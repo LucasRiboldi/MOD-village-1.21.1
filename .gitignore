@@ -1,0 +1,36 @@
+# Gradle
+.gradle/
+build/
+out/
+
+# Fabric Loom
+run/
+.fabric/
+remappedSrc/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# VS Code
+.vscode/
+
+# Java
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+hs_err_pid*
+replay_pid*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

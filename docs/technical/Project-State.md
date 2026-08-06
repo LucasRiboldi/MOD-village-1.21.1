@@ -212,7 +212,39 @@ Testing-Strategy.md
 Debugging-Strategy.md
 
 Development-Workflow.md
+
+Vanilla-Integration.md
 ```
+
+---
+
+# Architecture Decisions
+
+Status:
+
+```text
+PROPOSED
+```
+
+Documentos:
+
+```text
+docs/decisions/
+
+ADR-001-Core-Principles.md      (Accepted)
+
+ADR-002-Chunk-Loading-Strategy.md
+
+ADR-003-Village-Detection.md
+
+ADR-004-Mixin-Policy.md
+
+ADR-005-Core-Type-Isolation.md
+
+ADR-006-Package-Layout.md
+```
+
+ADR-002 a ADR-006 aguardam aprovação.
 
 ---
 
@@ -368,41 +400,56 @@ NOT STARTED
 
 ## Task
 
-Criar `ADR-002-Chunk-Loading-Strategy.md`.
+Revisar e aprovar as ADRs 002 a 006.
 
 ---
 
 ## Reason
 
-A auditoria técnica identificou que criar o projeto Fabric agora significaria
-implementar Simulation, Resource e Storage sobre uma decisão não tomada.
+As cinco ADRs foram redigidas com uma recomendação cada.
 
-Ver §10 — Decision 1.
+Nenhuma foi aceita ainda.
+
+Status atual de todas:
+
+```text
+Proposed — awaiting approval
+```
 
 ---
 
 ## Objective
 
-Definir o comportamento da colônia quando nenhum jogador está próximo.
+Converter:
+
+```text
+Proposed
+
+↓
+
+Accepted
+```
+
+Somente após isso a implementação pode começar.
 
 ---
 
 ## Expected Result
 
 ```text
-Estratégia escolhida
+ADRs aprovadas
 
 ↓
 
-Impacto documentado em Simulation-Loop
+Documentos afetados atualizados
 
 ↓
 
-Impacto documentado em Resource-System
+Version Matrix preenchida
 
 ↓
 
-Impacto documentado em Storage-System
+TASK-001 liberada
 ```
 
 ---
@@ -446,7 +493,7 @@ Resolver: simulação autônoma quando nenhum jogador está próximo.
 Status:
 
 ```text
-PENDING — BLOCKER
+PROPOSED — awaiting approval
 ```
 
 ---
@@ -464,7 +511,7 @@ Resolver: algoritmo de detecção de vila (cluster de POIs).
 Status:
 
 ```text
-PENDING — BLOCKER
+PROPOSED — awaiting approval
 ```
 
 ---
@@ -484,7 +531,7 @@ Resolver: injeção de comportamento no Brain do aldeão.
 Status:
 
 ```text
-PENDING — BLOCKER
+PROPOSED — awaiting approval
 ```
 
 ---
@@ -502,7 +549,7 @@ Resolver: Core independente de Minecraft.
 Status:
 
 ```text
-PENDING — BLOCKER
+PROPOSED — awaiting approval
 ```
 
 ---
@@ -520,7 +567,7 @@ Resolver: três layouts de pacote conflitantes.
 Status:
 
 ```text
-PENDING — BLOCKER
+PROPOSED — awaiting approval
 ```
 
 ---
@@ -931,6 +978,58 @@ Implementação bloqueada até conclusão do Stage 0.
 O próximo passo NÃO é criar o projeto Fabric.
 
 O próximo passo é ADR-002.
+
+---
+
+## Entry 003
+
+Data:
+
+2026-08-06
+
+Ação:
+
+Redação das decisões do Stage 0.
+
+Criado:
+
+```text
+ADR-002-Chunk-Loading-Strategy.md
+
+ADR-003-Village-Detection.md
+
+ADR-004-Mixin-Policy.md
+
+ADR-005-Core-Type-Isolation.md
+
+ADR-006-Package-Layout.md
+
+docs/technical/Vanilla-Integration.md
+
+LICENSE
+
+.gitignore
+```
+
+Atualizado:
+
+```text
+README.md          — licença MIT
+
+Fabric-Version.md  — Java 21, Yarn, Version Matrix
+```
+
+Estado:
+
+Todas as ADRs em `Proposed`.
+
+Nenhuma aceita.
+
+Resultado:
+
+Implementação permanece bloqueada.
+
+Aguardando aprovação.
 
 ---
 

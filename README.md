@@ -542,4 +542,10 @@ They are living communities waiting to evolve.
 
 # License
 
-To be defined.
+MIT License.
+
+Ver:
+
+```
+LICENSE
+```

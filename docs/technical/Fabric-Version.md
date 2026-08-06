@@ -98,8 +98,80 @@ O projeto não deve depender de:
 O código será desenvolvido em:
 
 ```text
-Java
+Java 21
 ```
+
+---
+
+## Reason
+
+Minecraft 1.20.5 e superiores exigem Java 21.
+
+Não é uma preferência do projeto. É um requisito da versão alvo.
+
+---
+
+## Toolchain
+
+O Gradle deve fixar:
+
+```text
+java.toolchain.languageVersion = 21
+```
+
+Nunca depender do JDK padrão da máquina.
+
+---
+
+# 5.1 Version Matrix
+
+As versões abaixo devem ser preenchidas com os valores exatos
+**antes** da TASK-001, consultando fabricmc.net.
+
+Não usar "latest" em nenhuma delas.
+
+---
+
+```text
+Minecraft:      1.21.1        (fixado)
+
+Java:           21            (fixado)
+
+Yarn:           1.21.1+build.?   ← confirmar
+
+Fabric Loader:  0.16.?           ← confirmar
+
+Fabric API:     ?+1.21.1         ← confirmar
+
+Fabric Loom:    1.7-SNAPSHOT     ← confirmar
+```
+
+---
+
+## Mappings
+
+Decisão:
+
+```text
+Yarn
+```
+
+Motivo:
+
+Toda a documentação do projeto usa nomenclatura Yarn
+(`ServerWorld`, `BlockPos`, `VillagerEntity`).
+
+Mojmap usaria nomes diferentes e invalidaria os documentos existentes.
+
+---
+
+## Regra
+
+`§8` deste documento dizia "mappings oficiais compatíveis".
+
+Isso era ambíguo: Yarn não é oficial, Mojmap é.
+
+A ambiguidade fica resolvida aqui em favor de Yarn.
 
 ---
 
