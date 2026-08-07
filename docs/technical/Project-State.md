@@ -297,7 +297,55 @@ Construir expansão
 Status:
 
 ```text
-NOT STARTED
+DONE — TASK-001 (2026-08-06)
+```
+
+Criado:
+
+```text
+build.gradle
+
+settings.gradle
+
+gradle.properties
+
+gradle/wrapper/          (Gradle 9.6.1)
+
+src/main/java/com/villagecolony/VillageColonyMod.java
+
+src/main/resources/fabric.mod.json
+```
+
+Verificado:
+
+```text
+./gradlew build  → BUILD SUCCESSFUL
+
+build/libs/village-colony-0.1.0.jar
+
+fabric.mod.json válido, ${version} expandido para 0.1.0
+```
+
+```text
+./gradlew runClient  → jogo abriu
+
+FabricLoader: Loading 56 mods
+
+  - villagecolony 0.1.0
+
+[villagecolony] [Village Colony] Mod initialized
+
+Nenhuma exceção no log.
+```
+
+Requisito de ambiente descoberto:
+
+```text
+Loom 1.17.18 exige JVM 21 para rodar o Gradle,
+
+não apenas para a toolchain.
+
+JDK instalado: Temurin 21.0.12 em ~/.jdks
 ```
 
 ---
@@ -403,80 +451,61 @@ NOT STARTED
 ## Task
 
 ```text
-TASK-001 — Criar o projeto Fabric
+TASK-002 — Configurar Identidade do Mod
+
+TASK-003 — Criar Estrutura de Pacotes
 ```
 
 ---
 
 ## Reason
 
-O Stage 0 foi concluído em 2026-08-06.
+TASK-001 foi concluída e verificada em 2026-08-06.
 
-As seis ADRs estão aceitas e a Version Matrix está fixada.
-
-Nenhum bloqueador de decisão permanece.
+O projeto compila e o mod carrega no jogo.
 
 ---
 
-## Objective
+## Estado das tarefas adjacentes
 
-Produzir um projeto Gradle que compila:
-
-```text
-gradle.properties
-
-build.gradle
-
-settings.gradle
-
-gradle-wrapper
-
-src/main/resources/fabric.mod.json
-```
-
-Usando exatamente as versões de:
+TASK-001 criou a versão **mínima** de arquivos que pertencem
+formalmente a outras tarefas, porque sem eles o critério de aceite
+de TASK-001 não era testável.
 
 ```text
-docs/technical/Fabric-Version.md §5.1
+fabric.mod.json    → TASK-002 (escopo completo em aberto)
+
+VillageColonyMod   → TASK-004 (registro de eventos em aberto)
 ```
+
+Ambas seguem abertas.
 
 ---
 
-## Expected Result
+## Objective — TASK-003
+
+Criar a árvore de pacotes de:
 
 ```text
-./gradlew build
-
-↓
-
-jar gerado em build/libs/
-
-↓
-
-Version Matrix validada na prática
+docs/decisions/ADR-006-Package-Layout.md §3
 ```
+
+Domínio dentro da camada.
 
 ---
 
-## Definition of Done
+## Ambiente de build
+
+O Gradle precisa rodar sobre JVM 21.
+
+Loom 1.17.18 exige isso para o próprio plugin, não apenas
+para a toolchain.
 
 ```text
-build passa
-
-runClient abre o jogo
-
-mod aparece na lista de mods
-
-nenhuma versão "latest" ou SNAPSHOT no gradle.properties
+JAVA_HOME=~/.jdks/jdk-21.0.12+8
 ```
 
----
-
-## Riscos conhecidos
-
-A combinação Loom 1.17.18 + Gradle 9.6.1 não foi executada ainda.
-
-Se o build falhar, corrigir `Fabric-Version.md` antes de seguir.
+Instalado em 2026-08-06.
 
 ---
 
@@ -1119,6 +1148,64 @@ Resultado:
 Implementação desbloqueada.
 
 Próximo passo: TASK-001.
+```
+
+---
+
+## 2026-08-06 — TASK-001 concluída
+
+Criado:
+
+```text
+build.gradle
+
+settings.gradle
+
+gradle.properties
+
+gradle/wrapper/      (Gradle 9.6.1)
+
+gradlew / gradlew.bat
+
+.gitattributes
+
+src/main/java/com/villagecolony/VillageColonyMod.java
+
+src/main/resources/fabric.mod.json
+```
+
+Verificado:
+
+```text
+./gradlew build      → BUILD SUCCESSFUL
+
+./gradlew runClient  → mod carregado, sem exceções
+```
+
+Descoberto:
+
+```text
+Loom 1.17.18 exige JVM 21 para rodar o Gradle.
+
+O foojay-resolver cobre a toolchain, não o JVM do Gradle.
+
+Temurin 21.0.12 instalado em ~/.jdks
+```
+
+Corrigido:
+
+```text
+Initial-Setup-Checklist.md §6
+
+  layout antigo substituído por referência à ADR-006
+```
+
+Resultado:
+
+```text
+Version Matrix validada na prática.
+
+Nenhum valor precisou de correção.
 ```
 
 ---
