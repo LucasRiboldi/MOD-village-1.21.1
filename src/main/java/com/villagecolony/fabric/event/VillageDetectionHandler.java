@@ -47,21 +47,22 @@ public final class VillageDetectionHandler {
      * <p>A checagem barata vem primeiro: sem cama neste chunk, não há
      * motivo para pagar a busca de raio 64. A esmagadora maioria dos
      * chunks carregados cai fora aqui.
+     *
+     * <p>O gatilho é a posição da própria cama encontrada, não o canto do
+     * chunk. {@code ChunkPos.getStartPos()} devolve y=0, e
+     * {@code getInCircle} mede distância em três dimensões: partindo de
+     * y=0, uma cama em y=64 já consome todo o raio de busca antes de
+     * qualquer deslocamento horizontal. Ancorado no chunk, este gatilho
+     * não encontrava vila nenhuma.
      */
     private static void onChunkLoad(ServerWorld world, WorldChunk chunk) {
-        boolean hasBed = world.getPointOfInterestStorage()
+        world.getPointOfInterestStorage()
                 .getInChunk(
                         poi -> poi.matchesKey(PointOfInterestTypes.HOME),
                         chunk.getPos(),
                         PointOfInterestStorage.OccupationStatus.ANY)
-                .findAny()
-                .isPresent();
-
-        if (!hasBed) {
-            return;
-        }
-
-        detectAround(world, chunk.getPos().getStartPos());
+                .findFirst()
+                .ifPresent(bed -> detectAround(world, bed.getPos()));
     }
 
     /**

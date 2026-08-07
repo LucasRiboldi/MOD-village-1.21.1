@@ -679,11 +679,48 @@ centro move, UUID permanece
 
 ---
 
-Não verificado:
+Verificado em jogo (2026-08-06, instalação TLauncher):
 
 ```text
-Nenhuma vila real foi detectada em jogo.
+Loaded 0 colonies
+
+Colony created at ColonyPos[x=1109, y=64, z=730] with 3 beds
+
+Saved 1 colonies
 ```
+
+Detecção, adoção e gravação funcionam sobre uma vila plains real.
+
+---
+
+Falta apenas reabrir o mundo e conferir `Loaded 1 colonies`,
+que fecha a TASK-008.
+
+---
+
+## Bug encontrado pelo teste em jogo
+
+O gatilho de `CHUNK_LOAD` nunca encontrava vila.
+
+Causa:
+
+```text
+ChunkPos.getStartPos()  →  BlockPos(startX, 0, startZ)
+
+getInCircle             →  distância em três dimensões
+```
+
+Partindo de y=0, uma cama em y=64 já consome os 64 blocos de raio
+antes de qualquer deslocamento horizontal.
+
+A detecção observada veio do ciclo de 600 ticks, ancorado no jogador —
+esse sempre esteve na altura certa.
+
+Correção: ancorar no POI de cama encontrado pelo `getInChunk`, que já
+era consultado ali.
+
+Nenhum teste unitário pegaria isto: o defeito está na fronteira com o
+Minecraft, não na lógica do Core.
 
 ---
 
