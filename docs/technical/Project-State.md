@@ -436,20 +436,17 @@ runClient carrega o mod, registro não lança
 
 ---
 
-Não verificado:
+Verificado em servidor real (2026-08-06):
 
 ```text
-SERVER_STARTED e SERVER_STOPPING nunca dispararam.
+Loaded 0 colonies    SERVER_STARTED
+
+Saved 0 colonies     SERVER_STOPPING
 ```
 
-Motivo:
+O EULA foi aceito pelo autor no ambiente de desenvolvimento.
 
-`runClient` para no menu principal — não há servidor.
-
-`runServer` exige aceite do EULA da Mojang em `run/eula.txt`,
-que é decisão do autor.
-
-Enquanto isso, os dois handlers são código não exercitado.
+`run/` não é versionado; cada máquina precisa aceitar o seu.
 
 ---
 
@@ -514,9 +511,7 @@ ColonyRotation
 Status:
 
 ```text
-CODE COMPLETE — TASK-007 (2026-08-06)
-
-NÃO VERIFICADO
+DONE — TASK-007 (2026-08-06)
 ```
 
 Feito:
@@ -550,22 +545,50 @@ creationTime    campo não existe no modelo Colony
 Verificado:
 
 ```text
-compila
+43 tests passando (8 de serialização)
 
-35 unit tests seguem passando
+Round-trip NBT: id, posição e state sobrevivem
+
+Coordenadas negativas sobrevivem
+
+Toda colônia volta DORMANT
+
+state desconhecido cai para STABLE, não lança
+
+entrada sem id é ignorada, não lança
 ```
+
+Verificado em servidor real:
+
+```text
+./gradlew runServer
+
+  Loaded 0 colonies
+
+  Saved 0 colonies
+
+run/world/data/villagecolony_colonies.dat  gravado
+```
+
+---
 
 Não verificado:
 
 ```text
-Nada foi salvo nem carregado de um mundo real.
+Uma colônia com dados atravessando
+
+fechar e reabrir o mundo de verdade.
 ```
 
-O critério "dados sobrevivem ao fechar mundo" exige rodar um servidor.
+Motivo: nada cria colônia ainda. A detecção é TASK-009.
 
-`runServer` continua parado no EULA.
+O que resta sem cobertura é apenas a costura:
 
-Esta é a segunda tarefa cuja verificação depende disso.
+```text
+ColonyService → ColonySavedData → disco → ColonyService
+```
+
+As duas pontas estão testadas. O trecho do meio é o que TASK-008 fecha.
 
 ---
 
@@ -1712,20 +1735,35 @@ Não impedir o jogador de abrir o mundo.
 Verificado:
 
 ```text
-compila, 35 testes seguem passando
+43 tests passando
+
+runServer: Loaded 0 / Saved 0 colonies
+
+villagecolony_colonies.dat gravado no mundo
 ```
 
-Não verificado:
+O EULA foi aceito pelo autor, desbloqueando também a verificação
+pendente da TASK-004.
+
+---
+
+## 2026-08-06 — Ordem do MVP-Tasks tem uma inversão
+
+`TASK-008 — Testar Carregamento` exige:
 
 ```text
-Nenhum dado foi gravado ou lido de um mundo real.
+Criar mundo → Encontrar vila → Salvar → Fechar → Abrir
 ```
 
-Bloqueio:
+"Encontrar vila" é `TASK-009`.
 
-```text
-run/eula.txt  →  eula=false
-```
+A TASK-008 depende de uma tarefa que vem depois dela.
+
+Consequência prática: o round-trip com dados reais só pode ser
+provado após a detecção existir.
+
+Enquanto isso, a serialização foi coberta por teste direto de NBT,
+sem servidor.
 
 ---
 
