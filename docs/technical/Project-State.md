@@ -2,9 +2,9 @@
 
 # Village Colony — Project State
 
-**Status:** Documentation Complete / Stage 0 Complete / Implementation Unblocked
-**Version:** 0.1.0 Planning Phase
-**Last Update:** 2026-08-06 — Stage 0 concluído
+**Status:** Em implementação — Fases 1 a 3 completas, Fase 4 em andamento
+**Version:** 0.1.0
+**Last Update:** 2026-08-07 — TASK-012 concluída
 **Repository:** https://github.com/LucasRiboldi/MOD-village-1.21.1
 
 ---
@@ -60,20 +60,45 @@ Java
 ## Current Stage
 
 ```text
-Phase 0 — Project Preparation
+Fase 4 — Sistema de Trabalhadores
 ```
 
 ---
 
 ## Description
 
-A fase atual consiste na preparação completa da documentação, arquitetura e regras de desenvolvimento antes da geração do código.
+Fases 1 a 3 estão completas e verificadas dentro do jogo: o mod detecta
+vilas, cria colônias, mantém sua identidade e persiste tudo entre
+sessões.
+
+A fase atual registra os aldeões como trabalhadores e vai atribuir-lhes
+profissões de colônia.
 
 ---
 
-# 4. Development Status
+## Concluído até aqui
 
-## Completed
+```text
+Fase 0   decisões de arquitetura        ADR-001 a ADR-006
+
+Fase 1   núcleo da colônia              TASK-001 a TASK-006
+
+Fase 2   persistência                   TASK-007 e TASK-008
+
+Fase 3   detecção da vila               TASK-009 e TASK-010
+
+Fase 4   trabalhadores                  TASK-011 e TASK-012
+```
+
+Detalhe por tarefa em §6. Histórico em §15.
+
+---
+
+# 4. Documentation Status
+
+A documentação abaixo foi escrita antes do código e permanece a
+referência do projeto. Onde código e documento divergirem, o conflito
+está registrado em §9 ou numa emenda de ADR.
 
 ## Project Definition
 
@@ -252,1570 +277,400 @@ Nenhuma decisão de arquitetura permanece em aberto.
 
 # 5. Current MVP Status
 
-## MVP Version
+## MVP Goal e progresso
 
 ```text
-Not Started
-```
-
----
-
-## MVP Goal
-
-Criar uma vila Vanilla capaz de:
-
-```text
-Detectar vila
+Detectar vila          FEITO, verificado em jogo
 
 ↓
 
-Registrar aldeões
+Registrar aldeões      FEITO, não verificado em jogo
 
 ↓
 
-Organizar trabalhadores
+Organizar trabalhadores   em andamento (TASK-013, TASK-014)
 
 ↓
 
-Coletar recursos
+Coletar recursos       não iniciado
 
 ↓
 
-Produzir materiais
+Produzir materiais     não iniciado
 
 ↓
 
-Construir expansão
+Construir expansão     não iniciado
+```
+
+Dois dos seis passos do MVP estão de pé.
+
+---
+
+# 6. Implementation Status
+
+Uma linha por tarefa. O detalhe de cada uma está no Development Log (§15).
+
+```text
+Fase 0 — Decisões
+
+  ADR-001 a ADR-006          aceitas
+  ADR-003                    emendada três vezes (§10 da própria ADR)
+  Version Matrix             fixada e validada por build
+
+Fase 1 — Núcleo da Colônia
+
+  TASK-001  projeto Fabric           feito, verificado em jogo
+  TASK-002  identidade do mod        feito, verificado em jogo
+  TASK-003  estrutura de pacotes     feito
+  TASK-004  entrypoint e eventos     feito, verificado em jogo
+  TASK-005  modelo Colony            feito
+  TASK-006  ColonyService            feito
+
+Fase 2 — Persistência
+
+  TASK-007  ColonySavedData          feito, verificado em jogo
+  TASK-008  teste de carregamento    feito, verificado em jogo
+
+Fase 3 — Detecção da Vila
+
+  TASK-009  detecção de vila         feito, verificado em jogo
+  TASK-010  criação automática       feito, verificado em jogo
+
+Fase 4 — Trabalhadores
+
+  TASK-011  modelo Worker            feito
+  TASK-012  VillagerScanner          feito, NÃO verificado em jogo
+  TASK-013  ProfessionRegistry       não iniciado
+  TASK-014  atribuição inicial       não iniciado
+
+Fases 5 a 9
+
+  TASK-015 em diante                 não iniciadas
 ```
 
 ---
 
-# 6. Current Implementation Status
-
-## Fabric Project
-
-Status:
+## Código existente
 
 ```text
-DONE — TASK-001 (2026-08-06)
+core/
+  type/ColonyPos
+  colony/model/      Colony, ColonyState, ColonyLifecycle, VillageCandidate
+  colony/service/    ColonyService, VillageDetector
+  worker/model/      Worker, ProfessionType
+  worker/service/    WorkerService
+
+fabric/
+  adapter/           MinecraftTypeAdapter
+  event/             ServerLifecycleHandler, VillageDetectionHandler
+  integration/       VillageScanner, VillagerScanner
+
+data/
+  save/              ColonySavedData
 ```
 
-Criado:
-
-```text
-build.gradle
-
-settings.gradle
-
-gradle.properties
-
-gradle/wrapper/          (Gradle 9.6.1)
-
-src/main/java/com/villagecolony/VillageColonyMod.java
-
-src/main/resources/fabric.mod.json
-```
-
-Verificado:
-
-```text
-./gradlew build  → BUILD SUCCESSFUL
-
-build/libs/village-colony-0.1.0.jar
-
-fabric.mod.json válido, ${version} expandido para 0.1.0
-```
-
-```text
-./gradlew runClient  → jogo abriu
-
-FabricLoader: Loading 56 mods
-
-  - villagecolony 0.1.0
-
-[villagecolony] [Village Colony] Mod initialized
-
-Nenhuma exceção no log.
-```
-
-Requisito de ambiente descoberto:
-
-```text
-Loom 1.17.18 exige JVM 21 para rodar o Gradle,
-
-não apenas para a toolchain.
-
-JDK instalado: Temurin 21.0.12 em ~/.jdks
-```
+Vazios por enquanto: `core/task`, `core/resource`, `core/storage`,
+`core/construction`, `fabric/mixin`, `fabric/brain`.
 
 ---
 
-## Mod Identity
-
-Status:
+## Testes
 
 ```text
-DONE — TASK-002 (2026-08-06)
+106 testes, todos passando
 ```
 
-```text
-id           villagecolony
+Cobrem o Core (lógica pura) e a serialização NBT.
 
-name         Village Colony
-
-version      0.1.0
-
-license      MIT
-
-environment  *
-```
-
-Verificado: `FabricLoader` lista `villagecolony 0.1.0`.
-
-Pendente: `icon` (decisão de arte, não técnica).
+Não cobrem a fronteira com o Minecraft — é lá que moraram todos os
+defeitos sérios desta fase. Ver §11.
 
 ---
 
-## Package Structure
+## O que o mod faz hoje, em jogo
 
-Status:
-
-```text
-DONE — TASK-003 (2026-08-06)
-```
-
-Árvore criada conforme `ADR-006 §3`.
-
-28 pacotes, cada um com `package-info.java` documentando sua função.
-
-Nota: `package-info.java` sem anotações não gera `.class`.
-
-Os pacotes existem no repositório e no source jar, não no jar remapado.
-
-Isso é esperado — eles passam a existir no jar quando receberem código.
-
----
-
-## Mod Entry Point
-
-Status:
-
-```text
-DONE — TASK-004 (2026-08-06)
-```
-
-```text
-VillageColonyMod
-
-  MOD_ID, LOGGER compartilhado
-
-  chama ServerLifecycleHandler.register()
-
-fabric/event/ServerLifecycleHandler
-
-  SERVER_STARTED
-
-  SERVER_STOPPING
-```
-
-`VillageColonyMod` permanece sem lógica, conforme
-`Initial-Setup-Checklist.md §7`.
-
-O registro de cada evento vive em `fabric/event`, para que adicionar
-um evento não signifique alterar a classe principal.
-
----
-
-Verificado:
-
-```text
-build passa
-
-runClient carrega o mod, registro não lança
-```
-
----
-
-Verificado em servidor real (2026-08-06):
-
-```text
-Loaded 0 colonies    SERVER_STARTED
-
-Saved 0 colonies     SERVER_STOPPING
-```
-
-O EULA foi aceito pelo autor no ambiente de desenvolvimento.
-
-`run/` não é versionado; cada máquina precisa aceitar o seu.
-
----
-
-## Core Models
-
-Status:
-
-```text
-IN PROGRESS — Colony feito (TASK-005, 2026-08-06)
-```
-
-Feito:
-
-```text
-core/type/ColonyPos
-
-core/colony/model/Colony
-
-core/colony/model/ColonyState
-
-core/colony/model/ColonyLifecycle
-
-core/colony/service/ColonyService
-```
-
-Verificado:
-
-```text
-35 unit tests passando
-
-Core sem import de net.minecraft (ADR-006 §6)
-
-Nenhum domínio do core importa outro domínio
-```
-
-Planejado:
-
-```text
-Worker
-
-Task
-
-Resource
-
-Storage
-
-Building
-```
-
-Tipos da ADR-005 ainda não criados, por falta de uso:
-
-```text
-ResourceId
-
-ColonyRotation
-```
-
----
-
-## Persistence
-
-Status:
-
-```text
-DONE — TASK-007 (2026-08-06)
-```
-
-Feito:
-
-```text
-data/save/ColonySavedData      PersistentState do Overworld
-
-VillageColonyMod.COLONIES      registro global (ADR-006 §5)
-
-ServerLifecycleHandler         carrega e grava
-```
-
-Gravado:
-
-```text
-id, centerX/Y/Z, state
-```
-
-Não gravado:
-
-```text
-lifecycle       derivado do chunk, volta sempre DORMANT
-
-villageType     campo não existe no modelo Colony
-
-creationTime    campo não existe no modelo Colony
-```
-
----
-
-Verificado:
-
-```text
-43 tests passando (8 de serialização)
-
-Round-trip NBT: id, posição e state sobrevivem
-
-Coordenadas negativas sobrevivem
-
-Toda colônia volta DORMANT
-
-state desconhecido cai para STABLE, não lança
-
-entrada sem id é ignorada, não lança
-```
-
-Verificado em servidor real:
-
-```text
-./gradlew runServer
-
-  Loaded 0 colonies
-
-  Saved 0 colonies
-
-run/world/data/villagecolony_colonies.dat  gravado
-```
-
----
-
-Não verificado:
-
-```text
-Uma colônia com dados atravessando
-
-fechar e reabrir o mundo de verdade.
-```
-
-Motivo: nada cria colônia ainda. A detecção é TASK-009.
-
-O que resta sem cobertura é apenas a costura:
-
-```text
-ColonyService → ColonySavedData → disco → ColonyService
-```
-
-As duas pontas estão testadas. O trecho do meio é o que TASK-008 fecha.
-
----
-
-## Village Detection
-
-Status:
-
-```text
-DONE — TASK-009 (2026-08-06)
-```
-
-Feito:
-
-```text
-core/colony/model/VillageCandidate
-
-core/colony/service/VillageDetector    cluster + validação + centro
-
-fabric/adapter/MinecraftTypeAdapter    BlockPos <-> ColonyPos
-
-fabric/integration/VillageScanner      POI, aldeões, bioma
-```
-
-A lógica pura ficou no Core; o scanner apenas lê o mundo e converte.
-
----
-
-Verificado:
-
-```text
-59 tests passando (16 de detecção)
-
-transitividade do cluster
-
-fronteira exata de 32 blocos
-
-sino tem prioridade sobre a média
-
-coordenadas extremas não estouram
-
-constantes conferem com ADR-003 §8
-```
-
----
-
----
-
-## Colony Creation
-
-Status:
-
-```text
-DONE — TASK-010 (2026-08-06)
-```
-
-Feito:
-
-```text
-Colony.setCenter               centro móvel, ADR-003 §4
-
-ColonyService.adopt            anti-duplicata, ADR-003 §6
-
-fabric/event/VillageDetectionHandler   os dois gatilhos
-```
-
-Gatilhos, conforme ADR-003 §3:
-
-```text
-CHUNK_LOAD         só se o chunk contiver POI de cama
-
-END_SERVER_TICK    a cada 600 ticks, em torno dos jogadores
-```
-
-A checagem barata (`getInChunk`) vem antes da cara (`getInCircle`):
-a maioria dos chunks carregados é descartada sem custo.
-
----
-
-Verificado:
-
-```text
-68 tests passando (9 de adoção)
-
-anti-duplicata em ambos os lados da fronteira de 64
-
-centro move, UUID permanece
-```
-
----
-
-Verificado em jogo (2026-08-06, instalação TLauncher):
-
-```text
-Loaded 0 colonies
-
-Colony created at ColonyPos[x=1109, y=64, z=730] with 3 beds
-
-Saved 1 colonies
-```
-
-Detecção, adoção e gravação funcionam sobre uma vila plains real.
-
----
-
----
-
-## TASK-008 — Testar Carregamento
-
-Status:
-
-```text
-DONE — 2026-08-06
-```
-
-Segunda sessão, mesmo mundo:
-
-```text
-Loaded 1 colonies
-
-(4min30s dentro da vila, ~9 ciclos de detecção)
-
-Saved 1 colonies
-```
-
-O round-trip completo está fechado:
-
-```text
-detectar → salvar → fechar → abrir → colônia permanece
-```
-
-Anti-duplicata confirmado fora do teste: o jogador permaneceu na vila
-por nove ciclos e a contagem não subiu.
-
-Nenhum erro no log.
-
----
-
-## Bug encontrado pelo teste em jogo
-
-O gatilho de `CHUNK_LOAD` nunca encontrava vila.
-
-Causa:
-
-```text
-ChunkPos.getStartPos()  →  BlockPos(startX, 0, startZ)
-
-getInCircle             →  distância em três dimensões
-```
-
-Partindo de y=0, uma cama em y=64 já consome os 64 blocos de raio
-antes de qualquer deslocamento horizontal.
-
-A detecção observada veio do ciclo de 600 ticks, ancorado no jogador —
-esse sempre esteve na altura certa.
-
-Correção: ancorar no POI de cama encontrado pelo `getInChunk`, que já
-era consultado ali.
-
-Nenhum teste unitário pegaria isto: o defeito está na fronteira com o
-Minecraft, não na lógica do Core.
-
----
-
-## Cegueira de log — corrigida
-
-A segunda sessão não conseguiu confirmar a correção acima, porque o mod
-só logava **criação** de colônia.
-
-Uma vila já conhecida era reavaliada em silêncio, e o log não distinguia:
-
-```text
-detecção rodou e a vila já era conhecida
-
-detecção nunca rodou
-```
-
-Foi exatamente essa cegueira que permitiu ao gatilho de chunk ficar
-quebrado sem ninguém perceber.
-
-Correção: logar também quando o centro se move.
-
-Reavaliação que não muda nada segue silenciosa, então não vira spam por
-ciclo — jogador parado não gera linha.
-
----
-
-## Gatilho de CHUNK_LOAD — confirmado
-
-Sessão de 23:36:
-
-```text
-23:36:31  Loaded 1 colonies
-
-23:36:33  Colony ... moved ...
-```
-
-Dois segundos. O ciclo de 600 ticks levaria trinta.
-
-A correção funciona.
-
----
-
-## Lacuna da ADR-003 — centro oscilante
-
-O mesmo log revelou o centro alternando entre duas posições a 29
-blocos uma da outra:
-
-```text
-1096,68,742 → 1109,64,730   12 camas
-
-1109,64,730 → 1080,64,733    3 camas
-
-1080,64,733 → 1109,64,730   12 camas
-
-1109,64,730 → 1080,64,733    3 camas
-```
-
-Mesma colônia, mesmo UUID — a identificação estava certa.
-
----
-
-Causa:
-
-A ADR-003 §4 define o centro como a média das camas do cluster, e a
-§6 manda atualizar a colônia existente. Mas o §3 limita a coleta a 64
-blocos.
-
-Uma vila é maior que 64 blocos. Logo **nenhuma detecção enxerga a vila
-inteira**, e cada gatilho produz um cluster diferente.
-
-Como estava implementado, a última detecção sempre vencia: um gatilho
-de borda que via 3 de 12 camas arrastava o centro.
-
----
-
-Correção adotada:
-
-```text
-Colony.observedBeds
-
-  quantas camas a melhor observação já vista continha
-```
-
-```text
-Colony.observe(center, beds)
-
-  move o centro apenas se beds >= observedBeds
-```
-
-Empate move, porque a vila pode mudar de lugar mantendo o número de
-camas.
-
-O campo é persistido; save antigo lê 0 e autocorrige na primeira
-detecção da sessão.
-
----
-
-```text
-PENDENTE: emendar ADR-003 registrando que a completude da observação
-
-          decide a autoridade sobre o centro.
-```
-
----
-
-Verificado em jogo (2026-08-06, 23:50, jar corrigido):
-
-```text
-created at 885,920   12 camas
-
-moved to  870,923    13 camas
-
-moved to  878,922    15 camas
-
-moved to  876,919    21 camas
-```
-
-Contagem monotonicamente crescente. O centro converge em vez de
-oscilar.
-
-Comparar com a sessão anterior, mesmo cenário:
-
-```text
-12 → 3 → 12 → 3 → 3
-```
-
-Uma colônia, um UUID, estável nas quatro observações.
-
----
-
----
-
-## 2026-08-07 — Correções de revisão
-
-Defeito latente corrigido:
-
-```text
-setLifecycle nunca era chamado em produção.
-```
-
-Toda colônia lida do save ficava `DORMANT` para sempre, mesmo sendo
-observada pela detecção a cada ciclo.
-
-Como a ADR-002 manda o loop rodar só para colônias `ACTIVE`, a
-simulação da Fase 4 ignoraria silenciosamente toda colônia persistida.
-
-Correção:
-
-```text
-adopt()            observar acorda a colônia
-
-updateLifecycles() varredura por ciclo, via shouldTick(ChunkPos)
-```
-
-Sem a varredura, o oposto ocorreria: colônia visitada uma vez ficaria
-`ACTIVE` a sessão inteira, a milhares de blocos do jogador.
-
----
-
-Lacuna deixada em aberto, deliberadamente:
-
-```text
-ColonyState.ABANDONED existe e nada o atribui.
-```
-
-Ver ADR-003 §10, Emenda 1. Exige o scanner reportar clusters
-reprovados, o que é tarefa própria e não cabia numa revisão.
-
----
-
-Emendas de ADR-003 redigidas: três, em `docs/decisions/ADR-003 §10`.
-
----
-
-Verificado em jogo (2026-08-07, 00:13):
-
-```text
-00:14:59  Loaded 0 colonies
-
-00:15:01  Colony created at 1109,730 with 8 beds
-
-00:18:29  Colony ... is now DORMANT
-
-00:18:46  Saved 1 colonies
-```
-
-`is now DORMANT` é a varredura reconhecendo que os chunks da vila
-pararam de tickar. Comportamento que não existia antes desta correção.
-
-Nenhuma linha `is now ACTIVE`: a colônia nasce ACTIVE pela `adopt`, e a
-varredura só registra transição. Correto.
-
-Nenhuma linha `moved` em cerca de sete ciclos — o centro não oscila.
-
----
-
----
-
-## 2026-08-07 — TASK-011 concluída
-
-Criado:
-
-```text
-core/worker/model/ProfessionType   LUMBERJACK, MANUFACTURER,
-
-                                   FARMER, BUILDER
-
-core/worker/model/Worker           villagerId, colonyId, profession
-```
-
-Decisões:
-
-```text
-Identidade é o villagerId
-
-  a profissão muda, o aldeão não
-```
-
-```text
-A colônia é referenciada por UUID, não por objeto
-
-  domínio do core não importa outro (ADR-006 §6)
-```
-
-```text
-Profissão é Optional, não um quinto valor do enum
-
-  registrar aldeão e dar função são momentos diferentes
-
-  CODE-STANDARDS §7
-```
-
-Campos de Data-Model adiados por dependerem de outros sistemas:
-
-```text
-storageId    sistema de armazenamento
-
-state        WorkerState, sistema de tarefas
-
-currentTask  sistema de tarefas
-```
-
-Verificado:
-
-```text
-94 testes
-
-core sem net.minecraft
-
-worker não importa colony
-```
-
----
-
----
-
-## 2026-08-07 — TASK-012 concluída
-
-Criado:
-
-```text
-core/worker/service/WorkerService        registro em memória
-
-fabric/integration/VillagerScanner       lê aldeões do mundo
-```
-
-Ligado ao ciclo de detecção: adotar uma colônia registra seus aldeões.
-
-Nomes distintos conforme ADR-003 §7:
-
-```text
-VillageScanner    detecta vilas
-
-VillagerScanner   detecta aldeões dentro de uma colônia
-```
-
----
-
-Decisões:
-
-```text
-register é idempotente
-
-  a varredura reencontra os mesmos aldeões a cada ciclo;
-
-  reencontrar não pode apagar profissão já atribuída
-```
-
-```text
-Ausência na varredura não remove ninguém
-
-  aldeão fora do raio não está morto, só não foi visto
-
-  remove() existe para quando houver evento de morte
-```
-
-```text
-Mesmo raio da detecção de vila (64)
-
-  inventar um segundo número criaria duas noções de "perto"
-```
-
-```text
-Bebês são registrados
-
-  eles crescem; redescobrir depois custa mais
-```
-
----
-
-Verificado:
-
-```text
-106 testes
-
-core sem net.minecraft
-
-worker não importa colony
-```
-
----
-
-Não verificado:
-
-```text
-Nenhum aldeão foi registrado em jogo ainda.
-```
-
----
-
-## Lacuna conhecida — profissão não sobrevive à sessão
-
-`WORKERS` não é persistido.
-
-Os trabalhadores são redescobertos a cada sessão a partir dos aldeões
-do mundo, que são a fonte da verdade. Isso basta hoje, porque só há
-registro.
-
-Deixa de bastar em TASK-013/014: profissão atribuída é decisão da
-colônia, não existe no mundo Vanilla, e some ao fechar o mundo.
-
-`MVP-Tasks.md` não tem tarefa de persistência de workers.
-
-Precisa entrar antes ou junto de TASK-014.
-
----
-
-## Estado geral
-
-```text
-Fases 1 a 3 completas e verificadas em jogo
-
-Fase 4 em andamento — TASK-011 e TASK-012 feitas
-
-106 testes
-
-Próxima: TASK-013 — ProfessionRegistry
-```
-
----
-
-## Identidade visual
-
-```text
-Ícone: assets/villagecolony/icon.png
-```
-
-A arte diz "Village++"; o mod se chama "Village Colony", id
-`villagecolony`.
-
-Divergência mantida por decisão do autor em 2026-08-07.
-
-Trocar o id quebraria saves existentes: ele nomeia o arquivo
-`villagecolony_colonies.dat`, o caminho do ícone e o logger.
-
----
-
-Nota de método: trocar o jar com o jogo aberto não testa nada.
-
-O Minecraft carrega mods na inicialização da JVM. Sair ao menu e
-reentrar no mundo reusa o código em memória.
-
-Duas sessões foram desperdiçadas assim antes de perceber.
-
-Este é o segundo desvio de ADR-003 registrado aqui. O primeiro é
-`DORMANT → ABANDONED`.
-
----
-
-## Observação sobre a instrumentação
-
-A cegueira de log foi corrigida na sessão anterior, e o defeito
-apareceu na sessão seguinte.
-
-Sem a linha `moved`, o centro estaria oscilando em silêncio.
-
----
-
-## Limitação do console do runServer
-
-Comandos vanilla que dependem de argumento de registro ou produzem
-texto rico falham no console deste ambiente:
-
-```text
-seed                  → An unexpected error occurred
-
-locate structure ...  → An unexpected error occurred
-
-execute if biome ...  → An unexpected error occurred
-```
-
-Funcionam normalmente:
-
-```text
-say    list    stop    forceload
-```
-
-Nenhum stack trace é registrado no log.
-
-Isso **não passa pelo código do mod** — `seed` e `locate` são vanilla
-puro. É limitação do ambiente, não defeito do Village Colony.
-
-Consequência: não foi possível localizar uma vila plains nem sondar
-bioma por comando, que era o roteiro planejado para TASK-008.
-
----
-
-## Caminho alternativo de teste
-
-O jar foi instalado na instalação real do autor:
-
-```text
-C:\Users\lucas\AppData\Roaming\.minecraft\mods
-```
-
-Perfil `Fabric 1.21.1` existe.
-
-**Falta a Fabric API nessa instalação** — sem ela o mod não carrega,
-porque `fabric.mod.json` a declara como dependência.
-
----
-
-## Worker System
-
-Status:
-
-```text
-NOT STARTED
-```
-
-Planejado:
-
 ```text
-WorkerService
-
-VillagerAdapter
-```
-
----
+detecta vilas plains por cluster de camas
 
-## Resource System
+cria colônias com identidade estável
 
-Status:
+move o centro só para observações mais completas
 
-```text
-NOT STARTED
-```
-
----
+acorda e adormece colônias conforme os chunks
 
-## Construction System
+registra os aldeões como trabalhadores
 
-Status:
-
-```text
-NOT STARTED
+persiste as colônias entre sessões
 ```
 
 ---
 
 # 7. Next Development Step
 
-## Task
+## Decisão necessária antes de codificar
 
 ```text
-TASK-008 — Testar Carregamento
+Persistência de trabalhadores
 ```
 
-Fase 2, adiada até a detecção existir.
+`MVP-Tasks.md` não tem tarefa para isso, e é uma lacuna do plano.
 
----
+Hoje os trabalhadores são redescobertos a cada sessão a partir dos
+aldeões do mundo. Isso basta enquanto só há registro.
 
-## Reason
+Deixa de bastar em TASK-014: profissão atribuída é decisão da colônia,
+não existe no mundo Vanilla e sumiria ao fechar o mundo. Cada sessão
+redistribuiria funções do zero.
 
-Fase 3 concluída em 2026-08-06.
-
-A detecção cria colônias. Agora há o que salvar.
-
----
-
-## Objective — TASK-008
-
-O round-trip completo, que era a única costura de persistência sem
-cobertura:
+Opções:
 
 ```text
-detectar → salvar → fechar → abrir → colônia permanece
-```
+estender ColonySavedData
 
-Roteiro sem interface gráfica:
-
-```text
-locate structure minecraft:village_plains
-
-forceload add <x> <z>
-
-conferir "Colony created"
-
-stop
-
-reabrir e conferir "Loaded 1 colonies"
+criar WorkerSavedData
 ```
 
 ---
 
-## Depois
-
-Fase 4 — Sistema de Trabalhadores, a partir de TASK-011.
-
----
-
-## Pendência de decisão do autor
+## Depois da decisão
 
 ```text
-Ícone do mod
+TASK-013 — ProfessionRegistry
+
+TASK-014 — Atribuição inicial de profissões
 ```
 
 ---
 
-## Emendas de ADR — resolvidas
+# 8. Priority Queue
 
 ```text
-ADR-003 §10 — três emendas registradas
+1   decidir persistência de trabalhadores
+
+2   TASK-013 — ProfessionRegistry
+
+3   TASK-014 — atribuição inicial
+
+4   verificar TASK-012 em jogo
+
+5   Fase 5 — Sistema de Armazenamento (TASK-015+)
 ```
 
-Nenhum desvio de ADR permanece sem documento.
-
----
-
-## Antes disso — histórico
-
-```text
-TASK-007 — Criar Colony Saved Data
-```
-
-Fase 2 — Persistência.
-
----
-
-## Reason
-
-Fase 1 concluída em 2026-08-06.
-
-O registro de colônias existe em memória e está coberto por testes.
-
-Nada sobrevive a fechar o mundo.
-
----
-
-## Objective — TASK-007
-
-```text
-data/save/ColonySavedData
-```
-
-Salvar e recarregar:
-
-```text
-id
-
-posição
-
-state
-
-lifecycle
-```
-
----
-
-## Restrições
-
-```text
-ADR-006 §5   data/save contém apenas serialização,
-
-             nunca lógica de domínio
-
-ADR-002      o estado salvo deve bastar para retomar
-
-             sem perda
-
-ADR-005      ColonyPos é convertido na fronteira,
-
-             não gravado como BlockPos
-```
-
-Ao recarregar, usar `ColonyService.register()`, que já rejeita
-id duplicado.
-
----
-
-## Ponto de integração
-
-`ServerLifecycleHandler` já tem os dois ganchos onde isso encaixa:
-
-```text
-SERVER_STARTED   → carregar
-
-SERVER_STOPPING  → garantir gravação
-```
-
-Hoje eles apenas logam.
-
----
-
-## Pendência de decisão do autor
-
-```text
-Ícone do mod
-```
-
-`fabric.mod.json` não declara `icon`.
-
-Escolher a arte é decisão de identidade visual, não técnica.
-
-Sem `icon` o Fabric usa o ícone padrão. Nada quebra.
-
----
-
-## Ambiente de build
-
-O Gradle precisa rodar sobre JVM 21.
-
-Loom 1.17.18 exige isso para o próprio plugin, não apenas
-para a toolchain.
-
-```text
-JAVA_HOME=~/.jdks/jdk-21.0.12+8
-```
-
-Instalado em 2026-08-06.
-
----
-
-# 8. Current Priority Queue
-
-A auditoria técnica identificou cinco bloqueadores que precedem qualquer código.
-
-A fila abaixo reflete essa ordem.
-
----
-
-## Stage 0 — Decisions (no code)
-
----
-
-## Priority 0.1
-
-Criar:
-
-```text
-ADR-002-Chunk-Loading-Strategy.md
-```
-
-Resolver: simulação autônoma quando nenhum jogador está próximo.
-
-Status:
-
-```text
-DONE — Accepted 2026-08-06
-```
-
----
-
-## Priority 0.2
-
-Criar:
-
-```text
-ADR-003-Village-Detection.md
-```
-
-Resolver: algoritmo de detecção de vila (cluster de POIs).
-
-Status:
-
-```text
-DONE — Accepted 2026-08-06
-```
-
----
-
-## Priority 0.3
-
-Criar:
-
-```text
-ADR-004-Mixin-Policy.md
-
-Vanilla-Integration.md
-```
-
-Resolver: injeção de comportamento no Brain do aldeão.
-
-Status:
-
-```text
-DONE — Accepted 2026-08-06
-```
-
----
-
-## Priority 0.4
-
-Criar:
-
-```text
-ADR-005-Core-Type-Isolation.md
-```
-
-Resolver: Core independente de Minecraft.
-
-Status:
-
-```text
-DONE — Accepted 2026-08-06
-```
-
----
-
-## Priority 0.5
-
-Criar:
-
-```text
-ADR-006-Package-Layout.md
-```
-
-Resolver: três layouts de pacote conflitantes.
-
-Status:
-
-```text
-DONE — Accepted 2026-08-06
-```
-
----
-
-## Priority 0.6
-
-Atualizar:
-
-```text
-Fabric-Version.md
-```
-
-Fixar versões exatas: Java, Loom, Loader, Fabric API, mappings.
-
-Status:
-
-```text
-DONE — 2026-08-06
-```
-
-Matriz fixada em `Fabric-Version.md §5.1`.
-
-Validação prática ocorre na TASK-001.
-
----
-
-## Priority 0.7
-
-Correções de consistência na documentação.
-
-Status:
-
-```text
-DONE — 2026-08-06
-```
-
-Corrigido:
-
-```text
-PROJECT_CONSTITUTION.md §3
-
-  alinhado com ADR-002
-
-  autonomia = independência de comandos do jogador
-
-  não de chunks carregados
-```
-
-Escopo: apenas a contradição §3 vs ADR-002, identificada na auditoria.
-
-Nenhuma outra inconsistência foi auditada nesta passagem.
-
----
-
-## Stage 1 — Foundation (após Stage 0)
-
----
-
-## Priority 1.1
-
-Criar estrutura Gradle Fabric.
-
-Status:
-
-```text
-BLOCKED BY STAGE 0
-```
-
----
-
-## Priority 1.2
-
-Criar entrypoint do mod.
-
-Status:
-
-```text
-BLOCKED BY STAGE 0
-```
-
----
-
-## Priority 1.3
-
-Criar pacotes conforme ADR-006.
-
-Status:
-
-```text
-BLOCKED BY STAGE 0
-```
-
----
-
-## Priority 1.4
-
-Criar primeiros modelos:
-
-```text
-Colony
-
-Worker
-```
-
-Status:
-
-```text
-BLOCKED BY STAGE 0
-```
+O item 4 não bloqueia os demais, mas quanto mais tarde, mais caro:
+todos os defeitos graves desta fase apareceram só em jogo.
 
 ---
 
 # 9. Known Limitations
 
-Atualmente:
+## Regras aceitas e ainda não implementadas
 
-* nenhum código existe;
-* nenhum mundo de teste existe;
-* nenhuma integração Minecraft existe;
-* cinco decisões arquiteturais bloqueiam o início da implementação.
+```text
+ColonyState.ABANDONED
+
+  O valor existe; nada o atribui.
+
+  ADR-003 §6 exige distinguir "vila deixou de ser viável" de
+  "vila não foi observada". Hoje VillageScanner.scan devolve
+  apenas clusters aprovados, então as duas situações são
+  indistinguíveis.
+
+  Exige o scanner reportar clusters reprovados. Tarefa própria.
+```
+
+```text
+Aviso de colônias sobrepostas
+
+  ADR-003 §5 manda registrar
+  "[COLONY] Overlapping colonies detected"
+  quando dois centros ficam a menos de 32 blocos.
+
+  Não implementado.
+```
+
+```text
+Loop de simulação
+
+  ADR-002 define ACTIVE/DORMANT e o loop só roda para ACTIVE.
+
+  O ciclo de vida já funciona; o loop não existe.
+```
+
+---
+
+## Limites de escopo assumidos
+
+```text
+Só bioma PLAINS
+
+  Cluster em outro bioma é ignorado. Não é erro (ADR-003 §5).
+```
+
+```text
+Registro único, Overworld
+
+  COLONIES e WORKERS são estáticos e não separam dimensão.
+
+  Não é problema hoje porque PLAINS só existe no Overworld,
+  mas a suposição está no código, não no tipo.
+```
+
+```text
+Trabalhadores não são persistidos
+
+  Ver §7.
+```
+
+```text
+Fusão e divisão de vilas
+
+  MVP não funde nem divide (ADR-003 §5).
+```
+
+---
+
+## Limitação do ambiente de desenvolvimento
+
+```text
+Comandos que resolvem argumento de registro falham no
+console do runServer:
+
+  seed, locate structure, locate biome, execute if biome
+
+  → "An unexpected error occurred", sem stack trace
+
+Funcionam: say, list, stop, forceload
+```
+
+Não passa pelo código do mod — `seed` e `locate` são Vanilla puro.
+
+Consequência prática: testes que dependem de localizar estrutura ou
+sondar bioma precisam ser feitos no jogo real, não no `runServer`.
 
 ---
 
 # 10. Pending Decisions
 
-Cinco decisões críticas pendentes.
-
----
-
-## Decision 1 — Chunk Loading
-
-Conflito:
-
 ```text
-Constituição §3
+1  Persistência de trabalhadores — ver §7
 
-"a colônia funciona sem jogador próximo"
-
-versus
-
-Save-Data-System
-
-"recursos são lidos dos baús reais"
+   Bloqueia TASK-014.
 ```
 
-Sem jogador, o chunk está descarregado e o baú não é acessível.
-
-Opções:
-
-* chunk ticket / forceload;
-* simulação offline aproximada;
-* hibernação da colônia.
-
-Todas possuem custo. Nenhuma foi escolhida.
-
-Impacto:
-
-Define o design de Simulation, Resource e Storage.
-
----
-
-## Decision 2 — Village Detection
-
-Minecraft não possui objeto `Village`.
-
-Vila é emergente:
-
 ```text
-POIs (cama, workstation, sino)
+2  Ícone e nome divergem
 
-+
+   A arte diz "Village++"; o mod é "Village Colony", id villagecolony.
 
-VillagerEntity Brain memories
+   Decisão do autor em 2026-08-07: manter como está.
+
+   Trocar o id quebraria saves — ele nomeia
+   villagecolony_colonies.dat, o caminho do ícone e o logger.
 ```
 
-`locateStructure` encontra a estrutura gerada, não a vila viva.
-
-Impacto:
-
-TASK-009, Phase 4, v0.2.
-
----
-
-## Decision 3 — Mixin Policy
-
-Aldeões Vanilla não sabem quebrar nem colocar blocos.
-
-O villager 1.21.1 usa Brain/Activity/Schedule, não Goal.
-
-A Fabric API não expõe injeção pública no Brain.
-
-Requer Mixin em `VillagerEntity`.
-
-Nenhum documento menciona Mixin.
-
-Impacto:
-
-Toda a Phase 9 em diante. Compatibilidade com outros mods.
-
----
-
-## Decision 4 — Core Type Isolation
-
-`CLAUDE.md §6` proíbe Minecraft no Core.
-
-`Data-Model.md` define modelos com:
-
 ```text
-BlockPos
+3  Fundo do ícone
 
-Identifier
+   A arte veio sem canal alpha, fundo branco sólido.
 
-Rotation
+   Não foi removido por chave de cor: a ovelha e as nuvens
+   também são brancas e ficariam com buracos.
+
+   Depende de recorte manual, se o autor quiser transparência.
 ```
-
-que são `net.minecraft.*`.
-
-A regra é violada pela própria especificação.
-
-Impacto:
-
-Testabilidade unitária prometida em Testing-Strategy §3.
-
----
-
-## Decision 5 — Package Layout
-
-Três layouts conflitantes:
-
-```text
-README §11
-
-Class-Architecture
-
-Fabric-Implementation-Plan
-```
-
-Impacto:
-
-TASK-003.
 
 ---
 
 # 11. Architectural Risks
 
-## Risk: Complexidade excessiva
+## Risco confirmado — teste unitário não alcança a fronteira
 
-Controle:
+Quatro defeitos sérios desta fase passaram por 100+ testes verdes:
 
-Manter MVP pequeno.
+```text
+fabricloader >=0.19.3 exigido sem necessidade
 
----
+  o mod não carregaria na instalação real do autor
 
-## Risk: Substituir Vanilla
+ChunkPos.getStartPos() devolve y=0, getInCircle mede em 3D
 
-Controle:
+  o gatilho de chunk nunca encontrou vila alguma
 
-Seguir ADR-001.
+Centro oscilante entre observações parciais
 
----
+  a vila chegou a trocar de UUID, violando ADR-003 §4
 
-## Risk: Performance
+ColonyLifecycle sem escritor em produção
 
-Controle:
+  toda colônia vinda do save ficaria DORMANT para sempre,
+  e o loop de simulação a ignoraria em silêncio
+```
 
-Seguir Performance-Rules.md.
+Os dois primeiros só apareceram rodando o mod no jogo real.
 
----
+O terceiro apareceu porque uma linha de log foi adicionada no commit
+anterior — sem ela, o centro oscilaria em silêncio.
 
-## Risk: Chunks descarregados
-
-Controle:
-
-ADR-002 pendente.
-
----
-
-## Risk: Detecção de vila sem API
-
-Controle:
-
-ADR-003 pendente.
+O quarto apareceu numa auditoria de `grep`, não em teste.
 
 ---
 
-## Risk: Mixin no Brain do aldeão
+Consequência prática, a manter nas fases seguintes:
 
-Controle:
+```text
+depois de cada mudança que toque a camada fabric,
+rodar no jogo real e ler o latest.log
+```
 
-ADR-004 pendente.
+```text
+instrumentar antes de suspeitar
 
----
-
-## Risk: Saves quebrados na primeira migração
-
-Sem campo `dataVersion` no NBT.
-
-Controle:
-
-Adicionar no primeiro save implementado.
+  a linha de log que expõe o defeito precisa existir
+  antes de alguém desconfiar dele
+```
 
 ---
 
-## Risk: Processamento de template subestimado
+## Armadilha de método já paga
 
-Templates Vanilla contêm jigsaw blocks, structure void e data blocks.
+```text
+Trocar o jar com o jogo aberto não testa nada.
+```
 
-Não contêm fundação nem terraplanagem.
+O Minecraft carrega mods na inicialização da JVM. Sair ao menu e
+reentrar no mundo reusa o código em memória.
 
-Conversão `BlockState` → `Item` não é 1:1.
+Duas sessões de teste foram desperdiçadas assim.
 
-Controle:
+---
 
-Detalhar em Construction-System antes da Phase 11.
+## Riscos ainda abertos
+
+```text
+Raio de detecção menor que a vila
+
+  Mitigado por observedBeds, não eliminado.
+
+  Uma vila muito grande pode nunca ser observada por inteiro.
+```
+
+```text
+Dois clusters distintos a menos de 64 blocos
+
+  São adotados como uma colônia só, em silêncio.
+
+  ADR-003 §5 pede aviso; não implementado.
+```
+
+```text
+Mixin ainda não escrito
+
+  ADR-004 limita a superfície, mas nada foi injetado ainda.
+
+  O risco de compatibilidade com outros mods de aldeão
+  aparece só na Fase 9.
+```
 
 ---
 
@@ -1845,18 +700,90 @@ Testar
 
 # 13. Active Documents
 
-Documentos principais:
+Fonte de verdade por assunto. Onde dois documentos discordarem, vale o
+mais específico desta lista.
 
 ```text
-PROJECT_CONSTITUTION.md
+O que o projeto é
 
-MVP.md
+  PROJECT_CONSTITUTION.md      princípios; §3 emendado por ADR-002
 
-Architecture-Foundation.md
+  MVP.md                       escopo do MVP
 
-Class-Architecture.md
+  README.md                    visão geral e status resumido
 
-Development-Roadmap.md
+
+Arquitetura
+
+  docs/decisions/ADR-001..006  decisões; ADR-003 tem emendas em §10
+
+  Architecture-Foundation.md   camadas
+
+  Data-Model.md                modelos e campos
+
+  Class-Architecture.md        classes; layout delegado à ADR-006
+
+
+Sistemas
+
+  Simulation-Loop.md           ciclo da colônia (ainda não implementado)
+
+  Profession-System.md         profissões
+
+  Resource-System.md           recursos
+
+  Storage-System.md            armazenamento
+
+  Construction-System.md       construção
+
+  Save-Data-System.md          persistência
+
+
+Execução
+
+  MVP-Tasks.md                 tarefas; ver ressalva abaixo
+
+  docs/technical/Fabric-Version.md   versões fixadas
+
+  docs/technical/Performance-Rules.md
+
+  docs/technical/Testing-Strategy.md
+
+  docs/technical/Debugging-Strategy.md
+
+  docs/technical/Vanilla-Integration.md
+
+  docs/technical/Project-State.md    este documento
+```
+
+---
+
+## Ressalvas conhecidas nos documentos
+
+```text
+MVP-Tasks.md
+
+  TASK-006 chama a classe de "ColonyManager".
+
+  A ADR-006 §5 removeu manager como camada; a classe é ColonyService.
+
+
+  TASK-008 lista "Encontrar vila" como passo, mas isso é TASK-009.
+
+  A tarefa depende de outra que vem depois dela. Foi executada
+
+  fora de ordem, por isso.
+
+
+  Não existe tarefa de persistência de trabalhadores. Ver §7.
+```
+
+```text
+Initial-Setup-Checklist.md §6 e Class-Architecture.md
+
+  Continham layouts de pacote divergentes. Agora apontam para
+
+  a ADR-006 em vez de repetir a estrutura.
 ```
 
 ---

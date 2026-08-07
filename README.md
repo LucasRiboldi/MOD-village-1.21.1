@@ -428,72 +428,65 @@ CODE-STANDARDS.md
 Current status:
 
 ```
-Documentation Phase
+In development — MVP phase 4 of 9
 ```
+
+The mod builds, loads and runs. In game today it detects plains
+villages, creates colonies with a stable identity, wakes and sleeps them
+with their chunks, registers their villagers, and persists everything
+across sessions.
 
 Completed:
 
-✅ Project vision
-✅ Architecture design
-✅ Data models
-✅ Development roadmap
-✅ Claude Code instructions
+✅ Project vision and architecture
+✅ Architecture decisions (ADR-001 to ADR-006)
+✅ Fabric project, mod identity, package structure
+✅ Colony model, registry and persistence
+✅ Village detection and automatic colony creation
+✅ Worker model and villager registration
 
-Next phase:
+In progress:
 
 ```
-Fabric Project Initialization
+Colony professions
+```
+
+Not started:
+
+```
+Resources, storage, production, construction
+```
+
+Tests:
+
+```
+106 unit tests
+```
+
+The authoritative, always-current status is:
+
+```
+docs/technical/Project-State.md
 ```
 
 ---
 
 # 15. Roadmap
 
-## Phase 1
+```
+✅  Phase 1   Foundation      Fabric setup, structure, core models
+✅  Phase 2   Persistence     colonies survive world close
+✅  Phase 3   Detection       villages become colonies
+🔨  Phase 4   Workers         villagers, professions, assignment
+    Phase 5   Storage         personal chests per worker
+    Phase 6   Resources       collection and production
+    Phase 7   Construction    blueprints, builders, expansion
+    Phase 8   Registry        colony-built blocks
+    Phase 9   Integration     vanilla behaviour injection
+```
 
-Foundation:
-
-* Fabric setup;
-* project structure;
-* core models.
-
----
-
-## Phase 2
-
-Colony:
-
-* village detection;
-* persistence.
-
----
-
-## Phase 3
-
-Workers:
-
-* professions;
-* assignments.
-
----
-
-## Phase 4
-
-Resources:
-
-* storage;
-* collection;
-* production.
-
----
-
-## Phase 5
-
-Construction:
-
-* blueprints;
-* builders;
-* expansion.
+Task-level detail lives in `MVP-Tasks.md`; current progress in
+`docs/technical/Project-State.md`.
 
 ---
 
