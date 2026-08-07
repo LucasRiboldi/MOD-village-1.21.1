@@ -1,9 +1,11 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.resource.model.ColonyResources;
 import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.resource.model.ResourceType;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.storage.service.StorageRegistry;
+import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.item.ItemStack;
@@ -11,6 +13,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -94,6 +97,28 @@ public final class ChestInventoryReader {
         }
 
         return total;
+    }
+
+    /**
+     * O estoque de uma colônia, repartido por baú.
+     *
+     * <p>Difere de {@link #readAll} por guardar de onde veio cada
+     * parcela: o trabalhador vai até o baú, e o total sozinho não diz
+     * a ninguém para onde andar. Ver Resource-System.md §"Registro de
+     * Recursos".
+     */
+    public static ColonyResources readColony(
+            ServerWorld world, Iterable<UUID> workerIds, StorageRegistry storages) {
+
+        Map<ColonyPos, ResourceTally> byChest = new LinkedHashMap<>();
+
+        for (UUID workerId : workerIds) {
+            storages.of(workerId).ifPresent(storage -> byChest.put(
+                    storage.chestPosition(),
+                    read(world, MinecraftTypeAdapter.toBlockPos(storage.chestPosition()))));
+        }
+
+        return ColonyResources.of(byChest);
     }
 
     /** Atalho para somar tudo o que está registrado. */

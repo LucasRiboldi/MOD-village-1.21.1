@@ -5,7 +5,7 @@
 **Status:** Em implementação — Fases 1 a 3 completas, Fases 4 e 5
 escritas e não verificadas em jogo
 **Version:** 0.1.0
-**Last Update:** 2026-08-07 — correções de jogabilidade
+**Last Update:** 2026-08-07 — TASK-018 e TASK-019; TASK-020 bloqueada
 **Repository:** https://github.com/LucasRiboldi/MOD-village-1.21.1
 
 ---
@@ -61,7 +61,7 @@ Java
 ## Current Stage
 
 ```text
-Fase 5 — Sistema de Armazenamento
+Fase 6 — Sistema de Recursos
 ```
 
 ---
@@ -77,8 +77,14 @@ profissões e atribuição inicial — e **nenhuma parte dela foi verificada
 em jogo**. A Fase 5 está fechada sobre ela: baús registrados e
 inventário contado.
 
-Sete tarefas seguidas foram escritas sem passar pelo jogo. É a maior
-dívida aberta do projeto, e o §11 explica por que ela é cara.
+Sete tarefas e duas correções foram escritas sem passar pelo jogo. É a
+maior dívida aberta do projeto; o §7 lista o que verificar e o §11
+explica por que ela é cara.
+
+A Fase 6 avançou no que não depende do jogo — a colônia já sabe somar
+o que tem e calcular o que falta. A TASK-020, que ligaria isso ao ciclo
+da colônia, está bloqueada pelo loop de simulação, que nunca foi
+escrito. Ver §10.
 
 ---
 
@@ -98,6 +104,9 @@ Fase 4   trabalhadores                  TASK-011 a TASK-014
 
 Fase 5   armazenamento                  TASK-015 a TASK-017
                                         escrita, não verificada em jogo
+
+Fase 6   recursos                       TASK-018 e TASK-019
+                                        lógica pura, coberta por teste
 ```
 
 Detalhe por tarefa em §6. Histórico em §15.
@@ -361,10 +370,20 @@ Fase 5 — Armazenamento
   TASK-016  StorageRegistry          feito, NÃO verificado em jogo
   TASK-017  ler inventário           feito, NÃO verificado em jogo
 
-Fases 6 a 9
+Fase 6 — Recursos
 
-  TASK-018 em diante                 não iniciadas
+  TASK-018  visão agregada           feito (ColonyResources)
+  TASK-019  verificação de déficit   feito (ResourceDemand)
+  TASK-020  integrar com simulação   BLOQUEADA — ver §10
+
+Fases 7 a 9
+
+  TASK-021 em diante                 não iniciadas
 ```
+
+As TASK-018 e TASK-019 são lógica pura e estão cobertas por teste.
+Não trazem dívida de verificação em jogo: não leem o mundo. O que as
+alimenta — `ChestInventoryReader` — é que ainda não rodou lá.
 
 ---
 
@@ -381,7 +400,9 @@ core/
                      ProfessionAssigner
   storage/model/     WorkerStorage
   storage/service/   StorageRegistry
-  resource/model/    ResourceType, ResourceCategory, ResourceTally
+  resource/model/    ResourceType, ResourceCategory, ResourceTally,
+                     ColonyResources
+  resource/service/  ResourceDemand
 
 fabric/
   adapter/           MinecraftTypeAdapter
@@ -394,15 +415,15 @@ data/
   save/              ColonySavedData
 ```
 
-Vazios por enquanto: `core/task`, `core/resource/service`,
-`core/construction`, `fabric/mixin`, `fabric/brain`.
+Vazios por enquanto: `core/task`, `core/construction`,
+`fabric/mixin`, `fabric/brain`.
 
 ---
 
 ## Testes
 
 ```text
-164 testes, todos passando
+184 testes, todos passando
 ```
 
 Cobrem o Core (lógica pura) e a serialização NBT.
@@ -436,59 +457,171 @@ As três últimas linhas nunca rodaram em jogo.
 
 # 7. Next Development Step
 
-## Verificar a Fase 4 em jogo
+## Verificar as Fases 4 e 5 em jogo
 
-Nada da Fase 4 rodou no jogo real. São quatro tarefas empilhadas sobre
-código de fronteira nunca exercitado, e o §11 mostra que é exatamente
-aí que os defeitos desta camada moram.
+Nada das Fases 4 e 5 rodou no jogo real. São sete tarefas e duas
+correções empilhadas sobre código de fronteira nunca exercitado, e o
+§11 mostra que é exatamente aí que os defeitos desta camada moram.
 
-O que precisa ser observado no `latest.log`:
+O autor não pôde testar em 2026-08-07 e pediu para seguir. Esta seção
+é o registro do que ficou devendo, para que a sessão de teste, quando
+vier, não dependa de reconstruir o contexto de memória.
+
+---
+
+### Método
+
+```text
+1  ./gradlew build
+
+2  jar de build/libs/ numa instância Fabric 1.21.1
+
+3  INICIAR O JOGO DO ZERO
+```
+
+Trocar o jar com o jogo aberto não testa nada: o Minecraft carrega mods
+na inicialização da JVM, e sair ao menu e reentrar reusa o código em
+memória. Duas sessões já foram desperdiçadas assim — ver §11.
+
+Mundo de teste: vila plains, com o jogador parado perto tempo bastante
+para o ciclo longo rodar mais de uma vez.
+
+---
+
+### V1 — Registro de aldeões (TASK-012)
 
 ```text
 Registered N villagers in colony ...
-
-  N bate com os aldeões da vila
-
-  não repete a cada ciclo com os mesmos aldeões
-
-
-Assigned N professions in colony ...
-
-  aparece uma vez, não a cada ciclo
-
-  quatro aldeões produzem quatro funções distintas
-
-
-Loaded N colonies with M workers
-
-  M > 0 ao reabrir o mundo
-
-  as funções são as mesmas de antes de fechar
-
-
-Registered N storages in colony ...
-
-  cada aldeão pegou o baú da sua casa, não o do vizinho
-
-  dois aldeões do mesmo cômodo não pegaram o mesmo baú
-
-  um baú construído depois é encontrado no ciclo seguinte
-
-
-Colony ... stores {OAK_LOG=N, ...}
-
-  o número bate com o que está dentro do baú
-
-  conferir abrindo o baú, não confiar no log
-
-  item fora dos três acompanhados não aparece — é o esperado
 ```
 
-O último é o que prova a TASK-012b, e é o mais barato de fazer: fechar
-o mundo e reabrir.
+```text
+N bate com os aldeões da vila
 
-Método obrigatório: iniciar o jogo do zero com o jar novo. Trocar o jar
-com o jogo aberto não testa nada — ver §11.
+não repete a cada ciclo com os mesmos aldeões
+
+bebês entram na conta
+```
+
+Nunca verificado, e é a base de tudo o que vem depois.
+
+---
+
+### V2 — Atribuição de profissão (TASK-014)
+
+```text
+Assigned N professions in colony ...
+```
+
+```text
+aparece uma vez, não a cada ciclo
+
+quatro aldeões produzem quatro funções distintas
+
+o primeiro é LUMBERJACK
+```
+
+---
+
+### V3 — Persistência (TASK-012b)
+
+```text
+Loaded N colonies with M workers
+```
+
+```text
+M > 0 ao reabrir o mundo
+
+as funções são as mesmas de antes de fechar
+```
+
+O mais barato de todos: fechar o mundo e reabrir. Fazer primeiro.
+
+---
+
+### V4 — Registro de baús (TASK-015 e TASK-016)
+
+```text
+Registered N storages in colony ...
+```
+
+```text
+cada aldeão pegou o baú da sua casa, não o do vizinho
+
+dois aldeões do mesmo cômodo não pegaram o mesmo baú
+
+um baú construído depois é encontrado no ciclo seguinte
+```
+
+---
+
+### V5 — Contagem de estoque (TASK-017)
+
+```text
+Colony ... stores {OAK_LOG=N, ...}
+```
+
+```text
+o número bate com o que está dentro do baú
+
+conferir ABRINDO o baú, não confiar no log
+
+item fora dos três acompanhados não aparece — é o esperado
+```
+
+Atenção especial: este é o primeiro ponto em que um defeito aparece
+como valor e não como ausência. Se o V4 tiver associado o baú errado,
+o número aqui sairá plausível. O log não vai denunciar.
+
+---
+
+### V6 — Bebê e nitwit não trabalham (correção)
+
+```text
+Sem linha de log própria. Verificar pelo comportamento.
+```
+
+```text
+vila com bebê: o total de "Assigned" é menor que o de aldeões
+
+nitwit (casaco verde) não recebe função
+
+bebê crescido recebe função no ciclo seguinte, sozinho
+```
+
+O terceiro caso é o mais demorado e o mais fácil de esquecer: exige
+esperar um bebê crescer, ou usar ovo de spawn e crescer com trigo.
+
+---
+
+### V7 — Morte e zumbificação (correção)
+
+```text
+Worker ... died — profession freed
+Worker ... was converted — profession freed, storage released
+```
+
+```text
+matar um aldeão com função: a linha aparece
+
+zumbificar um aldeão: a linha aparece com "was converted"
+
+  este é o caminho comum em jogo e o que NÃO passa por morte
+
+depois da perda, o próximo aldeão recebe a função que vagou
+
+o baú do morto pode ser reivindicado por outro
+```
+
+A zumbificação exige dificuldade normal ou acima; em fácil o aldeão
+morre em vez de converter, e o caso mais importante não seria exercido.
+
+---
+
+### O que fazer com o resultado
+
+Defeito encontrado vira entrada em §15 com a linha de log que o
+denunciou, antes de qualquer correção. O §11 existe porque foi assim
+que os quatro defeitos anteriores foram entendidos.
 
 ---
 
@@ -535,7 +668,9 @@ Registrada como `TASK-012b` em `MVP-Tasks.md`.
 ```text
 1   verificar as Fases 4 e 5 em jogo — ver §7
 
-2   Fase 6 — Sistema de Recursos (TASK-018+)
+2   decidir o loop de simulação — desbloqueia TASK-020 (§10)
+
+3   Fase 7 — Sistema de Tarefas (TASK-021+)
 ```
 
 A verificação foi adiada a pedido do autor em 2026-08-07, e o código
@@ -614,12 +749,19 @@ O baú do jogador pode ser reivindicado
   tem como saber de quem ele é. Jogador que constrói sua base
   dentro da vila terá baús adotados por aldeões.
 
-  Hoje é inofensivo: nada move item, então a reivindicação é
-  invisível. Deixa de ser na Fase 6, quando o trabalhador
-  depositar produção — o jogador veria madeira aparecendo no
-  baú dele.
+  O dano tem dois estágios, e o primeiro já começou:
 
-  Precisa de decisão antes da Fase 6. Não há sinal confiável
+    agora   o estoque do jogador conta como da colônia.
+            ColonyResources soma o baú dele, e ResourceDemand
+            conclui que não falta nada com base em madeira
+            que não é da colônia. Invisível para o jogador.
+
+    Fase 8  o trabalhador deposita produção no baú dele.
+            Aí fica visível, e irritante.
+
+  Precisa de decisão antes da Fase 8, e quanto antes melhor:
+  a partir da Fase 7 as tarefas serão geradas a partir de
+  números que podem estar contaminados. Não há sinal confiável
   de propriedade no Vanilla; as saídas prováveis são exigir
   que o baú esteja dentro da mesma casa que a cama, ou deixar
   o jogador marcar o baú de alguma forma.
@@ -678,7 +820,33 @@ sondar bioma precisam ser feitos no jogo real, não no `runServer`.
 # 10. Pending Decisions
 
 ```text
-1  Ícone e nome divergem
+1  TASK-020 está bloqueada pelo loop de simulação
+
+   "A Colônia deve saber o que possui e o que falta."
+
+   Ela já pode: ColonyResources responde o primeiro,
+   ResourceDemand o segundo. Falta onde perguntar.
+
+   O loop de ADR-002 e Simulation-Loop.md nunca foi
+   escrito — §9 registra isso desde a Fase 4. Não há
+   ciclo de colônia em que encaixar a consulta, e o
+   VillageDetectionHandler é detecção, não simulação:
+   pendurar a decisão de recursos nele faria a colônia
+   pensar só quando alguém passasse perto.
+
+   Falta também a meta de estoque. Resource-System.md
+   §"Necessidade de Recursos" fala em "metas mínimas"
+   e dá um exemplo, mas nada define de onde elas vêm.
+   No MVP elas provavelmente saem do que a expansão
+   pretende construir — que é a Fase 9.
+
+   Decisão do autor: escrever o loop antes da TASK-020,
+   ou fixar metas constantes e ligar ao ciclo de detecção
+   como paliativo.
+```
+
+```text
+2  Ícone e nome divergem
 
    A arte diz "Village++"; o mod é "Village Colony", id villagecolony.
 
@@ -689,7 +857,7 @@ sondar bioma precisam ser feitos no jogo real, não no `runServer`.
 ```
 
 ```text
-2  Fundo do ícone
+3  Fundo do ícone
 
    A arte veio sem canal alpha, fundo branco sólido.
 
@@ -2157,6 +2325,108 @@ Não verificado:
 
 ```text
 Ambas dependem do jogo para valer. Ver §7.
+```
+
+---
+
+## 2026-08-07 — TASK-018 e TASK-019; TASK-020 bloqueada
+
+Teste em jogo adiado outra vez a pedido do autor. O §7 foi reescrito
+como roteiro de verificação — sete itens, V1 a V7, com o método e a
+ordem — para que a sessão de teste não dependa de reconstruir contexto
+de memória. Seguiu-se pelo que não precisa do jogo.
+
+Criado:
+
+```text
+core/resource/model/ColonyResources     total + repartição por baú
+
+core/resource/service/ResourceDemand    déficit
+```
+
+Alterado:
+
+```text
+ChestInventoryReader.readColony         agrega guardando a origem
+
+VillageDetectionHandler                 loga o número de baús
+```
+
+Decisão — o nome não é `ResourceRegistry`, como em MVP-Tasks.md:
+
+```text
+ColonyResources é imutável.
+```
+
+Registro sugere algo que se mantém e se atualiza; isto é uma leitura
+datada. Prometer atualidade que não se tem seria pior que o nome
+diferente. Mesma precedência de `ColonyManager` → `ColonyService`
+na TASK-006.
+
+Decisão — a repartição por baú é guardada, não só o total:
+
+```text
+O trabalhador vai ao baú, não ao total.
+```
+
+Saber que a colônia tem 64 troncos não diz a ninguém para onde andar.
+
+Decisão — baú vazio não entra na agregação:
+
+```text
+Senão "três baús com madeira" contaria baús sem madeira.
+```
+
+Decisão — déficit não lista o que não falta:
+
+```text
+Recurso em dia fica fora do mapa, não entra com zero.
+```
+
+Um mapa que lista o que não falta obriga todo chamador a filtrar, e o
+primeiro que esquecer vai gerar trabalho para buscar nada.
+
+Decisão — sobra é déficit zero, não negativo:
+
+```text
+Ter 100 com meta de 64 é déficit 0, não -36.
+```
+
+O excedente é outra pergunta. Misturá-lo faria uma soma de déficits
+cancelar falta de um recurso com sobra de outro.
+
+---
+
+### TASK-020 não foi feita, e não por falta de tempo
+
+`MVP-Tasks.md`: "A Colônia deve saber o que possui e o que falta."
+
+Ela já pode responder às duas. O que falta é **onde perguntar**. O loop
+de simulação da ADR-002 e do Simulation-Loop.md nunca foi escrito —
+§9 registra isso desde a Fase 4 — então não existe ciclo de colônia em
+que encaixar a consulta.
+
+Pendurá-la no `VillageDetectionHandler` seria errado: aquilo é
+detecção, não simulação. A colônia passaria a pensar sobre recursos
+apenas quando um jogador passasse perto o bastante para disparar a
+detecção.
+
+Falta também de onde vêm as metas de estoque. Resource-System.md
+§"Necessidade de Recursos" fala em "metas mínimas" e dá um exemplo,
+mas nada diz quem as define. Provavelmente saem do que a expansão
+pretende construir, que é a Fase 9.
+
+É uma lacuna de plano do mesmo tipo da que produziu a TASK-012b, e está
+em §10 aguardando decisão do autor.
+
+Verificado:
+
+```text
+184 testes passando
+
+./gradlew build → BUILD SUCCESSFUL
+
+Core continua sem net.minecraft (grep)
 ```
 
 ---

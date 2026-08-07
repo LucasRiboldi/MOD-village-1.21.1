@@ -5,7 +5,7 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.colony.service.VillageDetector;
-import com.villagecolony.core.resource.model.ResourceTally;
+import com.villagecolony.core.resource.model.ColonyResources;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
@@ -168,13 +168,14 @@ public final class VillageDetectionHandler {
             workerIds.add(worker.villagerId());
         }
 
-        ResourceTally tally = ChestInventoryReader.readAll(
+        ColonyResources resources = ChestInventoryReader.readColony(
                 world, workerIds, VillageColonyMod.STORAGES);
 
         VillageColonyMod.LOGGER.info(
-                "Colony {} stores {}",
+                "Colony {} stores {} across {} chests",
                 colony.id(),
-                tally.isEmpty() ? "nothing tracked" : tally.counts());
+                resources.isEmpty() ? "nothing tracked" : resources.total().counts(),
+                resources.byChest().size());
     }
 
     /**
