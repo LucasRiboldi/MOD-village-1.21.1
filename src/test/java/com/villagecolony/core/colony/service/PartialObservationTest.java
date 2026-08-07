@@ -93,6 +93,44 @@ class PartialObservationTest {
         assertFalse(colony.observe(new ColonyPos(50, 64, 0), 2), "visão pior");
     }
 
+    /**
+     * O pior desfecho da deriva, observado em jogo em 2026-08-06.
+     *
+     * <p>Sem a regra de completude, a colônia perseguia visões parciais
+     * até se afastar mais que {@link VillageDetector#DUPLICATE_DISTANCE}
+     * da vila real. A detecção seguinte não achava colônia por perto e
+     * criava outra — a vila trocava de UUID, quebrando a promessa da
+     * ADR-003 §4.
+     *
+     * <p>O que se garante aqui é a identidade da vila, não a contagem de
+     * colônias: o cluster de 1126,663 está a 69 blocos, além do limite de
+     * duplicata, e virar colônia própria é a decisão correta da §6.
+     */
+    @Test
+    void driftMustNotCostTheVillageItsIdentity() {
+        Colony original = service.adopt(seen(1109, 730, 12));
+
+        service.adopt(seen(1116, 669, 5));
+        service.adopt(seen(1126, 663, 3));
+
+        Colony afterwards = service.adopt(seen(1109, 730, 12));
+
+        assertEquals(original.id(), afterwards.id(), "o UUID da vila deve permanecer");
+        assertEquals(new ColonyPos(1109, 64, 730), afterwards.center(), "o centro não deriva");
+    }
+
+    /** Observação a 61 blocos é a mesma vila e não pode mover o centro. */
+    @Test
+    void nearbyPartialViewStaysInTheSameColony() {
+        Colony original = service.adopt(seen(1109, 730, 12));
+
+        Colony same = service.adopt(seen(1116, 669, 5));
+
+        assertEquals(1, service.count());
+        assertEquals(original.id(), same.id());
+        assertEquals(new ColonyPos(1109, 64, 730), same.center());
+    }
+
     @Test
     void worseViewKeepsTheStoredBedCount() {
         Colony colony = service.adopt(seen(0, 0, 10));
