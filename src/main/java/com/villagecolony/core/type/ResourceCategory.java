@@ -1,4 +1,4 @@
-package com.villagecolony.core.resource.model;
+package com.villagecolony.core.type;
 
 /**
  * De onde um recurso vem.

@@ -2,7 +2,7 @@ package com.villagecolony.fabric.integration;
 
 import com.villagecolony.core.resource.model.ColonyResources;
 import com.villagecolony.core.resource.model.ResourceTally;
-import com.villagecolony.core.resource.model.ResourceType;
+import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.storage.service.StorageRegistry;
 import com.villagecolony.core.type.ColonyPos;

@@ -1,4 +1,4 @@
-package com.villagecolony.core.worker.model;
+package com.villagecolony.core.type;
 
 /**
  * Uma ação que uma profissão sabe executar.
@@ -7,7 +7,14 @@ package com.villagecolony.core.worker.model;
  * capacidade que exige, a profissão declara as que possui, e a colônia
  * cruza as duas. Ver Profession-System.md §"Compatibilidade de Tarefas".
  *
- * <p>Existe como tipo próprio, e não como método de {@link ProfessionType},
+ * <p>Mora em {@code core.type}, e não no domínio worker, exatamente por
+ * ser esse vocabulário. A ADR-006 §6 proíbe um domínio do Core importar
+ * outro: se ficasse em {@code core.worker.model}, o domínio task teria
+ * de importá-lo para dizer de que precisa. Aqui, os dois lados dependem
+ * do tipo compartilhado e nenhum depende do outro. Mesmo papel de
+ * {@code ColonyPos}.
+ *
+ * <p>Existe como tipo próprio, e não como método de {@code ProfessionType},
  * porque duas profissões podem vir a compartilhar uma capacidade e uma
  * profissão nova não pode obrigar a mexer nas antigas. Ver
  * Profession-System.md §"Regras de Arquitetura".

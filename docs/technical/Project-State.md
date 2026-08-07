@@ -5,7 +5,7 @@
 **Status:** Em implementação — Fases 1 a 3 completas, Fases 4 e 5
 escritas e não verificadas em jogo
 **Version:** 0.1.0
-**Last Update:** 2026-08-07 — TASK-018 e TASK-019; TASK-020 bloqueada
+**Last Update:** 2026-08-07 — TASK-021 e TASK-022; TASK-023 parcial
 **Repository:** https://github.com/LucasRiboldi/MOD-village-1.21.1
 
 ---
@@ -61,7 +61,7 @@ Java
 ## Current Stage
 
 ```text
-Fase 6 — Sistema de Recursos
+Fase 7 — Sistema de Tarefas
 ```
 
 ---
@@ -81,10 +81,21 @@ Sete tarefas e duas correções foram escritas sem passar pelo jogo. É a
 maior dívida aberta do projeto; o §7 lista o que verificar e o §11
 explica por que ela é cara.
 
-A Fase 6 avançou no que não depende do jogo — a colônia já sabe somar
-o que tem e calcular o que falta. A TASK-020, que ligaria isso ao ciclo
-da colônia, está bloqueada pelo loop de simulação, que nunca foi
-escrito. Ver §10.
+As Fases 6 e 7 avançaram no que não depende do jogo: a colônia já sabe
+somar o que tem, calcular o que falta e manter uma fila de tarefas com
+prioridade e ciclo de vida.
+
+Nenhuma das duas está fechada, e por motivos de arquitetura, não de
+tempo:
+
+```text
+TASK-020   falta o loop de simulação
+
+TASK-023   falta uma camada de coordenação
+```
+
+As duas estão em §10 aguardando decisão do autor. É a mesma espécie de
+lacuna de plano que produziu a TASK-012b.
 
 ---
 
@@ -106,6 +117,9 @@ Fase 5   armazenamento                  TASK-015 a TASK-017
                                         escrita, não verificada em jogo
 
 Fase 6   recursos                       TASK-018 e TASK-019
+                                        lógica pura, coberta por teste
+
+Fase 7   tarefas                        TASK-021 e TASK-022
                                         lógica pura, coberta por teste
 ```
 
@@ -376,9 +390,16 @@ Fase 6 — Recursos
   TASK-019  verificação de déficit   feito (ResourceDemand)
   TASK-020  integrar com simulação   BLOQUEADA — ver §10
 
-Fases 7 a 9
+Fase 7 — Tarefas
 
-  TASK-021 em diante                 não iniciadas
+  TASK-021  modelo Task              feito (Task, TaskState,
+                                     TaskType, TaskPriority)
+  TASK-022  TaskService              feito
+  TASK-023  associar a profissões    PARCIAL — ver §10
+
+Fases 8 e 9
+
+  TASK-024 em diante                 não iniciadas
 ```
 
 As TASK-018 e TASK-019 são lógica pura e estão cobertas por teste.
@@ -391,18 +412,19 @@ alimenta — `ChestInventoryReader` — é que ainda não rodou lá.
 
 ```text
 core/
-  type/ColonyPos
+  type/              ColonyPos, Capability,
+                     ResourceType, ResourceCategory
   colony/model/      Colony, ColonyState, ColonyLifecycle, VillageCandidate
   colony/service/    ColonyService, VillageDetector
-  worker/model/      Worker, ProfessionType, Profession,
-                     Capability, ToolType
+  worker/model/      Worker, ProfessionType, Profession, ToolType
   worker/service/    WorkerService, ProfessionRegistry,
                      ProfessionAssigner
   storage/model/     WorkerStorage
   storage/service/   StorageRegistry
-  resource/model/    ResourceType, ResourceCategory, ResourceTally,
-                     ColonyResources
+  resource/model/    ResourceTally, ColonyResources
   resource/service/  ResourceDemand
+  task/model/        Task, TaskState, TaskType, TaskPriority
+  task/service/      TaskService
 
 fabric/
   adapter/           MinecraftTypeAdapter
@@ -415,15 +437,15 @@ data/
   save/              ColonySavedData
 ```
 
-Vazios por enquanto: `core/task`, `core/construction`,
-`fabric/mixin`, `fabric/brain`.
+Vazios por enquanto: `core/construction`, `fabric/mixin`,
+`fabric/brain`.
 
 ---
 
 ## Testes
 
 ```text
-184 testes, todos passando
+217 testes, todos passando
 ```
 
 Cobrem o Core (lógica pura) e a serialização NBT.
@@ -668,9 +690,11 @@ Registrada como `TASK-012b` em `MVP-Tasks.md`.
 ```text
 1   verificar as Fases 4 e 5 em jogo — ver §7
 
-2   decidir o loop de simulação — desbloqueia TASK-020 (§10)
+2   decidir a camada de coordenação — desbloqueia TASK-023 (§10)
 
-3   Fase 7 — Sistema de Tarefas (TASK-021+)
+3   decidir o loop de simulação — desbloqueia TASK-020 (§10)
+
+4   Fase 8 — Primeiro Trabalhador Funcional (TASK-024+)
 ```
 
 A verificação foi adiada a pedido do autor em 2026-08-07, e o código
@@ -820,7 +844,39 @@ sondar bioma precisam ser feitos no jogo real, não no `runServer`.
 # 10. Pending Decisions
 
 ```text
-1  TASK-020 está bloqueada pelo loop de simulação
+1  TASK-023 precisa de uma camada de coordenação
+
+   "Associar tarefas a profissões." Os dois lados existem:
+
+     TaskType declara a Capability que exige
+     ProfessionRegistry.withCapability diz quem a tem
+     TaskService.nextFor acha a tarefa de uma capacidade
+
+   O que falta é quem junta os dois em tempo de execução:
+   percorrer os trabalhadores ociosos de uma colônia, ler a
+   profissão de cada um e casar com a fila de tarefas.
+
+   Esse código importaria core.task e core.worker juntos, e a
+   ADR-006 §6 proíbe um domínio do Core importar outro. Não
+   existe hoje um lugar legítimo para ele:
+
+     core/<domínio>   proibido pela ADR-006 §6
+     core/type        é para tipos de valor, não serviço
+     fabric/          permitido (fabric -> core), mas seria
+                      regra de colônia morando na camada de
+                      integração
+
+   Saídas prováveis: criar um pacote de coordenação no core
+   acima dos domínios, ou aceitar que a colônia seja esse
+   coordenador e emendar a ADR-006 para permiti-lo.
+
+   Não inventei a camada por conta própria — é decisão de
+   arquitetura, e as seis ADRs existentes foram todas
+   aprovadas antes de virar código.
+```
+
+```text
+2  TASK-020 está bloqueada pelo loop de simulação
 
    "A Colônia deve saber o que possui e o que falta."
 
@@ -2427,6 +2483,164 @@ Verificado:
 ./gradlew build → BUILD SUCCESSFUL
 
 Core continua sem net.minecraft (grep)
+```
+
+---
+
+## 2026-08-07 — TASK-021 e TASK-022; TASK-023 parcial
+
+Criado:
+
+```text
+core/task/model/TaskState      AVAILABLE, RESERVED, EXECUTING,
+                               COMPLETED, CANCELLED
+
+core/task/model/TaskPriority   SURVIVAL, PRODUCTION, CONSTRUCTION
+
+core/task/model/TaskType       COLLECT_WOOD, CRAFT_MATERIAL, BUILD
+
+core/task/model/Task
+
+core/task/service/TaskService
+```
+
+Movido — e este é o ponto que mais mexeu no que já existia:
+
+```text
+core/worker/model/Capability       -> core/type/Capability
+
+core/resource/model/ResourceType   -> core/type/ResourceType
+
+core/resource/model/ResourceCategory -> core/type/ResourceCategory
+```
+
+Motivo: a ADR-006 §6 proíbe um domínio do Core importar outro. A tarefa
+precisa dizer de que capacidade precisa e sobre qual recurso age. Com
+`Capability` dentro de `core.worker` e `ResourceType` dentro de
+`core.resource`, o domínio task teria de importar os dois — violação
+direta.
+
+Os três são vocabulário compartilhado, não regra de um domínio: a
+tarefa declara a capacidade, a profissão declara as que tem, e nenhuma
+conhece a outra. É o mesmo papel de `ColonyPos`, que já morava ali.
+
+Verificado por varredura: nenhum domínio do Core importa outro.
+
+---
+
+Decisão — `TaskService`, não `TaskManager` como em MVP-Tasks.md:
+
+```text
+ADR-006 §5 removeu manager como camada.
+```
+
+Mesma decisão da TASK-006, onde `ColonyManager` virou `ColonyService`.
+
+Decisão — existe `CANCELLED`, que MVP-Tasks.md não lista:
+
+```text
+Simulation-Loop.md exige o caso.
+```
+
+Aldeão morreu, construção removida, recurso dispensado. Sem estado
+próprio, a tarefa cancelada teria de ser apagada — e apagar perde a
+diferença entre "foi feita" e "deixou de fazer sentido", que é o que a
+colônia precisa saber ao reavaliar.
+
+Decisão — `release` é diferente de `cancel`:
+
+```text
+release  perdeu o executor, a tarefa continua valendo
+
+cancel   a tarefa deixou de valer
+```
+
+Quando o lenhador morre, a colônia ainda precisa de madeira. Cancelar
+ali faria a demanda sumir junto com quem a atenderia.
+
+Decisão — reservar o que já está reservado lança:
+
+```text
+Simulation-Loop.md: uma tarefa tem um executor só.
+```
+
+Substituir em silêncio poria dois aldeões a cortar a mesma árvore, cada
+um contando a madeira do outro como sua.
+
+Decisão — `availableFor` já vem ordenada:
+
+```text
+A prioridade é regra da colônia, não de quem chama.
+```
+
+Deixar cada chamador ordenar abriria espaço para dois pontos do código
+escolherem tarefas em ordens diferentes. Empate mantém ordem de
+criação, e é disso que depende `sort` ser estável.
+
+Decisão — `purgeClosed` existe:
+
+```text
+Sem limpeza o registro cresce para sempre.
+```
+
+Uma colônia produzindo por horas acumula milhares de tarefas
+concluídas que ninguém consulta.
+
+Decisão — tarefas não são persistidas:
+
+```text
+Uma tarefa é intenção do momento.
+```
+
+Retomá-la numa sessão em que o mundo mudou faria o aldeão ir cortar
+uma árvore que o jogador já derrubou.
+
+---
+
+### O registro de tarefas foi ligado, mesmo vazio
+
+`VillageColonyMod.TASKS` existe e nada cria tarefas: a geração de
+demanda é o passo 4 do Simulation-Loop.md, que depende do loop
+não escrito.
+
+Foi ligado assim mesmo ao `VillagerLifecycleHandler`, que agora devolve
+à fila as tarefas de quem morreu, e ao `ServerLifecycleHandler`, que o
+esvazia. Custou três linhas, e o precedente pesou: `WorkerService.remove`
+ficou sem chamador até alguém notar que colônia nenhuma reabria vaga.
+
+---
+
+### TASK-023 ficou pela metade, e não por falta de tempo
+
+Os dois lados da associação existem e estão testados:
+
+```text
+TaskType declara a Capability
+
+ProfessionRegistry.withCapability diz quem a tem
+
+TaskService.nextFor acha a tarefa de uma capacidade
+```
+
+Falta quem junte os dois em tempo de execução. Esse código importaria
+`core.task` e `core.worker` juntos, e não há hoje lugar legítimo para
+ele — a ADR-006 §6 fecha os domínios, `core/type` é para tipos de valor
+e `fabric/` seria regra de colônia morando na camada de integração.
+
+Não criei a camada por conta própria. É decisão de arquitetura, e as
+seis ADRs existentes foram todas aprovadas antes de virar código. Está
+em §10.
+
+Verificado:
+
+```text
+217 testes passando
+
+./gradlew build → BUILD SUCCESSFUL
+
+Core continua sem net.minecraft
+
+Nenhum domínio do Core importa outro (varredura)
 ```
 
 ---

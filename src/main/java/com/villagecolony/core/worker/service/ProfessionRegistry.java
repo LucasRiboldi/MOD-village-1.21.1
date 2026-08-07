@@ -1,6 +1,6 @@
 package com.villagecolony.core.worker.service;
 
-import com.villagecolony.core.worker.model.Capability;
+import com.villagecolony.core.type.Capability;
 import com.villagecolony.core.worker.model.Profession;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.ToolType;

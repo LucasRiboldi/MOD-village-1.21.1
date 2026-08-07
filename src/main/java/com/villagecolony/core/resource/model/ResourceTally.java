@@ -1,5 +1,7 @@
 package com.villagecolony.core.resource.model;
 
+import com.villagecolony.core.type.ResourceType;
+
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;

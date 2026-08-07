@@ -1,6 +1,6 @@
 package com.villagecolony.fabric.adapter;
 
-import com.villagecolony.core.resource.model.ResourceType;
+import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.type.ColonyPos;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;

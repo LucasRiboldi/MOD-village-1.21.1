@@ -1,7 +1,7 @@
 package com.villagecolony.core.resource.service;
 
 import com.villagecolony.core.resource.model.ResourceTally;
-import com.villagecolony.core.resource.model.ResourceType;
+import com.villagecolony.core.type.ResourceType;
 import org.junit.jupiter.api.Test;
 
 import java.util.EnumMap;

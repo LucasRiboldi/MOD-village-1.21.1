@@ -1,5 +1,7 @@
 package com.villagecolony.core.resource.model;
 
+import com.villagecolony.core.type.ResourceCategory;
+import com.villagecolony.core.type.ResourceType;
 import org.junit.jupiter.api.Test;
 
 import java.util.EnumMap;

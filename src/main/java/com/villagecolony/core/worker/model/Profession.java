@@ -1,5 +1,7 @@
 package com.villagecolony.core.worker.model;
 
+import com.villagecolony.core.type.Capability;
+
 import java.util.Objects;
 import java.util.Set;
 

@@ -1,4 +1,4 @@
-package com.villagecolony.core.resource.model;
+package com.villagecolony.core.type;
 
 import java.util.Objects;
 

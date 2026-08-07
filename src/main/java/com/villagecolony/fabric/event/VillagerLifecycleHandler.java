@@ -66,17 +66,24 @@ public final class VillagerLifecycleHandler {
      * um baú perdido para a colônia.
      */
     private static void forget(UUID villagerId, String reason) {
+        // As tarefas primeiro: soltá-las depois de esquecer o
+        // trabalhador daria no mesmo hoje, mas deixaria a ordem
+        // dependendo de o registro de tarefas não consultar o de
+        // trabalhadores — e ele pode vir a consultar.
+        int releasedTasks = VillageColonyMod.TASKS.releaseAllOf(villagerId);
+
         boolean wasWorker = VillageColonyMod.WORKERS.remove(villagerId);
         boolean hadStorage = VillageColonyMod.STORAGES.remove(villagerId);
 
-        if (!wasWorker && !hadStorage) {
+        if (!wasWorker && !hadStorage && releasedTasks == 0) {
             return;
         }
 
         VillageColonyMod.LOGGER.info(
-                "Worker {} {} — profession freed{}",
+                "Worker {} {} — profession freed{}{}",
                 villagerId,
                 reason,
-                hadStorage ? ", storage released" : "");
+                hadStorage ? ", storage released" : "",
+                releasedTasks > 0 ? ", " + releasedTasks + " tasks requeued" : "");
     }
 }
