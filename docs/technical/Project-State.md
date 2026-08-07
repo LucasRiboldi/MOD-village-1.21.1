@@ -396,6 +396,63 @@ Isso é esperado — eles passam a existir no jar quando receberem código.
 
 ---
 
+## Mod Entry Point
+
+Status:
+
+```text
+DONE — TASK-004 (2026-08-06)
+```
+
+```text
+VillageColonyMod
+
+  MOD_ID, LOGGER compartilhado
+
+  chama ServerLifecycleHandler.register()
+
+fabric/event/ServerLifecycleHandler
+
+  SERVER_STARTED
+
+  SERVER_STOPPING
+```
+
+`VillageColonyMod` permanece sem lógica, conforme
+`Initial-Setup-Checklist.md §7`.
+
+O registro de cada evento vive em `fabric/event`, para que adicionar
+um evento não signifique alterar a classe principal.
+
+---
+
+Verificado:
+
+```text
+build passa
+
+runClient carrega o mod, registro não lança
+```
+
+---
+
+Não verificado:
+
+```text
+SERVER_STARTED e SERVER_STOPPING nunca dispararam.
+```
+
+Motivo:
+
+`runClient` para no menu principal — não há servidor.
+
+`runServer` exige aceite do EULA da Mojang em `run/eula.txt`,
+que é decisão do autor.
+
+Enquanto isso, os dois handlers são código não exercitado.
+
+---
+
 ## Core Models
 
 Status:
@@ -497,7 +554,7 @@ NOT STARTED
 ## Task
 
 ```text
-TASK-004 — Criar Classe Principal do Mod
+TASK-005 — Criar Modelo Colony
 ```
 
 Fase 1 — Núcleo da Colônia.
@@ -506,27 +563,51 @@ Fase 1 — Núcleo da Colônia.
 
 ## Reason
 
-TASK-001, TASK-002 e TASK-003 concluídas e verificadas em 2026-08-06.
+TASK-001 a TASK-004 concluídas em 2026-08-06.
 
-O projeto compila, o mod carrega e a árvore de pacotes existe.
+O projeto compila, o mod carrega e registra eventos de ciclo de vida.
 
 ---
 
-## Escopo restante de TASK-004
+## Objective — TASK-005
 
-`VillageColonyMod` já existe e inicializa.
-
-Falta:
+Criar o primeiro modelo do Core:
 
 ```text
-registro de eventos
+Colony
+
+  id
+
+  posição
+
+  estado
 ```
 
-O que a classe **não** deve fazer permanece em:
+Restrições que passam a valer agora:
 
 ```text
-docs/technical/Initial-Setup-Checklist.md §7
+ADR-005  posição usa ColonyPos, não BlockPos
+
+ADR-006  core/colony/model/, sem importar outro domínio do core
+
+ADR-002  o estado inclui ACTIVE e DORMANT
 ```
+
+Este é o primeiro código testável por unit test.
+
+Ver `Testing-Strategy.md §3`.
+
+---
+
+## Infraestrutura ainda ausente
+
+```text
+Nenhum framework de teste configurado.
+```
+
+`build.gradle` não declara JUnit.
+
+TASK-005 precisa disso antes de escrever o primeiro teste.
 
 ---
 
@@ -1319,6 +1400,46 @@ Pendente:
 ```text
 icon do mod — decisão do autor
 ```
+
+---
+
+## 2026-08-06 — TASK-004 concluída
+
+Criado:
+
+```text
+fabric/event/ServerLifecycleHandler.java
+```
+
+Alterado:
+
+```text
+VillageColonyMod  → LOGGER compartilhado, chama register()
+```
+
+Verificado:
+
+```text
+./gradlew build      → BUILD SUCCESSFUL
+
+./gradlew runClient  → mod carregado, sem exceções
+```
+
+Não verificado:
+
+```text
+Os handlers de SERVER_STARTED e SERVER_STOPPING nunca executaram.
+```
+
+`runServer` para no EULA:
+
+```text
+run/eula.txt  →  eula=false
+```
+
+Aceitar o EULA é decisão do autor, não do agente.
+
+Pendência aberta até que um servidor rode.
 
 ---
 
