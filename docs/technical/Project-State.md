@@ -693,8 +693,36 @@ Detecção, adoção e gravação funcionam sobre uma vila plains real.
 
 ---
 
-Falta apenas reabrir o mundo e conferir `Loaded 1 colonies`,
-que fecha a TASK-008.
+---
+
+## TASK-008 — Testar Carregamento
+
+Status:
+
+```text
+DONE — 2026-08-06
+```
+
+Segunda sessão, mesmo mundo:
+
+```text
+Loaded 1 colonies
+
+(4min30s dentro da vila, ~9 ciclos de detecção)
+
+Saved 1 colonies
+```
+
+O round-trip completo está fechado:
+
+```text
+detectar → salvar → fechar → abrir → colônia permanece
+```
+
+Anti-duplicata confirmado fora do teste: o jogador permaneceu na vila
+por nove ciclos e a contagem não subiu.
+
+Nenhum erro no log.
 
 ---
 
@@ -721,6 +749,40 @@ era consultado ali.
 
 Nenhum teste unitário pegaria isto: o defeito está na fronteira com o
 Minecraft, não na lógica do Core.
+
+---
+
+## Cegueira de log — corrigida
+
+A segunda sessão não conseguiu confirmar a correção acima, porque o mod
+só logava **criação** de colônia.
+
+Uma vila já conhecida era reavaliada em silêncio, e o log não distinguia:
+
+```text
+detecção rodou e a vila já era conhecida
+
+detecção nunca rodou
+```
+
+Foi exatamente essa cegueira que permitiu ao gatilho de chunk ficar
+quebrado sem ninguém perceber.
+
+Correção: logar também quando o centro se move.
+
+Reavaliação que não muda nada segue silenciosa, então não vira spam por
+ciclo — jogador parado não gera linha.
+
+---
+
+## Ainda não confirmado
+
+```text
+O gatilho de CHUNK_LOAD já funciona?
+```
+
+A correção está no jar instalado, mas nenhuma sessão rodou com ela
+ainda.
 
 ---
 

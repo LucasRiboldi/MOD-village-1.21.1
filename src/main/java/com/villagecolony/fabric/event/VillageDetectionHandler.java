@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.colony.service.VillageDetector;
+import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.integration.VillageScanner;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -91,15 +92,38 @@ public final class VillageDetectionHandler {
         }
     }
 
+    /**
+     * Registra o resultado de cada detecção.
+     *
+     * <p>Criação e mudança de centro são logadas; reavaliação que não
+     * muda nada é silenciosa. Sem isso o log não distingue "a detecção
+     * rodou e a vila já era conhecida" de "a detecção nunca rodou" — foi
+     * essa cegueira que escondeu o gatilho de chunk quebrado.
+     *
+     * <p>Não vira spam: o centro só se move quando o conjunto de camas ao
+     * alcance muda. Jogador parado não gera linha. Ver CODE-STANDARDS §8.
+     */
     private static void detectAround(ServerWorld world, BlockPos trigger) {
         for (VillageCandidate candidate : SCANNER.scan(world, trigger)) {
             int before = VillageColonyMod.COLONIES.count();
+
+            ColonyPos previousCenter = VillageColonyMod.COLONIES
+                    .findNearest(candidate.center(), VillageDetector.DUPLICATE_DISTANCE)
+                    .map(Colony::center)
+                    .orElse(null);
 
             Colony colony = VillageColonyMod.COLONIES.adopt(candidate);
 
             if (VillageColonyMod.COLONIES.count() > before) {
                 VillageColonyMod.LOGGER.info(
                         "Colony created at {} with {} beds",
+                        colony.center(),
+                        candidate.bedCount());
+            } else if (!colony.center().equals(previousCenter)) {
+                VillageColonyMod.LOGGER.info(
+                        "Colony {} moved from {} to {} with {} beds",
+                        colony.id(),
+                        previousCenter,
                         colony.center(),
                         candidate.bedCount());
             }
