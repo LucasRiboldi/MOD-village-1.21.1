@@ -6,6 +6,7 @@ import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.worker.service.ProfessionAssigner;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageScanner;
 import com.villagecolony.fabric.integration.VillagerScanner;
@@ -99,23 +100,37 @@ public final class VillageDetectionHandler {
     }
 
     /**
-     * Registra os aldeões da colônia como trabalhadores.
+     * Registra os aldeões da colônia como trabalhadores e dá função a
+     * quem não tem.
      *
-     * <p>Só produz linha de log quando alguém novo aparece. Reencontrar
-     * os mesmos aldeões a cada ciclo é o caso comum e deve ser silencioso.
+     * <p>Registro e atribuição são passos separados de propósito: um
+     * trabalhador vindo do save já chega com função, e a atribuição não
+     * pode desfazê-la. Ver TASK-012b e Worker#assign.
+     *
+     * <p>A atribuição roda mesmo quando nada foi registrado agora: um
+     * save anterior à TASK-012b traz trabalhadores sem função, e eles
+     * precisam recebê-la sem depender de um aldeão novo aparecer.
+     *
+     * <p>Só produz linha de log quando algo muda. Reencontrar os mesmos
+     * aldeões a cada ciclo é o caso comum e deve ser silencioso.
      */
     private static void registerVillagers(ServerWorld world, Colony colony) {
         int registered = VillagerScanner.scan(world, colony, VillageColonyMod.WORKERS);
 
-        if (registered == 0) {
-            return;
+        if (registered > 0) {
+            VillageColonyMod.LOGGER.info(
+                    "Registered {} villagers in colony {} ({} total)",
+                    registered,
+                    colony.id(),
+                    VillageColonyMod.WORKERS.countOfColony(colony.id()));
         }
 
-        VillageColonyMod.LOGGER.info(
-                "Registered {} villagers in colony {} ({} total)",
-                registered,
-                colony.id(),
-                VillageColonyMod.WORKERS.countOfColony(colony.id()));
+        int assigned = ProfessionAssigner.assignMissing(VillageColonyMod.WORKERS, colony.id());
+
+        if (assigned > 0) {
+            VillageColonyMod.LOGGER.info(
+                    "Assigned {} professions in colony {}", assigned, colony.id());
+        }
     }
 
     /**
