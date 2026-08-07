@@ -1,5 +1,6 @@
 package com.villagecolony;
 
+import com.villagecolony.core.colony.service.ColonyService;
 import com.villagecolony.fabric.event.ServerLifecycleHandler;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
@@ -28,6 +29,20 @@ public class VillageColonyMod implements ModInitializer {
      * {@code (villagecolony)} e possa ser filtrada.
      */
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
+    /**
+     * Registro das colônias em memória.
+     *
+     * <p>Campo estático por decisão explícita da ADR-006 §5: quando um
+     * ponto de acesso global é necessário, ele vive aqui e não vira uma
+     * camada de managers.
+     *
+     * <p><b>Limite do MVP:</b> existe um único registro, preenchido a
+     * partir do Overworld. Servidor com múltiplos mundos ou troca de save
+     * sem reiniciar o processo não são cobertos — por isso o registro é
+     * esvaziado ao parar o servidor.
+     */
+    public static final ColonyService COLONIES = new ColonyService();
 
     @Override
     public void onInitialize() {

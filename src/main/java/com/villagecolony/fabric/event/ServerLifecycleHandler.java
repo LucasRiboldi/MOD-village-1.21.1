@@ -1,6 +1,8 @@
 package com.villagecolony.fabric.event;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.data.save.ColonySavedData;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.server.MinecraftServer;
 
@@ -8,11 +10,7 @@ import net.minecraft.server.MinecraftServer;
  * Registra os eventos de ciclo de vida do servidor.
  *
  * <p>Estes são os dois pontos onde o estado da colônia entra e sai da
- * memória: as colônias são carregadas quando o servidor sobe e devem
- * estar gravadas antes de ele parar. Ver ADR-002 e Save-Data-System.md.
- *
- * <p>Nenhum estado é criado aqui ainda — as colônias só existem a partir
- * de TASK-005.
+ * memória. Ver ADR-002 e Save-Data-System.md.
  */
 public final class ServerLifecycleHandler {
 
@@ -24,11 +22,31 @@ public final class ServerLifecycleHandler {
         ServerLifecycleEvents.SERVER_STOPPING.register(ServerLifecycleHandler::onServerStopping);
     }
 
+    /** Recoloca no registro as colônias gravadas no mundo. */
     private static void onServerStarted(MinecraftServer server) {
-        VillageColonyMod.LOGGER.info("Server started — colony state not loaded yet (TASK-005)");
+        VillageColonyMod.COLONIES.clear();
+
+        for (Colony colony : ColonySavedData.get(server).colonies()) {
+            VillageColonyMod.COLONIES.register(colony);
+        }
+
+        VillageColonyMod.LOGGER.info(
+                "Loaded {} colonies", VillageColonyMod.COLONIES.count());
     }
 
+    /**
+     * Copia o registro para o saved data antes de o mundo fechar.
+     *
+     * <p>O registro é esvaziado em seguida: o processo pode abrir outro
+     * save sem reiniciar, e colônias do mundo anterior não podem vazar
+     * para ele.
+     */
     private static void onServerStopping(MinecraftServer server) {
-        VillageColonyMod.LOGGER.info("Server stopping — no colony state to persist yet");
+        ColonySavedData.get(server).sync(VillageColonyMod.COLONIES.all());
+
+        VillageColonyMod.LOGGER.info(
+                "Saved {} colonies", VillageColonyMod.COLONIES.count());
+
+        VillageColonyMod.COLONIES.clear();
     }
 }

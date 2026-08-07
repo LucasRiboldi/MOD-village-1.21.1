@@ -71,6 +71,58 @@ Colony Data
 
 ---
 
+## Estado da implementação
+
+Gravado hoje por `data/save/ColonySavedData`:
+
+```text
+id          UUID
+
+centerX/Y/Z int
+
+state       ColonyState
+```
+
+Ainda não gravado, porque os campos não existem no modelo `Colony`:
+
+```text
+villageType
+
+creationTime
+```
+
+---
+
+## lifecycle não é persistido
+
+`ColonyLifecycle` é **estado derivado**, não estado salvo.
+
+Ele depende apenas de o chunk estar carregado. Ao abrir o mundo nada
+está carregado, então toda colônia volta como:
+
+```text
+DORMANT
+```
+
+Persistir `ACTIVE` produziria uma colônia marcada como simulável cujo
+chunk não existe em memória — mentira sobre o mundo.
+
+O que precisa sobreviver é o `ColonyState`: o que a colônia estava
+fazendo. Isso é gravado e restaurado.
+
+Ver ADR-002.
+
+---
+
+## Estado desconhecido no save
+
+Um `state` que não exista mais no enum não derruba o carregamento do
+mundo. A colônia volta como `STABLE` e reavalia no próximo ciclo.
+
+Perder a intenção é aceitável. Impedir o jogador de abrir o mundo, não.
+
+---
+
 # Colony ID
 
 Cada colônia recebe um identificador único.

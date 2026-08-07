@@ -514,14 +514,58 @@ ColonyRotation
 Status:
 
 ```text
-NOT STARTED
+CODE COMPLETE — TASK-007 (2026-08-06)
+
+NÃO VERIFICADO
 ```
 
-Planejado:
+Feito:
 
 ```text
-ColonySavedData
+data/save/ColonySavedData      PersistentState do Overworld
+
+VillageColonyMod.COLONIES      registro global (ADR-006 §5)
+
+ServerLifecycleHandler         carrega e grava
 ```
+
+Gravado:
+
+```text
+id, centerX/Y/Z, state
+```
+
+Não gravado:
+
+```text
+lifecycle       derivado do chunk, volta sempre DORMANT
+
+villageType     campo não existe no modelo Colony
+
+creationTime    campo não existe no modelo Colony
+```
+
+---
+
+Verificado:
+
+```text
+compila
+
+35 unit tests seguem passando
+```
+
+Não verificado:
+
+```text
+Nada foi salvo nem carregado de um mundo real.
+```
+
+O critério "dados sobrevivem ao fechar mundo" exige rodar um servidor.
+
+`runServer` continua parado no EULA.
+
+Esta é a segunda tarefa cuja verificação depende disso.
 
 ---
 
@@ -1590,7 +1634,7 @@ Verificado:
 Core sem net.minecraft
 ```
 
-Decisões registradas no código:
+Decisões registradas no código (TASK-006):
 
 ```text
 register duplicado lança em vez de sobrescrever
@@ -1611,6 +1655,77 @@ sem thread safety — thread única do servidor
 ```
 
 Fase 1 encerrada.
+
+---
+
+## 2026-08-06 — TASK-007 escrita, não verificada
+
+Criado:
+
+```text
+data/save/ColonySavedData
+```
+
+Alterado:
+
+```text
+VillageColonyMod        campo COLONIES (ADR-006 §5)
+
+ServerLifecycleHandler  carrega no start, grava no stop
+```
+
+API confirmada contra o jar mapeado, não de memória:
+
+```text
+PersistentState.Type<T>(Supplier, BiFunction, DataFixTypes)
+
+writeNbt(NbtCompound, RegistryWrapper.WrapperLookup)
+
+server.getOverworld().getPersistentStateManager().getOrCreate(TYPE, key)
+```
+
+Decisão — `lifecycle` não é persistido:
+
+```text
+É estado derivado do carregamento de chunk.
+
+Ao abrir o mundo nada está carregado.
+
+Toda colônia volta DORMANT.
+```
+
+Persistir `ACTIVE` marcaria como simulável uma colônia cujo chunk não
+existe em memória.
+
+Contraria o que eu havia planejado na entrada anterior deste log, onde
+`lifecycle` constava entre os campos a salvar. A leitura da ADR-002
+mostrou que estava errado.
+
+Decisão — estado desconhecido no save:
+
+```text
+Cai para STABLE em vez de lançar.
+
+Não impedir o jogador de abrir o mundo.
+```
+
+Verificado:
+
+```text
+compila, 35 testes seguem passando
+```
+
+Não verificado:
+
+```text
+Nenhum dado foi gravado ou lido de um mundo real.
+```
+
+Bloqueio:
+
+```text
+run/eula.txt  →  eula=false
+```
 
 ---
 
