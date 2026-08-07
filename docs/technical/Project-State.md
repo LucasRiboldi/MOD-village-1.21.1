@@ -2,9 +2,10 @@
 
 # Village Colony — Project State
 
-**Status:** Em implementação — Fases 1 a 3 completas, Fase 4 em andamento
+**Status:** Em implementação — Fases 1 a 3 completas, Fase 4 escrita e
+não verificada em jogo
 **Version:** 0.1.0
-**Last Update:** 2026-08-07 — TASK-012 concluída
+**Last Update:** 2026-08-07 — TASK-012b, TASK-013 e TASK-014 concluídas
 **Repository:** https://github.com/LucasRiboldi/MOD-village-1.21.1
 
 ---
@@ -71,8 +72,10 @@ Fases 1 a 3 estão completas e verificadas dentro do jogo: o mod detecta
 vilas, cria colônias, mantém sua identidade e persiste tudo entre
 sessões.
 
-A fase atual registra os aldeões como trabalhadores e vai atribuir-lhes
-profissões de colônia.
+A Fase 4 está escrita por inteiro — registro, persistência, catálogo de
+profissões e atribuição inicial — e **nenhuma parte dela foi verificada
+em jogo**. É a maior dívida aberta do projeto, e o §11 explica por que
+ela é cara.
 
 ---
 
@@ -87,7 +90,8 @@ Fase 2   persistência                   TASK-007 e TASK-008
 
 Fase 3   detecção da vila               TASK-009 e TASK-010
 
-Fase 4   trabalhadores                  TASK-011 e TASK-012
+Fase 4   trabalhadores                  TASK-011 a TASK-014
+                                        escrita, não verificada em jogo
 ```
 
 Detalhe por tarefa em §6. Histórico em §15.
@@ -288,7 +292,7 @@ Registrar aldeões      FEITO, não verificado em jogo
 
 ↓
 
-Organizar trabalhadores   em andamento (TASK-013, TASK-014)
+Organizar trabalhadores   FEITO, não verificado em jogo
 
 ↓
 
@@ -303,7 +307,7 @@ Produzir materiais     não iniciado
 Construir expansão     não iniciado
 ```
 
-Dois dos seis passos do MVP estão de pé.
+Três dos seis passos do MVP estão escritos; um deles verificado.
 
 ---
 
@@ -341,8 +345,9 @@ Fase 4 — Trabalhadores
 
   TASK-011  modelo Worker            feito
   TASK-012  VillagerScanner          feito, NÃO verificado em jogo
-  TASK-013  ProfessionRegistry       não iniciado
-  TASK-014  atribuição inicial       não iniciado
+  TASK-012b persistir trabalhadores  feito, NÃO verificado em jogo
+  TASK-013  ProfessionRegistry       feito, NÃO verificado em jogo
+  TASK-014  atribuição inicial       feito, NÃO verificado em jogo
 
 Fases 5 a 9
 
@@ -358,8 +363,10 @@ core/
   type/ColonyPos
   colony/model/      Colony, ColonyState, ColonyLifecycle, VillageCandidate
   colony/service/    ColonyService, VillageDetector
-  worker/model/      Worker, ProfessionType
-  worker/service/    WorkerService
+  worker/model/      Worker, ProfessionType, Profession,
+                     Capability, ToolType
+  worker/service/    WorkerService, ProfessionRegistry,
+                     ProfessionAssigner
 
 fabric/
   adapter/           MinecraftTypeAdapter
@@ -378,7 +385,7 @@ Vazios por enquanto: `core/task`, `core/resource`, `core/storage`,
 ## Testes
 
 ```text
-106 testes, todos passando
+135 testes, todos passando
 ```
 
 Cobrem o Core (lógica pura) e a serialização NBT.
@@ -401,20 +408,62 @@ acorda e adormece colônias conforme os chunks
 
 registra os aldeões como trabalhadores
 
-persiste as colônias entre sessões
+dá função a quem não tem, cobrindo as quatro antes de repetir
+
+persiste colônias e trabalhadores entre sessões
 ```
+
+As três últimas linhas nunca rodaram em jogo.
 
 ---
 
 # 7. Next Development Step
 
-## Decisão necessária antes de codificar
+## Verificar a Fase 4 em jogo
+
+Nada da Fase 4 rodou no jogo real. São quatro tarefas empilhadas sobre
+código de fronteira nunca exercitado, e o §11 mostra que é exatamente
+aí que os defeitos desta camada moram.
+
+O que precisa ser observado no `latest.log`:
 
 ```text
-Persistência de trabalhadores
+Registered N villagers in colony ...
+
+  N bate com os aldeões da vila
+
+  não repete a cada ciclo com os mesmos aldeões
+
+
+Assigned N professions in colony ...
+
+  aparece uma vez, não a cada ciclo
+
+  quatro aldeões produzem quatro funções distintas
+
+
+Loaded N colonies with M workers
+
+  M > 0 ao reabrir o mundo
+
+  as funções são as mesmas de antes de fechar
 ```
 
-`MVP-Tasks.md` não tem tarefa para isso, e é uma lacuna do plano.
+O último é o que prova a TASK-012b, e é o mais barato de fazer: fechar
+o mundo e reabrir.
+
+Método obrigatório: iniciar o jogo do zero com o jar novo. Trocar o jar
+com o jogo aberto não testa nada — ver §11.
+
+---
+
+## Decisão registrada — persistência de trabalhadores
+
+```text
+Estender ColonySavedData
+```
+
+Decidido em 2026-08-07. A alternativa era um `WorkerSavedData` próprio.
 
 Hoje os trabalhadores são redescobertos a cada sessão a partir dos
 aldeões do mundo. Isso basta enquanto só há registro.
@@ -423,42 +472,45 @@ Deixa de bastar em TASK-014: profissão atribuída é decisão da colônia,
 não existe no mundo Vanilla e sumiria ao fechar o mundo. Cada sessão
 redistribuiria funções do zero.
 
-Opções:
+Motivo da escolha:
 
 ```text
-estender ColonySavedData
+worker referencia a colônia por colonyId
 
-criar WorkerSavedData
+  dois arquivos permitiriam worker órfão apontando
+  para colônia não gravada, sem transação que
+  mantivesse os dois em sincronia
+
+um só PersistentState
+
+  um segundo arquivo dobraria o custo de
+  versionamento futuro sem ganho no MVP
+
+ServerLifecycleHandler já tem os pontos de start/stop
+
+  não precisa de um segundo par
 ```
 
----
-
-## Depois da decisão
-
-```text
-TASK-013 — ProfessionRegistry
-
-TASK-014 — Atribuição inicial de profissões
-```
+Registrada como `TASK-012b` em `MVP-Tasks.md`.
 
 ---
 
 # 8. Priority Queue
 
 ```text
-1   decidir persistência de trabalhadores
+1   verificar a Fase 4 inteira em jogo — ver §7
 
-2   TASK-013 — ProfessionRegistry
-
-3   TASK-014 — atribuição inicial
-
-4   verificar TASK-012 em jogo
-
-5   Fase 5 — Sistema de Armazenamento (TASK-015+)
+2   Fase 5 — Sistema de Armazenamento (TASK-015+)
 ```
 
-O item 4 não bloqueia os demais, mas quanto mais tarde, mais caro:
-todos os defeitos graves desta fase apareceram só em jogo.
+A verificação foi adiada a pedido do autor em 2026-08-07, e o código
+seguiu sem ela. A dívida cresceu de uma tarefa para quatro: quando um
+defeito de fronteira aparecer, ele estará em algum ponto de
+`VillagerScanner`, `ColonySavedData` ou `VillageDetectionHandler`, sem
+o log intermediário que teria dito qual.
+
+Começar a Fase 5 antes de quitá-la empilha uma quinta camada sobre a
+mesma fronteira não exercitada.
 
 ---
 
@@ -517,9 +569,25 @@ Registro único, Overworld
 ```
 
 ```text
-Trabalhadores não são persistidos
+Profissão não muda depois de atribuída
 
-  Ver §7.
+  ProfessionAssigner só preenche vaga. Realocar conforme a
+  necessidade da colônia muda — e liberar a função de quem
+  morreu — não pertence ao MVP.
+
+  Profession-System.md §"Morte de Trabalhadores" prevê o
+  registro do óbito. WorkerService.remove existe e nada o
+  chama: falta como provar que o aldeão morreu.
+```
+
+```text
+Ferramenta inicial não é entregue
+
+  Profession-System.md diz que o trabalhador recebe a
+  ferramenta ao assumir a função. ToolType existe e a
+  profissão a declara, mas nada põe o item na mão do aldeão.
+
+  Depende do adaptador ToolType -> Item, não escrito.
 ```
 
 ```text
@@ -553,13 +621,7 @@ sondar bioma precisam ser feitos no jogo real, não no `runServer`.
 # 10. Pending Decisions
 
 ```text
-1  Persistência de trabalhadores — ver §7
-
-   Bloqueia TASK-014.
-```
-
-```text
-2  Ícone e nome divergem
+1  Ícone e nome divergem
 
    A arte diz "Village++"; o mod é "Village Colony", id villagecolony.
 
@@ -570,7 +632,7 @@ sondar bioma precisam ser feitos no jogo real, não no `runServer`.
 ```
 
 ```text
-3  Fundo do ícone
+2  Fundo do ícone
 
    A arte veio sem canal alpha, fundo branco sólido.
 
@@ -775,7 +837,10 @@ MVP-Tasks.md
   fora de ordem, por isso.
 
 
-  Não existe tarefa de persistência de trabalhadores. Ver §7.
+  A persistência de trabalhadores não constava do plano original.
+
+  Acrescentada como TASK-012b em 2026-08-07, fora da numeração
+  sequencial para não renumerar as tarefas seguintes. Ver §7.
 ```
 
 ```text
@@ -1440,6 +1505,241 @@ Caixa de contagem derivada das camas
   buscar aldeões no mundo inteiro é proibido
 
   por Performance-Rules.md §5
+```
+
+---
+
+## 2026-08-07 — Persistência de trabalhadores decidida
+
+Decisão:
+
+```text
+Estender ColonySavedData
+```
+
+Recusado: `WorkerSavedData` em arquivo próprio.
+
+Motivo: o `Worker` referencia a colônia por `colonyId`. Dois arquivos
+separados permitiriam um trabalhador órfão apontando para uma colônia
+que não foi gravada, e não há transação que mantenha os dois em
+sincronia. Um só `PersistentState` também evita dobrar o custo de
+versionamento futuro.
+
+Registrado:
+
+```text
+MVP-Tasks.md   TASK-012b, entre a 012 e a 013
+```
+
+A numeração com sufixo evita renumerar da TASK-013 em diante, o que
+invalidaria as referências já espalhadas pelos documentos.
+
+Nenhum código foi escrito nesta entrada.
+
+---
+
+## 2026-08-07 — Verificação em jogo adiada a pedido do autor
+
+A fila do §8 punha a verificação da TASK-012 antes de escrever mais
+código. O autor não podia rodar o jogo no momento e pediu para seguir.
+
+Consequência aceita: TASK-012b, 013 e 014 foram escritas sobre uma
+fronteira nunca exercitada. Registrado aqui para que a origem da dívida
+não se perca.
+
+---
+
+## 2026-08-07 — TASK-012b concluída
+
+Criado:
+
+```text
+WorkerService.restore        recoloca trabalhador vindo do save
+```
+
+Alterado:
+
+```text
+ColonySavedData          lista "workers" ao lado de "colonies"
+
+  sync(colonies, workers)  — assinatura mudou, os dois juntos
+
+ServerLifecycleHandler   carrega e grava os trabalhadores
+```
+
+Decisão — órfão é descartado na leitura:
+
+```text
+Trabalhador cuja colônia não veio no mesmo arquivo é ignorado.
+```
+
+Ele não deveria existir, já que os dois são gravados juntos. Se
+existir, mantê-lo seria pior que perdê-lo: nenhuma colônia o listaria e
+a varredura não o recriaria, porque o `villagerId` já teria dono. Ficaria
+invisível para sempre. Descartado, a varredura o reencontra e o reatribui
+à colônia certa — ao custo da profissão que ele tinha.
+
+Decisão — profissão ausente ou desconhecida vira "sem função":
+
+```text
+Mesmo princípio de readState: não derrubar o mundo.
+```
+
+Aqui o custo é menor que no estado da colônia — a TASK-014 dá uma função
+nova no próximo ciclo.
+
+Decisão — `restore` lança em duplicata, `register` não:
+
+```text
+register  idempotente   a varredura repete de propósito
+
+restore   lança         villagerId repetido no save esconderia
+                        qual profissão venceu
+```
+
+Verificado:
+
+```text
+116 testes passando
+
+./gradlew build → BUILD SUCCESSFUL
+```
+
+Não verificado:
+
+```text
+O round-trip com mundo real. Nenhum save foi aberto e fechado.
+```
+
+---
+
+## 2026-08-07 — TASK-013 concluída
+
+Criado:
+
+```text
+core/worker/model/Capability          COLLECT_WOOD, CRAFT_ITEMS,
+                                      MAINTAIN_FOOD, BUILD_STRUCTURE
+
+core/worker/model/ToolType            NONE, WOODEN_AXE, WOODEN_HOE
+
+core/worker/model/Profession          definição imutável
+
+core/worker/service/ProfessionRegistry   catálogo das quatro
+```
+
+Decisão — `Capability` é tipo próprio, não método de `ProfessionType`:
+
+```text
+Duas profissões podem vir a compartilhar uma capacidade.
+```
+
+Profession-System.md exige que profissão nova não obrigue a mexer nas
+antigas.
+
+Decisão — `ToolType` em vez de `Item`:
+
+```text
+ADR-005: o Core não conhece net.minecraft.
+```
+
+A conversão para o item Vanilla entra no `MinecraftTypeAdapter` quando
+houver quem entregue a ferramenta. Hoje não há.
+
+Decisão — o registro é estático e não tem `clear`:
+
+```text
+As quatro profissões são fixas e não pertencem a um mundo.
+```
+
+Difere de `ColonyService` e `WorkerService`, que são estado de partida.
+
+Decisão — `of` lança em vez de devolver `Optional`:
+
+```text
+Todo ProfessionType tem definição.
+```
+
+A falta de uma é profissão acrescentada ao enum sem entrada no catálogo
+— erro de programação, não ausência legítima. Há teste que trava isso.
+
+Não implementado:
+
+```text
+allowedTasks, previsto em Profession-System.md
+```
+
+Depende de `core/task`, hoje vazio. A ligação já é possível pelo outro
+lado: a tarefa declara a `Capability` que exige e `canPerform` responde.
+
+---
+
+## 2026-08-07 — TASK-014 concluída
+
+Criado:
+
+```text
+core/worker/service/ProfessionAssigner
+```
+
+Alterado:
+
+```text
+VillageDetectionHandler.registerVillagers
+
+  atribui depois de registrar
+```
+
+Regra adotada — sempre a função mais escassa da colônia:
+
+```text
+Cobre as quatro antes de duplicar qualquer uma.
+```
+
+É a necessidade mínima do Profession-System.md: seis aldeões, um de cada.
+
+Decisão — empate resolvido pela ordem de `ProfessionType`:
+
+```text
+LUMBERJACK, MANUFACTURER, FARMER, BUILDER
+```
+
+Numa colônia recém-detectada todas as contagens são zero, então é essa
+ordem que decide as primeiras quatro atribuições. Ela é a cadeia
+produtiva do MVP: começar pelo construtor, sem madeira nem material,
+daria um trabalhador sem o que fazer.
+
+Decisão — recontar a cada atribuição, não uma vez por lote:
+
+```text
+Quatro aldeões de uma colônia vazia veriam a mesma contagem
+e virariam quatro lenhadores.
+```
+
+Há teste para isso.
+
+Decisão — a atribuição roda mesmo sem aldeão novo:
+
+```text
+Save anterior à TASK-012b traz trabalhadores sem função.
+```
+
+Eles precisam receber uma sem depender de alguém nascer.
+
+Verificado:
+
+```text
+135 testes passando
+
+./gradlew build → BUILD SUCCESSFUL
+
+Core continua sem net.minecraft (grep)
+```
+
+Não verificado:
+
+```text
+Tudo o que depende do jogo. Ver §7.
 ```
 
 ---
