@@ -471,12 +471,14 @@ core/colony/model/Colony
 core/colony/model/ColonyState
 
 core/colony/model/ColonyLifecycle
+
+core/colony/service/ColonyService
 ```
 
 Verificado:
 
 ```text
-13 unit tests passando
+35 unit tests passando
 
 Core sem import de net.minecraft (ADR-006 §6)
 
@@ -582,44 +584,75 @@ NOT STARTED
 ## Task
 
 ```text
-TASK-006 — Criar Colony Manager
+TASK-007 — Criar Colony Saved Data
 ```
 
-Fase 1 — Núcleo da Colônia.
+Fase 2 — Persistência.
 
 ---
 
 ## Reason
 
-TASK-001 a TASK-005 concluídas em 2026-08-06.
+Fase 1 concluída em 2026-08-06.
 
-O modelo `Colony` existe e está coberto por testes.
+O registro de colônias existe em memória e está coberto por testes.
+
+Nada sobrevive a fechar o mundo.
 
 ---
 
-## Atenção — nome da TASK-006
-
-`MVP-Tasks.md` chama a tarefa de "Colony Manager".
-
-A ADR-006 §5 eliminou `manager` como camada:
+## Objective — TASK-007
 
 ```text
-Service
-
-  contém lógica e mantém o registro em memória
-
-data/save
-
-  contém apenas serialização
+data/save/ColonySavedData
 ```
 
-A classe a criar é:
+Salvar e recarregar:
 
 ```text
-core/colony/service/ColonyService
+id
+
+posição
+
+state
+
+lifecycle
 ```
 
-`MVP-Tasks.md` precede a ADR-006. Vale a ADR.
+---
+
+## Restrições
+
+```text
+ADR-006 §5   data/save contém apenas serialização,
+
+             nunca lógica de domínio
+
+ADR-002      o estado salvo deve bastar para retomar
+
+             sem perda
+
+ADR-005      ColonyPos é convertido na fronteira,
+
+             não gravado como BlockPos
+```
+
+Ao recarregar, usar `ColonyService.register()`, que já rejeita
+id duplicado.
+
+---
+
+## Ponto de integração
+
+`ServerLifecycleHandler` já tem os dois ganchos onde isso encaixa:
+
+```text
+SERVER_STARTED   → carregar
+
+SERVER_STOPPING  → garantir gravação
+```
+
+Hoje eles apenas logam.
 
 ---
 
@@ -1512,6 +1545,72 @@ centerPosition   BlockPos → ColonyPos   (ADR-005)
 
 lifecycle        campo adicionado
 ```
+
+---
+
+## 2026-08-06 — TASK-006 concluída
+
+Criado:
+
+```text
+core/colony/service/ColonyService
+```
+
+Nome divergente de `MVP-Tasks.md`:
+
+```text
+MVP-Tasks.md   ColonyManager
+
+ADR-006 §5     manager não existe como camada
+```
+
+Vale a ADR. A classe é `ColonyService`.
+
+Operações:
+
+```text
+createColony    detecção encontrou vila nova
+
+register        recolocação vinda do save
+
+find            por id
+
+findNearest     por posição, com raio explícito
+
+all             leitura, ordem de registro
+
+remove / clear / count
+```
+
+Verificado:
+
+```text
+35 unit tests passando
+
+Core sem net.minecraft
+```
+
+Decisões registradas no código:
+
+```text
+register duplicado lança em vez de sobrescrever
+
+  sobrescrever esconderia save corrompido
+
+raio de findNearest é parâmetro, não constante
+
+  quem chama conhece o contexto (ADR-003)
+
+LinkedHashMap para ordem de iteração estável
+
+  ordem instável dificulta depurar simulação
+
+sem thread safety — thread única do servidor
+
+  documentado na classe
+```
+
+Fase 1 encerrada.
 
 ---
 
