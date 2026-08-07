@@ -667,6 +667,70 @@ a maioria dos chunks carregados é descartada sem custo.
 
 ---
 
+Verificado:
+
+```text
+68 tests passando (9 de adoção)
+
+anti-duplicata em ambos os lados da fronteira de 64
+
+centro move, UUID permanece
+```
+
+---
+
+Não verificado:
+
+```text
+Nenhuma vila real foi detectada em jogo.
+```
+
+---
+
+## Limitação do console do runServer
+
+Comandos vanilla que dependem de argumento de registro ou produzem
+texto rico falham no console deste ambiente:
+
+```text
+seed                  → An unexpected error occurred
+
+locate structure ...  → An unexpected error occurred
+
+execute if biome ...  → An unexpected error occurred
+```
+
+Funcionam normalmente:
+
+```text
+say    list    stop    forceload
+```
+
+Nenhum stack trace é registrado no log.
+
+Isso **não passa pelo código do mod** — `seed` e `locate` são vanilla
+puro. É limitação do ambiente, não defeito do Village Colony.
+
+Consequência: não foi possível localizar uma vila plains nem sondar
+bioma por comando, que era o roteiro planejado para TASK-008.
+
+---
+
+## Caminho alternativo de teste
+
+O jar foi instalado na instalação real do autor:
+
+```text
+C:\Users\lucas\AppData\Roaming\.minecraft\mods
+```
+
+Perfil `Fabric 1.21.1` existe.
+
+**Falta a Fabric API nessa instalação** — sem ela o mod não carrega,
+porque `fabric.mod.json` a declara como dependência.
+
+---
+
 ## Worker System
 
 Status:
