@@ -2,15 +2,18 @@ package com.villagecolony.fabric.event;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageScanner;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestTypes;
@@ -89,6 +92,40 @@ public final class VillageDetectionHandler {
             for (ServerPlayerEntity player : world.getPlayers()) {
                 detectAround(world, player.getBlockPos());
             }
+        }
+
+        updateLifecycles(server.getOverworld());
+    }
+
+    /**
+     * Acorda e adormece colônias conforme seus chunks.
+     *
+     * <p>Sem isto, uma colônia visitada uma vez permaneceria
+     * {@link ColonyLifecycle#ACTIVE} pelo resto da sessão, mesmo a
+     * milhares de blocos do jogador — e o loop de simulação, que só roda
+     * para colônias ACTIVE, gastaria tick com vila que ninguém observa.
+     *
+     * <p>{@code shouldTick} é o critério certo: pergunta se o chunk está
+     * de fato sendo tickado, que é a definição de DORMANT na ADR-002.
+     *
+     * <p>Limite do MVP: consulta apenas o Overworld. Só existem colônias
+     * lá, porque o único bioma aceito é PLAINS.
+     */
+    private static void updateLifecycles(ServerWorld overworld) {
+        for (Colony colony : VillageColonyMod.COLONIES.all()) {
+            ChunkPos chunk = new ChunkPos(MinecraftTypeAdapter.toBlockPos(colony.center()));
+
+            ColonyLifecycle current = overworld.shouldTick(chunk)
+                    ? ColonyLifecycle.ACTIVE
+                    : ColonyLifecycle.DORMANT;
+
+            if (colony.lifecycle() == current) {
+                continue;
+            }
+
+            colony.setLifecycle(current);
+
+            VillageColonyMod.LOGGER.info("Colony {} is now {}", colony.id(), current);
         }
     }
 

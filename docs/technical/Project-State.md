@@ -879,6 +879,50 @@ Uma colônia, um UUID, estável nas quatro observações.
 
 ---
 
+---
+
+## 2026-08-07 — Correções de revisão
+
+Defeito latente corrigido:
+
+```text
+setLifecycle nunca era chamado em produção.
+```
+
+Toda colônia lida do save ficava `DORMANT` para sempre, mesmo sendo
+observada pela detecção a cada ciclo.
+
+Como a ADR-002 manda o loop rodar só para colônias `ACTIVE`, a
+simulação da Fase 4 ignoraria silenciosamente toda colônia persistida.
+
+Correção:
+
+```text
+adopt()            observar acorda a colônia
+
+updateLifecycles() varredura por ciclo, via shouldTick(ChunkPos)
+```
+
+Sem a varredura, o oposto ocorreria: colônia visitada uma vez ficaria
+`ACTIVE` a sessão inteira, a milhares de blocos do jogador.
+
+---
+
+Lacuna deixada em aberto, deliberadamente:
+
+```text
+ColonyState.ABANDONED existe e nada o atribui.
+```
+
+Ver ADR-003 §10, Emenda 1. Exige o scanner reportar clusters
+reprovados, o que é tarefa própria e não cabia numa revisão.
+
+---
+
+Emendas de ADR-003 redigidas: três, em `docs/decisions/ADR-003 §10`.
+
+---
+
 Nota de método: trocar o jar com o jogo aberto não testa nada.
 
 O Minecraft carrega mods na inicialização da JVM. Sair ao menu e
@@ -1041,13 +1085,13 @@ Fase 4 — Sistema de Trabalhadores, a partir de TASK-011.
 
 ---
 
-## Emenda pendente de ADR
+## Emendas de ADR — resolvidas
 
 ```text
-ADR-003 §7 — DORMANT → ABANDONED em ColonyState
+ADR-003 §10 — três emendas registradas
 ```
 
-Ver entrada de 2026-08-06 no log.
+Nenhum desvio de ADR permanece sem documento.
 
 ---
 

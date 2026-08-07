@@ -4,9 +4,10 @@
 
 # Village Colony Village Detection
 
-**Status:** Accepted
+**Status:** Accepted (emendada — ver §10)
 **Date:** 2026-08-06
 **Accepted:** 2026-08-06
+**Amended:** 2026-08-06 — três emendas vindas da implementação
 **Decision Type:** Architecture / Integration
 **Blocks:** TASK-009, TASK-010, Phase 4, v0.2
 
@@ -366,3 +367,176 @@ Conforme `CODE-STANDARDS.md §3`.
 A vila não é uma estrutura.
 
 A vila é onde os aldeões dormem.
+
+---
+
+# 10. Emendas
+
+Duas correções ao texto original, ambas descobertas durante a
+implementação das TASK-009 e TASK-010.
+
+O corpo da ADR acima permanece como foi aceito; o que vale é esta
+seção onde houver conflito.
+
+---
+
+## Emenda 1 — `DORMANT` vira `ABANDONED` em ColonyState
+
+**Data:** 2026-08-06
+
+**Afeta:** §6 e §7
+
+---
+
+O texto original manda `ColonyState` ganhar o valor `DORMANT` e afirma
+estar "alinhado com ADR-002".
+
+Não está. As duas condições são distintas:
+
+```text
+ADR-002   DORMANT = chunk descarregado
+
+ADR-003   DORMANT = vila sem população
+```
+
+Uma vila abandonada com o jogador parado ao lado atende à segunda e
+não à primeira. Os dois estados são simultâneos e independentes.
+
+---
+
+Decisão:
+
+```text
+ColonyLifecycle   ACTIVE | DORMANT      (ADR-002)
+
+ColonyState       ... | ABANDONED       (esta ADR, §6)
+```
+
+Motivo: dois `DORMANT` com significados diferentes no mesmo objeto são
+uma armadilha para quem lê o código depois.
+
+---
+
+Estado da implementação:
+
+```text
+O valor ABANDONED existe.
+
+Nada o atribui ainda.
+```
+
+A regra do §6 exige distinguir "vila deixou de ser viável" de "vila não
+foi observada". Hoje `VillageScanner.scan` devolve apenas clusters
+aprovados: um cluster reprovado simplesmente não aparece, e as duas
+situações ficam indistinguíveis.
+
+Implementar exige o scanner reportar também os clusters avaliados e
+reprovados perto de colônias conhecidas. Fica para tarefa própria.
+
+---
+
+## Emenda 2 — completude da observação decide o centro
+
+**Data:** 2026-08-06
+
+**Afeta:** §3, §4 e §6
+
+---
+
+O texto original tem uma contradição interna:
+
+```text
+§4   centro = média das camas do cluster
+
+§6   colônia existente é atualizada
+
+§3   coleta limitada a 64 blocos
+```
+
+Uma vila é maior que 64 blocos. Logo **nenhuma detecção enxerga a vila
+inteira**, e cada gatilho produz um cluster diferente.
+
+Atualizar sempre significa deixar a última detecção vencer.
+
+---
+
+Observado em jogo em 2026-08-06:
+
+```text
+1109,730 → 1080,733    3 camas
+
+1080,733 → 1109,730   12 camas
+
+1109,730 → 1080,733    3 camas
+```
+
+O centro oscilava entre uma visão de 12 camas e outra de 3.
+
+Pior: perseguindo visões parciais, a colônia se afastou mais de 64
+blocos da vila real. A detecção seguinte não achou colônia por perto e
+criou outra — a vila trocou de UUID, violando o §4 desta própria ADR.
+
+---
+
+Decisão:
+
+```text
+Colony.observedBeds
+
+  camas da melhor observação já vista
+```
+
+```text
+O centro só se move quando a nova observação tem
+
+observedBeds >= o valor registrado.
+```
+
+Empate move, porque a vila pode se deslocar mantendo o número de camas.
+
+O campo é persistido. Save anterior à emenda lê 0 e autocorrige na
+primeira detecção da sessão.
+
+---
+
+Verificado em jogo após a correção:
+
+```text
+12 → 13 → 15 → 21 camas
+```
+
+Contagem monotonicamente crescente. O centro converge.
+
+---
+
+## Emenda 3 — gatilho ancorado na cama
+
+**Data:** 2026-08-06
+
+**Afeta:** §3
+
+---
+
+O §3 define o gatilho como "chunk carregado contendo POI de cama", sem
+dizer de que ponto parte a coleta de raio 64.
+
+Ancorar no chunk não funciona:
+
+```text
+ChunkPos.getStartPos()  →  BlockPos(startX, 0, startZ)
+
+getInCircle             →  distância em três dimensões
+```
+
+Partindo de y=0, uma cama em y=64 consome todo o raio antes de qualquer
+deslocamento horizontal. A busca voltava sempre vazia.
+
+---
+
+Decisão:
+
+```text
+O gatilho é a posição do POI de cama encontrado no chunk.
+```
+
+Está na altura certa por definição.

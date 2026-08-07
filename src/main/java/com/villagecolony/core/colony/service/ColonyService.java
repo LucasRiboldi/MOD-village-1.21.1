@@ -1,6 +1,7 @@
 package com.villagecolony.core.colony.service;
 
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.type.ColonyPos;
 
@@ -86,15 +87,14 @@ public final class ColonyService {
         Optional<Colony> existing =
                 findNearest(candidate.center(), VillageDetector.DUPLICATE_DISTANCE);
 
-        if (existing.isPresent()) {
-            Colony colony = existing.get();
-            colony.observe(candidate.center(), candidate.bedCount());
+        Colony colony = existing.orElseGet(() -> createColony(candidate.center()));
 
-            return colony;
-        }
-
-        Colony colony = createColony(candidate.center());
         colony.observe(candidate.center(), candidate.bedCount());
+
+        // Detectar exige chunk carregado. Uma colônia observada está,
+        // por definição da ADR-002, sendo simulada — inclusive a que
+        // acabou de ser lida do save como DORMANT.
+        colony.setLifecycle(ColonyLifecycle.ACTIVE);
 
         return colony;
     }
