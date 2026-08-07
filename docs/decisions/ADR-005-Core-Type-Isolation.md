@@ -4,8 +4,9 @@
 
 # Village Colony Core Type Isolation
 
-**Status:** Proposed — awaiting approval
+**Status:** Accepted
 **Date:** 2026-08-06
+**Accepted:** 2026-08-06
 **Decision Type:** Architecture / Code Structure
 **Blocks:** Phase 2 — Core Models
 

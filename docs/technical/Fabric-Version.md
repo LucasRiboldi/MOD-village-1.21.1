@@ -125,26 +125,101 @@ Nunca depender do JDK padrão da máquina.
 
 # 5.1 Version Matrix
 
-As versões abaixo devem ser preenchidas com os valores exatos
-**antes** da TASK-001, consultando fabricmc.net.
+Todas as versões abaixo estão fixadas.
 
-Não usar "latest" em nenhuma delas.
+Não usar "latest", "+" ou SNAPSHOT em nenhuma delas.
+
+Qualquer alteração exige atualização deste documento no mesmo commit.
 
 ---
 
 ```text
-Minecraft:      1.21.1        (fixado)
+Minecraft:      1.21.1
 
-Java:           21            (fixado)
+Java:           21
 
-Yarn:           1.21.1+build.?   ← confirmar
+Gradle:         9.6.1
 
-Fabric Loader:  0.16.?           ← confirmar
+Fabric Loom:    1.17.18
 
-Fabric API:     ?+1.21.1         ← confirmar
+Yarn:           1.21.1+build.3
 
-Fabric Loom:    1.7-SNAPSHOT     ← confirmar
+Fabric Loader:  0.19.3
+
+Fabric API:     0.116.15+1.21.1
 ```
+
+---
+
+## Fontes
+
+Valores confirmados em 2026-08-06:
+
+```text
+Yarn / Loader   meta.fabricmc.net/v2/versions
+
+Loom            maven.fabricmc.net/net/fabricmc/fabric-loom
+
+Fabric API      api.modrinth.com/v2/project/fabric-api
+
+Gradle          services.gradle.org/versions/all
+```
+
+---
+
+## Notas de fixação
+
+`Yarn 1.21.1+build.3` é o build mais alto publicado para 1.21.1.
+
+`Fabric Loom 1.17.18` é a release estável mais recente e suporta
+Minecraft 1.14.4+ — não existe Loom específico de 1.21.1.
+
+`Gradle 9.6.1` foi escolhido em vez do 9.7.0 por maturidade;
+9.7.0 tem menos de uma semana na data desta fixação.
+
+`Fabric Loader 0.19.3` é a única versão marcada como `stable` no meta.
+
+---
+
+## gradle.properties
+
+Os valores acima devem aparecer literalmente em:
+
+```text
+gradle.properties
+```
+
+Nesta forma:
+
+```properties
+minecraft_version=1.21.1
+yarn_mappings=1.21.1+build.3
+loader_version=0.19.3
+fabric_version=0.116.15+1.21.1
+```
+
+E o wrapper em:
+
+```text
+gradle/wrapper/gradle-wrapper.properties
+```
+
+---
+
+## Verificação pendente
+
+A combinação Loom 1.17.18 + Gradle 9.6.1 + MC 1.21.1 **não foi
+executada** — a fixação é documental.
+
+A primeira execução de:
+
+```text
+./gradlew build
+```
+
+na TASK-001 é o teste desta matriz.
+
+Se falhar, corrigir aqui antes de prosseguir.
 
 ---
 

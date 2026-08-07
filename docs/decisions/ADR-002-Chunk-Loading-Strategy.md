@@ -4,8 +4,9 @@
 
 # Village Colony Chunk Loading Strategy
 
-**Status:** Proposed — awaiting approval
+**Status:** Accepted
 **Date:** 2026-08-06
+**Accepted:** 2026-08-06
 **Decision Type:** Architecture / Simulation
 **Blocks:** Simulation-Loop, Resource-System, Storage-System, Phase 1 onwards
 

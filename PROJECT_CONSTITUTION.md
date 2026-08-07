@@ -74,7 +74,7 @@ Villagers never make strategic decisions.
 
 ## 3. Autonomous Simulation
 
-The colony must continue functioning even when no player is nearby.
+The colony does not depend on the player to function.
 
 The player is never required for:
 
@@ -85,6 +85,23 @@ The player is never required for:
 * expansion.
 
 The player may interact with the village but never controls it.
+
+---
+
+### Scope of autonomy
+
+Autonomy means independence from player **commands**, not independence from
+Minecraft's chunk lifecycle.
+
+A colony ticks only while its chunks are loaded, exactly like a Vanilla village.
+When the chunks unload, the colony hibernates with persistent state and resumes
+without loss.
+
+Ver:
+
+```text
+docs/decisions/ADR-002-Chunk-Loading-Strategy.md
+```
 
 ---
 

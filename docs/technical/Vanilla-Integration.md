@@ -2,9 +2,9 @@
 
 # Village Colony — Vanilla Integration
 
-**Status:** Proposed — awaiting approval
+**Status:** Accepted — 2026-08-06
 **Version:** 1.0.0
-**Depends on:** ADR-004-Mixin-Policy
+**Depends on:** ADR-004-Mixin-Policy (Accepted)
 
 ---
 

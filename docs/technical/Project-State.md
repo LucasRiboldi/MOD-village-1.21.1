@@ -2,9 +2,9 @@
 
 # Village Colony — Project State
 
-**Status:** Documentation Complete / Technical Audit Complete / Implementation Blocked
+**Status:** Documentation Complete / Stage 0 Complete / Implementation Unblocked
 **Version:** 0.1.0 Planning Phase
-**Last Update:** 2026-08-06 — Technical Audit
+**Last Update:** 2026-08-06 — Stage 0 concluído
 **Repository:** https://github.com/LucasRiboldi/MOD-village-1.21.1
 
 ---
@@ -223,7 +223,7 @@ Vanilla-Integration.md
 Status:
 
 ```text
-PROPOSED
+ACCEPTED
 ```
 
 Documentos:
@@ -231,20 +231,22 @@ Documentos:
 ```text
 docs/decisions/
 
-ADR-001-Core-Principles.md      (Accepted)
+ADR-001-Core-Principles.md          (Accepted)
 
-ADR-002-Chunk-Loading-Strategy.md
+ADR-002-Chunk-Loading-Strategy.md   (Accepted)
 
-ADR-003-Village-Detection.md
+ADR-003-Village-Detection.md        (Accepted)
 
-ADR-004-Mixin-Policy.md
+ADR-004-Mixin-Policy.md             (Accepted)
 
-ADR-005-Core-Type-Isolation.md
+ADR-005-Core-Type-Isolation.md      (Accepted)
 
-ADR-006-Package-Layout.md
+ADR-006-Package-Layout.md           (Accepted)
 ```
 
-ADR-002 a ADR-006 aguardam aprovação.
+As seis ADRs foram aceitas em 2026-08-06.
+
+Nenhuma decisão de arquitetura permanece em aberto.
 
 ---
 
@@ -400,71 +402,81 @@ NOT STARTED
 
 ## Task
 
-Revisar e aprovar as ADRs 002 a 006.
+```text
+TASK-001 — Criar o projeto Fabric
+```
 
 ---
 
 ## Reason
 
-As cinco ADRs foram redigidas com uma recomendação cada.
+O Stage 0 foi concluído em 2026-08-06.
 
-Nenhuma foi aceita ainda.
+As seis ADRs estão aceitas e a Version Matrix está fixada.
 
-Status atual de todas:
-
-```text
-Proposed — awaiting approval
-```
+Nenhum bloqueador de decisão permanece.
 
 ---
 
 ## Objective
 
-Converter:
+Produzir um projeto Gradle que compila:
 
 ```text
-Proposed
+gradle.properties
 
-↓
+build.gradle
 
-Accepted
+settings.gradle
+
+gradle-wrapper
+
+src/main/resources/fabric.mod.json
 ```
 
-Somente após isso a implementação pode começar.
+Usando exatamente as versões de:
+
+```text
+docs/technical/Fabric-Version.md §5.1
+```
 
 ---
 
 ## Expected Result
 
 ```text
-ADRs aprovadas
+./gradlew build
 
 ↓
 
-Documentos afetados atualizados
+jar gerado em build/libs/
 
 ↓
 
-Version Matrix preenchida
-
-↓
-
-TASK-001 liberada
+Version Matrix validada na prática
 ```
 
 ---
 
-## Blocked
+## Definition of Done
 
 ```text
-Criar projeto Fabric
+build passa
 
-Criar Core Models
+runClient abre o jogo
 
-Criar ColonySavedData
+mod aparece na lista de mods
+
+nenhuma versão "latest" ou SNAPSHOT no gradle.properties
 ```
 
-permanecem bloqueados até o Stage 0 ser concluído.
+---
+
+## Riscos conhecidos
+
+A combinação Loom 1.17.18 + Gradle 9.6.1 não foi executada ainda.
+
+Se o build falhar, corrigir `Fabric-Version.md` antes de seguir.
 
 ---
 
@@ -493,7 +505,7 @@ Resolver: simulação autônoma quando nenhum jogador está próximo.
 Status:
 
 ```text
-PROPOSED — awaiting approval
+DONE — Accepted 2026-08-06
 ```
 
 ---
@@ -511,7 +523,7 @@ Resolver: algoritmo de detecção de vila (cluster de POIs).
 Status:
 
 ```text
-PROPOSED — awaiting approval
+DONE — Accepted 2026-08-06
 ```
 
 ---
@@ -531,7 +543,7 @@ Resolver: injeção de comportamento no Brain do aldeão.
 Status:
 
 ```text
-PROPOSED — awaiting approval
+DONE — Accepted 2026-08-06
 ```
 
 ---
@@ -549,7 +561,7 @@ Resolver: Core independente de Minecraft.
 Status:
 
 ```text
-PROPOSED — awaiting approval
+DONE — Accepted 2026-08-06
 ```
 
 ---
@@ -567,7 +579,7 @@ Resolver: três layouts de pacote conflitantes.
 Status:
 
 ```text
-PROPOSED — awaiting approval
+DONE — Accepted 2026-08-06
 ```
 
 ---
@@ -585,8 +597,12 @@ Fixar versões exatas: Java, Loom, Loader, Fabric API, mappings.
 Status:
 
 ```text
-PENDING
+DONE — 2026-08-06
 ```
+
+Matriz fixada em `Fabric-Version.md §5.1`.
+
+Validação prática ocorre na TASK-001.
 
 ---
 
@@ -597,8 +613,24 @@ Correções de consistência na documentação.
 Status:
 
 ```text
-PENDING
+DONE — 2026-08-06
 ```
+
+Corrigido:
+
+```text
+PROJECT_CONSTITUTION.md §3
+
+  alinhado com ADR-002
+
+  autonomia = independência de comandos do jogador
+
+  não de chunks carregados
+```
+
+Escopo: apenas a contradição §3 vs ADR-002, identificada na auditoria.
+
+Nenhuma outra inconsistência foi auditada nesta passagem.
 
 ---
 
@@ -1030,6 +1062,64 @@ Resultado:
 Implementação permanece bloqueada.
 
 Aguardando aprovação.
+
+---
+
+## 2026-08-06 — Stage 0 concluído
+
+Aceito:
+
+```text
+ADR-002  Hibernação com estado persistente e retomada
+
+ADR-003  Detecção por cluster de POIs de cama ocupados
+
+ADR-004  Mixin com superfície mínima e declarada
+
+ADR-005  Tipos de valor próprios no Core (records imutáveis)
+
+ADR-006  Domínio dentro da camada
+```
+
+Atualizado:
+
+```text
+PROJECT_CONSTITUTION.md   §3 alinhado com ADR-002
+
+Fabric-Version.md         Version Matrix fixada
+```
+
+Versões fixadas:
+
+```text
+Gradle 9.6.1
+
+Loom 1.17.18
+
+Yarn 1.21.1+build.3
+
+Loader 0.19.3
+
+Fabric API 0.116.15+1.21.1
+```
+
+Não verificado:
+
+```text
+A matriz não foi executada.
+
+Nenhum build rodou.
+
+A validação acontece na TASK-001.
+```
+
+Resultado:
+
+```text
+Implementação desbloqueada.
+
+Próximo passo: TASK-001.
+```
 
 ---
 

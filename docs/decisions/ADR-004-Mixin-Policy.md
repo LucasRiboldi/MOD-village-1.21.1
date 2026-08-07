@@ -4,8 +4,9 @@
 
 # Village Colony Mixin Policy
 
-**Status:** Proposed — awaiting approval
+**Status:** Accepted
 **Date:** 2026-08-06
+**Accepted:** 2026-08-06
 **Decision Type:** Architecture / Vanilla Integration
 **Blocks:** Phase 9 onwards (Lumberjack, Manufacturer, Builder)
 

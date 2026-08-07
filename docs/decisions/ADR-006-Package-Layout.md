@@ -4,8 +4,9 @@
 
 # Village Colony Package Layout
 
-**Status:** Proposed — awaiting approval
+**Status:** Accepted
 **Date:** 2026-08-06
+**Accepted:** 2026-08-06
 **Decision Type:** Architecture / Code Structure
 **Blocks:** TASK-003
 

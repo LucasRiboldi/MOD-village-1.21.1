@@ -4,8 +4,9 @@
 
 # Village Colony Village Detection
 
-**Status:** Proposed — awaiting approval
+**Status:** Accepted
 **Date:** 2026-08-06
+**Accepted:** 2026-08-06
 **Decision Type:** Architecture / Integration
 **Blocks:** TASK-009, TASK-010, Phase 4, v0.2
 
