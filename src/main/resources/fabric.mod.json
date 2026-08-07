@@ -13,6 +13,7 @@
     "issues": "https://github.com/LucasRiboldi/MOD-village-1.21.1/issues"
   },
   "license": "MIT",
+  "icon": "assets/villagecolony/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [
