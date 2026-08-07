@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "villagecolony",
+  "version": "${version}",
+  "name": "Village Colony",
+  "description": "Transforms vanilla villages into autonomous living colonies.",
+  "authors": [
+    "Lucas Riboldi"
+  ],
+  "contact": {
+    "repo": "https://github.com/LucasRiboldi/MOD-village-1.21.1"
+  },
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.villagecolony.VillageColonyMod"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "fabric-api": "*",
+    "minecraft": "~1.21.1",
+    "java": ">=21"
+  }
+}

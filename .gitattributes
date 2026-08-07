@@ -1,0 +1,14 @@
+# Normaliza finais de linha para que o repositório funcione em
+# Windows, Linux e macOS.
+
+* text=auto eol=lf
+
+# O launcher Unix quebra se receber CRLF.
+gradlew text eol=lf
+
+# O launcher Windows quebra se receber LF.
+gradlew.bat text eol=crlf
+
+*.jar binary
+*.png binary
+*.zip binary

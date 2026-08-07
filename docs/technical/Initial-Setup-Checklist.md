@@ -208,16 +208,34 @@ com.villagecolony
 
 Estrutura:
 
+A autoridade sobre o layout é:
+
+```text
+docs/decisions/ADR-006-Package-Layout.md
+```
+
+Resumo — domínio dentro da camada:
+
 ```text
 com.villagecolony
 
+├── VillageColonyMod.java
+
 ├── core
 
-│   ├── model
+│   ├── type
 
-│   ├── service
+│   ├── colony      (model + service)
 
-│   └── manager
+│   ├── worker      (model + service)
+
+│   ├── task        (model + service)
+
+│   ├── resource    (model + service)
+
+│   ├── storage     (model + service)
+
+│   └── construction (model + service)
 
 
 ├── fabric
@@ -226,11 +244,20 @@ com.villagecolony
 
 │   ├── event
 
-│   └── integration
+│   ├── integration
+
+│   ├── mixin
+
+│   └── brain
 
 
 └── data
+
+    └── save
 ```
+
+O agrupamento por camada (`core/model`, `core/service`, `core/manager`)
+que constava aqui foi **substituído** pela ADR-006.
 
 ---
 

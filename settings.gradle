@@ -1,0 +1,19 @@
+pluginManagement {
+    repositories {
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+// Permite ao Gradle baixar o JDK 21 automaticamente quando a máquina
+// não tiver um instalado. A toolchain declarada em build.gradle continua
+// sendo a autoridade sobre qual Java compila o mod.
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+rootProject.name = 'village-colony'
