@@ -8,6 +8,9 @@ run/
 .fabric/
 remappedSrc/
 
+# Log4j escreve aqui quando o Gradle roda a partir da raiz
+logs/
+
 # IntelliJ IDEA
 .idea/
 *.iml
