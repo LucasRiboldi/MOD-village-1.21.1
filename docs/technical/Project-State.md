@@ -923,6 +923,40 @@ Emendas de ADR-003 redigidas: três, em `docs/decisions/ADR-003 §10`.
 
 ---
 
+Verificado em jogo (2026-08-07, 00:13):
+
+```text
+00:14:59  Loaded 0 colonies
+
+00:15:01  Colony created at 1109,730 with 8 beds
+
+00:18:29  Colony ... is now DORMANT
+
+00:18:46  Saved 1 colonies
+```
+
+`is now DORMANT` é a varredura reconhecendo que os chunks da vila
+pararam de tickar. Comportamento que não existia antes desta correção.
+
+Nenhuma linha `is now ACTIVE`: a colônia nasce ACTIVE pela `adopt`, e a
+varredura só registra transição. Correto.
+
+Nenhuma linha `moved` em cerca de sete ciclos — o centro não oscila.
+
+---
+
+## Estado geral
+
+```text
+Fases 1 a 3 completas e verificadas em jogo
+
+81 testes
+
+Fase 4 — Sistema de Trabalhadores, a partir de TASK-011
+```
+
+---
+
 Nota de método: trocar o jar com o jogo aberto não testa nada.
 
 O Minecraft carrega mods na inicialização da JVM. Sair ao menu e
