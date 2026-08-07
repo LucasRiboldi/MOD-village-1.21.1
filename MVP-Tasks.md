@@ -271,6 +271,37 @@ Todos aldeões da vila são registrados.
 
 ---
 
+## TASK-012b — Persistir Trabalhadores
+
+Estender:
+
+```text
+ColonySavedData
+```
+
+Decisão (2026-08-07): estender o save existente em vez de criar um
+`WorkerSavedData`. Um segundo arquivo permitiria worker órfão apontando
+para colônia que não foi gravada, sem transação que mantivesse os dois
+em sincronia.
+
+Gravar por trabalhador:
+
+* villagerId;
+* colonyId;
+* profissão, quando houver.
+
+Carregar com `Worker.restore`, que já aceita profissão ausente.
+
+Motivo:
+
+Profissão de colônia é decisão do mod, não existe no mundo Vanilla e
+sumiria ao fechar o mundo. Sem isto, cada sessão redistribuiria funções
+do zero e a TASK-014 não se sustenta.
+
+Esta tarefa não constava do plano original. Ver Project-State.md §7.
+
+---
+
 ## TASK-013 — Criar Sistema de Profissões
 
 Implementar:

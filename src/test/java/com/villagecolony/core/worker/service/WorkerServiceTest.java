@@ -129,6 +129,49 @@ class WorkerServiceTest {
     }
 
     @Test
+    void restorePutsBackAWorkerWithItsProfession() {
+        UUID villager = UUID.randomUUID();
+
+        service.restore(Worker.restore(villager, COLONY, ProfessionType.FARMER));
+
+        assertEquals(
+                ProfessionType.FARMER,
+                service.find(villager).orElseThrow().profession().orElseThrow());
+    }
+
+    /**
+     * Ao contrário de register, que a varredura repete de propósito:
+     * villagerId repetido no save esconderia qual profissão venceu.
+     */
+    @Test
+    void restoreRejectsDuplicate() {
+        UUID villager = UUID.randomUUID();
+
+        service.restore(Worker.restore(villager, COLONY, ProfessionType.FARMER));
+
+        assertThrows(IllegalStateException.class, () ->
+                service.restore(Worker.restore(villager, OTHER_COLONY, ProfessionType.BUILDER)));
+    }
+
+    /** A varredura roda depois do carregamento e não pode apagar função. */
+    @Test
+    void registerAfterRestoreKeepsProfession() {
+        UUID villager = UUID.randomUUID();
+
+        service.restore(Worker.restore(villager, COLONY, ProfessionType.LUMBERJACK));
+        service.register(villager, COLONY);
+
+        assertEquals(
+                ProfessionType.LUMBERJACK,
+                service.find(villager).orElseThrow().profession().orElseThrow());
+    }
+
+    @Test
+    void restoreRejectsNull() {
+        assertThrows(NullPointerException.class, () -> service.restore(null));
+    }
+
+    @Test
     void clearEmptiesTheRegistry() {
         service.register(UUID.randomUUID(), COLONY);
         service.register(UUID.randomUUID(), OTHER_COLONY);

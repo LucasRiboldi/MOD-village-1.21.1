@@ -5,6 +5,8 @@ import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.ColonyState;
 import com.villagecolony.core.colony.service.ColonyService;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.core.worker.model.Worker;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
@@ -14,7 +16,9 @@ import net.minecraft.world.PersistentState;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -26,6 +30,11 @@ import java.util.UUID;
  *
  * <p>Os dados ficam presos ao Overworld porque a colônia pertence ao
  * mundo, não ao jogador. Ver Save-Data-System.md.
+ *
+ * <p>Colônias e trabalhadores moram no mesmo arquivo de propósito
+ * (TASK-012b): o trabalhador aponta para a colônia por id, e dois
+ * arquivos separados poderiam ser gravados em momentos diferentes,
+ * deixando trabalhador órfão apontando para colônia inexistente.
  */
 public final class ColonySavedData extends PersistentState {
 
@@ -40,12 +49,19 @@ public final class ColonySavedData extends PersistentState {
     private static final String STATE = "state";
     private static final String OBSERVED_BEDS = "observedBeds";
 
+    private static final String WORKERS = "workers";
+    private static final String VILLAGER_ID = "villagerId";
+    private static final String COLONY_ID = "colonyId";
+    private static final String PROFESSION = "profession";
+
     public static final PersistentState.Type<ColonySavedData> TYPE = new PersistentState.Type<>(
             ColonySavedData::new,
             ColonySavedData::readNbt,
             null);
 
     private final List<Colony> colonies = new ArrayList<>();
+
+    private final List<Worker> workers = new ArrayList<>();
 
     private ColonySavedData() {
     }
@@ -68,14 +84,31 @@ public final class ColonySavedData extends PersistentState {
     }
 
     /**
-     * Copia o registro em memória para cá e marca para gravação.
+     * Trabalhadores lidos do disco, já sem os órfãos.
+     *
+     * <p>Vazio antes do primeiro save, e também em saves anteriores à
+     * TASK-012b — nesse caso a varredura os reencontra, só sem profissão.
+     */
+    public List<Worker> workers() {
+        return List.copyOf(workers);
+    }
+
+    /**
+     * Copia os registros em memória para cá e marca para gravação.
      *
      * <p>O Minecraft grava quando decide gravar; nosso papel é apenas
      * garantir que o conteúdo esteja correto e sinalizado como sujo.
+     *
+     * <p>Os dois registros são copiados na mesma chamada porque são
+     * gravados no mesmo arquivo: sincronizar um sem o outro produziria
+     * exatamente o órfão que juntá-los evita.
      */
-    public void sync(Collection<Colony> current) {
+    public void sync(Collection<Colony> currentColonies, Collection<Worker> currentWorkers) {
         colonies.clear();
-        colonies.addAll(current);
+        colonies.addAll(currentColonies);
+
+        workers.clear();
+        workers.addAll(currentWorkers);
 
         markDirty();
     }
@@ -98,6 +131,23 @@ public final class ColonySavedData extends PersistentState {
         }
 
         nbt.put(COLONIES, list);
+
+        NbtList workerList = new NbtList();
+
+        for (Worker worker : workers) {
+            NbtCompound entry = new NbtCompound();
+
+            entry.putUuid(VILLAGER_ID, worker.villagerId());
+            entry.putUuid(COLONY_ID, worker.colonyId());
+
+            // Ausente, e não vazio, para quem ainda não tem função: a
+            // leitura distingue "sem chave" de "chave desconhecida".
+            worker.profession().ifPresent(p -> entry.putString(PROFESSION, p.name()));
+
+            workerList.add(entry);
+        }
+
+        nbt.put(WORKERS, workerList);
 
         return nbt;
     }
@@ -130,7 +180,74 @@ public final class ColonySavedData extends PersistentState {
             data.colonies.add(colony);
         }
 
+        readWorkers(nbt, data);
+
         return data;
+    }
+
+    /**
+     * Lê os trabalhadores, descartando os que apontam para colônia que
+     * não veio no mesmo arquivo.
+     *
+     * <p>Um órfão não deveria existir — colônias e trabalhadores são
+     * gravados juntos. Se existir, o save foi editado ou corrompido, e
+     * um trabalhador de colônia inexistente seria invisível para sempre:
+     * nenhuma colônia o listaria, e a varredura não o recriaria, porque
+     * o villagerId já teria dono. Descartar deixa a varredura reencontrá-lo
+     * e reatribuí-lo à colônia certa, ao custo da profissão que ele tinha.
+     *
+     * <p>Chamado depois das colônias, e depende disso.
+     */
+    private static void readWorkers(NbtCompound nbt, ColonySavedData data) {
+        Set<UUID> knownColonies = new HashSet<>();
+
+        for (Colony colony : data.colonies) {
+            knownColonies.add(colony.id());
+        }
+
+        NbtList list = nbt.getList(WORKERS, NbtElement.COMPOUND_TYPE);
+
+        for (int i = 0; i < list.size(); i++) {
+            NbtCompound entry = list.getCompound(i);
+
+            if (!entry.containsUuid(VILLAGER_ID) || !entry.containsUuid(COLONY_ID)) {
+                continue;
+            }
+
+            UUID colonyId = entry.getUuid(COLONY_ID);
+
+            if (!knownColonies.contains(colonyId)) {
+                continue;
+            }
+
+            data.workers.add(Worker.restore(
+                    entry.getUuid(VILLAGER_ID),
+                    colonyId,
+                    readProfession(entry)));
+        }
+    }
+
+    /**
+     * Profissão ausente ou desconhecida vira "sem função".
+     *
+     * <p>Mesmo princípio de {@link #readState}: não derrubar o
+     * carregamento do mundo. Aqui o custo é menor — a atribuição inicial
+     * dá uma função nova ao aldeão no próximo ciclo (TASK-014).
+     */
+    private static ProfessionType readProfession(NbtCompound entry) {
+        if (!entry.contains(PROFESSION, NbtElement.STRING_TYPE)) {
+            return null;
+        }
+
+        String name = entry.getString(PROFESSION);
+
+        for (ProfessionType profession : ProfessionType.values()) {
+            if (profession.name().equals(name)) {
+                return profession;
+            }
+        }
+
+        return null;
     }
 
     /**

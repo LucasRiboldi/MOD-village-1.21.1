@@ -2,6 +2,7 @@ package com.villagecolony.fabric.event;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.data.save.ColonySavedData;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.server.MinecraftServer;
@@ -22,17 +23,31 @@ public final class ServerLifecycleHandler {
         ServerLifecycleEvents.SERVER_STOPPING.register(ServerLifecycleHandler::onServerStopping);
     }
 
-    /** Recoloca no registro as colônias gravadas no mundo. */
+    /**
+     * Recoloca no registro as colônias e os trabalhadores gravados no
+     * mundo.
+     *
+     * <p>Os trabalhadores vêm depois das colônias porque o saved data já
+     * descartou os que não pertencem a nenhuma colônia carregada.
+     */
     private static void onServerStarted(MinecraftServer server) {
         VillageColonyMod.COLONIES.clear();
         VillageColonyMod.WORKERS.clear();
 
-        for (Colony colony : ColonySavedData.get(server).colonies()) {
+        ColonySavedData data = ColonySavedData.get(server);
+
+        for (Colony colony : data.colonies()) {
             VillageColonyMod.COLONIES.register(colony);
         }
 
+        for (Worker worker : data.workers()) {
+            VillageColonyMod.WORKERS.restore(worker);
+        }
+
         VillageColonyMod.LOGGER.info(
-                "Loaded {} colonies", VillageColonyMod.COLONIES.count());
+                "Loaded {} colonies with {} workers",
+                VillageColonyMod.COLONIES.count(),
+                VillageColonyMod.WORKERS.count());
     }
 
     /**
@@ -43,7 +58,9 @@ public final class ServerLifecycleHandler {
      * para ele.
      */
     private static void onServerStopping(MinecraftServer server) {
-        ColonySavedData.get(server).sync(VillageColonyMod.COLONIES.all());
+        ColonySavedData.get(server).sync(
+                VillageColonyMod.COLONIES.all(),
+                VillageColonyMod.WORKERS.all());
 
         VillageColonyMod.LOGGER.info(
                 "Saved {} colonies with {} workers",

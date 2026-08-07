@@ -55,6 +55,29 @@ public final class WorkerService {
         return worker;
     }
 
+    /**
+     * Recoloca no registro um trabalhador vindo do save.
+     *
+     * <p>Diferente de {@link #register}, que é idempotente porque a
+     * varredura reencontra os mesmos aldeões a cada ciclo: aqui um
+     * villagerId repetido só pode vir de save corrompido ou de um
+     * carregamento feito duas vezes. Lançar expõe isso; ignorar em
+     * silêncio esconderia qual dos dois registros venceu — e eles podem
+     * ter profissões diferentes.
+     *
+     * <p>Mesma decisão de {@code ColonyService.register}, pelo mesmo
+     * motivo. Ver TASK-006.
+     */
+    public void restore(Worker worker) {
+        Objects.requireNonNull(worker, "worker");
+
+        Worker existing = workers.putIfAbsent(worker.villagerId(), worker);
+
+        if (existing != null) {
+            throw new IllegalStateException("Worker already registered: " + worker.villagerId());
+        }
+    }
+
     public Optional<Worker> find(UUID villagerId) {
         if (villagerId == null) {
             return Optional.empty();
