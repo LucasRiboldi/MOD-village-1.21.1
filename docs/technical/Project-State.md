@@ -852,6 +852,40 @@ PENDENTE: emendar ADR-003 registrando que a completude da observação
           decide a autoridade sobre o centro.
 ```
 
+---
+
+Verificado em jogo (2026-08-06, 23:50, jar corrigido):
+
+```text
+created at 885,920   12 camas
+
+moved to  870,923    13 camas
+
+moved to  878,922    15 camas
+
+moved to  876,919    21 camas
+```
+
+Contagem monotonicamente crescente. O centro converge em vez de
+oscilar.
+
+Comparar com a sessão anterior, mesmo cenário:
+
+```text
+12 → 3 → 12 → 3 → 3
+```
+
+Uma colônia, um UUID, estável nas quatro observações.
+
+---
+
+Nota de método: trocar o jar com o jogo aberto não testa nada.
+
+O Minecraft carrega mods na inicialização da JVM. Sair ao menu e
+reentrar no mundo reusa o código em memória.
+
+Duas sessões foram desperdiçadas assim antes de perceber.
+
 Este é o segundo desvio de ADR-003 registrado aqui. O primeiro é
 `DORMANT → ABANDONED`.
 
