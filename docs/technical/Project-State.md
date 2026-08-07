@@ -2,10 +2,10 @@
 
 # Village Colony — Project State
 
-**Status:** Em implementação — Fases 1 a 3 completas, Fase 4 escrita e
-não verificada em jogo
+**Status:** Em implementação — Fases 1 a 3 completas, Fases 4 e 5
+escritas e não verificadas em jogo
 **Version:** 0.1.0
-**Last Update:** 2026-08-07 — TASK-012b, TASK-013 e TASK-014 concluídas
+**Last Update:** 2026-08-07 — TASK-015 e TASK-016 concluídas
 **Repository:** https://github.com/LucasRiboldi/MOD-village-1.21.1
 
 ---
@@ -61,7 +61,7 @@ Java
 ## Current Stage
 
 ```text
-Fase 4 — Sistema de Trabalhadores
+Fase 5 — Sistema de Armazenamento
 ```
 
 ---
@@ -74,8 +74,10 @@ sessões.
 
 A Fase 4 está escrita por inteiro — registro, persistência, catálogo de
 profissões e atribuição inicial — e **nenhuma parte dela foi verificada
-em jogo**. É a maior dívida aberta do projeto, e o §11 explica por que
-ela é cara.
+em jogo**. A Fase 5 começou sobre ela e já traz o registro dos baús.
+
+Seis tarefas seguidas foram escritas sem passar pelo jogo. É a maior
+dívida aberta do projeto, e o §11 explica por que ela é cara.
 
 ---
 
@@ -91,6 +93,9 @@ Fase 2   persistência                   TASK-007 e TASK-008
 Fase 3   detecção da vila               TASK-009 e TASK-010
 
 Fase 4   trabalhadores                  TASK-011 a TASK-014
+                                        escrita, não verificada em jogo
+
+Fase 5   armazenamento                  TASK-015 e TASK-016
                                         escrita, não verificada em jogo
 ```
 
@@ -349,9 +354,15 @@ Fase 4 — Trabalhadores
   TASK-013  ProfessionRegistry       feito, NÃO verificado em jogo
   TASK-014  atribuição inicial       feito, NÃO verificado em jogo
 
-Fases 5 a 9
+Fase 5 — Armazenamento
 
-  TASK-015 em diante                 não iniciadas
+  TASK-015  detecção de baú          feito, NÃO verificado em jogo
+  TASK-016  StorageRegistry          feito, NÃO verificado em jogo
+  TASK-017  ler inventário           não iniciado
+
+Fases 6 a 9
+
+  TASK-018 em diante                 não iniciadas
 ```
 
 ---
@@ -367,17 +378,19 @@ core/
                      Capability, ToolType
   worker/service/    WorkerService, ProfessionRegistry,
                      ProfessionAssigner
+  storage/model/     WorkerStorage
+  storage/service/   StorageRegistry
 
 fabric/
   adapter/           MinecraftTypeAdapter
   event/             ServerLifecycleHandler, VillageDetectionHandler
-  integration/       VillageScanner, VillagerScanner
+  integration/       VillageScanner, VillagerScanner, ChestScanner
 
 data/
   save/              ColonySavedData
 ```
 
-Vazios por enquanto: `core/task`, `core/resource`, `core/storage`,
+Vazios por enquanto: `core/task`, `core/resource`,
 `core/construction`, `fabric/mixin`, `fabric/brain`.
 
 ---
@@ -385,7 +398,7 @@ Vazios por enquanto: `core/task`, `core/resource`, `core/storage`,
 ## Testes
 
 ```text
-135 testes, todos passando
+148 testes, todos passando
 ```
 
 Cobrem o Core (lógica pura) e a serialização NBT.
@@ -447,6 +460,15 @@ Loaded N colonies with M workers
   M > 0 ao reabrir o mundo
 
   as funções são as mesmas de antes de fechar
+
+
+Registered N storages in colony ...
+
+  cada aldeão pegou o baú da sua casa, não o do vizinho
+
+  dois aldeões do mesmo cômodo não pegaram o mesmo baú
+
+  um baú construído depois é encontrado no ciclo seguinte
 ```
 
 O último é o que prova a TASK-012b, e é o mais barato de fazer: fechar
@@ -498,19 +520,22 @@ Registrada como `TASK-012b` em `MVP-Tasks.md`.
 # 8. Priority Queue
 
 ```text
-1   verificar a Fase 4 inteira em jogo — ver §7
+1   verificar as Fases 4 e 5 em jogo — ver §7
 
-2   Fase 5 — Sistema de Armazenamento (TASK-015+)
+2   TASK-017 — ler o inventário dos baús
+
+3   Fase 6 — Sistema de Recursos (TASK-018+)
 ```
 
 A verificação foi adiada a pedido do autor em 2026-08-07, e o código
-seguiu sem ela. A dívida cresceu de uma tarefa para quatro: quando um
+seguiu sem ela. A dívida cresceu de uma tarefa para seis: quando um
 defeito de fronteira aparecer, ele estará em algum ponto de
-`VillagerScanner`, `ColonySavedData` ou `VillageDetectionHandler`, sem
-o log intermediário que teria dito qual.
+`VillagerScanner`, `ChestScanner`, `ColonySavedData` ou
+`VillageDetectionHandler`, sem o log intermediário que teria dito qual.
 
-Começar a Fase 5 antes de quitá-la empilha uma quinta camada sobre a
-mesma fronteira não exercitada.
+A TASK-017 lê o conteúdo dos baús registrados. Se o registro estiver
+errado, ela contará o inventário do baú errado — e o número parecerá
+plausível.
 
 ---
 
@@ -1730,6 +1755,132 @@ Verificado:
 
 ```text
 135 testes passando
+
+./gradlew build → BUILD SUCCESSFUL
+
+Core continua sem net.minecraft (grep)
+```
+
+Não verificado:
+
+```text
+Tudo o que depende do jogo. Ver §7.
+```
+
+---
+
+## 2026-08-07 — TASK-015 e TASK-016 concluídas
+
+Criado:
+
+```text
+core/storage/model/WorkerStorage        workerId + posição do baú
+
+core/storage/service/StorageRegistry    quem tem baú, e onde
+
+fabric/integration/ChestScanner         cama -> baú próximo
+```
+
+Alterado:
+
+```text
+VillagerScanner          procura o baú na mesma passagem
+
+  scan devolve ScanResult, não int
+
+VillageColonyMod         campo STORAGES
+
+ServerLifecycleHandler   esvazia STORAGES junto com os demais
+
+VillageDetectionHandler  loga os baús registrados
+```
+
+APIs confirmadas com `javap` no jar mapeado, não de memória:
+
+```text
+MemoryModuleType.HOME                     -> GlobalPos
+
+Brain.getOptionalRegisteredMemory(...)
+
+GlobalPos.dimension() / pos()
+
+WorldChunk.getBlockEntities()             -> Map<BlockPos, BlockEntity>
+
+ServerChunkManager.getWorldChunk(x, z)    null se não carregado
+```
+
+Decisão — a busca parte das block entities do chunk, não do cubo:
+
+```text
+Percorrer o cubo de raio 6 custaria 2197 getBlockEntity
+por aldeão sem baú, a cada ciclo.
+```
+
+Contra Performance-Rules.md §6. Uma casa tem um punhado de block
+entities, e é sobre esse punhado que se itera. O raio vira um filtro,
+não um laço.
+
+Decisão — a cama é a casa:
+
+```text
+MemoryModuleType.HOME já é a cama do aldeão.
+```
+
+É o mesmo POI que a ADR-003 usa para achar a vila, então não há uma
+segunda noção de "casa" no código.
+
+Decisão — baú já reivindicado é pulado:
+
+```text
+Storage-System.md §"Proteção".
+```
+
+Sem isso, dois aldeões do mesmo cômodo partilhariam um baú e cada um
+contaria o estoque do outro como seu.
+
+Decisão — `register` substitui, ao contrário de colônia e trabalhador:
+
+```text
+O baú registrado pode ter sido quebrado.
+```
+
+Reencontrar o dono com outro baú é a recuperação prevista em
+Storage-System.md §"Falhas". Recusar prenderia o trabalhador a um baú
+que não existe mais.
+
+Decisão — o registro de baús não é persistido:
+
+```text
+A posição do baú existe no mundo e é redescoberta.
+```
+
+Difere da profissão, que só existe na cabeça do mod. Salvar manteria
+uma segunda verdade que envelheceria assim que o jogador quebrasse o
+baú.
+
+Decisão — a busca não força carregamento de chunk:
+
+```text
+Chunk não carregado é pulado.
+```
+
+ADR-002. O baú lá será encontrado no ciclo em que o chunk estiver
+carregado.
+
+Não implementado:
+
+```text
+"Storage Missing" de Storage-System.md §"Falhas"
+```
+
+`StorageRegistry.remove` existe e nada o chama: falta detectar que o
+baú registrado sumiu. Enquanto isso, um baú quebrado continua no
+registro até o dono achar outro.
+
+Verificado:
+
+```text
+148 testes passando
 
 ./gradlew build → BUILD SUCCESSFUL
 

@@ -1,6 +1,7 @@
 package com.villagecolony;
 
 import com.villagecolony.core.colony.service.ColonyService;
+import com.villagecolony.core.storage.service.StorageRegistry;
 import com.villagecolony.core.worker.service.WorkerService;
 import com.villagecolony.fabric.event.ServerLifecycleHandler;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
@@ -52,12 +53,24 @@ public class VillageColonyMod implements ModInitializer {
      * <p>Mesma justificativa de {@link #COLONIES}: ADR-006 §5 permite o
      * campo estático em vez de uma camada de managers.
      *
-     * <p>Não é persistido. Os trabalhadores são redescobertos a cada
-     * sessão a partir dos aldeões do mundo, que são a fonte da verdade.
-     * Isso deixa de bastar quando houver profissão atribuída — ver
-     * TASK-013.
+     * <p>Persistido junto com as colônias desde a TASK-012b: a profissão
+     * atribuída é decisão do mod e não existe no mundo Vanilla, então
+     * redescobrir os aldeões deixou de bastar.
      */
     public static final WorkerService WORKERS = new WorkerService();
+
+    /**
+     * Registro dos baús dos trabalhadores em memória.
+     *
+     * <p>Mesma justificativa de {@link #COLONIES}: ADR-006 §5 permite o
+     * campo estático em vez de uma camada de managers.
+     *
+     * <p>Não é persistido. Ao contrário da profissão, a posição do baú
+     * existe no mundo e é redescoberta pela varredura a cada sessão —
+     * salvar seria manter uma segunda verdade que envelheceria assim que
+     * o jogador quebrasse o baú.
+     */
+    public static final StorageRegistry STORAGES = new StorageRegistry();
 
     @Override
     public void onInitialize() {

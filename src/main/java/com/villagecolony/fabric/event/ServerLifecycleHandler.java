@@ -33,6 +33,7 @@ public final class ServerLifecycleHandler {
     private static void onServerStarted(MinecraftServer server) {
         VillageColonyMod.COLONIES.clear();
         VillageColonyMod.WORKERS.clear();
+        VillageColonyMod.STORAGES.clear();
 
         ColonySavedData data = ColonySavedData.get(server);
 
@@ -69,5 +70,6 @@ public final class ServerLifecycleHandler {
 
         VillageColonyMod.COLONIES.clear();
         VillageColonyMod.WORKERS.clear();
+        VillageColonyMod.STORAGES.clear();
     }
 }

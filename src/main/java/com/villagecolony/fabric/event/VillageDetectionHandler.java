@@ -115,14 +115,23 @@ public final class VillageDetectionHandler {
      * aldeões a cada ciclo é o caso comum e deve ser silencioso.
      */
     private static void registerVillagers(ServerWorld world, Colony colony) {
-        int registered = VillagerScanner.scan(world, colony, VillageColonyMod.WORKERS);
+        VillagerScanner.ScanResult result = VillagerScanner.scan(
+                world, colony, VillageColonyMod.WORKERS, VillageColonyMod.STORAGES);
 
-        if (registered > 0) {
+        if (result.registeredWorkers() > 0) {
             VillageColonyMod.LOGGER.info(
                     "Registered {} villagers in colony {} ({} total)",
-                    registered,
+                    result.registeredWorkers(),
                     colony.id(),
                     VillageColonyMod.WORKERS.countOfColony(colony.id()));
+        }
+
+        if (result.registeredStorages() > 0) {
+            VillageColonyMod.LOGGER.info(
+                    "Registered {} storages in colony {} ({} total)",
+                    result.registeredStorages(),
+                    colony.id(),
+                    VillageColonyMod.STORAGES.count());
         }
 
         int assigned = ProfessionAssigner.assignMissing(VillageColonyMod.WORKERS, colony.id());
