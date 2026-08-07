@@ -945,14 +945,74 @@ Nenhuma linha `moved` em cerca de sete ciclos — o centro não oscila.
 
 ---
 
+---
+
+## 2026-08-07 — TASK-011 concluída
+
+Criado:
+
+```text
+core/worker/model/ProfessionType   LUMBERJACK, MANUFACTURER,
+
+                                   FARMER, BUILDER
+
+core/worker/model/Worker           villagerId, colonyId, profession
+```
+
+Decisões:
+
+```text
+Identidade é o villagerId
+
+  a profissão muda, o aldeão não
+```
+
+```text
+A colônia é referenciada por UUID, não por objeto
+
+  domínio do core não importa outro (ADR-006 §6)
+```
+
+```text
+Profissão é Optional, não um quinto valor do enum
+
+  registrar aldeão e dar função são momentos diferentes
+
+  CODE-STANDARDS §7
+```
+
+Campos de Data-Model adiados por dependerem de outros sistemas:
+
+```text
+storageId    sistema de armazenamento
+
+state        WorkerState, sistema de tarefas
+
+currentTask  sistema de tarefas
+```
+
+Verificado:
+
+```text
+94 testes
+
+core sem net.minecraft
+
+worker não importa colony
+```
+
+---
+
 ## Estado geral
 
 ```text
 Fases 1 a 3 completas e verificadas em jogo
 
-81 testes
+Fase 4 iniciada — TASK-011 feita
 
-Fase 4 — Sistema de Trabalhadores, a partir de TASK-011
+94 testes
+
+Próxima: TASK-012 — VillagerScanner
 ```
 
 ---

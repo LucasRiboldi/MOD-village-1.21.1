@@ -338,6 +338,20 @@ BUILDER
 
 ---
 
+O campo é **opcional**.
+
+Registrar um aldeão e dar-lhe função são momentos diferentes: a
+detecção registra todos os aldeões da vila (TASK-012), e só depois a
+colônia decide quem faz o quê (TASK-013).
+
+A ausência de função é representada por ausência de valor —
+`Optional.empty()` — e não por um quinto valor do enum. O enum contém
+exatamente as quatro profissões acima.
+
+Conforme `CODE-STANDARDS.md §7`.
+
+---
+
 ### storageId
 
 Tipo:
