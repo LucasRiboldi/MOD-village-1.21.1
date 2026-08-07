@@ -143,7 +143,8 @@ public final class VillageDetectionHandler {
             logResources(world, colony);
         }
 
-        int assigned = ProfessionAssigner.assignMissing(VillageColonyMod.WORKERS, colony.id());
+        int assigned = ProfessionAssigner.assignMissing(
+                VillageColonyMod.WORKERS, colony.id(), result.employable());
 
         if (assigned > 0) {
             VillageColonyMod.LOGGER.info(

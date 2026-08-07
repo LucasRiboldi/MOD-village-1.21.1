@@ -9,6 +9,11 @@ import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+import net.minecraft.village.VillagerProfession;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * Registra como trabalhadores os aldeões vivos de uma colônia.
@@ -58,12 +63,18 @@ public final class VillagerScanner {
         int registered = 0;
         int storagesFound = 0;
 
+        Set<UUID> employable = new HashSet<>();
+
         for (VillagerEntity villager
                 : world.getEntitiesByClass(VillagerEntity.class, area, VillagerEntity::isAlive)) {
 
             if (!workers.isRegistered(villager.getUuid())) {
                 workers.register(villager.getUuid(), colony.id());
                 registered++;
+            }
+
+            if (canWork(villager)) {
+                employable.add(villager.getUuid());
             }
 
             // Fora do if: o aldeão pode já ser conhecido e ainda não ter
@@ -74,11 +85,38 @@ public final class VillagerScanner {
             }
         }
 
-        return new ScanResult(registered, storagesFound);
+        return new ScanResult(registered, storagesFound, Set.copyOf(employable));
     }
 
-    /** O que uma varredura mudou. Zero em ambos é o caso comum. */
-    public record ScanResult(int registeredWorkers, int registeredStorages) {
+    /**
+     * Se este aldeão pode receber uma função de colônia.
+     *
+     * <p>Bebê não trabalha. Ele é registrado — a colônia não perde nada
+     * ao já conhecê-lo — mas dar-lhe um machado seria absurdo em jogo, e
+     * ele ainda ocuparia a vaga de lenhador que um adulto deveria ter.
+     * Profession-System.md §"Nascimento de Novos Aldeões" é explícito:
+     * a função vem quando surge um aldeão <em>adulto</em>. Ao crescer,
+     * ele passa a ser elegível sozinho, no ciclo seguinte.
+     *
+     * <p>Nitwit também não. O Vanilla nunca lhe dá emprego, e o jogador
+     * que reconhece o casaco verde espera que ele continue inútil. Uma
+     * colônia que o pusesse a construir contrariaria a expectativa que o
+     * próprio jogo criou — e o PROJECT_CONSTITUTION §4 manda respeitar
+     * o comportamento Vanilla do aldeão.
+     */
+    private static boolean canWork(VillagerEntity villager) {
+        return !villager.isBaby()
+                && villager.getVillagerData().getProfession() != VillagerProfession.NITWIT;
+    }
+
+    /**
+     * O que uma varredura viu.
+     *
+     * <p>{@code employable} são os aldeões prontos para receber função —
+     * não os que a têm. Vazio é comum: uma vila só de bebês existe.
+     */
+    public record ScanResult(
+            int registeredWorkers, int registeredStorages, Set<UUID> employable) {
 
         public boolean changedNothing() {
             return registeredWorkers == 0 && registeredStorages == 0;

@@ -5,6 +5,7 @@ import com.villagecolony.core.storage.service.StorageRegistry;
 import com.villagecolony.core.worker.service.WorkerService;
 import com.villagecolony.fabric.event.ServerLifecycleHandler;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
+import com.villagecolony.fabric.event.VillagerLifecycleHandler;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,6 +77,7 @@ public class VillageColonyMod implements ModInitializer {
     public void onInitialize() {
         ServerLifecycleHandler.register();
         VillageDetectionHandler.register();
+        VillagerLifecycleHandler.register();
 
         LOGGER.info("[Village Colony] Mod initialized");
     }

@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -68,7 +69,7 @@ public final class ProfessionAssigner {
     }
 
     /**
-     * Dá função a todos os trabalhadores sem função de uma colônia.
+     * Dá função aos trabalhadores sem função que podem trabalhar.
      *
      * <p>Recalcula a cada atribuição, e não uma vez para o lote: atribuir
      * quatro aldeões de uma colônia vazia de uma só vez daria quatro
@@ -77,16 +78,26 @@ public final class ProfessionAssigner {
      * <p>Chamável a cada ciclo. Quem já tem função é ignorado, então
      * rodar de novo sem aldeão novo não faz nada.
      *
+     * @param employable quem pode receber função agora. Quem está fora
+     *     é pulado sem virar erro: um bebê ainda vai crescer e um aldeão
+     *     que não foi visto neste ciclo continua existindo. Quem decide
+     *     isso é a camada fabric, que enxerga a entidade — ver
+     *     {@code VillagerScanner}. A contagem de necessidade continua
+     *     olhando a colônia inteira, porque um lenhador é um lenhador
+     *     esteja ele à vista ou não.
      * @return quantos receberam função agora
      */
-    public static int assignMissing(WorkerService workers, UUID colonyId) {
+    public static int assignMissing(
+            WorkerService workers, UUID colonyId, Set<UUID> employable) {
+
         Objects.requireNonNull(workers, "workers");
         Objects.requireNonNull(colonyId, "colonyId");
+        Objects.requireNonNull(employable, "employable");
 
         int assigned = 0;
 
         for (Worker worker : workers.ofColony(colonyId)) {
-            if (worker.hasProfession()) {
+            if (worker.hasProfession() || !employable.contains(worker.villagerId())) {
                 continue;
             }
 

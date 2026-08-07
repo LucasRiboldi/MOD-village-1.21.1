@@ -5,7 +5,7 @@
 **Status:** Em implementação — Fases 1 a 3 completas, Fases 4 e 5
 escritas e não verificadas em jogo
 **Version:** 0.1.0
-**Last Update:** 2026-08-07 — TASK-017 concluída, Fase 5 encerrada
+**Last Update:** 2026-08-07 — correções de jogabilidade
 **Repository:** https://github.com/LucasRiboldi/MOD-village-1.21.1
 
 ---
@@ -385,7 +385,8 @@ core/
 
 fabric/
   adapter/           MinecraftTypeAdapter
-  event/             ServerLifecycleHandler, VillageDetectionHandler
+  event/             ServerLifecycleHandler, VillageDetectionHandler,
+                     VillagerLifecycleHandler
   integration/       VillageScanner, VillagerScanner, ChestScanner,
                      ChestInventoryReader
 
@@ -401,7 +402,7 @@ Vazios por enquanto: `core/task`, `core/resource/service`,
 ## Testes
 
 ```text
-161 testes, todos passando
+164 testes, todos passando
 ```
 
 Cobrem o Core (lógica pura) e a serialização NBT.
@@ -607,15 +608,33 @@ Registro único, Overworld
 ```
 
 ```text
+O baú do jogador pode ser reivindicado
+
+  ChestScanner pega o baú livre mais próximo da cama, e não
+  tem como saber de quem ele é. Jogador que constrói sua base
+  dentro da vila terá baús adotados por aldeões.
+
+  Hoje é inofensivo: nada move item, então a reivindicação é
+  invisível. Deixa de ser na Fase 6, quando o trabalhador
+  depositar produção — o jogador veria madeira aparecendo no
+  baú dele.
+
+  Precisa de decisão antes da Fase 6. Não há sinal confiável
+  de propriedade no Vanilla; as saídas prováveis são exigir
+  que o baú esteja dentro da mesma casa que a cama, ou deixar
+  o jogador marcar o baú de alguma forma.
+```
+
+```text
 Profissão não muda depois de atribuída
 
   ProfessionAssigner só preenche vaga. Realocar conforme a
   necessidade da colônia muda — e liberar a função de quem
   morreu — não pertence ao MVP.
 
-  Profession-System.md §"Morte de Trabalhadores" prevê o
-  registro do óbito. WorkerService.remove existe e nada o
-  chama: falta como provar que o aldeão morreu.
+  A morte já libera a vaga — ver VillagerLifecycleHandler.
+  O que falta é realocar quem está vivo quando a necessidade
+  da colônia muda.
 ```
 
 ```text
@@ -2016,6 +2035,128 @@ Não verificado:
 
 ```text
 Tudo o que depende do jogo. Ver §7.
+```
+
+---
+
+## 2026-08-07 — Duas correções de jogabilidade
+
+Nenhuma das duas veio de tarefa do plano. Vieram de olhar o que já
+existia como jogo, e não como código.
+
+---
+
+### Bebê e nitwit não recebem mais função
+
+Sintoma:
+
+```text
+ProfessionAssigner dava função a todo trabalhador sem função.
+```
+
+Um bebê virava lenhador. Além de absurdo em jogo, ele ocupava a vaga:
+`mostNeeded` contava a função como preenchida, e o adulto seguinte
+virava fazendeiro numa colônia sem ninguém cortando madeira.
+
+O nitwit tinha o mesmo problema com um agravante. O Vanilla nunca lhe
+dá emprego, e o jogador que reconhece o casaco verde espera que ele
+continue inútil — PROJECT_CONSTITUTION §4 manda respeitar o
+comportamento Vanilla do aldeão.
+
+Correção:
+
+```text
+VillagerScanner decide quem pode trabalhar
+
+  !isBaby() && profissão != NITWIT
+
+ScanResult carrega os aptos
+
+assignMissing recebe o conjunto
+```
+
+A decisão fica na camada fabric porque é ela que enxerga a entidade. O
+Core continua puro: recebe um conjunto de ids e não pergunta por quê.
+
+A contagem de necessidade continua olhando a colônia inteira. Um
+lenhador é um lenhador esteja ele à vista ou não — filtrar a contagem
+pelos aptos faria a colônia recontratar funções que já tem toda vez que
+alguém saísse do raio.
+
+O bebê é registrado como antes. Ao crescer, torna-se elegível sozinho,
+no ciclo seguinte, sem nada que trate o caso.
+
+---
+
+### Aldeão morto ou zumbificado deixa de ser trabalhador
+
+Sintoma:
+
+```text
+WorkerService.remove existia e nada o chamava.
+```
+
+Uma colônia que perdesse o lenhador numa noite de zumbis continuaria
+achando que tinha um, para sempre. A vaga nunca reabria. O baú do morto
+ficava reservado para sempre, e nenhum outro aldeão podia usá-lo.
+
+Correção:
+
+```text
+fabric/event/VillagerLifecycleHandler
+
+  AFTER_DEATH       morreu
+
+  MOB_CONVERSION    virou zumbi
+```
+
+Os dois eventos, não só a morte: aldeão mordido por zumbi é
+<em>convertido</em>, não morto, então `AFTER_DEATH` nunca dispara — e é
+justamente o caso mais comum de perder um trabalhador em jogo.
+
+Remove o trabalhador e o baú dele juntos. Um baú reservado para quem
+não existe mais é um baú perdido para a colônia.
+
+Só o evento serve como prova. Ausência na varredura não serve, e é por
+isso que `remove` tinha ficado sem quem o chamasse: um aldeão fora do
+raio, ou num chunk descarregado, não está morto — apenas não foi visto.
+
+Consequência aceita:
+
+```text
+Zumbi curado volta com identidade nova.
+```
+
+Será registrado do zero e receberá a função de que a colônia mais
+precisar, não necessariamente a que tinha. Preservar a antiga exigiria
+rastrear a conversão nos dois sentidos.
+
+---
+
+Não corrigido, e por quê:
+
+```text
+O baú do jogador pode ser reivindicado — ver §9.
+```
+
+Hoje é inofensivo, porque nada move item. Vira problema real na Fase 6,
+e a saída depende de decisão do autor: não há sinal de propriedade no
+Vanilla para o mod se apoiar.
+
+Verificado:
+
+```text
+164 testes passando
+
+./gradlew build → BUILD SUCCESSFUL
+
+Core continua sem net.minecraft (grep)
+```
+
+Não verificado:
+
+```text
+Ambas dependem do jogo para valer. Ver §7.
 ```
 
 ---

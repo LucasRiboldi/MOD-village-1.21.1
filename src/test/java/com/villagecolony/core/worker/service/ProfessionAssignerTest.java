@@ -6,11 +6,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -32,12 +34,23 @@ class ProfessionAssignerTest {
         }
     }
 
+    /** Todo mundo apto: o caso de uma vila só de adultos. */
+    private Set<UUID> everyone() {
+        Set<UUID> ids = new HashSet<>();
+
+        for (Worker worker : workers.all()) {
+            ids.add(worker.villagerId());
+        }
+
+        return ids;
+    }
+
     /** Profession-System.md: seis aldeões, um de cada função. */
     @Test
     void firstFourWorkersCoverEveryProfession() {
         addWorkers(COLONY, 4);
 
-        assertEquals(4, ProfessionAssigner.assignMissing(workers, COLONY));
+        assertEquals(4, ProfessionAssigner.assignMissing(workers, COLONY, everyone()));
 
         Set<ProfessionType> assigned = EnumSet.noneOf(ProfessionType.class);
 
@@ -56,7 +69,7 @@ class ProfessionAssignerTest {
     void aBatchIsNotAllTheSameProfession() {
         addWorkers(COLONY, 4);
 
-        ProfessionAssigner.assignMissing(workers, COLONY);
+        ProfessionAssigner.assignMissing(workers, COLONY, everyone());
 
         long lumberjacks = workers.ofColony(COLONY).stream()
                 .filter(w -> w.profession().orElseThrow() == ProfessionType.LUMBERJACK)
@@ -70,7 +83,7 @@ class ProfessionAssignerTest {
     void theFirstWorkerIsALumberjack() {
         addWorkers(COLONY, 1);
 
-        ProfessionAssigner.assignMissing(workers, COLONY);
+        ProfessionAssigner.assignMissing(workers, COLONY, everyone());
 
         assertEquals(
                 ProfessionType.LUMBERJACK,
@@ -82,7 +95,7 @@ class ProfessionAssignerTest {
     void theFifthWorkerDoublesTheScarcest() {
         addWorkers(COLONY, 5);
 
-        ProfessionAssigner.assignMissing(workers, COLONY);
+        ProfessionAssigner.assignMissing(workers, COLONY, everyone());
 
         long lumberjacks = workers.ofColony(COLONY).stream()
                 .filter(w -> w.profession().orElseThrow() == ProfessionType.LUMBERJACK)
@@ -95,9 +108,9 @@ class ProfessionAssignerTest {
     @Test
     void runningAgainAssignsNobody() {
         addWorkers(COLONY, 3);
-        ProfessionAssigner.assignMissing(workers, COLONY);
+        ProfessionAssigner.assignMissing(workers, COLONY, everyone());
 
-        assertEquals(0, ProfessionAssigner.assignMissing(workers, COLONY));
+        assertEquals(0, ProfessionAssigner.assignMissing(workers, COLONY, everyone()));
     }
 
     /** Realocar quem já trabalha é decisão da colônia, não daqui. */
@@ -106,7 +119,7 @@ class ProfessionAssignerTest {
         UUID villager = UUID.randomUUID();
         workers.restore(Worker.restore(villager, COLONY, ProfessionType.BUILDER));
 
-        ProfessionAssigner.assignMissing(workers, COLONY);
+        ProfessionAssigner.assignMissing(workers, COLONY, everyone());
 
         assertEquals(
                 ProfessionType.BUILDER,
@@ -119,7 +132,7 @@ class ProfessionAssignerTest {
         addWorkers(COLONY, 2);
         addWorkers(OTHER_COLONY, 2);
 
-        ProfessionAssigner.assignMissing(workers, COLONY);
+        ProfessionAssigner.assignMissing(workers, COLONY, everyone());
 
         for (Worker worker : workers.ofColony(OTHER_COLONY)) {
             assertTrue(worker.profession().isEmpty());
@@ -128,7 +141,61 @@ class ProfessionAssignerTest {
 
     @Test
     void anEmptyColonyAssignsNobody() {
-        assertEquals(0, ProfessionAssigner.assignMissing(workers, COLONY));
+        assertEquals(0, ProfessionAssigner.assignMissing(workers, COLONY, everyone()));
+    }
+
+    /** Bebê e nitwit são registrados, mas não recebem função. */
+    @Test
+    void whoCannotWorkGetsNoProfession() {
+        UUID adult = UUID.randomUUID();
+        UUID baby = UUID.randomUUID();
+
+        workers.register(adult, COLONY);
+        workers.register(baby, COLONY);
+
+        assertEquals(1, ProfessionAssigner.assignMissing(workers, COLONY, Set.of(adult)));
+
+        assertTrue(workers.find(adult).orElseThrow().hasProfession());
+        assertFalse(workers.find(baby).orElseThrow().hasProfession());
+    }
+
+    /** Crescido, ele recebe função no ciclo seguinte, sem nada especial. */
+    @Test
+    void theBabyIsHiredOnceItCanWork() {
+        UUID baby = UUID.randomUUID();
+        workers.register(baby, COLONY);
+
+        ProfessionAssigner.assignMissing(workers, COLONY, Set.of());
+
+        assertEquals(1, ProfessionAssigner.assignMissing(workers, COLONY, Set.of(baby)));
+        assertTrue(workers.find(baby).orElseThrow().hasProfession());
+    }
+
+    /**
+     * A vaga aberta por um morto é preenchida pelo próximo: a contagem
+     * olha quem está registrado, e o handler de morte já o removeu.
+     */
+    @Test
+    void aFreedProfessionIsFilledAgain() {
+        addWorkers(COLONY, 4);
+        ProfessionAssigner.assignMissing(workers, COLONY, everyone());
+
+        UUID lumberjack = workers.ofColony(COLONY).stream()
+                .filter(w -> w.profession().orElseThrow() == ProfessionType.LUMBERJACK)
+                .findFirst()
+                .orElseThrow()
+                .villagerId();
+
+        workers.remove(lumberjack);
+
+        UUID newcomer = UUID.randomUUID();
+        workers.register(newcomer, COLONY);
+
+        ProfessionAssigner.assignMissing(workers, COLONY, Set.of(newcomer));
+
+        assertEquals(
+                ProfessionType.LUMBERJACK,
+                workers.find(newcomer).orElseThrow().profession().orElseThrow());
     }
 
     @Test
@@ -139,7 +206,7 @@ class ProfessionAssignerTest {
     @Test
     void rejectsNull() {
         assertThrows(NullPointerException.class,
-                () -> ProfessionAssigner.assignMissing(workers, null));
+                () -> ProfessionAssigner.assignMissing(workers, null, everyone()));
 
         assertThrows(NullPointerException.class,
                 () -> ProfessionAssigner.mostNeeded(null));
