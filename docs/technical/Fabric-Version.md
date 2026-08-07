@@ -167,6 +167,34 @@ Gradle          services.gradle.org/versions/all
 
 ---
 
+## Versão de build ≠ versão mínima exigida
+
+A matriz acima diz com o que o mod é **compilado**.
+
+`fabric.mod.json` diz o que ele **exige para rodar**:
+
+```text
+fabricloader >= 0.16.0
+```
+
+São coisas diferentes e não devem ser confundidas.
+
+---
+
+Motivo:
+
+O mod não usa nenhuma API introduzida depois do Loader 0.16.
+
+Declarar `>=0.19.3` apenas porque o build usa essa versão exclui
+instalações perfeitamente capazes de rodá-lo — foi o que aconteceu
+com um perfil TLauncher em 0.17.2, que recusaria o mod sem razão
+técnica.
+
+Regra: o mínimo declarado reflete o que o código precisa, não o que
+a máquina de build tem instalado.
+
+---
+
 ## Notas de fixação
 
 `Yarn 1.21.1+build.3` é o build mais alto publicado para 1.21.1.
