@@ -5,7 +5,7 @@
 **Status:** Em implementação — Fases 1 a 3 completas, Fases 4 e 5
 escritas e não verificadas em jogo
 **Version:** 0.1.0
-**Last Update:** 2026-08-07 — TASK-021 e TASK-022; TASK-023 parcial
+**Last Update:** 2026-08-07 — sessão encerrada; pendências em §8
 **Repository:** https://github.com/LucasRiboldi/MOD-village-1.21.1
 
 ---
@@ -687,28 +687,106 @@ Registrada como `TASK-012b` em `MVP-Tasks.md`.
 
 # 8. Priority Queue
 
+Sessão de 2026-08-07 encerrada aqui. O autor fará o acesso ao jogo
+depois; esta seção é o ponto de retomada.
+
+---
+
+## Precisa do jogo
+
 ```text
-1   verificar as Fases 4 e 5 em jogo — ver §7
-
-2   decidir a camada de coordenação — desbloqueia TASK-023 (§10)
-
-3   decidir o loop de simulação — desbloqueia TASK-020 (§10)
-
-4   Fase 8 — Primeiro Trabalhador Funcional (TASK-024+)
+P1   verificar as Fases 4 e 5 — roteiro V1 a V7 em §7
 ```
 
-A verificação foi adiada a pedido do autor em 2026-08-07, e o código
-seguiu sem ela. A dívida cresceu de uma tarefa para sete: quando um
-defeito de fronteira aparecer, ele estará em algum ponto de
+Sete tarefas e duas correções esperando por isto. A dívida começou em
+uma tarefa e cresceu por três adiamentos seguidos, todos a pedido do
+autor e todos registrados em §15.
+
+Quando um defeito de fronteira aparecer, ele estará em algum ponto de
 `VillagerScanner`, `ChestScanner`, `ChestInventoryReader`,
 `ColonySavedData` ou `VillageDetectionHandler`, sem o log intermediário
 que teria dito qual.
 
-A contagem da TASK-017 depende do registro da TASK-015 estar certo. Se
-o `ChestScanner` associar o baú do vizinho, o total sairá plausível e
-errado — nada no log vai denunciar, porque o número existe e é um
-número. É o primeiro ponto do projeto em que um defeito deixa de
-aparecer como ausência e passa a aparecer como valor.
+Começar pelo **V3** — fechar o mundo e reabrir. É o mais barato e prova
+a persistência.
+
+---
+
+## Precisa de decisão do autor
+
+```text
+P2   camada de coordenação    desbloqueia TASK-023   §10 item 1
+
+P3   loop de simulação        desbloqueia TASK-020   §10 item 2
+
+P4   propriedade do baú       antes da Fase 8        §9
+```
+
+Nenhuma das três é escolha de implementação. São decisões de
+arquitetura ou de regra de jogo, e as seis ADRs existentes foram todas
+aprovadas antes de virar código.
+
+---
+
+## Não precisa nem do jogo nem de decisão
+
+Levantadas em 2026-08-07, nenhuma iniciada:
+
+```text
+A   automatizar V1, V2, V4, V5, V6 e V7 com Fabric Game Test
+
+    fabric-gametest-api-v1 já vem no Fabric API do projeto.
+    Roda o servidor headless pelo Gradle: monta a estrutura,
+    afirma, falha o build. Sem cliente e sem humano.
+
+    Não cobre o V3: persistência exige fechar e reabrir o
+    mundo, e o gametest roda um servidor só.
+
+    Custo: falta configurar runGametest no build.gradle, e a
+    detecção é disparada por chunk e por ciclo de ticks —
+    provavelmente exige uma costura no VillageDetectionHandler
+    para o teste chamar a detecção direto. É mudança em código
+    de produção para viabilizar teste, e por isso não foi feita
+    sem combinar.
+
+    É a de maior valor: transforma "preciso de uma sessão de
+    jogo" em "preciso rodar o Gradle", e vale para as fases
+    seguintes, não só para a dívida atual.
+```
+
+```text
+B   travar a ADR-006 §6 como teste automatizado
+
+    Hoje a regra "nenhum domínio do core importa outro" é
+    verificada por grep, à mão. Isso não é guarda-corpo: some
+    no dia em que alguém esquecer de rodar.
+
+    Foi essa regra que obrigou a mover Capability e ResourceType
+    para core/type na Fase 7 — ela já cobrou uma vez.
+
+    Barata e independente das demais.
+```
+
+```text
+C   consolidar este documento
+
+    2662 linhas. A consolidação anterior (commit fb7d4c0)
+    aconteceu com 2534, e pelo mesmo motivo: a regra de
+    fechamento do §16 pergunta se quem abre o projeto hoje sabe
+    onde as coisas estão, e o Development Log já tem dezenove
+    entradas.
+```
+
+---
+
+## Depois disso
+
+```text
+Fase 8 — Primeiro Trabalhador Funcional (TASK-024+)
+```
+
+Depende de P2, P3 e P4. É onde a tarefa sai do papel e o aldeão de
+fato anda até a árvore.
 
 ---
 
@@ -1135,6 +1213,10 @@ Initial-Setup-Checklist.md §6 e Class-Architecture.md
 ---
 
 # 14. Session Resume Template
+
+Ao retomar em 2026-08-07 ou depois, começar por §8. Ela diz o que
+depende do jogo, o que depende de decisão e o que não depende de
+nenhum dos dois.
 
 Ao iniciar uma nova sessão:
 
@@ -2641,6 +2723,57 @@ Verificado:
 Core continua sem net.minecraft
 
 Nenhum domínio do Core importa outro (varredura)
+```
+
+---
+
+## 2026-08-07 — Sessão encerrada, pendências registradas
+
+Nenhum código nesta entrada. O §8 foi reescrito como ponto de retomada
+e passou a separar três coisas que antes estavam misturadas numa fila
+só:
+
+```text
+o que precisa do jogo         P1
+
+o que precisa de decisão      P2, P3, P4
+
+o que não precisa de nenhum   A, B, C
+```
+
+A separação importa porque o projeto passou três sessões seguidas
+adiando o item que precisa do jogo, e a fila antiga não deixava óbvio
+que havia trabalho disponível sem ele.
+
+Levantadas e não iniciadas, por decisão do autor de encerrar a sessão:
+
+```text
+A  Fabric Game Test cobriria V1, V2, V4, V5, V6 e V7
+
+   O fabric-gametest-api-v1 já vem no Fabric API do projeto —
+   confirmado no cache de dependências. Falta configurar
+   runGametest, que não existe entre as tasks do Gradle hoje.
+
+   Exigiria uma costura no VillageDetectionHandler, porque a
+   detecção só é disparada por chunk e por ciclo de ticks.
+   Mexer em produção para viabilizar teste é decisão que não
+   se toma sozinho.
+
+B  A ADR-006 §6 vira teste em vez de grep manual
+
+C  Este documento passou de 2662 linhas
+```
+
+Estado ao encerrar:
+
+```text
+217 testes passando
+
+./gradlew build → BUILD SUCCESSFUL
+
+Core sem net.minecraft; nenhum domínio importa outro
+
+9 commits à frente de origin/main, agora empurrados
 ```
 
 ---
