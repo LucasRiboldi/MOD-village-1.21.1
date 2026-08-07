@@ -5,8 +5,11 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.colony.service.VillageDetector;
+import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
+import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageScanner;
 import com.villagecolony.fabric.integration.VillagerScanner;
@@ -18,6 +21,10 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.poi.PointOfInterestStorage;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import net.minecraft.world.poi.PointOfInterestTypes;
 
 /**
@@ -132,6 +139,8 @@ public final class VillageDetectionHandler {
                     result.registeredStorages(),
                     colony.id(),
                     VillageColonyMod.STORAGES.count());
+
+            logResources(world, colony);
         }
 
         int assigned = ProfessionAssigner.assignMissing(VillageColonyMod.WORKERS, colony.id());
@@ -140,6 +149,31 @@ public final class VillageDetectionHandler {
             VillageColonyMod.LOGGER.info(
                     "Assigned {} professions in colony {}", assigned, colony.id());
         }
+    }
+
+    /**
+     * Registra no log o que a colônia tem guardado.
+     *
+     * <p>Só quando um baú novo entra no registro. O conteúdo muda a cada
+     * baú aberto pelo jogador, e logar isso a cada ciclo encheria o
+     * arquivo sem dizer nada — mas sem nenhuma linha, a contagem da
+     * TASK-017 seria invisível em jogo, e o §11 do Project-State existe
+     * justamente porque defeitos desta camada só aparecem lá.
+     */
+    private static void logResources(ServerWorld world, Colony colony) {
+        List<UUID> workerIds = new ArrayList<>();
+
+        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
+            workerIds.add(worker.villagerId());
+        }
+
+        ResourceTally tally = ChestInventoryReader.readAll(
+                world, workerIds, VillageColonyMod.STORAGES);
+
+        VillageColonyMod.LOGGER.info(
+                "Colony {} stores {}",
+                colony.id(),
+                tally.isEmpty() ? "nothing tracked" : tally.counts());
     }
 
     /**

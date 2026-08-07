@@ -5,7 +5,7 @@
 **Status:** Em implementação — Fases 1 a 3 completas, Fases 4 e 5
 escritas e não verificadas em jogo
 **Version:** 0.1.0
-**Last Update:** 2026-08-07 — TASK-015 e TASK-016 concluídas
+**Last Update:** 2026-08-07 — TASK-017 concluída, Fase 5 encerrada
 **Repository:** https://github.com/LucasRiboldi/MOD-village-1.21.1
 
 ---
@@ -74,9 +74,10 @@ sessões.
 
 A Fase 4 está escrita por inteiro — registro, persistência, catálogo de
 profissões e atribuição inicial — e **nenhuma parte dela foi verificada
-em jogo**. A Fase 5 começou sobre ela e já traz o registro dos baús.
+em jogo**. A Fase 5 está fechada sobre ela: baús registrados e
+inventário contado.
 
-Seis tarefas seguidas foram escritas sem passar pelo jogo. É a maior
+Sete tarefas seguidas foram escritas sem passar pelo jogo. É a maior
 dívida aberta do projeto, e o §11 explica por que ela é cara.
 
 ---
@@ -95,7 +96,7 @@ Fase 3   detecção da vila               TASK-009 e TASK-010
 Fase 4   trabalhadores                  TASK-011 a TASK-014
                                         escrita, não verificada em jogo
 
-Fase 5   armazenamento                  TASK-015 e TASK-016
+Fase 5   armazenamento                  TASK-015 a TASK-017
                                         escrita, não verificada em jogo
 ```
 
@@ -358,7 +359,7 @@ Fase 5 — Armazenamento
 
   TASK-015  detecção de baú          feito, NÃO verificado em jogo
   TASK-016  StorageRegistry          feito, NÃO verificado em jogo
-  TASK-017  ler inventário           não iniciado
+  TASK-017  ler inventário           feito, NÃO verificado em jogo
 
 Fases 6 a 9
 
@@ -380,17 +381,19 @@ core/
                      ProfessionAssigner
   storage/model/     WorkerStorage
   storage/service/   StorageRegistry
+  resource/model/    ResourceType, ResourceCategory, ResourceTally
 
 fabric/
   adapter/           MinecraftTypeAdapter
   event/             ServerLifecycleHandler, VillageDetectionHandler
-  integration/       VillageScanner, VillagerScanner, ChestScanner
+  integration/       VillageScanner, VillagerScanner, ChestScanner,
+                     ChestInventoryReader
 
 data/
   save/              ColonySavedData
 ```
 
-Vazios por enquanto: `core/task`, `core/resource`,
+Vazios por enquanto: `core/task`, `core/resource/service`,
 `core/construction`, `fabric/mixin`, `fabric/brain`.
 
 ---
@@ -398,7 +401,7 @@ Vazios por enquanto: `core/task`, `core/resource`,
 ## Testes
 
 ```text
-148 testes, todos passando
+161 testes, todos passando
 ```
 
 Cobrem o Core (lógica pura) e a serialização NBT.
@@ -469,6 +472,15 @@ Registered N storages in colony ...
   dois aldeões do mesmo cômodo não pegaram o mesmo baú
 
   um baú construído depois é encontrado no ciclo seguinte
+
+
+Colony ... stores {OAK_LOG=N, ...}
+
+  o número bate com o que está dentro do baú
+
+  conferir abrindo o baú, não confiar no log
+
+  item fora dos três acompanhados não aparece — é o esperado
 ```
 
 O último é o que prova a TASK-012b, e é o mais barato de fazer: fechar
@@ -522,20 +534,21 @@ Registrada como `TASK-012b` em `MVP-Tasks.md`.
 ```text
 1   verificar as Fases 4 e 5 em jogo — ver §7
 
-2   TASK-017 — ler o inventário dos baús
-
-3   Fase 6 — Sistema de Recursos (TASK-018+)
+2   Fase 6 — Sistema de Recursos (TASK-018+)
 ```
 
 A verificação foi adiada a pedido do autor em 2026-08-07, e o código
-seguiu sem ela. A dívida cresceu de uma tarefa para seis: quando um
+seguiu sem ela. A dívida cresceu de uma tarefa para sete: quando um
 defeito de fronteira aparecer, ele estará em algum ponto de
-`VillagerScanner`, `ChestScanner`, `ColonySavedData` ou
-`VillageDetectionHandler`, sem o log intermediário que teria dito qual.
+`VillagerScanner`, `ChestScanner`, `ChestInventoryReader`,
+`ColonySavedData` ou `VillageDetectionHandler`, sem o log intermediário
+que teria dito qual.
 
-A TASK-017 lê o conteúdo dos baús registrados. Se o registro estiver
-errado, ela contará o inventário do baú errado — e o número parecerá
-plausível.
+A contagem da TASK-017 depende do registro da TASK-015 estar certo. Se
+o `ChestScanner` associar o baú do vizinho, o total sairá plausível e
+errado — nada no log vai denunciar, porque o número existe e é um
+número. É o primeiro ponto do projeto em que um defeito deixa de
+aparecer como ausência e passa a aparecer como valor.
 
 ---
 
@@ -1881,6 +1894,118 @@ Verificado:
 
 ```text
 148 testes passando
+
+./gradlew build → BUILD SUCCESSFUL
+
+Core continua sem net.minecraft (grep)
+```
+
+Não verificado:
+
+```text
+Tudo o que depende do jogo. Ver §7.
+```
+
+---
+
+## 2026-08-07 — TASK-017 concluída, Fase 5 encerrada
+
+Criado:
+
+```text
+core/resource/model/ResourceCategory    NATURAL, PROCESSED, CONSTRUCTION
+
+core/resource/model/ResourceType        OAK_LOG, OAK_PLANKS, COBBLESTONE
+
+core/resource/model/ResourceTally       contagem imutável, somável
+
+fabric/integration/ChestInventoryReader lê os baús
+```
+
+Alterado:
+
+```text
+MinecraftTypeAdapter      Item -> ResourceType
+
+VillageDetectionHandler   loga o estoque quando um baú novo entra
+```
+
+APIs confirmadas com `javap` no jar mapeado:
+
+```text
+Inventory.size() / getStack(int)
+
+ItemStack.getItem() / getCount() / isEmpty()
+
+Items.OAK_LOG / OAK_PLANKS / COBBLESTONE
+```
+
+Decisão — o tipo do recurso é do Core, o item é da fronteira:
+
+```text
+ADR-005. ResourceType não conhece Item.
+```
+
+A conversão é uma comparação por identidade no `MinecraftTypeAdapter`:
+`Items.OAK_LOG` é singleton do registro, a mesma instância para todo
+stack de carvalho do servidor.
+
+Decisão — `ResourceTally` é imutável:
+
+```text
+Uma contagem é a fotografia de um momento.
+```
+
+O baú muda o tempo todo. Um objeto que se atualizasse sozinho não teria
+como dizer de quando é o número que carrega. Somar duas contagens
+produz uma terceira, e é assim que os baús viram um total.
+
+Decisão — zero e ausente são a mesma coisa:
+
+```text
+of() descarta os zeros.
+```
+
+Sem isso, duas contagens que dizem o mesmo não seriam iguais — uma com
+`OAK_LOG=0`, outra sem a chave.
+
+Decisão — o total é calculado, não guardado:
+
+```text
+O jogador pode esvaziar o baú a qualquer momento.
+```
+
+Um total em cache estaria errado sem que nada avisasse. Enquanto a
+contagem for barata — um punhado de baús, dezenas de slots — vale
+pagar por ela. Quando deixar de ser, o cache precisará de invalidação
+por evento, não de um temporizador.
+
+Decisão — baú duplo conta só a metade registrada:
+
+```text
+Cada metade é uma block entity com posição própria.
+```
+
+Foi uma delas que o trabalhador reivindicou. Contar as duas faria a
+colônia enxergar o dobro quando o outro lado fosse reivindicado por
+outro aldeão.
+
+Decisão — o log sai só quando um baú novo entra no registro:
+
+```text
+O conteúdo muda a cada baú que o jogador abre.
+```
+
+Logar por ciclo encheria o arquivo sem dizer nada. Sem nenhuma linha, a
+contagem seria invisível em jogo — e o §11 existe porque defeitos desta
+camada só aparecem lá.
+
+Nada aqui escreve no baú. O MVP lê; mover item é da Fase 6.
+
+Verificado:
+
+```text
+161 testes passando
 
 ./gradlew build → BUILD SUCCESSFUL
 
