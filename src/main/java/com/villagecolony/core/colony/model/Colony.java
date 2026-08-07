@@ -40,6 +40,19 @@ public final class Colony {
 
     private ColonyLifecycle lifecycle;
 
+    /**
+     * Quantas camas a melhor observação já vista continha.
+     *
+     * <p>Mede o quão completa foi a detecção que definiu o
+     * {@link #center} atual — não o tamanho real da vila.
+     *
+     * <p>Existe porque nenhuma detecção enxerga a vila inteira: o raio de
+     * busca é de 64 blocos e uma vila é maior que isso. Sem este número,
+     * uma detecção de borda que vê 3 de 12 camas sobrescreve o centro
+     * calculado a partir das 12.
+     */
+    private int observedBeds;
+
     private Colony(UUID id, ColonyPos center, ColonyState state, ColonyLifecycle lifecycle) {
         this.id = id;
         this.center = center;
@@ -93,6 +106,38 @@ public final class Colony {
      */
     public void setCenter(ColonyPos center) {
         this.center = Objects.requireNonNull(center, "center");
+    }
+
+    public int observedBeds() {
+        return observedBeds;
+    }
+
+    /**
+     * Move o centro apenas se esta observação for ao menos tão completa
+     * quanto a que definiu o centro atual.
+     *
+     * <p>Uma detecção que enxerga menos camas viu menos da vila, e não
+     * tem autoridade para reposicionar o centro. Sem esta regra o centro
+     * oscila entre observações parciais feitas de pontos diferentes.
+     *
+     * <p>Empate move: a vila pode mudar de lugar mantendo o mesmo número
+     * de camas.
+     *
+     * @return true se o centro foi movido
+     */
+    public boolean observe(ColonyPos center, int beds) {
+        Objects.requireNonNull(center, "center");
+
+        if (beds < observedBeds) {
+            return false;
+        }
+
+        boolean moved = !this.center.equals(center);
+
+        this.center = center;
+        this.observedBeds = beds;
+
+        return moved;
     }
 
     public ColonyState state() {

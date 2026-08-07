@@ -119,7 +119,7 @@ public final class VillageDetectionHandler {
                         "Colony created at {} with {} beds",
                         colony.center(),
                         candidate.bedCount());
-            } else if (!colony.center().equals(previousCenter)) {
+            } else if (previousCenter != null && !colony.center().equals(previousCenter)) {
                 VillageColonyMod.LOGGER.info(
                         "Colony {} moved from {} to {} with {} beds",
                         colony.id(),

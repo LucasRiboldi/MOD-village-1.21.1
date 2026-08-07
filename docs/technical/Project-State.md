@@ -775,14 +775,94 @@ ciclo — jogador parado não gera linha.
 
 ---
 
-## Ainda não confirmado
+## Gatilho de CHUNK_LOAD — confirmado
+
+Sessão de 23:36:
 
 ```text
-O gatilho de CHUNK_LOAD já funciona?
+23:36:31  Loaded 1 colonies
+
+23:36:33  Colony ... moved ...
 ```
 
-A correção está no jar instalado, mas nenhuma sessão rodou com ela
-ainda.
+Dois segundos. O ciclo de 600 ticks levaria trinta.
+
+A correção funciona.
+
+---
+
+## Lacuna da ADR-003 — centro oscilante
+
+O mesmo log revelou o centro alternando entre duas posições a 29
+blocos uma da outra:
+
+```text
+1096,68,742 → 1109,64,730   12 camas
+
+1109,64,730 → 1080,64,733    3 camas
+
+1080,64,733 → 1109,64,730   12 camas
+
+1109,64,730 → 1080,64,733    3 camas
+```
+
+Mesma colônia, mesmo UUID — a identificação estava certa.
+
+---
+
+Causa:
+
+A ADR-003 §4 define o centro como a média das camas do cluster, e a
+§6 manda atualizar a colônia existente. Mas o §3 limita a coleta a 64
+blocos.
+
+Uma vila é maior que 64 blocos. Logo **nenhuma detecção enxerga a vila
+inteira**, e cada gatilho produz um cluster diferente.
+
+Como estava implementado, a última detecção sempre vencia: um gatilho
+de borda que via 3 de 12 camas arrastava o centro.
+
+---
+
+Correção adotada:
+
+```text
+Colony.observedBeds
+
+  quantas camas a melhor observação já vista continha
+```
+
+```text
+Colony.observe(center, beds)
+
+  move o centro apenas se beds >= observedBeds
+```
+
+Empate move, porque a vila pode mudar de lugar mantendo o número de
+camas.
+
+O campo é persistido; save antigo lê 0 e autocorrige na primeira
+detecção da sessão.
+
+---
+
+```text
+PENDENTE: emendar ADR-003 registrando que a completude da observação
+
+          decide a autoridade sobre o centro.
+```
+
+Este é o segundo desvio de ADR-003 registrado aqui. O primeiro é
+`DORMANT → ABANDONED`.
+
+---
+
+## Observação sobre a instrumentação
+
+A cegueira de log foi corrigida na sessão anterior, e o defeito
+apareceu na sessão seguinte.
+
+Sem a linha `moved`, o centro estaria oscilando em silêncio.
 
 ---
 

@@ -88,12 +88,15 @@ public final class ColonyService {
 
         if (existing.isPresent()) {
             Colony colony = existing.get();
-            colony.setCenter(candidate.center());
+            colony.observe(candidate.center(), candidate.bedCount());
 
             return colony;
         }
 
-        return createColony(candidate.center());
+        Colony colony = createColony(candidate.center());
+        colony.observe(candidate.center(), candidate.bedCount());
+
+        return colony;
     }
 
     public Optional<Colony> find(UUID id) {

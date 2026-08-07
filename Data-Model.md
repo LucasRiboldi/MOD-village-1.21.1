@@ -112,6 +112,28 @@ ColonyPos
 
 Localização principal da vila.
 
+Acompanhado de:
+
+```java
+observedBeds
+```
+
+Quantas camas a melhor observação já vista continha — a completude da
+detecção que definiu o centro atual, não o tamanho real da vila.
+
+Existe porque o raio de detecção é 64 blocos e uma vila é maior que
+isso: nenhuma observação é completa. Sem esse número, uma detecção de
+borda sobrescreve o centro calculado a partir de uma visão melhor, e o
+centro oscila.
+
+Observado em jogo em 2026-08-06, alternando entre visões de 12 e 3
+camas.
+
+O centro só se move quando a nova observação é ao menos tão completa
+quanto a anterior.
+
+---
+
 `BlockPos` constava aqui antes da ADR-005.
 
 O Core não conhece tipos do Minecraft; a conversão acontece em

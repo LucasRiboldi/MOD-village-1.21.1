@@ -38,6 +38,7 @@ public final class ColonySavedData extends PersistentState {
     private static final String CENTER_Y = "centerY";
     private static final String CENTER_Z = "centerZ";
     private static final String STATE = "state";
+    private static final String OBSERVED_BEDS = "observedBeds";
 
     public static final PersistentState.Type<ColonySavedData> TYPE = new PersistentState.Type<>(
             ColonySavedData::new,
@@ -91,6 +92,7 @@ public final class ColonySavedData extends PersistentState {
             entry.putInt(CENTER_Y, colony.center().y());
             entry.putInt(CENTER_Z, colony.center().z());
             entry.putString(STATE, colony.state().name());
+            entry.putInt(OBSERVED_BEDS, colony.observedBeds());
 
             list.add(entry);
         }
@@ -119,7 +121,13 @@ public final class ColonySavedData extends PersistentState {
                     entry.getInt(CENTER_Y),
                     entry.getInt(CENTER_Z));
 
-            data.colonies.add(Colony.restore(id, center, readState(entry), ColonyLifecycle.DORMANT));
+            Colony colony = Colony.restore(id, center, readState(entry), ColonyLifecycle.DORMANT);
+
+            // Save antigo não tem o campo; getInt devolve 0, que apenas
+            // faz a primeira detecção da sessão valer. Autocorrige.
+            colony.observe(center, entry.getInt(OBSERVED_BEDS));
+
+            data.colonies.add(colony);
         }
 
         return data;
