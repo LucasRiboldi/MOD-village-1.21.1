@@ -151,9 +151,43 @@ STABLE
 PRODUCTION
 
 EXPANSION
+
+ABANDONED
 ```
 
 Descreve **o que a colônia está fazendo**.
+
+---
+
+`ABANDONED` vem da ADR-003 §6: a vila deixou de ser viável — menos de
+3 camas ou nenhum aldeão vivo.
+
+A colônia não é apagada. Isso destruiria o registro de Buildings e
+violaria `PROJECT_CONSTITUTION.md §10`.
+
+---
+
+A ADR-003 §7 chama este valor de `DORMANT` e afirma estar "alinhado com
+ADR-002".
+
+Não está. As duas condições são diferentes:
+
+```text
+ADR-002   DORMANT   = chunk descarregado
+
+ADR-003   DORMANT   = vila sem população
+```
+
+Uma vila abandonada com o jogador ao lado atende a segunda e não a
+primeira.
+
+Como `ColonyLifecycle` já usa `DORMANT` no sentido da ADR-002, o valor
+de `ColonyState` foi nomeado `ABANDONED`.
+
+Dois `DORMANT` com significados distintos no mesmo objeto seriam uma
+armadilha.
+
+**A ADR-003 §7 precisa de emenda registrando esta troca.**
 
 ---
 

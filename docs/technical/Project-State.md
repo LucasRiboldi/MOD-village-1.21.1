@@ -597,14 +597,52 @@ As duas pontas estão testadas. O trecho do meio é o que TASK-008 fecha.
 Status:
 
 ```text
-NOT STARTED
+DONE — TASK-009 (2026-08-06)
 ```
 
-Planejado:
+Feito:
 
 ```text
-VillageScanner
+core/colony/model/VillageCandidate
+
+core/colony/service/VillageDetector    cluster + validação + centro
+
+fabric/adapter/MinecraftTypeAdapter    BlockPos <-> ColonyPos
+
+fabric/integration/VillageScanner      POI, aldeões, bioma
 ```
+
+A lógica pura ficou no Core; o scanner apenas lê o mundo e converte.
+
+---
+
+Verificado:
+
+```text
+59 tests passando (16 de detecção)
+
+transitividade do cluster
+
+fronteira exata de 32 blocos
+
+sino tem prioridade sobre a média
+
+coordenadas extremas não estouram
+
+constantes conferem com ADR-003 §8
+```
+
+---
+
+Não verificado:
+
+```text
+Nenhuma vila real foi detectada em jogo.
+```
+
+O scanner não está ligado a nada ainda — quem o chama é TASK-010.
+
+Sem gatilho, ele nunca executa.
 
 ---
 
@@ -649,6 +687,76 @@ NOT STARTED
 # 7. Next Development Step
 
 ## Task
+
+```text
+TASK-010 — Criar Colônia Automaticamente
+
+TASK-008 — Testar Carregamento  (depois de TASK-010)
+```
+
+Fase 3 — Detecção da Vila.
+
+---
+
+## Objective — TASK-010
+
+Ligar o `VillageScanner` a um gatilho e criar colônias.
+
+Gatilho, conforme ADR-003 §3:
+
+```text
+chunk carregado contendo POI de cama
+
+ou ciclo de 600 ticks
+```
+
+Anti-duplicata, conforme ADR-003 §6:
+
+```text
+ColonyService.findNearest(center, DUPLICATE_DISTANCE)
+
+  presente → atualizar centro, manter o UUID
+
+  vazio    → createColony
+```
+
+`findNearest` já existe e já tem teste.
+
+O UUID nunca muda; só `centerPosition` é atualizado (ADR-003 §4).
+
+---
+
+## Depois: TASK-008
+
+Com TASK-010 pronta, o round-trip completo passa a ser testável:
+
+```text
+detectar → salvar → fechar → abrir → colônia permanece
+```
+
+Essa é a única costura de persistência ainda sem cobertura.
+
+---
+
+## Pendência de decisão do autor
+
+```text
+Ícone do mod
+```
+
+---
+
+## Emenda pendente de ADR
+
+```text
+ADR-003 §7 — DORMANT → ABANDONED em ColonyState
+```
+
+Ver entrada de 2026-08-06 no log.
+
+---
+
+## Antes disso — histórico
 
 ```text
 TASK-007 — Criar Colony Saved Data
@@ -1764,6 +1872,106 @@ provado após a detecção existir.
 
 Enquanto isso, a serialização foi coberta por teste direto de NBT,
 sem servidor.
+
+---
+
+## 2026-08-06 — TASK-009 concluída
+
+Criado:
+
+```text
+core/colony/model/VillageCandidate
+
+core/colony/service/VillageDetector
+
+fabric/adapter/MinecraftTypeAdapter
+
+fabric/integration/VillageScanner
+```
+
+Divisão adotada:
+
+```text
+Core      decide o que é vila (puro, testável)
+
+Fabric    lê POI, conta aldeões, checa bioma
+```
+
+APIs confirmadas com `javap` no jar mapeado:
+
+```text
+PointOfInterestStorage.getInCircle(Predicate, BlockPos, int, OccupationStatus)
+
+PointOfInterestTypes.HOME / MEETING  são RegistryKey
+
+WorldView.getBiome(BlockPos) → RegistryEntry<Biome>
+
+EntityView.getEntitiesByClass(Class, Box, Predicate)
+```
+
+---
+
+## Conflito entre ADRs — resolvido com desvio
+
+ADR-003 §7 manda `ColonyState` ganhar `DORMANT`, dizendo estar
+"alinhado com ADR-002".
+
+Não está:
+
+```text
+ADR-002   DORMANT = chunk descarregado
+
+ADR-003   DORMANT = vila sem população
+```
+
+Condições diferentes. Uma vila abandonada com o jogador ao lado
+atende a segunda e não a primeira.
+
+`ColonyLifecycle` já usa `DORMANT` no sentido da ADR-002.
+
+Decisão: o valor de `ColonyState` chama-se `ABANDONED`.
+
+Motivo: dois `DORMANT` com significados distintos no mesmo objeto
+seriam uma armadilha para quem lê o código depois.
+
+```text
+PENDENTE: emendar ADR-003 §7 registrando a troca.
+```
+
+Este é um desvio do texto de uma ADR aceita, e está aqui para ser
+revisto pelo autor — não para passar despercebido.
+
+---
+
+## Escolhas de implementação
+
+```text
+Distância de cluster é horizontal
+
+  a cama do sótão é da mesma casa
+```
+
+```text
+Média das camas somada em long
+
+  64 camas em coordenada extrema estouram int
+```
+
+```text
+Camas com OccupationStatus.ANY
+
+  vila que perdeu aldeões ainda é vila;
+
+  quem decide isso é a validação
+```
+
+```text
+Caixa de contagem derivada das camas
+
+  buscar aldeões no mundo inteiro é proibido
+
+  por Performance-Rules.md §5
+```
 
 ---
 

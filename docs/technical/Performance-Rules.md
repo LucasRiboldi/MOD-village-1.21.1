@@ -74,6 +74,32 @@ Preferir:
 
 ---
 
+## Limites fixados da detecção de vila
+
+Definidos na ADR-003 §8 e implementados como constantes nomeadas em
+`core/colony/service/VillageDetector`:
+
+```text
+Raio de coleta            64 blocos
+
+Distância de cluster      32 blocos
+
+Camas mínimas              3
+
+Aldeões mínimos            2
+
+Distância anti-duplicata  64 blocos
+
+Ciclo                    600 ticks
+```
+
+Nenhum destes valores aparece como literal no código.
+
+O teste `constantsMatchTheDecisionRecord` falha se alguém alterar um
+deles sem passar por aqui.
+
+---
+
 Exemplo:
 
 ## Curto prazo

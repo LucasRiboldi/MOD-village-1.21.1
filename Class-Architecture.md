@@ -87,6 +87,29 @@ vale a ADR-006 §5.
 
 ---
 
+# Scanners — dois componentes distintos
+
+A ADR-003 §7 pede que a ambiguidade de nomes seja resolvida:
+
+```text
+VillageScanner   detecta vilas
+
+                 cluster de POI de cama
+
+                 fabric/integration/
+
+VillagerScanner  detecta aldeões dentro de uma colônia
+
+                 ainda não existe
+```
+
+A lógica pura de clusterização e validação não fica no scanner: mora em
+`core/colony/service/VillageDetector`, que não conhece Minecraft.
+
+O scanner lê o mundo e converte; o detector decide.
+
+---
+
 # Camada Model
 
 Responsável apenas por dados.
