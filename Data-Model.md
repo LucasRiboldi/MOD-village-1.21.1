@@ -80,6 +80,7 @@ Colony
 - centerPosition
 - biomeType
 - state
+- lifecycle
 - workers
 - buildings
 - tasks
@@ -106,10 +107,15 @@ Identificador único.
 Tipo:
 
 ```java
-BlockPos
+ColonyPos
 ```
 
 Localização principal da vila.
+
+`BlockPos` constava aqui antes da ADR-005.
+
+O Core não conhece tipos do Minecraft; a conversão acontece em
+`fabric.adapter.MinecraftTypeAdapter`.
 
 ---
 
@@ -146,6 +152,48 @@ PRODUCTION
 
 EXPANSION
 ```
+
+Descreve **o que a colônia está fazendo**.
+
+---
+
+### lifecycle
+
+Tipo:
+
+```java
+ColonyLifecycle
+```
+
+Valores:
+
+```text
+ACTIVE
+
+DORMANT
+```
+
+Descreve **se a colônia está sendo simulada**. Introduzido pela ADR-002.
+
+---
+
+Os dois estados são independentes.
+
+`ACTIVE` e `DORMANT` dependem apenas do carregamento de chunk.
+
+Uma colônia `DORMANT` conserva o `ColonyState` em que parou e retoma
+nele ao acordar.
+
+Combinação válida:
+
+```text
+lifecycle = DORMANT
+
+state     = EXPANSION
+```
+
+Significa: a colônia estava construindo e a construção continua de onde
+parou quando o chunk voltar.
 
 ---
 

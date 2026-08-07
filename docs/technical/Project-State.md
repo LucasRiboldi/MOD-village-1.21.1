@@ -458,14 +458,34 @@ Enquanto isso, os dois handlers são código não exercitado.
 Status:
 
 ```text
-NOT STARTED
+IN PROGRESS — Colony feito (TASK-005, 2026-08-06)
+```
+
+Feito:
+
+```text
+core/type/ColonyPos
+
+core/colony/model/Colony
+
+core/colony/model/ColonyState
+
+core/colony/model/ColonyLifecycle
+```
+
+Verificado:
+
+```text
+13 unit tests passando
+
+Core sem import de net.minecraft (ADR-006 §6)
+
+Nenhum domínio do core importa outro domínio
 ```
 
 Planejado:
 
 ```text
-Colony
-
 Worker
 
 Task
@@ -475,6 +495,14 @@ Resource
 Storage
 
 Building
+```
+
+Tipos da ADR-005 ainda não criados, por falta de uso:
+
+```text
+ResourceId
+
+ColonyRotation
 ```
 
 ---
@@ -554,7 +582,7 @@ NOT STARTED
 ## Task
 
 ```text
-TASK-005 — Criar Modelo Colony
+TASK-006 — Criar Colony Manager
 ```
 
 Fase 1 — Núcleo da Colônia.
@@ -563,51 +591,35 @@ Fase 1 — Núcleo da Colônia.
 
 ## Reason
 
-TASK-001 a TASK-004 concluídas em 2026-08-06.
+TASK-001 a TASK-005 concluídas em 2026-08-06.
 
-O projeto compila, o mod carrega e registra eventos de ciclo de vida.
-
----
-
-## Objective — TASK-005
-
-Criar o primeiro modelo do Core:
-
-```text
-Colony
-
-  id
-
-  posição
-
-  estado
-```
-
-Restrições que passam a valer agora:
-
-```text
-ADR-005  posição usa ColonyPos, não BlockPos
-
-ADR-006  core/colony/model/, sem importar outro domínio do core
-
-ADR-002  o estado inclui ACTIVE e DORMANT
-```
-
-Este é o primeiro código testável por unit test.
-
-Ver `Testing-Strategy.md §3`.
+O modelo `Colony` existe e está coberto por testes.
 
 ---
 
-## Infraestrutura ainda ausente
+## Atenção — nome da TASK-006
+
+`MVP-Tasks.md` chama a tarefa de "Colony Manager".
+
+A ADR-006 §5 eliminou `manager` como camada:
 
 ```text
-Nenhum framework de teste configurado.
+Service
+
+  contém lógica e mantém o registro em memória
+
+data/save
+
+  contém apenas serialização
 ```
 
-`build.gradle` não declara JUnit.
+A classe a criar é:
 
-TASK-005 precisa disso antes de escrever o primeiro teste.
+```text
+core/colony/service/ColonyService
+```
+
+`MVP-Tasks.md` precede a ADR-006. Vale a ADR.
 
 ---
 
@@ -1440,6 +1452,66 @@ run/eula.txt  →  eula=false
 Aceitar o EULA é decisão do autor, não do agente.
 
 Pendência aberta até que um servidor rode.
+
+---
+
+## 2026-08-06 — TASK-005 concluída
+
+Criado:
+
+```text
+core/type/ColonyPos                  record, ADR-005
+
+core/colony/model/ColonyState        STABLE, PRODUCTION, EXPANSION
+
+core/colony/model/ColonyLifecycle    ACTIVE, DORMANT
+
+core/colony/model/Colony
+```
+
+Infraestrutura:
+
+```text
+JUnit 5.12.2 configurado em build.gradle
+```
+
+Verificado:
+
+```text
+13 unit tests passando
+
+Core sem net.minecraft
+
+Nenhum domínio do core importa outro
+```
+
+Conflito de documentos resolvido:
+
+```text
+Data-Model.md    state = STABLE | PRODUCTION | EXPANSION
+
+ADR-002          state = ACTIVE | DORMANT
+```
+
+Não era conflito. São dois eixos independentes:
+
+```text
+ColonyState      o que a colônia faz
+
+ColonyLifecycle  se a colônia é simulada
+```
+
+Uma colônia DORMANT conserva seu ColonyState e retoma nele.
+
+Coberto pelo teste `goingDormantPreservesState`.
+
+Corrigido em `Data-Model.md`:
+
+```text
+centerPosition   BlockPos → ColonyPos   (ADR-005)
+
+lifecycle        campo adicionado
+```
 
 ---
 
