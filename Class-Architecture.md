@@ -56,27 +56,34 @@ Fabric Adapter
 
 # Estrutura Geral
 
-```text
-com.villagecolony
+A fonte única de verdade sobre o layout de pacotes é:
 
-├── core
-│
-│   ├── model
-│   │
-│   ├── service
-│   │
-│   └── manager
-│
-├── fabric
-│
-│   ├── adapter
-│   │
-│   ├── event
-│   │
-│   └── integration
-│
-└── data
+```text
+docs/decisions/ADR-006-Package-Layout.md
 ```
+
+Este documento não repete a estrutura.
+
+---
+
+Duas mudanças da ADR-006 afetam o restante deste arquivo:
+
+```text
+Agrupamento por domínio dentro da camada,
+
+não por camada.
+```
+
+```text
+A camada "manager" deixou de existir.
+
+Service contém a lógica e o registro em memória.
+
+data/save contém apenas serialização.
+```
+
+Onde este documento ainda descrever `ColonyManager` como camada,
+vale a ADR-006 §5.
 
 ---
 

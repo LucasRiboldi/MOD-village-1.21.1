@@ -3,12 +3,14 @@
   "id": "villagecolony",
   "version": "${version}",
   "name": "Village Colony",
-  "description": "Transforms vanilla villages into autonomous living colonies.",
+  "description": "Transforms vanilla villages into autonomous living colonies. Villagers organize themselves, manage resources, produce materials and expand the settlement without player intervention.",
   "authors": [
     "Lucas Riboldi"
   ],
   "contact": {
-    "repo": "https://github.com/LucasRiboldi/MOD-village-1.21.1"
+    "homepage": "https://github.com/LucasRiboldi/MOD-village-1.21.1",
+    "sources": "https://github.com/LucasRiboldi/MOD-village-1.21.1",
+    "issues": "https://github.com/LucasRiboldi/MOD-village-1.21.1/issues"
   },
   "license": "MIT",
   "environment": "*",

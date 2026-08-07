@@ -54,37 +54,31 @@ A Colônia fornece a lógica.
 
 # Estrutura do Projeto
 
-Estrutura inicial:
+A fonte única de verdade sobre o layout de pacotes é:
 
 ```text
-village-colony/
-
-├── src/main/java/
-│
-│   └── com/villagecolony/
-│
-│       ├── VillageColonyMod.java
-│       │
-│       ├── core/
-│       │   ├── colony/
-│       │   ├── task/
-│       │   ├── profession/
-│       │   ├── resource/
-│       │   ├── storage/
-│       │   └── construction/
-│       │
-│       ├── fabric/
-│       │   ├── entity/
-│       │   ├── world/
-│       │   ├── event/
-│       │   ├── block/
-│       │   └── structure/
-│       │
-│       └── data/
-│           └── save/
-│
-└── src/main/resources/
+docs/decisions/ADR-006-Package-Layout.md
 ```
+
+Este documento não repete a estrutura.
+
+---
+
+A árvore que constava aqui divergia da ADR-006 em três pontos:
+
+```text
+core/profession/   →  core/worker/
+
+fabric/entity, world, block, structure
+
+  →  fabric/adapter, event, integration, mixin, brain
+```
+
+```text
+Faltava core/type/, exigido pela ADR-005.
+```
+
+Vale a ADR-006.
 
 ---
 

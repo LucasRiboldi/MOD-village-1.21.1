@@ -322,22 +322,23 @@ build/libs/
 ```
 Village Colony
 
-├── core
+├── core        colony logic, no Minecraft types
 │
-│   ├── models
-│   ├── services
-│   └── managers
+├── fabric      integration with Minecraft
 │
-├── fabric
+├── data        persistence
 │
-│   ├── adapters
-│   ├── events
-│   └── integration
-│
-├── data
-│
-└── docs
+└── docs        specs and decisions
 ```
+
+The authoritative package layout is:
+
+```
+docs/decisions/ADR-006-Package-Layout.md
+```
+
+Packages are grouped by domain inside each layer, and named in the
+singular.
 
 ---
 

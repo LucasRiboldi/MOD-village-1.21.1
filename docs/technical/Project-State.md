@@ -350,6 +350,52 @@ JDK instalado: Temurin 21.0.12 em ~/.jdks
 
 ---
 
+## Mod Identity
+
+Status:
+
+```text
+DONE — TASK-002 (2026-08-06)
+```
+
+```text
+id           villagecolony
+
+name         Village Colony
+
+version      0.1.0
+
+license      MIT
+
+environment  *
+```
+
+Verificado: `FabricLoader` lista `villagecolony 0.1.0`.
+
+Pendente: `icon` (decisão de arte, não técnica).
+
+---
+
+## Package Structure
+
+Status:
+
+```text
+DONE — TASK-003 (2026-08-06)
+```
+
+Árvore criada conforme `ADR-006 §3`.
+
+28 pacotes, cada um com `package-info.java` documentando sua função.
+
+Nota: `package-info.java` sem anotações não gera `.class`.
+
+Os pacotes existem no repositório e no source jar, não no jar remapado.
+
+Isso é esperado — eles passam a existir no jar quando receberem código.
+
+---
+
 ## Core Models
 
 Status:
@@ -451,46 +497,50 @@ NOT STARTED
 ## Task
 
 ```text
-TASK-002 — Configurar Identidade do Mod
-
-TASK-003 — Criar Estrutura de Pacotes
+TASK-004 — Criar Classe Principal do Mod
 ```
+
+Fase 1 — Núcleo da Colônia.
 
 ---
 
 ## Reason
 
-TASK-001 foi concluída e verificada em 2026-08-06.
+TASK-001, TASK-002 e TASK-003 concluídas e verificadas em 2026-08-06.
 
-O projeto compila e o mod carrega no jogo.
-
----
-
-## Estado das tarefas adjacentes
-
-TASK-001 criou a versão **mínima** de arquivos que pertencem
-formalmente a outras tarefas, porque sem eles o critério de aceite
-de TASK-001 não era testável.
-
-```text
-fabric.mod.json    → TASK-002 (escopo completo em aberto)
-
-VillageColonyMod   → TASK-004 (registro de eventos em aberto)
-```
-
-Ambas seguem abertas.
+O projeto compila, o mod carrega e a árvore de pacotes existe.
 
 ---
 
-## Objective — TASK-003
+## Escopo restante de TASK-004
 
-Criar a árvore de pacotes de:
+`VillageColonyMod` já existe e inicializa.
+
+Falta:
 
 ```text
-docs/decisions/ADR-006-Package-Layout.md §3
+registro de eventos
 ```
 
-Domínio dentro da camada.
+O que a classe **não** deve fazer permanece em:
+
+```text
+docs/technical/Initial-Setup-Checklist.md §7
+```
+
+---
+
+## Pendência de decisão do autor
+
+```text
+Ícone do mod
+```
+
+`fabric.mod.json` não declara `icon`.
+
+Escolher a arte é decisão de identidade visual, não técnica.
+
+Sem `icon` o Fabric usa o ícone padrão. Nada quebra.
 
 ---
 
@@ -1206,6 +1256,68 @@ Resultado:
 Version Matrix validada na prática.
 
 Nenhum valor precisou de correção.
+```
+
+---
+
+## 2026-08-06 — TASK-002 e TASK-003 concluídas
+
+TASK-002 — Identidade do mod:
+
+```text
+fabric.mod.json completo
+
+description, contact.homepage, sources, issues
+
+license MIT
+```
+
+TASK-003 — Estrutura de pacotes:
+
+```text
+28 pacotes conforme ADR-006 §3
+
+cada um com package-info.java
+```
+
+Verificado:
+
+```text
+./gradlew build      → BUILD SUCCESSFUL
+
+./gradlew runClient  → villagecolony 0.1.0 na lista de mods
+
+                       sem exceções
+```
+
+Corrigido — ADR-006 §7 exigia fonte única:
+
+```text
+README.md §11
+
+Class-Architecture.md
+
+Fabric-Implementation-Plan.md
+```
+
+Os três repetiam layouts divergentes.
+
+Agora apontam para a ADR-006.
+
+Divergências encontradas:
+
+```text
+core/profession/  →  core/worker/
+
+camada manager    →  não existe mais
+
+core/type/        →  estava ausente
+```
+
+Pendente:
+
+```text
+icon do mod — decisão do autor
 ```
 
 ---
