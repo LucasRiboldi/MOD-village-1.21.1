@@ -8,6 +8,7 @@ import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageScanner;
+import com.villagecolony.fabric.integration.VillagerScanner;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -98,6 +99,26 @@ public final class VillageDetectionHandler {
     }
 
     /**
+     * Registra os aldeões da colônia como trabalhadores.
+     *
+     * <p>Só produz linha de log quando alguém novo aparece. Reencontrar
+     * os mesmos aldeões a cada ciclo é o caso comum e deve ser silencioso.
+     */
+    private static void registerVillagers(ServerWorld world, Colony colony) {
+        int registered = VillagerScanner.scan(world, colony, VillageColonyMod.WORKERS);
+
+        if (registered == 0) {
+            return;
+        }
+
+        VillageColonyMod.LOGGER.info(
+                "Registered {} villagers in colony {} ({} total)",
+                registered,
+                colony.id(),
+                VillageColonyMod.WORKERS.countOfColony(colony.id()));
+    }
+
+    /**
      * Acorda e adormece colônias conforme seus chunks.
      *
      * <p>Sem isto, uma colônia visitada uma vez permaneceria
@@ -150,6 +171,8 @@ public final class VillageDetectionHandler {
                     .orElse(null);
 
             Colony colony = VillageColonyMod.COLONIES.adopt(candidate);
+
+            registerVillagers(world, colony);
 
             if (VillageColonyMod.COLONIES.count() > before) {
                 VillageColonyMod.LOGGER.info(

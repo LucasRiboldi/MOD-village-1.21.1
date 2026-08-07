@@ -1,6 +1,7 @@
 package com.villagecolony;
 
 import com.villagecolony.core.colony.service.ColonyService;
+import com.villagecolony.core.worker.service.WorkerService;
 import com.villagecolony.fabric.event.ServerLifecycleHandler;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
 import net.fabricmc.api.ModInitializer;
@@ -44,6 +45,19 @@ public class VillageColonyMod implements ModInitializer {
      * esvaziado ao parar o servidor.
      */
     public static final ColonyService COLONIES = new ColonyService();
+
+    /**
+     * Registro dos trabalhadores em memória.
+     *
+     * <p>Mesma justificativa de {@link #COLONIES}: ADR-006 §5 permite o
+     * campo estático em vez de uma camada de managers.
+     *
+     * <p>Não é persistido. Os trabalhadores são redescobertos a cada
+     * sessão a partir dos aldeões do mundo, que são a fonte da verdade.
+     * Isso deixa de bastar quando houver profissão atribuída — ver
+     * TASK-013.
+     */
+    public static final WorkerService WORKERS = new WorkerService();
 
     @Override
     public void onInitialize() {

@@ -25,6 +25,7 @@ public final class ServerLifecycleHandler {
     /** Recoloca no registro as colônias gravadas no mundo. */
     private static void onServerStarted(MinecraftServer server) {
         VillageColonyMod.COLONIES.clear();
+        VillageColonyMod.WORKERS.clear();
 
         for (Colony colony : ColonySavedData.get(server).colonies()) {
             VillageColonyMod.COLONIES.register(colony);
@@ -45,8 +46,11 @@ public final class ServerLifecycleHandler {
         ColonySavedData.get(server).sync(VillageColonyMod.COLONIES.all());
 
         VillageColonyMod.LOGGER.info(
-                "Saved {} colonies", VillageColonyMod.COLONIES.count());
+                "Saved {} colonies with {} workers",
+                VillageColonyMod.COLONIES.count(),
+                VillageColonyMod.WORKERS.count());
 
         VillageColonyMod.COLONIES.clear();
+        VillageColonyMod.WORKERS.clear();
     }
 }

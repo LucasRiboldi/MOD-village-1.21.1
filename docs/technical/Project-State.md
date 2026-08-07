@@ -1003,17 +1003,126 @@ worker não importa colony
 
 ---
 
+---
+
+## 2026-08-07 — TASK-012 concluída
+
+Criado:
+
+```text
+core/worker/service/WorkerService        registro em memória
+
+fabric/integration/VillagerScanner       lê aldeões do mundo
+```
+
+Ligado ao ciclo de detecção: adotar uma colônia registra seus aldeões.
+
+Nomes distintos conforme ADR-003 §7:
+
+```text
+VillageScanner    detecta vilas
+
+VillagerScanner   detecta aldeões dentro de uma colônia
+```
+
+---
+
+Decisões:
+
+```text
+register é idempotente
+
+  a varredura reencontra os mesmos aldeões a cada ciclo;
+
+  reencontrar não pode apagar profissão já atribuída
+```
+
+```text
+Ausência na varredura não remove ninguém
+
+  aldeão fora do raio não está morto, só não foi visto
+
+  remove() existe para quando houver evento de morte
+```
+
+```text
+Mesmo raio da detecção de vila (64)
+
+  inventar um segundo número criaria duas noções de "perto"
+```
+
+```text
+Bebês são registrados
+
+  eles crescem; redescobrir depois custa mais
+```
+
+---
+
+Verificado:
+
+```text
+106 testes
+
+core sem net.minecraft
+
+worker não importa colony
+```
+
+---
+
+Não verificado:
+
+```text
+Nenhum aldeão foi registrado em jogo ainda.
+```
+
+---
+
+## Lacuna conhecida — profissão não sobrevive à sessão
+
+`WORKERS` não é persistido.
+
+Os trabalhadores são redescobertos a cada sessão a partir dos aldeões
+do mundo, que são a fonte da verdade. Isso basta hoje, porque só há
+registro.
+
+Deixa de bastar em TASK-013/014: profissão atribuída é decisão da
+colônia, não existe no mundo Vanilla, e some ao fechar o mundo.
+
+`MVP-Tasks.md` não tem tarefa de persistência de workers.
+
+Precisa entrar antes ou junto de TASK-014.
+
+---
+
 ## Estado geral
 
 ```text
 Fases 1 a 3 completas e verificadas em jogo
 
-Fase 4 iniciada — TASK-011 feita
+Fase 4 em andamento — TASK-011 e TASK-012 feitas
 
-94 testes
+106 testes
 
-Próxima: TASK-012 — VillagerScanner
+Próxima: TASK-013 — ProfessionRegistry
 ```
+
+---
+
+## Identidade visual
+
+```text
+Ícone: assets/villagecolony/icon.png
+```
+
+A arte diz "Village++"; o mod se chama "Village Colony", id
+`villagecolony`.
+
+Divergência mantida por decisão do autor em 2026-08-07.
+
+Trocar o id quebraria saves existentes: ele nomeia o arquivo
+`villagecolony_colonies.dat`, o caminho do ícone e o logger.
 
 ---
 
