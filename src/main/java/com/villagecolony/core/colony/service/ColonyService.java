@@ -1,6 +1,7 @@
 package com.villagecolony.core.colony.service;
 
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.type.ColonyPos;
 
 import java.util.Collection;
@@ -64,6 +65,35 @@ public final class ColonyService {
         if (existing != null) {
             throw new IllegalStateException("Colony already registered: " + colony.id());
         }
+    }
+
+    /**
+     * Transforma uma vila detectada em colônia.
+     *
+     * <p>Se já existe colônia dentro de
+     * {@link VillageDetector#DUPLICATE_DISTANCE} do centro detectado, ela
+     * é a mesma vila: o centro é atualizado e o UUID preservado. Caso
+     * contrário nasce uma colônia nova.
+     *
+     * <p>É isso que impede colônias duplicadas quando o jogador reentra
+     * na área e a detecção roda de novo. Ver ADR-003 §4 e §6.
+     *
+     * @return a colônia resultante, nova ou atualizada
+     */
+    public Colony adopt(VillageCandidate candidate) {
+        Objects.requireNonNull(candidate, "candidate");
+
+        Optional<Colony> existing =
+                findNearest(candidate.center(), VillageDetector.DUPLICATE_DISTANCE);
+
+        if (existing.isPresent()) {
+            Colony colony = existing.get();
+            colony.setCenter(candidate.center());
+
+            return colony;
+        }
+
+        return createColony(candidate.center());
     }
 
     public Optional<Colony> find(UUID id) {

@@ -27,7 +27,14 @@ public final class Colony {
 
     private final UUID id;
 
-    private final ColonyPos center;
+    /**
+     * Move conforme camas são adicionadas ou removidas.
+     *
+     * <p>Não é final por exigência da ADR-003 §4: o centro acompanha a
+     * vila, mas o {@link #id} nunca muda. Workers e Buildings ficam
+     * ligados ao UUID, não à posição.
+     */
+    private ColonyPos center;
 
     private ColonyState state;
 
@@ -76,6 +83,16 @@ public final class Colony {
 
     public ColonyPos center() {
         return center;
+    }
+
+    /**
+     * Reposiciona o centro da colônia.
+     *
+     * <p>Chamado quando a detecção reavalia a vila e o conjunto de camas
+     * mudou. A identidade da colônia não é afetada. Ver ADR-003 §4.
+     */
+    public void setCenter(ColonyPos center) {
+        this.center = Objects.requireNonNull(center, "center");
     }
 
     public ColonyState state() {

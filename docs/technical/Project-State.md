@@ -634,15 +634,36 @@ constantes conferem com ADR-003 §8
 
 ---
 
-Não verificado:
+---
+
+## Colony Creation
+
+Status:
 
 ```text
-Nenhuma vila real foi detectada em jogo.
+DONE — TASK-010 (2026-08-06)
 ```
 
-O scanner não está ligado a nada ainda — quem o chama é TASK-010.
+Feito:
 
-Sem gatilho, ele nunca executa.
+```text
+Colony.setCenter               centro móvel, ADR-003 §4
+
+ColonyService.adopt            anti-duplicata, ADR-003 §6
+
+fabric/event/VillageDetectionHandler   os dois gatilhos
+```
+
+Gatilhos, conforme ADR-003 §3:
+
+```text
+CHUNK_LOAD         só se o chunk contiver POI de cama
+
+END_SERVER_TICK    a cada 600 ticks, em torno dos jogadores
+```
+
+A checagem barata (`getInChunk`) vem antes da cara (`getInCircle`):
+a maioria dos chunks carregados é descartada sem custo.
 
 ---
 
@@ -689,52 +710,49 @@ NOT STARTED
 ## Task
 
 ```text
-TASK-010 — Criar Colônia Automaticamente
-
-TASK-008 — Testar Carregamento  (depois de TASK-010)
+TASK-008 — Testar Carregamento
 ```
 
-Fase 3 — Detecção da Vila.
+Fase 2, adiada até a detecção existir.
 
 ---
 
-## Objective — TASK-010
+## Reason
 
-Ligar o `VillageScanner` a um gatilho e criar colônias.
+Fase 3 concluída em 2026-08-06.
 
-Gatilho, conforme ADR-003 §3:
-
-```text
-chunk carregado contendo POI de cama
-
-ou ciclo de 600 ticks
-```
-
-Anti-duplicata, conforme ADR-003 §6:
-
-```text
-ColonyService.findNearest(center, DUPLICATE_DISTANCE)
-
-  presente → atualizar centro, manter o UUID
-
-  vazio    → createColony
-```
-
-`findNearest` já existe e já tem teste.
-
-O UUID nunca muda; só `centerPosition` é atualizado (ADR-003 §4).
+A detecção cria colônias. Agora há o que salvar.
 
 ---
 
-## Depois: TASK-008
+## Objective — TASK-008
 
-Com TASK-010 pronta, o round-trip completo passa a ser testável:
+O round-trip completo, que era a única costura de persistência sem
+cobertura:
 
 ```text
 detectar → salvar → fechar → abrir → colônia permanece
 ```
 
-Essa é a única costura de persistência ainda sem cobertura.
+Roteiro sem interface gráfica:
+
+```text
+locate structure minecraft:village_plains
+
+forceload add <x> <z>
+
+conferir "Colony created"
+
+stop
+
+reabrir e conferir "Loaded 1 colonies"
+```
+
+---
+
+## Depois
+
+Fase 4 — Sistema de Trabalhadores, a partir de TASK-011.
 
 ---
 

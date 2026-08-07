@@ -2,6 +2,7 @@ package com.villagecolony;
 
 import com.villagecolony.core.colony.service.ColonyService;
 import com.villagecolony.fabric.event.ServerLifecycleHandler;
+import com.villagecolony.fabric.event.VillageDetectionHandler;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +48,7 @@ public class VillageColonyMod implements ModInitializer {
     @Override
     public void onInitialize() {
         ServerLifecycleHandler.register();
+        VillageDetectionHandler.register();
 
         LOGGER.info("[Village Colony] Mod initialized");
     }
