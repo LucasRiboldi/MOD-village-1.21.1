@@ -757,16 +757,9 @@ A   automatizar V1, V2, V4, V5, V6 e V7 com Fabric Game Test
 ```
 
 ```text
-B   travar a ADR-006 §6 como teste automatizado
+B   travar a ADR-006 §6 como teste automatizado    FEITO
 
-    Hoje a regra "nenhum domínio do core importa outro" é
-    verificada por grep, à mão. Isso não é guarda-corpo: some
-    no dia em que alguém esquecer de rodar.
-
-    Foi essa regra que obrigou a mover Capability e ResourceType
-    para core/type na Fase 7 — ela já cobrou uma vez.
-
-    Barata e independente das demais.
+    DependencyRuleTest, em 2026-08-07. Ver §15.
 ```
 
 ```text
@@ -2936,9 +2929,9 @@ Antes disto, toda linha dizia `nothing tracked across 0 chests`. Isso
 era o esperado e não defeito: a colônia acompanha três itens, e baú de
 vila vanilla tem trigo, semente e esmeralda.
 
-Ressalva registrada: a linha `nothing tracked across 0 chests` não
-distingue "baú vazio" de "baú em chunk que não consegui ler". Depois da
-correção do travamento, o segundo caso passou a existir. Ver §9.
+Ressalva encontrada aqui e corrigida logo depois: a linha
+`nothing tracked across 0 chests` não distinguia "baú vazio" de "baú em
+chunk que não consegui ler". Ver a entrada seguinte.
 
 ---
 
@@ -2992,6 +2985,96 @@ V4                      não verificado
 V7(zumbi)               não exercido
 
 217 testes passando; ./gradlew build → BUILD SUCCESSFUL
+```
+
+---
+
+## 2026-08-07 — Duas melhorias que a verificação cobrou
+
+Nenhuma tarefa do MVP. As duas saíram do que a sessão de verificação
+mostrou, e as duas fecham buracos de observação, não de funcionalidade.
+
+---
+
+### A contagem de baús passou a dizer o que não conseguiu ler
+
+A correção do travamento criou um caso que antes não existia: baú
+registrado cujo chunk não está carregado. `ColonyResources` descarta baú
+vazio na agregação, então esse baú e um baú vazio saíam pelo mesmo cano
+— sumiam.
+
+O log dizia a mesma coisa nos dois casos:
+
+```text
+Colony ... stores nothing tracked across 0 chests
+```
+
+"Nenhum baú tem madeira" e "não consegui ler baú nenhum" com o mesmo
+texto. É o defeito-que-parece-número que o V5 do §7 já antecipava, e
+agora com uma causa concreta atrás dele.
+
+`ChestInventoryReader.survey` devolve `ChestSurvey`: o que foi lido,
+quantos baús foram alcançados — vazios inclusive — e quantos ficaram
+fora de alcance. A linha passou a ser:
+
+```text
+Colony ... stores {OAK_LOG=448} in 8 of 13 chests read
+Colony ... stores nothing tracked in 0 of 4 chests read (9 unreachable, chunk unloaded)
+```
+
+`readColony` continua existindo e devolvendo só o agregado. O javadoc
+de `survey` diz quando preferir uma à outra: decisão de colônia tomada
+sobre contagem parcial mandaria um trabalhador buscar o que ela já tem.
+
+Fica registrado que isto é observação, não correção do risco. A colônia
+ainda não *usa* `isPartial()` para se recusar a decidir — quando o loop
+de simulação existir (§10 item 2), é onde essa recusa mora.
+
+---
+
+### A regra de dependência da ADR-006 §6 virou teste
+
+Era o item B do §8. A regra "nenhum domínio do core importa outro" era
+conferida por `grep`, à mão — o que some no dia em que alguém esquecer
+de rodar. Ela já tinha cobrado uma vez, obrigando a mover `Capability`
+e `ResourceType` para `core/type` na Fase 7.
+
+`DependencyRuleTest` lê os fontes de `core/` e trava três coisas:
+
+```text
+core não importa net.minecraft nem net.fabricmc
+
+core não importa fabric nem data
+
+nenhum domínio do core importa outro, exceto core/type
+```
+
+Lê fonte, e não bytecode, de propósito: a regra é sobre `import`, que é
+o que o autor escreve e o que a ADR proíbe. O bytecode já perdeu a
+diferença entre um import e um nome qualificado.
+
+O teste foi verificado ao contrário antes de entrar. Um arquivo
+temporário em `core/colony/model` importando `Worker` e `BlockPos` fez
+os dois testes certos falharem, com a mensagem apontando arquivo e
+import:
+
+```text
+ADR-006 §6 — nenhum domínio do core importa outro. Violações:
+  .../TempViolation.java (colony) importa com.villagecolony.core.worker.model.Worker
+```
+
+O quarto teste, `theScanReachesTheSource`, existe porque uma varredura
+que não acha arquivo nenhum passa sempre — e passaria calada se o
+caminho relativo quebrasse.
+
+---
+
+Estado ao registrar:
+
+```text
+221 testes passando (eram 217)
+
+./gradlew build → BUILD SUCCESSFUL
 ```
 
 ---

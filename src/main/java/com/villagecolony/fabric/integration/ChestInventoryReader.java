@@ -16,6 +16,7 @@ import net.minecraft.world.chunk.WorldChunk;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -55,13 +56,29 @@ public final class ChestInventoryReader {
      * §15, entrada de 2026-08-07.
      */
     public static ResourceTally read(ServerWorld world, BlockPos position) {
-        WorldChunk chunk = world.getChunkManager()
-                .getWorldChunk(position.getX() >> 4, position.getZ() >> 4);
+        WorldChunk chunk = chunkAt(world, position);
 
         if (chunk == null) {
             return ResourceTally.empty();
         }
 
+        return readIn(chunk, position);
+    }
+
+    /**
+     * O chunk de uma posição, ou {@code null} se ele não estiver
+     * carregado.
+     *
+     * <p>Nunca força o carregamento. Ver a nota de {@link #read}: forçar
+     * daqui trava a thread do servidor.
+     */
+    private static WorldChunk chunkAt(ServerWorld world, BlockPos position) {
+        return world.getChunkManager()
+                .getWorldChunk(position.getX() >> 4, position.getZ() >> 4);
+    }
+
+    /** A leitura em si, com o chunk já em mãos. */
+    private static ResourceTally readIn(WorldChunk chunk, BlockPos position) {
         if (!(chunk.getBlockEntity(position) instanceof ChestBlockEntity chest)) {
             return ResourceTally.empty();
         }
@@ -126,15 +143,72 @@ public final class ChestInventoryReader {
     public static ColonyResources readColony(
             ServerWorld world, Iterable<UUID> workerIds, StorageRegistry storages) {
 
+        return survey(world, workerIds, storages).resources();
+    }
+
+    /**
+     * O resultado de uma varredura de baús, com o que ela não conseguiu
+     * olhar.
+     *
+     * <p>Existe porque {@link ColonyResources} sozinho não sabe dizer a
+     * diferença entre um baú vazio e um baú que a colônia não pôde ler:
+     * os dois somem da agregação. Enquanto a leitura forçava o
+     * carregamento do chunk essa diferença não existia — todo baú
+     * registrado era legível. Depois da correção de {@link #read} ela
+     * passou a existir, e um baú fora de alcance vira estoque a menos
+     * sem nada avisando.
+     *
+     * <p>É o risco que o V5 do §7 já apontava, agora com nome: nesta
+     * camada o defeito aparece como número plausível, não como ausência.
+     *
+     * @param resources   o que foi lido, sem os baús vazios
+     * @param chestsRead  baús alcançados, incluindo os que estavam vazios
+     * @param chestsUnreachable baús registrados cujo chunk não está carregado
+     */
+    public record ChestSurvey(
+            ColonyResources resources, int chestsRead, int chestsUnreachable) {
+
+        /** Se a contagem está incompleta, e por isso não vale confiar nela. */
+        public boolean isPartial() {
+            return chestsUnreachable > 0;
+        }
+    }
+
+    /**
+     * O estoque de uma colônia, dizendo também o que ficou fora do
+     * alcance.
+     *
+     * <p>Preferir a {@link #readColony} quando a resposta for usada para
+     * decidir alguma coisa: uma colônia que conclui "falta madeira"
+     * porque metade dos baús estava descarregada mandaria um trabalhador
+     * buscar o que ela já tem.
+     */
+    public static ChestSurvey survey(
+            ServerWorld world, Iterable<UUID> workerIds, StorageRegistry storages) {
+
         Map<ColonyPos, ResourceTally> byChest = new LinkedHashMap<>();
+        int unreachable = 0;
 
         for (UUID workerId : workerIds) {
-            storages.of(workerId).ifPresent(storage -> byChest.put(
-                    storage.chestPosition(),
-                    read(world, MinecraftTypeAdapter.toBlockPos(storage.chestPosition()))));
+            Optional<WorkerStorage> storage = storages.of(workerId);
+
+            if (storage.isEmpty()) {
+                continue;
+            }
+
+            ColonyPos position = storage.get().chestPosition();
+            BlockPos blockPos = MinecraftTypeAdapter.toBlockPos(position);
+            WorldChunk chunk = chunkAt(world, blockPos);
+
+            if (chunk == null) {
+                unreachable++;
+                continue;
+            }
+
+            byChest.put(position, readIn(chunk, blockPos));
         }
 
-        return ColonyResources.of(byChest);
+        return new ChestSurvey(ColonyResources.of(byChest), byChest.size(), unreachable);
     }
 
     /** Atalho para somar tudo o que está registrado. */

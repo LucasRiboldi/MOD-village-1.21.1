@@ -160,6 +160,11 @@ public final class VillageDetectionHandler {
      * arquivo sem dizer nada — mas sem nenhuma linha, a contagem da
      * TASK-017 seria invisível em jogo, e o §11 do Project-State existe
      * justamente porque defeitos desta camada só aparecem lá.
+     *
+     * <p>Diz quantos baús foram alcançados, e não só quantos tinham algo
+     * dentro. A linha antiga contava apenas os não vazios, e assim
+     * "nenhum baú tem madeira" e "não consegui ler baú nenhum" saíam com
+     * o mesmo texto — o defeito-que-parece-número do V5.
      */
     private static void logResources(ServerWorld world, Colony colony) {
         List<UUID> workerIds = new ArrayList<>();
@@ -168,14 +173,20 @@ public final class VillageDetectionHandler {
             workerIds.add(worker.villagerId());
         }
 
-        ColonyResources resources = ChestInventoryReader.readColony(
+        ChestInventoryReader.ChestSurvey survey = ChestInventoryReader.survey(
                 world, workerIds, VillageColonyMod.STORAGES);
 
+        ColonyResources resources = survey.resources();
+
         VillageColonyMod.LOGGER.info(
-                "Colony {} stores {} across {} chests",
+                "Colony {} stores {} in {} of {} chests read{}",
                 colony.id(),
                 resources.isEmpty() ? "nothing tracked" : resources.total().counts(),
-                resources.byChest().size());
+                resources.byChest().size(),
+                survey.chestsRead(),
+                survey.isPartial()
+                        ? " (" + survey.chestsUnreachable() + " unreachable, chunk unloaded)"
+                        : "");
     }
 
     /**
