@@ -1072,6 +1072,17 @@ usar número de vila de verdade nos testes
   save tinha 38 camas
 ```
 
+```text
+critério de verificação exige instrumentação que o
+satisfaça, escrita junto com ele
+
+  três critérios do roteiro V1–V7 eram inverificáveis
+  como escritos: o estoque não distinguia baú vazio de
+  ilegível, o encolhimento não tinha linha nenhuma, e o
+  V4 pedia saber de quem era cada baú sem que nada
+  dissesse isso
+```
+
 ---
 
 ## Armadilha de método já paga
@@ -3434,6 +3445,71 @@ Estado ao registrar:
 ./gradlew build → BUILD SUCCESSFUL
 
 encolhimento verificado em jogo
+```
+
+---
+
+## 2026-08-07 — V7 fechado; o V4 era inverificável
+
+A zumbificação apareceu em jogo, e distinta da morte:
+
+```text
+Worker 0bdd1c8a was converted — profession freed
+Worker fc3c2162 was converted — profession freed
+Worker 457439b1 was converted — profession freed, storage released
+```
+
+Os dois desfechos convivem no mesmo ataque — na mesma investida
+apareceram sete linhas de `died` e três de `was converted`. A diferença
+entre "morreu" e "virou zumbi" é o caminho mais comum em jogo e o que o
+§7 marcava como o mais fácil de deixar passar. Está exercido.
+
+A terceira linha mostra a outra metade: `storage released` só sai para
+quem tinha baú. Quem não tinha, não solta.
+
+Com isto o V7 fecha inteiro. Restava o V4.
+
+---
+
+### O V4 não falhou: ele não podia ser respondido
+
+"Cada aldeão pegou o baú da sua casa, não o do vizinho." O autor foi
+verificar em jogo e a resposta foi que não dá para saber.
+
+```text
+Registered 7 storages in colony ... (7 total)
+```
+
+Quantos, e nada mais. Nem qual baú, nem de quem, nem onde. Não existe
+UI, e o baú reivindicado é igual a qualquer outro. O critério estava no
+roteiro desde o começo e nenhuma sessão poderia tê-lo respondido.
+
+É o mesmo padrão da linha `nothing tracked across 0 chests` e da linha
+que faltava no encolhimento: um critério de verificação escrito sem
+que existisse a instrumentação para satisfazê-lo. Três vezes no mesmo
+dia.
+
+`ChestScanner` passou a registrar cada reivindicação:
+
+```text
+Storage claimed by <uuid>: bed 1109,68,730 chest 1112,68,731 (3,3 blocks apart)
+```
+
+São as coordenadas de ir até lá e abrir o baú, que é a verificação que
+o V4 pede. Uma linha por baú reivindicado, e o baú de um aldeão é
+procurado uma vez só enquanto ele o tiver.
+
+---
+
+Estado ao registrar:
+
+```text
+V2, V3, V5, V7      confirmados em jogo
+encolhimento        confirmado em jogo
+V1, V6              indício forte, critério final pendente
+V4                  instrumentado, ainda por verificar
+
+233 testes passando; build verde
 ```
 
 ---

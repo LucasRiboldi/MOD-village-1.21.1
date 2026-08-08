@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.storage.service.StorageRegistry;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -83,7 +84,34 @@ public final class ChestScanner {
 
         storages.register(storage);
 
+        logClaim(villager, home.get().pos(), chest.get());
+
         return Optional.of(storage);
+    }
+
+    /**
+     * Registra qual baú ficou com qual aldeão, e a que distância da cama.
+     *
+     * <p>Existe porque o V4 do §7 — "cada aldeão pegou o baú da sua casa,
+     * não o do vizinho" — era impossível de verificar. O log dizia
+     * quantos baús foram registrados e nada mais: nem qual baú, nem de
+     * quem, nem onde. Não havia como o autor conferir em jogo, e um
+     * defeito aqui aparece depois como estoque plausível na contagem da
+     * TASK-017.
+     *
+     * <p>Uma linha por baú reivindicado. Não vira spam: o baú de um
+     * aldeão é procurado uma vez e nunca mais, enquanto ele o tiver.
+     *
+     * <p>As coordenadas são as de ir até lá e abrir o baú — é essa a
+     * verificação que a linha existe para permitir.
+     */
+    private static void logClaim(VillagerEntity villager, BlockPos bed, BlockPos chest) {
+        VillageColonyMod.LOGGER.info(
+                "Storage claimed by {}: bed {} chest {} ({} blocks apart)",
+                villager.getUuid(),
+                bed.toShortString(),
+                chest.toShortString(),
+                String.format("%.1f", Math.sqrt(bed.getSquaredDistance(chest))));
     }
 
     /**
