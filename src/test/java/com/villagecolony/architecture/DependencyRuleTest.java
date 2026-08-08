@@ -40,6 +40,20 @@ class DependencyRuleTest {
      */
     private static final String SHARED = "type";
 
+    /**
+     * A camada de coordenação, que pode importar qualquer domínio.
+     *
+     * <p>Emenda da ADR-006 §6 em 2026-08-08. É o lugar do código que
+     * casa tarefa com profissão: precisa de {@code core.task} e
+     * {@code core.worker} na mesma linha, e nenhum dos dois pode
+     * importar o outro.
+     *
+     * <p>A exceção vale numa direção só. Coordenação lê domínio;
+     * domínio não lê coordenação, ou a regra de dependência viraria um
+     * ciclo com nome bonito.
+     */
+    private static final String COORDINATION = "coordination";
+
     /** O core não conhece Minecraft. É o que o torna testável. */
     @Test
     void coreDoesNotImportMinecraft() {
@@ -93,12 +107,44 @@ class DependencyRuleTest {
                 return;
             }
 
+            if (COORDINATION.equals(owner)) {
+                return;
+            }
+
             offenders.add(file + " (" + owner + ") importa " + imported);
         });
 
         assertTrue(
                 offenders.isEmpty(),
                 () -> message("nenhum domínio do core importa outro", offenders));
+    }
+
+    /**
+     * A exceção da coordenação vale numa direção só.
+     *
+     * <p>Sem isto, "coordenação pode importar domínio" viraria na
+     * prática "todo mundo pode importar todo mundo, desde que passe por
+     * coordination". A ADR-006 §6 abriu um pacote, não a regra.
+     */
+    @Test
+    void coreDomainsDoNotImportTheCoordinationLayer() {
+        List<String> offenders = new ArrayList<>();
+
+        forEachCoreImport((file, imported) -> {
+            String owner = coreDomainOf(packageOfFile(file));
+
+            if (owner == null || COORDINATION.equals(owner)) {
+                return;
+            }
+
+            if (COORDINATION.equals(coreDomainOf(imported))) {
+                offenders.add(file + " (" + owner + ") importa " + imported);
+            }
+        });
+
+        assertTrue(
+                offenders.isEmpty(),
+                () -> message("domínio do core não importa a coordenação", offenders));
     }
 
     /** Confere que a varredura de fato encontrou código para analisar. */

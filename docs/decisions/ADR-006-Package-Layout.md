@@ -313,6 +313,32 @@ Comunicação por interface ou serviço, conforme
 
 ---
 
+Emenda de 2026-08-08 — `core/coordination`:
+
+```text
+core/coordination  →  qualquer domínio do core
+
+qualquer domínio    ↛  outro domínio      (segue proibido)
+core/coordination   ↛  fabric, data       (segue proibido)
+```
+
+A TASK-023 precisa casar tarefa com profissão, e isso exige ler
+`core.task` e `core.worker` na mesma linha de código. Não havia lugar
+legítimo para ela: `core/type` é para tipos de valor, e `fabric/` faria
+regra de colônia morar na camada de integração — a única sem um teste
+de unidade sequer, e onde todos os defeitos da semana apareceram.
+
+`core/coordination` é uma camada acima dos domínios, não um domínio.
+Não guarda estado próprio: recebe os serviços dos domínios e os
+combina.
+
+A emenda é estreita de propósito. Um domínio continua sem poder
+importar outro; o que se abre é um pacote nomeado, e só ele.
+`DependencyRuleTest` passa a conhecer a exceção — a regra continua
+sendo teste, não confiança.
+
+---
+
 # 7. Consequences
 
 Documentos a atualizar:

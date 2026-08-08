@@ -1,0 +1,217 @@
+package com.villagecolony.core.coordination;
+
+import com.villagecolony.core.task.model.Task;
+import com.villagecolony.core.task.model.TaskPriority;
+import com.villagecolony.core.task.model.TaskState;
+import com.villagecolony.core.task.model.TaskType;
+import com.villagecolony.core.task.service.TaskService;
+import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.core.worker.model.Worker;
+import com.villagecolony.core.worker.service.WorkerService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+/**
+ * TASK-023 — quem faz o quê.
+ *
+ * <p>Os dois lados já existiam e não se conheciam: {@link TaskType}
+ * declara a {@link com.villagecolony.core.type.Capability} que exige, e
+ * a profissão do trabalhador diz quais ele tem. Faltava quem os casasse,
+ * e não havia lugar legítimo para esse código até a emenda da ADR-006
+ * §6.
+ */
+class WorkAssignmentTest {
+
+    private static final UUID COLONY = UUID.randomUUID();
+
+    private WorkerService workers;
+
+    private TaskService tasks;
+
+    @BeforeEach
+    void setUp() {
+        workers = new WorkerService();
+        tasks = new TaskService();
+    }
+
+    private Worker workerWith(ProfessionType profession) {
+        Worker worker = workers.register(UUID.randomUUID(), COLONY);
+        worker.assign(profession);
+
+        return worker;
+    }
+
+    private Task woodTask() {
+        return tasks.create(COLONY, TaskType.COLLECT_WOOD, TaskPriority.PRODUCTION,
+                ResourceType.OAK_LOG, 64);
+    }
+
+    @Test
+    void aLumberjackTakesTheWoodTask() {
+        Worker lumberjack = workerWith(ProfessionType.LUMBERJACK);
+        Task task = woodTask();
+
+        int assigned = WorkAssignment.assign(COLONY, workers, tasks);
+
+        assertEquals(1, assigned);
+        assertEquals(TaskState.RESERVED, task.state());
+        assertEquals(Optional.of(lumberjack.villagerId()), task.executor());
+    }
+
+    /** A capacidade é o critério, não o nome da profissão. */
+    @Test
+    void aFarmerDoesNotTakeTheWoodTask() {
+        workerWith(ProfessionType.FARMER);
+        Task task = woodTask();
+
+        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(TaskState.AVAILABLE, task.state());
+    }
+
+    @Test
+    void aWorkerWithoutAProfessionTakesNothing() {
+        workers.register(UUID.randomUUID(), COLONY);
+        Task task = woodTask();
+
+        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(TaskState.AVAILABLE, task.state());
+    }
+
+    /**
+     * Um trabalhador por vez.
+     *
+     * <p>Sem isto o mesmo lenhador pegaria a fila inteira, e a Fase 8 o
+     * mandaria andar para dois lugares ao mesmo tempo.
+     */
+    @Test
+    void aBusyWorkerDoesNotTakeASecondTask() {
+        workerWith(ProfessionType.LUMBERJACK);
+        woodTask();
+        woodTask();
+
+        assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
+    }
+
+    @Test
+    void twoLumberjacksTakeTwoTasks() {
+        workerWith(ProfessionType.LUMBERJACK);
+        workerWith(ProfessionType.LUMBERJACK);
+        woodTask();
+        woodTask();
+
+        assertEquals(2, WorkAssignment.assign(COLONY, workers, tasks));
+    }
+
+    @Test
+    void moreWorkersThanTasksLeavesTheRestIdle() {
+        workerWith(ProfessionType.LUMBERJACK);
+        workerWith(ProfessionType.LUMBERJACK);
+        woodTask();
+
+        assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
+    }
+
+    /** A fila respeita a prioridade que o TaskService já ordena. */
+    @Test
+    void theUrgentTaskGoesFirst() {
+        workerWith(ProfessionType.LUMBERJACK);
+
+        tasks.create(COLONY, TaskType.COLLECT_WOOD, TaskPriority.CONSTRUCTION,
+                ResourceType.OAK_LOG, 64);
+
+        Task urgent = tasks.create(COLONY, TaskType.COLLECT_WOOD, TaskPriority.SURVIVAL,
+                ResourceType.OAK_LOG, 64);
+
+        WorkAssignment.assign(COLONY, workers, tasks);
+
+        assertEquals(TaskState.RESERVED, urgent.state());
+    }
+
+    /** Trabalhador de outra colônia não atende esta fila. */
+    @Test
+    void aWorkerOfAnotherColonyIsNotConsidered() {
+        Worker stranger = workers.register(UUID.randomUUID(), UUID.randomUUID());
+        stranger.assign(ProfessionType.LUMBERJACK);
+
+        Task task = woodTask();
+
+        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(TaskState.AVAILABLE, task.state());
+    }
+
+    @Test
+    void nothingToDoIsNotAnError() {
+        workerWith(ProfessionType.LUMBERJACK);
+
+        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
+    }
+
+    @Test
+    void idleWorkersAreTheOnesWithoutATask() {
+        Worker busy = workerWith(ProfessionType.LUMBERJACK);
+        Worker free = workerWith(ProfessionType.BUILDER);
+
+        woodTask();
+        WorkAssignment.assign(COLONY, workers, tasks);
+
+        List<Worker> idle = WorkAssignment.idleWorkers(COLONY, workers, tasks);
+
+        assertEquals(1, idle.size());
+        assertEquals(free.villagerId(), idle.get(0).villagerId());
+        assertFalse(idle.contains(busy));
+    }
+
+    @Test
+    void nullArgumentsAreRejected() {
+        assertThrows(NullPointerException.class,
+                () -> WorkAssignment.assign(null, workers, tasks));
+
+        assertThrows(NullPointerException.class,
+                () -> WorkAssignment.assign(COLONY, null, tasks));
+
+        assertThrows(NullPointerException.class,
+                () -> WorkAssignment.assign(COLONY, workers, null));
+    }
+
+    /**
+     * Reatribuir depois de o trabalhador soltar a tarefa.
+     *
+     * <p>O caminho de quem morre no meio do trabalho: o §15 registra que
+     * a profissão e o baú já são liberados; a tarefa também precisa
+     * voltar para a fila e achar outro dono.
+     */
+    @Test
+    void aReleasedTaskFindsAnotherWorker() {
+        Worker first = workerWith(ProfessionType.LUMBERJACK);
+        Worker second = workerWith(ProfessionType.LUMBERJACK);
+
+        Task task = woodTask();
+
+        WorkAssignment.assign(COLONY, workers, tasks);
+
+        UUID owner = task.executor().orElseThrow();
+
+        tasks.releaseAllOf(owner);
+        workers.remove(owner);
+
+        assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
+
+        UUID survivor = owner.equals(first.villagerId())
+                ? second.villagerId()
+                : first.villagerId();
+
+        assertEquals(Optional.of(survivor), task.executor());
+        assertTrue(task.state() == TaskState.RESERVED);
+    }
+}
