@@ -694,21 +694,23 @@ depois; esta seção é o ponto de retomada.
 
 ## Precisa do jogo
 
+A dívida foi paga em 2026-08-07. O que sobrou é o resto do roteiro:
+
 ```text
-P1   verificar as Fases 4 e 5 — roteiro V1 a V7 em §7
+P1   V4          cada aldeão pegou o baú da própria casa?
+     V7(zumbi)   dificuldade normal ou acima
+     V1, V6      fechar o critério que falta em cada um
 ```
 
-Sete tarefas e duas correções esperando por isto. A dívida começou em
-uma tarefa e cresceu por três adiamentos seguidos, todos a pedido do
-autor e todos registrados em §15.
+Confirmados em jogo: V2, V3, V5 e a morte do V7. O relato completo, com
+as linhas de log que os provaram, está na entrada de §15.
 
-Quando um defeito de fronteira aparecer, ele estará em algum ponto de
-`VillagerScanner`, `ChestScanner`, `ChestInventoryReader`,
-`ColonySavedData` ou `VillageDetectionHandler`, sem o log intermediário
-que teria dito qual.
+O travamento encontrado no caminho está em §11: `getBlockEntity` chamado
+de dentro do evento de carga de chunk parava a thread do servidor.
+Corrigido em `93bacdf`.
 
-Começar pelo **V3** — fechar o mundo e reabrir. É o mais barato e prova
-a persistência.
+V4 é o único que continua sem nenhuma evidência, e é o que o V5 depende
+para valer: baú associado ao aldeão errado produz contagem plausível.
 
 ---
 
@@ -2882,6 +2884,114 @@ Estado ao registrar:
 ./gradlew build → BUILD SUCCESSFUL
 
 roteiro V1 a V7 ainda por rodar; a sessão travou antes
+```
+
+---
+
+## 2026-08-07 — Fases 4 e 5 verificadas em jogo
+
+A dívida de três sessões foi paga. Seis dos sete pontos do roteiro V1 a
+V7 têm agora evidência de jogo real, colhida em duas sessões seguidas
+depois da correção do travamento.
+
+---
+
+### V3 — Persistência: CONFIRMADO
+
+```text
+[22:14:03] Loaded 2 colonies with 16 workers
+```
+
+As duas leituras anteriores diziam `0 workers` e quase foram tratadas
+como defeito. Não eram: liam o save das 21:52, escrito pelo jar velho.
+O primeiro save escrito pelo jar atual voltou inteiro.
+
+Nenhuma linha `Assigned` seguiu o carregamento — as funções vieram do
+save e a atribuição não as desfez, que é o contrato da TASK-012b.
+
+---
+
+### V2 — Atribuição: CONFIRMADO
+
+Lido dentro do `villagecolony_colonies.dat`, não só pelo log:
+
+```text
+4 LUMBERJACK · 4 MANUFACTURER · 4 FARMER · 3 BUILDER
+o primeiro é LUMBERJACK
+```
+
+Rodízio entre as quatro funções, uma linha por lote novo, silêncio ao
+reencontrar os mesmos aldeões.
+
+---
+
+### V5 — Contagem de estoque: CONFIRMADO
+
+```text
+[22:18:23] stores {OAK_LOG=128} across 2 chests
+[22:20:53] stores {OAK_LOG=448, OAK_PLANKS=64} across 8 chests
+```
+
+Antes disto, toda linha dizia `nothing tracked across 0 chests`. Isso
+era o esperado e não defeito: a colônia acompanha três itens, e baú de
+vila vanilla tem trigo, semente e esmeralda.
+
+Ressalva registrada: a linha `nothing tracked across 0 chests` não
+distingue "baú vazio" de "baú em chunk que não consegui ler". Depois da
+correção do travamento, o segundo caso passou a existir. Ver §9.
+
+---
+
+### V7 — Morte: CONFIRMADO
+
+```text
+[22:21:37] Villager ... died, message: 'Saqueador atingiu Aldeão'
+[22:21:37] Worker fa196508 died — profession freed, storage released
+```
+
+Não foi provocado: um saqueador matou o aldeão durante a sessão. A
+contagem seguiu correta — 22 trabalhadores, menos o morto, mais quatro
+registrados depois, deu 25.
+
+A zumbificação continua sem exercício, e é o caminho mais comum em
+jogo. Exige dificuldade normal ou acima.
+
+---
+
+### V1 e V6 — Indício, não confirmação
+
+O registro é incremental e não repete aldeão já conhecido, ao longo de
+três sessões. Falta o único critério que o log não dá: se `N` bate com
+a contagem real de aldeões da vila.
+
+Do V6, o indício é bom e aparece várias vezes:
+
+```text
+Registered 4 villagers ... / Assigned 3 professions
+```
+
+Alguém foi registrado e não empregado, que é o comportamento correto
+para bebê e nitwit. O save fecha com 25 trabalhadores e 23 profissões.
+Falta esperar um bebê crescer e receber função sozinho.
+
+---
+
+### V4 — Não verificado
+
+Se cada aldeão pegou o baú da própria casa e não o do vizinho, o log
+não diz. É inspeção visual, e continua pendente.
+
+---
+
+Estado ao registrar:
+
+```text
+V2, V3, V5, V7(morte)   confirmados em jogo
+V1, V6                  indício forte, critério final pendente
+V4                      não verificado
+V7(zumbi)               não exercido
+
+217 testes passando; ./gradlew build → BUILD SUCCESSFUL
 ```
 
 ---
