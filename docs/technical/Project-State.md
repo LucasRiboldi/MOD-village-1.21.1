@@ -4487,3 +4487,77 @@ Fase 8: fechada e verificada em jogo
 travamento ao carregar: corrigido e confirmado em jogo
 regra da colheita: escrita e coberta por teste, não vista em jogo
 ```
+
+---
+
+## 2026-08-08 — Todas as árvores, e a copa junto
+
+Pedido do autor, com três decisões tomadas na hora:
+
+```text
+folhas       quebrar as folhas da árvore derrubada e
+             recolher o que elas dropam
+
+contagem     tipo próprio por madeira, somando numa
+             categoria para efeito de meta
+
+alcance      Overworld inteiro; Nether e bambu ficam na
+             tabela, prontos para ligar
+```
+
+O centro da mudança é `TreeSpecies`: uma linha por árvore, e cada linha
+diz tronco, folha, muda e recurso. Acrescentar uma árvore é acrescentar
+uma linha — e o `MinecraftTypeAdapter` lê a mesma tabela, então a
+contagem no estoque passa a existir sozinha.
+
+Não é a tag `minecraft:logs` de propósito. A tag inclui tronco
+descascado e bloco de madeira, que são material de construção do
+jogador, não árvore, e não diz que muda replanta o quê.
+
+Nether e bambu ficaram de fora com motivo, não por esquecimento: caule
+carmesim e distorcido não têm muda, têm fungo, e o fungo só vira árvore
+em nylium e com farinha de osso. Bambu não tem muda nenhuma — cresce da
+própria base, e derrubá-lo inteiro impede que se reponha. Os dois pedem
+um campo a mais na tabela, e ele entra quando houver colônia num bioma
+que os tenha.
+
+---
+
+O grupo de recursos é a parte que muda o comportamento da colônia, e
+não só do lenhador. `ResourceGroup.WOOD` faz o déficit somar as oito
+madeiras: quem tem o baú cheio de bétula deixa de mandar buscar
+carvalho. O estoque continua sabendo o tipo de cada tronco — é o
+déficit que soma.
+
+Isso resolve metade do que a sessão de 05:26 mostrou: a tarefa que
+nascia a cada ciclo, para sempre. A outra metade é a meta ser constante,
+que continua sendo a Fase 9.
+
+---
+
+A colheita agora devolve `Harvest` em vez de um número: quantos troncos,
+quantas folhas, e os itens já somados por tipo. Os drops saem da mesma
+tabela de loot que o jogo consultaria — é dela que vêm a muda de vez em
+quando, a maçã do carvalho e o graveto. Repetir essas probabilidades no
+mod seria inventar uma segunda verdade sobre o que uma árvore dá.
+
+A copa é achada a partir dos troncos, nunca de um raio, e para a seis
+blocos de qualquer tronco. Sem esse limite, copas encostadas ligariam
+uma árvore à vizinha e derrubar uma levaria a copa de meia floresta.
+
+O teste antigo "folha não é alvo" tinha de mudar de novo, e desta vez de
+premissa: a copa agora vem junto. O que sobrou dele são três testes com
+o que a regra ainda protege — folha longe do tronco, folha de outra
+espécie, e o teto que não é folha.
+
+---
+
+Estado ao registrar:
+
+```text
+260 testes de unidade + 20 de jogo; build verde
+
+Fase 8: fechada e verificada em jogo
+todas as árvores, copa e drops: escritos e cobertos por teste,
+não vistos em jogo
+```

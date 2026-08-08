@@ -14,6 +14,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.brain.Schedule;
 import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
@@ -50,7 +51,7 @@ public class LumberjackGameTest implements FabricGameTest {
 
         plantTree(context, base);
 
-        int felled = TreeHarvester.fell(context.getWorld(), context.getAbsolutePos(base));
+        int felled = TreeHarvester.fell(context.getWorld(), context.getAbsolutePos(base)).logs();
 
         context.assertTrue(felled == 4, "esperava 4 troncos derrubados, foram " + felled);
 
@@ -166,27 +167,130 @@ public class LumberjackGameTest implements FabricGameTest {
     }
 
     /**
-     * Folha fora da coluna não é alvo.
+     * A copa da árvore derrubada vem junto.
      *
-     * <p>O autor escolheu "só tronco" justamente para não encostar em
-     * construção feita de folha, e a copa fica de pé.
-     *
-     * <p>A exceção é uma coluna de um bloco de largura acima da muda, e
-     * ela tem teste próprio em {@link #replantingOpensTheColumnAbove}.
-     * Aqui a folha está ao lado do tronco: é o caso que a regra protege,
-     * e a limpeza da coluna não pode alcançá-lo.
+     * <p>Regra nova de 2026-08-08: o lenhador recolhe tudo o que a
+     * árvore dropa, e muda, maçã e graveto vêm da folha. A folha ligada
+     * ao tronco que caiu é copa dele.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_leaves")
-    public void fellingLeavesTheLeavesAlone(TestContext context) {
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_canopy")
+    public void thecanopyComesDownWithTheTrunk(TestContext context) {
         BlockPos base = new BlockPos(2, 2, 2);
-        BlockPos leaf = base.up(4).east();
+        BlockPos canopy = base.up(3).east();
 
         plantTree(context, base);
-        context.setBlockState(leaf, Blocks.OAK_LEAVES.getDefaultState());
+        context.setBlockState(canopy, Blocks.OAK_LEAVES.getDefaultState());
+
+        TreeHarvester.Harvest harvest =
+                TreeHarvester.fell(context.getWorld(), context.getAbsolutePos(base));
+
+        context.expectBlock(Blocks.AIR, canopy);
+
+        context.assertTrue(
+                harvest.leaves() == 1,
+                "esperava 1 folha colhida, foram " + harvest.leaves());
+
+        context.complete();
+    }
+
+    /**
+     * A folha da árvore de trás fica onde está.
+     *
+     * <p>Copas encostadas ligariam uma árvore à vizinha, e derrubar uma
+     * levaria a copa de meia floresta. A folha longe do tronco que caiu
+     * não é copa dele — é o que impede a colheita de virar desmatamento.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_far_leaves")
+    public void leavesFarFromTheTrunkStay(TestContext context) {
+        BlockPos base = new BlockPos(2, 2, 2);
+        BlockPos faraway = base.up(2).east(8);
+
+        plantTree(context, base);
+        context.setBlockState(faraway, Blocks.OAK_LEAVES.getDefaultState());
 
         TreeHarvester.fell(context.getWorld(), context.getAbsolutePos(base));
 
-        context.expectBlock(Blocks.OAK_LEAVES, leaf);
+        context.expectBlock(Blocks.OAK_LEAVES, faraway);
+
+        context.complete();
+    }
+
+    /**
+     * A folha de outra espécie não é copa desta árvore.
+     *
+     * <p>Uma parede de folha de bétula encostada num carvalho é parede.
+     * A colheita é por espécie, do tronco à muda.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_leaves")
+    public void leavesOfAnotherSpeciesStay(TestContext context) {
+        BlockPos base = new BlockPos(2, 2, 2);
+        BlockPos foreign = base.up(2).east();
+
+        plantTree(context, base);
+        context.setBlockState(foreign, Blocks.BIRCH_LEAVES.getDefaultState());
+
+        TreeHarvester.fell(context.getWorld(), context.getAbsolutePos(base));
+
+        context.expectBlock(Blocks.BIRCH_LEAVES, foreign);
+
+        context.complete();
+    }
+
+    /**
+     * Qualquer árvore da tabela, e a muda é da própria espécie.
+     *
+     * <p>Pedido do autor: o lenhador corta todo tipo de árvore. Bétula
+     * aqui vale pelas oito — o caminho é o mesmo para todas, e o que se
+     * verifica é que a espécie percorre a colheita inteira, do tronco à
+     * muda replantada.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_birch_tree")
+    public void anyTreeInTheTableIsFelledAndReplanted(TestContext context) {
+        BlockPos base = new BlockPos(2, 2, 2);
+
+        context.setBlockState(base.down(), Blocks.DIRT.getDefaultState());
+
+        for (int y = 0; y < 4; y++) {
+            context.setBlockState(base.up(y), Blocks.BIRCH_LOG.getDefaultState());
+        }
+
+        TreeHarvester.Harvest harvest =
+                TreeHarvester.fell(context.getWorld(), context.getAbsolutePos(base));
+
+        context.assertTrue(
+                harvest.logs() == 4, "esperava 4 troncos de bétula, foram " + harvest.logs());
+
+        context.expectBlock(Blocks.BIRCH_SAPLING, base);
+
+        context.complete();
+    }
+
+    /**
+     * O que a árvore dropa volta como item, e não fica no chão.
+     *
+     * <p>É o que o baú recebe. Item no chão despawna, cai n'água e é
+     * roubado por mob, e a contagem da colônia passaria a mentir.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_drops")
+    public void theHarvestComesBackAsItems(TestContext context) {
+        BlockPos base = new BlockPos(2, 2, 2);
+
+        plantTree(context, base);
+
+        TreeHarvester.Harvest harvest =
+                TreeHarvester.fell(context.getWorld(), context.getAbsolutePos(base));
+
+        int logs = 0;
+
+        for (ItemStack stack : harvest.drops()) {
+            if (stack.isOf(Items.OAK_LOG)) {
+                logs += stack.getCount();
+            }
+        }
+
+        context.assertTrue(
+                logs == harvest.logs(),
+                "derrubou " + harvest.logs() + " troncos e devolveu " + logs + " itens");
 
         context.complete();
     }
@@ -223,7 +327,7 @@ public class LumberjackGameTest implements FabricGameTest {
 
         ServerWorld world = context.getWorld();
 
-        int felled = TreeHarvester.fell(world, context.getAbsolutePos(base));
+        int felled = TreeHarvester.fell(world, context.getAbsolutePos(base)).logs();
 
         ColonyPos chestPos =
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chest));

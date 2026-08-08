@@ -1,6 +1,5 @@
 package com.villagecolony.fabric.integration;
 
-import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Heightmap;
@@ -11,8 +10,9 @@ import java.util.Optional;
 /**
  * Acha a árvore mais próxima do centro da colônia.
  *
- * <p>Só carvalho, e só o tronco: é o que o lenhador pode derrubar, por
- * decisão do autor em 2026-08-08. Ver §10.
+ * <p>Qualquer árvore da tabela de {@link TreeSpecies}, e só o tronco.
+ * Tronco descascado e bloco de madeira ficam de fora: são material de
+ * construção do jogador, não floresta.
  *
  * <p>Nunca varre o volume do raio. Um raio de 64 em três dimensões são
  * milhões de blocos, e Performance-Rules.md §5 e §6 proíbem esse
@@ -55,7 +55,7 @@ public final class TreeScanner {
     }
 
     /**
-     * O tronco de carvalho mais próximo do centro, dentro do raio.
+     * O tronco mais próximo do centro, dentro do raio.
      *
      * <p>Devolve vazio quando não há nenhum ao alcance, e isso não é
      * erro: a colônia espera o ciclo seguinte em vez de mandar o
@@ -114,7 +114,7 @@ public final class TreeScanner {
         for (int y = bottom; y <= top; y++) {
             BlockPos pos = new BlockPos(x, y, z);
 
-            if (chunk.getBlockState(pos).isOf(Blocks.OAK_LOG)) {
+            if (TreeSpecies.isLog(chunk.getBlockState(pos))) {
                 return Optional.of(pos);
             }
         }

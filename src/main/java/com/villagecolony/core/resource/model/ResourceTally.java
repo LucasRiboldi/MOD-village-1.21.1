@@ -1,5 +1,6 @@
 package com.villagecolony.core.resource.model;
 
+import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.type.ResourceType;
 
 import java.util.Collections;
@@ -66,6 +67,29 @@ public final class ResourceTally {
     /** Zero para o que não foi contado. Ausência é zero, não erro. */
     public int amountOf(ResourceType type) {
         return counts.getOrDefault(type, 0);
+    }
+
+    /**
+     * Quanto a colônia tem somando o grupo inteiro.
+     *
+     * <p>Oito madeiras contam como madeira. Ver {@link ResourceGroup}.
+     *
+     * <p>{@link ResourceGroup#NONE} não soma nada: um recurso que só se
+     * satisfaz com ele mesmo devolve a própria contagem, e é o chamador
+     * que decide qual das duas perguntas está fazendo.
+     */
+    public int amountOfGroup(ResourceGroup group) {
+        Objects.requireNonNull(group, "group");
+
+        int total = 0;
+
+        for (Map.Entry<ResourceType, Integer> entry : counts.entrySet()) {
+            if (entry.getKey().group() == group) {
+                total += entry.getValue();
+            }
+        }
+
+        return total;
     }
 
     public boolean has(ResourceType type) {

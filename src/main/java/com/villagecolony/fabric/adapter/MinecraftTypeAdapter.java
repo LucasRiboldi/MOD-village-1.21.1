@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.adapter;
 
 import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.fabric.integration.TreeSpecies;
 import com.villagecolony.core.type.ColonyPos;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
@@ -42,8 +43,14 @@ public final class MinecraftTypeAdapter {
      * carvalho do servidor.
      */
     public static Optional<ResourceType> toResourceType(Item item) {
-        if (item == Items.OAK_LOG) {
-            return Optional.of(ResourceType.OAK_LOG);
+        // As madeiras vêm da tabela de espécies, e não de uma segunda
+        // lista aqui: acrescentar uma árvore lá passaria a contar sozinho
+        // no estoque. Duas listas divergiriam no dia em que alguém
+        // lembrasse de uma e esquecesse a outra.
+        for (TreeSpecies species : TreeSpecies.values()) {
+            if (item == species.log().asItem()) {
+                return Optional.of(species.resource());
+            }
         }
 
         if (item == Items.OAK_PLANKS) {

@@ -155,4 +155,45 @@ class ResourceDemandTest {
         assertThrows(NullPointerException.class,
                 () -> ResourceDemand.deficit(withNullKey, ResourceTally.empty()));
     }
+    /**
+     * Abeto satisfaz meta de carvalho.
+     *
+     * <p>A colônia conta cada madeira pelo nome, mas quando pergunta
+     * "falta madeira?" a resposta soma o grupo. Sem isto, um baú cheio
+     * de bétula mandaria o lenhador buscar carvalho para sempre — e foi
+     * exatamente o que a sessão de 05:26 mostrou acontecendo com a
+     * tarefa que nascia a cada ciclo.
+     */
+    @Test
+    void anyWoodSatisfiesAWoodGoal() {
+        ResourceTally spruceOnly = ResourceTally.of(Map.of(ResourceType.SPRUCE_LOG, 64));
+
+        assertTrue(ResourceDemand.deficit(goal(ResourceType.OAK_LOG, 64), spruceOnly).isEmpty());
+
+        assertEquals(0, ResourceDemand.deficitOf(ResourceType.OAK_LOG, 64, spruceOnly));
+    }
+
+    /** Madeiras diferentes somam entre si. */
+    @Test
+    void woodOfDifferentSpeciesAddsUp() {
+        ResourceTally mixed = ResourceTally.of(Map.of(
+                ResourceType.OAK_LOG, 30,
+                ResourceType.BIRCH_LOG, 20,
+                ResourceType.CHERRY_LOG, 10));
+
+        assertEquals(4, ResourceDemand.deficitOf(ResourceType.OAK_LOG, 64, mixed));
+    }
+
+    /**
+     * Pedra não é substituída por madeira.
+     *
+     * <p>O grupo existe para as madeiras, e o resto continua se
+     * satisfazendo só com ele mesmo.
+     */
+    @Test
+    void resourcesOutsideAGroupDoNotSubstitute() {
+        ResourceTally woodOnly = ResourceTally.of(Map.of(ResourceType.OAK_LOG, 64));
+
+        assertEquals(32, ResourceDemand.deficitOf(ResourceType.COBBLESTONE, 32, woodOnly));
+    }
 }

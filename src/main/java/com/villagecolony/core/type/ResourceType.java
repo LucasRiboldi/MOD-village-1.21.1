@@ -20,19 +20,44 @@ import java.util.Objects;
  */
 public enum ResourceType {
 
-    OAK_LOG(ResourceCategory.NATURAL),
+    OAK_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD),
 
-    OAK_PLANKS(ResourceCategory.PROCESSED),
+    BIRCH_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD),
 
-    COBBLESTONE(ResourceCategory.NATURAL);
+    SPRUCE_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD),
+
+    JUNGLE_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD),
+
+    ACACIA_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD),
+
+    DARK_OAK_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD),
+
+    CHERRY_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD),
+
+    MANGROVE_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD),
+
+    OAK_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.NONE),
+
+    COBBLESTONE(ResourceCategory.NATURAL, ResourceGroup.NONE);
 
     private final ResourceCategory category;
+    private final ResourceGroup group;
 
-    ResourceType(ResourceCategory category) {
+    ResourceType(ResourceCategory category, ResourceGroup group) {
         this.category = Objects.requireNonNull(category);
+        this.group = Objects.requireNonNull(group);
     }
 
     public ResourceCategory category() {
         return category;
+    }
+
+    /**
+     * O grupo que soma com este recurso para efeito de meta.
+     *
+     * <p>Oito madeiras, uma meta. Ver {@link ResourceGroup}.
+     */
+    public ResourceGroup group() {
+        return group;
     }
 }

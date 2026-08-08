@@ -1,6 +1,7 @@
 package com.villagecolony.core.resource.service;
 
 import com.villagecolony.core.resource.model.ResourceTally;
+import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.type.ResourceType;
 
 import java.util.Collections;
@@ -64,7 +65,7 @@ public final class ResourceDemand {
                         "Negative goal for " + type + ": " + wanted);
             }
 
-            int lacking = wanted - owned.amountOf(type);
+            int lacking = wanted - available(type, owned);
 
             if (lacking > 0) {
                 missing.put(type, lacking);
@@ -83,7 +84,26 @@ public final class ResourceDemand {
             throw new IllegalArgumentException("Negative goal for " + type + ": " + goal);
         }
 
-        return Math.max(0, goal - owned.amountOf(type));
+        return Math.max(0, goal - available(type, owned));
+    }
+
+    /**
+     * Quanto a colônia tem que sirva para esta meta.
+     *
+     * <p>Uma meta de madeira é satisfeita por qualquer madeira: quem tem
+     * o baú cheio de abeto não precisa de carvalho, e mandar buscar
+     * seria trabalho para nada. O estoque continua sabendo o tipo de
+     * cada tronco — é o déficit que soma o grupo. Ver
+     * {@link ResourceGroup}.
+     *
+     * <p>Recurso de grupo {@link ResourceGroup#NONE} só se satisfaz com
+     * ele mesmo: pedra é pedra, e tábua de carvalho não vira tábua de
+     * bétula numa receita.
+     */
+    private static int available(ResourceType type, ResourceTally owned) {
+        return type.group() == ResourceGroup.NONE
+                ? owned.amountOf(type)
+                : owned.amountOfGroup(type.group());
     }
 
     /** Se a colônia já tem tudo o que queria. */

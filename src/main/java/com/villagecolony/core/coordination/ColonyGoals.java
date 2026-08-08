@@ -31,6 +31,11 @@ public final class ColonyGoals {
      * <p>Uma pilha de madeira bruta e meia de pedra. Não tem tábua: ela
      * é {@code PROCESSED} e viraria tarefa de fabricação, que ninguém
      * executa antes da Fase 8.
+     *
+     * <p>{@code OAK_LOG} aqui vale por qualquer madeira. A meta é do
+     * grupo, não da espécie: sessenta e quatro troncos de abeto
+     * satisfazem esta linha tanto quanto sessenta e quatro de carvalho.
+     * Ver {@code ResourceGroup} e {@code ResourceDemand.deficit}.
      */
     private static final Map<ResourceType, Integer> MVP_GOAL = Map.of(
             ResourceType.OAK_LOG, 64,

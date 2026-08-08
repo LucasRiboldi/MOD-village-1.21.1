@@ -12,12 +12,16 @@ import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.TreeHarvester;
 import com.villagecolony.fabric.integration.TreeScanner;
+import com.villagecolony.fabric.integration.TreeSpecies;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -31,8 +35,11 @@ import java.util.UUID;
  * <p>Regras decididas pelo autor em 2026-08-08:
  *
  * <ul>
- *   <li>só tronco de carvalho, e replanta muda na base;
- *   <li>a madeira vai direto para o baú do trabalhador;
+ *   <li>qualquer árvore da tabela de {@code TreeSpecies}, tronco e copa,
+ *       e replanta a muda da própria espécie na base;
+ *   <li>tudo o que a árvore dropa vai direto para o baú do trabalhador,
+ *       sem passar por item no chão;
+ *   <li>árvore que não caiba no baú fica de pé;
  *   <li>procura até {@link #SEARCH_RADIUS} blocos do centro da colônia.
  * </ul>
  */
@@ -148,8 +155,14 @@ public final class LumberjackWork {
         // a árvore sumiria e a colônia não ficaria com nada. Recolher
         // todos os recursos da árvore começa em não derrubar a árvore
         // que não se pode recolher.
+        //
+        // A conta é a do tronco, que é certa: um bloco, um item. O que a
+        // folha dá é sorteado na hora — muda, maçã, graveto, ou nada — e
+        // não dá para perguntar de antemão. São poucos itens, e o espaço
+        // conferido para o tronco inteiro sobra para eles.
         int trunk = TreeHarvester.trunkSize(world, tree);
-        int room = ChestDepositor.freeSpaceFor(world, storage.chestPosition(), Items.OAK_LOG);
+        int room = ChestDepositor.freeSpaceFor(
+                world, storage.chestPosition(), logItemAt(world, tree));
 
         if (room < trunk) {
             VillageColonyMod.LOGGER.info(
@@ -163,24 +176,13 @@ public final class LumberjackWork {
             return 0;
         }
 
-        int felled = TreeHarvester.fell(world, tree);
+        TreeHarvester.Harvest harvest = TreeHarvester.fell(world, tree);
 
-        if (felled == 0) {
+        if (harvest.isEmpty()) {
             return 0;
         }
 
-        int leftOver = ChestDepositor.deposit(
-                world, storage.chestPosition(), Items.OAK_LOG, felled);
-
-        if (leftOver > 0) {
-            // Não deveria acontecer: o espaço foi conferido acima. Se
-            // acontecer, alguém mexeu no baú entre a pergunta e a
-            // resposta, e a linha existe para isso aparecer.
-            VillageColonyMod.LOGGER.warn(
-                    "Chest of worker {} filled up mid-harvest — {} logs were lost",
-                    storage.workerId(),
-                    leftOver);
-        }
+        deposit(world, storage, harvest);
 
         task.complete();
 
@@ -190,12 +192,71 @@ public final class LumberjackWork {
         WorkTargets.clear(villager.getUuid());
 
         VillageColonyMod.LOGGER.info(
-                "Worker {} felled {} logs at {}",
+                "Worker {} felled {} logs and {} leaves at {} — {}",
                 storage.workerId(),
-                felled,
-                tree.toShortString());
+                harvest.logs(),
+                harvest.leaves(),
+                tree.toShortString(),
+                describe(harvest.drops()));
 
-        return felled;
+        return harvest.logs();
+    }
+
+    /**
+     * Põe no baú tudo o que a árvore deu.
+     *
+     * <p>Tronco, muda, maçã, graveto: o que a tabela de loot der. A
+     * colônia só conta os troncos, e os outros ficam no baú sem contagem
+     * — o que não é perda, é a regra de sempre: item fora da lista
+     * continua no baú, apenas não é contado.
+     */
+    private static void deposit(
+            ServerWorld world, WorkerStorage storage, TreeHarvester.Harvest harvest) {
+
+        for (ItemStack stack : harvest.drops()) {
+            int leftOver = ChestDepositor.deposit(
+                    world, storage.chestPosition(), stack.getItem(), stack.getCount());
+
+            if (leftOver == 0) {
+                continue;
+            }
+
+            // O espaço do tronco foi conferido antes de derrubar, e o que
+            // a folha dá é pouco. Chegar aqui significa baú quase cheio
+            // ou alguém mexendo nele no meio da colheita — e precisa
+            // aparecer, porque o item já saiu do mundo.
+            VillageColonyMod.LOGGER.warn(
+                    "Chest of worker {} filled up mid-harvest — {} of {} were lost",
+                    storage.workerId(),
+                    leftOver,
+                    stack.getItem());
+        }
+    }
+
+    /** O item do tronco desta árvore, para perguntar do espaço no baú. */
+    private static Item logItemAt(ServerWorld world, BlockPos tree) {
+        return TreeSpecies.ofLog(world.getBlockState(tree))
+                .map(species -> species.log().asItem())
+                .orElse(Items.OAK_LOG);
+    }
+
+    /** O que a colheita rendeu, em uma linha legível. */
+    private static String describe(List<ItemStack> drops) {
+        if (drops.isEmpty()) {
+            return "nothing dropped";
+        }
+
+        StringBuilder text = new StringBuilder();
+
+        for (ItemStack stack : drops) {
+            if (!text.isEmpty()) {
+                text.append(", ");
+            }
+
+            text.append(stack.getCount()).append(" ").append(stack.getItem());
+        }
+
+        return text.toString();
     }
 
     /**
