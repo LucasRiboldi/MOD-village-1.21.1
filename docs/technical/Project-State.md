@@ -115,8 +115,11 @@ Fase 7   tarefas                        TASK-021 a TASK-023
                                         verificada em jogo
 
 Fase 8   primeiro trabalhador           TASK-024 e TASK-025
-                                        coberta por gametest,
-                                        NÃO verificada em jogo
+                                        coberta por gametest;
+                                        em jogo a tarefa nasce e é
+                                        reservada, mas a derrubada
+                                        nunca aconteceu — o aldeão
+                                        não chega à árvore (§8)
 ```
 
 Detalhe por tarefa em §6. Histórico em §15.
@@ -405,8 +408,12 @@ Fase 8 — Primeiro Trabalhador
                                      coberto por gametest
   TASK-025  coleta de madeira        feito (TreeScanner,
                                      TreeHarvester, ChestDepositor),
-                                     coberto por gametest
-                                     NÃO verificado em jogo
+                                     coberto por gametest;
+                                     bloqueado em jogo pelo
+                                     movimento do aldeão (§8)
+
+  extra     nome sobre a cabeça      feito (WorkerNameplate),
+                                     verificado em jogo
 
 Fase 9
 
@@ -565,15 +572,30 @@ Situação em 2026-08-08, fim da sessão.
 
 ---
 
-## Precisa de decisão do autor
+## Bloqueio real da Fase 8
 
 ```text
-P1   regras do lenhador      antes da TASK-024   §7
+P1   o lenhador não chega à árvore
 ```
 
-O que ele pode quebrar, o que acontece com o item e até onde ele anda.
-São regras de jogo, e a primeira vez que uma decisão errada estraga o
-mundo de quem joga.
+Tudo o resto da Fase 8 funciona: a tarefa é criada, reservada por um
+lenhador e repetida a cada ciclo. Nenhuma linha `felled` apareceu em
+jogo até agora.
+
+A causa conhecida é o cérebro Vanilla do aldeão, que tem agenda própria
+— dormir, trabalhar, socializar — e sobrescreve o destino que
+`LumberjackWork` pede por `startMovingTo`.
+
+O caminho é uma task no `Brain`, e ele já está autorizado: a ADR-004
+permite o mixin em `VillagerEntity.initBrain`, que existe exatamente
+para registrar a `Activity` da colônia. É trabalho de verdade, não
+ajuste, e mexe em como o aldeão se comporta fora do trabalho.
+
+Sem decisão pendente. É implementação.
+
+---
+
+## Precisa de decisão do autor
 
 ```text
 P2   meta de estoque         antes da Fase 9
@@ -4253,6 +4275,84 @@ Estado ao registrar:
 travamento da Fase 8: corrigido e confirmado em jogo
 derrubada de árvore: nunca aconteceu em jogo
 nomes: escritos, não vistos
+```
+
+---
+
+## 2026-08-08 — Os nomes apareceram; o que está pronto e o que falta
+
+```text
+[03:49:16] Named 1 workers in colony 0c2771b0
+[03:49:16] Named 7 workers in colony 0c2771b0
+[03:49:44] Named 7 workers in colony 9a5afa23
+[03:49:44] Named 23 workers in colony 0c2771b0
+```
+
+Quarenta e quatro trabalhadores nomeados, confirmados em jogo pelo
+autor. Vêm em lotes porque a nomeação acompanha a detecção, que enxerga
+a vila por partes.
+
+---
+
+### O que está pronto e verificado em jogo
+
+```text
+detecção de vila, identidade e persistência
+registro de aldeões como trabalhadores
+atribuição de profissão, com rodízio
+descoberta do baú da casa, com regra de nível e de parede
+contagem de estoque, com aviso de leitura parcial
+encolhimento da colônia por sonda repetida
+ciclo de simulação: déficit vira tarefa
+distribuição de tarefa por capacidade
+nome da profissão sobre a cabeça
+```
+
+---
+
+### O que está escrito e nunca aconteceu em jogo
+
+```text
+a derrubada de árvore
+```
+
+É uma coisa só, e é o bloqueio da Fase 8. A tarefa nasce, é reservada e
+se repete a cada ciclo; o lenhador não chega à árvore. Ver §8.
+
+O resto da Fase 8 — achar árvore, derrubar troncos ligados, replantar,
+depositar no baú — está coberto por seis testes de jogo, e dois deles
+existem para provar o que ele **não** quebra.
+
+---
+
+### O que falta, em ordem
+
+```text
+1  o lenhador andar até a árvore     task no Brain, ADR-004 já permite
+
+2  meta de estoque real              hoje é constante; sai da Fase 9
+
+3  gametest para o que falta         morte, zumbificação, encolhimento,
+                                     e o ciclo gerando tarefa
+
+4  consolidar este documento         passou de 4200 linhas
+```
+
+O item 3 tem uma ressalva que a Fase 8 deixou clara: gametest cobre
+comportamento, não custo. O travamento que quebrou o jogo do autor
+passou por doze testes verdes.
+
+---
+
+Estado ao registrar:
+
+```text
+257 testes de unidade + 12 de jogo
+
+./gradlew build → BUILD SUCCESSFUL
+./gradlew runGametest → All 12 required tests passed
+
+uma única coisa escrita e não vista em jogo: a derrubada
 ```
 
 ---
