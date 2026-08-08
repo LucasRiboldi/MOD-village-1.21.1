@@ -10,7 +10,12 @@ import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.block.ShapeContext;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.GlobalPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.RaycastContext;
 import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.Map;
@@ -193,6 +198,10 @@ public final class ChestScanner {
                         continue;
                     }
 
+                    if (!isInTheSameRoom(world, bed, pos)) {
+                        continue;
+                    }
+
                     nearest = pos;
                     nearestDistance = distance;
                 }
@@ -200,6 +209,50 @@ public final class ChestScanner {
         }
 
         return Optional.ofNullable(nearest);
+    }
+
+    /**
+     * Se há linha livre entre a cama e o baú.
+     *
+     * <p>É o critério de propriedade decidido pelo autor em 2026-08-08,
+     * o item P4 do §8. Distância não distingue parede: um baú a cinco
+     * blocos pode estar do outro lado dela, na casa do vizinho ou na
+     * base do jogador construída encostada na vila.
+     *
+     * <p>A pergunta que o traço responde é "dá para ir da cama ao baú
+     * sem atravessar bloco?". Se dá, os dois estão no mesmo cômodo, e a
+     * definição de Storage-System.md §"Registro de Armazenamento" —
+     * aldeão, casa, cama, baú da casa — passa a valer de fato.
+     *
+     * <p>Resolve os dois casos que sobravam de uma vez: o baú do vizinho
+     * e o baú do jogador. Nenhum dos dois tem sinal próprio no Vanilla;
+     * os dois têm parede.
+     *
+     * <p>Traça do centro da cama ao centro do baú. Bater no próprio baú
+     * é chegar: ele é sólido, e é o alvo. Bater na própria cama é sair,
+     * porque o traço começa dentro dela.
+     *
+     * <p>Custo: um traço por baú candidato, e só quando o aldeão não tem
+     * baú — que é uma vez na vida dele, não uma por ciclo.
+     */
+    private static boolean isInTheSameRoom(ServerWorld world, BlockPos bed, BlockPos chest) {
+        Vec3d from = bed.toCenterPos();
+        Vec3d to = chest.toCenterPos();
+
+        BlockHitResult hit = world.raycast(new RaycastContext(
+                from,
+                to,
+                RaycastContext.ShapeType.COLLIDER,
+                RaycastContext.FluidHandling.NONE,
+                ShapeContext.absent()));
+
+        if (hit.getType() == HitResult.Type.MISS) {
+            return true;
+        }
+
+        BlockPos blocked = hit.getBlockPos();
+
+        return blocked.equals(chest) || blocked.equals(bed);
     }
 
     /**

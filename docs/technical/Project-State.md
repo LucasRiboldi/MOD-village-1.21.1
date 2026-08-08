@@ -867,6 +867,10 @@ O baú do jogador pode ser reivindicado
   estar no mesmo nível da cama, com um bloco de folga. Isso
   fecha o andar de cima, não a casa do lado — parede não é
   altura, e a distância continua atravessando qualquer uma.
+
+  Ainda em 2026-08-08 o P4 foi decidido: linha livre entre a
+  cama e o baú. Parede desqualifica, e isso cobre tanto o baú
+  do vizinho quanto o do jogador. Escrito e não visto em jogo.
 ```
 
 ```text
@@ -3707,6 +3711,93 @@ Estado ao registrar:
 ./gradlew build → BUILD SUCCESSFUL
 
 nada disto foi visto em jogo ainda
+```
+
+---
+
+## 2026-08-08 — P4 decidida: parede define propriedade
+
+A última das três decisões do §8. Não havia critério nenhum de
+propriedade: o `ChestScanner` pegava o baú livre mais próximo da cama e
+não tinha como saber de quem ele era.
+
+Sobravam dois casos que a distância não separa, e eles são o mesmo caso:
+
+```text
+o baú do vizinho    casa geminada, cama de um lado da parede
+                    e baú do outro
+
+o baú do jogador    base construída encostada na vila, sem
+                    sinal no Vanilla que diga que é sua
+```
+
+Escolha do autor entre três saídas: linha livre entre a cama e o baú.
+
+```text
+dá para ir da cama ao baú sem atravessar bloco?
+
+  sim  → mesmo cômodo, o baú é da casa
+  não  → parede no meio, não é da colônia
+```
+
+Uma regra resolve os dois, porque nenhum dos dois tem sinal próprio no
+Vanilla e os dois têm parede.
+
+Descartadas: marcar o baú à mão, que inventa regra de jogo que o MVP não
+tinha; e adotar só o que já existia na vila, que quebra "o jogador
+constrói para a colônia".
+
+---
+
+### Como
+
+Um traço do centro da cama ao centro do baú,
+`RaycastContext.ShapeType.COLLIDER`. Bater no próprio baú é chegar — ele
+é sólido e é o alvo. Bater na própria cama é sair, porque o traço começa
+dentro dela.
+
+Custo: um traço por baú candidato, e só quando o aldeão não tem baú.
+Para quem tem, a busca inteira nem começa.
+
+---
+
+### O que isto piora, e por que ainda assim vale
+
+Um baú na volta de um corredor em L está no mesmo cômodo e não tem linha
+livre. Ele deixa de ser reivindicado.
+
+É o erro na direção certa: a colônia deixa de adotar um baú que era
+dela, em vez de adotar um que não era. O primeiro é um aldeão sem baú; o
+segundo é a colônia contando o estoque do jogador e, a partir de ontem,
+gerando tarefa com base nele.
+
+Também custa mais para o aldeão que não acha baú nenhum: a busca se
+repete a cada ciclo, e agora com um traço por candidato. São poucos baús
+num raio de seis.
+
+---
+
+### Urgência que apareceu ontem
+
+Enquanto nada consumia a contagem, a contaminação era inerte. Com o
+`ColonyCycle` ligado, o número errado passou a **gerar tarefa**: a
+colônia que soma o baú do jogador conclui que não falta madeira e não
+pede nada, ou o contrário.
+
+O §9 descrevia esse primeiro estágio como "invisível para o jogador".
+Deixou de ser.
+
+---
+
+Estado ao registrar:
+
+```text
+257 testes passando; build verde
+
+as três decisões do §8 estão fechadas
+
+P4 é código de fronteira e não tem teste — a camada
+fabric segue sem nenhum. Precisa de jogo
 ```
 
 ---
