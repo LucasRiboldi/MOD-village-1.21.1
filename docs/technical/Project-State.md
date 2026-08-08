@@ -61,41 +61,32 @@ Java
 ## Current Stage
 
 ```text
-Fase 7 — Sistema de Tarefas
+Fase 8 — Primeiro Trabalhador Funcional
 ```
 
 ---
 
 ## Description
 
-Fases 1 a 3 estão completas e verificadas dentro do jogo: o mod detecta
-vilas, cria colônias, mantém sua identidade e persiste tudo entre
-sessões.
+As Fases 1 a 7 estão completas e verificadas em jogo. O mod detecta
+vilas, cria colônias, mantém sua identidade entre sessões, registra
+aldeões como trabalhadores, dá função a cada um, encontra o baú da casa,
+conta o que ele guarda, calcula o que falta e distribui tarefas a quem
+sabe executá-las.
 
-A Fase 4 está escrita por inteiro — registro, persistência, catálogo de
-profissões e atribuição inicial — e **nenhuma parte dela foi verificada
-em jogo**. A Fase 5 está fechada sobre ela: baús registrados e
-inventário contado.
+A dívida de verificação que dominou 2026-08-07 foi paga. O roteiro V1 a
+V7 do §7 foi respondido inteiro, e as três decisões que travavam a
+Fase 8 — coordenação, loop de simulação e propriedade do baú — foram
+decididas e implementadas.
 
-Sete tarefas e duas correções foram escritas sem passar pelo jogo. É a
-maior dívida aberta do projeto; o §7 lista o que verificar e o §11
-explica por que ela é cara.
+A camada fabric deixou de ser cega: `./gradlew runGametest` sobe um
+servidor sem cliente e cobre seis casos. O primeiro defeito de produção
+encontrado por máquina neste projeto veio dela, horas depois de existir.
 
-As Fases 6 e 7 avançaram no que não depende do jogo: a colônia já sabe
-somar o que tem, calcular o que falta e manter uma fila de tarefas com
-prioridade e ciclo de vida.
-
-Nenhuma das duas está fechada, e por motivos de arquitetura, não de
-tempo:
-
-```text
-TASK-020   falta o loop de simulação
-
-TASK-023   falta uma camada de coordenação
-```
-
-As duas estão em §10 aguardando decisão do autor. É a mesma espécie de
-lacuna de plano que produziu a TASK-012b.
+O que a Fase 8 traz é uma virada de natureza: até aqui o mod só **lê** o
+mundo. A partir da TASK-024 ele **escreve** — derruba árvore e recolhe
+item. Bloco quebrado por engano é dano no save do jogador, diferente de
+tudo que se errou até agora.
 
 ---
 
@@ -103,6 +94,7 @@ lacuna de plano que produziu a TASK-012b.
 
 ```text
 Fase 0   decisões de arquitetura        ADR-001 a ADR-006
+                                        ADR-003 e ADR-006 emendadas
 
 Fase 1   núcleo da colônia              TASK-001 a TASK-006
 
@@ -111,16 +103,16 @@ Fase 2   persistência                   TASK-007 e TASK-008
 Fase 3   detecção da vila               TASK-009 e TASK-010
 
 Fase 4   trabalhadores                  TASK-011 a TASK-014
-                                        escrita, não verificada em jogo
+                                        verificada em jogo
 
 Fase 5   armazenamento                  TASK-015 a TASK-017
-                                        escrita, não verificada em jogo
+                                        verificada em jogo
 
-Fase 6   recursos                       TASK-018 e TASK-019
-                                        lógica pura, coberta por teste
+Fase 6   recursos                       TASK-018 a TASK-020
+                                        verificada em jogo
 
-Fase 7   tarefas                        TASK-021 e TASK-022
-                                        lógica pura, coberta por teste
+Fase 7   tarefas                        TASK-021 a TASK-023
+                                        verificada em jogo
 ```
 
 Detalhe por tarefa em §6. Histórico em §15.
@@ -313,30 +305,31 @@ Nenhuma decisão de arquitetura permanece em aberto.
 ## MVP Goal e progresso
 
 ```text
-Detectar vila          FEITO, verificado em jogo
+Detectar vila             FEITO, verificado em jogo
 
 ↓
 
-Registrar aldeões      FEITO, não verificado em jogo
+Registrar aldeões         FEITO, verificado em jogo
 
 ↓
 
-Organizar trabalhadores   FEITO, não verificado em jogo
+Organizar trabalhadores   FEITO, verificado em jogo
 
 ↓
 
-Coletar recursos       não iniciado
+Coletar recursos          próximo — Fase 8
 
 ↓
 
-Produzir materiais     não iniciado
+Produzir materiais        não iniciado
 
 ↓
 
-Construir expansão     não iniciado
+Construir expansão        não iniciado
 ```
 
-Três dos seis passos do MVP estão escritos; um deles verificado.
+Três dos seis passos do MVP estão feitos e verificados em jogo. O
+quarto é a Fase 8, e é onde o mod passa a escrever no mundo.
 
 ---
 
@@ -373,29 +366,34 @@ Fase 3 — Detecção da Vila
 Fase 4 — Trabalhadores
 
   TASK-011  modelo Worker            feito
-  TASK-012  VillagerScanner          feito, NÃO verificado em jogo
-  TASK-012b persistir trabalhadores  feito, NÃO verificado em jogo
-  TASK-013  ProfessionRegistry       feito, NÃO verificado em jogo
-  TASK-014  atribuição inicial       feito, NÃO verificado em jogo
+  TASK-012  VillagerScanner          feito, verificado em jogo
+  TASK-012b persistir trabalhadores  feito, verificado em jogo
+  TASK-013  ProfessionRegistry       feito, verificado em jogo
+  TASK-014  atribuição inicial       feito, verificado em jogo
+                                     e por gametest
 
 Fase 5 — Armazenamento
 
-  TASK-015  detecção de baú          feito, NÃO verificado em jogo
-  TASK-016  StorageRegistry          feito, NÃO verificado em jogo
-  TASK-017  ler inventário           feito, NÃO verificado em jogo
+  TASK-015  detecção de baú          feito, verificado em jogo
+                                     e por gametest
+  TASK-016  StorageRegistry          feito, verificado em jogo
+  TASK-017  ler inventário           feito, verificado em jogo
+                                     e por gametest
 
 Fase 6 — Recursos
 
   TASK-018  visão agregada           feito (ColonyResources)
   TASK-019  verificação de déficit   feito (ResourceDemand)
-  TASK-020  integrar com simulação   BLOQUEADA — ver §10
+  TASK-020  integrar com simulação   feito (ColonyCycle),
+                                     verificado em jogo
 
 Fase 7 — Tarefas
 
   TASK-021  modelo Task              feito (Task, TaskState,
                                      TaskType, TaskPriority)
   TASK-022  TaskService              feito
-  TASK-023  associar a profissões    PARCIAL — ver §10
+  TASK-023  associar a profissões    feito (WorkAssignment),
+                                     verificado em jogo
 
 Fases 8 e 9
 
@@ -479,306 +477,140 @@ As três últimas linhas nunca rodaram em jogo.
 
 # 7. Next Development Step
 
-## Verificar as Fases 4 e 5 em jogo
+## Fase 8 — o primeiro trabalhador que age
 
-Nada das Fases 4 e 5 rodou no jogo real. São sete tarefas e duas
-correções empilhadas sobre código de fronteira nunca exercitado, e o
-§11 mostra que é exatamente aí que os defeitos desta camada moram.
+A TASK-024 e a TASK-025 fazem o lenhador andar até a árvore, quebrar o
+bloco e recolher a madeira.
 
-O autor não pôde testar em 2026-08-07 e pediu para seguir. Esta seção
-é o registro do que ficou devendo, para que a sessão de teste, quando
-vier, não dependa de reconstruir o contexto de memória.
-
----
-
-### Método
-
-```text
-1  ./gradlew build
-
-2  jar de build/libs/ numa instância Fabric 1.21.1
-
-3  INICIAR O JOGO DO ZERO
-```
-
-Trocar o jar com o jogo aberto não testa nada: o Minecraft carrega mods
-na inicialização da JVM, e sair ao menu e reentrar reusa o código em
-memória. Duas sessões já foram desperdiçadas assim — ver §11.
-
-Mundo de teste: vila plains, com o jogador parado perto tempo bastante
-para o ciclo longo rodar mais de uma vez.
+Tudo o que vem antes está pronto e verificado: existe colônia, existe
+trabalhador com profissão, existe baú com estoque contado, existe fila
+de tarefas e existe quem as distribua. A tarefa `COLLECT_WOOD` já é
+criada e reservada por um lenhador a cada ciclo — falta o lenhador
+fazer alguma coisa com ela.
 
 ---
 
-### V1 — Registro de aldeões (TASK-012)
+### O que muda de natureza aqui
 
 ```text
-Registered N villagers in colony ...
+até a Fase 7   o mod lê o mundo
+
+da Fase 8      o mod escreve no mundo
 ```
 
-```text
-N bate com os aldeões da vila
+Bloco quebrado por engano é dano permanente no save do jogador. Nenhum
+defeito desta semana teve essa propriedade: baú contado errado é número
+errado num log, e centro deslocado se corrige sozinho no ciclo seguinte.
 
-não repete a cada ciclo com os mesmos aldeões
-
-bebês entram na conta
-```
-
-Nunca verificado, e é a base de tudo o que vem depois.
+Isso muda o que "verificar" significa. Um gametest que derruba árvore
+roda num mundo descartável; uma sessão de jogo do autor, não.
 
 ---
 
-### V2 — Atribuição de profissão (TASK-014)
+### Decisões de regra que a Fase 8 exige
+
+Nenhuma é de implementação, e nenhuma foi tomada:
 
 ```text
-Assigned N professions in colony ...
+o que o lenhador pode quebrar
+
+  só tronco? tronco e folha? replanta muda?
+  árvore que o jogador plantou é diferente da
+  que nasceu com o mundo?
+
+o que acontece com o item
+
+  vai para o baú do trabalhador, fica no chão,
+  ou some e vira número no estoque?
+
+até onde ele anda
+
+  raio a partir do centro da colônia, e o que
+  fazer quando não há árvore dentro dele
 ```
 
-```text
-aparece uma vez, não a cada ciclo
-
-quatro aldeões produzem quatro funções distintas
-
-o primeiro é LUMBERJACK
-```
+A terceira tem custo de desempenho: procurar árvore é varredura de
+blocos, e Performance-Rules.md §5 e §6 já proíbem o caminho ingênuo.
 
 ---
 
-### V3 — Persistência (TASK-012b)
+### O que já está pronto para ser usado
 
 ```text
-Loaded N colonies with M workers
+Task com COLLECT_WOOD, estados e executor
+WorkAssignment reservando por capacidade
+ColonyCycle chamando tudo isso a cada 600 ticks
+ChestInventoryReader para depositar depois
+runGametest para verificar sem sessão de jogo
 ```
-
-```text
-M > 0 ao reabrir o mundo
-
-as funções são as mesmas de antes de fechar
-```
-
-O mais barato de todos: fechar o mundo e reabrir. Fazer primeiro.
-
----
-
-### V4 — Registro de baús (TASK-015 e TASK-016)
-
-```text
-Registered N storages in colony ...
-```
-
-```text
-cada aldeão pegou o baú da sua casa, não o do vizinho
-
-dois aldeões do mesmo cômodo não pegaram o mesmo baú
-
-um baú construído depois é encontrado no ciclo seguinte
-```
-
----
-
-### V5 — Contagem de estoque (TASK-017)
-
-```text
-Colony ... stores {OAK_LOG=N, ...}
-```
-
-```text
-o número bate com o que está dentro do baú
-
-conferir ABRINDO o baú, não confiar no log
-
-item fora dos três acompanhados não aparece — é o esperado
-```
-
-Atenção especial: este é o primeiro ponto em que um defeito aparece
-como valor e não como ausência. Se o V4 tiver associado o baú errado,
-o número aqui sairá plausível. O log não vai denunciar.
-
----
-
-### V6 — Bebê e nitwit não trabalham (correção)
-
-```text
-Sem linha de log própria. Verificar pelo comportamento.
-```
-
-```text
-vila com bebê: o total de "Assigned" é menor que o de aldeões
-
-nitwit (casaco verde) não recebe função
-
-bebê crescido recebe função no ciclo seguinte, sozinho
-```
-
-O terceiro caso é o mais demorado e o mais fácil de esquecer: exige
-esperar um bebê crescer, ou usar ovo de spawn e crescer com trigo.
-
----
-
-### V7 — Morte e zumbificação (correção)
-
-```text
-Worker ... died — profession freed
-Worker ... was converted — profession freed, storage released
-```
-
-```text
-matar um aldeão com função: a linha aparece
-
-zumbificar um aldeão: a linha aparece com "was converted"
-
-  este é o caminho comum em jogo e o que NÃO passa por morte
-
-depois da perda, o próximo aldeão recebe a função que vagou
-
-o baú do morto pode ser reivindicado por outro
-```
-
-A zumbificação exige dificuldade normal ou acima; em fácil o aldeão
-morre em vez de converter, e o caso mais importante não seria exercido.
-
----
-
-### O que fazer com o resultado
-
-Defeito encontrado vira entrada em §15 com a linha de log que o
-denunciou, antes de qualquer correção. O §11 existe porque foi assim
-que os quatro defeitos anteriores foram entendidos.
-
----
-
-## Decisão registrada — persistência de trabalhadores
-
-```text
-Estender ColonySavedData
-```
-
-Decidido em 2026-08-07. A alternativa era um `WorkerSavedData` próprio.
-
-Hoje os trabalhadores são redescobertos a cada sessão a partir dos
-aldeões do mundo. Isso basta enquanto só há registro.
-
-Deixa de bastar em TASK-014: profissão atribuída é decisão da colônia,
-não existe no mundo Vanilla e sumiria ao fechar o mundo. Cada sessão
-redistribuiria funções do zero.
-
-Motivo da escolha:
-
-```text
-worker referencia a colônia por colonyId
-
-  dois arquivos permitiriam worker órfão apontando
-  para colônia não gravada, sem transação que
-  mantivesse os dois em sincronia
-
-um só PersistentState
-
-  um segundo arquivo dobraria o custo de
-  versionamento futuro sem ganho no MVP
-
-ServerLifecycleHandler já tem os pontos de start/stop
-
-  não precisa de um segundo par
-```
-
-Registrada como `TASK-012b` em `MVP-Tasks.md`.
 
 ---
 
 # 8. Priority Queue
 
-Sessão de 2026-08-07 encerrada aqui. O autor fará o acesso ao jogo
-depois; esta seção é o ponto de retomada.
-
----
-
-## Precisa do jogo
-
-Nada. A dívida foi paga entre 2026-08-07 e 2026-08-08.
-
-```text
-V1 a V7          respondidos
-encolhimento     verificado
-loop de simulação e P4   verificados
-```
-
-O relato de cada um, com as linhas de log que o provaram, está em §15.
-
-Quatro defeitos apareceram no caminho e estão em §11: o travamento da
-thread do servidor, a prova geométrica inalcançável, a âncora que nunca
-nascia e o baú noutro andar. Nenhum tinha sido pego por teste.
+Situação em 2026-08-08, fim da sessão.
 
 ---
 
 ## Precisa de decisão do autor
 
-Nada. As três foram decididas em 2026-08-08 e implementadas.
-
 ```text
-P2   camada de coordenação    core/coordination, ADR-006 emendada
-
-P3   loop de simulação        ColonyCycle, verificado em jogo
-
-P4   propriedade do baú       linha livre entre cama e baú,
-                              verificado em jogo
+P1   regras do lenhador      antes da TASK-024   §7
 ```
 
-A decisão seguinte que se enxerga daqui é a meta de estoque: hoje
-`ColonyGoals` devolve número fixo, e a meta real sai do que a expansão
-pretende construir — Fase 9.
+O que ele pode quebrar, o que acontece com o item e até onde ele anda.
+São regras de jogo, e a primeira vez que uma decisão errada estraga o
+mundo de quem joga.
+
+```text
+P2   meta de estoque         antes da Fase 9
+```
+
+`ColonyGoals` devolve número fixo — 64 de madeira, 32 de pedra. A meta
+real sai do que a expansão pretende construir. Está isolado numa classe
+e a assinatura já recebe a colônia.
 
 ---
 
-## Não precisa nem do jogo nem de decisão
-
-Levantadas em 2026-08-07, nenhuma iniciada:
+## Não precisa de decisão
 
 ```text
-A   automatizar a verificação com Fabric Game Test    FEITO EM PARTE
+A   estender o gametest para o que ainda não cobre
 
-    ./gradlew runGametest, em 2026-08-08. Dois testes:
-    vila vira colônia, e aldeão vira trabalhador com
-    profissão. Ver §15.
+    hoje: detecção, profissão, baú, parede, nível e
+    contagem — seis casos.
 
-    O que ficou de fora e por quê está na mesma entrada.
+    falta: morte e zumbificação do trabalhador,
+    encolhimento da colônia, e o ciclo gerando tarefa
+    a partir de déficit.
+
+    O V3 continua fora do alcance: persistência exige
+    fechar e reabrir o mundo, e o gametest roda um
+    servidor só.
 ```
 
 ```text
-A (texto original)   automatizar V1, V2, V4, V5, V6 e V7
+B   consolidar este documento
 
-    fabric-gametest-api-v1 já vem no Fabric API do projeto.
-    Roda o servidor headless pelo Gradle: monta a estrutura,
-    afirma, falha o build. Sem cliente e sem humano.
+    passou de 4100 linhas. As consolidações anteriores
+    aconteceram com 2534 e 2662, e o Development Log já
+    tem mais de trinta entradas.
 
-    Não cobre o V3: persistência exige fechar e reabrir o
-    mundo, e o gametest roda um servidor só.
-
-    Custo: falta configurar runGametest no build.gradle, e a
-    detecção é disparada por chunk e por ciclo de ticks —
-    provavelmente exige uma costura no VillageDetectionHandler
-    para o teste chamar a detecção direto. É mudança em código
-    de produção para viabilizar teste, e por isso não foi feita
-    sem combinar.
-
-    É a de maior valor: transforma "preciso de uma sessão de
-    jogo" em "preciso rodar o Gradle", e vale para as fases
-    seguintes, não só para a dívida atual.
+    A regra do §16 pergunta se quem abre o projeto hoje
+    sabe onde as coisas estão. Hoje ainda sabe, pelas
+    seções 1 a 14; o §15 é que virou arquivo.
 ```
 
-```text
-B   travar a ADR-006 §6 como teste automatizado    FEITO
+---
 
-    DependencyRuleTest, em 2026-08-07. Ver §15.
-```
+## Fechado nesta sessão
 
 ```text
-C   consolidar este documento
-
-    2662 linhas. A consolidação anterior (commit fb7d4c0)
-    aconteceu com 2534, e pelo mesmo motivo: a regra de
-    fechamento do §16 pergunta se quem abre o projeto hoje sabe
-    onde as coisas estão, e o Development Log já tem dezenove
-    entradas.
+verificação das Fases 4 a 7      V1 a V7 respondidos
+P2 camada de coordenação         core/coordination
+P3 loop de simulação             ColonyCycle
+P4 propriedade do baú            linha livre cama–baú
+item A do §8 anterior            runGametest existe
 ```
 
 ---
@@ -786,12 +618,11 @@ C   consolidar este documento
 ## Depois disso
 
 ```text
-Fase 8 — Primeiro Trabalhador Funcional (TASK-024+)
+Fase 9 — Expansão
 ```
 
-Sem bloqueio desde 2026-08-08. É onde a tarefa sai do papel e o aldeão
-de fato anda até a árvore — e a primeira vez que o mod escreve no
-mundo em vez de só lê-lo.
+É onde a meta de estoque deixa de ser constante e passa a sair do que a
+colônia pretende construir.
 
 ---
 
@@ -936,65 +767,40 @@ sondar bioma precisam ser feitos no jogo real, não no `runServer`.
 # 10. Pending Decisions
 
 ```text
-1  TASK-023 precisa de uma camada de coordenação
+1  Regras do lenhador — Fase 8
 
-   "Associar tarefas a profissões." Os dois lados existem:
+   O que ele pode quebrar, o que acontece com o item
+   derrubado e até onde ele anda. Ver §7.
 
-     TaskType declara a Capability que exige
-     ProfessionRegistry.withCapability diz quem a tem
-     TaskService.nextFor acha a tarefa de uma capacidade
-
-   O que falta é quem junta os dois em tempo de execução:
-   percorrer os trabalhadores ociosos de uma colônia, ler a
-   profissão de cada um e casar com a fila de tarefas.
-
-   Esse código importaria core.task e core.worker juntos, e a
-   ADR-006 §6 proíbe um domínio do Core importar outro. Não
-   existe hoje um lugar legítimo para ele:
-
-     core/<domínio>   proibido pela ADR-006 §6
-     core/type        é para tipos de valor, não serviço
-     fabric/          permitido (fabric -> core), mas seria
-                      regra de colônia morando na camada de
-                      integração
-
-   Saídas prováveis: criar um pacote de coordenação no core
-   acima dos domínios, ou aceitar que a colônia seja esse
-   coordenador e emendar a ADR-006 para permiti-lo.
-
-   Não inventei a camada por conta própria — é decisão de
-   arquitetura, e as seis ADRs existentes foram todas
-   aprovadas antes de virar código.
+   É a primeira decisão do projeto em que errar estraga
+   o mundo de quem joga, e não só um número num log.
 ```
 
 ```text
-2  TASK-020 está bloqueada pelo loop de simulação
+2  Meta de estoque — Fase 9
 
-   "A Colônia deve saber o que possui e o que falta."
+   ColonyGoals devolve 64 de madeira e 32 de pedra para
+   toda colônia. Resource-System.md fala em metas mínimas
+   e não diz de onde vêm; a resposta é a expansão.
 
-   Ela já pode: ColonyResources responde o primeiro,
-   ResourceDemand o segundo. Falta onde perguntar.
-
-   O loop de ADR-002 e Simulation-Loop.md nunca foi
-   escrito — §9 registra isso desde a Fase 4. Não há
-   ciclo de colônia em que encaixar a consulta, e o
-   VillageDetectionHandler é detecção, não simulação:
-   pendurar a decisão de recursos nele faria a colônia
-   pensar só quando alguém passasse perto.
-
-   Falta também a meta de estoque. Resource-System.md
-   §"Necessidade de Recursos" fala em "metas mínimas"
-   e dá um exemplo, mas nada define de onde elas vêm.
-   No MVP elas provavelmente saem do que a expansão
-   pretende construir — que é a Fase 9.
-
-   Decisão do autor: escrever o loop antes da TASK-020,
-   ou fixar metas constantes e ligar ao ciclo de detecção
-   como paliativo.
+   Isolado numa classe, e a assinatura já recebe a
+   colônia.
 ```
 
+---
+
+Resolvidas em 2026-08-08, mantidas aqui por rastreabilidade:
+
 ```text
-2  Ícone e nome divergem
+camada de coordenação   → core/coordination, ADR-006 emendada
+loop de simulação       → ColonyCycle
+propriedade do baú      → linha livre entre cama e baú
+```
+
+---
+
+```text
+3  Ícone e nome divergem
 
    A arte diz "Village++"; o mod é "Village Colony", id villagecolony.
 
@@ -1005,7 +811,7 @@ sondar bioma precisam ser feitos no jogo real, não no `runServer`.
 ```
 
 ```text
-3  Fundo do ícone
+4  Fundo do ícone
 
    A arte veio sem canal alpha, fundo branco sólido.
 
@@ -4090,6 +3896,85 @@ Estado ao registrar:
 ./gradlew runGametest → All 6 required tests passed
 
 a correção da regra de parede não foi vista em jogo
+```
+
+---
+
+## 2026-08-08 — Fecho da sessão
+
+O que foi feito, na ordem em que aconteceu:
+
+```text
+paga a dívida de verificação das Fases 4 e 5
+  V1 a V7 respondidos; V4 gerou correção
+
+quatro defeitos de fronteira achados e corrigidos
+  travamento da thread do servidor
+  prova geométrica inalcançável
+  âncora da sonda que nunca nascia
+  baú noutro andar
+
+decidido e implementado o encolhimento da colônia
+
+decididas e implementadas as três do §8
+  P2 core/coordination, ADR-006 emendada
+  P3 ColonyCycle, o loop da ADR-002
+  P4 linha livre entre cama e baú
+
+item A do §8: runGametest existe, com seis casos
+
+quinto defeito, achado por máquina
+  a regra de parede não filtrava nada
+```
+
+Fases 4 a 7 fechadas e verificadas em jogo. §3, §5, §6, §7, §8 e §10
+reescritos para descrever o projeto de hoje.
+
+---
+
+### Duas correções a coisas que eu afirmei
+
+```text
+"a regra de parede barrou o par 1130,714 → 1130,719"
+
+  não barrou. A regra não filtrava nada. O baú foi para
+  uma cama mais perto, a dois blocos contra cinco.
+
+contagem de testes num commit
+
+  informei 251; eram 246. Corrigido no commit seguinte.
+```
+
+A primeira é a que importa: a evidência era compatível com a explicação
+e não a sustentava, e foi apresentada como se sustentasse.
+
+---
+
+### O que fica para a próxima sessão
+
+```text
+decisão   regras do lenhador — §7 e §10 item 1
+
+trabalho  TASK-024 e TASK-025, a Fase 8
+
+dívida    gametest para morte, zumbificação,
+          encolhimento e geração de tarefa
+
+dívida    consolidar este documento, item B do §8
+```
+
+---
+
+Estado ao encerrar:
+
+```text
+257 testes de unidade + 6 de jogo
+
+./gradlew build → BUILD SUCCESSFUL
+./gradlew runGametest → All 6 required tests passed
+
+nada escrito e não verificado, salvo a correção da
+regra de parede, que tem gametest e não tem jogo
 ```
 
 ---
