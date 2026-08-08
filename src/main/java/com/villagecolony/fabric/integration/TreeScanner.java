@@ -1,0 +1,115 @@
+package com.villagecolony.fabric.integration;
+
+import net.minecraft.block.Blocks;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.Heightmap;
+import net.minecraft.world.chunk.WorldChunk;
+
+import java.util.Optional;
+
+/**
+ * Acha a árvore mais próxima do centro da colônia.
+ *
+ * <p>Só carvalho, e só o tronco: é o que o lenhador pode derrubar, por
+ * decisão do autor em 2026-08-08. Ver §10.
+ *
+ * <p>Nunca varre o volume do raio. Um raio de 64 em três dimensões são
+ * milhões de blocos, e Performance-Rules.md §5 e §6 proíbem esse
+ * caminho. Aqui se percorrem colunas, e de cada coluna se olha só a
+ * faixa em torno da superfície — o mapa de altura já diz onde ela está.
+ *
+ * <p>Chunk não carregado é pulado sem forçar carregamento, pela ADR-002
+ * e pela lição de 2026-08-07: forçar de dentro do ciclo do servidor
+ * trava a thread.
+ */
+public final class TreeScanner {
+
+    /**
+     * Quantas colunas se olha por busca, no máximo.
+     *
+     * <p>O raio de 64 tem mais de dezesseis mil colunas. Sem teto, uma
+     * colônia sem árvore nenhuma por perto pagaria a varredura inteira a
+     * cada ciclo, e são vários ciclos por minuto entre todas as
+     * colônias.
+     *
+     * <p>A busca é em espiral a partir do centro, então parar no teto
+     * significa "não achei perto", não "não achei". O ciclo seguinte
+     * tenta de novo.
+     */
+    private static final int MAX_COLUMNS = 4096;
+
+    /**
+     * Quantos blocos acima e abaixo da superfície se procura tronco.
+     *
+     * <p>O mapa de altura aponta o topo do que bloqueia movimento — a
+     * copa, no caso de uma árvore. O tronco está abaixo dela.
+     */
+    private static final int SURFACE_MARGIN = 24;
+
+    private TreeScanner() {
+    }
+
+    /**
+     * O tronco de carvalho mais próximo do centro, dentro do raio.
+     *
+     * <p>Devolve vazio quando não há nenhum ao alcance, e isso não é
+     * erro: a colônia espera o ciclo seguinte em vez de mandar o
+     * trabalhador para o horizonte.
+     */
+    public static Optional<BlockPos> findNearestLog(
+            ServerWorld world, BlockPos center, int radius) {
+
+        int columns = 0;
+
+        for (int ring = 0; ring <= radius; ring++) {
+            for (int dx = -ring; dx <= ring; dx++) {
+                for (int dz = -ring; dz <= ring; dz++) {
+
+                    // Só a casca do anel: o miolo já foi visto nos
+                    // anéis anteriores.
+                    if (Math.abs(dx) != ring && Math.abs(dz) != ring) {
+                        continue;
+                    }
+
+                    if (++columns > MAX_COLUMNS) {
+                        return Optional.empty();
+                    }
+
+                    Optional<BlockPos> log = logInColumn(
+                            world, center.getX() + dx, center.getZ() + dz);
+
+                    if (log.isPresent()) {
+                        return log;
+                    }
+                }
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /** O tronco mais baixo desta coluna, se houver. */
+    private static Optional<BlockPos> logInColumn(ServerWorld world, int x, int z) {
+        WorldChunk chunk = world.getChunkManager().getWorldChunk(x >> 4, z >> 4);
+
+        if (chunk == null) {
+            return Optional.empty();
+        }
+
+        int surface = chunk.sampleHeightmap(Heightmap.Type.MOTION_BLOCKING, x & 15, z & 15);
+
+        int top = Math.min(surface + 1, world.getTopY() - 1);
+        int bottom = Math.max(surface - SURFACE_MARGIN, world.getBottomY());
+
+        for (int y = bottom; y <= top; y++) {
+            BlockPos pos = new BlockPos(x, y, z);
+
+            if (chunk.getBlockState(pos).isOf(Blocks.OAK_LOG)) {
+                return Optional.of(pos);
+            }
+        }
+
+        return Optional.empty();
+    }
+}

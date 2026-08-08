@@ -15,6 +15,7 @@ import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageScanner;
 import com.villagecolony.fabric.integration.VillagerScanner;
+import com.villagecolony.fabric.work.LumberjackWork;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -205,6 +206,10 @@ public final class VillageDetectionHandler {
                     assigned,
                     VillageColonyMod.TASKS.availableFor(colony.id()).size());
         }
+
+        // Depois da distribuição: quem recebeu tarefa neste ciclo já
+        // começa a andar nele, em vez de esperar o próximo.
+        LumberjackWork.run(overworld, colony);
     }
 
     /**

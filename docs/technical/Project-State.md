@@ -61,7 +61,7 @@ Java
 ## Current Stage
 
 ```text
-Fase 8 — Primeiro Trabalhador Funcional
+Fase 8 — Primeiro Trabalhador Funcional (escrita)
 ```
 
 ---
@@ -113,6 +113,10 @@ Fase 6   recursos                       TASK-018 a TASK-020
 
 Fase 7   tarefas                        TASK-021 a TASK-023
                                         verificada em jogo
+
+Fase 8   primeiro trabalhador           TASK-024 e TASK-025
+                                        coberta por gametest,
+                                        NÃO verificada em jogo
 ```
 
 Detalhe por tarefa em §6. Histórico em §15.
@@ -317,7 +321,7 @@ Organizar trabalhadores   FEITO, verificado em jogo
 
 ↓
 
-Coletar recursos          próximo — Fase 8
+Coletar recursos          FEITO, não verificado em jogo
 
 ↓
 
@@ -395,7 +399,16 @@ Fase 7 — Tarefas
   TASK-023  associar a profissões    feito (WorkAssignment),
                                      verificado em jogo
 
-Fases 8 e 9
+Fase 8 — Primeiro Trabalhador
+
+  TASK-024  capacidade do lenhador   feito (LumberjackWork),
+                                     coberto por gametest
+  TASK-025  coleta de madeira        feito (TreeScanner,
+                                     TreeHarvester, ChestDepositor),
+                                     coberto por gametest
+                                     NÃO verificado em jogo
+
+Fase 9
 
   TASK-024 em diante                 não iniciadas
 ```
@@ -767,13 +780,17 @@ sondar bioma precisam ser feitos no jogo real, não no `runServer`.
 # 10. Pending Decisions
 
 ```text
-1  Regras do lenhador — Fase 8
+1  Movimento do trabalhador — Fase 8
 
-   O que ele pode quebrar, o que acontece com o item
-   derrubado e até onde ele anda. Ver §7.
+   O cérebro Vanilla do aldeão tem agenda própria e pode
+   sobrescrever o destino que LumberjackWork pede. O
+   caminho correto é uma task no Brain, que é mudança
+   maior e mexe em como o aldeão se comporta fora do
+   trabalho.
 
-   É a primeira decisão do projeto em que errar estraga
-   o mundo de quem joga, e não só um número num log.
+   Hoje o pedido é repetido a cada ciclo. Se o aldeão não
+   chegar, a linha "felled" não aparece — e é isso que
+   uma sessão de jogo vai dizer.
 ```
 
 ```text
@@ -795,6 +812,10 @@ Resolvidas em 2026-08-08, mantidas aqui por rastreabilidade:
 camada de coordenação   → core/coordination, ADR-006 emendada
 loop de simulação       → ColonyCycle
 propriedade do baú      → linha livre entre cama e baú
+
+regras do lenhador      → só oak_log, replanta muda;
+                          madeira direto para o baú;
+                          raio 64 do centro
 ```
 
 ---
@@ -3975,6 +3996,107 @@ Estado ao encerrar:
 
 nada escrito e não verificado, salvo a correção da
 regra de parede, que tem gametest e não tem jogo
+```
+
+---
+
+## 2026-08-08 — Fase 8: o mod passou a escrever no mundo
+
+TASK-024 e TASK-025. A virada de natureza do projeto: até aqui tudo
+lia, agora derruba árvore e guarda madeira.
+
+---
+
+### As regras, decididas pelo autor
+
+```text
+alvo     só oak_log. Folha, terra e qualquer outro
+         bloco ficam. Ao terminar a árvore, planta
+         muda na base
+
+item     vai direto para o baú do trabalhador, sem
+         passar por item no chão
+
+alcance  64 blocos do centro da colônia
+```
+
+O item foi a decisão menos óbvia. Item no chão despawna em cinco
+minutos, cai n'água, e outro mob o pega — a contagem da colônia passaria
+a mentir sem nada avisar, que é a família de defeito que mais custou
+nesta semana.
+
+O alcance ficou em 64, e não nos 32 que eu recomendei: é o mesmo raio da
+detecção de vila.
+
+---
+
+### O que foi escrito
+
+```text
+TreeScanner      acha o carvalho mais próximo do centro
+
+TreeHarvester    derruba os troncos ligados e replanta
+
+ChestDepositor   guarda no baú o que couber, devolve o resto
+
+LumberjackWork   o passo de trabalho por ciclo: achar,
+                 andar, derrubar, guardar
+```
+
+`TreeScanner` não varre volume. Raio 64 em três dimensões são milhões de
+blocos, e Performance-Rules.md §5 e §6 proíbem esse caminho: ele percorre
+colunas em espiral a partir do centro, usa o mapa de altura para saber
+onde está a superfície, e para no teto de 4096 colunas. Parar no teto é
+"não achei perto", e o ciclo seguinte tenta de novo.
+
+`TreeHarvester` tem teto de 24 troncos por árvore. Carvalho comum tem
+entre quatro e sete; o teto existe para o carvalho gigante e para a casa
+de tronco que o jogador tenha encostado numa árvore.
+
+---
+
+### Seis testes de jogo, e os negativos importam mais
+
+```text
+fellingTakesTheWholeTrunk        derruba os quatro troncos
+fellingReplantsASapling          muda no lugar da base
+fellingLeavesTheLeavesAlone      folha fica
+fellingIgnoresOtherWoods         bétula fica
+theWoodGoesIntoTheChest          madeira entra e é contada
+theSearchFindsATreeNearby        a varredura acha
+```
+
+Os dois do meio são os que protegem a construção de quem joga.
+Verificados por mutação: com o `TreeHarvester` tornado guloso —
+aceitando folha e bétula — os dois falham, e só eles.
+
+---
+
+### O limite conhecido
+
+O movimento. O cérebro Vanilla do aldeão tem agenda própria e pode
+sobrescrever o destino que `LumberjackWork` pede. O caminho correto é
+uma task no `Brain`, que é mudança maior e mexe no comportamento dele
+fora do trabalho.
+
+Hoje o pedido é repetido a cada ciclo, e a derrubada só acontece a três
+blocos da árvore. Se o aldeão não chegar, a linha `felled` não aparece —
+é o que uma sessão de jogo vai dizer, e é a única parte da Fase 8 que os
+testes não conseguem responder.
+
+Está em §10 como decisão pendente.
+
+---
+
+Estado ao registrar:
+
+```text
+257 testes de unidade + 12 de jogo
+
+./gradlew build → BUILD SUCCESSFUL
+./gradlew runGametest → All 12 required tests passed
+
+a derrubada nunca rodou em jogo
 ```
 
 ---
