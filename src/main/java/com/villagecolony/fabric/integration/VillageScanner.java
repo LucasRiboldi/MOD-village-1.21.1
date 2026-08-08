@@ -39,6 +39,16 @@ public final class VillageScanner {
      *     o ponto avaliado no ciclo longo
      */
     public List<VillageCandidate> scan(ServerWorld world, BlockPos trigger) {
+        return scan(world, trigger, false);
+    }
+
+    /**
+     * @param isProbe se esta varredura é a sonda ancorada no centro de
+     *     uma colônia. Só ela marca a âncora dos candidatos, porque só
+     *     ela parte do mesmo ponto a cada ciclo e produz leituras
+     *     comparáveis entre si. Ver {@code Colony#observe}
+     */
+    public List<VillageCandidate> scan(ServerWorld world, BlockPos trigger, boolean isProbe) {
         List<ColonyPos> beds = collectBeds(world, trigger);
 
         if (beds.size() < VillageDetector.MIN_BEDS) {
@@ -56,10 +66,26 @@ public final class VillageScanner {
                             findMeetingPoint(world, cluster),
                             from)
                     .filter(candidate -> isPlains(world, candidate.center()))
+                    .map(candidate -> isProbe ? candidate : withoutAnchor(candidate))
                     .ifPresent(candidates::add);
         }
 
         return candidates;
+    }
+
+    /**
+     * A mesma observação, sem âncora.
+     *
+     * <p>A prova de completude continua valendo — ela não depende de
+     * repetição. O que se retira é o direito de confirmar uma leitura
+     * pela seguinte, que só a sonda tem: o gatilho de chunk e a posição
+     * do jogador não voltam ao mesmo ponto de propósito, e um jogador
+     * parado na borda da vila repetiria a mesma visão pobre ciclo após
+     * ciclo até ela se confirmar.
+     */
+    private static VillageCandidate withoutAnchor(VillageCandidate candidate) {
+        return new VillageCandidate(
+                candidate.center(), candidate.bedCount(), candidate.complete());
     }
 
     /**

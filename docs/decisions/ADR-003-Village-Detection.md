@@ -511,24 +511,35 @@ o centro congelado para sempre.
 
 Duas coisas dão essa autoridade.
 
-**Mesma âncora** — o caminho que funciona na prática:
+**A sonda** — o caminho que funciona na prática:
 
 ```text
-a colônia guarda de onde veio a melhor observação
+o ciclo longo varre também a partir do centro
+de cada colônia ativa: é a sonda
 
-varredura do MESMO ponto vendo menos camas
+duas leituras seguidas da sonda, mesma âncora,
+a segunda não maior que a primeira
   → a vila encolheu
 ```
 
-Duas varreduras da mesma âncora enxergam a mesma fatia da vila; ver
-menos dali só pode significar que camas sumiram. Para haver âncora
-estável, o ciclo longo varre também a partir do centro de cada colônia
-ativa — a posição do jogador muda a cada passo e nunca se repete.
+A sonda parte do mesmo ponto a cada ciclo, então suas leituras são
+comparáveis entre si — a posição do jogador muda a cada passo e nunca se
+repete. Uma leitura que se confirma na seguinte não é acidente de
+posição.
 
-A âncora só é atualizada junto com `observedBeds`. Se qualquer
-observação a sobrescrevesse, uma visão de borda viraria referência e a
-próxima visão de borda dali encolheria a colônia: a deriva de volta por
-outro caminho.
+Exige repetição: a leitura anterior já precisa estar abaixo da contagem
+registrada. Sem isso, a sonda que viu 38 e depois 33 confirmaria o 33
+contra si mesma, e uma visão parcial isolada encolheria a colônia.
+
+`probeAnchor` e `probeBeds` são gravados a cada leitura da sonda, aceita
+ou recusada. Ligá-los à observação aceita foi um defeito: a colônia vem
+do save com âncora nula, nenhuma observação é aceita enquanto ela
+estiver grande demais, e a âncora nunca nascia.
+
+Só a sonda leva âncora. A varredura do jogador e a do chunk vêm sem: um
+jogador parado na borda repetiria a mesma visão pobre ciclo após ciclo,
+e ela se confirmaria — a deriva entrando pela porta aberta para o
+encolhimento.
 
 **Prova geométrica** — rara, mas serve na primeira observação, quando
 ainda não há âncora com que comparar:

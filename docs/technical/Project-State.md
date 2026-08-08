@@ -3273,6 +3273,90 @@ falta ver em jogo: a vila encolhida ainda não encolheu a colônia
 
 ---
 
+## 2026-08-07 — A âncora que nunca nascia
+
+Segunda tentativa, segunda recusa em jogo. A sonda do centro estava
+rodando — o log passou a trazer duas linhas por ciclo, uma de cada
+varredura — mas a colônia seguiu em 38:
+
+```text
+[23:26:03] saw 33 beds, keeping 38   ← jogador
+[23:26:03] saw 33 beds, keeping 38   ← sonda
+[23:26:33] saw 33 beds, keeping 38
+[23:26:33] saw 33 beds, keeping 38
+```
+
+O impasse estava no meu código, e é do tipo que teste de unidade não
+encontra porque depende do estado com que a colônia nasce:
+
+```text
+a colônia vem do save com observedBeds = 38
+e âncora nula
+
+a âncora só era gravada numa observação ACEITA
+
+nenhuma observação é aceita enquanto 33 < 38
+
+logo a âncora nunca nasce, e nada nunca encolhe
+```
+
+Os testes anteriores não pegaram porque todos partiam de uma colônia
+criada na hora, cuja primeira observação é sempre aceita e já deixava a
+âncora pronta. Nenhum partia de colônia carregada do save.
+
+---
+
+### A sonda passou a ter memória própria
+
+`probeAnchor` e `probeBeds` são gravados a cada leitura da sonda, aceita
+ou recusada. Deixaram de ser um efeito da observação aceita e viraram o
+que sempre deveriam ter sido: o registro do que a sonda viu da última
+vez.
+
+A regra de encolhimento ficou:
+
+```text
+mesma âncora da leitura anterior
+   e  a leitura de agora não é maior que aquela
+   e  aquela já estava abaixo da contagem registrada
+```
+
+A terceira condição é a que exige repetição. Sem ela, a sonda que viu 38
+e depois 33 confirmaria o 33 contra si mesma, e uma visão parcial
+isolada encolheria a colônia — dois testes falharam exatamente nisso
+antes de a condição existir.
+
+---
+
+### Só a sonda tem âncora
+
+A varredura que parte do jogador e a que parte do chunk carregado passam
+`anchor` nulo. Não é detalhe: um jogador parado na borda da vila repete
+a mesma visão pobre ciclo após ciclo, e ela se confirmaria sozinha. A
+deriva do §11 entraria pela porta que abrimos para o encolhimento.
+
+`VillageScanner.scan` recebe `isProbe` e retira a âncora quando a
+varredura não é sonda. A prova de completude continua valendo nas duas,
+porque ela não depende de repetição.
+
+---
+
+Estado ao registrar:
+
+```text
+233 testes passando
+
+  eram 238; sete testes da âncora antiga foram
+  substituídos por oito da sonda, e o total caiu
+  porque a regra antiga tinha caso que não existe mais
+
+./gradlew build → BUILD SUCCESSFUL
+
+falta ver em jogo, pela terceira vez
+```
+
+---
+
 # 16. Definition of Project Progress
 
 O projeto avança somente quando:

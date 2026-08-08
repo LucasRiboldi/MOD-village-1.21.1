@@ -147,198 +147,144 @@ class PartialObservationTest {
     // ficava com o centro congelado para sempre: nenhuma observação
     // futura alcançaria a marca antiga.
     //
-    // Quem tem autoridade para dizer que a vila encolheu é a observação
-    // completa — aquela que provadamente não pode ter cortado cama
-    // nenhuma. Ver VillageDetectorTest#completeness.
+    // Quem tem autoridade para dizer que a vila encolheu é a sonda: a
+    // varredura ancorada no centro da colônia, repetida a cada ciclo.
+    // Duas leituras seguidas dela são comparáveis entre si, porque
+    // partem do mesmo ponto. Ver §15 de Project-State.md.
     // ----------------------------------------------------------------
 
     private static VillageCandidate fullySeen(int x, int z, int beds) {
         return new VillageCandidate(new ColonyPos(x, 64, z), beds, true);
     }
 
-    /** Observação com âncora: o ponto de onde a varredura partiu. */
-    private static VillageCandidate seenFrom(ColonyPos anchor, int x, int z, int beds) {
+    /** Leitura da sonda: a varredura ancorada no centro da colônia. */
+    private static VillageCandidate probe(ColonyPos anchor, int x, int z, int beds) {
         return new VillageCandidate(new ColonyPos(x, 64, z), beds, false, anchor);
     }
 
     /**
-     * O caso que falhou em jogo em 2026-08-07.
+     * O caso que falhou em jogo em 2026-08-07, duas vezes.
      *
-     * <p>Vila de 38 camas, cinco camas destruídas, cinco observações
-     * seguidas de 32 e 33 camas — todas recusadas pela prova geométrica,
-     * porque a vila é maior que a margem de 32 blocos. A colônia ficou
-     * presa em 38.
-     *
-     * <p>Com a âncora, a segunda observação vinda do mesmo ponto tem
-     * autoridade: a mesma janela não encolhe sozinha.
+     * <p>Vila de 38 camas, cinco destruídas. A sonda lê 33 e não pode
+     * encolher sozinha — 33 tanto pode ser a vila menor quanto uma visão
+     * parcial. Quando a leitura seguinte, do mesmo ponto, repete 33, ela
+     * deixa de ser acidente de posição: a vila tem 33.
      */
     @Test
-    void sameAnchorSeeingFewerBedsShrinksTheColony() {
+    void aRepeatedProbeReadingShrinksTheColony() {
         ColonyPos anchor = new ColonyPos(1109, 64, 730);
 
-        service.adopt(seenFrom(anchor, 1109, 730, 38));
+        service.adopt(probe(anchor, 1109, 730, 38));
+        service.adopt(probe(anchor, 1109, 730, 33));
 
-        Colony colony = service.adopt(seenFrom(anchor, 1109, 730, 33));
+        Colony colony = service.adopt(probe(anchor, 1109, 730, 33));
 
-        assertEquals(33, colony.observedBeds(), "a mesma janela viu menos: a vila encolheu");
+        assertEquals(33, colony.observedBeds(), "a sonda confirmou: a vila encolheu");
     }
 
-    /** Âncora diferente não prova nada — é a visão de borda de sempre. */
+    /** Uma leitura só nunca basta: pode ser a posição, não a vila. */
     @Test
-    void anotherAnchorSeeingFewerBedsProvesNothing() {
+    void aSingleProbeReadingProvesNothing() {
         ColonyPos anchor = new ColonyPos(1109, 64, 730);
-        ColonyPos elsewhere = new ColonyPos(1080, 64, 733);
 
-        service.adopt(seenFrom(anchor, 1109, 730, 38));
+        service.adopt(probe(anchor, 1109, 730, 38));
 
-        Colony colony = service.adopt(seenFrom(elsewhere, 1080, 733, 3));
+        Colony colony = service.adopt(probe(anchor, 1109, 730, 33));
+
+        assertEquals(38, colony.observedBeds());
+    }
+
+    /**
+     * A colônia que veio do save também encolhe.
+     *
+     * <p>Foi exatamente isto que travou em jogo: a âncora nascia só numa
+     * observação aceita, e nenhuma vinha enquanto a colônia estivesse
+     * grande demais. A sonda registra a âncora mesmo quando é recusada.
+     */
+    @Test
+    void aColonyLoadedFromSaveCanStillShrink() {
+        ColonyPos anchor = new ColonyPos(1109, 64, 730);
+
+        Colony colony = service.adopt(seen(1109, 730, 38));
+
+        service.adopt(probe(anchor, 1109, 730, 33));
+        service.adopt(probe(anchor, 1109, 730, 33));
+
+        assertEquals(33, colony.observedBeds());
+    }
+
+    /**
+     * A varredura do jogador não é sonda, e repetir não lhe dá
+     * autoridade.
+     *
+     * <p>É o que impede a deriva do §11 de voltar: jogador parado na
+     * borda repete a mesma visão pobre ciclo após ciclo.
+     */
+    @Test
+    void repeatingAPlayerViewNeverShrinksTheColony() {
+        service.adopt(seen(1109, 730, 38));
+
+        for (int i = 0; i < 5; i++) {
+            service.adopt(seen(1080, 733, 3));
+        }
+
+        Colony colony = service.all().iterator().next();
 
         assertEquals(38, colony.observedBeds());
         assertEquals(new ColonyPos(1109, 64, 730), colony.center());
     }
 
-    /**
-     * A âncora acompanha a melhor observação, não a última.
-     *
-     * <p>Se a âncora fosse sobrescrita por qualquer observação, uma visão
-     * de borda viraria a nova referência e a próxima visão de borda dali
-     * encolheria a colônia — a deriva do §11 por outro caminho.
-     */
+    /** Sonda de outro ponto não confirma leitura de ponto nenhum. */
     @Test
-    void aWorseViewDoesNotBecomeTheNewAnchor() {
-        ColonyPos good = new ColonyPos(1109, 64, 730);
-        ColonyPos edge = new ColonyPos(1080, 64, 733);
+    void probesFromDifferentAnchorsDoNotConfirmEachOther() {
+        ColonyPos here = new ColonyPos(1109, 64, 730);
+        ColonyPos there = new ColonyPos(1080, 64, 733);
 
-        service.adopt(seenFrom(good, 1109, 730, 38));
-        service.adopt(seenFrom(edge, 1080, 733, 3));
+        service.adopt(probe(here, 1109, 730, 38));
+        service.adopt(probe(here, 1109, 730, 33));
 
-        Colony colony = service.adopt(seenFrom(edge, 1080, 733, 2));
+        Colony colony = service.adopt(probe(there, 1080, 733, 3));
 
-        assertEquals(38, colony.observedBeds(), "a borda nunca virou referência");
-    }
-
-    /** Crescer continua sem precisar de âncora nenhuma. */
-    @Test
-    void growingStillNeedsNoAnchor() {
-        ColonyPos anchor = new ColonyPos(0, 64, 0);
-
-        service.adopt(seenFrom(anchor, 0, 0, 5));
-
-        Colony colony = service.adopt(seen(20, 0, 9));
-
-        assertEquals(9, colony.observedBeds());
-    }
-
-    /** Uma observação melhor de outro ponto muda a âncora junto. */
-    @Test
-    void aBetterViewMovesTheAnchorToo() {
-        ColonyPos first = new ColonyPos(0, 64, 0);
-        ColonyPos better = new ColonyPos(30, 64, 0);
-
-        service.adopt(seenFrom(first, 0, 0, 5));
-        service.adopt(seenFrom(better, 30, 0, 12));
-
-        Colony colony = service.adopt(seenFrom(better, 30, 0, 8));
-
-        assertEquals(8, colony.observedBeds(), "a nova âncora já tem autoridade");
-    }
-
-    /** Sem âncora, nada encolhe — é o padrão seguro de quem não sabe de onde olhou. */
-    @Test
-    void anObservationWithoutAnAnchorNeverShrinks() {
-        ColonyPos anchor = new ColonyPos(0, 64, 0);
-
-        service.adopt(seenFrom(anchor, 0, 0, 10));
-
-        Colony colony = service.adopt(seen(0, 0, 4));
-
-        assertEquals(10, colony.observedBeds());
+        assertEquals(38, colony.observedBeds());
     }
 
     /**
      * A prova geométrica continua valendo por si.
      *
-     * <p>Ela é rara em vila grande, mas é a única que funciona na
-     * primeira observação, quando ainda não há âncora com que comparar.
+     * <p>Sozinha ela não bastou — vila real é maior que a margem, e foi
+     * isso que travou em jogo. Mas ela não depende de repetição, e é a
+     * única que encolhe já na primeira observação.
      */
     @Test
-    void completeViewStillShrinksWithoutMatchingAnchor() {
-        service.adopt(seenFrom(new ColonyPos(0, 64, 0), 0, 0, 10));
+    void aCompleteViewShrinksWithoutAnyProbe() {
+        service.adopt(seen(0, 0, 10));
 
         Colony colony = service.adopt(fullySeen(50, 50, 4));
 
         assertEquals(4, colony.observedBeds());
     }
 
+    /** Crescer continua sem precisar de sonda nenhuma. */
     @Test
-    void completeViewMayShrinkTheColony() {
-        service.adopt(fullySeen(1109, 730, 12));
-
-        Colony colony = service.adopt(fullySeen(1109, 730, 4));
-
-        assertEquals(4, colony.observedBeds(), "a vila encolheu e a colônia acompanha");
-    }
-
-    @Test
-    void completeViewMayShrinkAndMoveTheCenter() {
-        service.adopt(fullySeen(1109, 730, 12));
-
-        Colony colony = service.adopt(fullySeen(1080, 733, 4));
-
-        assertEquals(new ColonyPos(1080, 64, 733), colony.center());
-        assertEquals(4, colony.observedBeds());
-    }
-
-    /**
-     * A regra antiga continua valendo para quem não viu tudo.
-     *
-     * <p>É o que impede a decisão de hoje de reabrir a oscilação: o
-     * jogador andando pela vila produz visões parciais o tempo todo, e
-     * nenhuma delas encolhe coisa alguma.
-     */
-    @Test
-    void partialViewStillCannotShrinkTheColony() {
-        service.adopt(fullySeen(1109, 730, 12));
-
-        Colony colony = service.adopt(seen(1080, 733, 4));
-
-        assertEquals(new ColonyPos(1109, 64, 730), colony.center());
-        assertEquals(12, colony.observedBeds());
-    }
-
-    /** A oscilação original, agora com uma visão completa no meio dela. */
-    @Test
-    void completeViewDoesNotReopenTheOscillation() {
-        service.adopt(fullySeen(1109, 730, 12));
-
-        for (int i = 0; i < 5; i++) {
-            service.adopt(seen(1080, 733, 3));
-            service.adopt(seen(1109, 730, 12));
-        }
-
-        Colony colony = service.all().iterator().next();
-
-        assertEquals(new ColonyPos(1109, 64, 730), colony.center());
-        assertEquals(12, colony.observedBeds());
-    }
-
-    /** Crescer nunca precisou de autoridade, e continua não precisando. */
-    @Test
-    void partialViewMayStillGrowTheColony() {
-        service.adopt(fullySeen(0, 0, 5));
+    void growingStillNeedsNoProbe() {
+        service.adopt(seen(0, 0, 5));
 
         Colony colony = service.adopt(seen(20, 0, 9));
 
-        assertEquals(new ColonyPos(20, 64, 0), colony.center());
         assertEquals(9, colony.observedBeds());
     }
 
+    /** A vila volta a crescer depois de encolher. */
     @Test
-    void observeReportsMovementWhenShrinking() {
-        Colony colony = service.adopt(fullySeen(0, 0, 10));
+    void theColonyGrowsAgainAfterShrinking() {
+        ColonyPos anchor = new ColonyPos(0, 64, 0);
 
-        assertFalse(colony.observe(new ColonyPos(0, 64, 0), 3, true), "mesmo centro");
-        assertTrue(colony.observe(new ColonyPos(9, 64, 0), 2, true), "centro novo");
-        assertFalse(colony.observe(new ColonyPos(50, 64, 0), 1, false), "visão parcial");
+        service.adopt(probe(anchor, 0, 0, 10));
+        service.adopt(probe(anchor, 0, 0, 4));
+        service.adopt(probe(anchor, 0, 0, 4));
+
+        Colony colony = service.adopt(seen(0, 0, 12));
+
+        assertEquals(12, colony.observedBeds());
     }
 }

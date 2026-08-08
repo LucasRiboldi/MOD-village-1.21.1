@@ -137,7 +137,7 @@ public final class VillageDetectionHandler {
         }
 
         for (ColonyPos center : centers) {
-            detectAround(overworld, MinecraftTypeAdapter.toBlockPos(center));
+            detectAround(overworld, MinecraftTypeAdapter.toBlockPos(center), true);
         }
     }
 
@@ -268,7 +268,15 @@ public final class VillageDetectionHandler {
      * alcance muda. Jogador parado não gera linha. Ver CODE-STANDARDS §8.
      */
     private static void detectAround(ServerWorld world, BlockPos trigger) {
-        for (VillageCandidate candidate : SCANNER.scan(world, trigger)) {
+        detectAround(world, trigger, false);
+    }
+
+    /**
+     * @param isProbe se a varredura é a sonda ancorada no centro de uma
+     *     colônia, a única cujas leituras se confirmam entre ciclos
+     */
+    private static void detectAround(ServerWorld world, BlockPos trigger, boolean isProbe) {
+        for (VillageCandidate candidate : SCANNER.scan(world, trigger, isProbe)) {
             int before = VillageColonyMod.COLONIES.count();
 
             Optional<Colony> known = VillageColonyMod.COLONIES

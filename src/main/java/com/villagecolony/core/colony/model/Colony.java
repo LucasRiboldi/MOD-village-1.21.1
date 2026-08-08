@@ -54,16 +54,22 @@ public final class Colony {
     private int observedBeds;
 
     /**
-     * De onde partiu a varredura que produziu {@link #observedBeds}.
+     * A âncora da última varredura ancorada, e o que ela viu.
      *
-     * <p>É o que dá autoridade para a colônia encolher: uma varredura
-     * feita do mesmo ponto enxerga a mesma fatia da vila, então ver menos
-     * camas dali só pode significar que camas sumiram. Ver
-     * {@link #observe(ColonyPos, int, boolean, ColonyPos)}.
+     * <p>A sonda é a varredura que parte do centro da própria colônia,
+     * repetida a cada ciclo. Ao contrário da posição do jogador, ela é o
+     * mesmo ponto de um ciclo para o outro, e por isso duas leituras
+     * dela são comparáveis.
      *
-     * <p>Nulo enquanto nenhuma observação ancorada tiver chegado.
+     * <p>Guardados fora de {@link #observedBeds} de propósito: são
+     * atualizados a cada leitura da sonda, aceita ou recusada. Ligá-los
+     * à observação aceita foi o defeito de 2026-08-07 — a âncora só
+     * nascia numa aceitação, e nenhuma aceitação vinha enquanto a
+     * colônia estivesse grande demais. Nada nunca encolhia.
      */
-    private ColonyPos observedFrom;
+    private ColonyPos probeAnchor;
+
+    private int probeBeds;
 
     private Colony(UUID id, ColonyPos center, ColonyState state, ColonyLifecycle lifecycle) {
         this.id = id;
@@ -124,8 +130,12 @@ public final class Colony {
         return observedBeds;
     }
 
-    public ColonyPos observedFrom() {
-        return observedFrom;
+    public ColonyPos probeAnchor() {
+        return probeAnchor;
+    }
+
+    public int probeBeds() {
+        return probeBeds;
     }
 
     /**
@@ -157,19 +167,19 @@ public final class Colony {
      *
      * <ul>
      *   <li>{@code complete}: a detecção provou que não cortou cama
-     *       alguma. Rara em vila grande, mas é a única que serve na
-     *       primeira observação, quando não há âncora com que comparar.
-     *   <li>{@code from} igual a {@link #observedFrom}: a varredura veio
-     *       do mesmo ponto da que definiu a contagem atual. A mesma
-     *       janela enxerga a mesma fatia da vila, então ver menos dali só
-     *       pode significar que camas sumiram.
+     *       alguma. Rara em vila grande, e insuficiente sozinha — ver
+     *       §15.
+     *   <li>a sonda repetir a leitura: duas varreduras seguidas da mesma
+     *       âncora vendo o mesmo tanto, ou menos. A sonda é o mesmo
+     *       ponto de um ciclo para o outro, então suas leituras são
+     *       comparáveis entre si, e uma leitura que se confirma não é
+     *       acidente de posição.
      * </ul>
      *
-     * <p>A âncora só é atualizada quando a observação vale — isto é,
-     * junto com {@code observedBeds}. Se qualquer observação a
-     * sobrescrevesse, uma visão de borda viraria referência e a próxima
-     * visão de borda dali encolheria a colônia: a deriva do §11 por
-     * outro caminho.
+     * <p>Só a sonda ancorada no centro da colônia traz {@code from}. A
+     * varredura que parte do jogador vem sem âncora de propósito: um
+     * jogador parado na borda da vila repetiria a mesma visão pobre
+     * ciclo após ciclo, e ela se confirmaria — a deriva do §11 de volta.
      *
      * <p>Quem prova a completude é a detecção, não esta classe: o Core
      * não sabe o que é raio de busca nem chunk. Ver
@@ -177,14 +187,29 @@ public final class Colony {
      *
      * @param complete se a observação provadamente não cortou cama
      *     alguma do cluster
-     * @param from de onde a varredura partiu; {@code null} quando quem
-     *     chama não sabe, e nesse caso a observação nunca encolhe
+     * @param from âncora da sonda; {@code null} para varredura que não é
+     *     sonda, e nesse caso a observação nunca encolhe
      * @return true se o centro foi movido
      */
     public boolean observe(ColonyPos center, int beds, boolean complete, ColonyPos from) {
         Objects.requireNonNull(center, "center");
 
-        if (beds < observedBeds && !complete && !sameWindowAs(from)) {
+        // A leitura anterior da sonda também precisa estar abaixo da
+        // contagem registrada. Sem isso, a primeira leitura menor já
+        // passaria: a sonda que viu 38 e depois 33 confirmaria o 33
+        // contra si mesma, e uma visão parcial isolada encolheria a
+        // colônia.
+        boolean confirmedByProbe = from != null
+                && from.equals(probeAnchor)
+                && beds <= probeBeds
+                && probeBeds < observedBeds;
+
+        if (from != null) {
+            probeAnchor = from;
+            probeBeds = beds;
+        }
+
+        if (beds < observedBeds && !complete && !confirmedByProbe) {
             return false;
         }
 
@@ -192,14 +217,8 @@ public final class Colony {
 
         this.center = center;
         this.observedBeds = beds;
-        this.observedFrom = from;
 
         return moved;
-    }
-
-    /** Se esta varredura partiu do mesmo ponto que a melhor já vista. */
-    private boolean sameWindowAs(ColonyPos from) {
-        return from != null && from.equals(observedFrom);
     }
 
     public ColonyState state() {
