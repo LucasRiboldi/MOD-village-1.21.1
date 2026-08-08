@@ -862,6 +862,11 @@ O baú do jogador pode ser reivindicado
   de propriedade no Vanilla; as saídas prováveis são exigir
   que o baú esteja dentro da mesma casa que a cama, ou deixar
   o jogador marcar o baú de alguma forma.
+
+  Em 2026-08-08 a altura passou a ser exigida: o baú tem de
+  estar no mesmo nível da cama, com um bloco de folga. Isso
+  fecha o andar de cima, não a casa do lado — parede não é
+  altura, e a distância continua atravessando qualquer uma.
 ```
 
 ```text
@@ -3510,6 +3515,78 @@ V1, V6              indício forte, critério final pendente
 V4                  instrumentado, ainda por verificar
 
 233 testes passando; build verde
+```
+
+---
+
+## 2026-08-08 — V4 respondido: um baú estava noutro andar
+
+A instrumentação da véspera respondeu na primeira sessão. Dezesseis
+baús reivindicados, com cama, baú e distância:
+
+```text
+13 de 16    1,4 a 2,4 blocos    mesmo cômodo
+ 3 de 16    ~5 blocos           suspeitos
+```
+
+O autor foi conferir os três em jogo. Um estava errado, e de um jeito
+que a distância não denunciava:
+
+```text
+7ae2b8d3   cama 1068,65,735   baú 1068,70,735   5,0 blocos
+```
+
+Mesmo x, mesmo z, cinco blocos acima. Distância no espaço não conhece
+teto: o baú estava dentro do raio de seis e noutro andar.
+
+---
+
+### A regra
+
+Decisão do autor: o baú tem de estar no mesmo nível da cama.
+
+```text
+MAX_LEVEL_DIFFERENCE = 1
+```
+
+Um bloco de folga, e não zero, porque chão de vila vanilla tem degrau —
+casa com piso 68 de um lado e 69 do outro é comum. Os números da sessão
+sustentam a escolha: quinze dos dezesseis baús estavam a zero ou um
+bloco de altura da cama; só o do outro andar estava a cinco.
+
+A vertical saiu do cubo de busca e virou limite próprio. O horizontal
+continua em seis.
+
+Nada a migrar: o registro de baús não é persistido, é refeito a cada
+sessão. A reivindicação errada simplesmente não se repete.
+
+---
+
+### O que a regra não resolve
+
+Os outros dois suspeitos — camas em z=714 com baús em z=719 — não são
+de altura. Se estiverem errados, é parede no meio, e altura não
+distingue parede.
+
+```text
+o baú do vizinho continua alcançável
+```
+
+Isso é o item P4 do §8, a propriedade do baú, que já estava na fila e
+segue lá. A regra de hoje fecha o andar de cima; a casa do lado
+continua aberta.
+
+---
+
+Estado ao registrar:
+
+```text
+V1 a V7             respondidos; V4 gerou correção
+encolhimento        confirmado em jogo
+
+233 testes passando; build verde
+
+a regra de nível ainda não foi vista em jogo
 ```
 
 ---

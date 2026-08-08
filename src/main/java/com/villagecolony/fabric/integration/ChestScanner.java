@@ -38,6 +38,25 @@ public final class ChestScanner {
      */
     private static final int SEARCH_RADIUS = 6;
 
+    /**
+     * Diferença de altura máxima entre a cama e o baú dela, em blocos.
+     *
+     * <p>O baú tem de estar no mesmo nível da cama. Distância no espaço
+     * não conhece teto: em 2026-08-07 um aldeão de
+     * {@code 1068,65,735} reivindicou o baú de {@code 1068,70,735} —
+     * mesmo x, mesmo z, cinco blocos acima. Estava dentro do raio e
+     * noutro andar.
+     *
+     * <p>Um bloco de folga, e não zero: chão de vila vanilla tem
+     * degrau, e a casa cujo piso é 68 de um lado e 69 do outro é comum.
+     * Dos dezesseis baús reivindicados naquela sessão, quinze estavam a
+     * zero ou um bloco da cama; só o do outro andar estava a cinco.
+     *
+     * <p>Não resolve o caso da casa geminada — parede não é altura. Ver
+     * §9.
+     */
+    private static final int MAX_LEVEL_DIFFERENCE = 1;
+
     private ChestScanner() {
     }
 
@@ -187,10 +206,12 @@ public final class ChestScanner {
      * Cubo, e não esfera: o baú no canto do quarto está tão dentro da
      * casa quanto o encostado na cama, e medir por distância euclidiana
      * o deixaria de fora sem motivo visível para quem construiu.
+     *
+     * <p>A vertical é apertada à parte. Ver {@link #MAX_LEVEL_DIFFERENCE}.
      */
     private static boolean isWithinRadius(BlockPos bed, BlockPos pos) {
         return Math.abs(pos.getX() - bed.getX()) <= SEARCH_RADIUS
-                && Math.abs(pos.getY() - bed.getY()) <= SEARCH_RADIUS
-                && Math.abs(pos.getZ() - bed.getZ()) <= SEARCH_RADIUS;
+                && Math.abs(pos.getZ() - bed.getZ()) <= SEARCH_RADIUS
+                && Math.abs(pos.getY() - bed.getY()) <= MAX_LEVEL_DIFFERENCE;
     }
 }
