@@ -5,7 +5,7 @@
 **Status:** Em implementação — Fases 1 a 3 completas, Fases 4 e 5
 escritas e não verificadas em jogo
 **Version:** 0.1.0
-**Last Update:** 2026-08-08 — o aldeão anda até a árvore; ver §8
+**Last Update:** 2026-08-08 — Fase 8 fechada em jogo; regras novas em §16, erros em §17
 **Repository:** https://github.com/LucasRiboldi/MOD-village-1.21.1
 
 ---
@@ -4380,15 +4380,30 @@ para provar o que o lenhador **não** quebra.
 ### O que falta, em ordem
 
 ```text
-1  meta de estoque real              hoje é constante; sai da Fase 9
+1  colher até o baú encher            decidido em 2026-08-08, não
+                                      implementado; substitui a meta
+                                      constante — ver §10
 
-2  gametest para o que falta         morte, zumbificação, encolhimento,
-                                     e o ciclo gerando tarefa
+2  colher no tempo de um jogador      decidido em 2026-08-08, não
+                                      implementado; hoje a árvore cai
+                                      num tick — ver §10
 
-3  consolidar este documento         passou de 4200 linhas
+3  a fila de tarefas não esvazia      tarefa nova a cada ciclo, e as
+                                      antigas ficam; erro conhecido,
+                                      ver §16
+
+4  gametest para o que falta          morte, zumbificação, encolhimento,
+                                      e o ciclo gerando tarefa
+
+5  consolidar este documento          passou de 4400 linhas
 ```
 
-O item 2 tem uma ressalva que a Fase 8 deixou clara: gametest cobre
+Os itens 1 e 2 são a mesma decisão vista de dois lados: quanto colher, e
+em quanto tempo. Juntos eles tiram o lenhador do regime de "uma árvore
+inteira por ciclo, para sempre" e o põem no regime de trabalho contínuo
+com um teto real.
+
+O item 4 tem uma ressalva que a Fase 8 deixou clara: gametest cobre
 comportamento, não custo. O travamento que quebrou o jogo do autor
 passou por doze testes verdes.
 
@@ -4561,3 +4576,188 @@ Fase 8: fechada e verificada em jogo
 todas as árvores, copa e drops: escritos e cobertos por teste,
 não vistos em jogo
 ```
+
+---
+
+# 16. Decidido em 2026-08-08 e ainda não implementado
+
+Duas regras do autor, registradas aqui na íntegra porque a implementação
+não cabia na mesma sessão. Estão em §10 como itens 1 e 2 do que falta.
+
+---
+
+## Regra 1 — colher até os baús da colônia encherem
+
+```text
+o trabalhador colhe enquanto houver espaço nos baús da colônia
+
+quando os baús enchem, ele para
+
+quando o jogador tira alguma coisa e abre espaço, ele volta a colher
+```
+
+O que isso substitui: hoje a colônia quer 64 de madeira e 32 de pedra,
+por um número fixo em `ColonyGoals`, e o comentário da própria classe já
+dizia que a resposta real viria da expansão. A regra do autor é outra e
+é melhor: a meta deixa de ser um número inventado e passa a ser uma
+propriedade do mundo — o espaço que a colônia tem para guardar.
+
+O que muda em código:
+
+```text
+ColonyGoals          deixa de devolver constante; a meta vira
+                     "cabe mais?" em vez de "quanto?"
+
+ResourceDemand       o déficit passa a ser espaço livre, não
+                     diferença de contagem
+
+ChestInventoryReader já sabe ler os baús; falta somar o espaço
+                     livre, que ChestDepositor.freeSpaceFor já
+                     calcula para um baú só
+
+ColonyCycle          para de gerar tarefa quando não há espaço, e
+                     volta a gerar quando houver
+```
+
+Efeito colateral bom: isso encerra o item 3 do que falta. A fila não
+esvazia hoje justamente porque a colônia nunca se dá por satisfeita.
+
+Ponto que precisará de decisão na hora de implementar: "os baús da
+colônia" são os baús dos trabalhadores registrados, que é o que
+`StorageRegistry` conhece hoje. Um baú comunitário da colônia não
+existe ainda.
+
+---
+
+## Regra 2 — colher na velocidade de um jogador com ferramenta de ferro
+
+```text
+o trabalhador leva para quebrar um bloco o mesmo tempo que um
+jogador levaria com ferramenta de ferro
+```
+
+Hoje a árvore inteira cai num tick, dentro do ciclo de 600. Uma árvore
+de seis troncos e oitenta folhas desaparece no mesmo instante, o que é
+visível e errado — e também é um pico de custo dentro de um tick, que é
+o tipo de coisa que já travou este projeto duas vezes.
+
+A conta do Vanilla, para bloco com a ferramenta certa:
+
+```text
+tempo em segundos = dureza × 1,5 ÷ velocidade da ferramenta
+
+machado de ferro: velocidade 6
+tronco:           dureza 2      → 0,5 s = 10 ticks
+folha:            dureza 0,2    → machado não é a ferramenta certa
+                                  da folha; a conta muda, e o valor
+                                  precisa sair da própria fórmula do
+                                  jogo, não de um número escrito aqui
+```
+
+O caminho provável: o trabalho do lenhador sai do ciclo de 600 ticks e
+passa a ter um passo por tick, com um bloco em progresso e um contador.
+Isso é o mesmo lugar onde a Regra 1 vai morar — as duas são a mesma
+mudança vista de dois lados: quanto colher, e em quanto tempo.
+
+Regra que não pode ser esquecida na implementação: o custo por tick tem
+de continuar cabendo num tick. Um contador por trabalhador é barato; uma
+varredura por trabalhador por tick não é.
+
+---
+
+# 17. Erros conhecidos
+
+Registrados com o que se sabe, e sem inventar causa para o que não foi
+investigado.
+
+---
+
+## E1 — A fila de tarefas não esvazia
+
+```text
+[05:19:31] Colony 0c2771b0 assigned 1 tasks (0 open)
+[05:20:01] Colony 0c2771b0 assigned 1 tasks (0 open)
+[05:20:31] Colony 0c2771b0 assigned 1 tasks (0 open)
+   ... a cada 30 segundos, indefinidamente
+```
+
+Uma tarefa nova por ciclo, por colônia. Em sete minutos de sessão foram
+catorze, e nada as remove.
+
+Causa conhecida: a colônia compara estoque com uma meta constante e
+gera tarefa enquanto faltar. Como o lenhador entrega devagar — uma
+árvore por ciclo, no melhor caso — a meta demora, e a fila cresce mais
+rápido do que esvazia.
+
+Metade já foi corrigida em 2026-08-08: com `ResourceGroup.WOOD`, bétula
+e abeto passaram a contar para a mesma meta, então a colônia se satisfaz
+com o que já tem. A outra metade é a Regra 1 do §16.
+
+Não é só cosmético: tarefa é objeto em memória, e nada as expira.
+
+---
+
+## E2 — A colônia 0c2771b0 nunca prova a visão completa
+
+```text
+Colony 0c2771b0 saw 28 beds, keeping 31 — view not provably complete
+Colony 0c2771b0 saw 5 beds, keeping 31 — view not provably complete
+```
+
+Três linhas dessas por ciclo, sessão após sessão. A colônia registrou 31
+camas uma vez e nunca mais viu as 31 ao mesmo tempo, então nunca encolhe
+— o que é a regra funcionando, e não um defeito por si.
+
+O que é suspeito é a linha com 5 camas: uma sonda que vê 5 de 31 está
+partindo de um ponto que não alcança a vila, ou está rodando com metade
+dos chunks fora. Isso não foi investigado.
+
+Se a vila tiver de fato encolhido, a colônia está com 31 camas que não
+existem — e a contagem de vagas de profissão sai errada por cima.
+
+---
+
+## E3 — Sobra de colheita é perda de item
+
+Se o baú encher no meio da colheita, o que não coube é registrado em
+WARN e perdido: o bloco já saiu do mundo e o item não vira drop no chão,
+por decisão do autor.
+
+O espaço é conferido antes de derrubar, e a conferência cobre o tronco
+inteiro — que é a parte determinística. O que a folha dá é sorteado na
+hora e não dá para prever. São poucos itens e o espaço do tronco sobra
+para eles, mas a perda é possível.
+
+A Regra 1 do §16 torna isto raro por construção: um trabalhador que só
+colhe quando há espaço quase nunca chega ao limite no meio.
+
+---
+
+## E4 — `path held: no` e o aldeão chega assim mesmo
+
+```text
+[05:32:14] heading to the tree — 12 blocks away, work time: yes,
+           path held: no, doing: idle
+[05:32:44] felled 6 logs
+```
+
+No instante da leitura, a memória `WALK_TARGET` já tinha sido descartada
+pelo Vanilla, e o aldeão chegou. A explicação provável é que a reposição
+a cada tick — e não a primeira escrita — é o que faz o caminho
+acontecer.
+
+Provável, não verificado. Fica registrado porque, se um dia o aldeão
+parar de chegar, esta linha é o primeiro lugar a olhar.
+
+---
+
+## E5 — Colheita de outras espécies nunca aconteceu em jogo
+
+Só a derrubada de carvalho foi vista em jogo, em 2026-08-08 às 05:32:44.
+Bétula, abeto, selva, acácia, carvalho-escuro, cerejeira e mangue estão
+escritos e cobertos por teste de jogo, e nada mais.
+
+O mangue é o mais provável de falhar primeiro: o que se replanta ali é
+propágulo, e ele quer lama ou água rasa. A regra confia em
+`canPlaceAt`, que é a resposta certa, mas isso nunca foi visto
+acontecendo.
