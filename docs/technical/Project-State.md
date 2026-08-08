@@ -5,7 +5,7 @@
 **Status:** Em implementação — Fases 1 a 3 completas, Fases 4 e 5
 escritas e não verificadas em jogo
 **Version:** 0.1.0
-**Last Update:** 2026-08-07 — sessão encerrada; pendências em §8
+**Last Update:** 2026-08-08 — o aldeão anda até a árvore; ver §8
 **Repository:** https://github.com/LucasRiboldi/MOD-village-1.21.1
 
 ---
@@ -116,10 +116,10 @@ Fase 7   tarefas                        TASK-021 a TASK-023
 
 Fase 8   primeiro trabalhador           TASK-024 e TASK-025
                                         coberta por gametest;
-                                        em jogo a tarefa nasce e é
-                                        reservada, mas a derrubada
-                                        nunca aconteceu — o aldeão
-                                        não chega à árvore (§8)
+                                        o aldeão andar até a árvore
+                                        passou a ser task no Brain,
+                                        verde em gametest e ainda
+                                        não vista em jogo (§8)
 ```
 
 Detalhe por tarefa em §6. Histórico em §15.
@@ -572,26 +572,45 @@ Situação em 2026-08-08, fim da sessão.
 
 ---
 
-## Bloqueio real da Fase 8
+## Bloqueio da Fase 8 — implementado em 2026-08-08
 
 ```text
-P1   o lenhador não chega à árvore
+P1   o lenhador não chega à árvore     task no Brain, escrita
 ```
 
-Tudo o resto da Fase 8 funciona: a tarefa é criada, reservada por um
-lenhador e repetida a cada ciclo. Nenhuma linha `felled` apareceu em
-jogo até agora.
+A causa era a esperada: `LumberjackWork` pedia o caminho por
+`getNavigation().startMovingTo`, e o cérebro Vanilla reescrevia o
+destino no mesmo tick, seguindo a agenda dele. Quem manda no caminho do
+aldeão em 1.21.1 é a memória `WALK_TARGET` — e as tasks Vanilla de
+movimento só começam quando ela está vazia. Manter a memória posta
+enquanto houver destino é o que segura o aldeão no caminho.
 
-A causa conhecida é o cérebro Vanilla do aldeão, que tem agenda própria
-— dormir, trabalhar, socializar — e sobrescreve o destino que
-`LumberjackWork` pede por `startMovingTo`.
+O que existe agora:
 
-O caminho é uma task no `Brain`, e ele já está autorizado: a ADR-004
-permite o mixin em `VillagerEntity.initBrain`, que existe exatamente
-para registrar a `Activity` da colônia. É trabalho de verdade, não
-ajuste, e mexe em como o aldeão se comporta fora do trabalho.
+```text
+VillagerEntityMixin        @Inject TAIL em initBrain, só delega
+ColonyBrainInitializer     põe a task em CORE, prioridade 5
+GoToWorkTargetTask         escreve WALK_TARGET enquanto houver destino
+WorkTargets                UUID → BlockPos, posto pelo ciclo
+```
 
-Sem decisão pendente. É implementação.
+A task só age com destino posto e só no horário de trabalho da agenda
+Vanilla; fora dele o aldeão dorme, come e socializa como sempre. Pânico
+e incursão vêm antes. Quando a tarefa termina, é solta ou o trabalhador
+morre, o destino é apagado e o aldeão volta à rotina no mesmo tick — a
+cessão imediata da ADR-004 §5.
+
+Dois pontos da ADR-004 §5 mudaram de lugar na implementação: a task vive
+em CORE em vez de numa Activity própria, e o destino vive num mapa do
+mod em vez de numa memória customizada. Motivo de cada um em
+ADR-004 §11.
+
+**Verificado por gametest, não em jogo.** O teste `lumber_walk` tica o
+mundo com um aldeão dentro e falha se ele não se aproximar — foi
+conferido desligando a task: com ela desligada o teste falha. É a
+primeira vez que um teste deste projeto pega este defeito; os doze
+anteriores nunca tocaram o cérebro do aldeão. Falta a sessão de jogo do
+autor e a linha `felled` no log.
 
 ---
 
@@ -4316,29 +4335,29 @@ nome da profissão sobre a cabeça
 a derrubada de árvore
 ```
 
-É uma coisa só, e é o bloqueio da Fase 8. A tarefa nasce, é reservada e
-se repete a cada ciclo; o lenhador não chega à árvore. Ver §8.
+É uma coisa só. A tarefa nasce, é reservada e se repete a cada ciclo; o
+caminho até a árvore, que era o bloqueio, passou a ser uma task no Brain
+e ficou verde em gametest. Falta a sessão de jogo e a linha `felled` no
+log. Ver §8.
 
 O resto da Fase 8 — achar árvore, derrubar troncos ligados, replantar,
-depositar no baú — está coberto por seis testes de jogo, e dois deles
-existem para provar o que ele **não** quebra.
+depositar no baú, e agora andar até lá — está coberto por sete testes de
+jogo, e dois deles existem para provar o que ele **não** quebra.
 
 ---
 
 ### O que falta, em ordem
 
 ```text
-1  o lenhador andar até a árvore     task no Brain, ADR-004 já permite
+1  meta de estoque real              hoje é constante; sai da Fase 9
 
-2  meta de estoque real              hoje é constante; sai da Fase 9
-
-3  gametest para o que falta         morte, zumbificação, encolhimento,
+2  gametest para o que falta         morte, zumbificação, encolhimento,
                                      e o ciclo gerando tarefa
 
-4  consolidar este documento         passou de 4200 linhas
+3  consolidar este documento         passou de 4200 linhas
 ```
 
-O item 3 tem uma ressalva que a Fase 8 deixou clara: gametest cobre
+O item 2 tem uma ressalva que a Fase 8 deixou clara: gametest cobre
 comportamento, não custo. O travamento que quebrou o jogo do autor
 passou por doze testes verdes.
 

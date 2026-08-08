@@ -6,9 +6,14 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.TreeHarvester;
+import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.TreeScanner;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.ai.brain.MemoryModuleType;
+import net.minecraft.entity.ai.brain.Schedule;
+import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
@@ -146,6 +151,57 @@ public class LumberjackGameTest implements FabricGameTest {
                 "derrubou " + felled + " e o baú guardou " + stored);
 
         context.complete();
+    }
+
+    /**
+     * O aldeão anda até onde a colônia mandou.
+     *
+     * <p>É o bloqueio da Fase 8, e o motivo de existir a task no Brain: a
+     * versão que chamava {@code startMovingTo} direto passava por todos os
+     * outros testes desta classe e mesmo assim o lenhador nunca chegava à
+     * árvore em jogo. Só um teste que **tique o mundo** com um aldeão
+     * dentro pega isso — os de derrubada não tocam no cérebro dele.
+     *
+     * <p>O relógio é posto no horário de trabalho de propósito: fora
+     * dele, a task deve mesmo ficar quieta, e o teste passaria por
+     * engano.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_walk", tickLimit = 300)
+    public void theVillagerWalksToWhereTheColonyAsked(TestContext context) {
+        BlockPos start = new BlockPos(1, 2, 1);
+        BlockPos target = new BlockPos(7, 2, 5);
+
+        for (int x = 0; x <= 8; x++) {
+            for (int z = 0; z <= 6; z++) {
+                context.setBlockState(new BlockPos(x, 1, z), Blocks.DIRT.getDefaultState());
+            }
+        }
+
+        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, start);
+        BlockPos absoluteTarget = context.getAbsolutePos(target);
+
+        WorkTargets.set(villager.getUuid(), absoluteTarget);
+
+        double startDistance = villager.getBlockPos().getSquaredDistance(absoluteTarget);
+
+        context.runAtTick(200, () -> {
+            double now = villager.getBlockPos().getSquaredDistance(absoluteTarget);
+
+            context.assertTrue(
+                    villager.getBrain().getOptionalRegisteredMemory(MemoryModuleType.WALK_TARGET)
+                            .isPresent(),
+                    "o Brain do aldeão não recebeu destino nenhum");
+
+            context.assertTrue(
+                    now < startDistance,
+                    "o aldeão não se aproximou: saiu a " + startDistance + " e está a " + now);
+
+            WorkTargets.clear(villager.getUuid());
+
+            context.complete();
+        });
     }
 
     /**

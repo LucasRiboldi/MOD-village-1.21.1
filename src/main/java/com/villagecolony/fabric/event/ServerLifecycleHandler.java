@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.data.save.ColonySavedData;
+import com.villagecolony.fabric.brain.WorkTargets;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.server.MinecraftServer;
 
@@ -35,6 +36,7 @@ public final class ServerLifecycleHandler {
         VillageColonyMod.WORKERS.clear();
         VillageColonyMod.STORAGES.clear();
         VillageColonyMod.TASKS.clear();
+        WorkTargets.clearAll();
 
         ColonySavedData data = ColonySavedData.get(server);
 
@@ -73,5 +75,6 @@ public final class ServerLifecycleHandler {
         VillageColonyMod.WORKERS.clear();
         VillageColonyMod.STORAGES.clear();
         VillageColonyMod.TASKS.clear();
+        WorkTargets.clearAll();
     }
 }

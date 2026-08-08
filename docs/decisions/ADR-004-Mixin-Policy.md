@@ -408,3 +408,77 @@ O mixin é a porta, não a casa.
 Ele apenas deixa a colônia entrar.
 
 Toda a inteligência permanece no Core.
+
+---
+
+# 11. Implementação — dois desvios, 2026-08-08
+
+A ADR foi escrita antes do código. O mixin foi implementado como está
+no §3, sem exceção. Dois pontos do §5 mudaram de lugar, e ficam
+registrados aqui porque o efeito em jogo é o descrito na ADR — o que
+mudou foi onde a regra vive.
+
+---
+
+## Desvio 1 — CORE em vez de Activity própria
+
+Previsto:
+
+```text
+Activity villagecolony:colony_work, ao nível de WORK
+```
+
+Feito:
+
+```text
+uma task em Activity.CORE, prioridade 5
+```
+
+Motivo: quem escolhe a Activity ativa em 1.21.1 é a `Schedule`, por uma
+task Vanilla de CORE. Uma Activity que a Schedule não conhece nunca
+seria escolhida, e fazê-la ser escolhida exigiria justamente uma task de
+CORE chamando `doExclusively` a cada tick — mais peça para o mesmo
+efeito.
+
+As duas condições que a Activity daria estão dentro da task: ela só age
+com destino posto, e só no horário de trabalho da agenda Vanilla.
+
+Uma consequência do §6 pesou aqui: a Activity `WORK` de Vanilla exige
+memória de `JOB_SITE`, e o candidato preferencial a trabalhador da
+colônia é o aldeão **sem** workstation. Amarrar o trabalho a `WORK`
+ativa deixaria justamente ele parado. A task pergunta à `Schedule` que
+horas são, não ao Brain que Activity está ativa — e cede na hora para
+pânico e incursão.
+
+---
+
+## Desvio 2 — sem memórias customizadas
+
+Previsto:
+
+```text
+villagecolony:current_task
+villagecolony:task_target
+villagecolony:home_storage
+```
+
+Feito:
+
+```text
+WorkTargets — um mapa do mod, UUID → BlockPos
+```
+
+Motivo: um Brain só guarda memórias declaradas na lista estática
+`VillagerEntity.MEMORY_MODULES`, e `Brain.setMemory` ignora em silêncio
+qualquer tipo fora dela. Registrar a memória exigiria um segundo mixin,
+sobre um campo estático, para reescrever uma lista imutável de Vanilla —
+mais superfície de conflito do que o §7 aceita, e para guardar um dado
+que não precisa ser salvo no aldeão.
+
+O destino é intenção do momento, como a tarefa, que também não é
+persistida. Ao reiniciar o servidor ele se perde, e o ciclo seguinte o
+repõe.
+
+Se algum dia um dado da colônia precisar viajar dentro do save do
+aldeão, a memória customizada volta à mesa — e com ela o segundo mixin,
+que exige nova ADR.

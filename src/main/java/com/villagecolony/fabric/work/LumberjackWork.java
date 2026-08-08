@@ -7,6 +7,7 @@ import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.TreeHarvester;
 import com.villagecolony.fabric.integration.TreeScanner;
@@ -99,6 +100,10 @@ public final class LumberjackWork {
             // trabalho a quem tenha baú, em vez de travar a fila.
             task.release();
 
+            // E devolve o aldeão à agenda Vanilla: sem tarefa não há
+            // por que ele continuar andando até a árvore.
+            WorkTargets.clear(executor.get());
+
             return 0;
         }
 
@@ -154,6 +159,11 @@ public final class LumberjackWork {
 
         task.complete();
 
+        // Tarefa cumprida, aldeão liberado. É a cessão imediata da
+        // ADR-004 §5: sem destino, a task do Brain para e ele volta à
+        // rotina Vanilla no mesmo tick.
+        WorkTargets.clear(villager.getUuid());
+
         VillageColonyMod.LOGGER.info(
                 "Worker {} felled {} logs at {}",
                 storage.workerId(),
@@ -166,15 +176,19 @@ public final class LumberjackWork {
     /**
      * Manda o aldeão andar até a árvore.
      *
-     * <p>Limite conhecido: o cérebro Vanilla do aldeão tem agenda
-     * própria — dormir, trabalhar, socializar — e pode sobrescrever este
-     * destino. O caminho correto seria uma task no {@code Brain}, que é
-     * mudança maior. No MVP o pedido é repetido a cada ciclo, e o log de
-     * derrubada dirá se ele chega. Ver §9.
+     * <p>Escrever o destino em {@link WorkTargets} e deixar a
+     * {@code GoToWorkTargetTask} conduzir. A versão anterior chamava
+     * {@code getNavigation().startMovingTo} daqui e o aldeão nunca
+     * chegou: o cérebro Vanilla reescrevia o destino no mesmo tick,
+     * seguindo a agenda dele. Quem manda no caminho é o Brain, então o
+     * pedido passou a ser feito na língua dele.
+     *
+     * <p>O ciclo continua repondo o destino a cada 600 ticks, o que
+     * cobre o caso de a árvore ter mudado — o jogador derrubou a de
+     * antes, e o alvo agora é outro.
      */
     private static void walkTo(VillagerEntity villager, BlockPos tree) {
-        villager.getNavigation().startMovingTo(
-                tree.getX() + 0.5, tree.getY(), tree.getZ() + 0.5, 0.5);
+        WorkTargets.set(villager.getUuid(), tree);
     }
 
     /**

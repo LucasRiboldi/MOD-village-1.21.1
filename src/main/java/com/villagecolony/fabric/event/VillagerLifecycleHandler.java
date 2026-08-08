@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.event;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.fabric.brain.WorkTargets;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.MobEntity;
@@ -71,6 +72,11 @@ public final class VillagerLifecycleHandler {
         // dependendo de o registro de tarefas não consultar o de
         // trabalhadores — e ele pode vir a consultar.
         int releasedTasks = VillageColonyMod.TASKS.releaseAllOf(villagerId);
+
+        // O destino também: um aldeão zumbificado e depois curado volta
+        // com identidade nova, mas o UUID antigo ficaria no mapa para
+        // sempre se ninguém o tirasse.
+        WorkTargets.clear(villagerId);
 
         boolean wasWorker = VillageColonyMod.WORKERS.remove(villagerId);
         boolean hadStorage = VillageColonyMod.STORAGES.remove(villagerId);
