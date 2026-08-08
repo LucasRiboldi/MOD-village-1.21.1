@@ -103,14 +103,20 @@ public final class VillageDetector {
      * @param cluster camas agrupadas
      * @param villagerCount aldeões vivos no raio
      * @param meetingPoint sino do cluster, se houver
+     * @param trigger de onde a busca partiu, quando se sabe; sem ele
+     *     nenhuma observação se prova completa
      * @return vazio quando o cluster não qualifica — não é erro, apenas
      *     não é vila
      */
     public Optional<VillageCandidate> evaluate(
-            List<ColonyPos> cluster, int villagerCount, Optional<ColonyPos> meetingPoint) {
+            List<ColonyPos> cluster,
+            int villagerCount,
+            Optional<ColonyPos> meetingPoint,
+            Optional<ColonyPos> trigger) {
 
         Objects.requireNonNull(cluster, "cluster");
         Objects.requireNonNull(meetingPoint, "meetingPoint");
+        Objects.requireNonNull(trigger, "trigger");
 
         if (cluster.size() < MIN_BEDS || villagerCount < MIN_VILLAGERS) {
             return Optional.empty();
@@ -118,7 +124,45 @@ public final class VillageDetector {
 
         ColonyPos center = meetingPoint.orElseGet(() -> averageOf(cluster));
 
-        return Optional.of(new VillageCandidate(center, cluster.size()));
+        boolean complete = trigger
+                .map(from -> coversWholeCluster(cluster, from))
+                .orElse(false);
+
+        return Optional.of(new VillageCandidate(center, cluster.size(), complete));
+    }
+
+    /**
+     * Se a busca feita a partir de {@code trigger} não pode ter cortado
+     * cama alguma deste cluster.
+     *
+     * <p>A prova é geométrica. Toda cama de um cluster está a no máximo
+     * {@link #CLUSTER_DISTANCE} de outra cama dele — é a definição de
+     * cluster. Logo, se toda cama vista está a até
+     * {@code SEARCH_RADIUS - CLUSTER_DISTANCE} do gatilho, qualquer cama
+     * ligada a elas ainda cairia dentro de {@link #SEARCH_RADIUS} e
+     * teria sido coletada. Nada ficou de fora.
+     *
+     * <p>Fora dessa margem a resposta é "não sei", e o seguro é dizer
+     * que não. Uma vila grande observada da beirada é o caso comum, e é
+     * exatamente ela que não pode encolher a colônia.
+     *
+     * <p>Mede na horizontal, como a clusterização. Uma cama muito acima
+     * ou abaixo das outras cabe no cluster e poderia cair fora da esfera
+     * de busca — é o limite conhecido desta prova, e vale o risco: vila
+     * Vanilla é de superfície, e o erro possível é a colônia deixar de
+     * encolher, não encolher errado.
+     */
+    private static boolean coversWholeCluster(List<ColonyPos> cluster, ColonyPos trigger) {
+        int margin = SEARCH_RADIUS - CLUSTER_DISTANCE;
+        long marginSquared = (long) margin * margin;
+
+        for (ColonyPos bed : cluster) {
+            if (bed.horizontalDistanceSquared(trigger) > marginSquared) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

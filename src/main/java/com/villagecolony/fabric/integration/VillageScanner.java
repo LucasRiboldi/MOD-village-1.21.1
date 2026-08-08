@@ -47,8 +47,14 @@ public final class VillageScanner {
 
         List<VillageCandidate> candidates = new ArrayList<>();
 
+        Optional<ColonyPos> from = Optional.of(MinecraftTypeAdapter.toColonyPos(trigger));
+
         for (List<ColonyPos> cluster : detector.cluster(beds)) {
-            detector.evaluate(cluster, countVillagers(world, cluster), findMeetingPoint(world, cluster))
+            detector.evaluate(
+                            cluster,
+                            countVillagers(world, cluster),
+                            findMeetingPoint(world, cluster),
+                            from)
                     .filter(candidate -> isPlains(world, candidate.center()))
                     .ifPresent(candidates::add);
         }

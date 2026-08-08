@@ -3079,6 +3079,96 @@ Estado ao registrar:
 
 ---
 
+## 2026-08-07 — A colônia pode encolher
+
+Decisão do autor, tomada a partir de uma pergunta levantada na sessão de
+verificação. `observedBeds` só crescia: uma vila que perdesse camas —
+zumbis destroem, o jogador derruba — ficaria com o centro congelado no
+lugar antigo para sempre, porque nenhuma observação futura alcançaria a
+marca antiga. A partir da Fase 8 isso mandaria trabalhador andar até um
+centro que não existe mais.
+
+---
+
+### O que não podia ser desfeito junto
+
+A regra que impedia o encolhimento é a mesma que impede a oscilação do
+§11, e essa oscilação chegou a custar o UUID de uma vila. Baixar a
+guarda por completo devolveria o defeito.
+
+O que separa os dois casos é *autoridade*: uma observação que viu menos
+camas ou viu menos da vila, ou a vila encolheu de fato, e o log não
+distinguia as duas.
+
+---
+
+### A prova de completude
+
+Uma observação é completa quando provadamente não cortou cama alguma:
+
+```text
+toda cama de um cluster está a no máximo CLUSTER_DISTANCE
+de outra cama dele — é a definição de cluster
+
+logo, se toda cama vista está a até
+SEARCH_RADIUS - CLUSTER_DISTANCE do gatilho,
+qualquer cama ligada a elas cairia dentro do raio
+e teria sido coletada
+
+64 - 32 = 32 blocos de margem
+```
+
+Dentro da margem, "vi menos camas" só pode significar que a vila
+encolheu. Fora dela, a resposta é "não sei", e o seguro é continuar
+recusando.
+
+`VillageCandidate` ganhou `complete`, `Colony.observe` ganhou o terceiro
+argumento, e quem prova é a detecção — o Core não sabe o que é raio de
+busca. `VillageScanner` passa o gatilho, que já tinha em mãos.
+
+Limite conhecido e aceito: a prova mede na horizontal, como a
+clusterização. Uma cama muito acima ou abaixo das outras entra no
+cluster e poderia cair fora da esfera de busca. Vila Vanilla é de
+superfície, e o erro possível é a colônia deixar de encolher — nunca
+encolher errado.
+
+---
+
+### Como foi verificado
+
+Teste antes de código. Os testes novos não compilavam contra a API
+antiga, que é o vermelho legítimo aqui.
+
+Depois de verdes, a regra foi revertida à mão dentro de `observe` para
+confirmar que os testes a sustentam:
+
+```text
+if (beds < observedBeds) {        ← sem o && !complete
+
+  completeViewMayShrinkTheColony        FALHOU
+  completeViewMayShrinkAndMoveTheCenter FALHOU
+  observeReportsMovementWhenShrinking   FALHOU
+
+  os 12 restantes seguiram passando
+```
+
+Os doze que continuaram verdes importam tanto quanto os três que
+falharam: são eles que garantem que a oscilação não voltou junto.
+
+---
+
+Estado ao registrar:
+
+```text
+231 testes passando (eram 221)
+
+./gradlew build → BUILD SUCCESSFUL
+
+falta ver em jogo: nenhuma vila encolheu ainda
+```
+
+---
+
 # 16. Definition of Project Progress
 
 O projeto avança somente quando:

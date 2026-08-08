@@ -499,6 +499,36 @@ primeira detecção da sessão.
 
 ---
 
+Emenda de 2026-08-07 — a colônia pode encolher:
+
+```text
+uma observação COMPLETA escapa da regra
+e pode baixar observedBeds
+```
+
+Sem ela `observedBeds` só crescia, e vila que perdesse camas ficava com
+o centro congelado para sempre.
+
+Completa é a observação que provadamente não cortou cama alguma:
+
+```text
+toda cama vista a até SEARCH_RADIUS - CLUSTER_DISTANCE
+do gatilho — 64 - 32 = 32 blocos
+```
+
+A prova vem da definição de cluster: cama ligada a outra está a no
+máximo `CLUSTER_DISTANCE` dela, então uma vizinha ainda cairia dentro do
+raio de busca e teria sido coletada.
+
+Fora da margem a resposta é "não sei", e a regra original continua
+valendo — é o que impede a oscilação de voltar.
+
+Mede na horizontal, como a clusterização. Cama muito acima ou abaixo
+entra no cluster e poderia cair fora da esfera: o erro possível é deixar
+de encolher, nunca encolher errado.
+
+---
+
 Verificado em jogo após a correção:
 
 ```text

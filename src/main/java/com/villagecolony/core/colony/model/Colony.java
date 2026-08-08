@@ -113,6 +113,14 @@ public final class Colony {
     }
 
     /**
+     * Observação sem prova de completude. Ver
+     * {@link #observe(ColonyPos, int, boolean)}.
+     */
+    public boolean observe(ColonyPos center, int beds) {
+        return observe(center, beds, false);
+    }
+
+    /**
      * Move o centro apenas se esta observação for ao menos tão completa
      * quanto a que definiu o centro atual.
      *
@@ -123,12 +131,24 @@ public final class Colony {
      * <p>Empate move: a vila pode mudar de lugar mantendo o mesmo número
      * de camas.
      *
+     * <p>Uma observação {@code complete} escapa da regra e pode baixar a
+     * contagem. Sem essa saída, {@code observedBeds} só cresceria, e uma
+     * vila que perdesse camas ficaria com o centro congelado para sempre
+     * — nenhuma observação futura alcançaria a marca antiga. A colônia
+     * pode encolher: decisão do autor em 2026-08-07, registrada em §15.
+     *
+     * <p>Quem prova a completude é a detecção, não esta classe: o Core
+     * não sabe o que é raio de busca nem chunk. Ver
+     * {@code VillageDetector#evaluate}.
+     *
+     * @param complete se a observação provadamente não cortou cama
+     *     alguma do cluster
      * @return true se o centro foi movido
      */
-    public boolean observe(ColonyPos center, int beds) {
+    public boolean observe(ColonyPos center, int beds, boolean complete) {
         Objects.requireNonNull(center, "center");
 
-        if (beds < observedBeds) {
+        if (beds < observedBeds && !complete) {
             return false;
         }
 

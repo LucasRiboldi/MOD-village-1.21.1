@@ -139,4 +139,92 @@ class PartialObservationTest {
 
         assertEquals(10, colony.observedBeds());
     }
+
+    // ----------------------------------------------------------------
+    // A colônia pode encolher — decisão do autor em 2026-08-07.
+    //
+    // Até aqui observedBeds só crescia, e uma vila que perdesse camas
+    // ficava com o centro congelado para sempre: nenhuma observação
+    // futura alcançaria a marca antiga.
+    //
+    // Quem tem autoridade para dizer que a vila encolheu é a observação
+    // completa — aquela que provadamente não pode ter cortado cama
+    // nenhuma. Ver VillageDetectorTest#completeness.
+    // ----------------------------------------------------------------
+
+    private static VillageCandidate fullySeen(int x, int z, int beds) {
+        return new VillageCandidate(new ColonyPos(x, 64, z), beds, true);
+    }
+
+    @Test
+    void completeViewMayShrinkTheColony() {
+        service.adopt(fullySeen(1109, 730, 12));
+
+        Colony colony = service.adopt(fullySeen(1109, 730, 4));
+
+        assertEquals(4, colony.observedBeds(), "a vila encolheu e a colônia acompanha");
+    }
+
+    @Test
+    void completeViewMayShrinkAndMoveTheCenter() {
+        service.adopt(fullySeen(1109, 730, 12));
+
+        Colony colony = service.adopt(fullySeen(1080, 733, 4));
+
+        assertEquals(new ColonyPos(1080, 64, 733), colony.center());
+        assertEquals(4, colony.observedBeds());
+    }
+
+    /**
+     * A regra antiga continua valendo para quem não viu tudo.
+     *
+     * <p>É o que impede a decisão de hoje de reabrir a oscilação: o
+     * jogador andando pela vila produz visões parciais o tempo todo, e
+     * nenhuma delas encolhe coisa alguma.
+     */
+    @Test
+    void partialViewStillCannotShrinkTheColony() {
+        service.adopt(fullySeen(1109, 730, 12));
+
+        Colony colony = service.adopt(seen(1080, 733, 4));
+
+        assertEquals(new ColonyPos(1109, 64, 730), colony.center());
+        assertEquals(12, colony.observedBeds());
+    }
+
+    /** A oscilação original, agora com uma visão completa no meio dela. */
+    @Test
+    void completeViewDoesNotReopenTheOscillation() {
+        service.adopt(fullySeen(1109, 730, 12));
+
+        for (int i = 0; i < 5; i++) {
+            service.adopt(seen(1080, 733, 3));
+            service.adopt(seen(1109, 730, 12));
+        }
+
+        Colony colony = service.all().iterator().next();
+
+        assertEquals(new ColonyPos(1109, 64, 730), colony.center());
+        assertEquals(12, colony.observedBeds());
+    }
+
+    /** Crescer nunca precisou de autoridade, e continua não precisando. */
+    @Test
+    void partialViewMayStillGrowTheColony() {
+        service.adopt(fullySeen(0, 0, 5));
+
+        Colony colony = service.adopt(seen(20, 0, 9));
+
+        assertEquals(new ColonyPos(20, 64, 0), colony.center());
+        assertEquals(9, colony.observedBeds());
+    }
+
+    @Test
+    void observeReportsMovementWhenShrinking() {
+        Colony colony = service.adopt(fullySeen(0, 0, 10));
+
+        assertFalse(colony.observe(new ColonyPos(0, 64, 0), 3, true), "mesmo centro");
+        assertTrue(colony.observe(new ColonyPos(9, 64, 0), 2, true), "centro novo");
+        assertFalse(colony.observe(new ColonyPos(50, 64, 0), 1, false), "visão parcial");
+    }
 }

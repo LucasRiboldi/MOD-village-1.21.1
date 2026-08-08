@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class VillageDetectorTest {
@@ -105,7 +106,7 @@ class VillageDetectorTest {
     void tooFewBedsIsNotAVillage() {
         List<ColonyPos> cluster = beds(VillageDetector.MIN_BEDS - 1, 5);
 
-        assertEquals(Optional.empty(), detector.evaluate(cluster, 10, Optional.empty()));
+        assertEquals(Optional.empty(), detector.evaluate(cluster, 10, Optional.empty(), Optional.empty()));
     }
 
     @Test
@@ -114,7 +115,7 @@ class VillageDetectorTest {
 
         assertEquals(
                 Optional.empty(),
-                detector.evaluate(cluster, VillageDetector.MIN_VILLAGERS - 1, Optional.empty()));
+                detector.evaluate(cluster, VillageDetector.MIN_VILLAGERS - 1, Optional.empty(), Optional.empty()));
     }
 
     @Test
@@ -122,7 +123,7 @@ class VillageDetectorTest {
         List<ColonyPos> cluster = beds(VillageDetector.MIN_BEDS, 5);
 
         Optional<VillageCandidate> candidate =
-                detector.evaluate(cluster, VillageDetector.MIN_VILLAGERS, Optional.empty());
+                detector.evaluate(cluster, VillageDetector.MIN_VILLAGERS, Optional.empty(), Optional.empty());
 
         assertTrue(candidate.isPresent());
         assertEquals(VillageDetector.MIN_BEDS, candidate.orElseThrow().bedCount());
@@ -130,7 +131,7 @@ class VillageDetectorTest {
 
     @Test
     void emptyClusterIsNotAVillage() {
-        assertEquals(Optional.empty(), detector.evaluate(List.of(), 10, Optional.empty()));
+        assertEquals(Optional.empty(), detector.evaluate(List.of(), 10, Optional.empty(), Optional.empty()));
     }
 
     // --- centro ---
@@ -139,7 +140,7 @@ class VillageDetectorTest {
     void centerIsTheAverageOfBeds() {
         List<ColonyPos> cluster = List.of(bed(0, 0), bed(10, 0), bed(20, 0));
 
-        ColonyPos center = detector.evaluate(cluster, 5, Optional.empty()).orElseThrow().center();
+        ColonyPos center = detector.evaluate(cluster, 5, Optional.empty(), Optional.empty()).orElseThrow().center();
 
         assertEquals(bed(10, 0), center);
     }
@@ -150,7 +151,7 @@ class VillageDetectorTest {
         List<ColonyPos> cluster = List.of(bed(0, 0), bed(10, 0), bed(20, 0));
         ColonyPos bell = bed(7, 3);
 
-        ColonyPos center = detector.evaluate(cluster, 5, Optional.of(bell)).orElseThrow().center();
+        ColonyPos center = detector.evaluate(cluster, 5, Optional.of(bell), Optional.empty()).orElseThrow().center();
 
         assertEquals(bell, center);
     }
@@ -163,9 +164,77 @@ class VillageDetectorTest {
                 new ColonyPos(29_999_995, 64, 29_999_995),
                 new ColonyPos(30_000_000, 64, 30_000_000));
 
-        ColonyPos center = detector.evaluate(cluster, 5, Optional.empty()).orElseThrow().center();
+        ColonyPos center = detector.evaluate(cluster, 5, Optional.empty(), Optional.empty()).orElseThrow().center();
 
         assertEquals(new ColonyPos(29_999_995, 64, 29_999_995), center);
+    }
+
+    // --- completude da observação ---
+
+    /**
+     * Uma observação é completa quando nenhuma cama do cluster pode ter
+     * ficado de fora.
+     *
+     * <p>A prova é geométrica, e é o que dá autoridade para a colônia
+     * encolher. Cama de um mesmo cluster está a no máximo
+     * {@link VillageDetector#CLUSTER_DISTANCE} de outra cama dele; logo,
+     * se toda cama vista está a até
+     * {@code SEARCH_RADIUS - CLUSTER_DISTANCE} do gatilho, qualquer cama
+     * vizinha ainda cairia dentro do raio de busca e teria sido vista.
+     */
+    @Test
+    void observationIsCompleteWhenEveryBedIsWellInsideTheRadius() {
+        ColonyPos trigger = bed(0, 0);
+        List<ColonyPos> cluster = List.of(bed(0, 0), bed(10, 0), bed(20, 0));
+
+        VillageCandidate candidate =
+                detector.evaluate(cluster, 5, Optional.empty(), Optional.of(trigger)).orElseThrow();
+
+        assertTrue(candidate.complete());
+    }
+
+    @Test
+    void observationIsIncompleteWhenABedSitsNearTheEdge() {
+        ColonyPos trigger = bed(0, 0);
+        int margin = VillageDetector.SEARCH_RADIUS - VillageDetector.CLUSTER_DISTANCE;
+
+        List<ColonyPos> cluster = List.of(bed(0, 0), bed(10, 0), bed(margin + 1, 0));
+
+        VillageCandidate candidate =
+                detector.evaluate(cluster, 5, Optional.empty(), Optional.of(trigger)).orElseThrow();
+
+        assertFalse(candidate.complete(), "cama a " + (margin + 1) + " blocos pode ter vizinha cortada");
+    }
+
+    /** Exatamente na margem ainda prova: a vizinha cairia no limite do raio. */
+    @Test
+    void theMarginItselfIsComplete() {
+        ColonyPos trigger = bed(0, 0);
+        int margin = VillageDetector.SEARCH_RADIUS - VillageDetector.CLUSTER_DISTANCE;
+
+        List<ColonyPos> cluster = List.of(bed(0, 0), bed(margin, 0), bed(10, 0));
+
+        VillageCandidate candidate =
+                detector.evaluate(cluster, 5, Optional.empty(), Optional.of(trigger)).orElseThrow();
+
+        assertTrue(candidate.complete());
+    }
+
+    /**
+     * Sem gatilho não há prova, e sem prova não há autoridade.
+     *
+     * <p>É o caso de quem chama sem saber de onde olhou. O seguro é
+     * assumir observação parcial: ela cresce a colônia, mas não a
+     * encolhe.
+     */
+    @Test
+    void withoutATriggerTheObservationIsNeverComplete() {
+        List<ColonyPos> cluster = List.of(bed(0, 0), bed(10, 0), bed(20, 0));
+
+        VillageCandidate candidate =
+                detector.evaluate(cluster, 5, Optional.empty(), Optional.empty()).orElseThrow();
+
+        assertFalse(candidate.complete());
     }
 
     // --- constantes da ADR-003 §8 ---
