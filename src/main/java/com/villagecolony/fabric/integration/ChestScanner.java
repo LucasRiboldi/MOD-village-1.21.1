@@ -228,15 +228,26 @@ public final class ChestScanner {
      * e o baú do jogador. Nenhum dos dois tem sinal próprio no Vanilla;
      * os dois têm parede.
      *
-     * <p>Traça do centro da cama ao centro do baú. Bater no próprio baú
-     * é chegar: ele é sólido, e é o alvo. Bater na própria cama é sair,
-     * porque o traço começa dentro dela.
+     * <p>Parte de um bloco acima da cama, e não do centro dela. A cama é
+     * sólida: um traço que começa dentro dela bate nela mesma no
+     * primeiro passo. A primeira versão desta regra tratava esse acerto
+     * como "cheguei", e com isso aprovava qualquer baú — parede
+     * incluída. O teste de jogo pegou em segundos o que uma sessão
+     * inteira não tinha pego. Ver §15.
+     *
+     * <p>Um bloco acima é também onde a cabeça de quem levanta da cama
+     * estaria. Exige ar sobre a cama, o que casa vanilla tem; cama
+     * entalada sob teto baixo perde o baú, e o erro é para o lado de não
+     * adotar.
+     *
+     * <p>Chegar é bater no próprio baú — ele é sólido e é o alvo — ou
+     * não bater em nada.
      *
      * <p>Custo: um traço por baú candidato, e só quando o aldeão não tem
      * baú — que é uma vez na vida dele, não uma por ciclo.
      */
     private static boolean isInTheSameRoom(ServerWorld world, BlockPos bed, BlockPos chest) {
-        Vec3d from = bed.toCenterPos();
+        Vec3d from = bed.up().toCenterPos();
         Vec3d to = chest.toCenterPos();
 
         BlockHitResult hit = world.raycast(new RaycastContext(
@@ -246,13 +257,7 @@ public final class ChestScanner {
                 RaycastContext.FluidHandling.NONE,
                 ShapeContext.absent()));
 
-        if (hit.getType() == HitResult.Type.MISS) {
-            return true;
-        }
-
-        BlockPos blocked = hit.getBlockPos();
-
-        return blocked.equals(chest) || blocked.equals(bed);
+        return hit.getType() == HitResult.Type.MISS || hit.getBlockPos().equals(chest);
     }
 
     /**

@@ -20,7 +20,8 @@
       "com.villagecolony.VillageColonyMod"
     ],
     "fabric-gametest": [
-      "com.villagecolony.gametest.ColonyDetectionGameTest"
+      "com.villagecolony.gametest.ColonyDetectionGameTest",
+      "com.villagecolony.gametest.StorageGameTest"
     ]
   },
   "depends": {

@@ -3996,6 +3996,104 @@ Estado ao registrar:
 
 ---
 
+## 2026-08-08 — O teste de jogo pagou na primeira hora
+
+Quatro testes novos cobrindo baú e estoque, e o primeiro defeito de
+produção encontrado por máquina neste projeto.
+
+```text
+All 6 required tests passed :)
+```
+
+---
+
+### A regra de parede era um nada
+
+A regra do P4, escrita e dada como verificada horas antes, não filtrava
+coisa alguma.
+
+O traço partia do centro da cama. A cama é sólida: ele batia nela mesma
+no primeiro passo, e a regra tratava esse acerto como "cheguei". O
+resultado era `true` para qualquer baú, parede incluída.
+
+O teste plantou cama, parede de pedra e baú atrás dela, e o baú foi
+reivindicado. A sonda dentro do teste apontou o culpado:
+
+```text
+traço: BLOCK em -11912041, -59, -2021780   ← a própria cama
+```
+
+Correção: o traço parte de um bloco acima da cama, onde estaria a cabeça
+de quem levanta. Chegar passou a ser bater no próprio baú, ou não bater
+em nada.
+
+---
+
+### Uma conclusão de ontem estava errada
+
+Na sessão em jogo eu afirmei que a regra de parede tinha barrado um dos
+dois pares geminados — o `4b09f9cb`, de `1130,714` para `1130,719`, que
+sumiu da lista.
+
+Não foi a regra. A regra não filtrava nada. Aquele baú sumiu porque foi
+reivindicado por uma cama mais perto: `1ef9c30b`, de `1130,717`, está a
+dois blocos dele contra cinco.
+
+A evidência era compatível com a explicação e não a sustentava. Fica
+registrado porque o erro não foi de código: foi de leitura.
+
+---
+
+### O que os quatro testes cobrem
+
+```text
+aChestInTheSameRoomIsClaimed        o caminho feliz
+aChestBehindAWallIsNotClaimed       a regra do P4
+aChestOnAnotherLevelIsNotClaimed    a regra de nível
+theColonyCountsWhatTheChestHolds    o V5, com número afirmado
+```
+
+Todas as afirmações são ancoradas na posição do baú plantado, via
+`StorageRegistry.isTaken`. Contagem global não vale aqui, e é o mesmo
+motivo de §15 mais acima: o mundo é um só e as estruturas ficam a menos
+de 64 blocos. "Este baú tem dono" e "este baú não tem" são locais e
+valem.
+
+A memória `HOME` do aldeão é escrita à mão. Em jogo o cérebro dele
+reivindica a cama sozinho, o que leva tempo e depende do ciclo dele;
+o que estes testes verificam é o que o mod faz depois de existir casa.
+
+---
+
+### O que isto significa para o método
+
+```text
+o defeito estava em produção desde o commit e6ac113
+
+a sessão de jogo que o "verificou" não podia pegá-lo:
+o sintoma era um baú a mais reivindicado num canto da
+vila, indistinguível de um baú legítimo
+
+o teste pegou em segundos, e disse onde
+```
+
+É o argumento do item A por inteiro, e agora com um caso concreto.
+
+---
+
+Estado ao registrar:
+
+```text
+257 testes de unidade + 6 de jogo
+
+./gradlew build → BUILD SUCCESSFUL
+./gradlew runGametest → All 6 required tests passed
+
+a correção da regra de parede não foi vista em jogo
+```
+
+---
+
 # 16. Definition of Project Progress
 
 O projeto avança somente quando:
