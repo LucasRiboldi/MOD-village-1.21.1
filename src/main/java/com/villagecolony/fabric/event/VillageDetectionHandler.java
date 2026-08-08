@@ -88,6 +88,12 @@ public final class VillageDetectionHandler {
      *
      * <p>Parte da posição dos jogadores porque é ali que os chunks estão
      * carregados. Sem jogador não há o que simular.
+     *
+     * <p>Depois varre de novo a partir do centro de cada colônia ativa.
+     * Não é redundância: a varredura do jogador parte de um ponto que
+     * muda a cada passo, e uma colônia só pode encolher quando duas
+     * varreduras vêm da mesma âncora. O centro da colônia é o único
+     * ponto estável entre ciclos. Ver {@code Colony#observe}.
      */
     private static void onServerTick(net.minecraft.server.MinecraftServer server) {
         tickCounter++;
@@ -105,6 +111,34 @@ public final class VillageDetectionHandler {
         }
 
         updateLifecycles(server.getOverworld());
+
+        detectFromColonyCenters(server.getOverworld());
+    }
+
+    /**
+     * Reavalia cada colônia ativa a partir do próprio centro.
+     *
+     * <p>É a âncora estável que permite encolher. Roda depois de
+     * {@link #updateLifecycles} para não varrer colônia dormente, cujos
+     * chunks não estão carregados — a varredura não acharia cama alguma
+     * e a colônia se veria vazia.
+     *
+     * <p>Uma consulta de POI por colônia ativa a cada ciclo. O limite de
+     * Performance-Rules.md §5 continua respeitado: a busca é por raio em
+     * torno de um ponto, nunca pelo mundo.
+     */
+    private static void detectFromColonyCenters(ServerWorld overworld) {
+        List<ColonyPos> centers = new ArrayList<>();
+
+        for (Colony colony : VillageColonyMod.COLONIES.all()) {
+            if (colony.isActive()) {
+                centers.add(colony.center());
+            }
+        }
+
+        for (ColonyPos center : centers) {
+            detectAround(overworld, MinecraftTypeAdapter.toBlockPos(center));
+        }
     }
 
     /**

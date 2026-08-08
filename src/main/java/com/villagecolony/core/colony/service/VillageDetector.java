@@ -128,7 +128,8 @@ public final class VillageDetector {
                 .map(from -> coversWholeCluster(cluster, from))
                 .orElse(false);
 
-        return Optional.of(new VillageCandidate(center, cluster.size(), complete));
+        return Optional.of(
+                new VillageCandidate(center, cluster.size(), complete, trigger.orElse(null)));
     }
 
     /**

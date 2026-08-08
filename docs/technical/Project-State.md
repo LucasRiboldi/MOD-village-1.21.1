@@ -3169,6 +3169,110 @@ falta ver em jogo: nenhuma vila encolheu ainda
 
 ---
 
+## 2026-08-07 — A prova geométrica não servia, e o jogo mostrou
+
+Camas foram destruídas em jogo e a colônia não encolheu. O
+`observedBeds` seguiu em 38, conferido dentro do `.dat`.
+
+O log não sabia dizer por quê: a linha `moved` só sai quando o centro
+muda, e encolher sem mover o centro é silencioso. Duas causas possíveis,
+com correções diferentes — a regra recusou a observação menor, ou
+observação menor nenhuma chegou.
+
+Instrumentar antes de suspeitar. A linha nova saiu na sessão seguinte:
+
+```text
+[23:13:21] saw 32 beds, keeping 38 — view not provably complete
+[23:13:49] saw  3 beds, keeping 38 — view not provably complete
+[23:13:49] saw 33 beds, keeping 38 — view not provably complete
+[23:14:21] saw 33 beds, keeping 38 — view not provably complete
+[23:15:58] saw 32 beds, keeping 38 — view not provably complete
+```
+
+Cinco observações da vila encolhida, cinco recusas. A de 3 camas está
+correta — é visão de borda. As de 32 e 33 é que deviam ter passado.
+
+---
+
+### O defeito era do critério, não do jogo
+
+A prova exige toda cama a até 32 blocos do gatilho. Esta vila é maior
+que isso, e por isso nenhuma observação real ali jamais se prova
+completa. A regra estava correta no papel e inalcançável na prática.
+
+Os testes não pegaram porque usam clusters de três camas a dez blocos de
+distância — passavam com folga. O critério só funcionava em vila
+pequena, e não havia teste com vila do tamanho das de verdade.
+
+---
+
+### A mesma janela
+
+Decisão do autor entre três mecanismos. Escolhido: a colônia guarda de
+onde veio a melhor observação, e uma varredura do mesmo ponto vendo
+menos camas tem autoridade para encolher.
+
+```text
+Colony.observedFrom      âncora da melhor observação
+
+VillageCandidate.anchor  de onde a varredura partiu
+
+ciclo longo varre também a partir do centro de
+cada colônia ativa — âncora estável entre ciclos
+```
+
+A posição do jogador nunca se repete entre ciclos; o centro da colônia
+sim. Sem essa segunda varredura a âncora nunca casaria e o mecanismo
+não dispararia nunca — o mesmo erro da prova geométrica.
+
+Roda depois de `updateLifecycles`, para não varrer colônia dormente:
+sem chunk carregado a varredura não acharia cama alguma e a colônia se
+veria vazia.
+
+Custo: uma consulta de POI por colônia ativa a cada ciclo de 30s. O
+limite de Performance-Rules.md §5 continua respeitado — busca por raio
+em torno de um ponto, nunca pelo mundo.
+
+A prova geométrica ficou. É rara, mas é a única que serve na primeira
+observação, quando ainda não há âncora com que comparar.
+
+---
+
+### Como foi verificado
+
+Teste antes de código, e o primeiro deles é o caso real: vila de 38
+camas, observação de 33 da mesma âncora, encolhe.
+
+Duas mutações confirmaram que os testes sustentam as duas decisões:
+
+```text
+sem a comparação de âncora
+
+  sameAnchorSeeingFewerBedsShrinksTheColony  FALHOU
+  aBetterViewMovesTheAnchorToo               FALHOU
+
+âncora atualizada mesmo na recusa
+
+  aWorseViewDoesNotBecomeTheNewAnchor        FALHOU
+```
+
+A segunda mutação é a que importa mais: ela é exatamente a deriva do
+§11 voltando por outro caminho, e agora existe teste que a barra.
+
+---
+
+Estado ao registrar:
+
+```text
+238 testes passando (eram 231)
+
+./gradlew build → BUILD SUCCESSFUL
+
+falta ver em jogo: a vila encolhida ainda não encolheu a colônia
+```
+
+---
+
 # 16. Definition of Project Progress
 
 O projeto avança somente quando:

@@ -53,6 +53,18 @@ public final class Colony {
      */
     private int observedBeds;
 
+    /**
+     * De onde partiu a varredura que produziu {@link #observedBeds}.
+     *
+     * <p>É o que dá autoridade para a colônia encolher: uma varredura
+     * feita do mesmo ponto enxerga a mesma fatia da vila, então ver menos
+     * camas dali só pode significar que camas sumiram. Ver
+     * {@link #observe(ColonyPos, int, boolean, ColonyPos)}.
+     *
+     * <p>Nulo enquanto nenhuma observação ancorada tiver chegado.
+     */
+    private ColonyPos observedFrom;
+
     private Colony(UUID id, ColonyPos center, ColonyState state, ColonyLifecycle lifecycle) {
         this.id = id;
         this.center = center;
@@ -112,12 +124,21 @@ public final class Colony {
         return observedBeds;
     }
 
+    public ColonyPos observedFrom() {
+        return observedFrom;
+    }
+
     /**
-     * Observação sem prova de completude. Ver
-     * {@link #observe(ColonyPos, int, boolean)}.
+     * Observação sem prova de completude e sem âncora. Ver
+     * {@link #observe(ColonyPos, int, boolean, ColonyPos)}.
      */
     public boolean observe(ColonyPos center, int beds) {
-        return observe(center, beds, false);
+        return observe(center, beds, false, null);
+    }
+
+    /** Observação com prova geométrica, sem âncora. */
+    public boolean observe(ColonyPos center, int beds, boolean complete) {
+        return observe(center, beds, complete, null);
     }
 
     /**
@@ -131,11 +152,24 @@ public final class Colony {
      * <p>Empate move: a vila pode mudar de lugar mantendo o mesmo número
      * de camas.
      *
-     * <p>Uma observação {@code complete} escapa da regra e pode baixar a
-     * contagem. Sem essa saída, {@code observedBeds} só cresceria, e uma
-     * vila que perdesse camas ficaria com o centro congelado para sempre
-     * — nenhuma observação futura alcançaria a marca antiga. A colônia
-     * pode encolher: decisão do autor em 2026-08-07, registrada em §15.
+     * <p>A colônia pode encolher — decisão do autor em 2026-08-07. Duas
+     * coisas dão autoridade para baixar a contagem:
+     *
+     * <ul>
+     *   <li>{@code complete}: a detecção provou que não cortou cama
+     *       alguma. Rara em vila grande, mas é a única que serve na
+     *       primeira observação, quando não há âncora com que comparar.
+     *   <li>{@code from} igual a {@link #observedFrom}: a varredura veio
+     *       do mesmo ponto da que definiu a contagem atual. A mesma
+     *       janela enxerga a mesma fatia da vila, então ver menos dali só
+     *       pode significar que camas sumiram.
+     * </ul>
+     *
+     * <p>A âncora só é atualizada quando a observação vale — isto é,
+     * junto com {@code observedBeds}. Se qualquer observação a
+     * sobrescrevesse, uma visão de borda viraria referência e a próxima
+     * visão de borda dali encolheria a colônia: a deriva do §11 por
+     * outro caminho.
      *
      * <p>Quem prova a completude é a detecção, não esta classe: o Core
      * não sabe o que é raio de busca nem chunk. Ver
@@ -143,12 +177,14 @@ public final class Colony {
      *
      * @param complete se a observação provadamente não cortou cama
      *     alguma do cluster
+     * @param from de onde a varredura partiu; {@code null} quando quem
+     *     chama não sabe, e nesse caso a observação nunca encolhe
      * @return true se o centro foi movido
      */
-    public boolean observe(ColonyPos center, int beds, boolean complete) {
+    public boolean observe(ColonyPos center, int beds, boolean complete, ColonyPos from) {
         Objects.requireNonNull(center, "center");
 
-        if (beds < observedBeds && !complete) {
+        if (beds < observedBeds && !complete && !sameWindowAs(from)) {
             return false;
         }
 
@@ -156,8 +192,14 @@ public final class Colony {
 
         this.center = center;
         this.observedBeds = beds;
+        this.observedFrom = from;
 
         return moved;
+    }
+
+    /** Se esta varredura partiu do mesmo ponto que a melhor já vista. */
+    private boolean sameWindowAs(ColonyPos from) {
+        return from != null && from.equals(observedFrom);
     }
 
     public ColonyState state() {

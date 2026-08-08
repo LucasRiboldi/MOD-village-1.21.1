@@ -509,7 +509,29 @@ e pode baixar observedBeds
 Sem ela `observedBeds` só crescia, e vila que perdesse camas ficava com
 o centro congelado para sempre.
 
-Completa é a observação que provadamente não cortou cama alguma:
+Duas coisas dão essa autoridade.
+
+**Mesma âncora** — o caminho que funciona na prática:
+
+```text
+a colônia guarda de onde veio a melhor observação
+
+varredura do MESMO ponto vendo menos camas
+  → a vila encolheu
+```
+
+Duas varreduras da mesma âncora enxergam a mesma fatia da vila; ver
+menos dali só pode significar que camas sumiram. Para haver âncora
+estável, o ciclo longo varre também a partir do centro de cada colônia
+ativa — a posição do jogador muda a cada passo e nunca se repete.
+
+A âncora só é atualizada junto com `observedBeds`. Se qualquer
+observação a sobrescrevesse, uma visão de borda viraria referência e a
+próxima visão de borda dali encolheria a colônia: a deriva de volta por
+outro caminho.
+
+**Prova geométrica** — rara, mas serve na primeira observação, quando
+ainda não há âncora com que comparar:
 
 ```text
 toda cama vista a até SEARCH_RADIUS - CLUSTER_DISTANCE
@@ -520,12 +542,17 @@ A prova vem da definição de cluster: cama ligada a outra está a no
 máximo `CLUSTER_DISTANCE` dela, então uma vizinha ainda cairia dentro do
 raio de busca e teria sido coletada.
 
-Fora da margem a resposta é "não sei", e a regra original continua
-valendo — é o que impede a oscilação de voltar.
+Ela sozinha não bastou. Em jogo, em 2026-08-07, uma vila de 38 camas
+teve cinco camas destruídas e recusou cinco observações seguidas de 32 e
+33 camas: a vila é maior que a margem de 32 blocos, e nenhuma observação
+real ali jamais se prova completa. Ver §15.
 
 Mede na horizontal, como a clusterização. Cama muito acima ou abaixo
 entra no cluster e poderia cair fora da esfera: o erro possível é deixar
 de encolher, nunca encolher errado.
+
+Fora dos dois casos a resposta é "não sei", e a regra original continua
+valendo — é o que impede a oscilação de voltar.
 
 ---
 

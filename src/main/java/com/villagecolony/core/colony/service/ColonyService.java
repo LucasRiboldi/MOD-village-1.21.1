@@ -89,7 +89,11 @@ public final class ColonyService {
 
         Colony colony = existing.orElseGet(() -> createColony(candidate.center()));
 
-        colony.observe(candidate.center(), candidate.bedCount(), candidate.complete());
+        colony.observe(
+                candidate.center(),
+                candidate.bedCount(),
+                candidate.complete(),
+                candidate.anchor());
 
         // Detectar exige chunk carregado. Uma colônia observada está,
         // por definição da ADR-002, sendo simulada — inclusive a que

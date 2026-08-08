@@ -15,10 +15,14 @@ import java.util.Objects;
  *     camas, por ser o centro social real da vila Vanilla (ADR-003 §4)
  * @param bedCount camas do cluster
  * @param complete se esta observação provadamente não cortou cama
- *     alguma. Só ela autoriza a colônia a encolher — ver
- *     {@link Colony#observe} e {@code VillageDetector#evaluate}
+ *     alguma. Ver {@link Colony#observe} e
+ *     {@code VillageDetector#evaluate}
+ * @param anchor de onde a varredura partiu, ou {@code null} quando não
+ *     se sabe. Duas varreduras da mesma âncora enxergam a mesma fatia
+ *     da vila, e é isso que permite à colônia encolher
  */
-public record VillageCandidate(ColonyPos center, int bedCount, boolean complete) {
+public record VillageCandidate(
+        ColonyPos center, int bedCount, boolean complete, ColonyPos anchor) {
 
     public VillageCandidate {
         Objects.requireNonNull(center, "center");
@@ -29,12 +33,16 @@ public record VillageCandidate(ColonyPos center, int bedCount, boolean complete)
     }
 
     /**
-     * Observação sem prova de completude.
+     * Observação sem prova de completude e sem âncora.
      *
-     * <p>É o padrão seguro: cresce a colônia, não a encolhe. Quem sabe
-     * de onde olhou usa o construtor de três argumentos.
+     * <p>É o padrão seguro: cresce a colônia, não a encolhe.
      */
     public VillageCandidate(ColonyPos center, int bedCount) {
-        this(center, bedCount, false);
+        this(center, bedCount, false, null);
+    }
+
+    /** Observação com prova geométrica, sem âncora. */
+    public VillageCandidate(ColonyPos center, int bedCount, boolean complete) {
+        this(center, bedCount, complete, null);
     }
 }
