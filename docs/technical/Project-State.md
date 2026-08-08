@@ -876,6 +876,12 @@ Duas premissas erradas sobre o mundo, na regra de encolhimento
 
   margem de 32 blocos numa vila maior que isso;
   e colônia que nasce do save, não criada na hora
+
+getBlockState forçando chunk, de novo, na Fase 8
+
+  o mesmo erro de dois dias antes, no primeiro código
+  que escreve no mundo. O gametest não podia pegá-lo:
+  a estrutura de teste está toda carregada
 ```
 
 Os dois primeiros só apareceram rodando o mod no jogo real.
@@ -4097,6 +4103,93 @@ Estado ao registrar:
 ./gradlew runGametest → All 12 required tests passed
 
 a derrubada nunca rodou em jogo
+```
+
+---
+
+## 2026-08-08 — A Fase 8 quebrou o jogo, e o diagnóstico ficou incompleto
+
+Primeira sessão com a Fase 8 instalada: o terreno quase não carregou e
+os aldeões ficaram parados. O jogo foi fechado antes de eu poder tirar
+um thread dump, e o `latest.log` parou às 03:32:23 com o buffer não
+descarregado — a mesma assinatura do travamento de 2026-08-07.
+
+```text
+[03:32:23] Storage claimed by e8f56d2b ...
+[03:32:23] Storage claimed by a60c4f43 ...
+            (nada mais)
+```
+
+**Não sei qual dos três defeitos abaixo causou o quê.** O que se sabe é
+que os três existiam, e que os três são do tipo que já travou a thread
+antes.
+
+---
+
+### O que estava errado
+
+```text
+1  TreeHarvester lia e escrevia com world.getBlockState
+
+   O mesmo erro de 2026-08-07, repetido no primeiro
+   código que escreve no mundo. Um tronco na borda de
+   chunk faz o vizinho cair em chunk descarregado, e a
+   leitura o carrega à força — gerando terreno dentro do
+   laço, na thread do servidor.
+
+   Agora todo acesso passa por getWorldChunk com nulo
+   checado, e o que não está carregado é pulado.
+
+2  findVillager varria uma caixa de 128 blocos de lado
+
+   Por tarefa, por ciclo. O servidor já indexa entidade
+   por UUID: world.getEntity(uuid) responde direto.
+
+3  a espiral iterava o miolo para descartá-lo
+
+   Para olhar quatro mil colunas, o laço percorria mais
+   de um milhão de posições. O salto agora pula o miolo,
+   e o teto caiu de 4096 para 1024 colunas.
+```
+
+---
+
+### O que isto custa admitir
+
+Os doze testes de jogo passaram antes, durante e depois. Nenhum deles
+mede tempo nem toca em chunk descarregado: a estrutura do gametest é
+pequena e está inteiramente carregada.
+
+```text
+o gametest cobre comportamento, não custo
+
+o gametest cobre o mundo montado, não o mundo real
+```
+
+É o mesmo limite que o §11 registra para o teste de unidade, um nível
+acima. Uma bancada que não pode falhar por lentidão não protege contra
+lentidão.
+
+---
+
+### O que fica em aberto
+
+A correção não foi verificada em jogo, e o diagnóstico não foi
+confirmado — foi deduzido do código. Se o travamento voltar, o caminho
+é o mesmo que funcionou antes: manter o jogo aberto e tirar um thread
+dump com `jstack`, que aponta a linha exata.
+
+---
+
+Estado ao registrar:
+
+```text
+257 testes de unidade + 12 de jogo
+
+./gradlew build → BUILD SUCCESSFUL
+./gradlew runGametest → All 12 required tests passed
+
+a Fase 8 travou o jogo uma vez; a correção não foi vista
 ```
 
 ---

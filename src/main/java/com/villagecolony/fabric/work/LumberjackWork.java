@@ -14,9 +14,7 @@ import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -182,21 +180,19 @@ public final class LumberjackWork {
     /**
      * O aldeão deste trabalhador, se estiver carregado.
      *
-     * <p>Busca numa caixa em torno do centro da colônia, e não no mundo:
-     * varrer todas as entidades é proibido por Performance-Rules.md §5.
+     * <p>Busca por UUID, que é consulta direta num índice do servidor. A
+     * primeira versão varria uma caixa de 128 blocos de lado por tarefa
+     * por ciclo — muito mais caro, e sem ganho: o servidor já sabe onde
+     * cada entidade está.
+     *
+     * <p>Devolve vazio quando o aldeão não está carregado, o que é o
+     * caso comum de colônia longe do jogador.
      */
     private static Optional<VillagerEntity> findVillager(
             ServerWorld world, Colony colony, UUID villagerId) {
 
-        BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
-
-        Box area = new Box(center).expand(SEARCH_RADIUS);
-
-        List<VillagerEntity> nearby = world.getEntitiesByClass(
-                VillagerEntity.class,
-                area,
-                entity -> entity.getUuid().equals(villagerId));
-
-        return nearby.isEmpty() ? Optional.empty() : Optional.of(nearby.get(0));
+        return world.getEntity(villagerId) instanceof VillagerEntity villager
+                ? Optional.of(villager)
+                : Optional.empty();
     }
 }

@@ -1,8 +1,10 @@
 package com.villagecolony.fabric.integration;
 
+import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -69,7 +71,13 @@ public final class TreeHarvester {
             // Sem drop: a madeira vai direto para o baú do trabalhador,
             // por decisão do autor. Item no chão despawna, cai n'água e
             // é roubado por mob, e a contagem passaria a mentir.
-            world.removeBlock(log, false);
+            //
+            // Só se o chunk estiver carregado — connectedLogs já os
+            // filtrou, e escrever num chunk descarregado o carregaria à
+            // força, na thread do servidor.
+            if (loadedChunkAt(world, log) != null) {
+                world.removeBlock(log, false);
+            }
         }
 
         replant(world, base);
@@ -81,7 +89,7 @@ public final class TreeHarvester {
     private static List<BlockPos> connectedLogs(ServerWorld world, BlockPos start) {
         List<BlockPos> found = new ArrayList<>();
 
-        if (!world.getBlockState(start).isOf(Blocks.OAK_LOG)) {
+        if (!isOakLog(world, start)) {
             return found;
         }
 
@@ -106,7 +114,7 @@ public final class TreeHarvester {
                             continue;
                         }
 
-                        if (world.getBlockState(neighbour).isOf(Blocks.OAK_LOG)) {
+                        if (isOakLog(world, neighbour)) {
                             queue.add(neighbour);
                         }
                     }
@@ -115,6 +123,31 @@ public final class TreeHarvester {
         }
 
         return found;
+    }
+
+    /**
+     * O estado de um bloco, ou {@code null} se o chunk não está
+     * carregado.
+     *
+     * <p>Nunca {@code world.getBlockState} direto. Ele carrega o chunk
+     * que faltar, e do tick do servidor isso significa gerar terreno
+     * dentro do laço — foi assim que a thread travou em 2026-08-07, e a
+     * Fase 8 repetiu o erro em 2026-08-08. Ver §11.
+     */
+    private static BlockState stateAt(ServerWorld world, BlockPos pos) {
+        WorldChunk chunk = loadedChunkAt(world, pos);
+
+        return chunk == null ? null : chunk.getBlockState(pos);
+    }
+
+    private static WorldChunk loadedChunkAt(ServerWorld world, BlockPos pos) {
+        return world.getChunkManager().getWorldChunk(pos.getX() >> 4, pos.getZ() >> 4);
+    }
+
+    private static boolean isOakLog(ServerWorld world, BlockPos pos) {
+        BlockState state = stateAt(world, pos);
+
+        return state != null && state.isOf(Blocks.OAK_LOG);
     }
 
     private static BlockPos lowest(List<BlockPos> logs) {
@@ -137,7 +170,9 @@ public final class TreeHarvester {
      * seria inventar uma segunda verdade sobre o que é chão bom.
      */
     private static void replant(ServerWorld world, BlockPos base) {
-        if (!world.getBlockState(base).isAir()) {
+        BlockState here = stateAt(world, base);
+
+        if (here == null || !here.isAir()) {
             return;
         }
 

@@ -28,16 +28,20 @@ public final class TreeScanner {
     /**
      * Quantas colunas se olha por busca, no máximo.
      *
-     * <p>O raio de 64 tem mais de dezesseis mil colunas. Sem teto, uma
-     * colônia sem árvore nenhuma por perto pagaria a varredura inteira a
-     * cada ciclo, e são vários ciclos por minuto entre todas as
-     * colônias.
+     * <p>O raio de 64 tem mais de dezesseis mil colunas, e cada uma custa
+     * uma consulta de chunk e até vinte e cinco leituras de bloco. Sem
+     * teto, uma colônia sem árvore por perto pagaria a varredura inteira
+     * a cada ciclo.
+     *
+     * <p>Mil e vinte e quatro colunas cobrem um quadrado de dezesseis
+     * blocos de lado em torno do centro. Era quatro mil até 2026-08-08,
+     * quando o jogo do autor engasgou — ver §15.
      *
      * <p>A busca é em espiral a partir do centro, então parar no teto
      * significa "não achei perto", não "não achei". O ciclo seguinte
      * tenta de novo.
      */
-    private static final int MAX_COLUMNS = 4096;
+    private static final int MAX_COLUMNS = 1024;
 
     /**
      * Quantos blocos acima e abaixo da superfície se procura tronco.
@@ -66,9 +70,14 @@ public final class TreeScanner {
             for (int dx = -ring; dx <= ring; dx++) {
                 for (int dz = -ring; dz <= ring; dz++) {
 
-                    // Só a casca do anel: o miolo já foi visto nos
-                    // anéis anteriores.
+                    // Só a casca do anel: o miolo já foi visto nos anéis
+                    // anteriores. O salto pula o miolo inteiro em vez de
+                    // percorrê-lo descartando — a primeira versão
+                    // iterava mais de um milhão de posições para olhar
+                    // quatro mil colunas.
                     if (Math.abs(dx) != ring && Math.abs(dz) != ring) {
+                        dz = ring - 1;
+
                         continue;
                     }
 
