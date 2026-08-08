@@ -3591,6 +3591,126 @@ a regra de nível ainda não foi vista em jogo
 
 ---
 
+## 2026-08-08 — P2 e P3 decididas; a colônia passou a pensar
+
+Duas decisões do autor destravaram as TASK-020 e TASK-023, paradas
+desde a Fase 6.
+
+---
+
+### P2 — `core/coordination`
+
+O código que casa tarefa com profissão precisa de `core.task` e
+`core.worker` na mesma linha, e a ADR-006 §6 proíbe domínio importar
+domínio. As saídas eram três; a escolhida foi um pacote próprio no core,
+acima dos domínios.
+
+A emenda é estreita: só `core/coordination` pode importar domínios, e
+domínio nenhum passa a importar outro. `DependencyRuleTest` ganhou a
+exceção e um teste para a direção contrária — coordenação lê domínio,
+domínio não lê coordenação, ou a regra viraria um ciclo com nome bonito.
+
+A exceção foi verificada por mutação: sem ela, `WorkAssignment` aparece
+como violação da regra.
+
+Descartada a alternativa de deixar em `fabric/`, que não exigiria emenda
+nenhuma: é a única camada sem um teste de unidade sequer, e é onde todos
+os defeitos desta semana apareceram.
+
+---
+
+### TASK-023 — quem faz o quê
+
+`WorkAssignment` percorre os trabalhadores ociosos, lê a profissão de
+cada um e reserva a tarefa mais urgente que ele saiba fazer.
+
+```text
+uma tarefa por trabalhador, um trabalhador por tarefa
+
+  a Fase 8 vai mandar o aldeão andar até o local,
+  e quem tivesse duas andaria para dois lugares
+
+ocioso é quem não tem tarefa aberta
+
+  não quem está parado: a caminho da árvore
+  continua ocupado
+```
+
+Percorre as capacidades da profissão, não só a primeira: pedreiro que
+também carrega madeira pega madeira quando não há o que construir.
+
+---
+
+### P3 — o loop de simulação existe
+
+`ColonyCycle` é o ciclo da ADR-002, e roda uma vez por colônia ACTIVE a
+cada `CYCLE_TICKS`:
+
+```text
+comparar o que tem com o que quer
+pedir o que falta, retirar o pedido sem motivo
+entregar os pedidos a quem sabe atendê-los
+```
+
+Decisões que o ciclo carrega, cada uma com um teste:
+
+```text
+um pedido por recurso, não um por ciclo
+
+  30s de ciclo com falta permanente encheria a fila
+  sem limite
+
+pedido cancelado quando a falta acaba
+
+  o jogador enche o baú, e o pedido perde o motivo
+
+tarefa já iniciada não é cancelada
+
+  a contagem muda o tempo todo, e ninguém é
+  interrompido a meio caminho da árvore
+```
+
+---
+
+### O que o ciclo se recusa a fazer
+
+A colônia não decide sobre contagem parcial:
+
+```text
+if (survey.isPartial()) return;
+```
+
+Baú em chunk descarregado sai da soma sem avisar. Uma colônia que
+concluísse "falta madeira" com metade dos baús fora de alcance mandaria
+um trabalhador buscar o que ela já tem. O `ChestSurvey` de ontem existia
+para dar o aviso; hoje ele tem quem o ouça.
+
+---
+
+### O provisório assumido
+
+`ColonyGoals` devolve meta fixa para toda colônia: 64 de madeira, 32 de
+pedra. Resource-System.md fala em metas mínimas e não diz de onde vêm; a
+resposta real é a Fase 9, quando a meta sair do que a expansão pretende
+construir.
+
+Está isolado numa classe só, e a assinatura já recebe a colônia — trocar
+por meta de obra não toca em `ColonyCycle`.
+
+---
+
+Estado ao registrar:
+
+```text
+257 testes passando (eram 233)
+
+./gradlew build → BUILD SUCCESSFUL
+
+nada disto foi visto em jogo ainda
+```
+
+---
+
 # 16. Definition of Project Progress
 
 O projeto avança somente quando:

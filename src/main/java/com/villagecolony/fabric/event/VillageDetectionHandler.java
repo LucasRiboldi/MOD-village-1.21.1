@@ -5,6 +5,8 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.colony.service.VillageDetector;
+import com.villagecolony.core.coordination.ColonyCycle;
+import com.villagecolony.core.coordination.ColonyGoals;
 import com.villagecolony.core.resource.model.ColonyResources;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.Worker;
@@ -113,6 +115,69 @@ public final class VillageDetectionHandler {
         updateLifecycles(server.getOverworld());
 
         detectFromColonyCenters(server.getOverworld());
+
+        runColonyCycles(server.getOverworld());
+    }
+
+    /**
+     * O ciclo de simulação da ADR-002, uma vez por colônia ativa.
+     *
+     * <p>Roda por último de propósito: a colônia decide sobre o que a
+     * detecção acabou de ver, e não sobre a fotografia do ciclo passado.
+     *
+     * <p>Só colônia ACTIVE. Uma colônia dormente tem os chunks
+     * descarregados, e o estoque lido dela seria zero — a colônia
+     * concluiria que falta tudo e encheria a fila de pedidos que ninguém
+     * pode atender.
+     */
+    private static void runColonyCycles(ServerWorld overworld) {
+        for (Colony colony : List.copyOf(VillageColonyMod.COLONIES.all())) {
+            if (!colony.isActive()) {
+                continue;
+            }
+
+            runCycleOf(overworld, colony);
+        }
+    }
+
+    /**
+     * Um ciclo de uma colônia.
+     *
+     * <p>A contagem parcial é motivo para não decidir. Baú em chunk
+     * descarregado sai da soma sem avisar, e uma colônia que conclui
+     * "falta madeira" com metade dos baús fora de alcance mandaria um
+     * trabalhador buscar o que ela já tem. Ver
+     * {@code ChestInventoryReader.ChestSurvey} e a entrada de §15 de
+     * 2026-08-07.
+     */
+    private static void runCycleOf(ServerWorld overworld, Colony colony) {
+        List<UUID> workerIds = new ArrayList<>();
+
+        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
+            workerIds.add(worker.villagerId());
+        }
+
+        ChestInventoryReader.ChestSurvey survey = ChestInventoryReader.survey(
+                overworld, workerIds, VillageColonyMod.STORAGES);
+
+        if (survey.isPartial()) {
+            return;
+        }
+
+        int assigned = ColonyCycle.run(
+                colony.id(),
+                survey.resources().total(),
+                ColonyGoals.of(colony),
+                VillageColonyMod.TASKS,
+                VillageColonyMod.WORKERS);
+
+        if (assigned > 0) {
+            VillageColonyMod.LOGGER.info(
+                    "Colony {} assigned {} tasks ({} open)",
+                    colony.id(),
+                    assigned,
+                    VillageColonyMod.TASKS.availableFor(colony.id()).size());
+        }
     }
 
     /**
