@@ -27,7 +27,10 @@ import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.poi.PointOfInterestStorage;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.world.poi.PointOfInterestTypes;
@@ -48,6 +51,25 @@ import net.minecraft.world.poi.PointOfInterestTypes;
 public final class VillageDetectionHandler {
 
     private static final VillageScanner SCANNER = new VillageScanner();
+
+    /**
+     * Quantos gatilhos de chunk cabem esperando.
+     *
+     * <p>Existe para que abrir o mundo não guarde uma varredura por
+     * chunk carregado. O ciclo longo cobre o que passar do teto.
+     */
+    private static final int PENDING_LIMIT = 256;
+
+    /** Duração de um tick do servidor, em milissegundos. */
+    private static final int TICK_MILLIS = 50;
+
+    /**
+     * Chunks com cama esperando varredura, um por chunk.
+     *
+     * <p>{@code LinkedHashMap} para drenar na ordem em que chegaram: os
+     * primeiros chunks a carregar são os mais perto do jogador.
+     */
+    private static final Map<ChunkPos, BlockPos> pending = new LinkedHashMap<>();
 
     private static int tickCounter;
 
@@ -87,11 +109,11 @@ public final class VillageDetectionHandler {
     }
 
     /**
-     * Chunk carregado.
+     * Chunk carregado — só enfileira.
      *
      * <p>A checagem barata vem primeiro: sem cama neste chunk, não há
-     * motivo para pagar a busca de raio 64. A esmagadora maioria dos
-     * chunks carregados cai fora aqui.
+     * motivo para pagar nada. A esmagadora maioria dos chunks carregados
+     * cai fora aqui.
      *
      * <p>O gatilho é a posição da própria cama encontrada, não o canto do
      * chunk. {@code ChunkPos.getStartPos()} devolve y=0, e
@@ -99,15 +121,65 @@ public final class VillageDetectionHandler {
      * y=0, uma cama em y=64 já consome todo o raio de busca antes de
      * qualquer deslocamento horizontal. Ancorado no chunk, este gatilho
      * não encontrava vila nenhuma.
+     *
+     * <p><b>Por que enfileirar em vez de varrer aqui.</b> Este evento
+     * dispara uma vez por chunk, e ao abrir o mundo centenas chegam no
+     * mesmo tick. Uma vila de trinta camas ocupa dezenas de chunks, e
+     * cada um deles pagava a varredura inteira — POI num raio de 64,
+     * caixa de aldeões, baú de cada trabalhador novo, nome de cada
+     * trabalhador — dentro do mesmo tick. Era o travamento ao carregar o
+     * mapa de 2026-08-08: o servidor não voltava, e os aldeões não
+     * andavam porque nenhum tick terminava.
      */
     private static void onChunkLoad(ServerWorld world, WorldChunk chunk) {
+        if (pending.size() >= PENDING_LIMIT) {
+            // Fila cheia. Descartar é seguro: a varredura a partir do
+            // jogador, no ciclo longo, cobre o mesmo terreno.
+            return;
+        }
+
         world.getPointOfInterestStorage()
                 .getInChunk(
                         poi -> poi.matchesKey(PointOfInterestTypes.HOME),
                         chunk.getPos(),
                         PointOfInterestStorage.OccupationStatus.ANY)
                 .findFirst()
-                .ifPresent(bed -> detectAround(world, bed.getPos()));
+                .ifPresent(bed -> pending.putIfAbsent(chunk.getPos(), bed.getPos()));
+    }
+
+    /**
+     * Um gatilho de chunk por tick, no máximo.
+     *
+     * <p>É o teto que o evento de chunk não tem. Uma varredura por tick
+     * ainda esvazia a fila de uma vila inteira em pouco mais de um
+     * segundo, e nenhum tick paga por duas.
+     *
+     * <p>Cama dentro de colônia conhecida é descartada sem varrer: o que
+     * essa varredura descobriria — a vila cresceu, o centro se moveu — a
+     * sonda ancorada no centro já descobre a cada ciclo, e ela é a única
+     * com autoridade para encolher a colônia.
+     */
+    private static void drainOnePending(ServerWorld overworld) {
+        while (!pending.isEmpty()) {
+            Iterator<Map.Entry<ChunkPos, BlockPos>> entries = pending.entrySet().iterator();
+            BlockPos bed = entries.next().getValue();
+
+            entries.remove();
+
+            boolean known = VillageColonyMod.COLONIES
+                    .findNearest(
+                            MinecraftTypeAdapter.toColonyPos(bed),
+                            VillageDetector.DUPLICATE_DISTANCE)
+                    .isPresent();
+
+            if (known) {
+                continue;
+            }
+
+            detectAround(overworld, bed);
+
+            return;
+        }
     }
 
     /**
@@ -127,6 +199,8 @@ public final class VillageDetectionHandler {
      * ponto estável entre ciclos. Ver {@code Colony#observe}.
      */
     private static void onServerTick(net.minecraft.server.MinecraftServer server) {
+        drainOnePending(server.getOverworld());
+
         tickCounter++;
 
         if (tickCounter < VillageDetector.CYCLE_TICKS) {
@@ -134,6 +208,8 @@ public final class VillageDetectionHandler {
         }
 
         tickCounter = 0;
+
+        long startedAt = System.nanoTime();
 
         for (ServerWorld world : server.getWorlds()) {
             for (ServerPlayerEntity player : world.getPlayers()) {
@@ -146,6 +222,38 @@ public final class VillageDetectionHandler {
         detectFromColonyCenters(server.getOverworld());
 
         runColonyCycles(server.getOverworld());
+
+        reportIfSlow(startedAt);
+    }
+
+    /**
+     * Diz quanto custou o ciclo, quando custou caro.
+     *
+     * <p>Um tick do servidor tem 50 ms. Um ciclo que passe disso já
+     * atrasa o jogo, e sem esta linha o jogador sente a lentidão e o log
+     * não a explica — foi o que aconteceu duas vezes na Fase 8. É o
+     * "instrumentar antes de suspeitar" do §11: medir custa quase nada e
+     * transforma palpite em número.
+     *
+     * <p>Silencioso no caso normal, de propósito.
+     */
+    private static void reportIfSlow(long startedAt) {
+        long millis = (System.nanoTime() - startedAt) / 1_000_000L;
+
+        if (millis < TICK_MILLIS) {
+            return;
+        }
+
+        VillageColonyMod.LOGGER.warn(
+                "Colony cycle took {} ms — longer than a server tick ({} colonies, {} pending chunks)",
+                millis,
+                VillageColonyMod.COLONIES.count(),
+                pending.size());
+    }
+
+    /** Ao trocar de mundo, a fila do mundo anterior não pode viajar. */
+    public static void clearPending() {
+        pending.clear();
     }
 
     /**

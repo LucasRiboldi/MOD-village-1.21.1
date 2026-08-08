@@ -125,10 +125,19 @@ public final class GoToWorkTargetTask extends MultiTickTask<VillagerEntity> {
         villager.getBrain().forget(MemoryModuleType.WALK_TARGET);
     }
 
+    /**
+     * Põe o destino, se ele já não estiver posto.
+     *
+     * <p>A comparação não é economia de linha: {@code WalkTarget} novo é
+     * destino novo para a task Vanilla que anda, e ela recalcula o
+     * caminho inteiro quando o destino muda. Reescrever a memória a cada
+     * tick faria um A* por aldeão por tick — o aldeão recomeçaria o
+     * caminho antes de dar o passo, e ficaria parado gastando servidor.
+     */
     private void aim(VillagerEntity villager) {
         Optional<BlockPos> target = WorkTargets.of(villager.getUuid());
 
-        if (target.isEmpty()) {
+        if (target.isEmpty() || isAlreadyAimedAt(villager, target.get())) {
             return;
         }
 
@@ -137,5 +146,12 @@ public final class GoToWorkTargetTask extends MultiTickTask<VillagerEntity> {
         villager.getBrain().remember(MemoryModuleType.LOOK_TARGET, look);
         villager.getBrain().remember(
                 MemoryModuleType.WALK_TARGET, new WalkTarget(look, SPEED, COMPLETION_RANGE));
+    }
+
+    private boolean isAlreadyAimedAt(VillagerEntity villager, BlockPos target) {
+        return villager.getBrain()
+                .getOptionalRegisteredMemory(MemoryModuleType.WALK_TARGET)
+                .map(walk -> walk.getLookTarget().getBlockPos().equals(target))
+                .orElse(false);
     }
 }

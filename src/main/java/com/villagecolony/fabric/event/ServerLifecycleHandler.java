@@ -37,6 +37,7 @@ public final class ServerLifecycleHandler {
         VillageColonyMod.STORAGES.clear();
         VillageColonyMod.TASKS.clear();
         WorkTargets.clearAll();
+        VillageDetectionHandler.clearPending();
 
         ColonySavedData data = ColonySavedData.get(server);
 
@@ -76,5 +77,6 @@ public final class ServerLifecycleHandler {
         VillageColonyMod.STORAGES.clear();
         VillageColonyMod.TASKS.clear();
         WorkTargets.clearAll();
+        VillageDetectionHandler.clearPending();
     }
 }
