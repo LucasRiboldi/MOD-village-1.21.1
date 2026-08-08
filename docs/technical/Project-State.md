@@ -1025,6 +1025,11 @@ ColonyLifecycle sem escritor em produção
 World.getBlockEntity chamado de dentro do evento de chunk
 
   a thread do servidor travou; o terreno parou de carregar
+
+Duas premissas erradas sobre o mundo, na regra de encolhimento
+
+  margem de 32 blocos numa vila maior que isso;
+  e colônia que nasce do save, não criada na hora
 ```
 
 Os dois primeiros só apareceram rodando o mod no jogo real.
@@ -1048,6 +1053,23 @@ instrumentar antes de suspeitar
 
   a linha de log que expõe o defeito precisa existir
   antes de alguém desconfiar dele
+```
+
+```text
+testar a partir do estado com que a sessão começa
+
+  toda sessão depois da primeira lê a colônia do save.
+  Um teste que sempre cria a colônia na hora exercita
+  um estado que quase nunca acontece — foi assim que a
+  âncora que nunca nascia passou por 238 testes verdes
+```
+
+```text
+usar número de vila de verdade nos testes
+
+  a prova geométrica passava com cluster de três camas
+  a dez blocos, e falhava em toda vila real. Vila do
+  save tinha 38 camas
 ```
 
 ---
@@ -3353,6 +3375,65 @@ Estado ao registrar:
 ./gradlew build → BUILD SUCCESSFUL
 
 falta ver em jogo, pela terceira vez
+```
+
+---
+
+## 2026-08-07 — A colônia encolheu em jogo
+
+Terceira tentativa, e desta vez funcionou. A vila tinha 38 camas
+registradas e 33 reais desde que camas foram destruídas.
+
+```text
+[23:36:42] saw 33 beds, keeping 38    ← sonda registra
+[23:36:42] saw 33 beds, keeping 38
+
+           (a sonda confirmou 33 aqui)
+
+[23:38:42] saw  3 beds, keeping 33    ← já é 33
+[23:38:42] saw 13 beds, keeping 33
+[23:39:12] saw 25 beds, keeping 33
+```
+
+Confirmado fora do log, dentro do `.dat`: `observedBeds` passou de 38
+para 33 e sobreviveu ao salvamento.
+
+As três linhas depois do encolhimento são a outra metade da prova.
+Visões de 3, 13 e 25 camas foram recusadas contra os 33 — a guarda
+contra a deriva do §11 continua de pé enquanto o encolhimento funciona.
+As duas coisas conviviam mal em teoria e convivem bem em jogo.
+
+---
+
+### O que custou
+
+Três sessões de jogo do autor e duas correções minhas, ambas do mesmo
+tipo: código que passava em 230+ testes e não funcionava na primeira
+vez que encontrou o mundo real.
+
+```text
+prova geométrica    correta e inalcançável
+                    margem de 32 blocos, vila maior que isso
+
+âncora da sonda     nascia só numa observação aceita,
+                    e nenhuma vinha enquanto a colônia
+                    estivesse grande demais
+```
+
+Nenhum dos dois é erro de lógica. Os dois são erro de *premissa sobre o
+mundo* — o tamanho de uma vila real, e o estado com que uma colônia
+começa a sessão.
+
+---
+
+Estado ao registrar:
+
+```text
+233 testes passando
+
+./gradlew build → BUILD SUCCESSFUL
+
+encolhimento verificado em jogo
 ```
 
 ---
