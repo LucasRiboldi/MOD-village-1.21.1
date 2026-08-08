@@ -734,7 +734,17 @@ pretende construir — Fase 9.
 Levantadas em 2026-08-07, nenhuma iniciada:
 
 ```text
-A   automatizar V1, V2, V4, V5, V6 e V7 com Fabric Game Test
+A   automatizar a verificação com Fabric Game Test    FEITO EM PARTE
+
+    ./gradlew runGametest, em 2026-08-08. Dois testes:
+    vila vira colônia, e aldeão vira trabalhador com
+    profissão. Ver §15.
+
+    O que ficou de fora e por quê está na mesma entrada.
+```
+
+```text
+A (texto original)   automatizar V1, V2, V4, V5, V6 e V7
 
     fabric-gametest-api-v1 já vem no Fabric API do projeto.
     Roda o servidor headless pelo Gradle: monta a estrutura,
@@ -3889,6 +3899,99 @@ Estado ao registrar:
 257 testes passando; build verde
 
 nada pendente sem verificação
+```
+
+---
+
+## 2026-08-08 — A camada fabric ganhou o primeiro teste
+
+Item A do §8, aprovado pelo autor. `./gradlew runGametest` sobe um
+servidor sem cliente, monta a vila, afirma e falha o build.
+
+```text
+All 2 required tests passed :)
+```
+
+Dois testes, ambos cobrindo o caminho que nenhum teste de unidade
+alcança:
+
+```text
+aVillageBecomesAColony              POI vira detecção vira colônia
+
+villagersBecomeWorkersWithAProfession   e vira trabalhador com função
+```
+
+São carregados: com `MIN_VILLAGERS` mutado para 99, os dois falham.
+
+---
+
+### A costura
+
+`VillageDetectionHandler.runCycleNow` é o único código do mod que existe
+por causa de teste. Faz o que o ciclo longo faz, na mesma ordem —
+detectar, atualizar lifecycle, sondar do centro, simular. Se divergir do
+`onServerTick`, o teste passa a verificar um caminho que o jogo não
+percorre, que é pior do que não ter teste.
+
+Em jogo nada a chama.
+
+---
+
+### Três premissas erradas, todas descobertas rodando
+
+O padrão da semana se repetiu, com a diferença de que desta vez o
+retorno levou segundos em vez de uma sessão do autor.
+
+```text
+meia cama não vira POI
+
+  o primeiro teste plantava um bloco de cama só. O POI
+  HOME nasce da cabeceira, e sem POI não há vila
+
+o bioma não era problema
+
+  a suspeita era que o mundo de teste fosse void e a
+  detecção recusasse. A diagnose respondeu:
+  minecraft:plains
+
+o mundo é partilhado
+
+  o teste negativo plantou duas camas e a diagnose achou
+  cinco POIs no raio: as estruturas dos outros testes
+  ficam a menos de 64 blocos
+```
+
+A mensagem de falha só respondeu isso porque carrega uma diagnose — POIs
+no raio, bioma e posição absoluta. Sem ela, "esperava 1, achei 0"
+mandaria adivinhar entre as três.
+
+---
+
+### O que não cabe aqui
+
+O caso negativo — "camas de menos não são vila" — foi tentado e
+descartado com prova. "Não existe colônia" é propriedade global, e
+nenhum teste pode afirmá-la num mundo que todos partilham. Separar em
+batches não resolve: os blocos permanecem entre eles.
+
+Está coberto onde cabe, em `VillageDetectorTest`, que é onde a regra
+vive.
+
+O V3 continua humano: persistência exige fechar e reabrir o mundo, e o
+gametest roda um servidor só.
+
+Baú e estoque ainda não têm teste de jogo. São o próximo alvo natural, e
+agora custam minutos em vez de sessão.
+
+---
+
+Estado ao registrar:
+
+```text
+257 testes de unidade + 2 de jogo
+
+./gradlew build → BUILD SUCCESSFUL
+./gradlew runGametest → All 2 required tests passed
 ```
 
 ---

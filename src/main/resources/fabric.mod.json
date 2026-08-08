@@ -18,6 +18,9 @@
   "entrypoints": {
     "main": [
       "com.villagecolony.VillageColonyMod"
+    ],
+    "fabric-gametest": [
+      "com.villagecolony.gametest.ColonyDetectionGameTest"
     ]
   },
   "depends": {

@@ -14,6 +14,18 @@ repositories {
     // Fabric e Mojang já são adicionados pelo Loom.
 }
 
+// Testes de jogo (item A do §8 de Project-State.md).
+//
+// Fonte separada de propósito: este código sobe um servidor e depende de
+// Minecraft, então não é teste de unidade nem pode entrar no jar de
+// release. Ver Testing-Strategy.md §3, que hoje só cobre o Core.
+sourceSets {
+    gametest {
+        compileClasspath += sourceSets.main.compileClasspath + sourceSets.main.output
+        runtimeClasspath += sourceSets.main.runtimeClasspath + sourceSets.main.output
+    }
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
@@ -32,6 +44,27 @@ test {
 
     testLogging {
         events 'passed', 'skipped', 'failed'
+    }
+}
+
+// `./gradlew runGametest` sobe um servidor sem cliente, monta as
+// estruturas, roda as afirmações e falha o build.
+//
+// Existe porque a camada fabric não tinha teste nenhum, e foi nela que
+// os quatro defeitos de 2026-08-07 apareceram — todos depois de uma
+// sessão de jogo do autor. Ver §11.
+loom {
+    runs {
+        gametest {
+            server()
+            name = 'Game Test'
+            source sourceSets.gametest
+
+            vmArg '-Dfabric-api.gametest'
+            vmArg "-Dfabric-api.gametest.report-file=${layout.buildDirectory.get()}/gametest-report.xml"
+
+            runDir 'build/gametest'
+        }
     }
 }
 

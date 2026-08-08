@@ -58,6 +58,33 @@ public final class VillageDetectionHandler {
     }
 
     /**
+     * Roda um ciclo completo agora, a partir de um ponto.
+     *
+     * <p>Costura para os testes de jogo, e o único lugar do mod que
+     * existe por causa deles. Em jogo os dois gatilhos são o chunk que
+     * carrega e o ciclo de {@link VillageDetector#CYCLE_TICKS}; um teste
+     * que dependesse disso teria de carregar chunk e esperar trinta
+     * segundos por ciclo.
+     *
+     * <p>Faz o mesmo que o ciclo longo e na mesma ordem — detectar,
+     * atualizar lifecycle, sondar do centro, simular. Se aqui divergir
+     * de {@link #onServerTick}, o teste passa a verificar um caminho que
+     * o jogo não percorre, que é pior do que não ter teste.
+     *
+     * <p>Não é chamado por nada em produção. Ver o item A do §8 de
+     * Project-State.md.
+     */
+    public static void runCycleNow(ServerWorld world, BlockPos trigger) {
+        detectAround(world, trigger);
+
+        updateLifecycles(world);
+
+        detectFromColonyCenters(world);
+
+        runColonyCycles(world);
+    }
+
+    /**
      * Chunk carregado.
      *
      * <p>A checagem barata vem primeiro: sem cama neste chunk, não há
