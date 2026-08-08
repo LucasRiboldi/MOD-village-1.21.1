@@ -694,39 +694,38 @@ depois; esta seção é o ponto de retomada.
 
 ## Precisa do jogo
 
-A dívida foi paga em 2026-08-07. O que sobrou é o resto do roteiro:
+Nada. A dívida foi paga entre 2026-08-07 e 2026-08-08.
 
 ```text
-P1   V4          cada aldeão pegou o baú da própria casa?
-     V7(zumbi)   dificuldade normal ou acima
-     V1, V6      fechar o critério que falta em cada um
+V1 a V7          respondidos
+encolhimento     verificado
+loop de simulação e P4   verificados
 ```
 
-Confirmados em jogo: V2, V3, V5 e a morte do V7. O relato completo, com
-as linhas de log que os provaram, está na entrada de §15.
+O relato de cada um, com as linhas de log que o provaram, está em §15.
 
-O travamento encontrado no caminho está em §11: `getBlockEntity` chamado
-de dentro do evento de carga de chunk parava a thread do servidor.
-Corrigido em `93bacdf`.
-
-V4 é o único que continua sem nenhuma evidência, e é o que o V5 depende
-para valer: baú associado ao aldeão errado produz contagem plausível.
+Quatro defeitos apareceram no caminho e estão em §11: o travamento da
+thread do servidor, a prova geométrica inalcançável, a âncora que nunca
+nascia e o baú noutro andar. Nenhum tinha sido pego por teste.
 
 ---
 
 ## Precisa de decisão do autor
 
+Nada. As três foram decididas em 2026-08-08 e implementadas.
+
 ```text
-P2   camada de coordenação    desbloqueia TASK-023   §10 item 1
+P2   camada de coordenação    core/coordination, ADR-006 emendada
 
-P3   loop de simulação        desbloqueia TASK-020   §10 item 2
+P3   loop de simulação        ColonyCycle, verificado em jogo
 
-P4   propriedade do baú       antes da Fase 8        §9
+P4   propriedade do baú       linha livre entre cama e baú,
+                              verificado em jogo
 ```
 
-Nenhuma das três é escolha de implementação. São decisões de
-arquitetura ou de regra de jogo, e as seis ADRs existentes foram todas
-aprovadas antes de virar código.
+A decisão seguinte que se enxerga daqui é a meta de estoque: hoje
+`ColonyGoals` devolve número fixo, e a meta real sai do que a expansão
+pretende construir — Fase 9.
 
 ---
 
@@ -780,8 +779,9 @@ C   consolidar este documento
 Fase 8 — Primeiro Trabalhador Funcional (TASK-024+)
 ```
 
-Depende de P2, P3 e P4. É onde a tarefa sai do papel e o aldeão de
-fato anda até a árvore.
+Sem bloqueio desde 2026-08-08. É onde a tarefa sai do papel e o aldeão
+de fato anda até a árvore — e a primeira vez que o mod escreve no
+mundo em vez de só lê-lo.
 
 ---
 
@@ -3798,6 +3798,97 @@ as três decisões do §8 estão fechadas
 
 P4 é código de fronteira e não tem teste — a camada
 fabric segue sem nenhum. Precisa de jogo
+```
+
+---
+
+## 2026-08-08 — A colônia pensou em jogo, e o P4 fechou
+
+Uma sessão, duas verificações, nenhuma correção necessária. Primeira vez
+na semana.
+
+---
+
+### O loop de simulação funcionou
+
+Linha inédita, no primeiro ciclo:
+
+```text
+Colony 0c2771b0 assigned 1 tasks (0 open)
+Colony 9a5afa23 assigned 2 tasks (0 open)
+```
+
+Os números fecham com a meta de `ColonyGoals` — 64 de madeira, 32 de
+pedra — e é isso que prova que a cadeia inteira está ligada, não só que
+o código rodou:
+
+```text
+0c2771b0   stores {OAK_LOG=192}     madeira satisfeita,
+                                    falta pedra      → 1 tarefa
+
+9a5afa23   stores nothing tracked   falta as duas    → 2 tarefas
+```
+
+`(0 open)` diz que toda tarefa criada foi reservada no mesmo ciclo por
+um trabalhador com a capacidade certa. TASK-020 e TASK-023 confirmadas
+em jogo.
+
+---
+
+### O P4 fez o que devia
+
+Quinze baús reivindicados, contra dezesseis antes das duas regras:
+
+```text
+14 de 15    entre 1,4 e 2,8 blocos
+ 1 de 15    a 5,4 blocos
+```
+
+Os dois casos que sobravam foram tratados por regras diferentes, e dá
+para ver cada uma agindo:
+
+```text
+1068,65,735 → 1068,70,735    sumiu pela regra de nível
+
+1130,69,714 → 1130,69,719    sumiu pela regra de parede
+```
+
+O segundo é o que importa: era um dos dois pares geminados de z=714 para
+z=719, e a parede o barrou enquanto deixava o vizinho passar. A regra
+não é um filtro cego de distância.
+
+Sobrou um a 5,4 blocos, `1130,69,714 → 1132,69,719`, e ele não era
+denunciável pelo log — cinco blocos tanto pode ser sala aberta quanto
+casa do lado. O autor foi ao lugar e confirmou que dá para andar de um
+ao outro sem sair da casa.
+
+A reivindicação está correta. O V4 do §7 — "cada aldeão pegou o baú da
+sua casa, não o do vizinho" — está respondido, e afirmativamente.
+
+---
+
+### O que isto encerra
+
+```text
+Fases 4 a 7    escritas, verificadas em jogo
+
+V1 a V7        respondidos
+
+§8  P2, P3, P4 decididos e implementados
+```
+
+A Fase 8 não tem mais bloqueio. TASK-024 e TASK-025 são o lenhador que
+anda até a árvore, quebra o bloco e traz a madeira — a primeira vez que
+o mod vai escrever no mundo em vez de só lê-lo.
+
+---
+
+Estado ao registrar:
+
+```text
+257 testes passando; build verde
+
+nada pendente sem verificação
 ```
 
 ---
