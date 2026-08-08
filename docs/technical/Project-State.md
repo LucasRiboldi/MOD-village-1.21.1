@@ -4194,6 +4194,69 @@ a Fase 8 travou o jogo uma vez; a correção não foi vista
 
 ---
 
+## 2026-08-08 — A correção do travamento funcionou; nome sobre a cabeça
+
+Sessão de dois minutos com a Fase 8 corrigida:
+
+```text
+[03:38:44] assigned 1 tasks (0 open)
+[03:39:14] assigned 1 tasks (0 open)
+[03:39:44] assigned 1 tasks (0 open)
+[03:40:12] Saved 3 colonies with 45 workers
+```
+
+Ciclos a cada trinta segundos, mundo salvo, saída limpa. O travamento
+não voltou, e as três correções ficam confirmadas — sem saber, ainda,
+qual das três era a causa.
+
+Nenhuma linha `felled`. O lenhador não chegou à árvore, que é o limite
+registrado em §10: o cérebro Vanilla tem agenda própria e sobrescreve o
+destino pedido.
+
+---
+
+### Identificar o trabalhador em jogo
+
+Pedido do autor: pôr uma skin no lenhador para reconhecê-lo. A skin
+enviada era de jogador, no layout 64×64 de player, e aldeão usa modelo e
+UV próprios — aplicá-la daria textura embaralhada.
+
+Mais de fundo: a profissão é nossa e existe só no servidor. Textura por
+profissão exigiria mixin de renderização no cliente, sincronização por
+rede e ADR nova, já que a ADR-004 permite um mixin só. O mod deixaria de
+funcionar em cliente Vanilla.
+
+Escolha do autor entre três: nome sobre a cabeça.
+
+```text
+LUMBERJACK    → Lenhador
+MANUFACTURER  → Fabricante
+FARMER        → Fazendeiro
+BUILDER       → Construtor
+```
+
+`WorkerNameplate` nunca sobrescreve nome existente: aldeão batizado com
+etiqueta pelo jogador continua com o nome dele. Trabalhador sem
+profissão fica sem nome — bebê e nitwit são o caso comum, e chamá-los de
+trabalhador diria algo falso.
+
+Texto literal e não chave de tradução: o mod roda no servidor e o
+cliente pode ser Vanilla puro, que mostraria a chave crua.
+
+---
+
+Estado ao registrar:
+
+```text
+257 testes de unidade + 12 de jogo; build verde
+
+travamento da Fase 8: corrigido e confirmado em jogo
+derrubada de árvore: nunca aconteceu em jogo
+nomes: escritos, não vistos
+```
+
+---
+
 # 16. Definition of Project Progress
 
 O projeto avança somente quando:

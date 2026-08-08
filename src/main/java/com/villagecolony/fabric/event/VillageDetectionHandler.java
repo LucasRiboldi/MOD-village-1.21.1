@@ -15,6 +15,7 @@ import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageScanner;
 import com.villagecolony.fabric.integration.VillagerScanner;
+import com.villagecolony.fabric.integration.WorkerNameplate;
 import com.villagecolony.fabric.work.LumberjackWork;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -281,6 +282,16 @@ public final class VillageDetectionHandler {
         if (assigned > 0) {
             VillageColonyMod.LOGGER.info(
                     "Assigned {} professions in colony {}", assigned, colony.id());
+        }
+
+        // Depois da atribuição, e não só quando ela muda algo: um
+        // trabalhador vindo do save já chega com função e sem nome.
+        int labelled = WorkerNameplate.label(
+                world, VillageColonyMod.WORKERS.ofColony(colony.id()));
+
+        if (labelled > 0) {
+            VillageColonyMod.LOGGER.info(
+                    "Named {} workers in colony {}", labelled, colony.id());
         }
     }
 
