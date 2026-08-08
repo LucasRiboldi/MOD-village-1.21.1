@@ -7,10 +7,12 @@ import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.TreeHarvester;
 import com.villagecolony.fabric.integration.TreeScanner;
+import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
@@ -136,7 +138,7 @@ public final class LumberjackWork {
             Task task) {
 
         if (!villager.getBlockPos().isWithinDistance(tree, REACH)) {
-            walkTo(villager, tree);
+            walkTo(world, villager, tree);
 
             return 0;
         }
@@ -187,20 +189,32 @@ public final class LumberjackWork {
      * cobre o caso de a árvore ter mudado — o jogador derrubou a de
      * antes, e o alvo agora é outro.
      */
-    private static void walkTo(VillagerEntity villager, BlockPos tree) {
-        if (!WorkTargets.set(villager.getUuid(), tree)) {
-            return;
-        }
+    private static void walkTo(ServerWorld world, VillagerEntity villager, BlockPos tree) {
+        WorkTargets.set(villager.getUuid(), tree);
 
-        // Só quando o destino muda, que é uma vez por árvore. Existe
-        // porque sem esta linha o log não distingue "ele recebeu o
-        // caminho e não chegou" de "ele nunca recebeu caminho" — e essa
-        // cegueira já custou uma sessão inteira nesta mesma tarefa.
+        // Uma linha por ciclo enquanto ele estiver a caminho — trinta
+        // segundos entre elas, não é spam, e é a única forma de saber o
+        // que está acontecendo com um aldeão que ninguém está olhando.
+        //
+        // A versão anterior só falava quando a árvore mudava, e a sessão
+        // de 05:23 mostrou o limite disso: uma linha, treze blocos, sete
+        // ciclos de silêncio e nenhuma derrubada. Não dava para dizer se
+        // ele andava devagar, se estava travado no caminho ou se era
+        // noite e ele estava dormindo — três causas com três correções
+        // diferentes.
         VillageColonyMod.LOGGER.info(
-                "Worker {} heading to the tree at {} ({} blocks away)",
+                "Worker {} heading to the tree at {} — {} blocks away,"
+                        + " work time: {}, path held: {}, doing: {}",
                 villager.getUuid(),
                 tree.toShortString(),
-                (int) Math.sqrt(villager.getBlockPos().getSquaredDistance(tree)));
+                (int) Math.sqrt(villager.getBlockPos().getSquaredDistance(tree)),
+                WorkHours.isWorkTime(world, villager) ? "yes" : "no",
+                villager.getBrain()
+                        .getOptionalRegisteredMemory(MemoryModuleType.WALK_TARGET)
+                        .isPresent() ? "yes" : "no",
+                villager.getBrain().getFirstPossibleNonCoreActivity()
+                        .map(Object::toString)
+                        .orElse("nothing"));
     }
 
     /**

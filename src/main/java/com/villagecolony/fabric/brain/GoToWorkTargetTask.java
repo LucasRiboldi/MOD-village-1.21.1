@@ -1,6 +1,5 @@
 package com.villagecolony.fabric.brain;
 
-import net.minecraft.entity.ai.brain.Activity;
 import net.minecraft.entity.ai.brain.BlockPosLookTarget;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.brain.WalkTarget;
@@ -62,7 +61,8 @@ public final class GoToWorkTargetTask extends MultiTickTask<VillagerEntity> {
 
     @Override
     protected boolean shouldRun(ServerWorld world, VillagerEntity villager) {
-        return isWorkTime(world, villager) && WorkTargets.of(villager.getUuid()).isPresent();
+        return WorkHours.isWorkTime(world, villager)
+                && WorkTargets.of(villager.getUuid()).isPresent();
     }
 
     @Override
@@ -72,32 +72,8 @@ public final class GoToWorkTargetTask extends MultiTickTask<VillagerEntity> {
 
     @Override
     protected boolean shouldKeepRunning(ServerWorld world, VillagerEntity villager, long time) {
-        return isWorkTime(world, villager) && WorkTargets.of(villager.getUuid()).isPresent();
-    }
-
-    /**
-     * É hora de trabalhar, e nada mais urgente está acontecendo?
-     *
-     * <p>A pergunta é feita à {@code Schedule} do próprio aldeão, e não
-     * a {@code hasActivity(WORK)}. Motivo concreto: a Activity WORK de
-     * Vanilla exige memória de {@code JOB_SITE}, e o candidato
-     * preferencial a lenhador da colônia é justamente o aldeão sem
-     * workstation — ADR-004 §6. Ele nunca teria WORK ativa, e a
-     * colônia inteira ficaria parada.
-     *
-     * <p>Pânico e esconderijo continuam vindo antes: quando o sino toca
-     * ou a incursão começa, o Brain torna essas Activities possíveis e o
-     * trabalho espera.
-     */
-    private boolean isWorkTime(ServerWorld world, VillagerEntity villager) {
-        if (villager.getBrain().hasActivity(Activity.PANIC)
-                || villager.getBrain().hasActivity(Activity.HIDE)) {
-            return false;
-        }
-
-        int timeOfDay = (int) (world.getTimeOfDay() % 24000L);
-
-        return villager.getBrain().getSchedule().getActivityForTime(timeOfDay) == Activity.WORK;
+        return WorkHours.isWorkTime(world, villager)
+                && WorkTargets.of(villager.getUuid()).isPresent();
     }
 
     /**
