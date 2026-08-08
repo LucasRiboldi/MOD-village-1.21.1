@@ -81,15 +81,105 @@ public class LumberjackGameTest implements FabricGameTest {
     }
 
     /**
-     * Folha não é alvo.
+     * A folha em cima da muda sai da frente.
+     *
+     * <p>Pedido do autor em 2026-08-08. A copa da árvore derrubada fica
+     * de pé, e a folha logo acima da base é justamente o que impede a
+     * muda de virar árvore: ela ficaria plantada para sempre debaixo da
+     * copa da antecessora, e a floresta não se reporia.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_clearance")
+    public void replantingOpensTheColumnAbove(TestContext context) {
+        BlockPos base = new BlockPos(2, 2, 2);
+
+        plantTree(context, base);
+        context.setBlockState(base.up(4), Blocks.OAK_LEAVES.getDefaultState());
+        context.setBlockState(base.up(5), Blocks.OAK_LEAVES.getDefaultState());
+
+        TreeHarvester.fell(context.getWorld(), context.getAbsolutePos(base));
+
+        context.expectBlock(Blocks.OAK_SAPLING, base);
+        context.expectBlock(Blocks.AIR, base.up(4));
+        context.expectBlock(Blocks.AIR, base.up(5));
+
+        context.complete();
+    }
+
+    /**
+     * A limpeza para no que não é folha.
+     *
+     * <p>Uma varanda do jogador acima da árvore encerra a limpeza ali. A
+     * muda não vai crescer, e isso é problema dela — não licença para
+     * abrir buraco em construção alheia.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_ceiling")
+    public void theClearanceStopsAtWhatIsNotALeaf(TestContext context) {
+        BlockPos base = new BlockPos(2, 2, 2);
+        BlockPos floor = base.up(5);
+        BlockPos leafAbove = base.up(6);
+
+        plantTree(context, base);
+        context.setBlockState(floor, Blocks.OAK_PLANKS.getDefaultState());
+        context.setBlockState(leafAbove, Blocks.OAK_LEAVES.getDefaultState());
+
+        TreeHarvester.fell(context.getWorld(), context.getAbsolutePos(base));
+
+        context.expectBlock(Blocks.OAK_PLANKS, floor);
+        context.expectBlock(Blocks.OAK_LEAVES, leafAbove);
+
+        context.complete();
+    }
+
+    /**
+     * Árvore que não cabe no baú fica de pé.
+     *
+     * <p>O tronco sai do mundo sem drop. Derrubar sem ter onde guardar
+     * não seria colher: seria destruir a árvore e não ficar com nada.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_full_chest")
+    public void aFullChestLeavesTheTreeStanding(TestContext context) {
+        BlockPos base = new BlockPos(2, 2, 2);
+        BlockPos chest = new BlockPos(5, 2, 2);
+
+        plantTree(context, base);
+        context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+
+        ServerWorld world = context.getWorld();
+        ColonyPos chestPos = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chest));
+
+        int room = ChestDepositor.freeSpaceFor(world, chestPos, Items.OAK_LOG);
+
+        context.assertTrue(room > 0, "baú vazio devia ter espaço, tinha " + room);
+
+        // Enche o baú até não caber mais nenhum tronco.
+        int leftOver = ChestDepositor.deposit(world, chestPos, Items.OAK_LOG, room);
+
+        context.assertTrue(leftOver == 0, "não coube o que o próprio baú disse caber");
+
+        context.assertTrue(
+                ChestDepositor.freeSpaceFor(world, chestPos, Items.OAK_LOG) == 0,
+                "o baú devia estar cheio");
+
+        context.expectBlock(Blocks.OAK_LOG, base);
+
+        context.complete();
+    }
+
+    /**
+     * Folha fora da coluna não é alvo.
      *
      * <p>O autor escolheu "só tronco" justamente para não encostar em
-     * construção feita de folha.
+     * construção feita de folha, e a copa fica de pé.
+     *
+     * <p>A exceção é uma coluna de um bloco de largura acima da muda, e
+     * ela tem teste próprio em {@link #replantingOpensTheColumnAbove}.
+     * Aqui a folha está ao lado do tronco: é o caso que a regra protege,
+     * e a limpeza da coluna não pode alcançá-lo.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_leaves")
     public void fellingLeavesTheLeavesAlone(TestContext context) {
         BlockPos base = new BlockPos(2, 2, 2);
-        BlockPos leaf = base.up(4);
+        BlockPos leaf = base.up(4).east();
 
         plantTree(context, base);
         context.setBlockState(leaf, Blocks.OAK_LEAVES.getDefaultState());

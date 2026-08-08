@@ -143,6 +143,26 @@ public final class LumberjackWork {
             return 0;
         }
 
+        // Perguntar antes de derrubar. O tronco sai do mundo sem drop,
+        // então madeira que não coubesse no baú seria madeira destruída:
+        // a árvore sumiria e a colônia não ficaria com nada. Recolher
+        // todos os recursos da árvore começa em não derrubar a árvore
+        // que não se pode recolher.
+        int trunk = TreeHarvester.trunkSize(world, tree);
+        int room = ChestDepositor.freeSpaceFor(world, storage.chestPosition(), Items.OAK_LOG);
+
+        if (room < trunk) {
+            VillageColonyMod.LOGGER.info(
+                    "Chest of worker {} holds only {} more logs and the tree at {} has {}"
+                            + " — leaving it standing",
+                    storage.workerId(),
+                    room,
+                    tree.toShortString(),
+                    trunk);
+
+            return 0;
+        }
+
         int felled = TreeHarvester.fell(world, tree);
 
         if (felled == 0) {
@@ -153,8 +173,11 @@ public final class LumberjackWork {
                 world, storage.chestPosition(), Items.OAK_LOG, felled);
 
         if (leftOver > 0) {
-            VillageColonyMod.LOGGER.info(
-                    "Chest of worker {} is full — {} logs had nowhere to go",
+            // Não deveria acontecer: o espaço foi conferido acima. Se
+            // acontecer, alguém mexeu no baú entre a pergunta e a
+            // resposta, e a linha existe para isso aparecer.
+            VillageColonyMod.LOGGER.warn(
+                    "Chest of worker {} filled up mid-harvest — {} logs were lost",
                     storage.workerId(),
                     leftOver);
         }

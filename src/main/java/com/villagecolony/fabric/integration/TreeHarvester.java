@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.VillageColonyMod;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
@@ -46,11 +47,25 @@ public final class TreeHarvester {
     }
 
     /**
+     * Quanto acima da muda o caminho precisa estar livre.
+     *
+     * <p>Um carvalho comum sobe até sete blocos. Abrir oito deixa a muda
+     * com espaço para virar árvore em vez de ficar plantada para sempre
+     * debaixo da copa da árvore anterior.
+     */
+    private static final int SAPLING_CLEARANCE = 8;
+
+    /**
      * Derruba a árvore que contém este tronco.
      *
      * <p>Percorre os troncos ligados por vizinhança, inclusive na
      * diagonal — carvalho cresce torto e o tronco nem sempre é uma
      * coluna reta.
+     *
+     * <p>A ordem é a pedida pelo autor em 2026-08-08: derrubar a árvore
+     * inteira, recolher a madeira, e só então replantar. Replantar antes
+     * de o tronco descer inteiro planta uma muda debaixo da própria
+     * árvore.
      *
      * <p>Replanta na base quando o chão aceita muda. Não replanta em
      * pedra nem em areia, e isso não é erro: é a mesma resposta do
@@ -80,9 +95,76 @@ public final class TreeHarvester {
             }
         }
 
+        // Tronco cortado no teto é árvore pela metade: o que sobrou
+        // continua de pé e ainda é o tronco desta árvore. Replantar
+        // agora poria uma muda debaixo dele. A árvore desce no ciclo
+        // seguinte — a busca reencontra o que ficou — e a muda entra
+        // quando o último tronco tiver caído.
+        if (logs.size() >= MAX_LOGS) {
+            VillageColonyMod.LOGGER.info(
+                    "Tree at {} hit the {}-log ceiling — felling continues next cycle,"
+                            + " no sapling yet",
+                    base.toShortString(),
+                    MAX_LOGS);
+
+            return logs.size();
+        }
+
+        clearAbove(world, base);
+
         replant(world, base);
 
         return logs.size();
+    }
+
+    /**
+     * Abre a coluna acima da muda.
+     *
+     * <p>A copa da árvore derrubada fica de pé — folha não é tronco, e a
+     * regra do autor sempre foi não encostar nela. Só que a folha logo
+     * acima da base é justamente o que impede a muda de crescer: ela
+     * fica plantada indefinidamente, e a floresta não se repõe. Este é o
+     * único lugar onde folha é tocada, e mesmo aqui é uma coluna de um
+     * bloco de largura.
+     *
+     * <p>Para no primeiro bloco que não seja folha nem ar. Um telhado, uma
+     * ponte ou uma varanda do jogador acima da árvore encerra a limpeza
+     * ali: a muda não vai crescer, e isso é problema dela, não licença
+     * para abrir buraco em construção alheia.
+     *
+     * <p>Sem drop, pela mesma razão dos troncos: item no chão despawna e
+     * a contagem passaria a mentir.
+     */
+    private static void clearAbove(ServerWorld world, BlockPos base) {
+        for (int height = 1; height <= SAPLING_CLEARANCE; height++) {
+            BlockPos above = base.up(height);
+            BlockState state = stateAt(world, above);
+
+            if (state == null) {
+                return;
+            }
+
+            if (state.isAir()) {
+                continue;
+            }
+
+            if (!state.isOf(Blocks.OAK_LEAVES)) {
+                return;
+            }
+
+            world.removeBlock(above, false);
+        }
+    }
+
+    /**
+     * Quantos troncos esta árvore tem, sem tocar em nada.
+     *
+     * <p>Serve para perguntar antes de derrubar: o tronco é removido sem
+     * drop, então madeira que não caiba no baú do trabalhador é madeira
+     * destruída. Ver {@code ChestDepositor.freeSpaceFor}.
+     */
+    public static int trunkSize(ServerWorld world, BlockPos anyLog) {
+        return connectedLogs(world, anyLog).size();
     }
 
     /** Os troncos ligados a este, até o teto. */

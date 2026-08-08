@@ -835,7 +835,7 @@ sondar bioma precisam ser feitos no jogo real, não no `runServer`.
 ```
 
 ```text
-2  Meta de estoque — Fase 9
+1  Meta de estoque — Fase 9
 
    ColonyGoals devolve 64 de madeira e 32 de pedra para
    toda colônia. Resource-System.md fala em metas mínimas
@@ -844,6 +844,38 @@ sondar bioma precisam ser feitos no jogo real, não no `runServer`.
    Isolado numa classe, e a assinatura já recebe a
    colônia.
 ```
+
+---
+
+### A colheita, decidida em 2026-08-08 e verificada em jogo
+
+O lenhador chegou à árvore e derrubou: `felled 6 logs at 1120, 64, 669`,
+às 05:32:44. É a primeira derrubada do projeto em jogo, e fecha o
+bloqueio da Fase 8.
+
+Com ela o autor fechou a regra da colheita, que agora tem quatro partes
+em ordem:
+
+```text
+derrubar a árvore inteira    troncos ligados, até o teto de 24
+
+recolher tudo                o baú é consultado antes; árvore que
+                             não cabe fica de pé, porque tronco sai
+                             do mundo sem drop e seria destruído
+
+só então replantar           tronco cortado no teto não replanta;
+                             a muda entra quando o último cair
+
+abrir a coluna acima         folha na coluna da muda sai da frente,
+                             senão ela nunca vira árvore
+```
+
+A quarta parte abre uma exceção na regra "folha não é alvo", e a
+exceção é estreita de propósito: uma coluna de um bloco de largura,
+oito de altura, e a limpeza para no primeiro bloco que não seja folha —
+um telhado do jogador acima da árvore encerra ali. Dois testes de jogo
+guardam os dois lados, e o teste antigo da folha passou a pôr a folha ao
+lado do tronco, que é o caso que a regra sempre quis proteger.
 
 ---
 
@@ -4332,17 +4364,16 @@ nome da profissão sobre a cabeça
 ### O que está escrito e nunca aconteceu em jogo
 
 ```text
-a derrubada de árvore
+nada da Fase 8
 ```
 
-É uma coisa só. A tarefa nasce, é reservada e se repete a cada ciclo; o
-caminho até a árvore, que era o bloqueio, passou a ser uma task no Brain
-e ficou verde em gametest. Falta a sessão de jogo e a linha `felled` no
-log. Ver §8.
+A Fase 8 fechou em 2026-08-08 às 05:32:44, com a linha
+`Worker e8f56d2b felled 6 logs at 1120, 64, 669`. A tarefa nasce, é
+reservada, o aldeão anda até a árvore, derruba, e a madeira entra no
+baú — tudo visto em jogo, não só em teste.
 
-O resto da Fase 8 — achar árvore, derrubar troncos ligados, replantar,
-depositar no baú, e agora andar até lá — está coberto por sete testes de
-jogo, e dois deles existem para provar o que ele **não** quebra.
+A Fase 8 está coberta por dez testes de jogo, e quatro deles existem
+para provar o que o lenhador **não** quebra.
 
 ---
 
@@ -4391,3 +4422,68 @@ O projeto avança somente quando:
 O Project-State deve sempre responder:
 
 > "Se um desenvolvedor abrir este projeto hoje, ele sabe exatamente onde estamos e qual é o próximo passo?"
+
+---
+
+## 2026-08-08 — O lenhador derrubou; a colheita ganhou ordem
+
+```text
+[05:32:14] Worker e8f56d2b heading to the tree at 1120, 64, 669
+           — 12 blocks away, work time: yes, path held: no, doing: idle
+[05:32:44] Worker e8f56d2b felled 6 logs at 1120, 64, 669
+```
+
+Trinta segundos entre uma linha e outra: um ciclo. O bloqueio da Fase 8
+caiu.
+
+O caminho até aqui passou por três coisas, e só a primeira era a
+prevista:
+
+A task no Brain. `startMovingTo` era um pedido na língua errada; quem
+manda no caminho do aldeão é a memória `WALK_TARGET`, e as tasks Vanilla
+de movimento só começam com ela vazia.
+
+O travamento ao carregar o mapa, que não tinha nada a ver com o Brain — o
+jar que travou era anterior a ele. A detecção rodava inteira dentro do
+evento de chunk carregado, uma vez por chunk, e uma vila de trinta camas
+ocupa dezenas deles. Ao abrir o mundo, centenas chegam no mesmo tick.
+Agora o gatilho enfileira e o tick drena uma varredura.
+
+E duas rodadas de instrumentação, porque as duas primeiras sessões não
+souberam dizer o que tinha acontecido. A primeira linha só falava quando
+a árvore mudava, e deu uma linha e sete ciclos de silêncio. A segunda
+fala a cada ciclo e diz distância, horário de trabalho, se a memória de
+caminho sobreviveu e que Activity o Brain escolheu — e foi ela que
+mostrou `work time: yes` e a chegada.
+
+Detalhe que a linha revelou e que vale guardar: `path held: no`. No
+instante da leitura o Vanilla já tinha descartado o `WALK_TARGET`, e o
+aldeão chegou mesmo assim. A task repõe no tick seguinte, e é a
+reposição — não a primeira escrita — que faz o caminho acontecer.
+
+---
+
+Com a derrubada em jogo, o autor fechou a regra da colheita. Ver §10.
+
+O que mudou de comportamento: a árvore que não cabe no baú fica de pé,
+em vez de virar madeira destruída; o tronco cortado no teto de 24 não
+replanta, e a muda espera o último tronco cair; e a coluna acima da muda
+é aberta de folha, senão ela nunca vira árvore.
+
+A quarta regra abre exceção em "folha não é alvo". O teste antigo dessa
+regra punha a folha exatamente na coluna da muda — ou seja, ele
+guardava as duas coisas ao mesmo tempo e agora tinha de escolher. A
+folha passou para o lado do tronco, que é o caso que a regra sempre quis
+proteger: construção do jogador feita de folha.
+
+---
+
+Estado ao registrar:
+
+```text
+257 testes de unidade + 16 de jogo; build verde
+
+Fase 8: fechada e verificada em jogo
+travamento ao carregar: corrigido e confirmado em jogo
+regra da colheita: escrita e coberta por teste, não vista em jogo
+```

@@ -66,6 +66,48 @@ public final class ChestDepositor {
     }
 
     /**
+     * Quanto deste item ainda cabe no baú.
+     *
+     * <p>Existe para poder perguntar <b>antes</b> de derrubar. A madeira
+     * é removida do mundo sem drop, então tronco derrubado que não cabe
+     * no baú é tronco destruído — a árvore sumiria e a colônia não
+     * ficaria com nada. Perguntar primeiro é o que cumpre "recolher
+     * todos os recursos da árvore".
+     *
+     * <p>Devolve zero quando o baú não pode ser lido: chunk descarregado
+     * ou baú que o jogador quebrou. Zero faz o chamador não derrubar, que
+     * é a resposta segura.
+     */
+    public static int freeSpaceFor(ServerWorld world, ColonyPos chest, Item item) {
+        BlockPos position = MinecraftTypeAdapter.toBlockPos(chest);
+
+        WorldChunk chunk = world.getChunkManager()
+                .getWorldChunk(position.getX() >> 4, position.getZ() >> 4);
+
+        if (chunk == null) {
+            return 0;
+        }
+
+        if (!(chunk.getBlockEntity(position) instanceof ChestBlockEntity inventory)) {
+            return 0;
+        }
+
+        int room = 0;
+
+        for (int slot = 0; slot < inventory.size(); slot++) {
+            ItemStack stack = inventory.getStack(slot);
+
+            if (stack.isEmpty()) {
+                room += item.getDefaultStack().getMaxCount();
+            } else if (stack.isOf(item)) {
+                room += stack.getMaxCount() - stack.getCount();
+            }
+        }
+
+        return room;
+    }
+
+    /**
      * Completa as pilhas que já existem.
      *
      * <p>Antes de abrir slot novo: um baú com sete pilhas de madeira pela
