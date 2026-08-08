@@ -41,9 +41,15 @@ public final class WorkTargets {
     private WorkTargets() {
     }
 
-    /** Manda este aldeão até aqui. Repor o mesmo destino é barato. */
-    public static void set(UUID villagerId, BlockPos target) {
-        TARGETS.put(villagerId, target.toImmutable());
+    /**
+     * Manda este aldeão até aqui. Repor o mesmo destino é barato.
+     *
+     * @return se o destino mudou — falso quando já era este
+     */
+    public static boolean set(UUID villagerId, BlockPos target) {
+        BlockPos previous = TARGETS.put(villagerId, target.toImmutable());
+
+        return !target.equals(previous);
     }
 
     public static Optional<BlockPos> of(UUID villagerId) {

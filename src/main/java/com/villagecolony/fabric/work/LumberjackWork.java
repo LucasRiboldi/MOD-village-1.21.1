@@ -188,7 +188,19 @@ public final class LumberjackWork {
      * antes, e o alvo agora é outro.
      */
     private static void walkTo(VillagerEntity villager, BlockPos tree) {
-        WorkTargets.set(villager.getUuid(), tree);
+        if (!WorkTargets.set(villager.getUuid(), tree)) {
+            return;
+        }
+
+        // Só quando o destino muda, que é uma vez por árvore. Existe
+        // porque sem esta linha o log não distingue "ele recebeu o
+        // caminho e não chegou" de "ele nunca recebeu caminho" — e essa
+        // cegueira já custou uma sessão inteira nesta mesma tarefa.
+        VillageColonyMod.LOGGER.info(
+                "Worker {} heading to the tree at {} ({} blocks away)",
+                villager.getUuid(),
+                tree.toShortString(),
+                (int) Math.sqrt(villager.getBlockPos().getSquaredDistance(tree)));
     }
 
     /**
