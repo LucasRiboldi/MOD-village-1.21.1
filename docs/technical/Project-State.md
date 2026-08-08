@@ -1026,6 +1026,10 @@ ColonyLifecycle sem escritor em produção
 
   toda colônia vinda do save ficaria DORMANT para sempre,
   e o loop de simulação a ignoraria em silêncio
+
+World.getBlockEntity chamado de dentro do evento de chunk
+
+  a thread do servidor travou; o terreno parou de carregar
 ```
 
 Os dois primeiros só apareceram rodando o mod no jogo real.
@@ -2774,6 +2778,110 @@ Estado ao encerrar:
 Core sem net.minecraft; nenhum domínio importa outro
 
 9 commits à frente de origin/main, agora empurrados
+```
+
+---
+
+## 2026-08-07 — Primeiro defeito de fronteira encontrado em jogo
+
+A sessão de verificação começou e não chegou ao roteiro: o jogo travou o
+carregamento de terreno depois de alguns minutos de caminhada.
+
+Antes disso, uma sessão foi perdida por método. O jar instalado em
+`.minecraft/mods/` era das 09:41 e continha apenas até a TASK-012 —
+conferido abrindo o jar, sem `Profession`, `ChestScanner` nem `Task`
+dentro. Nada das Fases 4 e 5 podia aparecer no log porque nada das
+Fases 4 e 5 estava rodando. A armadilha do §11 tem agora uma irmã:
+
+```text
+Jar velho na pasta de mods não testa nada.
+Conferir o conteúdo do jar, não a data do arquivo.
+```
+
+O que aquela sessão provou, ainda assim, do V1:
+
+```text
+Colony created at ColonyPos[x=886, y=69, z=922] with 26 beds
+Colony ... moved to ... with 27 beds
+Registered 2 villagers in colony c18264c9 (8 total)
+Registered 6 villagers in colony c18264c9 (14 total)
+Colony c18264c9 is now DORMANT
+Saved 2 colonies with 30 workers
+```
+
+Detecção, movimentação de centro, registro incremental sem repetir os
+mesmos aldeões, DORMANT ao afastar e gravação ao sair. Falta conferir
+se `N` bate com a contagem real da vila, que só se vê em jogo.
+
+---
+
+### O travamento
+
+Com o jar correto, o terreno parou de carregar. Não houve crash, não
+houve linha de log — o `latest.log` ficou em zero byte, com o buffer
+presa na thread travada. O defeito não se denunciou por log nenhum.
+
+Quem o expôs foi um thread dump do processo, com `jstack`:
+
+```text
+"Server thread" ... TIMED_WAITING (parking)
+  at net.minecraft.class_1937.method_8321          getBlockEntity
+  at ChestInventoryReader.read(ChestInventoryReader.java:49)
+  at ChestInventoryReader.readColony(...:116)
+  at VillageDetectionHandler.logResources(...:171)
+  at VillageDetectionHandler.registerVillagers(...:143)
+  at VillageDetectionHandler.detectAround(...:235)
+  at VillageDetectionHandler.onChunkLoad(...:78)
+  at ServerChunkEvents.lambda$static$0(ServerChunkEvents.java:44)
+```
+
+A pilha diz tudo: `onChunkLoad` roda dentro do pipeline de carga de
+chunk, na própria thread do servidor. Dali, `World.getBlockEntity`
+carrega o chunk que faltar, e a thread passa a esperar por um chunk que
+só ela mesma poderia produzir. Ela para, e com ela para todo o
+carregamento de terreno.
+
+Correção: `ChestInventoryReader.read` passou a buscar o chunk por
+`getChunkManager().getWorldChunk(...)` e a devolver vazio quando ele não
+está carregado — exatamente o que o `ChestScanner.findFreeChest` já
+fazia, pela ADR-002 §"o mod não segura chunk". Os dois lados da leitura
+de baú agora seguem a mesma regra.
+
+Consequência aceita: baú em chunk descarregado não entra na contagem.
+É o comportamento correto — a colônia não enxerga o que não está
+carregado — mas cai no risco que o V5 já apontava, o de um defeito que
+aparece como número plausível em vez de ausência.
+
+---
+
+### O que isto custou e o que ensina
+
+```text
+o defeito não estava no código de domínio
+
+  217 testes verdes, e nenhum deles poderia pegá-lo:
+  o erro é a thread errada chamando o método certo
+```
+
+```text
+"instrumentar antes de suspeitar" não bastou aqui
+
+  a thread travou antes de escrever a linha; o log
+  ficou em zero byte. Contra travamento, a ferramenta
+  é o thread dump, não o log
+```
+
+Isto reforça o item A do §8 — o Fabric Game Test rodaria a detecção num
+servidor de verdade e teria travado o build, e não a tarde do autor.
+
+Estado ao registrar:
+
+```text
+217 testes passando
+
+./gradlew build → BUILD SUCCESSFUL
+
+roteiro V1 a V7 ainda por rodar; a sessão travou antes
 ```
 
 ---

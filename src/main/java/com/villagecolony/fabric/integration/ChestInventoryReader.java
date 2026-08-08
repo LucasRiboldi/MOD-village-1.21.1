@@ -11,6 +11,7 @@ import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
@@ -44,9 +45,24 @@ public final class ChestInventoryReader {
      * entity com posição própria, e é uma delas que o trabalhador
      * reivindicou. Contar as duas faria a colônia enxergar o dobro
      * quando o outro lado fosse reivindicado por outro aldeão.
+     *
+     * <p>Chunk não carregado é pulado sem forçar carregamento, como em
+     * {@link ChestScanner#findFreeChest} e pela mesma regra — ADR-002
+     * §"o mod não segura chunk". Aqui a regra é mais que economia:
+     * {@code World.getBlockEntity} carrega o chunk que faltar, e chamá-lo
+     * de dentro do evento de carga de chunk trava a thread do servidor,
+     * que passa a esperar por um chunk que só ela poderia produzir. Ver
+     * §15, entrada de 2026-08-07.
      */
     public static ResourceTally read(ServerWorld world, BlockPos position) {
-        if (!(world.getBlockEntity(position) instanceof ChestBlockEntity chest)) {
+        WorldChunk chunk = world.getChunkManager()
+                .getWorldChunk(position.getX() >> 4, position.getZ() >> 4);
+
+        if (chunk == null) {
+            return ResourceTally.empty();
+        }
+
+        if (!(chunk.getBlockEntity(position) instanceof ChestBlockEntity chest)) {
             return ResourceTally.empty();
         }
 
