@@ -24,6 +24,7 @@ import net.minecraft.world.poi.PointOfInterestStorage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.world.poi.PointOfInterestTypes;
 
@@ -236,10 +237,12 @@ public final class VillageDetectionHandler {
         for (VillageCandidate candidate : SCANNER.scan(world, trigger)) {
             int before = VillageColonyMod.COLONIES.count();
 
-            ColonyPos previousCenter = VillageColonyMod.COLONIES
-                    .findNearest(candidate.center(), VillageDetector.DUPLICATE_DISTANCE)
-                    .map(Colony::center)
-                    .orElse(null);
+            Optional<Colony> known = VillageColonyMod.COLONIES
+                    .findNearest(candidate.center(), VillageDetector.DUPLICATE_DISTANCE);
+
+            ColonyPos previousCenter = known.map(Colony::center).orElse(null);
+
+            logRefusedShrink(known, candidate);
 
             Colony colony = VillageColonyMod.COLONIES.adopt(candidate);
 
@@ -259,5 +262,35 @@ public final class VillageDetectionHandler {
                         candidate.bedCount());
             }
         }
+    }
+
+    /**
+     * Quando uma observação viu menos camas mas não teve autoridade para
+     * baixar a contagem.
+     *
+     * <p>Existe porque em 2026-08-07 camas foram destruídas em jogo e a
+     * colônia não encolheu, e o log não sabia dizer se a regra de
+     * completude tinha recusado a observação ou se a observação menor
+     * nunca tinha chegado. São causas diferentes com correções
+     * diferentes.
+     *
+     * <p>É o "instrumentar antes de suspeitar" do §11: a linha que expõe
+     * o caso precisa existir antes de alguém desconfiar dele.
+     *
+     * <p>Não vira spam por si: só sai quando a contagem observada está
+     * abaixo da registrada, que é justamente o caso raro.
+     */
+    private static void logRefusedShrink(Optional<Colony> known, VillageCandidate candidate) {
+        known.ifPresent(colony -> {
+            if (candidate.bedCount() >= colony.observedBeds() || candidate.complete()) {
+                return;
+            }
+
+            VillageColonyMod.LOGGER.info(
+                    "Colony {} saw {} beds, keeping {} — view not provably complete",
+                    colony.id(),
+                    candidate.bedCount(),
+                    colony.observedBeds());
+        });
     }
 }
