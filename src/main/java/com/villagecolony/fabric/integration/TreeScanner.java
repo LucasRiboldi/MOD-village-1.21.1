@@ -64,6 +64,30 @@ public final class TreeScanner {
     public static Optional<BlockPos> findNearestLog(
             ServerWorld world, BlockPos center, int radius) {
 
+        return findNearestLog(world, center, radius, log -> true);
+    }
+
+    /**
+     * O tronco mais próximo que quem procura aceita.
+     *
+     * <p>O filtro existe porque a colônia passou a ter vários lenhadores
+     * ao mesmo tempo. A busca parte sempre do centro e é determinística,
+     * então sem filtro os cinco lenhadores recebem a mesma árvore, quatro
+     * deles chegam num tronco que já caiu e o jogador vê meia vila em
+     * volta de um toco. Quem chama diz quais troncos já estão tomados; a
+     * espiral simplesmente continua.
+     *
+     * <p>Recusado não conta para o teto de colunas de propósito: a coluna
+     * foi olhada e custou o mesmo. Um lenhador cercado de árvores tomadas
+     * desiste no mesmo lugar em que desistiria se não houvesse árvore
+     * nenhuma, e tenta de novo depois.
+     */
+    public static Optional<BlockPos> findNearestLog(
+            ServerWorld world,
+            BlockPos center,
+            int radius,
+            java.util.function.Predicate<BlockPos> accepts) {
+
         int columns = 0;
 
         for (int ring = 0; ring <= radius; ring++) {
@@ -88,7 +112,7 @@ public final class TreeScanner {
                     Optional<BlockPos> log = logInColumn(
                             world, center.getX() + dx, center.getZ() + dz);
 
-                    if (log.isPresent()) {
+                    if (log.isPresent() && accepts.test(log.get())) {
                         return log;
                     }
                 }

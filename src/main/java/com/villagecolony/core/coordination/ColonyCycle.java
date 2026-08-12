@@ -66,7 +66,7 @@ public final class ColonyCycle {
         Map<ResourceType, Integer> missing = ResourceDemand.deficit(goal, owned);
 
         cancelSatisfied(colonyId, missing, tasks);
-        requestMissing(colonyId, missing, tasks);
+        requestMissing(colonyId, missing, tasks, workers);
 
         return WorkAssignment.assign(colonyId, workers, tasks);
     }
@@ -92,46 +92,78 @@ public final class ColonyCycle {
     }
 
     /**
-     * Cria um pedido por recurso em falta, se ainda não houver um.
+     * Pede o que falta, um pedido por mão que a colônia tem.
      *
-     * <p>Um por recurso, e não um por ciclo: o ciclo roda a cada trinta
-     * segundos, e uma colônia com falta permanente acumularia uma tarefa
-     * por ciclo até a fila crescer sem limite.
+     * <p>Um por trabalhador capaz, e não um só por recurso. Uma tarefa
+     * tem um executor — Simulation-Loop.md §"Uma tarefa possui apenas um
+     * executor" —, então uma colônia com cinco lenhadores e um pedido de
+     * madeira põe quatro deles a olhar o quinto trabalhar. Enquanto a
+     * tarefa durava uma árvore isso quase não aparecia, porque ela girava
+     * entre os aldeões a cada ciclo; com a Regra 1, que a faz durar até o
+     * baú encher, um lenhador só trabalharia por muito tempo.
      *
-     * <p>A quantidade é o que falta agora. Um pedido já aberto não é
-     * reescrito quando a falta cresce — mexer no alvo de uma tarefa que
-     * alguém pode estar executando é outra decisão, e o MVP não precisa
-     * dela: o ciclo seguinte à conclusão pede o resto.
+     * <p>O teto é o número de trabalhadores capazes, e não o de ociosos.
+     * Quem já está executando segura uma das tarefas abertas e por isso
+     * já está contado; olhar só os ociosos abriria uma tarefa nova a cada
+     * ciclo para quem já está trabalhando, que é o E1 de volta por outra
+     * porta.
+     *
+     * <p>E não é um por ciclo: uma colônia com falta permanente
+     * acumularia uma tarefa por ciclo até a fila crescer sem limite.
+     *
+     * <p>A quantidade é a falta repartida entre os pedidos abertos. É uma
+     * divisão de fachada e vale dizer por quê: quem de fato encerra o
+     * trabalho é o espaço no baú <em>daquele</em> trabalhador, conferido
+     * a cada árvore por {@code LumberjackWork}. O número na tarefa serve
+     * para o log e para o dia em que houver recurso cuja coleta não passe
+     * por baú próprio.
+     *
+     * <p>Um pedido já aberto não é reescrito quando a falta cresce —
+     * mexer no alvo de uma tarefa que alguém pode estar executando é
+     * outra decisão, e o MVP não precisa dela.
      */
     private static void requestMissing(
-            UUID colonyId, Map<ResourceType, Integer> missing, TaskService tasks) {
+            UUID colonyId,
+            Map<ResourceType, Integer> missing,
+            TaskService tasks,
+            WorkerService workers) {
 
         for (Map.Entry<ResourceType, Integer> entry : missing.entrySet()) {
-            if (hasOpenRequestFor(colonyId, entry.getKey(), tasks)) {
+            ResourceType resource = entry.getKey();
+            TaskType type = typeFor(resource);
+
+            int hands = WorkAssignment.countCapableOf(colonyId, type.required(), workers);
+
+            if (hands == 0) {
+                // Ninguém sabe fazer. Abrir a tarefa mesmo assim a
+                // deixaria na fila para sempre, sem executor possível.
                 continue;
             }
 
-            tasks.create(
-                    colonyId,
-                    typeFor(entry.getKey()),
-                    TaskPriority.PRODUCTION,
-                    entry.getKey(),
-                    entry.getValue());
+            int open = countOpenRequestsFor(colonyId, resource, tasks);
+            int share = Math.max(1, entry.getValue() / hands);
+
+            for (int i = open; i < hands; i++) {
+                tasks.create(colonyId, type, TaskPriority.PRODUCTION, resource, share);
+            }
         }
     }
 
-    private static boolean hasOpenRequestFor(
+    /** Quantos pedidos deste recurso ainda estão de pé. */
+    private static int countOpenRequestsFor(
             UUID colonyId, ResourceType resource, TaskService tasks) {
+
+        int open = 0;
 
         for (Task task : tasks.ofColony(colonyId)) {
             if (task.targetResource() == resource && task.state() != TaskState.CANCELLED
                     && task.state() != TaskState.COMPLETED) {
 
-                return true;
+                open++;
             }
         }
 
-        return false;
+        return open;
     }
 
     /**

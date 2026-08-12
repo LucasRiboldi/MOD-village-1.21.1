@@ -691,6 +691,99 @@ public class LumberjackGameTest implements FabricGameTest {
         });
     }
 
+    /**
+     * Dois lenhadores, duas árvores.
+     *
+     * <p>A busca parte sempre do centro da colônia e é determinística:
+     * sem reserva, os dois recebem a mesma árvore, um só a derruba e o
+     * outro fica ao lado de um toco. É o defeito que nasceu no instante
+     * em que a colônia passou a abrir uma tarefa por trabalhador.
+     *
+     * <p>Dois ticks porque a varredura por árvore tem orçamento de uma
+     * por tick no servidor inteiro — é o teto que impede o trabalho
+     * contínuo de virar varredura contínua.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_two_workers",
+            tickLimit = 200)
+    public void twoLumberjacksDoNotShareATree(TestContext context) {
+        BlockPos first = new BlockPos(2, 2, 2);
+        BlockPos second = new BlockPos(6, 2, 6);
+
+        clearColonyState();
+
+        plantTree(context, first);
+        plantTree(context, second);
+        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+
+        ServerWorld world = context.getWorld();
+
+        Colony colony = Colony.create(
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(first)));
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        for (int i = 0; i < 2; i++) {
+            BlockPos chest = new BlockPos(1, 2, 4 + i);
+
+            context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+
+            VillagerEntity villager = context.spawnEntity(
+                    EntityType.VILLAGER, new BlockPos(4, 2, 4));
+            villager.setBreedingAge(0);
+
+            Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+            worker.assign(ProfessionType.LUMBERJACK);
+
+            VillageColonyMod.STORAGES.register(WorkerStorage.of(
+                    villager.getUuid(),
+                    MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chest))));
+
+            Task task = VillageColonyMod.TASKS.create(
+                    colony.id(),
+                    TaskType.COLLECT_WOOD,
+                    TaskPriority.PRODUCTION,
+                    ResourceType.OAK_LOG,
+                    32);
+
+            task.reserveFor(villager.getUuid());
+        }
+
+        LumberjackWork.run(world, colony);
+
+        context.runAtTick(4, () -> {
+            List<BlockPos> working = LumberjackWork.blocksInProgress();
+
+            context.assertTrue(
+                    working.size() == 2,
+                    "esperava dois lenhadores com árvore, foram " + working.size());
+
+            context.assertTrue(
+                    !working.get(0).equals(working.get(1)),
+                    "os dois pegaram o mesmo tronco: " + working.get(0).toShortString());
+
+            // E são de árvores diferentes, não dois troncos da mesma.
+            int firstColumn = 0;
+
+            for (BlockPos pos : working) {
+                if (pos.getX() == context.getAbsolutePos(first).getX()
+                        && pos.getZ() == context.getAbsolutePos(first).getZ()) {
+
+                    firstColumn++;
+                }
+            }
+
+            context.assertTrue(
+                    firstColumn == 1,
+                    "os dois foram para a mesma árvore: " + firstColumn + " na primeira");
+
+            clearColonyState();
+            LumberjackWork.clearAll();
+
+            context.complete();
+        });
+    }
+
     /** Quantos troncos da árvore ainda estão de pé. */
     private static int logsStanding(TestContext context, BlockPos base) {
         int standing = 0;

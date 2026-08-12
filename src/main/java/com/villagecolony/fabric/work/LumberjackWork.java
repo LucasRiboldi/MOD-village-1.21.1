@@ -25,10 +25,12 @@ import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -123,6 +125,21 @@ public final class LumberjackWork {
      * por tick que não seria.
      */
     private static final Map<UUID, Job> JOBS = new HashMap<>();
+
+    /**
+     * Os troncos que já têm dono.
+     *
+     * <p>A colônia passou a abrir uma tarefa por lenhador, e a busca por
+     * árvore parte sempre do centro e é determinística: sem isto, todos
+     * receberiam a mesma árvore, um só a derrubaria e os outros ficariam
+     * em volta de um toco.
+     *
+     * <p>Guarda os troncos do plano, e não a árvore como um ponto: a
+     * busca devolve tronco, então comparar tronco com tronco é exato e
+     * custa uma consulta de conjunto. As folhas ficam de fora porque a
+     * busca nunca as devolve.
+     */
+    private static final Set<BlockPos> CLAIMED = new HashSet<>();
 
     private LumberjackWork() {
     }
@@ -226,6 +243,7 @@ public final class LumberjackWork {
             Job job = entry.getValue();
 
             if (!isOngoing(job.task)) {
+                unclaim(job.plan);
                 entries.remove();
 
                 continue;
@@ -238,6 +256,7 @@ public final class LumberjackWork {
             }
 
             if (outcome == Outcome.DONE) {
+                unclaim(job.plan);
                 entries.remove();
             }
         }
@@ -322,6 +341,8 @@ public final class LumberjackWork {
             // recolher, e só então replantar.
             TreeHarvester.finish(world, job.plan);
 
+            unclaim(job.plan);
+
             job.plan = null;
         }
 
@@ -330,7 +351,7 @@ public final class LumberjackWork {
         }
 
         Optional<BlockPos> tree = TreeScanner.findNearestLog(
-                world, job.center, SEARCH_RADIUS);
+                world, job.center, SEARCH_RADIUS, log -> !CLAIMED.contains(log));
 
         if (tree.isEmpty()) {
             // Nenhuma árvore ao alcance. Não é motivo para encerrar: a
@@ -363,6 +384,8 @@ public final class LumberjackWork {
         if (plan.isEmpty()) {
             return Outcome.SEARCHED;
         }
+
+        claim(plan);
 
         job.plan = plan;
         job.index = 0;
@@ -552,7 +575,45 @@ public final class LumberjackWork {
 
     /** Esquece o trabalho de quem já não tem tarefa aberta. */
     private static void dropClosedJobs() {
-        JOBS.values().removeIf(job -> !isOngoing(job.task));
+        JOBS.values().removeIf(job -> {
+            if (isOngoing(job.task)) {
+                return false;
+            }
+
+            unclaim(job.plan);
+
+            return true;
+        });
+    }
+
+    /**
+     * Reserva os troncos desta árvore para quem vai derrubá-la.
+     *
+     * <p>Só o tronco. A busca por árvore nunca devolve folha, então
+     * reservar a copa não impediria colisão nenhuma e faria o conjunto
+     * crescer sete vezes à toa.
+     */
+    private static void claim(TreeHarvester.Plan plan) {
+        for (int i = 0; i < plan.logs(); i++) {
+            CLAIMED.add(plan.blocks().get(i));
+        }
+    }
+
+    /**
+     * Devolve os troncos que este plano tinha reservado.
+     *
+     * <p>Chamado em toda saída — árvore terminada, tarefa encerrada,
+     * trabalhador morto. Uma reserva esquecida é uma árvore que ninguém
+     * mais pode cortar até o servidor reiniciar.
+     */
+    private static void unclaim(TreeHarvester.Plan plan) {
+        if (plan == null) {
+            return;
+        }
+
+        for (int i = 0; i < plan.logs(); i++) {
+            CLAIMED.remove(plan.blocks().get(i));
+        }
     }
 
     /**
@@ -563,12 +624,17 @@ public final class LumberjackWork {
      * mais vai encontrar.
      */
     public static void forget(UUID workerId) {
-        JOBS.remove(workerId);
+        Job job = JOBS.remove(workerId);
+
+        if (job != null) {
+            unclaim(job.plan);
+        }
     }
 
     /** Esvazia o registro, junto com o resto do estado em memória. */
     public static void clearAll() {
         JOBS.clear();
+        CLAIMED.clear();
     }
 
     /** Quantos lenhadores estão com trabalho aberto agora. */

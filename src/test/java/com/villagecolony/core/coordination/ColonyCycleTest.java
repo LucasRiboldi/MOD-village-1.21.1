@@ -54,6 +54,8 @@ class ColonyCycleTest {
 
     @Test
     void aDeficitBecomesATask() {
+        lumberjack();
+
         ColonyCycle.run(COLONY, owning(10), GOAL, tasks, workers);
 
         List<Task> created = tasks.ofColony(COLONY);
@@ -88,6 +90,8 @@ class ColonyCycleTest {
      */
     @Test
     void aSecondCycleDoesNotDuplicateTheRequest() {
+        lumberjack();
+
         ColonyCycle.run(COLONY, owning(10), GOAL, tasks, workers);
         ColonyCycle.run(COLONY, owning(10), GOAL, tasks, workers);
         ColonyCycle.run(COLONY, owning(10), GOAL, tasks, workers);
@@ -98,6 +102,8 @@ class ColonyCycleTest {
     /** Falta maior no ciclo seguinte não cria segunda tarefa do mesmo tipo. */
     @Test
     void aGrowingDeficitStillKeepsOneTask() {
+        lumberjack();
+
         ColonyCycle.run(COLONY, owning(50), GOAL, tasks, workers);
         ColonyCycle.run(COLONY, owning(2), GOAL, tasks, workers);
 
@@ -107,6 +113,8 @@ class ColonyCycleTest {
     /** Recursos diferentes em falta produzem tarefas diferentes. */
     @Test
     void eachMissingResourceGetsItsOwnTask() {
+        lumberjack();
+
         Map<ResourceType, Integer> goal = Map.of(
                 ResourceType.OAK_LOG, 64,
                 ResourceType.COBBLESTONE, 32);
@@ -131,6 +139,8 @@ class ColonyCycleTest {
      */
     @Test
     void theTaskIsCancelledWhenTheDeficitIsGone() {
+        lumberjack();
+
         ColonyCycle.run(COLONY, owning(10), GOAL, tasks, workers);
         ColonyCycle.run(COLONY, owning(64), GOAL, tasks, workers);
 
@@ -164,10 +174,105 @@ class ColonyCycleTest {
                 () -> ColonyCycle.run(COLONY, ResourceTally.empty(), null, tasks, workers));
     }
 
+    /**
+     * Cada lenhador ganha o seu pedido.
+     *
+     * <p>Uma tarefa tem um executor só. Com um pedido de madeira e cinco
+     * lenhadores, quatro ficariam olhando o quinto trabalhar — e desde a
+     * Regra 1, que faz a tarefa durar até o baú encher, ficariam olhando
+     * por muito tempo.
+     */
+    @Test
+    void everyCapableWorkerGetsATaskOfItsOwn() {
+        lumberjack();
+        lumberjack();
+        lumberjack();
+
+        ColonyCycle.run(COLONY, owning(10), GOAL, tasks, workers);
+
+        assertEquals(3, tasks.count());
+
+        for (Task task : tasks.ofColony(COLONY)) {
+            assertEquals(TaskState.RESERVED, task.state(), "sobrou tarefa sem dono");
+        }
+    }
+
+    /** A falta é repartida entre os pedidos abertos. */
+    @Test
+    void theDeficitIsSplitBetweenTheWorkers() {
+        lumberjack();
+        lumberjack();
+
+        ColonyCycle.run(COLONY, owning(4), GOAL, tasks, workers);
+
+        for (Task task : tasks.ofColony(COLONY)) {
+            assertEquals(30, task.amount(), "esperava metade dos 60 que faltam");
+        }
+    }
+
+    /**
+     * O ciclo seguinte não abre uma segunda rodada.
+     *
+     * <p>O teto é o número de trabalhadores capazes, e quem já está
+     * executando segura um dos pedidos — contá-lo como ocioso faria a
+     * colônia abrir uma tarefa nova por ciclo para quem já trabalha, que
+     * é o E1 de volta por outra porta.
+     */
+    @Test
+    void aSecondCycleDoesNotAddASecondRoundOfTasks() {
+        lumberjack();
+        lumberjack();
+
+        ColonyCycle.run(COLONY, owning(10), GOAL, tasks, workers);
+        ColonyCycle.run(COLONY, owning(10), GOAL, tasks, workers);
+        ColonyCycle.run(COLONY, owning(10), GOAL, tasks, workers);
+
+        assertEquals(2, tasks.count());
+    }
+
+    /**
+     * Um lenhador novo entra e ganha trabalho.
+     *
+     * <p>É o outro lado do teto: ele acompanha a colônia. Um aldeão que
+     * vira lenhador no meio da partida não precisa esperar a fila
+     * esvaziar.
+     */
+    @Test
+    void aNewWorkerGetsATaskInTheNextCycle() {
+        lumberjack();
+
+        ColonyCycle.run(COLONY, owning(10), GOAL, tasks, workers);
+
+        assertEquals(1, tasks.count());
+
+        lumberjack();
+
+        ColonyCycle.run(COLONY, owning(10), GOAL, tasks, workers);
+
+        assertEquals(2, tasks.count());
+    }
+
+    /**
+     * Sem ninguém que saiba fazer, não se abre pedido.
+     *
+     * <p>Uma tarefa que nenhuma profissão da colônia pode executar fica
+     * na fila para sempre: nada a cancela, porque a falta continua, e
+     * nada a conclui, porque não há executor. Era assim que a meta de
+     * pedra sobrevivia.
+     */
+    @Test
+    void nobodyCapableMeansNoRequest() {
+        ColonyCycle.run(COLONY, owning(10), GOAL, tasks, workers);
+
+        assertEquals(0, tasks.count());
+    }
+
     /** Uma colônia não mexe na fila da outra. */
     @Test
     void oneColonyDoesNotTouchAnother() {
         UUID other = UUID.randomUUID();
+
+        lumberjack();
 
         ColonyCycle.run(COLONY, owning(10), GOAL, tasks, workers);
         ColonyCycle.run(other, owning(64), GOAL, tasks, workers);

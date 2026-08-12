@@ -92,6 +92,42 @@ public final class WorkAssignment {
     }
 
     /**
+     * Quantos trabalhadores da colônia sabem fazer isto.
+     *
+     * <p>É quantas mãos a colônia tem para uma capacidade, e não quantas
+     * estão livres agora: quem já está executando conta, porque a tarefa
+     * dele é uma das que a colônia abriu. Contar só os ociosos faria a
+     * colônia abrir uma tarefa nova a cada ciclo para quem já está
+     * trabalhando.
+     *
+     * <p>Mora aqui, e não em {@code ColonyCycle}, pelo mesmo motivo que
+     * {@link #takeOneTask}: ler profissão e traduzir para capacidade é o
+     * que esta classe faz, e fazê-lo em dois lugares abriria espaço para
+     * as duas leituras divergirem.
+     */
+    public static int countCapableOf(
+            java.util.UUID colonyId, Capability capability, WorkerService workers) {
+
+        Objects.requireNonNull(colonyId, "colonyId");
+        Objects.requireNonNull(capability, "capability");
+        Objects.requireNonNull(workers, "workers");
+
+        int capable = 0;
+
+        for (Worker worker : workers.ofColony(colonyId)) {
+            if (worker.profession()
+                    .map(ProfessionRegistry::of)
+                    .filter(catalogued -> catalogued.capabilities().contains(capability))
+                    .isPresent()) {
+
+                capable++;
+            }
+        }
+
+        return capable;
+    }
+
+    /**
      * Dá a este trabalhador a tarefa mais urgente que ele saiba fazer.
      *
      * <p>Percorre as capacidades da profissão porque um pedreiro que
