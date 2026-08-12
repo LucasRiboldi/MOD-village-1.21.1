@@ -8,6 +8,7 @@ import com.villagecolony.fabric.integration.ChestMarker;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.decoration.ItemFrameEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
@@ -150,6 +151,129 @@ public class ChestMarkerGameTest implements FabricGameTest {
                 "o quadro continuou pendurado");
 
         context.complete();
+    }
+
+    /**
+     * Dois baús vizinhos não disputam o mesmo quadro.
+     *
+     * <p>O defeito que este teste guarda, achado no log de 2026-08-12: os
+     * baús de {@code 1118,70,727} e {@code 1120,70,727} ficam a dois
+     * blocos, e a busca por quadro aceitava qualquer um dentro da caixa.
+     * O quadro pendurado no vão entre eles pertencia aos dois: o
+     * fabricante punha a mesa, o fazendeiro punha a enxada trinta
+     * segundos depois, e a vila passou a sessão inteira com um baú que
+     * mentia sobre o próprio dono.
+     *
+     * <p>Os cinco testes anteriores usam um baú só, e por isso nenhum
+     * deles pegava isso.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "marker_neighbours")
+    public void twoChestsDoNotShareOneFrame(TestContext context) {
+        ChestMarker.clearAll();
+
+        BlockPos ofLumberjack = new BlockPos(3, 2, 3);
+        BlockPos ofFarmer = new BlockPos(5, 2, 3);
+        BlockPos gap = new BlockPos(4, 2, 3);
+
+        context.setBlockState(ofLumberjack, Blocks.CHEST.getDefaultState());
+        context.setBlockState(ofFarmer, Blocks.CHEST.getDefaultState());
+
+        // Só o vão entre eles fica livre. É a única forma de o quadro
+        // nascer onde as duas buscas se cruzam — que é o caso do defeito.
+        for (BlockPos chest : List.of(ofLumberjack, ofFarmer)) {
+            for (net.minecraft.util.math.Direction side
+                    : net.minecraft.util.math.Direction.Type.HORIZONTAL) {
+
+                BlockPos neighbour = chest.offset(side);
+
+                if (!neighbour.equals(gap)) {
+                    context.setBlockState(neighbour, Blocks.STONE.getDefaultState());
+                }
+            }
+        }
+
+        ServerWorld world = context.getWorld();
+
+        List<Worker> both = List.of(
+                worker(ProfessionType.LUMBERJACK), worker(ProfessionType.FARMER));
+
+        ChestMarker.StorageLookup chests = twoChests(
+                context, both.get(0), ofLumberjack, both.get(1), ofFarmer);
+
+        int first = ChestMarker.mark(world, both, chests);
+
+        context.assertTrue(first == 2, "esperava duas marcas, foram " + first);
+
+        // O que o defeito fazia: a segunda marcação achava o quadro do
+        // vizinho e trocava o ícone dele, e isso nunca parava.
+        int again = ChestMarker.mark(world, both, chests);
+
+        context.assertTrue(again == 0, "os dois baús ficaram trocando o mesmo quadro");
+
+        List<ItemFrameEntity> frames = world.getEntitiesByClass(
+                ItemFrameEntity.class,
+                new Box(context.getAbsolutePos(gap)).expand(2.0),
+                frame -> true);
+
+        // Dois: o mesmo bloco de ar comporta um quadro em cada parede, e
+        // cada baú fica com o seu.
+        context.assertTrue(frames.size() == 2, "esperava dois quadros, foram " + frames.size());
+
+        context.assertTrue(
+                heldAt(context, frames, ofLumberjack).isOf(Items.IRON_AXE),
+                "o baú do lenhador não ficou com o machado");
+
+        context.assertTrue(
+                heldAt(context, frames, ofFarmer).isOf(Items.IRON_HOE),
+                "o baú do fazendeiro não ficou com a enxada");
+
+        context.complete();
+    }
+
+    /** O item do quadro pregado neste baú. */
+    private static ItemStack heldAt(
+            TestContext context, List<ItemFrameEntity> frames, BlockPos chest) {
+
+        BlockPos absolute = context.getAbsolutePos(chest);
+
+        for (ItemFrameEntity frame : frames) {
+            BlockPos wall = frame.getAttachedBlockPos()
+                    .offset(frame.getHorizontalFacing().getOpposite());
+
+            if (wall.equals(absolute)) {
+                return frame.getHeldItemStack();
+            }
+        }
+
+        return ItemStack.EMPTY;
+    }
+
+    /** Um trabalhador solto, com função e sem baú ainda. */
+    private static Worker worker(ProfessionType profession) {
+        Worker worker = Worker.register(UUID.randomUUID(), UUID.randomUUID());
+        worker.assign(profession);
+
+        return worker;
+    }
+
+    /** Cada um destes dois trabalhadores com o seu baú. */
+    private static ChestMarker.StorageLookup twoChests(
+            TestContext context,
+            Worker first,
+            BlockPos firstChest,
+            Worker second,
+            BlockPos secondChest) {
+
+        ColonyPos one = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(firstChest));
+        ColonyPos other = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(secondChest));
+
+        return workerId -> {
+            if (workerId.equals(first.villagerId())) {
+                return Optional.of(one);
+            }
+
+            return workerId.equals(second.villagerId()) ? Optional.of(other) : Optional.empty();
+        };
     }
 
     /**

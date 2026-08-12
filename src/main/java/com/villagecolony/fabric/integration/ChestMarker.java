@@ -195,20 +195,46 @@ public final class ChestMarker {
         return false;
     }
 
-    /** O quadro do mod colado neste baú, se já houver um. */
+    /**
+     * O quadro do mod colado neste baú, se já houver um.
+     *
+     * <p>Colado <b>neste</b> baú, e não perto dele. Até 2026-08-12 a
+     * busca aceitava qualquer quadro do mod dentro da caixa, e perto
+     * não é o mesmo que ser: dois baús reivindicados a dois blocos de
+     * distância têm caixas que se cruzam, e o quadro pendurado no vão
+     * entre eles cai dentro das duas.
+     *
+     * <p>O que isso custou na vila do autor: o baú do fabricante em
+     * {@code 1118,70,727} e o do fazendeiro em {@code 1120,70,727}
+     * disputavam o mesmo quadro, cada um repondo o seu ícone no ciclo
+     * seguinte, para sempre — 30 em 30 segundos, um dos dois estava
+     * sempre mentindo sobre de quem era o baú.
+     *
+     * <p>De qual baú o quadro é: {@code getAttachedBlockPos} devolve o
+     * bloco de ar que o quadro ocupa — não a parede —, e é a parede que
+     * responde. Ela é o bloco seguinte na direção contrária àquela para
+     * a qual o quadro olha, que é como o próprio Vanilla a encontra em
+     * {@code canStayAttached}.
+     */
     private static Optional<ItemFrameEntity> existingMarkerAt(ServerWorld world, BlockPos chest) {
         Box around = new Box(chest).expand(1.0);
 
         List<ItemFrameEntity> frames = world.getEntitiesByClass(
-                ItemFrameEntity.class, around, ChestMarker::isOurs);
+                ItemFrameEntity.class, around, frame -> isOurs(frame, chest));
 
         return frames.isEmpty() ? Optional.empty() : Optional.of(frames.get(0));
     }
 
-    private static boolean isOurs(ItemFrameEntity frame) {
+    /** Se este quadro é do mod <em>e</em> está pregado neste baú. */
+    private static boolean isOurs(ItemFrameEntity frame, BlockPos chest) {
         Text name = frame.getCustomName();
 
-        return name != null && TAG.equals(name.getString());
+        return name != null && TAG.equals(name.getString()) && chest.equals(wallOf(frame));
+    }
+
+    /** O bloco em que este quadro está pregado. */
+    private static BlockPos wallOf(ItemFrameEntity frame) {
+        return frame.getAttachedBlockPos().offset(frame.getHorizontalFacing().getOpposite());
     }
 
     /**

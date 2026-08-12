@@ -100,7 +100,7 @@ public final class VillagerScanner {
                 if (claimed.isPresent()) {
                     storagesFound++;
 
-                    announce(colony, workers, villager.getUuid(), claimed.get());
+                    announce(workers, villager.getUuid(), claimed.get());
                 }
             }
         }
@@ -120,15 +120,25 @@ public final class VillagerScanner {
      * <p>É o mesmo remédio que fechou o E2: o número sozinho não diz
      * nada, o número com o lugar diz tudo. E aqui ele custa uma linha por
      * baú reivindicado, que acontece uma vez na vida de cada baú.
+     *
+     * <p>A colônia sai do <b>trabalhador</b>, e não de quem varreu. Até
+     * 2026-08-12 saía de quem varreu, e isso fez a linha atribuir dono
+     * errado: com dois centros a 61 blocos e raio de varredura 64, um
+     * aldeão da colônia vizinha entra nesta caixa, e quem varreu
+     * primeiro assinava embaixo. A linha chegou a mostrar dois
+     * fabricantes na mesma colônia, sugerindo furo na regra de uma vaga
+     * por profissão — a regra estava certa, a linha é que dizia o nome
+     * errado.
      */
     private static void announce(
-            Colony colony, WorkerService workers, UUID villagerId, WorkerStorage storage) {
+            WorkerService workers, UUID villagerId, WorkerStorage storage) {
+
+        Optional<Worker> worker = workers.find(villagerId);
 
         VillageColonyMod.LOGGER.info(
                 "Colony {} — {} {} claimed the chest at {}",
-                colony.id(),
-                workers.find(villagerId)
-                        .flatMap(Worker::profession)
+                worker.map(Worker::colonyId).map(Object::toString).orElse("unknown"),
+                worker.flatMap(Worker::profession)
                         .map(Object::toString)
                         .orElse("worker"),
                 villagerId.toString().substring(0, 8),

@@ -5401,3 +5401,108 @@ vilas se encostam.
 
 Ambos foram achados pela linha que nomeia quem pegou qual baú, no mesmo
 dia em que ela foi escrita.
+
+---
+
+## 2026-08-12 (mais tarde) — D1 e D2 fechados, e as duas causas anotadas estavam erradas
+
+Os dois foram investigados a partir do log de `06:47–06:51` da instalação
+de teste. Nenhuma das duas hipóteses registradas de manhã sobreviveu.
+
+---
+
+### D1 — a busca aceitava quadro perto, e perto não é o mesmo que ser
+
+A causa não é o `setHeldItemStack(badge, false)` nem o save/load de
+chunk. A colônia `c18264c9` marcou **uma vez** e nunca mais — o caminho
+que converge funciona, e nenhum recarregamento é necessário para
+reproduzir o defeito. Ele é específico da `9a5afa23`.
+
+```text
+1069,65,727  MANUFACTURER
+1105,64,681  LUMBERJACK     verificado pelo autor, machado
+1118,70,727  MANUFACTURER   ┐ dois blocos
+1120,70,727  FARMER         ┘
+1127,65,665  BUILDER        verificado pelo autor, tijolo
+```
+
+`existingMarkerAt` procurava em `new Box(chest).expand(1.0)` e só
+perguntava se o quadro era do mod. As caixas dos baús de `1118` e `1120`
+se cruzam em `x ∈ [1119, 1120]`, e o quadro pendurado no vão entre eles
+cai dentro das duas: o fabricante punha a mesa, o fazendeiro punha a
+enxada trinta segundos depois, para sempre. Daí o **2** constante — nunca
+3, nunca 5 — com um quadro só no mundo.
+
+E não era só log mentiroso: o ícone alternava a cada ciclo, e um dos dois
+baús estava sempre dizendo o dono errado.
+
+A correção pergunta em que bloco o quadro está pregado.
+`getAttachedBlockPos` devolve o bloco de ar que o quadro ocupa, não a
+parede; a parede é o bloco seguinte na direção contrária à que ele olha,
+que é como o próprio Vanilla a encontra em `canStayAttached`. `unmark`
+herda a correção, e tinha o mesmo furo: podia arrancar o quadro do baú
+vizinho.
+
+Os cinco gametests usavam **um** baú, e por isso nenhum pegava isso. O
+sexto põe dois a dois blocos, com só o vão livre. Ele foi rodado contra o
+código sem a correção e falhou com "os dois baús ficaram trocando o mesmo
+quadro" — é o defeito, e não uma variante dele.
+
+Uma coisa que a investigação previu errado: eu esperava um quadro só, com
+o segundo baú ficando sem marca. São dois. O mesmo bloco de ar comporta
+um quadro em cada parede, e cada baú fica com o seu. O teste é que estava
+errado, não o código.
+
+---
+
+### D2 — a regra da vaga não tem furo; a linha é que atribuía dono errado
+
+O registro de manhã dizia que a linha reporta a colônia que varreu **e
+que por isso a regra tem um furo**. A primeira metade está certa; a
+conclusão não segue dela.
+
+`enforceVacancies` itera `workers.ofColony(colonyId)` — a colônia gravada
+no trabalhador —, e `dismissExtraWorkers` roda para cada colônia, todo
+ciclo. Não há por onde escapar um segundo lenhador da mesma colônia.
+
+A prova é uma ausência: **nenhuma linha `dismissed` na sessão inteira**, e
+nenhuma `Assigned ... professions` — as profissões vieram do save. Dois
+`MANUFACTURER` na mesma colônia do registro teriam gerado uma aposentadoria
+no primeiro ciclo.
+
+A geometria fecha o caso:
+
+```text
+9a5afa23   centro ≈ 1116,64,669
+0c2771b0   centro   1109,64,730
+                    └── 61 blocos, raio de varredura 64 cada
+```
+
+Os três baús anunciados sob `9a5afa23` em `z=727` estão a **3** blocos do
+centro da `0c2771b0` e a **58** do da `9a5afa23`. E o `colonyId` do
+trabalhador persiste no save, enquanto `workers.register` só grava colônia
+em quem ainda não existe — por isso `3f052d86` e `fb3640ae` aparecem sob
+`0c2771b0` numa sessão e sob `9a5afa23` na outra. O dono não mudou; o
+varredor mudou.
+
+`announce` passou a tirar a colônia do trabalhador.
+
+**O que sobra, e não se conserta aqui:** a regra vale por colônia do
+registro, não por vila física. Com dois centros a 61 blocos e raio 64, um
+aldeão que mora numa vila pode estar registrado na outra, e duas vilas
+encostadas podem ter dois lenhadores no mesmo lugar, cada um legítimo pela
+sua colônia. Isso é o E2 — duas colônias que deveriam ser uma — e mexer em
+`enforceVacancies` só o esconderia.
+
+---
+
+### O que continua aberto
+
+- **E2** — `from.equals(probeAnchor)` nunca é verdade quando os raios de
+  sonda se cruzam, e a colônia nunca encolhe. Intocado.
+- **O lenhador mudo** — seis tarefas por ciclo, nenhuma árvore, sem
+  instrumentação para dizer por quê. Intocado.
+- **O lado do cliente** — nome, rachadura e braço continuam sem prova.
+- **Novo, não investigado:** `Marked ... in colony 9a5afa23` aparece duas
+  vezes no mesmo segundo em vários ciclos. A colônia está sendo
+  processada duas vezes por ciclo. Pode ter relação com o E2.
