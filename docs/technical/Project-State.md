@@ -5323,3 +5323,81 @@ Roda sem jogador, então nada do que é visto pelo cliente foi verificado:
 o nome sobre a cabeça, a rachadura no bloco e o braço balançando — as
 três coisas que a Regra 2 acrescentou para ser visível — continuam sem
 prova. Isso precisa de alguém no teclado.
+
+---
+
+## 2026-08-12 — A marca do baú funciona; dois defeitos abertos
+
+Verificado pelo autor dentro do jogo: o baú de `1105,64,681` tem **um**
+quadro com o machado do lenhador, e o de `1127,65,665` tem o do
+construtor. Bate com o log, que nomeou os dois.
+
+Ou seja: a marca aparece, é única, e diz a profissão certa.
+
+---
+
+### Alarme falso que precisa ficar registrado
+
+Antes de perguntar ao autor, eu li `Marked 2 chests` repetido a cada
+ciclo e concluí que havia vinte quadros empilhados e risco para o save.
+**Estava errado.** Havia um. A conclusão saiu de um número que se repete,
+sem nenhuma observação do mundo — o mesmo erro do F1 do E2, cometido de
+novo três dias depois.
+
+A regra que isso cobra: contagem que se repete não prova acúmulo. Só
+olhar prova.
+
+---
+
+### D1 — `markOne` diz que mudou quando não mudou
+
+```text
+[06:32:40] Marked 2 chests in colony 9a5afa23
+[06:33:10] Marked 2 chests in colony 9a5afa23
+   ... a cada 30 segundos, com um quadro só no mundo
+```
+
+O que se sabe, e o que isso exclui:
+
+```text
+quadro nascendo no lugar errado   excluído — seria reencontrado ou
+                                  duplicaria, e nenhum dos dois acontece
+
+quadro duplicado                  excluído — o autor viu um só
+
+quadro encontrado e item          é o que sobra: o teste de isOf falha,
+recolocado a cada ciclo           e o ícone é reposto sem necessidade
+```
+
+Não é destrutivo e não gasta entidade. É uma linha de log que mente e
+uma escrita por ciclo que não precisava existir.
+
+O gametest não pega porque afirma o item logo depois de marcar, sem
+recarregar o chunk entre uma coisa e outra. A suspeita a investigar
+primeiro é o `setHeldItemStack(badge, false)` de `place` contra o
+`setHeldItemStack(badge)` da atualização, e o que sobrevive a um
+save/load de chunk.
+
+---
+
+### D2 — a regra da vaga não vale entre vilas vizinhas
+
+```text
+0c2771b0 — MANUFACTURER 3f052d86 claimed the chest at 1069,65,727
+0c2771b0 — FARMER       c7528432 claimed the chest at 1113,67,744
+0c2771b0 — FARMER       b97c95f5 claimed the chest at 1120,70,727
+0c2771b0 — MANUFACTURER fb3640ae claimed the chest at 1118,70,727
+```
+
+Dois fazendeiros e dois fabricantes na mesma linha de colônia, e nenhuma
+linha `dismissed` na sessão.
+
+A explicação provável, não verificada: `0c2771b0` e `9a5afa23` estão a
+cerca de 65 blocos, e a caixa de `VillagerScanner` tem raio 64 em torno
+de cada centro — elas se sobrepõem. `enforceVacancies` conta por colônia
+**do trabalhador**; a linha nova reporta a colônia que **varreu**. Se for
+isso, a linha está atribuindo dono errado e a regra tem um furo onde duas
+vilas se encostam.
+
+Ambos foram achados pela linha que nomeia quem pegou qual baú, no mesmo
+dia em que ela foi escrita.
