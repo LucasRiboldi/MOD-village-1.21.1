@@ -5506,3 +5506,33 @@ sua colônia. Isso é o E2 — duas colônias que deveriam ser uma — e mexer e
 - **Novo, não investigado:** `Marked ... in colony 9a5afa23` aparece duas
   vezes no mesmo segundo em vários ciclos. A colônia está sendo
   processada duas vezes por ciclo. Pode ter relação com o E2.
+
+---
+
+### Verificado em jogo — sessão de 07:48
+
+Antes disso houve duas tentativas que não valeram: a das 07:11 rodou o jar
+de 06:25, ainda sem a correção, e a das 07:18 durou 40 segundos sem uma
+única linha de colônia. O que o autor viu nas duas — foice no `1118`,
+nada no `1120` — era o estado congelado que o defeito deixou: um quadro
+só, pregado no baú do fabricante, com o ícone do fazendeiro, que foi o
+último a escrever nele.
+
+Na sessão das 07:48, com o jar correto e tempo para uns oito ciclos:
+
+```text
+D1   Marked aparece 2× na sessão inteira, ambas em 07:49:30, e para.
+     Os ciclos seguem rodando até 07:53:41 (camas, lenhadores).
+     Antes: de 30 em 30 segundos, para sempre.
+
+D2   0c2771b0 — MANUFACTURER 3f052d86   (era 9a5afa23)
+     Com a linha dizendo a verdade, as duas colônias aparecem com
+     um de cada profissão. O furo nunca existiu.
+```
+
+E o autor confirmou dentro do jogo: os dois baús, cada um com a sua placa.
+
+**Novo, do mesmo log:** os lenhadores estão cortando — `a60c4f43` com 22
+toras, `e8f56d2b` com 7. Não é mérito desta correção, e não se sabe o que
+mudou. A pendência do lenhador mudo precisa ser reexaminada contra este
+log, e não contra o de ontem.
