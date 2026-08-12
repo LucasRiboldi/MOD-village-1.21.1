@@ -2,6 +2,7 @@ package com.villagecolony.fabric.event;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.work.LumberjackWork;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.MobEntity;
@@ -77,6 +78,11 @@ public final class VillagerLifecycleHandler {
         // com identidade nova, mas o UUID antigo ficaria no mapa para
         // sempre se ninguém o tirasse.
         WorkTargets.clear(villagerId);
+
+        // E a árvore que ele estava quebrando: o plano guarda posições de
+        // uma colheita em curso, e sem isto ele ficaria no registro
+        // esperando por um aldeão que não volta.
+        LumberjackWork.forget(villagerId);
 
         boolean wasWorker = VillageColonyMod.WORKERS.remove(villagerId);
         boolean hadStorage = VillageColonyMod.STORAGES.remove(villagerId);

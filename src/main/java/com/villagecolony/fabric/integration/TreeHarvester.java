@@ -107,32 +107,60 @@ public final class TreeHarvester {
     }
 
     /**
-     * Derruba a árvore que contém este tronco.
+     * A colheita inteira, decidida antes de qualquer bloco cair.
+     *
+     * <p>É o que a Regra 2 pediu: o trabalhador quebra um bloco de cada
+     * vez, ao longo de muitos ticks, e precisa saber desde o começo
+     * quais blocos são desta árvore. Descobrir isso durante a colheita
+     * não daria certo — a copa é alcançada a partir dos troncos, e
+     * depois de o primeiro cair já não há de onde partir.
+     *
+     * <p>Decidir uma vez também é o que segura o custo: a varredura da
+     * árvore é a parte cara, e ela acontece no tick em que a colheita
+     * começa e em mais nenhum.
+     *
+     * @param blocks troncos primeiro, copa depois, na ordem em que caem
+     * @param complete se a árvore desce inteira — falso quando o teto
+     *     cortou o tronco, e então não se replanta
+     */
+    public record Plan(
+            TreeSpecies species,
+            BlockPos base,
+            List<BlockPos> blocks,
+            int logs,
+            int leaves,
+            boolean complete) {
+
+        public static Plan nothing() {
+            return new Plan(null, null, List.of(), 0, 0, false);
+        }
+
+        public boolean isEmpty() {
+            return blocks.isEmpty();
+        }
+    }
+
+    /**
+     * O que há para colher nesta árvore, sem tocar em nada.
      *
      * <p>Percorre os troncos ligados por vizinhança, inclusive na
      * diagonal — árvore cresce torta e o tronco nem sempre é uma coluna
      * reta. Só troncos da mesma espécie: uma parede de bétula encostada
      * num carvalho é parede, não é a árvore.
-     *
-     * <p>Replanta na base quando o chão aceita muda. Não replanta em
-     * pedra nem em areia, e isso não é erro: é a mesma resposta do
-     * Vanilla para quem tenta plantar ali. Vale igual para o propágulo do
-     * mangue, que quer lama.
      */
-    public static Harvest fell(ServerWorld world, BlockPos anyLog) {
+    public static Plan plan(ServerWorld world, BlockPos anyLog) {
         TreeSpecies species = TreeSpecies.ofLog(stateAt(world, anyLog)).orElse(null);
 
         if (species == null) {
-            return Harvest.nothing();
+            return Plan.nothing();
         }
 
         List<BlockPos> logs = connectedLogs(world, species, anyLog);
 
         if (logs.isEmpty()) {
-            return Harvest.nothing();
+            return Plan.nothing();
         }
 
-        BlockPos base = lowest(logs);
         boolean complete = logs.size() < MAX_LOGS;
 
         // A copa é achada antes de o tronco cair. Depois seria tarde: a
@@ -140,29 +168,108 @@ public final class TreeHarvester {
         // de onde partir.
         List<BlockPos> leaves = complete ? connectedLeaves(world, species, logs) : List.of();
 
-        List<ItemStack> drops = new ArrayList<>();
+        List<BlockPos> blocks = new ArrayList<>(logs);
+        blocks.addAll(leaves);
 
-        breakAll(world, logs, drops);
-        breakAll(world, leaves, drops);
+        return new Plan(
+                species, lowest(logs), List.copyOf(blocks), logs.size(), leaves.size(), complete);
+    }
 
-        if (!complete) {
-            // Tronco cortado no teto é árvore pela metade: o que sobrou
-            // continua de pé e ainda é o tronco desta árvore. Replantar
-            // agora poria uma muda debaixo dele. A árvore desce no ciclo
-            // seguinte — a busca reencontra o que ficou — e a muda entra
-            // quando o último tronco tiver caído.
-            VillageColonyMod.LOGGER.info(
-                    "Tree at {} hit the {}-log ceiling — felling continues next cycle,"
-                            + " no sapling yet",
-                    base.toShortString(),
-                    MAX_LOGS);
-        } else {
-            clearAbove(world, base);
+    /**
+     * Quebra um bloco da colheita e devolve o que ele deu.
+     *
+     * <p>Confere a espécie antes de quebrar, e é por isso que recebe o
+     * plano em vez de só a posição. Entre planejar e chegar neste bloco
+     * passam-se dezenas de ticks, e nesse meio-tempo o jogador pode ter
+     * derrubado o tronco e posto uma tábua no lugar. Quebrar o que está
+     * ali sem perguntar seria quebrar a construção dele.
+     *
+     * <p>Devolve lista vazia quando o bloco já não é desta árvore, e
+     * isso não é erro: é a colheita encontrando o mundo mudado.
+     */
+    public static List<ItemStack> breakOne(ServerWorld world, Plan plan, BlockPos pos) {
+        TreeSpecies species = plan.species();
 
-            replant(world, species, base);
+        if (species == null) {
+            return List.of();
         }
 
-        return new Harvest(logs.size(), leaves.size(), merge(drops), complete);
+        if (!isBlock(world, pos, species.log()) && !isBlock(world, pos, species.leaves())) {
+            return List.of();
+        }
+
+        List<ItemStack> drops = new ArrayList<>();
+
+        breakAll(world, List.of(pos), drops);
+
+        return drops;
+    }
+
+    /**
+     * Fecha a colheita: abre a coluna e replanta.
+     *
+     * <p>Só depois do último bloco, e é a ordem pedida pelo autor —
+     * derrubar a árvore inteira, recolher, e só então replantar.
+     * Replantar antes planta uma muda debaixo da própria árvore.
+     *
+     * <p>Replanta na base quando o chão aceita muda. Não replanta em
+     * pedra nem em areia, e isso não é erro: é a mesma resposta do
+     * Vanilla para quem tenta plantar ali. Vale igual para o propágulo do
+     * mangue, que quer lama.
+     */
+    public static void finish(ServerWorld world, Plan plan) {
+        if (plan.isEmpty()) {
+            return;
+        }
+
+        if (!plan.complete()) {
+            // Tronco cortado no teto é árvore pela metade: o que sobrou
+            // continua de pé e ainda é o tronco desta árvore. Replantar
+            // agora poria uma muda debaixo dele. A árvore desce na
+            // colheita seguinte — a busca reencontra o que ficou — e a
+            // muda entra quando o último tronco tiver caído.
+            VillageColonyMod.LOGGER.info(
+                    "Tree at {} hit the {}-log ceiling — felling continues next time,"
+                            + " no sapling yet",
+                    plan.base().toShortString(),
+                    MAX_LOGS);
+
+            return;
+        }
+
+        clearAbove(world, plan.base());
+
+        replant(world, plan.species(), plan.base());
+    }
+
+    /**
+     * Derruba a árvore inteira de uma vez.
+     *
+     * <p>Os mesmos passos que o trabalhador dá ao longo de muitos ticks
+     * — planejar, quebrar bloco a bloco, fechar — só que sem esperar
+     * entre eles. As regras da colheita moram no plano, e não aqui, para
+     * que quem testa esta porta esteja testando as regras que o jogo
+     * percorre, e não uma segunda versão delas.
+     *
+     * <p>Em jogo quem colhe é {@code LumberjackWork}, no ritmo da Regra
+     * 2. Este caminho serve a quem precisa da árvore no chão agora.
+     */
+    public static Harvest fell(ServerWorld world, BlockPos anyLog) {
+        Plan plan = plan(world, anyLog);
+
+        if (plan.isEmpty()) {
+            return Harvest.nothing();
+        }
+
+        List<ItemStack> drops = new ArrayList<>();
+
+        for (BlockPos pos : plan.blocks()) {
+            drops.addAll(breakOne(world, plan, pos));
+        }
+
+        finish(world, plan);
+
+        return new Harvest(plan.logs(), plan.leaves(), merge(drops), plan.complete());
     }
 
     /**

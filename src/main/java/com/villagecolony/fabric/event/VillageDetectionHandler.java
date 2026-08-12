@@ -9,8 +9,10 @@ import com.villagecolony.core.coordination.ColonyCycle;
 import com.villagecolony.core.coordination.ColonyGoals;
 import com.villagecolony.core.resource.model.ColonyResources;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
+import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageScanner;
@@ -201,6 +203,13 @@ public final class VillageDetectionHandler {
     private static void onServerTick(net.minecraft.server.MinecraftServer server) {
         drainOnePending(server.getOverworld());
 
+        // A Regra 2 mora aqui: o lenhador quebra um bloco de cada vez, no
+        // tempo que um jogador com machado de ferro levaria, e para isso
+        // precisa de um passo por tick — não de um passo a cada 600. O
+        // custo é um contador por lenhador; a parte cara, a busca por
+        // árvore, tem orçamento próprio dentro de LumberjackWork.
+        LumberjackWork.tick(server.getOverworld());
+
         tickCounter++;
 
         if (tickCounter < VillageDetector.CYCLE_TICKS) {
@@ -275,6 +284,12 @@ public final class VillageDetectionHandler {
 
             runCycleOf(overworld, colony);
         }
+
+        // As tarefas encerradas saem do registro depois de todas as
+        // colônias terem decidido. `purgeClosed` existia desde a Fase 7 e
+        // nunca tinha sido chamado: tarefa é objeto em memória, e nada as
+        // removia. Era a metade do E1 que a Regra 1 não resolve sozinha.
+        VillageColonyMod.TASKS.purgeClosed();
     }
 
     /**
@@ -301,10 +316,16 @@ public final class VillageDetectionHandler {
             return;
         }
 
+        // A Regra 1: a meta é o que está guardado mais o que ainda cabe.
+        // O espaço é medido aqui porque é aqui que os baús existem — o
+        // Core não conhece baú, só recebe o número. Ver ColonyGoals.
+        int room = ChestDepositor.freeSpaceForGroup(
+                overworld, workerIds, VillageColonyMod.STORAGES, ResourceGroup.WOOD);
+
         int assigned = ColonyCycle.run(
                 colony.id(),
                 survey.resources().total(),
-                ColonyGoals.of(colony),
+                ColonyGoals.of(colony, survey.resources().total(), room),
                 VillageColonyMod.TASKS,
                 VillageColonyMod.WORKERS);
 

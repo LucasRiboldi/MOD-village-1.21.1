@@ -1,8 +1,19 @@
 package com.villagecolony.gametest;
 
+import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.storage.model.WorkerStorage;
+import com.villagecolony.core.task.model.Task;
+import com.villagecolony.core.task.model.TaskPriority;
+import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceGroup;
+import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.core.worker.model.Worker;
+import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.BlockBreakTime;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.TreeHarvester;
@@ -20,6 +31,9 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
+
+import java.util.List;
+import java.util.UUID;
 
 /**
  * O lenhador derrubando — Fase 8.
@@ -396,6 +410,316 @@ public class LumberjackGameTest implements FabricGameTest {
 
             context.complete();
         });
+    }
+
+    // ----------------------------------------------------------------
+    // Regra 2 — colher no tempo de um jogador com ferramenta de ferro
+    // ----------------------------------------------------------------
+
+    /**
+     * O tronco leva meio segundo, que é o que um jogador leva.
+     *
+     * <p>Dez ticks: dureza 2, machado de ferro com velocidade 6, divisor
+     * 30 do Vanilla. O número não está escrito no código — sai da
+     * fórmula do jogo — e é aqui que se prova que sai certo.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_break_time")
+    public void aLogTakesHalfASecondWithAnIronAxe(TestContext context) {
+        BlockPos base = new BlockPos(2, 2, 2);
+
+        plantTree(context, base);
+
+        BlockPos absolute = context.getAbsolutePos(base);
+
+        int ticks = BlockBreakTime.ticksFor(
+                context.getWorld(),
+                absolute,
+                context.getWorld().getBlockState(absolute),
+                Items.IRON_AXE);
+
+        context.assertTrue(ticks == 10, "esperava 10 ticks por tronco, deu " + ticks);
+
+        context.complete();
+    }
+
+    /**
+     * A árvore não cai mais dentro de um tick.
+     *
+     * <p>É a Regra 2 pelo lado que interessa: nenhum bloco custa zero, e
+     * a colheita inteira é uma soma de esperas. Antes de 2026-08-08 uma
+     * árvore de seis troncos e oitenta folhas desaparecia no mesmo
+     * instante — visível, errado, e um pico de custo dentro de um tick.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_break_cost")
+    public void everyBlockOfTheHarvestCostsAtLeastOneTick(TestContext context) {
+        BlockPos base = new BlockPos(2, 2, 2);
+
+        plantTree(context, base);
+        context.setBlockState(base.up(4), Blocks.OAK_LEAVES.getDefaultState());
+
+        ServerWorld world = context.getWorld();
+
+        TreeHarvester.Plan plan = TreeHarvester.plan(world, context.getAbsolutePos(base));
+
+        context.assertTrue(plan.blocks().size() >= 5, "o plano não pegou a árvore inteira");
+
+        for (BlockPos pos : plan.blocks()) {
+            int ticks = BlockBreakTime.ticksFor(
+                    world, pos, world.getBlockState(pos), Items.IRON_AXE);
+
+            context.assertTrue(ticks >= 1, "bloco de graça em " + pos.toShortString());
+        }
+
+        context.complete();
+    }
+
+    /**
+     * Um bloco de cada vez deixa o resto de pé.
+     *
+     * <p>É o que permite a colheita durar: quebrar o primeiro tronco não
+     * pode levar os outros junto, senão a Regra 2 seria só uma espera
+     * antes de a árvore sumir inteira.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_one_by_one")
+    public void breakingOneBlockLeavesTheRestStanding(TestContext context) {
+        BlockPos base = new BlockPos(2, 2, 2);
+
+        plantTree(context, base);
+
+        ServerWorld world = context.getWorld();
+
+        TreeHarvester.Plan plan = TreeHarvester.plan(world, context.getAbsolutePos(base));
+
+        TreeHarvester.breakOne(world, plan, plan.blocks().get(0));
+
+        int standing = 0;
+
+        for (int y = 0; y < 4; y++) {
+            if (world.getBlockState(context.getAbsolutePos(base.up(y)))
+                    .isOf(Blocks.OAK_LOG)) {
+
+                standing++;
+            }
+        }
+
+        context.assertTrue(standing == 3, "esperava 3 troncos de pé, ficaram " + standing);
+
+        context.complete();
+    }
+
+    /**
+     * O bloco que o jogador trocou não é quebrado.
+     *
+     * <p>Entre planejar e chegar num bloco passam-se dezenas de ticks, e
+     * nesse meio-tempo o jogador pode ter posto uma tábua ali. Quebrar o
+     * que estiver na posição sem perguntar seria quebrar a construção
+     * dele — e o risco só existe porque a colheita passou a demorar.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_changed_world")
+    public void aBlockReplacedMidHarvestIsLeftAlone(TestContext context) {
+        BlockPos base = new BlockPos(2, 2, 2);
+        BlockPos top = base.up(3);
+
+        plantTree(context, base);
+
+        ServerWorld world = context.getWorld();
+
+        TreeHarvester.Plan plan = TreeHarvester.plan(world, context.getAbsolutePos(base));
+
+        // O jogador troca o tronco de cima por tábua depois do plano.
+        context.setBlockState(top, Blocks.OAK_PLANKS.getDefaultState());
+
+        List<ItemStack> drops =
+                TreeHarvester.breakOne(world, plan, context.getAbsolutePos(top));
+
+        context.assertTrue(drops.isEmpty(), "colheu o que não era da árvore");
+        context.expectBlock(Blocks.OAK_PLANKS, top);
+
+        context.complete();
+    }
+
+    // ----------------------------------------------------------------
+    // Regra 1 — colher até os baús encherem
+    // ----------------------------------------------------------------
+
+    /**
+     * O espaço é do grupo, e não de um item.
+     *
+     * <p>Um baú com meia pilha de bétula tem espaço para madeira mesmo
+     * que o próximo tronco seja de carvalho. Perguntar por um item só
+     * faria a colônia enxergar menos espaço do que tem, e parar de colher
+     * antes da hora.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_group_space")
+    public void freeSpaceCountsAnyWood(TestContext context) {
+        BlockPos chest = new BlockPos(2, 2, 2);
+
+        context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+
+        ServerWorld world = context.getWorld();
+        ColonyPos chestPos = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chest));
+
+        int empty = ChestDepositor.freeSpaceForGroup(world, chestPos, ResourceGroup.WOOD);
+
+        context.assertTrue(empty > 0, "baú vazio devia ter espaço, tinha " + empty);
+
+        // Meia pilha de bétula num slot: o espaço cai, mas o que sobrou
+        // naquele slot continua contando como espaço de madeira.
+        ChestDepositor.deposit(world, chestPos, Items.BIRCH_LOG, 32);
+
+        int afterBirch = ChestDepositor.freeSpaceForGroup(world, chestPos, ResourceGroup.WOOD);
+
+        context.assertTrue(
+                afterBirch == empty - 32,
+                "esperava " + (empty - 32) + " de espaço, deu " + afterBirch);
+
+        context.complete();
+    }
+
+    /**
+     * O que não é recurso da colônia não vira espaço.
+     *
+     * <p>Um slot ocupado por item do jogador não é espaço da colônia. Se
+     * contasse, a meta seria maior que o baú e o lenhador colheria
+     * madeira que não caberia — que é exatamente a perda que a Regra 1
+     * veio evitar.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_foreign_space")
+    public void anotherPlayersItemIsNotFreeSpace(TestContext context) {
+        BlockPos chest = new BlockPos(2, 2, 2);
+
+        context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+
+        ServerWorld world = context.getWorld();
+        ColonyPos chestPos = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chest));
+
+        int empty = ChestDepositor.freeSpaceForGroup(world, chestPos, ResourceGroup.WOOD);
+
+        ChestDepositor.deposit(world, chestPos, Items.DIAMOND, 1);
+
+        int afterDiamond = ChestDepositor.freeSpaceForGroup(world, chestPos, ResourceGroup.WOOD);
+
+        context.assertTrue(
+                afterDiamond == empty - 64,
+                "o slot do jogador continuou contando como espaço: " + afterDiamond);
+
+        context.complete();
+    }
+
+    /**
+     * As duas regras juntas, num mundo que tica.
+     *
+     * <p>É o teste que os outros desta seção não substituem. Eles
+     * verificam as peças — quanto tempo um bloco pede, um bloco por vez,
+     * quanto cabe no baú — e todas podiam estar certas com o lenhador
+     * parado, que foi exatamente o que aconteceu no bloqueio da Fase 8:
+     * a versão que chamava {@code startMovingTo} passou por todos os
+     * testes de derrubada e mesmo assim o aldeão nunca chegava à árvore.
+     *
+     * <p>Aqui a colônia tem tarefa, o lenhador tem baú, o aldeão está ao
+     * pé da árvore e o servidor tica. O que se prova é o ritmo: aos
+     * cinco ticks nenhum tronco caiu — porque o tronco pede dez —, e mais
+     * adiante a árvore está no baú.
+     *
+     * <p>O relógio é posto no horário de trabalho de propósito: fora
+     * dele o aldeão dorme, e o teste passaria por engano.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_continuous",
+            tickLimit = 400)
+    public void theHarvestTakesTimeAndEndsInTheChest(TestContext context) {
+        BlockPos base = new BlockPos(4, 2, 4);
+        BlockPos chest = new BlockPos(2, 2, 2);
+        BlockPos stand = new BlockPos(3, 2, 4);
+
+        clearColonyState();
+
+        plantTree(context, base);
+        context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+
+        ServerWorld world = context.getWorld();
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, stand);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(base)));
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.LUMBERJACK);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(
+                villager.getUuid(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chest))));
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_WOOD,
+                TaskPriority.PRODUCTION,
+                ResourceType.OAK_LOG,
+                64);
+
+        task.reserveFor(villager.getUuid());
+
+        // Despacho: abre o trabalho. Daqui em diante quem age é o tick do
+        // servidor, que é o que este teste quer exercitar.
+        LumberjackWork.run(world, colony);
+
+        context.runAtTick(5, () -> {
+            int standing = logsStanding(context, base);
+
+            context.assertTrue(
+                    standing == 4,
+                    "aos 5 ticks o tronco não podia ter caído — de pé: " + standing);
+        });
+
+        context.runAtTick(320, () -> {
+            int stored = ChestInventoryReader
+                    .read(world, context.getAbsolutePos(chest))
+                    .amountOf(ResourceType.OAK_LOG);
+
+            context.assertTrue(stored > 0, "a madeira não chegou ao baú");
+
+            clearColonyState();
+            LumberjackWork.clearAll();
+            WorkTargets.clear(villager.getUuid());
+
+            context.complete();
+        });
+    }
+
+    /** Quantos troncos da árvore ainda estão de pé. */
+    private static int logsStanding(TestContext context, BlockPos base) {
+        int standing = 0;
+
+        for (int y = 0; y < 4; y++) {
+            if (context.getWorld().getBlockState(context.getAbsolutePos(base.up(y)))
+                    .isOf(Blocks.OAK_LOG)) {
+
+                standing++;
+            }
+        }
+
+        return standing;
+    }
+
+    /**
+     * Zera o estado do mod entre testes.
+     *
+     * <p>Os registros são estáticos e vivem no servidor, que é um só para
+     * a bateria inteira. Sem isto, a colônia de um teste apareceria na do
+     * seguinte, e a ordem de execução — que não é garantida — mudaria o
+     * resultado.
+     */
+    private static void clearColonyState() {
+        VillageColonyMod.COLONIES.clear();
+        VillageColonyMod.WORKERS.clear();
+        VillageColonyMod.STORAGES.clear();
+        VillageColonyMod.TASKS.clear();
+        LumberjackWork.clearAll();
     }
 
     /**
