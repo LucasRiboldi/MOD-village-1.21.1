@@ -234,6 +234,39 @@ class PartialObservationTest {
         assertEquals(new ColonyPos(1109, 64, 730), colony.center());
     }
 
+    /**
+     * A sonda da vila vizinha não apaga a leitura desta — o E2.
+     *
+     * <p>A sequência é a do log de 2026-08-12, com os números da vila do
+     * autor: a colônia de {@code 1109,730} lê 35 do próprio centro,
+     * ciclo após ciclo, contra 36 registradas, e entre uma leitura e a
+     * seguinte chega a sonda de {@code 1116,669} — a colônia vizinha, a
+     * 61 blocos, cujo raio cruza o desta. Ela lê 10, porque enxerga só a
+     * beirada daqui.
+     *
+     * <p>Enquanto qualquer âncora escrevia na memória da sonda, a
+     * leitura de 10 apagava a de 35 antes que a repetição pudesse
+     * confirmá-la. A colônia ficava presa em 36 para sempre, e foi assim
+     * por quatro ciclos observados em jogo.
+     *
+     * <p>Os outros testes de sonda nunca intercalam, e por isso nenhum
+     * deles pegava isto.
+     */
+    @Test
+    void aNeighbourProbeDoesNotEraseThisColonysReading() {
+        ColonyPos here = new ColonyPos(1109, 64, 730);
+        ColonyPos neighbour = new ColonyPos(1116, 64, 669);
+
+        service.adopt(probe(here, 1109, 730, 36));
+
+        service.adopt(probe(here, 1109, 730, 35));
+        service.adopt(probe(neighbour, 1109, 730, 10));
+
+        Colony colony = service.adopt(probe(here, 1109, 730, 35));
+
+        assertEquals(35, colony.observedBeds(), "a sonda da vila confirmou: ela encolheu");
+    }
+
     /** Sonda de outro ponto não confirma leitura de ponto nenhum. */
     @Test
     void probesFromDifferentAnchorsDoNotConfirmEachOther() {

@@ -5536,3 +5536,71 @@ E o autor confirmou dentro do jogo: os dois baús, cada um com a sua placa.
 toras, `e8f56d2b` com 7. Não é mérito desta correção, e não se sabe o que
 mudou. A pendência do lenhador mudo precisa ser reexaminada contra este
 log, e não contra o de ontem.
+
+---
+
+## 2026-08-12 (E2) — a sonda da vizinha apagava a leitura da própria
+
+O log de 07:48 é a reprodução completa, com os números da vila do autor.
+Três observações chegam à colônia `0c2771b0` por ciclo:
+
+```text
+07:52:11   saw 25 beds  from anchor none        keeping 36   jogador
+07:52:11   saw 35 beds  from anchor 1109,730    keeping 36   sonda dela
+07:52:11   saw 10 beds  from anchor 1116,669    keeping 36   sonda da vizinha
+07:52:41   saw 35 beds  from anchor 1109,730    keeping 36
+07:53:11   saw 35 beds  from anchor 1109,730    keeping 36
+07:53:41   saw 35 beds  from anchor 1109,730    keeping 36
+```
+
+A sonda própria leu 35 quatro vezes seguidas, do mesmo ponto, contra 36
+registradas — exatamente o que o §15 exige para encolher. A colônia
+continuou em 36.
+
+`Colony.observe` guardava uma âncora só e gravava qualquer uma. A leitura
+de `1116,669` — centro da `9a5afa23`, a 61 blocos — apagava a de
+`1109,730` entre um ciclo e o seguinte, e `from.equals(probeAnchor)`
+nunca era verdade. `detectFromColonyCenters` sonda cada centro ativo, e o
+candidato vai para a colônia mais próxima, que pode não ser a que sondou:
+a sonda de uma vira observação da outra.
+
+**A correção:** só a sonda ancorada no centro **desta** colônia confirma
+e escreve na memória. Âncora alheia vale o mesmo que âncora nenhuma.
+Custa um ciclo de memória quando o centro se move, e isso é correto —
+leituras de pontos diferentes não são comparáveis.
+
+O teste novo intercala a sonda da vizinha entre duas leituras da própria,
+que é o que o log mostra e o que nenhum teste de sonda fazia. Rodado
+contra o código sem a correção, falha.
+
+---
+
+### Decisão do autor: quando duas vilas viram uma
+
+`0c2771b0` e `9a5afa23` estão a 61 blocos, e `DUPLICATE_DISTANCE` é 64 —
+hoje `adopt` não as criaria separadas. **São vilas separadas assim
+mesmo**, e é assim que devem continuar: distância não é o critério.
+
+Duas vilas viram uma quando **um bloco de uma encostar no bloco da
+outra** — quando a construção as junta, e não quando um número diz que
+estão perto. A fusão **não reduz trabalhadores**: a vila resultante fica
+com os de ambas.
+
+A direção da construção pode acompanhar isso: o construtor tende para a
+cidade mais próxima, e o encontro das duas frentes é o que dispara a
+fusão.
+
+Nada disso está implementado. É a decisão registrada para quando a
+construção existir, e é ela que fecha o que sobrou do D2 — a vaga por
+profissão vale por colônia do registro, e duas vilas encostadas só param
+de disputar trabalhador quando forem uma.
+
+---
+
+### Fechado de quebra: a colônia processada duas vezes por ciclo
+
+Não é defeito. `registerVillagers` roda uma vez por candidato adotado, e
+com os raios se cruzando a mesma colônia recebe dois ou três candidatos
+por ciclo — daí a linha `Marked` repetida no mesmo segundo. O custo é uma
+consulta de entidades por adoção, o que merece um olhar quando a fusão
+existir, mas não é acúmulo nem erro.

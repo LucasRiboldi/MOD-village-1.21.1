@@ -66,6 +66,11 @@ public final class Colony {
      * à observação aceita foi o defeito de 2026-08-07 — a âncora só
      * nascia numa aceitação, e nenhuma aceitação vinha enquanto a
      * colônia estivesse grande demais. Nada nunca encolhia.
+     *
+     * <p>Guardam a sonda <b>desta</b> colônia, e só ela. Aceitar
+     * qualquer âncora foi o E2: a sonda da vila vizinha caía aqui e
+     * apagava a leitura da própria antes que a repetição a confirmasse.
+     * Ver {@link #observe(ColonyPos, int, boolean, ColonyPos)}.
      */
     private ColonyPos probeAnchor;
 
@@ -188,23 +193,37 @@ public final class Colony {
      * @param complete se a observação provadamente não cortou cama
      *     alguma do cluster
      * @param from âncora da sonda; {@code null} para varredura que não é
-     *     sonda, e nesse caso a observação nunca encolhe
+     *     sonda, e nesse caso a observação nunca encolhe. Âncora que não
+     *     é o centro desta colônia é sonda de outra vila, e vale o mesmo
+     *     que {@code null}: não encolhe e não escreve na memória da
+     *     sonda
      * @return true se o centro foi movido
      */
     public boolean observe(ColonyPos center, int beds, boolean complete, ColonyPos from) {
         Objects.requireNonNull(center, "center");
+
+        // A sonda desta colônia parte do centro dela. Âncora que não é o
+        // centro é sonda de outra vila caindo aqui: as duas se enxergam
+        // quando os raios se cruzam, e a observação de uma é adotada
+        // pela outra.
+        boolean ownProbe = from != null && from.equals(this.center);
 
         // A leitura anterior da sonda também precisa estar abaixo da
         // contagem registrada. Sem isso, a primeira leitura menor já
         // passaria: a sonda que viu 38 e depois 33 confirmaria o 33
         // contra si mesma, e uma visão parcial isolada encolheria a
         // colônia.
-        boolean confirmedByProbe = from != null
+        boolean confirmedByProbe = ownProbe
                 && from.equals(probeAnchor)
                 && beds <= probeBeds
                 && probeBeds < observedBeds;
 
-        if (from != null) {
+        // Só a sonda própria escreve na memória. Deixar a de fora
+        // escrever foi o E2: a vila de 1109,730 leu 35 do próprio centro
+        // quatro ciclos seguidos, contra 36 registradas, e nunca
+        // encolheu — entre uma leitura e a seguinte, a sonda de
+        // 1116,669 apagava a âncora.
+        if (ownProbe) {
             probeAnchor = from;
             probeBeds = beds;
         }
