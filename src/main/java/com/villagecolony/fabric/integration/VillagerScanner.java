@@ -1,5 +1,7 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.storage.service.StorageRegistry;
@@ -13,6 +15,7 @@ import net.minecraft.util.math.Box;
 import net.minecraft.village.VillagerProfession;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -90,14 +93,46 @@ public final class VillagerScanner {
             // ainda não ter baú, seja porque o jogador o construiu
             // depois, seja porque o chunk dele não estava carregado no
             // ciclo anterior, seja porque ele acabou de receber função.
-            if (isEmployed(workers, villager.getUuid())
-                    && ChestScanner.scan(world, villager, storages).isPresent()) {
+            if (isEmployed(workers, villager.getUuid())) {
+                Optional<WorkerStorage> claimed =
+                        ChestScanner.scan(world, villager, storages);
 
-                storagesFound++;
+                if (claimed.isPresent()) {
+                    storagesFound++;
+
+                    announce(colony, workers, villager.getUuid(), claimed.get());
+                }
             }
         }
 
         return new ScanResult(registered, storagesFound, Set.copyOf(employable));
+    }
+
+    /**
+     * Diz qual profissão ficou com qual baú.
+     *
+     * <p>A linha antiga contava — "Registered 5 storages" — e não dizia
+     * de quem nem onde. Em 2026-08-12 isso deixou duas perguntas sem
+     * resposta na mesma sessão: por que uma vila com quatro vagas
+     * registrou cinco baús, e por que três deles não ganharam marca.
+     * Nenhuma das duas dá para responder a partir de um número.
+     *
+     * <p>É o mesmo remédio que fechou o E2: o número sozinho não diz
+     * nada, o número com o lugar diz tudo. E aqui ele custa uma linha por
+     * baú reivindicado, que acontece uma vez na vida de cada baú.
+     */
+    private static void announce(
+            Colony colony, WorkerService workers, UUID villagerId, WorkerStorage storage) {
+
+        VillageColonyMod.LOGGER.info(
+                "Colony {} — {} {} claimed the chest at {}",
+                colony.id(),
+                workers.find(villagerId)
+                        .flatMap(Worker::profession)
+                        .map(Object::toString)
+                        .orElse("worker"),
+                villagerId.toString().substring(0, 8),
+                storage.chestPosition());
     }
 
     /**

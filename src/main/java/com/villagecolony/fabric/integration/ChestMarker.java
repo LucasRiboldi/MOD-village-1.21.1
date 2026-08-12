@@ -16,9 +16,13 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.chunk.WorldChunk;
 
+import com.villagecolony.VillageColonyMod;
+
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Diz, dentro do jogo, de quem é cada baú.
@@ -51,7 +55,21 @@ public final class ChestMarker {
      */
     private static final String TAG = "villagecolony:storage";
 
+    /**
+     * Os baús sobre os quais o log já reclamou de falta de espaço.
+     *
+     * <p>Em memória e descartável: ao reiniciar, a primeira tentativa
+     * reclama de novo, o que é o comportamento certo — quem abriu o log
+     * daquela sessão precisa ver o motivo.
+     */
+    private static final Set<BlockPos> complainedAbout = new HashSet<>();
+
     private ChestMarker() {
+    }
+
+    /** Esquece as reclamações, junto com o resto do estado em memória. */
+    public static void clearAll() {
+        complainedAbout.clear();
     }
 
     /**
@@ -162,6 +180,18 @@ public final class ChestMarker {
 
         // Baú cercado por todos os lados. Fica sem marca, e o mod não
         // abre espaço na construção do jogador para pendurar a sua.
+        //
+        // Dito uma vez por baú, e não a cada ciclo: é uma situação
+        // permanente até o jogador mexer na casa, e repeti-la a cada
+        // trinta segundos encheria o log sem acrescentar nada. Mas
+        // precisa ser dita ao menos uma vez — sem ela, "registrei cinco
+        // baús e marquei dois" não tem explicação nenhuma no log.
+        if (complainedAbout.add(chest.toImmutable())) {
+            VillageColonyMod.LOGGER.info(
+                    "Chest at {} has no free side for its badge — left unmarked",
+                    chest.toShortString());
+        }
+
         return false;
     }
 
