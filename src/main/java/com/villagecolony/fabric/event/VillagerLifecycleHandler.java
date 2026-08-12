@@ -2,8 +2,10 @@ package com.villagecolony.fabric.event;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.integration.ChestMarker;
 import com.villagecolony.fabric.work.LumberjackWork;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.VillagerEntity;
@@ -38,8 +40,28 @@ public final class VillagerLifecycleHandler {
 
     private static void onDeath(LivingEntity entity, net.minecraft.entity.damage.DamageSource cause) {
         if (entity instanceof VillagerEntity villager) {
+            unmarkChestOf(villager);
+
             forget(villager.getUuid(), "died");
         }
+    }
+
+    /**
+     * Tira a marca do baú antes de esquecer o trabalhador.
+     *
+     * <p>Nesta ordem porque a marca precisa da posição do baú, e
+     * {@link #forget} apaga o registro que a guarda.
+     *
+     * <p>O baú e o que está dentro dele ficam: quem morreu era o dono, e
+     * não o conteúdo. O que sai é a promessa de que aquele baú tem dono.
+     */
+    private static void unmarkChestOf(VillagerEntity villager) {
+        if (!(villager.getWorld() instanceof ServerWorld world)) {
+            return;
+        }
+
+        VillageColonyMod.STORAGES.of(villager.getUuid())
+                .ifPresent(storage -> ChestMarker.unmark(world, storage.chestPosition()));
     }
 
     /**
@@ -57,6 +79,8 @@ public final class VillagerLifecycleHandler {
      */
     private static void onConversion(MobEntity previous, MobEntity converted, boolean keepEquipment) {
         if (previous instanceof VillagerEntity villager) {
+            unmarkChestOf(villager);
+
             forget(villager.getUuid(), "was converted");
         }
     }

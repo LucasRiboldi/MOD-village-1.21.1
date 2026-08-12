@@ -13,8 +13,10 @@ import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
+import com.villagecolony.fabric.integration.ChestMarker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageScanner;
 import com.villagecolony.fabric.integration.VillagerScanner;
@@ -410,7 +412,7 @@ public final class VillageDetectionHandler {
         // Antes de atribuir: um save anterior a 2026-08-12 chega com
         // seis lenhadores gravados, e uma regra que só valesse para
         // aldeão novo nunca os desfaria.
-        dismissExtraWorkers(colony);
+        dismissExtraWorkers(world, colony);
 
         int assigned = ProfessionAssigner.assignMissing(
                 VillageColonyMod.WORKERS, colony.id(), result.employable());
@@ -429,6 +431,20 @@ public final class VillageDetectionHandler {
             VillageColonyMod.LOGGER.info(
                     "Named {} workers in colony {}", labelled, colony.id());
         }
+
+        // A marca do baú acompanha a profissão, e por isso vem depois
+        // dela: um trabalhador que acabou de perder a função não pode
+        // deixar o machado pendurado no baú.
+        int marked = ChestMarker.mark(
+                world,
+                VillageColonyMod.WORKERS.ofColony(colony.id()),
+                workerId -> VillageColonyMod.STORAGES.of(workerId)
+                        .map(WorkerStorage::chestPosition));
+
+        if (marked > 0) {
+            VillageColonyMod.LOGGER.info(
+                    "Marked {} chests in colony {}", marked, colony.id());
+        }
     }
 
     /**
@@ -444,7 +460,7 @@ public final class VillageDetectionHandler {
      * já está lá dentro, e o aldeão pode voltar a ter função quando o
      * titular morrer.
      */
-    private static void dismissExtraWorkers(Colony colony) {
+    private static void dismissExtraWorkers(ServerWorld world, Colony colony) {
         Set<UUID> demoted = ProfessionAssigner.enforceVacancies(
                 VillageColonyMod.WORKERS,
                 colony.id(),
@@ -458,6 +474,11 @@ public final class VillageDetectionHandler {
             VillageColonyMod.TASKS.releaseAllOf(villagerId);
             WorkTargets.clear(villagerId);
             LumberjackWork.forget(villagerId);
+
+            // E a marca do baú: um machado pendurado no baú de quem já
+            // não é lenhador mente para quem está jogando.
+            VillageColonyMod.STORAGES.of(villagerId)
+                    .ifPresent(storage -> ChestMarker.unmark(world, storage.chestPosition()));
         }
 
         VillageColonyMod.LOGGER.info(

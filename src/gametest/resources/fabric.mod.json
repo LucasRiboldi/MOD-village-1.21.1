@@ -10,7 +10,8 @@
     "fabric-gametest": [
       "com.villagecolony.gametest.ColonyDetectionGameTest",
       "com.villagecolony.gametest.StorageGameTest",
-      "com.villagecolony.gametest.LumberjackGameTest"
+      "com.villagecolony.gametest.LumberjackGameTest",
+      "com.villagecolony.gametest.ChestMarkerGameTest"
     ]
   },
   "depends": {
