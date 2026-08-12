@@ -475,14 +475,22 @@ public final class VillageDetectionHandler {
             WorkTargets.clear(villagerId);
             LumberjackWork.forget(villagerId);
 
-            // E a marca do baú: um machado pendurado no baú de quem já
+            // A marca do baú sai: um machado pendurado no baú de quem já
             // não é lenhador mente para quem está jogando.
             VillageColonyMod.STORAGES.of(villagerId)
                     .ifPresent(storage -> ChestMarker.unmark(world, storage.chestPosition()));
+
+            // E o baú volta para a colônia. Segurá-lo prendia o
+            // armazenamento a quem não trabalha: a vila do autor tinha
+            // treze baús reivindicados e quatro trabalhadores, e o
+            // fazendeiro não conseguia nenhum. O conteúdo fica onde
+            // está; o que sai é a reserva.
+            VillageColonyMod.STORAGES.remove(villagerId);
         }
 
         VillageColonyMod.LOGGER.info(
-                "Colony {} dismissed {} workers — one of each profession is the rule",
+                "Colony {} dismissed {} workers — chests released, one of each"
+                        + " profession is the rule",
                 colony.id(),
                 demoted.size());
     }

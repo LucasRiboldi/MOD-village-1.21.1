@@ -3,6 +3,7 @@ package com.villagecolony.fabric.integration;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.storage.service.StorageRegistry;
+import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.WorkerService;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.entity.passive.VillagerEntity;
@@ -77,15 +78,38 @@ public final class VillagerScanner {
                 employable.add(villager.getUuid());
             }
 
-            // Fora do if: o aldeão pode já ser conhecido e ainda não ter
-            // baú, seja porque o jogador o construiu depois, seja porque
-            // o chunk dele não estava carregado no ciclo anterior.
-            if (ChestScanner.scan(world, villager, storages).isPresent()) {
+            // Baú é de quem trabalha.
+            //
+            // Antes de 2026-08-12 todo aldeão reivindicava um, e a vila
+            // do autor mostrou o que isso custa: treze baús presos, dos
+            // quais só dois pertenciam a alguém com função. O fazendeiro
+            // e o construtor não conseguiam reivindicar nenhum, porque os
+            // vizinhos desempregados tinham chegado primeiro.
+            //
+            // Fora do if de registro: o aldeão pode já ser conhecido e
+            // ainda não ter baú, seja porque o jogador o construiu
+            // depois, seja porque o chunk dele não estava carregado no
+            // ciclo anterior, seja porque ele acabou de receber função.
+            if (isEmployed(workers, villager.getUuid())
+                    && ChestScanner.scan(world, villager, storages).isPresent()) {
+
                 storagesFound++;
             }
         }
 
         return new ScanResult(registered, storagesFound, Set.copyOf(employable));
+    }
+
+    /**
+     * Se este aldeão tem função na colônia.
+     *
+     * <p>A função vem de um passo posterior a esta varredura, então quem
+     * acabou de ser registrado só reivindica baú no ciclo seguinte. Um
+     * ciclo de atraso é barato; deixar os quarenta desempregados
+     * reivindicarem primeiro não era.
+     */
+    private static boolean isEmployed(WorkerService workers, UUID villagerId) {
+        return workers.find(villagerId).filter(Worker::hasProfession).isPresent();
     }
 
     /**

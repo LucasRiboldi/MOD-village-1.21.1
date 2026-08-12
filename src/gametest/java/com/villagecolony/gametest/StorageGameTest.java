@@ -1,6 +1,9 @@
 package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.fabric.integration.VillagerScanner;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceType;
@@ -8,6 +11,8 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+
+import java.util.UUID;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.ChestBlockEntity;
@@ -257,8 +262,83 @@ public class StorageGameTest implements FabricGameTest {
         return VillageColonyMod.STORAGES.isTaken(position);
     }
 
+    /**
+     * Dois ciclos, e não um.
+     *
+     * <p>Desde 2026-08-12 o baú é de quem trabalha, e a função vem de um
+     * passo posterior à varredura que procura baú: no primeiro ciclo o
+     * aldeão é registrado e recebe a profissão, e no segundo ele
+     * reivindica. Um ciclo só deixaria estes testes verificando um estado
+     * que o jogo atravessa em trinta segundos.
+     */
     private static void runCycle(TestContext context, BlockPos anchor) {
         VillageDetectionHandler.runCycleNow(
                 context.getWorld(), context.getAbsolutePos(anchor));
+
+        VillageDetectionHandler.runCycleNow(
+                context.getWorld(), context.getAbsolutePos(anchor));
+    }
+
+    /**
+     * Baú é de quem trabalha.
+     *
+     * <p>Antes de 2026-08-12 todo aldeão reivindicava um, e a vila do
+     * autor acabou com treze baús presos e quatro trabalhadores: o
+     * fazendeiro não conseguia nenhum porque os vizinhos desempregados
+     * tinham chegado primeiro.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "storage_employed_only")
+    public void onlyAWorkerWithAProfessionClaimsAChest(TestContext context) {
+        BlockPos bed = new BlockPos(2, 2, 2);
+        BlockPos chest = new BlockPos(3, 2, 2);
+
+        VillageColonyMod.COLONIES.clear();
+        VillageColonyMod.WORKERS.clear();
+        VillageColonyMod.STORAGES.clear();
+
+        context.setBlockState(bed, Blocks.WHITE_BED.getDefaultState()
+                .with(BedBlock.PART, BedPart.HEAD)
+                .with(BedBlock.FACING, Direction.NORTH));
+        context.setBlockState(bed.offset(Direction.SOUTH), Blocks.WHITE_BED.getDefaultState()
+                .with(BedBlock.PART, BedPart.FOOT)
+                .with(BedBlock.FACING, Direction.NORTH));
+        context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+
+        ServerWorld world = context.getWorld();
+
+        Colony colony = Colony.create(
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(bed)));
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(2, 2, 3));
+        villager.setBreedingAge(0);
+        villager.getBrain().remember(
+                MemoryModuleType.HOME,
+                GlobalPos.create(world.getRegistryKey(), context.getAbsolutePos(bed)));
+
+        // Sem profissão: nenhum baú é reivindicado.
+        VillagerScanner.scan(world, colony, VillageColonyMod.WORKERS, VillageColonyMod.STORAGES);
+
+        context.assertTrue(
+                VillageColonyMod.STORAGES.of(villager.getUuid()).isEmpty(),
+                "aldeão sem função reivindicou baú");
+
+        // Com profissão, no ciclo seguinte, ele reivindica.
+        VillageColonyMod.WORKERS.find(villager.getUuid()).orElseThrow()
+                .assign(ProfessionType.LUMBERJACK);
+
+        VillagerScanner.scan(world, colony, VillageColonyMod.WORKERS, VillageColonyMod.STORAGES);
+
+        context.assertTrue(
+                VillageColonyMod.STORAGES.of(villager.getUuid()).isPresent(),
+                "o lenhador não conseguiu o baú ao lado da própria cama");
+
+        VillageColonyMod.COLONIES.clear();
+        VillageColonyMod.WORKERS.clear();
+        VillageColonyMod.STORAGES.clear();
+
+        context.complete();
     }
 }
