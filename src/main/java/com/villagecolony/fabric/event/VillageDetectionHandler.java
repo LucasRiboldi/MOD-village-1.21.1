@@ -513,7 +513,14 @@ public final class VillageDetectionHandler {
      *     colônia, a única cujas leituras se confirmam entre ciclos
      */
     private static void detectAround(ServerWorld world, BlockPos trigger, boolean isProbe) {
-        for (VillageCandidate candidate : SCANNER.scan(world, trigger, isProbe)) {
+        // Uma observação por colônia, e não uma por aglomerado de camas.
+        // Entre 32 e 64 blocos existe a faixa em que um punhado de camas
+        // é outro aglomerado e a mesma colônia: os dois candidatos
+        // chegavam com a mesma âncora, e o segundo era confirmado pelo
+        // primeiro dentro do mesmo tick. Ver ColonyService#bestPerColony
+        // e §17, E2.
+        for (VillageCandidate candidate
+                : VillageColonyMod.COLONIES.bestPerColony(SCANNER.scan(world, trigger, isProbe))) {
             int before = VillageColonyMod.COLONIES.count();
 
             Optional<Colony> known = VillageColonyMod.COLONIES
@@ -558,6 +565,14 @@ public final class VillageDetectionHandler {
      *
      * <p>Não vira spam por si: só sai quando a contagem observada está
      * abaixo da registrada, que é justamente o caso raro.
+     *
+     * <p>Diz onde o candidato estava e de onde a varredura partiu. Sem
+     * isso a linha é um número sem lugar, e foi essa cegueira que
+     * escondeu o E2 por três dias: "viu 5 de 31" parecia sonda com
+     * defeito e era, o tempo todo, um segundo aglomerado de camas a
+     * quarenta blocos. Com o centro na linha, dois aglomerados
+     * diferentes se distinguem de imediato de uma leitura pobre do
+     * mesmo.
      */
     private static void logRefusedShrink(Optional<Colony> known, VillageCandidate candidate) {
         known.ifPresent(colony -> {
@@ -566,9 +581,12 @@ public final class VillageDetectionHandler {
             }
 
             VillageColonyMod.LOGGER.info(
-                    "Colony {} saw {} beds, keeping {} — view not provably complete",
+                    "Colony {} saw {} beds at {} from anchor {}, keeping {}"
+                            + " — view not provably complete",
                     colony.id(),
                     candidate.bedCount(),
+                    candidate.center(),
+                    candidate.anchor() == null ? "none" : candidate.anchor(),
                     colony.observedBeds());
         });
     }

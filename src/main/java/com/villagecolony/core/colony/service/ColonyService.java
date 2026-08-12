@@ -5,9 +5,11 @@ import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.type.ColonyPos;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -101,6 +103,74 @@ public final class ColonyService {
         colony.setLifecycle(ColonyLifecycle.ACTIVE);
 
         return colony;
+    }
+
+    /**
+     * Uma observação por colônia, dentre as de uma varredura só.
+     *
+     * <p>Uma varredura devolve um candidato por aglomerado de camas, e
+     * dois aglomerados podem cair na mesma colônia:
+     * {@link #adopt} considera a mesma vila tudo o que estiver a até
+     * {@link VillageDetector#DUPLICATE_DISTANCE} do centro, enquanto
+     * {@code VillageDetector.cluster} separa o que estiver a mais de
+     * {@code CLUSTER_DISTANCE}. Entre 32 e 64 blocos existe a faixa em
+     * que um punhado de camas é, ao mesmo tempo, outro aglomerado e a
+     * mesma colônia.
+     *
+     * <p><b>Por que isto precisa existir.</b> A colônia só encolhe
+     * quando a sonda repete a leitura — duas varreduras da mesma âncora
+     * vendo o mesmo tanto. A regra pressupõe leituras de ciclos
+     * sucessivos, e nada exigia que fossem sucessivas: dois candidatos
+     * da mesma varredura chegam com a mesma âncora, o primeiro grava a
+     * leitura e o segundo é confirmado por ela no mesmo tick. Uma vila
+     * de 31 camas com cinco camas vizinhas desabava para 5, e o centro
+     * pulava para o vizinho. Ver §17, E2, e a entrada de 2026-08-11.
+     *
+     * <p>Vence o maior. Ele é o que viu mais da vila, que é o mesmo
+     * critério de {@code Colony#observe}: quem enxergou menos não tem
+     * autoridade sobre quem enxergou mais.
+     *
+     * <p>Candidato que não cai em colônia conhecida passa sempre: cada
+     * um vira uma colônia nova, e agrupá-los aqui faria a detecção
+     * perder vila. Dois deles perto um do outro continuam sendo
+     * resolvidos por {@link #adopt}, um depois do outro, como antes.
+     *
+     * <p>O agrupamento é calculado antes de qualquer adoção, e é por
+     * isso que devolve uma lista em vez de adotar aqui mesmo: adotar
+     * move centros, e um centro movido mudaria a resposta de
+     * {@link #findNearest} para os candidatos seguintes da mesma
+     * varredura.
+     *
+     * @return os candidatos que devem ser adotados, na ordem em que
+     *     chegaram
+     */
+    public List<VillageCandidate> bestPerColony(Collection<VillageCandidate> candidates) {
+        Objects.requireNonNull(candidates, "candidates");
+
+        Map<UUID, VillageCandidate> bestOf = new LinkedHashMap<>();
+        List<VillageCandidate> unknown = new ArrayList<>();
+
+        for (VillageCandidate candidate : candidates) {
+            Optional<Colony> owner =
+                    findNearest(candidate.center(), VillageDetector.DUPLICATE_DISTANCE);
+
+            if (owner.isEmpty()) {
+                unknown.add(candidate);
+
+                continue;
+            }
+
+            bestOf.merge(
+                    owner.get().id(),
+                    candidate,
+                    (kept, other) -> other.bedCount() > kept.bedCount() ? other : kept);
+        }
+
+        List<VillageCandidate> chosen = new ArrayList<>(bestOf.values());
+
+        chosen.addAll(unknown);
+
+        return List.copyOf(chosen);
     }
 
     public Optional<Colony> find(UUID id) {

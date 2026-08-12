@@ -3,6 +3,7 @@ package com.villagecolony.core.colony.service;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.ColonyState;
+import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.type.ColonyPos;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -174,6 +175,105 @@ class ColonyServiceTest {
         service.clear();
 
         assertEquals(0, service.count());
+    }
+
+    // ----------------------------------------------------------------
+    // Uma observação por colônia por varredura — E2, 2026-08-11
+    // ----------------------------------------------------------------
+
+    /**
+     * Uma varredura, dois aglomerados, a mesma colônia: vence o maior.
+     *
+     * <p>Vila grande e um punhado de camas a quarenta blocos — longe
+     * demais para entrar no mesmo cluster, perto demais para ser outra
+     * colônia. A varredura devolve os dois, e {@code findNearest} manda
+     * os dois para a mesma colônia.
+     *
+     * <p>Sem esta escolha, os dois viravam observação: o primeiro
+     * gravava a leitura da sonda e o segundo era confirmado por ela no
+     * mesmo tick — a regra da sonda foi feita para ciclos sucessivos, e
+     * nada exigia que fossem sucessivos. Ver §17, E2.
+     */
+    @Test
+    void oneScanGivesEachColonyASingleObservation() {
+        service.createColony(ORIGIN);
+
+        VillageCandidate big = new VillageCandidate(ORIGIN, 28, false, ORIGIN);
+        VillageCandidate small =
+                new VillageCandidate(new ColonyPos(40, 64, 0), 5, false, ORIGIN);
+
+        List<VillageCandidate> kept = service.bestPerColony(List.of(big, small));
+
+        assertEquals(1, kept.size(), "a colônia recebeu duas leituras da mesma varredura");
+        assertEquals(28, kept.get(0).bedCount(), "ficou com a leitura pobre");
+    }
+
+    /**
+     * O aglomerado satélite não encolhe a colônia.
+     *
+     * <p>É o E2 inteiro em uma asserção: 31 camas registradas, uma
+     * varredura que enxerga 28 da vila e 5 do vizinho, e a colônia
+     * continua com 31 e no lugar em que estava.
+     */
+    @Test
+    void aSatelliteClusterCannotShrinkTheColony() {
+        Colony colony = service.createColony(ORIGIN);
+        colony.observe(ORIGIN, 31);
+
+        VillageCandidate big = new VillageCandidate(ORIGIN, 28, false, ORIGIN);
+        VillageCandidate small =
+                new VillageCandidate(new ColonyPos(40, 64, 0), 5, false, ORIGIN);
+
+        for (VillageCandidate candidate : service.bestPerColony(List.of(big, small))) {
+            service.adopt(candidate);
+        }
+
+        assertEquals(31, colony.observedBeds(), "a colônia encolheu numa varredura só");
+        assertEquals(ORIGIN, colony.center(), "o centro pulou para o satélite");
+    }
+
+    /** A ordem em que a varredura devolve os aglomerados não importa. */
+    @Test
+    void theOrderOfTheClustersDoesNotMatter() {
+        Colony colony = service.createColony(ORIGIN);
+        colony.observe(ORIGIN, 31);
+
+        VillageCandidate big = new VillageCandidate(ORIGIN, 28, false, ORIGIN);
+        VillageCandidate small =
+                new VillageCandidate(new ColonyPos(40, 64, 0), 5, false, ORIGIN);
+
+        for (VillageCandidate candidate : service.bestPerColony(List.of(small, big))) {
+            service.adopt(candidate);
+        }
+
+        assertEquals(31, colony.observedBeds());
+    }
+
+    /**
+     * Vilas de colônias diferentes continuam passando as duas.
+     *
+     * <p>O agrupamento é por colônia, e não um "só o maior da
+     * varredura": duas vilas distantes descobertas na mesma varredura
+     * são duas colônias, e recusar uma delas faria a detecção perder
+     * vila.
+     */
+    @Test
+    void candidatesOfDifferentColoniesAllSurvive() {
+        VillageCandidate here = new VillageCandidate(ORIGIN, 12, false, ORIGIN);
+        VillageCandidate faraway =
+                new VillageCandidate(new ColonyPos(500, 64, 0), 4, false, ORIGIN);
+
+        assertEquals(2, service.bestPerColony(List.of(here, faraway)).size());
+    }
+
+    /** Sem colônia conhecida, todo candidato passa: cada um vira uma. */
+    @Test
+    void unknownCandidatesAreAllKept() {
+        VillageCandidate one = new VillageCandidate(ORIGIN, 8, false, ORIGIN);
+        VillageCandidate two =
+                new VillageCandidate(new ColonyPos(400, 64, 0), 6, false, ORIGIN);
+
+        assertEquals(2, service.bestPerColony(List.of(one, two)).size());
     }
 
     /** Após remover, o mesmo id pode ser registrado de novo. */
