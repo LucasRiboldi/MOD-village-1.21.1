@@ -4380,22 +4380,23 @@ para provar o que o lenhador **não** quebra.
 ### O que falta, em ordem
 
 ```text
-1  colher até o baú encher            decidido em 2026-08-08, não
-                                      implementado; substitui a meta
-                                      constante — ver §10
+1  colher até o baú encher            FEITO em 2026-08-11
 
-2  colher no tempo de um jogador      decidido em 2026-08-08, não
-                                      implementado; hoje a árvore cai
-                                      num tick — ver §10
+2  colher no tempo de um jogador      FEITO em 2026-08-11
 
-3  a fila de tarefas não esvazia      tarefa nova a cada ciclo, e as
-                                      antigas ficam; erro conhecido,
-                                      ver §16
+3  a fila de tarefas não esvazia      FEITO em 2026-08-11, junto com a
+                                      Regra 1 — ver §17, E1
 
 4  gametest para o que falta          morte, zumbificação, encolhimento,
                                       e o ciclo gerando tarefa
 
-5  consolidar este documento          passou de 4400 linhas
+5  consolidar este documento          passou de 4700 linhas
+
+6  um lenhador de cada vez            a colônia abre uma tarefa por
+                                      recurso, então só um trabalhador
+                                      colhe; com a tarefa durando muito
+                                      mais, isso passou a pesar — ver a
+                                      entrada de 2026-08-11
 ```
 
 Os itens 1 e 2 são a mesma decisão vista de dois lados: quanto colher, e
@@ -4579,10 +4580,18 @@ não vistos em jogo
 
 ---
 
-# 16. Decidido em 2026-08-08 e ainda não implementado
+# 16. Decidido em 2026-08-08 — implementado em 2026-08-11
 
-Duas regras do autor, registradas aqui na íntegra porque a implementação
-não cabia na mesma sessão. Estão em §10 como itens 1 e 2 do que falta.
+Duas regras do autor, registradas aqui na íntegra quando ainda eram só
+decisão. **As duas foram implementadas em 2026-08-11**; o texto abaixo
+fica como está porque é o enunciado da regra, e o enunciado não muda
+por ela ter sido escrita em código. O que a implementação de fato fez, e
+onde ela divergiu do previsto aqui, está na entrada de §15 de
+2026-08-11.
+
+Duas previsões deste capítulo se confirmaram e vale marcá-las: o item 3
+do que falta (a fila que não esvazia) morreu junto, e o lugar onde as
+duas regras moram é de fato o mesmo.
 
 ---
 
@@ -4672,7 +4681,17 @@ investigado.
 
 ---
 
-## E1 — A fila de tarefas não esvazia
+## E1 — A fila de tarefas não esvazia — **corrigido em 2026-08-11**
+
+Fechado pelas duas metades previstas: a Regra 1 tirou a meta constante,
+e `purgeClosed` — que existia desde a Fase 7 sem quem a chamasse —
+passou a ser chamado ao fim de cada ciclo. O registro de tarefas deixou
+de crescer para sempre.
+
+O texto original fica abaixo.
+
+---
+
 
 ```text
 [05:19:31] Colony 0c2771b0 assigned 1 tasks (0 open)
@@ -4761,3 +4780,152 @@ O mangue é o mais provável de falhar primeiro: o que se replanta ali é
 propágulo, e ele quer lama ou água rasa. A regra confia em
 `canPlaceAt`, que é a resposta certa, mas isso nunca foi visto
 acontecendo.
+
+---
+
+## 2026-08-11 — As duas regras da colheita, e o lenhador ganhou relógio
+
+As regras 1 e 2 do §16 saíram do papel. Não foram duas mudanças: são a
+mesma vista de dois lados, e foi assim que couberam numa sessão só.
+
+---
+
+### A meta virou uma pergunta sobre o mundo
+
+```text
+antes    meta = 64 de madeira, escrito em ColonyGoals
+agora    meta = o que está guardado + o que ainda cabe
+```
+
+O déficit que `ResourceDemand` tira dessa meta é exatamente o espaço
+livre, e nada em `ResourceDemand` precisou mudar para isso — a conta
+dele sempre foi meta menos estoque. Baú cheio dá meta igual ao estoque,
+déficit zero, nenhuma tarefa nova.
+
+O espaço é medido por grupo, e não por item. Meia pilha de bétula num
+slot é espaço para madeira mesmo que o próximo tronco seja de carvalho;
+perguntar por um item só faria a colônia enxergar menos espaço do que
+tem e parar de colher antes da hora. Slot ocupado por item do jogador
+não conta como espaço — se contasse, a meta seria maior que o baú e o
+lenhador colheria o que não caberia, que é a perda que a regra veio
+evitar.
+
+`ColonyGoals` recebe estoque e espaço por parâmetro. A camada core não
+conhece baú, e não vai conhecer: quem mede é a camada fabric, e o que
+atravessa a fronteira é um número.
+
+---
+
+### A árvore parou de cair dentro de um tick
+
+O tempo de cada bloco sai da fórmula do Vanilla, e nenhum número dela
+está escrito no mod:
+
+```text
+fração por tick = velocidade da ferramenta ÷ dureza ÷ divisor
+
+divisor 30   quando a ferramenta colhe o bloco
+divisor 100  quando não colhe
+```
+
+A dureza vem do bloco, a velocidade vem da ferramenta contra aquele
+bloco, e o divisor vem de a ferramenta colher ou não. Machado de ferro
+contra tronco dá dez ticks — meio segundo, que é o que um jogador leva —
+e a folha sai da mesma conta, sem tabela paralela para envelhecer.
+
+Isso obrigou o trabalho do lenhador a sair do ciclo de 600 ticks. São
+dois relógios agora:
+
+```text
+ciclo de 600   despacha: abre trabalho para tarefa nova, fecha o de
+               tarefa encerrada
+
+tick           trabalha: avança um contador e, quando ele estoura,
+               quebra um bloco
+```
+
+O custo por tick é um contador por lenhador. A parte cara — a varredura
+por árvore do `TreeScanner`, que olha até mil colunas — tem orçamento de
+uma por tick no servidor inteiro. Sem esse teto a Regra 1, que faz o
+lenhador querer árvore nova assim que termina uma, transformaria
+trabalho contínuo em varredura contínua.
+
+A rachadura é desenhada e o braço balança. Sem isso a Regra 2 seria
+invisível: o jogador veria um aldeão parado ao lado de uma árvore que
+some sozinha meio minuto depois.
+
+---
+
+### A tarefa passou a durar
+
+Decisão tomada nesta sessão, e é o que fecha o E1. A tarefa nasce com o
+espaço livre como alvo e só termina quando não cabe mais madeira, com o
+lenhador derrubando uma árvore atrás da outra dentro dela. Antes ela
+morria em cada árvore e renascia no ciclo seguinte.
+
+A outra metade do E1 era mais boba do que parecia: `purgeClosed` existia
+desde a Fase 7 e nunca tinha sido chamado por ninguém. Agora é chamado
+ao fim de cada ciclo.
+
+---
+
+### Duas coisas que apareceram no caminho
+
+A pedra saiu da meta. Ninguém minera no MVP, e `ColonyCycle.typeFor`
+manda todo recurso NATURAL para `COLLECT_WOOD`: a meta de 32 de pedra
+virava uma tarefa de coleta que só o lenhador podia pegar, e ele
+derrubava árvore para atendê-la. O `LumberjackWork` também passou a
+filtrar por `ResourceGroup.WOOD`, para que o recurso — e não só o tipo
+de tarefa — decida o que ele faz. Era um defeito que já existia; a Regra
+1 o teria tornado permanente.
+
+A colheita passou a conferir a espécie antes de quebrar cada bloco. O
+risco nasceu com a Regra 2: entre planejar a árvore e chegar num bloco
+dela passam-se dezenas de ticks, e nesse meio-tempo o jogador pode ter
+derrubado o tronco e posto uma tábua ali. Quebrar o que estiver na
+posição sem perguntar seria quebrar a construção dele.
+
+---
+
+### O que ficou provado, e por qual teste
+
+```text
+266 testes de unidade + 27 de jogo; build verde
+```
+
+O de jogo que importa é o que tica o mundo: colônia com tarefa, lenhador
+com baú, aldeão ao pé da árvore, servidor ticando. Aos cinco ticks
+nenhum tronco caiu — porque o tronco pede dez — e mais adiante a madeira
+está no baú. Os outros verificam as peças, e todas podiam estar certas
+com o lenhador parado: foi exatamente isso que aconteceu no bloqueio da
+Fase 8, quando a versão que chamava `startMovingTo` passou por todos os
+testes de derrubada sem o aldeão nunca chegar à árvore.
+
+---
+
+### O que esta sessão não fez
+
+**Nada disto foi visto em jogo.** O build está verde e o mundo de teste
+tica, mas ninguém abriu o save e olhou. É a mesma situação em que a
+sessão de 2026-08-08 estava antes de a derrubada acontecer, e o §11
+existe porque defeitos desta camada só aparecem lá — em particular o
+custo, que gametest não cobre: o travamento que quebrou o jogo do autor
+passou por doze testes verdes.
+
+**Um lenhador de cada vez.** `ColonyCycle` abre uma tarefa por recurso, e
+`WorkAssignment` a entrega a um trabalhador só. Isso já era verdade
+antes, mas era invisível: a tarefa durava uma árvore e girava entre os
+aldeões a cada ciclo. Com a tarefa durando até o baú encher, um único
+lenhador trabalha por muito tempo e os outros ficam parados. Repartir uma
+meta de colônia entre vários trabalhadores é uma decisão que não foi
+tomada, e não foi tomada de propósito — não estava no pedido.
+
+**O E2 continua aberto.** A sonda que vê 5 de 31 camas não foi
+investigada nesta sessão.
+
+**A perda de sobra (E3) ficou mais rara, não impossível.** O espaço é
+conferido antes de cada árvore, e um trabalhador que só começa quando
+cabe a árvore inteira quase nunca chega ao limite no meio. O aviso em
+WARN continua lá para o caso de o jogador mexer no baú durante a
+colheita — que agora leva muito mais tempo, e portanto é mais provável
+do que era.
