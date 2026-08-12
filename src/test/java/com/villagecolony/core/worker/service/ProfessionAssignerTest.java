@@ -90,18 +90,152 @@ class ProfessionAssignerTest {
                 workers.ofColony(COLONY).get(0).profession().orElseThrow());
     }
 
-    /** Coberta a base, o quinto reforça a função mais escassa. */
+    /**
+     * Cobertas as quatro vagas, o quinto aldeão continua Vanilla.
+     *
+     * <p>Decisão do autor em 2026-08-12: uma vila tem um trabalhador de
+     * cada tipo. Antes disto a vaga era ilimitada, e a vila de quarenta e
+     * três aldeões do autor acabou com seis lenhadores disputando tarefa
+     * a cada ciclo.
+     */
     @Test
-    void theFifthWorkerDoublesTheScarcest() {
+    void theFifthWorkerGetsNothing() {
         addWorkers(COLONY, 5);
+
+        int assigned = ProfessionAssigner.assignMissing(workers, COLONY, everyone());
+
+        assertEquals(4, assigned, "esperava as quatro vagas e nada além");
+
+        long employed = workers.ofColony(COLONY).stream()
+                .filter(Worker::hasProfession)
+                .count();
+
+        assertEquals(4, employed);
+    }
+
+    /** Uma vila grande emprega quatro, e só. */
+    @Test
+    void oneOfEachProfessionAndNoMore() {
+        addWorkers(COLONY, 43);
 
         ProfessionAssigner.assignMissing(workers, COLONY, everyone());
 
+        for (ProfessionType type : ProfessionType.values()) {
+            long count = workers.ofColony(COLONY).stream()
+                    .filter(w -> w.profession().filter(type::equals).isPresent())
+                    .count();
+
+            assertEquals(1, count, "profissão duplicada: " + type);
+        }
+    }
+
+    /** Com as quatro preenchidas, não há vaga. */
+    @Test
+    void thereIsNoVacancyOnceEveryProfessionIsFilled() {
+        addWorkers(COLONY, 4);
+        ProfessionAssigner.assignMissing(workers, COLONY, everyone());
+
+        assertTrue(ProfessionAssigner.vacancy(workers.ofColony(COLONY)).isEmpty());
+    }
+
+    /**
+     * O save antigo é acertado ao carregar.
+     *
+     * <p>A colônia do autor chegou com seis lenhadores gravados. Uma
+     * regra que só valesse para aldeão novo nunca os desfaria.
+     */
+    @Test
+    void anOldSaveWithSixLumberjacksIsTrimmed() {
+        addWorkers(COLONY, 6);
+
+        for (Worker worker : workers.ofColony(COLONY)) {
+            worker.assign(ProfessionType.LUMBERJACK);
+        }
+
+        Set<UUID> demoted = ProfessionAssigner.enforceVacancies(workers, COLONY);
+
+        assertEquals(5, demoted.size());
+
         long lumberjacks = workers.ofColony(COLONY).stream()
-                .filter(w -> w.profession().orElseThrow() == ProfessionType.LUMBERJACK)
+                .filter(w -> w.profession().filter(ProfessionType.LUMBERJACK::equals).isPresent())
                 .count();
 
-        assertEquals(2, lumberjacks);
+        assertEquals(1, lumberjacks);
+    }
+
+    /**
+     * Quem perde a função volta a ser candidato.
+     *
+     * <p>Não é remoção: ele continua trabalhador da colônia e assume a
+     * primeira vaga que abrir — quando o lenhador morrer, por exemplo.
+     */
+    @Test
+    void aDismissedWorkerCanBeHiredAgain() {
+        addWorkers(COLONY, 6);
+
+        for (Worker worker : workers.ofColony(COLONY)) {
+            worker.assign(ProfessionType.LUMBERJACK);
+        }
+
+        ProfessionAssigner.enforceVacancies(workers, COLONY);
+
+        int assigned = ProfessionAssigner.assignMissing(workers, COLONY, everyone());
+
+        assertEquals(3, assigned, "as três vagas restantes deviam ser preenchidas");
+    }
+
+    /**
+     * Entre dois candidatos, a vaga fica com quem pode trabalhar.
+     *
+     * <p>O servidor de 2026-08-12 mostrou o custo de não fazer isso: dos
+     * treze trabalhadores com baú da vila, a vaga de lenhador ficou com
+     * o único sem, e a tarefa voltava para a fila a cada ciclo.
+     */
+    @Test
+    void theVacancyGoesToSomeoneWhoCanWork() {
+        addWorkers(COLONY, 3);
+
+        List<Worker> all = workers.ofColony(COLONY);
+
+        for (Worker worker : all) {
+            worker.assign(ProfessionType.LUMBERJACK);
+        }
+
+        UUID withChest = all.get(2).villagerId();
+
+        ProfessionAssigner.enforceVacancies(workers, COLONY, withChest::equals);
+
+        assertEquals(
+                ProfessionType.LUMBERJACK,
+                workers.find(withChest).orElseThrow().profession().orElseThrow(),
+                "a vaga não ficou com quem tem baú");
+    }
+
+    /** Se ninguém tem baú, alguém fica com a vaga assim mesmo. */
+    @Test
+    void withoutAnyoneEquippedTheVacancyIsStillFilled() {
+        addWorkers(COLONY, 3);
+
+        for (Worker worker : workers.ofColony(COLONY)) {
+            worker.assign(ProfessionType.LUMBERJACK);
+        }
+
+        ProfessionAssigner.enforceVacancies(workers, COLONY, villagerId -> false);
+
+        long lumberjacks = workers.ofColony(COLONY).stream()
+                .filter(w -> w.profession().filter(ProfessionType.LUMBERJACK::equals).isPresent())
+                .count();
+
+        assertEquals(1, lumberjacks);
+    }
+
+    /** Colônia já dentro da regra não perde ninguém. */
+    @Test
+    void enforcingChangesNothingWhenTheColonyIsAlreadyRight() {
+        addWorkers(COLONY, 4);
+        ProfessionAssigner.assignMissing(workers, COLONY, everyone());
+
+        assertTrue(ProfessionAssigner.enforceVacancies(workers, COLONY).isEmpty());
     }
 
     /** Roda a cada ciclo: sem aldeão novo não pode fazer nada. */

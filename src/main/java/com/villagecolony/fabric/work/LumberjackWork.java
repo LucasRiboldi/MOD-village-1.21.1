@@ -8,6 +8,7 @@ import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.BlockBreakTime;
 import com.villagecolony.fabric.integration.ChestDepositor;
@@ -218,7 +219,92 @@ public final class LumberjackWork {
 
         dropClosedJobs();
 
+        report(world, colony);
+
         return open;
+    }
+
+    /**
+     * Uma linha por ciclo dizendo o que cada lenhador está fazendo.
+     *
+     * <p>Existe porque a Regra 2 tirou o trabalho do ciclo de 600 ticks e
+     * levou a instrumentação junto: em 2026-08-12 um servidor rodou onze
+     * ciclos com seis tarefas atribuídas e nenhuma árvore derrubada, e o
+     * log não sabia dizer se o aldeão estava andando, sem baú, sem árvore
+     * ou dormindo. Quatro causas com quatro correções diferentes.
+     *
+     * <p>Uma linha a cada trinta segundos não é spam, e é a única forma
+     * de saber o que acontece com um aldeão que ninguém está olhando —
+     * a mesma razão da linha que existia antes. O que não pode voltar é
+     * falar a cada tick.
+     *
+     * <p>Silenciosa quando não há lenhador com trabalho: colônia sem
+     * tarefa de madeira não precisa dizer nada.
+     */
+    private static void report(ServerWorld world, Colony colony) {
+        StringBuilder line = new StringBuilder();
+        int reported = 0;
+
+        for (Map.Entry<UUID, Job> entry : JOBS.entrySet()) {
+            Job job = entry.getValue();
+
+            if (!job.task.belongsTo(colony.id())) {
+                continue;
+            }
+
+            if (reported++ > 0) {
+                line.append("; ");
+            }
+
+            line.append(shortId(entry.getKey()))
+                    .append(" ")
+                    .append(describe(world, entry.getKey(), job));
+        }
+
+        if (reported == 0) {
+            return;
+        }
+
+        VillageColonyMod.LOGGER.info(
+                "Colony {} lumberjacks: {}", colony.id(), line);
+    }
+
+    /**
+     * O que este lenhador está fazendo, em poucas palavras.
+     *
+     * <p>Diz distância e horário de trabalho porque um aldeão parado ao
+     * lado de uma árvore e um aldeão que nunca vai chegar são a mesma
+     * linha sem eles. Foi o que a leitura de 2026-08-12 mostrou: um
+     * lenhador travado em "bloco 1 de 60, 0/0 ticks" ciclo após ciclo, e
+     * nenhuma forma de saber se ele estava longe, dormindo ou fora de
+     * chunk carregado — três causas com três correções diferentes.
+     */
+    private static String describe(ServerWorld world, UUID workerId, Job job) {
+        if (!(world.getEntity(workerId) instanceof VillagerEntity villager)) {
+            return "not loaded (" + job.collected + " logs so far)";
+        }
+
+        String clock = WorkHours.isWorkTime(world, villager) ? "work time" : "off hours";
+
+        if (job.isBetweenTrees()) {
+            return "looking for a tree, " + clock
+                    + " (" + job.collected + " logs so far)";
+        }
+
+        int distance = (int) Math.sqrt(
+                villager.getBlockPos().getSquaredDistance(job.plan.base()));
+
+        return (distance <= REACH ? "chopping" : "walking")
+                + " — tree at " + job.plan.base().toShortString()
+                + ", " + distance + " blocks away, " + clock
+                + ", block " + (job.index + 1) + " of " + job.plan.blocks().size()
+                + ", " + job.progress + "/" + job.required + " ticks"
+                + ", " + job.collected + " logs so far";
+    }
+
+    /** Os oito primeiros dígitos do UUID, como no resto do log. */
+    private static String shortId(UUID id) {
+        return id.toString().substring(0, 8);
     }
 
     /**
@@ -295,6 +381,15 @@ public final class LumberjackWork {
             // por que ele continuar andando até a árvore.
             WorkTargets.clear(workerId);
 
+            // Precisa aparecer. Este caminho solta a tarefa em silêncio
+            // e ela volta para a fila, é reservada de novo no ciclo
+            // seguinte e solta outra vez — um ciclo perpétuo que, do
+            // lado de fora, parecia trabalho acontecendo. Ver a entrada
+            // de 2026-08-12.
+            VillageColonyMod.LOGGER.info(
+                    "Worker {} has no chest — wood task returned to the queue",
+                    workerId);
+
             return Outcome.DONE;
         }
 
@@ -342,6 +437,15 @@ public final class LumberjackWork {
             TreeHarvester.finish(world, job.plan);
 
             unclaim(job.plan);
+
+            VillageColonyMod.LOGGER.info(
+                    "Worker {} finished the tree at {} — {} logs and {} leaves,"
+                            + " {} logs this task",
+                    villager.getUuid(),
+                    job.plan.base().toShortString(),
+                    job.plan.logs(),
+                    job.plan.leaves(),
+                    job.collected);
 
             job.plan = null;
         }

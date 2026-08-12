@@ -12,6 +12,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
+import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -34,6 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import net.minecraft.world.poi.PointOfInterestTypes;
 
@@ -405,6 +407,11 @@ public final class VillageDetectionHandler {
             logResources(world, colony);
         }
 
+        // Antes de atribuir: um save anterior a 2026-08-12 chega com
+        // seis lenhadores gravados, e uma regra que só valesse para
+        // aldeão novo nunca os desfaria.
+        dismissExtraWorkers(colony);
+
         int assigned = ProfessionAssigner.assignMissing(
                 VillageColonyMod.WORKERS, colony.id(), result.employable());
 
@@ -422,6 +429,41 @@ public final class VillageDetectionHandler {
             VillageColonyMod.LOGGER.info(
                     "Named {} workers in colony {}", labelled, colony.id());
         }
+    }
+
+    /**
+     * Aposenta quem excede a vaga da profissão.
+     *
+     * <p>Uma vila tem um trabalhador de cada tipo. Quem perde a função
+     * larga o que segurava: a tarefa volta para a fila, o destino é
+     * cedido e a árvore em curso é devolvida — senão a tarefa ficaria
+     * reservada para quem já não sabe executá-la, e a árvore ficaria
+     * marcada para sempre.
+     *
+     * <p>O baú fica com ele. Recolhê-lo tiraria da colônia a madeira que
+     * já está lá dentro, e o aldeão pode voltar a ter função quando o
+     * titular morrer.
+     */
+    private static void dismissExtraWorkers(Colony colony) {
+        Set<UUID> demoted = ProfessionAssigner.enforceVacancies(
+                VillageColonyMod.WORKERS,
+                colony.id(),
+                villagerId -> VillageColonyMod.STORAGES.of(villagerId).isPresent());
+
+        if (demoted.isEmpty()) {
+            return;
+        }
+
+        for (UUID villagerId : demoted) {
+            VillageColonyMod.TASKS.releaseAllOf(villagerId);
+            WorkTargets.clear(villagerId);
+            LumberjackWork.forget(villagerId);
+        }
+
+        VillageColonyMod.LOGGER.info(
+                "Colony {} dismissed {} workers — one of each profession is the rule",
+                colony.id(),
+                demoted.size());
     }
 
     /**
