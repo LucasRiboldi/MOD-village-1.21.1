@@ -5196,3 +5196,130 @@ Estado ao registrar:
 ```text
 276 testes de unidade + 28 de jogo; build verde
 ```
+
+---
+
+## 2026-08-12 — Rodou em servidor de verdade, e o F1 estava errado
+
+Primeira execução do mod fora de gametest desde que as três sessões de
+trabalho começaram: um servidor dedicado sobre uma cópia do save do
+autor, com os chunks da vila forçados para que as colônias ficassem
+ACTIVE sem jogador.
+
+```text
+Loaded 3 colonies with 43 workers
+Colony 0c2771b0 is now ACTIVE
+Colony 9a5afa23 is now ACTIVE
+```
+
+---
+
+### O que só apareceu ao rodar de verdade
+
+O mod **não subia** num servidor dedicado. O `fabric.mod.json` declarava
+três entrypoints `fabric-gametest` apontando para classes do sourceset
+de teste, que nunca entraram no jar:
+
+```text
+Caused by: java.lang.ClassNotFoundException:
+  com.villagecolony.gametest.ColonyDetectionGameTest
+```
+
+O cliente singleplayer não carrega esse entrypoint, e por isso o defeito
+existia desde que os gametests foram escritos sem que ninguém notasse.
+Corrigido no mesmo dia: os entrypoints foram para um `fabric.mod.json`
+próprio do sourceset de gametest.
+
+Vale registrar o que isso custou: três sessões de trabalho e vinte e
+oito testes de jogo verdes não pegaram um defeito que a primeira
+tentativa de rodar o mod pegou em trinta segundos.
+
+---
+
+### O F1 de ontem estava errado
+
+A entrada de 2026-08-11 concluiu que a linha de 5 camas era um segundo
+aglomerado de casas — outra vila pequena, contada como a mesma colônia.
+A linha nova, que agora diz o centro e a âncora, desmente isso:
+
+```text
+saw 28 beds at [1109,64,730] from anchor [1109,64,730]
+saw  5 beds at [1109,64,730] from anchor [1120,64,667]
+```
+
+**Mesmo centro, âncoras diferentes.** Não são dois aglomerados: é a
+mesma vila, vista de dois pontos. O centro é o sino, e as duas leituras
+acham o mesmo sino.
+
+A âncora `[1120,64,667]` é o centro da colônia **9a5afa23**, a vizinha.
+A sonda dela colhe as camas num raio de 64 do próprio centro, alcança só
+a beirada da vila grande — cinco camas —, agrupa, acha o sino da vila
+grande como centro, e `findNearest` entrega o candidato para a colônia
+`0c2771b0`.
+
+Ou seja: o E2 original estava certo no que suspeitava e eu estava errado
+ao contestá-lo. "Uma sonda que vê 5 de 31 está partindo de um ponto que
+não alcança a vila" — é exatamente isso, e o ponto é o centro da colônia
+vizinha.
+
+O argumento estatístico que me convenceu — "um 5 que se repete cento e
+catorze vezes não é visão parcial" — não vale: o ponto de onde essa
+leitura parte também é fixo, porque é o centro de uma colônia. Uma visão
+parcial de âncora fixa é tão estável quanto a boa.
+
+---
+
+### E isso responde a pergunta que ficou em aberto
+
+Ontem ficou registrado que o log de 2026-08-08 nunca encolheu a colônia
+e que, pelo código, isso não deveria ser possível. A resposta é esta:
+
+```text
+12×  from anchor [1109,64,730]     a sonda da própria colônia
+12×  from anchor [1120,64,667]     a sonda da vizinha
+```
+
+Uma colônia tem **um** lugar para guardar a âncora da sonda, e recebe
+observações de **duas**. Elas se alternam, e cada uma sobrescreve a
+âncora da outra. `from.equals(probeAnchor)` nunca é verdade, e
+`confirmedByProbe` nunca dispara.
+
+A colônia não encolhe nunca — não por prudência, mas porque a regra
+está permanentemente quebrada quando duas colônias vizinhas têm raios de
+sonda que se cruzam.
+
+**Isto é o E2 de verdade, e a correção de ontem não o resolve.** O
+`bestPerColony` desduplica candidatos de uma mesma varredura; estes vêm
+de varreduras diferentes. A correção de ontem continua certa — o defeito
+que ela trata está provado por reprodução —, mas trata outra coisa.
+
+---
+
+### O lenhador não cortou nada em onze ciclos
+
+```text
+11×  Colony 0c2771b0 assigned 6 tasks (0 open)
+ 0×  qualquer linha de corte
+```
+
+Seis tarefas atribuídas **a cada ciclo**, o que significa que as seis
+saem do ar entre um ciclo e outro e voltam para a fila. O caminho que
+faz isso sem dizer nada é o `release` por falta de baú: sem baú,
+`LumberjackWork` solta a tarefa em silêncio, ela volta a AVAILABLE, e o
+ciclo seguinte a entrega de novo.
+
+Não dá para afirmar que é isso a partir deste log, e é essa a questão:
+**não dá para afirmar nada**. Ao tirar o trabalho do lenhador do ciclo
+de 600 ticks, a instrumentação foi junto — a linha "heading to the tree"
+saiu e nada ocupou o lugar dela. O lenhador ficou mudo.
+
+O que se sabe: seis lenhadores com tarefa, onze ciclos, nenhuma árvore.
+
+---
+
+### O que este teste não cobriu
+
+Roda sem jogador, então nada do que é visto pelo cliente foi verificado:
+o nome sobre a cabeça, a rachadura no bloco e o braço balançando — as
+três coisas que a Regra 2 acrescentou para ser visível — continuam sem
+prova. Isso precisa de alguém no teclado.
