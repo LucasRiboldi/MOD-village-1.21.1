@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "villagecolony-gametest",
+  "version": "1.0.0",
+  "name": "Village Colony Game Tests",
+  "description": "Os testes de jogo do Village Colony. Existe como mod separado para que os entrypoints de gametest fiquem fora do jar publicado: um servidor dedicado carrega o entrypoint 'fabric-gametest' no boot, e apontar para classes que não estão no jar derruba o servidor antes de o mod iniciar.",
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-gametest": [
+      "com.villagecolony.gametest.ColonyDetectionGameTest",
+      "com.villagecolony.gametest.StorageGameTest",
+      "com.villagecolony.gametest.LumberjackGameTest"
+    ]
+  },
+  "depends": {
+    "villagecolony": "*"
+  }
+}
