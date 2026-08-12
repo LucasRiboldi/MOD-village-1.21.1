@@ -4392,11 +4392,7 @@ para provar o que o lenhador **não** quebra.
 
 5  consolidar este documento          passou de 4700 linhas
 
-6  um lenhador de cada vez            a colônia abre uma tarefa por
-                                      recurso, então só um trabalhador
-                                      colhe; com a tarefa durando muito
-                                      mais, isso passou a pesar — ver a
-                                      entrada de 2026-08-11
+6  um lenhador de cada vez            FEITO em 2026-08-11
 ```
 
 Os itens 1 e 2 são a mesma decisão vista de dois lados: quanto colher, e
@@ -4929,3 +4925,122 @@ cabe a árvore inteira quase nunca chega ao limite no meio. O aviso em
 WARN continua lá para o caso de o jogador mexer no baú durante a
 colheita — que agora leva muito mais tempo, e portanto é mais provável
 do que era.
+
+---
+
+## 2026-08-11 — Um pedido por lenhador, e uma árvore para cada um
+
+O item 6 tinha sido aberto poucas horas antes, na entrada acima, como
+uma consequência da Regra 1 que não estava no pedido. O autor mandou
+fechá-lo.
+
+---
+
+### O que estava errado
+
+`ColonyCycle` abria um pedido por recurso, e Simulation-Loop.md é
+explícito: uma tarefa tem um executor só. Uma vila com cinco lenhadores
+punha quatro a olhar o quinto.
+
+Isso já era verdade antes da Regra 1 e quase não aparecia, porque a
+tarefa durava uma árvore e girava entre os aldeões a cada ciclo. Foi a
+tarefa passar a durar até o baú encher que transformou um rodízio
+disfarçado em quatro aldeões parados.
+
+---
+
+### O teto é quem sabe fazer, não quem está livre
+
+```text
+pedidos abertos de um recurso  ≤  trabalhadores capazes da colônia
+```
+
+A tentação era contar ociosos. Seria errado: quem está executando segura
+um dos pedidos abertos e já está contado, e olhar só os ociosos abriria
+uma tarefa nova a cada ciclo para quem já trabalha — o E1 de volta por
+outra porta, com outro nome.
+
+O teto acompanha a colônia nos dois sentidos. Um aldeão que vira
+lenhador no meio da partida ganha trabalho no ciclo seguinte, sem
+esperar a fila esvaziar.
+
+A quantidade de cada pedido é a falta repartida entre eles. É divisão de
+fachada e o código diz isso: quem de fato encerra o trabalho é o espaço
+no baú **daquele** trabalhador, conferido a cada árvore. O número na
+tarefa serve para o log e para o dia em que houver recurso cuja coleta
+não passe por baú próprio.
+
+---
+
+### O defeito que a correção trouxe junto
+
+```text
+a busca por árvore parte do centro da colônia
+a busca é determinística
+dois lenhadores procurando  →  o mesmo tronco para os dois
+```
+
+Um derruba, o outro fica ao lado de um toco. Não é hipótese: é o que o
+teste mostra quando se desliga a reserva.
+
+O trabalho em curso passou a reservar os troncos do seu plano, e
+`TreeScanner.findNearestLog` ganhou um filtro para pular o que já tem
+dono — a espiral simplesmente continua até achar árvore livre.
+
+Só o tronco entra na reserva. A busca nunca devolve folha, então
+reservar a copa não impediria colisão nenhuma e faria o conjunto crescer
+sete vezes à toa.
+
+Tronco recusado não conta para o teto de mil colunas do scanner: a
+coluna foi olhada e custou o mesmo. Um lenhador cercado de árvores
+tomadas desiste no mesmo lugar em que desistiria se não houvesse árvore
+nenhuma.
+
+A reserva é devolvida em toda saída — árvore terminada, tarefa
+encerrada, trabalhador morto, servidor parando. Uma reserva esquecida é
+uma árvore que ninguém mais corta até reiniciar.
+
+---
+
+### Mudança de comportamento que vale registrar
+
+Colônia sem ninguém capaz não abre mais o pedido. Antes ele nascia e
+ficava na fila para sempre: nada o cancelava, porque a falta continuava,
+e nada o concluía, porque não havia executor. Era assim que a meta de
+pedra sobrevivia antes de sair.
+
+Cinco testes de `ColonyCycleTest` mudaram por causa disto. Eles rodavam
+sem registrar trabalhador nenhum e verificavam que a tarefa nascia — o
+que agora é justamente o caso em que ela não deve nascer. Passaram a
+registrar um lenhador, que é a situação que descrevem.
+
+---
+
+### O que ficou provado, e por qual teste
+
+```text
+271 testes de unidade + 28 de jogo; build verde
+```
+
+O teste dos dois lenhadores foi conferido pelo avesso: com a reserva
+desligada, ele falha. É a única forma de saber que ele mede alguma
+coisa, e vale a pena registrar que foi feito — um teste verde que
+continuaria verde com o defeito de volta não prova nada.
+
+---
+
+### O que esta sessão não fez
+
+**Continua sem verificação em jogo.** Vale para esta entrada e para a
+anterior: nada das regras 1 e 2, nem o pedido por lenhador, foi visto
+num save de verdade. O custo é o que mais preocupa — vários lenhadores
+quebrando bloco a cada tick é trabalho por tick que antes não existia, e
+gametest não mede custo.
+
+**Nada distribui os lenhadores pelo mapa.** A reserva impede que dois
+peguem o mesmo tronco, mas todos continuam procurando a partir do mesmo
+centro: com muitos lenhadores, eles trabalham em árvores vizinhas, em
+anéis cada vez mais largos. Repartir a floresta por setor é outra
+decisão, e não foi tomada.
+
+**O E2 continua aberto.**
