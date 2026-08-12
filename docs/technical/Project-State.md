@@ -4712,7 +4712,18 @@ Não é só cosmético: tarefa é objeto em memória, e nada as expira.
 
 ---
 
-## E2 — A colônia 0c2771b0 nunca prova a visão completa
+## E2 — A colônia 0c2771b0 nunca prova a visão completa — **investigado e corrigido em 2026-08-11**
+
+A suspeita registrada abaixo estava errada, e o defeito real era outro.
+Ver a entrada de §15 de 2026-08-11. Em resumo: as 31 camas existem; a
+linha de 5 camas era um segundo aglomerado, não uma sonda com defeito; e
+o defeito de verdade era dois candidatos da mesma varredura se
+confirmando dentro do mesmo tick.
+
+O texto original fica abaixo.
+
+---
+
 
 ```text
 Colony 0c2771b0 saw 28 beds, keeping 31 — view not provably complete
@@ -5044,3 +5055,144 @@ anéis cada vez mais largos. Repartir a floresta por setor é outra
 decisão, e não foi tomada.
 
 **O E2 continua aberto.**
+
+---
+
+## 2026-08-11 — O E2 investigado: eram três coisas, e a suspeita estava errada
+
+O E2 estava aberto desde 2026-08-08 com uma frase que envelheceu mal:
+"se a vila tiver de fato encolhido, a colônia está com 31 camas que não
+existem". As 31 existem. O que não existia era o entendimento do que a
+linha de 5 camas queria dizer.
+
+A investigação começou onde deveria ter começado: o log real da sessão,
+preservado em `AppData\Roaming\.minecraft\logs`. Trezentas e vinte e
+nove linhas do E2.
+
+---
+
+### O que a estatística do log disse
+
+```text
+197×  saw 28 beds, keeping 31
+114×  saw  5 beds, keeping 31
+  5×  saw 27       1×  saw 24, 23, 20, 19, 4, 3
+```
+
+O 28 e o 5 são estáveis. As leituras esparsas — 19, 20, 23, 24, 27 — são
+as varreduras que partem da posição do jogador, e variam porque ele
+anda.
+
+Uma visão parcial da mesma vila oscilaria como essas. Um 5 que se repete
+cento e catorze vezes não é visão parcial: é outra coisa, sempre a
+mesma.
+
+---
+
+### F1 — a linha de 5 camas é um segundo aglomerado
+
+```text
+cluster        separa o que está a mais de 32 blocos
+adopt          considera a mesma vila o que está a até 64 do centro
+```
+
+Entre 32 e 64 existe uma faixa em que um punhado de camas é, ao mesmo
+tempo, **outro aglomerado** e **a mesma colônia**. O vizinho de três a
+cinco camas caiu exatamente nela.
+
+Nunca foram 5 de 31. São 5 de outra coisa, contadas como se fossem a
+mesma vila.
+
+---
+
+### F2 — o 28 contra 31 é geometria, não perda
+
+A prova de completude exige toda cama a até
+`SEARCH_RADIUS − CLUSTER_DISTANCE`, que são 32 blocos do gatilho. Uma
+vila de 31 camas é muito maior que isso.
+
+Consequência que vale escrever com todas as letras: **nenhuma sonda
+ancorada no centro de uma vila grande vai provar completude, nunca.** O
+`complete` é falso por construção para qualquer vila com mais de 32
+blocos de raio, e a sonda alcança 28 das 31 porque as outras três estão
+além do raio de 64 a partir do centro. Foram vistas numa sessão anterior
+de um ponto mais favorável, e por isso ficaram registradas.
+
+A prova geométrica não está errada — está inútil para o tamanho de vila
+que o jogo produz. Já havia suspeita disso em §15, 2026-08-07.
+
+---
+
+### F3 — o defeito de verdade, achado por reprodução
+
+```text
+antes:  observedBeds=31  center=[27, 64, 0]
+depois: observedBeds=5   center=[4, 64, 40]
+```
+
+Uma varredura, dois candidatos, a mesma colônia. Os dois chegam com a
+mesma âncora — é a mesma varredura. O primeiro grava a leitura da sonda,
+e o segundo é confirmado por ela **dentro do mesmo tick**.
+
+A regra "duas leituras da mesma âncora confirmam uma diminuição" foi
+escrita para ciclos sucessivos, e nada exigia que fossem sucessivos.
+
+O estrago não é cosmético: o centro pula quarenta blocos para o vizinho,
+e o centro é de onde o lenhador procura árvore e de onde a sonda do
+ciclo seguinte parte. A contagem de vagas de profissão vai junto.
+
+---
+
+### A correção
+
+Uma observação por colônia por varredura, e vence a que viu mais. É o
+mesmo critério de `Colony#observe`: quem enxergou menos não tem
+autoridade sobre quem enxergou mais.
+
+O agrupamento é calculado antes de qualquer adoção, e por isso
+`bestPerColony` devolve lista em vez de adotar — adotar move centros, e
+um centro movido mudaria a resposta de `findNearest` para os candidatos
+seguintes da mesma varredura.
+
+Candidato que não cai em colônia conhecida continua passando. Agrupá-lo
+faria a detecção perder vila.
+
+---
+
+### A instrumentação que faltava
+
+A linha dizia `saw 5 beds, keeping 31` e não dizia **onde**. Foi essa
+cegueira que fez o E2 durar três dias parecendo sonda com defeito.
+
+Agora diz o centro do candidato e a âncora da varredura. Com o centro na
+linha, dois aglomerados diferentes se distinguem de imediato de uma
+leitura pobre do mesmo.
+
+É o §11 de novo, e desta vez cobrado por um erro que já estava escrito:
+a linha que expõe o caso precisa existir antes de alguém desconfiar
+dele — e precisa dizer o suficiente.
+
+---
+
+### O que ficou sem resposta
+
+**Por que o jar daquela noite nunca encolheu.** O log tem 329 linhas e
+todas dizem "keeping 31": a colônia nunca mudou de tamanho. Pelo código
+de hoje isso não deveria ser possível — mesmo sem o segundo candidato,
+uma leitura ancorada de 28 se autoconfirmaria no ciclo seguinte e a
+colônia cairia para 28.
+
+O jar da sessão foi sobrescrito às 06:02 de 2026-08-08 e não dá para
+diferenciá-lo do que estava no repositório. Fica registrado como
+pergunta em aberto, e não como causa inventada: o F3 está provado por
+reprodução no código atual, e é isso que a correção trata.
+
+**Nada disto foi visto em jogo**, como as duas entradas anteriores.
+
+---
+
+Estado ao registrar:
+
+```text
+276 testes de unidade + 28 de jogo; build verde
+```
