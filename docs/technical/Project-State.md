@@ -1457,9 +1457,13 @@ achar, inclusive dentro dos limites que o jogo registra para a vila —
 sem isso não haveria colheita, porque vila de planície nasce cercada de
 carvalho e boa parte dele cai dentro desses limites.
 
-Consequência que vale saber: uma árvore que tenha vindo junto com a vila
-gerada é derrubável como qualquer outra. O que protege a casa não é esta
-regra, é a da copa — tronco sem folha viva não é árvore.
+**Árvore que nasceu junto com a vila é derrubável como qualquer outra**
+— perguntado ao autor em 2026-08-13 e confirmado por ele. A exceção é da
+árvore, não do lugar onde ela está: estar dentro da vila não muda o que
+um bloco é.
+
+O que protege a casa não é esta regra, é a da copa — tronco sem folha
+viva não é árvore.
 
 ---
 

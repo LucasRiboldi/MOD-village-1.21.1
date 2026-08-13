@@ -4693,9 +4693,13 @@ floresta. É a regra da copa, escrita ontem, que faz esse trabalho.
 
 **A árvore é a exceção, e é a única.** Vila de planície nasce cercada de
 carvalho, e boa parte dele cai dentro dos limites que o jogo registra
-para a vila; sem a exceção não haveria colheita. A consequência é que
-uma árvore gerada junto com a vila é derrubável como qualquer outra, e
-isso é o pedido do autor, não um descuido.
+para a vila; sem a exceção não haveria colheita.
+
+A consequência foi levantada como pergunta na entrega e **o autor
+confirmou no mesmo dia**: árvore gerada junto com a vila é derrubável
+como qualquer outra. A exceção é da árvore, não do lugar — estar dentro
+da vila não muda o que um bloco é. Fica registrado como decisão dele, e
+não como leitura minha do pedido.
 
 **O que muda de comportamento hoje: quase nada, e vale dizer.** A única
 coisa que o mod quebra é árvore, e árvore é a exceção. O único caminho
