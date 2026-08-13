@@ -5412,3 +5412,124 @@ negativo, por regra desligada:
 e o §8 tem o item: a linha `manufacturers:` aparecendo, tábua entrando no
 baú, tronco sumindo na mesma conta, e a colônia parando sozinha na
 metade.
+
+---
+
+## 2026-08-13 — Fecho de sessão: o que foi feito, o que falhou, e o que fica
+
+Quinze commits, de `c7670bf` a `6bd2a57`. Esta entrada existe para que
+quem retomar não precise ler as outras.
+
+---
+
+### O que foi criado
+
+```text
+BlockProtection      a porta única para "posso quebrar isto?" (Regra 3)
+ChestWithdrawer      tirar item do baú — o mod nunca tinha feito isso
+CraftingLookup       a receita perguntada ao RecipeManager do jogo
+ManufacturerWork     o fabricante: tronco vira tábua, no baú dele
+ColonyFixture        o teste limpa só o que criou
+
+Development-Log.md   este arquivo, separado do Project-State
+```
+
+---
+
+### O que mudou de comportamento
+
+```text
+tronco sem copa viva não é árvore        Regra 3, e a exceção da árvore
+
+a busca guarda em que anel parou         o raio de 64 deixou de ser
+                                         decorativo
+
+grupo recusado não é reencontrado        sem isso a colônia trava
+
+dois trabalhadores por profissão         Regra 4, era um
+
+a vaga prefere quem consegue baú         na atribuição e na dispensa
+
+a meta de tábua                          Regra 5, metade do que cabe
+
+o teto de tarefa RESERVED                Task.complete deixou de
+                                         derrubar o servidor
+
+as oito tábuas e o grupo PLANKS          a colônia enxerga o que fabrica
+```
+
+---
+
+### O que falhou, e o que cada falha ensinou
+
+```text
+a regra da copa travou uma colônia inteira
+
+  Escrita num dia, e no seguinte a vila de 1109,730 passou dezesseis
+  minutos em horário de trabalho sem cortar nada: a busca achava a casa
+  mais próxima, a copa recusava, e o ciclo seguinte achava a mesma casa.
+  Regra nova precisa ser olhada pelo lado de quem ela recusa.
+
+Task.complete numa tarefa RESERVED derrubava o servidor
+
+  Achado pelo teste rodado contra a própria regra desligada, e não em
+  jogo. O passo de "provar que o teste falha" pagou o preço dele inteiro
+  numa vez só.
+
+/time set day não é horário de trabalho
+
+  Instrução minha, errada, que custou duas sessões do autor. A agenda do
+  aldeão põe WORK em 2000; day é 1000.
+
+os testes de jogo rodam concorrentes
+
+  Cada um limpava os registros globais, e um apagava a colônia do outro
+  no meio do caminho. Meia sessão para descobrir, e um teste que não
+  pode existir nesta bateria — o do encolhimento — foi removido com o
+  motivo escrito no lugar dele.
+
+duas conclusões minhas foram desmentidas pelo próprio log
+
+  As árvores "longe" da sessão de 00:49 estavam dentro do alcance
+  antigo, e não provavam o cursor. A prova veio depois, com árvores nos
+  anéis 20 a 25.
+```
+
+---
+
+### O que ficou por fazer
+
+```text
+1  ver a Fase 9 em jogo
+
+   Nada dela rodou fora de teste. A linha "manufacturers:", a tábua
+   entrando no baú, o tronco sumindo na conta de quatro para um, e a
+   colônia parando na metade.
+
+2  a metade estrutural da Regra 3
+
+   Hoje quem protege a construção em jogo é a regra da copa. A pergunta
+   sobre peça de vila gerada nunca foi exercitada: o mundo do gametest
+   não tem vila.
+
+3  o lado do cliente
+
+   Nome sobre a cabeça, rachadura no bloco e braço balançando.
+
+4  E3, E4 e E5 do §17
+
+   Perda de item na sobra da colheita, o "path held: no", e as seis
+   espécies que nunca caíram em jogo.
+
+5  a Fase 10
+
+   Três decisões de regra antes da primeira linha de código: onde a
+   colônia constrói, o que constrói, e quando para. Ver §7.
+```
+
+---
+
+### O que não está escrito em lugar nenhum, e devia
+
+Nada. As regras do autor estão no §18 com a data de cada uma, os erros
+conhecidos no §17, a fila no §8, e o caminho de volta no §14.

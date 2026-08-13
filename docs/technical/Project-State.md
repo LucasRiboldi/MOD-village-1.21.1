@@ -1231,14 +1231,62 @@ Initial-Setup-Checklist.md §6 e Class-Architecture.md
 
 ---
 
-# 14. Session Resume Template
+# 14. Onde retomar
 
-Ao retomar, começar pelo §8. Ele diz o que depende de uma sessão de jogo,
-o que depende de decisão do autor e o que não depende de nenhum dos dois.
+## O estado em 2026-08-13, fim da madrugada
 
-Depois dele, o §17 diz o que se sabe estar quebrado.
+```text
+Fases 1 a 8    completas e verificadas em jogo
+Fase 9         escrita, coberta por teste, nunca vista em jogo
+Fase 10        não iniciada — é o próximo passo (§7)
 
-Ao encerrar uma sessão, atualizar:
+299 testes unitários + 60 de jogo, verdes
+árvore de trabalho limpa, tudo empurrado para origin/main
+```
+
+---
+
+## As três coisas que esperam, em ordem
+
+```text
+1  ver a Fase 9 em jogo          §8, P1c
+
+   O fabricante nunca rodou fora de teste. É a dívida mais nova e a
+   mais barata de pagar: uma sessão com /time set noon, olhando a
+   linha "manufacturers:" no log.
+
+2  ver o que ficou da Fase 8     §8, P1b e P2
+
+   A metade estrutural da Regra 3 — a peça de vila protegendo — e o
+   lado do cliente: nome, rachadura e braço.
+
+3  começar a Fase 10             §7
+
+   Três decisões de regra esperam o autor antes da primeira linha:
+   onde a colônia constrói, o que ela constrói, e quando ela para.
+```
+
+---
+
+## Como rodar, sem procurar
+
+```text
+build e testes     JAVA_HOME="$HOME/.jdks/jdk-21.0.12+8" ./gradlew build
+
+testes de jogo     JAVA_HOME="$HOME/.jdks/jdk-21.0.12+8" ./gradlew runGametest
+
+jar para jogar     build/libs/village-colony-0.1.0.jar
+                   → %APPDATA%/.minecraft/mods/
+```
+
+O PATH da máquina tem Java 8; sem o `JAVA_HOME` explícito o Loom recusa.
+
+Trocar o jar com o jogo aberto não testa nada, e `/time set day` não é
+horário de trabalho do aldeão — as duas armadilhas estão no §11.
+
+---
+
+## Ao encerrar uma sessão, atualizar
 
 ```text
 §3   Current Phase        se a fase mudou
@@ -1248,6 +1296,8 @@ Ao encerrar uma sessão, atualizar:
 §8   Priority Queue        o que entrou, o que saiu
 
 §17  Erros conhecidos      o que se descobriu, sem inventar causa
+
+§18  Regras vigentes       regra nova do autor, com a data
 
 Development-Log.md         a entrada da sessão, no fim do arquivo
 ```
