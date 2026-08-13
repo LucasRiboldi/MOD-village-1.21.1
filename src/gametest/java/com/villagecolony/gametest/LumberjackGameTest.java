@@ -784,8 +784,6 @@ public class LumberjackGameTest implements FabricGameTest {
         BlockPos chest = new BlockPos(2, 2, 2);
         BlockPos stand = new BlockPos(3, 2, 4);
 
-        clearColonyState();
-
         plantTree(context, base);
         context.setBlockState(chest, Blocks.CHEST.getDefaultState());
         context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
@@ -800,6 +798,10 @@ public class LumberjackGameTest implements FabricGameTest {
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(base)));
 
         VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create()
+                .owning(colony)
+                .owning(villager.getUuid());
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.LUMBERJACK);
@@ -836,9 +838,7 @@ public class LumberjackGameTest implements FabricGameTest {
 
             context.assertTrue(stored > 0, "a madeira não chegou ao baú");
 
-            clearColonyState();
-            LumberjackWork.clearAll();
-            WorkTargets.clear(villager.getUuid());
+            owned.cleanUp();
 
             context.complete();
         });
@@ -862,8 +862,6 @@ public class LumberjackGameTest implements FabricGameTest {
         BlockPos first = new BlockPos(2, 2, 2);
         BlockPos second = new BlockPos(6, 2, 6);
 
-        clearColonyState();
-
         plantTree(context, first);
         plantTree(context, second);
         context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
@@ -876,6 +874,8 @@ public class LumberjackGameTest implements FabricGameTest {
 
         VillageColonyMod.COLONIES.register(colony);
 
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
         for (int i = 0; i < 2; i++) {
             BlockPos chest = new BlockPos(1, 2, 4 + i);
 
@@ -884,6 +884,8 @@ public class LumberjackGameTest implements FabricGameTest {
             VillagerEntity villager = context.spawnEntity(
                     EntityType.VILLAGER, new BlockPos(4, 2, 4));
             villager.setBreedingAge(0);
+
+            owned.owning(villager.getUuid());
 
             Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
             worker.assign(ProfessionType.LUMBERJACK);
@@ -930,8 +932,7 @@ public class LumberjackGameTest implements FabricGameTest {
                     firstColumn == 1,
                     "os dois foram para a mesma árvore: " + firstColumn + " na primeira");
 
-            clearColonyState();
-            LumberjackWork.clearAll();
+            owned.cleanUp();
 
             context.complete();
         });
@@ -952,22 +953,6 @@ public class LumberjackGameTest implements FabricGameTest {
         return standing;
     }
 
-    /**
-     * Zera o estado do mod entre testes.
-     *
-     * <p>Os registros são estáticos e vivem no servidor, que é um só para
-     * a bateria inteira. Sem isto, a colônia de um teste apareceria na do
-     * seguinte, e a ordem de execução — que não é garantida — mudaria o
-     * resultado.
-     */
-    private static void clearColonyState() {
-        VillageColonyMod.COLONIES.clear();
-        VillageColonyMod.WORKERS.clear();
-        VillageColonyMod.STORAGES.clear();
-        VillageColonyMod.TASKS.clear();
-        LumberjackWork.clearAll();
-        TreeScanner.clearAll();
-    }
 
     /**
      * A busca acha a árvore que está ao alcance.
@@ -1014,8 +999,6 @@ public class LumberjackGameTest implements FabricGameTest {
         BlockPos pillar = new BlockPos(2, 2, 2);
         BlockPos tree = new BlockPos(6, 2, 6);
 
-        clearColonyState();
-
         // O pilar é construção: tronco sem copa. Fica entre o centro e a
         // árvore, e a busca chega nele primeiro.
         raiseLogs(context, pillar, 3);
@@ -1037,6 +1020,10 @@ public class LumberjackGameTest implements FabricGameTest {
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)));
 
         VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create()
+                .owning(colony)
+                .owning(villager.getUuid());
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.LUMBERJACK);
@@ -1076,8 +1063,7 @@ public class LumberjackGameTest implements FabricGameTest {
                 context.expectBlock(Blocks.OAK_LOG, pillar.up(y));
             }
 
-            clearColonyState();
-            LumberjackWork.clearAll();
+            owned.cleanUp();
 
             context.complete();
         });

@@ -3,6 +3,7 @@ package com.villagecolony.gametest;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
+import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -16,9 +17,10 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestTypes;
+
+import java.util.Optional;
 
 /**
  * Os primeiros testes que não precisam de um humano.
@@ -49,8 +51,6 @@ public class ColonyDetectionGameTest implements FabricGameTest {
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_detection")
     public void aVillageBecomesAColony(TestContext context) {
-        clearColonyState();
-
         BlockPos anchor = new BlockPos(1, 1, 1);
 
         placeBeds(context, anchor, BEDS);
@@ -59,9 +59,10 @@ public class ColonyDetectionGameTest implements FabricGameTest {
         runCycle(context, anchor);
 
         context.assertTrue(
-                VillageColonyMod.COLONIES.count() == 1,
-                "esperava uma colônia, achei " + VillageColonyMod.COLONIES.count()
-                        + " — " + diagnose(context, anchor));
+                colonyOf(context, anchor).isPresent(),
+                "nenhuma colônia nasceu destas camas — " + diagnose(context, anchor));
+
+        forget(context, anchor);
 
         context.complete();
     }
@@ -116,8 +117,6 @@ public class ColonyDetectionGameTest implements FabricGameTest {
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_workers")
     public void villagersBecomeWorkersWithAProfession(TestContext context) {
-        clearColonyState();
-
         BlockPos anchor = new BlockPos(1, 1, 1);
 
         placeBeds(context, anchor, BEDS);
@@ -125,11 +124,8 @@ public class ColonyDetectionGameTest implements FabricGameTest {
 
         runCycle(context, anchor);
 
-        if (VillageColonyMod.COLONIES.count() != 1) {
-            context.throwGameTestException("nenhuma colônia foi detectada");
-        }
-
-        Colony colony = VillageColonyMod.COLONIES.all().iterator().next();
+        Colony colony = colonyOf(context, anchor).orElseThrow(
+                () -> new AssertionError("nenhuma colônia nasceu destas camas"));
 
         int workers = VillageColonyMod.WORKERS.countOfColony(colony.id());
 
@@ -146,110 +142,65 @@ public class ColonyDetectionGameTest implements FabricGameTest {
                 withProfession == workers,
                 "trabalhador sem profissão: " + (workers - withProfession) + " de " + workers);
 
+        forget(context, anchor);
+
         context.complete();
     }
 
-    /**
-     * A colônia encolhe quando a sonda dela confirma a leitura menor.
-     *
-     * <p>É o item A do §8 e o caminho inteiro do E2: a vila perde casas,
-     * a sonda ancorada no centro lê menos, e a colônia só baixa a
-     * contagem quando a leitura menor se repete. Uma leitura menor
-     * sozinha não vale — visão parcial é o caso comum, e foi ela que fez
-     * o centro derivar em 2026-08-07.
-     *
-     * <p>O que este teste afirma é o caminho inteiro: cama destruída no
-     * mundo vira contagem menor na colônia. A outra metade da regra —
-     * **não** encolher na primeira leitura menor — mora em
-     * `PartialObservationTest#aSingleProbeReadingProvesNothing`, e não
-     * pode morar aqui: a colônia também encolhe quando a observação é
-     * provadamente completa, e se ela é ou não depende das camas das
-     * estruturas vizinhas, que mudam de lugar sempre que um teste novo
-     * entra na bateria. Um teste que exigisse "não encolheu ainda"
-     * passaria ou falharia conforme o vizinho.
-     *
-     * <p>A contagem absoluta não é afirmada. As estruturas dos outros
-     * testes ficam a menos de {@code CLUSTER_DISTANCE} e suas camas
-     * entram no aglomerado — o que este teste pode afirmar é a diferença
-     * entre antes e depois, que é o que a regra decide.
-     *
-     * <p><b>Por que este teste atravessa ticks.</b> A sonda só roda para
-     * colônia ACTIVE, e ACTIVE quer dizer chunk ticando. Em jogo quem
-     * mantém o chunk assim é o jogador por perto; aqui não há jogador, e
-     * o centro da colônia cai onde o aglomerado o puser — inclusive fora
-     * da estrutura do teste, porque as camas das estruturas vizinhas
-     * entram na conta. O teste força o chunk do centro, e o pedido de
-     * carga só vale no tick seguinte: por isso os ciclos são agendados
-     * em vez de rodarem em sequência.
-     */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_shrink",
-            tickLimit = 200)
-    public void aColonyShrinksOnlyWhenItsOwnProbeConfirms(TestContext context) {
-        clearColonyState();
-
-        BlockPos anchor = new BlockPos(1, 1, 1);
-        int planted = BEDS + 4;
-
-        placeBeds(context, anchor, planted);
-        spawnVillagers(context, anchor, VillageDetector.MIN_VILLAGERS);
-
-        runCycle(context, anchor);
-
-        if (VillageColonyMod.COLONIES.count() != 1) {
-            context.throwGameTestException(
-                    "nenhuma colônia foi detectada — " + diagnose(context, anchor));
-        }
-
-        Colony colony = VillageColonyMod.COLONIES.all().iterator().next();
-        ChunkPos center = new ChunkPos(MinecraftTypeAdapter.toBlockPos(colony.center()));
-
-        context.getWorld().setChunkForced(center.x, center.z, true);
-
-        int before = colony.observedBeds();
-
-        removeLastBeds(context, anchor, planted, 4);
-
-        context.runAtTick(20, () -> {
-            runCycle(context, anchor);
-
-            context.assertTrue(
-                    colony.isActive(),
-                    "a colônia continua dormente e a sonda nunca roda — "
-                            + "centro " + colony.center() + ", chunk " + center);
-        });
-
-        context.runAtTick(30, () -> {
-            runCycle(context, anchor);
-
-            context.assertTrue(
-                    colony.observedBeds() < before,
-                    "a sonda confirmou a leitura menor e a colônia não encolheu: "
-                            + before + " → " + colony.observedBeds()
-                            + " — âncora da sonda " + colony.probeAnchor());
-
-            context.getWorld().setChunkForced(center.x, center.z, false);
-
-            clearColonyState();
-
-            context.complete();
-        });
-    }
+    // O encolhimento da colônia também não mora aqui, e a razão é a
+    // mesma do caso acima — descoberto em 2026-08-13, depois de o teste
+    // existir por um dia e falhar de forma intermitente.
+    //
+    // A regra precisa de duas leituras da sonda sobre o mesmo aglomerado
+    // de camas. O aglomerado inclui as camas das estruturas vizinhas, e
+    // os testes rodam concorrentes: enquanto este media, outro plantava
+    // as suas. A colônia crescia de 11 para 13 camas entre um ciclo e o
+    // seguinte, sem que nada do mod estivesse errado.
+    //
+    // Tentado e descartado: forçar o chunk do centro (o centro se move),
+    // forçar a vizinhança inteira (a população de camas continua
+    // mudando), e afirmar só a diferença antes e depois (contaminada
+    // pelo mesmo motivo).
+    //
+    // A regra está coberta onde ela cabe:
+    // PartialObservationTest#aRepeatedProbeReadingShrinksTheColony e
+    // #aSingleProbeReadingProvesNothing. E o caminho inteiro — cama
+    // destruída no mundo virando contagem menor — foi verificado em jogo
+    // em 2026-08-07; ver o Development Log.
 
     // ----------------------------------------------------------------
 
     /**
-     * Zera o estado do mod entre testes.
+     * A colônia desta estrutura de teste, se nasceu alguma.
      *
-     * <p>Os registros são estáticos e vivem no servidor, que é um só para
-     * a bateria inteira. Sem isto, a colônia de um teste apareceria na
-     * contagem do seguinte, e a ordem de execução — que não é garantida —
-     * mudaria o resultado.
+     * <p>Por posição, e não por contagem global. A bateria roda testes
+     * concorrentes, e um deles pode ter colônia própria no mesmo
+     * instante: afirmar "existe uma colônia no mundo" seria afirmar
+     * sobre o vizinho. Ver {@link ColonyFixture}.
      */
-    private static void clearColonyState() {
-        VillageColonyMod.COLONIES.clear();
-        VillageColonyMod.WORKERS.clear();
-        VillageColonyMod.STORAGES.clear();
-        VillageColonyMod.TASKS.clear();
+    private static Optional<Colony> colonyOf(TestContext context, BlockPos anchor) {
+        return VillageColonyMod.COLONIES.findNearest(
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(anchor)),
+                VillageDetector.DUPLICATE_DISTANCE);
+    }
+
+    /**
+     * Tira do registro a colônia desta estrutura, e os trabalhadores
+     * dela.
+     *
+     * <p>Só o que este teste fez nascer. Limpar tudo apagaria a colônia
+     * de um teste que ainda está rodando.
+     */
+    private static void forget(TestContext context, BlockPos anchor) {
+        colonyOf(context, anchor).ifPresent(colony -> {
+            ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+            for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
+                owned.owning(worker.villagerId());
+            }
+
+            owned.cleanUp();
+        });
     }
 
     /**
@@ -269,20 +220,6 @@ public class ColonyDetectionGameTest implements FabricGameTest {
             context.setBlockState(head.offset(Direction.SOUTH), Blocks.WHITE_BED.getDefaultState()
                     .with(BedBlock.PART, BedPart.FOOT)
                     .with(BedBlock.FACING, Direction.NORTH));
-        }
-    }
-
-    /** Tira as últimas camas plantadas, como uma vila que perde casas. */
-    private static void removeLastBeds(
-            TestContext context, BlockPos anchor, int planted, int count) {
-
-        for (int i = planted - count; i < planted; i++) {
-            BlockPos head = bedHead(anchor, i);
-
-            // As duas metades: meia cama continuaria de pé como bloco
-            // solto, e o POI nasce da cabeceira.
-            context.setBlockState(head, Blocks.AIR.getDefaultState());
-            context.setBlockState(head.offset(Direction.SOUTH), Blocks.AIR.getDefaultState());
         }
     }
 

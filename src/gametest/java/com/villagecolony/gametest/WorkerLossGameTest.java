@@ -56,6 +56,8 @@ public class WorkerLossGameTest implements FabricGameTest {
 
         assertForgotten(context, fixture, "morrer");
 
+        cleanUp(fixture);
+
         context.complete();
     }
 
@@ -74,6 +76,8 @@ public class WorkerLossGameTest implements FabricGameTest {
         fixture.villager.convertTo(EntityType.ZOMBIE_VILLAGER, true);
 
         assertForgotten(context, fixture, "ser zumbificado");
+
+        cleanUp(fixture);
 
         context.complete();
     }
@@ -106,8 +110,6 @@ public class WorkerLossGameTest implements FabricGameTest {
     private record Fixture(VillagerEntity villager, Colony colony, Task task) {
 
         static Fixture build(TestContext context) {
-            clearColonyState();
-
             BlockPos chest = new BlockPos(2, 2, 2);
             BlockPos stand = new BlockPos(1, 2, 1);
 
@@ -143,16 +145,11 @@ public class WorkerLossGameTest implements FabricGameTest {
         }
     }
 
-    /**
-     * Zera o estado do mod entre testes.
-     *
-     * <p>Os registros são estáticos e vivem no servidor, que é um só para
-     * a bateria inteira.
-     */
-    private static void clearColonyState() {
-        VillageColonyMod.COLONIES.clear();
-        VillageColonyMod.WORKERS.clear();
-        VillageColonyMod.STORAGES.clear();
-        VillageColonyMod.TASKS.clear();
+    /** Tira do registro o que este teste criou, e nada mais. */
+    private static void cleanUp(Fixture fixture) {
+        ColonyFixture.create()
+                .owning(fixture.colony())
+                .owning(fixture.villager().getUuid())
+                .cleanUp();
     }
 }

@@ -8,6 +8,7 @@ import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestMarker;
 import com.villagecolony.fabric.integration.TreeScanner;
 import com.villagecolony.fabric.work.LumberjackWork;
+import com.villagecolony.fabric.work.ManufacturerWork;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.server.MinecraftServer;
 
@@ -41,6 +42,7 @@ public final class ServerLifecycleHandler {
         VillageColonyMod.TASKS.clear();
         WorkTargets.clearAll();
         LumberjackWork.clearAll();
+        ManufacturerWork.clearAll();
         ChestMarker.clearAll();
         TreeScanner.clearAll();
         VillageDetectionHandler.clearPending();
@@ -84,6 +86,7 @@ public final class ServerLifecycleHandler {
         VillageColonyMod.TASKS.clear();
         WorkTargets.clearAll();
         LumberjackWork.clearAll();
+        ManufacturerWork.clearAll();
         ChestMarker.clearAll();
         TreeScanner.clearAll();
         VillageDetectionHandler.clearPending();

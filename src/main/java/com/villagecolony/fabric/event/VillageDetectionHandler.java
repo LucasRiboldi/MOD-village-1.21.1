@@ -22,6 +22,7 @@ import com.villagecolony.fabric.integration.VillageScanner;
 import com.villagecolony.fabric.integration.VillagerScanner;
 import com.villagecolony.fabric.integration.WorkerNameplate;
 import com.villagecolony.fabric.work.LumberjackWork;
+import com.villagecolony.fabric.work.ManufacturerWork;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -213,6 +214,7 @@ public final class VillageDetectionHandler {
         // custo é um contador por lenhador; a parte cara, a busca por
         // árvore, tem orçamento próprio dentro de LumberjackWork.
         LumberjackWork.tick(server.getOverworld());
+        ManufacturerWork.tick(server.getOverworld());
 
         tickCounter++;
 
@@ -344,6 +346,7 @@ public final class VillageDetectionHandler {
         // Depois da distribuição: quem recebeu tarefa neste ciclo já
         // começa a andar nele, em vez de esperar o próximo.
         LumberjackWork.run(overworld, colony);
+        ManufacturerWork.run(overworld, colony);
     }
 
     /**
@@ -495,6 +498,7 @@ public final class VillageDetectionHandler {
             VillageColonyMod.TASKS.releaseAllOf(villagerId);
             WorkTargets.clear(villagerId);
             LumberjackWork.forget(villagerId);
+            ManufacturerWork.forget(villagerId);
 
             // A marca do baú sai: um machado pendurado no baú de quem já
             // não é lenhador mente para quem está jogando.

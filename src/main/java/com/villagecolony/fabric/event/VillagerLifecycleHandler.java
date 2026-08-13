@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestMarker;
 import com.villagecolony.fabric.work.LumberjackWork;
+import com.villagecolony.fabric.work.ManufacturerWork;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.entity.LivingEntity;
@@ -107,6 +108,7 @@ public final class VillagerLifecycleHandler {
         // uma colheita em curso, e sem isto ele ficaria no registro
         // esperando por um aldeão que não volta.
         LumberjackWork.forget(villagerId);
+        ManufacturerWork.forget(villagerId);
 
         boolean wasWorker = VillageColonyMod.WORKERS.remove(villagerId);
         boolean hadStorage = VillageColonyMod.STORAGES.remove(villagerId);

@@ -16,7 +16,8 @@
       "com.villagecolony.gametest.ColonyCycleGameTest",
       "com.villagecolony.gametest.BlockProtectionGameTest",
       "com.villagecolony.gametest.ChestWithdrawerGameTest",
-      "com.villagecolony.gametest.CraftingLookupGameTest"
+      "com.villagecolony.gametest.CraftingLookupGameTest",
+      "com.villagecolony.gametest.ManufacturerGameTest"
     ]
   },
   "depends": {

@@ -46,8 +46,6 @@ public class ColonyCycleGameTest implements FabricGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "cycle_deficit")
     public void aFullChestAsksForNothingAndAnEmptyOneAsksForWood(TestContext context) {
-        clearColonyState();
-
         BlockPos chest = new BlockPos(2, 2, 2);
         BlockPos stand = new BlockPos(1, 2, 1);
 
@@ -66,6 +64,10 @@ public class ColonyCycleGameTest implements FabricGameTest {
                 UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(absoluteStand));
 
         VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create()
+                .owning(colony)
+                .owning(villager.getUuid());
 
         // Um lenhador, senão nenhuma tarefa de coleta nasce: o ciclo não
         // abre pedido que ninguém sabe atender.
@@ -105,7 +107,7 @@ public class ColonyCycleGameTest implements FabricGameTest {
                 "com o baú vazio a colônia devia pedir madeira, e abriu "
                         + collectWoodTasksOf(colony) + " tarefas");
 
-        clearColonyState();
+        owned.cleanUp();
 
         context.complete();
     }
@@ -129,8 +131,6 @@ public class ColonyCycleGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "cycle_tree_too_big",
             tickLimit = 200)
     public void aTreeThatDoesNotFitEndsTheTaskInsteadOfCrashing(TestContext context) {
-        clearColonyState();
-
         BlockPos base = new BlockPos(4, 2, 4);
         BlockPos chest = new BlockPos(2, 2, 2);
         BlockPos stand = new BlockPos(3, 2, 4);
@@ -157,6 +157,10 @@ public class ColonyCycleGameTest implements FabricGameTest {
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(base)));
 
         VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create()
+                .owning(colony)
+                .owning(villager.getUuid());
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.LUMBERJACK);
@@ -187,8 +191,7 @@ public class ColonyCycleGameTest implements FabricGameTest {
 
             context.expectBlock(Blocks.OAK_LOG, base);
 
-            clearColonyState();
-            LumberjackWork.clearAll();
+            owned.cleanUp();
 
             context.complete();
         });
@@ -219,10 +222,4 @@ public class ColonyCycleGameTest implements FabricGameTest {
         }
     }
 
-    private static void clearColonyState() {
-        VillageColonyMod.COLONIES.clear();
-        VillageColonyMod.WORKERS.clear();
-        VillageColonyMod.STORAGES.clear();
-        VillageColonyMod.TASKS.clear();
-    }
 }
