@@ -428,13 +428,16 @@ CODE-STANDARDS.md
 Current status:
 
 ```
-In development — MVP phase 4 of 9
+In development — MVP phases 1 to 8 done, phase 9 next
 ```
 
-The mod builds, loads and runs. In game today it detects plains
-villages, creates colonies with a stable identity, wakes and sleeps them
-with their chunks, registers their villagers, and persists everything
-across sessions.
+The mod builds, loads and runs, on a client and on a dedicated server.
+In game today it detects plains villages, creates colonies with a stable
+identity, wakes and sleeps them with their chunks, registers their
+villagers, gives each one a profession, finds and marks each worker's
+chest, counts what it holds, decides what is missing, opens tasks and
+hands them out — and the lumberjack walks to a tree, fells it one block
+at a time, deposits the wood and replants.
 
 Completed:
 
@@ -443,24 +446,28 @@ Completed:
 ✅ Fabric project, mod identity, package structure
 ✅ Colony model, registry and persistence
 ✅ Village detection and automatic colony creation
-✅ Worker model and villager registration
+✅ Workers, professions and worker storage
+✅ Resources, deficit and the colony simulation cycle
+✅ Tasks and their assignment by capability
+✅ The first working profession — the lumberjack
 
-In progress:
+Next:
 
 ```
-Colony professions
+Phase 9 — manufacturing (logs into planks)
 ```
 
 Not started:
 
 ```
-Resources, storage, production, construction
+Manufacturing, construction, building registry
 ```
 
 Tests:
 
 ```
-106 unit tests
+284 unit tests
+ 45 game tests (./gradlew runGametest)
 ```
 
 The authoritative, always-current status is:
