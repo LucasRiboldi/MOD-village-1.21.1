@@ -79,21 +79,9 @@ public final class ChestScanner {
     public static Optional<WorkerStorage> scan(
             ServerWorld world, VillagerEntity villager, StorageRegistry storages) {
 
-        if (storages.hasStorage(villager.getUuid())) {
-            return Optional.empty();
-        }
-
-        Optional<GlobalPos> home =
-                villager.getBrain().getOptionalRegisteredMemory(MemoryModuleType.HOME);
+        Optional<GlobalPos> home = bedOf(world, villager, storages);
 
         if (home.isEmpty()) {
-            return Optional.empty();
-        }
-
-        // Um aldeão do Nether com cama no Overworld não teria baú
-        // alcançável, e ler blocos de outra dimensão pela referência
-        // deste mundo daria a posição errada, não um erro.
-        if (!home.get().dimension().equals(world.getRegistryKey())) {
             return Optional.empty();
         }
 
@@ -111,6 +99,53 @@ public final class ChestScanner {
         logClaim(villager, home.get().pos(), chest.get());
 
         return Optional.of(storage);
+    }
+
+    /**
+     * Se este aldeão conseguiria um baú, sem reivindicar nenhum.
+     *
+     * <p>A mesma pergunta de {@link #scan}, feita antes de o aldeão ter
+     * função. Existe porque a atribuição passou a preferir quem consegue
+     * baú: sem isso a vaga podia ir para um aldeão cuja cama não alcança
+     * baú nenhum, e ele passava a sessão pegando a tarefa e devolvendo —
+     * foi o que o log de 2026-08-13 mostrou, com dois lenhadores sem baú
+     * numa vila que tinha baú livre.
+     *
+     * <p>É uma preferência, não uma promessa: dois candidatos podem
+     * enxergar o mesmo baú livre, e só um fica com ele.
+     *
+     * <p>Custa uma varredura de baús por candidato, e por isso quem
+     * chama só pergunta quando há vaga aberta — que é raro depois dos
+     * primeiros ciclos. Ver {@code VillagerScanner}.
+     */
+    public static boolean hasFreeChest(
+            ServerWorld world, VillagerEntity villager, StorageRegistry storages) {
+
+        return bedOf(world, villager, storages)
+                .flatMap(home -> findFreeChest(world, home.pos(), storages))
+                .isPresent();
+    }
+
+    /**
+     * A cama deste aldeão, quando faz sentido procurar baú para ele.
+     *
+     * <p>Vazio quando ele já tem baú — rever o mesmo aldeão a cada ciclo
+     * é o caso comum, e reabrir a busca custaria uma varredura por aldeão
+     * por ciclo, contra Performance-Rules.md §6 —, quando não tem cama, ou
+     * quando a cama está noutra dimensão: um aldeão do Nether com cama no
+     * Overworld não teria baú alcançável, e ler blocos de outra dimensão
+     * pela referência deste mundo daria a posição errada, não um erro.
+     */
+    private static Optional<GlobalPos> bedOf(
+            ServerWorld world, VillagerEntity villager, StorageRegistry storages) {
+
+        if (storages.hasStorage(villager.getUuid())) {
+            return Optional.empty();
+        }
+
+        return villager.getBrain()
+                .getOptionalRegisteredMemory(MemoryModuleType.HOME)
+                .filter(home -> home.dimension().equals(world.getRegistryKey()));
     }
 
     /**

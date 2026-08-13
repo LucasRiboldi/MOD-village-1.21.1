@@ -168,6 +168,66 @@ class ProfessionAssignerTest {
     }
 
     /**
+     * A vaga vai para quem consegue baú.
+     *
+     * <p>O log de 2026-08-13 mostrou o custo de não fazer isso: dois
+     * lenhadores sem baú numa vila que tinha baú livre, pegando a tarefa
+     * e devolvendo à fila a cada trinta segundos, para sempre. A vaga
+     * tinha ido para a cama errada.
+     */
+    @Test
+    void theVacancyPrefersSomeoneWhoCanGetAChest() {
+        addWorkers(COLONY, 2);
+
+        List<Worker> all = workers.ofColony(COLONY);
+        UUID withChestNearby = all.get(1).villagerId();
+
+        ProfessionAssigner.assignMissing(
+                workers, COLONY, everyone(), withChestNearby::equals);
+
+        assertEquals(
+                ProfessionType.LUMBERJACK,
+                workers.find(withChestNearby).orElseThrow().profession().orElseThrow(),
+                "a primeira vaga não foi para quem consegue baú");
+    }
+
+    /**
+     * Ninguém consegue baú, e as vagas são preenchidas assim mesmo.
+     *
+     * <p>É preferência, não exigência: vaga vazia não é melhor que um
+     * trabalhador que ainda não tem onde guardar. O jogador pode
+     * construir o baú depois.
+     */
+    @Test
+    void withoutAnyChestAroundTheVacanciesAreStillFilled() {
+        addWorkers(COLONY, 4);
+
+        int assigned = ProfessionAssigner.assignMissing(
+                workers, COLONY, everyone(), villagerId -> false);
+
+        assertEquals(4, assigned);
+    }
+
+    /** Quem consegue baú não é atendido duas vezes. */
+    @Test
+    void thePreferredCandidateIsNotAssignedTwice() {
+        addWorkers(COLONY, 3);
+
+        UUID preferred = workers.ofColony(COLONY).get(0).villagerId();
+
+        int assigned = ProfessionAssigner.assignMissing(
+                workers, COLONY, everyone(), preferred::equals);
+
+        assertEquals(3, assigned, "cada aldeão devia receber uma função só");
+
+        long employed = workers.ofColony(COLONY).stream()
+                .filter(Worker::hasProfession)
+                .count();
+
+        assertEquals(3, employed);
+    }
+
+    /**
      * O save antigo é acertado ao carregar.
      *
      * <p>A colônia do autor chegou com seis lenhadores gravados. Uma

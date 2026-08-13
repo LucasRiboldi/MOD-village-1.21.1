@@ -6,6 +6,7 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.storage.service.StorageRegistry;
 import com.villagecolony.core.worker.model.Worker;
+import com.villagecolony.core.worker.service.ProfessionAssigner;
 import com.villagecolony.core.worker.service.WorkerService;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.entity.passive.VillagerEntity;
@@ -68,6 +69,12 @@ public final class VillagerScanner {
         int storagesFound = 0;
 
         Set<UUID> employable = new HashSet<>();
+        Set<UUID> equippable = new HashSet<>();
+
+        // Perguntar quem consegue baú custa uma varredura por candidato,
+        // e só serve para escolher entre eles. Sem vaga aberta não há o
+        // que escolher, e é esse o caso em quase todo ciclo.
+        boolean hiring = ProfessionAssigner.vacancy(workers.ofColony(colony.id())).isPresent();
 
         for (VillagerEntity villager
                 : world.getEntitiesByClass(VillagerEntity.class, area, VillagerEntity::isAlive)) {
@@ -79,6 +86,12 @@ public final class VillagerScanner {
 
             if (canWork(villager)) {
                 employable.add(villager.getUuid());
+
+                if (hiring && !isEmployed(workers, villager.getUuid())
+                        && ChestScanner.hasFreeChest(world, villager, storages)) {
+
+                    equippable.add(villager.getUuid());
+                }
             }
 
             // Baú é de quem trabalha.
@@ -105,7 +118,8 @@ public final class VillagerScanner {
             }
         }
 
-        return new ScanResult(registered, storagesFound, Set.copyOf(employable));
+        return new ScanResult(
+                registered, storagesFound, Set.copyOf(employable), Set.copyOf(equippable));
     }
 
     /**
@@ -183,9 +197,17 @@ public final class VillagerScanner {
      *
      * <p>{@code employable} são os aldeões prontos para receber função —
      * não os que a têm. Vazio é comum: uma vila só de bebês existe.
+     *
+     * <p>{@code equippable} são, dentre eles, os que conseguiriam um baú.
+     * É subconjunto de {@code employable} e só é preenchido quando a
+     * colônia tem vaga aberta — perguntar custa uma varredura de baús por
+     * candidato, e depois dos primeiros ciclos não há vaga nenhuma.
      */
     public record ScanResult(
-            int registeredWorkers, int registeredStorages, Set<UUID> employable) {
+            int registeredWorkers,
+            int registeredStorages,
+            Set<UUID> employable,
+            Set<UUID> equippable) {
 
         public boolean changedNothing() {
             return registeredWorkers == 0 && registeredStorages == 0;

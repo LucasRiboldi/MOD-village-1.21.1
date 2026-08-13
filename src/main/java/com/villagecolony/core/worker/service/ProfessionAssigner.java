@@ -254,14 +254,48 @@ public final class ProfessionAssigner {
     public static int assignMissing(
             WorkerService workers, UUID colonyId, Set<UUID> employable) {
 
+        return assignMissing(workers, colonyId, employable, villagerId -> true);
+    }
+
+    /**
+     * @param equipped diz se este aldeão conseguiria um baú. A vaga vai
+     *     primeiro para quem consegue: um trabalhador sem baú pega a
+     *     tarefa e a devolve à fila a cada ciclo, para sempre, e do lado
+     *     de fora isso se parece com trabalho acontecendo. O log de
+     *     2026-08-13 mostrou dois lenhadores assim numa vila que tinha
+     *     baú livre — a vaga tinha ido para a cama errada.
+     *
+     *     <p>É preferência, não exigência: esgotados os candidatos com
+     *     baú possível, a vaga vai para quem sobrar. Uma vaga vazia não
+     *     é melhor que um trabalhador que ainda não tem onde guardar —
+     *     o jogador pode construir o baú depois, e aí ele o reivindica
+     *     no ciclo seguinte
+     */
+    public static int assignMissing(
+            WorkerService workers, UUID colonyId, Set<UUID> employable,
+            Predicate<UUID> equipped) {
+
         Objects.requireNonNull(workers, "workers");
         Objects.requireNonNull(colonyId, "colonyId");
         Objects.requireNonNull(employable, "employable");
+        Objects.requireNonNull(equipped, "equipped");
+
+        int assigned = assignPass(workers, colonyId, employable, equipped);
+
+        return assigned + assignPass(workers, colonyId, employable, villagerId -> true);
+    }
+
+    /** Uma passada de atribuição sobre quem o filtro aceitar. */
+    private static int assignPass(
+            WorkerService workers, UUID colonyId, Set<UUID> employable,
+            Predicate<UUID> accepts) {
 
         int assigned = 0;
 
         for (Worker worker : workers.ofColony(colonyId)) {
-            if (worker.hasProfession() || !employable.contains(worker.villagerId())) {
+            if (worker.hasProfession() || !employable.contains(worker.villagerId())
+                    || !accepts.test(worker.villagerId())) {
+
                 continue;
             }
 

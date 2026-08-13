@@ -414,8 +414,14 @@ public final class VillageDetectionHandler {
         // aldeão novo nunca os desfaria.
         dismissExtraWorkers(world, colony);
 
+        // A vaga vai primeiro para quem consegue baú: sem isso ela podia
+        // ir para uma cama que não alcança baú nenhum, e o trabalhador
+        // passava a sessão pegando a tarefa e devolvendo à fila.
         int assigned = ProfessionAssigner.assignMissing(
-                VillageColonyMod.WORKERS, colony.id(), result.employable());
+                VillageColonyMod.WORKERS,
+                colony.id(),
+                result.employable(),
+                result.equippable()::contains);
 
         if (assigned > 0) {
             VillageColonyMod.LOGGER.info(

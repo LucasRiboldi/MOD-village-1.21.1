@@ -4775,3 +4775,107 @@ que é exatamente o defeito que o §11 já registra.
 ```
 
 Nenhuma das duas regras novas foi vista em jogo.
+
+---
+
+## 2026-08-13 (madrugada) — a sessão de jogo, e a vaga que ia para a cama errada
+
+Primeira sessão com o jar da noite: 00:31 a 00:36, dez ciclos, três
+colônias, oitenta trabalhadores registrados.
+
+---
+
+### O que a sessão não pôde provar
+
+```text
+lumberjacks: 15be5ffc looking for a tree, off hours (0 logs so far)
+```
+
+**`off hours` em todas as linhas.** A sessão caiu fora do horário de
+trabalho da agenda Vanilla, e nenhum lenhador podia trabalhar. Nada
+sobre a regra da copa, o cursor da busca ou a Regra 3 apareceu, e não
+por defeito.
+
+Fica a nota de método: teste de lenhador exige horário de trabalho. É
+`/time set day` e ficar perto da vila, e vale mais que qualquer linha de
+log nova.
+
+---
+
+### O que ela provou
+
+```text
+Assigned 4 professions in colony c18264c9
+Assigned 1 professions in colony 9a5afa23
+lumberjacks: 2898aeb3 ... ; a60c4f43 ...
+```
+
+A Regra 4 funcionou em jogo: três colônias, dois lenhadores em cada,
+nenhuma linha `dismissed` — o teto subiu e ninguém sobrou. As vagas
+novas puxaram baús novos junto, e a correção do E2 continua de pé: a
+sonda da vizinha aparece nomeada e não apaga mais a leitura da própria.
+
+Nenhuma exceção do mod na sessão inteira.
+
+---
+
+### O defeito que ela mostrou
+
+```text
+Worker 15be5ffc has no chest — wood task returned to the queue
+Worker cc8800ac has no chest — wood task returned to the queue
+   ... a cada 30 segundos, com baú livre na vila
+```
+
+Dobrar as vagas dobrou a demanda por baú, e apareceu o que uma vaga só
+escondia: **`assignMissing` dava a função sem olhar se aquele aldeão
+conseguiria um baú.** `enforceVacancies` já tinha essa preferência desde
+2026-08-12; a atribuição inicial, não. A vaga ia para a cama errada, e o
+trabalhador passava a sessão pegando a tarefa e devolvendo à fila.
+
+Do lado de fora isso se parece com trabalho acontecendo — é a mesma
+armadilha do lenhador mudo.
+
+---
+
+### A correção
+
+```text
+ChestScanner.hasFreeChest     a mesma pergunta de scan, sem reivindicar
+
+VillagerScanner               monta o conjunto dos que conseguiriam
+                              baú, e só quando há vaga aberta
+
+ProfessionAssigner            duas passadas: primeiro quem consegue,
+                              depois os demais
+```
+
+É preferência, não exigência: esgotados os candidatos com baú possível,
+a vaga vai para quem sobrar. Vaga vazia não é melhor que um trabalhador
+sem baú — o jogador pode construir o baú depois, e aí ele o reivindica
+no ciclo seguinte.
+
+O custo é uma varredura de baús por candidato, e por isso a pergunta só
+é feita quando existe vaga aberta. Depois dos primeiros ciclos não
+existe, e o custo é zero.
+
+Dois candidatos podem enxergar o mesmo baú livre e só um ficar com ele.
+Isso continua possível, e é aceitável: a preferência não promete baú,
+promete não escolher quem certamente não terá nenhum.
+
+---
+
+### Verificado
+
+```text
+288 testes unitários     verdes  (eram 285)
+ 47 testes de jogo       verdes
+
+negativo: com a preferência desligada, o teste novo falha
+```
+
+Uma correção do relatório da sessão: eu ia registrar as árvores achadas
+a 76 e 63 blocos como sinal do cursor da busca funcionando. **Não são.**
+A busca mede do centro da colônia, não do aldeão, e as três árvores
+estão nos anéis 15, 14 e 4 — todas dentro do alcance que o código antigo
+já tinha. O cursor continua sem evidência em jogo.
