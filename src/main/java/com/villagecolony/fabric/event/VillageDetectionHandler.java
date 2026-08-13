@@ -328,10 +328,15 @@ public final class VillageDetectionHandler {
         int room = ChestDepositor.freeSpaceForGroup(
                 overworld, workerIds, VillageColonyMod.STORAGES, ResourceGroup.WOOD);
 
+        // E a Regra 5, a da Fase 9: metade do que os baús comportam em
+        // tábua. Medida do mesmo jeito e pelo mesmo motivo.
+        int plankRoom = ChestDepositor.freeSpaceForGroup(
+                overworld, workerIds, VillageColonyMod.STORAGES, ResourceGroup.PLANKS);
+
         int assigned = ColonyCycle.run(
                 colony.id(),
                 survey.resources().total(),
-                ColonyGoals.of(colony, survey.resources().total(), room),
+                ColonyGoals.of(colony, survey.resources().total(), room, plankRoom),
                 VillageColonyMod.TASKS,
                 VillageColonyMod.WORKERS);
 

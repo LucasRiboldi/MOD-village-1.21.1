@@ -13,6 +13,7 @@ import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.event.VillageDetectionHandler;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.work.ManufacturerWork;
@@ -174,4 +175,72 @@ public class ManufacturerGameTest implements FabricGameTest {
         });
     }
 
+    /**
+     * O laço inteiro da Fase 9, sem tarefa posta à mão.
+     *
+     * <p>Os outros testes desta classe entregam a tarefa pronta ao
+     * fabricante. Este não: põe tronco no baú e roda o ciclo da colônia,
+     * que é quem decide se há o que fabricar. É a torneira da Regra 5 —
+     * a meta é metade do que os baús comportam em tábua — e é o caminho
+     * que o jogo percorre.
+     *
+     * <p>A ordem importa e foi aprendida na Fase 8: a torneira só foi
+     * aberta depois de existir quem executasse. Tarefa sem executor fica
+     * reservada para sempre.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_from_cycle",
+            tickLimit = 300)
+    public void theCycleOpensTheCraftingTaskByItself(TestContext context) {
+        BlockPos stand = new BlockPos(3, 2, 2);
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+
+        ServerWorld world = context.getWorld();
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        ChestDepositor.deposit(world, chest, Items.OAK_LOG, 8);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, stand);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST)));
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create()
+                .owning(colony)
+                .owning(villager.getUuid());
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MANUFACTURER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        VillageDetectionHandler.runCycleNow(world, context.getAbsolutePos(stand));
+
+        int crafting = 0;
+
+        for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
+            if (task.type() == TaskType.CRAFT_MATERIAL) {
+                crafting++;
+            }
+        }
+
+        context.assertTrue(
+                crafting == 1,
+                "o ciclo devia ter aberto uma tarefa de fabricação, abriu " + crafting);
+
+        context.runAtTick(90, () -> {
+            context.assertTrue(
+                    planksIn(context, chest) > 0,
+                    "a tarefa que o ciclo abriu não virou tábua nenhuma");
+
+            owned.cleanUp();
+
+            context.complete();
+        });
+    }
 }

@@ -5265,3 +5265,150 @@ E3, E4, E5                        como estavam
 ```
 
 Nenhuma exceção do mod na sessão.
+
+---
+
+## 2026-08-13 — A Fase 9: a colônia aprendeu a transformar
+
+Quatro peças, na ordem em que cada uma pôde ser testada sozinha, e a
+torneira por último — que é a ordem que a Fase 8 ensinou.
+
+---
+
+### 1. Tirar do baú
+
+`ChestWithdrawer`, o par simétrico do depositor. É a primeira coisa que
+este mod faz que **diminui** o que o jogador tem: até aqui a colônia
+contava o baú, punha madeira dentro, e nada saía.
+
+Duas regras próprias, por causa disso: só tira o que a colônia conta —
+item do jogador guardado no mesmo baú fica onde está — e devolve o que
+de fato saiu, e não o que foi pedido, porque a receita depende da
+espécie do tronco e um número não diria qual é.
+
+---
+
+### 2. As oito tábuas
+
+A colônia contava oito troncos e uma tábua só, e isso não fechava: o
+fabricante transformaria bétula em tábua que o estoque não enxerga, e a
+contagem passaria a mentir sem avisar.
+
+As oito entraram na tabela de espécies, que é onde as madeiras já moram.
+E o grupo `PLANKS` entrou junto, corrigindo o que o `ResourceGroup`
+dizia. A frase antiga — "tábua não se substitui" — valia para **receita**
+e continua valendo; a pergunta do grupo é outra: "já tenho material
+fabricado suficiente?". Sem ele, uma colônia de floresta de bétula
+fabricaria para sempre, que é o E1 por outra porta.
+
+---
+
+### 3. A receita, perguntada ao jogo
+
+`CraftingLookup` pergunta ao `RecipeManager` do servidor o que sai de um
+tronco sozinho. A alternativa — escrever "um tronco dá quatro tábuas" no
+mod — seria uma segunda verdade sobre o jogo, divergente no dia em que um
+datapack mudasse a receita. É a mesma escolha da tabela de loot da
+colheita.
+
+Só receita de uma casa, que é a que cabe na mão sem bancada. **A pergunta
+"onde a colônia fabrica" não foi respondida, e não precisou ser:** ela só
+tem sentido quando existir receita que exija mesa, e aí é decisão do
+autor.
+
+---
+
+### 4. O fabricante
+
+`ManufacturerWork` tem a forma do lenhador — despacho no ciclo longo,
+trabalho um passo por tick, anda até o próprio baú e trabalha ali — com
+uma regra que o lenhador não tem:
+
+```text
+nada sai do baú antes da peça ficar pronta
+```
+
+O tronco é retirado, transformado e devolvido no mesmo tick. Durante a
+espera existe um contador, e não um tronco na mão de um aldeão que pode
+morrer, ser zumbificado, ou estar num servidor que vai ser desligado. O
+E3 registra o que acontece do outro lado, quando algo sai do mundo antes
+de ter para onde ir.
+
+Um segundo por peça. É número inventado, e está dito na classe: a Regra 2
+tem a fórmula do jogo para tempo de quebra, e fabricar não tem
+equivalente — o jogador faz tábua num clique.
+
+---
+
+### 5. A torneira, por último
+
+A meta de tábua — Regra 5 do §18 — entrou depois de existir quem
+executasse. É a lição da Fase 8: tarefa aberta sem executor possível fica
+reservada para sempre.
+
+```text
+meta = (tábua guardada + tábua que ainda cabe) / 2
+
+e zero enquanto não houver tronco guardado
+```
+
+A segunda linha nasceu de uma pergunta feita antes de rodar: sem ela, uma
+colônia sem madeira abriria tarefa de fabricação a cada ciclo para o
+fabricante encerrá-la no tick seguinte por falta de material. Trabalho
+nenhum e uma linha de log por ciclo — o E1 de novo.
+
+O teste que fecha o laço não entrega tarefa pronta a ninguém: põe tronco
+no baú, roda o ciclo da colônia e afirma que a tarefa nasce e vira tábua.
+Rodado com a torneira fechada, falha.
+
+---
+
+### O suite parou de se sabotar, e isso custou meia sessão
+
+Enquanto a Fase 9 era escrita, dois testes antigos passaram a falhar de
+forma intermitente. A causa não era o mod: **os testes de jogo rodam
+concorrentes**. Um teste que atravessa noventa ticks continua vivo
+enquanto os batches seguintes começam, e cada teste chamava
+`COLONIES.clear()` — apagando a colônia de quem estava no meio do
+caminho.
+
+O sintoma era o `cycle_deficit` acusando "a colônia não pediu madeira"
+com a colônia dele já apagada por um vizinho.
+
+```text
+ColonyFixture      cada teste guarda o que registrou e desfaz só aquilo
+
+detecção           procura a colônia da própria estrutura, em vez de
+                   afirmar sobre a contagem global
+
+encolhimento       o teste saiu. Ele precisa de duas leituras sobre o
+                   mesmo aglomerado de camas, e o aglomerado inclui as
+                   camas das estruturas vizinhas — que outros testes
+                   plantam enquanto ele mede
+```
+
+O motivo do teste removido ficou escrito no lugar onde ele estava, ao
+lado do caso idêntico descartado em 2026-08-08 pela mesma razão. A regra
+continua coberta em `PartialObservationTest`, e o caminho inteiro foi
+verificado em jogo em 2026-08-07.
+
+Depois disso, três rodadas completas seguidas, todas verdes.
+
+---
+
+### Verificado
+
+```text
+299 testes unitários     verdes
+ 60 testes de jogo       verdes, em rodadas repetidas
+
+negativo, por regra desligada:
+
+  a recusa do grupo sem copa    o lenhador trava na construção
+  a torneira da Regra 5         o ciclo não abre tarefa nenhuma
+```
+
+**Nada da Fase 9 foi visto em jogo.** É a dívida de sempre desta camada,
+e o §8 tem o item: a linha `manufacturers:` aparecendo, tábua entrando no
+baú, tronco sumindo na mesma conta, e a colônia parando sozinha na
+metade.

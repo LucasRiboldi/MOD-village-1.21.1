@@ -61,7 +61,7 @@ Java
 ## Current Stage
 
 ```text
-Fase 8 encerrada e verificada em jogo — a próxima é a Fase 9
+Fase 9 escrita e coberta por teste — falta vê-la em jogo
 ```
 
 ---
@@ -81,9 +81,10 @@ rodou pela primeira vez num servidor dedicado sobre uma cópia do save do
 autor, e no fim daquele dia dois lenhadores da vila dele estavam
 cortando — 22 e 7 toras.
 
-O que muda a partir daqui é a natureza da Fase 9: até agora a colônia
-recolhe o que o mundo já tem. Fabricar é transformar o que ela guardou, e
-é a primeira vez que o estoque vai diminuir por decisão do mod.
+A Fase 9 entrou em 2026-08-13: o fabricante tira tronco do baú, faz
+tábua pela receita do próprio jogo e devolve ao mesmo baú. É a primeira
+vez que o mod **diminui** o que o jogador tem — até aqui a colônia só
+somava. Nada disso foi visto em jogo ainda.
 
 ---
 
@@ -101,8 +102,11 @@ Fase 5   armazenamento                  TASK-015 a TASK-017
 Fase 6   recursos                       TASK-018 a TASK-020
 Fase 7   tarefas                        TASK-021 a TASK-023
 Fase 8   primeiro trabalhador           TASK-024 e TASK-025
+                                        verificada em jogo
 
-todas verificadas em jogo
+Fase 9   fabricação                     TASK-027 a TASK-029
+                                        coberta por teste, não vista
+                                        em jogo
 ```
 
 Detalhe por tarefa em §6. Histórico em `Development-Log.md`.
@@ -311,15 +315,16 @@ Coletar recursos          FEITO, verificado em jogo
 
 ↓
 
-Produzir materiais        não iniciado — Fase 9
+Produzir materiais        FEITO, não verificado em jogo
 
 ↓
 
 Construir expansão        não iniciado — Fase 10
 ```
 
-Quatro dos seis passos do MVP estão feitos e verificados em jogo. Os dois
-que faltam são as duas fases seguintes, e a segunda depende da primeira.
+Cinco dos seis passos do MVP estão feitos, e quatro deles verificados em
+jogo. O que falta é a construção — a Fase 10 —, e é ela que dá motivo ao
+que o fabricante produz.
 
 ---
 
@@ -403,7 +408,19 @@ Fase 8 — Primeiro Trabalhador
                                      para o baú, por decisão de
                                      2026-08-08. Ver §10
 
-Fase 9 em diante                     não iniciadas
+Fase 9 — Fabricação
+
+  TASK-027  implementar o Manufacturer   feito (ManufacturerWork)
+  TASK-028  integrar o Recipe Manager    feito (CraftingLookup)
+  TASK-029  produzir tábua               feito, coberto por teste de
+                                         jogo, não visto em jogo
+
+  extra     tirar item do baú            feito (ChestWithdrawer) —
+                                         o mod nunca tinha feito isso
+  extra     as oito tábuas               feitas (TreeSpecies,
+                                         ResourceGroup.PLANKS)
+
+Fase 10 em diante                        não iniciadas
 ```
 
 ---
@@ -436,10 +453,11 @@ fabric/
                      VillagerLifecycleHandler
   integration/       VillageScanner, VillagerScanner, ChestScanner,
                      ChestInventoryReader, ChestDepositor, ChestMarker,
+                     ChestWithdrawer, CraftingLookup, BlockProtection,
                      TreeScanner, TreeHarvester, TreeSpecies,
                      BlockBreakTime, WorkerNameplate
   mixin/             VillagerEntityMixin
-  work/              LumberjackWork
+  work/              LumberjackWork, ManufacturerWork
 
 data/
   save/              ColonySavedData
@@ -452,10 +470,16 @@ Vazio por enquanto: `core/construction`.
 ## Testes
 
 ```text
-284 testes unitários     lógica pura do Core e serialização NBT
- 45 testes de jogo       a fronteira com o Minecraft, num servidor
+299 testes unitários     lógica pura do Core e serialização NBT
+ 60 testes de jogo       a fronteira com o Minecraft, num servidor
                          sem cliente (./gradlew runGametest)
 ```
+
+Os testes de jogo rodam **concorrentes**: um teste que atravessa ticks
+continua vivo enquanto os batches seguintes começam. Nenhum deles pode
+apagar registro global nem afirmar sobre contagem global — ver
+`ColonyFixture`, e o comentário no lugar onde ficava o teste de
+encolhimento.
 
 O gametest existe porque o teste unitário não alcança a fronteira, e foi
 lá que moraram todos os defeitos sérios deste projeto. Ver §11.
@@ -497,41 +521,57 @@ libera vaga, baú e tarefa quando o trabalhador morre ou é zumbificado
 
 # 7. Next Development Step
 
-## Fase 9 — Fabricação
+## Fase 10 — Construção
 
 ```text
-TASK-027  implementar o Manufacturer      capacidade CRAFT_ITEMS
-TASK-028  integrar o Recipe Manager       receitas Vanilla
-TASK-029  produzir Oak Planks             tronco → tábua → baú
+TASK-030  criar o Blueprint               blocos, posições, materiais
+TASK-031  ler estrutura Vanilla           Plains Small House
+TASK-032  calcular materiais              a lista do que a obra pede
+TASK-033  criar a Build Task              entregue ao construtor
+TASK-034  implementar o Builder           capacidade BUILD_STRUCTURE
+TASK-035  colocar blocos                  e registrar o que foi posto
 ```
 
-O que já está pronto para ser usado: `TaskType.CRAFT_MATERIAL` existe e
-`ColonyCycle.typeFor` já manda recurso PROCESSED para ele; o
-`ProfessionRegistry` já tem o Manufacturer com a capacidade; o estoque
-conta por tipo e agrupa por `ResourceGroup`; e o trabalho contínuo do
-lenhador — plano feito uma vez, um passo por tick — é o molde do que a
-fabricação vai precisar.
-
-O que a Fase 9 vai exigir decidir:
-
-```text
-onde se fabrica          bancada da vila? o próprio baú? o Vanilla
-                         exige bancada para receita 3x3
-
-o que se consome         fabricar tira do baú. Hoje nada tira, e o
-                         estoque só cresce — nenhum código do mod
-                         jamais removeu item de um baú
-```
-
-Quanto produzir já tem resposta: §18, Regra 5 — a meta é a da obra, e
-enquanto não houver obra, metade do espaço de armazenamento em tábua.
+É a fase que dá motivo ao que a Fase 9 produz: hoje a tábua é feita
+porque cabe no baú, e não porque alguém a espera.
 
 ---
 
-## Antes disso, e sem depender dela
+## O que já está pronto para ela
 
-O §8 lista o que está aberto hoje. Nada ali bloqueia a Fase 9, e as duas
-primeiras dependem só de uma sessão de jogo do autor.
+```text
+BlockProtection      a porta única para "posso mexer aqui?", escrita
+                     na Regra 3 justamente para esta fase
+
+ManufacturerWork     o molde do trabalho que consome estoque, com a
+                     regra de nada sair do baú sem destino
+
+TaskType.BUILD       existe, e ColonyCycle.typeFor já manda recurso
+                     CONSTRUCTION para ele
+
+Regra 5              a meta da obra substitui a metade assim que a
+                     obra existir — ver §18
+```
+
+---
+
+## O que a Fase 10 vai exigir decidir
+
+```text
+onde a colônia constrói    a vila cresce para onde? e a que distância
+                           da última casa?
+
+o que ela constrói          a casa de planície Vanilla, ou um projeto
+                            próprio?
+
+quando para                 uma vila que cresce para sempre vira outra
+                            coisa. A Regra 1 respondeu isso para a
+                            colheita com o espaço dos baús; a
+                            construção não tem equivalente óbvio
+```
+
+E é onde entra a decisão já registrada em §10: duas vilas viram uma
+quando um bloco de uma encostar no bloco da outra.
 
 ---
 
@@ -551,6 +591,15 @@ A metade estrutural da Regra 3 — o mod perguntar ao jogo quais blocos são
 peça de vila gerada — continua sem prova. O mundo do gametest não tem
 vila gerada, e em jogo quem tem protegido a construção até agora é a
 regra da copa, não a estrutura.
+
+```text
+P1c  a Fase 9 em jogo
+```
+
+O fabricante nunca rodou em jogo. O que uma sessão precisa mostrar: a
+linha `manufacturers:` aparecendo, tábua entrando no baú, e o tronco
+sumindo na mesma conta — quatro tábuas por tronco. E que a colônia para
+sozinha quando a metade é atingida.
 
 ```text
 P2   o lado do cliente
@@ -1375,6 +1424,7 @@ Regra 1   colher até os baús encherem          08-08, feita em 08-11
 Regra 2   colher no tempo de um jogador        08-08, feita em 08-11
 Regra 3   o que nunca se destrói               08-13, feita em 08-13
 Regra 4   dois trabalhadores por profissão     08-13, feita em 08-13
+Regra 5   quanto fabricar                      08-13, feita em 08-13
 ```
 
 Duas previsões das primeiras se confirmaram e vale marcá-las: a fila que
@@ -1592,17 +1642,22 @@ lote de partida.
 
 ---
 
-### O que isso exige na hora de implementar
+### O que a implementação de 2026-08-13 fez
 
 ```text
-ColonyGoals          ganha a linha da tábua, medida em capacidade
-                     e não em contagem
+ColonyGoals          a meta de tábua é (guardado + o que cabe) / 2,
+                     e é zero enquanto não houver tronco guardado:
+                     não se pede o que não há com que fazer
 
-ChestDepositor       já sabe medir espaço livre por grupo; falta
-                     medir capacidade total
+ManufacturerWork     tira do baú, fabrica pela receita do jogo e
+                     devolve — tudo no mesmo tick, para nada ficar
+                     na mão de ninguém
 
-nada disso entra     antes de existir quem execute CRAFT_MATERIAL.
-antes do fabricante  Tarefa aberta sem executor possível fica
-                     reservada para sempre — é o que o §11 ensina
+a torneira por       a meta entrou depois do executor. Tarefa aberta
+último               sem quem a execute fica reservada para sempre,
+                     e é o que o §11 ensina
 ```
+
+A parte da obra continua para a Fase 10: quando ela existir, o que ela
+pedir substitui a metade.
 

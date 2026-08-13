@@ -118,4 +118,128 @@ class ColonyGoalsTest {
                 IllegalArgumentException.class,
                 () -> ColonyGoals.of(colony(), ResourceTally.empty(), -1));
     }
+
+    // ----------------------------------------------------------------
+    // A Regra 5, de 2026-08-13: quanto fabricar.
+    //
+    // A conta da Regra 1 não serve. Um tronco vira quatro tábuas, então
+    // fabricar aumenta o volume guardado: "fabricar até encher"
+    // transformaria toda a madeira da colônia em tábua e pararia a
+    // coleta junto, porque é o baú cheio que faz o lenhador parar.
+    // ----------------------------------------------------------------
+
+    /**
+     * A meta de tábua é metade do que os baús comportam.
+     *
+     * <p>O tronco no estoque é o que abre a meta: sem material não se
+     * pede fabricação. Ver {@link #withoutLogsThereIsNoPlankGoal}.
+     */
+    @Test
+    void thePlankGoalIsHalfOfWhatTheChestsHold() {
+        Map<ResourceType, Integer> goal = ColonyGoals.of(
+                colony(), owned(ResourceType.OAK_LOG, 8), 0, 200);
+
+        assertEquals(100, goal.get(ResourceType.OAK_PLANKS));
+    }
+
+    /**
+     * A capacidade conta o que já está guardado.
+     *
+     * <p>Sem isso a meta subiria a cada peça feita: o espaço livre cai
+     * quando a tábua entra, e uma meta que só olhasse o espaço livre
+     * mandaria fabricar cada vez menos sem nunca se dar por satisfeita.
+     */
+    @Test
+    void whatIsAlreadyStoredCountsTowardTheCapacity() {
+        Map<ResourceType, Integer> counts = new EnumMap<>(ResourceType.class);
+        counts.put(ResourceType.BIRCH_PLANKS, 60);
+        counts.put(ResourceType.OAK_LOG, 8);
+
+        Map<ResourceType, Integer> goal =
+                ColonyGoals.of(colony(), ResourceTally.of(counts), 0, 140);
+
+        assertEquals(100, goal.get(ResourceType.OAK_PLANKS));
+    }
+
+    /**
+     * Na metade, a colônia para de pedir.
+     *
+     * <p>É o ponto fixo da regra, e o que impede o E1 de voltar por esta
+     * porta: cada peça feita sobe o guardado e desce o que cabe, até os
+     * dois se encontrarem.
+     */
+    @Test
+    void atHalfTheColonyStopsAsking() {
+        Map<ResourceType, Integer> counts = new EnumMap<>(ResourceType.class);
+        counts.put(ResourceType.OAK_PLANKS, 100);
+        counts.put(ResourceType.OAK_LOG, 8);
+
+        ResourceTally stock = ResourceTally.of(counts);
+
+        Map<ResourceType, Integer> missing = ResourceDemand.deficit(
+                ColonyGoals.of(colony(), stock, 0, 100), stock);
+
+        assertFalse(missing.containsKey(ResourceType.OAK_PLANKS));
+    }
+
+    /** Tábua de qualquer espécie satisfaz a meta. */
+    @Test
+    void anyPlankSatisfiesTheGoal() {
+        Map<ResourceType, Integer> counts = new EnumMap<>(ResourceType.class);
+        counts.put(ResourceType.JUNGLE_PLANKS, 100);
+        counts.put(ResourceType.OAK_LOG, 8);
+
+        ResourceTally jungle = ResourceTally.of(counts);
+
+        Map<ResourceType, Integer> missing = ResourceDemand.deficit(
+                ColonyGoals.of(colony(), jungle, 0, 100), jungle);
+
+        assertFalse(missing.containsKey(ResourceType.OAK_PLANKS));
+    }
+
+    /** Sem baú, nenhuma meta de tábua. */
+    @Test
+    void withoutChestsThereIsNoPlankGoal() {
+        Map<ResourceType, Integer> missing = ResourceDemand.deficit(
+                ColonyGoals.of(colony(), ResourceTally.empty(), 0, 0),
+                ResourceTally.empty());
+
+        assertFalse(missing.containsKey(ResourceType.OAK_PLANKS));
+    }
+
+    /** Espaço de tábua negativo é erro de quem mediu. */
+    @Test
+    void negativePlankRoomIsRefused() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> ColonyGoals.of(colony(), ResourceTally.empty(), 0, -1));
+    }
+
+    /**
+     * Sem tronco, não se pede tábua.
+     *
+     * <p>Não se pede o que não há com que fazer. Sem esta regra, uma
+     * colônia sem madeira abriria tarefa de fabricação a cada ciclo para
+     * o fabricante encerrá-la no tick seguinte — o E1 voltando por outra
+     * porta.
+     */
+    @Test
+    void withoutLogsThereIsNoPlankGoal() {
+        Map<ResourceType, Integer> missing = ResourceDemand.deficit(
+                ColonyGoals.of(colony(), ResourceTally.empty(), 100, 200),
+                ResourceTally.empty());
+
+        assertFalse(missing.containsKey(ResourceType.OAK_PLANKS));
+    }
+
+    /** Com tronco no baú, a meta de tábua abre. */
+    @Test
+    void withLogsThePlankGoalOpens() {
+        ResourceTally stock = owned(ResourceType.OAK_LOG, 8);
+
+        Map<ResourceType, Integer> missing = ResourceDemand.deficit(
+                ColonyGoals.of(colony(), stock, 0, 200), stock);
+
+        assertEquals(100, missing.get(ResourceType.OAK_PLANKS));
+    }
 }
