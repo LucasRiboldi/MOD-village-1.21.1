@@ -228,6 +228,66 @@ class ProfessionAssignerTest {
     }
 
     /**
+     * Quem não consegue baú perde a vaga para quem consegue.
+     *
+     * <p>Decisão do autor em 2026-08-13. A vila `c18264c9` passou duas
+     * sessões com dois lenhadores sem baú devolvendo a tarefa à fila a
+     * cada trinta segundos: a preferência de atribuição não os alcançava,
+     * porque ela escolhe quem <b>recebe</b> a função e eles já a tinham
+     * do save.
+     */
+    @Test
+    void aChestlessWorkerLosesTheJobWhenSomeoneElseCanGetAChest() {
+        addWorkers(COLONY, 2);
+
+        for (Worker worker : workers.ofColony(COLONY)) {
+            worker.assign(ProfessionType.LUMBERJACK);
+        }
+
+        Set<UUID> demoted = ProfessionAssigner.enforceVacancies(
+                workers, COLONY, villagerId -> false, 1);
+
+        assertEquals(1, demoted.size(), "um candidato, uma troca");
+
+        long lumberjacks = workers.ofColony(COLONY).stream()
+                .filter(w -> w.profession().filter(ProfessionType.LUMBERJACK::equals).isPresent())
+                .count();
+
+        assertEquals(1, lumberjacks, "o outro devia continuar na vaga");
+    }
+
+    /**
+     * Sem candidato, ninguém é dispensado.
+     *
+     * <p>Vaga vazia não é melhor que trabalhador sem baú: o jogador pode
+     * construir o baú depois, e aí ele o reivindica no ciclo seguinte.
+     */
+    @Test
+    void withoutAReplacementTheChestlessWorkerKeepsTheJob() {
+        addWorkers(COLONY, 2);
+
+        for (Worker worker : workers.ofColony(COLONY)) {
+            worker.assign(ProfessionType.LUMBERJACK);
+        }
+
+        assertTrue(ProfessionAssigner.enforceVacancies(
+                workers, COLONY, villagerId -> false, 0).isEmpty());
+    }
+
+    /** Quem tem baú não é trocado, haja candidato ou não. */
+    @Test
+    void anEquippedWorkerIsNeverSwapped() {
+        addWorkers(COLONY, 2);
+
+        for (Worker worker : workers.ofColony(COLONY)) {
+            worker.assign(ProfessionType.LUMBERJACK);
+        }
+
+        assertTrue(ProfessionAssigner.enforceVacancies(
+                workers, COLONY, villagerId -> true, 5).isEmpty());
+    }
+
+    /**
      * O save antigo é acertado ao carregar.
      *
      * <p>A colônia do autor chegou com seis lenhadores gravados. Uma

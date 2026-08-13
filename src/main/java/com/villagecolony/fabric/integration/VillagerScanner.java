@@ -72,9 +72,11 @@ public final class VillagerScanner {
         Set<UUID> equippable = new HashSet<>();
 
         // Perguntar quem consegue baú custa uma varredura por candidato,
-        // e só serve para escolher entre eles. Sem vaga aberta não há o
-        // que escolher, e é esse o caso em quase todo ciclo.
-        boolean hiring = ProfessionAssigner.vacancy(workers.ofColony(colony.id())).isPresent();
+        // e só serve quando a resposta muda alguma coisa: quando há vaga
+        // aberta, ou quando alguém está ocupando uma sem baú — e nesse
+        // caso a resposta decide se ele perde a vaga para quem consegue.
+        boolean hiring = ProfessionAssigner.vacancy(workers.ofColony(colony.id())).isPresent()
+                || hasEmployedWithoutStorage(workers, colony.id(), storages);
 
         for (VillagerEntity villager
                 : world.getEntitiesByClass(VillagerEntity.class, area, VillagerEntity::isAlive)) {
@@ -187,6 +189,19 @@ public final class VillagerScanner {
      * próprio jogo criou — e o PROJECT_CONSTITUTION §4 manda respeitar
      * o comportamento Vanilla do aldeão.
      */
+    /** Alguém desta colônia tem função e não tem onde guardar. */
+    private static boolean hasEmployedWithoutStorage(
+            WorkerService workers, java.util.UUID colonyId, StorageRegistry storages) {
+
+        for (Worker worker : workers.ofColony(colonyId)) {
+            if (worker.hasProfession() && !storages.hasStorage(worker.villagerId())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static boolean canWork(VillagerEntity villager) {
         return !villager.isBaby()
                 && villager.getVillagerData().getProfession() != VillagerProfession.NITWIT;

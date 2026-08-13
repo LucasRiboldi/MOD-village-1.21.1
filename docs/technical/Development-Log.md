@@ -5090,3 +5090,66 @@ consegue, e é decisão de regra, não de código.
 
 negativo: sem a recusa, o teste novo falha
 ```
+
+---
+
+## 2026-08-13 (01:45) — quem não consegue baú perde a vaga para quem consegue
+
+Decisão do autor, fechando o que a sessão de 01:21 deixou aberto: os dois
+lenhadores sem baú da `c18264c9` devolviam a tarefa à fila a cada trinta
+segundos, e a preferência escrita às 00:45 não os alcançava — ela escolhe
+quem **recebe** a função, e eles já a tinham do save.
+
+---
+
+### A regra
+
+```text
+trabalhador com função e sem baú perde a função
+
+só quando existe aldeão sem função que conseguiria um baú
+
+sem candidato, ninguém é dispensado
+```
+
+A última linha é a mesma regra da atribuição, vista do outro lado: vaga
+vazia não é melhor que trabalhador sem baú. O jogador pode construir o
+baú depois, e aí ele o reivindica no ciclo seguinte.
+
+O número de trocas é o número de candidatos, e é o que faz isto
+convergir: um baú livre e dois lenhadores sem baú dão uma troca, o
+candidato reivindica o baú, e no ciclo seguinte não há mais candidato
+nenhum. Sem esse teto, os dois seriam dispensados para um baú só.
+
+---
+
+### O que mudou
+
+```text
+ProfessionAssigner    enforceVacancies ganhou o teto de trocas, e
+                      dispensa quem falha no teste do baú
+
+VillagerScanner       passou a montar o conjunto de quem consegue baú
+                      também quando alguém está ocupando vaga sem baú,
+                      e não só quando há vaga aberta
+
+log                   diz quantos dos dispensados foram por falta de
+                      baú, e não só quantos foram
+```
+
+O custo da sondagem continua barato: o baú é procurado a seis blocos da
+cama, o que são um ou dois chunks por candidato.
+
+---
+
+### Verificado
+
+```text
+291 testes unitários     verdes  (eram 288)
+ 48 testes de jogo       verdes
+
+negativo: com o teto de trocas zerado, o teste novo falha
+```
+
+Em jogo, o que confirma é a linha `dismissed ... of them had no chest` na
+`c18264c9`, seguida do silêncio: sem mais `has no chest` a cada ciclo.

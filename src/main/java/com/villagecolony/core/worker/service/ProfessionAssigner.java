@@ -168,6 +168,28 @@ public final class ProfessionAssigner {
     public static Set<UUID> enforceVacancies(
             WorkerService workers, UUID colonyId, Predicate<UUID> equipped) {
 
+        return enforceVacancies(workers, colonyId, equipped, 0);
+    }
+
+    /**
+     * @param replacements quantos aldeões sem função conseguiriam baú
+     *     agora. É o teto de trocas: um trabalhador sem baú perde a
+     *     função para quem consegue um, e só quando esse alguém existe.
+     *
+     *     <p>Decisão do autor em 2026-08-13, depois de a vila
+     *     {@code c18264c9} passar duas sessões com dois lenhadores sem
+     *     baú devolvendo a tarefa à fila a cada trinta segundos. A
+     *     preferência de atribuição não os alcançava: ela escolhe quem
+     *     <b>recebe</b> a função, e eles já a tinham do save.
+     *
+     *     <p>Sem candidato, ninguém é dispensado: vaga vazia não é
+     *     melhor que trabalhador sem baú, e o jogador pode construir o
+     *     baú depois. É a mesma regra da atribuição, vista do outro
+     *     lado.
+     */
+    public static Set<UUID> enforceVacancies(
+            WorkerService workers, UUID colonyId, Predicate<UUID> equipped, int replacements) {
+
         Objects.requireNonNull(workers, "workers");
         Objects.requireNonNull(colonyId, "colonyId");
         Objects.requireNonNull(equipped, "equipped");
@@ -201,6 +223,25 @@ public final class ProfessionAssigner {
                 worker.unassign();
                 demoted.add(worker.villagerId());
             }
+        }
+
+        // E a troca: quem ficou com a vaga sem conseguir baú a perde
+        // para quem consegue, enquanto houver quem consiga.
+        int left = replacements;
+
+        for (Worker worker : employed) {
+            if (left <= 0) {
+                break;
+            }
+
+            if (demoted.contains(worker.villagerId()) || equipped.test(worker.villagerId())) {
+                continue;
+            }
+
+            worker.unassign();
+            demoted.add(worker.villagerId());
+
+            left--;
         }
 
         return demoted;

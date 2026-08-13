@@ -412,7 +412,11 @@ public final class VillageDetectionHandler {
         // Antes de atribuir: um save anterior a 2026-08-12 chega com
         // seis lenhadores gravados, e uma regra que só valesse para
         // aldeão novo nunca os desfaria.
-        dismissExtraWorkers(world, colony);
+        //
+        // E é aqui que o trabalhador sem baú perde a vaga para quem
+        // consegue um — a atribuição não o alcança, porque ele já tem
+        // função.
+        dismissExtraWorkers(world, colony, result.equippable().size());
 
         // A vaga vai primeiro para quem consegue baú: sem isso ela podia
         // ir para uma cama que não alcança baú nenhum, e o trabalhador
@@ -466,14 +470,25 @@ public final class VillageDetectionHandler {
      * já está lá dentro, e o aldeão pode voltar a ter função quando o
      * titular morrer.
      */
-    private static void dismissExtraWorkers(ServerWorld world, Colony colony) {
+    private static void dismissExtraWorkers(
+            ServerWorld world, Colony colony, int replacements) {
+
         Set<UUID> demoted = ProfessionAssigner.enforceVacancies(
                 VillageColonyMod.WORKERS,
                 colony.id(),
-                villagerId -> VillageColonyMod.STORAGES.of(villagerId).isPresent());
+                villagerId -> VillageColonyMod.STORAGES.of(villagerId).isPresent(),
+                replacements);
 
         if (demoted.isEmpty()) {
             return;
+        }
+
+        int chestless = 0;
+
+        for (UUID villagerId : demoted) {
+            if (VillageColonyMod.STORAGES.of(villagerId).isEmpty()) {
+                chestless++;
+            }
         }
 
         for (UUID villagerId : demoted) {
@@ -495,10 +510,11 @@ public final class VillageDetectionHandler {
         }
 
         VillageColonyMod.LOGGER.info(
-                "Colony {} dismissed {} workers — chests released, at most {} of each"
-                        + " profession is the rule",
+                "Colony {} dismissed {} workers ({} of them had no chest and lost the job"
+                        + " to someone who can get one) — at most {} of each profession",
                 colony.id(),
                 demoted.size(),
+                chestless,
                 ProfessionAssigner.MAX_PER_PROFESSION);
     }
 
