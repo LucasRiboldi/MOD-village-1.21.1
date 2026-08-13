@@ -3,6 +3,7 @@ package com.villagecolony.fabric.integration;
 import com.villagecolony.VillageColonyMod;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.LeavesBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -26,6 +27,10 @@ import java.util.Set;
  *   <li>só tronco e folha de árvore da tabela de {@link TreeSpecies} —
  *       tronco descascado e bloco de madeira são construção, não
  *       floresta;
+ *   <li>só grupo de tronco com copa viva: folha da mesma espécie que
+ *       nasceu ali, e não folha pendurada à mão. Sem copa não é árvore,
+ *       é construção — casa de vila é feita de tronco, e o carvalho da
+ *       planície é o mesmo carvalho da floresta;
  *   <li>só o que estiver ligado ao que se achou, e nunca tudo num raio;
  *   <li>só a copa daquele tronco: a folha é alcançada a partir dos
  *       troncos que caíram, não do ar em volta;
@@ -161,12 +166,24 @@ public final class TreeHarvester {
             return Plan.nothing();
         }
 
-        boolean complete = logs.size() < MAX_LOGS;
-
         // A copa é achada antes de o tronco cair. Depois seria tarde: a
         // folha é alcançada a partir dos troncos, e sem eles não haveria
         // de onde partir.
-        List<BlockPos> leaves = complete ? connectedLeaves(world, species, logs) : List.of();
+        List<BlockPos> canopy = connectedLeaves(world, species, logs);
+
+        // Sem copa viva não é árvore, e não se toca. Ver #isNaturalLeaf.
+        //
+        // Achada antes do teto de propósito: até 2026-08-12 a copa só era
+        // procurada quando a árvore cabia no teto, e era justamente a
+        // construção grande — a que passa de 24 troncos — que escapava do
+        // teste sem nunca ser olhada.
+        if (canopy.isEmpty()) {
+            return Plan.nothing();
+        }
+
+        boolean complete = logs.size() < MAX_LOGS;
+
+        List<BlockPos> leaves = complete ? canopy : List.of();
 
         List<BlockPos> blocks = new ArrayList<>(logs);
         blocks.addAll(leaves);
@@ -194,7 +211,9 @@ public final class TreeHarvester {
             return List.of();
         }
 
-        if (!isBlock(world, pos, species.log()) && !isBlock(world, pos, species.leaves())) {
+        // Folha do jogador não entra nem por engano: entre planejar e
+        // chegar aqui ele pode ter posto uma no lugar da que caiu.
+        if (!isBlock(world, pos, species.log()) && !isNaturalLeaf(world, pos, species)) {
             return List.of();
         }
 
@@ -378,6 +397,8 @@ public final class TreeHarvester {
      * partir do tronco que caiu não é copa dele. E para em
      * {@link #LEAF_REACH} de qualquer tronco, senão copas encostadas
      * ligariam uma árvore à vizinha e derrubar uma levaria a floresta.
+     *
+     * <p>Só folha que nasceu ali. Ver {@link #isNaturalLeaf}.
      */
     private static List<BlockPos> connectedLeaves(
             ServerWorld world, TreeSpecies species, List<BlockPos> logs) {
@@ -394,7 +415,7 @@ public final class TreeHarvester {
                     continue;
                 }
 
-                if (!isBlock(world, neighbour, species.leaves())) {
+                if (!isNaturalLeaf(world, neighbour, species)) {
                     continue;
                 }
 
@@ -408,6 +429,30 @@ public final class TreeHarvester {
         }
 
         return found;
+    }
+
+    /**
+     * Folha que nasceu ali, e não folha que o jogador pendurou.
+     *
+     * <p>O Vanilla já responde a essa pergunta: folha colocada à mão vem
+     * com {@code persistent = true} e nunca apodrece; folha de árvore
+     * crescida vem com {@code false} e vive presa ao tronco. É a única
+     * marca no mundo que separa uma coisa da outra, e o mod não tem
+     * nenhuma melhor.
+     *
+     * <p>Serve a duas coisas ao mesmo tempo: a copa que o trabalhador
+     * colhe não inclui a decoração de ninguém, e um grupo de troncos sem
+     * copa viva — casa de vila, cabana, pilar — deixa de ser confundido
+     * com árvore. Ver {@link #plan}.
+     */
+    private static boolean isNaturalLeaf(ServerWorld world, BlockPos pos, TreeSpecies species) {
+        BlockState state = stateAt(world, pos);
+
+        if (!state.isOf(species.leaves())) {
+            return false;
+        }
+
+        return state.contains(LeavesBlock.PERSISTENT) && !state.get(LeavesBlock.PERSISTENT);
     }
 
     private static boolean isWithinReachOfATrunk(BlockPos leaf, List<BlockPos> logs) {
@@ -448,6 +493,11 @@ public final class TreeHarvester {
      * uma ponte ou uma varanda do jogador acima da árvore encerra a
      * limpeza ali: a muda não vai crescer, e isso é problema dela, não
      * licença para abrir buraco em construção alheia.
+     *
+     * <p>Folha pendurada à mão encerra do mesmo jeito. Ela é construção
+     * como qualquer outra — ver {@link #isNaturalLeaf} —, e a única
+     * diferença é que aqui vale a folha de qualquer espécie: a copa que
+     * cobre esta base pode ser da árvore vizinha.
      */
     private static void clearAbove(ServerWorld world, BlockPos base) {
         for (int height = 1; height <= SAPLING_CLEARANCE; height++) {
@@ -462,7 +512,7 @@ public final class TreeHarvester {
                 continue;
             }
 
-            if (!isAnyLeaves(state)) {
+            if (!isAnyNaturalLeaf(state)) {
                 return;
             }
 
@@ -470,7 +520,12 @@ public final class TreeHarvester {
         }
     }
 
-    private static boolean isAnyLeaves(BlockState state) {
+    /** Folha de qualquer espécie, desde que tenha nascido ali. */
+    private static boolean isAnyNaturalLeaf(BlockState state) {
+        if (!state.contains(LeavesBlock.PERSISTENT) || state.get(LeavesBlock.PERSISTENT)) {
+            return false;
+        }
+
         for (TreeSpecies species : TreeSpecies.values()) {
             if (state.isOf(species.leaves())) {
                 return true;

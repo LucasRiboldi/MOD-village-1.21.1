@@ -5604,3 +5604,160 @@ com os raios se cruzando a mesma colônia recebe dois ou três candidatos
 por ciclo — daí a linha `Marked` repetida no mesmo segundo. O custo é uma
 consulta de entidades por adoção, o que merece um olhar quando a fusão
 existir, mas não é acúmulo nem erro.
+
+---
+
+## 2026-08-12 (noite) — a copa separa árvore de casa, e a busca parou de morrer no mesmo lugar
+
+Duas mudanças estavam escritas na árvore de trabalho e não tinham teste,
+entrada aqui nem commit. Esta sessão fechou as duas, e a segunda cobrou
+uma terceira.
+
+---
+
+### Regra nova — sem copa viva não é árvore
+
+Casa de planície é feita de tronco de carvalho, e o carvalho da casa é o
+mesmo da floresta: mesmo bloco, mesmo drop, mesma espécie na tabela. Até
+aqui a única coisa que separava uma da outra era o teto de 24 troncos, e
+ele não separa nada — uma cabana de dez troncos passa por baixo dele sem
+esbarrar.
+
+A diferença que o mundo registra é a copa. Folha de árvore crescida vem
+com `persistent = false` e apodrece se o tronco cair; folha pendurada à
+mão vem com `true` e nunca apodrece. É a única marca do Vanilla que
+responde à pergunta, e o mod não tem nenhuma melhor.
+
+O que passou a valer:
+
+```text
+grupo de tronco sem folha natural ligada    não é árvore, não se toca
+
+folha pendurada à mão                       não é copa, e não vira copa
+                                            de um pilar por engano
+
+a copa é procurada antes do teto de 24      era o furo da primeira
+                                            versão: a construção grande
+                                            escapava sem nunca ser
+                                            olhada
+```
+
+O terceiro ponto merece o destaque. Na versão que chegou aqui, a copa só
+era procurada quando o tronco cabia no teto — e uma parede de vinte e
+cinco troncos, que é justamente a construção que mais dói perder, nunca
+chegava a ser examinada. O teste `lumber_big_wall` guarda esse lado.
+
+---
+
+### Consequência que a regra cobrou: a limpeza da coluna
+
+`clearAbove` abre a coluna acima da muda e para no primeiro bloco que
+não seja folha. Com a regra nova, "folha" deixou de ser suficiente:
+folha pendurada à mão é construção como um telhado de tábua, e agora
+encerra a limpeza do mesmo jeito.
+
+Continua valendo folha de **qualquer** espécie — a copa que cobre esta
+base pode ser da árvore vizinha —, desde que tenha nascido ali.
+
+---
+
+### A busca deixou de recomeçar do centro
+
+`TreeScanner` olha no máximo 1024 colunas por busca, e 1024 colunas
+acabam no anel 16. Como toda busca recomeçava do zero, o raio de 64 que
+ela recebe era decorativo: uma colônia cuja floresta comece depois do
+décimo sexto bloco morre no mesmo lugar, ciclo após ciclo, para sempre.
+
+Agora cada centro guarda em que anel parou, em memória:
+
+```text
+teto estourado    guarda o anel em que estava, e recomeça nele —
+                  ele ficou pela metade
+
+achou             zera o cursor: a árvore sai do mundo, e a próxima
+                  procura recomeça de perto
+
+deu a volta       zera o cursor: a floresta cresce, e a muda
+                  replantada perto volta a ser árvore
+```
+
+O custo por ciclo não muda — são as mesmas 1024 colunas —, e o alcance
+cresce com o tempo. Perder o cursor ao reiniciar custa alguns ciclos de
+busca perto do centro, e nada mais.
+
+---
+
+### O que os testes desta classe estavam provando errado
+
+A `plantTree` dos testes do lenhador plantava quatro troncos e nenhuma
+folha. Com a regra nova, essa árvore deixou de ser árvore — e oito
+testes passariam **por não tocar em nada**, que é o oposto do que eles
+afirmam medir.
+
+Foi um caso raro em que a regra nova expôs testes fracos que já eram
+fracos antes: `leavesOfAnotherSpeciesStay` e `fellingIgnoresOtherWoods`
+verificam que um bloco alheio fica de pé, e um teste que nunca derruba
+nada satisfaz isso sem esforço.
+
+A `plantTree` passou a plantar tronco e copa, com a folha ao lado do
+tronco de cima — e não acima dele, que é onde três testes medem a
+coluna da muda.
+
+---
+
+### Verificado
+
+```text
+284 testes unitários            verdes
+ 40 testes de jogo              verdes
+
+os 5 testes novos rodados       falham os 5, e só eles
+contra o código sem a
+correção
+```
+
+Os cinco novos são: tronco sem copa, folha pendurada não é copa, parede
+de vinte e cinco troncos, limpeza que para na folha do jogador, e a
+busca que avança e depois volta ao centro.
+
+O teste da busca não afirma o cursor: afirma a consequência dele. Uma
+árvore plantada perto **depois** da primeira busca não é vista na
+segunda — sinal de que a varredura está longe, continuando — e volta a
+ser vista quando a volta se completa. Sem a correção, a segunda busca a
+encontra na hora, e o teste falha ali.
+
+---
+
+### Não verificado
+
+**Nada disto foi visto em jogo.** É a dívida de sempre desta camada, e
+o §11 diz o que ela costuma esconder: os defeitos sérios deste projeto
+apareceram todos na fronteira com o Minecraft, não no teste.
+
+O que uma sessão do autor precisa mostrar:
+
+```text
+a casa de tronco da vila continua de pé depois de vários ciclos
+com lenhador trabalhando ao lado dela
+
+a colônia cuja floresta começa longe passa a ter linha de corte,
+em vez de "looking for a tree" para sempre
+
+a muda continua nascendo, e a coluna acima dela continua sendo
+aberta quando é folha de verdade que está no caminho
+```
+
+---
+
+### O que continua aberto
+
+- **O lenhador mudo** — o cursor da busca é uma causa provável para a
+  colônia que nunca achava árvore, e não é prova. O log de 23:03 desta
+  mesma noite mostra os dois lenhadores com 8 toras cada, o que já
+  contraria a leitura mais pessimista da pendência. Ela precisa ser
+  reexaminada contra um log novo.
+- **O lado do cliente** — nome, rachadura e braço continuam sem prova.
+- **E5** — continua como estava: só carvalho foi derrubado em jogo. O
+  teste exercita carvalho e bétula; as outras seis espécies não têm caso
+  próprio, e a regra da copa acabou de acrescentar mais uma coisa que
+  varia entre elas.

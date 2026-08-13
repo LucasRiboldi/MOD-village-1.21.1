@@ -21,6 +21,7 @@ import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.TreeScanner;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.LeavesBlock;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.ai.brain.Schedule;
@@ -48,7 +49,19 @@ import java.util.UUID;
  */
 public class LumberjackGameTest implements FabricGameTest {
 
-    /** Uma árvore de carvalho simples: quatro troncos sobre terra. */
+    /**
+     * Uma árvore de carvalho simples: quatro troncos sobre terra, e uma
+     * folha da copa encostada no de cima.
+     *
+     * <p>A copa não é enfeite do teste. Desde 2026-08-12 tronco sem folha
+     * viva não é árvore, é construção — e uma árvore de teste sem copa
+     * provaria a regra errada: passaria por não ser tocada, e não por ser
+     * colhida direito.
+     *
+     * <p>Ao lado do tronco, e não acima dele: a coluna acima da base é
+     * onde a muda cresce, e três testes desta classe medem justamente o
+     * que acontece nela.
+     */
     private static BlockPos plantTree(TestContext context, BlockPos base) {
         context.setBlockState(base.down(), Blocks.DIRT.getDefaultState());
 
@@ -56,7 +69,24 @@ public class LumberjackGameTest implements FabricGameTest {
             context.setBlockState(base.up(y), Blocks.OAK_LOG.getDefaultState());
         }
 
+        context.setBlockState(base.up(3).north(), Blocks.OAK_LEAVES.getDefaultState());
+
         return base;
+    }
+
+    /** Um tronco pelado: o que uma casa de vila tem, e uma árvore não. */
+    private static void raiseLogs(TestContext context, BlockPos base, int height) {
+        context.setBlockState(base.down(), Blocks.DIRT.getDefaultState());
+
+        for (int y = 0; y < height; y++) {
+            context.setBlockState(base.up(y), Blocks.OAK_LOG.getDefaultState());
+        }
+    }
+
+    /** Folha pendurada à mão: a mesma folha, com a marca do jogador. */
+    private static void hangLeaf(TestContext context, BlockPos pos) {
+        context.setBlockState(
+                pos, Blocks.OAK_LEAVES.getDefaultState().with(LeavesBlock.PERSISTENT, true));
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_fell")
@@ -200,9 +230,10 @@ public class LumberjackGameTest implements FabricGameTest {
 
         context.expectBlock(Blocks.AIR, canopy);
 
+        // Duas: a que o teste pendurou aqui, e a que a árvore já tinha.
         context.assertTrue(
-                harvest.leaves() == 1,
-                "esperava 1 folha colhida, foram " + harvest.leaves());
+                harvest.leaves() == 2,
+                "esperava 2 folhas colhidas, foram " + harvest.leaves());
 
         context.complete();
     }
@@ -250,6 +281,124 @@ public class LumberjackGameTest implements FabricGameTest {
         context.complete();
     }
 
+    // ----------------------------------------------------------------
+    // A copa é o que separa árvore de construção — 2026-08-12
+    // ----------------------------------------------------------------
+
+    /**
+     * Tronco sem copa viva não é árvore.
+     *
+     * <p>Casa de planície é feita de tronco de carvalho, e o carvalho da
+     * casa é exatamente o mesmo da floresta: espécie, bloco e drop. A
+     * copa é a única diferença que o mundo registra entre uma coisa e a
+     * outra, e é nela que a regra se apoia.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_no_canopy")
+    public void aTrunkWithoutACanopyIsNotATree(TestContext context) {
+        BlockPos base = new BlockPos(2, 2, 2);
+
+        raiseLogs(context, base, 4);
+
+        TreeHarvester.Harvest harvest =
+                TreeHarvester.fell(context.getWorld(), context.getAbsolutePos(base));
+
+        context.assertTrue(
+                harvest.isEmpty(),
+                "colheu " + harvest.logs() + " troncos de uma construção");
+
+        for (int y = 0; y < 4; y++) {
+            context.expectBlock(Blocks.OAK_LOG, base.up(y));
+        }
+
+        context.complete();
+    }
+
+    /**
+     * Folha pendurada à mão não faz de um pilar uma árvore.
+     *
+     * <p>Sem isto a regra seria fácil de burlar sem querer: uma folha
+     * decorativa no canto da casa devolveria a casa inteira à colheita. A
+     * marca {@code persistent} do Vanilla é o que separa a folha que
+     * nasceu ali da que alguém colocou.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_hung_leaves")
+    public void leavesHungByHandAreNotACanopy(TestContext context) {
+        BlockPos base = new BlockPos(2, 2, 2);
+        BlockPos hung = base.up(3).north();
+
+        raiseLogs(context, base, 4);
+        hangLeaf(context, hung);
+
+        TreeHarvester.Harvest harvest =
+                TreeHarvester.fell(context.getWorld(), context.getAbsolutePos(base));
+
+        context.assertTrue(
+                harvest.isEmpty(),
+                "a folha do jogador virou copa: colheu " + harvest.logs() + " troncos");
+
+        context.expectBlock(Blocks.OAK_LOG, base);
+        context.expectBlock(Blocks.OAK_LEAVES, hung);
+
+        context.complete();
+    }
+
+    /**
+     * A construção grande também é olhada.
+     *
+     * <p>Era o furo da primeira versão da regra: a copa só era procurada
+     * quando o tronco cabia no teto de 24, e uma parede de vinte e cinco
+     * troncos passava sem nunca ser olhada — justamente a construção que
+     * mais dói perder.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_big_wall")
+    public void aWallBiggerThanTheCeilingIsNotATree(TestContext context) {
+        BlockPos corner = new BlockPos(1, 2, 2);
+
+        for (int x = 0; x < 5; x++) {
+            for (int y = 0; y < 5; y++) {
+                context.setBlockState(corner.add(x, y, 0), Blocks.OAK_LOG.getDefaultState());
+            }
+        }
+
+        TreeHarvester.Harvest harvest =
+                TreeHarvester.fell(context.getWorld(), context.getAbsolutePos(corner));
+
+        context.assertTrue(
+                harvest.isEmpty(),
+                "colheu " + harvest.logs() + " troncos de uma parede de 25");
+
+        for (int x = 0; x < 5; x++) {
+            for (int y = 0; y < 5; y++) {
+                context.expectBlock(Blocks.OAK_LOG, corner.add(x, y, 0));
+            }
+        }
+
+        context.complete();
+    }
+
+    /**
+     * A limpeza da coluna para na folha que o jogador pendurou.
+     *
+     * <p>Mesma regra do telhado de tábua, e pelo mesmo motivo: acima da
+     * muda pode estar a decoração de alguém. A folha que nasceu ali sai
+     * da frente; a que foi pendurada, não.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_hung_ceiling")
+    public void theClearanceStopsAtALeafHungByHand(TestContext context) {
+        BlockPos base = new BlockPos(2, 2, 2);
+        BlockPos hung = base.up(5);
+
+        plantTree(context, base);
+        hangLeaf(context, hung);
+
+        TreeHarvester.fell(context.getWorld(), context.getAbsolutePos(base));
+
+        context.expectBlock(Blocks.OAK_SAPLING, base);
+        context.expectBlock(Blocks.OAK_LEAVES, hung);
+
+        context.complete();
+    }
+
     /**
      * Qualquer árvore da tabela, e a muda é da própria espécie.
      *
@@ -267,6 +416,10 @@ public class LumberjackGameTest implements FabricGameTest {
         for (int y = 0; y < 4; y++) {
             context.setBlockState(base.up(y), Blocks.BIRCH_LOG.getDefaultState());
         }
+
+        // Copa de bétula: a espécie percorre a colheita inteira, e sem
+        // folha da própria espécie isto seria uma parede de bétula.
+        context.setBlockState(base.up(3).north(), Blocks.BIRCH_LEAVES.getDefaultState());
 
         TreeHarvester.Harvest harvest =
                 TreeHarvester.fell(context.getWorld(), context.getAbsolutePos(base));
@@ -813,6 +966,7 @@ public class LumberjackGameTest implements FabricGameTest {
         VillageColonyMod.STORAGES.clear();
         VillageColonyMod.TASKS.clear();
         LumberjackWork.clearAll();
+        TreeScanner.clearAll();
     }
 
     /**
@@ -833,6 +987,59 @@ public class LumberjackGameTest implements FabricGameTest {
                 .isPresent();
 
         context.assertTrue(found, "a árvore ao lado não foi encontrada");
+
+        context.complete();
+    }
+
+    /**
+     * A busca continua de onde parou, e depois volta ao centro.
+     *
+     * <p>O teto de mil e vinte e quatro colunas acaba no anel dezesseis.
+     * Até 2026-08-12 toda busca recomeçava do centro, então o raio de 64
+     * era decorativo: a colônia de {@code 1109,730} passou uma sessão
+     * inteira sem achar árvore porque a floresta dela começa depois do
+     * décimo sexto bloco, e a busca morria no mesmo lugar todo ciclo.
+     *
+     * <p>O que este teste exige é a consequência, não o cursor: uma
+     * árvore plantada perto **depois** da primeira busca não é vista na
+     * segunda — sinal de que ela está longe, continuando — e volta a ser
+     * vista quando a varredura completa a volta e o cursor zera.
+     *
+     * <p>O filtro por coluna existe para que árvore de outra estrutura de
+     * teste, dentro do raio, não responda pela nossa.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_search_cursor")
+    public void theSearchMovesOutwardAndComesBack(TestContext context) {
+        BlockPos base = new BlockPos(4, 2, 4);
+        BlockPos center = context.getAbsolutePos(new BlockPos(2, 2, 2));
+        BlockPos trunk = context.getAbsolutePos(base);
+
+        TreeScanner.clearAll();
+
+        java.util.function.Predicate<BlockPos> onlyOurs =
+                pos -> pos.getX() == trunk.getX() && pos.getZ() == trunk.getZ();
+
+        ServerWorld world = context.getWorld();
+
+        context.assertTrue(
+                TreeScanner.findNearestLog(world, center, 24, onlyOurs).isEmpty(),
+                "achou a nossa árvore antes de ela existir");
+
+        plantTree(context, base);
+
+        context.assertTrue(
+                TreeScanner.findNearestLog(world, center, 24, onlyOurs).isEmpty(),
+                "a busca recomeçou do centro em vez de continuar de onde parou");
+
+        boolean found = false;
+
+        for (int attempt = 0; attempt < 10 && !found; attempt++) {
+            found = TreeScanner.findNearestLog(world, center, 24, onlyOurs).isPresent();
+        }
+
+        context.assertTrue(found, "a busca deu a volta e não voltou a olhar perto");
+
+        TreeScanner.clearAll();
 
         context.complete();
     }

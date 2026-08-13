@@ -39,9 +39,30 @@ public final class TreeScanner {
      *
      * <p>A busca é em espiral a partir do centro, então parar no teto
      * significa "não achei perto", não "não achei". O ciclo seguinte
-     * tenta de novo.
+     * continua de onde este parou — ver {@link #NEXT_RING}.
      */
     private static final int MAX_COLUMNS = 1024;
+
+    /**
+     * Em que anel a próxima busca deste centro começa.
+     *
+     * <p>Mil e vinte e quatro colunas acabam no anel 16, e é só até ali
+     * que uma busca alcança. O raio de 64 que ela recebe nunca era
+     * atingido: em 2026-08-12 o lenhador da vila de {@code 1109,730}
+     * passou a sessão inteira em "looking for a tree" porque a floresta
+     * dele começa depois do décimo sexto bloco, e toda busca recomeçava
+     * do centro para morrer no mesmo lugar.
+     *
+     * <p>Guardar onde parou faz o alcance crescer com o tempo sem custar
+     * mais por ciclo: cada busca paga as mesmas mil colunas, e o anel
+     * seguinte é problema do ciclo seguinte. Achar zera o cursor — a
+     * árvore encontrada sai do mundo, e a próxima procura recomeça de
+     * perto, que é onde o trabalhador prefere trabalhar.
+     *
+     * <p>Em memória e descartável. Perder isto ao reiniciar custa alguns
+     * ciclos de busca perto do centro, e nada mais.
+     */
+    private static final java.util.Map<BlockPos, Integer> NEXT_RING = new java.util.HashMap<>();
 
     /**
      * Quantos blocos acima e abaixo da superfície se procura tronco.
@@ -90,7 +111,13 @@ public final class TreeScanner {
 
         int columns = 0;
 
-        for (int ring = 0; ring <= radius; ring++) {
+        int startRing = NEXT_RING.getOrDefault(center, 0);
+
+        if (startRing > radius) {
+            startRing = 0;
+        }
+
+        for (int ring = startRing; ring <= radius; ring++) {
             for (int dx = -ring; dx <= ring; dx++) {
                 for (int dz = -ring; dz <= ring; dz++) {
 
@@ -106,6 +133,13 @@ public final class TreeScanner {
                     }
 
                     if (++columns > MAX_COLUMNS) {
+                        // Recomeça neste anel, e não no seguinte: ele
+                        // ficou pela metade. Reolhar a primeira metade
+                        // custa colunas que já custariam de qualquer
+                        // forma, e é mais barato que guardar em que
+                        // ponto do anel a busca estava.
+                        NEXT_RING.put(center.toImmutable(), ring);
+
                         return Optional.empty();
                     }
 
@@ -113,13 +147,25 @@ public final class TreeScanner {
                             world, center.getX() + dx, center.getZ() + dz);
 
                     if (log.isPresent() && accepts.test(log.get())) {
+                        NEXT_RING.remove(center);
+
                         return log;
                     }
                 }
             }
         }
 
+        // Varreu até a borda do raio sem achar nada. Recomeçar do centro
+        // é o certo: a floresta cresce, e a muda replantada perto volta a
+        // ser árvore antes de a busca dar a volta inteira de novo.
+        NEXT_RING.remove(center);
+
         return Optional.empty();
+    }
+
+    /** Esquece os cursores, junto com o resto do estado em memória. */
+    public static void clearAll() {
+        NEXT_RING.clear();
     }
 
     /** O tronco mais baixo desta coluna, se houver. */
