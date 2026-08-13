@@ -518,14 +518,13 @@ O que a Fase 9 vai exigir decidir:
 onde se fabrica          bancada da vila? o próprio baú? o Vanilla
                          exige bancada para receita 3x3
 
-quanto produzir          a Regra 1 mede espaço de madeira; produzir
-                         tábua até encher o baú transformaria toda a
-                         madeira da colônia em tábua
-
 o que se consome         fabricar tira do baú. Hoje nada tira, e o
                          estoque só cresce — nenhum código do mod
                          jamais removeu item de um baú
 ```
+
+Quanto produzir já tem resposta: §18, Regra 5 — a meta é a da obra, e
+enquanto não houver obra, metade do espaço de armazenamento em tábua.
 
 ---
 
@@ -560,6 +559,16 @@ do décimo sexto bloco precisa passar a ter linha de corte
 ```
 
 ```text
+P1b  a caixa da vila protege, em jogo
+```
+
+A Regra 3 do §18 — nunca destruir bloco da vila original — pergunta ao
+próprio jogo quais blocos são peça de estrutura gerada. O mundo do
+gametest não tem vila gerada, então essa metade da regra só pode ser
+vista no save do autor. O que o teste alcança é o caminho sem estrutura
+nenhuma, que é o que roda a cada colheita.
+
+```text
 P2   o lado do cliente
 ```
 
@@ -573,12 +582,12 @@ teclado.
 ## Precisa de decisão do autor
 
 ```text
-P3   quanto fabricar          antes da Fase 9
+nada em aberto
 ```
 
-A Regra 1 respondeu "quanto colher" com o espaço dos baús. Fabricar não
-tem resposta equivalente, e a mesma regra aplicada à tábua transformaria
-toda a madeira da colônia em tábua. Ver §7.
+O P3 — quanto fabricar — foi resolvido em 2026-08-13 por delegação do
+autor. A regra está no §18, Regra 5, e é a mais fácil de derrubar deste
+capítulo: o enunciado vale até ele dizer outra coisa.
 
 ---
 
@@ -698,7 +707,8 @@ Registro único, Overworld
 ```text
 Profissão não muda depois de atribuída
 
-  ProfessionAssigner só preenche vaga.
+  ProfessionAssigner só preenche vaga, até duas por profissão
+  (§18, Regra 4).
 
   A morte e a zumbificação já liberam a vaga — ver
   VillagerLifecycleHandler, coberto por gametest desde 2026-08-12.
@@ -1333,18 +1343,23 @@ D2  vaga de profissão entre vilas          não era defeito
 
 ---
 
-# 18. Regras vigentes do autor — decididas em 2026-08-08, implementadas em 2026-08-11
+# 18. Regras vigentes do autor
 
-Duas regras do autor, registradas aqui na íntegra quando ainda eram só
-decisão. **As duas foram implementadas em 2026-08-11**; o texto abaixo
-fica como está porque é o enunciado da regra, e o enunciado não muda
-por ela ter sido escrita em código. O que a implementação de fato fez, e
-onde ela divergiu do previsto aqui, está na entrada de §15 de
-2026-08-11.
+As regras do autor sobre o comportamento da colônia, na ordem em que
+foram decididas. O enunciado fica como foi dito; o que a implementação
+de fato fez, e onde divergiu, está na entrada do Development Log da data
+correspondente.
 
-Duas previsões deste capítulo se confirmaram e vale marcá-las: a fila
-que não esvaziava — o E1 do §17 — morreu junto, e o lugar onde as duas
-regras moram é de fato o mesmo.
+```text
+Regra 1   colher até os baús encherem          08-08, feita em 08-11
+Regra 2   colher no tempo de um jogador        08-08, feita em 08-11
+Regra 3   o que nunca se destrói               08-13, feita em 08-13
+Regra 4   dois trabalhadores por profissão     08-13, feita em 08-13
+```
+
+Duas previsões das primeiras se confirmaram e vale marcá-las: a fila que
+não esvaziava — o E1 do §17 — morreu junto, e o lugar onde as duas
+primeiras regras moram é de fato o mesmo.
 
 ---
 
@@ -1426,3 +1441,144 @@ de continuar cabendo num tick. Um contador por trabalhador é barato; uma
 varredura por trabalhador por tick não é.
 
 ---
+
+---
+
+## Regra 3 — o que o trabalhador nunca destrói
+
+```text
+nunca um bloco da vila original
+
+nunca um bloco colocado pelo jogador
+```
+
+**A árvore é a exceção, e é a única.** O lenhador derruba árvore onde a
+achar, inclusive dentro dos limites que o jogo registra para a vila —
+sem isso não haveria colheita, porque vila de planície nasce cercada de
+carvalho e boa parte dele cai dentro desses limites.
+
+Consequência que vale saber: uma árvore que tenha vindo junto com a vila
+gerada é derrubável como qualquer outra. O que protege a casa não é esta
+regra, é a da copa — tronco sem folha viva não é árvore.
+
+---
+
+### O que o mundo consegue responder, e o que não consegue
+
+```text
+vila original      o jogo guarda, por chunk, as peças de cada
+                   estrutura gerada: a casa, o poço, a rua, o
+                   lampião. A pergunta é por peça, não pela caixa
+                   da vila inteira — a caixa cobre o campo aberto
+                   entre as casas, e proibir o campo aberto
+                   proibiria a colônia de trabalhar em casa
+
+colocado pelo      o Minecraft não guarda quem pôs cada bloco. A
+jogador            única marca é a folha: colocada à mão vem
+                   persistent, nascida de árvore não
+```
+
+Para tudo o mais, o mod não tem como saber — e por isso a proteção real
+é a inversa, e não mora numa lista de proibições: **o trabalhador só
+quebra o que consegue provar ser floresta.** A regra da copa é o que faz
+esse trabalho hoje.
+
+Vila construída pelo jogador não tem estrutura registrada, e a primeira
+pergunta responde "não" para ela. Não é buraco: é a segunda metade da
+regra que a cobre, pela via inversa.
+
+---
+
+### Onde isto vive
+
+`fabric/integration/BlockProtection` é a porta única. Hoje quem passa por
+ela é só a limpeza da coluna da muda — o único bloco que a colheita
+quebra sem que ele seja da árvore que ela planejou.
+
+A porta existe para as fases seguintes: fabricar e construir vão tocar no
+mundo, e a pergunta "posso quebrar isto?" tem de ser feita num lugar só.
+
+---
+
+## Regra 4 — dois trabalhadores de cada profissão
+
+```text
+a vila começa com dois lenhadores, dois fabricantes, dois
+fazendeiros e dois construtores
+
+os demais aldeões continuam os que já eram
+```
+
+Era um de cada desde 2026-08-12, e antes disso a vaga era ilimitada — a
+vila de 43 aldeões do autor acabou com seis lenhadores disputando tarefa
+a cada ciclo.
+
+Oito trabalhadores numa vila de quarenta continua sendo uma minoria
+empregada, e é esse o ponto: a vila continua sendo a vila do jogador, com
+a colônia dentro dela.
+
+A colônia cobre as quatro funções antes de dobrar qualquer uma. Preencher
+por ordem daria dois lenhadores antes do primeiro fabricante, e uma vila
+com dois lenhadores e nenhum construtor é pior do que uma com um de cada.
+
+O teto vale também para save antigo: quem excede perde a função no
+primeiro ciclo, devolve o baú e volta a ser candidato à próxima vaga que
+abrir.
+
+---
+
+## Regra 5 — quanto fabricar
+
+**Decidida por delegação em 2026-08-13**, a pedido do autor ("resolve o
+P3"). É a única regra deste capítulo que não saiu da cabeça dele, e por
+isso é a mais fácil de derrubar: o enunciado abaixo vale até ele dizer
+outra coisa.
+
+```text
+a meta de tábua é o que a obra pede
+
+enquanto não houver obra, o fabricante enche metade do espaço de
+armazenamento da colônia com tábua, e para
+```
+
+---
+
+### Por que não foi a mesma resposta da Regra 1
+
+A Regra 1 respondeu "quanto colher" com o espaço dos baús. A mesma
+resposta para a tábua se destrói sozinha:
+
+```text
+um tronco vira quatro tábuas
+
+fabricar aumenta o volume guardado, não diminui
+
+"fabricar até encher" transformaria toda a madeira da colônia em
+tábua e pararia a coleta junto — o baú cheio é o que faz o lenhador
+parar
+```
+
+Metade e metade mantém as duas coisas vivas: o lenhador tem para onde
+colher, e o fabricante tem o que fazer. E a metade é medida no mundo — a
+capacidade dos baús que a colônia tem —, não é uma quantidade inventada.
+
+Quando a Fase 10 trouxer a obra, a demanda dela substitui o teto: o que a
+obra pede vira a meta, e a metade deixa de ser teto e passa a ser só o
+lote de partida.
+
+---
+
+### O que isso exige na hora de implementar
+
+```text
+ColonyGoals          ganha a linha da tábua, medida em capacidade
+                     e não em contagem
+
+ChestDepositor       já sabe medir espaço livre por grupo; falta
+                     medir capacidade total
+
+nada disso entra     antes de existir quem execute CRAFT_MATERIAL.
+antes do fabricante  Tarefa aberta sem executor possível fica
+                     reservada para sempre — é o que o §11 ensina
+```
+

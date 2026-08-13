@@ -489,10 +489,11 @@ public final class VillageDetectionHandler {
         }
 
         VillageColonyMod.LOGGER.info(
-                "Colony {} dismissed {} workers — chests released, one of each"
+                "Colony {} dismissed {} workers — chests released, at most {} of each"
                         + " profession is the rule",
                 colony.id(),
-                demoted.size());
+                demoted.size(),
+                ProfessionAssigner.MAX_PER_PROFESSION);
     }
 
     /**

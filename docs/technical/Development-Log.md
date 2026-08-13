@@ -4659,3 +4659,115 @@ Se a vila tiver de fato encolhido, a colônia está com 31 camas que não
 existem — e a contagem de vagas de profissão sai errada por cima.
 
 ---
+
+---
+
+## 2026-08-13 — três regras do autor, e a quinta decidida por delegação
+
+O autor trouxe duas regras novas e mandou resolver o P3. As duas
+primeiras viraram código hoje; a terceira é decisão registrada, sem
+código, porque o código dela não existe ainda.
+
+---
+
+### Regra 3 — nunca destruir bloco da vila original nem do jogador
+
+O enunciado é curto e a implementação é o oposto disso, porque o
+Minecraft não guarda quem pôs cada bloco. O que se conseguiu foi:
+
+```text
+vila original      o jogo guarda as peças de cada estrutura gerada.
+                   A pergunta é por peça, não pela caixa da vila
+                   inteira — a caixa cobre o campo aberto entre as
+                   casas, e proibir o campo aberto proibiria a
+                   colônia de trabalhar dentro da própria vila
+
+jogador            só a folha responde: colocada à mão vem
+                   persistent, nascida de árvore não. Para todo o
+                   resto, o mundo não diz
+```
+
+Daí a forma da correção: `BlockProtection` é a porta, e a proteção real
+continua sendo a inversa — o trabalhador só quebra o que prova ser
+floresta. É a regra da copa, escrita ontem, que faz esse trabalho.
+
+**A árvore é a exceção, e é a única.** Vila de planície nasce cercada de
+carvalho, e boa parte dele cai dentro dos limites que o jogo registra
+para a vila; sem a exceção não haveria colheita. A consequência é que
+uma árvore gerada junto com a vila é derrubável como qualquer outra, e
+isso é o pedido do autor, não um descuido.
+
+**O que muda de comportamento hoje: quase nada, e vale dizer.** A única
+coisa que o mod quebra é árvore, e árvore é a exceção. O único caminho
+que passa pela porta é a limpeza da coluna da muda, que toca folha de
+outra árvore — e essa passou a respeitar a peça de vila. A porta existe
+para as Fases 9 e 10, quando fabricar e construir forem tocar no mundo.
+
+A metade "vila original" não é testável por máquina: estrutura nasce da
+geração de terreno, e o mundo do gametest não tem vila. O teste cobre o
+caminho sem estrutura nenhuma — o que roda a cada colheita — e a outra
+metade virou item de verificação em jogo no §8.
+
+---
+
+### Regra 4 — dois trabalhadores de cada profissão
+
+Era um desde ontem, e antes disso ilimitado. O teto virou dois, e a
+mudança maior não foi o número:
+
+```text
+vacancy()   passou a devolver a profissão mais escassa que ainda tem
+            vaga, e não a primeira da lista
+
+            com teto de dois, ir por ordem daria dois lenhadores antes
+            do primeiro fabricante — uma vila com dois lenhadores e
+            nenhum construtor é pior do que uma com um de cada
+
+enforceVacancies()   passou a guardar um conjunto por profissão em vez
+                     de um trabalhador, mantendo a preferência por quem
+                     tem baú
+```
+
+Os testes que afirmavam "um de cada" viraram "dois de cada", e um teste
+novo guarda a ordem: o quinto aldeão dobra o lenhador, e não o
+construtor.
+
+---
+
+### Regra 5 — quanto fabricar, decidida por delegação
+
+O autor disse "resolve o P3". Fica registrado que a decisão é minha e
+não dele, porque é a que ele mais vai querer revisar.
+
+A tentação era responder como a Regra 1 respondeu para a colheita — o
+espaço dos baús. Ela se destrói sozinha: um tronco vira quatro tábuas,
+então fabricar aumenta o volume guardado. "Fabricar até encher"
+transformaria toda a madeira da colônia em tábua e pararia a coleta
+junto, porque é o baú cheio que faz o lenhador parar.
+
+```text
+a meta de tábua é o que a obra pede
+
+enquanto não houver obra, o fabricante enche metade do espaço de
+armazenamento da colônia com tábua, e para
+```
+
+Metade e metade mantém as duas coisas vivas, e a metade é medida no
+mundo — a capacidade dos baús que a colônia tem —, não é quantidade
+inventada. Quando a Fase 10 trouxer a obra, a demanda dela substitui o
+teto.
+
+**Nada disso virou código, de propósito.** Abrir tarefa de fabricação
+antes de existir quem a execute deixaria a tarefa reservada para sempre,
+que é exatamente o defeito que o §11 já registra.
+
+---
+
+### Verificado
+
+```text
+285 testes unitários     verdes  (era 284)
+ 47 testes de jogo       verdes  (eram 45)
+```
+
+Nenhuma das duas regras novas foi vista em jogo.

@@ -38,6 +38,14 @@ import java.util.Set;
  *       repor.
  * </ul>
  *
+ * <p><b>A árvore é a exceção da regra de 2026-08-13</b> — nunca destruir
+ * bloco da vila original nem bloco posto pelo jogador. O lenhador derruba
+ * árvore onde a achar, inclusive dentro dos limites que o jogo registra
+ * para a vila, e por isso a colheita não consulta
+ * {@link BlockProtection}. Quem separa a casa da floresta aqui é a regra
+ * da copa, não a proteção. A única parte desta classe que pergunta é a
+ * limpeza da coluna da muda, que toca bloco de outra árvore.
+ *
  * <p>A ordem é a pedida pelo autor: derrubar a árvore inteira, recolher
  * tudo o que ela dropa, e só então replantar. Replantar antes planta uma
  * muda debaixo da própria árvore.
@@ -498,6 +506,12 @@ public final class TreeHarvester {
      * como qualquer outra — ver {@link #isNaturalLeaf} —, e a única
      * diferença é que aqui vale a folha de qualquer espécie: a copa que
      * cobre esta base pode ser da árvore vizinha.
+     *
+     * <p>É o único lugar da colheita que quebra bloco que não é desta
+     * árvore, e por isso o único que pergunta a
+     * {@link BlockProtection}: a copa que passa por cima da muda pode ser
+     * de uma árvore que o jogo gerou junto com a vila. A árvore desta
+     * colheita não passa por lá, pela exceção do autor.
      */
     private static void clearAbove(ServerWorld world, BlockPos base) {
         for (int height = 1; height <= SAPLING_CLEARANCE; height++) {
@@ -513,6 +527,10 @@ public final class TreeHarvester {
             }
 
             if (!isAnyNaturalLeaf(state)) {
+                return;
+            }
+
+            if (!BlockProtection.mayBreak(world, above, state)) {
                 return;
             }
 

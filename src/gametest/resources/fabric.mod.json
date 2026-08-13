@@ -13,7 +13,8 @@
       "com.villagecolony.gametest.LumberjackGameTest",
       "com.villagecolony.gametest.ChestMarkerGameTest",
       "com.villagecolony.gametest.WorkerLossGameTest",
-      "com.villagecolony.gametest.ColonyCycleGameTest"
+      "com.villagecolony.gametest.ColonyCycleGameTest",
+      "com.villagecolony.gametest.BlockProtectionGameTest"
     ]
   },
   "depends": {

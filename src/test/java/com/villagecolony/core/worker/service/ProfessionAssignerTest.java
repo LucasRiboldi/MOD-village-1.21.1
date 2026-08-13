@@ -91,31 +91,31 @@ class ProfessionAssignerTest {
     }
 
     /**
-     * Cobertas as quatro vagas, o quinto aldeão continua Vanilla.
+     * Cobertas as oito vagas, o nono aldeão continua o que já era.
      *
-     * <p>Decisão do autor em 2026-08-12: uma vila tem um trabalhador de
-     * cada tipo. Antes disto a vaga era ilimitada, e a vila de quarenta e
-     * três aldeões do autor acabou com seis lenhadores disputando tarefa
-     * a cada ciclo.
+     * <p>Decisão do autor em 2026-08-13: a vila começa com dois
+     * trabalhadores de cada tipo. Antes a vaga era ilimitada, e a vila de
+     * quarenta e três aldeões do autor acabou com seis lenhadores
+     * disputando tarefa a cada ciclo.
      */
     @Test
-    void theFifthWorkerGetsNothing() {
-        addWorkers(COLONY, 5);
+    void theNinthWorkerGetsNothing() {
+        addWorkers(COLONY, 9);
 
         int assigned = ProfessionAssigner.assignMissing(workers, COLONY, everyone());
 
-        assertEquals(4, assigned, "esperava as quatro vagas e nada além");
+        assertEquals(8, assigned, "esperava as oito vagas e nada além");
 
         long employed = workers.ofColony(COLONY).stream()
                 .filter(Worker::hasProfession)
                 .count();
 
-        assertEquals(4, employed);
+        assertEquals(8, employed);
     }
 
-    /** Uma vila grande emprega quatro, e só. */
+    /** Uma vila grande emprega oito, e só. */
     @Test
-    void oneOfEachProfessionAndNoMore() {
+    void twoOfEachProfessionAndNoMore() {
         addWorkers(COLONY, 43);
 
         ProfessionAssigner.assignMissing(workers, COLONY, everyone());
@@ -125,14 +125,43 @@ class ProfessionAssignerTest {
                     .filter(w -> w.profession().filter(type::equals).isPresent())
                     .count();
 
-            assertEquals(1, count, "profissão duplicada: " + type);
+            assertEquals(2, count, "profissão fora do teto: " + type);
         }
     }
 
-    /** Com as quatro preenchidas, não há vaga. */
+    /**
+     * O quinto dobra o lenhador, e não o construtor.
+     *
+     * <p>Com teto de dois, preencher por ordem de declaração daria dois
+     * lenhadores antes do primeiro fabricante — uma vila com dois
+     * lenhadores e nenhum construtor é pior do que uma com um de cada. A
+     * quinta vaga é a primeira que pode dobrar, e dobra a primeira da
+     * cadeia produtiva.
+     */
+    @Test
+    void theFifthWorkerDoublesTheFirstOfTheChain() {
+        addWorkers(COLONY, 5);
+
+        ProfessionAssigner.assignMissing(workers, COLONY, everyone());
+
+        long lumberjacks = workers.ofColony(COLONY).stream()
+                .filter(w -> w.profession().filter(ProfessionType.LUMBERJACK::equals).isPresent())
+                .count();
+
+        assertEquals(2, lumberjacks, "o quinto devia ter dobrado o lenhador");
+
+        for (ProfessionType type : ProfessionType.values()) {
+            assertTrue(
+                    workers.ofColony(COLONY).stream()
+                            .anyMatch(w -> w.profession().filter(type::equals).isPresent()),
+                    "profissão descoberta: " + type);
+        }
+    }
+
+    /** Com as oito preenchidas, não há vaga. */
     @Test
     void thereIsNoVacancyOnceEveryProfessionIsFilled() {
-        addWorkers(COLONY, 4);
+        addWorkers(COLONY, 8);
         ProfessionAssigner.assignMissing(workers, COLONY, everyone());
 
         assertTrue(ProfessionAssigner.vacancy(workers.ofColony(COLONY)).isEmpty());
@@ -154,13 +183,13 @@ class ProfessionAssignerTest {
 
         Set<UUID> demoted = ProfessionAssigner.enforceVacancies(workers, COLONY);
 
-        assertEquals(5, demoted.size());
+        assertEquals(4, demoted.size());
 
         long lumberjacks = workers.ofColony(COLONY).stream()
                 .filter(w -> w.profession().filter(ProfessionType.LUMBERJACK::equals).isPresent())
                 .count();
 
-        assertEquals(1, lumberjacks);
+        assertEquals(2, lumberjacks);
     }
 
     /**
@@ -181,7 +210,7 @@ class ProfessionAssignerTest {
 
         int assigned = ProfessionAssigner.assignMissing(workers, COLONY, everyone());
 
-        assertEquals(3, assigned, "as três vagas restantes deviam ser preenchidas");
+        assertEquals(4, assigned, "os quatro dispensados deviam voltar a ter função");
     }
 
     /**
@@ -193,7 +222,7 @@ class ProfessionAssignerTest {
      */
     @Test
     void theVacancyGoesToSomeoneWhoCanWork() {
-        addWorkers(COLONY, 3);
+        addWorkers(COLONY, 4);
 
         List<Worker> all = workers.ofColony(COLONY);
 
@@ -201,7 +230,7 @@ class ProfessionAssignerTest {
             worker.assign(ProfessionType.LUMBERJACK);
         }
 
-        UUID withChest = all.get(2).villagerId();
+        UUID withChest = all.get(3).villagerId();
 
         ProfessionAssigner.enforceVacancies(workers, COLONY, withChest::equals);
 
@@ -226,13 +255,13 @@ class ProfessionAssignerTest {
                 .filter(w -> w.profession().filter(ProfessionType.LUMBERJACK::equals).isPresent())
                 .count();
 
-        assertEquals(1, lumberjacks);
+        assertEquals(2, lumberjacks);
     }
 
     /** Colônia já dentro da regra não perde ninguém. */
     @Test
     void enforcingChangesNothingWhenTheColonyIsAlreadyRight() {
-        addWorkers(COLONY, 4);
+        addWorkers(COLONY, 8);
         ProfessionAssigner.assignMissing(workers, COLONY, everyone());
 
         assertTrue(ProfessionAssigner.enforceVacancies(workers, COLONY).isEmpty());
