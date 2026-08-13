@@ -4954,3 +4954,139 @@ Nenhuma exceção do mod.
 a 4, 14 e 15 anéis do centro, todas ao alcance do código antigo — e a
 metade "vila original" da Regra 3.
 
+
+---
+
+## 2026-08-13 (01:21) — sete árvores numa vila, zero na outra: a regra da copa travava a colônia
+
+Sessão de vinte e quatro minutos, com `/time set noon`. Duas coisas
+opostas no mesmo log.
+
+---
+
+### A colheita contínua funcionando, e bonita de ler
+
+```text
+01:13:05  e8f56d2b finished the tree at 1117,63,657 — 9 logs and 57 leaves,  9 this task
+01:13:17  ae64bb8c finished the tree at 1096,65,649 — 8 logs and 75 leaves,  8 this task
+01:13:40  e8f56d2b finished the tree at 1107,63,692 — 5 logs and 52 leaves, 14 this task
+01:13:52  ae64bb8c finished the tree at 1139,69,647 — 8 logs and 54 leaves, 16 this task
+01:14:13  e8f56d2b finished the tree at 1091,64,645 — 10 logs and 32 leaves, 24 this task
+01:14:43  ae64bb8c finished the tree at 1091,64,642 — 10 logs and 100 leaves, 26 this task
+01:14:49  e8f56d2b finished the tree at 1086,63,672 — 9 logs and 85 leaves, 33 this task
+```
+
+Sete árvores em menos de dois minutos, dois lenhadores, e a contagem por
+tarefa subindo — 9, 14, 24, 33. É a Regra 1 inteira: a tarefa não acaba
+numa árvore, acaba quando o baú enche. E a regra da copa não atrapalhou
+nada: todas as sete tinham copa, e a copa desceu junto.
+
+---
+
+### E a outra vila, dezesseis minutos sem cortar nada
+
+```text
+00:58:20  0c2771b0 lumberjacks: 2898aeb3 looking for a tree, work time (0 logs so far)
+01:13:07  0c2771b0 lumberjacks: 2898aeb3 looking for a tree, work time (0 logs so far)
+01:14:37  0c2771b0 lumberjacks: 2898aeb3 looking for a tree, work time (0 logs so far)
+```
+
+Horário de trabalho confirmado, dois lenhadores, floresta ao alcance —
+na sessão de 00:49 essa mesma colônia tinha um lenhador andando até uma
+árvore a quinze anéis do centro. Nada.
+
+**A causa é minha, de ontem.** A busca é determinística a partir do
+centro, e devolve sempre o tronco mais próximo. Se esse tronco é
+construção — e o centro desta colônia é o sino, no meio da vila —, a
+regra da copa devolve plano vazio, o lenhador desiste, e no ciclo
+seguinte a busca recomeça do centro e acha **o mesmo tronco**. Para
+sempre, e sem uma linha de log dizendo o quê.
+
+```text
+findNearestLog acha um tronco  →  NEXT_RING.remove(center)   (zera o cursor)
+plan(...) devolve vazio        →  Outcome.SEARCHED           (desiste)
+ciclo seguinte                 →  busca do anel 0            (acha o mesmo)
+```
+
+Antes da regra da copa não travava porque a casa era derrubada — o
+defeito veio junto com a proteção que o autor pediu, e ficou escondido
+por um dia porque a vila que trava é a que tem construção de tronco
+perto do centro.
+
+---
+
+### A correção
+
+`LumberjackWork` passou a anotar o grupo de tronco que a regra da copa
+recusou, e a busca deixa de devolvê-lo:
+
+```text
+REJECTED       guarda o grupo inteiro, não o tronco que a busca
+               devolveu — recusar de um em um faria uma parede de
+               vinte e cinco troncos custar vinte e cinco buscas
+
+teto de 4096   uma vila cercada de construção de madeira encheria o
+               conjunto sem limite; estourar o teto esquece tudo, o
+               que custa uma busca perdida por grupo
+
+log            "Not a tree at 1124,68,738 — 12 logs without a living
+               canopy, skipping it from now on"
+```
+
+A linha de log é o que faltava: o lenhador mudo passou dois dias sem
+dizer por que não trabalhava.
+
+O teste novo põe a construção **mais perto** que a árvore, que é
+exatamente a ordem que trava, e afirma as duas coisas: o lenhador chega
+à árvore, e o pilar continua de pé. Rodado contra o código sem a
+correção, falha.
+
+---
+
+### Um teste que estava frágil, e foi corrigido junto
+
+O `colony_shrink` falhou nesta rodada — não por defeito do mod, mas
+porque a estrutura de teste nova deslocou as vizinhas, e a colônia dele
+passou a encolher pelo caminho da observação **provadamente completa**,
+que é legítimo e imediato.
+
+O teste exigia "não encolheu ainda na primeira leitura menor", e essa
+metade não pode ser afirmada num mundo partilhado: se a observação é
+provavelmente completa ou não depende das camas do vizinho. Ela ficou
+onde já estava coberta —
+`PartialObservationTest#aSingleProbeReadingProvesNothing` — e o teste de
+jogo passou a afirmar só o caminho inteiro: cama destruída vira contagem
+menor.
+
+---
+
+### O que continua sem prova
+
+```text
+o cursor da busca      as sete árvores desta sessão estão dentro do
+                       alcance do código antigo
+
+a vila original        a metade estrutural da Regra 3
+
+a casa de pé           agora tem duas provas indiretas — o pilar do
+                       teste novo e as sete árvores com copa — mas
+                       nenhuma sessão em que o autor tenha olhado
+                       uma casa de tronco com lenhador ao lado
+```
+
+E os dois lenhadores sem baú da `c18264c9` continuam devolvendo tarefa a
+cada ciclo. A preferência de 00:45 não os alcança: ela escolhe **quem
+recebe** a função, e esses dois já a tinham do save. Fica anotado; a
+correção é dispensar quem não consegue baú quando há candidato que
+consegue, e é decisão de regra, não de código.
+
+---
+
+### Verificado
+
+```text
+288 testes unitários     verdes
+ 48 testes de jogo       verdes  (eram 47)
+
+negativo: sem a recusa, o teste novo falha
+```

@@ -992,6 +992,98 @@ public class LumberjackGameTest implements FabricGameTest {
     }
 
     /**
+     * Construção perto não prende o lenhador.
+     *
+     * <p>É o defeito que a regra da copa criou e que o log de 2026-08-13
+     * mostrou: a vila de {@code 1109,730} passou dezesseis minutos em
+     * horário de trabalho, com dois lenhadores, sem derrubar nada — e com
+     * floresta ao alcance.
+     *
+     * <p>A causa é a busca ser determinística a partir do centro. O
+     * tronco mais próximo era construção; a regra da copa devolvia plano
+     * vazio; a busca recomeçava do centro no ciclo seguinte e achava o
+     * mesmo tronco. Para sempre, sem uma linha de log dizendo o quê.
+     *
+     * <p>O teste põe a construção mais perto que a árvore, que é
+     * exatamente a ordem que trava. Sem a correção, nada é derrubado.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_stuck_on_build",
+            tickLimit = 400)
+    public void aBuildingNearTheCenterDoesNotTrapTheSearch(TestContext context) {
+        BlockPos center = new BlockPos(1, 2, 1);
+        BlockPos pillar = new BlockPos(2, 2, 2);
+        BlockPos tree = new BlockPos(6, 2, 6);
+
+        clearColonyState();
+
+        // O pilar é construção: tronco sem copa. Fica entre o centro e a
+        // árvore, e a busca chega nele primeiro.
+        raiseLogs(context, pillar, 3);
+
+        plantTree(context, tree);
+
+        BlockPos chest = new BlockPos(1, 2, 3);
+
+        context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+
+        ServerWorld world = context.getWorld();
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(5, 2, 5));
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)));
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.LUMBERJACK);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(
+                villager.getUuid(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chest))));
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_WOOD,
+                TaskPriority.PRODUCTION,
+                ResourceType.OAK_LOG,
+                32);
+
+        task.reserveFor(villager.getUuid());
+
+        LumberjackWork.run(world, colony);
+
+        context.runAtTick(30, () -> {
+            List<BlockPos> working = LumberjackWork.blocksInProgress();
+
+            context.assertTrue(
+                    !working.isEmpty(),
+                    "o lenhador ficou preso na construção e nunca achou a árvore");
+
+            BlockPos absoluteTree = context.getAbsolutePos(tree);
+
+            context.assertTrue(
+                    working.get(0).getX() == absoluteTree.getX()
+                            && working.get(0).getZ() == absoluteTree.getZ(),
+                    "o lenhador foi para " + working.get(0).toShortString()
+                            + ", que não é a árvore");
+
+            // E a construção continua de pé, que é a outra metade.
+            for (int y = 0; y < 3; y++) {
+                context.expectBlock(Blocks.OAK_LOG, pillar.up(y));
+            }
+
+            clearColonyState();
+            LumberjackWork.clearAll();
+
+            context.complete();
+        });
+    }
+
+    /**
      * A busca continua de onde parou, e depois volta ao centro.
      *
      * <p>O teto de mil e vinte e quatro colunas acaba no anel dezesseis.

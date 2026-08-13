@@ -158,9 +158,15 @@ public class ColonyDetectionGameTest implements FabricGameTest {
      * sozinha não vale — visão parcial é o caso comum, e foi ela que fez
      * o centro derivar em 2026-08-07.
      *
-     * <p>O teste exige as duas metades: **não** encolher na primeira
-     * leitura menor, e encolher na segunda. Só a segunda passaria com a
-     * regra apagada.
+     * <p>O que este teste afirma é o caminho inteiro: cama destruída no
+     * mundo vira contagem menor na colônia. A outra metade da regra —
+     * **não** encolher na primeira leitura menor — mora em
+     * `PartialObservationTest#aSingleProbeReadingProvesNothing`, e não
+     * pode morar aqui: a colônia também encolhe quando a observação é
+     * provadamente completa, e se ela é ou não depende das camas das
+     * estruturas vizinhas, que mudam de lugar sempre que um teste novo
+     * entra na bateria. Um teste que exigisse "não encolheu ainda"
+     * passaria ou falharia conforme o vizinho.
      *
      * <p>A contagem absoluta não é afirmada. As estruturas dos outros
      * testes ficam a menos de {@code CLUSTER_DISTANCE} e suas camas
@@ -210,11 +216,6 @@ public class ColonyDetectionGameTest implements FabricGameTest {
                     colony.isActive(),
                     "a colônia continua dormente e a sonda nunca roda — "
                             + "centro " + colony.center() + ", chunk " + center);
-
-            context.assertTrue(
-                    colony.observedBeds() == before,
-                    "encolheu já na primeira leitura menor: " + before
-                            + " → " + colony.observedBeds());
         });
 
         context.runAtTick(30, () -> {

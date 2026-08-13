@@ -307,9 +307,21 @@ public final class TreeHarvester {
      * madeira destruída. Ver {@code ChestDepositor.freeSpaceFor}.
      */
     public static int trunkSize(ServerWorld world, BlockPos anyLog) {
+        return trunkOf(world, anyLog).size();
+    }
+
+    /**
+     * Os troncos ligados a este, sem tocar em nada.
+     *
+     * <p>Serve a quem precisa apontar o grupo inteiro, e não só contá-lo:
+     * um grupo de tronco que a regra da copa recusou é construção, e quem
+     * procura árvore precisa saber que aquele grupo todo não é uma. Ver
+     * {@code LumberjackWork}.
+     */
+    public static List<BlockPos> trunkOf(ServerWorld world, BlockPos anyLog) {
         return TreeSpecies.ofLog(stateAt(world, anyLog))
-                .map(species -> connectedLogs(world, species, anyLog).size())
-                .orElse(0);
+                .map(species -> connectedLogs(world, species, anyLog))
+                .orElse(List.of());
     }
 
     /**

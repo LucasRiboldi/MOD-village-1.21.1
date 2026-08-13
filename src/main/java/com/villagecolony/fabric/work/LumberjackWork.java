@@ -142,6 +142,39 @@ public final class LumberjackWork {
      */
     private static final Set<BlockPos> CLAIMED = new HashSet<>();
 
+    /**
+     * Os troncos que a regra da copa já recusou.
+     *
+     * <p>Sem isto a colônia trava. A busca é determinística a partir do
+     * centro: se o tronco mais próximo é construção — casa de vila,
+     * cabana, pilar —, a regra da copa devolve plano vazio, a busca
+     * recomeça do centro no ciclo seguinte e acha o mesmo tronco. Para
+     * sempre, e sem uma linha de log dizendo o quê.
+     *
+     * <p>Aconteceu com a vila de {@code 1109,730} em 2026-08-13:
+     * dezesseis minutos em horário de trabalho, dois lenhadores, nenhuma
+     * árvore, e uma floresta inteira ao alcance. O defeito nasceu junto
+     * com a regra da copa, um dia antes.
+     *
+     * <p>Guarda o grupo inteiro, e não o tronco que a busca devolveu:
+     * recusar de um em um faria uma parede de vinte e cinco troncos
+     * custar vinte e cinco buscas.
+     *
+     * <p>Esquecido ao parar o servidor, como o resto do estado em
+     * memória. Construção não vira árvore, então a recusa não envelhece
+     * — o que envelhece é o mundo, e para isso basta reiniciar.
+     */
+    private static final Set<BlockPos> REJECTED = new HashSet<>();
+
+    /**
+     * Quantos troncos recusados se guarda antes de esquecer tudo.
+     *
+     * <p>Um teto, não uma regra: uma vila cercada de construção de
+     * madeira encheria o conjunto sem limite. Esquecer tudo custa uma
+     * busca perdida por grupo, e é melhor que crescer para sempre.
+     */
+    private static final int MAX_REJECTED = 4096;
+
     private LumberjackWork() {
     }
 
@@ -455,7 +488,10 @@ public final class LumberjackWork {
         }
 
         Optional<BlockPos> tree = TreeScanner.findNearestLog(
-                world, job.center, SEARCH_RADIUS, log -> !CLAIMED.contains(log));
+                world,
+                job.center,
+                SEARCH_RADIUS,
+                log -> !CLAIMED.contains(log) && !REJECTED.contains(log));
 
         if (tree.isEmpty()) {
             // Nenhuma árvore ao alcance. Não é motivo para encerrar: a
@@ -473,11 +509,12 @@ public final class LumberjackWork {
         // folha dá é sorteado na hora — muda, maçã, graveto, ou nada — e
         // não dá para perguntar de antemão. São poucos itens, e o espaço
         // conferido para o tronco inteiro sobra para eles.
-        int trunk = TreeHarvester.trunkSize(world, tree.get());
+        List<BlockPos> trunkGroup = TreeHarvester.trunkOf(world, tree.get());
+
         int room = ChestDepositor.freeSpaceForGroup(
                 world, storage.chestPosition(), ResourceGroup.WOOD);
 
-        if (room < trunk) {
+        if (room < trunkGroup.size()) {
             finishTask(job, villager.getUuid(), storage, room);
 
             return Outcome.DONE;
@@ -486,6 +523,11 @@ public final class LumberjackWork {
         TreeHarvester.Plan plan = TreeHarvester.plan(world, tree.get());
 
         if (plan.isEmpty()) {
+            // Não é árvore: a regra da copa recusou. Recusar em silêncio
+            // e sair daqui faria a busca reencontrar este mesmo tronco no
+            // ciclo seguinte, e no seguinte — ver REJECTED.
+            reject(trunkGroup);
+
             return Outcome.SEARCHED;
         }
 
@@ -716,6 +758,25 @@ public final class LumberjackWork {
     }
 
     /**
+     * Anota que este grupo de tronco não é árvore.
+     *
+     * <p>A busca deixa de devolvê-lo, e o lenhador passa ao próximo. Ver
+     * {@link #REJECTED} para o que acontece sem isto.
+     */
+    private static void reject(List<BlockPos> trunk) {
+        if (REJECTED.size() + trunk.size() > MAX_REJECTED) {
+            REJECTED.clear();
+        }
+
+        REJECTED.addAll(trunk);
+
+        VillageColonyMod.LOGGER.info(
+                "Not a tree at {} — {} logs without a living canopy, skipping it from now on",
+                trunk.isEmpty() ? "?" : trunk.get(0).toShortString(),
+                trunk.size());
+    }
+
+    /**
      * Devolve os troncos que este plano tinha reservado.
      *
      * <p>Chamado em toda saída — árvore terminada, tarefa encerrada,
@@ -751,6 +812,7 @@ public final class LumberjackWork {
     public static void clearAll() {
         JOBS.clear();
         CLAIMED.clear();
+        REJECTED.clear();
     }
 
     /** Quantos lenhadores estão com trabalho aberto agora. */
