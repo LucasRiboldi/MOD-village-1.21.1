@@ -4579,3 +4579,83 @@ Development-Log.md    4500 linhas, 56 entradas por data
 
 284 testes unitários e 45 de jogo, verdes
 ```
+
+---
+
+## 2026-08-12 (madrugada) — o texto original do E1 e do E2
+
+Os dois foram encurtados no §17 durante a consolidação: lá ficou o
+resumo e o ponteiro, e o relato de cada investigação já está nas
+entradas de 2026-08-11 e 2026-08-12 deste arquivo.
+
+O que segue é o texto como estava registrado quando os defeitos ainda
+eram defeitos abertos — inclusive as suspeitas que se revelaram erradas,
+que são a parte que ensina. Nada aqui foi reescrito.
+
+---
+
+## E1 — A fila de tarefas não esvazia — **corrigido em 2026-08-11**
+
+Fechado pelas duas metades previstas: a Regra 1 tirou a meta constante,
+e `purgeClosed` — que existia desde a Fase 7 sem quem a chamasse —
+passou a ser chamado ao fim de cada ciclo. O registro de tarefas deixou
+de crescer para sempre.
+
+O texto original fica abaixo.
+
+---
+
+
+```text
+[05:19:31] Colony 0c2771b0 assigned 1 tasks (0 open)
+[05:20:01] Colony 0c2771b0 assigned 1 tasks (0 open)
+[05:20:31] Colony 0c2771b0 assigned 1 tasks (0 open)
+   ... a cada 30 segundos, indefinidamente
+```
+
+Uma tarefa nova por ciclo, por colônia. Em sete minutos de sessão foram
+catorze, e nada as remove.
+
+Causa conhecida: a colônia compara estoque com uma meta constante e
+gera tarefa enquanto faltar. Como o lenhador entrega devagar — uma
+árvore por ciclo, no melhor caso — a meta demora, e a fila cresce mais
+rápido do que esvazia.
+
+Metade já foi corrigida em 2026-08-08: com `ResourceGroup.WOOD`, bétula
+e abeto passaram a contar para a mesma meta, então a colônia se satisfaz
+com o que já tem. A outra metade é a Regra 1 do §16.
+
+Não é só cosmético: tarefa é objeto em memória, e nada as expira.
+
+---
+
+## E2 — A colônia 0c2771b0 nunca prova a visão completa — **investigado e corrigido em 2026-08-11**
+
+A suspeita registrada abaixo estava errada, e o defeito real era outro.
+Ver a entrada de §15 de 2026-08-11. Em resumo: as 31 camas existem; a
+linha de 5 camas era um segundo aglomerado, não uma sonda com defeito; e
+o defeito de verdade era dois candidatos da mesma varredura se
+confirmando dentro do mesmo tick.
+
+O texto original fica abaixo.
+
+---
+
+
+```text
+Colony 0c2771b0 saw 28 beds, keeping 31 — view not provably complete
+Colony 0c2771b0 saw 5 beds, keeping 31 — view not provably complete
+```
+
+Três linhas dessas por ciclo, sessão após sessão. A colônia registrou 31
+camas uma vez e nunca mais viu as 31 ao mesmo tempo, então nunca encolhe
+— o que é a regra funcionando, e não um defeito por si.
+
+O que é suspeito é a linha com 5 camas: uma sonda que vê 5 de 31 está
+partindo de um ponto que não alcança a vila, ou está rodando com metade
+dos chunks fora. Isso não foi investigado.
+
+Se a vila tiver de fato encolhido, a colônia está com 31 camas que não
+existem — e a contagem de vagas de profissão sai errada por cima.
+
+---
