@@ -21,10 +21,27 @@ public enum ResourceGroup {
     WOOD,
 
     /**
+     * Qualquer tábua.
+     *
+     * <p>Entrou na Fase 9, e corrige o que a versão anterior deste
+     * arquivo dizia: que tábua não se substitui. A frase valia para
+     * <b>receita</b> e continua valendo — quem pede tábua de carvalho
+     * numa receita não aceita bétula, e o estoque continua contando cada
+     * uma pelo nome.
+     *
+     * <p>O que mudou é a pergunta que o grupo responde, que é outra:
+     * "esta colônia já tem material fabricado suficiente?". Aí a espécie
+     * não importa, e sem o grupo o fabricante entraria no mesmo laço que
+     * o E1: uma colônia de floresta de bétula transformaria tronco em
+     * tábua para sempre, porque a meta de carvalho nunca seria atingida
+     * por tábua nenhuma que ela conseguisse fazer.
+     */
+    PLANKS,
+
+    /**
      * Recurso que só se satisfaz com ele mesmo.
      *
-     * <p>Tábua de carvalho não é substituída por tábua de bétula numa
-     * receita que peça carvalho, e pedra não é substituída por nada.
+     * <p>Pedra não é substituída por nada.
      */
     NONE
 }

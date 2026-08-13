@@ -51,10 +51,10 @@ public final class MinecraftTypeAdapter {
             if (item == species.log().asItem()) {
                 return Optional.of(species.resource());
             }
-        }
 
-        if (item == Items.OAK_PLANKS) {
-            return Optional.of(ResourceType.OAK_PLANKS);
+            if (item == species.planks().asItem()) {
+                return Optional.of(species.plankResource());
+            }
         }
 
         if (item == Items.COBBLESTONE) {

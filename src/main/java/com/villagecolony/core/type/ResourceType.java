@@ -36,7 +36,21 @@ public enum ResourceType {
 
     MANGROVE_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD),
 
-    OAK_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.NONE),
+    OAK_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS),
+
+    BIRCH_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS),
+
+    SPRUCE_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS),
+
+    JUNGLE_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS),
+
+    ACACIA_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS),
+
+    DARK_OAK_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS),
+
+    CHERRY_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS),
+
+    MANGROVE_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS),
 
     COBBLESTONE(ResourceCategory.NATURAL, ResourceGroup.NONE);
 

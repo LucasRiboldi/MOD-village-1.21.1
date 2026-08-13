@@ -32,24 +32,26 @@ import java.util.Optional;
  */
 public enum TreeSpecies {
 
-    OAK(Blocks.OAK_LOG, Blocks.OAK_LEAVES, Blocks.OAK_SAPLING, ResourceType.OAK_LOG),
+    OAK(Blocks.OAK_LOG, Blocks.OAK_LEAVES, Blocks.OAK_SAPLING, ResourceType.OAK_LOG,
+            Blocks.OAK_PLANKS, ResourceType.OAK_PLANKS),
 
-    BIRCH(Blocks.BIRCH_LOG, Blocks.BIRCH_LEAVES, Blocks.BIRCH_SAPLING, ResourceType.BIRCH_LOG),
+    BIRCH(Blocks.BIRCH_LOG, Blocks.BIRCH_LEAVES, Blocks.BIRCH_SAPLING, ResourceType.BIRCH_LOG,
+            Blocks.BIRCH_PLANKS, ResourceType.BIRCH_PLANKS),
 
     SPRUCE(Blocks.SPRUCE_LOG, Blocks.SPRUCE_LEAVES, Blocks.SPRUCE_SAPLING,
-            ResourceType.SPRUCE_LOG),
+            ResourceType.SPRUCE_LOG, Blocks.SPRUCE_PLANKS, ResourceType.SPRUCE_PLANKS),
 
     JUNGLE(Blocks.JUNGLE_LOG, Blocks.JUNGLE_LEAVES, Blocks.JUNGLE_SAPLING,
-            ResourceType.JUNGLE_LOG),
+            ResourceType.JUNGLE_LOG, Blocks.JUNGLE_PLANKS, ResourceType.JUNGLE_PLANKS),
 
     ACACIA(Blocks.ACACIA_LOG, Blocks.ACACIA_LEAVES, Blocks.ACACIA_SAPLING,
-            ResourceType.ACACIA_LOG),
+            ResourceType.ACACIA_LOG, Blocks.ACACIA_PLANKS, ResourceType.ACACIA_PLANKS),
 
     DARK_OAK(Blocks.DARK_OAK_LOG, Blocks.DARK_OAK_LEAVES, Blocks.DARK_OAK_SAPLING,
-            ResourceType.DARK_OAK_LOG),
+            ResourceType.DARK_OAK_LOG, Blocks.DARK_OAK_PLANKS, ResourceType.DARK_OAK_PLANKS),
 
     CHERRY(Blocks.CHERRY_LOG, Blocks.CHERRY_LEAVES, Blocks.CHERRY_SAPLING,
-            ResourceType.CHERRY_LOG),
+            ResourceType.CHERRY_LOG, Blocks.CHERRY_PLANKS, ResourceType.CHERRY_PLANKS),
 
     /**
      * Mangue, o caso difícil do Overworld.
@@ -60,18 +62,29 @@ public enum TreeSpecies {
      * simplesmente não replanta, como já acontece com muda em pedra.
      */
     MANGROVE(Blocks.MANGROVE_LOG, Blocks.MANGROVE_LEAVES, Blocks.MANGROVE_PROPAGULE,
-            ResourceType.MANGROVE_LOG);
+            ResourceType.MANGROVE_LOG, Blocks.MANGROVE_PLANKS, ResourceType.MANGROVE_PLANKS);
 
     private final Block log;
     private final Block leaves;
     private final Block sapling;
     private final ResourceType resource;
+    private final Block planks;
+    private final ResourceType plankResource;
 
-    TreeSpecies(Block log, Block leaves, Block sapling, ResourceType resource) {
+    TreeSpecies(
+            Block log,
+            Block leaves,
+            Block sapling,
+            ResourceType resource,
+            Block planks,
+            ResourceType plankResource) {
+
         this.log = log;
         this.leaves = leaves;
         this.sapling = sapling;
         this.resource = resource;
+        this.planks = planks;
+        this.plankResource = plankResource;
     }
 
     public Block log() {
@@ -88,6 +101,24 @@ public enum TreeSpecies {
 
     public ResourceType resource() {
         return resource;
+    }
+
+    /**
+     * A tábua desta espécie.
+     *
+     * <p>Entrou na Fase 9. O mod não usa este bloco para fabricar — quem
+     * diz o que um tronco vira é a receita do próprio jogo —, mas
+     * precisa dele para <b>contar</b> o resultado: sem isto, o fabricante
+     * transformaria tronco em tábua que a colônia não enxerga, e o
+     * estoque passaria a mentir.
+     */
+    public Block planks() {
+        return planks;
+    }
+
+    /** O recurso que a tábua desta espécie vira no estoque. */
+    public ResourceType plankResource() {
+        return plankResource;
     }
 
     /** A espécie deste tronco, se for tronco de árvore conhecida. */
