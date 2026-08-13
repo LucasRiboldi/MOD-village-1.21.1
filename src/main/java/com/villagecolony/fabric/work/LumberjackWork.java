@@ -564,8 +564,20 @@ public final class LumberjackWork {
      * quanto a tarefa rendeu porque é a única prova em jogo de que o
      * trabalho contínuo aconteceu — sem ela, um lenhador que trabalhou
      * dez minutos e um que nunca achou árvore produzem o mesmo silêncio.
+     *
+     * <p>Pode chegar aqui com a tarefa ainda RESERVED, e é o caso comum
+     * da Regra 1: o baú termina quase cheio, o ciclo seguinte abre um
+     * pedido do tamanho do espaço que sobrou, e a primeira árvore que o
+     * lenhador olha já não cabe. Ele encerra sem ter derrubado nada, e
+     * {@code Task.complete} exige EXECUTING — completar direto lançava
+     * dentro do tick do servidor e derrubava o mundo. A transição é a
+     * mesma que {@code startNextTree} faz ao começar uma árvore.
      */
     private static void finishTask(Job job, UUID workerId, WorkerStorage storage, int room) {
+        if (job.task.state() == TaskState.RESERVED) {
+            job.task.start();
+        }
+
         job.task.complete();
 
         // Tarefa cumprida, aldeão liberado. É a cessão imediata da

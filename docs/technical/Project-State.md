@@ -5761,3 +5761,129 @@ aberta quando é folha de verdade que está no caminho
   teste exercita carvalho e bétula; as outras seis espécies não têm caso
   próprio, e a regra da copa acabou de acrescentar mais uma coisa que
   varia entre elas.
+
+---
+
+## 2026-08-12 (noite, mais tarde) — o item A fechado, e um travamento de servidor que ele encontrou
+
+O item A do §8 pedia três casos que o gametest não cobria: morte e
+zumbificação do trabalhador, encolhimento da colônia, e o ciclo gerando
+tarefa a partir de déficit. Os três entraram. O quarto teste desta
+sessão não estava na lista — nasceu de um defeito que o próprio trabalho
+de teste desenterrou.
+
+---
+
+### Os três casos do item A
+
+```text
+worker_death         o aldeão morre: vaga, baú e tarefa voltam
+worker_conversion    o aldeão é zumbificado: o mesmo, por outro evento
+
+colony_shrink        a vila perde casas e a colônia encolhe — mas só
+                     quando a sonda dela repete a leitura menor
+
+cycle_deficit        baú sem espaço não gera pedido; baú vazio gera
+```
+
+A morte e a zumbificação são eventos diferentes do Fabric, e é por isso
+que são dois testes: `AFTER_DEATH` não dispara quando o aldeão é mordido
+por um zumbi, que é o caso mais comum de perder um trabalhador em jogo.
+
+O teste do encolhimento exige as duas metades: **não** encolher na
+primeira leitura menor, e encolher na segunda. Com a regra apagada, só a
+segunda metade falha — a primeira passaria de graça.
+
+O teste do ciclo entope o baú com **terra**, e não com madeira. É o que
+o torna capaz de falhar: com o baú cheio de madeira, a meta constante
+antiga também daria déficit zero, e o teste passaria sem provar nada.
+Com terra, a colônia tem zero madeira e nenhum espaço — pela regra velha
+faltariam 64, pela Regra 1 não falta nada.
+
+---
+
+### O defeito que o teste desenterrou
+
+Rodando a bateria contra o código com a Regra 1 desligada — o passo de
+"provar que o teste falha" —, o servidor não falhou um teste: **caiu**.
+
+```text
+java.lang.IllegalStateException: Cannot complete a task that is RESERVED
+  LumberjackWork.finishTask
+  LumberjackWork.startNextTree
+  ...
+  VillageDetectionHandler.onServerTick
+```
+
+`Task.complete` exige EXECUTING, e o lenhador só marca a tarefa como
+iniciada depois de escolher uma árvore. Quando a primeira árvore que ele
+olha não cabe no baú, `finishTask` encerra a tarefa **antes** disso — e
+a tarefa ainda está RESERVED.
+
+Não é artefato de teste. É o fim normal da Regra 1 visto de perto:
+
+```text
+o baú termina quase cheio
+
+o ciclo seguinte abre um pedido do tamanho do espaço que sobrou
+
+o lenhador reserva, olha a primeira árvore, e ela não cabe
+
+→ exceção dentro do tick do servidor
+```
+
+Nunca aconteceu em jogo porque o baú do autor tinha espaço de sobra
+todas as vezes. Bastava um baú com espaço para dois troncos e uma árvore
+de quatro.
+
+A correção é a mesma transição que `startNextTree` já fazia: iniciar a
+tarefa antes de encerrá-la. O teste `cycle_tree_too_big` monta
+exatamente esse mundo, e rodado contra o código sem a correção derruba o
+servidor com a mesma exceção.
+
+---
+
+### O que o teste do encolhimento cobrou
+
+A sonda só roda para colônia ACTIVE, e ACTIVE quer dizer chunk ticando.
+Em jogo quem mantém o chunk assim é o jogador por perto; no gametest não
+há jogador, e o centro da colônia cai onde o aglomerado o puser —
+inclusive fora da estrutura do teste, porque as camas das estruturas
+vizinhas entram na conta.
+
+O teste força o chunk do centro, e o pedido de carga só vale no tick
+seguinte. Por isso ele atravessa ticks em vez de rodar os ciclos em
+sequência, e por isso a mensagem de falha diz se a colônia estava ativa:
+sem isso, uma sonda que nunca rodou se parece com uma regra que não
+funciona.
+
+Vale registrar como diagnóstico geral: no gametest, colônia longe da
+estrutura é colônia dormente, e colônia dormente não pensa.
+
+---
+
+### Verificado
+
+```text
+284 testes unitários      verdes
+ 45 testes de jogo        verdes  (eram 40 no começo da noite)
+
+negativo, por regra desligada:
+
+  Regra 1 (meta pelo espaço)     cycle_deficit falha
+  confirmação da sonda           colony_shrink falha
+  handler de morte/conversão     worker_death e worker_conversion falham
+  transição RESERVED→EXECUTING   cycle_tree_too_big derruba o servidor
+```
+
+---
+
+### O que continua fora do alcance do gametest
+
+```text
+persistência entre sessões   exige fechar e reabrir o mundo, e a
+                             bateria roda um servidor só (V3 do §7)
+
+o lado do cliente            nome, rachadura e braço precisam de
+                             alguém no teclado
+```

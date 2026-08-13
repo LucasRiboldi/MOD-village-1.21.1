@@ -3,6 +3,7 @@ package com.villagecolony.gametest;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.BedBlock;
@@ -15,6 +16,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestTypes;
 
@@ -147,6 +149,91 @@ public class ColonyDetectionGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * A colônia encolhe quando a sonda dela confirma a leitura menor.
+     *
+     * <p>É o item A do §8 e o caminho inteiro do E2: a vila perde casas,
+     * a sonda ancorada no centro lê menos, e a colônia só baixa a
+     * contagem quando a leitura menor se repete. Uma leitura menor
+     * sozinha não vale — visão parcial é o caso comum, e foi ela que fez
+     * o centro derivar em 2026-08-07.
+     *
+     * <p>O teste exige as duas metades: **não** encolher na primeira
+     * leitura menor, e encolher na segunda. Só a segunda passaria com a
+     * regra apagada.
+     *
+     * <p>A contagem absoluta não é afirmada. As estruturas dos outros
+     * testes ficam a menos de {@code CLUSTER_DISTANCE} e suas camas
+     * entram no aglomerado — o que este teste pode afirmar é a diferença
+     * entre antes e depois, que é o que a regra decide.
+     *
+     * <p><b>Por que este teste atravessa ticks.</b> A sonda só roda para
+     * colônia ACTIVE, e ACTIVE quer dizer chunk ticando. Em jogo quem
+     * mantém o chunk assim é o jogador por perto; aqui não há jogador, e
+     * o centro da colônia cai onde o aglomerado o puser — inclusive fora
+     * da estrutura do teste, porque as camas das estruturas vizinhas
+     * entram na conta. O teste força o chunk do centro, e o pedido de
+     * carga só vale no tick seguinte: por isso os ciclos são agendados
+     * em vez de rodarem em sequência.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_shrink",
+            tickLimit = 200)
+    public void aColonyShrinksOnlyWhenItsOwnProbeConfirms(TestContext context) {
+        clearColonyState();
+
+        BlockPos anchor = new BlockPos(1, 1, 1);
+        int planted = BEDS + 4;
+
+        placeBeds(context, anchor, planted);
+        spawnVillagers(context, anchor, VillageDetector.MIN_VILLAGERS);
+
+        runCycle(context, anchor);
+
+        if (VillageColonyMod.COLONIES.count() != 1) {
+            context.throwGameTestException(
+                    "nenhuma colônia foi detectada — " + diagnose(context, anchor));
+        }
+
+        Colony colony = VillageColonyMod.COLONIES.all().iterator().next();
+        ChunkPos center = new ChunkPos(MinecraftTypeAdapter.toBlockPos(colony.center()));
+
+        context.getWorld().setChunkForced(center.x, center.z, true);
+
+        int before = colony.observedBeds();
+
+        removeLastBeds(context, anchor, planted, 4);
+
+        context.runAtTick(20, () -> {
+            runCycle(context, anchor);
+
+            context.assertTrue(
+                    colony.isActive(),
+                    "a colônia continua dormente e a sonda nunca roda — "
+                            + "centro " + colony.center() + ", chunk " + center);
+
+            context.assertTrue(
+                    colony.observedBeds() == before,
+                    "encolheu já na primeira leitura menor: " + before
+                            + " → " + colony.observedBeds());
+        });
+
+        context.runAtTick(30, () -> {
+            runCycle(context, anchor);
+
+            context.assertTrue(
+                    colony.observedBeds() < before,
+                    "a sonda confirmou a leitura menor e a colônia não encolheu: "
+                            + before + " → " + colony.observedBeds()
+                            + " — âncora da sonda " + colony.probeAnchor());
+
+            context.getWorld().setChunkForced(center.x, center.z, false);
+
+            clearColonyState();
+
+            context.complete();
+        });
+    }
+
     // ----------------------------------------------------------------
 
     /**
@@ -172,7 +259,7 @@ public class ColonyDetectionGameTest implements FabricGameTest {
      */
     private static void placeBeds(TestContext context, BlockPos anchor, int count) {
         for (int i = 0; i < count; i++) {
-            BlockPos head = anchor.add(i * 3, 0, 0);
+            BlockPos head = bedHead(anchor, i);
 
             context.setBlockState(head, Blocks.WHITE_BED.getDefaultState()
                     .with(BedBlock.PART, BedPart.HEAD)
@@ -182,6 +269,31 @@ public class ColonyDetectionGameTest implements FabricGameTest {
                     .with(BedBlock.PART, BedPart.FOOT)
                     .with(BedBlock.FACING, Direction.NORTH));
         }
+    }
+
+    /** Tira as últimas camas plantadas, como uma vila que perde casas. */
+    private static void removeLastBeds(
+            TestContext context, BlockPos anchor, int planted, int count) {
+
+        for (int i = planted - count; i < planted; i++) {
+            BlockPos head = bedHead(anchor, i);
+
+            // As duas metades: meia cama continuaria de pé como bloco
+            // solto, e o POI nasce da cabeceira.
+            context.setBlockState(head, Blocks.AIR.getDefaultState());
+            context.setBlockState(head.offset(Direction.SOUTH), Blocks.AIR.getDefaultState());
+        }
+    }
+
+    /**
+     * Onde vai a cama de índice {@code i}.
+     *
+     * <p>Em grade de quatro por fila, e não em linha: uma fila de sete
+     * camas espaçadas passaria da borda da estrutura de teste. A cama
+     * ocupa dois blocos em z, por isso as filas ficam a três.
+     */
+    private static BlockPos bedHead(BlockPos anchor, int i) {
+        return anchor.add((i % 4) * 2, 0, (i / 4) * 3);
     }
 
     private static void spawnVillagers(TestContext context, BlockPos anchor, int count) {

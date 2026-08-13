@@ -11,7 +11,9 @@
       "com.villagecolony.gametest.ColonyDetectionGameTest",
       "com.villagecolony.gametest.StorageGameTest",
       "com.villagecolony.gametest.LumberjackGameTest",
-      "com.villagecolony.gametest.ChestMarkerGameTest"
+      "com.villagecolony.gametest.ChestMarkerGameTest",
+      "com.villagecolony.gametest.WorkerLossGameTest",
+      "com.villagecolony.gametest.ColonyCycleGameTest"
     ]
   },
   "depends": {
