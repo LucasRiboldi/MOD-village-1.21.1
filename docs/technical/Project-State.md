@@ -980,7 +980,7 @@ satisfaça, escrita junto com ele
 
 ---
 
-## Armadilha de método já paga
+## Armadilhas de método já pagas
 
 ```text
 Trocar o jar com o jogo aberto não testa nada.
@@ -990,6 +990,21 @@ O Minecraft carrega mods na inicialização da JVM. Sair ao menu e
 reentrar no mundo reusa o código em memória.
 
 Duas sessões de teste foram desperdiçadas assim.
+
+---
+
+```text
+/time set day não é hora de trabalho do aldeão.
+```
+
+A agenda Vanilla do aldeão põe WORK no tique **2000** e o tira em 9000.
+`day` é 1000 — antes da janela. Duas sessões de 2026-08-13 morreram
+assim, uma inteira e outra no meio: o autor pôs 1000 e o lenhador que
+estava cortando parou.
+
+O que serve: `/time set noon`, que é 6000, ou `/time set 2000`. E olhar
+a própria linha do lenhador, que diz `work time` ou `off hours` — ela
+existe para responder isso sem adivinhação.
 
 ---
 

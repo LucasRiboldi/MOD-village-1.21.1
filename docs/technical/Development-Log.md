@@ -4879,3 +4879,78 @@ a 76 e 63 blocos como sinal do cursor da busca funcionando. **Não são.**
 A busca mede do centro da colônia, não do aldeão, e as três árvores
 estão nos anéis 15, 14 e 4 — todas dentro do alcance que o código antigo
 já tinha. O cursor continua sem evidência em jogo.
+
+---
+
+## 2026-08-13 (madrugada, 00:47) — a primeira derrubada com a regra da copa, e a hora certa do relógio
+
+Sessão de três minutos, e a mais produtiva do projeto até agora.
+
+```text
+[00:49:25] Worker e8f56d2b finished the tree at 1120, 64, 669
+           — 5 logs and 56 leaves, 5 logs this task
+```
+
+**Cinco troncos e cinquenta e seis folhas.** É a primeira colheita com a
+regra da copa em jogo, e ela mostra o lado que interessava: árvore de
+verdade continua caindo inteira, com a copa junto. A regra não quebrou a
+colheita.
+
+O que ela ainda não mostra é o outro lado — a casa de tronco da vila
+continuar de pé. Ausência de estrago não aparece no log; isso é o autor
+olhando.
+
+---
+
+### A correção das 00:45 funcionou em jogo, quinze minutos depois
+
+```text
+has no chest — wood task returned to the queue     0 ocorrências
+```
+
+Na sessão anterior era a cada trinta segundos, com dois lenhadores. Nesta
+não aparece nenhuma vez, e as linhas de reivindicação mostram por quê:
+`LUMBERJACK a60c4f43 claimed the chest at 1090,64,738`, e mais quatro.
+
+É o ciclo mais curto que este projeto já teve entre um defeito observado
+em jogo e a correção confirmada em jogo.
+
+---
+
+### A hora certa do relógio, que custou duas sessões
+
+```text
+[00:49:03]  lumberjacks: ... looking for a tree, work time
+[00:49:18]  [Majest: Tempo definido para 1000 tiques]
+[00:49:33]  lumberjacks: ... walking — ..., off hours
+```
+
+O autor pôs `/time set day` para ajudar, e **encerrou a janela de
+trabalho**. A agenda Vanilla põe WORK no tique 2000 e o tira em 9000;
+`day` é 1000, que é antes. A instrução que eu tinha dado estava errada.
+
+O que serve é `/time set noon` (6000) ou `/time set 2000`. Está
+registrado no §11 como armadilha de método, junto com a do jar trocado
+com o jogo aberto.
+
+---
+
+### O que o log diz de resto
+
+```text
+Loaded 3 colonies with 80 workers
+
+dois lenhadores por colônia, os dois com baú e com árvore
+
+e8f56d2b seguiu para a segunda árvore com a mesma tarefa — "5 logs
+so far" — que é a Regra 1 trabalhando: ele colhe até o baú encher
+
+a sonda da vizinha continua aparecendo nomeada e sem apagar nada
+```
+
+Nenhuma exceção do mod.
+
+**Continua sem prova:** o cursor da busca — as árvores desta sessão estão
+a 4, 14 e 15 anéis do centro, todas ao alcance do código antigo — e a
+metade "vila original" da Regra 3.
+
