@@ -5153,3 +5153,115 @@ negativo: com o teto de trocas zerado, o teste novo falha
 
 Em jogo, o que confirma é a linha `dismissed ... of them had no chest` na
 `c18264c9`, seguida do silêncio: sem mais `has no chest` a cada ciclo.
+
+---
+
+## 2026-08-13 (01:53) — a sessão que fechou três pendências de uma vez
+
+Três minutos de jogo, e o log responde tudo o que estava aberto sobre o
+lenhador.
+
+---
+
+### A colônia que não cortava há dois dias, cortando
+
+```text
+01:52:01  a60c4f43 finished the tree at 1089,63,717 —  8 logs,  49 leaves
+01:52:26  2898aeb3 finished the tree at 1095,66,751 — 17 logs, 160 leaves
+01:53:07  a60c4f43 finished the tree at 1131,69,731 — 12 logs, 155 leaves
+01:53:17  2898aeb3 finished the tree at 1086,66,754 — 20 logs, 163 leaves
+```
+
+`2898aeb3` e `a60c4f43` são os dois lenhadores da `0c2771b0`, a vila de
+`1109,730` — a que passou a sessão de 01:21 inteira em "looking for a
+tree" com horário de trabalho confirmado.
+
+---
+
+### E o cursor da busca, provado pela distância
+
+```text
+árvore em 1089,717   anel 20
+árvore em 1095,751   anel 21
+árvore em 1131,731   anel 22
+árvore em 1086,754   anel 24
+árvore em 1084,724   anel 25
+```
+
+O teto de mil e vinte e quatro colunas acaba no anel 16. **Cinco das seis
+árvores desta colônia estão além dele**, e o código anterior não tinha
+como alcançá-las: toda busca recomeçava do centro e morria no mesmo
+lugar.
+
+É a prova que faltava desde 2026-08-12, e ela veio junto com a explicação
+de por que a vila era muda: os anéis de perto dela só tinham construção,
+e a floresta começa no vigésimo bloco.
+
+---
+
+### A regra da copa, dos dois lados na mesma sessão
+
+```text
+Not a tree at 1092,64,736 — 24 logs without a living canopy
+Not a tree at 1122,71,714 — 13 logs
+Not a tree at 1098,63,714 —  7 logs
+Not a tree at 1128,68,720 —  5 logs
+Not a tree at 1103,63,694 —  3 logs
+Not a tree at 1103,63,697 —  3 logs
+Not a tree at 1112,70,744 —  3 logs
+Not a tree at 1113,68,743 —  1 log     ┐
+Not a tree at 1115,68,743 —  1 log     │ os postes de lampião
+Not a tree at 1113,68,747 —  1 log     │ da vila
+Not a tree at 1115,68,747 —  1 log     ┘
+```
+
+Onze construções olhadas e deixadas em pé — sessenta e um troncos —, e
+oito árvores de verdade derrubadas no mesmo intervalo. É a melhor prova
+que o log pode dar da Regra 3: o mod diz, bloco a bloco, o que reconheceu
+como construção.
+
+O grupo de 24 é o caso que a primeira versão da regra deixava passar: a
+copa só era procurada quando o tronco cabia no teto, e a construção
+grande escapava sem ser olhada.
+
+---
+
+### E a troca por baú, silenciosa depois de acontecer
+
+```text
+01:51:19  Colony 9a5afa23 dismissed 2 workers (2 of them had no chest
+          and lost the job to someone who can get one)
+```
+
+Uma linha, e depois nada: **nenhum `has no chest` na sessão inteira**,
+contra um a cada trinta segundos nas duas anteriores. É o que a regra
+prometia — a troca acontece uma vez e converge.
+
+---
+
+### O que o estoque mostra
+
+```text
+01:51:19  0c2771b0 stores {OAK_LOG=128} in 2 of 8 chests read
+01:51:49  0c2771b0 stores {OAK_LOG=128, JUNGLE_LOG=8, CHERRY_LOG=16}
+                                        in 4 of 8 chests read
+```
+
+A madeira nova entrando, e mais baús sendo lidos conforme os
+trabalhadores novos reivindicam os seus.
+
+---
+
+### O que continua aberto
+
+```text
+a metade estrutural da Regra 3    quem tem protegido a construção em
+                                  jogo é a regra da copa, não a
+                                  pergunta sobre peça de vila
+
+o lado do cliente                 nome, rachadura e braço
+
+E3, E4, E5                        como estavam
+```
+
+Nenhuma exceção do mod na sessão.

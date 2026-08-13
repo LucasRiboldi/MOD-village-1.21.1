@@ -544,38 +544,45 @@ Situação em 2026-08-12, fim da noite.
 ## Precisa de uma sessão de jogo do autor
 
 ```text
-P1   a copa e o cursor da busca, em jogo
-```
-
-Duas regras entraram em 2026-08-12 à noite, verdes em gametest e nunca
-vistas em jogo:
-
-```text
-tronco sem copa viva não é árvore — a casa de tronco da vila precisa
-continuar de pé depois de vários ciclos com lenhador ao lado dela
-
-a busca continua de onde parou — a colônia cuja floresta começa depois
-do décimo sexto bloco precisa passar a ter linha de corte
-```
-
-```text
 P1b  a caixa da vila protege, em jogo
 ```
 
-A Regra 3 do §18 — nunca destruir bloco da vila original — pergunta ao
-próprio jogo quais blocos são peça de estrutura gerada. O mundo do
-gametest não tem vila gerada, então essa metade da regra só pode ser
-vista no save do autor. O que o teste alcança é o caminho sem estrutura
-nenhuma, que é o que roda a cada colheita.
+A metade estrutural da Regra 3 — o mod perguntar ao jogo quais blocos são
+peça de vila gerada — continua sem prova. O mundo do gametest não tem
+vila gerada, e em jogo quem tem protegido a construção até agora é a
+regra da copa, não a estrutura.
 
 ```text
 P2   o lado do cliente
 ```
 
 Nome sobre a cabeça, rachadura no bloco e braço balançando: as três
-coisas que a Regra 2 acrescentou para o trabalho ser visível, e nenhuma
-tem prova. O servidor dedicado não as mostra — precisa de alguém no
-teclado.
+coisas que a Regra 2 acrescentou para o trabalho ser visível. O log não
+as mostra — precisa de alguém olhando.
+
+---
+
+## Verificado em jogo em 2026-08-13
+
+```text
+a regra da copa, dos dois lados      onze construções recusadas pelo
+                                     nome e pelo tamanho — 24, 13, 7,
+                                     5 e três de 3 troncos, mais quatro
+                                     postes de um — e oito árvores de
+                                     verdade derrubadas na mesma sessão
+
+o cursor da busca                    cinco das seis árvores da colônia
+                                     1109,730 estão nos anéis 20 a 25,
+                                     fora do alcance do código anterior,
+                                     que morria no anel 16
+
+a troca por baú                      uma linha de dispensa, e o silêncio
+                                     depois dela: nenhum "has no chest"
+                                     na sessão inteira
+
+a colônia que não cortava            0c2771b0 derrubou quatro árvores
+                                     depois de dois dias muda
+```
 
 ---
 
@@ -1289,22 +1296,6 @@ que é a resposta certa, mas isso nunca foi visto acontecendo.
 
 ---
 
-### E6 — O lenhador que não cortava — explicação provável, sem confirmação
-
-No servidor dedicado de 2026-08-12 pela manhã, seis lenhadores receberam
-tarefa em onze ciclos e nenhuma árvore caiu. Na sessão das 07:48 do mesmo
-dia dois deles cortaram — 22 e 7 toras —, e não se soube o que mudou.
-
-A explicação provável apareceu à noite: a busca por árvore gastava suas
-mil colunas no anel 16 e recomeçava do centro a cada ciclo, então uma
-colônia cuja floresta comece depois disso nunca achava nada. A busca
-passou a continuar de onde parou.
-
-Provável, não confirmado. O que confirma é uma sessão com linha de corte
-na colônia de `1109,730`. Ver §8, P1.
-
----
-
 ## Fechados, mantidos por rastreabilidade
 
 ```text
@@ -1345,6 +1336,20 @@ D2  vaga de profissão entre vilas          não era defeito
     não à do registro. A regra nunca teve furo; a linha é que
     mentia. O que sobra é o limite registrado em §11: duas vilas
     encostadas disputam trabalhador até a fusão existir.
+```
+
+```text
+E6  o lenhador que não cortava             corrigido em 2026-08-13
+
+    Eram duas causas somadas. A busca gastava suas mil colunas no
+    anel 16 e recomeçava do centro, então floresta mais longe que
+    isso era inalcançável — corrigido com o cursor de anel. E a
+    regra da copa, ao recusar a construção mais próxima do centro,
+    fazia a busca reencontrar a mesma construção para sempre —
+    corrigido anotando o grupo recusado.
+
+    Verificado em jogo: a colônia 1109,730 passou a derrubar, e as
+    árvores dela estão nos anéis 20 a 25.
 ```
 
 ```text
