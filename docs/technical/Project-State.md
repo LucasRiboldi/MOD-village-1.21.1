@@ -496,6 +496,7 @@ core/
   construction/model/ Blueprint, BlueprintBlock, ConstructionProject,
                      ConstructionState, Building
   construction/service/ ConstructionService, BuildingRegistry
+                     (as duas persistidas em ColonySavedData)
   coordination/      ColonyCycle, ColonyGoals, WorkAssignment
   worker/model/      Worker, ProfessionType, Profession, ToolType
   worker/service/    WorkerService, ProfessionRegistry,
@@ -533,8 +534,8 @@ Nenhum pacote vazio: `core/construction` foi preenchido em 2026-08-14.
 ## Testes
 
 ```text
-360 testes unitários     lógica pura do Core e serialização NBT
- 74 testes de jogo       a fronteira com o Minecraft, num servidor
+366 testes unitários     lógica pura do Core e serialização NBT
+ 76 testes de jogo       a fronteira com o Minecraft, num servidor
                          sem cliente (./gradlew runGametest)
 ```
 
@@ -611,10 +612,6 @@ não uma casa.
 ## Depois disso, e nesta ordem
 
 ```text
-persistir obra e construção     a dívida nova, e a mais cara: ao
-                                reabrir o mundo a colônia esquece que a
-                                casa é dela. Ver §9
-
 estender a estrada              hoje a vila só constrói em beira de rua
                                 que já existe. Quando ela acabar, a
                                 colônia para de crescer antes do que a
@@ -848,21 +845,18 @@ Ferramenta inicial            entregue desde 2026-08-13
 ```
 
 ```text
-Obra e construção não são gravadas       desde 2026-08-14
+Obra e construção         gravadas desde 2026-08-14
 
-  Nem ConstructionService nem BuildingRegistry vão para o save.
+  As duas vão para o mesmo arquivo das colônias.
 
-  A obra interrompida por fechar o mundo é replanejada na sessão
-  seguinte, e isso é aceitável: a casa meio construída é lote
-  ocupado, e o scanner recusa terreno com bloco em cima.
+  O progresso da obra não é gravado, e isso é decisão: quem sabe o
+  que já está de pé é o mundo. Ao retomar, cada bloco do projeto
+  cujo lugar já contém o bloco certo sai da lista — e a parede que
+  o jogador derrubou entre sessões volta a ser pedida, que é a
+  resposta certa.
 
-  O que dói é o registro de construções. Ao reabrir o mundo a
-  colônia esquece que a casa é dela: a casa continua de pé, porque
-  quem guarda blocos é o mundo, mas a proteção do §10 da
-  Constituição some, e a fusão de vilas perde a memória de que
-  depende.
-
-  É a dívida mais cara em aberto do projeto.
+  O que continua fora do save: as tarefas, que são intenção do
+  momento, e a marca de qual trabalhador estava construindo.
 ```
 
 ```text
@@ -1310,7 +1304,7 @@ itens A, B, C  escritos em 2026-08-13, cobertos por teste, nunca
 Fases 10 e 11  escritas em 2026-08-14, cobertas por teste, nunca
                vistas em jogo. A colônia constrói
 
-360 testes unitários + 74 de jogo, verdes
+366 testes unitários + 76 de jogo, verdes
 árvore de trabalho limpa, tudo empurrado para origin/main
 ```
 

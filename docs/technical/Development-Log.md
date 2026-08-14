@@ -6016,3 +6016,100 @@ Está no §9. É o primeiro item da fila depois da sessão de jogo.
    Os itens A/B/C em jogo, a metade estrutural da Regra 3, o lado do
    cliente, E3/E4/E5, e a TASK-042.
 ```
+
+---
+
+## 2026-08-14 (madrugada) — A casa continua sendo da colônia
+
+A dívida que a entrada anterior deixou aberta, e que ela mesma chamou de
+mais cara do projeto: nem a obra nem o registro de construções iam para o
+save. A casa ficava de pé — quem guarda blocos é o mundo —, mas a colônia
+reabria sem saber que ela era dela.
+
+---
+
+### O que vai para o disco
+
+No mesmo arquivo das colônias, pelo mesmo motivo dos trabalhadores em
+2026-08-07: arquivos separados permitiriam construção órfã, apontando
+para colônia que não foi gravada, sem transação que mantivesse os dois em
+sincronia.
+
+```text
+construções   id, colônia, estrutura, e os dois cantos da caixa
+
+obras         id, colônia, estrutura, lugar e estado
+```
+
+---
+
+### O que não vai, e por quê
+
+**O progresso da obra.** Quem sabe o que já está de pé é o mundo, e é a
+ele que a sessão seguinte pergunta: ao retomar, cada bloco do projeto
+cujo lugar já contém o bloco certo sai da lista.
+
+Sai mais barato no disco e sai mais **certo**. Uma lista de posições
+gravada juraria que a parede está lá; se o jogador a derrubou entre uma
+sessão e outra, a colônia a levanta de novo — e essa é a resposta que se
+quer, não a que o arquivo teria dado.
+
+Custa uma leitura de bloco por peça, uma vez por colônia por sessão.
+
+---
+
+### A obra volta em duas etapas
+
+Porque precisa: o save é lido antes de haver mundo, e um projeto precisa
+da estrutura do jogo para existir. Então a identidade e o lugar saem do
+arquivo na abertura, e o projeto inteiro nasce no primeiro ciclo da
+colônia, quando há a quem perguntar.
+
+```text
+estrutura que sumiu    obra abandonada com uma linha, em vez de tentar
+                       renascer a cada ciclo para sempre
+
+estado desconhecido    vira BUILDING, que é de onde a obra continua
+                       sozinha. COMPLETED apagaria do registro uma casa
+                       pela metade; PLANNED a faria esperar por uma
+                       preparação que já aconteceu
+
+save antigo            carrega sem as chaves. Perde-se a memória de
+                       casas anteriores a esta versão — que é o que a
+                       versão anterior perdia toda vez
+```
+
+---
+
+### Um defeito meu, do dia anterior
+
+O `ColonyFixture` não limpava obra nem construção. Os testes de construção
+escritos horas antes deixavam canteiro e casa nos registros globais, e a
+bateria roda concorrente: o lote que a colônia de outro teste escolhesse
+poderia cair sobre a casa deste.
+
+É a segunda vez em dois dias que eu escrevo um teste que suja o mundo dos
+vizinhos, depois de citar a regra que proíbe isso. A regra está no topo do
+`ColonyFixture`; o que faltou foi lembrar dela ao criar um registro
+global novo.
+
+---
+
+### O que ficou por fazer
+
+```text
+1  ver o MVP inteiro em jogo
+
+   Continua sendo o primeiro item. Precisa de um construtor na vila e
+   de pedra e vidro nos baús.
+
+2  estender a estrada
+
+   A vila só constrói em beira de rua que já existe.
+
+3  o que já estava por fazer
+
+   Os itens A/B/C em jogo, a metade estrutural da Regra 3, o lado do
+   cliente, E3/E4/E5, e a TASK-042 — que agora tem o que verificar:
+   fechar o mundo com uma obra em curso e reabrir.
+```
