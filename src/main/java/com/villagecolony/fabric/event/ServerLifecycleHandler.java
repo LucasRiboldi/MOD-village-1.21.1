@@ -8,6 +8,8 @@ import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestMarker;
 import com.villagecolony.fabric.integration.TreeScanner;
 import com.villagecolony.fabric.work.LumberjackWork;
+import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.ManufacturerWork;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.server.MinecraftServer;
@@ -40,11 +42,15 @@ public final class ServerLifecycleHandler {
         VillageColonyMod.WORKERS.clear();
         VillageColonyMod.STORAGES.clear();
         VillageColonyMod.TASKS.clear();
+        VillageColonyMod.CONSTRUCTIONS.clear();
+        VillageColonyMod.BUILDINGS.clear();
         WorkTargets.clearAll();
         LumberjackWork.clearAll();
         ManufacturerWork.clearAll();
+        BuilderWork.clearAll();
         ChestMarker.clearAll();
         TreeScanner.clearAll();
+        BuildSiteScanner.clearAll();
         VillageDetectionHandler.clearPending();
 
         ColonySavedData data = ColonySavedData.get(server);
@@ -84,11 +90,15 @@ public final class ServerLifecycleHandler {
         VillageColonyMod.WORKERS.clear();
         VillageColonyMod.STORAGES.clear();
         VillageColonyMod.TASKS.clear();
+        VillageColonyMod.CONSTRUCTIONS.clear();
+        VillageColonyMod.BUILDINGS.clear();
         WorkTargets.clearAll();
         LumberjackWork.clearAll();
         ManufacturerWork.clearAll();
+        BuilderWork.clearAll();
         ChestMarker.clearAll();
         TreeScanner.clearAll();
+        BuildSiteScanner.clearAll();
         VillageDetectionHandler.clearPending();
     }
 }

@@ -20,7 +20,8 @@
       "com.villagecolony.gametest.ManufacturerGameTest",
       "com.villagecolony.gametest.WorkerEquipmentGameTest",
       "com.villagecolony.gametest.BlueprintReaderGameTest",
-      "com.villagecolony.gametest.BuildSiteGameTest"
+      "com.villagecolony.gametest.BuildSiteGameTest",
+      "com.villagecolony.gametest.BuilderGameTest"
     ]
   },
   "depends": {

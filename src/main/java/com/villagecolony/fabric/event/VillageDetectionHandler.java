@@ -26,9 +26,12 @@ import com.villagecolony.fabric.integration.VillagerScanner;
 import com.villagecolony.fabric.integration.WorkerEquipment;
 import com.villagecolony.fabric.integration.WorkerNameplate;
 import com.villagecolony.fabric.work.LumberjackWork;
+import com.villagecolony.fabric.work.BuilderWork;
+import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.ManufacturerWork;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.minecraft.block.Blocks;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -228,6 +231,7 @@ public final class VillageDetectionHandler {
         // árvore, tem orçamento próprio dentro de LumberjackWork.
         LumberjackWork.tick(server.getOverworld());
         ManufacturerWork.tick(server.getOverworld());
+        BuilderWork.tick(server.getOverworld());
 
         tickCounter++;
 
@@ -317,6 +321,11 @@ public final class VillageDetectionHandler {
         // nunca tinha sido chamado: tarefa é objeto em memória, e nada as
         // removia. Era a metade do E1 que a Regra 1 não resolve sozinha.
         VillageColonyMod.TASKS.purgeClosed();
+
+        // E as obras terminadas, pelo mesmo motivo: canteiro é objeto em
+        // memória, e sem alguém que o remova o registro só cresce. A casa
+        // fica em BUILDINGS.
+        VillageColonyMod.CONSTRUCTIONS.purgeFinished();
     }
 
     /**
@@ -354,10 +363,19 @@ public final class VillageDetectionHandler {
         int plankRoom = ChestDepositor.freeSpaceForGroup(
                 overworld, workerIds, VillageColonyMod.STORAGES, ResourceGroup.PLANKS);
 
+        // A obra é decidida antes de a colônia pensar: o que ela pede
+        // entra na conta do mesmo ciclo, e não do seguinte. Planejar
+        // depois faria a colônia passar um ciclo inteiro sem saber que
+        // tem uma casa para levantar.
+        ConstructionPlanner.plan(overworld, colony);
+
+        int planksForWork = ConstructionPlanner.planksNeededBy(
+                MinecraftTypeAdapter.toResourceId(Blocks.OAK_PLANKS), colony);
+
         int assigned = ColonyCycle.run(
                 colony.id(),
                 survey.resources().total(),
-                ColonyGoals.of(colony, survey.resources().total(), room, plankRoom),
+                ColonyGoals.of(colony, survey.resources().total(), room, plankRoom, planksForWork),
                 VillageColonyMod.TASKS,
                 VillageColonyMod.WORKERS);
 
@@ -373,6 +391,7 @@ public final class VillageDetectionHandler {
         // começa a andar nele, em vez de esperar o próximo.
         LumberjackWork.run(overworld, colony);
         ManufacturerWork.run(overworld, colony);
+        BuilderWork.run(overworld, colony);
     }
 
     /**
@@ -614,6 +633,7 @@ public final class VillageDetectionHandler {
             WorkTargets.clear(villagerId);
             LumberjackWork.forget(villagerId);
             ManufacturerWork.forget(villagerId);
+            BuilderWork.forget(villagerId);
 
             // A marca do baú sai: um machado pendurado no baú de quem já
             // não é lenhador mente para quem está jogando. E o da mão

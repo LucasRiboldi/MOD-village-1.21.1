@@ -15,6 +15,7 @@ import net.minecraft.structure.StructureTemplate;
 import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -170,6 +171,18 @@ public final class StructureBlueprintReader {
 
             blocks.add(new BlueprintBlock(offsetOf(entry), name));
         }
+
+        // De baixo para cima, e a ordem é do projeto, não do construtor:
+        // o arquivo do jogo não promete ordem nenhuma, e um construtor
+        // que seguisse a ordem do arquivo poria o telhado antes da
+        // parede. Dentro da mesma altura, por x e depois por z, para que
+        // duas leituras do mesmo arquivo deem exatamente a mesma casa —
+        // obra com ordem instável é impossível de depurar
+        // (Debugging-Strategy.md).
+        blocks.sort(Comparator
+                .comparingInt((BlueprintBlock block) -> block.offset().y())
+                .thenComparingInt(block -> block.offset().x())
+                .thenComparingInt(block -> block.offset().z()));
 
         return blocks;
     }

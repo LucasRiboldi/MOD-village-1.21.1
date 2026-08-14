@@ -2,6 +2,8 @@ package com.villagecolony;
 
 import com.villagecolony.core.colony.service.ColonyService;
 import com.villagecolony.core.storage.service.StorageRegistry;
+import com.villagecolony.core.construction.service.BuildingRegistry;
+import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.core.task.service.TaskService;
 import com.villagecolony.core.worker.service.WorkerService;
 import com.villagecolony.fabric.event.ServerLifecycleHandler;
@@ -94,6 +96,33 @@ public class VillageColonyMod implements ModInitializer {
      * árvore que o jogador já derrubou.
      */
     public static final TaskService TASKS = new TaskService();
+
+    /**
+     * As obras em andamento — Fase 10.
+     *
+     * <p>Uma por colônia de cada vez. O canteiro sai daqui quando a casa
+     * fica pronta; o que fica é {@link #BUILDINGS}.
+     *
+     * <p>Não é persistido. Uma obra interrompida por fechar o mundo
+     * volta a ser planejada na sessão seguinte, e a casa meio construída
+     * do mundo é lote ocupado — o scanner recusa terreno com bloco em
+     * cima. Persistir obra é trabalho da Fase 11 e não do MVP.
+     */
+    public static final ConstructionService CONSTRUCTIONS = new ConstructionService();
+
+    /**
+     * O que a colônia levantou — Fase 11.
+     *
+     * <p>Sobrevive à obra e responde "este bloco é da colônia?", que é o
+     * que a proteção, a fusão de vilas e a escolha do próximo lote
+     * precisam saber.
+     *
+     * <p>Também não é persistido, e isso <b>custa</b>: ao reabrir o
+     * mundo, a colônia esquece que a casa é dela. A casa continua de pé —
+     * o mundo é que guarda blocos —, mas a proteção some. Está registrado
+     * em Project-State §9.
+     */
+    public static final BuildingRegistry BUILDINGS = new BuildingRegistry();
 
     @Override
     public void onInitialize() {
