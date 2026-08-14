@@ -2,10 +2,12 @@
 
 # Village Colony — Project State
 
-**Status:** Em implementação — Fases 1 a 8 completas e verificadas em jogo
+**Status:** MVP escrito por inteiro — Fases 1 a 8 verificadas em jogo,
+9 a 11 só por teste
 **Version:** 0.1.0
-**Last Update:** 2026-08-12 — documento consolidado: o log saiu para
-`Development-Log.md`, e o que ficou aqui é o estado
+**Last Update:** 2026-08-14 — as Fases 10 e 11 entraram, a persistência
+da obra fechou, e a fila de prioridade passou a ter um item só que
+bloqueia o MVP: uma sessão de jogo
 **Repository:** https://github.com/LucasRiboldi/MOD-village-1.21.1
 
 ---
@@ -118,6 +120,11 @@ Fase 8   primeiro trabalhador           TASK-024 e TASK-025
 
 Fase 9   fabricação                     TASK-027 a TASK-029
                                         coberta por teste, não vista
+                                        em jogo
+
+Fase 10  construção                     TASK-030 a TASK-035
+Fase 11  registro de infraestrutura     TASK-036 e TASK-037
+                                        cobertas por teste, não vistas
                                         em jogo
 ```
 
@@ -625,60 +632,67 @@ TASK-042                        o teste de persistência do MVP, que a
 
 # 8. Priority Queue
 
-Situação em 2026-08-12, fim da noite.
+Situação em 2026-08-14, fim da madrugada.
 
 ---
 
 ## Precisa de uma sessão de jogo do autor
 
-```text
-P1b  a caixa da vila protege, em jogo
-```
-
-A metade estrutural da Regra 3 — o mod perguntar ao jogo quais blocos são
-peça de vila gerada — continua sem prova. O mundo do gametest não tem
-vila gerada, e em jogo quem tem protegido a construção até agora é a
-regra da copa, não a estrutura.
+É o único item que bloqueia o MVP. Tudo abaixo dele é trabalho que pode
+esperar; isto não, porque **três fases inteiras nunca rodaram fora de
+teste**.
 
 ```text
-P1c  a Fase 9 em jogo
+P1  o MVP inteiro, numa sessão
+
+    Fase 9    a linha "manufacturers:", a tábua entrando no baú e o
+              tronco sumindo na mesma conta — quatro por um
+
+    Fase 10   a linha "planned", o lote escolhido, e a casa subindo
+              bloco a bloco. São 151 blocos, um por segundo
+
+    Fase 11   a casa pronta virando infraestrutura, e o lote seguinte
+              não caindo em cima dela
+
+    itens A, B e C   a linha "is now ABANDONED" ao demolir camas, o
+                     "Equipped N workers", e o aviso de sobreposição
+                     se o mundo der o acaso
 ```
 
-O fabricante nunca rodou em jogo. O que uma sessão precisa mostrar: a
-linha `manufacturers:` aparecendo, tábua entrando no baú, e o tronco
-sumindo na mesma conta — quatro tábuas por tronco. E que a colônia para
-sozinha quando a metade é atingida.
+O que a sessão precisa ter: um construtor na vila, e **pedra e vidro nos
+baús** — a colônia produz tábua e nada mais, e a casa pede 43 de pedra.
+Sem isso a obra fica em WAITING_RESOURCES, que é o comportamento certo e
+não uma casa.
 
 ```text
-P2   o lado do cliente
-```
+P2  a metade estrutural da Regra 3
 
-Nome sobre a cabeça, rachadura no bloco e braço balançando: as três
-coisas que a Regra 2 acrescentou para o trabalho ser visível. O log não
-as mostra — precisa de alguém olhando.
+    O mod perguntar ao jogo quais blocos são peça de vila gerada. O
+    mundo do gametest não tem vila gerada, e em jogo quem tem
+    protegido é a regra da copa.
+
+P3  o lado do cliente
+
+    Nome sobre a cabeça, rachadura no bloco e braço balançando. O log
+    não os mostra.
+```
 
 ---
 
-## Verificado em jogo em 2026-08-13
+## Não precisa de decisão nem de jogo
 
 ```text
-a regra da copa, dos dois lados      onze construções recusadas pelo
-                                     nome e pelo tamanho — 24, 13, 7,
-                                     5 e três de 3 troncos, mais quatro
-                                     postes de um — e oito árvores de
-                                     verdade derrubadas na mesma sessão
+TASK-045  a proteção consultar o registro de construções
 
-o cursor da busca                    cinco das seis árvores da colônia
-                                     1109,730 estão nos anéis 20 a 25,
-                                     fora do alcance do código anterior,
-                                     que morria no anel 16
+          O buraco entre a TASK-037 e a Regra 3: a resposta existe e
+          ninguém a pergunta. É o E7 do §17, e é a mais barata da
+          lista.
 
-a troca por baú                      uma linha de dispensa, e o silêncio
-                                     depois dela: nenhum "has no chest"
-                                     na sessão inteira
+TASK-043  estender a estrada
 
-a colônia que não cortava            0c2771b0 derrubou quatro árvores
-                                     depois de dois dias muda
+          A metade que falta da Regra 6. A intenção já está
+          registrada — um trecho por casa —, e pavimentar não custa
+          material.
 ```
 
 ---
@@ -686,71 +700,41 @@ a colônia que não cortava            0c2771b0 derrubou quatro árvores
 ## Precisa de decisão do autor
 
 ```text
-nada em aberto
-```
+TASK-048  o que uma colônia ABANDONED deixa de fazer
 
-O P3 — quanto fabricar — foi resolvido em 2026-08-13 por delegação do
-autor. A regra está no §18, Regra 5, e é a mais fácil de derrubar deste
-capítulo: o enunciado vale até ele dizer outra coisa.
+          Hoje: nada. Ela é marcada e continua sendo simulada.
 
----
+TASK-044  a fusão de vilas
 
-## Não precisa de decisão nem de jogo
+          Decidida em 2026-08-12 e destravada em 2026-08-14, quando o
+          registro de construções passou a existir. Exige ADR nova.
 
-```text
-nada em aberto
-```
+TASK-046  a orientação dos blocos
 
-Os itens A, B e C foram feitos em 2026-08-13. O que sobra dos três é
-verificação em jogo, e ela cabe na mesma sessão do P1c:
-
-```text
-A   a colônia abandonada     demolir as camas de uma vila conhecida e
-                             ver a linha "is now ABANDONED"; repô-las
-                             e ver a colônia voltar
-
-B   o aviso de sobreposição  só aparece com duas vilas a menos de 32
-                             blocos, que é raro em mundo gerado. Pode
-                             esperar por acaso
-
-C   a ferramenta             o log diz "Equipped N workers"; o aldeão
-                             não mostra o item, porque o modelo do
-                             Vanilla não tem braço que o segure. Um
-                             zumbi-aldeão mostraria
+          É o E8 do §17, e a decisão é de arquitetura: levar
+          BlockState para o Core contra a ADR-005, ou inventar uma
+          linguagem de propriedades lá dentro.
 ```
 
 ---
 
-## Fechado em 2026-08-12
+## Fechado em 2026-08-13 e 2026-08-14
 
 ```text
-E1   fila de tarefas que não esvazia    Regra 1 + purgeClosed
-E2   colônia que nunca encolhe          só a sonda própria escreve
-D1   marca trocando de dono             o quadro é do baú em que
-                                        está pregado
-D2   vaga de profissão entre vilas      não havia furo; a linha
-                                        de log é que mentia
+itens A, B e C do §8 anterior       ColonyState.ABANDONED com escritor,
+                                    aviso de sobreposição, ferramenta
+                                    do trabalhador
 
-item A do §8 anterior                   morte, zumbificação,
-                                        encolhimento e déficit
-                                        cobertos por gametest
-item B do §8 anterior                   este documento, consolidado
+Fase 10 inteira                     TASK-030 a 035
+Fase 11 inteira                     TASK-036 e 037
 
-travamento por tarefa RESERVED          encontrado pelo teste rodado
-                                        contra a regra desligada
+persistir obra e construção         a que era a dívida mais cara do
+                                    projeto, aberta e fechada no mesmo
+                                    dia
+
+teste flaky de profissão            a afirmação passou a dizer a regra
+                                    em vez da população
 ```
-
----
-
-## Depois disso
-
-```text
-Fase 9 — Fabricação
-Fase 10 — Construção
-```
-
-A construção traz junto a decisão já registrada em §10: duas vilas viram
-uma quando um bloco de uma encostar no bloco da outra.
 
 ---
 
@@ -1283,6 +1267,25 @@ MVP-Tasks.md
 ```
 
 ```text
+Construction-System.md
+
+  Três coisas que o documento descreve e o código não faz, todas
+  conhecidas e assumidas em 2026-08-14:
+
+  §PREPARING descreve limpeza de grama, flor, folha e neve. O código
+  pula o estado: o lote só é aceito quando não há nada em cima dele,
+  então não há o que limpar. Ver TASK-047.
+
+  §Estradas manda construir a rua antes da casa. O código só usa rua
+  que já existe, e não constrói rua nenhuma — o que obedece à ordem
+  ("nunca casa isolada") por um caminho mais estreito. Ver TASK-043.
+
+  §"Modelo de Construção" prevê `rotation`. O modelo não tem: o MVP
+  levanta a casa como ela está no arquivo, e girar só faz sentido
+  quando houver rua com direção.
+```
+
+```text
 Initial-Setup-Checklist.md §6 e Class-Architecture.md
 
   Continham layouts de pacote divergentes. Agora apontam para
@@ -1459,6 +1462,62 @@ carvalho e bétula, e nenhuma outra tem caso próprio.
 O mangue é o mais provável de falhar primeiro: o que se replanta ali é
 propágulo, e ele quer lama ou água rasa. A regra confia em `canPlaceAt`,
 que é a resposta certa, mas isso nunca foi visto acontecendo.
+
+---
+
+### E7 — A proteção não consulta o registro de construções
+
+`BuildingRegistry.isColonyInfrastructure` responde "este bloco é da
+colônia?". `BlockProtection` — a porta única do "posso quebrar isto?" —
+**não pergunta**.
+
+O registro existe desde 2026-08-14, a resposta existe, e o caminho que
+decide o que pode ser quebrado não passa por ela.
+
+Não causa dano hoje: a única coisa que o mod quebra é árvore, e a regra
+da copa já a separa de construção. Passa a causar no dia em que houver
+qualquer outra demolição — e é o tipo de furo que só aparece depois de
+ter sido usado.
+
+Tarefa própria: TASK-045.
+
+---
+
+### E8 — Blocos de duas partes saem soltos
+
+O `Blueprint` guarda o nome do bloco e descarta o estado. Porta e cama
+ocupam dois blocos no Vanilla, ligados por uma propriedade — e o mod põe
+duas metades independentes, cada uma no estado padrão.
+
+O que se espera ver: casa de pé, escada apontando para o padrão, e a
+metade de cima da porta possivelmente não se sustentando. Nunca foi visto
+em jogo, porque a Fase 10 nunca rodou em jogo.
+
+Tarefa própria: TASK-046. Exige decisão de arquitetura — levar
+`BlockState` para o Core contra a ADR-005, ou inventar uma linguagem de
+propriedades lá dentro.
+
+---
+
+### E9 — Colônia marcada ABANDONED e desmarcada no ciclo seguinte
+
+Observado na bateria de gametest em 2026-08-14:
+
+```text
+Colony 20c744a6 is inhabited again — now STABLE
+```
+
+Precedido, em algum ciclo anterior, da marcação de abandono. A colônia do
+mundo de teste oscila entre ABANDONED e STABLE.
+
+A explicação provável é o mundo do gametest: as vilas dos testes se
+sobrepõem, e a sonda de uma colônia às vezes não alcança as camas que a
+definiram. **Provável, não investigado.** Em mundo de verdade não há
+motivo conhecido para isso acontecer.
+
+Fica registrado porque, se em jogo aparecer a mesma oscilação, esta linha
+é o primeiro lugar a olhar — e porque hoje ABANDONED não muda nada, o que
+esconderia o sintoma (ver TASK-048).
 
 ---
 

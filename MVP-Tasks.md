@@ -2,13 +2,13 @@
 
 # Village Colony — MVP Development Tasks
 
-**Version:** 1.1.0
+**Version:** 1.2.0
 
 **Status:** Approved
 
-**Last Update:** 2026-08-13 — estado anotado por tarefa; as divergências
-que viviam numa nota de rodapé do Project-State passaram para o lado da
-tarefa a que pertencem
+**Last Update:** 2026-08-14 — as Fases 10 e 11 passaram a FEITO, e o
+plano ganhou um capítulo de tarefas por criar: o que a implementação
+revelou e o plano original não previa
 
 ---
 
@@ -738,41 +738,31 @@ Enquanto isso não acontecer, a Fase 9 não está fechada.
 
 # Fase 10 — Construção
 
-Estado da fase: `NÃO INICIADA`
+Estado da fase: `NÃO VISTO` — escrita em 2026-08-14
 
-`core/construction` existe com os pacotes criados e nenhuma classe
-dentro.
-
-Três decisões do autor precisam vir antes da primeira linha de código:
+As três decisões que bloqueavam a fase foram tomadas pelo autor em
+2026-08-14, e estão em Project-State §18 como **Regra 6**:
 
 ```text
-onde a colônia constrói    a vila cresce para onde? e a que distância
-                           da última casa?
+o que se constrói    a casa de planície do próprio jogo
 
-o que ela constrói         a casa de planície Vanilla, ou um projeto
-                           próprio?
+onde se constrói     estrada primeiro, casa ligada a ela
 
-quando ela para            uma vila que cresce para sempre vira outra
-                           coisa. A Regra 1 respondeu isso para a
-                           colheita com o espaço dos baús; a construção
-                           não tem equivalente óbvio
+quando para          não para por regra; o freio é o mundo
 ```
 
-E uma quarta, de confirmação: a **Regra 5** foi decidida por delegação, e
-o teto da metade some assim que a obra existir. A TASK-032 é onde isso
-deixa de ser hipótese — vale confirmar o enunciado com o autor antes
-dela, não depois.
+A Regra 5 foi confirmada junto: quando há obra, o que ela pede vira a
+meta de tábua, e a metade do armazém volta a ser lote de partida.
 
-O que já está pronto para esta fase: `BlockProtection` como porta única
-do "posso mexer aqui?", `ManufacturerWork` como molde do trabalho que
-consome estoque, e `TaskType.BUILD`, que `ColonyCycle.typeFor` já
-alimenta.
+A fase inteira está escrita e coberta por teste. **Nada dela foi visto em
+jogo**, e é a maior dívida de verificação do projeto: são 151 blocos
+entrando no mundo do jogador.
 
 ---
 
 ## TASK-030 — Criar Blueprint
 
-Estado: `NÃO INICIADA`
+Estado: `FEITO`
 
 Representar:
 
@@ -784,7 +774,7 @@ Representar:
 
 ## TASK-031 — Ler Estrutura Vanilla
 
-Estado: `NÃO INICIADA`
+Estado: `FEITO` — coberto por teste de jogo
 
 MVP:
 
@@ -792,33 +782,51 @@ MVP:
 Plains Small House
 ```
 
-Depende da decisão "o que ela constrói".
+O jogo tem oito variantes de `plains_small_house`. O MVP levanta a
+primeira. A leitura é pelo NBT que o próprio jogo grava, e **não** pela
+API de enumeração: `getInfosForBlock(pos, data, null)` devolve zero
+blocos na 1.21.1, em silêncio. Ver o log de 2026-08-14.
 
 ---
 
 ## TASK-032 — Calcular Materiais
 
-Estado: `NÃO INICIADA`
+Estado: `FEITO`
 
 Gerar:
 
 Lista necessária.
 
-É aqui que a demanda da obra substitui o teto da Regra 5.
+A demanda da obra substitui o teto da Regra 5, e o guarda de "sem tronco
+não se pede tábua" continua valendo por cima dela.
+
+A lista real da casa de planície, medida em 2026-08-14:
+
+```text
+oak_stairs 49 · cobblestone 43 · oak_planks 33 · stripped_oak_log 16
+wall_torch 3 · glass_pane 3 · oak_door 2 · white_bed 2
+```
+
+A colônia produz **tábua**, e só. O resto precisa já estar nos baús —
+decisão de 2026-08-14, tomada por delegação. Construção nunca cria
+recurso.
 
 ---
 
 ## TASK-033 — Criar Build Task
 
-Estado: `NÃO INICIADA`
+Estado: `FEITO`
 
 Enviar para Builder.
+
+Uma obra por colônia de cada vez, e só quando há construtor na vila — a
+torneira por último, como a Fase 9 fez.
 
 ---
 
 ## TASK-034 — Implementar Builder
 
-Estado: `NÃO INICIADA`
+Estado: `FEITO`
 
 Capacidade:
 
@@ -830,7 +838,7 @@ BUILD_STRUCTURE
 
 ## TASK-035 — Colocar Blocos
 
-Estado: `NÃO INICIADA`
+Estado: `FEITO` — coberto por teste de jogo, não visto em jogo
 
 Fluxo:
 
@@ -850,8 +858,9 @@ Colocar
 Registrar
 ```
 
-Toda quebra e toda colocação passam por `BlockProtection` — a Regra 3 é
-o que separa a obra da vila do jogador.
+Um bloco por segundo, de baixo para cima. O material sai do baú
+**antes** de o bloco entrar no mundo, e o que não tem onde se apoiar é
+riscado com uma linha no log em vez de tentado para sempre.
 
 O passo "Registrar" é a Fase 11, e acontece no mesmo instante: colocar o
 bloco e dizer de quem ele é não são dois momentos.
@@ -860,7 +869,7 @@ bloco e dizer de quem ele é não são dois momentos.
 
 # Fase 11 — Registro de Infraestrutura
 
-Estado da fase: `NÃO INICIADA`
+Estado da fase: `NÃO VISTO` — escrita em 2026-08-14, junto da TASK-035
 
 Esta fase não é opcional nem posterior: a decisão de 2026-08-12 — duas
 vilas viram uma quando um bloco de uma encostar no bloco da outra —
@@ -874,7 +883,7 @@ Por isso ela caminha junto da TASK-035, e não depois dela.
 
 ## TASK-036 — Criar Building Registry
 
-Estado: `NÃO INICIADA`
+Estado: `FEITO` — coberto por teste de jogo
 
 Salvar:
 
@@ -882,11 +891,17 @@ Salvar:
 * tipo;
 * colônia.
 
+Por **caixa** da construção, e não por bloco: as mesmas respostas — a
+proteção, a fusão de vilas e o próximo lote — por um preço muito menor.
+O que se perde é o vazio dentro da casa, que passa a ser da colônia.
+
+Persistido em `ColonySavedData` desde 2026-08-14.
+
 ---
 
 ## TASK-037 — Marcar Blocos da Colônia
 
-Estado: `NÃO INICIADA`
+Estado: `FEITO`
 
 Todo bloco colocado recebe origem:
 
@@ -898,7 +913,7 @@ Colony Infrastructure
 
 # Fase 12 — Testes do MVP
 
-Estado da fase: `PARCIALMENTE PAGA`
+Estado da fase: `PARCIALMENTE PAGA` — falta a verificação humana
 
 Quatro das cinco validações já são feitas pela bateria de testes de jogo,
 que roda num servidor sem cliente. O que sobra é a TASK-042, e ela sobra
@@ -947,7 +962,7 @@ Validar:
 
 ## TASK-041 — Teste Construção
 
-Estado: `NÃO INICIADA` — depende das Fases 10 e 11
+Estado: `NÃO INICIADA` — agora possível, e é a verificação que falta
 
 Validar:
 
@@ -972,6 +987,10 @@ Casa nova
 ## TASK-042 — Teste Persistência
 
 Estado: `NÃO INICIADA` — e não é automatizável na bateria atual
+
+Desde 2026-08-14 tem mais o que verificar: fechar o mundo com uma obra em
+curso e reabrir. A linha a procurar é `resumed ... blocks already
+standing`.
 
 Validar:
 
@@ -1010,6 +1029,113 @@ liberar vaga na morte        VillagerLifecycleHandler — morte e
                              zumbificação devolvem vaga, baú e tarefa.
                              FEITO EM JOGO
 ```
+
+---
+
+# Tarefas por criar
+
+Trabalho que a implementação revelou e que o plano original não previa.
+Não faz parte do MVP — o MVP está escrito —, mas cada item aqui é uma
+promessa feita em documento, uma decisão já tomada que ainda não
+aconteceu, ou uma consequência conhecida de uma simplificação assumida.
+
+A numeração continua de onde a TASK-042 parou.
+
+---
+
+## TASK-043 — Estender a estrada
+
+Prioridade: **alta** — é a metade que falta da Regra 6.
+
+Hoje a colônia só constrói em lote encostado em rua que **já existe**.
+Quando a beira livre acabar, a vila para de crescer — um limite mais
+apertado que o da regra, que diz "enquanto houver material e espaço".
+
+O que a tarefa precisa decidir: quanto de rua por vez, e para que
+direção. A intenção registrada é um trecho por casa.
+
+Nota de implementação já levantada: estender rua **não custa material**.
+Pavimentar é transformar grama em `dirt_path`, que é o que uma pá faz —
+nada é criado nem consumido.
+
+---
+
+## TASK-044 — Fusão de vilas por construção
+
+Decidida em 2026-08-12: duas vilas viram uma quando um bloco de uma
+encostar no bloco da outra. A fusão não reduz trabalhadores — a vila
+resultante fica com os de ambas.
+
+Estava bloqueada por não existir registro de construções. **Deixou de
+estar**: `BuildingRegistry.foreignNeighboursOf` já responde a pergunta, e
+ninguém a faz.
+
+Exige ADR nova, conforme ADR-003 §5.
+
+---
+
+## TASK-045 — A proteção consultar o registro de construções
+
+O buraco entre a TASK-037 e a Regra 3.
+
+`BuildingRegistry.isColonyInfrastructure` responde "este bloco é da
+colônia?", e **`BlockProtection` não pergunta**. O registro existe, a
+resposta existe, e o caminho que decide o que pode ser quebrado não passa
+por ela.
+
+Hoje não causa dano visível porque a única coisa que o mod quebra é
+árvore, e a regra da copa já a separa de construção. Passa a causar no
+dia em que houver qualquer outra demolição — e é o tipo de furo que só
+aparece depois de ele ter sido usado.
+
+---
+
+## TASK-046 — Orientação dos blocos da construção
+
+O `Blueprint` guarda o **nome** do bloco e descarta o estado. A casa sobe
+com escada apontando para o padrão, e blocos de duas partes — porta e
+cama — são postos como duas metades soltas.
+
+O que se vê em jogo: casa de pé e um pouco tosca. O que pode acontecer de
+pior: a metade de cima da porta não se sustenta e some.
+
+Exige decidir entre levar `BlockState` para dentro do Core, contra a
+ADR-005, ou inventar uma linguagem de propriedades no Core. É decisão de
+arquitetura, e por isso é tarefa própria e não um conserto.
+
+---
+
+## TASK-047 — Preparar o terreno de verdade
+
+Construction-System.md §PREPARING descreve limpeza de grama, flores,
+folhas e neve. O código **pula** o estado: o lote só é aceito quando não
+há nada em cima dele, então não há o que limpar.
+
+A tarefa nasce no dia em que o critério do lote afrouxar — por exemplo,
+para aceitar lote com uma árvore em cima, que hoje é recusado.
+
+---
+
+## TASK-048 — Dar consequência a ColonyState.ABANDONED
+
+O valor passou a ser atribuído em 2026-08-13, e **não muda nada**: a
+colônia marcada continua sendo simulada, com trabalhadores, tarefas e
+obra.
+
+Parar de simular vila morta é decisão do autor, não do código. A pergunta
+concreta: uma colônia abandonada deve encerrar tarefas e obras em curso,
+ou apenas parar de abrir novas?
+
+---
+
+## TASK-049 — Logística: o material viajar até a obra
+
+Hoje o construtor tira do baú da colônia **sem ir até ele**. Carregar
+material entre o baú e o canteiro é logística, declarada fora do MVP
+nesta mesma lista.
+
+Fica registrada porque a simplificação é visível em jogo: um aldeão
+constrói uma parede sem nunca ter passado perto de um baú.
 
 ---
 
@@ -1066,16 +1192,18 @@ Materiais são produzidos.                 NÃO VISTO EM JOGO
 
 ↓
 
-Uma nova casa é construída.               NÃO INICIADA
+Uma nova casa é construída.               NÃO VISTO EM JOGO
 
 ↓
 
-A nova estrutura pertence à vila.         NÃO INICIADA
+A nova estrutura pertence à vila.         NÃO VISTO EM JOGO
 ```
 
-Cinco dos oito passos estão provados em jogo. O sexto está escrito e
-esperando uma sessão. Os dois últimos são as Fases 10 e 11, e é por isso
-que elas andam juntas.
+**Os oito passos estão escritos.** Cinco estão provados em jogo; os três
+últimos — produzir, construir e registrar — só por teste.
+
+O que separa o MVP de concluído não é mais código: é uma sessão de jogo.
+Ver Project-State §7 para o que ela precisa ter.
 
 ---
 
