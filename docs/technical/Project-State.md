@@ -441,7 +441,27 @@ Fora de fase — regras aceitas em documento e nunca implementadas
                                          WorkerEquipment), coberto por
                                          teste de jogo, não visto em jogo
 
-Fase 10 em diante                        não iniciadas
+Fase 10 — Construção                     começada em 2026-08-14
+
+  Regra 6   como a vila cresce           decidida pelo autor (§18)
+
+  TASK-030  criar o Blueprint            feito (Blueprint,
+                                         BlueprintBlock, ResourceId)
+  TASK-031  ler estrutura Vanilla        feito (StructureBlueprintReader),
+                                         coberto por teste de jogo
+  TASK-032  calcular materiais           feito (ConstructionProject,
+                                         ConstructionState) — e a Regra 5
+                                         ligada em ColonyGoals
+  TASK-033  criar a Build Task           não iniciada
+  TASK-034  implementar o Builder        não iniciada
+  TASK-035  colocar blocos               não iniciada
+
+  extra     escolher o lote              feito (BuildSiteScanner),
+                                         coberto por teste de jogo
+
+Nada da Fase 10 foi visto em jogo, e nada dela mexe no mundo ainda.
+
+Fase 11 em diante                        não iniciadas
 ```
 
 ---
@@ -455,6 +475,8 @@ core/
   colony/model/      Colony, ColonyState, ColonyLifecycle,
                      VillageCandidate, ClusterRejection
   colony/service/    ColonyService, VillageDetector, ColonyAbandonment
+  construction/model/ Blueprint, BlueprintBlock, ConstructionProject,
+                     ConstructionState
   coordination/      ColonyCycle, ColonyGoals, WorkAssignment
   worker/model/      Worker, ProfessionType, Profession, ToolType
   worker/service/    WorkerService, ProfessionRegistry,
@@ -476,7 +498,8 @@ fabric/
                      ChestInventoryReader, ChestDepositor, ChestMarker,
                      ChestWithdrawer, CraftingLookup, BlockProtection,
                      TreeScanner, TreeHarvester, TreeSpecies,
-                     BlockBreakTime, WorkerNameplate, WorkerEquipment
+                     BlockBreakTime, WorkerNameplate, WorkerEquipment,
+                     StructureBlueprintReader, BuildSiteScanner
   mixin/             VillagerEntityMixin
   work/              LumberjackWork, ManufacturerWork
 
@@ -484,15 +507,16 @@ data/
   save/              ColonySavedData
 ```
 
-Vazio por enquanto: `core/construction`.
+Vazio por enquanto: `core/construction/service` — a decisão de construir
+ainda não existe, só o modelo do que construir.
 
 ---
 
 ## Testes
 
 ```text
-320 testes unitários     lógica pura do Core e serialização NBT
- 62 testes de jogo       a fronteira com o Minecraft, num servidor
+349 testes unitários     lógica pura do Core e serialização NBT
+ 71 testes de jogo       a fronteira com o Minecraft, num servidor
                          sem cliente (./gradlew runGametest)
 ```
 
@@ -1260,9 +1284,11 @@ Fases 1 a 8    completas e verificadas em jogo
 Fase 9         escrita, coberta por teste, nunca vista em jogo
 itens A, B, C  escritos em 2026-08-13, cobertos por teste, nunca
                vistos em jogo
-Fase 10        não iniciada — é o próximo passo (§7)
+Fase 10        começada em 2026-08-14: o projeto, a leitura da casa
+               Vanilla, a obra como plano e a escolha do lote. Falta o
+               que mexe no mundo — TASK-033 a 035
 
-320 testes unitários + 62 de jogo, verdes
+349 testes unitários + 71 de jogo, verdes
 árvore de trabalho limpa, tudo empurrado para origin/main
 ```
 

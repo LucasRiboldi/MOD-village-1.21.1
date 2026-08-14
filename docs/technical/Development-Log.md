@@ -5716,3 +5716,168 @@ nas três rodadas não sabotadas. Fica registrado como flaky latente.
    A Fase 9 em jogo, a metade estrutural da Regra 3, o lado do
    cliente, E3/E4/E5, e as três decisões da Fase 10.
 ```
+
+---
+
+## 2026-08-14 — A Fase 10 abre: o projeto, a casa do jogo, e onde ela cabe
+
+O autor decidiu as três perguntas que bloqueavam a fase desde que ela foi
+escrita, e delegou as decisões de implementação. O enunciado está no §18
+como Regra 6; aqui fica o que foi construído sobre ele.
+
+---
+
+### O que foi entregue
+
+```text
+TASK-030  Blueprint, BlueprintBlock, ResourceId
+TASK-031  StructureBlueprintReader — a casa vem do arquivo do jogo
+TASK-032  ConstructionProject, ConstructionState, e a Regra 5 ligada
+extra     BuildSiteScanner — onde a próxima casa cabe
+```
+
+Nada disto mexe no mundo. O que falta da fase é justamente o que mexe:
+TASK-033 a 035.
+
+---
+
+### A medição que decidiu o desenho
+
+A casa de planície do Vanilla, lida do próprio arquivo:
+
+```text
+oak_stairs        49
+cobblestone       43
+oak_planks        33
+stripped_oak_log  16
+wall_torch         3
+glass_pane         3
+oak_door           2
+white_bed          2
+```
+
+A colônia produz **tábua**, e só. Escada e porta ela saberia fazer — têm
+receita a partir de tábua, e o `CraftingLookup` já pergunta ao jogo.
+Pedra, vidro, cama e tocha estão fora do MVP; mineração é pós-MVP
+declarado.
+
+**Decisão tomada por delegação:** a obra pede tudo o que a casa tem, e o
+que a colônia não produz precisa já estar nos baús. Construção nunca cria
+recurso — é regra do próprio Construction-System.md. Na prática o jogador
+estoca pedra e vidro e a vila levanta a casa; sem isso a obra fica em
+WAITING_RESOURCES, que é estado previsto, não defeito.
+
+É a decisão mais fácil de derrubar desta fase, junto com a Regra 5.
+
+---
+
+### As quatro decisões de implementação
+
+Três delegadas pelo autor, e uma que o código obrigou:
+
+```text
+distância da rua    encostada, um bloco. Mais que isso abre quintal
+                    entre a casa e a rua
+
+rua por vez         nenhuma ainda. A leitura barata da Regra 6 é
+                    procurar lote ao lado de rua que já existe — e a
+                    vila de planície nasce cheia de rua. Estender a rua
+                    fica para quando a beira livre acabar
+
+desnível            dois blocos dentro do lote
+
+janela do lote      dois blocos acima do nível do centro da colônia, e
+                    oito abaixo. Vila não constrói no morro que a olha
+                    de cima; e o centro sai das camas, que ficam no
+                    piso das casas, acima da rua
+```
+
+---
+
+### Três defeitos, e o que cada um ensina
+
+```text
+getInfosForBlock(pos, data, null) devolve zero
+
+  A forma óbvia de enumerar um template. Na 1.21.1 ela não enumera
+  nada, e não avisa: o template carrega, informa o tamanho certo e
+  entrega lista vazia.
+
+  Só foi possível ver porque a mensagem tinha sido separada antes —
+  "o jogo não tem essa estrutura" e "tem, e não enumerou" são
+  correções diferentes. A leitura passou a ser pelo NBT que o próprio
+  jogo grava, que aliás traz o nome do bloco, que é o que o Blueprint
+  guarda.
+```
+
+```text
+o mapa de alturas não serve dentro do gametest
+
+  A arena é fechada por barreira. MOTION_BLOCKING devolveu h=-51 com a
+  grama em -59: o teto, não o chão. Num mundo de verdade daria a
+  superfície e estaria certo — é um defeito que só existe no ambiente
+  de teste, e mesmo assim precisava de correção, porque o teste é onde
+  a fronteira se prova.
+
+  Trocado por uma janela de colunas em torno do nível da vila, que
+  vale nos dois mundos.
+```
+
+```text
+a janela recortava o morro                    ← este era de verdade
+
+  Com janela de dois blocos para cima, uma torre de quatro era lida
+  como dois — a altura do teto da janela — e um lote com desnível de
+  quatro passava pelo limite de dois. A casa nasceria enfiada na
+  encosta.
+
+  Agora qualquer coisa acima da janela reprova a coluna inteira.
+  Efeito colateral assumido: lote com árvore em cima é recusado, e a
+  colônia procura outro lugar em vez de derrubar o que não planejou.
+```
+
+O terceiro foi achado pelo gametest do desnível, que existia havia dez
+minutos. Os dois primeiros, pela linha de diagnóstico escrita antes da
+suspeita — o §11 de novo, pela terceira sessão seguida.
+
+---
+
+### Um teste meu que estava errado
+
+Os dois gametests de equipamento, escritos na véspera, afirmavam sobre os
+trabalhadores da colônia mais próxima e **matavam um deles**. Numa
+bateria concorrente essa colônia é compartilhada com as estruturas
+vizinhas: o teste matava o aldeão de outro teste, que é exatamente o que
+o `ColonyFixture` proíbe — e eu tinha citado essa regra ao escrevê-los.
+
+Refeitos para construir os próprios `Worker` na hora, apontando para
+aldeões que eles mesmos criaram. Ganharam dois casos que faltavam: o que
+o jogador já segura fica, e a ferramenta volta quando a função vai
+embora.
+
+---
+
+### O que ficou por fazer
+
+```text
+1  TASK-033 a 035 — o que mexe no mundo
+
+   A tarefa de obra, o construtor e a colocação de blocos. É onde a
+   Fase 10 encosta no mundo pela primeira vez, e o §11 diz o que
+   esperar disso.
+
+2  estender a rua
+
+   Quando não houver mais lote encostado em rua. Sem isso a vila para
+   de crescer antes do que a Regra 6 permite.
+
+3  a Fase 11 junto da TASK-035
+
+   Colocar o bloco e registrar de quem ele é são o mesmo momento, e a
+   fusão de vilas decidida em 08-12 depende desse registro.
+
+4  o que já estava por fazer
+
+   A Fase 9 em jogo, os itens A/B/C em jogo, a metade estrutural da
+   Regra 3, o lado do cliente, e E3/E4/E5.
+```
