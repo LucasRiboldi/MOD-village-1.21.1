@@ -576,23 +576,24 @@ Regra 5              a meta da obra substitui a metade assim que a
 
 ---
 
-## O que a Fase 10 vai exigir decidir
+## O que a Fase 10 exigia decidir — decidido em 2026-08-14
 
 ```text
-onde a colônia constrói    a vila cresce para onde? e a que distância
-                           da última casa?
+o que ela constrói          a casa de planície do próprio jogo
 
-o que ela constrói          a casa de planície Vanilla, ou um projeto
-                            próprio?
+onde ela constrói           estrada primeiro, casa ligada a ela
 
-quando para                 uma vila que cresce para sempre vira outra
-                            coisa. A Regra 1 respondeu isso para a
-                            colheita com o espaço dos baús; a
-                            construção não tem equivalente óbvio
+quando para                 não para por regra; o freio é o mundo
 ```
 
-E é onde entra a decisão já registrada em §10: duas vilas viram uma
-quando um bloco de uma encostar no bloco da outra.
+O enunciado inteiro, com o que cada escolha descarta, está no §18,
+Regra 6. As três perguntas que a implementação ainda terá de responder
+sozinha — distância da estrada, quanto de estrada por vez, e até que
+desnível vale aplainar — estão lá também.
+
+E aqui entra a decisão já registrada em §10: duas vilas viram uma quando
+um bloco de uma encostar no bloco da outra. Com a Regra 6, é a estrada
+que vai encostar primeiro.
 
 ---
 
@@ -866,17 +867,7 @@ sondar bioma precisam ser feitos no jogo real, não no `runServer`.
 ## Em aberto
 
 ```text
-1  Quanto fabricar — Fase 9
-
-   A Regra 1 respondeu "quanto colher" com o espaço dos baús.
-   Fabricar não tem resposta equivalente: aplicar a mesma regra
-   à tábua transformaria toda a madeira da colônia em tábua.
-
-   Ver §7 e §8, P3.
-```
-
-```text
-2  Fundo do ícone do mod
+1  Fundo do ícone do mod
 
    A arte veio sem canal alpha, fundo branco sólido.
 
@@ -1509,6 +1500,7 @@ Regra 2   colher no tempo de um jogador        08-08, feita em 08-11
 Regra 3   o que nunca se destrói               08-13, feita em 08-13
 Regra 4   dois trabalhadores por profissão     08-13, feita em 08-13
 Regra 5   quanto fabricar                      08-13, feita em 08-13
+Regra 6   como a vila cresce                   08-14, em implementação
 ```
 
 Duas previsões das primeiras se confirmaram e vale marcá-las: a fila que
@@ -1745,3 +1737,73 @@ a torneira por       a meta entrou depois do executor. Tarefa aberta
 A parte da obra continua para a Fase 10: quando ela existir, o que ela
 pedir substitui a metade.
 
+
+---
+
+## Regra 6 — como a vila cresce
+
+**Decidida pelo autor em 2026-08-14**, respondendo às três perguntas que
+o §7 guardava desde a abertura da Fase 10, mais a confirmação da Regra 5.
+
+```text
+o que se constrói    a casa de planície do próprio jogo, lida da
+                     estrutura Vanilla
+
+onde se constrói     estrada primeiro, casa ligada a ela. Nunca casa
+                     isolada com estrada depois
+
+quando para          não para por regra: constrói enquanto houver
+                     material e espaço
+
+a Regra 5            confirmada. Quando a obra existir, o que ela pede
+                     vira a meta de tábua; a metade do armazém deixa de
+                     ser teto e passa a ser o lote de partida
+```
+
+---
+
+### O que cada uma escolhe, e o que descarta
+
+**A casa é do jogo, não do mod.** É a mesma escolha que a Fase 9 fez com
+a receita: perguntar ao Minecraft em vez de escrever a resposta. A casa
+combina com a vila porque é a casa da vila. O projeto próprio foi
+descartado por criar uma segunda fonte de verdade e uma casa que destoa.
+
+**A estrada vem primeiro**, como Construction-System.md §"Estradas" já
+mandava. É a opção cara — exige achar a estrada existente e saber
+estendê-la — e foi escolhida sabendo disso, contra a alternativa de pôr a
+casa no primeiro terreno plano. O que se compra com o custo é o
+crescimento que parece Vanilla, em vez de casas espalhadas.
+
+**Nada faz a vila parar de crescer**, e o autor escolheu assim depois de
+ver as duas alternativas: um teto de casas seria número inventado, do
+tipo que a Regra 1 veio substituir, e "até todo aldeão ter cama" foi
+descartado.
+
+Fica registrado o que isto significa, sem suavizar: a colônia não tem
+critério de parada próprio. O freio é o mundo — só se constrói onde a
+estrada alcança e o terreno deixa —, e ele é um limite real mas não é um
+número. Se um dia a vila crescer demais, é esta regra que muda, e o
+lugar de mexer é a escolha do lugar, não o executor.
+
+---
+
+### O que a Fase 10 ainda vai ter de decidir sozinha
+
+Coisas que a regra não responde e a implementação não pode adiar:
+
+```text
+a que distância da estrada     "ligada a ela" não diz encostada nem
+                               a três blocos
+
+quanto de estrada por vez      um trecho por casa? até onde o terreno
+                               deixar?
+
+terreno que não é plano        aplainar é destruir bloco natural, o
+                               que a Regra 3 permite — mas até que
+                               altura de desnível vale aplainar em vez
+                               de procurar outro lugar
+```
+
+Estas serão decididas na implementação e anotadas no Development Log da
+data, como as anteriores. Nenhuma delas troca o enunciado acima.
