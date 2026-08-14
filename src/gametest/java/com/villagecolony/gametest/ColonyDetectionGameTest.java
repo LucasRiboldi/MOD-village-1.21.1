@@ -114,6 +114,23 @@ public class ColonyDetectionGameTest implements FabricGameTest {
     // vira colônia, que vira trabalhador com profissão.
 
     /**
+     * Aldeões de sobra para as vagas que existem.
+     *
+     * <p>Um a mais do que o teto, por profissão. É o número que põe as duas
+     * afirmações deste teste em contato com a regra: com {@link #CROWD}
+     * candidatos, as {@value ProfessionAssigner#MAX_PER_PROFESSION} vagas
+     * de cada profissão têm quem as dispute, e as que sobram não têm para
+     * onde ir. Um teto que deixasse de valer produziria o terceiro
+     * lenhador na hora.
+     *
+     * <p>Derivado, e não escrito: mudar o teto para três muda este número
+     * junto, e o teste continua afirmando a regra em vigor em vez de uma
+     * que já foi.
+     */
+    private static final int CROWD =
+            (ProfessionAssigner.MAX_PER_PROFESSION + 1) * ProfessionType.values().length;
+
+    /**
      * Os aldeões da colônia viram trabalhadores com profissão.
      *
      * <p>V1 e V2 do §7 juntos: registro e atribuição.
@@ -123,7 +140,7 @@ public class ColonyDetectionGameTest implements FabricGameTest {
         BlockPos anchor = new BlockPos(1, 1, 1);
 
         placeBeds(context, anchor, BEDS);
-        spawnVillagers(context, anchor, VillageDetector.MIN_VILLAGERS);
+        spawnVillagers(context, anchor, CROWD);
 
         runCycle(context, anchor);
 
@@ -133,9 +150,8 @@ public class ColonyDetectionGameTest implements FabricGameTest {
         List<Worker> crew = VillageColonyMod.WORKERS.ofColony(colony.id());
 
         context.assertTrue(
-                crew.size() >= VillageDetector.MIN_VILLAGERS,
-                "esperava ao menos " + VillageDetector.MIN_VILLAGERS
-                        + " trabalhadores, achei " + crew.size());
+                crew.size() >= CROWD,
+                "esperava ao menos " + CROWD + " trabalhadores, achei " + crew.size());
 
         assertProfessionsWithinCap(context, crew);
         assertNoVacancyLeftOpen(context, crew);
@@ -167,6 +183,15 @@ public class ColonyDetectionGameTest implements FabricGameTest {
     // empregados em min(trabalhadores, vagas) sem depender de quantos
     // trabalhadores apareceram — e continuam locais à colônia desta
     // estrutura, como ColonyFixture exige.
+    //
+    // E o teste planta os próprios CROWD aldeões, em vez de contar com os
+    // dois mínimos mais o que a vizinhança emprestar. As duas afirmações
+    // só têm o que dizer com mais candidatos do que vagas: com dois
+    // aldeões nenhum teto é excedido nem quando o teto some, e foi
+    // exatamente assim que a primeira tentativa de conferir esta correção
+    // passou com a regra desligada. O que a vizinhança mandar continua
+    // entrando na conta e continua não importando — as duas afirmações
+    // valem para qualquer população acima do piso.
 
     /** Nenhuma profissão passa das vagas que tem. */
     private static void assertProfessionsWithinCap(TestContext context, List<Worker> crew) {
@@ -288,9 +313,20 @@ public class ColonyDetectionGameTest implements FabricGameTest {
         return anchor.add((i % 4) * 2, 0, (i / 4) * 3);
     }
 
+    /**
+     * Aldeões atrás das camas, em grade de quatro por fila.
+     *
+     * <p>Em grade pelo mesmo motivo que as camas: uma fila de doze passaria
+     * da borda da estrutura de teste, e {@code spawnEntity} fora dos
+     * limites não é aldeão que não conta — é o teste que não roda.
+     *
+     * <p>A partir de z+4 para não disputar espaço com as camas, que ocupam
+     * z+0 e z+1 na primeira fila.
+     */
     private static void spawnVillagers(TestContext context, BlockPos anchor, int count) {
         for (int i = 0; i < count; i++) {
-            VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, anchor.add(i, 0, 2));
+            VillagerEntity villager = context.spawnEntity(
+                    EntityType.VILLAGER, anchor.add(i % 4, 0, 4 + (i / 4)));
 
             // Adulto: bebê não recebe profissão, e a atribuição é o que
             // este teste verifica. Ver a correção de 2026-08-07.
