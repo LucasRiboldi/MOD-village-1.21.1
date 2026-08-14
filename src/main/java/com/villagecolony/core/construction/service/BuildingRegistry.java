@@ -124,11 +124,34 @@ public final class BuildingRegistry {
     }
 
     /**
+     * Esquece as construções desta colônia.
+     *
+     * <p>Não derruba casa alguma: o mundo é que guarda blocos. O que sai
+     * é a memória de que elas são da colônia — e por isso o único uso
+     * legítimo é a colônia deixar de existir, ou o teste desfazer o que
+     * criou.
+     *
+     * @return quantas saíram
+     */
+    public int removeOfColony(UUID colonyId) {
+        if (colonyId == null) {
+            return 0;
+        }
+
+        int before = buildings.size();
+
+        buildings.values().removeIf(building -> building.colonyId().equals(colonyId));
+
+        return before - buildings.size();
+    }
+
+    /**
      * Esvazia o registro. Usado ao descarregar o mundo.
      *
      * <p>Não apaga casa alguma do mundo: apaga a memória de que ela é da
-     * colônia. Enquanto a persistência da Fase 11 não existir, essa
-     * memória morre ao fechar o jogo — ver Project-State §9.
+     * colônia. Desde 2026-08-14 essa memória volta do save — o registro é
+     * esvaziado ao descarregar o mundo porque o processo pode abrir outro,
+     * e não porque ela se perca.
      */
     public void clear() {
         buildings.clear();

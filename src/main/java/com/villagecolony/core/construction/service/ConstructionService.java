@@ -1,6 +1,10 @@
 package com.villagecolony.core.construction.service;
 
+import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.ConstructionProject;
+import com.villagecolony.core.construction.model.ConstructionState;
+import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceId;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,6 +36,75 @@ public final class ConstructionService {
 
     /** Ordem de inserção, para log e iteração reproduzíveis. */
     private final Map<UUID, ConstructionProject> projects = new LinkedHashMap<>();
+
+    /**
+     * Obras lidas do save, esperando o mundo para renascer.
+     *
+     * <p>Um projeto precisa do {@link Blueprint},
+     * e o blueprint vem da estrutura do jogo — que só existe com um mundo
+     * carregado. O save é lido antes disso.
+     *
+     * <p>Então a obra volta em duas etapas: a identidade e o lugar saem
+     * do arquivo agora, e o projeto inteiro nasce no primeiro ciclo da
+     * colônia, quando há mundo a quem perguntar. Ver
+     * {@code ConstructionPlanner.resume}.
+     */
+    private final Map<UUID, Pending> pending = new LinkedHashMap<>();
+
+    /**
+     * Uma obra gravada, antes de virar {@link ConstructionProject}.
+     *
+     * @param blueprint qual estrutura ela levanta; o projeto é relido do
+     *     jogo por este nome
+     * @param origin o canto onde ela sobe
+     */
+    public record Pending(
+            UUID id,
+            UUID colonyId,
+            ResourceId blueprint,
+            ColonyPos origin,
+            ConstructionState state) {
+
+        public Pending {
+            Objects.requireNonNull(id, "id");
+            Objects.requireNonNull(colonyId, "colonyId");
+            Objects.requireNonNull(blueprint, "blueprint");
+            Objects.requireNonNull(origin, "origin");
+            Objects.requireNonNull(state, "state");
+        }
+    }
+
+    /** Guarda uma obra vinda do save, para renascer com o mundo. */
+    public void registerPending(Pending entry) {
+        Objects.requireNonNull(entry, "entry");
+
+        pending.put(entry.colonyId(), entry);
+    }
+
+    /** A obra desta colônia que ainda espera o mundo, se houver. */
+    public Optional<Pending> pendingOf(UUID colonyId) {
+        if (colonyId == null) {
+            return Optional.empty();
+        }
+
+        return Optional.ofNullable(pending.get(colonyId));
+    }
+
+    /**
+     * Esquece a obra pendente desta colônia.
+     *
+     * <p>Chamado quando ela renasce — e também quando não pode renascer,
+     * porque o jogo não conhece mais aquela estrutura. Nos dois casos
+     * insistir a cada ciclo só encheria o log.
+     */
+    public void dropPending(UUID colonyId) {
+        pending.remove(colonyId);
+    }
+
+    /** Todas as obras à espera do mundo. Somente leitura. */
+    public Collection<Pending> allPending() {
+        return Collections.unmodifiableCollection(pending.values());
+    }
 
     /**
      * Registra uma obra nova.
@@ -121,8 +194,32 @@ public final class ConstructionService {
         return projects.size();
     }
 
+    /**
+     * Tira do registro tudo o que é desta colônia.
+     *
+     * <p>Existe para a colônia que sai do registro — e para o teste que
+     * desfaz só o que criou, num mundo de bateria concorrente. Ver
+     * {@code ColonyFixture}.
+     *
+     * @return quantas saíram
+     */
+    public int removeOfColony(UUID colonyId) {
+        if (colonyId == null) {
+            return 0;
+        }
+
+        pending.remove(colonyId);
+
+        int before = projects.size();
+
+        projects.values().removeIf(project -> project.colonyId().equals(colonyId));
+
+        return before - projects.size();
+    }
+
     /** Esvazia o registro. Usado ao descarregar o mundo. */
     public void clear() {
         projects.clear();
+        pending.clear();
     }
 }

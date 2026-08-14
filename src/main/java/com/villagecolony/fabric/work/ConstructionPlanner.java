@@ -4,15 +4,20 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
+import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
+import net.minecraft.block.Block;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.BlockPos;
 
 import java.util.Optional;
 
@@ -58,6 +63,8 @@ public final class ConstructionPlanner {
      * @return a obra recém-planejada, quando nasce uma agora
      */
     public static Optional<ConstructionProject> plan(ServerWorld world, Colony colony) {
+        resume(world, colony);
+
         if (VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isPresent()) {
             return Optional.empty();
         }
@@ -114,6 +121,83 @@ public final class ConstructionPlanner {
                 builders);
 
         return Optional.of(project);
+    }
+
+    /**
+     * Faz renascer a obra que o save trouxe.
+     *
+     * <p>O save guarda identidade, estrutura, lugar e estado — e não o
+     * progresso. **Quem sabe o que já está de pé é o mundo**, e é a ele
+     * que se pergunta: cada bloco do projeto cujo lugar já contém o bloco
+     * certo sai da lista.
+     *
+     * <p>Sai mais barato no disco e sai mais certo. Uma lista de posições
+     * gravada juraria que a parede está lá; se o jogador a derrubou entre
+     * uma sessão e outra, a colônia a levanta de novo — e essa é a
+     * resposta que se quer.
+     *
+     * <p>Custa uma leitura de bloco por peça do projeto, uma vez por
+     * colônia por sessão. Cento e cinquenta leituras de vetor no primeiro
+     * ciclo, e nada depois.
+     *
+     * <p>Roda dentro de {@link #plan}, antes de tudo: uma obra que voltou
+     * do save é uma obra aberta, e planejar outra por cima dela abriria
+     * dois canteiros na mesma vila.
+     */
+    private static void resume(ServerWorld world, Colony colony) {
+        Optional<ConstructionService.Pending> pending =
+                VillageColonyMod.CONSTRUCTIONS.pendingOf(colony.id());
+
+        if (pending.isEmpty()) {
+            return;
+        }
+
+        ConstructionService.Pending saved = pending.get();
+
+        Optional<Blueprint> blueprint = StructureBlueprintReader.read(world, saved.blueprint());
+
+        if (blueprint.isEmpty()) {
+            // O jogo não conhece mais essa estrutura — datapack que saiu,
+            // versão que mudou. Desistir da obra é melhor que tentar a
+            // cada ciclo: a casa pela metade fica no mundo, e o lote
+            // ocupado impede a colônia de construir por cima dela.
+            VillageColonyMod.LOGGER.warn(
+                    "Colony {} had a project of {}, which this game no longer has — dropped",
+                    colony.id(),
+                    saved.blueprint());
+
+            VillageColonyMod.CONSTRUCTIONS.dropPending(colony.id());
+
+            return;
+        }
+
+        ConstructionProject project = ConstructionProject.restore(
+                saved.id(), saved.colonyId(), blueprint.get(), saved.origin(), saved.state());
+
+        int standing = 0;
+
+        for (BlueprintBlock block : project.blueprint().blocks()) {
+            BlockPos where = MinecraftTypeAdapter.toBlockPos(project.worldPositionOf(block));
+
+            Optional<Block> expected = MinecraftTypeAdapter.toBlock(block.block());
+
+            if (expected.isPresent() && world.getBlockState(where).isOf(expected.get())) {
+                project.markPlaced(block);
+
+                standing++;
+            }
+        }
+
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+        VillageColonyMod.CONSTRUCTIONS.dropPending(colony.id());
+
+        VillageColonyMod.LOGGER.info(
+                "Colony {} resumed {} at {} — {} blocks already standing, {} to go",
+                colony.id(),
+                project.blueprint().id(),
+                project.origin(),
+                standing,
+                project.remainingCount());
     }
 
     /**

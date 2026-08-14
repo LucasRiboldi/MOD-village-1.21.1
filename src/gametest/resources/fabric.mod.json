@@ -21,7 +21,8 @@
       "com.villagecolony.gametest.WorkerEquipmentGameTest",
       "com.villagecolony.gametest.BlueprintReaderGameTest",
       "com.villagecolony.gametest.BuildSiteGameTest",
-      "com.villagecolony.gametest.BuilderGameTest"
+      "com.villagecolony.gametest.BuilderGameTest",
+      "com.villagecolony.gametest.ConstructionResumeGameTest"
     ]
   },
   "depends": {

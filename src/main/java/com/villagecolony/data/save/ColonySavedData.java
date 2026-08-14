@@ -1,6 +1,10 @@
 package com.villagecolony.data.save;
 
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.construction.model.ConstructionState;
+import com.villagecolony.core.construction.service.ConstructionService;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.ColonyState;
 import com.villagecolony.core.colony.service.ColonyService;
@@ -54,6 +58,19 @@ public final class ColonySavedData extends PersistentState {
     private static final String COLONY_ID = "colonyId";
     private static final String PROFESSION = "profession";
 
+    private static final String PROJECTS = "projects";
+    private static final String BUILDINGS = "buildings";
+    private static final String BLUEPRINT = "blueprint";
+    private static final String ORIGIN_X = "originX";
+    private static final String ORIGIN_Y = "originY";
+    private static final String ORIGIN_Z = "originZ";
+    private static final String MIN_X = "minX";
+    private static final String MIN_Y = "minY";
+    private static final String MIN_Z = "minZ";
+    private static final String MAX_X = "maxX";
+    private static final String MAX_Y = "maxY";
+    private static final String MAX_Z = "maxZ";
+
     public static final PersistentState.Type<ColonySavedData> TYPE = new PersistentState.Type<>(
             ColonySavedData::new,
             ColonySavedData::readNbt,
@@ -62,6 +79,18 @@ public final class ColonySavedData extends PersistentState {
     private final List<Colony> colonies = new ArrayList<>();
 
     private final List<Worker> workers = new ArrayList<>();
+
+    /**
+     * As obras em andamento, e o que a colônia já levantou.
+     *
+     * <p>Entraram no mesmo arquivo das colônias pelo mesmo motivo que os
+     * trabalhadores: gravar em arquivos separados permitiria construção
+     * órfã, apontando para colônia que não foi gravada, sem transação que
+     * mantivesse os dois em sincronia.
+     */
+    private final List<ConstructionService.Pending> projects = new ArrayList<>();
+
+    private final List<Building> buildings = new ArrayList<>();
 
     private ColonySavedData() {
     }
@@ -104,13 +133,47 @@ public final class ColonySavedData extends PersistentState {
      * exatamente o órfão que juntá-los evita.
      */
     public void sync(Collection<Colony> currentColonies, Collection<Worker> currentWorkers) {
+        sync(currentColonies, currentWorkers, List.of(), List.of());
+    }
+
+    /**
+     * @param currentProjects as obras em andamento, já reduzidas ao que
+     *     se grava: identidade, estrutura, lugar e estado. O progresso
+     *     não vai para o disco — quem sabe o que está de pé é o mundo.
+     *     Ver {@code ConstructionProject.restore}
+     * @param currentBuildings o que a colônia levantou. É este que dói
+     *     perder: sem ele a colônia reabre o mundo sem saber que a casa
+     *     é dela, e a proteção do PROJECT_CONSTITUTION.md §10 some
+     */
+    public void sync(
+            Collection<Colony> currentColonies,
+            Collection<Worker> currentWorkers,
+            Collection<ConstructionService.Pending> currentProjects,
+            Collection<Building> currentBuildings) {
+
         colonies.clear();
         colonies.addAll(currentColonies);
 
         workers.clear();
         workers.addAll(currentWorkers);
 
+        projects.clear();
+        projects.addAll(currentProjects);
+
+        buildings.clear();
+        buildings.addAll(currentBuildings);
+
         markDirty();
+    }
+
+    /** As obras que o save trouxe, esperando o mundo. */
+    public List<ConstructionService.Pending> projects() {
+        return List.copyOf(projects);
+    }
+
+    /** O que a colônia levantou, segundo o save. */
+    public List<Building> buildings() {
+        return List.copyOf(buildings);
     }
 
     @Override
@@ -149,6 +212,44 @@ public final class ColonySavedData extends PersistentState {
 
         nbt.put(WORKERS, workerList);
 
+        NbtList projectList = new NbtList();
+
+        for (ConstructionService.Pending project : projects) {
+            NbtCompound entry = new NbtCompound();
+
+            entry.putUuid(ID, project.id());
+            entry.putUuid(COLONY_ID, project.colonyId());
+            entry.putString(BLUEPRINT, project.blueprint().toString());
+            entry.putInt(ORIGIN_X, project.origin().x());
+            entry.putInt(ORIGIN_Y, project.origin().y());
+            entry.putInt(ORIGIN_Z, project.origin().z());
+            entry.putString(STATE, project.state().name());
+
+            projectList.add(entry);
+        }
+
+        nbt.put(PROJECTS, projectList);
+
+        NbtList buildingList = new NbtList();
+
+        for (Building building : buildings) {
+            NbtCompound entry = new NbtCompound();
+
+            entry.putUuid(ID, building.id());
+            entry.putUuid(COLONY_ID, building.colonyId());
+            entry.putString(BLUEPRINT, building.blueprint().toString());
+            entry.putInt(MIN_X, building.min().x());
+            entry.putInt(MIN_Y, building.min().y());
+            entry.putInt(MIN_Z, building.min().z());
+            entry.putInt(MAX_X, building.max().x());
+            entry.putInt(MAX_Y, building.max().y());
+            entry.putInt(MAX_Z, building.max().z());
+
+            buildingList.add(entry);
+        }
+
+        nbt.put(BUILDINGS, buildingList);
+
         return nbt;
     }
 
@@ -181,8 +282,98 @@ public final class ColonySavedData extends PersistentState {
         }
 
         readWorkers(nbt, data);
+        readConstruction(nbt, data);
 
         return data;
+    }
+
+    /**
+     * Lê obras e construções, descartando as de colônia desconhecida.
+     *
+     * <p>Mesma regra dos trabalhadores, e pelo mesmo motivo: uma casa de
+     * colônia inexistente seria protegida para sempre por um dono que
+     * ninguém acha.
+     *
+     * <p>Save anterior a 2026-08-14 não tem as chaves, e {@code getList}
+     * devolve lista vazia. Autocorrige: perde-se a memória de casas
+     * construídas antes desta versão, que é exatamente o que a versão
+     * anterior perdia toda vez.
+     */
+    private static void readConstruction(NbtCompound nbt, ColonySavedData data) {
+        Set<UUID> knownColonies = new HashSet<>();
+
+        for (Colony colony : data.colonies) {
+            knownColonies.add(colony.id());
+        }
+
+        NbtList projectList = nbt.getList(PROJECTS, NbtElement.COMPOUND_TYPE);
+
+        for (int i = 0; i < projectList.size(); i++) {
+            NbtCompound entry = projectList.getCompound(i);
+
+            if (!entry.containsUuid(ID) || !entry.containsUuid(COLONY_ID)) {
+                continue;
+            }
+
+            UUID colonyId = entry.getUuid(COLONY_ID);
+
+            if (!knownColonies.contains(colonyId)) {
+                continue;
+            }
+
+            data.projects.add(new ConstructionService.Pending(
+                    entry.getUuid(ID),
+                    colonyId,
+                    ResourceId.parse(entry.getString(BLUEPRINT)),
+                    new ColonyPos(
+                            entry.getInt(ORIGIN_X),
+                            entry.getInt(ORIGIN_Y),
+                            entry.getInt(ORIGIN_Z)),
+                    readConstructionState(entry)));
+        }
+
+        NbtList buildingList = nbt.getList(BUILDINGS, NbtElement.COMPOUND_TYPE);
+
+        for (int i = 0; i < buildingList.size(); i++) {
+            NbtCompound entry = buildingList.getCompound(i);
+
+            if (!entry.containsUuid(ID) || !entry.containsUuid(COLONY_ID)) {
+                continue;
+            }
+
+            UUID colonyId = entry.getUuid(COLONY_ID);
+
+            if (!knownColonies.contains(colonyId)) {
+                continue;
+            }
+
+            data.buildings.add(new Building(
+                    entry.getUuid(ID),
+                    colonyId,
+                    ResourceId.parse(entry.getString(BLUEPRINT)),
+                    new ColonyPos(entry.getInt(MIN_X), entry.getInt(MIN_Y), entry.getInt(MIN_Z)),
+                    new ColonyPos(entry.getInt(MAX_X), entry.getInt(MAX_Y), entry.getInt(MAX_Z))));
+        }
+    }
+
+    /**
+     * O estado gravado da obra.
+     *
+     * <p>Estado desconhecido — de uma versão futura, ou de save editado —
+     * vira BUILDING, que é o estado de onde a obra continua sozinha. Cair
+     * em COMPLETED apagaria do registro uma casa pela metade; cair em
+     * PLANNED a faria esperar por uma preparação que já aconteceu.
+     */
+    private static ConstructionState readConstructionState(NbtCompound entry) {
+        String name = entry.getString(STATE);
+
+        for (ConstructionState state : ConstructionState.values()) {
+            if (state.name().equals(name)) {
+                return state;
+            }
+        }
+
+        return ConstructionState.BUILDING;
     }
 
     /**

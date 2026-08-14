@@ -3,6 +3,12 @@ package com.villagecolony.fabric.event;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.worker.model.Worker;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.construction.model.ConstructionProject;
+import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.data.save.ColonySavedData;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestMarker;
@@ -63,10 +69,24 @@ public final class ServerLifecycleHandler {
             VillageColonyMod.WORKERS.restore(worker);
         }
 
+        // As obras voltam pela metade de propósito: falta-lhes o projeto,
+        // que só existe com um mundo carregado a quem perguntar. Elas
+        // renascem no primeiro ciclo de cada colônia — ver
+        // ConstructionPlanner.resume.
+        for (ConstructionService.Pending project : data.projects()) {
+            VillageColonyMod.CONSTRUCTIONS.registerPending(project);
+        }
+
+        for (Building building : data.buildings()) {
+            VillageColonyMod.BUILDINGS.register(building);
+        }
+
         VillageColonyMod.LOGGER.info(
-                "Loaded {} colonies with {} workers",
+                "Loaded {} colonies with {} workers, {} buildings and {} projects to resume",
                 VillageColonyMod.COLONIES.count(),
-                VillageColonyMod.WORKERS.count());
+                VillageColonyMod.WORKERS.count(),
+                VillageColonyMod.BUILDINGS.count(),
+                data.projects().size());
     }
 
     /**
@@ -76,15 +96,49 @@ public final class ServerLifecycleHandler {
      * save sem reiniciar, e colônias do mundo anterior não podem vazar
      * para ele.
      */
+    /**
+     * As obras em andamento, reduzidas ao que vai para o disco.
+     *
+     * <p>Identidade, estrutura, lugar e estado. O progresso não: quem
+     * sabe o que já está de pé é o mundo, e é a ele que a sessão seguinte
+     * pergunta.
+     *
+     * <p>As que voltaram do save e ainda não renasceram vão junto — sem
+     * isso, fechar o mundo antes do primeiro ciclo apagaria a obra.
+     */
+    private static List<ConstructionService.Pending> openProjects() {
+        List<ConstructionService.Pending> saving =
+                new ArrayList<>(VillageColonyMod.CONSTRUCTIONS.allPending());
+
+        for (ConstructionProject project : VillageColonyMod.CONSTRUCTIONS.all()) {
+            if (!project.state().isOpen()) {
+                continue;
+            }
+
+            saving.add(new ConstructionService.Pending(
+                    project.id(),
+                    project.colonyId(),
+                    project.blueprint().id(),
+                    project.origin(),
+                    project.state()));
+        }
+
+        return saving;
+    }
+
     private static void onServerStopping(MinecraftServer server) {
         ColonySavedData.get(server).sync(
                 VillageColonyMod.COLONIES.all(),
-                VillageColonyMod.WORKERS.all());
+                VillageColonyMod.WORKERS.all(),
+                openProjects(),
+                VillageColonyMod.BUILDINGS.all());
 
         VillageColonyMod.LOGGER.info(
-                "Saved {} colonies with {} workers",
+                "Saved {} colonies with {} workers, {} buildings and {} open projects",
                 VillageColonyMod.COLONIES.count(),
-                VillageColonyMod.WORKERS.count());
+                VillageColonyMod.WORKERS.count(),
+                VillageColonyMod.BUILDINGS.count(),
+                openProjects().size());
 
         VillageColonyMod.COLONIES.clear();
         VillageColonyMod.WORKERS.clear();

@@ -79,6 +79,13 @@ final class ColonyFixture {
                 VillageColonyMod.TASKS.remove(task.id());
             }
 
+            // Obra e construção saem junto: desde 2026-08-14 um teste de
+            // construção deixa canteiro e casa no registro, e os dois são
+            // globais. Um lote que a colônia de outro teste escolhesse
+            // poderia cair sobre a casa deste.
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
+            VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
+
             VillageColonyMod.COLONIES.remove(colony.id());
         }
 

@@ -71,6 +71,41 @@ public final class ConstructionProject {
                 Objects.requireNonNull(origin, "origin"));
     }
 
+    /**
+     * Uma obra que volta do save.
+     *
+     * <p>Diferente de {@link #plan}, preserva a identidade e o estado
+     * gravados — como {@code Colony.restore} faz com a colônia.
+     *
+     * <p><b>O que ela não traz de volta é o progresso</b>, e isso é
+     * decisão, não esquecimento: quem sabe o que já está construído é o
+     * mundo. Quem restaura risca da lista os blocos que já estão de pé,
+     * comparando com o que há em cada posição — ver
+     * {@code ConstructionPlanner.resume}.
+     *
+     * <p>Sai mais barato no save e sai mais <b>certo</b>: uma parede que
+     * o jogador derrubou entre uma sessão e outra volta para a lista, e a
+     * colônia a levanta de novo. Uma lista de posições gravada teria
+     * jurado que ela estava lá.
+     */
+    public static ConstructionProject restore(
+            UUID id,
+            UUID colonyId,
+            Blueprint blueprint,
+            ColonyPos origin,
+            ConstructionState state) {
+
+        ConstructionProject project = new ConstructionProject(
+                Objects.requireNonNull(id, "id"),
+                Objects.requireNonNull(colonyId, "colonyId"),
+                Objects.requireNonNull(blueprint, "blueprint"),
+                Objects.requireNonNull(origin, "origin"));
+
+        project.state = Objects.requireNonNull(state, "state");
+
+        return project;
+    }
+
     public UUID id() {
         return id;
     }
