@@ -907,12 +907,18 @@ sondar bioma precisam ser feitos no jogo real, não no `runServer`.
 ## Decididas e registradas
 
 ```text
-Ícone e nome divergem                    2026-08-07
+Ícone e nome divergem                    2026-08-07,
+                                         resolvido em 2026-08-14
 
-   A arte diz "Village++"; o mod é "Village Colony", id
-   villagecolony. Decisão: manter como está — trocar o id
-   quebraria saves, porque ele nomeia o arquivo .dat, o
-   caminho do ícone e o logger.
+   A arte dizia "Village++"; o mod é "Village Colony", id
+   villagecolony. A decisão de 08-07 foi manter o id — trocá-lo
+   quebraria saves, porque ele nomeia o arquivo .dat, o caminho
+   do ícone e o logger.
+
+   Em 2026-08-14 a divergência saiu pelo outro lado: o nome foi
+   removido da arte. A placa de madeira ficou lisa, reconstruída
+   com a própria textura da tábua, e o galhardete abaixo dela
+   continua onde estava. O id não foi tocado.
 ```
 
 ```text
