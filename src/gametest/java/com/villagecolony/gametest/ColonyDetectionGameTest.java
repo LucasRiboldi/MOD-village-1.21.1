@@ -3,7 +3,9 @@ package com.villagecolony.gametest;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
+import com.villagecolony.core.worker.service.ProfessionAssigner;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -20,6 +22,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestTypes;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -127,24 +130,75 @@ public class ColonyDetectionGameTest implements FabricGameTest {
         Colony colony = colonyOf(context, anchor).orElseThrow(
                 () -> new AssertionError("nenhuma colônia nasceu destas camas"));
 
-        int workers = VillageColonyMod.WORKERS.countOfColony(colony.id());
+        List<Worker> crew = VillageColonyMod.WORKERS.ofColony(colony.id());
 
         context.assertTrue(
-                workers >= VillageDetector.MIN_VILLAGERS,
+                crew.size() >= VillageDetector.MIN_VILLAGERS,
                 "esperava ao menos " + VillageDetector.MIN_VILLAGERS
-                        + " trabalhadores, achei " + workers);
+                        + " trabalhadores, achei " + crew.size());
 
-        long withProfession = VillageColonyMod.WORKERS.ofColony(colony.id()).stream()
-                .filter(worker -> worker.hasProfession())
-                .count();
-
-        context.assertTrue(
-                withProfession == workers,
-                "trabalhador sem profissão: " + (workers - withProfession) + " de " + workers);
+        assertProfessionsWithinCap(context, crew);
+        assertNoVacancyLeftOpen(context, crew);
 
         forget(context, anchor);
 
         context.complete();
+    }
+
+    // A afirmação daqui era "todo trabalhador tem profissão", e ela só
+    // valia por acidente de população.
+    //
+    // Descoberto em 2026-08-13: "trabalhador sem profissão: 4 de 12". A
+    // colônia tinha doze trabalhadores e oito vagas — dois de cada uma
+    // das quatro profissões, conforme ProfessionAssigner.MAX_PER_PROFESSION
+    // —, e os quatro restantes continuavam Vanilla, que é exatamente o que
+    // a regra manda acontecer. Nada estava quebrado; a afirmação é que
+    // dizia mais do que a regra promete.
+    //
+    // Os doze vêm da mesma contaminação dos dois casos comentados acima:
+    // as estruturas vizinhas ficam a menos de VillageDetector.SEARCH_RADIUS
+    // e seus aldeões entram na caixa de varredura desta colônia. Quantos
+    // entram depende de quais batches estão rodando junto, então a
+    // afirmação antiga passava ou falhava conforme o relógio da bateria.
+    //
+    // O que a regra promete, e o que fica afirmado aqui, são duas coisas:
+    // nenhuma profissão passa do teto, e nenhuma vaga fica aberta enquanto
+    // existe trabalhador sem função. Juntas elas fixam o número de
+    // empregados em min(trabalhadores, vagas) sem depender de quantos
+    // trabalhadores apareceram — e continuam locais à colônia desta
+    // estrutura, como ColonyFixture exige.
+
+    /** Nenhuma profissão passa das vagas que tem. */
+    private static void assertProfessionsWithinCap(TestContext context, List<Worker> crew) {
+        for (ProfessionType type : ProfessionType.values()) {
+            long employed = crew.stream()
+                    .filter(worker -> worker.profession().filter(type::equals).isPresent())
+                    .count();
+
+            context.assertTrue(
+                    employed <= ProfessionAssigner.MAX_PER_PROFESSION,
+                    type + ": " + employed + " trabalhadores para "
+                            + ProfessionAssigner.MAX_PER_PROFESSION + " vagas");
+        }
+    }
+
+    /**
+     * Nenhuma vaga sobrou aberta com trabalhador sem função à espera.
+     *
+     * <p>É a outra metade da regra. Sem ela, uma colônia que não
+     * atribuísse nada passaria no teto — zero também está abaixo de dois.
+     */
+    private static void assertNoVacancyLeftOpen(TestContext context, List<Worker> crew) {
+        long idle = crew.stream().filter(worker -> !worker.hasProfession()).count();
+
+        if (idle == 0) {
+            return;
+        }
+
+        context.assertTrue(
+                ProfessionAssigner.vacancy(crew).isEmpty(),
+                "vaga de " + ProfessionAssigner.vacancy(crew).orElse(null) + " aberta com "
+                        + idle + " de " + crew.size() + " trabalhadores sem função");
     }
 
     // O encolhimento da colônia também não mora aqui, e a razão é a
