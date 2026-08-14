@@ -86,6 +86,12 @@ tábua pela receita do próprio jogo e devolve ao mesmo baú. É a primeira
 vez que o mod **diminui** o que o jogador tem — até aqui a colônia só
 somava. Nada disso foi visto em jogo ainda.
 
+Ainda em 2026-08-13, mais tarde, saíram as três dívidas que não
+dependiam de decisão nem de sessão de jogo — os itens A, B e C do §8:
+`ColonyState.ABANDONED` ganhou quem o atribua, colônias sobrepostas
+passaram a avisar, e o trabalhador recebe a ferramenta da profissão.
+Nenhuma das três foi vista em jogo.
+
 ---
 
 ## Concluído até aqui
@@ -420,6 +426,21 @@ Fase 9 — Fabricação
   extra     as oito tábuas               feitas (TreeSpecies,
                                          ResourceGroup.PLANKS)
 
+Fora de fase — regras aceitas em documento e nunca implementadas
+
+  item A    ColonyState.ABANDONED        feito (ClusterRejection,
+                                         ColonyAbandonment), coberto
+                                         por teste de unidade, não
+                                         visto em jogo
+
+  item B    aviso de sobreposição        feito (ColonyService.overlapping),
+                                         coberto por teste de unidade,
+                                         não visto em jogo
+
+  item C    ferramenta inicial           feito (MinecraftTypeAdapter.toItem,
+                                         WorkerEquipment), coberto por
+                                         teste de jogo, não visto em jogo
+
 Fase 10 em diante                        não iniciadas
 ```
 
@@ -432,8 +453,8 @@ core/
   type/              ColonyPos, Capability, ResourceType,
                      ResourceCategory, ResourceGroup
   colony/model/      Colony, ColonyState, ColonyLifecycle,
-                     VillageCandidate
-  colony/service/    ColonyService, VillageDetector
+                     VillageCandidate, ClusterRejection
+  colony/service/    ColonyService, VillageDetector, ColonyAbandonment
   coordination/      ColonyCycle, ColonyGoals, WorkAssignment
   worker/model/      Worker, ProfessionType, Profession, ToolType
   worker/service/    WorkerService, ProfessionRegistry,
@@ -455,7 +476,7 @@ fabric/
                      ChestInventoryReader, ChestDepositor, ChestMarker,
                      ChestWithdrawer, CraftingLookup, BlockProtection,
                      TreeScanner, TreeHarvester, TreeSpecies,
-                     BlockBreakTime, WorkerNameplate
+                     BlockBreakTime, WorkerNameplate, WorkerEquipment
   mixin/             VillagerEntityMixin
   work/              LumberjackWork, ManufacturerWork
 
@@ -470,8 +491,8 @@ Vazio por enquanto: `core/construction`.
 ## Testes
 
 ```text
-299 testes unitários     lógica pura do Core e serialização NBT
- 60 testes de jogo       a fronteira com o Minecraft, num servidor
+320 testes unitários     lógica pura do Core e serialização NBT
+ 62 testes de jogo       a fronteira com o Minecraft, num servidor
                          sem cliente (./gradlew runGametest)
 ```
 
@@ -650,22 +671,25 @@ capítulo: o enunciado vale até ele dizer outra coisa.
 ## Não precisa de decisão nem de jogo
 
 ```text
-A   ColonyState.ABANDONED
+nada em aberto
+```
 
-    O valor existe e nada o atribui. Exige o scanner reportar
-    aglomerado reprovado, para distinguir "vila deixou de ser
-    viável" de "vila não foi observada". Ver §9 e ADR-003 §6.
+Os itens A, B e C foram feitos em 2026-08-13. O que sobra dos três é
+verificação em jogo, e ela cabe na mesma sessão do P1c:
 
-B   aviso de colônias sobrepostas
+```text
+A   a colônia abandonada     demolir as camas de uma vila conhecida e
+                             ver a linha "is now ABANDONED"; repô-las
+                             e ver a colônia voltar
 
-    ADR-003 §5 manda registrar quando dois centros ficam a menos de
-    32 blocos. Não implementado.
+B   o aviso de sobreposição  só aparece com duas vilas a menos de 32
+                             blocos, que é raro em mundo gerado. Pode
+                             esperar por acaso
 
-C   ferramenta inicial do trabalhador
-
-    Profession-System.md diz que o trabalhador recebe a ferramenta ao
-    assumir a função. ToolType existe e a profissão a declara; falta o
-    adaptador ToolType → Item.
+C   a ferramenta             o log diz "Equipped N workers"; o aldeão
+                             não mostra o item, porque o modelo do
+                             Vanilla não tem braço que o segure. Um
+                             zumbi-aldeão mostraria
 ```
 
 ---
@@ -708,26 +732,30 @@ uma quando um bloco de uma encostar no bloco da outra.
 ## Regras aceitas e ainda não implementadas
 
 ```text
-ColonyState.ABANDONED
+ColonyState.ABANDONED            implementado em 2026-08-13
 
-  O valor existe; nada o atribui.
+  VillageScanner.survey passou a devolver também o que recusou, e
+  ColonyAbandonment decide sobre isso. Só a sonda ancorada no
+  centro da própria colônia, e só enquanto ela está ACTIVE — que é
+  o que separa "a vila acabou" de "ninguém olhou", exatamente o que
+  a ADR-003 §6 pede.
 
-  ADR-003 §6 exige distinguir "vila deixou de ser viável" de
-  "vila não foi observada". Hoje VillageScanner.scan devolve
-  apenas aglomerados aprovados, então as duas situações são
-  indistinguíveis.
-
-  Exige o scanner reportar aglomerado reprovado. Tarefa própria.
+  O que a colônia abandonada ainda não faz: nada. Ela é marcada,
+  gravada no save e nada muda de comportamento. Parar de simular
+  uma vila morta é decisão que não foi tomada — e ABANDONED com
+  jogador ao lado continua ACTIVE, então não é o lifecycle que
+  resolve.
 ```
 
 ```text
-Aviso de colônias sobrepostas
+Aviso de colônias sobrepostas    implementado em 2026-08-13
 
-  ADR-003 §5 manda registrar
-  "[COLONY] Overlapping colonies detected"
-  quando dois centros ficam a menos de 32 blocos.
+  ColonyService.overlapping responde quem está a menos de 32
+  blocos, e a detecção avisa uma vez por par por sessão.
 
-  Não implementado.
+  O aviso não funde nada — fundir exige nova ADR, e o critério
+  dela já está decidido: um bloco de uma encostando no da outra.
+  Ver abaixo.
 ```
 
 ```text
@@ -773,20 +801,28 @@ Profissão não muda depois de atribuída
 ```
 
 ```text
-Ferramenta inicial não é entregue
+Ferramenta inicial            entregue desde 2026-08-13
 
-  Profession-System.md diz que o trabalhador recebe a
-  ferramenta ao assumir a função. ToolType existe e a
-  profissão a declara, mas nada põe o item na mão do aldeão.
+  WorkerEquipment põe a ferramenta da profissão na mão do
+  trabalhador, e a tira de quem perde a função.
 
-  Depende do adaptador ToolType → Item, não escrito.
+  O limite que fica: ninguém a vê. O modelo de aldeão do Vanilla
+  implementa ModelWithHead e ModelWithHat, nunca ModelWithArms, e
+  VillagerEntityRenderer não monta HeldItemFeatureRenderer —
+  conferido no jarro mapeado da 1.21.1. O item existe no NBT do
+  aldeão e não na tela de ninguém.
+
+  E não muda velocidade de trabalho: a Regra 2 fixou a colheita no
+  tempo de um machado de ferro, e LumberjackWork continua medindo
+  por ele de propósito.
 ```
 
 ```text
-Nada tira item de baú
+Nada tira item de baú         resolvido na Fase 9
 
-  O mod só deposita. Nenhum caminho do código remove item de um
-  baú, e a Fase 9 é a primeira que precisa disso.
+  ChestWithdrawer existe desde 2026-08-13 e é o único caminho que
+  remove item de um baú. Fica registrado porque a frase valeu até
+  a Fase 8 e aparece em comentários daquela época.
 ```
 
 ```text
@@ -1077,9 +1113,12 @@ Raio de detecção menor que a vila
 ```text
 Dois aglomerados distintos a menos de 64 blocos
 
-  São adotados como uma colônia só, em silêncio.
+  São adotados como uma colônia só.
 
-  ADR-003 §5 pede aviso; não implementado.
+  Desde 2026-08-13 não é mais em silêncio: dois centros a menos
+  de 32 blocos rendem o aviso da ADR-003 §5. O que o aviso não
+  faz é resolver — para isso é preciso a fusão, que depende da
+  construção existir.
 ```
 
 ```text
@@ -1228,9 +1267,11 @@ Initial-Setup-Checklist.md §6 e Class-Architecture.md
 ```text
 Fases 1 a 8    completas e verificadas em jogo
 Fase 9         escrita, coberta por teste, nunca vista em jogo
+itens A, B, C  escritos em 2026-08-13, cobertos por teste, nunca
+               vistos em jogo
 Fase 10        não iniciada — é o próximo passo (§7)
 
-299 testes unitários + 60 de jogo, verdes
+320 testes unitários + 62 de jogo, verdes
 árvore de trabalho limpa, tudo empurrado para origin/main
 ```
 
@@ -1244,6 +1285,9 @@ Fase 10        não iniciada — é o próximo passo (§7)
    O fabricante nunca rodou fora de teste. É a dívida mais nova e a
    mais barata de pagar: uma sessão com /time set noon, olhando a
    linha "manufacturers:" no log.
+
+   Na mesma sessão cabem os itens A, B e C — o que cada um pede
+   está no §8.
 
 2  ver o que ficou da Fase 8     §8, P1b e P2
 

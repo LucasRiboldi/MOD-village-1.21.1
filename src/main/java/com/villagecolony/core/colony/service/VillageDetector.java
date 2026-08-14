@@ -1,5 +1,6 @@
 package com.villagecolony.core.colony.service;
 
+import com.villagecolony.core.colony.model.ClusterRejection;
 import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.type.ColonyPos;
 
@@ -38,6 +39,19 @@ public final class VillageDetector {
 
     /** Colônia existente a esta distância é a mesma vila, não outra. */
     public static final int DUPLICATE_DISTANCE = 64;
+
+    /**
+     * Dois centros mais próximos que isto se sobrepõem.
+     *
+     * <p>ADR-003 §5: o MVP não funde as duas colônias, apenas registra o
+     * aviso. Fundir exige nova ADR — e a decisão de 2026-08-12 já disse
+     * qual será o critério dela: duas vilas viram uma quando um bloco de
+     * uma encostar no bloco da outra, o que depende da construção existir.
+     *
+     * <p>É o mesmo número de {@link #CLUSTER_DISTANCE}, e não por acaso:
+     * abaixo dele as camas de uma seriam agrupadas com as da outra.
+     */
+    public static final int OVERLAP_DISTANCE = CLUSTER_DISTANCE;
 
     /** Intervalo do ciclo longo de detecção. Ver Performance-Rules.md §4. */
     public static final int CYCLE_TICKS = 600;
@@ -118,7 +132,11 @@ public final class VillageDetector {
         Objects.requireNonNull(meetingPoint, "meetingPoint");
         Objects.requireNonNull(trigger, "trigger");
 
-        if (cluster.size() < MIN_BEDS || villagerCount < MIN_VILLAGERS) {
+        // O aglomerado vazio é barrado aqui e não por rejectionOf, e a
+        // diferença é de propósito: "não vi nada" não é o mesmo que "vi e
+        // recusei". Recusa marca colônia abandonada; raio sem cama
+        // nenhuma não pode marcar nada. Ver ClusterRejection.
+        if (cluster.isEmpty() || rejectionOf(cluster, villagerCount).isPresent()) {
             return Optional.empty();
         }
 
@@ -130,6 +148,49 @@ public final class VillageDetector {
 
         return Optional.of(
                 new VillageCandidate(center, cluster.size(), complete, trigger.orElse(null)));
+    }
+
+    /**
+     * Por que este aglomerado não é uma vila, quando não é.
+     *
+     * <p>É a mesma validação do Passo 3 da ADR-003 que {@link #evaluate}
+     * aplica — e é aqui que ela mora, para que aprovar e recusar não
+     * possam divergir. Um dia com duas cópias da regra é o dia em que o
+     * mod aceita uma vila e diz que a recusou.
+     *
+     * <p>A ordem importa no que ela conta: camas de menos vem primeiro
+     * porque é a condição mais forte. Um aglomerado de duas camas sem
+     * ninguém em volta é acampamento, e chamá-lo de "vila sem população"
+     * daria a entender que houve vila ali.
+     *
+     * <p>Existe porque {@code ColonyState.ABANDONED} não tinha quem o
+     * atribuísse: a detecção só sabia dizer o que aprovava, e "a vila
+     * acabou" chegava indistinguível de "ninguém olhou". Ver ADR-003 §6 e
+     * {@link ClusterRejection}.
+     *
+     * @return vazio quando o aglomerado qualifica como vila
+     */
+    public Optional<ClusterRejection> rejectionOf(List<ColonyPos> cluster, int villagerCount) {
+        Objects.requireNonNull(cluster, "cluster");
+
+        if (cluster.isEmpty()) {
+            // Sem cama não há lugar de que falar, e um centro médio de
+            // lista vazia seria uma divisão por zero.
+            return Optional.empty();
+        }
+
+        ClusterRejection.Reason reason;
+
+        if (cluster.size() < MIN_BEDS) {
+            reason = ClusterRejection.Reason.TOO_FEW_BEDS;
+        } else if (villagerCount < MIN_VILLAGERS) {
+            reason = ClusterRejection.Reason.TOO_FEW_VILLAGERS;
+        } else {
+            return Optional.empty();
+        }
+
+        return Optional.of(new ClusterRejection(
+                averageOf(cluster), cluster.size(), villagerCount, reason));
     }
 
     /**

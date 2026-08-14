@@ -5533,3 +5533,186 @@ duas conclusões minhas foram desmentidas pelo próprio log
 
 Nada. As regras do autor estão no §18 com a data de cada uma, os erros
 conhecidos no §17, a fila no §8, e o caminho de volta no §14.
+
+---
+
+## 2026-08-13 — Os três itens que não dependiam de ninguém
+
+Os itens A, B e C do §8: as três regras aceitas em documento que nunca
+tinham sido implementadas, e que não esperavam nem decisão do autor nem
+sessão de jogo. Saíram as três na mesma sessão.
+
+---
+
+### A — a colônia abandonada
+
+`ColonyState.ABANDONED` existia no enum desde a Fase 1, com javadoc
+explicando por que o nome não era DORMANT, e **nada em produção jamais
+chamou `setState`**. O eixo inteiro de estado da colônia era um campo
+gravado no save e nunca escrito.
+
+A causa estava na detecção, e a ADR-003 §6 já a nomeava: `VillageScanner`
+devolvia apenas aglomerados aprovados. "A vila deixou de ser viável" e "a
+vila não foi observada" chegavam ao mesmo lugar com a mesma cara — uma
+lista vazia.
+
+O que foi feito:
+
+```text
+ClusterRejection     o aglomerado recusado, com o motivo: camas de
+                     menos ou gente de menos
+
+rejectionOf          a validação da ADR-003 §3 num lugar só, e é
+                     dela que evaluate passou a depender. Duas
+                     cópias da regra divergiriam no dia em que
+                     alguém mexesse numa
+
+VillageScanner       ganhou survey, que devolve o aprovado e o
+                     recusado. scan continua devolvendo só o
+                     aprovado, que é o que a detecção precisa
+
+ColonyAbandonment    a decisão, no Core: quem sonda de dentro de si
+                     mesma e não acha vila, é abandonada
+```
+
+Três guardas, e cada um responde a uma forma de errar:
+
+```text
+só a sonda da própria colônia    a varredura do jogador parte de um
+                                 ponto que muda; a sonda parte sempre
+                                 do centro
+
+só colônia ACTIVE                colônia dormente tem os chunks
+                                 descarregados, sua varredura não
+                                 acharia cama alguma, e toda vila
+                                 longe do jogador seria declarada
+                                 morta
+
+bioma recusado não condena       aglomerado fora de PLAINS é limite
+                                 do MVP (ADR-003 §5), não vila morta.
+                                 Um centro que caminhasse para a
+                                 borda do bioma condenaria uma vila
+                                 cheia de gente
+```
+
+Não exige confirmação em dois ciclos, ao contrário do encolhimento, e a
+diferença tem motivo: o encolhimento **perde** informação — a contagem
+menor sobrescreve a maior e não há volta. O abandono não perde nada e se
+desfaz sozinho na primeira varredura que enxergar vila.
+
+O que a colônia abandonada faz de diferente: **nada**. Ela é marcada,
+gravada e continua sendo simulada. Parar de simular vila morta é decisão
+que ninguém tomou, e não é o lifecycle que a resolve — ABANDONED com
+jogador ao lado continua ACTIVE.
+
+---
+
+### B — o aviso de sobreposição
+
+A ADR-003 §5 pede a linha desde 2026-08-06. `ColonyService.overlapping`
+responde quem está a menos de 32 blocos, e a detecção avisa uma vez por
+par por sessão — a sobreposição não se resolve sozinha, e sem a memória
+do par seriam cem linhas iguais por hora.
+
+O par é ordenado pelo id antes de virar chave. A sonda de cada uma das
+duas encontra a outra, e sem a ordem fixa o mesmo par sairia duas vezes.
+
+O aviso não funde nada, e é isso que a ADR manda. O que ele dá é o nome
+do problema quando ele aparecer: duas colônias sobrepostas disputam
+trabalhador, e sem esta linha o sintoma seria um aldeão trocando de vila
+sem motivo aparente.
+
+---
+
+### C — a ferramenta do trabalhador
+
+`ToolType` existia desde a Fase 4, cada profissão declarava a sua, e não
+havia conversão para item. `MinecraftTypeAdapter.toItem` fechou o vão, e
+`WorkerEquipment` entrega — e retira de quem perde a função, pelo mesmo
+motivo que a marca do baú sai.
+
+Duas decisões que valem ficar escritas:
+
+```text
+não muda a velocidade de       a Regra 2 diz "no tempo de um jogador
+trabalho                       com ferramenta de ferro". Passar a
+                               medir pelo machado de madeira que o
+                               aldeão agora carrega tornaria a
+                               colheita mais lenta do que a regra
+                               manda — seria trocar uma regra do
+                               autor por uma consequência de
+                               implementação. LumberjackWork continua
+                               de ferro, e o comentário que prometia
+                               o contrário foi corrigido
+
+não vira drop                  a ferramenta é criada do nada. Se
+                               caísse com a morte do aldeão, matar
+                               trabalhadores seria uma forma de
+                               colher machados
+```
+
+E o limite honesto: **ninguém vê**. Conferido no jarro mapeado da
+1.21.1 — `VillagerResemblingModel` implementa `ModelWithHead` e
+`ModelWithHat`, nunca `ModelWithArms`, e `VillagerEntityRenderer` não
+monta `HeldItemFeatureRenderer`. O modelo de aldeão do Vanilla não tem
+onde pendurar um item. Foi feito porque Profession-System.md pede, porque
+persiste no NBT e porque é de onde a Fase 10 vai puxar a ferramenta do
+construtor — não porque acrescente algo à tela.
+
+---
+
+### O que os testes acharam
+
+```text
+o aglomerado vazio            evaluate deixou de barrá-lo quando
+                              passou a depender de rejectionOf, e
+                              averageOf dividiu por zero. Achado por
+                              emptyClusterIsNotAVillage, que já
+                              existia
+
+                              A correção não foi só um if: "não vi
+                              nada" e "vi e recusei" precisam ser
+                              coisas diferentes, porque a segunda
+                              marca colônia abandonada e a primeira
+                              não pode marcar nada
+```
+
+E o passo do §11 — rodar o teste novo contra a regra desligada — fez o
+que devia: com `WorkerEquipment.equip` devolvendo zero, os dois testes de
+jogo novos falharam com a mensagem certa.
+
+```text
+LUMBERJACK deveria segurar minecraft:wooden_axe e segura nada
+nenhum trabalhador armado para matar — o teste não afirmaria nada
+```
+
+Nessa mesma rodada sabotada apareceu um terceiro, que não é meu:
+`villagersBecomeWorkersWithAProfession` falhou com "trabalhador sem
+profissão: 4 de 12". É a contaminação entre testes concorrentes já
+descrita em ColonyDetectionGameTest — a colônia absorveu aldeões das
+estruturas vizinhas — encontrando o teto da Regra 4: com doze
+trabalhadores e oito vagas, quatro ficam sem função, e a afirmação "todos
+têm profissão" deixa de ser verdadeira sem que nada esteja errado. Passou
+nas três rodadas não sabotadas. Fica registrado como flaky latente.
+
+---
+
+### O que ficou por fazer
+
+```text
+1  ver os três em jogo
+
+   Nenhum rodou fora de teste. Cabem na mesma sessão da Fase 9: a
+   linha "is now ABANDONED" ao demolir camas, o "Equipped N workers",
+   e o aviso de sobreposição se o mundo der o acaso.
+
+2  a colônia abandonada não muda nada
+
+   Ela é marcada e continua sendo simulada. Se isso deve mudar é
+   decisão do autor, e não estava no item A.
+
+3  o que já estava por fazer
+
+   A Fase 9 em jogo, a metade estrutural da Regra 3, o lado do
+   cliente, E3/E4/E5, e as três decisões da Fase 10.
+```

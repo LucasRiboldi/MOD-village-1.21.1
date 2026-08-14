@@ -173,6 +173,47 @@ public final class ColonyService {
         return List.copyOf(chosen);
     }
 
+    /**
+     * As colônias cujo centro está perto demais do desta.
+     *
+     * <p>ADR-003 §5: dois centros a menos de
+     * {@link VillageDetector#OVERLAP_DISTANCE} blocos são uma
+     * sobreposição, e o MVP registra o aviso sem fundir nada. Fundir
+     * exige nova ADR.
+     *
+     * <p>Não é hipótese: com raio de varredura de 64 e anti-duplicata de
+     * 64, dois aglomerados distintos a sessenta blocos viram duas
+     * colônias que se enxergam, e um aldeão que mora numa pode acabar
+     * registrado na outra. É o risco aberto do §11 do Project-State, e
+     * até aqui ele acontecia em silêncio.
+     *
+     * <p>A colônia consultada nunca aparece no resultado — ela não se
+     * sobrepõe a si mesma.
+     *
+     * @return as vizinhas sobrepostas, em ordem de registro; vazio no
+     *     caso normal
+     */
+    public List<Colony> overlapping(Colony colony) {
+        Objects.requireNonNull(colony, "colony");
+
+        long maxDistanceSquared =
+                (long) VillageDetector.OVERLAP_DISTANCE * VillageDetector.OVERLAP_DISTANCE;
+
+        List<Colony> found = new ArrayList<>();
+
+        for (Colony other : colonies.values()) {
+            if (other.id().equals(colony.id())) {
+                continue;
+            }
+
+            if (colony.center().horizontalDistanceSquared(other.center()) <= maxDistanceSquared) {
+                found.add(other);
+            }
+        }
+
+        return List.copyOf(found);
+    }
+
     public Optional<Colony> find(UUID id) {
         if (id == null) {
             return Optional.empty();

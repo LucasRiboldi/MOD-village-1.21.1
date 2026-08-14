@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.colony.model.ClusterRejection;
 import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.type.ColonyPos;
@@ -49,28 +50,90 @@ public final class VillageScanner {
      *     comparáveis entre si. Ver {@code Colony#observe}
      */
     public List<VillageCandidate> scan(ServerWorld world, BlockPos trigger, boolean isProbe) {
+        return survey(world, trigger, isProbe).candidates();
+    }
+
+    /**
+     * Tudo o que a varredura viu — o que aprovou e o que recusou.
+     *
+     * <p>{@link #scan} devolve só a metade aprovada, que é o que a
+     * detecção precisa. Quem precisa da outra metade é a marcação de
+     * colônia abandonada: sem ela, "a vila deixou de ser viável" e "a
+     * vila não foi observada" chegam iguais. Ver ADR-003 §6 e
+     * {@code ColonyAbandonment}.
+     */
+    public ScanResult survey(ServerWorld world, BlockPos trigger, boolean isProbe) {
         List<ColonyPos> beds = collectBeds(world, trigger);
 
         if (beds.size() < VillageDetector.MIN_BEDS) {
-            return List.of();
+            // Nem a soma de todas as camas do raio chega ao mínimo: não
+            // há aglomerado que possa passar, e contar aldeões seria
+            // pagar uma busca por entidades para confirmar o óbvio. A
+            // recusa sai daqui mesmo, com o centro das camas que houver
+            // — e sem nenhuma cama, sem recusa alguma: um raio vazio não
+            // afirma nada sobre vila nenhuma.
+            return new ScanResult(
+                    List.of(),
+                    detector.rejectionOf(beds, ClusterRejection.VILLAGERS_NOT_COUNTED)
+                            .map(List::of)
+                            .orElseGet(List::of),
+                    false);
         }
 
         List<VillageCandidate> candidates = new ArrayList<>();
+        List<ClusterRejection> rejections = new ArrayList<>();
+        boolean ignoredByBiome = false;
 
         Optional<ColonyPos> from = Optional.of(MinecraftTypeAdapter.toColonyPos(trigger));
 
         for (List<ColonyPos> cluster : detector.cluster(beds)) {
-            detector.evaluate(
-                            cluster,
-                            countVillagers(world, cluster),
-                            findMeetingPoint(world, cluster),
-                            from)
-                    .filter(candidate -> isPlains(world, candidate.center()))
-                    .map(candidate -> isProbe ? candidate : withoutAnchor(candidate))
-                    .ifPresent(candidates::add);
+            int villagers = countVillagers(world, cluster);
+
+            Optional<ClusterRejection> rejection = detector.rejectionOf(cluster, villagers);
+
+            if (rejection.isPresent()) {
+                rejections.add(rejection.get());
+
+                continue;
+            }
+
+            Optional<VillageCandidate> candidate = detector.evaluate(
+                    cluster, villagers, findMeetingPoint(world, cluster), from);
+
+            if (candidate.isEmpty()) {
+                continue;
+            }
+
+            if (!isPlains(world, candidate.get().center())) {
+                // Fora de PLAINS é limite do MVP, não recusa: a vila está
+                // lá, viva, e o mod é que não a atende (ADR-003 §5). A
+                // diferença importa porque recusa marca colônia
+                // abandonada e isto não pode marcar.
+                ignoredByBiome = true;
+
+                continue;
+            }
+
+            candidates.add(isProbe ? candidate.get() : withoutAnchor(candidate.get()));
         }
 
-        return candidates;
+        return new ScanResult(List.copyOf(candidates), List.copyOf(rejections), ignoredByBiome);
+    }
+
+    /**
+     * O que uma varredura viu.
+     *
+     * @param candidates aglomerados aprovados como vila
+     * @param rejected aglomerados que não passaram na validação da
+     *     ADR-003 §3, com o motivo de cada um
+     * @param ignoredByBiome se algum aglomerado passou na validação e foi
+     *     descartado por estar fora de PLAINS. Não é recusa, e quem
+     *     decide abandono precisa saber a diferença
+     */
+    public record ScanResult(
+            List<VillageCandidate> candidates,
+            List<ClusterRejection> rejected,
+            boolean ignoredByBiome) {
     }
 
     /**

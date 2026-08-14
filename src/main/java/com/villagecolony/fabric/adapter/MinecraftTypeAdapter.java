@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.adapter;
 
 import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.worker.model.ToolType;
 import com.villagecolony.fabric.integration.TreeSpecies;
 import com.villagecolony.core.type.ColonyPos;
 import net.minecraft.item.Item;
@@ -62,5 +63,30 @@ public final class MinecraftTypeAdapter {
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * O item correspondente à ferramenta de uma profissão.
+     *
+     * <p>Profession-System.md §"Ferramentas das Profissões" diz que o
+     * trabalhador recebe a ferramenta inicial ao assumir a função.
+     * {@link ToolType} existia e a profissão já a declarava desde a Fase
+     * 4; o que faltava era esta conversão, e por isso nada chegava à mão
+     * de ninguém.
+     *
+     * <p>{@link ToolType#NONE} devolve vazio, e não um item vazio: o
+     * fabricante e o construtor trabalham de mãos livres por decisão do
+     * MVP, e um {@code ItemStack.EMPTY} circulando obrigaria todo mundo a
+     * checá-lo.
+     *
+     * <p>A evolução madeira → pedra → ferro não pertence ao MVP. Quando
+     * pertencer, é este método que ganha o nível, não quem o chama.
+     */
+    public static Optional<Item> toItem(ToolType tool) {
+        return switch (tool) {
+            case NONE -> Optional.empty();
+            case WOODEN_AXE -> Optional.of(Items.WOODEN_AXE);
+            case WOODEN_HOE -> Optional.of(Items.WOODEN_HOE);
+        };
     }
 }

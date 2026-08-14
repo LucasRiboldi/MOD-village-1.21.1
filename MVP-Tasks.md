@@ -1013,22 +1013,27 @@ liberar vaga na morte        VillagerLifecycleHandler — morte e
 
 ---
 
-# O que falta e não é tarefa desta lista
+# O que não é tarefa desta lista
 
-Três itens aceitos em documento, nunca implementados, e que não pertencem
-a nenhuma fase do MVP. O texto integral está em Project-State §8 e §9.
+Três itens aceitos em documento, fora de qualquer fase do MVP, feitos em
+2026-08-13. O texto integral está em Project-State §8 e §9.
 
 ```text
-ColonyState.ABANDONED        o valor existe e nada o atribui
+ColonyState.ABANDONED        FEITO — a detecção passou a dizer o que
+                             recusou, e a sonda da própria colônia
+                             decide. ADR-003 §6
 
-aviso de colônias            ADR-003 §5 manda registrar dois centros
-sobrepostas                  a menos de 32 blocos
+aviso de colônias            FEITO — dois centros a menos de 32 blocos
+sobrepostas                  rendem um aviso por par por sessão. O
+                             aviso não funde nada. ADR-003 §5
 
-ferramenta inicial           ToolType existe e a profissão a declara;
-                             falta o adaptador ToolType → Item
+ferramenta inicial           FEITO — o trabalhador recebe a ferramenta
+                             da profissão, e a devolve ao perder a
+                             função. Não muda a velocidade de trabalho,
+                             que a Regra 2 fixou em ferro
 ```
 
-Nenhum depende de decisão do autor nem de sessão de jogo.
+Nenhum foi visto em jogo: os três esperam a mesma sessão do TASK-029.
 
 ---
 

@@ -85,10 +85,17 @@ public final class LumberjackWork {
     /**
      * A ferramenta que o tempo de quebra assume.
      *
-     * <p>É a Regra 2 ao pé da letra: ferramenta de ferro. O aldeão não
-     * carrega item nenhum — isto é o relógio da colheita, não um
-     * inventário. Quando houver ferramenta de verdade, é esta linha que
-     * passa a perguntar ao trabalhador o que ele tem na mão.
+     * <p>É a Regra 2 ao pé da letra: ferramenta de ferro. Isto é o
+     * relógio da colheita, não um inventário.
+     *
+     * <p>Desde 2026-08-13 o lenhador <b>carrega</b> um machado de
+     * madeira, entregue por {@code WorkerEquipment} porque
+     * Profession-System.md manda entregá-lo. E mesmo assim esta linha
+     * continua de ferro, de propósito: perguntar ao trabalhador o que ele
+     * tem na mão tornaria a colheita mais lenta do que a Regra 2 manda —
+     * seria trocar uma regra do autor por uma consequência de
+     * implementação. O dia de perguntar é o dia em que a evolução de
+     * ferramenta existir, e ela não pertence ao MVP.
      */
     private static final Item TOOL = Items.IRON_AXE;
 
