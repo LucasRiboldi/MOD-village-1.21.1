@@ -1,552 +1,189 @@
+<div align="center">
+
+<img src="src/main/resources/assets/villagecolony/icon.png" width="180" alt="Village Colony">
+
 # Village Colony
 
-## A Living Vanilla Village Expansion Mod for Minecraft 1.21.1
+### Your villages stop waiting for you.
 
-![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-green)
-![Fabric](https://img.shields.io/badge/Mod%20Loader-Fabric-blue)
-![Java](https://img.shields.io/badge/Language-Java-orange)
-![Status](https://img.shields.io/badge/Development-MVP-yellow)
+*A Fabric mod that turns vanilla villages into colonies that work, produce and grow on their own.*
 
----
+![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
+![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
+![Environment](https://img.shields.io/badge/Side-Server%20%7C%20Singleplayer-lightgrey)
+![Version](https://img.shields.io/badge/Version-0.1.0%20alpha-orange)
+![License](https://img.shields.io/badge/License-MIT-informational)
 
-# 1. Overview
-
-**Village Colony** is a Minecraft Fabric mod that transforms vanilla villages into autonomous living colonies.
-
-The objective is not to replace Minecraft's village system, but to extend it.
-
-Villagers keep their natural behavior and professions while gaining the ability to:
-
-* organize themselves;
-* manage resources;
-* produce materials;
-* construct new buildings;
-* expand their settlement naturally.
-
-The colony should continue operating without player intervention.
+</div>
 
 ---
 
-# 2. Project Vision
+## What it does
 
-The core idea:
+You find a plains village. You walk away.
 
-> "A vanilla village that learned how to grow by itself."
+When you come back, someone has been chopping wood. The logs are in a chest
+marked with an axe. Someone else turned them into planks. And where there was
+grass beside the road, there is a house that wasn't there before.
 
-The player is not the manager of the colony.
-
-The player does not assign jobs.
-
-The villagers are responsible for the daily life of the settlement.
+Nobody told them to. **You never opened a single menu.**
 
 ---
 
-# 3. Design Philosophy
+## What your villagers do
 
-## Vanilla First
+🪓 **The lumberjack** walks to a tree, fells it one block at a time — at the
+speed of a player with an iron axe — carries nothing home because the wood goes
+straight into his chest, and replants the sapling before he leaves.
 
-Minecraft Vanilla remains the foundation.
+🪚 **The manufacturer** takes logs out of the chest, turns them into planks
+using the game's own recipe, and puts them back. He stops when half the
+colony's storage is planks, so the lumberjack always has somewhere to put more.
 
-The mod uses existing:
+🏠 **The builder** reads a real vanilla village house out of the game files and
+raises it, one block per second, beside an existing road. Every block is paid
+for out of the colony's chests first — **the colony never conjures materials**.
 
-* villagers;
-* blocks;
-* recipes;
-* structures;
-* inventories;
-* world generation.
+🌾 **The farmer** has a name, a hoe and a chest — and no work yet.
 
-The mod adds organization, not replacement.
+Each of them gets a name over their head and a picture frame nailed to their
+chest, so you can tell at a glance who is who.
 
 ---
 
-## No Artificial Simulation
+## The rules it plays by
 
-The project does not create:
+**Vanilla first.** The villagers are ordinary villagers. The chests are ordinary
+chests. The recipes are the game's recipes, asked at runtime — not copied into
+the mod. The house is literally the same file the world generator uses.
 
-* virtual inventories;
-* abstract resources;
-* external databases;
-* artificial needs;
-* independent NPC entities.
+**Nothing is invented.** No virtual inventory, no abstract resource counter, no
+shadow economy. If the colony has 40 planks, there are 40 planks in a chest you
+can walk up to and open. Take them, and the colony notices.
 
-Resources exist physically inside the Minecraft world.
+**Your build is safe.** The only thing a worker ever breaks is a tree, and it
+has to prove the tree is a tree: a trunk with no living leaves above it counts
+as a building, not a forest. Generated village pieces are asked about directly
+and left alone.
 
-Example:
+**It stops on its own.** Harvesting ends when the chests are full and starts
+again when you take something out. Nothing grows without limit.
 
-```
-Villager
+---
 
-↓
+## The loop
 
-Personal Chest
-
-↓
-
-Stored Resources
-
-↓
-
-Construction
+```text
+   village found  →  villagers hired  →  wood cut  →  planks made  →  house built
+        ↑                                                                  │
+        └──────────────────  the new house has beds  ←─────────────────────┘
 ```
 
 ---
 
-# 4. Core Gameplay Loop
+## Installation
 
-The colony follows this cycle:
+**Requirements**
 
-```
-Village Exists
+| | |
+|---|---|
+| Minecraft | 1.21.1 (Java Edition) |
+| Loader | Fabric |
+| Dependency | Fabric API |
 
-↓
+**Steps**
 
-Villagers Work
+1. Install [Fabric Loader](https://fabricmc.net/use/) for 1.21.1.
+2. Drop [Fabric API](https://modrinth.com/mod/fabric-api) into your `mods` folder.
+3. Drop `village-colony-0.1.0.jar` in beside it.
+4. Launch, load a world, and find a plains village.
 
-↓
+Works in singleplayer and on a dedicated server. Clients don't need the mod
+installed to join a server that has it.
 
-Resources Accumulate
+**Where to look**
 
-↓
-
-Materials Are Produced
-
-↓
-
-Builder Creates Structures
-
-↓
-
-Village Expands
-
-↓
-
-New Villagers Continue The Cycle
-```
+The colony reports what it is doing in the server log. Villagers only work
+during their vanilla work hours — `/time set noon` if you don't want to wait,
+and note that `/time set day` is *before* the work window opens.
 
 ---
 
-# 5. Current Development Goal
+## Development status
 
-The first milestone is the MVP.
+> **This is an alpha, and honest about it.**
 
-The MVP creates:
+The mod builds, loads, and runs on a client and on a dedicated server.
 
-* autonomous village detection;
-* villager registration;
-* worker professions;
-* resource storage;
-* basic production;
-* construction of new vanilla-style houses.
+| Feature | State |
+|---|---|
+| Village detection, stable colony identity | ✅ verified in game |
+| Workers, professions, tools, chest ownership | ✅ verified in game |
+| Resource counting, deficits, task assignment | ✅ verified in game |
+| Wood harvesting and replanting | ✅ verified in game |
+| Manufacturing — logs into planks | 🧪 covered by tests, not yet seen in game |
+| Construction — houses and site selection | 🧪 covered by tests, not yet seen in game |
+| Building registry and protection | 🧪 covered by tests, not yet seen in game |
+| Farming, mining, blacksmith, defence | ⬜ not started |
 
----
+**Known limits right now.** The colony only produces planks — a vanilla house
+also wants cobblestone, glass and beds, and those have to already be in the
+chests. Houses go up beside roads that already exist; the colony does not lay
+new road yet. Doors and beds are placed as loose halves, so the house is a
+little rough.
 
-# 6. MVP Features
-
-## Colony System
-
-The mod detects vanilla villages and creates a colony representation.
-
-The colony stores:
-
-* location;
-* villagers;
-* buildings;
-* tasks;
-* resources.
-
----
-
-## Worker System
-
-Villagers receive responsibilities based on colony needs.
-
-Initial professions:
-
-* Lumberjack;
-* Manufacturer;
-* Farmer;
-* Builder.
-
----
-
-## Storage System
-
-Each worker owns a personal storage.
-
-Rules:
-
-* storage is inside the worker's house;
-* storage is near the worker's bed;
-* resources are physically stored;
-* no global inventory exists.
-
----
-
-## Resource System
-
-The colony tracks available resources.
-
-Initial resources:
-
-* Oak Log;
-* Oak Planks;
-* Cobblestone.
-
-Resources are collected, stored and transformed.
-
----
-
-## Construction System
-
-Builders expand the village.
-
-Rules:
-
-* original vanilla village blocks are protected;
-* builders do not destroy generated structures;
-* new blocks created by the colony are registered;
-* expansion follows existing village roads.
-
----
-
-# 7. Player Role
-
-The player is not required.
-
-The colony must:
-
-* survive;
-* produce;
-* organize;
-* expand;
-
-without commands or supervision.
-
-The player may observe, interact and assist, but the colony is autonomous.
-
----
-
-# 8. Technology
-
-## Minecraft
-
-Version:
-
-```
-1.21.1
+```text
+366 unit tests  ·  76 in-game tests  ·  ./gradlew build
 ```
 
----
-
-## Mod Loader
-
-```
-Fabric
-```
+The always-current status lives in
+[`docs/technical/Project-State.md`](docs/technical/Project-State.md).
 
 ---
 
-## Language
+## Building from source
 
-```
-Java
-```
-
----
-
-## Dependencies
-
-Required:
-
-* Fabric Loader
-* Fabric API
-
-No external services are required.
-
----
-
-# 9. Installation
-
-## Player Installation
-
-Requirements:
-
-* Minecraft Java Edition;
-* Fabric Loader 1.21.1;
-* Fabric API.
-
-Installation:
-
-1. Install Fabric Loader.
-2. Place the Village Colony jar inside:
-
-```
-.minecraft/mods
-```
-
-3. Start Minecraft using Fabric.
-
----
-
-# 10. Development Setup
-
-Requirements:
-
-* Java Development Kit compatible with Minecraft 1.21.1;
-* Gradle;
-* IntelliJ IDEA recommended.
-
-Clone project:
-
-```
-git clone <repository>
-```
-
-Build:
-
-```
+```bash
+git clone https://github.com/LucasRiboldi/MOD-village-1.21.1.git
+cd MOD-village-1.21.1
 ./gradlew build
 ```
 
-The generated jar will be located in:
+The jar lands in `build/libs/`. Needs a JDK 21.
 
-```
-build/libs/
-```
-
----
-
-# 11. Project Structure
-
-```
-Village Colony
-
-├── core        colony logic, no Minecraft types
-│
-├── fabric      integration with Minecraft
-│
-├── data        persistence
-│
-└── docs        specs and decisions
-```
-
-The authoritative package layout is:
-
-```
-docs/decisions/ADR-006-Package-Layout.md
-```
-
-Packages are grouped by domain inside each layer, and named in the
-singular.
-
----
-
-# 12. Architecture Principles
-
-The project follows:
-
-```
-Minecraft/Fabric
-
-↓
-
-Adapter Layer
-
-↓
-
-Service Layer
-
-↓
-
-Core Models
+```bash
+./gradlew runGametest    # the in-game test battery, headless
+./gradlew runServer      # a dedicated server with the mod loaded
 ```
 
 ---
 
-Rules:
+## For developers
 
-* Models contain data.
-* Services contain logic.
-* Fabric adapters communicate with Minecraft.
-* Core systems do not depend on Minecraft classes.
+The mod is split so that the colony's brain never touches Minecraft:
+
+```text
+core/     what a colony is and how it decides — no Minecraft types at all
+fabric/   the border: adapters, world scanning, block placement, mixins
+data/     persistence
+```
+
+Every architectural decision is written down and dated in
+[`docs/decisions/`](docs/decisions), from why villages are detected by
+clustering beds instead of asking for structures, to why the mixin surface is
+one method.
+
+The design documents come first in this project and the code follows them.
+Where the two disagree, the disagreement is recorded rather than hidden — see
+the "ressalvas" sections of
+[`docs/technical/Project-State.md`](docs/technical/Project-State.md).
+
+**Contributing:** read the architecture docs first, keep the core free of
+Minecraft imports, and add a test at the boundary — every serious defect in
+this project's history lived there.
 
 ---
 
-# 13. Documentation
+## License
 
-The project documentation is divided into:
-
-## Design
-
-```
-PROJECT_CONSTITUTION.md
-MVP.md
-Development-Roadmap.md
-```
-
----
-
-## Architecture
-
-```
-Architecture-Foundation.md
-Data-Model.md
-Class-Architecture.md
-Simulation-Loop.md
-```
-
----
-
-## Systems
-
-```
-Profession-System.md
-Resource-System.md
-Storage-System.md
-Construction-System.md
-Save-Data-System.md
-```
-
----
-
-## Development Control
-
-```
-claude/
-
-CLAUDE.md
-DEVELOPMENT-RULES.md
-IMPLEMENTATION-ORDER.md
-CODE-STANDARDS.md
-```
-
----
-
-# 14. Development Status
-
-Current status:
-
-```
-In development — MVP phases 1 to 8 done, phase 9 next
-```
-
-The mod builds, loads and runs, on a client and on a dedicated server.
-In game today it detects plains villages, creates colonies with a stable
-identity, wakes and sleeps them with their chunks, registers their
-villagers, gives each one a profession, finds and marks each worker's
-chest, counts what it holds, decides what is missing, opens tasks and
-hands them out — and the lumberjack walks to a tree, fells it one block
-at a time, deposits the wood and replants.
-
-Completed:
-
-✅ Project vision and architecture
-✅ Architecture decisions (ADR-001 to ADR-006)
-✅ Fabric project, mod identity, package structure
-✅ Colony model, registry and persistence
-✅ Village detection and automatic colony creation
-✅ Workers, professions and worker storage
-✅ Resources, deficit and the colony simulation cycle
-✅ Tasks and their assignment by capability
-✅ The first working profession — the lumberjack
-
-Next:
-
-```
-Phase 9 — manufacturing (logs into planks)
-```
-
-Not started:
-
-```
-Manufacturing, construction, building registry
-```
-
-Tests:
-
-```
-284 unit tests
- 45 game tests (./gradlew runGametest)
-```
-
-The authoritative, always-current status is:
-
-```
-docs/technical/Project-State.md
-```
-
----
-
-# 15. Roadmap
-
-```
-✅  Phase 1   Foundation      Fabric setup, structure, core models
-✅  Phase 2   Persistence     colonies survive world close
-✅  Phase 3   Detection       villages become colonies
-🔨  Phase 4   Workers         villagers, professions, assignment
-    Phase 5   Storage         personal chests per worker
-    Phase 6   Resources       collection and production
-    Phase 7   Construction    blueprints, builders, expansion
-    Phase 8   Registry        colony-built blocks
-    Phase 9   Integration     vanilla behaviour injection
-```
-
-Task-level detail lives in `MVP-Tasks.md`; current progress in
-`docs/technical/Project-State.md`.
-
----
-
-# 16. Performance Goals
-
-Village Colony must:
-
-* run locally;
-* require no external server;
-* avoid unnecessary world scanning;
-* preserve Minecraft performance.
-
-The mod should scale naturally from:
-
-```
-One village
-
-↓
-
-Multiple autonomous colonies
-```
-
----
-
-# 17. Contribution Rules
-
-Before adding features:
-
-1. Read the architecture documents.
-2. Confirm compatibility with the project vision.
-3. Avoid unnecessary complexity.
-4. Keep systems modular.
-
----
-
-# 18. Final Objective
-
-Village Colony aims to create the feeling that:
-
-```
-Minecraft villages are not static.
-
-They are living communities waiting to evolve.
-```
-
----
-
-# License
-
-MIT License.
-
-Ver:
-
-```
-LICENSE
-```
+MIT — see [LICENSE](LICENSE).
