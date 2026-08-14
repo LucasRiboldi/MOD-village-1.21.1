@@ -1175,7 +1175,9 @@ Sistemas
 
 Execução
 
-  MVP-Tasks.md                 tarefas; ver ressalva abaixo
+  MVP-Tasks.md                 tarefas, com o estado de cada uma;
+                               o detalhe por tarefa fica no §6 deste
+                               documento
 
   docs/technical/Fabric-Version.md   versões fixadas
 
@@ -1199,26 +1201,14 @@ Execução
 ```text
 MVP-Tasks.md
 
-  TASK-006 chama a classe de "ColonyManager".
+  As quatro ressalvas que viviam aqui — o nome ColonyManager, a
+  TASK-008 fora de ordem, a TASK-012b fora da numeração e a
+  TASK-026 cancelada — foram para dentro do próprio arquivo em
+  2026-08-13, cada uma junto da tarefa a que pertence.
 
-  A ADR-006 §5 removeu manager como camada; a classe é ColonyService.
-
-
-  TASK-008 lista "Encontrar vila" como passo, mas isso é TASK-009.
-
-  A tarefa depende de outra que vem depois dela. Foi executada
-  fora de ordem, por isso.
-
-
-  A persistência de trabalhadores não constava do plano original.
-
-  Acrescentada como TASK-012b em 2026-08-07, fora da numeração
-  sequencial para não renumerar as tarefas seguintes.
-
-
-  A TASK-026 — depositar de 32 em 32 — foi cancelada em 2026-08-08.
-
-  A madeira vai direto para o baú. Ver §10.
+  Aquele documento passou a carregar o estado de cada tarefa.
+  Onde ele e este §6 discordarem, vale este: é o que se atualiza
+  ao fim de cada sessão.
 ```
 
 ```text
