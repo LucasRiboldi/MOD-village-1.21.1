@@ -1,11 +1,15 @@
 package com.villagecolony.fabric.adapter;
 
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.ToolType;
 import com.villagecolony.fabric.integration.TreeSpecies;
 import com.villagecolony.core.type.ColonyPos;
+import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
+import net.minecraft.registry.Registries;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.Optional;
@@ -82,6 +86,50 @@ public final class MinecraftTypeAdapter {
      * <p>A evolução madeira → pedra → ferro não pertence ao MVP. Quando
      * pertencer, é este método que ganha o nível, não quem o chama.
      */
+    /**
+     * O nome do jogo, como {@code Identifier}.
+     *
+     * <p>{@code Identifier.of} valida os caracteres e estoura se o nome
+     * for impossível. Deixar estourar é o certo: um id malformado só
+     * chega aqui vindo de código, e {@link ResourceId} de propósito não
+     * valida o que o jogo aceita — quem sabe disso é o jogo.
+     */
+    public static Identifier toIdentifier(ResourceId id) {
+        return Identifier.of(id.namespace(), id.path());
+    }
+
+    public static ResourceId toResourceId(Identifier id) {
+        return new ResourceId(id.getNamespace(), id.getPath());
+    }
+
+    /**
+     * O nome com que o jogo registra este bloco.
+     *
+     * <p>Todo bloco tem entrada no registro, inclusive os de outros
+     * mods: é assim que o jogo o salva em disco.
+     */
+    public static ResourceId toResourceId(Block block) {
+        return toResourceId(Registries.BLOCK.getId(block));
+    }
+
+    /**
+     * O bloco que este nome designa, se o jogo o conhece.
+     *
+     * <p>Vazio para nome que o registro não tem — um projeto lido de um
+     * datapack que depois saiu, por exemplo. O registro devolve
+     * {@code AIR} para desconhecido, e "ar" é uma resposta que quem
+     * constrói não pode confundir com um bloco de verdade.
+     */
+    public static Optional<Block> toBlock(ResourceId id) {
+        Identifier identifier = toIdentifier(id);
+
+        if (!Registries.BLOCK.containsId(identifier)) {
+            return Optional.empty();
+        }
+
+        return Optional.of(Registries.BLOCK.get(identifier));
+    }
+
     public static Optional<Item> toItem(ToolType tool) {
         return switch (tool) {
             case NONE -> Optional.empty();

@@ -18,7 +18,8 @@
       "com.villagecolony.gametest.ChestWithdrawerGameTest",
       "com.villagecolony.gametest.CraftingLookupGameTest",
       "com.villagecolony.gametest.ManufacturerGameTest",
-      "com.villagecolony.gametest.WorkerEquipmentGameTest"
+      "com.villagecolony.gametest.WorkerEquipmentGameTest",
+      "com.villagecolony.gametest.BlueprintReaderGameTest"
     ]
   },
   "depends": {
