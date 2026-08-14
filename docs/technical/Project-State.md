@@ -61,7 +61,7 @@ Java
 ## Current Stage
 
 ```text
-Fase 9 escrita e coberta por teste — falta vê-la em jogo
+Fases 9, 10 e 11 escritas e cobertas por teste — falta vê-las em jogo
 ```
 
 ---
@@ -85,6 +85,12 @@ A Fase 9 entrou em 2026-08-13: o fabricante tira tronco do baú, faz
 tábua pela receita do próprio jogo e devolve ao mesmo baú. É a primeira
 vez que o mod **diminui** o que o jogador tem — até aqui a colônia só
 somava. Nada disso foi visto em jogo ainda.
+
+Em 2026-08-14 a colônia passou a **construir**. O construtor levanta a
+casa de planície do próprio jogo, um bloco por segundo, tirando cada peça
+do baú antes de pô-la no mundo — e a casa pronta vira infraestrutura da
+colônia. É o sexto e último passo do MVP, e o primeiro trabalho do mod
+que acrescenta bloco em vez de tirar. Nada disso foi visto em jogo.
 
 Ainda em 2026-08-13, mais tarde, saíram as três dívidas que não
 dependiam de decisão nem de sessão de jogo — os itens A, B e C do §8:
@@ -325,12 +331,14 @@ Produzir materiais        FEITO, não verificado em jogo
 
 ↓
 
-Construir expansão        não iniciado — Fase 10
+Construir expansão        FEITO, não verificado em jogo
 ```
 
-Cinco dos seis passos do MVP estão feitos, e quatro deles verificados em
-jogo. O que falta é a construção — a Fase 10 —, e é ela que dá motivo ao
-que o fabricante produz.
+**Os seis passos do MVP estão escritos.** Quatro estão verificados em
+jogo; os dois últimos — produzir e construir — só por teste.
+
+O que separa o MVP de concluído não é mais código: é uma sessão de jogo
+que veja a tábua sair do tronco e a casa subir. Ver §8.
 
 ---
 
@@ -452,16 +460,26 @@ Fase 10 — Construção                     começada em 2026-08-14
   TASK-032  calcular materiais           feito (ConstructionProject,
                                          ConstructionState) — e a Regra 5
                                          ligada em ColonyGoals
-  TASK-033  criar a Build Task           não iniciada
-  TASK-034  implementar o Builder        não iniciada
-  TASK-035  colocar blocos               não iniciada
+  TASK-033  criar a Build Task           feito (ConstructionService,
+                                         ConstructionPlanner)
+  TASK-034  implementar o Builder        feito (BuilderWork)
+  TASK-035  colocar blocos               feito, coberto por teste de
+                                         jogo, não visto em jogo
+
+Fase 11 — Registro de Infraestrutura     feita junto da TASK-035
+
+  TASK-036  Building Registry            feito (Building, BuildingRegistry)
+  TASK-037  marcar blocos da colônia     feito — por caixa da construção,
+                                         não por bloco
 
   extra     escolher o lote              feito (BuildSiteScanner),
                                          coberto por teste de jogo
 
-Nada da Fase 10 foi visto em jogo, e nada dela mexe no mundo ainda.
+Nada das Fases 10 e 11 foi visto em jogo.
 
-Fase 11 em diante                        não iniciadas
+Fase 12 — Testes do MVP                  TASK-038 a 040 cobertas por
+                                         gametest; TASK-041 e 042
+                                         exigem sessão de jogo
 ```
 
 ---
@@ -476,7 +494,8 @@ core/
                      VillageCandidate, ClusterRejection
   colony/service/    ColonyService, VillageDetector, ColonyAbandonment
   construction/model/ Blueprint, BlueprintBlock, ConstructionProject,
-                     ConstructionState
+                     ConstructionState, Building
+  construction/service/ ConstructionService, BuildingRegistry
   coordination/      ColonyCycle, ColonyGoals, WorkAssignment
   worker/model/      Worker, ProfessionType, Profession, ToolType
   worker/service/    WorkerService, ProfessionRegistry,
@@ -500,23 +519,22 @@ fabric/
                      TreeScanner, TreeHarvester, TreeSpecies,
                      BlockBreakTime, WorkerNameplate, WorkerEquipment,
                      StructureBlueprintReader, BuildSiteScanner
+  work/              LumberjackWork, ManufacturerWork, BuilderWork,
+                     ConstructionPlanner
   mixin/             VillagerEntityMixin
-  work/              LumberjackWork, ManufacturerWork
-
 data/
   save/              ColonySavedData
 ```
 
-Vazio por enquanto: `core/construction/service` — a decisão de construir
-ainda não existe, só o modelo do que construir.
+Nenhum pacote vazio: `core/construction` foi preenchido em 2026-08-14.
 
 ---
 
 ## Testes
 
 ```text
-349 testes unitários     lógica pura do Core e serialização NBT
- 71 testes de jogo       a fronteira com o Minecraft, num servidor
+360 testes unitários     lógica pura do Core e serialização NBT
+ 74 testes de jogo       a fronteira com o Minecraft, num servidor
                          sem cliente (./gradlew runGametest)
 ```
 
@@ -566,58 +584,45 @@ libera vaga, baú e tarefa quando o trabalhador morre ou é zumbificado
 
 # 7. Next Development Step
 
-## Fase 10 — Construção
+## Ver o MVP inteiro rodar, numa sessão só
+
+Não há mais fase por escrever. Os seis passos do MVP existem em código, e
+o que falta é a prova que este projeto trata como prova — o jogo real.
 
 ```text
-TASK-030  criar o Blueprint               blocos, posições, materiais
-TASK-031  ler estrutura Vanilla           Plains Small House
-TASK-032  calcular materiais              a lista do que a obra pede
-TASK-033  criar a Build Task              entregue ao construtor
-TASK-034  implementar o Builder           capacidade BUILD_STRUCTURE
-TASK-035  colocar blocos                  e registrar o que foi posto
+1  a Fase 9 em jogo        a tábua saindo do tronco, e o tronco sumindo
+                           na mesma conta
+
+2  a Fase 10 em jogo       a linha "planned", o lote escolhido, e a casa
+                           subindo bloco a bloco. A casa de planície são
+                           151 blocos, um por segundo
+
+3  a Fase 11 em jogo       a casa pronta virando infraestrutura, e o
+                           lote seguinte não caindo em cima dela
 ```
 
-É a fase que dá motivo ao que a Fase 9 produz: hoje a tábua é feita
-porque cabe no baú, e não porque alguém a espera.
+O que a sessão precisa ter: um construtor na vila, e **pedra e vidro nos
+baús** — a colônia produz tábua e nada mais, e a casa pede 43 de pedra.
+Sem isso a obra fica em WAITING_RESOURCES, que é o comportamento certo e
+não uma casa.
 
 ---
 
-## O que já está pronto para ela
+## Depois disso, e nesta ordem
 
 ```text
-BlockProtection      a porta única para "posso mexer aqui?", escrita
-                     na Regra 3 justamente para esta fase
+persistir obra e construção     a dívida nova, e a mais cara: ao
+                                reabrir o mundo a colônia esquece que a
+                                casa é dela. Ver §9
 
-ManufacturerWork     o molde do trabalho que consome estoque, com a
-                     regra de nada sair do baú sem destino
+estender a estrada              hoje a vila só constrói em beira de rua
+                                que já existe. Quando ela acabar, a
+                                colônia para de crescer antes do que a
+                                Regra 6 permite
 
-TaskType.BUILD       existe, e ColonyCycle.typeFor já manda recurso
-                     CONSTRUCTION para ele
-
-Regra 5              a meta da obra substitui a metade assim que a
-                     obra existir — ver §18
+TASK-042                        o teste de persistência do MVP, que a
+                                bateria não alcança
 ```
-
----
-
-## O que a Fase 10 exigia decidir — decidido em 2026-08-14
-
-```text
-o que ela constrói          a casa de planície do próprio jogo
-
-onde ela constrói           estrada primeiro, casa ligada a ela
-
-quando para                 não para por regra; o freio é o mundo
-```
-
-O enunciado inteiro, com o que cada escolha descarta, está no §18,
-Regra 6. As três perguntas que a implementação ainda terá de responder
-sozinha — distância da estrada, quanto de estrada por vez, e até que
-desnível vale aplainar — estão lá também.
-
-E aqui entra a decisão já registrada em §10: duas vilas viram uma quando
-um bloco de uma encostar no bloco da outra. Com a Regra 6, é a estrada
-que vai encostar primeiro.
 
 ---
 
@@ -840,6 +845,24 @@ Ferramenta inicial            entregue desde 2026-08-13
   E não muda velocidade de trabalho: a Regra 2 fixou a colheita no
   tempo de um machado de ferro, e LumberjackWork continua medindo
   por ele de propósito.
+```
+
+```text
+Obra e construção não são gravadas       desde 2026-08-14
+
+  Nem ConstructionService nem BuildingRegistry vão para o save.
+
+  A obra interrompida por fechar o mundo é replanejada na sessão
+  seguinte, e isso é aceitável: a casa meio construída é lote
+  ocupado, e o scanner recusa terreno com bloco em cima.
+
+  O que dói é o registro de construções. Ao reabrir o mundo a
+  colônia esquece que a casa é dela: a casa continua de pé, porque
+  quem guarda blocos é o mundo, mas a proteção do §10 da
+  Constituição some, e a fusão de vilas perde a memória de que
+  depende.
+
+  É a dívida mais cara em aberto do projeto.
 ```
 
 ```text
@@ -1284,11 +1307,10 @@ Fases 1 a 8    completas e verificadas em jogo
 Fase 9         escrita, coberta por teste, nunca vista em jogo
 itens A, B, C  escritos em 2026-08-13, cobertos por teste, nunca
                vistos em jogo
-Fase 10        começada em 2026-08-14: o projeto, a leitura da casa
-               Vanilla, a obra como plano e a escolha do lote. Falta o
-               que mexe no mundo — TASK-033 a 035
+Fases 10 e 11  escritas em 2026-08-14, cobertas por teste, nunca
+               vistas em jogo. A colônia constrói
 
-349 testes unitários + 71 de jogo, verdes
+360 testes unitários + 74 de jogo, verdes
 árvore de trabalho limpa, tudo empurrado para origin/main
 ```
 

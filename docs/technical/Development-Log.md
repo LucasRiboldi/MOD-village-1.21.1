@@ -5881,3 +5881,138 @@ embora.
    A Fase 9 em jogo, os itens A/B/C em jogo, a metade estrutural da
    Regra 3, o lado do cliente, e E3/E4/E5.
 ```
+
+---
+
+## 2026-08-14 (fim da noite) — A colônia constrói
+
+O sexto passo do MVP. Depois desta entrada não há mais fase por escrever:
+o que falta é ver.
+
+---
+
+### O que foi entregue
+
+```text
+TASK-033  ConstructionService, ConstructionPlanner
+TASK-034  BuilderWork
+TASK-035  colocar blocos, um por segundo
+TASK-036  Building, BuildingRegistry
+TASK-037  todo bloco da caixa é infraestrutura da colônia
+```
+
+A Fase 11 veio junto porque é o mesmo instante: colocar o bloco e dizer
+de quem ele é não são dois passos, e a fusão de vilas decidida em 08-12
+depende do segundo.
+
+---
+
+### Os quatro guardas do construtor
+
+É o primeiro trabalho do mod que **acrescenta** bloco. O lenhador tira, o
+fabricante transforma. Bloco posto no lugar errado é dano que ninguém
+desfaz, e por isso cada guarda responde a uma forma de estragar o mundo
+do jogador:
+
+```text
+o lote já vem livre    BuildSiteScanner recusa terreno com qualquer
+                       coisa em cima
+
+nada substitui nada    só entra bloco onde havia ar, grama alta ou flor
+
+o material sai antes   a peça é tirada do baú e só então o bloco entra
+                       no mundo. Sem material não há bloco
+
+o que não se apoia     tocha sem parede e porta sem chão são riscadas
+é riscado              com uma linha, e não tentadas para sempre. Obra
+                       que não termina é pior que casa com buraco
+```
+
+---
+
+### Duas decisões de ordem
+
+```text
+de baixo para cima     o arquivo do jogo não promete ordem nenhuma, e
+                       seguir a dele poria o telhado antes da parede. A
+                       ordenação é da leitura do projeto, não do
+                       construtor: duas leituras do mesmo arquivo dão
+                       exatamente a mesma casa
+
+a torneira por último  não se abre obra sem construtor na vila. Uma obra
+                       sem executor ficaria aberta para sempre, e a meta
+                       de tábua da Regra 5 apontaria para uma casa que
+                       ninguém levanta — o fabricante encheria os baús
+                       por causa de um canteiro fantasma. É a mesma
+                       ordem que a Fase 9 seguiu
+```
+
+---
+
+### O registro é por caixa, não por bloco
+
+`Building` guarda os dois cantos da construção. Responde às três
+perguntas que dependem dele — a proteção, a fusão e o próximo lote — por
+um preço muito menor que cento e cinquenta posições por casa.
+
+O que se perde: o vazio dentro da casa passa a ser "da colônia". Uma
+árvore que nascesse no meio do quarto estaria protegida. É o lado seguro
+do erro — protege demais, nunca de menos.
+
+---
+
+### O que foi assumido, e é bom não confundir com esquecimento
+
+```text
+o material não viaja   o construtor tira do baú da colônia sem ir até
+                       ele. Carregar material é logística, declarada
+                       fora do MVP em MVP-Tasks.md
+
+PREPARING passa direto o lote só é aceito quando não há nada em cima
+                       dele, então a limpeza de terreno não tem o que
+                       limpar. Implementá-la agora seria escrever código
+                       para um caso que a escolha do lote já excluiu
+
+o estado do bloco      escada e porta saem no padrão, sem a orientação
+                       que tinham no arquivo. A casa sai de pé e um
+                       pouco tosca
+```
+
+---
+
+### A dívida nova, e é a mais cara do projeto
+
+Nem a obra nem o registro de construções vão para o save.
+
+A obra interrompida é replanejada na sessão seguinte, e isso passa. O que
+dói é o registro: **ao reabrir o mundo, a colônia esquece que a casa é
+dela.** A casa continua de pé — quem guarda blocos é o mundo —, mas a
+proteção do §10 da Constituição some, e a fusão de vilas perde a memória
+de que depende.
+
+Está no §9. É o primeiro item da fila depois da sessão de jogo.
+
+---
+
+### O que ficou por fazer
+
+```text
+1  ver o MVP inteiro em jogo
+
+   A Fase 9, a 10 e a 11 numa sessão só. Precisa de um construtor na
+   vila e de pedra e vidro nos baús — a colônia produz tábua e nada
+   mais, e a casa pede 43 de pedra.
+
+2  persistir obra e construção
+
+   A dívida acima.
+
+3  estender a estrada
+
+   Hoje a vila só constrói em beira de rua que já existe.
+
+4  o que já estava por fazer
+
+   Os itens A/B/C em jogo, a metade estrutural da Regra 3, o lado do
+   cliente, E3/E4/E5, e a TASK-042.
+```
