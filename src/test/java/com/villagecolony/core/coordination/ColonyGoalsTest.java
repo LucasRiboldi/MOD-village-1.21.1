@@ -242,4 +242,61 @@ class ColonyGoalsTest {
 
         assertEquals(100, missing.get(ResourceType.OAK_PLANKS));
     }
+
+    // --- a segunda metade da Regra 5: a obra manda ---
+
+    /**
+     * Com obra, a meta de tábua é a da obra.
+     *
+     * <p>A metade do armazém deixa de ser teto e vira lote de partida.
+     */
+    @Test
+    void theWorkDemandReplacesTheHalf() {
+        Map<ResourceType, Integer> counts = new EnumMap<>(ResourceType.class);
+        counts.put(ResourceType.OAK_LOG, 10);
+        counts.put(ResourceType.OAK_PLANKS, 4);
+
+        Map<ResourceType, Integer> goal =
+                ColonyGoals.of(colony(), ResourceTally.of(counts), 0, 100, 33);
+
+        assertEquals(33, goal.get(ResourceType.OAK_PLANKS));
+    }
+
+    /** Sem obra, continua valendo a metade. */
+    @Test
+    void withoutWorkTheHalfStillRules() {
+        Map<ResourceType, Integer> counts = new EnumMap<>(ResourceType.class);
+        counts.put(ResourceType.OAK_LOG, 10);
+        counts.put(ResourceType.OAK_PLANKS, 4);
+
+        Map<ResourceType, Integer> goal =
+                ColonyGoals.of(colony(), ResourceTally.of(counts), 0, 100, 0);
+
+        assertEquals(52, goal.get(ResourceType.OAK_PLANKS));
+    }
+
+    /**
+     * Sem tronco, nem a obra levanta a meta.
+     *
+     * <p>Pedir tábua sem madeira com que fazê-la abriria uma tarefa por
+     * ciclo para o fabricante encerrá-la no tick seguinte — o E1 por
+     * outra porta. A obra espera em WAITING_RESOURCES, e quem destrava é
+     * a meta de madeira.
+     */
+    @Test
+    void withoutLogsEvenTheWorkWaits() {
+        Map<ResourceType, Integer> counts = new EnumMap<>(ResourceType.class);
+        counts.put(ResourceType.OAK_PLANKS, 4);
+
+        Map<ResourceType, Integer> goal =
+                ColonyGoals.of(colony(), ResourceTally.of(counts), 0, 100, 33);
+
+        assertEquals(4, goal.get(ResourceType.OAK_PLANKS));
+    }
+
+    @Test
+    void aNegativeWorkDemandIsRefused() {
+        assertThrows(IllegalArgumentException.class,
+                () -> ColonyGoals.of(colony(), ResourceTally.of(new EnumMap<>(ResourceType.class)), 0, 0, -1));
+    }
 }

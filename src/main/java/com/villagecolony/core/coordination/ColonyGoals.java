@@ -85,8 +85,34 @@ public final class ColonyGoals {
     public static Map<ResourceType, Integer> of(
             Colony colony, ResourceTally owned, int woodRoom, int plankRoom) {
 
+        return of(colony, owned, woodRoom, plankRoom, 0);
+    }
+
+    /**
+     * @param planksForWork quantas tábuas a obra em curso ainda pede.
+     *     Zero quando não há obra.
+     *
+     *     <p>É a segunda metade da Regra 5, escrita em 2026-08-13 e
+     *     ligada agora que a Fase 10 existe: <b>o que a obra pede vira a
+     *     meta</b>, e a metade do armazém deixa de ser teto para virar o
+     *     lote de partida. Uma colônia sem obra fabrica até a metade e
+     *     para; com obra, fabrica o que a casa consome.
+     *
+     *     <p>Substitui em vez de somar. Somar faria a colônia guardar
+     *     meia despensa de tábua <em>além</em> da casa, e a Regra 1 já
+     *     diz que o baú cheio é o que faz o lenhador parar — encher de
+     *     tábua o espaço da madeira pararia a coleta que alimenta a
+     *     própria obra.
+     */
+    public static Map<ResourceType, Integer> of(
+            Colony colony, ResourceTally owned, int woodRoom, int plankRoom, int planksForWork) {
+
         Objects.requireNonNull(colony, "colony");
         Objects.requireNonNull(owned, "owned");
+
+        if (planksForWork < 0) {
+            throw new IllegalArgumentException("Negative work demand: " + planksForWork);
+        }
 
         if (woodRoom < 0) {
             throw new IllegalArgumentException("Negative storage room: " + woodRoom);
@@ -115,9 +141,19 @@ public final class ColonyGoals {
         // fabricante encerrá-la no tick seguinte, por falta de material
         // — trabalho nenhum e uma linha de log por ciclo, que é o E1
         // voltando por outra porta.
+        //
+        // A obra, quando existe, manda: a meta é o que ela ainda pede.
+        // O guarda de "sem tronco não se pede tábua" continua valendo
+        // por cima dela — uma obra que exige quarenta tábuas sem madeira
+        // na colônia abriria tarefa de fabricação a cada ciclo para o
+        // fabricante encerrá-la no tick seguinte. A obra espera em
+        // WAITING_RESOURCES, que é o estado previsto para isso, e quem
+        // destrava é a meta de madeira acima.
         int planks = owned.amountOfGroup(ResourceGroup.WOOD) == 0
                 ? storedPlanks
-                : (storedPlanks + plankRoom) / 2;
+                : planksForWork > 0
+                        ? planksForWork
+                        : (storedPlanks + plankRoom) / 2;
 
         return Map.of(
                 ResourceType.OAK_LOG, wood,
