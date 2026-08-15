@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
@@ -76,6 +77,20 @@ public final class ManufacturerWork {
     /** De quantos em quantos ticks o braço balança. */
     private static final int SWING_INTERVAL = 5;
 
+    /**
+     * Quantos ticks andando sem chegar ao baú antes de desistir.
+     *
+     * <p>Quatro ciclos da colônia. O baú do fabricante é o dele, a
+     * poucos blocos da cama: dois minutos de horário de trabalho sem
+     * cobrir essa distância não é lentidão, é aldeão preso.
+     *
+     * <p>Sem isto a tarefa reservada não voltava para a fila enquanto o
+     * trabalhador estivesse vivo — a vaga ficava com quem nunca
+     * chegaria. Mesma regra e mesmo motivo de
+     * {@code LumberjackWork.STALL_LIMIT}.
+     */
+    private static final int STALL_LIMIT = 4 * VillageDetector.CYCLE_TICKS;
+
     /** O trabalho em curso de cada fabricante. */
     private static final Map<UUID, Job> JOBS = new HashMap<>();
 
@@ -92,6 +107,13 @@ public final class ManufacturerWork {
 
         /** Quantas peças esta tarefa já rendeu. */
         private int crafted;
+
+        /**
+         * Ticks de horário de trabalho andando sem chegar ao baú.
+         *
+         * <p>Zerado ao chegar. Ver {@link #STALL_LIMIT}.
+         */
+        private int stalled;
 
         private Job(Task task) {
             this.task = task;
@@ -191,8 +213,29 @@ public final class ManufacturerWork {
         if (!villager.getBlockPos().isWithinDistance(chest, REACH)) {
             WorkTargets.set(workerId, chest);
 
+            if (++job.stalled > STALL_LIMIT) {
+                // Andou dois minutos de horário de trabalho e não chegou
+                // ao próprio baú. Devolver a tarefa à fila é melhor que
+                // guardá-la para quem não a fará — e em silêncio isto
+                // seria indistinguível de trabalho acontecendo.
+                job.task.release();
+
+                WorkTargets.clear(workerId);
+
+                VillageColonyMod.LOGGER.info(
+                        "Worker {} could not reach its chest at {} in {} work ticks"
+                                + " — crafting task returned to the queue",
+                        workerId,
+                        chest.toShortString(),
+                        STALL_LIMIT);
+
+                return false;
+            }
+
             return true;
         }
+
+        job.stalled = 0;
 
         return craftOne(world, villager, job, storage.get());
     }

@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
@@ -68,6 +69,20 @@ public final class BuilderWork {
     /** De quão perto o construtor precisa estar do bloco que põe. */
     private static final int REACH = 5;
 
+    /**
+     * Quantos ticks andando sem chegar ao bloco antes de desistir.
+     *
+     * <p>Quatro ciclos da colônia. O lote fica na vila e a obra é
+     * escolhida em beira de rua: dois minutos de horário de trabalho sem
+     * cobrir essa distância não é lentidão, é construtor preso.
+     *
+     * <p>Sem isto a tarefa reservada não voltava para a fila enquanto o
+     * trabalhador estivesse vivo, e uma obra podia ficar parada para
+     * sempre com dono. Mesma regra e mesmo motivo de
+     * {@code LumberjackWork.STALL_LIMIT}.
+     */
+    private static final int STALL_LIMIT = 4 * VillageDetector.CYCLE_TICKS;
+
     /** Trabalho aberto, por construtor. */
     private static final Map<UUID, Job> JOBS = new HashMap<>();
 
@@ -80,6 +95,12 @@ public final class BuilderWork {
         private int progress;
 
         private int placed;
+
+        /**
+         * Ticks de horário de trabalho andando sem chegar ao bloco da
+         * vez. Zerado ao chegar. Ver {@link #STALL_LIMIT}.
+         */
+        private int stalled;
 
         private Job(Task task, UUID projectId) {
             this.task = task;
@@ -189,8 +210,19 @@ public final class BuilderWork {
         if (!villager.getBlockPos().isWithinDistance(target, REACH)) {
             WorkTargets.set(workerId, target);
 
+            if (++job.stalled > STALL_LIMIT) {
+                // Andou dois minutos de horário de trabalho e não chegou
+                // ao bloco. A obra continua de pé e volta para a fila; o
+                // que não continua é este construtor sendo dono dela.
+                finish(job, workerId, "the builder could not reach " + target.toShortString());
+
+                return false;
+            }
+
             return true;
         }
+
+        job.stalled = 0;
 
         if (++job.progress < TICKS_PER_BLOCK) {
             return true;

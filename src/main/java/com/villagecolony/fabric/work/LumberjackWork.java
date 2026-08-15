@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
@@ -125,6 +126,29 @@ public final class LumberjackWork {
     private static final int SEARCHES_PER_TICK = 1;
 
     /**
+     * Quantos ticks de trabalho sem nenhum avanço antes de desistir.
+     *
+     * <p>Quatro ciclos da colônia. É muito de propósito: derrubar um
+     * tronco leva dez ticks, e atravessar o raio de busca a pé leva bem
+     * menos que isto. Um lenhador que passou dois minutos de horário de
+     * trabalho sem quebrar um bloco nem começar uma árvore não está
+     * demorando — está preso.
+     *
+     * <p>Existe porque a tarefa reservada não tinha como voltar para a
+     * fila enquanto o trabalhador estivesse vivo. A morte e a
+     * zumbificação liberam, por {@code VillagerLifecycleHandler}; o
+     * aldeão vivo que o jogador levou de barco, que caiu num buraco ou
+     * que ficou do lado errado de uma parede, não. A vaga da profissão
+     * ficava ocupada por alguém que nunca chegaria, e a colônia não
+     * abria pedido novo porque, para ela, aquele pedido tinha dono.
+     *
+     * <p>O relógio só corre em horário de trabalho e com o aldeão
+     * carregado — ver {@link #step}. Uma noite inteira não é
+     * travamento, e chunk descarregado é a colônia dormindo.
+     */
+    private static final int STALL_LIMIT = 4 * VillageDetector.CYCLE_TICKS;
+
+    /**
      * O trabalho em curso de cada lenhador.
      *
      * <p>Em memória e não persistido, como a própria tarefa: ao
@@ -213,6 +237,16 @@ public final class LumberjackWork {
 
         /** Quantos troncos esta tarefa já rendeu, para a linha de log. */
         private int collected;
+
+        /**
+         * Ticks de horário de trabalho desde o último avanço de verdade.
+         *
+         * <p>Zerado quando um bloco cai e quando uma árvore nova começa —
+         * os dois únicos sinais de que o trabalho anda. Andar não conta:
+         * é exatamente o aldeão que anda para sempre sem chegar que este
+         * contador existe para pegar. Ver {@link #STALL_LIMIT}.
+         */
+        private int stalled;
 
         private Job(Task task, BlockPos center) {
             this.task = task;
@@ -435,8 +469,14 @@ public final class LumberjackWork {
 
         if (!(world.getEntity(workerId) instanceof VillagerEntity villager)) {
             // Aldeão fora de chunk carregado, que é o caso comum de
-            // colônia longe do jogador. A tarefa espera por ele.
+            // colônia longe do jogador. A tarefa espera por ele, e o
+            // relógio de travamento não corre: colônia dormindo não é
+            // trabalhador preso.
             return Outcome.WORKED;
+        }
+
+        if (WorkHours.isWorkTime(world, villager) && ++job.stalled > STALL_LIMIT) {
+            return giveUp(job, workerId);
         }
 
         if (job.isBetweenTrees()) {
@@ -544,6 +584,7 @@ public final class LumberjackWork {
         job.index = 0;
         job.progress = 0;
         job.required = 0;
+        job.stalled = 0;
 
         if (job.task.state() == TaskState.RESERVED) {
             job.task.start();
@@ -604,6 +645,34 @@ public final class LumberjackWork {
         job.index++;
         job.progress = 0;
         job.required = 0;
+        job.stalled = 0;
+    }
+
+    /**
+     * Devolve à fila a tarefa de um lenhador que parou de andar.
+     *
+     * <p>Mesmo desfecho do trabalhador sem baú, e pelo mesmo motivo: a
+     * tarefa continua fazendo sentido, e quem não a fará é este
+     * trabalhador. Solta o tronco reservado, apaga o destino para o
+     * aldeão voltar à agenda Vanilla, e diz o que houve — este caminho
+     * em silêncio seria indistinguível de trabalho acontecendo, que é a
+     * forma que o E1 assume toda vez que reaparece.
+     */
+    private static Outcome giveUp(Job job, UUID workerId) {
+        job.task.release();
+
+        WorkTargets.clear(workerId);
+
+        VillageColonyMod.LOGGER.info(
+                "Worker {} made no progress for {} work ticks{} — wood task"
+                        + " returned to the queue",
+                shortId(workerId),
+                STALL_LIMIT,
+                job.plan == null
+                        ? " while looking for a tree"
+                        : " on the tree at " + job.plan.base().toShortString());
+
+        return Outcome.DONE;
     }
 
     /**
