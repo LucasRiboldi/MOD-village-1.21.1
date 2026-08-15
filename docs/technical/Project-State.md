@@ -2,13 +2,13 @@
 
 # Village Colony — Project State
 
-**Status:** MVP escrito por inteiro — Fases 1 a 8 verificadas em jogo,
-9 a 11 só por teste
+**Status:** MVP escrito por inteiro — Fases 1 a 9 verificadas em jogo,
+10 e 11 só por teste
 **Version:** 0.1.0
-**Last Update:** 2026-08-14, à noite — a primeira sessão de jogo com a
-Fase 9 mostrou que o fabricante lia o baú errado (E10), corrigido; a
-TASK-045 fechou junto; e o rodízio de profissão (E11) entrou na fila
-como decisão do autor
+**Last Update:** 2026-08-15, de madrugada — quatro sessões de jogo em
+duas noites. A Fase 9 e o item C ficaram verificados em jogo; o E10, o
+E13 e o E14 fecharam, com a TASK-045 e a TASK-047 junto; e o rodízio de
+profissão (E11) espera decisão do autor. A casa ainda não subiu
 **Repository:** https://github.com/LucasRiboldi/MOD-village-1.21.1
 
 ---
@@ -513,9 +513,20 @@ Fora de fase — fechado em 2026-08-14, à noite, a partir do log da sessão
 
   E10       o fabricante lê os baús da   feito
             colônia, e não só o seu       (ManufacturerWork.convertOne),
-                                     coberto por teste de jogo. A Fase 9
-                                     continua sem ter sido vista
-                                     funcionando em jogo
+                                     coberto por teste de jogo e
+                                     **verificado em jogo** em 08-14
+
+  TASK-047  a cobertura do campo não     feito
+            reprova o lote               (BuildSiteScanner.isNothing),
+                                     coberto por teste de jogo. É o que
+                                     fechou o E14, e destravou a Fase 10
+
+  extra     a Fase 10 diz por que não    feito
+            construiu                    (ConstructionPlanner.silent),
+                                     cinco motivos separados, e a
+                                     varredura inacabada separada da
+                                     resposta (BuildSiteScanner
+                                     .sweepPausedAt)
 
 Fase 12 — Testes do MVP                  TASK-038 a 040 cobertas por
                                          gametest; TASK-041 e 042
@@ -575,12 +586,18 @@ Nenhum pacote vazio: `core/construction` foi preenchido em 2026-08-14.
 
 ```text
 366 testes unitários     lógica pura do Core e serialização NBT
- 78 testes de jogo       a fronteira com o Minecraft, num servidor
+ 80 testes de jogo       a fronteira com o Minecraft, num servidor
                          sem cliente (./gradlew runGametest)
 ```
 
-Dois entraram em 2026-08-14, à noite: o tronco no baú do lenhador
-virando tábua (E10) e a casa da colônia protegida (E7).
+Quatro entraram entre 2026-08-14 à noite e 08-15 de madrugada: o tronco
+no baú do lenhador virando tábua (E10), a casa da colônia protegida
+(E7), a varredura inacabada que não é resposta (E14) e o campo de grama
+que não reprova o lote (TASK-047).
+
+Três dos quatro foram rodados contra a regra desligada e falharam
+sozinhos. O da varredura não teve fase vermelha: ele afirma uma
+propriedade de `sweepPausedAt`, que não existia antes dele.
 
 Os testes de jogo rodam **concorrentes**: um teste que atravessa ticks
 continua vivo enquanto os batches seguintes começam. Nenhum deles pode
@@ -628,27 +645,37 @@ libera vaga, baú e tarefa quando o trabalhador morre ou é zumbificado
 
 # 7. Next Development Step
 
-## Ver o MVP inteiro rodar, numa sessão só
+## Ver a casa subir
 
-Não há mais fase por escrever. Os seis passos do MVP existem em código, e
-o que falta é a prova que este projeto trata como prova — o jogo real.
+Não há mais fase por escrever, e a Fase 9 saiu da lista em 2026-08-14:
+o fabricante foi visto trabalhando em jogo. Sobra o sexto passo.
 
 ```text
-1  a Fase 9 em jogo        a tábua saindo do tronco, e o tronco sumindo
-                           na mesma conta
-
-2  a Fase 10 em jogo       a linha "planned", o lote escolhido, e a casa
+1  a Fase 10 em jogo       a linha "planned", o lote escolhido, e a casa
                            subindo bloco a bloco. A casa de planície são
                            151 blocos, um por segundo
 
-3  a Fase 11 em jogo       a casa pronta virando infraestrutura, e o
+2  a Fase 11 em jogo       a casa pronta virando infraestrutura, e o
                            lote seguinte não caindo em cima dela
 ```
 
-O que a sessão precisa ter: um construtor na vila, e **pedra e vidro nos
-baús** — a colônia produz tábua e nada mais, e a casa pede 43 de pedra.
-Sem isso a obra fica em WAITING_RESOURCES, que é o comportamento certo e
-não uma casa.
+Quatro sessões em 2026-08-14 e 15 foram gastas chegando até aqui, e
+nenhuma delas viu bloco ser posto. O que elas fecharam foi o caminho
+até a obra: o fabricante lendo o baú certo (E10), o jar certo (E13), a
+Fase 10 dizendo por que não construía (E14 primeira metade) e a grama
+do campo deixando de reprovar todo lote (E14, TASK-047).
+
+**O que ainda não se sabe:** se as vilas do autor têm lote de verdade.
+A grama deixou de recusar; que sobre lugar é outra pergunta, e ela
+depende do que a vila tem de espaço livre encostado em rua.
+
+O que a sessão precisa ter: um construtor na vila, `/time set noon`, e
+**pedra e vidro nos baús** — a colônia produz tábua e nada mais, e a
+casa pede 43 de pedra. Sem isso a obra fica em WAITING_RESOURCES, que é
+o comportamento certo e não uma casa.
+
+Se voltar `planned no building`, a linha agora diz qual dos cinco
+motivos é.
 
 ---
 
@@ -668,21 +695,16 @@ TASK-042                        o teste de persistência do MVP, que a
 
 # 8. Priority Queue
 
-Situação em 2026-08-14, fim da madrugada.
+Situação em 2026-08-15, depois de quatro sessões de jogo.
 
 ---
 
 ## Precisa de uma sessão de jogo do autor
 
-É o único item que bloqueia o MVP. Tudo abaixo dele é trabalho que pode
-esperar; isto não, porque **três fases inteiras nunca rodaram fora de
-teste**.
+É o único item que bloqueia o MVP.
 
 ```text
-P1  o MVP inteiro, numa sessão
-
-    Fase 9    a linha "manufacturers:", a tábua entrando no baú e o
-              tronco sumindo na mesma conta — quatro por um
+P1  a casa subindo
 
     Fase 10   a linha "planned", o lote escolhido, e a casa subindo
               bloco a bloco. São 151 blocos, um por segundo
@@ -690,15 +712,23 @@ P1  o MVP inteiro, numa sessão
     Fase 11   a casa pronta virando infraestrutura, e o lote seguinte
               não caindo em cima dela
 
-    itens A, B e C   a linha "is now ABANDONED" ao demolir camas, o
-                     "Equipped N workers", e o aviso de sobreposição
-                     se o mundo der o acaso
+    itens A e B      a linha "is now ABANDONED" ao demolir camas, e o
+                     aviso de sobreposição se o mundo der o acaso
 ```
 
-O que a sessão precisa ter: um construtor na vila, e **pedra e vidro nos
-baús** — a colônia produz tábua e nada mais, e a casa pede 43 de pedra.
-Sem isso a obra fica em WAITING_RESOURCES, que é o comportamento certo e
-não uma casa.
+O que a sessão precisa ter: um construtor na vila, `/time set noon`, e
+**pedra e vidro nos baús** — a colônia produz tábua e nada mais, e a
+casa pede 43 de pedra. Sem isso a obra fica em WAITING_RESOURCES, que é
+o comportamento certo e não uma casa.
+
+Saíram desta fila em 2026-08-14 e 15, todos vistos em jogo:
+
+```text
+Fase 9      "manufacturers:" com peças subindo, e vinte tábuas de
+            acácia onde não havia nenhuma
+
+item C      "Equipped 4 workers" nas duas colônias
+```
 
 ```text
 P2  a metade estrutural da Regra 3
@@ -1335,9 +1365,17 @@ Construction-System.md
   Três coisas que o documento descreve e o código não faz, todas
   conhecidas e assumidas em 2026-08-14:
 
-  §PREPARING descreve limpeza de grama, flor, folha e neve. O código
-  pula o estado: o lote só é aceito quando não há nada em cima dele,
-  então não há o que limpar. Ver TASK-047.
+  §PREPARING descreve limpeza de grama, flor, folha e neve. A TASK-047
+  fechou em 2026-08-15, e fechou pelo outro lado: em vez de um estado
+  que limpa, o scanner passou a não enxergar a cobertura do campo como
+  obstáculo, e quem a remove é o construtor ao escrever o bloco no
+  lugar.
+
+  O que fica de dívida, e é cosmético: onde o projeto pede ar — o
+  interior dos cômodos — nada é escrito, e a grama fica dentro da casa.
+
+  Folha continua fora, por decisão de 2026-08-15: aceitá-la faria a
+  colônia escolher lote debaixo de copa.
 
   §Estradas manda construir a rua antes da casa. O código só usa rua
   que já existe, e não constrói rua nenhuma — o que obedece à ordem
@@ -1360,42 +1398,50 @@ Initial-Setup-Checklist.md §6 e Class-Architecture.md
 
 # 14. Onde retomar
 
-## O estado em 2026-08-14, à noite
+## O estado em 2026-08-15, de madrugada
 
 ```text
-Fases 1 a 8    completas e verificadas em jogo
-Fase 9         rodou em jogo e não fabricou nada. A causa foi achada
-               e corrigida na mesma noite — E10 do §17 —, e a
-               correção não foi vista em jogo
-Fases 10 e 11  escritas, cobertas por teste, nunca vistas em jogo —
-               e **não estavam no jar** da sessão de 08-14. Ver E13
-itens A, B, C  cobertos por teste; nenhum apareceu no log da sessão
-TASK-045       fechada
+Fases 1 a 9    completas e verificadas em jogo
+Fases 10 e 11  escritas e cobertas por teste. O caminho até a obra
+               foi desentupido em quatro sessões, e bloco nenhum
+               foi visto sendo posto
+itens A e B    cobertos por teste, nunca vistos em jogo
+item C         verificado em jogo em 08-14
 E11            rodízio de profissão, visto em jogo, à espera de
-               decisão do autor
+               decisão do autor (TASK-049)
 
-366 testes unitários + 78 de jogo, verdes
+366 testes unitários + 80 de jogo, verdes
+árvore limpa, tudo empurrado para origin/main
 ```
+
+O que as quatro sessões fecharam, em ordem: o fabricante lia o baú
+errado (E10); o jar rodado era velho (E13); a Fase 10 não dizia por que
+não construía (E14, primeira metade); a linha que passou a dizer
+afirmava mais do que sabia (E14, segunda metade); e a grama do campo
+reprovava todo lote de planície (TASK-047, que fechou o E14).
 
 ---
 
 ## As três coisas que esperam, em ordem
 
 ```text
-1  rodar a sessão de novo         §8, P1
+1  ver a casa subir               §8, P1
 
-   A correção do E10 muda exatamente o que a sessão de 2026-08-14
-   não conseguiu ver. O que olhar, na ordem em que deve aparecer:
+   É o último passo do MVP, e o único que nunca rodou. O que olhar:
 
-     "manufacturers:" com peças subindo, e não zero
-     o tronco sumindo da conta na mesma proporção — quatro por um
-     a linha "planned" e o lote escolhido
-     a casa subindo, 151 blocos, um por segundo
+     "planned ... — 151 blocks, N builders"
+     "builders: 1 working, BUILDING at ..., N blocks left"
+     e depois a casa virando infraestrutura
 
    O que a sessão precisa ter: um construtor na vila, /time set
    noon, e **pedra e vidro nos baús** — a colônia produz tábua e
    nada mais, e a casa pede 43 de pedra. Sem isso a obra fica em
    WAITING_RESOURCES, que é o comportamento certo e não uma casa.
+
+   Se voltar "planned no building", a linha diz qual dos cinco
+   motivos é. O que ninguém sabe ainda é se as vilas do autor têm
+   lote de verdade — a grama deixou de recusar, e sobrar lugar é
+   outra pergunta.
 
    O jar precisa ser trocado com o jogo fechado. Ver §11.
 

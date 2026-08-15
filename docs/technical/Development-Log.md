@@ -6551,3 +6551,115 @@ A obra ainda não foi vista subindo. O que se sabe é que o lote deixou
 de ser recusado por grama.
 
 366 testes unitários e 80 de jogo, verdes.
+
+---
+
+## 2026-08-15, fecho das quatro sessões
+
+Duas noites, quatro sessões de jogo, seis commits de código. O que
+segue é o balanço, para quem abrir o projeto amanhã.
+
+### O que ficou verificado em jogo
+
+```text
+Fase 9      o fabricante trabalhando. Vinte tábuas de acácia onde não
+            havia nenhuma, "manufacturers:" com peças subindo, e
+            nenhuma tarefa encerrada por falta de tronco
+
+item C      "Equipped 4 workers" nas duas colônias
+```
+
+O MVP passou de quatro para cinco passos verificados. Falta um.
+
+### O que foi corrigido
+
+```text
+E10   o fabricante lia o próprio baú      ManufacturerWork.convertOne
+      e a meta media a colônia inteira
+
+E7    a proteção não consultava o         BlockProtection.isColonyBuilt
+      registro de construções             (TASK-045)
+
+E14   a Fase 10 não dizia por que não     ConstructionPlanner.silent
+      construía
+
+E14   e a linha que passou a dizer         BuildSiteScanner
+      afirmava mais do que sabia           .sweepPausedAt
+
+E14   a grama do campo reprovava todo     BuildSiteScanner.isNothing
+      lote de planície                    (TASK-047)
+```
+
+### O que se aprendeu, e entrou no §11
+
+```text
+o teste precisa modelar o mundo que acontece
+
+  76 testes de jogo verdes, e a Fase 9 rendeu zero tábuas na
+  primeira sessão real. Todos punham o tronco no baú do
+  fabricante, e ninguém põe tronco lá
+
+a linha tem de dizer o que sabe, não o que se conclui
+
+  instrumentar antes de suspeitar não basta. Uma sessão inteira
+  foi gasta atrás de "não há lote" quando o que a linha sabia era
+  "não terminei de olhar"
+
+conferir a versão antes de ler o resto do log
+
+  a primeira das quatro sessões rodou um jar de dois dias antes, e
+  o silêncio de duas fases inteiras não significava nada
+```
+
+### O que falta
+
+```text
+1  ver a casa subir                    o último passo do MVP
+
+   Nunca rodou. O caminho até ela foi desentupido, e o que não se
+   sabe é se as vilas do autor têm lote de verdade: a grama deixou
+   de recusar, sobrar lugar é outra pergunta.
+
+   Precisa de construtor na vila, /time set noon, e pedra e vidro
+   nos baús.
+
+2  E11 / TASK-049                      decisão do autor
+
+   O rodízio de profissão a cada ciclo. Mexe na Regra 4: dispensar
+   quem não tem baú só faz sentido se o substituto puder conseguir
+   um.
+
+3  TASK-048, TASK-044, TASK-046        decisão do autor
+
+   O que uma colônia ABANDONED deixa de fazer; a fusão de vilas; a
+   orientação dos blocos (E8).
+
+4  TASK-043                            não precisa de decisão
+
+   Estender a estrada. A vila só constrói em beira de rua que já
+   existe.
+
+5  o que já estava por fazer
+
+   Itens A e B em jogo, a metade estrutural da Regra 3, o lado do
+   cliente, E3/E4/E5/E8/E9/E12, e a TASK-042.
+```
+
+### Dívidas pequenas que estas sessões criaram
+
+```text
+grama dentro da casa      o construtor limpa escrevendo o bloco no
+                          lugar; onde o projeto pede ar, nada é
+                          escrito e a moita fica. Cosmético
+
+WARN de 86 ms             um ciclo de colônia passou de um tick, uma
+                          vez, logo depois de carregar. Não se
+                          repetiu, e não foi investigado
+
+um teste sem fase         anUnfinishedSweepIsNotAnAnswer afirma uma
+vermelha                  propriedade de sweepPausedAt, que não
+                          existia antes dele. Os outros três novos
+                          foram rodados contra a regra desligada
+```
+
+366 testes unitários e 80 de jogo, verdes. Árvore limpa.
