@@ -145,8 +145,8 @@ na seção de cada regra.
 | # | Regra | Estado |
 |---|---|---|
 | ~~H1~~ | ~~**Regra 7** — o lenhador planta onde cortou~~ | ✅ feita em 08-15, dois testes de jogo pelo caminho do trabalhador |
-| H2 | **Regra 8** — um baú ao lado de cada cama | 👤 espera decisão. A amarração cama–baú já existe; falta **criar** o baú. É a maior escrita no mundo do jogador que o mod já faria, e esbarra em "a colônia não cria recurso" |
-| H3 | **Regra 9** — subir e descer para alcançar, e poder voltar | 👤 espera decisão: só navegação sem limite de altura, ou o aldeão põe e tira bloco para chegar? As duas leituras dão trabalhos muito diferentes. A metade "poder voltar" vale sozinha e não depende disso. Fecha o G2 |
+| H2 | **Regra 8** — um baú ao lado de cada cama | 🔨 **decidido em 08-15:** o baú é exceção de geração, aparece do nada. A amarração cama–baú já existe; falta criar o baú e nomear a exceção no Construction-System |
+| H3 | **Regra 9** — subir e descer para alcançar, e poder voltar | 🔨 **decidido em 08-15:** só navegação, o aldeão não põe nem tira bloco. Conferir caminho de ida e volta antes de aceitar o alvo; alvo sem caminho sai da escolha, sem recusa permanente. Fecha o G2 |
 | H4 | **Regra 10** — o construtor fabrica o que a expansão pede | 👤 espera decisão sobre baú comunitário e sobre onde termina o fabricante. As peças existem: `CraftingLookup`, `ChestWithdrawer`, `ManufacturerWork` |
 | H5 | **Regra 11** — uma de cada profissão em cada vila | 🔨 mecanismo já pronto (`vacancy` devolve a mais escassa). Falta a garantia: vila pequena demais, e a dispensa podendo tirar o último de uma profissão. Nenhum teste afirma o piso |
 

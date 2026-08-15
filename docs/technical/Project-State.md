@@ -2505,15 +2505,21 @@ StorageRegistry    já registra o par trabalhador–baú
 Decisões que a implementação precisa tomar, e que **não estão no
 enunciado**:
 
+**Decidido pelo autor em 08-15: o baú é exceção de geração.** Ele
+aparece do nada, e a justificativa é que não é produção da colônia — é
+completar o que o Minecraft gerou incompleto. A regra "a colônia não
+cria recurso" continua valendo para tudo o mais: o que a obra consome
+sai de baú, e nada do que o trabalhador produz vem do nada.
+
+Isto precisa entrar no `Construction-System.md` §Regras de Arquitetura
+como exceção nomeada, e não ficar só aqui — regra com exceção não escrita
+é regra que se perde.
+
+O que a implementação ainda decide:
+
 ```text
 onde é "ao lado"        qual dos vizinhos da cama, e em que altura.
                         Precisa ser livre, válido e alcançável
-
-de onde vem o baú       Construction-System.md §Regras de Arquitetura
-                        diz que a colônia não cria recurso. Um baú
-                        vindo do nada contraria isso — ou a criação
-                        de vila é exceção, por ser conserto de
-                        geração e não produção da colônia
 
 vilas já geradas        "toda cidade gerada" lê-se como todas,
                         inclusive as que já estão no mundo. Então é
@@ -2549,24 +2555,35 @@ Vanilla, com o limite de passo dele — e árvore em encosta, em cima de
 morro ou do outro lado de um barranco fica fora de alcance sem que nada
 no log diga isso.
 
-Decisão que muda tudo, e que o enunciado não resolve:
+**Decidido pelo autor em 08-15: só navegação.** O aldeão anda por onde o
+terreno deixa — sobe encosta, desce degrau, dá a volta. Não põe nem tira
+bloco para chegar. Árvore inalcançável a pé deixa de ser alvo, e ele
+procura outra.
+
+A leitura recusada foi a outra: o aldeão pôr degrau, andaime ou escada
+para alcançar. Ela faria o lenhador escrever no mundo — o que hoje só o
+construtor faz — e reabriria a Regra 3.
+
+Com isso o trabalho fica assim:
 
 ```text
-navegação            "subir e descer" é só tirar o limite de altura
-                     do caminho — o aldeão dá a volta pelo terreno
+antes de aceitar o alvo   conferir que existe caminho até ele, e de
+                          volta. É a segunda metade do enunciado:
+                          "ao ir, poder voltar" — não se jogar num
+                          desnível que não sobe
 
-ou construção        ou o aldeão põe e tira bloco para chegar:
-                     degrau, andaime, escada
+alvo sem caminho          sai da escolha e o lenhador procura outro,
+                          como já acontece com o tronco sem copa.
+                          Não pode ser recusa permanente: o jogador
+                          constrói ponte, e a árvore volta a valer
+
+custo                     um cálculo de caminho é caro. Cabe no
+                          orçamento de SEARCHES_PER_TICK, que já é
+                          de uma busca por tick no servidor inteiro
 ```
 
-As duas leituras dão trabalhos muito diferentes. A segunda faz o
-lenhador escrever no mundo, o que hoje só o construtor faz, e reabre a
-Regra 3 — o que nunca se destrói.
-
-A segunda metade do enunciado é a mais clara das duas e vale sozinha:
-**ao ir, poder voltar.** Quer dizer não se jogar num desnível que não
-consegue subir de volta. Isso é uma conferência de ida e volta antes de
-aceitar o alvo, e não depende de qual das duas leituras vale.
+Fecha o G2 do Backlog — o lenhador parado a sete blocos da árvore por
+dezesseis minutos, em 08-15.
 
 ---
 
