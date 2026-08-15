@@ -408,17 +408,28 @@ public final class LumberjackWork {
      * lenhador travado em "bloco 1 de 60, 0/0 ticks" ciclo após ciclo, e
      * nenhuma forma de saber se ele estava longe, dormindo ou fora de
      * chunk carregado — três causas com três correções diferentes.
+     *
+     * <p>E diz o relógio de travamento, desde 2026-08-15. Naquela sessão
+     * dois lenhadores ficaram dezesseis minutos a sete e nove blocos da
+     * árvore sem chegar, e {@link #giveUp} — que deveria ter soltado a
+     * tarefa em dois minutos de horário de trabalho — não falou uma vez
+     * sequer. Três explicações cabiam no que o log mostrava: o contador
+     * sobe e o limite está alto demais; o contador não sobe porque
+     * {@code step} não chega à linha 534; ou alguém o zera a cada ciclo.
+     * As três pedem correções diferentes e o número as separa numa
+     * olhada — medir custa uma palavra na linha.
      */
     private static String describe(ServerWorld world, UUID workerId, Job job) {
         if (!(world.getEntity(workerId) instanceof VillagerEntity villager)) {
-            return "not loaded (" + job.collected + " logs so far)";
+            return "not loaded (" + job.collected + " logs so far, stall " + job.stalled + ")";
         }
 
         String clock = WorkHours.isWorkTime(world, villager) ? "work time" : "off hours";
 
         if (job.isBetweenTrees()) {
             return "looking for a tree, " + clock
-                    + " (" + job.collected + " logs so far)";
+                    + " (" + job.collected + " logs so far, stall "
+                    + job.stalled + "/" + STALL_LIMIT + ")";
         }
 
         int distance = (int) Math.sqrt(
@@ -429,7 +440,8 @@ public final class LumberjackWork {
                 + ", " + distance + " blocks away, " + clock
                 + ", block " + (job.index + 1) + " of " + job.plan.blocks().size()
                 + ", " + job.progress + "/" + job.required + " ticks"
-                + ", " + job.collected + " logs so far";
+                + ", " + job.collected + " logs so far"
+                + ", stall " + job.stalled + "/" + STALL_LIMIT;
     }
 
     /** Os oito primeiros dígitos do UUID, como no resto do log. */
