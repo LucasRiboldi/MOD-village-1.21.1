@@ -211,6 +211,42 @@ public final class LumberjackWork {
      */
     private static final int MAX_REJECTED = 4096;
 
+    /**
+     * As árvores que a navegação não entrega, e desde quando.
+     *
+     * <p>A Regra 9, de 2026-08-15: o aldeão sobe e desce o que for
+     * preciso para alcançar o recurso, <b>de maneira que ao ir ele possa
+     * voltar</b>. O autor decidiu a leitura estreita — só navegação, o
+     * lenhador não põe nem tira bloco para chegar. Então árvore que o
+     * caminho não alcança deixa de ser alvo.
+     *
+     * <p>Separado de {@link #REJECTED} de propósito, e é a diferença
+     * entre "não é árvore" e "não dá para chegar agora". A primeira é
+     * para sempre; a segunda não pode ser: o jogador constrói ponte,
+     * abre porta, aplaina barranco, e a árvore volta a valer. Por isso
+     * isto esquece sozinho — ver {@link #UNREACHABLE_MEMORY}.
+     *
+     * <p><b>Aprende tentando, e não prevendo.</b> A primeira versão disto
+     * perguntava à navegação, antes de escolher, se havia caminho até a
+     * árvore. Rodada contra a bateria, ela recusou seis árvores comuns:
+     * {@code findPathTo} não responde de forma confiável para um aldeão
+     * recém-posto no mundo, e a resposta errada é cara — árvore boa
+     * descartada por cinco minutos. Quem sabe de verdade se dá para
+     * chegar é o guarda de travamento, depois de dois minutos de horário
+     * de trabalho tentando. Ver {@link #giveUp}.
+     */
+    private static final Map<BlockPos, Long> UNREACHABLE = new HashMap<>();
+
+    /**
+     * Por quantos ticks uma árvore fica marcada como inalcançável.
+     *
+     * <p>Dez ciclos da colônia, cinco minutos. Longo o bastante para a
+     * busca passar adiante em vez de reencontrar a mesma árvore a cada
+     * ciclo, e curto o bastante para a ponte que o jogador acabou de
+     * construir valer na mesma sessão.
+     */
+    private static final int UNREACHABLE_MEMORY = 10 * VillageDetector.CYCLE_TICKS;
+
     private LumberjackWork() {
     }
 
@@ -544,7 +580,7 @@ public final class LumberjackWork {
         }
 
         if (WorkHours.isWorkTime(world, villager) && ++job.stalled > STALL_LIMIT) {
-            return giveUp(job, workerId);
+            return giveUp(world, job, workerId);
         }
 
         if (job.isBetweenTrees()) {
@@ -606,7 +642,9 @@ public final class LumberjackWork {
                 world,
                 job.center,
                 SEARCH_RADIUS,
-                log -> !CLAIMED.contains(log) && !REJECTED.contains(log));
+                log -> !CLAIMED.contains(log)
+                        && !REJECTED.contains(log)
+                        && !isOutOfReach(world, log));
 
         if (tree.isEmpty()) {
             // Nenhuma árvore ao alcance. Não é motivo para encerrar: a
@@ -726,7 +764,7 @@ public final class LumberjackWork {
      * em silêncio seria indistinguível de trabalho acontecendo, que é a
      * forma que o E1 assume toda vez que reaparece.
      */
-    private static Outcome giveUp(Job job, UUID workerId) {
+    private static Outcome giveUp(ServerWorld world, Job job, UUID workerId) {
         job.task.release();
 
         WorkTargets.clear(workerId);
@@ -739,6 +777,15 @@ public final class LumberjackWork {
                 job.plan == null
                         ? " while looking for a tree"
                         : " on the tree at " + job.plan.base().toShortString());
+
+        if (job.plan != null) {
+            // A outra metade da Regra 9, e o que fecha o G2. Soltar a
+            // tarefa sem esquecer a árvore troca de trabalhador e não de
+            // problema: a busca é determinística a partir do centro, essa
+            // árvore continua sendo a mais próxima, e o substituto anda
+            // até ela para travar no mesmo lugar.
+            markUnreachable(world, job.plan.base());
+        }
 
         return Outcome.DONE;
     }
@@ -907,6 +954,64 @@ public final class LumberjackWork {
      * <p>A busca deixa de devolvê-lo, e o lenhador passa ao próximo. Ver
      * {@link #REJECTED} para o que acontece sem isto.
      */
+    /**
+     * Marca uma árvore como fora de alcance por ora.
+     *
+     * <p>Chamado de dois lugares, e os dois importam: da escolha, quando
+     * a navegação já diz que não dá; e de {@link #giveUp}, quando o
+     * lenhador andou dois minutos de horário de trabalho e não chegou.
+     *
+     * <p>O segundo é o que fecha o G2. Sem ele o guarda de travamento
+     * soltava a tarefa, a busca reencontrava a mesma árvore — ela é a
+     * mais próxima, e a busca é determinística — e o ciclo recomeçava
+     * inteiro. Soltar a tarefa sem esquecer a árvore é trocar de
+     * trabalhador, não de problema.
+     *
+     * <p>Público pelo mesmo motivo que {@code
+     * ConstructionPlanner.forgetBlueprint}: a bateria precisa chegar
+     * aqui. Chamar {@link #giveUp} num teste custaria os 2.400 ticks de
+     * {@link #STALL_LIMIT} — dois minutos de relógio contra uma bateria
+     * que roda em vinte e cinco segundos, que é o E1 do grupo E.
+     */
+    public static void markUnreachable(ServerWorld world, BlockPos base) {
+        UNREACHABLE.put(base, world.getTime());
+
+        VillageColonyMod.LOGGER.info(
+                "Tree at {} is out of reach — skipping it for {} ticks",
+                base.toShortString(),
+                UNREACHABLE_MEMORY);
+    }
+
+    /**
+     * Esquece as árvores fora de alcance. Só os testes precisam disso.
+     *
+     * <p>{@link #UNREACHABLE} é estático e vive enquanto o servidor
+     * viver, o que em jogo é o certo — a colônia não deve reaprender a
+     * cada ciclo que não chega naquele barranco. Numa bateria de testes
+     * é o contrário: as áreas de teste são reaproveitadas, e uma posição
+     * marcada por um teste reaparece como árvore boa no seguinte.
+     */
+    public static void forgetUnreachable() {
+        UNREACHABLE.clear();
+    }
+
+    /** Se esta árvore ainda está no prazo de esquecimento. */
+    private static boolean isOutOfReach(ServerWorld world, BlockPos base) {
+        Long since = UNREACHABLE.get(base);
+
+        if (since == null) {
+            return false;
+        }
+
+        if (world.getTime() - since < UNREACHABLE_MEMORY) {
+            return true;
+        }
+
+        UNREACHABLE.remove(base);
+
+        return false;
+    }
+
     private static void reject(List<BlockPos> trunk) {
         if (REJECTED.size() + trunk.size() > MAX_REJECTED) {
             REJECTED.clear();

@@ -130,7 +130,7 @@ jogo**, que é coisa diferente. Ver Development-Log, entrada das 12:45.
 | # | O que | Estado |
 |---|---|---|
 | G1 | **A obra nunca foi vista abrindo tarefa em jogo.** `ensureTask` entrou às 10:11 de 08-15 e nenhuma sessão o executou ainda | 🔒 bloqueia o MVP. **Não é regressão** — é código nunca exercitado. Jar novo instalado às 12:45; a próxima sessão é a primeira que o roda |
-| G2 | **O guarda de travamento do lenhador nunca rodou em jogo.** Os 16 min congelados de 11:37 foram num jar sem `STALL_LIMIT` | 🔨 Verificar antes de investigar. Se travar de novo com o jar novo, `stall N/2400` na linha diz qual das três hipóteses vale |
+| G2 | **O lenhador travado na mesma árvore** | 🟡 fechado dos dois lados em 08-15: o guarda de travamento entrou no jar, e agora ele **esquece a árvore** ao desistir — antes soltava a tarefa e a busca reescolhia a mesma, o que trocava de trabalhador e não de problema. A ligação `giveUp → markUnreachable` não é coberta pela bateria (2.400 ticks contra 25 s — é o E1), e espera confirmação em jogo |
 | G3 | **O fabricante não fabrica** — `0/20 ticks` parado, some do relatório depois das 11:22 | Não investigado. A correção do baú (E16) pode ter removido a causa; verificar antes de investigar |
 | G4 | **A colônia move o centro recusando encolher** — saiu de âncora de 6 camas para uma de 3 com `view not provably complete`, e deixou a obra 65 blocos atrás | 👤 espera decisão. É comportamento da ADR-003, não defeito declarado |
 | G5 | **`BuilderWork.java` com 509 linhas** — passou do limite de 500 ao receber a instrumentação do G1 | 🔨 extrair os métodos de log para uma classe irmã |
@@ -146,7 +146,7 @@ na seção de cada regra.
 |---|---|---|
 | ~~H1~~ | ~~**Regra 7** — o lenhador planta onde cortou~~ | ✅ feita em 08-15, dois testes de jogo pelo caminho do trabalhador |
 | H2 | **Regra 8** — um baú ao lado de cada cama | 🟡 **metade feita em 08-15.** `ChestPlacer` põe o baú quando a cama de um **trabalhador** não alcança nenhum, com 5 recusas e 6 testes de jogo. Falta a outra metade: cama de aldeão que não trabalha continua sem baú, porque `VillageCandidate` carrega contagem e não as posições das camas |
-| H3 | **Regra 9** — subir e descer para alcançar, e poder voltar | 🔨 **decidido em 08-15:** só navegação, o aldeão não põe nem tira bloco. Conferir caminho de ida e volta antes de aceitar o alvo; alvo sem caminho sai da escolha, sem recusa permanente. Fecha o G2 |
+| ~~H3~~ | ~~**Regra 9** — subir e descer para alcançar, e poder voltar~~ | ✅ feita em 08-15. Árvore fora de alcance sai da escolha por 6.000 ticks, e quem a marca é o guarda de travamento. A checagem de caminho **antes** de escolher foi tentada e descartada: recusou seis árvores boas na bateria |
 | H4 | **Regra 10** — o construtor fabrica o que a expansão pede | 👤 espera decisão sobre baú comunitário e sobre onde termina o fabricante. As peças existem: `CraftingLookup`, `ChestWithdrawer`, `ManufacturerWork` |
 | H5 | **Regra 11** — uma de cada profissão em cada vila | 🔨 mecanismo já pronto (`vacancy` devolve a mais escassa). Falta a garantia: vila pequena demais, e a dispensa podendo tirar o último de uma profissão. Nenhum teste afirma o piso |
 

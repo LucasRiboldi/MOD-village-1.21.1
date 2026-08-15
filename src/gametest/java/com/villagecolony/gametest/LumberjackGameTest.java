@@ -845,6 +845,106 @@ public class LumberjackGameTest implements FabricGameTest {
     }
 
     /**
+     * A Regra 9: árvore fora de alcance sai da escolha.
+     *
+     * <p>O autor decidiu a leitura estreita em 2026-08-15 — só
+     * navegação, o lenhador não põe nem tira bloco para chegar. Então a
+     * árvore a que ele não chega deixa de ser alvo por um tempo, e ele
+     * vai atrás de outra.
+     *
+     * <p>É o G2: em jogo, dois lenhadores passaram dezesseis minutos a
+     * sete e nove blocos de uma árvore sem nunca chegar. A busca é
+     * determinística a partir do centro, então a mais próxima era
+     * escolhida de novo a cada ciclo — soltar a tarefa sem esquecer a
+     * árvore trocava de trabalhador, não de problema.
+     *
+     * <p>Este teste marca a árvore de perto e prova o <b>filtro</b>: o
+     * lenhador pula a marcada e derruba a outra. Quem marca em jogo é
+     * {@code giveUp}, e essa metade a bateria não alcança — são 2.400
+     * ticks contra vinte e cinco segundos, o E1 do grupo E.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_unreachable",
+            tickLimit = 400)
+    public void theTreeMarkedOutOfReachIsSkipped(TestContext context) {
+        // As duas árvores ao alcance do braço, e o lenhador entre elas.
+        // Sem caminhada de propósito: o que este teste mede é a escolha
+        // da busca, e uma caminhada de nove blocos mediria a navegação
+        // junto — foi assim que a primeira versão dele ficou instável.
+        BlockPos near = new BlockPos(4, 2, 4);
+        BlockPos far = new BlockPos(6, 2, 4);
+        BlockPos chest = new BlockPos(2, 2, 2);
+        BlockPos stand = new BlockPos(5, 2, 5);
+
+        for (int x = 1; x <= 8; x++) {
+            for (int z = 1; z <= 8; z++) {
+                context.setBlockState(new BlockPos(x, 1, z), Blocks.STONE.getDefaultState());
+            }
+        }
+
+        plantTree(context, near);
+        plantTree(context, far);
+
+        context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+
+        ServerWorld world = context.getWorld();
+
+        // A de perto está fora de alcance, e a busca tem de pular por
+        // cima dela em vez de escolhê-la por ser a mais próxima.
+        LumberjackWork.markUnreachable(world, context.getAbsolutePos(near));
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, stand);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(near)));
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create()
+                .owning(colony)
+                .owning(villager.getUuid());
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.LUMBERJACK);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(
+                villager.getUuid(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chest))));
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_WOOD,
+                TaskPriority.PRODUCTION,
+                ResourceType.OAK_LOG,
+                64);
+
+        task.reserveFor(villager.getUuid());
+
+        LumberjackWork.run(world, colony);
+
+        context.runAtTick(360, () -> {
+            context.assertTrue(
+                    logsStanding(context, near) == 4,
+                    "a árvore marcada fora de alcance foi derrubada assim mesmo");
+
+            context.assertTrue(
+                    logsStanding(context, far) < 4,
+                    "o lenhador pulou a marcada e não foi atrás de nenhuma outra");
+
+            // As áreas de teste são reaproveitadas, e a marca dura 6.000
+            // ticks: deixá-la aqui faria o teste seguinte encontrar uma
+            // árvore boa marcada como fora de alcance.
+            LumberjackWork.forgetUnreachable();
+
+            owned.cleanUp();
+
+            context.complete();
+        });
+    }
+
+    /**
      * A regra do autor: o lenhador sempre planta onde cortou.
      *
      * <p>{@code fellingReplantsASapling} já provava a muda, mas pela
