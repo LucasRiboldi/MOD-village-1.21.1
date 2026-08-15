@@ -276,19 +276,55 @@ public final class BuildSiteScanner {
         // porque o tronco está acima da janela. Conservador de
         // propósito — a colônia procura outro lugar em vez de derrubar
         // o que não planejou.
-        if (!chunk.getBlockState(new BlockPos(x, aroundY + WINDOW_UP + 1, z)).isAir()) {
+        if (!isNothing(chunk.getBlockState(new BlockPos(x, aroundY + WINDOW_UP + 1, z)))) {
             return Optional.empty();
         }
 
         for (int y = aroundY + WINDOW_UP; y >= aroundY - WINDOW_DOWN; y--) {
             BlockPos pos = new BlockPos(x, y, z);
 
-            if (!chunk.getBlockState(pos).isAir()) {
+            if (!isNothing(chunk.getBlockState(pos))) {
                 return Optional.of(pos);
             }
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * Se este bloco não conta como obstáculo para achar o chão.
+     *
+     * <p>Ar, e a cobertura do campo: grama, samambaia, flor, camada de
+     * neve. A TASK-047, e o motivo dela está numa sessão inteira.
+     *
+     * <p>Em 2026-08-15, 00:42, duas colônias varreram o raio de 64 blocos
+     * até o fim, duas vezes cada, e não acharam um lote — em duas vilas
+     * de planície rodeadas de campo aberto. A causa: este laço devolvia o
+     * bloco mais alto que não fosse ar, e em planície esse bloco é o tufo
+     * de grama. {@code flatGroundAt} então recusava a coluna, porque tufo
+     * não é chão. Um lote de sete por sete precisa das quarenta e nove
+     * colunas limpas, e em planície nenhuma está.
+     *
+     * <p>Construction-System.md §PREPARING sempre mandou limpar grama,
+     * flor e neve. O código pulava esse estado alegando que o lote só é
+     * aceito quando não há nada em cima dele — e a alegação era verdadeira
+     * e era exatamente o defeito.
+     *
+     * <p><b>Folha fica de fora, e é decisão.</b> O documento a lista, mas
+     * aceitar folha como nada faria a colônia escolher lote debaixo de
+     * copa — e a casa nasceria dentro da árvore. O guarda da janela pega
+     * o tronco, não a copa baixa. Conservador de propósito, como a recusa
+     * de lote com árvore em cima logo acima.
+     *
+     * <p>Quem limpa é o próprio construtor, sem código novo: ele escreve
+     * o bloco no lugar, e o que estava ali sai. O que sobra é a moita
+     * dentro de cômodo cujo projeto pede ar — o projeto não escreve nada
+     * ali, e a grama fica. É cosmético e está registrado no §13.
+     */
+    private static boolean isNothing(BlockState state) {
+        return state.isAir()
+                || state.isIn(BlockTags.REPLACEABLE)
+                || state.isIn(BlockTags.SMALL_FLOWERS);
     }
 
     /**

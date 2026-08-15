@@ -60,6 +60,60 @@ public class BuildSiteGameTest implements FabricGameTest {
     }
 
     /**
+     * Um campo de grama não desqualifica o lote.
+     *
+     * <p>Escrito depois da sessão de 2026-08-15, 00:42, que fechou o E14:
+     * duas varreduras completas por colônia, raio 64 inteiro, e nenhum
+     * lote — em duas vilas de planície rodeadas de campo aberto.
+     *
+     * <p>O mecanismo: {@code groundInColumn} devolve o bloco mais alto que
+     * não é ar, e num campo de planície esse bloco é a <b>grama alta</b>,
+     * não o bloco de grama. {@code isNaturalGround} então recusa a coluna,
+     * porque tufo não é chão. Um lote de sete por sete precisa das
+     * quarenta e nove colunas limpas, e em planície isso não acontece.
+     *
+     * <p>É o buraco que a TASK-047 já registrava por outro lado:
+     * Construction-System.md §PREPARING manda limpar grama, flor e neve, e
+     * o código pula o estado alegando que o lote só é aceito quando não há
+     * nada em cima dele. A alegação é verdadeira e é justamente o defeito.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_grass")
+    public void aFieldOfGrassDoesNotDisqualifyTheLot(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+
+        paveGround(context, center);
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+
+        // O campo inteiro coberto, e não um tufo só: com um tufo, a busca
+        // tenta as quatro direções e o lote escapa pelo lado limpo — foi
+        // assim que a primeira versão deste teste passou sem provar nada.
+        // Planície de verdade é grama em toda parte.
+        for (int dx = -RADIUS; dx <= RADIUS; dx++) {
+            for (int dz = -RADIUS; dz <= RADIUS; dz++) {
+                if (dx == 0 && dz == 0) {
+                    continue;
+                }
+
+                context.setBlockState(
+                        center.add(dx, 1, dz), Blocks.SHORT_GRASS.getDefaultState());
+            }
+        }
+
+        Optional<ColonyPos> site = BuildSiteScanner.find(
+                context.getWorld(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        context.assertTrue(
+                site.isPresent(),
+                "o campo de grama reprovou o lote — em planície isso é todo lote");
+
+        context.complete();
+    }
+
+    /**
      * "Não achei" e "não terminei de procurar" são respostas diferentes.
      *
      * <p>Escrito depois da sessão de 2026-08-15, 00:28. A busca tem teto
