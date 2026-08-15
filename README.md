@@ -4,144 +4,178 @@
 
 # Village Colony
 
-### Your villages stop waiting for you.
+### Suas vilas param de esperar por você.
 
-*A Fabric mod that turns vanilla villages into colonies that work, produce and grow on their own.*
+*Um mod Fabric que transforma vilas do Minecraft Vanilla em colônias que
+trabalham, produzem e crescem sozinhas.*
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Environment](https://img.shields.io/badge/Side-Server%20%7C%20Singleplayer-lightgrey)
-![Version](https://img.shields.io/badge/Version-0.1.0%20alpha-orange)
-![License](https://img.shields.io/badge/License-MIT-informational)
+![Ambiente](https://img.shields.io/badge/Lado-Servidor%20%7C%20Singleplayer-lightgrey)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.1.0%20alpha-orange)
+![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 
 </div>
 
 ---
 
-## What it does
+## O que ele faz
 
-You find a plains village. You walk away.
+Você acha uma vila de planície. Você vai embora.
 
-When you come back, someone has been chopping wood. The logs are in a chest
-marked with an axe. Someone else turned them into planks. And where there was
-grass beside the road, there is a house that wasn't there before.
+Quando volta, alguém andou cortando madeira. As toras estão num baú
+marcado com um machado. Outro alguém as transformou em tábuas. E onde
+havia grama na beira da rua, há uma casa que não estava lá antes.
 
-Nobody told them to. **You never opened a single menu.**
-
----
-
-## What your villagers do
-
-🪓 **The lumberjack** walks to a tree, fells it one block at a time — at the
-speed of a player with an iron axe — carries nothing home because the wood goes
-straight into his chest, and replants the sapling before he leaves.
-
-🪚 **The manufacturer** takes logs out of the chest, turns them into planks
-using the game's own recipe, and puts them back. He stops when half the
-colony's storage is planks, so the lumberjack always has somewhere to put more.
-
-🏠 **The builder** reads a real vanilla village house out of the game files and
-raises it, one block per second, beside an existing road. Every block is paid
-for out of the colony's chests first — **the colony never conjures materials**.
-
-🌾 **The farmer** has a name, a hoe and a chest — and no work yet.
-
-Each of them gets a name over their head and a picture frame nailed to their
-chest, so you can tell at a glance who is who.
+Ninguém mandou. **Você não abriu um único menu.**
 
 ---
 
-## The rules it plays by
+## O que os seus aldeões fazem
 
-**Vanilla first.** The villagers are ordinary villagers. The chests are ordinary
-chests. The recipes are the game's recipes, asked at runtime — not copied into
-the mod. The house is literally the same file the world generator uses.
+🪓 **O lenhador** anda até a árvore, derruba um bloco por vez — no tempo
+de um jogador com machado de ferro —, não carrega nada para casa porque
+a madeira vai direto para o baú dele, e replanta a muda antes de sair.
 
-**Nothing is invented.** No virtual inventory, no abstract resource counter, no
-shadow economy. If the colony has 40 planks, there are 40 planks in a chest you
-can walk up to and open. Take them, and the colony notices.
+🪚 **O fabricante** tira tronco do baú, faz tábua pela receita do próprio
+jogo, e devolve. Ele para quando metade do estoque da colônia é tábua,
+para que o lenhador sempre tenha onde pôr mais.
 
-**Your build is safe.** The only thing a worker ever breaks is a tree, and it
-has to prove the tree is a tree: a trunk with no living leaves above it counts
-as a building, not a forest. Generated village pieces are asked about directly
-and left alone.
+🏠 **O construtor** lê uma casa de vila de verdade dos arquivos do jogo e
+a levanta, um bloco por segundo, na beira de uma rua que já existe. Cada
+peça sai do baú da colônia antes de entrar no mundo — **a colônia nunca
+inventa material**.
 
-**It stops on its own.** Harvesting ends when the chests are full and starts
-again when you take something out. Nothing grows without limit.
+🌾 **O fazendeiro** tem nome, enxada e baú — e nenhum trabalho ainda.
+
+Cada um ganha um nome sobre a cabeça e um quadro pregado no baú, para
+você saber de relance quem é quem.
 
 ---
 
-## The loop
+## As regras do jogo dele
+
+**Vanilla primeiro.** Os aldeões são aldeões comuns. Os baús são baús
+comuns. As receitas são as do jogo, perguntadas em tempo de execução —
+não copiadas para dentro do mod. A casa é literalmente o mesmo arquivo
+que o gerador de mundo usa.
+
+**Nada é inventado.** Sem inventário virtual, sem contador abstrato de
+recurso, sem economia paralela. Se a colônia tem 40 tábuas, há 40 tábuas
+num baú que você pode abrir. Tire-as, e a colônia percebe.
+
+**A sua construção está segura.** A única coisa que um trabalhador quebra
+é árvore, e ele precisa provar que a árvore é árvore: tronco sem folha
+viva acima conta como construção, não como floresta. Peças de vila
+gerada são perguntadas diretamente ao jogo e deixadas em paz.
+
+**Ele para sozinho.** A colheita acaba quando os baús enchem e recomeça
+quando você tira alguma coisa. Nada cresce sem limite.
+
+---
+
+## O ciclo
 
 ```text
-   village found  →  villagers hired  →  wood cut  →  planks made  →  house built
-        ↑                                                                  │
-        └──────────────────  the new house has beds  ←─────────────────────┘
+   vila achada  →  aldeões contratados  →  madeira cortada  →  tábua feita  →  casa erguida
+        ↑                                                                          │
+        └──────────────────────  a casa nova tem camas  ←──────────────────────────┘
 ```
 
 ---
 
-## Installation
+## Instalação
 
-**Requirements**
+**Requisitos**
 
 | | |
 |---|---|
 | Minecraft | 1.21.1 (Java Edition) |
 | Loader | Fabric |
-| Dependency | Fabric API |
+| Dependência | Fabric API |
 
-**Steps**
+**Passos**
 
-1. Install [Fabric Loader](https://fabricmc.net/use/) for 1.21.1.
-2. Drop [Fabric API](https://modrinth.com/mod/fabric-api) into your `mods` folder.
-3. Drop `village-colony-0.1.0.jar` in beside it.
-4. Launch, load a world, and find a plains village.
+1. Instale o [Fabric Loader](https://fabricmc.net/use/) para 1.21.1.
+2. Ponha a [Fabric API](https://modrinth.com/mod/fabric-api) na pasta `mods`.
+3. Ponha o `village-colony-0.1.0.jar` ao lado dela.
+4. Abra o jogo, carregue um mundo, e ache uma vila de planície.
 
-Works in singleplayer and on a dedicated server. Clients don't need the mod
-installed to join a server that has it.
+Funciona em singleplayer e em servidor dedicado. Quem entra num servidor
+que tem o mod **não** precisa instalá-lo no cliente.
 
-**Where to look**
+**Onde olhar**
 
-The colony reports what it is doing in the server log. Villagers only work
-during their vanilla work hours — `/time set noon` if you don't want to wait,
-and note that `/time set day` is *before* the work window opens.
+A colônia conta o que está fazendo no log do servidor. Os aldeões só
+trabalham no horário de trabalho do Vanilla — use `/time set noon` se
+não quiser esperar, e note que `/time set day` é **antes** de a janela
+de trabalho abrir.
 
 ---
 
-## Development status
+## Estado do desenvolvimento
 
-> **This is an alpha, and honest about it.**
+> **Isto é um alpha, e é honesto sobre isso.**
 
-The mod builds, loads, and runs on a client and on a dedicated server.
+O mod compila, carrega e roda em cliente e em servidor dedicado.
 
-| Feature | State |
+| Sistema | Estado |
 |---|---|
-| Village detection, stable colony identity | ✅ verified in game |
-| Workers, professions, tools, chest ownership | ✅ verified in game |
-| Resource counting, deficits, task assignment | ✅ verified in game |
-| Wood harvesting and replanting | ✅ verified in game |
-| Manufacturing — logs into planks | 🧪 covered by tests, not yet seen in game |
-| Construction — houses and site selection | 🧪 covered by tests, not yet seen in game |
-| Building registry and protection | 🧪 covered by tests, not yet seen in game |
-| Farming, mining, blacksmith, defence | ⬜ not started |
-
-**Known limits right now.** The colony only produces planks — a vanilla house
-also wants cobblestone, glass and beds, and those have to already be in the
-chests. Houses go up beside roads that already exist; the colony does not lay
-new road yet. Doors and beds are placed as loose halves, so the house is a
-little rough.
+| Detecção de vila, identidade estável da colônia | ✅ verificado em jogo |
+| Trabalhadores, profissões, ferramentas, posse do baú | ✅ verificado em jogo |
+| Contagem de recursos, déficit, atribuição de tarefas | ✅ verificado em jogo |
+| Colheita de madeira e replantio | ✅ verificado em jogo |
+| Fabricação — tronco vira tábua | ✅ verificado em jogo |
+| Construção — casas e escolha de lote | 🧪 coberto por teste, nunca visto em jogo |
+| Registro de construções e proteção | 🧪 coberto por teste, nunca visto em jogo |
+| Agricultura, mineração, ferraria, defesa | ⬜ não começado |
 
 ```text
-366 unit tests  ·  76 in-game tests  ·  ./gradlew build
+366 testes unitários  ·  80 testes de jogo  ·  ./gradlew build
 ```
 
-The always-current status lives in
+---
+
+## As etapas
+
+**Cinco dos seis passos do MVP estão verificados em jogo.** Falta um, e
+é o único que bloqueia.
+
+```text
+✅  detectar vila             verificado em jogo
+✅  registrar aldeões         verificado em jogo
+✅  organizar trabalhadores   verificado em jogo
+✅  coletar recursos          verificado em jogo
+✅  produzir materiais        verificado em jogo
+🧪  construir expansão        coberto por teste, nunca visto em jogo
+```
+
+### O que falta, na ordem
+
+| | Etapa | Estado |
+|---|---|---|
+| **1** | **Ver a casa subir.** A obra bloco a bloco, a casa virando infraestrutura da colônia, e o lote seguinte não caindo em cima dela | 🔒 exige sessão de jogo |
+| **2** | **Decidir o rodízio de profissão.** A colônia dispensa quem não conseguiu baú "em favor de quem consegue", e o substituto também não consegue. Corrigir mexe numa regra, não no código | 👤 exige decisão |
+| **3** | **O motivo de não trabalhar como valor.** Hoje só a fase de construção diz por que não construiu; o lenhador e o fabricante ainda se calam | 🔨 pronto para fazer |
+| **4** | **Blocos de duas partes.** Porta e cama são postas como duas metades soltas. A saída provável é pô-las numa segunda passada, com o par junto | 🔨 pronto para fazer |
+| **5** | **Estender a estrada.** Hoje a vila só constrói em beira de rua que já existe; quando ela acabar, a colônia para de crescer | 🔨 pronto para fazer |
+| **6** | **Envelhecimento de tarefa.** Para que a tarefa mais antiga não seja esquecida para sempre | 🔨 pronto para fazer |
+| **7** | **A proteção estrutural, e o lado do cliente.** Perguntar ao jogo quais blocos são de vila gerada; e nome, rachadura e braço na tela | 🔨 pronto para fazer |
+| **8** | **O trabalhador pedir o que lhe falta**, em vez de travar | ⏸️ só depois do MVP fechar |
+
+**Limites de hoje.** A colônia só produz tábua — uma casa de vila também
+quer pedra, vidro e cama, e essas precisam já estar nos baús. As casas
+sobem ao lado de ruas que já existem; a colônia ainda não pavimenta.
+Porta e cama saem como metades soltas, então a casa fica um pouco tosca.
+
+A lista completa — **33 itens abertos em 8 grupos**, com o que já foi
+feito — está em [`docs/technical/Backlog.md`](docs/technical/Backlog.md).
+O estado sempre atual está em
 [`docs/technical/Project-State.md`](docs/technical/Project-State.md).
 
 ---
 
-## Building from source
+## Compilando do código-fonte
 
 ```bash
 git clone https://github.com/LucasRiboldi/MOD-village-1.21.1.git
@@ -149,41 +183,47 @@ cd MOD-village-1.21.1
 ./gradlew build
 ```
 
-The jar lands in `build/libs/`. Needs a JDK 21.
+O jar cai em `build/libs/`. Precisa de um JDK 21.
 
 ```bash
-./gradlew runGametest    # the in-game test battery, headless
-./gradlew runServer      # a dedicated server with the mod loaded
+./gradlew runGametest    # a bateria de testes de jogo, sem cliente
+./gradlew runServer      # um servidor dedicado com o mod carregado
 ```
 
 ---
 
-## For developers
+## Para quem desenvolve
 
-The mod is split so that the colony's brain never touches Minecraft:
+O mod é dividido de modo que o cérebro da colônia nunca toque no
+Minecraft:
 
 ```text
-core/     what a colony is and how it decides — no Minecraft types at all
-fabric/   the border: adapters, world scanning, block placement, mixins
-data/     persistence
+core/     o que uma colônia é e como ela decide — nenhum tipo do Minecraft
+fabric/   a fronteira: adaptadores, varredura do mundo, blocos, mixins
+data/     persistência
 ```
 
-Every architectural decision is written down and dated in
-[`docs/decisions/`](docs/decisions), from why villages are detected by
-clustering beds instead of asking for structures, to why the mixin surface is
-one method.
+Toda decisão de arquitetura está escrita e datada em
+[`docs/decisions/`](docs/decisions) — de por que as vilas são detectadas
+por aglomerado de camas em vez de perguntar por estruturas, até por que
+a superfície do mixin é um método só.
 
-The design documents come first in this project and the code follows them.
-Where the two disagree, the disagreement is recorded rather than hidden — see
-the "ressalvas" sections of
-[`docs/technical/Project-State.md`](docs/technical/Project-State.md).
+Neste projeto os documentos de projeto vêm primeiro e o código os segue.
+Onde os dois discordam, a discordância é registrada em vez de escondida
+— veja as seções de "ressalvas" do
+[`Project-State.md`](docs/technical/Project-State.md).
 
-**Contributing:** read the architecture docs first, keep the core free of
-Minecraft imports, and add a test at the boundary — every serious defect in
-this project's history lived there.
+Há também uma engenharia reversa de um mod concorrente em
+[`docs/workers-analysis/`](docs/workers-analysis), feita como fonte de
+conhecimento técnico. Nenhuma linha de código foi copiada de lá, e o
+§11 daquela pasta explica por que não poderia ser.
+
+**Contribuindo:** leia os documentos de arquitetura primeiro, mantenha o
+core livre de imports do Minecraft, e acrescente um teste na fronteira —
+todo defeito sério da história deste projeto morou lá.
 
 ---
 
-## License
+## Licença
 
-MIT — see [LICENSE](LICENSE).
+MIT — veja [LICENSE](LICENSE).
