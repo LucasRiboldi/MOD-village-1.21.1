@@ -7165,3 +7165,118 @@ nada e sem perder item, e continua esperando a decisão da TASK-049.
 sessão inteira, com 2.900 tábuas guardadas e a meta da Regra 5 sendo
 metade do armazém. Não foi investigado, e não se inventa causa: fica
 registrado como o próximo lugar a olhar depois que a casa subir.
+
+---
+
+## 2026-08-15, tarde — 44 minutos em jogo, e o que eles mostraram
+
+A sessão que a entrada anterior pediu. Mundo novo, colônia
+`8f1544c5`, das 11:09:44 às 11:53:38 — 44 minutos, o jar do dia.
+
+**Nenhuma exceção, nenhum ERROR, nenhum crash.** O ciclo rodou os 88
+ciclos inteiros. A telemetria construída em 08-14 e 08-15 foi o que
+permitiu diagnosticar tudo o que segue sem reproduzir nada.
+
+Produção da colônia nos 44 minutos:
+
+```text
+61 toras cortadas
+ 0 tábuas fabricadas
+ 0 blocos construídos
+```
+
+### A casa continua sem subir — o E14 não estava fechado
+
+`builders: 0 working, BUILDING at ColonyPos[x=859,101,-3419], 151 blocks
+left`, idêntico nos 88 ciclos. Nunca 150.
+
+A linha `opened a build task` de `ConstructionPlanner.ensureTask` **não
+aparece uma vez sequer**. O estado é `BUILDING` e faltam 151 blocos — os
+dois impressos na mesma linha do relatório, pelos mesmos acessores que o
+`ensureTask` consulta. Das três saídas do método sobra a guarda de que
+já existe tarefa `BUILD` com `isOpen()`; e `BuilderWork` descarta essa
+mesma tarefa por não ter executor. A guarda que evita duplicata também
+impede a recuperação.
+
+Não foi possível fechar a causa por leitura. O caminho
+`ColonyCycle.run` → `WorkAssignment.assign` → `idleWorkers` →
+`availableFor` foi percorrido inteiro e cada elo está correto
+isoladamente. Falta saber em que estado a tarefa está parada — e o log
+não dizia, porque a contagem de tarefas abertas só era impressa quando
+alguma tarefa era distribuída.
+
+**O E14 volta para a lista de abertos.** Ele foi dado por fechado em
+08-15 com base em teste; em jogo nunca passou.
+
+### O lenhador que chega a sete blocos e para
+
+Das 11:37:34 ao desligamento — dezesseis minutos — os dois congelados:
+`7 blocks away, block 1 of 60, 0/0 ticks` e `9 blocks away, block 1 of
+181`. Antes disso, `af863783` ficou dez minutos em `6 blocks away, block
+7 of 32` e só se soltou quando a colônia mudou de centro.
+
+A distância oscila com o dia — vão dormir, voltam — mas ao voltar param
+sempre nos mesmos sete e nove blocos.
+
+`giveUp`, que solta a tarefa depois de `STALL_LIMIT` = 2.400 ticks de
+horário de trabalho, **não falou uma única vez em 44 minutos**, com
+trechos de "work time" de cinco minutos e meio seguidos. Três
+explicações cabem e nenhuma dá para descartar lendo o código: o contador
+sobe e o limite está alto demais; o contador não sobe porque `step` não
+chega à linha; ou alguém o zera a cada ciclo. É o E1 do grupo E cobrando
+o preço de nunca ter tido teste.
+
+### O que foi corrigido nesta sessão
+
+**Tarefa que precisa de baú não vai mais para quem não tem.** Dois
+lenhadores e dois fabricantes passaram doze minutos sem baú. A cada
+ciclo a distribuição lhes dava a tarefa; a cada tick o trabalho a
+devolvia à fila. Dezenas de linhas `has no chest — returned to the
+queue`, nada produzido, e a tarefa nunca chegando a quem tinha baú.
+
+É exatamente o ciclo perpétuo que o comentário de `LumberjackWork`
+descreve desde 08-12 — "do lado de fora, parecia trabalho acontecendo" —
+visto acontecendo.
+
+`TaskType.needsOwnStorage()` passa a distinguir: colher e fabricar
+terminam guardando, construir não. Sobrecarga em vez de troca de
+assinatura, porque o Core não conhece baú e as 33 chamadas de
+`ColonyCycle.run` em teste não têm o que dizer sobre isso.
+
+**A contagem de tarefas abertas voltou ao log.** O `if (assigned > 0)`
+calava a linha exatamente quando havia algo a dizer: distribuição parada
+é `assigned == 0`. Ela sumiu às 11:21 e não voltou — 32 minutos sem
+saber se havia tarefa parada ou tarefa nenhuma. Foi o que impediu de
+fechar o construtor nesta sessão.
+
+**O relatório do construtor diz o estado da tarefa de obra**, e o do
+lenhador diz o relógio de travamento. Nenhum dos dois é correção; os
+dois são a medida que falta para escolher a correção certa em vez de
+adivinhar — o §11 pela terceira vez.
+
+### O que não era defeito
+
+**As profissões não estagnaram.** 47 aldeões registrados e só 5
+profissões atribuídas parecia defeito e não é: `MAX_PER_PROFESSION` é 2
+e as quatro profissões estão com as duas vagas ocupadas — dois
+lenhadores, dois fabricantes, dois construtores, dois fazendeiros. O
+teto está funcionando como escrito.
+
+### O que fica em aberto, e não foi tocado
+
+**O fabricante continua sem fabricar.** `at the chest, off hours, 0/20
+ticks` e o contador nunca avança; depois das 11:22 os fabricantes somem
+do relatório. Com a correção do baú a fila deixa de girar, mas se isso
+basta para ele produzir é pergunta da próxima sessão.
+
+**A colônia mudou para um centro pior.** Às 11:22:34 saiu de uma âncora
+de 6 camas para uma de 3, depois de três linhas `keeping 6 — view not
+provably complete` no mesmo tick. Contagem de camas mantida, centro
+movido: as duas decisões estão desacopladas em `adopt`. Deixou a obra 65
+blocos para trás. É comportamento governado pela ADR-003 e não se muda
+sem decisão — fica registrado como pergunta ao autor, não como defeito.
+
+**`BuilderWork.java` passou de 500 linhas** (509). O acréscimo foi a
+instrumentação do estado da tarefa. Cabe extrair os três métodos de log
+para uma classe irmã; não foi feito aqui para não misturar refatoração
+com correção.

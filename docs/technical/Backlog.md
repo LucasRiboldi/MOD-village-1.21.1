@@ -104,11 +104,30 @@ E7   proteção não via construções           08-14
 E10  o fabricante lia o baú errado          08-14  ✅ em jogo
 E12  "Equipped N workers" nunca apareceu    08-14  ✅ em jogo
 E13  a sessão rodou um jar velho            08-14  (fica como hábito)
-E14  a Fase 10 não abria obra               08-15
+E16  tarefa de baú ia para quem não tinha   08-15  ✅ em jogo (diagnóstico)
 D1   a marca do baú trocava de dono         08-12
 D2   vaga de profissão entre vilas          não era defeito
+D8   profissões estagnadas em 5             não era defeito: é MAX_PER_PROFESSION
 --   travamento por tarefa RESERVED         08-12
 ```
+
+**E14 saiu daqui.** Foi dado por fechado em 08-15 com base em teste, e a
+sessão de jogo da tarde do mesmo dia mostrou que em jogo ele nunca
+passou: 88 ciclos com `0 working` e `151 blocks left`, sem uma linha de
+`opened a build task`. Ver o grupo G.
+
+## 2.6 Grupo G — o que a sessão de 08-15 (tarde) deixou aberto
+
+44 minutos em jogo, sem exceção nem crash. 61 toras, 0 tábuas, 0 blocos.
+Detalhe e evidência no Development-Log, entrada de 2026-08-15 tarde.
+
+| # | O que | Estado |
+|---|---|---|
+| G1 | **E14 reaberto — a obra não abre tarefa em jogo.** `ensureTask` sai pela guarda de tarefa `BUILD` já existente; `BuilderWork` descarta essa mesma tarefa por não ter executor | 🔒 bloqueia o MVP. Instrumentado em 08-15: o relatório do construtor agora diz o estado da tarefa. **Uma sessão de 5 min fecha o diagnóstico** |
+| G2 | **O lenhador para a 7 blocos da árvore e `giveUp` nunca dispara** — 16 min congelado, `STALL_LIMIT` de 2.400 ticks nunca alcançado | 🔨 Instrumentado em 08-15: `stall N/2400` na linha do lenhador. Três hipóteses, o número separa as três |
+| G3 | **O fabricante não fabrica** — `0/20 ticks` parado, some do relatório depois das 11:22 | Não investigado. A correção do baú (E16) pode ter removido a causa; verificar antes de investigar |
+| G4 | **A colônia move o centro recusando encolher** — saiu de âncora de 6 camas para uma de 3 com `view not provably complete`, e deixou a obra 65 blocos atrás | 👤 espera decisão. É comportamento da ADR-003, não defeito declarado |
+| G5 | **`BuilderWork.java` com 509 linhas** — passou do limite de 500 ao receber a instrumentação do G1 | 🔨 extrair os métodos de log para uma classe irmã |
 
 ## 2.5 Contagem
 
