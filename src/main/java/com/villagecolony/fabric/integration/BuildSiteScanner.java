@@ -13,6 +13,7 @@ import net.minecraft.world.chunk.WorldChunk;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
  * Onde a próxima casa cabe — a metade da Regra 6 que olha o mundo.
@@ -171,6 +172,29 @@ public final class BuildSiteScanner {
     /** Esquece os cursores. Chamado ao descarregar o mundo. */
     public static void clearAll() {
         NEXT_RING.clear();
+    }
+
+    /**
+     * Em que anel a busca deste centro parou por falta de orçamento.
+     *
+     * <p>Existe para separar duas respostas que {@link #find} devolve
+     * iguais: "varri o raio inteiro e não há lote" e "o orçamento deste
+     * ciclo acabou no meio". Vazio quer dizer a primeira.
+     *
+     * <p>Não é estado novo — é o cursor que já existia, lido de fora. Ele
+     * só fica gravado quando o teto de colunas estoura, e sai quando a
+     * varredura completa o raio ou acha o lote.
+     *
+     * <p>Escrito depois da sessão de 2026-08-15, 00:28, em que a Fase 10
+     * afirmou "no free lot beside a road within 64 blocks" quatorze vezes
+     * sem nunca ter varrido raio nenhum inteiro: dezesseis mil colunas,
+     * mil por ciclo, e a sessão não durou os dezessete ciclos que a conta
+     * pede. Ver o E14 do §17.
+     */
+    public static OptionalInt sweepPausedAt(ColonyPos center) {
+        Integer ring = NEXT_RING.get(MinecraftTypeAdapter.toBlockPos(center));
+
+        return ring == null ? OptionalInt.empty() : OptionalInt.of(ring);
     }
 
     /**

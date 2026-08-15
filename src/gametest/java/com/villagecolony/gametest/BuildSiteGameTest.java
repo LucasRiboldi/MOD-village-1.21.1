@@ -60,6 +60,49 @@ public class BuildSiteGameTest implements FabricGameTest {
     }
 
     /**
+     * "Não achei" e "não terminei de procurar" são respostas diferentes.
+     *
+     * <p>Escrito depois da sessão de 2026-08-15, 00:28. A busca tem teto
+     * de colunas por chamada e um cursor que retoma no anel onde parou —
+     * e {@code find} devolve vazio nos dois casos: quando varreu o raio
+     * inteiro sem achar, e quando o orçamento daquele ciclo acabou no meio.
+     *
+     * <p>A linha de log da Fase 10 dizia "no free lot beside a road within
+     * 64 blocks" nos dois, e no segundo caso isso é mentira: um raio de 64
+     * são dezesseis mil colunas, mil por ciclo, dezessete ciclos — e a
+     * sessão teve quatorze. Ninguém tinha varrido raio nenhum inteiro.
+     *
+     * <p>O estado que separa os dois já existia dentro do scanner: o
+     * cursor só fica gravado quando o orçamento acaba.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_partial")
+    public void anUnfinishedSweepIsNotAnAnswer(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+
+        paveGround(context, center);
+
+        ColonyPos from = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center));
+
+        // Raio curto: cabe inteiro no orçamento, e a varredura termina.
+        BuildSiteScanner.find(context.getWorld(), from, RADIUS, SMALL_HOUSE);
+
+        context.assertTrue(
+                BuildSiteScanner.sweepPausedAt(from).isEmpty(),
+                "raio de " + RADIUS + " cabe num ciclo, e a busca disse que parou no meio");
+
+        // Raio de vila de verdade: dezesseis mil colunas, mil por chamada.
+        BuildSiteScanner.find(context.getWorld(), from, 64, SMALL_HOUSE);
+
+        context.assertTrue(
+                BuildSiteScanner.sweepPausedAt(from).isPresent(),
+                "raio de 64 não cabe num ciclo, e a busca disse que varreu tudo");
+
+        BuildSiteScanner.clearAll();
+
+        context.complete();
+    }
+
+    /**
      * Sem rua, não há lote.
      *
      * <p>É a Regra 6 ao pé da letra: nunca casa isolada. Um chão liso e

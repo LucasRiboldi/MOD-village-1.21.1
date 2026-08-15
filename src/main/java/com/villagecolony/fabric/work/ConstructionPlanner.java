@@ -128,9 +128,19 @@ public final class ConstructionPlanner {
                 world, colony.center(), VillageDetector.SEARCH_RADIUS, blueprint.get().size());
 
         if (site.isEmpty()) {
-            return silent(colony, "no free lot beside a road within "
-                    + VillageDetector.SEARCH_RADIUS + " blocks of " + colony.center()
-                    + " that fits " + blueprint.get().size());
+            // Duas respostas, e a diferença importa: uma diz que não há
+            // lote, a outra diz que ninguém terminou de olhar. A linha
+            // anterior dizia a primeira nos dois casos, e no segundo isso
+            // era mentira — ver o E14 do §17.
+            //
+            // Sem o número do anel de propósito: silent() só registra
+            // quando o motivo muda, e um anel diferente por ciclo faria a
+            // linha voltar toda vez.
+            return silent(colony, BuildSiteScanner.sweepPausedAt(colony.center()).isPresent()
+                    ? "still sweeping for a lot — the ring budget ran out before an answer"
+                    : "no free lot beside a road in the whole "
+                            + VillageDetector.SEARCH_RADIUS + "-block radius of "
+                            + colony.center() + " that fits " + blueprint.get().size());
         }
 
         if (VillageColonyMod.BUILDINGS.isColonyInfrastructure(site.get())) {
