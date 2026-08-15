@@ -6113,3 +6113,148 @@ global novo.
    cliente, E3/E4/E5, e a TASK-042 — que agora tem o que verificar:
    fechar o mundo com uma obra em curso e reabrir.
 ```
+
+---
+
+## 2026-08-14, à noite — a primeira sessão da Fase 9, e o que ela mostrou
+
+O autor entrou no mundo, passeou dezesseis minutos e saiu. A sessão foi
+curta e rendeu mais que várias longas: era a primeira vez que a Fase 9
+rodava fora de teste.
+
+Ela não fabricou nada.
+
+### O que o log disse
+
+```text
+Colony 0c2771b0 stores {OAK_LOG=134, JUNGLE_LOG=14, CHERRY_LOG=49}
+Worker 3f052d86 finished crafting — 0 pieces made, stopped because
+                no logs left in the chest
+```
+
+Dezessete vezes essa segunda linha, uma por fabricante por ciclo. Os
+lenhadores derrubaram o tempo todo — 28 toras cada, árvores de 179
+blocos —, a colônia guardava 134 troncos, e os quatro fabricantes
+encerravam a tarefa dizendo que não havia tronco.
+
+As duas linhas estão a poucos segundos uma da outra e se contradizem.
+É o tipo de contradição que só o log em jogo produz, e que nenhuma das
+duas linhas, sozinha, denunciaria.
+
+### A causa
+
+Não era o executor nem a torneira. Era o desacordo entre os dois sobre
+onde fica o estoque.
+
+```text
+ColonyGoals            a meta da Regra 5 se mede no ResourceTally da
+                       colônia inteira — a soma de todos os baús
+
+ManufacturerWork       convertOne tirava o tronco de
+.convertOne            storage.chestPosition(): o baú do próprio
+                       fabricante
+
+LumberjackWork         deposita em storage.chestPosition(): o baú do
+                       próprio lenhador
+```
+
+Nada nunca põe tronco no baú de um fabricante. A meta olhava a colônia
+e via madeira; o executor olhava um baú e via vazio. A cada ciclo a
+meta abria a tarefa e o executor a encerrava no tick seguinte.
+
+O comentário do próprio `ColonyGoals`, escrito em 08-13, descreve esse
+desfecho com precisão — "abriria tarefa de fabricação a cada ciclo para
+o fabricante encerrá-la no tick seguinte, que é o E1 voltando por outra
+porta" — e põe um guarda contra a causa errada. O guarda é "não pedir
+tábua sem tronco guardado", e ele funcionou: havia tronco guardado. O
+E1 voltou pela porta ao lado.
+
+### A correção
+
+A retirada passou a ser da colônia, percorrendo os baús dos
+trabalhadores dela — que é exatamente o que `BuilderWork.takeMaterial`
+já fazia desde a Fase 10, e cujo comentário dizia, em voz alta, que o
+fabricante era o contrário disso "porque o que ele faz é transformar o
+que já é seu". A intenção era legítima e o mundo não a sustenta.
+
+A tábua volta ao baú **de onde o tronco saiu**, e não ao do fabricante:
+preserva a regra do mesmo baú no mesmo tick, e o lugar aberto pela
+retirada é onde a peça cabe.
+
+O que continua sendo do fabricante é o lugar. Ele anda até o próprio
+baú e trabalha ali, e sem baú próprio não trabalha — o que mantém de pé
+a Regra 4 e a dispensa de quem não consegue baú.
+
+### Por que 76 testes de jogo verdes não pegaram
+
+Todos os quatro testes da Fase 9 punham o tronco no baú do fabricante.
+
+O §11 deste projeto ensina que o teste unitário não alcança a fronteira,
+e a Fase 9 tinha teste de fronteira — quatro. O que faltava era outra
+coisa, e virou linha nova no §11: **o teste precisa modelar o mundo que
+acontece.** A pergunta não é "este código funciona?", é "quem põe esta
+coisa aqui, em jogo?". Ninguém põe tronco no baú de um fabricante.
+
+O teste novo põe o tronco no baú do lenhador, com o baú do fabricante
+vazio, e falhava antes da correção.
+
+### TASK-045, de carona
+
+Com o log já lido e a árvore limpa, fechou-se a dívida que o §8 chamava
+de mais barata da lista: `BlockProtection` passou a consultar
+`BuildingRegistry.isColonyInfrastructure`. São três agora os que não se
+quebram — bloco de vila gerada, bloco do jogador, e bloco de casa que a
+colônia levantou.
+
+O teste novo foi rodado contra a regra desligada, como o §11 manda, e
+falhou sozinho.
+
+### O que a sessão mostrou e não foi corrigido
+
+```text
+E11  rodízio de profissão
+
+     Nove dispensas em dezesseis minutos na colônia 9a5afa23, uma por
+     ciclo, cada uma seguida de "Assigned 1 professions". A colônia
+     dispensa quem não conseguiu baú em favor de quem consegue, e o
+     substituto também não consegue.
+
+     Não travou nada. Custa trabalho por ciclo e trabalhador trocando
+     de função sem que nada tenha mudado no mundo.
+
+     Não foi corrigido porque a correção mexe na Regra 4 — dispensar
+     só faz sentido se o substituto puder de fato conseguir baú. É
+     decisão do autor: TASK-049.
+
+E12  "Equipped N workers" nunca apareceu
+
+     Nem "Named N workers", com 80 trabalhadores em três colônias. As
+     duas linhas rodam na bateria de gametest.
+
+     A explicação provável é que só registram quando o número é maior
+     que zero, e as colônias vieram do save já nomeadas e equipadas.
+     Provável, não verificado. O item C do §8 continua sem ter sido
+     visto em jogo.
+```
+
+### O que ficou por fazer
+
+```text
+1  rodar a sessão de novo
+
+   A correção do E10 muda exatamente o que a sessão não conseguiu
+   ver. Precisa de um construtor na vila, /time set noon, e pedra e
+   vidro nos baús — a colônia produz tábua e nada mais, e a casa pede
+   43 de pedra.
+
+   O jar trocado com o jogo aberto não testa nada.
+
+2  decidir o E11                   TASK-049
+
+3  o que já estava por fazer
+
+   Estender a estrada, os itens A/B/C em jogo, a metade estrutural da
+   Regra 3, o lado do cliente, E3/E4/E5/E8/E9, e a TASK-042.
+```
+
+366 testes unitários e 78 de jogo, verdes.

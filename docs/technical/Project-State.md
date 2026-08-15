@@ -5,9 +5,10 @@
 **Status:** MVP escrito por inteiro — Fases 1 a 8 verificadas em jogo,
 9 a 11 só por teste
 **Version:** 0.1.0
-**Last Update:** 2026-08-14 — as Fases 10 e 11 entraram, a persistência
-da obra fechou, e a fila de prioridade passou a ter um item só que
-bloqueia o MVP: uma sessão de jogo
+**Last Update:** 2026-08-14, à noite — a primeira sessão de jogo com a
+Fase 9 mostrou que o fabricante lia o baú errado (E10), corrigido; a
+TASK-045 fechou junto; e o rodízio de profissão (E11) entrou na fila
+como decisão do autor
 **Repository:** https://github.com/LucasRiboldi/MOD-village-1.21.1
 
 ---
@@ -86,7 +87,14 @@ cortando — 22 e 7 toras.
 A Fase 9 entrou em 2026-08-13: o fabricante tira tronco do baú, faz
 tábua pela receita do próprio jogo e devolve ao mesmo baú. É a primeira
 vez que o mod **diminui** o que o jogador tem — até aqui a colônia só
-somava. Nada disso foi visto em jogo ainda.
+somava.
+
+Em 2026-08-14, à noite, ela rodou em jogo pela primeira vez e **não
+fabricou nada**: dezessete tarefas encerradas por falta de tronco, com
+134 troncos guardados na colônia. O fabricante lia o próprio baú, e
+quem colhe deposita no baú dele — é o E10 do §17, corrigido na mesma
+noite. A tábua saindo do tronco continua sendo coisa que ninguém viu
+acontecer.
 
 Em 2026-08-14 a colônia passou a **construir**. O construtor levanta a
 casa de planície do próprio jogo, um bloco por segundo, tirando cada peça
@@ -484,6 +492,19 @@ Fase 11 — Registro de Infraestrutura     feita junto da TASK-035
 
 Nada das Fases 10 e 11 foi visto em jogo.
 
+Fora de fase — fechado em 2026-08-14, à noite, a partir do log da sessão
+
+  TASK-045  proteção consulta construções   feito
+                                     (BlockProtection.isColonyBuilt),
+                                     coberto por teste de jogo e rodado
+                                     contra a regra desligada
+
+  E10       o fabricante lê os baús da   feito
+            colônia, e não só o seu       (ManufacturerWork.convertOne),
+                                     coberto por teste de jogo. A Fase 9
+                                     continua sem ter sido vista
+                                     funcionando em jogo
+
 Fase 12 — Testes do MVP                  TASK-038 a 040 cobertas por
                                          gametest; TASK-041 e 042
                                          exigem sessão de jogo
@@ -542,9 +563,12 @@ Nenhum pacote vazio: `core/construction` foi preenchido em 2026-08-14.
 
 ```text
 366 testes unitários     lógica pura do Core e serialização NBT
- 76 testes de jogo       a fronteira com o Minecraft, num servidor
+ 78 testes de jogo       a fronteira com o Minecraft, num servidor
                          sem cliente (./gradlew runGametest)
 ```
+
+Dois entraram em 2026-08-14, à noite: o tronco no baú do lenhador
+virando tábua (E10) e a casa da colônia protegida (E7).
 
 Os testes de jogo rodam **concorrentes**: um teste que atravessa ticks
 continua vivo enquanto os batches seguintes começam. Nenhum deles pode
@@ -682,12 +706,6 @@ P3  o lado do cliente
 ## Não precisa de decisão nem de jogo
 
 ```text
-TASK-045  a proteção consultar o registro de construções
-
-          O buraco entre a TASK-037 e a Regra 3: a resposta existe e
-          ninguém a pergunta. É o E7 do §17, e é a mais barata da
-          lista.
-
 TASK-043  estender a estrada
 
           A metade que falta da Regra 6. A intenção já está
@@ -700,6 +718,17 @@ TASK-043  estender a estrada
 ## Precisa de decisão do autor
 
 ```text
+TASK-049  quando dispensar quem não conseguiu baú
+
+          É o E11 do §17, visto em jogo em 2026-08-14: a colônia
+          dispensa o trabalhador sem baú "em favor de quem consegue",
+          e o substituto também não consegue — nove vezes em
+          dezesseis minutos, uma por ciclo.
+
+          A correção mexe na Regra 4, e por isso espera: dispensar só
+          faz sentido se o substituto puder de fato conseguir baú, e
+          decidir isso antes de atribuir é regra, não implementação.
+
 TASK-048  o que uma colônia ABANDONED deixa de fazer
 
           Hoje: nada. Ela é marcada e continua sendo simulada.
@@ -1055,6 +1084,22 @@ testar a partir do estado com que a sessão começa
 ```
 
 ```text
+o teste alcançar a fronteira não basta — ele
+precisa modelar o mundo que acontece
+
+  os quatro testes da Fase 9 punham o tronco no baú
+  do próprio fabricante, que é um estado que o jogo
+  nunca produz sozinho: quem colhe deposita no baú
+  dele. Setenta e seis testes de jogo verdes, e a
+  primeira sessão real rendeu zero tábuas. Ver o E10
+  do §17
+
+  a pergunta que o teste tem de responder não é
+  "este código funciona?", é "quem põe esta coisa
+  aqui, em jogo?"
+```
+
+```text
 usar número de vila de verdade nos testes
 
   a prova geométrica passava com cluster de três camas
@@ -1303,18 +1348,21 @@ Initial-Setup-Checklist.md §6 e Class-Architecture.md
 
 # 14. Onde retomar
 
-## O estado em 2026-08-13, fim da madrugada
+## O estado em 2026-08-14, à noite
 
 ```text
 Fases 1 a 8    completas e verificadas em jogo
-Fase 9         escrita, coberta por teste, nunca vista em jogo
-itens A, B, C  escritos em 2026-08-13, cobertos por teste, nunca
-               vistos em jogo
-Fases 10 e 11  escritas em 2026-08-14, cobertas por teste, nunca
-               vistas em jogo. A colônia constrói
+Fase 9         rodou em jogo e não fabricou nada. A causa foi achada
+               e corrigida na mesma noite — E10 do §17 —, e a
+               correção não foi vista em jogo
+Fases 10 e 11  escritas, cobertas por teste, nunca vistas em jogo.
+               Ficaram atrás da Fase 9: sem tábua não há obra
+itens A, B, C  cobertos por teste; nenhum apareceu no log da sessão
+TASK-045       fechada
+E11            rodízio de profissão, visto em jogo, à espera de
+               decisão do autor
 
-366 testes unitários + 76 de jogo, verdes
-árvore de trabalho limpa, tudo empurrado para origin/main
+366 testes unitários + 78 de jogo, verdes
 ```
 
 ---
@@ -1322,24 +1370,31 @@ Fases 10 e 11  escritas em 2026-08-14, cobertas por teste, nunca
 ## As três coisas que esperam, em ordem
 
 ```text
-1  ver a Fase 9 em jogo          §8, P1c
+1  rodar a sessão de novo         §8, P1
 
-   O fabricante nunca rodou fora de teste. É a dívida mais nova e a
-   mais barata de pagar: uma sessão com /time set noon, olhando a
-   linha "manufacturers:" no log.
+   A correção do E10 muda exatamente o que a sessão de 2026-08-14
+   não conseguiu ver. O que olhar, na ordem em que deve aparecer:
 
-   Na mesma sessão cabem os itens A, B e C — o que cada um pede
-   está no §8.
+     "manufacturers:" com peças subindo, e não zero
+     o tronco sumindo da conta na mesma proporção — quatro por um
+     a linha "planned" e o lote escolhido
+     a casa subindo, 151 blocos, um por segundo
 
-2  ver o que ficou da Fase 8     §8, P1b e P2
+   O que a sessão precisa ter: um construtor na vila, /time set
+   noon, e **pedra e vidro nos baús** — a colônia produz tábua e
+   nada mais, e a casa pede 43 de pedra. Sem isso a obra fica em
+   WAITING_RESOURCES, que é o comportamento certo e não uma casa.
 
-   A metade estrutural da Regra 3 — a peça de vila protegendo — e o
-   lado do cliente: nome, rachadura e braço.
+   O jar precisa ser trocado com o jogo fechado. Ver §11.
 
-3  começar a Fase 10             §7
+2  decidir o E11                  §8, TASK-049
 
-   Três decisões de regra esperam o autor antes da primeira linha:
-   onde a colônia constrói, o que ela constrói, e quando ela para.
+   O rodízio de profissão mexe na Regra 4 e espera o autor.
+
+3  o que ficou da Fase 8          §8, P2 e P3
+
+   A metade estrutural da Regra 3 e o lado do cliente: nome,
+   rachadura e braço.
 ```
 
 ---
@@ -1471,24 +1526,6 @@ que é a resposta certa, mas isso nunca foi visto acontecendo.
 
 ---
 
-### E7 — A proteção não consulta o registro de construções
-
-`BuildingRegistry.isColonyInfrastructure` responde "este bloco é da
-colônia?". `BlockProtection` — a porta única do "posso quebrar isto?" —
-**não pergunta**.
-
-O registro existe desde 2026-08-14, a resposta existe, e o caminho que
-decide o que pode ser quebrado não passa por ela.
-
-Não causa dano hoje: a única coisa que o mod quebra é árvore, e a regra
-da copa já a separa de construção. Passa a causar no dia em que houver
-qualquer outra demolição — e é o tipo de furo que só aparece depois de
-ter sido usado.
-
-Tarefa própria: TASK-045.
-
----
-
 ### E8 — Blocos de duas partes saem soltos
 
 O `Blueprint` guarda o nome do bloco e descarta o estado. Porta e cama
@@ -1527,7 +1564,94 @@ esconderia o sintoma (ver TASK-048).
 
 ---
 
+### E11 — Rodízio de profissão a cada ciclo
+
+Observado na sessão de 2026-08-14, na colônia `9a5afa23`: nove
+dispensas em dezesseis minutos, uma por ciclo, cada uma seguida de
+`Assigned 1 professions`.
+
+```text
+Colony 9a5afa23 dismissed 1 workers (1 of them had no chest and lost
+the job to someone who can get one) — at most 2 of each profession
+Assigned 1 professions in colony 9a5afa23
+```
+
+A colônia dispensa quem não conseguiu baú "em favor de quem consegue",
+atribui a vaga a outro, e o outro também não consegue baú — e no ciclo
+seguinte a mesma troca acontece de novo. O fabricante `fb3640ae`
+apareceu como `no chest` do começo ao fim da sessão, então quem gira é
+a vaga ao lado dele, não ele.
+
+Não trava nada e não perde item. O que custa é trabalho jogado fora por
+ciclo, uma linha de log por ciclo, e trabalhador trocando de função sem
+que nada no mundo tenha mudado — que é a forma do E1 visto de um
+terceiro ângulo.
+
+**A correção mexe na Regra 4**, e por isso não foi feita: dispensar
+quem não tem baú só faz sentido se o substituto puder conseguir um, e
+saber isso antes de atribuir é decisão de regra, não de implementação.
+Tarefa própria: TASK-049, em §8, sob decisão do autor.
+
+---
+
+### E12 — `Equipped N workers` nunca apareceu em jogo
+
+A linha existe e roda na bateria de gametest (`Equipped 2 workers in
+colony ...`). Na sessão de 2026-08-14, com 80 trabalhadores em três
+colônias, ela não apareceu nenhuma vez — nem `Named N workers`.
+
+A explicação provável é que as duas só registram quando o número é
+maior que zero, e as três colônias vieram do save já nomeadas e já
+equipadas de sessões anteriores. **Provável, não verificado.**
+
+Fica registrado porque é exatamente o item C do §8 — a ferramenta
+inicial — que continua sem ter sido visto em jogo, e porque a próxima
+sessão pode confirmá-lo de graça: basta um aldeão ganhar profissão
+nova.
+
+---
+
 ## Fechados, mantidos por rastreabilidade
+
+```text
+E10 o fabricante lia o baú errado           corrigido em 2026-08-14
+
+    A Fase 9 rodou em jogo pela primeira vez e não fabricou nada:
+    dezessete tarefas encerradas com "no logs left in the chest",
+    zero tábuas, com 134 troncos guardados na colônia e dois
+    lenhadores derrubando o tempo todo.
+
+    Nem o executor nem a torneira estavam errados sozinhos — eles
+    discordavam sobre onde fica o estoque. ColonyGoals mede a meta
+    da Regra 5 no ResourceTally da colônia inteira; convertOne
+    tirava o tronco do baú do próprio fabricante. Como quem colhe
+    deposita no baú dele, o baú de um fabricante nunca recebe
+    tronco: a meta abria tarefa por ciclo para o executor encerrá-la
+    no tick seguinte — o E1 pela porta que o comentário do
+    ColonyGoals previu e não fechou.
+
+    A retirada passou a ser da colônia, como já era a do construtor,
+    e a tábua volta ao baú de onde o tronco saiu.
+
+    Por que 76 testes verdes não pegaram: todos punham o tronco no
+    baú do fabricante, que é um estado que o jogo nunca produz
+    sozinho. A lição do §11 ganha uma linha — não basta o teste
+    alcançar a fronteira, ele precisa modelar o mundo que acontece.
+```
+
+```text
+E7  a proteção não consultava as construções  corrigido em 2026-08-14
+
+    BlockProtection passou a perguntar a
+    BuildingRegistry.isColonyInfrastructure. São três agora os que
+    não se quebram: bloco de vila gerada, bloco do jogador, e bloco
+    de casa que a colônia levantou. TASK-045, fechada.
+
+    Não corrigiu dano observado — o mod só quebra árvore, e a regra
+    da copa já a separa de construção. Fechou o furo antes da
+    primeira demolição de outra natureza.
+```
+
 
 ```text
 E1  a fila de tarefas não esvazia          corrigido em 2026-08-11
