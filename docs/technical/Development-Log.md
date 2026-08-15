@@ -6293,3 +6293,99 @@ Fica como E13 do §17, e a lição é mais simples que a do E10: o log diz
 qual versão está rodando, na linha de carregamento, e esse é o primeiro
 lugar a olhar — antes de concluir qualquer coisa a partir do que uma
 fase deixou de dizer.
+
+---
+
+## 2026-08-14, 23:41 — a Fase 9 em jogo, e a Fase 10 muda
+
+Nove minutos, jar certo. A primeira linha confirmou o que o E13 mandou
+conferir antes de qualquer coisa:
+
+```text
+Loaded 3 colonies with 80 workers, 0 buildings and 0 projects to resume
+```
+
+### A Fase 9 está verificada em jogo
+
+```text
+23:41:46  stores {OAK_LOG=70, JUNGLE_LOG=24, ACACIA_LOG=18,
+                  CHERRY_LOG=86, OAK_PLANKS=256}
+23:44:46  stores {OAK_LOG=70, JUNGLE_LOG=24, ACACIA_LOG=22,
+                  CHERRY_LOG=86, OAK_PLANKS=256, ACACIA_PLANKS=20}
+```
+
+Vinte tábuas de acácia onde não havia nenhuma. `manufacturers:` com
+`4 pieces so far` e `1 pieces so far`, e **nenhuma** linha
+`finished crafting — 0 pieces made` na sessão inteira, contra dezessete
+na anterior.
+
+O E10 fecha do lado que importa: o defeito era real, a correção pegou,
+e o quinto passo do MVP saiu de "coberto por teste" para "verificado em
+jogo".
+
+Os fabricantes da colônia `9a5afa23` fizeram zero peças, com progresso
+parado em `12/20` e `0/20`. A sessão virou `off hours` às 23:48 e o
+trabalho congelou onde estava, que é o comportamento certo — a sessão
+foi curta demais para eles.
+
+### O item C também
+
+```text
+Equipped 4 workers in colony 9a5afa23
+Equipped 4 workers in colony 0c2771b0
+```
+
+O E12 fecha: as linhas nunca tinham aparecido porque o código não estava
+no jar velho. A ferramenta inicial está verificada em jogo.
+
+### A Fase 10 não abriu obra, e o log não disse por quê
+
+Nenhuma linha. Nem obra, nem recusa. Três colônias, quatro construtores
+com baú, 256 tábuas guardadas, e silêncio.
+
+`ConstructionPlanner.plan` tinha cinco saídas silenciosas, e de fora as
+cinco eram idênticas. Dá para eliminar duas sem sessão nova — os
+construtores existem, com `claimed the chest` no mesmo log, e a leitura
+da casa de planície tem gametest verde desde a TASK-031. Sobra o lote
+como suspeito provável, e ele tem motivo documentado no §7: a vila só
+constrói em beira de rua que já existe.
+
+**Provável, não verificado**, e é exatamente a conclusão que este
+projeto não aceita sem a linha que a prove. Então a linha foi escrita,
+em vez de a suspeita ser adotada.
+
+Cada recusa passa a dizer qual é. A do lote diz centro, raio e tamanho
+exigido — o bastante para ser investigada sem uma terceira sessão. E o
+motivo só é registrado quando muda: uma linha por colônia por ciclo
+seria o E1 por uma terceira porta.
+
+Entra como E14, aberto.
+
+### Um WARN que não estava lá antes
+
+```text
+Colony cycle took 86 ms — longer than a server tick
+(3 colonies, 0 pending chunks)
+```
+
+Uma vez, no primeiro ciclo depois de carregar — que é o ciclo que lê
+todos os baús e retoma tudo. Não se repetiu nos oito ciclos seguintes.
+Fica anotado sem investigação e sem causa inventada: um pico de
+carregamento é a explicação óbvia, e óbvio não é verificado.
+
+### O que ficou por fazer
+
+```text
+1  ler a linha nova da Fase 10     E14
+
+   Uma sessão de dois minutos responde. O que olhar é
+   "planned no building — ...".
+
+2  decidir o E11                   TASK-049
+
+3  o resto                         estender a estrada, Regra 3
+                                   estrutural, lado do cliente,
+                                   E3/E4/E5/E8/E9, TASK-042
+```
+
+366 testes unitários e 78 de jogo, verdes.

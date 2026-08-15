@@ -92,9 +92,18 @@ somava.
 Em 2026-08-14, à noite, ela rodou em jogo pela primeira vez e **não
 fabricou nada**: dezessete tarefas encerradas por falta de tronco, com
 134 troncos guardados na colônia. O fabricante lia o próprio baú, e
-quem colhe deposita no baú dele — é o E10 do §17, corrigido na mesma
-noite. A tábua saindo do tronco continua sendo coisa que ninguém viu
-acontecer.
+quem colhe deposita no baú dele — é o E10 do §17.
+
+Corrigido e **verificado em jogo na mesma noite**, às 23:41:
+
+```text
+Colony 0c2771b0 stores {... ACACIA_LOG=22, OAK_PLANKS=256,
+                        ACACIA_PLANKS=20} in 5 of 8 chests read
+```
+
+Vinte tábuas de acácia onde não havia nenhuma três minutos antes,
+`manufacturers:` com peças subindo, e nenhuma tarefa encerrada por
+falta de tronco. **A Fase 9 está verificada em jogo.**
 
 Em 2026-08-14 a colônia passou a **construir**. O construtor levanta a
 casa de planície do próprio jogo, um bloco por segundo, tirando cada peça
@@ -342,18 +351,21 @@ Coletar recursos          FEITO, verificado em jogo
 
 ↓
 
-Produzir materiais        FEITO, não verificado em jogo
+Produzir materiais        FEITO, verificado em jogo em 2026-08-14
 
 ↓
 
 Construir expansão        FEITO, não verificado em jogo
 ```
 
-**Os seis passos do MVP estão escritos.** Quatro estão verificados em
-jogo; os dois últimos — produzir e construir — só por teste.
+**Os seis passos do MVP estão escritos.** Cinco estão verificados em
+jogo. Falta um: a casa subindo.
 
-O que separa o MVP de concluído não é mais código: é uma sessão de jogo
-que veja a tábua sair do tronco e a casa subir. Ver §8.
+E o que separa esse último de verificado não é mais "rodar uma sessão".
+A sessão de 23:41 rodou o jar certo, com construtor na vila e tábua nos
+baús, e a Fase 10 não abriu obra nenhuma. Por qual dos cinco motivos,
+ninguém sabe — nenhum deles escrevia linha. A instrumentação entrou na
+mesma noite, e é ela que a próxima sessão vai ler. Ver §8, P1.
 
 ---
 
@@ -1594,6 +1606,36 @@ Tarefa própria: TASK-049, em §8, sob decisão do autor.
 
 ---
 
+### E14 — A Fase 10 não abre obra, e não se sabe por quê
+
+Sessão de 2026-08-14, 23:41, com o jar certo — `Loaded 3 colonies with
+80 workers, 0 buildings and 0 projects to resume`. Nove minutos, três
+colônias, quatro construtores com baú, 256 tábuas de carvalho guardadas.
+
+Nenhuma linha da Fase 10. Nem obra, nem recusa, nem canteiro.
+
+`ConstructionPlanner.plan` roda todo ciclo e tinha **cinco** saídas
+silenciosas: obra já aberta, sem construtor, o jogo sem a casa, sem
+lote, e lote sobre construção da colônia. Do lado de fora as cinco
+davam o mesmo silêncio.
+
+O que já se sabe eliminar sem sessão nova: construtor existe — quatro
+`BUILDER ... claimed the chest` no mesmo log —, e a leitura da casa de
+planície tem gametest verde desde a TASK-031.
+
+**O suspeito provável é o lote**, e ele tem motivo documentado: o §7
+registra que a vila só constrói em beira de rua que já existe. Provável,
+não verificado — e é exatamente o tipo de conclusão que este projeto não
+aceita sem a linha que a prove.
+
+Instrumentado em 2026-08-14, à noite: cada recusa passa a dizer qual é,
+e a do lote diz centro, raio e tamanho exigido. Registra só quando o
+motivo muda, para não virar ruído por ciclo.
+
+Fica aberto até a próxima sessão dizer qual dos cinco é.
+
+---
+
 ### E13 — A sessão rodou um jar velho, e ninguém percebeu na hora
 
 O jar em `%APPDATA%/.minecraft/mods/` na sessão de 2026-08-14 era de
@@ -1640,10 +1682,20 @@ A linha existe e roda na bateria de gametest (`Equipped 2 workers in
 colony ...`). Na sessão de 2026-08-14, com 80 trabalhadores em três
 colônias, ela não apareceu nenhuma vez — nem `Named N workers`.
 
-A explicação é o E13: o jar daquela sessão era de 08-13, 08:55, e a
+A explicação era o E13: o jar daquela sessão era de 08-13, 08:55, e a
 ferramenta inicial entrou mais tarde naquele mesmo dia. O código não
-estava lá. `Named` continua sem explicação — provavelmente as colônias
-vieram do save já nomeadas, e isso não foi verificado.
+estava lá.
+
+**Fechado em 2026-08-14, 23:41**, com o jar certo:
+
+```text
+Equipped 4 workers in colony 9a5afa23
+Equipped 4 workers in colony 0c2771b0
+```
+
+O item C do §8 está verificado em jogo. `Named` continua sem aparecer,
+e a explicação provável é que as colônias vieram do save já nomeadas —
+provável, não verificado, e sem consequência conhecida.
 
 Fica registrado porque é exatamente o item C do §8 — a ferramenta
 inicial — que continua sem ter sido visto em jogo, e porque a próxima
