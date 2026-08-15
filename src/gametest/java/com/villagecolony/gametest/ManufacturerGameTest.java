@@ -41,6 +41,15 @@ public class ManufacturerGameTest implements FabricGameTest {
     private static final BlockPos CHEST = new BlockPos(2, 2, 2);
     private static final BlockPos STAND = new BlockPos(3, 2, 2);
 
+    /**
+     * O baú de outro trabalhador da mesma colônia.
+     *
+     * <p>A dois blocos do baú do fabricante de propósito: encostados, o
+     * Minecraft os juntaria num baú duplo, e a prova de que o material veio
+     * de outro lugar morreria junto.
+     */
+    private static final BlockPos OTHER_CHEST = new BlockPos(4, 2, 2);
+
     /** Colônia, fabricante, baú e tarefa reservada. */
     private static Fixture setUp(TestContext context, int logs) {
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
@@ -151,6 +160,63 @@ public class ManufacturerGameTest implements FabricGameTest {
             context.assertTrue(
                     planksIn(context, fixture.chest) > 0,
                     "e no fim nenhuma tábua apareceu — o teste não provou nada");
+
+            fixture.owned.cleanUp();
+
+            context.complete();
+        });
+    }
+
+    /**
+     * O tronco está no baú do lenhador, e a tábua sai assim mesmo.
+     *
+     * <p>É o mundo que a sessão de 2026-08-14 mostrou, e que nenhum teste
+     * desta classe modelava: quem colhe deposita no <b>próprio</b> baú, e o
+     * fabricante tem um baú só dele — vazio. Os outros testes desta classe
+     * põem o tronco no baú do fabricante, que é um estado que o jogo nunca
+     * produz sozinho.
+     *
+     * <p>Com o tronco do lado de lá, o fabricante encerrava a tarefa a cada
+     * ciclo dizendo "no logs left in the chest" — dezessete vezes em
+     * dezesseis minutos, zero tábuas, com 134 troncos guardados na colônia.
+     * A meta da Regra 5 se mede na colônia inteira; o executor media um baú
+     * só, e os dois discordavam sobre onde estava o estoque.
+     *
+     * <p>A tábua volta para o baú de onde o tronco saiu, que é o que
+     * preserva a regra do mesmo baú no mesmo tick.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_colony_wide",
+            tickLimit = 300)
+    public void logsInAnotherWorkersChestStillBecomePlanks(TestContext context) {
+        Fixture fixture = setUp(context, 0);
+
+        context.setBlockState(OTHER_CHEST, Blocks.CHEST.getDefaultState());
+
+        ColonyPos lumberjackChest =
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(OTHER_CHEST));
+
+        ChestDepositor.deposit(context.getWorld(), lumberjackChest, Items.OAK_LOG, 4);
+
+        UUID lumberjack = UUID.randomUUID();
+
+        VillageColonyMod.WORKERS.register(lumberjack, fixture.colony.id())
+                .assign(ProfessionType.LUMBERJACK);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(lumberjack, lumberjackChest));
+
+        fixture.owned.owning(lumberjack);
+
+        context.runAtTick(90, () -> {
+            int planks = planksIn(context, lumberjackChest);
+            int logs = logsIn(context, lumberjackChest);
+
+            context.assertTrue(
+                    planks > 0,
+                    "o fabricante não fez tábua nenhuma com o tronco do lenhador");
+
+            context.assertTrue(
+                    logs < 4,
+                    "nenhum tronco foi consumido do baú do lenhador: ainda são " + logs);
 
             fixture.owned.cleanUp();
 

@@ -8,6 +8,7 @@ import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
+import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
@@ -30,9 +31,15 @@ import java.util.UUID;
 /**
  * O fabricante trabalhando — Fase 9, TASK-027 a TASK-029.
  *
- * <p>Ele tira tronco do baú, transforma em tábua pela receita do próprio
- * jogo, e devolve a tábua ao mesmo baú. É a primeira profissão que
- * <b>consome</b>: até aqui a colônia só somava.
+ * <p>Ele tira tronco de um baú da colônia, transforma em tábua pela
+ * receita do próprio jogo, e devolve a tábua ao mesmo baú de onde o tronco
+ * saiu. É a primeira profissão que <b>consome</b>: até aqui a colônia só
+ * somava.
+ *
+ * <p>O material é da colônia, não do fabricante — ver {@link #convertOne}
+ * para o que a sessão de 2026-08-14 mostrou sobre isso. O que continua
+ * sendo dele é o <b>lugar</b>: ele anda até o próprio baú e trabalha ali,
+ * e sem baú próprio não trabalha.
  *
  * <p>Tem a forma do lenhador — despacho no ciclo longo, trabalho um passo
  * por tick — e por bons motivos: o custo por tick tem de continuar
@@ -215,24 +222,58 @@ public final class ManufacturerWork {
 
         job.progress = 0;
 
-        return convertOne(world, job, storage.chestPosition(), villager.getUuid());
+        return convertOne(world, job, villager.getUuid());
     }
 
     /**
-     * Tira um tronco, faz a tábua, devolve ao baú.
+     * Tira um tronco dos baús da colônia, faz a tábua, devolve ao baú de
+     * onde o tronco saiu.
      *
      * <p>Nesta ordem e no mesmo tick. A conferência de espaço vem antes
      * da retirada: tirar o tronco e descobrir depois que a tábua não cabe
      * seria destruir o tronco do jogador, que é exatamente o defeito que
      * o E3 registra do outro lado.
+     *
+     * <p><b>De qualquer baú da colônia, e não só do próprio.</b> Até
+     * 2026-08-14 era só do próprio, por uma intenção que o mundo não
+     * sustenta: quem colhe deposita no baú <em>dele</em>, e nada nunca põe
+     * tronco no baú de um fabricante. A sessão daquele dia mostrou o
+     * resultado — dezessete tarefas encerradas com "no logs left in the
+     * chest", zero tábuas, e 134 troncos guardados na colônia. A meta da
+     * Regra 5 se mede na colônia inteira ({@code ColonyGoals} soma o
+     * {@code ResourceTally} dela); o executor media um baú só, e a
+     * discordância entre os dois é que abria tarefa por ciclo para
+     * encerrá-la no tick seguinte.
+     *
+     * <p>A tábua volta para o mesmo baú de onde o tronco veio, e não para
+     * o do fabricante: é o que preserva a regra do mesmo baú no mesmo
+     * tick, e o que garante que o lugar aberto pela retirada é o lugar
+     * onde a peça cabe.
      */
-    private static boolean convertOne(
-            ServerWorld world, Job job, ColonyPos chest, UUID workerId) {
+    private static boolean convertOne(ServerWorld world, Job job, UUID workerId) {
+        ColonyPos chest = null;
+        List<ItemStack> logs = List.of();
 
-        List<ItemStack> logs = ChestWithdrawer.withdrawGroup(world, chest, ResourceGroup.WOOD, 1);
+        for (Worker worker : VillageColonyMod.WORKERS.ofColony(job.task.colonyId())) {
+            Optional<WorkerStorage> owned = VillageColonyMod.STORAGES.of(worker.villagerId());
+
+            if (owned.isEmpty()) {
+                continue;
+            }
+
+            ColonyPos candidate = owned.get().chestPosition();
+
+            logs = ChestWithdrawer.withdrawGroup(world, candidate, ResourceGroup.WOOD, 1);
+
+            if (!logs.isEmpty()) {
+                chest = candidate;
+
+                break;
+            }
+        }
 
         if (logs.isEmpty()) {
-            finish(job, workerId, "no logs left in the chest");
+            finish(job, workerId, "no logs left in the colony chests");
 
             return false;
         }

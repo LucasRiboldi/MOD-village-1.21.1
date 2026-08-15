@@ -281,8 +281,13 @@ public final class BuilderWork {
      * Tira uma peça de material dos baús da colônia.
      *
      * <p>De qualquer baú dela, e não só do baú do construtor — a obra é
-     * da colônia, não dele. É o contrário do fabricante, que trabalha o
-     * próprio estoque porque o que ele faz é transformar o que já é seu.
+     * da colônia, não dele.
+     *
+     * <p>Era o contrário do fabricante, que tirava só do próprio baú. Em
+     * 2026-08-14 deixou de ser: aquela intenção não sobrevivia ao mundo,
+     * onde quem colhe deposita no baú dele e nada nunca enche o baú de um
+     * fabricante. As duas profissões que consomem material da colônia
+     * passaram a lê-lo do mesmo lugar.
      *
      * @return false quando não há esse material em baú nenhum
      */
