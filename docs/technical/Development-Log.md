@@ -7280,3 +7280,83 @@ sem decisão — fica registrado como pergunta ao autor, não como defeito.
 instrumentação do estado da tarefa. Cabe extrair os três métodos de log
 para uma classe irmã; não foi feito aqui para não misturar refatoração
 com correção.
+
+---
+
+## 2026-08-15, 12:45 — o E13 de novo, e duas conclusões minhas que caem
+
+A entrada anterior, escrita há uma hora, tem duas conclusões erradas. A
+causa das duas é a mesma, e é o E13: **as duas sessões de jogo de hoje
+rodaram o jar de 01:09.**
+
+Verificado por dentro do jar instalado, não por dedução:
+
+```text
+jar em mods/  01:09     jar recém-compilado  12:15
+  "blocks left"          ✓      "blocks left"          ✓
+  "assigned {} tasks"    ✓      "opened a build task"  ✓
+  "opened a build task"  —      "made no progress"     ✓
+  "made no progress"     —      "needsOwnStorage"      ✓
+```
+
+O jar de 01:09 é anterior a `adf611e` (10:11), que criou o
+`ensureTask`, e anterior ao guarda de travamento do lenhador.
+
+### O que cai
+
+**"O E14 é regressão e a obra morre na guarda de tarefa já existente."**
+Não. `ConstructionPlanner.ensureTask` não está no jar — nenhuma linha de
+código cria a tarefa de obra ali. `opened a build task` nunca apareceu
+porque não havia o que a imprimisse. A dedução — estado `BUILDING`, 151
+blocos, logo sobra a guarda — estava certa em cada passo e partia de uma
+premissa falsa: a de que o método existia.
+
+**"`giveUp` deveria ter disparado em 2.400 ticks e não disparou."**
+Também não. `STALL_LIMIT` e `giveUp` não estão no jar. As três hipóteses
+levantadas — limite alto demais, contador que não sobe, alguém que o
+zera — eram todas sobre código que não estava rodando. A quarta, que não
+foi considerada, era a certa.
+
+O que fica de pé da entrada anterior: a correção do baú (E16), que nasceu
+de dezenas de linhas `has no chest` e não de dedução, e as duas medidas
+de instrumentação, que continuam fazendo falta.
+
+**O sintoma que denunciava isso estava na entrada anterior e eu o li sem
+ver.** Ela já dizia, sobre a sessão da manhã: "o jar daquela sessão era
+anterior às correções do dia". O log da tarde dizia o mesmo em silêncio —
+`builders:` sem o sufixo novo, `assigned` uma vez em vez de a cada ciclo.
+É literalmente o hábito que o D7 pede: conferir o que está carregado
+antes de concluir do silêncio de uma fase.
+
+### O que a sessão de 12:21–12:45 mostra de verdade
+
+23 minutos, sem exceção. Ainda no jar velho, então não testa nada do que
+entrou hoje — mas testa o estado do mundo, e ele melhorou:
+
+```text
+ 8 árvores derrubadas
+63 toras (48 + 15)
+ 0 linhas "has no chest"
+ 0 blocos construídos      (esperado: sem ensureTask no jar)
+ 0 linhas de fabricante
+```
+
+Os oito baús já estavam reivindicados no carregamento, vindos do save da
+sessão anterior. **Com baú, a cadeia do lenhador funciona**: oito árvores
+em 23 minutos, sem travar, sem devolver tarefa. É evidência a favor da
+correção do E16 — a falta de baú era o gargalo daquela cadeia, e não uma
+segunda causa escondida.
+
+A colônia moveu o centro de 823 para 821 com 7 camas: dois blocos, com
+mais camas do que antes. Nada parecido com o salto de 6 para 3 camas da
+sessão da manhã. O G4 continua aberto, mas não se repetiu.
+
+`Not a tree — N logs without a living canopy, skipping it from now on`
+apareceu quatro vezes: a regra da copa e o `REJECTED` trabalhando.
+
+### O jar novo foi instalado
+
+`build/libs/village-colony-0.1.0.jar` de 12:15 copiado para `mods/`; o
+antigo guardado como `village-colony-0.1.0.jar.bak-0109`. A próxima
+sessão é a primeira que roda o `ensureTask`, o guarda de travamento, a
+correção do baú e as duas instrumentações.

@@ -121,10 +121,16 @@ passou: 88 ciclos com `0 working` e `151 blocks left`, sem uma linha de
 44 minutos em jogo, sem exceção nem crash. 61 toras, 0 tábuas, 0 blocos.
 Detalhe e evidência no Development-Log, entrada de 2026-08-15 tarde.
 
+**Corrigido às 12:45:** G1 e G2 foram escritos a partir de duas sessões
+que rodaram o jar de 01:09 — anterior ao `ensureTask` e ao guarda de
+travamento. Verificado por dentro do jar. Nenhum dos dois é o defeito
+que a linha original descrevia; os dois continuam **não verificados em
+jogo**, que é coisa diferente. Ver Development-Log, entrada das 12:45.
+
 | # | O que | Estado |
 |---|---|---|
-| G1 | **E14 reaberto — a obra não abre tarefa em jogo.** `ensureTask` sai pela guarda de tarefa `BUILD` já existente; `BuilderWork` descarta essa mesma tarefa por não ter executor | 🔒 bloqueia o MVP. Instrumentado em 08-15: o relatório do construtor agora diz o estado da tarefa. **Uma sessão de 5 min fecha o diagnóstico** |
-| G2 | **O lenhador para a 7 blocos da árvore e `giveUp` nunca dispara** — 16 min congelado, `STALL_LIMIT` de 2.400 ticks nunca alcançado | 🔨 Instrumentado em 08-15: `stall N/2400` na linha do lenhador. Três hipóteses, o número separa as três |
+| G1 | **A obra nunca foi vista abrindo tarefa em jogo.** `ensureTask` entrou às 10:11 de 08-15 e nenhuma sessão o executou ainda | 🔒 bloqueia o MVP. **Não é regressão** — é código nunca exercitado. Jar novo instalado às 12:45; a próxima sessão é a primeira que o roda |
+| G2 | **O guarda de travamento do lenhador nunca rodou em jogo.** Os 16 min congelados de 11:37 foram num jar sem `STALL_LIMIT` | 🔨 Verificar antes de investigar. Se travar de novo com o jar novo, `stall N/2400` na linha diz qual das três hipóteses vale |
 | G3 | **O fabricante não fabrica** — `0/20 ticks` parado, some do relatório depois das 11:22 | Não investigado. A correção do baú (E16) pode ter removido a causa; verificar antes de investigar |
 | G4 | **A colônia move o centro recusando encolher** — saiu de âncora de 6 camas para uma de 3 com `view not provably complete`, e deixou a obra 65 blocos atrás | 👤 espera decisão. É comportamento da ADR-003, não defeito declarado |
 | G5 | **`BuilderWork.java` com 509 linhas** — passou do limite de 500 ao receber a instrumentação do G1 | 🔨 extrair os métodos de log para uma classe irmã |
