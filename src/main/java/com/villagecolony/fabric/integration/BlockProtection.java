@@ -1,5 +1,7 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.VillageColonyMod;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.LeavesBlock;
 import net.minecraft.registry.tag.StructureTags;
@@ -38,9 +40,13 @@ import net.minecraft.world.gen.StructureAccessor;
  * trabalhador só quebra o que ele consegue provar ser floresta. Ver
  * {@code TreeHarvester}.
  *
- * <p>Esta classe é a porta única para as fases seguintes. Fabricar e
- * construir vão precisar tocar no mundo, e é aqui que a pergunta "posso
- * quebrar isto?" tem de ser feita — uma vez, num lugar só.
+ * <p>Esta classe é a porta única. Fabricar e construir tocam no mundo, e é
+ * aqui que a pergunta "posso quebrar isto?" é feita — uma vez, num lugar
+ * só.
+ *
+ * <p>São três os que não se quebram: o bloco da vila que o jogo gerou, o
+ * bloco que o jogador pôs, e — desde 2026-08-14 — o bloco de uma casa que
+ * a própria colônia levantou. Ver {@link #isColonyBuilt}.
  */
 public final class BlockProtection {
 
@@ -58,7 +64,33 @@ public final class BlockProtection {
      *     uma segunda leitura e mantém a regra de ADR-002 num lugar só
      */
     public static boolean mayBreak(ServerWorld world, BlockPos pos, BlockState state) {
-        return !isPlayerPlaced(state) && !isVillageOriginal(world, pos);
+        return !isPlayerPlaced(state)
+                && !isColonyBuilt(pos)
+                && !isVillageOriginal(world, pos);
+    }
+
+    /**
+     * Se este bloco é de uma casa que a própria colônia levantou.
+     *
+     * <p>A terceira metade da regra, e a que o autor não precisou
+     * enunciar: a vila original é do jogo, o bloco do jogador é dele, e
+     * este é da colônia. Nenhum dos três se derruba.
+     *
+     * <p>Ligada em 2026-08-14 — o E7. A resposta existia desde que a Fase
+     * 11 entrou, e esta porta não a perguntava. Não causava dano enquanto
+     * a única coisa que o mod quebrava era árvore, porque a regra da copa
+     * já separa tronco de construção; passaria a causar na primeira
+     * demolição de qualquer outra natureza — e é o tipo de furo que só
+     * aparece depois de ter sido usado.
+     *
+     * <p>Pergunta pela caixa da construção, e não por bloco colocado: é o
+     * que {@code Building} guarda, e é de propósito. Um bloco que o
+     * construtor pulou continua sendo parte da casa, senão a casa teria
+     * buracos por onde uma demolição passaria.
+     */
+    public static boolean isColonyBuilt(BlockPos pos) {
+        return VillageColonyMod.BUILDINGS.isColonyInfrastructure(
+                MinecraftTypeAdapter.toColonyPos(pos));
     }
 
     /**
