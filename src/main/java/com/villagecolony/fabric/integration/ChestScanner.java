@@ -3,6 +3,7 @@ package com.villagecolony.fabric.integration;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.storage.service.StorageRegistry;
+import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
@@ -121,9 +122,39 @@ public final class ChestScanner {
     public static boolean hasFreeChest(
             ServerWorld world, VillagerEntity villager, StorageRegistry storages) {
 
+        return freeChestFor(world, villager, storages).isPresent();
+    }
+
+    /**
+     * <b>Qual</b> baú este aldeão conseguiria, sem reivindicá-lo.
+     *
+     * <p>Existe porque contar candidatos não é contar baús, e a diferença
+     * é o E11 do §17. Até 2026-08-15 a colônia dispensava um trabalhador
+     * sem baú para cada <em>candidato</em> que respondesse sim a
+     * {@link #hasFreeChest} — e dois aldeões do mesmo cômodo respondem
+     * sim olhando para o <b>mesmo</b> baú.
+     *
+     * <p>Três candidatos enxergando um baú só rendiam três dispensas,
+     * uma reivindicação e dois trabalhadores novos sem baú. No ciclo
+     * seguinte, a mesma troca — nove vezes em dezesseis minutos na vila
+     * {@code 9a5afa23}, e 689 vezes na sessão de cinco horas e quarenta
+     * de 2026-08-15.
+     *
+     * <p>Com a posição em mãos, quem chama conta <b>baús distintos</b>, e
+     * a decisão do autor de 2026-08-15 passa a valer ao pé da letra: só
+     * se dispensa quem não tem baú quando existe baú livre de verdade
+     * para o substituto.
+     *
+     * <p>Continua sendo preferência e não promessa — o baú é reivindicado
+     * depois, e o mundo pode mudar entre uma coisa e outra. O que deixa
+     * de acontecer é a colônia contar o mesmo baú duas vezes.
+     */
+    public static Optional<ColonyPos> freeChestFor(
+            ServerWorld world, VillagerEntity villager, StorageRegistry storages) {
+
         return bedOf(world, villager, storages)
                 .flatMap(home -> findFreeChest(world, home.pos(), storages))
-                .isPresent();
+                .map(MinecraftTypeAdapter::toColonyPos);
     }
 
     /**

@@ -541,7 +541,12 @@ public final class VillageDetectionHandler {
         // E é aqui que o trabalhador sem baú perde a vaga para quem
         // consegue um — a atribuição não o alcança, porque ele já tem
         // função.
-        dismissExtraWorkers(world, colony, result.equippable().size());
+        // Baús distintos, e não candidatos: dois aldeões do mesmo cômodo
+        // enxergam o mesmo baú, e dispensar um trabalhador por candidato
+        // trocava a vaga por alguém que também ficaria sem. É a decisão do
+        // autor de 2026-08-15 — só se dispensa quando há baú livre de
+        // verdade para o substituto. Ver o E11 do §17.
+        dismissExtraWorkers(world, colony, result.freeChests().size());
 
         // A vaga vai primeiro para quem consegue baú: sem isso ela podia
         // ir para uma cama que não alcança baú nenhum, e o trabalhador

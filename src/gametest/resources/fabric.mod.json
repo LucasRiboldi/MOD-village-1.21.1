@@ -22,7 +22,8 @@
       "com.villagecolony.gametest.BlueprintReaderGameTest",
       "com.villagecolony.gametest.BuildSiteGameTest",
       "com.villagecolony.gametest.BuilderGameTest",
-      "com.villagecolony.gametest.ConstructionResumeGameTest"
+      "com.villagecolony.gametest.ConstructionResumeGameTest",
+      "com.villagecolony.gametest.FreeChestCountGameTest"
     ]
   },
   "depends": {

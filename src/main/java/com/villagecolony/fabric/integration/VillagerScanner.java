@@ -5,6 +5,7 @@ import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.storage.service.StorageRegistry;
+import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
 import com.villagecolony.core.worker.service.WorkerService;
@@ -71,6 +72,12 @@ public final class VillagerScanner {
         Set<UUID> employable = new HashSet<>();
         Set<UUID> equippable = new HashSet<>();
 
+        // Os baús distintos que os candidatos conseguiriam, e não os
+        // candidatos. Dois aldeões do mesmo cômodo enxergam o MESMO baú,
+        // e contá-los como dois é o E11 do §17 — ver
+        // ChestScanner.freeChestFor.
+        Set<ColonyPos> freeChests = new HashSet<>();
+
         // Perguntar quem consegue baú custa uma varredura por candidato,
         // e só serve quando a resposta muda alguma coisa: quando há vaga
         // aberta, ou quando alguém está ocupando uma sem baú — e nesse
@@ -89,10 +96,12 @@ public final class VillagerScanner {
             if (canWork(villager)) {
                 employable.add(villager.getUuid());
 
-                if (hiring && !isEmployed(workers, villager.getUuid())
-                        && ChestScanner.hasFreeChest(world, villager, storages)) {
-
-                    equippable.add(villager.getUuid());
+                if (hiring && !isEmployed(workers, villager.getUuid())) {
+                    ChestScanner.freeChestFor(world, villager, storages)
+                            .ifPresent(chest -> {
+                                equippable.add(villager.getUuid());
+                                freeChests.add(chest);
+                            });
                 }
             }
 
@@ -121,7 +130,11 @@ public final class VillagerScanner {
         }
 
         return new ScanResult(
-                registered, storagesFound, Set.copyOf(employable), Set.copyOf(equippable));
+                registered,
+                storagesFound,
+                Set.copyOf(employable),
+                Set.copyOf(equippable),
+                Set.copyOf(freeChests));
     }
 
     /**
@@ -218,11 +231,19 @@ public final class VillagerScanner {
      * colônia tem vaga aberta — perguntar custa uma varredura de baús por
      * candidato, e depois dos primeiros ciclos não há vaga nenhuma.
      */
+    /**
+     * @param freeChests os baús <b>distintos</b> que os {@code equippable}
+     *     conseguiriam. Menor que {@code equippable} sempre que dois
+     *     candidatos olharem para o mesmo baú, que é o caso comum de dois
+     *     aldeões do mesmo cômodo — e é o número que decide quantas
+     *     dispensas cabem. Ver o E11 do §17
+     */
     public record ScanResult(
             int registeredWorkers,
             int registeredStorages,
             Set<UUID> employable,
-            Set<UUID> equippable) {
+            Set<UUID> equippable,
+            Set<ColonyPos> freeChests) {
 
         public boolean changedNothing() {
             return registeredWorkers == 0 && registeredStorages == 0;
