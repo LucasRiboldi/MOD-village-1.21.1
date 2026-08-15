@@ -13,6 +13,7 @@ import com.villagecolony.core.worker.service.WorkerService;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 /**
  * O ciclo em que a colônia pensa — TASK-020 e ADR-002.
@@ -57,18 +58,40 @@ public final class ColonyCycle {
             TaskService tasks,
             WorkerService workers) {
 
+        return run(colonyId, owned, goal, tasks, workers, worker -> true);
+    }
+
+    /**
+     * O mesmo, sabendo quem tem baú.
+     *
+     * <p>Quem chama em jogo é o ciclo da camada Fabric, que conhece o
+     * registro de baús. Sem essa consulta a distribuição entrega tarefa
+     * de colher e de fabricar a trabalhador sem baú, que a devolve no
+     * primeiro tick — ver {@link TaskType#needsOwnStorage()}.
+     *
+     * @param hasStorage responde se um trabalhador tem baú próprio
+     */
+    public static int run(
+            UUID colonyId,
+            ResourceTally owned,
+            Map<ResourceType, Integer> goal,
+            TaskService tasks,
+            WorkerService workers,
+            Predicate<UUID> hasStorage) {
+
         Objects.requireNonNull(colonyId, "colonyId");
         Objects.requireNonNull(owned, "owned");
         Objects.requireNonNull(goal, "goal");
         Objects.requireNonNull(tasks, "tasks");
         Objects.requireNonNull(workers, "workers");
+        Objects.requireNonNull(hasStorage, "hasStorage");
 
         Map<ResourceType, Integer> missing = ResourceDemand.deficit(goal, owned);
 
         cancelSatisfied(colonyId, missing, tasks);
         requestMissing(colonyId, missing, tasks, workers);
 
-        return WorkAssignment.assign(colonyId, workers, tasks);
+        return WorkAssignment.assign(colonyId, workers, tasks, hasStorage);
     }
 
     /**

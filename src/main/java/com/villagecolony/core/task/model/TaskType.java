@@ -16,10 +16,10 @@ import com.villagecolony.core.type.Capability;
 public enum TaskType {
 
     /** Derrubar árvore e trazer a madeira. */
-    COLLECT_WOOD(Capability.COLLECT_WOOD, true),
+    COLLECT_WOOD(Capability.COLLECT_WOOD, true, true),
 
     /** Transformar matéria-prima em material. */
-    CRAFT_MATERIAL(Capability.CRAFT_ITEMS, true),
+    CRAFT_MATERIAL(Capability.CRAFT_ITEMS, true, true),
 
     /**
      * Erguer parte de uma expansão.
@@ -27,15 +27,18 @@ public enum TaskType {
      * <p>Único tipo que <b>não</b> é pedido de recurso. Ver
      * {@link #isResourceRequest}.
      */
-    BUILD(Capability.BUILD_STRUCTURE, false);
+    BUILD(Capability.BUILD_STRUCTURE, false, false);
 
     private final Capability required;
 
     private final boolean resourceRequest;
 
-    TaskType(Capability required, boolean resourceRequest) {
+    private final boolean ownStorage;
+
+    TaskType(Capability required, boolean resourceRequest, boolean ownStorage) {
         this.required = required;
         this.resourceRequest = resourceRequest;
+        this.ownStorage = ownStorage;
     }
 
     /** A capacidade que o executor precisa ter. */
@@ -72,5 +75,30 @@ public enum TaskType {
      */
     public boolean isResourceRequest() {
         return resourceRequest;
+    }
+
+    /**
+     * Se o executor precisa ter baú próprio para sequer começar.
+     *
+     * <p>Colher e fabricar terminam guardando: {@code LumberjackWork} e
+     * {@code ManufacturerWork} soltam a tarefa no primeiro tick quando
+     * {@code STORAGES.of(worker)} vem vazio, porque não há onde pôr o que
+     * o trabalho produz. Dar a tarefa a quem não tem baú é abrir e fechar
+     * o mesmo trabalho todo ciclo — e, de fora, isso parece trabalho
+     * acontecendo.
+     *
+     * <p>Construir não guarda nada: o material sai do baú da colônia por
+     * {@code ChestWithdrawer} e vira bloco no mundo. Um construtor sem
+     * baú próprio constrói igual, e exigir baú dele travaria a obra por
+     * um motivo que não existe.
+     *
+     * <p>Ver a sessão de 2026-08-15: dois lenhadores e dois fabricantes
+     * sem baú devolveram tarefa a cada ciclo por doze minutos seguidos —
+     * dezenas de linhas "has no chest ... returned to the queue" e nenhum
+     * recurso produzido, enquanto a tarefa deixava de chegar a quem tinha
+     * baú para atendê-la.
+     */
+    public boolean needsOwnStorage() {
+        return ownStorage;
     }
 }

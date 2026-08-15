@@ -214,4 +214,67 @@ class WorkAssignmentTest {
         assertEquals(Optional.of(survivor), task.executor());
         assertTrue(task.state() == TaskState.RESERVED);
     }
+
+    /**
+     * A sessão de 2026-08-15, e o motivo de {@code needsOwnStorage}
+     * existir.
+     *
+     * <p>Dois lenhadores e dois fabricantes ficaram doze minutos sem
+     * baú. A cada ciclo a distribuição lhes dava a tarefa, e a cada tick
+     * {@code LumberjackWork} a devolvia à fila por não ter onde guardar:
+     * dezenas de linhas "has no chest — wood task returned to the queue"
+     * e nada produzido. A tarefa girava e nunca chegava a quem tinha baú.
+     */
+    @Test
+    void aWorkerWithoutAChestDoesNotTakeATaskThatNeedsOne() {
+        workerWith(ProfessionType.LUMBERJACK);
+
+        Task task = woodTask();
+
+        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks, worker -> false));
+        assertEquals(TaskState.AVAILABLE, task.state());
+        assertTrue(task.executor().isEmpty());
+    }
+
+    /** E a tarefa recusada sobra para quem pode atendê-la. */
+    @Test
+    void theTaskGoesToTheLumberjackWhoHasAChest() {
+        Worker without = workerWith(ProfessionType.LUMBERJACK);
+        Worker with = workerWith(ProfessionType.LUMBERJACK);
+
+        Task task = woodTask();
+
+        assertEquals(
+                1,
+                WorkAssignment.assign(
+                        COLONY, workers, tasks, worker -> worker.equals(with.villagerId())));
+
+        assertEquals(Optional.of(with.villagerId()), task.executor());
+        assertFalse(task.executor().equals(Optional.of(without.villagerId())));
+    }
+
+    /**
+     * Construir não guarda nada — o material sai do baú da colônia e
+     * vira bloco. Exigir baú próprio do construtor travaria a obra por um
+     * motivo que não existe.
+     */
+    @Test
+    void aBuilderWithoutAChestStillTakesTheBuildTask() {
+        workerWith(ProfessionType.BUILDER);
+
+        Task task = tasks.create(
+                COLONY, TaskType.BUILD, TaskPriority.CONSTRUCTION, ResourceType.OAK_PLANKS, 151);
+
+        assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks, worker -> false));
+        assertTrue(task.executor().isPresent());
+    }
+
+    /** Sem o argumento, o comportamento é o de antes: baú não é olhado. */
+    @Test
+    void theOverloadWithoutStorageKnowledgeAssignsAsBefore() {
+        workerWith(ProfessionType.LUMBERJACK);
+        woodTask();
+
+        assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
+    }
 }

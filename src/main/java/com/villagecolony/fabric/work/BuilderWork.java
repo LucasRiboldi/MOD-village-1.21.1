@@ -133,12 +133,20 @@ public final class BuilderWork {
 
         int open = 0;
 
+        StringBuilder queue = new StringBuilder();
+
         for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
             if (task.type() != TaskType.BUILD || !isOngoing(task)) {
                 continue;
             }
 
             Optional<UUID> executor = task.executor();
+
+            queue.append(queue.isEmpty() ? "" : "; ")
+                    .append(task.state())
+                    .append(executor.isEmpty()
+                            ? " with nobody"
+                            : " by " + executor.get().toString().substring(0, 8));
 
             if (executor.isEmpty()) {
                 continue;
@@ -151,7 +159,7 @@ public final class BuilderWork {
 
         JOBS.values().removeIf(job -> !isOngoing(job.task));
 
-        report(colony, project.get(), open);
+        report(colony, project.get(), open, queue.isEmpty() ? "no build task" : queue.toString());
 
         return open;
     }
@@ -486,13 +494,16 @@ public final class BuilderWork {
      * não anda" e "não há obra" são indistinguíveis no log, e foi essa
      * cegueira que custou as sessões do §11.
      */
-    private static void report(Colony colony, ConstructionProject project, int builders) {
+    private static void report(
+            Colony colony, ConstructionProject project, int builders, String queue) {
+
         VillageColonyMod.LOGGER.info(
-                "Colony {} builders: {} working, {} at {}, {} blocks left",
+                "Colony {} builders: {} working, {} at {}, {} blocks left — {}",
                 colony.id(),
                 builders,
                 project.state(),
                 project.origin(),
-                project.remainingCount());
+                project.remainingCount(),
+                queue);
     }
 }

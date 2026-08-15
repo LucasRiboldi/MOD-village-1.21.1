@@ -1,6 +1,7 @@
 package com.villagecolony.core.coordination;
 
 import com.villagecolony.core.task.model.Task;
+import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.task.service.TaskService;
 import com.villagecolony.core.type.Capability;
 import com.villagecolony.core.worker.model.Profession;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * Quem faz o quê — TASK-023.
@@ -31,6 +33,15 @@ import java.util.Optional;
  * {@code TaskService}. Nada disso é escolhido aqui de novo.
  */
 public final class WorkAssignment {
+
+    /**
+     * O que responder quando ninguém perguntou por baú.
+     *
+     * <p>Preserva o comportamento de antes de {@link
+     * TaskType#needsOwnStorage()} existir: sem informação de baú, todo
+     * trabalhador é elegível. É o que a sobrecarga de três argumentos usa.
+     */
+    private static final Predicate<java.util.UUID> ANY_WORKER_HAS_STORAGE = worker -> true;
 
     private WorkAssignment() {
     }
@@ -51,14 +62,35 @@ public final class WorkAssignment {
     public static int assign(
             java.util.UUID colonyId, WorkerService workers, TaskService tasks) {
 
+        return assign(colonyId, workers, tasks, ANY_WORKER_HAS_STORAGE);
+    }
+
+    /**
+     * O mesmo, sabendo quem tem baú.
+     *
+     * <p>A sobrecarga acima existe para quem não tem essa informação —
+     * o Core não conhece baú de Minecraft, e boa parte dos testes de
+     * unidade não precisa dele. Em jogo quem chama é o ciclo, que conhece
+     * o registro de baús e passa a consulta aqui.
+     *
+     * @param hasStorage responde se um trabalhador tem baú próprio. Ver
+     *     {@link TaskType#needsOwnStorage()} para o que depende disso
+     */
+    public static int assign(
+            java.util.UUID colonyId,
+            WorkerService workers,
+            TaskService tasks,
+            Predicate<java.util.UUID> hasStorage) {
+
         Objects.requireNonNull(colonyId, "colonyId");
         Objects.requireNonNull(workers, "workers");
         Objects.requireNonNull(tasks, "tasks");
+        Objects.requireNonNull(hasStorage, "hasStorage");
 
         int assigned = 0;
 
         for (Worker worker : idleWorkers(colonyId, workers, tasks)) {
-            if (takeOneTask(colonyId, worker, tasks)) {
+            if (takeOneTask(colonyId, worker, tasks, hasStorage)) {
                 assigned++;
             }
         }
@@ -135,10 +167,20 @@ public final class WorkAssignment {
      * construir. A ordem entre as capacidades de uma mesma profissão é a
      * do catálogo, e não uma decisão tomada aqui.
      *
+     * <p>Uma tarefa que exige baú próprio é pulada quando o trabalhador
+     * não tem um. Não é filtro de conveniência: quem a executasse a
+     * soltaria no primeiro tick, e o ciclo seguinte a daria ao mesmo
+     * trabalhador — a fila giraria sem que nada fosse produzido, e a
+     * tarefa nunca chegaria a quem tem baú. Ver
+     * {@link TaskType#needsOwnStorage()}.
+     *
      * @return true se alguma tarefa foi reservada
      */
     private static boolean takeOneTask(
-            java.util.UUID colonyId, Worker worker, TaskService tasks) {
+            java.util.UUID colonyId,
+            Worker worker,
+            TaskService tasks,
+            Predicate<java.util.UUID> hasStorage) {
 
         Optional<ProfessionType> profession = worker.profession();
 
@@ -151,11 +193,19 @@ public final class WorkAssignment {
         for (Capability capability : catalogued.capabilities()) {
             Optional<Task> task = tasks.nextFor(colonyId, capability);
 
-            if (task.isPresent()) {
-                task.get().reserveFor(worker.villagerId());
-
-                return true;
+            if (task.isEmpty()) {
+                continue;
             }
+
+            if (task.get().type().needsOwnStorage()
+                    && !hasStorage.test(worker.villagerId())) {
+
+                continue;
+            }
+
+            task.get().reserveFor(worker.villagerId());
+
+            return true;
         }
 
         return false;

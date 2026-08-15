@@ -377,15 +377,24 @@ public final class VillageDetectionHandler {
                 survey.resources().total(),
                 ColonyGoals.of(colony, survey.resources().total(), room, plankRoom, planksForWork),
                 VillageColonyMod.TASKS,
-                VillageColonyMod.WORKERS);
+                VillageColonyMod.WORKERS,
+                VillageColonyMod.STORAGES::hasStorage);
 
-        if (assigned > 0) {
-            VillageColonyMod.LOGGER.info(
-                    "Colony {} assigned {} tasks ({} open)",
-                    colony.id(),
-                    assigned,
-                    VillageColonyMod.TASKS.availableFor(colony.id()).size());
-        }
+        // Sem o `if (assigned > 0)` que estava aqui. A linha calava
+        // exatamente quando havia algo a dizer: distribuição parada é
+        // `assigned == 0`, e era então que a contagem de tarefas abertas
+        // — a única prova de que a fila não está vazia — desaparecia do
+        // log. Na sessão de 2026-08-15 ela sumiu às 11:21 e não voltou
+        // mais, e foram trinta e dois minutos sem saber se a colônia
+        // tinha tarefa parada ou tarefa nenhuma.
+        //
+        // É o mesmo remédio do E10 e do E2: número nenhum não é silêncio
+        // barato, é a pergunta seguinte ficando sem resposta.
+        VillageColonyMod.LOGGER.info(
+                "Colony {} assigned {} tasks ({} open)",
+                colony.id(),
+                assigned,
+                VillageColonyMod.TASKS.availableFor(colony.id()).size());
 
         // Depois da distribuição: quem recebeu tarefa neste ciclo já
         // começa a andar nele, em vez de esperar o próximo.
