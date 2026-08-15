@@ -6389,3 +6389,83 @@ carregamento é a explicação óbvia, e óbvio não é verificado.
 ```
 
 366 testes unitários e 78 de jogo, verdes.
+
+---
+
+## 2026-08-15, 00:28 — a linha respondeu, e respondeu demais
+
+Sessão de sete minutos, só para ler a instrumentação que entrou na
+noite anterior. Ela apareceu no primeiro ciclo, nas duas colônias:
+
+```text
+Colony 0c2771b0 planned no building — no free lot beside a road within
+64 blocks of ColonyPos[x=1109, y=64, z=730] that fits
+ColonyPos[x=7, y=7, z=7]
+```
+
+Dos cinco caminhos silenciosos, é o do lote. A suspeita registrada
+ontem estava certa, e agora não é mais suspeita — o que é exatamente
+por que a linha foi escrita em vez de a suspeita ser adotada.
+
+### E aí a própria linha virou o defeito
+
+`BuildSiteScanner.find` devolve `Optional.empty()` em dois casos que não
+são o mesmo:
+
+```text
+varri o raio inteiro e não há lote
+o teto de colunas deste ciclo estourou antes de eu terminar
+```
+
+A mensagem dizia o primeiro nos dois. E o caso da sessão era o segundo:
+
+```text
+raio 64            ~16.000 colunas
+MAX_COLUMNS        1.000 por chamada
+                   → 17 ciclos para uma volta
+
+a sessão           14 ciclos
+```
+
+Nenhuma das duas colônias tinha varrido raio nenhum inteiro quando o
+log afirmou que não havia lote onde procurar.
+
+O erro é meu e é de ontem: escrevi uma linha de instrumentação que
+afirma uma conclusão em vez de relatar um fato. É o §11 pela borda que
+ele mesmo avisa — "critério de verificação exige instrumentação que o
+satisfaça" —, e uma instrumentação que mente é pior que silêncio,
+porque o silêncio ao menos não fecha a investigação.
+
+### A correção
+
+O estado que separa as duas respostas já existia dentro do scanner: o
+cursor de anel só fica gravado quando o teto estoura, e sai quando a
+varredura completa o raio ou acha o lote. `sweepPausedAt` o lê de fora.
+Não é estado novo, é estado que ninguém perguntava.
+
+A conta dos dezessete ciclos deixou de ser conta e virou teste:
+`anUnfinishedSweepIsNotAnAnswer` afirma que raio 3 termina numa chamada
+e raio 64 não. Se um dia o teto mudar, ele avisa.
+
+A mensagem não leva o número do anel de propósito. `silent()` só
+registra quando o motivo muda, e um anel diferente por ciclo faria a
+linha voltar a cada trinta segundos — o E1 pela quarta porta.
+
+### A pergunta que fica
+
+O E14 continua aberto, com a pergunta afiada em vez de respondida:
+
+```text
+a varredura completa o raio e não acha lote?
+ou ela nunca completa?
+```
+
+A sessão seguinte responde pela linha que aparecer. Se vier
+"no free lot ... in the whole 64-block radius", o E14 fecha e o que
+sobra não é defeito: é a TASK-043. A vila só constrói em beira de rua
+que já existe, e a rua da vila do autor acabou.
+
+Se vier "still sweeping", o assunto é outro — o orçamento de varredura
+contra a duração de uma sessão de verdade.
+
+366 testes unitários e 79 de jogo, verdes.

@@ -1628,11 +1628,37 @@ registra que a vila só constrói em beira de rua que já existe. Provável,
 não verificado — e é exatamente o tipo de conclusão que este projeto não
 aceita sem a linha que a prove.
 
-Instrumentado em 2026-08-14, à noite: cada recusa passa a dizer qual é,
-e a do lote diz centro, raio e tamanho exigido. Registra só quando o
-motivo muda, para não virar ruído por ciclo.
+Instrumentado em 2026-08-14, à noite. **Respondido em 2026-08-15,
+00:28**, no primeiro ciclo da sessão seguinte:
 
-Fica aberto até a próxima sessão dizer qual dos cinco é.
+```text
+Colony 0c2771b0 planned no building — no free lot beside a road
+within 64 blocks of ColonyPos[x=1109, y=64, z=730] that fits
+ColonyPos[x=7, y=7, z=7]
+```
+
+Nas duas colônias. Dos cinco caminhos, é o do lote — como se suspeitava,
+e agora não é mais suspeita.
+
+**Mas a linha afirmava mais do que sabia**, e isso é a segunda metade
+do E14. `BuildSiteScanner.find` devolve vazio em dois casos diferentes:
+varreu o raio inteiro sem achar, ou o teto de colunas daquele ciclo
+estourou no meio. A mensagem dizia o primeiro nos dois.
+
+A conta: raio 64 são dezesseis mil colunas, mil por chamada, dezessete
+ciclos para uma volta. A sessão teve quatorze. **Nenhuma das duas
+colônias tinha varrido raio nenhum inteiro** quando o log afirmou que
+não havia lote. A conta deixou de ser conta e virou teste em
+`anUnfinishedSweepIsNotAnAnswer`.
+
+Corrigido na mesma noite: `sweepPausedAt` lê o cursor que já existia, e
+a mensagem passa a separar "não há lote" de "não terminei de olhar".
+
+Continua aberto, e agora com a pergunta certa: **a varredura completa o
+raio e não acha, ou ela nunca completa?** A sessão seguinte responde
+pela linha que aparecer. Se for "no free lot ... in the whole 64-block
+radius", o E14 fecha e o que sobra é a TASK-043 — a vila só constrói em
+beira de rua que já existe, e a rua acabou.
 
 ---
 
