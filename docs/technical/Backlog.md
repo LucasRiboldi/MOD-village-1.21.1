@@ -22,7 +22,7 @@ seção de origem, e cada linha diz qual é.
 ```text
 FEITO e verificado em jogo        5 dos 6 passos do MVP
 FEITO e coberto por teste          1 passo do MVP + 3 itens fora de fase
-FALTA                             33 itens, em 8 grupos
+FALTA                             32 itens, em 8 grupos
 
 do que falta, o que bloqueia       4 itens — todos do grupo A
 o resto                           depois, e nesta ordem: B → C → F
@@ -74,6 +74,10 @@ TASK-045  proteção consulta construções          🧪 08-14
 TASK-047  a grama do campo não reprova o lote    🧪 08-15
 TASK-050  a tarefa volta à fila quando o
           trabalhador não chega                  ⚠️ 08-15, SEM TESTE
+TASK-051  o motivo de não trabalhar como valor   🧪 08-15 (IdleReason,
+          — o F1 da fila do Workers                 IdleLog), 7 testes,
+                                                    2 rodados contra a
+                                                    regra desligada
 
 extra     a Fase 10 diz por que não construiu    🧪 cinco motivos
 extra     a varredura inacabada não é resposta   🧪 sweepPausedAt
@@ -99,7 +103,7 @@ D2   vaga de profissão entre vilas          não era defeito
 ## 2.5 Contagem
 
 ```text
-366 testes unitários     lógica pura do Core e serialização NBT
+373 testes unitários     lógica pura do Core e serialização NBT
  80 testes de jogo       a fronteira, num servidor sem cliente
 ```
 
@@ -179,7 +183,7 @@ Detalhe em `docs/workers-analysis/12-recommendations.md`.
 
 | # | O que | Custo / risco |
 |---|---|---|
-| F1 | **`IdleReason`** — o motivo de não trabalhar como valor, não como silêncio | Baixo / nenhum. **O de maior retorno.** Hoje só a Fase 10 aprendeu, e a lição custou três sessões |
+| ~~F1~~ | ~~**`IdleReason`**~~ | ✅ **feito em 2026-08-15.** Ver §2.3 |
 | F2 | **Blocos de duas partes** — segunda passada, e o par posto junto | Médio / médio. **Pode fechar o E8 sem a ADR que a TASK-046 supõe.** É pista, não solução |
 | F3 | **`Task.age`** — envelhecimento contra inanição | Trivial. Um `int` e um incremento |
 | F4 | **`ItemRequest`** — o trabalhador declara o que lhe falta | Médio / **médio**. Toca `Task`, que é o centro. Só depois do MVP |
@@ -239,8 +243,7 @@ seed/locate falham no runServer       Vanilla puro; testes que dependem
 ```text
 1  A1        a sessão do P1               🔒 bloqueia tudo
 2  B1        decidir o E11                👤 é o único que trava outra coisa
-3  F1        IdleReason                   🔨 barato, e torna as sessões
-                                             seguintes legíveis
+3  F1        IdleReason                   ✅ feito em 2026-08-15
 4  F2        blocos de duas partes        🔨 se a pista se confirmar, mata
                                              o E8 e a TASK-046 de uma vez
 5  C1        estender a estrada

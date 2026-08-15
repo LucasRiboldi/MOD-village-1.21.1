@@ -545,6 +545,16 @@ Fora de fase — 2026-08-15, da leitura do mod Workers
                                          ticks e a bateria inteira roda
                                          em cinco segundos
 
+  TASK-051  o motivo de não trabalhar      feito (IdleReason no Core,
+            como valor                     IdleLog na fronteira). As três
+                                         profissões falam o mesmo
+                                         vocabulário, e o log registra a
+                                         mudança de motivo em vez do
+                                         estado. Sete testes de unidade,
+                                         dois rodados contra a regra
+                                         desligada. É o F1 da fila da
+                                         workers-analysis
+
   extra     a análise do Workers         doze documentos em
                                          docs/workers-analysis/, e a
                                          pasta workers-maingit/ no
@@ -608,10 +618,15 @@ Nenhum pacote vazio: `core/construction` foi preenchido em 2026-08-14.
 ## Testes
 
 ```text
-366 testes unitários     lógica pura do Core e serialização NBT
+373 testes unitários     lógica pura do Core e serialização NBT
  80 testes de jogo       a fronteira com o Minecraft, num servidor
                          sem cliente (./gradlew runGametest)
 ```
+
+Sete entraram em 2026-08-15 com o `IdleReason`: afirmam que dois
+silêncios diferentes produzem linhas diferentes, que é a propriedade
+inteira daquele tipo. Dois deles foram rodados contra a regra
+desligada — duplicando a frase de um motivo — e falharam sozinhos.
 
 Quatro entraram entre 2026-08-14 à noite e 08-15 de madrugada: o tronco
 no baú do lenhador virando tábua (E10), a casa da colônia protegida
@@ -1378,6 +1393,10 @@ Execução
   docs/technical/Project-State.md    este documento — o estado
 
   docs/technical/Development-Log.md  o histórico, por data
+
+  docs/technical/Backlog.md    o que está feito e o que falta, num
+                               índice só. Não decide nada: onde ele e
+                               este documento discordarem, vale este
 
 
 Referência externa
