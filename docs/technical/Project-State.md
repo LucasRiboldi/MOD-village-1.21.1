@@ -545,6 +545,24 @@ Fora de fase — 2026-08-15, da leitura do mod Workers
                                          ticks e a bateria inteira roda
                                          em cinco segundos
 
+  TASK-052  a porta vira porta, e não      feito
+            duas metades soltas            (StructureBlueprintReader
+                                         .isSecondHalf descarta a metade
+                                         de cima na leitura;
+                                         BuilderWork.placeSecondHalf
+                                         escreve a outra com a
+                                         propriedade que as liga). Dois
+                                         testes de jogo, os dois rodados
+                                         contra a regra desligada.
+
+                                         Fecha metade do E8 **sem ADR
+                                         nova**: o Core não mudou uma
+                                         linha, porque quem sabe o que é
+                                         "metade de cima" é a fronteira.
+                                         Conserta junto uma conta que
+                                         ninguém tinha notado — a porta
+                                         custava duas portas ao baú
+
   TASK-051  o motivo de não trabalhar      feito (IdleReason no Core,
             como valor                     IdleLog na fronteira). As três
                                          profissões falam o mesmo
@@ -619,7 +637,7 @@ Nenhum pacote vazio: `core/construction` foi preenchido em 2026-08-14.
 
 ```text
 373 testes unitários     lógica pura do Core e serialização NBT
- 80 testes de jogo       a fronteira com o Minecraft, num servidor
+ 82 testes de jogo       a fronteira com o Minecraft, num servidor
                          sem cliente (./gradlew runGametest)
 ```
 
@@ -1654,19 +1672,32 @@ que é a resposta certa, mas isso nunca foi visto acontecendo.
 
 ---
 
-### E8 — Blocos de duas partes saem soltos
+### E8 — A orientação dos blocos (metade fechada em 2026-08-15)
 
-O `Blueprint` guarda o nome do bloco e descarta o estado. Porta e cama
-ocupam dois blocos no Vanilla, ligados por uma propriedade — e o mod põe
-duas metades independentes, cada uma no estado padrão.
+O `Blueprint` guarda o nome do bloco e descarta o estado. Isso custava
+duas coisas, e elas se separaram.
 
-O que se espera ver: casa de pé, escada apontando para o padrão, e a
-metade de cima da porta possivelmente não se sustentando. Nunca foi visto
-em jogo, porque a Fase 10 nunca rodou em jogo.
+**As duas partes — fechado.** Porta e cama ocupam dois blocos ligados
+por uma propriedade, e o mod punha duas metades independentes no estado
+padrão: duas metades de baixo empilhadas, dois pés de cama lado a lado.
+E cobrava duas peças do baú por um item.
 
-Tarefa própria: TASK-046. Exige decisão de arquitetura — levar
-`BlockState` para o Core contra a ADR-005, ou inventar uma linguagem de
-propriedades lá dentro.
+Resolvido na leitura e na escrita, e **sem a ADR que esta entrada
+supunha necessária**: a metade de cima é descartada por
+`StructureBlueprintReader.isSecondHalf`, e `BuilderWork.placeSecondHalf`
+escreve a outra com a propriedade que as liga. O Core não mudou uma
+linha — quem sabe o que é "metade de cima" é a fronteira, que é onde
+esse conhecimento sempre pertenceu.
+
+**A orientação — aberto.** Escada e porta continuam saindo no padrão, e
+a cabeceira da cama vai para onde o estado padrão aponta e não para onde
+o arquivo dizia. Nunca foi visto em jogo, porque a Fase 10 nunca rodou.
+
+Tarefa própria: TASK-046, agora só sobre orientação. A decisão que ela
+pede continua sendo a mesma — levar `BlockState` para o Core contra a
+ADR-005, ou inventar uma linguagem de propriedades lá dentro —, e agora
+ela vale por menos: uma casa com escada virada para o lado errado é
+feia; uma casa com a porta partida não era casa.
 
 ---
 

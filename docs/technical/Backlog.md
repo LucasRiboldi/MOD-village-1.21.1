@@ -22,7 +22,7 @@ seção de origem, e cada linha diz qual é.
 ```text
 FEITO e verificado em jogo        5 dos 6 passos do MVP
 FEITO e coberto por teste          1 passo do MVP + 3 itens fora de fase
-FALTA                             32 itens, em 8 grupos
+FALTA                             31 itens, em 8 grupos
 
 do que falta, o que bloqueia       4 itens — todos do grupo A
 o resto                           depois, e nesta ordem: B → C → F
@@ -74,6 +74,10 @@ TASK-045  proteção consulta construções          🧪 08-14
 TASK-047  a grama do campo não reprova o lote    🧪 08-15
 TASK-050  a tarefa volta à fila quando o
           trabalhador não chega                  ⚠️ 08-15, SEM TESTE
+TASK-052  a porta vira porta, e não duas          🧪 08-15, 2 testes de
+          metades soltas — o F2 da fila                jogo, os dois
+                                                       rodados contra a
+                                                       regra desligada
 TASK-051  o motivo de não trabalhar como valor   🧪 08-15 (IdleReason,
           — o F1 da fila do Workers                 IdleLog), 7 testes,
                                                     2 rodados contra a
@@ -104,7 +108,7 @@ D2   vaga de profissão entre vilas          não era defeito
 
 ```text
 373 testes unitários     lógica pura do Core e serialização NBT
- 80 testes de jogo       a fronteira, num servidor sem cliente
+ 82 testes de jogo       a fronteira, num servidor sem cliente
 ```
 
 ---
@@ -143,7 +147,7 @@ Nenhuma linha pode ser escrita antes.
 | B1 | **TASK-049 / E11** — rodízio de profissão a cada ciclo | Mexe na Regra 4: dispensar quem não tem baú só faz sentido se o substituto puder conseguir um | §8, §17 |
 | B2 | **TASK-048** — o que uma colônia `ABANDONED` deixa de fazer | Hoje: nada. É marcada, gravada, e continua sendo simulada | §8 |
 | B3 | **TASK-044** — fusão de vilas | Exige ADR nova. O critério já está decidido: um bloco de uma encostando no da outra | §8, §10 |
-| B4 | **TASK-046 / E8** — blocos de duas partes | Supunha exigir ADR. **A análise sugere que talvez não** — ver F2 | §8, §17 |
+| B4 | **TASK-046 / E8** — a **orientação** dos blocos | Escada e porta saem no padrão. As duas partes foram resolvidas em 08-15 **sem ADR nova**; o que sobra é a orientação, e essa ainda pede a decisão | §8, §17 |
 | B5 | Fundo do ícone do mod | Veio sem alpha; chave de cor abriria buracos na ovelha e nas nuvens | §10 |
 
 ## Grupo C — Não precisa de decisão nem de jogo 🔨
@@ -161,7 +165,7 @@ Nenhuma linha pode ser escrita antes.
 | D1 | **E3** — sobra de colheita é perda de item | Conhecido e aceito. A Regra 1 o torna raro por construção | §17 |
 | D2 | **E4** — `path held: no` e o aldeão chega assim mesmo | **Provável, não verificado.** Se um dia ele parar de chegar, é o primeiro lugar a olhar | §17 |
 | D3 | **E5** — colheita de outras espécies nunca vista em jogo | Só carvalho. O mangue é o mais provável de falhar primeiro | §17 |
-| D4 | **E8** — blocos de duas partes saem soltos | = B4. Nunca visto, porque a Fase 10 nunca rodou | §17 |
+| D4 | **E8** — orientação dos blocos | = B4. A metade das duas partes fechou em 08-15; a da orientação continua. Nunca visto, porque a Fase 10 nunca rodou | §17 |
 | D5 | **E9** — colônia `ABANDONED` desmarcada no ciclo seguinte | **Provável, não investigado.** Hoje `ABANDONED` não muda nada, o que esconde o sintoma | §17 |
 | D6 | **E11** — rodízio de profissão | = B1 | §17 |
 | D7 | **E13** — hábito a criar: conferir a linha de carregamento do log antes de concluir do silêncio de uma fase | §17 |
@@ -184,7 +188,7 @@ Detalhe em `docs/workers-analysis/12-recommendations.md`.
 | # | O que | Custo / risco |
 |---|---|---|
 | ~~F1~~ | ~~**`IdleReason`**~~ | ✅ **feito em 2026-08-15.** Ver §2.3 |
-| F2 | **Blocos de duas partes** — segunda passada, e o par posto junto | Médio / médio. **Pode fechar o E8 sem a ADR que a TASK-046 supõe.** É pista, não solução |
+| ~~F2~~ | ~~**Blocos de duas partes**~~ | ✅ **feito em 2026-08-15.** A pista se confirmou: o Core não mudou uma linha |
 | F3 | **`Task.age`** — envelhecimento contra inanição | Trivial. Um `int` e um incremento |
 | F4 | **`ItemRequest`** — o trabalhador declara o que lhe falta | Médio / **médio**. Toca `Task`, que é o centro. Só depois do MVP |
 | F5 | **`ProfessionSpec`** — parâmetros de profissão como dado | Baixo. Vira problema na quinta profissão |
@@ -244,8 +248,8 @@ seed/locate falham no runServer       Vanilla puro; testes que dependem
 1  A1        a sessão do P1               🔒 bloqueia tudo
 2  B1        decidir o E11                👤 é o único que trava outra coisa
 3  F1        IdleReason                   ✅ feito em 2026-08-15
-4  F2        blocos de duas partes        🔨 se a pista se confirmar, mata
-                                             o E8 e a TASK-046 de uma vez
+4  F2        blocos de duas partes        ✅ feito em 2026-08-15 — fechou
+                                             metade do E8, e sem ADR nova
 5  C1        estender a estrada
 6  F3        Task.age
 7  C2, C3    a Regra 3 estrutural, e o cliente

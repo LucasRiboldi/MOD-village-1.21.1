@@ -131,7 +131,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Agricultura, mineração, ferraria, defesa | ⬜ não começado |
 
 ```text
-373 testes unitários  ·  80 testes de jogo  ·  ./gradlew build
+373 testes unitários  ·  82 testes de jogo  ·  ./gradlew build
 ```
 
 ---
@@ -157,7 +157,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | **1** | **Ver a casa subir.** A obra bloco a bloco, a casa virando infraestrutura da colônia, e o lote seguinte não caindo em cima dela | 🔒 exige sessão de jogo |
 | **2** | **Decidir o rodízio de profissão.** A colônia dispensa quem não conseguiu baú "em favor de quem consegue", e o substituto também não consegue. Corrigir mexe numa regra, não no código | 👤 exige decisão |
 | ~~**3**~~ | ~~**O motivo de não trabalhar como valor.**~~ As três profissões dizem por que não trabalharam, no mesmo vocabulário, e o log registra a mudança em vez do estado | ✅ **feito em 2026-08-15** |
-| **4** | **Blocos de duas partes.** Porta e cama são postas como duas metades soltas. A saída provável é pô-las numa segunda passada, com o par junto | 🔨 pronto para fazer |
+| ~~**4**~~ | ~~**Blocos de duas partes.**~~ A porta é uma porta e a cama é uma cama. Sobra a **orientação**: escada e porta saem no padrão | ✅ **feito em 2026-08-15** |
 | **5** | **Estender a estrada.** Hoje a vila só constrói em beira de rua que já existe; quando ela acabar, a colônia para de crescer | 🔨 pronto para fazer |
 | **6** | **Envelhecimento de tarefa.** Para que a tarefa mais antiga não seja esquecida para sempre | 🔨 pronto para fazer |
 | **7** | **A proteção estrutural, e o lado do cliente.** Perguntar ao jogo quais blocos são de vila gerada; e nome, rachadura e braço na tela | 🔨 pronto para fazer |
@@ -166,9 +166,11 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 **Limites de hoje.** A colônia só produz tábua — uma casa de vila também
 quer pedra, vidro e cama, e essas precisam já estar nos baús. As casas
 sobem ao lado de ruas que já existem; a colônia ainda não pavimenta.
-Porta e cama saem como metades soltas, então a casa fica um pouco tosca.
+Porta e cama já saem inteiras; o que ainda sai no padrão é a
+orientação — escada apontando para o mesmo lado, cabeceira de cama
+onde o jogo a puser.
 
-A lista completa — **32 itens abertos em 8 grupos**, com o que já foi
+A lista completa — **31 itens abertos em 8 grupos**, com o que já foi
 feito — está em [`docs/technical/Backlog.md`](docs/technical/Backlog.md).
 O estado sempre atual está em
 [`docs/technical/Project-State.md`](docs/technical/Project-State.md).

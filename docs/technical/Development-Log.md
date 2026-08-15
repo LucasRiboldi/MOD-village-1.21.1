@@ -6867,3 +6867,117 @@ então a tarefa de obra nunca sai de RESERVED e esse ramo nunca roda —
 inclusive quando a casa fica pronta. Não foi mexido: não quebra nada
 hoje, e mexer nisso sem ver a Fase 10 rodar em jogo seria consertar o
 que ninguém viu funcionar.
+
+---
+
+## 2026-08-15, mais tarde — as etapas 3 e 4 da ordem
+
+O autor pediu a lista do que falta guardada, o README em português, e a
+ordem de desenvolvimento executada. As etapas 1 e 2 dependem dele —
+sessão de jogo e decisão sobre a Regra 4. As 3 e 4 foram feitas.
+
+### O que foi guardado
+
+`docs/technical/Backlog.md`, índice consolidado do que está feito e do
+que falta. Não é fonte de verdade nova, e o cabeçalho diz isso: onde ele
+e o Project-State discordarem, vale o Project-State. Duplicar autoridade
+seria criar o problema que o §13 já tinha resolvido.
+
+O README passou a português do Brasil e ganhou a seção "As etapas", com
+os seis passos do MVP e as etapas seguintes na ordem, cada uma marcada
+pelo que a destrava.
+
+### Etapa 3 — o motivo de não trabalhar como valor
+
+O E14 custou três sessões porque cinco saídas silenciosas davam a mesma
+coisa vista de fora. A lição tinha sido aprendida por uma fase só.
+
+`core/coordination/IdleReason` — onze motivos, cada um com sua frase.
+Enum e não texto: frase se compara por igualdade de string, e é assim
+que dois motivos passam a dizer a mesma coisa sem ninguém perceber. Um
+teste falha se alguém os fizer coincidir.
+
+`fabric/work/IdleLog` — fala na primeira vez, cala enquanto o motivo não
+muda, volta a falar quando muda. **O log registra transições, não
+estados.** A regra já existia no ConstructionPlanner; aqui virou geral, e
+a chave passou a incluir o assunto — lenhador parado e construtor parado
+são dois silêncios, e um não pode calar o outro.
+
+E os dois executores que faltavam passaram a falar. Três respostas, e
+cada uma manda em coisa diferente: sem trabalhador é a atribuição de
+profissão, sem tarefa é a meta da colônia, tarefa sem executor é o
+casamento entre as duas.
+
+### Etapa 4 — a porta vira porta
+
+A pista da análise do Workers se confirmou, e melhor do que ela dizia.
+
+No arquivo do jogo uma porta são duas entradas com o mesmo nome,
+empilhadas, distinguidas só pela propriedade `half`. O projeto guardava
+as duas, e `placeOne` punha `getDefaultState()` nas duas posições — que é
+a metade de baixo. Duas metades de baixo, uma sobre a outra.
+
+E cobrava **duas portas** do baú por uma porta. Ninguém tinha notado:
+cada bloco do projeto tira uma peça do estoque, e uma porta no Vanilla é
+um item só.
+
+Duas pontas, nenhuma delas levando BlockState ao Core:
+
+```text
+isSecondHalf        descarta a metade de cima na leitura. Os nomes de
+                    propriedade e de valor vêm do próprio jogo —
+                    Properties.DOUBLE_BLOCK_HALF.getName(),
+                    DoubleBlockHalf.UPPER.asString() — e não de literais
+                    escritos aqui. Se o Vanilla os renomear, isto
+                    acompanha
+
+placeSecondHalf     escreve a outra metade com a propriedade que as
+                    liga, e só onde o lugar aceita
+```
+
+Escrever a segunda metade em vez de chamar `Block.onPlaced` é
+deliberado: `onPlaced` dispara tudo o que a colocação por um jogador
+dispara, e o construtor não é um jogador com uma porta na mão. Ele monta
+uma casa a partir de um arquivo, e o que precisa é da propriedade.
+
+**A TASK-046 não precisou de ADR nova**, e é o achado que vale registrar.
+O E8 supunha exigir decisão de arquitetura — `BlockState` no Core contra
+a ADR-005, ou uma linguagem de propriedades lá dentro. Nenhuma das duas.
+O Core não mudou uma linha, porque quem sabe o que é "metade de cima" é a
+fronteira, que é onde esse conhecimento sempre pertenceu.
+
+A pergunta que destravou não foi "como levo o estado para o Core?", foi
+"quem precisa saber disto?".
+
+O que sobra do E8 é a orientação, e ela vale por menos do que valia: uma
+casa com escada virada para o lado errado é feia; uma casa com a porta
+partida não era casa.
+
+### Os testes
+
+Quatro novos — sete unitários do IdleReason e dois de jogo da porta —, e
+**quatro deles rodados contra a respectiva regra desligada**, cada um
+falhando sozinho:
+
+```text
+dois motivos nunca dizem a mesma frase      duplicando a frase de um
+sem tarefa e sem executor são distintos     motivo
+
+aDoorIsOneBlockInTheProjectAndNotTwo        desligando isSecondHalf
+theDoorGoesUpAsOneDoorAndNotTwoHalves       desligando placeSecondHalf
+```
+
+O teste do leitor afirma geometria e não contagem: nenhuma coluna da
+casa pode ter duas entradas de porta. "Esta casa tem uma porta"
+quebraria na próxima variante que o Vanilla mudasse.
+
+373 testes unitários e 82 de jogo, verdes.
+
+### O que continua sem verificação
+
+**Nada disto foi visto em jogo.** A Fase 10 nunca rodou numa sessão, e é
+por isso que a porta partida nunca chegou a ser vista partida. O que
+mudou é que, quando ela rodar, a porta estará inteira — e se não
+estiver, há dois testes dizendo onde olhar.
+
+E a TASK-050, da sessão anterior, continua sem teste próprio.
