@@ -1355,8 +1355,8 @@ Fases 1 a 8    completas e verificadas em jogo
 Fase 9         rodou em jogo e não fabricou nada. A causa foi achada
                e corrigida na mesma noite — E10 do §17 —, e a
                correção não foi vista em jogo
-Fases 10 e 11  escritas, cobertas por teste, nunca vistas em jogo.
-               Ficaram atrás da Fase 9: sem tábua não há obra
+Fases 10 e 11  escritas, cobertas por teste, nunca vistas em jogo —
+               e **não estavam no jar** da sessão de 08-14. Ver E13
 itens A, B, C  cobertos por teste; nenhum apareceu no log da sessão
 TASK-045       fechada
 E11            rodízio de profissão, visto em jogo, à espera de
@@ -1594,15 +1594,56 @@ Tarefa própria: TASK-049, em §8, sob decisão do autor.
 
 ---
 
+### E13 — A sessão rodou um jar velho, e ninguém percebeu na hora
+
+O jar em `%APPDATA%/.minecraft/mods/` na sessão de 2026-08-14 era de
+**08-13, 08:55** — anterior às Fases 10 e 11 e aos itens A, B e C.
+
+Como se sabe, sem depender de data de arquivo: a linha de encerramento
+da sessão foi
+
+```text
+Saved 3 colonies with 80 workers
+```
+
+e o código atual escreve
+
+```text
+Saved {} colonies with {} workers, {} buildings and {} open projects
+```
+
+O formato mudou quando a persistência da obra entrou, em 08-14. A
+linha antiga é a prova de que o código de 08-14 não estava rodando.
+
+**O que isso invalida e o que não invalida.** Não invalida o E10: o
+fabricante é código de 08-13, está no jar velho e no novo sem mudança,
+e o defeito é real — a correção continua de pé. Invalida a conclusão
+que se ia tirar do silêncio das Fases 10 e 11: não houve linha
+"planned" nem construtor trabalhando porque **esse código não estava
+lá**, e não por falta de material. Nada se aprendeu sobre elas.
+
+O §11 já registra "trocar o jar com o jogo aberto não testa nada".
+Esta é a variante mais simples e mais fácil de cometer: o jar não foi
+trocado. E o log **diz** qual versão está rodando, na linha de
+carregamento — que é o primeiro lugar a olhar antes de concluir
+qualquer coisa do silêncio de uma fase.
+
+Fechado do lado prático em 2026-08-14 à noite: o jar novo foi
+instalado. Fica aberto como hábito a criar — conferir a linha de
+carregamento antes de ler o resto do log.
+
+---
+
 ### E12 — `Equipped N workers` nunca apareceu em jogo
 
 A linha existe e roda na bateria de gametest (`Equipped 2 workers in
 colony ...`). Na sessão de 2026-08-14, com 80 trabalhadores em três
 colônias, ela não apareceu nenhuma vez — nem `Named N workers`.
 
-A explicação provável é que as duas só registram quando o número é
-maior que zero, e as três colônias vieram do save já nomeadas e já
-equipadas de sessões anteriores. **Provável, não verificado.**
+A explicação é o E13: o jar daquela sessão era de 08-13, 08:55, e a
+ferramenta inicial entrou mais tarde naquele mesmo dia. O código não
+estava lá. `Named` continua sem explicação — provavelmente as colônias
+vieram do save já nomeadas, e isso não foi verificado.
 
 Fica registrado porque é exatamente o item C do §8 — a ferramenta
 inicial — que continua sem ter sido visto em jogo, e porque a próxima

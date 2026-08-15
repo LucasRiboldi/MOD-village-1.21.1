@@ -6258,3 +6258,38 @@ E12  "Equipped N workers" nunca apareceu
 ```
 
 366 testes unitários e 78 de jogo, verdes.
+
+---
+
+### Adendo, mesma noite — o jar era velho
+
+Escrito depois do texto acima, e ele fica como está para que o erro
+apareça: parte do que se concluiu da sessão não se sustenta.
+
+Ao instalar o jar novo, o antigo estava datado de **08-13, 08:55** —
+anterior às Fases 10 e 11 e aos itens A, B e C.
+
+A prova não depende da data do arquivo. A sessão encerrou com
+
+```text
+Saved 3 colonies with 80 workers
+```
+
+e o código de 08-14 escreve `... workers, {} buildings and {} open
+projects`. O formato mudou quando a persistência da obra entrou. A
+linha antiga diz qual código estava rodando.
+
+**O que cai e o que fica.** O E10 fica inteiro: `ManufacturerWork` é
+código de 08-13, idêntico no jar velho e no novo, e o defeito é real —
+dezessete tarefas encerradas com tronco na colônia. A correção continua
+de pé e continua necessária.
+
+O que cai é a leitura do silêncio das Fases 10 e 11. Não houve linha
+"planned" nem construtor trabalhando porque **esse código não estava
+no jar**, e não por falta de pedra nos baús. Sobre elas a sessão não
+disse nada, e o texto acima chegou a insinuar que sim.
+
+Fica como E13 do §17, e a lição é mais simples que a do E10: o log diz
+qual versão está rodando, na linha de carregamento, e esse é o primeiro
+lugar a olhar — antes de concluir qualquer coisa a partir do que uma
+fase deixou de dizer.
