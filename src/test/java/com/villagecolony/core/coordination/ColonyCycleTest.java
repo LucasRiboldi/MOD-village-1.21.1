@@ -280,4 +280,70 @@ class ColonyCycleTest {
         assertEquals(1, tasks.ofColony(COLONY).size());
         assertEquals(0, tasks.ofColony(other).size());
     }
+
+    // ── A tarefa de obra não pertence ao ciclo ─────────────────────────
+    //
+    // A sessão de 2026-08-15 mostrou que nada em produção criava tarefa
+    // BUILD, e a correção pôs ConstructionPlanner para criá-la. Os dois
+    // testes abaixo guardam as duas armadilhas que essa tarefa
+    // encontraria aqui dentro — as duas silenciosas, e as duas fatais
+    // para a obra.
+
+    /** Uma tarefa de obra, como o ConstructionPlanner a abre. */
+    private Task buildTask() {
+        return tasks.create(
+                COLONY,
+                TaskType.BUILD,
+                com.villagecolony.core.task.model.TaskPriority.CONSTRUCTION,
+                ResourceType.OAK_PLANKS,
+                151);
+    }
+
+    /**
+     * O recurso de uma tarefa de obra é nominal. Se o ciclo a cancelasse
+     * por aquele recurso não estar em falta, a casa sairia da fila porque
+     * o estoque de tábua subiu — que é o contrário do que se quer, já que
+     * é a tábua que a casa consome.
+     */
+    @Test
+    void aBuildTaskIsNotCancelledWhenItsNominalResourceIsNotMissing() {
+        lumberjack();
+
+        Task build = buildTask();
+
+        // Meta só de madeira: OAK_PLANKS não está em falta nenhuma.
+        ColonyCycle.run(COLONY, owning(10), GOAL, tasks, workers);
+
+        assertEquals(
+                TaskState.AVAILABLE,
+                build.state(),
+                "o ciclo cancelou a obra por causa do estoque de tábua");
+    }
+
+    /**
+     * E ela não pode ocupar a vaga de um pedido de verdade: contada como
+     * pedido de tábua, faria a colônia deixar de fabricar exatamente o
+     * que a obra consome.
+     */
+    @Test
+    void aBuildTaskDoesNotCountAsAnOpenRequestForItsNominalResource() {
+        workers.register(UUID.randomUUID(), COLONY).assign(ProfessionType.MANUFACTURER);
+
+        buildTask();
+
+        ColonyCycle.run(
+                COLONY,
+                ResourceTally.of(Map.of(ResourceType.OAK_PLANKS, 0)),
+                Map.of(ResourceType.OAK_PLANKS, 32),
+                tasks,
+                workers);
+
+        long crafting = tasks.ofColony(COLONY).stream()
+                .filter(task -> task.type() == TaskType.CRAFT_MATERIAL)
+                .count();
+
+        assertTrue(
+                crafting > 0,
+                "a obra ocupou a vaga do pedido de tábua, e a colônia não vai fabricar");
+    }
 }

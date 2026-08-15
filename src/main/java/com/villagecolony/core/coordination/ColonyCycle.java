@@ -85,6 +85,14 @@ public final class ColonyCycle {
             UUID colonyId, Map<ResourceType, Integer> missing, TaskService tasks) {
 
         for (Task task : tasks.availableFor(colonyId)) {
+            if (!task.type().isResourceRequest()) {
+                // A tarefa de obra não é pedido de recurso, e o recurso
+                // dela é nominal. Cancelá-la aqui tiraria da fila uma
+                // casa por conta do estoque de tábua ter subido — ver
+                // TaskType.isResourceRequest.
+                continue;
+            }
+
             if (!missing.containsKey(task.targetResource())) {
                 task.cancel();
             }
@@ -156,6 +164,12 @@ public final class ColonyCycle {
         int open = 0;
 
         for (Task task : tasks.ofColony(colonyId)) {
+            if (!task.type().isResourceRequest()) {
+                // Idem: a de obra não é pedido, e contá-la aqui faria a
+                // colônia deixar de fabricar a tábua que a obra consome.
+                continue;
+            }
+
             if (task.targetResource() == resource && task.state() != TaskState.CANCELLED
                     && task.state() != TaskState.COMPLETED) {
 

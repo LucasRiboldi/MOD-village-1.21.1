@@ -10,8 +10,11 @@ import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.core.coordination.WorkAssignment;
+import com.villagecolony.core.task.model.Task;
+import com.villagecolony.core.task.model.TaskPriority;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
@@ -56,20 +59,19 @@ public final class ConstructionPlanner {
     private static Blueprint house;
 
     /**
-     * Por que esta colônia não abriu obra, da última vez que se perguntou.
+     * Como esta fase aparece na linha de {@link IdleLog}.
      *
-     * <p>Existe por causa da sessão de 2026-08-14, à noite: a Fase 10 não
-     * produziu linha nenhuma — nem obra, nem recusa — e havia cinco
-     * caminhos silenciosos por onde ela podia ter saído. Do lado de fora,
-     * "não tem construtor", "o jogo não tem essa casa" e "não há lote"
-     * eram o mesmo silêncio.
+     * <p>O motivo de não haver obra existe por causa da sessão de
+     * 2026-08-14, à noite: a Fase 10 não produziu linha nenhuma — nem
+     * obra, nem recusa — e havia cinco caminhos silenciosos por onde ela
+     * podia ter saído. Do lado de fora, "não tem construtor", "o jogo não
+     * tem essa casa" e "não há lote" eram o mesmo silêncio. É o §11: a
+     * linha que expõe o defeito precisa existir antes de alguém
+     * desconfiar dele.
      *
-     * <p>É o §11: a linha que expõe o defeito precisa existir antes de
-     * alguém desconfiar dele.
-     *
-     * <p>Guarda o motivo anterior para <b>só registrar quando ele muda</b>.
-     * Uma linha por colônia por ciclo seria o E1 por uma terceira porta —
-     * ruído constante dizendo sempre a mesma coisa.
+     * <p>A memória do último motivo, que morava aqui, virou
+     * {@link IdleLog} em 2026-08-15 — o lenhador e o fabricante
+     * precisavam da mesma regra.
      */
     private static final String SUBJECT = "building";
 
@@ -100,6 +102,77 @@ public final class ConstructionPlanner {
     }
 
     /**
+     * Garante que a obra aberta tenha uma tarefa por onde alguém a pegue.
+     *
+     * <p><b>É o defeito que a sessão de 2026-08-15 achou, e o último do
+     * MVP.</b> A obra existia, o construtor existia com baú, e as duas
+     * casas ficaram em {@code 151 blocks left} por cinco horas e quarenta
+     * minutos com {@code 0 working}. A corrente arrebentava aqui: nada em
+     * produção criava tarefa de construção.
+     *
+     * <p>{@code tasks.create} só era chamado de {@code ColonyCycle
+     * .requestMissing}, que traduz falta de recurso em tarefa; e
+     * {@code typeFor} só devolve {@code BUILD} para recurso de categoria
+     * {@code CONSTRUCTION}, que <b>nenhum {@code ResourceType} tem</b>.
+     * A tarefa de obra era estruturalmente impossível, e por isso
+     * {@code BuilderWork} nunca teve o que fazer — em vila nenhuma.
+     *
+     * <p>Os 82 testes verdes não pegaram porque {@code BuilderGameTest}
+     * criava a tarefa à mão. É o §11 pela segunda vez, com a mesma frase
+     * que o E10 rendeu: a pergunta não é "este código funciona?", é
+     * <em>"quem põe esta coisa aqui, em jogo?"</em>.
+     *
+     * <p>Quem põe passou a ser este método, e não o ciclo: a obra não é
+     * uma falta de recurso — é um projeto aberto precisando de mão. O
+     * ciclo continua dono do que nasce de falta, e a vida desta tarefa
+     * pertence ao projeto. Ver {@code TaskType.isResourceRequest}.
+     *
+     * <p>Uma tarefa por vez, e só enquanto a obra está em
+     * {@link ConstructionState#BUILDING}: em {@code WAITING_RESOURCES} não
+     * há o que colocar, e abrir tarefa ali poria um construtor a andar
+     * até um canteiro para não fazer nada.
+     */
+    private static void ensureTask(Colony colony, ConstructionProject project) {
+        if (project.state() != ConstructionState.BUILDING) {
+            return;
+        }
+
+        for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
+            if (task.type() == TaskType.BUILD && task.isOpen()) {
+                return;
+            }
+        }
+
+        int blocks = project.remainingCount();
+
+        if (blocks == 0) {
+            // A obra acabou e ainda não foi encerrada. Quem a fecha é o
+            // construtor ao pôr o último bloco; abrir tarefa para zero
+            // blocos seria ocupar uma mão por nada — e Task.create
+            // recusaria, com razão.
+            return;
+        }
+
+        VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.BUILD,
+                TaskPriority.CONSTRUCTION,
+                // Nominal, e é seguro que seja: a tarefa de obra não é
+                // pedido de recurso, e quem paga cada bloco é
+                // BuilderWork.takeMaterial, lendo o projeto. O que este
+                // campo carrega de útil é o número — quantos blocos
+                // faltam —, que aparece no log.
+                ResourceType.OAK_PLANKS,
+                blocks);
+
+        VillageColonyMod.LOGGER.info(
+                "Colony {} opened a build task — {} blocks left of {}",
+                colony.id(),
+                blocks,
+                project.blueprint().id());
+    }
+
+    /**
      * Decide, se for o caso, a próxima obra desta colônia.
      *
      * @return a obra recém-planejada, quando nasce uma agora
@@ -107,7 +180,11 @@ public final class ConstructionPlanner {
     public static Optional<ConstructionProject> plan(ServerWorld world, Colony colony) {
         resume(world, colony);
 
-        if (VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isPresent()) {
+        Optional<ConstructionProject> open = VillageColonyMod.CONSTRUCTIONS.openOf(colony.id());
+
+        if (open.isPresent()) {
+            ensureTask(colony, open.get());
+
             return silent(colony, IdleReason.ALREADY_OPEN, "");
         }
 
@@ -179,6 +256,8 @@ public final class ConstructionPlanner {
         // código para um caso que a escolha do lote já excluiu.
         project.moveTo(ConstructionState.PREPARING);
         project.moveTo(ConstructionState.BUILDING);
+
+        ensureTask(colony, project);
 
         IdleLog.clear(colony.id(), SUBJECT);
 

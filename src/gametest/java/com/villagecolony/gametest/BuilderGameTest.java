@@ -7,6 +7,7 @@ import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.storage.model.WorkerStorage;
+import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskPriority;
 import com.villagecolony.core.task.model.TaskType;
@@ -19,6 +20,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.work.BuilderWork;
+import com.villagecolony.fabric.work.ConstructionPlanner;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -275,6 +277,114 @@ public class BuilderGameTest implements FabricGameTest {
         }
 
         return found;
+    }
+
+    /**
+     * A obra ganha tarefa sozinha — o defeito da sessão de 2026-08-15.
+     *
+     * <p><b>Este é o teste que faltava, e o motivo de ele faltar é a
+     * lição.</b> Todos os outros desta classe criam a tarefa de
+     * construção à mão, e por isso todos passavam enquanto, em jogo,
+     * duas casas ficavam cinco horas e quarenta minutos em
+     * {@code 151 blocks left} com {@code 0 working}.
+     *
+     * <p>Nada em produção criava tarefa {@code BUILD}: {@code
+     * tasks.create} só era chamado de {@code ColonyCycle.requestMissing},
+     * e aquele caminho só produz {@code BUILD} para recurso de categoria
+     * {@code CONSTRUCTION}, que nenhum {@code ResourceType} tem. O
+     * construtor não tinha o que fazer em vila nenhuma.
+     *
+     * <p>É o §11 pela segunda vez, com a mesma frase que o E10 rendeu: a
+     * pergunta que o teste tem de responder não é "este código
+     * funciona?", é <em>"quem põe esta coisa aqui, em jogo?"</em>.
+     *
+     * <p>Por isso este teste <b>não cria tarefa nenhuma</b>. Ele monta o
+     * estado com que a sessão real começa — colônia, obra aberta em
+     * BUILDING, construtor com baú abastecido — chama
+     * {@code ConstructionPlanner.plan} e {@code WorkAssignment.assign}
+     * como o ciclo os chama, e afirma que a parede sobe.
+     *
+     * <p>Rodado contra a regra desligada em 2026-08-15: sem
+     * {@code ConstructionPlanner.ensureTask} nenhum bloco é posto, que é
+     * exatamente o que a sessão de jogo mostrou.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_task",
+            tickLimit = 300)
+    public void theOpenProjectGetsItsOwnTaskWithoutAnyoneCreatingIt(TestContext context) {
+        Fixture fixture = setUpWithoutTask(context);
+
+        context.runAtTick(90, () -> {
+            context.assertTrue(
+                    isPlanks(context, SITE),
+                    "ninguém abriu tarefa para a obra: o primeiro bloco não foi posto");
+
+            context.assertTrue(
+                    isPlanks(context, SITE.east()),
+                    "a obra parou no primeiro bloco");
+
+            fixture.owned.cleanUp();
+
+            context.complete();
+        });
+    }
+
+    /**
+     * O mesmo cenário de {@link #setUp}, menos a tarefa.
+     *
+     * <p>A diferença é a coisa inteira: aqui quem abre a tarefa é o
+     * {@code ConstructionPlanner}, e quem a entrega ao construtor é o
+     * {@code WorkAssignment} — as duas peças que o ciclo chama, na ordem
+     * em que ele as chama.
+     */
+    private static Fixture setUpWithoutTask(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        world.setTimeOfDay(Schedule.WORK_TIME);
+
+        context.setBlockState(SITE.down(), Blocks.STONE.getDefaultState());
+        context.setBlockState(SITE.down().east(), Blocks.STONE.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        ChestDepositor.deposit(world, chest, Items.OAK_PLANKS, 8);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.BUILDER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        ConstructionProject project = ConstructionProject.plan(
+                colony.id(),
+                wall(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(SITE)));
+
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+
+        // O ciclo, na ordem em que VillageDetectionHandler o roda:
+        // o planejador abre a tarefa, a atribuição a entrega, e o
+        // executor a assume.
+        ConstructionPlanner.plan(world, colony);
+
+        WorkAssignment.assign(colony.id(), VillageColonyMod.WORKERS, VillageColonyMod.TASKS);
+
+        BuilderWork.run(world, colony);
+
+        return new Fixture(
+                colony,
+                project,
+                chest,
+                ColonyFixture.create().owning(colony).owning(villager.getUuid()));
     }
 
     /** Duas tábuas lado a lado. */
