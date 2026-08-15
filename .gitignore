@@ -37,3 +37,12 @@ replay_pid*
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Referência de engenharia reversa, não redistribuível.
+#
+# O mod Workers (Talha Kantar) é "All Rights Reserved": copiar,
+# modificar e distribuir são proibidos pela licença que acompanha o
+# fonte. Commitar a pasta neste repositório público seria
+# redistribuição. A análise arquitetural dela — que é obra nossa e pode
+# ser publicada — está em docs/workers-analysis/.
+workers-maingit/
