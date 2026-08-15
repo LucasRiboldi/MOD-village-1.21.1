@@ -102,6 +102,43 @@ public final class ConstructionPlanner {
     }
 
     /**
+     * Acorda a obra que esperava material, quando o material chegou.
+     *
+     * <p>{@code WAITING_RESOURCES} era estado terminal na prática. A
+     * única transição para {@code BUILDING} estava na criação do projeto,
+     * e {@link #ensureTask} não abre tarefa fora de {@code BUILDING}: a
+     * obra que uma vez ficasse sem material não voltava a ser tentada
+     * nunca mais, ainda que o baú enchesse no minuto seguinte.
+     *
+     * <p>Foi o que a sessão das 19:44 de 2026-08-15 mostrou. A casa parou
+     * em 149 blocos com 52 tábuas guardadas, dois fabricantes ociosos e
+     * a linha {@code builders: 0 working, WAITING_RESOURCES ... — no
+     * build task} repetindo até o desligamento. O comentário de
+     * {@code BuilderWork.waitForResources} já dizia que "quem destrava é
+     * o ciclo da colônia" — era intenção que nenhum código cumpria.
+     *
+     * <p>Só acorda com o material do próximo bloco em mãos. Acordar sem
+     * conferir poria o construtor a caminhar até a obra todo ciclo para
+     * falhar ao chegar, que é a mesma roda do E16 por outra porta.
+     */
+    private static void wakeIfSupplied(ServerWorld world, ConstructionProject project) {
+        if (project.state() != ConstructionState.WAITING_RESOURCES) {
+            return;
+        }
+
+        if (!BuilderWork.hasMaterialForNextBlock(world, project)) {
+            return;
+        }
+
+        project.moveTo(ConstructionState.BUILDING);
+
+        VillageColonyMod.LOGGER.info(
+                "Project {} has what it was waiting for — back to building, {} blocks left",
+                project.id(),
+                project.remainingCount());
+    }
+
+    /**
      * Garante que a obra aberta tenha uma tarefa por onde alguém a pegue.
      *
      * <p><b>É o defeito que a sessão de 2026-08-15 achou, e o último do
@@ -183,6 +220,8 @@ public final class ConstructionPlanner {
         Optional<ConstructionProject> open = VillageColonyMod.CONSTRUCTIONS.openOf(colony.id());
 
         if (open.isPresent()) {
+            wakeIfSupplied(world, open.get());
+
             ensureTask(colony, open.get());
 
             return silent(colony, IdleReason.ALREADY_OPEN, "");

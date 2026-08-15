@@ -69,6 +69,37 @@ public final class ChestWithdrawer {
     }
 
     /**
+     * Quantos itens deste tipo o baú tem, sem tirar nenhum.
+     *
+     * <p>A pergunta que {@link #withdraw} responde tirando. Existe para
+     * quem precisa saber antes de decidir — a obra parada em
+     * {@code WAITING_RESOURCES} perguntando se já pode acordar.
+     *
+     * <p>Mesma leitura de {@code withdraw}: o mesmo baú, o mesmo teste de
+     * item. As duas têm de concordar, senão a obra acorda e volta a
+     * dormir no mesmo ciclo.
+     */
+    public static int countIn(ServerWorld world, ColonyPos chest, Item item) {
+        ChestBlockEntity inventory = chestAt(world, chest);
+
+        if (inventory == null) {
+            return 0;
+        }
+
+        int found = 0;
+
+        for (int slot = 0; slot < inventory.size(); slot++) {
+            ItemStack stack = inventory.getStack(slot);
+
+            if (stack.isOf(item)) {
+                found += stack.getCount();
+            }
+        }
+
+        return found;
+    }
+
+    /**
      * Tira até {@code amount} itens deste grupo, seja qual for a espécie.
      *
      * <p>É o que a fabricação precisa: o fabricante pega madeira, não

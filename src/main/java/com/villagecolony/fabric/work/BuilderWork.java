@@ -413,12 +413,65 @@ public final class BuilderWork {
     }
 
     /**
+     * O material do próximo bloco já está em algum baú da colônia?
+     *
+     * <p>Pergunta sem tirar nada, e existe para {@code ConstructionPlanner}
+     * poder tirar a obra de {@code WAITING_RESOURCES}. A varredura é a
+     * mesma de {@link #takeMaterial} — todos os baús de todos os
+     * trabalhadores da colônia — porque as duas precisam concordar: uma
+     * que dissesse "tem" e outra que não achasse poria a obra a acordar e
+     * voltar a dormir todo ciclo.
+     */
+    public static boolean hasMaterialForNextBlock(
+            ServerWorld world, ConstructionProject project) {
+
+        Optional<BlueprintBlock> next = project.nextBlock();
+
+        if (next.isEmpty()) {
+            // Nada a pôr: a obra acabou e quem a fecha é o construtor.
+            return true;
+        }
+
+        Optional<Block> material = MinecraftTypeAdapter.toBlock(next.get().block());
+
+        if (material.isEmpty()) {
+            // Bloco que este jogo não conhece. placeOne o risca e segue,
+            // então acordar a obra é o certo — ela não vai travar nele.
+            return true;
+        }
+
+        Item item = material.get().asItem();
+
+        for (Worker worker : VillageColonyMod.WORKERS.ofColony(project.colonyId())) {
+            Optional<WorkerStorage> storage = VillageColonyMod.STORAGES.of(worker.villagerId());
+
+            if (storage.isEmpty()) {
+                continue;
+            }
+
+            if (ChestWithdrawer.countIn(world, storage.get().chestPosition(), item) > 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Falta material: a obra espera, e a tarefa volta para a fila.
      *
      * <p>WAITING_RESOURCES é estado previsto (Construction-System.md), e
      * não defeito. Quem destrava é o ciclo da colônia, que vê a falta e
      * pede o que falta — e o jogador, que estoca o que a colônia não
      * produz.
+     *
+     * <p>Até 2026-08-15 essa frase descrevia uma intenção que nenhum
+     * código cumpria: a única transição para {@code BUILDING} estava na
+     * criação do projeto, e {@code ensureTask} não abre tarefa fora de
+     * {@code BUILDING}. Na prática isto era estado terminal — a obra da
+     * sessão das 19:44 estava parada em 149 blocos com 52 tábuas no baú.
+     * Quem destrava de verdade é {@code ConstructionPlanner.plan}, com
+     * {@link #hasMaterialForNextBlock}.
      */
     private static void waitForResources(
             ConstructionProject project, Job job, UUID workerId, BlueprintBlock block) {

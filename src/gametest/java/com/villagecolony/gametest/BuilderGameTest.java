@@ -329,6 +329,106 @@ public class BuilderGameTest implements FabricGameTest {
     }
 
     /**
+     * A obra que ficou sem material acorda quando o material chega.
+     *
+     * <p>{@code WAITING_RESOURCES} era estado terminal na prática: a
+     * única transição para {@code BUILDING} estava na criação do
+     * projeto, e {@code ensureTask} não abre tarefa fora de
+     * {@code BUILDING}. A obra que uma vez ficasse sem material não era
+     * tentada nunca mais, ainda que o baú enchesse no minuto seguinte.
+     *
+     * <p>A sessão das 19:44 de 2026-08-15 mostrou isso: casa parada em
+     * 149 blocos, 52 tábuas guardadas, dois fabricantes ociosos, e
+     * {@code builders: 0 working, WAITING_RESOURCES ... — no build task}
+     * repetindo até o desligamento.
+     *
+     * <p>Aqui o baú começa vazio, a obra dorme por falta de tábua, o
+     * baú é abastecido, e o ciclo seguinte tem de encontrar a parede de
+     * pé.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_wakes",
+            tickLimit = 400)
+    public void theProjectThatRanOutOfMaterialWakesWhenTheChestIsFilled(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        world.setTimeOfDay(Schedule.WORK_TIME);
+
+        context.setBlockState(SITE.down(), Blocks.STONE.getDefaultState());
+        context.setBlockState(SITE.down().east(), Blocks.STONE.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        // Baú vazio de propósito: é a falta que põe a obra para dormir.
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.BUILDER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        ConstructionProject project = ConstructionProject.plan(
+                colony.id(),
+                wall(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(SITE)));
+
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+
+        ColonyFixture owned =
+                ColonyFixture.create().owning(colony).owning(villager.getUuid());
+
+        ConstructionPlanner.plan(world, colony);
+
+        WorkAssignment.assign(colony.id(), VillageColonyMod.WORKERS, VillageColonyMod.TASKS);
+
+        BuilderWork.run(world, colony);
+
+        // Sem tábua no baú, o construtor chega e desiste.
+        context.runAtTick(120, () -> {
+            context.assertTrue(
+                    project.state() == ConstructionState.WAITING_RESOURCES,
+                    "a obra precisava estar esperando material, e está em " + project.state());
+
+            context.assertTrue(
+                    !isPlanks(context, SITE),
+                    "não havia tábua no baú e mesmo assim um bloco foi posto");
+
+            ChestDepositor.deposit(world, chest, Items.OAK_PLANKS, 8);
+        });
+
+        // O ciclo seguinte, como VillageDetectionHandler o roda.
+        context.runAtTick(140, () -> {
+            ConstructionPlanner.plan(world, colony);
+
+            context.assertTrue(
+                    project.state() == ConstructionState.BUILDING,
+                    "o material chegou e a obra continua em " + project.state());
+
+            WorkAssignment.assign(colony.id(), VillageColonyMod.WORKERS, VillageColonyMod.TASKS);
+
+            BuilderWork.run(world, colony);
+        });
+
+        context.runAtTick(320, () -> {
+            context.assertTrue(
+                    isPlanks(context, SITE),
+                    "a obra acordou e mesmo assim o bloco não foi posto");
+
+            owned.cleanUp();
+
+            context.complete();
+        });
+    }
+
+    /**
      * O mesmo cenário de {@link #setUp}, menos a tarefa.
      *
      * <p>A diferença é a coisa inteira: aqui quem abre a tarefa é o
