@@ -30,8 +30,10 @@ import java.util.Optional;
  * é ela que o Vanilla guarda como {@code MemoryModuleType.HOME}, e é o
  * mesmo POI que a ADR-003 usa para achar a vila.
  *
- * <p>Não cria nada. O baú tem de existir na casa; aqui só se anota onde
- * ele está. Ver Storage-System.md §"Criação do Baú".
+ * <p>Prefere sempre o baú que já existe. Quando não existe nenhum ao
+ * alcance da cama, {@link ChestPlacer} põe um — é a Regra 8, de
+ * 2026-08-15, e ela substituiu a regra anterior de que o mod não criava
+ * baú nenhum. Ver Storage-System.md §"Criação do Baú".
  */
 public final class ChestScanner {
 
@@ -87,6 +89,14 @@ public final class ChestScanner {
         }
 
         Optional<BlockPos> chest = findFreeChest(world, home.get().pos(), storages);
+
+        if (chest.isEmpty()) {
+            // A Regra 8: não havia baú ao alcance desta cama, então ele
+            // passa a haver. Antes de 2026-08-15 a busca acabava aqui e
+            // o aldeão ficava sem baú para sempre — o E16, que custou
+            // doze minutos de tarefa girando na sessão daquele dia.
+            chest = ChestPlacer.placeBeside(world, home.get().pos());
+        }
 
         if (chest.isEmpty()) {
             return Optional.empty();

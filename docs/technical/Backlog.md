@@ -145,7 +145,7 @@ na seção de cada regra.
 | # | Regra | Estado |
 |---|---|---|
 | ~~H1~~ | ~~**Regra 7** — o lenhador planta onde cortou~~ | ✅ feita em 08-15, dois testes de jogo pelo caminho do trabalhador |
-| H2 | **Regra 8** — um baú ao lado de cada cama | 🔨 **decidido em 08-15:** o baú é exceção de geração, aparece do nada. A amarração cama–baú já existe; falta criar o baú e nomear a exceção no Construction-System |
+| H2 | **Regra 8** — um baú ao lado de cada cama | 🟡 **metade feita em 08-15.** `ChestPlacer` põe o baú quando a cama de um **trabalhador** não alcança nenhum, com 5 recusas e 6 testes de jogo. Falta a outra metade: cama de aldeão que não trabalha continua sem baú, porque `VillageCandidate` carrega contagem e não as posições das camas |
 | H3 | **Regra 9** — subir e descer para alcançar, e poder voltar | 🔨 **decidido em 08-15:** só navegação, o aldeão não põe nem tira bloco. Conferir caminho de ida e volta antes de aceitar o alvo; alvo sem caminho sai da escolha, sem recusa permanente. Fecha o G2 |
 | H4 | **Regra 10** — o construtor fabrica o que a expansão pede | 👤 espera decisão sobre baú comunitário e sobre onde termina o fabricante. As peças existem: `CraftingLookup`, `ChestWithdrawer`, `ManufacturerWork` |
 | H5 | **Regra 11** — uma de cada profissão em cada vila | 🔨 mecanismo já pronto (`vacancy` devolve a mais escassa). Falta a garantia: vila pequena demais, e a dispensa podendo tirar o último de uma profissão. Nenhum teste afirma o piso |

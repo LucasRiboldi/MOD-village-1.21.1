@@ -12,6 +12,7 @@
       "com.villagecolony.gametest.StorageGameTest",
       "com.villagecolony.gametest.LumberjackGameTest",
       "com.villagecolony.gametest.ChestMarkerGameTest",
+      "com.villagecolony.gametest.ChestPlacerGameTest",
       "com.villagecolony.gametest.WorkerLossGameTest",
       "com.villagecolony.gametest.ColonyCycleGameTest",
       "com.villagecolony.gametest.BlockProtectionGameTest",

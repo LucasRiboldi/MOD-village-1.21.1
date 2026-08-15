@@ -80,13 +80,75 @@ Worker Storage
 
 # Criação do Baú
 
-No MVP:
+**Mudou em 2026-08-15, pela Regra 8.** O que estava escrito aqui — "o
+sistema não cria casas ou baús automaticamente" — deixou de valer para o
+baú. Continua valendo para a casa.
 
-O sistema não cria casas ou baús automaticamente.
+A regra vigente:
 
-O baú deve existir na casa do aldeão.
+```text
+toda vila gerada pelo Minecraft ganha um baú ao lado de cada cama
 
-O mod apenas registra o armazenamento encontrado.
+cada aldeão fica vinculado a uma cama
+
+e ao baú mais perto da sua cama
+```
+
+Ordem de preferência, e ela importa:
+
+```text
+1. o baú que já existe ao alcance da cama    ChestScanner
+2. um baú novo, ao lado da cama              ChestPlacer
+```
+
+Nunca o inverso. Vila que já tem baú não ganha baú novo.
+
+## De onde vem o baú
+
+Do nada, e **isto é exceção declarada**. A regra de arquitetura do
+`Construction-System.md` — a colônia não cria recurso — continua valendo
+para todo o resto: o que a obra consome sai de baú, e nada do que o
+trabalhador produz nasce do vazio.
+
+A justificativa da exceção é que este baú não é produção da colônia. É
+completar o que a geração de vila do Minecraft deixou incompleto — do
+mesmo lado da linha que a detecção de vila, e não do lado da economia.
+
+## O cuidado ao pôr
+
+É a escrita mais invasiva que o mod faz: um bloco dentro da casa de
+alguém. A escolha do lugar recusa mais do que aceita.
+
+```text
+substituível        ar, grama alta, flor. Bloco do jogador fica
+                    onde está — Regra 3
+
+nunca cama          os vizinhos de uma cama incluem a outra metade
+                    dela
+
+chão firme embaixo  senão o baú flutua, ou cai sobre areia
+
+livre em cima       baú com bloco opaco em cima não abre, nem para
+                    o aldeão nem para o jogador
+
+não encostar        baú ao lado de baú vira baú duplo, e um
+noutro baú          inventário com dois donos
+```
+
+Quatro vizinhos no nível da cama; se nenhum servir, os quatro um bloco
+abaixo — chão de vila vanilla tem degrau, e é a mesma folga de um bloco
+que o `ChestScanner` já aceita entre cama e baú. Se ainda assim nenhum
+servir, o aldeão fica sem baú e a linha diz isso.
+
+## O que isto ainda não cobre
+
+O baú nasce quando um **trabalhador** precisa dele e a cama dele não
+alcança nenhum. Cama de aldeão que não trabalha continua sem baú.
+
+O enunciado da regra é mais largo — *cada* cama — e cobri-lo exige as
+posições das camas por colônia, que a varredura hoje descarta:
+`VillageCandidate` carrega centro e contagem, não a lista. Ver o H2 do
+Backlog.
 
 ---
 
