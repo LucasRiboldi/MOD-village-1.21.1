@@ -19,7 +19,10 @@ import net.minecraft.block.Block;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * A colônia decide construir — TASK-033.
@@ -54,7 +57,43 @@ public final class ConstructionPlanner {
      */
     private static Blueprint house;
 
+    /**
+     * Por que esta colônia não abriu obra, da última vez que se perguntou.
+     *
+     * <p>Existe por causa da sessão de 2026-08-14, à noite: a Fase 10 não
+     * produziu linha nenhuma — nem obra, nem recusa — e havia cinco
+     * caminhos silenciosos por onde ela podia ter saído. Do lado de fora,
+     * "não tem construtor", "o jogo não tem essa casa" e "não há lote"
+     * eram o mesmo silêncio.
+     *
+     * <p>É o §11: a linha que expõe o defeito precisa existir antes de
+     * alguém desconfiar dele.
+     *
+     * <p>Guarda o motivo anterior para <b>só registrar quando ele muda</b>.
+     * Uma linha por colônia por ciclo seria o E1 por uma terceira porta —
+     * ruído constante dizendo sempre a mesma coisa.
+     */
+    private static final Map<UUID, String> LAST_SILENCE = new HashMap<>();
+
     private ConstructionPlanner() {
+    }
+
+    /**
+     * Registra por que não houve obra, uma vez por motivo.
+     *
+     * @return sempre vazio, para servir de {@code return} das recusas
+     */
+    private static Optional<ConstructionProject> silent(Colony colony, String why) {
+        if (!why.equals(LAST_SILENCE.put(colony.id(), why))) {
+            VillageColonyMod.LOGGER.info("Colony {} planned no building — {}", colony.id(), why);
+        }
+
+        return Optional.empty();
+    }
+
+    /** Esquece o motivo guardado. Chamado ao parar o servidor. */
+    public static void clearAll() {
+        LAST_SILENCE.clear();
     }
 
     /**
@@ -66,27 +105,32 @@ public final class ConstructionPlanner {
         resume(world, colony);
 
         if (VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isPresent()) {
-            return Optional.empty();
+            return silent(colony, "one is already open");
         }
 
         int builders = WorkAssignment.countCapableOf(
                 colony.id(), TaskType.BUILD.required(), VillageColonyMod.WORKERS);
 
         if (builders == 0) {
-            return Optional.empty();
+            return silent(colony, "no builder in the village");
         }
 
         Optional<Blueprint> blueprint = houseOf(world);
 
         if (blueprint.isEmpty()) {
-            return Optional.empty();
+            return silent(
+                    colony,
+                    "this game has no " + StructureBlueprintReader.PLAINS_SMALL_HOUSE
+                            + " to read");
         }
 
         Optional<ColonyPos> site = BuildSiteScanner.find(
                 world, colony.center(), VillageDetector.SEARCH_RADIUS, blueprint.get().size());
 
         if (site.isEmpty()) {
-            return Optional.empty();
+            return silent(colony, "no free lot beside a road within "
+                    + VillageDetector.SEARCH_RADIUS + " blocks of " + colony.center()
+                    + " that fits " + blueprint.get().size());
         }
 
         if (VillageColonyMod.BUILDINGS.isColonyInfrastructure(site.get())) {
@@ -95,7 +139,7 @@ public final class ConstructionPlanner {
             // mundo, e uma casa de madeira sobre terra continua parecendo
             // terreno pelo topo do bloco. A próxima passagem tenta outro
             // anel.
-            return Optional.empty();
+            return silent(colony, "the lot at " + site.get() + " falls on a colony building");
         }
 
         ConstructionProject project =
@@ -111,6 +155,8 @@ public final class ConstructionPlanner {
         // código para um caso que a escolha do lote já excluiu.
         project.moveTo(ConstructionState.PREPARING);
         project.moveTo(ConstructionState.BUILDING);
+
+        LAST_SILENCE.remove(colony.id());
 
         VillageColonyMod.LOGGER.info(
                 "Colony {} planned {} at {} — {} blocks, {} builders",
