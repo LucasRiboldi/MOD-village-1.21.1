@@ -6469,3 +6469,85 @@ Se vier "still sweeping", o assunto é outro — o orçamento de varredura
 contra a duração de uma sessão de verdade.
 
 366 testes unitários e 79 de jogo, verdes.
+
+---
+
+## 2026-08-15, 00:42 — a grama, e o preço de instrumentar mal
+
+Vinte minutos de sessão, o suficiente para a varredura fechar o raio
+duas vezes em cada colônia:
+
+```text
+00:42:59  still sweeping for a lot — the ring budget ran out
+00:53:35  no free lot beside a road in the whole 64-block radius
+00:54:05  still sweeping for a lot
+01:03:05  no free lot beside a road in the whole 64-block radius
+```
+
+**A varredura termina e não acha.** Sem margem: raio 64 inteiro, duas
+vezes, nas duas vilas.
+
+### A causa
+
+`groundInColumn` devolvia o bloco mais alto que não fosse ar. Em
+planície esse bloco é o tufo de grama, e não o bloco de grama.
+`flatGroundAt` então recusava a coluna, porque tufo não é chão.
+
+Um lote de sete por sete precisa das quarenta e nove colunas limpas.
+Em campo de planície, nenhuma está.
+
+`Construction-System.md §PREPARING` sempre mandou limpar grama, flor e
+neve. O código pulava o estado alegando que o lote só é aceito quando
+não há nada em cima dele — a alegação era verdadeira e era exatamente
+o defeito. Estava registrada como TASK-047 no §13, por outro lado, e
+ninguém sabia que ela bloqueava a Fase 10 inteira.
+
+### O teste que passou sem provar nada
+
+A primeira versão punha **um** tufo dentro do lote e afirmava que ele
+seria aceito. Passou. Não porque a hipótese estivesse errada, mas
+porque `siteBesideRoadAt` tenta as quatro direções, e a casa de teste
+tem dois por dois — o lote escapava pelo lado limpo.
+
+Cobrir o campo inteiro fez o teste falhar, e foi aí que ele começou a
+afirmar alguma coisa. É a mesma lição do E10 por outro ângulo: o teste
+precisa modelar o mundo que acontece, e planície é grama em toda parte.
+
+### O preço de instrumentar mal
+
+Três sessões para um defeito de uma linha, e duas delas foram gastas
+com o instrumento:
+
+```text
+1ª  a Fase 10 em silêncio       cinco saídas sem log
+2ª  a linha mentindo            "não há lote" quando não terminara
+                                de olhar
+3ª  a resposta                  a varredura fecha o raio e não acha
+```
+
+A segunda sessão foi inteiramente culpa da instrumentação que escrevi
+na primeira: uma linha que afirma uma conclusão em vez de relatar um
+fato. O §11 manda instrumentar antes de suspeitar, e falta ali a outra
+metade — **a linha tem de dizer o que sabe, e não o que se conclui.**
+
+O que salvou foi o hábito de não aceitar "provável". A suspeita do lote
+estava certa desde a primeira sessão; se ela tivesse sido adotada, a
+correção teria sido em `TASK-043` — estender a estrada — e não teria
+funcionado, porque a rua não tinha nada de errado.
+
+### O que fica
+
+```text
+folha fora do isNothing     decisão: aceitá-la faria a colônia
+                            escolher lote debaixo de copa, e a casa
+                            nasceria dentro da árvore
+
+moita dentro de cômodo      o construtor limpa escrevendo o bloco no
+                            lugar; onde o projeto pede ar, ele não
+                            escreve nada e a grama fica. Cosmético
+```
+
+A obra ainda não foi vista subindo. O que se sabe é que o lote deixou
+de ser recusado por grama.
+
+366 testes unitários e 80 de jogo, verdes.

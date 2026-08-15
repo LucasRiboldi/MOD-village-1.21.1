@@ -1606,7 +1606,35 @@ Tarefa própria: TASK-049, em §8, sob decisão do autor.
 
 ---
 
-### E14 — A Fase 10 não abre obra, e não se sabe por quê
+### E14 — A Fase 10 não abria obra: a grama do campo (fechado)
+
+Fechado em 2026-08-15, 01:08, depois de três sessões. O texto abaixo
+fica inteiro porque o caminho é a parte que ensina — duas das três
+sessões foram gastas com o instrumento, não com o defeito.
+
+**A resposta final.** A varredura completa o raio e não acha, e o
+motivo é `groundInColumn`: ela devolvia o bloco mais alto que não fosse
+ar, e em planície esse bloco é o tufo de grama. `flatGroundAt` recusava
+a coluna porque tufo não é chão. Um lote de sete por sete precisa das
+quarenta e nove colunas limpas, e em planície nenhuma está.
+
+`Construction-System.md §PREPARING` sempre mandou limpar grama, flor e
+neve. O código pulava o estado alegando que o lote só é aceito quando
+não há nada em cima dele — a alegação era verdadeira, e era o defeito.
+Era a TASK-047, registrada no §13 por outro lado e sem ninguém saber
+que ela bloqueava a Fase 10 inteira.
+
+Corrigido: `isNothing` trata ar, cobertura do campo e camada de neve
+como nada. Folha fica de fora por decisão — aceitá-la faria a colônia
+escolher lote debaixo de copa.
+
+**A obra ainda não foi vista subindo.** O que se sabe é que o lote
+deixou de ser recusado por grama; que exista lote de verdade nas vilas
+do autor é a próxima sessão que diz.
+
+---
+
+### E14 — como era, antes de fechar
 
 Sessão de 2026-08-14, 23:41, com o jar certo — `Loaded 3 colonies with
 80 workers, 0 buildings and 0 projects to resume`. Nove minutos, três
@@ -1654,11 +1682,17 @@ não havia lote. A conta deixou de ser conta e virou teste em
 Corrigido na mesma noite: `sweepPausedAt` lê o cursor que já existia, e
 a mensagem passa a separar "não há lote" de "não terminei de olhar".
 
-Continua aberto, e agora com a pergunta certa: **a varredura completa o
-raio e não acha, ou ela nunca completa?** A sessão seguinte responde
-pela linha que aparecer. Se for "no free lot ... in the whole 64-block
-radius", o E14 fecha e o que sobra é a TASK-043 — a vila só constrói em
-beira de rua que já existe, e a rua acabou.
+Respondido em 2026-08-15, 00:42, numa sessão de vinte minutos:
+
+```text
+00:42:59  still sweeping for a lot — the ring budget ran out
+00:53:35  no free lot beside a road in the whole 64-block radius
+00:54:05  still sweeping for a lot
+01:03:05  no free lot beside a road in the whole 64-block radius
+```
+
+Duas varreduras completas por colônia, e a terceira já em curso. **A
+varredura termina e não acha.** A causa está no topo desta entrada.
 
 ---
 
