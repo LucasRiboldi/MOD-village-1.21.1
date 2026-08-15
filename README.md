@@ -131,7 +131,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Agricultura, mineração, ferraria, defesa | ⬜ não começado |
 
 ```text
-375 testes unitários  ·  83 testes de jogo  ·  ./gradlew build
+375 testes unitários  ·  85 testes de jogo  ·  ./gradlew build
 ```
 
 ---
@@ -155,7 +155,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | | Etapa | Estado |
 |---|---|---|
 | **1** | **Ver a casa subir.** A obra bloco a bloco, a casa virando infraestrutura da colônia, e o lote seguinte não caindo em cima dela. A sessão de 2026-08-15 achou por que ela nunca subia — ninguém criava a tarefa de obra —, e isso está corrigido; falta ver | 🔒 exige sessão de jogo |
-| **2** | **Decidir o rodízio de profissão.** A colônia dispensa quem não conseguiu baú "em favor de quem consegue", e o substituto também não consegue. Corrigir mexe numa regra, não no código | 👤 exige decisão |
+| ~~**2**~~ | ~~**O rodízio de profissão.**~~ A colônia só dispensa quem não tem baú quando existe baú livre de verdade para o substituto — contar candidatos não era contar baús | ✅ **feito em 2026-08-15** |
 | ~~**3**~~ | ~~**O motivo de não trabalhar como valor.**~~ As três profissões dizem por que não trabalharam, no mesmo vocabulário, e o log registra a mudança em vez do estado | ✅ **feito em 2026-08-15** |
 | ~~**4**~~ | ~~**Blocos de duas partes.**~~ A porta é uma porta e a cama é uma cama. Sobra a **orientação**: escada e porta saem no padrão | ✅ **feito em 2026-08-15** |
 | **5** | **Estender a estrada.** Hoje a vila só constrói em beira de rua que já existe; quando ela acabar, a colônia para de crescer | 🔨 pronto para fazer |

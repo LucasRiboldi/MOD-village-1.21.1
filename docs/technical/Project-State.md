@@ -545,6 +545,16 @@ Fora de fase — 2026-08-15, da leitura do mod Workers
                                          ticks e a bateria inteira roda
                                          em cinco segundos
 
+  TASK-049  contar baús, e não candidatos  feito
+                                         (ChestScanner.freeChestFor,
+                                         ScanResult.freeChests). Fecha o
+                                         E11: a colônia só dispensa quem
+                                         não tem baú quando há baú livre
+                                         de verdade. Decisão do autor de
+                                         2026-08-15, opção A. Dois testes
+                                         de jogo, o da ligação rodado
+                                         contra a regra desligada
+
   TASK-053  a obra ganha tarefa            feito
                                          (ConstructionPlanner.ensureTask;
                                          TaskType.isResourceRequest
@@ -651,7 +661,7 @@ Nenhum pacote vazio: `core/construction` foi preenchido em 2026-08-14.
 
 ```text
 375 testes unitários     lógica pura do Core e serialização NBT
- 83 testes de jogo       a fronteira com o Minecraft, num servidor
+ 85 testes de jogo       a fronteira com o Minecraft, num servidor
                          sem cliente (./gradlew runGametest)
 ```
 
@@ -1061,6 +1071,51 @@ sondar bioma precisam ser feitos no jogo real, não no `runServer`.
 ---
 
 ## Decididas e registradas
+
+```text
+As cinco decisões de 2026-08-15
+
+   Tomadas de uma vez, para irem sendo desenvolvidas aos poucos. A
+   ordem de execução é a do Backlog.md §4; o que cada uma decide está
+   abaixo, com a tarefa que a implementa.
+
+   1  quando dispensar quem não conseguiu baú          TASK-049
+      → só se dispensa quando há baú livre DE VERDADE para o
+        substituto. Contar candidatos não é contar baús.
+      FEITA em 2026-08-15. Fecha o E11.
+
+   2  o que uma colônia ABANDONED deixa de fazer       TASK-048
+      → ela para de CRESCER, e continua colhendo. Sem obra nova; o
+        trabalho que já existe segue.
+      NÃO IMPLEMENTADA. Ver a ressalva do E9 abaixo.
+
+   3  o que acontece quando duas vilas viram uma       TASK-044
+      → a colônia resultante fica com TUDO: trabalhadores, baús e
+        construções das duas. Confirma o que o autor já enunciara em
+        2026-08-12 — a fusão não reduz trabalhadores.
+      NÃO IMPLEMENTADA. Exige ADR nova.
+
+   4  a orientação dos blocos                          TASK-046
+      → o Core APRENDE a falar de orientação. Escada, porta e cama
+        saem como o arquivo manda, e não no padrão.
+      NÃO IMPLEMENTADA. Exige ADR nova — é a que emenda a ADR-005.
+
+   5  o fundo do ícone
+      → arte nova entregue pelo autor em 2026-08-15.
+      PENDENTE de o arquivo entrar em assets/villagecolony/icon.png.
+```
+
+```text
+Ressalva da decisão 2, e ela é a razão de a tarefa esperar
+
+   O E9 registra que a marca ABANDONED oscila no ambiente de teste, e
+   ninguém investigou por quê. "Parar de crescer" só é seguro se a
+   marca estiver certa: numa colônia viva marcada por engano, a decisão
+   silencia a construção sem que nada avise.
+
+   Investigar o E9 é mais barato que implementar a decisão e descobrir
+   isso depois. É o passo que vem antes da TASK-048.
+```
 
 ```text
 Ícone e nome divergem                    2026-08-07,
@@ -1754,7 +1809,27 @@ quando a obra passar a puxar a meta.
 
 ---
 
-### E11 — Rodízio de profissão a cada ciclo
+### E11 — Rodízio de profissão a cada ciclo (fechado em 2026-08-15)
+
+**Fechado.** A causa era de contagem, e estava escrita no javadoc do
+próprio `ChestScanner.hasFreeChest` desde que ele nasceu: *"é uma
+preferência, não uma promessa: dois candidatos podem enxergar o mesmo
+baú livre, e só um fica com ele."*
+
+Quem contava contava **candidatos**. Três aldeões do mesmo cômodo
+olhando para um baú davam três dispensas, uma reivindicação e dois
+trabalhadores novos sem baú — e no ciclo seguinte, a mesma troca. Foram
+689 vezes na sessão de 5h40m de 2026-08-15.
+
+`freeChestFor` passou a dizer **qual** baú, e a varredura conta baús
+distintos. Não visto em jogo: o que a próxima sessão deve mostrar é o
+silêncio.
+
+O texto original fica abaixo, porque o caminho é a parte que ensina.
+
+---
+
+### E11 — como era, antes de fechar
 
 Observado na sessão de 2026-08-14, na colônia `9a5afa23`: nove
 dispensas em dezesseis minutos, uma por ciclo, cada uma seguida de
