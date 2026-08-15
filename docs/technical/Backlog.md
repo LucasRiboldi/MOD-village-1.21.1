@@ -135,6 +135,21 @@ jogo**, que é coisa diferente. Ver Development-Log, entrada das 12:45.
 | G4 | **A colônia move o centro recusando encolher** — saiu de âncora de 6 camas para uma de 3 com `view not provably complete`, e deixou a obra 65 blocos atrás | 👤 espera decisão. É comportamento da ADR-003, não defeito declarado |
 | G5 | **`BuilderWork.java` com 509 linhas** — passou do limite de 500 ao receber a instrumentação do G1 | 🔨 extrair os métodos de log para uma classe irmã |
 
+## 2.7 Grupo H — as regras novas de 08-15
+
+Enunciados em `Project-State.md` §18, Regras 7 a 11. A Regra 7 já está
+feita. As três seguintes têm decisões em aberto que o enunciado não
+resolve, e nenhuma delas deve começar antes de decidida — estão listadas
+na seção de cada regra.
+
+| # | Regra | Estado |
+|---|---|---|
+| ~~H1~~ | ~~**Regra 7** — o lenhador planta onde cortou~~ | ✅ feita em 08-15, dois testes de jogo pelo caminho do trabalhador |
+| H2 | **Regra 8** — um baú ao lado de cada cama | 👤 espera decisão. A amarração cama–baú já existe; falta **criar** o baú. É a maior escrita no mundo do jogador que o mod já faria, e esbarra em "a colônia não cria recurso" |
+| H3 | **Regra 9** — subir e descer para alcançar, e poder voltar | 👤 espera decisão: só navegação sem limite de altura, ou o aldeão põe e tira bloco para chegar? As duas leituras dão trabalhos muito diferentes. A metade "poder voltar" vale sozinha e não depende disso. Fecha o G2 |
+| H4 | **Regra 10** — o construtor fabrica o que a expansão pede | 👤 espera decisão sobre baú comunitário e sobre onde termina o fabricante. As peças existem: `CraftingLookup`, `ChestWithdrawer`, `ManufacturerWork` |
+| H5 | **Regra 11** — uma de cada profissão em cada vila | 🔨 mecanismo já pronto (`vacancy` devolve a mais escassa). Falta a garantia: vila pequena demais, e a dispensa podendo tirar o último de uma profissão. Nenhum teste afirma o piso |
+
 ## 2.5 Contagem
 
 ```text

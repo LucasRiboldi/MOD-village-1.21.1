@@ -2138,6 +2138,14 @@ Regra 3   o que nunca se destrói               08-13, feita em 08-13
 Regra 4   dois trabalhadores por profissão     08-13, feita em 08-13
 Regra 5   quanto fabricar                      08-13, feita em 08-13
 Regra 6   como a vila cresce                   08-14, em implementação
+Regra 7   o lenhador planta onde cortou        08-15, feita em 08-15
+Regra 8   um baú ao lado de cada cama          08-15, a implementar
+Regra 9   subir e descer para alcançar, e      08-15, a implementar
+          poder voltar
+Regra 10  o construtor fabrica o que a         08-15, a implementar
+          expansão pede
+Regra 11  uma de cada profissão em cada vila   08-15, já satisfeita pelo
+                                               mecanismo — falta a garantia
 ```
 
 Duas previsões das primeiras se confirmaram e vale marcá-las: a fila que
@@ -2444,3 +2452,191 @@ terreno que não é plano        aplainar é destruir bloco natural, o
 
 Estas serão decididas na implementação e anotadas no Development Log da
 data, como as anteriores. Nenhuma delas troca o enunciado acima.
+
+---
+
+## Regra 7 — o lenhador planta onde cortou
+
+```text
+o lenhador sempre planta uma árvore no lugar onde ele cortou
+```
+
+Feita em 08-15. O replantio já existia e era preguiçoso: morava em
+`startNextTree` e só acontecia quando o lenhador ia procurar a árvore
+seguinte. Quem derrubasse uma árvore e perdesse o trabalho antes disso
+deixava o toco sem muda — tarefa cancelada, baú fora do registro, guarda
+de travamento. `closePlan` passou a fechar o plano em toda saída, e a
+conta é a dos troncos: derrubado o último, o lugar é chão livre e a muda
+entra.
+
+Ver o Development Log de 08-15 e os dois testes de jogo pelo caminho do
+trabalhador.
+
+---
+
+## Regra 8 — um baú ao lado de cada cama
+
+```text
+toda vila gerada pelo Minecraft ganha um baú ao lado de cada cama
+
+cada aldeão fica vinculado a uma cama
+
+e ao baú mais perto da sua cama
+```
+
+**Metade disto já existe.** `ChestScanner` amarra o aldeão ao baú mais
+próximo da cama dele, dentro de um raio de 6, e a linha `Storage claimed
+by X: bed ... chest ... (2,0 blocks apart)` é essa amarração acontecendo.
+O que não existe é **criar** o baú quando não há nenhum — hoje o aldeão
+sem baú por perto simplesmente fica sem baú, que foi o E16 de 08-15.
+
+O que muda em código:
+
+```text
+ChestScanner       já acha o mais próximo da cama; nada a mudar
+                   na escolha
+
+um lugar novo      quem põe o baú que falta. A vila é varrida por
+                   cama na detecção; é ali que a falta aparece
+
+StorageRegistry    já registra o par trabalhador–baú
+```
+
+Decisões que a implementação precisa tomar, e que **não estão no
+enunciado**:
+
+```text
+onde é "ao lado"        qual dos vizinhos da cama, e em que altura.
+                        Precisa ser livre, válido e alcançável
+
+de onde vem o baú       Construction-System.md §Regras de Arquitetura
+                        diz que a colônia não cria recurso. Um baú
+                        vindo do nada contraria isso — ou a criação
+                        de vila é exceção, por ser conserto de
+                        geração e não produção da colônia
+
+vilas já geradas        "toda cidade gerada" lê-se como todas,
+                        inclusive as que já estão no mundo. Então é
+                        na detecção, e não na geração
+
+cama sem espaço         o que fazer quando nenhum vizinho serve
+```
+
+Esta é a maior escrita no mundo do jogador que o mod já faria: um baú
+por cama, em toda vila detectada. A ressalva do `Construction-System.md`
+— bloco posto no lugar errado é dano que ninguém desfaz — vale aqui com
+mais força do que na obra, porque a obra é um lote escolhido vazio e
+isto é dentro da casa de alguém.
+
+---
+
+## Regra 9 — subir e descer para alcançar, e poder voltar
+
+```text
+na busca de recurso o aldeão sobe e desce quantos blocos forem
+necessários para alcançar o recurso
+
+de maneira que, ao ir, ele possa voltar
+```
+
+O que isso mira: o lenhador que para a sete blocos da árvore e não
+chega. Foi visto em 08-15, dezesseis minutos parado, e é o G2 do
+Backlog.
+
+Hoje quem manda no caminho é `GoToWorkTargetTask`, escrevendo
+`WALK_TARGET` na memória do cérebro Vanilla. Quem calcula o caminho é o
+Vanilla, com o limite de passo dele — e árvore em encosta, em cima de
+morro ou do outro lado de um barranco fica fora de alcance sem que nada
+no log diga isso.
+
+Decisão que muda tudo, e que o enunciado não resolve:
+
+```text
+navegação            "subir e descer" é só tirar o limite de altura
+                     do caminho — o aldeão dá a volta pelo terreno
+
+ou construção        ou o aldeão põe e tira bloco para chegar:
+                     degrau, andaime, escada
+```
+
+As duas leituras dão trabalhos muito diferentes. A segunda faz o
+lenhador escrever no mundo, o que hoje só o construtor faz, e reabre a
+Regra 3 — o que nunca se destrói.
+
+A segunda metade do enunciado é a mais clara das duas e vale sozinha:
+**ao ir, poder voltar.** Quer dizer não se jogar num desnível que não
+consegue subir de volta. Isso é uma conferência de ida e volta antes de
+aceitar o alvo, e não depende de qual das duas leituras vale.
+
+---
+
+## Regra 10 — o construtor fabrica o que a expansão pede
+
+```text
+além de erguer a expansão, o construtor fabrica os itens que ela
+pede — uma cama nova, um baú, uma tocha
+
+se houver recurso em qualquer baú da vila, ele busca, fabrica o item
+e o deixa guardado no baú
+
+de onde ele é retirado na hora de pôr na estrutura
+```
+
+O que já existe: `CraftingLookup` sabe ler receita Vanilla, o
+`ManufacturerWork` já fabrica tábua a partir de tronco, e
+`ChestWithdrawer` já tira material de baú para o construtor pôr bloco.
+As peças estão todas no lugar; o que falta é a cadeia.
+
+Decisões que a implementação precisa tomar:
+
+```text
+"qualquer baú da vila"   hoje o modelo é um baú por trabalhador, e a
+                         nota da Regra 1 já avisava que baú comunitário
+                         não existe. Esta regra exige ler e tirar de
+                         todos
+
+em qual baú guarda       o do próprio construtor, ou o mais perto da
+                         obra
+
+onde termina o           fabricar é o ofício do MANUFACTURER. A regra
+fabricante               dá parte disso ao construtor, e a linha entre
+                         os dois precisa ficar escrita
+
+quais itens              cama, baú e tocha estão no enunciado. A lista
+                         cresce com o que a expansão pedir, e sai da
+                         planta — não de uma lista fixa
+```
+
+---
+
+## Regra 11 — uma de cada profissão em cada vila
+
+```text
+cada vila tem ao menos um aldeão de cada profissão do mod
+
+LUMBERJACK, MANUFACTURER, FARMER, BUILDER
+```
+
+É o piso; a Regra 4 — dois por profissão — é o teto.
+
+**Já satisfeita pelo mecanismo.** `ProfessionAssigner.vacancy` devolve a
+profissão mais escassa que ainda tem vaga, e não a primeira da lista,
+justamente para cobrir as quatro antes de dobrar qualquer uma. O
+comentário do método já diz isso desde 08-13: "uma vila com dois
+lenhadores e nenhum construtor é pior do que uma com um de cada".
+
+O que falta não é o mecanismo, é a **garantia**:
+
+```text
+vila com menos de       quatro profissões não cabem em três aldeões.
+quatro empregáveis      O piso vira "tantas quantas couberem", e isso
+                        precisa estar escrito
+
+a dispensa             `dismiss` tira a função de quem excede a vaga
+                       e de quem não tem baú. Nada hoje a impede de
+                       tirar o último de uma profissão — não foi
+                       visto acontecer, e não foi verificado
+
+nenhum teste           não há teste que afirme o piso. O que existe
+afirma o piso          testa o teto
+```
