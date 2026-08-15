@@ -20,12 +20,17 @@ import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.work.BuilderWork;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.entity.ChestBlockEntity;
+import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.brain.Schedule;
 import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.state.property.Properties;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
@@ -119,6 +124,157 @@ public class BuilderGameTest implements FabricGameTest {
                 project,
                 chest,
                 ColonyFixture.create().owning(colony).owning(villager.getUuid()));
+    }
+
+    /**
+     * A porta do E8: uma entrada só no projeto, duas metades no mundo.
+     *
+     * <p>Até 2026-08-15 o projeto guardava as duas metades da porta —
+     * é assim que o arquivo do jogo as grava — e a obra punha as duas
+     * no estado padrão, que é a metade de <b>baixo</b>. O resultado
+     * eram duas metades de baixo empilhadas: nem porta, nem bloco
+     * legítimo, e o dobro do material.
+     *
+     * <p>O que este teste afirma é a correção inteira, nas três pontas:
+     * o projeto pede uma porta só, o mundo recebe as duas metades, e as
+     * duas metades estão <b>ligadas</b> — a de cima com
+     * {@code half=upper}, que é a propriedade que faz o jogo tratá-las
+     * como uma porta.
+     *
+     * <p>Rodado contra a regra desligada em 2026-08-15: sem
+     * {@code BuilderWork.placeSecondHalf} a terceira afirmação falha, e
+     * sem o descarte em {@code StructureBlueprintReader.isSecondHalf} a
+     * conta do baú falha.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_door",
+            tickLimit = 300)
+    public void theDoorGoesUpAsOneDoorAndNotTwoHalves(TestContext context) {
+        Fixture fixture = setUpDoor(context);
+
+        context.runAtTick(90, () -> {
+            BlockState lower = stateAt(context, SITE);
+            BlockState upper = stateAt(context, SITE.up());
+
+            context.assertTrue(
+                    lower.isOf(Blocks.OAK_DOOR),
+                    "a metade de baixo da porta não foi colocada — veio "
+                            + lower.getBlock());
+
+            context.assertTrue(
+                    upper.isOf(Blocks.OAK_DOOR),
+                    "a metade de cima da porta não foi colocada — veio "
+                            + upper.getBlock());
+
+            context.assertTrue(
+                    lower.get(Properties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.LOWER
+                            && upper.get(Properties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER,
+                    "as duas metades não estão ligadas: embaixo "
+                            + lower.get(Properties.DOUBLE_BLOCK_HALF)
+                            + ", em cima " + upper.get(Properties.DOUBLE_BLOCK_HALF));
+
+            context.assertTrue(
+                    doorsIn(context, fixture.chest) == 1,
+                    "uma porta devia custar uma porta, e o baú ficou com "
+                            + doorsIn(context, fixture.chest) + " de 2");
+
+            fixture.owned.cleanUp();
+
+            context.complete();
+        });
+    }
+
+    /**
+     * Colônia, construtor com duas portas no baú, e um projeto de uma
+     * porta só.
+     *
+     * <p>Duas portas de propósito: uma sobra para que a afirmação da
+     * conta seja "custou uma" e não "acabou o material".
+     */
+    private static Fixture setUpDoor(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        world.setTimeOfDay(Schedule.WORK_TIME);
+
+        context.setBlockState(SITE.down(), Blocks.STONE.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        ChestDepositor.deposit(world, chest, Items.OAK_DOOR, 2);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.BUILDER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        ConstructionProject project = ConstructionProject.plan(
+                colony.id(),
+                door(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(SITE)));
+
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(), TaskType.BUILD, TaskPriority.PRODUCTION, ResourceType.OAK_PLANKS, 1);
+
+        task.reserveFor(villager.getUuid());
+
+        BuilderWork.run(world, colony);
+
+        return new Fixture(
+                colony,
+                project,
+                chest,
+                ColonyFixture.create().owning(colony).owning(villager.getUuid()));
+    }
+
+    /** Uma porta, uma entrada — como o projeto passou a guardá-la. */
+    private static Blueprint door() {
+        return Blueprint.of(HUT, List.of(
+                new BlueprintBlock(
+                        new ColonyPos(0, 0, 0),
+                        MinecraftTypeAdapter.toResourceId(Blocks.OAK_DOOR))));
+    }
+
+    private static BlockState stateAt(TestContext context, BlockPos relative) {
+        return context.getWorld().getBlockState(context.getAbsolutePos(relative));
+    }
+
+    /**
+     * Quantas portas sobraram no baú.
+     *
+     * <p>Contado aqui e não por {@code ChestInventoryReader}: aquele só
+     * conhece os recursos que a colônia acompanha, e porta não é um
+     * deles. O teste precisa da contagem crua.
+     */
+    private static int doorsIn(TestContext context, ColonyPos chest) {
+        BlockPos pos = MinecraftTypeAdapter.toBlockPos(chest);
+
+        if (!(context.getWorld().getBlockEntity(pos) instanceof ChestBlockEntity inventory)) {
+            return -1;
+        }
+
+        int found = 0;
+
+        for (int slot = 0; slot < inventory.size(); slot++) {
+            ItemStack stack = inventory.getStack(slot);
+
+            if (stack.isOf(Items.OAK_DOOR)) {
+                found += stack.getCount();
+            }
+        }
+
+        return found;
     }
 
     /** Duas tábuas lado a lado. */

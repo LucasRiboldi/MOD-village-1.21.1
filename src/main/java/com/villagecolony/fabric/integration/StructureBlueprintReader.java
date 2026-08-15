@@ -7,10 +7,13 @@ import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.core.type.ColonyPos;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.enums.BedPart;
+import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.state.property.Properties;
 import net.minecraft.structure.StructureTemplate;
 import net.minecraft.util.Identifier;
 
@@ -72,7 +75,63 @@ public final class StructureBlueprintReader {
      */
     private static final String BLOCK_NAME_KEY = "Name";
 
+    /**
+     * A chave das propriedades dentro de uma entrada da paleta.
+     *
+     * <p>Mesma situação do {@link #BLOCK_NAME_KEY}: é o formato que o
+     * jogo grava, e ele não o expõe como constante.
+     *
+     * <p>O projeto continua descartando o estado do bloco (ADR-005). O
+     * que se lê daqui é uma pergunta só, e ela não vira dado do Core:
+     * <em>esta entrada é a metade de cima de um bloco de duas partes?</em>
+     * Ver {@link #isSecondHalf}.
+     */
+    private static final String PROPERTIES_KEY = "Properties";
+
     private StructureBlueprintReader() {
+    }
+
+    /**
+     * Se esta entrada da paleta é a <b>segunda</b> metade de um bloco que
+     * ocupa dois lugares — a parte de cima de uma porta, a cabeceira de
+     * uma cama.
+     *
+     * <p>É o E8 do §17. No arquivo do jogo uma porta são duas entradas
+     * com o mesmo nome, distinguidas só pela propriedade {@code half}; a
+     * cama, duas com {@code part}. O projeto guardava as duas, e a obra
+     * punha dois blocos independentes no estado padrão — duas metades de
+     * baixo empilhadas, dois pés de cama lado a lado.
+     *
+     * <p>A saída é não guardar a segunda. Quem a põe é o jogo, quando o
+     * construtor puser a primeira — ver {@code BuilderWork.placeSecondHalf}.
+     * É a ADR-001 outra vez: perguntar ao Minecraft em vez de escrever a
+     * resposta aqui.
+     *
+     * <p>Conserta também uma conta que ninguém tinha notado: a porta
+     * custava <b>duas</b> portas ao estoque da colônia, porque cada
+     * metade era um bloco do projeto e cada bloco do projeto tira uma
+     * peça do baú. Uma porta no Vanilla é um item só.
+     *
+     * <p>Os nomes de propriedade e de valor vêm do próprio jogo
+     * ({@code Properties.DOUBLE_BLOCK_HALF.getName()} e afins) e não de
+     * literais escritos aqui — se o Vanilla os renomear, isto acompanha.
+     *
+     * <p>O que continua fora: a <b>orientação</b>. Escada e porta saem no
+     * padrão, e a cabeceira da cama vai para onde o estado padrão apontar
+     * e não para onde o arquivo dizia. É a outra metade do E8, e ela é a
+     * que exige a decisão da TASK-046.
+     */
+    private static boolean isSecondHalf(NbtCompound paletteEntry) {
+        NbtCompound properties = paletteEntry.getCompound(PROPERTIES_KEY);
+
+        if (properties.isEmpty()) {
+            return false;
+        }
+
+        return DoubleBlockHalf.UPPER.asString().equals(
+                        properties.getString(Properties.DOUBLE_BLOCK_HALF.getName()))
+                || BedPart.HEAD.asString().equals(
+                        properties.getString(Properties.BED_PART.getName()));
     }
 
     /**
@@ -145,8 +204,15 @@ public final class StructureBlueprintReader {
 
         List<ResourceId> names = new ArrayList<>(palette.size());
 
+        // Paralelo à paleta: quais entradas são a metade de cima de um
+        // bloco de duas partes, e por isso não entram no projeto.
+        boolean[] secondHalf = new boolean[palette.size()];
+
         for (int i = 0; i < palette.size(); i++) {
-            names.add(ResourceId.parse(palette.getCompound(i).getString(BLOCK_NAME_KEY)));
+            NbtCompound entry = palette.getCompound(i);
+
+            names.add(ResourceId.parse(entry.getString(BLOCK_NAME_KEY)));
+            secondHalf[i] = isSecondHalf(entry);
         }
 
         List<BlueprintBlock> blocks = new ArrayList<>();
@@ -166,6 +232,10 @@ public final class StructureBlueprintReader {
             ResourceId name = names.get(index);
 
             if (isScaffolding(name)) {
+                continue;
+            }
+
+            if (secondHalf[index]) {
                 continue;
             }
 

@@ -18,6 +18,9 @@ import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
 import net.minecraft.block.Block;
+import net.minecraft.block.enums.BedPart;
+import net.minecraft.block.enums.DoubleBlockHalf;
+import net.minecraft.state.property.Properties;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Item;
@@ -302,11 +305,71 @@ public final class BuilderWork {
 
         world.setBlockState(target, state, Block.NOTIFY_ALL);
 
+        placeSecondHalf(world, target, state);
+
         project.markPlaced(block);
 
         job.placed++;
 
         return true;
+    }
+
+    /**
+     * Completa um bloco que ocupa dois lugares.
+     *
+     * <p>É o E8 do §17, e a outra ponta de
+     * {@code StructureBlueprintReader.isSecondHalf}: o projeto guarda uma
+     * porta só, e é aqui que ela vira duas metades <b>ligadas</b> em vez
+     * de dois blocos independentes no estado padrão.
+     *
+     * <p>Escrever a segunda metade em vez de deixar o jogo fazê-lo é
+     * deliberado. {@code Block.onPlaced} faria isso, e faria também tudo
+     * o mais que a colocação por jogador dispara — som, evento, lógica de
+     * item. O construtor não é um jogador com uma porta na mão; ele está
+     * montando uma casa a partir de um arquivo, e o que ele precisa é da
+     * propriedade que liga as duas metades.
+     *
+     * <p>Só escreve onde há lugar. A metade de cima cai sobre o que o
+     * projeto já pôs no andar de cima em nenhum caso — a leitura descarta
+     * aquela posição —, mas o mundo é do jogador e pode ter qualquer
+     * coisa ali. A Regra 3 vale aqui como vale no resto da obra: nada
+     * substitui o que não é substituível.
+     *
+     * <p>Bloco de uma parte só passa direto: {@code contains} responde
+     * não, e nada acontece.
+     */
+    private static void placeSecondHalf(ServerWorld world, BlockPos pos, BlockState state) {
+        if (state.contains(Properties.DOUBLE_BLOCK_HALF)) {
+            put(world, pos.up(), state.with(Properties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.UPPER));
+
+            return;
+        }
+
+        if (state.contains(Properties.BED_PART) && state.contains(Properties.HORIZONTAL_FACING)) {
+            // A cabeceira vai para onde o estado padrão aponta, e não
+            // para onde o arquivo dizia: a orientação é a metade do E8
+            // que continua aberta (TASK-046). Uma cama virada para o
+            // norte numa casa que a queria virada para o leste continua
+            // sendo uma cama — dois pés lado a lado não eram.
+            put(
+                    world,
+                    pos.offset(state.get(Properties.HORIZONTAL_FACING)),
+                    state.with(Properties.BED_PART, BedPart.HEAD));
+        }
+    }
+
+    /** Escreve, se o lugar aceitar. */
+    private static void put(ServerWorld world, BlockPos pos, BlockState state) {
+        if (!world.getBlockState(pos).isReplaceable()) {
+            VillageColonyMod.LOGGER.info(
+                    "Could not finish the two-part block at {} — {} is in the way",
+                    pos,
+                    world.getBlockState(pos).getBlock());
+
+            return;
+        }
+
+        world.setBlockState(pos, state, Block.NOTIFY_ALL);
     }
 
     /**

@@ -8,11 +8,14 @@ import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.DoorBlock;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * A casa do jogo vira projeto da colônia — TASK-031.
@@ -99,6 +102,54 @@ public class BlueprintReaderGameTest implements FabricGameTest {
     }
 
     /** Estrutura que não existe devolve vazio, e não derruba o tick. */
+    /**
+     * A porta da casa é uma entrada só — o E8 do §17, do lado do leitor.
+     *
+     * <p>No arquivo do jogo uma porta são <b>duas</b> entradas com o mesmo
+     * nome, empilhadas, distinguidas só pela propriedade {@code half}. O
+     * projeto guardava as duas, e a obra punha duas metades de baixo uma
+     * sobre a outra — além de cobrar duas portas do baú por uma porta.
+     *
+     * <p>A afirmação é geométrica de propósito, e não uma contagem: "esta
+     * casa tem exatamente uma porta" quebraria na próxima variante que o
+     * Vanilla mudasse. O que não pode acontecer, em casa nenhuma, é a
+     * mesma porta aparecer duas vezes na mesma coluna, em alturas
+     * seguidas.
+     *
+     * <p>Rodado contra a regra desligada em 2026-08-15: sem o descarte em
+     * {@code isSecondHalf} este teste falha na casa de planície.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "blueprint_reader")
+    public void aDoorIsOneBlockInTheProjectAndNotTwo(TestContext context) {
+        Set<String> doorColumns = new HashSet<>();
+        int doors = 0;
+
+        for (BlueprintBlock block : read(context).blocks()) {
+            Optional<Block> game = MinecraftTypeAdapter.toBlock(block.block());
+
+            if (game.isEmpty() || !(game.get() instanceof DoorBlock)) {
+                continue;
+            }
+
+            doors++;
+
+            String column = block.offset().x() + "," + block.offset().z();
+
+            context.assertTrue(
+                    doorColumns.add(column),
+                    "a coluna " + column + " tem duas entradas de porta — "
+                            + "a metade de cima não foi descartada na leitura");
+        }
+
+        // Uma casa sem porta nenhuma passaria no laço acima sem afirmar
+        // nada, e o teste viraria decoração. Se um dia a variante do MVP
+        // não tiver porta, é esta linha que avisa — e aí o teste muda de
+        // casa, não de afirmação.
+        context.assertTrue(doors > 0, "a casa de planície veio sem porta alguma");
+
+        context.complete();
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "blueprint_reader")
     public void anUnknownStructureIsEmptyAndNotAnError(TestContext context) {
         Optional<Blueprint> nothing = StructureBlueprintReader.read(
