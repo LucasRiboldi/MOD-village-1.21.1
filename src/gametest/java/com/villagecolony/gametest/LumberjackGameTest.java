@@ -845,6 +845,176 @@ public class LumberjackGameTest implements FabricGameTest {
     }
 
     /**
+     * A regra do autor: o lenhador sempre planta onde cortou.
+     *
+     * <p>{@code fellingReplantsASapling} já provava a muda, mas pela
+     * porta de {@code TreeHarvester.fell} — a que derruba tudo num tick.
+     * Em jogo quem derruba é o trabalhador, tick a tick, e o replantio
+     * dele mora noutro lugar: em {@code startNextTree}, quando ele vai
+     * procurar a árvore seguinte.
+     *
+     * <p>É a mesma distância entre teste e jogo que custou o E14 — lá o
+     * teste criava a tarefa à mão e a colônia nunca a criava. A pergunta
+     * não é "o replantio funciona?", é <em>"quem planta esta muda, em
+     * jogo?"</em>.
+     *
+     * <p>Aqui a árvore desce pelas mãos do lenhador, e a muda tem de
+     * estar no lugar da base ao fim.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_worker_replant",
+            tickLimit = 400)
+    public void theLumberjackPlantsWhereHeCut(TestContext context) {
+        BlockPos base = new BlockPos(4, 2, 4);
+        BlockPos chest = new BlockPos(2, 2, 2);
+        BlockPos stand = new BlockPos(3, 2, 4);
+
+        plantTree(context, base);
+        context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+
+        ServerWorld world = context.getWorld();
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, stand);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(base)));
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create()
+                .owning(colony)
+                .owning(villager.getUuid());
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.LUMBERJACK);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(
+                villager.getUuid(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chest))));
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_WOOD,
+                TaskPriority.PRODUCTION,
+                ResourceType.OAK_LOG,
+                64);
+
+        task.reserveFor(villager.getUuid());
+
+        LumberjackWork.run(world, colony);
+
+        context.runAtTick(320, () -> {
+            context.expectBlock(Blocks.OAK_SAPLING, base);
+
+            owned.cleanUp();
+
+            context.complete();
+        });
+    }
+
+    /**
+     * E planta mesmo quando o trabalho acaba junto com a árvore.
+     *
+     * <p>O replantio é preguiçoso: acontece quando o lenhador procura a
+     * próxima árvore, e não quando o último tronco cai. Quem perdesse o
+     * trabalho entre uma coisa e outra deixava o toco pelado.
+     *
+     * <p>Aqui a tarefa é cancelada com a árvore já no chão. O trabalho
+     * morre no tick seguinte sem nunca chegar a {@code startNextTree} —
+     * e a muda tem de entrar mesmo assim, que é o que
+     * {@code closePlan} passou a garantir.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_replant_on_close",
+            tickLimit = 400)
+    public void theSaplingGoesInEvenWhenTheTaskDiesWithTheTree(TestContext context) {
+        BlockPos base = new BlockPos(4, 2, 4);
+        BlockPos chest = new BlockPos(2, 2, 2);
+        BlockPos stand = new BlockPos(3, 2, 4);
+
+        plantTree(context, base);
+        context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+
+        ServerWorld world = context.getWorld();
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, stand);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(base)));
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create()
+                .owning(colony)
+                .owning(villager.getUuid());
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.LUMBERJACK);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(
+                villager.getUuid(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chest))));
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_WOOD,
+                TaskPriority.PRODUCTION,
+                ResourceType.OAK_LOG,
+                64);
+
+        task.reserveFor(villager.getUuid());
+
+        LumberjackWork.run(world, colony);
+
+        // A janela é de um tick: o último tronco cai num tick e
+        // startNextTree replanta no seguinte. Um `runAtTick` fixo cai
+        // depois dela — foi assim que a primeira versão deste teste
+        // passou com a correção revertida, que é o E2 de novo.
+        //
+        // Então observa-se todo tick e cancela-se no primeiro em que a
+        // árvore está no chão. Aí o trabalho morre sem nunca chegar a
+        // startNextTree, que é o caso que closePlan cobre.
+        boolean[] cancelled = {false};
+        int[] cancelledAt = {0};
+
+        for (int tick = 1; tick <= 320; tick++) {
+            int now = tick;
+
+            context.runAtTick(tick, () -> {
+                if (cancelled[0] || logsStanding(context, base) > 0) {
+                    return;
+                }
+
+                task.cancel();
+
+                cancelled[0] = true;
+                cancelledAt[0] = now;
+            });
+        }
+
+        context.runAtTick(340, () -> {
+            context.assertTrue(
+                    cancelled[0],
+                    "a árvore não chegou ao chão em 320 ticks — o teste não chegou a exercitar"
+                            + " o que pretende");
+
+            context.assertTrue(
+                    logsStanding(context, base) == 0,
+                    "a árvore precisava estar no chão");
+
+            context.expectBlock(Blocks.OAK_SAPLING, base);
+
+            owned.cleanUp();
+
+            context.complete();
+        });
+    }
+
+    /**
      * Dois lenhadores, duas árvores.
      *
      * <p>A busca parte sempre do centro da colônia e é determinística:

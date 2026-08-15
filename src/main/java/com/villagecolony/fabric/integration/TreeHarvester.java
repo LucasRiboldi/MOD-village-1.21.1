@@ -613,16 +613,39 @@ public final class TreeHarvester {
     private static void replant(ServerWorld world, TreeSpecies species, BlockPos base) {
         BlockState here = stateAt(world, base);
 
-        if (here == null || !here.isAir()) {
+        if (here == null) {
+            VillageColonyMod.LOGGER.info(
+                    "No {} sapling at {} — the chunk went out from under it",
+                    species,
+                    base.toShortString());
+
+            return;
+        }
+
+        if (!here.isAir()) {
+            VillageColonyMod.LOGGER.info(
+                    "No {} sapling at {} — {} is in the way",
+                    species,
+                    base.toShortString(),
+                    here.getBlock());
+
             return;
         }
 
         BlockState sapling = species.sapling().getDefaultState();
 
         if (!sapling.canPlaceAt(world, base)) {
+            VillageColonyMod.LOGGER.info(
+                    "No {} sapling at {} — the ground will not take one",
+                    species,
+                    base.toShortString());
+
             return;
         }
 
         world.setBlockState(base, sapling);
+
+        VillageColonyMod.LOGGER.info(
+                "Planted a {} sapling at {}", species, base.toShortString());
     }
 }
