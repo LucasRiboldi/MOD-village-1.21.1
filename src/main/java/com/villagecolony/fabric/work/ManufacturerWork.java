@@ -3,6 +3,8 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
+import com.villagecolony.core.coordination.IdleReason;
+import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
@@ -94,6 +96,9 @@ public final class ManufacturerWork {
     /** O trabalho em curso de cada fabricante. */
     private static final Map<UUID, Job> JOBS = new HashMap<>();
 
+    /** Como esta profissão aparece na linha de {@link IdleLog}. */
+    private static final String SUBJECT = "manufacturer";
+
     private ManufacturerWork() {
     }
 
@@ -150,9 +155,55 @@ public final class ManufacturerWork {
 
         JOBS.values().removeIf(job -> !isOngoing(job.task));
 
+        if (open == 0) {
+            reportIdle(colony);
+        } else {
+            IdleLog.clear(colony.id(), SUBJECT);
+        }
+
         report(world, colony);
 
         return open;
+    }
+
+    /**
+     * Diz por que nenhum fabricante desta colônia está trabalhando.
+     *
+     * <p>Mesma razão e mesma forma de {@code LumberjackWork.reportIdle}:
+     * {@link #report} só fala de fabricante <b>com</b> trabalho aberto, e
+     * o silêncio de uma colônia sem tarefa era indistinguível do silêncio
+     * de uma colônia sem fabricante.
+     *
+     * <p>Vale mais aqui do que no lenhador, e o E10 é a prova: a Fase 9
+     * rodou uma sessão inteira encerrando tarefa por falta de tronco, com
+     * 134 troncos guardados. O que faltava não era a tarefa — era saber
+     * de qual dos lados vinha o silêncio.
+     */
+    private static void reportIdle(Colony colony) {
+        int hands = WorkAssignment.countCapableOf(
+                colony.id(), TaskType.CRAFT_MATERIAL.required(), VillageColonyMod.WORKERS);
+
+        if (hands == 0) {
+            IdleLog.record(colony.id(), SUBJECT, IdleReason.NO_WORKER);
+
+            return;
+        }
+
+        boolean anyTask = false;
+
+        for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
+            if (task.type() == TaskType.CRAFT_MATERIAL && isOngoing(task)) {
+                anyTask = true;
+
+                break;
+            }
+        }
+
+        IdleLog.record(
+                colony.id(),
+                SUBJECT,
+                anyTask ? IdleReason.NO_EXECUTOR : IdleReason.NO_TASK,
+                hands + " able to");
     }
 
     /**

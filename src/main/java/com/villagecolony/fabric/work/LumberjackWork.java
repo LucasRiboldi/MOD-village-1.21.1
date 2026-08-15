@@ -3,6 +3,8 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
+import com.villagecolony.core.coordination.IdleReason;
+import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
@@ -158,6 +160,9 @@ public final class LumberjackWork {
      */
     private static final Map<UUID, Job> JOBS = new HashMap<>();
 
+    /** Como esta profissão aparece na linha de {@link IdleLog}. */
+    private static final String SUBJECT = "lumberjack";
+
     /**
      * Os troncos que já têm dono.
      *
@@ -293,9 +298,60 @@ public final class LumberjackWork {
 
         dropClosedJobs();
 
+        if (open == 0) {
+            reportIdle(colony);
+        } else {
+            IdleLog.clear(colony.id(), SUBJECT);
+        }
+
         report(world, colony);
 
         return open;
+    }
+
+    /**
+     * Diz por que nenhum lenhador desta colônia está trabalhando.
+     *
+     * <p>Até 2026-08-15 este caminho era mudo. {@link #report} só fala de
+     * lenhador <b>com</b> trabalho aberto, então uma colônia com dois
+     * lenhadores e nenhuma tarefa passava a sessão inteira sem uma linha
+     * — e do lado de fora isso é idêntico a uma colônia que não tem
+     * lenhador nenhum, ou a uma cujo código não está rodando.
+     *
+     * <p>É a lição do E14 aplicada onde ela ainda não estava: a fase de
+     * construção aprendeu a dizer por que não construía, e as outras
+     * duas continuaram caladas.
+     *
+     * <p>Três respostas, e a diferença entre elas manda em coisas
+     * diferentes: sem trabalhador é a atribuição de profissão; sem
+     * tarefa é a meta da colônia; e tarefa sem executor é o casamento
+     * entre as duas.
+     */
+    private static void reportIdle(Colony colony) {
+        int hands = WorkAssignment.countCapableOf(
+                colony.id(), TaskType.COLLECT_WOOD.required(), VillageColonyMod.WORKERS);
+
+        if (hands == 0) {
+            IdleLog.record(colony.id(), SUBJECT, IdleReason.NO_WORKER);
+
+            return;
+        }
+
+        boolean anyTask = false;
+
+        for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
+            if (isWoodTask(task) && isOngoing(task)) {
+                anyTask = true;
+
+                break;
+            }
+        }
+
+        IdleLog.record(
+                colony.id(),
+                SUBJECT,
+                anyTask ? IdleReason.NO_EXECUTOR : IdleReason.NO_TASK,
+                hands + " able to");
     }
 
     /**

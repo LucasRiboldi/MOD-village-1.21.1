@@ -8,6 +8,7 @@ import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.service.ConstructionService;
+import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
@@ -19,10 +20,7 @@ import net.minecraft.block.Block;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * A colônia decide construir — TASK-033.
@@ -73,7 +71,7 @@ public final class ConstructionPlanner {
      * Uma linha por colônia por ciclo seria o E1 por uma terceira porta —
      * ruído constante dizendo sempre a mesma coisa.
      */
-    private static final Map<UUID, String> LAST_SILENCE = new HashMap<>();
+    private static final String SUBJECT = "building";
 
     private ConstructionPlanner() {
     }
@@ -81,19 +79,24 @@ public final class ConstructionPlanner {
     /**
      * Registra por que não houve obra, uma vez por motivo.
      *
+     * <p>A memória do último motivo saiu daqui em 2026-08-15 e virou
+     * {@link IdleLog}: o lenhador e o fabricante precisavam da mesma
+     * regra, e ela estava escrita só aqui. O que ficou é a tradução das
+     * cinco recusas desta fase para o vocabulário do {@link IdleReason}.
+     *
      * @return sempre vazio, para servir de {@code return} das recusas
      */
-    private static Optional<ConstructionProject> silent(Colony colony, String why) {
-        if (!why.equals(LAST_SILENCE.put(colony.id(), why))) {
-            VillageColonyMod.LOGGER.info("Colony {} planned no building — {}", colony.id(), why);
-        }
+    private static Optional<ConstructionProject> silent(
+            Colony colony, IdleReason why, String detail) {
+
+        IdleLog.record(colony.id(), SUBJECT, why, detail);
 
         return Optional.empty();
     }
 
     /** Esquece o motivo guardado. Chamado ao parar o servidor. */
     public static void clearAll() {
-        LAST_SILENCE.clear();
+        IdleLog.clearAll();
     }
 
     /**
@@ -105,14 +108,18 @@ public final class ConstructionPlanner {
         resume(world, colony);
 
         if (VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isPresent()) {
-            return silent(colony, "one is already open");
+            return silent(colony, IdleReason.ALREADY_OPEN, "");
         }
 
         int builders = WorkAssignment.countCapableOf(
                 colony.id(), TaskType.BUILD.required(), VillageColonyMod.WORKERS);
 
         if (builders == 0) {
-            return silent(colony, "no builder in the village");
+            // Sem detalhe: a frase do motivo já diz "no worker in the
+            // village can do it", e o assunto da linha já diz que o
+            // trabalho é de construção. Repetir "no builder" aqui só
+            // alonga a linha.
+            return silent(colony, IdleReason.NO_WORKER, "");
         }
 
         Optional<Blueprint> blueprint = houseOf(world);
@@ -120,8 +127,8 @@ public final class ConstructionPlanner {
         if (blueprint.isEmpty()) {
             return silent(
                     colony,
-                    "this game has no " + StructureBlueprintReader.PLAINS_SMALL_HOUSE
-                            + " to read");
+                    IdleReason.NOT_IN_GAME,
+                    "no " + StructureBlueprintReader.PLAINS_SMALL_HOUSE + " to read");
         }
 
         Optional<ColonyPos> site = BuildSiteScanner.find(
@@ -133,14 +140,18 @@ public final class ConstructionPlanner {
             // anterior dizia a primeira nos dois casos, e no segundo isso
             // era mentira — ver o E14 do §17.
             //
-            // Sem o número do anel de propósito: silent() só registra
+            // Sem o número do anel de propósito: IdleLog só registra
             // quando o motivo muda, e um anel diferente por ciclo faria a
             // linha voltar toda vez.
-            return silent(colony, BuildSiteScanner.sweepPausedAt(colony.center()).isPresent()
-                    ? "still sweeping for a lot — the ring budget ran out before an answer"
-                    : "no free lot beside a road in the whole "
-                            + VillageDetector.SEARCH_RADIUS + "-block radius of "
-                            + colony.center() + " that fits " + blueprint.get().size());
+            return BuildSiteScanner.sweepPausedAt(colony.center()).isPresent()
+                    ? silent(colony, IdleReason.SWEEP_INCOMPLETE, "looking for a lot")
+                    : silent(
+                            colony,
+                            IdleReason.NO_TARGET,
+                            "no free lot beside a road in the whole "
+                                    + VillageDetector.SEARCH_RADIUS + "-block radius of "
+                                    + colony.center() + " that fits "
+                                    + blueprint.get().size());
         }
 
         if (VillageColonyMod.BUILDINGS.isColonyInfrastructure(site.get())) {
@@ -149,7 +160,10 @@ public final class ConstructionPlanner {
             // mundo, e uma casa de madeira sobre terra continua parecendo
             // terreno pelo topo do bloco. A próxima passagem tenta outro
             // anel.
-            return silent(colony, "the lot at " + site.get() + " falls on a colony building");
+            return silent(
+                    colony,
+                    IdleReason.SITE_REFUSED,
+                    "the lot at " + site.get() + " falls on a colony building");
         }
 
         ConstructionProject project =
@@ -166,7 +180,7 @@ public final class ConstructionPlanner {
         project.moveTo(ConstructionState.PREPARING);
         project.moveTo(ConstructionState.BUILDING);
 
-        LAST_SILENCE.remove(colony.id());
+        IdleLog.clear(colony.id(), SUBJECT);
 
         VillageColonyMod.LOGGER.info(
                 "Colony {} planned {} at {} — {} blocks, {} builders",
