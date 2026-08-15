@@ -6981,3 +6981,187 @@ mudou é que, quando ela rodar, a porta estará inteira — e se não
 estiver, há dois testes dizendo onde olhar.
 
 E a TASK-050, da sessão anterior, continua sem teste próprio.
+
+---
+
+## 2026-08-15, manhã — a sessão do P1, e o defeito que ela achou
+
+O autor jogou das 03:18 às 08:59. **Cinco horas e quarenta minutos**,
+mundo novo, três colônias carregadas do save com 78 trabalhadores e
+duas obras a retomar.
+
+Nenhuma exceção. Nenhum travamento. Os lenhadores cortaram cerca de
+**duas mil toras** — 830, 584 e 584 —, a colônia acumulou perto de
+2.900 tábuas, e nove trabalhadores reivindicaram baú.
+
+E as duas casas ficaram assim:
+
+```text
+03:19:46  builders: 0 working, BUILDING at 1101,65,745, 151 blocks left
+08:59:02  builders: 0 working, BUILDING at 1101,65,745, 151 blocks left
+```
+
+O mesmo número, cinco horas e quarenta depois. `0 working` do começo ao
+fim, com um construtor na vila e baú reivindicado
+(`BUILDER fb3640ae claimed the chest`).
+
+---
+
+### Duas armadilhas de leitura, antes do defeito
+
+Vale registrar porque as duas custaram uma conclusão errada, e as duas
+são de método.
+
+**O nome do logger não aparece no log do cliente.** Procurar
+`villagecolony` no `latest.log` devolve duas linhas — a lista de mods e
+o ResourceManager. No ambiente de dev o prefixo `(villagecolony)` existe;
+no cliente real, não. A primeira leitura concluiu "o mod não escreveu
+nada em 5h40m", e o mod tinha escrito 1.354 linhas de relatório.
+
+**`grep -E` não aceita `\|`.** O padrão `felled\|logs` não é alternância
+em ERE, e devolveu zero. A segunda conclusão errada foi "nenhuma madeira
+foi cortada", com 2.000 toras no log.
+
+A regra que fica: **conferir o instrumento antes de concluir do
+silêncio dele.** É o E13 outra vez, de um terceiro ângulo — lá era o jar
+errado, aqui era o filtro errado.
+
+---
+
+### O defeito
+
+A linha que abriu o caminho foi esta, repetida o ciclo inteiro:
+
+```text
+Colony 0c2771b0 assigned 2 tasks (0 open)
+```
+
+Duas tarefas, e as duas de madeira. Nenhuma de construção, nunca. Daí a
+corrente, para trás:
+
+```text
+tasks.create é chamado de um lugar só      ColonyCycle.requestMissing
+
+requestMissing traduz FALTA DE RECURSO     e ColonyCycle.typeFor só
+em tarefa                                  devolve BUILD para recurso de
+                                           categoria CONSTRUCTION
+
+nenhum ResourceType tem categoria          o enum tem NATURAL (troncos,
+CONSTRUCTION                               cobblestone) e PROCESSED
+                                           (tábuas). ResourceCategory
+                                           .CONSTRUCTION existe e ninguém
+                                           o usa
+```
+
+**A tarefa de obra era estruturalmente impossível de criar.**
+`BuilderWork.run` só pega tarefa `BUILD`. O construtor nunca teve o que
+fazer — não naquela vila, em vila nenhuma, em nenhuma sessão que este
+mod já teve.
+
+A Fase 10 estava marcada como "coberta por teste" desde 08-14. Ela
+nunca podia ter funcionado.
+
+---
+
+### Por que 83 testes verdes não pegaram
+
+`BuilderGameTest.setUp` criava a tarefa à mão:
+
+```java
+Task task = VillageColonyMod.TASKS.create(colony.id(), TaskType.BUILD, ...);
+task.reserveFor(villager.getUuid());
+```
+
+Os testes provaram que o construtor constrói **se** receber tarefa. A
+condição nunca acontecia.
+
+É o §11 pela segunda vez em dois dias, e com a mesma frase que o E10
+rendeu:
+
+> a pergunta que o teste tem de responder não é "este código
+> funciona?", é **"quem põe esta coisa aqui, em jogo?"**
+
+No E10 a resposta era "quem colhe deposita no baú dele, não no do
+fabricante". Aqui é mais dura: **ninguém põe.**
+
+---
+
+### A correção
+
+Quem abre a tarefa passou a ser `ConstructionPlanner.ensureTask`, e não
+o ciclo. O motivo não é conveniência: a obra **não é uma falta de
+recurso**. É um projeto aberto precisando de mão, e a vida da tarefa
+pertence ao projeto, não à contagem do estoque.
+
+O planejador já roda por ciclo, já sabe se há obra e se há construtor, e
+roda **antes** de `ColonyCycle.run` — então a tarefa nasce, é atribuída
+e é executada no mesmo ciclo.
+
+Uma tarefa por vez, e só em `BUILDING`: em `WAITING_RESOURCES` não há o
+que colocar, e abrir tarefa ali poria um construtor a andar até um
+canteiro para não fazer nada.
+
+### As duas armadilhas que isso abriu
+
+O `targetResource` de uma tarefa de obra é **nominal** — quem paga cada
+bloco é `BuilderWork.takeMaterial`, lendo o projeto. Mas o ciclo lê esse
+campo, e leria errado nos dois sentidos:
+
+```text
+cancelSatisfied        cancelaria a casa assim que a tábua deixasse de
+                       estar em falta — ou seja, por causa do material
+                       que a própria casa consome
+
+countOpenRequestsFor   contaria a obra como pedido de tábua, e a colônia
+                       deixaria de fabricar exatamente o que a obra gasta
+```
+
+As duas em silêncio, e as duas fatais. Fechadas por
+`TaskType.isResourceRequest`: o ciclo é dono do que nasce de falta, e só
+disso.
+
+A distinção é do domínio, e por isso mora no Core em vez de virar um
+`if (type == BUILD)` repetido em dois lugares. Um `if` teria funcionado
+igual e não teria dito por quê.
+
+---
+
+### O teste que faltava
+
+Um só, e é o único da classe que **não cria tarefa nenhuma**:
+`theOpenProjectGetsItsOwnTaskWithoutAnyoneCreatingIt`. Monta o estado
+com que a sessão real começa — colônia, obra em BUILDING, construtor com
+baú abastecido —, chama `plan` e `assign` na ordem em que o ciclo os
+chama, e afirma que a parede sobe.
+
+Mais dois de unidade, um por armadilha do ciclo.
+
+Os três rodados contra a respectiva regra desligada, e os três falhando
+sozinhos. Sem `ensureTask`, bloco nenhum é posto — que é exatamente o
+que a sessão de jogo mostrou, e é a primeira vez que um teste deste
+projeto reproduz um defeito de jogo antes de a correção entrar.
+
+375 testes unitários e 83 de jogo, verdes.
+
+---
+
+### O que a sessão deixa em aberto
+
+**A casa continua sem ter sido vista subindo.** O que mudou é que, pela
+primeira vez, existe o caminho inteiro entre a obra aberta e o
+construtor. A próxima sessão é a que responde.
+
+E o jar daquela sessão era anterior às correções do dia — o log traz
+`planned no building — one is already open`, que é o formato de antes do
+`IdleReason`. Nada do que entrou em 08-15 estava rodando ali: nem o
+guarda de travamento, nem os motivos nomeados, nem a porta inteira.
+
+**O E11 apareceu em escala.** Foram 689 `Assigned` e 692 `Equipped` em
+5h40m, com dispensas por falta de baú desde o primeiro minuto — dez
+vezes mais volume do que o log de 08-14 mostrava. Continua sem travar
+nada e sem perder item, e continua esperando a decisão da TASK-049.
+
+**O fabricante não fabricou.** Zero linhas de `manufacturers:` na
+sessão inteira, com 2.900 tábuas guardadas e a meta da Regra 5 sendo
+metade do armazém. Não foi investigado, e não se inventa causa: fica
+registrado como o próximo lugar a olhar depois que a casa subir.

@@ -545,6 +545,20 @@ Fora de fase — 2026-08-15, da leitura do mod Workers
                                          ticks e a bateria inteira roda
                                          em cinco segundos
 
+  TASK-053  a obra ganha tarefa            feito
+                                         (ConstructionPlanner.ensureTask;
+                                         TaskType.isResourceRequest
+                                         protege a tarefa de obra das
+                                         duas armadilhas do ciclo).
+
+                                         É o defeito que a sessão de
+                                         2026-08-15 achou: nada em
+                                         produção criava tarefa BUILD, e
+                                         o construtor nunca teve o que
+                                         fazer em vila nenhuma. Três
+                                         testes, os três rodados contra a
+                                         regra desligada
+
   TASK-052  a porta vira porta, e não      feito
             duas metades soltas            (StructureBlueprintReader
                                          .isSecondHalf descarta a metade
@@ -636,8 +650,8 @@ Nenhum pacote vazio: `core/construction` foi preenchido em 2026-08-14.
 ## Testes
 
 ```text
-373 testes unitários     lógica pura do Core e serialização NBT
- 82 testes de jogo       a fronteira com o Minecraft, num servidor
+375 testes unitários     lógica pura do Core e serialização NBT
+ 83 testes de jogo       a fronteira com o Minecraft, num servidor
                          sem cliente (./gradlew runGametest)
 ```
 
@@ -1720,6 +1734,23 @@ motivo conhecido para isso acontecer.
 Fica registrado porque, se em jogo aparecer a mesma oscilação, esta linha
 é o primeiro lugar a olhar — e porque hoje ABANDONED não muda nada, o que
 esconderia o sintoma (ver TASK-048).
+
+---
+
+### E15 — O fabricante não fabricou numa sessão de 5h40m
+
+Observado na sessão de 2026-08-15: **zero** linhas `manufacturers:` em
+cinco horas e quarenta minutos, com três fabricantes de baú
+reivindicado e cerca de 2.900 tábuas guardadas na colônia.
+
+A meta da Regra 5, sem obra ligada, é metade do que os baús comportam em
+tábua. Com 2.900 guardadas é possível que a meta já estivesse satisfeita
+e que a ausência seja o comportamento certo — a Regra 5 mandando parar.
+
+**Não investigado, e não se inventa causa.** Fica registrado com o que
+se sabe, e é o próximo lugar a olhar depois que a casa subir: a mesma
+sessão que provar a Fase 10 vai dizer se o fabricante volta a trabalhar
+quando a obra passar a puxar a meta.
 
 ---
 

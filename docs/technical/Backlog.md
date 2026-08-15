@@ -74,6 +74,10 @@ TASK-045  proteção consulta construções          🧪 08-14
 TASK-047  a grama do campo não reprova o lote    🧪 08-15
 TASK-050  a tarefa volta à fila quando o
           trabalhador não chega                  ⚠️ 08-15, SEM TESTE
+TASK-053  a obra ganha tarefa — o construtor      🧪 08-15, 3 testes,
+          nunca teve o que fazer em jogo             os três rodados
+                                                     contra a regra
+                                                     desligada
 TASK-052  a porta vira porta, e não duas          🧪 08-15, 2 testes de
           metades soltas — o F2 da fila                jogo, os dois
                                                        rodados contra a
@@ -107,8 +111,8 @@ D2   vaga de profissão entre vilas          não era defeito
 ## 2.5 Contagem
 
 ```text
-373 testes unitários     lógica pura do Core e serialização NBT
- 82 testes de jogo       a fronteira, num servidor sem cliente
+375 testes unitários     lógica pura do Core e serialização NBT
+ 83 testes de jogo       a fronteira, num servidor sem cliente
 ```
 
 ---
