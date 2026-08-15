@@ -5,10 +5,15 @@
 **Status:** MVP escrito por inteiro — Fases 1 a 9 verificadas em jogo,
 10 e 11 só por teste
 **Version:** 0.1.0
-**Last Update:** 2026-08-15, de madrugada — quatro sessões de jogo em
-duas noites. A Fase 9 e o item C ficaram verificados em jogo; o E10, o
-E13 e o E14 fecharam, com a TASK-045 e a TASK-047 junto; e o rodízio de
-profissão (E11) espera decisão do autor. A casa ainda não subiu
+**Last Update:** 2026-08-15, mais tarde — uma sessão de leitura. O mod
+Workers foi lido por inteiro e virou `docs/workers-analysis/`; a pasta
+dele saiu do alcance do git; e a tarefa reservada ganhou como voltar
+para a fila quando o trabalhador vivo não chega. A casa ainda não subiu
+
+Antes disso, na madrugada: quatro sessões de jogo em duas noites. A
+Fase 9 e o item C ficaram verificados em jogo; o E10, o E13 e o E14
+fecharam, com a TASK-045 e a TASK-047 junto; e o rodízio de profissão
+(E11) espera decisão do autor
 **Repository:** https://github.com/LucasRiboldi/MOD-village-1.21.1
 
 ---
@@ -528,6 +533,24 @@ Fora de fase — fechado em 2026-08-14, à noite, a partir do log da sessão
                                      resposta (BuildSiteScanner
                                      .sweepPausedAt)
 
+Fora de fase — 2026-08-15, da leitura do mod Workers
+
+  TASK-050  a tarefa volta para a fila   feito (LumberjackWork,
+            quando o trabalhador não     ManufacturerWork, BuilderWork:
+            chega                        contador de ticks sem avanço,
+                                         quatro ciclos, só em horário de
+                                         trabalho e com o aldeão
+                                         carregado). NÃO tem teste
+                                         próprio: o limite é de 2400
+                                         ticks e a bateria inteira roda
+                                         em cinco segundos
+
+  extra     a análise do Workers         doze documentos em
+                                         docs/workers-analysis/, e a
+                                         pasta workers-maingit/ no
+                                         .gitignore — a licença dela é
+                                         All Rights Reserved
+
 Fase 12 — Testes do MVP                  TASK-038 a 040 cobertas por
                                          gametest; TASK-041 e 042
                                          exigem sessão de jogo
@@ -912,6 +935,21 @@ Obra e construção         gravadas desde 2026-08-14
 
   O que continua fora do save: as tarefas, que são intenção do
   momento, e a marca de qual trabalhador estava construindo.
+```
+
+```text
+O guarda de travamento não tem teste      2026-08-15
+
+  TASK-050 solta a tarefa do trabalhador que passa quatro ciclos em
+  horário de trabalho sem avançar. O caminho é o certo e não foi
+  exercitado: alcançá-lo num gametest custaria 2400 ticks, contra os
+  cinco segundos da bateria inteira.
+
+  O que existe no lugar é a linha de log — quantos ticks, e onde o
+  trabalhador estava. A sessão de jogo do P1 é a primeira chance de
+  vê-la, e o esperado é **não** vê-la: se ela aparecer numa vila
+  normal, o limite está curto ou alguma condição de horário está
+  errada.
 ```
 
 ```text
@@ -1340,6 +1378,19 @@ Execução
   docs/technical/Project-State.md    este documento — o estado
 
   docs/technical/Development-Log.md  o histórico, por data
+
+
+Referência externa
+
+  docs/workers-analysis/       a engenharia reversa do mod Workers,
+                               em doze documentos. É estudo, não
+                               decisão: nada ali obriga este projeto a
+                               nada, e o §12 de lá diz por que o MVP
+                               vem antes de qualquer item da lista.
+
+                               A pasta workers-maingit/ que o originou
+                               é All Rights Reserved e está no
+                               .gitignore. Não commitar.
 ```
 
 ---

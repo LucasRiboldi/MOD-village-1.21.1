@@ -6663,3 +6663,207 @@ vermelha                  propriedade de sweepPausedAt, que não
 ```
 
 366 testes unitários e 80 de jogo, verdes. Árvore limpa.
+
+---
+
+# 2026-08-15 — O Workers lido, e a tarefa que não tinha como voltar
+
+Sessão de leitura, não de jogo. O autor pediu engenharia reversa
+arquitetural do mod **Villager Workers 2**, que estava numa pasta
+`workers-maingit/` dentro do projeto, como fonte de conhecimento —
+explicitamente **não** como código para copiar.
+
+O resultado são doze documentos em `docs/workers-analysis/`, e duas
+mudanças no código: uma linha de `.gitignore` e um guarda de
+travamento nos três executores de trabalho.
+
+---
+
+## A licença, primeiro, porque decide o resto
+
+`workers-maingit/LICENSE.txt`: **All Rights Reserved**, Talha Kantar,
+2023. Proíbe reprodução, modificação e distribuição. Não há permissão
+em arquivo nenhum. O `CREDITS.txt` que acompanha é do Minecraft Forge,
+não do Workers, e não outorga coisa alguma.
+
+A pasta estava **untracked**, e um `git add .` a teria commitado —
+redistribuição de obra de terceiro num repositório público. Foi para o
+`.gitignore` antes de qualquer outra coisa.
+
+Vale registrar que a questão é quase acadêmica por um segundo motivo:
+**nenhuma classe do Workers compilaria aqui.** Forge contra Fabric,
+mappings official contra yarn, 1.20.1 contra 1.21.1, Java 17 contra
+21, e a entidade base dele herda de `recruits.AbstractChunkLoaderEntity`
+— um mod que não veio junto. Metade da arquitetura do Workers está
+fora do repositório que temos.
+
+---
+
+## O que a leitura achou
+
+O Workers é um mod de **peões do jogador**: o jogador compra o
+trabalhador, planta no mundo uma caixa 3D dizendo onde trabalhar, e o
+trabalhador procura essa caixa. Não há colônia, não há vila, não há
+fila de tarefas. Cada trabalhador acha o próprio trabalho, e o estado
+dele é um `enum` dentro do Goal — dezessete estados, no caso do
+lenhador.
+
+É o oposto deste projeto por decisão, não por qualidade. E foi por isso
+que a comparação rendeu: onde as arquiteturas divergem não há nada a
+trazer, e onde elas encostam — a fronteira com o Minecraft — está tudo
+o que interessa.
+
+### As cinco convergências
+
+Duas implementações que não se conhecem chegando à mesma regra pelo
+mesmo motivo. Valem tanto quanto as ideias novas, porque cada uma é uma
+decisão nossa ganhando uma segunda testemunha:
+
+```text
+tronco sem copa viva não é árvore      a nossa é de 2026-08-12;
+                                       a dele testa PERSISTENT e
+                                       DISTANCE, como a nossa
+
+o mundo é a verdade sobre a obra       o progresso não é gravado; ao
+                                       retomar, o bloco que já está
+                                       no lugar sai da lista
+
+dois relógios para o trabalho          decisão no ciclo longo,
+                                       quebra de bloco no tick
+
+quebrar bloco leva o tempo que leva    os dois calculam pela dureza e
+                                       desenham a rachadura
+
+instrumentar antes de suspeitar        ele deixou a linha de log
+                                       comentada em todo setState
+```
+
+### As três verificações que passaram
+
+A análise sugeriu cinco conferências. Três já estavam certas, e com a
+razão escrita no lugar — o que é a parte que importa:
+
+```text
+baú duplo contado uma vez     ChestInventoryReader:45 explica que cada
+                              metade é uma block entity e que contar as
+                              duas dobraria o estoque
+
+folha PERSISTENT              TreeHarvester:475 separa copa viva de
+                              folha pendurada à mão, que é o que
+                              distingue casa de árvore
+
+blocos de baixo para cima     StructureBlueprintReader:182 ordena por
+                              y, x, z, e diz que o arquivo do jogo não
+                              promete ordem nenhuma
+```
+
+Uma quarta — baú com bloco em cima — não é problema aqui: o trabalhador
+não abre baú, escreve no inventário direto.
+
+A quinta virou correção. É o resto desta entrada.
+
+---
+
+## E-novo: a tarefa que nunca voltava
+
+O Workers solta a área reservada quando o trabalhador se afasta mais de
+31 blocos dela (`AbstractWorkerEntity.aiStep`). Procurando o equivalente
+aqui, o equivalente não existia.
+
+Tarefa reservada voltava para a fila em dois casos: o trabalhador perder
+o baú, e o trabalhador morrer ou virar zumbi. **O aldeão vivo que não
+chega não tinha saída.** Os três executores tinham a mesma forma:
+
+```java
+if (!villager.getBlockPos().isWithinDistance(target, REACH)) {
+    WorkTargets.set(workerId, target);
+    return true;      // e amanhã de novo, para sempre
+}
+```
+
+O aldeão que o jogador levou de barco, que caiu num buraco, que ficou do
+lado errado de uma parede, ou que não alcança o próprio baú, andava para
+sempre segurando a tarefa.
+
+E o custo não é o trabalhador parado — é a vaga. `ColonyCycle` conta
+pedido aberto para decidir se abre outro: para a colônia, aquele pedido
+tinha dono. Um lenhador preso significava madeira que ninguém mais ia
+buscar.
+
+### O guarda
+
+Cada trabalho conta os ticks desde o último avanço de verdade — bloco
+quebrado, árvore nova, chegada ao alvo — e desiste depois de quatro
+ciclos da colônia. A tarefa é liberada, o destino apagado, o aldeão
+volta à agenda Vanilla.
+
+Duas condições impedem o falso positivo, e as duas custaram pensar:
+
+```text
+o relógio só corre em horário     a noite tem doze mil ticks e o Brain
+de trabalho                       não anda nela. Sem esta condição toda
+                                  noite pareceria travamento
+
+o relógio não corre com o         colônia dormindo longe do jogador não
+aldeão descarregado               é trabalhador preso, e é o caso comum
+```
+
+Dois minutos de horário de trabalho é folgado de propósito: um tronco
+leva dez ticks, e a janela WORK do dia tem sete mil.
+
+**A regra aqui é por tempo, e não por distância como no Workers.** A
+diferença não é de gosto: lá quem tem dono é o lugar, e a pergunta certa
+é "o trabalhador ainda está perto dele?". Aqui quem tem dono é a
+**tarefa**, e a pergunta certa é "ela ainda está andando?".
+
+### O que não foi verificado
+
+O caminho novo **não tem teste próprio**. O limite é de 2400 ticks, e um
+gametest que o alcance custaria dois minutos numa bateria que roda
+inteira em cinco segundos. Fica como está, registrado, com uma linha de
+log que diz quantos ticks e onde o trabalhador estava — que é o que a
+sessão de jogo vai poder ler.
+
+Build e 366 testes unitários verdes; 80 de jogo verdes. Nenhum deles
+exercita o guarda.
+
+---
+
+## O que a análise deixou na fila, e não foi feito
+
+Por ordem de retorno, tudo em
+`docs/workers-analysis/12-recommendations.md`:
+
+```text
+IdleReason          o motivo de não trabalhar como valor, não como
+                    silêncio. É o que o E14 custou três sessões para
+                    ensinar, e hoje só a Fase 10 aprendeu
+
+ItemRequest         o trabalhador declarar o que lhe falta em vez de
+                    travar. Toca Task, que é o centro — depois do MVP
+
+blocos de duas      o Workers põe porta e cama numa segunda passada, e
+partes              põe o par junto. Pode fechar o E8 sem levar
+                    BlockState ao Core, ou seja sem a ADR que a
+                    TASK-046 supõe necessária. É pista, não solução:
+                    ninguém verificou se a ligação acontece sozinha
+
+Task.age            envelhecimento contra inanição, um int
+
+qualidade da casa   cinco bits dizendo se a casa construída é
+                    habitável — fecha o ciclo da Fase 11
+```
+
+Nada disso é o MVP. O que bloqueia continua sendo o P1: ver a casa
+subir.
+
+---
+
+## Uma observação de passagem
+
+`BuilderWork.finish` tem um ramo que chama `task.complete()` quando o
+estado é EXECUTING. Nenhum caminho do construtor chama `task.start()`,
+então a tarefa de obra nunca sai de RESERVED e esse ramo nunca roda —
+inclusive quando a casa fica pronta. Não foi mexido: não quebra nada
+hoje, e mexer nisso sem ver a Fase 10 rodar em jogo seria consertar o
+que ninguém viu funcionar.
