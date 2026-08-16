@@ -159,7 +159,12 @@ public final class BuilderWork {
 
         JOBS.values().removeIf(job -> !isOngoing(job.task));
 
-        report(colony, project.get(), open, queue.isEmpty() ? "no build task" : queue.toString());
+        report(
+                colony,
+                project.get(),
+                open,
+                queue.isEmpty() ? "no build task" : queue.toString(),
+                waitingFor(project.get()));
 
         return open;
     }
@@ -548,15 +553,47 @@ public final class BuilderWork {
      * cegueira que custou as sessões do §11.
      */
     private static void report(
-            Colony colony, ConstructionProject project, int builders, String queue) {
+            Colony colony,
+            ConstructionProject project,
+            int builders,
+            String queue,
+            String waiting) {
 
         VillageColonyMod.LOGGER.info(
-                "Colony {} builders: {} working, {} at {}, {} blocks left — {}",
+                "Colony {} builders: {} working, {} at {}, {} blocks left — {}{}",
                 colony.id(),
                 builders,
                 project.state(),
                 project.origin(),
                 project.remainingCount(),
-                queue);
+                queue,
+                waiting);
+    }
+
+    /**
+     * O que a obra dormindo está esperando.
+     *
+     * <p>Vazio quando ela não está dormindo — a linha já é longa.
+     *
+     * <p>Existe por causa da sessão das 21:29 de 2026-08-15, a primeira
+     * a rodar {@code wakeIfSupplied}. Ele se comportou como devia e não
+     * acordou nada, porque o material do próximo bloco não estava em baú
+     * algum. Só que o log dizia apenas {@code WAITING_RESOURCES ... no
+     * build task}, e daí não sai a pergunta seguinte: <b>esperando o
+     * quê?</b>
+     *
+     * <p>A resposta muda tudo. Se falta tábua, a colônia fabrica e a
+     * casa anda sozinha. Se falta pedregulho ou vidro, ninguém nesta
+     * vila produz aquilo — e a obra não está lenta, está impossível.
+     * Dois estados idênticos no log, e correções que não se parecem.
+     */
+    private static String waitingFor(ConstructionProject project) {
+        if (project.state() != ConstructionState.WAITING_RESOURCES) {
+            return "";
+        }
+
+        return project.nextBlock()
+                .map(block -> ", waiting for " + block.block())
+                .orElse(", waiting with nothing left to place");
     }
 }
