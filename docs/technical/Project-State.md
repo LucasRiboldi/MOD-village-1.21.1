@@ -2147,6 +2147,8 @@ Regra 10  o construtor fabrica o que a         08-15, a implementar
 Regra 11  uma de cada profissão em cada vila   08-15, já satisfeita pelo
                                                mecanismo — falta a garantia
 Regra 12  o centro fica em bloco que existe    08-15, feita em 08-15
+Regra 13  a obra do MVP é uma que a colônia    08-15, feita em 08-15
+          consiga fazer
 ```
 
 Duas previsões das primeiras se confirmaram e vale marcá-las: a fila que
@@ -2712,3 +2714,60 @@ onde não      a recusa de aglomerado continua com a média crua. Ela
 Quatro testes de unidade. Não fecha o G4 sozinho — a colônia ainda pode
 mudar de centro recusando encolher —, mas tira do caminho a parte em que
 o centro novo era um ponto no ar.
+
+---
+
+## Regra 13 — a obra do MVP é uma que a colônia consiga fazer
+
+```text
+a obra que o MVP precisa provar é feita só do que a colônia produz
+
+o que a colônia não produz, o jogador guarda no baú — e o construtor
+usa dali, sem distinguir de onde veio
+```
+
+Decidida em 2026-08-15 sobre a lista de compras da casa de planície,
+medida na bateria naquele dia:
+
+```text
+149 blocos, 8 tipos            72 blocos, 2 tipos
+ 49 oak_stairs      tábua       71 oak_planks   tábua
+ 43 cobblestone     minerar      1 oak_door     tábua
+ 33 oak_planks      tábua
+ 16 stripped_oak    machado
+  3 glass_pane      fundir
+  3 wall_torch      carvão
+  1 white_bed       lã
+  1 oak_door        tábua
+
+a casa do jogo                 a cabana da colônia
+```
+
+Sessenta e seis dos 149 blocos da casa pedem cadeias que este mod não
+tem — minerar, fundir, tosquiar, descascar. A colônia parava no primeiro
+pedregulho e ficava em `WAITING_RESOURCES` para sempre. Não por defeito:
+a meta era impossível, e nenhuma quantidade de lenhador mudaria isso.
+
+**As duas metades da decisão.**
+
+A primeira: {@code ColonyHut} passa a ser a obra do MVP. Tábua e porta,
+as duas saindo de tronco. A colônia levanta a cabana do começo ao fim
+sem o jogador guardar nada — e é isso que faltava para o sexto passo do
+MVP poder ser visto acontecendo.
+
+A segunda: o que a colônia não produz **não vira profissão nova**. Vira
+material que o jogador guarda no baú. `takeMaterial` já lê qualquer baú
+da colônia e não pergunta de onde o item veio, então isso já funciona —
+o que faltava era a colônia **dizer** o que está esperando, e é o que a
+linha `waiting for X` do relatório do construtor passou a fazer.
+
+A casa do jogo continua sendo o alvo bonito. O dia em que a colônia
+minerar e fundir, ela volta — e o que muda hoje é só qual obra o MVP
+precisa provar.
+
+```text
+o teste que segura     theColonyCanMakeEverythingTheHutIsMadeOf
+                       afirma que a cabana só pede o que sai de
+                       tronco. Pôr pedregulho nela derruba a bateria
+                       antes de a sessão de jogo descobrir
+```

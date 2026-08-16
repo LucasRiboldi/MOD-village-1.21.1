@@ -2,6 +2,7 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.construction.model.ColonyHut;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -31,6 +32,17 @@ import java.util.Optional;
  */
 public class HouseBillOfMaterialsGameTest implements FabricGameTest {
 
+    /**
+     * O que sai de tronco, e portanto do lenhador mais o fabricante.
+     *
+     * <p>Lista curta de propósito: cada nome aqui é uma cadeia que o mod
+     * tem, ou vai ter pela Regra 10. Acrescentar um nome sem a cadeia
+     * existir é o mesmo que voltar à casa de planície.
+     */
+    private static final java.util.Set<String> FROM_LOGS =
+            java.util.Set.of("oak_planks", "oak_door", "oak_stairs", "oak_slab", "oak_fence");
+
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "house_bill")
     public void theHouseSaysWhatItIsMadeOf(TestContext context) {
         StructureBlueprintReader.read(
@@ -40,6 +52,29 @@ public class HouseBillOfMaterialsGameTest implements FabricGameTest {
                         () -> VillageColonyMod.LOGGER.info(
                                 "BILL — this game has no {}",
                                 StructureBlueprintReader.PLAINS_SMALL_HOUSE));
+
+        context.complete();
+    }
+
+    /**
+     * E a cabana da colônia, que é o alvo do MVP desde 08-15.
+     *
+     * <p>Este afirma, e não só relata: a cabana tem de ser feita
+     * <b>só</b> do que a colônia produz a partir de tronco. No dia em
+     * que alguém puser pedregulho nela, a obra volta a ser impossível e
+     * este teste cai antes de a sessão de jogo descobrir.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "hut_bill")
+    public void theColonyCanMakeEverythingTheHutIsMadeOf(TestContext context) {
+        Blueprint hut = ColonyHut.blueprint();
+
+        announce(hut);
+
+        for (ResourceId material : hut.materials().keySet()) {
+            context.assertTrue(
+                    FROM_LOGS.contains(material.path()),
+                    "a cabana pede " + material + ", que a colônia não faz a partir de tronco");
+        }
 
         context.complete();
     }

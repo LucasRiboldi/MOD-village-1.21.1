@@ -998,9 +998,7 @@ public final class LumberjackWork {
      * inteiro. Soltar a tarefa sem esquecer a árvore é trocar de
      * trabalhador, não de problema.
      *
-     * <p>Público pelo mesmo motivo que {@code
-     * ConstructionPlanner.forgetBlueprint}: a bateria precisa chegar
-     * aqui. Chamar {@link #giveUp} num teste custaria os 2.400 ticks de
+     * <p>Público porque a bateria precisa chegar aqui. Chamar {@link #giveUp} num teste custaria os 2.400 ticks de
      * {@link #STALL_LIMIT} — dois minutos de relógio contra uma bateria
      * que roda em vinte e cinco segundos, que é o E1 do grupo E.
      */

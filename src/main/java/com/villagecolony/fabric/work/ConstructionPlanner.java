@@ -5,6 +5,7 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.construction.model.ColonyHut;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.service.ConstructionService;
@@ -56,8 +57,6 @@ public final class ConstructionPlanner {
      * de blocos, e o mesmo para todo mundo. Trocar de mundo não o
      * invalida — a casa de planície é a mesma em qualquer save.
      */
-    private static Blueprint house;
-
     /**
      * Como esta fase aparece na linha de {@link IdleLog}.
      *
@@ -238,17 +237,10 @@ public final class ConstructionPlanner {
             return silent(colony, IdleReason.NO_WORKER, "");
         }
 
-        Optional<Blueprint> blueprint = houseOf(world);
-
-        if (blueprint.isEmpty()) {
-            return silent(
-                    colony,
-                    IdleReason.NOT_IN_GAME,
-                    "no " + StructureBlueprintReader.PLAINS_SMALL_HOUSE + " to read");
-        }
+        Blueprint blueprint = ColonyHut.blueprint();
 
         Optional<ColonyPos> site = BuildSiteScanner.find(
-                world, colony.center(), VillageDetector.SEARCH_RADIUS, blueprint.get().size());
+                world, colony.center(), VillageDetector.SEARCH_RADIUS, blueprint.size());
 
         if (site.isEmpty()) {
             // Duas respostas, e a diferença importa: uma diz que não há
@@ -267,7 +259,7 @@ public final class ConstructionPlanner {
                             "no free lot beside a road in the whole "
                                     + VillageDetector.SEARCH_RADIUS + "-block radius of "
                                     + colony.center() + " that fits "
-                                    + blueprint.get().size());
+                                    + blueprint.size());
         }
 
         if (VillageColonyMod.BUILDINGS.isColonyInfrastructure(site.get())) {
@@ -283,7 +275,7 @@ public final class ConstructionPlanner {
         }
 
         ConstructionProject project =
-                ConstructionProject.plan(colony.id(), blueprint.get(), site.get());
+                ConstructionProject.plan(colony.id(), blueprint, site.get());
 
         VillageColonyMod.CONSTRUCTIONS.register(project);
 
@@ -342,7 +334,7 @@ public final class ConstructionPlanner {
 
         ConstructionService.Pending saved = pending.get();
 
-        Optional<Blueprint> blueprint = StructureBlueprintReader.read(world, saved.blueprint());
+        Optional<Blueprint> blueprint = blueprintOf(world, saved.blueprint());
 
         if (blueprint.isEmpty()) {
             // O jogo não conhece mais essa estrutura — datapack que saiu,
@@ -400,18 +392,20 @@ public final class ConstructionPlanner {
                 .orElse(0);
     }
 
-    /** Esquece o projeto guardado. Só os testes precisam disso. */
-    public static void forgetBlueprint() {
-        house = null;
-    }
-
-    private static Optional<Blueprint> houseOf(ServerWorld world) {
-        if (house == null) {
-            house = StructureBlueprintReader
-                    .read(world, StructureBlueprintReader.PLAINS_SMALL_HOUSE)
-                    .orElse(null);
+    /**
+     * A planta deste id, venha ela do mod ou do jogo.
+     *
+     * <p>Existe para {@link #resume}, que carrega obra gravada em sessão
+     * anterior e só tem o id em mãos. A cabana da colônia é escrita em
+     * código e o leitor de estrutura não a acharia; a casa do jogo é o
+     * contrário. Perguntar aos dois é o que deixa um save antigo — com a
+     * casa de planície pela metade — continuar de onde parou.
+     */
+    private static Optional<Blueprint> blueprintOf(ServerWorld world, ResourceId id) {
+        if (ColonyHut.ID.equals(id)) {
+            return Optional.of(ColonyHut.blueprint());
         }
 
-        return Optional.ofNullable(house);
+        return StructureBlueprintReader.read(world, id);
     }
 }
