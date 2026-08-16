@@ -147,8 +147,9 @@ na seção de cada regra.
 | ~~H1~~ | ~~**Regra 7** — o lenhador planta onde cortou~~ | ✅ feita em 08-15, dois testes de jogo pelo caminho do trabalhador |
 | H2 | **Regra 8** — um baú ao lado de cada cama | 🟡 **metade feita em 08-15.** `ChestPlacer` põe o baú quando a cama de um **trabalhador** não alcança nenhum, com 5 recusas e 6 testes de jogo. Falta a outra metade: cama de aldeão que não trabalha continua sem baú, porque `VillageCandidate` carrega contagem e não as posições das camas |
 | ~~H3~~ | ~~**Regra 9** — subir e descer para alcançar, e poder voltar~~ | ✅ feita em 08-15. Árvore fora de alcance sai da escolha por 6.000 ticks, e quem a marca é o guarda de travamento. A checagem de caminho **antes** de escolher foi tentada e descartada: recusou seis árvores boas na bateria |
-| H4 | **Regra 10** — o construtor fabrica o que a expansão pede | 👤 espera decisão sobre baú comunitário e sobre onde termina o fabricante. As peças existem: `CraftingLookup`, `ChestWithdrawer`, `ManufacturerWork` |
+| H4 | **Regra 10** — o construtor fabrica o que a expansão pede | 🔨 **decidido em 08-15:** acesso a todos os baús, do mais próximo para o mais longe, acumulando até juntar a quantidade; e o construtor é fabricante dos blocos da obra. **Não começado** — é a maior das cinco. Peças existentes: `CraftingLookup`, `ChestWithdrawer`, `takeMaterial` |
 | H5 | **Regra 11** — uma de cada profissão em cada vila | 🔨 mecanismo já pronto (`vacancy` devolve a mais escassa). Falta a garantia: vila pequena demais, e a dispensa podendo tirar o último de uma profissão. Nenhum teste afirma o piso |
+| ~~H6~~ | ~~**Regra 12** — o centro fica em bloco que existe~~ | ✅ feita em 08-15. Era a média das camas, um ponto que podia cair no ar ou dentro do morro. Agora é a cama mais próxima da média. Quatro testes de unidade |
 
 ## 2.5 Contagem
 
@@ -221,7 +222,7 @@ no §4. O enunciado de cada decisão está em `Project-State.md §10`.
 
 | # | O que | Origem |
 |---|---|---|
-| E1 | **TASK-050 sem teste.** O guarda de travamento: 2.400 ticks contra uma bateria que roda em 5 s | §9 |
+| ~~E1~~ | ~~**TASK-050 sem teste.** O guarda de travamento~~ | ✅ fechado em 08-15: o autor autorizou encurtar o limite para a bateria. `shortenStallLimitTo` / `restoreStallLimit`, e um teste que prova as duas coisas que o guarda faz — devolver a tarefa e esquecer a árvore |
 | E2 | **Teste sem fase vermelha:** `anUnfinishedSweepIsNotAnAnswer` afirma propriedade que não existia antes dele | Dev-Log 08-15 |
 | E3 | **WARN de 86 ms** — um ciclo passou de um tick, uma vez. Não se repetiu, não foi investigado | Dev-Log 08-15 |
 | E4 | **Persistência entre sessões** — exige fechar e reabrir o mundo; a bateria roda um servidor só | §6 |

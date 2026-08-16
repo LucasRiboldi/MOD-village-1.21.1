@@ -237,6 +237,78 @@ class VillageDetectorTest {
         assertFalse(candidate.complete());
     }
 
+    // --- o centro ancorado em bloco que existe, 2026-08-15 ---
+
+    /**
+     * Regra do autor: a posição do centro é marcada na horizontal e na
+     * vertical dos blocos existentes.
+     *
+     * <p>Antes disto o centro era a média pura — um ponto calculado que
+     * não precisa coincidir com nada. Três camas em L têm média num lugar
+     * onde não há cama alguma, e era ali que a colônia se ancorava.
+     */
+    @Test
+    void theCenterLandsOnABedThatExists() {
+        List<ColonyPos> cluster = List.of(bed(0, 0), bed(20, 0), bed(0, 20));
+
+        ColonyPos center = detector
+                .evaluate(cluster, 5, Optional.empty(), Optional.empty())
+                .orElseThrow()
+                .center();
+
+        assertTrue(cluster.contains(center), "o centro caiu onde não há cama: " + center);
+    }
+
+    /** E é a cama mais próxima da média, não uma qualquer. */
+    @Test
+    void theCenterIsTheBedNearestTheMean() {
+        // Média em x = 10: a cama de x=9 é a mais perto dela.
+        List<ColonyPos> cluster = List.of(bed(0, 0), bed(9, 0), bed(21, 0));
+
+        ColonyPos center = detector
+                .evaluate(cluster, 5, Optional.empty(), Optional.empty())
+                .orElseThrow()
+                .center();
+
+        assertEquals(bed(9, 0), center);
+    }
+
+    /**
+     * A vertical também sai de bloco existente.
+     *
+     * <p>Camas em andares diferentes davam média num y intermediário —
+     * dentro do forro, entre um piso e outro.
+     */
+    @Test
+    void theCenterTakesItsHeightFromABedToo() {
+        List<ColonyPos> cluster = List.of(
+                new ColonyPos(0, 64, 0),
+                new ColonyPos(4, 70, 0),
+                new ColonyPos(8, 70, 0));
+
+        ColonyPos center = detector
+                .evaluate(cluster, 5, Optional.empty(), Optional.empty())
+                .orElseThrow()
+                .center();
+
+        assertTrue(
+                center.y() == 64 || center.y() == 70,
+                "a altura do centro não é a de nenhuma cama: " + center.y());
+    }
+
+    /** O sino continua mandando: ele também é bloco que existe. */
+    @Test
+    void theMeetingPointStillWins() {
+        ColonyPos bell = new ColonyPos(3, 65, 3);
+
+        ColonyPos center = detector
+                .evaluate(beds(4, 10), 5, Optional.of(bell), Optional.empty())
+                .orElseThrow()
+                .center();
+
+        assertEquals(bell, center);
+    }
+
     // --- constantes da ADR-003 §8 ---
 
     @Test

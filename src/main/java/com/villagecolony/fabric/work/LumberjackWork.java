@@ -151,6 +151,37 @@ public final class LumberjackWork {
     private static final int STALL_LIMIT = 4 * VillageDetector.CYCLE_TICKS;
 
     /**
+     * O limite em vigor. É {@link #STALL_LIMIT}, menos nos testes.
+     *
+     * <p>Existe por decisão do autor em 2026-08-15, e a razão é o E1 do
+     * grupo E: 2.400 ticks são dois minutos de relógio, contra uma
+     * bateria que roda inteira em vinte e cinco segundos. O guarda de
+     * travamento nunca teve teste por isso — e desde a Regra 9 ele carrega
+     * também a marcação de árvore fora de alcance, que é o que fecha o
+     * G2. Dois comportamentos sem cobertura no mesmo lugar.
+     *
+     * <p>É código de produção existindo para teste, e isso se paga com
+     * limites: só a bateria mexe aqui, sempre devolvendo ao padrão por
+     * {@link #restoreStallLimit()}, e o valor de jogo continua sendo o
+     * único que o mod usa sozinho.
+     */
+    private static int stallLimit = STALL_LIMIT;
+
+    /** Encurta o relógio de travamento. Só os testes precisam disso. */
+    public static void shortenStallLimitTo(int ticks) {
+        if (ticks <= 0) {
+            throw new IllegalArgumentException("stall limit must be positive: " + ticks);
+        }
+
+        stallLimit = ticks;
+    }
+
+    /** Devolve o relógio ao valor de jogo. */
+    public static void restoreStallLimit() {
+        stallLimit = STALL_LIMIT;
+    }
+
+    /**
      * O trabalho em curso de cada lenhador.
      *
      * <p>Em memória e não persistido, como a própria tarefa: ao
@@ -465,7 +496,7 @@ public final class LumberjackWork {
         if (job.isBetweenTrees()) {
             return "looking for a tree, " + clock
                     + " (" + job.collected + " logs so far, stall "
-                    + job.stalled + "/" + STALL_LIMIT + ")";
+                    + job.stalled + "/" + stallLimit + ")";
         }
 
         int distance = (int) Math.sqrt(
@@ -477,7 +508,7 @@ public final class LumberjackWork {
                 + ", block " + (job.index + 1) + " of " + job.plan.blocks().size()
                 + ", " + job.progress + "/" + job.required + " ticks"
                 + ", " + job.collected + " logs so far"
-                + ", stall " + job.stalled + "/" + STALL_LIMIT;
+                + ", stall " + job.stalled + "/" + stallLimit;
     }
 
     /** Os oito primeiros dígitos do UUID, como no resto do log. */
@@ -579,7 +610,7 @@ public final class LumberjackWork {
             return Outcome.WORKED;
         }
 
-        if (WorkHours.isWorkTime(world, villager) && ++job.stalled > STALL_LIMIT) {
+        if (WorkHours.isWorkTime(world, villager) && ++job.stalled > stallLimit) {
             return giveUp(world, job, workerId);
         }
 
@@ -773,7 +804,7 @@ public final class LumberjackWork {
                 "Worker {} made no progress for {} work ticks{} — wood task"
                         + " returned to the queue",
                 shortId(workerId),
-                STALL_LIMIT,
+                stallLimit,
                 job.plan == null
                         ? " while looking for a tree"
                         : " on the tree at " + job.plan.base().toShortString());

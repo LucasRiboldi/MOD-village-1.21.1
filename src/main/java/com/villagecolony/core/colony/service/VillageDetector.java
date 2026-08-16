@@ -140,7 +140,7 @@ public final class VillageDetector {
             return Optional.empty();
         }
 
-        ColonyPos center = meetingPoint.orElseGet(() -> averageOf(cluster));
+        ColonyPos center = meetingPoint.orElseGet(() -> anchoredCenterOf(cluster));
 
         boolean complete = trigger
                 .map(from -> coversWholeCluster(cluster, from))
@@ -190,7 +190,7 @@ public final class VillageDetector {
         }
 
         return Optional.of(new ClusterRejection(
-                averageOf(cluster), cluster.size(), villagerCount, reason));
+                meanOf(cluster), cluster.size(), villagerCount, reason));
     }
 
     /**
@@ -228,11 +228,67 @@ public final class VillageDetector {
     }
 
     /**
+     * O centro do aglomerado, sempre numa cama que existe.
+     *
+     * <p><b>Regra do autor, 2026-08-15:</b> a posição do centro é marcada
+     * na horizontal e na vertical dos blocos existentes. Antes disto o
+     * centro era a média pura das camas — um ponto calculado que não
+     * precisa coincidir com coisa alguma: ele cai no ar entre duas casas,
+     * dentro do morro atrás da vila, ou no meio do lago. Nos três casos a
+     * colônia passa a medir distância a partir de um lugar onde não há
+     * nada, e a âncora que deveria ser estável é a que menos existe.
+     *
+     * <p>A média continua sendo o alvo — ela é o que descreve onde a vila
+     * está. O que muda é que o centro passa a ser a <b>cama mais próxima
+     * dela</b>, e cama é bloco: tem horizontal e tem vertical, as duas do
+     * mundo real.
+     *
+     * <p>Isto não substitui o ponto de encontro. Quando há sino, ele
+     * continua mandando — e pelo mesmo motivo, aliás: sino também é bloco
+     * que existe.
+     */
+    private static ColonyPos anchoredCenterOf(List<ColonyPos> cluster) {
+        return nearestTo(meanOf(cluster), cluster);
+    }
+
+    /**
+     * A cama do aglomerado mais perto deste ponto.
+     *
+     * <p>Empate resolvido pela ordem do aglomerado, que é a da varredura
+     * de POI e é estável entre ciclos — e estabilidade é o ponto: um
+     * centro que trocasse de cama a cada ciclo faria a colônia se ver
+     * andando sem que nada tivesse mudado.
+     */
+    private static ColonyPos nearestTo(ColonyPos target, List<ColonyPos> cluster) {
+        ColonyPos nearest = cluster.get(0);
+        long best = squaredDistance(nearest, target);
+
+        for (ColonyPos bed : cluster) {
+            long distance = squaredDistance(bed, target);
+
+            if (distance < best) {
+                nearest = bed;
+                best = distance;
+            }
+        }
+
+        return nearest;
+    }
+
+    private static long squaredDistance(ColonyPos from, ColonyPos to) {
+        long dx = (long) from.x() - to.x();
+        long dy = (long) from.y() - to.y();
+        long dz = (long) from.z() - to.z();
+
+        return dx * dx + dy * dy + dz * dz;
+    }
+
+    /**
      * Média das posições das camas.
      *
      * <p>Soma em long: 64 camas em coordenada extrema estouram int.
      */
-    private static ColonyPos averageOf(List<ColonyPos> cluster) {
+    private static ColonyPos meanOf(List<ColonyPos> cluster) {
         long x = 0;
         long y = 0;
         long z = 0;

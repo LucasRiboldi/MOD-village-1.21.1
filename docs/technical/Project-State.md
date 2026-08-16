@@ -2146,6 +2146,7 @@ Regra 10  o construtor fabrica o que a         08-15, a implementar
           expansão pede
 Regra 11  uma de cada profissão em cada vila   08-15, já satisfeita pelo
                                                mecanismo — falta a garantia
+Regra 12  o centro fica em bloco que existe    08-15, feita em 08-15
 ```
 
 Duas previsões das primeiras se confirmaram e vale marcá-las: a fila que
@@ -2604,24 +2605,42 @@ O que já existe: `CraftingLookup` sabe ler receita Vanilla, o
 `ChestWithdrawer` já tira material de baú para o construtor pôr bloco.
 As peças estão todas no lugar; o que falta é a cadeia.
 
-Decisões que a implementação precisa tomar:
+**Decidido pelo autor em 2026-08-15**, as duas pontas:
 
 ```text
-"qualquer baú da vila"   hoje o modelo é um baú por trabalhador, e a
-                         nota da Regra 1 já avisava que baú comunitário
-                         não existe. Esta regra exige ler e tirar de
-                         todos
+de qual baú ele tira    de todos. O construtor tem acesso a qualquer
+                        baú da vila. Começa pelo mais próximo e vai
+                        abrindo para o seguinte enquanto não juntar a
+                        quantidade de que precisa
 
-em qual baú guarda       o do próprio construtor, ou o mais perto da
-                         obra
+quem fabrica            o construtor é fabricante. Ele mesmo faz o
+                        craft dos blocos que a construção pede — junta
+                        o material dos baús, do mais perto para o mais
+                        longe, e só fabrica quando tem a quantidade
+```
 
-onde termina o           fabricar é o ofício do MANUFACTURER. A regra
-fabricante               dá parte disso ao construtor, e a linha entre
-                         os dois precisa ficar escrita
+Note o que isso muda em relação ao que existe. `takeMaterial` já
+percorre todos os baús da colônia, mas na ordem em que
+{@code WORKERS.ofColony} devolve — que não é distância. Passa a ser por
+proximidade, e passa a **acumular**: tirar três de um baú e cinco de
+outro para juntar oito é o caso normal, não a exceção.
 
-quais itens              cama, baú e tocha estão no enunciado. A lista
-                         cresce com o que a expansão pedir, e sai da
-                         planta — não de uma lista fixa
+E o construtor deixa de só consumir. Quando falta o bloco pronto mas
+sobra o ingrediente, é ele quem fabrica — e não o MANUFACTURER, que
+continua com a cadeia de produção geral da colônia.
+
+O que a implementação ainda decide:
+
+```text
+em qual baú guarda      o do próprio construtor, ou o mais perto da
+                        obra
+
+quais itens             cama, baú e tocha estão no enunciado. A lista
+                        cresce com o que a expansão pedir, e sai da
+                        planta — não de uma lista fixa
+
+receita de quê          quando falta bloco e falta ingrediente, até
+                        onde descer na cadeia
 ```
 
 ---
@@ -2657,3 +2676,39 @@ a dispensa             `dismiss` tira a função de quem excede a vaga
 nenhum teste           não há teste que afirme o piso. O que existe
 afirma o piso          testa o teto
 ```
+
+---
+
+## Regra 12 — o centro fica em bloco que existe
+
+```text
+a posição do centro da colônia é marcada na horizontal e na vertical
+dos blocos existentes
+```
+
+Decidida em 2026-08-15, e feita no mesmo dia.
+
+Até aqui o centro era a **média** das posições das camas — um ponto
+calculado que não precisa coincidir com coisa alguma. Três camas em L
+têm média num lugar onde não há cama; camas em dois andares dão um `y`
+no meio do forro. A colônia media distância a partir dali: a âncora que
+deveria ser a coisa mais estável do sistema era a que menos existia.
+
+A média continua sendo o alvo — ela é o que descreve onde a vila está. O
+que mudou é que o centro passou a ser a **cama mais próxima dela**, e
+cama é bloco: tem horizontal e tem vertical, as duas do mundo real.
+
+O sino continua mandando quando existe, e pelo mesmo motivo: sino também
+é bloco que existe.
+
+```text
+onde vale     o centro da colônia, em VillageDetector.evaluate
+
+onde não      a recusa de aglomerado continua com a média crua. Ela
+              não é âncora, é um "onde isto estava" — nada mede
+              distância a partir dela
+```
+
+Quatro testes de unidade. Não fecha o G4 sozinho — a colônia ainda pode
+mudar de centro recusando encolher —, mas tira do caminho a parte em que
+o centro novo era um ponto no ar.

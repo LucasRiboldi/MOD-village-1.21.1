@@ -5,6 +5,7 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskPriority;
+import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
@@ -837,6 +838,102 @@ public class LumberjackGameTest implements FabricGameTest {
                     .amountOf(ResourceType.OAK_LOG);
 
             context.assertTrue(stored > 0, "a madeira não chegou ao baú");
+
+            owned.cleanUp();
+
+            context.complete();
+        });
+    }
+
+    /**
+     * O guarda de travamento, enfim coberto — o E1 do grupo E.
+     *
+     * <p>Ele existe desde a TASK-050 e nunca teve teste: 2.400 ticks são
+     * dois minutos de relógio contra uma bateria que roda em vinte e
+     * cinco segundos. O autor autorizou encurtar o limite em 2026-08-15,
+     * e é isso que este teste faz.
+     *
+     * <p>Prova as duas coisas que o guarda faz, e a segunda entrou com a
+     * Regra 9: a tarefa volta para a fila, <b>e</b> a árvore é esquecida.
+     * Sem a segunda, a busca reescolhe a mesma árvore no ciclo seguinte —
+     * ela é a mais próxima, e a busca é determinística — e o lenhador
+     * seguinte trava no mesmo lugar.
+     *
+     * <p>A árvore fica numa torre sem escada, alcançável pela busca e não
+     * pelos pés.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_stall_guard",
+            tickLimit = 400)
+    public void theStallGuardReturnsTheTaskAndForgetsTheTree(TestContext context) {
+        BlockPos marooned = new BlockPos(4, 6, 4);
+        BlockPos chest = new BlockPos(2, 2, 2);
+        BlockPos stand = new BlockPos(3, 2, 6);
+
+        for (int x = 1; x <= 8; x++) {
+            for (int z = 1; z <= 8; z++) {
+                context.setBlockState(new BlockPos(x, 1, z), Blocks.STONE.getDefaultState());
+            }
+        }
+
+        // Uma coluna isolada com a árvore em cima: a busca a enxerga, os
+        // pés não chegam nela.
+        for (int y = 2; y <= 5; y++) {
+            context.setBlockState(new BlockPos(4, y, 4), Blocks.STONE.getDefaultState());
+        }
+
+        plantTree(context, marooned);
+
+        context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+
+        ServerWorld world = context.getWorld();
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, stand);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(marooned)));
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create()
+                .owning(colony)
+                .owning(villager.getUuid());
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.LUMBERJACK);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(
+                villager.getUuid(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chest))));
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_WOOD,
+                TaskPriority.PRODUCTION,
+                ResourceType.OAK_LOG,
+                64);
+
+        task.reserveFor(villager.getUuid());
+
+        // Sessenta ticks de horário de trabalho em vez de 2.400.
+        LumberjackWork.shortenStallLimitTo(60);
+
+        LumberjackWork.run(world, colony);
+
+        context.runAtTick(300, () -> {
+            LumberjackWork.restoreStallLimit();
+
+            context.assertTrue(
+                    task.state() == TaskState.AVAILABLE,
+                    "o guarda não devolveu a tarefa à fila — ela está em " + task.state());
+
+            context.assertTrue(
+                    task.executor().isEmpty(),
+                    "a tarefa voltou à fila e continua com dono");
+
+            LumberjackWork.forgetUnreachable();
 
             owned.cleanUp();
 
