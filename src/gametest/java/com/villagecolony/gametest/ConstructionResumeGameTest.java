@@ -140,4 +140,51 @@ public class ConstructionResumeGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * Obra de planta antiga, sem um bloco de pé, sai da frente.
+     *
+     * <p>A Regra 13 trocou a obra do MVP pela cabana, e a colônia do
+     * autor continuou presa à casa de planície gravada no save: quinze
+     * ciclos de {@code waiting for minecraft:stripped_oak_log}, que
+     * ninguém produz, e a cabana nunca chegou a ser planejada. {@code
+     * plan} não abre obra nova enquanto houver uma aberta.
+     *
+     * <p>Nada se perde: são zero blocos de pé. O que se ganha é a
+     * colônia voltando a construir.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "resume_stale_target")
+    public void anUntouchedProjectOfTheOldTargetIsDropped(TestContext context) {
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ORIGIN));
+
+        Colony colony = Colony.create(UUID.randomUUID(), origin);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillageColonyMod.CONSTRUCTIONS.registerPending(new ConstructionService.Pending(
+                UUID.randomUUID(),
+                colony.id(),
+                StructureBlueprintReader.PLAINS_SMALL_HOUSE,
+                origin,
+                ConstructionState.WAITING_RESOURCES));
+
+        ConstructionPlanner.plan(context.getWorld(), colony);
+
+        context.assertTrue(
+                VillageColonyMod.CONSTRUCTIONS.pendingOf(colony.id()).isEmpty(),
+                "a obra antiga continua guardada");
+
+        context.assertTrue(
+                VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
+                        .map(open -> !open.blueprint().id().equals(
+                                StructureBlueprintReader.PLAINS_SMALL_HOUSE))
+                        .orElse(true),
+                "a casa de planície voltou a ser aberta, e ela é impossível para esta colônia");
+
+        owned.cleanUp();
+
+        context.complete();
+    }
 }

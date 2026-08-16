@@ -47,17 +47,6 @@ import java.util.Optional;
 public final class ConstructionPlanner {
 
     /**
-     * O projeto lido do jogo, guardado depois da primeira leitura.
-     *
-     * <p>Ler um template é abrir e decodificar um arquivo, e a casa não
-     * muda entre um ciclo e o outro. Sem esta memória, cada ciclo de cada
-     * colônia pagaria a leitura inteira.
-     *
-     * <p>Estático e sem limpeza: é um objeto imutável de algumas centenas
-     * de blocos, e o mesmo para todo mundo. Trocar de mundo não o
-     * invalida — a casa de planície é a mesma em qualquer save.
-     */
-    /**
      * Como esta fase aparece na linha de {@link IdleLog}.
      *
      * <p>O motivo de não haver obra existe por causa da sessão de
@@ -366,6 +355,32 @@ public final class ConstructionPlanner {
 
                 standing++;
             }
+        }
+
+        if (standing == 0 && !ColonyHut.ID.equals(project.blueprint().id())) {
+            // Obra de uma planta que não é mais o alvo, e sem um bloco de
+            // pé. Nada se perde ao abandoná-la — e mantê-la trava a
+            // colônia para sempre, porque `plan` não abre obra nova
+            // enquanto houver uma aberta.
+            //
+            // Foi o que a sessão das 22:01 de 2026-08-15 mostrou. A Regra
+            // 13 trocou a obra do MVP pela cabana, e a colônia continuou
+            // presa à casa de planície gravada no save: quinze ciclos de
+            // "waiting for minecraft:stripped_oak_log", que ninguém
+            // produz. A cabana nunca chegou a ser planejada.
+            //
+            // Com bloco de pé é o contrário: casa pela metade é do
+            // jogador, e abandoná-la deixaria um esqueleto no mundo com o
+            // lote ocupado. Essa continua de onde parou.
+            VillageColonyMod.LOGGER.info(
+                    "Colony {} drops the untouched {} — the target is now {}",
+                    colony.id(),
+                    project.blueprint().id(),
+                    ColonyHut.ID);
+
+            VillageColonyMod.CONSTRUCTIONS.dropPending(colony.id());
+
+            return;
         }
 
         VillageColonyMod.CONSTRUCTIONS.register(project);

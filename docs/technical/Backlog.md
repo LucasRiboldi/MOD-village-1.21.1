@@ -131,7 +131,7 @@ jogo**, que é coisa diferente. Ver Development-Log, entrada das 12:45.
 |---|---|---|
 | G1 | **A obra nunca foi vista abrindo tarefa em jogo.** `ensureTask` entrou às 10:11 de 08-15 e nenhuma sessão o executou ainda | 🔒 bloqueia o MVP. **Não é regressão** — é código nunca exercitado. Jar novo instalado às 12:45; a próxima sessão é a primeira que o roda |
 | G2 | **O lenhador travado na mesma árvore** | 🟡 fechado dos dois lados em 08-15: o guarda de travamento entrou no jar, e agora ele **esquece a árvore** ao desistir — antes soltava a tarefa e a busca reescolhia a mesma, o que trocava de trabalhador e não de problema. A ligação `giveUp → markUnreachable` não é coberta pela bateria (2.400 ticks contra 25 s — é o E1), e espera confirmação em jogo |
-| G3 | **O fabricante não fabrica** — `0/20 ticks` parado, some do relatório depois das 11:22 | Não investigado. A correção do baú (E16) pode ter removido a causa; verificar antes de investigar |
+| ~~G3~~ | ~~**O fabricante não fabrica**~~ | ✅ **não era defeito.** Na sessão das 22:01 os dois fabricantes produziram 134 e 130 tábuas. Nunca tinha havido tarefa aberta para eles — a correção do baú (E16) e os baús reivindicados destravaram |
 | G4 | **A colônia move o centro recusando encolher** — saiu de âncora de 6 camas para uma de 3 com `view not provably complete`, e deixou a obra 65 blocos atrás | 👤 espera decisão. É comportamento da ADR-003, não defeito declarado |
 | G5 | **`BuilderWork.java` com 509 linhas** — passou do limite de 500 ao receber a instrumentação do G1 | 🔨 extrair os métodos de log para uma classe irmã |
 
