@@ -41,10 +41,15 @@ a madeira vai direto para o baú dele, e replanta a muda antes de sair.
 jogo, e devolve. Ele para quando metade do estoque da colônia é tábua,
 para que o lenhador sempre tenha onde pôr mais.
 
-🏠 **O construtor** lê uma casa de vila de verdade dos arquivos do jogo e
-a levanta, um bloco por segundo, na beira de uma rua que já existe. Cada
-peça sai do baú da colônia antes de entrar no mundo — **a colônia nunca
-inventa material**.
+🏠 **O construtor** levanta uma cabana de tábua, um bloco por segundo, na
+beira de uma rua que já existe. Cada peça sai do baú da colônia antes de
+entrar no mundo — **a colônia nunca inventa material**.
+
+A cabana é de propósito modesta: 71 tábuas e uma porta, tudo o que sai de
+tronco. A casa de vila do próprio jogo pede 43 pedregulhos, 3 vidros e
+uma cama de lã, e nenhum aldeão deste mod minera, funde ou tosquia — a
+obra parava no primeiro pedregulho e ficava parada para sempre. A casa
+bonita volta a ser o alvo no dia em que essas cadeias existirem.
 
 🌾 **O fazendeiro** tem nome, enxada e baú — e nenhum trabalho ainda.
 
@@ -57,8 +62,9 @@ você saber de relance quem é quem.
 
 **Vanilla primeiro.** Os aldeões são aldeões comuns. Os baús são baús
 comuns. As receitas são as do jogo, perguntadas em tempo de execução —
-não copiadas para dentro do mod. A casa é literalmente o mesmo arquivo
-que o gerador de mundo usa.
+não copiadas para dentro do mod. O leitor de estruturas do jogo continua
+no código e é o que carrega obra antiga de save; a obra que a colônia
+abre hoje é a cabana do mod, pelo motivo explicado acima.
 
 **Nada é inventado.** Sem inventário virtual, sem contador abstrato de
 recurso, sem economia paralela. Se a colônia tem 40 tábuas, há 40 tábuas
@@ -126,12 +132,13 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Contagem de recursos, déficit, atribuição de tarefas | ✅ verificado em jogo |
 | Colheita de madeira e replantio | ✅ verificado em jogo |
 | Fabricação — tronco vira tábua | ✅ verificado em jogo |
-| Construção — casas e escolha de lote | 🧪 coberto por teste, nunca visto em jogo |
+| Construção — o construtor põe bloco no mundo | 🟡 **visto em jogo**, 2 blocos; nenhuma casa terminada ainda |
+| Baú criado ao lado da cama quando não há nenhum | 🧪 coberto por teste, nunca visto em jogo |
 | Registro de construções e proteção | 🧪 coberto por teste, nunca visto em jogo |
 | Agricultura, mineração, ferraria, defesa | ⬜ não começado |
 
 ```text
-375 testes unitários  ·  85 testes de jogo  ·  ./gradlew build
+383 testes unitários  ·  99 testes de jogo  ·  ./gradlew build
 ```
 
 ---
@@ -147,14 +154,14 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 ✅  organizar trabalhadores   verificado em jogo
 ✅  coletar recursos          verificado em jogo
 ✅  produzir materiais        verificado em jogo
-🧪  construir expansão        coberto por teste, nunca visto em jogo
+🟡  construir expansão        o construtor põe bloco; casa nenhuma terminada
 ```
 
 ### O que falta, na ordem
 
 | | Etapa | Estado |
 |---|---|---|
-| **1** | **Ver a casa subir.** A obra bloco a bloco, a casa virando infraestrutura da colônia, e o lote seguinte não caindo em cima dela. A sessão de 2026-08-15 achou por que ela nunca subia — ninguém criava a tarefa de obra —, e isso está corrigido; falta ver | 🔒 exige sessão de jogo |
+| **1** | **Ver a casa inteira subir.** Os dois primeiros blocos foram vistos em 2026-08-15. Falta a cabana terminada, virando infraestrutura da colônia, e o lote seguinte não caindo em cima dela. Quatro travas foram achadas e corrigidas naquele dia — tarefa de obra que ninguém criava, `WAITING_RESOURCES` sem volta, obra impossível por falta de pedregulho, e obra antiga presa no save | 🔒 exige sessão de jogo |
 | ~~**2**~~ | ~~**O rodízio de profissão.**~~ A colônia só dispensa quem não tem baú quando existe baú livre de verdade para o substituto — contar candidatos não era contar baús | ✅ **feito em 2026-08-15** |
 | ~~**3**~~ | ~~**O motivo de não trabalhar como valor.**~~ As três profissões dizem por que não trabalharam, no mesmo vocabulário, e o log registra a mudança em vez do estado | ✅ **feito em 2026-08-15** |
 | ~~**4**~~ | ~~**Blocos de duas partes.**~~ A porta é uma porta e a cama é uma cama. Sobra a **orientação**: escada e porta saem no padrão | ✅ **feito em 2026-08-15** |
@@ -163,17 +170,75 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | **7** | **A proteção estrutural, e o lado do cliente.** Perguntar ao jogo quais blocos são de vila gerada; e nome, rachadura e braço na tela | 🔨 pronto para fazer |
 | **8** | **O trabalhador pedir o que lhe falta**, em vez de travar | ⏸️ só depois do MVP fechar |
 
-**Limites de hoje.** A colônia só produz tábua — uma casa de vila também
-quer pedra, vidro e cama, e essas precisam já estar nos baús. As casas
-sobem ao lado de ruas que já existem; a colônia ainda não pavimenta.
-Porta e cama já saem inteiras; o que ainda sai no padrão é a
-orientação — escada apontando para o mesmo lado, cabeceira de cama
-onde o jogo a puser.
+**Limites de hoje.** A colônia só produz tábua. A obra dela é por isso
+uma cabana de tábua, e não a casa de vila do jogo — essa pede pedra,
+vidro e lã, e a colônia não minera, não funde e não tosquia. O que ela
+não produz, **você guarda no baú**: o construtor tira de qualquer baú da
+colônia sem perguntar de onde veio, e o log diz o que está faltando.
 
-A lista completa — **31 itens abertos em 8 grupos**, com o que já foi
-feito — está em [`docs/technical/Backlog.md`](docs/technical/Backlog.md).
+As casas sobem ao lado de ruas que já existem; a colônia ainda não
+pavimenta. Porta e cama já saem inteiras; o que ainda sai no padrão é a
+orientação — escada apontando para o mesmo lado, cabeceira de cama onde
+o jogo a puser.
+
+As pendências por prioridade estão em [`TODO.md`](TODO.md). A lista
+completa — **34 itens abertos em 9 grupos**, com a razão de cada um —
+está em [`docs/technical/Backlog.md`](docs/technical/Backlog.md).
 O estado sempre atual está em
 [`docs/technical/Project-State.md`](docs/technical/Project-State.md).
+
+---
+
+## Último ciclo de desenvolvimento
+
+**2026-08-15** — cinco sessões em jogo, cerca de duas horas, e as travas
+que elas expuseram. O ciclo começou com a casa parada em `151 blocks
+left` e terminou com o construtor pondo bloco no mundo.
+
+**Implementado**
+
+- **Regra 7** — o lenhador replanta em toda saída do trabalho, e não só
+  ao ir buscar a próxima árvore. *Visto em jogo: 15 mudas em 15 árvores.*
+- **Regra 8** — um baú nasce ao lado da cama quando não há nenhum ao
+  alcance, com cinco recusas para não estragar a casa de ninguém.
+- **Regra 9** — árvore que o lenhador não alcança sai da escolha por
+  6.000 ticks, e quem a marca é o guarda de travamento.
+- **Regra 12** — o centro da colônia deixa de ser a média das camas — um
+  ponto que podia cair no ar — e passa a ser a cama mais próxima dela.
+- **Regra 13** — a obra do MVP passa a ser uma cabana de 71 tábuas e uma
+  porta, que a colônia produz inteira.
+- O relatório do construtor diz o estado da tarefa de obra e **de que
+  material a obra está à espera**.
+- Um teste que lê qualquer planta e escreve a lista de compras no log.
+
+**Corrigido**
+
+- Tarefa que exige baú deixa de ir para quem não tem baú — antes ela era
+  entregue e devolvida a cada ciclo, sem nada ser produzido.
+- `WAITING_RESOURCES` deixa de ser estado terminal. A obra que uma vez
+  ficasse sem material não era tentada nunca mais, ainda que o baú
+  enchesse no minuto seguinte.
+- Obra de planta antiga e sem um bloco de pé sai da frente, em vez de
+  prender a colônia numa meta impossível gravada no save.
+- A contagem de tarefas abertas volta ao log — ela calava exatamente
+  quando a distribuição parava, que é quando fazia falta.
+- O relógio de travamento do lenhador deixa de ser invisível.
+
+**Melhorado**
+
+- O guarda de travamento ganhou teste depois de existir sem nenhum desde
+  a TASK-050 — o limite passou a ser ajustável para a bateria alcançá-lo.
+- 375 → 383 testes unitários, 85 → 99 testes de jogo.
+
+**Pendente**
+
+- **A cabana inteira nunca foi vista subindo.** Dois blocos foram postos;
+  nenhuma casa terminou.
+- **Regra 10** — o construtor fabricando o que a obra pede. Decidida,
+  não começada; é a maior das que restam.
+- Cinco correções deste ciclo **têm teste mas nunca rodaram em jogo**: o
+  baú ao lado da cama, o despertar de `WAITING_RESOURCES`, a árvore fora
+  de alcance, a cabana e o descarte da obra antiga.
 
 ---
 

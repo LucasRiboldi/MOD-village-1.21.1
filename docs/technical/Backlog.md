@@ -116,24 +116,20 @@ sessão de jogo da tarde do mesmo dia mostrou que em jogo ele nunca
 passou: 88 ciclos com `0 working` e `151 blocks left`, sem uma linha de
 `opened a build task`. Ver o grupo G.
 
-## 2.6 Grupo G — o que a sessão de 08-15 (tarde) deixou aberto
+## 2.6 Grupo S — o que as sessões de jogo de 08-15 deixaram
 
-44 minutos em jogo, sem exceção nem crash. 61 toras, 0 tábuas, 0 blocos.
-Detalhe e evidência no Development-Log, entrada de 2026-08-15 tarde.
-
-**Corrigido às 12:45:** G1 e G2 foram escritos a partir de duas sessões
-que rodaram o jar de 01:09 — anterior ao `ensureTask` e ao guarda de
-travamento. Verificado por dentro do jar. Nenhum dos dois é o defeito
-que a linha original descrevia; os dois continuam **não verificados em
-jogo**, que é coisa diferente. Ver Development-Log, entrada das 12:45.
+Cinco sessões em jogo naquele dia, somando cerca de duas horas. Detalhe e
+evidência no Development-Log. **Renomeado de "G" para "S" em 08-15:** já
+existia um grupo G neste documento, vindo das ressalvas do
+`Construction-System`, e os dois se sobrepunham.
 
 | # | O que | Estado |
 |---|---|---|
-| G1 | **A obra nunca foi vista abrindo tarefa em jogo.** `ensureTask` entrou às 10:11 de 08-15 e nenhuma sessão o executou ainda | 🔒 bloqueia o MVP. **Não é regressão** — é código nunca exercitado. Jar novo instalado às 12:45; a próxima sessão é a primeira que o roda |
-| G2 | **O lenhador travado na mesma árvore** | 🟡 fechado dos dois lados em 08-15: o guarda de travamento entrou no jar, e agora ele **esquece a árvore** ao desistir — antes soltava a tarefa e a busca reescolhia a mesma, o que trocava de trabalhador e não de problema. A ligação `giveUp → markUnreachable` não é coberta pela bateria (2.400 ticks contra 25 s — é o E1), e espera confirmação em jogo |
-| ~~G3~~ | ~~**O fabricante não fabrica**~~ | ✅ **não era defeito.** Na sessão das 22:01 os dois fabricantes produziram 134 e 130 tábuas. Nunca tinha havido tarefa aberta para eles — a correção do baú (E16) e os baús reivindicados destravaram |
-| G4 | **A colônia move o centro recusando encolher** — saiu de âncora de 6 camas para uma de 3 com `view not provably complete`, e deixou a obra 65 blocos atrás | 👤 espera decisão. É comportamento da ADR-003, não defeito declarado |
-| G5 | **`BuilderWork.java` com 509 linhas** — passou do limite de 500 ao receber a instrumentação do G1 | 🔨 extrair os métodos de log para uma classe irmã |
+| ~~S1~~ | ~~**A obra nunca foi vista abrindo tarefa em jogo**~~ | ✅ **visto em 08-15, 13:12.** `opened a build task`, `1 working ... RESERVED by a1af0a01`, e a obra foi de 151 para 149 blocos — os dois primeiros blocos que este mod pôs no mundo |
+| S2 | **O lenhador travado na mesma árvore** | 🟡 fechado dos dois lados no código: o guarda de travamento entrou no jar, e ao desistir ele **esquece a árvore**. Antes soltava a tarefa e a busca reescolhia a mesma. **Não reapareceu em jogo desde então** — mas também não foi visto disparando, porque nada travou |
+| ~~S3~~ | ~~**O fabricante não fabrica**~~ | ✅ **não era defeito.** Na sessão das 22:01 os dois produziram 134 e 130 tábuas. Faltava tarefa aberta, e a correção do baú (E16) destravou |
+| S4 | **A colônia move o centro recusando encolher** | 👤 espera decisão. A Regra 12 tirou do caminho a parte em que o centro novo era um ponto no ar; o desacoplamento entre contagem de camas e posição continua. Não se repetiu depois de 08-15 11:22 |
+| S5 | **Arquivos acima de 500 linhas** | 🔨 `LumberjackWork` 1149, `VillageDetectionHandler` 901, `TreeHarvester` 651, `BuilderWork` 599, `ManufacturerWork` 510. Os três primeiros já estavam grandes; o ciclo de 08-15 piorou `LumberjackWork` e `BuilderWork` ao acrescentar instrumentação |
 
 ## 2.7 Grupo H — as regras novas de 08-15
 

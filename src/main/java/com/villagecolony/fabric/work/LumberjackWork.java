@@ -998,17 +998,38 @@ public final class LumberjackWork {
      * inteiro. Soltar a tarefa sem esquecer a árvore é trocar de
      * trabalhador, não de problema.
      *
-     * <p>Público porque a bateria precisa chegar aqui. Chamar {@link #giveUp} num teste custaria os 2.400 ticks de
+     * <p>Público porque a bateria precisa chegar aqui. Chamar
+     * {@link #giveUp} num teste custaria os 2.400 ticks de
      * {@link #STALL_LIMIT} — dois minutos de relógio contra uma bateria
      * que roda em vinte e cinco segundos, que é o E1 do grupo E.
      */
     public static void markUnreachable(ServerWorld world, BlockPos base) {
+        forgetStaleMarks(world);
+
         UNREACHABLE.put(base, world.getTime());
 
         VillageColonyMod.LOGGER.info(
                 "Tree at {} is out of reach — skipping it for {} ticks",
                 base.toShortString(),
                 UNREACHABLE_MEMORY);
+    }
+
+    /**
+     * Tira do registro as marcas cujo prazo já passou.
+     *
+     * <p>{@link #isOutOfReach} também as tira, mas só quando alguém
+     * pergunta por aquela árvore — e a busca só pergunta pelo que ela
+     * reencontra. Árvore marcada num canto que a colônia nunca mais
+     * visita ficaria no mapa enquanto o servidor vivesse.
+     *
+     * <p>É o teto que {@link #REJECTED} tem em {@link #MAX_REJECTED} e
+     * que este mapa não tinha. Aqui sai mais barato: a marca já carrega
+     * o instante em que nasceu, então dá para varrer por prazo em vez de
+     * esquecer tudo ao encher.
+     */
+    private static void forgetStaleMarks(ServerWorld world) {
+        UNREACHABLE.values().removeIf(
+                since -> world.getTime() - since >= UNREACHABLE_MEMORY);
     }
 
     /**
