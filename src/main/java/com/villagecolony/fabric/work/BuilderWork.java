@@ -16,7 +16,10 @@ import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
+import com.villagecolony.fabric.integration.ColonyChests;
+import com.villagecolony.fabric.integration.CraftingLookup;
 import net.minecraft.block.Block;
 import net.minecraft.block.enums.BedPart;
 import net.minecraft.block.enums.DoubleBlockHalf;
@@ -29,6 +32,7 @@ import net.minecraft.util.math.BlockPos;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -447,19 +451,97 @@ public final class BuilderWork {
     private static boolean takeMaterial(
             ServerWorld world, ConstructionProject project, Item material) {
 
-        for (Worker worker : VillageColonyMod.WORKERS.ofColony(project.colonyId())) {
-            Optional<WorkerStorage> storage = VillageColonyMod.STORAGES.of(worker.villagerId());
+        List<ColonyPos> chests = ColonyChests.nearestFirst(project.colonyId(), project.origin());
 
-            if (storage.isEmpty()) {
-                continue;
-            }
+        if (ColonyChests.withdraw(world, chests, material, 1) > 0) {
+            return true;
+        }
 
-            if (ChestWithdrawer.withdraw(world, storage.get().chestPosition(), material, 1) > 0) {
-                return true;
+        // Não havia pronto. A Regra 10: se a colônia tem do que se faz,
+        // o construtor faz. É o que faltava na sessão de 2026-08-18 —
+        // 154 tábuas guardadas, uma porta faltando, e nada ligando as
+        // duas coisas.
+        if (!craftMissing(world, project, chests, material)) {
+            return false;
+        }
+
+        return ColonyChests.withdraw(world, chests, material, 1) > 0;
+    }
+
+    /**
+     * Fabrica o que a obra pede, com o que os baús da colônia têm.
+     *
+     * <p>A Regra 10, decidida em 2026-08-15 e elaborada em 2026-08-18: o
+     * construtor é fabricante do bloco estrutural que falta na hora.
+     * Junta o material dos baús, do mais perto da obra para o mais
+     * longe, e <b>só fabrica quando tem a quantidade inteira</b>.
+     *
+     * <p>A ordem das três conferências não é arbitrária, e cada uma
+     * evita destruir material do jogador:
+     *
+     * <ol>
+     *   <li>a receita existe, e todos os ingredientes dela estão em
+     *       baú — senão não há o que fabricar;
+     *   <li>há quantidade inteira de cada ingrediente — fabricar pela
+     *       metade tranca material num item que não serve;
+     *   <li>o resultado cabe em algum baú — tirar o ingrediente e
+     *       descobrir depois que a peça não cabe é o defeito que o E3
+     *       registra do outro lado.
+     * </ol>
+     *
+     * <p>Só então se tira. Um degrau de receita por vez: falta escada e
+     * sobra tábua, ele faz; falta escada e falta tábua, ele declara a
+     * falta e a colônia resolve no ciclo seguinte.
+     *
+     * @return true quando fabricou, e o material agora está no baú
+     */
+    private static boolean craftMissing(
+            ServerWorld world,
+            ConstructionProject project,
+            List<ColonyPos> chests,
+            Item material) {
+
+        Optional<CraftingLookup.Bill> found = CraftingLookup.billFor(
+                world, material, item -> ColonyChests.countIn(world, chests, item) > 0);
+
+        if (found.isEmpty()) {
+            return false;
+        }
+
+        CraftingLookup.Bill bill = found.get();
+
+        for (Map.Entry<Item, Integer> part : bill.ingredients().entrySet()) {
+            if (ColonyChests.countIn(world, chests, part.getKey()) < part.getValue()) {
+                return false;
             }
         }
 
-        return false;
+        Optional<ColonyPos> room = ColonyChests.firstWithRoomFor(
+                world, chests, bill.result(), bill.resultCount());
+
+        if (room.isEmpty()) {
+            VillageColonyMod.LOGGER.info(
+                    "Project {} could make {} and has nowhere to put it — every chest is full",
+                    project.id(),
+                    material);
+
+            return false;
+        }
+
+        for (Map.Entry<Item, Integer> part : bill.ingredients().entrySet()) {
+            ColonyChests.withdraw(world, chests, part.getKey(), part.getValue());
+        }
+
+        ChestDepositor.deposit(world, room.get(), bill.result(), bill.resultCount());
+
+        VillageColonyMod.LOGGER.info(
+                "Project {} made {} {} out of {} — the colony had what it takes",
+                project.id(),
+                bill.resultCount(),
+                material,
+                bill.ingredients());
+
+        return true;
     }
 
     /**
@@ -492,19 +574,43 @@ public final class BuilderWork {
 
         Item item = material.get().asItem();
 
-        for (Worker worker : VillageColonyMod.WORKERS.ofColony(project.colonyId())) {
-            Optional<WorkerStorage> storage = VillageColonyMod.STORAGES.of(worker.villagerId());
+        List<ColonyPos> chests = ColonyChests.nearestFirst(project.colonyId(), project.origin());
 
-            if (storage.isEmpty()) {
-                continue;
-            }
+        if (ColonyChests.countIn(world, chests, item) > 0) {
+            return true;
+        }
 
-            if (ChestWithdrawer.countIn(world, storage.get().chestPosition(), item) > 0) {
-                return true;
+        // Ter do que se faz conta como ter — a Regra 10. Sem isto a obra
+        // que uma vez dormisse por falta de porta continuaria dormindo
+        // com o baú cheio de tábua, porque quem a acorda pergunta aqui.
+        return canBeMade(world, chests, item);
+    }
+
+    /**
+     * A colônia consegue fabricar este item com o que está nos baús?
+     *
+     * <p>Pergunta sem tirar nada, e é a mesma conta que
+     * {@link #craftMissing} faz antes de gastar: receita conhecida, e
+     * quantidade inteira de cada ingrediente. As duas precisam
+     * concordar — uma que dissesse "dá" e outra que não fabricasse poria
+     * a obra a acordar e voltar a dormir todo ciclo, que é o defeito que
+     * {@code wakeIfSupplied} existe para não ter.
+     */
+    private static boolean canBeMade(ServerWorld world, List<ColonyPos> chests, Item material) {
+        Optional<CraftingLookup.Bill> bill = CraftingLookup.billFor(
+                world, material, item -> ColonyChests.countIn(world, chests, item) > 0);
+
+        if (bill.isEmpty()) {
+            return false;
+        }
+
+        for (Map.Entry<Item, Integer> part : bill.get().ingredients().entrySet()) {
+            if (ColonyChests.countIn(world, chests, part.getKey()) < part.getValue()) {
+                return false;
             }
         }
 
-        return false;
+        return true;
     }
 
     /**

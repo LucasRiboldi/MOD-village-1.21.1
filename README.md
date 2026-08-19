@@ -78,6 +78,12 @@ gerada são perguntadas diretamente ao jogo e deixadas em paz.
 **Ele para sozinho.** A colheita acaba quando os baús enchem e recomeça
 quando você tira alguma coisa. Nada cresce sem limite.
 
+**A colônia fabrica o que a obra pede.** Se falta a porta e sobra tábua,
+o construtor faz a porta: ele junta o material de todos os baús da vila,
+do mais perto da obra para o mais longe, somando entre eles até dar. Só
+fabrica com a quantidade inteira em mãos, e só quando o resultado tem
+onde ser guardado.
+
 **O dia inteiro é dia de trabalho.** Enquanto houver sol, os
 trabalhadores estão buscando recurso ou trabalhando. A última hora de
 luz é deles para voltar para casa, e a noite é para dormir — trabalhador
@@ -117,10 +123,9 @@ que tem o mod **não** precisa instalá-lo no cliente.
 
 **Onde olhar**
 
-A colônia conta o que está fazendo no log do servidor. Os aldeões só
-trabalham no horário de trabalho do Vanilla — use `/time set noon` se
-não quiser esperar, e note que `/time set day` é **antes** de a janela
-de trabalho abrir.
+A colônia conta o que está fazendo no log do servidor. Os trabalhadores
+trabalham o dia claro inteiro e param na última hora de luz para voltar
+para casa — se você chegar de noite, use `/time set day` e eles começam.
 
 ---
 
@@ -143,7 +148,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Agricultura, mineração, ferraria, defesa | ⬜ não começado |
 
 ```text
-383 testes unitários  ·  99 testes de jogo  ·  ./gradlew build
+387 testes unitários  ·  104 testes de jogo  ·  ./gradlew build
 ```
 
 ---

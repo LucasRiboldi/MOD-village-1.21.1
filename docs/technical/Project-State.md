@@ -2888,6 +2888,63 @@ mas não faz o vidro.
 
 ---
 
+**A metade do construtor foi feita em 2026-08-19.** É a que destrava a
+cabana, e a sessão de 2026-08-18 mostrou por quê: o relatório repetia
+`waiting for minecraft:oak_door` com **154 tábuas guardadas**. A colônia
+tinha tudo de que precisava e parava a um bloco do fim.
+
+```text
+a pergunta que      `CraftingLookup.billFor` procura a receita pelo
+faltava             RESULTADO, e não pelo ingrediente. `resultOfOne`
+                    respondia "o que sai deste tronco?"; ninguém
+                    sabia perguntar "o que faz uma porta?"
+
+o ingrediente é     a receita da porta aceita tábua de qualquer
+escolhido pelo      madeira. A casa da grade vira um item concreto
+que existe          consultando os baús — escolher a madeira que a
+                    colônia não tem produziria uma lista de compras
+                    impossível
+
+os baús, enfim      `ColonyChests.nearestFirst` ordena por distância
+por distância       até a obra. A ordem antiga era a de registro dos
+                    trabalhadores, que não é distância nenhuma
+
+e acumulando        `ColonyChests.withdraw` soma entre baús. Três
+                    tábuas num baú e três em outro eram seis tábuas
+                    que a colônia tinha e não conseguia usar
+
+três conferências   receita conhecida com todos os ingredientes em
+antes de gastar     baú; quantidade inteira de cada um; e lugar onde
+                    o resultado caiba. Cada uma evita destruir
+                    material do jogador — fabricar pela metade tranca
+                    material num item que não serve, e fabricar sem
+                    onde guardar gasta o ingrediente à toa
+
+ter do que se faz   `hasMaterialForNextBlock` passou a contar a
+conta como ter      fabricação. Sem isso a obra que dormisse por
+                    falta de porta continuaria dormindo com o baú
+                    cheio de tábua, porque quem a acorda pergunta ali
+```
+
+```text
+os testes que      theBuilderMakesTheDoorTheWorkIsWaitingFor — baú com
+seguram            seis tábuas, projeto de uma porta: a porta entra no
+                   mundo, a tábua sai do baú, e as duas portas que
+                   sobram da receita ficam guardadas
+
+                   theMaterialIsGatheredFromMoreThanOneChest — três
+                   tábuas em cada um de dois baús, e a porta sobe
+```
+
+**O que continua por fazer desta regra:** a metade do fabricante — porta,
+janela, cama e baú por estoque, independentemente de haver obra. Ela
+precisa de algo que a tarefa hoje não sabe dizer: *qual item*. A tarefa
+carrega um `ResourceType`, que é a lista fechada do que a colônia conta,
+e porta não está nela — nem deve estar, porque a lista sai da planta. É
+o `ItemRequest` do backlog, e ele toca `Task`, que é o centro.
+
+---
+
 ## Regra 15 — a estrada cresce com a vila
 
 ```text

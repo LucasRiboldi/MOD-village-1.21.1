@@ -29,6 +29,7 @@ import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.brain.Schedule;
 import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
@@ -198,6 +199,152 @@ public class BuilderGameTest implements FabricGameTest {
         });
     }
 
+
+    /**
+     * A Regra 10: o construtor fabrica o que falta para a obra.
+     *
+     * <p>É o que travou a sessão de 2026-08-18. O relatório repetia
+     * {@code WAITING_RESOURCES ... waiting for minecraft:oak_door} com
+     * <b>154 tábuas guardadas</b> na colônia: ninguém fazia a porta, e a
+     * cabana parava a um bloco do fim. A colônia tinha tudo de que
+     * precisava e mesmo assim não terminava a casa.
+     *
+     * <p>O baú aqui tem só tábua — seis, que é o que a receita do jogo
+     * pede — e o projeto pede uma porta. As três afirmações são a regra
+     * inteira: a porta entrou no mundo, a tábua saiu do baú, e o que
+     * sobrou da fabricação ficou guardado em vez de sumir.
+     *
+     * <p>Rodado contra a regra desligada: a obra vai para
+     * {@code WAITING_RESOURCES} e nenhuma porta é posta.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_craft",
+            tickLimit = 300)
+    public void theBuilderMakesTheDoorTheWorkIsWaitingFor(TestContext context) {
+        Fixture fixture = setUpDoor(context, Items.OAK_PLANKS, 6);
+
+        context.runAtTick(90, () -> {
+            context.assertTrue(
+                    stateAt(context, SITE).isOf(Blocks.OAK_DOOR),
+                    "a Regra 10 pede que o construtor faça a porta que falta,"
+                            + " e no lugar dela veio "
+                            + stateAt(context, SITE).getBlock());
+
+            context.assertTrue(
+                    planksIn(context, fixture.chest) == 0,
+                    "a porta tinha de custar as seis tábuas, e sobraram "
+                            + planksIn(context, fixture.chest));
+
+            // A receita do jogo dá três portas por seis tábuas. Uma foi
+            // para a parede; as outras duas são da colônia, e sumir com
+            // elas seria destruir material do jogador.
+            context.assertTrue(
+                    doorsIn(context, fixture.chest) == 2,
+                    "o que sobrou da fabricação tinha de ficar no baú, e ficaram "
+                            + doorsIn(context, fixture.chest));
+
+            fixture.owned.cleanUp();
+
+            context.complete();
+        });
+    }
+
+    /**
+     * O material vem de mais de um baú, somando até dar.
+     *
+     * <p>A outra metade da decisão de 2026-08-15: {@code takeMaterial}
+     * percorria todos os baús da colônia, mas desistia no primeiro que
+     * não tivesse tudo. Três tábuas num baú e três em outro eram seis
+     * tábuas que a colônia tinha e não conseguia usar.
+     *
+     * <p>Rodado contra a regra desligada: nenhum baú sozinho tem as seis,
+     * a fabricação não acontece e a porta não sobe.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_craft",
+            tickLimit = 300)
+    public void theMaterialIsGatheredFromMoreThanOneChest(TestContext context) {
+        Fixture fixture = setUpDoorInTwoChests(context);
+
+        context.runAtTick(90, () -> {
+            context.assertTrue(
+                    stateAt(context, SITE).isOf(Blocks.OAK_DOOR),
+                    "três tábuas num baú e três em outro são seis tábuas, e a"
+                            + " porta não subiu");
+
+            fixture.owned.cleanUp();
+
+            context.complete();
+        });
+    }
+
+    /**
+     * Duas colônias de um baú cada, com metade da receita em cada um.
+     *
+     * <p>Dois trabalhadores porque é assim que a colônia tem dois baús:
+     * o registro de baú é por trabalhador.
+     */
+    private static Fixture setUpDoorInTwoChests(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        BlockPos second = new BlockPos(2, 2, 4);
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        context.setBlockState(second, Blocks.CHEST.getDefaultState());
+        world.setTimeOfDay(Schedule.WORK_TIME);
+
+        context.setBlockState(SITE.down(), Blocks.STONE.getDefaultState());
+
+        ColonyPos near = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+        ColonyPos far = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(second));
+
+        ChestDepositor.deposit(world, near, Items.OAK_PLANKS, 3);
+        ChestDepositor.deposit(world, far, Items.OAK_PLANKS, 3);
+
+        VillagerEntity builder = context.spawnEntity(EntityType.VILLAGER, STAND);
+        builder.setBreedingAge(0);
+
+        VillagerEntity other = context.spawnEntity(EntityType.VILLAGER, STAND);
+        other.setBreedingAge(0);
+
+        Colony colony = Colony.create(UUID.randomUUID(), near);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        Worker worker = VillageColonyMod.WORKERS.register(builder.getUuid(), colony.id());
+        worker.assign(ProfessionType.BUILDER);
+
+        VillageColonyMod.WORKERS.register(other.getUuid(), colony.id())
+                .assign(ProfessionType.LUMBERJACK);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(builder.getUuid(), near));
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(other.getUuid(), far));
+
+        ConstructionProject project = ConstructionProject.plan(
+                colony.id(),
+                door(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(SITE)));
+
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(), TaskType.BUILD, TaskPriority.PRODUCTION, ResourceType.OAK_PLANKS, 1);
+
+        task.reserveFor(builder.getUuid());
+
+        BuilderWork.run(world, colony);
+
+        return new Fixture(
+                colony,
+                project,
+                near,
+                ColonyFixture.create()
+                        .owning(colony)
+                        .owning(builder.getUuid())
+                        .owning(other.getUuid()));
+    }
+
     /**
      * Colônia, construtor com duas portas no baú, e um projeto de uma
      * porta só.
@@ -206,6 +353,16 @@ public class BuilderGameTest implements FabricGameTest {
      * conta seja "custou uma" e não "acabou o material".
      */
     private static Fixture setUpDoor(TestContext context) {
+        return setUpDoor(context, Items.OAK_DOOR, 2);
+    }
+
+    /**
+     * O mesmo cenário da porta, com o que o baú recebe por fora.
+     *
+     * <p>Existe por causa da Regra 10: o baú com tábua em vez de porta
+     * é o caso que a sessão de 2026-08-18 mostrou travado.
+     */
+    private static Fixture setUpDoor(TestContext context, Item stock, int amount) {
         ServerWorld world = context.getWorld();
 
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
@@ -215,7 +372,7 @@ public class BuilderGameTest implements FabricGameTest {
 
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
 
-        ChestDepositor.deposit(world, chest, Items.OAK_DOOR, 2);
+        ChestDepositor.deposit(world, chest, stock, amount);
 
         VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
         villager.setBreedingAge(0);

@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-08-18
+**Atualizado:** 2026-08-19
 
 Lista curta e priorizada. A lista completa, com a razão de cada item e a
 seção de origem, está em
@@ -14,11 +14,6 @@ discordarem, vale o Backlog.
 
 Bloqueia o sexto e último passo do MVP: ver uma casa inteira subir.
 
-- **Regra 10 — ninguém fabrica a porta.** Na sessão de 2026-08-18 o
-  construtor ficou em `waiting for minecraft:oak_door` com 154 tábuas
-  guardadas, e o fabricante sem tarefa: a meta de tábua estava cumprida,
-  e nada traduz "a obra precisa de uma porta" em pedido. É o que trava a
-  cabana hoje, e é a maior das pendentes.
 - **Ver a cabana inteira subir em jogo.** As Regras 14 (alcance) e 18
   (expediente) têm teste e **não rodaram em jogo** — é a próxima sessão.
 - **Verificar em jogo as cinco correções que só têm teste:** o baú
@@ -33,11 +28,13 @@ Bloqueia o sexto e último passo do MVP: ver uma casa inteira subir.
   4 execuções da bateria, e é anterior ao ciclo de 08-19. Enquanto ele
   oscilar, a bateria não prova que nada quebrou. A pista é estado
   estático compartilhado entre testes concorrentes.
-- **Regra 10 — quem fabrica o quê.** Elaborada em 2026-08-18. O
-  fabricante passa a produzir porta, janela, cama e baú por estoque; o
-  construtor fabrica o bloco estrutural que falta na hora, juntando
-  material de todos os baús do mais próximo ao mais longe, acumulando
-  entre baús. É a maior das regras pendentes.
+- **Regra 10, metade do fabricante.** A do construtor foi feita em
+  2026-08-19 — ele fabrica o que falta, juntando material dos baús do
+  mais próximo ao mais longe e acumulando entre eles. Falta o fabricante
+  produzir porta, janela, cama e baú **por estoque**, sem depender de
+  haver obra. Depende do `ItemRequest`: a tarefa carrega um
+  `ResourceType`, e porta não está nessa lista — nem deve estar, porque
+  a lista sai da planta.
 - **Regra 15 — a estrada cresce com a vila.** O construtor estende a
   rua a partir da ponta mais distante do centro, um trecho por casa.
   Sem isso a vila para quando acaba a beira de rua que o mundo deu.
