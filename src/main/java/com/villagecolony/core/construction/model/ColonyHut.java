@@ -2,6 +2,7 @@ package com.villagecolony.core.construction.model;
 
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.core.type.Side;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,30 +56,65 @@ public final class ColonyHut {
 
     public static final ResourceId ID = new ResourceId("villagecolony", "hut");
 
-    private static final ResourceId PLANKS = new ResourceId(ResourceId.VANILLA, "oak_planks");
+    /** A madeira das vilas de planície, e o padrão de quem não escolhe. */
+    public static final ResourceId OAK_PLANKS =
+            new ResourceId(ResourceId.VANILLA, "oak_planks");
 
-    private static final ResourceId DOOR = new ResourceId(ResourceId.VANILLA, "oak_door");
+    /** No meio da parede, seja qual for a parede. */
+    private static final int DOOR_AT = SIDE / 2;
 
-    /** Onde fica a porta, no meio da parede do norte. */
-    private static final int DOOR_X = SIDE / 2;
-
+    /** O que a última montagem produziu, para não remontar por consulta. */
     private static Blueprint plan;
+
+    private static ResourceId planWood;
+
+    private static Side planSide;
 
     private ColonyHut() {
     }
 
     /**
-     * A planta, montada uma vez.
+     * A planta desta colônia: a madeira dela, e o lado em que a rua está.
      *
-     * <p>Imutável e igual para todo mundo, como a casa lida do jogo —
-     * guardar poupa remontar a lista a cada consulta.
+     * <p>Dois parâmetros que antes eram constantes, e cada um é uma
+     * regra:
+     *
+     * <ul>
+     *   <li><b>a madeira</b> é a Regra 20 — cada vila constrói no estilo
+     *       do seu bioma, e o estilo que a colônia sabe produzir é a
+     *       espécie da madeira;
+     *   <li><b>o lado</b> é a Regra 17 — a casa se abre para a rua. A
+     *       parede da porta deixa de ser sempre o norte e passa a ser a
+     *       que encosta no caminho.
+     * </ul>
+     *
+     * <p>Guarda a última montagem porque o ciclo pergunta a planta a
+     * cada passagem e a colônia não muda de madeira nem de rua entre uma
+     * e outra. Montagem nova só quando a pergunta muda.
+     *
+     * @param wood a tábua desta colônia. A porta sai da mesma espécie
+     * @param doorSide para que lado fica a rua, visto de dentro do lote
      */
-    public static Blueprint blueprint() {
-        if (plan == null) {
-            plan = Blueprint.of(ID, blocks());
+    public static Blueprint blueprint(ResourceId wood, Side doorSide) {
+        if (plan == null || !wood.equals(planWood) || doorSide != planSide) {
+            plan = Blueprint.of(ID, blocks(wood, doorOf(wood), doorSide));
+            planWood = wood;
+            planSide = doorSide;
         }
 
         return plan;
+    }
+
+    /**
+     * A porta da mesma espécie da tábua.
+     *
+     * <p>{@code spruce_planks} vira {@code spruce_door}. É convenção do
+     * jogo e não do mod, e vale para as nove madeiras que existem — o
+     * que a torna mais confiável que uma tabela escrita aqui, que
+     * envelheceria na próxima madeira que o jogo acrescentasse.
+     */
+    private static ResourceId doorOf(ResourceId wood) {
+        return new ResourceId(wood.namespace(), wood.path().replace("_planks", "_door"));
     }
 
     /**
@@ -93,28 +129,32 @@ public final class ColonyHut {
      * {@code BuildSiteScanner}, e forrar o terreno gastaria vinte e cinco
      * tábuas para esconder a grama que já estava lá.
      */
-    private static List<BlueprintBlock> blocks() {
+    private static List<BlueprintBlock> blocks(
+            ResourceId wood, ResourceId door, Side doorSide) {
+
         List<BlueprintBlock> blocks = new ArrayList<>();
+
+        ColonyPos doorway = doorwayOn(doorSide);
 
         for (int y = 0; y < WALL_HEIGHT; y++) {
             for (int x = 0; x < SIDE; x++) {
                 for (int z = 0; z < SIDE; z++) {
-                    if (!isWall(x, z) || isDoorway(x, z, y)) {
+                    if (!isWall(x, z) || isDoorway(x, z, y, doorway)) {
                         continue;
                     }
 
-                    blocks.add(new BlueprintBlock(new ColonyPos(x, y, z), PLANKS));
+                    blocks.add(new BlueprintBlock(new ColonyPos(x, y, z), wood));
                 }
             }
         }
 
         // A porta por último entre os blocos baixos: ela precisa do
         // batente de pé dos dois lados para não ficar solta.
-        blocks.add(new BlueprintBlock(new ColonyPos(DOOR_X, 0, 0), DOOR));
+        blocks.add(new BlueprintBlock(doorway, door));
 
         for (int x = 0; x < SIDE; x++) {
             for (int z = 0; z < SIDE; z++) {
-                blocks.add(new BlueprintBlock(new ColonyPos(x, WALL_HEIGHT, z), PLANKS));
+                blocks.add(new BlueprintBlock(new ColonyPos(x, WALL_HEIGHT, z), wood));
             }
         }
 
@@ -126,8 +166,25 @@ public final class ColonyHut {
         return x == 0 || z == 0 || x == SIDE - 1 || z == SIDE - 1;
     }
 
-    /** O vão da porta: dois blocos de altura, no meio da parede norte. */
-    private static boolean isDoorway(int x, int z, int y) {
-        return z == 0 && x == DOOR_X && y < 2;
+    /**
+     * Onde a porta fica, dado o lado em que a rua está — a Regra 17.
+     *
+     * <p>No meio da parede que encosta no caminho. A cabana é um
+     * quadrado, então mudar de parede é mudar duas coordenadas e nada
+     * mais: não há o que girar, e é por isso que esta regra saiu barata
+     * aqui e será cara no dia em que a planta tiver escada.
+     */
+    private static ColonyPos doorwayOn(Side doorSide) {
+        return switch (doorSide) {
+            case NORTH -> new ColonyPos(DOOR_AT, 0, 0);
+            case SOUTH -> new ColonyPos(DOOR_AT, 0, SIDE - 1);
+            case WEST -> new ColonyPos(0, 0, DOOR_AT);
+            case EAST -> new ColonyPos(SIDE - 1, 0, DOOR_AT);
+        };
+    }
+
+    /** O vão da porta: dois blocos de altura, na parede que dá na rua. */
+    private static boolean isDoorway(int x, int z, int y, ColonyPos doorway) {
+        return x == doorway.x() && z == doorway.z() && y < 2;
     }
 }

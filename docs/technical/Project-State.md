@@ -3175,3 +3175,125 @@ encosta            inalcançável passa a ser marcada. Se isso basta
 o centro           trocando de âncora a cada 30 segundos entre 49
 oscilando          camas e 7. É a ADR-003, e espera decisão do autor
 ```
+
+---
+
+## Regra 19 — o lote fica no nível da estrada
+
+```text
+a casa assenta no mesmo nível da rua em que ela encosta
+
+de modo que se entre e se saia dela a pé, sem degrau que impeça
+```
+
+Decidida em 2026-08-19. É a condição que faltava para a Regra 17 servir
+de alguma coisa: porta virada para a rua com dois blocos de degrau na
+frente é porta que ninguém atravessa.
+
+Hoje `flatGroundAt` aceita desnível de até `MAX_SLOPE` dentro do lote e
+não compara nada com a rua. O lote pode ficar dois acima do caminho, e a
+casa nasce numa varanda sem escada.
+
+```text
+o que passa a      todas as colunas do lote no mesmo nível, e esse
+valer               nível igual ao do bloco de rua em que o lote
+                    encosta. O piso da casa fica então na mesma altura
+                    do topo da rua, que é por onde se anda
+
+o que isso custa    lote perto de encosta passa a ser recusado. É
+                    conservador de propósito: recusar é procurar
+                    outro lugar, e aceitar é uma casa em que ninguém
+                    entra
+
+o que isso não é    nivelar o terreno. A colônia não terraplana — ela
+                    escolhe onde já está plano. Terraplanar é escrever
+                    no mundo do jogador fora da planta, e a Regra 3
+                    não deixa
+```
+
+---
+
+## Regra 20 — cada vila constrói no estilo do seu bioma
+
+```text
+a casa que a colônia levanta é feita da madeira da vila a que ela
+pertence
+```
+
+Decidida em 2026-08-19, com a segunda metade explícita: **o mod passa a
+aceitar vila fora da planície**. Sem isso a regra não teria o que variar
+— `VillageScanner` descarta em silêncio todo aglomerado que não esteja
+em PLAINS, e o estilo por bioma seria uma escolha entre uma opção só.
+
+```text
+a madeira sai       planície e vila de savana usam carvalho; taiga e
+do bioma            vila nevada, pinheiro; savana, acácia. A cabana
+                    deixa de ter `oak_planks` escrito nela e passa a
+                    perguntar qual madeira é a desta colônia
+
+por que madeira,    porque é o que a colônia sabe fazer. Copiar a casa
+e não a casa        que o jogo gera para cada bioma foi considerado e
+do jogo             recusado: a de planície pede 43 pedregulhos, 3
+                    vidros e uma cama de lã, e nenhum aldeão deste mod
+                    minera, funde ou tosquia. É a Regra 13, e ela
+                    continua valendo
+
+o que a colônia     a espécie fica gravada na colônia, e não é
+guarda              perguntada ao mundo a cada obra: bioma é consulta
+                    de chunk, e chunk descarregado responderia errado
+
+deserto             vila de deserto não tem árvore. A colônia nasce,
+                    contrata e conta recurso; construir, só quando o
+                    jogador guardar madeira no baú ou quando existir
+                    outra fonte. Isso é limite conhecido, e o
+                    relatório precisa dizê-lo em vez de calar
+```
+
+---
+
+## Regra 21 — toda casa nasce com cama, baú e lampião
+
+```text
+cada casa construída tem dentro, no mínimo, uma cama, um baú e um
+lampião
+```
+
+Decidida em 2026-08-19, junto com a resposta para o que fazer quando
+falta material — e essa metade é a que importa.
+
+**O problema.** Dos três, a colônia só sabe fazer o baú:
+
+```text
+baú        8 tábuas                    ✅ sai de tronco
+cama       3 tábuas + 3 lãs            ❌ lã pede tosquia
+lampião    8 pepitas de ferro + tocha  ❌ ferro pede minerar e fundir
+tocha      graveto + carvão            ❌ carvão pede minerar
+```
+
+Exigir os três para dar a casa por pronta reproduziria exatamente o
+travamento que a Regra 13 corrigiu em 08-15: sem lã e sem ferro em baú,
+nenhuma casa terminaria e a vila pararia de crescer.
+
+**Decidido pelo autor: a casa termina, e a mobília entra quando houver
+material.**
+
+```text
+a estrutura         paredes, teto, porta e baú. O baú é feito pela
+termina sozinha     colônia, então a casa nasce com ele
+
+cama e lampião      ficam como pendência da casa, não da obra. Assim
+                    que aparecer lã ou ferro em qualquer baú da
+                    colônia, o construtor os põe
+
+a vila não para     obra terminada libera o lote seguinte. Uma casa
+                    sem cama continua sendo uma casa, e continua
+                    contando para a vila
+
+o relatório diz     por casa, o que ainda falta lá dentro. Sem essa
+o que falta         linha, "casa sem cama" e "casa que a colônia
+                    esqueceu" são o mesmo silêncio — é o §11 de novo
+```
+
+A cama tem um efeito de segunda ordem que vale escrever: cama nova é
+aldeão novo, e aldeão novo é trabalhador. A vila que ganha camas cresce
+sozinha, que é o ciclo desenhado no README desde o começo.

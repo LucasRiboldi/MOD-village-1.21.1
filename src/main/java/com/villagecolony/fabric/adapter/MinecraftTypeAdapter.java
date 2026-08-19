@@ -2,6 +2,7 @@ package com.villagecolony.fabric.adapter;
 
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.type.Side;
 import com.villagecolony.core.worker.model.ToolType;
 import com.villagecolony.fabric.integration.TreeSpecies;
 import com.villagecolony.core.type.ColonyPos;
@@ -11,6 +12,7 @@ import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 
 import java.util.Optional;
 
@@ -94,6 +96,36 @@ public final class MinecraftTypeAdapter {
      * chega aqui vindo de código, e {@link ResourceId} de propósito não
      * valida o que o jogo aceita — quem sabe disso é o jogo.
      */
+    /**
+     * O lado do horizonte do jogo, no vocabulário do Core.
+     *
+     * <p>Cima e baixo não são lado de casa e não chegam aqui: quem
+     * pergunta é a escolha de lote, que só percorre
+     * {@code Direction.Type.HORIZONTAL}.
+     *
+     * @throws IllegalArgumentException se vier UP ou DOWN, que seria
+     *     defeito de quem chamou e não caso a tratar
+     */
+    public static Side toSide(Direction direction) {
+        return switch (direction) {
+            case NORTH -> Side.NORTH;
+            case SOUTH -> Side.SOUTH;
+            case EAST -> Side.EAST;
+            case WEST -> Side.WEST;
+            default -> throw new IllegalArgumentException("not a horizontal side: " + direction);
+        };
+    }
+
+    /** O caminho de volta: o lado do Core na direção do jogo. */
+    public static Direction toDirection(Side side) {
+        return switch (side) {
+            case NORTH -> Direction.NORTH;
+            case SOUTH -> Direction.SOUTH;
+            case EAST -> Direction.EAST;
+            case WEST -> Direction.WEST;
+        };
+    }
+
     public static Identifier toIdentifier(ResourceId id) {
         return Identifier.of(id.namespace(), id.path());
     }

@@ -29,6 +29,7 @@ import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -326,7 +327,7 @@ public final class BuilderWork {
             return true;
         }
 
-        BlockState state = material.get().getDefaultState();
+        BlockState state = facing(project, block, material.get().getDefaultState());
 
         if (!world.getBlockState(target).isReplaceable()) {
             // Já tem coisa ali, e não é grama alta: pode ser peça de
@@ -374,6 +375,57 @@ public final class BuilderWork {
         job.placed++;
 
         return true;
+    }
+
+    /**
+     * Vira o bloco de parede para fora da casa — a Regra 17.
+     *
+     * <p>Até 2026-08-19 a porta saía no estado padrão da planta, que
+     * olha sempre para o mesmo lado: a casa podia ter a porta na parede
+     * da rua e a folha abrindo para o lado errado. Agora a orientação
+     * sai da <b>geometria</b>, e não de um campo gravado.
+     *
+     * <p>A conta: o bloco está numa das quatro paredes; a parede diz
+     * para onde é fora; e a face do bloco olha para <b>dentro</b>, que é
+     * como o jogo grava a porta que um jogador põe da rua — ele está do
+     * lado de fora, olhando para a casa, e a porta guarda a direção do
+     * olhar dele.
+     *
+     * <p>Só blocos de parede. Bloco do miolo — a cama, o baú da Regra 21
+     * — não tem "fora" e fica com o estado padrão até ter regra própria.
+     *
+     * <p>Deduzir em vez de gravar tem uma vantagem que vale dizer: a
+     * obra que volta do save não precisa que o save saiba disso. A
+     * planta remontada já traz a porta na parede certa, e a face sai
+     * dela.
+     */
+    private static BlockState facing(
+            ConstructionProject project, BlueprintBlock block, BlockState state) {
+
+        if (!state.contains(Properties.HORIZONTAL_FACING)) {
+            return state;
+        }
+
+        ColonyPos size = project.blueprint().size();
+        ColonyPos at = block.offset();
+
+        Direction outward = null;
+
+        if (at.x() == 0) {
+            outward = Direction.WEST;
+        } else if (at.x() == size.x() - 1) {
+            outward = Direction.EAST;
+        } else if (at.z() == 0) {
+            outward = Direction.NORTH;
+        } else if (at.z() == size.z() - 1) {
+            outward = Direction.SOUTH;
+        }
+
+        if (outward == null) {
+            return state;
+        }
+
+        return state.with(Properties.HORIZONTAL_FACING, outward.getOpposite());
     }
 
     /**

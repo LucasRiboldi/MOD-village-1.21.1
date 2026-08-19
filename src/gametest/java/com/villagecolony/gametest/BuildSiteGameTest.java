@@ -41,7 +41,7 @@ public class BuildSiteGameTest implements FabricGameTest {
 
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
 
-        Optional<ColonyPos> site = BuildSiteScanner.find(
+        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
@@ -52,8 +52,8 @@ public class BuildSiteGameTest implements FabricGameTest {
         // Assenta sobre o chão, não dentro dele: o chão está em y=1
         // relativo, então a casa começa em y=2.
         context.assertTrue(
-                site.get().y() == context.getAbsolutePos(center).getY() + 1,
-                "a casa assentou em " + site.get().y() + ", e o chão está em "
+                site.get().origin().y() == context.getAbsolutePos(center).getY() + 1,
+                "a casa assentou em " + site.get().origin().y() + ", e o chão está em "
                         + context.getAbsolutePos(center).getY());
 
         context.complete();
@@ -100,7 +100,7 @@ public class BuildSiteGameTest implements FabricGameTest {
             }
         }
 
-        Optional<ColonyPos> site = BuildSiteScanner.find(
+        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
@@ -169,7 +169,7 @@ public class BuildSiteGameTest implements FabricGameTest {
 
         paveGround(context, center);
 
-        Optional<ColonyPos> site = BuildSiteScanner.find(
+        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
@@ -210,13 +210,113 @@ public class BuildSiteGameTest implements FabricGameTest {
             }
         }
 
-        Optional<ColonyPos> site = BuildSiteScanner.find(
+        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 SMALL_HOUSE);
 
         context.assertTrue(site.isEmpty(), "aceitou lote com desnível de quatro blocos");
+
+        context.complete();
+    }
+
+    /**
+     * A Regra 19: lote acima do nível da rua é recusado.
+     *
+     * <p>Sem ela a casa nasce numa varanda sem escada — o lote pode
+     * ficar até {@code MAX_SLOPE} acima do caminho e continuar sendo
+     * "plano". A porta da Regra 17 daria para o alto de um degrau que
+     * ninguém sobe, e a casa ficaria bonita e inútil.
+     *
+     * <p>Rodado contra a regra desligada: o lote de cima é aceito e a
+     * afirmação falha.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site")
+    public void aLotAboveTheRoadIsRefused(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+
+        paveGround(context, center);
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+
+        // Tudo em volta da rua sobe um degrau. O lote continua plano
+        // entre si, e deixa de estar no nível de quem anda na rua.
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (dx == 0 && dz == 0) {
+                    continue;
+                }
+
+                context.setBlockState(
+                        center.add(dx, 1, dz), Blocks.GRASS_BLOCK.getDefaultState());
+            }
+        }
+
+        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                context.getWorld(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        context.assertTrue(
+                site.isEmpty(),
+                "a Regra 19 recusa lote fora do nível da rua, e este foi aceito em "
+                        + site.map(found -> found.origin().toString()).orElse(""));
+
+        context.complete();
+    }
+
+    /**
+     * A Regra 17: o lote sabe para que lado fica a rua.
+     *
+     * <p>A direção sempre foi conhecida — a busca testa os quatro lados
+     * e o primeiro que serve vence — e era jogada fora depois de
+     * calcular o canto. É ela que diz em que parede a porta vai.
+     *
+     * <p>Rodado contra a regra desligada: não havia o que afirmar, o
+     * lote não dizia lado nenhum.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site")
+    public void theLotKnowsWhichSideTheRoadIsOn(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+
+        paveGround(context, center);
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+
+        Optional<BuildSiteScanner.Site> found = BuildSiteScanner.find(
+                context.getWorld(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        context.assertTrue(found.isPresent(), "não achou lote ao lado da rua");
+
+        BuildSiteScanner.Site site = found.get();
+
+        // Andar do lote para o lado que ele aponta tem de dar na rua, de
+        // alguma das colunas da face. Se der em qualquer outra coisa, a
+        // porta vai para o mato.
+        boolean reachesTheRoad = false;
+
+        for (int dx = 0; dx < SMALL_HOUSE.x(); dx++) {
+            for (int dz = 0; dz < SMALL_HOUSE.z(); dz++) {
+                BlockPos cell = new BlockPos(
+                        site.origin().x() + dx, site.origin().y() - 1, site.origin().z() + dz);
+
+                if (context.getWorld().getBlockState(cell.offset(site.doorSide()))
+                        .isOf(Blocks.DIRT_PATH)) {
+
+                    reachesTheRoad = true;
+                }
+            }
+        }
+
+        context.assertTrue(
+                reachesTheRoad,
+                "o lote diz que a rua fica ao " + site.doorSide()
+                        + ", e daquele lado não há caminho nenhum");
 
         context.complete();
     }

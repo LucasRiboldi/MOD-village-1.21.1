@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.ColonyHut;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.test.GameTest;
@@ -66,7 +67,7 @@ public class HouseBillOfMaterialsGameTest implements FabricGameTest {
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "hut_bill")
     public void theColonyCanMakeEverythingTheHutIsMadeOf(TestContext context) {
-        Blueprint hut = ColonyHut.blueprint();
+        Blueprint hut = ColonyHut.blueprint(ColonyHut.OAK_PLANKS, Side.NORTH);
 
         announce(hut);
 

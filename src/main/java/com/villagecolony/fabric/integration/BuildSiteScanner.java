@@ -112,6 +112,22 @@ public final class BuildSiteScanner {
     }
 
     /**
+     * Um lote escolhido, e para que lado ele se abre.
+     *
+     * <p>A direção existe por causa da Regra 17. Ela sempre foi
+     * conhecida — {@code siteBesideRoadAt} escolhe um dos quatro lados
+     * ao procurar — e era jogada fora depois de calcular o canto. A casa
+     * saía com a porta apontando para onde a planta tinha sido escrita,
+     * que em vila de verdade é o mato.
+     *
+     * @param origin o canto de onde a casa sobe — o menor x, y e z dela
+     * @param doorSide para que lado fica a rua, visto de dentro do lote.
+     *     É por esse lado que a casa se abre
+     */
+    public record Site(ColonyPos origin, Direction doorSide) {
+    }
+
+    /**
      * Um lote para uma casa deste tamanho, encostado em estrada.
      *
      * @param size quanto a casa ocupa, do {@code Blueprint}
@@ -120,7 +136,7 @@ public final class BuildSiteScanner {
      *     "não achei nesta passagem", e a passagem seguinte continua de
      *     onde esta parou
      */
-    public static Optional<ColonyPos> find(
+    public static Optional<Site> find(
             ServerWorld world, ColonyPos center, int radius, ColonyPos size) {
 
         BlockPos from = MinecraftTypeAdapter.toBlockPos(center);
@@ -150,7 +166,7 @@ public final class BuildSiteScanner {
                         return Optional.empty();
                     }
 
-                    Optional<ColonyPos> site = siteBesideRoadAt(
+                    Optional<Site> site = siteBesideRoadAt(
                             world, from.getX() + dx, from.getZ() + dz, from.getY(), size);
 
                     if (site.isPresent()) {
@@ -165,6 +181,51 @@ public final class BuildSiteScanner {
         // Varreu tudo sem achar. Recomeçar do centro: a vila muda, o
         // jogador abre espaço, e o lote de ontem pode existir amanhã.
         NEXT_RING.remove(from);
+
+        return Optional.empty();
+    }
+
+    /**
+     * Para que lado deste lote fica a rua — a Regra 17, do lado de fora.
+     *
+     * <p>Existe para a obra que volta do save. O lado escolhido não é
+     * gravado em disco de propósito: ele é uma leitura do mundo, e o
+     * mundo é a única fonte que continua certa depois de o jogador mexer
+     * nele. Perguntar de novo custa quatro leituras de coluna e evita um
+     * campo novo no save que poderia discordar do terreno.
+     *
+     * <p>Procura o caminho encostado em cada uma das quatro faces, na
+     * altura em que o lote assenta. Vazio quando não há rua nenhuma em
+     * volta — o jogador arrancou o caminho, e aí a casa fica com a porta
+     * onde ela já estava.
+     *
+     * @param floor a altura do piso da casa. A rua fica um abaixo dele,
+     *     porque é sobre ela que se anda
+     */
+    public static Optional<Direction> roadSideOf(
+            ServerWorld world, ColonyPos origin, ColonyPos size) {
+
+        int roadY = origin.y() - 1;
+
+        for (Direction side : Direction.Type.HORIZONTAL) {
+            for (int step = 0; step < Math.max(size.x(), size.z()); step++) {
+                int x = side.getOffsetX() != 0
+                        ? (side.getOffsetX() < 0 ? origin.x() - 1 : origin.x() + size.x())
+                        : origin.x() + step;
+
+                int z = side.getOffsetZ() != 0
+                        ? (side.getOffsetZ() < 0 ? origin.z() - 1 : origin.z() + size.z())
+                        : origin.z() + step;
+
+                if (step >= (side.getOffsetX() != 0 ? size.z() : size.x())) {
+                    break;
+                }
+
+                if (world.getBlockState(new BlockPos(x, roadY, z)).isOf(Blocks.DIRT_PATH)) {
+                    return Optional.of(side);
+                }
+            }
+        }
 
         return Optional.empty();
     }
@@ -205,7 +266,7 @@ public final class BuildSiteScanner {
      * igualmente boas, e escolher por sorteio faria a mesma vila crescer
      * diferente a cada sessão, o que é ruim de depurar.
      */
-    private static Optional<ColonyPos> siteBesideRoadAt(
+    private static Optional<Site> siteBesideRoadAt(
             ServerWorld world, int x, int z, int aroundY, ColonyPos size) {
 
         Optional<BlockPos> ground = groundInColumn(world, x, z, aroundY);
@@ -213,6 +274,9 @@ public final class BuildSiteScanner {
         if (ground.isEmpty() || !world.getBlockState(ground.get()).isOf(Blocks.DIRT_PATH)) {
             return Optional.empty();
         }
+
+        // A altura da rua, que a Regra 19 usa como régua do lote.
+        int roadY = ground.get().getY();
 
         for (Direction side : Direction.Type.HORIZONTAL) {
             // O lote começa no bloco seguinte à estrada — encostado nela,
@@ -226,10 +290,15 @@ public final class BuildSiteScanner {
             int originX = side.getOffsetX() < 0 ? lotX - size.x() + 1 : lotX;
             int originZ = side.getOffsetZ() < 0 ? lotZ - size.z() + 1 : lotZ;
 
-            Optional<Integer> floor = flatGroundAt(world, originX, originZ, aroundY, size);
+            Optional<Integer> floor =
+                    flatGroundAt(world, originX, originZ, aroundY, roadY, size);
 
             if (floor.isPresent()) {
-                return Optional.of(new ColonyPos(originX, floor.get(), originZ));
+                // A rua fica do lado oposto àquele para onde o lote
+                // cresceu: `side` aponta da rua para o lote, e a porta
+                // olha de volta para ela.
+                return Optional.of(new Site(
+                        new ColonyPos(originX, floor.get(), originZ), side.getOpposite()));
             }
         }
 
@@ -341,10 +410,8 @@ public final class BuildSiteScanner {
      *     ficar acima é degrau que a preparação resolve
      */
     private static Optional<Integer> flatGroundAt(
-            ServerWorld world, int originX, int originZ, int aroundY, ColonyPos size) {
-
-        int lowest = Integer.MAX_VALUE;
-        int highest = Integer.MIN_VALUE;
+            ServerWorld world, int originX, int originZ, int aroundY,
+            int roadY, ColonyPos size) {
 
         for (int dx = 0; dx < size.x(); dx++) {
             for (int dz = 0; dz < size.z(); dz++) {
@@ -367,17 +434,20 @@ public final class BuildSiteScanner {
                     return Optional.empty();
                 }
 
-                lowest = Math.min(lowest, ground.getY());
-                highest = Math.max(highest, ground.getY());
-
-                if (highest - lowest > MAX_SLOPE) {
+                // A Regra 19: no nível da rua, e não apenas plano entre
+                // si. Um lote inteiro dois blocos acima do caminho é
+                // plano e é uma varanda sem escada — a porta da Regra 17
+                // daria para o alto de um degrau que ninguém sobe.
+                if (ground.getY() != roadY) {
                     return Optional.empty();
                 }
             }
         }
 
-        // O piso da casa vai sobre o chão, e não dentro dele.
-        return Optional.of(lowest + 1);
+        // O piso da casa vai sobre o chão, e não dentro dele. Como o
+        // chão está no nível da rua, o piso fica na altura em que se
+        // anda sobre ela.
+        return Optional.of(roadY + 1);
     }
 
     /**

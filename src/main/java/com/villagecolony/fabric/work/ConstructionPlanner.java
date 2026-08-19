@@ -16,6 +16,7 @@ import com.villagecolony.core.task.model.TaskPriority;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.type.Side;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
@@ -226,9 +227,12 @@ public final class ConstructionPlanner {
             return silent(colony, IdleReason.NO_WORKER, "");
         }
 
-        Blueprint blueprint = ColonyHut.blueprint();
+        // A planta provisória serve só para medir: o tamanho da cabana
+        // não muda com a parede em que a porta fica, e é o tamanho que a
+        // busca de lote precisa saber antes de haver lote.
+        Blueprint blueprint = ColonyHut.blueprint(ColonyHut.OAK_PLANKS, Side.NORTH);
 
-        Optional<ColonyPos> site = BuildSiteScanner.find(
+        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 world, colony.center(), VillageDetector.SEARCH_RADIUS, blueprint.size());
 
         if (site.isEmpty()) {
@@ -251,7 +255,7 @@ public final class ConstructionPlanner {
                                     + blueprint.size());
         }
 
-        if (VillageColonyMod.BUILDINGS.isColonyInfrastructure(site.get())) {
+        if (VillageColonyMod.BUILDINGS.isColonyInfrastructure(site.get().origin())) {
             // O lote caiu sobre casa que a própria colônia levantou. O
             // scanner não conhece o registro de construções — ele olha o
             // mundo, e uma casa de madeira sobre terra continua parecendo
@@ -260,11 +264,17 @@ public final class ConstructionPlanner {
             return silent(
                     colony,
                     IdleReason.SITE_REFUSED,
-                    "the lot at " + site.get() + " falls on a colony building");
+                    "the lot at " + site.get().origin() + " falls on a colony building");
         }
 
-        ConstructionProject project =
-                ConstructionProject.plan(colony.id(), blueprint, site.get());
+        // Agora que há lote, a planta é remontada com a parede certa: é
+        // a Regra 17, e o lado sai de quem achou o lote.
+        Blueprint facingTheRoad = ColonyHut.blueprint(
+                ColonyHut.OAK_PLANKS,
+                MinecraftTypeAdapter.toSide(site.get().doorSide()));
+
+        ConstructionProject project = ConstructionProject.plan(
+                colony.id(), facingTheRoad, site.get().origin());
 
         VillageColonyMod.CONSTRUCTIONS.register(project);
 
@@ -323,7 +333,7 @@ public final class ConstructionPlanner {
 
         ConstructionService.Pending saved = pending.get();
 
-        Optional<Blueprint> blueprint = blueprintOf(world, saved.blueprint());
+        Optional<Blueprint> blueprint = blueprintOf(world, saved.blueprint(), saved.origin());
 
         if (blueprint.isEmpty()) {
             // O jogo não conhece mais essa estrutura — datapack que saiu,
@@ -416,9 +426,21 @@ public final class ConstructionPlanner {
      * contrário. Perguntar aos dois é o que deixa um save antigo — com a
      * casa de planície pela metade — continuar de onde parou.
      */
-    private static Optional<Blueprint> blueprintOf(ServerWorld world, ResourceId id) {
+    private static Optional<Blueprint> blueprintOf(
+            ServerWorld world, ResourceId id, ColonyPos origin) {
+
         if (ColonyHut.ID.equals(id)) {
-            return Optional.of(ColonyHut.blueprint());
+            // A parede da porta é perguntada ao mundo, e não ao save —
+            // ver BuildSiteScanner.roadSideOf. Sem rua em volta, a casa
+            // fica com a porta ao norte, que é onde a planta antiga a
+            // punha: obra de save velho continua de onde parou.
+            Side doorSide = BuildSiteScanner
+                    .roadSideOf(world, origin, ColonyHut.blueprint(
+                            ColonyHut.OAK_PLANKS, Side.NORTH).size())
+                    .map(MinecraftTypeAdapter::toSide)
+                    .orElse(Side.NORTH);
+
+            return Optional.of(ColonyHut.blueprint(ColonyHut.OAK_PLANKS, doorSide));
         }
 
         return StructureBlueprintReader.read(world, id);
