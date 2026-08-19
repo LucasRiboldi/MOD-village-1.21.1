@@ -115,6 +115,38 @@ public class HouseBillOfMaterialsGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * O schema que o mod passou a carregar sozinho — 2026-08-19.
+     *
+     * <p>A casa está em {@code data/villagecolony/structure/houses/}, e
+     * o que este teste prende é que ela <b>carrega</b>: o caminho de
+     * dados do 1.21.1 é {@code structure} no singular, e um arquivo na
+     * pasta errada não é erro em lugar nenhum — ele simplesmente não
+     * existe para o jogo, e a colônia diria "o jogo não tem essa
+     * estrutura" sem que ninguém soubesse por quê.
+     *
+     * <p>Também relata a lista de compras dela, que é o que decide se a
+     * colônia pode ou não construí-la. Ver a Regra 13.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "hut_bill")
+    public void theModsOwnSchemaLoads(TestContext context) {
+        Optional<Blueprint> house = StructureBlueprintReader.read(
+                context.getWorld(), StructureBlueprintReader.SMALL_HOUSE);
+
+        context.assertTrue(
+                house.isPresent(),
+                "o schema " + StructureBlueprintReader.SMALL_HOUSE
+                        + " não carregou — confira a pasta data/villagecolony/structure");
+
+        announce(house.get());
+
+        context.assertTrue(
+                house.get().blockCount() > 100,
+                "a casa pequena tem 149 blocos e veio com " + house.get().blockCount());
+
+        context.complete();
+    }
+
     /** Uma linha por material, do mais pedido para o menos. */
     private static void announce(Blueprint house) {
         Map<ResourceId, Integer> materials = house.materials();

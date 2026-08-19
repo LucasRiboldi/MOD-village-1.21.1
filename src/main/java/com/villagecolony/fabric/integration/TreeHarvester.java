@@ -69,6 +69,33 @@ public final class TreeHarvester {
     private static final int MAX_LOGS = 24;
 
     /**
+     * Até quantos troncos se percorre <b>só para saber se é árvore</b>.
+     *
+     * <p>Bem acima de {@link #MAX_LOGS}, e a diferença entre os dois é a
+     * correção de 2026-08-19.
+     *
+     * <p>O que acontecia: a copa era procurada a partir do grupo de
+     * troncos, e o grupo já vinha cortado no teto de colheita. A busca
+     * parte da base e sobe; num abeto gigante ou num carvalho-escuro, 24
+     * troncos são seis níveis de um tronco de vinte e tantos, e a copa
+     * fica muito acima do que o grupo alcançou. Sem folha no grupo, a
+     * árvore era declarada "não é árvore" — e a recusa é <b>permanente</b>,
+     * então aquele abeto saía da vida da colônia.
+     *
+     * <p>A sessão de 2026-08-19 mostrou isso quatro vezes, sempre com o
+     * mesmo número: {@code 24 logs without a living canopy}. Vinte e
+     * quatro é o teto, não uma medida da árvore — quando o número da
+     * recusa é exatamente o limite, o limite é a causa.
+     *
+     * <p>São duas perguntas diferentes e agora têm dois limites: o teto
+     * de colheita continua cortando o trabalho em pedaços de 24, e este
+     * só serve para responder "existe copa viva ligada a este tronco?".
+     * Custa uma travessia maior, e ela acontece na escolha da árvore,
+     * que é limitada a uma por tick no servidor inteiro.
+     */
+    private static final int CANOPY_SEARCH_LOGS = 256;
+
+    /**
      * Teto de folhas por árvore.
      *
      * <p>Uma copa de carvalho tem cerca de oitenta folhas; a de um
@@ -96,7 +123,34 @@ public final class TreeHarvester {
      */
     private static final int SAPLING_CLEARANCE = 8;
 
+    /**
+     * O teto de colheita em vigor. É {@link #MAX_LOGS}, menos nos
+     * testes.
+     *
+     * <p>Mesma saída de {@code LumberjackWork.shortenStallLimitTo}, e
+     * pelo mesmo motivo: a arena da bateria tem oito blocos de altura e
+     * um abeto gigante não cabe nela. Baixar o teto reproduz a mesma
+     * geometria — tronco mais alto que o teto, copa acima dele — numa
+     * árvore que cabe.
+     *
+     * <p>Note qual dos dois limites é o ajustável. O que a correção de
+     * 2026-08-19 separou foi <b>o teto de colheita</b> da <b>busca de
+     * copa</b>; encurtar a busca de copa reproduziria o defeito em vez
+     * de testar a correção.
+     */
+    private static int harvestCeiling = MAX_LOGS;
+
     private TreeHarvester() {
+    }
+
+    /** Só para a bateria: encurta o teto de colheita. */
+    public static void shortenHarvestCeilingTo(int logs) {
+        harvestCeiling = logs;
+    }
+
+    /** Devolve o teto de colheita ao valor de jogo. */
+    public static void restoreHarvestCeiling() {
+        harvestCeiling = MAX_LOGS;
     }
 
     /**
@@ -168,16 +222,18 @@ public final class TreeHarvester {
             return Plan.nothing();
         }
 
-        List<BlockPos> logs = connectedLogs(world, species, anyLog);
+        // O tronco inteiro, e não o pedaço que cabe na colheita: é a
+        // partir dele que se pergunta pela copa. Ver CANOPY_SEARCH_LOGS.
+        List<BlockPos> trunk = connectedLogs(world, species, anyLog, CANOPY_SEARCH_LOGS);
 
-        if (logs.isEmpty()) {
+        if (trunk.isEmpty()) {
             return Plan.nothing();
         }
 
         // A copa é achada antes de o tronco cair. Depois seria tarde: a
         // folha é alcançada a partir dos troncos, e sem eles não haveria
         // de onde partir.
-        List<BlockPos> canopy = connectedLeaves(world, species, logs);
+        List<BlockPos> canopy = connectedLeaves(world, species, trunk);
 
         // Sem copa viva não é árvore, e não se toca. Ver #isNaturalLeaf.
         //
@@ -189,7 +245,11 @@ public final class TreeHarvester {
             return Plan.nothing();
         }
 
-        boolean complete = logs.size() < MAX_LOGS;
+        // E só agora o teto de colheita: o que desce nesta volta são os
+        // troncos mais baixos, e o resto fica para a próxima.
+        boolean complete = trunk.size() <= harvestCeiling;
+
+        List<BlockPos> logs = complete ? trunk : List.copyOf(trunk.subList(0, harvestCeiling));
 
         List<BlockPos> leaves = complete ? canopy : List.of();
 
@@ -259,7 +319,7 @@ public final class TreeHarvester {
                     "Tree at {} hit the {}-log ceiling — felling continues next time,"
                             + " no sapling yet",
                     plan.base().toShortString(),
-                    MAX_LOGS);
+                    harvestCeiling);
 
             return;
         }
@@ -320,7 +380,7 @@ public final class TreeHarvester {
      */
     public static List<BlockPos> trunkOf(ServerWorld world, BlockPos anyLog) {
         return TreeSpecies.ofLog(stateAt(world, anyLog))
-                .map(species -> connectedLogs(world, species, anyLog))
+                .map(species -> connectedLogs(world, species, anyLog, CANOPY_SEARCH_LOGS))
                 .orElse(List.of());
     }
 
@@ -381,7 +441,7 @@ public final class TreeHarvester {
 
     /** Os troncos da mesma espécie ligados a este, até o teto. */
     private static List<BlockPos> connectedLogs(
-            ServerWorld world, TreeSpecies species, BlockPos start) {
+            ServerWorld world, TreeSpecies species, BlockPos start, int limit) {
 
         List<BlockPos> found = new ArrayList<>();
 
@@ -395,7 +455,7 @@ public final class TreeHarvester {
         queue.add(start);
         seen.add(start);
 
-        while (!queue.isEmpty() && found.size() < MAX_LOGS) {
+        while (!queue.isEmpty() && found.size() < limit) {
             BlockPos current = queue.removeFirst();
 
             found.add(current);

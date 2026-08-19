@@ -75,6 +75,84 @@ public class LumberjackGameTest implements FabricGameTest {
         return base;
     }
 
+    /**
+     * Árvore alta demais para o teto de colheita continua sendo árvore.
+     *
+     * <p>O defeito de 2026-08-19, visto em jogo: quatro recusas seguidas
+     * de {@code 24 logs without a living canopy}, sempre com o mesmo
+     * número — e 24 é o teto de colheita, não uma medida de árvore. A
+     * copa era procurada a partir do grupo de troncos <b>já cortado no
+     * teto</b>; num abeto gigante os 24 primeiros troncos são a base, e
+     * a copa fica muito acima deles. A árvore virava "não é árvore", e a
+     * recusa é permanente.
+     *
+     * <p>O teto é encurtado aqui porque a arena tem oito blocos de
+     * altura e um abeto gigante não cabe nela. A geometria é a mesma: um
+     * tronco mais alto que o teto, com a copa em cima.
+     *
+     * <p>Rodado contra a correção desligada: o plano volta vazio e a
+     * afirmação falha.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_tall_tree")
+    public void aTreeTallerThanTheHarvestCeilingIsStillATree(TestContext context) {
+        BlockPos base = new BlockPos(3, 2, 3);
+
+        // Seis troncos e a copa no alto, com o teto em quatro.
+        context.setBlockState(base.down(), Blocks.DIRT.getDefaultState());
+
+        for (int y = 0; y < 6; y++) {
+            context.setBlockState(base.up(y), Blocks.OAK_LOG.getDefaultState());
+        }
+
+        context.setBlockState(base.up(5).north(), Blocks.OAK_LEAVES.getDefaultState());
+        context.setBlockState(base.up(6), Blocks.OAK_LEAVES.getDefaultState());
+
+        TreeHarvester.shortenHarvestCeilingTo(4);
+
+        try {
+            TreeHarvester.Plan plan = TreeHarvester.plan(
+                    context.getWorld(), context.getAbsolutePos(base));
+
+            context.assertTrue(
+                    !plan.isEmpty(),
+                    "o tronco tem copa viva no alto e foi recusado como 'não é árvore'"
+                            + " — o teto de colheita não pode decidir isso");
+        } finally {
+            TreeHarvester.restoreHarvestCeiling();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * E o tronco pelado continua não sendo árvore.
+     *
+     * <p>A outra metade: a correção acima não pode ter afrouxado a
+     * regra que protege a construção do jogador. Um pilar de troncos
+     * sem copa é casa, e a Regra 3 manda não tocar.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_tall_tree")
+    public void aTallBareTrunkIsStillNotATree(TestContext context) {
+        BlockPos base = new BlockPos(5, 2, 5);
+
+        raiseLogs(context, base, 6);
+
+        TreeHarvester.shortenHarvestCeilingTo(4);
+
+        try {
+            TreeHarvester.Plan plan = TreeHarvester.plan(
+                    context.getWorld(), context.getAbsolutePos(base));
+
+            context.assertTrue(
+                    plan.isEmpty(),
+                    "um pilar de troncos sem copa virou árvore — a Regra 3 caiu junto");
+        } finally {
+            TreeHarvester.restoreHarvestCeiling();
+        }
+
+        context.complete();
+    }
+
     /** Um tronco pelado: o que uma casa de vila tem, e uma árvore não. */
     private static void raiseLogs(TestContext context, BlockPos base, int height) {
         context.setBlockState(base.down(), Blocks.DIRT.getDefaultState());

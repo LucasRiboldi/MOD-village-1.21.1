@@ -67,6 +67,25 @@ public final class StructureBlueprintReader {
             ResourceId.vanilla("village/plains/houses/plains_small_house_1");
 
     /**
+     * A casa pequena, agora como schema do próprio mod.
+     *
+     * <p>É o mesmo arquivo do jogo, copiado para
+     * {@code data/villagecolony/structure/houses/small_house.nbt} em
+     * 2026-08-19. Ver o README daquela pasta.
+     *
+     * <p><b>Por que copiar em vez de apontar para o do jogo.</b> A
+     * planta que o mod garante existir não depende de o jogo continuar
+     * gerando aquela peça com aquele nome, e pode ser trocada por um
+     * datapack sem recompilar nada. É a mesma razão que fez
+     * {@code ColonyHut} ser escrita em código.
+     *
+     * <p>Não é a obra da colônia hoje — ver a Regra 13, e a lista de
+     * materiais no README.
+     */
+    public static final ResourceId SMALL_HOUSE =
+            new ResourceId("villagecolony", "houses/small_house");
+
+    /**
      * A chave do nome do bloco dentro de uma entrada da paleta.
      *
      * <p>Escrita aqui porque o jogo não a expõe como constante: é o

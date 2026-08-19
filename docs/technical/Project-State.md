@@ -3300,3 +3300,64 @@ o que falta         linha, "casa sem cama" e "casa que a colônia
 A cama tem um efeito de segunda ordem que vale escrever: cama nova é
 aldeão novo, e aldeão novo é trabalhador. A vila que ganha camas cresce
 sozinha, que é o ciclo desenhado no README desde o começo.
+
+---
+
+## O teto de colheita decidindo o que é árvore — 2026-08-19
+
+O autor relatou, depois da sessão de 02:10: *"o texto do lenhador não é
+verdade, tem vários tipos de árvores que não foram cortadas"*. Estava
+certo, e a causa não era a que parecia.
+
+**O que a lista de espécies tinha.** As oito do Overworld —
+`OAK, BIRCH, SPRUCE, JUNGLE, ACACIA, DARK_OAK, CHERRY, MANGROVE`. Nenhuma
+faltava, e acrescentar espécie não teria mudado nada. Nether e bambu
+continuam de fora com motivo escrito na própria tabela.
+
+**Onde a recusa nascia.** No log:
+
+```text
+Not a tree at 836, 100, -3429 — 24 logs without a living canopy
+Not a tree at 836, 100, -3423 — 24 logs without a living canopy
+Not a tree at 845, 102, -3427 — 24 logs without a living canopy
+```
+
+Vinte e quatro é `MAX_LOGS`, o teto de colheita. **Quando o número da
+recusa é exatamente o limite, o limite é a causa.**
+
+`connectedLogs` percorre o tronco em largura a partir da base e para no
+teto; a copa era procurada a partir <b>desse grupo já cortado</b>. Num
+abeto gigante ou num carvalho-escuro, 24 troncos são os seis níveis de
+baixo de um tronco de vinte e tantos, e a copa fica muito acima do que o
+grupo alcançou. Sem folha no grupo, a árvore virava "não é árvore" — e a
+recusa é permanente, então aquela árvore saía da vida da colônia.
+
+Há ironia no comentário que já estava lá: em 2026-08-12 alguém corrigiu
+a *ordem* — a copa passou a ser procurada antes de o teto reprovar a
+árvore — e escreveu que "era justamente a construção grande que escapava
+do teste". A ordem foi corrigida; o **grupo** continuou sendo o
+truncado.
+
+**A correção: são duas perguntas, e agora têm dois limites.**
+
+```text
+MAX_LOGS = 24            o teto de trabalho. Continua cortando a
+                         colheita em pedaços, e o pedaço que desce
+                         são os troncos mais baixos
+
+CANOPY_SEARCH_LOGS = 256 só para responder "existe copa viva ligada a
+                         este tronco?". Não derruba nada
+```
+
+O custo é uma travessia maior, e ela acontece na escolha da árvore, que
+é limitada a uma por tick no servidor inteiro.
+
+**O que não podia cair junto** é a regra que protege a construção do
+jogador: pilar de tronco sem copa continua não sendo árvore. Os dois
+casos estão presos por teste, e o primeiro foi rodado com a correção
+desligada — recusa a árvore alta, como em jogo.
+
+```text
+os testes que    aTreeTallerThanTheHarvestCeilingIsStillATree
+seguram          aTallBareTrunkIsStillNotATree
+```
