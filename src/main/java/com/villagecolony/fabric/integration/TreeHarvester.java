@@ -468,6 +468,21 @@ public final class TreeHarvester {
     private static boolean isNaturalLeaf(ServerWorld world, BlockPos pos, TreeSpecies species) {
         BlockState state = stateAt(world, pos);
 
+        if (state == null) {
+            // Chunk descarregado ao lado do tronco. A copa é achada
+            // varrendo os vinte e seis vizinhos de cada tronco, e uma
+            // árvore na borda da área carregada tem vizinho fora dela —
+            // ler ali devolve nulo, como em todo o resto deste arquivo.
+            //
+            // Faltava só aqui, e custou o servidor inteiro: em
+            // 2026-08-19 esta linha derrubou a bateria com um
+            // NullPointerException no meio de `plan`, levando junto os
+            // testes que nada tinham a ver com árvore. Folha que não dá
+            // para ler não é folha desta copa — a mesma resposta que
+            // `breakAll` e `clearAbove` já davam.
+            return false;
+        }
+
         if (!state.isOf(species.leaves())) {
             return false;
         }

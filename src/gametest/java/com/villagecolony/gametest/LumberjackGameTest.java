@@ -861,9 +861,27 @@ public class LumberjackGameTest implements FabricGameTest {
      *
      * <p>A árvore fica numa torre sem escada, alcançável pela busca e não
      * pelos pés.
+     *
+     * <p><b>Por que ele olha a cada tick, e não num tique combinado.</b>
+     * Até 2026-08-19 a afirmação era feita no tique 300, e o teste caía
+     * uma vez em quatro. A instrumentação mostrou o guarda funcionando
+     * perfeitamente — soltava a tarefa no tique 61 e marcava a árvore —
+     * e mostrou o que vinha depois: entre o tique 61 e o 300 cabe o
+     * ciclo de colônia de 600 ticks, que reserva de novo a tarefa
+     * disponível, acha outra árvore no raio de 64 e a põe de volta em
+     * EXECUTING. Não era defeito do guarda: era o teste afirmando um
+     * estado passageiro tarde demais, sobre um estado que a colônia tem
+     * todo o direito de mudar. Agora a prova é feita no instante da
+     * devolução.
+     *
+     * <p>E a colônia deste teste fica <b>fora</b> de {@code COLONIES}
+     * de propósito, que é o que fecha a corrida de vez: nada aqui
+     * precisa do ciclo — {@code run} recebe a colônia na mão e
+     * {@code tick} só olha os trabalhos abertos — e mantê-la registrada
+     * só põe um segundo ator mexendo naquilo que este teste mede.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_stall_guard",
-            tickLimit = 400)
+            tickLimit = 200)
     public void theStallGuardReturnsTheTaskAndForgetsTheTree(TestContext context) {
         BlockPos marooned = new BlockPos(4, 6, 4);
         BlockPos chest = new BlockPos(2, 2, 2);
@@ -895,8 +913,9 @@ public class LumberjackGameTest implements FabricGameTest {
                 UUID.randomUUID(),
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(marooned)));
 
-        VillageColonyMod.COLONIES.register(colony);
-
+        // Sem `COLONIES.register`: ver o javadoc. A colônia entra na
+        // fixture assim mesmo, porque é dela que saem as tarefas a
+        // limpar no fim.
         ColonyFixture owned = ColonyFixture.create()
                 .owning(colony)
                 .owning(villager.getUuid());
@@ -918,27 +937,93 @@ public class LumberjackGameTest implements FabricGameTest {
         task.reserveFor(villager.getUuid());
 
         // Sessenta ticks de horário de trabalho em vez de 2.400.
-        LumberjackWork.shortenStallLimitTo(60);
+        LumberjackWork.shortenStallLimitTo(SHORT_STALL_LIMIT);
 
         LumberjackWork.run(world, colony);
 
-        context.runAtTick(300, () -> {
-            LumberjackWork.restoreStallLimit();
+        BlockPos treeBase = context.getAbsolutePos(marooned);
+        boolean[] settled = { false };
 
-            context.assertTrue(
-                    task.state() == TaskState.AVAILABLE,
-                    "o guarda não devolveu a tarefa à fila — ela está em " + task.state());
+        // A cada tick até o prazo: assim que a tarefa cair na fila, o
+        // teste fecha ali mesmo. Ver o javadoc — a devolução é um
+        // instante, não um estado que se possa conferir mais tarde.
+        for (int tick = 1; tick <= STALL_GUARD_PATIENCE; tick++) {
+            context.runAtTick(tick, () -> {
+                if (settled[0] || task.state() != TaskState.AVAILABLE) {
+                    return;
+                }
 
-            context.assertTrue(
-                    task.executor().isEmpty(),
-                    "a tarefa voltou à fila e continua com dono");
+                settled[0] = true;
 
-            LumberjackWork.forgetUnreachable();
+                proveTheStallGuard(context, owned, task, treeBase);
+            });
+        }
 
-            owned.cleanUp();
+        // O prazo. Chega aqui se a devolução nunca aconteceu, e é o
+        // mesmo julgamento de sempre — só que agora a mensagem diz
+        // quanto se esperou por ela.
+        context.runAtTick(STALL_GUARD_PATIENCE + 1, () -> {
+            if (settled[0]) {
+                return;
+            }
 
-            context.complete();
+            settled[0] = true;
+
+            proveTheStallGuard(context, owned, task, treeBase);
         });
+    }
+
+    /** Quanto vale o limite de travamento enquanto este teste roda. */
+    private static final int SHORT_STALL_LIMIT = 60;
+
+    /**
+     * Quanto o teste espera pela devolução da tarefa.
+     *
+     * <p>O guarda dispara no tick seguinte ao limite, e o resto é folga
+     * para o tick em que o trabalho abre e para um eventual tick fora do
+     * horário de trabalho, que o contador não conta.
+     */
+    private static final int STALL_GUARD_PATIENCE = SHORT_STALL_LIMIT + 40;
+
+    /**
+     * Julga o guarda de travamento e encerra o teste.
+     *
+     * <p>Devolve o estado global <b>antes</b> de afirmar, e essa ordem é
+     * a correção de um defeito real: {@code assertTrue} lança, e na
+     * versão anterior a limpeza vinha depois dela. Uma falha aqui
+     * deixava para trás o limite encurtado valendo para todo mundo, a
+     * árvore marcada e — pior — um lenhador vivo, que passava o resto da
+     * bateria reivindicando as árvores dos outros testes. Era por isso
+     * que este teste nunca caía sozinho.
+     */
+    private static void proveTheStallGuard(
+            TestContext context, ColonyFixture owned, Task task, BlockPos treeBase) {
+
+        TaskState state = task.state();
+        boolean unowned = task.executor().isEmpty();
+        boolean forgotten = LumberjackWork.isOutOfReach(context.getWorld(), treeBase);
+
+        LumberjackWork.restoreStallLimit();
+        LumberjackWork.forgetUnreachable();
+
+        owned.cleanUp();
+
+        context.assertTrue(
+                state == TaskState.AVAILABLE,
+                "o guarda não devolveu a tarefa à fila em " + STALL_GUARD_PATIENCE
+                        + " ticks — ela está em " + state);
+
+        context.assertTrue(unowned, "a tarefa voltou à fila e continua com dono");
+
+        // A segunda metade, que o javadoc promete desde sempre e o teste
+        // não conferia: sem esquecer a árvore, o guarda troca de
+        // trabalhador e não de problema.
+        context.assertTrue(
+                forgotten,
+                "o guarda devolveu a tarefa e não esqueceu a árvore de "
+                        + treeBase.toShortString());
+
+        context.complete();
     }
 
     /**

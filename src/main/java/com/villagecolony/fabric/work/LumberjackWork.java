@@ -1045,8 +1045,18 @@ public final class LumberjackWork {
         UNREACHABLE.clear();
     }
 
-    /** Se esta árvore ainda está no prazo de esquecimento. */
-    private static boolean isOutOfReach(ServerWorld world, BlockPos base) {
+    /**
+     * Se esta árvore ainda está no prazo de esquecimento.
+     *
+     * <p>Pública pelo mesmo motivo que {@link #markUnreachable} e
+     * {@link #forgetUnreachable}: a bateria precisa perguntar. A marca é
+     * a metade do guarda que sobrevive ao instante — a tarefa devolvida
+     * à fila pode ser reservada de novo no ciclo seguinte, a árvore
+     * marcada fica marcada por {@link #UNREACHABLE_MEMORY} ticks — e é
+     * por isso a única das duas que um teste consegue afirmar sem
+     * disputar com o relógio da colônia.
+     */
+    public static boolean isOutOfReach(ServerWorld world, BlockPos base) {
         Long since = UNREACHABLE.get(base);
 
         if (since == null) {
