@@ -20,6 +20,7 @@ import com.villagecolony.core.type.Side;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.VillageBiomes;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import net.minecraft.block.Block;
 import net.minecraft.server.world.ServerWorld;
@@ -230,7 +231,13 @@ public final class ConstructionPlanner {
         // A planta provisória serve só para medir: o tamanho da cabana
         // não muda com a parede em que a porta fica, e é o tamanho que a
         // busca de lote precisa saber antes de haver lote.
-        Blueprint blueprint = ColonyHut.blueprint(ColonyHut.OAK_PLANKS, Side.NORTH);
+        // A Regra 20: a madeira é a da vila, e não sempre carvalho. A
+        // colônia ativa tem o chunk do centro carregado — é o ciclo que
+        // garante isso —, então perguntar o bioma aqui é barato e certo.
+        ResourceId wood = VillageBiomes.woodAt(world, colony.center())
+                .orElse(ColonyHut.OAK_PLANKS);
+
+        Blueprint blueprint = ColonyHut.blueprint(wood, Side.NORTH);
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 world, colony.center(), VillageDetector.SEARCH_RADIUS, blueprint.size());
@@ -270,8 +277,7 @@ public final class ConstructionPlanner {
         // Agora que há lote, a planta é remontada com a parede certa: é
         // a Regra 17, e o lado sai de quem achou o lote.
         Blueprint facingTheRoad = ColonyHut.blueprint(
-                ColonyHut.OAK_PLANKS,
-                MinecraftTypeAdapter.toSide(site.get().doorSide()));
+                wood, MinecraftTypeAdapter.toSide(site.get().doorSide()));
 
         ConstructionProject project = ConstructionProject.plan(
                 colony.id(), facingTheRoad, site.get().origin());
@@ -434,13 +440,15 @@ public final class ConstructionPlanner {
             // ver BuildSiteScanner.roadSideOf. Sem rua em volta, a casa
             // fica com a porta ao norte, que é onde a planta antiga a
             // punha: obra de save velho continua de onde parou.
+            ResourceId wood = VillageBiomes.woodAt(world, origin)
+                    .orElse(ColonyHut.OAK_PLANKS);
+
             Side doorSide = BuildSiteScanner
-                    .roadSideOf(world, origin, ColonyHut.blueprint(
-                            ColonyHut.OAK_PLANKS, Side.NORTH).size())
+                    .roadSideOf(world, origin, ColonyHut.blueprint(wood, Side.NORTH).size())
                     .map(MinecraftTypeAdapter::toSide)
                     .orElse(Side.NORTH);
 
-            return Optional.of(ColonyHut.blueprint(ColonyHut.OAK_PLANKS, doorSide));
+            return Optional.of(ColonyHut.blueprint(wood, doorSide));
         }
 
         return StructureBlueprintReader.read(world, id);

@@ -9,7 +9,6 @@ import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import net.minecraft.world.biome.BiomeKeys;
 import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestTypes;
 
@@ -33,8 +32,9 @@ public final class VillageScanner {
     /**
      * Procura vilas em torno de um ponto.
      *
-     * <p>Clusters fora de PLAINS são descartados em silêncio: o MVP só
-     * suporta esse bioma, e isso não é erro. Ver ADR-003 §5.
+     * <p>Clusters em bioma onde o jogo não gera vila são descartados em
+     * silêncio: o mod não os atende, e isso não é erro. A lista está em
+     * {@link VillageBiomes}. Ver ADR-003 §5.
      *
      * @param trigger centro da busca — o chunk que acabou de carregar ou
      *     o ponto avaliado no ciclo longo
@@ -104,11 +104,14 @@ public final class VillageScanner {
                 continue;
             }
 
-            if (!isPlains(world, candidate.get().center())) {
-                // Fora de PLAINS é limite do MVP, não recusa: a vila está
-                // lá, viva, e o mod é que não a atende (ADR-003 §5). A
-                // diferença importa porque recusa marca colônia
-                // abandonada e isto não pode marcar.
+            if (!VillageBiomes.hasVillages(world, candidate.get().center())) {
+                // Bioma em que o jogo não gera vila é limite do mod, não
+                // recusa: a vila está lá, viva, e o mod é que não a
+                // atende (ADR-003 §5). A diferença importa porque recusa
+                // marca colônia abandonada e isto não pode marcar.
+                //
+                // A lista deixou de ser só PLAINS em 2026-08-19, com a
+                // Regra 20 — ver VillageBiomes.
                 ignoredByBiome = true;
 
                 continue;
@@ -127,7 +130,7 @@ public final class VillageScanner {
      * @param rejected aglomerados que não passaram na validação da
      *     ADR-003 §3, com o motivo de cada um
      * @param ignoredByBiome se algum aglomerado passou na validação e foi
-     *     descartado por estar fora de PLAINS. Não é recusa, e quem
+     *     descartado por estar em bioma sem vila. Não é recusa, e quem
      *     decide abandono precisa saber a diferença
      */
     public record ScanResult(
@@ -219,8 +222,5 @@ public final class VillageScanner {
         return world.getEntitiesByClass(VillagerEntity.class, area, VillagerEntity::isAlive).size();
     }
 
-    private static boolean isPlains(ServerWorld world, ColonyPos center) {
-        return world.getBiome(MinecraftTypeAdapter.toBlockPos(center))
-                .matchesKey(BiomeKeys.PLAINS);
-    }
+
 }

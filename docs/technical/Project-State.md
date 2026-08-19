@@ -3238,9 +3238,12 @@ do jogo             recusado: a de planície pede 43 pedregulhos, 3
                     minera, funde ou tosquia. É a Regra 13, e ela
                     continua valendo
 
-o que a colônia     a espécie fica gravada na colônia, e não é
-guarda              perguntada ao mundo a cada obra: bioma é consulta
-                    de chunk, e chunk descarregado responderia errado
+de onde sai a       do bioma do centro, perguntado ao mundo na hora
+espécie             de planejar a obra. Não é gravada na colônia, e a
+                    razão é que o receio não se sustentou: o ciclo só
+                    roda para colônia ACTIVE, e ACTIVE quer dizer chunk
+                    carregado. Guardar exigiria mexer no save para
+                    responder o que o mundo já responde certo
 
 deserto             vila de deserto não tem árvore. A colônia nasce,
                     contrata e conta recurso; construir, só quando o

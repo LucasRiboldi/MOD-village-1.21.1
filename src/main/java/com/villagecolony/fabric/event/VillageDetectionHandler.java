@@ -21,6 +21,7 @@ import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.ChestMarker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.VillageBiomes;
 import com.villagecolony.fabric.integration.VillageScanner;
 import com.villagecolony.fabric.integration.VillagerScanner;
 import com.villagecolony.fabric.integration.WorkerEquipment;
@@ -369,8 +370,14 @@ public final class VillageDetectionHandler {
         // tem uma casa para levantar.
         ConstructionPlanner.plan(overworld, colony);
 
+        // A tábua da vila, e não sempre a de carvalho — a Regra 20. A
+        // obra de uma colônia de taiga pede pinheiro, e perguntar por
+        // carvalho devolveria zero: a meta perderia a demanda da obra e
+        // cairia na metade do baú, que é a conta de quando não há obra.
         int planksForWork = ConstructionPlanner.planksNeededBy(
-                MinecraftTypeAdapter.toResourceId(Blocks.OAK_PLANKS), colony);
+                VillageBiomes.woodAt(overworld, colony.center())
+                        .orElse(MinecraftTypeAdapter.toResourceId(Blocks.OAK_PLANKS)),
+                colony);
 
         int assigned = ColonyCycle.run(
                 colony.id(),
