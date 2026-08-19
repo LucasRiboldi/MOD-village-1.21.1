@@ -12,7 +12,7 @@ trabalham, produzem e crescem sozinhas.*
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
 ![Ambiente](https://img.shields.io/badge/Lado-Servidor%20%7C%20Singleplayer-lightgrey)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.1.0%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.2.0%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 
 </div>
@@ -123,13 +123,17 @@ no mato depois do escuro é trabalhador que os monstros pegam.
 
 1. Instale o [Fabric Loader](https://fabricmc.net/use/) para 1.21.1.
 2. Ponha a [Fabric API](https://modrinth.com/mod/fabric-api) na pasta `mods`.
-3. Baixe o `village-colony-0.1.0.jar` na
+3. Baixe o `village-colony-0.2.0.jar` na
    [página de releases](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases)
    e ponha ao lado dela.
 4. Abra o jogo, carregue um mundo, e ache uma vila de planície.
 
 Funciona em singleplayer e em servidor dedicado. Quem entra num servidor
 que tem o mod **não** precisa instalá-lo no cliente.
+
+> **Atualizando de uma versão anterior:** apague o jar antigo da pasta
+> `mods`. O Fabric recusa carregar dois jars do mesmo mod, e o nome do
+> arquivo muda a cada versão.
 
 **Onde olhar**
 
