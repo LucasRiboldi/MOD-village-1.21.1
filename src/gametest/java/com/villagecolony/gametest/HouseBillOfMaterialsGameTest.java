@@ -147,6 +147,77 @@ public class HouseBillOfMaterialsGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * A casa de planície sabe por onde se entra, e gira para a rua.
+     *
+     * <p>A Regra 17 com planta lida do jogo. A cabana do mod é quadrada
+     * e resolvia a porta mudando duas coordenadas; a casa do arquivo tem
+     * a porta onde o gerador a pôs — a um bloco da parede oeste, com o
+     * encaixe de rua do jigsaw do mesmo lado — e a única forma de
+     * virá-la é girar tudo.
+     *
+     * <p>Prende as duas pontas: a planta responde de que lado é a porta,
+     * e girar leva a porta para o lado pedido.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "hut_bill")
+    public void theSmallHouseKnowsWhichWayItOpensAndTurnsToTheRoad(TestContext context) {
+        Blueprint house = StructureBlueprintReader.read(
+                        context.getWorld(), StructureBlueprintReader.SMALL_HOUSE)
+                .orElseThrow();
+
+        Optional<Side> door = house.doorSide();
+
+        context.assertTrue(door.isPresent(), "a casa pequena não disse por onde se entra");
+
+        context.assertTrue(
+                door.get() == Side.WEST,
+                "a porta da casa pequena fica a oeste, e a planta disse " + door.get());
+
+        for (Side road : Side.values()) {
+            Blueprint turned = house.rotated(door.get().turnsTo(road));
+
+            context.assertTrue(
+                    turned.doorSide().orElseThrow() == road,
+                    "girada para " + road + ", a porta foi parar em "
+                            + turned.doorSide().orElseThrow());
+
+            context.assertTrue(
+                    turned.blockCount() == house.blockCount(),
+                    "girar mudou o número de blocos da casa");
+        }
+
+        context.complete();
+    }
+
+    /**
+     * A cama e a tocha da casa do jogo não seguram a obra — a Regra 21.
+     *
+     * <p>A regra nasceu para a cabana do mod, onde a lista de mobília
+     * era escrita à mão. Numa casa lida de arquivo é preciso reconhecer
+     * a mobília, senão a obra pararia esperando lã.
+     *
+     * <p>E o que <b>não</b> é mobília importa igual: pedregulho é
+     * parede, e parede segura a obra.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "hut_bill")
+    public void theBedAndTheTorchDoNotHoldUpTheWork(TestContext context) {
+        Blueprint house = StructureBlueprintReader.read(
+                        context.getWorld(), StructureBlueprintReader.SMALL_HOUSE)
+                .orElseThrow();
+
+        for (BlueprintBlock block : house.blocks()) {
+            String name = block.block().path();
+
+            boolean shouldBeFurniture = name.endsWith("_bed") || name.endsWith("torch");
+
+            context.assertTrue(
+                    block.furniture() == shouldBeFurniture,
+                    name + " está do lado errado da Regra 21");
+        }
+
+        context.complete();
+    }
+
     /** Uma linha por material, do mais pedido para o menos. */
     private static void announce(Blueprint house) {
         Map<ResourceId, Integer> materials = house.materials();

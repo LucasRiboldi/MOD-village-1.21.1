@@ -46,3 +46,17 @@ desktop.ini
 # redistribuição. A análise arquitetural dela — que é obra nossa e pode
 # ser publicada — está em docs/workers-analysis/.
 workers-maingit/
+
+# Assets do próprio Minecraft, usados como referência local.
+#
+# 1.180 arquivos e 6,5 MB de estruturas da Mojang, baixados para
+# consulta. Mesma razão da pasta acima, e mais uma:
+#
+#   1. são assets da Mojang, e este repositório é público —
+#      redistribuí-los é decisão jurídica, não técnica;
+#   2. o mod não precisa deles. O jogo já os traz, e o construtor os lê
+#      por id. O que entra no repositório é só a lista de NOMES, em
+#      data/villagecolony/catalog/vanilla_structures.json.
+#
+# Quem quiser a pasta baixa de InventivetalentDev/minecraft-assets.
+minecraft-assets_structure/

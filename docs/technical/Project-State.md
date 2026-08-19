@@ -3455,3 +3455,96 @@ obedecer             a limpeza do canteiro, refeita ao voltar do save
 O princípio, para quem escrever o próximo cache: **marca que não vence é
 uma afirmação sobre o futuro do mundo do jogador, e o mod não tem como
 fazer nenhuma.**
+
+---
+
+## Regra 24 — a vila de planície levanta a casa do jogo
+
+```text
+o modelo de casa construído em vila de planície é a casa pequena
+padrão do Minecraft (plains_small_house_1)
+```
+
+Decidida pelo autor em 2026-08-19, e ela desfaz metade da Regra 13.
+
+A Regra 13 tinha trocado a obra do MVP pela cabana do mod porque a casa
+do jogo era **impossível**: 66 dos 149 blocos dela pedem minerar,
+fundir, tosquiar e descascar, e a colônia parava no primeiro pedregulho.
+O que mudou desde então não foi a colônia — foi a segunda metade da
+própria Regra 13 ficar utilizável: *o que a colônia não produz, o
+jogador guarda no baú*, e a Regra 10 deu ao construtor o acesso a
+qualquer baú da vila, com fabricação do que faltar.
+
+```text
+o que a colônia faz    49 escadas (da tábua, pela Regra 10)
+sozinha                33 tábuas
+                        1 porta
+
+o que você guarda      43 pedregulhos
+no baú                 16 troncos descascados
+                        3 vidraças
+
+o que não segura        1 cama, 3 tochas — mobília, Regra 21
+a obra
+```
+
+**A consequência, dita antes de acontecer:** esta casa **não sobe
+sozinha** como a cabana subia. Sem pedregulho num baú, a obra fica em
+`WAITING_RESOURCES` e o relatório diz o que falta. Isso é o modo de jogo
+que o autor escolheu, não um defeito — mas é uma troca, e quem abrir o
+log daqui a um mês precisa achar isto escrito.
+
+**A Regra 17 sobreviveu, e não de graça.** A cabana é um quadrado e
+resolvia a porta mudando duas coordenadas. A casa do jogo tem a porta
+onde o arquivo a pôs — a um bloco da parede oeste, com o *jigsaw* de
+encaixe de rua do mesmo lado. A única forma de virá-la para a rua é
+**girar a planta inteira**, e é o que passa a acontecer:
+
+```text
+Blueprint.doorSide()   a parede mais perto da porta. Acerta a casa de
+                       planície, e a conta é a mesma para qualquer
+                       planta com porta
+
+Blueprint.rotated(n)   giro em quartos de volta, com a caixa
+                       acompanhando: 5x3 vira 3x5. A ordem dos blocos
+                       é preservada, porque é ela que faz a parede
+                       subir antes do teto
+
+Side.turnsTo(outro)    quantos quartos de volta daqui até lá
+```
+
+A obra que volta do save é girada de novo, e o lado sai do mundo — não
+do save. Um campo gravado poderia discordar do terreno depois de o
+jogador mexer nele; o caminho de terra ao lado, não.
+
+**A mobília precisou ser reconhecida.** A Regra 21 nasceu para a cabana,
+onde a lista era escrita à mão. Numa planta lida de arquivo o leitor
+marca cama, tocha, lanterna e baú como mobília — e **só isso**.
+Pedregulho, vidraça e tronco descascado seguram a obra, e é assim que
+tem de ser: são parede, e casa sem parede não é casa.
+
+---
+
+## O catálogo de estruturas — 2026-08-19
+
+O autor baixou a pasta `minecraft-assets_structure/` com **1.180
+arquivos** de estrutura do jogo, 6,5 MB, e pediu que ela fosse a base de
+dados de construções possíveis do construtor — "para implementar no
+futuro".
+
+**O que entrou no repositório:** só os **nomes**, em
+`data/villagecolony/catalog/vanilla_structures.json` (51 KB). Nenhum byte
+de arquivo da Mojang.
+
+**Por quê.** O mod não precisa dos arquivos: o jogo já os traz, e
+`StructureBlueprintReader` os lê por id — foi assim que a casa de
+planície foi medida em 08-15, antes de qualquer cópia existir. E o
+repositório é público, então commitar assets da Mojang é decisão
+jurídica, não técnica. O `.gitignore` já tinha o precedente exato, com a
+pasta do mod Workers.
+
+**O que falta para o construtor escolher entre muitas** não é a lista. É
+o critério — que casa, para qual vila, em que ordem — e a conta de
+materiais de cada uma, que hoje só existe sob demanda. A ferramenta para
+isso já está escrita: `Blueprint.materials()`, que o teste de lista de
+compras usa.

@@ -111,6 +111,35 @@ public final class StructureBlueprintReader {
     }
 
     /**
+     * O que é mobília numa planta lida do jogo — a Regra 21.
+     *
+     * <p>Mobília não segura a obra: falta o material dela e a casa
+     * termina assim mesmo, com a peça entrando depois. A regra nasceu
+     * para a cabana do mod, onde a lista era escrita à mão; numa casa
+     * lida de arquivo é preciso reconhecê-la.
+     *
+     * <p>A lista é curta de propósito, e cada item tem o mesmo motivo:
+     * a colônia não sabe fazê-lo e ele não sustenta parede nenhuma.
+     * Cama pede lã, tocha e lanterna pedem carvão e ferro. Baú entra
+     * porque é mobília por natureza, ainda que a colônia saiba fazê-lo —
+     * a casa sem baú continua sendo casa.
+     *
+     * <p><b>O que fica de fora é o ponto.</b> Pedregulho, vidraça e
+     * tronco descascado <b>seguram</b> a obra, e é assim que tem de ser:
+     * são parede, e casa sem parede não é casa. Quando a colônia não os
+     * produz, a obra espera pelo jogador — e o relatório diz por quê.
+     */
+    private static boolean isFurniture(ResourceId block) {
+        String name = block.path();
+
+        return name.endsWith("_bed")
+                || name.equals("torch")
+                || name.equals("wall_torch")
+                || name.equals("lantern")
+                || name.equals("chest");
+    }
+
+    /**
      * Se esta entrada da paleta é a <b>segunda</b> metade de um bloco que
      * ocupa dois lugares — a parte de cima de uma porta, a cabeceira de
      * uma cama.
@@ -258,7 +287,9 @@ public final class StructureBlueprintReader {
                 continue;
             }
 
-            blocks.add(new BlueprintBlock(offsetOf(entry), name));
+            blocks.add(isFurniture(name)
+                    ? BlueprintBlock.furniture(offsetOf(entry), name)
+                    : new BlueprintBlock(offsetOf(entry), name));
         }
 
         // De baixo para cima, e a ordem é do projeto, não do construtor:

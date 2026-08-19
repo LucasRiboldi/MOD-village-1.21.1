@@ -40,7 +40,15 @@ porta e cama é descartada, porque quem a completa é o construtor.
 A casa pequena de vila de planície do próprio jogo
 (`plains_small_house_1`, DataVersion 3952), 7 × 7 × 7.
 
-**Ela ainda não é a obra da colônia**, e a razão está na Regra 13:
+**É a obra da colônia em vila de planície desde 2026-08-19**, por
+decisão do autor. Nos outros biomas continua a cabana do mod.
+
+A porta dela fica a um bloco da parede oeste — e o encaixe de rua do
+gerador, o *jigsaw*, está do mesmo lado. A colônia descobre isso sozinha
+(`Blueprint.doorSide`) e **gira a planta inteira** para a porta cair na
+rua, que é a Regra 17.
+
+**O que isso custa**, e é preciso dizer:
 
 ```text
 149 blocos, 8 tipos
@@ -54,9 +62,35 @@ A casa pequena de vila de planície do próprio jogo
   1 oak_door          tábua      ✅
 ```
 
-Sessenta e cinco blocos pedem cadeias que a colônia não tem. Pela
-segunda metade da Regra 13, isso não a torna impossível: o que a colônia
-não produz, **o jogador guarda no baú**, e o construtor tira dali sem
-perguntar de onde veio. O que ela exige é essa combinação, e por isso
-trocar a obra padrão é decisão do autor, não consequência de o arquivo
-estar nesta pasta.
+Sessenta e dois blocos pedem cadeias que a colônia não tem. Pela segunda
+metade da Regra 13, isso não a torna impossível: o que a colônia não
+produz, **o jogador guarda no baú**, e o construtor tira dali sem
+perguntar de onde veio.
+
+Mas a consequência é real e o autor a aceitou: **esta casa não sobe
+sozinha** como a cabana subia. Sem pedregulho num baú, a obra fica em
+`WAITING_RESOURCES` e o relatório diz o que falta, uma peça por vez.
+
+A cama e a tocha são exceção — elas são **mobília** pela Regra 21, e
+mobília não segura a obra. A casa termina sem elas e elas entram quando
+o material aparecer. Pedregulho não: parede segura a obra, porque casa
+sem parede não é casa.
+
+---
+
+## O catálogo de estruturas
+
+`data/villagecolony/catalog/vanilla_structures.json` lista os **1.180
+ids** de estrutura que o jogo 1.21.1 traz — vilas de cinco biomas,
+fortalezas, cidades antigas, câmaras de provação, e o resto.
+
+**Só nomes.** Nenhum byte de arquivo da Mojang mora no repositório: o
+jogo já traz as estruturas, e o construtor as lê por id com o mesmo
+`StructureBlueprintReader` que lê esta pasta. A lista foi gerada da
+pasta `minecraft-assets_structure/`, que fica fora do controle de versão
+pelo motivo escrito no `.gitignore`.
+
+É a base para o passo seguinte, que o autor pediu para deixar preparado:
+**o construtor escolhendo entre muitas estruturas** em vez de uma só. O
+que falta para isso não é a lista — é o critério de escolha (que casa,
+para qual vila, em que ordem) e a conta de materiais de cada uma.

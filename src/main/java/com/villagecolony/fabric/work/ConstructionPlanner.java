@@ -66,6 +66,14 @@ public final class ConstructionPlanner {
      */
     private static final String SUBJECT = "building";
 
+    /**
+     * A casa pequena, lida do disco uma vez por sessão.
+     *
+     * <p>Esquecida ao parar o servidor, junto com o resto — ver
+     * {@link #clearAll()}.
+     */
+    private static Optional<Blueprint> smallHouse;
+
     private ConstructionPlanner() {
     }
 
@@ -90,6 +98,8 @@ public final class ConstructionPlanner {
     /** Esquece o motivo guardado. Chamado ao parar o servidor. */
     public static void clearAll() {
         IdleLog.clearAll();
+
+        smallHouse = null;
     }
 
     /**
@@ -232,13 +242,10 @@ public final class ConstructionPlanner {
         // A planta provisória serve só para medir: o tamanho da cabana
         // não muda com a parede em que a porta fica, e é o tamanho que a
         // busca de lote precisa saber antes de haver lote.
-        // A Regra 20: a madeira é a da vila, e não sempre carvalho. A
-        // colônia ativa tem o chunk do centro carregado — é o ciclo que
-        // garante isso —, então perguntar o bioma aqui é barato e certo.
-        ResourceId wood = VillageBiomes.woodAt(world, colony.center())
-                .orElse(ColonyHut.OAK_PLANKS);
-
-        Blueprint blueprint = ColonyHut.blueprint(wood, Side.NORTH);
+        // A planta desta vila. Em planície é a casa pequena do próprio
+        // jogo, por decisão do autor em 2026-08-19; nos outros biomas
+        // continua a cabana do mod, na madeira do bioma (Regra 20).
+        Blueprint blueprint = houseFor(world, colony);
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 world, colony.center(), VillageDetector.SEARCH_RADIUS, blueprint.size());
@@ -275,10 +282,10 @@ public final class ConstructionPlanner {
                     "the lot at " + site.get().origin() + " falls on a colony building");
         }
 
-        // Agora que há lote, a planta é remontada com a parede certa: é
-        // a Regra 17, e o lado sai de quem achou o lote.
-        Blueprint facingTheRoad = ColonyHut.blueprint(
-                wood, MinecraftTypeAdapter.toSide(site.get().doorSide()));
+        // Agora que há lote, a planta é virada para a rua: é a Regra 17,
+        // e o lado sai de quem achou o lote.
+        Blueprint facingTheRoad = turnedToTheRoad(
+                blueprint, MinecraftTypeAdapter.toSide(site.get().doorSide()));
 
         ConstructionProject project = ConstructionProject.plan(
                 colony.id(), facingTheRoad, site.get().origin());
@@ -431,6 +438,73 @@ public final class ConstructionPlanner {
     }
 
     /**
+     * A casa que esta vila levanta.
+     *
+     * <p>Decidido pelo autor em 2026-08-19: <b>vila de planície constrói
+     * a casa pequena do próprio jogo</b>, e não mais a cabana do mod. O
+     * arquivo dela é um schema do mod — ver
+     * {@code data/villagecolony/structure/houses/} —, então não depende
+     * de o jogo continuar gerando aquela peça com aquele nome.
+     *
+     * <p>Nos outros biomas continua a cabana, na madeira do bioma. Não é
+     * esquecimento: a casa de cada bioma existe no catálogo e ainda não
+     * foi escolhida uma por bioma, e o autor pediu "por hora, em testes,
+     * só a casa básica pequena".
+     *
+     * <p><b>O que isso custa, e é preciso dizer.</b> A casa do jogo pede
+     * 43 pedregulhos, 16 troncos descascados e 3 vidraças, e a colônia
+     * não minera, não funde e não descasca. Pela segunda metade da
+     * Regra 13 a obra não é impossível — o jogador guarda no baú o que a
+     * colônia não faz, e o construtor tira dali —, mas ela <b>não sobe
+     * sozinha</b> como a cabana subia. O relatório diz o que falta, uma
+     * peça por vez.
+     */
+    private static Blueprint houseFor(ServerWorld world, Colony colony) {
+        ResourceId wood = VillageBiomes.woodAt(world, colony.center())
+                .orElse(ColonyHut.OAK_PLANKS);
+
+        if (!ColonyHut.OAK_PLANKS.equals(wood)) {
+            return ColonyHut.blueprint(wood, Side.NORTH);
+        }
+
+        return smallHouse(world).orElseGet(() -> ColonyHut.blueprint(wood, Side.NORTH));
+    }
+
+    /**
+     * A casa pequena, lida uma vez e guardada.
+     *
+     * <p>Ler um template é abrir e decodificar um arquivo de trezentos e
+     * quarenta e três blocos, e o ciclo pergunta pela planta a cada
+     * passagem. O aviso está no cabeçalho de
+     * {@code StructureBlueprintReader}: quem chama guarda o resultado.
+     */
+    private static Optional<Blueprint> smallHouse(ServerWorld world) {
+        if (smallHouse == null) {
+            smallHouse = StructureBlueprintReader.read(
+                    world, StructureBlueprintReader.SMALL_HOUSE);
+        }
+
+        return smallHouse;
+    }
+
+    /**
+     * A planta virada para a rua — a Regra 17, agora por giro.
+     *
+     * <p>A cabana do mod é quadrada e resolvia a porta mudando duas
+     * coordenadas. A casa do jogo não: a porta está onde o arquivo a
+     * pôs — a um bloco da parede oeste, na casa de planície —, e a única
+     * forma de virá-la para a rua é girar a planta inteira.
+     *
+     * <p>Planta sem porta passa reta: cerca e poço não têm por onde
+     * entrar, e girá-los não faria diferença nenhuma.
+     */
+    private static Blueprint turnedToTheRoad(Blueprint house, Side road) {
+        return house.doorSide()
+                .map(door -> house.rotated(door.turnsTo(road)))
+                .orElse(house);
+    }
+
+    /**
      * A planta deste id, venha ela do mod ou do jogo.
      *
      * <p>Existe para {@link #resume}, que carrega obra gravada em sessão
@@ -450,14 +524,29 @@ public final class ConstructionPlanner {
             ResourceId wood = VillageBiomes.woodAt(world, origin)
                     .orElse(ColonyHut.OAK_PLANKS);
 
-            Side doorSide = BuildSiteScanner
-                    .roadSideOf(world, origin, ColonyHut.blueprint(wood, Side.NORTH).size())
-                    .map(MinecraftTypeAdapter::toSide)
-                    .orElse(Side.NORTH);
-
-            return Optional.of(ColonyHut.blueprint(wood, doorSide));
+            return Optional.of(ColonyHut.blueprint(
+                    wood, roadSideOf(world, origin, ColonyHut.blueprint(wood, Side.NORTH))));
         }
 
-        return StructureBlueprintReader.read(world, id);
+        // Planta lida de arquivo: ela volta como o arquivo a gravou, e
+        // precisa ser virada de novo para a rua. Sem isto a obra que
+        // volta do save mede o mundo com a planta na orientação errada,
+        // conclui que nada está de pé e reconstrói por cima, torto.
+        return StructureBlueprintReader.read(world, id)
+                .map(house -> turnedToTheRoad(house, roadSideOf(world, origin, house)));
+    }
+
+    /**
+     * Para que lado fica a rua desta obra, lida do mundo.
+     *
+     * <p>O lado não é gravado no save de propósito: ele é uma leitura do
+     * mundo, e o mundo é a única fonte que continua certa depois de o
+     * jogador mexer nele. Sem rua em volta — o jogador arrancou o
+     * caminho —, fica o norte, que é onde a planta antiga punha a porta.
+     */
+    private static Side roadSideOf(ServerWorld world, ColonyPos origin, Blueprint house) {
+        return BuildSiteScanner.roadSideOf(world, origin, house.size())
+                .map(MinecraftTypeAdapter::toSide)
+                .orElse(Side.NORTH);
     }
 }
