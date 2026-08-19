@@ -441,6 +441,13 @@ public final class BuildSiteScanner {
                 if (ground.getY() != roadY) {
                     return Optional.empty();
                 }
+
+                // E a Regra 22: a casa não sobe onde já há coisa. Não
+                // basta o chão estar bom; a coluna inteira, até o teto
+                // da planta, precisa estar livre.
+                if (!isClearAbove(world, x, z, roadY + 1, size.y())) {
+                    return Optional.empty();
+                }
             }
         }
 
@@ -448,6 +455,45 @@ public final class BuildSiteScanner {
         // chão está no nível da rua, o piso fica na altura em que se
         // anda sobre ela.
         return Optional.of(roadY + 1);
+    }
+
+    /**
+     * A coluna está livre da altura do piso até o teto da planta?
+     *
+     * <p>A Regra 22, de 2026-08-19. Até aqui o lote era julgado pelo
+     * <b>chão</b>: a coluna respondia onde a casa assenta, e um único
+     * bloco acima da janela reprovava. Isso deixava passar o que
+     * estivesse dentro da caixa da casa e acima daquela janela — árvore
+     * caída, cerca, poste, a quina de outra construção. A casa nascia
+     * com aquilo dentro dela, e o construtor pulava os blocos ocupados
+     * com {@code is in the way}.
+     *
+     * <p>Agora a pergunta é sobre o volume: cada coluna do lote, do piso
+     * ao último nível da planta.
+     *
+     * <p><b>Planta não ocupa.</b> Grama alta, flor, samambaia e camada
+     * de neve não reprovam o lote — quem constrói tira. É o outro lado
+     * da mesma decisão do autor: recusar um lote de planície por causa
+     * de um pé de margarida seria recusar a planície inteira.
+     */
+    private static boolean isClearAbove(
+            ServerWorld world, int x, int z, int floor, int height) {
+
+        WorldChunk chunk = world.getChunkManager().getWorldChunk(x >> 4, z >> 4);
+
+        if (chunk == null) {
+            // Chunk descarregado: não dá para afirmar que está livre, e
+            // afirmar sem saber é como a casa nasce dentro da árvore.
+            return false;
+        }
+
+        for (int y = floor; y < floor + height; y++) {
+            if (!isNothing(chunk.getBlockState(new BlockPos(x, y, z)))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

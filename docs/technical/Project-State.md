@@ -3361,3 +3361,97 @@ desligada — recusa a árvore alta, como em jogo.
 os testes que    aTreeTallerThanTheHarvestCeilingIsStillATree
 seguram          aTallBareTrunkIsStillNotATree
 ```
+
+---
+
+## Regra 22 — o lote é livre no volume, e planta não conta
+
+```text
+não pode haver bloco no espaço interno da casa
+
+se houver bloco acima da linha de base, dentro do espaço onde a casa
+vai, aquele espaço não serve
+
+flor e mato não impedem: quem constrói tira
+```
+
+Pedida pelo autor em 2026-08-19, depois de ver casa nascendo com coisa
+dentro.
+
+**O que estava errado.** O lote era julgado pelo **chão**. A coluna
+respondia onde a casa assenta, e havia uma única pergunta sobre o alto —
+um bloco acima da janela de busca reprovava a coluna. A janela tem dois
+blocos; a casa tem sete. Tudo o que estivesse entre um e outro passava
+despercebido, e a casa subia em volta do obstáculo: o construtor punha o
+que dava e pulava o resto com `is in the way`.
+
+**O que passa a valer:** cada coluna do lote, do piso ao último nível da
+planta, precisa estar livre. É a pergunta sobre o volume que a Regra 16
+já anunciava e que só agora tem código.
+
+**A outra metade, e ela é do mesmo pedido:** planta não ocupa. Grama
+alta, samambaia, flor e camada de neve não reprovam lote nenhum — e por
+não reprovarem, precisam de alguém que as tire. Esse alguém é o estado
+`PREPARING`, que existia no documento desde o começo e passava em branco.
+
+```text
+o que a preparação  o que o jogo considera substituível: mato, flor,
+tira                neve. Bloco sólido não, e não por acidente — a
+                    Regra 3 manda não tocar no que é do jogador, e um
+                    lote com bloco sólido dentro nem devia ter sido
+                    escolhido
+
+sem drop            a flor some, não vira item no chão. É o que
+                    acontece quando um jogador põe bloco sobre grama
+                    alta. Fazer cair encheria o canteiro de entulho
+                    que ninguém recolhe
+
+quando              ao abrir a obra, e de novo ao ela voltar do save —
+                    o jogador pode ter plantado no meio (Regra 23)
+```
+
+```text
+os testes que    aBlockInsideTheHouseRefusesTheLot — com uma casa
+seguram          ALTA, porque com casa baixa a janela de chão cobre o
+                 volume por acidente e o teste passa sem a regra. A
+                 primeira versão dele passou assim
+
+                 flowersInsideTheHouseDoNotRefuseTheLot
+```
+
+---
+
+## Regra 23 — o que já foi analisado se analisa de novo
+
+```text
+vale para o mod inteiro: espaço já analisado pode ser reanalisado,
+porque o jogador modifica a vila
+```
+
+Pedida pelo autor em 2026-08-19, e ela derruba um argumento que estava
+escrito no código com todas as letras. `LumberjackWork.REJECTED` dizia:
+
+> *Construção não vira árvore, então a recusa não envelhece — o que
+> envelhece é o mundo, e para isso basta reiniciar.*
+
+O argumento está errado pelo lado do jogador. Ele derruba a parede,
+planta uma muda ao lado do pilar, deixa a copa crescer sobre o tronco
+que descascou. **O mundo muda, e o mod ficava com uma opinião de trinta
+minutos atrás** — até o servidor reiniciar.
+
+Agora a recusa envelhece, como já envelhecia a marca de árvore fora de
+alcance: guarda quando nasceu e esquece sozinha, em dez ciclos da
+colônia.
+
+```text
+o que já obedecia    UNREACHABLE, com prazo desde a Regra 9
+                     o cursor da busca de lote, que recomeça do centro
+                     o cursor da busca de árvore
+
+o que passou a       REJECTED, o "não é árvore"
+obedecer             a limpeza do canteiro, refeita ao voltar do save
+```
+
+O princípio, para quem escrever o próximo cache: **marca que não vence é
+uma afirmação sobre o futuro do mundo do jogador, e o mod não tem como
+fazer nenhuma.**

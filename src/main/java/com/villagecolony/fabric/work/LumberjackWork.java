@@ -227,11 +227,28 @@ public final class LumberjackWork {
      * recusar de um em um faria uma parede de vinte e cinco troncos
      * custar vinte e cinco buscas.
      *
-     * <p>Esquecido ao parar o servidor, como o resto do estado em
-     * memória. Construção não vira árvore, então a recusa não envelhece
-     * — o que envelhece é o mundo, e para isso basta reiniciar.
+     * <p><b>A recusa envelhece</b>, desde 2026-08-19. Ela não envelhecia,
+     * e o argumento escrito aqui era que "construção não vira árvore".
+     * O argumento estava errado pelo lado do jogador: ele derruba a
+     * parede, planta uma muda ao lado do pilar, deixa a copa crescer
+     * sobre o tronco que ele havia descascado. O mundo muda, e o mod
+     * ficava com uma opinião de trinta minutos atrás.
+     *
+     * <p>É a Regra 23 — <i>o que já foi analisado pode ser analisado de
+     * novo</i> —, e agora esta marca é igual à de {@link #UNREACHABLE}:
+     * guarda quando nasceu e esquece sozinha.
      */
-    private static final Set<BlockPos> REJECTED = new HashSet<>();
+    private static final Map<BlockPos, Long> REJECTED = new HashMap<>();
+
+    /**
+     * Quanto tempo um grupo de troncos fica marcado como "não é árvore".
+     *
+     * <p>Dez ciclos da colônia, o mesmo prazo de {@link #UNREACHABLE_MEMORY}
+     * e pelo mesmo motivo: é tempo bastante para a busca não reencontrar
+     * a mesma parede a cada passagem, e curto bastante para o jogador
+     * ver o mod mudar de ideia dentro da mesma sessão.
+     */
+    private static final int REJECTED_MEMORY = 10 * VillageDetector.CYCLE_TICKS;
 
     /**
      * Quantos troncos recusados se guarda antes de esquecer tudo.
@@ -674,7 +691,7 @@ public final class LumberjackWork {
                 job.center,
                 SEARCH_RADIUS,
                 log -> !CLAIMED.contains(log)
-                        && !REJECTED.contains(log)
+                        && !isRejected(world, log)
                         && !isOutOfReach(world, log));
 
         if (tree.isEmpty()) {
@@ -710,7 +727,7 @@ public final class LumberjackWork {
             // Não é árvore: a regra da copa recusou. Recusar em silêncio
             // e sair daqui faria a busca reencontrar este mesmo tronco no
             // ciclo seguinte, e no seguinte — ver REJECTED.
-            reject(trunkGroup);
+            reject(world, trunkGroup);
 
             return Outcome.SEARCHED;
         }
@@ -1030,6 +1047,12 @@ public final class LumberjackWork {
     private static void forgetStaleMarks(ServerWorld world) {
         UNREACHABLE.values().removeIf(
                 since -> world.getTime() - since >= UNREACHABLE_MEMORY);
+
+        // E as recusas de "não é árvore", pela Regra 23: o jogador
+        // planta uma muda ao lado do pilar, e o que era construção passa
+        // a ser floresta.
+        REJECTED.values().removeIf(
+                since -> world.getTime() - since >= REJECTED_MEMORY);
     }
 
     /**
@@ -1062,17 +1085,44 @@ public final class LumberjackWork {
         return false;
     }
 
-    private static void reject(List<BlockPos> trunk) {
+    private static void reject(ServerWorld world, List<BlockPos> trunk) {
         if (REJECTED.size() + trunk.size() > MAX_REJECTED) {
             REJECTED.clear();
         }
 
-        REJECTED.addAll(trunk);
+        for (BlockPos log : trunk) {
+            REJECTED.put(log.toImmutable(), world.getTime());
+        }
 
         VillageColonyMod.LOGGER.info(
-                "Not a tree at {} — {} logs without a living canopy, skipping it from now on",
+                "Not a tree at {} — {} logs without a living canopy,"
+                        + " skipping it for {} ticks",
                 trunk.isEmpty() ? "?" : trunk.get(0).toShortString(),
-                trunk.size());
+                trunk.size(),
+                REJECTED_MEMORY);
+    }
+
+    /**
+     * Se este grupo de troncos ainda está marcado como "não é árvore".
+     *
+     * <p>Tira a marca vencida ao perguntar, do mesmo jeito que
+     * {@link #isOutOfReach} faz — quem reencontra o lugar é quem paga
+     * por limpá-lo.
+     */
+    private static boolean isRejected(ServerWorld world, BlockPos log) {
+        Long since = REJECTED.get(log);
+
+        if (since == null) {
+            return false;
+        }
+
+        if (world.getTime() - since >= REJECTED_MEMORY) {
+            REJECTED.remove(log);
+
+            return false;
+        }
+
+        return true;
     }
 
     /**

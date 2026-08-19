@@ -20,6 +20,7 @@ import com.villagecolony.core.type.Side;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.SitePreparation;
 import com.villagecolony.fabric.integration.VillageBiomes;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import net.minecraft.block.Block;
@@ -284,13 +285,15 @@ public final class ConstructionPlanner {
 
         VillageColonyMod.CONSTRUCTIONS.register(project);
 
-        // PREPARING passa direto, e é honesto dizer por quê: o lote só é
-        // aceito quando não há nada em cima dele — BuildSiteScanner
-        // reprova a coluna que tenha qualquer bloco acima da janela. A
-        // limpeza de terreno prevista em Construction-System.md §PREPARING
-        // não tem o que limpar, e implementá-la agora seria escrever
-        // código para um caso que a escolha do lote já excluiu.
+        // PREPARING deixou de passar em branco em 2026-08-19. O lote é
+        // escolhido sem bloco sólido dentro (Regra 22), mas grama alta e
+        // flor não reprovam lote nenhum — e o miolo da planta não põe
+        // bloco, então elas ficariam dentro da casa para sempre. Quem as
+        // tira é a preparação.
         project.moveTo(ConstructionState.PREPARING);
+
+        SitePreparation.clear(world, project);
+
         project.moveTo(ConstructionState.BUILDING);
 
         ensureTask(colony, project);
@@ -358,6 +361,10 @@ public final class ConstructionPlanner {
 
         ConstructionProject project = ConstructionProject.restore(
                 saved.id(), saved.colonyId(), blueprint.get(), saved.origin(), saved.state());
+
+        // O jogador pode ter plantado no canteiro entre uma sessão e
+        // outra — a Regra 23: o que já foi olhado se olha de novo.
+        SitePreparation.clear(world, project);
 
         int standing = 0;
 

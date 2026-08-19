@@ -31,6 +31,15 @@ public class BuildSiteGameTest implements FabricGameTest {
     private static final ColonyPos SMALL_HOUSE = new ColonyPos(2, 3, 2);
 
     /**
+     * Uma casa alta, para a Regra 22 ter o que exercitar.
+     *
+     * <p>A casa de vila do jogo tem sete de altura. Com três, a janela
+     * de busca de chão já cobre o volume por acidente, e a regra do
+     * volume não é testada de verdade.
+     */
+    private static final ColonyPos TALL_HOUSE = new ColonyPos(2, 5, 2);
+
+    /**
      * Chão liso com rua ao lado: a colônia acha onde construir.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site")
@@ -217,6 +226,102 @@ public class BuildSiteGameTest implements FabricGameTest {
                 SMALL_HOUSE);
 
         context.assertTrue(site.isEmpty(), "aceitou lote com desnível de quatro blocos");
+
+        context.complete();
+    }
+
+    /**
+     * A Regra 22: bloco dentro da caixa da casa reprova o lote.
+     *
+     * <p>Pedido do autor em 2026-08-19, depois de ver casa nascendo com
+     * coisa dentro. O lote era julgado pelo <b>chão</b>: a coluna dizia
+     * onde a casa assenta, e o que estivesse acima da janela de busca
+     * passava despercebido. A casa subia em volta do obstáculo, e o
+     * construtor pulava os blocos ocupados com {@code is in the way}.
+     *
+     * <p>Aqui o chão está perfeito e há um bloco no ar, à altura do
+     * primeiro andar. O lote inteiro tem de ser recusado.
+     *
+     * <p>Rodado contra a regra desligada: o lote é aceito e a afirmação
+     * falha.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site")
+    public void aBlockInsideTheHouseRefusesTheLot(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+
+        paveGround(context, center);
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+
+        // Uma pedra no ar, em cada uma das quatro vizinhanças da rua:
+        // não importa para que lado o lote cresça, ele encontra isto.
+        //
+        // A quatro blocos do chão de propósito. Mais baixo que isso e
+        // quem recusaria seria a janela de busca de chão, que já existia
+        // — o teste passaria sem a Regra 22 e não provaria nada. Foi o
+        // que aconteceu na primeira versão dele.
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (dx == 0 && dz == 0) {
+                    continue;
+                }
+
+                context.setBlockState(
+                        center.add(dx, 4, dz), Blocks.STONE.getDefaultState());
+            }
+        }
+
+        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                context.getWorld(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                RADIUS,
+                TALL_HOUSE);
+
+        context.assertTrue(
+                site.isEmpty(),
+                "havia bloco dentro da caixa da casa e o lote foi aceito em "
+                        + site.map(found -> found.origin().toString()).orElse(""));
+
+        context.complete();
+    }
+
+    /**
+     * E a flor não reprova nada — o outro lado da Regra 22.
+     *
+     * <p>"O worker deve ser capaz de destruir flores se for somente o
+     * que atrapalha", disse o autor no mesmo pedido. Recusar um lote de
+     * planície por causa de um pé de margarida seria recusar a planície
+     * inteira, que é o defeito que a sessão de 2026-08-15 já tinha
+     * mostrado com a grama alta.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site")
+    public void flowersInsideTheHouseDoNotRefuseTheLot(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+
+        paveGround(context, center);
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (dx == 0 && dz == 0) {
+                    continue;
+                }
+
+                context.setBlockState(
+                        center.add(dx, 1, dz), Blocks.DANDELION.getDefaultState());
+            }
+        }
+
+        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                context.getWorld(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        context.assertTrue(
+                site.isPresent(),
+                "um campo de margaridas reprovou o lote — quem constrói tira a flor");
 
         context.complete();
     }
