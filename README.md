@@ -78,6 +78,14 @@ gerada são perguntadas diretamente ao jogo e deixadas em paz.
 **Ele para sozinho.** A colheita acaba quando os baús enchem e recomeça
 quando você tira alguma coisa. Nada cresce sem limite.
 
+**A casa nasce mobiliada, no estilo da vila.** Ela é feita da madeira do
+bioma — carvalho na planície, pinheiro na taiga, acácia na savana —, tem
+a porta virada para a rua e assenta no nível dela, para você entrar e
+sair a pé. Dentro vão uma cama, um baú e um lampião. O baú a colônia faz;
+a cama e o lampião pedem lã e ferro, que ela não produz — guarde num baú
+e eles entram sozinhos. **A casa não fica esperando por eles**: termina
+sem, e a vila continua crescendo.
+
 **A colônia fabrica o que a obra pede.** Se falta a porta e sobra tábua,
 o construtor faz a porta: ele junta o material de todos os baús da vila,
 do mais perto da obra para o mais longe, somando entre eles até dar. Só
@@ -148,7 +156,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Agricultura, mineração, ferraria, defesa | ⬜ não começado |
 
 ```text
-387 testes unitários  ·  104 testes de jogo  ·  ./gradlew build
+395 testes unitários  ·  112 testes de jogo  ·  ./gradlew build
 ```
 
 ---

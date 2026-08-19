@@ -18,8 +18,7 @@ import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
-import com.villagecolony.fabric.integration.ColonyChests;
-import com.villagecolony.fabric.integration.CraftingLookup;
+import com.villagecolony.fabric.integration.ColonySupply;
 import net.minecraft.block.Block;
 import net.minecraft.block.enums.BedPart;
 import net.minecraft.block.enums.DoubleBlockHalf;
@@ -361,6 +360,23 @@ public final class BuilderWork {
         }
 
         if (!takeMaterial(world, project, material.get().asItem())) {
+            if (block.furniture()) {
+                // A Regra 21: a obra não espera por mobília. Falta lã
+                // para a cama ou ferro para o lampião, e a casa termina
+                // sem — a peça entra depois, por HouseFurnishing, quando
+                // o material aparecer num baú. Exigi-la aqui faria
+                // nenhuma casa terminar e a vila parar de crescer, que é
+                // o travamento que a Regra 13 corrigiu.
+                VillageColonyMod.LOGGER.info(
+                        "Project {} finishes without {} — the colony has no material for it yet",
+                        project.id(),
+                        block.block());
+
+                project.markPlaced(block);
+
+                return true;
+            }
+
             waitForResources(project, job, workerId, block);
 
             return false;
@@ -452,7 +468,7 @@ public final class BuilderWork {
      * <p>Bloco de uma parte só passa direto: {@code contains} responde
      * não, e nada acontece.
      */
-    private static void placeSecondHalf(ServerWorld world, BlockPos pos, BlockState state) {
+    public static void placeSecondHalf(ServerWorld world, BlockPos pos, BlockState state) {
         if (state.contains(Properties.DOUBLE_BLOCK_HALF)) {
             put(world, pos.up(), state.with(Properties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.UPPER));
 
@@ -503,97 +519,7 @@ public final class BuilderWork {
     private static boolean takeMaterial(
             ServerWorld world, ConstructionProject project, Item material) {
 
-        List<ColonyPos> chests = ColonyChests.nearestFirst(project.colonyId(), project.origin());
-
-        if (ColonyChests.withdraw(world, chests, material, 1) > 0) {
-            return true;
-        }
-
-        // Não havia pronto. A Regra 10: se a colônia tem do que se faz,
-        // o construtor faz. É o que faltava na sessão de 2026-08-18 —
-        // 154 tábuas guardadas, uma porta faltando, e nada ligando as
-        // duas coisas.
-        if (!craftMissing(world, project, chests, material)) {
-            return false;
-        }
-
-        return ColonyChests.withdraw(world, chests, material, 1) > 0;
-    }
-
-    /**
-     * Fabrica o que a obra pede, com o que os baús da colônia têm.
-     *
-     * <p>A Regra 10, decidida em 2026-08-15 e elaborada em 2026-08-18: o
-     * construtor é fabricante do bloco estrutural que falta na hora.
-     * Junta o material dos baús, do mais perto da obra para o mais
-     * longe, e <b>só fabrica quando tem a quantidade inteira</b>.
-     *
-     * <p>A ordem das três conferências não é arbitrária, e cada uma
-     * evita destruir material do jogador:
-     *
-     * <ol>
-     *   <li>a receita existe, e todos os ingredientes dela estão em
-     *       baú — senão não há o que fabricar;
-     *   <li>há quantidade inteira de cada ingrediente — fabricar pela
-     *       metade tranca material num item que não serve;
-     *   <li>o resultado cabe em algum baú — tirar o ingrediente e
-     *       descobrir depois que a peça não cabe é o defeito que o E3
-     *       registra do outro lado.
-     * </ol>
-     *
-     * <p>Só então se tira. Um degrau de receita por vez: falta escada e
-     * sobra tábua, ele faz; falta escada e falta tábua, ele declara a
-     * falta e a colônia resolve no ciclo seguinte.
-     *
-     * @return true quando fabricou, e o material agora está no baú
-     */
-    private static boolean craftMissing(
-            ServerWorld world,
-            ConstructionProject project,
-            List<ColonyPos> chests,
-            Item material) {
-
-        Optional<CraftingLookup.Bill> found = CraftingLookup.billFor(
-                world, material, item -> ColonyChests.countIn(world, chests, item) > 0);
-
-        if (found.isEmpty()) {
-            return false;
-        }
-
-        CraftingLookup.Bill bill = found.get();
-
-        for (Map.Entry<Item, Integer> part : bill.ingredients().entrySet()) {
-            if (ColonyChests.countIn(world, chests, part.getKey()) < part.getValue()) {
-                return false;
-            }
-        }
-
-        Optional<ColonyPos> room = ColonyChests.firstWithRoomFor(
-                world, chests, bill.result(), bill.resultCount());
-
-        if (room.isEmpty()) {
-            VillageColonyMod.LOGGER.info(
-                    "Project {} could make {} and has nowhere to put it — every chest is full",
-                    project.id(),
-                    material);
-
-            return false;
-        }
-
-        for (Map.Entry<Item, Integer> part : bill.ingredients().entrySet()) {
-            ColonyChests.withdraw(world, chests, part.getKey(), part.getValue());
-        }
-
-        ChestDepositor.deposit(world, room.get(), bill.result(), bill.resultCount());
-
-        VillageColonyMod.LOGGER.info(
-                "Project {} made {} {} out of {} — the colony had what it takes",
-                project.id(),
-                bill.resultCount(),
-                material,
-                bill.ingredients());
-
-        return true;
+        return ColonySupply.take(world, project.colonyId(), project.origin(), material);
     }
 
     /**
@@ -624,45 +550,18 @@ public final class BuilderWork {
             return true;
         }
 
-        Item item = material.get().asItem();
-
-        List<ColonyPos> chests = ColonyChests.nearestFirst(project.colonyId(), project.origin());
-
-        if (ColonyChests.countIn(world, chests, item) > 0) {
+        if (next.get().furniture()) {
+            // Mobília nunca segura a obra — a Regra 21. Se a obra
+            // dormiu, não foi por causa dela, e responder "tem" aqui é o
+            // que impede a casa de ficar esperando por lã.
             return true;
         }
 
-        // Ter do que se faz conta como ter — a Regra 10. Sem isto a obra
-        // que uma vez dormisse por falta de porta continuaria dormindo
-        // com o baú cheio de tábua, porque quem a acorda pergunta aqui.
-        return canBeMade(world, chests, item);
-    }
-
-    /**
-     * A colônia consegue fabricar este item com o que está nos baús?
-     *
-     * <p>Pergunta sem tirar nada, e é a mesma conta que
-     * {@link #craftMissing} faz antes de gastar: receita conhecida, e
-     * quantidade inteira de cada ingrediente. As duas precisam
-     * concordar — uma que dissesse "dá" e outra que não fabricasse poria
-     * a obra a acordar e voltar a dormir todo ciclo, que é o defeito que
-     * {@code wakeIfSupplied} existe para não ter.
-     */
-    private static boolean canBeMade(ServerWorld world, List<ColonyPos> chests, Item material) {
-        Optional<CraftingLookup.Bill> bill = CraftingLookup.billFor(
-                world, material, item -> ColonyChests.countIn(world, chests, item) > 0);
-
-        if (bill.isEmpty()) {
-            return false;
-        }
-
-        for (Map.Entry<Item, Integer> part : bill.get().ingredients().entrySet()) {
-            if (ColonyChests.countIn(world, chests, part.getKey()) < part.getValue()) {
-                return false;
-            }
-        }
-
-        return true;
+        return ColonySupply.canProvide(
+                world,
+                project.colonyId(),
+                project.origin(),
+                material.get().asItem());
     }
 
     /**

@@ -345,6 +345,80 @@ public class BuilderGameTest implements FabricGameTest {
                         .owning(other.getUuid()));
     }
 
+
+    /**
+     * A Regra 21: a obra não espera por mobília.
+     *
+     * <p>Dos três móveis, a colônia só sabe fazer o baú — a cama pede lã
+     * e o lampião pede ferro, e nenhum aldeão deste mod tosquia ou
+     * minera. Exigi-los para dar a casa por pronta faria nenhuma casa
+     * terminar e a vila parar de crescer, que é o travamento que a
+     * Regra 13 corrigiu em 08-15.
+     *
+     * <p>O baú aqui tem tábua e nenhuma lã. A cama é a obra inteira, e
+     * o que se afirma é que ela <b>termina</b> assim mesmo.
+     *
+     * <p>Rodado contra a regra desligada: a obra vai para
+     * {@code WAITING_RESOURCES} e nunca fecha.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_furniture",
+            tickLimit = 300)
+    public void theWorkFinishesWithoutTheFurnitureItCannotMake(TestContext context) {
+        Fixture fixture = setUp(context, 8, furnishedRoom(), 1);
+
+        context.runAtTick(90, () -> {
+            context.assertTrue(
+                    fixture.project.state() == ConstructionState.COMPLETED,
+                    "a Regra 21 manda a obra terminar sem a cama, e ela ficou em "
+                            + fixture.project.state());
+
+            fixture.owned.cleanUp();
+
+            context.complete();
+        });
+    }
+
+    /**
+     * E o baú, que a colônia sabe fazer, entra — a outra metade.
+     *
+     * <p>Sem esta afirmação a regra poderia ser cumprida do jeito
+     * errado: pular toda mobília sempre terminaria a obra e deixaria
+     * toda casa vazia.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_furniture",
+            tickLimit = 300)
+    public void theFurnitureTheColonyCanMakeGoesIn(TestContext context) {
+        Fixture fixture = setUp(context, 8, furnishedRoom(), 1);
+
+        context.runAtTick(90, () -> {
+            context.assertTrue(
+                    stateAt(context, SITE).isOf(Blocks.CHEST),
+                    "o baú sai de oito tábuas e a colônia tinha oito — veio "
+                            + stateAt(context, SITE).getBlock());
+
+            fixture.owned.cleanUp();
+
+            context.complete();
+        });
+    }
+
+    /**
+     * Uma planta de mobília só: um baú que dá para fazer, e uma cama que
+     * não.
+     *
+     * <p>A cama fica no lugar seguinte para as duas caberem sem se
+     * atrapalhar.
+     */
+    private static Blueprint furnishedRoom() {
+        return Blueprint.of(HUT, List.of(
+                BlueprintBlock.furniture(
+                        new ColonyPos(0, 0, 0),
+                        MinecraftTypeAdapter.toResourceId(Blocks.CHEST)),
+                BlueprintBlock.furniture(
+                        new ColonyPos(1, 0, 0),
+                        MinecraftTypeAdapter.toResourceId(Blocks.WHITE_BED))));
+    }
+
     /**
      * Colônia, construtor com duas portas no baú, e um projeto de uma
      * porta só.

@@ -2,6 +2,7 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ColonyHut;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.Side;
@@ -60,10 +61,20 @@ public class HouseBillOfMaterialsGameTest implements FabricGameTest {
     /**
      * E a cabana da colônia, que é o alvo do MVP desde 08-15.
      *
-     * <p>Este afirma, e não só relata: a cabana tem de ser feita
-     * <b>só</b> do que a colônia produz a partir de tronco. No dia em
-     * que alguém puser pedregulho nela, a obra volta a ser impossível e
-     * este teste cai antes de a sessão de jogo descobrir.
+     * <p>Este afirma, e não só relata: a <b>estrutura</b> da cabana tem
+     * de ser feita só do que a colônia produz a partir de tronco. No dia
+     * em que alguém puser pedregulho numa parede, a obra volta a ser
+     * impossível e este teste cai antes de a sessão de jogo descobrir.
+     *
+     * <p><b>A mobília ficou de fora em 2026-08-19</b>, e é a Regra 21.
+     * Cama e lampião pedem lã e ferro, que a colônia não produz — e
+     * entram na casa mesmo assim, porque a Regra 21 os tirou do caminho
+     * da obra: a casa termina sem eles e a peça entra depois, quando o
+     * material aparecer num baú. Exigi-los aqui seria pedir de volta o
+     * travamento que a Regra 13 corrigiu.
+     *
+     * <p>A distinção é a que importa: o que <b>segura</b> a obra
+     * continua tendo de ser possível.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "hut_bill")
     public void theColonyCanMakeEverythingTheHutIsMadeOf(TestContext context) {
@@ -71,11 +82,35 @@ public class HouseBillOfMaterialsGameTest implements FabricGameTest {
 
         announce(hut);
 
-        for (ResourceId material : hut.materials().keySet()) {
+        for (BlueprintBlock block : hut.blocks()) {
+            if (block.furniture()) {
+                continue;
+            }
+
             context.assertTrue(
-                    FROM_LOGS.contains(material.path()),
-                    "a cabana pede " + material + ", que a colônia não faz a partir de tronco");
+                    FROM_LOGS.contains(block.block().path()),
+                    "a estrutura da cabana pede " + block.block()
+                            + ", que a colônia não faz a partir de tronco");
         }
+
+        context.complete();
+    }
+
+    /**
+     * A mobília existe, e a colônia sabe fazer pelo menos o baú.
+     *
+     * <p>A outra ponta da Regra 21: sem esta afirmação, "a mobília não
+     * segura a obra" poderia ser cumprido tirando a mobília da planta.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "hut_bill")
+    public void theHutCarriesItsFurniture(TestContext context) {
+        Blueprint hut = ColonyHut.blueprint(ColonyHut.OAK_PLANKS, Side.NORTH);
+
+        long furniture = hut.blocks().stream().filter(BlueprintBlock::furniture).count();
+
+        context.assertTrue(
+                furniture == 3,
+                "a Regra 21 pede cama, baú e lampião, e a cabana traz " + furniture);
 
         context.complete();
     }

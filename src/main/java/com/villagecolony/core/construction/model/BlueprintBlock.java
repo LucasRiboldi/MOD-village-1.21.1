@@ -23,7 +23,35 @@ import java.util.Objects;
  * @param offset posição relativa à origem do projeto
  * @param block o bloco a colocar ali
  */
-public record BlueprintBlock(ColonyPos offset, ResourceId block) {
+public record BlueprintBlock(ColonyPos offset, ResourceId block, boolean furniture) {
+
+    /**
+     * Um bloco de estrutura, que é o caso comum.
+     *
+     * <p>Parede, teto e porta: sem eles não há casa, e a obra espera
+     * pelo material deles.
+     */
+    public BlueprintBlock(ColonyPos offset, ResourceId block) {
+        this(offset, block, false);
+    }
+
+    /**
+     * Um bloco de mobília — a Regra 21.
+     *
+     * <p>Cama, baú e lampião. A diferença com a estrutura é o que
+     * acontece quando falta material: a obra <b>não espera</b> por
+     * mobília. Ela termina sem, e a peça entra depois, quando o material
+     * aparecer num baú.
+     *
+     * <p>A razão é a Regra 13. Dos três, a colônia só sabe fazer o baú:
+     * a cama pede lã e o lampião pede ferro, e nenhum aldeão deste mod
+     * tosquia ou minera. Exigi-los para dar a casa por pronta faria
+     * nenhuma casa terminar, e a vila pararia de crescer — que é
+     * exatamente o travamento que a Regra 13 corrigiu.
+     */
+    public static BlueprintBlock furniture(ColonyPos offset, ResourceId block) {
+        return new BlueprintBlock(offset, block, true);
+    }
 
     public BlueprintBlock {
         Objects.requireNonNull(offset, "offset");

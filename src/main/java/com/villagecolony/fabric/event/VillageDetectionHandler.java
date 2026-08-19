@@ -26,6 +26,7 @@ import com.villagecolony.fabric.integration.VillageScanner;
 import com.villagecolony.fabric.integration.VillagerScanner;
 import com.villagecolony.fabric.integration.WorkerEquipment;
 import com.villagecolony.fabric.integration.WorkerNameplate;
+import com.villagecolony.fabric.work.HouseFurnishing;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.ConstructionPlanner;
@@ -408,6 +409,11 @@ public final class VillageDetectionHandler {
         LumberjackWork.run(overworld, colony);
         ManufacturerWork.run(overworld, colony);
         BuilderWork.run(overworld, colony);
+
+        // E a mobília das casas já de pé — a Regra 21. Depois do
+        // construtor de propósito: a casa que terminou neste ciclo já é
+        // olhada nele.
+        HouseFurnishing.run(overworld, colony);
     }
 
     /**

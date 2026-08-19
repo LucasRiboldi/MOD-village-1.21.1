@@ -61,6 +61,12 @@ class ColonyHutTest {
         Blueprint plan = ColonyHut.blueprint(spruce, Side.NORTH);
 
         for (BlueprintBlock block : plan.blocks()) {
+            if (block.furniture()) {
+                // Cama, baú e lampião não têm espécie de madeira — ver a
+                // Regra 21. O que esta afirmação cobre é a estrutura.
+                continue;
+            }
+
             assertTrue(
                     block.block().equals(spruce) || block.block().equals(spruceDoor),
                     "a cabana de pinheiro pediu " + block.block());
@@ -78,6 +84,73 @@ class ColonyHutTest {
                     ColonyHut.blueprint(OAK, side).blocks().size(),
                     "a cabana ao " + side + " tem outro tamanho");
         }
+    }
+
+    @Test
+    @DisplayName("toda casa nasce com cama, baú e lampião dentro")
+    void everyHouseHasABedAChestAndALantern() {
+        Blueprint plan = ColonyHut.blueprint(OAK, Side.NORTH);
+
+        for (ResourceId piece : List.of(ColonyHut.BED, ColonyHut.CHEST, ColonyHut.LANTERN)) {
+            assertTrue(
+                    plan.blocks().stream().anyMatch(block -> block.block().equals(piece)),
+                    "a casa saiu sem " + piece.path());
+        }
+    }
+
+    @Test
+    @DisplayName("a mobília não segura a obra, e a estrutura sim")
+    void furnitureIsMarkedAndStructureIsNot() {
+        Blueprint plan = ColonyHut.blueprint(OAK, Side.NORTH);
+
+        for (BlueprintBlock block : plan.blocks()) {
+            boolean isFurniture = block.block().equals(ColonyHut.BED)
+                    || block.block().equals(ColonyHut.CHEST)
+                    || block.block().equals(ColonyHut.LANTERN);
+
+            assertEquals(
+                    isFurniture,
+                    block.furniture(),
+                    block.block().path() + " em " + block.offset() + " está do lado errado"
+                            + " da Regra 21");
+        }
+    }
+
+    @Test
+    @DisplayName("a mobília fica no miolo, sem encostar em parede")
+    void theFurnitureSitsInsideTheWalls() {
+        for (Side side : Side.values()) {
+            for (BlueprintBlock block : ColonyHut.blueprint(OAK, side).blocks()) {
+                if (!block.furniture()) {
+                    continue;
+                }
+
+                ColonyPos at = block.offset();
+
+                assertTrue(
+                        at.x() > 0 && at.x() < ColonyHut.SIDE - 1
+                                && at.z() > 0 && at.z() < ColonyHut.SIDE - 1,
+                        "a peça " + block.block().path() + " ficou na parede, em " + at);
+            }
+        }
+    }
+
+    /**
+     * A cabeceira da cama precisa caber, e ela vai um bloco ao norte do
+     * pé — é o que {@code BuilderWork.placeSecondHalf} faz.
+     */
+    @Test
+    @DisplayName("a cabeceira da cama cabe dentro da casa")
+    void theBedHeadFitsIndoors() {
+        ColonyPos foot = ColonyHut.blueprint(OAK, Side.NORTH).blocks().stream()
+                .filter(block -> block.block().equals(ColonyHut.BED))
+                .map(BlueprintBlock::offset)
+                .findFirst()
+                .orElseThrow();
+
+        assertTrue(
+                foot.z() - 1 > 0,
+                "a cabeceira da cama cairia dentro da parede: o pé está em " + foot);
     }
 
     private static ColonyPos doorOf(Side side) {

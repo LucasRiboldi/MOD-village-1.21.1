@@ -14,8 +14,11 @@ discordarem, vale o Backlog.
 
 Bloqueia o sexto e último passo do MVP: ver uma casa inteira subir.
 
-- **Ver a cabana inteira subir em jogo.** As Regras 14 (alcance) e 18
-  (expediente) têm teste e **não rodaram em jogo** — é a próxima sessão.
+- **Ver a cabana inteira subir em jogo.** Seis regras novas têm teste e
+  **nenhuma rodou em jogo**: 14 (alcance), 18 (expediente), 10
+  (fabricação), 17 (porta na rua), 19 (nível da rua), 20 (bioma) e 21
+  (mobília). É a próxima sessão, e ela vale mais que qualquer regra
+  nova.
 - **Verificar em jogo as cinco correções que só têm teste:** o baú
   criado ao lado da cama, o despertar de `WAITING_RESOURCES`, a árvore
   fora de alcance, a cabana como obra do MVP, e o descarte da obra
@@ -35,6 +38,9 @@ Bloqueia o sexto e último passo do MVP: ver uma casa inteira subir.
   haver obra. Depende do `ItemRequest`: a tarefa carrega um
   `ResourceType`, e porta não está nessa lista — nem deve estar, porque
   a lista sai da planta.
+- **A mobília em jogo.** A Regra 21 põe cama, baú e lampião, e só o baú
+  a colônia fabrica. Cama e lampião dependem de você guardar lã e ferro
+  num baú — falta ver isso acontecendo numa sessão.
 - **Regra 15 — a estrada cresce com a vila.** O construtor estende a
   rua a partir da ponta mais distante do centro, um trecho por casa.
   Sem isso a vila para quando acaba a beira de rua que o mundo deu.
@@ -42,10 +48,6 @@ Bloqueia o sexto e último passo do MVP: ver uma casa inteira subir.
   obra) e máxima (não soltar da malha) entre construções, e lote
   conferido como volume — largura, profundidade e altura — e não como
   retângulo de chão.
-- **Regra 17 — a casa com uma lateral na estrada.** A `Direction` que
-  `siteBesideRoadAt` escolhe é descartada hoje; passa a girar a planta
-  inteira e a ser gravada no projeto. Fecha o antigo item de orientação
-  de blocos.
 - **Regra 11 — garantir uma de cada profissão por vila.** O mecanismo já
   existe (`ProfessionAssigner.vacancy` devolve a mais escassa), mas nada
   garante o piso, nenhum teste o afirma, e a dispensa pode tirar o último

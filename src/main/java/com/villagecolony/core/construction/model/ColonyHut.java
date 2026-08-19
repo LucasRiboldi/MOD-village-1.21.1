@@ -158,12 +158,48 @@ public final class ColonyHut {
             }
         }
 
+        // A Regra 21, por último: a mobília entra depois do teto, e não
+        // segura a obra. Ver furniture() e a lista de FURNISHINGS.
+        blocks.addAll(furnishings());
+
         return List.copyOf(blocks);
     }
 
     /** A borda do quadrado. O miolo fica oco — é onde se mora. */
     private static boolean isWall(int x, int z) {
         return x == 0 || z == 0 || x == SIDE - 1 || z == SIDE - 1;
+    }
+
+    /**
+     * O baú da casa: a única das três peças que a colônia sabe fazer.
+     *
+     * <p>Oito tábuas, e sai da mesma madeira do resto.
+     */
+    public static final ResourceId CHEST = new ResourceId(ResourceId.VANILLA, "chest");
+
+    /** A cama. Pede lã, e a colônia não tosquia — ver a Regra 21. */
+    public static final ResourceId BED = new ResourceId(ResourceId.VANILLA, "white_bed");
+
+    /** O lampião. Pede ferro, e a colônia não minera — ver a Regra 21. */
+    public static final ResourceId LANTERN = new ResourceId(ResourceId.VANILLA, "lantern");
+
+    /**
+     * O que vai dentro de toda casa — a Regra 21.
+     *
+     * <p>As posições são do miolo, longe das paredes, e cabem em
+     * qualquer das quatro orientações porque a cabana é um quadrado e a
+     * porta nunca cai no meio.
+     *
+     * <p>A cama ocupa dois lugares: o pé aqui, e a cabeceira um bloco ao
+     * norte, que {@code BuilderWork} completa. Por isso ela fica em
+     * {@code z = 2} e não em {@code z = 1} — a cabeceira iria para
+     * dentro da parede.
+     */
+    public static List<BlueprintBlock> furnishings() {
+        return List.of(
+                BlueprintBlock.furniture(new ColonyPos(1, 0, 1), CHEST),
+                BlueprintBlock.furniture(new ColonyPos(3, 0, 2), BED),
+                BlueprintBlock.furniture(new ColonyPos(1, 0, 3), LANTERN));
     }
 
     /**
