@@ -76,6 +76,18 @@ public class BuilderGameTest implements FabricGameTest {
      * @param planks quantas tábuas o baú recebe
      */
     private static Fixture setUp(TestContext context, int planks) {
+        return setUp(context, planks, wall(), 2);
+    }
+
+    /**
+     * O mesmo cenário, com a planta e o tamanho da tarefa por fora.
+     *
+     * <p>Existe por causa da Regra 14: a torre precisa da mesma
+     * montagem da parede, e só muda o que se manda construir.
+     */
+    private static Fixture setUp(
+            TestContext context, int planks, Blueprint plan, int taskAmount) {
+
         ServerWorld world = context.getWorld();
 
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
@@ -106,7 +118,7 @@ public class BuilderGameTest implements FabricGameTest {
 
         ConstructionProject project = ConstructionProject.plan(
                 colony.id(),
-                wall(),
+                plan,
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(SITE)));
 
         VillageColonyMod.CONSTRUCTIONS.register(project);
@@ -115,7 +127,8 @@ public class BuilderGameTest implements FabricGameTest {
         project.moveTo(ConstructionState.BUILDING);
 
         Task task = VillageColonyMod.TASKS.create(
-                colony.id(), TaskType.BUILD, TaskPriority.PRODUCTION, ResourceType.OAK_PLANKS, 2);
+                colony.id(), TaskType.BUILD, TaskPriority.PRODUCTION,
+                ResourceType.OAK_PLANKS, taskAmount);
 
         task.reserveFor(villager.getUuid());
 
@@ -488,6 +501,62 @@ public class BuilderGameTest implements FabricGameTest {
     }
 
     /** Duas tábuas lado a lado. */
+    /**
+     * Seis tábuas empilhadas: a Regra 14 medida em altura.
+     *
+     * <p>A do topo fica a cinco blocos acima do pé do construtor. Isso
+     * é de propósito: com o alcance esférico de raio 5, cinco de altura
+     * mais um de lado dão distância maior que 5, e o bloco de cima é
+     * inalcançável com o construtor <b>dentro</b> do lote.
+     */
+    private static Blueprint tower() {
+        ResourceId planks = MinecraftTypeAdapter.toResourceId(Blocks.OAK_PLANKS);
+
+        return Blueprint.of(HUT, List.of(
+                new BlueprintBlock(new ColonyPos(0, 0, 0), planks),
+                new BlueprintBlock(new ColonyPos(0, 1, 0), planks),
+                new BlueprintBlock(new ColonyPos(0, 2, 0), planks),
+                new BlueprintBlock(new ColonyPos(0, 3, 0), planks),
+                new BlueprintBlock(new ColonyPos(0, 4, 0), planks),
+                new BlueprintBlock(new ColonyPos(0, 5, 0), planks)));
+    }
+
+    /**
+     * A Regra 14 — o construtor alcança o alto da obra.
+     *
+     * <p>Visto em jogo em 2026-08-18: parte da casa subiu, e parou. A
+     * causa era {@code REACH} medido por {@code isWithinDistance}, que
+     * é uma <b>esfera</b>: o bloco alto sai dela ainda que o construtor
+     * esteja com o pé no lote, e a obra morre na altura do telhado sem
+     * nenhuma linha dizendo por quê.
+     *
+     * <p>O que o teste afirma é a torre <b>inteira</b>, e não só o topo:
+     * uma correção que alcançasse o alto e perdesse a base trocaria um
+     * defeito por outro.
+     *
+     * <p>Rodado contra a regra desligada: com o alcance esférico as
+     * cinco primeiras sobem e a sexta nunca, e o teste falha no bloco
+     * de cima.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_reach",
+            tickLimit = 300)
+    public void theBuilderReachesTheTopOfTheWorkFromTheGround(TestContext context) {
+        Fixture fixture = setUp(context, 6, tower(), 6);
+
+        context.runAtTick(200, () -> {
+            for (int up = 0; up < 6; up++) {
+                context.assertTrue(
+                        isPlanks(context, SITE.up(up)),
+                        "a Regra 14 pede a torre inteira, e faltou a tábua "
+                                + up + " blocos acima do chão do lote");
+            }
+
+            fixture.owned.cleanUp();
+
+            context.complete();
+        });
+    }
+
     private static Blueprint wall() {
         ResourceId planks = MinecraftTypeAdapter.toResourceId(Blocks.OAK_PLANKS);
 

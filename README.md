@@ -161,11 +161,12 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 
 | | Etapa | Estado |
 |---|---|---|
-| **1** | **Ver a casa inteira subir.** Os dois primeiros blocos foram vistos em 2026-08-15. Falta a cabana terminada, virando infraestrutura da colônia, e o lote seguinte não caindo em cima dela. Quatro travas foram achadas e corrigidas naquele dia — tarefa de obra que ninguém criava, `WAITING_RESOURCES` sem volta, obra impossível por falta de pedregulho, e obra antiga presa no save | 🔒 exige sessão de jogo |
+| **1** | **Ver a casa inteira subir.** Os dois primeiros blocos foram vistos em 2026-08-15, e parte da casa em 2026-08-18 — foi essa sessão que expôs a **Regra 14**: o alcance do construtor era uma esfera de raio 5, e o bloco alto ficava fora dela com ele de pé dentro do lote. Corrigido e coberto por teste de jogo; falta a cabana terminada, virando infraestrutura da colônia | 🔒 exige sessão de jogo |
 | ~~**2**~~ | ~~**O rodízio de profissão.**~~ A colônia só dispensa quem não tem baú quando existe baú livre de verdade para o substituto — contar candidatos não era contar baús | ✅ **feito em 2026-08-15** |
 | ~~**3**~~ | ~~**O motivo de não trabalhar como valor.**~~ As três profissões dizem por que não trabalharam, no mesmo vocabulário, e o log registra a mudança em vez do estado | ✅ **feito em 2026-08-15** |
 | ~~**4**~~ | ~~**Blocos de duas partes.**~~ A porta é uma porta e a cama é uma cama. Sobra a **orientação**: escada e porta saem no padrão | ✅ **feito em 2026-08-15** |
-| **5** | **Estender a estrada.** Hoje a vila só constrói em beira de rua que já existe; quando ela acabar, a colônia para de crescer | 🔨 pronto para fazer |
+| **5** | **Regra 15 — estender a estrada.** Hoje a vila só constrói em beira de rua que já existe; quando ela acabar, a colônia para de crescer | 🔨 pronto para fazer |
+| **5b** | **Regras 16 e 17 — o lote com espaço em volta, e a casa com uma lateral na rua.** Distância mínima e máxima entre construções, lote conferido como volume, e a planta girando para a porta dar na rua | 🔨 decidido em 2026-08-18 |
 | **6** | **Envelhecimento de tarefa.** Para que a tarefa mais antiga não seja esquecida para sempre | 🔨 pronto para fazer |
 | **7** | **A proteção estrutural, e o lado do cliente.** Perguntar ao jogo quais blocos são de vila gerada; e nome, rachadura e braço na tela | 🔨 pronto para fazer |
 | **8** | **O trabalhador pedir o que lhe falta**, em vez de travar | ⏸️ só depois do MVP fechar |

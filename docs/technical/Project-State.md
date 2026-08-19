@@ -2771,3 +2771,242 @@ o teste que segura     theColonyCanMakeEverythingTheHutIsMadeOf
                        tronco. Pôr pedregulho nela derruba a bateria
                        antes de a sessão de jogo descobrir
 ```
+
+---
+
+## Regra 14 — o construtor alcança o alto da obra
+
+```text
+o construtor põe bloco em qualquer altura da obra, bastando estar
+encostado na área de construção
+```
+
+Vista em jogo em 2026-08-18: parte da casa subiu, e parou. O motivo
+está em `BuilderWork.REACH`, que vale 5 e é medido por
+`isWithinDistance` — uma **esfera**. Um bloco a oito de altura fica
+fora dela ainda que o construtor esteja com o pé no lote, e a obra
+morre na altura do telhado sem nenhuma linha dizendo por quê.
+
+A esfera é a forma errada de perguntar. O que importa é ele estar
+**no lote**, não a que altura está o bloco:
+
+```text
+horizontal    continua valendo o alcance de braço — ele precisa
+              estar em cima, ou colado, da coluna onde vai pôr
+
+vertical      sem limite dentro da obra. Da fundação ao último
+              bloco da planta, de pé no chão do lote
+
+o que isso    o construtor não voa, não sobe andaime e não empilha
+não é         bloco para subir. Ele fica no chão e a planta sobe.
+              A Regra 3 continua fechada: ele só escreve o que a
+              planta manda
+```
+
+O par disso é a linha: alvo recusado por alcance tem de aparecer no
+relatório do construtor, como a árvore fora de alcance da Regra 9
+aparece no do lenhador. Foi o silêncio que custou a sessão de 08-18.
+
+**Feita em 2026-08-18**, nas três pontas:
+
+```text
+o alcance          `isWithinReach` mede só o plano — dx² + dz² ≤ 25.
+                   A altura saiu da conta
+
+para onde anda     `footOf` manda o construtor ao pé da coluna, na
+                   altura da origem do projeto. Andar até o bloco em
+                   si só servia enquanto a obra era rasa: mandá-lo a
+                   uma posição no ar é pedir caminho que não existe,
+                   e ele ficaria parado até o guarda devolver a
+                   tarefa — a mesma roda por outra porta
+
+a linha            `walking for N ticks without reaching the block`
+                   no relatório do construtor, enquanto ele não
+                   alcança
+
+o teste que        theBuilderReachesTheTopOfTheWorkFromTheGround —
+segura             uma torre de seis tábuas, com a do topo a cinco
+                   de altura. Rodado contra a regra desligada: as
+                   três primeiras sobem e a quarta nunca
+```
+
+---
+
+## Regra 10, elaborada em 2026-08-18 — quem fabrica o quê
+
+O enunciado de 08-15 continua de pé; o que 08-18 acrescenta é a
+**divisão do trabalho**, que estava por decidir.
+
+```text
+o FABRICANTE faz o que a casa leva nas aberturas e dentro
+    porta, janela (vidraça), cama, baú
+    fabrica e guarda no baú, como já faz com tábua
+
+o CONSTRUTOR faz o bloco estrutural que falta na hora
+    tábua, escada, e o que mais a planta pedir
+    junta o material dos baús e fabrica ali
+```
+
+A leitura: o fabricante trabalha por **estoque** — a colônia sempre
+tem porta, cama e baú prontos, haja obra ou não. O construtor trabalha
+por **falta** — quando o próximo bloco da planta não está em baú
+nenhum, ele desce um degrau na receita e fabrica.
+
+Isso não desfaz "o construtor é fabricante", de 08-15: ele continua
+fabricando. O que mudou é que os quatro itens de mobília saíram da
+conta dele e viraram meta permanente do fabricante, do mesmo jeito que
+a tábua é hoje.
+
+**A busca de material, que era a outra metade de 08-15:**
+
+```text
+ordem dos baús      do mais próximo da obra para o mais longe.
+                    Hoje `takeMaterial` percorre na ordem de
+                    `WORKERS.ofColony`, que não é distância
+
+acumular            tirar 3 de um baú e 5 de outro para juntar 8 é
+                    o caso normal. Hoje ele desiste no primeiro baú
+                    que não tem tudo
+
+quando fabricar     só com a quantidade inteira dos ingredientes em
+                    mãos. Fabricar pela metade tranca o material num
+                    item que não serve
+
+onde guarda         o baú mais próximo da obra. O do próprio
+                    construtor não serve: ele anda, e o baú não
+
+até onde desce      um degrau por vez. Falta escada e sobra tábua:
+na receita          fabrica. Falta escada e falta tábua: fabrica
+                    tábua se houver tronco, e senão declara a falta
+                    (`waiting for X`) em vez de tentar a cadeia toda
+```
+
+**A vidraça é a exceção honesta:** ela pede fundir, e a colônia não
+funde (Regra 13). Enquanto não houver forno, o vidro é material que o
+jogador guarda no baú — o fabricante monta a vidraça a partir dele,
+mas não faz o vidro.
+
+---
+
+## Regra 15 — a estrada cresce com a vila
+
+```text
+quando não houver mais lote livre encostado em rua, o construtor
+estende a rua — e o lote novo nasce na beira do trecho novo
+```
+
+Era a pendência declarada no cabeçalho de `BuildSiteScanner` desde
+08-14: "a vila cresce enquanto houver beira de rua livre, e para
+quando não houver". É esse "para" que esta regra tira.
+
+```text
+quem estende        o construtor, e é obra como outra qualquer —
+                    abre projeto, consome material, aparece no
+                    relatório
+
+de onde             da ponta de rua mais distante do centro.
+                    Estrada que cresce pelo meio racha a vila
+
+quanto por vez      um trecho curto por casa. Rua que cresce
+                    sozinha vira rua sem nada em volta — é a
+                    decisão 2 de 08-14, e ela continua valendo
+
+o que é o trecho    caminho de terra (`DIRT_PATH`) no nível do
+                    chão, seguindo o eixo da rua que ele prolonga,
+                    e parando onde o desnível passa de MAX_SLOPE
+
+quando não dá       ponta de rua contra encosta, água ou lote
+                    ocupado: tenta a ponta seguinte. Sem nenhuma
+                    ponta boa, a vila para — e agora diz por quê
+```
+
+Ordem que não pode inverter: **estrada primeiro, casa ligada a ela**.
+A regra do autor de 08-14 sobrevive inteira — o que muda é que a
+estrada passou a ser algo que a colônia produz, e não só algo que ela
+encontra.
+
+---
+
+## Regra 16 — cada casa com espaço em volta, e nem longe demais
+
+```text
+a casa nova nasce a uma distância boa das que já existem: nem tão
+perto que atrapalhe a obra, nem tão longe que se solte da vila
+
+e o lote precisa estar livre na largura, na altura e na profundidade
+```
+
+Hoje o `BuildSiteScanner` pergunta duas coisas do lote — se encosta em
+rua, e se o chão é plano dentro da janela. Não pergunta o que há em
+volta, nem o que há **em cima**. Daí sair casa colada em casa, e casa
+com a copa de uma árvore dentro do telhado.
+
+**As duas distâncias:**
+
+```text
+mínima     um corredor livre entre a parede nova e a parede mais
+           próxima que já existe. Menos que isso e o construtor
+           não passa em volta da própria obra
+
+máxima     a casa nova encosta na malha da vila. Passar disso é
+           fundar um bairro solto, e a Regra 12 já mostrou o que
+           acontece quando o centro e a obra se separam — 65
+           blocos, em 08-15
+```
+
+**O volume, e não a área.** O lote deixa de ser um retângulo de chão e
+passa a ser uma caixa:
+
+```text
+largura e         o tamanho da planta, mais a margem do corredor
+profundidade      em cada lado
+
+altura            a altura da planta, mais um bloco de folga. E
+                  livre de verdade: hoje a coluna reprova o que
+                  estiver acima da janela, mas por acidente da
+                  busca de chão, não por regra
+
+o que ocupa       bloco sólido, tronco, folha, água, e construção
+                  da vila. Grama, flor e neve não ocupam — é o
+                  mesmo `isNothing` da TASK-047
+```
+
+Os números — quanto é o corredor, quanto é "encostar na malha" —
+ficam para a implementação medir em jogo. O que a regra fixa é que
+existem os dois limites, e que a pergunta é sobre volume.
+
+---
+
+## Regra 17 — a casa sempre com uma lateral na estrada
+
+```text
+toda construção tem uma de suas laterais voltada para a estrada, e é
+por essa lateral que ela se abre
+```
+
+A metade da posição já existe: `siteBesideRoadAt` põe o lote colado na
+rua e o faz crescer para longe dela. O que falta é a **orientação** —
+hoje escada e porta saem no estado padrão da planta, olhando para onde
+a planta olhava quando foi lida.
+
+```text
+a lateral da rua    é a face do lote que toca o `DIRT_PATH`. Já é
+                    conhecida: é a `Direction` que
+                    `siteBesideRoadAt` escolheu, e que hoje é
+                    descartada depois de calcular o canto
+
+a porta             na lateral da rua, virada para fora. Casa cuja
+                    porta dá no mato é casa em que ninguém entra
+
+a planta gira       os blocos com face — porta, escada, cama,
+inteira             placa — giram junto com o lote. Girar a porta e
+                    deixar a escada é pior que não girar nada
+
+o que grava         a direção escolhida vira parte do projeto
+                    salvo. Obra retomada depois de sair do mundo
+                    precisa girar igual, senão a casa sai meio
+                    torta
+```
+
+Fecha o item "orientação de blocos" do TODO, que estava solto em 🟡
+sem dono nem critério: o critério é a rua.

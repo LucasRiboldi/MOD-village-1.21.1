@@ -1,21 +1,22 @@
 # TODO
 
-**Atualizado:** 2026-08-15
+**Atualizado:** 2026-08-18
 
 Lista curta e priorizada. A lista completa, com a razão de cada item e a
 seção de origem, está em
-[`docs/technical/Backlog.md`](docs/technical/Backlog.md) — **34 itens
-abertos em 9 grupos**. Onde os dois discordarem, vale o Backlog.
+[`docs/technical/Backlog.md`](docs/technical/Backlog.md). O enunciado de
+cada regra está em `docs/technical/Project-State.md`. Onde os dois
+discordarem, vale o Backlog.
 
 ---
 
 ## 🔴 Crítico
 
-Bloqueia o sexto e último passo do MVP.
+Bloqueia o sexto e último passo do MVP: ver uma casa inteira subir.
 
-- **Ver a cabana inteira subir em jogo.** Dois blocos foram postos em
-  2026-08-15; nenhuma casa terminou. Todas as travas conhecidas foram
-  corrigidas, e nenhuma das correções rodou em jogo ainda.
+- **Ver a cabana inteira subir em jogo.** A Regra 14 foi feita em
+  2026-08-18 e tem teste de jogo, mas **não rodou em jogo** — é a
+  próxima sessão.
 - **Verificar em jogo as cinco correções que só têm teste:** o baú
   criado ao lado da cama, o despertar de `WAITING_RESOURCES`, a árvore
   fora de alcance, a cabana como obra do MVP, e o descarte da obra
@@ -23,10 +24,22 @@ Bloqueia o sexto e último passo do MVP.
 
 ## 🟠 Importante
 
-- **Regra 10 — o construtor fabricando o que a obra pede.** Decidida em
-  2026-08-15 e não começada. Acesso a todos os baús do mais próximo para
-  o mais longe, acumulando até juntar a quantidade; e o construtor faz o
-  craft dos blocos da obra. É a maior das regras pendentes.
+- **Regra 10 — quem fabrica o quê.** Elaborada em 2026-08-18. O
+  fabricante passa a produzir porta, janela, cama e baú por estoque; o
+  construtor fabrica o bloco estrutural que falta na hora, juntando
+  material de todos os baús do mais próximo ao mais longe, acumulando
+  entre baús. É a maior das regras pendentes.
+- **Regra 15 — a estrada cresce com a vila.** O construtor estende a
+  rua a partir da ponta mais distante do centro, um trecho por casa.
+  Sem isso a vila para quando acaba a beira de rua que o mundo deu.
+- **Regra 16 — espaço em volta da casa.** Distância mínima (corredor de
+  obra) e máxima (não soltar da malha) entre construções, e lote
+  conferido como volume — largura, profundidade e altura — e não como
+  retângulo de chão.
+- **Regra 17 — a casa com uma lateral na estrada.** A `Direction` que
+  `siteBesideRoadAt` escolhe é descartada hoje; passa a girar a planta
+  inteira e a ser gravada no projeto. Fecha o antigo item de orientação
+  de blocos.
 - **Regra 11 — garantir uma de cada profissão por vila.** O mecanismo já
   existe (`ProfessionAssigner.vacancy` devolve a mais escassa), mas nada
   garante o piso, nenhum teste o afirma, e a dispensa pode tirar o último
@@ -35,24 +48,20 @@ Bloqueia o sexto e último passo do MVP.
   recusando encolher — em 2026-08-15 saiu de uma âncora de 6 camas para
   uma de 3 e deixou a obra 65 blocos atrás. É comportamento da ADR-003 e
   espera decisão do autor.
-- **Estender a estrada.** A colônia só constrói na beira de rua que já
-  existe; quando ela acabar, a vila para de crescer.
 
 ## 🟡 Melhoria
 
 - **Quebrar os arquivos acima de 500 linhas.** `LumberjackWork` (1149),
   `VillageDetectionHandler` (901), `TreeHarvester` (651), `BuilderWork`
-  (599), `ManufacturerWork` (510). Os três primeiros já estavam grandes;
-  o ciclo de 08-15 piorou os dois de trabalho ao acrescentar
-  instrumentação.
+  (599), `ManufacturerWork` (510). As Regras 14 a 17 caem justamente
+  sobre `BuilderWork`, `ConstructionPlanner` e `BuildSiteScanner` —
+  quebrar antes de crescer sai mais barato que depois.
 - **Envelhecimento de tarefa** (`Task.age`), para que a tarefa mais
   antiga não seja esquecida para sempre.
 - **Cobrir a Regra 8 por inteiro.** Hoje o baú nasce quando um
   *trabalhador* precisa dele. Cama de aldeão que não trabalha continua
   sem baú — cobrir isso exige propagar as posições das camas por
   colônia, que a varredura hoje descarta.
-- **Orientação de blocos.** Escada e porta saem no padrão; falta girar
-  conforme a planta.
 - **Proteção estrutural** — perguntar ao jogo quais blocos são de vila
   gerada, em vez de inferir.
 
@@ -60,7 +69,8 @@ Bloqueia o sexto e último passo do MVP.
 
 - **Cadeias de produção que não existem:** minerar, fundir, tosquiar,
   descascar. São elas que devolveriam a casa de vila do jogo como obra
-  possível — hoje ela pede 66 blocos que a colônia não sabe fazer.
+  possível — hoje ela pede 66 blocos que a colônia não sabe fazer. A
+  janela da Regra 10 depende de fundir: até lá o jogador guarda o vidro.
 - **O trabalhador pedir o que lhe falta** (`ItemRequest`), em vez de
   travar. Toca `Task`, que é o centro; só depois do MVP fechar.
 - **Fundir colônias sobrepostas.** Hoje o mod só avisa. O critério já

@@ -69,7 +69,17 @@ public final class BuilderWork {
     /** Um bloco por segundo. Ver a Regra 2, que fez o mesmo com a derrubada. */
     private static final int TICKS_PER_BLOCK = 20;
 
-    /** De quão perto o construtor precisa estar do bloco que põe. */
+    /**
+     * De quão perto o construtor precisa estar da <b>coluna</b> do bloco.
+     *
+     * <p>Medido no plano, e não no espaço. É a Regra 14, e ela nasceu da
+     * sessão de 2026-08-18: parte da casa subiu e a obra parou. O
+     * alcance era {@code isWithinDistance}, que é uma <b>esfera</b> —
+     * cinco de altura mais um de lado passam de cinco de raio, e o bloco
+     * do alto ficava inalcançável com o construtor de pé <b>dentro</b>
+     * do lote. Do lado de fora, "não tem material" e "não alcança" eram
+     * o mesmo silêncio.
+     */
     private static final int REACH = 5;
 
     /**
@@ -152,7 +162,10 @@ public final class BuilderWork {
                 continue;
             }
 
-            JOBS.computeIfAbsent(executor.get(), worker -> new Job(task, project.get().id()));
+            Job job = JOBS.computeIfAbsent(
+                    executor.get(), worker -> new Job(task, project.get().id()));
+
+            queue.append(walking(job));
 
             open++;
         }
@@ -223,8 +236,8 @@ public final class BuilderWork {
 
         BlockPos target = MinecraftTypeAdapter.toBlockPos(project.worldPositionOf(next.get()));
 
-        if (!villager.getBlockPos().isWithinDistance(target, REACH)) {
-            WorkTargets.set(workerId, target);
+        if (!isWithinReach(villager.getBlockPos(), target)) {
+            WorkTargets.set(workerId, footOf(project, target));
 
             if (++job.stalled > STALL_LIMIT) {
                 // Andou dois minutos de horário de trabalho e não chegou
@@ -247,6 +260,38 @@ public final class BuilderWork {
         job.progress = 0;
 
         return placeOne(world, project, job, workerId, next.get(), target);
+    }
+
+    /**
+     * Se o construtor alcança este bloco — a Regra 14.
+     *
+     * <p>Só a distância no plano. A vertical não entra: da fundação ao
+     * último bloco da planta, o construtor põe de pé no chão do lote. O
+     * que ele não faz continua não fazendo — não voa, não sobe andaime e
+     * não empilha bloco para subir, porque nada disso está na planta e a
+     * Regra 3 manda escrever só o que ela diz.
+     */
+    private static boolean isWithinReach(BlockPos worker, BlockPos target) {
+        int dx = worker.getX() - target.getX();
+        int dz = worker.getZ() - target.getZ();
+
+        return dx * dx + dz * dz <= REACH * REACH;
+    }
+
+    /**
+     * O pé da coluna do bloco: para onde o construtor caminha.
+     *
+     * <p>Andar até o bloco em si só servia enquanto a obra era rasa. Com
+     * a Regra 14 o alvo pode estar no telhado, e mandar o aldeão a uma
+     * posição no ar é pedir um caminho que não existe — ele fica parado
+     * até o guarda de travamento devolver a tarefa, que é a mesma roda
+     * por outra porta.
+     *
+     * <p>O chão do lote é a altura da origem do projeto: é onde a
+     * fundação está e onde ele já esteve para pôr o primeiro bloco.
+     */
+    private static BlockPos footOf(ConstructionProject project, BlockPos target) {
+        return new BlockPos(target.getX(), project.origin().y(), target.getZ());
     }
 
     /**
@@ -568,6 +613,26 @@ public final class BuilderWork {
                 project.remainingCount(),
                 queue,
                 waiting);
+    }
+
+    /**
+     * Há quanto tempo este construtor anda sem alcançar o bloco.
+     *
+     * <p>Vazio enquanto ele está pondo bloco — a linha já é longa.
+     *
+     * <p>É a segunda metade da Regra 14, e é o que faltou na sessão de
+     * 2026-08-18. A obra parou na altura do telhado e o relatório dizia
+     * apenas {@code BUILDING ... 1 blocks left}: do lado de fora, o
+     * construtor que não alcança e o construtor que trabalha devagar
+     * eram a mesma linha. O lenhador já tinha essa distinção desde a
+     * Regra 9; o construtor não.
+     */
+    private static String walking(Job job) {
+        if (job.stalled == 0) {
+            return "";
+        }
+
+        return ", walking for " + job.stalled + " ticks without reaching the block";
     }
 
     /**
