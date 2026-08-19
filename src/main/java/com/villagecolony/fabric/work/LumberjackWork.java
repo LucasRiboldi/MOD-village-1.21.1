@@ -1155,12 +1155,24 @@ public final class LumberjackWork {
         return JOBS.size();
     }
 
-    /** As posições em curso, para os testes de jogo. Somente leitura. */
-    public static List<BlockPos> blocksInProgress() {
+    /**
+     * As posições em curso de uma colônia, para os testes de jogo.
+     *
+     * <p>Somente leitura, e <b>por colônia</b>. A versão global durou
+     * até 2026-08-19, quando três testes de lenhador passaram a falhar
+     * um a cada três execuções: {@code JOBS} é estático e a bateria roda
+     * testes concorrentes — um teste que atravessa noventa tiques
+     * continua vivo enquanto o batch seguinte começa. Quem perguntava
+     * "quantos lenhadores estão com árvore" recebia os do servidor
+     * inteiro e afirmava sobre o vizinho. É a mesma regra que
+     * {@code ColonyFixture} já escrevia do outro lado: nenhum teste
+     * afirma sobre o que não criou.
+     */
+    public static List<BlockPos> blocksInProgress(UUID colonyId) {
         List<BlockPos> positions = new ArrayList<>();
 
         for (Job job : JOBS.values()) {
-            if (!job.isBetweenTrees()) {
+            if (!job.isBetweenTrees() && job.task.belongsTo(colonyId)) {
                 positions.add(job.currentBlock());
             }
         }

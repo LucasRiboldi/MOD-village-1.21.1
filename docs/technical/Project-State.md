@@ -3010,3 +3010,111 @@ o que grava         a direção escolhida vira parte do projeto
 
 Fecha o item "orientação de blocos" do TODO, que estava solto em 🟡
 sem dono nem critério: o critério é a rua.
+
+---
+
+## Regra 18 — o dia inteiro é expediente
+
+```text
+enquanto houver sol, o trabalhador está buscando recurso ou
+trabalhando
+
+a última hora de luz é dele para voltar para casa; a noite é para
+dormir
+```
+
+Decidida e feita em 2026-08-19, sobre o que a sessão de 2026-08-18
+mostrou: a colônia parava com o sol alto, e nada no relatório explicava.
+
+**A causa, medida no jar de 1.21.1.** Quem respondia "é hora de
+trabalhar?" era a `Schedule` do Vanilla, e a resposta dela é curta:
+
+```text
+villager_default        10  IDLE
+                      2000  WORK     ← o expediente começava aqui
+                      9000  MEET     ← e acabava aqui
+                     11000  IDLE
+                     12000  REST
+```
+
+São **7.000 tiques de trabalho num dia de 24.000**. Pior: o dia claro
+vai até 12.000, então havia **3.000 tiques de sol** — um quarto da luz
+— em que a colônia inteira parava de colher, de fabricar e de
+construir, porque o aldeão tinha ido conversar no sino.
+
+As linhas do relatório de 08-18 mostram isso acontecendo:
+
+```text
+23:55:15  lumberjacks: ... off hours,  stall 137/2400
+23:55:45  lumberjacks: ... work time,  stall 195/2400
+23:58:15  lumberjacks: ... work time,  stall 1789/2400
+23:58:45  lumberjacks: ... off hours,  stall 2282/2400   ← e congela
+00:00:45  lumberjacks: ... off hours,  stall 2282/2400
+```
+
+**O efeito colateral que ninguém tinha visto.** O guarda de travamento
+da Regra 9 só conta durante o expediente — de propósito, porque quem
+não pode andar não está preso. Com uma janela de 7.000 tiques, o
+contador chegou a 2.282 de 2.400 e o expediente acabou. A árvore
+inalcançável nunca foi marcada, e o lenhador voltava a ela no dia
+seguinte. **A Regra 9 não fechava em jogo por causa da janela**, e
+nenhum teste podia ter pego isso: a bateria roda em vinte e cinco
+segundos, e o defeito é de escala de dia.
+
+**O que passa a valer:**
+
+```text
+a janela           do amanhecer (0) ao anoitecer (11.000). São 11.000
+                   de 12.000 tiques de luz, contra 7.000 antes
+
+por que 11.000     é onde o Vanilla troca MEET por IDLE, uma hora
+                   antes de mandar dormir. A última hora de luz fica
+                   para voltar para casa: trabalhar até o escuro
+                   deixaria o aldeão no mato quando os monstros
+                   nascem, e a colônia perderia trabalhador por causa
+                   da própria regra
+
+criança            não trabalha. A Schedule do bebê não tem WORK em
+                   hora nenhuma e dava isso de graça; ao deixar de
+                   perguntar a ela, a colônia passa a dizer isso por
+                   conta própria
+
+pânico e           continuam vindo antes. Sino tocando ou incursão, o
+esconderijo        trabalho espera
+```
+
+**Onde a regra mora.** O relógio — a janela pura — é
+`core.coordination.WorkClock`, sem Minecraft nenhum. `WorkHours`, na
+camada Fabric, acrescenta só o que depende do aldeão: criança, pânico,
+esconderijo.
+
+A separação não é cerimônia, e o motivo é uma armadilha real: a hora
+do mundo é **global**, e a bateria roda testes concorrentes. A primeira
+versão desta regra tinha um teste de jogo que virava a noite para
+afirmar "à noite ninguém trabalha" — e derrubou três testes de lenhador
+que rodavam junto. A janela se afirma fora do jogo; dentro do jogo só
+se afirmam horas que estão **dentro** do expediente.
+
+```text
+os testes que      WorkClockTest — amanhecer, manhã, tarde, a borda
+seguram            do anoitecer, a noite, e o relógio acumulado de
+                   dez dias
+
+                   WorkHoursGameTest — a tarde é expediente com um
+                   aldeão de verdade, e criança não trabalha
+```
+
+**O que esta regra não resolve**, e ficou visível no mesmo log:
+
+```text
+o construtor       parado em `waiting for minecraft:oak_door` com 154
+                   tábuas no baú. Ninguém fabrica a porta — é a
+                   Regra 10, e ela continua por fazer
+
+o lenhador em      o guarda agora alcança o limite, e a árvore
+encosta            inalcançável passa a ser marcada. Se isso basta
+                   para a vila do jogador, só a próxima sessão diz
+
+o centro           trocando de âncora a cada 30 segundos entre 49
+oscilando          camas e 7. É a ADR-003, e espera decisão do autor
+```

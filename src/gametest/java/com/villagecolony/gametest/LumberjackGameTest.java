@@ -1274,7 +1274,7 @@ public class LumberjackGameTest implements FabricGameTest {
         LumberjackWork.run(world, colony);
 
         context.runAtTick(4, () -> {
-            List<BlockPos> working = LumberjackWork.blocksInProgress();
+            List<BlockPos> working = LumberjackWork.blocksInProgress(colony.id());
 
             context.assertTrue(
                     working.size() == 2,
@@ -1411,7 +1411,7 @@ public class LumberjackGameTest implements FabricGameTest {
         LumberjackWork.run(world, colony);
 
         context.runAtTick(30, () -> {
-            List<BlockPos> working = LumberjackWork.blocksInProgress();
+            List<BlockPos> working = LumberjackWork.blocksInProgress(colony.id());
 
             context.assertTrue(
                     !working.isEmpty(),

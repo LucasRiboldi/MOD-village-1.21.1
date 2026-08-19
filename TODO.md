@@ -14,9 +14,13 @@ discordarem, vale o Backlog.
 
 Bloqueia o sexto e último passo do MVP: ver uma casa inteira subir.
 
-- **Ver a cabana inteira subir em jogo.** A Regra 14 foi feita em
-  2026-08-18 e tem teste de jogo, mas **não rodou em jogo** — é a
-  próxima sessão.
+- **Regra 10 — ninguém fabrica a porta.** Na sessão de 2026-08-18 o
+  construtor ficou em `waiting for minecraft:oak_door` com 154 tábuas
+  guardadas, e o fabricante sem tarefa: a meta de tábua estava cumprida,
+  e nada traduz "a obra precisa de uma porta" em pedido. É o que trava a
+  cabana hoje, e é a maior das pendentes.
+- **Ver a cabana inteira subir em jogo.** As Regras 14 (alcance) e 18
+  (expediente) têm teste e **não rodaram em jogo** — é a próxima sessão.
 - **Verificar em jogo as cinco correções que só têm teste:** o baú
   criado ao lado da cama, o despertar de `WAITING_RESOURCES`, a árvore
   fora de alcance, a cabana como obra do MVP, e o descarte da obra
@@ -24,6 +28,11 @@ Bloqueia o sexto e último passo do MVP: ver uma casa inteira subir.
 
 ## 🟠 Importante
 
+- **Teste instável do guarda de travamento.**
+  `theStallGuardReturnsTheTaskAndForgetsTheTree` falha cerca de 1 a cada
+  4 execuções da bateria, e é anterior ao ciclo de 08-19. Enquanto ele
+  oscilar, a bateria não prova que nada quebrou. A pista é estado
+  estático compartilhado entre testes concorrentes.
 - **Regra 10 — quem fabrica o quê.** Elaborada em 2026-08-18. O
   fabricante passa a produzir porta, janela, cama e baú por estoque; o
   construtor fabrica o bloco estrutural que falta na hora, juntando

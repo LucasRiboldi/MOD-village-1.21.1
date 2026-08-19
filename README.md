@@ -78,6 +78,11 @@ gerada são perguntadas diretamente ao jogo e deixadas em paz.
 **Ele para sozinho.** A colheita acaba quando os baús enchem e recomeça
 quando você tira alguma coisa. Nada cresce sem limite.
 
+**O dia inteiro é dia de trabalho.** Enquanto houver sol, os
+trabalhadores estão buscando recurso ou trabalhando. A última hora de
+luz é deles para voltar para casa, e a noite é para dormir — trabalhador
+no mato depois do escuro é trabalhador que os monstros pegam.
+
 ---
 
 ## O ciclo
