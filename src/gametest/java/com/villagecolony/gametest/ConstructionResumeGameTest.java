@@ -5,9 +5,11 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
+import com.villagecolony.core.construction.model.ColonyHut;
 import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.work.ConstructionPlanner;
@@ -193,6 +195,57 @@ public class ConstructionResumeGameTest implements FabricGameTest {
                 "a casa de planície voltou a ser aberta, e ela é impossível para esta colônia");
 
         owned.cleanUp();
+
+        context.complete();
+    }
+
+    /**
+     * A obra largada sai do registro e o lote continua tomado.
+     *
+     * <p>É a consequência do {@code PatienceClock}, afirmada sem
+     * esperar os dez minutos dele: o relógio se prova fora do jogo, e o
+     * que acontece quando ele estoura se prova aqui.
+     *
+     * <p><b>O que se ganha e o que se perde.</b> Ganha-se a colônia
+     * viva: quem planeja não abre obra nova enquanto houver uma aberta,
+     * e uma casa esperando pedregulho que o jogador nunca traz parava a
+     * vila para sempre. Perde-se aquela casa, que fica pela metade — e
+     * por isso o lote precisa continuar tomado, senão a colônia
+     * planejaria por cima do que ela mesma levantou.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "give_up_stalled")
+    public void aStalledProjectLeavesItsLotTaken(TestContext context) {
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ORIGIN));
+
+        Colony colony = Colony.create(UUID.randomUUID(), origin);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        ConstructionProject project = ConstructionProject.plan(
+                colony.id(),
+                ColonyHut.blueprint(ColonyHut.OAK_PLANKS, Side.NORTH),
+                origin);
+
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.WAITING_RESOURCES);
+
+        ConstructionPlanner.giveUp(colony, project);
+
+        context.assertTrue(
+                VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isEmpty(),
+                "a obra largada continua aberta, e a colônia segue travada nela");
+
+        context.assertTrue(
+                VillageColonyMod.BUILDINGS.isColonyInfrastructure(origin),
+                "o lote da casa pela metade ficou livre, e a colônia vai construir por cima");
+
+        owned.cleanUp();
+
+        VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
 
         context.complete();
     }

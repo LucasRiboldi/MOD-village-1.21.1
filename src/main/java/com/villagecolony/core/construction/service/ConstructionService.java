@@ -182,6 +182,24 @@ public final class ConstructionService {
      *
      * @return quantas saíram
      */
+    /**
+     * Tira esta obra do registro, terminada ou não.
+     *
+     * <p>Existe para a obra que esperou demais por material e saiu da
+     * frente — ver {@code PatienceClock}. {@link #purgeFinished} não
+     * serve: ela só leva o que já está em COMPLETED, e uma obra
+     * abandonada nunca chegou lá.
+     *
+     * <p>Quem chama é responsável por guardar a caixa dela no registro
+     * de construções antes. Esquecer a obra sem isso deixaria o lote
+     * livre, e a colônia planejaria por cima da casa pela metade.
+     *
+     * @return se havia o que esquecer
+     */
+    public boolean forget(UUID projectId) {
+        return projectId != null && projects.remove(projectId) != null;
+    }
+
     public int purgeFinished() {
         int before = projects.size();
 

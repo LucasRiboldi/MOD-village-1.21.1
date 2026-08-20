@@ -4,11 +4,13 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ColonyHut;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.service.ConstructionService;
+import com.villagecolony.core.coordination.PatienceClock;
 import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.task.model.Task;
@@ -27,7 +29,10 @@ import net.minecraft.block.Block;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.Optional;
 
 /**
@@ -75,6 +80,17 @@ public final class ConstructionPlanner {
      */
     private static Optional<Blueprint> smallHouse;
 
+    /**
+     * Desde quando cada obra espera material.
+     *
+     * <p>Fora do modelo de propósito: a hora é do mundo, e
+     * {@code ConstructionProject} não conhece Minecraft. Esquecida ao
+     * parar o servidor — e isso é escolha, não descuido: a paciência
+     * recomeça na sessão seguinte, que é quando o jogador tem chance de
+     * ter trazido o material.
+     */
+    private static final Map<UUID, Long> WAITING_SINCE = new HashMap<>();
+
     private ConstructionPlanner() {
     }
 
@@ -99,6 +115,8 @@ public final class ConstructionPlanner {
     /** Esquece o motivo guardado. Chamado ao parar o servidor. */
     public static void clearAll() {
         IdleLog.clearAll();
+
+        WAITING_SINCE.clear();
 
         smallHouse = null;
     }
@@ -138,6 +156,83 @@ public final class ConstructionPlanner {
                 "Project {} has what it was waiting for — back to building, {} blocks left",
                 project.id(),
                 project.remainingCount());
+    }
+
+    /**
+     * A obra que esperou material tempo demais sai da frente.
+     *
+     * <p><b>O buraco que isto fecha.</b> Quem planeja não abre obra nova
+     * enquanto houver uma aberta, e nada tirava da frente uma obra
+     * parada em {@code WAITING_RESOURCES}. A casa de planície pede 43
+     * pedregulhos que a colônia não minera; sem o jogador guardá-los num
+     * baú, a vila parava de crescer <b>para sempre</b>. O lenhador já
+     * tinha o guarda de travamento desde a Regra 9; a obra não tinha
+     * nada equivalente, e a diferença nunca foi deliberada.
+     *
+     * <p><b>A casa pela metade fica de pé, e o lote fica tomado.</b> Ela
+     * é do jogador agora — derrubá-la seria a Regra 3 ao contrário. E a
+     * caixa vai para o registro de construções antes de a obra sumir,
+     * senão o lote voltaria a parecer livre e a colônia planejaria por
+     * cima do que ela mesma levantou.
+     *
+     * <p><b>O que isto custa, dito por inteiro:</b> a obra não volta. Se
+     * o pedregulho aparecer depois, ninguém retoma aquela casa — ela
+     * fica como está. A alternativa era a vila inteira parada à espera
+     * de uma entrega que pode nunca vir, e entre as duas esta é a que
+     * deixa a colônia viva.
+     *
+     * @return se a obra foi abandonada agora
+     */
+    private static boolean giveUpIfStalled(
+            ServerWorld world, Colony colony, ConstructionProject project) {
+
+        if (project.state() != ConstructionState.WAITING_RESOURCES) {
+            WAITING_SINCE.remove(project.id());
+
+            return false;
+        }
+
+        long since = WAITING_SINCE.computeIfAbsent(project.id(), id -> world.getTime());
+
+        if (!PatienceClock.ranOut(since, world.getTime())) {
+            return false;
+        }
+
+        giveUp(colony, project);
+
+        return true;
+    }
+
+    /**
+     * Larga esta obra: a casa fica de pé como está, e o lote com ela.
+     *
+     * <p>Separado do relógio de propósito. O relógio é de escala de
+     * minutos e se afirma fora do jogo, como o {@link
+     * com.villagecolony.core.coordination.WorkClock}; a consequência —
+     * a caixa virar construção, a obra sair do registro, a colônia
+     * voltar a planejar — se afirma dentro dele, sem esperar dez
+     * minutos. Juntas as duas metades não deixam buraco.
+     *
+     * <p>A ordem das duas linhas importa: a construção entra no registro
+     * <b>antes</b> de a obra sair. Invertida, haveria um instante em que
+     * o lote não pertence a ninguém.
+     */
+    public static void giveUp(Colony colony, ConstructionProject project) {
+        WAITING_SINCE.remove(project.id());
+
+        VillageColonyMod.BUILDINGS.register(Building.of(project));
+        VillageColonyMod.CONSTRUCTIONS.forget(project.id());
+
+        VillageColonyMod.LOGGER.info(
+                "Colony {} gives up on {} at {} — {} blocks never came in {} cycles."
+                        + " The half-built house and its lot stay taken",
+                colony.id(),
+                project.blueprint().id(),
+                project.origin(),
+                project.remainingCount(),
+                PatienceClock.CYCLES);
+
+        IdleLog.clear(colony.id(), SUBJECT);
     }
 
     /**
@@ -224,9 +319,14 @@ public final class ConstructionPlanner {
         if (open.isPresent()) {
             wakeIfSupplied(world, open.get());
 
-            ensureTask(colony, open.get());
+            // A obra que esperou demais sai da frente, e o planejamento
+            // segue nesta mesma passagem: fazer a colônia esperar mais um
+            // ciclo depois de já ter esperado vinte não serve a ninguém.
+            if (!giveUpIfStalled(world, colony, open.get())) {
+                ensureTask(colony, open.get());
 
-            return silent(colony, IdleReason.ALREADY_OPEN, "");
+                return silent(colony, IdleReason.ALREADY_OPEN, "");
+            }
         }
 
         int builders = WorkAssignment.countCapableOf(
