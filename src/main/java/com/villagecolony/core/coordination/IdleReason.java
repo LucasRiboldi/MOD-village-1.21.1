@@ -70,10 +70,7 @@ public enum IdleReason {
     NOT_IN_GAME("this game does not have what it asks for"),
 
     /** Falta o material, e a colônia não inventa recurso. */
-    MISSING_MATERIAL("the colony has none of the material"),
-
-    /** O lugar existe e não serve. */
-    SITE_REFUSED("the lot found cannot be used");
+    MISSING_MATERIAL("the colony has none of the material");
 
     private final String message;
 

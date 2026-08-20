@@ -240,17 +240,14 @@ public final class ConstructionPlanner {
                                     + blueprint.size());
         }
 
-        if (VillageColonyMod.BUILDINGS.isColonyInfrastructure(site.get().origin())) {
-            // O lote caiu sobre casa que a própria colônia levantou. O
-            // scanner não conhece o registro de construções — ele olha o
-            // mundo, e uma casa de madeira sobre terra continua parecendo
-            // terreno pelo topo do bloco. A próxima passagem tenta outro
-            // anel.
-            return silent(
-                    colony,
-                    IdleReason.SITE_REFUSED,
-                    "the lot at " + site.get().origin() + " falls on a colony building");
-        }
+        // A recusa de lote sobre casa da colônia morava aqui, e daqui não
+        // funcionava. O comentário dizia "a próxima passagem tenta outro
+        // anel", e era falso: achar um lote apaga o cursor da varredura,
+        // então a passagem seguinte recomeçava do centro e reencontrava o
+        // mesmo lugar. Em 2026-08-20 a vila do autor ficou nesse laço.
+        //
+        // A pergunta desceu para `BuildSiteScanner.isClearAbove`, que é
+        // onde a varredura ainda pode seguir para o anel seguinte.
 
         // A planta que coube naquele lote — a maior das oferecidas que
         // serviu ali. Decisão do autor de 2026-08-20.

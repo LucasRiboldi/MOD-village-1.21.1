@@ -1,5 +1,8 @@
 package com.villagecolony.gametest;
 
+import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.construction.model.ColonyHut;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
@@ -559,6 +562,63 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.assertTrue(
                 TALL_HOUSE.equals(site.get().size()),
                 "a grande cabia e a colônia escolheu " + site.get().size());
+
+        BuildSiteScanner.clearAll();
+
+        context.complete();
+    }
+
+    /**
+     * Lote sobre casa que a própria colônia levantou não serve.
+     *
+     * <p><b>E o miolo dela é o caso difícil.</b> A cabana é oca e não tem
+     * piso: o chão de dentro é a grama original, no nível da rua, com o
+     * volume livre até o teto. Ela passa em todas as perguntas que o
+     * scanner sabe fazer ao mundo — a Regra 19, a Regra 22, o chão
+     * natural — porque nenhuma delas pergunta de quem é aquilo.
+     *
+     * <p>Visto em jogo em 2026-08-20, 01:54: a vila achou lote em
+     * ColonyPos[-6818, 96, -5050], que é uma cabana de pé desde a
+     * véspera. Quem recusava era o planejador, depois da busca, e o
+     * comentário dele dizia que "a próxima passagem tenta outro anel" —
+     * não tentava. Achar um lote apaga o cursor, então a passagem
+     * seguinte recomeçava do centro e reencontrava o mesmo miolo. A
+     * colônia ficou em laço fechado.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_owned")
+    public void aLotInsideAColonyHouseIsNotALot(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+
+        paveGround(context, center);
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+
+        UUID colony = UUID.randomUUID();
+
+        // Uma casa da colônia cobrindo tudo em volta da rua. Nenhum bloco
+        // entra no mundo: o registro é a única diferença, e é dele que o
+        // teste trata.
+        ColonyPos from = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(center.add(-RADIUS, 0, -RADIUS)));
+
+        VillageColonyMod.BUILDINGS.register(new Building(
+                UUID.randomUUID(),
+                colony,
+                ColonyHut.ID,
+                from,
+                new ColonyPos(from.x() + 2 * RADIUS, from.y() + 4, from.z() + 2 * RADIUS)));
+
+        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                context.getWorld(), colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                RADIUS, SMALL_HOUSE);
+
+        context.assertTrue(
+                site.isEmpty(),
+                "a busca ofereceu " + site.map(BuildSiteScanner.Site::origin).orElse(null)
+                        + ", que está dentro de uma casa da colônia");
+
+        VillageColonyMod.BUILDINGS.removeOfColony(colony);
 
         BuildSiteScanner.clearAll();
 

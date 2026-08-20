@@ -554,7 +554,25 @@ public final class BuildSiteScanner {
         }
 
         for (int y = floor; y < floor + height; y++) {
-            if (!isNothing(chunk.getBlockState(new BlockPos(x, y, z)))) {
+            BlockPos at = new BlockPos(x, y, z);
+
+            if (!isNothing(chunk.getBlockState(at))) {
+                return false;
+            }
+
+            // E de quem é este vazio. A cabana da colônia é oca e não tem
+            // piso: o miolo dela é grama original no nível da rua, com o
+            // volume livre até o teto, e passa em todas as perguntas que
+            // se fazem ao mundo — nenhuma delas pergunta de quem aquilo é.
+            //
+            // Visto em jogo em 2026-08-20, 01:54: a vila ofereceu como
+            // lote o interior de uma cabana levantada na véspera. Quem
+            // recusava era o planejador, depois da busca, e isso não
+            // bastava: achar um lote apaga o cursor, então a passagem
+            // seguinte recomeçava do centro e reencontrava o mesmo miolo.
+            // A recusa precisa acontecer aqui dentro, onde a varredura
+            // pode seguir para o anel seguinte.
+            if (BlockProtection.isColonyBuilt(at)) {
                 return false;
             }
         }
