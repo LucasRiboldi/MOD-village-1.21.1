@@ -248,7 +248,8 @@ public final class ConstructionPlanner {
         Blueprint blueprint = houseFor(world, colony);
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
-                world, colony.center(), VillageDetector.SEARCH_RADIUS, blueprint.size());
+                world, colony.id(), colony.center(),
+                VillageDetector.SEARCH_RADIUS, blueprint.size());
 
         if (site.isEmpty()) {
             // Duas respostas, e a diferença importa: uma diz que não há
@@ -259,7 +260,7 @@ public final class ConstructionPlanner {
             // Sem o número do anel de propósito: IdleLog só registra
             // quando o motivo muda, e um anel diferente por ciclo faria a
             // linha voltar toda vez.
-            return BuildSiteScanner.sweepPausedAt(colony.center()).isPresent()
+            return BuildSiteScanner.sweepPausedAt(colony.id()).isPresent()
                     ? silent(colony, IdleReason.SWEEP_INCOMPLETE, "looking for a lot")
                     : silent(
                             colony,

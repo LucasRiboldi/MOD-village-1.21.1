@@ -10,6 +10,7 @@ import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * O lote da próxima casa — a Regra 6 lendo o mundo.
@@ -52,6 +53,7 @@ public class BuildSiteGameTest implements FabricGameTest {
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
+                UUID.randomUUID(),
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 SMALL_HOUSE);
@@ -111,6 +113,7 @@ public class BuildSiteGameTest implements FabricGameTest {
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
+                UUID.randomUUID(),
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 SMALL_HOUSE);
@@ -146,19 +149,70 @@ public class BuildSiteGameTest implements FabricGameTest {
 
         ColonyPos from = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center));
 
+        UUID colony = UUID.randomUUID();
+
         // Raio curto: cabe inteiro no orçamento, e a varredura termina.
-        BuildSiteScanner.find(context.getWorld(), from, RADIUS, SMALL_HOUSE);
+        BuildSiteScanner.find(context.getWorld(), colony, from, RADIUS, SMALL_HOUSE);
 
         context.assertTrue(
-                BuildSiteScanner.sweepPausedAt(from).isEmpty(),
+                BuildSiteScanner.sweepPausedAt(colony).isEmpty(),
                 "raio de " + RADIUS + " cabe num ciclo, e a busca disse que parou no meio");
 
         // Raio de vila de verdade: dezesseis mil colunas, mil por chamada.
-        BuildSiteScanner.find(context.getWorld(), from, 64, SMALL_HOUSE);
+        BuildSiteScanner.find(context.getWorld(), colony, from, 64, SMALL_HOUSE);
 
         context.assertTrue(
-                BuildSiteScanner.sweepPausedAt(from).isPresent(),
+                BuildSiteScanner.sweepPausedAt(colony).isPresent(),
                 "raio de 64 não cabe num ciclo, e a busca disse que varreu tudo");
+
+        BuildSiteScanner.clearAll();
+
+        context.complete();
+    }
+
+    /**
+     * A varredura sobrevive ao centro da colônia se mexendo.
+     *
+     * <p>O cursor era guardado pela posição do centro. O centro troca de
+     * âncora e volta a cada ciclo — é a ADR-003, vista nos logs de 08-18
+     * e 08-19 —, e cada troca dava um cursor novo: a busca recomeçava do
+     * anel zero para sempre e nunca passava do orçamento de um ciclo.
+     *
+     * <p>Na sessão de 2026-08-19, 23:39, isso deixou uma colônia três
+     * minutos em "still sweeping" sem nunca planejar nada. Ficou visível
+     * agora porque a casa de planície é 7×7×7 contra os 5×5×4 da cabana,
+     * e o lote perto acabou: enquanto havia lote no anel de perto, a
+     * busca achava antes de o orçamento acabar e o defeito não aparecia.
+     *
+     * <p>O cursor é da colônia, então é ela quem o guarda.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_moving_center")
+    public void theSweepSurvivesTheCenterMoving(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        ColonyPos first = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(3, 1, 3)));
+
+        // O centro que se move: a mesma colônia, alguns blocos ao lado.
+        ColonyPos second = new ColonyPos(first.x() + 9, first.y(), first.z() - 7);
+
+        // Uma casa que não cabe em lugar nenhum, de propósito: este teste
+        // é sobre o cursor, e um lote encontrado o apagaria. As arenas da
+        // bateria dividem o mundo, e a rua que outro teste pavimentou cai
+        // dentro dos 64 blocos daqui.
+        ColonyPos tooBigToFit = new ColonyPos(40, 20, 40);
+
+        BuildSiteScanner.find(context.getWorld(), colony, first, 64, tooBigToFit);
+
+        int paused = BuildSiteScanner.sweepPausedAt(colony).orElse(0);
+
+        context.assertTrue(paused > 0, "o orçamento devia ter acabado no meio do raio de 64");
+
+        BuildSiteScanner.find(context.getWorld(), colony, second, 64, tooBigToFit);
+
+        context.assertTrue(
+                BuildSiteScanner.sweepPausedAt(colony).orElse(0) > paused,
+                "a busca recomeçou do centro quando a âncora mudou, e nunca avança");
 
         BuildSiteScanner.clearAll();
 
@@ -180,6 +234,7 @@ public class BuildSiteGameTest implements FabricGameTest {
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
+                UUID.randomUUID(),
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 SMALL_HOUSE);
@@ -221,6 +276,7 @@ public class BuildSiteGameTest implements FabricGameTest {
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
+                UUID.randomUUID(),
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 SMALL_HOUSE);
@@ -273,6 +329,7 @@ public class BuildSiteGameTest implements FabricGameTest {
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
+                UUID.randomUUID(),
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 TALL_HOUSE);
@@ -315,6 +372,7 @@ public class BuildSiteGameTest implements FabricGameTest {
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
+                UUID.randomUUID(),
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 SMALL_HOUSE);
@@ -360,6 +418,7 @@ public class BuildSiteGameTest implements FabricGameTest {
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
+                UUID.randomUUID(),
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 SMALL_HOUSE);
@@ -392,6 +451,7 @@ public class BuildSiteGameTest implements FabricGameTest {
 
         Optional<BuildSiteScanner.Site> found = BuildSiteScanner.find(
                 context.getWorld(),
+                UUID.randomUUID(),
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 SMALL_HOUSE);

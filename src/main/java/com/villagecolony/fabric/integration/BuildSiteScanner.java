@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.UUID;
 
 /**
  * Onde a próxima casa cabe — a metade da Regra 6 que olha o mundo.
@@ -105,8 +106,21 @@ public final class BuildSiteScanner {
      * <p>Um lote não aparece de um ciclo para o outro, e recomeçar do
      * centro a cada ciclo custaria o teto inteiro de colunas para
      * reencontrar as mesmas casas.
+     *
+     * <p><b>A chave é a colônia, e não o centro dela.</b> Era o centro
+     * até 2026-08-19, e isso apagava o cursor toda vez que a âncora
+     * trocava — o que ela faz a cada trinta segundos, pela ADR-003. Com
+     * um cursor novo por ciclo a varredura recomeçava do anel zero para
+     * sempre e nunca passava do orçamento de uma passagem: dos dezesseis
+     * mil colunas do raio de 64, as mesmas mil, de novo e de novo.
+     *
+     * <p>Ficou invisível enquanto havia lote perto do centro, porque a
+     * busca achava antes de o orçamento acabar. A casa de planície da
+     * Regra 24 é 7×7×7 contra os 5×5×4 da cabana, e com o lote de perto
+     * acabado a colônia passou a varrer até o fim do orçamento — e a
+     * travar ali.
      */
-    private static final Map<BlockPos, Integer> NEXT_RING = new HashMap<>();
+    private static final Map<UUID, Integer> NEXT_RING = new HashMap<>();
 
     private BuildSiteScanner() {
     }
@@ -137,13 +151,13 @@ public final class BuildSiteScanner {
      *     onde esta parou
      */
     public static Optional<Site> find(
-            ServerWorld world, ColonyPos center, int radius, ColonyPos size) {
+            ServerWorld world, UUID colonyId, ColonyPos center, int radius, ColonyPos size) {
 
         BlockPos from = MinecraftTypeAdapter.toBlockPos(center);
 
         int columns = 0;
 
-        int startRing = NEXT_RING.getOrDefault(from, 0);
+        int startRing = NEXT_RING.getOrDefault(colonyId, 0);
 
         if (startRing > radius) {
             startRing = 0;
@@ -161,7 +175,7 @@ public final class BuildSiteScanner {
                     }
 
                     if (++columns > MAX_COLUMNS) {
-                        NEXT_RING.put(from.toImmutable(), ring);
+                        NEXT_RING.put(colonyId, ring);
 
                         return Optional.empty();
                     }
@@ -170,7 +184,7 @@ public final class BuildSiteScanner {
                             world, from.getX() + dx, from.getZ() + dz, from.getY(), size);
 
                     if (site.isPresent()) {
-                        NEXT_RING.remove(from);
+                        NEXT_RING.remove(colonyId);
 
                         return site;
                     }
@@ -180,7 +194,7 @@ public final class BuildSiteScanner {
 
         // Varreu tudo sem achar. Recomeçar do centro: a vila muda, o
         // jogador abre espaço, e o lote de ontem pode existir amanhã.
-        NEXT_RING.remove(from);
+        NEXT_RING.remove(colonyId);
 
         return Optional.empty();
     }
@@ -236,7 +250,7 @@ public final class BuildSiteScanner {
     }
 
     /**
-     * Em que anel a busca deste centro parou por falta de orçamento.
+     * Em que anel a busca desta colônia parou por falta de orçamento.
      *
      * <p>Existe para separar duas respostas que {@link #find} devolve
      * iguais: "varri o raio inteiro e não há lote" e "o orçamento deste
@@ -252,8 +266,8 @@ public final class BuildSiteScanner {
      * mil por ciclo, e a sessão não durou os dezessete ciclos que a conta
      * pede. Ver o E14 do §17.
      */
-    public static OptionalInt sweepPausedAt(ColonyPos center) {
-        Integer ring = NEXT_RING.get(MinecraftTypeAdapter.toBlockPos(center));
+    public static OptionalInt sweepPausedAt(UUID colonyId) {
+        Integer ring = NEXT_RING.get(colonyId);
 
         return ring == null ? OptionalInt.empty() : OptionalInt.of(ring);
     }
