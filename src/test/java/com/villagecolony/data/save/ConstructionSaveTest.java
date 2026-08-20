@@ -4,12 +4,15 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.ColonyState;
 import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.construction.model.ColonyHut;
+import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -109,7 +112,12 @@ class ConstructionSaveTest {
                 restored.furnished());
     }
 
-    /** Save de antes da Regra 21: casa sem a lista, e sem explodir. */
+    /**
+     * Casa do jogo gravada antes da lista: continua sem conta nenhuma.
+     *
+     * <p>A migração é só da cabana. Casa lida do arquivo do jogo tem a
+     * mobília que o arquivo manda e nunca passou por esta regra.
+     */
     @Test
     void aBuildingFromBeforeTheFurnitureRuleLoadsEmpty() {
         UUID colonyId = UUID.randomUUID();
@@ -136,6 +144,72 @@ class ConstructionSaveTest {
         }
 
         assertTrue(ColonySavedData.TYPE.deserializer().apply(nbt, null).buildings().get(0).furnished().isEmpty());
+    }
+
+    /**
+     * Cabana gravada antes da lista conta como já mobiliada.
+     *
+     * <p>Pedido do autor em 2026-08-20. Sem isto, cada casa que já está
+     * de pé no mundo dele receberia cama, baú e lampião mais uma vez —
+     * inclusive as de onde ele tinha acabado de tirar as peças, que é o
+     * defeito que a regra veio proibir.
+     */
+    @Test
+    void aHutFromBeforeTheFurnitureRuleCountsAsAlreadyFurnished() {
+        NbtCompound nbt = savedHut();
+
+        stripFurnishedList(nbt);
+
+        Building restored =
+                ColonySavedData.TYPE.deserializer().apply(nbt, null).buildings().get(0);
+
+        for (BlueprintBlock piece : ColonyHut.furnishings()) {
+            assertTrue(
+                    restored.wasFurnishedWith(piece.block()),
+                    "a casa antiga vai receber " + piece.block() + " de novo");
+        }
+    }
+
+    /**
+     * Cabana nova, com a lista vazia gravada, continua podendo receber.
+     *
+     * <p>É a outra metade da migração, e a que a torna segura: lista
+     * ausente e lista vazia dizem coisas diferentes. Tratá-las igual
+     * congelaria toda casa recém-construída sem mobília para sempre.
+     */
+    @Test
+    void aNewHutWithAnEmptyListStillGetsItsFurniture() {
+        Building restored = ColonySavedData.TYPE.deserializer()
+                .apply(savedHut(), null).buildings().get(0);
+
+        assertTrue(restored.furnished().isEmpty());
+    }
+
+    private static NbtCompound savedHut() {
+        UUID colonyId = UUID.randomUUID();
+
+        ColonySavedData data = empty();
+
+        data.sync(
+                List.of(colonyAt(colonyId, new ColonyPos(0, 64, 0))),
+                List.of(),
+                List.of(),
+                List.of(new Building(
+                        UUID.randomUUID(),
+                        colonyId,
+                        ColonyHut.ID,
+                        new ColonyPos(10, 64, -20),
+                        new ColonyPos(14, 68, -16))));
+
+        return data.writeNbt(new NbtCompound(), null);
+    }
+
+    private static void stripFurnishedList(NbtCompound nbt) {
+        NbtList saved = nbt.getList("buildings", NbtElement.COMPOUND_TYPE);
+
+        for (int i = 0; i < saved.size(); i++) {
+            saved.getCompound(i).remove("furnished");
+        }
     }
 
     @Test

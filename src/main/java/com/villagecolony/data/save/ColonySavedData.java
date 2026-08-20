@@ -1,7 +1,9 @@
 package com.villagecolony.data.save;
 
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.construction.model.ColonyHut;
 import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.core.type.ResourceId;
@@ -360,22 +362,66 @@ public final class ColonySavedData extends PersistentState {
                 continue;
             }
 
-            Set<ResourceId> furnished = new LinkedHashSet<>();
-
-            NbtList saved = entry.getList(FURNISHED, NbtElement.STRING_TYPE);
-
-            for (int piece = 0; piece < saved.size(); piece++) {
-                furnished.add(ResourceId.parse(saved.getString(piece)));
-            }
+            ResourceId blueprint = ResourceId.parse(entry.getString(BLUEPRINT));
 
             data.buildings.add(new Building(
                     entry.getUuid(ID),
                     colonyId,
-                    ResourceId.parse(entry.getString(BLUEPRINT)),
+                    blueprint,
                     new ColonyPos(entry.getInt(MIN_X), entry.getInt(MIN_Y), entry.getInt(MIN_Z)),
                     new ColonyPos(entry.getInt(MAX_X), entry.getInt(MAX_Y), entry.getInt(MAX_Z)),
-                    furnished));
+                    furnishedIn(entry, blueprint)));
         }
+    }
+
+    /**
+     * O que esta casa já recebeu de mobília, lido do save.
+     *
+     * <p><b>A migração, e a distinção que a torna segura.</b> A lista
+     * nasceu em 2026-08-20, com a regra de que peça destruída não volta.
+     * Casa gravada antes disso não tem a chave — e a conta vazia faria a
+     * colônia pôr cama, baú e lampião mais uma vez em cada casa que já
+     * está de pé no mundo do jogador, inclusive naquelas de onde ele já
+     * tinha tirado as peças.
+     *
+     * <p>Então **chave ausente quer dizer casa antiga, e casa antiga
+     * conta como já mobiliada**. É a resposta conservadora: a colônia
+     * deixa de escrever no que não conhece. O custo é uma casa velha que
+     * de fato nunca teve cama continuar sem — e isso o jogador resolve
+     * pondo uma, que é o lado certo de errar.
+     *
+     * <p>**Lista vazia presente é outra coisa**, e por isso a diferença
+     * entre as duas importa: é casa nova, que ainda vai receber as três.
+     * Tratar as duas igual congelaria toda casa recém-construída sem
+     * mobília para sempre.
+     *
+     * <p>Só vale para a cabana. Casa lida do jogo tem a mobília que o
+     * arquivo dela manda e nunca passou por esta regra.
+     */
+    private static Set<ResourceId> furnishedIn(NbtCompound entry, ResourceId blueprint) {
+        if (!entry.contains(FURNISHED, NbtElement.LIST_TYPE)) {
+            if (!ColonyHut.ID.equals(blueprint)) {
+                return Set.of();
+            }
+
+            Set<ResourceId> all = new LinkedHashSet<>();
+
+            for (BlueprintBlock piece : ColonyHut.furnishings()) {
+                all.add(piece.block());
+            }
+
+            return all;
+        }
+
+        Set<ResourceId> furnished = new LinkedHashSet<>();
+
+        NbtList saved = entry.getList(FURNISHED, NbtElement.STRING_TYPE);
+
+        for (int piece = 0; piece < saved.size(); piece++) {
+            furnished.add(ResourceId.parse(saved.getString(piece)));
+        }
+
+        return furnished;
     }
 
     /**
