@@ -14,6 +14,7 @@ import com.villagecolony.core.worker.model.Worker;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtString;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.PersistentState;
@@ -21,6 +22,7 @@ import net.minecraft.world.PersistentState;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -70,6 +72,9 @@ public final class ColonySavedData extends PersistentState {
     private static final String MAX_X = "maxX";
     private static final String MAX_Y = "maxY";
     private static final String MAX_Z = "maxZ";
+
+    /** As peças da Regra 21 que esta casa já recebeu, uma vez cada. */
+    private static final String FURNISHED = "furnished";
 
     public static final PersistentState.Type<ColonySavedData> TYPE = new PersistentState.Type<>(
             ColonySavedData::new,
@@ -245,6 +250,14 @@ public final class ColonySavedData extends PersistentState {
             entry.putInt(MAX_Y, building.max().y());
             entry.putInt(MAX_Z, building.max().z());
 
+            NbtList furnished = new NbtList();
+
+            for (ResourceId piece : building.furnished()) {
+                furnished.add(NbtString.of(piece.toString()));
+            }
+
+            entry.put(FURNISHED, furnished);
+
             buildingList.add(entry);
         }
 
@@ -347,12 +360,21 @@ public final class ColonySavedData extends PersistentState {
                 continue;
             }
 
+            Set<ResourceId> furnished = new LinkedHashSet<>();
+
+            NbtList saved = entry.getList(FURNISHED, NbtElement.STRING_TYPE);
+
+            for (int piece = 0; piece < saved.size(); piece++) {
+                furnished.add(ResourceId.parse(saved.getString(piece)));
+            }
+
             data.buildings.add(new Building(
                     entry.getUuid(ID),
                     colonyId,
                     ResourceId.parse(entry.getString(BLUEPRINT)),
                     new ColonyPos(entry.getInt(MIN_X), entry.getInt(MIN_Y), entry.getInt(MIN_Z)),
-                    new ColonyPos(entry.getInt(MAX_X), entry.getInt(MAX_Y), entry.getInt(MAX_Z))));
+                    new ColonyPos(entry.getInt(MAX_X), entry.getInt(MAX_Y), entry.getInt(MAX_Z)),
+                    furnished));
         }
     }
 

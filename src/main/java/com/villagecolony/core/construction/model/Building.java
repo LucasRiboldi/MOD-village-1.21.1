@@ -3,7 +3,9 @@ package com.villagecolony.core.construction.model;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 
+import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -32,7 +34,8 @@ import java.util.UUID;
  * @param max canto de maior coordenada, inclusive
  */
 public record Building(
-        UUID id, UUID colonyId, ResourceId blueprint, ColonyPos min, ColonyPos max) {
+        UUID id, UUID colonyId, ResourceId blueprint, ColonyPos min, ColonyPos max,
+        Set<ResourceId> furnished) {
 
     public Building {
         Objects.requireNonNull(id, "id");
@@ -40,10 +43,49 @@ public record Building(
         Objects.requireNonNull(blueprint, "blueprint");
         Objects.requireNonNull(min, "min");
         Objects.requireNonNull(max, "max");
+        Objects.requireNonNull(furnished, "furnished");
 
         if (max.x() < min.x() || max.y() < min.y() || max.z() < min.z()) {
             throw new IllegalArgumentException("Inverted bounds: " + min + " to " + max);
         }
+
+        furnished = Set.copyOf(furnished);
+    }
+
+    /** Uma casa que ainda não recebeu peça nenhuma. */
+    public Building(
+            UUID id, UUID colonyId, ResourceId blueprint, ColonyPos min, ColonyPos max) {
+
+        this(id, colonyId, blueprint, min, max, Set.of());
+    }
+
+    /**
+     * Se esta peça já entrou nesta casa alguma vez.
+     *
+     * <p><b>Alguma vez, e não "está lá agora".</b> A diferença é a regra
+     * do autor de 2026-08-20: peça destruída não volta. Perguntar ao
+     * mundo responde "não está lá" tanto para a cama que nunca entrou
+     * quanto para a que o jogador desfez com uma picareta, e tratar as
+     * duas igual põe a colônia a repor o que alguém tirou de propósito.
+     *
+     * <p>Por isso isto mora na construção, e não num mapa em memória: a
+     * casa sobrevive ao servidor parar, e a resposta precisa sobreviver
+     * junto. Uma marca esquecida no boot faria a mobília voltar do nada
+     * na sessão seguinte, que é o mesmo defeito com prazo mais longo.
+     */
+    public boolean wasFurnishedWith(ResourceId piece) {
+        return furnished.contains(piece);
+    }
+
+    /** Esta casa, agora com esta peça na conta do que já recebeu. */
+    public Building withFurnished(ResourceId piece) {
+        Objects.requireNonNull(piece, "piece");
+
+        Set<ResourceId> next = new LinkedHashSet<>(furnished);
+
+        next.add(piece);
+
+        return new Building(id, colonyId, blueprint, min, max, next);
     }
 
     /**

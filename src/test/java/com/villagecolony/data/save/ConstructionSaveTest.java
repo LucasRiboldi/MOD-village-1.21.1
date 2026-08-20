@@ -9,9 +9,11 @@ import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -69,6 +71,71 @@ class ConstructionSaveTest {
 
         assertEquals(1, restored.size());
         assertEquals(building, restored.get(0));
+    }
+
+    /**
+     * A conta do que a casa já recebeu atravessa o save.
+     *
+     * <p>Regra do autor, 2026-08-20: peça destruída não volta. Se esta
+     * lista não sobrevivesse ao servidor parar, a cama que o jogador
+     * desfez reapareceria na sessão seguinte — o mesmo defeito com prazo
+     * mais longo, e mais difícil de ver.
+     */
+    @Test
+    void whatTheHouseAlreadyGotSurvivesTheRoundTrip() {
+        UUID colonyId = UUID.randomUUID();
+
+        Building building = new Building(
+                UUID.randomUUID(),
+                colonyId,
+                HOUSE,
+                new ColonyPos(10, 64, -20),
+                new ColonyPos(16, 70, -14))
+                .withFurnished(ResourceId.vanilla("white_bed"))
+                .withFurnished(ResourceId.vanilla("lantern"));
+
+        ColonySavedData data = empty();
+
+        data.sync(
+                List.of(colonyAt(colonyId, new ColonyPos(0, 64, 0))),
+                List.of(),
+                List.of(),
+                List.of(building));
+
+        Building restored = roundTrip(data).buildings().get(0);
+
+        assertEquals(
+                Set.of(ResourceId.vanilla("white_bed"), ResourceId.vanilla("lantern")),
+                restored.furnished());
+    }
+
+    /** Save de antes da Regra 21: casa sem a lista, e sem explodir. */
+    @Test
+    void aBuildingFromBeforeTheFurnitureRuleLoadsEmpty() {
+        UUID colonyId = UUID.randomUUID();
+
+        Building building = new Building(
+                UUID.randomUUID(),
+                colonyId,
+                HOUSE,
+                new ColonyPos(10, 64, -20),
+                new ColonyPos(16, 70, -14));
+
+        ColonySavedData data = empty();
+
+        data.sync(
+                List.of(colonyAt(colonyId, new ColonyPos(0, 64, 0))),
+                List.of(),
+                List.of(),
+                List.of(building));
+
+        NbtCompound nbt = data.writeNbt(new NbtCompound(), null);
+
+        for (int i = 0; i < nbt.getList("buildings", NbtElement.COMPOUND_TYPE).size(); i++) {
+            nbt.getList("buildings", NbtElement.COMPOUND_TYPE).getCompound(i).remove("furnished");
+        }
+
+        assertTrue(ColonySavedData.TYPE.deserializer().apply(nbt, null).buildings().get(0).furnished().isEmpty());
     }
 
     @Test

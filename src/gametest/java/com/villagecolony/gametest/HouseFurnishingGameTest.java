@@ -84,7 +84,6 @@ public class HouseFurnishingGameTest implements FabricGameTest {
 
         VillageColonyMod.BUILDINGS.removeOfColony(fixture.colony.id());
 
-        HouseFurnishing.clearAll();
 
         context.complete();
     }
@@ -105,9 +104,11 @@ public class HouseFurnishingGameTest implements FabricGameTest {
      * foi o jogador, repor é escrever por cima da escolha dele — a
      * Regra 3.
      *
-     * <p>A marca envelhece em dez ciclos, como a recusa da Regra 23:
-     * marca que não vence é uma afirmação sobre o futuro do mundo do
-     * jogador, e o mod não tem como fazer nenhuma.
+     * <p><b>E a marca não vence.</b> Regra do autor, 2026-08-20, depois
+     * de ver a mobília voltar sozinha: peça destruída não volta. A
+     * primeira versão desta correção deixava a marca envelhecer em dez
+     * ciclos, como a recusa da Regra 23 — e cinco minutos depois a cama
+     * reaparecia na casa de quem a tinha desfeito.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "house_furnishing_gone")
     public void aPieceThatVanishesIsNotReplacedEveryCycle(TestContext context) {
@@ -138,7 +139,6 @@ public class HouseFurnishingGameTest implements FabricGameTest {
 
         VillageColonyMod.BUILDINGS.removeOfColony(fixture.colony.id());
 
-        HouseFurnishing.clearAll();
 
         context.complete();
     }

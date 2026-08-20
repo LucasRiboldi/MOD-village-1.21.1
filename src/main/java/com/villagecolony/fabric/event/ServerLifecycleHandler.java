@@ -16,7 +16,6 @@ import com.villagecolony.fabric.integration.TreeScanner;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.work.BuilderWork;
-import com.villagecolony.fabric.work.HouseFurnishing;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.ManufacturerWork;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -60,7 +59,6 @@ public final class ServerLifecycleHandler {
         ChestMarker.clearAll();
         TreeScanner.clearAll();
         BuildSiteScanner.clearAll();
-        HouseFurnishing.clearAll();
         VillageDetectionHandler.clearPending();
 
         ColonySavedData data = ColonySavedData.get(server);
@@ -158,7 +156,6 @@ public final class ServerLifecycleHandler {
         ChestMarker.clearAll();
         TreeScanner.clearAll();
         BuildSiteScanner.clearAll();
-        HouseFurnishing.clearAll();
         VillageDetectionHandler.clearPending();
     }
 }
