@@ -4,35 +4,25 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.construction.model.Blueprint;
-import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.BlueprintBlock;
-import com.villagecolony.core.construction.model.ColonyHut;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.service.ConstructionService;
-import com.villagecolony.core.coordination.PatienceClock;
 import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskPriority;
 import com.villagecolony.core.task.model.TaskType;
-import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceType;
-import com.villagecolony.core.type.Side;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.SitePreparation;
-import com.villagecolony.fabric.integration.VillageBiomes;
-import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import net.minecraft.block.Block;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import java.util.Optional;
 
 /**
@@ -52,6 +42,19 @@ import java.util.Optional;
  * decidiu em 2026-08-14 que se constrói enquanto houver material e
  * espaço. O freio é o mundo — só há obra onde há lote livre encostado em
  * rua, e é {@code BuildSiteScanner} quem responde isso.
+ *
+ * <p><b>O que saiu daqui em 2026-08-20</b>, quando este arquivo passou
+ * de setecentas linhas. Eram três perguntas independentes morando
+ * juntas, e cada uma virou um arquivo com nome:
+ *
+ * <pre>
+ * {@link HousePlans}    qual planta, e virada para que lado
+ * {@link WaitingWork}   a obra que espera material: acordar ou largar
+ * </pre>
+ *
+ * <p>O que ficou é a decisão de abrir obra: há construtor, há lote, e
+ * então nasce o projeto e a tarefa por onde alguém o pega. Mais a
+ * retomada do save, que é a mesma decisão vista de trás para frente.
  */
 public final class ConstructionPlanner {
 
@@ -71,25 +74,6 @@ public final class ConstructionPlanner {
      * precisavam da mesma regra.
      */
     private static final String SUBJECT = "building";
-
-    /**
-     * A casa pequena, lida do disco uma vez por sessão.
-     *
-     * <p>Esquecida ao parar o servidor, junto com o resto — ver
-     * {@link #clearAll()}.
-     */
-    private static Optional<Blueprint> smallHouse;
-
-    /**
-     * Desde quando cada obra espera material.
-     *
-     * <p>Fora do modelo de propósito: a hora é do mundo, e
-     * {@code ConstructionProject} não conhece Minecraft. Esquecida ao
-     * parar o servidor — e isso é escolha, não descuido: a paciência
-     * recomeça na sessão seguinte, que é quando o jogador tem chance de
-     * ter trazido o material.
-     */
-    private static final Map<UUID, Long> WAITING_SINCE = new HashMap<>();
 
     private ConstructionPlanner() {
     }
@@ -115,124 +99,6 @@ public final class ConstructionPlanner {
     /** Esquece o motivo guardado. Chamado ao parar o servidor. */
     public static void clearAll() {
         IdleLog.clearAll();
-
-        WAITING_SINCE.clear();
-
-        smallHouse = null;
-    }
-
-    /**
-     * Acorda a obra que esperava material, quando o material chegou.
-     *
-     * <p>{@code WAITING_RESOURCES} era estado terminal na prática. A
-     * única transição para {@code BUILDING} estava na criação do projeto,
-     * e {@link #ensureTask} não abre tarefa fora de {@code BUILDING}: a
-     * obra que uma vez ficasse sem material não voltava a ser tentada
-     * nunca mais, ainda que o baú enchesse no minuto seguinte.
-     *
-     * <p>Foi o que a sessão das 19:44 de 2026-08-15 mostrou. A casa parou
-     * em 149 blocos com 52 tábuas guardadas, dois fabricantes ociosos e
-     * a linha {@code builders: 0 working, WAITING_RESOURCES ... — no
-     * build task} repetindo até o desligamento. O comentário de
-     * {@code BuilderWork.waitForResources} já dizia que "quem destrava é
-     * o ciclo da colônia" — era intenção que nenhum código cumpria.
-     *
-     * <p>Só acorda com o material do próximo bloco em mãos. Acordar sem
-     * conferir poria o construtor a caminhar até a obra todo ciclo para
-     * falhar ao chegar, que é a mesma roda do E16 por outra porta.
-     */
-    private static void wakeIfSupplied(ServerWorld world, ConstructionProject project) {
-        if (project.state() != ConstructionState.WAITING_RESOURCES) {
-            return;
-        }
-
-        if (!BuilderWork.hasMaterialForNextBlock(world, project)) {
-            return;
-        }
-
-        project.moveTo(ConstructionState.BUILDING);
-
-        VillageColonyMod.LOGGER.info(
-                "Project {} has what it was waiting for — back to building, {} blocks left",
-                project.id(),
-                project.remainingCount());
-    }
-
-    /**
-     * A obra que esperou material tempo demais sai da frente.
-     *
-     * <p><b>O buraco que isto fecha.</b> Quem planeja não abre obra nova
-     * enquanto houver uma aberta, e nada tirava da frente uma obra
-     * parada em {@code WAITING_RESOURCES}. A casa de planície pede 43
-     * pedregulhos que a colônia não minera; sem o jogador guardá-los num
-     * baú, a vila parava de crescer <b>para sempre</b>. O lenhador já
-     * tinha o guarda de travamento desde a Regra 9; a obra não tinha
-     * nada equivalente, e a diferença nunca foi deliberada.
-     *
-     * <p><b>A casa pela metade fica de pé, e o lote fica tomado.</b> Ela
-     * é do jogador agora — derrubá-la seria a Regra 3 ao contrário. E a
-     * caixa vai para o registro de construções antes de a obra sumir,
-     * senão o lote voltaria a parecer livre e a colônia planejaria por
-     * cima do que ela mesma levantou.
-     *
-     * <p><b>O que isto custa, dito por inteiro:</b> a obra não volta. Se
-     * o pedregulho aparecer depois, ninguém retoma aquela casa — ela
-     * fica como está. A alternativa era a vila inteira parada à espera
-     * de uma entrega que pode nunca vir, e entre as duas esta é a que
-     * deixa a colônia viva.
-     *
-     * @return se a obra foi abandonada agora
-     */
-    private static boolean giveUpIfStalled(
-            ServerWorld world, Colony colony, ConstructionProject project) {
-
-        if (project.state() != ConstructionState.WAITING_RESOURCES) {
-            WAITING_SINCE.remove(project.id());
-
-            return false;
-        }
-
-        long since = WAITING_SINCE.computeIfAbsent(project.id(), id -> world.getTime());
-
-        if (!PatienceClock.ranOut(since, world.getTime())) {
-            return false;
-        }
-
-        giveUp(colony, project);
-
-        return true;
-    }
-
-    /**
-     * Larga esta obra: a casa fica de pé como está, e o lote com ela.
-     *
-     * <p>Separado do relógio de propósito. O relógio é de escala de
-     * minutos e se afirma fora do jogo, como o {@link
-     * com.villagecolony.core.coordination.WorkClock}; a consequência —
-     * a caixa virar construção, a obra sair do registro, a colônia
-     * voltar a planejar — se afirma dentro dele, sem esperar dez
-     * minutos. Juntas as duas metades não deixam buraco.
-     *
-     * <p>A ordem das duas linhas importa: a construção entra no registro
-     * <b>antes</b> de a obra sair. Invertida, haveria um instante em que
-     * o lote não pertence a ninguém.
-     */
-    public static void giveUp(Colony colony, ConstructionProject project) {
-        WAITING_SINCE.remove(project.id());
-
-        VillageColonyMod.BUILDINGS.register(Building.of(project));
-        VillageColonyMod.CONSTRUCTIONS.forget(project.id());
-
-        VillageColonyMod.LOGGER.info(
-                "Colony {} gives up on {} at {} — {} blocks never came in {} cycles."
-                        + " The half-built house and its lot stay taken",
-                colony.id(),
-                project.blueprint().id(),
-                project.origin(),
-                project.remainingCount(),
-                PatienceClock.CYCLES);
-
-        IdleLog.clear(colony.id(), SUBJECT);
     }
 
     /**
@@ -317,12 +183,12 @@ public final class ConstructionPlanner {
         Optional<ConstructionProject> open = VillageColonyMod.CONSTRUCTIONS.openOf(colony.id());
 
         if (open.isPresent()) {
-            wakeIfSupplied(world, open.get());
+            WaitingWork.wakeIfSupplied(world, open.get());
 
             // A obra que esperou demais sai da frente, e o planejamento
             // segue nesta mesma passagem: fazer a colônia esperar mais um
             // ciclo depois de já ter esperado vinte não serve a ninguém.
-            if (!giveUpIfStalled(world, colony, open.get())) {
+            if (!WaitingWork.giveUpIfStalled(world, colony, open.get())) {
                 ensureTask(colony, open.get());
 
                 return silent(colony, IdleReason.ALREADY_OPEN, "");
@@ -346,7 +212,7 @@ public final class ConstructionPlanner {
         // A planta desta vila. Em planície é a casa pequena do próprio
         // jogo, por decisão do autor em 2026-08-19; nos outros biomas
         // continua a cabana do mod, na madeira do bioma (Regra 20).
-        List<Blueprint> plans = plansFor(world, colony);
+        List<Blueprint> plans = HousePlans.plansFor(world, colony);
 
         Blueprint blueprint = plans.get(0);
 
@@ -395,7 +261,7 @@ public final class ConstructionPlanner {
 
         // Agora que há lote, a planta é virada para a rua: é a Regra 17,
         // e o lado sai de quem achou o lote.
-        Blueprint facingTheRoad = turnedToTheRoad(
+        Blueprint facingTheRoad = HousePlans.turnedToTheRoad(
                 chosen, MinecraftTypeAdapter.toSide(site.get().doorSide()));
 
         ConstructionProject project = ConstructionProject.plan(
@@ -460,7 +326,7 @@ public final class ConstructionPlanner {
 
         ConstructionService.Pending saved = pending.get();
 
-        Optional<Blueprint> blueprint = blueprintOf(world, saved.blueprint(), saved.origin());
+        Optional<Blueprint> blueprint = HousePlans.blueprintOf(world, saved.blueprint(), saved.origin());
 
         if (blueprint.isEmpty()) {
             // O jogo não conhece mais essa estrutura — datapack que saiu,
@@ -498,7 +364,7 @@ public final class ConstructionPlanner {
             }
         }
 
-        ResourceId target = houseFor(world, colony).id();
+        ResourceId target = HousePlans.houseFor(world, colony).id();
 
         if (project.isSupersededBy(target)) {
             // Obra de uma planta que não é mais o alvo, e sem um bloco de
@@ -557,147 +423,5 @@ public final class ConstructionPlanner {
         return VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
                 .map(project -> project.remainingMaterials().getOrDefault(planks, 0))
                 .orElse(0);
-    }
-
-    /**
-     * A casa que esta vila levanta.
-     *
-     * <p>Decidido pelo autor em 2026-08-19: <b>vila de planície constrói
-     * a casa pequena do próprio jogo</b>, e não mais a cabana do mod. O
-     * arquivo dela é um schema do mod — ver
-     * {@code data/villagecolony/structure/houses/} —, então não depende
-     * de o jogo continuar gerando aquela peça com aquele nome.
-     *
-     * <p>Nos outros biomas continua a cabana, na madeira do bioma. Não é
-     * esquecimento: a casa de cada bioma existe no catálogo e ainda não
-     * foi escolhida uma por bioma, e o autor pediu "por hora, em testes,
-     * só a casa básica pequena".
-     *
-     * <p><b>O que isso custa, e é preciso dizer.</b> A casa do jogo pede
-     * 43 pedregulhos, 16 troncos descascados e 3 vidraças, e a colônia
-     * não minera, não funde e não descasca. Pela segunda metade da
-     * Regra 13 a obra não é impossível — o jogador guarda no baú o que a
-     * colônia não faz, e o construtor tira dali —, mas ela <b>não sobe
-     * sozinha</b> como a cabana subia. O relatório diz o que falta, uma
-     * peça por vez.
-     */
-    private static Blueprint houseFor(ServerWorld world, Colony colony) {
-        return plansFor(world, colony).get(0);
-    }
-
-    /**
-     * O que esta colônia sabe levantar, da maior planta para a menor.
-     *
-     * <p><b>Por que é uma lista desde 2026-08-20.</b> A vila do autor
-     * varreu o raio de 64 inteiro sem achar lugar para a casa de
-     * planície, tendo três cabanas de pé ali dentro: 49 colunas no nível
-     * exato da rua pedem muito mais espaço que 25, e a vila parou de
-     * crescer. Exigir a planta grande em toda parte era transformar a
-     * Regra 24 num travamento.
-     *
-     * <p>A cabana fecha a lista sempre, e é de propósito: ela é a planta
-     * que a colônia levanta sozinha, sem o jogador guardar nada em baú.
-     * Enquanto ela couber em algum lugar, a vila continua crescendo — que
-     * é a Regra 13 outra vez, agora sobre espaço em vez de material.
-     *
-     * <p>Fora da planície a lista tem um item só: a casa do jogo é de
-     * planície, e a Regra 20 manda a cabana ser da madeira do bioma.
-     */
-    private static List<Blueprint> plansFor(ServerWorld world, Colony colony) {
-        ResourceId wood = VillageBiomes.woodAt(world, colony.center())
-                .orElse(ColonyHut.OAK_PLANKS);
-
-        Blueprint hut = ColonyHut.blueprint(wood, Side.NORTH);
-
-        if (!ColonyHut.OAK_PLANKS.equals(wood)) {
-            return List.of(hut);
-        }
-
-        return smallHouse(world)
-                .map(house -> List.of(house, hut))
-                .orElseGet(() -> List.of(hut));
-    }
-
-    /**
-     * A casa pequena, lida uma vez e guardada.
-     *
-     * <p>Ler um template é abrir e decodificar um arquivo de trezentos e
-     * quarenta e três blocos, e o ciclo pergunta pela planta a cada
-     * passagem. O aviso está no cabeçalho de
-     * {@code StructureBlueprintReader}: quem chama guarda o resultado.
-     */
-    private static Optional<Blueprint> smallHouse(ServerWorld world) {
-        if (smallHouse == null) {
-            smallHouse = StructureBlueprintReader.read(
-                    world, StructureBlueprintReader.SMALL_HOUSE);
-        }
-
-        return smallHouse;
-    }
-
-    /**
-     * A planta virada para a rua — a Regra 17, agora por giro.
-     *
-     * <p>A cabana do mod é quadrada e resolvia a porta mudando duas
-     * coordenadas. A casa do jogo não: a porta está onde o arquivo a
-     * pôs — a um bloco da parede oeste, na casa de planície —, e a única
-     * forma de virá-la para a rua é girar a planta inteira.
-     *
-     * <p>Planta sem porta passa reta: cerca e poço não têm por onde
-     * entrar, e girá-los não faria diferença nenhuma.
-     */
-    private static Blueprint turnedToTheRoad(Blueprint house, Side road) {
-        return house.doorSide()
-                .map(door -> house.rotated(door.turnsTo(road)))
-                .orElse(house);
-    }
-
-    /**
-     * A planta deste id, venha ela do mod ou do jogo.
-     *
-     * <p>Existe para {@link #resume}, que carrega obra gravada em sessão
-     * anterior e só tem o id em mãos. {@link HouseFurnishing} usa a
-     * mesma resposta pelo mesmo motivo: uma casa terminada guarda o id e
-     * o canto, e onde a mobília dela vai está na planta — girada como a
-     * casa foi levantada, que é o que este método reconstrói. A cabana da colônia é escrita em
-     * código e o leitor de estrutura não a acharia; a casa do jogo é o
-     * contrário. Perguntar aos dois é o que deixa um save antigo — com a
-     * casa de planície pela metade — continuar de onde parou.
-     */
-    static Optional<Blueprint> blueprintOf(
-            ServerWorld world, ResourceId id, ColonyPos origin) {
-
-        if (ColonyHut.ID.equals(id)) {
-            // A parede da porta é perguntada ao mundo, e não ao save —
-            // ver BuildSiteScanner.roadSideOf. Sem rua em volta, a casa
-            // fica com a porta ao norte, que é onde a planta antiga a
-            // punha: obra de save velho continua de onde parou.
-            ResourceId wood = VillageBiomes.woodAt(world, origin)
-                    .orElse(ColonyHut.OAK_PLANKS);
-
-            return Optional.of(ColonyHut.blueprint(
-                    wood, roadSideOf(world, origin, ColonyHut.blueprint(wood, Side.NORTH))));
-        }
-
-        // Planta lida de arquivo: ela volta como o arquivo a gravou, e
-        // precisa ser virada de novo para a rua. Sem isto a obra que
-        // volta do save mede o mundo com a planta na orientação errada,
-        // conclui que nada está de pé e reconstrói por cima, torto.
-        return StructureBlueprintReader.read(world, id)
-                .map(house -> turnedToTheRoad(house, roadSideOf(world, origin, house)));
-    }
-
-    /**
-     * Para que lado fica a rua desta obra, lida do mundo.
-     *
-     * <p>O lado não é gravado no save de propósito: ele é uma leitura do
-     * mundo, e o mundo é a única fonte que continua certa depois de o
-     * jogador mexer nele. Sem rua em volta — o jogador arrancou o
-     * caminho —, fica o norte, que é onde a planta antiga punha a porta.
-     */
-    private static Side roadSideOf(ServerWorld world, ColonyPos origin, Blueprint house) {
-        return BuildSiteScanner.roadSideOf(world, origin, house.size())
-                .map(MinecraftTypeAdapter::toSide)
-                .orElse(Side.NORTH);
     }
 }

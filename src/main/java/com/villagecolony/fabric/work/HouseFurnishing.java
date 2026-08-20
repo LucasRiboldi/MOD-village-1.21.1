@@ -144,7 +144,7 @@ public final class HouseFurnishing {
             return known;
         }
 
-        List<BlueprintBlock> pieces = ConstructionPlanner
+        List<BlueprintBlock> pieces = HousePlans
                 .blueprintOf(world, house.blueprint(), house.min())
                 .map(plan -> plan.blocks().stream()
                         .filter(BlueprintBlock::furniture)

@@ -13,6 +13,7 @@ import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.work.ConstructionPlanner;
+import com.villagecolony.fabric.work.WaitingWork;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Block;
 import net.minecraft.test.GameTest;
@@ -233,7 +234,7 @@ public class ConstructionResumeGameTest implements FabricGameTest {
         project.moveTo(ConstructionState.PREPARING);
         project.moveTo(ConstructionState.WAITING_RESOURCES);
 
-        ConstructionPlanner.giveUp(colony, project);
+        WaitingWork.giveUp(colony, project);
 
         context.assertTrue(
                 VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isEmpty(),

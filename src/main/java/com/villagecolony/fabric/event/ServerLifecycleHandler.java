@@ -17,6 +17,8 @@ import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.HouseFurnishing;
+import com.villagecolony.fabric.work.HousePlans;
+import com.villagecolony.fabric.work.WaitingWork;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.ManufacturerWork;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -57,6 +59,8 @@ public final class ServerLifecycleHandler {
         ManufacturerWork.clearAll();
         BuilderWork.clearAll();
         ConstructionPlanner.clearAll();
+        HousePlans.clearAll();
+        WaitingWork.clearAll();
         ChestMarker.clearAll();
         TreeScanner.clearAll();
         BuildSiteScanner.clearAll();
@@ -155,6 +159,8 @@ public final class ServerLifecycleHandler {
         ManufacturerWork.clearAll();
         BuilderWork.clearAll();
         ConstructionPlanner.clearAll();
+        HousePlans.clearAll();
+        WaitingWork.clearAll();
         ChestMarker.clearAll();
         TreeScanner.clearAll();
         BuildSiteScanner.clearAll();
