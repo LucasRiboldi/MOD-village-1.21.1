@@ -8,11 +8,13 @@ import com.villagecolony.core.colony.model.ColonyState;
 import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.colony.service.ColonyAbandonment;
 import com.villagecolony.core.colony.service.VillageDetector;
+import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.coordination.ColonyCycle;
 import com.villagecolony.core.coordination.ColonyGoals;
 import com.villagecolony.core.resource.model.ColonyResources;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
+import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
 import com.villagecolony.fabric.brain.WorkTargets;
@@ -27,6 +29,8 @@ import com.villagecolony.fabric.integration.VillagerScanner;
 import com.villagecolony.fabric.integration.WorkerEquipment;
 import com.villagecolony.fabric.integration.WorkerNameplate;
 import com.villagecolony.fabric.work.HouseFurnishing;
+import com.villagecolony.fabric.work.MinerWork;
+import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.ConstructionPlanner;
@@ -231,6 +235,7 @@ public final class VillageDetectionHandler {
         // precisa de um passo por tick — não de um passo a cada 600. O
         // custo é um contador por lenhador; a parte cara, a busca por
         // árvore, tem orçamento próprio dentro de LumberjackWork.
+        MinerWork.tick(server.getOverworld());
         LumberjackWork.tick(server.getOverworld());
         ManufacturerWork.tick(server.getOverworld());
         BuilderWork.tick(server.getOverworld());
@@ -380,10 +385,23 @@ public final class VillageDetectionHandler {
                         .orElse(MinecraftTypeAdapter.toResourceId(Blocks.OAK_PLANKS)),
                 colony);
 
+        // A pedra que a obra pede, e a pedra desta vila — 2026-08-20. No
+        // deserto é arenito; perguntar por pedregulho daria zero, e a
+        // vila voltaria a não construir por falta de meta.
+        VillagePalette palette = HousePlans.paletteOf(overworld, colony.center());
+
+        ResourceType stone = MinecraftTypeAdapter.toBlock(palette.stone())
+                .flatMap(block -> MinecraftTypeAdapter.toResourceType(block.asItem()))
+                .orElse(ResourceType.COBBLESTONE);
+
+        int stoneForWork = ConstructionPlanner.materialNeededBy(palette.stone(), colony);
+
         int assigned = ColonyCycle.run(
                 colony.id(),
                 survey.resources().total(),
-                ColonyGoals.of(colony, survey.resources().total(), room, plankRoom, planksForWork),
+                ColonyGoals.of(
+                        colony, survey.resources().total(), room, plankRoom, planksForWork,
+                        stone, stoneForWork),
                 VillageColonyMod.TASKS,
                 VillageColonyMod.WORKERS,
                 VillageColonyMod.STORAGES::hasStorage);
@@ -407,6 +425,7 @@ public final class VillageDetectionHandler {
         // Depois da distribuição: quem recebeu tarefa neste ciclo já
         // começa a andar nele, em vez de esperar o próximo.
         LumberjackWork.run(overworld, colony);
+        MinerWork.run(overworld, colony);
         ManufacturerWork.run(overworld, colony);
         BuilderWork.run(overworld, colony);
 
@@ -658,6 +677,7 @@ public final class VillageDetectionHandler {
         for (UUID villagerId : demoted) {
             VillageColonyMod.TASKS.releaseAllOf(villagerId);
             WorkTargets.clear(villagerId);
+            MinerWork.forget(villagerId);
             LumberjackWork.forget(villagerId);
             ManufacturerWork.forget(villagerId);
             BuilderWork.forget(villagerId);

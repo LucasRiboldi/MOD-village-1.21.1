@@ -48,6 +48,10 @@ class ColonyCycleTest {
         workers.register(UUID.randomUUID(), COLONY).assign(ProfessionType.LUMBERJACK);
     }
 
+    private void miner() {
+        workers.register(UUID.randomUUID(), COLONY).assign(ProfessionType.MINER);
+    }
+
     private static ResourceTally owning(int logs) {
         return ResourceTally.of(Map.of(ResourceType.OAK_LOG, logs));
     }
@@ -110,10 +114,19 @@ class ColonyCycleTest {
         assertEquals(1, tasks.count());
     }
 
-    /** Recursos diferentes em falta produzem tarefas diferentes. */
+    /**
+     * Recursos diferentes em falta produzem tarefas diferentes.
+     *
+     * <p>E cada uma vai para quem sabe fazê-la. Até 2026-08-20 pedra
+     * caía em {@code COLLECT_WOOD} junto com a madeira, porque a tarefa
+     * era escolhida pela categoria do recurso e as duas são naturais —
+     * a colônia mandava o lenhador buscar pedregulho. Agora a escolha é
+     * pelo grupo, e sem mineiro na vila o pedido de pedra nem abre.
+     */
     @Test
     void eachMissingResourceGetsItsOwnTask() {
         lumberjack();
+        miner();
 
         Map<ResourceType, Integer> goal = Map.of(
                 ResourceType.OAK_LOG, 64,

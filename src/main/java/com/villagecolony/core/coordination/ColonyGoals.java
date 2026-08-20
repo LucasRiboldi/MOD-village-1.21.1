@@ -5,6 +5,7 @@ import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.type.ResourceType;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -107,6 +108,35 @@ public final class ColonyGoals {
     public static Map<ResourceType, Integer> of(
             Colony colony, ResourceTally owned, int woodRoom, int plankRoom, int planksForWork) {
 
+        return of(colony, owned, woodRoom, plankRoom, planksForWork, ResourceType.COBBLESTONE, 0);
+    }
+
+    /**
+     * O mesmo, mais a pedra que a obra pede — 2026-08-20.
+     *
+     * <p><b>Por que a pedra entra por fora e a tábua por dentro.</b> A
+     * tábua tem meta própria mesmo sem obra: a colônia guarda tábua
+     * porque tábua é o que ela sabe fazer com o que o lenhador traz.
+     * Pedra não — ninguém quer um baú cheio de pedregulho por gosto. Ela
+     * só é meta quando <b>uma casa a está pedindo</b>, e por isso o
+     * número vem de fora, de quem sabe o que a obra ainda quer.
+     *
+     * <p>Qual pedra é decisão da paleta do bioma: pedregulho onde há
+     * rocha, arenito no deserto. Perguntar sempre por pedregulho daria
+     * zero no deserto, e a vila voltaria a não construir.
+     *
+     * @param stone qual pedra esta vila usa
+     * @param stoneForWork quanto dela a obra aberta ainda pede
+     */
+    public static Map<ResourceType, Integer> of(
+            Colony colony,
+            ResourceTally owned,
+            int woodRoom,
+            int plankRoom,
+            int planksForWork,
+            ResourceType stone,
+            int stoneForWork) {
+
         Objects.requireNonNull(colony, "colony");
         Objects.requireNonNull(owned, "owned");
 
@@ -155,8 +185,15 @@ public final class ColonyGoals {
                         ? planksForWork
                         : (storedPlanks + plankRoom) / 2;
 
-        return Map.of(
-                ResourceType.OAK_LOG, wood,
-                ResourceType.OAK_PLANKS, planks);
+        Map<ResourceType, Integer> goals = new LinkedHashMap<>();
+
+        goals.put(ResourceType.OAK_LOG, wood);
+        goals.put(ResourceType.OAK_PLANKS, planks);
+
+        if (stoneForWork > 0) {
+            goals.put(stone, stoneForWork);
+        }
+
+        return Map.copyOf(goals);
     }
 }

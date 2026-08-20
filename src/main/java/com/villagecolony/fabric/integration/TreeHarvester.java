@@ -528,6 +528,19 @@ public final class TreeHarvester {
     private static boolean isNaturalLeaf(ServerWorld world, BlockPos pos, TreeSpecies species) {
         BlockState state = stateAt(world, pos);
 
+        if (state == null) {
+            // Chunk descarregado. {@code stateAt} devolve nulo de
+            // propósito — pedir o chunk aqui forçaria carregamento dentro
+            // do tique —, e esta era a única porta que não conferia.
+            //
+            // Derrubou o servidor de teste em 2026-08-20, quando a copa
+            // passou a ser procurada em até 256 troncos: a busca alcança
+            // muito mais longe que antes, e longe o bastante para sair do
+            // que está carregado. Folha que não se pode ver não é folha
+            // viva, e a árvore simplesmente não é escolhida.
+            return false;
+        }
+
         if (!state.isOf(species.leaves())) {
             return false;
         }

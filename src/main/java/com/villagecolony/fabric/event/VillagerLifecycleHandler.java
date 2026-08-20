@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestMarker;
 import com.villagecolony.fabric.work.LumberjackWork;
+import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.ManufacturerWork;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.server.world.ServerWorld;
@@ -107,6 +108,7 @@ public final class VillagerLifecycleHandler {
         // E a árvore que ele estava quebrando: o plano guarda posições de
         // uma colheita em curso, e sem isto ele ficaria no registro
         // esperando por um aldeão que não volta.
+        MinerWork.forget(villagerId);
         LumberjackWork.forget(villagerId);
         ManufacturerWork.forget(villagerId);
 

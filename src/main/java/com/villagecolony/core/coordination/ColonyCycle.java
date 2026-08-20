@@ -211,10 +211,26 @@ public final class ColonyCycle {
      * que uma obra consome é erguido.
      */
     private static TaskType typeFor(ResourceType resource) {
-        return switch (resource.category()) {
-            case NATURAL -> TaskType.COLLECT_WOOD;
-            case PROCESSED -> TaskType.CRAFT_MATERIAL;
-            case CONSTRUCTION -> TaskType.BUILD;
+        // Pelo grupo, e não pela categoria — 2026-08-20. A categoria
+        // separa natural de processado, e isso bastava enquanto o único
+        // natural era madeira: pedra, areia e lã entraram e todas caíram
+        // em COLLECT_WOOD, que mandaria o lenhador buscar pedregulho.
+        if (resource == ResourceType.GLASS) {
+            // A exceção nominal: vidro é processado, mas não por receita
+            // de bancada. Quem o faz é a fornalha.
+            return TaskType.SMELT_MATERIAL;
+        }
+
+        return switch (resource.group()) {
+            case WOOD -> TaskType.COLLECT_WOOD;
+            case STONE, SAND -> TaskType.COLLECT_STONE;
+            case WOOL -> TaskType.COLLECT_WOOL;
+            case PLANKS -> TaskType.CRAFT_MATERIAL;
+            case NONE -> switch (resource.category()) {
+                case NATURAL -> TaskType.COLLECT_WOOD;
+                case PROCESSED -> TaskType.CRAFT_MATERIAL;
+                case CONSTRUCTION -> TaskType.BUILD;
+            };
         };
     }
 }

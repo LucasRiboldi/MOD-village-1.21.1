@@ -116,7 +116,7 @@ public final class HousePlans {
      * debaixo de uma colônia já registrada — datapack, versão nova — e
      * para que a resposta nunca seja "não sei".
      */
-    static VillagePalette paletteOf(ServerWorld world, ColonyPos where) {
+    public static VillagePalette paletteOf(ServerWorld world, ColonyPos where) {
         return VillageBiomes.paletteAt(world, where)
                 .orElseGet(() -> VillagePalette.ofWood(ColonyHut.OAK_PLANKS));
     }

@@ -417,8 +417,20 @@ public final class ConstructionPlanner {
      * armazém. Zero quando não há obra — e aí volta a valer a metade.
      */
     public static int planksNeededBy(ResourceId planks, Colony colony) {
+        return materialNeededBy(planks, colony);
+    }
+
+    /**
+     * Quanto deste material a obra aberta ainda pede.
+     *
+     * <p>Era só para tábua até 2026-08-20, e virou geral quando o
+     * mineiro entrou: a meta da colônia precisa saber que a casa quer 43
+     * pedregulhos, senão ninguém abre tarefa de mineração e a obra dorme
+     * esperando um material que a colônia já sabe fazer.
+     */
+    public static int materialNeededBy(ResourceId material, Colony colony) {
         return VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
-                .map(project -> project.remainingMaterials().getOrDefault(planks, 0))
+                .map(project -> project.remainingMaterials().getOrDefault(material, 0))
                 .orElse(0);
     }
 }
