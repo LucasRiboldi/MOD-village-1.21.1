@@ -3,8 +3,6 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
-import com.villagecolony.core.coordination.IdleReason;
-import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
@@ -14,27 +12,18 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.BlockBreakTime;
-import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.TreeHarvester;
 import com.villagecolony.fabric.integration.TreeScanner;
-import net.minecraft.block.BlockState;
 import net.minecraft.entity.passive.VillagerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -66,6 +55,22 @@ import java.util.UUID;
  * qualquer árvore da tabela de {@code TreeSpecies}, tronco e copa, muda
  * da própria espécie na base, nada cai no chão, e árvore que não caiba
  * no baú fica de pé.
+ *
+ * <p><b>O que saiu daqui em 2026-08-20</b>, quando este arquivo tinha
+ * mil e duzentas linhas contra o teto de quinhentas. Eram cinco
+ * perguntas independentes morando juntas:
+ *
+ * <pre>
+ * {@link TreeChoice}         qual árvore agora, e quando desistir dela
+ * {@link TreeFelling}        derrubar o bloco e guardar o que ele deu
+ * {@link TreeMarks}          o que sai da escolha, e por quanto tempo
+ * {@link TreeClaims}         as árvores que já têm dono
+ * {@link LumberjackReport}   a linha que o lenhador deixa no log
+ * </pre>
+ *
+ * <p>O que ficou é o laço: despachar por ciclo, andar por tique, decidir
+ * a cada passo. {@code Job} fica aqui porque é o estado que o laço
+ * carrega — os outros cinco o leem, e por isso ele é do pacote.
  */
 public final class LumberjackWork {
 
@@ -83,36 +88,7 @@ public final class LumberjackWork {
      * está ao pé do tronco alcança a copa dele; exigir aproximação por
      * folha poria o aldeão a dar voltas em torno da própria árvore.
      */
-    private static final int REACH = 4;
-
-    /**
-     * A ferramenta que o tempo de quebra assume.
-     *
-     * <p>É a Regra 2 ao pé da letra: ferramenta de ferro. Isto é o
-     * relógio da colheita, não um inventário.
-     *
-     * <p>Desde 2026-08-13 o lenhador <b>carrega</b> um machado de
-     * madeira, entregue por {@code WorkerEquipment} porque
-     * Profession-System.md manda entregá-lo. E mesmo assim esta linha
-     * continua de ferro, de propósito: perguntar ao trabalhador o que ele
-     * tem na mão tornaria a colheita mais lenta do que a Regra 2 manda —
-     * seria trocar uma regra do autor por uma consequência de
-     * implementação. O dia de perguntar é o dia em que a evolução de
-     * ferramenta existir, e ela não pertence ao MVP.
-     */
-    private static final Item TOOL = Items.IRON_AXE;
-
-    /**
-     * Quantos estágios de rachadura o cliente conhece.
-     *
-     * <p>Vanilla desenha de 0 a 9. Sem isso a Regra 2 seria invisível:
-     * o jogador veria um aldeão parado ao lado de uma árvore que some
-     * sozinha meio minuto depois.
-     */
-    private static final int BREAKING_STAGES = 10;
-
-    /** De quantos em quantos ticks o braço balança. */
-    private static final int SWING_INTERVAL = 5;
+    static final int REACH = 4;
 
     /**
      * Quantas buscas por árvore cabem num tick, no servidor inteiro.
@@ -128,60 +104,6 @@ public final class LumberjackWork {
     private static final int SEARCHES_PER_TICK = 1;
 
     /**
-     * Quantos ticks de trabalho sem nenhum avanço antes de desistir.
-     *
-     * <p>Quatro ciclos da colônia. É muito de propósito: derrubar um
-     * tronco leva dez ticks, e atravessar o raio de busca a pé leva bem
-     * menos que isto. Um lenhador que passou dois minutos de horário de
-     * trabalho sem quebrar um bloco nem começar uma árvore não está
-     * demorando — está preso.
-     *
-     * <p>Existe porque a tarefa reservada não tinha como voltar para a
-     * fila enquanto o trabalhador estivesse vivo. A morte e a
-     * zumbificação liberam, por {@code VillagerLifecycleHandler}; o
-     * aldeão vivo que o jogador levou de barco, que caiu num buraco ou
-     * que ficou do lado errado de uma parede, não. A vaga da profissão
-     * ficava ocupada por alguém que nunca chegaria, e a colônia não
-     * abria pedido novo porque, para ela, aquele pedido tinha dono.
-     *
-     * <p>O relógio só corre em horário de trabalho e com o aldeão
-     * carregado — ver {@link #step}. Uma noite inteira não é
-     * travamento, e chunk descarregado é a colônia dormindo.
-     */
-    private static final int STALL_LIMIT = 4 * VillageDetector.CYCLE_TICKS;
-
-    /**
-     * O limite em vigor. É {@link #STALL_LIMIT}, menos nos testes.
-     *
-     * <p>Existe por decisão do autor em 2026-08-15, e a razão é o E1 do
-     * grupo E: 2.400 ticks são dois minutos de relógio, contra uma
-     * bateria que roda inteira em vinte e cinco segundos. O guarda de
-     * travamento nunca teve teste por isso — e desde a Regra 9 ele carrega
-     * também a marcação de árvore fora de alcance, que é o que fecha o
-     * G2. Dois comportamentos sem cobertura no mesmo lugar.
-     *
-     * <p>É código de produção existindo para teste, e isso se paga com
-     * limites: só a bateria mexe aqui, sempre devolvendo ao padrão por
-     * {@link #restoreStallLimit()}, e o valor de jogo continua sendo o
-     * único que o mod usa sozinho.
-     */
-    private static int stallLimit = STALL_LIMIT;
-
-    /** Encurta o relógio de travamento. Só os testes precisam disso. */
-    public static void shortenStallLimitTo(int ticks) {
-        if (ticks <= 0) {
-            throw new IllegalArgumentException("stall limit must be positive: " + ticks);
-        }
-
-        stallLimit = ticks;
-    }
-
-    /** Devolve o relógio ao valor de jogo. */
-    public static void restoreStallLimit() {
-        stallLimit = STALL_LIMIT;
-    }
-
-    /**
      * O trabalho em curso de cada lenhador.
      *
      * <p>Em memória e não persistido, como a própria tarefa: ao
@@ -189,119 +111,18 @@ public final class LumberjackWork {
      * contador por trabalhador é barato; é a varredura por trabalhador
      * por tick que não seria.
      */
-    private static final Map<UUID, Job> JOBS = new HashMap<>();
+    static final Map<UUID, Job> JOBS = new HashMap<>();
 
     /** Como esta profissão aparece na linha de {@link IdleLog}. */
-    private static final String SUBJECT = "lumberjack";
-
-    /**
-     * Os troncos que já têm dono.
-     *
-     * <p>A colônia passou a abrir uma tarefa por lenhador, e a busca por
-     * árvore parte sempre do centro e é determinística: sem isto, todos
-     * receberiam a mesma árvore, um só a derrubaria e os outros ficariam
-     * em volta de um toco.
-     *
-     * <p>Guarda os troncos do plano, e não a árvore como um ponto: a
-     * busca devolve tronco, então comparar tronco com tronco é exato e
-     * custa uma consulta de conjunto. As folhas ficam de fora porque a
-     * busca nunca as devolve.
-     */
-    private static final Set<BlockPos> CLAIMED = new HashSet<>();
-
-    /**
-     * Os troncos que a regra da copa já recusou.
-     *
-     * <p>Sem isto a colônia trava. A busca é determinística a partir do
-     * centro: se o tronco mais próximo é construção — casa de vila,
-     * cabana, pilar —, a regra da copa devolve plano vazio, a busca
-     * recomeça do centro no ciclo seguinte e acha o mesmo tronco. Para
-     * sempre, e sem uma linha de log dizendo o quê.
-     *
-     * <p>Aconteceu com a vila de {@code 1109,730} em 2026-08-13:
-     * dezesseis minutos em horário de trabalho, dois lenhadores, nenhuma
-     * árvore, e uma floresta inteira ao alcance. O defeito nasceu junto
-     * com a regra da copa, um dia antes.
-     *
-     * <p>Guarda o grupo inteiro, e não o tronco que a busca devolveu:
-     * recusar de um em um faria uma parede de vinte e cinco troncos
-     * custar vinte e cinco buscas.
-     *
-     * <p><b>A recusa envelhece</b>, desde 2026-08-19. Ela não envelhecia,
-     * e o argumento escrito aqui era que "construção não vira árvore".
-     * O argumento estava errado pelo lado do jogador: ele derruba a
-     * parede, planta uma muda ao lado do pilar, deixa a copa crescer
-     * sobre o tronco que ele havia descascado. O mundo muda, e o mod
-     * ficava com uma opinião de trinta minutos atrás.
-     *
-     * <p>É a Regra 23 — <i>o que já foi analisado pode ser analisado de
-     * novo</i> —, e agora esta marca é igual à de {@link #UNREACHABLE}:
-     * guarda quando nasceu e esquece sozinha.
-     */
-    private static final Map<BlockPos, Long> REJECTED = new HashMap<>();
-
-    /**
-     * Quanto tempo um grupo de troncos fica marcado como "não é árvore".
-     *
-     * <p>Dez ciclos da colônia, o mesmo prazo de {@link #UNREACHABLE_MEMORY}
-     * e pelo mesmo motivo: é tempo bastante para a busca não reencontrar
-     * a mesma parede a cada passagem, e curto bastante para o jogador
-     * ver o mod mudar de ideia dentro da mesma sessão.
-     */
-    private static final int REJECTED_MEMORY = 10 * VillageDetector.CYCLE_TICKS;
-
-    /**
-     * Quantos troncos recusados se guarda antes de esquecer tudo.
-     *
-     * <p>Um teto, não uma regra: uma vila cercada de construção de
-     * madeira encheria o conjunto sem limite. Esquecer tudo custa uma
-     * busca perdida por grupo, e é melhor que crescer para sempre.
-     */
-    private static final int MAX_REJECTED = 4096;
-
-    /**
-     * As árvores que a navegação não entrega, e desde quando.
-     *
-     * <p>A Regra 9, de 2026-08-15: o aldeão sobe e desce o que for
-     * preciso para alcançar o recurso, <b>de maneira que ao ir ele possa
-     * voltar</b>. O autor decidiu a leitura estreita — só navegação, o
-     * lenhador não põe nem tira bloco para chegar. Então árvore que o
-     * caminho não alcança deixa de ser alvo.
-     *
-     * <p>Separado de {@link #REJECTED} de propósito, e é a diferença
-     * entre "não é árvore" e "não dá para chegar agora". A primeira é
-     * para sempre; a segunda não pode ser: o jogador constrói ponte,
-     * abre porta, aplaina barranco, e a árvore volta a valer. Por isso
-     * isto esquece sozinho — ver {@link #UNREACHABLE_MEMORY}.
-     *
-     * <p><b>Aprende tentando, e não prevendo.</b> A primeira versão disto
-     * perguntava à navegação, antes de escolher, se havia caminho até a
-     * árvore. Rodada contra a bateria, ela recusou seis árvores comuns:
-     * {@code findPathTo} não responde de forma confiável para um aldeão
-     * recém-posto no mundo, e a resposta errada é cara — árvore boa
-     * descartada por cinco minutos. Quem sabe de verdade se dá para
-     * chegar é o guarda de travamento, depois de dois minutos de horário
-     * de trabalho tentando. Ver {@link #giveUp}.
-     */
-    private static final Map<BlockPos, Long> UNREACHABLE = new HashMap<>();
-
-    /**
-     * Por quantos ticks uma árvore fica marcada como inalcançável.
-     *
-     * <p>Dez ciclos da colônia, cinco minutos. Longo o bastante para a
-     * busca passar adiante em vez de reencontrar a mesma árvore a cada
-     * ciclo, e curto o bastante para a ponte que o jogador acabou de
-     * construir valer na mesma sessão.
-     */
-    private static final int UNREACHABLE_MEMORY = 10 * VillageDetector.CYCLE_TICKS;
+    static final String SUBJECT = "lumberjack";
 
     private LumberjackWork() {
     }
 
     /** Uma árvore em curso, e onde ela está. */
-    private static final class Job {
+    static final class Job {
 
-        private final Task task;
+        final Task task;
 
         /**
          * De onde parte a busca por árvore.
@@ -310,22 +131,22 @@ public final class LumberjackWork {
          * não consulta o registro de colônias: ele roda sessenta vezes
          * por segundo, e o centro não muda entre um ciclo e outro.
          */
-        private final BlockPos center;
+        final BlockPos center;
 
         /** A árvore de agora. Nulo entre uma árvore e a próxima. */
-        private TreeHarvester.Plan plan;
+        TreeHarvester.Plan plan;
 
         /** Qual bloco do plano está sendo quebrado. */
-        private int index;
+        int index;
 
         /** Ticks já gastos neste bloco. */
-        private int progress;
+        int progress;
 
         /** Ticks que este bloco pede. Zero enquanto não foi perguntado. */
-        private int required;
+        int required;
 
         /** Quantos troncos esta tarefa já rendeu, para a linha de log. */
-        private int collected;
+        int collected;
 
         /**
          * Ticks de horário de trabalho desde o último avanço de verdade.
@@ -333,20 +154,20 @@ public final class LumberjackWork {
          * <p>Zerado quando um bloco cai e quando uma árvore nova começa —
          * os dois únicos sinais de que o trabalho anda. Andar não conta:
          * é exatamente o aldeão que anda para sempre sem chegar que este
-         * contador existe para pegar. Ver {@link #STALL_LIMIT}.
+         * contador existe para pegar. Ver {@link #TreeChoice.STALL_LIMIT}.
          */
-        private int stalled;
+        int stalled;
 
-        private Job(Task task, BlockPos center) {
+        Job(Task task, BlockPos center) {
             this.task = task;
             this.center = center;
         }
 
-        private boolean isBetweenTrees() {
+        boolean isBetweenTrees() {
             return plan == null || index >= plan.blocks().size();
         }
 
-        private BlockPos currentBlock() {
+        BlockPos currentBlock() {
             return plan.blocks().get(index);
         }
     }
@@ -383,154 +204,14 @@ public final class LumberjackWork {
         dropClosedJobs();
 
         if (open == 0) {
-            reportIdle(colony);
+            LumberjackReport.reportIdle(colony);
         } else {
             IdleLog.clear(colony.id(), SUBJECT);
         }
 
-        report(world, colony);
+        LumberjackReport.report(world, colony);
 
         return open;
-    }
-
-    /**
-     * Diz por que nenhum lenhador desta colônia está trabalhando.
-     *
-     * <p>Até 2026-08-15 este caminho era mudo. {@link #report} só fala de
-     * lenhador <b>com</b> trabalho aberto, então uma colônia com dois
-     * lenhadores e nenhuma tarefa passava a sessão inteira sem uma linha
-     * — e do lado de fora isso é idêntico a uma colônia que não tem
-     * lenhador nenhum, ou a uma cujo código não está rodando.
-     *
-     * <p>É a lição do E14 aplicada onde ela ainda não estava: a fase de
-     * construção aprendeu a dizer por que não construía, e as outras
-     * duas continuaram caladas.
-     *
-     * <p>Três respostas, e a diferença entre elas manda em coisas
-     * diferentes: sem trabalhador é a atribuição de profissão; sem
-     * tarefa é a meta da colônia; e tarefa sem executor é o casamento
-     * entre as duas.
-     */
-    private static void reportIdle(Colony colony) {
-        int hands = WorkAssignment.countCapableOf(
-                colony.id(), TaskType.COLLECT_WOOD.required(), VillageColonyMod.WORKERS);
-
-        if (hands == 0) {
-            IdleLog.record(colony.id(), SUBJECT, IdleReason.NO_WORKER);
-
-            return;
-        }
-
-        boolean anyTask = false;
-
-        for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
-            if (isWoodTask(task) && isOngoing(task)) {
-                anyTask = true;
-
-                break;
-            }
-        }
-
-        IdleLog.record(
-                colony.id(),
-                SUBJECT,
-                anyTask ? IdleReason.NO_EXECUTOR : IdleReason.NO_TASK,
-                hands + " able to");
-    }
-
-    /**
-     * Uma linha por ciclo dizendo o que cada lenhador está fazendo.
-     *
-     * <p>Existe porque a Regra 2 tirou o trabalho do ciclo de 600 ticks e
-     * levou a instrumentação junto: em 2026-08-12 um servidor rodou onze
-     * ciclos com seis tarefas atribuídas e nenhuma árvore derrubada, e o
-     * log não sabia dizer se o aldeão estava andando, sem baú, sem árvore
-     * ou dormindo. Quatro causas com quatro correções diferentes.
-     *
-     * <p>Uma linha a cada trinta segundos não é spam, e é a única forma
-     * de saber o que acontece com um aldeão que ninguém está olhando —
-     * a mesma razão da linha que existia antes. O que não pode voltar é
-     * falar a cada tick.
-     *
-     * <p>Silenciosa quando não há lenhador com trabalho: colônia sem
-     * tarefa de madeira não precisa dizer nada.
-     */
-    private static void report(ServerWorld world, Colony colony) {
-        StringBuilder line = new StringBuilder();
-        int reported = 0;
-
-        for (Map.Entry<UUID, Job> entry : JOBS.entrySet()) {
-            Job job = entry.getValue();
-
-            if (!job.task.belongsTo(colony.id())) {
-                continue;
-            }
-
-            if (reported++ > 0) {
-                line.append("; ");
-            }
-
-            line.append(shortId(entry.getKey()))
-                    .append(" ")
-                    .append(describe(world, entry.getKey(), job));
-        }
-
-        if (reported == 0) {
-            return;
-        }
-
-        VillageColonyMod.LOGGER.info(
-                "Colony {} lumberjacks: {}", colony.id(), line);
-    }
-
-    /**
-     * O que este lenhador está fazendo, em poucas palavras.
-     *
-     * <p>Diz distância e horário de trabalho porque um aldeão parado ao
-     * lado de uma árvore e um aldeão que nunca vai chegar são a mesma
-     * linha sem eles. Foi o que a leitura de 2026-08-12 mostrou: um
-     * lenhador travado em "bloco 1 de 60, 0/0 ticks" ciclo após ciclo, e
-     * nenhuma forma de saber se ele estava longe, dormindo ou fora de
-     * chunk carregado — três causas com três correções diferentes.
-     *
-     * <p>E diz o relógio de travamento, desde 2026-08-15. Naquela sessão
-     * dois lenhadores ficaram dezesseis minutos a sete e nove blocos da
-     * árvore sem chegar, e {@link #giveUp} — que deveria ter soltado a
-     * tarefa em dois minutos de horário de trabalho — não falou uma vez
-     * sequer. Três explicações cabiam no que o log mostrava: o contador
-     * sobe e o limite está alto demais; o contador não sobe porque
-     * {@code step} não chega à linha 534; ou alguém o zera a cada ciclo.
-     * As três pedem correções diferentes e o número as separa numa
-     * olhada — medir custa uma palavra na linha.
-     */
-    private static String describe(ServerWorld world, UUID workerId, Job job) {
-        if (!(world.getEntity(workerId) instanceof VillagerEntity villager)) {
-            return "not loaded (" + job.collected + " logs so far, stall " + job.stalled + ")";
-        }
-
-        String clock = WorkHours.isWorkTime(world, villager) ? "work time" : "off hours";
-
-        if (job.isBetweenTrees()) {
-            return "looking for a tree, " + clock
-                    + " (" + job.collected + " logs so far, stall "
-                    + job.stalled + "/" + stallLimit + ")";
-        }
-
-        int distance = (int) Math.sqrt(
-                villager.getBlockPos().getSquaredDistance(job.plan.base()));
-
-        return (distance <= REACH ? "chopping" : "walking")
-                + " — tree at " + job.plan.base().toShortString()
-                + ", " + distance + " blocks away, " + clock
-                + ", block " + (job.index + 1) + " of " + job.plan.blocks().size()
-                + ", " + job.progress + "/" + job.required + " ticks"
-                + ", " + job.collected + " logs so far"
-                + ", stall " + job.stalled + "/" + stallLimit;
-    }
-
-    /** Os oito primeiros dígitos do UUID, como no resto do log. */
-    private static String shortId(UUID id) {
-        return id.toString().substring(0, 8);
     }
 
     /**
@@ -575,7 +256,7 @@ public final class LumberjackWork {
     }
 
     /** O que um passo consumiu, para o tick saber o que fazer com ele. */
-    private enum Outcome {
+    enum Outcome {
 
         /** Nada de especial: andou, quebrou, ou esperou. */
         WORKED,
@@ -627,330 +308,23 @@ public final class LumberjackWork {
             return Outcome.WORKED;
         }
 
-        if (WorkHours.isWorkTime(world, villager) && ++job.stalled > stallLimit) {
-            return giveUp(world, job, workerId);
+        if (WorkHours.isWorkTime(world, villager) && ++job.stalled > TreeChoice.stallLimit) {
+            return TreeChoice.giveUp(world, job, workerId);
         }
 
         if (job.isBetweenTrees()) {
-            return startNextTree(world, villager, job, storage.get(), maySearch);
+            return TreeChoice.startNextTree(world, villager, job, storage.get(), maySearch);
         }
 
         if (!villager.getBlockPos().isWithinDistance(job.plan.base(), REACH)) {
-            walkTo(villager, job.plan.base());
+            TreeChoice.walkTo(villager, job.plan.base());
 
             return Outcome.WORKED;
         }
 
-        chop(world, villager, job, storage.get());
+        TreeFelling.chop(world, villager, job, storage.get());
 
         return Outcome.WORKED;
-    }
-
-    /**
-     * Escolhe a próxima árvore, ou encerra a tarefa.
-     *
-     * <p>É aqui que a Regra 1 fecha o ciclo: enquanto couber madeira no
-     * baú, há árvore nova; quando não couber, a tarefa termina. A
-     * colônia reavalia no ciclo seguinte e só pede de novo se o espaço
-     * tiver voltado — o jogador esvaziou o baú, um baú novo entrou no
-     * registro.
-     */
-    private static Outcome startNextTree(
-            ServerWorld world,
-            VillagerEntity villager,
-            Job job,
-            WorkerStorage storage,
-            boolean maySearch) {
-
-        if (job.plan != null) {
-            // A árvore anterior acabou de descer. Fechar antes de
-            // procurar outra: é a ordem pedida pelo autor — derrubar,
-            // recolher, e só então replantar.
-            TreeHarvester.finish(world, job.plan);
-
-            unclaim(job.plan);
-
-            VillageColonyMod.LOGGER.info(
-                    "Worker {} finished the tree at {} — {} logs and {} leaves,"
-                            + " {} logs this task",
-                    villager.getUuid(),
-                    job.plan.base().toShortString(),
-                    job.plan.logs(),
-                    job.plan.leaves(),
-                    job.collected);
-
-            job.plan = null;
-        }
-
-        if (!maySearch) {
-            return Outcome.WORKED;
-        }
-
-        Optional<BlockPos> tree = TreeScanner.findNearestLog(
-                world,
-                job.center,
-                SEARCH_RADIUS,
-                log -> !CLAIMED.contains(log)
-                        && !isRejected(world, log)
-                        && !isOutOfReach(world, log));
-
-        if (tree.isEmpty()) {
-            // Nenhuma árvore ao alcance. Não é motivo para encerrar: a
-            // floresta cresce, e a muda replantada volta a ser árvore.
-            return Outcome.SEARCHED;
-        }
-
-        // Perguntar antes de derrubar. O tronco sai do mundo sem drop,
-        // então madeira que não coubesse no baú seria madeira destruída:
-        // a árvore sumiria e a colônia não ficaria com nada. Recolher
-        // todos os recursos da árvore começa em não derrubar a árvore
-        // que não se pode recolher.
-        //
-        // A conta é a do tronco, que é certa: um bloco, um item. O que a
-        // folha dá é sorteado na hora — muda, maçã, graveto, ou nada — e
-        // não dá para perguntar de antemão. São poucos itens, e o espaço
-        // conferido para o tronco inteiro sobra para eles.
-        List<BlockPos> trunkGroup = TreeHarvester.trunkOf(world, tree.get());
-
-        int room = ChestDepositor.freeSpaceForGroup(
-                world, storage.chestPosition(), ResourceGroup.WOOD);
-
-        if (room < trunkGroup.size()) {
-            finishTask(job, villager.getUuid(), storage, room);
-
-            return Outcome.DONE;
-        }
-
-        TreeHarvester.Plan plan = TreeHarvester.plan(world, tree.get());
-
-        if (plan.isEmpty()) {
-            // Não é árvore: a regra da copa recusou. Recusar em silêncio
-            // e sair daqui faria a busca reencontrar este mesmo tronco no
-            // ciclo seguinte, e no seguinte — ver REJECTED.
-            reject(world, trunkGroup);
-
-            return Outcome.SEARCHED;
-        }
-
-        claim(plan);
-
-        job.plan = plan;
-        job.index = 0;
-        job.progress = 0;
-        job.required = 0;
-        job.stalled = 0;
-
-        if (job.task.state() == TaskState.RESERVED) {
-            job.task.start();
-        }
-
-        walkTo(villager, plan.base());
-
-        return Outcome.SEARCHED;
-    }
-
-    /**
-     * Um tick de machado no bloco da vez.
-     *
-     * <p>O contador sobe; quando alcança o que o bloco pede, o bloco cai
-     * e o que ele deu vai direto para o baú. É o único ponto do mod que
-     * escreve no mundo a cada tick, e escreve um bloco por lenhador —
-     * o custo por tick tem de continuar cabendo num tick.
-     */
-    private static void chop(
-            ServerWorld world, VillagerEntity villager, Job job, WorkerStorage storage) {
-
-        BlockPos pos = job.currentBlock();
-        BlockState state = stateAt(world, pos);
-
-        if (state == null) {
-            // Chunk descarregado no meio da colheita. Esperar é melhor
-            // que pular: o bloco continua lá, e o aldeão também.
-            return;
-        }
-
-        if (job.required == 0) {
-            job.required = BlockBreakTime.ticksFor(world, pos, state, TOOL);
-        }
-
-        job.progress++;
-
-        if (job.progress % SWING_INTERVAL == 1) {
-            villager.swingHand(Hand.MAIN_HAND);
-        }
-
-        if (job.progress < job.required) {
-            world.setBlockBreakingInfo(
-                    villager.getId(), pos, job.progress * BREAKING_STAGES / job.required);
-
-            return;
-        }
-
-        // Rachadura apagada antes de o bloco sair: um estágio deixado
-        // para trás fica desenhado no ar até o cliente recarregar.
-        world.setBlockBreakingInfo(villager.getId(), pos, -1);
-
-        List<ItemStack> drops = TreeHarvester.breakOne(world, job.plan, pos);
-
-        job.collected += countLogs(drops, job.plan);
-
-        deposit(world, storage, drops);
-
-        job.index++;
-        job.progress = 0;
-        job.required = 0;
-        job.stalled = 0;
-    }
-
-    /**
-     * Devolve à fila a tarefa de um lenhador que parou de andar.
-     *
-     * <p>Mesmo desfecho do trabalhador sem baú, e pelo mesmo motivo: a
-     * tarefa continua fazendo sentido, e quem não a fará é este
-     * trabalhador. Solta o tronco reservado, apaga o destino para o
-     * aldeão voltar à agenda Vanilla, e diz o que houve — este caminho
-     * em silêncio seria indistinguível de trabalho acontecendo, que é a
-     * forma que o E1 assume toda vez que reaparece.
-     */
-    private static Outcome giveUp(ServerWorld world, Job job, UUID workerId) {
-        job.task.release();
-
-        WorkTargets.clear(workerId);
-
-        VillageColonyMod.LOGGER.info(
-                "Worker {} made no progress for {} work ticks{} — wood task"
-                        + " returned to the queue",
-                shortId(workerId),
-                stallLimit,
-                job.plan == null
-                        ? " while looking for a tree"
-                        : " on the tree at " + job.plan.base().toShortString());
-
-        if (job.plan != null) {
-            // A outra metade da Regra 9, e o que fecha o G2. Soltar a
-            // tarefa sem esquecer a árvore troca de trabalhador e não de
-            // problema: a busca é determinística a partir do centro, essa
-            // árvore continua sendo a mais próxima, e o substituto anda
-            // até ela para travar no mesmo lugar.
-            markUnreachable(world, job.plan.base());
-        }
-
-        return Outcome.DONE;
-    }
-
-    /**
-     * Encerra a tarefa por baú cheio.
-     *
-     * <p>É o fim previsto pela Regra 1, e não uma falha. A linha diz
-     * quanto a tarefa rendeu porque é a única prova em jogo de que o
-     * trabalho contínuo aconteceu — sem ela, um lenhador que trabalhou
-     * dez minutos e um que nunca achou árvore produzem o mesmo silêncio.
-     *
-     * <p>Pode chegar aqui com a tarefa ainda RESERVED, e é o caso comum
-     * da Regra 1: o baú termina quase cheio, o ciclo seguinte abre um
-     * pedido do tamanho do espaço que sobrou, e a primeira árvore que o
-     * lenhador olha já não cabe. Ele encerra sem ter derrubado nada, e
-     * {@code Task.complete} exige EXECUTING — completar direto lançava
-     * dentro do tick do servidor e derrubava o mundo. A transição é a
-     * mesma que {@code startNextTree} faz ao começar uma árvore.
-     */
-    private static void finishTask(Job job, UUID workerId, WorkerStorage storage, int room) {
-        if (job.task.state() == TaskState.RESERVED) {
-            job.task.start();
-        }
-
-        job.task.complete();
-
-        // Tarefa cumprida, aldeão liberado. É a cessão imediata da
-        // ADR-004 §5: sem destino, a task do Brain para e ele volta à
-        // rotina Vanilla no mesmo tick.
-        WorkTargets.clear(workerId);
-
-        VillageColonyMod.LOGGER.info(
-                "Worker {} filled the chest — {} logs collected, {} more would fit",
-                storage.workerId(),
-                job.collected,
-                room);
-    }
-
-    /**
-     * Põe no baú tudo o que o bloco deu.
-     *
-     * <p>Tronco, muda, maçã, graveto: o que a tabela de loot der. A
-     * colônia só conta os troncos, e os outros ficam no baú sem contagem
-     * — o que não é perda, é a regra de sempre: item fora da lista
-     * continua no baú, apenas não é contado.
-     */
-    private static void deposit(
-            ServerWorld world, WorkerStorage storage, List<ItemStack> drops) {
-
-        for (ItemStack stack : drops) {
-            int leftOver = ChestDepositor.deposit(
-                    world, storage.chestPosition(), stack.getItem(), stack.getCount());
-
-            if (leftOver == 0) {
-                continue;
-            }
-
-            // O espaço do tronco foi conferido antes de derrubar, e o que
-            // a folha dá é pouco. Chegar aqui significa baú quase cheio
-            // ou alguém mexendo nele no meio da colheita — e precisa
-            // aparecer, porque o item já saiu do mundo.
-            VillageColonyMod.LOGGER.warn(
-                    "Chest of worker {} filled up mid-harvest — {} of {} were lost",
-                    storage.workerId(),
-                    leftOver,
-                    stack.getItem());
-        }
-    }
-
-    /** Quantos troncos havia no que este bloco deu. */
-    private static int countLogs(List<ItemStack> drops, TreeHarvester.Plan plan) {
-        Item log = plan.species().log().asItem();
-        int logs = 0;
-
-        for (ItemStack stack : drops) {
-            if (stack.isOf(log)) {
-                logs += stack.getCount();
-            }
-        }
-
-        return logs;
-    }
-
-    /**
-     * Manda o aldeão andar até a árvore.
-     *
-     * <p>Escrever o destino em {@link WorkTargets} e deixar a
-     * {@code GoToWorkTargetTask} conduzir. A versão anterior chamava
-     * {@code getNavigation().startMovingTo} daqui e o aldeão nunca
-     * chegou: o cérebro Vanilla reescrevia o destino no mesmo tick,
-     * seguindo a agenda dele. Quem manda no caminho é o Brain, então o
-     * pedido passou a ser feito na língua dele.
-     *
-     * <p>Reposto a cada tick enquanto ele estiver a caminho. Não é
-     * desperdício: a leitura de 2026-08-08 mostrou o {@code WALK_TARGET}
-     * já descartado pelo Vanilla no instante em que o aldeão chegava, e
-     * é a reposição — não a primeira escrita — que faz o caminho
-     * acontecer. Ver §17, E4.
-     */
-    private static void walkTo(VillagerEntity villager, BlockPos tree) {
-        WorkTargets.set(villager.getUuid(), tree);
-    }
-
-    /**
-     * O estado de um bloco, ou {@code null} se o chunk não está
-     * carregado.
-     *
-     * <p>Nunca {@code world.getBlockState} direto. Ele carrega o chunk
-     * que faltar, e do tick do servidor isso significa gerar terreno
-     * dentro do laço. Ver §11.
-     */
-    private static BlockState stateAt(ServerWorld world, BlockPos pos) {
-        WorldChunk chunk = world.getChunkManager()
-                .getWorldChunk(pos.getX() >> 4, pos.getZ() >> 4);
-
-        return chunk == null ? null : chunk.getBlockState(pos);
     }
 
     /**
@@ -961,12 +335,12 @@ public final class LumberjackWork {
      * {@code COLLECT_WOOD}, então uma meta de pedra fazia o lenhador
      * derrubar árvore para atendê-la. O recurso é que decide.
      */
-    private static boolean isWoodTask(Task task) {
+    static boolean isWoodTask(Task task) {
         return task.type() == TaskType.COLLECT_WOOD
                 && task.targetResource().group() == ResourceGroup.WOOD;
     }
 
-    private static boolean isOngoing(Task task) {
+    static boolean isOngoing(Task task) {
         return task.state() == TaskState.RESERVED || task.state() == TaskState.EXECUTING;
     }
 
@@ -977,152 +351,10 @@ public final class LumberjackWork {
                 return false;
             }
 
-            unclaim(job.plan);
+            TreeClaims.unclaim(job.plan);
 
             return true;
         });
-    }
-
-    /**
-     * Reserva os troncos desta árvore para quem vai derrubá-la.
-     *
-     * <p>Só o tronco. A busca por árvore nunca devolve folha, então
-     * reservar a copa não impediria colisão nenhuma e faria o conjunto
-     * crescer sete vezes à toa.
-     */
-    private static void claim(TreeHarvester.Plan plan) {
-        for (int i = 0; i < plan.logs(); i++) {
-            CLAIMED.add(plan.blocks().get(i));
-        }
-    }
-
-    /**
-     * Anota que este grupo de tronco não é árvore.
-     *
-     * <p>A busca deixa de devolvê-lo, e o lenhador passa ao próximo. Ver
-     * {@link #REJECTED} para o que acontece sem isto.
-     */
-    /**
-     * Marca uma árvore como fora de alcance por ora.
-     *
-     * <p>Chamado de dois lugares, e os dois importam: da escolha, quando
-     * a navegação já diz que não dá; e de {@link #giveUp}, quando o
-     * lenhador andou dois minutos de horário de trabalho e não chegou.
-     *
-     * <p>O segundo é o que fecha o G2. Sem ele o guarda de travamento
-     * soltava a tarefa, a busca reencontrava a mesma árvore — ela é a
-     * mais próxima, e a busca é determinística — e o ciclo recomeçava
-     * inteiro. Soltar a tarefa sem esquecer a árvore é trocar de
-     * trabalhador, não de problema.
-     *
-     * <p>Público porque a bateria precisa chegar aqui. Chamar
-     * {@link #giveUp} num teste custaria os 2.400 ticks de
-     * {@link #STALL_LIMIT} — dois minutos de relógio contra uma bateria
-     * que roda em vinte e cinco segundos, que é o E1 do grupo E.
-     */
-    public static void markUnreachable(ServerWorld world, BlockPos base) {
-        forgetStaleMarks(world);
-
-        UNREACHABLE.put(base, world.getTime());
-
-        VillageColonyMod.LOGGER.info(
-                "Tree at {} is out of reach — skipping it for {} ticks",
-                base.toShortString(),
-                UNREACHABLE_MEMORY);
-    }
-
-    /**
-     * Tira do registro as marcas cujo prazo já passou.
-     *
-     * <p>{@link #isOutOfReach} também as tira, mas só quando alguém
-     * pergunta por aquela árvore — e a busca só pergunta pelo que ela
-     * reencontra. Árvore marcada num canto que a colônia nunca mais
-     * visita ficaria no mapa enquanto o servidor vivesse.
-     *
-     * <p>É o teto que {@link #REJECTED} tem em {@link #MAX_REJECTED} e
-     * que este mapa não tinha. Aqui sai mais barato: a marca já carrega
-     * o instante em que nasceu, então dá para varrer por prazo em vez de
-     * esquecer tudo ao encher.
-     */
-    private static void forgetStaleMarks(ServerWorld world) {
-        UNREACHABLE.values().removeIf(
-                since -> world.getTime() - since >= UNREACHABLE_MEMORY);
-
-        // E as recusas de "não é árvore", pela Regra 23: o jogador
-        // planta uma muda ao lado do pilar, e o que era construção passa
-        // a ser floresta.
-        REJECTED.values().removeIf(
-                since -> world.getTime() - since >= REJECTED_MEMORY);
-    }
-
-    /**
-     * Esquece as árvores fora de alcance. Só os testes precisam disso.
-     *
-     * <p>{@link #UNREACHABLE} é estático e vive enquanto o servidor
-     * viver, o que em jogo é o certo — a colônia não deve reaprender a
-     * cada ciclo que não chega naquele barranco. Numa bateria de testes
-     * é o contrário: as áreas de teste são reaproveitadas, e uma posição
-     * marcada por um teste reaparece como árvore boa no seguinte.
-     */
-    public static void forgetUnreachable() {
-        UNREACHABLE.clear();
-    }
-
-    /** Se esta árvore ainda está no prazo de esquecimento. */
-    private static boolean isOutOfReach(ServerWorld world, BlockPos base) {
-        Long since = UNREACHABLE.get(base);
-
-        if (since == null) {
-            return false;
-        }
-
-        if (world.getTime() - since < UNREACHABLE_MEMORY) {
-            return true;
-        }
-
-        UNREACHABLE.remove(base);
-
-        return false;
-    }
-
-    private static void reject(ServerWorld world, List<BlockPos> trunk) {
-        if (REJECTED.size() + trunk.size() > MAX_REJECTED) {
-            REJECTED.clear();
-        }
-
-        for (BlockPos log : trunk) {
-            REJECTED.put(log.toImmutable(), world.getTime());
-        }
-
-        VillageColonyMod.LOGGER.info(
-                "Not a tree at {} — {} logs without a living canopy,"
-                        + " skipping it for {} ticks",
-                trunk.isEmpty() ? "?" : trunk.get(0).toShortString(),
-                trunk.size(),
-                REJECTED_MEMORY);
-    }
-
-    /**
-     * Se este grupo de troncos ainda está marcado como "não é árvore".
-     *
-     * <p>Tira a marca vencida ao perguntar, do mesmo jeito que
-     * {@link #isOutOfReach} faz — quem reencontra o lugar é quem paga
-     * por limpá-lo.
-     */
-    private static boolean isRejected(ServerWorld world, BlockPos log) {
-        Long since = REJECTED.get(log);
-
-        if (since == null) {
-            return false;
-        }
-
-        if (world.getTime() - since >= REJECTED_MEMORY) {
-            REJECTED.remove(log);
-
-            return false;
-        }
-
-        return true;
     }
 
     /**
@@ -1165,17 +397,7 @@ public final class LumberjackWork {
             TreeHarvester.finish(world, job.plan);
         }
 
-        unclaim(job.plan);
-    }
-
-    private static void unclaim(TreeHarvester.Plan plan) {
-        if (plan == null) {
-            return;
-        }
-
-        for (int i = 0; i < plan.logs(); i++) {
-            CLAIMED.remove(plan.blocks().get(i));
-        }
+        TreeClaims.unclaim(job.plan);
     }
 
     /**
@@ -1189,15 +411,16 @@ public final class LumberjackWork {
         Job job = JOBS.remove(workerId);
 
         if (job != null) {
-            unclaim(job.plan);
+            TreeClaims.unclaim(job.plan);
         }
     }
 
     /** Esvazia o registro, junto com o resto do estado em memória. */
     public static void clearAll() {
         JOBS.clear();
-        CLAIMED.clear();
-        REJECTED.clear();
+        TreeClaims.clearAll();
+
+        TreeMarks.clearAll();
     }
 
     /** Quantos lenhadores estão com trabalho aberto agora. */

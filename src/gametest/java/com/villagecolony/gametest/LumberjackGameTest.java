@@ -12,6 +12,8 @@ import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.work.LumberjackWork;
+import com.villagecolony.fabric.work.TreeChoice;
+import com.villagecolony.fabric.work.TreeMarks;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BlockBreakTime;
@@ -996,12 +998,12 @@ public class LumberjackGameTest implements FabricGameTest {
         task.reserveFor(villager.getUuid());
 
         // Sessenta ticks de horário de trabalho em vez de 2.400.
-        LumberjackWork.shortenStallLimitTo(60);
+        TreeChoice.shortenStallLimitTo(60);
 
         LumberjackWork.run(world, colony);
 
         context.runAtTick(300, () -> {
-            LumberjackWork.restoreStallLimit();
+            TreeChoice.restoreStallLimit();
 
             context.assertTrue(
                     task.state() == TaskState.AVAILABLE,
@@ -1011,7 +1013,7 @@ public class LumberjackGameTest implements FabricGameTest {
                     task.executor().isEmpty(),
                     "a tarefa voltou à fila e continua com dono");
 
-            LumberjackWork.forgetUnreachable();
+            TreeMarks.forgetUnreachable();
 
             owned.cleanUp();
 
@@ -1066,7 +1068,7 @@ public class LumberjackGameTest implements FabricGameTest {
 
         // A de perto está fora de alcance, e a busca tem de pular por
         // cima dela em vez de escolhê-la por ser a mais próxima.
-        LumberjackWork.markUnreachable(world, context.getAbsolutePos(near));
+        TreeMarks.markUnreachable(world, context.getAbsolutePos(near));
 
         VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, stand);
         villager.setBreedingAge(0);
@@ -1111,7 +1113,7 @@ public class LumberjackGameTest implements FabricGameTest {
             // As áreas de teste são reaproveitadas, e a marca dura 6.000
             // ticks: deixá-la aqui faria o teste seguinte encontrar uma
             // árvore boa marcada como fora de alcance.
-            LumberjackWork.forgetUnreachable();
+            TreeMarks.forgetUnreachable();
 
             owned.cleanUp();
 
