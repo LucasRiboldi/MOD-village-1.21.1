@@ -2166,6 +2166,9 @@ Regra 24  a vila de planície levanta a casa     08-19, feita em 08-19
 Regra 25  a maior planta que couber no lote     08-20, feita em 08-20
 Regra 26  a cadeia de produção, e a paleta      08-20, feita em parte
           de cada vila                          — ver o que ela não fecha
+Regra 27  só o catálogo do jogo, e o            08-20, IMUTÁVEL, feita
+          construtor aguarda o bloco            em 08-20. Desfaz partes
+                                                das Regras 13, 21 e 25
 ```
 
 Duas previsões das primeiras se confirmaram e vale marcá-las: a fila que
@@ -3691,3 +3694,82 @@ o buraco         o lenhador replanta o que corta (Regra 7). O mineiro
 por profissão, com sete profissões, são catorze vagas por colônia — eram
 oito. A Regra 11, que garante o piso de uma de cada, ficou
 proporcionalmente maior e continua por fazer.
+
+---
+
+## Regra 27 — o construtor só levanta o que está no catálogo do jogo
+
+```text
+todas as estruturas que o construtor de cada bioma poderá construir
+estão na pasta "minecraft-assets_structure"
+
+não criar estruturas que não estão na lista
+
+o construtor aguarda a existência do específico tipo de bloco que ele
+precisa para continuar a construir
+```
+
+**Regra imutável, dita pelo autor em 2026-08-20.** Ela desfaz decisões
+anteriores, e vale registrar quais, porque são decisões que este mesmo
+documento defendeu:
+
+```text
+Regra 13    criou a cabana do mod — escrita em código, cinco por cinco
+            — porque a casa do jogo era impossível com o que a colônia
+            produzia. A cabana deixa de ser levantada
+
+Regra 21    mandava a casa terminar sem cama e sem lampião, e a peça
+            entrar depois. A obra passa a esperar por elas
+
+Regra 25    continua valendo, e agora escolhe entre as casas do
+            catálogo em vez de escolher entre casa do jogo e cabana
+```
+
+**O que tornou isso possível**, e é do mesmo dia: a Regra 26 deu à
+colônia mineiro, pastor e fundidor. A Regra 13 recusou a casa do jogo
+porque 66 dos 149 blocos dela pediam minerar, fundir, tosquiar e
+descascar. A resposta agora não é trocar a casa — é a colônia aprender.
+
+```text
+o que a lista tem     plains 36 casas    savanna 31    desert 28
+                      taiga  27 casas    snowy   30
+
+de onde ela sai       data/villagecolony/catalog/vanilla_structures.json,
+                      o índice da pasta, que entrou em 08-19 — só os
+                      nomes, nenhum byte de arquivo da Mojang. Os
+                      arquivos o jogo já traz
+
+o que fica de fora    as variantes zumbi. São as mesmas casas em ruína,
+                      e uma colônia que as levantasse estaria
+                      construindo a própria decadência
+```
+
+**A cabana continua no código, e não é contradição.** Save antigo tem
+cabana pela metade e construção registrada, e apagá-la faria a colônia
+planejar por cima do que ela mesma levantou. Ela é **retomável e nunca
+mais oferecida** — a regra proíbe criar, não proíbe terminar o que já
+está de pé.
+
+**A espera do construtor, e o que a torna suportável.** Aguardar o bloco
+específico, sem exceção, reabriria o travamento que a Regra 13 corrigiu
+— não fosse o `PatienceClock` da mesma semana, que tira a obra da frente
+depois de vinte ciclos. **A espera é do construtor, não da vila:** ele
+espera pela peça, e a colônia vai planejar outra coisa.
+
+**O que isto custa, dito sem suavizar:**
+
+```text
+tocha           pede graveto e carvão, e a colônia não minera carvão.
+                Casa de vila tem tochas, então casa de vila espera pelo
+                jogador — ou fica pela metade quando a paciência acabar
+
+ferro           mesmo caso, pelo lampião
+
+tronco          mesmo caso. É machado no tronco, e ninguém descasca
+descascado
+
+o corte de       a busca de lote experimenta quatro tamanhos por coluna,
+quatro plantas   e não trinta e seis. Casa de tamanho raro num lote
+                 apertado deixa de ser tentada — o preço de a varredura
+                 caber num tique
+```

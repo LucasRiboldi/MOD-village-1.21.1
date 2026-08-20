@@ -107,7 +107,34 @@ public final class VillageBiomes {
             return Optional.of(VillagePalette.ofSandstone());
         }
 
-        return woodFor(biome).map(VillagePalette::ofWood);
+        return woodFor(biome).map(planks -> VillagePalette.ofWood(styleOf(biome), planks));
+    }
+
+    /**
+     * A pasta do catálogo a que este bioma corresponde — a Regra 27.
+     *
+     * <p>São as cinco vilas que o jogo gera, e os nomes são os das
+     * pastas dele: {@code village/<estilo>/houses/}. Bioma nevado usa
+     * pinheiro como a taiga, mas as casas dele são outras — e é por isso
+     * que o estilo não pode sair da madeira.
+     */
+    private static String styleOf(RegistryKey<Biome> biome) {
+        if (BiomeKeys.SNOWY_PLAINS.equals(biome) || BiomeKeys.SNOWY_TAIGA.equals(biome)) {
+            return "snowy";
+        }
+
+        if (BiomeKeys.TAIGA.equals(biome)
+                || BiomeKeys.OLD_GROWTH_PINE_TAIGA.equals(biome)
+                || BiomeKeys.OLD_GROWTH_SPRUCE_TAIGA.equals(biome)) {
+
+            return "taiga";
+        }
+
+        if (BiomeKeys.SAVANNA.equals(biome) || BiomeKeys.SAVANNA_PLATEAU.equals(biome)) {
+            return "savanna";
+        }
+
+        return "plains";
     }
 
     /** A paleta da vila que está neste lugar. */

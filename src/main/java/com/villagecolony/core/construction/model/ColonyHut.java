@@ -96,7 +96,7 @@ public final class ColonyHut {
      * @param doorSide para que lado fica a rua, visto de dentro do lote
      */
     public static Blueprint blueprint(ResourceId wood, Side doorSide) {
-        return blueprint(VillagePalette.ofWood(wood), doorSide);
+        return blueprint(VillagePalette.ofWood("plains", wood), doorSide);
     }
 
     /**
@@ -132,7 +132,7 @@ public final class ColonyHut {
      * envelheceria na próxima madeira que o jogo acrescentasse.
      */
     private static ResourceId doorOf(ResourceId wood) {
-        return VillagePalette.ofWood(wood).door().orElseThrow();
+        return VillagePalette.ofWood("plains", wood).door().orElseThrow();
     }
 
     /**

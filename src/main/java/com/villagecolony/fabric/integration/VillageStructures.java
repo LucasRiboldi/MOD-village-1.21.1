@@ -1,0 +1,117 @@
+package com.villagecolony.fabric.integration;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.type.ResourceId;
+
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * O que o construtor <b>pode</b> levantar, por tipo de vila — a Regra 27.
+ *
+ * <p><b>A regra é imutável, e o autor a disse assim:</b> as estruturas
+ * que o construtor de cada bioma pode construir são as da pasta de
+ * estruturas do jogo, e nenhuma outra. O mod não inventa casa.
+ *
+ * <p>Isso desfaz uma decisão anterior. A Regra 13 tinha criado a cabana
+ * do mod — escrita em código, cinco por cinco — porque a casa do jogo
+ * era impossível de levantar com o que a colônia produzia. A resposta
+ * agora é outra: se a casa do catálogo pede pedra, a colônia aprende a
+ * minerar. Foi o que 2026-08-20 fez.
+ *
+ * <p>A lista sai de {@code data/villagecolony/catalog/vanilla_structures.json},
+ * que é o índice da pasta e entrou no repositório em 08-19 — só os
+ * nomes, nenhum byte de arquivo da Mojang. Os arquivos em si o jogo já
+ * traz, e {@link StructureBlueprintReader} os lê por id.
+ *
+ * <pre>
+ * plains    36 casas      savanna   31 casas
+ * taiga     27 casas      snowy     30 casas
+ * desert    28 casas
+ * </pre>
+ *
+ * <p><b>As variantes zumbi ficam de fora</b>, e não por gosto: são as
+ * mesmas casas em ruína, com teia e tocha apagada. Uma colônia que as
+ * levantasse estaria construindo a própria decadência.
+ */
+public final class VillageStructures {
+
+    /** Onde o índice da pasta mora dentro do jar. */
+    private static final String CATALOG =
+            "/data/villagecolony/catalog/vanilla_structures.json";
+
+    /** Lido uma vez por sessão. São mil e cento e oitenta nomes. */
+    private static final Map<String, List<ResourceId>> HOUSES = new HashMap<>();
+
+    private VillageStructures() {
+    }
+
+    /**
+     * As casas que uma vila deste estilo pode ter.
+     *
+     * <p>Vazio quer dizer catálogo ausente ou estilo desconhecido, e o
+     * chamador precisa tratar: sem lista não há o que construir, e
+     * inventar uma casa para preencher o silêncio é exatamente o que
+     * esta regra proíbe.
+     */
+    public static synchronized List<ResourceId> housesFor(String style) {
+        return HOUSES.computeIfAbsent(style, VillageStructures::load);
+    }
+
+    private static List<ResourceId> load(String style) {
+        String folder = "village/" + style + "/houses/";
+
+        List<ResourceId> found = new ArrayList<>();
+
+        try (InputStream stream = VillageStructures.class.getResourceAsStream(CATALOG)) {
+            if (stream == null) {
+                VillageColonyMod.LOGGER.warn(
+                        "The structure catalog is missing from the jar — no house to build");
+
+                return List.of();
+            }
+
+            JsonObject root = JsonParser
+                    .parseReader(new InputStreamReader(stream, StandardCharsets.UTF_8))
+                    .getAsJsonObject();
+
+            for (JsonElement entry : root.getAsJsonArray("structures")) {
+                String path = entry.getAsString();
+
+                if (!path.startsWith(folder) || path.contains("zombie")) {
+                    continue;
+                }
+
+                found.add(ResourceId.vanilla(path));
+            }
+        } catch (Exception broken) {
+            // Catálogo corrompido é o mod sem casa nenhuma, e isso precisa
+            // aparecer: silêncio aqui viraria "a colônia não constrói" sem
+            // motivo no log, que é o §11 outra vez.
+            VillageColonyMod.LOGGER.warn(
+                    "Could not read the structure catalog — no house to build", broken);
+
+            return List.of();
+        }
+
+        VillageColonyMod.LOGGER.info(
+                "Village style {} can build {} houses from the game catalog",
+                style,
+                found.size());
+
+        return List.copyOf(found);
+    }
+
+    /** Esquece o que foi lido. Chamado ao parar o servidor. */
+    public static synchronized void clearAll() {
+        HOUSES.clear();
+    }
+}

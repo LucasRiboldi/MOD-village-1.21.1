@@ -36,6 +36,7 @@ import java.util.Optional;
  * decisões do autor, e tabela de decisão se afirma sem subir servidor.
  */
 public record VillagePalette(
+        String style,
         ResourceId wall,
         Optional<ResourceId> door,
         ResourceId stone,
@@ -60,6 +61,7 @@ public record VillagePalette(
     public static final ResourceId WOOL = vanilla("white_wool");
 
     public VillagePalette {
+        Objects.requireNonNull(style, "style");
         Objects.requireNonNull(wall, "wall");
         Objects.requireNonNull(door, "door");
         Objects.requireNonNull(stone, "stone");
@@ -76,13 +78,13 @@ public record VillagePalette(
      * uma tabela escrita aqui, que envelheceria na próxima madeira que o
      * jogo acrescentasse.
      */
-    public static VillagePalette ofWood(ResourceId planks) {
+    public static VillagePalette ofWood(String style, ResourceId planks) {
         Objects.requireNonNull(planks, "planks");
 
         ResourceId door = new ResourceId(
                 planks.namespace(), planks.path().replace("_planks", "_door"));
 
-        return new VillagePalette(planks, Optional.of(door), COBBLESTONE, GLASS, WOOL);
+        return new VillagePalette(style, planks, Optional.of(door), COBBLESTONE, GLASS, WOOL);
     }
 
     /**
@@ -93,7 +95,20 @@ public record VillagePalette(
      * casa sobe sem depender de uma árvore que não existe.
      */
     public static VillagePalette ofSandstone() {
-        return new VillagePalette(SANDSTONE, Optional.empty(), SANDSTONE, GLASS, WOOL);
+        return new VillagePalette(
+                "desert", SANDSTONE, Optional.empty(), SANDSTONE, GLASS, WOOL);
+    }
+
+    /**
+     * O nome da pasta deste estilo no catálogo de estruturas.
+     *
+     * <p>É o elo com a Regra 27: as estruturas que o construtor pode
+     * levantar são as de {@code village/<estilo>/houses/}, e nenhuma
+     * outra. O estilo mora aqui porque já é ele quem responde "que tipo
+     * de vila é esta".
+     */
+    public String style() {
+        return style;
     }
 
     /** Se a colônia deste estilo sabe fazer porta. */

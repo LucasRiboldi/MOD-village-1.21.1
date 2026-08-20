@@ -62,27 +62,33 @@ colônia antes de pôr no mundo. **A colônia nunca inventa material**: o
 que falta, ele fabrica do que houver nos baús; o que não dá para
 fabricar, ele espera.
 
-A casa muda com a vila, e **a maior que couber no lote** é a que sobe:
+**As casas são as do próprio Minecraft, e só elas.** O mod não inventa
+casa: cada vila levanta o que a pasta de estruturas do jogo tem para o
+bioma dela, e **a maior que couber no lote** é a que sobe.
 
-| Vila | Parede | Porta |
-|---|---|---|
-| Planície | a casa pequena do próprio Minecraft, ou a cabana de carvalho | carvalho |
-| Taiga e nevada | cabana de pinheiro | pinheiro |
-| Savana | cabana de acácia | acácia |
-| **Deserto** | **cabana de arenito** | nenhuma — não há madeira ali |
+| Vila | Casas disponíveis |
+|---|---|
+| Planície | 36 |
+| Savana | 31 |
+| Nevada | 30 |
+| **Deserto** | **28** |
+| Taiga | 27 |
 
-A casa de planície pede 43 pedregulhos, 16 troncos descascados e 3
-vidraças. O mineiro traz a pedra e o fundidor faz o vidro; **o tronco
-descascado ainda é seu** — ninguém ali descasca. Onde a casa grande não
-cabe, a colônia levanta a cabana, que ela produz inteira sozinha.
+As variantes em ruína ficam de fora — uma colônia que as levantasse
+estaria construindo a própria decadência.
 
 O deserto era o buraco do mod: a vila nascia, contratava, contava
-recurso e nunca construía, por não haver árvore. Agora ela levanta em
-arenito o que o mineiro tira da duna ao lado.
+recurso e nunca construía, por não haver árvore. Agora o mineiro tira
+arenito da duna e ela levanta as casas de deserto do jogo.
 
-Toda casa nasce com cama, baú e lampião dentro. A casa **não espera** por
-eles: termina sem, e eles entram quando houver material. **Peça
-destruída não volta** — se você tirar o lampião, ele fica fora.
+**O construtor espera pelo bloco exato de que precisa.** Ele não
+substitui e não pula: falta a cama, a obra para na cama. O que impede a
+vila de morrer esperando é que a *obra* sai da frente depois de vinte
+ciclos — a espera é dele, não dela.
+
+A colônia produz tábua, pedra, lã e vidro, e fabrica com isso o que a
+planta pedir. **O que ela ainda não faz — tocha, ferro e tronco
+descascado — é seu**: guarde num baú da vila e a obra anda.
 
 🌾 **O fazendeiro** tem nome, enxada e baú — e nenhum trabalho ainda.
 
@@ -340,6 +346,13 @@ pela primeira vez.
 
 **Implementado**
 
+- **Regra 27, imutável** — o construtor só levanta o que está na pasta
+  de estruturas do jogo, e **aguarda o bloco específico** de que
+  precisa. Ela desfaz a cabana que a Regra 13 tinha inventado e a
+  exceção de mobília da Regra 21. O que a tornou possível é do mesmo
+  dia: a Regra 13 recusou a casa do jogo porque 66 dos 149 blocos dela
+  pediam minerar, fundir, tosquiar e descascar — e agora a colônia
+  aprendeu três dos quatro.
 - **O mineiro** tira pedra do mundo: pedregulho onde há rocha, arenito
   no deserto. Ele só toca pedra **exposta e de ninguém** — peça de vila
   gerada e casa da colônia ficam de pé, e isso importa mais que para o
@@ -351,11 +364,8 @@ pela primeira vez.
   Resolve a exceção que a Regra 10 tinha registrado como impossível.
 - **A paleta por bioma** — a Regra 20 dita por inteiro. Antes o estilo do
   bioma era uma coisa só, a espécie da madeira, e por isso o deserto
-  ficava de fora. Agora o bioma diz também de que é a parede, e a vila de
-  deserto levanta em **arenito** o que o mineiro tira da duna.
-- **A cabana do deserto não tem porta**, e é decisão: porta sai de tábua,
-  tábua sai de tronco, e ali não há tronco. Exigi-la deixaria a casa em
-  espera para sempre.
+  ficava de fora. Agora o bioma diz também de que é a parede e a qual
+  pasta do catálogo a vila pertence.
 - **A planta se adapta ao lote** (Regra 25). A vila varreu o raio inteiro
   sem achar lugar para a casa de planície, tendo três cabanas de pé
   dentro dela: 49 colunas no nível exato da rua pedem muito mais espaço

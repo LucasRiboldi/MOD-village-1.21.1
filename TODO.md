@@ -13,17 +13,25 @@ funcionando em jogo* são coisas diferentes, e estão separadas abaixo.
 
 ---
 
+## 🔒 Regra imutável
+
+- **Regra 27, de 2026-08-20.** O construtor de cada bioma só levanta
+  estruturas da pasta `minecraft-assets_structure` — o mod não cria
+  casa. E ele **aguarda o bloco específico** de que precisa, sem
+  substituir e sem pular. Ela desfaz partes das Regras 13, 21 e 25, e
+  isso está registrado no `Project-State.md`.
+
 ## 🔴 Crítico
 
 - **Rodar em jogo a cadeia de produção.** Mineiro, pastor e fundidor
   entraram em 2026-08-20 e **nenhum foi visto trabalhando numa vila de
-  verdade**. Junto vêm a paleta por bioma, a cabana de arenito do
-  deserto e a planta que se adapta ao lote.
+  verdade**. Junto vêm a paleta por bioma, as casas do catálogo do jogo
+  em lugar da cabana do mod, e a planta que se adapta ao lote.
   - **O que olhar:** `Miner ... took N from ...`, `Shepherd ... sheared`,
     `Smelter ... made minecraft:glass out of minecraft:sand`, e uma linha
     `planned` seguida de casa subindo.
-  - **Numa vila de deserto:** ela deve construir pela primeira vez, em
-    arenito e sem porta.
+  - **Numa vila de deserto:** ela deve construir pela primeira vez, e a
+    casa deve ser uma das 28 que o jogo tem para deserto.
   - **O que não deve aparecer:** `no building work: nothing to work on`
     em laço, e nenhuma linha de mobília repetida.
 
@@ -34,6 +42,10 @@ funcionando em jogo* são coisas diferentes, e estão separadas abaixo.
 
 ## 🟠 Importante
 
+- **Tocha e ferro travam as casas de vila.** A tocha pede carvão e o
+  lampião pede ferro; nenhum dos dois é minerado. Como o construtor agora
+  **espera** pelo bloco exato (Regra 27), toda casa com tocha para nela
+  até o jogador trazer — ou fica pela metade quando a paciência acabar.
 - **A areia não é colhida por ninguém.** O fundidor funde a areia que
   houver nos baús, e nada a põe lá. Falta a meta de areia — e ela depende
   de decompor a receita da vidraça, que é o `ItemRequest` do backlog.
@@ -50,9 +62,10 @@ funcionando em jogo* são coisas diferentes, e estão separadas abaixo.
 - **Regra 16 — distância entre construções.** A metade da altura foi
   feita com a Regra 22; falta a distância mínima (corredor de obra) e
   máxima (não soltar da malha da vila).
-- **Escolher entre as 1.180 estruturas do catálogo.** A lista está em
-  `data/villagecolony/catalog/vanilla_structures.json`. Falta o critério
-  — que construção, para qual vila, em que ordem.
+- **O critério de escolha entre as casas do catálogo é grosso.** Hoje é
+  "a maior que couber", entre quatro tamanhos por bioma. Falta escolher
+  por *função* — casa de moradia antes de celeiro, oficina quando houver
+  profissão para ela — e a ordem em que a vila cresce.
 - **Regra 10, metade do fabricante.** Porta, janela, cama e baú por
   estoque, sem depender de haver obra. Depende do `ItemRequest`.
 - **Regra 11 — garantir uma de cada profissão por vila.** Ficou maior com

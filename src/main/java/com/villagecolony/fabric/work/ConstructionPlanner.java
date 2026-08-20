@@ -206,13 +206,18 @@ public final class ConstructionPlanner {
             return silent(colony, IdleReason.NO_WORKER, "");
         }
 
-        // A planta provisória serve só para medir: o tamanho da cabana
-        // não muda com a parede em que a porta fica, e é o tamanho que a
-        // busca de lote precisa saber antes de haver lote.
-        // A planta desta vila. Em planície é a casa pequena do próprio
-        // jogo, por decisão do autor em 2026-08-19; nos outros biomas
-        // continua a cabana do mod, na madeira do bioma (Regra 20).
+        // As plantas desta vila, da maior para a menor — a Regra 25 —, e
+        // todas do catálogo do jogo, que é a Regra 27. O mod não inventa
+        // casa: se a lista vier vazia, não há o que construir, e dizê-lo
+        // é melhor que levantar algo que ninguém pediu.
         List<Blueprint> plans = HousePlans.plansFor(world, colony);
+
+        if (plans.isEmpty()) {
+            return silent(
+                    colony,
+                    IdleReason.NOT_IN_GAME,
+                    "this game has no village house for the " + colony.id() + " style");
+        }
 
         Blueprint blueprint = plans.get(0);
 
@@ -361,9 +366,9 @@ public final class ConstructionPlanner {
             }
         }
 
-        ResourceId target = HousePlans.houseFor(world, colony).id();
+        Optional<ResourceId> target = HousePlans.houseFor(world, colony).map(Blueprint::id);
 
-        if (project.isSupersededBy(target)) {
+        if (target.isPresent() && project.isSupersededBy(target.get())) {
             // Obra de uma planta que não é mais o alvo, e sem um bloco de
             // pé. Nada se perde ao abandoná-la — e mantê-la trava a
             // colônia para sempre, porque `plan` não abre obra nova
@@ -391,7 +396,7 @@ public final class ConstructionPlanner {
                     "Colony {} drops the untouched {} — the target is now {}",
                     colony.id(),
                     project.blueprint().id(),
-                    target);
+                    target.get());
 
             VillageColonyMod.CONSTRUCTIONS.dropPending(colony.id());
 

@@ -10,9 +10,16 @@ import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
+import com.villagecolony.fabric.integration.VillageStructures;
 import com.villagecolony.fabric.integration.VillageBiomes;
 import net.minecraft.server.world.ServerWorld;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,20 +41,14 @@ import java.util.Optional;
  */
 public final class HousePlans {
 
-    /**
-     * A casa pequena, lida do disco uma vez por sessão.
-     *
-     * <p>Esquecida ao parar o servidor, junto com o resto — ver
-     * {@link #clearAll()}.
-     */
-    private static Optional<Blueprint> smallHouse;
-
     private HousePlans() {
     }
 
     /** Esquece a planta lida do disco. Chamado ao parar o servidor. */
     public static void clearAll() {
-        smallHouse = null;
+        READ.clear();
+
+        VillageStructures.clearAll();
     }
 
     /**
@@ -72,8 +73,10 @@ public final class HousePlans {
      * sozinha</b> como a cabana subia. O relatório diz o que falta, uma
      * peça por vez.
      */
-    static Blueprint houseFor(ServerWorld world, Colony colony) {
-        return plansFor(world, colony).get(0);
+    static Optional<Blueprint> houseFor(ServerWorld world, Colony colony) {
+        List<Blueprint> plans = plansFor(world, colony);
+
+        return plans.isEmpty() ? Optional.empty() : Optional.of(plans.get(0));
     }
 
     /**
@@ -95,17 +98,77 @@ public final class HousePlans {
      * planície, e a Regra 20 manda a cabana ser da madeira do bioma.
      */
     static List<Blueprint> plansFor(ServerWorld world, Colony colony) {
-        VillagePalette palette = paletteOf(world, colony.center());
+        return catalogPlans(world, paletteOf(world, colony.center()).style());
+    }
 
-        Blueprint hut = ColonyHut.blueprint(palette, Side.NORTH);
+    /**
+     * Quantas plantas a busca de lote experimenta por coluna.
+     *
+     * <p>A Regra 25 manda oferecer da maior para a menor, e a Regra 27
+     * deu trinta e seis casas por bioma. Trinta e seis tamanhos por
+     * coluna de estrada seria uma varredura trinta e seis vezes mais
+     * cara, e a de hoje já leva dez minutos.
+     *
+     * <p>Quatro é o corte, e é generoso: os tamanhos são poucos e
+     * repetidos — a maioria das casas de um bioma divide a mesma pegada.
+     * O que se perde é a casa de tamanho raro num lote apertado, e o que
+     * se ganha é a colônia continuar planejando dentro de um tique.
+     */
+    private static final int PLANS_OFFERED = 4;
 
-        if (!ColonyHut.OAK_PLANKS.equals(palette.wall())) {
-            return List.of(hut);
+    /** As plantas lidas, por id. Ler um template não é barato. */
+    private static final Map<ResourceId, Optional<Blueprint>> READ = new HashMap<>();
+
+    /**
+     * O que esta vila pode levantar, da maior planta para a menor.
+     *
+     * <p><b>Só o que está no catálogo</b> — a Regra 27, e ela é imutável.
+     * Até 2026-08-20 a colônia levantava uma cabana escrita em código,
+     * criada pela Regra 13 porque a casa do jogo era impossível com o que
+     * ela produzia. A resposta passou a ser outra: a casa do jogo pede
+     * pedra, então a colônia aprendeu a minerar.
+     *
+     * <p>Tamanhos repetidos entram uma vez só. Oferecer duas casas da
+     * mesma pegada faria a busca medir o mesmo lote duas vezes para dar a
+     * mesma resposta.
+     */
+    private static List<Blueprint> catalogPlans(ServerWorld world, String style) {
+        List<Blueprint> plans = new ArrayList<>();
+
+        Set<ColonyPos> sizes = new HashSet<>();
+
+        for (ResourceId id : VillageStructures.housesFor(style)) {
+            Optional<Blueprint> house = READ.computeIfAbsent(
+                    id, missing -> StructureBlueprintReader.read(world, missing));
+
+            if (house.isEmpty()) {
+                continue;
+            }
+
+            plans.add(house.get());
         }
 
-        return smallHouse(world)
-                .map(house -> List.of(house, hut))
-                .orElseGet(() -> List.of(hut));
+        plans.sort(Comparator.comparingInt(HousePlans::volumeOf).reversed());
+
+        List<Blueprint> offered = new ArrayList<>();
+
+        for (Blueprint plan : plans) {
+            if (!sizes.add(plan.size())) {
+                continue;
+            }
+
+            offered.add(plan);
+
+            if (offered.size() == PLANS_OFFERED) {
+                break;
+            }
+        }
+
+        return List.copyOf(offered);
+    }
+
+    private static int volumeOf(Blueprint plan) {
+        return plan.size().x() * plan.size().y() * plan.size().z();
     }
 
     /**
@@ -118,24 +181,7 @@ public final class HousePlans {
      */
     public static VillagePalette paletteOf(ServerWorld world, ColonyPos where) {
         return VillageBiomes.paletteAt(world, where)
-                .orElseGet(() -> VillagePalette.ofWood(ColonyHut.OAK_PLANKS));
-    }
-
-    /**
-     * A casa pequena, lida uma vez e guardada.
-     *
-     * <p>Ler um template é abrir e decodificar um arquivo de trezentos e
-     * quarenta e três blocos, e o ciclo pergunta pela planta a cada
-     * passagem. O aviso está no cabeçalho de
-     * {@code StructureBlueprintReader}: quem chama guarda o resultado.
-     */
-    static Optional<Blueprint> smallHouse(ServerWorld world) {
-        if (smallHouse == null) {
-            smallHouse = StructureBlueprintReader.read(
-                    world, StructureBlueprintReader.SMALL_HOUSE);
-        }
-
-        return smallHouse;
+                .orElseGet(() -> VillagePalette.ofWood("plains", ColonyHut.OAK_PLANKS));
     }
 
     /**

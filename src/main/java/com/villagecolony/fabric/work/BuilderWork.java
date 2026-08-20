@@ -360,23 +360,16 @@ public final class BuilderWork {
         }
 
         if (!takeMaterial(world, project, material.get().asItem())) {
-            if (block.furniture()) {
-                // A Regra 21: a obra não espera por mobília. Falta lã
-                // para a cama ou ferro para o lampião, e a casa termina
-                // sem — a peça entra depois, por HouseFurnishing, quando
-                // o material aparecer num baú. Exigi-la aqui faria
-                // nenhuma casa terminar e a vila parar de crescer, que é
-                // o travamento que a Regra 13 corrigiu.
-                VillageColonyMod.LOGGER.info(
-                        "Project {} finishes without {} — the colony has no material for it yet",
-                        project.id(),
-                        block.block());
-
-                project.markPlaced(block);
-
-                return true;
-            }
-
+            // <b>O construtor aguarda o bloco específico de que precisa</b>
+            // — regra imutável do autor, 2026-08-20. Sem exceção, e a
+            // mobília era a exceção que havia: a Regra 21 mandava a casa
+            // terminar sem cama e sem lampião, e a peça entrar depois.
+            //
+            // O que mudou desde 08-19 é que a espera passou a ter fim
+            // possível: o pastor tosquia, o mineiro minera, o fundidor
+            // funde. E o que impede a colônia de morrer esperando é o
+            // PatienceClock, que tira a obra da frente depois de vinte
+            // ciclos — a espera é do construtor, não da vila.
             waitForResources(project, job, workerId, block);
 
             return false;

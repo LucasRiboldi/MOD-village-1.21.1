@@ -21,18 +21,18 @@ class VillagePaletteTest {
     void theDoorComesFromTheSpeciesOfThePlanks() {
         assertEquals(
                 vanilla("spruce_door"),
-                VillagePalette.ofWood(vanilla("spruce_planks")).door().orElseThrow());
+                VillagePalette.ofWood("taiga", vanilla("spruce_planks")).door().orElseThrow());
 
         assertEquals(
                 vanilla("acacia_door"),
-                VillagePalette.ofWood(vanilla("acacia_planks")).door().orElseThrow());
+                VillagePalette.ofWood("savanna", vanilla("acacia_planks")).door().orElseThrow());
     }
 
     @Test
     void aWoodenVillageWallsInItsOwnSpecies() {
         assertEquals(
                 vanilla("acacia_planks"),
-                VillagePalette.ofWood(vanilla("acacia_planks")).wall());
+                VillagePalette.ofWood("savanna", vanilla("acacia_planks")).wall());
     }
 
     /**
@@ -59,7 +59,7 @@ class VillagePaletteTest {
     @Test
     void everyVillageShearsAndSmeltsTheSameThings() {
         for (VillagePalette palette : new VillagePalette[] {
-                VillagePalette.ofWood(vanilla("oak_planks")),
+                VillagePalette.ofWood("plains", vanilla("oak_planks")),
                 VillagePalette.ofSandstone()}) {
 
             assertEquals(VillagePalette.GLASS, palette.glass());
@@ -93,7 +93,7 @@ class VillagePaletteTest {
     @Test
     void theWoodenHutStillGetsItsDoor() {
         Blueprint hut = ColonyHut.blueprint(
-                VillagePalette.ofWood(ColonyHut.OAK_PLANKS), Side.NORTH);
+                VillagePalette.ofWood("plains", ColonyHut.OAK_PLANKS), Side.NORTH);
 
         assertTrue(
                 hut.blocks().stream()
