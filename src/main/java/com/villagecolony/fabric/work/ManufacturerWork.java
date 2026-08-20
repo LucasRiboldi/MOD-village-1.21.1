@@ -1,6 +1,12 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
+import net.minecraft.item.Item;
+import net.minecraft.block.Block;
+import com.villagecolony.fabric.integration.ColonySupply;
+import com.villagecolony.fabric.integration.ColonyChests;
+import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.coordination.IdleReason;
@@ -316,7 +322,130 @@ public final class ManufacturerWork {
 
         job.progress = 0;
 
+        // O que a obra pede vem primeiro — 2026-08-20. Enquanto o
+        // fabricante só sabia fazer tábua, a casa parava em qualquer
+        // peça que a colônia não tivesse; agora ele descasca tronco,
+        // monta tocha e vidraça, e só volta à tábua quando não há nada
+        // que a obra esteja esperando.
+        if (produceForWork(world, job, villager.getUuid())) {
+            return true;
+        }
+
         return convertOne(world, job, villager.getUuid());
+    }
+
+    /**
+     * Faz a primeira peça que a obra pede e a colônia não tem.
+     *
+     * <p>Pedido do autor em 2026-08-20: <i>"o fabricante deve descascar
+     * stripped_oak, criar tocha e a vidraça, se os materiais necessários
+     * existirem nos baús da vila"</i>.
+     *
+     * <p>São dois caminhos, e a diferença entre eles é do jogo e não do
+     * mod:
+     *
+     * <pre>
+     * descascar   não é receita de bancada — é machado no tronco. Sai
+     *             de uma conversão nominal: oak_log vira
+     *             stripped_oak_log, e o nome basta porque é convenção
+     *             do próprio jogo
+     *
+     * montar      tocha e vidraça são receitas de verdade, e quem as
+     *             conhece é o livro do jogo. CraftingLookup.billFor
+     *             procura pelo RESULTADO, que é a pergunta certa aqui
+     * </pre>
+     *
+     * @return se fez alguma coisa nesta passagem
+     */
+    private static boolean produceForWork(ServerWorld world, Job job, UUID workerId) {
+        Optional<Colony> colony = VillageColonyMod.COLONIES.find(job.task.colonyId());
+
+        if (colony.isEmpty()) {
+            return false;
+        }
+
+        Optional<ConstructionProject> open =
+                VillageColonyMod.CONSTRUCTIONS.openOf(colony.get().id());
+
+        if (open.isEmpty()) {
+            return false;
+        }
+
+        for (ResourceId wanted : open.get().remainingMaterials().keySet()) {
+            Optional<Item> item = MinecraftTypeAdapter.toBlock(wanted).map(Block::asItem);
+
+            if (item.isEmpty()) {
+                continue;
+            }
+
+            List<ColonyPos> chests =
+                    ColonyChests.nearestFirst(colony.get().id(), colony.get().center());
+
+            if (ColonyChests.countIn(world, chests, item.get()) > 0) {
+                // A colônia já tem. Não é o fabricante quem falta.
+                continue;
+            }
+
+            if (strip(world, colony.get(), wanted, workerId)
+                    || ColonySupply.take(
+                            world, colony.get().id(), colony.get().center(), item.get())) {
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Descasca um tronco, se a colônia tiver um e a obra quiser o pelado.
+     *
+     * <p>Não passa pelo livro de receitas porque não é receita: no jogo,
+     * descascar é passar o machado. O que se aproveita é o nome —
+     * {@code stripped_oak_log} sai de {@code oak_log} —, e essa
+     * convenção vale para as nove madeiras.
+     */
+    private static boolean strip(
+            ServerWorld world, Colony colony, ResourceId wanted, UUID workerId) {
+
+        if (!wanted.path().startsWith("stripped_")) {
+            return false;
+        }
+
+        ResourceId bark = new ResourceId(
+                wanted.namespace(), wanted.path().substring("stripped_".length()));
+
+        Optional<Item> log = MinecraftTypeAdapter.toBlock(bark).map(Block::asItem);
+        Optional<Item> naked = MinecraftTypeAdapter.toBlock(wanted).map(Block::asItem);
+
+        if (log.isEmpty() || naked.isEmpty()) {
+            return false;
+        }
+
+        List<ColonyPos> chests = ColonyChests.nearestFirst(colony.id(), colony.center());
+
+        if (ColonyChests.withdraw(world, chests, log.get(), 1) < 1) {
+            return false;
+        }
+
+        Optional<ColonyPos> room =
+                ColonyChests.firstWithRoomFor(world, chests, naked.get(), 1);
+
+        if (room.isEmpty()) {
+            // Não cabe em baú nenhum. Devolve o tronco: descascar sem
+            // onde guardar destruiria material do jogador.
+            ColonyChests.firstWithRoomFor(world, chests, log.get(), 1)
+                    .ifPresent(back -> ChestDepositor.deposit(world, back, log.get(), 1));
+
+            return false;
+        }
+
+        ChestDepositor.deposit(world, room.get(), naked.get(), 1);
+
+        VillageColonyMod.LOGGER.info(
+                "Manufacturer {} stripped a {} into {}", workerId, bark.path(), wanted.path());
+
+        return true;
     }
 
     /**

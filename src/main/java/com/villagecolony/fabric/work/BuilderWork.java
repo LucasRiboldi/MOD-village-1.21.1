@@ -412,11 +412,15 @@ public final class BuilderWork {
      * provisória: porta, cama, lampião e baú saem da frente quando não
      * houver nenhum nos baús da vila.
      *
-     * <p>As quatro têm a mesma natureza — dependem de cadeia que a
-     * colônia ainda não fecha por inteiro — e as quatro são peças que a
-     * casa dispensa sem deixar buraco na parede. Pedra, tábua e vidraça
-     * não entram: sem elas a casa tem furo, e furo é a Regra 22 ao
-     * contrário.
+     * <p>Em 2026-08-20, mais tarde, o autor acrescentou tronco
+     * descascado, tocha e vidraça — os três que a medição da casa de
+     * planície mostrou como o que ainda a travava. A casa passa a subir
+     * com janela vazia e sem luz quando faltar material, e isso é
+     * escolha declarada: durante o teste, ver a casa fechar vale mais
+     * que vê-la perfeita.
+     *
+     * <p>Pedra e tábua continuam fora da lista: sem elas a casa tem furo
+     * de parede, e furo é a Regra 22 ao contrário.
      *
      * <p><b>Para desligar:</b> apague este método e o bloco que o chama.
      * A Regra 27 volta a valer sem exceção.
@@ -428,7 +432,10 @@ public final class BuilderWork {
                 || name.endsWith("_bed")
                 || name.equals("lantern")
                 || name.equals("soul_lantern")
-                || name.equals("chest");
+                || name.equals("chest")
+                || name.startsWith("stripped_")
+                || name.endsWith("torch")
+                || name.endsWith("_pane");
     }
 
     /**
