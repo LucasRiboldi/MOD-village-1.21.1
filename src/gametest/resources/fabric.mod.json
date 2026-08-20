@@ -27,7 +27,8 @@
       "com.villagecolony.gametest.ConstructionResumeGameTest",
       "com.villagecolony.gametest.FreeChestCountGameTest",
       "com.villagecolony.gametest.WorkHoursGameTest",
-      "com.villagecolony.gametest.VillageBiomesGameTest"
+      "com.villagecolony.gametest.VillageBiomesGameTest",
+      "com.villagecolony.gametest.HouseFurnishingGameTest"
     ]
   },
   "depends": {
