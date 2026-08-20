@@ -73,7 +73,7 @@ public final class HouseFurnishing {
      * Custa uma leitura de bloco por peça de mobília por casa — três
      * leituras por casa —, e só age quando falta alguma.
      */
-    public static void run(ServerWorld world, Colony colony) {
+    public static int run(ServerWorld world, Colony colony) {
         List<String> missing = new ArrayList<>();
 
         for (Building house : List.copyOf(VillageColonyMod.BUILDINGS.ofColony(colony.id()))) {
@@ -111,6 +111,13 @@ public final class HouseFurnishing {
             VillageColonyMod.LOGGER.info(
                     "Colony {} has houses still missing {}", colony.id(), missing);
         }
+
+        // Quantas peças de lã a colônia ainda quer — 2026-08-20. A cama
+        // custa três, e é a única peça de mobília feita de lã. Quem usa
+        // este número é a meta da colônia: sem ele o pastor nunca recebe
+        // tarefa, e sem tarefa não há tosquia, cama, aldeão nem vila
+        // crescendo. Era o laço aberto que a Regra 21 deixou.
+        return (int) missing.stream().filter(piece -> piece.endsWith("_bed")).count() * 3;
     }
 
     /**

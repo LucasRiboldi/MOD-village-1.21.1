@@ -29,7 +29,9 @@
       "com.villagecolony.gametest.WorkHoursGameTest",
       "com.villagecolony.gametest.VillageBiomesGameTest",
       "com.villagecolony.gametest.HouseFurnishingGameTest",
-      "com.villagecolony.gametest.MinerGameTest"
+      "com.villagecolony.gametest.MinerGameTest",
+      "com.villagecolony.gametest.SmelterGameTest",
+      "com.villagecolony.gametest.ShepherdGameTest"
     ]
   },
   "depends": {

@@ -45,6 +45,32 @@ public final class CraftingLookup {
      * tronco, hoje, porque é o que o jogo diz. O mod não conta com esse
      * número em lugar nenhum.
      */
+    /**
+     * O que a fornalha faz com este item — 2026-08-20.
+     *
+     * <p>A exceção honesta que a Regra 10 registrou em 08-18: a vidraça
+     * pede vidro, vidro pede fundir, e a colônia não fundia. Agora funde.
+     *
+     * <p>Pergunta ao próprio jogo, como {@link #resultOfOne} faz com a
+     * bancada: quem sabe que areia vira vidro é o Minecraft, e escrever
+     * a tabela aqui a faria envelhecer no primeiro datapack.
+     */
+    public static Optional<ItemStack> smelted(ServerWorld world, ItemStack input) {
+        if (input.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return world.getRecipeManager()
+                .getFirstMatch(
+                        RecipeType.SMELTING,
+                        new net.minecraft.recipe.input.SingleStackRecipeInput(input),
+                        world)
+                .map(entry -> entry.value().craft(
+                        new net.minecraft.recipe.input.SingleStackRecipeInput(input),
+                        world.getRegistryManager()))
+                .filter(result -> !result.isEmpty());
+    }
+
     public static Optional<ItemStack> resultOfOne(ServerWorld world, ItemStack input) {
         if (input.isEmpty()) {
             return Optional.empty();

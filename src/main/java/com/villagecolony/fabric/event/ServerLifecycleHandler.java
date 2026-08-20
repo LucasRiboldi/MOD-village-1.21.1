@@ -19,6 +19,8 @@ import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.integration.RingSweep;
 import com.villagecolony.fabric.work.HouseFurnishing;
 import com.villagecolony.fabric.work.MinerWork;
+import com.villagecolony.fabric.work.ShepherdWork;
+import com.villagecolony.fabric.work.SmelterWork;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.WaitingWork;
 import com.villagecolony.fabric.work.ConstructionPlanner;
@@ -59,6 +61,8 @@ public final class ServerLifecycleHandler {
         WorkTargets.clearAll();
         LumberjackWork.clearAll();
         MinerWork.clearAll();
+        SmelterWork.clearAll();
+        ShepherdWork.clearAll();
         RingSweep.clearAll();
         ManufacturerWork.clearAll();
         BuilderWork.clearAll();
@@ -161,6 +165,8 @@ public final class ServerLifecycleHandler {
         WorkTargets.clearAll();
         LumberjackWork.clearAll();
         MinerWork.clearAll();
+        SmelterWork.clearAll();
+        ShepherdWork.clearAll();
         RingSweep.clearAll();
         ManufacturerWork.clearAll();
         BuilderWork.clearAll();

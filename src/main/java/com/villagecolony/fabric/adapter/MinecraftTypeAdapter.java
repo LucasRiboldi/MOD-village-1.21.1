@@ -68,6 +68,25 @@ public final class MinecraftTypeAdapter {
             return Optional.of(ResourceType.COBBLESTONE);
         }
 
+        // As matérias que a cadeia de produção de 2026-08-20 acrescentou.
+        // Areia vermelha conta como areia: as duas fundem em vidro, e a
+        // colônia não distingue o que a fornalha não distingue.
+        if (item == Items.SANDSTONE) {
+            return Optional.of(ResourceType.SANDSTONE);
+        }
+
+        if (item == Items.SAND || item == Items.RED_SAND) {
+            return Optional.of(ResourceType.SAND);
+        }
+
+        if (item == Items.GLASS) {
+            return Optional.of(ResourceType.GLASS);
+        }
+
+        if (item == Items.WHITE_WOOL) {
+            return Optional.of(ResourceType.WHITE_WOOL);
+        }
+
         return Optional.empty();
     }
 

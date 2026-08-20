@@ -108,7 +108,9 @@ public final class ColonyGoals {
     public static Map<ResourceType, Integer> of(
             Colony colony, ResourceTally owned, int woodRoom, int plankRoom, int planksForWork) {
 
-        return of(colony, owned, woodRoom, plankRoom, planksForWork, ResourceType.COBBLESTONE, 0);
+        return of(
+                colony, owned, woodRoom, plankRoom, planksForWork,
+                ResourceType.COBBLESTONE, 0, 0);
     }
 
     /**
@@ -125,8 +127,13 @@ public final class ColonyGoals {
      * rocha, arenito no deserto. Perguntar sempre por pedregulho daria
      * zero no deserto, e a vila voltaria a não construir.
      *
+     * <p>A lã entra pela mesma porta e pelo mesmo motivo: ninguém guarda
+     * lã por gosto. Ela é meta quando <b>uma casa está sem cama</b>, e
+     * três por cama é o que a receita do jogo pede.
+     *
      * @param stone qual pedra esta vila usa
      * @param stoneForWork quanto dela a obra aberta ainda pede
+     * @param woolForBeds quanta lã as casas sem cama ainda pedem
      */
     public static Map<ResourceType, Integer> of(
             Colony colony,
@@ -135,7 +142,8 @@ public final class ColonyGoals {
             int plankRoom,
             int planksForWork,
             ResourceType stone,
-            int stoneForWork) {
+            int stoneForWork,
+            int woolForBeds) {
 
         Objects.requireNonNull(colony, "colony");
         Objects.requireNonNull(owned, "owned");
@@ -192,6 +200,10 @@ public final class ColonyGoals {
 
         if (stoneForWork > 0) {
             goals.put(stone, stoneForWork);
+        }
+
+        if (woolForBeds > 0) {
+            goals.put(ResourceType.WHITE_WOOL, woolForBeds);
         }
 
         return Map.copyOf(goals);

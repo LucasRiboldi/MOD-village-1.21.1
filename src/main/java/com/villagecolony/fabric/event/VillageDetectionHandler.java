@@ -30,6 +30,8 @@ import com.villagecolony.fabric.integration.WorkerEquipment;
 import com.villagecolony.fabric.integration.WorkerNameplate;
 import com.villagecolony.fabric.work.HouseFurnishing;
 import com.villagecolony.fabric.work.MinerWork;
+import com.villagecolony.fabric.work.ShepherdWork;
+import com.villagecolony.fabric.work.SmelterWork;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.BuilderWork;
@@ -50,6 +52,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -70,6 +73,26 @@ import net.minecraft.world.poi.PointOfInterestTypes;
  * o raio limitado do scanner.
  */
 public final class VillageDetectionHandler {
+
+    /**
+     * Quanta lã cada colônia pediu na passagem anterior.
+     *
+     * <p><b>Um ciclo atrasado, e de propósito.</b> Quem sabe que uma casa
+     * está sem cama é a passagem de mobília, e ela roda <b>depois</b> do
+     * construtor — a casa que terminou neste ciclo já é olhada nele. A
+     * meta, por sua vez, é montada antes. Adiantar a mobília para antes
+     * do construtor resolveria a ordem e criaria outra: a casa recém
+     * terminada esperaria um ciclo inteiro pela cama.
+     *
+     * <p>Trinta segundos de atraso numa meta de lã não custam nada, e a
+     * alternativa custaria.
+     */
+    private static final Map<UUID, Integer> WOOL_WANTED = new HashMap<>();
+
+    /** Quanta lã esta colônia pediu, ou zero se ainda não pediu nada. */
+    private static int woolWanted(Colony colony) {
+        return WOOL_WANTED.getOrDefault(colony.id(), 0);
+    }
 
     private static final VillageScanner SCANNER = new VillageScanner();
 
@@ -236,6 +259,8 @@ public final class VillageDetectionHandler {
         // custo é um contador por lenhador; a parte cara, a busca por
         // árvore, tem orçamento próprio dentro de LumberjackWork.
         MinerWork.tick(server.getOverworld());
+        SmelterWork.tick(server.getOverworld());
+        ShepherdWork.tick(server.getOverworld());
         LumberjackWork.tick(server.getOverworld());
         ManufacturerWork.tick(server.getOverworld());
         BuilderWork.tick(server.getOverworld());
@@ -401,7 +426,7 @@ public final class VillageDetectionHandler {
                 survey.resources().total(),
                 ColonyGoals.of(
                         colony, survey.resources().total(), room, plankRoom, planksForWork,
-                        stone, stoneForWork),
+                        stone, stoneForWork, woolWanted(colony)),
                 VillageColonyMod.TASKS,
                 VillageColonyMod.WORKERS,
                 VillageColonyMod.STORAGES::hasStorage);
@@ -426,13 +451,15 @@ public final class VillageDetectionHandler {
         // começa a andar nele, em vez de esperar o próximo.
         LumberjackWork.run(overworld, colony);
         MinerWork.run(overworld, colony);
+        SmelterWork.run(overworld, colony);
+        ShepherdWork.run(overworld, colony);
         ManufacturerWork.run(overworld, colony);
         BuilderWork.run(overworld, colony);
 
         // E a mobília das casas já de pé — a Regra 21. Depois do
         // construtor de propósito: a casa que terminou neste ciclo já é
         // olhada nele.
-        HouseFurnishing.run(overworld, colony);
+        WOOL_WANTED.put(colony.id(), HouseFurnishing.run(overworld, colony));
     }
 
     /**
@@ -678,6 +705,8 @@ public final class VillageDetectionHandler {
             VillageColonyMod.TASKS.releaseAllOf(villagerId);
             WorkTargets.clear(villagerId);
             MinerWork.forget(villagerId);
+            SmelterWork.forget(villagerId);
+            ShepherdWork.forget(villagerId);
             LumberjackWork.forget(villagerId);
             ManufacturerWork.forget(villagerId);
             BuilderWork.forget(villagerId);
