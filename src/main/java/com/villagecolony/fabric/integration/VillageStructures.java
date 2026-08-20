@@ -44,6 +44,25 @@ import java.util.Map;
  */
 public final class VillageStructures {
 
+    /**
+     * <b>Barreira de teste, e ela sai inteira quando o autor mandar.</b>
+     *
+     * <p>Regra do autor de 2026-08-20, e ela é explicitamente
+     * provisória: <i>"enquanto este projeto não estiver formalmente
+     * acabado, a única estrutura que o construtor pode construir é a
+     * casa pequena do seu bioma"</i>.
+     *
+     * <p>Vinte e oito a trinta e seis casas por bioma é variedade demais
+     * para depurar: cada uma pede materiais diferentes, e uma sessão que
+     * falha não diz se falhou pela regra nova ou pela casa sorteada. Uma
+     * casa por bioma torna toda sessão comparável com a anterior.
+     *
+     * <p><b>Para desligar:</b> apague este campo e a linha que o usa em
+     * {@link #load}. A lista volta a ser a pasta inteira, que é a
+     * Regra 27, e nada mais precisa mudar.
+     */
+    private static final String ONLY_WHILE_TESTING = "_small_house_1";
+
     /** Onde o índice da pasta mora dentro do jar. */
     private static final String CATALOG =
             "/data/villagecolony/catalog/vanilla_structures.json";
@@ -90,6 +109,11 @@ public final class VillageStructures {
                     continue;
                 }
 
+                // A barreira de teste. Some com esta linha.
+                if (!path.endsWith(ONLY_WHILE_TESTING)) {
+                    continue;
+                }
+
                 found.add(ResourceId.vanilla(path));
             }
         } catch (Exception broken) {
@@ -103,9 +127,10 @@ public final class VillageStructures {
         }
 
         VillageColonyMod.LOGGER.info(
-                "Village style {} can build {} houses from the game catalog",
+                "Village style {} can build {} houses from the game catalog: {}",
                 style,
-                found.size());
+                found.size(),
+                found);
 
         return List.copyOf(found);
     }

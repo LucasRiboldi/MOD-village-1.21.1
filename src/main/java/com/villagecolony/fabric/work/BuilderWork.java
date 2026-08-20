@@ -12,6 +12,7 @@ import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
@@ -360,16 +361,34 @@ public final class BuilderWork {
         }
 
         if (!takeMaterial(world, project, material.get().asItem())) {
-            // <b>O construtor aguarda o bloco específico de que precisa</b>
-            // — regra imutável do autor, 2026-08-20. Sem exceção, e a
-            // mobília era a exceção que havia: a Regra 21 mandava a casa
-            // terminar sem cama e sem lampião, e a peça entrar depois.
+            if (isSkippableWhileTesting(block.block())) {
+                // <b>Barreira de teste</b>, e ela sai quando o autor
+                // mandar — regra dele, 2026-08-20: enquanto o projeto não
+                // estiver formalmente acabado, a obra não espera por
+                // porta, cama, lampião nem baú que não estejam num baú da
+                // vila.
+                //
+                // São as quatro peças que dependem de cadeia que a
+                // colônia ainda não fecha, e segurá-las faria nenhuma
+                // sessão de teste terminar uma casa. O bloco é riscado, e
+                // a casa fica sem ele.
+                VillageColonyMod.LOGGER.info(
+                        "Project {} goes on without {} — the colony has none, and the test"
+                                + " barrier lets it pass",
+                        project.id(),
+                        block.block());
+
+                project.markPlaced(block);
+
+                return true;
+            }
+
+            // Fora dessas quatro, <b>o construtor aguarda o bloco
+            // específico de que precisa</b> — a Regra 27, imutável.
             //
-            // O que mudou desde 08-19 é que a espera passou a ter fim
-            // possível: o pastor tosquia, o mineiro minera, o fundidor
-            // funde. E o que impede a colônia de morrer esperando é o
-            // PatienceClock, que tira a obra da frente depois de vinte
-            // ciclos — a espera é do construtor, não da vila.
+            // O que impede a colônia de morrer esperando é o
+            // PatienceClock: a obra sai da frente depois de vinte ciclos,
+            // então a espera é do construtor e não da vila.
             waitForResources(project, job, workerId, block);
 
             return false;
@@ -384,6 +403,32 @@ public final class BuilderWork {
         job.placed++;
 
         return true;
+    }
+
+    /**
+     * As quatro peças que a obra não espera, enquanto se testa.
+     *
+     * <p>Regra do autor de 2026-08-20, e ela é explicitamente
+     * provisória: porta, cama, lampião e baú saem da frente quando não
+     * houver nenhum nos baús da vila.
+     *
+     * <p>As quatro têm a mesma natureza — dependem de cadeia que a
+     * colônia ainda não fecha por inteiro — e as quatro são peças que a
+     * casa dispensa sem deixar buraco na parede. Pedra, tábua e vidraça
+     * não entram: sem elas a casa tem furo, e furo é a Regra 22 ao
+     * contrário.
+     *
+     * <p><b>Para desligar:</b> apague este método e o bloco que o chama.
+     * A Regra 27 volta a valer sem exceção.
+     */
+    private static boolean isSkippableWhileTesting(ResourceId block) {
+        String name = block.path();
+
+        return name.endsWith("_door")
+                || name.endsWith("_bed")
+                || name.equals("lantern")
+                || name.equals("soul_lantern")
+                || name.equals("chest");
     }
 
     /**

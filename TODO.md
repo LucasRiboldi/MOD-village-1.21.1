@@ -21,7 +21,22 @@ funcionando em jogo* são coisas diferentes, e estão separadas abaixo.
   substituir e sem pular. Ela desfaz partes das Regras 13, 21 e 25, e
   isso está registrado no `Project-State.md`.
 
+## 🧪 Barreira de teste, provisória
+
+- **Regra 28, de 2026-08-20.** Enquanto o projeto não estiver
+  formalmente acabado: uma casa por bioma (`<estilo>_small_house_1`), e a
+  obra **não espera** por porta, cama, lampião nem baú que não estejam
+  num baú da vila. O autor a declarou temporária na própria frase.
+  - **Onde sai:** `VillageStructures.ONLY_WHILE_TESTING` e
+    `BuilderWork.isSkippableWhileTesting`. Dois lugares, e nada mais
+    precisa mudar.
+
 ## 🔴 Crítico
+
+- **A casa de planície ainda não fecha sozinha, e falta pouco.** Medido
+  na lista de materiais dela: `16 stripped_oak_log`, `3 wall_torch` e
+  `3 glass_pane`. A barreira dispensa porta e cama; estes três não, e o
+  construtor espera por eles. Guardar num baú da vila destrava.
 
 - **Rodar em jogo a cadeia de produção.** Mineiro, pastor e fundidor
   entraram em 2026-08-20 e **nenhum foi visto trabalhando numa vila de
@@ -42,10 +57,9 @@ funcionando em jogo* são coisas diferentes, e estão separadas abaixo.
 
 ## 🟠 Importante
 
-- **Tocha e ferro travam as casas de vila.** A tocha pede carvão e o
-  lampião pede ferro; nenhum dos dois é minerado. Como o construtor agora
-  **espera** pelo bloco exato (Regra 27), toda casa com tocha para nela
-  até o jogador trazer — ou fica pela metade quando a paciência acabar.
+- **A tocha trava, e o lampião não trava mais.** A tocha pede carvão e
+  ninguém minera carvão; o lampião entrou na lista de dispensáveis da
+  Regra 28. Enquanto ninguém fizer carvão, casa de vila espera por tocha.
 - **A areia não é colhida por ninguém.** O fundidor funde a areia que
   houver nos baús, e nada a põe lá. Falta a meta de areia — e ela depende
   de decompor a receita da vidraça, que é o `ItemRequest` do backlog.

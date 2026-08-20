@@ -41,6 +41,18 @@ import java.util.UUID;
  */
 public class ConstructionResumeGameTest implements FabricGameTest {
 
+    /**
+     * Uma casa do jogo que <b>não</b> é o alvo de vila nenhuma.
+     *
+     * <p>Desde 2026-08-20 o alvo é {@code <estilo>_small_house_1} e só
+     * ele — barreira de teste do autor. A segunda variante existe no
+     * jogo, é lida pelo mesmo leitor, e nunca é escolhida: é exatamente
+     * o que este teste precisa de "planta que não é mais o alvo".
+     */
+    private static final com.villagecolony.core.type.ResourceId OTHER_HOUSE =
+            com.villagecolony.core.type.ResourceId.vanilla(
+                    "village/plains/houses/plains_small_house_2");
+
     /** Alto o bastante para o projeto cair sobre puro ar. */
     private static final BlockPos ORIGIN = new BlockPos(1, 4, 1);
 
@@ -178,7 +190,7 @@ public class ConstructionResumeGameTest implements FabricGameTest {
         VillageColonyMod.CONSTRUCTIONS.registerPending(new ConstructionService.Pending(
                 UUID.randomUUID(),
                 colony.id(),
-                StructureBlueprintReader.PLAINS_SMALL_HOUSE,
+                OTHER_HOUSE,
                 origin,
                 ConstructionState.WAITING_RESOURCES));
 
@@ -190,8 +202,7 @@ public class ConstructionResumeGameTest implements FabricGameTest {
 
         context.assertTrue(
                 VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
-                        .map(open -> !open.blueprint().id().equals(
-                                StructureBlueprintReader.PLAINS_SMALL_HOUSE))
+                        .map(open -> !open.blueprint().id().equals(OTHER_HOUSE))
                         .orElse(true),
                 "a casa de planície voltou a ser aberta, e ela é impossível para esta colônia");
 

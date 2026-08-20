@@ -2169,6 +2169,9 @@ Regra 26  a cadeia de produção, e a paleta      08-20, feita em parte
 Regra 27  só o catálogo do jogo, e o            08-20, IMUTÁVEL, feita
           construtor aguarda o bloco            em 08-20. Desfaz partes
                                                 das Regras 13, 21 e 25
+Regra 28  a casa pequena do bioma, e a obra     08-20, PROVISÓRIA por
+          não espera por porta, cama,           decisão do autor. Estreita
+          lampião e baú                         a 27 enquanto se testa
 ```
 
 Duas previsões das primeiras se confirmaram e vale marcá-las: a fila que
@@ -3773,3 +3776,70 @@ quatro plantas   e não trinta e seis. Casa de tamanho raro num lote
                  apertado deixa de ser tentada — o preço de a varredura
                  caber num tique
 ```
+
+---
+
+## Regra 28 — a barreira de teste, e ela é provisória por decisão
+
+```text
+enquanto este projeto não estiver formalmente acabado:
+
+  a única estrutura que o construtor pode construir é a casa pequena
+  do seu bioma — em planície, plains_small_house_1
+
+  a construção não espera pela porta, cama, lampião e baú se eles não
+  estiverem dentro de algum baú da vila
+```
+
+Dita pelo autor em 2026-08-20, e **ele a declarou temporária na própria
+frase**: *"esta barreira de teste vai sumir quando eu definir no
+futuro"*. Está registrada aqui como regra porque vale hoje, e marcada
+como barreira porque não vale amanhã.
+
+**Por que ela ajuda.** Vinte e oito a trinta e seis casas por bioma é
+variedade demais para depurar: cada uma pede materiais diferentes, e uma
+sessão que falha não diz se falhou pela regra nova ou pela casa
+sorteada. Uma casa por bioma torna toda sessão comparável com a
+anterior.
+
+**Onde ela mora, e como sai:**
+
+```text
+a casa única    VillageStructures.ONLY_WHILE_TESTING. Apagar o campo e
+                a linha que o usa devolve a pasta inteira, que é a
+                Regra 27
+
+as quatro       BuilderWork.isSkippableWhileTesting. Apagar o método e
+peças           o bloco que o chama devolve a espera sem exceção
+```
+
+**Por que são essas quatro peças e não outras.** Porta, cama, lampião e
+baú dependem de cadeia que a colônia ainda não fecha, e as quatro são
+peças que a casa dispensa **sem ficar com buraco na parede**. Pedra,
+tábua e vidraça não entram na lista: sem elas a casa tem furo, e furo é
+a Regra 22 ao contrário.
+
+**O que continua travando a casa de planície, medido e não suposto.** A
+lista de materiais dela é de 149 blocos em 8 tipos:
+
+```text
+ 49 oak_stairs          a colônia faz, de tábua
+ 43 cobblestone         o mineiro traz
+ 33 oak_planks          o fabricante faz
+  1 white_bed           dispensada pela barreira
+  1 oak_door            dispensada pela barreira
+
+ 16 stripped_oak_log    NINGUÉM DESCASCA — a obra espera
+  3 wall_torch          pede carvão, e ninguém minera carvão
+  3 glass_pane          o fundidor faz vidro de areia, e NINGUÉM COLHE
+                        AREIA
+```
+
+**Então a casa ainda não fecha sozinha**, e por três tipos de bloco que a
+barreira não cobre. Enquanto for assim, quem quiser vê-la terminar
+guarda num baú da vila: **16 troncos descascados, 3 tochas e 3 vidraças**
+— ou areia, que o fundidor converte.
+
+Isso está dito aqui, e não descoberto na próxima sessão, porque é
+exatamente o tipo de coisa que custa uma sessão inteira quando fica
+implícita.

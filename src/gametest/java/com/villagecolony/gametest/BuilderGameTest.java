@@ -347,35 +347,33 @@ public class BuilderGameTest implements FabricGameTest {
 
 
     /**
-     * A obra <b>espera</b> pela mobília que falta — a Regra 27.
+     * A obra segue sem a cama que a colônia não tem — barreira de teste.
      *
-     * <p><b>Este teste afirmava o contrário até 2026-08-20</b>, e a
-     * inversão é a regra imutável do autor: o construtor aguarda a
-     * existência do bloco específico de que precisa. Sem exceção — e a
-     * mobília era a exceção que havia, pela Regra 21.
+     * <p><b>Este teste já afirmou as duas coisas</b>, e vale registrar
+     * por quê. A Regra 27 mandou o construtor aguardar o bloco
+     * específico, sem exceção. No mesmo dia o autor pôs uma barreira
+     * explicitamente provisória por cima: enquanto o projeto não estiver
+     * formalmente acabado, a obra <b>não espera</b> por porta, cama,
+     * lampião nem baú que não estejam num baú da vila.
      *
-     * <p>O que mudou e permite exigir isso: a espera passou a ter fim
-     * possível. O pastor tosquia, o mineiro minera, o fundidor funde. E
-     * o que impede a colônia de morrer esperando é o {@code
-     * PatienceClock}, que tira a obra da frente depois de vinte ciclos —
-     * a espera é do construtor, não da vila.
+     * <p>São as quatro peças que dependem de cadeia que a colônia ainda
+     * não fecha, e segurá-las faria nenhuma sessão de teste terminar uma
+     * casa. Pedra, tábua e vidraça continuam sendo esperadas: sem elas a
+     * casa tem furo.
      *
      * <p>O baú aqui tem tábua e nenhuma lã. A cama é o que falta, e o
-     * que se afirma é que a obra <b>não fecha</b> sem ela.
+     * que se afirma é que a obra <b>fecha assim mesmo</b>.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_furniture",
             tickLimit = 300)
-    public void theWorkWaitsForTheFurnitureItCannotMake(TestContext context) {
+    public void theWorkGoesOnWithoutTheFurnitureItCannotMake(TestContext context) {
         Fixture fixture = setUp(context, 8, furnishedRoom(), 1);
 
         context.runAtTick(90, () -> {
-            // Afirma que ela NÃO fechou, e não em que estado exato ela
-            // está. A bateria roda concorrente e o construtor pode estar
-            // ainda a caminho da cama aos 90 tiques; o que nunca pode
-            // acontecer é a obra dar-se por pronta sem ela.
             context.assertTrue(
-                    fixture.project.state() != ConstructionState.COMPLETED,
-                    "a obra fechou sem a cama, e a Regra 27 manda esperar por ela");
+                    fixture.project.state() == ConstructionState.COMPLETED,
+                    "a barreira de teste manda a obra seguir sem a cama, e ela ficou em "
+                            + fixture.project.state());
 
             fixture.owned.cleanUp();
 

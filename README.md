@@ -64,31 +64,36 @@ fabricar, ele espera.
 
 **As casas são as do próprio Minecraft, e só elas.** O mod não inventa
 casa: cada vila levanta o que a pasta de estruturas do jogo tem para o
-bioma dela, e **a maior que couber no lote** é a que sobe.
+bioma dela.
 
-| Vila | Casas disponíveis |
-|---|---|
-| Planície | 36 |
-| Savana | 31 |
-| Nevada | 30 |
-| **Deserto** | **28** |
-| Taiga | 27 |
-
-As variantes em ruína ficam de fora — uma colônia que as levantasse
-estaria construindo a própria decadência.
+> **Enquanto o mod está em alpha, é uma casa por bioma** — a casa
+> pequena, `plains_small_house_1` e as equivalentes. É barreira de teste
+> deliberada: uma casa só por bioma torna cada sessão comparável com a
+> anterior. Quando ela sair, são 36 casas em planície, 31 em savana, 30
+> em nevada, 28 em deserto e 27 em taiga, e a **maior que couber no
+> lote** é a que sobe.
 
 O deserto era o buraco do mod: a vila nascia, contratava, contava
 recurso e nunca construía, por não haver árvore. Agora o mineiro tira
 arenito da duna e ela levanta as casas de deserto do jogo.
 
 **O construtor espera pelo bloco exato de que precisa.** Ele não
-substitui e não pula: falta a cama, a obra para na cama. O que impede a
-vila de morrer esperando é que a *obra* sai da frente depois de vinte
-ciclos — a espera é dele, não dela.
+substitui e não pula — com quatro exceções enquanto o mod está em alpha:
+**porta, cama, lampião e baú** são dispensados se não houver nenhum num
+baú da vila, para que a casa consiga terminar durante os testes. O que
+impede a vila de morrer esperando é que a *obra* sai da frente depois de
+vinte ciclos — a espera é do construtor, não dela.
 
-A colônia produz tábua, pedra, lã e vidro, e fabrica com isso o que a
-planta pedir. **O que ela ainda não faz — tocha, ferro e tronco
-descascado — é seu**: guarde num baú da vila e a obra anda.
+A colônia produz tábua, pedra, lã e vidro. Para a casa de planície
+fechar sozinha ainda faltam três coisas que ela não faz, e **guardá-las
+num baú da vila é o que destrava a obra**:
+
+```text
+16 troncos descascados   ninguém descasca
+ 3 tochas                pedem carvão, e ninguém minera carvão
+ 3 vidraças              o fundidor faz vidro de areia — mas
+                         ninguém colhe areia. Guarde areia e ele faz
+```
 
 🌾 **O fazendeiro** tem nome, enxada e baú — e nenhum trabalho ainda.
 
