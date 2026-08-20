@@ -387,7 +387,9 @@ public final class ConstructionPlanner {
             }
         }
 
-        if (standing == 0 && !ColonyHut.ID.equals(project.blueprint().id())) {
+        ResourceId target = houseFor(world, colony).id();
+
+        if (project.isSupersededBy(target)) {
             // Obra de uma planta que não é mais o alvo, e sem um bloco de
             // pé. Nada se perde ao abandoná-la — e mantê-la trava a
             // colônia para sempre, porque `plan` não abre obra nova
@@ -399,6 +401,15 @@ public final class ConstructionPlanner {
             // "waiting for minecraft:stripped_oak_log", que ninguém
             // produz. A cabana nunca chegou a ser planejada.
             //
+            // **E aconteceu de novo, ao contrário.** A correção daquele
+            // dia perguntava se a planta era a cabana, com o id escrito
+            // no código. A Regra 24 devolveu a casa do jogo às vilas de
+            // planície em 2026-08-19, e a pergunta passou a proteger
+            // exatamente a obra que devia sair: a cabana gravada no save
+            // era retomada, e o alvo novo nunca chegava a ser planejado.
+            // Por isso o alvo agora é perguntado à colônia — `houseFor` é
+            // a mesma resposta que `plan` usa uma linha abaixo.
+            //
             // Com bloco de pé é o contrário: casa pela metade é do
             // jogador, e abandoná-la deixaria um esqueleto no mundo com o
             // lote ocupado. Essa continua de onde parou.
@@ -406,7 +417,7 @@ public final class ConstructionPlanner {
                     "Colony {} drops the untouched {} — the target is now {}",
                     colony.id(),
                     project.blueprint().id(),
-                    ColonyHut.ID);
+                    target);
 
             VillageColonyMod.CONSTRUCTIONS.dropPending(colony.id());
 

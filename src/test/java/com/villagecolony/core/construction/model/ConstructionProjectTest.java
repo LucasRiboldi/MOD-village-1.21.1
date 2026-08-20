@@ -21,6 +21,8 @@ class ConstructionProjectTest {
 
     private static final ResourceId HOUSE = ResourceId.vanilla("village/plains/houses/small_house");
 
+    private static final ResourceId OTHER_HOUSE = new ResourceId("villagecolony", "hut");
+
     private static final ResourceId PLANKS = ResourceId.vanilla("oak_planks");
 
     private static final ResourceId COBBLE = ResourceId.vanilla("cobblestone");
@@ -143,5 +145,38 @@ class ConstructionProjectTest {
     void buildingCannotStartBeforePreparing() {
         assertThrows(IllegalStateException.class,
                 () -> project.moveTo(ConstructionState.BUILDING));
+    }
+
+    /**
+     * A obra sem um bloco de pé, de uma planta que não é mais o alvo,
+     * sai da frente — e quem diz qual é o alvo é a colônia, não uma
+     * planta escrita à mão aqui dentro.
+     *
+     * <p>A pergunta já esteve errada duas vezes pelo mesmo motivo: o
+     * alvo foi escrito fixo no código. Em 2026-08-15 a Regra 13 trocou a
+     * obra do MVP pela cabana e a colônia ficou presa à casa de planície
+     * gravada no save; a correção daquele dia escreveu "o alvo é a
+     * cabana", e a Regra 24 tornou isso falso de novo — em planície o
+     * alvo voltou a ser a casa do jogo.
+     */
+    @Test
+    void anUntouchedProjectIsSupersededByADifferentTarget() {
+        assertTrue(project.isSupersededBy(OTHER_HOUSE));
+    }
+
+    @Test
+    void aProjectOfTheCurrentTargetStays() {
+        assertFalse(project.isSupersededBy(HOUSE));
+    }
+
+    /**
+     * Com bloco de pé é o contrário: casa pela metade é do jogador, e
+     * abandoná-la deixaria um esqueleto no mundo com o lote ocupado.
+     */
+    @Test
+    void aProjectWithABlockStandingIsNeverSuperseded() {
+        project.markPlaced(block(0, 0, 0, COBBLE));
+
+        assertFalse(project.isSupersededBy(OTHER_HOUSE));
     }
 }

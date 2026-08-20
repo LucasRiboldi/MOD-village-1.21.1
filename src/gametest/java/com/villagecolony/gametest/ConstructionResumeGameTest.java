@@ -152,6 +152,15 @@ public class ConstructionResumeGameTest implements FabricGameTest {
      *
      * <p>Nada se perde: são zero blocos de pé. O que se ganha é a
      * colônia voltando a construir.
+     *
+     * <p><b>O que este teste não alcança.</b> O alvo é perguntado à
+     * colônia desde a Regra 24, e a resposta depende do bioma — em
+     * planície ela é a própria casa de planície, e então nada seria
+     * descartado aqui. Este caso só é "planta antiga" porque o bioma da
+     * arena não é planície, e a arena tem bioma fixo. A regra em si
+     * está presa fora do jogo, em {@code
+     * ConstructionProjectTest#anUntouchedProjectIsSupersededByADifferentTarget},
+     * onde o alvo é escolhido pelo teste.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "resume_stale_target")
     public void anUntouchedProjectOfTheOldTargetIsDropped(TestContext context) {

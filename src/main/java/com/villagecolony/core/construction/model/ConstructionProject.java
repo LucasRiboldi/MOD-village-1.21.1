@@ -216,6 +216,32 @@ public final class ConstructionProject {
     }
 
     /**
+     * Se esta obra sai da frente para dar lugar ao alvo de hoje.
+     *
+     * <p>Duas condições, e as duas importam. A planta precisa ser
+     * <b>outra</b> que não o alvo atual da colônia, e não pode haver um
+     * único bloco de pé. Sem bloco posto nada se perde ao abandoná-la, e
+     * o que se ganha é a colônia voltando a construir: quem planeja não
+     * abre obra nova enquanto houver uma aberta.
+     *
+     * <p>Com bloco de pé é o contrário. Casa pela metade é do jogador, e
+     * abandoná-la deixaria um esqueleto no mundo com o lote ocupado —
+     * essa continua de onde parou, seja qual for o alvo.
+     *
+     * <p><b>O alvo vem de fora, e é o ponto desta assinatura.</b> Ele já
+     * foi escrito fixo aqui dentro duas vezes, e nas duas envelheceu: a
+     * Regra 13 fez da cabana o alvo em 2026-08-15, e a Regra 24 devolveu
+     * a casa do jogo às vilas de planície em 2026-08-19. Uma obra não
+     * tem como saber o que a colônia dela constrói hoje — quem sabe é a
+     * colônia, e por isso ela é quem responde.
+     */
+    public boolean isSupersededBy(ResourceId target) {
+        Objects.requireNonNull(target, "target");
+
+        return remaining.size() == blueprint.blockCount() && !blueprint.id().equals(target);
+    }
+
+    /**
      * O primeiro bloco que ainda falta, se falta algum.
      *
      * <p>Quem constrói pode pular este e tentar outro: um bloco que
