@@ -33,6 +33,9 @@ public final class ProfessionRegistry {
 
     static {
         define(ProfessionType.LUMBERJACK, ToolType.WOODEN_AXE, Capability.COLLECT_WOOD);
+        define(ProfessionType.MINER, ToolType.WOODEN_PICKAXE, Capability.COLLECT_STONE);
+        define(ProfessionType.SHEPHERD, ToolType.SHEARS, Capability.COLLECT_WOOL);
+        define(ProfessionType.SMELTER, ToolType.NONE, Capability.SMELT_ITEMS);
         define(ProfessionType.MANUFACTURER, ToolType.NONE, Capability.CRAFT_ITEMS);
         define(ProfessionType.FARMER, ToolType.WOODEN_HOE, Capability.MAINTAIN_FOOD);
         define(ProfessionType.BUILDER, ToolType.NONE, Capability.BUILD_STRUCTURE);

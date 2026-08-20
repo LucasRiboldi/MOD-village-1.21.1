@@ -24,6 +24,15 @@ public enum Capability {
     /** Derrubar árvores e recolher a madeira. */
     COLLECT_WOOD,
 
+    /** Tirar pedra do mundo: pedregulho, ou arenito no deserto. */
+    COLLECT_STONE,
+
+    /** Tosquiar ovelha. */
+    COLLECT_WOOL,
+
+    /** Fundir: areia em vidro, e o que mais a fornalha fizer. */
+    SMELT_ITEMS,
+
     /** Transformar matéria-prima em material de construção. */
     CRAFT_ITEMS,
 

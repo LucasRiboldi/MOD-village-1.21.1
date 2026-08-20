@@ -120,12 +120,18 @@ class WorkerTest {
     }
 
     @Test
-    void professionsAreTheFourFromTheDataModel() {
-        assertEquals(4, ProfessionType.values().length);
+    void everyProfessionOfTheProductionChainExists() {
+        assertEquals(7, ProfessionType.values().length);
 
-        assertEquals(ProfessionType.LUMBERJACK, ProfessionType.valueOf("LUMBERJACK"));
-        assertEquals(ProfessionType.MANUFACTURER, ProfessionType.valueOf("MANUFACTURER"));
-        assertEquals(ProfessionType.FARMER, ProfessionType.valueOf("FARMER"));
-        assertEquals(ProfessionType.BUILDER, ProfessionType.valueOf("BUILDER"));
+        // A ordem é a da cadeia produtiva, e ela importa: o distribuidor
+        // preenche nessa sequência, então quem colhe vem antes de quem
+        // transforma, e quem transforma antes de quem constrói.
+        assertEquals(ProfessionType.LUMBERJACK, ProfessionType.values()[0]);
+        assertEquals(ProfessionType.MINER, ProfessionType.values()[1]);
+        assertEquals(ProfessionType.SHEPHERD, ProfessionType.values()[2]);
+        assertEquals(ProfessionType.SMELTER, ProfessionType.values()[3]);
+        assertEquals(ProfessionType.MANUFACTURER, ProfessionType.values()[4]);
+        assertEquals(ProfessionType.FARMER, ProfessionType.values()[5]);
+        assertEquals(ProfessionType.BUILDER, ProfessionType.values()[6]);
     }
 }

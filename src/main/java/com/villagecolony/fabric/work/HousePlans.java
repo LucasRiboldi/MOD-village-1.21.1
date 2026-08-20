@@ -3,6 +3,7 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.ColonyHut;
+import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.Side;
@@ -94,18 +95,30 @@ public final class HousePlans {
      * planície, e a Regra 20 manda a cabana ser da madeira do bioma.
      */
     static List<Blueprint> plansFor(ServerWorld world, Colony colony) {
-        ResourceId wood = VillageBiomes.woodAt(world, colony.center())
-                .orElse(ColonyHut.OAK_PLANKS);
+        VillagePalette palette = paletteOf(world, colony.center());
 
-        Blueprint hut = ColonyHut.blueprint(wood, Side.NORTH);
+        Blueprint hut = ColonyHut.blueprint(palette, Side.NORTH);
 
-        if (!ColonyHut.OAK_PLANKS.equals(wood)) {
+        if (!ColonyHut.OAK_PLANKS.equals(palette.wall())) {
             return List.of(hut);
         }
 
         return smallHouse(world)
                 .map(house -> List.of(house, hut))
                 .orElseGet(() -> List.of(hut));
+    }
+
+    /**
+     * A paleta desta vila, com carvalho como reserva.
+     *
+     * <p>Bioma fora da tabela é vila que o mod não atende, e o ciclo nem
+     * chegaria aqui. A reserva existe para o caso de o bioma mudar
+     * debaixo de uma colônia já registrada — datapack, versão nova — e
+     * para que a resposta nunca seja "não sei".
+     */
+    static VillagePalette paletteOf(ServerWorld world, ColonyPos where) {
+        return VillageBiomes.paletteAt(world, where)
+                .orElseGet(() -> VillagePalette.ofWood(ColonyHut.OAK_PLANKS));
     }
 
     /**
@@ -162,11 +175,11 @@ public final class HousePlans {
             // ver BuildSiteScanner.roadSideOf. Sem rua em volta, a casa
             // fica com a porta ao norte, que é onde a planta antiga a
             // punha: obra de save velho continua de onde parou.
-            ResourceId wood = VillageBiomes.woodAt(world, origin)
-                    .orElse(ColonyHut.OAK_PLANKS);
+            VillagePalette palette = paletteOf(world, origin);
 
             return Optional.of(ColonyHut.blueprint(
-                    wood, roadSideOf(world, origin, ColonyHut.blueprint(wood, Side.NORTH))));
+                    palette,
+                    roadSideOf(world, origin, ColonyHut.blueprint(palette, Side.NORTH))));
         }
 
         // Planta lida de arquivo: ela volta como o arquivo a gravou, e

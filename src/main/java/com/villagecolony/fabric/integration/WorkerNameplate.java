@@ -83,6 +83,9 @@ public final class WorkerNameplate {
     private static String labelFor(ProfessionType profession) {
         return switch (profession) {
             case LUMBERJACK -> "Lenhador";
+            case MINER -> "Mineiro";
+            case SHEPHERD -> "Pastor";
+            case SMELTER -> "Fundidor";
             case MANUFACTURER -> "Fabricante";
             case FARMER -> "Fazendeiro";
             case BUILDER -> "Construtor";

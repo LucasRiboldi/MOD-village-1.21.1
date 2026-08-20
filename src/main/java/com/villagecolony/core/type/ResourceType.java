@@ -52,7 +52,19 @@ public enum ResourceType {
 
     MANGROVE_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS),
 
-    COBBLESTONE(ResourceCategory.NATURAL, ResourceGroup.NONE);
+    COBBLESTONE(ResourceCategory.NATURAL, ResourceGroup.STONE),
+
+    /** A pedra da vila de deserto, e a parede dela — 2026-08-20. */
+    SANDSTONE(ResourceCategory.NATURAL, ResourceGroup.STONE),
+
+    /** O que o fundidor recebe para dar vidro. */
+    SAND(ResourceCategory.NATURAL, ResourceGroup.SAND),
+
+    /** O que o fundidor devolve. A vidraça sai daqui. */
+    GLASS(ResourceCategory.PROCESSED, ResourceGroup.NONE),
+
+    /** O que o pastor traz. A cama sai daqui. */
+    WHITE_WOOL(ResourceCategory.NATURAL, ResourceGroup.WOOL);
 
     private final ResourceCategory category;
     private final ResourceGroup group;

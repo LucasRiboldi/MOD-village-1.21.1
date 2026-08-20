@@ -166,6 +166,8 @@ public final class MinecraftTypeAdapter {
         return switch (tool) {
             case NONE -> Optional.empty();
             case WOODEN_AXE -> Optional.of(Items.WOODEN_AXE);
+            case WOODEN_PICKAXE -> Optional.of(Items.WOODEN_PICKAXE);
+            case SHEARS -> Optional.of(Items.SHEARS);
             case WOODEN_HOE -> Optional.of(Items.WOODEN_HOE);
         };
     }

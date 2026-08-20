@@ -39,6 +39,22 @@ public enum ResourceGroup {
     PLANKS,
 
     /**
+     * Pedregulho e arenito: a parede que não é de madeira — 2026-08-20.
+     *
+     * <p>Um grupo, e não dois, pela mesma razão de {@link #PLANKS}: a
+     * pergunta que o grupo responde é "a colônia já tem pedra bastante
+     * para a obra?", e aí a espécie não importa. Qual pedra a vila usa é
+     * decisão da {@code VillagePalette}, e essa continua por nome.
+     */
+    STONE,
+
+    /** Areia — o que o fundidor recebe para dar vidro. */
+    SAND,
+
+    /** Lã, de onde a cama sai. */
+    WOOL,
+
+    /**
      * Recurso que só se satisfaz com ele mesmo.
      *
      * <p>Pedra não é substituída por nada.

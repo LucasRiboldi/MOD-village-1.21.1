@@ -18,6 +18,15 @@ public enum TaskType {
     /** Derrubar árvore e trazer a madeira. */
     COLLECT_WOOD(Capability.COLLECT_WOOD, true, true),
 
+    /** Tirar pedra do mundo — pedregulho, ou arenito no deserto. */
+    COLLECT_STONE(Capability.COLLECT_STONE, true, true),
+
+    /** Tosquiar ovelha e trazer a lã. */
+    COLLECT_WOOL(Capability.COLLECT_WOOL, true, true),
+
+    /** Fundir: areia em vidro, e o que mais a fornalha fizer. */
+    SMELT_MATERIAL(Capability.SMELT_ITEMS, true, true),
+
     /** Transformar matéria-prima em material. */
     CRAFT_MATERIAL(Capability.CRAFT_ITEMS, true, true),
 

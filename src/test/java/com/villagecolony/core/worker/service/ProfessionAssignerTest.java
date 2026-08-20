@@ -45,12 +45,15 @@ class ProfessionAssignerTest {
         return ids;
     }
 
-    /** Profession-System.md: seis aldeões, um de cada função. */
+    /** Um aldeão de cada função, na ordem da cadeia produtiva. */
     @Test
-    void firstFourWorkersCoverEveryProfession() {
-        addWorkers(COLONY, 4);
+    void theFirstWorkersCoverEveryProfession() {
+        int professions = ProfessionType.values().length;
 
-        assertEquals(4, ProfessionAssigner.assignMissing(workers, COLONY, everyone()));
+        addWorkers(COLONY, professions);
+
+        assertEquals(
+                professions, ProfessionAssigner.assignMissing(workers, COLONY, everyone()));
 
         Set<ProfessionType> assigned = EnumSet.noneOf(ProfessionType.class);
 
@@ -99,18 +102,22 @@ class ProfessionAssignerTest {
      * disputando tarefa a cada ciclo.
      */
     @Test
-    void theNinthWorkerGetsNothing() {
-        addWorkers(COLONY, 9);
+    void theWorkerPastTheLastVacancyGetsNothing() {
+        // A Regra 4: dois de cada. Com sete profissões são catorze vagas,
+        // e o décimo quinto aldeão fica sem função.
+        int vacancies = 2 * ProfessionType.values().length;
+
+        addWorkers(COLONY, vacancies + 1);
 
         int assigned = ProfessionAssigner.assignMissing(workers, COLONY, everyone());
 
-        assertEquals(8, assigned, "esperava as oito vagas e nada além");
+        assertEquals(vacancies, assigned, "esperava as vagas e nada além");
 
         long employed = workers.ofColony(COLONY).stream()
                 .filter(Worker::hasProfession)
                 .count();
 
-        assertEquals(8, employed);
+        assertEquals(vacancies, employed);
     }
 
     /** Uma vila grande emprega oito, e só. */
@@ -130,17 +137,17 @@ class ProfessionAssignerTest {
     }
 
     /**
-     * O quinto dobra o lenhador, e não o construtor.
+     * O primeiro a dobrar dobra o lenhador, e não o construtor.
      *
      * <p>Com teto de dois, preencher por ordem de declaração daria dois
      * lenhadores antes do primeiro fabricante — uma vila com dois
      * lenhadores e nenhum construtor é pior do que uma com um de cada. A
-     * quinta vaga é a primeira que pode dobrar, e dobra a primeira da
-     * cadeia produtiva.
+     * primeira vaga depois de todas cobertas é a primeira que pode
+     * dobrar, e dobra a primeira da cadeia produtiva.
      */
     @Test
-    void theFifthWorkerDoublesTheFirstOfTheChain() {
-        addWorkers(COLONY, 5);
+    void theFirstSpareWorkerDoublesTheFirstOfTheChain() {
+        addWorkers(COLONY, ProfessionType.values().length + 1);
 
         ProfessionAssigner.assignMissing(workers, COLONY, everyone());
 
@@ -148,7 +155,7 @@ class ProfessionAssignerTest {
                 .filter(w -> w.profession().filter(ProfessionType.LUMBERJACK::equals).isPresent())
                 .count();
 
-        assertEquals(2, lumberjacks, "o quinto devia ter dobrado o lenhador");
+        assertEquals(2, lumberjacks, "o excedente devia ter dobrado o lenhador");
 
         for (ProfessionType type : ProfessionType.values()) {
             assertTrue(
@@ -158,10 +165,10 @@ class ProfessionAssignerTest {
         }
     }
 
-    /** Com as oito preenchidas, não há vaga. */
+    /** Com todas as vagas preenchidas — duas por profissão —, não há vaga. */
     @Test
     void thereIsNoVacancyOnceEveryProfessionIsFilled() {
-        addWorkers(COLONY, 8);
+        addWorkers(COLONY, 2 * ProfessionType.values().length);
         ProfessionAssigner.assignMissing(workers, COLONY, everyone());
 
         assertTrue(ProfessionAssigner.vacancy(workers.ofColony(COLONY)).isEmpty());

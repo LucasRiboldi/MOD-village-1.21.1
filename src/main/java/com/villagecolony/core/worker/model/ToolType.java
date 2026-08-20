@@ -17,5 +17,11 @@ public enum ToolType {
 
     WOODEN_AXE,
 
+    /** Do mineiro. Pedra pede picareta, e a de madeira é a inicial. */
+    WOODEN_PICKAXE,
+
+    /** Do pastor. Tesoura não tem grau, então é ela mesma. */
+    SHEARS,
+
     WOODEN_HOE
 }

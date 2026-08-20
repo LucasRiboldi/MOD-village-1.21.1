@@ -66,7 +66,7 @@ public final class ColonyHut {
     /** O que a última montagem produziu, para não remontar por consulta. */
     private static Blueprint plan;
 
-    private static ResourceId planWood;
+    private static VillagePalette planPalette;
 
     private static Side planSide;
 
@@ -96,9 +96,27 @@ public final class ColonyHut {
      * @param doorSide para que lado fica a rua, visto de dentro do lote
      */
     public static Blueprint blueprint(ResourceId wood, Side doorSide) {
-        if (plan == null || !wood.equals(planWood) || doorSide != planSide) {
-            plan = Blueprint.of(ID, blocks(wood, doorOf(wood), doorSide));
-            planWood = wood;
+        return blueprint(VillagePalette.ofWood(wood), doorSide);
+    }
+
+    /**
+     * A cabana desta paleta — 2026-08-20.
+     *
+     * <p>A Regra 20 dita por inteiro. Até aqui o estilo do bioma era uma
+     * coisa só, a espécie da madeira, e o deserto ficava de fora: a vila
+     * nascia, contratava e não construía nunca, porque não há árvore
+     * ali. Com a paleta, a parede é o que o bioma dá — tábua onde há
+     * árvore, arenito onde há duna.
+     *
+     * <p><b>Paleta sem porta constrói o vão e para ali.</b> No deserto a
+     * porta sairia de tábua, tábua sai de tronco, e não há tronco. Exigi-la
+     * deixaria a casa em {@code WAITING_RESOURCES} para sempre, que é o
+     * travamento que a Regra 13 corrigiu. Quem quiser porta, pendura uma.
+     */
+    public static Blueprint blueprint(VillagePalette palette, Side doorSide) {
+        if (plan == null || !palette.equals(planPalette) || doorSide != planSide) {
+            plan = Blueprint.of(ID, blocks(palette, doorSide));
+            planPalette = palette;
             planSide = doorSide;
         }
 
@@ -114,7 +132,7 @@ public final class ColonyHut {
      * envelheceria na próxima madeira que o jogo acrescentasse.
      */
     private static ResourceId doorOf(ResourceId wood) {
-        return new ResourceId(wood.namespace(), wood.path().replace("_planks", "_door"));
+        return VillagePalette.ofWood(wood).door().orElseThrow();
     }
 
     /**
@@ -129,8 +147,8 @@ public final class ColonyHut {
      * {@code BuildSiteScanner}, e forrar o terreno gastaria vinte e cinco
      * tábuas para esconder a grama que já estava lá.
      */
-    private static List<BlueprintBlock> blocks(
-            ResourceId wood, ResourceId door, Side doorSide) {
+    private static List<BlueprintBlock> blocks(VillagePalette palette, Side doorSide) {
+        ResourceId wood = palette.wall();
 
         List<BlueprintBlock> blocks = new ArrayList<>();
 
@@ -150,7 +168,11 @@ public final class ColonyHut {
 
         // A porta por último entre os blocos baixos: ela precisa do
         // batente de pé dos dois lados para não ficar solta.
-        blocks.add(new BlueprintBlock(doorway, door));
+        //
+        // Paleta sem porta deixa o vão aberto, e é decisão: no deserto a
+        // porta pediria madeira que não existe ali, e a obra dormiria
+        // esperando por ela.
+        palette.door().ifPresent(door -> blocks.add(new BlueprintBlock(doorway, door)));
 
         for (int x = 0; x < SIDE; x++) {
             for (int z = 0; z < SIDE; z++) {

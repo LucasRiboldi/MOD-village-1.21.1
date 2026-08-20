@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.integration;
 
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.registry.RegistryKey;
@@ -76,8 +77,9 @@ public final class VillageBiomes {
         table.put(BiomeKeys.SAVANNA, ACACIA);
         table.put(BiomeKeys.SAVANNA_PLATEAU, ACACIA);
 
-        // Deserto: o jogo gera vila, e a colônia não tem árvore. Ver o
-        // cabeçalho — carvalho é o que ela usará quando houver madeira.
+        // Deserto: sem árvore. A madeira aqui é a de reserva, para
+        // quando o jogador guardar tronco no baú; a parede da casa é
+        // arenito, e quem decide isso é a paleta.
         table.put(BiomeKeys.DESERT, OAK);
 
         return Map.copyOf(table);
@@ -91,6 +93,30 @@ public final class VillageBiomes {
      * vila que exista fora desta lista continua lá, viva, e o mod é que
      * não a atende — ver ADR-003 §5.
      */
+    /**
+     * A paleta desta vila — a Regra 20 dita por inteiro, 2026-08-20.
+     *
+     * <p>Até aqui o estilo do bioma era a espécie da madeira e nada
+     * mais, e por isso o deserto ficava de fora: a vila nascia,
+     * contratava e nunca construía. Agora o bioma responde também de que
+     * é a parede, e no deserto ela é arenito — que o mineiro tira da
+     * duna ao lado.
+     */
+    public static Optional<VillagePalette> paletteFor(RegistryKey<Biome> biome) {
+        if (BiomeKeys.DESERT.equals(biome)) {
+            return Optional.of(VillagePalette.ofSandstone());
+        }
+
+        return woodFor(biome).map(VillagePalette::ofWood);
+    }
+
+    /** A paleta da vila que está neste lugar. */
+    public static Optional<VillagePalette> paletteAt(ServerWorld world, ColonyPos where) {
+        return world.getBiome(MinecraftTypeAdapter.toBlockPos(where))
+                .getKey()
+                .flatMap(VillageBiomes::paletteFor);
+    }
+
     public static Optional<ResourceId> woodFor(RegistryKey<Biome> biome) {
         return Optional.ofNullable(WOOD.get(biome));
     }

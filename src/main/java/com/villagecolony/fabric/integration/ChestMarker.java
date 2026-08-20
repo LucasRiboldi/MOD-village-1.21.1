@@ -277,6 +277,9 @@ public final class ChestMarker {
     private static Item itemOf(ProfessionType profession) {
         return switch (profession) {
             case LUMBERJACK -> Items.IRON_AXE;
+            case MINER -> Items.IRON_PICKAXE;
+            case SHEPHERD -> Items.SHEARS;
+            case SMELTER -> Items.FURNACE;
             case FARMER -> Items.IRON_HOE;
             case MANUFACTURER -> Items.CRAFTING_TABLE;
             case BUILDER -> Items.BRICKS;
@@ -287,6 +290,9 @@ public final class ChestMarker {
     private static String label(ProfessionType profession) {
         return switch (profession) {
             case LUMBERJACK -> "Baú do Lenhador";
+            case MINER -> "Baú do Mineiro";
+            case SHEPHERD -> "Baú do Pastor";
+            case SMELTER -> "Baú do Fundidor";
             case FARMER -> "Baú do Fazendeiro";
             case MANUFACTURER -> "Baú do Fabricante";
             case BUILDER -> "Baú do Construtor";
