@@ -3,6 +3,9 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.VillagePalette;
+import com.villagecolony.fabric.integration.BlockProtection;
+import com.villagecolony.core.type.Side;
+import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.storage.model.WorkerStorage;
@@ -15,8 +18,6 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.BlockBreakTime;
 import com.villagecolony.fabric.integration.ChestDepositor;
-import com.villagecolony.fabric.integration.RingSweep;
-import com.villagecolony.fabric.integration.StoneFace;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
@@ -51,8 +52,8 @@ import java.util.UUID;
  *
  * <p><b>O que ele nunca toca</b> é a Regra 3, e para pedra ela morde
  * mais que para árvore: a vila gerada e as casas do jogador são feitas
- * do mesmo material que ele procura. {@code StoneFace} responde por
- * isso, e responde antes de qualquer picareta.
+ * do mesmo material que ele cava. A conferência é feita a cada posição da
+ * mina, antes de qualquer picareta.
  *
  * <p>O desenho é o do lenhador, e de propósito — despacho por ciclo,
  * trabalho por tique, um guarda de travamento para quem anda sem chegar.
@@ -64,8 +65,15 @@ public final class MinerWork {
     /** Alcance de braço, medido no plano. O mesmo do lenhador. */
     private static final int REACH = 4;
 
-    /** A ferramenta com que a velocidade é medida — a Regra 2. */
-    private static final Item TOOL = Items.IRON_PICKAXE;
+    /**
+     * A picareta de diamante, e é decisão do autor.
+     *
+     * <p>A Regra 2 mede a velocidade pela ferramenta de um jogador; o
+     * autor pediu diamante para o mineiro, e faz sentido: são vinte
+     * blocos de descida antes de a mina render alguma coisa, e com
+     * picareta de madeira isso é uma sessão inteira.
+     */
+    private static final Item TOOL = Items.DIAMOND_PICKAXE;
 
     private static final int BREAKING_STAGES = 10;
 
@@ -74,32 +82,37 @@ public final class MinerWork {
     /** Uma busca por tique no servidor inteiro, como a de árvore. */
     private static final int SEARCHES_PER_TICK = 1;
 
-    /** Até onde ele procura pedra. */
-    private static final int SEARCH_RADIUS = 48;
+    /** Quantas posições da mina uma passagem examina antes de desistir. */
+    private static final int CUTS_PER_SEARCH = 64;
+
+    /** Recusas seguidas antes de a galeria virar. */
+    private static final int BLOCKED_BEFORE_TURNING = 8;
+
+    /** A que distância do centro a mina se abre — o fim da vila. */
+    private static final int MINE_DISTANCE = 40;
 
     /**
-     * O raio em vigor. É {@link #SEARCH_RADIUS}, menos nos testes.
+     * A distância em vigor. É {@link #MINE_DISTANCE}, menos nos testes.
      *
-     * <p>Existe pela mesma razão do relógio encurtado do lenhador, e por
-     * uma mais dura: a bateria roda arenas lado a lado no mesmo mundo, e
-     * um mineiro de raio 48 sai da arena dele e come a pedra do teste
-     * vizinho. Um teste que destrói o cenário de outro é pior que um
-     * teste que não existe.
+     * <p>A bateria roda arenas lado a lado no mesmo mundo, e uma mina
+     * aberta a quarenta blocos sai da arena dela e cava o cenário do
+     * teste vizinho. Um teste que destrói o cenário de outro é pior que
+     * um teste que não existe.
      */
-    private static int searchRadius = SEARCH_RADIUS;
+    private static int mineDistance = MINE_DISTANCE;
 
-    /** Encurta o raio de busca. Só os testes precisam disso. */
-    public static void shortenSearchTo(int blocks) {
+    /** Aproxima a boca da mina. Só os testes precisam disso. */
+    public static void shortenMineDistanceTo(int blocks) {
         if (blocks <= 0) {
-            throw new IllegalArgumentException("Radius must be positive: " + blocks);
+            throw new IllegalArgumentException("Distance must be positive: " + blocks);
         }
 
-        searchRadius = blocks;
+        mineDistance = blocks;
     }
 
-    /** Devolve o raio ao valor de jogo. */
-    public static void restoreSearch() {
-        searchRadius = SEARCH_RADIUS;
+    /** Devolve a distância ao valor de jogo. */
+    public static void restoreMineDistance() {
+        mineDistance = MINE_DISTANCE;
     }
 
     /**
@@ -126,6 +139,15 @@ public final class MinerWork {
 
         /** A pedra de agora. Nulo entre uma e a próxima. */
         private BlockPos target;
+
+        /** A mina desta colônia. Nula até o mineiro chegar à boca dela. */
+        private MineShaft shaft;
+
+        /** Em que posição da mina ele está. */
+        private int cut;
+
+        /** Quantas posições seguidas vieram bloqueadas. */
+        private int blocked;
 
         private int progress;
 
@@ -278,27 +300,133 @@ public final class MinerWork {
     }
 
     /** Acha a próxima pedra, reserva-a e manda o aldeão andar até lá. */
+    /**
+     * A próxima posição da mina, e a mina se ela ainda não existe.
+     *
+     * <p><b>A Regra 29, e ela substituiu a busca de superfície.</b> Até
+     * agora o mineiro procurava pedra exposta em volta da vila, e o
+     * autor descreveu outra coisa: ele anda até o fim da vila, desce
+     * cavando em escada, abre salas e segue na galeria sem fim.
+     *
+     * <p>Posição que não se pode cavar não para a mina — pula-se para a
+     * seguinte, e a galeria vira depois de uma sequência de recusas. É a
+     * frase do autor: <i>"sempre que encontrar uma barreira que impeça de
+     * realizar estas ações ele começa a recolher para outro lado"</i>.
+     */
     private static boolean startNextStone(
             ServerWorld world, UUID workerId, Job job, VillagerEntity villager) {
 
-        Optional<BlockPos> found = RingSweep.around(
-                workerId,
-                job.center,
-                searchRadius,
-                column -> StoneFace.in(world, column, job.center.getY(), job.wanted));
+        if (job.shaft == null) {
+            Optional<BlockPos> mouth = mouthOf(world, job);
 
-        if (found.isEmpty()) {
+            if (mouth.isEmpty()) {
+                return true;
+            }
+
+            job.shaft = MineShaft.from(
+                    MinecraftTypeAdapter.toColonyPos(mouth.get()), sideOf(job));
+
+            VillageColonyMod.LOGGER.info(
+                    "Miner {} opens a mine at {} — down {} then {} more",
+                    workerId,
+                    mouth.get(),
+                    MineShaft.DESCENT,
+                    MineShaft.DESCENT);
+        }
+
+        // Uma passagem procura a primeira posição que valha a pena: as já
+        // abertas são puladas de graça, e as impossíveis contam para a
+        // curva da galeria.
+        for (int look = 0; look < CUTS_PER_SEARCH; look++) {
+            BlockPos at = MinecraftTypeAdapter.toBlockPos(job.shaft.positionAt(job.cut++));
+
+            if (!world.isInBuildLimit(at)) {
+                job.shaft = job.shaft.turned();
+                job.blocked = 0;
+
+                continue;
+            }
+
+            BlockState state = world.getBlockState(at);
+
+            if (state.isAir() || !state.getFluidState().isEmpty()) {
+                // Já aberto, ou água e lava. Nenhum dos dois se cava.
+                continue;
+            }
+
+            if (state.getHardness(world, at) < 0
+                    || BlockProtection.isVillageOriginal(world, at)
+                    || BlockProtection.isColonyBuilt(at)) {
+
+                // Bedrock, casa da vila, casa da colônia. A Regra 3 e o
+                // impossível, pela mesma porta.
+                if (++job.blocked >= BLOCKED_BEFORE_TURNING) {
+                    job.shaft = job.shaft.turned();
+                    job.blocked = 0;
+
+                    VillageColonyMod.LOGGER.info(
+                            "Miner {} hit something it cannot dig — the gallery turns", workerId);
+                }
+
+                continue;
+            }
+
+            job.blocked = 0;
+            job.target = at;
+            job.progress = 0;
+            job.required = 0;
+            job.stalled = 0;
+
+            WorkTargets.set(workerId, job.target);
+
             return true;
         }
 
-        job.target = found.get();
-        job.progress = 0;
-        job.required = 0;
-        job.stalled = 0;
-
-        WorkTargets.set(workerId, job.target);
-
         return true;
+    }
+
+    /**
+     * A boca da mina: o fim da vila, na direção em que ela se abre.
+     *
+     * <p>É a frase do autor — <i>"anda até o final da vila"</i>. Longe o
+     * bastante para a escada não descer sob as casas, perto o bastante
+     * para o aldeão ir e voltar dentro do expediente.
+     */
+    private static Optional<BlockPos> mouthOf(ServerWorld world, Job job) {
+        Side towards = sideOf(job);
+
+        int x = job.center.getX() + towards.offsetX() * mineDistance;
+        int z = job.center.getZ() + towards.offsetZ() * mineDistance;
+
+        for (int y = job.center.getY() + 4; y >= job.center.getY() - 8; y--) {
+            BlockPos at = new BlockPos(x, y, z);
+
+            if (world.getBlockState(at).isAir()) {
+                continue;
+            }
+
+            if (BlockProtection.isVillageOriginal(world, at)
+                    || BlockProtection.isColonyBuilt(at)) {
+
+                return Optional.empty();
+            }
+
+            return Optional.of(at);
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Para que lado esta colônia abre a mina.
+     *
+     * <p>Sai do identificador da colônia, e é de propósito: duas colônias
+     * vizinhas cavam para lados diferentes, e a mesma colônia cava sempre
+     * para o mesmo lado entre sessões — o aldeão não perde a mina que
+     * abriu ontem.
+     */
+    private static Side sideOf(Job job) {
+        return Side.values()[Math.floorMod(job.task.colonyId().hashCode(), Side.values().length)];
     }
 
     /** Quebra a pedra em curso, no tempo que ela pede. */
@@ -406,8 +534,6 @@ public final class MinerWork {
                 workerId,
                 job.target);
 
-        RingSweep.forget(workerId);
-
         job.task.release();
 
         release(workerId, job);
@@ -431,8 +557,6 @@ public final class MinerWork {
     /** Esquece o trabalho deste aldeão. Morte, zumbificação, dispensa. */
     public static void forget(UUID workerId) {
         JOBS.remove(workerId);
-
-        RingSweep.forget(workerId);
 
         WorkTargets.clear(workerId);
     }

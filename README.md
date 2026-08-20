@@ -37,10 +37,15 @@ Ninguém mandou. **Você não abriu um único menu.**
 de um jogador com machado de ferro —, não carrega nada para casa porque
 a madeira vai direto para o baú dele, e replanta a muda antes de sair.
 
-⛏️ **O mineiro** tira pedra do mundo e guarda no baú — pedregulho onde
-há rocha, **arenito no deserto**, que ali é a própria parede. Ele só
-toca pedra exposta e que não é de ninguém: peça de vila gerada e casa da
-colônia ficam de pé, porque são feitas do mesmo material que ele procura.
+⛏️ **O mineiro abre uma mina de verdade.** Ele anda até o fim da vila e
+desce cavando **em escada** com picareta de diamante, para poder subir de
+volta. Dez blocos abaixo abre uma sala de 7×4; desce mais dez virando
+para outro lado, abre outra sala; e do vigésimo bloco em diante segue
+numa galeria sem fim, de dois blocos de altura. Barreira à frente — lava,
+bedrock, a casa de alguém — e a galeria vira.
+
+Ele nunca cava vila gerada nem casa da colônia: a boca da mina não se
+abre sobre elas, e cada bloco é conferido de novo antes da picareta.
 
 🐑 **O pastor** tosquia a ovelha e traz a lã. A ovelha continua viva e a
 lã volta a crescer — é a colheita que se repete. A lã sai da cor do
@@ -78,22 +83,15 @@ recurso e nunca construía, por não haver árvore. Agora o mineiro tira
 arenito da duna e ela levanta as casas de deserto do jogo.
 
 **O construtor espera pelo bloco exato de que precisa.** Ele não
-substitui e não pula — com quatro exceções enquanto o mod está em alpha:
-**porta, cama, lampião e baú** são dispensados se não houver nenhum num
-baú da vila, para que a casa consiga terminar durante os testes. O que
-impede a vila de morrer esperando é que a *obra* sai da frente depois de
-vinte ciclos — a espera é do construtor, não dela.
+substitui e não pula — com uma lista de exceções enquanto o mod está em
+alpha: **porta, cama, lampião, baú, tronco descascado, tocha e vidraça**
+são dispensados se não houver nenhum num baú da vila, para que a casa
+consiga terminar durante os testes. Pedra e tábua não entram na lista:
+sem elas a casa fica com furo de parede.
 
-A colônia produz tábua, pedra, lã e vidro. Para a casa de planície
-fechar sozinha ainda faltam três coisas que ela não faz, e **guardá-las
-num baú da vila é o que destrava a obra**:
-
-```text
-16 troncos descascados   ninguém descasca
- 3 tochas                pedem carvão, e ninguém minera carvão
- 3 vidraças              o fundidor faz vidro de areia — mas
-                         ninguém colhe areia. Guarde areia e ele faz
-```
+E o fabricante passou a fazer três dessas: ele **descasca tronco**,
+monta **tocha** e monta **vidraça**, quando os materiais estiverem nos
+baús da vila.
 
 🌾 **O fazendeiro** tem nome, enxada e baú — e nenhum trabalho ainda.
 

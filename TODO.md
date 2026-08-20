@@ -33,10 +33,11 @@ funcionando em jogo* são coisas diferentes, e estão separadas abaixo.
 
 ## 🔴 Crítico
 
-- **A casa de planície ainda não fecha sozinha, e falta pouco.** Medido
-  na lista de materiais dela: `16 stripped_oak_log`, `3 wall_torch` e
-  `3 glass_pane`. A barreira dispensa porta e cama; estes três não, e o
-  construtor espera por eles. Guardar num baú da vila destrava.
+- **Ver a mina em jogo.** A Regra 29 entrou em 2026-08-20 e o mineiro
+  nunca desceu numa vila de verdade. **O que olhar:** `Miner ... opens a
+  mine at ...`, e depois a escada descendo dez blocos, uma sala de 7×4, e
+  a galeria seguindo do vigésimo em diante. **O que não pode acontecer:**
+  buraco em casa de vila ou da colônia.
 
 - **Rodar em jogo a cadeia de produção.** Mineiro, pastor e fundidor
   entraram em 2026-08-20 e **nenhum foi visto trabalhando numa vila de
@@ -57,9 +58,17 @@ funcionando em jogo* são coisas diferentes, e estão separadas abaixo.
 
 ## 🟠 Importante
 
-- **A tocha trava, e o lampião não trava mais.** A tocha pede carvão e
-  ninguém minera carvão; o lampião entrou na lista de dispensáveis da
-  Regra 28. Enquanto ninguém fizer carvão, casa de vila espera por tocha.
+- **Carvão e ferro continuam fora da cadeia.** A tocha e o lampião são
+  dispensados pela Regra 28, então não travam mais a obra — mas a casa
+  sobe sem luz até o jogador trazer. O mineiro já desce vinte blocos; o
+  que falta é ele reconhecer minério.
+- **A mina não é gravada no save.** Ao voltar, o mineiro reabre a boca no
+  mesmo lugar e pula as posições já abertas. Custa uma varredura de
+  índices, não uma escavação — mas é estado em memória num sistema que
+  grava todo o resto.
+- **`RingSweep` ficou sem quem o chame.** A mina substituiu a busca em
+  espiral do mineiro, que era o único usuário. Ou os dois scanners
+  migram para ele — que é o item abaixo — ou ele sai.
 - **A areia não é colhida por ninguém.** O fundidor funde a areia que
   houver nos baús, e nada a põe lá. Falta a meta de areia — e ela depende
   de decompor a receita da vidraça, que é o `ItemRequest` do backlog.

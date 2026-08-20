@@ -2172,6 +2172,12 @@ Regra 27  só o catálogo do jogo, e o            08-20, IMUTÁVEL, feita
 Regra 28  a casa pequena do bioma, e a obra     08-20, PROVISÓRIA por
           não espera por porta, cama,           decisão do autor. Estreita
           lampião e baú                         a 27 enquanto se testa
+                                                — ampliada no mesmo dia
+                                                com tronco descascado,
+                                                tocha e vidraça
+Regra 29  a mina em escada, duas salas e a      08-20, feita em 08-20.
+          galeria sem fim                       Substitui o mineiro de
+                                                superfície do mesmo dia
 ```
 
 Duas previsões das primeiras se confirmaram e vale marcá-las: a fila que
@@ -3843,3 +3849,85 @@ guarda num baú da vila: **16 troncos descascados, 3 tochas e 3 vidraças**
 Isso está dito aqui, e não descoberto na próxima sessão, porque é
 exatamente o tipo de coisa que custa uma sessão inteira quando fica
 implícita.
+
+---
+
+## Regra 29 — a mina, e o mineiro que desce por ela
+
+```text
+o mineiro anda até o final da vila e começa a cavar com sua picareta
+de diamante para baixo em formato de escada, de modo que ele possa
+subir de volta
+
+desce 10 blocos; no andar do 10° bloco recolhe uma área de 7x4
+
+depois, em outra direção da descida, cava mais 10 blocos para baixo
+com a mesma regra da escada; no andar do 20° recolhe outra área de 7x4
+
+sempre que encontrar uma barreira que impeça de realizar estas ações
+ele começa a recolher para outro lado
+
+na camada 20 ele começa a recolher na altura do aldeão mais 1
+infinitamente
+```
+
+Dita pelo autor em 2026-08-20, e ela **substitui** o mineiro de
+superfície do mesmo dia — aquele procurava pedra exposta em volta da
+vila, e a mina é outra coisa.
+
+**Por que a escada, e não o poço.** É a frase do autor: *"de modo que ele
+possa subir de volta"*. Um aldeão que cavasse reto para baixo ficaria no
+fundo do buraco, e a colônia perderia um trabalhador por causa do próprio
+trabalho.
+
+**Por que dois blocos de altura.** *"na altura do aldeão mais 1"* — os pés
+e a cabeça. Um só e ele não passa; três e a mina custa cinquenta por
+cento a mais de tempo para dar a mesma pedra.
+
+```text
+lance 1     dez degraus, dois blocos cada          20 posições
+sala 1      sete por quatro no nível -10           56 posições
+lance 2     mais dez degraus, virando à direita    20 posições
+sala 2      sete por quatro no nível -20           56 posições
+galeria     do nível -20 em diante                 sem fim
+```
+
+**A forma mora em `core`**, e é geometria pura: `MineShaft` não conhece
+Minecraft, e por isso as cento e cinquenta e duas posições da parte
+cavada se afirmam em milissegundos em vez de uma sessão. Quem decide se
+um bloco <i>pode</i> ser cavado — bedrock, a vila do jogo, a casa da
+colônia — é a camada de fora.
+
+**Duas correções que o teste da forma pegou**, e as duas custariam
+tempo do aldeão em jogo:
+
+```text
+a sala começava   o último degrau abre exatamente os dois blocos que
+sobre o patamar   seriam o canto dela, e cavá-los de novo é bater a
+                  picareta no ar
+
+o segundo lance   partia da ponta da sala e entrava na largura dela,
+partia do lugar   sobrepondo oito posições. Passou a partir do canto
+errado
+```
+
+**A Regra 3 tem duas portas aqui**, e é de propósito: a boca da mina não
+se abre sobre vila gerada nem sobre casa da colônia, e cada posição
+cavada é conferida de novo. Qualquer uma das duas basta para o teste
+passar — foi preciso desligar as duas para vê-lo falhar, e isso está
+registrado porque um dia alguém vai mexer numa e achar que a outra não
+existe.
+
+**A picareta é de diamante**, por decisão do autor. São vinte blocos de
+descida antes de a mina render alguma coisa, e com picareta de madeira
+isso é uma sessão inteira.
+
+**O lado para onde a mina abre sai do identificador da colônia.** Duas
+colônias vizinhas cavam para lados diferentes, e a mesma colônia cava
+sempre para o mesmo lado entre sessões — o aldeão não perde a mina que
+abriu ontem.
+
+**O que esta regra não guarda, e é limite conhecido:** a mina não é
+gravada no save. Ao voltar, o mineiro reabre a boca no mesmo lugar — o
+lado é determinístico — e reencontra as posições já abertas como ar,
+pulando-as de graça. Custa uma varredura de índices, não uma escavação.

@@ -45,6 +45,40 @@ public enum Side {
     }
 
     /** O lado oposto a este. */
+    /**
+     * Quanto este lado anda em x — a mesma convenção do jogo.
+     *
+     * <p>Norte é z negativo, leste é x positivo. Escrito aqui porque a
+     * mina precisa andar em linha reta e {@code core} não conhece
+     * {@code Direction}.
+     */
+    public int offsetX() {
+        return switch (this) {
+            case EAST -> 1;
+            case WEST -> -1;
+            case NORTH, SOUTH -> 0;
+        };
+    }
+
+    /** Quanto este lado anda em z. */
+    public int offsetZ() {
+        return switch (this) {
+            case SOUTH -> 1;
+            case NORTH -> -1;
+            case EAST, WEST -> 0;
+        };
+    }
+
+    /** O lado à direita deste, olhando de cima. */
+    public Side clockwise() {
+        return switch (this) {
+            case NORTH -> EAST;
+            case EAST -> SOUTH;
+            case SOUTH -> WEST;
+            case WEST -> NORTH;
+        };
+    }
+
     public Side opposite() {
         return switch (this) {
             case NORTH -> SOUTH;
