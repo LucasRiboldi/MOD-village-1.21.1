@@ -556,12 +556,15 @@ public final class ConstructionPlanner {
      * A planta deste id, venha ela do mod ou do jogo.
      *
      * <p>Existe para {@link #resume}, que carrega obra gravada em sessão
-     * anterior e só tem o id em mãos. A cabana da colônia é escrita em
+     * anterior e só tem o id em mãos. {@link HouseFurnishing} usa a
+     * mesma resposta pelo mesmo motivo: uma casa terminada guarda o id e
+     * o canto, e onde a mobília dela vai está na planta — girada como a
+     * casa foi levantada, que é o que este método reconstrói. A cabana da colônia é escrita em
      * código e o leitor de estrutura não a acharia; a casa do jogo é o
      * contrário. Perguntar aos dois é o que deixa um save antigo — com a
      * casa de planície pela metade — continuar de onde parou.
      */
-    private static Optional<Blueprint> blueprintOf(
+    static Optional<Blueprint> blueprintOf(
             ServerWorld world, ResourceId id, ColonyPos origin) {
 
         if (ColonyHut.ID.equals(id)) {

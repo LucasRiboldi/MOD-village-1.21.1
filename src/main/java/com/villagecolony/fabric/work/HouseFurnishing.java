@@ -17,9 +17,12 @@ import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.UUID;
 
 /**
@@ -44,7 +47,23 @@ import java.util.UUID;
  */
 public final class HouseFurnishing {
 
+    /**
+     * A mobília de cada casa, lida uma vez.
+     *
+     * <p>Esquecida ao parar o servidor. Perder isto custa uma leitura de
+     * template por casa na primeira passagem seguinte, e nada mais.
+     */
+    private static final Map<UUID, List<BlueprintBlock>> PIECES = new HashMap<>();
+
+    /** Teto de plantas guardadas. Uma por casa. */
+    private static final int MAX_PLANS = 1024;
+
     private HouseFurnishing() {
+    }
+
+    /** Esquece as plantas lidas. Chamado ao parar o servidor. */
+    public static void clearAll() {
+        PIECES.clear();
     }
 
     /**
@@ -58,9 +77,9 @@ public final class HouseFurnishing {
         List<String> missing = new ArrayList<>();
 
         for (Building house : List.copyOf(VillageColonyMod.BUILDINGS.ofColony(colony.id()))) {
-            if (!ColonyHut.ID.equals(house.blueprint())) {
-                // Casa lida do jogo tem a mobília que o arquivo dela
-                // manda, e não a desta regra.
+            List<BlueprintBlock> pieces = furnishingsOf(world, house);
+
+            if (pieces.isEmpty()) {
                 continue;
             }
 
@@ -71,7 +90,7 @@ public final class HouseFurnishing {
             // e as outras duas voltariam no ciclo seguinte.
             Building current = house;
 
-            for (BlueprintBlock piece : ColonyHut.furnishings()) {
+            for (BlueprintBlock piece : pieces) {
                 switch (furnish(world, colony, current, piece)) {
                     case PLACED -> current = current.withFurnished(piece.block());
                     case MISSING -> missing.add(piece.block().path());
@@ -92,6 +111,51 @@ public final class HouseFurnishing {
             VillageColonyMod.LOGGER.info(
                     "Colony {} has houses still missing {}", colony.id(), missing);
         }
+    }
+
+    /**
+     * Onde vai a mobília desta casa, e qual é.
+     *
+     * <p><b>De qualquer casa, e não só da cabana.</b> Até 2026-08-20
+     * esta passagem pulava tudo que não fosse {@code ColonyHut}, com o
+     * argumento de que casa lida do jogo tem a mobília que o arquivo
+     * manda. O argumento ignorava o que o construtor faz quando falta
+     * material: ele pula a peça com {@code finishes without ...} e a
+     * casa termina sem ela. Ninguém voltava.
+     *
+     * <p>E o efeito era de sistema. Casa sem cama não vira aldeão,
+     * aldeão é quem trabalha, e a casa que a colônia passou a preferir
+     * naquele mesmo dia era justamente a que nunca ganhava cama — o laço
+     * da vila ficava aberto onde ele devia fechar.
+     *
+     * <p>A planta vem girada como a casa foi levantada. Sem isso os
+     * deslocamentos da mobília seriam os do arquivo, e a cama entraria
+     * atravessada na parede de uma casa que o mundo girou.
+     *
+     * <p><b>Lida uma vez por casa por sessão.</b> Ler um template é
+     * abrir e decodificar centenas de blocos, e esta passagem roda a
+     * cada ciclo para cada casa. O aviso está no cabeçalho de
+     * {@code StructureBlueprintReader}: quem chama guarda o resultado.
+     */
+    private static List<BlueprintBlock> furnishingsOf(ServerWorld world, Building house) {
+        List<BlueprintBlock> known = PIECES.get(house.id());
+
+        if (known != null) {
+            return known;
+        }
+
+        List<BlueprintBlock> pieces = ConstructionPlanner
+                .blueprintOf(world, house.blueprint(), house.min())
+                .map(plan -> plan.blocks().stream()
+                        .filter(BlueprintBlock::furniture)
+                        .toList())
+                .orElse(List.of());
+
+        if (PIECES.size() < MAX_PLANS) {
+            PIECES.put(house.id(), pieces);
+        }
+
+        return pieces;
     }
 
     /** O que a passagem fez com uma peça. */

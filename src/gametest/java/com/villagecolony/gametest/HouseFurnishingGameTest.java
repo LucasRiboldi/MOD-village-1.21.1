@@ -3,14 +3,17 @@ package com.villagecolony.gametest;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.ColonyHut;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestDepositor;
+import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.work.HouseFurnishing;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
@@ -37,10 +40,17 @@ import java.util.UUID;
  */
 public class HouseFurnishingGameTest implements FabricGameTest {
 
-    private static final BlockPos CHEST = new BlockPos(1, 2, 1);
+    /**
+     * O baú da colônia, no alto e fora do caminho.
+     *
+     * <p>A casa de planície é 7x7 e ocupa a arena inteira no plano. O
+     * baú sobe para não disputar posição com peça de mobília nenhuma —
+     * nem com o chão que o teste monta.
+     */
+    private static final BlockPos CHEST = new BlockPos(6, 5, 6);
 
-    /** O canto da casa: longe do baú, para a peça não cair sobre ele. */
-    private static final BlockPos HOUSE = new BlockPos(4, 2, 1);
+    /** O canto da casa. A de planície vai de 0 a 6, que é toda a arena. */
+    private static final BlockPos HOUSE = new BlockPos(0, 2, 0);
 
     /**
      * A mobília entra uma vez, e a passagem seguinte não gasta mais nada.
@@ -143,16 +153,54 @@ public class HouseFurnishingGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * A casa lida do jogo também recebe a mobília que lhe falta.
+     *
+     * <p><b>O buraco que este teste fecha.</b> A Regra 21 nasceu para a
+     * cabana, e {@code run} pulava tudo que não fosse ela. O construtor
+     * marca cama e tocha da casa de planície como mobília e as pula com
+     * {@code finishes without minecraft:white_bed} quando falta
+     * material — e ninguém voltava para pô-las.
+     *
+     * <p>O efeito era de sistema, e não cosmético: casa sem cama não
+     * vira aldeão, aldeão é quem trabalha, e a casa que a colônia passou
+     * a preferir em 2026-08-20 era justamente a que nunca ganhava cama.
+     * O laço da vila — casa, cama, aldeão, trabalhador, casa — ficava
+     * aberto exatamente onde ele devia fechar.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "house_furnishing_read")
+    public void aHouseReadFromTheGameGetsItsFurnitureToo(TestContext context) {
+        Fixture fixture = setUp(context, StructureBlueprintReader.SMALL_HOUSE);
+
+        int before = countIn(context, fixture.chest, Items.WHITE_BED);
+
+        HouseFurnishing.run(context.getWorld(), fixture.colony);
+
+        context.assertTrue(
+                countIn(context, fixture.chest, Items.WHITE_BED) < before,
+                "a casa do jogo não recebeu cama nenhuma — a Regra 21 continua só da cabana");
+
+        fixture.owned.cleanUp();
+
+        VillageColonyMod.BUILDINGS.removeOfColony(fixture.colony.id());
+
+        context.complete();
+    }
+
     private record Fixture(Colony colony, ColonyPos chest, ColonyFixture owned) {
     }
 
     private static Fixture setUp(TestContext context) {
+        return setUp(context, ColonyHut.ID);
+    }
+
+    private static Fixture setUp(TestContext context, ResourceId plan) {
         ServerWorld world = context.getWorld();
 
         // Chão sólido sob a casa inteira: a cama e o lampião precisam de
         // em que se apoiar, e sem isso o teste mediria a regra errada.
-        for (int dx = -1; dx <= ColonyHut.SIDE; dx++) {
-            for (int dz = -1; dz <= ColonyHut.SIDE; dz++) {
+        for (int dx = 0; dx <= 6; dx++) {
+            for (int dz = 0; dz <= 6; dz++) {
                 context.setBlockState(HOUSE.add(dx, -1, dz), Blocks.STONE.getDefaultState());
             }
         }
@@ -182,9 +230,13 @@ public class HouseFurnishingGameTest implements FabricGameTest {
 
         owned.owning(keeper);
 
+        Blueprint blueprint = ColonyHut.ID.equals(plan)
+                ? ColonyHut.blueprint(ColonyHut.OAK_PLANKS, Side.NORTH)
+                : StructureBlueprintReader.read(context.getWorld(), plan).orElseThrow();
+
         ConstructionProject project = ConstructionProject.plan(
                 colony.id(),
-                ColonyHut.blueprint(ColonyHut.OAK_PLANKS, Side.NORTH),
+                blueprint,
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(HOUSE)));
 
         VillageColonyMod.BUILDINGS.register(Building.of(project));
