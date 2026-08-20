@@ -3931,3 +3931,98 @@ abriu ontem.
 gravada no save. Ao voltar, o mineiro reabre a boca no mesmo lugar — o
 lado é determinístico — e reencontra as posições já abertas como ar,
 pulando-as de graça. Custa uma varredura de índices, não uma escavação.
+
+---
+
+# 19. O ciclo de 2026-08-20, registrado
+
+Dezenove commits num dia, e o ciclo que mais mudou a natureza do mod
+desde a Fase 10. Fica aqui o que foi feito, o que não foi, e o que
+passou a se contradizer.
+
+## O que mudou de natureza
+
+**A colônia deixou de depender do jogador para os materiais.** Até
+08-19 ela produzia tábua e nada mais; o que a casa pedia de pedra,
+vidro, lã e ferro era o jogador que guardava no baú. Hoje ela minera,
+tosquia, funde e descasca.
+
+**O mod deixou de inventar casa.** A cabana escrita em código — criada
+pela Regra 13 porque a casa do jogo era impossível — foi aposentada pela
+Regra 27. O que mudou não foi a casa: foi a colônia aprender a fazer o
+que a casa pede.
+
+## O que ficou por fazer, e é sabido
+
+```text
+areia            ninguém a colhe. O fundidor funde a que houver no
+                 baú, e é o único elo da cadeia que ainda depende do
+                 jogador
+
+carvão e ferro   o mineiro desce vinte blocos e não reconhece minério.
+                 Sem eles, tocha e lampião ficam na lista de
+                 dispensáveis da Regra 28, e a casa sobe sem luz
+
+a mina no save   estado em memória num sistema que grava todo o resto.
+                 Ao voltar, o mineiro reabre a boca e revarre os
+                 índices já abertos
+
+o fazendeiro     tem nome, enxada e baú desde a Fase 4, e nenhum
+                 trabalho. É a última profissão do modelo sem código
+```
+
+## O que falta testar
+
+**Nada deste ciclo foi visto em jogo.** É a maior dívida aberta, e ela
+cresce a cada commit: dezenove mudanças cobertas por teste e nenhuma
+rodada numa vila de verdade. A lista ordenada do que olhar está no
+`TODO.md`.
+
+Sem teste próprio, e a bateria só prova que nada quebrou:
+
+```text
+o fabricante descascando, montando tocha e vidraça
+a retomada da mina depois de o servidor parar
+```
+
+Coberto, mas com limite conhecido: **a arena da bateria tem bioma fixo**,
+então a aceitação de vila de taiga, savana, nevada ou deserto nunca
+rodou.
+
+## Os conflitos que este ciclo criou
+
+Registrados porque dívida calada é dívida que ninguém paga. O
+detalhamento está no `TODO.md`.
+
+```text
+1  três regras sobre a mesma pergunta — a 21, a 27 e a 28 discordam
+   sobre a obra esperar pela mobília. Vale a 28, que é provisória
+
+2  VillagePalette ficou quase sem uso: wall() e door() só servem à
+   cabana aposentada
+
+3  small_house.nbt é cópia de arquivo da Mojang num repositório
+   público, e desde a Regra 27 a produção não o lê. O §catálogo
+   afirmava em 08-19 que nenhum byte da Mojang tinha entrado, e isso
+   deixou de ser verdade no mesmo dia
+
+4  a Regra 25 está inerte enquanto a 28 valer: escolher a maior planta
+   precisa de mais de uma planta
+
+5  RingSweep ficou sem quem o chame — a mina substituiu o único usuário
+
+6  a cabana do mod continua no código, e é deliberado: save antigo tem
+   cabana pela metade. Mas é uma estrutura que a Regra 27 proíbe criar,
+   morando no código que a proíbe
+```
+
+## O que o ciclo prova sobre o método
+
+Três defeitos deste ciclo vieram de **sessões de jogo** e nenhum teste
+os teria pego: o alvo escrito no código, o cursor guardado pela posição,
+e o miolo oco oferecido como lote. Dois vieram de **testes** e nenhuma
+sessão os teria mostrado: o servidor caindo por chunk descarregado, e as
+duas sobreposições da geometria da mina.
+
+As duas coisas são necessárias, e o projeto continua sem poder trocar
+uma pela outra.
