@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-08-19 (v0.2.0-alpha)
+**Atualizado:** 2026-08-20
 
 Lista curta e priorizada. O enunciado de cada regra está em
 [`docs/technical/Project-State.md`](docs/technical/Project-State.md); a
@@ -15,83 +15,90 @@ funcionando em jogo* são coisas diferentes, e estão separadas abaixo.
 
 ## 🔴 Crítico
 
-- **Rodar em jogo o que a v0.2.0 traz.** Onze regras entraram desde a
-  última sessão e **nenhuma foi vista funcionando**. A maior delas é a
-  troca da casa de planície pela casa do próprio jogo.
-  - **Antes de entrar:** guarde **pedregulho, tronco descascado e
-    vidraça** num baú da vila. Sem isso a obra para — e isso é a regra,
-    não defeito.
-  - **O que olhar:** a casa terminando sem buracos; a porta dando na
-    rua; o log dizendo `houses still missing [...]` quando faltar cama
-    ou lampião; e nenhuma casa nascendo em volta de um tronco.
-- **Verificar em jogo as correções antigas que só têm teste:** o baú
-  criado ao lado da cama, o despertar de `WAITING_RESOURCES` e o
-  descarte da obra antiga presa no save.
+- **Rodar em jogo a cadeia de produção.** Mineiro, pastor e fundidor
+  entraram em 2026-08-20 e **nenhum foi visto trabalhando numa vila de
+  verdade**. Junto vêm a paleta por bioma, a cabana de arenito do
+  deserto e a planta que se adapta ao lote.
+  - **O que olhar:** `Miner ... took N from ...`, `Shepherd ... sheared`,
+    `Smelter ... made minecraft:glass out of minecraft:sand`, e uma linha
+    `planned` seguida de casa subindo.
+  - **Numa vila de deserto:** ela deve construir pela primeira vez, em
+    arenito e sem porta.
+  - **O que não deve aparecer:** `no building work: nothing to work on`
+    em laço, e nenhuma linha de mobília repetida.
+
+- **Verificar em jogo as correções de 08-20 que só têm teste:** o alvo da
+  obra perguntado à colônia, o cursor de busca por colônia, o miolo oco
+  da cabana recusado como lote, e a obra parada saindo da frente depois
+  de vinte ciclos.
 
 ## 🟠 Importante
 
+- **A areia não é colhida por ninguém.** O fundidor funde a areia que
+  houver nos baús, e nada a põe lá. Falta a meta de areia — e ela depende
+  de decompor a receita da vidraça, que é o `ItemRequest` do backlog.
+- **Descascar tronco.** O último material da casa de planície que a
+  colônia não produz. Não é receita de bancada: é machado no tronco, e
+  pede caminho próprio no lenhador ou no fabricante.
 - **Teste instável do guarda de travamento.**
   `theStallGuardReturnsTheTaskAndForgetsTheTree` falha cerca de 1 a cada
-  4 execuções, e é anterior ao ciclo de 08-19. Enquanto ele oscilar, a
-  bateria não prova que nada quebrou. A pista é estado estático
+  4 execuções, e é anterior a 08-19. A pista é estado estático
   compartilhado entre testes concorrentes.
-- **Regra 15 — a estrada cresce com a vila.** O construtor estende a rua
-  a partir da ponta mais distante do centro, um trecho por casa. Ficou
-  mais urgente na v0.2.0: com o lote exigido no nível da rua **e** livre
-  no volume, lote bom é bem mais raro — e a casa do jogo é 7×7×7, contra
-  os 5×5×4 da cabana.
+- **Regra 15 — a estrada cresce com a vila.** A vila só constrói em beira
+  de rua que já existe. Quando ela acabar, a colônia para de crescer — e
+  a Regra 25 só adiou isso, não resolveu.
 - **Regra 16 — distância entre construções.** A metade da altura foi
   feita com a Regra 22; falta a distância mínima (corredor de obra) e
   máxima (não soltar da malha da vila).
 - **Escolher entre as 1.180 estruturas do catálogo.** A lista está em
   `data/villagecolony/catalog/vanilla_structures.json`. Falta o critério
-  — que construção, para qual vila, em que ordem — e a conta de
-  materiais de cada uma, que hoje só existe sob demanda
-  (`Blueprint.materials`).
-- **Regra 10, metade do fabricante.** O fabricante produzir porta,
-  janela, cama e baú **por estoque**, sem depender de haver obra.
-  Depende do `ItemRequest`: a tarefa carrega um `ResourceType`, e porta
-  não está nessa lista — nem deve estar, porque a lista sai da planta.
-- **Regra 11 — garantir uma de cada profissão por vila.** O mecanismo
-  existe (`ProfessionAssigner.vacancy`), mas nada garante o piso, nenhum
-  teste o afirma, e a dispensa pode tirar o último de uma profissão.
+  — que construção, para qual vila, em que ordem.
+- **Regra 10, metade do fabricante.** Porta, janela, cama e baú por
+  estoque, sem depender de haver obra. Depende do `ItemRequest`.
+- **Regra 11 — garantir uma de cada profissão por vila.** Ficou maior com
+  a cadeia de produção: são **sete** profissões agora, e catorze vagas
+  por colônia pela Regra 4. Nada garante o piso, e a dispensa pode tirar
+  o último de uma profissão.
 - **Decidir o movimento de centro da colônia.** Ela troca de âncora e
   volta, a cada 30 segundos, entre 49 camas e 7 — visto nos logs de
-  08-18 e 08-19. É comportamento da ADR-003 e **espera decisão do
+  08-18, 08-19 e 08-20. É comportamento da ADR-003 e **espera decisão do
   autor**.
 
 ## 🟡 Melhoria
 
-- **Quebrar os arquivos acima de 500 linhas.** `LumberjackWork` (1232),
-  `VillageDetectionHandler` (914), `BuilderWork` (721), `TreeHarvester`
-  (711), `ConstructionPlanner` (552). O ciclo de 08-19 já tirou a
-  fabricação de `BuilderWork` para `ColonySupply` e a limpeza de
-  canteiro para `SitePreparation` — o mesmo caminho serve para o resto.
-- **O fabricante lendo os baús como o construtor lê.** Ele já usa todos
-  os baús da colônia, mas na ordem de registro e sem somar entre eles.
-  `ColonySupply` já faz as duas coisas certo.
+- **O buraco que o mineiro deixa.** O lenhador replanta o que corta
+  (Regra 7); o mineiro não tem equivalente, porque pedra não cresce. A
+  vila vai ficando com covas rasas em volta. Decidir se preenche, se cava
+  em galeria, ou se aceita.
+- **O fundidor lê os baús na ordem de registro**, e não por distância nem
+  somando entre eles. `ColonyChests` já faz as duas coisas certo, e o
+  fabricante tem a mesma dívida.
+- **Quebrar os arquivos ainda acima de 500 linhas:**
+  `VillageDetectionHandler` (914), `BuilderWork` (721), `BuildSiteScanner`
+  (580), `ColonySavedData` (528), `ManufacturerWork` (510).
+- **Migrar `TreeScanner` e `BuildSiteScanner` para `RingSweep`.** A
+  espiral orçada agora existe escrita uma vez, e as duas continuam com a
+  cópia delas.
 - **Envelhecimento de tarefa** (`Task.age`), para que a tarefa mais
   antiga não seja esquecida para sempre.
 - **Cobrir a Regra 8 por inteiro.** O baú nasce quando um *trabalhador*
   precisa dele; cama de aldeão que não trabalha continua sem baú.
-- **Proteção estrutural** — perguntar ao jogo quais blocos são de vila
-  gerada, em vez de inferir.
 - **A vila fora da planície de ponta a ponta.** A tabela de biomas tem
-  teste, mas a aceitação de uma vila de taiga ou savana nunca rodou: a
-  arena da bateria tem bioma fixo.
-- **A escada ainda sai no estado padrão da planta.** A porta já não —
-  ela é girada para a rua. Escada e placa continuam sem orientação.
+  teste, mas a aceitação de uma vila de taiga, savana ou deserto nunca
+  rodou: a arena da bateria tem bioma fixo.
+- **A escada ainda sai no estado padrão da planta.** A porta já não — ela
+  é girada para a rua. Escada e placa continuam sem orientação.
 
 ## 🟢 Futuro
 
-- **Cadeias de produção que não existem:** minerar, fundir, tosquiar,
-  descascar. São elas que fariam a casa de planície subir sozinha, e que
-  fariam a colônia produzir a cama e o lampião em vez de esperar pelo
-  jogador.
+- **Ferro.** O lampião pede ferro, e ferro pede minerar fundo e fundir. O
+  fundidor já sabe fundir; falta o mineiro descer.
+- **O fazendeiro.** Tem nome, enxada e baú desde a Fase 4, e nenhum
+  trabalho. É a última profissão do modelo sem código.
 - **O trabalhador pedir o que lhe falta** (`ItemRequest`), em vez de
-  travar. Toca `Task`, que é o centro.
+  travar. Toca `Task`, que é o centro — e é ele que destrava a areia, a
+  metade do fabricante e a cadeia de receitas.
 - **Fundir colônias sobrepostas.** Hoje o mod só avisa. O critério foi
   decidido em 2026-08-12.
 - **Lado do cliente:** nome sobre a cabeça, rachadura e braço na tela.
-- **Deserto:** a colônia nasce e não constrói, por não haver árvore. O
-  relatório precisa dizer isso em vez de calar.
+- **Defesa.** Nada no modelo ainda.

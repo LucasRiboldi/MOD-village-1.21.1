@@ -2149,6 +2149,23 @@ Regra 11  uma de cada profissão em cada vila   08-15, já satisfeita pelo
 Regra 12  o centro fica em bloco que existe    08-15, feita em 08-15
 Regra 13  a obra do MVP é uma que a colônia    08-15, feita em 08-15
           consiga fazer
+Regra 14  o construtor alcança o alto da obra   08-18, feita em 08-18
+Regra 15  a estrada cresce com a vila           08-18, a implementar
+Regra 16  espaço em volta de cada casa          08-18, meia feita
+Regra 17  a casa se abre para a estrada         08-19, feita em 08-19
+Regra 18  o dia inteiro é expediente            08-19, feita em 08-19
+Regra 19  o lote fica no nível da estrada       08-19, feita em 08-19
+Regra 20  cada vila constrói no estilo do seu   08-19, feita em 08-19
+          bioma                                 e ampliada pela 26
+Regra 21  toda casa nasce com cama, baú e       08-19, feita em 08-19
+          lampião                               e ampliada em 08-20
+Regra 22  o lote é livre no volume              08-19, feita em 08-19
+Regra 23  o que já foi analisado se reanalisa   08-19, feita em 08-19
+Regra 24  a vila de planície levanta a casa     08-19, feita em 08-19
+          do jogo
+Regra 25  a maior planta que couber no lote     08-20, feita em 08-20
+Regra 26  a cadeia de produção, e a paleta      08-20, feita em parte
+          de cada vila                          — ver o que ela não fecha
 ```
 
 Duas previsões das primeiras se confirmaram e vale marcá-las: a fila que
@@ -3548,3 +3565,129 @@ o critério — que casa, para qual vila, em que ordem — e a conta de
 materiais de cada uma, que hoje só existe sob demanda. A ferramenta para
 isso já está escrita: `Blueprint.materials()`, que o teste de lista de
 compras usa.
+
+---
+
+## Regra 25 — a colônia levanta a maior planta que couber no lote
+
+```text
+onde a casa grande couber, é ela que sobe; onde não couber, sobe a que
+cabe — e a escolha é por lote, não por vila
+```
+
+Decidida em 2026-08-20, e o motivo está num log. A vila varreu o raio de
+64 inteiro e respondeu:
+
+```text
+no free lot beside a road in the whole 64-block radius of
+[-6810, 98, -5054] that fits ColonyPos[x=7, y=7, z=7]
+```
+
+Na mesma vila em que **três cabanas já estavam de pé**. A casa de
+planície pede 49 colunas no nível exato da rua, fora das peças da vila
+gerada e com sete blocos livres acima; a cabana pede 25. Exigir a grande
+em toda parte transformou a Regra 24 num travamento: a colônia parou de
+crescer.
+
+```text
+por lote, e não     a casa de planície continua subindo onde há
+por vila            espaço para ela. Rebaixar a vila inteira porque um
+                    canto é apertado seria perder a Regra 24 para
+                    salvar o crescimento
+
+a cabana fecha      é a única planta que a colônia levanta sem o
+a lista sempre      jogador guardar nada em baú. Enquanto ela couber
+                    em algum lugar, a vila continua crescendo
+
+uma varredura só    as plantas dividem o mesmo teto de mil colunas.
+                    Coluna que não é estrada é recusada antes de olhar
+                    planta nenhuma, que é a esmagadora maioria
+```
+
+É a Regra 13 outra vez — construir o que a colônia consegue —, agora
+sobre **espaço** em vez de material.
+
+---
+
+## Regra 26 — a cadeia de produção, e a paleta de cada vila
+
+```text
+a colônia produz o que a casa dela pede, e o que ela pede depende do
+bioma em que a vila está
+```
+
+Decidida em 2026-08-20. É a Regra 20 dita por inteiro e a segunda metade
+da Regra 13 finalmente exercida.
+
+**O que estava errado.** A Regra 20 dizia que cada vila constrói no
+estilo do seu bioma, e o estilo era **uma coisa só**: a espécie da
+madeira. Isso bastava enquanto a colônia só sabia derrubar árvore, e
+deixava o deserto de fora — a vila nascia, contratava, contava recurso e
+não construía nunca.
+
+**A paleta.** Cada bioma responde de que a vila é feita, por inteiro:
+
+```text
+estilo      parede            porta        pedra
+carvalho    oak_planks        oak_door     cobblestone
+pinheiro    spruce_planks     spruce_door  cobblestone
+acácia      acacia_planks     acacia_door  cobblestone
+arenito     sandstone         —            sandstone
+```
+
+**O deserto não tem porta, e é decisão.** A porta sai de tábua, tábua sai
+de tronco, e ali não há tronco. Exigi-la deixaria a casa em
+`WAITING_RESOURCES` para sempre — o travamento que a Regra 13 corrigiu. A
+cabana do deserto tem o vão, e quem quiser pendura a porta.
+
+**As três profissões novas**, e o que cada uma destrava:
+
+```text
+MINER      pedra do mundo: pedregulho onde há rocha, arenito no
+           deserto. Destrava os 43 pedregulhos da casa de planície e
+           a vila de deserto inteira
+
+SHEPHERD   lã, e a ovelha continua viva. Destrava a cama — e a cama
+           é aldeão novo, que é trabalhador novo. É o elo que faltava
+           no laço da vila
+
+SMELTER    areia em vidro, pela receita de fornalha do jogo. Resolve
+           a exceção que a Regra 10 registrou em 08-18 como
+           impossível
+```
+
+**O que a Regra 3 exige aqui, e é mais que para a árvore.** A vila gerada
+e as casas do jogador são feitas do mesmo material que o mineiro procura.
+Ele só toca pedra **exposta e de ninguém** — nem peça de vila, nem
+construção da colônia. Um mineiro sem essa porta derrubaria a igreja no
+primeiro ciclo.
+
+**Sem forno no mundo, e é decisão.** O fundidor transforma o que está no
+baú, como o fabricante transforma tronco em tábua sem bancada. Pôr forno
+de verdade seria escrever bloco fora da planta.
+
+**O que esta regra NÃO fecha**, e está dito para não passar por pronto:
+
+```text
+areia            ninguém a colhe. O fundidor funde a que houver no
+                 baú, e enquanto nada a traz o vidro depende do
+                 jogador. Falta a meta, e ela pede decompor a receita
+                 da vidraça — o ItemRequest do backlog
+
+tronco           não é receita de bancada: é machado no tronco. É o
+descascado       último material da casa de planície que a colônia
+                 não faz
+
+ferro            o lampião pede ferro, e ferro pede minerar fundo e
+                 fundir. O fundidor já sabe fundir; falta o mineiro
+                 descer
+
+o buraco         o lenhador replanta o que corta (Regra 7). O mineiro
+                 não tem equivalente, porque pedra não cresce, e a
+                 vila vai ficando com covas rasas em volta
+```
+
+**A Regra 4 mudou de tamanho sem mudar de enunciado.** Dois trabalhadores
+por profissão, com sete profissões, são catorze vagas por colônia — eram
+oito. A Regra 11, que garante o piso de uma de cada, ficou
+proporcionalmente maior e continua por fazer.

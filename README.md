@@ -37,6 +37,19 @@ Ninguém mandou. **Você não abriu um único menu.**
 de um jogador com machado de ferro —, não carrega nada para casa porque
 a madeira vai direto para o baú dele, e replanta a muda antes de sair.
 
+⛏️ **O mineiro** tira pedra do mundo e guarda no baú — pedregulho onde
+há rocha, **arenito no deserto**, que ali é a própria parede. Ele só
+toca pedra exposta e que não é de ninguém: peça de vila gerada e casa da
+colônia ficam de pé, porque são feitas do mesmo material que ele procura.
+
+🐑 **O pastor** tosquia a ovelha e traz a lã. A ovelha continua viva e a
+lã volta a crescer — é a colheita que se repete. A lã sai da cor do
+rebanho, e não branca sempre.
+
+🔥 **O fundidor** transforma areia em vidro, pela receita de fornalha do
+próprio jogo. Sem forno no mundo: ele transforma o que está no baú, como
+o fabricante faz com o tronco.
+
 🪚 **O fabricante** tira tronco do baú, faz tábua pela receita do próprio
 jogo, e devolve. Ele para quando metade do estoque da colônia é tábua,
 para que o lenhador sempre tenha onde pôr mais.
@@ -49,15 +62,27 @@ colônia antes de pôr no mundo. **A colônia nunca inventa material**: o
 que falta, ele fabrica do que houver nos baús; o que não dá para
 fabricar, ele espera.
 
-Em **vila de planície** a casa é a casa pequena do próprio Minecraft.
-Ela pede 43 pedregulhos, 16 troncos descascados e 3 vidraças, e nenhum
-aldeão deste mod minera, funde ou descasca — **guarde isso num baú da
-vila** e a obra anda; sem isso ela para e o log diz o que falta. Nos
-outros biomas a colônia levanta uma cabana da madeira do bioma, que ela
-produz inteira sozinha.
+A casa muda com a vila, e **a maior que couber no lote** é a que sobe:
+
+| Vila | Parede | Porta |
+|---|---|---|
+| Planície | a casa pequena do próprio Minecraft, ou a cabana de carvalho | carvalho |
+| Taiga e nevada | cabana de pinheiro | pinheiro |
+| Savana | cabana de acácia | acácia |
+| **Deserto** | **cabana de arenito** | nenhuma — não há madeira ali |
+
+A casa de planície pede 43 pedregulhos, 16 troncos descascados e 3
+vidraças. O mineiro traz a pedra e o fundidor faz o vidro; **o tronco
+descascado ainda é seu** — ninguém ali descasca. Onde a casa grande não
+cabe, a colônia levanta a cabana, que ela produz inteira sozinha.
+
+O deserto era o buraco do mod: a vila nascia, contratava, contava
+recurso e nunca construía, por não haver árvore. Agora ela levanta em
+arenito o que o mineiro tira da duna ao lado.
 
 Toda casa nasce com cama, baú e lampião dentro. A casa **não espera** por
-eles: termina sem, e eles entram quando aparecer lã e ferro num baú.
+eles: termina sem, e eles entram quando houver material. **Peça
+destruída não volta** — se você tirar o lampião, ele fica fora.
 
 🌾 **O fazendeiro** tem nome, enxada e baú — e nenhum trabalho ainda.
 
@@ -184,12 +209,19 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Cama, baú e lampião dentro de cada casa | 🧪 coberto por teste, nunca visto em jogo |
 | Baú criado ao lado da cama quando não há nenhum | 🧪 coberto por teste, nunca visto em jogo |
 | Registro de construções e proteção | 🧪 coberto por teste, nunca visto em jogo |
+| A planta se adapta ao lote — a maior que couber | 🧪 coberto por teste, nunca visto em jogo |
+| Obra parada sai da frente em vez de travar a vila | 🧪 coberto por teste, nunca visto em jogo |
+| **Mineração** — pedregulho, e arenito no deserto | 🧪 coberto por teste, nunca visto em jogo |
+| **Tosquia** — lã, e a ovelha fica viva | 🧪 coberto por teste, nunca visto em jogo |
+| **Fundição** — areia vira vidro | 🧪 coberto por teste, nunca visto em jogo |
+| **Vila de deserto constrói**, em arenito | 🧪 coberto por teste, nunca visto em jogo |
 | Catálogo dos 1.180 ids de estrutura do jogo | 📋 lista pronta, escolha entre elas não começou |
 | Estrada crescendo com a vila | ⬜ não começado |
-| Agricultura, mineração, ferraria, defesa | ⬜ não começado |
+| Descascar tronco | ⬜ não começado — o tronco descascado é seu |
+| Agricultura, ferraria, defesa | ⬜ não começado |
 
 ```text
-402 testes unitários  ·  119 testes de jogo  ·  ./gradlew build
+421 testes unitários  ·  131 testes de jogo  ·  ./gradlew build
 ```
 
 **O que 🧪 quer dizer aqui.** A bateria roda o caso e ele passa. Não quer
@@ -223,15 +255,17 @@ a recusar, e a correção ainda não foi vista em jogo.
 
 | | Etapa | Estado |
 |---|---|---|
-| **1** | **Rodar em jogo o que a v0.2.0 traz.** Onze regras entraram desde a última sessão e **nenhuma foi vista funcionando**: a casa do jogo, fabricação, alcance, porta na rua, expediente, nível da rua, volume do lote, mato arrancado, reanálise, bioma e mobília | 🔒 exige sessão de jogo |
-| **2** | **Regra 15 — estender a estrada.** A vila só constrói em beira de rua que já existe; quando ela acabar, a colônia para de crescer. Ficou mais urgente com a exigência de nível e de volume: lote bom é mais raro agora | 🔨 pronto para fazer |
-| **3** | **Regra 16 — espaço em volta da casa.** A metade da altura está feita; falta a distância mínima e máxima entre construções | 🔨 meia feita |
-| **4** | **Escolher entre as 1.180 estruturas do catálogo.** A lista está no mod; falta o critério — que casa, para qual vila, em que ordem — e a conta de materiais de cada uma | 🔨 base pronta |
-| **5** | **Regra 10, metade do fabricante.** Porta, janela, cama e baú por estoque, sem depender de haver obra | 🔨 depende do `ItemRequest` |
-| **6** | **Regra 11 — uma de cada profissão por vila.** O mecanismo existe; falta a garantia e o teste | 🔨 pronto para fazer |
-| **7** | **Envelhecimento de tarefa**, para que a mais antiga não seja esquecida | 🔨 pronto para fazer |
-| **8** | **A proteção estrutural, e o lado do cliente.** Perguntar ao jogo quais blocos são de vila gerada; e nome, rachadura e braço na tela | 🔨 pronto para fazer |
-| **9** | **O trabalhador pedir o que lhe falta**, em vez de travar | ⏸️ toca o centro do sistema |
+| **1** | **Rodar em jogo a cadeia de produção.** Mineiro, pastor e fundidor entraram em 2026-08-20 e **nenhum foi visto trabalhando numa vila de verdade**. Junto vêm a paleta por bioma, a cabana de arenito do deserto e a planta que se adapta ao lote | 🔒 exige sessão de jogo |
+| **2** | **A areia não é colhida por ninguém.** O fundidor funde a areia que houver no baú, e nada a põe lá. Sem isso o vidro depende de você | 🔨 falta a meta de areia |
+| **3** | **Descascar tronco.** O último material da casa de planície que a colônia não produz. Não é receita de bancada: é machado no tronco, e pede caminho próprio | 🔨 pronto para fazer |
+| **4** | **Regra 15 — estender a estrada.** A vila só constrói em beira de rua que já existe; quando ela acabar, a colônia para de crescer | 🔨 pronto para fazer |
+| **5** | **Regra 16 — espaço em volta da casa.** A metade da altura está feita; falta a distância mínima e máxima | 🔨 meia feita |
+| **6** | **Escolher entre as 1.180 estruturas do catálogo.** A lista está no mod; falta o critério e a conta de materiais de cada uma | 🔨 base pronta |
+| **7** | **Regra 10, metade do fabricante.** Porta, janela, cama e baú por estoque, sem depender de haver obra | 🔨 depende do `ItemRequest` |
+| **8** | **Regra 11 — uma de cada profissão por vila.** O mecanismo existe; falta a garantia e o teste. Ficou maior: são sete profissões agora, e catorze vagas por colônia | 🔨 pronto para fazer |
+| **9** | **Envelhecimento de tarefa**, para que a mais antiga não seja esquecida | 🔨 pronto para fazer |
+| **10** | **O fazendeiro e a defesa.** Duas profissões que o modelo prevê e ninguém escreveu | ⬜ não começado |
+| **11** | **O trabalhador pedir o que lhe falta**, em vez de travar | ⏸️ toca o centro do sistema |
 
 **Uma decisão espera o autor:** o que fazer com o centro da colônia, que
 troca de âncora e volta a cada 30 segundos — visto nos logs de 08-18 e
@@ -242,6 +276,11 @@ troca de âncora e volta a cada 30 segundos — visto nos logs de 08-18 e
 
 | Etapa | |
 |---|---|
+| **Mineiro, pastor e fundidor — a cadeia de produção** | ✅ 2026-08-20 |
+| **A paleta por bioma, e a vila de deserto construindo** | ✅ 2026-08-20 |
+| **A planta se adapta ao lote — a maior que couber** | ✅ 2026-08-20 |
+| **Obra parada sai da frente em vez de travar a vila** | ✅ 2026-08-20 |
+| **Peça de mobília destruída não volta** | ✅ 2026-08-20 |
 | **A casa do jogo em vila de planície, girada para a rua** | ✅ 2026-08-19 |
 | **O lote conferido no volume, e o mato arrancado** | ✅ 2026-08-19 |
 | **Recusa que envelhece — nada é rejeitado para sempre** | ✅ 2026-08-19 |
@@ -259,20 +298,25 @@ troca de âncora e volta a cada 30 segundos — visto nos logs de 08-18 e
 
 </details>
 
-**Limites de hoje.** A colônia produz tábua, e a partir dela fabrica o
-que a obra pedir — porta, baú, escada. O que ela **não** produz é o que
-pede minerar, fundir, tosquiar ou descascar: pedra, vidro, lã e ferro.
+**Limites de hoje.** A colônia produz tábua, pedra, lã e vidro, e a
+partir deles fabrica o que a obra pedir — porta, baú, escada, cama. O
+que ela ainda **não** produz:
 
-Isso mudou de peso na v0.2.0: **a casa de planície é a casa do jogo**, e
-ela pede 43 pedregulhos, 16 troncos descascados e 3 vidraças. Ela não
-sobe sozinha como a cabana subia — **guarde esses blocos num baú da
-vila** e o construtor os usa; sem eles a obra fica parada dizendo o que
-falta, uma peça por vez. Nos outros biomas continua a cabana, que a
-colônia levanta inteira sozinha.
+| Falta | Por quê |
+|---|---|
+| **Areia** | O fundidor funde a que houver no baú, e ninguém a colhe. Sem areia não há vidro |
+| **Tronco descascado** | Não é receita de bancada — é machado no tronco, e pede caminho próprio |
+| **Ferro** | O lampião pede ferro, e o ferro pede minerar fundo e fundir |
+
+A casa de planície pede 43 pedregulhos, 16 troncos descascados e 3
+vidraças. O mineiro resolve a pedra; o tronco descascado continua seu —
+**guarde-o num baú da vila** e a obra anda. Onde a casa grande não cabe,
+a colônia levanta a cabana, que ela produz inteira sozinha.
 
 A cama e o lampião não entram nessa conta — a casa **não espera** por
-eles, termina sem, e eles entram sozinhos quando aparecer lã e ferro num
-baú.
+eles, termina sem, e eles entram sozinhos quando houver material. E
+**peça destruída não volta**: se você tirar o lampião de propósito, a
+colônia não o repõe.
 
 As casas sobem ao lado de ruas que já existem; a colônia ainda não
 pavimenta, e essa é a próxima etapa — e ficou mais apertada, porque o
@@ -283,102 +327,94 @@ rua.
 As pendências por prioridade estão em [`TODO.md`](TODO.md), com o que já
 foi feito, o que falta e o que espera decisão sua. A lista longa está em
 [`docs/technical/Backlog.md`](docs/technical/Backlog.md), e o estado
-sempre atual — o enunciado das 21 regras, uma a uma — em
+sempre atual — o enunciado das 25 regras, uma a uma — em
 [`docs/technical/Project-State.md`](docs/technical/Project-State.md).
 
 ---
 ## Último ciclo de desenvolvimento
 
-**2026-08-19** — o ciclo em que a casa fechou, e depois mudou de casa.
-Começou com o relatório repetindo `waiting for minecraft:oak_door` com
-154 tábuas guardadas; terminou com onze regras novas, uma cabana de pé
-em jogo, e a vila de planície passando a levantar a casa do próprio
-Minecraft. É o ciclo da **v0.2.0-alpha**.
+**2026-08-20** — o ciclo em que a colônia deixou de depender de você para
+os materiais. Começou com três correções vindas de sessões de jogo e
+terminou com **três profissões novas** e a vila de deserto construindo
+pela primeira vez.
 
 **Implementado**
 
-- **Regra 10** — o construtor fabrica o que a obra pede. Faltava a
-  pergunta invertida: o mod sabia "o que sai deste tronco?" e não "o que
-  faz uma porta?". Junto vieram as duas metades decididas em 08-15 e
-  nunca escritas — os baús percorridos **por distância** até a obra, e a
-  retirada **somando entre eles**.
-- **Regra 14** — o construtor alcança o alto da obra. O alcance era uma
-  esfera de raio 5, e o bloco do telhado ficava fora dela com ele de pé
-  dentro do lote.
-- **Regra 17** — a porta dá na rua. A direção sempre foi conhecida e era
-  descartada depois de calcular o canto.
-- **Regra 18** — o dia claro inteiro é expediente. A janela era a do
-  Vanilla: WORK das 2.000 às 9.000, sete mil tiques num dia de vinte e
-  quatro mil, com **três mil tiques de sol** parados.
-- **Regra 19** — o lote fica no nível da rua, para se entrar e sair a pé.
-- **Regra 20** — cada vila constrói na madeira do seu bioma, e o mod
-  deixa de aceitar só planície.
-- **Regra 21** — toda casa nasce com cama, baú e lampião. A casa **não
-  espera** por lã e ferro: termina sem, e a peça entra depois.
-- **Uma pasta de schemas** em `data/villagecolony/structure/`, com a
-  casa pequena de planície e um README de como fazer outra.
-- **Regra 22** — o lote é conferido no **volume**, e não só no chão. A
-  janela antiga olhava dois blocos acima do terreno; a casa tem sete, e
-  o que estivesse no meio passava.
-- **A limpeza do canteiro**, que o documento previa desde o começo e
-  passava em branco: o construtor arranca mato e flor antes de começar.
-  Planta não reprova lote — recusar um lote de planície por causa de uma
-  margarida seria recusar a planície inteira.
-- **Regra 23** — nada é recusado para sempre. A marca de "não é árvore"
-  envelhece, como a de árvore fora de alcance já envelhecia.
-- **Regra 24** — a vila de planície levanta a **casa pequena do próprio
-  jogo**, girada para a porta dar na rua. Girar exigiu escrever rotação
-  de planta no Core: a cabana era um quadrado e resolvia a porta mudando
-  duas coordenadas; a casa do arquivo tem a porta onde o gerador a pôs.
-- **Um catálogo dos 1.180 ids de estrutura** do jogo, preparando o
-  construtor para escolher entre muitas construções. Só os nomes — os
-  arquivos são da Mojang e o jogo já os traz.
+- **O mineiro** tira pedra do mundo: pedregulho onde há rocha, arenito
+  no deserto. Ele só toca pedra **exposta e de ninguém** — peça de vila
+  gerada e casa da colônia ficam de pé, e isso importa mais que para o
+  lenhador, porque as duas são feitas do material que ele procura.
+- **O pastor** tosquia, e a ovelha continua viva. É a colheita que se
+  repete, e a Regra 7 de graça: quem replanta é o próprio jogo. A lã sai
+  da cor do rebanho.
+- **O fundidor** faz vidro de areia, pela receita de fornalha do jogo.
+  Resolve a exceção que a Regra 10 tinha registrado como impossível.
+- **A paleta por bioma** — a Regra 20 dita por inteiro. Antes o estilo do
+  bioma era uma coisa só, a espécie da madeira, e por isso o deserto
+  ficava de fora. Agora o bioma diz também de que é a parede, e a vila de
+  deserto levanta em **arenito** o que o mineiro tira da duna.
+- **A cabana do deserto não tem porta**, e é decisão: porta sai de tábua,
+  tábua sai de tronco, e ali não há tronco. Exigi-la deixaria a casa em
+  espera para sempre.
+- **A planta se adapta ao lote** (Regra 25). A vila varreu o raio inteiro
+  sem achar lugar para a casa de planície, tendo três cabanas de pé
+  dentro dela: 49 colunas no nível exato da rua pedem muito mais espaço
+  que 25. Agora a colônia levanta a maior planta que couber **naquele
+  lote**, e a casa grande continua subindo onde há espaço.
+- **A obra que espera demais sai da frente** (`PatienceClock`). Nada
+  tirava da frente uma obra parada, e a vila parava de crescer para
+  sempre esperando um pedregulho. Vinte ciclos — mais que uma varredura
+  inteira, que é o custo da alternativa.
+- **A Regra 21 vale para qualquer casa**, e não só para a cabana. A casa
+  que a colônia passou a preferir era justamente a que nunca ganhava
+  cama, e casa sem cama não vira aldeão.
+- **Peça destruída não volta**, e a conta disso vai para o save.
 
-**Corrigido**
+**Corrigido, e as três causas vieram de jogo**
 
-- **O teto de colheita decidia o que é árvore.** A copa era procurada a
-  partir do grupo de troncos já cortado em 24, então abeto gigante e
-  carvalho-escuro viravam "não é árvore" — e a recusa é permanente. O
-  log dizia `24 logs without a living canopy`, e 24 é o teto: quando o
-  número da recusa é exatamente o limite, o limite é a causa.
-- **A obra dormia por falta de mobília.** `hasMaterialForNextBlock`
-  passou a contar a fabricação e a ignorar mobília.
-- **Dois testes afirmavam sobre o servidor inteiro.** A bateria roda
-  concorrente, e `blocksInProgress` era global — um teste contava os
-  lenhadores do vizinho.
-- **O teto de colheita decidia o que é árvore.** Abeto gigante e
-  carvalho-escuro viravam "não é árvore", e a recusa era permanente. O
-  log dizia `24 logs without a living canopy`, e 24 é o teto: quando o
-  número da recusa é exatamente o limite, o limite é a causa.
+- **O alvo da obra** era comparado com um id escrito no código. A
+  pergunta envelheceu duas vezes: primeiro presa à casa de planície,
+  depois à cabana. Agora quem responde é a colônia.
+- **O cursor da busca de lote** era guardado pela posição do centro — e o
+  centro troca de âncora a cada trinta segundos. A varredura recomeçava
+  do zero todo ciclo e nunca passava das mil primeiras colunas.
+- **O miolo oco da cabana** era oferecido como lote: sem piso, o chão de
+  dentro é grama no nível da rua com o volume livre. Passava em todas as
+  perguntas que se fazem ao mundo, porque nenhuma pergunta de quem é.
 
-**Melhorado**
+**Achado no caminho, e os dois são reais**
 
-- A retirada de material saiu de `BuilderWork` para `ColonySupply`, que
-  a obra e a mobília compartilham.
-- 383 → 402 testes unitários, 99 → 119 testes de jogo.
-- O README deixou de afirmar coisas que tinham deixado de ser verdade —
-  o horário de trabalho do Vanilla, e a contagem de testes.
+- `TreeHarvester.isNaturalLeaf` não conferia chunk descarregado e
+  **derrubava o servidor**. A copa passou a ser procurada em até 256
+  troncos em 08-19, e alcança longe o bastante para sair do carregado.
+- `ChestDepositor.deposit` devolve quantos **não** couberam, e o mineiro
+  leu como quantos entraram — todo pedregulho guardado virava uma linha
+  de "baú cheio" com o baú vazio ao lado.
 
-**Verificado em jogo, 2026-08-19**
+**Refatorado**
 
-- **A cabana subiu do começo ao fim** e virou infraestrutura da colônia,
-  às 02:12. Outra foi planejada 26 segundos depois. É o sexto e último
-  passo do MVP.
-- **O guarda de travamento fechou o ciclo** pela primeira vez: os dois
-  lenhadores devolveram a tarefa e a árvore inalcançável saiu da escolha.
+- `ConstructionPlanner` (703 linhas) partiu em três, e `LumberjackWork`
+  (1232, o pior arquivo do projeto) em seis. Não por tamanho: eram
+  perguntas independentes morando juntas. Nenhum arquivo acima de 500.
+- `RingSweep` nasceu do mineiro: a espiral orçada com cursor já existia
+  em dois lugares e ele seria a terceira cópia.
+- 402 → 421 testes unitários, 119 → 131 testes de jogo.
 
-**Pendente**
+**Pendente, e dito sem suavizar**
 
-- **As onze regras deste ciclo não rodaram em jogo.** A sessão que
-  fechou a casa rodou um jar de quatro dias antes — o defeito dos
-  dezesseis blocos pulados naquela casa é justamente o que a Regra 22
-  passou a recusar. A troca da casa de planície, que é a maior mudança
-  da v0.2.0, nunca foi vista acontecendo.
+- **Nada disto foi visto em jogo.** As três profissões novas, a paleta, a
+  cabana de arenito e as três correções estão cobertas por teste e nunca
+  rodaram numa vila de verdade.
+- **A areia não é colhida por ninguém.** O fundidor funde a que houver no
+  baú; enquanto ninguém a traz, o vidro continua dependendo de você.
+- **Descascar tronco** continua fora. É o último material da casa de
+  planície que a colônia não faz.
 - **Um teste instável** (`theStallGuardReturnsTheTaskAndForgetsTheTree`),
-  cerca de 1 falha a cada 4 execuções, anterior a este ciclo.
-- **A metade do fabricante da Regra 10**, que depende do `ItemRequest`.
-- **A escolha entre as estruturas do catálogo.** A lista está pronta; o
-  critério, não.
+  cerca de uma falha em quatro execuções, anterior a este ciclo.
+- **O centro da colônia** continua trocando de âncora a cada trinta
+  segundos, e continua esperando decisão do autor.
+
+---
 
 ## Compilando do código-fonte
 
