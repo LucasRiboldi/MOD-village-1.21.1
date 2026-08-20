@@ -9,6 +9,7 @@ import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -490,6 +491,80 @@ public class BuildSiteGameTest implements FabricGameTest {
      * Chão de grama em volta do ponto, largo o bastante para caber a
      * casa em qualquer das quatro direções.
      */
+    /**
+     * Onde a planta grande não cabe, a colônia levanta a que cabe.
+     *
+     * <p>Decisão do autor em 2026-08-20, depois de a vila dele parar de
+     * crescer: dez minutos de varredura completa para
+     * {@code no free lot ... that fits ColonyPos[x=7, y=7, z=7]}, na
+     * mesma vila em que três cabanas de 5x5 já estavam de pé.
+     *
+     * <p>A casa de planície pede 49 colunas no nível exato da rua, fora
+     * das peças da vila gerada e com sete blocos livres acima. A cabana
+     * pede 25. É a Regra 13 outra vez — construir o que a colônia
+     * consegue —, agora sobre o espaço em vez do material.
+     *
+     * <p>Escolhida por lote, e não por vila: onde a grande couber, é ela
+     * que sobe. Só desce um degrau onde a grande não cabe.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_fallback")
+    public void theBiggestPlanThatFitsIsTheOneChosen(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+
+        paveGround(context, center);
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+
+        // Uma planta maior do que o chão que este teste montou.
+        ColonyPos tooBig = new ColonyPos(6, 5, 6);
+
+        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                context.getWorld(),
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                RADIUS,
+                List.of(tooBig, SMALL_HOUSE));
+
+        context.assertTrue(
+                site.isPresent(),
+                "a grande não cabia, e a colônia desistiu em vez de descer um degrau");
+
+        context.assertTrue(
+                SMALL_HOUSE.equals(site.get().size()),
+                "o lote achado é de " + site.get().size() + ", e não da planta que coube");
+
+        BuildSiteScanner.clearAll();
+
+        context.complete();
+    }
+
+    /** Onde a grande cabe, é a grande — e não a primeira que servir. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_fallback")
+    public void theBigPlanWinsWhereItFits(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+
+        paveGround(context, center);
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+
+        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                context.getWorld(),
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                RADIUS,
+                List.of(TALL_HOUSE, SMALL_HOUSE));
+
+        context.assertTrue(site.isPresent(), "não achou lote no chão que o teste montou");
+
+        context.assertTrue(
+                TALL_HOUSE.equals(site.get().size()),
+                "a grande cabia e a colônia escolheu " + site.get().size());
+
+        BuildSiteScanner.clearAll();
+
+        context.complete();
+    }
+
     private static void paveGround(TestContext context, BlockPos center) {
         for (int dx = -RADIUS; dx <= RADIUS; dx++) {
             for (int dz = -RADIUS; dz <= RADIUS; dz++) {

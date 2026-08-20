@@ -11,6 +11,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -137,8 +138,11 @@ public final class BuildSiteScanner {
      * @param origin o canto de onde a casa sobe — o menor x, y e z dela
      * @param doorSide para que lado fica a rua, visto de dentro do lote.
      *     É por esse lado que a casa se abre
+     * @param size qual das plantas oferecidas coube aqui. Decisão do
+     *     autor em 2026-08-20: a colônia levanta a maior que couber
+     *     neste lote, e desce um degrau só onde a maior não cabe
      */
-    public record Site(ColonyPos origin, Direction doorSide) {
+    public record Site(ColonyPos origin, Direction doorSide, ColonyPos size) {
     }
 
     /**
@@ -152,6 +156,37 @@ public final class BuildSiteScanner {
      */
     public static Optional<Site> find(
             ServerWorld world, UUID colonyId, ColonyPos center, int radius, ColonyPos size) {
+
+        return find(world, colonyId, center, radius, List.of(size));
+    }
+
+    /**
+     * Um lote para a maior destas plantas que couber nele.
+     *
+     * <p>Decidido pelo autor em 2026-08-20, e o motivo está num log: a
+     * vila dele varreu o raio de 64 inteiro sem achar lugar para a casa
+     * de planície — 49 colunas no nível exato da rua, fora das peças da
+     * vila gerada e com sete blocos livres acima — enquanto três cabanas
+     * de 25 colunas já estavam de pé ali. Exigir a planta grande era
+     * parar de crescer.
+     *
+     * <p><b>A escolha é por lote, e não por vila.</b> Cada coluna
+     * candidata é testada da maior planta para a menor, e a primeira que
+     * servir vence. Assim a casa grande continua subindo onde há espaço
+     * para ela, em vez de a vila inteira rebaixar o padrão porque um
+     * canto é apertado.
+     *
+     * <p>Uma varredura só, e o mesmo teto de colunas: as plantas
+     * dividem a passagem em vez de cada uma pedir a sua. Coluna que não
+     * é estrada é recusada antes de olhar planta nenhuma, que é a
+     * esmagadora maioria.
+     *
+     * @param plans da maior para a menor. A ordem é de quem chama, e é
+     *     ela que define o que "maior" quer dizer
+     */
+    public static Optional<Site> find(
+            ServerWorld world, UUID colonyId, ColonyPos center, int radius,
+            List<ColonyPos> plans) {
 
         BlockPos from = MinecraftTypeAdapter.toBlockPos(center);
 
@@ -181,7 +216,7 @@ public final class BuildSiteScanner {
                     }
 
                     Optional<Site> site = siteBesideRoadAt(
-                            world, from.getX() + dx, from.getZ() + dz, from.getY(), size);
+                            world, from.getX() + dx, from.getZ() + dz, from.getY(), plans);
 
                     if (site.isPresent()) {
                         NEXT_RING.remove(colonyId);
@@ -281,7 +316,7 @@ public final class BuildSiteScanner {
      * diferente a cada sessão, o que é ruim de depurar.
      */
     private static Optional<Site> siteBesideRoadAt(
-            ServerWorld world, int x, int z, int aroundY, ColonyPos size) {
+            ServerWorld world, int x, int z, int aroundY, List<ColonyPos> plans) {
 
         Optional<BlockPos> ground = groundInColumn(world, x, z, aroundY);
 
@@ -291,6 +326,21 @@ public final class BuildSiteScanner {
 
         // A altura da rua, que a Regra 19 usa como régua do lote.
         int roadY = ground.get().getY();
+
+        for (ColonyPos size : plans) {
+            Optional<Site> site = siteFor(world, x, z, aroundY, roadY, size);
+
+            if (site.isPresent()) {
+                return site;
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /** O lote desta planta ao lado desta rua, se houver. */
+    private static Optional<Site> siteFor(
+            ServerWorld world, int x, int z, int aroundY, int roadY, ColonyPos size) {
 
         for (Direction side : Direction.Type.HORIZONTAL) {
             // O lote começa no bloco seguinte à estrada — encostado nela,
@@ -312,7 +362,9 @@ public final class BuildSiteScanner {
                 // cresceu: `side` aponta da rua para o lote, e a porta
                 // olha de volta para ela.
                 return Optional.of(new Site(
-                        new ColonyPos(originX, floor.get(), originZ), side.getOpposite()));
+                        new ColonyPos(originX, floor.get(), originZ),
+                        side.getOpposite(),
+                        size));
             }
         }
 

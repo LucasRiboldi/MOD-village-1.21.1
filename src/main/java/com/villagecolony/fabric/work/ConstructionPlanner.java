@@ -27,6 +27,7 @@ import net.minecraft.block.Block;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -245,11 +246,13 @@ public final class ConstructionPlanner {
         // A planta desta vila. Em planície é a casa pequena do próprio
         // jogo, por decisão do autor em 2026-08-19; nos outros biomas
         // continua a cabana do mod, na madeira do bioma (Regra 20).
-        Blueprint blueprint = houseFor(world, colony);
+        List<Blueprint> plans = plansFor(world, colony);
+
+        Blueprint blueprint = plans.get(0);
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
-                world, colony.id(), colony.center(),
-                VillageDetector.SEARCH_RADIUS, blueprint.size());
+                world, colony.id(), colony.center(), VillageDetector.SEARCH_RADIUS,
+                plans.stream().map(Blueprint::size).toList());
 
         if (site.isEmpty()) {
             // Duas respostas, e a diferença importa: uma diz que não há
@@ -283,10 +286,17 @@ public final class ConstructionPlanner {
                     "the lot at " + site.get().origin() + " falls on a colony building");
         }
 
+        // A planta que coube naquele lote — a maior das oferecidas que
+        // serviu ali. Decisão do autor de 2026-08-20.
+        Blueprint chosen = plans.stream()
+                .filter(plan -> plan.size().equals(site.get().size()))
+                .findFirst()
+                .orElse(blueprint);
+
         // Agora que há lote, a planta é virada para a rua: é a Regra 17,
         // e o lado sai de quem achou o lote.
         Blueprint facingTheRoad = turnedToTheRoad(
-                blueprint, MinecraftTypeAdapter.toSide(site.get().doorSide()));
+                chosen, MinecraftTypeAdapter.toSide(site.get().doorSide()));
 
         ConstructionProject project = ConstructionProject.plan(
                 colony.id(), facingTheRoad, site.get().origin());
@@ -472,14 +482,40 @@ public final class ConstructionPlanner {
      * peça por vez.
      */
     private static Blueprint houseFor(ServerWorld world, Colony colony) {
+        return plansFor(world, colony).get(0);
+    }
+
+    /**
+     * O que esta colônia sabe levantar, da maior planta para a menor.
+     *
+     * <p><b>Por que é uma lista desde 2026-08-20.</b> A vila do autor
+     * varreu o raio de 64 inteiro sem achar lugar para a casa de
+     * planície, tendo três cabanas de pé ali dentro: 49 colunas no nível
+     * exato da rua pedem muito mais espaço que 25, e a vila parou de
+     * crescer. Exigir a planta grande em toda parte era transformar a
+     * Regra 24 num travamento.
+     *
+     * <p>A cabana fecha a lista sempre, e é de propósito: ela é a planta
+     * que a colônia levanta sozinha, sem o jogador guardar nada em baú.
+     * Enquanto ela couber em algum lugar, a vila continua crescendo — que
+     * é a Regra 13 outra vez, agora sobre espaço em vez de material.
+     *
+     * <p>Fora da planície a lista tem um item só: a casa do jogo é de
+     * planície, e a Regra 20 manda a cabana ser da madeira do bioma.
+     */
+    private static List<Blueprint> plansFor(ServerWorld world, Colony colony) {
         ResourceId wood = VillageBiomes.woodAt(world, colony.center())
                 .orElse(ColonyHut.OAK_PLANKS);
 
+        Blueprint hut = ColonyHut.blueprint(wood, Side.NORTH);
+
         if (!ColonyHut.OAK_PLANKS.equals(wood)) {
-            return ColonyHut.blueprint(wood, Side.NORTH);
+            return List.of(hut);
         }
 
-        return smallHouse(world).orElseGet(() -> ColonyHut.blueprint(wood, Side.NORTH));
+        return smallHouse(world)
+                .map(house -> List.of(house, hut))
+                .orElseGet(() -> List.of(hut));
     }
 
     /**
