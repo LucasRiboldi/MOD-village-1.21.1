@@ -52,6 +52,22 @@ public final class Mine {
      */
     private int cut;
 
+    /**
+     * Quantas posições seguidas vieram impossíveis de cavar.
+     *
+     * <p><b>Não vai para o disco</b>, e é de propósito: é a contagem de
+     * uma passagem, não um fato sobre a mina. Reabrir o mundo com ela
+     * zerada custa no máximo oito posições a mais antes de a galeria
+     * virar, e guardá-la faria a mina reabrir prestes a virar por causa
+     * de uma barreira que ninguém mais está olhando.
+     *
+     * <p>Mora aqui, e não no trabalho do mineiro, porque a galeria que
+     * ela faz virar é da colônia: dois mineiros na mesma escada esbarram
+     * na mesma lava, e duas contagens separadas pediriam dezesseis
+     * recusas para uma curva que precisa de oito.
+     */
+    private int blocked;
+
     private Mine(UUID colonyId, MineShaft shaft, int cut) {
         this.colonyId = Objects.requireNonNull(colonyId, "colonyId");
         this.shaft = Objects.requireNonNull(shaft, "shaft");
@@ -112,5 +128,28 @@ public final class Mine {
      */
     public void turn() {
         shaft = shaft.turned();
+        blocked = 0;
+    }
+
+    /**
+     * Mais uma posição que não se cava, e se já é hora de virar.
+     *
+     * @param limit quantas recusas seguidas bastam para a galeria virar
+     * @return true quando esta foi a que fechou a conta. A galeria já
+     *     virou, e a contagem recomeçou
+     */
+    public boolean blockedAgain(int limit) {
+        if (++blocked < limit) {
+            return false;
+        }
+
+        turn();
+
+        return true;
+    }
+
+    /** A picareta pegou. A contagem de recusas recomeça. */
+    public void digging() {
+        blocked = 0;
     }
 }

@@ -22,7 +22,9 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.work.GlassDemand;
 import com.villagecolony.fabric.work.HousePlans;
+import com.villagecolony.fabric.work.MineDigging;
 import com.villagecolony.fabric.work.MinerWork;
+import com.villagecolony.fabric.work.SandGathering;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
@@ -127,7 +129,7 @@ public class MinerGameTest implements FabricGameTest {
         // do servidor, que é o que este teste exercita.
         // Raio curto: a bateria roda arenas vizinhas no mesmo mundo, e
         // um mineiro de raio 48 comeria a pedra do teste do lado.
-        MinerWork.shortenMineDistanceTo(NEARBY);
+        MineDigging.shortenMineDistanceTo(NEARBY);
 
         MinerWork.run(world, colony);
 
@@ -152,7 +154,7 @@ public class MinerGameTest implements FabricGameTest {
 
             MinerWork.forget(villager.getUuid());
 
-            MinerWork.restoreMineDistance();
+            MineDigging.restoreMineDistance();
 
             context.complete();
         });
@@ -225,7 +227,7 @@ public class MinerGameTest implements FabricGameTest {
 
         // Raio curto: a bateria roda arenas vizinhas no mesmo mundo, e
         // um mineiro de raio 48 comeria a pedra do teste do lado.
-        MinerWork.shortenMineDistanceTo(NEARBY);
+        MineDigging.shortenMineDistanceTo(NEARBY);
 
         MinerWork.run(world, colony);
 
@@ -244,7 +246,7 @@ public class MinerGameTest implements FabricGameTest {
 
             VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
 
-            MinerWork.restoreMineDistance();
+            MineDigging.restoreMineDistance();
 
             context.complete();
         });
@@ -309,7 +311,7 @@ public class MinerGameTest implements FabricGameTest {
         VillageColonyMod.MINES.restore(
                 Mine.restore(colony.id(), MineShaft.from(mouth, Side.EAST), FRONTIER));
 
-        MinerWork.shortenMineDistanceTo(NEARBY);
+        MineDigging.shortenMineDistanceTo(NEARBY);
 
         MinerWork.run(world, colony);
 
@@ -328,7 +330,7 @@ public class MinerGameTest implements FabricGameTest {
 
             MinerWork.forget(villager.getUuid());
 
-            MinerWork.restoreMineDistance();
+            MineDigging.restoreMineDistance();
 
             context.complete();
         });
@@ -390,7 +392,7 @@ public class MinerGameTest implements FabricGameTest {
         // Raio curto pelo mesmo motivo da mina: a bateria roda arenas
         // vizinhas no mesmo mundo, e uma varredura de 48 blocos raspa a
         // praia do teste do lado.
-        MinerWork.shortenSandRadiusTo(NEARBY);
+        SandGathering.shortenSandRadiusTo(NEARBY);
 
         MinerWork.run(world, colony);
 
@@ -405,7 +407,7 @@ public class MinerGameTest implements FabricGameTest {
 
             MinerWork.forget(villager.getUuid());
 
-            MinerWork.restoreSandRadius();
+            SandGathering.restoreSandRadius();
 
             context.complete();
         });
