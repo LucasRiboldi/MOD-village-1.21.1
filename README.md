@@ -223,6 +223,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Cama, baú e lampião dentro de cada casa | 🧪 coberto por teste, nunca visto em jogo |
 | Baú criado ao lado da cama quando não há nenhum | 🧪 coberto por teste, nunca visto em jogo |
 | Registro de construções e proteção | 🧪 coberto por teste, nunca visto em jogo |
+| **Uma de cada profissão antes de dobrar qualquer uma**, e a troca por baú nunca esvazia a última | ✅ coberto por teste unitário |
 | **As casas são as do jogo**, e só elas | 🧪 coberto por teste, nunca visto em jogo |
 | **A mina** — escada, duas salas e galeria sem fim | 🧪 coberto por teste, nunca visto em jogo |
 | **A mina sobrevive ao fechar do mundo** — a boca, o lado da galeria e até onde a picareta chegou | 🧪 coberto por teste, e um reinício de verdade nunca foi feito |

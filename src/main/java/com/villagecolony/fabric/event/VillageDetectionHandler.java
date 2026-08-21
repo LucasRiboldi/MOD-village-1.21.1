@@ -630,7 +630,10 @@ public final class VillageDetectionHandler {
         // trocava a vaga por alguém que também ficaria sem. É a decisão do
         // autor de 2026-08-15 — só se dispensa quando há baú livre de
         // verdade para o substituto. Ver o E11 do §17.
-        dismissExtraWorkers(world, colony, result.freeChests().size());
+        // Quantas trocas cabem, e não quantos baús sobram — 2026-08-21.
+        // Uma troca sem substituto esvazia uma função e não a preenche de
+        // volta, e isso é a Regra 11 quebrando. Ver ScanResult.substitutes.
+        dismissExtraWorkers(world, colony, result.substitutes());
 
         // A vaga vai primeiro para quem consegue baú: sem isso ela podia
         // ir para uma cama que não alcança baú nenhum, e o trabalhador

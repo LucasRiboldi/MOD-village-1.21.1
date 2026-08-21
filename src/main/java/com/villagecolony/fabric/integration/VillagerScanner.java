@@ -248,5 +248,28 @@ public final class VillagerScanner {
         public boolean changedNothing() {
             return registeredWorkers == 0 && registeredStorages == 0;
         }
+
+        /**
+         * Quantas trocas de vaga cabem nesta passagem — a Regra 11.
+         *
+         * <p>Uma troca precisa de duas coisas: <b>um baú livre</b>, que é
+         * a decisão do E11 de 08-15, e <b>alguém para ocupá-lo</b>, que é
+         * o piso da Regra 11. Faltando qualquer uma, a troca deixaria uma
+         * função vazia sem ninguém para reassumi-la no mesmo ciclo.
+         *
+         * <p><b>Hoje o mínimo não muda nada</b>, e é de propósito que ele
+         * esteja escrito: cada baú livre entra na lista junto com o
+         * candidato que o alcançou, então nunca há mais baú que
+         * candidato. A garantia da Regra 11 vinha daí — de um acidente do
+         * jeito de contar, e não de uma frase. Um dia em que os baús
+         * livres passem a ser contados de outra maneira, esta linha é o
+         * que impede a vila de perder o último lenhador.
+         *
+         * <p>A dispensa não conhece o piso; ela conhece o número que
+         * recebe. É este.
+         */
+        public int substitutes() {
+            return Math.min(freeChests.size(), equippable.size());
+        }
     }
 }

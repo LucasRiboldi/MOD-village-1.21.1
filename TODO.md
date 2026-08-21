@@ -12,11 +12,20 @@ discordarem, vale o Backlog.
 funcionando em jogo* são coisas diferentes, e estão separadas.
 
 ```text
-462 testes unitários  ·  151 testes de jogo  ·  29 regras do autor
+469 testes unitários  ·  151 testes de jogo  ·  29 regras do autor
 7 trabalhadores com código  ·  6 arquivos acima do teto de 500 linhas
 ```
 
 ---
+
+**Regra 11 — o piso das profissões (2026-08-21)**
+
+- **Sete testes** afirmam o piso, que até aqui não tinha nenhum: o que
+  existia testava o teto.
+- **A ressalva foi verificada, e a resposta é sim:** a dispensa pode
+  esvaziar uma função se lhe pedirem mais trocas que substitutos.
+- **A garantia ganhou nome** — `ScanResult.substitutes`, o mínimo entre
+  baús livres e candidatos. Ela existia por acidente do jeito de contar.
 
 **A rua e o deserto (2026-08-21)**
 
@@ -232,11 +241,7 @@ nenhum save conhecido tiver cabana, ela sai.
 profissões sem uma única sessão de verdade. Nada mais deveria ser
 construído antes disto.
 
-**2 — Regra 11, uma de cada profissão por vila.** Ficou maior com a
-cadeia: são sete profissões e catorze vagas por colônia. Nada garante o
-piso, e a dispensa pode tirar o último de uma profissão.
-
-**3 — Quebrar os arquivos acima de 500 linhas.**
+**2 — Quebrar os arquivos acima de 500 linhas.**
 
 ```text
 979  VillageDetectionHandler      639  ManufacturerWork
@@ -254,13 +259,13 @@ testes há mais quatro acima do teto: `LumberjackGameTest` 1571,
 este último já aliviado em 125 linhas com a saída do
 `WorkMaterialsGameTest`, e ainda dez acima.
 
-**4 — Decidir o movimento do centro da colônia.** Troca de âncora e
+**3 — Decidir o movimento do centro da colônia.** Troca de âncora e
 volta a cada 30 segundos, entre 49 camas e 7. Visto em 08-18, 08-19 e
 08-20. É a ADR-003, e **espera decisão do autor**.
 
-**5 — Regra 16**, distância mínima e máxima entre construções.
+**4 — Regra 16**, distância mínima e máxima entre construções.
 
-**6 — O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de
+**5 — O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de
 travar. Toca `Task`, que é o centro, e destrava a metade do fabricante e
 a cadeia de receitas em profundidade qualquer. A areia saiu daqui: o
 `GlassDemand` faz **um** passo de decomposição, que era o que ela pedia.

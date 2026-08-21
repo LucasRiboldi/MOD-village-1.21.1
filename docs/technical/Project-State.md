@@ -2144,7 +2144,7 @@ Regra 9   subir e descer para alcançar, e      08-15, a implementar
           poder voltar
 Regra 10  o construtor fabrica o que a         08-15, a implementar
           expansão pede
-Regra 11  uma de cada profissão em cada vila   08-15, já satisfeita pelo
+Regra 11  uma de cada profissão em cada vila   08-15, fechada em 08-21.
                                                mecanismo — falta a garantia
 Regra 12  o centro fica em bloco que existe    08-15, feita em 08-15
 Regra 13  a obra do MVP é uma que a colônia    08-15, feita em 08-15
@@ -2692,21 +2692,37 @@ justamente para cobrir as quatro antes de dobrar qualquer uma. O
 comentário do método já diz isso desde 08-13: "uma vila com dois
 lenhadores e nenhum construtor é pior do que uma com um de cada".
 
-O que falta não é o mecanismo, é a **garantia**:
+As três ressalvas de 08-15, e o que 2026-08-21 fez com cada uma:
 
 ```text
-vila com menos de       quatro profissões não cabem em três aldeões.
-quatro empregáveis      O piso vira "tantas quantas couberem", e isso
-                        precisa estar escrito
+vila com menos          ESCRITO. Sete profissões não cabem em três
+empregáveis que         aldeões. O piso vira "tantas quantas
+profissões              couberem", e o que a regra exige então é que
+                        as três sejam três funções DIFERENTES —
+                        dobrar uma antes de cobrir as outras é a vila
+                        com dois lenhadores e nenhum construtor
 
-a dispensa             `dismiss` tira a função de quem excede a vaga
-                       e de quem não tem baú. Nada hoje a impede de
-                       tirar o último de uma profissão — não foi
-                       visto acontecer, e não foi verificado
+a dispensa pode         VERIFICADO, e a resposta é sim: pedindo três
+tirar o último          trocas a uma vila de um trabalhador por
+                        função, três funções ficam vazias. A dispensa
+                        não conhece o piso; ela conhece o número de
+                        trocas que lhe pedem
 
-nenhum teste           não há teste que afirme o piso. O que existe
-afirma o piso          testa o teto
+nenhum teste            SETE TESTES, em ProfessionFloorTest. O teto
+afirma o piso           continua com os seus, em ProfessionAssignerTest
 ```
+
+**Onde a garantia mora, e por que ela mudou de lugar.** Quem segura a
+Regra 11 não é a dispensa: é o número que a varredura passa a ela. Uma
+troca precisa de duas coisas — um baú livre, que é a decisão do E11, e
+**alguém para ocupá-lo**, que é este piso. O código passava a contagem de
+baús livres, e ela funcionava porque cada baú livre entra na lista junto
+com o candidato que o alcançou: nunca há mais baú que candidato.
+
+Funcionava **por acidente do jeito de contar**. Agora tem nome —
+`ScanResult.substitutes`, o mínimo entre os dois — e o dia em que os baús
+livres passarem a ser contados de outra maneira, essa linha é o que
+impede a vila de perder o último lenhador.
 
 ---
 
@@ -3747,7 +3763,8 @@ o buraco         o lenhador replanta o que corta (Regra 7). O mineiro
 **A Regra 4 mudou de tamanho sem mudar de enunciado.** Dois trabalhadores
 por profissão, com sete profissões, são catorze vagas por colônia — eram
 oito. A Regra 11, que garante o piso de uma de cada, ficou
-proporcionalmente maior e continua por fazer.
+proporcionalmente maior, e foi fechada em 2026-08-21: sete testes, e a
+garantia com nome próprio.
 
 ---
 
