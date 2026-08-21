@@ -10,6 +10,7 @@ import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
+import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
@@ -156,6 +157,14 @@ public final class SmelterWork {
      * @return se ainda há o que fundir
      */
     private static boolean smeltOne(ServerWorld world, UUID workerId, Job job) {
+        Optional<ResourceGroup> raw = rawFor(job.task.targetResource());
+
+        if (raw.isEmpty()) {
+            finish(job, workerId, "the furnace makes no " + job.task.targetResource());
+
+            return false;
+        }
+
         for (Worker worker : VillageColonyMod.WORKERS.ofColony(job.task.colonyId())) {
             Optional<WorkerStorage> owned = VillageColonyMod.STORAGES.of(worker.villagerId());
 
@@ -165,19 +174,40 @@ public final class SmelterWork {
 
             ColonyPos chest = owned.get().chestPosition();
 
-            List<ItemStack> raw = ChestWithdrawer.withdrawGroup(
-                    world, chest, ResourceGroup.SAND, 1);
+            List<ItemStack> taken = ChestWithdrawer.withdrawGroup(
+                    world, chest, raw.get(), 1);
 
-            if (raw.isEmpty()) {
+            if (taken.isEmpty()) {
                 continue;
             }
 
-            return convert(world, chest, raw.get(0), job, workerId);
+            return convert(world, chest, taken.get(0), job, workerId);
         }
 
         finish(job, workerId, "nothing in the colony chests to smelt");
 
         return false;
+    }
+
+    /**
+     * O que entra na fornalha para sair isto — 2026-08-21.
+     *
+     * <p>Até aqui o fundidor só conhecia areia, e a tarefa de fundir
+     * ferro o faria queimar a areia da vidraça para não dar lingote
+     * nenhum. Agora o cru sai do que a tarefa pede.
+     *
+     * <p>É a única tabela deste tipo no mod, e ela é curta de propósito:
+     * duas linhas, as duas que a colônia consome. Quem sabe <b>o que</b>
+     * a fornalha devolve continua sendo o livro do jogo, em
+     * {@code CraftingLookup.smelted} — aqui só se diz o que vale a pena
+     * tirar do baú.
+     */
+    private static Optional<ResourceGroup> rawFor(ResourceType made) {
+        return switch (made) {
+            case GLASS -> Optional.of(ResourceGroup.SAND);
+            case IRON_INGOT -> Optional.of(ResourceGroup.IRON);
+            default -> Optional.empty();
+        };
     }
 
     /** Põe a peça fundida de volta no baú de onde a crua saiu. */

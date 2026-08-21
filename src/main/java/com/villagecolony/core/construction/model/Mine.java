@@ -3,6 +3,7 @@ package com.villagecolony.core.construction.model;
 import com.villagecolony.core.type.ColonyPos;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -67,6 +68,17 @@ public final class Mine {
      * recusas para uma curva que precisa de oito.
      */
     private int blocked;
+
+    /**
+     * O último minério cavado, enquanto a veia não acabar.
+     *
+     * <p><b>Também não vai para o disco</b>, e pela mesma razão do
+     * {@link #blocked}: uma veia interrompida por fechar o mundo custa
+     * uma viagem a mais, e não um erro. O que se perde é o mineiro voltar
+     * ao túnel em vez de terminar o carvão — e o túnel passa por ele de
+     * novo.
+     */
+    private ColonyPos vein;
 
     private Mine(UUID colonyId, MineShaft shaft, int cut) {
         this.colonyId = Objects.requireNonNull(colonyId, "colonyId");
@@ -151,5 +163,41 @@ public final class Mine {
     /** A picareta pegou. A contagem de recusas recomeça. */
     public void digging() {
         blocked = 0;
+    }
+
+    /**
+     * A posição de agora fica para a passagem seguinte.
+     *
+     * <p>Serve a um caso só, e ele é real: o túnel chegou a uma pedra
+     * cavável e havia minério colado nela. A picareta vai ao minério, e a
+     * pedra do túnel continua lá — sem desandar o cursor, ele passaria
+     * por cima dela e o túnel ficaria com um bloco no meio para sempre.
+     */
+    public void holdPosition() {
+        if (cut > 0) {
+            cut--;
+        }
+    }
+
+    /** Onde a veia de minério estava, se o mineiro ainda a segue. */
+    public Optional<ColonyPos> vein() {
+        return Optional.ofNullable(vein);
+    }
+
+    /**
+     * O mineiro achou minério aqui, e é daqui que a veia continua.
+     *
+     * <p>Minério não vem sozinho: um carvão tem outro do lado. Guardar a
+     * posição é o que permite terminar a veia antes de voltar ao túnel —
+     * sem isso o aldeão sairia de perto e teria de andar até lá de novo
+     * na passagem seguinte.
+     */
+    public void followVein(ColonyPos ore) {
+        vein = Objects.requireNonNull(ore, "ore");
+    }
+
+    /** Acabou o minério em volta. O túnel volta a mandar. */
+    public void veinExhausted() {
+        vein = null;
     }
 }

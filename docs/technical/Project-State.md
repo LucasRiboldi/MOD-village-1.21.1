@@ -3694,6 +3694,18 @@ não há nenhuma fora do deserto. A mesma profissão, dois caminhos, e quem
 decide é o recurso que a tarefa pede. O caminho de superfície devolveu
 função ao `RingSweep`, que tinha ficado sem quem o chamasse.
 
+**O minério entrou em 2026-08-21**, e com ele a mina deixou de ser só
+uma fonte de pedregulho. O mineiro reconhece carvão e ferro — as duas
+variantes, comum e de ardósia, porque a segunda sala fica no nível −20 —
+e **segue a veia**: minério não vem sozinho, e voltar para o túnel com
+metade dela aberta faria o aldeão andar até lá outra vez na passagem
+seguinte. O minério colado na parede vem antes da parede, e a posição do
+túnel espera a passagem seguinte em vez de se perder.
+
+**Só carvão e ferro**, e é decisão: são os dois que alguma receita da
+colônia consome. Ouro, cobre e redstone encheriam o baú, e baú cheio faz
+a Regra 1 parar a coleta do que falta.
+
 **O que esta regra NÃO fecha**, e está dito para não passar por pronto:
 
 ```text
@@ -3860,13 +3872,19 @@ A medição original, do dia em que a barreira nasceu:
  16 stripped_oak_log    ✅ o fabricante descasca, por conversão nominal
   3 glass_pane          ✅ a vidraça vira vidro pela receita, o vidro
                         vira meta, e o mineiro colhe a areia dele
-  3 wall_torch          ❌ pede carvão, e o mineiro desce vinte blocos
-                        sem reconhecer minério
+  3 wall_torch          ⚠️ o carvão chegou em 08-21, e a receita da tocha
+                        também pede graveto
 ```
 
-**Então falta uma**, e é a tocha. Enquanto for assim, quem quiser ver a
-casa de planície terminar guarda **3 tochas** num baú da vila — ou
-espera o minério na mina, que é o item seguinte da fila.
+**As três matérias-primas estão resolvidas.** O que sobrou não é
+material: é **profundidade de receita**. O fabricante só monta o que
+puder montar com <b>todos</b> os ingredientes já no baú, e a tocha pede
+carvão e graveto. O carvão a mina dá; o graveto vem das folhas que o
+lenhador derruba, por sorteio da tabela de loot — quando cai, a tocha
+sai; quando não, ela espera.
+
+Fazer graveto de tábua é um passo de "faça primeiro o que falta" dentro
+do `ColonySupply`, e é o mesmo passo que o lampião pede. Está na fila.
 
 **Nada disto foi visto em jogo**, e a frase vale para as duas que
 fecharam: elas estão cobertas por teste e nenhuma rodou numa vila de
@@ -4004,10 +4022,6 @@ que a casa pede.
 ## O que ficou por fazer, e é sabido
 
 ```text
-carvão e ferro   o mineiro desce vinte blocos e não reconhece minério.
-                 Sem eles, tocha e lampião ficam na lista de
-                 dispensáveis da Regra 28, e a casa sobe sem luz
-
 o fazendeiro     tem nome, enxada e baú desde a Fase 4, e nenhum
                  trabalho. É a última profissão do modelo sem código
 ```

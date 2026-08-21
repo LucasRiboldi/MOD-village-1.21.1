@@ -55,6 +55,29 @@ public enum ResourceGroup {
     WOOL,
 
     /**
+     * Carvão — 2026-08-21. A tocha sai daqui.
+     *
+     * <p>Grupo próprio, e não junto com a pedra, porque grupo é o
+     * conjunto do que se <b>substitui</b>: cinco pedregulhos não fazem
+     * uma tocha. Carvão e carvão vegetal, sim — a receita da tocha
+     * aceita os dois, e a colônia não distingue o que o jogo não
+     * distingue.
+     */
+    COAL,
+
+    /**
+     * Ferro cru — 2026-08-21. O lampião sai daqui, passando pela
+     * fornalha.
+     *
+     * <p>Um grupo de um só, como {@link #SAND}: existe para dizer <b>de
+     * onde</b> ele vem, que é a mina, e não para substituir nada. O
+     * lingote não entra — ferro cru e lingote não se trocam, e pôr os
+     * dois no mesmo grupo faria uma meta de lingote parecer satisfeita
+     * por minério que ninguém fundiu.
+     */
+    IRON,
+
+    /**
      * Recurso que só se satisfaz com ele mesmo.
      *
      * <p>Pedra não é substituída por nada.

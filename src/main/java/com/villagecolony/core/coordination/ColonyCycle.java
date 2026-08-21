@@ -215,15 +215,18 @@ public final class ColonyCycle {
         // separa natural de processado, e isso bastava enquanto o único
         // natural era madeira: pedra, areia e lã entraram e todas caíram
         // em COLLECT_WOOD, que mandaria o lenhador buscar pedregulho.
-        if (resource == ResourceType.GLASS) {
-            // A exceção nominal: vidro é processado, mas não por receita
-            // de bancada. Quem o faz é a fornalha.
+        if (resource == ResourceType.GLASS || resource == ResourceType.IRON_INGOT) {
+            // A exceção nominal: vidro e lingote são processados, mas não
+            // por receita de bancada. Quem os faz é a fornalha.
             return TaskType.SMELT_MATERIAL;
         }
 
         return switch (resource.group()) {
             case WOOD -> TaskType.COLLECT_WOOD;
-            case STONE, SAND -> TaskType.COLLECT_STONE;
+            // Carvão e ferro entraram em 2026-08-21 e vêm pela mesma
+            // porta da pedra: quem os tira do mundo é o mineiro, e ele
+            // os acha descendo a mesma escada.
+            case STONE, SAND, COAL, IRON -> TaskType.COLLECT_STONE;
             case WOOL -> TaskType.COLLECT_WOOL;
             case PLANKS -> TaskType.CRAFT_MATERIAL;
             case NONE -> switch (resource.category()) {

@@ -87,6 +87,22 @@ public final class MinecraftTypeAdapter {
             return Optional.of(ResourceType.WHITE_WOOL);
         }
 
+        // O que a mina passou a dar em 2026-08-21. Carvão vegetal conta
+        // como carvão pela mesma razão da areia vermelha: a receita da
+        // tocha aceita os dois, e a colônia não distingue o que o jogo
+        // não distingue.
+        if (item == Items.COAL || item == Items.CHARCOAL) {
+            return Optional.of(ResourceType.COAL);
+        }
+
+        if (item == Items.RAW_IRON) {
+            return Optional.of(ResourceType.RAW_IRON);
+        }
+
+        if (item == Items.IRON_INGOT) {
+            return Optional.of(ResourceType.IRON_INGOT);
+        }
+
         return Optional.empty();
     }
 

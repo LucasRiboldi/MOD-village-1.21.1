@@ -137,6 +137,59 @@ class ColonyCycleTest {
         assertEquals(2, tasks.count());
     }
 
+    /**
+     * Carvão e ferro cru são do mineiro — 2026-08-21.
+     *
+     * <p>Pela mesma porta da pedra, e é o certo: os dois saem do mundo, e
+     * quem os tira é quem desce a escada. Sem esta linha eles caíam em
+     * {@code COLLECT_WOOD} pela categoria natural, e a colônia mandava o
+     * lenhador procurar carvão em cima da árvore.
+     */
+    @Test
+    void theOreGoesToTheMiner() {
+        miner();
+
+        ColonyCycle.run(
+                COLONY,
+                ResourceTally.empty(),
+                Map.of(ResourceType.COAL, 4, ResourceType.RAW_IRON, 2),
+                tasks,
+                workers);
+
+        List<Task> created = tasks.ofColony(COLONY);
+
+        assertEquals(2, created.size());
+
+        for (Task task : created) {
+            assertEquals(TaskType.COLLECT_STONE, task.type());
+        }
+    }
+
+    /**
+     * O lingote é da fornalha, e não da bancada.
+     *
+     * <p>A mesma exceção nominal do vidro: os dois são processados e
+     * nenhum dos dois cabe numa bancada. Sem a linha, o lingote viraria
+     * pedido de fabricação e o fabricante ficaria olhando para um ferro
+     * cru que ele não sabe transformar.
+     */
+    @Test
+    void theIngotGoesToTheFurnace() {
+        workers.register(UUID.randomUUID(), COLONY).assign(ProfessionType.SMELTER);
+
+        ColonyCycle.run(
+                COLONY,
+                ResourceTally.empty(),
+                Map.of(ResourceType.IRON_INGOT, 3),
+                tasks,
+                workers);
+
+        List<Task> created = tasks.ofColony(COLONY);
+
+        assertEquals(1, created.size());
+        assertEquals(TaskType.SMELT_MATERIAL, created.get(0).type());
+    }
+
     @Test
     void aColonyWithoutGoalsAsksForNothing() {
         ColonyCycle.run(COLONY, ResourceTally.empty(), Map.of(), tasks, workers);

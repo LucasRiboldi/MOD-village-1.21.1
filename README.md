@@ -44,6 +44,11 @@ para outro lado, abre outra sala; e do vigésimo bloco em diante segue
 numa galeria sem fim, de dois blocos de altura. Barreira à frente — lava,
 bedrock, a casa de alguém — e a galeria vira.
 
+E ele **vê o minério**: carvão e ferro, comuns e de ardósia, e a veia é
+seguida até acabar — o minério colado na parede vem antes da parede. Só
+esses dois, porque só esses duas receitas da colônia consomem; ouro e
+cobre encheriam o baú do que ninguém usa.
+
 Ele nunca cava vila gerada nem casa da colônia: a boca da mina não se
 abre sobre elas, e cada bloco é conferido de novo antes da picareta.
 
@@ -228,7 +233,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Obra parada sai da frente em vez de travar a vila | 🧪 coberto por teste, nunca visto em jogo |
 | A planta se adapta ao lote — a maior que couber | 🧪 pronta, e inerte enquanto for uma casa por bioma |
 | **Colher areia**, e o vidro virando meta pela receita da vidraça | 🧪 coberto por teste, nunca visto em jogo |
-| Reconhecer minério na mina | ⬜ não começado — a luz da casa ainda depende de você |
+| **Carvão e ferro na mina**, com a veia seguida até acabar | 🧪 coberto por teste, nunca visto em jogo |
 | Estrada crescendo com a vila | ⬜ não começado |
 | Agricultura e defesa | ⬜ não começado |
 
@@ -268,11 +273,12 @@ a recusar, e a correção ainda não foi vista em jogo.
 | | Etapa | Estado |
 |---|---|---|
 | **1** | **Rodar em jogo a cadeia de produção.** Mineiro, pastor e fundidor entraram em 2026-08-20 e **nenhum foi visto trabalhando numa vila de verdade**. Junto vêm a paleta por bioma, a cabana de arenito do deserto e a planta que se adapta ao lote | 🔒 exige sessão de jogo |
-| **2** | **Reconhecer minério na mina.** O mineiro desce vinte blocos e não vê carvão nem ferro. É o último material da casa de planície que ainda depende de você — as três tochas | 🔨 pronto para fazer |
-| **3** | **Regra 15 — estender a estrada.** A vila só constrói em beira de rua que já existe; quando ela acabar, a colônia para de crescer | 🔨 pronto para fazer |
-| **4** | **Regra 16 — espaço em volta da casa.** A metade da altura está feita; falta a distância mínima e máxima | 🔨 meia feita |
-| **5** | **Escolher entre as 1.180 estruturas do catálogo.** A lista está no mod; falta o critério e a conta de materiais de cada uma | 🔨 base pronta |
-| **6** | **Regra 10, metade do fabricante.** Porta, janela, cama e baú por estoque, sem depender de haver obra | 🔨 depende do `ItemRequest` |
+| **2** | **Um passo de "faça primeiro o que falta".** O fabricante só monta com todos os ingredientes no baú. A tocha pede graveto, o lampião pede pepita, e nenhum dos dois se faz sozinho | 🔨 pronto para fazer |
+| **3** | **Quem peça o ferro.** O fundidor funde ferro cru e nada lhe abre tarefa: o lampião é mobília e não passa pelas metas | 🔨 pronto para fazer |
+| **4** | **Regra 15 — estender a estrada.** A vila só constrói em beira de rua que já existe; quando ela acabar, a colônia para de crescer | 🔨 pronto para fazer |
+| **5** | **Regra 16 — espaço em volta da casa.** A metade da altura está feita; falta a distância mínima e máxima | 🔨 meia feita |
+| **6** | **Escolher entre as 1.180 estruturas do catálogo.** A lista está no mod; falta o critério e a conta de materiais de cada uma | 🔨 base pronta |
+| **7** | **Regra 10, metade do fabricante.** Porta, janela, cama e baú por estoque, sem depender de haver obra | 🔨 depende do `ItemRequest` |
 | **8** | **Regra 11 — uma de cada profissão por vila.** O mecanismo existe; falta a garantia e o teste. Ficou maior: são sete profissões agora, e catorze vagas por colônia | 🔨 pronto para fazer |
 | **9** | **Envelhecimento de tarefa**, para que a mais antiga não seja esquecida | 🔨 pronto para fazer |
 | **10** | **O fazendeiro e a defesa.** Duas profissões que o modelo prevê e ninguém escreveu | ⬜ não começado |
@@ -315,13 +321,15 @@ que ela ainda **não** produz:
 
 | Falta | Por quê |
 |---|---|
-| **Carvão** | A tocha da parede pede carvão, e o mineiro desce vinte blocos sem reconhecer minério |
-| **Ferro** | O lampião pede ferro, e o ferro pede o mesmo minério que ninguém vê |
+| **Profundidade de receita** | O fabricante só monta o que puder montar com **todos** os ingredientes já no baú. A tocha pede carvão — que a mina agora dá — e **graveto**, que só chega por sorteio das folhas |
+| **Quem peça o ferro** | O fundidor sabe fundir ferro cru desde 2026-08-21, e nada abre tarefa para ele: o lampião é mobília e não passa pelas metas da colônia |
 
 A casa de planície pede 43 pedregulhos, 16 troncos descascados, 3
-vidraças e 3 tochas. O mineiro resolve a pedra; o fabricante descasca o
-tronco; a areia, o vidro e a vidraça fecharam em 2026-08-20. **A tocha
-continua sua** — guarde três num baú da vila e a obra anda. Onde a casa grande não cabe,
+vidraças e 3 tochas. **As matérias-primas estão todas resolvidas** — o
+mineiro traz pedra, areia, carvão e ferro; o fundidor faz vidro e
+lingote; o fabricante descasca e monta. O que falta não é material: é a
+receita fundo demais para um passo só. Enquanto for assim, **guarde três
+tochas num baú da vila** nos dias em que o graveto não cair. Onde a casa grande não cabe,
 a colônia levanta a cabana, que ela produz inteira sozinha.
 
 A cama e o lampião não entram nessa conta — a casa **não espera** por
@@ -406,8 +414,9 @@ inventava.
 - **Nada deste ciclo foi visto em jogo.** Dezenove commits, quatro
   regras e três profissões cobertos por teste e nunca rodados numa vila
   de verdade.
-- **Carvão e ferro** não são reconhecidos na mina, então a casa sobe sem
-  luz — as três tochas da casa de planície continuam por sua conta.
+- **A tocha depende de haver graveto no baú.** O carvão a mina passou a
+  dar em 2026-08-21; o graveto cai das folhas por sorteio, e fazê-lo de
+  tábua exige um passo de recursão que o fabricante ainda não tem.
 - **A mina é gravada desde 2026-08-20**, mas **fechar e reabrir o mundo
   de verdade nunca foi feito**: a bateria roda um servidor só.
 - **Seis conflitos internos** estão listados em [`TODO.md`](TODO.md) —

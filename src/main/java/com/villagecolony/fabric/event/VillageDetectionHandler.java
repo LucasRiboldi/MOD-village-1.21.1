@@ -11,6 +11,7 @@ import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.coordination.ColonyCycle;
 import com.villagecolony.core.coordination.ColonyGoals;
+import com.villagecolony.core.coordination.WorkDemand;
 import com.villagecolony.core.resource.model.ColonyResources;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
@@ -32,7 +33,7 @@ import com.villagecolony.fabric.work.HouseFurnishing;
 import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
-import com.villagecolony.fabric.work.GlassDemand;
+import com.villagecolony.fabric.work.WorkMaterials;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.BuilderWork;
@@ -422,18 +423,23 @@ public final class VillageDetectionHandler {
 
         int stoneForWork = ConstructionPlanner.materialNeededBy(palette.stone(), colony);
 
-        // O vidro da obra, com a vidraça já decomposta pela receita do
-        // jogo — 2026-08-20. A casa não pede vidro, pede vidraça, e
-        // perguntar por vidro devolvia zero: o fundidor nunca recebia
-        // tarefa e a areia não tinha para quem ser colhida.
-        int glassForWork = GlassDemand.of(overworld, palette, colony);
+        // O que a obra pede em peça, traduzido para o que a colônia sabe
+        // produzir — 2026-08-20 o vidro, 2026-08-21 o carvão. A casa não
+        // pede vidro, pede vidraça; não pede carvão, pede tocha. Perguntar
+        // pelo material devolvia zero, e com zero ninguém recebia tarefa.
+        WorkDemand work = new WorkDemand(
+                planksForWork,
+                stone,
+                stoneForWork,
+                woolWanted(colony),
+                WorkMaterials.glass(overworld, palette, colony),
+                WorkMaterials.coal(overworld, colony));
 
         int assigned = ColonyCycle.run(
                 colony.id(),
                 survey.resources().total(),
                 ColonyGoals.of(
-                        colony, survey.resources().total(), room, plankRoom, planksForWork,
-                        stone, stoneForWork, woolWanted(colony), glassForWork),
+                        colony, survey.resources().total(), room, plankRoom, work),
                 VillageColonyMod.TASKS,
                 VillageColonyMod.WORKERS,
                 VillageColonyMod.STORAGES::hasStorage);

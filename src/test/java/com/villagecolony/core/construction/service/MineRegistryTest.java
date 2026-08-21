@@ -124,6 +124,98 @@ class MineRegistryTest {
                 () -> Mine.restore(UUID.randomUUID(), shaft(), -1));
     }
 
+    /**
+     * A posição do túnel espera quando a picareta vai ao minério.
+     *
+     * <p>O caso é real: o túnel chegou a uma pedra cavável e havia carvão
+     * colado nela. Sem desandar o cursor, ele passaria por cima da pedra
+     * e o túnel ficaria com um bloco no meio para sempre.
+     */
+    @Test
+    void theTunnelPositionWaitsWhileTheOreIsTaken() {
+        Mine mine = Mine.open(UUID.randomUUID(), shaft());
+
+        ColonyPos first = mine.nextPosition();
+
+        mine.holdPosition();
+
+        assertEquals(first, mine.nextPosition());
+    }
+
+    /** Desandar do começo não leva a picareta para antes do primeiro degrau. */
+    @Test
+    void theCursorNeverGoesBehindTheStart() {
+        Mine mine = Mine.open(UUID.randomUUID(), shaft());
+
+        mine.holdPosition();
+
+        assertEquals(0, mine.cut());
+    }
+
+    /**
+     * A veia é lembrada até acabar, e a virada da galeria não a leva.
+     *
+     * <p>Minério não vem sozinho, e voltar ao túnel com a veia pela
+     * metade faria o aldeão andar até lá outra vez na passagem seguinte.
+     */
+    @Test
+    void theVeinIsRememberedUntilItRunsOut() {
+        Mine mine = Mine.open(UUID.randomUUID(), shaft());
+
+        assertTrue(mine.vein().isEmpty());
+
+        ColonyPos ore = new ColonyPos(41, 54, 3);
+
+        mine.followVein(ore);
+
+        assertEquals(ore, mine.vein().orElseThrow());
+
+        mine.veinExhausted();
+
+        assertTrue(mine.vein().isEmpty());
+    }
+
+    /**
+     * A galeria vira depois de oito recusas seguidas, e não de dezesseis.
+     *
+     * <p>A contagem é da mina, e não do mineiro: dois na mesma escada
+     * esbarram na mesma lava, e duas contagens separadas pediriam o dobro
+     * de recusas para uma curva que precisa de oito.
+     */
+    @Test
+    void theGalleryTurnsOnceTheRefusalsAddUp() {
+        Mine mine = Mine.open(UUID.randomUUID(), shaft());
+
+        Side before = mine.shaft().gallery();
+
+        for (int i = 0; i < 7; i++) {
+            assertFalse(mine.blockedAgain(8), "virou cedo demais, na recusa " + (i + 1));
+        }
+
+        assertTrue(mine.blockedAgain(8));
+        assertNotEquals(before, mine.shaft().gallery());
+
+        // E a contagem recomeça: a curva seguinte também pede oito.
+        assertFalse(mine.blockedAgain(8));
+    }
+
+    /** Picareta que pega zera a conta das recusas. */
+    @Test
+    void diggingClearsTheRefusals() {
+        Mine mine = Mine.open(UUID.randomUUID(), shaft());
+
+        Side before = mine.shaft().gallery();
+
+        for (int i = 0; i < 7; i++) {
+            mine.blockedAgain(8);
+        }
+
+        mine.digging();
+
+        assertFalse(mine.blockedAgain(8));
+        assertEquals(before, mine.shaft().gallery());
+    }
+
     @Test
     void aColonyThatGoesAwayTakesItsMine() {
         MineRegistry registry = new MineRegistry();

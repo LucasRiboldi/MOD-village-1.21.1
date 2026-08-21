@@ -20,7 +20,7 @@ import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
-import com.villagecolony.fabric.work.GlassDemand;
+import com.villagecolony.fabric.work.WorkMaterials;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.MineDigging;
 import com.villagecolony.fabric.work.MinerWork;
@@ -436,21 +436,61 @@ public class MinerGameTest implements FabricGameTest {
         VillagePalette palette = HousePlans.paletteOf(world, here);
 
         context.assertTrue(
-                GlassDemand.glassForPanes(world, palette, 0) == 0,
+                WorkMaterials.through(world, ResourceId.vanilla("glass_pane"), ResourceType.GLASS, 0) == 0,
                 "obra sem janela não pode pedir vidro");
 
-        int forThree = GlassDemand.glassForPanes(world, palette, 3);
+        int forThree = WorkMaterials.through(world, ResourceId.vanilla("glass_pane"), ResourceType.GLASS, 3);
 
         context.assertTrue(
                 forThree == 6,
                 "três vidraças deviam custar uma fornada de 6 vidros, e custaram " + forThree);
 
         // Dezessete passam de uma fornada: a segunda entra inteira.
-        int forSeventeen = GlassDemand.glassForPanes(world, palette, 17);
+        int forSeventeen = WorkMaterials.through(world, ResourceId.vanilla("glass_pane"), ResourceType.GLASS, 17);
 
         context.assertTrue(
                 forSeventeen == 12,
                 "dezessete vidraças deviam custar duas fornadas, e custaram " + forSeventeen);
+
+        context.complete();
+    }
+
+    /**
+     * A tocha da parede vira carvão pela receita do jogo — 2026-08-21.
+     *
+     * <p>A mesma conta do vidro e o mesmo silêncio possível: a casa pede
+     * <b>tocha</b>, e não carvão. Um carvão dá quatro tochas, e as três
+     * da casa de planície custam uma fornada — o resto fica no baú para a
+     * casa seguinte.
+     *
+     * <p><b>O que este teste realmente guarda</b> é que
+     * {@code wall_torch} chega ao item {@code torch}: a tocha de parede
+     * não tem item próprio no jogo, e se essa ponte quebrar a conta
+     * devolve zero e a colônia para de pedir carvão sem dizer nada.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "glass_demand",
+            tickLimit = 20)
+    public void threeTorchesCostOneCoal(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        ResourceId wallTorch = ResourceId.vanilla("wall_torch");
+
+        context.assertTrue(
+                WorkMaterials.through(world, wallTorch, ResourceType.COAL, 0) == 0,
+                "obra sem tocha não pode pedir carvão");
+
+        int forThree = WorkMaterials.through(world, wallTorch, ResourceType.COAL, 3);
+
+        context.assertTrue(
+                forThree == 1,
+                "três tochas deviam custar um carvão, e custaram " + forThree);
+
+        // Cinco passam da fornada de quatro: a segunda entra inteira.
+        int forFive = WorkMaterials.through(world, wallTorch, ResourceType.COAL, 5);
+
+        context.assertTrue(
+                forFive == 2,
+                "cinco tochas deviam custar dois carvões, e custaram " + forFive);
 
         context.complete();
     }
@@ -464,12 +504,15 @@ public class MinerGameTest implements FabricGameTest {
      * nunca pediria areia e <b>nada acusaria o erro</b> — nem exceção,
      * nem log, só um fundidor parado para sempre.
      *
+     * <p>Vale igual para {@code wall_torch} e o carvão, que entrou em
+     * 2026-08-21 pela mesma porta.
+     *
      * <p>Por isso a afirmação é sobre o nome, e sobre a casa que a Regra
      * 27 manda construir de verdade — não sobre uma cópia no mod.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "glass_demand",
             tickLimit = 20)
-    public void theCatalogueHouseAsksForPanesByThatName(TestContext context) {
+    public void theCatalogueHouseAsksForPanesAndTorchesByThoseNames(TestContext context) {
         ResourceId house = ResourceId.vanilla("village/plains/houses/plains_small_house_1");
 
         Optional<Blueprint> plan = StructureBlueprintReader.read(context.getWorld(), house);
@@ -484,7 +527,101 @@ public class MinerGameTest implements FabricGameTest {
                 "a casa de planície não listou glass_pane — a chave da lista mudou,"
                         + " e com ela a colônia para de pedir areia em silêncio");
 
+        int torches = plan.get().materials()
+                .getOrDefault(ResourceId.vanilla("wall_torch"), 0);
+
+        context.assertTrue(
+                torches > 0,
+                "a casa de planície não listou wall_torch — a chave da lista mudou,"
+                        + " e com ela a colônia para de pedir carvão em silêncio");
+
         context.complete();
+    }
+
+    /**
+     * O carvão da galeria chega ao baú, e a veia é seguida — 2026-08-21.
+     *
+     * <p>A Regra 29 mandou o mineiro descer vinte blocos, e até aqui ele
+     * descia sem <b>ver</b>: passava ao lado do carvão e trazia
+     * pedregulho. As três tochas da casa de planície ficavam por conta do
+     * jogador.
+     *
+     * <p>Duas afirmações, e a segunda é a que dá o nome à coisa. Minério
+     * não vem sozinho: o segundo carvão está <b>fora</b> do caminho da
+     * escada, colado no primeiro. Se ele chegar ao baú, foi porque o
+     * mineiro seguiu a veia em vez de voltar para o túnel.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_ore",
+            tickLimit = 400)
+    public void theCoalInTheGalleryReachesTheChestAndTheVeinIsFollowed(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        ground(context);
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+
+        // O primeiro degrau da escada, contado da boca: entrada + um a
+        // leste, na mesma altura. É o que MineShaft.positionAt(0) dá.
+        context.setBlockState(new BlockPos(5, 2, 3), Blocks.COAL_ORE.getDefaultState());
+
+        // E o vizinho dele, que a escada nunca visita.
+        context.setBlockState(new BlockPos(5, 2, 2), Blocks.COAL_ORE.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        owned.owning(villager.getUuid());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_STONE,
+                TaskPriority.PRODUCTION,
+                ResourceType.COAL,
+                8);
+
+        task.reserveFor(villager.getUuid());
+
+        // A boca posta à mão: o lado da descida sai do identificador da
+        // colônia, que é sorteado, e um teste não pode depender de sorte
+        // para saber onde a escada passa.
+        ColonyPos mouth = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(4, 2, 3)));
+
+        VillageColonyMod.MINES.restore(
+                Mine.restore(colony.id(), MineShaft.from(mouth, Side.EAST), 0));
+
+        MinerWork.run(world, colony);
+
+        context.runAtTick(320, () -> {
+            int coal = ChestInventoryReader
+                    .read(world, context.getAbsolutePos(CHEST))
+                    .amountOf(ResourceType.COAL);
+
+            context.assertTrue(coal > 0, "o carvão da escada não chegou ao baú");
+
+            context.assertTrue(
+                    coal > 1,
+                    "só veio um carvão — o mineiro voltou ao túnel e deixou a veia pela metade");
+
+            owned.cleanUp();
+
+            MinerWork.forget(villager.getUuid());
+
+            context.complete();
+        });
     }
 
     /** Chão sólido, para o aldeão andar e a pedra ter em que assentar. */

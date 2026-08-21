@@ -367,6 +367,56 @@ class ColonyGoalsTest {
                 ResourceType.COBBLESTONE, 0, 0, glassForWork);
     }
 
+    /**
+     * O carvão da tocha vira meta — 2026-08-21.
+     *
+     * <p>Direto, e sem o passo do meio que o vidro tem: entre a mina e a
+     * tocha não há fornalha. O mineiro traz o carvão pronto.
+     */
+    @Test
+    void theCoalTheTorchesCostBecomesAGoal() {
+        Map<ResourceType, Integer> goal = ColonyGoals.of(
+                colony(),
+                ResourceTally.of(new EnumMap<>(ResourceType.class)),
+                0,
+                0,
+                new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 2));
+
+        assertEquals(2, goal.get(ResourceType.COAL));
+        assertFalse(goal.containsKey(ResourceType.SAND));
+    }
+
+    /** Obra sem tocha não manda ninguém para a mina atrás de carvão. */
+    @Test
+    void aWorkWithoutTorchesAsksForNoCoal() {
+        Map<ResourceType, Integer> goal = ColonyGoals.of(
+                colony(),
+                ResourceTally.of(new EnumMap<>(ResourceType.class)),
+                0,
+                0,
+                WorkDemand.none());
+
+        assertFalse(goal.containsKey(ResourceType.COAL));
+    }
+
+    /**
+     * Demanda negativa não passa, e agora com o nome do material.
+     *
+     * <p>Nove parâmetros posicionais, quatro do mesmo tipo, era a
+     * assinatura onde trocar dois de lugar não dá erro de compilação. O
+     * {@link WorkDemand} deu nome a cada um e juntou a validação.
+     */
+    @Test
+    void aNegativeDemandIsRefusedByName() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, -1, 0));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, -1));
+    }
+
     @Test
     void aNegativeWorkDemandIsRefused() {
         assertThrows(IllegalArgumentException.class,

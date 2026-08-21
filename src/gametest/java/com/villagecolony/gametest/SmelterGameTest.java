@@ -108,4 +108,82 @@ public class SmelterGameTest implements FabricGameTest {
             context.complete();
         });
     }
+
+    /**
+     * O ferro cru vira lingote na mesma fornalha — 2026-08-21.
+     *
+     * <p>O fundidor só conhecia areia. Uma tarefa de fundir ferro o faria
+     * tirar a <b>areia</b> do baú, porque o cru estava escrito no código
+     * e não vinha da tarefa — e a areia da vidraça queimaria para não dar
+     * lingote nenhum.
+     *
+     * <p>Agora o cru sai do que a tarefa pede, e é a única tabela desse
+     * tipo no mod: duas linhas, as duas que a colônia consome. O que a
+     * fornalha <b>devolve</b> continua sendo pergunta ao livro do jogo.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "smelter_iron",
+            tickLimit = 200)
+    public void theRawIronInTheChestBecomesAnIngot(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        context.setBlockState(new BlockPos(3, 1, 3), Blocks.DIRT.getDefaultState());
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        ChestDepositor.deposit(world, chest, Items.RAW_IRON, 4);
+
+        // A areia entra junto, e é o ponto: se o fundidor voltar a olhar
+        // só para o grupo da areia, ele a queima e o ferro fica intacto.
+        ChestDepositor.deposit(world, chest, Items.SAND, 4);
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.SMELTER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        owned.owning(villager.getUuid());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.SMELT_MATERIAL,
+                TaskPriority.PRODUCTION,
+                ResourceType.IRON_INGOT,
+                4);
+
+        task.reserveFor(villager.getUuid());
+
+        SmelterWork.run(world, colony);
+
+        context.runAtTick(150, () -> {
+            var inChest = ChestInventoryReader.read(world, context.getAbsolutePos(CHEST));
+
+            context.assertTrue(
+                    inChest.amountOf(ResourceType.IRON_INGOT) > 0,
+                    "o ferro cru não virou lingote nenhum");
+
+            context.assertTrue(
+                    inChest.amountOf(ResourceType.RAW_IRON) < 4,
+                    "o lingote apareceu e o cru continua inteiro — matéria do nada");
+
+            context.assertTrue(
+                    inChest.amountOf(ResourceType.SAND) == 4,
+                    "o fundidor queimou a areia numa tarefa de ferro");
+
+            owned.cleanUp();
+
+            SmelterWork.forget(villager.getUuid());
+
+            context.complete();
+        });
+    }
 }

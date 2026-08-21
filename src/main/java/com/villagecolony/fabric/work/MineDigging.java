@@ -6,6 +6,7 @@ import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BlockProtection;
+import com.villagecolony.fabric.integration.OreVein;
 import net.minecraft.block.BlockState;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -91,7 +92,39 @@ public final class MineDigging {
             return Optional.empty();
         }
 
-        return nextCut(world, workerId, mine.get());
+        return followingTheVein(world, mine.get())
+                .or(() -> nextCut(world, workerId, mine.get()));
+    }
+
+    /**
+     * O minério colado no que acabou de sair, se a veia continuar.
+     *
+     * <p><b>A veia manda no túnel.</b> Minério não vem sozinho, e voltar
+     * para a escada com metade da veia aberta faria o aldeão andar até lá
+     * outra vez na passagem seguinte. Enquanto houver minério ao lado do
+     * último, é ele o alvo.
+     *
+     * <p>Quando acabar, a memória da veia sai e o túnel volta a mandar —
+     * senão o mineiro reperguntaria por ela a cada passagem, para sempre.
+     */
+    private static Optional<BlockPos> followingTheVein(ServerWorld world, Mine mine) {
+        Optional<BlockPos> from = mine.vein().map(MinecraftTypeAdapter::toBlockPos);
+
+        if (from.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Optional<BlockPos> more = OreVein.beside(world, from.get());
+
+        if (more.isEmpty()) {
+            mine.veinExhausted();
+
+            return Optional.empty();
+        }
+
+        mine.followVein(MinecraftTypeAdapter.toColonyPos(more.get()));
+
+        return more;
     }
 
     /**
@@ -171,7 +204,28 @@ public final class MineDigging {
 
             mine.digging();
 
-            return Optional.of(at);
+            // O minério da parede vem antes da parede — 2026-08-21. Um
+            // túnel de dois blocos de altura mostra o que está colado
+            // nele, e passar direto era o mineiro trazendo pedregulho de
+            // uma galeria cheia de carvão.
+            Optional<BlockPos> ore = OreVein.isOre(state)
+                    ? Optional.of(at)
+                    : OreVein.beside(world, at);
+
+            if (ore.isEmpty()) {
+                return Optional.of(at);
+            }
+
+            mine.followVein(MinecraftTypeAdapter.toColonyPos(ore.get()));
+
+            if (!ore.get().equals(at)) {
+                // A posição do túnel não foi cavada, e não pode ser
+                // perdida: sem isto o cursor passaria por cima dela e o
+                // túnel ficaria com um bloco no meio para sempre.
+                mine.holdPosition();
+            }
+
+            return ore;
         }
 
         return Optional.empty();

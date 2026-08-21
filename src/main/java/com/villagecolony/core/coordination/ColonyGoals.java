@@ -183,12 +183,37 @@ public final class ColonyGoals {
             int woolForBeds,
             int glassForWork) {
 
+        return of(
+                colony,
+                owned,
+                woodRoom,
+                plankRoom,
+                new WorkDemand(planksForWork, stone, stoneForWork, woolForBeds, glassForWork, 0));
+    }
+
+    /**
+     * As metas desta colônia, dada a obra que ela tem aberta.
+     *
+     * <p>É a entrada de verdade; as outras existem para quem só olha uma
+     * parte, e todas caem aqui. A demanda da obra virou um tipo em
+     * 2026-08-21 — ver {@link WorkDemand}, e o porquê mora lá.
+     */
+    public static Map<ResourceType, Integer> of(
+            Colony colony,
+            ResourceTally owned,
+            int woodRoom,
+            int plankRoom,
+            WorkDemand work) {
+
         Objects.requireNonNull(colony, "colony");
         Objects.requireNonNull(owned, "owned");
+        Objects.requireNonNull(work, "work");
 
-        if (planksForWork < 0) {
-            throw new IllegalArgumentException("Negative work demand: " + planksForWork);
-        }
+        int planksForWork = work.planks();
+        ResourceType stone = work.stone();
+        int stoneForWork = work.stoneAmount();
+        int woolForBeds = work.wool();
+        int glassForWork = work.glass();
 
         if (woodRoom < 0) {
             throw new IllegalArgumentException("Negative storage room: " + woodRoom);
@@ -252,6 +277,13 @@ public final class ColonyGoals {
             if (glassMissing > 0) {
                 goals.put(ResourceType.SAND, glassMissing);
             }
+        }
+
+        // O carvão da tocha — 2026-08-21. Direto, e sem o passo do meio
+        // que o vidro tem: o mineiro traz o carvão pronto da galeria, e
+        // não há fornalha entre a mina e a tocha.
+        if (work.coal() > 0) {
+            goals.put(ResourceType.COAL, work.coal());
         }
 
         return Map.copyOf(goals);

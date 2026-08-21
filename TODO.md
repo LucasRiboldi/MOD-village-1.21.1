@@ -12,8 +12,8 @@ discordarem, vale o Backlog.
 funcionando em jogo* são coisas diferentes, e estão separadas.
 
 ```text
-450 testes unitários  ·  138 testes de jogo  ·  29 regras do autor
-7 trabalhadores com código  ·  7 arquivos acima do teto de 500 linhas
+460 testes unitários  ·  141 testes de jogo  ·  29 regras do autor
+7 trabalhadores com código  ·  6 arquivos acima do teto de 500 linhas
 ```
 
 ---
@@ -44,6 +44,19 @@ funcionando em jogo* são coisas diferentes, e estão separadas.
   casa → cama → aldeão → trabalhador.
 - **Fundidor**: areia vira vidro, pela receita de fornalha do jogo.
 - **Fabricante ampliado**: descasca tronco, monta tocha e vidraça.
+
+**Cadeia de materiais — o minério (2026-08-21)**
+
+- **O mineiro reconhece carvão e ferro**, comuns e de ardósia, e
+  **segue a veia**: o minério colado na parede vem antes da parede, e a
+  posição do túnel espera em vez de se perder. `OreVein` nasceu.
+- **O carvão da tocha virou meta**, pela mesma decomposição do vidro.
+- **O fundidor funde ferro cru**: o cru sai do que a tarefa pede, e não
+  estava mais escrito no código como areia.
+- **`MinerWork` foi partido** — `MineDigging` desce, `SandGathering`
+  varre, e ele ficou com o que os dois compartilham. 690 → 459 linhas.
+- **`WorkDemand` nasceu**: a demanda da obra tinha nove parâmetros
+  posicionais, quatro do mesmo tipo.
 
 **Cadeia de materiais — a areia fechou**
 
@@ -109,6 +122,7 @@ visto:
 | **7** | **O cursor de busca por colônia** | A varredura concluindo, em vez de `still sweeping` eterno |
 | **8** | **A mobília não voltando** | Nenhuma linha `furnished the house` repetida |
 | **9** | **A cadeia da areia inteira** | meta de `SAND`, `Miner ... took` numa praia, `Smelter ... made minecraft:glass`, e a vidraça saindo do fabricante |
+| **10** | **O carvão da galeria** | `Miner ... took` de um `coal_ore` no nível −20, e a veia inteira num só ciclo |
 
 **Sem teste próprio, e a bateria só prova que nada quebrou:**
 
@@ -189,43 +203,49 @@ nenhum save conhecido tiver cabana, ela sai.
 profissões sem uma única sessão de verdade. Nada mais deveria ser
 construído antes disto.
 
-**2 — Minério na mina.** O mineiro já desce vinte blocos e não reconhece
-carvão nem ferro. **É o último elo que falta**: com a areia fechada, a
-casa de planície só depende do jogador pelas três tochas, que pedem
-carvão. Com ele, tocha e lampião saem da lista de dispensáveis.
+**2 — Um passo de "faça primeiro o que falta".** É o que sobrou da
+tocha, e não é material: o fabricante só monta o que puder montar com
+**todos** os ingredientes já no baú. A tocha pede carvão — que a mina
+agora dá — e **graveto**, que só chega por sorteio das folhas. O lampião
+pede pepita, que pede lingote, e trava do mesmo jeito. Um nível de
+recursão no `ColonySupply` fecha os dois.
 
-**3 — Regra 15, a estrada crescendo com a vila.** A colônia só constrói
+**3 — Quem pede o ferro.** O fundidor sabe fundir ferro cru desde
+08-21 e **nada abre tarefa para ele**: o lampião é mobília da Regra 21 e
+não passa pelas metas da colônia. Ou a mobília relata o que lhe falta,
+como já faz com a lã, ou o ferro fica de enfeite no baú.
+
+**4 — Regra 15, a estrada crescendo com a vila.** A colônia só constrói
 em beira de rua que já existe. Quando ela acabar, a vila para — e a
 Regra 25 só adiou isso.
 
-**4 — Regra 11, uma de cada profissão por vila.** Ficou maior com a
+**5 — Regra 11, uma de cada profissão por vila.** Ficou maior com a
 cadeia: são sete profissões e catorze vagas por colônia. Nada garante o
 piso, e a dispensa pode tirar o último de uma profissão.
 
-**5 — Quebrar os sete arquivos acima de 500 linhas.**
+**6 — Quebrar os arquivos acima de 500 linhas.**
 
 ```text
-963  VillageDetectionHandler      639  ManufacturerWork
+970  VillageDetectionHandler      639  ManufacturerWork
 766  BuilderWork                  598  BuildSiteScanner
 724  TreeHarvester                566  ColonySavedData
-690  MinerWork
 ```
 
-**`MinerWork` é agora o pior caso e o mais urgente da lista:** 580 no
-começo do dia, 690 no fim — a mina persistida e o caminho da areia
-entraram nele. São dois trabalhos diferentes morando no mesmo arquivo, e
-a divisão natural já está desenhada: descer a mina e varrer a superfície.
-`ColonySavedData` foi de 528 a 566 mesmo com o `MineSave` saindo para
-fora. Nos testes há mais três acima do teto: `LumberjackGameTest` 1571,
+**`MinerWork` saiu da lista** em 2026-08-21: chegou a 690 linhas e foi
+partido em três — `MineDigging` desce, `SandGathering` varre, e ele ficou
+com o que os dois compartilham. 459 linhas.
+
+`VillageDetectionHandler` é o pior caso e o único que passa de 900. Nos
+testes há mais três acima do teto: `LumberjackGameTest` 1571,
 `BuilderGameTest` 904, `BuildSiteGameTest` 636.
 
-**6 — Decidir o movimento do centro da colônia.** Troca de âncora e
+**7 — Decidir o movimento do centro da colônia.** Troca de âncora e
 volta a cada 30 segundos, entre 49 camas e 7. Visto em 08-18, 08-19 e
 08-20. É a ADR-003, e **espera decisão do autor**.
 
-**7 — Regra 16**, distância mínima e máxima entre construções.
+**8 — Regra 16**, distância mínima e máxima entre construções.
 
-**8 — O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de
+**9 — O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de
 travar. Toca `Task`, que é o centro, e destrava a metade do fabricante e
 a cadeia de receitas em profundidade qualquer. A areia saiu daqui: o
 `GlassDemand` faz **um** passo de decomposição, que era o que ela pedia.

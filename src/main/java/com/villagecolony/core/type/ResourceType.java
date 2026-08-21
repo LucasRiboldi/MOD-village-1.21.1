@@ -64,7 +64,16 @@ public enum ResourceType {
     GLASS(ResourceCategory.PROCESSED, ResourceGroup.NONE),
 
     /** O que o pastor traz. A cama sai daqui. */
-    WHITE_WOOL(ResourceCategory.NATURAL, ResourceGroup.WOOL);
+    WHITE_WOOL(ResourceCategory.NATURAL, ResourceGroup.WOOL),
+
+    /** O que o mineiro acha na galeria. A tocha sai daqui — 2026-08-21. */
+    COAL(ResourceCategory.NATURAL, ResourceGroup.COAL),
+
+    /** O minério de ferro, como sai da pedra: cru, e ainda não serve. */
+    RAW_IRON(ResourceCategory.NATURAL, ResourceGroup.IRON),
+
+    /** O que o fundidor devolve do ferro cru. O lampião sai daqui. */
+    IRON_INGOT(ResourceCategory.PROCESSED, ResourceGroup.NONE);
 
     private final ResourceCategory category;
     private final ResourceGroup group;
