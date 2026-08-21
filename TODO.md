@@ -179,8 +179,10 @@ visto:
   taiga, savana, nevada ou deserto nunca rodou.
 - **Um teste instável:** `theStallGuardReturnsTheTaskAndForgetsTheTree`,
   cerca de 1 falha em 4 execuções, anterior a este ciclo. Em 2026-08-21
-  falhou 2 vezes em 8 execuções, com duas mensagens diferentes — a tarefa
-  ficou em `EXECUTING` numa e em `RESERVED` na outra.
+  falhou **3 vezes em 10 execuções**, com duas mensagens diferentes — a
+  tarefa ficou em `EXECUTING` numa e em `RESERVED` nas outras duas. É o
+  item mais barato de arrumar da lista, e o único que atrapalha todo
+  ciclo.
 
 ---
 

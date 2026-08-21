@@ -231,6 +231,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | **Fundição** — areia vira vidro | 🧪 coberto por teste, nunca visto em jogo |
 | **Descascar tronco**, e montar tocha e vidraça | 🧪 coberto por teste, nunca visto em jogo |
 | **Vila de deserto constrói** | 🧪 coberto por teste, nunca visto em jogo |
+| **A mina reconhece minério** — carvão e ferro, e a veia é seguida | 🧪 coberto por teste, nunca visto em jogo |
 | Obra parada sai da frente em vez de travar a vila | 🧪 coberto por teste, nunca visto em jogo |
 | A planta se adapta ao lote — a maior que couber | 🧪 pronta, e inerte enquanto for uma casa por bioma |
 | **Colher areia**, e o vidro virando meta pela receita da vidraça | 🧪 coberto por teste, nunca visto em jogo |
@@ -242,7 +243,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Agricultura e defesa | ⬜ não começado |
 
 ```text
-431 testes unitários  ·  134 testes de jogo  ·  ./gradlew build
+469 testes unitários  ·  151 testes de jogo  ·  ./gradlew build
 ```
 
 **O que 🧪 quer dizer aqui.** A bateria roda o caso e ele passa. Não quer
@@ -276,24 +277,40 @@ a recusar, e a correção ainda não foi vista em jogo.
 
 | | Etapa | Estado |
 |---|---|---|
-| **1** | **Rodar em jogo a cadeia de produção.** Mineiro, pastor e fundidor entraram em 2026-08-20 e **nenhum foi visto trabalhando numa vila de verdade**. Junto vêm a paleta por bioma, a cabana de arenito do deserto e a planta que se adapta ao lote | 🔒 exige sessão de jogo |
-| **2** | **Regra 16 — espaço em volta da casa.** A metade da altura está feita; falta a distância mínima e máxima | 🔨 meia feita |
-| **3** | **Escolher entre as 1.180 estruturas do catálogo.** A lista está no mod; falta o critério e a conta de materiais de cada uma | 🔨 base pronta |
-| **4** | **Regra 10, metade do fabricante.** Porta, janela, cama e baú por estoque, sem depender de haver obra | 🔨 depende do `ItemRequest` |
-| **8** | **Regra 11 — uma de cada profissão por vila.** O mecanismo existe; falta a garantia e o teste. Ficou maior: são sete profissões agora, e catorze vagas por colônia | 🔨 pronto para fazer |
-| **9** | **Envelhecimento de tarefa**, para que a mais antiga não seja esquecida | 🔨 pronto para fazer |
-| **10** | **O fazendeiro e a defesa.** Duas profissões que o modelo prevê e ninguém escreveu | ⬜ não começado |
-| **11** | **O trabalhador pedir o que lhe falta**, em vez de travar | ⏸️ toca o centro do sistema |
+| **1** | **Rodar em jogo.** São **25 commits** desde a última sessão de verdade, em 2026-08-19: sete profissões, seis regras novas, a mina, a cadeia de materiais inteira e a rua que cresce. **Nada disso foi visto numa vila.** Cada regra escrita daqui em diante é mais uma coisa não verificada empilhada sobre as outras | 🔒 exige sessão de jogo |
+| **2** | **Quebrar os seis arquivos acima de 500 linhas.** `VillageDetectionHandler` tem 979 e é o pior | 🔨 pronto para fazer |
+| **3** | **O movimento do centro da colônia.** Troca de âncora e volta a cada 30 segundos, entre 49 camas e 7 — visto em 08-18, 08-19 e 08-20. É a ADR-003 | 👤 **espera decisão sua** |
+| **4** | **Regra 16 — espaço em volta da casa.** A metade da altura está feita; falta a distância mínima e máxima | 🔨 meia feita |
+| **5** | **O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de travar. Toca `Task`, que é o centro do sistema | ⏸️ decisão de arquitetura |
+| **6** | **Escolher entre as 1.180 estruturas do catálogo.** A lista está no mod; falta o critério e a conta de materiais de cada uma | 🔨 base pronta |
+| **7** | **Regra 10, metade do fabricante.** Porta, janela, cama e baú por estoque, sem depender de haver obra | 🔨 depende do `ItemRequest` |
+| **8** | **Envelhecimento de tarefa**, para que a mais antiga não seja esquecida | 🔨 pronto para fazer |
+| **9** | **O fazendeiro e a defesa.** Duas profissões que o modelo prevê e ninguém escreveu | ⬜ não começado |
 
-**Uma decisão espera o autor:** o que fazer com o centro da colônia, que
-troca de âncora e volta a cada 30 segundos — visto nos logs de 08-18 e
-08-19. É comportamento da ADR-003.
+### O que precisa ser arrumado
+
+Nada aqui impede o mod de rodar. Tudo aqui cresce se ficar calado.
+
+| | O que | Por quê |
+|---|---|---|
+| 🔴 | **Um teste de jogo instável** — `theStallGuardReturnsTheTaskAndForgetsTheTree` | Falhou **3 vezes em 10 execuções** em 08-21, com duas mensagens diferentes: a tarefa em `EXECUTING` numa e em `RESERVED` noutra. Um teste que mente às vezes é pior que um que falta |
+| 🔴 | **Uma falha não diagnosticada** — `theStoneLeavesTheWorldAndReachesTheChest` disse "a pedra não chegou ao baú" uma vez | A suspeita é o custo de ler estrutura dentro do tique; a leitura foi reduzida e não voltou a falhar. **Suspeita, não diagnóstico** |
+| 🟠 | **Seis arquivos acima de 500 linhas** no código, quatro nos testes | `LumberjackGameTest` tem 1571 |
+| 🟠 | **Regras 21, 27 e 28 se contradizem** sobre a obra esperar pela mobília | A 28 é provisória e vence hoje. Quando sair, decidir se a 21 morre junto |
+| 🟡 | **Um `.nbt` da Mojang no repositório** — cópia de `plains_small_house_1`, e sem uso desde a Regra 27 | 👤 decisão jurídica, sua |
+| 🟡 | **`VillagePalette` ficou meio morta** — `wall()` e `door()` só o `ColonyHut`, que a Regra 27 aposentou | |
+| 🟡 | **A cabana do mod continua no código**, e a Regra 27 proíbe criá-la | Deliberado: save antigo tem cabana pela metade. Sai quando nenhum save conhecido tiver uma |
+| 🟡 | **A Regra 25 está inerte** enquanto a 28 valer | "A maior planta que couber" precisa de mais de uma planta |
+| 🟡 | **A arena da bateria tem bioma fixo** de planície | Foi o que escondeu por uma semana que a vila de deserto não reconhecia a própria rua |
 
 <details>
 <summary>Etapas fechadas nos ciclos anteriores</summary>
 
 | Etapa | |
 |---|---|
+| **Regra 11 — uma de cada profissão, e a garantia com nome** | ✅ 2026-08-21 |
+| **Regra 15 — a rua cresce com a vila** | ✅ 2026-08-21 |
+| **A cadeia de materiais fechada — areia, carvão e ferro** | ✅ 2026-08-21 |
 | **Mineiro, pastor e fundidor — a cadeia de produção** | ✅ 2026-08-20 |
 | **A paleta por bioma, e a vila de deserto construindo** | ✅ 2026-08-20 |
 | **A planta se adapta ao lote — a maior que couber** | ✅ 2026-08-20 |
@@ -338,11 +355,10 @@ eles, termina sem, e eles entram sozinhos quando houver material. E
 **peça destruída não volta**: se você tirar o lampião de propósito, a
 colônia não o repõe.
 
-As casas sobem ao lado de ruas que já existem; a colônia ainda não
-pavimenta, e essa é a próxima etapa — e ficou mais apertada, porque o
-lote agora precisa estar no nível da rua e livre no volume inteiro. A
-escada ainda sai no estado padrão da planta; a porta, não — ela dá na
-rua.
+As casas sobem ao lado da rua, e **desde 2026-08-21 a colônia faz rua**:
+quando não sobra beira livre, ela calça cinco blocos a partir da ponta
+mais distante do centro. A escada ainda sai no estado padrão da planta;
+a porta, não — ela dá na rua.
 
 As pendências por prioridade estão em [`TODO.md`](TODO.md), com o que já
 foi feito, o que falta e o que espera decisão sua. A lista longa está em
@@ -353,13 +369,74 @@ sempre atual — o enunciado das 29 regras, uma a uma — em
 ---
 ## Último ciclo de desenvolvimento
 
-**2026-08-20** — dezenove commits, e o ciclo em que a colônia deixou de
-depender de você para os materiais. Começou com três defeitos vindos de
-sessões de jogo e terminou com **três profissões novas**, uma mina de
-verdade, e as casas do próprio Minecraft no lugar da cabana que o mod
-inventava.
+**2026-08-21** — nove commits, e o ciclo em que a casa de planície deixou
+de depender de você em **todos os oito materiais**. Começou pela mina no
+save e terminou com a rua crescendo sozinha.
 
-**Quatro regras novas do autor**
+**Implementado**
+
+| | |
+|---|---|
+| **A mina é da colônia, e é gravada** | A boca, o lado da galeria e até onde a picareta chegou. Uma por colônia, e não uma por mineiro |
+| **Areia, e o vidro virando meta** | A casa pede **vidraça**, e não vidro. A conta decompõe pela receita do jogo |
+| **Carvão e ferro na mina** | E a **veia é seguida**: o minério colado na parede vem antes da parede |
+| **A bancada faz o que falta** | Dois degraus de receita. A tocha pedia graveto, e ninguém fazia graveto |
+| **O lampião pede ferro** | A mobília relata o que lhe falta; o lingote vira meta da fornalha e o cru vira meta da mina |
+| **Regra 15 — a rua cresce com a vila** | Sem beira livre, a colônia calça cinco blocos a partir da ponta mais distante do centro |
+| **Regra 11 — o piso das profissões** | Sete testes onde não havia nenhum, e a garantia com nome próprio |
+
+**Corrigido**
+
+- **A vila de deserto nunca achou lote.** A rua de lá é de **arenito
+  liso**, e a busca reconhecia rua por um nome escrito no código:
+  `dirt_path`. A vila nascia, contratava, contava recurso, recebia
+  arenito do mineiro — e terminava toda varredura dizendo que não havia
+  lote. Não aparecia em teste porque a arena da bateria tem bioma fixo
+  de planície. Agora quem responde de que bloco é a rua é o **catálogo
+  do jogo**.
+- **O fundidor queimaria a areia numa tarefa de ferro.** O que entra na
+  fornalha estava escrito no código como areia; agora sai da tarefa.
+- **Um javadoc mentiroso**: o registro de construções dizia não ser
+  persistido, e é desde 08-14.
+
+**Achado no caminho**
+
+- Mover três testes para um arquivo novo derrubou a bateria de **143
+  para 140 — dizendo "todos passaram"**. Classe de gametest não
+  registrada em `fabric.mod.json` **some em silêncio**: os testes não
+  falham, eles deixam de existir. Quem acusou foi a contagem, e é por
+  isso que ela vai no relatório de todo ciclo.
+- A dispensa por falta de baú **pode** esvaziar uma profissão. O que a
+  impedia era um acidente do jeito de contar baús livres. Agora é uma
+  frase com nome.
+
+**Refatorado**
+
+- `MinerWork` 690 → 459, em três arquivos: `MineDigging` desce,
+  `SandGathering` varre, e ele ficou com o que os dois compartilham.
+- `GlassDemand` virou `WorkMaterials` quando o carvão precisou da mesma
+  conta; `WorkDemand` nasceu porque `ColonyGoals.of` chegou a nove
+  parâmetros posicionais, quatro do mesmo tipo.
+- 450 → 469 testes unitários, 134 → 151 testes de jogo.
+
+**Pendente, e dito sem suavizar**
+
+- **Nada deste ciclo foi visto em jogo**, e nada do anterior também.
+  São **25 commits** desde a última sessão de verdade.
+- **A casa nunca foi vista terminando sozinha.** Que ela possa é
+  afirmação de teste.
+- **Fechar e reabrir o mundo de verdade nunca foi feito** — a bateria
+  roda um servidor só, e é justamente o que a mina no save promete.
+- **Um teste instável e uma falha não diagnosticada**, ambos na tabela
+  acima.
+
+<details>
+<summary>2026-08-20 — o ciclo anterior, em dezenove commits</summary>
+
+O ciclo em que a colônia deixou de depender de você para os materiais, e
+em que o mod parou de inventar casa.
+
+**Cinco regras novas do autor**
 
 | | |
 |---|---|
@@ -369,62 +446,27 @@ inventava.
 | **Regra 28** | 🧪 **Provisória** — uma casa por bioma, e a obra não espera por sete peças |
 | **Regra 29** | A mina: escada, duas salas de 7×4, e galeria sem fim |
 
-**Implementado**
-
-- **O mineiro** abre uma mina de verdade — desce em escada com picareta
-  de diamante, abre sala no nível −10, desce mais dez virando, abre
-  outra no −20, e segue numa galeria sem fim. Nunca cava vila gerada
-  nem casa da colônia, e há duas portas conferindo isso.
-- **O pastor** tosquia, e a ovelha continua viva. Fecha o laço da vila:
-  casa, cama, aldeão novo, trabalhador, casa.
-- **O fundidor** faz vidro de areia, pela receita de fornalha do jogo.
-- **O fabricante** passou a descascar tronco e montar tocha e vidraça.
+- **O mineiro** abre uma mina de verdade — escada com picareta de
+  diamante, sala no −10, outra no −20, e galeria sem fim.
+- **O pastor** tosquia, e a ovelha continua viva.
+- **O fundidor** faz vidro de areia, pela receita do jogo.
 - **As casas são as do jogo.** A cabana que o mod inventava foi
-  aposentada — o que mudou não foi a casa, foi a colônia aprender a
-  minerar.
-- **A obra que espera demais sai da frente**, depois de vinte ciclos. É
-  o que torna a espera do construtor suportável.
-- **Peça de mobília destruída não volta**, e a conta vive no save.
+  aposentada.
+- **A obra que espera demais sai da frente**, depois de vinte ciclos.
 
-**Corrigido, e as três causas vieram de jogo**
+**Corrigido, e as três causas vieram de jogo:** o alvo da obra comparado
+com um id escrito no código; o cursor da busca de lote guardado pela
+posição do centro, que troca de âncora a cada trinta segundos; e o miolo
+oco da cabana oferecido como lote.
 
-- **O alvo da obra** era comparado com um id escrito no código, e a
-  pergunta envelheceu duas vezes.
-- **O cursor da busca de lote** era guardado pela posição do centro — e
-  o centro troca de âncora a cada trinta segundos.
-- **O miolo oco da cabana** era oferecido como lote: sem piso, o chão de
-  dentro é grama no nível da rua com o volume livre.
+**Achado no caminho:** `TreeHarvester.isNaturalLeaf` não conferia chunk
+descarregado e **derrubava o servidor**; `ChestDepositor.deposit` devolve
+quantos **não** couberam, e o mineiro leu ao contrário.
 
-**Achado no caminho**
+**Refatorado:** `ConstructionPlanner` 703 → 414; `LumberjackWork` 1232 →
+455, que era o pior arquivo do projeto.
 
-- `TreeHarvester.isNaturalLeaf` não conferia chunk descarregado e
-  **derrubava o servidor**.
-- `ChestDepositor.deposit` devolve quantos **não** couberam, e o mineiro
-  leu como quantos entraram.
-- O teste da forma da mina pegou **duas sobreposições** de geometria que
-  em jogo teriam passado por trabalho.
-
-**Refatorado**
-
-- `ConstructionPlanner` 703 → 414, em três arquivos.
-- `LumberjackWork` 1232 → 455, em seis. Era o pior arquivo do projeto.
-- 402 → 431 testes unitários, 119 → 134 testes de jogo.
-
-**Pendente, e dito sem suavizar**
-
-- **Nada deste ciclo foi visto em jogo.** Dezenove commits, quatro
-  regras e três profissões cobertos por teste e nunca rodados numa vila
-  de verdade.
-- **Nenhum material da casa de planície depende mais de você**, e
-  **nada disso foi visto em jogo**.
-- **O ferro do lampião fechou em 2026-08-21**, e também nunca rodou em
-  jogo: a mobília relata o que lhe falta, o lingote vira meta da fornalha
-  e o minério cru vira meta da mina.
-- **A mina é gravada desde 2026-08-20**, mas **fechar e reabrir o mundo
-  de verdade nunca foi feito**: a bateria roda um servidor só.
-- **Seis conflitos internos** estão listados em [`TODO.md`](TODO.md) —
-  regras que se contradizem, código que ficou sem uso, e um arquivo da
-  Mojang que continua no repositório e não é mais lido.
+</details>
 
 ---
 
