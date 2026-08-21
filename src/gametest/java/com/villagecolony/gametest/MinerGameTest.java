@@ -2,7 +2,11 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.core.construction.model.Mine;
+import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
@@ -16,6 +20,7 @@ import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
+import com.villagecolony.fabric.work.GlassDemand;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.MinerWork;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -28,6 +33,7 @@ import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -326,6 +332,157 @@ public class MinerGameTest implements FabricGameTest {
 
             context.complete();
         });
+    }
+
+    /**
+     * A areia sai da praia e chega ao baú — 2026-08-20.
+     *
+     * <p>O elo que ainda dependia do jogador. O fundidor sabia fundir
+     * desde a manhã deste dia, e a areia que ele fundia era a que o
+     * jogador guardava no baú: ninguém a colhia.
+     *
+     * <p><b>Areia não desce a mina</b>, e é o que este teste separa do
+     * anterior. A Regra 29 mandou o mineiro cavar fundo, e para pedra
+     * isso está certo; areia mora na praia, na duna e na margem do lago,
+     * e a vinte blocos de profundidade não há nenhuma fora do deserto. A
+     * mesma profissão, dois caminhos, e quem decide é o que a tarefa
+     * pede.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_sand",
+            tickLimit = 400)
+    public void theSandLeavesTheWorldAndReachesTheChest(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        ground(context);
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        context.setBlockState(ROCK, Blocks.SAND.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        owned.owning(villager.getUuid());
+
+        // A areia entra pela mesma porta da pedra: a tarefa é de coleta
+        // do mineiro, e o que muda é o recurso pedido.
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_STONE,
+                TaskPriority.PRODUCTION,
+                ResourceType.SAND,
+                8);
+
+        task.reserveFor(villager.getUuid());
+
+        // Raio curto pelo mesmo motivo da mina: a bateria roda arenas
+        // vizinhas no mesmo mundo, e uma varredura de 48 blocos raspa a
+        // praia do teste do lado.
+        MinerWork.shortenSandRadiusTo(NEARBY);
+
+        MinerWork.run(world, colony);
+
+        context.runAtTick(320, () -> {
+            int stored = ChestInventoryReader
+                    .read(world, context.getAbsolutePos(CHEST))
+                    .amountOfGroup(ResourceGroup.SAND);
+
+            context.assertTrue(stored > 0, "a areia não chegou ao baú");
+
+            owned.cleanUp();
+
+            MinerWork.forget(villager.getUuid());
+
+            MinerWork.restoreSandRadius();
+
+            context.complete();
+        });
+    }
+
+    /**
+     * A vidraça vira vidro pela receita do próprio jogo — 2026-08-20.
+     *
+     * <p>É a conta que fecha a cadeia, e a que pode calar sem quebrar
+     * nada: a casa de planície não pede vidro, pede <b>três vidraças</b>,
+     * e perguntar ao projeto quanto vidro falta devolvia zero. Com zero a
+     * colônia nunca abre tarefa de fundição, o fundidor fica parado e a
+     * areia não tem para quem ser colhida.
+     *
+     * <p>Seis vidros dão dezesseis vidraças, e quem diz isso é o livro de
+     * receitas do jogo — nenhum número desses está escrito no mod. Três
+     * vidraças pedem a fornada inteira: meia fornada não existe.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "glass_demand",
+            tickLimit = 20)
+    public void threePanesCostOneBatchOfGlass(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        ColonyPos here = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        VillagePalette palette = HousePlans.paletteOf(world, here);
+
+        context.assertTrue(
+                GlassDemand.glassForPanes(world, palette, 0) == 0,
+                "obra sem janela não pode pedir vidro");
+
+        int forThree = GlassDemand.glassForPanes(world, palette, 3);
+
+        context.assertTrue(
+                forThree == 6,
+                "três vidraças deviam custar uma fornada de 6 vidros, e custaram " + forThree);
+
+        // Dezessete passam de uma fornada: a segunda entra inteira.
+        int forSeventeen = GlassDemand.glassForPanes(world, palette, 17);
+
+        context.assertTrue(
+                forSeventeen == 12,
+                "dezessete vidraças deviam custar duas fornadas, e custaram " + forSeventeen);
+
+        context.complete();
+    }
+
+    /**
+     * A casa do catálogo pede vidraça com este nome exato.
+     *
+     * <p>É o elo que pode quebrar em silêncio. {@code GlassDemand}
+     * procura {@code minecraft:glass_pane} na lista de materiais da obra;
+     * se a chave da lista fosse outra, a busca devolveria zero, a colônia
+     * nunca pediria areia e <b>nada acusaria o erro</b> — nem exceção,
+     * nem log, só um fundidor parado para sempre.
+     *
+     * <p>Por isso a afirmação é sobre o nome, e sobre a casa que a Regra
+     * 27 manda construir de verdade — não sobre uma cópia no mod.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "glass_demand",
+            tickLimit = 20)
+    public void theCatalogueHouseAsksForPanesByThatName(TestContext context) {
+        ResourceId house = ResourceId.vanilla("village/plains/houses/plains_small_house_1");
+
+        Optional<Blueprint> plan = StructureBlueprintReader.read(context.getWorld(), house);
+
+        context.assertTrue(plan.isPresent(), "a casa de planície do catálogo não carregou");
+
+        int panes = plan.get().materials()
+                .getOrDefault(ResourceId.vanilla("glass_pane"), 0);
+
+        context.assertTrue(
+                panes > 0,
+                "a casa de planície não listou glass_pane — a chave da lista mudou,"
+                        + " e com ela a colônia para de pedir areia em silêncio");
+
+        context.complete();
     }
 
     /** Chão sólido, para o aldeão andar e a pedra ter em que assentar. */

@@ -227,7 +227,8 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | **Vila de deserto constrói** | 🧪 coberto por teste, nunca visto em jogo |
 | Obra parada sai da frente em vez de travar a vila | 🧪 coberto por teste, nunca visto em jogo |
 | A planta se adapta ao lote — a maior que couber | 🧪 pronta, e inerte enquanto for uma casa por bioma |
-| Colher areia, e reconhecer minério na mina | ⬜ não começado — o vidro e a luz dependem de você |
+| **Colher areia**, e o vidro virando meta pela receita da vidraça | 🧪 coberto por teste, nunca visto em jogo |
+| Reconhecer minério na mina | ⬜ não começado — a luz da casa ainda depende de você |
 | Estrada crescendo com a vila | ⬜ não começado |
 | Agricultura e defesa | ⬜ não começado |
 
@@ -267,12 +268,11 @@ a recusar, e a correção ainda não foi vista em jogo.
 | | Etapa | Estado |
 |---|---|---|
 | **1** | **Rodar em jogo a cadeia de produção.** Mineiro, pastor e fundidor entraram em 2026-08-20 e **nenhum foi visto trabalhando numa vila de verdade**. Junto vêm a paleta por bioma, a cabana de arenito do deserto e a planta que se adapta ao lote | 🔒 exige sessão de jogo |
-| **2** | **A areia não é colhida por ninguém.** O fundidor funde a areia que houver no baú, e nada a põe lá. Sem isso o vidro depende de você | 🔨 falta a meta de areia |
-| **3** | **Descascar tronco.** O último material da casa de planície que a colônia não produz. Não é receita de bancada: é machado no tronco, e pede caminho próprio | 🔨 pronto para fazer |
-| **4** | **Regra 15 — estender a estrada.** A vila só constrói em beira de rua que já existe; quando ela acabar, a colônia para de crescer | 🔨 pronto para fazer |
-| **5** | **Regra 16 — espaço em volta da casa.** A metade da altura está feita; falta a distância mínima e máxima | 🔨 meia feita |
-| **6** | **Escolher entre as 1.180 estruturas do catálogo.** A lista está no mod; falta o critério e a conta de materiais de cada uma | 🔨 base pronta |
-| **7** | **Regra 10, metade do fabricante.** Porta, janela, cama e baú por estoque, sem depender de haver obra | 🔨 depende do `ItemRequest` |
+| **2** | **Reconhecer minério na mina.** O mineiro desce vinte blocos e não vê carvão nem ferro. É o último material da casa de planície que ainda depende de você — as três tochas | 🔨 pronto para fazer |
+| **3** | **Regra 15 — estender a estrada.** A vila só constrói em beira de rua que já existe; quando ela acabar, a colônia para de crescer | 🔨 pronto para fazer |
+| **4** | **Regra 16 — espaço em volta da casa.** A metade da altura está feita; falta a distância mínima e máxima | 🔨 meia feita |
+| **5** | **Escolher entre as 1.180 estruturas do catálogo.** A lista está no mod; falta o critério e a conta de materiais de cada uma | 🔨 base pronta |
+| **6** | **Regra 10, metade do fabricante.** Porta, janela, cama e baú por estoque, sem depender de haver obra | 🔨 depende do `ItemRequest` |
 | **8** | **Regra 11 — uma de cada profissão por vila.** O mecanismo existe; falta a garantia e o teste. Ficou maior: são sete profissões agora, e catorze vagas por colônia | 🔨 pronto para fazer |
 | **9** | **Envelhecimento de tarefa**, para que a mais antiga não seja esquecida | 🔨 pronto para fazer |
 | **10** | **O fazendeiro e a defesa.** Duas profissões que o modelo prevê e ninguém escreveu | ⬜ não começado |
@@ -315,13 +315,13 @@ que ela ainda **não** produz:
 
 | Falta | Por quê |
 |---|---|
-| **Areia** | O fundidor funde a que houver no baú, e ninguém a colhe. Sem areia não há vidro |
-| **Tronco descascado** | Não é receita de bancada — é machado no tronco, e pede caminho próprio |
-| **Ferro** | O lampião pede ferro, e o ferro pede minerar fundo e fundir |
+| **Carvão** | A tocha da parede pede carvão, e o mineiro desce vinte blocos sem reconhecer minério |
+| **Ferro** | O lampião pede ferro, e o ferro pede o mesmo minério que ninguém vê |
 
-A casa de planície pede 43 pedregulhos, 16 troncos descascados e 3
-vidraças. O mineiro resolve a pedra; o tronco descascado continua seu —
-**guarde-o num baú da vila** e a obra anda. Onde a casa grande não cabe,
+A casa de planície pede 43 pedregulhos, 16 troncos descascados, 3
+vidraças e 3 tochas. O mineiro resolve a pedra; o fabricante descasca o
+tronco; a areia, o vidro e a vidraça fecharam em 2026-08-20. **A tocha
+continua sua** — guarde três num baú da vila e a obra anda. Onde a casa grande não cabe,
 a colônia levanta a cabana, que ela produz inteira sozinha.
 
 A cama e o lampião não entram nessa conta — a casa **não espera** por
@@ -406,8 +406,8 @@ inventava.
 - **Nada deste ciclo foi visto em jogo.** Dezenove commits, quatro
   regras e três profissões cobertos por teste e nunca rodados numa vila
   de verdade.
-- **A areia não é colhida por ninguém**, então o vidro ainda depende de
-  você. **Carvão e ferro** também não, então a casa sobe sem luz.
+- **Carvão e ferro** não são reconhecidos na mina, então a casa sobe sem
+  luz — as três tochas da casa de planície continuam por sua conta.
 - **A mina é gravada desde 2026-08-20**, mas **fechar e reabrir o mundo
   de verdade nunca foi feito**: a bateria roda um servidor só.
 - **Seis conflitos internos** estão listados em [`TODO.md`](TODO.md) —

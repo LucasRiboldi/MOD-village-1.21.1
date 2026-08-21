@@ -3678,14 +3678,25 @@ primeiro ciclo.
 baú, como o fabricante transforma tronco em tábua sem bancada. Pôr forno
 de verdade seria escrever bloco fora da planta.
 
+**A areia foi fechada no mesmo dia**, e a decomposição que ela pedia
+coube num passo. A casa de planície não pede vidro: pede **três
+vidraças**, e perguntar ao projeto quanto vidro falta devolvia zero — com
+zero a colônia nunca abria tarefa de fundição, o fundidor ficava parado e
+a areia não tinha para quem ser colhida. Agora a vidraça é decomposta
+pela receita do próprio jogo (seis vidros dão dezesseis vidraças), o vidro
+vira meta, e a areia sai dele: uma por vidro, descontando o que já está
+fundido. Ver `GlassDemand`.
+
+**E areia não desce a mina.** A Regra 29 mandou o mineiro cavar fundo, e
+para pedra está certo — há pedra em toda parte abaixo do chão. Areia mora
+na praia, na duna e na margem do lago, e a vinte blocos de profundidade
+não há nenhuma fora do deserto. A mesma profissão, dois caminhos, e quem
+decide é o recurso que a tarefa pede. O caminho de superfície devolveu
+função ao `RingSweep`, que tinha ficado sem quem o chamasse.
+
 **O que esta regra NÃO fecha**, e está dito para não passar por pronto:
 
 ```text
-areia            ninguém a colhe. O fundidor funde a que houver no
-                 baú, e enquanto nada a traz o vidro depende do
-                 jogador. Falta a meta, e ela pede decompor a receita
-                 da vidraça — o ItemRequest do backlog
-
 tronco           não é receita de bancada: é machado no tronco. É o
 descascado       último material da casa de planície que a colônia
                  não faz
@@ -3828,6 +3839,8 @@ a Regra 22 ao contrário.
 **O que continua travando a casa de planície, medido e não suposto.** A
 lista de materiais dela é de 149 blocos em 8 tipos:
 
+A medição original, do dia em que a barreira nasceu:
+
 ```text
  49 oak_stairs          a colônia faz, de tábua
  43 cobblestone         o mineiro traz
@@ -3841,10 +3854,23 @@ lista de materiais dela é de 149 blocos em 8 tipos:
                         AREIA
 ```
 
-**Então a casa ainda não fecha sozinha**, e por três tipos de bloco que a
-barreira não cobre. Enquanto for assim, quem quiser vê-la terminar
-guarda num baú da vila: **16 troncos descascados, 3 tochas e 3 vidraças**
-— ou areia, que o fundidor converte.
+**Duas das três fecharam no mesmo dia**, e o que sobrou é uma só:
+
+```text
+ 16 stripped_oak_log    ✅ o fabricante descasca, por conversão nominal
+  3 glass_pane          ✅ a vidraça vira vidro pela receita, o vidro
+                        vira meta, e o mineiro colhe a areia dele
+  3 wall_torch          ❌ pede carvão, e o mineiro desce vinte blocos
+                        sem reconhecer minério
+```
+
+**Então falta uma**, e é a tocha. Enquanto for assim, quem quiser ver a
+casa de planície terminar guarda **3 tochas** num baú da vila — ou
+espera o minério na mina, que é o item seguinte da fila.
+
+**Nada disto foi visto em jogo**, e a frase vale para as duas que
+fecharam: elas estão cobertas por teste e nenhuma rodou numa vila de
+verdade.
 
 Isso está dito aqui, e não descoberto na próxima sessão, porque é
 exatamente o tipo de coisa que custa uma sessão inteira quando fica
@@ -3978,10 +4004,6 @@ que a casa pede.
 ## O que ficou por fazer, e é sabido
 
 ```text
-areia            ninguém a colhe. O fundidor funde a que houver no
-                 baú, e é o único elo da cadeia que ainda depende do
-                 jogador
-
 carvão e ferro   o mineiro desce vinte blocos e não reconhece minério.
                  Sem eles, tocha e lampião ficam na lista de
                  dispensáveis da Regra 28, e a casa sobe sem luz

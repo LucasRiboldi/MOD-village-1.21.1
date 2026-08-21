@@ -12,7 +12,7 @@ discordarem, vale o Backlog.
 funcionando em jogo* são coisas diferentes, e estão separadas.
 
 ```text
-445 testes unitários  ·  135 testes de jogo  ·  29 regras do autor
+450 testes unitários  ·  138 testes de jogo  ·  29 regras do autor
 7 trabalhadores com código  ·  7 arquivos acima do teto de 500 linhas
 ```
 
@@ -44,6 +44,17 @@ funcionando em jogo* são coisas diferentes, e estão separadas.
   casa → cama → aldeão → trabalhador.
 - **Fundidor**: areia vira vidro, pela receita de fornalha do jogo.
 - **Fabricante ampliado**: descasca tronco, monta tocha e vidraça.
+
+**Cadeia de materiais — a areia fechou**
+
+- **O vidro virou meta.** A casa não pede vidro, pede **vidraça**, e
+  perguntar por vidro devolvia zero: o fundidor nunca recebia tarefa. A
+  vidraça é decomposta pela receita do jogo — seis vidros dão dezesseis
+  — e o vidro vira meta. `GlassDemand` nasceu.
+- **A areia sai do vidro que falta**, descontando o já fundido, e o
+  mineiro a colhe **na superfície**: praia, duna e margem de lago. A
+  mesma profissão, dois caminhos, e quem decide é o recurso da tarefa.
+  `SandPatch` nasceu, e o `RingSweep` voltou a ter dono.
 
 **Persistência**
 
@@ -97,6 +108,7 @@ visto:
 | **6** | **A obra parada saindo da frente** | `gives up on ... never came in 20 cycles`, seguido de `planned` |
 | **7** | **O cursor de busca por colônia** | A varredura concluindo, em vez de `still sweeping` eterno |
 | **8** | **A mobília não voltando** | Nenhuma linha `furnished the house` repetida |
+| **9** | **A cadeia da areia inteira** | meta de `SAND`, `Miner ... took` numa praia, `Smelter ... made minecraft:glass`, e a vidraça saindo do fabricante |
 
 **Sem teste próprio, e a bateria só prova que nada quebrou:**
 
@@ -177,45 +189,46 @@ nenhum save conhecido tiver cabana, ela sai.
 profissões sem uma única sessão de verdade. Nada mais deveria ser
 construído antes disto.
 
-**2 — Areia, para o vidro fechar a cadeia.** O fundidor funde a areia
-que houver no baú, e ninguém a colhe. É o único elo da cadeia de
-materiais que ainda depende do jogador.
+**2 — Minério na mina.** O mineiro já desce vinte blocos e não reconhece
+carvão nem ferro. **É o último elo que falta**: com a areia fechada, a
+casa de planície só depende do jogador pelas três tochas, que pedem
+carvão. Com ele, tocha e lampião saem da lista de dispensáveis.
 
-**3 — Minério na mina.** O mineiro já desce vinte blocos e não reconhece
-carvão nem ferro. Com eles, tocha e lampião saem da lista de dispensáveis
-e a casa fica completa.
-
-**4 — Regra 15, a estrada crescendo com a vila.** A colônia só constrói
+**3 — Regra 15, a estrada crescendo com a vila.** A colônia só constrói
 em beira de rua que já existe. Quando ela acabar, a vila para — e a
 Regra 25 só adiou isso.
 
-**5 — Regra 11, uma de cada profissão por vila.** Ficou maior com a
+**4 — Regra 11, uma de cada profissão por vila.** Ficou maior com a
 cadeia: são sete profissões e catorze vagas por colônia. Nada garante o
 piso, e a dispensa pode tirar o último de uma profissão.
 
-**6 — Quebrar os sete arquivos acima de 500 linhas.**
+**5 — Quebrar os sete arquivos acima de 500 linhas.**
 
 ```text
-963  VillageDetectionHandler      598  BuildSiteScanner
-766  BuilderWork                  586  MinerWork
+963  VillageDetectionHandler      639  ManufacturerWork
+766  BuilderWork                  598  BuildSiteScanner
 724  TreeHarvester                566  ColonySavedData
-639  ManufacturerWork
+690  MinerWork
 ```
 
-Os dois últimos **cresceram** ao gravar a mina — 580→586 e 528→566 —
-mesmo com a serialização saindo para o `MineSave`. Nos testes há mais
-três: `LumberjackGameTest` 1571, `BuilderGameTest` 904,
-`BuildSiteGameTest` 636.
+**`MinerWork` é agora o pior caso e o mais urgente da lista:** 580 no
+começo do dia, 690 no fim — a mina persistida e o caminho da areia
+entraram nele. São dois trabalhos diferentes morando no mesmo arquivo, e
+a divisão natural já está desenhada: descer a mina e varrer a superfície.
+`ColonySavedData` foi de 528 a 566 mesmo com o `MineSave` saindo para
+fora. Nos testes há mais três acima do teto: `LumberjackGameTest` 1571,
+`BuilderGameTest` 904, `BuildSiteGameTest` 636.
 
-**7 — Decidir o movimento do centro da colônia.** Troca de âncora e
+**6 — Decidir o movimento do centro da colônia.** Troca de âncora e
 volta a cada 30 segundos, entre 49 camas e 7. Visto em 08-18, 08-19 e
 08-20. É a ADR-003, e **espera decisão do autor**.
 
-**8 — Regra 16**, distância mínima e máxima entre construções.
+**7 — Regra 16**, distância mínima e máxima entre construções.
 
-**9 — O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de
-travar. Toca `Task`, que é o centro, e destrava a areia, a metade do
-fabricante e a cadeia de receitas.
+**8 — O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de
+travar. Toca `Task`, que é o centro, e destrava a metade do fabricante e
+a cadeia de receitas em profundidade qualquer. A areia saiu daqui: o
+`GlassDemand` faz **um** passo de decomposição, que era o que ela pedia.
 
 ---
 

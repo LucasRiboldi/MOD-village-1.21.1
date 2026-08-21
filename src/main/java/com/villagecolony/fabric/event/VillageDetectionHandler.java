@@ -32,6 +32,7 @@ import com.villagecolony.fabric.work.HouseFurnishing;
 import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
+import com.villagecolony.fabric.work.GlassDemand;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.BuilderWork;
@@ -421,12 +422,18 @@ public final class VillageDetectionHandler {
 
         int stoneForWork = ConstructionPlanner.materialNeededBy(palette.stone(), colony);
 
+        // O vidro da obra, com a vidraça já decomposta pela receita do
+        // jogo — 2026-08-20. A casa não pede vidro, pede vidraça, e
+        // perguntar por vidro devolvia zero: o fundidor nunca recebia
+        // tarefa e a areia não tinha para quem ser colhida.
+        int glassForWork = GlassDemand.of(overworld, palette, colony);
+
         int assigned = ColonyCycle.run(
                 colony.id(),
                 survey.resources().total(),
                 ColonyGoals.of(
                         colony, survey.resources().total(), room, plankRoom, planksForWork,
-                        stone, stoneForWork, woolWanted(colony)),
+                        stone, stoneForWork, woolWanted(colony), glassForWork),
                 VillageColonyMod.TASKS,
                 VillageColonyMod.WORKERS,
                 VillageColonyMod.STORAGES::hasStorage);

@@ -145,6 +145,44 @@ public final class ColonyGoals {
             int stoneForWork,
             int woolForBeds) {
 
+        return of(
+                colony, owned, woodRoom, plankRoom, planksForWork,
+                stone, stoneForWork, woolForBeds, 0);
+    }
+
+    /**
+     * O mesmo, mais o vidro que a obra pede — e a areia dele.
+     *
+     * <p><b>Duas metas de uma vez, e é o elo que faltava.</b> Até esta
+     * linha o vidro nunca era meta: a colônia tinha um fundidor que sabia
+     * fundir e nunca recebia tarefa, e a areia não tinha para quem ser
+     * colhida. O único material da cadeia que ainda dependia do jogador.
+     *
+     * <p>A areia é <b>derivada</b>, e não recebida de fora: uma areia por
+     * vidro, que é o que a fornalha do jogo faz. Mesmo espírito das três
+     * lãs por cama — quando a conta é a receita do jogo e não uma medida
+     * do mundo, ela cabe aqui.
+     *
+     * <p><b>E é a areia que falta, não a que a obra pede.</b> Pedir areia
+     * pelo tamanho da janela ignoraria o vidro já fundido, e a colônia
+     * continuaria raspando a praia com o baú cheio de vidro. Desconta-se
+     * o que já está guardado, e a meta seca sozinha quando o fundidor
+     * alcança a obra.
+     *
+     * @param glassForWork quanto vidro a obra aberta ainda consome, já
+     *     com a vidraça decomposta pela receita. Ver {@code GlassDemand}
+     */
+    public static Map<ResourceType, Integer> of(
+            Colony colony,
+            ResourceTally owned,
+            int woodRoom,
+            int plankRoom,
+            int planksForWork,
+            ResourceType stone,
+            int stoneForWork,
+            int woolForBeds,
+            int glassForWork) {
+
         Objects.requireNonNull(colony, "colony");
         Objects.requireNonNull(owned, "owned");
 
@@ -204,6 +242,16 @@ public final class ColonyGoals {
 
         if (woolForBeds > 0) {
             goals.put(ResourceType.WHITE_WOOL, woolForBeds);
+        }
+
+        if (glassForWork > 0) {
+            goals.put(ResourceType.GLASS, glassForWork);
+
+            int glassMissing = glassForWork - owned.amountOf(ResourceType.GLASS);
+
+            if (glassMissing > 0) {
+                goals.put(ResourceType.SAND, glassMissing);
+            }
         }
 
         return Map.copyOf(goals);

@@ -294,6 +294,79 @@ class ColonyGoalsTest {
         assertEquals(4, goal.get(ResourceType.OAK_PLANKS));
     }
 
+    /**
+     * O vidro da obra vira meta, e a areia dele junto — 2026-08-20.
+     *
+     * <p>O elo que faltava na cadeia. Antes desta linha o vidro nunca era
+     * meta: a colônia tinha um fundidor que sabia fundir e nunca recebia
+     * tarefa, e a areia não tinha para quem ser colhida.
+     */
+    @Test
+    void theGlassTheWorkWantsAsksForSandToo() {
+        Map<ResourceType, Integer> goal = withGlassDemand(
+                ResourceTally.of(new EnumMap<>(ResourceType.class)), 6);
+
+        assertEquals(6, goal.get(ResourceType.GLASS));
+        assertEquals(6, goal.get(ResourceType.SAND));
+    }
+
+    /**
+     * A areia que se pede é a que falta, e não a que a janela custa.
+     *
+     * <p>Pedir areia pelo tamanho da obra ignoraria o vidro já fundido, e
+     * a colônia continuaria raspando a praia com o baú cheio de vidro.
+     */
+    @Test
+    void theSandGoalDiscountsTheGlassAlreadyMade() {
+        Map<ResourceType, Integer> goal = withGlassDemand(owned(ResourceType.GLASS, 4), 6);
+
+        assertEquals(6, goal.get(ResourceType.GLASS));
+        assertEquals(2, goal.get(ResourceType.SAND));
+    }
+
+    /** Fundido o bastante, a areia sai da lista sozinha. */
+    @Test
+    void theSandGoalDriesUpWhenTheGlassIsThere() {
+        Map<ResourceType, Integer> goal = withGlassDemand(owned(ResourceType.GLASS, 6), 6);
+
+        assertFalse(goal.containsKey(ResourceType.SAND));
+        assertEquals(6, goal.get(ResourceType.GLASS));
+    }
+
+    /**
+     * Sem janela na obra, nem vidro nem areia entram.
+     *
+     * <p>A cabana de deserto não tem janela, e uma meta de areia ali
+     * mandaria o mineiro raspar a duna por nada.
+     */
+    @Test
+    void aWorkWithoutWindowsAsksForNeither() {
+        Map<ResourceType, Integer> goal = withGlassDemand(
+                ResourceTally.of(new EnumMap<>(ResourceType.class)), 0);
+
+        assertFalse(goal.containsKey(ResourceType.GLASS));
+        assertFalse(goal.containsKey(ResourceType.SAND));
+    }
+
+    /** A areia é meta de coleta, e o vidro é de fundição. */
+    @Test
+    void theSandIsStillMissingWhileNoOneBroughtIt() {
+        ResourceTally stock = owned(ResourceType.SAND, 2);
+
+        Map<ResourceType, Integer> missing = ResourceDemand.deficit(
+                withGlassDemand(stock, 6), stock);
+
+        assertEquals(4, missing.get(ResourceType.SAND));
+    }
+
+    private static Map<ResourceType, Integer> withGlassDemand(
+            ResourceTally stock, int glassForWork) {
+
+        return ColonyGoals.of(
+                colony(), stock, 0, 0, 0,
+                ResourceType.COBBLESTONE, 0, 0, glassForWork);
+    }
+
     @Test
     void aNegativeWorkDemandIsRefused() {
         assertThrows(IllegalArgumentException.class,

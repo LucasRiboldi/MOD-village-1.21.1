@@ -14,11 +14,14 @@ import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.BlockBreakTime;
 import com.villagecolony.fabric.integration.ChestDepositor;
+import com.villagecolony.fabric.integration.RingSweep;
+import com.villagecolony.fabric.integration.SandPatch;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
@@ -117,6 +120,32 @@ public final class MinerWork {
     }
 
     /**
+     * Até onde se procura areia em volta da vila.
+     *
+     * <p>Areia não se minera fundo: ela mora na praia, na duna e na
+     * margem do lago, e a vinte blocos de profundidade não há nenhuma
+     * fora do deserto. Este raio é o da superfície, e é o mesmo que o
+     * mineiro de afloramento usava antes de a Regra 29 mandá-lo descer.
+     */
+    private static final int SAND_RADIUS = 48;
+
+    private static int sandRadius = SAND_RADIUS;
+
+    /** Encurta a busca de areia. Só os testes precisam disso. */
+    public static void shortenSandRadiusTo(int blocks) {
+        if (blocks <= 0) {
+            throw new IllegalArgumentException("Radius must be positive: " + blocks);
+        }
+
+        sandRadius = blocks;
+    }
+
+    /** Devolve o raio ao valor de jogo. */
+    public static void restoreSandRadius() {
+        sandRadius = SAND_RADIUS;
+    }
+
+    /**
      * Quantos tiques de expediente sem avanço antes de largar a pedra.
      *
      * <p>Mesma razão do guarda do lenhador: um aldeão que anda para
@@ -128,6 +157,15 @@ public final class MinerWork {
     private static final Map<UUID, Job> JOBS = new HashMap<>();
 
     private static final String SUBJECT = "miner";
+
+    /**
+     * O assunto da busca de areia, separado do da mineração.
+     *
+     * <p>A chave do {@link IdleLog} inclui o assunto, e é de propósito:
+     * um mineiro sem tarefa e um mineiro que não acha areia são dois
+     * silêncios diferentes, e um calaria o outro se dividissem a chave.
+     */
+    private static final String SAND_SUBJECT = "miner sand";
 
     /** A pedra em curso, e o quanto dela já saiu. */
     private static final class Job {
@@ -311,6 +349,12 @@ public final class MinerWork {
     private static boolean startNextStone(
             ServerWorld world, UUID workerId, Job job, VillagerEntity villager) {
 
+        // Areia não está lá embaixo — 2026-08-20. A mesma profissão, dois
+        // caminhos, e quem decide é o que a tarefa pede.
+        if (job.task.targetResource().group() == ResourceGroup.SAND) {
+            return startNextSand(world, workerId, job);
+        }
+
         // A mina é da colônia, e não deste mineiro: o segundo a descer
         // continua a mesma escada, e a que o save trouxe já vem com a
         // fronteira de ontem.
@@ -387,6 +431,60 @@ public final class MinerWork {
 
             return true;
         }
+
+        return true;
+    }
+
+    /**
+     * A próxima areia exposta em volta da vila.
+     *
+     * <p><b>Por que a areia não desce a mina.</b> A Regra 29 mandou o
+     * mineiro cavar fundo, e para pedra isso é certo: há pedra em toda
+     * parte abaixo do chão. Areia é o contrário — praia, duna e margem de
+     * lago, e a vinte blocos de profundidade não há nenhuma fora do
+     * deserto. Descer atrás dela seria cavar vinte blocos para não achar.
+     *
+     * <p>É a espiral do {@link RingSweep}, e é ela que volta a ter dono:
+     * a varredura nasceu para o mineiro de afloramento que a mina
+     * aposentou no mesmo dia, e ficou sem quem a chamasse.
+     *
+     * <p>Vazio não quer dizer "não há areia": pode ser o orçamento da
+     * passagem acabando no meio do raio. Quem sabe a diferença é o
+     * {@code RingSweep.pausedAt}, e ela vai para o log — dizer "não há"
+     * quando se quer dizer "não terminei de olhar" é o log mentindo
+     * justamente onde ele serve.
+     */
+    private static boolean startNextSand(ServerWorld world, UUID workerId, Job job) {
+        Optional<BlockPos> found = RingSweep.around(
+                workerId,
+                job.center,
+                sandRadius,
+                column -> SandPatch.in(world, column, job.center.getY()));
+
+        if (found.isEmpty()) {
+            // Pelo IdleLog, e não direto no logger: uma varredura de raio
+            // 48 são dez passagens, e dizer "não achei" em cada uma daria
+            // duas linhas por segundo numa vila sem praia. Fala na
+            // primeira vez e cala enquanto o motivo não mudar.
+            IdleLog.record(
+                    job.task.colonyId(),
+                    SAND_SUBJECT,
+                    RingSweep.pausedAt(workerId).isPresent()
+                            ? IdleReason.SWEEP_INCOMPLETE
+                            : IdleReason.NO_TARGET,
+                    "sand within " + sandRadius + " blocks");
+
+            return true;
+        }
+
+        IdleLog.clear(job.task.colonyId(), SAND_SUBJECT);
+
+        job.target = found.get();
+        job.progress = 0;
+        job.required = 0;
+        job.stalled = 0;
+
+        WorkTargets.set(workerId, job.target);
 
         return true;
     }
@@ -543,6 +641,11 @@ public final class MinerWork {
         job.task.release();
 
         release(workerId, job);
+
+        // O cursor da varredura de areia sai junto: sem isso a passagem
+        // seguinte reencontraria exatamente a mesma areia inalcançável,
+        // que é a roda que a Regra 9 fechou do lado do lenhador.
+        RingSweep.forget(workerId);
     }
 
     private static boolean isWithinReach(VillagerEntity villager, BlockPos target) {
@@ -565,6 +668,7 @@ public final class MinerWork {
         JOBS.remove(workerId);
 
         WorkTargets.clear(workerId);
+        RingSweep.forget(workerId);
     }
 
     /** Esvazia o registro. Chamado ao parar o servidor. */
