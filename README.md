@@ -236,7 +236,8 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | **A bancada faz o que falta** — o graveto da tocha sai da tábua | 🧪 coberto por teste, nunca visto em jogo |
 | **O lampião pede ferro**, e o pedido chega à fornalha e à mina | 🧪 coberto por teste, nunca visto em jogo |
 | **Carvão e ferro na mina**, com a veia seguida até acabar | 🧪 coberto por teste, nunca visto em jogo |
-| Estrada crescendo com a vila | ⬜ não começado |
+| **A rua cresce com a vila** — sem beira livre, a colônia calça o trecho seguinte | 🧪 coberto por teste, nunca visto em jogo |
+| **A rua do deserto é reconhecida** — é de arenito liso, e a vila de lá nunca achou lote | 🧪 coberto por teste, nunca visto em jogo |
 | Agricultura e defesa | ⬜ não começado |
 
 ```text
@@ -275,10 +276,9 @@ a recusar, e a correção ainda não foi vista em jogo.
 | | Etapa | Estado |
 |---|---|---|
 | **1** | **Rodar em jogo a cadeia de produção.** Mineiro, pastor e fundidor entraram em 2026-08-20 e **nenhum foi visto trabalhando numa vila de verdade**. Junto vêm a paleta por bioma, a cabana de arenito do deserto e a planta que se adapta ao lote | 🔒 exige sessão de jogo |
-| **2** | **Regra 15 — estender a estrada.** A vila só constrói em beira de rua que já existe; quando ela acabar, a colônia para de crescer | 🔨 pronto para fazer |
-| **3** | **Regra 16 — espaço em volta da casa.** A metade da altura está feita; falta a distância mínima e máxima | 🔨 meia feita |
-| **4** | **Escolher entre as 1.180 estruturas do catálogo.** A lista está no mod; falta o critério e a conta de materiais de cada uma | 🔨 base pronta |
-| **5** | **Regra 10, metade do fabricante.** Porta, janela, cama e baú por estoque, sem depender de haver obra | 🔨 depende do `ItemRequest` |
+| **2** | **Regra 16 — espaço em volta da casa.** A metade da altura está feita; falta a distância mínima e máxima | 🔨 meia feita |
+| **3** | **Escolher entre as 1.180 estruturas do catálogo.** A lista está no mod; falta o critério e a conta de materiais de cada uma | 🔨 base pronta |
+| **4** | **Regra 10, metade do fabricante.** Porta, janela, cama e baú por estoque, sem depender de haver obra | 🔨 depende do `ItemRequest` |
 | **8** | **Regra 11 — uma de cada profissão por vila.** O mecanismo existe; falta a garantia e o teste. Ficou maior: são sete profissões agora, e catorze vagas por colônia | 🔨 pronto para fazer |
 | **9** | **Envelhecimento de tarefa**, para que a mais antiga não seja esquecida | 🔨 pronto para fazer |
 | **10** | **O fazendeiro e a defesa.** Duas profissões que o modelo prevê e ninguém escreveu | ⬜ não começado |

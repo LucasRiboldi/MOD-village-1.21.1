@@ -2150,7 +2150,7 @@ Regra 12  o centro fica em bloco que existe    08-15, feita em 08-15
 Regra 13  a obra do MVP é uma que a colônia    08-15, feita em 08-15
           consiga fazer
 Regra 14  o construtor alcança o alto da obra   08-18, feita em 08-18
-Regra 15  a estrada cresce com a vila           08-18, a implementar
+Regra 15  a estrada cresce com a vila           08-18, feita em 08-21.
 Regra 16  espaço em volta de cada casa          08-18, meia feita
 Regra 17  a casa se abre para a estrada         08-19, feita em 08-19
 Regra 18  o dia inteiro é expediente            08-19, feita em 08-19
@@ -3010,6 +3010,28 @@ Ordem que não pode inverter: **estrada primeiro, casa ligada a ela**.
 A regra do autor de 08-14 sobrevive inteira — o que muda é que a
 estrada passou a ser algo que a colônia produz, e não só algo que ela
 encontra.
+
+**Feita em 2026-08-21**, e com duas escolhas que valem registro.
+
+**A ponta sai da varredura que já acontece.** Procurar a ponta da rua
+numa varredura própria custaria o raio de 64 inteiro — dezessete
+passagens de mil colunas, oito minutos e meio de relógio — logo depois
+da varredura de lote que acabou de falhar percorrendo exatamente as
+mesmas colunas. Então quem acha a ponta é a busca de lote: ela já visita
+cada coluna e já pergunta se aquilo é rua, e o que se acrescenta é uma
+pergunta a mais nas poucas colunas que **são**. A ponta mais distante
+fica guardada para quando a varredura terminar sem lote.
+
+**Calçar não custa material**, como o Backlog decidiu, e não abre
+projeto. O `Project-State` de 08-18 dizia "abre projeto, consome
+material"; o Backlog dizia o contrário, e o TODO manda o Backlog vencer.
+O que a regra ganha com isso é simplicidade: a colônia não fica
+esperando terra num baú para poder crescer.
+
+**O ritmo em jogo, e é lento de propósito:** a rua só cresce quando a
+varredura de 64 blocos **termina** sem lote — dezessete ciclos, cerca de
+oito minutos e meio. É o preço de a regra só agir quando a vila
+realmente não tem mais onde construir.
 
 ---
 

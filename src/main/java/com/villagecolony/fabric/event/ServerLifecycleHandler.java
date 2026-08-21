@@ -14,6 +14,7 @@ import com.villagecolony.data.save.ColonySavedData;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestMarker;
 import com.villagecolony.fabric.integration.TreeScanner;
+import com.villagecolony.fabric.integration.RoadExtension;
 import com.villagecolony.fabric.integration.VillageRoad;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
@@ -75,6 +76,7 @@ public final class ServerLifecycleHandler {
         ChestMarker.clearAll();
         TreeScanner.clearAll();
         VillageRoad.clearAll();
+        RoadExtension.clearAll();
         BuildSiteScanner.clearAll();
         HouseFurnishing.clearAll();
         VillageDetectionHandler.clearPending();
@@ -193,6 +195,7 @@ public final class ServerLifecycleHandler {
         ChestMarker.clearAll();
         TreeScanner.clearAll();
         VillageRoad.clearAll();
+        RoadExtension.clearAll();
         BuildSiteScanner.clearAll();
         HouseFurnishing.clearAll();
         VillageDetectionHandler.clearPending();

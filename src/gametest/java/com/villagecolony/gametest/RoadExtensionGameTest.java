@@ -1,0 +1,246 @@
+package com.villagecolony.gametest;
+
+import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.storage.model.WorkerStorage;
+import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.fabric.integration.RoadExtension;
+import com.villagecolony.fabric.work.ConstructionPlanner;
+import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.block.Blocks;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.test.GameTest;
+import net.minecraft.test.TestContext;
+import net.minecraft.util.math.BlockPos;
+
+import java.util.UUID;
+
+/**
+ * A rua cresce com a vila — a Regra 15, 2026-08-21.
+ *
+ * <p><b>O "para" que esta regra tira.</b> O cabeçalho do
+ * {@code BuildSiteScanner} dizia desde 08-14: "a vila cresce enquanto
+ * houver beira de rua livre, e para quando não houver". Uma vila que
+ * ocupasse toda a beira da rua que o jogo gerou parava de crescer para
+ * sempre, e o log dizia apenas que não havia lote — o que era verdade, e
+ * escondia que a colônia podia fazer um.
+ *
+ * <p><b>O cenário destes testes é uma faixa de um bloco de largura.</b> É
+ * o jeito mais direto de montar uma vila sem beira livre: a rua existe, e
+ * não há nenhum lugar plano ao lado dela onde uma casa caiba. Foi para
+ * exatamente esse caso que a regra foi escrita.
+ */
+public class RoadExtensionGameTest implements FabricGameTest {
+
+    /** Curto o bastante para a varredura caber numa passagem só. */
+    private static final int RADIUS = 3;
+
+    /** Uma casa de dois por dois, que não cabe numa faixa de um. */
+    private static final ColonyPos SMALL_HOUSE = new ColonyPos(2, 3, 2);
+
+    /** Onde a rua começa. É daqui que a colônia mede a distância. */
+    private static final BlockPos ROAD_START = new BlockPos(2, 1, 2);
+
+    /** A ponta da rua: daqui em diante é terra por calçar. */
+    private static final BlockPos ROAD_END = new BlockPos(4, 1, 2);
+
+    /**
+     * Sem beira livre, a colônia calça o trecho seguinte.
+     *
+     * <p>A ponta escolhida é a <b>mais distante do centro</b>, e o cenário
+     * tem duas: a rua acaba dos dois lados, e o começo dela está a zero do
+     * centro enquanto o fim está a quatro. Estrada que cresce pelo meio
+     * racha a vila, e é por isso que a distância decide.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_extension")
+    public void withoutAFreeLotTheRoadGrows(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        strip(context);
+
+        // A varredura é quem anota a ponta, e é ela que precisa falhar:
+        // é o "não há mais lote" dela que autoriza a rua a crescer.
+        context.assertTrue(
+                BuildSiteScanner.find(
+                        context.getWorld(),
+                        colony,
+                        MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
+                        RADIUS,
+                        SMALL_HOUSE).isEmpty(),
+                "a faixa de um bloco não podia ter cabido uma casa de dois");
+
+        RoadExtension.Outcome outcome = RoadExtension.extend(
+                context.getWorld(), colony, ResourceId.vanilla("dirt_path"));
+
+        context.assertTrue(
+                outcome == RoadExtension.Outcome.EXTENDED,
+                "a rua não cresceu: " + outcome);
+
+        for (int step = 1; step <= 3; step++) {
+            BlockPos laid = ROAD_END.add(step, 0, 0);
+
+            context.assertTrue(
+                    context.getBlockState(laid).isOf(Blocks.DIRT_PATH),
+                    "o bloco " + step + " depois da ponta não virou rua");
+        }
+
+        context.complete();
+    }
+
+    /**
+     * A rua não cresce enquanto houver onde construir.
+     *
+     * <p>É a metade que impede a regra de virar outra coisa: rua que
+     * cresce sozinha vira rua sem nada em volta. A colônia só calça
+     * quando a varredura inteira terminou sem lote, e uma que ache lote
+     * apaga a ponta que tinha anotado.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_extension")
+    public void withAFreeLotTheRoadStaysAsItIs(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        // Chão largo em volta: agora há beira de rua de sobra.
+        for (int dx = -RADIUS; dx <= RADIUS; dx++) {
+            for (int dz = -RADIUS; dz <= RADIUS; dz++) {
+                context.setBlockState(
+                        ROAD_START.add(dx, 0, dz), Blocks.GRASS_BLOCK.getDefaultState());
+            }
+        }
+
+        for (int step = 0; step <= 2; step++) {
+            context.setBlockState(
+                    ROAD_START.add(step, 0, 0), Blocks.DIRT_PATH.getDefaultState());
+        }
+
+        context.assertTrue(
+                BuildSiteScanner.find(
+                        context.getWorld(),
+                        colony,
+                        MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
+                        RADIUS,
+                        SMALL_HOUSE).isPresent(),
+                "o cenário não montou: era para haver lote ao lado da rua");
+
+        context.assertTrue(
+                RoadExtension.extend(
+                        context.getWorld(), colony, ResourceId.vanilla("dirt_path"))
+                        == RoadExtension.Outcome.NO_END,
+                "a rua cresceu com a vila ainda tendo onde construir");
+
+        context.complete();
+    }
+
+    /**
+     * Rua não se prolonga sobre o que já está de pé.
+     *
+     * <p>A Regra 3, e aqui ela morde: a vila gerada é feita de bloco que
+     * passaria por chão. Uma ponta que dê contra pedra para de calçar em
+     * vez de cavar.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_extension")
+    public void theRoadStopsAtWhatItMayNotPave(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        strip(context);
+
+        // Pedra à frente da ponta: não é chão de vila, e não se calça.
+        context.setBlockState(ROAD_END.add(1, 0, 0), Blocks.STONE.getDefaultState());
+
+        BuildSiteScanner.find(
+                context.getWorld(),
+                colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        context.assertTrue(
+                RoadExtension.extend(
+                        context.getWorld(), colony, ResourceId.vanilla("dirt_path"))
+                        == RoadExtension.Outcome.BLOCKED,
+                "a rua passou por cima da pedra");
+
+        context.assertTrue(
+                context.getBlockState(ROAD_END.add(1, 0, 0)).isOf(Blocks.STONE),
+                "a pedra virou rua");
+
+        context.complete();
+    }
+
+    /**
+     * O planejador manda calçar quando não tem onde construir.
+     *
+     * <p>Os testes acima provam a mecânica; este prova a <b>ligação</b>.
+     * A Regra 15 mora numa linha só do planejamento — a que antes se
+     * limitava a dizer "no free lot beside a road" e desistir —, e uma
+     * ligação que não estivesse ligada passaria por todos os outros.
+     *
+     * <p>O raio é encurtado porque a regra só age quando a varredura
+     * <b>termina</b>: sessenta e quatro blocos são dezessete passagens de
+     * mil colunas, e um teste que quisesse ver a rua crescer teria de
+     * rodar as dezessete — sobre as arenas dos vizinhos.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_planner")
+    public void thePlannerIsWhatOrdersThePaving(TestContext context) {
+        strip(context);
+
+        ColonyPos where = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START));
+
+        Colony colony = Colony.create(UUID.randomUUID(), where);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity villager = context.spawnEntity(
+                EntityType.VILLAGER, ROAD_START.add(0, 1, 0));
+        villager.setBreedingAge(0);
+
+        VillageColonyMod.WORKERS
+                .register(villager.getUuid(), colony.id())
+                .assign(ProfessionType.BUILDER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), where));
+
+        owned.owning(villager.getUuid());
+
+        ConstructionPlanner.shortenSearchTo(RADIUS);
+
+        try {
+            ConstructionPlanner.plan(context.getWorld(), colony);
+
+            context.assertTrue(
+                    context.getBlockState(ROAD_END.add(1, 0, 0)).isOf(Blocks.DIRT_PATH),
+                    "o planejamento terminou sem lote e não mandou calçar nada");
+        } finally {
+            ConstructionPlanner.restoreSearch();
+
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * Uma faixa de um bloco: rua até a ponta, terra depois dela.
+     *
+     * <p>Estreita de propósito. É o que garante que não há lote: uma casa
+     * de dois por dois não cabe em largura um, e a varredura termina o
+     * raio inteiro sem achar nada — que é a condição da regra.
+     */
+    private static void strip(TestContext context) {
+        for (int step = 0; step <= 2; step++) {
+            context.setBlockState(
+                    ROAD_START.add(step, 0, 0), Blocks.DIRT_PATH.getDefaultState());
+        }
+
+        for (int step = 1; step <= 3; step++) {
+            context.setBlockState(
+                    ROAD_END.add(step, 0, 0), Blocks.DIRT.getDefaultState());
+        }
+    }
+}

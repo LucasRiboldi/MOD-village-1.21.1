@@ -198,6 +198,12 @@ public final class BuildSiteScanner {
             startRing = 0;
         }
 
+        if (startRing == 0) {
+            // Varredura nova: a ponta que a anterior anotou pode não
+            // existir mais, e o mundo é a única fonte que continua certa.
+            RoadExtension.forgetEnds(colonyId);
+        }
+
         for (int ring = startRing; ring <= radius; ring++) {
             for (int dx = -ring; dx <= ring; dx++) {
                 for (int dz = -ring; dz <= ring; dz++) {
@@ -216,10 +222,16 @@ public final class BuildSiteScanner {
                     }
 
                     Optional<Site> site = siteBesideRoadAt(
-                            world, from.getX() + dx, from.getZ() + dz, from.getY(), plans);
+                            world, colonyId, from,
+                            from.getX() + dx, from.getZ() + dz, from.getY(), plans);
 
                     if (site.isPresent()) {
                         NEXT_RING.remove(colonyId);
+
+                        // Há lote: a rua não precisa crescer, e a ponta
+                        // anotada até aqui sai. A Regra 15 é o que fazer
+                        // quando NÃO há.
+                        RoadExtension.forgetEnds(colonyId);
 
                         return site;
                     }
@@ -316,7 +328,8 @@ public final class BuildSiteScanner {
      * diferente a cada sessão, o que é ruim de depurar.
      */
     private static Optional<Site> siteBesideRoadAt(
-            ServerWorld world, int x, int z, int aroundY, List<ColonyPos> plans) {
+            ServerWorld world, UUID colonyId, BlockPos center,
+            int x, int z, int aroundY, List<ColonyPos> plans) {
 
         Optional<BlockPos> ground = groundInColumn(world, x, z, aroundY);
 
@@ -327,6 +340,12 @@ public final class BuildSiteScanner {
         if (ground.isEmpty() || !VillageRoad.isPaving(world, world.getBlockState(ground.get()))) {
             return Optional.empty();
         }
+
+        // A Regra 15 pega carona aqui — 2026-08-21. Esta coluna é rua, e
+        // esta varredura é a única que passa por todas elas. Perguntar
+        // agora se ela é ponta custa algumas leituras nas poucas colunas
+        // calçadas; perguntar depois custaria o raio inteiro de novo.
+        RoadExtension.consider(world, colonyId, ground.get(), center);
 
         // A altura da rua, que a Regra 19 usa como régua do lote.
         int roadY = ground.get().getY();
@@ -592,7 +611,7 @@ public final class BuildSiteScanner {
      * alguém. O caminho de terra fica de fora de propósito — a casa
      * encosta na rua, não sobe em cima dela.
      */
-    private static boolean isNaturalGround(BlockState state) {
+    static boolean isNaturalGround(BlockState state) {
         return state.isOf(Blocks.GRASS_BLOCK)
                 || state.isOf(Blocks.DIRT)
                 || state.isOf(Blocks.COARSE_DIRT)

@@ -17,6 +17,8 @@ import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.VillageRoad;
+import com.villagecolony.fabric.integration.RoadExtension;
 import com.villagecolony.fabric.integration.SitePreparation;
 import net.minecraft.block.Block;
 import net.minecraft.server.world.ServerWorld;
@@ -74,6 +76,32 @@ public final class ConstructionPlanner {
      * precisavam da mesma regra.
      */
     private static final String SUBJECT = "building";
+
+    /**
+     * Até onde a colônia procura lote. É o raio da vila, menos nos testes.
+     *
+     * <p>A bateria roda arenas lado a lado no mesmo mundo, e uma
+     * varredura de 64 blocos sai da arena e acha a rua do teste vizinho.
+     * E há um motivo prático junto: 64 são dezessete passagens de mil
+     * colunas, e a Regra 15 só age quando a varredura <b>termina</b> —
+     * um teste que quisesse ver a rua crescer teria de rodar as
+     * dezessete.
+     */
+    private static int searchRadius = VillageDetector.SEARCH_RADIUS;
+
+    /** Encurta a busca de lote. Só os testes precisam disso. */
+    public static void shortenSearchTo(int blocks) {
+        if (blocks <= 0) {
+            throw new IllegalArgumentException("Radius must be positive: " + blocks);
+        }
+
+        searchRadius = blocks;
+    }
+
+    /** Devolve o raio ao valor de jogo. */
+    public static void restoreSearch() {
+        searchRadius = VillageDetector.SEARCH_RADIUS;
+    }
 
     private ConstructionPlanner() {
     }
@@ -222,7 +250,7 @@ public final class ConstructionPlanner {
         Blueprint blueprint = plans.get(0);
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
-                world, colony.id(), colony.center(), VillageDetector.SEARCH_RADIUS,
+                world, colony.id(), colony.center(), searchRadius,
                 plans.stream().map(Blueprint::size).toList());
 
         if (site.isEmpty()) {
@@ -234,15 +262,20 @@ public final class ConstructionPlanner {
             // Sem o número do anel de propósito: IdleLog só registra
             // quando o motivo muda, e um anel diferente por ciclo faria a
             // linha voltar toda vez.
-            return BuildSiteScanner.sweepPausedAt(colony.id()).isPresent()
-                    ? silent(colony, IdleReason.SWEEP_INCOMPLETE, "looking for a lot")
-                    : silent(
-                            colony,
-                            IdleReason.NO_TARGET,
-                            "no free lot beside a road in the whole "
-                                    + VillageDetector.SEARCH_RADIUS + "-block radius of "
-                                    + colony.center() + " that fits "
-                                    + blueprint.size());
+            if (BuildSiteScanner.sweepPausedAt(colony.id()).isPresent()) {
+                return silent(colony, IdleReason.SWEEP_INCOMPLETE, "looking for a lot");
+            }
+
+            // A Regra 15, e é aqui que ela cabe: a varredura terminou o
+            // raio inteiro e não há beira de rua livre. Antes desta
+            // linha a vila parava para sempre — a rua era algo que a
+            // colônia encontrava, e nunca algo que ela produzia.
+            //
+            // O lote novo não nasce nesta passagem de propósito: a
+            // varredura seguinte é que vai encontrá-lo, e ela recomeça
+            // do centro no ciclo que vem. Trinta segundos, e a ordem da
+            // regra fica respeitada — estrada primeiro, casa depois.
+            return extendTheRoad(world, colony, blueprint);
         }
 
         // A recusa de lote sobre casa da colônia morava aqui, e daqui não
@@ -423,6 +456,59 @@ public final class ConstructionPlanner {
      */
     public static int planksNeededBy(ResourceId planks, Colony colony) {
         return materialNeededBy(planks, colony);
+    }
+
+    /**
+     * Prolonga a rua quando não há mais beira livre — a Regra 15.
+     *
+     * <p>A ponta já foi escolhida: a varredura que acabou de falhar
+     * anotou a mais distante do centro enquanto procurava lote. Aqui só
+     * se calça, e o que se decide é o que dizer quando não dá.
+     *
+     * <p><b>Três respostas, e as três são diferentes no log.</b> Sem rua
+     * nenhuma para prolongar, a vila realmente parou e o motivo é o
+     * antigo. Com ponta e sem poder calçar — encosta, água, peça de vila
+     * — a vila também parou, mas por outra razão, e confundir as duas
+     * mandaria o autor procurar no lugar errado.
+     */
+    private static Optional<ConstructionProject> extendTheRoad(
+            ServerWorld world, Colony colony, Blueprint blueprint) {
+
+        Optional<ResourceId> paving = VillageRoad.pavingFor(
+                world, HousePlans.paletteOf(world, colony.center()).style());
+
+        if (paving.isEmpty()) {
+            return silent(
+                    colony,
+                    IdleReason.NOT_IN_GAME,
+                    "this game has no street to say what the road is made of");
+        }
+
+        RoadExtension.Outcome outcome =
+                RoadExtension.extend(world, colony.id(), paving.get());
+
+        return switch (outcome) {
+            case EXTENDED -> {
+                // Fala sempre, e não pelo IdleLog: rua nova é coisa que
+                // aconteceu, e o log de transições cala o que se repete.
+                IdleLog.clear(colony.id(), SUBJECT);
+
+                yield Optional.empty();
+            }
+
+            case BLOCKED -> silent(
+                    colony,
+                    IdleReason.NO_TARGET,
+                    "the far end of the road runs into something it may not pave");
+
+            case NO_END -> silent(
+                    colony,
+                    IdleReason.NO_TARGET,
+                    "no free lot beside a road in the whole "
+                            + searchRadius + "-block radius of "
+                            + colony.center() + " that fits " + blueprint.size()
+                            + ", and no road end to extend either");
+        };
     }
 
     /**
