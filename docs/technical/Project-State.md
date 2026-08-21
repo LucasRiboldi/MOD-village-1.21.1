@@ -3872,19 +3872,23 @@ A medição original, do dia em que a barreira nasceu:
  16 stripped_oak_log    ✅ o fabricante descasca, por conversão nominal
   3 glass_pane          ✅ a vidraça vira vidro pela receita, o vidro
                         vira meta, e o mineiro colhe a areia dele
-  3 wall_torch          ⚠️ o carvão chegou em 08-21, e a receita da tocha
-                        também pede graveto
+  3 wall_torch          ✅ o carvão sai da mina, e o graveto sai da
+                        tábua — a bancada desce dois degraus
 ```
 
-**As três matérias-primas estão resolvidas.** O que sobrou não é
-material: é **profundidade de receita**. O fabricante só monta o que
-puder montar com <b>todos</b> os ingredientes já no baú, e a tocha pede
-carvão e graveto. O carvão a mina dá; o graveto vem das folhas que o
-lenhador derruba, por sorteio da tabela de loot — quando cai, a tocha
-sai; quando não, ela espera.
+**As três fecharam**, e a última fechou por um motivo diferente das
+outras duas: não faltava material, faltava **profundidade de receita**.
+Até 2026-08-21 a colônia só montava o que pudesse montar com <b>todos</b>
+os ingredientes já no baú, e a tocha pede carvão e graveto. O carvão a
+mina passou a dar; o graveto caía das folhas por sorteio, e ninguém o
+fazia de tábua — a colônia ficava com carvão, tábua e nenhuma tocha.
 
-Fazer graveto de tábua é um passo de "faça primeiro o que falta" dentro
-do `ColonySupply`, e é o mesmo passo que o lampião pede. Está na fila.
+`ColonySupply` agora desce **dois degraus** atrás do que falta. Dois, e
+não um, porque é o que o lampião pede: pepita, que sai do lingote; e
+tocha, que sai de carvão e graveto.
+
+**A casa de planície não depende mais do jogador em nenhum material.**
+Isso está afirmado por teste e **não foi visto em jogo**.
 
 **Nada disto foi visto em jogo**, e a frase vale para as duas que
 fecharam: elas estão cobertas por teste e nenhuma rodou numa vila de

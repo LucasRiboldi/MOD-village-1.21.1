@@ -12,7 +12,7 @@ discordarem, vale o Backlog.
 funcionando em jogo* são coisas diferentes, e estão separadas.
 
 ```text
-460 testes unitários  ·  141 testes de jogo  ·  29 regras do autor
+460 testes unitários  ·  143 testes de jogo  ·  29 regras do autor
 7 trabalhadores com código  ·  6 arquivos acima do teto de 500 linhas
 ```
 
@@ -45,7 +45,15 @@ funcionando em jogo* são coisas diferentes, e estão separadas.
 - **Fundidor**: areia vira vidro, pela receita de fornalha do jogo.
 - **Fabricante ampliado**: descasca tronco, monta tocha e vidraça.
 
-**Cadeia de materiais — o minério (2026-08-21)**
+**Cadeia de materiais — o minério e o degrau (2026-08-21)**
+
+- **A bancada desce dois degraus** atrás do que falta. A tocha saía de
+  carvão e graveto, e ninguém fazia graveto: a colônia ficava com
+  carvão, tábua e nenhuma tocha. Dois degraus, e não um, porque é o que
+  o lampião pede — pepita, que sai do lingote, e tocha.
+- **`canProvide` desce junto**, e tinha de descer: uma resposta que
+  dissesse "não" onde o `take` faria poria a obra a esperar por peça que
+  a colônia sabe montar.
 
 - **O mineiro reconhece carvão e ferro**, comuns e de ardósia, e
   **segue a veia**: o minério colado na parede vem antes da parede, e a
@@ -123,6 +131,7 @@ visto:
 | **8** | **A mobília não voltando** | Nenhuma linha `furnished the house` repetida |
 | **9** | **A cadeia da areia inteira** | meta de `SAND`, `Miner ... took` numa praia, `Smelter ... made minecraft:glass`, e a vidraça saindo do fabricante |
 | **10** | **O carvão da galeria** | `Miner ... took` de um `coal_ore` no nível −20, e a veia inteira num só ciclo |
+| **11** | **A casa de planície terminando sozinha** | é a primeira vez que ela pode: nenhum dos 8 materiais depende mais do jogador |
 
 **Sem teste próprio, e a bateria só prova que nada quebrou:**
 
@@ -203,27 +212,20 @@ nenhum save conhecido tiver cabana, ela sai.
 profissões sem uma única sessão de verdade. Nada mais deveria ser
 construído antes disto.
 
-**2 — Um passo de "faça primeiro o que falta".** É o que sobrou da
-tocha, e não é material: o fabricante só monta o que puder montar com
-**todos** os ingredientes já no baú. A tocha pede carvão — que a mina
-agora dá — e **graveto**, que só chega por sorteio das folhas. O lampião
-pede pepita, que pede lingote, e trava do mesmo jeito. Um nível de
-recursão no `ColonySupply` fecha os dois.
-
-**3 — Quem pede o ferro.** O fundidor sabe fundir ferro cru desde
+**2 — Quem pede o ferro.** O fundidor sabe fundir ferro cru desde
 08-21 e **nada abre tarefa para ele**: o lampião é mobília da Regra 21 e
 não passa pelas metas da colônia. Ou a mobília relata o que lhe falta,
 como já faz com a lã, ou o ferro fica de enfeite no baú.
 
-**4 — Regra 15, a estrada crescendo com a vila.** A colônia só constrói
+**3 — Regra 15, a estrada crescendo com a vila.** A colônia só constrói
 em beira de rua que já existe. Quando ela acabar, a vila para — e a
 Regra 25 só adiou isso.
 
-**5 — Regra 11, uma de cada profissão por vila.** Ficou maior com a
+**4 — Regra 11, uma de cada profissão por vila.** Ficou maior com a
 cadeia: são sete profissões e catorze vagas por colônia. Nada garante o
 piso, e a dispensa pode tirar o último de uma profissão.
 
-**6 — Quebrar os arquivos acima de 500 linhas.**
+**5 — Quebrar os arquivos acima de 500 linhas.**
 
 ```text
 970  VillageDetectionHandler      639  ManufacturerWork
@@ -239,13 +241,13 @@ com o que os dois compartilham. 459 linhas.
 testes há mais três acima do teto: `LumberjackGameTest` 1571,
 `BuilderGameTest` 904, `BuildSiteGameTest` 636.
 
-**7 — Decidir o movimento do centro da colônia.** Troca de âncora e
+**6 — Decidir o movimento do centro da colônia.** Troca de âncora e
 volta a cada 30 segundos, entre 49 camas e 7. Visto em 08-18, 08-19 e
 08-20. É a ADR-003, e **espera decisão do autor**.
 
-**8 — Regra 16**, distância mínima e máxima entre construções.
+**7 — Regra 16**, distância mínima e máxima entre construções.
 
-**9 — O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de
+**8 — O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de
 travar. Toca `Task`, que é o centro, e destrava a metade do fabricante e
 a cadeia de receitas em profundidade qualquer. A areia saiu daqui: o
 `GlassDemand` faz **um** passo de decomposição, que era o que ela pedia.

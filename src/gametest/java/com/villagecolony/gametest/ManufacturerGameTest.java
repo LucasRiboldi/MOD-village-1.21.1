@@ -16,6 +16,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
+import com.villagecolony.fabric.integration.ColonySupply;
 import com.villagecolony.fabric.work.ManufacturerWork;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
@@ -308,5 +309,124 @@ public class ManufacturerGameTest implements FabricGameTest {
 
             context.complete();
         });
+    }
+
+    /**
+     * A tocha sai de carvão e tábua — 2026-08-21.
+     *
+     * <p><b>O degrau que faltava.</b> Até aqui a colônia só montava o que
+     * pudesse montar com <b>todos</b> os ingredientes já no baú. A tocha
+     * pede carvão e graveto: o carvão a mina passou a dar, e o graveto
+     * cai das folhas por sorteio — quando não caía, a colônia ficava com
+     * carvão, tábua e nenhuma tocha, e as três da casa de planície
+     * continuavam por conta do jogador.
+     *
+     * <p>Aqui o baú tem carvão e tábua, e <b>nenhum graveto</b>. Se a
+     * tocha aparecer, foi porque a colônia fez o graveto primeiro.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_depth",
+            tickLimit = 100)
+    public void theColonyMakesTheStickTheTorchNeeds(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        context.setBlockState(new BlockPos(2, 1, 2), Blocks.DIRT.getDefaultState());
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        ChestDepositor.deposit(world, chest, Items.COAL, 4);
+        ChestDepositor.deposit(world, chest, Items.OAK_PLANKS, 8);
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MANUFACTURER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        owned.owning(villager.getUuid());
+
+        context.assertTrue(
+                ChestInventoryReader.read(world, context.getAbsolutePos(CHEST))
+                        .amountOf(ResourceType.OAK_PLANKS) == 8,
+                "o cenário do teste não montou: a tábua não entrou no baú");
+
+        // A pergunta antes da retirada precisa concordar com ela. Uma que
+        // dissesse "não" aqui poria a obra a esperar por peça que a
+        // colônia sabe montar.
+        context.assertTrue(
+                ColonySupply.canProvide(world, colony.id(), chest, Items.TORCH),
+                "a colônia disse que não sabe fazer tocha, com carvão e tábua no baú");
+
+        context.assertTrue(
+                ColonySupply.take(world, colony.id(), chest, Items.TORCH),
+                "a tocha não saiu de carvão e tábua — faltou o degrau do graveto");
+
+        int planksLeft = ChestInventoryReader.read(world, context.getAbsolutePos(CHEST))
+                .amountOf(ResourceType.OAK_PLANKS);
+
+        context.assertTrue(
+                planksLeft < 8,
+                "a tocha apareceu e a tábua continua inteira — matéria do nada");
+
+        owned.cleanUp();
+
+        context.complete();
+    }
+
+    /**
+     * Sem tábua não há graveto, e sem graveto não há tocha.
+     *
+     * <p>A outra ponta: o degrau novo não pode virar uma colônia que diz
+     * saber fazer tudo. Com carvão e mais nada, a resposta é não — e ela
+     * precisa ser a mesma dos dois lados, senão a obra acorda e volta a
+     * dormir todo ciclo.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_depth",
+            tickLimit = 100)
+    public void coalAloneIsNotATorch(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        context.setBlockState(new BlockPos(2, 1, 2), Blocks.DIRT.getDefaultState());
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        ChestDepositor.deposit(world, chest, Items.COAL, 4);
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MANUFACTURER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        owned.owning(villager.getUuid());
+
+        context.assertTrue(
+                !ColonySupply.canProvide(world, colony.id(), chest, Items.TORCH),
+                "a colônia disse saber fazer tocha só com carvão");
+
+        context.assertTrue(
+                !ColonySupply.take(world, colony.id(), chest, Items.TORCH),
+                "saiu uma tocha de carvão e nada mais");
+
+        owned.cleanUp();
+
+        context.complete();
     }
 }
