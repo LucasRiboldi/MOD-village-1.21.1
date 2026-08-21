@@ -12,7 +12,7 @@ discordarem, vale o Backlog.
 funcionando em jogo* são coisas diferentes, e estão separadas.
 
 ```text
-460 testes unitários  ·  143 testes de jogo  ·  29 regras do autor
+462 testes unitários  ·  144 testes de jogo  ·  29 regras do autor
 7 trabalhadores com código  ·  6 arquivos acima do teto de 500 linhas
 ```
 
@@ -54,6 +54,12 @@ funcionando em jogo* são coisas diferentes, e estão separadas.
 - **`canProvide` desce junto**, e tinha de descer: uma resposta que
   dissesse "não" onde o `take` faria poria a obra a esperar por peça que
   a colônia sabe montar.
+- **O ferro tem quem o peça.** O lampião é mobília, e a mobília passou a
+  relatar o que lhe falta em **dois** materiais — lã e ferro — em vez de
+  um inteiro solto. O lingote vira meta da fornalha e o cru vira meta da
+  mina, como o vidro e a areia.
+- **A decomposição desce dois degraus**, e foi o lampião que os pediu:
+  ele quer pepita, e a pepita é que sai do lingote.
 
 - **O mineiro reconhece carvão e ferro**, comuns e de ardósia, e
   **segue a veia**: o minério colado na parede vem antes da parede, e a
@@ -150,7 +156,9 @@ visto:
 - **A arena da bateria tem bioma fixo.** A aceitação de uma vila de
   taiga, savana, nevada ou deserto nunca rodou.
 - **Um teste instável:** `theStallGuardReturnsTheTaskAndForgetsTheTree`,
-  cerca de 1 falha em 4 execuções, anterior a este ciclo.
+  cerca de 1 falha em 4 execuções, anterior a este ciclo. Em 2026-08-21
+  falhou 2 vezes em 8 execuções, com duas mensagens diferentes — a tarefa
+  ficou em `EXECUTING` numa e em `RESERVED` na outra.
 
 ---
 
@@ -212,23 +220,18 @@ nenhum save conhecido tiver cabana, ela sai.
 profissões sem uma única sessão de verdade. Nada mais deveria ser
 construído antes disto.
 
-**2 — Quem pede o ferro.** O fundidor sabe fundir ferro cru desde
-08-21 e **nada abre tarefa para ele**: o lampião é mobília da Regra 21 e
-não passa pelas metas da colônia. Ou a mobília relata o que lhe falta,
-como já faz com a lã, ou o ferro fica de enfeite no baú.
-
-**3 — Regra 15, a estrada crescendo com a vila.** A colônia só constrói
+**2 — Regra 15, a estrada crescendo com a vila.** A colônia só constrói
 em beira de rua que já existe. Quando ela acabar, a vila para — e a
 Regra 25 só adiou isso.
 
-**4 — Regra 11, uma de cada profissão por vila.** Ficou maior com a
+**3 — Regra 11, uma de cada profissão por vila.** Ficou maior com a
 cadeia: são sete profissões e catorze vagas por colônia. Nada garante o
 piso, e a dispensa pode tirar o último de uma profissão.
 
-**5 — Quebrar os arquivos acima de 500 linhas.**
+**4 — Quebrar os arquivos acima de 500 linhas.**
 
 ```text
-970  VillageDetectionHandler      639  ManufacturerWork
+979  VillageDetectionHandler      639  ManufacturerWork
 766  BuilderWork                  598  BuildSiteScanner
 724  TreeHarvester                566  ColonySavedData
 ```
@@ -238,16 +241,18 @@ partido em três — `MineDigging` desce, `SandGathering` varre, e ele ficou
 com o que os dois compartilham. 459 linhas.
 
 `VillageDetectionHandler` é o pior caso e o único que passa de 900. Nos
-testes há mais três acima do teto: `LumberjackGameTest` 1571,
-`BuilderGameTest` 904, `BuildSiteGameTest` 636.
+testes há mais quatro acima do teto: `LumberjackGameTest` 1571,
+`BuilderGameTest` 904, `BuildSiteGameTest` 636 e `MinerGameTest` 510 —
+este último já aliviado em 125 linhas com a saída do
+`WorkMaterialsGameTest`, e ainda dez acima.
 
-**6 — Decidir o movimento do centro da colônia.** Troca de âncora e
+**5 — Decidir o movimento do centro da colônia.** Troca de âncora e
 volta a cada 30 segundos, entre 49 camas e 7. Visto em 08-18, 08-19 e
 08-20. É a ADR-003, e **espera decisão do autor**.
 
-**7 — Regra 16**, distância mínima e máxima entre construções.
+**6 — Regra 16**, distância mínima e máxima entre construções.
 
-**8 — O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de
+**7 — O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de
 travar. Toca `Task`, que é o centro, e destrava a metade do fabricante e
 a cadeia de receitas em profundidade qualquer. A areia saiu daqui: o
 `GlassDemand` faz **um** passo de decomposição, que era o que ela pedia.

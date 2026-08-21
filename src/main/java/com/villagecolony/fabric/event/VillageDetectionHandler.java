@@ -89,11 +89,11 @@ public final class VillageDetectionHandler {
      * <p>Trinta segundos de atraso numa meta de lã não custam nada, e a
      * alternativa custaria.
      */
-    private static final Map<UUID, Integer> WOOL_WANTED = new HashMap<>();
+    private static final Map<UUID, HouseFurnishing.Needs> FURNISHING_WANTED = new HashMap<>();
 
-    /** Quanta lã esta colônia pediu, ou zero se ainda não pediu nada. */
-    private static int woolWanted(Colony colony) {
-        return WOOL_WANTED.getOrDefault(colony.id(), 0);
+    /** O que a mobília desta colônia pediu, ou nada se ainda não pediu. */
+    private static HouseFurnishing.Needs furnishingWanted(Colony colony) {
+        return FURNISHING_WANTED.getOrDefault(colony.id(), new HouseFurnishing.Needs(0, 0));
     }
 
     private static final VillageScanner SCANNER = new VillageScanner();
@@ -427,13 +427,16 @@ public final class VillageDetectionHandler {
         // produzir — 2026-08-20 o vidro, 2026-08-21 o carvão. A casa não
         // pede vidro, pede vidraça; não pede carvão, pede tocha. Perguntar
         // pelo material devolvia zero, e com zero ninguém recebia tarefa.
+        HouseFurnishing.Needs furnishing = furnishingWanted(colony);
+
         WorkDemand work = new WorkDemand(
                 planksForWork,
                 stone,
                 stoneForWork,
-                woolWanted(colony),
+                furnishing.wool(),
                 WorkMaterials.glass(overworld, palette, colony),
-                WorkMaterials.coal(overworld, colony));
+                WorkMaterials.coal(overworld, colony),
+                furnishing.iron());
 
         int assigned = ColonyCycle.run(
                 colony.id(),
@@ -472,7 +475,7 @@ public final class VillageDetectionHandler {
         // E a mobília das casas já de pé — a Regra 21. Depois do
         // construtor de propósito: a casa que terminou neste ciclo já é
         // olhada nele.
-        WOOL_WANTED.put(colony.id(), HouseFurnishing.run(overworld, colony));
+        FURNISHING_WANTED.put(colony.id(), HouseFurnishing.run(overworld, colony));
     }
 
     /**

@@ -25,6 +25,9 @@ import java.util.Objects;
  *     decomposta pela receita
  * @param coal quanto carvão as tochas da obra vão custar, pela mesma
  *     decomposição
+ * @param iron quantos lingotes os lampiões que faltam vão custar. Vem da
+ *     mobília da Regra 21, e não da obra: o lampião entra na casa já
+ *     terminada
  */
 public record WorkDemand(
         int planks,
@@ -32,7 +35,8 @@ public record WorkDemand(
         int stoneAmount,
         int wool,
         int glass,
-        int coal) {
+        int coal,
+        int iron) {
 
     public WorkDemand {
         Objects.requireNonNull(stone, "stone");
@@ -42,11 +46,12 @@ public record WorkDemand(
         refuseNegative(wool, "wool");
         refuseNegative(glass, "glass");
         refuseNegative(coal, "coal");
+        refuseNegative(iron, "iron");
     }
 
     /** Nenhuma obra aberta: a colônia decide pela Regra 1 e nada mais. */
     public static WorkDemand none() {
-        return new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 0);
+        return new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 0, 0);
     }
 
     private static void refuseNegative(int amount, String what) {

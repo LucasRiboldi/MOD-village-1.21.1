@@ -188,7 +188,8 @@ public final class ColonyGoals {
                 owned,
                 woodRoom,
                 plankRoom,
-                new WorkDemand(planksForWork, stone, stoneForWork, woolForBeds, glassForWork, 0));
+                new WorkDemand(
+                        planksForWork, stone, stoneForWork, woolForBeds, glassForWork, 0, 0));
     }
 
     /**
@@ -284,6 +285,19 @@ public final class ColonyGoals {
         // não há fornalha entre a mina e a tocha.
         if (work.coal() > 0) {
             goals.put(ResourceType.COAL, work.coal());
+        }
+
+        // O ferro do lampião — 2026-08-21, e com o passo do meio de volta:
+        // o lingote é da fornalha, e o cru é da mina. Sem as duas metas o
+        // fundidor sabia fundir ferro e nenhuma tarefa lhe chegava.
+        if (work.iron() > 0) {
+            goals.put(ResourceType.IRON_INGOT, work.iron());
+
+            int ingotsMissing = work.iron() - owned.amountOf(ResourceType.IRON_INGOT);
+
+            if (ingotsMissing > 0) {
+                goals.put(ResourceType.RAW_IRON, ingotsMissing);
+            }
         }
 
         return Map.copyOf(goals);

@@ -380,10 +380,44 @@ class ColonyGoalsTest {
                 ResourceTally.of(new EnumMap<>(ResourceType.class)),
                 0,
                 0,
-                new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 2));
+                new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 2, 0));
 
         assertEquals(2, goal.get(ResourceType.COAL));
         assertFalse(goal.containsKey(ResourceType.SAND));
+    }
+
+    /**
+     * O lampião pede lingote, e o lingote pede minério — 2026-08-21.
+     *
+     * <p>Duas metas, como o vidro: o lingote é da fornalha e o cru é da
+     * mina. Sem as duas o fundidor sabia fundir ferro e nenhuma tarefa
+     * lhe chegava.
+     */
+    @Test
+    void theLanternAsksForTheIngotAndForTheOre() {
+        Map<ResourceType, Integer> goal = ColonyGoals.of(
+                colony(),
+                ResourceTally.of(new EnumMap<>(ResourceType.class)),
+                0,
+                0,
+                new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 0, 2));
+
+        assertEquals(2, goal.get(ResourceType.IRON_INGOT));
+        assertEquals(2, goal.get(ResourceType.RAW_IRON));
+    }
+
+    /** Fundido o bastante, o minério sai da lista e a mina descansa. */
+    @Test
+    void theOreGoalDriesUpWhenTheIngotsAreThere() {
+        Map<ResourceType, Integer> goal = ColonyGoals.of(
+                colony(),
+                owned(ResourceType.IRON_INGOT, 2),
+                0,
+                0,
+                new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 0, 2));
+
+        assertEquals(2, goal.get(ResourceType.IRON_INGOT));
+        assertFalse(goal.containsKey(ResourceType.RAW_IRON));
     }
 
     /** Obra sem tocha não manda ninguém para a mina atrás de carvão. */
@@ -410,11 +444,11 @@ class ColonyGoalsTest {
     void aNegativeDemandIsRefusedByName() {
         assertThrows(
                 IllegalArgumentException.class,
-                () -> new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, -1, 0));
+                () -> new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, -1, 0, 0));
 
         assertThrows(
                 IllegalArgumentException.class,
-                () -> new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, -1));
+                () -> new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, -1, 0));
     }
 
     @Test

@@ -32,7 +32,8 @@
       "com.villagecolony.gametest.MinerGameTest",
       "com.villagecolony.gametest.SmelterGameTest",
       "com.villagecolony.gametest.ShepherdGameTest",
-      "com.villagecolony.gametest.VillageStructuresGameTest"
+      "com.villagecolony.gametest.VillageStructuresGameTest",
+      "com.villagecolony.gametest.WorkMaterialsGameTest"
     ]
   },
   "depends": {

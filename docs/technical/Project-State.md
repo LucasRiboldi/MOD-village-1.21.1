@@ -3890,6 +3890,14 @@ tocha, que sai de carvão e graveto.
 **A casa de planície não depende mais do jogador em nenhum material.**
 Isso está afirmado por teste e **não foi visto em jogo**.
 
+**E o lampião fechou junto**, pelo mesmo degrau. Ele é mobília da Regra
+21 e não passa pela obra: quem sabe quantas casas estão sem ele é a
+passagem que as mobiliaria, e ela relatava **um** número — a lã. Agora
+relata dois, e o segundo desce dois degraus até o lingote, porque o
+lampião pede pepita e a pepita é que sai do lingote. O lingote vira meta
+da fornalha, o minério cru vira meta da mina, e o fundidor que aprendeu a
+fundir ferro pela manhã passou a receber tarefa.
+
 **Nada disto foi visto em jogo**, e a frase vale para as duas que
 fecharam: elas estão cobertas por teste e nenhuma rodou numa vila de
 verdade.

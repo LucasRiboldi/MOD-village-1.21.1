@@ -234,6 +234,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | A planta se adapta ao lote — a maior que couber | 🧪 pronta, e inerte enquanto for uma casa por bioma |
 | **Colher areia**, e o vidro virando meta pela receita da vidraça | 🧪 coberto por teste, nunca visto em jogo |
 | **A bancada faz o que falta** — o graveto da tocha sai da tábua | 🧪 coberto por teste, nunca visto em jogo |
+| **O lampião pede ferro**, e o pedido chega à fornalha e à mina | 🧪 coberto por teste, nunca visto em jogo |
 | **Carvão e ferro na mina**, com a veia seguida até acabar | 🧪 coberto por teste, nunca visto em jogo |
 | Estrada crescendo com a vila | ⬜ não começado |
 | Agricultura e defesa | ⬜ não começado |
@@ -274,11 +275,10 @@ a recusar, e a correção ainda não foi vista em jogo.
 | | Etapa | Estado |
 |---|---|---|
 | **1** | **Rodar em jogo a cadeia de produção.** Mineiro, pastor e fundidor entraram em 2026-08-20 e **nenhum foi visto trabalhando numa vila de verdade**. Junto vêm a paleta por bioma, a cabana de arenito do deserto e a planta que se adapta ao lote | 🔒 exige sessão de jogo |
-| **2** | **Quem peça o ferro.** O fundidor funde ferro cru e nada lhe abre tarefa: o lampião é mobília e não passa pelas metas da colônia | 🔨 pronto para fazer |
-| **3** | **Regra 15 — estender a estrada.** A vila só constrói em beira de rua que já existe; quando ela acabar, a colônia para de crescer | 🔨 pronto para fazer |
-| **4** | **Regra 16 — espaço em volta da casa.** A metade da altura está feita; falta a distância mínima e máxima | 🔨 meia feita |
-| **5** | **Escolher entre as 1.180 estruturas do catálogo.** A lista está no mod; falta o critério e a conta de materiais de cada uma | 🔨 base pronta |
-| **6** | **Regra 10, metade do fabricante.** Porta, janela, cama e baú por estoque, sem depender de haver obra | 🔨 depende do `ItemRequest` |
+| **2** | **Regra 15 — estender a estrada.** A vila só constrói em beira de rua que já existe; quando ela acabar, a colônia para de crescer | 🔨 pronto para fazer |
+| **3** | **Regra 16 — espaço em volta da casa.** A metade da altura está feita; falta a distância mínima e máxima | 🔨 meia feita |
+| **4** | **Escolher entre as 1.180 estruturas do catálogo.** A lista está no mod; falta o critério e a conta de materiais de cada uma | 🔨 base pronta |
+| **5** | **Regra 10, metade do fabricante.** Porta, janela, cama e baú por estoque, sem depender de haver obra | 🔨 depende do `ItemRequest` |
 | **8** | **Regra 11 — uma de cada profissão por vila.** O mecanismo existe; falta a garantia e o teste. Ficou maior: são sete profissões agora, e catorze vagas por colônia | 🔨 pronto para fazer |
 | **9** | **Envelhecimento de tarefa**, para que a mais antiga não seja esquecida | 🔨 pronto para fazer |
 | **10** | **O fazendeiro e a defesa.** Duas profissões que o modelo prevê e ninguém escreveu | ⬜ não começado |
@@ -321,8 +321,8 @@ que ela ainda **não** produz:
 
 | Falta | Por quê |
 |---|---|
-| **Quem peça o ferro** | O fundidor sabe fundir ferro cru desde 2026-08-21, e nada abre tarefa para ele: o lampião é mobília e não passa pelas metas da colônia |
-| **Receita fundo demais** | A bancada desce dois degraus atrás do que falta. Cadeia mais longa que isso ainda não passa |
+| **Receita fundo demais** | A bancada e a conta de materiais descem **dois** degraus atrás do que falta. Cadeia mais longa que isso ainda não passa |
+| **Comida, e a agricultura** | O fazendeiro tem nome, enxada e baú desde a Fase 4, e nenhum trabalho |
 
 A casa de planície pede 43 pedregulhos, 16 troncos descascados, 3
 vidraças e 3 tochas. **Nenhum dos oito materiais dela depende mais de
@@ -416,8 +416,9 @@ inventava.
   de verdade.
 - **Nenhum material da casa de planície depende mais de você**, e
   **nada disso foi visto em jogo**.
-- **Nada pede ferro ainda.** O fundidor sabe fazer o lingote e nenhuma
-  tarefa lhe chega.
+- **O ferro do lampião fechou em 2026-08-21**, e também nunca rodou em
+  jogo: a mobília relata o que lhe falta, o lingote vira meta da fornalha
+  e o minério cru vira meta da mina.
 - **A mina é gravada desde 2026-08-20**, mas **fechar e reabrir o mundo
   de verdade nunca foi feito**: a bateria roda um servidor só.
 - **Seis conflitos internos** estão listados em [`TODO.md`](TODO.md) —

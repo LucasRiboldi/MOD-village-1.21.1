@@ -73,8 +73,24 @@ public final class HouseFurnishing {
      * Custa uma leitura de bloco por peça de mobília por casa — três
      * leituras por casa —, e só age quando falta alguma.
      */
-    public static int run(ServerWorld world, Colony colony) {
-        List<String> missing = new ArrayList<>();
+    /**
+     * O que a mobília ainda quer, por material — 2026-08-21.
+     *
+     * <p>Era um inteiro: a lã, e só ela. O lampião entrou e a colônia
+     * precisou saber de dois — e um número solto que às vezes é lã e às
+     * vezes é ferro é a próxima confusão esperando acontecer.
+     *
+     * @param wool quantas peças de lã as camas que faltam custam
+     * @param iron quantos lingotes os lampiões que faltam custam, com a
+     *     pepita já decomposta pela receita do jogo
+     */
+    public record Needs(int wool, int iron) {
+
+        static final Needs NOTHING = new Needs(0, 0);
+    }
+
+    public static Needs run(ServerWorld world, Colony colony) {
+        List<ResourceId> missing = new ArrayList<>();
 
         for (Building house : List.copyOf(VillageColonyMod.BUILDINGS.ofColony(colony.id()))) {
             List<BlueprintBlock> pieces = furnishingsOf(world, house);
@@ -93,7 +109,7 @@ public final class HouseFurnishing {
             for (BlueprintBlock piece : pieces) {
                 switch (furnish(world, colony, current, piece)) {
                     case PLACED -> current = current.withFurnished(piece.block());
-                    case MISSING -> missing.add(piece.block().path());
+                    case MISSING -> missing.add(piece.block());
                     case ALREADY -> {
                     }
                 }
@@ -112,12 +128,27 @@ public final class HouseFurnishing {
                     "Colony {} has houses still missing {}", colony.id(), missing);
         }
 
+        if (missing.isEmpty()) {
+            return Needs.NOTHING;
+        }
+
         // Quantas peças de lã a colônia ainda quer — 2026-08-20. A cama
         // custa três, e é a única peça de mobília feita de lã. Quem usa
         // este número é a meta da colônia: sem ele o pastor nunca recebe
         // tarefa, e sem tarefa não há tosquia, cama, aldeão nem vila
         // crescendo. Era o laço aberto que a Regra 21 deixou.
-        return (int) missing.stream().filter(piece -> piece.endsWith("_bed")).count() * 3;
+        int beds = (int) missing.stream()
+                .filter(piece -> piece.path().endsWith("_bed"))
+                .count();
+
+        // E quantos lingotes os lampiões custam — 2026-08-21. O mesmo laço
+        // do lado do ferro: sem este número o fundidor nunca recebe tarefa
+        // de lingote, e a casa fica sem luz com o minério no baú.
+        int lanterns = (int) missing.stream()
+                .filter(WorkMaterials.LANTERN::equals)
+                .count();
+
+        return new Needs(beds * 3, WorkMaterials.iron(world, lanterns));
     }
 
     /**

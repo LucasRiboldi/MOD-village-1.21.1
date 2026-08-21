@@ -48,6 +48,18 @@ public final class WorkMaterials {
 
     private static final ResourceId TORCH = ResourceId.vanilla("torch");
 
+    /** O lampião da Regra 21, que é o que pede ferro nesta colônia. */
+    public static final ResourceId LANTERN = ResourceId.vanilla("lantern");
+
+    /**
+     * Quantos degraus de receita a conta desce.
+     *
+     * <p>O mesmo teto do {@code ColonySupply}, e pela mesma razão: é o
+     * que o lampião pede — pepita, que sai do lingote — e cada degrau
+     * custa uma varredura do livro de receitas inteiro.
+     */
+    private static final int RECIPE_DEPTH = 2;
+
     private WorkMaterials() {
     }
 
@@ -74,6 +86,23 @@ public final class WorkMaterials {
      * saem do mesmo item e da mesma receita. Separá-las daria duas contas
      * para uma fornada.
      */
+    /**
+     * O lingote que os lampiões que faltam vão custar — 2026-08-21.
+     *
+     * <p><b>Dois degraus, e é o caso que os pediu.</b> O lampião não pede
+     * lingote: pede oito <b>pepitas</b>, e a pepita é que sai do lingote,
+     * nove de cada. Um degrau só devolveria zero, e com zero o fundidor
+     * nunca recebe tarefa de ferro — que foi exatamente o que aconteceu
+     * no dia em que ele aprendeu a fundi-lo.
+     *
+     * <p>Vem da mobília, e não da obra: o lampião é peça da Regra 21, e
+     * quem sabe quantas casas estão sem ele é a passagem que as
+     * mobiliaria. Ver {@code HouseFurnishing}.
+     */
+    public static int iron(ServerWorld world, int lanterns) {
+        return through(world, LANTERN, ResourceType.IRON_INGOT, lanterns);
+    }
+
     public static int coal(ServerWorld world, Colony colony) {
         int torches = ConstructionPlanner.materialNeededBy(WALL_TORCH, colony)
                 + ConstructionPlanner.materialNeededBy(TORCH, colony);
@@ -102,18 +131,37 @@ public final class WorkMaterials {
      * receitas de verdade.
      */
     public static int through(ServerWorld world, ResourceId made, ResourceType part, int wanted) {
+        return through(world, made, part, wanted, RECIPE_DEPTH);
+    }
+
+    private static int through(
+            ServerWorld world, ResourceId made, ResourceType part, int wanted, int depth) {
+
+        Optional<Item> piece = MinecraftTypeAdapter.toBlock(made).map(Block::asItem);
+
+        return piece.map(item -> through(world, item, part, wanted, depth)).orElse(0);
+    }
+
+    /**
+     * O mesmo, item a item, para descer pela receita.
+     *
+     * <p>Um degrau: o que a receita pede e é do tipo procurado entra na
+     * conta; o que não é vira a mesma pergunta um degrau abaixo. É assim
+     * que o lampião chega ao lingote — ele pede <b>pepita</b>, e a pepita
+     * é que sai do lingote.
+     *
+     * <p>O teto é o mesmo do {@code ColonySupply}, e pela mesma razão:
+     * cada degrau custa uma varredura do livro de receitas inteiro.
+     */
+    private static int through(
+            ServerWorld world, Item made, ResourceType part, int wanted, int depth) {
+
         if (wanted <= 0) {
             return 0;
         }
 
-        Optional<Item> piece = MinecraftTypeAdapter.toBlock(made).map(Block::asItem);
-
-        if (piece.isEmpty()) {
-            return 0;
-        }
-
         Optional<CraftingLookup.Bill> bill =
-                CraftingLookup.billFor(world, piece.get(), item -> true);
+                CraftingLookup.billFor(world, made, item -> true);
 
         if (bill.isEmpty()) {
             return 0;
@@ -125,23 +173,27 @@ public final class WorkMaterials {
             return 0;
         }
 
-        int perBatch = 0;
+        int makings = (wanted + perMaking - 1) / perMaking;
+
+        int total = 0;
 
         for (Map.Entry<Item, Integer> ingredient : bill.get().ingredients().entrySet()) {
+            int needed = makings * ingredient.getValue();
+
             if (MinecraftTypeAdapter.toResourceType(ingredient.getKey())
                     .filter(part::equals)
                     .isPresent()) {
 
-                perBatch += ingredient.getValue();
+                total += needed;
+
+                continue;
+            }
+
+            if (depth > 0) {
+                total += through(world, ingredient.getKey(), part, needed, depth - 1);
             }
         }
 
-        if (perBatch <= 0) {
-            return 0;
-        }
-
-        int makings = (wanted + perMaking - 1) / perMaking;
-
-        return makings * perBatch;
+        return total;
     }
 }
