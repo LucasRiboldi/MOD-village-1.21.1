@@ -70,6 +70,9 @@ public final class VillageStructures {
     /** Lido uma vez por sessão. São mil e cento e oitenta nomes. */
     private static final Map<String, List<ResourceId>> HOUSES = new HashMap<>();
 
+    /** As ruas, pela mesma porta e no mesmo catálogo — 2026-08-21. */
+    private static final Map<String, List<ResourceId>> STREETS = new HashMap<>();
+
     private VillageStructures() {
     }
 
@@ -82,11 +85,27 @@ public final class VillageStructures {
      * esta regra proíbe.
      */
     public static synchronized List<ResourceId> housesFor(String style) {
-        return HOUSES.computeIfAbsent(style, VillageStructures::load);
+        return HOUSES.computeIfAbsent(style, found -> load(found, "houses", true));
     }
 
-    private static List<ResourceId> load(String style) {
-        String folder = "village/" + style + "/houses/";
+    /**
+     * As ruas que uma vila deste estilo tem — 2026-08-21.
+     *
+     * <p>Servem a uma pergunta só, e ela é sobre <b>material</b>: de que
+     * bloco o jogo pavimenta a rua deste bioma. A colônia precisa saber
+     * para reconhecer beira de rua e para estender a que existe.
+     *
+     * <p>Sem a barreira de teste: a Regra 28 limita quantas <b>casas</b>
+     * a colônia tenta construir, e uma rua não é casa — restringir a
+     * lista aqui só esconderia estilos cujo nome de peça não bate com a
+     * convenção da casa pequena.
+     */
+    public static synchronized List<ResourceId> streetsFor(String style) {
+        return STREETS.computeIfAbsent(style, found -> load(found, "streets", false));
+    }
+
+    private static List<ResourceId> load(String style, String kind, boolean onlyWhileTesting) {
+        String folder = "village/" + style + "/" + kind + "/";
 
         List<ResourceId> found = new ArrayList<>();
 
@@ -110,7 +129,7 @@ public final class VillageStructures {
                 }
 
                 // A barreira de teste. Some com esta linha.
-                if (!path.endsWith(ONLY_WHILE_TESTING)) {
+                if (onlyWhileTesting && !path.endsWith(ONLY_WHILE_TESTING)) {
                     continue;
                 }
 
@@ -127,10 +146,10 @@ public final class VillageStructures {
         }
 
         VillageColonyMod.LOGGER.info(
-                "Village style {} can build {} houses from the game catalog: {}",
+                "Village style {} has {} {} in the game catalog",
                 style,
                 found.size(),
-                found);
+                kind);
 
         return List.copyOf(found);
     }
@@ -138,5 +157,6 @@ public final class VillageStructures {
     /** Esquece o que foi lido. Chamado ao parar o servidor. */
     public static synchronized void clearAll() {
         HOUSES.clear();
+        STREETS.clear();
     }
 }

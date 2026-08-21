@@ -56,6 +56,17 @@ public record VillagePalette(
     /** A areia, de onde o fundidor tira o vidro. */
     public static final ResourceId SAND = vanilla("sand");
 
+    /**
+     * O calçamento de quase toda vila do jogo.
+     *
+     * <p>Está aqui como <b>último recurso</b>, e não como decisão: quem
+     * diz de que bloco é a rua de cada estilo é o catálogo do jogo — ver
+     * {@code VillageRoad}. Este nome só entra em cena se o catálogo não
+     * puder ser lido, e a alternativa seria a colônia deixar de
+     * reconhecer rua nenhuma e parar de crescer em silêncio.
+     */
+    public static final ResourceId DIRT_PATH = vanilla("dirt_path");
+
     public static final ResourceId GLASS = vanilla("glass");
 
     public static final ResourceId WOOL = vanilla("white_wool");

@@ -270,7 +270,7 @@ public final class BuildSiteScanner {
                     break;
                 }
 
-                if (world.getBlockState(new BlockPos(x, roadY, z)).isOf(Blocks.DIRT_PATH)) {
+                if (VillageRoad.isPaving(world, world.getBlockState(new BlockPos(x, roadY, z)))) {
                     return Optional.of(side);
                 }
             }
@@ -320,7 +320,11 @@ public final class BuildSiteScanner {
 
         Optional<BlockPos> ground = groundInColumn(world, x, z, aroundY);
 
-        if (ground.isEmpty() || !world.getBlockState(ground.get()).isOf(Blocks.DIRT_PATH)) {
+        // Rua é o que o jogo calça, e não um nome escrito aqui —
+        // 2026-08-21. A vila de deserto calça com arenito liso, e
+        // enquanto esta linha dizia `dirt_path` ela nunca teve beira de
+        // rua: nascia, contratava, contava recurso e nunca achava lote.
+        if (ground.isEmpty() || !VillageRoad.isPaving(world, world.getBlockState(ground.get()))) {
             return Optional.empty();
         }
 

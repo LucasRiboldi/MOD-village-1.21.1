@@ -45,6 +45,40 @@ public class BuildSiteGameTest implements FabricGameTest {
     private static final ColonyPos TALL_HOUSE = new ColonyPos(2, 5, 2);
 
     /**
+     * A rua do deserto também é rua — 2026-08-21.
+     *
+     * <p>Ela é de <b>arenito liso</b>, e a busca de lote reconhecia rua
+     * por um nome escrito no código: {@code dirt_path}. Enquanto foi
+     * assim, a vila de deserto nunca teve beira de rua nenhuma, e
+     * terminava toda varredura dizendo que não havia lote.
+     *
+     * <p>A arena da bateria tem bioma fixo de planície, e é por isso que
+     * nada disso aparecia: o teste do lote é o mesmo, e o que muda é o
+     * bloco que faz de rua.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site")
+    public void aLotBesideASandstoneRoadIsFound(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+
+        paveGround(context, center);
+
+        context.setBlockState(center, Blocks.SMOOTH_SANDSTONE.getDefaultState());
+
+        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                context.getWorld(),
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        context.assertTrue(
+                site.isPresent(),
+                "não achou lote ao lado da rua de arenito — o deserto continua sem construir");
+
+        context.complete();
+    }
+
+    /**
      * Chão liso com rua ao lado: a colônia acha onde construir.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site")
