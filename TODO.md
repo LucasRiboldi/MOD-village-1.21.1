@@ -12,7 +12,7 @@ discordarem, vale o Backlog.
 funcionando em jogo* são coisas diferentes, e estão separadas.
 
 ```text
-431 testes unitários  ·  134 testes de jogo  ·  29 regras do autor
+445 testes unitários  ·  135 testes de jogo  ·  29 regras do autor
 7 trabalhadores com código  ·  7 arquivos acima do teto de 500 linhas
 ```
 
@@ -44,6 +44,13 @@ funcionando em jogo* são coisas diferentes, e estão separadas.
   casa → cama → aldeão → trabalhador.
 - **Fundidor**: areia vira vidro, pela receita de fornalha do jogo.
 - **Fabricante ampliado**: descasca tronco, monta tocha e vidraça.
+
+**Persistência**
+
+- **A mina no save.** Sete campos: a colônia dona, a boca, o lado da
+  descida, o lado da galeria e a fronteira já cavada. Uma mina por
+  colônia — o segundo mineiro continua a mesma escada em vez de abrir
+  outra boca. `Mine`, `MineRegistry` e `MineSave` nasceram.
 
 **Construção**
 
@@ -94,7 +101,14 @@ visto:
 **Sem teste próprio, e a bateria só prova que nada quebrou:**
 
 - O caminho novo do fabricante — descascar, montar tocha e vidraça.
-- A retomada da mina depois de reiniciar o servidor.
+
+**Com teste e ainda por ver em jogo:**
+
+- **A retomada da mina.** O round-trip do save e a retomada dentro do
+  servidor de teste estão afirmados (`MineSaveTest`, `MineRegistryTest`,
+  `miner_resume`). O que nenhum deles alcança é **fechar e reabrir o
+  mundo de verdade** — a bateria roda um servidor só, e é a dívida E4 do
+  Backlog.
 
 **Coberto por teste, mas com limite conhecido:**
 
@@ -163,42 +177,43 @@ nenhum save conhecido tiver cabana, ela sai.
 profissões sem uma única sessão de verdade. Nada mais deveria ser
 construído antes disto.
 
-**2 — Gravar a mina no save.** Hoje ela é estado em memória num sistema
-que grava todo o resto. Ao voltar, o mineiro reabre a boca e revarre os
-índices já abertos. Custa pouco hoje e cresce com a profundidade.
-
-**3 — Areia, para o vidro fechar a cadeia.** O fundidor funde a areia
+**2 — Areia, para o vidro fechar a cadeia.** O fundidor funde a areia
 que houver no baú, e ninguém a colhe. É o único elo da cadeia de
 materiais que ainda depende do jogador.
 
-**4 — Minério na mina.** O mineiro já desce vinte blocos e não reconhece
+**3 — Minério na mina.** O mineiro já desce vinte blocos e não reconhece
 carvão nem ferro. Com eles, tocha e lampião saem da lista de dispensáveis
 e a casa fica completa.
 
-**5 — Regra 15, a estrada crescendo com a vila.** A colônia só constrói
+**4 — Regra 15, a estrada crescendo com a vila.** A colônia só constrói
 em beira de rua que já existe. Quando ela acabar, a vila para — e a
 Regra 25 só adiou isso.
 
-**6 — Regra 11, uma de cada profissão por vila.** Ficou maior com a
+**5 — Regra 11, uma de cada profissão por vila.** Ficou maior com a
 cadeia: são sete profissões e catorze vagas por colônia. Nada garante o
 piso, e a dispensa pode tirar o último de uma profissão.
 
-**7 — Quebrar os sete arquivos acima de 500 linhas.**
+**6 — Quebrar os sete arquivos acima de 500 linhas.**
 
 ```text
-963  VillageDetectionHandler      639  ManufacturerWork
-766  BuilderWork                  598  BuildSiteScanner
-724  TreeHarvester                580  MinerWork
-528  ColonySavedData
+963  VillageDetectionHandler      598  BuildSiteScanner
+766  BuilderWork                  586  MinerWork
+724  TreeHarvester                566  ColonySavedData
+639  ManufacturerWork
 ```
 
-**8 — Decidir o movimento do centro da colônia.** Troca de âncora e
+Os dois últimos **cresceram** ao gravar a mina — 580→586 e 528→566 —
+mesmo com a serialização saindo para o `MineSave`. Nos testes há mais
+três: `LumberjackGameTest` 1571, `BuilderGameTest` 904,
+`BuildSiteGameTest` 636.
+
+**7 — Decidir o movimento do centro da colônia.** Troca de âncora e
 volta a cada 30 segundos, entre 49 camas e 7. Visto em 08-18, 08-19 e
 08-20. É a ADR-003, e **espera decisão do autor**.
 
-**9 — Regra 16**, distância mínima e máxima entre construções.
+**8 — Regra 16**, distância mínima e máxima entre construções.
 
-**10 — O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de
+**9 — O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de
 travar. Toca `Task`, que é o centro, e destrava a areia, a metade do
 fabricante e a cadeia de receitas.
 

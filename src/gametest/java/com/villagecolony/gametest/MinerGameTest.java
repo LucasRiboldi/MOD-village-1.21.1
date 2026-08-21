@@ -2,6 +2,8 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.construction.model.Mine;
+import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskPriority;
@@ -9,6 +11,7 @@ import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.type.Side;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -50,6 +53,15 @@ public class MinerGameTest implements FabricGameTest {
      * aberta a quarenta blocos cava o cenário do teste vizinho.
      */
     private static final int NEARBY = 2;
+
+    /** A boca da mina que o save trouxe, dentro da arena deste teste. */
+    private static final BlockPos MOUTH = new BlockPos(6, 1, 6);
+
+    /**
+     * A fronteira gravada: já além de {@link MineShaft#CARVED}, que é
+     * onde acabam os dois lances e as duas salas e começa a galeria.
+     */
+    private static final int FRONTIER = MineShaft.CARVED + 48;
 
     /**
      * A pedra sai do mundo e entra no baú.
@@ -225,6 +237,90 @@ public class MinerGameTest implements FabricGameTest {
             MinerWork.forget(villager.getUuid());
 
             VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
+
+            MinerWork.restoreMineDistance();
+
+            context.complete();
+        });
+    }
+
+    /**
+     * A mina que o save trouxe não é reaberta — 2026-08-20.
+     *
+     * <p>Até esta data a mina morava num campo do trabalho do mineiro, e
+     * fechar o mundo apagava as duas coisas que custam a refazer: a boca,
+     * que a sessão seguinte reprocurava e achava alguns blocos <b>abaixo</b>
+     * — o bloco de ontem tinha sido cavado —, e a fronteira, que voltava
+     * ao primeiro degrau e revarria índice por índice tudo o que já
+     * estava aberto.
+     *
+     * <p>Aqui a mina entra no registro como se o save a tivesse trazido,
+     * com a fronteira já na galeria sem fim. O que se afirma é o que o
+     * jogador veria: a colônia continua com <b>uma</b> boca, e ela é a de
+     * ontem; e a picareta anda para a frente, em vez de recomeçar.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_resume",
+            tickLimit = 200)
+    public void theMineTheSaveBroughtIsNotDugAgain(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        ground(context);
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        owned.owning(villager.getUuid());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_STONE,
+                TaskPriority.PRODUCTION,
+                ResourceType.COBBLESTONE,
+                16);
+
+        task.reserveFor(villager.getUuid());
+
+        // A boca de ontem, e uma fronteira já na galeria: acima de
+        // MineShaft.CARVED as duas salas e os dois lances estão abertos, e
+        // é justamente o trecho que revarrer custa caro.
+        ColonyPos mouth = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(MOUTH));
+
+        VillageColonyMod.MINES.restore(
+                Mine.restore(colony.id(), MineShaft.from(mouth, Side.EAST), FRONTIER));
+
+        MinerWork.shortenMineDistanceTo(NEARBY);
+
+        MinerWork.run(world, colony);
+
+        context.runAtTick(120, () -> {
+            Mine mine = VillageColonyMod.MINES.of(colony.id()).orElseThrow();
+
+            context.assertTrue(
+                    mine.entry().equals(mouth),
+                    "a colônia trocou de boca: " + mine.entry() + " em vez de " + mouth);
+
+            context.assertTrue(
+                    mine.cut() > FRONTIER,
+                    "a fronteira não andou — parou em " + mine.cut());
+
+            owned.cleanUp();
+
+            MinerWork.forget(villager.getUuid());
 
             MinerWork.restoreMineDistance();
 

@@ -4,6 +4,7 @@ import com.villagecolony.core.colony.service.ColonyService;
 import com.villagecolony.core.storage.service.StorageRegistry;
 import com.villagecolony.core.construction.service.BuildingRegistry;
 import com.villagecolony.core.construction.service.ConstructionService;
+import com.villagecolony.core.construction.service.MineRegistry;
 import com.villagecolony.core.task.service.TaskService;
 import com.villagecolony.core.worker.service.WorkerService;
 import com.villagecolony.fabric.event.ServerLifecycleHandler;
@@ -117,12 +118,22 @@ public class VillageColonyMod implements ModInitializer {
      * que a proteção, a fusão de vilas e a escolha do próximo lote
      * precisam saber.
      *
-     * <p>Também não é persistido, e isso <b>custa</b>: ao reabrir o
-     * mundo, a colônia esquece que a casa é dela. A casa continua de pé —
-     * o mundo é que guarda blocos —, mas a proteção some. Está registrado
-     * em Project-State §9.
+     * <p>É persistido desde 2026-08-14, e era a dívida mais cara do
+     * projeto até então: sem o save, a colônia reabria o mundo sem saber
+     * que a casa é dela — a casa continuava de pé, porque quem guarda
+     * blocos é o mundo, mas a proteção sumia.
      */
     public static final BuildingRegistry BUILDINGS = new BuildingRegistry();
+
+    /**
+     * A mina de cada colônia — Regra 29.
+     *
+     * <p>Uma por colônia, e persistida: a boca no fim da vila, o lado em
+     * que a galeria segue e até onde a picareta chegou. Sem o save, a
+     * sessão seguinte reprocurava uma boca que já tinha sido cavada e
+     * revarria do primeiro degrau tudo o que já estava aberto.
+     */
+    public static final MineRegistry MINES = new MineRegistry();
 
     @Override
     public void onInitialize() {

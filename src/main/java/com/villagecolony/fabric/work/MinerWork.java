@@ -5,6 +5,7 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.core.type.Side;
+import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.core.coordination.WorkAssignment;
@@ -139,12 +140,6 @@ public final class MinerWork {
 
         /** A pedra de agora. Nulo entre uma e a próxima. */
         private BlockPos target;
-
-        /** A mina desta colônia. Nula até o mineiro chegar à boca dela. */
-        private MineShaft shaft;
-
-        /** Em que posição da mina ele está. */
-        private int cut;
 
         /** Quantas posições seguidas vieram bloqueadas. */
         private int blocked;
@@ -316,15 +311,26 @@ public final class MinerWork {
     private static boolean startNextStone(
             ServerWorld world, UUID workerId, Job job, VillagerEntity villager) {
 
-        if (job.shaft == null) {
+        // A mina é da colônia, e não deste mineiro: o segundo a descer
+        // continua a mesma escada, e a que o save trouxe já vem com a
+        // fronteira de ontem.
+        Optional<Mine> known = VillageColonyMod.MINES.of(job.task.colonyId());
+
+        Mine mine;
+
+        if (known.isPresent()) {
+            mine = known.get();
+        } else {
             Optional<BlockPos> mouth = mouthOf(world, job);
 
             if (mouth.isEmpty()) {
                 return true;
             }
 
-            job.shaft = MineShaft.from(
-                    MinecraftTypeAdapter.toColonyPos(mouth.get()), sideOf(job));
+            mine = VillageColonyMod.MINES.open(
+                    job.task.colonyId(),
+                    MineShaft.from(
+                            MinecraftTypeAdapter.toColonyPos(mouth.get()), sideOf(job)));
 
             VillageColonyMod.LOGGER.info(
                     "Miner {} opens a mine at {} — down {} then {} more",
@@ -338,10 +344,10 @@ public final class MinerWork {
         // abertas são puladas de graça, e as impossíveis contam para a
         // curva da galeria.
         for (int look = 0; look < CUTS_PER_SEARCH; look++) {
-            BlockPos at = MinecraftTypeAdapter.toBlockPos(job.shaft.positionAt(job.cut++));
+            BlockPos at = MinecraftTypeAdapter.toBlockPos(mine.nextPosition());
 
             if (!world.isInBuildLimit(at)) {
-                job.shaft = job.shaft.turned();
+                mine.turn();
                 job.blocked = 0;
 
                 continue;
@@ -361,7 +367,7 @@ public final class MinerWork {
                 // Bedrock, casa da vila, casa da colônia. A Regra 3 e o
                 // impossível, pela mesma porta.
                 if (++job.blocked >= BLOCKED_BEFORE_TURNING) {
-                    job.shaft = job.shaft.turned();
+                    mine.turn();
                     job.blocked = 0;
 
                     VillageColonyMod.LOGGER.info(

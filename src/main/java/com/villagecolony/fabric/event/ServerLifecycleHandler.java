@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.ConstructionProject;
+import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.data.save.ColonySavedData;
 import com.villagecolony.fabric.brain.WorkTargets;
@@ -58,6 +59,7 @@ public final class ServerLifecycleHandler {
         VillageColonyMod.TASKS.clear();
         VillageColonyMod.CONSTRUCTIONS.clear();
         VillageColonyMod.BUILDINGS.clear();
+        VillageColonyMod.MINES.clear();
         WorkTargets.clearAll();
         LumberjackWork.clearAll();
         MinerWork.clearAll();
@@ -97,11 +99,20 @@ public final class ServerLifecycleHandler {
             VillageColonyMod.BUILDINGS.register(building);
         }
 
+        // A mina volta inteira: a boca, o lado da galeria e a fronteira.
+        // Sem ela o mineiro reprocurava uma boca que ele mesmo já tinha
+        // cavado, e revarria do primeiro degrau tudo o que estava aberto.
+        for (Mine mine : data.mines()) {
+            VillageColonyMod.MINES.restore(mine);
+        }
+
         VillageColonyMod.LOGGER.info(
-                "Loaded {} colonies with {} workers, {} buildings and {} projects to resume",
+                "Loaded {} colonies with {} workers, {} buildings, {} mines"
+                        + " and {} projects to resume",
                 VillageColonyMod.COLONIES.count(),
                 VillageColonyMod.WORKERS.count(),
                 VillageColonyMod.BUILDINGS.count(),
+                VillageColonyMod.MINES.count(),
                 data.projects().size());
     }
 
@@ -147,13 +158,16 @@ public final class ServerLifecycleHandler {
                 VillageColonyMod.COLONIES.all(),
                 VillageColonyMod.WORKERS.all(),
                 openProjects(),
-                VillageColonyMod.BUILDINGS.all());
+                VillageColonyMod.BUILDINGS.all(),
+                VillageColonyMod.MINES.all());
 
         VillageColonyMod.LOGGER.info(
-                "Saved {} colonies with {} workers, {} buildings and {} open projects",
+                "Saved {} colonies with {} workers, {} buildings, {} mines"
+                        + " and {} open projects",
                 VillageColonyMod.COLONIES.count(),
                 VillageColonyMod.WORKERS.count(),
                 VillageColonyMod.BUILDINGS.count(),
+                VillageColonyMod.MINES.count(),
                 openProjects().size());
 
         VillageColonyMod.COLONIES.clear();
@@ -162,6 +176,7 @@ public final class ServerLifecycleHandler {
         VillageColonyMod.TASKS.clear();
         VillageColonyMod.CONSTRUCTIONS.clear();
         VillageColonyMod.BUILDINGS.clear();
+        VillageColonyMod.MINES.clear();
         WorkTargets.clearAll();
         LumberjackWork.clearAll();
         MinerWork.clearAll();

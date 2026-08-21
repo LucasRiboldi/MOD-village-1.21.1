@@ -86,6 +86,11 @@ final class ColonyFixture {
             VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
             VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
 
+            // A mina também é da colônia e também é global. Deixá-la
+            // atrás faria o teste seguinte herdar uma escada aberta em
+            // outra arena, e o mineiro dele desceria por ela.
+            VillageColonyMod.MINES.removeOfColony(colony.id());
+
             VillageColonyMod.COLONIES.remove(colony.id());
         }
 

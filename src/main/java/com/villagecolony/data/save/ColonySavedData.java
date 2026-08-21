@@ -5,6 +5,7 @@ import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.ColonyHut;
 import com.villagecolony.core.construction.model.ConstructionState;
+import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.colony.model.ColonyLifecycle;
@@ -99,6 +100,14 @@ public final class ColonySavedData extends PersistentState {
 
     private final List<Building> buildings = new ArrayList<>();
 
+    /**
+     * A mina de cada colônia — Regra 29.
+     *
+     * <p>No mesmo arquivo pelo mesmo motivo de sempre: a mina aponta
+     * para a colônia por id, e mina órfã seria escada de dono nenhum.
+     */
+    private final List<Mine> mines = new ArrayList<>();
+
     private ColonySavedData() {
     }
 
@@ -158,6 +167,23 @@ public final class ColonySavedData extends PersistentState {
             Collection<ConstructionService.Pending> currentProjects,
             Collection<Building> currentBuildings) {
 
+        sync(currentColonies, currentWorkers, currentProjects, currentBuildings, List.of());
+    }
+
+    /**
+     * @param currentMines a mina de cada colônia — a boca, o lado da
+     *     descida, o lado da galeria e a fronteira já cavada. É a única
+     *     parte do trabalho do mineiro que o mundo <b>não</b> guarda: os
+     *     túneis abertos ficam onde estão, mas nada neles diz onde a
+     *     escada começa nem até onde a picareta chegou
+     */
+    public void sync(
+            Collection<Colony> currentColonies,
+            Collection<Worker> currentWorkers,
+            Collection<ConstructionService.Pending> currentProjects,
+            Collection<Building> currentBuildings,
+            Collection<Mine> currentMines) {
+
         colonies.clear();
         colonies.addAll(currentColonies);
 
@@ -170,6 +196,9 @@ public final class ColonySavedData extends PersistentState {
         buildings.clear();
         buildings.addAll(currentBuildings);
 
+        mines.clear();
+        mines.addAll(currentMines);
+
         markDirty();
     }
 
@@ -181,6 +210,11 @@ public final class ColonySavedData extends PersistentState {
     /** O que a colônia levantou, segundo o save. */
     public List<Building> buildings() {
         return List.copyOf(buildings);
+    }
+
+    /** As minas que o save trouxe, uma por colônia. */
+    public List<Mine> mines() {
+        return List.copyOf(mines);
     }
 
     @Override
@@ -265,6 +299,8 @@ public final class ColonySavedData extends PersistentState {
 
         nbt.put(BUILDINGS, buildingList);
 
+        MineSave.write(nbt, mines);
+
         return nbt;
     }
 
@@ -320,6 +356,8 @@ public final class ColonySavedData extends PersistentState {
         for (Colony colony : data.colonies) {
             knownColonies.add(colony.id());
         }
+
+        data.mines.addAll(MineSave.read(nbt, knownColonies));
 
         NbtList projectList = nbt.getList(PROJECTS, NbtElement.COMPOUND_TYPE);
 

@@ -3927,10 +3927,33 @@ colônias vizinhas cavam para lados diferentes, e a mesma colônia cava
 sempre para o mesmo lado entre sessões — o aldeão não perde a mina que
 abriu ontem.
 
-**O que esta regra não guarda, e é limite conhecido:** a mina não é
-gravada no save. Ao voltar, o mineiro reabre a boca no mesmo lugar — o
-lado é determinístico — e reencontra as posições já abertas como ar,
-pulando-as de graça. Custa uma varredura de índices, não uma escavação.
+**A mina é da colônia, e é gravada — 2026-08-20, no mesmo dia.** Sete
+campos no save: a colônia dona, a boca em três coordenadas, o lado da
+descida, o lado da galeria e a fronteira já cavada. Uma mina por colônia,
+e não uma por mineiro: o segundo a descer continua a mesma escada.
+
+**O que o limite era, e por que ele não era pequeno.** A regra nasceu com
+a mina em memória, e o texto de então dizia que reabrir custava "uma
+varredura de índices, não uma escavação". Estava certo pela metade:
+
+```text
+a boca        reprocurada pelo primeiro bloco sólido na coluna do fim
+              da vila — e esse bloco tinha sido cavado. A busca descia
+              mais, achava outro, e a colônia ganhava uma segunda
+              escada alguns blocos abaixo da de ontem
+
+a fronteira   voltava a zero, e a varredura de índices era de graça
+              por posição e crescia com a profundidade: a galeria não
+              acaba, e a conta acompanha
+
+a galeria     reabria virada para a lava que já a tinha feito virar, e
+              o mineiro batia oito vezes na mesma barreira para virar
+              de novo
+```
+
+**O lado da descida continua saindo do identificador da colônia**, e
+agora é redundância de propósito: mesmo que o save se perca, a mina nova
+abre para o mesmo lado da antiga.
 
 ---
 
@@ -3962,10 +3985,6 @@ areia            ninguém a colhe. O fundidor funde a que houver no
 carvão e ferro   o mineiro desce vinte blocos e não reconhece minério.
                  Sem eles, tocha e lampião ficam na lista de
                  dispensáveis da Regra 28, e a casa sobe sem luz
-
-a mina no save   estado em memória num sistema que grava todo o resto.
-                 Ao voltar, o mineiro reabre a boca e revarre os
-                 índices já abertos
 
 o fazendeiro     tem nome, enxada e baú desde a Fase 4, e nenhum
                  trabalho. É a última profissão do modelo sem código

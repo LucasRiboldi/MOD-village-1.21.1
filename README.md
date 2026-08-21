@@ -220,6 +220,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Registro de construções e proteção | 🧪 coberto por teste, nunca visto em jogo |
 | **As casas são as do jogo**, e só elas | 🧪 coberto por teste, nunca visto em jogo |
 | **A mina** — escada, duas salas e galeria sem fim | 🧪 coberto por teste, nunca visto em jogo |
+| **A mina sobrevive ao fechar do mundo** — a boca, o lado da galeria e até onde a picareta chegou | 🧪 coberto por teste, e um reinício de verdade nunca foi feito |
 | **Tosquia** — lã, e a ovelha fica viva | 🧪 coberto por teste, nunca visto em jogo |
 | **Fundição** — areia vira vidro | 🧪 coberto por teste, nunca visto em jogo |
 | **Descascar tronco**, e montar tocha e vidraça | 🧪 coberto por teste, nunca visto em jogo |
@@ -407,7 +408,8 @@ inventava.
   de verdade.
 - **A areia não é colhida por ninguém**, então o vidro ainda depende de
   você. **Carvão e ferro** também não, então a casa sobe sem luz.
-- **A mina não é gravada no save.**
+- **A mina é gravada desde 2026-08-20**, mas **fechar e reabrir o mundo
+  de verdade nunca foi feito**: a bateria roda um servidor só.
 - **Seis conflitos internos** estão listados em [`TODO.md`](TODO.md) —
   regras que se contradizem, código que ficou sem uso, e um arquivo da
   Mojang que continua no repositório e não é mais lido.
