@@ -240,13 +240,13 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | **Carvão e ferro na mina**, com a veia seguida até acabar | 🧪 coberto por teste, nunca visto em jogo |
 | **A rua cresce com a vila** — sem beira livre, a colônia calça o trecho seguinte | 🧪 coberto por teste, nunca visto em jogo |
 | **A rua do deserto é reconhecida** — é de arenito liso, e a vila de lá nunca achou lote | 🧪 coberto por teste, nunca visto em jogo |
-| **O centro da colônia só anda pela sonda** — varredura do jogador não o arrasta mais | 🧪 coberto por teste, nunca visto em jogo |
+| **O centro da colônia só anda pela sonda** — varredura do jogador não o arrasta mais | ✅ **verificado em jogo** em 2026-08-22 |
 | **O registro de aldeão segue as camas vistas**, e não o centro antigo | 🧪 coberto por teste, nunca visto em jogo |
 | **A barreira de teste grita** — cada peça riscada nomeia a cadeia que falhou | 🧪 coberto por teste, nunca visto em jogo |
 | Agricultura e defesa | ⬜ não começado |
 
 ```text
-458 testes unitários  ·  150 testes de jogo  ·  ./gradlew build
+458 testes unitários  ·  153 testes de jogo  ·  ./gradlew build
 ```
 
 **O que 🧪 quer dizer aqui.** A bateria roda o caso e ele passa. Não quer
@@ -280,7 +280,7 @@ a recusar, e a correção ainda não foi vista em jogo.
 
 | | Etapa | Estado |
 |---|---|---|
-| **1** | **Rodar em jogo.** São **36 commits** desde a última sessão de verdade, em 2026-08-19: sete profissões, sete regras novas, a mina, a cadeia de materiais inteira, a rua que cresce e as nove decisões de 08-21. **Nada disso foi visto numa vila.** Cada regra escrita daqui em diante é mais uma coisa não verificada empilhada sobre as outras | 🔒 exige sessão de jogo |
+| **1** | **Rodar em jogo.** A sessão de 2026-08-22 durou 28 minutos e morreu nos dois defeitos que ela mesma revelou — os dois corrigidos no mesmo dia, e nenhuma das correções vista funcionando. Antes dela eram **36 commits** desde a última sessão de verdade, em 2026-08-19: sete profissões, sete regras novas, a mina, a cadeia de materiais inteira, a rua que cresce e as nove decisões de 08-21. **Nada disso foi visto numa vila.** Cada regra escrita daqui em diante é mais uma coisa não verificada empilhada sobre as outras | 🔒 exige sessão de jogo |
 | **2** | **Implementar a ADR-008 — orientação de blocos.** É a que muda o que se vê: cama, escada e tocha param de sair todas para o mesmo lado. A decisão está escrita; falta atravessar o `Side` pelo `BlueprintBlock` | 🔨 decidido, por escrever |
 | **3** | **Quebrar os seis arquivos acima de 500 linhas.** `VillageDetectionHandler` tem 982 e é o pior | 🔨 pronto para fazer |
 | **4** | **Regra 16 — espaço em volta da casa.** A metade da altura está feita; falta a distância mínima e máxima | 🔨 meia feita |

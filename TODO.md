@@ -13,10 +13,56 @@ conta 375 testes.
 funcionando em jogo* são coisas diferentes, e estão separadas.
 
 ```text
-458 testes unitários  ·  150 testes de jogo  ·  29 regras do autor
+458 testes unitários  ·  153 testes de jogo  ·  29 regras do autor
 7 trabalhadores com código  ·  6 arquivos acima do teto de 500 linhas
 bateria: 1 instável, 2 falhas em 12 rodadas — ver a seção seguinte
 ```
+
+---
+
+## 🏜️ A primeira sessão em 36 commits — 2026-08-22
+
+Vinte e oito minutos, 01:04 → 01:32. O jar novo foi o que rodou: a linha
+`TEST BARRIER` só existe nele.
+
+**O que ela provou**
+
+| | |
+|---|---|
+| **A vila de deserto planejou uma casa do catálogo** | `desert_small_house_1`, 113 blocos. Inédito — ela nunca tinha passado de contratar |
+| **A Emenda 4 segura o centro** | 4 movimentos em 28 min, todos com a contagem subindo (9 → 17 → 23 camas) e ≤16 blocos. **23 varreduras do jogador recusadas sem mover nada.** Nada parecido com o salto de 65 de 08-15 |
+| **O guarda de travamento do lenhador dispara em jogo** | 4 vezes, `made no progress ... returned to the queue` |
+| **7 colônias, 122 trabalhadores, 6 construções** | e a persistência aguentou |
+
+**O que ela quebrou, e os dois foram corrigidos no mesmo dia**
+
+**1 — O construtor não chegava ao bloco.** Oito minutos, três voltas do
+guarda de dois minutos, zero blocos. `footOf` mandava o aldeão ao pé da
+coluna na altura da origem da obra — e no deserto essa altura está
+**dentro da duna**. Andar para dentro de bloco sólido é pedir um caminho
+que não existe. `standingSpotNear` procura onde um aldeão cabe de pé, e
+o guarda passou a dizer por que não chegou.
+
+**2 — A conta de pedra pedia o bloco errado.** O mineiro ficou parado a
+sessão inteira com os baús vazios. Lendo a casa no jar do jogo:
+
+```text
+ 60  smooth_sandstone
+ 27  sandstone_slab
+  5  sandstone            ← o único que a conta enxergava
+  1  smooth_sandstone_stairs
+```
+
+93 na família, 5 no bloco puro. É **a terceira vez** que este defeito
+aparece e sempre no deserto — vidro/vidraça, rua de terra/arenito liso,
+e agora parede de arenito/arenito liso. A conta passou a ser por
+família, e isso conserta a taiga junto (`cobblestone_stairs` e
+`cobblestone_wall` também estavam de fora).
+
+**O elo seguinte, e ele está aberto:** a colônia vai **cavar** arenito, e
+a casa pede o **liso**. Quem funde pedra ainda não existe — o fundidor só
+tem meta de vidro e de ferro. A obra vai esperar, que é o estado certo, e
+agora com material no baú em vez de baú vazio.
 
 ---
 
@@ -129,8 +175,8 @@ quem decompõe uma peça não pode partir de outra peça da mesma família.
 
 ## 🧪 O que falta testar — nada disto foi visto em jogo
 
-**Trinta e cinco commits desde a última sessão de verdade.** Em ordem do
-que mais precisa ser visto:
+**A sessão de 2026-08-22 fechou os itens 5, 11 e parte do 2 e do 3.** O
+resto continua sem ter sido visto:
 
 | | O que | Como confirmar no log |
 |---|---|---|
@@ -138,13 +184,13 @@ que mais precisa ser visto:
 | **2** | **A casa do catálogo subindo** | `planned minecraft:village/<bioma>/houses/<bioma>_small_house_1` |
 | **3** | **A vila de deserto construindo** | Pela primeira vez na história do mod |
 | **4** | **A barreira de teste** | `TEST BARRIER covered for nothing this session` é a notícia boa. Qualquer `TEST BARRIER skipped` nomeia a cadeia que falhou |
-| **5** | **O centro parado** | Nenhum salto de âncora. A obra não fica para trás |
+| ~~5~~ | ~~**O centro parado**~~ | ✅ **visto em 2026-08-22** — 4 movimentos, todos convergindo |
 | **6** | **A casa esperando a cama** | `WAITING_RESOURCES` por `white_bed`, e o pastor tosquiando por causa disso |
 | **7** | **Pastor, fundidor e o fabricante descascando** | `Shepherd ... sheared`, `Smelter ... made minecraft:glass`, `stripped a oak_log` |
 | **8** | **A cadeia da areia inteira** | meta de `SAND`, `Miner ... took` numa praia, vidro, e a vidraça saindo do fabricante |
 | **9** | **O carvão da galeria** | `Miner ... took` de um `coal_ore` no −20, e a veia inteira num só ciclo |
 | **10** | **A casa de planície terminando sozinha** | é a primeira vez que ela pode |
-| **11** | **A vila de deserto achando lote**, e **a rua crescendo** | `extended the road 5 blocks` |
+| ~~11~~ | ~~**A vila de deserto achando lote**~~ | ✅ **visto em 2026-08-22** — lote achado e casa planejada. A rua crescendo continua por ver |
 | **12** | **O E9** | `E9 — colony ... changed state N times`. Silêncio aqui fecha o erro |
 | **13** | **O registro seguindo as camas** | `Registered N villagers` numa colônia cujo centro esteja longe do aglomerado novo |
 
@@ -186,18 +232,19 @@ só como frase aqui e no README.
 
 ## 🗂️ Próximas atividades, por importância
 
-**1 — Rodar em jogo.** Trinta e cinco commits, nove decisões e três
-profissões sem uma única sessão de verdade. Nada mais deveria ser
-construído antes disto.
+**1 — Rodar em jogo de novo, com o jar de 2026-08-22.** A sessão anterior
+morreu nos dois defeitos que ela mesma revelou, e nenhuma das correções
+foi vista funcionando. O que se espera ver: o construtor <b>colocando
+bloco</b>, e o mineiro <b>cavando arenito</b>.
 
 **2 — Fechar a bateria.** Os dois testes da seção 🔴. O da arena é
 regressão deste ciclo; o do lenhador atrapalha todo ciclo desde antes.
 
-**3 — Implementar a ADR-008 (orientação).** É a que muda o que se vê:
+**4 — Implementar a ADR-008 (orientação).** É a que muda o que se vê:
 cama, escada e tocha param de sair todas para o mesmo lado. `Side` já
 existe; o que falta é atravessá-lo pelo `BlueprintBlock`.
 
-**4 — Quebrar os arquivos acima de 500 linhas.**
+**5 — Quebrar os arquivos acima de 500 linhas.**
 
 ```text
 982  VillageDetectionHandler      621  BuildSiteScanner
@@ -211,13 +258,13 @@ já está em 527. Nos testes há mais quatro acima do teto:
 `LumberjackGameTest` 1571, `BuilderGameTest` 904, `BuildSiteGameTest` 670
 e `MinerGameTest` 510.
 
-**5 — Regra 16**, distância mínima e máxima entre construções.
+**6 — Regra 16**, distância mínima e máxima entre construções.
 
-**6 — O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de
+**7 — O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de
 travar. `WorkMaterials` já é meio dele — um passo de decomposição, dois
 onde o lampião pede. O que falta é a profundidade qualquer.
 
-**7 — Implementar a ADR-007 (fusão).** Depende de a construção rodar em
+**8 — Implementar a ADR-007 (fusão).** Depende de a construção rodar em
 jogo: nada dispara enquanto uma obra não encostar na outra.
 
 ---
