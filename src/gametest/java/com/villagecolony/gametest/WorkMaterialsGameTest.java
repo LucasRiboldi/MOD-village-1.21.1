@@ -15,6 +15,7 @@ import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -255,6 +256,54 @@ public class WorkMaterialsGameTest implements FabricGameTest {
                 torches > 0,
                 "a casa de planície não listou wall_torch — a chave da lista mudou,"
                         + " e com ela a colônia para de pedir carvão em silêncio");
+
+        context.complete();
+    }
+
+    /**
+     * A casa de deserto é de arenito <b>liso</b>, e a conta precisa vê-lo.
+     *
+     * <p><b>Este é o teste que faltava em 2026-08-21.</b> Naquele dia a
+     * vila de deserto planejou a primeira casa da história do mod e o
+     * mineiro ficou parado a sessão inteira: a conta perguntava por
+     * {@code minecraft:sandstone} e a casa é feita de
+     * {@code smooth_sandstone}, {@code sandstone_slab} e
+     * {@code smooth_sandstone_stairs}. Quase zero, e zero é o mineiro
+     * sem tarefa.
+     *
+     * <p>A afirmação é sobre a casa que a Regra 27 manda construir de
+     * verdade, e ela vale nos dois sentidos: o arenito puro sozinho não
+     * paga a parede, e a família paga.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_materials",
+            tickLimit = 20)
+    public void theDesertHouseIsMadeOfSmoothSandstone(TestContext context) {
+        Optional<Blueprint> plan = StructureBlueprintReader.read(
+                context.getWorld(),
+                ResourceId.vanilla("village/desert/houses/desert_small_house_1"));
+
+        context.assertTrue(plan.isPresent(), "a casa de deserto do catálogo não carregou");
+
+        Map<ResourceId, Integer> materials = plan.get().materials();
+
+        int pure = materials.getOrDefault(ResourceId.vanilla("sandstone"), 0);
+
+        int family = 0;
+
+        for (Map.Entry<ResourceId, Integer> entry : materials.entrySet()) {
+            if (entry.getKey().path().contains("sandstone")) {
+                family += entry.getValue();
+            }
+        }
+
+        context.assertTrue(
+                family > 0,
+                "a casa de deserto não listou arenito nenhum — a paleta dela mudou");
+
+        context.assertTrue(
+                family > pure * 2,
+                "o arenito puro passou a responder pela parede (" + pure + " de " + family
+                        + ") — se a casa mudou, a conta por família pode voltar a ser por bloco");
 
         context.complete();
     }

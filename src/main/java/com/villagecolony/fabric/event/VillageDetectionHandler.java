@@ -400,7 +400,10 @@ public final class VillageDetectionHandler {
                 .flatMap(block -> MinecraftTypeAdapter.toResourceType(block.asItem()))
                 .orElse(ResourceType.COBBLESTONE);
 
-        int stoneForWork = ConstructionPlanner.materialNeededBy(palette.stone(), colony);
+        // Por família desde 2026-08-22, e foi a vila de deserto que
+        // cobrou: a casa dela é de arenito LISO, e perguntar pelo
+        // arenito puro devolvia quase zero. Ver WorkMaterials.stone.
+        int stoneForWork = WorkMaterials.stone(palette, colony);
 
         // O que a obra pede em peça, traduzido para o que a colônia sabe
         // produzir. A casa não pede vidro, pede vidraça; não pede carvão,

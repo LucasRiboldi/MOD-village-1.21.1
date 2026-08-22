@@ -117,6 +117,47 @@ public final class WorkMaterials {
     }
 
     /**
+     * A pedra que a obra pede, contada por <b>família</b> — 2026-08-22.
+     *
+     * <p><b>O defeito que ela conserta, visto em jogo em 2026-08-22.</b>
+     * A vila de deserto planejou a primeira casa da história do mod —
+     * {@code desert_small_house_1}, 113 blocos — e o mineiro ficou
+     * parado o tempo todo, com {@code no miner work: no task open for
+     * it}. Os baús estavam vazios e ninguém foi cavar.
+     *
+     * <p>A causa: a conta perguntava por {@code minecraft:sandstone},
+     * que é o que a paleta chama de "a pedra do deserto". Lendo o
+     * arquivo da casa no jar do jogo, ela é feita de
+     * {@code smooth_sandstone}, {@code sandstone_slab} e
+     * {@code smooth_sandstone_stairs} — e o arenito puro aparece uma vez
+     * só. A conta dava quase zero, e zero é o mineiro sem tarefa.
+     *
+     * <p>É a terceira vez que este defeito aparece, e sempre no deserto:
+     * a casa não pede vidro, pede vidraça; a rua não é de terra batida, é
+     * de arenito liso; e agora a parede não é de arenito, é de arenito
+     * <i>liso</i>. A pergunta certa nunca é pelo bloco exato.
+     *
+     * <p><b>Um por um, e não pela receita.</b> A laje custa meio bloco e
+     * a escada custa um e meio, então contar 1:1 pede a mais numa e a
+     * menos noutra. Fica assim de propósito: {@code through} desce por
+     * <b>receita de banca</b>, e o arenito liso sai da <b>fornalha</b> —
+     * o livro de receitas devolveria zero, que é o defeito que se está
+     * consertando. Sobrar é melhor que faltar, e a sobra fica no baú.
+     *
+     * <p><b>O que ela ainda não resolve:</b> a colônia vai <b>cavar</b> o
+     * arenito, e a casa pede o liso. Quem funde pedra ainda não existe —
+     * o fundidor só tem meta de vidro e de ferro. A obra vai esperar,
+     * que é o estado certo, e agora com material no baú em vez de
+     * baú vazio.
+     */
+    public static int stone(VillagePalette palette, Colony colony) {
+        String family = palette.stone().path();
+
+        return ConstructionPlanner.materialNeededBy(
+                material -> material.path().contains(family), colony);
+    }
+
+    /**
      * A lã que as camas da obra vão custar — 2026-08-21.
      *
      * <p>Mesma conta, mesmo dia, mesma razão: a Regra 21 morreu e a
