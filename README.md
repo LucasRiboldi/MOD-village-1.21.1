@@ -233,6 +233,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | **Vila de deserto constrói** | 🧪 coberto por teste, nunca visto em jogo |
 | **A mina reconhece minério** — carvão e ferro, e a veia é seguida | 🧪 coberto por teste, nunca visto em jogo |
 | **O mineiro diz o que está fazendo**, uma linha por ciclo | 🧪 coberto por teste, nunca visto em jogo |
+| **A mina tem onde nascer** — doze colunas em vez de uma, e voz quando nenhuma serve | 🧪 coberto por teste, **e é o que a próxima sessão precisa ver** |
 | **A boca da mina ganha lanterna e baú** — e o minério fica lá até lotar | 🧪 coberto por teste, nunca visto em jogo |
 | **O mineiro reconhece os oito minérios** do jogo, e não dois | 🧪 coberto por teste, nunca visto em jogo |
 | **Grupo de recurso classifica, e não substitui** — pedregulho deixou de responder por arenito | ✅ coberto por teste unitário |
@@ -250,7 +251,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Agricultura e defesa | ⬜ não começado |
 
 ```text
-464 testes unitários  ·  156 testes de jogo  ·  ./gradlew build
+464 testes unitários  ·  157 testes de jogo  ·  ./gradlew build
 ```
 
 **O que 🧪 quer dizer aqui.** A bateria roda o caso e ele passa. Não quer
@@ -297,31 +298,32 @@ a recusar, e a correção ainda não foi vista em jogo.
 
 ### O que precisa ser arrumado
 
-Nada aqui impede o mod de rodar. Tudo aqui cresce se ficar calado.
-
-**Quatro itens saíram desta lista em 2026-08-21, e o do grupo de
-recursos em 08-22** — grupo voltou a ser classificação, e a substituição
-é declarada. O teste instável
-continua aqui — melhorou de 3 falhas em 10 rodadas para 2 em 12, e
-melhora não é diagnóstico.
+A lista completa — resolvidos, erros, incompatibilidades e decisões —
+vive no [`TODO.md`](TODO.md), organizada por nível de progressão. Aqui
+ficam os que mudam o que se vê no jogo.
 
 | | O que | Por quê |
 |---|---|---|
-| 🟠 | **Seis arquivos acima de 500 linhas** no código, quatro nos testes | `LumberjackGameTest` tem 1571. `ConstructionPlanner` **voltou** à lista: 703 → 414 em 08-20, e 527 hoje. `MinerWork` está a 35 linhas do teto |
-| 🔴 | **Ninguém funde pedra** — a colônia cava arenito e a casa pede o **liso** | É o único elo entre a obra de deserto e a casa de pé. Visto em jogo: `no minecraft:smooth_sandstone in the colony chests`, sete vezes. Mecânico de escrever; o que trava é a decisão do grupo, acima |
-| 🔴 | **Um teste de jogo instável** — `theStallGuardReturnsTheTaskAndForgetsTheTree` | **2 falhas em 12 rodadas** em 08-22, depois da correção do registro de aldeão — eram 3 em 10 antes dela. A causa continua sem diagnóstico, e um teste que mente às vezes é pior que um que falta |
-| 🟠 | **Uma falha não diagnosticada** — `theStoneLeavesTheWorldAndReachesTheChest` disse "a pedra não chegou ao baú" uma vez | A suspeita é o custo de ler estrutura dentro do tique; a leitura foi reduzida e não voltou a falhar. **Suspeita, não diagnóstico** |
-| 🟡 | **O ícone tem 1,95 MB, e o jar tem 2,29 MB** | 85% do que se distribui é uma imagem mostrada a 64 pixels na lista de mods. A 256×256 daria cerca de 100 KB. É escolha de arte, e por isso não foi mexida |
-| 🟡 | **O `furniture()` do `BlueprintBlock` perdeu o dono** | Ele marcava o que a Regra 21 repunha. A regra morreu, e quem decide o que não segura a obra é a barreira da Regra 28 |
-| 🟡 | **A Regra 25 está inerte** enquanto a 28 valer | "A maior planta que couber" precisa de mais de uma planta |
-| 🟡 | **A arena da bateria tem bioma fixo** de planície | Foi o que escondeu por uma semana que a vila de deserto não reconhecia a própria rua |
-| 🟡 | **O `Development-Log.md` parou em 2026-08-15** | Quarenta e um commits e **três sessões de jogo** não estão nele. O que se aprendeu nas três de 08-22 vive só no TODO, no README e nas mensagens de commit. O "49 camas e 7" que originou a Emenda 4 da ADR-003 não tem registro primário no repositório |
+| 🔴 | **Ninguém funde pedra** — a colônia cava arenito e a casa pede o **liso** | É o único elo entre a obra de deserto e a casa de pé. Visto em jogo sete vezes numa sessão |
+| 🔴 | **A vila fica presa numa obra só** | O planejador não sabe desistir. O catálogo do jogo já tem fazenda, curtume, ferraria — e a Regra 28 filtra tudo para uma casa por bioma |
+| 🔴 | **`MinerWork` cruzou o teto** — 465 → 511 linhas em 08-22, e `BuilderWork` foi de 729 a 838 | Regressão deste ciclo. São oito arquivos de código acima de 500 |
+| 🔴 | **Um teste de jogo instável** — `theStallGuardReturnsTheTaskAndForgetsTheTree` | 2 falhas em 12 rodadas, depois de melhorar de 3 em 10. **Sem diagnóstico** |
+| 🟠 | **`theStoneLeavesTheWorldAndReachesTheChest`** disse "a pedra não chegou ao baú" uma vez | Suspeita, não diagnóstico |
+| 🟠 | **A arena da bateria tem bioma fixo** de planície | Escondeu **duas vezes** que o deserto estava quebrado |
+| 🟡 | **O ícone tem 1,95 MB, e o jar 2,29 MB** | 85% do que se distribui é uma imagem mostrada a 64 pixels |
+| 🟡 | **`furniture()` sem dono** e **Regra 25 inerte** | Lógica morta desde a Regra 21 e a 28 |
+| 🟡 | **O `Development-Log` parou em 08-15** | Quarenta e seis commits e três sessões de jogo fora dele |
+| 👤 | **Sete decisões esperam você** | Da mina sem lugar à política de substituição. Estão no `TODO.md`, na ordem em que travam |
 
 <details>
 <summary>Etapas fechadas nos ciclos anteriores</summary>
 
 | Etapa | |
 |---|---|
+| **Nível 1 — a mina tem onde nascer, e voz quando não tem** | ✅ 2026-08-22 |
+| **Regra 30 — o mineiro recolhe tudo, e a boca tem endereço** | ✅ 2026-08-22 |
+| **ADR-009 — a vila evolui por bioma e recurso** | ✅ 2026-08-22 |
+| **Grupo de recurso classifica, e não substitui** | ✅ 2026-08-22 |
 | **ADR-003 Emenda 4 — o centro da colônia é da sonda** | ✅ 2026-08-21 |
 | **A Regra 21 morre, e a demanda de lã e ferro passa para a obra** | ✅ 2026-08-21 |
 | **A barreira de teste da Regra 28 passa a gritar** | ✅ 2026-08-21 |
@@ -389,10 +391,51 @@ sempre atual — o enunciado das 29 regras, uma a uma — em
 ---
 ## Último ciclo de desenvolvimento
 
-**2026-08-21** — onze commits, e o ciclo em que o autor respondeu as
-**nove perguntas** que estavam em aberto e todas foram aplicadas. Começou
-pelo centro da colônia e terminou achando um defeito que estava escondido
-atrás de um teste que todo mundo chamava de instável.
+**2026-08-22** — quinze commits, **três sessões de jogo** e uma virada
+de arquitetura. O dia começou com o autor respondendo nove perguntas em
+aberto e terminou com a raiz de tudo achada: **a mina nunca tinha
+aberto.**
+
+**O que as sessões provaram**
+
+| | |
+|---|---|
+| **A vila de deserto planejou uma casa do catálogo** | `desert_small_house_1`, 113 blocos. Inédito |
+| **O construtor chega ao bloco** | A obra passou de `BUILDING` a `WAITING_RESOURCES`, que só se alcança tocando o bloco. Antes: oito minutos andando sem chegar |
+| **O centro parou de saltar** | 4 movimentos convergindo, e 23 varreduras do jogador recusadas sem mover nada |
+| **A conta de pedra abre tarefa** | `no miner work` caiu de toda passagem de ciclo para uma vez em treze minutos |
+
+**A raiz, achada no fim do dia**
+
+`MineDigging.mouthOf` procurava a boca em **uma coluna** — centro mais
+quarenta blocos numa direção fixa — e desistia se ela não servisse. Sem
+alternativa, sem nova tentativa e **sem uma linha de log**. Três sessões
+terminaram com `0 mines` no save e mineiros mudos com tarefa aberta. E a
+mina é a raiz de pedra, carvão e ferro: sem ela, a cadeia inteira de
+material fica pendurada num elo que nunca produziu um bloco.
+
+Agora são **doze colunas**, a boca é superfície e não miolo de morro, e
+o fracasso tem voz.
+
+**Três defeitos de jogo, corrigidos no mesmo dia**
+
+- **O construtor pisava dentro da duna.** `footOf` mandava o aldeão ao
+  pé da coluna na altura da obra — no deserto, debaixo da areia.
+- **A conta de pedra pedia o bloco errado.** A casa de deserto tem 93
+  blocos de arenito na família e 5 do bloco puro; a conta via 5.
+- **A colônia procurava aldeão no centro antigo**, e não onde viu as
+  camas — defeito que a Emenda 4 destapou.
+
+**A virada:** a [`ADR-009`](docs/decisions/ADR-009-Autonomous-Village-Evolution.md)
+tira o mod de `BIOMA → ESCOLHER ESTRUTURA` e o põe num **motor universal
+de evolução** alimentado por perfis. A primeira peça dela já entrou:
+grupo de recurso voltou a ser classificação, e a substituição passou a
+ser declarada.
+
+---
+
+<details>
+<summary>O ciclo das nove decisões — 2026-08-21</summary>
 
 **As nove decisões**
 
@@ -525,6 +568,8 @@ quantos **não** couberam, e o mineiro leu ao contrário.
 
 **Refatorado:** `ConstructionPlanner` 703 → 414; `LumberjackWork` 1232 →
 455, que era o pior arquivo do projeto.
+
+</details>
 
 </details>
 

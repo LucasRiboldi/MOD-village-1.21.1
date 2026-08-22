@@ -1693,6 +1693,17 @@ O Project-State deve sempre responder:
 
 # 17. Erros conhecidos
 
+> **A lista viva mora no [`TODO.md`](../../TODO.md)** desde 2026-08-22,
+> organizada por nível de progressão lógica: resolvidos, erros abertos,
+> pendências por nível, incompatibilidades e decisões que faltam. Esta
+> seção guarda o histórico e o detalhe de cada erro; onde as duas
+> discordarem, vale o TODO.
+>
+> Nasceram em 2026-08-22, das três sessões de jogo: **E18** (ninguém
+> funde pedra), **E19** (`MinerWork` cruzou o teto de 500 linhas),
+> **E20** (o guarda de travamento instável) e **E21** (a pedra que não
+> chegou ao baú).
+
 Registrados com o que se sabe, e sem inventar causa para o que não foi
 investigado.
 

@@ -152,11 +152,13 @@ na seção de cada regra.
 
 ```text
 464 testes unitários     lógica pura do Core e serialização NBT
-154 testes de jogo       a fronteira, num servidor sem cliente
+157 testes de jogo       a fronteira, num servidor sem cliente
 ```
 
-> **A ADR-009 refez a fila de prioridades em 2026-08-22.** O §4 deste
-> arquivo é anterior a ela; vale o `TODO.md`.
+> **A ADR-009 refez a fila de prioridades em 2026-08-22**, e o `TODO.md`
+> foi reorganizado por **nível de progressão lógica** no mesmo dia. O
+> §4 deste arquivo é anterior aos dois: **vale o `TODO.md`**, que é a
+> lista canônica de resolvidos, erros, incompatibilidades e decisões.
 >
 > **Este arquivo parou em 2026-08-15 e está sendo alcançado aos poucos.**
 > Onde ele discordar do `TODO.md`, **vale o TODO** — a precedência foi
@@ -222,6 +224,9 @@ no §4. O enunciado de cada decisão está em `Project-State.md §10`.
 | D5 | **E9** — colônia `ABANDONED` desmarcada no ciclo seguinte | **Instrumentado em 2026-08-21** — `ColonyStateLog` diz de onde veio, o que a sonda viu nos dois sentidos, e nomeia quem trocou três vezes ou mais. Falta a sessão de jogo que responde | §17 |
 | ~~D6~~ | ~~**E11** — rodízio de profissão~~ | ✅ fechado em 08-15: a colônia conta baús distintos, e não candidatos | §17 |
 | ~~D8~~ | ~~**E17** — `SANDSTONE` e `COBBLESTONE` no mesmo grupo~~ | ✅ **fechado em 2026-08-22** pela ADR-009 §3.4: grupo classifica, substituição se declara. `ResourceSubstitution` | §17 |
+| D10 | **E19** — `MinerWork` cruzou o teto de 500 linhas (465 → 511), e `BuilderWork` foi de 729 a 838 | Regressão de 2026-08-22. A ADR-009 §6 diz que 500 é indicador e o corte é por responsabilidade | §17 |
+| D11 | **E20** — `theStallGuardReturnsTheTaskAndForgetsTheTree` instável | 2 falhas em 12 rodadas em 08-22, depois de melhorar de 3 em 10. **Sem diagnóstico** | §17 |
+| D12 | **E21** — `theStoneLeavesTheWorldAndReachesTheChest` falhou uma vez | Suspeita: custo de ler estrutura no tique. **Suspeita, não diagnóstico** | §17 |
 | D9 | **E18** — a colônia cava arenito e a casa pede arenito **liso**; ninguém funde pedra | **Achado em jogo, 2026-08-22.** É o único elo entre a obra de deserto e a casa de pé | §17 |
 | D7 | **E13** — hábito a criar: conferir a linha de carregamento do log antes de concluir do silêncio de uma fase | §17 |
 
