@@ -3,6 +3,7 @@ package com.villagecolony.gametest;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.core.construction.model.Mine;
@@ -678,6 +679,75 @@ public class MinerGameTest implements FabricGameTest {
         context.assertTrue(
                 OreVein.isOre(Blocks.COAL_ORE.getDefaultState()),
                 "o carvão deixou de ser minério, e a veia dele para de ser seguida");
+
+        context.complete();
+    }
+
+    /**
+     * A busca não desiste na primeira coluna — 2026-08-22.
+     *
+     * <p><b>É o defeito que fez a mina nunca abrir.</b> Até aqui
+     * {@code mouthOf} olhava <b>um ponto</b> — centro mais quarenta
+     * blocos numa direção fixa — e devolvia vazio se ele não servisse.
+     * Três sessões de jogo terminaram com {@code 0 mines} no save e
+     * mineiros mudos com tarefa aberta.
+     *
+     * <p>A coluna ideal é tapada por construção da colônia, que a Regra 3
+     * proíbe cavar. O que se afirma é que a mina <b>ainda assim</b> acha
+     * onde nascer, mais perto ou de outro lado.
+     *
+     * <p>A montagem se confere antes de afirmar: sem a coluna ideal
+     * realmente tapada, o teste passaria por acidente e não diria nada.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+            tickLimit = 20)
+    public void theSearchTriesMoreThanOneColumn(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        for (int x = 0; x <= 7; x++) {
+            for (int z = 0; z <= 7; z++) {
+                context.setBlockState(new BlockPos(x, 1, z), Blocks.DIRT.getDefaultState());
+            }
+        }
+
+        BlockPos center = context.getAbsolutePos(new BlockPos(4, 2, 4));
+
+        MineDigging.shortenMineDistanceTo(3);
+
+        // A mesma conta que mouthOf faz para a coluna ideal.
+        BlockPos ideal = new BlockPos(
+                center.getX() + Side.NORTH.offsetX() * 3,
+                center.getY(),
+                center.getZ() + Side.NORTH.offsetZ() * 3);
+
+        UUID colonyId = UUID.randomUUID();
+
+        VillageColonyMod.BUILDINGS.register(new Building(
+                UUID.randomUUID(),
+                colonyId,
+                ResourceId.vanilla("village/plains/houses/plains_small_house_1"),
+                MinecraftTypeAdapter.toColonyPos(ideal.add(-1, -14, -1)),
+                MinecraftTypeAdapter.toColonyPos(ideal.add(1, 6, 1))));
+
+        boolean covered = VillageColonyMod.BUILDINGS.isColonyInfrastructure(
+                MinecraftTypeAdapter.toColonyPos(ideal.down()));
+
+        Optional<BlockPos> mouth = MineDigging.mouthOf(world, center, Side.NORTH);
+
+        MineDigging.restoreMineDistance();
+
+        VillageColonyMod.BUILDINGS.removeOfColony(colonyId);
+
+        context.assertTrue(covered, "a montagem falhou: a coluna ideal não ficou tapada");
+
+        context.assertTrue(
+                mouth.isPresent(),
+                "a coluna ideal estava tapada e a busca desistiu — é o defeito de 08-22");
+
+        context.assertTrue(
+                Math.abs(mouth.get().getX() - ideal.getX()) > 1
+                        || Math.abs(mouth.get().getZ() - ideal.getZ()) > 1,
+                "a boca nasceu dentro da construção, em " + mouth.get().toShortString());
 
         context.complete();
     }

@@ -5,6 +5,7 @@ import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.MineMouth;
 import com.villagecolony.fabric.integration.OreVein;
@@ -43,6 +44,35 @@ public final class MineDigging {
 
     /** A que distância do centro a mina se abre — o fim da vila. */
     private static final int MINE_DISTANCE = 40;
+
+    /**
+     * As frações da distância que a busca tenta, em centésimos.
+     *
+     * <p>Cheia primeiro, que é a intenção do autor, e depois mais perto.
+     * <b>Nunca mais longe:</b> "o fim da vila" é um teto, e a bateria
+     * encurta essa distância para o mineiro não comer a pedra da arena
+     * do lado.
+     */
+    private static final int[] REACHES = {100, 75, 50};
+
+    /** Mais perto que isto a escada desceria sob a própria vila. */
+    private static final int NEAREST_MOUTH = 2;
+
+    /**
+     * Quanto acima do nível da vila a boca pode nascer.
+     *
+     * <p>Curto de propósito: a boca é <b>o fim da vila</b>, e não o topo
+     * do morro ao lado. Foi por olhar oito para cima que a primeira
+     * versão desta busca abriu uma mina seis blocos acima do centro, em
+     * cima do piso da arena vizinha.
+     */
+    private static final int LOOK_UP = 3;
+
+    /** E quanto abaixo, para a boca numa depressão. */
+    private static final int LOOK_DOWN = 12;
+
+    /** O assunto do registrador para a boca que não se acha — 2026-08-22. */
+    private static final String MOUTH_SUBJECT = "miner mine mouth";
 
     /**
      * A distância em vigor. É {@link #MINE_DISTANCE}, menos nos testes.
@@ -154,8 +184,22 @@ public final class MineDigging {
         Optional<BlockPos> mouth = mouthOf(world, center, descent);
 
         if (mouth.isEmpty()) {
+            // A linha que faltava, e a falta dela custou três sessões.
+            // O mineiro ficava "looking for stone" para sempre e nada
+            // dizia que a mina sequer tinha onde nascer. Assunto próprio
+            // porque MinerWork.run limpa o dele quando há tarefa aberta
+            // — e aqui há tarefa, e mesmo assim não há mina.
+            IdleLog.record(
+                    colonyId,
+                    MOUTH_SUBJECT,
+                    IdleReason.NO_TARGET,
+                    "no column within " + mineDistance + " blocks of " + center.toShortString()
+                            + " can hold a mine mouth — tried 4 sides at 3 distances");
+
             return Optional.empty();
         }
+
+        IdleLog.clear(colonyId, MOUTH_SUBJECT);
 
         Mine opened = VillageColonyMod.MINES.open(
                 colonyId,
@@ -259,30 +303,133 @@ public final class MineDigging {
      * <p>É a frase do autor — <i>anda até o final da vila</i>. Longe o
      * bastante para a escada não descer sob as casas, perto o bastante
      * para o aldeão ir e voltar dentro do expediente.
+     *
+     * <p><b>Era uma coluna só, e por isso a mina nunca abriu.</b> Até
+     * 2026-08-22 esta busca olhava exatamente um ponto — centro mais
+     * quarenta blocos numa direção fixa — e desistia se ele não
+     * servisse. Sem alternativa, sem nova tentativa e <b>sem uma linha
+     * de log</b>: três sessões de jogo terminaram com {@code 0 mines} no
+     * save e mineiros mudos com tarefa aberta.
+     *
+     * <p>Agora ela tenta <b>doze colunas</b>: quatro lados, três
+     * distâncias. A ordem é determinística e começa na intenção do autor
+     * — o lado da colônia, na distância cheia —, e só depois encurta.
+     * <b>Nunca vai mais longe</b> que a distância pedida: "o fim da
+     * vila" é um teto, e a bateria encurta essa distância justamente
+     * para o mineiro não comer a pedra da arena vizinha.
+     *
+     * <p>Pública para o teste de jogo, e é uma leitura sem efeito: nada
+     * no mundo muda por perguntar onde a boca caberia.
      */
-    private static Optional<BlockPos> mouthOf(
+    public static Optional<BlockPos> mouthOf(
             ServerWorld world, BlockPos center, Side towards) {
 
-        int x = center.getX() + towards.offsetX() * mineDistance;
-        int z = center.getZ() + towards.offsetZ() * mineDistance;
+        for (int part : REACHES) {
+            int away = Math.max(NEAREST_MOUTH, mineDistance * part / 100);
 
-        for (int y = center.getY() + 4; y >= center.getY() - 8; y--) {
-            BlockPos at = new BlockPos(x, y, z);
+            Side side = towards;
 
-            if (world.getBlockState(at).isAir()) {
-                continue;
+            for (int turn = 0; turn < 4; turn++) {
+                Optional<BlockPos> found = surfaceAt(world, center, side, away);
+
+                if (found.isPresent()) {
+                    return found;
+                }
+
+                side = side.clockwise();
             }
-
-            if (BlockProtection.isVillageOriginal(world, at)
-                    || BlockProtection.isColonyBuilt(at)) {
-
-                return Optional.empty();
-            }
-
-            return Optional.of(at);
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * O chão desta coluna, se ela servir de boca.
+     *
+     * <p><b>O topo sólido, e não o primeiro sólido.</b> A busca antiga
+     * descia do centro mais quatro e devolvia o que encontrasse — numa
+     * encosta, isso é o <b>miolo do morro</b>, e a boca nascia enterrada.
+     * Aqui um bloco só vale se o que está sobre ele puder ser ocupado.
+     *
+     * <p><b>Nem debaixo d'água.</b> Água é substituível, então o leito do
+     * lago passaria por superfície. A boca de uma mina dentro de um lago
+     * é a mina inundada no primeiro degrau.
+     *
+     * <p>Vazio quando a coluna não serve — e vazio é "tente a próxima",
+     * e não "desista", que era o defeito.
+     */
+    private static Optional<BlockPos> surfaceAt(
+            ServerWorld world, BlockPos center, Side side, int away) {
+
+        int x = center.getX() + side.offsetX() * away;
+        int z = center.getZ() + side.offsetZ() * away;
+
+        if (world.getChunkManager().getWorldChunk(x >> 4, z >> 4) == null) {
+            // Nunca forçar carregamento de dentro do ciclo — §11.
+            return Optional.empty();
+        }
+
+        // Do nível da vila para fora, e não do céu para baixo. "O fim da
+        // vila" é um lugar no chão dela: pegar o topo sólido da coluna
+        // punha a boca em cima do que estivesse acima — numa arena de
+        // bateria, o piso do teste vizinho; num mundo, o galho de uma
+        // árvore ou a laje de um morro que a vila não ocupa.
+        //
+        // Desce primeiro: o chão costuma estar abaixo do marco do centro,
+        // que é cama ou baú e fica um bloco acima dele.
+        for (int step = 0; step <= Math.max(LOOK_UP, LOOK_DOWN); step++) {
+            for (int sign = -1; sign <= 1; sign += 2) {
+                int offset = step * sign;
+
+                if (offset > LOOK_UP || offset < -LOOK_DOWN) {
+                    continue;
+                }
+
+                int y = center.getY() + offset;
+
+                Optional<BlockPos> found = surfaceOn(world, new BlockPos(x, y, z));
+
+                if (found.isPresent()) {
+                    return found;
+                }
+
+                if (step == 0) {
+                    break;
+                }
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Se esta posição é chão de verdade: sólida, com espaço livre em cima.
+     *
+     * <p><b>Nem debaixo d'água.</b> Água é substituível, então o leito do
+     * lago passaria por superfície — e boca de mina dentro de um lago é
+     * a mina inundada no primeiro degrau.
+     *
+     * <p>Vazio também quando o bloco é peça de vila gerada ou construção
+     * da colônia: a Regra 3 vale para a boca como vale para o resto.
+     */
+    private static Optional<BlockPos> surfaceOn(ServerWorld world, BlockPos at) {
+        if (!world.getBlockState(at).isSolidBlock(world, at)) {
+            return Optional.empty();
+        }
+
+        BlockPos above = at.up();
+
+        if (!world.getBlockState(above).isReplaceable()
+                || !world.getFluidState(above).isEmpty()) {
+
+            return Optional.empty();
+        }
+
+        if (BlockProtection.isVillageOriginal(world, at) || BlockProtection.isColonyBuilt(at)) {
+            return Optional.empty();
+        }
+
+        return Optional.of(at);
     }
 
     /**
