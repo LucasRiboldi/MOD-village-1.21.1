@@ -232,6 +232,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | **Descascar tronco**, e montar tocha e vidraça | 🧪 coberto por teste, nunca visto em jogo |
 | **Vila de deserto constrói** | 🧪 coberto por teste, nunca visto em jogo |
 | **A mina reconhece minério** — carvão e ferro, e a veia é seguida | 🧪 coberto por teste, nunca visto em jogo |
+| **O mineiro diz o que está fazendo**, uma linha por ciclo | 🧪 coberto por teste, nunca visto em jogo |
 | Obra parada sai da frente em vez de travar a vila | 🧪 coberto por teste, nunca visto em jogo |
 | A planta se adapta ao lote — a maior que couber | 🧪 pronta, e inerte enquanto for uma casa por bioma |
 | **Colher areia**, e o vidro virando meta pela receita da vidraça | 🧪 coberto por teste, nunca visto em jogo |
@@ -246,7 +247,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Agricultura e defesa | ⬜ não começado |
 
 ```text
-458 testes unitários  ·  153 testes de jogo  ·  ./gradlew build
+458 testes unitários  ·  154 testes de jogo  ·  ./gradlew build
 ```
 
 **O que 🧪 quer dizer aqui.** A bateria roda o caso e ele passa. Não quer

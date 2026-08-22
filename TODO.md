@@ -13,10 +13,56 @@ conta 375 testes.
 funcionando em jogo* são coisas diferentes, e estão separadas.
 
 ```text
-458 testes unitários  ·  153 testes de jogo  ·  29 regras do autor
+458 testes unitários  ·  154 testes de jogo  ·  29 regras do autor
 7 trabalhadores com código  ·  6 arquivos acima do teto de 500 linhas
 bateria: 1 instável, 2 falhas em 12 rodadas — ver a seção seguinte
 ```
+
+---
+
+## ✅ As duas correções, provadas em jogo — 2026-08-22, 03:45
+
+Terceira sessão do dia, treze minutos, e ela mediu exatamente o que
+precisava ser medido.
+
+**O construtor chega — provado**
+
+```text
+builders: 1 working, BUILDING at ColonyPos[x=-5656, y=64, z=-798]
+builders: 1 working, WAITING_RESOURCES ...        ← só se chega aqui TOCANDO o bloco
+Builder 8a0988a5 stopped — no minecraft:smooth_sandstone in the colony chests
+```
+
+`WAITING_RESOURCES` só é alcançado depois de `isWithinReach` ser verdade e
+`takeMaterial` falhar. `could not reach` = **0** na sessão inteira, e o
+maior travamento foi de **117 ticks** — seis segundos, contra os 2400 de
+duas sessões atrás.
+
+**A conta de pedra abre tarefa — provado**
+
+`no miner work: no task open for it` apareceu **uma vez em treze
+minutos**. Antes era toda passagem de ciclo.
+
+---
+
+## 🔴 E parou no elo que estava previsto
+
+```text
+no minecraft:smooth_sandstone in the colony chests    ×7
+```
+
+A colônia cava **arenito** e a casa pede o **liso**. O fundidor conhece
+duas linhas — areia→vidro e ferro cru→lingote — e pedra não é uma delas.
+
+**A decisão que vem junto, e ela é do autor.** Copiar o vidro é
+mecânico: `SMOOTH_SANDSTONE` vira `ResourceType`, a meta desce para
+`SANDSTONE` como o vidro desce para areia, e `SmelterWork.rawFor` ganha a
+terceira linha. O que não é mecânico é o **grupo**: hoje `SANDSTONE` e
+`COBBLESTONE` estão os dois em `ResourceGroup.STONE`, e o déficit conta
+por grupo — então uma vila de deserto com pedregulho no baú **já acha
+que a meta de arenito está cumprida**, e o fundidor queimaria pedregulho
+achando que faz arenito liso. Separar os dois em grupos próprios
+conserta, e mexe numa tabela de decisão.
 
 ---
 
@@ -232,19 +278,18 @@ só como frase aqui e no README.
 
 ## 🗂️ Próximas atividades, por importância
 
-**1 — Rodar em jogo de novo, com o jar de 2026-08-22.** A sessão anterior
-morreu nos dois defeitos que ela mesma revelou, e nenhuma das correções
-foi vista funcionando. O que se espera ver: o construtor <b>colocando
-bloco</b>, e o mineiro <b>cavando arenito</b>.
+**1 — Decidir o grupo do arenito, e escrever quem funde pedra.** É o
+único elo entre a obra de deserto e a casa de pé, e a sessão de 03:45
+parou exatamente nele. A decisão está na seção vermelha acima.
 
 **2 — Fechar a bateria.** Os dois testes da seção 🔴. O da arena é
 regressão deste ciclo; o do lenhador atrapalha todo ciclo desde antes.
 
-**4 — Implementar a ADR-008 (orientação).** É a que muda o que se vê:
+**3 — Implementar a ADR-008 (orientação).** É a que muda o que se vê:
 cama, escada e tocha param de sair todas para o mesmo lado. `Side` já
 existe; o que falta é atravessá-lo pelo `BlueprintBlock`.
 
-**5 — Quebrar os arquivos acima de 500 linhas.**
+**4 — Quebrar os arquivos acima de 500 linhas.**
 
 ```text
 982  VillageDetectionHandler      621  BuildSiteScanner
@@ -258,13 +303,13 @@ já está em 527. Nos testes há mais quatro acima do teto:
 `LumberjackGameTest` 1571, `BuilderGameTest` 904, `BuildSiteGameTest` 670
 e `MinerGameTest` 510.
 
-**6 — Regra 16**, distância mínima e máxima entre construções.
+**5 — Regra 16**, distância mínima e máxima entre construções.
 
-**7 — O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de
+**6 — O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de
 travar. `WorkMaterials` já é meio dele — um passo de decomposição, dois
 onde o lampião pede. O que falta é a profundidade qualquer.
 
-**8 — Implementar a ADR-007 (fusão).** Depende de a construção rodar em
+**7 — Implementar a ADR-007 (fusão).** Depende de a construção rodar em
 jogo: nada dispara enquanto uma obra não encostar na outra.
 
 ---
