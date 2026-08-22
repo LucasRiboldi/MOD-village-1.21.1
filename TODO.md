@@ -1,276 +1,217 @@
 # TODO
 
-**Atualizado:** 2026-08-20, ao fim do ciclo de dezenove commits.
+**Atualizado:** 2026-08-22, ao fim do ciclo das nove decisões.
 
 O enunciado de cada regra está em
 [`docs/technical/Project-State.md`](docs/technical/Project-State.md) §18;
 a lista longa, com a razão de cada item, em
 [`docs/technical/Backlog.md`](docs/technical/Backlog.md). Onde os dois
-discordarem, vale o Backlog.
+discordarem, **vale este arquivo** — o Backlog parou em 08-15 e ainda
+conta 375 testes.
 
 **A distinção que este arquivo respeita:** *tem teste* e *foi visto
 funcionando em jogo* são coisas diferentes, e estão separadas.
 
 ```text
-469 testes unitários  ·  151 testes de jogo  ·  29 regras do autor
+458 testes unitários  ·  150 testes de jogo  ·  29 regras do autor
 7 trabalhadores com código  ·  6 arquivos acima do teto de 500 linhas
+a bateria de jogo NÃO fecha verde — ver a seção seguinte
 ```
 
 ---
 
-**Regra 11 — o piso das profissões (2026-08-21)**
+## 🔴 O que está quebrado agora
 
-- **Sete testes** afirmam o piso, que até aqui não tinha nenhum: o que
-  existia testava o teto.
-- **A ressalva foi verificada, e a resposta é sim:** a dispensa pode
-  esvaziar uma função se lhe pedirem mais trocas que substitutos.
-- **A garantia ganhou nome** — `ScanResult.substitutes`, o mínimo entre
-  baús livres e candidatos. Ela existia por acidente do jeito de contar.
+**A bateria de jogo falha um teste por rodada**, alternando entre dois.
+Cinco rodadas seguidas em 08-21, cinco falhas, nunca as duas juntas.
 
-**A rua e o deserto (2026-08-21)**
+| | Teste | O que é |
+|---|---|---|
+| **1** | `thestallguardreturnsthetaskandforgetsthetree` | Instável desde antes deste ciclo — 3 falhas em 10 rodadas em 08-21. Já estava aqui |
+| **2** | `villagersbecomeworkerswithaprofession` | **Regressão de arena deste ciclo**, e a causa está entendida |
 
-- **A rua do deserto é de arenito liso**, e a busca de lote reconhecia
-  rua por um nome escrito no código. A vila de deserto **nunca teve
-  beira de rua**: nascia, contratava e nunca achava lote. `VillageRoad`
-  mede o calçamento lendo o catálogo do jogo.
-- **Regra 15 — a rua cresce com a vila.** Sem beira livre, a colônia
-  calça cinco blocos a partir da ponta mais distante do centro. A ponta
-  sai da varredura de lote que acabou de falhar, e não de uma varredura
-  nova.
+**A causa do 2.** Com dois testes a menos — os da cabana, que saíram com
+ela —, a bateria remaneja as estruturas, e as camas desse teste passaram
+a cair a menos de `CLUSTER_DISTANCE` das de um vizinho. Os dois
+aglomerados viram um, e a colônia que o adota fica a 73 blocos dali.
+Antes da **Emenda 4 da ADR-003** ela arrastaria o centro para o meio do
+aglomerado novo e alcançaria aqueles aldeões; agora o centro só anda
+pela sonda, e não alcança.
 
-## 🔒 As regras que mandam hoje
+**Não é defeito da regra** — é a contaminação entre gametests que o
+próprio `ColonyDetectionGameTest` documenta em três lugares, aparecendo
+por uma porta nova. Metade já foi corrigida (`colonyOwning` procura a
+colônia pelo **dono** do aldeão em vez de pela distância) e não bastou:
+quando ninguém os registra, não há dono a encontrar.
 
-- **Regra 27 — imutável.** O construtor de cada bioma só levanta
-  estruturas da pasta `minecraft-assets_structure`; o mod não cria casa.
-  E ele **aguarda o bloco específico** de que precisa.
-- **Regra 28 — provisória, e o autor a declarou assim.** Enquanto o
-  projeto não estiver formalmente acabado: **uma casa por bioma**
-  (`<estilo>_small_house_1`), e a obra **não espera** por porta, cama,
-  lampião, baú, tronco descascado, tocha nem vidraça que não estejam num
-  baú da vila.
-  - **Onde ela sai:** `VillageStructures.ONLY_WHILE_TESTING` e
-    `BuilderWork.isSkippableWhileTesting`. Dois lugares, e nada mais.
+**O que provavelmente resolve:** dar a este teste camas que não possam
+se fundir com as do vizinho, ou uma arena própria. Nenhuma das duas foi
+tentada.
 
 ---
 
-## ✅ O que foi feito neste ciclo
+## ✅ O ciclo das nove decisões — 2026-08-21
 
-**Cadeia de produção — três profissões novas**
+O autor respondeu as nove perguntas em aberto de uma vez, e todas foram
+aplicadas.
 
-- **Mineiro** com mina de verdade (Regra 29): escada de dez degraus,
-  sala 7×4 no nível −10, segundo lance virando, sala no −20, e galeria
-  sem fim. Picareta de diamante.
-- **Pastor**: tosquia e a ovelha continua viva. Fecha o laço
-  casa → cama → aldeão → trabalhador.
-- **Fundidor**: areia vira vidro, pela receita de fornalha do jogo.
-- **Fabricante ampliado**: descasca tronco, monta tocha e vidraça.
+**1 — ADR-003 Emenda 4: o centro é da sonda, e de mais ninguém.**
+A contagem de camas e a posição do centro eram a mesma decisão em
+`Colony.observe`, e nunca foram a mesma pergunta. O portão tinha três
+portas — empate, prova geométrica e sino — e todas moviam o centro. Agora
+a contagem continua entrando por qualquer observação; a posição, só numa
+leitura da sonda. Fecha o sintoma de 08-18 a 08-20 e o salto de 65 blocos
+de 08-15.
 
-**Cadeia de materiais — o minério e o degrau (2026-08-21)**
+**2 — Regra 28: a barreira de teste passou a gritar.**
+A justificativa dela caducou — as sete cadeias fecharam entre 08-20 e
+08-21. Ela fica até a primeira sessão de jogo, mas cada peça riscada sai
+como `WARN` dizendo **qual cadeia** deveria tê-la produzido, e a sessão
+termina com a soma. Nasceu `TestBarrier`, e apagá-la devolve a Regra 27
+sem exceção.
 
-- **A bancada desce dois degraus** atrás do que falta. A tocha saía de
-  carvão e graveto, e ninguém fazia graveto: a colônia ficava com
-  carvão, tábua e nenhuma tocha. Dois degraus, e não um, porque é o que
-  o lampião pede — pepita, que sai do lingote, e tocha.
-- **`canProvide` desce junto**, e tinha de descer: uma resposta que
-  dissesse "não" onde o `take` faria poria a obra a esperar por peça que
-  a colônia sabe montar.
-- **O ferro tem quem o peça.** O lampião é mobília, e a mobília passou a
-  relatar o que lhe falta em **dois** materiais — lã e ferro — em vez de
-  um inteiro solto. O lingote vira meta da fornalha e o cru vira meta da
-  mina, como o vidro e a areia.
-- **A decomposição desce dois degraus**, e foi o lampião que os pediu:
-  ele quer pepita, e a pepita é que sai do lingote.
+**3 — Regra 21: morreu.**
+`HouseFurnishing` fazia duas coisas: repunha mobília riscada — isso
+morreu — e declarava a demanda de lã e ferro, que era a **única** origem
+dessas metas. Essa parte passou para `WorkMaterials`, lendo a obra
+aberta, como o vidro e o carvão já faziam. **Cama e lampião saíram da
+barreira** por consequência: sem quem os reponha, riscá-los deixaria a
+casa sem eles para sempre.
 
-- **O mineiro reconhece carvão e ferro**, comuns e de ardósia, e
-  **segue a veia**: o minério colado na parede vem antes da parede, e a
-  posição do túnel espera em vez de se perder. `OreVein` nasceu.
-- **O carvão da tocha virou meta**, pela mesma decomposição do vidro.
-- **O fundidor funde ferro cru**: o cru sai do que a tarefa pede, e não
-  estava mais escrito no código como areia.
-- **`MinerWork` foi partido** — `MineDigging` desce, `SandGathering`
-  varre, e ele ficou com o que os dois compartilham. 690 → 459 linhas.
-- **`WorkDemand` nasceu**: a demanda da obra tinha nove parâmetros
-  posicionais, quatro do mesmo tipo.
+**4 — O `.nbt` da Mojang: declarado.**
+Nasceu o `NOTICE`. Diz o que o arquivo é, de onde veio, em que commit
+entrou, que nenhum caminho de produção o abre desde a Regra 27, e que ele
+não está coberto pelo MIT deste repositório.
 
-**Cadeia de materiais — a areia fechou**
+**5 — E9: o dado antes da decisão.**
+A TASK-048 continua sem código de propósito. O que entrou foi a medida:
+a linha de transição diz de que estado veio e o que a sonda viu **nos
+dois sentidos**, e a sessão termina nomeando toda colônia que trocou de
+estado três vezes ou mais. `ColonyStateLog` some quando o E9 fechar.
 
-- **O vidro virou meta.** A casa não pede vidro, pede **vidraça**, e
-  perguntar por vidro devolvia zero: o fundidor nunca recebia tarefa. A
-  vidraça é decomposta pela receita do jogo — seis vidros dão dezesseis
-  — e o vidro vira meta. `GlassDemand` nasceu.
-- **A areia sai do vidro que falta**, descontando o já fundido, e o
-  mineiro a colhe **na superfície**: praia, duna e margem de lago. A
-  mesma profissão, dois caminhos, e quem decide é o recurso da tarefa.
-  `SandPatch` nasceu, e o `RingSweep` voltou a ter dono.
+**6 e 7 — as duas ADRs que faltavam.**
+`ADR-007` (fusão): sobrevive o UUID da maior; o teto de profissão é
+violado e permanece violado; o centro é o do sobrevivente. `ADR-008`
+(orientação): forma (a) — `Side` de quatro direções em `BlueprintBlock`,
+tradução na fronteira, e as duas formas recusadas ditas por escrito.
+**Nenhuma das duas está implementada.**
 
-**Persistência**
+**8 — O ícone: fundo transparente.**
+Arte nova do autor, 1254×1254. O fundo saiu por **preenchimento a partir
+da borda**, e não por chave de cor — que era a objeção de 08-07, e ela
+continuava certa: a roupa do aldeão e o reboco da casa são brancos.
+39,1% da imagem saiu, e nenhum branco de dentro do desenho foi tocado.
 
-- **A mina no save.** Sete campos: a colônia dona, a boca, o lado da
-  descida, o lado da galeria e a fronteira já cavada. Uma mina por
-  colônia — o segundo mineiro continua a mesma escada em vez de abrir
-  outra boca. `Mine`, `MineRegistry` e `MineSave` nasceram.
+**9 e 10 — a cabana e a paleta: apagadas.**
+`ColonyHut` saiu do código, e `VillagePalette` encolheu junto — parede,
+porta e lã tinham um só leitor, que era ela. Ficaram estilo, pedra e
+vidro.
 
-**Construção**
+**Um defeito de jogo veio junto, e foi corrigido.**
+`hasMaterialForNextBlock` dizia "tem" para toda mobília, citando a Regra
+21. Com a regra morta e a cama de volta à espera, a obra acordaria
+dizendo que tem a cama, tentaria, falharia e dormiria — todo ciclo, para
+sempre. A pergunta passou a ser a barreira.
 
-- **Regra 27** — só o catálogo do jogo, e a espera pelo bloco exato.
-- **Regra 28** — a barreira de teste.
-- **Regra 25** — a maior planta que couber no lote.
-- **Paleta por bioma** — parede, porta e as três matérias, por estilo.
-- **`PatienceClock`** — obra parada sai da frente em vinte ciclos.
-- **Regra 21 estendida** — a mobília vale para qualquer casa, não só
-  para a cabana.
-- **Peça destruída não volta**, e a conta vive no save.
-
-**Corrigido, e as causas vieram de jogo**
-
-- O alvo da obra era comparado com um id escrito no código.
-- O cursor da busca de lote era guardado pela posição do centro, que
-  troca de âncora a cada trinta segundos.
-- O miolo oco da cabana era oferecido como lote.
-- `TreeHarvester.isNaturalLeaf` derrubava o servidor com chunk
-  descarregado.
-- `ChestDepositor.deposit` era lido ao contrário pelo mineiro.
-
-**Refatorado**
-
-- `ConstructionPlanner` 703 → 414, em três arquivos.
-- `LumberjackWork` 1232 → 455, em seis arquivos.
-- `RingSweep`, `MineShaft`, `VillagePalette`, `PatienceClock` nasceram.
+**E um defeito que estava escondido há mais tempo.**
+O jogo tem mais de uma receita para `white_bed`, e uma delas é **tingir**
+uma cama preta. O livro devolvia essa, e a conta de lã dava **zero** — o
+pastor sem tarefa e a casa sem cama, em silêncio. A regra que conserta:
+quem decompõe uma peça não pode partir de outra peça da mesma família.
 
 ---
 
 ## 🧪 O que falta testar — nada disto foi visto em jogo
 
-**Tudo o que este ciclo produziu está coberto por teste e nenhuma linha
-dele rodou numa vila de verdade.** Em ordem do que mais precisa ser
-visto:
+**Trinta e cinco commits desde a última sessão de verdade.** Em ordem do
+que mais precisa ser visto:
 
 | | O que | Como confirmar no log |
 |---|---|---|
-| **1** | **A mina** | `Miner ... opens a mine at ...`, depois a escada, a sala 7×4 e a galeria no chão do mundo |
+| **1** | **A mina** | `Miner ... opens a mine at ...`, depois a escada, a sala 7×4 e a galeria |
 | **2** | **A casa do catálogo subindo** | `planned minecraft:village/<bioma>/houses/<bioma>_small_house_1` |
 | **3** | **A vila de deserto construindo** | Pela primeira vez na história do mod |
-| **4** | **Pastor e fundidor** | `Shepherd ... sheared`, `Smelter ... made minecraft:glass` |
-| **5** | **O fabricante descascando** | `Manufacturer ... stripped a oak_log into stripped_oak_log` |
-| **6** | **A obra parada saindo da frente** | `gives up on ... never came in 20 cycles`, seguido de `planned` |
-| **7** | **O cursor de busca por colônia** | A varredura concluindo, em vez de `still sweeping` eterno |
-| **8** | **A mobília não voltando** | Nenhuma linha `furnished the house` repetida |
-| **9** | **A cadeia da areia inteira** | meta de `SAND`, `Miner ... took` numa praia, `Smelter ... made minecraft:glass`, e a vidraça saindo do fabricante |
-| **10** | **O carvão da galeria** | `Miner ... took` de um `coal_ore` no nível −20, e a veia inteira num só ciclo |
-| **11** | **A casa de planície terminando sozinha** | é a primeira vez que ela pode: nenhum dos 8 materiais depende mais do jogador |
-| **12** | **A vila de deserto achando lote** | inédito: até 08-21 ela não reconhecia a própria rua |
-| **13** | **A rua crescendo** | `extended the road 5 blocks` depois de a varredura terminar sem lote |
+| **4** | **A barreira de teste** | `TEST BARRIER covered for nothing this session` é a notícia boa. Qualquer `TEST BARRIER skipped` nomeia a cadeia que falhou |
+| **5** | **O centro parado** | Nenhum salto de âncora. A obra não fica para trás |
+| **6** | **A casa esperando a cama** | `WAITING_RESOURCES` por `white_bed`, e o pastor tosquiando por causa disso |
+| **7** | **Pastor, fundidor e o fabricante descascando** | `Shepherd ... sheared`, `Smelter ... made minecraft:glass`, `stripped a oak_log` |
+| **8** | **A cadeia da areia inteira** | meta de `SAND`, `Miner ... took` numa praia, vidro, e a vidraça saindo do fabricante |
+| **9** | **O carvão da galeria** | `Miner ... took` de um `coal_ore` no −20, e a veia inteira num só ciclo |
+| **10** | **A casa de planície terminando sozinha** | é a primeira vez que ela pode |
+| **11** | **A vila de deserto achando lote**, e **a rua crescendo** | `extended the road 5 blocks` |
+| **12** | **O E9** | `E9 — colony ... changed state N times`. Silêncio aqui fecha o erro |
 
-**Sem teste próprio, e a bateria só prova que nada quebrou:**
+**Coberto por teste, com limite conhecido:**
 
-- O caminho novo do fabricante — descascar, montar tocha e vidraça.
-
-**Com teste e ainda por ver em jogo:**
-
-- **A retomada da mina.** O round-trip do save e a retomada dentro do
-  servidor de teste estão afirmados (`MineSaveTest`, `MineRegistryTest`,
-  `miner_resume`). O que nenhum deles alcança é **fechar e reabrir o
-  mundo de verdade** — a bateria roda um servidor só, e é a dívida E4 do
-  Backlog.
-
-**Coberto por teste, mas com limite conhecido:**
-
-- **A arena da bateria tem bioma fixo.** A aceitação de uma vila de
-  taiga, savana, nevada ou deserto nunca rodou.
-- **Um teste instável:** `theStallGuardReturnsTheTaskAndForgetsTheTree`,
-  cerca de 1 falha em 4 execuções, anterior a este ciclo. Em 2026-08-21
-  falhou **3 vezes em 10 execuções**, com duas mensagens diferentes — a
-  tarefa ficou em `EXECUTING` numa e em `RESERVED` nas outras duas. É o
-  item mais barato de arrumar da lista, e o único que atrapalha todo
-  ciclo.
+- **A arena da bateria tem bioma fixo.** Taiga, savana, nevada e deserto
+  nunca rodaram.
+- **A retomada da mina entre sessões** — fechar e reabrir o mundo de
+  verdade continua sendo a dívida E4.
 
 ---
 
-## ⚠️ Conflitos — coisas que se contradizem hoje
+## ⚠️ Conflitos — o que ainda se contradiz
 
-Achados lendo o código ao fim do ciclo. Nenhum é urgente; todos são
-dívida que cresce se ficar calada.
+**Quatro dos seis fecharam neste ciclo.** Ficaram estes:
 
-**1. Três regras sobre a mesma pergunta: a obra espera pela mobília?**
-
-```text
-Regra 21   não espera — a peça entra depois
-Regra 27   espera sempre, sem exceção
-Regra 28   não espera por sete blocos nomeados
-```
-
-Vale a 28, que é a mais nova, e ela é provisória. Quando sair, volta a
-27 — e a 21 fica sem sentido, porque `HouseFurnishing` passa a nunca ter
-o que repor. **Decidir se a 21 morre junto.**
-
-**2. A `VillagePalette` ficou quase sem uso.**
-
-`wall()` e `door()` só são lidos por `ColonyHut`, que a Regra 27
-aposentou. O que a paleta ainda faz de útil é dizer o **estilo** (a pasta
-do catálogo) e a **pedra** do bioma. Metade dela é código que ninguém
-executa fora do caminho de save antigo.
-
-**3. Um arquivo da Mojang num repositório público, e agora inútil.**
-
-`src/main/resources/data/villagecolony/structure/houses/small_house.nbt`
-é cópia byte a byte de `plains_small_house_1.nbt`. Desde a Regra 27 a
-produção não o lê mais — só dois testes de jogo. O `Project-State`
-afirmava em 08-19 que nenhum byte da Mojang tinha entrado no
-repositório, e isso deixou de ser verdade naquele mesmo dia.
-**Decisão jurídica, não técnica, e é do autor.**
-
-**4. A Regra 25 está inerte enquanto a 28 valer.**
-
+**1. A Regra 25 continua inerte enquanto a 28 valer.**
 "A maior planta que couber" precisa de mais de uma planta. Com uma casa
 por bioma, ela não escolhe nada. Volta a valer quando a barreira sair.
 
-**5. ~~`RingSweep` ficou sem quem o chame.~~** ✅ Fechado em 2026-08-21:
-a busca de areia do mineiro voltou a usá-lo. Os outros dois scanners
-continuam com espirais próprias.
+**2. O `furniture()` do `BlueprintBlock` perdeu o dono.**
+Ele marcava o que a Regra 21 repunha. A regra morreu, e quem decide hoje
+o que não segura a obra é a barreira da Regra 28. A marca continua sendo
+lida do arquivo e afirmada por teste, e **não governa mais nada** — some
+junto com a barreira, ou ganha outro uso.
 
-**6. A cabana do mod continua no código.**
+**3. O ícone tem 1,95 MB, e o jar tem 2,29 MB.**
+85% do que se distribui é uma imagem mostrada a 64 pixels na lista de
+mods. A 256×256 daria cerca de 100 KB. É escolha de arte, e por isso não
+foi mexida.
 
-É deliberado — save antigo tem cabana pela metade, e apagá-la faria a
-colônia construir por cima dela. Mas é uma estrutura que a Regra 27
-proíbe criar, morando no código que a proíbe. **Vale um prazo:** quando
-nenhum save conhecido tiver cabana, ela sai.
+**4. O `Development-Log.md` parou em 2026-08-15.**
+Trinta e cinco commits, sete dias e duas sessões de jogo não estão nele,
+e `logs/latest.log` tem 0 bytes. O "49 camas e 7" que originou a Emenda
+4 **não tem registro primário em lugar nenhum do repositório** — existe
+só como frase aqui e no README.
 
 ---
 
 ## 🗂️ Próximas atividades, por importância
 
-**1 — Rodar em jogo.** Dezenove commits, quatro regras novas e três
+**1 — Rodar em jogo.** Trinta e cinco commits, nove decisões e três
 profissões sem uma única sessão de verdade. Nada mais deveria ser
 construído antes disto.
 
-**2 — Quebrar os arquivos acima de 500 linhas.**
+**2 — Fechar a bateria.** Os dois testes da seção 🔴. O da arena é
+regressão deste ciclo; o do lenhador atrapalha todo ciclo desde antes.
+
+**3 — Implementar a ADR-008 (orientação).** É a que muda o que se vê:
+cama, escada e tocha param de sair todas para o mesmo lado. `Side` já
+existe; o que falta é atravessá-lo pelo `BlueprintBlock`.
+
+**4 — Quebrar os arquivos acima de 500 linhas.**
 
 ```text
-979  VillageDetectionHandler      639  ManufacturerWork
-766  BuilderWork                  598  BuildSiteScanner
-724  TreeHarvester                566  ColonySavedData
+982  VillageDetectionHandler      621  BuildSiteScanner
+729  BuilderWork                  566  ColonySavedData
+724  TreeHarvester                527  ConstructionPlanner
+639  ManufacturerWork
 ```
 
-**`MinerWork` saiu da lista** em 2026-08-21: chegou a 690 linhas e foi
-partido em três — `MineDigging` desce, `SandGathering` varre, e ele ficou
-com o que os dois compartilham. 459 linhas.
+`ConstructionPlanner` **voltou** à lista: foi de 703 para 414 em 08-20 e
+já está em 527. Nos testes há mais quatro acima do teto:
+`LumberjackGameTest` 1571, `BuilderGameTest` 904, `BuildSiteGameTest` 670
+e `MinerGameTest` 510.
 
-`VillageDetectionHandler` é o pior caso e o único que passa de 900. Nos
-testes há mais quatro acima do teto: `LumberjackGameTest` 1571,
-`BuilderGameTest` 904, `BuildSiteGameTest` 636 e `MinerGameTest` 510 —
-este último já aliviado em 125 linhas com a saída do
-`WorkMaterialsGameTest`, e ainda dez acima.
+**5 — Regra 16**, distância mínima e máxima entre construções.
 
-**3 — Decidir o movimento do centro da colônia.** Troca de âncora e
-volta a cada 30 segundos, entre 49 camas e 7. Visto em 08-18, 08-19 e
-08-20. É a ADR-003, e **espera decisão do autor**.
+**6 — O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de
+travar. `WorkMaterials` já é meio dele — um passo de decomposição, dois
+onde o lampião pede. O que falta é a profundidade qualquer.
 
-**4 — Regra 16**, distância mínima e máxima entre construções.
-
-**5 — O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de
-travar. Toca `Task`, que é o centro, e destrava a metade do fabricante e
-a cadeia de receitas em profundidade qualquer. A areia saiu daqui: o
-`GlassDemand` faz **um** passo de decomposição, que era o que ela pedia.
+**7 — Implementar a ADR-007 (fusão).** Depende de a construção rodar em
+jogo: nada dispara enquanto uma obra não encostar na outra.
 
 ---
 
@@ -278,8 +219,6 @@ a cadeia de receitas em profundidade qualquer. A areia saiu daqui: o
 
 - **O fazendeiro.** Tem nome, enxada e baú desde a Fase 4, e nenhum
   trabalho. É a última profissão do modelo sem código.
-- **O buraco que o mineiro deixa** na superfície e a mina aberta — se
-  preenche, se fecha a boca, ou se aceita.
-- **Fundir colônias sobrepostas.** Hoje o mod só avisa.
+- **O buraco que o mineiro deixa** na superfície e a mina aberta.
 - **Lado do cliente:** nome sobre a cabeça, rachadura e braço na tela.
 - **Defesa.** Nada no modelo ainda.
