@@ -1058,15 +1058,11 @@ sondar bioma precisam ser feitos no jogo real, não no `runServer`.
 ## Em aberto
 
 ```text
-1  Fundo do ícone do mod
-
-   A arte veio sem canal alpha, fundo branco sólido.
-
-   Não foi removido por chave de cor: a ovelha e as nuvens
-   também são brancas e ficariam com buracos.
-
-   Depende de recorte manual, se o autor quiser transparência.
+nenhuma
 ```
+
+A última em aberto era o fundo do ícone, e ela fechou em 2026-08-21.
+Ver abaixo.
 
 ---
 
@@ -1101,8 +1097,14 @@ As cinco decisões de 2026-08-15
       NÃO IMPLEMENTADA. Exige ADR nova — é a que emenda a ADR-005.
 
    5  o fundo do ícone
-      → arte nova entregue pelo autor em 2026-08-15.
-      PENDENTE de o arquivo entrar em assets/villagecolony/icon.png.
+      → arte nova entregue pelo autor, e instalada em 2026-08-21:
+        1254x1254, o distintivo com o aldeão, a casa e o nome.
+      FEITA em 2026-08-21. O fundo branco saiu por preenchimento a
+      partir da borda, e não por chave de cor — e essa distinção era
+      o problema inteiro. Chave de cor abriria buracos na roupa do
+      aldeão e no reboco da casa, que também são brancos. O
+      preenchimento só alcança o branco LIGADO À BORDA: 39,1% da
+      imagem saiu, e nenhum branco de dentro do desenho foi tocado.
 ```
 
 ```text
