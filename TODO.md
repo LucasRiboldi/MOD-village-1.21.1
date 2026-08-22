@@ -251,26 +251,49 @@ resto continua sem ter sido visto:
 
 ## ⚠️ Conflitos — o que ainda se contradiz
 
-**Quatro dos seis fecharam neste ciclo.** Ficaram estes:
+**Quatro dos seis fecharam em 08-21; as sessões de jogo de 08-22
+acrescentaram dois.** São estes:
 
-**1. A Regra 25 continua inerte enquanto a 28 valer.**
+**1. `SANDSTONE` e `COBBLESTONE` dividem o mesmo grupo** — achado em
+2026-08-22, e é o que bloqueia a vila de deserto.
+
+Os dois estão em `ResourceGroup.STONE`, e `ResourceDemand.deficit` conta
+por grupo. Duas consequências, e as duas são de jogo:
+
+- uma vila de deserto com pedregulho no baú **acha que a meta de arenito
+  está cumprida**, e o mineiro não vai cavar;
+- quando alguém escrever quem funde pedra, o fundidor **queimaria
+  pedregulho** achando que faz arenito liso — o mesmo defeito que a
+  tarefa de ferro teve com a areia, e que já foi corrigido uma vez.
+
+Separar os dois em grupos próprios conserta, e mexe numa tabela de
+decisão. **Espera decisão do autor**, e é o item 1 da fila.
+
+**2. `MinerWork` está a 35 linhas do teto.**
+465 de 500, e ele já foi partido uma vez — 690 → 459 em 08-21, com
+`MineDigging` e `SandGathering` saindo dele. `MinerReport` levou a linha
+de log embora antes de ela o empurrar para 570, mas a próxima coisa que
+entrar passa do teto.
+
+**3. A Regra 25 continua inerte enquanto a 28 valer.**
 "A maior planta que couber" precisa de mais de uma planta. Com uma casa
 por bioma, ela não escolhe nada. Volta a valer quando a barreira sair.
 
-**2. O `furniture()` do `BlueprintBlock` perdeu o dono.**
+**4. O `furniture()` do `BlueprintBlock` perdeu o dono.**
 Ele marcava o que a Regra 21 repunha. A regra morreu, e quem decide hoje
 o que não segura a obra é a barreira da Regra 28. A marca continua sendo
 lida do arquivo e afirmada por teste, e **não governa mais nada** — some
 junto com a barreira, ou ganha outro uso.
 
-**3. O ícone tem 1,95 MB, e o jar tem 2,29 MB.**
+**5. O ícone tem 1,95 MB, e o jar tem 2,29 MB.**
 85% do que se distribui é uma imagem mostrada a 64 pixels na lista de
 mods. A 256×256 daria cerca de 100 KB. É escolha de arte, e por isso não
 foi mexida.
 
-**4. O `Development-Log.md` parou em 2026-08-15.**
-Trinta e cinco commits, sete dias e duas sessões de jogo não estão nele,
-e `logs/latest.log` tem 0 bytes. O "49 camas e 7" que originou a Emenda
+**6. O `Development-Log.md` parou em 2026-08-15.**
+Quarenta e um commits, sete dias e **três sessões de jogo** não estão
+nele. As três de 08-22 foram lidas do `latest.log` e o que se aprendeu
+delas vive só aqui, no README e nas mensagens de commit. O "49 camas e 7" que originou a Emenda
 4 **não tem registro primário em lugar nenhum do repositório** — existe
 só como frase aqui e no README.
 

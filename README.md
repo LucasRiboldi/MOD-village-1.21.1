@@ -302,7 +302,8 @@ melhora não é diagnóstico.
 
 | | O que | Por quê |
 |---|---|---|
-| 🟠 | **Seis arquivos acima de 500 linhas** no código, quatro nos testes | `LumberjackGameTest` tem 1571. `ConstructionPlanner` **voltou** à lista: 703 → 414 em 08-20, e 527 hoje |
+| 🔴 | **`SANDSTONE` e `COBBLESTONE` no mesmo `ResourceGroup`** | O déficit conta por grupo: vila de deserto com pedregulho no baú acha que a meta de arenito está cumprida, e o fundidor queimaria pedregulho achando que faz arenito liso. 👤 **espera decisão sua** — é o que separa a casa de deserto de ficar de pé |
+| 🟠 | **Seis arquivos acima de 500 linhas** no código, quatro nos testes | `LumberjackGameTest` tem 1571. `ConstructionPlanner` **voltou** à lista: 703 → 414 em 08-20, e 527 hoje. `MinerWork` está a 35 linhas do teto |
 | 🔴 | **Um teste de jogo instável** — `theStallGuardReturnsTheTaskAndForgetsTheTree` | **2 falhas em 12 rodadas** em 08-22, depois da correção do registro de aldeão — eram 3 em 10 antes dela. A causa continua sem diagnóstico, e um teste que mente às vezes é pior que um que falta |
 | 🟠 | **Uma falha não diagnosticada** — `theStoneLeavesTheWorldAndReachesTheChest` disse "a pedra não chegou ao baú" uma vez | A suspeita é o custo de ler estrutura dentro do tique; a leitura foi reduzida e não voltou a falhar. **Suspeita, não diagnóstico** |
 | 🟡 | **O ícone tem 1,95 MB, e o jar tem 2,29 MB** | 85% do que se distribui é uma imagem mostrada a 64 pixels na lista de mods. A 256×256 daria cerca de 100 KB. É escolha de arte, e por isso não foi mexida |

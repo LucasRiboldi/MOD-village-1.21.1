@@ -152,7 +152,7 @@ na seção de cada regra.
 
 ```text
 458 testes unitários     lógica pura do Core e serialização NBT
-150 testes de jogo       a fronteira, num servidor sem cliente
+154 testes de jogo       a fronteira, num servidor sem cliente
 ```
 
 > **Este arquivo parou em 2026-08-15 e está sendo alcançado aos poucos.**
@@ -218,6 +218,8 @@ no §4. O enunciado de cada decisão está em `Project-State.md §10`.
 | D4 | **E8** — orientação dos blocos | = B4. A metade das duas partes fechou em 08-15; a da orientação continua. Nunca visto, porque a Fase 10 nunca rodou | §17 |
 | D5 | **E9** — colônia `ABANDONED` desmarcada no ciclo seguinte | **Instrumentado em 2026-08-21** — `ColonyStateLog` diz de onde veio, o que a sonda viu nos dois sentidos, e nomeia quem trocou três vezes ou mais. Falta a sessão de jogo que responde | §17 |
 | ~~D6~~ | ~~**E11** — rodízio de profissão~~ | ✅ fechado em 08-15: a colônia conta baús distintos, e não candidatos | §17 |
+| D8 | **E17** — `SANDSTONE` e `COBBLESTONE` no mesmo `ResourceGroup.STONE`, e o déficit conta por grupo | **Achado em jogo, 2026-08-22.** Vila de deserto com pedregulho no baú acha a meta de arenito cumprida; e o fundidor, quando aprender pedra, queimaria pedregulho. 👤 espera decisão | §17 |
+| D9 | **E18** — a colônia cava arenito e a casa pede arenito **liso**; ninguém funde pedra | **Achado em jogo, 2026-08-22.** É o único elo entre a obra de deserto e a casa de pé | §17 |
 | D7 | **E13** — hábito a criar: conferir a linha de carregamento do log antes de concluir do silêncio de uma fase | §17 |
 
 ## Grupo E — Dívidas de verificação e teste
