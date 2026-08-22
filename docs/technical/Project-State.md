@@ -1089,12 +1089,18 @@ As cinco decisões de 2026-08-15
       → a colônia resultante fica com TUDO: trabalhadores, baús e
         construções das duas. Confirma o que o autor já enunciara em
         2026-08-12 — a fusão não reduz trabalhadores.
-      NÃO IMPLEMENTADA. Exige ADR nova.
+      ADR-007 ESCRITA em 2026-08-21, e ela responde as três perguntas
+      que faltavam: sobrevive o UUID da MAIOR; o teto de profissão é
+      violado e PERMANECE violado; o centro é o do sobrevivente.
+      NÃO IMPLEMENTADA.
 
    4  a orientação dos blocos                          TASK-046
       → o Core APRENDE a falar de orientação. Escada, porta e cama
         saem como o arquivo manda, e não no padrão.
-      NÃO IMPLEMENTADA. Exige ADR nova — é a que emenda a ADR-005.
+      ADR-008 ESCRITA em 2026-08-21, forma (a): Side de quatro
+      direções no BlueprintBlock, tradução na fronteira. Emenda a
+      ADR-005, e o precedente está dito lá.
+      NÃO IMPLEMENTADA.
 
    5  o fundo do ícone
       → arte nova entregue pelo autor, e instalada em 2026-08-21:

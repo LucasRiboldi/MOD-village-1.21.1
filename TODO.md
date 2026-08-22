@@ -15,38 +15,44 @@ funcionando em jogo* são coisas diferentes, e estão separadas.
 ```text
 458 testes unitários  ·  150 testes de jogo  ·  29 regras do autor
 7 trabalhadores com código  ·  6 arquivos acima do teto de 500 linhas
-a bateria de jogo NÃO fecha verde — ver a seção seguinte
+bateria: 1 instável, 2 falhas em 12 rodadas — ver a seção seguinte
 ```
 
 ---
 
-## 🔴 O que está quebrado agora
+## ⚠️ A bateria quase fechou, e o que a abriu era defeito de jogo
 
-**A bateria de jogo falha um teste por rodada**, alternando entre dois.
-Cinco rodadas seguidas em 08-21, cinco falhas, nunca as duas juntas.
+Ela ficou vermelha por sete commits, e a causa não era de teste.
 
-| | Teste | O que é |
-|---|---|---|
-| **1** | `thestallguardreturnsthetaskandforgetsthetree` | Instável desde antes deste ciclo — 3 falhas em 10 rodadas em 08-21. Já estava aqui |
-| **2** | `villagersbecomeworkerswithaprofession` | **Regressão de arena deste ciclo**, e a causa está entendida |
+`VillagerScanner.scan` partia sempre de `colony.center()`. Isso valia
+enquanto o centro perseguia a última observação: adotar um aglomerado
+movia o centro para perto dele, e a caixa de busca ia junto. **A Emenda
+4 parou o centro**, e a caixa ficou para trás.
 
-**A causa do 2.** Com dois testes a menos — os da cabana, que saíram com
-ela —, a bateria remaneja as estruturas, e as camas desse teste passaram
-a cair a menos de `CLUSTER_DISTANCE` das de um vizinho. Os dois
-aglomerados viram um, e a colônia que o adota fica a 73 blocos dali.
-Antes da **Emenda 4 da ADR-003** ela arrastaria o centro para o meio do
-aglomerado novo e alcançaria aqueles aldeões; agora o centro só anda
-pela sonda, e não alcança.
+O efeito, em jogo: uma colônia que adote um aglomerado a dezenas de
+blocos do próprio centro fica dona dele **e não enxerga um aldeão sequer
+ali**. A vila cresce para um lado e a colônia procura gente no outro.
+Ninguém vira trabalhador, nenhuma profissão é atribuída, e o log não diz
+nada — `Registered 0 villagers` é silencioso por construção.
 
-**Não é defeito da regra** — é a contaminação entre gametests que o
-próprio `ColonyDetectionGameTest` documenta em três lugares, aparecendo
-por uma porta nova. Metade já foi corrigida (`colonyOwning` procura a
-colônia pelo **dono** do aldeão em vez de pela distância) e não bastou:
-quando ninguém os registra, não há dono a encontrar.
+**A correção:** quem adota diz **de onde** veio a observação, e o
+registro parte dali. O centro continua parado, que é a decisão; o
+registro segue as camas, que é onde a gente está.
 
-**O que provavelmente resolve:** dar a este teste camas que não possam
-se fundir com as do vizinho, ou uma arena própria. Nenhuma das duas foi
-tentada.
+**O que ele fechou, medido em doze rodadas depois da correção:**
+
+```text
+villagersbecomeworkerswithaprofession    0 falhas em 12   ✅ fechado
+thestallguardreturns...forgetsthetree    2 falhas em 12   ⚠️ melhorou
+```
+
+**A ressalva, e ela corrige o que eu escrevi antes.** As cinco primeiras
+rodadas depois da correção vieram verdes, e daí saíram duas frases
+otimistas demais — no commit `7832b10` e na primeira versão desta seção
+— dizendo que a instabilidade do lenhador tinha a mesma causa e estava
+fechada. **Não está.** Ela caiu de 3 em 10 para 2 em 12, o que é uma
+melhora real e não uma explicação. A causa dela continua sem
+diagnóstico.
 
 ---
 
@@ -140,6 +146,7 @@ que mais precisa ser visto:
 | **10** | **A casa de planície terminando sozinha** | é a primeira vez que ela pode |
 | **11** | **A vila de deserto achando lote**, e **a rua crescendo** | `extended the road 5 blocks` |
 | **12** | **O E9** | `E9 — colony ... changed state N times`. Silêncio aqui fecha o erro |
+| **13** | **O registro seguindo as camas** | `Registered N villagers` numa colônia cujo centro esteja longe do aglomerado novo |
 
 **Coberto por teste, com limite conhecido:**
 

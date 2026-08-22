@@ -220,7 +220,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Lote conferido no volume, e mato arrancado | 🧪 coberto por teste, nunca visto em jogo |
 | Recusa que envelhece, em vez de valer para sempre | 🧪 coberto por teste, nunca visto em jogo |
 | Madeira conforme o bioma da vila | 🧪 coberto por teste, nunca visto em jogo |
-| Cama, baú e lampião dentro de cada casa | 🧪 coberto por teste, nunca visto em jogo |
+| Cama e lampião são esperados pela obra; a lã e o ferro viram meta da colônia | 🧪 coberto por teste, nunca visto em jogo |
 | Baú criado ao lado da cama quando não há nenhum | 🧪 coberto por teste, nunca visto em jogo |
 | Registro de construções e proteção | 🧪 coberto por teste, nunca visto em jogo |
 | **Uma de cada profissão antes de dobrar qualquer uma**, e a troca por baú nunca esvazia a última | ✅ coberto por teste unitário |
@@ -240,10 +240,13 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | **Carvão e ferro na mina**, com a veia seguida até acabar | 🧪 coberto por teste, nunca visto em jogo |
 | **A rua cresce com a vila** — sem beira livre, a colônia calça o trecho seguinte | 🧪 coberto por teste, nunca visto em jogo |
 | **A rua do deserto é reconhecida** — é de arenito liso, e a vila de lá nunca achou lote | 🧪 coberto por teste, nunca visto em jogo |
+| **O centro da colônia só anda pela sonda** — varredura do jogador não o arrasta mais | 🧪 coberto por teste, nunca visto em jogo |
+| **O registro de aldeão segue as camas vistas**, e não o centro antigo | 🧪 coberto por teste, nunca visto em jogo |
+| **A barreira de teste grita** — cada peça riscada nomeia a cadeia que falhou | 🧪 coberto por teste, nunca visto em jogo |
 | Agricultura e defesa | ⬜ não começado |
 
 ```text
-469 testes unitários  ·  151 testes de jogo  ·  ./gradlew build
+458 testes unitários  ·  150 testes de jogo  ·  ./gradlew build
 ```
 
 **O que 🧪 quer dizer aqui.** A bateria roda o caso e ele passa. Não quer
@@ -277,37 +280,47 @@ a recusar, e a correção ainda não foi vista em jogo.
 
 | | Etapa | Estado |
 |---|---|---|
-| **1** | **Rodar em jogo.** São **25 commits** desde a última sessão de verdade, em 2026-08-19: sete profissões, seis regras novas, a mina, a cadeia de materiais inteira e a rua que cresce. **Nada disso foi visto numa vila.** Cada regra escrita daqui em diante é mais uma coisa não verificada empilhada sobre as outras | 🔒 exige sessão de jogo |
-| **2** | **Quebrar os seis arquivos acima de 500 linhas.** `VillageDetectionHandler` tem 979 e é o pior | 🔨 pronto para fazer |
-| **3** | **O movimento do centro da colônia.** Troca de âncora e volta a cada 30 segundos, entre 49 camas e 7 — visto em 08-18, 08-19 e 08-20. É a ADR-003 | 👤 **espera decisão sua** |
+| **1** | **Rodar em jogo.** São **36 commits** desde a última sessão de verdade, em 2026-08-19: sete profissões, sete regras novas, a mina, a cadeia de materiais inteira, a rua que cresce e as nove decisões de 08-21. **Nada disso foi visto numa vila.** Cada regra escrita daqui em diante é mais uma coisa não verificada empilhada sobre as outras | 🔒 exige sessão de jogo |
+| **2** | **Implementar a ADR-008 — orientação de blocos.** É a que muda o que se vê: cama, escada e tocha param de sair todas para o mesmo lado. A decisão está escrita; falta atravessar o `Side` pelo `BlueprintBlock` | 🔨 decidido, por escrever |
+| **3** | **Quebrar os seis arquivos acima de 500 linhas.** `VillageDetectionHandler` tem 982 e é o pior | 🔨 pronto para fazer |
 | **4** | **Regra 16 — espaço em volta da casa.** A metade da altura está feita; falta a distância mínima e máxima | 🔨 meia feita |
 | **5** | **O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de travar. Toca `Task`, que é o centro do sistema | ⏸️ decisão de arquitetura |
 | **6** | **Escolher entre as 1.180 estruturas do catálogo.** A lista está no mod; falta o critério e a conta de materiais de cada uma | 🔨 base pronta |
 | **7** | **Regra 10, metade do fabricante.** Porta, janela, cama e baú por estoque, sem depender de haver obra | 🔨 depende do `ItemRequest` |
 | **8** | **Envelhecimento de tarefa**, para que a mais antiga não seja esquecida | 🔨 pronto para fazer |
-| **9** | **O fazendeiro e a defesa.** Duas profissões que o modelo prevê e ninguém escreveu | ⬜ não começado |
+| **9** | **Implementar a ADR-007 — fusão de colônias.** Decidida por escrito; nada dispara enquanto uma obra não encostar na outra | 🔨 decidido, por escrever |
+| **10** | **O fazendeiro e a defesa.** Duas profissões que o modelo prevê e ninguém escreveu | ⬜ não começado |
 
 ### O que precisa ser arrumado
 
 Nada aqui impede o mod de rodar. Tudo aqui cresce se ficar calado.
 
+**Quatro itens saíram desta lista em 2026-08-21.** O teste instável
+continua aqui — melhorou de 3 falhas em 10 rodadas para 2 em 12, e
+melhora não é diagnóstico.
+
 | | O que | Por quê |
 |---|---|---|
-| 🔴 | **Um teste de jogo instável** — `theStallGuardReturnsTheTaskAndForgetsTheTree` | Falhou **3 vezes em 10 execuções** em 08-21, com duas mensagens diferentes: a tarefa em `EXECUTING` numa e em `RESERVED` noutra. Um teste que mente às vezes é pior que um que falta |
-| 🔴 | **Uma falha não diagnosticada** — `theStoneLeavesTheWorldAndReachesTheChest` disse "a pedra não chegou ao baú" uma vez | A suspeita é o custo de ler estrutura dentro do tique; a leitura foi reduzida e não voltou a falhar. **Suspeita, não diagnóstico** |
-| 🟠 | **Seis arquivos acima de 500 linhas** no código, quatro nos testes | `LumberjackGameTest` tem 1571 |
-| 🟠 | **Regras 21, 27 e 28 se contradizem** sobre a obra esperar pela mobília | A 28 é provisória e vence hoje. Quando sair, decidir se a 21 morre junto |
-| 🟡 | **Um `.nbt` da Mojang no repositório** — cópia de `plains_small_house_1`, e sem uso desde a Regra 27 | 👤 decisão jurídica, sua |
-| 🟡 | **`VillagePalette` ficou meio morta** — `wall()` e `door()` só o `ColonyHut`, que a Regra 27 aposentou | |
-| 🟡 | **A cabana do mod continua no código**, e a Regra 27 proíbe criá-la | Deliberado: save antigo tem cabana pela metade. Sai quando nenhum save conhecido tiver uma |
+| 🟠 | **Seis arquivos acima de 500 linhas** no código, quatro nos testes | `LumberjackGameTest` tem 1571. `ConstructionPlanner` **voltou** à lista: 703 → 414 em 08-20, e 527 hoje |
+| 🔴 | **Um teste de jogo instável** — `theStallGuardReturnsTheTaskAndForgetsTheTree` | **2 falhas em 12 rodadas** em 08-22, depois da correção do registro de aldeão — eram 3 em 10 antes dela. A causa continua sem diagnóstico, e um teste que mente às vezes é pior que um que falta |
+| 🟠 | **Uma falha não diagnosticada** — `theStoneLeavesTheWorldAndReachesTheChest` disse "a pedra não chegou ao baú" uma vez | A suspeita é o custo de ler estrutura dentro do tique; a leitura foi reduzida e não voltou a falhar. **Suspeita, não diagnóstico** |
+| 🟡 | **O ícone tem 1,95 MB, e o jar tem 2,29 MB** | 85% do que se distribui é uma imagem mostrada a 64 pixels na lista de mods. A 256×256 daria cerca de 100 KB. É escolha de arte, e por isso não foi mexida |
+| 🟡 | **O `furniture()` do `BlueprintBlock` perdeu o dono** | Ele marcava o que a Regra 21 repunha. A regra morreu, e quem decide o que não segura a obra é a barreira da Regra 28 |
 | 🟡 | **A Regra 25 está inerte** enquanto a 28 valer | "A maior planta que couber" precisa de mais de uma planta |
 | 🟡 | **A arena da bateria tem bioma fixo** de planície | Foi o que escondeu por uma semana que a vila de deserto não reconhecia a própria rua |
+| 🟡 | **O `Development-Log.md` parou em 2026-08-15** | Trinta e seis commits e duas sessões de jogo não estão nele, e `logs/latest.log` tem 0 bytes. O "49 camas e 7" que originou a Emenda 4 da ADR-003 não tem registro primário no repositório |
 
 <details>
 <summary>Etapas fechadas nos ciclos anteriores</summary>
 
 | Etapa | |
 |---|---|
+| **ADR-003 Emenda 4 — o centro da colônia é da sonda** | ✅ 2026-08-21 |
+| **A Regra 21 morre, e a demanda de lã e ferro passa para a obra** | ✅ 2026-08-21 |
+| **A barreira de teste da Regra 28 passa a gritar** | ✅ 2026-08-21 |
+| **A cabana do mod e a paleta de construção apagadas** | ✅ 2026-08-21 |
+| **ADR-007 e ADR-008 — fusão e orientação, decididas por escrito** | ✅ 2026-08-21 |
+| **O ícone com fundo transparente, e o `NOTICE` da Mojang** | ✅ 2026-08-21 |
 | **Regra 11 — uma de cada profissão, e a garantia com nome** | ✅ 2026-08-21 |
 | **Regra 15 — a rua cresce com a vila** | ✅ 2026-08-21 |
 | **A cadeia de materiais fechada — areia, carvão e ferro** | ✅ 2026-08-21 |
@@ -369,9 +382,49 @@ sempre atual — o enunciado das 29 regras, uma a uma — em
 ---
 ## Último ciclo de desenvolvimento
 
-**2026-08-21** — nove commits, e o ciclo em que a casa de planície deixou
-de depender de você em **todos os oito materiais**. Começou pela mina no
-save e terminou com a rua crescendo sozinha.
+**2026-08-21** — onze commits, e o ciclo em que o autor respondeu as
+**nove perguntas** que estavam em aberto e todas foram aplicadas. Começou
+pelo centro da colônia e terminou achando um defeito que estava escondido
+atrás de um teste que todo mundo chamava de instável.
+
+**As nove decisões**
+
+| | |
+|---|---|
+| **O centro da colônia só anda pela sonda** | ADR-003 Emenda 4. Contagem de camas e posição eram a mesma decisão e nunca foram a mesma pergunta — o portão tinha três portas e todas moviam o centro |
+| **A barreira de teste grita** | A justificativa dela caducou: as sete cadeias fecharam. Fica até a primeira sessão, mas cada peça riscada nomeia a cadeia que falhou, e a sessão termina com a soma |
+| **A Regra 21 morre** | A mobília repunha o que a obra riscava, e declarava a demanda de lã e ferro. A primeira parte morreu; a segunda passou para a obra aberta |
+| **O `.nbt` da Mojang, declarado** | Nasceu o `NOTICE`: o que é, de onde veio, em que commit entrou, e que não está coberto pelo MIT daqui |
+| **O E9 ganha medida antes de decisão** | A transição de estado diz de onde veio e o que a sonda viu nos dois sentidos; a sessão nomeia quem trocou três vezes ou mais |
+| **ADR-007 — fusão** | Sobrevive o UUID da maior; o teto de profissão é violado e permanece violado; o centro é o do sobrevivente |
+| **ADR-008 — orientação** | `Side` de quatro direções no `BlueprintBlock`, tradução na fronteira. As duas formas recusadas estão ditas por escrito |
+| **O ícone com fundo transparente** | Por preenchimento a partir da borda, e não por chave de cor — a roupa do aldeão e o reboco da casa também são brancos |
+| **A cabana e a paleta, apagadas** | `ColonyHut` saiu; `VillagePalette` perdeu parede, porta e lã, que só ela lia |
+
+**Três defeitos de jogo apareceram no caminho**
+
+- **A colônia procurava aldeão onde era o centro, e não onde viu as
+  camas.** Com o centro parado pela Emenda 4, uma colônia que adotasse um
+  aglomerado a dezenas de blocos do próprio centro ficava dona dele **e
+  não enxergava um aldeão sequer ali**. É o que fazia a bateria falhar, e
+  **melhorou** `theStallGuardReturnsTheTaskAndForgetsTheTree` sem
+  explicá-lo. Medido em doze rodadas depois da correção: o teste da
+  detecção não falhou nenhuma vez, e o do lenhador falhou duas — era 3
+  em 10 antes. É melhora real, e não diagnóstico.
+- **A receita da cama devolvia zero.** O jogo tem mais de uma receita para
+  `white_bed`, e uma delas é **tingir** uma cama preta. O livro achava
+  essa primeiro, e a conta de lã dava zero — o pastor sem tarefa e a casa
+  sem cama, sem uma linha de log. Quem decompõe uma peça não pode partir
+  de outra peça da mesma família.
+- **A obra dizia ter a mobília que não tinha.** `hasMaterialForNextBlock`
+  respondia "tem" para toda peça de mobília, citando a Regra 21. Com a
+  regra morta, a obra acordaria, tentaria, falharia e dormiria — todo
+  ciclo, para sempre.
+
+---
+
+<details>
+<summary>O ciclo de 2026-08-21, pela manhã — a cadeia de materiais</summary>
 
 **Implementado**
 
@@ -422,13 +475,13 @@ save e terminou com a rua crescendo sozinha.
 **Pendente, e dito sem suavizar**
 
 - **Nada deste ciclo foi visto em jogo**, e nada do anterior também.
-  São **25 commits** desde a última sessão de verdade.
+  Eram **25 commits** desde a última sessão de verdade; hoje são 36.
 - **A casa nunca foi vista terminando sozinha.** Que ela possa é
   afirmação de teste.
 - **Fechar e reabrir o mundo de verdade nunca foi feito** — a bateria
   roda um servidor só, e é justamente o que a mina no save promete.
-- **Um teste instável e uma falha não diagnosticada**, ambos na tabela
-  acima.
+- **Um teste instável e uma falha não diagnosticada.** O instável foi
+  diagnosticado em 08-21 e não era instável — ver o ciclo acima.
 
 <details>
 <summary>2026-08-20 — o ciclo anterior, em dezenove commits</summary>
@@ -465,6 +518,8 @@ quantos **não** couberam, e o mineiro leu ao contrário.
 
 **Refatorado:** `ConstructionPlanner` 703 → 414; `LumberjackWork` 1232 →
 455, que era o pior arquivo do projeto.
+
+</details>
 
 </details>
 

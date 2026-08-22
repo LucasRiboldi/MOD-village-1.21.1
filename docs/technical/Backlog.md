@@ -151,9 +151,14 @@ na seção de cada regra.
 ## 2.5 Contagem
 
 ```text
-375 testes unitários     lógica pura do Core e serialização NBT
- 85 testes de jogo       a fronteira, num servidor sem cliente
+458 testes unitários     lógica pura do Core e serialização NBT
+150 testes de jogo       a fronteira, num servidor sem cliente
 ```
+
+> **Este arquivo parou em 2026-08-15 e está sendo alcançado aos poucos.**
+> Onde ele discordar do `TODO.md`, **vale o TODO** — a precedência foi
+> invertida em 2026-08-22, porque a que existia mandava confiar no
+> documento mais velho.
 
 ---
 
@@ -191,15 +196,15 @@ no §4. O enunciado de cada decisão está em `Project-State.md §10`.
 |---|---|---|
 | ~~B1~~ | **TASK-049 / E11** — só dispensa quem não tem baú quando há baú livre **de verdade** para o substituto | ✅ **feita em 08-15**, 2 testes de jogo |
 | B2 | **TASK-048** — a colônia `ABANDONED` **para de crescer** e continua colhendo | 🔨 **investigar o E9 antes.** Se a marca oscila, a decisão silencia colônia viva |
-| B3 | **TASK-044** — a fusão fica com **tudo** das duas: trabalhadores, baús e construções | 📐 exige **ADR nova** |
-| B4 | **TASK-046 / E8** — o Core **aprende a falar de orientação**; escada, porta e cama saem como o arquivo manda | 📐 exige **ADR nova** — é a que emenda a ADR-005 |
-| B5 | Ícone novo, entregue pelo autor | ⏳ falta o arquivo entrar em `assets/villagecolony/icon.png` |
+| B3 | **TASK-044** — a fusão fica com **tudo** das duas: trabalhadores, baús e construções | ✅ **ADR-007 escrita em 08-21**; falta implementar |
+| B4 | **TASK-046 / E8** — o Core **aprende a falar de orientação**; escada, porta e cama saem como o arquivo manda | ✅ **ADR-008 escrita em 08-21**, forma (a); falta implementar |
+| ~~B5~~ | Ícone novo, entregue pelo autor | ✅ **feito em 2026-08-21**, com o fundo recortado a partir da borda |
 
 ## Grupo C — Não precisa de decisão nem de jogo 🔨
 
 | # | O que | Origem |
 |---|---|---|
-| C1 | **TASK-043** — estender a estrada. A metade que falta da Regra 6: hoje a vila só constrói em beira de rua que já existe, e quando ela acabar a colônia para de crescer antes do que a regra permite. Pavimentar não custa material | §8 |
+| ~~C1~~ | ✅ **feita em 2026-08-21** — é a Regra 15. **TASK-043** — estender a estrada. A metade que falta da Regra 6: hoje a vila só constrói em beira de rua que já existe, e quando ela acabar a colônia para de crescer antes do que a regra permite. Pavimentar não custa material | §8 |
 | C2 | **P2** — a metade estrutural da Regra 3: perguntar ao jogo quais blocos são peça de vila gerada | §8 |
 | C3 | **P3** — o lado do cliente: nome sobre a cabeça, rachadura no bloco, braço balançando | §8 |
 
@@ -211,7 +216,7 @@ no §4. O enunciado de cada decisão está em `Project-State.md §10`.
 | D2 | **E4** — `path held: no` e o aldeão chega assim mesmo | **Provável, não verificado.** Se um dia ele parar de chegar, é o primeiro lugar a olhar | §17 |
 | D3 | **E5** — colheita de outras espécies nunca vista em jogo | Só carvalho. O mangue é o mais provável de falhar primeiro | §17 |
 | D4 | **E8** — orientação dos blocos | = B4. A metade das duas partes fechou em 08-15; a da orientação continua. Nunca visto, porque a Fase 10 nunca rodou | §17 |
-| D5 | **E9** — colônia `ABANDONED` desmarcada no ciclo seguinte | **Provável, não investigado.** Hoje `ABANDONED` não muda nada, o que esconde o sintoma | §17 |
+| D5 | **E9** — colônia `ABANDONED` desmarcada no ciclo seguinte | **Instrumentado em 2026-08-21** — `ColonyStateLog` diz de onde veio, o que a sonda viu nos dois sentidos, e nomeia quem trocou três vezes ou mais. Falta a sessão de jogo que responde | §17 |
 | ~~D6~~ | ~~**E11** — rodízio de profissão~~ | ✅ fechado em 08-15: a colônia conta baús distintos, e não candidatos | §17 |
 | D7 | **E13** — hábito a criar: conferir a linha de carregamento do log antes de concluir do silêncio de uma fase | §17 |
 
@@ -259,8 +264,9 @@ prefetch de materiais.
 ninguém as descubra de novo como se fossem defeito.
 
 ```text
-só bioma PLAINS                       aglomerado em outro bioma é
-                                      ignorado (ADR-003 §5)
+(vencido em 2026-08-20)               a paleta por bioma abriu taiga,
+                                      savana, nevada e deserto; a arena
+                                      da bateria é que continua PLAINS
 
 registro único, Overworld             COLONIES e WORKERS são estáticos
                                       e não separam dimensão
@@ -299,19 +305,21 @@ FEITO em 2026-08-15
                                 sessão do P1 achou
   TASK-050                      a tarefa órfã volta para a fila
 
-A FAZER, nesta ordem
+A FAZER, nesta ordem — revista em 2026-08-22
 
   1  A1        a sessão do P1            🔒 bloqueia o MVP, e é o único
                                             que bloqueia
-  2  B5        o ícone novo              ⏳ falta o arquivo entrar
-  3  E9        investigar a oscilação    🔨 vem ANTES da B2
+  2  B4        implementar a orientação  🔨 ADR-008 escrita; é a que
+                                            muda o que se vê
+  3  E9        ler o que a instrumenta-  🔨 ColonyStateLog já mede;
+               ção disser numa sessão       falta a sessão
   4  B2        ABANDONED para de crescer 🔨 depois do E9
-  5  C1        estender a estrada        🔨
-  6  F3        Task.age                  🔨
-  7  B4        ADR da orientação         📐 decisão tomada, ADR por
-                                            escrever
-  8  B3        ADR da fusão              📐 idem
-  9  C2, C3    a Regra 3 estrutural, e o cliente
+  5  F3        Task.age                  🔨
+  6  B3        implementar a fusão       🔨 ADR-007 escrita; depende de
+                                            a construção rodar em jogo
+  7  C2, C3    a Regra 3 estrutural, e o cliente
+
+  FEITAS DESDE 08-15:  B1  B5  C1  D6  E1
  10  F4        ItemRequest               só depois do MVP fechado
 ```
 
