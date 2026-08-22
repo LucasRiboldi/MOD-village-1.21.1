@@ -81,6 +81,7 @@ public final class ServerLifecycleHandler {
         BuildSiteScanner.clearAll();
         HouseFurnishing.clearAll();
         TestBarrier.clearAll();
+        ColonyStateLog.clearAll();
         VillageDetectionHandler.clearPending();
 
         ColonySavedData data = ColonySavedData.get(server);
@@ -179,6 +180,7 @@ public final class ServerLifecycleHandler {
         // A soma da barreira de teste, antes de tudo ser esquecido.
         // Silêncio aqui é a notícia boa: nenhuma casa precisou dela.
         TestBarrier.report();
+        ColonyStateLog.report();
 
         VillageColonyMod.COLONIES.clear();
         VillageColonyMod.WORKERS.clear();
@@ -205,6 +207,7 @@ public final class ServerLifecycleHandler {
         BuildSiteScanner.clearAll();
         HouseFurnishing.clearAll();
         TestBarrier.clearAll();
+        ColonyStateLog.clearAll();
         VillageDetectionHandler.clearPending();
     }
 }

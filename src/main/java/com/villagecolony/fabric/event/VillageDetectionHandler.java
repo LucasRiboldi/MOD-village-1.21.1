@@ -532,31 +532,47 @@ public final class VillageDetectionHandler {
 
         ColonyAbandonment.judge(colony, probedFrom, result.candidates(), result.ignoredByBiome())
                 .ifPresent(state -> {
+                    ColonyState was = colony.state();
+
                     colony.setState(state);
 
-                    if (state == ColonyState.ABANDONED) {
-                        VillageColonyMod.LOGGER.warn(
-                                "Colony {} is now ABANDONED — probed from {} and found no village ({})",
-                                colony.id(),
-                                probedFrom,
-                                describe(result));
-                    } else {
-                        VillageColonyMod.LOGGER.info(
-                                "Colony {} is inhabited again — now {}", colony.id(), state);
-                    }
+                    // O motivo sai nos dois sentidos desde 2026-08-21, e
+                    // a soma da sessão sai ao parar o servidor: é o
+                    // dado que o E9 pede antes de a TASK-048 poder ser
+                    // escrita. Ver ColonyStateLog.
+                    ColonyStateLog.transition(
+                            colony.id(),
+                            was,
+                            state,
+                            "probed from " + probedFrom + ", " + describe(result));
                 });
     }
 
     /**
-     * O que a sonda viu, para a linha do abandono.
+     * O que a sonda viu, para as duas linhas de transição.
      *
      * <p>É o "instrumentar antes de suspeitar" do §11 aplicado a esta
      * regra: sem o motivo, uma colônia marcada como abandonada manda
      * alguém adivinhar entre camas demolidas, aldeões mortos e uma sonda
      * que não achou nada porque o chunk não estava onde se pensava. As
      * três têm correções diferentes.
+     *
+     * <p><b>Desde 2026-08-21 fala também da volta</b>, e é metade do que
+     * o E9 pede. A linha da desmarcação não dizia nada, então uma vila
+     * reconstruída e uma sonda que enxergou mal produziam a mesma frase.
+     * Quando há candidato, o que se relata é ele.
      */
     private static String describe(VillageScanner.ScanResult result) {
+        if (!result.candidates().isEmpty()) {
+            List<String> seen = new ArrayList<>();
+
+            for (VillageCandidate candidate : result.candidates()) {
+                seen.add(candidate.bedCount() + " beds at " + candidate.center());
+            }
+
+            return "saw " + String.join("; ", seen);
+        }
+
         if (result.rejected().isEmpty()) {
             return "no bed cluster within range at all";
         }
