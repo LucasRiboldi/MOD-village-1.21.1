@@ -29,8 +29,7 @@ import java.util.Optional;
  * <p>Saiu de {@code ConstructionPlanner} em 2026-08-20, quando ele
  * passou de setecentas linhas. É uma pergunta inteira e independente
  * das outras duas daquele arquivo: <b>qual planta</b>, e <b>com a porta
- * para que lado</b>. Quem planeja usa a resposta; quem mobília
- * ({@link HouseFurnishing}) usa a mesma, e usava por dentro do
+ * para que lado</b>. Quem planeja usa a resposta, e usava por dentro do
  * planejador antes desta separação.
  *
  * <p>Três regras do autor moram aqui juntas, e é por isso que elas
@@ -205,10 +204,9 @@ public final class HousePlans {
      * A planta deste id, venha ela do mod ou do jogo.
      *
      * <p>Existe para {@link #resume}, que carrega obra gravada em sessão
-     * anterior e só tem o id em mãos. {@link HouseFurnishing} usa a
-     * mesma resposta pelo mesmo motivo: uma casa terminada guarda o id e
-     * o canto, e onde a mobília dela vai está na planta — girada como a
-     * casa foi levantada, que é o que este método reconstrói. A cabana da colônia é escrita em
+     * anterior e só tem o id em mãos — a planta precisa voltar girada
+     * como a casa foi levantada, que é o que este método reconstrói.
+     * A cabana da colônia é escrita em
      * código e o leitor de estrutura não a acharia; a casa do jogo é o
      * contrário. Perguntar aos dois é o que deixa um save antigo — com a
      * casa de planície pela metade — continuar de onde parou.

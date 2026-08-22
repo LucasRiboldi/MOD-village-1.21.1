@@ -4,8 +4,6 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.ColonyState;
 import com.villagecolony.core.construction.model.Building;
-import com.villagecolony.core.construction.model.ColonyHut;
-import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.core.type.ColonyPos;
@@ -13,10 +11,10 @@ import com.villagecolony.core.type.ResourceId;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtString;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -77,115 +75,16 @@ class ConstructionSaveTest {
     }
 
     /**
-     * A conta do que a casa já recebeu atravessa o save.
+     * Save antigo com a lista de mobília continua carregando.
      *
-     * <p>Regra do autor, 2026-08-20: peça destruída não volta. Se esta
-     * lista não sobrevivesse ao servidor parar, a cama que o jogador
-     * desfez reapareceria na sessão seguinte — o mesmo defeito com prazo
-     * mais longo, e mais difícil de ver.
+     * <p>A lista nasceu em 2026-08-20 e morreu em 2026-08-21, com a
+     * Regra 21. O que ficou de pé no mundo do autor tem a chave gravada,
+     * e a leitura precisa <b>ignorá-la</b> em vez de tropecçar nela:
+     * chave desconhecida num save é coisa normal, e derrubar a
+     * construção por causa dela perderia a casa inteira.
      */
     @Test
-    void whatTheHouseAlreadyGotSurvivesTheRoundTrip() {
-        UUID colonyId = UUID.randomUUID();
-
-        Building building = new Building(
-                UUID.randomUUID(),
-                colonyId,
-                HOUSE,
-                new ColonyPos(10, 64, -20),
-                new ColonyPos(16, 70, -14))
-                .withFurnished(ResourceId.vanilla("white_bed"))
-                .withFurnished(ResourceId.vanilla("lantern"));
-
-        ColonySavedData data = empty();
-
-        data.sync(
-                List.of(colonyAt(colonyId, new ColonyPos(0, 64, 0))),
-                List.of(),
-                List.of(),
-                List.of(building));
-
-        Building restored = roundTrip(data).buildings().get(0);
-
-        assertEquals(
-                Set.of(ResourceId.vanilla("white_bed"), ResourceId.vanilla("lantern")),
-                restored.furnished());
-    }
-
-    /**
-     * Casa do jogo gravada antes da lista: continua sem conta nenhuma.
-     *
-     * <p>A migração é só da cabana. Casa lida do arquivo do jogo tem a
-     * mobília que o arquivo manda e nunca passou por esta regra.
-     */
-    @Test
-    void aBuildingFromBeforeTheFurnitureRuleLoadsEmpty() {
-        UUID colonyId = UUID.randomUUID();
-
-        Building building = new Building(
-                UUID.randomUUID(),
-                colonyId,
-                HOUSE,
-                new ColonyPos(10, 64, -20),
-                new ColonyPos(16, 70, -14));
-
-        ColonySavedData data = empty();
-
-        data.sync(
-                List.of(colonyAt(colonyId, new ColonyPos(0, 64, 0))),
-                List.of(),
-                List.of(),
-                List.of(building));
-
-        NbtCompound nbt = data.writeNbt(new NbtCompound(), null);
-
-        for (int i = 0; i < nbt.getList("buildings", NbtElement.COMPOUND_TYPE).size(); i++) {
-            nbt.getList("buildings", NbtElement.COMPOUND_TYPE).getCompound(i).remove("furnished");
-        }
-
-        assertTrue(ColonySavedData.TYPE.deserializer().apply(nbt, null).buildings().get(0).furnished().isEmpty());
-    }
-
-    /**
-     * Cabana gravada antes da lista conta como já mobiliada.
-     *
-     * <p>Pedido do autor em 2026-08-20. Sem isto, cada casa que já está
-     * de pé no mundo dele receberia cama, baú e lampião mais uma vez —
-     * inclusive as de onde ele tinha acabado de tirar as peças, que é o
-     * defeito que a regra veio proibir.
-     */
-    @Test
-    void aHutFromBeforeTheFurnitureRuleCountsAsAlreadyFurnished() {
-        NbtCompound nbt = savedHut();
-
-        stripFurnishedList(nbt);
-
-        Building restored =
-                ColonySavedData.TYPE.deserializer().apply(nbt, null).buildings().get(0);
-
-        for (BlueprintBlock piece : ColonyHut.furnishings()) {
-            assertTrue(
-                    restored.wasFurnishedWith(piece.block()),
-                    "a casa antiga vai receber " + piece.block() + " de novo");
-        }
-    }
-
-    /**
-     * Cabana nova, com a lista vazia gravada, continua podendo receber.
-     *
-     * <p>É a outra metade da migração, e a que a torna segura: lista
-     * ausente e lista vazia dizem coisas diferentes. Tratá-las igual
-     * congelaria toda casa recém-construída sem mobília para sempre.
-     */
-    @Test
-    void aNewHutWithAnEmptyListStillGetsItsFurniture() {
-        Building restored = ColonySavedData.TYPE.deserializer()
-                .apply(savedHut(), null).buildings().get(0);
-
-        assertTrue(restored.furnished().isEmpty());
-    }
-
-    private static NbtCompound savedHut() {
+    void anOldSaveWithAFurnishedListStillLoads() {
         UUID colonyId = UUID.randomUUID();
 
         ColonySavedData data = empty();
@@ -197,20 +96,29 @@ class ConstructionSaveTest {
                 List.of(new Building(
                         UUID.randomUUID(),
                         colonyId,
-                        ColonyHut.ID,
+                        HOUSE,
                         new ColonyPos(10, 64, -20),
-                        new ColonyPos(14, 68, -16))));
+                        new ColonyPos(16, 70, -14))));
 
-        return data.writeNbt(new NbtCompound(), null);
-    }
+        NbtCompound nbt = data.writeNbt(new NbtCompound(), null);
 
-    private static void stripFurnishedList(NbtCompound nbt) {
         NbtList saved = nbt.getList("buildings", NbtElement.COMPOUND_TYPE);
 
         for (int i = 0; i < saved.size(); i++) {
-            saved.getCompound(i).remove("furnished");
+            NbtList furnished = new NbtList();
+
+            furnished.add(NbtString.of("minecraft:white_bed"));
+
+            saved.getCompound(i).put("furnished", furnished);
         }
+
+        Building restored =
+                ColonySavedData.TYPE.deserializer().apply(nbt, null).buildings().get(0);
+
+        assertEquals(HOUSE, restored.blueprint());
+        assertEquals(new ColonyPos(10, 64, -20), restored.min());
     }
+
 
     @Test
     void anOpenProjectSurvivesTheRoundTrip() {

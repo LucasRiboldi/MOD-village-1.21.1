@@ -25,7 +25,9 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * A colônia decide construir — TASK-033.
@@ -522,6 +524,27 @@ public final class ConstructionPlanner {
     public static int materialNeededBy(ResourceId material, Colony colony) {
         return VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
                 .map(project -> project.remainingMaterials().getOrDefault(material, 0))
+                .orElse(0);
+    }
+
+    /**
+     * O mesmo, para uma família de materiais — 2026-08-21.
+     *
+     * <p>A cama tem dezesseis cores e a planta grava a que está no
+     * arquivo. Perguntar por {@code white_bed} devolve zero numa casa que
+     * pede {@code red_bed}, e zero é o pastor sem tarefa — o mesmo
+     * defeito que o vidro teve por pedir vidraça.
+     *
+     * <p>A lã que a colônia produz é branca, e a cama colorida ainda
+     * pede tinta que ninguém faz. O que isto conserta é a <b>demanda</b>
+     * aparecer; a cor é problema do dia em que a colônia souber tingir.
+     */
+    public static int materialNeededBy(Predicate<ResourceId> family, Colony colony) {
+        return VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
+                .map(project -> project.remainingMaterials().entrySet().stream()
+                        .filter(entry -> family.test(entry.getKey()))
+                        .mapToInt(Map.Entry::getValue)
+                        .sum())
                 .orElse(0);
     }
 }

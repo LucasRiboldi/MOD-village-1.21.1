@@ -8,6 +8,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.CraftingLookup;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 
 import java.util.Map;
@@ -48,8 +49,11 @@ public final class WorkMaterials {
 
     private static final ResourceId TORCH = ResourceId.vanilla("torch");
 
-    /** O lampião da Regra 21, que é o que pede ferro nesta colônia. */
+    /** O lampião, que é o que pede ferro nesta colônia. */
     public static final ResourceId LANTERN = ResourceId.vanilla("lantern");
+
+    /** A cama, pela receita de uma cor — três lãs e três tábuas. */
+    private static final ResourceId WHITE_BED = ResourceId.vanilla("white_bed");
 
     /**
      * Quantos degraus de receita a conta desce.
@@ -86,8 +90,15 @@ public final class WorkMaterials {
      * saem do mesmo item e da mesma receita. Separá-las daria duas contas
      * para uma fornada.
      */
+    public static int coal(ServerWorld world, Colony colony) {
+        int torches = ConstructionPlanner.materialNeededBy(WALL_TORCH, colony)
+                + ConstructionPlanner.materialNeededBy(TORCH, colony);
+
+        return through(world, WALL_TORCH, ResourceType.COAL, torches);
+    }
+
     /**
-     * O lingote que os lampiões que faltam vão custar — 2026-08-21.
+     * O lingote que os lampiões da obra vão custar — 2026-08-21.
      *
      * <p><b>Dois degraus, e é o caso que os pediu.</b> O lampião não pede
      * lingote: pede oito <b>pepitas</b>, e a pepita é que sai do lingote,
@@ -95,19 +106,34 @@ public final class WorkMaterials {
      * nunca recebe tarefa de ferro — que foi exatamente o que aconteceu
      * no dia em que ele aprendeu a fundi-lo.
      *
-     * <p>Vem da mobília, e não da obra: o lampião é peça da Regra 21, e
-     * quem sabe quantas casas estão sem ele é a passagem que as
-     * mobiliaria. Ver {@code HouseFurnishing}.
+     * <p><b>Vinha da mobília até 2026-08-21</b>, quando a Regra 21 saiu e
+     * a pergunta mudou de dono: quem sabe quantos lampiões faltam é a obra
+     * aberta, do mesmo jeito que ela já sabia do vidro e do carvão.
      */
-    public static int iron(ServerWorld world, int lanterns) {
+    public static int iron(ServerWorld world, Colony colony) {
+        int lanterns = ConstructionPlanner.materialNeededBy(LANTERN, colony);
+
         return through(world, LANTERN, ResourceType.IRON_INGOT, lanterns);
     }
 
-    public static int coal(ServerWorld world, Colony colony) {
-        int torches = ConstructionPlanner.materialNeededBy(WALL_TORCH, colony)
-                + ConstructionPlanner.materialNeededBy(TORCH, colony);
+    /**
+     * A lã que as camas da obra vão custar — 2026-08-21.
+     *
+     * <p>Mesma conta, mesmo dia, mesma razão: a Regra 21 morreu e a
+     * demanda passou para a obra.
+     *
+     * <p>A cama é contada por <b>família</b>. A planta grava a cor que
+     * estiver no arquivo, e perguntar por uma só devolveria zero nas
+     * outras quinze — o mesmo defeito que o vidro teve por a casa pedir
+     * vidraça. A lã que esta colônia produz é branca, e cama colorida
+     * ainda pede tinta que ninguém faz: o que isto conserta é a demanda
+     * <b>aparecer</b>.
+     */
+    public static int wool(ServerWorld world, Colony colony) {
+        int beds = ConstructionPlanner.materialNeededBy(
+                material -> material.path().endsWith("_bed"), colony);
 
-        return through(world, WALL_TORCH, ResourceType.COAL, torches);
+        return through(world, WHITE_BED, ResourceType.WHITE_WOOL, beds);
     }
 
     /**
@@ -161,7 +187,7 @@ public final class WorkMaterials {
         }
 
         Optional<CraftingLookup.Bill> bill =
-                CraftingLookup.billFor(world, made, item -> true);
+                CraftingLookup.billFor(world, made, ingredient -> !sameFamily(made, ingredient));
 
         if (bill.isEmpty()) {
             return 0;
@@ -195,5 +221,43 @@ public final class WorkMaterials {
         }
 
         return total;
+    }
+
+    /**
+     * Se dois itens são a mesma coisa de outra cor ou outra madeira.
+     *
+     * <p><b>Existe porque a cama quase custou uma cama.</b> O jogo tem
+     * mais de uma receita que dá {@code white_bed}, e uma delas é
+     * <i>tingir</i>: {@code black_bed} mais corante branco. O livro
+     * devolve a primeira que encontrar, e encontrou essa — a conta de
+     * lã dava <b>zero</b>, e zero aqui é o pastor sem tarefa.
+     *
+     * <p>A regra que conserta é esta: <b>quem decompõe uma peça não pode
+     * partir de outra peça da mesma família.</b> Para saber quanta lã
+     * uma cama custa, uma receita que pede cama não serve, ainda que
+     * exista e funcione na bancada.
+     *
+     * <p>Família é a última palavra do nome: {@code white_bed} e
+     * {@code black_bed} são "bed"; {@code glass_pane} e {@code glass} não
+     * são parentes. <b>O limite conhecido:</b> tronco descascado e tronco
+     * são os dois "log", e uma conta que precisasse descer de um para o
+     * outro daria zero. Nenhuma das quatro contas desta classe passa por
+     * aí, e o dia em que uma passar vai aparecer como zero — que é o
+     * mesmo sintoma, e agora com um lugar nomeado para procurar.
+     */
+    private static boolean sameFamily(Item made, Item ingredient) {
+        if (made == ingredient) {
+            return true;
+        }
+
+        return lastWord(made).equals(lastWord(ingredient));
+    }
+
+    private static String lastWord(Item item) {
+        String path = Registries.ITEM.getId(item).getPath();
+
+        int underscore = path.lastIndexOf('_');
+
+        return underscore < 0 ? path : path.substring(underscore + 1);
     }
 }

@@ -13,15 +13,15 @@ import java.util.UUID;
  *
  * <p><b>Regra 28, do autor em 2026-08-20, e ele a declarou provisória:</b>
  * enquanto o projeto não estiver formalmente acabado, a obra não espera
- * por porta, cama, lampião, baú, tronco descascado, tocha nem vidraça
- * que não estejam num baú da vila. O bloco é riscado, e a casa fica sem
+ * por peça que não esteja num baú da vila — hoje porta, baú, tronco
+ * descascado, tocha e vidraça. O bloco é riscado, e a casa fica sem
  * ele.
  *
  * <p><b>A razão dela caducou em 2026-08-21.</b> A justificativa escrita
  * era "peças que dependem de cadeia que a colônia ainda não fecha". As
  * cadeias fecharam — o pastor tosquia, a mina traz carvão e ferro, a
  * fornalha funde, o fabricante descasca e monta. Hoje a colônia sabe
- * fazer <b>todas</b> as sete.
+ * fazer <b>todas</b> elas.
  *
  * <p>Decisão do autor em 2026-08-21: a barreira <b>fica</b> até a
  * primeira sessão de jogo, porque nenhuma dessas cadeias rodou de
@@ -31,6 +31,13 @@ import java.util.UUID;
  * soma. Casa que sobe sem uma linha destas subiu com a cadeia inteira;
  * casa que sobe com elas diz, peça por peça, onde procurar.
  *
+ * <p><b>Cama e lampião saíram da lista no mesmo dia</b>, e por outra
+ * decisão: a Regra 21 morreu, e com ela a passagem que repunha mobília
+ * depois. Riscar a cama deixaria a casa sem cama <b>para sempre</b>, e a
+ * demanda de lã sumiria junto — a conta sai da obra aberta agora. Para
+ * esses dois vale a Regra 27 pura: o construtor aguarda, e o
+ * PatienceClock é quem impede a colônia de morrer esperando.
+ *
  * <p><b>Para desligar:</b> apague esta classe e as três chamadas a ela
  * em {@link BuilderWork} e {@link
  * com.villagecolony.fabric.event.ServerLifecycleHandler}. A Regra 27
@@ -39,7 +46,7 @@ import java.util.UUID;
 public final class TestBarrier {
 
     /**
-     * As sete peças, e a cadeia que deveria ter posto cada uma no baú.
+     * As cinco peças, e a cadeia que deveria ter posto cada uma no baú.
      *
      * <p>Ordenado: a chave é o sufixo do nome do bloco, e a primeira que
      * casar vence. {@code stripped_} é prefixo e está tratado à parte.
@@ -49,8 +56,6 @@ public final class TestBarrier {
     static {
         CHAINS.put("_door", "the manufacturer's planks");
         CHAINS.put("chest", "the manufacturer's planks");
-        CHAINS.put("_bed", "the shepherd's wool");
-        CHAINS.put("lantern", "the miner's iron and the manufacturer's torch");
         CHAINS.put("torch", "the miner's coal and the manufacturer's sticks");
         CHAINS.put("_pane", "the miner's sand and the smelter's glass");
     }
@@ -66,7 +71,8 @@ public final class TestBarrier {
      *
      * @return a cadeia que deveria tê-lo produzido, ou vazio se a
      *     barreira não cobre este bloco — e nesse caso vale a Regra 27,
-     *     e o construtor aguarda
+     *     e o construtor aguarda. Cama e lampião caem aqui desde
+     *     2026-08-21
      */
     public static Optional<String> chainFor(ResourceId block) {
         String name = block.path();

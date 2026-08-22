@@ -20,7 +20,6 @@ import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.integration.RingSweep;
-import com.villagecolony.fabric.work.HouseFurnishing;
 import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
@@ -79,7 +78,6 @@ public final class ServerLifecycleHandler {
         VillageRoad.clearAll();
         RoadExtension.clearAll();
         BuildSiteScanner.clearAll();
-        HouseFurnishing.clearAll();
         TestBarrier.clearAll();
         ColonyStateLog.clearAll();
         VillageDetectionHandler.clearPending();
@@ -205,7 +203,6 @@ public final class ServerLifecycleHandler {
         VillageRoad.clearAll();
         RoadExtension.clearAll();
         BuildSiteScanner.clearAll();
-        HouseFurnishing.clearAll();
         TestBarrier.clearAll();
         ColonyStateLog.clearAll();
         VillageDetectionHandler.clearPending();

@@ -29,7 +29,6 @@ import com.villagecolony.fabric.integration.VillageScanner;
 import com.villagecolony.fabric.integration.VillagerScanner;
 import com.villagecolony.fabric.integration.WorkerEquipment;
 import com.villagecolony.fabric.integration.WorkerNameplate;
-import com.villagecolony.fabric.work.HouseFurnishing;
 import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
@@ -75,26 +74,6 @@ import net.minecraft.world.poi.PointOfInterestTypes;
  * o raio limitado do scanner.
  */
 public final class VillageDetectionHandler {
-
-    /**
-     * Quanta lã cada colônia pediu na passagem anterior.
-     *
-     * <p><b>Um ciclo atrasado, e de propósito.</b> Quem sabe que uma casa
-     * está sem cama é a passagem de mobília, e ela roda <b>depois</b> do
-     * construtor — a casa que terminou neste ciclo já é olhada nele. A
-     * meta, por sua vez, é montada antes. Adiantar a mobília para antes
-     * do construtor resolveria a ordem e criaria outra: a casa recém
-     * terminada esperaria um ciclo inteiro pela cama.
-     *
-     * <p>Trinta segundos de atraso numa meta de lã não custam nada, e a
-     * alternativa custaria.
-     */
-    private static final Map<UUID, HouseFurnishing.Needs> FURNISHING_WANTED = new HashMap<>();
-
-    /** O que a mobília desta colônia pediu, ou nada se ainda não pediu. */
-    private static HouseFurnishing.Needs furnishingWanted(Colony colony) {
-        return FURNISHING_WANTED.getOrDefault(colony.id(), new HouseFurnishing.Needs(0, 0));
-    }
 
     private static final VillageScanner SCANNER = new VillageScanner();
 
@@ -424,19 +403,21 @@ public final class VillageDetectionHandler {
         int stoneForWork = ConstructionPlanner.materialNeededBy(palette.stone(), colony);
 
         // O que a obra pede em peça, traduzido para o que a colônia sabe
-        // produzir — 2026-08-20 o vidro, 2026-08-21 o carvão. A casa não
-        // pede vidro, pede vidraça; não pede carvão, pede tocha. Perguntar
-        // pelo material devolvia zero, e com zero ninguém recebia tarefa.
-        HouseFurnishing.Needs furnishing = furnishingWanted(colony);
-
+        // produzir. A casa não pede vidro, pede vidraça; não pede carvão,
+        // pede tocha; não pede lã, pede cama. Perguntar pelo material
+        // devolvia zero, e com zero ninguém recebia tarefa.
+        //
+        // <b>As quatro saem do mesmo lugar desde 2026-08-21</b>: a obra
+        // aberta. A lã e o ferro vinham da passagem de mobília, que a
+        // Regra 21 sustentava, e ela morreu.
         WorkDemand work = new WorkDemand(
                 planksForWork,
                 stone,
                 stoneForWork,
-                furnishing.wool(),
+                WorkMaterials.wool(overworld, colony),
                 WorkMaterials.glass(overworld, palette, colony),
                 WorkMaterials.coal(overworld, colony),
-                furnishing.iron());
+                WorkMaterials.iron(overworld, colony));
 
         int assigned = ColonyCycle.run(
                 colony.id(),
@@ -472,10 +453,6 @@ public final class VillageDetectionHandler {
         ManufacturerWork.run(overworld, colony);
         BuilderWork.run(overworld, colony);
 
-        // E a mobília das casas já de pé — a Regra 21. Depois do
-        // construtor de propósito: a casa que terminou neste ciclo já é
-        // olhada nele.
-        FURNISHING_WANTED.put(colony.id(), HouseFurnishing.run(overworld, colony));
     }
 
     /**

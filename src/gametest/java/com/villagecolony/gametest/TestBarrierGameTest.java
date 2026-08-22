@@ -23,25 +23,39 @@ import java.util.List;
  */
 public class TestBarrierGameTest implements FabricGameTest {
 
-    /** As sete, e nenhuma outra. */
+    /** As cinco, e nenhuma outra. */
     private static final List<String> COVERED =
             List.of(
                     "oak_door",
-                    "white_bed",
-                    "lantern",
-                    "soul_lantern",
                     "chest",
                     "stripped_oak_log",
                     "torch",
                     "wall_torch",
                     "glass_pane");
 
-    /** Estas a obra espera, e esperar é a Regra 27. */
+    /**
+     * Estas a obra espera, e esperar é a Regra 27.
+     *
+     * <p>Cama e lampião entraram nesta lista em 2026-08-21, e não por
+     * capricho: a Regra 21 morreu, então nada os repõe depois. Riscá-los
+     * deixaria a casa sem eles para sempre, e a demanda de lã e de ferro
+     * sumiria junto — a conta sai da obra aberta agora.
+     */
     private static final List<String> NOT_COVERED =
-            List.of("cobblestone", "oak_planks", "oak_log", "sand", "glass", "dirt_path");
+            List.of(
+                    "white_bed",
+                    "red_bed",
+                    "lantern",
+                    "soul_lantern",
+                    "cobblestone",
+                    "oak_planks",
+                    "oak_log",
+                    "sand",
+                    "glass",
+                    "dirt_path");
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "test_barrier")
-    public void theBarrierCoversTheSevenPieces(TestContext context) {
+    public void theBarrierCoversTheFivePieces(TestContext context) {
         for (String block : COVERED) {
             context.assertTrue(
                     TestBarrier.chainFor(ResourceId.vanilla(block)).isPresent(),
@@ -71,12 +85,11 @@ public class TestBarrierGameTest implements FabricGameTest {
     /** Cada peça aponta para a profissão que a produz, e não outra. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "test_barrier")
     public void everyPieceNamesTheChainThatShouldHaveMadeIt(TestContext context) {
-        assertChain(context, "white_bed", "shepherd");
         assertChain(context, "glass_pane", "smelter");
         assertChain(context, "stripped_oak_log", "manufacturer");
-        assertChain(context, "lantern", "miner");
         assertChain(context, "torch", "miner");
         assertChain(context, "oak_door", "manufacturer");
+        assertChain(context, "chest", "manufacturer");
 
         context.complete();
     }

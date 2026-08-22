@@ -136,6 +136,12 @@ public class WorkMaterialsGameTest implements FabricGameTest {
      * <p>Um lampião custa um lingote, e sobra pepita: nove saem de um, e
      * ele quer oito. Sobrar é melhor que faltar — meia fornada não
      * existe.
+     *
+     * <p>Pergunta a {@code through} direto desde 2026-08-21. Até ali
+     * {@code iron} recebia a contagem de lampões pronta, da passagem de
+     * mobília; agora ela mesma pergunta à obra aberta, e a obra precisa
+     * de um mundo montado. O que este teste quer é a <b>receita</b>, e
+     * ela está aqui inteira.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_materials",
             tickLimit = 20)
@@ -143,23 +149,71 @@ public class WorkMaterialsGameTest implements FabricGameTest {
         ServerWorld world = context.getWorld();
 
         context.assertTrue(
-                WorkMaterials.iron(world, 0) == 0,
+                lanternsCost(world, 0) == 0,
                 "casa sem lampião não pode pedir ferro");
 
-        int forOne = WorkMaterials.iron(world, 1);
+        int forOne = lanternsCost(world, 1);
 
         context.assertTrue(
                 forOne == 1,
                 "um lampião devia custar um lingote, e custou " + forOne);
 
         // Dois lampiões são dezesseis pepitas: duas fornadas de nove.
-        int forTwo = WorkMaterials.iron(world, 2);
+        int forTwo = lanternsCost(world, 2);
 
         context.assertTrue(
                 forTwo == 2,
                 "dois lampiões deviam custar dois lingotes, e custaram " + forTwo);
 
         context.complete();
+    }
+
+    private static int lanternsCost(ServerWorld world, int lanterns) {
+        return WorkMaterials.through(
+                world, WorkMaterials.LANTERN, ResourceType.IRON_INGOT, lanterns);
+    }
+
+    /**
+     * A cama desce um degrau até a lã — 2026-08-21.
+     *
+     * <p>Nasceu com a morte da Regra 21. A conta de lã era {@code camas
+     * × 3}, escrita à mão na passagem de mobília; passou a sair da
+     * receita do jogo, como o vidro e o carvão já saíam. O número
+     * continua sendo três — e a diferença é que agora quem o diz é o
+     * livro de receitas, e um datapack que mude a cama muda a conta
+     * junto.
+     *
+     * <p><b>E ele já pegou um defeito.</b> O jogo tem mais de uma receita
+     * para {@code white_bed}, e uma delas é tingir uma cama preta: o
+     * livro devolveu essa, e a conta de lã deu zero. Zero aqui é o
+     * pastor sem tarefa e a casa sem cama, em silêncio. Ver
+     * {@code WorkMaterials.sameFamily}.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_materials",
+            tickLimit = 20)
+    public void oneBedCostsThreeWool(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        int forOne = bedsCost(world, 1);
+
+        context.assertTrue(
+                forOne == 3,
+                "uma cama devia custar três lãs, e custou " + forOne);
+
+        int forTwo = bedsCost(world, 2);
+
+        context.assertTrue(
+                forTwo == 6,
+                "duas camas deviam custar seis lãs, e custaram " + forTwo);
+
+        context.assertTrue(bedsCost(world, 0) == 0, "casa sem cama não pede lã");
+
+        context.complete();
+    }
+
+    private static int bedsCost(ServerWorld world, int beds) {
+        return WorkMaterials.through(
+                world, ResourceId.vanilla("white_bed"), ResourceType.WHITE_WOOL, beds);
     }
 
     /**
