@@ -24,6 +24,7 @@ import com.villagecolony.fabric.work.HouseFurnishing;
 import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
+import com.villagecolony.fabric.work.TestBarrier;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.WaitingWork;
 import com.villagecolony.fabric.work.ConstructionPlanner;
@@ -79,6 +80,7 @@ public final class ServerLifecycleHandler {
         RoadExtension.clearAll();
         BuildSiteScanner.clearAll();
         HouseFurnishing.clearAll();
+        TestBarrier.clearAll();
         VillageDetectionHandler.clearPending();
 
         ColonySavedData data = ColonySavedData.get(server);
@@ -174,6 +176,10 @@ public final class ServerLifecycleHandler {
                 VillageColonyMod.MINES.count(),
                 openProjects().size());
 
+        // A soma da barreira de teste, antes de tudo ser esquecido.
+        // Silêncio aqui é a notícia boa: nenhuma casa precisou dela.
+        TestBarrier.report();
+
         VillageColonyMod.COLONIES.clear();
         VillageColonyMod.WORKERS.clear();
         VillageColonyMod.STORAGES.clear();
@@ -198,6 +204,7 @@ public final class ServerLifecycleHandler {
         RoadExtension.clearAll();
         BuildSiteScanner.clearAll();
         HouseFurnishing.clearAll();
+        TestBarrier.clearAll();
         VillageDetectionHandler.clearPending();
     }
 }

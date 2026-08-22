@@ -35,7 +35,8 @@
       "com.villagecolony.gametest.VillageStructuresGameTest",
       "com.villagecolony.gametest.WorkMaterialsGameTest",
       "com.villagecolony.gametest.VillageRoadGameTest",
-      "com.villagecolony.gametest.RoadExtensionGameTest"
+      "com.villagecolony.gametest.RoadExtensionGameTest",
+      "com.villagecolony.gametest.TestBarrierGameTest"
     ]
   },
   "depends": {

@@ -361,22 +361,18 @@ public final class BuilderWork {
         }
 
         if (!takeMaterial(world, project, material.get().asItem())) {
-            if (isSkippableWhileTesting(block.block())) {
-                // <b>Barreira de teste</b>, e ela sai quando o autor
-                // mandar — regra dele, 2026-08-20: enquanto o projeto não
-                // estiver formalmente acabado, a obra não espera por
-                // porta, cama, lampião nem baú que não estejam num baú da
-                // vila.
+            Optional<String> chain = TestBarrier.chainFor(block.block());
+
+            if (chain.isPresent()) {
+                // <b>Barreira de teste</b> — a Regra 28, provisória por
+                // declaração do autor: o bloco é riscado, e a casa fica
+                // sem ele.
                 //
-                // São as quatro peças que dependem de cadeia que a
-                // colônia ainda não fecha, e segurá-las faria nenhuma
-                // sessão de teste terminar uma casa. O bloco é riscado, e
-                // a casa fica sem ele.
-                VillageColonyMod.LOGGER.info(
-                        "Project {} goes on without {} — the colony has none, and the test"
-                                + " barrier lets it pass",
-                        project.id(),
-                        block.block());
+                // Ela grita desde 2026-08-21, e o porquê está em
+                // TestBarrier: a cadeia de cada uma das sete peças
+                // fechou, e peça riscada deixou de ser o esperado para
+                // virar notícia.
+                TestBarrier.skip(project.id(), block.block(), chain.get());
 
                 project.markPlaced(block);
 
@@ -403,39 +399,6 @@ public final class BuilderWork {
         job.placed++;
 
         return true;
-    }
-
-    /**
-     * As quatro peças que a obra não espera, enquanto se testa.
-     *
-     * <p>Regra do autor de 2026-08-20, e ela é explicitamente
-     * provisória: porta, cama, lampião e baú saem da frente quando não
-     * houver nenhum nos baús da vila.
-     *
-     * <p>Em 2026-08-20, mais tarde, o autor acrescentou tronco
-     * descascado, tocha e vidraça — os três que a medição da casa de
-     * planície mostrou como o que ainda a travava. A casa passa a subir
-     * com janela vazia e sem luz quando faltar material, e isso é
-     * escolha declarada: durante o teste, ver a casa fechar vale mais
-     * que vê-la perfeita.
-     *
-     * <p>Pedra e tábua continuam fora da lista: sem elas a casa tem furo
-     * de parede, e furo é a Regra 22 ao contrário.
-     *
-     * <p><b>Para desligar:</b> apague este método e o bloco que o chama.
-     * A Regra 27 volta a valer sem exceção.
-     */
-    private static boolean isSkippableWhileTesting(ResourceId block) {
-        String name = block.path();
-
-        return name.endsWith("_door")
-                || name.endsWith("_bed")
-                || name.equals("lantern")
-                || name.equals("soul_lantern")
-                || name.equals("chest")
-                || name.startsWith("stripped_")
-                || name.endsWith("torch")
-                || name.endsWith("_pane");
     }
 
     /**
