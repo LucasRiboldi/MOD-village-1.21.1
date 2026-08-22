@@ -88,6 +88,16 @@ public final class BuilderWork {
     private static final int REACH = 5;
 
     /**
+     * Quantos blocos acima e abaixo do chão do lote procurar um
+     * lugar de pé — 2026-08-22.
+     *
+     * <p>Seis é a altura de uma duna de deserto sobre o lote, que é o
+     * caso que pediu esta busca. Mais que isso deixa de ser "perto da
+     * coluna" e vira outra decisão.
+     */
+    private static final int FOOT_SEARCH = 6;
+
+    /**
      * Quantos ticks andando sem chegar ao bloco antes de desistir.
      *
      * <p>Quatro ciclos da colônia. O lote fica na vila e a obra é
@@ -242,13 +252,17 @@ public final class BuilderWork {
         BlockPos target = MinecraftTypeAdapter.toBlockPos(project.worldPositionOf(next.get()));
 
         if (!isWithinReach(villager.getBlockPos(), target)) {
-            WorkTargets.set(workerId, footOf(project, target));
+            WorkTargets.set(workerId, footOf(world, project, target));
 
             if (++job.stalled > STALL_LIMIT) {
                 // Andou dois minutos de horário de trabalho e não chegou
                 // ao bloco. A obra continua de pé e volta para a fila; o
                 // que não continua é este construtor sendo dono dela.
-                finish(job, workerId, "the builder could not reach " + target.toShortString());
+                finish(
+                        job,
+                        workerId,
+                        "the builder could not reach " + target.toShortString()
+                                + " — " + whyNotReached(world, project, villager, target));
 
                 return false;
             }
@@ -295,8 +309,97 @@ public final class BuilderWork {
      * <p>O chão do lote é a altura da origem do projeto: é onde a
      * fundação está e onde ele já esteve para pôr o primeiro bloco.
      */
-    private static BlockPos footOf(ConstructionProject project, BlockPos target) {
-        return new BlockPos(target.getX(), project.origin().y(), target.getZ());
+    private static BlockPos footOf(
+            ServerWorld world, ConstructionProject project, BlockPos target) {
+
+        BlockPos ground = new BlockPos(target.getX(), project.origin().y(), target.getZ());
+
+        return standingSpotNear(world, ground).orElse(ground);
+    }
+
+    /**
+     * Um lugar onde um aldeão cabe de pé, perto desta coluna.
+     *
+     * <p><b>Nasceu da sessão de 2026-08-22.</b> A vila de deserto
+     * planejou a primeira casa da história do mod e o construtor passou
+     * oito minutos com {@code walking for N ticks without reaching the
+     * block}, três vezes até o guarda de dois minutos, sem colocar um
+     * bloco. O alvo era o pé da coluna na altura da origem da obra — e
+     * no deserto essa altura pode estar <b>enterrada na duna</b>. Andar
+     * para dentro de areia sólida é pedir um caminho que não existe, e a
+     * task Vanilla simplesmente não anda.
+     *
+     * <p>Procura, a partir do chão do lote, o primeiro lugar de pé —
+     * dois blocos livres sobre bloco sólido — alternando para cima e
+     * para baixo. Para cima resolve a duna; para baixo resolve o lote
+     * numa depressão, e a Regra 14 já dizia que o alvo pode estar no ar.
+     *
+     * <p>Vazio quando o chunk não está carregado: pedir por ele aqui
+     * forçaria carregamento dentro do tick, que é o defeito que travou o
+     * servidor duas vezes neste projeto (§11).
+     *
+     * <p>Pública para o teste de jogo, e é uma leitura sem efeito: o
+     * caminho inteiro —
+     * construtor longe, lote enterrado — não cabe na arena da bateria,
+     * e o que se pode afirmar é a decisão em si.
+     */
+    public static Optional<BlockPos> standingSpotNear(ServerWorld world, BlockPos ground) {
+        if (world.getChunkManager().getWorldChunk(ground.getX() >> 4, ground.getZ() >> 4) == null) {
+            return Optional.empty();
+        }
+
+        for (int step = 0; step <= FOOT_SEARCH; step++) {
+            for (int sign = 1; sign >= -1; sign -= 2) {
+                BlockPos at = ground.up(step * sign);
+
+                if (at.getY() < world.getBottomY() || at.getY() > world.getTopY() - 2) {
+                    continue;
+                }
+
+                if (standable(world, at)) {
+                    return Optional.of(at);
+                }
+
+                if (step == 0) {
+                    break;
+                }
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /** Dois blocos livres sobre bloco sólido: onde um aldeão cabe. */
+    private static boolean standable(ServerWorld world, BlockPos at) {
+        return world.getBlockState(at.down()).isSolidBlock(world, at.down())
+                && world.getBlockState(at).getCollisionShape(world, at).isEmpty()
+                && world.getBlockState(at.up()).getCollisionShape(world, at.up()).isEmpty();
+    }
+
+    /**
+     * Por que o construtor não chegou, dito em uma frase.
+     *
+     * <p>É o §11 outra vez: sem isto, "não chegou" tanto pode ser duna
+     * por cima do lote, caminho bloqueado, aldeão longe demais para dois
+     * minutos de caminhada, ou chunk que saiu de memória — e as quatro
+     * têm correções diferentes. A sessão de 2026-08-22 gastou oito
+     * minutos sem poder escolher entre elas.
+     */
+    private static String whyNotReached(
+            ServerWorld world, ConstructionProject project, VillagerEntity villager,
+            BlockPos target) {
+
+        BlockPos ground = new BlockPos(target.getX(), project.origin().y(), target.getZ());
+
+        Optional<BlockPos> spot = standingSpotNear(world, ground);
+
+        String where = spot.map(BlockPos::toShortString).orElse("nowhere to stand");
+
+        return "the worker is at " + villager.getBlockPos().toShortString()
+                + ", " + (int) Math.sqrt(villager.getBlockPos().getSquaredDistance(target))
+                + " blocks away; it was walking to " + where
+                + "; the lot floor at " + ground.toShortString() + " is "
+                + world.getBlockState(ground).getBlock().getName().getString();
     }
 
     /**

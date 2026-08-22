@@ -39,6 +39,7 @@ import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -345,6 +346,75 @@ public class BuilderGameTest implements FabricGameTest {
                         .owning(other.getUuid()));
     }
 
+
+    /**
+     * O lote enterrado na duna: o construtor procura onde caber de pé.
+     *
+     * <p><b>O caso que a sessão de 2026-08-22 mostrou travado.</b> A vila
+     * de deserto planejou a primeira casa da história do mod e o
+     * construtor passou oito minutos em {@code walking for N ticks
+     * without reaching the block}, três vezes até o guarda de dois
+     * minutos, sem colocar um bloco. O alvo de caminhada era o pé da
+     * coluna na altura da origem da obra — e no deserto essa altura
+     * está debaixo da areia. Andar para dentro de bloco sólido é pedir um
+     * caminho que não existe, e a task Vanilla simplesmente não anda.
+     *
+     * <p><b>O que este teste afirma, e o que ele não alcança.</b> A
+     * decisão — onde o construtor deve pisar — está aqui inteira. O
+     * caminho de ponta a ponta não: reproduzi-lo pede um construtor a
+     * mais de {@code REACH} blocos do lote <b>e</b> uma duna por cima
+     * dele, e a arena da bateria não tem esse tamanho. Um teste que
+     * passasse sem a correção afirmaria menos que nada, e foi o que a
+     * primeira versão deste fez.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_buried",
+            tickLimit = 20)
+    public void theFootOfABuriedColumnIsAboveTheSand(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        BlockPos floor = context.getAbsolutePos(SITE);
+
+        context.setBlockState(SITE.down(), Blocks.STONE.getDefaultState());
+
+        for (int up = 0; up < 3; up++) {
+            context.setBlockState(SITE.up(up), Blocks.SAND.getDefaultState());
+        }
+
+        Optional<BlockPos> spot = BuilderWork.standingSpotNear(world, floor);
+
+        context.assertTrue(spot.isPresent(), "a coluna enterrada não ofereceu lugar nenhum");
+
+        context.assertTrue(
+                spot.get().getY() > floor.getY(),
+                "o pé ficou em " + spot.get().toShortString() + ", dentro da areia");
+
+        context.assertTrue(
+                world.getBlockState(spot.get()).isAir()
+                        && world.getBlockState(spot.get().up()).isAir()
+                        && !world.getBlockState(spot.get().down()).isAir(),
+                "o lugar escolhido não é um lugar de pé");
+
+        context.complete();
+    }
+
+    /** E a coluna livre continua respondendo o próprio chão. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_buried",
+            tickLimit = 20)
+    public void theFootOfAnOpenColumnIsTheLotFloor(TestContext context) {
+        context.setBlockState(SITE.down(), Blocks.STONE.getDefaultState());
+
+        BlockPos floor = context.getAbsolutePos(SITE);
+
+        Optional<BlockPos> spot = BuilderWork.standingSpotNear(context.getWorld(), floor);
+
+        context.assertTrue(spot.isPresent(), "a coluna livre não ofereceu lugar nenhum");
+
+        context.assertTrue(
+                spot.get().equals(floor),
+                "o lote livre devia ser o próprio chão, e veio " + spot.get().toShortString());
+
+        context.complete();
+    }
 
     /**
      * A obra <b>espera</b> pela cama que a colônia não tem — Regra 27.
