@@ -589,9 +589,9 @@ public final class VillageDetectionHandler {
      * <p>Só produz linha de log quando algo muda. Reencontrar os mesmos
      * aldeões a cada ciclo é o caso comum e deve ser silencioso.
      */
-    private static void registerVillagers(ServerWorld world, Colony colony) {
+    private static void registerVillagers(ServerWorld world, Colony colony, ColonyPos around) {
         VillagerScanner.ScanResult result = VillagerScanner.scan(
-                world, colony, VillageColonyMod.WORKERS, VillageColonyMod.STORAGES);
+                world, colony, around, VillageColonyMod.WORKERS, VillageColonyMod.STORAGES);
 
         if (result.registeredWorkers() > 0) {
             VillageColonyMod.LOGGER.info(
@@ -861,7 +861,11 @@ public final class VillageDetectionHandler {
 
             Colony colony = VillageColonyMod.COLONIES.adopt(candidate);
 
-            registerVillagers(world, colony);
+            // A partir das camas vistas, e não do centro — 2026-08-22.
+            // Desde a Emenda 4 o centro não persegue mais a observação,
+            // então uma colônia que adote um aglomerado longe do próprio
+            // centro procuraria aldeões no lugar errado.
+            registerVillagers(world, colony, candidate.center());
 
             if (VillageColonyMod.COLONIES.count() > before) {
                 VillageColonyMod.LOGGER.info(

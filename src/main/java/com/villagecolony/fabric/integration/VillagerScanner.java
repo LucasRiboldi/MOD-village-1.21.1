@@ -58,7 +58,35 @@ public final class VillagerScanner {
             Colony colony,
             WorkerService workers,
             StorageRegistry storages) {
-        BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
+
+        return scan(world, colony, colony.center(), workers, storages);
+    }
+
+    /**
+     * O mesmo, a partir de onde as camas foram vistas — 2026-08-22.
+     *
+     * <p><b>Por que a origem passou a ser um parâmetro.</b> Até aqui a
+     * busca partia sempre do centro da colônia, e isso valia enquanto o
+     * centro perseguia a última observação. A Emenda 4 da ADR-003 parou
+     * o centro: ele só anda numa leitura da sonda.
+     *
+     * <p>O efeito era este: uma colônia que adotasse um aglomerado a
+     * dezenas de blocos do próprio centro ficava dono dele <b>e não
+     * enxergava um aldeão sequer ali</b> — a caixa de busca continuava
+     * centrada no lugar antigo. A vila crescia para um lado e a colônia
+     * procurava gente no outro.
+     *
+     * <p>Quem adota passa a dizer <b>de onde</b> veio a observação. O
+     * centro continua parado, que é a decisão; o registro segue as camas,
+     * que é onde a gente está.
+     */
+    public static ScanResult scan(
+            ServerWorld world,
+            Colony colony,
+            ColonyPos around,
+            WorkerService workers,
+            StorageRegistry storages) {
+        BlockPos center = MinecraftTypeAdapter.toBlockPos(around);
 
         Box area = Box.of(
                 center.toCenterPos(),
