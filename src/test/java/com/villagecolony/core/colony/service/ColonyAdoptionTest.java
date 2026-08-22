@@ -27,6 +27,11 @@ class ColonyAdoptionTest {
         return new VillageCandidate(new ColonyPos(x, 64, z), 5);
     }
 
+    /** Leitura da sonda: a varredura ancorada no centro da colônia. */
+    private static VillageCandidate probe(ColonyPos anchor, int x, int z) {
+        return new VillageCandidate(new ColonyPos(x, 64, z), 5, false, anchor);
+    }
+
     @Test
     void firstDetectionCreatesAColony() {
         Colony colony = service.adopt(at(0, 0));
@@ -45,17 +50,35 @@ class ColonyAdoptionTest {
         assertSame(first, second);
     }
 
-    /** O centro se move, o UUID não. */
+    /**
+     * O centro se move, o UUID não.
+     *
+     * <p>Quem o move é a sonda, desde a Emenda 4 da ADR-003. A
+     * varredura que não é sonda continua achando a mesma colônia — que
+     * é o que a §4 promete — e deixa a posição onde está.
+     */
     @Test
     void centerMovesButIdentityHolds() {
         Colony first = service.adopt(at(0, 0));
         java.util.UUID originalId = first.id();
 
-        Colony updated = service.adopt(at(20, 0));
+        Colony updated = service.adopt(probe(first.center(), 20, 0));
 
         assertEquals(1, service.count());
         assertEquals(originalId, updated.id());
         assertEquals(new ColonyPos(20, 64, 0), updated.center());
+    }
+
+    /** A mesma varredura, sem âncora: mesma colônia, mesmo lugar. */
+    @Test
+    void aScanThatIsNotAProbeKeepsTheCenterWhereItIs() {
+        Colony first = service.adopt(at(0, 0));
+
+        Colony updated = service.adopt(at(20, 0));
+
+        assertEquals(1, service.count());
+        assertEquals(first.id(), updated.id());
+        assertEquals(new ColonyPos(0, 64, 0), updated.center());
     }
 
     @Test

@@ -164,8 +164,12 @@ public final class Colony {
      * tem autoridade para reposicionar o centro. Sem esta regra o centro
      * oscila entre observações parciais feitas de pontos diferentes.
      *
-     * <p>Empate move: a vila pode mudar de lugar mantendo o mesmo número
-     * de camas.
+     * <p><b>Quem move o centro é só a sonda</b> — regra do autor,
+     * 2026-08-21. A contagem de camas continua sendo atualizada por
+     * qualquer observação que passe no portao acima; a <b>posição</b>,
+     * não. A varredura do jogador e a do chunk partem de onde alguém
+     * estava, e o centro as seguia: empate em camas bastava para
+     * arrastá-lo. Ver ADR-003, Emenda 4.
      *
      * <p>A colônia pode encolher — decisão do autor em 2026-08-07. Duas
      * coisas dão autoridade para baixar a contagem:
@@ -197,7 +201,8 @@ public final class Colony {
      *     é o centro desta colônia é sonda de outra vila, e vale o mesmo
      *     que {@code null}: não encolhe e não escreve na memória da
      *     sonda
-     * @return true se o centro foi movido
+     * @return true se o centro foi movido — o que só uma leitura da
+     *     sonda desta colônia consegue
      */
     public boolean observe(ColonyPos center, int beds, boolean complete, ColonyPos from) {
         Objects.requireNonNull(center, "center");
@@ -232,10 +237,27 @@ public final class Colony {
             return false;
         }
 
+        this.observedBeds = beds;
+
+        // Regra do autor, 2026-08-21: só a sonda move o centro.
+        //
+        // A contagem e a posição eram a mesma decisão, e nunca foram a
+        // mesma pergunta. "Esta observação viu mais da vila?" governa o
+        // número; "de onde ela olhou?" governa o centro. Enquanto as
+        // duas andaram juntas, qualquer observação que empatasse em
+        // camas arrastava o centro para o ponto de onde foi feita — e o
+        // jogador anda, então o centro andava com ele.
+        //
+        // A sonda parte do centro da colônia e a ele volta. É a única
+        // varredura cuja posição não é acidente de onde alguém estava.
+        // Ver ADR-003, Emenda 4.
+        if (!ownProbe) {
+            return false;
+        }
+
         boolean moved = !this.center.equals(center);
 
         this.center = center;
-        this.observedBeds = beds;
 
         return moved;
     }

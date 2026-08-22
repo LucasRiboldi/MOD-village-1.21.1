@@ -56,24 +56,69 @@ class PartialObservationTest {
         assertEquals(new ColonyPos(1109, 64, 730), colony.center());
     }
 
+    /**
+     * A visão melhor conta camas e não move o centro — 2026-08-21.
+     *
+     * <p>Até aqui ela movia, e mover era a regra original da Emenda 2.
+     * Quem move passou a ser a sonda, e só ela: a varredura do jogador
+     * parte de onde ele estava, e o centro a seguia.
+     */
     @Test
-    void betterViewMovesTheCenter() {
+    void aBetterViewUpdatesTheCountAndNotTheCenter() {
         service.adopt(seen(1080, 733, 3));
 
         Colony colony = service.adopt(seen(1109, 730, 12));
+
+        assertEquals(
+                new ColonyPos(1080, 64, 733), colony.center(), "o centro não segue o jogador");
+        assertEquals(12, colony.observedBeds(), "a contagem segue a melhor visão");
+    }
+
+    /** E a sonda move: ela parte do centro da colônia e a ele volta. */
+    @Test
+    void theProbeMovesTheCenter() {
+        Colony colony = service.adopt(seen(1080, 733, 3));
+
+        service.adopt(probe(colony.center(), 1109, 730, 12));
 
         assertEquals(new ColonyPos(1109, 64, 730), colony.center());
         assertEquals(12, colony.observedBeds());
     }
 
-    /** A vila pode se mover mantendo o mesmo número de camas. */
+    /**
+     * O empate deixou de mover — 2026-08-21.
+     *
+     * <p>Era a porta mais larga das três: a mesma vila vista de outro
+     * ponto, com o mesmo tanto de camas, arrastava o centro sem que nada
+     * tivesse mudado no mundo.
+     */
     @Test
-    void equallyCompleteViewMovesTheCenter() {
+    void anEqualViewNoLongerMovesTheCenter() {
         service.adopt(seen(0, 0, 5));
 
         Colony colony = service.adopt(seen(20, 0, 5));
 
-        assertEquals(new ColonyPos(20, 64, 0), colony.center());
+        assertEquals(new ColonyPos(0, 64, 0), colony.center());
+    }
+
+    /**
+     * O sintoma de 08-18 a 08-20: o centro trocando a cada trinta
+     * segundos, entre uma visão grande e um punhado de camas.
+     *
+     * <p>Um aglomerado pequeno dentro da margem de 32 blocos se prova
+     * completo, e a prova é boa: ela diz que aquele aglomerado não foi
+     * cortado. O que ela não diz é que aquele aglomerado é a vila. A
+     * contagem cede à prova, porque a vila pode mesmo ter encolhido; o
+     * centro não, porque a prova nada afirma sobre onde é o meio.
+     */
+    @Test
+    void aCompleteSmallViewShrinksTheCountAndLeavesTheCenter() {
+        Colony colony = service.adopt(seen(1109, 730, 49));
+
+        service.adopt(fullySeen(1120, 730, 7));
+
+        assertEquals(7, colony.observedBeds(), "a prova de completude ainda encolhe");
+        assertEquals(new ColonyPos(1109, 64, 730), colony.center(), "e o centro fica");
     }
 
     @Test
@@ -87,10 +132,21 @@ class PartialObservationTest {
     @Test
     void observeReportsWhetherItMoved() {
         Colony colony = service.adopt(seen(0, 0, 5));
+        ColonyPos anchor = colony.center();
 
-        assertFalse(colony.observe(new ColonyPos(0, 64, 0), 5), "mesmo centro");
-        assertTrue(colony.observe(new ColonyPos(9, 64, 0), 5), "centro novo");
+        assertFalse(colony.observe(anchor, 5, false, anchor), "mesmo centro");
+        assertTrue(colony.observe(new ColonyPos(9, 64, 0), 5, false, anchor), "centro novo");
         assertFalse(colony.observe(new ColonyPos(50, 64, 0), 2), "visão pior");
+    }
+
+    /** Sem âncora nenhuma nunca há movimento a relatar. */
+    @Test
+    void anObservationWithoutAnAnchorNeverReportsAMove() {
+        Colony colony = service.adopt(seen(0, 0, 5));
+
+        assertFalse(colony.observe(new ColonyPos(9, 64, 0), 40), "melhor, e ainda assim parada");
+        assertEquals(40, colony.observedBeds(), "mas a contagem entrou");
+        assertEquals(new ColonyPos(0, 64, 0), colony.center());
     }
 
     /**

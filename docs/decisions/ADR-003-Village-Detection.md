@@ -8,6 +8,7 @@
 **Date:** 2026-08-06
 **Accepted:** 2026-08-06
 **Amended:** 2026-08-06 — três emendas vindas da implementação
+**Amended:** 2026-08-21 — Emenda 4: só a sonda move o centro
 **Decision Type:** Architecture / Integration
 **Blocks:** TASK-009, TASK-010, Phase 4, v0.2
 
@@ -372,8 +373,9 @@ A vila é onde os aldeões dormem.
 
 # 10. Emendas
 
-Duas correções ao texto original, ambas descobertas durante a
-implementação das TASK-009 e TASK-010.
+Quatro correções ao texto original. As três primeiras foram
+descobertas durante a implementação das TASK-009 e TASK-010; a
+quarta veio de três sessões de jogo e é decisão do autor.
 
 O corpo da ADR acima permanece como foi aceito; o que vale é esta
 seção onde houver conflito.
@@ -608,3 +610,60 @@ O gatilho é a posição do POI de cama encontrado no chunk.
 ```
 
 Está na altura certa por definição.
+
+---
+
+## Emenda 4 — só a sonda move o centro
+
+**Data:** 2026-08-21
+
+**Afeta:** §4 e a Emenda 2
+
+---
+
+A Emenda 2 protegeu a **contagem** contra visões parciais e não disse
+nada sobre a **posição**. As duas ficaram sendo a mesma decisão em
+`Colony.observe`: toda observação que passasse no portão da contagem
+movia o centro junto.
+
+O portão tem três portas, e todas as três moviam:
+
+```text
+empate               beds >= observedBeds
+
+prova geométrica     complete — todas as camas a <= 32 do gatilho
+
+sino                 o centro é o sino quando o cluster tem um
+```
+
+Observado em jogo em 2026-08-18, 08-19 e 08-20: o centro trocando a
+cada trinta segundos, entre uma visão grande e um punhado de camas. E em
+2026-08-15, o mesmo movimento deixando a obra 65 blocos para trás.
+
+---
+
+Decisão do autor:
+
+```text
+A contagem continua sendo atualizada por qualquer observação
+que passe no portão.
+
+O centro só se move numa leitura da sonda desta colônia.
+```
+
+A varredura do jogador e a do chunk partem de onde alguém estava. A
+sonda parte do centro da colônia e a ele volta — é a única cuja posição
+não é acidente. É o mesmo argumento que a Emenda 2 já usava para dar à
+sonda, e só a ela, autoridade para encolher.
+
+---
+
+**O que se perde, e é aceito.** Uma colônia cujo centro esteja errado e
+cuja sonda não enxergue nada não se corrige sozinha: a varredura do
+jogador atualiza a contagem e deixa a posição onde está. O caso já
+estava coberto pelo §6 — vila que se afastou mais que
+`DUPLICATE_DISTANCE` do centro registrado vira colônia nova, com UUID
+novo, e a antiga fica sem camas até ser recusada.
+
+**O que se ganha.** As três portas fecham de uma vez, e nenhuma
+observação feita de onde o jogador estava reposiciona a obra.
