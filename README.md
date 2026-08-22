@@ -304,13 +304,14 @@ melhora não é diagnóstico.
 |---|---|---|
 | 🔴 | **`SANDSTONE` e `COBBLESTONE` no mesmo `ResourceGroup`** | O déficit conta por grupo: vila de deserto com pedregulho no baú acha que a meta de arenito está cumprida, e o fundidor queimaria pedregulho achando que faz arenito liso. 👤 **espera decisão sua** — é o que separa a casa de deserto de ficar de pé |
 | 🟠 | **Seis arquivos acima de 500 linhas** no código, quatro nos testes | `LumberjackGameTest` tem 1571. `ConstructionPlanner` **voltou** à lista: 703 → 414 em 08-20, e 527 hoje. `MinerWork` está a 35 linhas do teto |
+| 🔴 | **Ninguém funde pedra** — a colônia cava arenito e a casa pede o **liso** | É o único elo entre a obra de deserto e a casa de pé. Visto em jogo: `no minecraft:smooth_sandstone in the colony chests`, sete vezes. Mecânico de escrever; o que trava é a decisão do grupo, acima |
 | 🔴 | **Um teste de jogo instável** — `theStallGuardReturnsTheTaskAndForgetsTheTree` | **2 falhas em 12 rodadas** em 08-22, depois da correção do registro de aldeão — eram 3 em 10 antes dela. A causa continua sem diagnóstico, e um teste que mente às vezes é pior que um que falta |
 | 🟠 | **Uma falha não diagnosticada** — `theStoneLeavesTheWorldAndReachesTheChest` disse "a pedra não chegou ao baú" uma vez | A suspeita é o custo de ler estrutura dentro do tique; a leitura foi reduzida e não voltou a falhar. **Suspeita, não diagnóstico** |
 | 🟡 | **O ícone tem 1,95 MB, e o jar tem 2,29 MB** | 85% do que se distribui é uma imagem mostrada a 64 pixels na lista de mods. A 256×256 daria cerca de 100 KB. É escolha de arte, e por isso não foi mexida |
 | 🟡 | **O `furniture()` do `BlueprintBlock` perdeu o dono** | Ele marcava o que a Regra 21 repunha. A regra morreu, e quem decide o que não segura a obra é a barreira da Regra 28 |
 | 🟡 | **A Regra 25 está inerte** enquanto a 28 valer | "A maior planta que couber" precisa de mais de uma planta |
 | 🟡 | **A arena da bateria tem bioma fixo** de planície | Foi o que escondeu por uma semana que a vila de deserto não reconhecia a própria rua |
-| 🟡 | **O `Development-Log.md` parou em 2026-08-15** | Trinta e seis commits e duas sessões de jogo não estão nele, e `logs/latest.log` tem 0 bytes. O "49 camas e 7" que originou a Emenda 4 da ADR-003 não tem registro primário no repositório |
+| 🟡 | **O `Development-Log.md` parou em 2026-08-15** | Quarenta e um commits e **três sessões de jogo** não estão nele. O que se aprendeu nas três de 08-22 vive só no TODO, no README e nas mensagens de commit. O "49 camas e 7" que originou a Emenda 4 da ADR-003 não tem registro primário no repositório |
 
 <details>
 <summary>Etapas fechadas nos ciclos anteriores</summary>
