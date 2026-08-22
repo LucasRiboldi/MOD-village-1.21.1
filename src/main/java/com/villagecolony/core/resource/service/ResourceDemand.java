@@ -90,20 +90,20 @@ public final class ResourceDemand {
     /**
      * Quanto a colônia tem que sirva para esta meta.
      *
-     * <p>Uma meta de madeira é satisfeita por qualquer madeira: quem tem
-     * o baú cheio de abeto não precisa de carvalho, e mandar buscar
-     * seria trabalho para nada. O estoque continua sabendo o tipo de
-     * cada tronco — é o déficit que soma o grupo. Ver
-     * {@link ResourceGroup}.
+     * <p><b>Somava o grupo inteiro até 2026-08-22</b>, e era um defeito
+     * de arquitetura: grupo é classificação, e não equivalência. Como
+     * {@code COBBLESTONE} e {@code SANDSTONE} moram os dois em
+     * {@link ResourceGroup#STONE}, uma vila de deserto com pedregulho no
+     * baú concluía que a meta de arenito estava cumprida — e o mineiro
+     * nunca ia cavar.
      *
-     * <p>Recurso de grupo {@link ResourceGroup#NONE} só se satisfaz com
-     * ele mesmo: pedra é pedra, e tábua de carvalho não vira tábua de
-     * bétula numa receita.
+     * <p>Agora a substituição é <b>declarada</b>, uma exigência por vez,
+     * em {@link ResourceSubstitution}. Madeira por madeira e tábua por
+     * tábua continuam valendo, porque estão escritas lá; pedra por pedra
+     * não vale, porque não está.
      */
     private static int available(ResourceType type, ResourceTally owned) {
-        return type.group() == ResourceGroup.NONE
-                ? owned.amountOf(type)
-                : owned.amountOfGroup(type.group());
+        return ResourceSubstitution.availableFor(type, owned);
     }
 
     /** Se a colônia já tem tudo o que queria. */

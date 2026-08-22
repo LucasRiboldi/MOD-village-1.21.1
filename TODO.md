@@ -13,10 +13,57 @@ conta 375 testes.
 funcionando em jogo* são coisas diferentes, e estão separadas.
 
 ```text
-458 testes unitários  ·  156 testes de jogo  ·  30 regras do autor
+464 testes unitários  ·  156 testes de jogo  ·  30 regras do autor
 7 trabalhadores com código  ·  6 arquivos acima do teto de 500 linhas
 bateria: 1 instável, 2 falhas em 12 rodadas — ver a seção seguinte
 ```
+
+---
+
+## 🧭 A direção mudou — ADR-009, 2026-08-22
+
+O autor reescreveu o rumo do projeto. A íntegra está em
+[`docs/decisions/ADR-009-Autonomous-Village-Evolution.md`](docs/decisions/ADR-009-Autonomous-Village-Evolution.md).
+
+```text
+O bioma define o contexto.
+Os recursos disponíveis definem as possibilidades.
+As necessidades da vila definem as prioridades.
+Os trabalhadores executam o plano.
+```
+
+O mod sai de `BIOMA → ESCOLHER ESTRUTURA` e vai para um **motor
+universal de evolução** alimentado por perfis. Bioma novo passa a custar
+um perfil, e não dezenas de exceções.
+
+**A regra de ouro:** toda funcionalidade nova responde — isto funciona
+para **uma** vila, ou para **qualquer** vila com contexto diferente? Um
+`if (desert)` deve ser questionado.
+
+**O que já existe:** a metade de baixo do diagrama — trabalhadores,
+construções, produção — rodando sem a metade de cima.
+**`VillageProfile`, o inventário de território, o orçamento e o
+planejador que desiste de uma obra e escolhe outra ainda não existem.**
+
+### O primeiro pedaço, feito no mesmo dia
+
+**Grupo não é equivalência** — §3.4 da ADR, e o item 1 da lista revista.
+Nasceu `ResourceSubstitution`:
+
+```text
+o padrão é NÃO substituir
+uma exigência se satisfaz só com ela mesma
+substituição é declarada, e a lista é a declaração
+
+declarado:      tronco por tronco, tábua por tábua
+não declarado:  pedregulho por arenito
+```
+
+`ResourceDemand.available` somava o grupo inteiro e passou a somar só o
+declarado. Era isso que fazia a vila de deserto com 320 de pedregulho
+concluir que a meta de arenito estava cumprida — e o mineiro nunca ir
+cavar. **Seis testes unitários novos**, e um deles trava o padrão: tipo
+novo não ganha substituto por acidente de grupo.
 
 ---
 
@@ -286,20 +333,9 @@ resto continua sem ter sido visto:
 **Quatro dos seis fecharam em 08-21; as sessões de jogo de 08-22
 acrescentaram dois.** São estes:
 
-**1. `SANDSTONE` e `COBBLESTONE` dividem o mesmo grupo** — achado em
-2026-08-22, e é o que bloqueia a vila de deserto.
-
-Os dois estão em `ResourceGroup.STONE`, e `ResourceDemand.deficit` conta
-por grupo. Duas consequências, e as duas são de jogo:
-
-- uma vila de deserto com pedregulho no baú **acha que a meta de arenito
-  está cumprida**, e o mineiro não vai cavar;
-- quando alguém escrever quem funde pedra, o fundidor **queimaria
-  pedregulho** achando que faz arenito liso — o mesmo defeito que a
-  tarefa de ferro teve com a areia, e que já foi corrigido uma vez.
-
-Separar os dois em grupos próprios conserta, e mexe numa tabela de
-decisão. **Espera decisão do autor**, e é o item 1 da fila.
+**1. ~~`SANDSTONE` e `COBBLESTONE` dividem o mesmo grupo~~** ✅ **fechado
+em 2026-08-22.** Grupo voltou a ser classificação, e a substituição
+passou a ser declarada em `ResourceSubstitution`. Ver a ADR-009 §3.4.
 
 **2. `MinerWork` está a 35 linhas do teto.**
 465 de 500, e ele já foi partido uma vez — 690 → 459 em 08-21, com
@@ -331,41 +367,63 @@ só como frase aqui e no README.
 
 ---
 
-## 🗂️ Próximas atividades, por importância
+## 🗂️ Próximas atividades — refeitas pela ADR-009
 
-**1 — Decidir o grupo do arenito, e escrever quem funde pedra.** É o
-único elo entre a obra de deserto e a casa de pé, e a sessão de 03:45
-parou exatamente nele. A decisão está na seção vermelha acima.
+A ordem antiga foi substituída. O objetivo maior passa a ser o ciclo:
 
-**2 — Fechar a bateria.** Os dois testes da seção 🔴. O da arena é
-regressão deste ciclo; o do lenhador atrapalha todo ciclo desde antes.
+```text
+BIOMA → RECURSOS DISPONÍVEIS → RECURSOS PRODUZÍVEIS
+      → RECURSOS NECESSÁRIOS → PLANO POSSÍVEL → TRABALHADORES
+      → PRODUÇÃO → CONSTRUÇÃO → EXPANSÃO → NOVO PLANO
+```
 
-**3 — Implementar a ADR-008 (orientação).** É a que muda o que se vê:
-cama, escada e tocha param de sair todas para o mesmo lado. `Side` já
-existe; o que falta é atravessá-lo pelo `BlueprintBlock`.
+e ele tem de funcionar para deserto, planície, taiga, savana e nevado.
 
-**4 — Quebrar os arquivos acima de 500 linhas.**
+**1 — `SMOOTH_SANDSTONE` pelo sistema genérico de produção.** Item 2 da
+lista revista, e o único elo entre a obra de deserto e a casa de pé.
+**Sem exceção de deserto**: o que entra é "a colônia sabe produzir X a
+partir de Y", e arenito liso é o primeiro caso.
+
+**2 — `VillageProfile` e o inventário de território.** A metade de cima
+do diagrama. Sem ela o resto da ADR não tem onde se apoiar.
+
+**3 — O planejador que desiste.** Obra bloqueada volta ao planejamento e
+a vila escolhe outro objetivo, em vez de esperar para sempre. É o §3.6,
+e é o que separa "vila viva" de "vila parada com log bonito".
+
+**4 — Cenário de teste por bioma.** A planície deixa de ser o ambiente
+padrão universal. Ela escondeu duas vezes que o deserto estava quebrado.
+`DesertVillageAutonomyTest` primeiro.
+
+**5 — StallGuard determinístico.** Diagnosticar, não esconder com retry.
+2 falhas em 12 rodadas.
+
+**6 — Instrumentar `theStoneLeavesTheWorldAndReachesTheChest`** antes de
+tentar corrigir.
+
+**7 — Refatorar por responsabilidade.** 500 linhas é indicador, e não
+regra: o corte se faz por assunto.
 
 ```text
 982  VillageDetectionHandler      621  BuildSiteScanner
 729  BuilderWork                  566  ColonySavedData
 724  TreeHarvester                527  ConstructionPlanner
-639  ManufacturerWork
+639  ManufacturerWork             465  MinerWork  (a 35 do teto)
 ```
 
-`ConstructionPlanner` **voltou** à lista: foi de 703 para 414 em 08-20 e
-já está em 527. Nos testes há mais quatro acima do teto:
-`LumberjackGameTest` 1571, `BuilderGameTest` 904, `BuildSiteGameTest` 670
-e `MinerGameTest` 510.
+**8 — Decidir a Regra 25.** Se a 28 a substituiu definitivamente, ela
+sai. Sem lógica morta.
 
-**5 — Regra 16**, distância mínima e máxima entre construções.
+**9 — Dar dono ao `furniture()`**, ou apagá-lo com a barreira.
 
-**6 — O `ItemRequest`.** O trabalhador pedir o que lhe falta em vez de
-travar. `WorkMaterials` já é meio dele — um passo de decomposição, dois
-onde o lampião pede. O que falta é a profundidade qualquer.
+**10 — O `Development-Log` vira registro de conhecimento
+arquitetural**, e não diário de sessão.
 
-**7 — Implementar a ADR-007 (fusão).** Depende de a construção rodar em
-jogo: nada dispara enquanto uma obra não encostar na outra.
+**11 — O ícone.** Dívida de distribuição, não prioridade funcional.
+
+**Continuam na fila, e agora atrás do motor:** ADR-008 (orientação),
+ADR-007 (fusão), Regra 16 e o `ItemRequest` — este último virou parte do
+§3.5, e não um item próprio.
 
 ---
 

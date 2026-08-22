@@ -1,0 +1,103 @@
+package com.villagecolony.core.resource.service;
+
+import com.villagecolony.core.resource.model.ResourceTally;
+import com.villagecolony.core.type.ResourceType;
+import org.junit.jupiter.api.Test;
+
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+/**
+ * Grupo é classificação, e não equivalência — regra do autor, 2026-08-22.
+ *
+ * <p>O que estes testes travam é o <b>padrão</b>: sem declaração, uma
+ * exigência se satisfaz só com ela mesma. Foi por um grupo valer como
+ * equivalência que o pedregulho passou por arenito, e uma vila de
+ * deserto inteira parou de minerar.
+ */
+class ResourceSubstitutionTest {
+
+    /**
+     * O defeito, dito na asserção: pedregulho não é arenito.
+     *
+     * <p>Os dois moram em {@code ResourceGroup.STONE}, e enquanto o
+     * déficit somava o grupo, uma vila de deserto com 320 de pedregulho
+     * concluía que a meta de arenito estava cumprida. Visto em jogo em
+     * 2026-08-22.
+     */
+    @Test
+    void cobblestoneDoesNotAnswerForSandstone() {
+        assertFalse(
+                ResourceSubstitution.accepts(ResourceType.SANDSTONE, ResourceType.COBBLESTONE),
+                "pedregulho voltou a responder por arenito");
+
+        assertFalse(
+                ResourceSubstitution.accepts(ResourceType.COBBLESTONE, ResourceType.SANDSTONE),
+                "arenito voltou a responder por pedregulho");
+    }
+
+    /** E o déficit acompanha: baú cheio de pedregulho, arenito faltando. */
+    @Test
+    void aChestFullOfCobblestoneStillOwesSandstone() {
+        ResourceTally owned = ResourceTally.of(Map.of(ResourceType.COBBLESTONE, 320));
+
+        Map<ResourceType, Integer> missing =
+                ResourceDemand.deficit(Map.of(ResourceType.SANDSTONE, 93), owned);
+
+        assertEquals(93, missing.getOrDefault(ResourceType.SANDSTONE, 0));
+    }
+
+    /**
+     * Madeira por madeira continua valendo, porque está declarado.
+     *
+     * <p>É substituição de <b>estoque</b>: quem tem o baú cheio de abeto
+     * não precisa de carvalho para responder "esta colônia tem madeira?".
+     * A receita continua pedindo a espécie pelo nome.
+     */
+    @Test
+    void anyLogAnswersForAnyOtherLog() {
+        assertTrue(ResourceSubstitution.accepts(ResourceType.OAK_LOG, ResourceType.SPRUCE_LOG));
+        assertTrue(ResourceSubstitution.accepts(ResourceType.SPRUCE_LOG, ResourceType.OAK_LOG));
+
+        ResourceTally owned = ResourceTally.of(Map.of(ResourceType.SPRUCE_LOG, 64));
+
+        assertEquals(64, ResourceSubstitution.availableFor(ResourceType.OAK_LOG, owned));
+    }
+
+    /** E tábua por tábua, pelo mesmo motivo. */
+    @Test
+    void anyPlankAnswersForAnyOtherPlank() {
+        assertTrue(
+                ResourceSubstitution.accepts(
+                        ResourceType.OAK_PLANKS, ResourceType.ACACIA_PLANKS));
+    }
+
+    /** Tronco não é tábua: são grupos diferentes, e nenhum declara o outro. */
+    @Test
+    void aLogDoesNotAnswerForAPlank() {
+        assertFalse(ResourceSubstitution.accepts(ResourceType.OAK_PLANKS, ResourceType.OAK_LOG));
+    }
+
+    /**
+     * O padrão é não substituir, e é o que impede o defeito de voltar.
+     *
+     * <p>Tipo novo no {@code ResourceType} não ganha substituto por
+     * acidente de grupo — que é exatamente como o arenito entrou.
+     */
+    @Test
+    void everyResourceAnswersForItselfAndNothingElseIsAssumed() {
+        for (ResourceType type : ResourceType.values()) {
+            assertTrue(
+                    ResourceSubstitution.acceptedFor(type).contains(type),
+                    type + " deixou de servir para si mesmo");
+        }
+
+        assertEquals(1, ResourceSubstitution.acceptedFor(ResourceType.GLASS).size());
+        assertEquals(1, ResourceSubstitution.acceptedFor(ResourceType.COAL).size());
+        assertEquals(1, ResourceSubstitution.acceptedFor(ResourceType.SANDSTONE).size());
+        assertEquals(1, ResourceSubstitution.acceptedFor(ResourceType.COBBLESTONE).size());
+    }
+}

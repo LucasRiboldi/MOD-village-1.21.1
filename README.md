@@ -235,6 +235,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | **O mineiro diz o que está fazendo**, uma linha por ciclo | 🧪 coberto por teste, nunca visto em jogo |
 | **A boca da mina ganha lanterna e baú** — e o minério fica lá até lotar | 🧪 coberto por teste, nunca visto em jogo |
 | **O mineiro reconhece os oito minérios** do jogo, e não dois | 🧪 coberto por teste, nunca visto em jogo |
+| **Grupo de recurso classifica, e não substitui** — pedregulho deixou de responder por arenito | ✅ coberto por teste unitário |
 | Obra parada sai da frente em vez de travar a vila | 🧪 coberto por teste, nunca visto em jogo |
 | A planta se adapta ao lote — a maior que couber | 🧪 pronta, e inerte enquanto for uma casa por bioma |
 | **Colher areia**, e o vidro virando meta pela receita da vidraça | 🧪 coberto por teste, nunca visto em jogo |
@@ -249,7 +250,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Agricultura e defesa | ⬜ não começado |
 
 ```text
-458 testes unitários  ·  156 testes de jogo  ·  ./gradlew build
+464 testes unitários  ·  156 testes de jogo  ·  ./gradlew build
 ```
 
 **O que 🧪 quer dizer aqui.** A bateria roda o caso e ele passa. Não quer
@@ -298,13 +299,14 @@ a recusar, e a correção ainda não foi vista em jogo.
 
 Nada aqui impede o mod de rodar. Tudo aqui cresce se ficar calado.
 
-**Quatro itens saíram desta lista em 2026-08-21.** O teste instável
+**Quatro itens saíram desta lista em 2026-08-21, e o do grupo de
+recursos em 08-22** — grupo voltou a ser classificação, e a substituição
+é declarada. O teste instável
 continua aqui — melhorou de 3 falhas em 10 rodadas para 2 em 12, e
 melhora não é diagnóstico.
 
 | | O que | Por quê |
 |---|---|---|
-| 🔴 | **`SANDSTONE` e `COBBLESTONE` no mesmo `ResourceGroup`** | O déficit conta por grupo: vila de deserto com pedregulho no baú acha que a meta de arenito está cumprida, e o fundidor queimaria pedregulho achando que faz arenito liso. 👤 **espera decisão sua** — é o que separa a casa de deserto de ficar de pé |
 | 🟠 | **Seis arquivos acima de 500 linhas** no código, quatro nos testes | `LumberjackGameTest` tem 1571. `ConstructionPlanner` **voltou** à lista: 703 → 414 em 08-20, e 527 hoje. `MinerWork` está a 35 linhas do teto |
 | 🔴 | **Ninguém funde pedra** — a colônia cava arenito e a casa pede o **liso** | É o único elo entre a obra de deserto e a casa de pé. Visto em jogo: `no minecraft:smooth_sandstone in the colony chests`, sete vezes. Mecânico de escrever; o que trava é a decisão do grupo, acima |
 | 🔴 | **Um teste de jogo instável** — `theStallGuardReturnsTheTaskAndForgetsTheTree` | **2 falhas em 12 rodadas** em 08-22, depois da correção do registro de aldeão — eram 3 em 10 antes dela. A causa continua sem diagnóstico, e um teste que mente às vezes é pior que um que falta |
