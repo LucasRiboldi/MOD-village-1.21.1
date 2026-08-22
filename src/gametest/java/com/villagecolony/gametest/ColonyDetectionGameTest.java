@@ -22,6 +22,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestTypes;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -139,13 +140,41 @@ public class ColonyDetectionGameTest implements FabricGameTest {
     public void villagersBecomeWorkersWithAProfession(TestContext context) {
         BlockPos anchor = new BlockPos(1, 1, 1);
 
+        // A vizinha que já estiver aqui sai antes — 2026-08-21. A
+        // bateria roda batches concorrentes, e uma colônia largada por
+        // outro teste a menos de DUPLICATE_DISTANCE adota estas camas em
+        // vez de deixar nascer colônia nova. Ela não se move para cá
+        // desde a Emenda 4 da ADR-003: o centro só anda numa leitura da
+        // sonda. Então os aldeões daqui ficam fora do alcance dela, e
+        // nenhum vira trabalhador.
+        forget(context, anchor);
+
         placeBeds(context, anchor, BEDS);
-        spawnVillagers(context, anchor, CROWD);
 
-        runCycle(context, anchor);
+        List<VillagerEntity> crowd = spawnVillagers(context, anchor, CROWD);
 
-        Colony colony = colonyOf(context, anchor).orElseThrow(
-                () -> new AssertionError("nenhuma colônia nasceu destas camas"));
+        // Três passagens, e não uma. O POI da cama não nasce no tick em
+        // que o bloco entra, e a bateria roda os batches concorrentes —
+        // uma passagem só às vezes chega antes de o mundo ter registrado
+        // as camas, e aí não há vila para detectar. Passar de novo custa
+        // nada e tira a afirmação do relógio da bateria.
+        Colony colony = null;
+
+        for (int attempt = 0; attempt < 3 && colony == null; attempt++) {
+            runCycle(context, anchor);
+
+            colony = colonyOwning(crowd).orElse(null);
+        }
+
+        if (colony == null) {
+            long registered = crowd.stream()
+                    .filter(villager -> VillageColonyMod.WORKERS.find(villager.getUuid())
+                            .isPresent())
+                    .count();
+
+            throw new AssertionError("nenhuma colônia ficou com estes aldeões — "
+                    + registered + " de " + crowd.size() + " viraram trabalhador");
+        }
 
         List<Worker> crew = VillageColonyMod.WORKERS.ofColony(colony.id());
 
@@ -156,7 +185,7 @@ public class ColonyDetectionGameTest implements FabricGameTest {
         assertProfessionsWithinCap(context, crew);
         assertNoVacancyLeftOpen(context, crew);
 
-        forget(context, anchor);
+        forgetColony(colony);
 
         context.complete();
     }
@@ -271,15 +300,18 @@ public class ColonyDetectionGameTest implements FabricGameTest {
      * de um teste que ainda está rodando.
      */
     private static void forget(TestContext context, BlockPos anchor) {
-        colonyOf(context, anchor).ifPresent(colony -> {
-            ColonyFixture owned = ColonyFixture.create().owning(colony);
+        colonyOf(context, anchor).ifPresent(ColonyDetectionGameTest::forgetColony);
+    }
 
-            for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
-                owned.owning(worker.villagerId());
-            }
+    /** O mesmo, quando a colônia já está em mãos. */
+    private static void forgetColony(Colony colony) {
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
 
-            owned.cleanUp();
-        });
+        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
+            owned.owning(worker.villagerId());
+        }
+
+        owned.cleanUp();
     }
 
     /**
@@ -323,7 +355,11 @@ public class ColonyDetectionGameTest implements FabricGameTest {
      * <p>A partir de z+4 para não disputar espaço com as camas, que ocupam
      * z+0 e z+1 na primeira fila.
      */
-    private static void spawnVillagers(TestContext context, BlockPos anchor, int count) {
+    private static List<VillagerEntity> spawnVillagers(
+            TestContext context, BlockPos anchor, int count) {
+
+        List<VillagerEntity> born = new ArrayList<>();
+
         for (int i = 0; i < count; i++) {
             VillagerEntity villager = context.spawnEntity(
                     EntityType.VILLAGER, anchor.add(i % 4, 0, 4 + (i / 4)));
@@ -331,7 +367,39 @@ public class ColonyDetectionGameTest implements FabricGameTest {
             // Adulto: bebê não recebe profissão, e a atribuição é o que
             // este teste verifica. Ver a correção de 2026-08-07.
             villager.setBreedingAge(0);
+
+            born.add(villager);
         }
+
+        return born;
+    }
+
+    /**
+     * A colônia que ficou com <b>estes</b> aldeões.
+     *
+     * <p>Por dono, e não por posição — 2026-08-21. {@link #colonyOf}
+     * procura no raio de {@code DUPLICATE_DISTANCE} da âncora, e isso
+     * pressupunha que a colônia destas camas ficasse com o centro por
+     * perto. Deixou de ser verdade com a Emenda 4 da ADR-003: o centro
+     * só se move numa leitura da sonda, então uma colônia vizinha que
+     * adote estas camas as adota <b>sem sair do lugar</b> — e ela pode
+     * estar a mais de 32 blocos daqui.
+     *
+     * <p>É a contaminação que este arquivo já documenta em três lugares,
+     * aparecendo por uma porta nova. Perguntar "de quem é este aldeão"
+     * não depende de distância nenhuma.
+     */
+    private static Optional<Colony> colonyOwning(List<VillagerEntity> villagers) {
+        for (VillagerEntity villager : villagers) {
+            Optional<Colony> owner = VillageColonyMod.WORKERS.find(villager.getUuid())
+                    .flatMap(worker -> VillageColonyMod.COLONIES.find(worker.colonyId()));
+
+            if (owner.isPresent()) {
+                return owner;
+            }
+        }
+
+        return Optional.empty();
     }
 
     private static void runCycle(TestContext context, BlockPos anchor) {

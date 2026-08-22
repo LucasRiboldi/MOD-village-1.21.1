@@ -2,7 +2,6 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
-import com.villagecolony.core.construction.model.ColonyHut;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
@@ -180,7 +179,7 @@ public final class HousePlans {
      */
     public static VillagePalette paletteOf(ServerWorld world, ColonyPos where) {
         return VillageBiomes.paletteAt(world, where)
-                .orElseGet(() -> VillagePalette.ofWood("plains", ColonyHut.OAK_PLANKS));
+                .orElseGet(() -> VillagePalette.ofWood("plains"));
     }
 
     /**
@@ -206,25 +205,14 @@ public final class HousePlans {
      * <p>Existe para {@link #resume}, que carrega obra gravada em sessão
      * anterior e só tem o id em mãos — a planta precisa voltar girada
      * como a casa foi levantada, que é o que este método reconstrói.
-     * A cabana da colônia é escrita em
-     * código e o leitor de estrutura não a acharia; a casa do jogo é o
-     * contrário. Perguntar aos dois é o que deixa um save antigo — com a
-     * casa de planície pela metade — continuar de onde parou.
+     *
+     * <p>Até 2026-08-21 havia dois caminhos aqui, e o primeiro era a
+     * cabana do mod, escrita em código, que o leitor de estrutura não
+     * acharia. Ela saiu, e ficou o caminho único: obra gravada aponta
+     * para um arquivo do jogo, e é dele que a planta volta.
      */
     static Optional<Blueprint> blueprintOf(
             ServerWorld world, ResourceId id, ColonyPos origin) {
-
-        if (ColonyHut.ID.equals(id)) {
-            // A parede da porta é perguntada ao mundo, e não ao save —
-            // ver BuildSiteScanner.roadSideOf. Sem rua em volta, a casa
-            // fica com a porta ao norte, que é onde a planta antiga a
-            // punha: obra de save velho continua de onde parou.
-            VillagePalette palette = paletteOf(world, origin);
-
-            return Optional.of(ColonyHut.blueprint(
-                    palette,
-                    roadSideOf(world, origin, ColonyHut.blueprint(palette, Side.NORTH))));
-        }
 
         // Planta lida de arquivo: ela volta como o arquivo a gravou, e
         // precisa ser virada de novo para a rua. Sem isto a obra que

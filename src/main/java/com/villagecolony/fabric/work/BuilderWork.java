@@ -558,10 +558,16 @@ public final class BuilderWork {
             return true;
         }
 
-        if (next.get().furniture()) {
-            // Mobília nunca segura a obra — a Regra 21. Se a obra
-            // dormiu, não foi por causa dela, e responder "tem" aqui é o
-            // que impede a casa de ficar esperando por lã.
+        if (TestBarrier.chainFor(next.get().block()).isPresent()) {
+            // Peça que a barreira risca nunca segura a obra: quando o
+            // construtor chegar nela vai passar por cima, então dizer
+            // "tem" aqui é dizer a verdade sobre o que vai acontecer.
+            //
+            // <b>Era {@code furniture()} até 2026-08-21</b>, e virou isto
+            // no dia em que cama e lampião saíram da barreira. As duas
+            // perguntas coincidiam enquanto a Regra 21 vivia; deixar a
+            // antiga poria a obra a acordar dizendo que tem a cama,
+            // tentar, falhar e dormir de novo — todo ciclo, para sempre.
             return true;
         }
 

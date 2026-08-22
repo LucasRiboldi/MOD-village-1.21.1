@@ -2,8 +2,8 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.Building;
-import com.villagecolony.core.construction.model.ColonyHut;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -638,7 +638,7 @@ public class BuildSiteGameTest implements FabricGameTest {
         VillageColonyMod.BUILDINGS.register(new Building(
                 UUID.randomUUID(),
                 colony,
-                ColonyHut.ID,
+                ResourceId.vanilla("village/plains/houses/plains_small_house_1"),
                 from,
                 new ColonyPos(from.x() + 2 * RADIUS, from.y() + 4, from.z() + 2 * RADIUS)));
 

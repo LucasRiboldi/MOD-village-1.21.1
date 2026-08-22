@@ -202,7 +202,7 @@ public class MinerGameTest implements FabricGameTest {
         VillageColonyMod.BUILDINGS.register(new com.villagecolony.core.construction.model.Building(
                 UUID.randomUUID(),
                 colony.id(),
-                com.villagecolony.core.construction.model.ColonyHut.ID,
+                ResourceId.vanilla("village/plains/houses/plains_small_house_1"),
                 new ColonyPos(wall.x() - 40, wall.y() - 40, wall.z() - 40),
                 new ColonyPos(wall.x() + 40, wall.y() + 40, wall.z() + 40)));
 

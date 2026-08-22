@@ -3,10 +3,9 @@ package com.villagecolony.core.construction.model;
 import com.villagecolony.core.type.ResourceId;
 
 import java.util.Objects;
-import java.util.Optional;
 
 /**
- * De que uma vila é feita, e o que o bioma dela dá.
+ * O que o bioma de uma vila dá, e como a pasta dele se chama.
  *
  * <p>Decidido em 2026-08-20. A Regra 20 já dizia que cada vila constrói
  * no estilo do seu bioma, mas o estilo era <b>uma coisa só</b>: a
@@ -14,34 +13,31 @@ import java.util.Optional;
  * árvore, e deixava o deserto de fora — a vila nascia, contratava, e não
  * construía nunca, porque não há árvore ali.
  *
- * <p>A paleta é a Regra 20 dita por inteiro: <b>parede, porta, e as três
- * matérias que os trabalhadores novos produzem</b>. Cada bioma responde
- * com o que ele tem, e a colônia constrói com isso.
- *
  * <pre>
- * estilo      parede            porta        pedra        vidro   lã
- * carvalho    oak_planks        oak_door     cobblestone  glass   white_wool
- * pinheiro    spruce_planks     spruce_door  cobblestone  glass   white_wool
- * acácia      acacia_planks     acacia_door  cobblestone  glass   white_wool
- * arenito     sandstone         —            sandstone    glass   white_wool
+ * estilo      pasta do catálogo     pedra        vidro
+ * carvalho    village/plains/       cobblestone  glass
+ * pinheiro    village/taiga/        cobblestone  glass
+ * acácia      village/savanna/      cobblestone  glass
+ * nevado      village/snowy/        cobblestone  glass
+ * arenito     village/desert/       sandstone    glass
  * </pre>
  *
- * <p><b>O deserto não tem porta, e isso é decisão.</b> A porta sai de
- * tábua, tábua sai de tronco, e o deserto não tem tronco. Uma casa que
- * exigisse porta ali ficaria em {@code WAITING_RESOURCES} até o jogador
- * trazer uma — que é exatamente o travamento que a Regra 13 corrigiu. A
- * cabana do deserto tem o vão, e quem quiser pendura a porta.
+ * <p><b>Encolheu em 2026-08-21, com a cabana.</b> Ela carregava também a
+ * <b>parede</b> e a <b>porta</b> de cada estilo, e havia um só leitor
+ * para as duas: {@code ColonyHut}, a casa que o mod desenhava em código.
+ * A Regra 27 aposentou essa casa, e a Regra 28 tornou a paleta de
+ * construção inútil — o que levanta parede hoje é o arquivo de
+ * estrutura do jogo, que traz os próprios blocos.
+ *
+ * <p>O que ficou é o que ainda tem quem pergunte: o <b>estilo</b>, que é
+ * a pasta do catálogo e o elo com a Regra 27; a <b>pedra</b>, que o
+ * mineiro procura e que no deserto é arenito; e o <b>vidro</b>, que o
+ * fundidor faz.
  *
  * <p>Mora em {@code core} e não conhece Minecraft: é uma tabela de
  * decisões do autor, e tabela de decisão se afirma sem subir servidor.
  */
-public record VillagePalette(
-        String style,
-        ResourceId wall,
-        Optional<ResourceId> door,
-        ResourceId stone,
-        ResourceId glass,
-        ResourceId wool) {
+public record VillagePalette(String style, ResourceId stone, ResourceId glass) {
 
     private static ResourceId vanilla(String path) {
         return new ResourceId(ResourceId.VANILLA, path);
@@ -50,7 +46,7 @@ public record VillagePalette(
     /** O pedregulho, que é a pedra de toda vila que não é de deserto. */
     public static final ResourceId COBBLESTONE = vanilla("cobblestone");
 
-    /** O arenito, que é a pedra <b>e</b> a parede do deserto. */
+    /** O arenito, que é a pedra do deserto. */
     public static final ResourceId SANDSTONE = vanilla("sandstone");
 
     /** A areia, de onde o fundidor tira o vidro. */
@@ -69,45 +65,33 @@ public record VillagePalette(
 
     public static final ResourceId GLASS = vanilla("glass");
 
-    public static final ResourceId WOOL = vanilla("white_wool");
-
     public VillagePalette {
         Objects.requireNonNull(style, "style");
-        Objects.requireNonNull(wall, "wall");
-        Objects.requireNonNull(door, "door");
         Objects.requireNonNull(stone, "stone");
         Objects.requireNonNull(glass, "glass");
-        Objects.requireNonNull(wool, "wool");
     }
 
     /**
      * A paleta de uma vila de madeira, qualquer que seja a espécie.
      *
-     * <p>A porta sai da própria espécie: {@code spruce_planks} vira
-     * {@code spruce_door}. É convenção do jogo e não do mod, e vale para
-     * as nove madeiras que existem — o que a torna mais confiável que
-     * uma tabela escrita aqui, que envelheceria na próxima madeira que o
-     * jogo acrescentasse.
+     * <p>A espécie deixou de entrar na conta em 2026-08-21: ela servia
+     * para a parede e para a porta da cabana, e a cabana saiu. O que a
+     * madeira ainda decide é <b>se o mod atende este bioma</b>, e essa
+     * pergunta é de {@code VillageBiomes}, não daqui.
      */
-    public static VillagePalette ofWood(String style, ResourceId planks) {
-        Objects.requireNonNull(planks, "planks");
-
-        ResourceId door = new ResourceId(
-                planks.namespace(), planks.path().replace("_planks", "_door"));
-
-        return new VillagePalette(style, planks, Optional.of(door), COBBLESTONE, GLASS, WOOL);
+    public static VillagePalette ofWood(String style) {
+        return new VillagePalette(style, COBBLESTONE, GLASS);
     }
 
     /**
-     * A paleta do deserto: arenito, e sem porta.
+     * A paleta do deserto: a pedra é arenito.
      *
-     * <p>A pedra <b>é</b> a parede aqui, e é o que faz a vila de deserto
-     * finalmente construir: o mineiro tira arenito da duna ao lado, e a
-     * casa sobe sem depender de uma árvore que não existe.
+     * <p>É o que faz a vila de deserto finalmente construir — o mineiro
+     * tira arenito da duna ao lado, e a casa sobe sem depender de uma
+     * árvore que não existe.
      */
     public static VillagePalette ofSandstone() {
-        return new VillagePalette(
-                "desert", SANDSTONE, Optional.empty(), SANDSTONE, GLASS, WOOL);
+        return new VillagePalette("desert", SANDSTONE, GLASS);
     }
 
     /**
@@ -120,10 +104,5 @@ public record VillagePalette(
      */
     public String style() {
         return style;
-    }
-
-    /** Se a colônia deste estilo sabe fazer porta. */
-    public boolean hasDoor() {
-        return door.isPresent();
     }
 }

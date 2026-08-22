@@ -5,10 +5,10 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
-import com.villagecolony.core.construction.model.ColonyHut;
 import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
@@ -21,6 +21,7 @@ import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -212,6 +213,24 @@ public class ConstructionResumeGameTest implements FabricGameTest {
     }
 
     /**
+     * Uma planta de duas tábuas, feita à mão.
+     *
+     * <p>Era a cabana do mod até 2026-08-21, e ela foi apagada. O que
+     * este teste precisa é de <b>uma planta qualquer</b> com um id e um
+     * tamanho: quem ele afirma é {@code WaitingWork.giveUp}, e a obra
+     * largada podia ser de qualquer coisa.
+     */
+    private static Blueprint aWallOfPlanks() {
+        return Blueprint.of(
+                ResourceId.vanilla("village/plains/houses/plains_small_house_1"),
+                List.of(
+                        new BlueprintBlock(
+                                new ColonyPos(0, 0, 0), ResourceId.vanilla("oak_planks")),
+                        new BlueprintBlock(
+                                new ColonyPos(1, 0, 0), ResourceId.vanilla("oak_planks"))));
+    }
+
+    /**
      * A obra largada sai do registro e o lote continua tomado.
      *
      * <p>É a consequência do {@code PatienceClock}, afirmada sem
@@ -237,7 +256,7 @@ public class ConstructionResumeGameTest implements FabricGameTest {
 
         ConstructionProject project = ConstructionProject.plan(
                 colony.id(),
-                ColonyHut.blueprint(ColonyHut.OAK_PLANKS, Side.NORTH),
+                aWallOfPlanks(),
                 origin);
 
         VillageColonyMod.CONSTRUCTIONS.register(project);

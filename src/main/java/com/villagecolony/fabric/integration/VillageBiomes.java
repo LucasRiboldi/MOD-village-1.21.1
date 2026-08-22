@@ -98,8 +98,8 @@ public final class VillageBiomes {
      *
      * <p>Até aqui o estilo do bioma era a espécie da madeira e nada
      * mais, e por isso o deserto ficava de fora: a vila nascia,
-     * contratava e nunca construía. Agora o bioma responde também de que
-     * é a parede, e no deserto ela é arenito — que o mineiro tira da
+     * contratava e nunca construía. Agora o bioma responde também qual é
+     * a <b>pedra</b>, e no deserto ela é arenito — que o mineiro tira da
      * duna ao lado.
      */
     public static Optional<VillagePalette> paletteFor(RegistryKey<Biome> biome) {
@@ -107,7 +107,10 @@ public final class VillageBiomes {
             return Optional.of(VillagePalette.ofSandstone());
         }
 
-        return woodFor(biome).map(planks -> VillagePalette.ofWood(styleOf(biome), planks));
+        // A madeira não entra mais na paleta — ela saiu com a cabana,
+        // em 2026-08-21. O que ela ainda decide é se o mod atende este
+        // bioma: vazio aqui quer dizer que o jogo não gera vila ali.
+        return woodFor(biome).map(wood -> VillagePalette.ofWood(styleOf(biome)));
     }
 
     /**

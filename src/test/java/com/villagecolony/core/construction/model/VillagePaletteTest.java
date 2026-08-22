@@ -1,103 +1,52 @@
 package com.villagecolony.core.construction.model;
 
-import com.villagecolony.core.type.ResourceId;
-import com.villagecolony.core.type.Side;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * De que uma vila é feita — a Regra 20 dita por inteiro, 2026-08-20.
+ * O que o bioma de uma vila dá — a Regra 20, encolhida em 2026-08-21.
+ *
+ * <p>A paleta chegou a dizer também de que é a parede e a porta de cada
+ * estilo. Havia um só leitor para os dois — a cabana escrita em código —
+ * e ela saiu com a Regra 27. O que se afirma aqui é o que sobrou, e o
+ * que sobrou tem quem pergunte.
  */
 class VillagePaletteTest {
 
-    private static ResourceId vanilla(String path) {
-        return new ResourceId(ResourceId.VANILLA, path);
-    }
-
+    /**
+     * O estilo é a pasta do catálogo, e é o elo com a Regra 27.
+     *
+     * <p>Ele não sai da madeira: bioma nevado usa pinheiro como a taiga,
+     * e as casas dele são outras.
+     */
     @Test
-    void theDoorComesFromTheSpeciesOfThePlanks() {
-        assertEquals(
-                vanilla("spruce_door"),
-                VillagePalette.ofWood("taiga", vanilla("spruce_planks")).door().orElseThrow());
-
-        assertEquals(
-                vanilla("acacia_door"),
-                VillagePalette.ofWood("savanna", vanilla("acacia_planks")).door().orElseThrow());
-    }
-
-    @Test
-    void aWoodenVillageWallsInItsOwnSpecies() {
-        assertEquals(
-                vanilla("acacia_planks"),
-                VillagePalette.ofWood("savanna", vanilla("acacia_planks")).wall());
+    void theStyleIsTheCatalogFolder() {
+        assertEquals("taiga", VillagePalette.ofWood("taiga").style());
+        assertEquals("snowy", VillagePalette.ofWood("snowy").style());
+        assertEquals("desert", VillagePalette.ofSandstone().style());
     }
 
     /**
-     * O deserto não tem porta, e é decisão e não esquecimento.
+     * No deserto a pedra é arenito, e é ela que faz a vila construir.
      *
-     * <p>A porta sai de tábua, tábua sai de tronco, e o deserto não tem
-     * tronco. Exigi-la deixaria a casa em espera para sempre — que é o
-     * travamento que a Regra 13 corrigiu.
+     * <p>É o que fecha o limite conhecido do deserto: até 2026-08-20 a
+     * vila de deserto nascia, contratava, contava recurso e não
+     * construía nunca, porque procurava pedregulho onde só há areia.
      */
     @Test
-    void theDesertHasNoDoorToMake() {
-        assertFalse(VillagePalette.ofSandstone().hasDoor());
+    void theDesertMinesTheStoneItHas() {
+        assertEquals(VillagePalette.SANDSTONE, VillagePalette.ofSandstone().stone());
+        assertEquals(VillagePalette.COBBLESTONE, VillagePalette.ofWood("plains").stone());
     }
 
-    /** No deserto a pedra é a parede: é ela que faz a vila construir. */
+    /** O vidro é o mesmo em toda parte: o fundidor faz um só. */
     @Test
-    void theDesertWallsInTheStoneItMines() {
-        VillagePalette desert = VillagePalette.ofSandstone();
-
-        assertEquals(VillagePalette.SANDSTONE, desert.wall());
-        assertEquals(VillagePalette.SANDSTONE, desert.stone());
-    }
-
-    @Test
-    void everyVillageShearsAndSmeltsTheSameThings() {
+    void everyVillageSmeltsTheSameGlass() {
         for (VillagePalette palette : new VillagePalette[] {
-                VillagePalette.ofWood("plains", vanilla("oak_planks")),
-                VillagePalette.ofSandstone()}) {
+                VillagePalette.ofWood("plains"), VillagePalette.ofSandstone()}) {
 
             assertEquals(VillagePalette.GLASS, palette.glass());
-            assertEquals(VillagePalette.WOOL, palette.wool());
         }
-    }
-
-    /**
-     * A cabana do deserto sobe sem uma tábua, e sem porta.
-     *
-     * <p>É o que fecha o limite conhecido do §"deserto": até 2026-08-20
-     * a vila de deserto nascia, contratava, contava recurso e não
-     * construía nunca.
-     */
-    @Test
-    void theDesertHutIsAllStoneAndHasNoDoor() {
-        Blueprint hut = ColonyHut.blueprint(VillagePalette.ofSandstone(), Side.NORTH);
-
-        assertTrue(
-                hut.blocks().stream()
-                        .filter(block -> !block.furniture())
-                        .allMatch(block -> VillagePalette.SANDSTONE.equals(block.block())),
-                "a cabana do deserto tem bloco que não é arenito");
-
-        assertFalse(
-                hut.blocks().stream().anyMatch(block -> block.block().path().endsWith("_door")),
-                "a cabana do deserto ganhou uma porta que ninguém ali sabe fazer");
-    }
-
-    /** E a de madeira continua com a porta dela. */
-    @Test
-    void theWoodenHutStillGetsItsDoor() {
-        Blueprint hut = ColonyHut.blueprint(
-                VillagePalette.ofWood("plains", ColonyHut.OAK_PLANKS), Side.NORTH);
-
-        assertTrue(
-                hut.blocks().stream()
-                        .anyMatch(block -> vanilla("oak_door").equals(block.block())),
-                "a cabana de carvalho perdeu a porta");
     }
 }

@@ -1,6 +1,5 @@
 package com.villagecolony.gametest;
 
-import com.villagecolony.core.construction.model.ColonyHut;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.integration.VillageStructures;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -51,18 +50,14 @@ public class VillageStructuresGameTest implements FabricGameTest {
      *
      * <p>É a regra dita pelo lado de fora: a cabana escrita em código —
      * {@code villagecolony:hut} — existia e era o que a colônia
-     * levantava. Ela continua no código para que save antigo com uma
-     * cabana pela metade saiba retomá-la, e <b>nunca mais é oferecida
-     * como alvo</b>.
+     * levantava. Ela foi apagada em 2026-08-21, e o que resta afirmar é
+     * que <b>nada fora do jogo entra na lista</b>: um namespace que não
+     * seja {@code minecraft} é casa que o mod inventou.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_catalog")
     public void nothingTheModInventedIsOffered(TestContext context) {
         for (String style : STYLES) {
             for (ResourceId house : VillageStructures.housesFor(style)) {
-                context.assertTrue(
-                        !ColonyHut.ID.equals(house),
-                        "a cabana do mod voltou à lista de " + style);
-
                 context.assertTrue(
                         ResourceId.VANILLA.equals(house.namespace()),
                         house + " não é do jogo, e a Regra 27 só aceita o que é");
