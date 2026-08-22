@@ -23,6 +23,8 @@ import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.work.WorkMaterials;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.MineDigging;
+import com.villagecolony.fabric.integration.MineMouth;
+import com.villagecolony.fabric.integration.OreVein;
 import com.villagecolony.fabric.work.MinerReport;
 import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.SandGathering;
@@ -35,7 +37,9 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -581,6 +585,99 @@ public class MinerGameTest implements FabricGameTest {
                 "a linha não diz quanto ele já juntou do que a tarefa pede: " + line.get());
 
         owned.cleanUp();
+
+        context.complete();
+    }
+
+    /**
+     * A boca da mina ganha lanterna e baú — a Regra 30.
+     *
+     * <p><b>Regra do autor, 2026-08-22:</b> onde o mineiro decide começar
+     * a cavar aparecem uma lanterna de um lado do buraco e um baú
+     * marcado como do mineiro do outro.
+     *
+     * <p>Afirma também que <b>chamar de novo não cria de novo</b>. A
+     * mobília é posta a cada passagem em que a mina existe — mina de
+     * save antigo não passou pela regra, e boca em chunk descarregado
+     * falha na primeira tentativa —, então repetir precisa ser de graça.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+            tickLimit = 20)
+    public void theMineMouthGetsALanternAndAChest(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        BlockPos mouth = context.getAbsolutePos(ROCK);
+
+        // Chão sólido em volta: sem ele nenhum vizinho serve, e o teste
+        // mediria a ausência de lugar em vez da regra.
+        for (Direction side : Direction.Type.HORIZONTAL) {
+            context.setBlockState(ROCK.offset(side).down(), Blocks.STONE.getDefaultState());
+        }
+
+        Optional<BlockPos> chest = MineMouth.furnish(world, mouth);
+
+        context.assertTrue(chest.isPresent(), "a boca da mina não ganhou baú");
+
+        context.assertTrue(
+                world.getBlockState(chest.get()).isOf(Blocks.CHEST),
+                "o que a boca ganhou não é um baú");
+
+        boolean lantern = false;
+
+        for (Direction side : Direction.Type.HORIZONTAL) {
+            if (world.getBlockState(mouth.offset(side)).isOf(Blocks.LANTERN)) {
+                lantern = true;
+            }
+        }
+
+        context.assertTrue(lantern, "a boca da mina ficou sem lanterna");
+
+        Optional<BlockPos> again = MineMouth.furnish(world, mouth);
+
+        context.assertTrue(
+                again.isPresent() && again.get().equals(chest.get()),
+                "mobiliar de novo mudou o baú de lugar — e ela roda a cada passagem");
+
+        context.complete();
+    }
+
+    /**
+     * O que é tesouro e o que não é — a Regra 30, decidida pelo autor.
+     *
+     * <p>O baú da boca guarda <b>todo minério menos carvão</b>. O carvão
+     * fica de fora porque a colônia o consome o tempo todo — a tocha sai
+     * dele e a fornalha o queima —, e mandá-lo para o fundo da mina
+     * seria afastá-lo de quem o usa.
+     *
+     * <p>Eram dois minérios reconhecidos até 08-21, carvão e ferro.
+     * Seguir só esses dois era o mineiro passando ao lado de diamante sem
+     * ver, e a regra manda ele ir atrás de recurso normalmente.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+            tickLimit = 20)
+    public void everyOreButCoalIsTreasure(TestContext context) {
+        for (Block ore : List.of(
+                Blocks.COPPER_ORE, Blocks.IRON_ORE, Blocks.GOLD_ORE, Blocks.REDSTONE_ORE,
+                Blocks.LAPIS_ORE, Blocks.EMERALD_ORE, Blocks.DIAMOND_ORE,
+                Blocks.DEEPSLATE_DIAMOND_ORE, Blocks.DEEPSLATE_GOLD_ORE)) {
+
+            context.assertTrue(
+                    OreVein.isTreasure(ore.getDefaultState()),
+                    ore.getName().getString() + " devia ir para o baú da mina");
+        }
+
+        for (Block common : List.of(
+                Blocks.COAL_ORE, Blocks.DEEPSLATE_COAL_ORE, Blocks.STONE,
+                Blocks.COBBLESTONE, Blocks.SANDSTONE, Blocks.DIRT)) {
+
+            context.assertTrue(
+                    !OreVein.isTreasure(common.getDefaultState()),
+                    common.getName().getString() + " não é tesouro, e foi para o baú da mina");
+        }
+
+        context.assertTrue(
+                OreVein.isOre(Blocks.COAL_ORE.getDefaultState()),
+                "o carvão deixou de ser minério, e a veia dele para de ser seguida");
 
         context.complete();
     }

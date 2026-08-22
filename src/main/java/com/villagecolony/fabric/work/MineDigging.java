@@ -6,6 +6,7 @@ import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BlockProtection;
+import com.villagecolony.fabric.integration.MineMouth;
 import com.villagecolony.fabric.integration.OreVein;
 import net.minecraft.block.BlockState;
 import net.minecraft.server.world.ServerWorld;
@@ -140,6 +141,11 @@ public final class MineDigging {
         Optional<Mine> known = VillageColonyMod.MINES.of(colonyId);
 
         if (known.isPresent()) {
+            // A boca de uma mina que veio do save pode nunca ter sido
+            // mobiliada — a Regra 30 é de 2026-08-22 e há minas mais
+            // velhas que ela. Idempotente: com baú lá, isto não faz nada.
+            furnishMouth(world, known.get());
+
             return known;
         }
 
@@ -162,7 +168,23 @@ public final class MineDigging {
                 MineShaft.DESCENT,
                 MineShaft.DESCENT);
 
+        // A Regra 30: onde ele decide começar a cavar nascem a lanterna
+        // e o baú da mina.
+        furnishMouth(world, opened);
+
         return Optional.of(opened);
+    }
+
+    /**
+     * A lanterna e o baú da boca — a Regra 30, 2026-08-22.
+     *
+     * <p>Chamada também para mina já conhecida, e de propósito: mina de
+     * save antigo não passou pela regra, e boca em chunk descarregado
+     * não pôde ser mobiliada na primeira tentativa. {@code MineMouth} não
+     * faz nada quando o baú já está lá.
+     */
+    private static void furnishMouth(ServerWorld world, Mine mine) {
+        MineMouth.furnish(world, MinecraftTypeAdapter.toBlockPos(mine.shaft().entry()));
     }
 
     /**

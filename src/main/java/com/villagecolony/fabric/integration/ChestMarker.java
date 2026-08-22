@@ -116,6 +116,18 @@ public final class ChestMarker {
     }
 
     /**
+     * Marca um baú avulso, que não é de trabalhador nenhum.
+     *
+     * <p>Existe para a boca da mina — Regra 30, 2026-08-22. O baú de lá
+     * é da <b>mina</b> e não de um mineiro: o segundo a descer usa o
+     * mesmo, e ele não aparece em {@code StorageRegistry}. Sem isto a
+     * marca só alcançaria baú com dono.
+     */
+    public static boolean markAt(ServerWorld world, BlockPos chest, ProfessionType profession) {
+        return markOne(world, chest, profession);
+    }
+
+    /**
      * Põe ou corrige a marca de um baú.
      *
      * @return true se algo mudou no mundo

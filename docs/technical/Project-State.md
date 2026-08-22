@@ -2186,6 +2186,11 @@ Regra 28  a casa pequena do bioma, e a obra     08-20, PROVISÓRIA por
 Regra 29  a mina em escada, duas salas e a      08-20, feita em 08-20.
           galeria sem fim                       Substitui o mineiro de
                                                 superfície do mesmo dia
+
+Regra 30  o mineiro recolhe tudo o que cava;    08-22, feita em 08-22.
+          a boca da mina ganha lanterna e um    Amplia a 29
+          baú de minério, e ele transborda
+          para o baú do mineiro
 ```
 
 Duas previsões das primeiras se confirmaram e vale marcá-las: a fila que
@@ -3952,6 +3957,48 @@ verdade.
 Isso está dito aqui, e não descoberto na próxima sessão, porque é
 exatamente o tipo de coisa que custa uma sessão inteira quando fica
 implícita.
+
+---
+
+## Regra 30 — o mineiro recolhe tudo, e a boca da mina tem endereço
+
+**Enunciada pelo autor em 2026-08-22, e implementada no mesmo dia.**
+
+```text
+o mineiro vai atrás de recurso normalmente, e recolhe
+TUDO o que cavar
+
+onde ele decide começar a cavar aparecem duas coisas:
+  uma lanterna de um lado do buraco
+  um baú marcado como do mineiro do outro
+
+esse baú guarda MINÉRIO, e só
+
+quando ele lotar, o minério passa a ir para o baú
+principal do mineiro
+```
+
+**O que é minério, decidido pelo autor no mesmo dia:** cobre, ferro,
+ouro, redstone, lápis, esmeralda e diamante — **todo minério menos
+carvão**. Pedra, terra e carvão vão direto para o baú do mineiro na
+vila, que é de onde a obra e a fornalha tiram o que consomem; mandar
+carvão para o fundo da mina seria afastá-lo de quem o usa.
+
+**O que ela muda na 29.** O `OreVein` reconhecia dois minérios — carvão
+e ferro — e agora reconhece os oito, nas duas variantes de ardósia.
+Seguir só dois era o mineiro passando ao lado de diamante sem ver.
+
+**Não custa material**, e é a mesma decisão que a mina inteira já
+carrega: a escada, as duas salas e a galeria são cavadas e ninguém paga
+por elas. Cobrar aqui faria a mina não abrir até a colônia ter lanterna
+— e lanterna pede ferro, que vem da mina.
+
+**Sem estado novo em disco.** Onde está o baú é lido do mundo: dos
+vizinhos da boca, o que for um baú é ele. Gravar a posição seria uma
+segunda verdade que o jogador desfaz com uma picareta.
+
+**Onde ela mora:** `MineMouth`, `OreVein.isTreasure` e
+`MinerWork.treasureChestFor`.
 
 ---
 

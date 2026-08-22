@@ -13,10 +13,41 @@ conta 375 testes.
 funcionando em jogo* são coisas diferentes, e estão separadas.
 
 ```text
-458 testes unitários  ·  154 testes de jogo  ·  29 regras do autor
+458 testes unitários  ·  156 testes de jogo  ·  30 regras do autor
 7 trabalhadores com código  ·  6 arquivos acima do teto de 500 linhas
 bateria: 1 instável, 2 falhas em 12 rodadas — ver a seção seguinte
 ```
+
+---
+
+## ✅ Regra 30 — o mineiro recolhe tudo, e a boca da mina tem endereço
+
+Enunciada pelo autor em 2026-08-22 e feita no mesmo dia.
+
+```text
+o mineiro vai atrás de recurso normalmente, e recolhe TUDO o que cava
+onde ele começa a cavar: uma lanterna de um lado, um baú do outro
+esse baú guarda minério, e só
+lotando, o minério passa a ir para o baú principal do mineiro
+```
+
+**O que é minério, e o autor decidiu:** cobre, ferro, ouro, redstone,
+lápis, esmeralda e diamante — **todo minério menos carvão**. Pedra,
+terra e carvão vão direto para o baú do mineiro na vila, que é de onde
+a obra e a fornalha tiram o que consomem.
+
+**O `OreVein` reconhecia dois minérios e passou a reconhecer oito**, nas
+duas variantes de ardósia. Seguir só carvão e ferro era o mineiro
+passando ao lado de diamante sem ver.
+
+**Não custa material**, como a mina inteira não custa — cobrar faria a
+mina não abrir até a colônia ter lanterna, e lanterna pede ferro, que
+vem da mina. **Sem campo novo no save**: onde está o baú é lido do
+mundo.
+
+Nasceu `MineMouth`. Dois testes de jogo travam a regra, e a bateria já
+mostra a linha: `Mine mouth at ... furnished — miner chest at ...,
+lantern at ...`.
 
 ---
 
@@ -237,8 +268,9 @@ resto continua sem ter sido visto:
 | **9** | **O carvão da galeria** | `Miner ... took` de um `coal_ore` no −20, e a veia inteira num só ciclo |
 | **10** | **A casa de planície terminando sozinha** | é a primeira vez que ela pode |
 | ~~11~~ | ~~**A vila de deserto achando lote**~~ | ✅ **visto em 2026-08-22** — lote achado e casa planejada. A rua crescendo continua por ver |
-| **12** | **O E9** | `E9 — colony ... changed state N times`. Silêncio aqui fecha o erro |
-| **13** | **O registro seguindo as camas** | `Registered N villagers` numa colônia cujo centro esteja longe do aglomerado novo |
+| **12** | **A boca da mina mobiliada** | `Mine mouth at ... furnished`, e o minério entrando no baú de lá em vez do da vila |
+| **13** | **O E9** | `E9 — colony ... changed state N times`. Silêncio aqui fecha o erro |
+| **14** | **O registro seguindo as camas** | `Registered N villagers` numa colônia cujo centro esteja longe do aglomerado novo |
 
 **Coberto por teste, com limite conhecido:**
 
