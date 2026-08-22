@@ -86,11 +86,11 @@ public final class MinerWork {
      * sempre sem chegar não está trabalhando, e sem isto a tarefa nunca
      * volta para a fila.
      */
-    private static final int STALL_LIMIT = 4 * 600;
+    static final int STALL_LIMIT = 4 * 600;
 
-    private static final Map<UUID, Job> JOBS = new HashMap<>();
+    static final Map<UUID, Job> JOBS = new HashMap<>();
 
-    private static final String SUBJECT = "miner";
+    static final String SUBJECT = "miner";
 
     /**
      * O assunto da busca de areia, separado do da mineração.
@@ -102,24 +102,24 @@ public final class MinerWork {
     private static final String SAND_SUBJECT = "miner sand";
 
     /** A pedra em curso, e o quanto dela já saiu. */
-    private static final class Job {
+    static final class Job {
 
-        private final Task task;
+        final Task task;
 
-        private final BlockPos center;
+        final BlockPos center;
 
-        private final ResourceId wanted;
+        final ResourceId wanted;
 
         /** A pedra de agora. Nulo entre uma e a próxima. */
-        private BlockPos target;
+        BlockPos target;
 
-        private int progress;
+        int progress;
 
-        private int required;
+        int required;
 
-        private int collected;
+        int collected;
 
-        private int stalled;
+        int stalled;
 
         private Job(Task task, BlockPos center, ResourceId wanted) {
             this.task = task;
@@ -166,6 +166,12 @@ public final class MinerWork {
         } else {
             IdleLog.clear(colony.id(), SUBJECT);
         }
+
+        // A linha do ciclo — 2026-08-22. Ela não existia, e a sessão
+        // daquele dia pagou por isso: dois mineiros com tarefa aberta
+        // passaram treze minutos sem produzir <b>uma linha sequer</b>.
+        // Ver MinerReport.
+        MinerReport.report(world, colony);
 
         return open;
     }

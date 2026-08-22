@@ -23,6 +23,7 @@ import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.work.WorkMaterials;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.MineDigging;
+import com.villagecolony.fabric.work.MinerReport;
 import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.SandGathering;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -506,5 +507,81 @@ public class MinerGameTest implements FabricGameTest {
                 context.setBlockState(new BlockPos(x, 1, z), Blocks.DIRT.getDefaultState());
             }
         }
+    }
+
+    /**
+     * O mineiro com trabalho aberto deixa linha no log.
+     *
+     * <p><b>O defeito era a ausência dela.</b> Na sessão de 2026-08-22
+     * dois mineiros reivindicaram baú e passaram treze minutos sem
+     * produzir uma linha sequer — nem "abriu mina", nem "pegou", nem
+     * motivo de ociosidade. Do lado de fora, o mineiro que anda, o que
+     * está parado, o que não tem picareta e o que não achou pedra eram a
+     * mesma coisa: silêncio.
+     *
+     * <p>O lenhador ganhou a linha dele em 2026-08-12 e o construtor em
+     * 08-18, depois do mesmo tipo de sessão perdida. Este teste existe
+     * para que a terceira não precise acontecer de novo.
+     *
+     * <p>Afirma a existência e o <b>conteúdo mínimo</b>: sem o que ele
+     * procura e sem quanto já juntou, a linha volta a não responder as
+     * perguntas que a sessão fez.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_report",
+            tickLimit = 40)
+    public void theMinerWithWorkLeavesALineInTheLog(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        context.setBlockState(ROCK, Blocks.STONE.getDefaultState());
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        owned.owning(villager.getUuid());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_STONE,
+                TaskPriority.PRODUCTION,
+                ResourceType.COBBLESTONE,
+                16);
+
+        task.reserveFor(villager.getUuid());
+
+        MineDigging.shortenMineDistanceTo(NEARBY);
+
+        MinerWork.run(world, colony);
+
+        Optional<String> line = MinerReport.report(world, colony);
+
+        context.assertTrue(
+                line.isPresent(),
+                "mineiro com trabalho aberto e nenhuma linha — é o defeito de 08-22 de volta");
+
+        context.assertTrue(
+                line.get().contains("wants "),
+                "a linha não diz o que o mineiro procura: " + line.get());
+
+        context.assertTrue(
+                line.get().contains(" of 16 so far"),
+                "a linha não diz quanto ele já juntou do que a tarefa pede: " + line.get());
+
+        owned.cleanUp();
+
+        context.complete();
     }
 }
