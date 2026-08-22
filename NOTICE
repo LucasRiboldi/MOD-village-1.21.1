@@ -1,0 +1,48 @@
+# NOTICE
+
+O código deste repositório é do autor e está sob a licença MIT, no
+arquivo `LICENSE`. Este arquivo declara o que **não** é.
+
+---
+
+## Um arquivo de estrutura da Mojang
+
+```text
+src/main/resources/data/villagecolony/structure/houses/small_house.nbt
+```
+
+**O que é.** Cópia byte a byte de `plains_small_house_1.nbt`, estrutura
+gerada e distribuída pela Mojang com o Minecraft Java Edition 1.21.1.
+1807 bytes, SHA-256 começando em `77b5e042f90717cd`.
+
+**Por que entrou.** Ele foi, durante um tempo, a planta que o construtor
+levantava: o mod precisava de uma casa em disco e essa foi a que se
+copiou. Entrou no commit `147e790`.
+
+**O que ele faz hoje: nada, em produção.** Desde a Regra 27, de
+2026-08-20, o construtor só levanta o que está no catálogo do jogo, lido
+do jogo em tempo de execução — nenhum caminho de produção abre este
+arquivo. Ele permanece porque dois testes de jogo o usam como planta
+fixa, e trocá-los por outra coisa é trabalho sem retorno enquanto a
+decisão for a de mantê-lo.
+
+**A decisão, e ela é do autor — 2026-08-21.** Manter o arquivo e
+declarar a origem por escrito, que é o que este parágrafo faz. Ele não é
+obra do autor, não está coberto pela licença MIT deste repositório, e
+seu uso está sujeito ao EULA do Minecraft e aos termos da Mojang.
+
+> Minecraft é marca registrada da Mojang Studios. Este projeto não é
+> afiliado à Mojang Studios nem à Microsoft, e não é por elas endossado.
+
+**Se um dia sair.** Basta apagar o arquivo e dar aos dois testes uma
+estrutura escrita à mão no mesmo formato. Não há dependência de produção
+a desfazer.
+
+---
+
+## O resto do jogo
+
+O mod lê estruturas, receitas e blocos do Minecraft **em tempo de
+execução**, pela API do Fabric. Nada disso é redistribuído aqui: o
+catálogo em `data/villagecolony/catalog/vanilla_structures.json` é uma
+lista de **nomes**, não de conteúdo.
