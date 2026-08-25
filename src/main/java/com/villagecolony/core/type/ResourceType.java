@@ -20,67 +20,78 @@ import java.util.Objects;
  */
 public enum ResourceType {
 
-    OAK_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD),
+    OAK_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD, Production.HARVESTED),
 
-    BIRCH_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD),
+    BIRCH_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD, Production.HARVESTED),
 
-    SPRUCE_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD),
+    SPRUCE_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD, Production.HARVESTED),
 
-    JUNGLE_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD),
+    JUNGLE_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD, Production.HARVESTED),
 
-    ACACIA_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD),
+    ACACIA_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD, Production.HARVESTED),
 
-    DARK_OAK_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD),
+    DARK_OAK_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD, Production.HARVESTED),
 
-    CHERRY_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD),
+    CHERRY_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD, Production.HARVESTED),
 
-    MANGROVE_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD),
+    MANGROVE_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD, Production.HARVESTED),
 
-    OAK_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS),
+    OAK_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED),
 
-    BIRCH_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS),
+    BIRCH_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED),
 
-    SPRUCE_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS),
+    SPRUCE_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED),
 
-    JUNGLE_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS),
+    JUNGLE_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED),
 
-    ACACIA_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS),
+    ACACIA_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED),
 
-    DARK_OAK_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS),
+    DARK_OAK_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED),
 
-    CHERRY_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS),
+    CHERRY_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED),
 
-    MANGROVE_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS),
+    MANGROVE_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED),
 
-    COBBLESTONE(ResourceCategory.NATURAL, ResourceGroup.STONE),
+    COBBLESTONE(ResourceCategory.NATURAL, ResourceGroup.STONE, Production.MINED),
 
     /** A pedra da vila de deserto, e a parede dela — 2026-08-20. */
-    SANDSTONE(ResourceCategory.NATURAL, ResourceGroup.STONE),
+    SANDSTONE(ResourceCategory.NATURAL, ResourceGroup.STONE, Production.MINED),
 
     /** O que o fundidor recebe para dar vidro. */
-    SAND(ResourceCategory.NATURAL, ResourceGroup.SAND),
+    SAND(ResourceCategory.NATURAL, ResourceGroup.SAND, Production.MINED),
 
     /** O que o fundidor devolve. A vidraça sai daqui. */
-    GLASS(ResourceCategory.PROCESSED, ResourceGroup.NONE),
+    GLASS(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.SMELTED),
 
     /** O que o pastor traz. A cama sai daqui. */
-    WHITE_WOOL(ResourceCategory.NATURAL, ResourceGroup.WOOL),
+    WHITE_WOOL(ResourceCategory.NATURAL, ResourceGroup.WOOL, Production.SHEARED),
 
     /** O que o mineiro acha na galeria. A tocha sai daqui — 2026-08-21. */
-    COAL(ResourceCategory.NATURAL, ResourceGroup.COAL),
+    COAL(ResourceCategory.NATURAL, ResourceGroup.COAL, Production.MINED),
 
     /** O minério de ferro, como sai da pedra: cru, e ainda não serve. */
-    RAW_IRON(ResourceCategory.NATURAL, ResourceGroup.IRON),
+    RAW_IRON(ResourceCategory.NATURAL, ResourceGroup.IRON, Production.MINED),
 
     /** O que o fundidor devolve do ferro cru. O lampião sai daqui. */
-    IRON_INGOT(ResourceCategory.PROCESSED, ResourceGroup.NONE);
+    IRON_INGOT(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.SMELTED),
+
+    /**
+     * A parede da vila de deserto — 2026-08-22.
+     *
+     * <p>Sai da <b>fornalha</b>, e não da bancada: arenito liso é arenito
+     * assado. Entrou porque a casa de deserto do catálogo é feita dele —
+     * sessenta blocos — e a colônia só sabia cavar o arenito cru.
+     */
+    SMOOTH_SANDSTONE(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.SMELTED);
 
     private final ResourceCategory category;
     private final ResourceGroup group;
+    private final Production production;
 
-    ResourceType(ResourceCategory category, ResourceGroup group) {
+    ResourceType(ResourceCategory category, ResourceGroup group, Production production) {
         this.category = Objects.requireNonNull(category);
         this.group = Objects.requireNonNull(group);
+        this.production = Objects.requireNonNull(production);
     }
 
     public ResourceCategory category() {
@@ -94,5 +105,16 @@ public enum ResourceType {
      */
     public ResourceGroup group() {
         return group;
+    }
+
+    /**
+     * De onde este recurso vem, e por isso quem o produz.
+     *
+     * <p>Declarado, e não deduzido: era uma exceção nominal em
+     * {@code ColonyCycle.typeFor} até 2026-08-22, e a ADR-009 pede o
+     * contrário. Ver {@link Production}.
+     */
+    public Production production() {
+        return production;
     }
 }

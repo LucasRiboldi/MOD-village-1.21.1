@@ -211,29 +211,21 @@ public final class ColonyCycle {
      * que uma obra consome é erguido.
      */
     private static TaskType typeFor(ResourceType resource) {
-        // Pelo grupo, e não pela categoria — 2026-08-20. A categoria
-        // separa natural de processado, e isso bastava enquanto o único
-        // natural era madeira: pedra, areia e lã entraram e todas caíram
-        // em COLLECT_WOOD, que mandaria o lenhador buscar pedregulho.
-        if (resource == ResourceType.GLASS || resource == ResourceType.IRON_INGOT) {
-            // A exceção nominal: vidro e lingote são processados, mas não
-            // por receita de bancada. Quem os faz é a fornalha.
-            return TaskType.SMELT_MATERIAL;
-        }
-
-        return switch (resource.group()) {
-            case WOOD -> TaskType.COLLECT_WOOD;
-            // Carvão e ferro entraram em 2026-08-21 e vêm pela mesma
-            // porta da pedra: quem os tira do mundo é o mineiro, e ele
-            // os acha descendo a mesma escada.
-            case STONE, SAND, COAL, IRON -> TaskType.COLLECT_STONE;
-            case WOOL -> TaskType.COLLECT_WOOL;
-            case PLANKS -> TaskType.CRAFT_MATERIAL;
-            case NONE -> switch (resource.category()) {
-                case NATURAL -> TaskType.COLLECT_WOOD;
-                case PROCESSED -> TaskType.CRAFT_MATERIAL;
-                case CONSTRUCTION -> TaskType.BUILD;
-            };
+        // Pela produção declarada, e não por uma lista de nomes —
+        // 2026-08-22, ADR-009.
+        //
+        // Havia aqui uma exceção nominal: `if (resource == GLASS ||
+        // resource == IRON_INGOT) return SMELT_MATERIAL`. Ela funcionava
+        // e pedia mais um nome a cada material novo — o arenito liso
+        // seria o terceiro. A regra de ouro da ADR diz que uma solução
+        // dessa forma deve ser questionada, e a resposta é esta: quem
+        // sabe de onde o recurso vem é o próprio recurso.
+        return switch (resource.production()) {
+            case HARVESTED -> TaskType.COLLECT_WOOD;
+            case MINED -> TaskType.COLLECT_STONE;
+            case SHEARED -> TaskType.COLLECT_WOOL;
+            case CRAFTED -> TaskType.CRAFT_MATERIAL;
+            case SMELTED -> TaskType.SMELT_MATERIAL;
         };
     }
 }

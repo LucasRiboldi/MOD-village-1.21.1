@@ -380,7 +380,7 @@ class ColonyGoalsTest {
                 ResourceTally.of(new EnumMap<>(ResourceType.class)),
                 0,
                 0,
-                new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 2, 0));
+                new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 2, 0, Map.of()));
 
         assertEquals(2, goal.get(ResourceType.COAL));
         assertFalse(goal.containsKey(ResourceType.SAND));
@@ -400,7 +400,7 @@ class ColonyGoalsTest {
                 ResourceTally.of(new EnumMap<>(ResourceType.class)),
                 0,
                 0,
-                new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 0, 2));
+                new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 0, 2, Map.of()));
 
         assertEquals(2, goal.get(ResourceType.IRON_INGOT));
         assertEquals(2, goal.get(ResourceType.RAW_IRON));
@@ -414,7 +414,7 @@ class ColonyGoalsTest {
                 owned(ResourceType.IRON_INGOT, 2),
                 0,
                 0,
-                new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 0, 2));
+                new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 0, 2, Map.of()));
 
         assertEquals(2, goal.get(ResourceType.IRON_INGOT));
         assertFalse(goal.containsKey(ResourceType.RAW_IRON));
@@ -444,16 +444,60 @@ class ColonyGoalsTest {
     void aNegativeDemandIsRefusedByName() {
         assertThrows(
                 IllegalArgumentException.class,
-                () -> new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, -1, 0, 0));
+                () -> new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, -1, 0, 0, Map.of()));
 
         assertThrows(
                 IllegalArgumentException.class,
-                () -> new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, -1, 0));
+                () -> new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, -1, 0, Map.of()));
     }
 
     @Test
     void aNegativeWorkDemandIsRefused() {
         assertThrows(IllegalArgumentException.class,
                 () -> ColonyGoals.of(colony(), ResourceTally.of(new EnumMap<>(ResourceType.class)), 0, 0, -1));
+    }
+
+    /**
+     * O que a obra pede e sai de fornalha vira meta — 2026-08-22.
+     *
+     * <p>É o elo que faltava para a vila de deserto: a casa do catálogo
+     * é feita de arenito <b>liso</b>, a colônia só sabia cavar o cru, e a
+     * obra ficava em {@code WAITING_RESOURCES} com o baú cheio de
+     * arenito. Visto em jogo sete vezes numa sessão.
+     *
+     * <p>Genérico de propósito: o que entra é todo material da obra cuja
+     * produção declarada é {@code SMELTED}, e não uma lista de nomes.
+     */
+    @Test
+    void whatTheWorkNeedsFromTheFurnaceBecomesAGoal() {
+        Map<ResourceType, Integer> goal = ColonyGoals.of(
+                colony(),
+                ResourceTally.empty(),
+                0,
+                0,
+                new WorkDemand(
+                        0, ResourceType.SANDSTONE, 93, 0, 0, 0, 0,
+                        Map.of(ResourceType.SMOOTH_SANDSTONE, 60)));
+
+        assertEquals(60, goal.get(ResourceType.SMOOTH_SANDSTONE));
+
+        // E o cru continua vindo da meta de pedra: é dele que o mineiro
+        // tira o que a fornalha vai assar.
+        assertEquals(93, goal.get(ResourceType.SANDSTONE));
+    }
+
+    /** Zero não vira meta: fornalha sem o que fazer não abre tarefa. */
+    @Test
+    void nothingToSmeltOpensNoGoal() {
+        Map<ResourceType, Integer> goal = ColonyGoals.of(
+                colony(),
+                ResourceTally.empty(),
+                0,
+                0,
+                new WorkDemand(
+                        0, ResourceType.COBBLESTONE, 0, 0, 0, 0, 0,
+                        Map.of(ResourceType.SMOOTH_SANDSTONE, 0)));
+
+        assertFalse(goal.containsKey(ResourceType.SMOOTH_SANDSTONE));
     }
 }

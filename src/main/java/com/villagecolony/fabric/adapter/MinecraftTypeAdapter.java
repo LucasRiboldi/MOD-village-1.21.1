@@ -83,6 +83,12 @@ public final class MinecraftTypeAdapter {
             return Optional.of(ResourceType.GLASS);
         }
 
+        // A parede da vila de deserto — 2026-08-22. Sai da fornalha, e
+        // é o que a casa de deserto do catálogo pede aos sessenta.
+        if (item == Items.SMOOTH_SANDSTONE) {
+            return Optional.of(ResourceType.SMOOTH_SANDSTONE);
+        }
+
         if (item == Items.WHITE_WOOL) {
             return Optional.of(ResourceType.WHITE_WOOL);
         }
@@ -195,6 +201,32 @@ public final class MinecraftTypeAdapter {
         }
 
         return Optional.of(Registries.BLOCK.get(identifier));
+    }
+
+    /**
+     * O item deste recurso — 2026-08-22.
+     *
+     * <p>O inverso de {@link #toResourceType}, e ele existe porque o
+     * fundidor passou a perguntar ao livro de receitas do jogo o que
+     * entra na fornalha para sair o que a tarefa pede. A pergunta é sobre
+     * um item, e a tarefa fala de {@link ResourceType}.
+     *
+     * <p><b>Um representante, e não o grupo.</b> Uma meta de madeira é
+     * satisfeita por qualquer tronco, mas a fornalha recebe um item de
+     * cada vez — e quem decide o que substitui o quê é
+     * {@code ResourceSubstitution}, e não esta conversão.
+     *
+     * <p>Vazio quando este jogo não tem o bloco: datapack que o tirou,
+     * versão que o renomeou.
+     */
+    public static Optional<Item> toItem(ResourceType resource) {
+        for (Item candidate : Registries.ITEM) {
+            if (toResourceType(candidate).filter(resource::equals).isPresent()) {
+                return Optional.of(candidate);
+            }
+        }
+
+        return Optional.empty();
     }
 
     public static Optional<Item> toItem(ToolType tool) {

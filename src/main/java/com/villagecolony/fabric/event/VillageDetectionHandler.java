@@ -420,7 +420,8 @@ public final class VillageDetectionHandler {
                 WorkMaterials.wool(overworld, colony),
                 WorkMaterials.glass(overworld, palette, colony),
                 WorkMaterials.coal(overworld, colony),
-                WorkMaterials.iron(overworld, colony));
+                WorkMaterials.iron(overworld, colony),
+                WorkMaterials.smeltedNeeds(colony));
 
         int assigned = ColonyCycle.run(
                 colony.id(),

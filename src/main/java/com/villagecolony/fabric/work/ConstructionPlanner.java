@@ -539,6 +539,21 @@ public final class ConstructionPlanner {
      * pede tinta que ninguém faz. O que isto conserta é a <b>demanda</b>
      * aparecer; a cor é problema do dia em que a colônia souber tingir.
      */
+    /**
+     * Tudo o que a obra aberta ainda pede, material por material.
+     *
+     * <p>Existe para quem precisa <b>classificar</b> o que falta em vez
+     * de somar um nome: a meta de fornalha da ADR-009 pergunta de cada
+     * material se ele sai de forno, e para isso precisa vê-los todos.
+     *
+     * <p>Vazio quando não há obra, que é a resposta certa e não um erro.
+     */
+    public static Map<ResourceId, Integer> materialsNeededBy(Colony colony) {
+        return VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
+                .map(ConstructionProject::remainingMaterials)
+                .orElse(Map.of());
+    }
+
     public static int materialNeededBy(Predicate<ResourceId> family, Colony colony) {
         return VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
                 .map(project -> project.remainingMaterials().entrySet().stream()

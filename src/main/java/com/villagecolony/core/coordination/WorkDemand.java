@@ -2,6 +2,8 @@ package com.villagecolony.core.coordination;
 
 import com.villagecolony.core.type.ResourceType;
 
+import java.util.Map;
+
 import java.util.Objects;
 
 /**
@@ -36,10 +38,14 @@ public record WorkDemand(
         int wool,
         int glass,
         int coal,
-        int iron) {
+        int iron,
+        Map<ResourceType, Integer> smelted) {
 
     public WorkDemand {
         Objects.requireNonNull(stone, "stone");
+        Objects.requireNonNull(smelted, "smelted");
+
+        smelted = Map.copyOf(smelted);
 
         refuseNegative(planks, "plank");
         refuseNegative(stoneAmount, "stone");
@@ -51,7 +57,7 @@ public record WorkDemand(
 
     /** Nenhuma obra aberta: a colônia decide pela Regra 1 e nada mais. */
     public static WorkDemand none() {
-        return new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 0, 0);
+        return new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 0, 0, Map.of());
     }
 
     private static void refuseNegative(int amount, String what) {

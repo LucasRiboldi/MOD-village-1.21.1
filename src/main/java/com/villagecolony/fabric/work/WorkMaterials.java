@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.VillagePalette;
+import com.villagecolony.core.type.Production;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -11,6 +12,7 @@ import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -114,6 +116,36 @@ public final class WorkMaterials {
         int lanterns = ConstructionPlanner.materialNeededBy(LANTERN, colony);
 
         return through(world, LANTERN, ResourceType.IRON_INGOT, lanterns);
+    }
+
+    /**
+     * O que a obra pede e sai da <b>fornalha</b> — 2026-08-22.
+     *
+     * <p><b>Genérico de propósito, e é a ADR-009 aplicada.</b> Entra aqui
+     * todo material da obra cuja produção declarada é
+     * {@link Production#SMELTED} — e não uma lista de nomes. O caso que
+     * pediu isto foi o arenito liso: a casa de deserto do catálogo é
+     * feita dele aos sessenta blocos, e a colônia só sabia cavar o
+     * arenito cru. Material novo que saia de fornalha entra sozinho, sem
+     * uma linha de código a mais.
+     *
+     * <p>O <b>cru</b> não sai daqui: a meta de pedra já conta a família
+     * inteira, e é dela que o mineiro tira o que a fornalha vai assar.
+     */
+    public static Map<ResourceType, Integer> smeltedNeeds(Colony colony) {
+        Map<ResourceType, Integer> wanted = new LinkedHashMap<>();
+
+        for (Map.Entry<ResourceId, Integer> entry
+                : ConstructionPlanner.materialsNeededBy(colony).entrySet()) {
+
+            MinecraftTypeAdapter.toBlock(entry.getKey())
+                    .map(Block::asItem)
+                    .flatMap(MinecraftTypeAdapter::toResourceType)
+                    .filter(type -> type.production() == Production.SMELTED)
+                    .ifPresent(type -> wanted.merge(type, entry.getValue(), Integer::sum));
+        }
+
+        return wanted;
     }
 
     /**

@@ -6,15 +6,20 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.CraftingLookup;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.WorkMaterials;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -304,6 +309,58 @@ public class WorkMaterialsGameTest implements FabricGameTest {
                 family > pure * 2,
                 "o arenito puro passou a responder pela parede (" + pure + " de " + family
                         + ") — se a casa mudou, a conta por família pode voltar a ser por bloco");
+
+        context.complete();
+    }
+
+    /**
+     * A fornalha assa arenito, e quem diz isso é o jogo — 2026-08-22.
+     *
+     * <p><b>É o elo que faltava para a vila de deserto.</b> A casa do
+     * catálogo é feita de arenito <b>liso</b> aos sessenta blocos, e a
+     * colônia só sabia cavar o cru: a obra ficava em
+     * {@code WAITING_RESOURCES} com o baú cheio de arenito e a parede
+     * pedindo outro bloco. Visto em jogo sete vezes numa sessão.
+     *
+     * <p>O fundidor tinha uma tabela de duas linhas escritas à mão —
+     * areia dá vidro, ferro cru dá lingote — e o arenito liso seria a
+     * terceira. A ADR-009 pede o contrário, e agora a pergunta vai ao
+     * livro de receitas do jogo.
+     *
+     * <p>Este teste é o elo que pode quebrar em silêncio: se a receita
+     * mudar de forma, {@code smeltingInputsFor} devolve vazio, o fundidor
+     * encerra a tarefa e <b>nada acusa</b> — só uma casa de deserto que
+     * nunca sobe.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_materials",
+            tickLimit = 20)
+    public void theFurnaceTurnsSandstoneIntoTheSmoothKind(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        List<Item> raws = CraftingLookup.smeltingInputsFor(world, Items.SMOOTH_SANDSTONE);
+
+        context.assertTrue(
+                raws.contains(Items.SANDSTONE),
+                "a fornalha deste jogo não faz arenito liso de arenito — veio " + raws);
+
+        // E o caminho de volta, que é o que o fundidor executa.
+        Optional<ItemStack> made = CraftingLookup.smelted(
+                world, new ItemStack(Items.SANDSTONE, 1));
+
+        context.assertTrue(
+                made.isPresent() && made.get().isOf(Items.SMOOTH_SANDSTONE),
+                "assar arenito não deu arenito liso");
+
+        // O vidro e o lingote continuam saindo pela mesma porta — a
+        // tabela de duas linhas morreu e ninguém pode ter ido junto.
+        context.assertTrue(
+                CraftingLookup.smeltingInputsFor(world, Items.GLASS).contains(Items.SAND),
+                "o vidro perdeu a areia quando a tabela do fundidor saiu");
+
+        context.assertTrue(
+                CraftingLookup.smeltingInputsFor(world, Items.IRON_INGOT)
+                        .contains(Items.RAW_IRON),
+                "o lingote perdeu o ferro cru quando a tabela do fundidor saiu");
 
         context.complete();
     }

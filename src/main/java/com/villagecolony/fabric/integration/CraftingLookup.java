@@ -5,11 +5,13 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.recipe.CraftingRecipe;
 import net.minecraft.recipe.Ingredient;
 import net.minecraft.recipe.RecipeEntry;
+import net.minecraft.recipe.SmeltingRecipe;
 import net.minecraft.recipe.RecipeType;
 import net.minecraft.recipe.input.CraftingRecipeInput;
 import net.minecraft.server.world.ServerWorld;
 
 import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -69,6 +71,46 @@ public final class CraftingLookup {
                         new net.minecraft.recipe.input.SingleStackRecipeInput(input),
                         world.getRegistryManager()))
                 .filter(result -> !result.isEmpty());
+    }
+
+    /**
+     * O que entra na fornalha para sair isto — 2026-08-22.
+     *
+     * <p>O inverso de {@link #smelted}, e ele existe para tirar do mod a
+     * última tabela de "quem vira o quê". Até aqui o fundidor tinha duas
+     * linhas escritas à mão — areia dá vidro, ferro cru dá lingote — e
+     * o arenito liso seria a terceira. A ADR-009 pede o contrário: quem
+     * sabe o que a fornalha faz é o livro de receitas do jogo.
+     *
+     * <p><b>Todos os candidatos, e não o primeiro.</b> Lingote de ferro
+     * sai de três coisas — minério, minério de ardósia e ferro cru — e
+     * qual delas serve depende do que está no baú, não da ordem em que o
+     * livro as devolve. Devolver só a primeira seria escolher por acaso.
+     *
+     * <p>Vazio quando a fornalha não faz isto — datapack que mudou,
+     * material que não é de fornalha —, e vazio aqui é o fundidor
+     * encerrando a tarefa em vez de queimar o que não devia.
+     */
+    public static List<Item> smeltingInputsFor(ServerWorld world, Item wanted) {
+        List<Item> inputs = new ArrayList<>();
+
+        for (RecipeEntry<SmeltingRecipe> entry
+                : world.getRecipeManager().listAllOfType(RecipeType.SMELTING)) {
+
+            if (!entry.value().getResult(world.getRegistryManager()).isOf(wanted)) {
+                continue;
+            }
+
+            for (Ingredient slot : entry.value().getIngredients()) {
+                for (ItemStack option : slot.getMatchingStacks()) {
+                    if (!option.isEmpty() && !inputs.contains(option.getItem())) {
+                        inputs.add(option.getItem());
+                    }
+                }
+            }
+        }
+
+        return inputs;
     }
 
     public static Optional<ItemStack> resultOfOne(ServerWorld world, ItemStack input) {

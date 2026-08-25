@@ -189,7 +189,8 @@ public final class ColonyGoals {
                 woodRoom,
                 plankRoom,
                 new WorkDemand(
-                        planksForWork, stone, stoneForWork, woolForBeds, glassForWork, 0, 0));
+                        planksForWork, stone, stoneForWork, woolForBeds, glassForWork,
+                        0, 0, java.util.Map.of()));
     }
 
     /**
@@ -286,6 +287,22 @@ public final class ColonyGoals {
         if (work.coal() > 0) {
             goals.put(ResourceType.COAL, work.coal());
         }
+
+        // O que a obra pede e sai da FORNALHA — 2026-08-22, ADR-009.
+        //
+        // Genérico de propósito: quem entra aqui é todo material da obra
+        // cuja produção declarada é SMELTED, e não uma lista de nomes. O
+        // caso que o pediu foi o arenito liso — a casa de deserto do
+        // catálogo é feita dele aos sessenta, e a colônia só sabia cavar
+        // o cru. Material novo que saia de fornalha entra sozinho.
+        //
+        // O cru vem de cima: a meta de pedra já conta a família inteira,
+        // e é dela que o mineiro tira o que a fornalha vai assar.
+        work.smelted().forEach((made, amount) -> {
+            if (amount > 0) {
+                goals.put(made, amount);
+            }
+        });
 
         // O ferro do lampião — 2026-08-21, e com o passo do meio de volta:
         // o lingote é da fornalha, e o cru é da mina. Sem as duas metas o
