@@ -233,6 +233,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | **Vila de deserto constrói** | 🧪 coberto por teste, nunca visto em jogo |
 | **A mina reconhece minério** — carvão e ferro, e a veia é seguida | 🧪 coberto por teste, nunca visto em jogo |
 | **O mineiro diz o que está fazendo**, uma linha por ciclo | 🧪 coberto por teste, nunca visto em jogo |
+| **A fornalha assa pedra** — e quem diz o que entra nela é o livro de receitas do jogo, não uma tabela | 🧪 coberto por teste, **é o elo que faltava para o deserto** |
 | **A mina tem onde nascer** — doze colunas em vez de uma, e voz quando nenhuma serve | 🧪 coberto por teste, **e é o que a próxima sessão precisa ver** |
 | **A boca da mina ganha lanterna e baú** — e o minério fica lá até lotar | 🧪 coberto por teste, nunca visto em jogo |
 | **O mineiro reconhece os oito minérios** do jogo, e não dois | 🧪 coberto por teste, nunca visto em jogo |
@@ -251,7 +252,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Agricultura e defesa | ⬜ não começado |
 
 ```text
-464 testes unitários  ·  157 testes de jogo  ·  ./gradlew build
+470 testes unitários  ·  158 testes de jogo  ·  ./gradlew build
 ```
 
 **O que 🧪 quer dizer aqui.** A bateria roda o caso e ele passa. Não quer
@@ -304,10 +305,9 @@ ficam os que mudam o que se vê no jogo.
 
 | | O que | Por quê |
 |---|---|---|
-| 🔴 | **Ninguém funde pedra** — a colônia cava arenito e a casa pede o **liso** | É o único elo entre a obra de deserto e a casa de pé. Visto em jogo sete vezes numa sessão |
 | 🔴 | **A vila fica presa numa obra só** | O planejador não sabe desistir. O catálogo do jogo já tem fazenda, curtume, ferraria — e a Regra 28 filtra tudo para uma casa por bioma |
-| 🔴 | **`MinerWork` cruzou o teto** — 465 → 511 linhas em 08-22, e `BuilderWork` foi de 729 a 838 | Regressão deste ciclo. São oito arquivos de código acima de 500 |
-| 🔴 | **Um teste de jogo instável** — `theStallGuardReturnsTheTaskAndForgetsTheTree` | 2 falhas em 12 rodadas, depois de melhorar de 3 em 10. **Sem diagnóstico** |
+| 🟠 | **Sete arquivos de código acima de 500 linhas** | `VillageDetectionHandler` é o pior com 983. `MinerWork` e `BuilderWork` foram cortados em 08-22, por responsabilidade |
+| 🟠 | **Um teste de jogo instável** — `theStallGuardReturnsTheTaskAndForgetsTheTree` | **Não reproduzido em 12 rodadas** depois do trabalho de 08-22, e isso não é diagnóstico. Duas hipóteses caíram no caminho |
 | 🟠 | **`theStoneLeavesTheWorldAndReachesTheChest`** disse "a pedra não chegou ao baú" uma vez | Suspeita, não diagnóstico |
 | 🟠 | **A arena da bateria tem bioma fixo** de planície | Escondeu **duas vezes** que o deserto estava quebrado |
 | 🟡 | **O ícone tem 1,95 MB, e o jar 2,29 MB** | 85% do que se distribui é uma imagem mostrada a 64 pixels |

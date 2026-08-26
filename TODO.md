@@ -16,8 +16,8 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-464 testes unitários  ·  157 testes de jogo  ·  30 regras  ·  9 ADRs
-8 arquivos de código acima de 500 linhas  ·  5 de teste
+470 testes unitários  ·  158 testes de jogo  ·  30 regras  ·  9 ADRs
+7 arquivos de código acima de 500 linhas  ·  5 de teste
 3 sessões de jogo em 2026-08-22  ·  7 commits desde a última
 ```
 
@@ -29,6 +29,8 @@ lista abaixo.
 
 | | O que | Prova |
 |---|---|---|
+| **E18 — quem funde pedra** | Duas exceções nominais saíram: `typeFor` deixou de ter lista de nomes, e o fundidor pergunta ao livro de receitas do jogo. Nasceu `Production` | 6 testes |
+| **E19 — o corte por responsabilidade** | `MinerWork` 511→436 (de volta ao teto), `BuilderWork` 838→625. Três classes, duas em molde que já existia | a bateria |
 | **Nível 1 — a mina tem onde nascer** | Era uma coluna só, sem alternativa e sem log. Agora são doze — quatro lados por três distâncias —, a boca é superfície e não miolo de morro, e o fracasso tem voz | teste de jogo, fase vermelha conferida |
 | **O mineiro tem voz** | `MinerWork` não tinha linha por ciclo. O lenhador ganhou a dele em 08-12, o construtor em 08-18 | teste de jogo |
 | **Regra 30 — a boca mobiliada** | Lanterna de um lado, baú do outro; minério menos carvão fica lá até lotar | 2 testes de jogo |
@@ -68,9 +70,7 @@ conferido no volume · árvore grande deixando de ser recusada.
 
 | | Erro | Estado |
 |---|---|---|
-| **E19** | **`MinerWork` cruzou o teto de 500 linhas** — 465 → 511 em 08-22. `BuilderWork` foi de 729 a 838 | Regressão deste ciclo. A ADR-009 §6 diz que 500 é indicador e o corte é por responsabilidade |
-| **E18** | **Ninguém funde pedra.** A colônia cava arenito e a casa pede o liso | Visto em jogo 7× numa sessão. **Único elo entre a obra de deserto e a casa de pé** |
-| **E20** | **`theStallGuardReturnsTheTaskAndForgetsTheTree` instável** | 2 falhas em 12 rodadas, depois de melhorar de 3 em 10. **Sem diagnóstico** |
+| **E20** | **`theStallGuardReturnsTheTaskAndForgetsTheTree` instável** | **Não reproduzido em 12 rodadas** depois do E18 — e isso não é diagnóstico. Duas hipóteses caíram: o relógio compartilhado do mundo (as três horas usadas estão todas dentro do expediente) e o limite global de travamento (só um teste o mexe) |
 | **E21** | **`theStoneLeavesTheWorldAndReachesTheChest`** disse "a pedra não chegou ao baú" uma vez | Suspeita: custo de ler estrutura no tique. **Suspeita, não diagnóstico** |
 | **E9** | Colônia `ABANDONED` desmarcada no ciclo seguinte | Instrumentado em 08-21; falta a sessão que responde |
 | **E4** | `path held: no` e o aldeão chega assim mesmo | Provável, nunca verificado |
@@ -96,11 +96,12 @@ fabricante · construtor **chegando ao bloco** · centro parado pela sonda
 - A boca em terreno impossível ainda **desiste** em vez de a vila fazer
   outra coisa — isso é Nível 4.
 
-### Nível 2 — material processado
+### Nível 2 — material processado *(feito, não visto)*
 
-- **E18 — quem funde pedra.** Pelo sistema **genérico**, sem exceção de
-  deserto: "a colônia sabe produzir X a partir de Y".
-- O fundidor tem duas linhas escritas à mão (`GLASS`, `IRON_INGOT`).
+- **E18 fechado em 08-22**, e pelo caminho genérico que a ADR pediu:
+  `Production` declarada no recurso, e o fundidor perguntando ao livro
+  de receitas do jogo. **Nenhuma sessão viu isso rodar** — a linha a
+  procurar é `Smelter ... made minecraft:smooth_sandstone`.
 
 ### Nível 3 — a obra termina sem o jogador
 
@@ -133,13 +134,14 @@ comércio entre vilas.
 
 ### Fora dos níveis — dívida que não bloqueia
 
-- **8 arquivos de código acima de 500 linhas**, e 5 de teste:
+- **7 arquivos de código acima de 500 linhas**, e 5 de teste.
+  `VillageDetectionHandler` é o pior com 983, e o corte dele é o próximo:
 
 ```text
-982  VillageDetectionHandler      621  BuildSiteScanner
-838  BuilderWork                  550  ConstructionPlanner
-724  TreeHarvester                511  MinerWork
+983  VillageDetectionHandler      621  BuildSiteScanner
+724  TreeHarvester                565  ConstructionPlanner
 639  ManufacturerWork             502  ColonySavedData
+625  BuilderWork
 
 1571 LumberjackGameTest           754  MinerGameTest
 975  BuilderGameTest              670  BuildSiteGameTest
@@ -175,7 +177,7 @@ comércio entre vilas.
 | | Decisão | Trava |
 |---|---|---|
 | 1 | **Mina sem lugar:** a vila tenta outro raio, aceita boca ruim, ou declara `BLOCKED` e faz outra coisa? | Nível 1 → 4 |
-| 2 | **Substituição:** fica binária ou vira os quatro níveis da ADR? `cut_sandstone` serve no lugar de `smooth_sandstone`? | Nível 2 |
+| 2 | **Substituição:** fica binária ou vira os quatro níveis da ADR? `cut_sandstone` serve no lugar de `smooth_sandstone`? | já não trava o Nível 2 — a fornalha faz o liso. Trava a **variedade** |
 | 3 | **Regra 28:** sai quando o planejador souber desistir, ou antes? | Nível 4 |
 | 4 | **Regra 25:** morre ou volta? Hoje é lógica morta | limpeza |
 | 5 | **Água e comida:** o mod planta e coloca água, ou fazenda fica fora do escopo? | Nível 6 e a alternativa de planície |
@@ -192,7 +194,8 @@ Em ordem do que mais precisa ser visto:
 |---|---|---|
 | **1** | **A mina abrindo** | `Miner ... opens a mine at ...` — ou a linha nova dizendo por que não |
 | **2** | **O mineiro cavando** | `Miner ... took` de um arenito, e a linha do ciclo dizendo o que ele faz |
-| **3** | **A boca mobiliada** | `Mine mouth at ... furnished — miner chest at ..., lantern at ...` |
+| **3** | **O fundidor assando pedra** | `Smelter ... made minecraft:smooth_sandstone` — o elo que faltava para a casa de deserto |
+| **4** | **A boca mobiliada** | `Mine mouth at ... furnished — miner chest at ..., lantern at ...` |
 | **4** | **A casa de deserto subindo** | `blocks left` caindo de 113 |
 | **5** | **A barreira de teste** | `TEST BARRIER covered for nothing` é a notícia boa |
 | **6** | **A casa esperando a cama**, e o pastor tosquiando por causa disso | `WAITING_RESOURCES` por `white_bed` |
