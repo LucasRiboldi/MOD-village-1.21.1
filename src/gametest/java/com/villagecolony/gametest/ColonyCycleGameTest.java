@@ -86,28 +86,30 @@ public class ColonyCycleGameTest implements FabricGameTest {
         // Regra 1 não falta nada, porque não há onde pôr.
         int room = ChestDepositor.freeSpaceFor(world, chestPos, Items.DIRT);
 
-        context.assertTrue(room > 0, "baú vazio devia ter espaço, tinha " + room);
+        try {
+            context.assertTrue(room > 0, "baú vazio devia ter espaço, tinha " + room);
 
-        ChestDepositor.deposit(world, chestPos, Items.DIRT, room);
+            ChestDepositor.deposit(world, chestPos, Items.DIRT, room);
 
-        VillageDetectionHandler.runCycleNow(world, absoluteStand);
+            VillageDetectionHandler.runCycleNow(world, absoluteStand);
 
-        context.assertTrue(
-                collectWoodTasksOf(colony) == 0,
-                "sem espaço no baú a colônia pediu madeira mesmo assim: "
-                        + collectWoodTasksOf(colony) + " tarefas");
+            context.assertTrue(
+                    collectWoodTasksOf(colony) == 0,
+                    "sem espaço no baú a colônia pediu madeira mesmo assim: "
+                            + collectWoodTasksOf(colony) + " tarefas");
 
-        // O jogador esvazia o baú. Nada mais muda.
-        emptyChest(world, absoluteChest);
+            // O jogador esvazia o baú. Nada mais muda.
+            emptyChest(world, absoluteChest);
 
-        VillageDetectionHandler.runCycleNow(world, absoluteStand);
+            VillageDetectionHandler.runCycleNow(world, absoluteStand);
 
-        context.assertTrue(
-                collectWoodTasksOf(colony) == 1,
-                "com o baú vazio a colônia devia pedir madeira, e abriu "
-                        + collectWoodTasksOf(colony) + " tarefas");
-
-        owned.cleanUp();
+            context.assertTrue(
+                    collectWoodTasksOf(colony) == 1,
+                    "com o baú vazio a colônia devia pedir madeira, e abriu "
+                            + collectWoodTasksOf(colony) + " tarefas");
+        } finally {
+            owned.cleanUp();
+        }
 
         context.complete();
     }
@@ -185,13 +187,15 @@ public class ColonyCycleGameTest implements FabricGameTest {
         LumberjackWork.run(world, colony);
 
         context.runAtTick(10, () -> {
-            context.assertTrue(
-                    task.state() == TaskState.COMPLETED,
-                    "a tarefa devia ter sido encerrada, e está em " + task.state());
+            try {
+                context.assertTrue(
+                        task.state() == TaskState.COMPLETED,
+                        "a tarefa devia ter sido encerrada, e está em " + task.state());
 
-            context.expectBlock(Blocks.OAK_LOG, base);
-
-            owned.cleanUp();
+                context.expectBlock(Blocks.OAK_LOG, base);
+            } finally {
+                owned.cleanUp();
+            }
 
             context.complete();
         });

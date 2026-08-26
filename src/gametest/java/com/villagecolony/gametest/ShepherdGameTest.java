@@ -99,17 +99,17 @@ public class ShepherdGameTest implements FabricGameTest {
                     .read(context.getWorld(), context.getAbsolutePos(CHEST))
                     .amountOfGroup(ResourceGroup.WOOL);
 
-            context.assertTrue(wool > 0, "a lã não chegou ao baú");
+            try {
+                context.assertTrue(wool > 0, "a lã não chegou ao baú");
 
-            context.assertTrue(sheep.isAlive(), "o pastor matou a ovelha em vez de tosquiá-la");
+                context.assertTrue(sheep.isAlive(), "o pastor matou a ovelha em vez de tosquiá-la");
 
-            context.assertTrue(sheep.isSheared(), "a lã apareceu e a ovelha continua lanuda");
+                context.assertTrue(sheep.isSheared(), "a lã apareceu e a ovelha continua lanuda");
+            } finally {
+                owned.cleanUp();
 
-            owned.cleanUp();
-
-            ShepherdWork.forget(villager.getUuid());
-
-            ShepherdWork.restoreSearch();
+                ShepherdWork.restoreSearch();
+            }
 
             context.complete();
         });

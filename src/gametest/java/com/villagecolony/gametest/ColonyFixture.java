@@ -7,6 +7,9 @@ import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.ManufacturerWork;
+import com.villagecolony.fabric.work.MinerWork;
+import com.villagecolony.fabric.work.ShepherdWork;
+import com.villagecolony.fabric.work.SmelterWork;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,11 +70,22 @@ final class ColonyFixture {
      */
     void cleanUp() {
         for (UUID worker : workers) {
+            // As seis profissões, na ordem do VillagerLifecycleHandler.
+            //
+            // O do construtor entrou em 2026-08-25, pelo mesmo motivo que
+            // ele entrou lá: trabalho de obra que sobrevive ao teste é
+            // trabalho que o teste seguinte herda.
+            //
+            // Mineiro, fundidor e pastor entraram em 2026-08-26. Faltavam
+            // aqui, e cada teste dessas três profissões chamava o `forget`
+            // à mão — sempre DEPOIS do `cleanUp`, e às vezes depois do
+            // `assertTrue`, que lança. Uma afirmação que caísse deixava o
+            // trabalhador vivo para o resto da bateria.
+            MinerWork.forget(worker);
+            SmelterWork.forget(worker);
+            ShepherdWork.forget(worker);
             LumberjackWork.forget(worker);
             ManufacturerWork.forget(worker);
-            // O do construtor entrou em 2026-08-25, pelo mesmo motivo que
-            // ele entrou no VillagerLifecycleHandler: trabalho de obra que
-            // sobrevive ao teste é trabalho que o teste seguinte herda.
             BuilderWork.forget(worker);
             WorkTargets.clear(worker);
 

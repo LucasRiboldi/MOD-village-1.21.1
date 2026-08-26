@@ -100,24 +100,26 @@ public class ConstructionResumeGameTest implements FabricGameTest {
         Optional<ConstructionProject> resumed =
                 VillageColonyMod.CONSTRUCTIONS.openOf(colony.id());
 
-        context.assertTrue(resumed.isPresent(), "a obra do save não renasceu");
+        try {
+            context.assertTrue(resumed.isPresent(), "a obra do save não renasceu");
 
-        context.assertTrue(
-                resumed.get().origin().equals(origin),
-                "a obra renasceu no lugar errado: " + resumed.get().origin());
+            context.assertTrue(
+                    resumed.get().origin().equals(origin),
+                    "a obra renasceu no lugar errado: " + resumed.get().origin());
 
-        context.assertTrue(
-                resumed.get().state() == ConstructionState.BUILDING,
-                "a obra renasceu em " + resumed.get().state());
+            context.assertTrue(
+                    resumed.get().state() == ConstructionState.BUILDING,
+                    "a obra renasceu em " + resumed.get().state());
 
-        // O bloco que já estava de pé não é pedido de novo. É a diferença
-        // entre retomar e recomeçar.
-        context.assertTrue(
-                resumed.get().remainingCount() == house.blockCount() - 1,
-                "esperava " + (house.blockCount() - 1) + " blocos a fazer, e faltam "
-                        + resumed.get().remainingCount());
-
-        owned.cleanUp();
+            // O bloco que já estava de pé não é pedido de novo. É a diferença
+            // entre retomar e recomeçar.
+            context.assertTrue(
+                    resumed.get().remainingCount() == house.blockCount() - 1,
+                    "esperava " + (house.blockCount() - 1) + " blocos a fazer, e faltam "
+                            + resumed.get().remainingCount());
+        } finally {
+            owned.cleanUp();
+        }
 
         context.complete();
     }
@@ -148,11 +150,13 @@ public class ConstructionResumeGameTest implements FabricGameTest {
 
         ConstructionPlanner.plan(context.getWorld(), colony);
 
-        context.assertTrue(
-                VillageColonyMod.CONSTRUCTIONS.pendingOf(colony.id()).isEmpty(),
-                "a obra de estrutura inexistente continua tentando renascer");
-
-        owned.cleanUp();
+        try {
+            context.assertTrue(
+                    VillageColonyMod.CONSTRUCTIONS.pendingOf(colony.id()).isEmpty(),
+                    "a obra de estrutura inexistente continua tentando renascer");
+        } finally {
+            owned.cleanUp();
+        }
 
         context.complete();
     }
@@ -197,17 +201,19 @@ public class ConstructionResumeGameTest implements FabricGameTest {
 
         ConstructionPlanner.plan(context.getWorld(), colony);
 
-        context.assertTrue(
-                VillageColonyMod.CONSTRUCTIONS.pendingOf(colony.id()).isEmpty(),
-                "a obra antiga continua guardada");
+        try {
+            context.assertTrue(
+                    VillageColonyMod.CONSTRUCTIONS.pendingOf(colony.id()).isEmpty(),
+                    "a obra antiga continua guardada");
 
-        context.assertTrue(
-                VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
-                        .map(open -> !open.blueprint().id().equals(OTHER_HOUSE))
-                        .orElse(true),
-                "a casa de planície voltou a ser aberta, e ela é impossível para esta colônia");
-
-        owned.cleanUp();
+            context.assertTrue(
+                    VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
+                            .map(open -> !open.blueprint().id().equals(OTHER_HOUSE))
+                            .orElse(true),
+                    "a casa de planície voltou a ser aberta, e ela é impossível para esta colônia");
+        } finally {
+            owned.cleanUp();
+        }
 
         context.complete();
     }
@@ -266,17 +272,19 @@ public class ConstructionResumeGameTest implements FabricGameTest {
 
         WaitingWork.giveUp(colony, project);
 
-        context.assertTrue(
-                VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isEmpty(),
-                "a obra largada continua aberta, e a colônia segue travada nela");
+        try {
+            context.assertTrue(
+                    VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isEmpty(),
+                    "a obra largada continua aberta, e a colônia segue travada nela");
 
-        context.assertTrue(
-                VillageColonyMod.BUILDINGS.isColonyInfrastructure(origin),
-                "o lote da casa pela metade ficou livre, e a colônia vai construir por cima");
+            context.assertTrue(
+                    VillageColonyMod.BUILDINGS.isColonyInfrastructure(origin),
+                    "o lote da casa pela metade ficou livre, e a colônia vai construir por cima");
+        } finally {
+            owned.cleanUp();
 
-        owned.cleanUp();
-
-        VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
+            VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
+        }
 
         context.complete();
     }

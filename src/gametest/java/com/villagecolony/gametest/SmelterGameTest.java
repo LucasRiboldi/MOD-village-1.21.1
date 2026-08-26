@@ -95,15 +95,16 @@ public class SmelterGameTest implements FabricGameTest {
                     .read(world, context.getAbsolutePos(CHEST))
                     .amountOf(ResourceType.SAND);
 
-            context.assertTrue(glass > 0, "a areia não virou vidro nenhum");
+            try {
+                context.assertTrue(glass > 0, "a areia não virou vidro nenhum");
 
-            context.assertTrue(
-                    sand < 4,
-                    "o vidro apareceu e a areia continua inteira — matéria do nada");
+                context.assertTrue(
+                        sand < 4,
+                        "o vidro apareceu e a areia continua inteira — matéria do nada");
+            } finally {
+                owned.cleanUp();
 
-            owned.cleanUp();
-
-            SmelterWork.forget(villager.getUuid());
+            }
 
             context.complete();
         });
@@ -167,21 +168,22 @@ public class SmelterGameTest implements FabricGameTest {
         context.runAtTick(150, () -> {
             var inChest = ChestInventoryReader.read(world, context.getAbsolutePos(CHEST));
 
-            context.assertTrue(
-                    inChest.amountOf(ResourceType.IRON_INGOT) > 0,
-                    "o ferro cru não virou lingote nenhum");
+            try {
+                context.assertTrue(
+                        inChest.amountOf(ResourceType.IRON_INGOT) > 0,
+                        "o ferro cru não virou lingote nenhum");
 
-            context.assertTrue(
-                    inChest.amountOf(ResourceType.RAW_IRON) < 4,
-                    "o lingote apareceu e o cru continua inteiro — matéria do nada");
+                context.assertTrue(
+                        inChest.amountOf(ResourceType.RAW_IRON) < 4,
+                        "o lingote apareceu e o cru continua inteiro — matéria do nada");
 
-            context.assertTrue(
-                    inChest.amountOf(ResourceType.SAND) == 4,
-                    "o fundidor queimou a areia numa tarefa de ferro");
+                context.assertTrue(
+                        inChest.amountOf(ResourceType.SAND) == 4,
+                        "o fundidor queimou a areia numa tarefa de ferro");
+            } finally {
+                owned.cleanUp();
 
-            owned.cleanUp();
-
-            SmelterWork.forget(villager.getUuid());
+            }
 
             context.complete();
         });

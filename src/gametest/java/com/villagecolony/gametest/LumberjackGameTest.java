@@ -917,9 +917,11 @@ public class LumberjackGameTest implements FabricGameTest {
                     .read(world, context.getAbsolutePos(chest))
                     .amountOf(ResourceType.OAK_LOG);
 
-            context.assertTrue(stored > 0, "a madeira não chegou ao baú");
-
-            owned.cleanUp();
+            try {
+                context.assertTrue(stored > 0, "a madeira não chegou ao baú");
+            } finally {
+                owned.cleanUp();
+            }
 
             context.complete();
         });
@@ -1027,17 +1029,19 @@ public class LumberjackGameTest implements FabricGameTest {
         context.runAtTick(300, () -> {
             TreeChoice.restoreStallLimit();
 
-            context.assertTrue(
-                    task.state() == TaskState.AVAILABLE,
-                    "o guarda não devolveu a tarefa à fila — ela está em " + task.state());
+            try {
+                context.assertTrue(
+                        task.state() == TaskState.AVAILABLE,
+                        "o guarda não devolveu a tarefa à fila — ela está em " + task.state());
 
-            context.assertTrue(
-                    task.executor().isEmpty(),
-                    "a tarefa voltou à fila e continua com dono");
+                context.assertTrue(
+                        task.executor().isEmpty(),
+                        "a tarefa voltou à fila e continua com dono");
+            } finally {
+                TreeMarks.forgetUnreachable();
 
-            TreeMarks.forgetUnreachable();
-
-            owned.cleanUp();
+                owned.cleanUp();
+            }
 
             context.complete();
         });
@@ -1124,20 +1128,22 @@ public class LumberjackGameTest implements FabricGameTest {
         LumberjackWork.run(world, colony);
 
         context.runAtTick(360, () -> {
-            context.assertTrue(
-                    logsStanding(context, near) == 4,
-                    "a árvore marcada fora de alcance foi derrubada assim mesmo");
+            try {
+                context.assertTrue(
+                        logsStanding(context, near) == 4,
+                        "a árvore marcada fora de alcance foi derrubada assim mesmo");
 
-            context.assertTrue(
-                    logsStanding(context, far) < 4,
-                    "o lenhador pulou a marcada e não foi atrás de nenhuma outra");
+                context.assertTrue(
+                        logsStanding(context, far) < 4,
+                        "o lenhador pulou a marcada e não foi atrás de nenhuma outra");
+            } finally {
+                // As áreas de teste são reaproveitadas, e a marca dura 6.000
+                // ticks: deixá-la aqui faria o teste seguinte encontrar uma
+                // árvore boa marcada como fora de alcance.
+                TreeMarks.forgetUnreachable();
 
-            // As áreas de teste são reaproveitadas, e a marca dura 6.000
-            // ticks: deixá-la aqui faria o teste seguinte encontrar uma
-            // árvore boa marcada como fora de alcance.
-            TreeMarks.forgetUnreachable();
-
-            owned.cleanUp();
+                owned.cleanUp();
+            }
 
             context.complete();
         });
@@ -1205,9 +1211,11 @@ public class LumberjackGameTest implements FabricGameTest {
         LumberjackWork.run(world, colony);
 
         context.runAtTick(320, () -> {
-            context.expectBlock(Blocks.OAK_SAPLING, base);
-
-            owned.cleanUp();
+            try {
+                context.expectBlock(Blocks.OAK_SAPLING, base);
+            } finally {
+                owned.cleanUp();
+            }
 
             context.complete();
         });
@@ -1296,18 +1304,20 @@ public class LumberjackGameTest implements FabricGameTest {
         }
 
         context.runAtTick(340, () -> {
-            context.assertTrue(
-                    cancelled[0],
-                    "a árvore não chegou ao chão em 320 ticks — o teste não chegou a exercitar"
-                            + " o que pretende");
+            try {
+                context.assertTrue(
+                        cancelled[0],
+                        "a árvore não chegou ao chão em 320 ticks — o teste não chegou a exercitar"
+                                + " o que pretende");
 
-            context.assertTrue(
-                    logsStanding(context, base) == 0,
-                    "a árvore precisava estar no chão");
+                context.assertTrue(
+                        logsStanding(context, base) == 0,
+                        "a árvore precisava estar no chão");
 
-            context.expectBlock(Blocks.OAK_SAPLING, base);
-
-            owned.cleanUp();
+                context.expectBlock(Blocks.OAK_SAPLING, base);
+            } finally {
+                owned.cleanUp();
+            }
 
             context.complete();
         });
@@ -1378,30 +1388,32 @@ public class LumberjackGameTest implements FabricGameTest {
         context.runAtTick(4, () -> {
             List<BlockPos> working = LumberjackWork.blocksInProgress(colony.id());
 
-            context.assertTrue(
-                    working.size() == 2,
-                    "esperava dois lenhadores com árvore, foram " + working.size());
+            try {
+                context.assertTrue(
+                        working.size() == 2,
+                        "esperava dois lenhadores com árvore, foram " + working.size());
 
-            context.assertTrue(
-                    !working.get(0).equals(working.get(1)),
-                    "os dois pegaram o mesmo tronco: " + working.get(0).toShortString());
+                context.assertTrue(
+                        !working.get(0).equals(working.get(1)),
+                        "os dois pegaram o mesmo tronco: " + working.get(0).toShortString());
 
-            // E são de árvores diferentes, não dois troncos da mesma.
-            int firstColumn = 0;
+                // E são de árvores diferentes, não dois troncos da mesma.
+                int firstColumn = 0;
 
-            for (BlockPos pos : working) {
-                if (pos.getX() == context.getAbsolutePos(first).getX()
-                        && pos.getZ() == context.getAbsolutePos(first).getZ()) {
+                for (BlockPos pos : working) {
+                    if (pos.getX() == context.getAbsolutePos(first).getX()
+                            && pos.getZ() == context.getAbsolutePos(first).getZ()) {
 
-                    firstColumn++;
+                        firstColumn++;
+                    }
                 }
+
+                context.assertTrue(
+                        firstColumn == 1,
+                        "os dois foram para a mesma árvore: " + firstColumn + " na primeira");
+            } finally {
+                owned.cleanUp();
             }
-
-            context.assertTrue(
-                    firstColumn == 1,
-                    "os dois foram para a mesma árvore: " + firstColumn + " na primeira");
-
-            owned.cleanUp();
 
             context.complete();
         });
@@ -1515,24 +1527,26 @@ public class LumberjackGameTest implements FabricGameTest {
         context.runAtTick(30, () -> {
             List<BlockPos> working = LumberjackWork.blocksInProgress(colony.id());
 
-            context.assertTrue(
-                    !working.isEmpty(),
-                    "o lenhador ficou preso na construção e nunca achou a árvore");
+            try {
+                context.assertTrue(
+                        !working.isEmpty(),
+                        "o lenhador ficou preso na construção e nunca achou a árvore");
 
-            BlockPos absoluteTree = context.getAbsolutePos(tree);
+                BlockPos absoluteTree = context.getAbsolutePos(tree);
 
-            context.assertTrue(
-                    working.get(0).getX() == absoluteTree.getX()
-                            && working.get(0).getZ() == absoluteTree.getZ(),
-                    "o lenhador foi para " + working.get(0).toShortString()
-                            + ", que não é a árvore");
+                context.assertTrue(
+                        working.get(0).getX() == absoluteTree.getX()
+                                && working.get(0).getZ() == absoluteTree.getZ(),
+                        "o lenhador foi para " + working.get(0).toShortString()
+                                + ", que não é a árvore");
 
-            // E a construção continua de pé, que é a outra metade.
-            for (int y = 0; y < 3; y++) {
-                context.expectBlock(Blocks.OAK_LOG, pillar.up(y));
+                // E a construção continua de pé, que é a outra metade.
+                for (int y = 0; y < 3; y++) {
+                    context.expectBlock(Blocks.OAK_LOG, pillar.up(y));
+                }
+            } finally {
+                owned.cleanUp();
             }
-
-            owned.cleanUp();
 
             context.complete();
         });

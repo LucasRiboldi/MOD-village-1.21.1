@@ -175,29 +175,31 @@ public class BuilderGameTest implements FabricGameTest {
             BlockState lower = stateAt(context, SITE);
             BlockState upper = stateAt(context, SITE.up());
 
-            context.assertTrue(
-                    lower.isOf(Blocks.OAK_DOOR),
-                    "a metade de baixo da porta não foi colocada — veio "
-                            + lower.getBlock());
+            try {
+                context.assertTrue(
+                        lower.isOf(Blocks.OAK_DOOR),
+                        "a metade de baixo da porta não foi colocada — veio "
+                                + lower.getBlock());
 
-            context.assertTrue(
-                    upper.isOf(Blocks.OAK_DOOR),
-                    "a metade de cima da porta não foi colocada — veio "
-                            + upper.getBlock());
+                context.assertTrue(
+                        upper.isOf(Blocks.OAK_DOOR),
+                        "a metade de cima da porta não foi colocada — veio "
+                                + upper.getBlock());
 
-            context.assertTrue(
-                    lower.get(Properties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.LOWER
-                            && upper.get(Properties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER,
-                    "as duas metades não estão ligadas: embaixo "
-                            + lower.get(Properties.DOUBLE_BLOCK_HALF)
-                            + ", em cima " + upper.get(Properties.DOUBLE_BLOCK_HALF));
+                context.assertTrue(
+                        lower.get(Properties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.LOWER
+                                && upper.get(Properties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER,
+                        "as duas metades não estão ligadas: embaixo "
+                                + lower.get(Properties.DOUBLE_BLOCK_HALF)
+                                + ", em cima " + upper.get(Properties.DOUBLE_BLOCK_HALF));
 
-            context.assertTrue(
-                    doorsIn(context, fixture.chest) == 1,
-                    "uma porta devia custar uma porta, e o baú ficou com "
-                            + doorsIn(context, fixture.chest) + " de 2");
-
-            fixture.owned.cleanUp();
+                context.assertTrue(
+                        doorsIn(context, fixture.chest) == 1,
+                        "uma porta devia custar uma porta, e o baú ficou com "
+                                + doorsIn(context, fixture.chest) + " de 2");
+            } finally {
+                fixture.owned.cleanUp();
+            }
 
             context.complete();
         });
@@ -227,26 +229,28 @@ public class BuilderGameTest implements FabricGameTest {
         Fixture fixture = setUpDoor(context, Items.OAK_PLANKS, 6);
 
         context.runAtTick(90, () -> {
-            context.assertTrue(
-                    stateAt(context, SITE).isOf(Blocks.OAK_DOOR),
-                    "a Regra 10 pede que o construtor faça a porta que falta,"
-                            + " e no lugar dela veio "
-                            + stateAt(context, SITE).getBlock());
+            try {
+                context.assertTrue(
+                        stateAt(context, SITE).isOf(Blocks.OAK_DOOR),
+                        "a Regra 10 pede que o construtor faça a porta que falta,"
+                                + " e no lugar dela veio "
+                                + stateAt(context, SITE).getBlock());
 
-            context.assertTrue(
-                    planksIn(context, fixture.chest) == 0,
-                    "a porta tinha de custar as seis tábuas, e sobraram "
-                            + planksIn(context, fixture.chest));
+                context.assertTrue(
+                        planksIn(context, fixture.chest) == 0,
+                        "a porta tinha de custar as seis tábuas, e sobraram "
+                                + planksIn(context, fixture.chest));
 
-            // A receita do jogo dá três portas por seis tábuas. Uma foi
-            // para a parede; as outras duas são da colônia, e sumir com
-            // elas seria destruir material do jogador.
-            context.assertTrue(
-                    doorsIn(context, fixture.chest) == 2,
-                    "o que sobrou da fabricação tinha de ficar no baú, e ficaram "
-                            + doorsIn(context, fixture.chest));
-
-            fixture.owned.cleanUp();
+                // A receita do jogo dá três portas por seis tábuas. Uma foi
+                // para a parede; as outras duas são da colônia, e sumir com
+                // elas seria destruir material do jogador.
+                context.assertTrue(
+                        doorsIn(context, fixture.chest) == 2,
+                        "o que sobrou da fabricação tinha de ficar no baú, e ficaram "
+                                + doorsIn(context, fixture.chest));
+            } finally {
+                fixture.owned.cleanUp();
+            }
 
             context.complete();
         });
@@ -269,12 +273,14 @@ public class BuilderGameTest implements FabricGameTest {
         Fixture fixture = setUpDoorInTwoChests(context);
 
         context.runAtTick(90, () -> {
-            context.assertTrue(
-                    stateAt(context, SITE).isOf(Blocks.OAK_DOOR),
-                    "três tábuas num baú e três em outro são seis tábuas, e a"
-                            + " porta não subiu");
-
-            fixture.owned.cleanUp();
+            try {
+                context.assertTrue(
+                        stateAt(context, SITE).isOf(Blocks.OAK_DOOR),
+                        "três tábuas num baú e três em outro são seis tábuas, e a"
+                                + " porta não subiu");
+            } finally {
+                fixture.owned.cleanUp();
+            }
 
             context.complete();
         });
@@ -444,12 +450,14 @@ public class BuilderGameTest implements FabricGameTest {
         Fixture fixture = setUp(context, 8, furnishedRoom(), 1);
 
         context.runAtTick(90, () -> {
-            context.assertTrue(
-                    fixture.project.state() == ConstructionState.WAITING_RESOURCES,
-                    "sem lã no baú a obra devia aguardar a cama, e ficou em "
-                            + fixture.project.state());
-
-            fixture.owned.cleanUp();
+            try {
+                context.assertTrue(
+                        fixture.project.state() == ConstructionState.WAITING_RESOURCES,
+                        "sem lã no baú a obra devia aguardar a cama, e ficou em "
+                                + fixture.project.state());
+            } finally {
+                fixture.owned.cleanUp();
+            }
 
             context.complete();
         });
@@ -468,12 +476,14 @@ public class BuilderGameTest implements FabricGameTest {
         Fixture fixture = setUp(context, 8, furnishedRoom(), 1);
 
         context.runAtTick(90, () -> {
-            context.assertTrue(
-                    stateAt(context, SITE).isOf(Blocks.CHEST),
-                    "o baú sai de oito tábuas e a colônia tinha oito — veio "
-                            + stateAt(context, SITE).getBlock());
-
-            fixture.owned.cleanUp();
+            try {
+                context.assertTrue(
+                        stateAt(context, SITE).isOf(Blocks.CHEST),
+                        "o baú sai de oito tábuas e a colônia tinha oito — veio "
+                                + stateAt(context, SITE).getBlock());
+            } finally {
+                fixture.owned.cleanUp();
+            }
 
             context.complete();
         });
@@ -635,15 +645,17 @@ public class BuilderGameTest implements FabricGameTest {
         Fixture fixture = setUpWithoutTask(context);
 
         context.runAtTick(90, () -> {
-            context.assertTrue(
-                    isPlanks(context, SITE),
-                    "ninguém abriu tarefa para a obra: o primeiro bloco não foi posto");
+            try {
+                context.assertTrue(
+                        isPlanks(context, SITE),
+                        "ninguém abriu tarefa para a obra: o primeiro bloco não foi posto");
 
-            context.assertTrue(
-                    isPlanks(context, SITE.east()),
-                    "a obra parou no primeiro bloco");
-
-            fixture.owned.cleanUp();
+                context.assertTrue(
+                        isPlanks(context, SITE.east()),
+                        "a obra parou no primeiro bloco");
+            } finally {
+                fixture.owned.cleanUp();
+            }
 
             context.complete();
         });
@@ -739,11 +751,13 @@ public class BuilderGameTest implements FabricGameTest {
         });
 
         context.runAtTick(320, () -> {
-            context.assertTrue(
-                    isPlanks(context, SITE),
-                    "a obra acordou e mesmo assim o bloco não foi posto");
-
-            owned.cleanUp();
+            try {
+                context.assertTrue(
+                        isPlanks(context, SITE),
+                        "a obra acordou e mesmo assim o bloco não foi posto");
+            } finally {
+                owned.cleanUp();
+            }
 
             context.complete();
         });
@@ -853,13 +867,16 @@ public class BuilderGameTest implements FabricGameTest {
 
         context.runAtTick(200, () -> {
             for (int up = 0; up < 6; up++) {
-                context.assertTrue(
-                        isPlanks(context, SITE.up(up)),
-                        "a Regra 14 pede a torre inteira, e faltou a tábua "
-                                + up + " blocos acima do chão do lote");
-            }
+                try {
+                    context.assertTrue(
+                            isPlanks(context, SITE.up(up)),
+                            "a Regra 14 pede a torre inteira, e faltou a tábua "
+                                    + up + " blocos acima do chão do lote");
+                } finally {
+                }
 
-            fixture.owned.cleanUp();
+                fixture.owned.cleanUp();
+                }
 
             context.complete();
         });
@@ -898,20 +915,22 @@ public class BuilderGameTest implements FabricGameTest {
         Fixture fixture = setUp(context, 8);
 
         context.runAtTick(90, () -> {
-            context.assertTrue(
-                    isPlanks(context, SITE),
-                    "o primeiro bloco da parede não foi colocado");
+            try {
+                context.assertTrue(
+                        isPlanks(context, SITE),
+                        "o primeiro bloco da parede não foi colocado");
 
-            context.assertTrue(
-                    isPlanks(context, SITE.east()),
-                    "o segundo bloco da parede não foi colocado");
+                context.assertTrue(
+                        isPlanks(context, SITE.east()),
+                        "o segundo bloco da parede não foi colocado");
 
-            context.assertTrue(
-                    planksIn(context, fixture.chest) == 6,
-                    "o baú devia ter pago duas tábuas e tem "
-                            + planksIn(context, fixture.chest));
-
-            fixture.owned.cleanUp();
+                context.assertTrue(
+                        planksIn(context, fixture.chest) == 6,
+                        "o baú devia ter pago duas tábuas e tem "
+                                + planksIn(context, fixture.chest));
+            } finally {
+                fixture.owned.cleanUp();
+            }
 
             context.complete();
         });
@@ -929,21 +948,23 @@ public class BuilderGameTest implements FabricGameTest {
         Fixture fixture = setUp(context, 8);
 
         context.runAtTick(90, () -> {
-            context.assertTrue(
-                    fixture.project.isFinished(),
-                    "a obra não terminou: faltam " + fixture.project.remainingCount());
+            try {
+                context.assertTrue(
+                        fixture.project.isFinished(),
+                        "a obra não terminou: faltam " + fixture.project.remainingCount());
 
-            ColonyPos corner = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(SITE));
+                ColonyPos corner = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(SITE));
 
-            context.assertTrue(
-                    VillageColonyMod.BUILDINGS.isColonyInfrastructure(corner),
-                    "a casa pronta não entrou no registro de construções");
+                context.assertTrue(
+                        VillageColonyMod.BUILDINGS.isColonyInfrastructure(corner),
+                        "a casa pronta não entrou no registro de construções");
 
-            context.assertTrue(
-                    !VillageColonyMod.BUILDINGS.ofColony(fixture.colony.id()).isEmpty(),
-                    "o registro não sabe de quem é a casa");
-
-            fixture.owned.cleanUp();
+                context.assertTrue(
+                        !VillageColonyMod.BUILDINGS.ofColony(fixture.colony.id()).isEmpty(),
+                        "o registro não sabe de quem é a casa");
+            } finally {
+                fixture.owned.cleanUp();
+            }
 
             context.complete();
         });
@@ -961,16 +982,18 @@ public class BuilderGameTest implements FabricGameTest {
         Fixture fixture = setUp(context, 0);
 
         context.runAtTick(90, () -> {
-            context.assertTrue(
-                    !isPlanks(context, SITE),
-                    "a colônia construiu com o baú vazio — inventou matéria");
+            try {
+                context.assertTrue(
+                        !isPlanks(context, SITE),
+                        "a colônia construiu com o baú vazio — inventou matéria");
 
-            context.assertTrue(
-                    fixture.project.state() == ConstructionState.WAITING_RESOURCES,
-                    "a obra devia estar esperando material, e está em "
-                            + fixture.project.state());
-
-            fixture.owned.cleanUp();
+                context.assertTrue(
+                        fixture.project.state() == ConstructionState.WAITING_RESOURCES,
+                        "a obra devia estar esperando material, e está em "
+                                + fixture.project.state());
+            } finally {
+                fixture.owned.cleanUp();
+            }
 
             context.complete();
         });
@@ -999,16 +1022,18 @@ public class BuilderGameTest implements FabricGameTest {
         Fixture fixture = setUpStone(context);
 
         context.runAtTick(90, () -> {
-            context.assertTrue(
-                    stateAt(context, SITE).isOf(Blocks.COBBLESTONE),
-                    "a planta pedia arenito, o baú tinha pedregulho, e o que subiu foi "
-                            + stateAt(context, SITE).getBlock().getName().getString());
+            try {
+                context.assertTrue(
+                        stateAt(context, SITE).isOf(Blocks.COBBLESTONE),
+                        "a planta pedia arenito, o baú tinha pedregulho, e o que subiu foi "
+                                + stateAt(context, SITE).getBlock().getName().getString());
 
-            context.assertTrue(
-                    !stateAt(context, SITE).isOf(Blocks.SANDSTONE),
-                    "entrou arenito que a colônia não tinha — isso é inventar matéria");
-
-            fixture.owned.cleanUp();
+                context.assertTrue(
+                        !stateAt(context, SITE).isOf(Blocks.SANDSTONE),
+                        "entrou arenito que a colônia não tinha — isso é inventar matéria");
+            } finally {
+                fixture.owned.cleanUp();
+            }
 
             context.complete();
         });

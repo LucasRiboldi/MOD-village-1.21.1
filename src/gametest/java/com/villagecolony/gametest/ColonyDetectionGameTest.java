@@ -62,11 +62,13 @@ public class ColonyDetectionGameTest implements FabricGameTest {
 
         runCycle(context, anchor);
 
-        context.assertTrue(
-                colonyOf(context, anchor).isPresent(),
-                "nenhuma colônia nasceu destas camas — " + diagnose(context, anchor));
-
-        forget(context, anchor);
+        try {
+            context.assertTrue(
+                    colonyOf(context, anchor).isPresent(),
+                    "nenhuma colônia nasceu destas camas — " + diagnose(context, anchor));
+        } finally {
+            forget(context, anchor);
+        }
 
         context.complete();
     }
@@ -178,14 +180,16 @@ public class ColonyDetectionGameTest implements FabricGameTest {
 
         List<Worker> crew = VillageColonyMod.WORKERS.ofColony(colony.id());
 
-        context.assertTrue(
-                crew.size() >= CROWD,
-                "esperava ao menos " + CROWD + " trabalhadores, achei " + crew.size());
+        try {
+            context.assertTrue(
+                    crew.size() >= CROWD,
+                    "esperava ao menos " + CROWD + " trabalhadores, achei " + crew.size());
 
-        assertProfessionsWithinCap(context, crew);
-        assertNoVacancyLeftOpen(context, crew);
-
-        forgetColony(colony);
+            assertProfessionsWithinCap(context, crew);
+            assertNoVacancyLeftOpen(context, crew);
+        } finally {
+            forgetColony(colony);
+        }
 
         context.complete();
     }

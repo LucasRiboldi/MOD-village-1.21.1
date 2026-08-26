@@ -26,6 +26,34 @@ lista abaixo.
 
 ## ✅ Resolvido
 
+### 2026-08-26 — a limpeza passou a rodar quando a afirmação cai
+
+`context.assertTrue` lança, e a limpeza vinha depois dela: uma afirmação
+que caísse deixava trabalhador vivo, colônia registrada e estático
+alterado **para o resto da bateria** — e o sintoma aparecia em outro
+teste. Terceiro canal de interferência da bateria, conhecido desde
+08-19 e nunca fechado.
+
+**44 dos 46 pontos de limpeza** estavam depois de uma afirmação. Agora
+são `try/finally`. O `RoadExtensionGameTest` já estava certo, e o outro é
+um auxiliar sem afirmação.
+
+Junto: o `ColonyFixture` esquecia três profissões e o
+`VillagerLifecycleHandler`, que ele espelha, esquece seis. Mineiro,
+fundidor e pastor entraram, e as chamadas à mão saíram.
+
+| | |
+|---|---|
+| **Prova** | uma afirmação quebrada de propósito, e o `finally` logou `worker ainda registrado? false` |
+| **Depois** | 476 unitários e 171 de jogo, zero falhas · 0 afirmações dentro de `finally` |
+| **Produção alterada** | **nenhuma** — tudo em `src/gametest` |
+
+**O que não foi medido, e não se afirma:** a intenção era contar a
+cascata antes e depois. Deu uma falha nos dois arranjos — o teste
+escolhido deixou de contaminar ninguém por causa da própria correção do
+E20. Está provado que **a limpeza executa**; o ganho contra cascata
+continua sendo argumento estrutural, não número.
+
 ### 2026-08-26 — o E20 fechou, e o mod não tinha culpa
 
 **O guarda de travamento sempre funcionou.** A instrumentação de uma

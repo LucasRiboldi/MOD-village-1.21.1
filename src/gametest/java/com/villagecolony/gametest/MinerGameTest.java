@@ -156,13 +156,13 @@ public class MinerGameTest implements FabricGameTest {
                     .read(world, context.getAbsolutePos(CHEST))
                     .amountOfGroup(ResourceGroup.STONE);
 
-            context.assertTrue(stored > 0, "a pedra não chegou ao baú");
+            try {
+                context.assertTrue(stored > 0, "a pedra não chegou ao baú");
+            } finally {
+                owned.cleanUp();
 
-            owned.cleanUp();
-
-            MinerWork.forget(villager.getUuid());
-
-            MineDigging.restoreMineDistance();
+                MineDigging.restoreMineDistance();
+            }
 
             context.complete();
         });
@@ -244,17 +244,17 @@ public class MinerGameTest implements FabricGameTest {
                     .read(world, context.getAbsolutePos(CHEST))
                     .amountOfGroup(ResourceGroup.STONE);
 
-            context.assertTrue(
-                    stored == 0,
-                    "o mineiro cavou " + stored + " de dentro da própria colônia");
+            try {
+                context.assertTrue(
+                        stored == 0,
+                        "o mineiro cavou " + stored + " de dentro da própria colônia");
+            } finally {
+                owned.cleanUp();
 
-            owned.cleanUp();
+                VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
 
-            MinerWork.forget(villager.getUuid());
-
-            VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
-
-            MineDigging.restoreMineDistance();
+                MineDigging.restoreMineDistance();
+            }
 
             context.complete();
         });
@@ -326,19 +326,19 @@ public class MinerGameTest implements FabricGameTest {
         context.runAtTick(120, () -> {
             Mine mine = VillageColonyMod.MINES.of(colony.id()).orElseThrow();
 
-            context.assertTrue(
-                    mine.entry().equals(mouth),
-                    "a colônia trocou de boca: " + mine.entry() + " em vez de " + mouth);
+            try {
+                context.assertTrue(
+                        mine.entry().equals(mouth),
+                        "a colônia trocou de boca: " + mine.entry() + " em vez de " + mouth);
 
-            context.assertTrue(
-                    mine.cut() > FRONTIER,
-                    "a fronteira não andou — parou em " + mine.cut());
+                context.assertTrue(
+                        mine.cut() > FRONTIER,
+                        "a fronteira não andou — parou em " + mine.cut());
+            } finally {
+                owned.cleanUp();
 
-            owned.cleanUp();
-
-            MinerWork.forget(villager.getUuid());
-
-            MineDigging.restoreMineDistance();
+                MineDigging.restoreMineDistance();
+            }
 
             context.complete();
         });
@@ -409,13 +409,13 @@ public class MinerGameTest implements FabricGameTest {
                     .read(world, context.getAbsolutePos(CHEST))
                     .amountOfGroup(ResourceGroup.SAND);
 
-            context.assertTrue(stored > 0, "a areia não chegou ao baú");
+            try {
+                context.assertTrue(stored > 0, "a areia não chegou ao baú");
+            } finally {
+                owned.cleanUp();
 
-            owned.cleanUp();
-
-            MinerWork.forget(villager.getUuid());
-
-            SandGathering.restoreSandRadius();
+                SandGathering.restoreSandRadius();
+            }
 
             context.complete();
         });
@@ -493,15 +493,16 @@ public class MinerGameTest implements FabricGameTest {
                     .read(world, context.getAbsolutePos(CHEST))
                     .amountOf(ResourceType.COAL);
 
-            context.assertTrue(coal > 0, "o carvão da escada não chegou ao baú");
+            try {
+                context.assertTrue(coal > 0, "o carvão da escada não chegou ao baú");
 
-            context.assertTrue(
-                    coal > 1,
-                    "só veio um carvão — o mineiro voltou ao túnel e deixou a veia pela metade");
+                context.assertTrue(
+                        coal > 1,
+                        "só veio um carvão — o mineiro voltou ao túnel e deixou a veia pela metade");
+            } finally {
+                owned.cleanUp();
 
-            owned.cleanUp();
-
-            MinerWork.forget(villager.getUuid());
+            }
 
             context.complete();
         });
@@ -575,19 +576,21 @@ public class MinerGameTest implements FabricGameTest {
 
         Optional<String> line = MinerReport.report(world, colony);
 
-        context.assertTrue(
-                line.isPresent(),
-                "mineiro com trabalho aberto e nenhuma linha — é o defeito de 08-22 de volta");
+        try {
+            context.assertTrue(
+                    line.isPresent(),
+                    "mineiro com trabalho aberto e nenhuma linha — é o defeito de 08-22 de volta");
 
-        context.assertTrue(
-                line.get().contains("wants "),
-                "a linha não diz o que o mineiro procura: " + line.get());
+            context.assertTrue(
+                    line.get().contains("wants "),
+                    "a linha não diz o que o mineiro procura: " + line.get());
 
-        context.assertTrue(
-                line.get().contains(" of 16 so far"),
-                "a linha não diz quanto ele já juntou do que a tarefa pede: " + line.get());
-
-        owned.cleanUp();
+            context.assertTrue(
+                    line.get().contains(" of 16 so far"),
+                    "a linha não diz quanto ele já juntou do que a tarefa pede: " + line.get());
+        } finally {
+            owned.cleanUp();
+        }
 
         context.complete();
     }

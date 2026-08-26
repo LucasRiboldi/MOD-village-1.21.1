@@ -4552,3 +4552,66 @@ O javadoc deste teste promete provar **duas** coisas — a tarefa volta à
 fila **e** a árvore é esquecida. O teste afirma só a primeira. É lacuna
 real, é anterior ao E20, e não entrou aqui: conserto de uma coisa por
 vez. Fica para quem pegar o teste em seguida.
+
+## A limpeza que não rodava quando a afirmação caía
+
+O item acima dizia que isto ficava para quem pegasse o teste em seguida.
+Foi no mesmo dia.
+
+**O problema, em uma frase:** `context.assertTrue` lança, e a limpeza
+vinha depois dela. Uma afirmação que caísse deixava trabalhador vivo,
+colônia registrada e estático alterado **para o resto da bateria** — e o
+sintoma aparecia em outro teste, não naquele. Era o terceiro canal de
+interferência da bateria, conhecido desde 2026-08-19 e nunca fechado.
+
+**A medida:** 44 dos 46 pontos de limpeza estavam depois de uma
+afirmação. O `RoadExtensionGameTest` já estava certo — alguém ali já
+sabia — e o outro é um auxiliar sem afirmação nenhuma.
+
+**O conserto** é o mesmo em toda parte, e é o que o Java tem para isto:
+
+```java
+try {
+    ...as afirmações...
+} finally {
+    ...a limpeza...
+}
+
+context.complete();
+```
+
+Junto veio uma falta que a varredura mostrou: o `ColonyFixture` esquecia
+**três** profissões e o `VillagerLifecycleHandler`, que ele diz espelhar,
+esquece **seis**. Mineiro, fundidor e pastor faltavam, e cada teste
+dessas profissões chamava o `forget` à mão — depois do `cleanUp`, e às
+vezes depois do assert. Agora as seis estão no fixture, e as chamadas à
+mão saíram.
+
+## Como se provou, e o que a prova não cobre
+
+Uma afirmação foi quebrada de propósito, e o `finally` ganhou uma linha
+de log:
+
+```text
+PROVA: limpeza rodou; worker ainda registrado? false
+```
+
+A afirmação caiu, o `finally` rodou, e o trabalhador saiu do registro.
+Antes, aquela linha seria inalcançável. O andaime foi removido em
+seguida.
+
+**O que a prova NÃO mostrou, e é honesto dizer.** A intenção era medir a
+cascata: quebrar um teste e contar quantos caíam junto, antes e depois.
+Deu **uma falha nos dois arranjos**. O teste escolhido — o do guarda de
+travamento — deixou de ser um bom demonstrador justamente por causa da
+correção do E20: sem o registro em `COLONIES`, ele já não tem como
+contaminar ninguém. Então o que está medido é que **a limpeza executa no
+caminho da falha**, e não que N testes deixaram de cair junto. O
+benefício contra cascata continua sendo argumento estrutural, e não
+número.
+
+```text
+depois     476 unitários, 0 falhas   ·   171 de jogo, 0 falhas
+           12 arquivos, 47 de 49 pontos de limpeza protegidos
+           0 afirmações dentro de finally
+```

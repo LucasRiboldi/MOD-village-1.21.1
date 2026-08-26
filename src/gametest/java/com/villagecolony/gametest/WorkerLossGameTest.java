@@ -59,13 +59,15 @@ public class WorkerLossGameTest implements FabricGameTest {
 
         fixture.villager.damage(world.getDamageSources().genericKill(), Float.MAX_VALUE);
 
-        context.assertTrue(
-                fixture.villager.isDead(),
-                "o aldeão não morreu, e o resto do teste não valeria nada");
+        try {
+            context.assertTrue(
+                    fixture.villager.isDead(),
+                    "o aldeão não morreu, e o resto do teste não valeria nada");
 
-        assertForgotten(context, fixture, "morrer");
-
-        cleanUp(fixture);
+            assertForgotten(context, fixture, "morrer");
+        } finally {
+            cleanUp(fixture);
+        }
 
         context.complete();
     }
@@ -84,9 +86,11 @@ public class WorkerLossGameTest implements FabricGameTest {
 
         fixture.villager.convertTo(EntityType.ZOMBIE_VILLAGER, true);
 
-        assertForgotten(context, fixture, "ser zumbificado");
-
-        cleanUp(fixture);
+        try {
+            assertForgotten(context, fixture, "ser zumbificado");
+        } finally {
+            cleanUp(fixture);
+        }
 
         context.complete();
     }
@@ -161,25 +165,27 @@ public class WorkerLossGameTest implements FabricGameTest {
 
         villager.damage(world.getDamageSources().genericKill(), Float.MAX_VALUE);
 
-        context.assertTrue(
-                villager.isDead(),
-                "o construtor não morreu, e o resto do teste não valeria nada");
+        try {
+            context.assertTrue(
+                    villager.isDead(),
+                    "o construtor não morreu, e o resto do teste não valeria nada");
 
-        // A obra desistindo, pelo mesmo caminho que o PatienceClock usa.
-        WaitingWork.giveUp(colony, project);
+            // A obra desistindo, pelo mesmo caminho que o PatienceClock usa.
+            WaitingWork.giveUp(colony, project);
 
-        // A linha que derrubava o servidor.
-        BuilderWork.tick(world);
+            // A linha que derrubava o servidor.
+            BuilderWork.tick(world);
 
-        context.assertTrue(
-                task.state() == TaskState.AVAILABLE,
-                "a tarefa do construtor morto ficou em " + task.state()
-                        + " — depois da obra fechar ela tem de continuar na fila");
-
-        ColonyFixture.create()
-                .owning(colony)
-                .owning(villager.getUuid())
-                .cleanUp();
+            context.assertTrue(
+                    task.state() == TaskState.AVAILABLE,
+                    "a tarefa do construtor morto ficou em " + task.state()
+                            + " — depois da obra fechar ela tem de continuar na fila");
+        } finally {
+            ColonyFixture.create()
+                    .owning(colony)
+                    .owning(villager.getUuid())
+                    .cleanUp();
+        }
 
         context.complete();
     }

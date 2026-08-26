@@ -120,13 +120,15 @@ public class ManufacturerGameTest implements FabricGameTest {
             int planks = planksIn(context, fixture.chest);
             int logs = logsIn(context, fixture.chest);
 
-            context.assertTrue(planks > 0, "o baú não recebeu tábua nenhuma");
+            try {
+                context.assertTrue(planks > 0, "o baú não recebeu tábua nenhuma");
 
-            context.assertTrue(
-                    logs < 4,
-                    "nenhum tronco foi consumido: ainda são " + logs);
-
-            fixture.owned.cleanUp();
+                context.assertTrue(
+                        logs < 4,
+                        "nenhum tronco foi consumido: ainda são " + logs);
+            } finally {
+                fixture.owned.cleanUp();
+            }
 
             context.complete();
         });
@@ -158,11 +160,13 @@ public class ManufacturerGameTest implements FabricGameTest {
         });
 
         context.runAtTick(90, () -> {
-            context.assertTrue(
-                    planksIn(context, fixture.chest) > 0,
-                    "e no fim nenhuma tábua apareceu — o teste não provou nada");
-
-            fixture.owned.cleanUp();
+            try {
+                context.assertTrue(
+                        planksIn(context, fixture.chest) > 0,
+                        "e no fim nenhuma tábua apareceu — o teste não provou nada");
+            } finally {
+                fixture.owned.cleanUp();
+            }
 
             context.complete();
         });
@@ -211,15 +215,17 @@ public class ManufacturerGameTest implements FabricGameTest {
             int planks = planksIn(context, lumberjackChest);
             int logs = logsIn(context, lumberjackChest);
 
-            context.assertTrue(
-                    planks > 0,
-                    "o fabricante não fez tábua nenhuma com o tronco do lenhador");
+            try {
+                context.assertTrue(
+                        planks > 0,
+                        "o fabricante não fez tábua nenhuma com o tronco do lenhador");
 
-            context.assertTrue(
-                    logs < 4,
-                    "nenhum tronco foi consumido do baú do lenhador: ainda são " + logs);
-
-            fixture.owned.cleanUp();
+                context.assertTrue(
+                        logs < 4,
+                        "nenhum tronco foi consumido do baú do lenhador: ainda são " + logs);
+            } finally {
+                fixture.owned.cleanUp();
+            }
 
             context.complete();
         });
@@ -232,11 +238,13 @@ public class ManufacturerGameTest implements FabricGameTest {
         Fixture fixture = setUp(context, 0);
 
         context.runAtTick(60, () -> {
-            context.assertTrue(
-                    fixture.task.state() == TaskState.COMPLETED,
-                    "a tarefa devia ter se encerrado, está em " + fixture.task.state());
-
-            fixture.owned.cleanUp();
+            try {
+                context.assertTrue(
+                        fixture.task.state() == TaskState.COMPLETED,
+                        "a tarefa devia ter se encerrado, está em " + fixture.task.state());
+            } finally {
+                fixture.owned.cleanUp();
+            }
 
             context.complete();
         });
@@ -301,11 +309,13 @@ public class ManufacturerGameTest implements FabricGameTest {
                 "o ciclo devia ter aberto uma tarefa de fabricação, abriu " + crafting);
 
         context.runAtTick(90, () -> {
-            context.assertTrue(
-                    planksIn(context, chest) > 0,
-                    "a tarefa que o ciclo abriu não virou tábua nenhuma");
-
-            owned.cleanUp();
+            try {
+                context.assertTrue(
+                        planksIn(context, chest) > 0,
+                        "a tarefa que o ciclo abriu não virou tábua nenhuma");
+            } finally {
+                owned.cleanUp();
+            }
 
             context.complete();
         });
@@ -353,30 +363,32 @@ public class ManufacturerGameTest implements FabricGameTest {
 
         owned.owning(villager.getUuid());
 
-        context.assertTrue(
-                ChestInventoryReader.read(world, context.getAbsolutePos(CHEST))
-                        .amountOf(ResourceType.OAK_PLANKS) == 8,
-                "o cenário do teste não montou: a tábua não entrou no baú");
+        try {
+            context.assertTrue(
+                    ChestInventoryReader.read(world, context.getAbsolutePos(CHEST))
+                            .amountOf(ResourceType.OAK_PLANKS) == 8,
+                    "o cenário do teste não montou: a tábua não entrou no baú");
 
-        // A pergunta antes da retirada precisa concordar com ela. Uma que
-        // dissesse "não" aqui poria a obra a esperar por peça que a
-        // colônia sabe montar.
-        context.assertTrue(
-                ColonySupply.canProvide(world, colony.id(), chest, Items.TORCH),
-                "a colônia disse que não sabe fazer tocha, com carvão e tábua no baú");
+            // A pergunta antes da retirada precisa concordar com ela. Uma que
+            // dissesse "não" aqui poria a obra a esperar por peça que a
+            // colônia sabe montar.
+            context.assertTrue(
+                    ColonySupply.canProvide(world, colony.id(), chest, Items.TORCH),
+                    "a colônia disse que não sabe fazer tocha, com carvão e tábua no baú");
 
-        context.assertTrue(
-                ColonySupply.take(world, colony.id(), chest, Items.TORCH),
-                "a tocha não saiu de carvão e tábua — faltou o degrau do graveto");
+            context.assertTrue(
+                    ColonySupply.take(world, colony.id(), chest, Items.TORCH),
+                    "a tocha não saiu de carvão e tábua — faltou o degrau do graveto");
 
-        int planksLeft = ChestInventoryReader.read(world, context.getAbsolutePos(CHEST))
-                .amountOf(ResourceType.OAK_PLANKS);
+            int planksLeft = ChestInventoryReader.read(world, context.getAbsolutePos(CHEST))
+                    .amountOf(ResourceType.OAK_PLANKS);
 
-        context.assertTrue(
-                planksLeft < 8,
-                "a tocha apareceu e a tábua continua inteira — matéria do nada");
-
-        owned.cleanUp();
+            context.assertTrue(
+                    planksLeft < 8,
+                    "a tocha apareceu e a tábua continua inteira — matéria do nada");
+        } finally {
+            owned.cleanUp();
+        }
 
         context.complete();
     }
@@ -417,15 +429,17 @@ public class ManufacturerGameTest implements FabricGameTest {
 
         owned.owning(villager.getUuid());
 
-        context.assertTrue(
-                !ColonySupply.canProvide(world, colony.id(), chest, Items.TORCH),
-                "a colônia disse saber fazer tocha só com carvão");
+        try {
+            context.assertTrue(
+                    !ColonySupply.canProvide(world, colony.id(), chest, Items.TORCH),
+                    "a colônia disse saber fazer tocha só com carvão");
 
-        context.assertTrue(
-                !ColonySupply.take(world, colony.id(), chest, Items.TORCH),
-                "saiu uma tocha de carvão e nada mais");
-
-        owned.cleanUp();
+            context.assertTrue(
+                    !ColonySupply.take(world, colony.id(), chest, Items.TORCH),
+                    "saiu uma tocha de carvão e nada mais");
+        } finally {
+            owned.cleanUp();
+        }
 
         context.complete();
     }

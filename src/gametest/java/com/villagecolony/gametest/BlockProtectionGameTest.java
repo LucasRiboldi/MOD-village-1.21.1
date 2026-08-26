@@ -85,22 +85,24 @@ public class BlockProtectionGameTest implements FabricGameTest {
 
         ColonyFixture owned = ColonyFixture.create().owning(colony);
 
-        context.assertTrue(
-                BlockProtection.mayBreak(world, absolute, world.getBlockState(absolute)),
-                "antes de existir casa aqui, a pedra devia ser quebrável");
+        try {
+            context.assertTrue(
+                    BlockProtection.mayBreak(world, absolute, world.getBlockState(absolute)),
+                    "antes de existir casa aqui, a pedra devia ser quebrável");
 
-        VillageColonyMod.BUILDINGS.register(new Building(
-                UUID.randomUUID(),
-                colony.id(),
-                new ResourceId("minecraft", "village/plains/houses/plains_small_house_1"),
-                here,
-                new ColonyPos(here.x() + 2, here.y() + 2, here.z() + 2)));
+            VillageColonyMod.BUILDINGS.register(new Building(
+                    UUID.randomUUID(),
+                    colony.id(),
+                    new ResourceId("minecraft", "village/plains/houses/plains_small_house_1"),
+                    here,
+                    new ColonyPos(here.x() + 2, here.y() + 2, here.z() + 2)));
 
-        context.assertTrue(
-                !BlockProtection.mayBreak(world, absolute, world.getBlockState(absolute)),
-                "a proteção deixou quebrar um bloco de uma casa da colônia");
-
-        owned.cleanUp();
+            context.assertTrue(
+                    !BlockProtection.mayBreak(world, absolute, world.getBlockState(absolute)),
+                    "a proteção deixou quebrar um bloco de uma casa da colônia");
+        } finally {
+            owned.cleanUp();
+        }
 
         context.complete();
     }
