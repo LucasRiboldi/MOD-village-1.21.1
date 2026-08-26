@@ -313,7 +313,6 @@ ficam os que mudam o que se vê no jogo.
 |---|---|---|
 | 🔴 | **A vila fica presa numa obra só** | O planejador não sabe desistir. O catálogo do jogo já tem fazenda, curtume, ferraria — e a Regra 28 filtra tudo para uma casa por bioma |
 | 🟠 | **Nove arquivos de código acima de 500 linhas** | Recontados em 08-26. `VillageDetectionHandler` é o pior com 983. `LumberjackWork` saiu da lista no corte do E19 (1149 → 455), e quatro entraram com a mina e a estrada |
-| 🟠 | **Um teste de jogo instável** — `theStallGuardReturnsTheTaskAndForgetsTheTree` | **Falhou 2 de 8 rodadas em 08-26**, e 3 de 7 em 08-25. Agora tem causa com endereço: o teste afirma no tique fixo 300 e deixa a colônia no ciclo de 600, que rerreserva a tarefa. Ver `Project-State.md` §20 |
 | 🟠 | **`theStoneLeavesTheWorldAndReachesTheChest`** disse "a pedra não chegou ao baú" uma vez | Suspeita, não diagnóstico |
 | 🟠 | **A arena da bateria tem bioma fixo** de planície | Escondeu **duas vezes** que o deserto estava quebrado |
 | 🟡 | **O ícone tem 1,95 MB, e o jar 2,29 MB** | 85% do que se distribui é uma imagem mostrada a 64 pixels |

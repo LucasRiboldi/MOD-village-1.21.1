@@ -4489,3 +4489,66 @@ rodapé de auditoria.
 
 O que entrou foi documentação: o §S5 do `Backlog`, a linha do E20 no
 `TODO.md`, e esta seção.
+
+## O E20, fechado no mesmo dia
+
+A seção acima dizia que ele ficava aberto de propósito. **Ficou aberto
+por algumas horas.** O que segue corrige o que está escrito ali, e a
+correção veio de instrumentar em vez de supor.
+
+**A primeira hipótese estava incompleta, e uma sonda a derrubou.** O
+checkpoint afirmou que o ciclo de 600 ticks rerreservava a tarefa. Para
+provar, o ciclo foi forçado no tique 200 com
+`VillageDetectionHandler.runCycleNow`. **Três rodadas, três verdes** — a
+sonda não reproduziu nada. Hipótese refutada, e o registro fica: era
+cedo demais.
+
+**A instrumentação respondeu o que a sonda não respondia.** Uma rodada
+vermelha, com o estado impresso a cada vinte ticks:
+
+```text
+tique  20..60   jobs=1  task=EXECUTING   dono=true    trabalhando
+tique  80..240  jobs=0  task=AVAILABLE   dono=false   o guarda devolveu
+tique 260       jobs=1  task=RESERVED    dono=true    alguém rerreservou
+tique 280..300  jobs=1  task=EXECUTING   dono=true    e a afirmação caiu
+```
+
+Três coisas ficam de pé aí, e duas contrariam o que se supunha:
+
+1. **O guarda sempre funcionou.** Devolveu no tique 61 e a tarefa ficou
+   na fila por 160 ticks. O mod nunca teve este defeito — **o defeito
+   era do teste**, e nenhuma linha de produção mudou para consertá-lo
+2. **Não era a árvore marcada.** `UNREACHABLE_MEMORY` vale 6.000 ticks e
+   a marca estava de pé no tique 260. O despacho achou **outra** árvore
+   — o raio de busca alcança a arena dos testes vizinhos, que rodam
+   concorrentes. Era esta metade que a sonda do tique 200 não tinha
+3. **O ciclo longo é o gatilho, e por isso alterna.** `onServerTick`
+   conta em campo estático do processo e varre todas as colônias
+   registradas a cada 600 ticks; a fase em que cada teste pega esse
+   contador é arbitrária
+
+## O conserto, e o que ele custou
+
+Uma linha a menos: a colônia do teste não entra mais em `COLONIES`. Nada
+ali precisava dela — `run` recebe a colônia na mão, e `LumberjackWork`
+não tem **uma única referência** a `COLONIES`; o `tick` percorre o
+próprio mapa de trabalhos. Registrar só punha um segundo ator mexendo no
+que o teste mede.
+
+```text
+antes    3 vermelhas em 15 rodadas (08-26)   ·   3 em 7 (08-25)
+depois   20 rodadas, zero vermelhas
+build    clean: 476 unitários, 0 falhas
+```
+
+**Vinte rodadas limpas é evidência forte, não prova.** Com a taxa
+observada de uma em cinco, vinte verdes seguidas por acaso têm ordem de
+1%. O erro é intermitente por natureza, e a honestidade aqui é dizer
+"não reapareceu em vinte", não "nunca mais volta".
+
+## O que ficou anotado e não foi feito
+
+O javadoc deste teste promete provar **duas** coisas — a tarefa volta à
+fila **e** a árvore é esquecida. O teste afirma só a primeira. É lacuna
+real, é anterior ao E20, e não entrou aqui: conserto de uma coisa por
+vez. Fica para quem pegar o teste em seguida.

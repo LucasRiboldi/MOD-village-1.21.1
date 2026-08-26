@@ -975,7 +975,29 @@ public class LumberjackGameTest implements FabricGameTest {
                 UUID.randomUUID(),
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(marooned)));
 
-        VillageColonyMod.COLONIES.register(colony);
+        // A colônia deste teste NÃO entra em COLONIES, e isso é o
+        // conserto do E20 — medido em 2026-08-26.
+        //
+        // O guarda sempre funcionou. A instrumentação de uma rodada
+        // vermelha mostrou a tarefa voltando à fila no tique 61 e ficando
+        // lá até o 240, com o job encerrado; no 260 ela aparecia RESERVED
+        // de novo, com job novo. Quem a reservava era o ciclo longo:
+        // `onServerTick` tem contador estático do processo, e a cada 600
+        // ticks ele varre TODAS as colônias registradas — a fase em que
+        // cada teste pega esse contador é arbitrária, e é daí que vinha a
+        // alternância de uma rodada em quatro.
+        //
+        // A árvore marcada não era o alvo: a marca vale 6.000 ticks e
+        // ainda estava de pé. O despacho achava OUTRA árvore — o raio de
+        // busca alcança a arena dos testes vizinhos, que rodam
+        // concorrentes.
+        //
+        // Nada aqui precisa do registro: `run` recebe a colônia na mão, e
+        // `LumberjackWork` não tem uma única referência a COLONIES — o
+        // `tick` percorre o próprio mapa de trabalhos. Registrar só punha
+        // um segundo ator mexendo no que o teste mede.
+        //
+        // Ver Project-State.md §20.
 
         ColonyFixture owned = ColonyFixture.create()
                 .owning(colony)

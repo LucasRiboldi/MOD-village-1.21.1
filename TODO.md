@@ -18,13 +18,44 @@ lista abaixo.
 
 ```text
 476 testes unitários  ·  171 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
-7 arquivos de código acima de 500 linhas  ·  5 de teste
+9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 2 sessões de jogo em 2026-08-25  ·  6 commits desde a última
 ```
 
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-26 — o E20 fechou, e o mod não tinha culpa
+
+**O guarda de travamento sempre funcionou.** A instrumentação de uma
+rodada vermelha mostrou o que ninguém tinha olhado: a tarefa voltava à
+fila no tique 61, o job encerrava, e ela ficava `AVAILABLE` até o tique
+240. **No 260 aparecia `RESERVED` de novo, com job novo** — e a
+afirmação era feita no 300, tarde demais.
+
+Quem a reservava era o **ciclo longo**: `onServerTick` tem contador
+estático do processo e varre todas as colônias registradas a cada 600
+ticks. A fase em que cada teste pega esse contador é arbitrária, e era
+daí que vinha a alternância de uma rodada em quatro.
+
+**Não era a árvore marcada** — a marca vale 6.000 ticks e estava de pé. O
+despacho achava **outra** árvore: o raio de busca alcança a arena dos
+testes vizinhos, que rodam concorrentes.
+
+O conserto é **uma linha a menos**: a colônia do teste não entra mais em
+`COLONIES`. Nada ali precisava dela — `run` recebe a colônia na mão, e
+`LumberjackWork` não tem uma única referência a `COLONIES`.
+
+| | |
+|---|---|
+| **Antes** | 3 vermelhas em 15 rodadas em 08-26; 3 em 7 em 08-25 |
+| **Depois** | **20 rodadas, zero vermelhas** |
+| **Código de produção alterado** | **nenhum** — o defeito era do teste |
+
+Uma hipótese caiu no caminho, e fica registrada: forçar o ciclo no tique
+200 **não** reproduziu (3 rodadas verdes). Cedo demais — naquele
+instante nenhuma árvore vizinha estava ao alcance.
 
 ### 2026-08-26 — a sessão que mostrou o gargalo seguinte
 
@@ -129,7 +160,6 @@ conferido no volume · árvore grande deixando de ser recusada.
 
 | | Erro | Estado |
 |---|---|---|
-| **E20** | **`theStallGuardReturnsTheTaskAndForgetsTheTree` instável** | **Reproduziu de novo no checkpoint de 08-26: 2 falhas em 8 rodadas**, com a mesma frase de sempre — `o guarda não devolveu a tarefa à fila — ela está em EXECUTING`. Em 08-25 foram 3 em 7. Duas hipóteses já tinham caído: o relógio compartilhado do mundo e o limite global de travamento. **A terceira não caiu, e agora tem endereço:** o teste registra a colônia em `COLONIES` (`LumberjackGameTest.java:978`) e afirma no tique fixo 300 (`:1005`), então o ciclo de 600 ticks reserva de novo a tarefa que o guarda acabou de devolver — o teste mede um estado passageiro tarde demais. **A instrumentação que provou isso é de 08-19** e está no ramo `claude/inspiring-torvalds-bdc8c3`, que ficou 21 mil linhas atrás do `main` e **não serve para merge** — o que se aproveita dele é o diagnóstico, não o diff. Correção indicada: afirmar a cada tique até um prazo curto, e tirar a colônia de `COLONIES` neste teste |
 | **E21** | **`theStoneLeavesTheWorldAndReachesTheChest`** disse "a pedra não chegou ao baú" uma vez | Suspeita: custo de ler estrutura no tique. **Suspeita, não diagnóstico**. Não repetiu em 7 rodadas de 08-25 |
 | **E9** | Colônia `ABANDONED` desmarcada no ciclo seguinte | **Silêncio na sessão de 08-25** — nenhuma colônia trocou de estado três vezes em 42 minutos. É notícia boa e não é prova: nenhuma colônia da sessão foi abandonada |
 | **E4** | `path held: no` e o aldeão chega assim mesmo | Provável, nunca verificado. Nenhuma linha dessas em 08-25 |
