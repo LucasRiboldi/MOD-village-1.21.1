@@ -138,13 +138,36 @@ public final class BuildSiteScanner {
     private static final Map<UUID, Sweep> SWEEPS = new HashMap<>();
 
     /**
-     * Onde uma varredura parou: o anel, e a coluna dentro da casca dele.
+     * Quanto o centro pode andar sem a varredura recomeçar — 2026-08-26.
+     *
+     * <p>Os anéis são medidos a partir do centro, e o centro anda. Até
+     * aqui o cursor sobrevivia a <b>qualquer</b> movimento — decisão de
+     * 08-19, tomada quando a âncora trocava a cada trinta segundos e
+     * zerar a busca a cada troca fazia ela nunca sair do lugar.
+     *
+     * <p>A ADR-003 Emenda 4 mudou a premissa: hoje o centro só anda pela
+     * sonda, e raramente — foram três movimentos em treze minutos na
+     * sessão de 2026-08-25. O preço de sobreviver a todos ficou visível:
+     * depois de um movimento, a varredura retomada pula os anéis de
+     * dentro do <b>novo</b> centro, que é onde o lote é mais provável.
+     *
+     * <p>Vinte blocos é a decisão do autor em 2026-08-26, e a frase dele:
+     * <i>movimento pequeno não atrapalha; movimento grande justifica
+     * recomeçar</i>. Os movimentos daquela sessão foram todos abaixo
+     * disso, e teriam mantido o cursor.
+     */
+    private static final int CENTER_DRIFT = 20;
+
+    /**
+     * Onde uma varredura parou: o anel, a coluna, e de que centro.
      *
      * @param ring o anel em que o orçamento acabou
      * @param column a posição, na casca desse anel, da primeira coluna
      *     que <b>não</b> chegou a ser olhada
+     * @param from o centro a partir do qual esses anéis foram medidos —
+     *     sem ele o cursor não sabe dizer se ainda fala do mesmo lugar
      */
-    private record Sweep(int ring, int column) {
+    private record Sweep(int ring, int column, ColonyPos from) {
     }
 
     private BuildSiteScanner() {
@@ -218,6 +241,12 @@ public final class BuildSiteScanner {
 
         Sweep paused = SWEEPS.get(colonyId);
 
+        if (paused != null && drifted(paused.from(), center)) {
+            // O centro andou demais para estes anéis ainda falarem do
+            // mesmo lugar — ver CENTER_DRIFT.
+            paused = null;
+        }
+
         int startRing = paused == null || paused.ring() > radius ? 0 : paused.ring();
 
         int startColumn = startRing == 0 ? 0 : paused.column();
@@ -256,7 +285,7 @@ public final class BuildSiteScanner {
                     }
 
                     if (++columns > MAX_COLUMNS) {
-                        SWEEPS.put(colonyId, new Sweep(ring, column));
+                        SWEEPS.put(colonyId, new Sweep(ring, column, center));
 
                         return Optional.empty();
                     }
@@ -329,6 +358,19 @@ public final class BuildSiteScanner {
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * Se o centro andou o bastante para os anéis deixarem de valer.
+     *
+     * <p>Compara ao quadrado para não tirar raiz: a conta é a mesma e o
+     * resultado é inteiro.
+     */
+    private static boolean drifted(ColonyPos from, ColonyPos now) {
+        long dx = (long) from.x() - now.x();
+        long dz = (long) from.z() - now.z();
+
+        return dx * dx + dz * dz > (long) CENTER_DRIFT * CENTER_DRIFT;
     }
 
     /** Esquece os cursores. Chamado ao descarregar o mundo. */

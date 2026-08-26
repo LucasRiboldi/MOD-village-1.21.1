@@ -17,7 +17,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-472 testes unitários  ·  165 testes de jogo  ·  30 regras  ·  9 ADRs
+472 testes unitários  ·  167 testes de jogo  ·  31 regras  ·  9 ADRs
 7 arquivos de código acima de 500 linhas  ·  5 de teste
 2 sessões de jogo em 2026-08-25  ·  6 commits desde a última
 ```
@@ -131,17 +131,17 @@ que a obra pede dois degraus abaixo** · construtor **chegando ao bloco**
 saindo da frente** · casa terminada uma vez, em 08-19, com baús que o
 jogador encheu.
 
-### Nível 1 — a raiz do material *(com alternativa, e não visto)*
+### Nível 1 — a raiz do material *(com duas alternativas, e não visto)*
 
 - **A mina não abriu na sessão de 08-25**, e não foi por silêncio: as
   doze colunas foram tentadas e nenhuma serviu. Duas respostas entraram
   em 08-26 — **vinte e quatro colunas** em vez de doze, e **pedra de
   superfície** quando nem elas servem.
-- A **decisão 1 deixou de travar**: sem boca a colônia agora raspa
-  afloramento em vez de ficar sem pedra. O que a decisão ainda decide é
-  o caso raro em que não há nem boca nem afloramento — aí a vila
-  continua sem pedra, e a pergunta é se ela declara `BLOCKED` e muda de
-  objetivo, que é Nível 4.
+- **A decisão 1 foi respondida em 08-26**, e a busca ganhou uma terceira
+  camada: as vinte e quatro colunas de perto, depois **duas distâncias
+  além do fim da vila** com janela de altura mais larga — a boca ruim —,
+  e só então o afloramento de superfície. A colônia agora precisa de um
+  terreno bem hostil para ficar sem pedra.
 - **Nada disso foi visto em jogo.** A linha a procurar é
   `Miner ... opens a mine at`, e a alternativa aparece como
   `no miner surface stone work: ...` quando também falha.
@@ -229,17 +229,27 @@ comércio entre vilas.
 | 🟠 | **`ChestWithdrawer.takeGroup` ainda usa grupo como equivalência.** Hoje é inócuo — só o fundidor o chama, com `SAND` e `IRON`, que têm um membro só. É o resto do buraco |
 | 🟠 | **Regra 25 inerte** enquanto a 28 valer: "a maior planta que couber" precisa de mais de uma planta |
 | 🟠 | **`furniture()` do `BlueprintBlock` sem dono** desde a morte da Regra 21 |
-| 🟡 | **ADR-009 §17 (população por capacidade) vs o vanilla**, que controla o *breeding*. O mod não tem como segurar população |
+| ✅ | **ADR-009 §17 (população por capacidade) vs o vanilla — resolvida por decisão em 08-26.** O jogo controla o *breeding* e o mod não tem como segurá-lo. A §17 **não cabe**, e fica registrada como ideia recusada em vez de pendência aberta |
 | ✅ | **ADR-009 §14 vs Regra 27 — resolvida.** O propósito da estrutura sai do nome, e o catálogo do jogo já os tem. Nenhuma contradição |
 
 ---
 
 ## ✅ Decisões tomadas em 2026-08-26
 
+Oito das nove foram respondidas de uma vez. **Seis não precisaram de
+código** — são escolha registrada, e valem a partir de agora. **Duas
+viraram trabalho** e já estão feitas, com teste e fase vermelha
+conferida: a boca ruim da mina, e a varredura que recomeça quando o
+centro anda muito.
+
 | | Decisão | O que ela manda fazer |
 |---|---|---|
 | **3** | **A Regra 28 sai quando o planejador souber desistir de um objetivo** — e não antes | Vira dependência com nome: a barreira de uma casa por bioma **só cai depois do Nível 4**. Enquanto o planejador perseguir uma obra só e não souber trocar de alvo, a vila continua levantando a casa pequena do bioma dela. A **Regra 25** — a maior planta que couber — fica dormindo junto, e acorda no mesmo dia |
 | **4** | **A Regra 25 volta** — por consequência da 3, e não por decisão própria | "A maior planta que couber no lote" precisa de mais de uma planta, e é a Regra 28 que impede isso. Respondida a 3, esta se responde sozinha: a 25 fica dormindo e acorda no dia em que a 28 sair. **Nada a apagar** — se o autor discordar, é só dizer |
+| **1** | **Mina sem lugar: ela aceita uma boca ruim, e procura mais longe** | Nasceu a segunda passagem da busca: quando as vinte e quatro colunas de perto falham, ela tenta 150% e 200% da distância, com janela de altura mais larga — aceita subir o morro ou descer a depressão. **O que ela não relaxa:** água em cima e a Regra 3. Mina inundada não é mina ruim, é mina quebrada. Feito em 08-26, com teste |
+| **6** | **A população fica com o vanilla, e a ideia original não cabe** | O jogo controla o *breeding*, e o mod não tem como segurá-lo. A ADR-009 §17 — população por capacidade — passa de pendência a **contradição declarada**: fica escrito que não cabe, em vez de esperar por uma implementação que não existe |
+| **8** | **O custo da busca de lote fica como está** — e se mede na próxima sessão | Nada muda agora. Se a vila ficar visivelmente parada esperando lote, o conserto é **no jeito de procurar, não no volume** — o teto de mil colunas por passagem não sobe, porque o ciclo já avisou 58 ms com ele |
+| **9** | **A varredura recomeça quando o centro andar mais de 20 blocos** | *Movimento pequeno não atrapalha; movimento grande justifica recomeçar.* O cursor passa a guardar de que centro os anéis foram medidos. Os três movimentos da sessão de 08-25 foram todos abaixo de 20 e teriam mantido o cursor — a decisão de 08-19 continua valendo para eles. Feito em 08-26, com teste |
 | **5** | **Agricultura está dentro do escopo, e virou a Regra 31** | *O fazendeiro planta qualquer semente que possuir ou tenha no baú, coloca a água, colhe o que está pronto e guarda no próprio baú.* Enunciado em `Project-State.md`. **Deliberadamente não implementada agora**: profissão nova inteira não entra antes de a cadeia atual ser vista funcionando até o fim numa vila |
 
 ---
@@ -248,12 +258,8 @@ comércio entre vilas.
 
 | | Decisão | Trava |
 |---|---|---|
-| 1 | **Mina sem lugar:** quando não há nem boca nem afloramento, a vila aceita boca ruim, tenta outro raio, ou declara `BLOCKED` e faz outra coisa? | **Deixou de travar em 08-26** — a pedra de superfície cobre o caso comum. O que sobra é o terreno em que nem ela serve |
 | 2 | **Substituição:** fica binária ou vira os quatro níveis da ADR? `cut_sandstone` serve no lugar de `smooth_sandstone`? | já não trava o Nível 2 — a fornalha faz o liso. Trava a **variedade** |
-| 6 | **População:** o mod controla, ou aceita o *breeding* do vanilla? | ADR-009 §17 |
 | ~~7~~ | ~~**Fusão de colônias**~~ — **não é decisão.** UUID sobrevivente e teto de profissão estão decididos na ADR-007 desde 08-21; falta implementar | trabalho, não pergunta |
-| 8 | **O custo da busca de lote (E26):** a vila cheia responde a cada nove minutos. Sobe o teto de colunas e aceita o tique mais pesado; varre só o que pode ser beira de rua; ou aceita que vila cheia cresce devagar? | Quanto tempo uma vila leva para abrir obra nova |
-| 9 | **O cursor da varredura sobrevive ao centro se mover** — é decisão de 08-19, com teste (`theSweepSurvivesTheCenterMoving`) e motivo escrito: a âncora trocava a cada trinta segundos e zerava a busca. **A ADR-003 Emenda 4 mudou essa premissa** — hoje o centro anda pela sonda, e raramente. O preço atual: depois de um movimento de centro, a varredura retomada pula os anéis de dentro do centro **novo**, que é onde o lote é mais provável. Reverter mexe numa decisão testada, e por isso não foi feito | A vila que acabou de mover o centro |
 
 ---
 

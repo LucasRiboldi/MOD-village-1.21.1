@@ -58,6 +58,36 @@ public final class MineDigging {
     private static final int[] REACHES = {100, 75, 50};
 
     /**
+     * As frações que a segunda passagem tenta, quando a primeira falha.
+     *
+     * <p><b>Aqui a busca vai mais longe de propósito</b>, e é decisão do
+     * autor em 2026-08-26: <i>ela aceita uma boca ruim, procura mais
+     * longe</i>. "O fim da vila" deixa de ser teto quando a alternativa
+     * é a colônia sem pedra.
+     *
+     * <p>Continua proporcional a {@link #mineDistance}, e não um número
+     * solto: a bateria encurta essa distância para o mineiro não comer a
+     * arena vizinha, e uma segunda passagem em blocos absolutos furaria
+     * essa garantia.
+     */
+    private static final int[] FARTHER = {150, 200};
+
+    /**
+     * A janela de altura da boca ruim, para cima e para baixo.
+     *
+     * <p>Mais larga que {@link #LOOK_UP} e {@link #LOOK_DOWN}: a boca
+     * boa é o fim da vila, no nível dela; a ruim aceita subir o morro ou
+     * descer a depressão, porque a alternativa é não haver mina.
+     *
+     * <p><b>O que ela não relaxa:</b> água em cima e a Regra 3. Mina
+     * inundada não é mina ruim, é mina quebrada; e peça de vila gerada
+     * ou construção da colônia continua intocável em qualquer passagem.
+     */
+    private static final int POOR_UP = 12;
+
+    private static final int POOR_DOWN = 24;
+
+    /**
      * Quanto anda a diagonal, em centésimos da distância cheia.
      *
      * <p>Setenta, que é o cateto de um quadrado de hipotenusa cem. Assim
@@ -285,7 +315,8 @@ public final class MineDigging {
                     MOUTH_SUBJECT,
                     IdleReason.NO_TARGET,
                     "no column within " + mineDistance + " blocks of " + center.toShortString()
-                            + " can hold a mine mouth — tried 8 directions at 3 distances");
+                            + " can hold a mine mouth — tried 8 directions at 5 distances,"
+                            + " the last two settling for a poor one");
 
             return Optional.empty();
         }
@@ -417,7 +448,22 @@ public final class MineDigging {
     public static Optional<BlockPos> mouthOf(
             ServerWorld world, BlockPos center, Side towards) {
 
-        for (int part : REACHES) {
+        return mouthWithin(world, center, towards, REACHES, LOOK_UP, LOOK_DOWN)
+                .or(() -> mouthWithin(world, center, towards, FARTHER, POOR_UP, POOR_DOWN));
+    }
+
+    /**
+     * As oito direções, nestas distâncias, com esta janela de altura.
+     *
+     * <p>Chamada duas vezes: a primeira com a boca boa — o fim da vila,
+     * no nível dela —, a segunda com a ruim, mais longe e menos exigente
+     * quanto à altura. Decisão do autor em 2026-08-26.
+     */
+    private static Optional<BlockPos> mouthWithin(
+            ServerWorld world, BlockPos center, Side towards,
+            int[] reaches, int up, int down) {
+
+        for (int part : reaches) {
             int away = Math.max(NEAREST_MOUTH, mineDistance * part / 100);
 
             int corner = Math.max(NEAREST_MOUTH, away * DIAGONAL / 100);
@@ -433,7 +479,7 @@ public final class MineDigging {
                 // as quatro do eixo caíram todas na água da mesma vila, e
                 // a colônia ficou sem pedra por falta de amostra.
                 Optional<BlockPos> found = surfaceAt(
-                        world, center, side.offsetX() * away, side.offsetZ() * away);
+                        world, center, side.offsetX() * away, side.offsetZ() * away, up, down);
 
                 if (found.isPresent()) {
                     return found;
@@ -443,7 +489,9 @@ public final class MineDigging {
                         world,
                         center,
                         (side.offsetX() + next.offsetX()) * corner,
-                        (side.offsetZ() + next.offsetZ()) * corner);
+                        (side.offsetZ() + next.offsetZ()) * corner,
+                        up,
+                        down);
 
                 if (found.isPresent()) {
                     return found;
@@ -472,7 +520,7 @@ public final class MineDigging {
      * e não "desista", que era o defeito.
      */
     private static Optional<BlockPos> surfaceAt(
-            ServerWorld world, BlockPos center, int dx, int dz) {
+            ServerWorld world, BlockPos center, int dx, int dz, int up, int down) {
 
         int x = center.getX() + dx;
         int z = center.getZ() + dz;
@@ -490,11 +538,11 @@ public final class MineDigging {
         //
         // Desce primeiro: o chão costuma estar abaixo do marco do centro,
         // que é cama ou baú e fica um bloco acima dele.
-        for (int step = 0; step <= Math.max(LOOK_UP, LOOK_DOWN); step++) {
+        for (int step = 0; step <= Math.max(up, down); step++) {
             for (int sign = -1; sign <= 1; sign += 2) {
                 int offset = step * sign;
 
-                if (offset > LOOK_UP || offset < -LOOK_DOWN) {
+                if (offset > up || offset < -down) {
                     continue;
                 }
 

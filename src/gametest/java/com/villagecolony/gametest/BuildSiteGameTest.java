@@ -724,4 +724,49 @@ public class BuildSiteGameTest implements FabricGameTest {
             }
         }
     }
+
+    /**
+     * Centro que anda muito faz a varredura recomeçar — decisão 9.
+     *
+     * <p>Os anéis são medidos a partir do centro. Até 2026-08-26 o cursor
+     * sobrevivia a <b>qualquer</b> movimento dele, e o preço era pular os
+     * anéis de dentro do centro novo — que é onde o lote é mais provável.
+     *
+     * <p>Decisão do autor em 2026-08-26: <i>movimento pequeno não
+     * atrapalha; movimento grande justifica recomeçar</i>. O teste vizinho
+     * prova o pequeno; este prova o grande.
+     *
+     * <p>A afirmação é aritmética. Uma passagem gasta o mesmo orçamento
+     * sempre: se a segunda <b>recomeçou</b>, ela para no mesmo anel que a
+     * primeira; se tivesse continuado, pararia num anel maior.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_far_center")
+    public void theSweepStartsOverWhenTheCenterMovesFar(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        ColonyPos first = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(3, 1, 3)));
+
+        // Bem mais que os vinte blocos que a decisão fixou.
+        ColonyPos far = new ColonyPos(first.x() + 40, first.y(), first.z());
+
+        ColonyPos tooBigToFit = new ColonyPos(40, 20, 40);
+
+        BuildSiteScanner.find(context.getWorld(), colony, first, 64, tooBigToFit);
+
+        int paused = BuildSiteScanner.sweepPausedAt(colony).orElse(0);
+
+        context.assertTrue(paused > 0, "o orçamento devia ter acabado no meio do raio de 64");
+
+        BuildSiteScanner.find(context.getWorld(), colony, far, 64, tooBigToFit);
+
+        context.assertTrue(
+                BuildSiteScanner.sweepPausedAt(colony).orElse(0) == paused,
+                "o centro andou quarenta blocos e a varredura continuou de onde estava —"
+                        + " os anéis de dentro do centro novo ficaram sem ser olhados");
+
+        BuildSiteScanner.clearAll();
+
+        context.complete();
+    }
 }

@@ -783,26 +783,31 @@ public class MinerGameTest implements FabricGameTest {
         // teste pôs.
         BlockPos center = context.getAbsolutePos(new BlockPos(2, 6, 2));
 
-        // O afloramento, longe das colunas que a boca tenta.
-        BlockPos outcrop = context.getAbsolutePos(new BlockPos(6, 6, 6));
+        // O afloramento, fora de toda coluna que a boca tenta — inclusive
+        // as da segunda passagem, que vão a 200% da distância.
+        BlockPos outcrop = context.getAbsolutePos(new BlockPos(7, 6, 7));
 
         world.setBlockState(outcrop, Blocks.STONE.getDefaultState());
 
         UUID worker = UUID.randomUUID();
         UUID colony = UUID.randomUUID();
 
-        // As vinte e quatro colunas tapadas de uma vez: com a distância
-        // encurtada elas cabem todas numa caixa de cinco por cinco em
-        // volta do centro, e construção da colônia não serve de boca.
+        // Todas as colunas da boca tapadas de uma vez — as três distâncias
+        // da boca boa e as duas da ruim. Com a distância encurtada a mais
+        // longe delas fica a 200% de NEARBY, e construção da colônia não
+        // serve de boca em passagem nenhuma. A caixa desce fundo porque a
+        // segunda passagem olha vinte e quatro blocos abaixo do centro.
+        int reach = NEARBY * 2;
+
         VillageColonyMod.BUILDINGS.register(new Building(
                 UUID.randomUUID(),
                 colony,
                 ResourceId.vanilla("village/plains/houses/plains_small_house_1"),
-                MinecraftTypeAdapter.toColonyPos(center.add(-NEARBY, -14, -NEARBY)),
-                MinecraftTypeAdapter.toColonyPos(center.add(NEARBY, 6, NEARBY))));
+                MinecraftTypeAdapter.toColonyPos(center.add(-reach, -26, -reach)),
+                MinecraftTypeAdapter.toColonyPos(center.add(reach, 14, reach))));
 
         MineDigging.shortenMineDistanceTo(NEARBY);
-        MineDigging.shortenSurfaceRadiusTo(5);
+        MineDigging.shortenSurfaceRadiusTo(6);
 
         try {
             Optional<BlockPos> target =
@@ -881,6 +886,71 @@ public class MinerGameTest implements FabricGameTest {
         context.assertTrue(
                 StonePatch.in(world, context.getAbsolutePos(rock), context.getAbsolutePos(rock).getY()).isEmpty(),
                 "terra não é pedra");
+
+        context.complete();
+    }
+
+    /**
+     * Sem boca boa, a colônia aceita uma ruim e procura mais longe.
+     *
+     * <p>Decisão do autor em 2026-08-26, com estas palavras: <i>ela aceita
+     * uma boca ruim, procura mais longe</i>. Até aqui "o fim da vila" era
+     * teto absoluto — se nenhuma das colunas de perto servisse, não havia
+     * mina, e a colônia ficava sem a raiz de pedra, carvão e ferro.
+     *
+     * <p>O cenário tapa <b>todas</b> as colunas da primeira passagem com
+     * construção da colônia, que a Regra 3 nunca deixa virar boca. O que
+     * sobra é a segunda passagem, que vai a 150% e 200% da distância.
+     *
+     * <p>A afirmação é a distância: a boca achada está <b>além</b> do que
+     * a primeira passagem alcança. Não se afirma qual coluna — isso
+     * depende do terreno do mundo da bateria, e o que a decisão manda é
+     * ir mais longe, não ir a um lugar específico.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+            tickLimit = 20)
+    public void withoutAGoodMouthTheSearchGoesFartherAndSettles(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        BlockPos center = context.getAbsolutePos(new BlockPos(3, 6, 3));
+
+        UUID colony = UUID.randomUUID();
+
+        int near = 3;
+
+        // Tudo o que a primeira passagem alcança é construção da colônia:
+        // ela vai no máximo a `near` do centro, e a caixa desce fundo
+        // porque a janela de altura também olha para baixo.
+        VillageColonyMod.BUILDINGS.register(new Building(
+                UUID.randomUUID(),
+                colony,
+                ResourceId.vanilla("village/plains/houses/plains_small_house_1"),
+                MinecraftTypeAdapter.toColonyPos(center.add(-near, -26, -near)),
+                MinecraftTypeAdapter.toColonyPos(center.add(near, 14, near))));
+
+        MineDigging.shortenMineDistanceTo(near);
+
+        try {
+            Optional<BlockPos> mouth = MineDigging.mouthOf(world, center, Side.NORTH);
+
+            context.assertTrue(
+                    mouth.isPresent(),
+                    "todas as colunas de perto estavam tapadas e a busca desistiu —"
+                            + " é a colônia sem pedra por causa do terreno em volta");
+
+            int away = Math.max(
+                    Math.abs(mouth.get().getX() - center.getX()),
+                    Math.abs(mouth.get().getZ() - center.getZ()));
+
+            context.assertTrue(
+                    away > near,
+                    "a boca saiu a " + away + " blocos, dentro do alcance da primeira"
+                            + " passagem — era para ela ter ido mais longe");
+        } finally {
+            MineDigging.restoreMineDistance();
+
+            VillageColonyMod.BUILDINGS.removeOfColony(colony);
+        }
 
         context.complete();
     }
