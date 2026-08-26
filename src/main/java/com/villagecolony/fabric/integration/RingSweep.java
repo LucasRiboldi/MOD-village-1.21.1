@@ -37,8 +37,27 @@ public final class RingSweep {
     /** Quantas colunas uma passagem pode olhar. */
     public static final int MAX_COLUMNS = 1024;
 
-    /** Onde cada dono parou. A chave é ele, nunca o lugar. */
-    private static final Map<UUID, Integer> NEXT_RING = new HashMap<>();
+    /**
+     * Onde cada dono parou. A chave é ele, nunca o lugar.
+     *
+     * <p><b>E é a coluna, não só o anel — 2026-08-25.</b> Guardava só o
+     * anel, e a passagem seguinte recomeçava do primeiro bloco dele:
+     * numa casca de quinhentas colunas, metade do orçamento gasto para
+     * chegar de volta ao que a passagem anterior já tinha respondido. É
+     * o mesmo defeito que o {@code BuildSiteScanner} tinha, corrigido no
+     * mesmo dia e pelo mesmo motivo.
+     */
+    private static final Map<UUID, Sweep> NEXT_RING = new HashMap<>();
+
+    /**
+     * Onde uma varredura parou: o anel, e a coluna na casca dele.
+     *
+     * @param ring o anel em que o orçamento acabou
+     * @param column a posição, nessa casca, da primeira coluna que
+     *     <b>não</b> chegou a ser olhada
+     */
+    private record Sweep(int ring, int column) {
+    }
 
     private RingSweep() {
     }
@@ -65,13 +84,18 @@ public final class RingSweep {
 
         int columns = 0;
 
-        int startRing = NEXT_RING.getOrDefault(owner, 0);
+        Sweep paused = NEXT_RING.get(owner);
 
-        if (startRing > radius) {
-            startRing = 0;
-        }
+        int startRing = paused == null || paused.ring() > radius ? 0 : paused.ring();
+
+        int startColumn = startRing == 0 ? 0 : paused.column();
 
         for (int ring = startRing; ring <= radius; ring++) {
+
+            // A posição desta coluna na casca, contando as que a passagem
+            // anterior já respondeu: é a absoluta que se retoma.
+            int inRing = 0;
+
             for (int dx = -ring; dx <= ring; dx++) {
                 for (int dz = -ring; dz <= ring; dz++) {
 
@@ -81,8 +105,16 @@ public final class RingSweep {
                         continue;
                     }
 
+                    int column = inRing++;
+
+                    if (ring == startRing && column < startColumn) {
+                        // Já respondida, e sair daqui não custa leitura
+                        // nem gasta orçamento.
+                        continue;
+                    }
+
                     if (++columns > MAX_COLUMNS) {
-                        NEXT_RING.put(owner, ring);
+                        NEXT_RING.put(owner, new Sweep(ring, column));
 
                         return Optional.empty();
                     }
@@ -108,7 +140,7 @@ public final class RingSweep {
 
     /** Em que anel a busca deste dono parou por falta de orçamento. */
     public static Optional<Integer> pausedAt(UUID owner) {
-        return Optional.ofNullable(NEXT_RING.get(owner));
+        return Optional.ofNullable(NEXT_RING.get(owner)).map(Sweep::ring);
     }
 
     /** Esquece o cursor de um dono só. */

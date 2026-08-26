@@ -26,6 +26,8 @@ import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.MineDigging;
 import com.villagecolony.fabric.integration.MineMouth;
 import com.villagecolony.fabric.integration.OreVein;
+import com.villagecolony.fabric.integration.RingSweep;
+import com.villagecolony.fabric.integration.StonePatch;
 import com.villagecolony.fabric.work.MinerReport;
 import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.SandGathering;
@@ -748,6 +750,137 @@ public class MinerGameTest implements FabricGameTest {
                 Math.abs(mouth.get().getX() - ideal.getX()) > 1
                         || Math.abs(mouth.get().getZ() - ideal.getZ()) > 1,
                 "a boca nasceu dentro da construção, em " + mouth.get().toShortString());
+
+        context.complete();
+    }
+
+    /**
+     * Sem boca de mina, a pedra vem da superfície — 2026-08-25.
+     *
+     * <p>Na sessão daquele dia as vinte e quatro colunas da boca caíram
+     * todas em terreno que não serve, e a colônia ficou <b>sem fonte de
+     * pedra nenhuma</b>: a obra morreu de fome esperando pedregulho e a
+     * vila parou de crescer por causa do terreno em volta. A escada
+     * continua sendo o caminho — é ela que traz carvão e ferro —, mas
+     * não ter escada não pode ser o mesmo que não ter pedra.
+     *
+     * <p>A arena não tem chão nenhum de propósito: é o que faz as vinte
+     * e quatro colunas falharem sem precisar montar terreno ruim. O
+     * único bloco sólido é o afloramento, e ele está fora das colunas
+     * que a boca tenta.
+     *
+     * <p>Rodado contra a alternativa desligada: {@code nextTarget}
+     * devolve vazio, que era o mineiro parado com tarefa aberta.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_surface",
+            tickLimit = 20)
+    public void withoutAMineMouthTheStoneComesFromTheSurface(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        // Alto na arena de propósito: o piso do mundo é de ardósia, e a
+        // janela do StonePatch o alcançaria se o centro ficasse rente ao
+        // chão. Aqui só existe um bloco de pedra na janela — o que o
+        // teste pôs.
+        BlockPos center = context.getAbsolutePos(new BlockPos(2, 6, 2));
+
+        // O afloramento, longe das colunas que a boca tenta.
+        BlockPos outcrop = context.getAbsolutePos(new BlockPos(6, 6, 6));
+
+        world.setBlockState(outcrop, Blocks.STONE.getDefaultState());
+
+        UUID worker = UUID.randomUUID();
+        UUID colony = UUID.randomUUID();
+
+        // As vinte e quatro colunas tapadas de uma vez: com a distância
+        // encurtada elas cabem todas numa caixa de cinco por cinco em
+        // volta do centro, e construção da colônia não serve de boca.
+        VillageColonyMod.BUILDINGS.register(new Building(
+                UUID.randomUUID(),
+                colony,
+                ResourceId.vanilla("village/plains/houses/plains_small_house_1"),
+                MinecraftTypeAdapter.toColonyPos(center.add(-NEARBY, -14, -NEARBY)),
+                MinecraftTypeAdapter.toColonyPos(center.add(NEARBY, 6, NEARBY))));
+
+        MineDigging.shortenMineDistanceTo(NEARBY);
+        MineDigging.shortenSurfaceRadiusTo(5);
+
+        try {
+            Optional<BlockPos> target =
+                    MineDigging.nextTarget(world, worker, colony, center);
+
+            context.assertTrue(
+                    VillageColonyMod.MINES.of(colony).isEmpty(),
+                    "a montagem falhou: era para nenhuma coluna servir de boca");
+
+            context.assertTrue(
+                    target.isPresent(),
+                    "sem boca de mina o mineiro ficou sem nada para cavar");
+
+            context.assertTrue(
+                    target.get().equals(outcrop),
+                    "o alvo não foi o afloramento, e sim " + target.get().toShortString());
+        } finally {
+            MineDigging.restoreMineDistance();
+            MineDigging.restoreSurfaceRadius();
+
+            RingSweep.forget(worker);
+
+            VillageColonyMod.BUILDINGS.removeOfColony(colony);
+        }
+
+        context.complete();
+    }
+
+    /**
+     * O que conta como pedra exposta, e o que não conta.
+     *
+     * <p>As três condições do {@code StonePatch}, e as três juntas: é da
+     * família da pedra, tem ar em cima, e não é de ninguém. A do arenito
+     * entra junto porque é a pedra da vila de deserto — a casa de lá pede
+     * noventa e três blocos dela.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_surface",
+            tickLimit = 20)
+    public void exposedStoneIsStoneWithAirAboveAndNoOwner(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        // No alto da arena: rente ao chão, a janela alcança o piso do
+        // mundo, que é de ardósia e responderia por qualquer afirmação.
+        BlockPos rock = new BlockPos(4, 6, 3);
+
+        for (Block stone : List.of(
+                Blocks.STONE, Blocks.COBBLESTONE, Blocks.ANDESITE, Blocks.DIORITE,
+                Blocks.GRANITE, Blocks.DEEPSLATE, Blocks.SANDSTONE, Blocks.RED_SANDSTONE)) {
+
+            context.setBlockState(rock, stone.getDefaultState());
+
+            context.assertTrue(
+                    StonePatch.in(world, context.getAbsolutePos(rock), context.getAbsolutePos(rock).getY())
+                            .isPresent(),
+                    stone.getName().getString() + " exposto devia servir ao mineiro");
+        }
+
+        // Tapada: a de cima é que estaria exposta, e ela não é pedra.
+        context.setBlockState(rock, Blocks.STONE.getDefaultState());
+        context.setBlockState(rock.up(), Blocks.DIRT.getDefaultState());
+
+        context.assertTrue(
+                StonePatch.in(world, context.getAbsolutePos(rock), context.getAbsolutePos(rock).getY()).isEmpty(),
+                "pedra enterrada não está exposta, e o mineiro não cava para chegar nela");
+
+        // Sob água: aldeão não mergulha.
+        context.setBlockState(rock.up(), Blocks.WATER.getDefaultState());
+
+        context.assertTrue(
+                StonePatch.in(world, context.getAbsolutePos(rock), context.getAbsolutePos(rock).getY()).isEmpty(),
+                "pedra sob água passou por exposta");
+
+        context.setBlockState(rock.up(), Blocks.AIR.getDefaultState());
+        context.setBlockState(rock, Blocks.DIRT.getDefaultState());
+
+        context.assertTrue(
+                StonePatch.in(world, context.getAbsolutePos(rock), context.getAbsolutePos(rock).getY()).isEmpty(),
+                "terra não é pedra");
 
         context.complete();
     }

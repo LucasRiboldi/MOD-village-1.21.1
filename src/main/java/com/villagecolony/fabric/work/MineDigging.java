@@ -9,6 +9,8 @@ import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.MineMouth;
 import com.villagecolony.fabric.integration.OreVein;
+import com.villagecolony.fabric.integration.RingSweep;
+import com.villagecolony.fabric.integration.StonePatch;
 import net.minecraft.block.BlockState;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -55,6 +57,15 @@ public final class MineDigging {
      */
     private static final int[] REACHES = {100, 75, 50};
 
+    /**
+     * Quanto anda a diagonal, em centésimos da distância cheia.
+     *
+     * <p>Setenta, que é o cateto de um quadrado de hipotenusa cem. Assim
+     * a boca na diagonal fica <b>à mesma distância</b> do centro que a
+     * boca no eixo, e o teto de "o fim da vila" continua sendo teto.
+     */
+    private static final int DIAGONAL = 70;
+
     /** Mais perto que isto a escada desceria sob a própria vila. */
     private static final int NEAREST_MOUTH = 2;
 
@@ -74,6 +85,18 @@ public final class MineDigging {
     /** O assunto do registrador para a boca que não se acha — 2026-08-22. */
     private static final String MOUTH_SUBJECT = "miner mine mouth";
 
+    /** E o da pedra de superfície, que é a alternativa a ela — 2026-08-25. */
+    private static final String SURFACE_SUBJECT = "miner surface stone";
+
+    /**
+     * A que distância se raspa pedra exposta quando não há mina.
+     *
+     * <p>O mesmo raio da areia, e pelo mesmo motivo: é o que um aldeão
+     * percorre e volta dentro do expediente. Mais que isso e ele passa o
+     * dia andando.
+     */
+    private static final int SURFACE_RADIUS = 48;
+
     /**
      * A distância em vigor. É {@link #MINE_DISTANCE}, menos nos testes.
      *
@@ -83,6 +106,9 @@ public final class MineDigging {
      * um teste que não existe.
      */
     private static int mineDistance = MINE_DISTANCE;
+
+    /** O raio de superfície em vigor. É {@link #SURFACE_RADIUS}, menos nos testes. */
+    private static int surfaceRadius = SURFACE_RADIUS;
 
     private MineDigging() {
     }
@@ -99,6 +125,25 @@ public final class MineDigging {
     /** Devolve a distância ao valor de jogo. */
     public static void restoreMineDistance() {
         mineDistance = MINE_DISTANCE;
+    }
+
+    /**
+     * Encurta a varredura de pedra exposta. Só os testes precisam disso.
+     *
+     * <p>Mesmo motivo de {@link #shortenMineDistanceTo}: quarenta e oito
+     * blocos saem da arena e raspam o cenário do teste vizinho.
+     */
+    public static void shortenSurfaceRadiusTo(int blocks) {
+        if (blocks <= 0) {
+            throw new IllegalArgumentException("Radius must be positive: " + blocks);
+        }
+
+        surfaceRadius = blocks;
+    }
+
+    /** Devolve o raio de superfície ao valor de jogo. */
+    public static void restoreSurfaceRadius() {
+        surfaceRadius = SURFACE_RADIUS;
     }
 
     /**
@@ -120,11 +165,57 @@ public final class MineDigging {
         Optional<Mine> mine = mineOf(world, workerId, colonyId, center);
 
         if (mine.isEmpty()) {
-            return Optional.empty();
+            // A boca não pôde nascer. Em vez de a colônia ficar sem a
+            // única fonte de pedra que tem, ela raspa o que estiver
+            // exposto em volta — ver exposedStone.
+            return exposedStone(world, workerId, colonyId, center);
         }
+
+        IdleLog.clear(colonyId, SURFACE_SUBJECT);
 
         return followingTheVein(world, mine.get())
                 .or(() -> nextCut(world, workerId, mine.get()));
+    }
+
+    /**
+     * A pedra de superfície, quando a mina não tem onde nascer.
+     *
+     * <p><b>É alternativa, e não substituto.</b> A escada continua sendo
+     * o caminho: é ela que traz carvão e ferro, e ela rende mais. Isto só
+     * roda quando as vinte e quatro colunas da boca falharam — e o que
+     * ele evita é o que a sessão de 2026-08-25 mostrou: uma vila cercada
+     * de água ficou sem pedra nenhuma, a obra morreu de fome esperando
+     * pedregulho, e a colônia parou de crescer por causa do terreno em
+     * volta.
+     *
+     * <p>Mesma espiral da areia, mesmo teto por passagem, e a distinção
+     * que o log precisa: "não terminei de olhar" não é "não há".
+     */
+    private static Optional<BlockPos> exposedStone(
+            ServerWorld world, UUID workerId, UUID colonyId, BlockPos center) {
+
+        Optional<BlockPos> found = RingSweep.around(
+                workerId,
+                center,
+                surfaceRadius,
+                column -> StonePatch.in(world, column, center.getY()));
+
+        if (found.isEmpty()) {
+            IdleLog.record(
+                    colonyId,
+                    SURFACE_SUBJECT,
+                    RingSweep.pausedAt(workerId).isPresent()
+                            ? IdleReason.SWEEP_INCOMPLETE
+                            : IdleReason.NO_TARGET,
+                    "no mine mouth, and no exposed stone within "
+                            + surfaceRadius + " blocks either");
+
+            return Optional.empty();
+        }
+
+        IdleLog.clear(colonyId, SURFACE_SUBJECT);
+
+        return found;
     }
 
     /**
@@ -194,7 +285,7 @@ public final class MineDigging {
                     MOUTH_SUBJECT,
                     IdleReason.NO_TARGET,
                     "no column within " + mineDistance + " blocks of " + center.toShortString()
-                            + " can hold a mine mouth — tried 4 sides at 3 distances");
+                            + " can hold a mine mouth — tried 8 directions at 3 distances");
 
             return Optional.empty();
         }
@@ -311,8 +402,10 @@ public final class MineDigging {
      * de log</b>: três sessões de jogo terminaram com {@code 0 mines} no
      * save e mineiros mudos com tarefa aberta.
      *
-     * <p>Agora ela tenta <b>doze colunas</b>: quatro lados, três
-     * distâncias. A ordem é determinística e começa na intenção do autor
+     * <p>Agora ela tenta <b>vinte e quatro colunas</b>: oito direções —
+     * os quatro lados e as quatro diagonais entre eles —, em três
+     * distâncias. Eram doze até 2026-08-25, e as quatro do eixo caíram
+     * todas na água da mesma vila. A ordem é determinística e começa na intenção do autor
      * — o lado da colônia, na distância cheia —, e só depois encurta.
      * <b>Nunca vai mais longe</b> que a distância pedida: "o fim da
      * vila" é um teto, e a bateria encurta essa distância justamente
@@ -327,16 +420,36 @@ public final class MineDigging {
         for (int part : REACHES) {
             int away = Math.max(NEAREST_MOUTH, mineDistance * part / 100);
 
+            int corner = Math.max(NEAREST_MOUTH, away * DIAGONAL / 100);
+
             Side side = towards;
 
             for (int turn = 0; turn < 4; turn++) {
-                Optional<BlockPos> found = surfaceAt(world, center, side, away);
+                Side next = side.clockwise();
+
+                // O eixo primeiro — é a intenção do autor, "anda até o
+                // fim da vila" —, e a diagonal entre ele e o seguinte
+                // logo depois. Oito por distância, e não quatro: em 08-25
+                // as quatro do eixo caíram todas na água da mesma vila, e
+                // a colônia ficou sem pedra por falta de amostra.
+                Optional<BlockPos> found = surfaceAt(
+                        world, center, side.offsetX() * away, side.offsetZ() * away);
 
                 if (found.isPresent()) {
                     return found;
                 }
 
-                side = side.clockwise();
+                found = surfaceAt(
+                        world,
+                        center,
+                        (side.offsetX() + next.offsetX()) * corner,
+                        (side.offsetZ() + next.offsetZ()) * corner);
+
+                if (found.isPresent()) {
+                    return found;
+                }
+
+                side = next;
             }
         }
 
@@ -359,10 +472,10 @@ public final class MineDigging {
      * e não "desista", que era o defeito.
      */
     private static Optional<BlockPos> surfaceAt(
-            ServerWorld world, BlockPos center, Side side, int away) {
+            ServerWorld world, BlockPos center, int dx, int dz) {
 
-        int x = center.getX() + side.offsetX() * away;
-        int z = center.getZ() + side.offsetZ() * away;
+        int x = center.getX() + dx;
+        int z = center.getZ() + dz;
 
         if (world.getChunkManager().getWorldChunk(x >> 4, z >> 4) == null) {
             // Nunca forçar carregamento de dentro do ciclo — §11.
