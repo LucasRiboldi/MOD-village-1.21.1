@@ -201,8 +201,18 @@ public final class TreeMarks {
         UNREACHABLE.clear();
     }
 
-    /** Se esta árvore ainda está no prazo de esquecimento. */
-    static boolean isOutOfReach(ServerWorld world, BlockPos base) {
+    /**
+     * Se esta árvore ainda está no prazo de esquecimento.
+     *
+     * <p><b>Público por causa do teste, como {@link #forgetUnreachable}.</b>
+     * Quem usa em produção é o {@link TreeChoice}, do mesmo pacote. O
+     * teste do guarda de travamento vive em {@code gametest} e precisa
+     * perguntar isto para provar a segunda metade da Regra 9 — que o
+     * guarda não só devolve a tarefa, mas <b>esquece a árvore</b>. O
+     * javadoc daquele teste prometia as duas provas desde sempre e só
+     * fazia a primeira; a segunda entrou em 2026-08-26.
+     */
+    public static boolean isOutOfReach(ServerWorld world, BlockPos base) {
         Long since = UNREACHABLE.get(base);
 
         if (since == null) {

@@ -1037,6 +1037,21 @@ public class LumberjackGameTest implements FabricGameTest {
                 context.assertTrue(
                         task.executor().isEmpty(),
                         "a tarefa voltou à fila e continua com dono");
+
+                // A segunda metade da Regra 9, que o javadoc acima
+                // prometia desde sempre e ninguém conferia — 2026-08-26.
+                //
+                // Sem ela, a tarefa volta para a fila e a busca reescolhe
+                // esta mesma árvore: ela é a mais próxima e a busca é
+                // determinística. Trocaria de trabalhador, e não de
+                // problema. Quem prova o filtro é
+                // theTreeMarkedOutOfReachIsSkipped, que marca à mão; o
+                // que faltava provar é que o guarda MARCA.
+                context.assertTrue(
+                        TreeMarks.isOutOfReach(world, context.getAbsolutePos(marooned)),
+                        "o guarda devolveu a tarefa e não esqueceu a árvore de "
+                                + marooned.toShortString()
+                                + " — o substituto vai travar no mesmo lugar");
             } finally {
                 TreeMarks.forgetUnreachable();
 

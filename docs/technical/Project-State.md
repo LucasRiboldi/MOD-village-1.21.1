@@ -4615,3 +4615,46 @@ depois     476 unitários, 0 falhas   ·   171 de jogo, 0 falhas
            12 arquivos, 47 de 49 pontos de limpeza protegidos
            0 afirmações dentro de finally
 ```
+
+## A segunda prova do guarda, que o javadoc devia desde sempre
+
+As duas seções acima anotaram esta lacuna e a deixaram para depois. Foi
+no mesmo dia, e é a última das três.
+
+O javadoc de `theStallGuardReturnsTheTaskAndForgetsTheTree` promete duas
+provas — **a tarefa volta para a fila** e **a árvore é esquecida** — e o
+teste só fazia a primeira. O nome do método já dizia `AndForgetsTheTree`.
+
+A segunda metade é a Regra 9, e ela é o que fecha o G2: soltar a tarefa
+sem esquecer a árvore **troca de trabalhador, e não de problema** — a
+busca é determinística a partir do centro, a árvore continua sendo a mais
+próxima, e o substituto anda até ela para travar no mesmo lugar.
+
+**Quem provava o quê, antes:** `theTreeMarkedOutOfReachIsSkipped` marca a
+árvore à mão e prova o **filtro** — que a busca pula o que está marcado.
+Ninguém provava que o **guarda marca**. A corrente tinha as duas pontas e
+faltava o elo.
+
+## O que custou, e a fase vermelha
+
+Uma linha de produção, e é só visibilidade:
+
+```text
+TreeMarks.isOutOfReach   static  →  public static
+```
+
+Mesmo motivo e mesmo precedente de `forgetUnreachable()`, que já é
+pública com a nota "só os testes precisam disso": quem a usa em produção
+é o `TreeChoice`, do mesmo pacote, e o teste vive em `gametest`.
+
+**Fase vermelha conferida.** A marcação em `TreeChoice.giveUp` foi
+desligada de propósito, e a bateria acusou **uma** falha — a nova, com a
+mensagem nova:
+
+```text
+(10885993, -60, 504336) o guarda devolveu a tarefa e não esqueceu a árvore
+```
+
+Uma só, e não três: as outras duas afirmações continuaram passando com a
+marcação desligada. É o que se queria — a afirmação nova isola a segunda
+metade, e não repete o que as outras já cobrem.

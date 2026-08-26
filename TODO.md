@@ -26,6 +26,26 @@ lista abaixo.
 
 ## ✅ Resolvido
 
+### 2026-08-26 — o guarda passou a provar as duas metades da Regra 9
+
+O javadoc de `theStallGuardReturnsTheTaskAndForgetsTheTree` prometia duas
+provas — a tarefa volta à fila **e** a árvore é esquecida — e o teste só
+fazia a primeira. O nome do método já dizia `AndForgetsTheTree`.
+
+A segunda é o que fecha o G2: soltar a tarefa sem esquecer a árvore
+**troca de trabalhador e não de problema**, porque a busca é
+determinística e aquela árvore continua sendo a mais próxima.
+`theTreeMarkedOutOfReachIsSkipped` já provava o **filtro**, marcando à
+mão; ninguém provava que o **guarda marca**.
+
+| | |
+|---|---|
+| **Custo em produção** | uma linha, e é só visibilidade — `TreeMarks.isOutOfReach` de package-private a `public`, mesmo precedente de `forgetUnreachable()` |
+| **Fase vermelha** | **conferida** — desligando a marcação em `TreeChoice.giveUp`, a bateria acusa **uma** falha, a nova. As outras duas afirmações continuam passando, então a nova isola mesmo a segunda metade |
+
+Com esta, as três pendências anotadas no ciclo fecharam: o E20, a limpeza
+depois do assert, e a lacuna do javadoc.
+
 ### 2026-08-26 — a limpeza passou a rodar quando a afirmação cai
 
 `context.assertTrue` lança, e a limpeza vinha depois dela: uma afirmação
