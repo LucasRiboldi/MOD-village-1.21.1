@@ -1699,10 +1699,26 @@ O Project-State deve sempre responder:
 > seção guarda o histórico e o detalhe de cada erro; onde as duas
 > discordarem, vale o TODO.
 >
-> Nasceram em 2026-08-22, das três sessões de jogo: **E18** (ninguém
-> funde pedra), **E19** (`MinerWork` cruzou o teto de 500 linhas),
-> **E20** (o guarda de travamento instável) e **E21** (a pedra que não
-> chegou ao baú).
+> Quatro nasceram em 2026-08-22, das três sessões de jogo, e dois
+> fecharam no mesmo dia:
+>
+> ```text
+> E18  ninguém funde pedra          ✅ fechado — Production declarada
+>                                      no recurso, e o fundidor
+>                                      perguntando ao livro de receitas
+> E19  MinerWork cruzou o teto      ✅ fechado — corte por
+>                                      responsabilidade: BuilderApproach,
+>                                      BuilderReport, MinerHaul
+> E20  o guarda de travamento       ⚠️ ABERTO. Não reproduzido em 12
+>                                      rodadas, e isso não é diagnóstico
+> E21  a pedra que não chegou       ⚠️ ABERTO. Instrumentar primeiro
+> ```
+>
+> **O E20 merece a ressalva por escrito.** Duas hipóteses caíram na
+> investigação de 08-22: o relógio compartilhado do mundo — que não
+> explica nada, porque as três horas usadas pelos testes estão todas
+> abaixo do `DUSK` — e o limite global de travamento, que só um
+> teste mexe. O que se sabe é que doze rodadas não o viram.
 
 Registrados com o que se sabe, e sem inventar causa para o que não foi
 investigado.
