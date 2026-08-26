@@ -19,7 +19,7 @@ lista abaixo.
 ```text
 476 testes unitários  ·  171 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
-2 sessões de jogo em 2026-08-25  ·  6 commits desde a última
+última sessão de jogo em 2026-08-26, 03:11  ·  5 commits desde ela
 ```
 
 ---

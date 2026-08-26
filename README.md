@@ -315,9 +315,9 @@ ficam os que mudam o que se vê no jogo.
 | 🟠 | **Nove arquivos de código acima de 500 linhas** | Recontados em 08-26. `VillageDetectionHandler` é o pior com 983. `LumberjackWork` saiu da lista no corte do E19 (1149 → 455), e quatro entraram com a mina e a estrada |
 | 🟠 | **`theStoneLeavesTheWorldAndReachesTheChest`** disse "a pedra não chegou ao baú" uma vez | Suspeita, não diagnóstico |
 | 🟠 | **A arena da bateria tem bioma fixo** de planície | Escondeu **duas vezes** que o deserto estava quebrado |
-| 🟡 | **O ícone tem 1,95 MB, e o jar 2,29 MB** | 85% do que se distribui é uma imagem mostrada a 64 pixels |
+| 🟡 | **O ícone tem 1,95 MB, e o jar 2,31 MB** | 84% do que se distribui é uma imagem mostrada a 64 pixels |
 | 🟡 | **`furniture()` sem dono** e **Regra 25 inerte** | Lógica morta desde a Regra 21 e a 28 |
-| 🟡 | **O `Development-Log` parou em 08-15** | Quarenta e seis commits e três sessões de jogo fora dele |
+| 🟠 | **O `Development-Log` parou em 08-15** | **Oitenta e seis commits** e quatro dias de sessão — 08-21, 08-22, 08-25 e 08-26 — fora dele. Recontado em 08-26, e subiu de 🟡 porque o buraco dobrou |
 | ✅ | **Nenhuma decisão esperando você** | As nove que travavam foram respondidas em 08-26, e a décima nasceu e fechou no mesmo dia. O que sobra é trabalho, não pergunta — a lista está no `TODO.md` |
 
 <details>
@@ -395,6 +395,37 @@ sempre atual — o enunciado das 29 regras, uma a uma — em
 
 ---
 ## Último ciclo de desenvolvimento
+
+**2026-08-26** — um checkpoint e **três defeitos fechados, nenhum deles
+do mod.** O dia começou com treze commits parados no repositório local e
+terminou com a bateria de testes consertada nos três lugares em que ela
+mentia.
+
+**O que se descobriu, e como**
+
+| | |
+|---|---|
+| **A bateria mentia numa rodada só** | Rodada oito vezes, deu **duas vermelhas**. Uma execução teria dito "171 passaram" e o checkpoint teria mentido por omissão |
+| **O guarda de travamento sempre funcionou** | O E20 acusava o mod há dias. A instrumentação mostrou a tarefa voltando à fila no tique 61 e ficando lá até o 240 — quem a rerreservava era o ciclo longo, e a afirmação era feita tarde demais |
+| **A limpeza não rodava quando a afirmação caía** | `assertTrue` lança, e a limpeza vinha depois. **44 dos 46 pontos** deixavam trabalhador vivo e estático alterado para o resto da bateria |
+| **O javadoc prometia duas provas e o teste fazia uma** | O nome do método já dizia `AndForgetsTheTree`, e ninguém conferia que o guarda **marca** a árvore |
+
+**O padrão do dia:** os três defeitos eram de **como o mod era
+observado**, não do mod. Duas das três correções não tocaram uma linha de
+produção; a terceira mudou uma, e só a visibilidade de um método.
+
+**Uma hipótese caiu no caminho, e fica registrada.** O checkpoint supôs
+que o ciclo de 600 ticks rerreservava a tarefa, e a sonda que forçou o
+ciclo no tique 200 deu três rodadas verdes. Era cedo demais: faltava a
+outra metade — a busca achando **outra** árvore, na arena de um teste
+vizinho.
+
+```text
+476 unitários, 0 falhas   ·   171 de jogo, 20 rodadas sem vermelha
+0 afirmações dentro de finally   ·   0 linhas de comportamento alteradas
+```
+
+### Ciclo anterior — 2026-08-22
 
 **2026-08-22** — quinze commits, **três sessões de jogo** e uma virada
 de arquitetura. O dia começou com o autor respondendo nove perguntas em
