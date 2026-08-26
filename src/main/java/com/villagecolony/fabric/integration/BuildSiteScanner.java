@@ -58,15 +58,21 @@ import java.util.UUID;
  * <hr>
  *
  * <p><b>Custo.</b> Mesma disciplina de {@code TreeScanner}: anéis a
- * partir do centro, teto de colunas por chamada e um cursor que retoma no
- * anel onde parou. Sem isso, uma varredura de raio 64 olharia dezesseis
+ * partir do centro, teto de colunas por chamada e um cursor que retoma na
+ * coluna onde parou. Sem isso, uma varredura de raio 64 olharia dezesseis
  * mil colunas dentro de um tick — e travar o servidor com varredura é
  * erro que este projeto já cometeu duas vezes (§11).
  */
 public final class BuildSiteScanner {
 
-    /** Quantas colunas uma chamada pode olhar. Ver {@code TreeScanner}. */
-    private static final int MAX_COLUMNS = 1024;
+    /**
+     * Quantas colunas uma chamada pode olhar. Ver {@code TreeScanner}.
+     *
+     * <p>Pública porque é ela que dá o número de passagens que um raio
+     * custa, e há teste que afirma esse custo. Deixá-lo escrito à mão lá
+     * faria o teste passar por acidente no dia em que este teto mudasse.
+     */
+    public static final int MAX_COLUMNS = 1024;
 
     /**
      * Quanto acima do nível da colônia ainda se procura chão.
@@ -120,8 +126,26 @@ public final class BuildSiteScanner {
      * Regra 24 é 7×7×7 contra os 5×5×4 da cabana, e com o lote de perto
      * acabado a colônia passou a varrer até o fim do orçamento — e a
      * travar ali.
+     *
+     * <p><b>E é a coluna, não o anel — 2026-08-25.</b> Até aqui só o
+     * anel era guardado, e a passagem seguinte recomeçava do primeiro
+     * bloco dele: a casca de um anel de raio 64 tem quinhentas e doze
+     * colunas, e re-perguntar por elas gastava orçamento para chegar às
+     * respostas que a passagem anterior já tinha. Custava duas passagens
+     * a mais das dezessete que o raio pede — um minuto de vila parada
+     * por varredura, para sempre.
      */
-    private static final Map<UUID, Integer> NEXT_RING = new HashMap<>();
+    private static final Map<UUID, Sweep> SWEEPS = new HashMap<>();
+
+    /**
+     * Onde uma varredura parou: o anel, e a coluna dentro da casca dele.
+     *
+     * @param ring o anel em que o orçamento acabou
+     * @param column a posição, na casca desse anel, da primeira coluna
+     *     que <b>não</b> chegou a ser olhada
+     */
+    private record Sweep(int ring, int column) {
+    }
 
     private BuildSiteScanner() {
     }
@@ -192,11 +216,11 @@ public final class BuildSiteScanner {
 
         int columns = 0;
 
-        int startRing = NEXT_RING.getOrDefault(colonyId, 0);
+        Sweep paused = SWEEPS.get(colonyId);
 
-        if (startRing > radius) {
-            startRing = 0;
-        }
+        int startRing = paused == null || paused.ring() > radius ? 0 : paused.ring();
+
+        int startColumn = startRing == 0 ? 0 : paused.column();
 
         if (startRing == 0) {
             // Varredura nova: a ponta que a anterior anotou pode não
@@ -205,6 +229,13 @@ public final class BuildSiteScanner {
         }
 
         for (int ring = startRing; ring <= radius; ring++) {
+
+            // Onde esta coluna fica na casca deste anel. Conta todas,
+            // inclusive as que a passagem anterior já respondeu: é a
+            // posição absoluta que se retoma, e não quantas foram vistas
+            // agora.
+            int inRing = 0;
+
             for (int dx = -ring; dx <= ring; dx++) {
                 for (int dz = -ring; dz <= ring; dz++) {
 
@@ -215,8 +246,17 @@ public final class BuildSiteScanner {
                         continue;
                     }
 
+                    int column = inRing++;
+
+                    if (ring == startRing && column < startColumn) {
+                        // Já respondida na passagem anterior. Sair daqui
+                        // não custa leitura de mundo e não gasta
+                        // orçamento — é só recolocar o cursor.
+                        continue;
+                    }
+
                     if (++columns > MAX_COLUMNS) {
-                        NEXT_RING.put(colonyId, ring);
+                        SWEEPS.put(colonyId, new Sweep(ring, column));
 
                         return Optional.empty();
                     }
@@ -226,7 +266,7 @@ public final class BuildSiteScanner {
                             from.getX() + dx, from.getZ() + dz, from.getY(), plans);
 
                     if (site.isPresent()) {
-                        NEXT_RING.remove(colonyId);
+                        SWEEPS.remove(colonyId);
 
                         // Há lote: a rua não precisa crescer, e a ponta
                         // anotada até aqui sai. A Regra 15 é o que fazer
@@ -241,7 +281,7 @@ public final class BuildSiteScanner {
 
         // Varreu tudo sem achar. Recomeçar do centro: a vila muda, o
         // jogador abre espaço, e o lote de ontem pode existir amanhã.
-        NEXT_RING.remove(colonyId);
+        SWEEPS.remove(colonyId);
 
         return Optional.empty();
     }
@@ -293,7 +333,7 @@ public final class BuildSiteScanner {
 
     /** Esquece os cursores. Chamado ao descarregar o mundo. */
     public static void clearAll() {
-        NEXT_RING.clear();
+        SWEEPS.clear();
     }
 
     /**
@@ -314,9 +354,9 @@ public final class BuildSiteScanner {
      * pede. Ver o E14 do §17.
      */
     public static OptionalInt sweepPausedAt(UUID colonyId) {
-        Integer ring = NEXT_RING.get(colonyId);
+        Sweep paused = SWEEPS.get(colonyId);
 
-        return ring == null ? OptionalInt.empty() : OptionalInt.of(ring);
+        return paused == null ? OptionalInt.empty() : OptionalInt.of(paused.ring());
     }
 
     /**

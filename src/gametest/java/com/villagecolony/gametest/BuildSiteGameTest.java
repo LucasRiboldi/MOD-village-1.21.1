@@ -209,6 +209,63 @@ public class BuildSiteGameTest implements FabricGameTest {
     }
 
     /**
+     * A varredura não pergunta duas vezes pela mesma coluna — E25.
+     *
+     * <p>O cursor guardava só o <b>anel</b>, e a passagem seguinte
+     * recomeçava do primeiro bloco dele. A casca de um anel de raio 64
+     * tem quinhentas e doze colunas: metade de uma passagem inteira
+     * gasta para chegar de volta aonde a anterior já tinha chegado.
+     *
+     * <p>O custo é o que se afirma aqui, e ele tem um piso aritmético:
+     * um raio de {@code R} tem {@code 1 + 4R(R+1)} colunas, e nenhuma
+     * varredura honesta pode precisar de mais passagens que
+     * {@code colunas ÷ teto}, arredondado para cima. Com o defeito eram
+     * dezenove das dezessete que o raio pede — meio minuto de vila
+     * parada por varredura, para sempre.
+     *
+     * <p>Sem tique nenhum de propósito: {@code find} é conta e leitura
+     * de bloco, e chamá-la em sequência mede exatamente o que o ciclo
+     * mediria em dezessete ciclos de trinta segundos.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_budget")
+    public void theSweepNeverAsksTheSameColumnTwice(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        ColonyPos center = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(3, 1, 3)));
+
+        // A mesma casa impossível do teste do centro que se move: um lote
+        // encontrado apagaria o cursor e a medição acabaria antes.
+        ColonyPos tooBigToFit = new ColonyPos(40, 20, 40);
+
+        int radius = 64;
+
+        int columns = 1 + 4 * radius * (radius + 1);
+
+        int floor = (columns + BuildSiteScanner.MAX_COLUMNS - 1)
+                / BuildSiteScanner.MAX_COLUMNS;
+
+        int passes = 0;
+
+        do {
+            BuildSiteScanner.find(context.getWorld(), colony, center, radius, tooBigToFit);
+
+            passes++;
+        } while (BuildSiteScanner.sweepPausedAt(colony).isPresent() && passes <= floor);
+
+        context.assertTrue(
+                passes == floor,
+                "a varredura do raio " + radius + " levou " + passes + " passagens, e "
+                        + columns + " colunas a " + BuildSiteScanner.MAX_COLUMNS
+                        + " por passagem cabem em " + floor
+                        + " — está re-perguntando por coluna já respondida");
+
+        BuildSiteScanner.clearAll();
+
+        context.complete();
+    }
+
+    /**
      * A varredura sobrevive ao centro da colônia se mexendo.
      *
      * <p>O cursor era guardado pela posição do centro. O centro troca de

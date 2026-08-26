@@ -252,7 +252,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Agricultura e defesa | ⬜ não começado |
 
 ```text
-472 testes unitários  ·  159 testes de jogo  ·  ./gradlew build
+472 testes unitários  ·  160 testes de jogo  ·  ./gradlew build
 ```
 
 **O que 🧪 quer dizer aqui.** A bateria roda o caso e ele passa. Não quer

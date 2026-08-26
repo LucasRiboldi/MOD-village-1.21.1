@@ -16,7 +16,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-472 testes unitários  ·  159 testes de jogo  ·  30 regras  ·  9 ADRs
+472 testes unitários  ·  160 testes de jogo  ·  30 regras  ·  9 ADRs
 7 arquivos de código acima de 500 linhas  ·  5 de teste
 sessão de jogo em 2026-08-25, 42 minutos  ·  0 commits desde ela
 ```
@@ -47,6 +47,7 @@ correção não foi vista em jogo.
 | | O que | Prova |
 |---|---|---|
 | **E22 — o crash** | Um construtor morto deixava o trabalho no registro, e vinte ciclos depois a obra fechava e mandava devolver à fila uma tarefa que já estava nela. Duas correções: `Task.isHeld()` passou a ser a pergunta que autoriza o `release`, e `BuilderWork.forget` entrou no `VillagerLifecycleHandler`, onde faltava entre os seis | 2 testes unitários, 1 teste de jogo. **Corrigido, não visto em jogo** |
+| **E25 — a varredura re-perguntava** | O cursor guardava só o **anel**, e a passagem seguinte recomeçava do primeiro bloco dele — a casca de um anel de raio 64 tem 512 colunas. Agora guarda a coluna, e o raio custa as 17 passagens que a aritmética pede, e não 19 | teste de jogo, **fase vermelha conferida**: com o cursor antigo ele acusa 18 passagens contra 17 |
 | **E5 — colheita de outras espécies** | Era "só carvalho, nunca visto em jogo". A sessão derrubou e replantou cinco: `Planted a ACACIA / SPRUCE / BIRCH / JUNGLE / OAK sapling` | **visto em jogo** |
 
 ### 2026-08-22 — as sessões de jogo e o que elas cobraram
@@ -95,7 +96,7 @@ conferido no volume · árvore grande deixando de ser recusada.
 | | Erro | Estado |
 |---|---|---|
 | **E20** | **`theStallGuardReturnsTheTaskAndForgetsTheTree` instável** | **Voltou a reproduzir em 08-25: 3 falhas em 7 rodadas.** Antes disso eram 12 rodadas limpas, e é essa alternância que o torna difícil. Duas hipóteses já caíram: o relógio compartilhado do mundo (as três horas usadas estão todas dentro do expediente) e o limite global de travamento (só um teste o mexe) |
-| **E25** | **A varredura de lote não termina na vila grande** | `no building work: still sweeping — the budget ran out before an answer — looking for a lot`, das 21:25 às 21:51 na colônia de 47 camas. Vinte e seis minutos sem resposta: o orçamento por ciclo não alcança o raio dela. Uma vez o motivo mudou para `the far end of the road runs into something it may not pave` |
+| **E26** | **Uma resposta de lote custa nove minutos**, e isso é o relógio de uma vila cheia | **Correção do que este arquivo dizia em 08-25:** a varredura **termina** — o `still sweeping` repetido eram varreduras sucessivas, não uma travada. O raio de 64 são 16.641 colunas a 1.024 por ciclo = 17 ciclos ≈ 8,5 min, e o log confirma: 21:25:11 → 21:34:15, quando ela terminou e estendeu a rua. O problema é o número em si: numa vila sem beira livre, a Regra 15 entrega 3 a 5 blocos de rua a cada nove minutos. **E o orçamento não se aumenta de graça** — o ciclo já avisou `took 58 ms — longer than a server tick` com uma varredura de 1.024 colunas dentro |
 | **E24** | **Cama sem espaço para baú é tentada para sempre** | `No room for a chest beside the bed at -7580, 64, -5129` a cada ciclo, sem fim e sem envelhecer. Três camas coladas bastam para a colônia repetir a mesma pergunta o resto da sessão |
 | **E23** | **Nome ofuscado no log da rua** | `extended the road 3 blocks east from class_2338{x=-6874, y=90, z=-5059}`. `end.at()` é um `BlockPos`, e em produção o `toString` dele sai intermediário. Só no log, e é a única linha do mod que vaza isso |
 | **E21** | **`theStoneLeavesTheWorldAndReachesTheChest`** disse "a pedra não chegou ao baú" uma vez | Suspeita: custo de ler estrutura no tique. **Suspeita, não diagnóstico**. Não repetiu em 7 rodadas de 08-25 |
@@ -231,6 +232,8 @@ comércio entre vilas.
 | 5 | **Água e comida:** o mod planta e coloca água, ou fazenda fica fora do escopo? | Nível 6 e a alternativa de planície |
 | 6 | **População:** o mod controla, ou aceita o *breeding* do vanilla? | ADR-009 §17 |
 | 7 | **Fusão de colônias:** qual UUID e o teto de profissão já estão decididos na ADR-007 — falta só escrever | Nível 6 |
+| 8 | **O custo da busca de lote (E26):** a vila cheia responde a cada nove minutos. Sobe o teto de colunas e aceita o tique mais pesado; varre só o que pode ser beira de rua; ou aceita que vila cheia cresce devagar? | Quanto tempo uma vila leva para abrir obra nova |
+| 9 | **O cursor da varredura sobrevive ao centro se mover** — é decisão de 08-19, com teste (`theSweepSurvivesTheCenterMoving`) e motivo escrito: a âncora trocava a cada trinta segundos e zerava a busca. **A ADR-003 Emenda 4 mudou essa premissa** — hoje o centro anda pela sonda, e raramente. O preço atual: depois de um movimento de centro, a varredura retomada pula os anéis de dentro do centro **novo**, que é onde o lote é mais provável. Reverter mexe numa decisão testada, e por isso não foi feito | A vila que acabou de mover o centro |
 
 ---
 
