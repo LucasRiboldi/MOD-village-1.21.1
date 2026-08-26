@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.colony.service.VillageDetector;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -8,6 +9,8 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -39,7 +42,34 @@ import java.util.Optional;
  */
 public final class ChestPlacer {
 
+    /**
+     * As camas sem lugar para baú, e desde quando — E24, 2026-08-25.
+     *
+     * <p>Sem isto a colônia repergunta a cada ciclo, para sempre. Na
+     * sessão de 2026-08-25 três camas coladas bastaram para
+     * {@code No room for a chest beside the bed at -7580, 64, -5129}
+     * sair a cada trinta segundos até o servidor parar — oito posições
+     * relidas por ciclo e por cama, e uma linha de log que só ensina que
+     * o mod não muda de ideia.
+     *
+     * <p><b>E a recusa envelhece</b>, que é a Regra 23: o jogador tira o
+     * bloco, abre o vão, muda a cama de lugar. Dez ciclos depois a cama
+     * volta a ser tentada.
+     */
+    private static final Map<BlockPos, Long> REFUSED = new HashMap<>();
+
+    /** Por quantos ticks uma cama recusada fica de fora. Dez ciclos. */
+    private static final int REFUSED_MEMORY = 10 * VillageDetector.CYCLE_TICKS;
+
+    /** Teto, e não regra: vila grande tem muita cama sem vão ao lado. */
+    private static final int MAX_REFUSED = 1024;
+
     private ChestPlacer() {
+    }
+
+    /** Esquece as recusas. Chamado ao parar o servidor. */
+    public static void clearAll() {
+        REFUSED.clear();
     }
 
     /**
@@ -53,6 +83,12 @@ public final class ChestPlacer {
      * @return onde o baú foi posto, ou vazio quando nenhum vizinho serve
      */
     public static Optional<BlockPos> placeBeside(ServerWorld world, BlockPos bed) {
+        if (isRefused(world, bed)) {
+            // Já se olhou, e não havia vão. Volta a valer em dez ciclos —
+            // ver REFUSED.
+            return Optional.empty();
+        }
+
         for (int drop = 0; drop <= 1; drop++) {
             for (Direction side : Direction.Type.HORIZONTAL) {
                 BlockPos spot = bed.offset(side).down(drop);
@@ -72,10 +108,40 @@ public final class ChestPlacer {
             }
         }
 
+        refuse(world, bed);
+
         VillageColonyMod.LOGGER.info(
-                "No room for a chest beside the bed at {}", bed.toShortString());
+                "No room for a chest beside the bed at {} — not asking again for {} cycles",
+                bed.toShortString(),
+                REFUSED_MEMORY / VillageDetector.CYCLE_TICKS);
 
         return Optional.empty();
+    }
+
+    /** Se esta cama está de castigo, e ainda não envelheceu. */
+    private static boolean isRefused(ServerWorld world, BlockPos bed) {
+        Long since = REFUSED.get(bed);
+
+        if (since == null) {
+            return false;
+        }
+
+        if (world.getTime() - since < REFUSED_MEMORY) {
+            return true;
+        }
+
+        REFUSED.remove(bed);
+
+        return false;
+    }
+
+    /** Anota que esta cama não tinha vão agora. */
+    private static void refuse(ServerWorld world, BlockPos bed) {
+        if (REFUSED.size() >= MAX_REFUSED) {
+            REFUSED.clear();
+        }
+
+        REFUSED.put(bed.toImmutable(), world.getTime());
     }
 
     /**

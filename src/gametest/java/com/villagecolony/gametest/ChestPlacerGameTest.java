@@ -198,4 +198,49 @@ public class ChestPlacerGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * A cama sem vão não é reperguntada a cada ciclo — E24, 2026-08-25.
+     *
+     * <p>Na sessão daquele dia a linha
+     * {@code No room for a chest beside the bed at -7580, 64, -5129}
+     * saiu a cada trinta segundos até o servidor parar: três camas
+     * coladas, oito posições relidas por ciclo, e um log que só ensinava
+     * que o mod não muda de ideia.
+     *
+     * <p>A prova é o segundo pedido com o vão <b>já aberto</b>: se a
+     * recusa vale, ele continua vazio. É a mesma marca que envelhece do
+     * {@code TreeMarks}, então o vão aberto passa a valer dez ciclos
+     * depois — e isso é o preço declarado de não repetir a busca.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "placer_walls")
+    public void aBedWithoutRoomIsNotAskedAgainEveryCycle(TestContext context) {
+        layBed(context);
+
+        for (Direction side : Direction.Type.HORIZONTAL) {
+            context.setBlockState(BED.offset(side), Blocks.STONE.getDefaultState());
+            context.setBlockState(BED.offset(side).down(), Blocks.STONE.getDefaultState());
+        }
+
+        context.setBlockState(BED.north(), Blocks.RED_BED.getDefaultState()
+                .with(Properties.BED_PART, BedPart.HEAD)
+                .with(Properties.HORIZONTAL_FACING, Direction.NORTH));
+
+        context.assertTrue(
+                place(context).isEmpty(),
+                "a montagem falhou: era para não haver vão nenhum");
+
+        // O vão abre — e mesmo assim a colônia não repergunta agora.
+        context.setBlockState(BED.east(), Blocks.AIR.getDefaultState());
+
+        context.assertTrue(
+                place(context).isEmpty(),
+                "a cama foi reperguntada no mesmo instante, e é isso que enche o log");
+
+        context.assertTrue(
+                !context.getBlockState(BED.east()).isOf(Blocks.CHEST),
+                "pôs baú numa cama que estava de castigo");
+
+        context.complete();
+    }
 }

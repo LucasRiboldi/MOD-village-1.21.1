@@ -19,6 +19,7 @@ import com.villagecolony.fabric.integration.VillageRoad;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.work.BuilderWork;
+import com.villagecolony.fabric.integration.ChestPlacer;
 import com.villagecolony.fabric.integration.RingSweep;
 import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
@@ -68,6 +69,7 @@ public final class ServerLifecycleHandler {
         SmelterWork.clearAll();
         ShepherdWork.clearAll();
         RingSweep.clearAll();
+        ChestPlacer.clearAll();
         ManufacturerWork.clearAll();
         BuilderWork.clearAll();
         ConstructionPlanner.clearAll();
@@ -193,6 +195,7 @@ public final class ServerLifecycleHandler {
         SmelterWork.clearAll();
         ShepherdWork.clearAll();
         RingSweep.clearAll();
+        ChestPlacer.clearAll();
         ManufacturerWork.clearAll();
         BuilderWork.clearAll();
         ConstructionPlanner.clearAll();
