@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.Block;
@@ -9,7 +10,10 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -62,8 +66,56 @@ public final class RoadExtension {
      */
     private static final int MAX_STEP = 1;
 
-    /** A ponta mais distante que a varredura desta colônia viu. */
-    private static final Map<UUID, End> ENDS = new HashMap<>();
+    /**
+     * Quantas pontas candidatas se guarda por colônia.
+     *
+     * <p><b>Era uma só, e por isso a vila parava — 2026-08-25.</b> A
+     * varredura guardava a ponta mais distante e nenhuma outra. Quando
+     * essa ponta específica não se deixava calçar — vila gerada à
+     * frente, casa da colônia, água, um degrau alto —, {@code pave}
+     * devolvia zero, a colônia não tinha alternativa, e a varredura
+     * seguinte reescolhia a <b>mesma</b> ponta, porque o critério é
+     * determinístico e o mundo não mudou. Oito minutos de varredura para
+     * bater no mesmo bloco, para sempre.
+     *
+     * <p>É a mesma forma do defeito que custou três sessões à mina, e a
+     * saída é a mesma: mais de um candidato. Doze pelo mesmo motivo que
+     * a boca da mina tem doze — é alternativa bastante para um terreno
+     * ruim sem virar uma lista que cresce com o tamanho da vila.
+     */
+    public static final int CANDIDATES = 12;
+
+    /**
+     * As pontas que esta varredura viu, da mais distante para a mais
+     * perto.
+     */
+    private static final Map<UUID, List<End>> ENDS = new HashMap<>();
+
+    /**
+     * As pontas que não se deixaram calçar, e desde quando.
+     *
+     * <p><b>A recusa envelhece</b> — é a Regra 23, e o mesmo molde de
+     * {@code TreeMarks}. Sem envelhecer, uma ponta impossível sairia da
+     * lista para sempre e a vila perderia candidatos a cada terreno
+     * ruim; sem recusa nenhuma, as doze mesmas pontas seriam tentadas
+     * toda varredura e a décima terceira nunca teria vez.
+     *
+     * <p>O jogador aplaina o barranco, tira a árvore, quebra a cerca — e
+     * dez ciclos depois a ponta volta a valer.
+     */
+    private static final Map<BlockPos, Long> REFUSED = new HashMap<>();
+
+    /** Por quantos ticks uma ponta recusada fica de fora. Dez ciclos. */
+    private static final int REFUSED_MEMORY = 10 * VillageDetector.CYCLE_TICKS;
+
+    /**
+     * Quantas recusas se guarda antes de esquecer tudo.
+     *
+     * <p>Teto, e não regra: uma vila cercada de construção encheria o
+     * mapa sem limite. Esquecer tudo custa uma tentativa perdida por
+     * ponta, e é melhor que crescer para sempre.
+     */
+    private static final int MAX_REFUSED = 1024;
 
     /** Uma ponta de rua, e para que lado ela continuaria. */
     private record End(BlockPos at, Direction towards, double fromCenter) {
@@ -88,39 +140,84 @@ public final class RoadExtension {
     /**
      * Esta coluna é rua — vale a pena olhar se ela é ponta?
      *
-     * <p>Chamada pela busca de lote, uma vez por coluna de rua. Guarda a
-     * mais distante do centro e descarta o resto: só uma vai ser
-     * prolongada, e guardar todas seria uma lista que cresce com o
-     * tamanho da vila sem servir a nada.
+     * <p>Chamada pela busca de lote, uma vez por coluna de rua. Guarda as
+     * {@value #CANDIDATES} mais distantes do centro e descarta o resto:
+     * guardar todas seria uma lista que cresce com o tamanho da vila, e
+     * guardar uma só era a vila parando na primeira ponta ruim.
      */
     static void consider(ServerWorld world, UUID colonyId, BlockPos road, BlockPos center) {
+        if (isRefused(world, road)) {
+            // Já se tentou calçar esta, e não deu. Ela volta a valer
+            // sozinha em dez ciclos — ver REFUSED.
+            return;
+        }
+
         Optional<Direction> towards = openSideOf(world, road);
 
         if (towards.isEmpty()) {
             return;
         }
 
+        List<End> found = ENDS.computeIfAbsent(colonyId, id -> new ArrayList<>());
+
         double distance = center.getSquaredDistance(road);
 
-        End best = ENDS.get(colonyId);
+        if (found.size() == CANDIDATES && distance <= found.get(found.size() - 1).fromCenter()) {
+            // Não entra nem no fim da lista: sai barato, sem ordenar.
+            return;
+        }
 
-        if (best == null || distance > best.fromCenter()) {
-            ENDS.put(colonyId, new End(road, towards.get(), distance));
+        found.add(new End(road, towards.get(), distance));
+
+        // Da mais distante para a mais perto, que é a frase da regra: a
+        // rua cresce pela ponta, e não pelo meio.
+        found.sort(Comparator.comparingDouble(End::fromCenter).reversed());
+
+        if (found.size() > CANDIDATES) {
+            found.remove(found.size() - 1);
         }
     }
 
-    /** Esquece a ponta desta colônia. A varredura recomeçou. */
+    /** Esquece as pontas desta colônia. A varredura recomeçou. */
     public static void forgetEnds(UUID colonyId) {
         ENDS.remove(colonyId);
     }
 
-    /** Esvazia o registro. Chamado ao parar o servidor. */
+    /** Se esta ponta está de castigo, e ainda não envelheceu. */
+    private static boolean isRefused(ServerWorld world, BlockPos road) {
+        Long since = REFUSED.get(road);
+
+        if (since == null) {
+            return false;
+        }
+
+        if (world.getTime() - since < REFUSED_MEMORY) {
+            return true;
+        }
+
+        REFUSED.remove(road);
+
+        return false;
+    }
+
+    /** Anota que esta ponta não se deixou calçar agora. */
+    private static void refuse(ServerWorld world, BlockPos road) {
+        if (REFUSED.size() >= MAX_REFUSED) {
+            REFUSED.clear();
+        }
+
+        REFUSED.put(road, world.getTime());
+    }
+
+    /** Esvazia os registros. Chamado ao parar o servidor. */
     public static void clearAll() {
         ENDS.clear();
+
+        REFUSED.clear();
     }
 
     /**
-     * Prolonga a rua desta colônia, a partir da ponta mais distante.
+     * Prolonga a rua desta colônia, tentando as pontas mais distantes.
      *
      * <p>Só faz sentido depois de uma varredura de lote que terminou sem
      * achar nada: é ela que enche o registro de pontas, e é o "não há
@@ -130,9 +227,9 @@ public final class RoadExtension {
      *     {@link VillageRoad}
      */
     public static Outcome extend(ServerWorld world, UUID colonyId, ResourceId paving) {
-        End end = ENDS.remove(colonyId);
+        List<End> ends = ENDS.remove(colonyId);
 
-        if (end == null) {
+        if (ends == null || ends.isEmpty()) {
             return Outcome.NO_END;
         }
 
@@ -142,20 +239,39 @@ public final class RoadExtension {
             return Outcome.NO_END;
         }
 
-        int laid = pave(world, end, block.get());
+        // Da mais distante para a mais perto, e a primeira que aceitar
+        // calçamento vence. Tentar todas custa poucas leituras de bloco e
+        // é o que impede a vila de parar por causa de uma ponta ruim.
+        for (End end : ends) {
+            int laid = pave(world, end, block.get());
 
-        if (laid == 0) {
-            return Outcome.BLOCKED;
+            if (laid == 0) {
+                refuse(world, end.at());
+
+                continue;
+            }
+
+            VillageColonyMod.LOGGER.info(
+                    "Colony {} extended the road {} blocks {} from {}",
+                    colonyId,
+                    laid,
+                    end.towards(),
+                    end.at().toShortString());
+
+            return Outcome.EXTENDED;
         }
 
+        // Todas recusaram. O fracasso tem voz e diz quantas foram — sem
+        // isto, "a rua não cresceu" e "a rua nem foi tentada" são a mesma
+        // linha, que é o que custou as sessões da mina.
         VillageColonyMod.LOGGER.info(
-                "Colony {} extended the road {} blocks {} from {}",
+                "Colony {} found no road end it may pave — tried {} of them, and they sit out"
+                        + " {} cycles before being tried again",
                 colonyId,
-                laid,
-                end.towards(),
-                end.at());
+                ends.size(),
+                REFUSED_MEMORY / VillageDetector.CYCLE_TICKS);
 
-        return Outcome.EXTENDED;
+        return Outcome.BLOCKED;
     }
 
     /**

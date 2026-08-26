@@ -172,6 +172,65 @@ public class RoadExtensionGameTest implements FabricGameTest {
     }
 
     /**
+     * Uma ponta murada não para a vila — E27, 2026-08-25.
+     *
+     * <p>A colônia guardava <b>uma</b> ponta, a mais distante, e nenhuma
+     * outra. Quando essa não se deixava calçar, {@code pave} devolvia
+     * zero e a vila não tinha alternativa: a varredura seguinte gastava
+     * mais oito minutos para reescolher a mesma ponta e bater no mesmo
+     * bloco. Foi o que a sessão de 2026-08-25 mostrou, às 23:14:27, na
+     * colônia {@code 56c5b68d}.
+     *
+     * <p>O cenário tem as duas pontas da mesma faixa: a de leste é a mais
+     * distante do centro e está murada de pedra; a de oeste está mais
+     * perto e tem chão. A afirmação é que a segunda foi tentada.
+     *
+     * <p>Rodado contra a regra desligada: a saída é {@code BLOCKED} e
+     * nenhum bloco de rua aparece a oeste.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_extension")
+    public void aWalledEndDoesNotStopTheRoadWhenAnotherServes(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        strip(context);
+
+        // A ponta mais distante, murada. É a que a colônia escolhia, e
+        // era a única que ela tentava.
+        context.setBlockState(ROAD_END.add(1, 0, 0), Blocks.STONE.getDefaultState());
+
+        // A outra ponta da mesma faixa, com chão de sobra. Mais perto do
+        // centro, então é a segunda da fila.
+        for (int step = 1; step <= 2; step++) {
+            context.setBlockState(
+                    ROAD_START.add(-step, 0, 0), Blocks.DIRT.getDefaultState());
+        }
+
+        BuildSiteScanner.find(
+                context.getWorld(),
+                colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        RoadExtension.Outcome outcome = RoadExtension.extend(
+                context.getWorld(), colony, ResourceId.vanilla("dirt_path"));
+
+        context.assertTrue(
+                outcome == RoadExtension.Outcome.EXTENDED,
+                "a ponta murada parou a vila em vez de a colônia tentar a próxima: " + outcome);
+
+        context.assertTrue(
+                context.getBlockState(ROAD_START.add(-1, 0, 0)).isOf(Blocks.DIRT_PATH),
+                "a segunda ponta não foi tentada");
+
+        context.assertTrue(
+                context.getBlockState(ROAD_END.add(1, 0, 0)).isOf(Blocks.STONE),
+                "a pedra virou rua");
+
+        context.complete();
+    }
+
+    /**
      * O planejador manda calçar quando não tem onde construir.
      *
      * <p>Os testes acima provam a mecânica; este prova a <b>ligação</b>.

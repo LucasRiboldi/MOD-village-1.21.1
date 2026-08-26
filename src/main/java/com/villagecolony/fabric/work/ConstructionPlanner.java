@@ -501,7 +501,9 @@ public final class ConstructionPlanner {
             case BLOCKED -> silent(
                     colony,
                     IdleReason.NO_TARGET,
-                    "the far end of the road runs into something it may not pave");
+                    "none of the road ends this colony can see may be paved — up to "
+                            + RoadExtension.CANDIDATES + " were tried, and each one that"
+                            + " refused sits out a while before being tried again");
 
             case NO_END -> silent(
                     colony,
