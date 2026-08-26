@@ -71,11 +71,17 @@ import java.util.Set;
  * {@link Substitution#ALTERNATIVE}: o primeiro conta para a meta e o
  * construtor continua exigindo o exato; o segundo o construtor assenta.
  *
- * <p><b>A madeira ficou em ACCEPTABLE</b>, e o autor sabe: a mesma
- * discordância mora lá — uma colônia com duzentas tábuas de bétula e
- * nenhuma de carvalho declara a meta cumprida enquanto a casa espera
- * carvalho. Está registrado no TODO, e não foi mexido porque a decisão
- * foi <i>pedra só</i>.
+ * <p><b>E a madeira entrou junto</b>, pela Emenda 2 do mesmo dia. A
+ * discordância morava lá também — uma colônia com duzentas tábuas de
+ * bétula e nenhuma de carvalho declarava a meta cumprida enquanto a casa
+ * esperava carvalho. Era o E28, e a correção é a mesma da pedra: a conta
+ * aceita, e a parede também.
+ *
+ * <p><b>{@code ACCEPTABLE} ficou sem ninguém</b>, e não é esquecimento:
+ * hoje tudo o que uma exigência aceita, o construtor assenta. O nível
+ * fica no enum porque a distinção continua fazendo sentido — um recurso
+ * que a colônia conte junto e não possa assentar é coisa que ainda pode
+ * existir.
  *
  * <h2>O que a Regra 27 ainda impede</h2>
  *
@@ -111,15 +117,21 @@ public final class ResourceSubstitution {
      * STONE} é um grupo e não está nesta lista, e é por isso que
      * pedregulho deixou de responder por arenito.
      */
-    private static final Set<ResourceGroup> INTERCHANGEABLE =
-            EnumSet.of(ResourceGroup.WOOD, ResourceGroup.PLANKS);
+    private static final Set<ResourceGroup> INTERCHANGEABLE = EnumSet.noneOf(ResourceGroup.class);
 
     /**
      * Os grupos cujos membros se substituem <b>até na parede</b>.
      *
-     * <p>Só a pedra, e é decisão do autor em 2026-08-26: <i>abre para
-     * pedra só</i>. Pedregulho e arenito passam a servir um pelo outro, e
-     * o construtor passa a poder assentar o que houver.
+     * <p>As três famílias com que se constrói: madeira, tábua e pedra.
+     * Duas decisões do autor no mesmo dia, e a segunda alargou a
+     * primeira — <i>abre para pedra só</i>, depois <i>igual aplicado à
+     * pedra, para criar as alternativas de recursos para todas as
+     * construções dos biomas</i>.
+     *
+     * <p>É o que dá alternativa a <b>toda</b> vila: a de planície com
+     * bétula em vez de carvalho, a de taiga com abeto, a de deserto com
+     * pedregulho em vez de arenito. Sem isso, cada bioma dependia de a
+     * floresta ao lado ter a espécie exata que a casa dele pede.
      *
      * <p><b>Isto desfaz metade do que 2026-08-22 fez, e de propósito.</b>
      * Naquele dia pedregulho deixou de responder por arenito porque a
@@ -130,7 +142,7 @@ public final class ResourceSubstitution {
      * voltam a dizer a mesma coisa: a conta aceita, e a parede também.
      */
     private static final Set<ResourceGroup> INTERCHANGEABLE_IN_THE_WALL =
-            EnumSet.of(ResourceGroup.STONE);
+            EnumSet.of(ResourceGroup.WOOD, ResourceGroup.PLANKS, ResourceGroup.STONE);
 
     /**
      * O que cada exigência aceita, e em que nível.

@@ -21,6 +21,7 @@ import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.work.BuilderApproach;
 import com.villagecolony.fabric.work.BuilderWork;
+import com.villagecolony.fabric.work.MaterialChoice;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.BlockState;
@@ -38,6 +39,7 @@ import net.minecraft.state.property.Properties;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 
 import java.util.List;
 import java.util.Optional;
@@ -1066,5 +1068,52 @@ public class BuilderGameTest implements FabricGameTest {
                 project,
                 chest,
                 ColonyFixture.create().owning(colony).owning(villager.getUuid()));
+    }
+
+    /**
+     * O substituto veste o estado da planta — E28, 2026-08-26.
+     *
+     * <p>A Emenda 2 da Regra 27 abriu a parede para a madeira, e com ela
+     * veio um risco que a pedra não tinha: <b>tronco tem eixo</b>. Uma
+     * viga deitada trocada de espécie no estado padrão sairia <b>em pé</b>
+     * — a casa fica torta, e é o tipo de defeito que só se vê olhando,
+     * nunca no log.
+     *
+     * <p><b>Isto ainda não acontece em jogo, e vale dizer por quê:</b> o
+     * {@code BlueprintBlock} não carrega propriedade nenhuma, e o
+     * construtor assenta tudo no estado padrão mais o giro da porta. O
+     * eixo do tronco já se perde hoje, com substituição ou sem — é a
+     * ADR-008, decidida e por escrever.
+     *
+     * <p>Então este teste afirma a <b>garantia</b>, e não o sintoma: no
+     * dia em que a ADR-008 fizer a planta carregar orientação, a
+     * substituição não vai desfazê-la. Sem ele, essa quebra só apareceria
+     * meses depois, numa casa torta que ninguém liga à troca de espécie.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_stone",
+            tickLimit = 20)
+    public void theSubstituteWearsTheStateTheBlueprintAsked(TestContext context) {
+        BlockState beam = Blocks.OAK_LOG.getDefaultState()
+                .with(Properties.AXIS, Direction.Axis.X);
+
+        BlockState dressed = MaterialChoice.dressedLike(beam, Items.BIRCH_LOG);
+
+        context.assertTrue(
+                dressed.isOf(Blocks.BIRCH_LOG),
+                "o substituto não é o bloco que saiu do baú");
+
+        context.assertTrue(
+                dressed.get(Properties.AXIS) == Direction.Axis.X,
+                "a viga trocada de espécie saiu no eixo " + dressed.get(Properties.AXIS)
+                        + " — a planta pedia X, e a casa sai torta assim");
+
+        // Pedra não tem eixo: copiar o que não existe não pode explodir.
+        BlockState stone = MaterialChoice.dressedLike(beam, Items.COBBLESTONE);
+
+        context.assertTrue(
+                stone.isOf(Blocks.COBBLESTONE),
+                "vestir pedra com o estado de um tronco não devolveu pedra");
+
+        context.complete();
     }
 }

@@ -2205,7 +2205,9 @@ Regra 27  só o catálogo do jogo, e o            08-20, IMUTÁVEL, feita
           construtor aguarda o bloco            em 08-20. Desfaz partes
                                                 das Regras 13, 21 e 25.
                                                 EMENDA 1 em 08-26: abre
-                                                para pedra só
+                                                para pedra só. EMENDA 2
+                                                no mesmo dia: e para a
+                                                madeira junto
 Regra 28  a casa pequena do bioma, e a obra     08-20, PROVISÓRIA por
           não espera por porta, cama,           decisão do autor. Estreita
           lampião e baú                         a 27 enquanto se testa
@@ -3930,6 +3932,76 @@ porque a decisão foi *pedra só*.
 construtor assenta, `MaterialChoice` é a lista que ele consulta, e
 `ResourceSubstitutionTest.theWallOnlyEverAcceptsStone` é o guarda que
 impede a emenda de crescer sem decisão.
+
+### Emenda 2 — e a madeira junto, 2026-08-26
+
+```text
+o construtor pode assentar, no lugar do bloco que a planta pede,
+qualquer membro declarado da mesma família de construção
+
+as famílias são três: madeira, tábua e pedra
+
+fora delas, ele continua aguardando o bloco específico
+```
+
+**A Emenda 1 tinha meio dia de idade quando esta a alargou**, e o motivo
+está no E28: ao escrever a abertura da pedra, apareceu que **a madeira
+tinha exatamente a mesma discordância**, e ninguém a tinha visto.
+
+`OAK_PLANKS` responde pelo grupo inteiro na conta da colônia — é
+deliberado, e está escrito em `ColonyGoals` desde sempre: *sessenta e
+quatro troncos de abeto satisfazem esta linha tanto quanto os de
+carvalho*. Só que o construtor exigia a espécie que a planta pede. Uma
+colônia com duzentas tábuas de bétula e nenhuma de carvalho **declarava
+a meta cumprida enquanto a casa esperava carvalho**, e a obra dormia até
+o `PatienceClock` desistir dela.
+
+**Por que ninguém viu.** Em planície o lenhador corta carvalho, e a casa
+de planície pede carvalho. O defeito precisa de uma vila cercada de
+outra espécie — e a sessão de 2026-08-25 já mostrava baús com bétula,
+abeto, selva, acácia, cerejeira e mangue.
+
+**O que a emenda dá, e é a frase do autor:** *alternativas de recursos
+para todas as construções dos biomas*. A vila de taiga levanta a casa
+dela com o abeto que tem em volta; a de savana, com acácia; a de
+deserto, com o pedregulho que sobrou. Nenhuma delas depende mais de a
+floresta ao lado ter a espécie exata que o arquivo de estrutura da
+Mojang escolheu.
+
+**O que continua valendo, e não mudou de uma emenda para a outra:**
+
+```text
+o material sai do baú antes de o bloco entrar no mundo
+
+o que se assenta é o que saiu do baú — a colônia não inventa matéria
+
+o preferido vem primeiro: a casa sai da espécie certa enquanto ela
+existir
+
+dentro da família, e só nela: tronco não vira tábua por substituição.
+Vira por receita, e quem faz isso é o fabricante
+
+fora das três famílias, nada substitui nada na parede. Areia, carvão,
+ferro e vidro alimentam receita, e trocá-los mudaria o que a colônia
+produz, não a cara da casa
+```
+
+**Um cuidado que a madeira exigiu e a pedra não.** Tronco tem eixo;
+tábua e pedra não têm nada. Um substituto assentado no estado padrão
+poria em pé a viga que a planta queria deitada. Por isso o substituto
+**veste as propriedades da planta** no que os dois tiverem em comum —
+`MaterialChoice.dressedLike`.
+
+**E fica dito que isso ainda não muda nada em jogo:** o
+`BlueprintBlock` não carrega propriedade nenhuma, e o construtor assenta
+tudo no estado padrão mais o giro da porta. O eixo do tronco já se perde
+hoje, com substituição ou sem — é a **ADR-008**, decidida e por
+escrever. A garantia existe para o dia em que ela entrar.
+
+**`ACCEPTABLE` ficou sem ninguém.** Hoje tudo o que uma exigência aceita,
+o construtor assenta. O nível fica no enum porque a distinção continua
+fazendo sentido: um recurso que a colônia conte junto e não possa
+assentar é coisa que ainda pode existir.
 
 ---
 

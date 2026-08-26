@@ -5,7 +5,9 @@ import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.type.Substitution;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.item.Item;
+import net.minecraft.state.property.Property;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -89,12 +91,37 @@ public final class MaterialChoice {
 
     /**
      * Se este item é o bloco que a planta pediu, e não um substituto.
-     *
-     * <p>Serve a quem vai assentar: o bloco da planta carrega estado —
-     * o lado da escada, a metade da porta — e o substituto não tem esse
-     * estado para carregar. Ver {@code BuilderWork.placeOne}.
      */
     public static boolean isExact(Block wanted, Item taken) {
         return wanted.asItem() == taken;
+    }
+
+    /**
+     * O substituto vestindo o estado que a planta pediu — 2026-08-26.
+     *
+     * <p><b>O tronco tem eixo, e a tábua não.</b> Uma viga deitada de
+     * carvalho trocada por bétula no estado padrão viraria uma viga
+     * <b>em pé</b> de bétula: a casa sai torta, e o defeito é do tipo que
+     * só se vê olhando. Por isso o que se copia são as propriedades, e
+     * não o bloco.
+     *
+     * <p>Copia só o que existe nos dois. Pedra não tem eixo, tábua não
+     * tem nada, e nesses casos isto devolve o estado padrão — que é o
+     * certo para eles.
+     */
+    public static BlockState dressedLike(BlockState blueprint, Item taken) {
+        BlockState substitute = Block.getBlockFromItem(taken).getDefaultState();
+
+        for (Property<?> property : blueprint.getProperties()) {
+            substitute = copy(blueprint, substitute, property);
+        }
+
+        return substitute;
+    }
+
+    private static <T extends Comparable<T>> BlockState copy(
+            BlockState from, BlockState to, Property<T> property) {
+
+        return to.contains(property) ? to.with(property, from.get(property)) : to;
     }
 }

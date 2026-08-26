@@ -355,12 +355,12 @@ public final class BuilderWork {
         }
 
         // O que se assenta é o que saiu do baú, e não o que a planta
-        // pediu: a colônia não inventa matéria. Só o bloco exato carrega
-        // o estado da planta — o substituto é bloco cheio e entra no
-        // estado padrão dele.
+        // pediu: a colônia não inventa matéria. O substituto veste o
+        // estado da planta no que os dois tiverem em comum — senão uma
+        // viga deitada trocada de espécie sairia em pé.
         BlockState placed = MaterialChoice.isExact(material.get(), taken.get())
                 ? state
-                : Block.getBlockFromItem(taken.get()).getDefaultState();
+                : MaterialChoice.dressedLike(state, taken.get());
 
         world.setBlockState(target, placed, Block.NOTIFY_ALL);
 

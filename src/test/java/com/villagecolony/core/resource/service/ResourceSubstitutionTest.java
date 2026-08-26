@@ -6,7 +6,9 @@ import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.type.Substitution;
 import org.junit.jupiter.api.Test;
 
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import java.util.Map;
 
@@ -152,9 +154,9 @@ class ResourceSubstitutionTest {
                 "toda exigência se prefere a si mesma, e isso não se declara");
 
         assertEquals(
-                Substitution.ACCEPTABLE,
+                Substitution.ALTERNATIVE,
                 ResourceSubstitution.levelOf(ResourceType.OAK_LOG, ResourceType.SPRUCE_LOG),
-                "abeto serve por carvalho sem ressalva — está declarado");
+                "abeto serve por carvalho, e desde a Emenda 2 até na parede");
 
         assertEquals(
                 Substitution.ALTERNATIVE,
@@ -190,20 +192,33 @@ class ResourceSubstitutionTest {
     }
 
     /**
-     * A Regra 27 abriu para pedra, e só para pedra.
+     * A parede aceita só dentro da família, e só nas de construção.
      *
-     * <p><b>Este teste é o guarda da emenda, e não uma afirmação de
+     * <p><b>Este teste é o guarda das emendas, e não uma afirmação de
      * gosto.</b> {@code ALTERNATIVE} é o nível que o construtor assenta;
-     * declarar um bloco nele sem que o construtor o aceite faz a colônia
-     * parar de buscar o que a obra espera, e a obra dorme para sempre —
-     * o defeito de 2026-08-22.
+     * declarar um recurso nele sem que o construtor o aceite faz a
+     * colônia parar de buscar o que a obra espera, e a obra dorme para
+     * sempre — o defeito de 2026-08-22.
      *
-     * <p>A emenda do autor em 2026-08-26 tem três palavras — <i>abre para
-     * pedra só</i> — e é isto que as guarda. Alargar a emenda passa por
-     * mudar este teste, e mudá-lo é a hora de reler o defeito.
+     * <p>Duas coisas guardadas aqui, e as duas importam:
+     *
+     * <ul>
+     *   <li><b>dentro da família.</b> Tronco não vira tábua por
+     *       substituição — vira por receita, e quem faz isso é o
+     *       fabricante;
+     *   <li><b>só famílias de construção.</b> Areia, carvão, ferro e
+     *       vidro não entram: eles alimentam receita, e trocá-los
+     *       mudaria o que a colônia produz, não a cara da casa.
+     * </ul>
+     *
+     * <p>Alargar as emendas da Regra 27 passa por mudar este teste, e
+     * mudá-lo é a hora de reler o defeito de 08-22.
      */
     @Test
-    void theWallOnlyEverAcceptsStone() {
+    void theWallOnlyEverAcceptsTheBuildingFamilies() {
+        Set<ResourceGroup> building = EnumSet.of(
+                ResourceGroup.WOOD, ResourceGroup.PLANKS, ResourceGroup.STONE);
+
         for (ResourceType required : ResourceType.values()) {
             for (ResourceType offered : ResourceType.values()) {
                 if (ResourceSubstitution.levelOf(required, offered)
@@ -212,38 +227,47 @@ class ResourceSubstitutionTest {
                     continue;
                 }
 
-                assertEquals(
-                        ResourceGroup.STONE,
-                        required.group(),
-                        required + " aceita substituto na parede e não é pedra —"
-                                + " a Regra 27 só abriu para pedra");
+                assertTrue(
+                        building.contains(required.group()),
+                        required + " aceita substituto na parede e não é família de"
+                                + " construção — as emendas da Regra 27 não vão até aí");
 
                 assertEquals(
-                        ResourceGroup.STONE,
+                        required.group(),
                         offered.group(),
-                        offered + " foi declarado para a parede e não é pedra");
+                        offered + " foi declarado para " + required
+                                + " e eles não são da mesma família");
             }
         }
     }
 
     /**
-     * A madeira continua fora da parede, e o autor sabe.
+     * A madeira entrou na parede — E28, e a Emenda 2 do mesmo dia.
      *
-     * <p>Ela é {@code ACCEPTABLE}: conta para a meta da colônia e o
-     * construtor continua exigindo a espécie que a planta pede. <b>A
-     * mesma discordância de 08-22 mora aqui</b> — uma colônia com
-     * duzentas tábuas de bétula e nenhuma de carvalho declara a meta
-     * cumprida enquanto a casa espera carvalho.
+     * <p>Ela era {@code ACCEPTABLE}: contava para a meta da colônia
+     * enquanto o construtor exigia a espécie que a planta pede. <b>Era a
+     * mesma discordância de 08-22</b> — uma colônia com duzentas tábuas
+     * de bétula e nenhuma de carvalho declarava a meta cumprida enquanto
+     * a casa esperava carvalho, e a obra dormia.
      *
-     * <p>Está registrado no TODO e não foi mexido porque a decisão do
-     * autor foi <i>pedra só</i>. Este teste existe para que a escolha
-     * continue visível em vez de virar esquecimento.
+     * <p>Ninguém tinha visto porque o lenhador de planície corta
+     * carvalho. Uma vila cercada de bétula travaria.
      */
     @Test
-    void woodCountsForTheGoalAndNotForTheWall() {
+    void anyPlankMayGoIntoTheWall() {
         assertEquals(
-                Substitution.ACCEPTABLE,
+                Substitution.ALTERNATIVE,
                 ResourceSubstitution.levelOf(ResourceType.OAK_PLANKS, ResourceType.BIRCH_PLANKS),
-                "a tábua de bétula mudou de nível sem decisão registrada");
+                "a tábua de bétula não entra na parede de carvalho — é o E28 de volta");
+
+        assertEquals(
+                Substitution.ALTERNATIVE,
+                ResourceSubstitution.levelOf(ResourceType.SPRUCE_LOG, ResourceType.OAK_LOG),
+                "o tronco de carvalho não entra na viga de abeto");
+
+        assertEquals(
+                ResourceType.OAK_PLANKS,
+                ResourceSubstitution.byPreference(ResourceType.OAK_PLANKS).get(0),
+                "o preferido deixou de vir primeiro — a casa sai de bétula tendo carvalho");
     }
 }
