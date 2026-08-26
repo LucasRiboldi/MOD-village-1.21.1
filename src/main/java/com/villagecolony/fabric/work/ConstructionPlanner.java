@@ -277,7 +277,7 @@ public final class ConstructionPlanner {
             // varredura seguinte é que vai encontrá-lo, e ela recomeça
             // do centro no ciclo que vem. Trinta segundos, e a ordem da
             // regra fica respeitada — estrada primeiro, casa depois.
-            return extendTheRoad(world, colony, blueprint);
+            return extendTheRoad(world, colony, blueprint, plans, builders);
         }
 
         // A recusa de lote sobre casa da colônia morava aqui, e daqui não
@@ -289,20 +289,36 @@ public final class ConstructionPlanner {
         // A pergunta desceu para `BuildSiteScanner.isClearAbove`, que é
         // onde a varredura ainda pode seguir para o anel seguinte.
 
+        return open(world, colony, site.get(), plans, blueprint, builders);
+    }
+
+    /**
+     * O lote vira obra aberta.
+     *
+     * <p>Separado de {@link #plan} em 2026-08-25, quando passou a haver
+     * <b>dois</b> caminhos até um lote: a varredura em anéis, e o atalho
+     * de quem acabou de calçar a rua e sabe onde nasceu beira nova. O
+     * trecho é o mesmo nos dois, e duas cópias dele seriam duas versões
+     * da Regra 17.
+     */
+    private static Optional<ConstructionProject> open(
+            ServerWorld world, Colony colony, BuildSiteScanner.Site site,
+            List<Blueprint> plans, Blueprint blueprint, int builders) {
+
         // A planta que coube naquele lote — a maior das oferecidas que
         // serviu ali. Decisão do autor de 2026-08-20.
         Blueprint chosen = plans.stream()
-                .filter(plan -> plan.size().equals(site.get().size()))
+                .filter(plan -> plan.size().equals(site.size()))
                 .findFirst()
                 .orElse(blueprint);
 
         // Agora que há lote, a planta é virada para a rua: é a Regra 17,
         // e o lado sai de quem achou o lote.
         Blueprint facingTheRoad = HousePlans.turnedToTheRoad(
-                chosen, MinecraftTypeAdapter.toSide(site.get().doorSide()));
+                chosen, MinecraftTypeAdapter.toSide(site.doorSide()));
 
         ConstructionProject project = ConstructionProject.plan(
-                colony.id(), facingTheRoad, site.get().origin());
+                colony.id(), facingTheRoad, site.origin());
 
         VillageColonyMod.CONSTRUCTIONS.register(project);
 
@@ -474,7 +490,8 @@ public final class ConstructionPlanner {
      * mandaria o autor procurar no lugar errado.
      */
     private static Optional<ConstructionProject> extendTheRoad(
-            ServerWorld world, Colony colony, Blueprint blueprint) {
+            ServerWorld world, Colony colony, Blueprint blueprint,
+            List<Blueprint> plans, int builders) {
 
         Optional<ResourceId> paving = VillageRoad.pavingFor(
                 world, HousePlans.paletteOf(world, colony.center()).style());
@@ -495,7 +512,19 @@ public final class ConstructionPlanner {
                 // aconteceu, e o log de transições cala o que se repete.
                 IdleLog.clear(colony.id(), SUBJECT);
 
-                yield Optional.empty();
+                // E o lote nasce agora — E26. A colônia acabou de criar a
+                // beira; mandá-la redescobri-la varrendo o raio inteiro
+                // custaria dezessete ciclos por uma informação que ela
+                // tem na mão. Vazio aqui não é erro: o trecho novo pode
+                // não caber casa, e aí a varredura seguinte decide.
+                yield BuildSiteScanner.findBeside(
+                                world,
+                                colony.id(),
+                                colony.center(),
+                                plans.stream().map(Blueprint::size).toList(),
+                                RoadExtension.justPaved(colony.id()))
+                        .flatMap(beside ->
+                                open(world, colony, beside, plans, blueprint, builders));
             }
 
             case BLOCKED -> silent(

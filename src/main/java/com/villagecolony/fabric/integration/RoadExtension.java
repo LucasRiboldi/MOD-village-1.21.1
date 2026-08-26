@@ -2,6 +2,7 @@ package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.service.VillageDetector;
+import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.Block;
@@ -121,6 +122,19 @@ public final class RoadExtension {
     private record End(BlockPos at, Direction towards, double fromCenter) {
     }
 
+    /**
+     * As colunas que a última extensão calçou, por colônia.
+     *
+     * <p>Existe para o E26: quando a rua cresce, a colônia <b>sabe</b>
+     * onde nasceu beira nova. Sem guardar isso, o planejamento manda
+     * varrer o raio de 64 inteiro para redescobrir um lugar que acabou de
+     * criar — dezessete ciclos, oito minutos e meio, por uma informação
+     * que estava na mão.
+     *
+     * <p>Vale para a passagem seguinte e só: quem lê, lê e apaga.
+     */
+    private static final Map<UUID, List<ColonyPos>> JUST_PAVED = new HashMap<>();
+
     /** O que aconteceu na tentativa de estender. */
     public enum Outcome {
 
@@ -214,6 +228,21 @@ public final class RoadExtension {
         ENDS.clear();
 
         REFUSED.clear();
+
+        JUST_PAVED.clear();
+    }
+
+    /**
+     * O que a última extensão desta colônia calçou — e some ao ser lido.
+     *
+     * <p>Some porque é informação de uma passagem: beira nova só é nova
+     * uma vez, e guardá-la faria o planejamento reexaminar as mesmas
+     * colunas a cada ciclo em vez de varrer.
+     */
+    public static List<ColonyPos> justPaved(UUID colonyId) {
+        List<ColonyPos> laid = JUST_PAVED.remove(colonyId);
+
+        return laid == null ? List.of() : laid;
     }
 
     /**
@@ -243,13 +272,17 @@ public final class RoadExtension {
         // calçamento vence. Tentar todas custa poucas leituras de bloco e
         // é o que impede a vila de parar por causa de uma ponta ruim.
         for (End end : ends) {
-            int laid = pave(world, end, block.get());
+            List<ColonyPos> laidAt = pave(world, end, block.get());
+
+            int laid = laidAt.size();
 
             if (laid == 0) {
                 refuse(world, end.at());
 
                 continue;
             }
+
+            JUST_PAVED.put(colonyId, laidAt);
 
             VillageColonyMod.LOGGER.info(
                     "Colony {} extended the road {} blocks {} from {}",
@@ -280,12 +313,12 @@ public final class RoadExtension {
      * <p>Para de verdade, e não pula: rua com buraco no meio é rua que o
      * aldeão não atravessa, e a beira depois do buraco não serve de lote.
      *
-     * @return quantos blocos entraram
+     * @return as colunas que entraram, na ordem
      */
-    private static int pave(ServerWorld world, End end, Block paving) {
+    private static List<ColonyPos> pave(ServerWorld world, End end, Block paving) {
         BlockPos previous = end.at();
 
-        int laid = 0;
+        List<ColonyPos> laid = new ArrayList<>();
 
         for (int step = 0; step < STRETCH; step++) {
             BlockPos ahead = previous.offset(end.towards());
@@ -323,7 +356,7 @@ public final class RoadExtension {
 
             previous = at;
 
-            laid++;
+            laid.add(MinecraftTypeAdapter.toColonyPos(at));
         }
 
         return laid;

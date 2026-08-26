@@ -18,6 +18,7 @@ import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -301,5 +302,71 @@ public class RoadExtensionGameTest implements FabricGameTest {
             context.setBlockState(
                     ROAD_END.add(step, 0, 0), Blocks.DIRT.getDefaultState());
         }
+    }
+    /**
+     * O lote nasce no trecho que a colônia acabou de calçar — E26.
+     *
+     * <p>A conta que a sessão de 2026-08-25 tornou concreta: uma resposta
+     * de lote custa dezessete ciclos, oito minutos e meio. Quando a Regra
+     * 15 calça um trecho, a colônia <b>sabe</b> onde nasceu beira nova —
+     * e mandá-la redescobrir isso varrendo o raio inteiro é pagar oito
+     * minutos por uma informação que ela tem na mão.
+     *
+     * <p>O cenário separa as duas coisas: terra larga só ao lado da
+     * segunda coluna calçada. A primeira não tem onde caber casa, e é ela
+     * que prova que a busca não se contenta com a primeira da lista.
+     *
+     * <p><b>O que este teste não alcança</b>, e fica dito: a ligação com
+     * {@code ConstructionPlanner} não é exercitada aqui. O planejamento
+     * usa as casas de verdade do jogo — sete por sete —, e um lote desse
+     * tamanho não cabe na arena da bateria junto com a rua.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_extension")
+    public void theLotIsBornOnTheStretchTheColonyJustPaved(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        strip(context);
+
+        // As três colunas que uma extensão calçaria, e o chão largo só a
+        // partir da segunda.
+        for (int step = 1; step <= 3; step++) {
+            context.setBlockState(
+                    ROAD_END.add(step, 0, 0), Blocks.DIRT_PATH.getDefaultState());
+        }
+
+        for (int x = 6; x <= 7; x++) {
+            for (int z = 0; z <= 4; z++) {
+                context.setBlockState(new BlockPos(x, 1, z), Blocks.DIRT.getDefaultState());
+            }
+        }
+
+        // A rua por cima da terra larga continua sendo rua.
+        for (int step = 2; step <= 3; step++) {
+            context.setBlockState(
+                    ROAD_END.add(step, 0, 0), Blocks.DIRT_PATH.getDefaultState());
+        }
+
+        ColonyPos center = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(ROAD_START));
+
+        ColonyPos tight = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(ROAD_END.add(1, 0, 0)));
+
+        ColonyPos roomy = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(ROAD_END.add(2, 0, 0)));
+
+        context.assertTrue(
+                BuildSiteScanner.findBeside(
+                        context.getWorld(), colony, center,
+                        List.of(SMALL_HOUSE), List.of(tight)).isEmpty(),
+                "achou lote encostado na coluna que não tem chão ao lado");
+
+        context.assertTrue(
+                BuildSiteScanner.findBeside(
+                        context.getWorld(), colony, center,
+                        List.of(SMALL_HOUSE), List.of(tight, roomy)).isPresent(),
+                "a colônia acabou de calçar este trecho e não achou o lote que ele abriu");
+
+        context.complete();
     }
 }

@@ -367,6 +367,44 @@ public final class BuildSiteScanner {
      * igualmente boas, e escolher por sorteio faria a mesma vila crescer
      * diferente a cada sessão, o que é ruim de depurar.
      */
+    /**
+     * Um lote encostado <b>nestas</b> colunas, sem varrer o raio — E26.
+     *
+     * <p>Existe por causa de uma conta que a sessão de 2026-08-25 tornou
+     * concreta: uma resposta de lote custa dezessete ciclos, oito minutos
+     * e meio. Quando a Regra 15 acaba de calçar um trecho, a colônia
+     * <b>sabe</b> onde nasceu beira nova — e mandá-la redescobrir isso
+     * varrendo o raio inteiro é pagar oito minutos por uma informação
+     * que ela tem na mão.
+     *
+     * <p>Não substitui a varredura: ela continua sendo quem acha lote em
+     * vila que ainda tem beira livre, e quem anota as pontas de rua. Isto
+     * é o atalho do caso em que a colônia acabou de criar a beira.
+     *
+     * @param road as colunas recém-calçadas, na ordem em que saíram
+     */
+    public static Optional<Site> findBeside(
+            ServerWorld world, UUID colonyId, ColonyPos center,
+            List<ColonyPos> plans, List<ColonyPos> road) {
+
+        BlockPos from = MinecraftTypeAdapter.toBlockPos(center);
+
+        for (ColonyPos column : road) {
+            Optional<Site> site = siteBesideRoadAt(
+                    world, colonyId, from, column.x(), column.z(), from.getY(), plans);
+
+            if (site.isPresent()) {
+                // Achou: a varredura em curso perde o sentido, e o cursor
+                // dela sai para a próxima começar limpa.
+                SWEEPS.remove(colonyId);
+
+                return site;
+            }
+        }
+
+        return Optional.empty();
+    }
+
     private static Optional<Site> siteBesideRoadAt(
             ServerWorld world, UUID colonyId, BlockPos center,
             int x, int z, int aroundY, List<ColonyPos> plans) {
