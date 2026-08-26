@@ -19,6 +19,7 @@ import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
+import com.villagecolony.fabric.work.BuilderApproach;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -380,7 +381,7 @@ public class BuilderGameTest implements FabricGameTest {
             context.setBlockState(SITE.up(up), Blocks.SAND.getDefaultState());
         }
 
-        Optional<BlockPos> spot = BuilderWork.standingSpotNear(world, floor);
+        Optional<BlockPos> spot = BuilderApproach.standingSpotNear(world, floor);
 
         context.assertTrue(spot.isPresent(), "a coluna enterrada não ofereceu lugar nenhum");
 
@@ -405,7 +406,7 @@ public class BuilderGameTest implements FabricGameTest {
 
         BlockPos floor = context.getAbsolutePos(SITE);
 
-        Optional<BlockPos> spot = BuilderWork.standingSpotNear(context.getWorld(), floor);
+        Optional<BlockPos> spot = BuilderApproach.standingSpotNear(context.getWorld(), floor);
 
         context.assertTrue(spot.isPresent(), "a coluna livre não ofereceu lugar nenhum");
 

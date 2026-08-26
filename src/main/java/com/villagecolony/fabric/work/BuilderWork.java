@@ -75,29 +75,6 @@ public final class BuilderWork {
     private static final int TICKS_PER_BLOCK = 20;
 
     /**
-     * De quão perto o construtor precisa estar da <b>coluna</b> do bloco.
-     *
-     * <p>Medido no plano, e não no espaço. É a Regra 14, e ela nasceu da
-     * sessão de 2026-08-18: parte da casa subiu e a obra parou. O
-     * alcance era {@code isWithinDistance}, que é uma <b>esfera</b> —
-     * cinco de altura mais um de lado passam de cinco de raio, e o bloco
-     * do alto ficava inalcançável com o construtor de pé <b>dentro</b>
-     * do lote. Do lado de fora, "não tem material" e "não alcança" eram
-     * o mesmo silêncio.
-     */
-    private static final int REACH = 5;
-
-    /**
-     * Quantos blocos acima e abaixo do chão do lote procurar um
-     * lugar de pé — 2026-08-22.
-     *
-     * <p>Seis é a altura de uma duna de deserto sobre o lote, que é o
-     * caso que pediu esta busca. Mais que isso deixa de ser "perto da
-     * coluna" e vira outra decisão.
-     */
-    private static final int FOOT_SEARCH = 6;
-
-    /**
      * Quantos ticks andando sem chegar ao bloco antes de desistir.
      *
      * <p>Quatro ciclos da colônia. O lote fica na vila e a obra é
@@ -114,13 +91,13 @@ public final class BuilderWork {
     /** Trabalho aberto, por construtor. */
     private static final Map<UUID, Job> JOBS = new HashMap<>();
 
-    private static final class Job {
+    static final class Job {
 
         private final Task task;
 
-        private final UUID projectId;
+        final UUID projectId;
 
-        private int progress;
+        int progress;
 
         private int placed;
 
@@ -128,7 +105,7 @@ public final class BuilderWork {
          * Ticks de horário de trabalho andando sem chegar ao bloco da
          * vez. Zerado ao chegar. Ver {@link #STALL_LIMIT}.
          */
-        private int stalled;
+        int stalled;
 
         private Job(Task task, UUID projectId) {
             this.task = task;
@@ -180,19 +157,19 @@ public final class BuilderWork {
             Job job = JOBS.computeIfAbsent(
                     executor.get(), worker -> new Job(task, project.get().id()));
 
-            queue.append(walking(job));
+            queue.append(BuilderReport.walking(job));
 
             open++;
         }
 
         JOBS.values().removeIf(job -> !isOngoing(job.task));
 
-        report(
+        BuilderReport.report(
                 colony,
                 project.get(),
                 open,
                 queue.isEmpty() ? "no build task" : queue.toString(),
-                waitingFor(project.get()));
+                BuilderReport.waitingFor(project.get()));
 
         return open;
     }
@@ -251,8 +228,8 @@ public final class BuilderWork {
 
         BlockPos target = MinecraftTypeAdapter.toBlockPos(project.worldPositionOf(next.get()));
 
-        if (!isWithinReach(villager.getBlockPos(), target)) {
-            WorkTargets.set(workerId, footOf(world, project, target));
+        if (!BuilderApproach.isWithinReach(villager.getBlockPos(), target)) {
+            WorkTargets.set(workerId, BuilderApproach.footOf(world, project, target));
 
             if (++job.stalled > STALL_LIMIT) {
                 // Andou dois minutos de horário de trabalho e não chegou
@@ -262,7 +239,9 @@ public final class BuilderWork {
                         job,
                         workerId,
                         "the builder could not reach " + target.toShortString()
-                                + " — " + whyNotReached(world, project, villager, target));
+                                + " — "
+                                + BuilderApproach.whyNotReached(
+                                        world, project, villager, target));
 
                 return false;
             }
@@ -279,127 +258,6 @@ public final class BuilderWork {
         job.progress = 0;
 
         return placeOne(world, project, job, workerId, next.get(), target);
-    }
-
-    /**
-     * Se o construtor alcança este bloco — a Regra 14.
-     *
-     * <p>Só a distância no plano. A vertical não entra: da fundação ao
-     * último bloco da planta, o construtor põe de pé no chão do lote. O
-     * que ele não faz continua não fazendo — não voa, não sobe andaime e
-     * não empilha bloco para subir, porque nada disso está na planta e a
-     * Regra 3 manda escrever só o que ela diz.
-     */
-    private static boolean isWithinReach(BlockPos worker, BlockPos target) {
-        int dx = worker.getX() - target.getX();
-        int dz = worker.getZ() - target.getZ();
-
-        return dx * dx + dz * dz <= REACH * REACH;
-    }
-
-    /**
-     * O pé da coluna do bloco: para onde o construtor caminha.
-     *
-     * <p>Andar até o bloco em si só servia enquanto a obra era rasa. Com
-     * a Regra 14 o alvo pode estar no telhado, e mandar o aldeão a uma
-     * posição no ar é pedir um caminho que não existe — ele fica parado
-     * até o guarda de travamento devolver a tarefa, que é a mesma roda
-     * por outra porta.
-     *
-     * <p>O chão do lote é a altura da origem do projeto: é onde a
-     * fundação está e onde ele já esteve para pôr o primeiro bloco.
-     */
-    private static BlockPos footOf(
-            ServerWorld world, ConstructionProject project, BlockPos target) {
-
-        BlockPos ground = new BlockPos(target.getX(), project.origin().y(), target.getZ());
-
-        return standingSpotNear(world, ground).orElse(ground);
-    }
-
-    /**
-     * Um lugar onde um aldeão cabe de pé, perto desta coluna.
-     *
-     * <p><b>Nasceu da sessão de 2026-08-22.</b> A vila de deserto
-     * planejou a primeira casa da história do mod e o construtor passou
-     * oito minutos com {@code walking for N ticks without reaching the
-     * block}, três vezes até o guarda de dois minutos, sem colocar um
-     * bloco. O alvo era o pé da coluna na altura da origem da obra — e
-     * no deserto essa altura pode estar <b>enterrada na duna</b>. Andar
-     * para dentro de areia sólida é pedir um caminho que não existe, e a
-     * task Vanilla simplesmente não anda.
-     *
-     * <p>Procura, a partir do chão do lote, o primeiro lugar de pé —
-     * dois blocos livres sobre bloco sólido — alternando para cima e
-     * para baixo. Para cima resolve a duna; para baixo resolve o lote
-     * numa depressão, e a Regra 14 já dizia que o alvo pode estar no ar.
-     *
-     * <p>Vazio quando o chunk não está carregado: pedir por ele aqui
-     * forçaria carregamento dentro do tick, que é o defeito que travou o
-     * servidor duas vezes neste projeto (§11).
-     *
-     * <p>Pública para o teste de jogo, e é uma leitura sem efeito: o
-     * caminho inteiro —
-     * construtor longe, lote enterrado — não cabe na arena da bateria,
-     * e o que se pode afirmar é a decisão em si.
-     */
-    public static Optional<BlockPos> standingSpotNear(ServerWorld world, BlockPos ground) {
-        if (world.getChunkManager().getWorldChunk(ground.getX() >> 4, ground.getZ() >> 4) == null) {
-            return Optional.empty();
-        }
-
-        for (int step = 0; step <= FOOT_SEARCH; step++) {
-            for (int sign = 1; sign >= -1; sign -= 2) {
-                BlockPos at = ground.up(step * sign);
-
-                if (at.getY() < world.getBottomY() || at.getY() > world.getTopY() - 2) {
-                    continue;
-                }
-
-                if (standable(world, at)) {
-                    return Optional.of(at);
-                }
-
-                if (step == 0) {
-                    break;
-                }
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    /** Dois blocos livres sobre bloco sólido: onde um aldeão cabe. */
-    private static boolean standable(ServerWorld world, BlockPos at) {
-        return world.getBlockState(at.down()).isSolidBlock(world, at.down())
-                && world.getBlockState(at).getCollisionShape(world, at).isEmpty()
-                && world.getBlockState(at.up()).getCollisionShape(world, at.up()).isEmpty();
-    }
-
-    /**
-     * Por que o construtor não chegou, dito em uma frase.
-     *
-     * <p>É o §11 outra vez: sem isto, "não chegou" tanto pode ser duna
-     * por cima do lote, caminho bloqueado, aldeão longe demais para dois
-     * minutos de caminhada, ou chunk que saiu de memória — e as quatro
-     * têm correções diferentes. A sessão de 2026-08-22 gastou oito
-     * minutos sem poder escolher entre elas.
-     */
-    private static String whyNotReached(
-            ServerWorld world, ConstructionProject project, VillagerEntity villager,
-            BlockPos target) {
-
-        BlockPos ground = new BlockPos(target.getX(), project.origin().y(), target.getZ());
-
-        Optional<BlockPos> spot = standingSpotNear(world, ground);
-
-        String where = spot.map(BlockPos::toShortString).orElse("nowhere to stand");
-
-        return "the worker is at " + villager.getBlockPos().toShortString()
-                + ", " + (int) Math.sqrt(villager.getBlockPos().getSquaredDistance(target))
-                + " blocks away; it was walking to " + where
-                + "; the lot floor at " + ground.toShortString() + " is "
-                + world.getBlockState(ground).getBlock().getName().getString();
     }
 
     /**
@@ -764,75 +622,4 @@ public final class BuilderWork {
         return task.state() != TaskState.COMPLETED && task.state() != TaskState.CANCELLED;
     }
 
-    /**
-     * Uma linha por ciclo, quando há obra.
-     *
-     * <p>Existe pelo mesmo motivo da linha do lenhador: sem ela, "a obra
-     * não anda" e "não há obra" são indistinguíveis no log, e foi essa
-     * cegueira que custou as sessões do §11.
-     */
-    private static void report(
-            Colony colony,
-            ConstructionProject project,
-            int builders,
-            String queue,
-            String waiting) {
-
-        VillageColonyMod.LOGGER.info(
-                "Colony {} builders: {} working, {} at {}, {} blocks left — {}{}",
-                colony.id(),
-                builders,
-                project.state(),
-                project.origin(),
-                project.remainingCount(),
-                queue,
-                waiting);
-    }
-
-    /**
-     * Há quanto tempo este construtor anda sem alcançar o bloco.
-     *
-     * <p>Vazio enquanto ele está pondo bloco — a linha já é longa.
-     *
-     * <p>É a segunda metade da Regra 14, e é o que faltou na sessão de
-     * 2026-08-18. A obra parou na altura do telhado e o relatório dizia
-     * apenas {@code BUILDING ... 1 blocks left}: do lado de fora, o
-     * construtor que não alcança e o construtor que trabalha devagar
-     * eram a mesma linha. O lenhador já tinha essa distinção desde a
-     * Regra 9; o construtor não.
-     */
-    private static String walking(Job job) {
-        if (job.stalled == 0) {
-            return "";
-        }
-
-        return ", walking for " + job.stalled + " ticks without reaching the block";
-    }
-
-    /**
-     * O que a obra dormindo está esperando.
-     *
-     * <p>Vazio quando ela não está dormindo — a linha já é longa.
-     *
-     * <p>Existe por causa da sessão das 21:29 de 2026-08-15, a primeira
-     * a rodar {@code wakeIfSupplied}. Ele se comportou como devia e não
-     * acordou nada, porque o material do próximo bloco não estava em baú
-     * algum. Só que o log dizia apenas {@code WAITING_RESOURCES ... no
-     * build task}, e daí não sai a pergunta seguinte: <b>esperando o
-     * quê?</b>
-     *
-     * <p>A resposta muda tudo. Se falta tábua, a colônia fabrica e a
-     * casa anda sozinha. Se falta pedregulho ou vidro, ninguém nesta
-     * vila produz aquilo — e a obra não está lenta, está impossível.
-     * Dois estados idênticos no log, e correções que não se parecem.
-     */
-    private static String waitingFor(ConstructionProject project) {
-        if (project.state() != ConstructionState.WAITING_RESOURCES) {
-            return "";
-        }
-
-        return project.nextBlock()
-                .map(block -> ", waiting for " + block.block())
-                .orElse(", waiting with nothing left to place");
-    }
 }
