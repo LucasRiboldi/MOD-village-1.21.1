@@ -591,11 +591,17 @@ public final class BuilderWork {
      * {@code Task.complete} exige EXECUTING, e chamá-lo fora disso
      * derrubou o servidor uma vez (§17). Quem termina a obra é a casa
      * pronta, não o trabalhador que parou.
+     *
+     * <p>E quem responde se ela pode ser liberada é a própria tarefa —
+     * {@link Task#isHeld()}. Perguntar {@code isOngoing} aqui derrubou o
+     * servidor <b>outra vez</b>, em 2026-08-25: a tarefa de um construtor
+     * morto volta para a fila como AVAILABLE, que não está encerrada e
+     * também não está na mão de ninguém.
      */
     private static void finish(Job job, UUID workerId, String why) {
         if (job.task.state() == TaskState.EXECUTING) {
             job.task.complete();
-        } else if (isOngoing(job.task)) {
+        } else if (job.task.isHeld()) {
             job.task.release();
         }
 
@@ -604,11 +610,18 @@ public final class BuilderWork {
         VillageColonyMod.LOGGER.info("Builder {} stopped — {}", workerId, why);
     }
 
-    /** Esquece o trabalho deste construtor. Morte, zumbificação, dispensa. */
+    /**
+     * Esquece o trabalho deste construtor. Morte, zumbificação, dispensa.
+     *
+     * <p>Chamado de dois lugares, e nos dois a tarefa já pode ter voltado
+     * para a fila antes — {@code VillagerLifecycleHandler} solta tudo o
+     * que o morto tinha antes de avisar quem o empregava. Daí a pergunta
+     * ser {@link Task#isHeld()}, e não "não está encerrada".
+     */
     public static void forget(UUID workerId) {
         Job job = JOBS.remove(workerId);
 
-        if (job != null && isOngoing(job.task)) {
+        if (job != null && job.task.isHeld()) {
             job.task.release();
         }
     }

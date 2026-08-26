@@ -171,6 +171,25 @@ public final class Task {
     }
 
     /**
+     * Se a tarefa está na mão de alguém — reservada ou em execução.
+     *
+     * <p>São <b>exatamente</b> os dois estados que {@link #release()}
+     * aceita, e é por isso que a pergunta mora aqui: quem for devolver
+     * uma tarefa à fila precisa fazê-la antes, e ela não pode ser
+     * reescrita do lado de fora.
+     *
+     * <p>Foi essa reescrita que derrubou o servidor em 2026-08-25. O
+     * construtor guardava o {@code release} com "esta tarefa não está
+     * encerrada?" — que é outra pergunta, e {@code AVAILABLE} passava
+     * por ela. Um construtor morto por zumbi deixava a tarefa na fila,
+     * e vinte ciclos depois a obra desistia e chamava {@code release}
+     * numa tarefa que já estava lá.
+     */
+    public boolean isHeld() {
+        return state == TaskState.RESERVED || state == TaskState.EXECUTING;
+    }
+
+    /**
      * Devolve a tarefa à fila, sem executor.
      *
      * <p>É o que acontece quando o trabalhador morre no meio: a tarefa
@@ -178,7 +197,7 @@ public final class Task {
      * errado — a colônia ainda precisa de madeira.
      */
     public void release() {
-        if (state != TaskState.RESERVED && state != TaskState.EXECUTING) {
+        if (!isHeld()) {
             throw new IllegalStateException(
                     "Cannot release a task that is " + state + ": " + id);
         }

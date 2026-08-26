@@ -3,6 +3,7 @@ package com.villagecolony.fabric.event;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestMarker;
+import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
@@ -110,11 +111,18 @@ public final class VillagerLifecycleHandler {
         // E a árvore que ele estava quebrando: o plano guarda posições de
         // uma colheita em curso, e sem isto ele ficaria no registro
         // esperando por um aldeão que não volta.
+        //
+        // São os seis, e o construtor faltava aqui até 2026-08-25 — a
+        // lista de dispensa em VillageDetectionHandler o tinha, esta não.
+        // O trabalho do construtor morto ficava no registro porque quem
+        // o percorre não distingue "morreu" de "está fora de chunk
+        // carregado", e explodia quando a obra fechasse.
         MinerWork.forget(villagerId);
         SmelterWork.forget(villagerId);
         ShepherdWork.forget(villagerId);
         LumberjackWork.forget(villagerId);
         ManufacturerWork.forget(villagerId);
+        BuilderWork.forget(villagerId);
 
         boolean wasWorker = VillageColonyMod.WORKERS.remove(villagerId);
         boolean hadStorage = VillageColonyMod.STORAGES.remove(villagerId);

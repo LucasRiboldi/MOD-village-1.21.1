@@ -119,6 +119,55 @@ class TaskTest {
         assertThrows(IllegalStateException.class, () -> collectWood().release());
     }
 
+    /**
+     * A pergunta que autoriza o {@code release}, nos cinco estados.
+     *
+     * <p>Ela existe para não ser reescrita por quem chama: cada
+     * reescrita foi um servidor derrubado — §17 com {@code complete}, e
+     * 2026-08-25 com {@code release}.
+     */
+    @Test
+    void onlyAReservedOrExecutingTaskIsHeld() {
+        assertFalse(collectWood().isHeld(), "recém-criada não está com ninguém");
+
+        Task reserved = collectWood();
+        reserved.reserveFor(UUID.randomUUID());
+        assertTrue(reserved.isHeld());
+
+        Task executing = collectWood();
+        executing.reserveFor(UUID.randomUUID());
+        executing.start();
+        assertTrue(executing.isHeld());
+
+        Task completed = collectWood();
+        completed.reserveFor(UUID.randomUUID());
+        completed.start();
+        completed.complete();
+        assertFalse(completed.isHeld());
+
+        Task cancelled = collectWood();
+        cancelled.cancel();
+        assertFalse(cancelled.isHeld());
+    }
+
+    /**
+     * A sequência exata do crash de 2026-08-25.
+     *
+     * <p>O construtor morreu, {@code releaseAllOf} devolveu a tarefa à
+     * fila, e vinte ciclos depois a obra desistiu e mandou devolvê-la
+     * outra vez. Quem guardar o segundo {@code release} com
+     * {@link Task#isHeld()} não chega a chamá-lo.
+     */
+    @Test
+    void aTaskAlreadyBackInTheQueueIsNotHeldAndCannotBeReleasedAgain() {
+        Task task = collectWood();
+        task.reserveFor(UUID.randomUUID());
+        task.release();
+
+        assertFalse(task.isHeld());
+        assertThrows(IllegalStateException.class, task::release);
+    }
+
     /** Deixou de fazer sentido: construção removida, recurso dispensado. */
     @Test
     void cancellingClosesItAndDropsTheExecutor() {

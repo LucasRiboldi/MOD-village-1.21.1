@@ -252,7 +252,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Agricultura e defesa | ⬜ não começado |
 
 ```text
-470 testes unitários  ·  158 testes de jogo  ·  ./gradlew build
+472 testes unitários  ·  159 testes de jogo  ·  ./gradlew build
 ```
 
 **O que 🧪 quer dizer aqui.** A bateria roda o caso e ele passa. Não quer
@@ -307,7 +307,7 @@ ficam os que mudam o que se vê no jogo.
 |---|---|---|
 | 🔴 | **A vila fica presa numa obra só** | O planejador não sabe desistir. O catálogo do jogo já tem fazenda, curtume, ferraria — e a Regra 28 filtra tudo para uma casa por bioma |
 | 🟠 | **Sete arquivos de código acima de 500 linhas** | `VillageDetectionHandler` é o pior com 983. `MinerWork` e `BuilderWork` foram cortados em 08-22, por responsabilidade |
-| 🟠 | **Um teste de jogo instável** — `theStallGuardReturnsTheTaskAndForgetsTheTree` | **Não reproduzido em 12 rodadas** depois do trabalho de 08-22, e isso não é diagnóstico. Duas hipóteses caíram no caminho |
+| 🟠 | **Um teste de jogo instável** — `theStallGuardReturnsTheTaskAndForgetsTheTree` | **Voltou a falhar em 08-25: 3 de 7 rodadas**, depois de 12 rodadas limpas. É a alternância que o torna difícil, e duas hipóteses já caíram |
 | 🟠 | **`theStoneLeavesTheWorldAndReachesTheChest`** disse "a pedra não chegou ao baú" uma vez | Suspeita, não diagnóstico |
 | 🟠 | **A arena da bateria tem bioma fixo** de planície | Escondeu **duas vezes** que o deserto estava quebrado |
 | 🟡 | **O ícone tem 1,95 MB, e o jar 2,29 MB** | 85% do que se distribui é uma imagem mostrada a 64 pixels |

@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.ManufacturerWork;
 
@@ -68,6 +69,10 @@ final class ColonyFixture {
         for (UUID worker : workers) {
             LumberjackWork.forget(worker);
             ManufacturerWork.forget(worker);
+            // O do construtor entrou em 2026-08-25, pelo mesmo motivo que
+            // ele entrou no VillagerLifecycleHandler: trabalho de obra que
+            // sobrevive ao teste é trabalho que o teste seguinte herda.
+            BuilderWork.forget(worker);
             WorkTargets.clear(worker);
 
             VillageColonyMod.WORKERS.remove(worker);
