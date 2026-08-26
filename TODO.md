@@ -1,6 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-25, depois da sessão de jogo que derrubou o servidor.
+**Atualizado:** 2026-08-26, depois de duas sessões de jogo e do ciclo que
+tirou os becos sem saída que elas revelaram.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -16,20 +17,29 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-472 testes unitários  ·  160 testes de jogo  ·  30 regras  ·  9 ADRs
+472 testes unitários  ·  165 testes de jogo  ·  30 regras  ·  9 ADRs
 7 arquivos de código acima de 500 linhas  ·  5 de teste
-sessão de jogo em 2026-08-25, 42 minutos  ·  0 commits desde ela
+2 sessões de jogo em 2026-08-25  ·  6 commits desde a última
 ```
 
 ---
 
 ## ✅ Resolvido
 
-### 2026-08-25 — a sessão de 42 minutos, e o que ela provou
+### 2026-08-25 — duas sessões, e os becos sem saída que elas mostraram
 
-A primeira sessão desde 08-22. Mundo de planície, cinco colônias no fim,
-e **ela terminou em crash** — o defeito está corrigido abaixo, e a
-correção não foi vista em jogo.
+A primeira sessão desde 08-22 durou 42 minutos e **terminou em crash**. A
+segunda, num mundo novo, mostrou a vila viva e parada: rua crescendo,
+lote nunca achado, mineiro sem nada para cavar.
+
+**O padrão que as duas revelaram, e que este ciclo atacou:** em três
+lugares diferentes o mod tinha **um candidato só** — uma ponta de rua,
+uma boca de mina, uma fonte de pedra. Candidato único é a vila parando
+para sempre quando o terreno não colabora, porque o critério é
+determinístico e o mundo não muda sozinho. Todos ganharam alternativa, e
+toda recusa passou a envelhecer.
+
+Nenhuma dessas correções foi vista em jogo.
 
 **Seis coisas vistas pela primeira vez numa vila:**
 
@@ -42,12 +52,17 @@ correção não foi vista em jogo.
 | **O mineiro tem voz**, uma linha por ciclo | a correção de 08-22, funcionando | `miners: cef3e01d looking for stone, work time, wants cobblestone, 0 of 43 so far` |
 | **O fracasso da boca da mina fala** | a linha que faltava e custou três sessões | `no miner mine mouth work: ... no column within 40 blocks of ... — tried 4 sides at 3 distances` |
 
-**E dois erros fecharam:**
+**E sete erros fecharam:**
 
 | | O que | Prova |
 |---|---|---|
 | **E22 — o crash** | Um construtor morto deixava o trabalho no registro, e vinte ciclos depois a obra fechava e mandava devolver à fila uma tarefa que já estava nela. Duas correções: `Task.isHeld()` passou a ser a pergunta que autoriza o `release`, e `BuilderWork.forget` entrou no `VillagerLifecycleHandler`, onde faltava entre os seis | 2 testes unitários, 1 teste de jogo. **Corrigido, não visto em jogo** |
 | **E25 — a varredura re-perguntava** | O cursor guardava só o **anel**, e a passagem seguinte recomeçava do primeiro bloco dele — a casca de um anel de raio 64 tem 512 colunas. Agora guarda a coluna, e o raio custa as 17 passagens que a aritmética pede, e não 19 | teste de jogo, **fase vermelha conferida**: com o cursor antigo ele acusa 18 passagens contra 17 |
+| **E27 — a rua com uma tentativa só** | `consider` guardava a ponta mais distante e nenhuma outra; a que recusasse parava a vila para sempre, porque o critério é determinístico e o mundo não muda. Agora são doze candidatas, tentadas uma a uma, e a que recusa fica de castigo dez ciclos | teste de jogo, **fase vermelha conferida** |
+| **E26 — oito minutos por lote** | A varredura termina, e o número é que era o problema: 17 ciclos por resposta. Agora a rua que a colônia acaba de calçar já é testada na mesma passagem — ela sabe onde criou beira nova e não precisa redescobrir | teste de jogo. **O teto de mil colunas por passagem ficou como está**, e vira a decisão 8 |
+| **E24 — a cama reperguntada para sempre** | Cama sem vão para baú era olhada a cada ciclo, sem fim. Agora fica de castigo dez ciclos e volta sozinha — Regra 23 | teste de jogo, **fase vermelha conferida** |
+| **E23 — nome ofuscado no log** | `class_2338{...}` saía na linha da rua em produção | `toShortString()` |
+| **A mina sem lugar** | Eram doze colunas, e as doze caíram na mesma água. Agora são vinte e quatro — oito direções, três distâncias — e, quando nem elas servem, a pedra vem de afloramento na superfície: o caminho que a Regra 29 aposentou, de volta como alternativa | 2 testes de jogo, **fase vermelha conferida** |
 | **E5 — colheita de outras espécies** | Era "só carvalho, nunca visto em jogo". A sessão derrubou e replantou cinco: `Planted a ACACIA / SPRUCE / BIRCH / JUNGLE / OAK sapling` | **visto em jogo** |
 
 ### 2026-08-22 — as sessões de jogo e o que elas cobraram
@@ -96,9 +111,6 @@ conferido no volume · árvore grande deixando de ser recusada.
 | | Erro | Estado |
 |---|---|---|
 | **E20** | **`theStallGuardReturnsTheTaskAndForgetsTheTree` instável** | **Voltou a reproduzir em 08-25: 3 falhas em 7 rodadas.** Antes disso eram 12 rodadas limpas, e é essa alternância que o torna difícil. Duas hipóteses já caíram: o relógio compartilhado do mundo (as três horas usadas estão todas dentro do expediente) e o limite global de travamento (só um teste o mexe) |
-| **E26** | **Uma resposta de lote custa nove minutos**, e isso é o relógio de uma vila cheia | **Correção do que este arquivo dizia em 08-25:** a varredura **termina** — o `still sweeping` repetido eram varreduras sucessivas, não uma travada. O raio de 64 são 16.641 colunas a 1.024 por ciclo = 17 ciclos ≈ 8,5 min, e o log confirma: 21:25:11 → 21:34:15, quando ela terminou e estendeu a rua. O problema é o número em si: numa vila sem beira livre, a Regra 15 entrega 3 a 5 blocos de rua a cada nove minutos. **E o orçamento não se aumenta de graça** — o ciclo já avisou `took 58 ms — longer than a server tick` com uma varredura de 1.024 colunas dentro |
-| **E24** | **Cama sem espaço para baú é tentada para sempre** | `No room for a chest beside the bed at -7580, 64, -5129` a cada ciclo, sem fim e sem envelhecer. Três camas coladas bastam para a colônia repetir a mesma pergunta o resto da sessão |
-| **E23** | **Nome ofuscado no log da rua** | `extended the road 3 blocks east from class_2338{x=-6874, y=90, z=-5059}`. `end.at()` é um `BlockPos`, e em produção o `toString` dele sai intermediário. Só no log, e é a única linha do mod que vaza isso |
 | **E21** | **`theStoneLeavesTheWorldAndReachesTheChest`** disse "a pedra não chegou ao baú" uma vez | Suspeita: custo de ler estrutura no tique. **Suspeita, não diagnóstico**. Não repetiu em 7 rodadas de 08-25 |
 | **E9** | Colônia `ABANDONED` desmarcada no ciclo seguinte | **Silêncio na sessão de 08-25** — nenhuma colônia trocou de estado três vezes em 42 minutos. É notícia boa e não é prova: nenhuma colônia da sessão foi abandonada |
 | **E4** | `path held: no` e o aldeão chega assim mesmo | Provável, nunca verificado. Nenhuma linha dessas em 08-25 |
@@ -119,19 +131,20 @@ que a obra pede dois degraus abaixo** · construtor **chegando ao bloco**
 saindo da frente** · casa terminada uma vez, em 08-19, com baús que o
 jogador encheu.
 
-### Nível 1 — a raiz do material *(a correção rodou, e não bastou)*
+### Nível 1 — a raiz do material *(com alternativa, e não visto)*
 
-- **A mina não abriu na sessão de 08-25**, e desta vez não foi por
-  silêncio: as doze colunas foram tentadas e nenhuma serviu —
-  `no column within 40 blocks of -7561, 66, -5122 can hold a mine mouth
-  — tried 4 sides at 3 distances`. A correção de 08-22 fez o que
-  prometeu (a busca alargou, o fracasso ganhou voz); **o que falta é o
-  que fazer quando as doze falham**.
-- Isso promove a **decisão 1** de "trava o Nível 1" para **a coisa que
-  trava o mod inteiro**: sem boca não há pedra, e sem pedra a obra morre
-  de fome em vinte ciclos, que foi exatamente o que a sessão mostrou.
-- A boca em terreno impossível ainda **desiste** em vez de a vila fazer
-  outra coisa — isso é Nível 4.
+- **A mina não abriu na sessão de 08-25**, e não foi por silêncio: as
+  doze colunas foram tentadas e nenhuma serviu. Duas respostas entraram
+  em 08-26 — **vinte e quatro colunas** em vez de doze, e **pedra de
+  superfície** quando nem elas servem.
+- A **decisão 1 deixou de travar**: sem boca a colônia agora raspa
+  afloramento em vez de ficar sem pedra. O que a decisão ainda decide é
+  o caso raro em que não há nem boca nem afloramento — aí a vila
+  continua sem pedra, e a pergunta é se ela declara `BLOCKED` e muda de
+  objetivo, que é Nível 4.
+- **Nada disso foi visto em jogo.** A linha a procurar é
+  `Miner ... opens a mine at`, e a alternativa aparece como
+  `no miner surface stone work: ...` quando também falha.
 
 ### Nível 2 — material processado *(feito, e passando fome)*
 
@@ -225,7 +238,7 @@ comércio entre vilas.
 
 | | Decisão | Trava |
 |---|---|---|
-| 1 | **Mina sem lugar:** a vila tenta outro raio, aceita boca ruim, ou declara `BLOCKED` e faz outra coisa? | **Trava tudo, e agora está medido.** Em 08-25 as doze colunas falharam e a vila morreu de fome: sem boca não há pedra, sem pedra a obra desiste em vinte ciclos |
+| 1 | **Mina sem lugar:** quando não há nem boca nem afloramento, a vila aceita boca ruim, tenta outro raio, ou declara `BLOCKED` e faz outra coisa? | **Deixou de travar em 08-26** — a pedra de superfície cobre o caso comum. O que sobra é o terreno em que nem ela serve |
 | 2 | **Substituição:** fica binária ou vira os quatro níveis da ADR? `cut_sandstone` serve no lugar de `smooth_sandstone`? | já não trava o Nível 2 — a fornalha faz o liso. Trava a **variedade** |
 | 3 | **Regra 28:** sai quando o planejador souber desistir, ou antes? | Nível 4 |
 | 4 | **Regra 25:** morre ou volta? Hoje é lógica morta | limpeza |
@@ -244,7 +257,8 @@ Em ordem do que mais precisa ser visto. Riscado é o que a sessão de
 
 | | O que | A linha que prova |
 |---|---|---|
-| **1** | **A mina abrindo** | `Miner ... opens a mine at ...`. Em 08-25 saiu **a outra linha**: as doze colunas foram tentadas e nenhuma serviu. A busca funciona; falta o que fazer quando ela falha |
+| **1** | **A mina abrindo** | `Miner ... opens a mine at ...`. Em 08-25 saiu a outra linha, com doze colunas; agora são vinte e quatro. Se falhar de novo, a linha nova a procurar é `no miner surface stone work` — e o mineiro deve estar cavando afloramento mesmo assim |
+| **1** | **A rua crescendo e a casa nascendo junto** | `extended the road N blocks ...` seguido de `planned ... at ...` **no mesmo ciclo**. Era o que custava oito minutos, e é a correção mais visível do ciclo de 08-26 |
 | **2** | **O mineiro cavando** | `Miner ... took` de um arenito. Depende de 1 |
 | **3** | **O fundidor assando pedra** | `Smelter ... made minecraft:smooth_sandstone`. Em 08-25 ele passou a sessão inteira em `nothing in the colony chests to smelt` — depende de 1 |
 | **4** | **A boca mobiliada** | `Mine mouth at ... furnished — miner chest at ..., lantern at ...`. Depende de 1 |
@@ -256,6 +270,7 @@ Em ordem do que mais precisa ser visto. Riscado é o que a sessão de
 | **9** | ~~**O E9**~~ | ✅ silêncio no relatório de 08-25 — mas nenhuma colônia da sessão chegou a ser abandonada, então o caso não foi exercitado |
 | **10** | **Fechar e reabrir o mundo com mina aberta** | O save de 08-25 trouxe `1 mines` e devolveu `1 mines`, mas ninguém cavou: o **registro** sobrevive, a **galeria retomada** continua sem prova |
 | **11** | **A correção do E22** | Um construtor morrer no meio da obra e a vila continuar de pé. Corrigido em 08-25, e a correção não foi vista em jogo |
+| **12** | **A pedra de superfície** | `Miner ... took minecraft:stone from ...` sem nenhuma linha de mina antes. É a alternativa que tira a vila do beco quando a boca não nasce |
 
 **Limites conhecidos:** a arena da bateria tem bioma fixo de planície —
 taiga, savana, nevada e deserto nunca rodaram, e a sessão de 08-25

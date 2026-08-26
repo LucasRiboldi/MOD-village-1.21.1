@@ -52,6 +52,12 @@ cobre encheriam o baú do que ninguém usa.
 Ele nunca cava vila gerada nem casa da colônia: a boca da mina não se
 abre sobre elas, e cada bloco é conferido de novo antes da picareta.
 
+E **quando a mina não tem onde nascer** — vila cercada de água, encosta,
+nenhuma das vinte e quatro colunas servindo —, ele não fica parado: passa
+a raspar afloramento de pedra na superfície, ao alcance de uma caminhada.
+Rende menos e não traz minério, e é justamente por isso que é a segunda
+opção.
+
 🐑 **O pastor** tosquia a ovelha e traz a lã. A ovelha continua viva e a
 lã volta a crescer — é a colheita que se repete. A lã sai da cor do
 rebanho, e não branca sempre.
@@ -252,7 +258,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Agricultura e defesa | ⬜ não começado |
 
 ```text
-472 testes unitários  ·  160 testes de jogo  ·  ./gradlew build
+472 testes unitários  ·  165 testes de jogo  ·  ./gradlew build
 ```
 
 **O que 🧪 quer dizer aqui.** A bateria roda o caso e ele passa. Não quer
