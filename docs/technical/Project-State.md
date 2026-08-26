@@ -4399,3 +4399,93 @@ duas sobreposições da geometria da mina.
 
 As duas coisas são necessárias, e o projeto continua sem poder trocar
 uma pela outra.
+
+---
+
+# 20. O checkpoint de 2026-08-26
+
+Não é um ciclo de desenvolvimento: é uma auditoria do estado real antes
+de enviar treze commits que estavam parados no `main` local. O que segue
+foi **medido nesta máquina**, e não lembrado.
+
+## O que foi rodado, e o que deu
+
+```text
+./gradlew clean build          BUILD SUCCESSFUL   11 tarefas executadas
+testes unitários               476 / 476          0 falhas, 0 ignorados
+./gradlew runGametest          171 / 171          bateria verde
+compileGametestJava            compila
+```
+
+Os 476 saem dos 42 XML de `build/test-results/test`, somados — não da
+contagem do console, que agrupa. A primeira execução de `build` veio
+inteira `UP-TO-DATE` e não provava nada; **o número acima é de um
+`clean`.**
+
+## O que a repetição mostrou, e uma execução só teria escondido
+
+A bateria foi rodada **oito vezes**. Seis verdes, **duas vermelhas**, e
+as duas no mesmo teste:
+
+```text
+lumberjackgametest.thestallguardreturnsthetaskandforgetsthetree
+  "o guarda não devolveu a tarefa à fila — ela está em EXECUTING"
+```
+
+É o **E20**, e ele continua aberto. Uma execução só teria dito "171
+passaram" e o checkpoint teria mentido por omissão — o erro aparece em
+uma rodada a cada quatro.
+
+**O diagnóstico saiu do arquivo, não de hipótese nova.** O teste
+registra a colônia em `COLONIES` (`LumberjackGameTest.java:978`) e faz a
+afirmação no tique fixo 300 (`:1005`). Entre a devolução da tarefa e o
+tique 300 cabe o ciclo de 600 ticks, que reserva de novo a tarefa
+disponível: o guarda funciona, e o teste mede um estado passageiro tarde
+demais. A instrumentação que provou isso é de **2026-08-19** e está no
+ramo `claude/inspiring-torvalds-bdc8c3` — que ficou **21 mil linhas
+atrás** do `main` e não serve para merge. O que se aproveita dele é o
+diagnóstico.
+
+## O sinal que a bateria deu sobre a Regra 28
+
+```text
+TEST BARRIER covered for nothing this session —
+every piece came from the colony's own chests. Rule 28 can go.
+```
+
+É a linha que o `TODO.md` pedia no item 5 do que falta ver. **Ela saiu
+na arena da bateria, não numa sessão de jogo** — bioma fixo de planície
+e fixtures montadas. Conta como notícia boa e **não** como a prova que o
+item pede, que continua devendo uma vila de verdade. E a decisão 3 de
+08-26 já disse que a Regra 28 só cai depois do Nível 4, então nada muda
+por causa desta linha.
+
+## O que a auditoria achou de discordante
+
+```text
+1  Backlog §S5 estava vencido em todos os números — corrigido neste
+   commit. LumberjackWork saiu da lista (1149 → 455, corte do E19) e
+   quatro arquivos entraram desde 08-15, trazidos pela mina e pela
+   estrada
+
+2  small_house.nbt continua rastreado num repositório público, e é
+   o conflito 3 do §19. Mudou uma coisa desde lá: a produção não o lê
+   mais, mas a bateria lê — theModsOwnSchemaLoads o carrega. Tirá-lo
+   não é apagar arquivo morto, é trabalho com teste junto
+
+3  o ramo claude/inspiring-torvalds-bdc8c3 está no remoto e 21 mil
+   linhas atrás. Ninguém o mencionava em documento nenhum
+
+4  o Gradle avisa que o build usa recurso incompatível com o Gradle 10.
+   Sai do Loom, não dos scripts do projeto. Não quebra nada hoje
+```
+
+## O que este checkpoint não fez
+
+**Nenhuma correção de comportamento.** O E20 tem causa e endereço e
+continua aberto de propósito: consertar teste intermitente pede fase
+vermelha conferida e muitas rodadas, e isso é ciclo próprio, não
+rodapé de auditoria.
+
+O que entrou foi documentação: o §S5 do `Backlog`, a linha do E20 no
+`TODO.md`, e esta seção.
