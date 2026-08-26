@@ -251,6 +251,26 @@ public final class ConstructionPlanner {
 
         Blueprint blueprint = plans.get(0);
 
+        // A ponta que já rendeu continua rendendo, e isso vem antes da
+        // varredura — 2026-08-26. Sem isto a colônia pagava dezessete
+        // ciclos por bloco de rua, e a sessão das 03:11 mediu o custo:
+        // um bloco calçado, e o lote de sete por sete continuou sem
+        // caber. Quem autorizou a rua a crescer foi a varredura que
+        // terminou sem lote, e essa autorização vale para o trecho.
+        if (RoadExtension.isGrowing(colony.id())) {
+            Optional<ConstructionProject> onTheStretch =
+                    keepGrowing(world, colony, blueprint, plans, builders);
+
+            if (onTheStretch.isPresent() || RoadExtension.isGrowing(colony.id())) {
+                // Ou nasceu lote no trecho novo, ou a passagem foi gasta
+                // crescendo. Nos dois casos a varredura espera.
+                return onTheStretch;
+            }
+
+            // A ponta parou de render. A varredura volta a mandar, e
+            // nesta mesma passagem.
+        }
+
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 world, colony.id(), colony.center(), searchRadius,
                 plans.stream().map(Blueprint::size).toList());
@@ -489,6 +509,44 @@ public final class ConstructionPlanner {
      * — a vila também parou, mas por outra razão, e confundir as duas
      * mandaria o autor procurar no lugar errado.
      */
+    /**
+     * Continua a rua que esta colônia começou, sem varrer de novo.
+     *
+     * <p>Irmão de {@link #extendTheRoad}, e a diferença é de onde vem a
+     * autorização: lá, de uma varredura que acabou de terminar sem lote;
+     * aqui, da mesma varredura, que continua valendo enquanto a ponta
+     * render. Ver {@code RoadExtension.MAX_RUN} para onde isso para.
+     *
+     * @return a obra, quando o trecho novo já coube uma casa
+     */
+    private static Optional<ConstructionProject> keepGrowing(
+            ServerWorld world, Colony colony, Blueprint blueprint,
+            List<Blueprint> plans, int builders) {
+
+        Optional<ResourceId> paving = VillageRoad.pavingFor(
+                world, HousePlans.paletteOf(world, colony.center()).style());
+
+        if (paving.isEmpty()) {
+            return Optional.empty();
+        }
+
+        if (RoadExtension.keepGrowing(world, colony.id(), paving.get())
+                != RoadExtension.Outcome.EXTENDED) {
+
+            return Optional.empty();
+        }
+
+        IdleLog.clear(colony.id(), SUBJECT);
+
+        return BuildSiteScanner.findBeside(
+                        world,
+                        colony.id(),
+                        colony.center(),
+                        plans.stream().map(Blueprint::size).toList(),
+                        RoadExtension.justPaved(colony.id()))
+                .flatMap(beside -> open(world, colony, beside, plans, blueprint, builders));
+    }
+
     private static Optional<ConstructionProject> extendTheRoad(
             ServerWorld world, Colony colony, Blueprint blueprint,
             List<Blueprint> plans, int builders) {

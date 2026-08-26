@@ -135,6 +135,43 @@ public final class RoadExtension {
      */
     private static final Map<UUID, List<ColonyPos>> JUST_PAVED = new HashMap<>();
 
+    /**
+     * A ponta que já rendeu, e quanto ela já rendeu — 2026-08-26.
+     *
+     * <p><b>O gargalo que a sessão das 03:11 mediu.</b> A rua cresceu um
+     * bloco — o {@code pave} para no primeiro que recusa — e um bloco de
+     * beira nova não abre lote para uma casa de sete por sete. A colônia
+     * então voltava a varrer o raio inteiro para, oito minutos e meio
+     * depois, calçar mais um.
+     *
+     * <p>Agora a ponta que rendeu é retomada na passagem seguinte, sem
+     * pagar outra varredura. Cinco blocos saem em cinco ciclos em vez de
+     * cinco varreduras — dois minutos e meio em vez de quarenta.
+     *
+     * <p><b>Isto não afrouxa a Regra 15.</b> A rua só começa a crescer
+     * quando uma varredura inteira termina sem lote, e é essa varredura
+     * que autoriza a insistência. O que mudou é que a autorização vale
+     * para o trecho, e não para um bloco.
+     */
+    private static final Map<UUID, Growth> GROWING = new HashMap<>();
+
+    /** Uma ponta em crescimento, e quanto já saiu dela. */
+    private record Growth(End end, int laid) {
+    }
+
+    /**
+     * Quantos blocos uma ponta pode render antes de a vila reavaliar.
+     *
+     * <p>Dezesseis, e o número tem razão: a maior casa do catálogo é de
+     * sete, e dezesseis dão beira para duas delas com folga. Passar disso
+     * sem que nenhum lote tenha nascido quer dizer que o problema não é
+     * falta de rua — e aí a varredura tem mais a dizer que a picareta.
+     *
+     * <p>É também o que impede a Regra 15 de virar outra coisa: rua que
+     * cresce sozinha e sem limite vira rodovia com mato dos dois lados.
+     */
+    public static final int MAX_RUN = 16;
+
     /** O que aconteceu na tentativa de estender. */
     public enum Outcome {
 
@@ -195,6 +232,10 @@ public final class RoadExtension {
     /** Esquece as pontas desta colônia. A varredura recomeçou. */
     public static void forgetEnds(UUID colonyId) {
         ENDS.remove(colonyId);
+
+        // A insistência é filha da varredura que terminou sem lote. Uma
+        // varredura nova refaz a pergunta, e a resposta velha sai junto.
+        GROWING.remove(colonyId);
     }
 
     /** Se esta ponta está de castigo, e ainda não envelheceu. */
@@ -230,6 +271,99 @@ public final class RoadExtension {
         REFUSED.clear();
 
         JUST_PAVED.clear();
+
+        GROWING.clear();
+    }
+
+    /** Se esta colônia tem ponta rendendo, para retomar sem varrer. */
+    public static boolean isGrowing(UUID colonyId) {
+        return GROWING.containsKey(colonyId);
+    }
+
+    /**
+     * Continua calçando a ponta que já estava rendendo — 2026-08-26.
+     *
+     * <p>Sem varredura nenhuma: quem autorizou a rua a crescer foi a
+     * varredura que terminou sem lote, e essa autorização vale para o
+     * trecho inteiro. Ver {@link #GROWING}.
+     *
+     * @return {@code EXTENDED} quando saiu bloco novo; {@code NO_END}
+     *     quando não havia ponta rendendo ou ela já rendeu o bastante;
+     *     {@code BLOCKED} quando ela parou de render agora
+     */
+    public static Outcome keepGrowing(ServerWorld world, UUID colonyId, ResourceId paving) {
+        Growth growth = GROWING.get(colonyId);
+
+        if (growth == null) {
+            return Outcome.NO_END;
+        }
+
+        if (growth.laid() >= MAX_RUN) {
+            // Rendeu o bastante e nenhum lote nasceu: o problema não é
+            // falta de rua, e a varredura tem mais a dizer.
+            GROWING.remove(colonyId);
+
+            VillageColonyMod.LOGGER.info(
+                    "Colony {} stops growing the road at {} blocks — no lot came of it,"
+                            + " and the sweep has more to say than the pickaxe",
+                    colonyId,
+                    growth.laid());
+
+            return Outcome.NO_END;
+        }
+
+        Optional<Block> block = MinecraftTypeAdapter.toBlock(paving);
+
+        if (block.isEmpty()) {
+            return Outcome.NO_END;
+        }
+
+        List<ColonyPos> laidAt = pave(world, growth.end(), block.get());
+
+        if (laidAt.isEmpty()) {
+            // A ponta parou de render. Ela sai de castigo em dez ciclos,
+            // e a varredura volta a mandar.
+            refuse(world, growth.end().at());
+
+            GROWING.remove(colonyId);
+
+            return Outcome.BLOCKED;
+        }
+
+        JUST_PAVED.put(colonyId, laidAt);
+
+        remember(colonyId, growth.end(), laidAt, growth.laid());
+
+        VillageColonyMod.LOGGER.info(
+                "Colony {} grew the road {} blocks further {} — {} of {} on this stretch",
+                colonyId,
+                laidAt.size(),
+                growth.end().towards(),
+                growth.laid() + laidAt.size(),
+                MAX_RUN);
+
+        return Outcome.EXTENDED;
+    }
+
+    /**
+     * Guarda a ponta nova: a última pedra assentada, mesmo rumo.
+     *
+     * <p>A ponta anda com o trecho. Guardar a antiga faria a passagem
+     * seguinte tentar calçar o que já é rua e concluir que ela recusou.
+     */
+    private static void remember(
+            UUID colonyId, End from, List<ColonyPos> laidAt, int alreadyLaid) {
+
+        ColonyPos tip = laidAt.get(laidAt.size() - 1);
+
+        GROWING.put(
+                colonyId,
+                new Growth(
+                        new End(
+                                MinecraftTypeAdapter.toBlockPos(tip),
+                                from.towards(),
+                                from.fromCenter()),
+                        alreadyLaid + laidAt.size()));
     }
 
     /**
@@ -283,6 +417,8 @@ public final class RoadExtension {
             }
 
             JUST_PAVED.put(colonyId, laidAt);
+
+            remember(colonyId, end, laidAt, 0);
 
             VillageColonyMod.LOGGER.info(
                     "Colony {} extended the road {} blocks {} from {}",

@@ -369,4 +369,110 @@ public class RoadExtensionGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * A ponta que rendeu é retomada, sem pagar outra varredura.
+     *
+     * <p><b>O gargalo que a sessão de 2026-08-26, às 03:11, mediu.</b> A
+     * rua cresceu <b>um</b> bloco — o {@code pave} para no primeiro que
+     * recusa — e um bloco de beira nova não abre lote para uma casa de
+     * sete por sete. A colônia então voltava a varrer o raio inteiro
+     * para, oito minutos e meio depois, calçar mais um.
+     *
+     * <p>Três coisas se afirmam aqui, e são as três que mudaram:
+     *
+     * <ul>
+     *   <li>calçar <b>deixa a ponta em crescimento</b> — antes ela era
+     *       consumida e esquecida;
+     *   <li>a ponta em crescimento é <b>retomada</b> sem varredura;
+     *   <li>quando ela para de render, a colônia <b>para de insistir</b>
+     *       e a varredura volta a mandar.
+     * </ul>
+     *
+     * <p>O que este teste <b>não</b> mede é o ganho em blocos: a arena da
+     * bateria tem oito de lado, e a pista acaba antes de a insistência
+     * ter onde render. O ganho é aritmético e está no {@code MAX_RUN}.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_extension")
+    public void theEndThatPaidIsResumedWithoutAnotherSweep(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        strip(context);
+
+        BuildSiteScanner.find(
+                context.getWorld(),
+                colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        context.assertTrue(
+                RoadExtension.extend(
+                        context.getWorld(), colony, ResourceId.vanilla("dirt_path"))
+                        == RoadExtension.Outcome.EXTENDED,
+                "a montagem falhou: a rua nem chegou a crescer");
+
+        context.assertTrue(
+                RoadExtension.isGrowing(colony),
+                "a ponta foi consumida e esquecida — a colônia vai pagar outra varredura"
+                        + " inteira pelo bloco seguinte");
+
+        // A pista acaba na borda da arena, então a retomada bate no fim.
+        // O que importa é que ela foi tentada, e que a colônia desistiu
+        // de insistir em vez de repetir para sempre.
+        RoadExtension.Outcome again = RoadExtension.keepGrowing(
+                context.getWorld(), colony, ResourceId.vanilla("dirt_path"));
+
+        context.assertTrue(
+                again != RoadExtension.Outcome.NO_END,
+                "a ponta em crescimento nem chegou a ser retomada");
+
+        context.assertTrue(
+                !RoadExtension.isGrowing(colony),
+                "a ponta parou de render e a colônia continuou insistindo nela");
+
+        context.complete();
+    }
+
+    /**
+     * Varredura nova apaga a insistência.
+     *
+     * <p>A autorização para a rua crescer é filha de uma varredura que
+     * terminou sem lote. Uma varredura nova refaz a pergunta, e a
+     * resposta velha sai junto — senão a colônia calçaria por causa de
+     * uma decisão que já não vale.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_extension")
+    public void aFreshSweepDropsTheGrowingEnd(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        strip(context);
+
+        BuildSiteScanner.find(
+                context.getWorld(),
+                colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        RoadExtension.extend(context.getWorld(), colony, ResourceId.vanilla("dirt_path"));
+
+        context.assertTrue(
+                RoadExtension.isGrowing(colony),
+                "a montagem falhou: era para haver ponta em crescimento");
+
+        // A varredura recomeça do centro, e é ela que chama forgetEnds.
+        BuildSiteScanner.find(
+                context.getWorld(),
+                colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        context.assertTrue(
+                !RoadExtension.isGrowing(colony),
+                "a varredura nova não apagou a insistência da anterior");
+
+        context.complete();
+    }
 }

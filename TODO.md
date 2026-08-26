@@ -17,7 +17,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-476 testes unitários  ·  169 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+476 testes unitários  ·  171 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 7 arquivos de código acima de 500 linhas  ·  5 de teste
 2 sessões de jogo em 2026-08-25  ·  6 commits desde a última
 ```
@@ -25,6 +25,24 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-26 — a sessão que mostrou o gargalo seguinte
+
+Vinte e três minutos, sem crash, no mundo novo. **Duas correções do dia
+anterior apareceram funcionando em jogo:**
+
+| | O que | A linha |
+|---|---|---|
+| **E27 — a rua saiu do beco** | A mesma colônia `56c5b68d` que em 08-25 ouviu `BLOCKED` e não cresceu | `[03:11:57] extended the road 1 blocks west from 766, 62, 961` |
+| **E23 — o nome ofuscado sumiu** | `from 766, 62, 961`, e não `class_2338{...}`. Zero ocorrências na sessão | a mesma linha |
+
+**E ela mediu o gargalo seguinte**, que virou o E29: a rua rendeu **um**
+bloco, e um bloco não abre lote para casa de sete por sete. A colônia
+voltou a varrer.
+
+**O que continua sem prova:** o E22 não foi exercitado (nenhum construtor
+morreu), o E24 não teve sintoma para mostrar, e a mina não chegou a ser
+perguntada — sem obra não há demanda de pedra.
 
 ### 2026-08-25 — duas sessões, e os becos sem saída que elas mostraram
 
@@ -63,6 +81,7 @@ Nenhuma dessas correções foi vista em jogo.
 | **E24 — a cama reperguntada para sempre** | Cama sem vão para baú era olhada a cada ciclo, sem fim. Agora fica de castigo dez ciclos e volta sozinha — Regra 23 | teste de jogo, **fase vermelha conferida** |
 | **E23 — nome ofuscado no log** | `class_2338{...}` saía na linha da rua em produção | `toShortString()` |
 | **A mina sem lugar** | Eram doze colunas, e as doze caíram na mesma água. Agora são vinte e quatro — oito direções, três distâncias — e, quando nem elas servem, a pedra vem de afloramento na superfície: o caminho que a Regra 29 aposentou, de volta como alternativa | 2 testes de jogo, **fase vermelha conferida** |
+| **E29 — a rua rendia um bloco por varredura** | Calçar consumia a ponta e a esquecia: a colônia voltava a varrer o raio inteiro para, 8m30 depois, calçar mais um. **Medido em jogo em 08-26, às 03:11:57** — `extended the road 1 blocks west`, e um bloco de beira não abre lote para casa de 7×7. Agora a ponta que rendeu é retomada na passagem seguinte, até 16 blocos ou até parar de render | 2 testes de jogo, **fase vermelha conferida** |
 | **E5 — colheita de outras espécies** | Era "só carvalho, nunca visto em jogo". A sessão derrubou e replantou cinco: `Planted a ACACIA / SPRUCE / BIRCH / JUNGLE / OAK sapling` | **visto em jogo** |
 
 ### 2026-08-22 — as sessões de jogo e o que elas cobraram
