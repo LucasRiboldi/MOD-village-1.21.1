@@ -2218,11 +2218,61 @@ Regra 30  o mineiro recolhe tudo o que cava;    08-22, feita em 08-22.
           a boca da mina ganha lanterna e um    Amplia a 29
           baú de minério, e ele transborda
           para o baú do mineiro
+
+Regra 31  o fazendeiro planta o que tiver no    08-26, ENUNCIADA e por
+          baú, põe a água, colhe o que está     escrever. Decisão do
+          pronto e guarda no próprio baú        autor na mesma data
 ```
 
 Duas previsões das primeiras se confirmaram e vale marcá-las: a fila que
 não esvaziava — o E1 do §17 — morreu junto, e o lugar onde as duas
 primeiras regras moram é de fato o mesmo.
+
+---
+
+## Regra 31 — o fazendeiro planta o que tem, e colhe o que está pronto
+
+```text
+o fazendeiro planta qualquer semente que possuir ou que esteja no baú
+dele
+
+ele coloca a água que a plantação precisa
+
+colhe as plantações prontas
+
+e guarda a colheita no próprio baú
+```
+
+Enunciada pelo autor em 2026-08-26, e **deliberadamente não implementada
+ainda**. A decisão veio junto com a ordem: uma profissão nova inteira não
+entra antes de a cadeia atual — mina, fundição, casa terminada — ter sido
+vista funcionando até o fim numa vila.
+
+**O que esta regra decide, e que estava em aberto desde a Fase 4:**
+agricultura está **dentro** do escopo do mod. O fazendeiro tem nome,
+enxada e baú desde então, e nunca teve trabalho; a pergunta "o mod planta
+ou fazenda fica de fora?" fica respondida — planta.
+
+**Quatro coisas que o enunciado já resolve**, e que não precisam voltar
+ao autor:
+
+1. **Qual semente.** A que houver — não há lista escrita no código, e
+   por isso trigo, cenoura, batata e beterraba entram pela mesma porta.
+   É a mesma disciplina da Regra 27: quem responde é o jogo, e não uma
+   tabela daqui.
+2. **De onde ela vem.** Do baú do fazendeiro, como o tronco vem do baú
+   do fabricante. A colônia não inventa semente.
+3. **A água é responsabilidade dele.** Terra arada seca não dá colheita,
+   e por isso pôr água faz parte do trabalho, e não do cenário.
+4. **Onde a colheita para.** No baú dele. É o mesmo caminho de todas as
+   outras profissões, e é o que faz a comida virar recurso contável da
+   colônia.
+
+**O que o enunciado ainda não diz**, e vai precisar de decisão quando
+chegar a hora de escrever: onde fica a lavoura — canteiro que a colônia
+levanta, ou terra arada que já existe na vila gerada. A
+`plains_small_farm_1` do catálogo do jogo é a resposta mais barata, e
+ela depende da Regra 28 sair.
 
 ---
 

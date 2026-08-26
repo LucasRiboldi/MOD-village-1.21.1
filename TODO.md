@@ -234,17 +234,24 @@ comércio entre vilas.
 
 ---
 
+## ✅ Decisões tomadas em 2026-08-26
+
+| | Decisão | O que ela manda fazer |
+|---|---|---|
+| **3** | **A Regra 28 sai quando o planejador souber desistir de um objetivo** — e não antes | Vira dependência com nome: a barreira de uma casa por bioma **só cai depois do Nível 4**. Enquanto o planejador perseguir uma obra só e não souber trocar de alvo, a vila continua levantando a casa pequena do bioma dela. A **Regra 25** — a maior planta que couber — fica dormindo junto, e acorda no mesmo dia |
+| **4** | **A Regra 25 volta** — por consequência da 3, e não por decisão própria | "A maior planta que couber no lote" precisa de mais de uma planta, e é a Regra 28 que impede isso. Respondida a 3, esta se responde sozinha: a 25 fica dormindo e acorda no dia em que a 28 sair. **Nada a apagar** — se o autor discordar, é só dizer |
+| **5** | **Agricultura está dentro do escopo, e virou a Regra 31** | *O fazendeiro planta qualquer semente que possuir ou tenha no baú, coloca a água, colhe o que está pronto e guarda no próprio baú.* Enunciado em `Project-State.md`. **Deliberadamente não implementada agora**: profissão nova inteira não entra antes de a cadeia atual ser vista funcionando até o fim numa vila |
+
+---
+
 ## 👤 Decisões que faltam, na ordem em que travam
 
 | | Decisão | Trava |
 |---|---|---|
 | 1 | **Mina sem lugar:** quando não há nem boca nem afloramento, a vila aceita boca ruim, tenta outro raio, ou declara `BLOCKED` e faz outra coisa? | **Deixou de travar em 08-26** — a pedra de superfície cobre o caso comum. O que sobra é o terreno em que nem ela serve |
 | 2 | **Substituição:** fica binária ou vira os quatro níveis da ADR? `cut_sandstone` serve no lugar de `smooth_sandstone`? | já não trava o Nível 2 — a fornalha faz o liso. Trava a **variedade** |
-| 3 | **Regra 28:** sai quando o planejador souber desistir, ou antes? | Nível 4 |
-| 4 | **Regra 25:** morre ou volta? Hoje é lógica morta | limpeza |
-| 5 | **Água e comida:** o mod planta e coloca água, ou fazenda fica fora do escopo? | Nível 6 e a alternativa de planície |
 | 6 | **População:** o mod controla, ou aceita o *breeding* do vanilla? | ADR-009 §17 |
-| 7 | **Fusão de colônias:** qual UUID e o teto de profissão já estão decididos na ADR-007 — falta só escrever | Nível 6 |
+| ~~7~~ | ~~**Fusão de colônias**~~ — **não é decisão.** UUID sobrevivente e teto de profissão estão decididos na ADR-007 desde 08-21; falta implementar | trabalho, não pergunta |
 | 8 | **O custo da busca de lote (E26):** a vila cheia responde a cada nove minutos. Sobe o teto de colunas e aceita o tique mais pesado; varre só o que pode ser beira de rua; ou aceita que vila cheia cresce devagar? | Quanto tempo uma vila leva para abrir obra nova |
 | 9 | **O cursor da varredura sobrevive ao centro se mover** — é decisão de 08-19, com teste (`theSweepSurvivesTheCenterMoving`) e motivo escrito: a âncora trocava a cada trinta segundos e zerava a busca. **A ADR-003 Emenda 4 mudou essa premissa** — hoje o centro anda pela sonda, e raramente. O preço atual: depois de um movimento de centro, a varredura retomada pula os anéis de dentro do centro **novo**, que é onde o lote é mais provável. Reverter mexe numa decisão testada, e por isso não foi feito | A vila que acabou de mover o centro |
 
