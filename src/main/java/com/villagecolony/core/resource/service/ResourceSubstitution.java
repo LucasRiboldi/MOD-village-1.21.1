@@ -59,7 +59,25 @@ import java.util.Set;
  * virou {@code ACCEPTABLE}. O que se ganhou foi <b>ordem</b>: sim e não
  * não sabem dizer "use este se não houver aquele".
  *
- * <h2>O que a Regra 27 impede, e por que nada está em ALTERNATIVE</h2>
+ * <h2>A Regra 27 abriu para pedra — 2026-08-26</h2>
+ *
+ * <p>Decisão do autor, e ela desfaz metade do que 08-22 fez, de
+ * propósito. <b>O defeito daquele dia era a discordância</b>, e não a
+ * substituição: a conta aceitava pedregulho por arenito, o construtor
+ * não, e a obra dormia esperando o que ninguém foi buscar. Com a Regra
+ * 27 aberta para pedra, os dois voltam a dizer a mesma coisa.
+ *
+ * <p>É essa concordância que separa {@link Substitution#ACCEPTABLE} de
+ * {@link Substitution#ALTERNATIVE}: o primeiro conta para a meta e o
+ * construtor continua exigindo o exato; o segundo o construtor assenta.
+ *
+ * <p><b>A madeira ficou em ACCEPTABLE</b>, e o autor sabe: a mesma
+ * discordância mora lá — uma colônia com duzentas tábuas de bétula e
+ * nenhuma de carvalho declara a meta cumprida enquanto a casa espera
+ * carvalho. Está registrado no TODO, e não foi mexido porque a decisão
+ * foi <i>pedra só</i>.
+ *
+ * <h2>O que a Regra 27 ainda impede</h2>
  *
  * <p>A variedade que a ADR quer — <i>deserto prefere arenito, não quer
  * dizer que só possa arenito</i> — esbarra numa regra <b>imutável</b>: a
@@ -80,10 +98,9 @@ import java.util.Set;
  * inteiro em {@code ColonyGoals}, e o construtor não pede espécie. A
  * meta de pedra nomeia o bloco que a casa daquele bioma usa.
  *
- * <p><b>Enquanto a Regra 27 valer, {@code ALTERNATIVE} fica vazio.</b> O
- * nível existe, a ordem funciona, e o dia em que o autor abrir mão da
- * Regra 27 — ou o dia em que a demanda de obra deixar de virar meta
- * nominal — a declaração é uma linha.
+ * <p>Fora da pedra, a Regra 27 continua valendo inteira: o construtor
+ * aguarda o bloco específico, e declarar substituição em
+ * {@code ACCEPTABLE} não muda isso.
  */
 public final class ResourceSubstitution {
 
@@ -96,6 +113,24 @@ public final class ResourceSubstitution {
      */
     private static final Set<ResourceGroup> INTERCHANGEABLE =
             EnumSet.of(ResourceGroup.WOOD, ResourceGroup.PLANKS);
+
+    /**
+     * Os grupos cujos membros se substituem <b>até na parede</b>.
+     *
+     * <p>Só a pedra, e é decisão do autor em 2026-08-26: <i>abre para
+     * pedra só</i>. Pedregulho e arenito passam a servir um pelo outro, e
+     * o construtor passa a poder assentar o que houver.
+     *
+     * <p><b>Isto desfaz metade do que 2026-08-22 fez, e de propósito.</b>
+     * Naquele dia pedregulho deixou de responder por arenito porque a
+     * colônia concluía que a meta estava cumprida e o mineiro não ia
+     * cavar — enquanto o construtor esperava pelo arenito. O defeito era
+     * a <b>discordância</b> entre a conta e o construtor, e não a
+     * substituição em si. Com a Regra 27 aberta para pedra, os dois
+     * voltam a dizer a mesma coisa: a conta aceita, e a parede também.
+     */
+    private static final Set<ResourceGroup> INTERCHANGEABLE_IN_THE_WALL =
+            EnumSet.of(ResourceGroup.STONE);
 
     /**
      * O que cada exigência aceita, e em que nível.
@@ -198,7 +233,18 @@ public final class ResourceSubstitution {
         Map<ResourceType, Map<ResourceType, Substitution>> table =
                 new EnumMap<>(ResourceType.class);
 
-        for (ResourceGroup group : INTERCHANGEABLE) {
+        declareGroups(table, INTERCHANGEABLE, Substitution.ACCEPTABLE);
+        declareGroups(table, INTERCHANGEABLE_IN_THE_WALL, Substitution.ALTERNATIVE);
+
+        return Collections.unmodifiableMap(table);
+    }
+
+    private static void declareGroups(
+            Map<ResourceType, Map<ResourceType, Substitution>> table,
+            Set<ResourceGroup> groups,
+            Substitution level) {
+
+        for (ResourceGroup group : groups) {
             Set<ResourceType> members = EnumSet.noneOf(ResourceType.class);
 
             for (ResourceType type : ResourceType.values()) {
@@ -212,17 +258,15 @@ public final class ResourceSubstitution {
 
                 for (ResourceType other : members) {
                     if (other != type) {
-                        // ACCEPTABLE, e nao PREFERRED: abeto serve tanto
-                        // quanto carvalho para "tenho tronco?", mas quem
-                        // se prefere e sempre o que se pediu.
-                        accepted.put(other, Substitution.ACCEPTABLE);
+                        // Nunca PREFERRED: abeto serve tanto quanto
+                        // carvalho para "tenho tronco?", mas quem se
+                        // prefere e sempre o que se pediu.
+                        accepted.put(other, level);
                     }
                 }
 
                 table.put(type, Collections.unmodifiableMap(accepted));
             }
         }
-
-        return Collections.unmodifiableMap(table);
     }
 }

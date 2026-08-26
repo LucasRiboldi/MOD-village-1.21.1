@@ -2203,7 +2203,9 @@ Regra 26  a cadeia de produção, e a paleta      08-20, feita em parte
           de cada vila                          — ver o que ela não fecha
 Regra 27  só o catálogo do jogo, e o            08-20, IMUTÁVEL, feita
           construtor aguarda o bloco            em 08-20. Desfaz partes
-                                                das Regras 13, 21 e 25
+                                                das Regras 13, 21 e 25.
+                                                EMENDA 1 em 08-26: abre
+                                                para pedra só
 Regra 28  a casa pequena do bioma, e a obra     08-20, PROVISÓRIA por
           não espera por porta, cama,           decisão do autor. Estreita
           lampião e baú                         a 27 enquanto se testa
@@ -3869,6 +3871,67 @@ não criar estruturas que não estão na lista
 o construtor aguarda a existência do específico tipo de bloco que ele
 precisa para continuar a construir
 ```
+
+### Emenda 1 — abre para pedra só, 2026-08-26
+
+```text
+o construtor pode assentar pedra declarada no lugar da pedra que a
+planta pede
+
+fora da pedra, ele continua aguardando o bloco específico
+```
+
+**Três palavras do autor**, e elas mudam uma regra marcada como
+imutável: *abre para pedra só*. O resto da Regra 27 continua inteiro —
+só o catálogo do jogo, e o construtor aguardando o bloco exato de tudo o
+que não for pedra.
+
+**Por que a emenda foi pedida.** A ADR-009 §3.10 quer variedade —
+*deserto prefere arenito; isso não quer dizer que só possa arenito* — e
+a decisão 2 do autor, no mesmo dia, mandou implementar os quatro níveis
+de substituição. Ao escrever, apareceu o impedimento: enquanto o
+construtor exigisse o bloco exato, declarar substituição não daria
+variedade nenhuma. Daria **travamento**.
+
+**O defeito que essa emenda evita, e é o mesmo de 2026-08-22.** Naquele
+dia, pedregulho respondia por arenito na conta da colônia e não no
+construtor. A vila de deserto com o baú cheio de pedregulho declarava a
+meta de arenito cumprida, o mineiro não ia cavar, e a obra dormia
+esperando um bloco que ninguém buscaria.
+
+**O defeito era a discordância**, e não a substituição. A correção de
+08-22 desfez a discordância pelo lado da conta: pedregulho deixou de
+responder por arenito. A emenda de 08-26 a desfaz pelo outro lado: a
+conta aceita, e a parede também. As duas correções são a mesma frase
+dita de dois jeitos — **a conta e o construtor precisam concordar**.
+
+**O que a emenda não afrouxa:**
+
+```text
+o material continua saindo do baú antes de o bloco entrar no mundo
+
+o que se assenta é o que saiu do baú, e não o que a planta pediu —
+a colônia não inventa matéria
+
+o preferido vem primeiro: a casa sai com o bloco certo enquanto ele
+existir, e o substituto entra quando o certo acabou
+
+fora do grupo da pedra, nada substitui nada na parede
+```
+
+**A madeira ficou de fora, e o autor sabe.** Ela é `ACCEPTABLE`: conta
+para a meta da colônia e o construtor continua exigindo a espécie que a
+planta pede. A mesma discordância mora ali — uma colônia com duzentas
+tábuas de bétula e nenhuma de carvalho declara a meta cumprida enquanto
+a casa espera carvalho. Está registrado no `TODO.md` e não foi mexido
+porque a decisão foi *pedra só*.
+
+**Onde isso vive no código:** `Substitution.ALTERNATIVE` é o nível que o
+construtor assenta, `MaterialChoice` é a lista que ele consulta, e
+`ResourceSubstitutionTest.theWallOnlyEverAcceptsStone` é o guarda que
+impede a emenda de crescer sem decisão.
+
+---
 
 **Regra imutável, dita pelo autor em 2026-08-20.** Ela desfaz decisões
 anteriores, e vale registrar quais, porque são decisões que este mesmo

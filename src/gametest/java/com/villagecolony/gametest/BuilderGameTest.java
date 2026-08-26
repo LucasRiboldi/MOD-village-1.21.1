@@ -973,4 +973,98 @@ public class BuilderGameTest implements FabricGameTest {
             context.complete();
         });
     }
+
+    /**
+     * A Regra 27 abriu para pedra: o baú tem pedregulho, a planta pede
+     * arenito, e a parede sobe.
+     *
+     * <p>Emenda do autor em 2026-08-26, com três palavras — <i>abre para
+     * pedra só</i>. Até então o construtor aguardava o bloco específico
+     * sem exceção, e uma vila que tivesse a pedra errada ficava com a
+     * casa parada.
+     *
+     * <p><b>Duas afirmações, e as duas importam.</b> A parede sobe — a
+     * obra não dorme. E o que entra nela é <b>pedregulho</b>, e não
+     * arenito: a colônia não inventa matéria, e o que se assenta é o que
+     * saiu do baú.
+     *
+     * <p>Rodado contra a emenda desligada: a obra fica em
+     * {@code WAITING_RESOURCES} e nenhum bloco entra.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_stone",
+            tickLimit = 300)
+    public void theWallOfSandstoneGoesUpWithTheCobblestoneTheColonyHas(TestContext context) {
+        Fixture fixture = setUpStone(context);
+
+        context.runAtTick(90, () -> {
+            context.assertTrue(
+                    stateAt(context, SITE).isOf(Blocks.COBBLESTONE),
+                    "a planta pedia arenito, o baú tinha pedregulho, e o que subiu foi "
+                            + stateAt(context, SITE).getBlock().getName().getString());
+
+            context.assertTrue(
+                    !stateAt(context, SITE).isOf(Blocks.SANDSTONE),
+                    "entrou arenito que a colônia não tinha — isso é inventar matéria");
+
+            fixture.owned.cleanUp();
+
+            context.complete();
+        });
+    }
+
+    /**
+     * Colônia com pedregulho no baú e uma parede de arenito para levantar.
+     */
+    private static Fixture setUpStone(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        world.setTimeOfDay(Schedule.WORK_TIME);
+
+        context.setBlockState(SITE.down(), Blocks.STONE.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        ChestDepositor.deposit(world, chest, Items.COBBLESTONE, 8);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.BUILDER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        Blueprint plan = Blueprint.of(HUT, List.of(new BlueprintBlock(
+                new ColonyPos(0, 0, 0),
+                MinecraftTypeAdapter.toResourceId(Blocks.SANDSTONE))));
+
+        ConstructionProject project = ConstructionProject.plan(
+                colony.id(),
+                plan,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(SITE)));
+
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(), TaskType.BUILD, TaskPriority.PRODUCTION,
+                ResourceType.SANDSTONE, 1);
+
+        task.reserveFor(villager.getUuid());
+
+        BuilderWork.run(world, colony);
+
+        return new Fixture(
+                colony,
+                project,
+                chest,
+                ColonyFixture.create().owning(colony).owning(villager.getUuid()));
+    }
 }

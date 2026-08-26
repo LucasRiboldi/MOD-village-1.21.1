@@ -321,7 +321,9 @@ public final class BuilderWork {
             return true;
         }
 
-        if (!takeMaterial(world, project, material.get().asItem())) {
+        Optional<Item> taken = takeMaterial(world, project, material.get());
+
+        if (taken.isEmpty()) {
             Optional<String> chain = TestBarrier.chainFor(block.block());
 
             if (chain.isPresent()) {
@@ -341,7 +343,8 @@ public final class BuilderWork {
             }
 
             // Fora dessas quatro, <b>o construtor aguarda o bloco
-            // específico de que precisa</b> — a Regra 27, imutável.
+            // específico de que precisa</b> — a Regra 27, aberta para
+            // pedra em 2026-08-26 e inteira no resto.
             //
             // O que impede a colônia de morrer esperando é o
             // PatienceClock: a obra sai da frente depois de vinte ciclos,
@@ -351,9 +354,17 @@ public final class BuilderWork {
             return false;
         }
 
-        world.setBlockState(target, state, Block.NOTIFY_ALL);
+        // O que se assenta é o que saiu do baú, e não o que a planta
+        // pediu: a colônia não inventa matéria. Só o bloco exato carrega
+        // o estado da planta — o substituto é bloco cheio e entra no
+        // estado padrão dele.
+        BlockState placed = MaterialChoice.isExact(material.get(), taken.get())
+                ? state
+                : Block.getBlockFromItem(taken.get()).getDefaultState();
 
-        placeSecondHalf(world, target, state);
+        world.setBlockState(target, placed, Block.NOTIFY_ALL);
+
+        placeSecondHalf(world, target, placed);
 
         project.markPlaced(block);
 
@@ -485,10 +496,24 @@ public final class BuilderWork {
      *
      * @return false quando não há esse material em baú nenhum
      */
-    private static boolean takeMaterial(
-            ServerWorld world, ConstructionProject project, Item material) {
+    /**
+     * Tira do baú o primeiro material que servir, e diz qual foi.
+     *
+     * <p>Do preferido ao último — {@link MaterialChoice}. Fora da pedra a
+     * lista tem um item só, que é a Regra 27 valendo inteira.
+     *
+     * @return o item que saiu do baú, ou vazio quando nenhum servia
+     */
+    private static Optional<Item> takeMaterial(
+            ServerWorld world, ConstructionProject project, Block wanted) {
 
-        return ColonySupply.take(world, project.colonyId(), project.origin(), material);
+        for (Item candidate : MaterialChoice.forBlock(wanted)) {
+            if (ColonySupply.take(world, project.colonyId(), project.origin(), candidate)) {
+                return Optional.of(candidate);
+            }
+        }
+
+        return Optional.empty();
     }
 
     /**
@@ -532,11 +557,18 @@ public final class BuilderWork {
             return true;
         }
 
-        return ColonySupply.canProvide(
-                world,
-                project.colonyId(),
-                project.origin(),
-                material.get().asItem());
+        // A mesma lista de takeMaterial, e por obrigação: uma pergunta
+        // que dissesse "tem" e uma retirada que não achasse poriam a obra
+        // a acordar e voltar a dormir todo ciclo.
+        for (Item candidate : MaterialChoice.forBlock(material.get())) {
+            if (ColonySupply.canProvide(
+                    world, project.colonyId(), project.origin(), candidate)) {
+
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

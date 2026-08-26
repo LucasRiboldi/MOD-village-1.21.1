@@ -17,7 +17,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-475 testes unitários  ·  167 testes de jogo  ·  31 regras  ·  9 ADRs
+476 testes unitários  ·  168 testes de jogo  ·  31 regras (1 emenda)  ·  9 ADRs
 7 arquivos de código acima de 500 linhas  ·  5 de teste
 2 sessões de jogo em 2026-08-25  ·  6 commits desde a última
 ```
@@ -110,6 +110,7 @@ conferido no volume · árvore grande deixando de ser recusada.
 
 | | Erro | Estado |
 |---|---|---|
+| **E28** | **A madeira tem a discordância que a pedra deixou de ter** | `OAK_PLANKS` responde pelo grupo inteiro na conta da colônia, e o construtor exige a espécie que a planta pede. Uma colônia com duzentas tábuas de bétula e nenhuma de carvalho **declara a meta cumprida enquanto a casa espera carvalho** — é a forma exata do defeito de 08-22, e ninguém o viu ainda porque o lenhador de planície corta carvalho. Achado ao escrever a Emenda 1 da Regra 27, e **não corrigido de propósito**: a decisão do autor foi *pedra só*. As duas saídas são as mesmas de lá — abrir a parede para a madeira, ou separar a conta da obra da meta da colônia |
 | **E20** | **`theStallGuardReturnsTheTaskAndForgetsTheTree` instável** | **Voltou a reproduzir em 08-25: 3 falhas em 7 rodadas.** Antes disso eram 12 rodadas limpas, e é essa alternância que o torna difícil. Duas hipóteses já caíram: o relógio compartilhado do mundo (as três horas usadas estão todas dentro do expediente) e o limite global de travamento (só um teste o mexe) |
 | **E21** | **`theStoneLeavesTheWorldAndReachesTheChest`** disse "a pedra não chegou ao baú" uma vez | Suspeita: custo de ler estrutura no tique. **Suspeita, não diagnóstico**. Não repetiu em 7 rodadas de 08-25 |
 | **E9** | Colônia `ABANDONED` desmarcada no ciclo seguinte | **Silêncio na sessão de 08-25** — nenhuma colônia trocou de estado três vezes em 42 minutos. É notícia boa e não é prova: nenhuma colônia da sessão foi abandonada |
@@ -224,7 +225,7 @@ comércio entre vilas.
 
 | | O que |
 |---|---|
-| 🟠 | **Os quatro níveis existem desde 08-26 e `ALTERNATIVE` está vazio.** A política está escrita e a ordem funciona; o que impede declarar qualquer coisa nela é a **Regra 27**, imutável. Deixou de ser dívida de arquitetura e virou a decisão 10 |
+| ✅ | **Os quatro níveis da ADR-009 §3.10 — resolvida em 08-26.** A política está escrita, a ordem funciona, e a Regra 27 abriu para pedra pela Emenda 1: `ALTERNATIVE` é o nível que o construtor assenta. Fora da pedra, `ACCEPTABLE` conta para a meta e não vai para a parede |
 | 🔴 | **Regra 28 vs ADR-009 §3.6.** A barreira é o remendo do problema que a ADR quer resolver: ela esconde o travamento em vez de a vila mudar de objetivo |
 | 🟠 | **`ChestWithdrawer.takeGroup` ainda usa grupo como equivalência.** Hoje é inócuo — só o fundidor o chama, com `SAND` e `IRON`, que têm um membro só. É o resto do buraco |
 | 🟠 | **Regra 25 inerte** enquanto a 28 valer: "a maior planta que couber" precisa de mais de uma planta |
@@ -251,25 +252,19 @@ centro anda muito.
 | **8** | **O custo da busca de lote fica como está** — e se mede na próxima sessão | Nada muda agora. Se a vila ficar visivelmente parada esperando lote, o conserto é **no jeito de procurar, não no volume** — o teto de mil colunas por passagem não sobe, porque o ciclo já avisou 58 ms com ele |
 | **9** | **A varredura recomeça quando o centro andar mais de 20 blocos** | *Movimento pequeno não atrapalha; movimento grande justifica recomeçar.* O cursor passa a guardar de que centro os anéis foram medidos. Os três movimentos da sessão de 08-25 foram todos abaixo de 20 e teriam mantido o cursor — a decisão de 08-19 continua valendo para eles. Feito em 08-26, com teste |
 | **2** | **A substituição vira os quatro níveis da ADR-009 §3.10** | `PREFERRED / ACCEPTABLE / ALTERNATIVE / FORBIDDEN`, com ordem de preferência. O padrão não mudou de comportamento — o "não" virou `FORBIDDEN` e o "sim" virou `ACCEPTABLE`. O que nasceu foi a **ordem**, que é a diferença entre aceitar e preferir. Feito em 08-26, com 3 testes. **`ALTERNATIVE` está vazio, e há um teste que impede enchê-lo** — ver a decisão pendente abaixo |
+| **10** | **A Regra 27 abre para pedra só** — Emenda 1, e ela mexe numa regra marcada imutável | O construtor passa a assentar pedra declarada no lugar da pedra que a planta pede; fora da pedra continua aguardando o exato. `ALTERNATIVE` ganhou conteúdo, e a variedade da ADR-009 §3.10 passou a caber. O que não afrouxou: o material sai do baú antes, **o que se assenta é o que saiu do baú**, e o preferido vem primeiro. Feito em 08-26, com teste de jogo e fase vermelha conferida |
 | **5** | **Agricultura está dentro do escopo, e virou a Regra 31** | *O fazendeiro planta qualquer semente que possuir ou tenha no baú, coloca a água, colhe o que está pronto e guarda no próprio baú.* Enunciado em `Project-State.md`. **Deliberadamente não implementada agora**: profissão nova inteira não entra antes de a cadeia atual ser vista funcionando até o fim numa vila |
 
 ---
 
 ## 👤 Decisões que faltam, na ordem em que travam
 
-**A que nasceu de outra.** Implementar os quatro níveis (decisão 2)
-esbarrou na **Regra 27, que é imutável**: *o construtor aguarda a
-existência do específico tipo de bloco que ele precisa*. A substituição
-não é lida pelo construtor — é lida por `ResourceDemand.deficit`, que
-decide **quais tarefas abrir**. Declarar que pedregulho serve por arenito
-faria a colônia concluir que a meta está cumprida e **não mandar o
-mineiro cavar**, enquanto o construtor espera para sempre pelo arenito
-que ninguém foi buscar. É o defeito de 08-22 por outro caminho, e é por
-isso que `ALTERNATIVE` ficou vazio.
+**Sobrou uma, e ela nasceu enquanto a decisão 10 era escrita.** A
+Regra 27 abriu para pedra, e a mesma discordância que ela desfez continua
+de pé na **madeira** — ver E28 abaixo.
 
 | | Decisão | Trava |
 |---|---|---|
-| 10 | **A Regra 27 abre mão, para a variedade caber?** Hoje ela é imutável e o construtor espera o bloco exato. Enquanto valer, os quatro níveis existem e não têm o que declarar: madeira é segura porque a meta dela é genérica de propósito; pedra nomeia o bloco da casa daquele bioma | A variedade que a ADR-009 §3.10 quer |
 | ~~7~~ | ~~**Fusão de colônias**~~ — **não é decisão.** UUID sobrevivente e teto de profissão estão decididos na ADR-007 desde 08-21; falta implementar | trabalho, não pergunta |
 
 ---

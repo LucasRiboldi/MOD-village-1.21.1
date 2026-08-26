@@ -1,6 +1,7 @@
 package com.villagecolony.core.resource.service;
 
 import com.villagecolony.core.resource.model.ResourceTally;
+import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.type.Substitution;
 import org.junit.jupiter.api.Test;
@@ -24,33 +25,62 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ResourceSubstitutionTest {
 
     /**
-     * O defeito, dito na asserção: pedregulho não é arenito.
+     * Pedregulho responde por arenito — e agora a parede concorda.
      *
-     * <p>Os dois moram em {@code ResourceGroup.STONE}, e enquanto o
-     * déficit somava o grupo, uma vila de deserto com 320 de pedregulho
-     * concluía que a meta de arenito estava cumprida. Visto em jogo em
-     * 2026-08-22.
+     * <p><b>Esta asserção era o contrário até 2026-08-26</b>, e a
+     * inversão é decisão do autor: <i>abre para pedra só</i>. Vale
+     * registrar o que mudou e o que não mudou, porque a asserção antiga
+     * nasceu de um defeito visto em jogo.
+     *
+     * <p>Em 2026-08-22 uma vila de deserto com 320 de pedregulho concluía
+     * que a meta de arenito estava cumprida, o mineiro não ia cavar, e o
+     * construtor esperava para sempre pelo arenito. <b>O defeito era a
+     * discordância</b> entre a conta e o construtor — não a substituição.
+     *
+     * <p>Com a Regra 27 aberta para pedra, os dois voltam a dizer a mesma
+     * coisa: a conta aceita pedregulho, e o construtor assenta
+     * pedregulho. É {@link Substitution#ALTERNATIVE}, e é o nível que
+     * significa exatamente isso.
      */
     @Test
-    void cobblestoneDoesNotAnswerForSandstone() {
-        assertFalse(
-                ResourceSubstitution.accepts(ResourceType.SANDSTONE, ResourceType.COBBLESTONE),
-                "pedregulho voltou a responder por arenito");
+    void cobblestoneAnswersForSandstoneAndTheWallAcceptsIt() {
+        assertEquals(
+                Substitution.ALTERNATIVE,
+                ResourceSubstitution.levelOf(ResourceType.SANDSTONE, ResourceType.COBBLESTONE),
+                "pedregulho devia servir por arenito, e até na parede");
 
-        assertFalse(
-                ResourceSubstitution.accepts(ResourceType.COBBLESTONE, ResourceType.SANDSTONE),
-                "arenito voltou a responder por pedregulho");
+        assertEquals(
+                Substitution.ALTERNATIVE,
+                ResourceSubstitution.levelOf(ResourceType.COBBLESTONE, ResourceType.SANDSTONE),
+                "arenito devia servir por pedregulho, e até na parede");
+
+        assertEquals(
+                ResourceType.SANDSTONE,
+                ResourceSubstitution.byPreference(ResourceType.SANDSTONE).get(0),
+                "o preferido deixou de vir primeiro — a casa vai sair de pedregulho"
+                        + " mesmo tendo arenito no baú");
     }
 
-    /** E o déficit acompanha: baú cheio de pedregulho, arenito faltando. */
+    /**
+     * E o déficit acompanha: baú cheio de pedregulho, arenito pago.
+     *
+     * <p>O outro lado da mesma decisão. Isto só é seguro porque o
+     * construtor assenta pedregulho: se ele ainda exigisse arenito, esta
+     * asserção seria a obra dormindo para sempre — o defeito de 08-22.
+     */
     @Test
-    void aChestFullOfCobblestoneStillOwesSandstone() {
+    void aChestFullOfCobblestoneNowPaysForSandstone() {
         ResourceTally owned = ResourceTally.of(Map.of(ResourceType.COBBLESTONE, 320));
 
         Map<ResourceType, Integer> missing =
                 ResourceDemand.deficit(Map.of(ResourceType.SANDSTONE, 93), owned);
 
-        assertEquals(93, missing.getOrDefault(ResourceType.SANDSTONE, 0));
+        assertEquals(
+                0,
+                missing.getOrDefault(ResourceType.SANDSTONE, 0),
+                "a vila continuou devendo arenito com o baú cheio de pedregulho — e o"
+                        + " construtor já assenta pedregulho, então isso é o mineiro"
+                        + " cavando o que ninguém precisa");
     }
 
     /**
@@ -100,8 +130,11 @@ class ResourceSubstitutionTest {
 
         assertEquals(1, ResourceSubstitution.acceptedFor(ResourceType.GLASS).size());
         assertEquals(1, ResourceSubstitution.acceptedFor(ResourceType.COAL).size());
-        assertEquals(1, ResourceSubstitution.acceptedFor(ResourceType.SANDSTONE).size());
-        assertEquals(1, ResourceSubstitution.acceptedFor(ResourceType.COBBLESTONE).size());
+
+        // A pedra deixou de estar sozinha em 2026-08-26: são dois, ela e
+        // a outra pedra. Nada mais entrou — ver theWallOnlyEverAcceptsStone.
+        assertEquals(2, ResourceSubstitution.acceptedFor(ResourceType.SANDSTONE).size());
+        assertEquals(2, ResourceSubstitution.acceptedFor(ResourceType.COBBLESTONE).size());
     }
 
     /**
@@ -124,9 +157,9 @@ class ResourceSubstitutionTest {
                 "abeto serve por carvalho sem ressalva — está declarado");
 
         assertEquals(
-                Substitution.FORBIDDEN,
+                Substitution.ALTERNATIVE,
                 ResourceSubstitution.levelOf(ResourceType.SANDSTONE, ResourceType.COBBLESTONE),
-                "pedregulho voltou a responder por arenito — é o defeito de 08-22");
+                "a pedra é o único nível de parede que existe, e ela saiu dele");
 
         assertEquals(
                 Substitution.FORBIDDEN,
@@ -157,31 +190,60 @@ class ResourceSubstitutionTest {
     }
 
     /**
-     * Nada em ALTERNATIVE enquanto a Regra 27 valer.
+     * A Regra 27 abriu para pedra, e só para pedra.
      *
-     * <p><b>Este teste é um guarda, e não uma afirmação de gosto.</b> A
-     * substituição é lida por {@code ResourceDemand.deficit}, que decide
-     * quais tarefas abrir — e não pelo construtor, que pela Regra 27
-     * aguarda o bloco específico. Declarar que um bloco serve por outro
-     * faz a colônia parar de mandar buscar o que o construtor espera, e
-     * a obra dorme para sempre. É o defeito de 2026-08-22 por outro
-     * caminho.
+     * <p><b>Este teste é o guarda da emenda, e não uma afirmação de
+     * gosto.</b> {@code ALTERNATIVE} é o nível que o construtor assenta;
+     * declarar um bloco nele sem que o construtor o aceite faz a colônia
+     * parar de buscar o que a obra espera, e a obra dorme para sempre —
+     * o defeito de 2026-08-22.
      *
-     * <p>O dia em que a Regra 27 sair, ou em que a demanda de obra deixar
-     * de virar meta nominal, este teste sai junto — e aí a variedade que
-     * a ADR quer passa a caber.
+     * <p>A emenda do autor em 2026-08-26 tem três palavras — <i>abre para
+     * pedra só</i> — e é isto que as guarda. Alargar a emenda passa por
+     * mudar este teste, e mudá-lo é a hora de reler o defeito.
      */
     @Test
-    void nothingIsMerelyAlternativeWhileTheBuilderWaitsForTheExactBlock() {
+    void theWallOnlyEverAcceptsStone() {
         for (ResourceType required : ResourceType.values()) {
             for (ResourceType offered : ResourceType.values()) {
-                assertTrue(
-                        ResourceSubstitution.levelOf(required, offered)
-                                != Substitution.ALTERNATIVE,
-                        offered + " foi declarado ALTERNATIVE para " + required
-                                + " — com a Regra 27 de pé isso faz a colônia parar de"
-                                + " buscar o bloco que o construtor espera");
+                if (ResourceSubstitution.levelOf(required, offered)
+                        != Substitution.ALTERNATIVE) {
+
+                    continue;
+                }
+
+                assertEquals(
+                        ResourceGroup.STONE,
+                        required.group(),
+                        required + " aceita substituto na parede e não é pedra —"
+                                + " a Regra 27 só abriu para pedra");
+
+                assertEquals(
+                        ResourceGroup.STONE,
+                        offered.group(),
+                        offered + " foi declarado para a parede e não é pedra");
             }
         }
+    }
+
+    /**
+     * A madeira continua fora da parede, e o autor sabe.
+     *
+     * <p>Ela é {@code ACCEPTABLE}: conta para a meta da colônia e o
+     * construtor continua exigindo a espécie que a planta pede. <b>A
+     * mesma discordância de 08-22 mora aqui</b> — uma colônia com
+     * duzentas tábuas de bétula e nenhuma de carvalho declara a meta
+     * cumprida enquanto a casa espera carvalho.
+     *
+     * <p>Está registrado no TODO e não foi mexido porque a decisão do
+     * autor foi <i>pedra só</i>. Este teste existe para que a escolha
+     * continue visível em vez de virar esquecimento.
+     */
+    @Test
+    void woodCountsForTheGoalAndNotForTheWall() {
+        assertEquals(
+                Substitution.ACCEPTABLE,
+                ResourceSubstitution.levelOf(ResourceType.OAK_PLANKS, ResourceType.BIRCH_PLANKS),
+                "a tábua de bétula mudou de nível sem decisão registrada");
     }
 }

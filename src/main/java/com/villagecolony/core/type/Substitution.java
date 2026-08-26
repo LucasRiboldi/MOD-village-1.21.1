@@ -28,24 +28,32 @@ public enum Substitution {
     PREFERRED,
 
     /**
-     * Serve sem ressalva quando o preferido não está à mão.
+     * Serve para a <b>meta</b> da colônia, e não para a parede.
      *
      * <p>É o caso da madeira: quem tem o baú cheio de abeto não precisa
      * de carvalho para responder "esta colônia tem tronco?", e mandar
      * buscar seria trabalho para nada.
+     *
+     * <p><b>O construtor continua exigindo o exato</b> neste nível — é a
+     * Regra 27, e ela só abriu para pedra. Substituição de estoque não é
+     * substituição de obra.
      */
     ACCEPTABLE,
 
     /**
-     * Serve, e só quando não houver nada melhor.
+     * Serve <b>até na parede</b>, e só quando não houver nada melhor.
      *
-     * <p>O nível que a ADR criou para a variedade: o bloco entra, a
-     * identidade da vila se mantém, e a colônia continua preferindo o
+     * <p>O nível que a ADR criou para a variedade: o bloco entra na casa,
+     * a identidade da vila se mantém, e a colônia continua preferindo o
      * certo enquanto ele existir.
      *
-     * <p><b>Nada está declarado neste nível hoje</b>, e não é
-     * esquecimento — ver {@code ResourceSubstitution}, §"o que a Regra 27
-     * impede".
+     * <p><b>É o que distingue este nível do de cima</b>, e é a diferença
+     * que a Regra 27 desenhou em 2026-08-26: o que está aqui o construtor
+     * pode assentar; o que está em {@link #ACCEPTABLE} ele conta e não
+     * assenta.
+     *
+     * <p>Declarado hoje: a família da pedra, e só ela — pedregulho e
+     * arenito, um pelo outro. Decisão do autor.
      */
     ALTERNATIVE,
 
