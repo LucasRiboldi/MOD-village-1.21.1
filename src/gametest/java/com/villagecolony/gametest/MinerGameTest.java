@@ -80,6 +80,32 @@ public class MinerGameTest implements FabricGameTest {
     private static final int FRONTIER = MineShaft.CARVED + 48;
 
     /**
+     * A boca da mina do teste do E30, no chão da arena.
+     *
+     * <p>Um bloco a leste dela está o primeiro corte, que é o alvo:
+     * {@code MineShaft.positionAt(0)} para {@link Side#EAST}.
+     */
+    private static final BlockPos DEEP_MOUTH = new BlockPos(2, 1, 5);
+
+    /**
+     * O poleiro do E30: seis blocos acima do alvo, na mesma coluna.
+     *
+     * <p>Zero de distância no plano, seis de distância de verdade. É a
+     * superfície de onde o mineiro da sessão de 2026-08-26 cavou a mina
+     * inteira sem descer nela.
+     */
+    private static final BlockPos PERCH = new BlockPos(3, 7, 5);
+
+    /**
+     * O alcance de braço, e ele espelha {@code MinerWork.REACH}.
+     *
+     * <p>Escrito aqui e não lido de lá de propósito: abrir a constante
+     * de produção para o teste esconderia a pergunta que este teste faz,
+     * que é justamente <b>em que medida</b> aquele quatro é medido.
+     */
+    private static final int ARM_REACH = 4;
+
+    /**
      * A pedra sai do mundo e entra no baú.
      *
      * <p>As duas metades da mesma regra, e é a mesma do lenhador:
@@ -502,6 +528,147 @@ public class MinerGameTest implements FabricGameTest {
             } finally {
                 owned.cleanUp();
 
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * O mineiro desce até a pedra em vez de cavá-la de longe — o E30.
+     *
+     * <p><b>O que a sessão de 2026-08-26 mostrou.</b> A primeira mina da
+     * história do mod abriu às 23:20:18, rendeu 43 blocos e parou. O
+     * relatório tem a linha que explica:
+     * {@code digging Pedra at 721, 54, 897, 9 blocks away, 1/6 ticks} —
+     * picareta em movimento a <b>nove blocos</b> do bloco. Nove é
+     * exatamente a queda até a superfície acima dele.
+     *
+     * <p>{@code MinerWork.isWithinReach} mede só o plano: {@code dx} e
+     * {@code dz}, nunca {@code dy}. O mineiro cava a mina inteira de pé
+     * lá em cima, furando o chão para baixo, e <b>nunca entra nela</b>.
+     * Funciona enquanto a escada desce debaixo dele; morre quando a
+     * galeria corre na horizontal, porque aí ele precisaria ter descido.
+     *
+     * <p>A Regra 29 pediu o contrário, e por escrito: <i>"o mineiro anda
+     * até o fim da vila e <b>desce cavando em escada</b>, para poder
+     * voltar a subir"</i> — degraus de dois blocos de altura, <i>"os que
+     * o aldeão precisa para caber de pé"</i>. A escada foi desenhada para
+     * ser andada, e nunca foi andada.
+     *
+     * <p><b>Por que 171 testes não pegaram.</b> Todo teste de mina desta
+     * classe põe o alvo em {@code MineShaft.positionAt(0)}, colado no
+     * aldeão. No primeiro degrau o alvo está dentro dos quatro blocos nas
+     * duas medidas, e a diferença entre alcance no plano e alcance de
+     * verdade não existe. A galeria de vinte blocos não cabe numa arena
+     * de oito, e é por isso que ela nunca foi exercitada aqui.
+     *
+     * <p><b>O que este teste faz, então.</b> Não finge a profundidade:
+     * reproduz o <b>mecanismo</b> em escala de arena. O aldeão nasce num
+     * poleiro seis blocos acima da pedra, na mesma coluna, com uma escada
+     * de terra que desce até o chão. Distância no plano: zero. Distância
+     * de verdade: seis.
+     *
+     * <p>A medida é tirada <b>no tique da quebra</b>, e não no fim: a
+     * pedra cai em seis tiques, e num teste que só olhasse no fim o
+     * aldeão teria descido sozinho depois e a prova passaria por engano.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_descent",
+            tickLimit = 400)
+    public void theMinerGoesDownToTheStoneInsteadOfDiggingItFromAbove(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        ground(context);
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        Block rock = MinecraftTypeAdapter
+                .toBlock(HousePlans.paletteOf(world, chest).stone())
+                .orElseThrow();
+
+        // A boca no chão da arena, e o primeiro corte um bloco a leste
+        // dela: é o que MineShaft.positionAt(0) dá para Side.EAST.
+        BlockPos target = DEEP_MOUTH.east();
+
+        context.setBlockState(target, rock.getDefaultState());
+
+        // O poleiro: seis blocos acima do alvo, na mesma coluna. É a
+        // superfície da sessão, em escala de arena.
+        context.setBlockState(PERCH.down(), Blocks.DIRT.getDefaultState());
+
+        // E a escada que desce dele até o chão, um bloco por degrau. Ela
+        // existe para que a versão certa TENHA como descer: um teste que
+        // o mineiro não pudesse passar não provaria nada.
+        for (int step = 1; step <= 4; step++) {
+            context.setBlockState(
+                    PERCH.add(step, -step - 1, 0), Blocks.DIRT.getDefaultState());
+        }
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, PERCH);
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        owned.owning(villager.getUuid());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_STONE,
+                TaskPriority.PRODUCTION,
+                ResourceType.COBBLESTONE,
+                16);
+
+        task.reserveFor(villager.getUuid());
+
+        ColonyPos mouth = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(DEEP_MOUTH));
+
+        VillageColonyMod.MINES.restore(
+                Mine.restore(colony.id(), MineShaft.from(mouth, Side.EAST), 0));
+
+        MineDigging.shortenMineDistanceTo(NEARBY);
+
+        MinerWork.run(world, colony);
+
+        BlockPos stone = context.getAbsolutePos(target);
+
+        // A distância no tique em que a pedra sai do mundo. -1 enquanto
+        // ela estiver de pé, e escrita uma vez só.
+        int[] whenBroken = { -1 };
+
+        context.runAtEveryTick(() -> {
+            if (whenBroken[0] >= 0 || context.getBlockState(target).isOf(rock)) {
+                return;
+            }
+
+            whenBroken[0] = (int) Math.sqrt(villager.getBlockPos().getSquaredDistance(stone));
+        });
+
+        context.runAtTick(320, () -> {
+            try {
+                context.assertTrue(
+                        whenBroken[0] >= 0,
+                        "a pedra não saiu do mundo — o mineiro não chegou nela de jeito nenhum");
+
+                context.assertTrue(
+                        whenBroken[0] <= ARM_REACH,
+                        "o mineiro quebrou a pedra de " + whenBroken[0]
+                                + " blocos de distância, e o braço dele tem " + ARM_REACH
+                                + ": ele cavou de cima sem descer — é o E30");
+            } finally {
+                owned.cleanUp();
+
+                MineDigging.restoreMineDistance();
             }
 
             context.complete();
