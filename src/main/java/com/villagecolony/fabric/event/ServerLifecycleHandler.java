@@ -19,6 +19,7 @@ import com.villagecolony.fabric.integration.RoadExtension;
 import com.villagecolony.fabric.integration.VillageRoad;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.SweepLog;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.integration.ChestPlacer;
 import com.villagecolony.fabric.integration.RingSweep;
@@ -81,6 +82,7 @@ public final class ServerLifecycleHandler {
         VillageRoad.clearAll();
         RoadExtension.clearAll();
         BuildSiteScanner.clearAll();
+        SweepLog.clearAll();
         TestBarrier.clearAll();
         ColonyStateLog.clearAll();
         VillageDetectionHandler.clearPending();
@@ -196,6 +198,10 @@ public final class ServerLifecycleHandler {
         TestBarrier.report();
         ColonyStateLog.report();
 
+        // O que a varredura de lote fez nesta sessão, por colônia. É a
+        // conta que separa "ela reinicia" de "ninguém a chamou".
+        SweepLog.report();
+
         VillageColonyMod.COLONIES.clear();
         VillageColonyMod.WORKERS.clear();
         VillageColonyMod.STORAGES.clear();
@@ -220,6 +226,7 @@ public final class ServerLifecycleHandler {
         VillageRoad.clearAll();
         RoadExtension.clearAll();
         BuildSiteScanner.clearAll();
+        SweepLog.clearAll();
         TestBarrier.clearAll();
         ColonyStateLog.clearAll();
         VillageDetectionHandler.clearPending();

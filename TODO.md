@@ -1,7 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-27, depois do ciclo que gravou o índice de ruas
-em disco.
+**Atualizado:** 2026-08-27, depois de instrumentar a varredura — a
+sessão das 19:11 deixou uma pergunta que o log não sabia responder.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -17,7 +17,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-484 testes unitários  ·  175 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+496 testes unitários  ·  175 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 última sessão de jogo em 2026-08-27, 01:33  ·  ela morreu na varredura
 ```
@@ -29,6 +29,44 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-27 — a varredura passou a dizer se reinicia ou se ninguém a chama
+
+**A sessão das 19:11 não respondeu, e mostrou por quê.** Vinte e seis
+ciclos de colônia, uma única linha de construção — *"still sweeping — the
+budget ran out before an answer"* — e nenhuma volta completa. Dezessete
+passagens bastariam para as 16.641 colunas. Duas explicações cabiam no
+mesmo silêncio:
+
+1. a varredura **reinicia** — o centro anda mais que os 20 blocos do
+   `CENTER_DRIFT`, o cursor é jogado fora, e ela recomeça do centro sem
+   nunca chegar ao fim;
+2. a varredura **não é chamada** — o planejador desiste antes do
+   `BuildSiteScanner`, e o ciclo passa sem gastar passagem.
+
+O `IdleLog` não as separa, e por um motivo bom: ele registra
+**transições**, e um ciclo em que o planejador nem roda não tem transição
+nenhuma. O silêncio das duas é idêntico.
+
+`SweepLog` tem os dois números que fecham a conta — quantas vezes o
+planejador **rodou** e quantas passagens de fato **correram**:
+
+```text
+26 rodadas, 26 passagens, 26 reinícios   →  a varredura reinicia
+26 rodadas,  8 passagens,  1 reinício    →  o planejador desiste antes
+```
+
+E a deriva fala na hora, não só na soma: pelo javadoc do `CENTER_DRIFT`
+ela deveria ser rara — três movimentos em treze minutos em 08-25. Se a
+linha sair a cada trinta segundos, **a enxurrada é o achado**.
+
+| | |
+|---|---|
+| **Fase vermelha** | `SweepLogTest` inteiro sem compilar — a classe não existia |
+| **Um defeito achado pela própria bateria** | a primeira rodada imprimiu `-1 never reached the sweep`: os testes de jogo chamam o scanner direto, sem planejador, e a subtração fica negativa por construção. O relatório passou a calar onde a conta não fecha, em vez de imprimir absurdo |
+| **E um segundo** | o aviso saía para colônia com **um** ciclo — cinquenta avisos numa bateria. Ganhou piso de evidência (`RUNS_BEFORE_JUDGING`) |
+| **Verificado rodando** | `gradlew build` → **496 unitários, 0 falhas**; `runGametest` → **175 de 175**, e a linha de deriva apareceu de verdade (*"the center moved 40 blocks"*) |
+| **Ainda não respondido** | qual das duas causas é a de 19:11. Isso é a **próxima sessão de jogo**, não este ciclo |
 
 ### 2026-08-27 — o índice de ruas atravessa o fechar do mundo
 

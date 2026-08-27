@@ -19,6 +19,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.VillageRoad;
 import com.villagecolony.fabric.integration.RoadExtension;
+import com.villagecolony.fabric.integration.SweepLog;
 import com.villagecolony.fabric.integration.SitePreparation;
 import net.minecraft.block.Block;
 import net.minecraft.server.world.ServerWorld;
@@ -208,6 +209,11 @@ public final class ConstructionPlanner {
      * @return a obra recém-planejada, quando nasce uma agora
      */
     public static Optional<ConstructionProject> plan(ServerWorld world, Colony colony) {
+        // O denominador da conta do SweepLog: quantas vezes o planejador
+        // rodou. Sem ele, "oito passagens de varredura" não diz se foram
+        // oito de oito ou oito de vinte e seis.
+        SweepLog.asked(colony.id());
+
         resume(world, colony);
 
         Optional<ConstructionProject> open = VillageColonyMod.CONSTRUCTIONS.openOf(colony.id());

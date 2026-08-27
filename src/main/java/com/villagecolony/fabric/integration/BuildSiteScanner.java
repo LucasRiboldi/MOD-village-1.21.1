@@ -280,6 +280,8 @@ public final class BuildSiteScanner {
         if (roads != null && drifted(roads.from(), center)) {
             // Mesma régua do cursor: centro que andou demais invalida a
             // medida, porque ela foi feita de outro lugar.
+            SweepLog.drifted(colonyId, roads.from(), center);
+
             ROADS.remove(colonyId);
             BUILDING.remove(colonyId);
             SWEEPS.remove(colonyId);
@@ -288,6 +290,8 @@ public final class BuildSiteScanner {
         }
 
         if (roads != null) {
+            SweepLog.indexed(colonyId);
+
             return findAmongRoads(world, colonyId, from, roads, plans);
         }
 
@@ -296,6 +300,8 @@ public final class BuildSiteScanner {
         if (paused != null && drifted(paused.from(), center)) {
             // O centro andou demais para estes anéis ainda falarem do
             // mesmo lugar — ver CENTER_DRIFT.
+            SweepLog.drifted(colonyId, paused.from(), center);
+
             paused = null;
         }
 
@@ -304,6 +310,10 @@ public final class BuildSiteScanner {
         int startColumn = startRing == 0 ? 0 : paused.column();
 
         if (startRing == 0) {
+            // A conta que separa "reiniciou" de "ninguém chamou" — ver
+            // SweepLog, e a sessão de 19:11 que deixou a dúvida.
+            SweepLog.restarted(colonyId);
+
             // Varredura nova: a ponta que a anterior anotou pode não
             // existir mais, e o mundo é a única fonte que continua certa.
             RoadExtension.forgetEnds(colonyId);
@@ -343,6 +353,10 @@ public final class BuildSiteScanner {
                     if (++columns > MAX_COLUMNS) {
                         SWEEPS.put(colonyId, new Sweep(ring, column, center));
 
+                        // Menos um: esta coluna foi contada e não chegou
+                        // a ser olhada.
+                        SweepLog.pass(colonyId, columns - 1);
+
                         return Optional.empty();
                     }
 
@@ -374,6 +388,8 @@ public final class BuildSiteScanner {
                         // vila muda e o lote de ontem pode existir.
                         SWEEPS.put(colonyId, new Sweep(ring, column + 1, center));
 
+                        SweepLog.pass(colonyId, columns);
+
                         // Há lote: a rua não precisa crescer, e a ponta
                         // anotada até aqui sai. A Regra 15 é o que fazer
                         // quando NÃO há.
@@ -388,6 +404,9 @@ public final class BuildSiteScanner {
         // Varreu tudo sem achar. Recomeçar do centro: a vila muda, o
         // jogador abre espaço, e o lote de ontem pode existir amanhã.
         SWEEPS.remove(colonyId);
+
+        SweepLog.pass(colonyId, columns);
+        SweepLog.completed(colonyId);
 
         // E aqui, e só aqui, o índice fica pronto: o raio inteiro foi
         // visitado, então a lista de ruas é a lista de ruas.
