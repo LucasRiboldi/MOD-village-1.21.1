@@ -17,8 +17,24 @@ public enum ToolType {
 
     WOODEN_AXE,
 
-    /** Do mineiro. Pedra pede picareta, e a de madeira é a inicial. */
+    /**
+     * Sobrou de quando o mineiro começava de madeira.
+     *
+     * <p>Fica no catálogo porque o enum é a linguagem das ferramentas, e
+     * não a lista do que está em uso: uma profissão futura que comece
+     * pobre volta a pedi-la.
+     */
     WOODEN_PICKAXE,
+
+    /**
+     * Do mineiro, e é decisão do autor — ver {@code MinerWork.TOOL}.
+     *
+     * <p>São vinte blocos de descida antes de a mina render alguma coisa,
+     * e com picareta de madeira isso é uma sessão inteira. O tempo de
+     * quebra já era calculado com diamante desde 2026-08-20; o catálogo
+     * só foi alcançá-lo em 08-27.
+     */
+    DIAMOND_PICKAXE,
 
     /** Do pastor. Tesoura não tem grau, então é ela mesma. */
     SHEARS,

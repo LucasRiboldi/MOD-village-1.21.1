@@ -68,6 +68,30 @@ class ProfessionRegistryTest {
                 ProfessionRegistry.of(ProfessionType.BUILDER).requiredTool());
     }
 
+    /**
+     * O mineiro segura a picareta com que ele mina — 2026-08-27.
+     *
+     * <p><b>A discordância que existia.</b> O catálogo entregava
+     * {@code WOODEN_PICKAXE} e o {@code MinerWork} calculava o tempo de
+     * quebra com {@code Items.DIAMOND_PICKAXE}: o aldeão minerava na
+     * velocidade do diamante segurando uma picareta de madeira.
+     *
+     * <p>Qual dos dois manda está escrito no javadoc do próprio
+     * {@code MinerWork.TOOL}, e é decisão do autor: <i>"o autor pediu
+     * diamante para o mineiro, e faz sentido: são vinte blocos de descida
+     * antes de a mina render alguma coisa, e com picareta de madeira isso
+     * é uma sessão inteira"</i>. Então quem estava errado era o catálogo.
+     *
+     * <p>Achado ao conferir um plano de implementação externo contra o
+     * código — ele especificava picareta de diamante, e a conferência
+     * mostrou que o mod concordava com ele em metade dos lugares.
+     */
+    @Test
+    void theMinerHoldsThePickaxeItMinesWith() {
+        assertEquals(ToolType.DIAMOND_PICKAXE,
+                ProfessionRegistry.of(ProfessionType.MINER).requiredTool());
+    }
+
     @Test
     void needsToolAnswersForBothCases() {
         assertTrue(ProfessionRegistry.of(ProfessionType.LUMBERJACK).needsTool());

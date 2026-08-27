@@ -1,7 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-27, depois do ciclo que mediu as ruas e passou a
-indexá-las — 698 colunas em vez de 16.641.
+**Atualizado:** 2026-08-27, depois do ciclo do mineiro e da varredura —
+e da conferência de um plano externo contra o código.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -17,7 +17,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-476 testes unitários  ·  174 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+477 testes unitários  ·  176 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 última sessão de jogo em 2026-08-27, 01:33  ·  ela morreu na varredura
 ```
@@ -25,6 +25,37 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-27 — o guarda parou de contar a noite, e o mineiro pegou a picareta certa
+
+Os dois saíram de uma **conferência de plano externo** contra o código: o
+autor trouxe um prompt de implementação de "Mineiro autônomo", e a
+comparação com o que existe achou duas discordâncias reais.
+
+**A porta de expediente.** `GoToWorkTargetTask` só anda em horário de
+trabalho — fora dele o aldeão dorme, come e socializa. Mas o
+`MinerWork` contava os tiques do guarda de travamento de qualquer jeito,
+e o guarda existe para punir **quem anda sem chegar**, não quem está
+proibido de andar. A sessão de 08-26 pagou: o contador foi de 886 a 2086
+com o relatório dizendo `off hours`, metade do orçamento queimada com o
+aldeão dormindo. O `STALL_LIMIT` promete *"tiques de expediente"* no
+javadoc e o código contava todos.
+
+O mineiro era o **único** trabalhador sem essa porta — lenhador,
+construtor e fabricante já a tinham. O conserto é o molde do lenhador,
+que esta classe segue por decisão.
+
+**A picareta.** O catálogo entregava `WOODEN_PICKAXE` e o `MinerWork`
+calculava o tempo de quebra com `DIAMOND_PICKAXE`: o aldeão minerava na
+velocidade do diamante **segurando uma picareta de madeira**. Qual dos
+dois manda estava escrito no javadoc do `TOOL` — *"o autor pediu
+diamante para o mineiro"* —, então quem estava errado era o catálogo.
+
+| | |
+|---|---|
+| **Fase vermelha** | `theStallGuardDoesNotCountOutsideWorkHours` — *"o guarda contou 59 tiques fora do expediente"*; `theMinerHoldsThePickaxeItMinesWith` — *"expected DIAMOND_PICKAXE but was WOODEN_PICKAXE"* |
+| **Como se testa a noite sem mexer no relógio** | com **criança**: `WorkHours` diz não para bebê sem depender da hora. Mexer no relógio do mundo é global e vaza para os testes vizinhos — a interferência que já custou um ciclo a esta bateria |
+| **Verificado rodando** | `gradlew test --rerun` → **477 unitários, 0 falhas**; `runGametest` → **176 de 176, quatro rodadas seguidas** |
 
 ### 2026-08-27 — as ruas ficam indexadas, e a varredura cabe num ciclo
 
@@ -479,6 +510,29 @@ peças da barreira.
   porque a busca nunca precisou dela. A linha é
   `no miner surface stone work: ...`.
 
+#### Vindas da conferência do plano externo — 2026-08-27
+
+Um prompt de implementação de "Mineiro autônomo" foi comparado, item a
+item, com o que existe. A maior parte já estava feita; **quatro coisas
+não estavam**, e todas têm sintoma já observado em log. Ficam aqui, no
+nível a que pertencem, e não como plano à parte.
+
+| | O que falta | O sintoma que já apareceu |
+|---|---|---|
+| 🟠 | **Inventário cheio dispara retorno.** Hoje o mineiro deposita e segue; não há teto nem volta por lotação | É onde mora o **E3** — sobra de colheita é perda de item |
+| 🟠 | **Um mineiro por mina.** A reserva é por **tarefa**, não por mina: os dois mineiros da sessão das 23:14 cavavam a mesma escada e deram `could not reach the stone` no mesmo tique | Sessão de 08-26, 23:23:08 |
+| 🟡 | **Iluminação além da boca.** Só a boca ganha lanterna, e nem sempre: saiu `lantern at nowhere it fits`. Galeria escura a 19 blocos é mob nascendo dentro da mina | Sessão de 08-26, 23:20:18 |
+| 🟢 | **Estoque-alvo além da conta da obra.** Hoje a colônia só quer o que a obra pede. Um piso mínimo de ferro e carvão é ideia legítima — e é **Nível 5**, o motor da ADR-009, não agora | nenhum; é desenho |
+
+**O que do plano foi deliberadamente recusado**, para não voltar como
+sugestão nova: caverna natural como estratégia de mineração (§9B) —
+o **E32** diz que o aldeão não entra nem na própria escada de dois
+blocos; máquina de estados própria do mineiro (§17) — criaria uma
+segunda arquitetura de trabalho ao lado das tarefas que as outras cinco
+profissões usam; sistema de configuração externo (§24) — as constantes
+moram no código com o javadoc que as justifica; e Nether, Deep Dark e
+risco por bioma (§22, §23) — o Nível 1 ainda não foi visto em jogo.
+
 ### Nível 2 — material processado *(feito, e ainda passando fome)*
 
 - **E18 fechado em 08-22**, e pelo caminho genérico que a ADR pediu:
@@ -630,7 +684,10 @@ acontecer, com a sessão que viu.
 
 | | O que | A linha que prova |
 |---|---|---|
-| **1** | **A galeria continuando** | `Miner ... took` **depois** de um `could not reach the stone`. O E30 fechou em 08-27 e **nenhuma sessão viu o conserto**: o mineiro agora desce a escada em vez de furar de cima, e é isso que precisa aparecer. Se ele voltar a estacionar, é o **E32** |
+| **1** | **O mineiro descendo a escada** | `Miner ... took` com o aldeão **dentro** da mina. O E30 fechou em 08-27 e **nenhuma sessão viu o conserto**. Se ele voltar a estacionar com `0/0 ticks`, é o **E32** |
+| **1** | **A varredura acabando num ciclo** | `no building work: still sweeping` aparecendo **uma vez** e não a sessão inteira, seguido de `planned ... at`. É o índice de ruas de 08-27, e é o que decide se dá para ver qualquer outra coisa |
+| **2** | **O mineiro parando à noite** | o contador de `stall` **congelado** enquanto o relatório diz `off hours`. Em 08-26 ele foi de 886 a 2086 dormindo |
+| **2** | **A picareta de diamante na mão** | o mineiro segurando diamante, e não madeira. Cosmético e de velocidade ao mesmo tempo |
 | **2** | **O fundidor assando** | `Smelter ... made ...`. Não depende mais da mina — depende da **areia**, e é a cadeia 8 abaixo |
 | **3** | **A cadeia da areia inteira** | meta de `SAND` → praia → vidro → vidraça. Em 08-25 parou em `looking for sand, 0 of 6`; em 08-26 nem começou, e mandou 3 `glass_pane` para a barreira |
 | **4** | **A casa inteira sem a barreira** | `TEST BARRIER covered for nothing` **numa sessão que construiu**. Em 08-26 a casa subiu, mas com 19 peças da barreira — e a linha limpa da sessão anterior era o E31, não notícia boa |

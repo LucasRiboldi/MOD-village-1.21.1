@@ -12,7 +12,7 @@ trabalham, produzem e crescem sozinhas.*
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
 ![Ambiente](https://img.shields.io/badge/Lado-Servidor%20%7C%20Singleplayer-lightgrey)
-![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.2.0%20alpha-orange)
+![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.0%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 
 </div>
@@ -184,7 +184,7 @@ no mato depois do escuro é trabalhador que os monstros pegam.
 
 1. Instale o [Fabric Loader](https://fabricmc.net/use/) para 1.21.1.
 2. Ponha a [Fabric API](https://modrinth.com/mod/fabric-api) na pasta `mods`.
-3. Baixe o `village-colony-0.2.0.jar` na
+3. Baixe o `village-colony-0.3.0.jar` na
    [página de releases](https://github.com/LucasRiboldi/MOD-village-1.21.1/releases)
    e ponha ao lado dela.
 4. Abra o jogo, carregue um mundo, e ache uma vila de planície.
@@ -218,7 +218,13 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Colheita de madeira e replantio | ✅ verificado em jogo |
 | Fabricação — tronco vira tábua | ✅ verificado em jogo |
 | Construção — a casa sobe do começo ao fim | ✅ **verificado em jogo** em 2026-08-19 |
+| A mina abre, é mobiliada e o mineiro cava | ✅ **verificado em jogo** em 2026-08-26 |
+| A casa termina sem o jogador encher baú | ✅ verificado em 2026-08-26 — **com 19 peças da barreira de teste** |
+| O pastor tosquia | ✅ verificado em jogo em 2026-08-26 |
 | Árvore grande reconhecida como árvore | ✅ **corrigido**, e a causa veio de jogo |
+| O mineiro desce a escada em vez de furar de cima | 🧪 corrigido em 08-27, **nunca visto em jogo** |
+| A varredura de lote acaba num ciclo, não em dezessete | 🧪 corrigido em 08-27, **nunca visto em jogo** |
+| O fundidor assando — ele espera **areia**, e a cadeia dela nunca começou | ⛔ elo sem entrada |
 | A casa de planície é a casa do jogo | 🧪 coberto por teste, nunca visto em jogo |
 | O construtor fabrica o que falta para a obra | 🧪 coberto por teste, nunca visto em jogo |
 | Expediente do dia claro inteiro | 🧪 coberto por teste, nunca visto em jogo |
@@ -292,7 +298,9 @@ a recusar, e a correção ainda não foi vista em jogo.
 
 | | Etapa | Estado |
 |---|---|---|
-| **1** | **Rodar em jogo.** A sessão de 2026-08-22 durou 28 minutos e morreu nos dois defeitos que ela mesma revelou — os dois corrigidos no mesmo dia, e nenhuma das correções vista funcionando. Antes dela eram **36 commits** desde a última sessão de verdade, em 2026-08-19: sete profissões, sete regras novas, a mina, a cadeia de materiais inteira, a rua que cresce e as nove decisões de 08-21. **Nada disso foi visto numa vila.** Cada regra escrita daqui em diante é mais uma coisa não verificada empilhada sobre as outras | 🔒 exige sessão de jogo |
+| **1** | **Rodar em jogo.** Continua sendo o primeiro item, e agora com um motivo preciso: **três das últimas quatro sessões morreram antes de a vila construir qualquer coisa**, presas na varredura de lote. O conserto dela é de 08-27 e ninguém o viu funcionando — nem ele, nem o mineiro que passou a descer a escada, nem a picareta certa na mão | 🔒 exige sessão de jogo |
+| **1** | **Gravar o índice de ruas em disco.** É o que decide se a alínea acima é possível: os mapas são estáticos e limpos ao subir o servidor, então **toda entrada no mundo remede as 16.641 colunas do zero**, e é isso que matou as duas sessões curtas | 🔨 medido, por escrever |
+| **1** | **O E32 — o aldeão não entra na própria escada.** Em 20% das geometrias ele fica a quatro blocos da pedra com `0/0 ticks`. Sem diagnóstico: descartado por sonda que fosse falta de vizinho pisável | 🔬 medido, sem causa |
 | **2** | **Implementar a ADR-008 — orientação de blocos.** É a que muda o que se vê: cama, escada e tocha param de sair todas para o mesmo lado. A decisão está escrita; falta atravessar o `Side` pelo `BlueprintBlock` | 🔨 decidido, por escrever |
 | **3** | **Quebrar os seis arquivos acima de 500 linhas.** `VillageDetectionHandler` tem 982 e é o pior | 🔨 pronto para fazer |
 | **4** | **Regra 16 — espaço em volta da casa.** A metade da altura está feita; falta a distância mínima e máxima | 🔨 meia feita |
@@ -311,7 +319,13 @@ ficam os que mudam o que se vê no jogo.
 
 | | O que | Por quê |
 |---|---|---|
+| 🔴 | **O E32 — o mineiro não entra na própria mina** | Em 20% das geometrias, vizinho pisável existe e ele fica parado a quatro blocos. Enquanto o alcance era medido no plano isso nunca aparecia, porque ele furava de longe |
+| 🔴 | **A primeira varredura de cada sessão custa 8,5 minutos** | O índice de ruas resolve o custo **dentro** da sessão, mas não sobrevive a ela: mapas estáticos, limpos ao subir o servidor |
 | 🔴 | **A vila fica presa numa obra só** | O planejador não sabe desistir. O catálogo do jogo já tem fazenda, curtume, ferraria — e a Regra 28 filtra tudo para uma casa por bioma |
+| 🟠 | **O relatório da barreira afirma o que não mediu** | Numa sessão com **zero obras** ele disse `covered for nothing — Rule 28 can go`. Ele só olha se pulou peça, e não se houve construção |
+| 🟠 | **Dois mineiros dividem a mesma escada** | A reserva é por tarefa, não por mina: os dois deram `could not reach the stone` no mesmo tique |
+| 🟠 | **Inventário do mineiro não tem teto nem retorno por lotação** | É onde mora o E3 — sobra de colheita vira perda de item |
+| 🟡 | **A mina só tem lanterna na boca**, e nem sempre | Saiu `lantern at nowhere it fits`. Galeria escura a 19 blocos é mob nascendo dentro dela |
 | 🟠 | **Nove arquivos de código acima de 500 linhas** | Recontados em 08-26. `VillageDetectionHandler` é o pior com 983. `LumberjackWork` saiu da lista no corte do E19 (1149 → 455), e quatro entraram com a mina e a estrada |
 | 🟠 | **`theStoneLeavesTheWorldAndReachesTheChest`** disse "a pedra não chegou ao baú" uma vez | Suspeita, não diagnóstico |
 | 🟠 | **A arena da bateria tem bioma fixo** de planície | Escondeu **duas vezes** que o deserto estava quebrado |
@@ -395,6 +409,55 @@ sempre atual — o enunciado das 29 regras, uma a uma — em
 
 ---
 ## Último ciclo de desenvolvimento
+
+**2026-08-27** — a primeira mina da história do mod abriu, a primeira
+casa terminou sem o jogador encher baú, e **as duas coisas expuseram
+defeitos que só apareceriam ali**.
+
+**O que a sessão de jogo mostrou**
+
+Dezoito minutos, e quatro itens da lista "falta ver em jogo" caíram
+juntos: a mina abrindo, o mineiro cavando, a boca mobiliada com baú e
+lanterna, e o pastor tosquiando. A casa subiu em 4 min 57 s — 149 blocos
+planejados, 127 assentados.
+
+**A ressalva que não se omite:** dezenove peças vieram da barreira de
+teste, não da colônia. *Casa feita inteira com material da própria vila*
+continua sem prova.
+
+**Os defeitos que a mina acendeu**
+
+| | |
+|---|---|
+| **O mineiro cavava a mina de pé lá em cima** | O alcance de braço media `dx` e `dz` e nunca `dy`. Ele furava o chão da superfície e **nunca entrava na própria escada** — que a Regra 29 desenhou com dois blocos de altura justamente para ele caber de pé. Funcionava enquanto a escada descia debaixo dele; morria quando a galeria corria na horizontal |
+| **O destino do aldeão era dentro da rocha** | Bloco sólido nunca é alcançável: a navegação devolve caminho parcial e ele estaciona. Uma sonda mostrou o alvo com vizinho pisável **e ninguém apontando para ele** |
+| **Três linhas de log nunca tinham falado** | O nome ofuscado `class_2338` voltou — 97 vezes, todas do mineiro. Não era regressão: a correção anterior arrumou os caminhos que **já tinham aparecido em log**, e os do mineiro nunca tinham rodado porque nenhuma mina tinha aberto |
+| **O guarda contava a noite** | O mineiro era o único trabalhador sem porta de expediente. Metade do orçamento de dois minutos queimou com o aldeão dormindo — proibido de andar pela própria agenda |
+
+**A varredura de lote, medida em vez de estimada**
+
+Duas sessões morreram sem a vila construir nada, presas em *"ainda
+varrendo"*. Lendo o save do mundo direto, das **16.641** colunas do
+quadrado de raio 64 só **698** eram rua — 4,19%, e o mesmo em três
+centros. O teto é 1.024 por passagem: as ruas **cabem numa passagem só**.
+
+A ideia óbvia — seguir o traçado a partir de uma semente — foi medida e
+**reprovada**: aquelas 698 colunas são catorze pedaços soltos, e um
+alastramento acharia 60% delas. O que entrou foi um índice, que só nasce
+de uma varredura completa e por isso não pode mentir sobre ter visto
+tudo.
+
+```text
+477 unitários, 0 falhas   ·   176 de jogo, 4 rodadas sem vermelha
+varredura: 17 ciclos → 1        ·   8,5 minutos → 30 segundos
+```
+
+**O que fica aberto, e está no [`TODO.md`](TODO.md):** o **E32** — em 20%
+das geometrias o aldeão ainda não entra na própria escada — e a primeira
+varredura de cada sessão, que continua custando os 17 ciclos porque o
+índice não é gravado em disco.
+
+### Ciclo anterior — 2026-08-26
 
 **2026-08-26** — um checkpoint e **três defeitos fechados, nenhum deles
 do mod.** O dia começou com treze commits parados no repositório local e

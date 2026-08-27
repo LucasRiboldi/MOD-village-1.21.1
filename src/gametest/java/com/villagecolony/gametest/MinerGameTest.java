@@ -690,6 +690,105 @@ public class MinerGameTest implements FabricGameTest {
         });
     }
 
+    /**
+     * Fora do expediente, o guarda de travamento não conta — 2026-08-27.
+     *
+     * <p><b>O defeito.</b> {@code GoToWorkTargetTask} só anda em horário
+     * de trabalho: fora dele o aldeão dorme, come e socializa, e o
+     * destino da colônia espera. Mas o {@code MinerWork} contava os
+     * tiques do guarda de qualquer jeito — e o guarda existe para punir
+     * <b>quem anda sem chegar</b>, não quem está proibido de andar.
+     *
+     * <p>A sessão de 2026-08-26 pagou por isso: o contador foi de 886 a
+     * 2086 com o relatório dizendo {@code off hours}, e metade do
+     * orçamento de dois minutos queimou com o aldeão dormindo. O
+     * {@code STALL_LIMIT} promete no javadoc <i>"tiques de expediente"</i>
+     * e o código contava todos.
+     *
+     * <p><b>Os outros já fazem certo</b>, e o lenhador é o molde — o
+     * desenho do mineiro é o dele, por decisão: {@code LumberjackWork}
+     * põe {@code isWorkTime} antes do {@code ++job.stalled}, e construtor
+     * e fabricante nem trabalham fora da hora.
+     *
+     * <p><b>Por que criança e não noite.</b> {@code WorkHours} responde
+     * não para bebê, sem depender do relógio. Mexer na hora do mundo é
+     * global e vaza para os testes vizinhos do mesmo lote — a
+     * interferência que já custou um ciclo inteiro a esta bateria.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_off_hours",
+            tickLimit = 100)
+    public void theStallGuardDoesNotCountOutsideWorkHours(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        ground(context);
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        Block rock = MinecraftTypeAdapter
+                .toBlock(HousePlans.paletteOf(world, chest).stone())
+                .orElseThrow();
+
+        // O alvo longe do aldeão, e sem escada até ele: é o arranjo do
+        // E30 sem a saída, porque aqui o que se afirma é o contador.
+        context.setBlockState(DEEP_MOUTH.east(), rock.getDefaultState());
+
+        context.setBlockState(PERCH.down(), Blocks.DIRT.getDefaultState());
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        // Criança: WorkHours diz não sem que o relógio do mundo mude.
+        VillagerEntity child = context.spawnEntity(EntityType.VILLAGER, PERCH);
+        child.setBreedingAge(-24_000);
+
+        Worker worker = VillageColonyMod.WORKERS.register(child.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(child.getUuid(), chest));
+
+        owned.owning(child.getUuid());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_STONE,
+                TaskPriority.PRODUCTION,
+                ResourceType.COBBLESTONE,
+                16);
+
+        task.reserveFor(child.getUuid());
+
+        ColonyPos mouth = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(DEEP_MOUTH));
+
+        VillageColonyMod.MINES.restore(
+                Mine.restore(colony.id(), MineShaft.from(mouth, Side.EAST), 0));
+
+        MineDigging.shortenMineDistanceTo(NEARBY);
+
+        MinerWork.run(world, colony);
+
+        context.runAtTick(60, () -> {
+            int stalled = MinerWork.stallOf(child.getUuid());
+
+            try {
+                context.assertTrue(
+                        stalled == 0,
+                        "o guarda contou " + stalled + " tiques fora do expediente, e fora dele"
+                                + " o aldeão está proibido de andar até a pedra");
+            } finally {
+                owned.cleanUp();
+
+                MineDigging.restoreMineDistance();
+            }
+
+            context.complete();
+        });
+    }
+
     /** Chão sólido, para o aldeão andar e a pedra ter em que assentar. */
     private static void ground(TestContext context) {
         for (int x = 0; x <= 7; x++) {

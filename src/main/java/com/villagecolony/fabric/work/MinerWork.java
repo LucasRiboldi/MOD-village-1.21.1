@@ -12,6 +12,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.BlockBreakTime;
 import com.villagecolony.fabric.integration.ChestDepositor;
@@ -284,7 +285,16 @@ public final class MinerWork {
         }
 
         if (!isWithinReach(villager, job.target)) {
-            job.stalled++;
+            // Só conta tique de expediente — 2026-08-27, e é o molde do
+            // lenhador, que esta classe segue de propósito. O guarda pune
+            // quem anda sem chegar; fora da hora o aldeão está PROIBIDO
+            // de andar, porque a GoToWorkTargetTask nem começa. A sessão
+            // de 08-26 queimou metade do orçamento com ele dormindo: o
+            // contador foi de 886 a 2086 com o relatório dizendo
+            // "off hours".
+            if (WorkHours.isWorkTime(world, villager)) {
+                job.stalled++;
+            }
 
             if (job.stalled >= STALL_LIMIT) {
                 giveUp(workerId, job);
@@ -495,6 +505,21 @@ public final class MinerWork {
     /** Quantos mineiros estão com trabalho aberto agora. */
     public static int activeJobs() {
         return JOBS.size();
+    }
+
+    /**
+     * Quantos tiques este mineiro já andou sem chegar na pedra.
+     *
+     * <p>Não é estado novo — é o contador do guarda de travamento, lido
+     * de fora, como o {@code BuildSiteScanner.sweepPausedAt}. Existe
+     * porque a pergunta que ele responde não tem outro observável: o
+     * guarda só fala quando estoura, e o defeito era ele <b>contar</b>
+     * quando não devia.
+     */
+    public static int stallOf(UUID workerId) {
+        Job job = JOBS.get(workerId);
+
+        return job == null ? 0 : job.stalled;
     }
 
     /** Quanta pedra este mineiro já trouxe nesta tarefa. */
