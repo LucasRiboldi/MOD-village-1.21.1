@@ -330,7 +330,7 @@ public final class MineDigging {
         VillageColonyMod.LOGGER.info(
                 "Miner {} opens a mine at {} - down {} then {} more",
                 workerId,
-                mouth.get(),
+                mouth.get().toShortString(),
                 MineShaft.DESCENT,
                 MineShaft.DESCENT);
 

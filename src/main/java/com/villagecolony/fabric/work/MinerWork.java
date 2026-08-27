@@ -355,7 +355,7 @@ public final class MinerWork {
                 "Miner {} took {} from {} — {} this task",
                 villager.getUuid(),
                 took,
-                job.target,
+                job.target.toShortString(),
                 job.collected);
 
         release(villager.getUuid(), job);
@@ -382,7 +382,7 @@ public final class MinerWork {
         VillageColonyMod.LOGGER.info(
                 "Miner {} could not reach the stone at {} — task back to the queue",
                 workerId,
-                job.target);
+                job.target.toShortString());
 
         job.task.release();
 

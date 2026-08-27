@@ -314,7 +314,7 @@ public final class BuilderWork {
                     "Project {} skips {} at {} — nothing holds it",
                     project.id(),
                     block.block(),
-                    target);
+                    target.toShortString());
 
             project.markPlaced(block);
 
@@ -473,7 +473,7 @@ public final class BuilderWork {
         if (!world.getBlockState(pos).isReplaceable()) {
             VillageColonyMod.LOGGER.info(
                     "Could not finish the two-part block at {} — {} is in the way",
-                    pos,
+                    pos.toShortString(),
                     world.getBlockState(pos).getBlock());
 
             return;

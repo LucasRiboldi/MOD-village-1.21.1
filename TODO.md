@@ -1,7 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-26, depois de duas sessões de jogo e do ciclo que
-tirou os becos sem saída que elas revelaram.
+**Atualizado:** 2026-08-26, depois da sessão das 23:14 — a que abriu a
+primeira mina e terminou a primeira casa sem o jogador encher baú.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -19,12 +19,90 @@ lista abaixo.
 ```text
 476 testes unitários  ·  171 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
-última sessão de jogo em 2026-08-26, 03:11  ·  5 commits desde ela
+última sessão de jogo em 2026-08-26, 23:14  ·  18 minutos  ·  1 casa, 1 mina
 ```
 
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-26 — o E23 tinha cinco bocas, e três nunca tinham falado
+
+O nome ofuscado voltou ao log da sessão das 23:14 — **97 ocorrências de
+`class_2338{...}`**, todas do mineiro. Não é regressão: a correção de
+08-26 arrumou os caminhos que **já tinham aparecido em log**, e os do
+mineiro nunca tinham rodado numa sessão porque **nenhuma mina tinha
+aberto**. A primeira mina da história do mod acendeu três linhas mudas
+de uma vez.
+
+O varredor foi o próprio histórico de logs — todas as sessões
+arquivadas, agrupadas por forma de mensagem. Ele achou **cinco** bocas,
+e duas eram do construtor:
+
+| Onde | A linha |
+|---|---|
+| [`MineDigging:333`](src/main/java/com/villagecolony/fabric/work/MineDigging.java) | `opens a mine at` |
+| [`MinerWork:358`](src/main/java/com/villagecolony/fabric/work/MinerWork.java) | `took {} from` |
+| [`MinerWork:385`](src/main/java/com/villagecolony/fabric/work/MinerWork.java) | `could not reach the stone at` |
+| [`BuilderWork:317`](src/main/java/com/villagecolony/fabric/work/BuilderWork.java) | `skips {} at — nothing holds it` |
+| [`BuilderWork:476`](src/main/java/com/villagecolony/fabric/work/BuilderWork.java) | `Could not finish the two-part block at` |
+
+O conserto é o `.toShortString()` que
+[`MineMouth:80`](src/main/java/com/villagecolony/fabric/integration/MineMouth.java)
+já usava — foi por isso que a linha da boca mobiliada saiu legível na
+mesma sessão em que as outras três saíram ofuscadas.
+
+**Nulidade conferida antes de encadear:** as três do mineiro só são
+alcançadas depois do `job.target == null` ter retornado, e `giveUp` vem
+de dentro do ramo que já leu `getBlockState(job.target)`.
+
+| | |
+|---|---|
+| **Verificado rodando** | `gradlew build` → **476 unitários, 0 falhas**; `gradlew runGametest` → **All 171 required tests passed** |
+| **Teste novo** | **nenhum** — é formatação de log, e o oráculo é o log da próxima sessão de mina |
+
+**O que fica em aberto:** nada garante que a sexta boca não exista num
+caminho que ainda não rodou. O varredor é repetível e está no histórico
+desta sessão — vale repassá-lo depois de toda sessão que estreie um
+caminho novo.
+
+### 2026-08-26, 23:14 — a mina abriu, e a casa terminou
+
+Dezoito minutos, e **quatro itens da lista "falta ver em jogo" caíram
+juntos**. A sessão anterior, de dois minutos, não tinha chegado nem à
+primeira varredura de lote; esta passou por tudo em cinco minutos:
+
+```text
+[23:20:17] planned .../plains_small_house_1 at 720, 63, 908 — 149 blocks, 2 builders
+[23:20:18] Miner 68f4dcde opens a mine at {x=732, y=63, z=898} - down 10 then 10 more
+[23:20:18] Mine mouth at 732, 63, 898 furnished — miner chest at 732, 63, 899
+[23:25:14] finished .../plains_small_house_1 — 127 blocks placed, now colony infrastructure
+[23:33:07] Saved 4 colonies with 41 workers, 1 buildings, 1 mines and 0 open projects
+```
+
+| # | O que se viu | Detalhe |
+|---|---|---|
+| **1** | **A mina abrindo** | e **sem** passar pela pedra de superfície: as vinte e quatro colunas de perto acharam lugar na primeira passagem |
+| **2** | **O mineiro cavando** | 43 blocos numa tarefa só, descendo até y≈44 |
+| **4** | **A boca mobiliada** | `miner chest at 732, 63, 899`, e `lantern at nowhere it fits` |
+| **7** | **O pastor tosquiando** | `sheared 3 of gray_wool — 42 this task`, e 28 no outro |
+
+**O que a casa não prova, e não se afirma.** Ela terminou **com a
+barreira segurando dezenove peças**:
+
+```text
+[23:33:07] TEST BARRIER covered for 19 this session:
+               16x stripped_oak_log — the manufacturer's stripping
+                3x glass_pane — the miner's sand and the smelter's glass
+```
+
+E é o padrão de 08-25 de novo, com números melhores: a barreira riscou
+`stripped_oak_log` entre 23:20:25 e 23:23:53, e os fabricantes
+entregaram `6 pieces`, `10 pieces` e `4 pieces` a partir de **23:27:04**
+— depois de a casa ter fechado, às 23:25:14. **A cadeia não está
+quebrada; ela chega tarde.** *A casa feita inteira com material da
+própria colônia* continua sem prova, e é o item do Nível 3 que fica de
+pé.
 
 ### 2026-08-26 — o guarda passou a provar as duas metades da Regra 9
 
@@ -113,7 +191,7 @@ anterior apareceram funcionando em jogo:**
 | | O que | A linha |
 |---|---|---|
 | **E27 — a rua saiu do beco** | A mesma colônia `56c5b68d` que em 08-25 ouviu `BLOCKED` e não cresceu | `[03:11:57] extended the road 1 blocks west from 766, 62, 961` |
-| **E23 — o nome ofuscado sumiu** | `from 766, 62, 961`, e não `class_2338{...}`. Zero ocorrências na sessão | a mesma linha |
+| **E23 — o nome ofuscado sumiu** | `from 766, 62, 961`, e não `class_2338{...}`. Zero ocorrências na sessão — **e a sessão de 23:14 mostrou por quê: nenhuma linha do mineiro tinha rodado.** Ver a entrada das cinco bocas, no topo | a mesma linha |
 
 **E ela mediu o gargalo seguinte**, que virou o E29: a rua rendeu **um**
 bloco, e um bloco não abre lote para casa de sete por sete. A colônia
@@ -208,6 +286,8 @@ conferido no volume · árvore grande deixando de ser recusada.
 
 | | Erro | Estado |
 |---|---|---|
+| **E30** | **A galeria engoliu os dois mineiros.** `could not reach the stone at {x=715, y=44, z=885} — task back to the queue`, os dois no mesmo tique, às 23:23:08, a 19 blocos de profundidade | **Visto em jogo, uma vez.** Depois disso ninguém minerou mais nos 10 minutos restantes. É o achado mais grave da sessão das 23:14: a mina abre, produz, e então se fecha sozinha. Sem diagnóstico — não se sabe se é o caminho de volta, o alcance, ou a descida do poço |
+| **E31** | **O relatório da barreira afirma o que não mediu.** [`TestBarrier.report()`](src/main/java/com/villagecolony/fabric/work/TestBarrier.java) decide só por `SKIPPED.isEmpty()`, e não sabe se houve obra | **Visto em jogo, na sessão das 23:06.** Zero obras, zero projetos, e mesmo assim saiu `covered for nothing this session — Rule 28 can go`. Numa sessão sem construção a linha é vazia, e ela está marcada como *a notícia boa* no §"falta ver em jogo" — o conserto é exigir que **alguma peça tenha sido assentada** antes de a frase valer |
 | **E21** | **`theStoneLeavesTheWorldAndReachesTheChest`** disse "a pedra não chegou ao baú" uma vez | Suspeita: custo de ler estrutura no tique. **Suspeita, não diagnóstico**. Não repetiu em 7 rodadas de 08-25 |
 | **E9** | Colônia `ABANDONED` desmarcada no ciclo seguinte | **Silêncio na sessão de 08-25** — nenhuma colônia trocou de estado três vezes em 42 minutos. É notícia boa e não é prova: nenhuma colônia da sessão foi abandonada |
 | **E4** | `path held: no` e o aldeão chega assim mesmo | Provável, nunca verificado. Nenhuma linha dessas em 08-25 |
@@ -225,25 +305,28 @@ Detecção · identidade estável · aldeões e profissões · baús · lenhador
 **em cinco espécies** · fabricante, **inclusive descascando e fazendo o
 que a obra pede dois degraus abaixo** · construtor **chegando ao bloco**
 · centro parado pela sonda · **a rua crescendo** · **a obra parada
-saindo da frente** · casa terminada uma vez, em 08-19, com baús que o
-jogador encheu.
+saindo da frente** · **a mina abrindo e sendo mobiliada** · **o mineiro
+cavando** · **o pastor tosquiando** · casa terminada duas vezes: em
+08-19 com baús que o jogador encheu, e em 08-26 sem ele — com dezenove
+peças da barreira.
 
-### Nível 1 — a raiz do material *(com duas alternativas, e não visto)*
+### Nível 1 — a raiz do material *(aberta, e ela se fecha sozinha)*
 
-- **A mina não abriu na sessão de 08-25**, e não foi por silêncio: as
-  doze colunas foram tentadas e nenhuma serviu. Duas respostas entraram
-  em 08-26 — **vinte e quatro colunas** em vez de doze, e **pedra de
-  superfície** quando nem elas servem.
-- **A decisão 1 foi respondida em 08-26**, e a busca ganhou uma terceira
-  camada: as vinte e quatro colunas de perto, depois **duas distâncias
-  além do fim da vila** com janela de altura mais larga — a boca ruim —,
-  e só então o afloramento de superfície. A colônia agora precisa de um
-  terreno bem hostil para ficar sem pedra.
-- **Nada disso foi visto em jogo.** A linha a procurar é
-  `Miner ... opens a mine at`, e a alternativa aparece como
-  `no miner surface stone work: ...` quando também falha.
+- **A mina abriu em 2026-08-26, 23:20:18** —
+  `Miner 68f4dcde opens a mine at {x=732, y=63, z=898} - down 10 then 10
+  more`, seguida de `Mine mouth ... furnished`. A busca acertou **na
+  primeira camada**: as vinte e quatro colunas de perto bastaram, sem
+  precisar da boca ruim nem do afloramento.
+- **O mineiro cavou** — 43 blocos numa tarefa só, descendo até y≈44.
+- **E aí a galeria o engoliu.** É o **E30**: os dois mineiros deram
+  `could not reach the stone` no mesmo tique, e a mina não produziu mais
+  nada nos dez minutos seguintes. **Abrir deixou de ser o gargalo;
+  continuar passou a ser.**
+- **A pedra de superfície continua sem prova** — nunca foi exercitada,
+  porque a busca nunca precisou dela. A linha é
+  `no miner surface stone work: ...`.
 
-### Nível 2 — material processado *(feito, e passando fome)*
+### Nível 2 — material processado *(feito, e ainda passando fome)*
 
 - **E18 fechado em 08-22**, e pelo caminho genérico que a ADR pediu:
   `Production` declarada no recurso, e o fundidor perguntando ao livro
@@ -251,25 +334,40 @@ jogador encheu.
   procurar é `Smelter ... made minecraft:smooth_sandstone`.
 - 08-25 mostrou que o elo **não está quebrado, está sem entrada**: o
   fundidor apareceu vivo e olhando o baú quinze vezes, sempre com
-  `Smelter ... stopped — nothing in the colony chests to smelt`. Ele
-  espera o Nível 1, e não uma correção sua.
+  `Smelter ... stopped — nothing in the colony chests to smelt`.
+- **08-26 mostrou que ele espera a coisa errada.** A mina abriu e ele
+  continuou com a mesma linha, porque o que lhe falta é **areia**, e a
+  cadeia da areia não começou — foram dela os 3 `glass_pane` que caíram
+  na barreira. O fundidor não espera o Nível 1 inteiro: espera **a
+  areia**, e isso é uma pendência com nome próprio agora.
 
 ### Nível 3 — a obra termina sem o jogador
 
-- Casa nunca terminou com material que a colônia mesma fez. Em 08-25 a
-  obra de 149 blocos pôs **um** e morreu esperando pedregulho:
-  `WAITING_RESOURCES ... waiting for minecraft:cobblestone` por dez
-  minutos, até o `PatienceClock`.
-- **A barreira de teste risca antes de a cadeia ter chance.** Ela pulou
-  `stripped_oak_log` às 21:56:15; o fabricante descascou o primeiro
-  tronco às 22:00:19 — quatro minutos depois. A peça foi riscada de uma
-  cadeia que **funcionava**, só não a tempo. Enquanto a Regra 28 valer,
-  a soma da sessão superestima o que está quebrado.
+- **A casa terminou sozinha em 2026-08-26, 23:25:14** — 149 blocos
+  planejados, **127 assentados**, em 4 min 57 s, e virou infraestrutura
+  da colônia. É a primeira vez sem o jogador encher baú. Em 08-25 a
+  mesma obra tinha posto **um** bloco e morrido esperando pedregulho.
+- **Mas dezenove peças foram da barreira**, não da colônia: 16
+  `stripped_oak_log` e 3 `glass_pane`. *Casa feita inteira com material
+  da própria colônia* **continua sem prova**, e é o que resta deste
+  nível.
+- **A barreira risca antes de a cadeia ter chance, e agora com número.**
+  Em 08-26 ela pulou `stripped_oak_log` entre 23:20:25 e 23:23:53; os
+  fabricantes entregaram a partir de **23:27:04** — depois de a casa ter
+  fechado. Mesmo padrão de 08-25, e a conclusão é a mesma: **a cadeia
+  funciona e chega tarde**. Enquanto a Regra 28 valer, a soma da sessão
+  superestima o que está quebrado.
 - **E21** — instrumentar antes de corrigir.
 
 ### Nível 4 — a vila não fica presa
 
 - O planejador persegue **uma** obra e não sabe desistir.
+- **A varredura recomeça do centro a cada obra fechada, e custa 17
+  passagens.** Medido em 08-26 pela decisão 8: 16.641 colunas, teto de
+  1.024 por passagem, 30 s por ciclo — **8,5 minutos** entre uma casa e
+  a próxima ter chance de nascer. Foi o que se viu às 23:25:22, logo
+  depois da primeira casa pronta. O conserto é **no jeito de procurar**,
+  não no volume.
 - **A Regra 28 filtra o catálogo para `*_small_house_1`** — a mesma
   barreira que torna o teste possível impede escolher outro objetivo.
 - **O catálogo do jogo já tem as alternativas**, e isso está confirmado:
@@ -345,7 +443,7 @@ centro anda muito.
 | **4** | **A Regra 25 volta** — por consequência da 3, e não por decisão própria | "A maior planta que couber no lote" precisa de mais de uma planta, e é a Regra 28 que impede isso. Respondida a 3, esta se responde sozinha: a 25 fica dormindo e acorda no dia em que a 28 sair. **Nada a apagar** — se o autor discordar, é só dizer |
 | **1** | **Mina sem lugar: ela aceita uma boca ruim, e procura mais longe** | Nasceu a segunda passagem da busca: quando as vinte e quatro colunas de perto falham, ela tenta 150% e 200% da distância, com janela de altura mais larga — aceita subir o morro ou descer a depressão. **O que ela não relaxa:** água em cima e a Regra 3. Mina inundada não é mina ruim, é mina quebrada. Feito em 08-26, com teste |
 | **6** | **A população fica com o vanilla, e a ideia original não cabe** | O jogo controla o *breeding*, e o mod não tem como segurá-lo. A ADR-009 §17 — população por capacidade — passa de pendência a **contradição declarada**: fica escrito que não cabe, em vez de esperar por uma implementação que não existe |
-| **8** | **O custo da busca de lote fica como está** — e se mede na próxima sessão | Nada muda agora. Se a vila ficar visivelmente parada esperando lote, o conserto é **no jeito de procurar, não no volume** — o teto de mil colunas por passagem não sobe, porque o ciclo já avisou 58 ms com ele |
+| **8** | **O custo da busca de lote fica como está** — e se mede na próxima sessão | **Medido em 08-26, e a condição bateu.** Na sessão das 23:06 a vila passou os 2 min inteiros em `still sweeping — the budget ran out before an answer`: raio 64 são **16.641 colunas**, o teto é **1.024 por passagem**, e a 30 s por ciclo isso dá **17 passagens ≈ 8,5 min** só para a primeira varredura — o número que o comentário de `ConstructionPlanner` já dizia. Na sessão das 23:14 ela teve tempo e achou lote; mas às 23:25:22, logo depois da casa pronta, **recomeçou do zero** e não nasceu segunda obra nos 8 min restantes. Pela própria decisão, o conserto é **no jeito de procurar, não no volume**, e virou pendência do Nível 4. Ciclo agora em **88 ms** |
 | **9** | **A varredura recomeça quando o centro andar mais de 20 blocos** | *Movimento pequeno não atrapalha; movimento grande justifica recomeçar.* O cursor passa a guardar de que centro os anéis foram medidos. Os três movimentos da sessão de 08-25 foram todos abaixo de 20 e teriam mantido o cursor — a decisão de 08-19 continua valendo para eles. Feito em 08-26, com teste |
 | **2** | **A substituição vira os quatro níveis da ADR-009 §3.10** | `PREFERRED / ACCEPTABLE / ALTERNATIVE / FORBIDDEN`, com ordem de preferência. O padrão não mudou de comportamento — o "não" virou `FORBIDDEN` e o "sim" virou `ACCEPTABLE`. O que nasceu foi a **ordem**, que é a diferença entre aceitar e preferir. Feito em 08-26, com 3 testes. **`ALTERNATIVE` está vazio, e há um teste que impede enchê-lo** — ver a decisão pendente abaixo |
 | **10** | **A Regra 27 abre para as três famílias de construção** — Emendas 1 e 2, e elas mexem numa regra marcada imutável | O construtor passa a assentar qualquer membro declarado da mesma família — madeira, tábua e pedra — no lugar do bloco que a planta pede; fora delas continua aguardando o exato. É a frase do autor: *alternativas de recursos para todas as construções dos biomas*. A de taiga levanta com abeto, a de savana com acácia, a de deserto com pedregulho. O que não afrouxou: o material sai do baú antes, **o que se assenta é o que saiu do baú**, o preferido vem primeiro, e é dentro da família. Feito em 08-26, com 2 testes de jogo e fase vermelha conferida |
@@ -367,27 +465,28 @@ centro anda muito.
 
 ## 🧪 O que falta ver em jogo
 
-Em ordem do que mais precisa ser visto. Riscado é o que a sessão de
-**2026-08-25** viu acontecer.
+Em ordem do que mais precisa ser visto. Riscado é o que já foi visto
+acontecer, com a sessão que viu.
 
 | | O que | A linha que prova |
 |---|---|---|
-| **1** | **A mina abrindo** | `Miner ... opens a mine at ...`. Em 08-25 saiu a outra linha, com doze colunas; agora são vinte e quatro. Se falhar de novo, a linha nova a procurar é `no miner surface stone work` — e o mineiro deve estar cavando afloramento mesmo assim |
-| **1** | **A rua crescendo e a casa nascendo junto** | `extended the road N blocks ...` seguido de `planned ... at ...` **no mesmo ciclo**. Era o que custava oito minutos, e é a correção mais visível do ciclo de 08-26 |
-| **2** | **O mineiro cavando** | `Miner ... took` de um arenito. Depende de 1 |
-| **3** | **O fundidor assando pedra** | `Smelter ... made minecraft:smooth_sandstone`. Em 08-25 ele passou a sessão inteira em `nothing in the colony chests to smelt` — depende de 1 |
-| **4** | **A boca mobiliada** | `Mine mouth at ... furnished — miner chest at ..., lantern at ...`. Depende de 1 |
-| **4** | **A casa de deserto subindo** | `blocks left` caindo de 113. Nenhuma sessão em deserto ainda |
-| **5** | **A barreira de teste limpa** | `TEST BARRIER covered for nothing` é a notícia boa. Em 08-25 deu `covered for 1: 1x stripped_oak_log` — e por atraso, não por cadeia quebrada |
-| **6** | **A casa esperando a cama**, e o pastor tosquiando por causa disso | `WAITING_RESOURCES` por `white_bed`. Em 08-25 a obra esperou por **pedregulho** e morreu antes de chegar na cama |
-| **7** | ~~**O fabricante descascando**~~ · falta pastor e fundidor | ✅ `stripped a oak_log`, 08-25. Faltam `sheared` e `made minecraft:glass` |
-| **8** | **A cadeia da areia inteira** | meta de `SAND` → praia → vidro → vidraça. Em 08-25 parou no começo: `looking for sand, 0 of 6` |
-| **9** | ~~**O E9**~~ | ✅ silêncio no relatório de 08-25 — mas nenhuma colônia da sessão chegou a ser abandonada, então o caso não foi exercitado |
-| **10** | **Fechar e reabrir o mundo com mina aberta** | O save de 08-25 trouxe `1 mines` e devolveu `1 mines`, mas ninguém cavou: o **registro** sobrevive, a **galeria retomada** continua sem prova |
-| **11** | **A correção do E22** | Um construtor morrer no meio da obra e a vila continuar de pé. Corrigido em 08-25, e a correção não foi vista em jogo |
-| **12** | **A pedra de superfície** | `Miner ... took minecraft:stone from ...` sem nenhuma linha de mina antes. É a alternativa que tira a vila do beco quando a boca não nasce |
+| **1** | **A galeria continuando** | `Miner ... took` **depois** de um `could not reach the stone`. É o E30, e é o que mais falta: a mina abre, produz 43 blocos e se fecha sozinha |
+| **2** | **O fundidor assando** | `Smelter ... made ...`. Não depende mais da mina — depende da **areia**, e é a cadeia 8 abaixo |
+| **3** | **A cadeia da areia inteira** | meta de `SAND` → praia → vidro → vidraça. Em 08-25 parou em `looking for sand, 0 of 6`; em 08-26 nem começou, e mandou 3 `glass_pane` para a barreira |
+| **4** | **A casa inteira sem a barreira** | `TEST BARRIER covered for nothing` **numa sessão que construiu**. Em 08-26 a casa subiu, mas com 19 peças da barreira — e a linha limpa da sessão anterior era o E31, não notícia boa |
+| **5** | **A rua crescendo e a casa nascendo junto** | `extended the road N blocks ...` seguido de `planned ... at ...` **no mesmo ciclo**. Em 08-26 a casa nasceu sem a rua crescer: a varredura achou lote sozinha |
+| **6** | **A casa de deserto subindo** | `blocks left` caindo de 113. Nenhuma sessão em deserto ainda |
+| **7** | **A casa esperando a cama** | `WAITING_RESOURCES` por `white_bed`. Em 08-25 a obra esperou **pedregulho** e morreu antes da cama; em 08-26 fechou sem esperar nada |
+| **8** | **Fechar e reabrir o mundo com mina aberta** | O save de 08-26 devolveu `1 mines`. O **registro** sobrevive; a **galeria retomada** continua sem prova, e agora tem o E30 pela frente |
+| **9** | **A correção do E22** | Um construtor morrer no meio da obra e a vila continuar de pé. Corrigido em 08-25, e a correção não foi vista em jogo |
+| **10** | **A pedra de superfície** | `no miner surface stone work` seguido de `Miner ... took minecraft:stone`. Em 08-26 a busca acertou na primeira camada e **nunca chegou nesta** |
+| ~~1~~ | ~~**A mina abrindo**~~ | ✅ `opens a mine at {x=732, y=63, z=898}`, 08-26 23:20:18 — e na primeira camada da busca |
+| ~~2~~ | ~~**O mineiro cavando**~~ | ✅ 43 blocos numa tarefa, até y≈44, 08-26 |
+| ~~4~~ | ~~**A boca mobiliada**~~ | ✅ `furnished — miner chest at 732, 63, 899`, 08-26. A lanterna não coube: `lantern at nowhere it fits` |
+| ~~7~~ | ~~**O fabricante descascando e o pastor tosquiando**~~ | ✅ `stripped a oak_log` em 08-25; `sheared 3 of gray_wool — 42 this task` em 08-26. Falta só o fundidor |
+| ~~9~~ | ~~**O E9**~~ | ✅ silêncio no relatório de 08-25 — mas nenhuma colônia da sessão chegou a ser abandonada, então o caso não foi exercitado |
 
 **Limites conhecidos:** a arena da bateria tem bioma fixo de planície —
-taiga, savana, nevada e deserto nunca rodaram, e a sessão de 08-25
-também foi em planície. E fechar e reabrir o mundo **com um mineiro
+taiga, savana, nevada e deserto nunca rodaram, e todas as sessões até
+hoje foram em planície. E fechar e reabrir o mundo **com um mineiro
 cavando** nunca foi feito (dívida E4 do Backlog).
