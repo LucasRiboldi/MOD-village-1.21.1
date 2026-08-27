@@ -1,7 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-27, depois do ciclo que tirou a varredura de
-recomeçar do centro a cada casa.
+**Atualizado:** 2026-08-27, depois do ciclo que mediu as ruas e passou a
+indexá-las — 698 colunas em vez de 16.641.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -17,7 +17,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-476 testes unitários  ·  173 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+476 testes unitários  ·  174 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 última sessão de jogo em 2026-08-27, 01:33  ·  ela morreu na varredura
 ```
@@ -25,6 +25,56 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-27 — as ruas ficam indexadas, e a varredura cabe num ciclo
+
+**A medição veio antes do código.** Lendo o save do mundo do autor
+direto — um leitor de Anvil+NBT escrito para isto —, das **16.641**
+colunas do quadrado de raio 64 só **698** eram calçamento:
+
+| Centro | Colunas de `dirt_path` | % do quadrado |
+|---|---|---|
+| 772, 898 | 698 | **4,19%** |
+| 764, 926 | 770 | **4,63%** |
+| 720, 908 (a obra) | 558 | **3,35%** |
+
+O teto da varredura é 1.024 colunas por passagem, e **698 cabem numa
+só**. Perguntar só às ruas tira a varredura de dezessete ciclos para um
+— de 8,5 minutos para trinta segundos.
+
+**A ideia natural foi medida e reprovada.** Seguir o traçado a partir de
+uma semente parecia óbvio, e a conectividade das mesmas 698 colunas diz
+que não:
+
+```text
+vizinhança direta          14 componentes   maior = 421 de 698  (60%)
+tolerando 1 bloco de vão    7 componentes   maior = 508 de 698  (73%)
+```
+
+**As ruas da vila são catorze pedaços soltos.** Um alastramento acharia
+60% delas, e os 40% de fora podem ser exatamente onde está o único lote
+livre — a família do E14, a colônia dizendo "não há lote" com lote
+existindo.
+
+**O índice não corre esse risco porque só nasce completo:** ele é
+promovido no único ponto do código em que o raio inteiro foi visitado.
+Coluna que deixou de ser rua é reconferida ao ser visitada — o
+`siteBesideRoadAt` já pergunta —, e rua nova entra por `remember`,
+chamado de dentro do `pave` da Regra 15. Sem esse gancho o índice
+envelheceria no pior momento: a rua cresce justamente quando não houve
+lote, e o lote novo nasce encostado no que acabou de ser calçado.
+
+**Limite assumido, e ele é real:** índice maior que o orçamento não vira
+índice — vila com mais de 1.024 colunas de rua continua varrendo o
+quadrado, que é o que ela já fazia. E **rua feita à mão pelo jogador
+fica invisível** até o centro andar mais de 20 blocos e a medida ser
+refeita.
+
+| | |
+|---|---|
+| **Fase vermelha** | `theCompletedSweepLeavesTheRoadColumnsIndexed` — *"terminou o raio e não guardou a única coluna de rua que achou"* |
+| **Verificado rodando** | `gradlew test --rerun` → **476 unitários, 0 falhas**; `runGametest` → **174 de 174, seis rodadas seguidas** |
+| **Não visto em jogo** | o ganho é de relógio, e só uma sessão o mostra |
 
 ### 2026-08-27 — a varredura para de recomeçar do centro a cada casa
 
@@ -60,8 +110,10 @@ conferia o efeito real:
 > varredura do centro.
 
 Por isso as duas sessões curtas morreram "na primeira varredura": é a
-primeira **daquela sessão**, e é sempre. Gravar o cursor junto da colônia
-é a alavanca seguinte, e está no 🟠 do Nível 4.
+primeira **daquela sessão**, e é sempre.
+
+**A alavanca seguinte mudou de nome no mesmo dia:** com o índice de ruas,
+o que vale gravar em disco é **ele**, e não o cursor. Ver a entrada acima.
 
 ### 2026-08-27 — o E30 fechou, e desenterrou o vizinho dele
 
@@ -465,17 +517,17 @@ peças da barreira.
 - O planejador persegue **uma** obra e não sabe desistir.
 - ✅ **A varredura recomeçar a cada obra fechada** — resolvido em 08-27,
   o cursor fica onde achou o lote.
-- 🔴 **O cursor é de sessão, e é o que sobra do gargalo.** `SWEEPS` é um
-  mapa estático, limpo ao subir e ao parar o servidor, nunca gravado em
-  disco: **toda entrada no mundo recomeça a varredura do centro**, e o
-  centro custa 8,5 minutos. Foi o que matou as sessões das 23:06 e das
-  01:33 — as duas acabaram sem sair da primeira varredura, e por isso
-  **o conserto do E30 nunca foi exercitado em jogo**. Gravar o cursor
-  junto da colônia é a alavanca seguinte.
-- **E há uma pergunta antes dela:** a varredura visita as 16.641 colunas
-  do quadrado, e lote válido é só o que fica **encostado em rua**.
-  Enumerar as ruas e olhar a vizinhança delas seria ordens de grandeza
-  menos leitura — é "o jeito de procurar" levado até o fim. Não medido.
+- ✅ **Perguntar só às ruas** — resolvido em 08-27 pelo índice: 698
+  colunas em vez de 16.641, e a varredura cabe numa passagem.
+- 🟠 **A primeira varredura de cada sessão ainda custa os 17 ciclos.**
+  `SWEEPS` e o índice são mapas estáticos, limpos ao subir e ao parar o
+  servidor: **toda entrada no mundo remede tudo do zero.** Foi o que
+  matou as sessões das 23:06 e das 01:33, e por isso o conserto do E30
+  nunca foi exercitado em jogo. Gravar **o índice** junto da colônia é o
+  que resolve — e é ele que vale gravar, não o cursor.
+- 🟡 **Rua feita à mão pelo jogador fica invisível ao índice** até o
+  centro andar mais de 20 blocos. A rua que a colônia mesma calça entra
+  na hora, por `remember`.
 - **A Regra 28 filtra o catálogo para `*_small_house_1`** — a mesma
   barreira que torna o teste possível impede escolher outro objetivo.
 - **O catálogo do jogo já tem as alternativas**, e isso está confirmado:

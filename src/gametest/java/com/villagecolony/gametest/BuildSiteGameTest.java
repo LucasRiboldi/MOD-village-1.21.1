@@ -770,6 +770,80 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * A varredura que termina o raio deixa as ruas indexadas.
+     *
+     * <p><b>A medição que pediu isto.</b> Lendo o save do mundo do autor
+     * em 2026-08-27, das <b>16.641</b> colunas do quadrado de raio 64 só
+     * <b>698</b> eram calçamento — 4,19%, e o mesmo em três centros
+     * diferentes (3,35% a 4,63%). O teto da varredura é 1.024 colunas por
+     * passagem: seiscentas e noventa e oito <b>cabem numa passagem só</b>.
+     * A varredura passa de dezessete ciclos para um, de 8,5 minutos para
+     * trinta segundos.
+     *
+     * <p><b>Por que índice e não seguir o traçado.</b> A ideia natural —
+     * alastrar a partir de uma semente e visitar só a rua — foi medida e
+     * reprovada: aquelas 698 colunas são <b>14 pedaços soltos</b>, e o
+     * maior tem 421. Um alastramento acharia 60% delas, e os 40% de fora
+     * podem ser exatamente onde está o único lote livre. Isso é a família
+     * do E14 — a colônia dizendo "não há lote" com lote existindo.
+     *
+     * <p>O índice não corre esse risco porque nasce de uma varredura
+     * <b>completa</b>: só é guardado quando o raio inteiro foi visitado.
+     * Coluna que deixou de ser rua é reconferida ao ser visitada, que é o
+     * que o código já fazia; rua nova entra por {@code remember}, chamado
+     * de onde a Regra 15 calça.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_index")
+    public void theCompletedSweepLeavesTheRoadColumnsIndexed(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+
+        UUID colony = UUID.randomUUID();
+
+        paveGround(context, center);
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+
+        // Rua existe, lote não: torre em cada vizinho põe o desnível
+        // acima do limite. É o arranjo do brokenGroundIsRefused, e o que
+        // ele garante aqui é que a varredura vai até o fim do raio em vez
+        // de sair cedo com lote na mão.
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                if (dx == 0 && dz == 0) {
+                    continue;
+                }
+
+                for (int dy = 1; dy <= BuildSiteScanner.MAX_SLOPE + 2; dy++) {
+                    context.setBlockState(
+                            center.add(dx, dy, dz), Blocks.GRASS_BLOCK.getDefaultState());
+                }
+            }
+        }
+
+        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                context.getWorld(),
+                colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        context.assertTrue(
+                site.isEmpty(),
+                "o arranjo deu lote, e este teste precisa de uma varredura que termine o raio");
+
+        context.assertTrue(
+                BuildSiteScanner.sweepPausedAt(colony).isEmpty(),
+                "a varredura não terminou o raio — o cursor ficou, e o índice só nasce completo");
+
+        context.assertTrue(
+                BuildSiteScanner.roadIndexSize(colony).orElse(0) == 1,
+                "a varredura terminou o raio e não guardou a única coluna de rua que achou:"
+                        + " a próxima passagem vai reperguntar o quadrado inteiro");
+
+        context.complete();
+    }
+
     private static void paveGround(TestContext context, BlockPos center) {
         for (int dx = -RADIUS; dx <= RADIUS; dx++) {
             for (int dz = -RADIUS; dz <= RADIUS; dz++) {

@@ -318,7 +318,7 @@ public final class RoadExtension {
             return Outcome.NO_END;
         }
 
-        List<ColonyPos> laidAt = pave(world, growth.end(), block.get());
+        List<ColonyPos> laidAt = pave(world, colonyId, growth.end(), block.get());
 
         if (laidAt.isEmpty()) {
             // A ponta parou de render. Ela sai de castigo em dez ciclos,
@@ -406,7 +406,7 @@ public final class RoadExtension {
         // calçamento vence. Tentar todas custa poucas leituras de bloco e
         // é o que impede a vila de parar por causa de uma ponta ruim.
         for (End end : ends) {
-            List<ColonyPos> laidAt = pave(world, end, block.get());
+            List<ColonyPos> laidAt = pave(world, colonyId, end, block.get());
 
             int laid = laidAt.size();
 
@@ -451,7 +451,9 @@ public final class RoadExtension {
      *
      * @return as colunas que entraram, na ordem
      */
-    private static List<ColonyPos> pave(ServerWorld world, End end, Block paving) {
+    private static List<ColonyPos> pave(
+            ServerWorld world, UUID colonyId, End end, Block paving) {
+
         BlockPos previous = end.at();
 
         List<ColonyPos> laid = new ArrayList<>();
@@ -489,6 +491,12 @@ public final class RoadExtension {
             }
 
             world.setBlockState(at, paving.getDefaultState());
+
+            // O índice de ruas precisa saber da beira nova — 2026-08-27.
+            // A rua cresce justamente quando não houve lote, e o lote
+            // novo nasce encostado no que acabou de ser calçado: índice
+            // que não soubesse disto nunca mais acharia nada.
+            BuildSiteScanner.remember(colonyId, at);
 
             previous = at;
 

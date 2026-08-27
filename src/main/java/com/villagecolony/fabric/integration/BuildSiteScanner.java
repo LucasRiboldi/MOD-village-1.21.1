@@ -10,11 +10,14 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.chunk.WorldChunk;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -170,6 +173,52 @@ public final class BuildSiteScanner {
     private record Sweep(int ring, int column, ColonyPos from) {
     }
 
+    /**
+     * As colunas de rua que a última varredura <b>completa</b> achou.
+     *
+     * <p><b>A medição que pediu isto — 2026-08-27.</b> Lendo o save do
+     * mundo do autor: das 16.641 colunas do quadrado de raio 64, só
+     * <b>698</b> eram calçamento — 4,19%, e o mesmo em três centros
+     * (3,35% a 4,63%). O teto é 1.024 por passagem, e 698 cabem numa só.
+     * A varredura passa de dezessete ciclos para um.
+     *
+     * <p><b>Por que índice e não seguir o traçado.</b> Alastrar a partir
+     * de uma semente foi medido e reprovado: aquelas 698 colunas são
+     * <b>catorze pedaços soltos</b>, o maior com 421. Um alastramento
+     * acharia 60% delas, e os 40% de fora podem ser onde está o único
+     * lote livre — que é a família do E14, a colônia dizendo "não há
+     * lote" com lote existindo.
+     *
+     * <p>O índice não corre esse risco: só nasce de uma varredura que
+     * visitou o raio inteiro. Coluna que deixou de ser rua é reconferida
+     * quando visitada — o {@code siteBesideRoadAt} já pergunta —, e rua
+     * nova entra por {@link #remember}, chamado de onde a Regra 15 calça.
+     */
+    private static final Map<UUID, RoadIndex> ROADS = new HashMap<>();
+
+    /**
+     * O índice em construção, enquanto a varredura não terminou o raio.
+     *
+     * <p>Separado do {@link #ROADS} de propósito: índice pela metade é
+     * pior que índice nenhum, porque mente sobre ter visto tudo.
+     */
+    private static final Map<UUID, Set<Long>> BUILDING = new HashMap<>();
+
+    /**
+     * As ruas de uma colônia, e de que centro elas foram medidas.
+     *
+     * @param columns as colunas calçadas, na ordem em que a varredura as
+     *     encontrou — do centro para fora, que é a ordem que interessa
+     * @param from o centro de onde vieram, pela mesma razão do
+     *     {@link Sweep}: centro que andou demais invalida a medida
+     */
+    private record RoadIndex(List<Long> columns, ColonyPos from) {
+    }
+
+    private static long key(int x, int z) {
+        return ((long) x << 32) | (z & 0xFFFFFFFFL);
+    }
+
     private BuildSiteScanner() {
     }
 
@@ -239,6 +288,22 @@ public final class BuildSiteScanner {
 
         int columns = 0;
 
+        RoadIndex roads = ROADS.get(colonyId);
+
+        if (roads != null && drifted(roads.from(), center)) {
+            // Mesma régua do cursor: centro que andou demais invalida a
+            // medida, porque ela foi feita de outro lugar.
+            ROADS.remove(colonyId);
+            BUILDING.remove(colonyId);
+            SWEEPS.remove(colonyId);
+
+            roads = null;
+        }
+
+        if (roads != null) {
+            return findAmongRoads(world, colonyId, from, roads, plans);
+        }
+
         Sweep paused = SWEEPS.get(colonyId);
 
         if (paused != null && drifted(paused.from(), center)) {
@@ -255,6 +320,10 @@ public final class BuildSiteScanner {
             // Varredura nova: a ponta que a anterior anotou pode não
             // existir mais, e o mundo é a única fonte que continua certa.
             RoadExtension.forgetEnds(colonyId);
+
+            // E o índice recomeça junto: o que a lapa anterior juntou
+            // falava de uma volta que não é esta.
+            BUILDING.put(colonyId, new LinkedHashSet<>());
         }
 
         for (int ring = startRing; ring <= radius; ring++) {
@@ -333,7 +402,93 @@ public final class BuildSiteScanner {
         // jogador abre espaço, e o lote de ontem pode existir amanhã.
         SWEEPS.remove(colonyId);
 
+        // E aqui, e só aqui, o índice fica pronto: o raio inteiro foi
+        // visitado, então a lista de ruas é a lista de ruas.
+        indexWhatWasSeen(colonyId, center);
+
         return Optional.empty();
+    }
+
+    /**
+     * Promove a índice o que a volta completa juntou.
+     *
+     * <p><b>Índice maior que o orçamento não vira índice.</b> Ele existe
+     * para caber numa passagem — se não couber, perguntar por ele custa o
+     * mesmo que varrer e ainda mente sobre ter visto tudo, porque pararia
+     * no meio. Vila assim continua no quadrado, que é o que ela já fazia.
+     */
+    private static void indexWhatWasSeen(UUID colonyId, ColonyPos center) {
+        Set<Long> seen = BUILDING.remove(colonyId);
+
+        if (seen == null || seen.isEmpty() || seen.size() > MAX_COLUMNS) {
+            ROADS.remove(colonyId);
+
+            return;
+        }
+
+        ROADS.put(colonyId, new RoadIndex(List.copyOf(seen), center));
+    }
+
+    /**
+     * A passagem que pergunta só às ruas.
+     *
+     * <p>É uma volta inteira por definição — o índice tem todas as
+     * colunas calçadas do raio, e cabe no orçamento —, então ela não
+     * deixa cursor: quem não achou lote aqui não achou em lugar nenhum, e
+     * é isso que autoriza a Regra 15 a crescer a rua.
+     */
+    private static Optional<Site> findAmongRoads(
+            ServerWorld world, UUID colonyId, BlockPos from, RoadIndex roads,
+            List<ColonyPos> plans) {
+
+        // Volta nova, pontas novas: a mesma razão da varredura do
+        // quadrado, e o mesmo lugar onde a Regra 15 as recolhe.
+        RoadExtension.forgetEnds(colonyId);
+
+        for (long column : roads.columns()) {
+            Optional<Site> site = siteBesideRoadAt(
+                    world, colonyId, from,
+                    (int) (column >> 32), (int) column, from.getY(), plans);
+
+            if (site.isPresent()) {
+                RoadExtension.forgetEnds(colonyId);
+
+                return site;
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Guarda uma coluna calçada agora — a rua que a Regra 15 acabou de
+     * abrir, 2026-08-27.
+     *
+     * <p>Sem isto o índice envelheceria no pior momento: a vila cresce a
+     * rua justamente quando não achou lote, e o lote novo nasce
+     * <b>encostado no que ela acabou de calçar</b>. Um índice que não
+     * soubesse da beira nova nunca mais acharia nada.
+     */
+    public static void remember(UUID colonyId, BlockPos road) {
+        long column = key(road.getX(), road.getZ());
+
+        Set<Long> building = BUILDING.get(colonyId);
+
+        if (building != null) {
+            building.add(column);
+        }
+
+        RoadIndex roads = ROADS.get(colonyId);
+
+        if (roads == null || roads.columns().contains(column)) {
+            return;
+        }
+
+        List<Long> grown = new ArrayList<>(roads.columns());
+
+        grown.add(column);
+
+        ROADS.put(colonyId, new RoadIndex(List.copyOf(grown), roads.from()));
     }
 
     /**
@@ -397,6 +552,8 @@ public final class BuildSiteScanner {
     /** Esquece os cursores. Chamado ao descarregar o mundo. */
     public static void clearAll() {
         SWEEPS.clear();
+        ROADS.clear();
+        BUILDING.clear();
     }
 
     /**
@@ -418,6 +575,18 @@ public final class BuildSiteScanner {
      * mil por ciclo, e a sessão não durou os dezessete ciclos que a conta
      * pede. Ver o E14 do §17.
      */
+    /**
+     * Quantas colunas de rua esta colônia tem indexadas, se tem índice.
+     *
+     * <p>Vazio quer dizer que nenhuma varredura completou o raio ainda, e
+     * que a próxima passagem vai perguntar o quadrado inteiro.
+     */
+    public static OptionalInt roadIndexSize(UUID colonyId) {
+        RoadIndex roads = ROADS.get(colonyId);
+
+        return roads == null ? OptionalInt.empty() : OptionalInt.of(roads.columns().size());
+    }
+
     public static OptionalInt sweepPausedAt(UUID colonyId) {
         Sweep paused = SWEEPS.get(colonyId);
 
@@ -489,6 +658,14 @@ public final class BuildSiteScanner {
         // agora se ela é ponta custa algumas leituras nas poucas colunas
         // calçadas; perguntar depois custaria o raio inteiro de novo.
         RoadExtension.consider(world, colonyId, ground.get(), center);
+
+        // Esta coluna é rua, e esta varredura é a única que passa por
+        // todas elas — o índice se enche exatamente aqui, e de graça.
+        Set<Long> building = BUILDING.get(colonyId);
+
+        if (building != null) {
+            building.add(key(x, z));
+        }
 
         // A altura da rua, que a Regra 19 usa como régua do lote.
         int roadY = ground.get().getY();
