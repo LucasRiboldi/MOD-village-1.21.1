@@ -27,6 +27,7 @@ import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,7 +62,23 @@ import java.util.UUID;
  */
 public final class MinerWork {
 
-    /** Alcance de braço, medido no plano. O mesmo do lenhador. */
+    /**
+     * Alcance de braço, medido no espaço. O mesmo número do lenhador.
+     *
+     * <p><b>Era medido no plano, e isso era o E30.</b> Sem o {@code dy}
+     * na conta, o mineiro cavava a mina inteira de pé na superfície,
+     * furando o chão para baixo, e <b>nunca entrava nela</b>: a sessão de
+     * 2026-08-26 o pegou quebrando pedra a nove blocos de altura,
+     * {@code digging Pedra at 721, 54, 897, 9 blocks away, 1/6 ticks}.
+     * Funcionava enquanto a escada descia debaixo dele, e morria quando
+     * a galeria corria na horizontal — aí ele precisaria ter descido, e
+     * ficava parado até o guarda devolver a tarefa.
+     *
+     * <p>Com o {@code dy}, a Regra 29 volta a valer como está escrita:
+     * <i>"o mineiro anda até o fim da vila e desce cavando em escada,
+     * para poder voltar a subir"</i>. Os degraus de dois blocos de altura
+     * existem justamente para ele caber de pé lá dentro.
+     */
     private static final int REACH = 4;
 
     /**
@@ -73,6 +90,18 @@ public final class MinerWork {
      * picareta de madeira isso é uma sessão inteira.
      */
     private static final Item TOOL = Items.DIAMOND_PICKAXE;
+
+    /**
+     * Por onde se tenta chegar na pedra, na ordem da Regra 29.
+     *
+     * <p>Os quatro lados antes de cima e de baixo: entrar no túnel é como
+     * se anda numa mina, e ficar em cima da pedra é o degrau que se
+     * acabou de abrir. Ver {@link #approachTo}.
+     */
+    private static final Direction[] APPROACHES = {
+        Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST,
+        Direction.UP, Direction.DOWN,
+    };
 
     private static final int BREAKING_STAGES = 10;
 
@@ -260,7 +289,10 @@ public final class MinerWork {
             if (job.stalled >= STALL_LIMIT) {
                 giveUp(workerId, job);
             } else {
-                WorkTargets.set(workerId, job.target);
+                // O mesmo destino da primeira vez, e pelo mesmo motivo:
+                // repor a pedra aqui era repor a rocha maciça, e a
+                // navegação não tem como cumprir isso — ver approachTo.
+                WorkTargets.set(workerId, approachTo(world, job.target));
             }
 
             return false;
@@ -305,9 +337,46 @@ public final class MinerWork {
         job.required = 0;
         job.stalled = 0;
 
-        WorkTargets.set(workerId, job.target);
+        WorkTargets.set(workerId, approachTo(world, job.target));
 
         return true;
+    }
+
+    /**
+     * Onde ficar de pé para bater nesta pedra — 2026-08-27.
+     *
+     * <p><b>Mandar o aldeão até a pedra era mandá-lo para dentro da
+     * rocha.</b> Bloco sólido nunca é alcançável: a navegação devolve
+     * caminho parcial, e ele estaciona onde parou. Enquanto o alcance era
+     * medido no plano isso não aparecia — ele batia de longe, de cima, e
+     * a pedra caía. Com o alcance honesto do E30, o mesmo aim virou um
+     * mineiro plantado a quatro blocos, {@code 0/0 ticks}, até o guarda
+     * devolver a tarefa.
+     *
+     * <p>A sonda de uma rodada vermelha mostrou o que faltava: o alvo
+     * <b>tinha</b> vizinho pisável — {@code up=ar(PISAVEL)}, os outros
+     * cinco sólidos —, e ninguém apontava para ele. Sete blocos e nove de
+     * distância, e a navegação sem destino que pudesse cumprir.
+     *
+     * <p>A ordem é a da Regra 29: os quatro lados primeiro, porque entrar
+     * no túnel é como se anda numa mina; depois em cima, que é o degrau
+     * recém-aberto da escada; e por último embaixo. Sem vizinho aberto
+     * fica a própria pedra, que é o que se fazia antes — pior destino,
+     * mas nunca pior que nenhum.
+     */
+    private static BlockPos approachTo(ServerWorld world, BlockPos target) {
+        for (Direction side : APPROACHES) {
+            BlockPos at = target.offset(side);
+
+            if (world.getBlockState(at).isAir()
+                    && world.getBlockState(at.up()).isAir()
+                    && !world.getBlockState(at.down()).isAir()) {
+
+                return at;
+            }
+        }
+
+        return target;
     }
 
     /** Quebra a pedra em curso, no tempo que ela pede. */
@@ -396,9 +465,10 @@ public final class MinerWork {
 
     private static boolean isWithinReach(VillagerEntity villager, BlockPos target) {
         double dx = villager.getX() - (target.getX() + 0.5);
+        double dy = villager.getY() - (target.getY() + 0.5);
         double dz = villager.getZ() - (target.getZ() + 0.5);
 
-        return dx * dx + dz * dz <= REACH * REACH;
+        return dx * dx + dy * dy + dz * dz <= REACH * REACH;
     }
 
     private static boolean isOngoing(Task task) {

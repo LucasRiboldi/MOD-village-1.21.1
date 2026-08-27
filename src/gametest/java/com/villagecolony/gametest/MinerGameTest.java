@@ -159,6 +159,21 @@ public class MinerGameTest implements FabricGameTest {
 
         task.reserveFor(villager.getUuid());
 
+        // A boca posta à mão, e é a mesma razão que o teste da galeria já
+        // dava: o lado da descida sai do identificador da colônia, que é
+        // sorteado, e um teste não pode depender de sorte para saber onde
+        // a escada passa. Enquanto o alcance era medido no plano isso não
+        // aparecia — o mineiro furava de longe e a pedra caía de qualquer
+        // geometria. Com o alcance honesto do E30 a sorte passou a decidir
+        // o resultado, e este teste vermelhava em 42% das rodadas.
+        //
+        // Boca no STAND e descida ao norte: MineShaft.positionAt(0) cai
+        // exatamente no ROCK, ao alcance do braço de quem está ali.
+        ColonyPos mouth = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(STAND));
+
+        VillageColonyMod.MINES.restore(
+                Mine.restore(colony.id(), MineShaft.from(mouth, Side.NORTH), 0));
+
         // Despacho: abre o trabalho. Daqui em diante quem age é o tique
         // do servidor, que é o que este teste exercita.
         // Raio curto: a bateria roda arenas vizinhas no mesmo mundo, e

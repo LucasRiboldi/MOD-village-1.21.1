@@ -1,7 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-26, depois da sessão das 23:14 — a que abriu a
-primeira mina e terminou a primeira casa sem o jogador encher baú.
+**Atualizado:** 2026-08-27, depois do ciclo que fechou o E30 — o mineiro
+cavava a mina de pé na superfície e nunca entrava nela.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -17,14 +17,75 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-476 testes unitários  ·  171 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+476 testes unitários  ·  172 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
-última sessão de jogo em 2026-08-26, 23:14  ·  18 minutos  ·  1 casa, 1 mina
+última sessão de jogo em 2026-08-26, 23:14  ·  E30 fechado sem tê-lo visto em jogo
 ```
 
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-27 — o E30 fechou, e desenterrou o vizinho dele
+
+**A causa raiz era o alcance.** `MinerWork.isWithinReach` media `dx` e
+`dz` e nunca `dy`: o mineiro cavava a mina inteira **de pé na
+superfície**, furando o chão para baixo, e nunca entrava nela. A sessão
+de 08-26 o pegou em flagrante — `digging Pedra at 721, 54, 897, **9
+blocks away**, 1/6 ticks`, picareta em movimento a nove blocos do bloco.
+Funcionava enquanto a escada descia debaixo dele, e morria quando a
+galeria corria na horizontal.
+
+A Regra 29 pedia o contrário, por escrito: *"desce cavando em escada,
+para poder voltar a subir"*, com degraus de dois blocos **"os que o
+aldeão precisa para caber de pé"**. A escada foi desenhada para ser
+andada e nunca tinha sido andada.
+
+| | |
+|---|---|
+| **Fase vermelha** | `theMinerGoesDownToTheStoneInsteadOfDiggingItFromAbove`, **vermelho 6 de 6** — determinístico. A mensagem: *"quebrou a pedra de 6 blocos de distância, e o braço dele tem 4"* |
+| **Conserto** | `dy` entra na conta |
+| **Verificado rodando** | `gradlew test --rerun` → **476 unitários, 0 falhas**; `runGametest` → **172 de 172, dez rodadas seguidas** |
+
+**E aí apareceu o segundo defeito, que o primeiro escondia.** Com o
+alcance honesto, o mineiro passou a precisar **chegar** no bloco — e
+`WorkTargets` o mandava para dentro da rocha. Bloco sólido nunca é
+alcançável: a navegação devolve caminho parcial e ele estaciona onde
+parou. Uma sonda temporária de uma rodada vermelha mostrou o que
+faltava:
+
+```text
+alvo 2931813,-61 | aldeao 2931820,-58 | dist 7,9
+vizinhos: up=ar(PISAVEL)  ·  os outros cinco sólidos
+```
+
+O alvo **tinha** vizinho pisável, e ninguém apontava para ele. Nasceu o
+`approachTo`: os quatro lados primeiro — entrar no túnel é como se anda
+numa mina —, depois em cima, que é o degrau recém-aberto, e por último
+embaixo.
+
+**O que foi medido, e o que não fecha.** A instabilidade que o alcance
+3D criou no `theStoneLeavesTheWorldAndReachesTheChest`:
+
+| Arranjo | Rodadas | Vermelhas |
+|---|---|---|
+| Alcance no plano (antes) | 6 | 0 |
+| + alcance 3D | 19 | **8 — 42%** |
+| + `approachTo` | 10 | **2 — 20%** |
+| + boca fixada no teste | 10 | **0** |
+
+Uma hipótese caiu no caminho e fica registrada: **não era orçamento de
+tiques.** Com 1100 em vez de 320 o vermelho continuou, 2 em 6.
+
+A última linha da tabela **não é conserto de produção, é conserto de
+teste**: aquele teste não fixava a boca, então o lado da descida saía do
+UUID sorteado da colônia e a sorte decidia o resultado. O teste irmão da
+galeria já fixava a boca, e pelo motivo escrito lá: *"um teste não pode
+depender de sorte para saber onde a escada passa"*. Enquanto o alcance
+era desonesto isso não aparecia — ele furava de longe e a pedra caía de
+qualquer geometria.
+
+**O que sobrou está no E32, e não se afirma consertado.**
 
 ### 2026-08-26 — o E23 tinha cinco bocas, e três nunca tinham falado
 
@@ -286,7 +347,8 @@ conferido no volume · árvore grande deixando de ser recusada.
 
 | | Erro | Estado |
 |---|---|---|
-| **E30** | **A galeria engoliu os dois mineiros.** `could not reach the stone at {x=715, y=44, z=885} — task back to the queue`, os dois no mesmo tique, às 23:23:08, a 19 blocos de profundidade | **Visto em jogo, uma vez.** Depois disso ninguém minerou mais nos 10 minutos restantes. É o achado mais grave da sessão das 23:14: a mina abre, produz, e então se fecha sozinha. Sem diagnóstico — não se sabe se é o caminho de volta, o alcance, ou a descida do poço |
+| **E32** | **O mineiro não entra na própria escada quando começa do lado errado.** Vizinho pisável existe, o `approachTo` aponta para ele, e o aldeão continua estacionado a 4 blocos com `0/0 ticks` | **Medido, não consertado.** Era 20% das rodadas antes de a boca ser fixada no teste; agora a bateria não o exercita mais, e ele **continua em produção**. Descartado por sonda: não é falta de vizinho pisável — o lote vermelho não tinha uma linha sequer de `sem vizinho pisavel`. A suspeita é a navegação recusar descer no buraco de um bloco de largura, e é **suspeita, não diagnóstico**. O modelo de movimento supõe que o mineiro sempre alcança o alvo, e a geometria da mina não garante isso: enquanto o alcance era medido no plano, a suposição nunca era testada |
+| ~~**E30**~~ | ~~A galeria engoliu os dois mineiros~~ | ✅ **Fechado em 08-27** — era o alcance medido no plano. Ver a entrada no topo |
 | **E31** | **O relatório da barreira afirma o que não mediu.** [`TestBarrier.report()`](src/main/java/com/villagecolony/fabric/work/TestBarrier.java) decide só por `SKIPPED.isEmpty()`, e não sabe se houve obra | **Visto em jogo, na sessão das 23:06.** Zero obras, zero projetos, e mesmo assim saiu `covered for nothing this session — Rule 28 can go`. Numa sessão sem construção a linha é vazia, e ela está marcada como *a notícia boa* no §"falta ver em jogo" — o conserto é exigir que **alguma peça tenha sido assentada** antes de a frase valer |
 | **E21** | **`theStoneLeavesTheWorldAndReachesTheChest`** disse "a pedra não chegou ao baú" uma vez | Suspeita: custo de ler estrutura no tique. **Suspeita, não diagnóstico**. Não repetiu em 7 rodadas de 08-25 |
 | **E9** | Colônia `ABANDONED` desmarcada no ciclo seguinte | **Silêncio na sessão de 08-25** — nenhuma colônia trocou de estado três vezes em 42 minutos. É notícia boa e não é prova: nenhuma colônia da sessão foi abandonada |
@@ -318,10 +380,12 @@ peças da barreira.
   primeira camada**: as vinte e quatro colunas de perto bastaram, sem
   precisar da boca ruim nem do afloramento.
 - **O mineiro cavou** — 43 blocos numa tarefa só, descendo até y≈44.
-- **E aí a galeria o engoliu.** É o **E30**: os dois mineiros deram
-  `could not reach the stone` no mesmo tique, e a mina não produziu mais
-  nada nos dez minutos seguintes. **Abrir deixou de ser o gargalo;
-  continuar passou a ser.**
+- **A galeria o engoliu, e o E30 fechou em 08-27**: o alcance era medido
+  no plano, e o mineiro cavava de pé lá em cima sem nunca entrar na
+  mina. Agora ele desce, com teste.
+- **Continuar ainda não está provado em jogo.** O conserto tem teste e
+  **nenhuma sessão o viu rodar**. E o **E32** ficou de pé: em 20% das
+  geometrias o aldeão não entra na própria escada.
 - **A pedra de superfície continua sem prova** — nunca foi exercitada,
   porque a busca nunca precisou dela. A linha é
   `no miner surface stone work: ...`.
@@ -470,7 +534,7 @@ acontecer, com a sessão que viu.
 
 | | O que | A linha que prova |
 |---|---|---|
-| **1** | **A galeria continuando** | `Miner ... took` **depois** de um `could not reach the stone`. É o E30, e é o que mais falta: a mina abre, produz 43 blocos e se fecha sozinha |
+| **1** | **A galeria continuando** | `Miner ... took` **depois** de um `could not reach the stone`. O E30 fechou em 08-27 e **nenhuma sessão viu o conserto**: o mineiro agora desce a escada em vez de furar de cima, e é isso que precisa aparecer. Se ele voltar a estacionar, é o **E32** |
 | **2** | **O fundidor assando** | `Smelter ... made ...`. Não depende mais da mina — depende da **areia**, e é a cadeia 8 abaixo |
 | **3** | **A cadeia da areia inteira** | meta de `SAND` → praia → vidro → vidraça. Em 08-25 parou em `looking for sand, 0 of 6`; em 08-26 nem começou, e mandou 3 `glass_pane` para a barreira |
 | **4** | **A casa inteira sem a barreira** | `TEST BARRIER covered for nothing` **numa sessão que construiu**. Em 08-26 a casa subiu, mas com 19 peças da barreira — e a linha limpa da sessão anterior era o E31, não notícia boa |
