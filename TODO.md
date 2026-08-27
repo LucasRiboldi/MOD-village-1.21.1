@@ -1,7 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-27, depois de instrumentar a varredura — a
-sessão das 19:11 deixou uma pergunta que o log não sabia responder.
+**Atualizado:** 2026-08-27, depois da sessão das 20:22 — o instrumento
+respondeu, e o jogador achou três coisas olhando a vila.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -17,9 +17,9 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-496 testes unitários  ·  175 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+499 testes unitários  ·  177 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
-última sessão de jogo em 2026-08-27, 01:33  ·  ela morreu na varredura
+última sessão de jogo em 2026-08-27, 20:22  ·  a varredura chegou a 14/17
 ```
 
 > A contagem de jogo era 176 aqui e **175** no `runGametest`. Recontado
@@ -29,6 +29,70 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-27 — a escada da mina não dava para descer, e a boca ficava sem lanterna
+
+Os dois vistos em jogo pelo autor, na sessão das 20:22.
+
+**A escada.** *"O mineiro precisa quebrar mais um bloco na sua frente
+para poder descer a escada."* O degrau abria **dois** blocos — que é
+quanto o aldeão ocupa **parado**. Descer não é cair: é andar para a
+frente no mesmo nível e só então cair, e nesse instante a cabeça está um
+bloco acima do teto do degrau seguinte.
+
+```text
+degrau s      abre y, y+1      pés em y, cabeça em y+1
+degrau s+1    abre y-1, y      a cabeça bate em y+1, maciço
+```
+
+O mineiro parava no primeiro degrau e batia a picareta no ar. A mina só
+descia porque o jogador abria o caminho na mão. Agora a escada abre
+**três** — a galeria continua com dois, porque ela é plana.
+
+**A migração que isso obrigou.** `cut` é um índice na ordem de cavar, e a
+ordem mudou: o primeiro lance foi de 20 posições para 30. Save antigo
+volta com a fronteira no **zero** — já aberto é pulado de graça, 64 por
+passagem, e o que passa a ser cavado é só o que faltava. É o conserto da
+escada que já está no mundo, não só das próximas.
+
+**A lanterna.** *"Faltou o lampião na entrada da mina, eu mesmo botei."*
+A mobília saía toda de dentro do mesmo `if`: quem já tinha baú voltava na
+primeira linha, e a lanterna nunca chegava a ser tentada. Duas bocas
+comuns caíam aí — a mina de save anterior à Regra 30, e aquela em que a
+primeira tentativa achou lugar para o baú e não para a lanterna. As duas
+peças passaram a ser conferidas separadamente, e a que o **jogador** pôs
+conta como posta.
+
+| | |
+|---|---|
+| **Fase vermelha** | `theVillagerWalksDownWithoutDiggingAgain`; `aMineFromBeforeTheTallerStairStartsOver`; `aMouthThatAlreadyHasAChestStillGetsItsLantern` |
+| **Verificado rodando** | `gradlew test` → **499 unitários, 0 falhas**; `runGametest` → **177 de 177** |
+| **Ainda não visto em jogo** | o mineiro descendo sozinho. É a próxima sessão |
+
+### 2026-08-27 — a varredura não reinicia: a sessão é que acaba antes
+
+**O instrumento respondeu na primeira sessão em que rodou.** Colônia
+`56c5b68d`, sessão das 20:22:
+
+```text
+14 planner runs, 14 passes over 14336 columns, 0 answered by the index
+— 1 restarts (0 by drift, farthest 0 blocks), 0 complete rounds
+```
+
+Nenhuma das duas hipóteses. A varredura **avança perfeitamente** — 14
+passagens, 14.336 colunas, uma passagem por ciclo, zero deriva de centro,
+um único reinício (o normal, o primeiro da sessão). Ela precisa de 17 e
+chegou a 14. **Faltaram três ciclos — noventa segundos.**
+
+> E isso muda a conclusão do ciclo anterior. O índice só nasce quando uma
+> volta **completa**, e essa sessão parou em 14/17 — então salvou
+> `0 road indexes`, e as 14 passagens foram jogadas fora. **O cursor
+> também precisa atravessar o disco**, e não só o índice. A entrada de
+> 08-27 dizia *"é ele que vale gravar, não o cursor"*; a medição desmente.
+
+A colônia `ca8966a6` deu o outro caso, e a linha nova o nomeou: *14 of 14
+planner runs gave up before reaching the sweep* — é a vila sem
+trabalhador capaz, e o culpado não é a varredura.
 
 ### 2026-08-27 — a varredura passou a dizer se reinicia ou se ninguém a chama
 
@@ -647,10 +711,13 @@ risco por bioma (§22, §23) — o Nível 1 ainda não foi visto em jogo.
   o cursor fica onde achou o lote.
 - ✅ **Perguntar só às ruas** — resolvido em 08-27 pelo índice: 698
   colunas em vez de 16.641, e a varredura cabe numa passagem.
-- ✅ **A primeira varredura de cada sessão** — resolvida em 08-27: o
-  índice vai para o disco junto da colônia e volta pronto. O cursor
-  (`SWEEPS`) continua de sessão de propósito — quem tem índice não
-  precisa dele. **Falta a sessão de jogo que confirme o ganho.**
+- 🔴 **O cursor da varredura ainda morre com a sessão.** Medido em
+  08-27, 20:22: 14 passagens de 17, e as 14 foram para o lixo porque o
+  índice só nasce de uma volta completa. Gravar o índice não bastou — o
+  `Sweep` (anel, coluna, centro) precisa ir junto. São três inteiros, e o
+  molde do `RoadIndexSave` já está pronto.
+- ✅ **A varredura não reinicia** — medido, não suposto: 1 reinício em 14
+  passagens, zero por deriva de centro.
 - 🟡 **Rua feita à mão pelo jogador fica invisível ao índice** até o
   centro andar mais de 20 blocos. A rua que a colônia mesma calça entra
   na hora, por `remember`.

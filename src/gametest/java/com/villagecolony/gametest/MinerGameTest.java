@@ -929,6 +929,90 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
+     * Boca que já tem baú também ganha lanterna — visto em jogo, 08-27.
+     *
+     * <p>A frase do autor: <i>"faltou o lampião na entrada da mina, eu
+     * mesmo botei"</i>. A mobília saía toda de dentro do mesmo {@code if}
+     * — quem já tinha baú voltava na primeira linha, e a lanterna nunca
+     * chegava a ser tentada.
+     *
+     * <p>Duas bocas caem nesse caso, e as duas são comuns: a mina que
+     * volta de um save anterior à Regra 30, e a boca em que a primeira
+     * tentativa achou lugar para o baú e não para a lanterna — chunk na
+     * borda, encosta, água. Nas duas a lanterna nunca vinha, porque a
+     * segunda chance não existia.
+     *
+     * <p>O baú é posto à mão aqui, e não pelo {@code furnish}: é
+     * exatamente o estado de quem chega mobiliado pela metade.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+            tickLimit = 20)
+    public void aMouthThatAlreadyHasAChestStillGetsItsLantern(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        BlockPos mouth = context.getAbsolutePos(ROCK);
+
+        for (Direction side : Direction.Type.HORIZONTAL) {
+            context.setBlockState(ROCK.offset(side).down(), Blocks.STONE.getDefaultState());
+        }
+
+        // Mobiliada pela metade: o baú está lá, a lanterna não.
+        context.setBlockState(ROCK.offset(Direction.NORTH), Blocks.CHEST.getDefaultState());
+
+        MineMouth.furnish(world, mouth);
+
+        boolean lantern = false;
+
+        for (Direction side : Direction.Type.HORIZONTAL) {
+            if (world.getBlockState(mouth.offset(side)).isOf(Blocks.LANTERN)) {
+                lantern = true;
+            }
+        }
+
+        context.assertTrue(lantern, "a boca que já tinha baú ficou sem lanterna para sempre");
+
+        context.complete();
+    }
+
+    /**
+     * Mobiliar de novo não põe uma segunda lanterna.
+     *
+     * <p>A outra metade da idempotência: agora que a lanterna é
+     * conferida a cada passagem, ela precisa reconhecer a que já está
+     * lá — inclusive a que o <b>jogador</b> pôs, que foi como a de
+     * 08-27 apareceu.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+            tickLimit = 20)
+    public void aLanternThatIsAlreadyThereIsNotDoubled(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        BlockPos mouth = context.getAbsolutePos(ROCK);
+
+        for (Direction side : Direction.Type.HORIZONTAL) {
+            context.setBlockState(ROCK.offset(side).down(), Blocks.STONE.getDefaultState());
+        }
+
+        MineMouth.furnish(world, mouth);
+        MineMouth.furnish(world, mouth);
+        MineMouth.furnish(world, mouth);
+
+        int lanterns = 0;
+
+        for (Direction side : Direction.Type.HORIZONTAL) {
+            for (int drop = 0; drop <= 1; drop++) {
+                if (world.getBlockState(mouth.offset(side).down(drop)).isOf(Blocks.LANTERN)) {
+                    lanterns++;
+                }
+            }
+        }
+
+        context.assertTrue(lanterns == 1, "a boca ficou com " + lanterns + " lanternas");
+
+        context.complete();
+    }
+
+    /**
      * O que é tesouro e o que não é — a Regra 30, decidida pelo autor.
      *
      * <p>O baú da boca guarda <b>todo minério menos carvão</b>. O carvão

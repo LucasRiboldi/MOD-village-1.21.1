@@ -168,6 +168,48 @@ class MineSaveTest {
     }
 
     /**
+     * Mina de antes da escada de três volta do começo — 2026-08-27.
+     *
+     * <p>A fronteira é um índice na ordem de cavar, e a ordem mudou: o
+     * degrau passou de dois blocos para três, e o primeiro lance de vinte
+     * posições para trinta. Um {@code cut} escrito na ordem antiga aponta
+     * para outro lugar na nova, e a mina retomaria no meio — deixando
+     * atrás dela exatamente os blocos de cabeça que este ciclo existe
+     * para abrir.
+     *
+     * <p>Voltar do começo é barato e conserta: já aberto é pulado de
+     * graça, 64 por passagem, e o que passa a ser cavado é só o que
+     * faltava. A boca e os dois lados ficam — eles não dependem da ordem.
+     */
+    @Test
+    void aMineFromBeforeTheTallerStairStartsOver() {
+        UUID colonyId = UUID.randomUUID();
+
+        Mine mine = Mine.restore(colonyId, MineShaft.from(MOUTH, Side.EAST), 437);
+
+        NbtCompound nbt = savedWith(colonyAt(colonyId), mine)
+                .writeNbt(new NbtCompound(), null);
+
+        nbt.getList("mines", NbtElement.COMPOUND_TYPE).getCompound(0).remove("shape");
+
+        Mine back = ColonySavedData.TYPE.deserializer().apply(nbt, null).mines().get(0);
+
+        assertEquals(0, back.cut());
+        assertEquals(MOUTH, back.entry());
+        assertEquals(mine.shaft().gallery(), back.shaft().gallery());
+    }
+
+    /** A mina desta versão retoma onde parou, e não do começo. */
+    @Test
+    void aMineOfThisShapeKeepsItsFrontier() {
+        UUID colonyId = UUID.randomUUID();
+
+        Mine mine = Mine.restore(colonyId, MineShaft.from(MOUTH, Side.EAST), 437);
+
+        assertEquals(437, roundTrip(savedWith(colonyAt(colonyId), mine)).mines().get(0).cut());
+    }
+
+    /**
      * Entrada estragada é descartada inteira, e não meio lida.
      *
      * <p>Um lado que não existe viraria mina apontada para lugar nenhum,

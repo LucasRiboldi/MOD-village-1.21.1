@@ -38,7 +38,7 @@ class MineShaftTest {
         MineShaft mine = shaft();
 
         for (int step = 1; step <= MineShaft.DESCENT; step++) {
-            ColonyPos feet = mine.positionAt((step - 1) * MineShaft.HEADROOM);
+            ColonyPos feet = mine.positionAt((step - 1) * MineShaft.STAIR_HEADROOM);
 
             assertEquals(ENTRY.y() - step + 1, feet.y(),
                     "o degrau " + step + " não desceu um bloco");
@@ -47,14 +47,14 @@ class MineShaftTest {
         }
     }
 
-    /** Cada degrau abre dois blocos: os pés e a cabeça. */
+    /** Cada degrau abre os pés e a cabeça, e mais um para passar. */
     @Test
-    void everyStepIsTwoBlocksTall() {
+    void everyStepIsTallEnoughToStandIn() {
         MineShaft mine = shaft();
 
         for (int step = 1; step <= MineShaft.DESCENT; step++) {
-            ColonyPos feet = mine.positionAt((step - 1) * MineShaft.HEADROOM);
-            ColonyPos head = mine.positionAt((step - 1) * MineShaft.HEADROOM + 1);
+            ColonyPos feet = mine.positionAt((step - 1) * MineShaft.STAIR_HEADROOM);
+            ColonyPos head = mine.positionAt((step - 1) * MineShaft.STAIR_HEADROOM + 1);
 
             assertEquals(feet.y() + 1, head.y(), "a cabeça do degrau " + step + " não abriu");
             assertEquals(feet.x(), head.x());
@@ -62,10 +62,61 @@ class MineShaftTest {
         }
     }
 
+    /**
+     * O aldeão consegue andar escada abaixo sem cavar mais nada.
+     *
+     * <p><b>Visto em jogo em 2026-08-27</b>, e a frase do autor: <i>"o
+     * mineiro precisa quebrar mais um bloco na sua frente para poder
+     * descer a escada"</i>. A escada tinha dois blocos por degrau, que é
+     * quanto o aldeão ocupa parado — e não é quanto ele precisa para
+     * <b>andar</b>.
+     *
+     * <p>Descer um degrau é primeiro andar para a frente, no mesmo nível,
+     * e só então cair. Nesse instante a cabeça dele está um bloco acima
+     * do teto do degrau seguinte, e o teto não tinha sido cavado. Ele
+     * ficava preso, batia a picareta, e a mina só descia porque o
+     * jogador abria o caminho.
+     *
+     * <p>Vale para os dois lances: o segundo parte do canto da sala e
+     * desce igual.
+     */
+    @Test
+    void theVillagerWalksDownWithoutDiggingAgain() {
+        MineShaft mine = shaft();
+
+        for (int flight = 0; flight < 2; flight++) {
+            int base = flight == 0
+                    ? 0
+                    : MineShaft.DESCENT * MineShaft.STAIR_HEADROOM
+                            + MineShaft.ROOM_LONG * MineShaft.ROOM_WIDE * MineShaft.HEADROOM;
+
+            for (int step = 1; step < MineShaft.DESCENT; step++) {
+                Set<Integer> ahead = new HashSet<>();
+
+                for (int k = 0; k < MineShaft.STAIR_HEADROOM; k++) {
+                    ahead.add(mine.positionAt(base + step * MineShaft.STAIR_HEADROOM + k).y());
+                }
+
+                int feet = mine.positionAt(base + (step - 1) * MineShaft.STAIR_HEADROOM).y();
+
+                assertTrue(
+                        ahead.contains(feet),
+                        "lance " + flight + ", degrau " + step
+                                + ": os pés não passam para o degrau seguinte");
+
+                assertTrue(
+                        ahead.contains(feet + 1),
+                        "lance " + flight + ", degrau " + step
+                                + ": a cabeça bate no teto do degrau seguinte");
+            }
+        }
+    }
+
     /** Dez degraus levam a dez blocos abaixo da entrada. */
     @Test
     void tenStepsReachTenBlocksDown() {
-        ColonyPos last = shaft().positionAt(MineShaft.DESCENT * MineShaft.HEADROOM - 2);
+        ColonyPos last = shaft().positionAt(
+                MineShaft.DESCENT * MineShaft.STAIR_HEADROOM - MineShaft.STAIR_HEADROOM);
 
         assertEquals(ENTRY.y() - MineShaft.DESCENT + 1, last.y());
     }
@@ -94,7 +145,7 @@ class MineShaftTest {
         Set<String> floor = new HashSet<>();
         Set<Integer> heights = new HashSet<>();
 
-        int from = MineShaft.DESCENT * MineShaft.HEADROOM;
+        int from = MineShaft.DESCENT * MineShaft.STAIR_HEADROOM;
         int upTo = from + MineShaft.ROOM_LONG * MineShaft.ROOM_WIDE * MineShaft.HEADROOM;
 
         for (int i = from; i < upTo; i++) {

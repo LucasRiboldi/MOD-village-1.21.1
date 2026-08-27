@@ -15,8 +15,8 @@ import java.util.Objects;
  * diante recolhe na altura do aldeão mais um, sem fim.
  *
  * <pre>
- * lance 1     dez degraus, dois blocos de altura cada — os que o
- *             aldeão precisa para caber de pé
+ * lance 1     dez degraus, três blocos de altura cada — dois para o
+ *             aldeão caber, e o terceiro para ele passar
  * sala 1      sete por quatro no nível -10
  * lance 2     mais dez degraus, virando à direita: cavar reto para
  *             baixo daria um poço, e de poço não se sobe
@@ -29,9 +29,13 @@ import java.util.Objects;
  * ficaria no fundo do buraco, e a colônia perderia um trabalhador por
  * causa do próprio trabalho.
  *
- * <p><b>Por que dois blocos de altura.</b> "na altura do aldeão mais 1"
- * — os pés e a cabeça. Um só e ele não passa; três e a mina custa
- * cinquenta por cento a mais de tempo para dar a mesma pedra.
+ * <p><b>Por que dois blocos de altura na galeria.</b> "na altura do
+ * aldeão mais 1" — os pés e a cabeça. Um só e ele não passa; três e a
+ * mina custa cinquenta por cento a mais de tempo para dar a mesma pedra.
+ *
+ * <p><b>E por que três na escada.</b> Porque descer é andar antes de
+ * cair, e quem anda leva a cabeça junto — ver {@link #STAIR_HEADROOM} e
+ * a sessão de 2026-08-27.
  *
  * <p>Mora em {@code core} e não conhece Minecraft: é geometria pura, e
  * geometria se afirma sem subir servidor. Quem decide se um bloco
@@ -52,8 +56,34 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
     /** Altura do aldeão mais um: os pés e a cabeça. */
     public static final int HEADROOM = 2;
 
+    /**
+     * Quanto um degrau abre — três, e não dois. Visto em jogo em
+     * 2026-08-27.
+     *
+     * <p>Dois é quanto o aldeão ocupa <b>parado</b>. Descer um degrau
+     * não é cair: é andar para a frente no mesmo nível e só então cair,
+     * e nesse instante a cabeça dele está um bloco acima do teto do
+     * degrau seguinte.
+     *
+     * <pre>
+     * degrau s      abre y, y+1      pés em y, cabeça em y+1
+     * degrau s+1    abre y-1, y      a cabeça bate em y+1, maciço
+     * </pre>
+     *
+     * <p>Com dois, o mineiro parava no primeiro degrau e batia a
+     * picareta no ar — a mina só descia porque o jogador abria o caminho
+     * na mão. A frase dele: <i>"o mineiro precisa quebrar mais um bloco
+     * na sua frente para poder descer a escada"</i>.
+     *
+     * <p><b>Custa vinte blocos na mina inteira</b>, dez por lance. A
+     * objeção que a galeria carrega — <i>três e a mina custa cinquenta
+     * por cento a mais</i> — vale para ela, que é plana e continua com
+     * dois. Escada plana não existe.
+     */
+    public static final int STAIR_HEADROOM = 3;
+
     /** Quantas posições um lance de escada pede. */
-    private static final int STAIR_BLOCKS = DESCENT * HEADROOM;
+    private static final int STAIR_BLOCKS = DESCENT * STAIR_HEADROOM;
 
     /** Quantas posições uma sala pede. */
     private static final int ROOM_BLOCKS = ROOM_LONG * ROOM_WIDE * HEADROOM;
@@ -128,8 +158,8 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
      * abaixo do anterior.
      */
     private static ColonyPos stair(ColonyPos top, Side towards, int i) {
-        int step = i / HEADROOM + 1;
-        int layer = i % HEADROOM;
+        int step = i / STAIR_HEADROOM + 1;
+        int layer = i % STAIR_HEADROOM;
 
         return new ColonyPos(
                 top.x() + towards.offsetX() * step,
@@ -180,8 +210,8 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
      * Uma posição da sala: sete de fundo, quatro de largura, duas de alto.
      *
      * <p><b>Começa um bloco adiante do patamar</b>, e não sobre ele. O
-     * último degrau abre exatamente os dois blocos que seriam o canto da
-     * sala, e cavá-los de novo seria o aldeão batendo a picareta no ar.
+     * último degrau abre os blocos que seriam o canto da sala, e cavá-los
+     * de novo seria o aldeão batendo a picareta no ar.
      */
     private static ColonyPos room(ColonyPos floor, Side towards, int i) {
         int high = i % HEADROOM;

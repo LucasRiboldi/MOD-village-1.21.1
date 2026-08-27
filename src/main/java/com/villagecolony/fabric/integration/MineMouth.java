@@ -40,25 +40,48 @@ public final class MineMouth {
     /**
      * Põe a lanterna e o baú, se ainda não estiverem lá.
      *
-     * <p>Idempotente por construção: se já houver baú entre os vizinhos,
-     * nada é criado. Chamada a cada passagem em que a mina existe, e
-     * silenciosa em todas menos na primeira.
+     * <p>Idempotente, e as <b>duas</b> peças o são — 2026-08-27. Até
+     * aqui só o baú era conferido: quem já tinha baú voltava na primeira
+     * linha, e a lanterna nunca chegava a ser tentada. O autor achou o
+     * buraco em jogo, e a frase dele foi <i>"faltou o lampião na entrada
+     * da mina, eu mesmo botei"</i>.
+     *
+     * <p>Duas bocas caíam nesse caso, e as duas são comuns: a mina que
+     * volta de um save anterior à Regra 30, e a boca em que a primeira
+     * tentativa achou lugar para o baú e não para a lanterna — encosta,
+     * água, borda de chunk. Nas duas a segunda chance não existia.
+     *
+     * <p>Chamada a cada passagem em que a mina existe, e silenciosa em
+     * todas menos naquelas em que põe alguma coisa.
      *
      * @return onde está o baú da boca, ou vazio quando nenhum vizinho
      *     serve — encosta, água, ou chunk fora de memória
      */
     public static Optional<BlockPos> furnish(ServerWorld world, BlockPos mouth) {
-        Optional<BlockPos> known = chestAt(world, mouth);
-
-        if (known.isPresent()) {
-            return known;
-        }
-
         if (chunkAt(world, mouth) == null) {
             // Nunca forçar carregamento de dentro do ciclo — §11.
             return Optional.empty();
         }
 
+        Optional<BlockPos> chest = chestAt(world, mouth);
+
+        if (chest.isEmpty()) {
+            chest = placeChest(world, mouth);
+        }
+
+        if (chest.isEmpty()) {
+            // Sem baú não há de que a lanterna ser o outro lado, e a
+            // passagem seguinte tenta os dois de novo.
+            return Optional.empty();
+        }
+
+        placeLanternIfMissing(world, mouth, chest.get());
+
+        return chest;
+    }
+
+    /** O baú da boca, recém-posto e marcado como do mineiro. */
+    private static Optional<BlockPos> placeChest(ServerWorld world, BlockPos mouth) {
         Optional<BlockPos> spot = freeSpotNear(world, mouth, null);
 
         if (spot.isEmpty()) {
@@ -69,20 +92,58 @@ public final class MineMouth {
 
         ChestMarker.markAt(world, spot.get(), ProfessionType.MINER);
 
-        // A lanterna vai do outro lado, e é o que faz a boca ser achável
-        // de longe no escuro — que é para o que o autor a pediu.
-        Optional<BlockPos> lamp = freeSpotNear(world, mouth, spot.get());
-
-        lamp.ifPresent(at ->
-                world.setBlockState(at, Blocks.LANTERN.getDefaultState(), Block.NOTIFY_ALL));
-
         VillageColonyMod.LOGGER.info(
-                "Mine mouth at {} furnished — miner chest at {}, lantern at {}",
+                "Mine mouth at {} got its miner chest at {}",
                 mouth.toShortString(),
-                spot.get().toShortString(),
-                lamp.map(BlockPos::toShortString).orElse("nowhere it fits"));
+                spot.get().toShortString());
 
         return spot;
+    }
+
+    /**
+     * A lanterna, do outro lado do buraco — o que faz a boca ser achável
+     * de longe no escuro, que é para o que o autor a pediu.
+     *
+     * <p>A que já está lá conta, inclusive a que o <b>jogador</b> pôs: a
+     * de 08-27 apareceu assim, e pôr uma segunda ao lado dela seria o
+     * mod discordando do dono do mundo por nada.
+     */
+    private static void placeLanternIfMissing(
+            ServerWorld world, BlockPos mouth, BlockPos chest) {
+
+        if (lanternAt(world, mouth).isPresent()) {
+            return;
+        }
+
+        Optional<BlockPos> lamp = freeSpotNear(world, mouth, chest);
+
+        if (lamp.isEmpty()) {
+            // Não cabe agora. A passagem seguinte tenta de novo, que é
+            // exatamente o que faltava antes desta versão.
+            return;
+        }
+
+        world.setBlockState(lamp.get(), Blocks.LANTERN.getDefaultState(), Block.NOTIFY_ALL);
+
+        VillageColonyMod.LOGGER.info(
+                "Mine mouth at {} got its lantern at {}",
+                mouth.toShortString(),
+                lamp.get().toShortString());
+    }
+
+    /** A lanterna desta boca, se ela existe — lida do mundo, como o baú. */
+    private static Optional<BlockPos> lanternAt(ServerWorld world, BlockPos mouth) {
+        for (int drop = 0; drop <= DROP; drop++) {
+            for (Direction side : Direction.Type.HORIZONTAL) {
+                BlockPos at = mouth.offset(side).down(drop);
+
+                if (world.getBlockState(at).isOf(Blocks.LANTERN)) {
+                    return Optional.of(at);
+                }
+            }
+        }
+
+        return Optional.empty();
     }
 
     /**

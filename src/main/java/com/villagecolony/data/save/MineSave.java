@@ -39,6 +39,28 @@ final class MineSave {
     private static final String DESCENT = "descent";
     private static final String GALLERY = "gallery";
     private static final String CUT = "cut";
+    private static final String SHAPE = "shape";
+
+    /**
+     * Qual geometria de mina escreveu esta fronteira — 2026-08-27.
+     *
+     * <p>{@code cut} é um indice na ordem de cavar do {@code MineShaft},
+     * e essa ordem ja mudou uma vez: o degrau passou de dois blocos para
+     * tres, e o primeiro lance de vinte posicoes para trinta. Um numero
+     * escrito numa ordem e lido noutra aponta para outro lugar, e a mina
+     * retomaria no meio — deixando atras dela justamente os blocos que a
+     * mudanca existe para abrir.
+     *
+     * <p><b>Sobe sempre que {@code positionAt} mudar de ordem.</b> Save
+     * de forma diferente volta com a fronteira no zero, e nao com ela
+     * traduzida: traduzir exigiria saber todas as formas antigas, e
+     * recomecar custa pouco — o ja aberto e pulado de graca, 64 por
+     * passagem.
+     *
+     * <p>Um, e nao zero, para o save anterior a esta chave — onde
+     * {@code getInt} devolve zero — cair no ramo do recomeco.
+     */
+    private static final int SHAPE_VERSION = 2;
 
     private MineSave() {
     }
@@ -56,6 +78,7 @@ final class MineSave {
             entry.putString(DESCENT, mine.shaft().descent().name());
             entry.putString(GALLERY, mine.shaft().gallery().name());
             entry.putInt(CUT, mine.cut());
+            entry.putInt(SHAPE, SHAPE_VERSION);
 
             list.add(entry);
         }
@@ -105,6 +128,12 @@ final class MineSave {
 
             if (cut < 0) {
                 continue;
+            }
+
+            if (entry.getInt(SHAPE) != SHAPE_VERSION) {
+                // Fronteira escrita noutra geometria. Ver SHAPE: a mina
+                // volta inteira, so que do primeiro degrau.
+                cut = 0;
             }
 
             ColonyPos entrance = new ColonyPos(
