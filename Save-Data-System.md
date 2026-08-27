@@ -421,6 +421,61 @@ Mas não é persistente.
 
 ---
 
+# Índice de Ruas
+
+A exceção ao princípio, e ela é deliberada — 2026-08-27.
+
+O índice de ruas **é** uma leitura do mundo, e o mundo é a fonte da
+verdade. Ainda assim vai para o disco, gravado por
+`data/save/RoadIndexSave` junto da colônia:
+
+```text
+Colony Roads
+
+- colonyId
+- from       o centro de onde o raio foi varrido
+- columns    as colunas calçadas, x e z empacotados
+```
+
+## Por que esta leitura se grava
+
+Porque refazê-la custa **16.641 colunas** — o quadrado de raio 64 —, e o
+orçamento é de mil por passagem, uma passagem por ciclo. Dezessete
+ciclos, oito minutos e meio, antes de a colônia saber onde procurar
+lote. Sendo de sessão, toda entrada no mundo pagava a conta inteira, e a
+sessão curta acabava dentro dela.
+
+## Por que isto não contradiz o princípio
+
+Porque o índice não é acreditado.
+
+```text
+o índice diz    onde vale a pena perguntar
+
+o mundo diz     se ainda é rua
+```
+
+Cada coluna é reperguntada ao mundo quando visitada. O centro vai junto
+para que um índice medido de outro lugar seja descartado em vez de
+mentir. O que se grava é o **caminho até a pergunta**, e não a resposta.
+
+## O que a fronteira recusa ao ler
+
+```text
+índice vazio            afirma "varri tudo e não há rua"
+
+entrada sem dono        mapa de vila nenhuma
+
+colônia desconhecida    mesma regra das casas e das minas
+
+maior que o orçamento   não caberia numa passagem
+```
+
+Recusado, a colônia varre o quadrado — o comportamento de antes desta
+versão.
+
+---
+
 # Recuperação após Carregamento
 
 Ao abrir o mundo:

@@ -1,7 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-27, depois do ciclo do mineiro e da varredura —
-e da conferência de um plano externo contra o código.
+**Atualizado:** 2026-08-27, depois do ciclo que gravou o índice de ruas
+em disco.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -17,14 +17,50 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-477 testes unitários  ·  176 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+484 testes unitários  ·  175 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 última sessão de jogo em 2026-08-27, 01:33  ·  ela morreu na varredura
 ```
 
+> A contagem de jogo era 176 aqui e **175** no `runGametest`. Recontado
+> em 08-27 por `@GameTest`: são 175, e o número deste arquivo estava um
+> acima.
+
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-27 — o índice de ruas atravessa o fechar do mundo
+
+A alavanca que a entrada da varredura tinha nomeado, e o item que
+destravava a verificação de todo o resto: **enquanto o índice fosse de
+sessão, nada do que foi consertado em 08-27 chegava a ser exercitado em
+jogo.** As duas sessões curtas do dia anterior morreram na primeira
+varredura porque a primeira varredura era sempre a primeira *daquela
+sessão* — 16.641 colunas, mil por passagem, dezessete ciclos, 8,5
+minutos antes da colônia saber onde procurar lote.
+
+O que se grava é o **índice**, e não o cursor: são as 698 colunas que a
+varredura completa achou, e não o lugar onde ela parou no meio.
+
+**Por que é seguro gravar uma leitura do mundo.** Porque ela não é
+acreditada. Cada coluna do índice é reperguntada ao mundo quando
+visitada — `siteBesideRoadAt` já o fazia —, e o centro de onde a medida
+saiu vai junto, para que um índice velho demais seja jogado fora em vez
+de mentir. Grava-se o **caminho até a pergunta**, não a resposta.
+
+O molde é o do `MineSave`, arquivo por agregado: `RoadIndexSave` faz o
+NBT, `ColonyRoads` é o registro que atravessa (e passou a ser o único
+dono do empacotamento `x`/`z` num `long` — a mesma conta era feita dos
+dois lados do disco, e duas cópias que discordassem na ordem dos bits
+devolveriam um índice embaralhado, com ruas onde não há).
+
+| | |
+|---|---|
+| **Fase vermelha** | `RoadIndexSaveTest` inteiro sem compilar — `ColonySavedData.roads()`, `BuildSiteScanner.saved()` e `restore()` não existiam |
+| **A fronteira recusa** | índice vazio (*"varri tudo e não achei rua"* pararia a colônia para sempre), entrada sem dono, colônia desconhecida, e índice maior que o orçamento de uma passagem |
+| **Verificado rodando** | `gradlew build` → **484 unitários, 0 falhas**; `runGametest` → **175 de 175** |
+| **Ainda não visto em jogo** | a sessão que prova o ganho — abrir o mundo e a colônia já achar lote sem varrer — **não foi jogada**. O `runGametest` grava `0 road indexes` porque nenhuma colônia de teste completa o raio |
 
 ### 2026-08-27 — o guarda parou de contar a noite, e o mineiro pegou a picareta certa
 
@@ -573,12 +609,10 @@ risco por bioma (§22, §23) — o Nível 1 ainda não foi visto em jogo.
   o cursor fica onde achou o lote.
 - ✅ **Perguntar só às ruas** — resolvido em 08-27 pelo índice: 698
   colunas em vez de 16.641, e a varredura cabe numa passagem.
-- 🟠 **A primeira varredura de cada sessão ainda custa os 17 ciclos.**
-  `SWEEPS` e o índice são mapas estáticos, limpos ao subir e ao parar o
-  servidor: **toda entrada no mundo remede tudo do zero.** Foi o que
-  matou as sessões das 23:06 e das 01:33, e por isso o conserto do E30
-  nunca foi exercitado em jogo. Gravar **o índice** junto da colônia é o
-  que resolve — e é ele que vale gravar, não o cursor.
+- ✅ **A primeira varredura de cada sessão** — resolvida em 08-27: o
+  índice vai para o disco junto da colônia e volta pronto. O cursor
+  (`SWEEPS`) continua de sessão de propósito — quem tem índice não
+  precisa dele. **Falta a sessão de jogo que confirme o ganho.**
 - 🟡 **Rua feita à mão pelo jogador fica invisível ao índice** até o
   centro andar mais de 20 blocos. A rua que a colônia mesma calça entra
   na hora, por `remember`.

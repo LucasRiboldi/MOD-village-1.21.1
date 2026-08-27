@@ -2,6 +2,7 @@ package com.villagecolony.data.save;
 
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.service.ConstructionService;
@@ -103,6 +104,14 @@ public final class ColonySavedData extends PersistentState {
      */
     private final List<Mine> mines = new ArrayList<>();
 
+    /**
+     * As ruas que cada colônia já mediu — 2026-08-27.
+     *
+     * <p>No mesmo arquivo pelo mesmo motivo de sempre: o índice aponta
+     * para a colônia por id, e índice órfão seria mapa de vila nenhuma.
+     */
+    private final List<ColonyRoads> roads = new ArrayList<>();
+
     private ColonySavedData() {
     }
 
@@ -179,6 +188,24 @@ public final class ColonySavedData extends PersistentState {
             Collection<Building> currentBuildings,
             Collection<Mine> currentMines) {
 
+        sync(currentColonies, currentWorkers, currentProjects, currentBuildings,
+                currentMines, List.of());
+    }
+
+    /**
+     * @param currentRoads o índice de ruas de cada colônia. É a resposta
+     *     cara de uma pergunta barata de reconferir: montá-lo custa
+     *     varrer 16.641 colunas em dezessete ciclos, e cada coluna dele
+     *     volta a ser perguntada ao mundo quando visitada
+     */
+    public void sync(
+            Collection<Colony> currentColonies,
+            Collection<Worker> currentWorkers,
+            Collection<ConstructionService.Pending> currentProjects,
+            Collection<Building> currentBuildings,
+            Collection<Mine> currentMines,
+            Collection<ColonyRoads> currentRoads) {
+
         colonies.clear();
         colonies.addAll(currentColonies);
 
@@ -193,6 +220,9 @@ public final class ColonySavedData extends PersistentState {
 
         mines.clear();
         mines.addAll(currentMines);
+
+        roads.clear();
+        roads.addAll(currentRoads);
 
         markDirty();
     }
@@ -210,6 +240,11 @@ public final class ColonySavedData extends PersistentState {
     /** As minas que o save trouxe, uma por colônia. */
     public List<Mine> mines() {
         return List.copyOf(mines);
+    }
+
+    /** Os índices de rua que o save trouxe, um por colônia. */
+    public List<ColonyRoads> roads() {
+        return List.copyOf(roads);
     }
 
     @Override
@@ -287,6 +322,7 @@ public final class ColonySavedData extends PersistentState {
         nbt.put(BUILDINGS, buildingList);
 
         MineSave.write(nbt, mines);
+        RoadIndexSave.write(nbt, roads);
 
         return nbt;
     }
@@ -345,6 +381,7 @@ public final class ColonySavedData extends PersistentState {
         }
 
         data.mines.addAll(MineSave.read(nbt, knownColonies));
+        data.roads.addAll(RoadIndexSave.read(nbt, knownColonies));
 
         NbtList projectList = nbt.getList(PROJECTS, NbtElement.COMPOUND_TYPE);
 
