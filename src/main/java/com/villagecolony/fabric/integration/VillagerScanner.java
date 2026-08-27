@@ -6,6 +6,7 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.storage.service.StorageRegistry;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
 import com.villagecolony.core.worker.service.WorkerService;
@@ -125,7 +126,9 @@ public final class VillagerScanner {
                 employable.add(villager.getUuid());
 
                 if (hiring && !isEmployed(workers, villager.getUuid())) {
-                    ChestScanner.freeChestFor(world, villager, storages)
+                    ChestScanner.freeChestFor(
+                                    world, villager, storages,
+                                    professionOf(workers, villager.getUuid()))
                             .ifPresent(chest -> {
                                 equippable.add(villager.getUuid());
                                 freeChests.add(chest);
@@ -146,8 +149,9 @@ public final class VillagerScanner {
             // depois, seja porque o chunk dele não estava carregado no
             // ciclo anterior, seja porque ele acabou de receber função.
             if (isEmployed(workers, villager.getUuid())) {
-                Optional<WorkerStorage> claimed =
-                        ChestScanner.scan(world, villager, storages);
+                Optional<WorkerStorage> claimed = ChestScanner.scan(
+                        world, villager, storages,
+                        professionOf(workers, villager.getUuid()));
 
                 if (claimed.isPresent()) {
                     storagesFound++;
@@ -210,6 +214,19 @@ public final class VillagerScanner {
      * ciclo de atraso é barato; deixar os quarenta desempregados
      * reivindicarem primeiro não era.
      */
+    /**
+     * A profissão deste aldeão, para o baú saber se serve — 2026-08-27.
+     *
+     * <p>Vazia para quem ainda não foi contratado, e é o que se quer:
+     * quem não tem profissão só reivindica baú sem marca. Ver
+     * {@code ChestMarker.allows}.
+     */
+    private static Optional<ProfessionType> professionOf(
+            WorkerService workers, UUID villagerId) {
+
+        return workers.find(villagerId).flatMap(Worker::profession);
+    }
+
     private static boolean isEmployed(WorkerService workers, UUID villagerId) {
         return workers.find(villagerId).filter(Worker::hasProfession).isPresent();
     }

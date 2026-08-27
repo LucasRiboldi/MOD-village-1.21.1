@@ -1,7 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-27, depois da sessão das 20:22 — o instrumento
-respondeu, e o jogador achou três coisas olhando a vila.
+**Atualizado:** 2026-08-27, depois de fechar os três achados da sessão
+das 20:22.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -17,7 +17,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-499 testes unitários  ·  177 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+499 testes unitários  ·  180 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 última sessão de jogo em 2026-08-27, 20:22  ·  a varredura chegou a 14/17
 ```
@@ -29,6 +29,38 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-27 — o baú marcado passou a ser de quem a marca diz
+
+**Visto em jogo:** *"tem material de lenhador indo para o baú do
+fazendeiro"*. O baú era escolhido pelo **mais perto da cama**, por ordem
+de chegada, e profissão não entrava na conta. O log da sessão mostra o
+mecanismo inteiro:
+
+```text
+MINER    9532fc7a: bed 755,64,918  chest 753,64,920  (2,8 blocos)
+SHEPHERD f638379c: bed 753,64,918  chest 754,64,918  (1,0 bloco)
+```
+
+Duas camas a dois blocos uma da outra, e quem fosse processado primeiro
+levava o baú do outro.
+
+**Decisão do autor: a marca vale.** Ela já existia desde 08-12 — um
+quadro com a ferramenta da profissão pregado no baú — e era escrita a
+cada ciclo. O que faltava era o mod **lê-la de volta**: era decoração, e
+virou regra. Baú marcado só serve a quem a marca diz; quem ainda não tem
+profissão só pega baú sem marca, senão bastaria reivindicar antes de ser
+contratado.
+
+**Por que isso não trava a vila.** A Regra 8 continua atrás: quando não
+há baú livre ao alcance da cama, o `ChestPlacer` põe um novo — e baú novo
+nasce sem marca.
+
+| | |
+|---|---|
+| **Fase vermelha** | `aMarkedChestIsOnlyFreeForItsOwnProfession`, `theMarkAnswersWhichProfessionOwnsTheChest` |
+| **Verificado rodando** | `gradlew build` → **499 unitários, 0 falhas**; `runGametest` → **180 de 180** |
+| **O que ela NÃO faz**, e está dito no código | não desfaz a primeira escolha. Baú **sem** marca continua indo para o vizinho mais próximo, e é a marca *daí em diante* que o prende. Para trocar de dono, o jogador arranca o quadro |
 
 ### 2026-08-27 — a escada da mina não dava para descer, e a boca ficava sem lanterna
 
@@ -718,6 +750,11 @@ risco por bioma (§22, §23) — o Nível 1 ainda não foi visto em jogo.
   molde do `RoadIndexSave` já está pronto.
 - ✅ **A varredura não reinicia** — medido, não suposto: 1 reinício em 14
   passagens, zero por deriva de centro.
+- 🟠 **Baú sem marca ainda vai para o vizinho mais próximo.** A marca
+  prende o baú depois da primeira escolha, não antes dela. Se a primeira
+  errar, quem conserta é o jogador arrancando o quadro. A saída seria a
+  opção 2 daquela conversa — limitar a busca à casa da cama, apertando o
+  `isInTheSameRoom` que já existe.
 - 🟡 **Rua feita à mão pelo jogador fica invisível ao índice** até o
   centro andar mais de 20 blocos. A rua que a colônia mesma calça entra
   na hora, por `remember`.

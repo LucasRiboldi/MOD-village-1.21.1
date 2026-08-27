@@ -52,6 +52,106 @@ public class ChestMarkerGameTest implements FabricGameTest {
                 ItemFrameEntity.class, new Box(absolute).expand(2.0), frame -> true).size();
     }
 
+    /**
+     * A marca diz a profissão de volta, e não só para o olho.
+     *
+     * <p>Até 2026-08-27 a marca era só decoração: o mod a escrevia e
+     * nunca a lia. Ela passou a ser a resposta de "de quem é este baú?"
+     * também para o código, e é isso que a torna uma regra em vez de um
+     * enfeite.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "marker_read")
+    public void theMarkAnswersWhichProfessionOwnsTheChest(TestContext context) {
+        BlockPos chest = new BlockPos(3, 2, 3);
+
+        context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+
+        ServerWorld world = context.getWorld();
+        BlockPos absolute = context.getAbsolutePos(chest);
+
+        context.assertTrue(
+                ChestMarker.professionAt(world, absolute).isEmpty(),
+                "um baú sem quadro nenhum disse ter dono");
+
+        ChestMarker.markAt(world, absolute, ProfessionType.FARMER);
+
+        context.assertTrue(
+                ChestMarker.professionAt(world, absolute)
+                        .filter(found -> found == ProfessionType.FARMER)
+                        .isPresent(),
+                "a marca do fazendeiro não foi lida de volta");
+
+        context.complete();
+    }
+
+    /**
+     * O lenhador não leva o baú do fazendeiro — decisão do autor,
+     * 2026-08-27.
+     *
+     * <p>Visto em jogo: <i>"tem material de lenhador indo para o baú do
+     * fazendeiro"</i>. O baú era escolhido pelo <b>mais perto da cama</b>,
+     * por ordem de chegada, e profissão não entrava na conta — duas camas
+     * a dois blocos uma da outra bastavam para quem fosse processado
+     * primeiro levar o baú do outro.
+     *
+     * <p>A marca já existia e já era escrita a cada ciclo. O que faltava
+     * era ela <b>valer</b>: baú marcado é de quem a marca diz, e quem não
+     * é daquela profissão procura outro.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "marker_read")
+    public void aMarkedChestIsOnlyFreeForItsOwnProfession(TestContext context) {
+        BlockPos chest = new BlockPos(3, 2, 3);
+
+        context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+
+        ServerWorld world = context.getWorld();
+        BlockPos absolute = context.getAbsolutePos(chest);
+
+        ChestMarker.markAt(world, absolute, ProfessionType.FARMER);
+
+        context.assertTrue(
+                ChestMarker.allows(world, absolute, Optional.of(ProfessionType.FARMER)),
+                "o fazendeiro foi barrado do próprio baú");
+
+        context.assertFalse(
+                ChestMarker.allows(world, absolute, Optional.of(ProfessionType.LUMBERJACK)),
+                "o lenhador levou o baú do fazendeiro");
+
+        context.assertFalse(
+                ChestMarker.allows(world, absolute, Optional.empty()),
+                "quem ainda não tem profissão levou um baú que já tem dono");
+
+        context.complete();
+    }
+
+    /**
+     * Baú sem marca serve a qualquer um, inclusive a quem ainda não tem
+     * profissão.
+     *
+     * <p>É o caso comum da vila nova, e a regra não pode travá-lo: sem
+     * isto ninguém reivindicaria o primeiro baú, e a marca — que só
+     * nasce depois da reivindicação — nunca chegaria a existir.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "marker_read")
+    public void anUnmarkedChestServesAnyone(TestContext context) {
+        BlockPos chest = new BlockPos(3, 2, 3);
+
+        context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+
+        ServerWorld world = context.getWorld();
+        BlockPos absolute = context.getAbsolutePos(chest);
+
+        context.assertTrue(
+                ChestMarker.allows(world, absolute, Optional.of(ProfessionType.LUMBERJACK)),
+                "o lenhador foi barrado de um baú sem dono");
+
+        context.assertTrue(
+                ChestMarker.allows(world, absolute, Optional.empty()),
+                "o aldeão sem profissão foi barrado de um baú sem dono");
+
+        context.complete();
+    }
+
     /** O baú do lenhador ganha um machado pendurado. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "marker_place")
     public void aChestGetsTheToolOfItsWorker(TestContext context) {

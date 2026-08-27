@@ -3,6 +3,7 @@ package com.villagecolony.fabric.integration;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.storage.service.StorageRegistry;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.entity.BlockEntity;
@@ -76,11 +77,14 @@ public final class ChestScanner {
      * varredura de blocos por aldeão por ciclo, contra
      * Performance-Rules.md §6.
      *
+     * @param wants a profissão deste aldeão. Baú de outra profissão não
+     *     serve — ver {@link ChestMarker#allows}
      * @return o registro criado, ou vazio quando o aldeão não tem cama,
      *     a cama está noutra dimensão, ou não há baú livre por perto
      */
     public static Optional<WorkerStorage> scan(
-            ServerWorld world, VillagerEntity villager, StorageRegistry storages) {
+            ServerWorld world, VillagerEntity villager, StorageRegistry storages,
+            Optional<ProfessionType> wants) {
 
         Optional<GlobalPos> home = bedOf(world, villager, storages);
 
@@ -88,7 +92,7 @@ public final class ChestScanner {
             return Optional.empty();
         }
 
-        Optional<BlockPos> chest = findFreeChest(world, home.get().pos(), storages);
+        Optional<BlockPos> chest = findFreeChest(world, home.get().pos(), storages, wants);
 
         if (chest.isEmpty()) {
             // A Regra 8: não havia baú ao alcance desta cama, então ele
@@ -130,9 +134,10 @@ public final class ChestScanner {
      * primeiros ciclos. Ver {@code VillagerScanner}.
      */
     public static boolean hasFreeChest(
-            ServerWorld world, VillagerEntity villager, StorageRegistry storages) {
+            ServerWorld world, VillagerEntity villager, StorageRegistry storages,
+            Optional<ProfessionType> wants) {
 
-        return freeChestFor(world, villager, storages).isPresent();
+        return freeChestFor(world, villager, storages, wants).isPresent();
     }
 
     /**
@@ -160,10 +165,11 @@ public final class ChestScanner {
      * de acontecer é a colônia contar o mesmo baú duas vezes.
      */
     public static Optional<ColonyPos> freeChestFor(
-            ServerWorld world, VillagerEntity villager, StorageRegistry storages) {
+            ServerWorld world, VillagerEntity villager, StorageRegistry storages,
+            Optional<ProfessionType> wants) {
 
         return bedOf(world, villager, storages)
-                .flatMap(home -> findFreeChest(world, home.pos(), storages))
+                .flatMap(home -> findFreeChest(world, home.pos(), storages, wants))
                 .map(MinecraftTypeAdapter::toColonyPos);
     }
 
@@ -230,9 +236,15 @@ public final class ChestScanner {
      * <p>Um baú já reivindicado é pulado: dois aldeões do mesmo cômodo
      * partilhando um baú fariam cada um contar o estoque do outro como
      * seu. Ver Storage-System.md §"Proteção".
+     *
+     * <p>E um baú <b>marcado de outra profissão</b> também — 2026-08-27.
+     * Dois aldeões do mesmo cômodo não partilham baú, mas até aqui
+     * disputavam qual dos dois ficava com ele, e quem chegasse primeiro
+     * levava. Ver {@link ChestMarker#allows}.
      */
     private static Optional<BlockPos> findFreeChest(
-            ServerWorld world, BlockPos bed, StorageRegistry storages) {
+            ServerWorld world, BlockPos bed, StorageRegistry storages,
+            Optional<ProfessionType> wants) {
 
         BlockPos nearest = null;
         double nearestDistance = Double.MAX_VALUE;
@@ -275,6 +287,13 @@ public final class ChestScanner {
                     }
 
                     if (!isInTheSameRoom(world, bed, pos)) {
+                        continue;
+                    }
+
+                    // Baú marcado é de quem a marca diz — 2026-08-27.
+                    // Ver ChestMarker.allows e a sessão em que o autor
+                    // achou madeira no baú do fazendeiro.
+                    if (!ChestMarker.allows(world, pos, wants)) {
                         continue;
                     }
 

@@ -128,6 +128,70 @@ public final class ChestMarker {
     }
 
     /**
+     * De que profissão é a marca deste baú, se ele tem uma.
+     *
+     * <p>Lida do mundo, como tudo nesta classe: o quadro é a verdade, e
+     * o jogador que o arrancar libera o baú. Vazio quer dizer baú sem
+     * dono — não quer dizer baú de todo mundo, e quem decide isso é
+     * {@link #allows}.
+     */
+    public static Optional<ProfessionType> professionAt(ServerWorld world, BlockPos chest) {
+        if (chunkAt(world, chest) == null) {
+            return Optional.empty();
+        }
+
+        return existingMarkerAt(world, chest).flatMap(ChestMarker::professionOf);
+    }
+
+    /**
+     * Se este baú pode ficar com quem exerce esta profissão — decisão do
+     * autor, 2026-08-27.
+     *
+     * <p><b>O que estava errado.</b> O baú era escolhido pelo mais perto
+     * da cama, por ordem de chegada, e profissão não entrava na conta.
+     * Duas camas a dois blocos uma da outra bastavam: quem fosse
+     * processado primeiro levava o baú do outro, e a marca ia atrás
+     * dizendo que agora era dele. O autor viu em jogo — <i>"tem material
+     * de lenhador indo para o baú do fazendeiro"</i>.
+     *
+     * <p><b>A marca já existia; o que faltava era ela valer.</b> Baú
+     * marcado é de quem a marca diz, e quem não é daquela profissão
+     * procura outro.
+     *
+     * <p><b>Quem ainda não tem profissão só pega baú sem marca.</b> Ele
+     * não tem com o que casar, e deixá-lo passar tornaria a regra letra
+     * morta — bastava reivindicar antes de ser contratado.
+     *
+     * <p><b>O que esta regra não faz</b>, e fica dito: ela não desfaz a
+     * primeira escolha. Baú sem marca vai para o vizinho mais próximo
+     * como sempre foi, e é a marca <i>daí em diante</i> que o prende.
+     * Para mudar de dono, o jogador arranca o quadro.
+     *
+     * @param wants a profissão de quem quer o baú, vazia para quem ainda
+     *     não tem nenhuma
+     */
+    public static boolean allows(
+            ServerWorld world, BlockPos chest, Optional<ProfessionType> wants) {
+
+        Optional<ProfessionType> owner = professionAt(world, chest);
+
+        return owner.isEmpty() || owner.equals(wants);
+    }
+
+    /** A profissão que este ícone representa, se for um dos nossos. */
+    private static Optional<ProfessionType> professionOf(ItemFrameEntity frame) {
+        ItemStack held = frame.getHeldItemStack();
+
+        for (ProfessionType profession : ProfessionType.values()) {
+            if (held.isOf(itemOf(profession))) {
+                return Optional.of(profession);
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /**
      * Põe ou corrige a marca de um baú.
      *
      * @return true se algo mudou no mundo

@@ -72,8 +72,12 @@ public class FreeChestCountGameTest implements FabricGameTest {
         VillagerEntity first = housed(context, new BlockPos(1, 2, 2));
         VillagerEntity second = housed(context, new BlockPos(2, 2, 2));
 
-        Optional<ColonyPos> forFirst = ChestScanner.freeChestFor(world, first, storages);
-        Optional<ColonyPos> forSecond = ChestScanner.freeChestFor(world, second, storages);
+        // Sem profissao: os dois sao candidatos, e o bau do comodo esta
+        // sem marca — a regra de 2026-08-27 nao muda nada aqui.
+        Optional<ColonyPos> forFirst =
+                ChestScanner.freeChestFor(world, first, storages, Optional.empty());
+        Optional<ColonyPos> forSecond =
+                ChestScanner.freeChestFor(world, second, storages, Optional.empty());
 
         context.assertTrue(
                 forFirst.isPresent() && forSecond.isPresent(),
