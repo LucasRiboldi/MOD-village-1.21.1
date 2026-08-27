@@ -3,6 +3,7 @@ package com.villagecolony.data.save;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.ColonyRoads;
+import com.villagecolony.core.construction.model.ColonySweepCursor;
 import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.service.ConstructionService;
@@ -112,6 +113,15 @@ public final class ColonySavedData extends PersistentState {
      */
     private final List<ColonyRoads> roads = new ArrayList<>();
 
+    /**
+     * A varredura que ficou no meio — 2026-08-27.
+     *
+     * <p>O outro lado do {@link #roads}: aquele guarda a volta
+     * terminada, este a que não chegou ao fim. Nunca os dois para a
+     * mesma colônia.
+     */
+    private final List<ColonySweepCursor> sweeps = new ArrayList<>();
+
     private ColonySavedData() {
     }
 
@@ -206,6 +216,25 @@ public final class ColonySavedData extends PersistentState {
             Collection<Mine> currentMines,
             Collection<ColonyRoads> currentRoads) {
 
+        sync(currentColonies, currentWorkers, currentProjects, currentBuildings,
+                currentMines, currentRoads, List.of());
+    }
+
+    /**
+     * @param currentSweeps a varredura de cada colônia que parou no meio
+     *     do raio, com o que ela já achou. Medido em 2026-08-27: uma
+     *     sessão de catorze passagens das dezessete necessárias gravava
+     *     <b>nada</b>, porque o índice só nasce de uma volta completa
+     */
+    public void sync(
+            Collection<Colony> currentColonies,
+            Collection<Worker> currentWorkers,
+            Collection<ConstructionService.Pending> currentProjects,
+            Collection<Building> currentBuildings,
+            Collection<Mine> currentMines,
+            Collection<ColonyRoads> currentRoads,
+            Collection<ColonySweepCursor> currentSweeps) {
+
         colonies.clear();
         colonies.addAll(currentColonies);
 
@@ -223,6 +252,9 @@ public final class ColonySavedData extends PersistentState {
 
         roads.clear();
         roads.addAll(currentRoads);
+
+        sweeps.clear();
+        sweeps.addAll(currentSweeps);
 
         markDirty();
     }
@@ -245,6 +277,11 @@ public final class ColonySavedData extends PersistentState {
     /** Os índices de rua que o save trouxe, um por colônia. */
     public List<ColonyRoads> roads() {
         return List.copyOf(roads);
+    }
+
+    /** As varreduras que o save trouxe pela metade, uma por colônia. */
+    public List<ColonySweepCursor> sweeps() {
+        return List.copyOf(sweeps);
     }
 
     @Override
@@ -323,6 +360,7 @@ public final class ColonySavedData extends PersistentState {
 
         MineSave.write(nbt, mines);
         RoadIndexSave.write(nbt, roads);
+        SweepCursorSave.write(nbt, sweeps);
 
         return nbt;
     }
@@ -382,6 +420,7 @@ public final class ColonySavedData extends PersistentState {
 
         data.mines.addAll(MineSave.read(nbt, knownColonies));
         data.roads.addAll(RoadIndexSave.read(nbt, knownColonies));
+        data.sweeps.addAll(SweepCursorSave.read(nbt, knownColonies));
 
         NbtList projectList = nbt.getList(PROJECTS, NbtElement.COMPOUND_TYPE);
 

@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.integration;
 
 import com.villagecolony.core.construction.model.ColonyRoads;
+import com.villagecolony.core.construction.model.ColonySweepCursor;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.BlockState;
@@ -481,6 +482,54 @@ public final class BuildSiteScanner {
         }
 
         ROADS.put(roads.colonyId(), roads);
+    }
+
+    /**
+     * A varredura pela metade de cada colônia, para o disco —
+     * 2026-08-27.
+     *
+     * <p>Vai junto o que ela já achou: sem isso a volta terminaria com
+     * meia lista de ruas e viraria um índice que mente sobre ter visto o
+     * raio inteiro. Ver {@link ColonySweepCursor}.
+     *
+     * <p><b>Cursor cuja memória não caberia num índice fica de fora.</b>
+     * Ele nunca chegaria a virar índice — o {@link #fits} recusaria no
+     * fim da volta — e gravá-lo custaria disco para adiar a mesma
+     * recusa. Vila assim varre do centro, que é o que ela já fazia.
+     */
+    public static List<ColonySweepCursor> pausedSweeps() {
+        List<ColonySweepCursor> saving = new ArrayList<>();
+
+        SWEEPS.forEach((colonyId, paused) -> {
+            Set<Long> seen = BUILDING.get(colonyId);
+
+            if (seen == null || seen.size() > MAX_COLUMNS) {
+                return;
+            }
+
+            saving.add(new ColonySweepCursor(
+                    colonyId, paused.from(), paused.ring(), paused.column(),
+                    List.copyOf(seen)));
+        });
+
+        return List.copyOf(saving);
+    }
+
+    /**
+     * Recoloca uma varredura que veio do disco — 2026-08-27.
+     *
+     * <p>É o que faz catorze passagens de dezessete deixarem de ser
+     * jogadas fora quando o mundo fecha. As duas metades voltam juntas: o
+     * lugar onde ela parou e o que ela achou até ali.
+     *
+     * <p>O que ela achou <b>não</b> vira índice — meia volta não viu o
+     * raio inteiro, e o {@link #ROADS} continua vazio até a volta
+     * terminar de verdade.
+     */
+    public static void restore(ColonySweepCursor cursor) {
+        SWEEPS.put(cursor.colonyId(), new Sweep(cursor.ring(), cursor.column(), cursor.from()));
+
+        BUILDING.put(cursor.colonyId(), new LinkedHashSet<>(cursor.found()));
     }
 
     /**

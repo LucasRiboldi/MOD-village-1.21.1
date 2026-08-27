@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.ColonyRoads;
+import com.villagecolony.core.construction.model.ColonySweepCursor;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.service.ConstructionService;
@@ -124,14 +125,22 @@ public final class ServerLifecycleHandler {
             BuildSiteScanner.restore(roads);
         }
 
+        // E a varredura que ficou no meio — 2026-08-27. Medido: catorze
+        // passagens das dezessete necessárias iam para o lixo, porque o
+        // índice só nasce de uma volta completa.
+        for (ColonySweepCursor cursor : data.sweeps()) {
+            BuildSiteScanner.restore(cursor);
+        }
+
         VillageColonyMod.LOGGER.info(
                 "Loaded {} colonies with {} workers, {} buildings, {} mines,"
-                        + " {} road indexes and {} projects to resume",
+                        + " {} road indexes, {} paused sweeps and {} projects to resume",
                 VillageColonyMod.COLONIES.count(),
                 VillageColonyMod.WORKERS.count(),
                 VillageColonyMod.BUILDINGS.count(),
                 VillageColonyMod.MINES.count(),
                 data.roads().size(),
+                data.sweeps().size(),
                 data.projects().size());
     }
 
@@ -174,6 +183,7 @@ public final class ServerLifecycleHandler {
 
     private static void onServerStopping(MinecraftServer server) {
         List<ColonyRoads> roads = BuildSiteScanner.saved();
+        List<ColonySweepCursor> sweeps = BuildSiteScanner.pausedSweeps();
 
         ColonySavedData.get(server).sync(
                 VillageColonyMod.COLONIES.all(),
@@ -181,16 +191,18 @@ public final class ServerLifecycleHandler {
                 openProjects(),
                 VillageColonyMod.BUILDINGS.all(),
                 VillageColonyMod.MINES.all(),
-                roads);
+                roads,
+                sweeps);
 
         VillageColonyMod.LOGGER.info(
                 "Saved {} colonies with {} workers, {} buildings, {} mines,"
-                        + " {} road indexes and {} open projects",
+                        + " {} road indexes, {} paused sweeps and {} open projects",
                 VillageColonyMod.COLONIES.count(),
                 VillageColonyMod.WORKERS.count(),
                 VillageColonyMod.BUILDINGS.count(),
                 VillageColonyMod.MINES.count(),
                 roads.size(),
+                sweeps.size(),
                 openProjects().size());
 
         // A soma da barreira de teste, antes de tudo ser esquecido.

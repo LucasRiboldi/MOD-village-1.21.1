@@ -1,7 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-27, depois de fechar os três achados da sessão
-das 20:22.
+**Atualizado:** 2026-08-27, depois de gravar também o cursor da
+varredura — o 🔴 que a medição das 20:22 abriu.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -17,7 +17,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-499 testes unitários  ·  180 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+506 testes unitários  ·  180 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 última sessão de jogo em 2026-08-27, 20:22  ·  a varredura chegou a 14/17
 ```
@@ -29,6 +29,35 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-27 — a varredura pela metade também atravessa o fechar do mundo
+
+O 🔴 que a própria medição abriu, três entradas acima. Gravar o índice
+não bastava: ele só nasce de uma volta **completa**, e a sessão das
+20:22 parou em **14 de 17**. As catorze passagens foram para o lixo, e
+uma vila grande podia repetir isso sessão após sessão sem nunca guardar
+nada.
+
+**A armadilha, e é o que quase virou um defeito novo.** O cursor sozinho
+não é meio conserto. Retomar no anel 40 sem as ruas que os anéis 0 a 39
+acharam faria a volta terminar com meia lista e chamá-la de índice
+completo — e a colônia passaria a perguntar só a ela, sem nunca mais
+varrer para descobrir o que faltava. **Um índice que mente sobre ter
+visto tudo é pior que índice nenhum.**
+
+Por isso o cursor carrega o que já foi achado, e por isso ele **não**
+aparece em `roadIndexSize`: meia volta não é índice, e essa diferença é
+a única coisa que separa um atalho de uma mentira. Está afirmado em
+`whatTheHalfSweepFoundIsNotAnIndexYet`.
+
+Os dois nunca coexistem para a mesma colônia, e não por acaso: o índice
+é construído no mesmo instante em que o cursor é apagado.
+
+| | |
+|---|---|
+| **Fase vermelha** | `SweepCursorSaveTest` inteiro sem compilar — 42 erros |
+| **Verificado rodando** | `gradlew build` → **506 unitários, 0 falhas**; `runGametest` → **180 de 180**, com `paused sweeps` nas duas linhas de log |
+| **O que ele aceita de envelhecimento** | anel já varrido não é reolhado, e entre sessões o jogador pode ter mudado o mundo ali. É o mesmo trato que a varredura já fazia dentro de uma sessão — 8,5 minutos —, agora esticado. Quando a volta completa, a seguinte recomeça do centro |
 
 ### 2026-08-27 — o baú marcado passou a ser de quem a marca diz
 
@@ -743,11 +772,13 @@ risco por bioma (§22, §23) — o Nível 1 ainda não foi visto em jogo.
   o cursor fica onde achou o lote.
 - ✅ **Perguntar só às ruas** — resolvido em 08-27 pelo índice: 698
   colunas em vez de 16.641, e a varredura cabe numa passagem.
-- 🔴 **O cursor da varredura ainda morre com a sessão.** Medido em
-  08-27, 20:22: 14 passagens de 17, e as 14 foram para o lixo porque o
-  índice só nasce de uma volta completa. Gravar o índice não bastou — o
-  `Sweep` (anel, coluna, centro) precisa ir junto. São três inteiros, e o
-  molde do `RoadIndexSave` já está pronto.
+- ✅ **O cursor da varredura** — resolvido em 08-27: ele vai para o
+  disco com o que a meia volta já achou, e a sessão seguinte retoma no
+  anel em que a anterior parou. **Falta a sessão de jogo que confirme.**
+- 🟡 **`ColonySavedData.sync` tem sete parâmetros**, numa cadeia de
+  sobrecargas 2→4→5→6→7. Cada agregado novo alonga a corrente. Não
+  incomoda ainda; o dia em que incomodar, o conserto é um tipo que
+  carregue o conjunto.
 - ✅ **A varredura não reinicia** — medido, não suposto: 1 reinício em 14
   passagens, zero por deriva de centro.
 - 🟠 **Baú sem marca ainda vai para o vizinho mais próximo.** A marca
