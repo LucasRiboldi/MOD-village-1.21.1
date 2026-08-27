@@ -1,7 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-27, depois do ciclo que fechou o E30 — o mineiro
-cavava a mina de pé na superfície e nunca entrava nela.
+**Atualizado:** 2026-08-27, depois do ciclo que tirou a varredura de
+recomeçar do centro a cada casa.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -17,14 +17,51 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-476 testes unitários  ·  172 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+476 testes unitários  ·  173 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
-última sessão de jogo em 2026-08-26, 23:14  ·  E30 fechado sem tê-lo visto em jogo
+última sessão de jogo em 2026-08-27, 01:33  ·  ela morreu na varredura
 ```
 
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-27 — a varredura para de recomeçar do centro a cada casa
+
+Achar lote apagava o cursor, e a varredura seguinte recomeçava do zero.
+O centro custa **dezessete passagens** — 16.641 colunas, 1.024 por vez,
+30 s por ciclo, **8,5 minutos** entre uma casa e a próxima ter chance de
+nascer. É o que a sessão de 08-26 mostrou às 23:25:22: recomeço do zero
+logo depois da primeira casa, e nenhuma segunda obra em oito minutos.
+
+Agora o cursor **fica**, uma coluna adiante. É a decisão 8 aplicada como
+ela foi escrita — *o conserto é no jeito de procurar, não no volume* —, e
+o teto de mil colunas não subiu: o ciclo já avisa 95 ms com ele.
+
+**Por que retomar é o certo e não só o barato:** os anéis de perto
+acabaram de responder não, e agora estão **mais** ocupados, porque a casa
+nova está neles. Quando o raio acaba o cursor sai sozinho e a próxima
+recomeça do centro, que é onde a vila muda e o lote de ontem pode
+existir.
+
+| | |
+|---|---|
+| **Fase vermelha** | `theSweepKeepsItsPlaceAfterFindingALot` — *"a varredura esqueceu onde estava depois de achar o lote"* |
+| **Verificado rodando** | `gradlew test --rerun` → **476 unitários, 0 falhas**; `runGametest` → **173 de 173, cinco rodadas seguidas** |
+
+**O que este conserto NÃO resolve, e é o mais importante do achado.** As
+sessões das 23:06 e das 01:33 morreram na **primeira** varredura, e essa
+continua custando os 8,5 minutos inteiros. O motivo apareceu enquanto eu
+conferia o efeito real:
+
+> **O cursor é de sessão.** `SWEEPS` é um `HashMap` estático, limpo em
+> `ServerLifecycleHandler` ao subir e ao parar, e **nunca gravado em
+> disco**. Toda vez que o jogador entra no mundo, a colônia recomeça a
+> varredura do centro.
+
+Por isso as duas sessões curtas morreram "na primeira varredura": é a
+primeira **daquela sessão**, e é sempre. Gravar o cursor junto da colônia
+é a alavanca seguinte, e está no 🟠 do Nível 4.
 
 ### 2026-08-27 — o E30 fechou, e desenterrou o vizinho dele
 
@@ -426,12 +463,19 @@ peças da barreira.
 ### Nível 4 — a vila não fica presa
 
 - O planejador persegue **uma** obra e não sabe desistir.
-- **A varredura recomeça do centro a cada obra fechada, e custa 17
-  passagens.** Medido em 08-26 pela decisão 8: 16.641 colunas, teto de
-  1.024 por passagem, 30 s por ciclo — **8,5 minutos** entre uma casa e
-  a próxima ter chance de nascer. Foi o que se viu às 23:25:22, logo
-  depois da primeira casa pronta. O conserto é **no jeito de procurar**,
-  não no volume.
+- ✅ **A varredura recomeçar a cada obra fechada** — resolvido em 08-27,
+  o cursor fica onde achou o lote.
+- 🔴 **O cursor é de sessão, e é o que sobra do gargalo.** `SWEEPS` é um
+  mapa estático, limpo ao subir e ao parar o servidor, nunca gravado em
+  disco: **toda entrada no mundo recomeça a varredura do centro**, e o
+  centro custa 8,5 minutos. Foi o que matou as sessões das 23:06 e das
+  01:33 — as duas acabaram sem sair da primeira varredura, e por isso
+  **o conserto do E30 nunca foi exercitado em jogo**. Gravar o cursor
+  junto da colônia é a alavanca seguinte.
+- **E há uma pergunta antes dela:** a varredura visita as 16.641 colunas
+  do quadrado, e lote válido é só o que fica **encostado em rua**.
+  Enumerar as ruas e olhar a vizinhança delas seria ordens de grandeza
+  menos leitura — é "o jeito de procurar" levado até o fim. Não medido.
 - **A Regra 28 filtra o catálogo para `*_small_house_1`** — a mesma
   barreira que torna o teste possível impede escolher outro objetivo.
 - **O catálogo do jogo já tem as alternativas**, e isso está confirmado:

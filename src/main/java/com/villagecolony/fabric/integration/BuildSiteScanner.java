@@ -295,7 +295,28 @@ public final class BuildSiteScanner {
                             from.getX() + dx, from.getZ() + dz, from.getY(), plans);
 
                     if (site.isPresent()) {
-                        SWEEPS.remove(colonyId);
+                        // O cursor FICA, e é a decisão 8 aplicada como
+                        // ela foi escrita: o conserto é no jeito de
+                        // procurar, não no volume — 2026-08-27.
+                        //
+                        // Apagá-lo aqui fazia a varredura seguinte
+                        // recomeçar do centro, e o centro custa dezessete
+                        // passagens: 16.641 colunas, mil por vez, trinta
+                        // segundos por ciclo. Oito minutos e meio entre
+                        // uma casa e a próxima ter chance de nascer, e
+                        // três sessões pagaram isso — 23:25:22 recomeçou
+                        // do zero logo depois da primeira casa, e as das
+                        // 23:06 e 01:33 acabaram sem sair da primeira
+                        // varredura.
+                        //
+                        // Retomar é o certo e não só o barato: os anéis
+                        // de perto acabaram de responder não, e agora
+                        // estão MAIS ocupados, porque a casa nova está
+                        // neles. Uma coluna adiante para não reperguntar
+                        // esta; quando o raio acaba o cursor sai sozinho
+                        // e a próxima recomeça do centro, que é onde a
+                        // vila muda e o lote de ontem pode existir.
+                        SWEEPS.put(colonyId, new Sweep(ring, column + 1, center));
 
                         // Há lote: a rua não precisa crescer, e a ponta
                         // anotada até aqui sai. A Regra 15 é o que fazer
@@ -386,8 +407,10 @@ public final class BuildSiteScanner {
      * ciclo acabou no meio". Vazio quer dizer a primeira.
      *
      * <p>Não é estado novo — é o cursor que já existia, lido de fora. Ele
-     * só fica gravado quando o teto de colunas estoura, e sai quando a
-     * varredura completa o raio ou acha o lote.
+     * fica gravado quando o teto de colunas estoura <b>e também quando o
+     * lote é achado</b>, e sai só quando a varredura completa o raio ou
+     * quando o centro anda demais. Achar lote deixou de apagá-lo em
+     * 2026-08-27: recomeçar do centro custava dezessete passagens.
      *
      * <p>Escrito depois da sessão de 2026-08-15, 00:28, em que a Fase 10
      * afirmou "no free lot beside a road within 64 blocks" quatorze vezes

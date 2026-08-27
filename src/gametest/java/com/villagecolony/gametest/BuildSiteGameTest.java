@@ -716,6 +716,60 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * Achar lote não faz a varredura esquecer onde estava.
+     *
+     * <p><b>O que isto custa hoje.</b> Ao achar lote a varredura apagava
+     * o cursor, e a seguinte recomeçava do centro: raio 64 são 16.641
+     * colunas, o teto é 1.024 por passagem, e a 30 s por ciclo isso dá
+     * <b>dezessete passagens, ~8,5 minutos</b> entre uma casa e a
+     * próxima ter chance de nascer. Não é conta de papel — é o número que
+     * o comentário do {@code ConstructionPlanner} já dizia, e foi medido
+     * em jogo três vezes: a sessão de 08-26 às 23:25:22 recomeçou do zero
+     * logo depois da primeira casa e não nasceu segunda obra em oito
+     * minutos, e as sessões das 23:06 e das 01:33 <b>terminaram sem sair
+     * da primeira varredura</b>.
+     *
+     * <p>É a decisão 8 aplicada como ela foi escrita: <i>o conserto é no
+     * jeito de procurar, não no volume</i>. O teto de mil colunas fica
+     * onde está — o ciclo já avisa 95 ms com ele.
+     *
+     * <p><b>Por que retomar é o certo, e não só o barato.</b> Os anéis de
+     * perto acabaram de ser varridos e agora estão <b>mais</b> ocupados,
+     * porque a casa nova está neles. Recomeçar do centro é reperguntar
+     * dezesseis mil colunas que já responderam não. Quando o cursor
+     * termina o raio ele sai sozinho e a próxima recomeça do centro — a
+     * vila muda, e o lote de ontem pode existir amanhã.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_resume")
+    public void theSweepKeepsItsPlaceAfterFindingALot(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+
+        UUID colony = UUID.randomUUID();
+
+        paveGround(context, center);
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+
+        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                context.getWorld(),
+                colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        context.assertTrue(
+                site.isPresent(),
+                "o arranjo não deu lote, então este teste não chega a afirmar nada");
+
+        context.assertTrue(
+                BuildSiteScanner.sweepPausedAt(colony).isPresent(),
+                "a varredura esqueceu onde estava depois de achar o lote — a próxima"
+                        + " recomeça do centro e paga as dezessete passagens de novo");
+
+        context.complete();
+    }
+
     private static void paveGround(TestContext context, BlockPos center) {
         for (int dx = -RADIUS; dx <= RADIUS; dx++) {
             for (int dz = -RADIUS; dz <= RADIUS; dz++) {
