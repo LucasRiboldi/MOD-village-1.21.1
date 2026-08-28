@@ -316,7 +316,15 @@ public final class MinerWork {
                 // Guardado, e não recalculado: a busca custa umas
                 // seiscentas leituras de bloco, e isto roda todo tique
                 // enquanto ele caminha.
-                WorkTargets.set(workerId, job.approach);
+                //
+                // E por pernas — 2026-08-28. Ver MinerReach.legTowards:
+                // a navegação não traça um caminho de vinte blocos por
+                // dentro da rocha, e ele ficava parado na superfície
+                // acima da galeria.
+                WorkTargets.set(
+                        workerId,
+                        MinerReach.legTowards(
+                                villager.getBlockPos(), job.approach, mouthOf(job)));
             }
 
             return false;
@@ -424,6 +432,14 @@ public final class MinerWork {
      * <p>Sem lugar nenhum ao alcance fica a própria pedra, que é o que
      * se fazia antes — pior destino, mas nunca pior que nenhum. Quem
      * trata esse caso é o guarda de travamento e o recuo da galeria.
+     *
+     * <p><b>"Cabe um aldeão" é uma pergunta só</b>, e quem responde é o
+     * {@link BuilderApproach#standable}. Esta classe tinha a sua, mais
+     * frouxa — pedia <i>qualquer coisa que não fosse ar</i> embaixo, e
+     * água serve —, e a sessão da meia-noite as pegou discordando na
+     * mesma linha de log: <i>"it was walking to 732,46,878, which is not
+     * standable"</i>. Escolhedor e relator não podem responder diferente
+     * à mesma pergunta; é a falha que a distância já tinha tido.
      */
     public static BlockPos approachTo(ServerWorld world, BlockPos target) {
         BlockPos nearest = null;
@@ -446,7 +462,7 @@ public final class MinerWork {
                         continue;
                     }
 
-                    if (!standable(world, at)) {
+                    if (!BuilderApproach.standable(world, at)) {
                         continue;
                     }
 
@@ -459,12 +475,6 @@ public final class MinerWork {
         return nearest == null ? target : nearest;
     }
 
-    /** Dois blocos de ar sobre chão sólido: onde um aldeão fica de pé. */
-    private static boolean standable(ServerWorld world, BlockPos at) {
-        return world.getBlockState(at).isAir()
-                && world.getBlockState(at.up()).isAir()
-                && !world.getBlockState(at.down()).isAir();
-    }
 
     /** Quebra a pedra em curso, no tempo que ela pede. */
     private static void mine(
@@ -567,6 +577,17 @@ public final class MinerWork {
     static double distanceTo(VillagerEntity villager, BlockPos target) {
         return MinerReach.distanceTo(
                 villager.getX(), villager.getY(), villager.getZ(), target);
+    }
+
+    /**
+     * A boca da mina desta colônia, se ela tem uma.
+     *
+     * <p>Vazia para o mineiro de superfície e para o de areia: nenhum
+     * dos dois tem descida a fazer, e mandá-los à boca seria um desvio.
+     */
+    private static Optional<BlockPos> mouthOf(Job job) {
+        return VillageColonyMod.MINES.of(job.task.colonyId())
+                .map(mine -> MinecraftTypeAdapter.toBlockPos(mine.shaft().entry()));
     }
 
     private static boolean isOngoing(Task task) {

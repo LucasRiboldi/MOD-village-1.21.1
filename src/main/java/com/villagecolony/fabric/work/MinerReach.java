@@ -2,6 +2,8 @@ package com.villagecolony.fabric.work;
 
 import net.minecraft.util.math.BlockPos;
 
+import java.util.Optional;
+
 /**
  * A que distância o mineiro alcança a pedra — 2026-08-27.
  *
@@ -49,5 +51,61 @@ public final class MinerReach {
     /** Se daqui se alcança aquele bloco. */
     public static boolean isWithinReach(double x, double y, double z, BlockPos target) {
         return distanceTo(x, y, z, target) <= REACH;
+    }
+
+    /**
+     * A perna de caminhada que a navegação do jogo cumpre sem se perder.
+     *
+     * <p>Oito blocos, e o número vem do que se viu: a mina desce vinte, e
+     * um destino a vinte atravessando rocha devolve caminho parcial. Oito
+     * é curto o bastante para o caminho ser contínuo e longo o bastante
+     * para ele não reavaliar o destino a cada passo.
+     */
+    public static final int LEG = 8;
+
+    /**
+     * Para onde mandar o aldeão agora — a boca da mina, ou o destino.
+     *
+     * <p><b>A sessão da meia-noite mostrou onde ele estava</b>, e foi a
+     * primeira vez que se soube: <i>"the miner is at 734, 66, 878"</i>.
+     * Y 66 é a superfície. Ele estava vinte e um blocos em linha reta
+     * <b>acima</b> da galeria, em cima do chão, mirando uma pedra no
+     * fundo da mina.
+     *
+     * <p>A navegação do jogo recebe um destino a vinte blocos
+     * atravessando rocha maciça, devolve caminho parcial, e ele
+     * estaciona no ponto mais próximo que consegue — bem ali em cima. É
+     * o sintoma que o MineColonies registrou na issue 4297 com as mesmas
+     * palavras, e o remendo do jogador é o mesmo que o autor fez: cavar
+     * até lá.
+     *
+     * <p><b>Não se pede à navegação um caminho que ela não sabe
+     * traçar.</b> Pede-se a boca, que fica na superfície e a que se chega
+     * andando; de dentro dela a escada é um corredor, e o resto é curto.
+     * Chegando à boca, o destino passa a ser a pedra — sem esta segunda
+     * metade ele trocaria um travamento por outro, parado na entrada
+     * para sempre.
+     *
+     * <p>Não é a solução do MineColonies, que trocou a navegação inteira
+     * por um A* próprio. É a que cabe aqui, e ataca exatamente o que se
+     * viu: ele nunca entrava.
+     *
+     * @param mouth a boca da mina desta colônia, vazia quando não há
+     *     mina — a pedra de superfície não tem descida a fazer
+     */
+    public static BlockPos legTowards(
+            BlockPos villager, BlockPos destination, Optional<BlockPos> mouth) {
+
+        if (mouth.isEmpty()) {
+            return destination;
+        }
+
+        if (Math.sqrt(villager.getSquaredDistance(destination)) <= LEG) {
+            return destination;
+        }
+
+        return Math.sqrt(villager.getSquaredDistance(mouth.get())) <= LEG
+                ? destination
+                : mouth.get();
     }
 }

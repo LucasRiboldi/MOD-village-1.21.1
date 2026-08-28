@@ -1657,6 +1657,50 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
+     * O lugar escolhido cabe um aldeão de verdade — 2026-08-28.
+     *
+     * <p><b>Havia duas definições de "dá para ficar de pé aqui", e a
+     * sessão da meia-noite as pegou discordando</b> na mesma linha:
+     *
+     * <pre>
+     * it was walking to 732, 46, 878, which is not standable
+     * </pre>
+     *
+     * <p>Quem escolheu o lugar achou que cabia; quem relatou achou que
+     * não. A do mineiro pedia <i>qualquer coisa que não fosse ar</i>
+     * embaixo — água, lava, folha, tapete servem —, e a do construtor
+     * pede <b>chão sólido</b>. A do construtor é a certa: um aldeão não
+     * fica de pé sobre água.
+     *
+     * <p>É a mesma falha que a distância tinha antes de ontem: duas
+     * contas para a mesma pergunta, e o log podendo contradizer a
+     * decisão. Uma conta só, e é a do construtor.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_approach",
+            tickLimit = 20)
+    public void theChosenSpotHoldsAVillager(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        solidRock(context);
+
+        // Um bolsão de dois de ar sobre ÁGUA: passa na regra frouxa
+        // — não é ar embaixo — e não segura ninguém de pé.
+        context.setBlockState(new BlockPos(2, 3, 3), Blocks.WATER.getDefaultState());
+        context.setBlockState(new BlockPos(2, 4, 3), Blocks.AIR.getDefaultState());
+        context.setBlockState(new BlockPos(2, 5, 3), Blocks.AIR.getDefaultState());
+
+        BlockPos target = context.getAbsolutePos(new BlockPos(3, 4, 3));
+
+        BlockPos stand = MinerWork.approachTo(world, target);
+
+        context.assertFalse(
+                stand.equals(context.getAbsolutePos(new BlockPos(2, 4, 3))),
+                "escolheu o bolsão sobre água — ninguém fica de pé ali");
+
+        context.complete();
+    }
+
+    /**
      * O que é tesouro e o que não é — a Regra 30, decidida pelo autor.
      *
      * <p>O baú da boca guarda <b>todo minério menos carvão</b>. O carvão
