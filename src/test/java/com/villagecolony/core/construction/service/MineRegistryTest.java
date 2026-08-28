@@ -142,6 +142,56 @@ class MineRegistryTest {
         assertEquals(first, mine.nextPosition());
     }
 
+    /**
+     * Bloco que não deu para alcançar volta a ser oferecido —
+     * 2026-08-27.
+     *
+     * <p><b>O autor foi olhar em jogo, e a frase dele fecha o caso:</b>
+     * <i>"tive que cavar até lá"</i>. O mod dizia estar cavando a galeria
+     * havia três sessões, e no mundo estava rocha maciça.
+     *
+     * <p>{@link Mine#nextPosition()} avança o cursor <b>sempre</b>. Quando
+     * o mineiro não conseguia chegar na pedra, a tarefa voltava para a
+     * fila e a posição ficava para trás: o cursor marchava por dentro da
+     * rocha, coluna após coluna, e o túnel nunca era aberto. É o mesmo
+     * defeito que o {@code holdPosition} já conserta quando a picareta
+     * desvia para o minério — <i>"o túnel ficaria com um bloco no meio
+     * para sempre"</i> —, e ninguém o chamava na desistência.
+     */
+    @Test
+    void aStoneThatCouldNotBeReachedIsOfferedAgain() {
+        Mine mine = Mine.open(UUID.randomUUID(), shaft());
+
+        ColonyPos unreachable = mine.nextPosition();
+
+        assertTrue(mine.holdPositionAt(unreachable), "o cursor não desandou");
+
+        assertEquals(unreachable, mine.nextPosition());
+    }
+
+    /**
+     * Só desanda quando a posição abandonada é a última entregue.
+     *
+     * <p>A mina é da colônia e dois mineiros a partilham. Desandar às
+     * cegas devolveria o cursor por cima do bloco que o <b>outro</b>
+     * acabou de pegar, e os dois passariam a brigar pelo mesmo ponto.
+     */
+    @Test
+    void onlyTheLastHandedOutPositionRollsBack() {
+        Mine mine = Mine.open(UUID.randomUUID(), shaft());
+
+        ColonyPos mine_ = mine.nextPosition();
+        ColonyPos theOther = mine.nextPosition();
+
+        assertFalse(
+                mine.holdPositionAt(mine_),
+                "desandou por cima do bloco que o outro mineiro pegou");
+
+        assertTrue(mine.holdPositionAt(theOther));
+
+        assertEquals(theOther, mine.nextPosition());
+    }
+
     /** Desandar do começo não leva a picareta para antes do primeiro degrau. */
     @Test
     void theCursorNeverGoesBehindTheStart() {

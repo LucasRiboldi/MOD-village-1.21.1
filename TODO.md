@@ -1,7 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-27, depois da sessão das 22:54 — o conserto do
-approachTo não bastou, e a frase de desistência passou a dizer por quê.
+**Atualizado:** 2026-08-27. O autor foi olhar a galeria em jogo, e o
+que ele viu fechou três sessões de investigação.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -17,7 +17,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-515 testes unitários  ·  191 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+517 testes unitários  ·  191 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 última sessão de jogo em 2026-08-27, 22:54  ·  zero blocos pela terceira vez
 ```
@@ -28,9 +28,44 @@ lista abaixo.
 
 ---
 
-## 🔍 Em investigação
+## ✅ Resolvido
 
-### 2026-08-27 — o mineiro não anda, e três sessões não bastaram
+### 2026-08-27 — o cursor da galeria marchava por dentro da rocha
+
+**Quem fechou o caso foi o autor, a pé.** A frase dele: *"fui olhar,
+tive que cavar até lá e não tinha nada, era um minério"*. O mod dizia
+estar abrindo a galeria havia três sessões, e no mundo estava **rocha
+maciça**.
+
+```java
+public ColonyPos nextPosition() {
+    return shaft.positionAt(cut++);   // avança SEMPRE
+}
+```
+
+Quando o mineiro não conseguia chegar na pedra, a tarefa voltava para a
+fila — e a posição ficava para trás. O cursor marchava pela ordem de
+cavar, coluna após coluna, enquanto o túnel continuava fechado. Daí os
+alvos avançarem (`731,45 → 732,45 → 733,44`) com **zero** blocos
+cavados, e daí metade das colunas "sumirem": elas nunca foram puladas
+por serem ar, foram puladas por terem sido abandonadas.
+
+**O conserto já existia no arquivo.** O `holdPosition` faz exatamente
+isto quando a picareta desvia para o minério, e o comentário dele
+descreve o sintoma do autor palavra por palavra — *"o túnel ficaria com
+um bloco no meio para sempre"*. Ninguém o chamava na desistência.
+
+A posição vai por parâmetro porque a mina é da colônia e **dois mineiros
+a partilham**: desandar às cegas devolveria o cursor por cima do bloco
+que o outro acabou de pegar.
+
+| | |
+|---|---|
+| **Fase vermelha** | `aStoneThatCouldNotBeReachedIsOfferedAgain`, `onlyTheLastHandedOutPositionRollsBack` |
+| **Verificado rodando** | `gradlew build` → **517 unitários, 0 falhas**; `runGametest` → **191 de 191** |
+| **O que isto NÃO resolve** | o mineiro continua sem conseguir chegar na pedra. Este conserto impede o mod de **mentir** sobre ter cavado; ele não faz o aldeão andar. A galeria vai insistir no mesmo bloco em vez de fingir que passou por ele |
+
+### 2026-08-27 — três sessões investigando por que o mineiro não anda
 
 **Terceira sessão seguida sem um bloco cavado.** O conserto do
 `approachTo` — que era um defeito real, e continua consertado — **não
@@ -1008,10 +1043,12 @@ risco por bioma (§22, §23) — o Nível 1 ainda não foi visto em jogo.
   na mão.
 - ✅ **O veio que desce** — resolvido em 08-27: ele abre o degrau antes,
   e desiste do minério quando o degrau não pode ser aberto.
-- 🔴 **O mineiro não anda até a pedra.** Três sessões, zero blocos. O
-  `approachTo` era um defeito real e está consertado, e **não era o
-  único**. A frase de desistência agora diz onde ele está, para onde foi
-  mandado e o que há lá — ver a seção *Em investigação*.
+- 🔴 **O mineiro ainda não anda até a pedra.** Três sessões, zero
+  blocos. Dois defeitos reais caíram no caminho — o `approachTo` mandando
+  para dentro da rocha, e o cursor marchando sem cavar — e **nenhum dos
+  dois era a causa de ele não andar**. A frase de desistência agora diz
+  onde ele está, para onde foi mandado e o que há lá; falta a sessão que
+  a leia.
 - 🟠 **Mineiro longe demais não caminha até a mina.** Na mesma sessão, o
   segundo mineiro passou tudo a `51,4 blocks away (out of reach)`, parado
   na vila. O alcance da navegação de aldeão não cobre a descida inteira,

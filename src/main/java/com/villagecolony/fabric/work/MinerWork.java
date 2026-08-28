@@ -489,6 +489,10 @@ public final class MinerWork {
 
         job.task.release();
 
+        // A posição volta para o cursor da galeria — 2026-08-27. Sem
+        // isto o mod marchava pela ordem de cavar com o mundo intacto.
+        MineDigging.couldNotReach(job.task.colonyId(), job.target);
+
         release(workerId, job);
 
         // O cursor da varredura de areia sai junto: sem isso a passagem

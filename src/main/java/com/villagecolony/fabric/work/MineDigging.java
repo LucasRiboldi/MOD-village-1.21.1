@@ -355,6 +355,28 @@ public final class MineDigging {
     }
 
     /**
+     * O mineiro desistiu desta pedra — 2026-08-27.
+     *
+     * <p>Devolve a posição ao cursor da galeria, quando ela é de lá.
+     * Sem isto o cursor passava por cima dela: o mod marchava pela ordem
+     * de cavar enquanto o mundo continuava rocha maciça, e três sessões
+     * seguidas terminaram com zero blocos e a galeria intacta.
+     *
+     * <p>Silencioso quando a pedra não era do túnel — veio, areia, ou a
+     * posição que o outro mineiro já ultrapassou. Ver
+     * {@link Mine#holdPositionAt}.
+     */
+    public static void couldNotReach(UUID colonyId, BlockPos stone) {
+        VillageColonyMod.MINES.of(colonyId).ifPresent(mine -> {
+            if (mine.holdPositionAt(MinecraftTypeAdapter.toColonyPos(stone))) {
+                VillageColonyMod.LOGGER.info(
+                        "The gallery keeps its place at {} — it was not dug",
+                        stone.toShortString());
+            }
+        });
+    }
+
+    /**
      * A mina desta colônia, aberta agora se ainda não existir.
      *
      * <p>A mina é da colônia, e não deste mineiro: o segundo a descer

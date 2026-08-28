@@ -179,6 +179,41 @@ public final class Mine {
         }
     }
 
+    /**
+     * Devolve ao cursor a posição que não chegou a ser cavada —
+     * 2026-08-27.
+     *
+     * <p><b>O autor foi olhar em jogo, e a frase dele fecha o caso:</b>
+     * <i>"tive que cavar até lá"</i>. O mod dizia estar abrindo a
+     * galeria havia três sessões, e no mundo estava rocha maciça.
+     *
+     * <p>{@link #nextPosition()} avança o cursor <b>sempre</b>. Quando o
+     * mineiro não conseguia chegar na pedra, a tarefa voltava para a
+     * fila e a posição ficava para trás — o cursor marchava por dentro da
+     * rocha, coluna após coluna, e o túnel nunca era aberto. É o mesmo
+     * defeito que o {@link #holdPosition()} já conserta quando a picareta
+     * desvia para o minério, e ninguém o chamava na desistência.
+     *
+     * <p><b>Por que a posição vem por parâmetro.</b> A mina é da colônia
+     * e dois mineiros a partilham. Desandar às cegas devolveria o cursor
+     * por cima do bloco que o <b>outro</b> acabou de pegar, e os dois
+     * passariam a brigar pelo mesmo ponto. Só desanda quem abandona a
+     * última posição entregue.
+     *
+     * @return true quando o cursor de fato voltou
+     */
+    public boolean holdPositionAt(ColonyPos at) {
+        Objects.requireNonNull(at, "at");
+
+        if (cut == 0 || !shaft.positionAt(cut - 1).equals(at)) {
+            return false;
+        }
+
+        cut--;
+
+        return true;
+    }
+
     /** Onde a veia de minério estava, se o mineiro ainda a segue. */
     public Optional<ColonyPos> vein() {
         return Optional.ofNullable(vein);
