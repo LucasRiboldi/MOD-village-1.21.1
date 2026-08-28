@@ -1,7 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-28. Ele entrou na mina, e o alvo dele acabou
-sendo um túnel que o jogador cavou à mão.
+**Atualizado:** 2026-08-28. O E33 fechou na bateria: o mineiro cava a
+escada dentro de rocha, e desce cavando. **Falta ver em jogo.**
 
 O **plano depois do MVP** — a economia inteira, as profissões que faltam
 e as cinco fases de crescimento — vive em
@@ -22,7 +22,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-530 testes unitários  ·  199 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+530 testes unitários  ·  202 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 última sessão de jogo em 2026-08-28, 00:14  ·  ele entrou, e parou no degrau 7
 ```
@@ -34,6 +34,44 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-28 — o E33 fechou na bateria: faltava a arena ser uma mina
+
+**O teste que faltava, e é por isso que a bateria ficava verde com o
+jogo quebrado.** Todos os testes do mineiro montavam um **piso de terra
+plano** e plantavam uma pedra nele:
+
+```java
+private static void ground(TestContext context) {
+    for (int x = 0; x <= 7; x++)
+        for (int z = 0; z <= 7; z++)
+            setBlockState(new BlockPos(x, 1, z), DIRT);   // um piso, e só
+}
+```
+
+Numa arena assim **não há escada, não há teto, não há degrau diagonal e
+não há frente de galeria** — nada do que o mundo de verdade tem, e nada
+do que quebrou sete sessões. Todo defeito destes dois dias vivia
+exatamente no que a arena não tinha.
+
+**Três testes novos, em rocha maciça:**
+
+| | |
+|---|---|
+| `theMinerDigsTheStaircaseThroughSolidRock` | ele tira os blocos do primeiro degrau, **com a altura de passagem**, e a pedra chega ao baú |
+| `theMinerWalksDownTheStaircaseAsItDigs` | o degrau 4 fica a **4,7 blocos da boca**, fora do braço de quatro. Se sai, ele andou escada abaixo |
+| `aMineWhoseCursorRanAheadDigsAgain` | a mina entra com a fronteira do save adiantada e **nada aberto** — a forma exata do defeito em jogo — e se conserta sozinha |
+
+**Os testes mordem, e isso foi conferido.** Desligando o
+`findTheFrontier`, `aMineWhoseCursorRanAheadDigsAgain` cai. A bateria
+rodou **três vezes seguidas** com 202 de 202, porque teste de tempo
+mente numa rodada só.
+
+| | |
+|---|---|
+| **Verificado rodando** | `gradlew build` → **530 unitários, 0 falhas**; `runGametest` → **202 de 202, três rodadas** |
+| **O que ainda não é prova** | a arena tem oito blocos e a mina de verdade desce vinte. O que se provou é que **a mecânica funciona numa escada real**; a distância continua sem teste |
+| **Estado do E33** | ✅ fechado na bateria · 🔒 **falta a sessão de jogo** |
 
 ### 2026-08-28 — a frente da galeria passou a ser lida do mundo
 
@@ -1160,7 +1198,8 @@ conferido no volume · árvore grande deixando de ser recusada.
 
 | | Erro | Estado |
 |---|---|---|
-| **E33** | **O mineiro não cavou um bloco em sete sessões.** Ele **entra** na mina desde 08-28 — chegou ao degrau 7 —, e para no fim da escada de verdade | **Medido a fundo, cinco defeitos reais consertados no caminho, e nenhum era a causa sozinho:** mobília da boca no primeiro degrau; degrau seguinte diagonal e invisível para a busca de faces; cursor marchando por dentro da rocha; duas contas de distância; duas contas de "cabe um aldeão". O último conserto — a frente da galeria lida do mundo — é de 08-28 e **não foi visto**. É o mesmo sintoma da [issue #4297 do MineColonies](https://github.com/ldtteam/minecolonies/issues/4297), que eles resolveram trocando a navegação inteira |
+| ~~**E33**~~ | ~~O mineiro não cavou um bloco em sete sessões~~ | ✅ **Fechado na bateria em 08-28.** Três testes em rocha maciça provam que ele cava a escada, desce cavando, e conserta a fronteira adiantada do save. Faltava a arena ser uma mina — todas as outras eram um piso de terra plano. **Falta ver em jogo** |
+| **E33-a** | **O mineiro não cavou um bloco em sete sessões.** Ele **entra** na mina desde 08-28 — chegou ao degrau 7 —, e para no fim da escada de verdade | **Medido a fundo, cinco defeitos reais consertados no caminho, e nenhum era a causa sozinho:** mobília da boca no primeiro degrau; degrau seguinte diagonal e invisível para a busca de faces; cursor marchando por dentro da rocha; duas contas de distância; duas contas de "cabe um aldeão". O último conserto — a frente da galeria lida do mundo — é de 08-28 e **não foi visto**. É o mesmo sintoma da [issue #4297 do MineColonies](https://github.com/ldtteam/minecolonies/issues/4297), que eles resolveram trocando a navegação inteira |
 | **E34** | **Túnel cavado pelo jogador confunde a frente da galeria.** Um bolsão iluminado, desligado da escada, parecia frente | **Foi a causa do travamento de 08-28, 00:14.** O recuo passo a passo aceitava qualquer posição de onde desse para bater. Contornado ao ler a frente do mundo em ordem; o mod **ainda não distingue** o que ele cavou do que o jogador cavou |
 | **E32** | **O mineiro não entra na própria escada quando começa do lado errado.** Vizinho pisável existe, o `approachTo` aponta para ele, e o aldeão continua estacionado a 4 blocos com `0/0 ticks` | **Medido, não consertado.** Era 20% das rodadas antes de a boca ser fixada no teste; agora a bateria não o exercita mais, e ele **continua em produção**. Descartado por sonda: não é falta de vizinho pisável — o lote vermelho não tinha uma linha sequer de `sem vizinho pisavel`. A suspeita é a navegação recusar descer no buraco de um bloco de largura, e é **suspeita, não diagnóstico**. O modelo de movimento supõe que o mineiro sempre alcança o alvo, e a geometria da mina não garante isso: enquanto o alcance era medido no plano, a suposição nunca era testada |
 | ~~**E30**~~ | ~~A galeria engoliu os dois mineiros~~ | ✅ **Fechado em 08-27** — era o alcance medido no plano. Ver a entrada no topo |

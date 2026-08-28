@@ -1713,6 +1713,270 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
+     * O E33: o mineiro cava a escada dentro da rocha — 2026-08-28.
+     *
+     * <p><b>Este teste faltava, e é por isso que a bateria ficava verde
+     * com o jogo quebrado.</b> Todos os outros testes do mineiro montam
+     * um <b>piso de terra plano</b> e plantam uma pedra nele. Numa arena
+     * assim não há escada, não há teto, não há degrau diagonal e não há
+     * frente de galeria — nada do que o mundo de verdade tem, e nada do
+     * que quebrou sete sessões seguidas.
+     *
+     * <p>Aqui a arena é <b>rocha maciça</b>, com um bolsão só na boca. O
+     * que se afirma é a coisa que nunca foi provada em lugar nenhum:
+     * <b>o mineiro tira blocos da escada, em ordem, descendo.</b>
+     *
+     * <p>A escada cabe: cinco degraus a partir de uma boca em
+     * {@code 6,5,4} descendo para oeste ficam dentro dos oito blocos da
+     * arena.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_e33",
+            tickLimit = 400)
+    public void theMinerDigsTheStaircaseThroughSolidRock(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        // Rocha maciça, e não um piso de terra: é a diferença entre esta
+        // bateria e o mundo do jogador.
+        for (int x = 0; x <= 7; x++) {
+            for (int y = 0; y <= 7; y++) {
+                for (int z = 0; z <= 7; z++) {
+                    context.setBlockState(
+                            new BlockPos(x, y, z), Blocks.STONE.getDefaultState());
+                }
+            }
+        }
+
+        BlockPos mouth = new BlockPos(6, 5, 4);
+
+        // O bolsão da boca: onde o aldeão cabe de pé, e o baú ao lado.
+        context.setBlockState(mouth, Blocks.AIR.getDefaultState());
+        context.setBlockState(mouth.up(), Blocks.AIR.getDefaultState());
+        context.setBlockState(new BlockPos(7, 6, 4), Blocks.AIR.getDefaultState());
+        context.setBlockState(new BlockPos(7, 5, 4), Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(7, 5, 4)));
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, mouth);
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        owned.owning(villager.getUuid());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(), TaskType.COLLECT_STONE, TaskPriority.PRODUCTION,
+                ResourceType.COBBLESTONE, 16);
+
+        task.reserveFor(villager.getUuid());
+
+        // A boca posta à mão: o lado da descida sai do id da colônia, que
+        // é sorteado, e um teste não pode depender de sorte.
+        VillageColonyMod.MINES.restore(Mine.restore(
+                colony.id(),
+                MineShaft.from(MinecraftTypeAdapter.toColonyPos(
+                        context.getAbsolutePos(mouth)), Side.WEST),
+                0));
+
+        MinerWork.run(world, colony);
+
+        context.runAtTick(360, () -> {
+            try {
+                // O primeiro degrau: um bloco à frente, na altura da boca.
+                context.assertTrue(
+                        context.getBlockState(new BlockPos(5, 5, 4)).isAir(),
+                        "o primeiro degrau da escada continua fechado — "
+                                + "o mineiro não cavou nada");
+
+                // E a cabeça dele, que é o que a escada de três abriu.
+                context.assertTrue(
+                        context.getBlockState(new BlockPos(5, 6, 4)).isAir(),
+                        "o degrau saiu sem altura para o aldeão passar");
+
+                int stone = ChestInventoryReader
+                        .read(world, context.getAbsolutePos(new BlockPos(7, 5, 4)))
+                        .amountOf(ResourceType.COBBLESTONE);
+
+                context.assertTrue(
+                        stone > 0,
+                        "a pedra saiu do mundo e não chegou ao baú");
+            } finally {
+                owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * A mina do save, com a fronteira adiantada, volta a cavar —
+     * o E33 como ele apareceu no mundo do autor.
+     *
+     * <p><b>É a forma exata do defeito.</b> O cursor marchou por dentro
+     * da rocha enquanto o mineiro não alcançava nada, o número foi para o
+     * save, e a mina ficou apontando dezenas de posições à frente do
+     * túnel de verdade. De lá nada é alcançável, e sete sessões
+     * terminaram com zero blocos.
+     *
+     * <p>Aqui a mina entra com a fronteira no meio da rocha fechada e
+     * <b>nada aberto</b>. O que se afirma é que ela se conserta sozinha:
+     * a frente é lida do mundo, e o mineiro cava o primeiro degrau.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_e33",
+            tickLimit = 400)
+    public void aMineWhoseCursorRanAheadDigsAgain(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        for (int x = 0; x <= 7; x++) {
+            for (int y = 0; y <= 7; y++) {
+                for (int z = 0; z <= 7; z++) {
+                    context.setBlockState(
+                            new BlockPos(x, y, z), Blocks.STONE.getDefaultState());
+                }
+            }
+        }
+
+        BlockPos mouth = new BlockPos(6, 5, 4);
+
+        context.setBlockState(mouth, Blocks.AIR.getDefaultState());
+        context.setBlockState(mouth.up(), Blocks.AIR.getDefaultState());
+        context.setBlockState(new BlockPos(7, 6, 4), Blocks.AIR.getDefaultState());
+        context.setBlockState(new BlockPos(7, 5, 4), Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(7, 5, 4)));
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, mouth);
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        owned.owning(villager.getUuid());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(), TaskType.COLLECT_STONE, TaskPriority.PRODUCTION,
+                ResourceType.COBBLESTONE, 16);
+
+        task.reserveFor(villager.getUuid());
+
+        // A fronteira do save, adiantada e mentirosa: nada disso foi
+        // aberto no mundo.
+        VillageColonyMod.MINES.restore(Mine.restore(
+                colony.id(),
+                MineShaft.from(MinecraftTypeAdapter.toColonyPos(
+                        context.getAbsolutePos(mouth)), Side.WEST),
+                MineShaft.CARVED + 64));
+
+        MinerWork.run(world, colony);
+
+        context.runAtTick(360, () -> {
+            try {
+                context.assertTrue(
+                        context.getBlockState(new BlockPos(5, 5, 4)).isAir(),
+                        "a mina ficou presa na fronteira que o save trouxe — "
+                                + "é o E33 como ele apareceu em jogo");
+            } finally {
+                owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * E ele desce: cava o degrau que não se alcança da boca.
+     *
+     * <p>A segunda metade, e a que separa <i>cavar</i> de <i>descer</i>.
+     * O degrau 4 fica a 4,7 blocos da boca — fora do braço de quatro. Se
+     * ele sair, o aldeão andou escada abaixo, que é o que sete sessões
+     * de jogo não conseguiram mostrar.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_e33",
+            tickLimit = 600)
+    public void theMinerWalksDownTheStaircaseAsItDigs(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        for (int x = 0; x <= 7; x++) {
+            for (int y = 0; y <= 7; y++) {
+                for (int z = 0; z <= 7; z++) {
+                    context.setBlockState(
+                            new BlockPos(x, y, z), Blocks.STONE.getDefaultState());
+                }
+            }
+        }
+
+        BlockPos mouth = new BlockPos(6, 5, 4);
+
+        context.setBlockState(mouth, Blocks.AIR.getDefaultState());
+        context.setBlockState(mouth.up(), Blocks.AIR.getDefaultState());
+        context.setBlockState(new BlockPos(7, 6, 4), Blocks.AIR.getDefaultState());
+        context.setBlockState(new BlockPos(7, 5, 4), Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(7, 5, 4)));
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, mouth);
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        owned.owning(villager.getUuid());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(), TaskType.COLLECT_STONE, TaskPriority.PRODUCTION,
+                ResourceType.COBBLESTONE, 32);
+
+        task.reserveFor(villager.getUuid());
+
+        VillageColonyMod.MINES.restore(Mine.restore(
+                colony.id(),
+                MineShaft.from(MinecraftTypeAdapter.toColonyPos(
+                        context.getAbsolutePos(mouth)), Side.WEST),
+                0));
+
+        MinerWork.run(world, colony);
+
+        context.runAtTick(560, () -> {
+            try {
+                context.assertTrue(
+                        context.getBlockState(new BlockPos(2, 2, 4)).isAir(),
+                        "o degrau 4 continua fechado — ele cava da boca e não desce");
+            } finally {
+                owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
      * O que é tesouro e o que não é — a Regra 30, decidida pelo autor.
      *
      * <p>O baú da boca guarda <b>todo minério menos carvão</b>. O carvão
