@@ -94,6 +94,36 @@ A prioridade é
 
 # 4. Roadmap Geral
 
+## Onde o projeto está — 2026-08-28
+
+Este arquivo é o **plano**; o estado de verdade vive no
+[`README.md`](README.md) e a lista canônica de pendências no
+[`TODO.md`](TODO.md). O quadro abaixo é só a régua deste plano.
+
+```text
+v0.1 Fundação        ✅ feito
+v0.2 Colônia         ✅ feito, verificado em jogo
+v0.3 Trabalhadores   ✅ feito, verificado em jogo — as SETE profissões
+                        buscam recurso e guardam no próprio baú
+v0.4 Recursos        ✅ feito — madeira, pedra, lã, areia, minério, lavoura
+                        ⚠️ o elo da areia nunca começou em jogo
+v0.5 Produção        ✅ feito, verificado em jogo — tábua, tocha, vidraça,
+                        tronco descascado, fundição
+v0.6 Construção      ✅ verificado em jogo em 2026-08-19
+                        ⚠️ uma casa por bioma enquanto a Regra 28 valer
+v0.7 Expansão        🔨 em andamento — a rua cresce, o lote é achado por
+                        índice, e a vila levanta a casa seguinte
+v1.0 MVP Completo    🔒 falta a sessão em que a vila roda sozinha do
+                        começo ao fim sem o jogador
+```
+
+**A ressalva que este projeto não omite:** *coberto por teste* e *visto
+funcionando em jogo* são coisas diferentes, e as duas aparecem separadas
+em toda lista. O maior item aberto hoje é o **mineiro, que não cavou um
+bloco em sete sessões** — ver o README.
+
+---
+
 ```text
 v0.1 Fundação
 

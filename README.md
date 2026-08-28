@@ -104,10 +104,38 @@ E o fabricante passou a fazer três dessas: ele **descasca tronco**,
 monta **tocha** e monta **vidraça**, quando os materiais estiverem nos
 baús da vila.
 
-🌾 **O fazendeiro** tem nome, enxada e baú — e nenhum trabalho ainda.
+🌾 **O fazendeiro** colhe a lavoura madura, **replanta com a semente da
+própria colheita** e guarda a comida no baú dele. Ele procura do centro
+da vila para fora, e só toca no que está pronto — colher verde devolve a
+semente e mais nada.
+
+Quem diz se está madura é o **bloco**, e não uma lista escrita no mod:
+vale para trigo, cenoura, batata e beterraba, e para o que um datapack
+plantar depois.
 
 Cada um ganha um nome sobre a cabeça e um quadro pregado no baú, para
 você saber de relance quem é quem.
+
+---
+
+### As sete profissões, o que fazem e o que falta
+
+**Todas as sete buscam recurso e guardam no próprio baú** desde
+2026-08-27 — o fazendeiro era a última sem trabalho nenhum.
+
+| Profissão | O que já faz | O que falta |
+|---|---|---|
+| 🪓 **Lenhador** | Acha árvore, derruba bloco a bloco no tempo do machado de ferro, replanta a muda, guarda no seu baú. Reconhece árvore grande | Não escolhe espécie por necessidade; não corta a copa que fica pendurada |
+| ⛏️ **Mineiro** | Abre a boca da mina, mobilia com baú e lanterna, desce em escada de três blocos por degrau, abre duas salas de 7×4 e uma galeria sem fim. Segue veio de minério e abre degrau ao descer. Vira a galeria em barreira. Raspa afloramento quando a mina não tem onde nascer | **Não foi visto cavando em jogo** — ver o quadro de falhas. Dois mineiros dividem a mesma escada. Sem teto de inventário |
+| 🐑 **Pastor** | Acha ovelha adulta e lanosa, tosquia, guarda a lã da cor do rebanho | Não cria rebanho, não alimenta, não separa por cor |
+| 🔥 **Fundidor** | Funde pela receita do próprio jogo, sem forno no mundo: areia vira vidro, ferro cru vira lingote, arenito vira arenito liso | **Depende de a cadeia da areia começar** — o elo que ainda não fecha |
+| 🪚 **Fabricante** | Tira tronco do baú e faz tábua pela receita do jogo, até metade do estoque. Descasca tronco, monta tocha e monta vidraça | Porta, cama, janela e baú por estoque, sem depender de haver obra (Regra 10) |
+| 🏠 **Construtor** | Levanta a casa do jogo um bloco por segundo, na beira de rua existente, porta virada para a rua, piso no nível dela. Arranca o mato, tira cada peça do baú, espera o que falta | Uma casa por bioma enquanto a Regra 28 valer. Não desiste de obra travada |
+| 🌾 **Fazendeiro** | Acha lavoura madura no raio da vila, colhe, replanta com a semente da colheita, guarda no seu baú | **Não ara terra nova nem planta em campo vazio.** Não faz pão, não escolhe cultura |
+
+**O que nenhuma delas faz ainda:** pedir o item que lhe falta em vez de
+travar (o `ItemRequest`), e defender a vila. As duas estão na lista de
+etapas.
 
 ---
 
@@ -222,8 +250,12 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | A casa termina sem o jogador encher baú | ✅ verificado em 2026-08-26 — **com 19 peças da barreira de teste** |
 | O pastor tosquia | ✅ verificado em jogo em 2026-08-26 |
 | Árvore grande reconhecida como árvore | ✅ **corrigido**, e a causa veio de jogo |
-| O mineiro desce a escada em vez de furar de cima | 🧪 corrigido em 08-27, **nunca visto em jogo** |
-| A varredura de lote acaba num ciclo, não em dezessete | 🧪 corrigido em 08-27, **nunca visto em jogo** |
+| O índice de ruas e a varredura pela metade atravessam o fechar do mundo | ✅ **verificado em jogo** em 2026-08-27 — `1 road indexes` gravado, 17 passagens, uma volta completa |
+| A varredura de lote acaba num ciclo, não em dezessete | ✅ **verificado em jogo** em 2026-08-27 |
+| O baú marcado é de quem a marca diz | 🧪 coberto por teste, nunca visto em jogo |
+| O fazendeiro colhe, replanta e guarda | 🧪 coberto por teste, **a vila não tinha lavoura madura** na sessão |
+| O mineiro entra na mina em vez de ficar na superfície | 🟡 **meio visto**: em 08-28 ele saiu de `y=66` e chegou ao degrau 7 |
+| **O mineiro cavando um bloco que seja** | ⛔ **sete sessões, zero blocos** — ver o quadro de falhas |
 | O fundidor assando — ele espera **areia**, e a cadeia dela nunca começou | ⛔ elo sem entrada |
 | A casa de planície é a casa do jogo | 🧪 coberto por teste, nunca visto em jogo |
 | O construtor fabrica o que falta para a obra | 🧪 coberto por teste, nunca visto em jogo |
@@ -261,10 +293,11 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | **O centro da colônia só anda pela sonda** — varredura do jogador não o arrasta mais | ✅ **verificado em jogo** em 2026-08-22 |
 | **O registro de aldeão segue as camas vistas**, e não o centro antigo | 🧪 coberto por teste, nunca visto em jogo |
 | **A barreira de teste grita** — cada peça riscada nomeia a cadeia que falhou | 🧪 coberto por teste, nunca visto em jogo |
-| Agricultura e defesa | ⬜ não começado |
+| **A lavoura** — o fazendeiro colhe, replanta e guarda | 🧪 coberto por teste, a vila não tinha lavoura madura na sessão |
+| Defesa | ⬜ não começado |
 
 ```text
-476 testes unitários  ·  171 testes de jogo  ·  ./gradlew build
+530 testes unitários  ·  199 testes de jogo  ·  0 falhas  ·  ./gradlew build
 ```
 
 **O que 🧪 quer dizer aqui.** A bateria roda o caso e ele passa. Não quer
@@ -298,9 +331,9 @@ a recusar, e a correção ainda não foi vista em jogo.
 
 | | Etapa | Estado |
 |---|---|---|
-| **1** | **Rodar em jogo.** Continua sendo o primeiro item, e agora com um motivo preciso: **três das últimas quatro sessões morreram antes de a vila construir qualquer coisa**, presas na varredura de lote. O conserto dela é de 08-27 e ninguém o viu funcionando — nem ele, nem o mineiro que passou a descer a escada, nem a picareta certa na mão | 🔒 exige sessão de jogo |
-| **1** | **Gravar o índice de ruas em disco.** É o que decide se a alínea acima é possível: os mapas são estáticos e limpos ao subir o servidor, então **toda entrada no mundo remede as 16.641 colunas do zero**, e é isso que matou as duas sessões curtas | 🔨 medido, por escrever |
-| **1** | **O E32 — o aldeão não entra na própria escada.** Em 20% das geometrias ele fica a quatro blocos da pedra com `0/0 ticks`. Sem diagnóstico: descartado por sonda que fosse falta de vizinho pisável | 🔬 medido, sem causa |
+| **1** | **O mineiro cavar um bloco.** Sete sessões, zero. Cinco defeitos reais caíram no caminho e **nenhum era a causa sozinho**; o último conserto — a frente da galeria lida do mundo — é de 08-28 e não foi visto | 🔒 exige sessão de jogo |
+| ✅ | ~~Gravar o índice de ruas em disco~~ | Feito em 08-27, e **verificado em jogo**: `1 road indexes` gravado |
+| ✅ | ~~O fazendeiro~~ | Feito em 08-27. As sete profissões buscam e guardam |
 | **2** | **Implementar a ADR-008 — orientação de blocos.** É a que muda o que se vê: cama, escada e tocha param de sair todas para o mesmo lado. A decisão está escrita; falta atravessar o `Side` pelo `BlueprintBlock` | 🔨 decidido, por escrever |
 | **3** | **Quebrar os seis arquivos acima de 500 linhas.** `VillageDetectionHandler` tem 982 e é o pior | 🔨 pronto para fazer |
 | **4** | **Regra 16 — espaço em volta da casa.** A metade da altura está feita; falta a distância mínima e máxima | 🔨 meia feita |
@@ -309,7 +342,8 @@ a recusar, e a correção ainda não foi vista em jogo.
 | **7** | **Regra 10, metade do fabricante.** Porta, janela, cama e baú por estoque, sem depender de haver obra | 🔨 depende do `ItemRequest` |
 | **8** | **Envelhecimento de tarefa**, para que a mais antiga não seja esquecida | 🔨 pronto para fazer |
 | **9** | **Implementar a ADR-007 — fusão de colônias.** Decidida por escrito; nada dispara enquanto uma obra não encostar na outra | 🔨 decidido, por escrever |
-| **10** | **O fazendeiro e a defesa.** Duas profissões que o modelo prevê e ninguém escreveu | ⬜ não começado |
+| **10** | **A defesa.** A profissão que o modelo prevê e ninguém escreveu. O fazendeiro saiu desta linha em 08-27 | ⬜ não começado |
+| **11** | **O fazendeiro arar e plantar.** Hoje ele só colhe o que já existe; campo vazio continua vazio | 🔨 base pronta |
 
 ### O que precisa ser arrumado
 
@@ -319,8 +353,8 @@ ficam os que mudam o que se vê no jogo.
 
 | | O que | Por quê |
 |---|---|---|
-| 🔴 | **O E32 — o mineiro não entra na própria mina** | Em 20% das geometrias, vizinho pisável existe e ele fica parado a quatro blocos. Enquanto o alcance era medido no plano isso nunca aparecia, porque ele furava de longe |
-| 🔴 | **A primeira varredura de cada sessão custa 8,5 minutos** | O índice de ruas resolve o custo **dentro** da sessão, mas não sobrevive a ela: mapas estáticos, limpos ao subir o servidor |
+| 🔴 | **O mineiro não cavou um bloco em sete sessões** | Cinco defeitos reais foram achados e corrigidos no caminho — mobília na escada, degrau diagonal invisível, cursor marchando por dentro da rocha, duas contas de distância, duas de "cabe um aldeão". **Nenhum era a causa sozinho.** O que se sabe hoje: ele **entra** na mina (chegou ao degrau 7 em 08-28) e para lá |
+| 🟠 | **O túnel que o jogador cava à mão confunde o mod** | Foi o que travou a mina do autor: um bolsão iluminado, desligado da escada, parecia frente de galeria. A frente passou a ser lida do mundo em 08-28, mas o mod ainda não distingue o que ele cavou do que o jogador cavou |
 | 🔴 | **A vila fica presa numa obra só** | O planejador não sabe desistir. O catálogo do jogo já tem fazenda, curtume, ferraria — e a Regra 28 filtra tudo para uma casa por bioma |
 | 🟠 | **O relatório da barreira afirma o que não mediu** | Numa sessão com **zero obras** ele disse `covered for nothing — Rule 28 can go`. Ele só olha se pulou peça, e não se houve construção |
 | 🟠 | **Dois mineiros dividem a mesma escada** | A reserva é por tarefa, não por mina: os dois deram `could not reach the stone` no mesmo tique |
@@ -410,9 +444,112 @@ sempre atual — o enunciado das 29 regras, uma a uma — em
 ---
 ## Último ciclo de desenvolvimento
 
-**2026-08-27** — a primeira mina da história do mod abriu, a primeira
-casa terminou sem o jogador encher baú, e **as duas coisas expuseram
-defeitos que só apareceriam ali**.
+**2026-08-27 e 28** — vinte e três commits, **oito sessões de jogo**, e
+um defeito que precisou de todas elas. As sete profissões passaram a
+trabalhar; o mineiro ainda não cavou.
+
+### O que ficou funcionando, e verificado em jogo
+
+| | |
+|---|---|
+| **O índice de ruas atravessa o fechar do mundo** | A varredura de lote custava 16.641 colunas a cada entrada no mundo — dezessete ciclos, 8,5 minutos, e as sessões curtas morriam dentro dela. Índice **e** cursor vão para o disco. Confirmado em jogo: `17 passes over 16641 columns, 1 complete rounds`, `1 road indexes` gravado |
+| **A pedra ganhou piso de estoque** | O mineiro só tinha tarefa quando havia obra aberta, e a obra dependia da varredura. Na prática ele quase nunca trabalhava — 19 ciclos com dois mineiros capazes e uma linha só: *"no task open for it"* |
+| **O baú marcado é de quem a marca diz** | O quadro pregado no baú existia desde 08-12 e era **decoração**: o mod o escrevia e nunca o lia. Baú era escolhido pelo mais perto da cama, e madeira ia parar no baú do fazendeiro |
+| **As sete profissões buscam e guardam** | O fazendeiro era só uma etiqueta — enxada, baú, placa e nenhum trabalho. Faltava a corrente inteira: recurso, produção, tarefa e meta |
+| **A escada da mina dá para descer** | Ela abria dois blocos por degrau, que é quanto o aldeão ocupa **parado**. Descer é andar antes de cair, e a cabeça batia no teto do degrau seguinte |
+
+### O defeito que levou oito sessões, e ainda está aberto
+
+**O mineiro não cavou um bloco.** Cinco defeitos reais caíram no
+caminho, e **nenhum era a causa sozinho**:
+
+```text
+a mobília da boca ficava no primeiro degrau  →  ele cavava a própria lanterna
+o degrau seguinte é DIAGONAL                 →  a busca só olhava as seis faces
+o cursor marchava por dentro da rocha        →  o mod dizia ter cavado, e não tinha
+duas contas de distância                     →  o log dizia "chegou" sobre quem não chegou
+duas contas de "cabe um aldeão"              →  o escolhedor e o relator discordavam
+```
+
+**O que os instrumentos foram descobrindo, sessão a sessão:** que a
+varredura não reiniciava (ela só acabava antes); que ele estava a 4,7 e
+não a 4; que ele estava **na superfície**, em `y=66`, vinte e um blocos
+acima da galeria; e por fim que ele **entrou** — chegou ao degrau 7 — e
+parou mirando uma lanterna que o próprio jogador tinha posto num túnel
+cavado à mão.
+
+Cada instrumento foi construído antes do conserto, e cada um encurtou a
+busca. **Nenhum palpite sobreviveu ao log.**
+
+### A pesquisa: o mesmo sintoma no MineColonies
+
+Procurando projetos de aldeão que ajudassem a entender, o
+[**MineColonies**](https://github.com/ldtteam/minecolonies) tem o
+sintoma registrado com as mesmas palavras —
+[issue #4297](https://github.com/ldtteam/minecolonies/issues/4297):
+
+> *o mineiro fica parado na superfície acima do alvo, numa mina grande;
+> sem bloqueio e sem falta de item. Cavar direto para baixo à mão
+> resolve até ele precisar voltar.*
+
+É exatamente o que aconteceu aqui, **incluindo o remendo manual** — o
+autor deste mod cavou até a galeria para ver o que havia lá.
+
+A resposta deles foi trocar a navegação do Minecraft por um **A\*
+próprio, multi-thread, com cache de chunks**
+([PerViamInvenire](https://github.com/ldtteam/PerViamInvenire)). Cedo
+demais para este projeto. O que se aproveitou foi a **disciplina** que
+aquilo impõe:
+
+- **nunca mandar o trabalhador para um lugar de onde ele não consegue
+  trabalhar** — virou a busca de apoio por distância, e a frente da
+  galeria lida do mundo;
+- **caminhar por pernas curtas** em vez de pedir um destino que a
+  navegação não sabe traçar — virou a entrada pela boca da mina;
+- **quem colhe, replanta** — virou a regra do fazendeiro.
+
+### Os testes
+
+```text
+530 testes unitários     0 falhas
+199 testes de jogo       0 falhas
+```
+
+**Falsos verdes e falsos vermelhos que a bateria pegou**, e valem tanto
+quanto os consertos:
+
+- um teste de aproximação **passou sem o conserto**, porque a arena não
+  tinha teto e o aldeão achava lugar em cima da coluna — numa mina de
+  verdade aquilo é rocha;
+- dois testes de "não há onde ficar de pé" falharam **por estarem
+  certos**: com alcance de 4, a superfície da rocha e o chão da arena
+  entram na conta;
+- um conserto do veio foi **revertido** por eu ter lido a diagonal da
+  escada como um veio descendo — os testes daquela versão afirmavam uma
+  geometria que o `OreVein` não produz;
+- `theMineTheSaveBroughtIsNotDugAgain` **virou do avesso**: ele afirmava
+  que a fronteira gravada era obedecida, e foi isso que quebrou a mina do
+  autor. Passou a afirmar que ela é conferida contra o mundo.
+
+### O que permanece falhando
+
+| | |
+|---|---|
+| 🔴 | **O mineiro não cavou nenhum bloco em jogo.** Entra na mina desde 08-28, e para no fim da escada de verdade |
+| 🟠 | **Túnel cavado pelo jogador confunde a frente da galeria.** O mod ainda não distingue o que ele abriu do que você abriu |
+| 🟠 | **Dois mineiros dividem a mesma escada.** A reserva é por tarefa, não por mina |
+| 🟠 | **O piso de pedra e de comida ignoram o espaço do armazém.** Vale para lã, vidro e carvão também |
+| 🟠 | **`ColonySavedData.sync` tem sete parâmetros**, numa cadeia de sobrecargas 2→4→5→6→7 |
+| 🟡 | **O fazendeiro não ara nem planta** — só colhe o que já existe |
+| 🟡 | **Rua feita à mão pelo jogador fica invisível ao índice** até o centro andar mais de 20 blocos |
+
+---
+
+### Ciclo anterior — 2026-08-27, manhã
+
+**A primeira mina da história do mod abriu**, a primeira casa terminou
+sem o jogador encher baú, e **as duas coisas expuseram defeitos que só
+apareceriam ali**.
 
 **O que a sessão de jogo mostrou**
 
