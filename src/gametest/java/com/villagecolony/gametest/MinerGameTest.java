@@ -901,7 +901,7 @@ public class MinerGameTest implements FabricGameTest {
             context.setBlockState(ROCK.offset(side).down(), Blocks.STONE.getDefaultState());
         }
 
-        Optional<BlockPos> chest = MineMouth.furnish(world, mouth);
+        Optional<BlockPos> chest = MineMouth.furnish(world, mouth, Direction.SOUTH);
 
         context.assertTrue(chest.isPresent(), "a boca da mina não ganhou baú");
 
@@ -919,7 +919,7 @@ public class MinerGameTest implements FabricGameTest {
 
         context.assertTrue(lantern, "a boca da mina ficou sem lanterna");
 
-        Optional<BlockPos> again = MineMouth.furnish(world, mouth);
+        Optional<BlockPos> again = MineMouth.furnish(world, mouth, Direction.SOUTH);
 
         context.assertTrue(
                 again.isPresent() && again.get().equals(chest.get()),
@@ -959,7 +959,7 @@ public class MinerGameTest implements FabricGameTest {
         // Mobiliada pela metade: o baú está lá, a lanterna não.
         context.setBlockState(ROCK.offset(Direction.NORTH), Blocks.CHEST.getDefaultState());
 
-        MineMouth.furnish(world, mouth);
+        MineMouth.furnish(world, mouth, Direction.SOUTH);
 
         boolean lantern = false;
 
@@ -993,9 +993,9 @@ public class MinerGameTest implements FabricGameTest {
             context.setBlockState(ROCK.offset(side).down(), Blocks.STONE.getDefaultState());
         }
 
-        MineMouth.furnish(world, mouth);
-        MineMouth.furnish(world, mouth);
-        MineMouth.furnish(world, mouth);
+        MineMouth.furnish(world, mouth, Direction.SOUTH);
+        MineMouth.furnish(world, mouth, Direction.SOUTH);
+        MineMouth.furnish(world, mouth, Direction.SOUTH);
 
         int lanterns = 0;
 
@@ -1008,6 +1008,67 @@ public class MinerGameTest implements FabricGameTest {
         }
 
         context.assertTrue(lanterns == 1, "a boca ficou com " + lanterns + " lanternas");
+
+        context.complete();
+    }
+
+    /**
+     * A mobília da boca não entra na escada — visto no log de 21:39.
+     *
+     * <p>O primeiro degrau é {@code mouth.offset(descent)}, na mesma
+     * altura da boca. O {@code freeSpotNear} percorria os quatro lados e
+     * o pegava como qualquer outro — e na sessão das 21:39 o lampião foi
+     * parar exatamente ali:
+     *
+     * <pre>
+     * Mine mouth at 732, 63, 898 got its lantern at 731, 63, 898
+     * miners: 68f4dcde digging Lanterna at 731, 63, 898, 48 blocks away
+     * </pre>
+     *
+     * <p>O mineiro recebeu ordem de cavar a própria lanterna. E desde que
+     * a mobília virou idempotente, o mod a repõe na passagem seguinte:
+     * põe, o mineiro quebra, põe de novo — para sempre.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+            tickLimit = 20)
+    public void theMouthFurnitureStaysOutOfTheStaircase(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        BlockPos mouth = context.getAbsolutePos(ROCK);
+
+        for (Direction side : Direction.Type.HORIZONTAL) {
+            context.setBlockState(ROCK.offset(side).down(), Blocks.STONE.getDefaultState());
+        }
+
+        MineMouth.furnish(world, mouth, Direction.WEST);
+
+        BlockPos firstStep = mouth.offset(Direction.WEST);
+
+        context.assertTrue(
+                world.getBlockState(firstStep).isAir(),
+                "a mobília ocupou o primeiro degrau: "
+                        + world.getBlockState(firstStep).getBlock());
+
+        context.assertFalse(
+                world.getBlockState(firstStep.down()).isOf(Blocks.CHEST)
+                        || world.getBlockState(firstStep.down()).isOf(Blocks.LANTERN),
+                "a mobília ocupou a coluna da descida um abaixo");
+
+        // E as duas peças continuam aparecendo, nos três lados que sobram.
+        boolean chest = false;
+        boolean lantern = false;
+
+        for (Direction side : Direction.Type.HORIZONTAL) {
+            for (int drop = 0; drop <= 1; drop++) {
+                BlockPos at = mouth.offset(side).down(drop);
+
+                chest |= world.getBlockState(at).isOf(Blocks.CHEST);
+                lantern |= world.getBlockState(at).isOf(Blocks.LANTERN);
+            }
+        }
+
+        context.assertTrue(chest, "a boca ficou sem baú");
+        context.assertTrue(lantern, "a boca ficou sem lanterna");
 
         context.complete();
     }

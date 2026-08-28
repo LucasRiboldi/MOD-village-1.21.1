@@ -1,7 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-27, depois da sessão das 21:06 — a varredura
-fechou a volta, e o mineiro apareceu parado por um motivo de projeto.
+**Atualizado:** 2026-08-27, depois da sessão das 21:39 — o mineiro
+desceu de verdade, e a mobília da boca estava na frente dele.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -17,9 +17,9 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-510 testes unitários  ·  180 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+510 testes unitários  ·  181 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
-última sessão de jogo em 2026-08-27, 21:06  ·  a volta fechou, índice gravado
+última sessão de jogo em 2026-08-27, 21:39  ·  o mineiro cavou a escada
 ```
 
 > A contagem de jogo era 176 aqui e **175** no `runGametest`. Recontado
@@ -29,6 +29,42 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-27 — o lampião estava no primeiro degrau, e o mineiro cavava o próprio lampião
+
+**Três coisas se confirmaram em jogo na sessão das 21:39**, e as três
+eram ciclos anteriores esperando prova:
+
+```text
+miners: 68f4dcde looking for stone, wants cobblestone, 0 of 26   ← o piso de pedra
+Mine mouth at 732, 63, 898 got its lantern at 731, 63, 898       ← o lampião idempotente
+took 1 from 715,47,888 · 715,46,887 · 715,45,886 · 715,44,885    ← a escada de três
+```
+
+A última é a mais importante: um bloco para baixo e um para o lado por
+degrau, com mais de um bloco por coluna. **É a escada da Regra 29 sendo
+cavada**, e é a primeira vez que ela aparece num log.
+
+**E o defeito que isso desenterrou.** O primeiro degrau é
+`mouth.offset(descent)`, na mesma altura da boca — e o `freeSpotNear` o
+tratava como qualquer outro vizinho. O lampião foi parar exatamente ali:
+
+```text
+miners: 68f4dcde digging Lanterna at 731, 63, 898, 48 blocks away, stall 2399/2400
+Miner 68f4dcde could not reach the stone at 731, 63, 898 — task back to the queue
+```
+
+O mineiro recebeu ordem de cavar a própria lanterna, e queimou o guarda
+inteiro nela. **Pior: desde que a mobília virou idempotente (o ciclo
+anterior), o mod a reporia toda passagem** — põe, o mineiro quebra, põe
+de novo. A mobília saiu da coluna da descida; sobram três lados, e três
+bastam para duas peças.
+
+| | |
+|---|---|
+| **Fase vermelha** | `theMouthFurnitureStaysOutOfTheStaircase` |
+| **Verificado rodando** | `gradlew build` → **510 unitários, 0 falhas**; `runGametest` → **181 de 181** |
+| **O que eu errei no caminho** | li a diagonal `715,47,888 → 715,46,887` como um veio descendo e escrevi um conserto para ela. Era a **escada**, funcionando. Os dois testes daquele conserto caíram por afirmarem uma geometria que o `OreVein` não produz, e a metade especulativa foi revertida |
 
 ### 2026-08-27 — a pedra ganhou piso, e o mineiro deixou de esperar obra
 
@@ -822,6 +858,12 @@ risco por bioma (§22, §23) — o Nível 1 ainda não foi visto em jogo.
   jogo** na sessão das 21:06: 17 passagens, 16.641 colunas, uma volta
   completa e `1 road indexes` gravado. A próxima sessão abre com o índice
   na mão.
+- 🟠 **O veio pode descer reto, e disso não se sobe.** `OreVein.beside`
+  aceita as seis faces, inclusive a de baixo, e um poço de um bloco de
+  largura não se escala — aldeão não pula dois. **Não foi observado em
+  jogo**, e é dedução da leitura do código, não medida. A decisão do
+  autor está pendente: tirar a face de baixo do `beside` (perde minério
+  abaixo da galeria) ou abrir degrau ao descer.
 - 🟡 **O piso de pedra ignora o espaço do armazém.** Baú cheio continua
   pedindo pedra. Vale para lã, vidro e carvão também — é a família toda
   de metas de demanda, e nenhuma delas tem `room`.

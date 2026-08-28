@@ -54,10 +54,13 @@ public final class MineMouth {
      * <p>Chamada a cada passagem em que a mina existe, e silenciosa em
      * todas menos naquelas em que põe alguma coisa.
      *
+     * @param descent para que lado a escada desce. A mobília fica fora
+     *     dessa coluna — ver {@link #freeSpotNear}
      * @return onde está o baú da boca, ou vazio quando nenhum vizinho
      *     serve — encosta, água, ou chunk fora de memória
      */
-    public static Optional<BlockPos> furnish(ServerWorld world, BlockPos mouth) {
+    public static Optional<BlockPos> furnish(
+            ServerWorld world, BlockPos mouth, Direction descent) {
         if (chunkAt(world, mouth) == null) {
             // Nunca forçar carregamento de dentro do ciclo — §11.
             return Optional.empty();
@@ -66,7 +69,7 @@ public final class MineMouth {
         Optional<BlockPos> chest = chestAt(world, mouth);
 
         if (chest.isEmpty()) {
-            chest = placeChest(world, mouth);
+            chest = placeChest(world, mouth, descent);
         }
 
         if (chest.isEmpty()) {
@@ -75,14 +78,16 @@ public final class MineMouth {
             return Optional.empty();
         }
 
-        placeLanternIfMissing(world, mouth, chest.get());
+        placeLanternIfMissing(world, mouth, chest.get(), descent);
 
         return chest;
     }
 
     /** O baú da boca, recém-posto e marcado como do mineiro. */
-    private static Optional<BlockPos> placeChest(ServerWorld world, BlockPos mouth) {
-        Optional<BlockPos> spot = freeSpotNear(world, mouth, null);
+    private static Optional<BlockPos> placeChest(
+            ServerWorld world, BlockPos mouth, Direction descent) {
+
+        Optional<BlockPos> spot = freeSpotNear(world, mouth, null, descent);
 
         if (spot.isEmpty()) {
             return Optional.empty();
@@ -109,13 +114,13 @@ public final class MineMouth {
      * mod discordando do dono do mundo por nada.
      */
     private static void placeLanternIfMissing(
-            ServerWorld world, BlockPos mouth, BlockPos chest) {
+            ServerWorld world, BlockPos mouth, BlockPos chest, Direction descent) {
 
         if (lanternAt(world, mouth).isPresent()) {
             return;
         }
 
-        Optional<BlockPos> lamp = freeSpotNear(world, mouth, chest);
+        Optional<BlockPos> lamp = freeSpotNear(world, mouth, chest, descent);
 
         if (lamp.isEmpty()) {
             // Não cabe agora. A passagem seguinte tenta de novo, que é
@@ -171,16 +176,39 @@ public final class MineMouth {
     }
 
     /**
-     * Um vizinho da boca onde caiba coisa nova.
+     * Um vizinho da boca onde caiba coisa nova, fora da escada.
+     *
+     * <p><b>Fora da escada — visto no log de 2026-08-27, 21:39.</b> O
+     * primeiro degrau é {@code mouth.offset(descent)}, na mesma altura da
+     * boca, e este método o tratava como qualquer outro vizinho. O
+     * lampião foi parar exatamente ali:
+     *
+     * <pre>
+     * Mine mouth at 732, 63, 898 got its lantern at 731, 63, 898
+     * miners: 68f4dcde digging Lanterna at 731, 63, 898, 48 blocks away
+     * </pre>
+     *
+     * <p>O mineiro recebeu ordem de cavar a própria lanterna. E desde que
+     * a mobília virou idempotente, o mod a reporia na passagem seguinte:
+     * põe, o mineiro quebra, põe de novo. Sobram três lados, e três
+     * bastam para duas peças.
+     *
+     * <p>A coluna inteira sai, e não só o degrau: um bloco abaixo dele é
+     * onde o aldeão põe os pés ao descer.
      *
      * @param taken o lugar que a peça anterior ocupou, para a seguinte
      *     não disputar com ela; {@code null} na primeira
+     * @param descent para que lado a escada desce
      */
     private static Optional<BlockPos> freeSpotNear(
-            ServerWorld world, BlockPos mouth, BlockPos taken) {
+            ServerWorld world, BlockPos mouth, BlockPos taken, Direction descent) {
 
         for (int drop = 0; drop <= DROP; drop++) {
             for (Direction side : Direction.Type.HORIZONTAL) {
+                if (side == descent) {
+                    continue;
+                }
+
                 BlockPos at = mouth.offset(side).down(drop);
 
                 if (at.equals(taken) || !isGoodSpot(world, at)) {

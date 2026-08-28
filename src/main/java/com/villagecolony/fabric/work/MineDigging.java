@@ -350,7 +350,10 @@ public final class MineDigging {
      * faz nada quando o baú já está lá.
      */
     private static void furnishMouth(ServerWorld world, Mine mine) {
-        MineMouth.furnish(world, MinecraftTypeAdapter.toBlockPos(mine.shaft().entry()));
+        MineMouth.furnish(
+                world,
+                MinecraftTypeAdapter.toBlockPos(mine.shaft().entry()),
+                MinecraftTypeAdapter.toDirection(mine.shaft().descent()));
     }
 
     /**
