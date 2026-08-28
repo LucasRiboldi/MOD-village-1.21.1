@@ -80,7 +80,7 @@ public final class MinerWork {
      * para poder voltar a subir"</i>. Os degraus de dois blocos de altura
      * existem justamente para ele caber de pé lá dentro.
      */
-    private static final int REACH = 4;
+    static final int REACH = MinerReach.REACH;
 
     /**
      * A picareta de diamante, e é decisão do autor.
@@ -473,12 +473,15 @@ public final class MinerWork {
         SandGathering.forget(workerId);
     }
 
-    private static boolean isWithinReach(VillagerEntity villager, BlockPos target) {
-        double dx = villager.getX() - (target.getX() + 0.5);
-        double dy = villager.getY() - (target.getY() + 0.5);
-        double dz = villager.getZ() - (target.getZ() + 0.5);
+    static boolean isWithinReach(VillagerEntity villager, BlockPos target) {
+        return MinerReach.isWithinReach(
+                villager.getX(), villager.getY(), villager.getZ(), target);
+    }
 
-        return dx * dx + dy * dy + dz * dz <= REACH * REACH;
+    /** A distância deste aldeão até aquela pedra. */
+    static double distanceTo(VillagerEntity villager, BlockPos target) {
+        return MinerReach.distanceTo(
+                villager.getX(), villager.getY(), villager.getZ(), target);
     }
 
     private static boolean isOngoing(Task task) {

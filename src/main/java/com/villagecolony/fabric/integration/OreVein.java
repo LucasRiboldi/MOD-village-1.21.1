@@ -1,7 +1,10 @@
 package com.villagecolony.fabric.integration;
 
+import net.fabricmc.fabric.api.tag.convention.v2.ConventionalBlockTags;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.registry.tag.BlockTags;
+import net.minecraft.registry.tag.TagKey;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -44,23 +47,29 @@ public final class OreVein {
      * normalmente e recolher tudo o que cavar; seguir só a veia de dois
      * minérios era o mineiro passando ao lado de diamante sem ver.
      */
-    private static final Set<Block> ORE = Set.of(
-            Blocks.COAL_ORE,
-            Blocks.DEEPSLATE_COAL_ORE,
-            Blocks.COPPER_ORE,
-            Blocks.DEEPSLATE_COPPER_ORE,
-            Blocks.IRON_ORE,
-            Blocks.DEEPSLATE_IRON_ORE,
-            Blocks.GOLD_ORE,
-            Blocks.DEEPSLATE_GOLD_ORE,
-            Blocks.REDSTONE_ORE,
-            Blocks.DEEPSLATE_REDSTONE_ORE,
-            Blocks.LAPIS_ORE,
-            Blocks.DEEPSLATE_LAPIS_ORE,
-            Blocks.EMERALD_ORE,
-            Blocks.DEEPSLATE_EMERALD_ORE,
-            Blocks.DIAMOND_ORE,
-            Blocks.DEEPSLATE_DIAMOND_ORE);
+    /**
+     * O que é minério — perguntado ao jogo, e não escrito aqui.
+     *
+     * <p><b>Decisão do autor, 2026-08-27:</b> <i>"ele deve minerar todo
+     * tipo de minério"</i>. Havia aqui uma lista de dezesseis nomes, e
+     * ela era a regra de ouro da ADR-009 sendo desobedecida: <i>uma
+     * solução dessa forma deve ser questionada</i>. Cada minério novo —
+     * de outra versão, de um datapack, de outro mod — pedia uma linha, e
+     * até alguém escrevê-la o mineiro passava por cima dele como se
+     * fosse pedra.
+     *
+     * <p>{@code c:ores} é a etiqueta convencional que o próprio jogo
+     * mantém, e é o mesmo caminho da Regra 27: quem responde é o
+     * catálogo. Ela já traz os dezesseis do Overworld com as variantes
+     * de deepslate, mais quartzo e ouro do Nether e os escombros
+     * antigos, e passa a trazer sozinha o que vier depois.
+     *
+     * <p><b>O que isto não conserta</b>, e fica dito: a lista antiga já
+     * cobria todo minério de superfície do Overworld em 1.21. Quem
+     * ganha com a troca é o mundo com datapack e a versão seguinte — não
+     * a sessão de hoje.
+     */
+    private static final TagKey<Block> ORE = ConventionalBlockTags.ORES;
 
     /**
      * O carvão, que é minério e não é tesouro — Regra 30, 2026-08-22.
@@ -69,15 +78,14 @@ public final class OreVein {
      * fundidor o queima. Guardar carvão no baú da boca da mina seria
      * mandá-lo para longe de quem o usa.
      */
-    private static final Set<Block> COAL = Set.of(
-            Blocks.COAL_ORE, Blocks.DEEPSLATE_COAL_ORE);
+    private static final TagKey<Block> COAL = BlockTags.COAL_ORES;
 
     private OreVein() {
     }
 
     /** Se este bloco é minério que a colônia usa. */
     public static boolean isOre(BlockState state) {
-        return ORE.contains(state.getBlock());
+        return state.isIn(ORE);
     }
 
     /**
@@ -90,7 +98,7 @@ public final class OreVein {
      * consomem.
      */
     public static boolean isTreasure(BlockState state) {
-        return isOre(state) && !COAL.contains(state.getBlock());
+        return isOre(state) && !state.isIn(COAL);
     }
 
     /**

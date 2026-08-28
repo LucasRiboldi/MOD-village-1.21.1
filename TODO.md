@@ -1,6 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-27, depois de dar saída ao veio que desce.
+**Atualizado:** 2026-08-27, depois da sessão das 22:19 — o mineiro
+travou, e o relatório estava mentindo sobre onde ele estava.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -16,9 +17,9 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-510 testes unitários  ·  185 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+515 testes unitários  ·  187 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
-última sessão de jogo em 2026-08-27, 21:39  ·  o mineiro cavou a escada
+última sessão de jogo em 2026-08-27, 22:19  ·  a galeria andou 5 colunas e travou
 ```
 
 > A contagem de jogo era 176 aqui e **175** no `runGametest`. Recontado
@@ -28,6 +29,48 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-27 — o relatório do mineiro media uma coisa e o alcance media outra
+
+**A sessão das 22:19.** A galeria andou cinco colunas em quatro segundos
+— `722,44,878` a `727,45,878`, dois blocos por coluna, exatamente o
+túnel de dois de altura — e então os dois mineiros travaram:
+
+```text
+digging Pedra at 728, 44, 878, 4 blocks away, 5/6 ticks, stall 2219/2400
+```
+
+Quatro blocos, e o alcance é quatro: parecia que ele estava no lugar
+certo e não batia. **As duas frases mediam coisas diferentes.** O
+relatório usava `getBlockPos()`, que é inteiro, e ainda truncava a raiz;
+o alcance usa a posição real do aldeão. Qualquer distância entre 4,0 e
+4,99 aparecia como *"4 blocks away"* e estava **fora** de alcance.
+
+Instrumento que mente é pior que instrumento nenhum: aquele mandou
+procurar o defeito onde ele não estava. Agora é uma conta só, com uma
+casa decimal e `(out of reach)` por extenso — parado perto e parado
+longe têm correções diferentes.
+
+A geometria saiu para `MinerReach`, classe própria: `MinerWork` não
+carrega fora do jogo, e três subtrações e uma raiz se afirmam sem subir
+servidor.
+
+### 2026-08-27 — todo tipo de minério, perguntado ao jogo
+
+Decisão do autor: *"ele deve minerar todo tipo de minério"*. Havia uma
+lista de dezesseis nomes escrita no `OreVein`, e ela era a regra de ouro
+da ADR-009 sendo desobedecida — cada minério novo pedia uma linha, e até
+alguém escrevê-la o mineiro passava por cima dele como se fosse pedra.
+
+Quem responde agora é `c:ores`, a etiqueta que o próprio jogo mantém —
+mesmo caminho da Regra 27.
+
+| | |
+|---|---|
+| **Fase vermelha** | `MinerReachTest` inteiro (18 erros de compilação); `everyKindOfOreCounts` |
+| **Verificado rodando** | `gradlew build` → **515 unitários, 0 falhas**; `runGametest` → **187 de 187** |
+| **O que a troca de etiqueta NÃO conserta** | a lista antiga já cobria todo minério do Overworld em 1.21. Quem ganha é mundo com datapack e a versão seguinte — **não a sessão de hoje** |
+| **E o travamento continua aberto** | saber que ele está a 4,7 e não a 4 não diz *por que* ele não anda os 0,7 que faltam. É a próxima sessão que responde |
 
 ### 2026-08-27 — o veio que desce abre o degrau antes
 
@@ -887,6 +930,13 @@ risco por bioma (§22, §23) — o Nível 1 ainda não foi visto em jogo.
   na mão.
 - ✅ **O veio que desce** — resolvido em 08-27: ele abre o degrau antes,
   e desiste do minério quando o degrau não pode ser aberto.
+- 🔴 **O mineiro trava na frente da galeria.** Sessão das 22:19: cinco
+  colunas em quatro segundos, depois dois mil e quatrocentos tiques
+  parado a ~4,x blocos do bloco seguinte, com `5/6 ticks` congelado. Ele
+  estava minerando e parou de andar. O relatório agora diz a distância
+  verdadeira e `(out of reach)`; **falta a sessão que mostre por que ele
+  não anda o pouco que falta** — navegação no túnel, horário, ou o
+  `approachTo` apontando para lugar que não dá para cumprir.
 - 🟡 **O piso de pedra ignora o espaço do armazém.** Baú cheio continua
   pedindo pedra. Vale para lã, vidro e carvão também — é a família toda
   de metas de demanda, e nenhuma delas tem `room`.

@@ -1235,6 +1235,79 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
+     * Todo tipo de minério — decisão do autor, 2026-08-27.
+     *
+     * <p>A frase dele: <i>"ele deve minerar todo tipo de minério"</i>.
+     * Havia uma lista de dezesseis nomes escrita no código, e cada
+     * minério novo pedia uma linha; até alguém escrevê-la, o mineiro
+     * passava por cima dele como se fosse pedra.
+     *
+     * <p>Quem responde agora é a etiqueta {@code c:ores} do jogo, pelo
+     * mesmo caminho da Regra 27. Este teste roda dentro do jogo de
+     * propósito: etiqueta só existe com registro carregado, e afirmá-la
+     * fora dele seria afirmar a lista de novo.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ore_kinds",
+            tickLimit = 20)
+    public void everyKindOfOreCounts(TestContext context) {
+        for (Block ore : List.of(
+                Blocks.COAL_ORE, Blocks.DEEPSLATE_COAL_ORE,
+                Blocks.IRON_ORE, Blocks.DEEPSLATE_IRON_ORE,
+                Blocks.COPPER_ORE, Blocks.GOLD_ORE, Blocks.REDSTONE_ORE,
+                Blocks.LAPIS_ORE, Blocks.EMERALD_ORE, Blocks.DIAMOND_ORE,
+                Blocks.DEEPSLATE_DIAMOND_ORE,
+                // Os que a lista escrita à mão não tinha.
+                Blocks.NETHER_QUARTZ_ORE, Blocks.NETHER_GOLD_ORE,
+                Blocks.ANCIENT_DEBRIS)) {
+
+            context.assertTrue(
+                    OreVein.isOre(ore.getDefaultState()),
+                    ore + " não foi reconhecido como minério");
+        }
+
+        for (Block plain : List.of(
+                Blocks.STONE, Blocks.DEEPSLATE, Blocks.COBBLESTONE,
+                Blocks.DIRT, Blocks.GRAVEL, Blocks.SANDSTONE)) {
+
+            context.assertFalse(
+                    OreVein.isOre(plain.getDefaultState()),
+                    plain + " foi tratado como minério");
+        }
+
+        context.complete();
+    }
+
+    /**
+     * O carvão continua não sendo tesouro, com a etiqueta no lugar da
+     * lista.
+     *
+     * <p>A Regra 30 separa os dois, e a troca de mecanismo não podia
+     * mexer nisso: carvão vai para o baú do mineiro, na vila, porque é
+     * lá que a tocha e a fornalha o consomem.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ore_kinds",
+            tickLimit = 20)
+    public void coalIsOreButNotTreasure(TestContext context) {
+        context.assertTrue(
+                OreVein.isOre(Blocks.COAL_ORE.getDefaultState()),
+                "carvão deixou de ser minério");
+
+        context.assertFalse(
+                OreVein.isTreasure(Blocks.COAL_ORE.getDefaultState()),
+                "carvão virou tesouro");
+
+        context.assertFalse(
+                OreVein.isTreasure(Blocks.DEEPSLATE_COAL_ORE.getDefaultState()),
+                "carvão de deepslate virou tesouro");
+
+        context.assertTrue(
+                OreVein.isTreasure(Blocks.DIAMOND_ORE.getDefaultState()),
+                "diamante deixou de ser tesouro");
+
+        context.complete();
+    }
+
+    /**
      * O que é tesouro e o que não é — a Regra 30, decidida pelo autor.
      *
      * <p>O baú da boca guarda <b>todo minério menos carvão</b>. O carvão

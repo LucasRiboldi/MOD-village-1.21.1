@@ -121,17 +121,30 @@ public final class MinerReport {
     }
 
     /**
-     * A quantos blocos o mineiro está da pedra.
+     * A quantos blocos o mineiro está da pedra, e se dali ele alcança.
      *
      * <p>"fora do mundo" quer dizer aldeão em chunk descarregado — o
      * caso em que o trabalho espera por ele e nada está errado.
+     *
+     * <p><b>A mesma conta do alcance desde 2026-08-27</b>, e com uma
+     * casa decimal. Media-se com {@code getBlockPos()}, inteiro, e ainda
+     * se truncava a raiz — qualquer distância entre 4,0 e 4,99 saía como
+     * <i>"4 blocks away"</i>, e o alcance é 4. A sessão das 22:19 passou
+     * dois mil e quatrocentos tiques dizendo que o mineiro estava a
+     * quatro blocos da pedra que ele não alcançava.
+     *
+     * <p>O "out of reach" é dito por extenso porque é a diferença que
+     * importa: parado perto e parado longe têm correções diferentes.
      */
     private static String distanceOf(ServerWorld world, UUID workerId, BlockPos target) {
         if (!(world.getEntity(workerId) instanceof VillagerEntity villager)) {
             return "out of the world";
         }
 
-        return (int) Math.sqrt(villager.getBlockPos().getSquaredDistance(target)) + " blocks away";
+        double away = MinerWork.distanceTo(villager, target);
+
+        return String.format("%.1f blocks away", away)
+                + (away <= MinerWork.REACH ? "" : " (out of reach)");
     }
 
     private static String hoursOf(ServerWorld world, UUID workerId) {
