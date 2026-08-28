@@ -1,7 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-27. O fazendeiro passou a trabalhar, e com ele
-as sete profissões buscam recurso e guardam no próprio baú.
+**Atualizado:** 2026-08-28. A sessão da meia-noite disse onde o mineiro
+estava, e era na superfície.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -17,9 +17,9 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-524 testes unitários  ·  198 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+528 testes unitários  ·  199 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
-última sessão de jogo em 2026-08-27, 22:54  ·  zero blocos pela terceira vez
+última sessão de jogo em 2026-08-28, 00:00  ·  o mineiro estava em y=66
 ```
 
 > A contagem de jogo era 176 aqui e **175** no `runGametest`. Recontado
@@ -29,6 +29,51 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-28 — ele estava na superfície, e agora entra pela boca
+
+**O instrumento respondeu inteiro**, e foi a primeira vez que se soube
+onde ele estava:
+
+```text
+the miner is at 734, 66, 878, 20,5 blocks away;
+it was walking to 732, 46, 878, which is not standable;
+the stone at 735, 45, 878 is Pedra
+```
+
+**Y 66 é a superfície.** Ele estava vinte e um blocos em linha reta
+**acima** da galeria, em cima do chão, mirando uma pedra no fundo da
+mina. A navegação recebe um destino a vinte blocos atravessando rocha
+maciça, devolve caminho parcial, e ele estaciona no ponto mais próximo
+que consegue — bem ali em cima.
+
+É o sintoma do MineColonies palavra por palavra, e o remendo do jogador
+é o mesmo que o autor fez: cavar até lá.
+
+**A perna que faltava.** Não se pede à navegação um caminho que ela não
+sabe traçar: pede-se a **boca da mina**, que fica na superfície e a que
+se chega andando. De dentro dela a escada é um corredor. Chegando à
+boca, o destino passa a ser a pedra — sem essa segunda metade ele
+trocaria um travamento por outro, parado na entrada para sempre.
+
+### 2026-08-28 — e havia duas definições de "cabe um aldeão aqui"
+
+A mesma linha pegou as duas discordando: **quem escolheu o lugar achou
+que cabia, quem relatou achou que não.** A do mineiro pedia *qualquer
+coisa que não fosse ar* embaixo — água, lava, folha servem —, e a do
+construtor pede **chão sólido**.
+
+É a falha que a distância já tinha tido anteontem: duas contas para a
+mesma pergunta, e o log podendo contradizer a decisão. Uma conta só, e é
+a do construtor.
+
+| | |
+|---|---|
+| **Fase vermelha** | `theChosenSpotHoldsAVillager` — *"escolheu o bolsão sobre água"*; `MinerLegTest` inteiro |
+| **Confirmado em jogo** | o recuo da galeria funcionou: `The gallery backs up from 736, 44, 878 — there is nowhere to stand to dig it` |
+| **Verificado rodando** | `gradlew build` → **528 unitários, 0 falhas**; `runGametest` → **199 de 199** |
+| **Ainda não visto em jogo** | um bloco cavado. Seis sessões, zero |
+| **O fazendeiro** | a corrente está viva e relatando — *"no ripe crop within 32 blocks"*. Não há lavoura madura na vila agora; não é defeito, é o mundo |
 
 ### 2026-08-27 — o fazendeiro era só uma etiqueta, e agora as sete trabalham
 
