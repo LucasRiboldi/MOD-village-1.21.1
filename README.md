@@ -126,7 +126,7 @@ você saber de relance quem é quem.
 | Profissão | O que já faz | O que falta |
 |---|---|---|
 | 🪓 **Lenhador** | Acha árvore, derruba bloco a bloco no tempo do machado de ferro, replanta a muda, guarda no seu baú. Reconhece árvore grande | Não escolhe espécie por necessidade; não corta a copa que fica pendurada |
-| ⛏️ **Mineiro** | Abre a boca da mina, mobilia com baú e lanterna, desce em escada de três blocos por degrau, abre duas salas de 7×4 e uma galeria sem fim. Segue veio de minério e abre degrau ao descer. Vira a galeria em barreira. Raspa afloramento quando a mina não tem onde nascer | **Não foi visto cavando em jogo** — ver o quadro de falhas. Dois mineiros dividem a mesma escada. Sem teto de inventário |
+| ⛏️ **Mineiro** | Abre a boca da mina, mobilia com baú e lanterna, desce em escada de três blocos por degrau, abre duas salas de 7×4 e uma galeria sem fim. Segue veio de minério e abre degrau ao descer. Vira a galeria em barreira. Corrige sozinho a fronteira adiantada do save. Raspa afloramento quando a mina não tem onde nascer | **Nunca foi visto cavando em jogo** — fechado na bateria em 08-28. Dois mineiros dividem a mesma escada. Sem teto de inventário |
 | 🐑 **Pastor** | Acha ovelha adulta e lanosa, tosquia, guarda a lã da cor do rebanho | Não cria rebanho, não alimenta, não separa por cor |
 | 🔥 **Fundidor** | Funde pela receita do próprio jogo, sem forno no mundo: areia vira vidro, ferro cru vira lingote, arenito vira arenito liso | **Depende de a cadeia da areia começar** — o elo que ainda não fecha |
 | 🪚 **Fabricante** | Tira tronco do baú e faz tábua pela receita do jogo, até metade do estoque. Descasca tronco, monta tocha e monta vidraça | Porta, cama, janela e baú por estoque, sem depender de haver obra (Regra 10) |
@@ -255,7 +255,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | O baú marcado é de quem a marca diz | 🧪 coberto por teste, nunca visto em jogo |
 | O fazendeiro colhe, replanta e guarda | 🧪 coberto por teste, **a vila não tinha lavoura madura** na sessão |
 | O mineiro entra na mina em vez de ficar na superfície | 🟡 **meio visto**: em 08-28 ele saiu de `y=66` e chegou ao degrau 7 |
-| **O mineiro cavando um bloco que seja** | ⛔ **sete sessões, zero blocos** — ver o quadro de falhas |
+| **O mineiro cavando a escada dentro de rocha** | 🧪 **fechado na bateria em 08-28** — três testes em rocha maciça. Em jogo: sete sessões, zero blocos |
 | O fundidor assando — ele espera **areia**, e a cadeia dela nunca começou | ⛔ elo sem entrada |
 | A casa de planície é a casa do jogo | 🧪 coberto por teste, nunca visto em jogo |
 | O construtor fabrica o que falta para a obra | 🧪 coberto por teste, nunca visto em jogo |
@@ -297,7 +297,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Defesa | ⬜ não começado |
 
 ```text
-530 testes unitários  ·  199 testes de jogo  ·  0 falhas  ·  ./gradlew build
+530 testes unitários  ·  202 testes de jogo  ·  0 falhas  ·  ./gradlew build
 ```
 
 **O que 🧪 quer dizer aqui.** A bateria roda o caso e ele passa. Não quer
@@ -358,7 +358,7 @@ a recusar, e a correção ainda não foi vista em jogo.
 
 | | Etapa | Estado |
 |---|---|---|
-| **1** | **O mineiro cavar um bloco.** Sete sessões, zero. Cinco defeitos reais caíram no caminho e **nenhum era a causa sozinho**; o último conserto — a frente da galeria lida do mundo — é de 08-28 e não foi visto | 🔒 exige sessão de jogo |
+| **1** | **Ver o mineiro cavar em jogo.** O E33 **fechou na bateria** em 08-28 — três testes em rocha maciça provam que ele cava a escada, desce cavando e conserta a fronteira adiantada do save. Em jogo continua sendo sete sessões e zero blocos | 🔒 exige sessão de jogo |
 | ✅ | ~~Gravar o índice de ruas em disco~~ | Feito em 08-27, e **verificado em jogo**: `1 road indexes` gravado |
 | ✅ | ~~O fazendeiro~~ | Feito em 08-27. As sete profissões buscam e guardam |
 | **2** | **Implementar a ADR-008 — orientação de blocos.** É a que muda o que se vê: cama, escada e tocha param de sair todas para o mesmo lado. A decisão está escrita; falta atravessar o `Side` pelo `BlueprintBlock` | 🔨 decidido, por escrever |
@@ -380,7 +380,7 @@ ficam os que mudam o que se vê no jogo.
 
 | | O que | Por quê |
 |---|---|---|
-| 🔴 | **O mineiro não cavou um bloco em sete sessões** | Cinco defeitos reais foram achados e corrigidos no caminho — mobília na escada, degrau diagonal invisível, cursor marchando por dentro da rocha, duas contas de distância, duas de "cabe um aldeão". **Nenhum era a causa sozinho.** O que se sabe hoje: ele **entra** na mina (chegou ao degrau 7 em 08-28) e para lá |
+| 🟠 | **O mineiro nunca foi visto cavando em jogo** | O E33 **fechou na bateria** em 08-28, com três testes em rocha maciça — inclusive um que reproduz a mina travada do autor. Seis defeitos reais caíram no caminho, e **nenhum era a causa sozinho**. Falta a sessão |
 | 🟠 | **O túnel que o jogador cava à mão confunde o mod** | Foi o que travou a mina do autor: um bolsão iluminado, desligado da escada, parecia frente de galeria. A frente passou a ser lida do mundo em 08-28, mas o mod ainda não distingue o que ele cavou do que o jogador cavou |
 | 🔴 | **A vila fica presa numa obra só** | O planejador não sabe desistir. O catálogo do jogo já tem fazenda, curtume, ferraria — e a Regra 28 filtra tudo para uma casa por bioma |
 | 🟠 | **O relatório da barreira afirma o que não mediu** | Numa sessão com **zero obras** ele disse `covered for nothing — Rule 28 can go`. Ele só olha se pulou peça, e não se houve construção |
@@ -539,8 +539,25 @@ aquilo impõe:
 
 ```text
 530 testes unitários     0 falhas
-199 testes de jogo       0 falhas
+202 testes de jogo       0 falhas  ·  rodada três vezes
 ```
+
+**O erro de teste que mais custou, e ele não era um teste falhando —
+era a arena.** Todos os testes do mineiro montavam um **piso de terra
+plano** e plantavam uma pedra nele:
+
+```java
+for (int x = 0; x <= 7; x++)
+    for (int z = 0; z <= 7; z++)
+        setBlockState(new BlockPos(x, 1, z), DIRT);   // um piso, e só
+```
+
+Numa arena assim não há escada, não há teto, não há degrau diagonal e
+não há frente de galeria. **Todo defeito destes dois dias vivia
+exatamente no que a arena não tinha** — por isso a bateria ficava verde
+com o jogo quebrado. Os três testes novos montam rocha maciça, e um
+deles reproduz a mina do autor: fronteira do save adiantada, nada
+aberto.
 
 **Falsos verdes e falsos vermelhos que a bateria pegou**, e valem tanto
 quanto os consertos:
