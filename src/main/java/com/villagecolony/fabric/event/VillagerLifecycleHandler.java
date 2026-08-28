@@ -6,6 +6,7 @@ import com.villagecolony.fabric.integration.ChestMarker;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.MinerWork;
+import com.villagecolony.fabric.work.FarmerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
 import com.villagecolony.fabric.work.ManufacturerWork;
@@ -120,6 +121,7 @@ public final class VillagerLifecycleHandler {
         MinerWork.forget(villagerId);
         SmelterWork.forget(villagerId);
         ShepherdWork.forget(villagerId);
+        FarmerWork.forget(villagerId);
         LumberjackWork.forget(villagerId);
         ManufacturerWork.forget(villagerId);
         BuilderWork.forget(villagerId);

@@ -39,6 +39,16 @@ public enum ResourceGroup {
     PLANKS,
 
     /**
+     * Qualquer lavoura — 2026-08-27.
+     *
+     * <p>Mesma razão do grupo da madeira, e a mesma pergunta: <i>"esta
+     * colônia tem o que comer?"</i>. Batata responde tão bem quanto
+     * trigo, e sem o grupo uma vila de cenoura plantaria para sempre
+     * porque a meta de trigo nunca cairia — o E1 por outra porta.
+     */
+    CROPS,
+
+    /**
      * Pedregulho e arenito: a parede que não é de madeira — 2026-08-20.
      *
      * <p>Um grupo, e não dois, pela mesma razão de {@link #PLANKS}: a

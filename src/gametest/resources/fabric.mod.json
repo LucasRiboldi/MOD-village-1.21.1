@@ -8,6 +8,7 @@
   "environment": "*",
   "entrypoints": {
     "fabric-gametest": [
+      "com.villagecolony.gametest.FarmerGameTest",
       "com.villagecolony.gametest.ColonyDetectionGameTest",
       "com.villagecolony.gametest.StorageGameTest",
       "com.villagecolony.gametest.LumberjackGameTest",

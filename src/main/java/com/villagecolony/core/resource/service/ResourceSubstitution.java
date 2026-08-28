@@ -116,8 +116,15 @@ public final class ResourceSubstitution {
      * <p>Estar num grupo não basta: é preciso estar <b>aqui</b>. {@code
      * STONE} é um grupo e não está nesta lista, e é por isso que
      * pedregulho deixou de responder por arenito.
+     *
+     * <p><b>A lavoura entrou em 2026-08-27</b>, e é a única que se
+     * substitui sem ser material de parede: a pergunta que ela responde
+     * é <i>"esta colônia tem o que comer?"</i>, e batata responde tão bem
+     * quanto trigo. Não vale na parede porque ninguém constrói de
+     * cenoura — e é por isso que ela está aqui e não na lista de baixo.
      */
-    private static final Set<ResourceGroup> INTERCHANGEABLE = EnumSet.noneOf(ResourceGroup.class);
+    private static final Set<ResourceGroup> INTERCHANGEABLE =
+            EnumSet.of(ResourceGroup.CROPS);
 
     /**
      * Os grupos cujos membros se substituem <b>até na parede</b>.

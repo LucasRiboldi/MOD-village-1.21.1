@@ -222,6 +222,7 @@ public final class ColonyCycle {
         // sabe de onde o recurso vem é o próprio recurso.
         return switch (resource.production()) {
             case HARVESTED -> TaskType.COLLECT_WOOD;
+            case FARMED -> TaskType.COLLECT_FOOD;
             case MINED -> TaskType.COLLECT_STONE;
             case SHEARED -> TaskType.COLLECT_WOOL;
             case CRAFTED -> TaskType.CRAFT_MATERIAL;

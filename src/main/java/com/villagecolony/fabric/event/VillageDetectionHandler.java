@@ -30,6 +30,7 @@ import com.villagecolony.fabric.integration.VillagerScanner;
 import com.villagecolony.fabric.integration.WorkerEquipment;
 import com.villagecolony.fabric.integration.WorkerNameplate;
 import com.villagecolony.fabric.work.MinerWork;
+import com.villagecolony.fabric.work.FarmerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
 import com.villagecolony.fabric.work.WorkMaterials;
@@ -242,6 +243,7 @@ public final class VillageDetectionHandler {
         MinerWork.tick(server.getOverworld());
         SmelterWork.tick(server.getOverworld());
         ShepherdWork.tick(server.getOverworld());
+        FarmerWork.tick(server.getOverworld());
         LumberjackWork.tick(server.getOverworld());
         ManufacturerWork.tick(server.getOverworld());
         BuilderWork.tick(server.getOverworld());
@@ -454,6 +456,7 @@ public final class VillageDetectionHandler {
         MinerWork.run(overworld, colony);
         SmelterWork.run(overworld, colony);
         ShepherdWork.run(overworld, colony);
+        FarmerWork.run(overworld, colony);
         ManufacturerWork.run(overworld, colony);
         BuilderWork.run(overworld, colony);
 
@@ -723,6 +726,7 @@ public final class VillageDetectionHandler {
             MinerWork.forget(villagerId);
             SmelterWork.forget(villagerId);
             ShepherdWork.forget(villagerId);
+            FarmerWork.forget(villagerId);
             LumberjackWork.forget(villagerId);
             ManufacturerWork.forget(villagerId);
             BuilderWork.forget(villagerId);

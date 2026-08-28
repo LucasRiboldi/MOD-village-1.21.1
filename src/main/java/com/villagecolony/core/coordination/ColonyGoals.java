@@ -86,6 +86,20 @@ public final class ColonyGoals {
      */
     public static final int STONE_FLOOR = 64;
 
+    /**
+     * Quanta comida a colônia mantém guardada — 2026-08-27.
+     *
+     * <p>Mesmo formato do piso da pedra, e pelo mesmo motivo: sem obra
+     * nenhuma o fazendeiro não teria tarefa, e seria o mineiro das 21:06
+     * de novo — capaz, com baú, e sem nada para fazer a sessão inteira.
+     *
+     * <p><b>Comida não depende de obra</b>, e é o que a separa da pedra:
+     * a vila come todo dia. Uma pilha de trigo é o que a colônia guarda,
+     * e o grupo {@code CROPS} faz batata e cenoura contarem para o mesmo
+     * piso.
+     */
+    public static final int FOOD_FLOOR = 64;
+
     private ColonyGoals() {
     }
 
@@ -304,6 +318,9 @@ public final class ColonyGoals {
         // manda quando pede mais; obra pequena não abaixa o estoque que
         // a colônia mantém para a casa seguinte.
         goals.put(stone, Math.max(stoneForWork, STONE_FLOOR));
+
+        // A despensa — 2026-08-27. Qualquer lavoura conta, pelo grupo.
+        goals.put(ResourceType.WHEAT, FOOD_FLOOR);
 
         if (woolForBeds > 0) {
             goals.put(ResourceType.WHITE_WOOL, woolForBeds);

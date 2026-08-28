@@ -1,8 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-27, depois de uma auditoria do mineiro com
-pesquisa em projetos de aldeão. A causa apareceu na geometria da própria
-Regra 29.
+**Atualizado:** 2026-08-27. O fazendeiro passou a trabalhar, e com ele
+as sete profissões buscam recurso e guardam no próprio baú.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -18,7 +17,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-519 testes unitários  ·  194 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+524 testes unitários  ·  198 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 última sessão de jogo em 2026-08-27, 22:54  ·  zero blocos pela terceira vez
 ```
@@ -30,6 +29,50 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-27 — o fazendeiro era só uma etiqueta, e agora as sete trabalham
+
+**Das sete profissões, era a única sem trabalho.** A colônia lhe dava
+enxada, baú e placa com o nome, e nunca mais falava com ele — lenhador,
+mineiro, pastor, fundidor, fabricante e construtor buscam e guardam
+desde a Fase 10; ele ficava parado no meio deles.
+
+**Faltava a corrente inteira**, e não só o comportamento:
+
+```text
+ResourceType.WHEAT/CARROT/POTATO/BEETROOT   não existiam
+Production.FARMED                            não existia
+ResourceGroup.CROPS                          não existia
+TaskType.COLLECT_FOOD                        não existia
+a meta de comida                             não existia
+FarmerWork                                   não existia
+```
+
+A `Capability.MAINTAIN_FOOD` existia desde a Fase 7 **e nenhuma tarefa a
+pedia** — capacidade sem tarefa é um aldeão com enxada e sem lavoura.
+
+**O que ele faz:** acha a lavoura madura mais perto do centro da vila,
+anda até ela, colhe, **replanta com a semente da própria colheita** e
+guarda o resto no seu baú. É a Regra 7 do lenhador aplicada onde ela
+nasceu — colher sem replantar deixaria a vila com um campo de terra
+arada vazia e uma refeição só.
+
+**Quem diz se está madura é o bloco**, não uma lista de nomes:
+`CropBlock.isMature` vale para as quatro do jogo e para o que um
+datapack plantar depois. Mesmo caminho que o minério tomou de manhã.
+
+**Um defeito que só o teste de ponta a ponta pegaria.** O fazendeiro
+colhia, replantava, guardava no baú — e a colônia lia **zero**. O
+`MinecraftTypeAdapter` não sabia nomear trigo, e o estoque só conta o
+que ele nomeia: a meta de comida nunca cairia, e o trabalho aconteceria
+para sempre sem valer nada.
+
+| | |
+|---|---|
+| **Fase vermelha** | `FarmerChainTest` (núcleo) e `FarmerGameTest` (mundo), os dois inteiros sem compilar |
+| **Verificado rodando** | `gradlew build` → **524 unitários, 0 falhas**; `runGametest` → **198 de 198** |
+| **Ainda não visto em jogo** | o fazendeiro colhendo numa vila de verdade |
+| **Limite assumido** | ele colhe o que **já** está plantado. Não ara terra nova nem planta em campo vazio — é o "básico" que o autor pediu, e arar é o ciclo seguinte |
 
 ### 2026-08-27 — o degrau seguinte é diagonal, e a busca só olhava faces
 

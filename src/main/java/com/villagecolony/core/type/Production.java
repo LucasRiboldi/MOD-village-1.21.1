@@ -26,6 +26,18 @@ public enum Production {
     /** Do machado do lenhador. */
     HARVESTED,
 
+    /**
+     * Colhido de lavoura madura, e replantado — 2026-08-27.
+     *
+     * <p>Separado do {@link #HARVESTED} de propósito, e a diferença é
+     * quem trabalha: madeira é do lenhador, lavoura é do fazendeiro. É a
+     * produção declarada que manda a tarefa para a profissão certa — ver
+     * {@code ColonyCycle.typeFor} —, e sem um valor próprio a colheita
+     * viraria tarefa de madeira e o lenhador iria derrubar árvore para
+     * atender fome.
+     */
+    FARMED,
+
     /** Da picareta do mineiro, na mina ou na superfície. */
     MINED,
 

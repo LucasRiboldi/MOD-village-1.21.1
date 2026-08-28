@@ -66,6 +66,26 @@ public enum ResourceType {
     /** O que o pastor traz. A cama sai daqui. */
     WHITE_WOOL(ResourceCategory.NATURAL, ResourceGroup.WOOL, Production.SHEARED),
 
+    /**
+     * A lavoura — 2026-08-27.
+     *
+     * <p>Das sete profissões, o fazendeiro era a única sem trabalho: a
+     * colônia lhe dava enxada, baú e placa com o nome, e nunca mais
+     * falava com ele. Faltava a corrente inteira, e ela começa aqui —
+     * sem um recurso de lavoura não há meta, sem meta não há tarefa, e
+     * sem tarefa ele fica parado como o mineiro das 21:06.
+     *
+     * <p>As quatro do jogo que se plantam em terra arada e se replantam
+     * com a própria colheita. Ver {@code FarmerWork}.
+     */
+    WHEAT(ResourceCategory.NATURAL, ResourceGroup.CROPS, Production.FARMED),
+
+    CARROT(ResourceCategory.NATURAL, ResourceGroup.CROPS, Production.FARMED),
+
+    POTATO(ResourceCategory.NATURAL, ResourceGroup.CROPS, Production.FARMED),
+
+    BEETROOT(ResourceCategory.NATURAL, ResourceGroup.CROPS, Production.FARMED),
+
     /** O que o mineiro acha na galeria. A tocha sai daqui — 2026-08-21. */
     COAL(ResourceCategory.NATURAL, ResourceGroup.COAL, Production.MINED),
 

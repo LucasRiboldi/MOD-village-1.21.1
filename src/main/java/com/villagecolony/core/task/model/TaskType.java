@@ -24,6 +24,15 @@ public enum TaskType {
     /** Tosquiar ovelha e trazer a lã. */
     COLLECT_WOOL(Capability.COLLECT_WOOL, true, true),
 
+    /**
+     * Colher lavoura madura, replantar, e trazer a comida — 2026-08-27.
+     *
+     * <p>O elo que faltava do fazendeiro. Ele tinha a capacidade
+     * {@code MAINTAIN_FOOD} desde a Fase 7 e nenhuma tarefa a pedia:
+     * capacidade sem tarefa é um aldeão com enxada e sem lavoura.
+     */
+    COLLECT_FOOD(Capability.MAINTAIN_FOOD, true, true),
+
     /** Fundir: areia em vidro, e o que mais a fornalha fizer. */
     SMELT_MATERIAL(Capability.SMELT_ITEMS, true, true),
 

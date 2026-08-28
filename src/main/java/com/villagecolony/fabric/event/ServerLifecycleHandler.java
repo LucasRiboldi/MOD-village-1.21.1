@@ -25,6 +25,7 @@ import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.integration.ChestPlacer;
 import com.villagecolony.fabric.integration.RingSweep;
 import com.villagecolony.fabric.work.MinerWork;
+import com.villagecolony.fabric.work.FarmerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
 import com.villagecolony.fabric.work.TestBarrier;
@@ -71,6 +72,7 @@ public final class ServerLifecycleHandler {
         MinerWork.clearAll();
         SmelterWork.clearAll();
         ShepherdWork.clearAll();
+        FarmerWork.clearAll();
         RingSweep.clearAll();
         ChestPlacer.clearAll();
         ManufacturerWork.clearAll();
@@ -226,6 +228,7 @@ public final class ServerLifecycleHandler {
         MinerWork.clearAll();
         SmelterWork.clearAll();
         ShepherdWork.clearAll();
+        FarmerWork.clearAll();
         RingSweep.clearAll();
         ChestPlacer.clearAll();
         ManufacturerWork.clearAll();

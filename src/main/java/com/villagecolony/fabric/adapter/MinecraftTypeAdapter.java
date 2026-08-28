@@ -93,6 +93,26 @@ public final class MinecraftTypeAdapter {
             return Optional.of(ResourceType.WHITE_WOOL);
         }
 
+        // A lavoura — 2026-08-27. Sem estas quatro linhas o fazendeiro
+        // colhia, replantava, guardava no baú, e a colônia lia zero: o
+        // estoque só conta o que este adaptador sabe nomear, e a meta de
+        // comida nunca cairia. O trabalho acontecia e não valia nada.
+        if (item == Items.WHEAT) {
+            return Optional.of(ResourceType.WHEAT);
+        }
+
+        if (item == Items.CARROT) {
+            return Optional.of(ResourceType.CARROT);
+        }
+
+        if (item == Items.POTATO) {
+            return Optional.of(ResourceType.POTATO);
+        }
+
+        if (item == Items.BEETROOT) {
+            return Optional.of(ResourceType.BEETROOT);
+        }
+
         // O que a mina passou a dar em 2026-08-21. Carvão vegetal conta
         // como carvão pela mesma razão da areia vermelha: a receita da
         // tocha aceita os dois, e a colônia não distingue o que o jogo
