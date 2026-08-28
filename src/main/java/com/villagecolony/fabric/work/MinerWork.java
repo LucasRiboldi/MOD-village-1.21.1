@@ -145,6 +145,16 @@ public final class MinerWork {
         /** A pedra de agora. Nulo entre uma e a próxima. */
         BlockPos target;
 
+        /**
+         * Onde ficar de pé para bater nela — calculado uma vez.
+         *
+         * <p>A busca do {@link #approachTo} custa umas seiscentas
+         * leituras de bloco, e o destino é reposto a cada tique enquanto
+         * ele caminha. Guardar é a diferença entre uma vez por pedra e
+         * seiscentas leituras por tique por mineiro.
+         */
+        BlockPos approach;
+
         int progress;
 
         int required;
@@ -302,7 +312,11 @@ public final class MinerWork {
                 // O mesmo destino da primeira vez, e pelo mesmo motivo:
                 // repor a pedra aqui era repor a rocha maciça, e a
                 // navegação não tem como cumprir isso — ver approachTo.
-                WorkTargets.set(workerId, approachTo(world, job.target));
+                //
+                // Guardado, e não recalculado: a busca custa umas
+                // seiscentas leituras de bloco, e isto roda todo tique
+                // enquanto ele caminha.
+                WorkTargets.set(workerId, job.approach);
             }
 
             return false;
@@ -343,11 +357,12 @@ public final class MinerWork {
         }
 
         job.target = found.get();
+        job.approach = approachTo(world, job.target);
         job.progress = 0;
         job.required = 0;
         job.stalled = 0;
 
-        WorkTargets.set(workerId, approachTo(world, job.target));
+        WorkTargets.set(workerId, job.approach);
 
         return true;
     }
@@ -374,33 +389,74 @@ public final class MinerWork {
      * fica a própria pedra, que é o que se fazia antes — pior destino,
      * mas nunca pior que nenhum.
      */
+    /**
+     * Onde ficar de pé para bater nesta pedra — 2026-08-27.
+     *
+     * <p><b>Mandar o aldeão até a pedra era mandá-lo para dentro da
+     * rocha.</b> Bloco sólido nunca é alcançável: a navegação devolve
+     * caminho parcial, e ele estaciona onde parou.
+     *
+     * <p><b>Olhar só os vizinhos era pouco, e a Regra 29 é a prova.</b>
+     * Um degrau da escada anda um para a frente e um para baixo:
+     *
+     * <pre>
+     * degrau 1   (1, 64, 0)   onde ele está de pé
+     * degrau 2   (2, 63, 0)   o alvo — DIAGONAL, não encosta em face nenhuma
+     * </pre>
+     *
+     * <p>As seis faces não alcançam a diagonal, e o método caía no "fica
+     * a própria pedra" já no segundo degrau. <b>E o aldeão alcançava o
+     * tempo todo</b>: de pé no degrau 1 ele está a 1,1 bloco do centro do
+     * degrau 2, e o braço dele é quatro. O lugar existia; a busca é que
+     * não sabia procurá-lo.
+     *
+     * <p>Explica por que algumas sessões cavaram e outras não: a galeria
+     * é reta, e blocos consecutivos dela <b>encostam</b>. Os onze blocos
+     * da sessão das 22:23 foram todos de galeria; a escada e a frente do
+     * túnel nunca saíram.
+     *
+     * <p><b>A busca é por distância, e não por ordem de face.</b> O
+     * lugar mais perto do alvo é o que dá menos chance de o caminho ser
+     * interrompido no meio. O cubo de raio quatro são umas seiscentas
+     * leituras — caro para um tique, barato uma vez por pedra, e é uma
+     * vez por pedra que ela roda: quem chama guarda o resultado.
+     *
+     * <p>Sem lugar nenhum ao alcance fica a própria pedra, que é o que
+     * se fazia antes — pior destino, mas nunca pior que nenhum. Quem
+     * trata esse caso é o guarda de travamento e o recuo da galeria.
+     */
     public static BlockPos approachTo(ServerWorld world, BlockPos target) {
-        for (Direction side : APPROACHES) {
-            BlockPos at = target.offset(side);
+        BlockPos nearest = null;
+        double nearestDistance = Double.MAX_VALUE;
 
-            if (standable(world, at)) {
-                return at;
-            }
+        for (int dx = -MinerReach.REACH; dx <= MinerReach.REACH; dx++) {
+            for (int dy = -MinerReach.REACH; dy <= MinerReach.REACH; dy++) {
+                for (int dz = -MinerReach.REACH; dz <= MinerReach.REACH; dz++) {
 
-            // E um abaixo dele — 2026-08-27, e é o chão do túnel.
-            //
-            // A sessão das 22:38 não cavou um bloco. A galeria é de dois
-            // de altura, e o alvo era o bloco DE CIMA da coluna da
-            // frente: atrás dele há ar, mas o teto acima é rocha, e não
-            // se fica de pé ali; embaixo há ar, mas o de cima é o
-            // próprio alvo. Nenhuma das seis faces servia, e o método
-            // caía no "fica a própria pedra" — mandar o aldeão para
-            // dentro da rocha, que a navegação não cumpre.
-            //
-            // O lugar existia o tempo todo: atrás e um abaixo, o chão do
-            // túnel, a um metro e oito do alvo. Diagonal, e por isso
-            // invisível para as seis faces.
-            if (standable(world, at.down())) {
-                return at.down();
+                    if (dx == 0 && dy == 0 && dz == 0) {
+                        continue;
+                    }
+
+                    BlockPos at = target.add(dx, dy, dz);
+
+                    double distance = MinerReach.distanceTo(
+                            at.getX() + 0.5, at.getY(), at.getZ() + 0.5, target);
+
+                    if (distance > MinerReach.REACH || distance >= nearestDistance) {
+                        continue;
+                    }
+
+                    if (!standable(world, at)) {
+                        continue;
+                    }
+
+                    nearest = at;
+                    nearestDistance = distance;
+                }
             }
         }
 
-        return target;
+        return nearest == null ? target : nearest;
     }
 
     /** Dois blocos de ar sobre chão sólido: onde um aldeão fica de pé. */
@@ -464,6 +520,7 @@ public final class MinerWork {
     /** Larga a pedra de agora e volta a procurar. */
     private static void release(UUID workerId, Job job) {
         job.target = null;
+        job.approach = null;
         job.progress = 0;
         job.required = 0;
         job.stalled = 0;

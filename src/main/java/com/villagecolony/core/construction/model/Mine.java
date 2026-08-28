@@ -180,6 +180,24 @@ public final class Mine {
     }
 
     /**
+     * Recua o cursor um passo — 2026-08-27.
+     *
+     * <p><b>Para quando ele marchou por dentro da rocha.</b> A posição
+     * que o cursor aponta pode não ter túnel atrás dela: não há de onde
+     * alcançá-la, e o mineiro é mandado para dentro da pedra. Recuar é o
+     * único caminho de volta, e ele funciona porque a ordem de cavar é
+     * um caminho <b>para fora da boca</b> — a posição anterior está
+     * sempre mais perto do que já está aberto.
+     *
+     * <p>Mesma conta do {@link #holdPosition()}, e nome próprio porque a
+     * intenção é outra: aquele guarda a posição de agora, este anda para
+     * trás.
+     */
+    public void backUp() {
+        holdPosition();
+    }
+
+    /**
      * Devolve ao cursor a posição que não chegou a ser cavada —
      * 2026-08-27.
      *

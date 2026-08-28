@@ -355,6 +355,57 @@ public final class MineDigging {
     }
 
     /**
+     * Recua o cursor até a frente que dá para alcançar — 2026-08-27.
+     *
+     * <p><b>A mina do autor ficou assim, e ele a diagnosticou a pé:</b>
+     * <i>"tive que cavar até lá"</i>. O cursor marchou por dentro da
+     * rocha enquanto o mineiro não conseguia chegar em nada, e parou
+     * dezenas de blocos à frente do túnel de verdade. Dali para a frente
+     * nada é alcançável, e a mina fica presa para sempre — inclusive
+     * depois de a marcha ter sido consertada, porque o cursor já está no
+     * lugar errado e gravado no save.
+     *
+     * <p>Recuar funciona porque a ordem de cavar é um caminho <b>para
+     * fora da boca</b>: a posição anterior está sempre mais perto do que
+     * já está aberto. Para quando acha uma de onde dá para bater, e ela
+     * é a frente de verdade.
+     *
+     * <p>Para também no ar — chegou ao túnel aberto —, e é o que impede
+     * o vaivém: a posição seguinte a uma aberta é justamente a que se
+     * alcança de dentro dela.
+     */
+    private static void backUpToTheRealFrontier(ServerWorld world, Mine mine) {
+        for (int back = 0; back < CUTS_PER_SEARCH && mine.cut() > 0; back++) {
+            BlockPos at = MinecraftTypeAdapter.toBlockPos(
+                    mine.shaft().positionAt(mine.cut()));
+
+            if (!world.isInBuildLimit(at)) {
+                return;
+            }
+
+            BlockState state = world.getBlockState(at);
+
+            if (state.isAir() || !state.getFluidState().isEmpty()) {
+                // Túnel aberto: a frente é aqui.
+                return;
+            }
+
+            if (!MinerWork.approachTo(world, at).equals(at)) {
+                // Há de onde bater nela. É a frente de verdade.
+                return;
+            }
+
+            mine.backUp();
+
+            if (back == 0) {
+                VillageColonyMod.LOGGER.info(
+                        "The gallery backs up from {} — there is nowhere to stand to dig it",
+                        at.toShortString());
+            }
+        }
+    }
+
+    /**
      * O mineiro desistiu desta pedra — 2026-08-27.
      *
      * <p>Devolve a posição ao cursor da galeria, quando ela é de lá.
@@ -460,6 +511,8 @@ public final class MineDigging {
      * a curva da galeria.
      */
     private static Optional<BlockPos> nextCut(ServerWorld world, UUID workerId, Mine mine) {
+        backUpToTheRealFrontier(world, mine);
+
         for (int look = 0; look < CUTS_PER_SEARCH; look++) {
             BlockPos at = MinecraftTypeAdapter.toBlockPos(mine.nextPosition());
 

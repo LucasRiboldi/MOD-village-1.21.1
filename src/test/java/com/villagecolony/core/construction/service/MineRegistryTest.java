@@ -192,6 +192,43 @@ class MineRegistryTest {
         assertEquals(theOther, mine.nextPosition());
     }
 
+    /**
+     * A galeria sabe recuar até a frente de verdade — 2026-08-27.
+     *
+     * <p>Quando o cursor marchou por dentro da rocha, a posição que ele
+     * aponta não tem túnel atrás dela: não há de onde alcançá-la, e o
+     * mineiro é mandado para dentro da pedra. Recuar é o único caminho
+     * de volta — a ordem de cavar é um caminho para fora da boca, então
+     * a posição anterior está sempre mais perto do que já está aberto.
+     */
+    @Test
+    void theGalleryCanBackUpToWhereItReallyEnds() {
+        Mine mine = Mine.open(UUID.randomUUID(), shaft());
+
+        for (int i = 0; i < 10; i++) {
+            mine.nextPosition();
+        }
+
+        assertEquals(10, mine.cut());
+
+        mine.backUp();
+        mine.backUp();
+
+        assertEquals(8, mine.cut());
+        assertEquals(mine.shaft().positionAt(8), mine.nextPosition());
+    }
+
+    /** Recuar do começo não leva a picareta para antes do primeiro degrau. */
+    @Test
+    void backingUpNeverGoesBehindTheStart() {
+        Mine mine = Mine.open(UUID.randomUUID(), shaft());
+
+        mine.backUp();
+        mine.backUp();
+
+        assertEquals(0, mine.cut());
+    }
+
     /** Desandar do começo não leva a picareta para antes do primeiro degrau. */
     @Test
     void theCursorNeverGoesBehindTheStart() {

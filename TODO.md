@@ -1,7 +1,8 @@
 # TODO
 
-**Atualizado:** 2026-08-27, depois da sessão das 23:18 — o mineiro
-anda, e isso derruba a hipótese que sobrava.
+**Atualizado:** 2026-08-27, depois de uma auditoria do mineiro com
+pesquisa em projetos de aldeão. A causa apareceu na geometria da própria
+Regra 29.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -17,7 +18,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-517 testes unitários  ·  192 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+519 testes unitários  ·  194 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 última sessão de jogo em 2026-08-27, 22:54  ·  zero blocos pela terceira vez
 ```
@@ -29,6 +30,71 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-27 — o degrau seguinte é diagonal, e a busca só olhava faces
+
+**A causa das cinco sessões sem cavar**, e ela estava na geometria da
+própria Regra 29. Um degrau anda um para a frente e um para baixo:
+
+```text
+posição 0 (degrau 1)   (1, 64, 0)   onde ele está de pé
+posição 3 (degrau 2)   (2, 63, 0)   o alvo — DIAGONAL
+```
+
+Os dois não encostam por **nenhuma face**. O `approachTo` olhava as seis
+faces e, desde a manhã, um bloco abaixo de cada uma — nenhuma alcança
+uma diagonal. Ele caía no *"fica a própria pedra"* já no **segundo
+degrau** e mandava o aldeão para dentro da rocha, que a navegação não
+cumpre.
+
+**E o aldeão alcançava o tempo todo.** De pé no degrau 1 ele está a
+**1,1 bloco** do centro do degrau 2, e o braço dele é 4. O lugar
+existia; a busca é que não sabia procurá-lo.
+
+**Explica por que algumas sessões cavaram e outras não.** A galeria é
+reta, e blocos consecutivos dela *encostam* — os onze blocos da sessão
+das 22:23 foram todos de galeria. A escada e a frente do túnel nunca
+saíram.
+
+A busca passou a ser por **distância** dentro do alcance, e não por
+ordem de face. Custa umas seiscentas leituras de bloco, e por isso o
+resultado é guardado no `Job`: uma vez por pedra, e não a cada tique
+enquanto ele caminha.
+
+### 2026-08-27 — e a galeria aprendeu a recuar
+
+O conserto acima não bastaria sozinho para a mina **que já existe**: o
+cursor marchou dezenas de blocos por dentro da rocha antes de a marcha
+ser consertada, e essa posição está gravada no save. De lá nada é
+alcançável, e a mina ficaria presa para sempre.
+
+Recuar funciona porque a ordem de cavar é um caminho **para fora da
+boca**: a posição anterior está sempre mais perto do que já está aberto.
+Para na primeira de onde dá para bater — e para também no ar, que é o
+que impede o vaivém.
+
+### 2026-08-27 — a pesquisa, e o que ela mostrou
+
+O autor pediu para procurar projetos de aldeão que ajudassem a entender.
+O **MineColonies** tem o mesmo sintoma registrado, com as mesmas
+palavras — [issue #4297](https://github.com/ldtteam/minecolonies/issues/4297):
+
+> *o mineiro fica parado na superfície acima do alvo, numa mina grande;
+> sem bloqueio e sem falta de item. Cavar direto para baixo à mão
+> resolve até ele precisar voltar.*
+
+É a mesma coisa que o autor fez — *"tive que cavar até lá"*. E a resposta
+deles foi **trocar a navegação inteira** por um A\* próprio, em pool de
+threads, com cache de chunks. Cedo demais para este projeto; o que se
+aproveita é a disciplina que aquilo impõe, e que aqui faltava: **nunca
+mandar o trabalhador para um lugar de onde ele não consegue trabalhar.**
+
+| | |
+|---|---|
+| **Fase vermelha** | `theNextStairStepIsReachedFromTheOneBefore` — *"o destino virou a própria pedra"*; `theGalleryCanBackUpToWhereItReallyEnds` |
+| **Dois falsos vermelhos no caminho** | a arena de teste tinha superfície e chão dentro do alcance de 4, e a busca nova os achava — **e estava certa em achar**. A rocha do teste ficou funda e larga o bastante para a premissa ser verdadeira |
+| **Verificado rodando** | `gradlew build` → **519 unitários, 0 falhas**; `runGametest` → **194 de 194** |
+| **Sem teste de jogo** | o recuo da galeria. Um poço de vinte blocos não cabe numa arena de oito; o mecanismo (`Mine.backUp`) tem teste de unidade, o laço que lê o mundo não |
 
 ### 2026-08-27 — o mineiro anda, e a linha de cada ciclo passou a dizer onde ele está
 
@@ -1075,13 +1141,10 @@ risco por bioma (§22, §23) — o Nível 1 ainda não foi visto em jogo.
   na mão.
 - ✅ **O veio que desce** — resolvido em 08-27: ele abre o degrau antes,
   e desiste do minério quando o degrau não pode ser aberto.
-- 🔴 **O mineiro chega perto e para.** Quatro sessões, zero blocos.
-  Três defeitos reais caíram no caminho — `approachTo` mandando para
-  dentro da rocha, cursor marchando sem cavar, instrumento que só falava
-  na desistência — e **nenhum era a causa**. O que se sabe agora: ele
-  **anda** (93,9 → 20,5 em um minuto), e para por volta de **21,5**
-  blocos do alvo, duas sessões seguidas no mesmo número. A linha de cada
-  ciclo agora diz onde ele está e para onde foi mandado.
+- 🟠 **O mineiro cavando de verdade ainda não foi visto em jogo.** A
+  causa foi encontrada e consertada — degrau diagonal invisível para a
+  busca de faces —, e a galeria aprendeu a recuar para desfazer o
+  estrago que já está no save. **Falta a sessão que confirme.**
 - 🟠 **Mineiro longe demais não caminha até a mina.** Na mesma sessão, o
   segundo mineiro passou tudo a `51,4 blocks away (out of reach)`, parado
   na vila. O alcance da navegação de aldeão não cobre a descida inteira,

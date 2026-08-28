@@ -1483,20 +1483,15 @@ public class MinerGameTest implements FabricGameTest {
     public void aStoneWithNowhereToStandSaysSo(TestContext context) {
         ServerWorld world = context.getWorld();
 
-        // Rocha maciça sem túnel nenhum: nada em volta serve.
-        for (int x = 2; x <= 6; x++) {
-            for (int y = 1; y <= 5; y++) {
-                for (int z = 1; z <= 5; z++) {
-                    context.setBlockState(
-                            new BlockPos(x, y, z), Blocks.STONE.getDefaultState());
-                }
-            }
-        }
+        // Rocha maciça sem túnel nenhum, e funda: em cima dela é lugar
+        // legítimo de ficar de pé, e com alcance 4 a superfície precisa
+        // ficar fora dele.
+        solidRock(context);
 
-        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(1, 2, 1));
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(1, 9, 1));
 
         String why = MinerReport.whyNotReached(
-                world, villager, context.getAbsolutePos(new BlockPos(4, 3, 3)));
+                world, villager, context.getAbsolutePos(new BlockPos(3, 4, 3)));
 
         context.assertTrue(
                 why.contains("the stone itself"),
@@ -1557,6 +1552,106 @@ public class MinerGameTest implements FabricGameTest {
                     line.get().contains("walking to"),
                     "a linha não diz para onde ele foi mandado: " + line.get());
         }
+
+        context.complete();
+    }
+
+    /** Rocha maciça na arena, para se cavar um vazio dentro dela. */
+    private static void solidRock(TestContext context) {
+        for (int x = 0; x <= 6; x++) {
+            for (int y = 1; y <= 8; y++) {
+                for (int z = 0; z <= 6; z++) {
+                    context.setBlockState(
+                            new BlockPos(x, y, z), Blocks.STONE.getDefaultState());
+                }
+            }
+        }
+    }
+
+    /**
+     * O degrau seguinte da escada é alcançado de onde ele já está —
+     * 2026-08-27.
+     *
+     * <p><b>É a geometria da própria Regra 29</b>, e o defeito estava
+     * nela desde sempre. Um degrau anda um para a frente e um para
+     * baixo:
+     *
+     * <pre>
+     * degrau 1   (1, 64, 0)   onde ele está de pé
+     * degrau 2   (2, 63, 0)   o alvo — DIAGONAL, não encosta em face nenhuma
+     * </pre>
+     *
+     * <p>O {@code approachTo} olhava as seis faces e, desde 08-27, um
+     * bloco abaixo de cada uma. Nenhuma alcança a diagonal. Ele caía no
+     * <i>"fica a própria pedra"</i> e mandava o aldeão para dentro da
+     * rocha, que a navegação não cumpre — e o aldeão estacionava.
+     *
+     * <p><b>E o aldeão alcançava o tempo todo:</b> de pé no degrau 1 ele
+     * está a 1,1 bloco do centro do degrau 2, e o braço dele é 4. O
+     * lugar existia; o método é que não sabia procurá-lo.
+     *
+     * <p>Explica também por que algumas sessões cavaram e outras não: a
+     * galeria é reta, e blocos consecutivos dela <b>encostam</b>. Os onze
+     * blocos da sessão das 22:23 foram todos de galeria; a escada e a
+     * frente do túnel nunca saíram.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_approach",
+            tickLimit = 20)
+    public void theNextStairStepIsReachedFromTheOneBefore(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        solidRock(context);
+
+        // O degrau já aberto: dois de ar sobre chão sólido.
+        context.setBlockState(new BlockPos(2, 3, 3), Blocks.AIR.getDefaultState());
+        context.setBlockState(new BlockPos(2, 4, 3), Blocks.AIR.getDefaultState());
+
+        // O degrau seguinte: um à frente e um abaixo. Diagonal.
+        BlockPos target = context.getAbsolutePos(new BlockPos(3, 2, 3));
+
+        BlockPos stand = MinerWork.approachTo(world, target);
+
+        context.assertFalse(
+                stand.equals(target),
+                "o destino virou a própria pedra — o aldeão não tem como chegar lá");
+
+        context.assertTrue(
+                BuilderApproach.standable(world, stand),
+                "o lugar escolhido não cabe um aldeão: " + stand.toShortString());
+
+        context.assertTrue(
+                MinerReach.isWithinReach(
+                        stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5, target),
+                "o lugar escolhido está fora de alcance: " + stand.toShortString());
+
+        context.complete();
+    }
+
+    /**
+     * Não havendo lugar nenhum ao alcance, continua sendo a própria
+     * pedra.
+     *
+     * <p>Pior destino, e nunca pior que nenhum: é o que o método já
+     * fazia, e o alargamento da busca não podia inventar um lugar onde
+     * não há. Quem trata este caso é o guarda de travamento, e agora
+     * também o recuo da galeria.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_approach",
+            tickLimit = 20)
+    public void buriedStoneStillFallsBackToItself(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        solidRock(context);
+
+        // No meio da rocha, e não perto de uma face dela: em cima é
+        // lugar legítimo de ficar de pé, e fora da caixa há o chão da
+        // arena. As duas primeiras versões deste teste acharam
+        // justamente esses, e estavam certas em achar.
+        BlockPos target = context.getAbsolutePos(new BlockPos(3, 4, 3));
+
+        context.assertTrue(
+                MinerWork.approachTo(world, target).equals(target),
+                "inventou um lugar de ficar de pé dentro da rocha");
 
         context.complete();
     }
