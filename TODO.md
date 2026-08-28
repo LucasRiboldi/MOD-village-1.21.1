@@ -1,7 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-27, depois de gravar também o cursor da
-varredura — o 🔴 que a medição das 20:22 abriu.
+**Atualizado:** 2026-08-27, depois da sessão das 21:06 — a varredura
+fechou a volta, e o mineiro apareceu parado por um motivo de projeto.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -17,9 +17,9 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-506 testes unitários  ·  180 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+510 testes unitários  ·  180 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
-última sessão de jogo em 2026-08-27, 20:22  ·  a varredura chegou a 14/17
+última sessão de jogo em 2026-08-27, 21:06  ·  a volta fechou, índice gravado
 ```
 
 > A contagem de jogo era 176 aqui e **175** no `runGametest`. Recontado
@@ -29,6 +29,52 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-27 — a pedra ganhou piso, e o mineiro deixou de esperar obra
+
+**A regra era o contrário até hoje**, e estava escrita: *"a tábua tem
+meta própria mesmo sem obra; pedra não — ninguém quer um baú cheio de
+pedregulho por gosto"*. A objeção continua certa, e é o próprio piso que
+a responde: alcançadas as 64, o déficit é zero e nenhuma tarefa nova
+abre. **Piso não é fome sem fim.**
+
+**O que a regra antiga custava**, medido na sessão das 21:06 — dezenove
+ciclos, dois mineiros capazes, e uma linha só, no primeiro ciclo:
+
+```text
+no miner work: no task open for it — 2 able to mine
+```
+
+O `IdleLog` registra transições, então essa linha vale a sessão inteira.
+A cadeia:
+
+```text
+sem lote livre  →  sem obra aberta  →  stoneForWork == 0
+                →  sem meta de pedra  →  sem tarefa de mineração
+                →  dois mineiros parados dezenove ciclos
+```
+
+E a obra dependia de uma varredura que consumiu a sessão toda. **Sob
+demanda, na prática, o mineiro quase nunca trabalhava.**
+
+**O segundo motivo do texto antigo expirou, e isso precisou ser
+conferido antes de inverter a regra.** Ele dizia que `ColonyCycle.typeFor`
+mandava todo recurso natural para coleta, e a meta de pedra virava tarefa
+que só o lenhador podia pegar — *ele derrubava árvore para atendê-la*.
+Hoje `typeFor` decide pela produção declarada: `MINED` vira
+`COLLECT_STONE`, e quem a pega é o mineiro.
+
+**Sessenta e quatro**, uma pilha: a casa de deserto do catálogo é de
+arenito liso aos sessenta. A obra manda quando pede mais; obra pequena
+não abaixa o estoque guardado para a casa seguinte.
+
+| | |
+|---|---|
+| **Fase vermelha** | `stoneIsAGoalEvenWithNoWorkOpen` e mais quatro — a constante `STONE_FLOOR` não existia |
+| **Um teste antigo caiu, e por verdade** | `aFullChestAsksForNothing` afirmava que baú cheio não pede **nada**, e agora a colônia quer pedra mesmo cheia. Estreitado à madeira, que é do que a Regra 1 fala |
+| **Verificado rodando** | `gradlew build` → **510 unitários, 0 falhas**; `runGametest` → **180 de 180** |
+| **Limitação assumida** | o piso de pedra **não** é limitado pelo espaço do armazém. Nunca foi: o que a obra pedia já ignorava o armazém, como a lã, o vidro e o carvão ignoram |
+| **Ainda não visto em jogo** | o mineiro descendo. A escada de três blocos continua sem verificação — nesta sessão ele nunca chegou a receber tarefa |
 
 ### 2026-08-27 — a varredura pela metade também atravessa o fechar do mundo
 
@@ -772,9 +818,13 @@ risco por bioma (§22, §23) — o Nível 1 ainda não foi visto em jogo.
   o cursor fica onde achou o lote.
 - ✅ **Perguntar só às ruas** — resolvido em 08-27 pelo índice: 698
   colunas em vez de 16.641, e a varredura cabe numa passagem.
-- ✅ **O cursor da varredura** — resolvido em 08-27: ele vai para o
-  disco com o que a meia volta já achou, e a sessão seguinte retoma no
-  anel em que a anterior parou. **Falta a sessão de jogo que confirme.**
+- ✅ **O cursor da varredura** — resolvido em 08-27, e **confirmado em
+  jogo** na sessão das 21:06: 17 passagens, 16.641 colunas, uma volta
+  completa e `1 road indexes` gravado. A próxima sessão abre com o índice
+  na mão.
+- 🟡 **O piso de pedra ignora o espaço do armazém.** Baú cheio continua
+  pedindo pedra. Vale para lã, vidro e carvão também — é a família toda
+  de metas de demanda, e nenhuma delas tem `room`.
 - 🟡 **`ColonySavedData.sync` tem sete parâmetros**, numa cadeia de
   sobrecargas 2→4→5→6→7. Cada agregado novo alonga a corrente. Não
   incomoda ainda; o dia em que incomodar, o conserto é um tipo que

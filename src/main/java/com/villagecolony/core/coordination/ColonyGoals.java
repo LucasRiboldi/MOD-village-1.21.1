@@ -47,6 +47,45 @@ import java.util.Objects;
  */
 public final class ColonyGoals {
 
+    /**
+     * Quanta pedra a colônia mantém guardada mesmo sem obra — decisão do
+     * autor, 2026-08-27.
+     *
+     * <p><b>Isto era zero até hoje</b>, e a razão estava escrita: <i>"a
+     * tábua tem meta própria mesmo sem obra; pedra não — ninguém quer um
+     * baú cheio de pedregulho por gosto"</i>. A objeção continua certa, e
+     * é o próprio piso que a responde: alcançadas as 64, o déficit é zero
+     * e nenhuma tarefa nova abre. Piso não é fome sem fim.
+     *
+     * <p><b>O que a regra antiga custava</b>, medido na sessão das
+     * 21:06: dezenove ciclos, dois mineiros capazes, e uma linha só —
+     * <i>"no miner work: no task open for it"</i>. A cadeia inteira:
+     *
+     * <pre>
+     * sem lote livre  →  sem obra aberta  →  stoneForWork == 0
+     *                 →  sem meta de pedra
+     *                 →  sem tarefa de mineração
+     *                 →  dois mineiros parados a sessão inteira
+     * </pre>
+     *
+     * <p>E a obra depende de uma varredura que consumiu a sessão toda —
+     * dezessete passagens. Sob demanda, na prática, o mineiro quase nunca
+     * trabalhava; com piso, a pedra já está lá quando a obra abrir, em
+     * vez de a obra esperar por ela.
+     *
+     * <p><b>Havia um segundo motivo, e ele expirou.</b> O texto antigo
+     * dizia que {@code ColonyCycle.typeFor} mandava todo recurso natural
+     * para coleta, e a meta de pedra virava tarefa que só o lenhador
+     * podia pegar — ele derrubava árvore para atendê-la. Hoje
+     * {@code typeFor} decide pela produção declarada: {@code MINED} vira
+     * {@code COLLECT_STONE}, e quem a pega é o mineiro.
+     *
+     * <p><b>Sessenta e quatro</b>, uma pilha: a casa de deserto do
+     * catálogo é feita de arenito liso aos sessenta, e uma pilha cobre
+     * uma casa com sobra pequena.
+     */
+    public static final int STONE_FLOOR = 64;
+
     private ColonyGoals() {
     }
 
@@ -116,12 +155,10 @@ public final class ColonyGoals {
     /**
      * O mesmo, mais a pedra que a obra pede — 2026-08-20.
      *
-     * <p><b>Por que a pedra entra por fora e a tábua por dentro.</b> A
-     * tábua tem meta própria mesmo sem obra: a colônia guarda tábua
-     * porque tábua é o que ela sabe fazer com o que o lenhador traz.
-     * Pedra não — ninguém quer um baú cheio de pedregulho por gosto. Ela
-     * só é meta quando <b>uma casa a está pedindo</b>, e por isso o
-     * número vem de fora, de quem sabe o que a obra ainda quer.
+     * <p><b>Por que a pedra entra por fora.</b> O número vem de quem
+     * sabe o que a obra ainda quer. O que mudou em 2026-08-27 foi o
+     * <b>chão</b> dele: até ali, sem obra a pedra não era meta nenhuma —
+     * ver {@link #STONE_FLOOR} para a sessão que desmentiu isso.
      *
      * <p>Qual pedra é decisão da paleta do bioma: pedregulho onde há
      * rocha, arenito no deserto. Perguntar sempre por pedregulho daria
@@ -263,9 +300,10 @@ public final class ColonyGoals {
         goals.put(ResourceType.OAK_LOG, wood);
         goals.put(ResourceType.OAK_PLANKS, planks);
 
-        if (stoneForWork > 0) {
-            goals.put(stone, stoneForWork);
-        }
+        // A pedra tem piso desde 2026-08-27 — ver STONE_FLOOR. A obra
+        // manda quando pede mais; obra pequena não abaixa o estoque que
+        // a colônia mantém para a casa seguinte.
+        goals.put(stone, Math.max(stoneForWork, STONE_FLOOR));
 
         if (woolForBeds > 0) {
             goals.put(ResourceType.WHITE_WOOL, woolForBeds);

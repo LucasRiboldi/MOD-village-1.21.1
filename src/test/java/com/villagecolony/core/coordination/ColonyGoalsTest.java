@@ -64,20 +64,29 @@ class ColonyGoalsTest {
     }
 
     /**
-     * Baú cheio não pede nada.
+     * Baú cheio não pede mais madeira.
      *
      * <p>É o fim do E1: a meta constante fazia a colônia pedir a cada
      * ciclo enquanto o lenhador não a alcançasse, e a fila crescia mais
      * rápido do que esvaziava.
+     *
+     * <p><b>Estreitado à madeira em 2026-08-27</b>, quando a pedra ganhou
+     * piso. A colônia passou a querer 64 de pedra mesmo de baú cheio, e
+     * "não pede nada" deixou de valer no nível da colônia. O que a
+     * afirmação sempre quis dizer — a Regra 1, déficit igual a espaço
+     * livre — continua inteira, e é da madeira que ela fala.
+     *
+     * <p>A pedra não é limitada pelo espaço, e nunca foi: o que a obra
+     * pedia já ignorava o armazém antes deste ciclo, como a lã, o vidro
+     * e o carvão ignoram.
      */
     @Test
-    void aFullChestAsksForNothing() {
+    void aFullChestAsksForNoMoreWood() {
         ResourceTally stock = owned(ResourceType.OAK_LOG, 64);
 
         Map<ResourceType, Integer> goal = ColonyGoals.of(colony(), stock, 0);
 
-        assertTrue(ResourceDemand.isSatisfied(goal, stock));
-        assertTrue(ResourceDemand.deficit(goal, stock).isEmpty());
+        assertFalse(ResourceDemand.deficit(goal, stock).containsKey(ResourceType.OAK_LOG));
     }
 
     /**
@@ -97,17 +106,96 @@ class ColonyGoalsTest {
     }
 
     /**
-     * A pedra saiu da meta.
+    /**
+     * A pedra tem piso, e ele vale mesmo sem obra — decisão do autor,
+     * 2026-08-27.
      *
-     * <p>Ninguém minera no MVP, e {@code ColonyCycle.typeFor} manda todo
-     * recurso NATURAL para coleta: a meta de pedra virava tarefa que só o
-     * lenhador podia pegar, e ele derrubava árvore para atendê-la.
+     * <p><b>Isto era o contrário até hoje</b>, e o teste anterior se
+     * chamava {@code thereIsNoStoneGoalWhileNobodyMines}. O motivo dele
+     * era real e envelheceu: <i>"ninguém minera no MVP, e
+     * ColonyCycle.typeFor manda todo recurso NATURAL para coleta — a
+     * meta de pedra virava tarefa que só o lenhador podia pegar, e ele
+     * derrubava árvore para atendê-la"</i>. Hoje {@code typeFor} decide
+     * pela produção declarada: {@code MINED} vira {@code COLLECT_STONE},
+     * e quem a pega é o mineiro.
+     *
+     * <p><b>O que a mudança custou de verdade</b>, medido na sessão das
+     * 21:06: dezenove ciclos, dois mineiros capazes, e uma linha só —
+     * <i>"no miner work: no task open for it"</i>. A pedra só era meta
+     * com obra aberta, a obra dependia de uma varredura que consumiu a
+     * sessão inteira, e o mineiro não trabalhou nenhuma vez.
      */
     @Test
-    void thereIsNoStoneGoalWhileNobodyMines() {
+    void stoneIsAGoalEvenWithNoWorkOpen() {
         Map<ResourceType, Integer> goal = ColonyGoals.of(
                 colony(), ResourceTally.empty(), 64);
 
+        assertEquals(ColonyGoals.STONE_FLOOR, goal.get(ResourceType.COBBLESTONE));
+    }
+
+    /**
+     * O piso é meta, e não fome sem fim.
+     *
+     * <p>A objeção que o texto antigo levantava continua de pé —
+     * <i>"ninguém quer um baú cheio de pedregulho por gosto"</i> — e é
+     * ela que o teto responde: alcançado o piso, o déficit é zero e
+     * nenhuma tarefa nova abre.
+     */
+    @Test
+    void aColonyWithItsStoneStopsAsking() {
+        ResourceTally stock = owned(ResourceType.COBBLESTONE, ColonyGoals.STONE_FLOOR);
+
+        Map<ResourceType, Integer> missing = ResourceDemand.deficit(
+                ColonyGoals.of(colony(), stock, 64), stock);
+
+        assertFalse(missing.containsKey(ResourceType.COBBLESTONE));
+    }
+
+    /**
+     * A obra manda quando pede mais que o piso.
+     *
+     * <p>Substitui em vez de somar, pelo mesmo motivo da tábua: somar
+     * faria a colônia guardar uma pilha <em>além</em> da casa, e o baú
+     * cheio é o que faz o trabalhador parar.
+     */
+    @Test
+    void theWorkWinsWhenItAsksForMoreThanTheFloor() {
+        Map<ResourceType, Integer> goal = ColonyGoals.of(
+                colony(), ResourceTally.empty(), 64, 0, 0,
+                ResourceType.COBBLESTONE, ColonyGoals.STONE_FLOOR + 56, 0);
+
+        assertEquals(ColonyGoals.STONE_FLOOR + 56, goal.get(ResourceType.COBBLESTONE));
+    }
+
+    /**
+     * Obra pequena não abaixa o piso.
+     *
+     * <p>Uma casa que ainda pede duas pedras não é motivo para a colônia
+     * esvaziar o estoque que ela mantém para a casa seguinte.
+     */
+    @Test
+    void aSmallWorkDoesNotLowerTheFloor() {
+        Map<ResourceType, Integer> goal = ColonyGoals.of(
+                colony(), ResourceTally.empty(), 64, 0, 0,
+                ResourceType.COBBLESTONE, 2, 0);
+
+        assertEquals(ColonyGoals.STONE_FLOOR, goal.get(ResourceType.COBBLESTONE));
+    }
+
+    /**
+     * O piso é da pedra <b>desta</b> vila.
+     *
+     * <p>O deserto constrói de arenito, e um piso de pedregulho ali
+     * encheria o baú do material errado enquanto a casa continuava
+     * parada por falta do certo.
+     */
+    @Test
+    void theFloorIsForTheStoneThisVillageBuildsWith() {
+        Map<ResourceType, Integer> goal = ColonyGoals.of(
+                colony(), ResourceTally.empty(), 64, 0, 0,
+                ResourceType.SANDSTONE, 0, 0);
+
+        assertEquals(ColonyGoals.STONE_FLOOR, goal.get(ResourceType.SANDSTONE));
         assertFalse(goal.containsKey(ResourceType.COBBLESTONE));
     }
 
