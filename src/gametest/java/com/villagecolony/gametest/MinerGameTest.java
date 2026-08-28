@@ -1506,6 +1506,62 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
+     * A linha de cada ciclo diz onde ele está quando não alcança —
+     * 2026-08-27.
+     *
+     * <p>Estava só na frase de desistência, e ela sai depois de 2400
+     * tiques de expediente. A sessão das 23:18 durou três minutos, o
+     * guarda parou em 1177, e ela passou inteira sem que a única linha
+     * capaz de responder chegasse a ser escrita.
+     *
+     * <p>O estado que interessa é o do travamento, não o do fim dele.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_report",
+            tickLimit = 40)
+    public void theCycleLineSaysWhereHeIsWhenOutOfReach(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        Colony colony = mineOwner(context);
+
+        galleryFace(context);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(1, 2, 3));
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(
+                villager.getUuid(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(1, 2, 1)))));
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(), TaskType.COLLECT_STONE, TaskPriority.PRODUCTION,
+                ResourceType.COBBLESTONE, 8);
+
+        task.reserveFor(villager.getUuid());
+
+        MinerWork.run(world, colony);
+        MinerWork.tick(world);
+
+        Optional<String> line = MinerReport.report(world, colony);
+
+        context.assertTrue(line.isPresent(), "o relatório do mineiro não saiu");
+
+        if (line.get().contains("out of reach")) {
+            context.assertTrue(
+                    line.get().contains("he is at"),
+                    "a linha não diz onde ele está: " + line.get());
+
+            context.assertTrue(
+                    line.get().contains("walking to"),
+                    "a linha não diz para onde ele foi mandado: " + line.get());
+        }
+
+        context.complete();
+    }
+
+    /**
      * O que é tesouro e o que não é — a Regra 30, decidida pelo autor.
      *
      * <p>O baú da boca guarda <b>todo minério menos carvão</b>. O carvão

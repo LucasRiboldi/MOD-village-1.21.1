@@ -1,7 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-27. O autor foi olhar a galeria em jogo, e o
-que ele viu fechou três sessões de investigação.
+**Atualizado:** 2026-08-27, depois da sessão das 23:18 — o mineiro
+anda, e isso derruba a hipótese que sobrava.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -17,7 +17,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-517 testes unitários  ·  191 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+517 testes unitários  ·  192 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 última sessão de jogo em 2026-08-27, 22:54  ·  zero blocos pela terceira vez
 ```
@@ -29,6 +29,38 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-27 — o mineiro anda, e a linha de cada ciclo passou a dizer onde ele está
+
+**O fato novo da sessão das 23:18**, e ele derruba o que eu vinha
+supondo:
+
+```text
+23:20:24   93,9 blocks away   (off hours)
+23:20:54   30,4 blocks away   (work time)
+23:21:24   20,5 blocks away   (work time)
+```
+
+**Ele anda.** Noventa e quatro para vinte em um minuto de expediente. As
+sessões anteriores mostravam distância congelada e eu li isso como
+"navegação não funciona" — funciona, e por dezenas de blocos. O que as
+outras sessões mostravam era ele **parado depois de chegar perto**, não
+incapaz de sair do lugar.
+
+**E a sessão passou sem responder nada**, por um defeito do instrumento:
+onde ele está e para onde foi mandado saíam só na frase de
+**desistência**, e ela sai depois de 2400 tiques de expediente. A sessão
+durou três minutos, o guarda parou em 1177, e a única linha capaz de
+responder nunca chegou a ser escrita.
+
+O estado que interessa é o do **travamento**, não o do fim dele. As duas
+informações passaram para a linha de cada ciclo, e só quando está fora
+de alcance — linha curta quando está tudo bem.
+
+| | |
+|---|---|
+| **Verificado rodando** | `gradlew build` → **517 unitários, 0 falhas**; `runGametest` → **192 de 192** |
+| **O número que se repete** | **21,5** — dois mineiros, duas sessões diferentes, param exatamente aí. Não é coincidência de distância, é um lugar |
 
 ### 2026-08-27 — o cursor da galeria marchava por dentro da rocha
 
@@ -1043,12 +1075,13 @@ risco por bioma (§22, §23) — o Nível 1 ainda não foi visto em jogo.
   na mão.
 - ✅ **O veio que desce** — resolvido em 08-27: ele abre o degrau antes,
   e desiste do minério quando o degrau não pode ser aberto.
-- 🔴 **O mineiro ainda não anda até a pedra.** Três sessões, zero
-  blocos. Dois defeitos reais caíram no caminho — o `approachTo` mandando
-  para dentro da rocha, e o cursor marchando sem cavar — e **nenhum dos
-  dois era a causa de ele não andar**. A frase de desistência agora diz
-  onde ele está, para onde foi mandado e o que há lá; falta a sessão que
-  a leia.
+- 🔴 **O mineiro chega perto e para.** Quatro sessões, zero blocos.
+  Três defeitos reais caíram no caminho — `approachTo` mandando para
+  dentro da rocha, cursor marchando sem cavar, instrumento que só falava
+  na desistência — e **nenhum era a causa**. O que se sabe agora: ele
+  **anda** (93,9 → 20,5 em um minuto), e para por volta de **21,5**
+  blocos do alvo, duas sessões seguidas no mesmo número. A linha de cada
+  ciclo agora diz onde ele está e para onde foi mandado.
 - 🟠 **Mineiro longe demais não caminha até a mina.** Na mesma sessão, o
   segundo mineiro passou tudo a `51,4 blocks away (out of reach)`, parado
   na vila. O alcance da navegação de aldeão não cobre a descida inteira,

@@ -143,8 +143,25 @@ public final class MinerReport {
 
         double away = MinerWork.distanceTo(villager, target);
 
-        return String.format("%.1f blocks away", away)
-                + (away <= MinerWork.REACH ? "" : " (out of reach)");
+        if (away <= MinerWork.REACH) {
+            return String.format("%.1f blocks away", away);
+        }
+
+        // Fora de alcance: onde ele está e para onde foi mandado entram
+        // na linha — 2026-08-27.
+        //
+        // Estavam só na frase de desistência, e ela sai depois de 2400
+        // tiques de expediente. A sessão das 23:18 durou três minutos, o
+        // guarda parou em 1177, e a sessão inteira passou sem que a única
+        // linha capaz de responder chegasse a ser escrita. O estado que
+        // interessa é o do travamento, não o do fim dele.
+        BlockPos spot = MinerWork.approachTo(world, target);
+
+        return String.format("%.1f blocks away (out of reach", away)
+                + ", he is at " + villager.getBlockPos().toShortString()
+                + ", walking to "
+                + (spot.equals(target) ? "the stone itself" : spot.toShortString())
+                + ")";
     }
 
     /**
