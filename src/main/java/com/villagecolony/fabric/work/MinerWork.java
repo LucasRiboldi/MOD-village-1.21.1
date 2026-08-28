@@ -297,7 +297,7 @@ public final class MinerWork {
             }
 
             if (job.stalled >= STALL_LIMIT) {
-                giveUp(workerId, job);
+                giveUp(world, workerId, job);
             } else {
                 // O mesmo destino da primeira vez, e pelo mesmo motivo:
                 // repor a pedra aqui era repor a rocha maciça, e a
@@ -478,11 +478,14 @@ public final class MinerWork {
      * seguinte reencontraria exatamente a mesma pedra inalcançável, que é
      * a roda que a Regra 9 fechou do lado do lenhador.
      */
-    private static void giveUp(UUID workerId, Job job) {
+    private static void giveUp(ServerWorld world, UUID workerId, Job job) {
         VillageColonyMod.LOGGER.info(
-                "Miner {} could not reach the stone at {} — task back to the queue",
+                "Miner {} could not reach the stone at {} — task back to the queue. {}",
                 workerId,
-                job.target.toShortString());
+                job.target.toShortString(),
+                world.getEntity(workerId) instanceof VillagerEntity villager
+                        ? MinerReport.whyNotReached(world, villager, job.target)
+                        : "the miner left the world");
 
         job.task.release();
 

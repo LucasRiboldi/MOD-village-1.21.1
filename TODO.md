@@ -1,7 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-27, depois da sessão das 22:38 — o instrumento
-novo apontou o defeito no primeiro uso.
+**Atualizado:** 2026-08-27, depois da sessão das 22:54 — o conserto do
+approachTo não bastou, e a frase de desistência passou a dizer por quê.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -17,9 +17,9 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-515 testes unitários  ·  189 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+515 testes unitários  ·  191 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
-última sessão de jogo em 2026-08-27, 22:38  ·  zero blocos, e ela disse por quê
+última sessão de jogo em 2026-08-27, 22:54  ·  zero blocos pela terceira vez
 ```
 
 > A contagem de jogo era 176 aqui e **175** no `runGametest`. Recontado
@@ -27,6 +27,46 @@ lista abaixo.
 > acima.
 
 ---
+
+## 🔍 Em investigação
+
+### 2026-08-27 — o mineiro não anda, e três sessões não bastaram
+
+**Terceira sessão seguida sem um bloco cavado.** O conserto do
+`approachTo` — que era um defeito real, e continua consertado — **não
+resolveu**:
+
+```text
+digging Pedra at 732, 45, 878, 21,5 blocks away (out of reach), stall 2399/2400
+digging Pedra at 733, 44, 878, 22,5 blocks away (out of reach), stall 2398/2400
+```
+
+Distâncias congeladas, `0/0 ticks` (o `mine` nunca foi chamado nem uma
+vez), guarda subindo a taxa cheia em horário de trabalho. **Ele não
+anda.**
+
+**O que ficou sabido**, e vale registrar porque estreita a busca:
+
+- não é horário — o guarda só conta em expediente e conta a taxa cheia;
+- não é o alcance — as distâncias são 21 e 22, não 4,x;
+- **metade da galeria está sendo pulada como já aberta.** Os alvos
+  avançam de coluna em coluna sem nada ser cavado, e o `nextCut` só pula
+  o que é ar ou fluido. Ou a galeria entrou numa caverna, ou está
+  alagada.
+
+**Distância sozinha não escolhe** entre aldeão longe demais para a
+navegação, destino que a navegação não cumpre, túnel alagado, e aldeão
+do outro lado de uma parede. As quatro têm correções diferentes, e a
+frase de desistência passou a dizer as três coisas que escolhem: onde
+ele está, para onde foi mandado, e o que há lá.
+
+Molde do `BuilderApproach.whyNotReached`, que existe pela mesma razão do
+lado do construtor desde 08-22.
+
+| | |
+|---|---|
+| **Verificado rodando** | `gradlew build` → **515 unitários, 0 falhas**; `runGametest` → **191 de 191** |
+| **A frase que decide** | *"the stone itself (no free neighbour to stand on)"* — quer dizer que o aldeão foi mandado para dentro da rocha. Se aparecer, o `approachTo` ainda tem buraco; se não, o problema é navegação ou terreno |
 
 ## ✅ Resolvido
 
@@ -968,9 +1008,10 @@ risco por bioma (§22, §23) — o Nível 1 ainda não foi visto em jogo.
   na mão.
 - ✅ **O veio que desce** — resolvido em 08-27: ele abre o degrau antes,
   e desiste do minério quando o degrau não pode ser aberto.
-- ✅ **O mineiro travando na frente da galeria** — era o `approachTo`
-  apontando para dentro da rocha em todo bloco de cima do túnel.
-  Resolvido em 08-27; **falta ver a galeria andar em jogo.**
+- 🔴 **O mineiro não anda até a pedra.** Três sessões, zero blocos. O
+  `approachTo` era um defeito real e está consertado, e **não era o
+  único**. A frase de desistência agora diz onde ele está, para onde foi
+  mandado e o que há lá — ver a seção *Em investigação*.
 - 🟠 **Mineiro longe demais não caminha até a mina.** Na mesma sessão, o
   segundo mineiro passou tudo a `51,4 blocks away (out of reach)`, parado
   na vila. O alcance da navegação de aldeão não cobre a descida inteira,

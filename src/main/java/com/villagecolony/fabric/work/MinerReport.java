@@ -147,6 +147,44 @@ public final class MinerReport {
                 + (away <= MinerWork.REACH ? "" : " (out of reach)");
     }
 
+    /**
+     * Por que o mineiro não chegou, dito em uma frase — 2026-08-27.
+     *
+     * <p>É o molde do {@code BuilderApproach.whyNotReached}, e existe
+     * pela mesma razão: <i>"não chegou"</i> tanto pode ser aldeão longe
+     * demais para a navegação, destino que a navegação não cumpre, túnel
+     * alagado, ou aldeão do outro lado de uma parede — e as quatro têm
+     * correções diferentes.
+     *
+     * <p><b>Duas sessões seguidas sem um bloco cavado</b> pediram isto.
+     * O relatório dizia a distância — 7,9 numa, 21,5 na outra, sempre
+     * congeladas — e distância sozinha não escolhe entre as quatro. As
+     * três coisas que escolhem são <b>onde ele está</b>, <b>para onde
+     * foi mandado</b> e <b>o que há lá</b>.
+     *
+     * <p>A frase mais importante é <i>"the stone itself"</i>: quer dizer
+     * que o {@code approachTo} não achou lugar de ficar de pé e mandou o
+     * aldeão para dentro da rocha, que a navegação nunca cumpre.
+     */
+    public static String whyNotReached(
+            ServerWorld world, VillagerEntity villager, BlockPos target) {
+
+        BlockPos spot = MinerWork.approachTo(world, target);
+
+        String where = spot.equals(target)
+                ? "the stone itself (no free neighbour to stand on)"
+                : spot.toShortString()
+                        + (BuilderApproach.standable(world, spot) ? "" : ", which is not standable")
+                        + (world.getBlockState(spot).getFluidState().isEmpty()
+                                ? "" : ", which is flooded");
+
+        return "the miner is at " + villager.getBlockPos().toShortString()
+                + ", " + String.format("%.1f", MinerWork.distanceTo(villager, target))
+                + " blocks away; it was walking to " + where
+                + "; the stone at " + target.toShortString() + " is "
+                + world.getBlockState(target).getBlock().getName().getString();
+    }
+
     private static String hoursOf(ServerWorld world, UUID workerId) {
         if (!(world.getEntity(workerId) instanceof VillagerEntity villager)) {
             return "out of the world";

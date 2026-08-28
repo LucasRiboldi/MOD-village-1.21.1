@@ -1429,6 +1429,83 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
+     * A frase de "não cheguei" diz onde ele está e para onde foi —
+     * 2026-08-27.
+     *
+     * <p><b>Duas sessões seguidas sem um bloco cavado.</b> O relatório
+     * dizia a distância — 7,9 numa, 21,5 na outra, sempre congeladas — e
+     * distância sozinha não escolhe entre aldeão longe demais, destino
+     * que a navegação não cumpre, túnel alagado, e aldeão do outro lado
+     * de uma parede. As quatro têm correções diferentes.
+     *
+     * <p>Molde do {@code BuilderApproach.whyNotReached}, que existe pela
+     * mesma razão do lado do construtor desde 08-22.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_approach",
+            tickLimit = 20)
+    public void theGiveUpLineSaysWhereHeIsAndWhereHeWasGoing(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        galleryFace(context);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(1, 2, 3));
+
+        BlockPos target = context.getAbsolutePos(new BlockPos(5, 3, 3));
+
+        String why = MinerReport.whyNotReached(world, villager, target);
+
+        context.assertTrue(
+                why.contains(villager.getBlockPos().toShortString()),
+                "a frase não diz onde o mineiro está: " + why);
+
+        context.assertTrue(
+                why.contains(target.toShortString()),
+                "a frase não diz de que pedra se trata: " + why);
+
+        context.assertTrue(
+                why.contains("blocks away"),
+                "a frase não diz a distância: " + why);
+
+        context.complete();
+    }
+
+    /**
+     * Quando não há onde ficar de pé, a frase diz isso com todas as
+     * letras.
+     *
+     * <p>É a distinção que mais importa: <i>"the stone itself"</i> quer
+     * dizer que o aldeão foi mandado para dentro da rocha, e a navegação
+     * nunca cumpre isso. Sem a frase, esse caso é indistinguível de
+     * aldeão longe demais.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_approach",
+            tickLimit = 20)
+    public void aStoneWithNowhereToStandSaysSo(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        // Rocha maciça sem túnel nenhum: nada em volta serve.
+        for (int x = 2; x <= 6; x++) {
+            for (int y = 1; y <= 5; y++) {
+                for (int z = 1; z <= 5; z++) {
+                    context.setBlockState(
+                            new BlockPos(x, y, z), Blocks.STONE.getDefaultState());
+                }
+            }
+        }
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(1, 2, 1));
+
+        String why = MinerReport.whyNotReached(
+                world, villager, context.getAbsolutePos(new BlockPos(4, 3, 3)));
+
+        context.assertTrue(
+                why.contains("the stone itself"),
+                "a frase não distinguiu 'não há onde ficar de pé': " + why);
+
+        context.complete();
+    }
+
+    /**
      * O que é tesouro e o que não é — a Regra 30, decidida pelo autor.
      *
      * <p>O baú da boca guarda <b>todo minério menos carvão</b>. O carvão
