@@ -132,7 +132,7 @@ public final class BuilderApproach {
     }
 
     /** Dois blocos livres sobre bloco sólido: onde um aldeão cabe. */
-    static boolean standable(ServerWorld world, BlockPos at) {
+    public static boolean standable(ServerWorld world, BlockPos at) {
         return world.getBlockState(at.down()).isSolidBlock(world, at.down())
                 && world.getBlockState(at).getCollisionShape(world, at).isEmpty()
                 && world.getBlockState(at.up()).getCollisionShape(world, at.up()).isEmpty();

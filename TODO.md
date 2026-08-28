@@ -1,7 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-27, depois da sessão das 22:19 — o mineiro
-travou, e o relatório estava mentindo sobre onde ele estava.
+**Atualizado:** 2026-08-27, depois da sessão das 22:38 — o instrumento
+novo apontou o defeito no primeiro uso.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -17,9 +17,9 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-515 testes unitários  ·  187 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+515 testes unitários  ·  189 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
-última sessão de jogo em 2026-08-27, 22:19  ·  a galeria andou 5 colunas e travou
+última sessão de jogo em 2026-08-27, 22:38  ·  zero blocos, e ela disse por quê
 ```
 
 > A contagem de jogo era 176 aqui e **175** no `runGametest`. Recontado
@@ -29,6 +29,44 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-27 — o bloco de cima da galeria não tinha onde se ficar de pé
+
+**A sessão das 22:38 não cavou um bloco**, e o relatório consertado
+apontou o lugar no primeiro uso:
+
+```text
+digging Pedra at 729, 45, 878, 7,9 blocks away (out of reach), stall 1938/2400
+```
+
+**7,9 congelado em oito relatórios seguidos.** Ele não andava — e o
+número parado, que a versão anterior não sabia mostrar, é o que
+transformou "aparentemente travou" em endereço.
+
+**A geometria.** A galeria é de dois de altura, e o alvo era o bloco
+**de cima** da coluna da frente. O `approachTo` olhava só as seis faces:
+
+```text
+atrás, mesma altura   ar, mas o teto acima é pedra — não se fica de pé
+embaixo               ar, mas o de cima é o próprio alvo, maciço
+os outros quatro      rocha
+```
+
+Nenhuma servia, e o método caía no *"fica a própria pedra"* — mandar o
+aldeão para dentro da rocha, que a navegação não cumpre. Ele ficava onde
+estava até o guarda devolver a tarefa. **Todo bloco de cima da galeria
+caía nisso**, ou seja metade dela.
+
+O lugar existia o tempo todo: **atrás e um abaixo**, o chão do túnel, a
+um metro e oito do alvo. Diagonal, e por isso invisível para as seis
+faces. Agora cada face é tentada também um bloco abaixo.
+
+| | |
+|---|---|
+| **Fase vermelha** | `theTopBlockOfTheGalleryHasSomewhereToStand` — *"o destino virou a própria pedra"* |
+| **Um falso verde no caminho** | a primeira arena do teste não tinha teto, e o `approachTo` achava lugar **em cima** da coluna — passava sem provar nada. Numa mina de verdade aquilo é rocha. A arena virou rocha maciça com um túnel cavado nela |
+| **Verificado rodando** | `gradlew build` → **515 unitários, 0 falhas**; `runGametest` → **189 de 189** |
+| **Ainda não visto em jogo** | a galeria andando sem travar. É a próxima sessão |
 
 ### 2026-08-27 — o relatório do mineiro media uma coisa e o alcance media outra
 
@@ -930,13 +968,13 @@ risco por bioma (§22, §23) — o Nível 1 ainda não foi visto em jogo.
   na mão.
 - ✅ **O veio que desce** — resolvido em 08-27: ele abre o degrau antes,
   e desiste do minério quando o degrau não pode ser aberto.
-- 🔴 **O mineiro trava na frente da galeria.** Sessão das 22:19: cinco
-  colunas em quatro segundos, depois dois mil e quatrocentos tiques
-  parado a ~4,x blocos do bloco seguinte, com `5/6 ticks` congelado. Ele
-  estava minerando e parou de andar. O relatório agora diz a distância
-  verdadeira e `(out of reach)`; **falta a sessão que mostre por que ele
-  não anda o pouco que falta** — navegação no túnel, horário, ou o
-  `approachTo` apontando para lugar que não dá para cumprir.
+- ✅ **O mineiro travando na frente da galeria** — era o `approachTo`
+  apontando para dentro da rocha em todo bloco de cima do túnel.
+  Resolvido em 08-27; **falta ver a galeria andar em jogo.**
+- 🟠 **Mineiro longe demais não caminha até a mina.** Na mesma sessão, o
+  segundo mineiro passou tudo a `51,4 blocks away (out of reach)`, parado
+  na vila. O alcance da navegação de aldeão não cobre a descida inteira,
+  e o guarda só devolve a tarefa depois de 2400 tiques. Não investigado.
 - 🟡 **O piso de pedra ignora o espaço do armazém.** Baú cheio continua
   pedindo pedra. Vale para lã, vidro e carvão também — é a família toda
   de metas de demanda, e nenhuma delas tem `room`.

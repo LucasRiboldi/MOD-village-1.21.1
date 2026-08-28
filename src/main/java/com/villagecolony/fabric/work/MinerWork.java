@@ -374,19 +374,40 @@ public final class MinerWork {
      * fica a própria pedra, que é o que se fazia antes — pior destino,
      * mas nunca pior que nenhum.
      */
-    private static BlockPos approachTo(ServerWorld world, BlockPos target) {
+    public static BlockPos approachTo(ServerWorld world, BlockPos target) {
         for (Direction side : APPROACHES) {
             BlockPos at = target.offset(side);
 
-            if (world.getBlockState(at).isAir()
-                    && world.getBlockState(at.up()).isAir()
-                    && !world.getBlockState(at.down()).isAir()) {
-
+            if (standable(world, at)) {
                 return at;
+            }
+
+            // E um abaixo dele — 2026-08-27, e é o chão do túnel.
+            //
+            // A sessão das 22:38 não cavou um bloco. A galeria é de dois
+            // de altura, e o alvo era o bloco DE CIMA da coluna da
+            // frente: atrás dele há ar, mas o teto acima é rocha, e não
+            // se fica de pé ali; embaixo há ar, mas o de cima é o
+            // próprio alvo. Nenhuma das seis faces servia, e o método
+            // caía no "fica a própria pedra" — mandar o aldeão para
+            // dentro da rocha, que a navegação não cumpre.
+            //
+            // O lugar existia o tempo todo: atrás e um abaixo, o chão do
+            // túnel, a um metro e oito do alvo. Diagonal, e por isso
+            // invisível para as seis faces.
+            if (standable(world, at.down())) {
+                return at.down();
             }
         }
 
         return target;
+    }
+
+    /** Dois blocos de ar sobre chão sólido: onde um aldeão fica de pé. */
+    private static boolean standable(ServerWorld world, BlockPos at) {
+        return world.getBlockState(at).isAir()
+                && world.getBlockState(at.up()).isAir()
+                && !world.getBlockState(at.down()).isAir();
     }
 
     /** Quebra a pedra em curso, no tempo que ela pede. */

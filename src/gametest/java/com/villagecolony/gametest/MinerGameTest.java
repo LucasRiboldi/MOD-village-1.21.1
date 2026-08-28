@@ -28,7 +28,9 @@ import com.villagecolony.fabric.integration.MineMouth;
 import com.villagecolony.fabric.integration.OreVein;
 import com.villagecolony.fabric.integration.RingSweep;
 import com.villagecolony.fabric.integration.StonePatch;
+import com.villagecolony.fabric.work.BuilderApproach;
 import com.villagecolony.fabric.work.MinerReport;
+import com.villagecolony.fabric.work.MinerReach;
 import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.SandGathering;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -1303,6 +1305,125 @@ public class MinerGameTest implements FabricGameTest {
         context.assertTrue(
                 OreVein.isTreasure(Blocks.DIAMOND_ORE.getDefaultState()),
                 "diamante deixou de ser tesouro");
+
+        context.complete();
+    }
+
+    /**
+     * Um pedaço de galeria de verdade: rocha maciça, e nela um túnel de
+     * dois de altura que para numa parede.
+     *
+     * <p>Maciça de propósito. Sem teto nem paredes o {@code approachTo}
+     * acha lugar de ficar de pé <b>em cima</b> da coluna da frente, e o
+     * teste passa sem provar nada — foi o que a primeira versão dele
+     * fez. Numa mina de verdade esse lugar é rocha.
+     *
+     * <pre>
+     * y=4   teto
+     * y=3   túnel · túnel · túnel · túnel · PAREDE   ← o bloco de cima
+     * y=2   túnel · túnel · túnel · túnel · PAREDE   ← o bloco do chão
+     * y=1   chão
+     * </pre>
+     */
+    private static void galleryFace(TestContext context) {
+        for (int x = 0; x <= 6; x++) {
+            for (int y = 1; y <= 4; y++) {
+                for (int z = 2; z <= 4; z++) {
+                    context.setBlockState(
+                            new BlockPos(x, y, z), Blocks.STONE.getDefaultState());
+                }
+            }
+        }
+
+        for (int x = 1; x <= 4; x++) {
+            context.setBlockState(new BlockPos(x, 2, 3), Blocks.AIR.getDefaultState());
+            context.setBlockState(new BlockPos(x, 3, 3), Blocks.AIR.getDefaultState());
+        }
+    }
+
+    /**
+     * O bloco de cima da galeria também tem onde se ficar de pé —
+     * 2026-08-27.
+     *
+     * <p><b>A sessão das 22:38 não cavou um bloco.</b> Os dois mineiros
+     * passaram a sessão inteira parados, e o relatório novo disse
+     * exatamente onde:
+     *
+     * <pre>
+     * digging Pedra at 729, 45, 878, 7,9 blocks away (out of reach), stall 1938/2400
+     * </pre>
+     *
+     * <p>Sete vírgula nove, <b>congelado</b> em oito relatórios seguidos.
+     * Ele não andava.
+     *
+     * <p><b>A geometria.</b> A galeria é de dois de altura: chão sólido,
+     * ar em cima dele, ar mais um. O alvo era o bloco <b>de cima</b> da
+     * coluna da frente, e o {@code approachTo} olhava só as seis faces:
+     *
+     * <pre>
+     * atrás, mesma altura   ar, mas o teto acima é pedra — não se fica de pé
+     * embaixo               ar, mas o de cima é o próprio alvo, maciço
+     * os outros quatro      rocha
+     * </pre>
+     *
+     * <p>Nenhuma servia, e o método caía no <i>"fica a própria pedra"</i>
+     * — mandar o aldeão para dentro da rocha. A navegação não cumpre
+     * isso, e ele fica onde está até o guarda devolver a tarefa.
+     *
+     * <p>O lugar de ficar de pé existia: é <b>atrás e um abaixo</b>, o
+     * chão do túnel, a um metro e oito do alvo. Diagonal, e por isso
+     * invisível para as seis faces.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_approach",
+            tickLimit = 20)
+    public void theTopBlockOfTheGalleryHasSomewhereToStand(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        galleryFace(context);
+
+        BlockPos target = context.getAbsolutePos(new BlockPos(5, 3, 3));
+
+        BlockPos stand = MinerWork.approachTo(world, target);
+
+        context.assertFalse(
+                stand.equals(target),
+                "o destino virou a própria pedra — o aldeão não tem como chegar lá");
+
+        context.assertTrue(
+                MinerReach.isWithinReach(
+                        stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5, target),
+                "o lugar escolhido está fora de alcance do alvo: "
+                        + stand.toShortString());
+
+        context.assertTrue(
+                BuilderApproach.standable(world, stand),
+                "o lugar escolhido não cabe um aldeão: " + stand.toShortString());
+
+        context.complete();
+    }
+
+    /**
+     * O bloco de baixo continua sendo alcançado de lado.
+     *
+     * <p>A outra metade: o conserto não podia trocar um destino bom por
+     * um pior. Para o bloco do chão da frente, o lugar é atrás dele na
+     * mesma altura — dentro do túnel, como se anda numa mina.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_approach",
+            tickLimit = 20)
+    public void theFloorBlockIsStillReachedFromTheSide(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        galleryFace(context);
+
+        BlockPos target = context.getAbsolutePos(new BlockPos(5, 2, 3));
+
+        BlockPos stand = MinerWork.approachTo(world, target);
+
+        context.assertTrue(
+                stand.equals(context.getAbsolutePos(new BlockPos(4, 2, 3))),
+                "o bloco do chão deixou de ser alcançado de dentro do túnel: "
+                        + stand.toShortString());
 
         context.complete();
     }
