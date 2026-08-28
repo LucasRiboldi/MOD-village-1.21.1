@@ -3,6 +3,11 @@
 **Atualizado:** 2026-08-28. Ele entrou na mina, e o alvo dele acabou
 sendo um túnel que o jogador cavou à mão.
 
+O **plano depois do MVP** — a economia inteira, as profissões que faltam
+e as cinco fases de crescimento — vive em
+[`Village-Economy.md`](docs/technical/Village-Economy.md). Este arquivo
+continua sendo o que está aberto **agora**.
+
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
 [`Project-State.md`](docs/technical/Project-State.md), vale este — os

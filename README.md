@@ -308,6 +308,33 @@ porta que ninguém fabricava.
 
 ---
 
+## Para onde ele vai
+
+O MVP é *a vila cresce sozinha*. Depois dele, o alvo é **a economia
+inteira**: as 13 profissões vanilla como agentes produtivos, mais as que
+o Vanilla não tem — Pedreiro, Pecuarista, Armazenista, Transportador,
+Guarda —, ligadas numa cadeia que vai da natureza à casa e de volta ao
+aldeão novo.
+
+O plano está escrito em
+[`docs/technical/Village-Economy.md`](docs/technical/Village-Economy.md):
+as famílias de material de cada bioma, o que cada profissão consome e
+produz, a cadeia produtiva, e as cinco fases — **acampamento → vila →
+vila desenvolvida → cidade → cidade autônoma**, com o que destrava cada
+uma.
+
+> **A vila de planície é um perfil, e não a regra.** Carvalho, terracota
+> branca e cascalho são o que aquele bioma oferece; o deserto constrói de
+> arenito liso. O motor é o mesmo — é a decisão da
+> [ADR-009](docs/decisions/ADR-009-Autonomous-Village-Evolution.md), e
+> este plano a respeita.
+
+**Onde ele está hoje:** sete profissões trabalhando, das quais duas — o
+**Mineiro** e o **Construtor** — não existem no Vanilla e são as que a
+autonomia exige.
+
+---
+
 ## As etapas
 
 **Os seis passos do MVP estão verificados em jogo.** O último fechou em

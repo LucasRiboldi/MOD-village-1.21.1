@@ -115,7 +115,20 @@ v0.7 Expansão        🔨 em andamento — a rua cresce, o lote é achado por
                         índice, e a vila levanta a casa seguinte
 v1.0 MVP Completo    🔒 falta a sessão em que a vila roda sozinha do
                         começo ao fim sem o jogador
+
+── depois do MVP ─────────────────────────────────────────────
+
+v1.1 Vila            🔨 casa sem barreira de teste, e o Pedreiro
+v1.2 Vila desenvolvida  ⬜ Pecuarista, Armazenista, estoque central
+v1.3 Cidade          ⬜ as 13 profissões vanilla como agentes
+v2.0 Cidade autônoma ⬜ árvore tecnológica pelo Bibliotecário
 ```
+
+**O arco depois do v1.0 tem documento próprio:**
+[`docs/technical/Village-Economy.md`](docs/technical/Village-Economy.md)
+— as famílias de material por bioma, as profissões que faltam, a cadeia
+produtiva, a tabela recurso→profissão e as cinco fases de crescimento,
+de acampamento a cidade autônoma.
 
 **A ressalva que este projeto não omite:** *coberto por teste* e *visto
 funcionando em jogo* são coisas diferentes, e as duas aparecem separadas
