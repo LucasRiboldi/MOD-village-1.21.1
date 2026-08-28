@@ -274,9 +274,84 @@ public final class MineDigging {
             return Optional.empty();
         }
 
+        if (more.get().getY() < from.get().getY()) {
+            Optional<BlockPos> step = stepBackUp(world, from.get());
+
+            if (step.isEmpty()) {
+                // Sem degrau possível não se desce. A colônia prefere
+                // perder o minério a perder o mineiro — a escada volta a
+                // mandar, e ela é subível por construção.
+                mine.veinExhausted();
+
+                return Optional.empty();
+            }
+
+            if (!step.get().equals(from.get())) {
+                // O degrau primeiro, e o veio NÃO avança: a passagem
+                // seguinte acha o mesmo minério com a saída pronta.
+                return step;
+            }
+        }
+
         mine.followVein(MinecraftTypeAdapter.toColonyPos(more.get()));
 
         return more;
+    }
+
+    /**
+     * O bloco que falta abrir para se voltar de um degrau abaixo —
+     * decisão do autor, 2026-08-27.
+     *
+     * <p><b>Por que o veio precisa disto e a escada não.</b> A escada da
+     * Regra 29 abre três blocos por degrau desde 08-27, e sobe-se por
+     * ela na mesma geometria em que se desce. O veio não tem geometria:
+     * {@link OreVein#beside} olha as seis faces, e a de baixo é a
+     * primeira da lista. Minério empilhado abre um poço de um bloco de
+     * largura, e de poço não se sobe — o aldeão não pula dois.
+     *
+     * <p><b>Qual bloco falta é sempre o mesmo:</b> o teto do nível de
+     * onde ele veio. Subir um degrau pede dois blocos de ar no nível de
+     * destino, e o de baixo já é o minério recém-tirado; o de cima é
+     * este. Com ele aberto, a subida se faz um degrau de cada vez até a
+     * boca do poço.
+     *
+     * @param from o minério de onde o veio parte — o nível ao qual o
+     *     mineiro precisa conseguir voltar
+     * @return o bloco a abrir; o próprio {@code from} quando já dá para
+     *     subir; vazio quando não há degrau possível e portanto não se
+     *     deve descer
+     */
+    private static Optional<BlockPos> stepBackUp(ServerWorld world, BlockPos from) {
+        BlockPos ceiling = from.up();
+
+        if (world.getBlockState(ceiling).isAir()) {
+            return Optional.of(from);
+        }
+
+        return canDig(world, ceiling) ? Optional.of(ceiling) : Optional.empty();
+    }
+
+    /**
+     * Se este bloco pode ser cavado — a Regra 3 e o impossível.
+     *
+     * <p>A mesma pergunta que {@link #nextCut} faz na sua volta, aqui
+     * porque o veio precisa saber se consegue abrir a saída antes de
+     * descer. Bedrock, lava e o que é da vila respondem não.
+     */
+    private static boolean canDig(ServerWorld world, BlockPos at) {
+        if (!world.isInBuildLimit(at)) {
+            return false;
+        }
+
+        BlockState state = world.getBlockState(at);
+
+        if (!state.getFluidState().isEmpty()) {
+            return false;
+        }
+
+        return state.getHardness(world, at) >= 0
+                && !BlockProtection.isVillageOriginal(world, at)
+                && !BlockProtection.isColonyBuilt(at);
     }
 
     /**

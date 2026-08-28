@@ -1073,6 +1073,167 @@ public class MinerGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** Uma mina desta colônia, com a boca posta à mão. */
+    private static Colony mineOwner(TestContext context) {
+        Colony colony = Colony.create(
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(6, 2, 6))));
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        VillageColonyMod.MINES.restore(Mine.restore(
+                colony.id(),
+                MineShaft.from(
+                        MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROCK)),
+                        Side.EAST),
+                0));
+
+        return colony;
+    }
+
+    /** Onde o veio está agora, e o minério colado embaixo dele. */
+    private static Colony veinGoingDown(TestContext context, BlockPos taken) {
+        Colony colony = mineOwner(context);
+
+        context.setBlockState(taken.down(), Blocks.COPPER_ORE.getDefaultState());
+
+        VillageColonyMod.MINES.of(colony.id()).orElseThrow()
+                .followVein(MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(taken)));
+
+        return colony;
+    }
+
+    private static Optional<BlockPos> veinTarget(TestContext context, Colony colony) {
+        return MineDigging.nextTarget(
+                context.getWorld(),
+                UUID.randomUUID(),
+                colony.id(),
+                context.getAbsolutePos(ROCK));
+    }
+
+    /**
+     * O veio que desce abre o degrau antes — decisão do autor, 2026-08-27.
+     *
+     * <p>A frase dele: <i>"o mineiro deve sempre manter um local que
+     * consiga escapar para voltar, ou que destrua bloco para poder
+     * subir"</i>, e a escolha foi abrir o bloco.
+     *
+     * <p>A escada da Regra 29 é subível por construção desde os três
+     * blocos por degrau. O <b>veio</b> não era: {@code OreVein.beside}
+     * olha as seis faces, e a de baixo é a primeira da lista. Minério
+     * empilhado abre um poço de um bloco de largura, e de poço não se
+     * sobe — o aldeão não pula dois.
+     *
+     * <p>O que falta é sempre o mesmo bloco: o teto do nível de onde ele
+     * veio. Com ele aberto, esse nível passa a ter os dois blocos de ar
+     * que um degrau para cima pede, e a subida se faz um degrau de cada
+     * vez até a boca do poço.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_vein",
+            tickLimit = 20)
+    public void aVeinGoingDownOpensTheStepFirst(TestContext context) {
+        BlockPos taken = new BlockPos(2, 3, 2);
+
+        Colony colony = veinGoingDown(context, taken);
+
+        // O teto do nível de onde ele veio, fechado.
+        context.setBlockState(taken.up(), Blocks.STONE.getDefaultState());
+
+        Optional<BlockPos> next = veinTarget(context, colony);
+
+        context.assertTrue(next.isPresent(), "o veio não devolveu alvo nenhum");
+
+        context.assertTrue(
+                next.get().equals(context.getAbsolutePos(taken.up())),
+                "desceu sem abrir por onde voltar — foi para "
+                        + next.get().toShortString());
+
+        context.complete();
+    }
+
+    /**
+     * Aberto o degrau, o minério de baixo é o alvo seguinte.
+     *
+     * <p>A outra metade, e ela é o que impede o conserto de virar
+     * travamento: a regra <b>atrasa</b> a descida em uma passagem, não a
+     * cancela.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_vein",
+            tickLimit = 20)
+    public void withTheStepOpenTheVeinGoesDown(TestContext context) {
+        BlockPos taken = new BlockPos(2, 3, 2);
+
+        Colony colony = veinGoingDown(context, taken);
+
+        // Já aberto: nada a fazer antes de descer.
+        context.setBlockState(taken.up(), Blocks.AIR.getDefaultState());
+
+        Optional<BlockPos> next = veinTarget(context, colony);
+
+        context.assertTrue(
+                next.isPresent() && next.get().equals(context.getAbsolutePos(taken.down())),
+                "o veio não desceu mesmo com o degrau aberto");
+
+        context.complete();
+    }
+
+    /**
+     * Degrau que não se abre encerra o veio, em vez de virar poço.
+     *
+     * <p>Bedrock, lava, ou a casa da vila por cima. Sem saída possível a
+     * colônia prefere perder o minério a perder o mineiro — a escada
+     * volta a mandar, e ela é subível por construção.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_vein",
+            tickLimit = 20)
+    public void aStepThatCannotBeOpenedEndsTheVein(TestContext context) {
+        BlockPos taken = new BlockPos(2, 3, 2);
+
+        Colony colony = veinGoingDown(context, taken);
+
+        context.setBlockState(taken.up(), Blocks.BEDROCK.getDefaultState());
+
+        Optional<BlockPos> next = veinTarget(context, colony);
+
+        context.assertFalse(
+                next.isPresent() && next.get().equals(context.getAbsolutePos(taken.down())),
+                "desceu para um poço sem saída");
+
+        context.assertFalse(
+                next.isPresent() && next.get().equals(context.getAbsolutePos(taken.up())),
+                "mandou cavar bedrock");
+
+        context.complete();
+    }
+
+    /**
+     * Veio que anda de lado não paga degrau nenhum.
+     *
+     * <p>O custo é do que desce, e só dele: exigir o teto de todo minério
+     * faria a galeria cavar cinquenta por cento a mais para andar reto.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_vein",
+            tickLimit = 20)
+    public void aVeinGoingSidewaysPaysNothing(TestContext context) {
+        BlockPos taken = new BlockPos(2, 3, 2);
+
+        Colony colony = mineOwner(context);
+
+        context.setBlockState(taken.north(), Blocks.COPPER_ORE.getDefaultState());
+        context.setBlockState(taken.up(), Blocks.STONE.getDefaultState());
+
+        VillageColonyMod.MINES.of(colony.id()).orElseThrow()
+                .followVein(MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(taken)));
+
+        Optional<BlockPos> next = veinTarget(context, colony);
+
+        context.assertTrue(
+                next.isPresent() && next.get().equals(context.getAbsolutePos(taken.north())),
+                "o veio de lado foi desviado para um degrau que ninguém precisa");
+
+        context.complete();
+    }
+
     /**
      * O que é tesouro e o que não é — a Regra 30, decidida pelo autor.
      *

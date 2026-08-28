@@ -1,7 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-08-27, depois da sessão das 21:39 — o mineiro
-desceu de verdade, e a mobília da boca estava na frente dele.
+**Atualizado:** 2026-08-27, depois de dar saída ao veio que desce.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -17,7 +16,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-510 testes unitários  ·  181 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+510 testes unitários  ·  185 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 última sessão de jogo em 2026-08-27, 21:39  ·  o mineiro cavou a escada
 ```
@@ -29,6 +28,34 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-27 — o veio que desce abre o degrau antes
+
+Decisão do autor, e a frase dele: *"o mineiro deve sempre manter um
+local que consiga escapar para voltar, ou que destrua bloco para poder
+subir"*. Escolhida a segunda — abrir o bloco.
+
+**A escada já era subível; o veio não.** A Regra 29 abre três blocos por
+degrau desde 08-27, e sobe-se por ela na mesma geometria em que se
+desce. O veio não tem geometria: `OreVein.beside` olha as seis faces, e
+**a de baixo é a primeira da lista**. Minério empilhado abre um poço de
+um bloco de largura, e de poço não se sobe — o aldeão não pula dois.
+
+**Qual bloco falta é sempre o mesmo:** o teto do nível de onde ele veio.
+Subir um degrau pede dois blocos de ar no destino; o de baixo já é o
+minério recém-tirado, o de cima é este. Aberto ele, a subida se faz um
+degrau de cada vez até a boca do poço.
+
+Degrau que não se abre — bedrock, lava, casa da vila — **encerra o
+veio**: a colônia prefere perder o minério a perder o mineiro, e a
+escada volta a mandar. Veio que anda de lado não paga nada: o custo é do
+que desce, e só dele.
+
+| | |
+|---|---|
+| **Fase vermelha** | `aVeinGoingDownOpensTheStepFirst` e `aStepThatCannotBeOpenedEndsTheVein` |
+| **Verificado rodando** | `gradlew build` → **510 unitários, 0 falhas**; `runGametest` → **185 de 185** |
+| **Não observado em jogo** | o poço nunca chegou a ser visto acontecendo. É conserto de leitura de código, e está dito |
 
 ### 2026-08-27 — o lampião estava no primeiro degrau, e o mineiro cavava o próprio lampião
 
@@ -858,12 +885,8 @@ risco por bioma (§22, §23) — o Nível 1 ainda não foi visto em jogo.
   jogo** na sessão das 21:06: 17 passagens, 16.641 colunas, uma volta
   completa e `1 road indexes` gravado. A próxima sessão abre com o índice
   na mão.
-- 🟠 **O veio pode descer reto, e disso não se sobe.** `OreVein.beside`
-  aceita as seis faces, inclusive a de baixo, e um poço de um bloco de
-  largura não se escala — aldeão não pula dois. **Não foi observado em
-  jogo**, e é dedução da leitura do código, não medida. A decisão do
-  autor está pendente: tirar a face de baixo do `beside` (perde minério
-  abaixo da galeria) ou abrir degrau ao descer.
+- ✅ **O veio que desce** — resolvido em 08-27: ele abre o degrau antes,
+  e desiste do minério quando o degrau não pode ser aberto.
 - 🟡 **O piso de pedra ignora o espaço do armazém.** Baú cheio continua
   pedindo pedra. Vale para lã, vidro e carvão também — é a família toda
   de metas de demanda, e nenhuma delas tem `room`.
