@@ -218,6 +218,44 @@ class MineRegistryTest {
         assertEquals(mine.shaft().positionAt(8), mine.nextPosition());
     }
 
+    /**
+     * A frente é lida do mundo, e não lembrada — 2026-08-28.
+     *
+     * <p><b>O recuo de ontem parava cedo demais.</b> Ele voltava até achar
+     * uma posição de onde dava para bater — e o <b>túnel que o jogador
+     * cavou à mão</b> oferece exatamente isso, num bolsão que não se liga
+     * à escada do mod. O mineiro ficava no degrau 7 mirando uma lanterna
+     * a vinte e quatro blocos, do outro lado da rocha.
+     *
+     * <p>A frente de verdade é a <b>primeira posição ainda fechada</b> na
+     * ordem de cavar. Ela é conectada por construção: tudo o que vem
+     * antes já está aberto, e a ordem é um caminho contínuo a partir da
+     * boca. Nenhum bolsão solto pode enganá-la.
+     */
+    @Test
+    void theFrontierIsWhereverTheCursorIsToldToGo() {
+        Mine mine = Mine.open(UUID.randomUUID(), shaft());
+
+        for (int i = 0; i < 40; i++) {
+            mine.nextPosition();
+        }
+
+        mine.rewindTo(7);
+
+        assertEquals(7, mine.cut());
+        assertEquals(mine.shaft().positionAt(7), mine.nextPosition());
+    }
+
+    /** A frente nunca vai para antes do primeiro degrau, nem para trás do fim. */
+    @Test
+    void theFrontierStaysInsideTheOrder() {
+        Mine mine = Mine.open(UUID.randomUUID(), shaft());
+
+        mine.rewindTo(-5);
+
+        assertEquals(0, mine.cut());
+    }
+
     /** Recuar do começo não leva a picareta para antes do primeiro degrau. */
     @Test
     void backingUpNeverGoesBehindTheStart() {

@@ -355,6 +355,60 @@ public final class MineDigging {
     }
 
     /**
+     * Onde a galeria de fato acaba, lido do mundo — 2026-08-28.
+     *
+     * <p><b>A primeira posição ainda fechada, na ordem de cavar.</b> Ela
+     * é conectada por construção: tudo o que vem antes já está aberto, e
+     * a ordem é um caminho contínuo a partir da boca. É o que faz o
+     * mineiro cavar sempre a partir de onde ele consegue estar.
+     *
+     * <p><b>Por que o recuo passo a passo não bastou</b> — sessão de
+     * 2026-08-28, 00:14. Ele voltava até achar uma posição de onde dava
+     * para bater, e o <b>túnel que o jogador cavou à mão</b> oferece
+     * exatamente isso. Os dois mineiros ficaram parados no degrau 7 da
+     * escada mirando uma lanterna a vinte e quatro blocos, dentro de um
+     * bolsão que não se liga à escada por lugar nenhum:
+     *
+     * <pre>
+     * the miner is at 725, 57, 898 ... the stone at 732, 45, 878 is Lanterna
+     * </pre>
+     *
+     * <p>Lido do mundo, e não lembrado: é a mesma escolha que o baú da
+     * boca e a marca do baú já faziam. O cursor gravado no save deixa de
+     * poder mentir, e nenhum buraco solto engana a conta.
+     *
+     * <p>Posição que não se cava — bedrock, casa da vila — é pulada: ela
+     * ficaria sendo a frente para sempre. Quem a trata é o
+     * {@code blockedAgain}, que vira a galeria.
+     */
+    private static void findTheFrontier(ServerWorld world, Mine mine) {
+        for (int i = 0; i < mine.cut(); i++) {
+            BlockPos at = MinecraftTypeAdapter.toBlockPos(mine.shaft().positionAt(i));
+
+            if (!world.isInBuildLimit(at)) {
+                continue;
+            }
+
+            BlockState state = world.getBlockState(at);
+
+            if (state.isAir() || !state.getFluidState().isEmpty() || !canDig(world, at)) {
+                continue;
+            }
+
+            if (i < mine.cut()) {
+                VillageColonyMod.LOGGER.info(
+                        "The gallery really ends at {} — the cursor was {} steps ahead of it",
+                        at.toShortString(),
+                        mine.cut() - i);
+
+                mine.rewindTo(i);
+            }
+
+            return;
+        }
+    }
+
+    /**
      * Recua o cursor até a frente que dá para alcançar — 2026-08-27.
      *
      * <p><b>A mina do autor ficou assim, e ele a diagnosticou a pé:</b>
@@ -511,7 +565,7 @@ public final class MineDigging {
      * a curva da galeria.
      */
     private static Optional<BlockPos> nextCut(ServerWorld world, UUID workerId, Mine mine) {
-        backUpToTheRealFrontier(world, mine);
+        findTheFrontier(world, mine);
 
         for (int look = 0; look < CUTS_PER_SEARCH; look++) {
             BlockPos at = MinecraftTypeAdapter.toBlockPos(mine.nextPosition());

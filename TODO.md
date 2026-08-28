@@ -1,7 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-08-28. A sessão da meia-noite disse onde o mineiro
-estava, e era na superfície.
+**Atualizado:** 2026-08-28. Ele entrou na mina, e o alvo dele acabou
+sendo um túnel que o jogador cavou à mão.
 
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
@@ -17,9 +17,9 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-528 testes unitários  ·  199 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+530 testes unitários  ·  199 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
-última sessão de jogo em 2026-08-28, 00:00  ·  o mineiro estava em y=66
+última sessão de jogo em 2026-08-28, 00:14  ·  ele entrou, e parou no degrau 7
 ```
 
 > A contagem de jogo era 176 aqui e **175** no `runGametest`. Recontado
@@ -29,6 +29,44 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-28 — a frente da galeria passou a ser lida do mundo
+
+**A perna funcionou, e o log mostra:** de `734, 66, 878` na superfície
+para `725, 57, 898` — que é, exatamente, o **degrau 7** da escada. Ele
+entrou na mina pela primeira vez.
+
+**E parou lá, mirando isto:**
+
+```text
+the miner is at 725, 57, 898, 24,5 blocks away;
+the stone at 732, 45, 878 is Lanterna
+```
+
+**Uma lanterna.** O autor tinha cavado à mão até a galeria dias antes —
+*"tive que cavar até lá"* — e iluminado o próprio túnel. Aquele buraco
+não se liga à escada do mod por lugar nenhum.
+
+**O recuo de ontem parava cedo demais.** Ele voltava até achar uma
+posição de onde desse para bater, e o túnel do jogador oferece
+exatamente isso. Os dois mineiros ficaram no fim da escada de verdade
+mirando um bolsão do outro lado da rocha.
+
+**A frente de verdade é a primeira posição ainda fechada na ordem de
+cavar.** Ela é conectada por construção — tudo o que vem antes já está
+aberto, e a ordem é um caminho contínuo a partir da boca. Nenhum buraco
+solto engana a conta.
+
+Lida do mundo, e não lembrada: a mesma escolha que o baú da boca e a
+marca do baú já faziam. **O número gravado no save deixa de poder
+mentir.**
+
+| | |
+|---|---|
+| **Fase vermelha** | `theFrontierIsWhereverTheCursorIsToldToGo`, `theFrontierStaysInsideTheOrder` |
+| **Um teste antigo virou do avesso, e por verdade** | `theMineTheSaveBroughtIsNotDugAgain` afirmava que a fronteira gravada era **obedecida** — e foi isso que quebrou a mina do autor. Passou a afirmar que ela é **conferida**. Não custa: o que já está aberto é pulado com uma leitura de bloco, não com uma picareta |
+| **Verificado rodando** | `gradlew build` → **530 unitários, 0 falhas**; `runGametest` → **199 de 199** |
+| **Ainda não visto em jogo** | um bloco cavado. Sete sessões |
 
 ### 2026-08-28 — ele estava na superfície, e agora entra pela boca
 

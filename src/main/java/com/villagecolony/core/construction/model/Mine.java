@@ -180,6 +180,24 @@ public final class Mine {
     }
 
     /**
+     * Põe o cursor nesta posição da ordem de cavar — 2026-08-28.
+     *
+     * <p><b>A frente da galeria passou a ser lida do mundo</b>, e não
+     * lembrada. O recuo passo a passo parava cedo demais: ele voltava até
+     * achar uma posição de onde dava para bater, e o <b>túnel que o
+     * jogador cavou à mão</b> oferece exatamente isso, num bolsão que não
+     * se liga à escada do mod. O mineiro ficava no degrau 7 mirando uma
+     * lanterna a vinte e quatro blocos, do outro lado da rocha.
+     *
+     * <p>Quem decide qual índice é a frente é {@code MineDigging}, que vê
+     * o mundo; aqui só se obedece. Índice negativo vira zero — a picareta
+     * não vai para antes do primeiro degrau.
+     */
+    public void rewindTo(int index) {
+        cut = Math.max(0, index);
+    }
+
+    /**
      * Recua o cursor um passo — 2026-08-27.
      *
      * <p><b>Para quando ele marchou por dentro da rocha.</b> A posição

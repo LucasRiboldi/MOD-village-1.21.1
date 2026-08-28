@@ -304,19 +304,26 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
-     * A mina que o save trouxe não é reaberta — 2026-08-20.
+     * A boca do save é respeitada; a fronteira dele, conferida —
+     * 2026-08-20, reescrito em 2026-08-28.
      *
-     * <p>Até esta data a mina morava num campo do trabalho do mineiro, e
-     * fechar o mundo apagava as duas coisas que custam a refazer: a boca,
-     * que a sessão seguinte reprocurava e achava alguns blocos <b>abaixo</b>
-     * — o bloco de ontem tinha sido cavado —, e a fronteira, que voltava
-     * ao primeiro degrau e revarria índice por índice tudo o que já
-     * estava aberto.
+     * <p><b>A boca continua sendo a de ontem</b>, e é metade do que este
+     * teste sempre afirmou: sem ela a sessão seguinte reprocurava uma
+     * entrada e achava outra alguns blocos abaixo, porque a de ontem
+     * tinha sido cavada.
      *
-     * <p>Aqui a mina entra no registro como se o save a tivesse trazido,
-     * com a fronteira já na galeria sem fim. O que se afirma é o que o
-     * jogador veria: a colônia continua com <b>uma</b> boca, e ela é a de
-     * ontem; e a picareta anda para a frente, em vez de recomeçar.
+     * <p><b>A outra metade virou o contrário, e foi o mundo que ensinou.</b>
+     * Ele afirmava que a fronteira gravada era obedecida — e foi
+     * justamente isso que quebrou a mina do autor. O cursor marchou
+     * dezenas de blocos por dentro da rocha, o número foi para o save, e
+     * a mina ficou presa apontando para um lugar que ninguém alcança.
+     *
+     * <p>Hoje a fronteira é <b>lida do mundo</b>: a primeira posição
+     * ainda fechada na ordem de cavar. Aqui o túnel não existe — a arena
+     * é rasa e nada foi aberto —, então o número do save é corrigido para
+     * baixo, e é isso que se afirma. <b>Não custa cavar de novo</b>: o que
+     * já está aberto é pulado com uma leitura de bloco, não com uma
+     * picareta.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_resume",
             tickLimit = 200)
@@ -375,8 +382,13 @@ public class MinerGameTest implements FabricGameTest {
                         "a colônia trocou de boca: " + mine.entry() + " em vez de " + mouth);
 
                 context.assertTrue(
-                        mine.cut() > FRONTIER,
-                        "a fronteira não andou — parou em " + mine.cut());
+                        mine.cut() < FRONTIER,
+                        "acreditou num número que o mundo não confirma — ficou em "
+                                + mine.cut() + " com o túnel fechado");
+
+                context.assertTrue(
+                        mine.cut() > 0,
+                        "a picareta não andou a partir da frente de verdade");
             } finally {
                 owned.cleanUp();
 
