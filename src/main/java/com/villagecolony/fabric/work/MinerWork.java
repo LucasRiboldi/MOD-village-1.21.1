@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.storage.model.WorkerStorage;
@@ -311,7 +312,7 @@ public final class MinerWork {
                 WorkTargets.set(
                         workerId,
                         MinerReach.legTowards(
-                                villager.getBlockPos(), job.approach, mouthOf(job)),
+                                villager.getBlockPos(), job.approach, mineOf(job)),
                         MinerReach.ARRIVAL);
             }
 
@@ -552,8 +553,18 @@ public final class MinerWork {
      * dos dois tem descida a fazer, e mandá-los à boca seria um desvio.
      */
     private static Optional<BlockPos> mouthOf(Job job) {
-        return VillageColonyMod.MINES.of(job.task.colonyId())
-                .map(mine -> MinecraftTypeAdapter.toBlockPos(mine.shaft().entry()));
+        return mineOf(job).map(mine -> MinecraftTypeAdapter.toBlockPos(mine.shaft().entry()));
+    }
+
+    /**
+     * A mina desta colonia, se ela tem uma.
+     *
+     * <p>A mina inteira e nao so a boca, porque o passo de caminhada e
+     * dado pela <b>ordem de cavar</b> desde 2026-08-29: e ela que sabe
+     * onde o corredor passa. Ver {@link MinerReach#legTowards}.
+     */
+    private static Optional<Mine> mineOf(Job job) {
+        return VillageColonyMod.MINES.of(job.task.colonyId());
     }
 
     /**

@@ -1,7 +1,9 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.construction.model.Mine;
 import net.minecraft.util.math.BlockPos;
 import org.junit.jupiter.api.Test;
+
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

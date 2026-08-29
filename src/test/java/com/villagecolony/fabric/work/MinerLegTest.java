@@ -1,14 +1,21 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.construction.model.Mine;
+import com.villagecolony.core.construction.model.MineShaft;
+import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.Side;
 import net.minecraft.util.math.BlockPos;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Por onde o mineiro entra na mina — 2026-08-28.
+ * Por onde o mineiro entra na mina, e como ele desce — 2026-08-28 e 29.
  *
  * <p><b>A sessão da meia-noite mostrou onde ele estava</b>, e foi a
  * primeira vez que se soube:
@@ -19,60 +26,110 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * </pre>
  *
  * <p><b>Y 66 é a superfície.</b> Ele estava vinte e um blocos em linha
- * reta <b>acima</b> da galeria, em cima do chão, mirando uma pedra no
- * fundo da mina. A navegação do jogo recebe um destino a vinte blocos
- * atravessando rocha maciça, devolve caminho parcial, e ele estaciona no
- * ponto mais próximo que consegue — que é bem ali em cima.
- *
- * <p>É o sintoma que o MineColonies registrou na
+ * reta <b>acima</b> da galeria, mirando uma pedra no fundo da mina. A
+ * navegação do jogo recebe um destino a vinte blocos atravessando rocha
+ * maciça, devolve caminho parcial, e ele estaciona no ponto mais próximo
+ * que consegue — bem ali em cima. É o sintoma que o MineColonies
+ * registrou na
  * <a href="https://github.com/ldtteam/minecolonies/issues/4297">issue
- * 4297</a> com as mesmas palavras — <i>"o mineiro fica parado na
- * superfície acima do alvo"</i> —, e o remendo do jogador é o mesmo que
- * o autor fez: cavar até lá.
+ * 4297</a>, e o remendo do jogador é o mesmo que o autor fez: cavar até
+ * lá.
  *
- * <p><b>A perna que faltava.</b> Não se pede à navegação um caminho que
- * ela não sabe traçar: pede-se a <b>boca da mina</b>, que fica na
- * superfície e a que se chega andando. De dentro dela a escada é um
- * corredor, e o resto do caminho é curto.
+ * <p><b>A primeira perna resolveu a entrada e criou o E35.</b> Ela tinha
+ * duas pontas e nada no meio: longe, o destino era a boca; perto da
+ * boca, o destino virava a pedra do fundo. A sessão de 2026-08-28 pegou
+ * o segundo mineiro <b>oscilando na fronteira</b>:
+ *
+ * <pre>
+ * 740, 65, 895  ->  8,77 da boca   FORA da perna  -> mandado à boca
+ * 739, 65, 896  ->  7,55 da boca   DENTRO         -> mandado à pedra
+ * 741, 63, 898  ->  9,00 da boca   FORA           -> mandado à boca
+ * </pre>
+ *
+ * <p>Ele andava para a boca, cruzava os oito blocos, recebia um destino
+ * que a navegação não cumpre, derivava, saía dos oito, e recomeçava.
+ * Para sempre. <b>A descida tem vinte blocos e a perna tem oito: são
+ * três passos, e o sistema só sabia dar dois.</b>
+ *
+ * <p>Agora quem dá o passo é a <b>ordem de cavar</b>: ela é um corredor
+ * contínuo a partir da boca, e o passo seguinte é o ponto mais avançado
+ * dela que ainda caiba numa perna.
  */
 class MinerLegTest {
 
-    private static final BlockPos MOUTH = new BlockPos(732, 63, 898);
+    private static final ColonyPos MOUTH = new ColonyPos(732, 63, 898);
+
+    private static final BlockPos MOUTH_BLOCK = new BlockPos(732, 63, 898);
 
     private static final BlockPos DEEP = new BlockPos(735, 45, 878);
+
+    /** A mina desta colônia, com a escada já aberta até certa posição. */
+    private static Optional<Mine> mine(int cut) {
+        return Optional.of(
+                Mine.restore(UUID.randomUUID(), MineShaft.from(MOUTH, Side.NORTH), cut));
+    }
 
     /** Longe da pedra e longe da boca: entra pela boca. */
     @Test
     void fromTheSurfaceHeAimsForTheMouth() {
         assertEquals(
-                MOUTH,
-                MinerReach.legTowards(new BlockPos(734, 66, 878), DEEP, Optional.of(MOUTH)));
+                MOUTH_BLOCK,
+                MinerReach.legTowards(new BlockPos(734, 66, 878), DEEP, mine(30)));
     }
 
     /**
-     * Já na boca, ele mira a pedra.
+     * <b>O E35.</b> Já na boca, o passo é escada abaixo — e não a pedra.
      *
-     * <p>Sem isto ele ficaria parado na entrada para sempre, trocando um
-     * travamento por outro.
+     * <p>Este teste afirmava o contrário até 2026-08-29, e o que ele
+     * travava era o defeito: <i>"já na boca, ele mira a pedra"</i>. Mirar
+     * a pedra dali é mirar vinte blocos abaixo, do outro lado da rocha,
+     * e a navegação não cumpre — ele derivava, saía do alcance da perna,
+     * e o destino voltava a ser a boca.
      */
     @Test
-    void atTheMouthHeAimsForTheStone() {
-        assertEquals(
-                DEEP,
-                MinerReach.legTowards(new BlockPos(731, 63, 898), DEEP, Optional.of(MOUTH)));
+    void atTheMouthTheLegIsAStepDownTheShaft() {
+        BlockPos leg = MinerReach.legTowards(new BlockPos(731, 63, 898), DEEP, mine(30));
+
+        assertNotEquals(
+                DEEP, leg,
+                "à boca ele continua sendo mandado à pedra do fundo, que é o E35");
+
+        assertTrue(
+                leg.getY() < MOUTH_BLOCK.getY(),
+                "o passo não desce: " + leg.toShortString());
+
+        assertTrue(
+                Math.sqrt(new BlockPos(731, 63, 898).getSquaredDistance(leg)) <= MinerReach.LEG,
+                "o passo saiu fora do alcance de uma perna: " + leg.toShortString());
     }
 
     /**
-     * Perto da pedra, a boca não interessa.
+     * E de dentro da escada ele continua descendo, em vez de voltar.
      *
-     * <p>Dentro da galeria ele está a metros do alvo e a dezenas da
-     * boca; mandá-lo voltar seria desfazer a descida a cada passo.
+     * <p>É a metade que impede a troca de um travamento por outro: um
+     * passo que devolvesse a boca desfaria a descida a cada tique.
+     */
+    @Test
+    void fromInsideTheShaftTheLegKeepsGoingDown() {
+        BlockPos onTheStairs = new BlockPos(732, 58, 893);
+
+        BlockPos leg = MinerReach.legTowards(onTheStairs, DEEP, mine(60));
+
+        assertTrue(
+                leg.getY() < onTheStairs.getY(),
+                "de dentro da escada ele foi mandado para cima: " + leg.toShortString());
+    }
+
+    /**
+     * Perto da pedra, nem a boca nem a ordem interessam.
+     *
+     * <p>Dentro da galeria ele está a metros do alvo: o passo é o alvo.
      */
     @Test
     void insideTheGalleryHeKeepsAimingForTheStone() {
         assertEquals(
                 DEEP,
-                MinerReach.legTowards(new BlockPos(730, 45, 878), DEEP, Optional.of(MOUTH)));
+                MinerReach.legTowards(new BlockPos(730, 45, 878), DEEP, mine(200)));
     }
 
     /**
@@ -86,5 +143,18 @@ class MinerLegTest {
         assertEquals(
                 DEEP,
                 MinerReach.legTowards(new BlockPos(734, 66, 878), DEEP, Optional.empty()));
+    }
+
+    /**
+     * Mina recém-aberta, sem nada cavado, ainda manda para a boca.
+     *
+     * <p>Não há ordem por onde andar, e a boca é a única resposta que
+     * não inventa caminho.
+     */
+    @Test
+    void anUntouchedMineStillSendsHimToTheMouth() {
+        assertEquals(
+                MOUTH_BLOCK,
+                MinerReach.legTowards(new BlockPos(734, 66, 878), DEEP, mine(0)));
     }
 }

@@ -1,5 +1,7 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.construction.model.Mine;
+import com.villagecolony.core.type.ColonyPos;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.Optional;
@@ -95,7 +97,21 @@ public final class MinerReach {
     public static final int LEG = 8;
 
     /**
-     * Para onde mandar o aldeão agora — a boca da mina, ou o destino.
+     * Quantas posições da ordem de cavar a busca do passo olha.
+     *
+     * <p>A galeria não tem fim, e a conta é aritmética pura — nenhuma
+     * leitura de bloco —, mas ainda assim ela não pode crescer com a
+     * sessão. Duas mil posições são umas seiscentas colunas: mais mina
+     * do que qualquer sessão cavou até hoje, e barato o bastante para
+     * rodar todo tique.
+     *
+     * <p>Mina maior que isto cai no destino de sempre, que é a boca —
+     * o comportamento de antes deste conserto.
+     */
+    private static final int STEPS_SCANNED = 2000;
+
+    /**
+     * Para onde mandar o aldeão agora — um passo pela escada.
      *
      * <p><b>A sessão da meia-noite mostrou onde ele estava</b>, e foi a
      * primeira vez que se soube: <i>"the miner is at 734, 66, 878"</i>.
@@ -111,23 +127,42 @@ public final class MinerReach {
      * até lá.
      *
      * <p><b>Não se pede à navegação um caminho que ela não sabe
-     * traçar.</b> Pede-se a boca, que fica na superfície e a que se chega
-     * andando; de dentro dela a escada é um corredor, e o resto é curto.
-     * Chegando à boca, o destino passa a ser a pedra — sem esta segunda
-     * metade ele trocaria um travamento por outro, parado na entrada
-     * para sempre.
+     * traçar.</b> Pede-se um passo de cada vez.
+     *
+     * <p><b>E a primeira versão só sabia dar dois passos — o E35.</b>
+     * Longe, o destino era a boca; perto da boca, o destino virava a
+     * pedra, vinte blocos abaixo e do outro lado da rocha. A sessão de
+     * 2026-08-28 pegou o segundo mineiro <b>oscilando na fronteira</b>:
+     *
+     * <pre>
+     * 740, 65, 895  ->  8,77 da boca   FORA da perna  -> mandado à boca
+     * 739, 65, 896  ->  7,55 da boca   DENTRO         -> mandado à pedra
+     * 741, 63, 898  ->  9,00 da boca   FORA           -> mandado à boca
+     * </pre>
+     *
+     * <p>Ele andava para a boca, cruzava os oito blocos, recebia um
+     * destino que a navegação não cumpre, derivava, saía dos oito, e
+     * recomeçava. Para sempre. A descida tem vinte blocos e a perna tem
+     * oito: são três passos, e o sistema só sabia dar dois.
+     *
+     * <p><b>Agora a mina sabe o caminho dela.</b> A ordem de cavar
+     * <b>é</b> um corredor contínuo a partir da boca — tudo o que vem
+     * antes da frente já está aberto —, e o passo seguinte é o ponto
+     * mais avançado dessa ordem que ainda caiba numa perna, contado a
+     * partir de onde ele está. Um degrau de cada vez, escada abaixo, e
+     * sem fronteira nenhuma para oscilar em volta.
      *
      * <p>Não é a solução do MineColonies, que trocou a navegação inteira
-     * por um A* próprio. É a que cabe aqui, e ataca exatamente o que se
-     * viu: ele nunca entrava.
+     * por um A* próprio. É a que cabe aqui, e usa um dado que o mod já
+     * tem de graça.
      *
-     * @param mouth a boca da mina desta colônia, vazia quando não há
-     *     mina — a pedra de superfície não tem descida a fazer
+     * @param mine a mina desta colônia, vazia quando não há uma — a
+     *     pedra de superfície e a areia não têm descida a fazer
      */
     public static BlockPos legTowards(
-            BlockPos villager, BlockPos destination, Optional<BlockPos> mouth) {
+            BlockPos villager, BlockPos destination, Optional<Mine> mine) {
 
-        if (mouth.isEmpty()) {
+        if (mine.isEmpty()) {
             return destination;
         }
 
@@ -135,8 +170,64 @@ public final class MinerReach {
             return destination;
         }
 
-        return Math.sqrt(villager.getSquaredDistance(mouth.get())) <= LEG
-                ? destination
-                : mouth.get();
+        BlockPos step = stepAlongTheShaft(villager, mine.get());
+
+        return step != null ? step : at(mine.get().shaft().entry());
+    }
+
+    /**
+     * O ponto mais avançado da ordem de cavar que ainda cabe numa perna.
+     *
+     * <p><b>Contíguo, e é o que importa.</b> A ordem dobra — a escada
+     * desce para um lado, a sala se abre, o segundo lance vira, e a
+     * galeria corre para outro. Um ponto avançado pode passar
+     * <b>perto</b> dele por fora da rocha sem que haja caminho: pegar
+     * "o último que estiver a oito blocos" mandaria o aldeão atravessar
+     * parede.
+     *
+     * <p>Então a busca anda a partir de onde ele está: acha a posição da
+     * ordem mais perto dele e caminha para a frente <b>enquanto</b> as
+     * posições continuarem ao alcance. A primeira que sair encerra o
+     * passo, e o que ficou é um trecho contínuo do corredor.
+     *
+     * @return nulo quando ele não está na passagem — na superfície, longe
+     *     da boca. Aí quem responde é a boca
+     */
+    private static BlockPos stepAlongTheShaft(BlockPos villager, Mine mine) {
+        int scanned = Math.min(mine.cut(), STEPS_SCANNED);
+
+        int here = -1;
+        double nearest = Double.MAX_VALUE;
+
+        for (int i = 0; i < scanned; i++) {
+            double away = Math.sqrt(villager.getSquaredDistance(at(mine.shaft().positionAt(i))));
+
+            if (away < nearest) {
+                nearest = away;
+                here = i;
+            }
+        }
+
+        if (here < 0 || nearest > LEG) {
+            return null;
+        }
+
+        BlockPos step = at(mine.shaft().positionAt(here));
+
+        for (int i = here + 1; i < scanned; i++) {
+            BlockPos ahead = at(mine.shaft().positionAt(i));
+
+            if (Math.sqrt(villager.getSquaredDistance(ahead)) > LEG) {
+                break;
+            }
+
+            step = ahead;
+        }
+
+        return step;
+    }
+
+    private static BlockPos at(ColonyPos position) {
+        return new BlockPos(position.x(), position.y(), position.z());
     }
 }
