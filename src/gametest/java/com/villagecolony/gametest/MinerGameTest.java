@@ -2432,4 +2432,172 @@ public class MinerGameTest implements FabricGameTest {
 
         task.reserveFor(workerId);
     }
+
+    /** Onde a escada destes testes de luz começa, dentro da rocha. */
+    private static final BlockPos LIT_ENTRY = new BlockPos(0, 6, 3);
+
+    /**
+     * Uma mina desta colônia com a escada aberta até certa posição.
+     *
+     * <p>A ordem de cavar é do {@code MineShaft}, e abrir por ela é o
+     * que o mineiro teria feito — a arena fica com a escada de verdade,
+     * e não com um corredor inventado.
+     */
+    private static Colony openedMine(TestContext context, int cut) {
+        Colony colony = Colony.create(
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(6, 2, 6))));
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        MineShaft shaft = MineShaft.from(
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(LIT_ENTRY)), Side.EAST);
+
+        VillageColonyMod.MINES.restore(Mine.restore(colony.id(), shaft, cut));
+
+        for (int i = 0; i < cut; i++) {
+            context.getWorld().setBlockState(
+                    MinecraftTypeAdapter.toBlockPos(shaft.positionAt(i)),
+                    Blocks.AIR.getDefaultState());
+        }
+
+        return colony;
+    }
+
+    /** A posição de índice {@code i} da escada destes testes. */
+    private static BlockPos dug(TestContext context, Colony colony, int i) {
+        return MinecraftTypeAdapter.toBlockPos(
+                VillageColonyMod.MINES.of(colony.id()).orElseThrow().shaft().positionAt(i));
+    }
+
+    private static Optional<BlockPos> targetFor(TestContext context, Colony colony) {
+        return MineDigging.nextTarget(
+                context.getWorld(),
+                UUID.randomUUID(),
+                colony.id(),
+                context.getAbsolutePos(LIT_ENTRY));
+    }
+
+    /**
+     * A galeria ganha luz onde já foi cavada — 2026-08-28.
+     *
+     * <p><b>Só a boca tinha lanterna, e nem sempre.</b> Vinte blocos
+     * abaixo do chão, com luz zero, é criatura nascendo <b>dentro</b> da
+     * mina, ao lado de um aldeão desarmado — e a sessão de 08-26 nem a
+     * lanterna da boca conseguiu pôr: {@code lantern at nowhere it fits}.
+     *
+     * <p>A tocha vai no <b>chão</b> da passagem, e não na posição da
+     * ordem: a ordem abre a coluna inteira, e só a de baixo tem rocha
+     * embaixo para apoiar a tocha.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_light",
+            tickLimit = 20)
+    public void theGalleryIsLitWhereItWasAlreadyDug(TestContext context) {
+        solidRock(context);
+
+        Colony colony = openedMine(context, 18);
+
+        try {
+            targetFor(context, colony);
+
+            // O alto da coluna do índice 8: o cursor está em 18, e a luz
+            // fica um espaçamento inteiro atrás dele.
+            BlockPos lit = context.getAbsolutePos(new BlockPos(3, 6, 3));
+
+            context.assertTrue(
+                    context.getWorld().getBlockState(lit).isOf(Blocks.WALL_TORCH),
+                    "a galeria continuou escura: "
+                            + context.getWorld().getBlockState(lit).getBlock().getName()
+                                    .getString()
+                            + " em " + lit.toShortString());
+
+            // E o chão da mesma coluna continua sendo degrau — a tocha
+            // no piso foi o primeiro defeito desta feature.
+            BlockPos floor = context.getAbsolutePos(new BlockPos(3, 4, 3));
+
+            context.assertTrue(
+                    context.getWorld().getBlockState(floor).isAir(),
+                    "a tocha comeu o degrau em " + floor.toShortString());
+        } finally {
+            MineClaims.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * O mineiro não cava a própria tocha — 2026-08-28.
+     *
+     * <p>É o defeito do lampião no primeiro degrau, de 08-27, que
+     * voltaria pela porta da frente: tocha tem dureza e não é da vila, e
+     * o {@code nextCut} a trataria como pedra. Uma posição com luz é
+     * <b>espaço aberto</b>, não rocha.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_light",
+            tickLimit = 20)
+    public void theMinerDoesNotDigItsOwnTorch(TestContext context) {
+        solidRock(context);
+
+        Colony colony = openedMine(context, 3);
+
+        // A quarta posição da ordem, acesa e com rocha embaixo.
+        BlockPos torch = dug(context, colony, 3);
+
+        context.getWorld().setBlockState(torch, Blocks.TORCH.getDefaultState());
+
+        try {
+            Optional<BlockPos> next = targetFor(context, colony);
+
+            context.assertTrue(
+                    next.isPresent(),
+                    "a mina não devolveu alvo nenhum, e sem isso o teste não mede nada");
+
+            context.assertFalse(
+                    next.get().equals(torch),
+                    "o mineiro mirou a própria tocha em " + torch.toShortString());
+
+            context.assertTrue(
+                    next.get().equals(dug(context, colony, 4)),
+                    "ele devia ter seguido para a posição seguinte, e foi para "
+                            + next.get().toShortString());
+        } finally {
+            MineClaims.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * Tocha na ordem de cavar não é o fim da galeria — 2026-08-28.
+     *
+     * <p>A outra metade, e é a que trancaria a mina. O
+     * {@code findTheFrontier} recua o cursor até a primeira posição
+     * ainda fechada; sem saber que luz é passagem aberta, ele recuaria
+     * até a tocha <b>toda passagem</b>, e a mina nunca mais passaria
+     * dali.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_light",
+            tickLimit = 20)
+    public void aTorchInTheDigOrderIsNotTheFrontier(TestContext context) {
+        solidRock(context);
+
+        Colony colony = openedMine(context, 9);
+
+        BlockPos torch = dug(context, colony, 3);
+
+        context.getWorld().setBlockState(torch, Blocks.TORCH.getDefaultState());
+
+        try {
+            Optional<BlockPos> next = targetFor(context, colony);
+
+            context.assertTrue(
+                    next.isPresent() && next.get().equals(dug(context, colony, 9)),
+                    "a frente da galeria recuou até a tocha: foi para "
+                            + next.map(BlockPos::toShortString).orElse("lugar nenhum"));
+        } finally {
+            MineClaims.clearAll();
+        }
+
+        context.complete();
+    }
 }

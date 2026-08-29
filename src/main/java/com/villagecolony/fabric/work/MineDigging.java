@@ -7,6 +7,7 @@ import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.fabric.integration.BlockProtection;
+import com.villagecolony.fabric.integration.MineLighting;
 import com.villagecolony.fabric.integration.MineMouth;
 import com.villagecolony.fabric.integration.OreVein;
 import com.villagecolony.fabric.integration.RingSweep;
@@ -363,6 +364,13 @@ public final class MineDigging {
             return false;
         }
 
+        if (MineLighting.isLight(world, at, state)) {
+            // A luz da mina não se cava, e o findTheFrontier a pula por
+            // aqui: uma tocha na ordem de cavar seria "fronteira" para
+            // sempre, e o cursor recuaria até ela toda passagem.
+            return false;
+        }
+
         return state.getHardness(world, at) >= 0
                 && !BlockProtection.isVillageOriginal(world, at)
                 && !BlockProtection.isColonyBuilt(at);
@@ -511,7 +519,7 @@ public final class MineDigging {
             // A boca de uma mina que veio do save pode nunca ter sido
             // mobiliada — a Regra 30 é de 2026-08-22 e há minas mais
             // velhas que ela. Idempotente: com baú lá, isto não faz nada.
-            furnishMouth(world, known.get());
+            furnishAndLight(world, known.get());
 
             return known;
         }
@@ -552,24 +560,32 @@ public final class MineDigging {
 
         // A Regra 30: onde ele decide começar a cavar nascem a lanterna
         // e o baú da mina.
-        furnishMouth(world, opened);
+        furnishAndLight(world, opened);
 
         return Optional.of(opened);
     }
 
     /**
-     * A lanterna e o baú da boca — a Regra 30, 2026-08-22.
+     * A lanterna e o baú da boca, e a luz da galeria.
      *
      * <p>Chamada também para mina já conhecida, e de propósito: mina de
      * save antigo não passou pela regra, e boca em chunk descarregado
      * não pôde ser mobiliada na primeira tentativa. {@code MineMouth} não
      * faz nada quando o baú já está lá.
+     *
+     * <p><b>E a luz da galeria desde 2026-08-28</b>, que é da mesma
+     * natureza: de graça, idempotente, e no que já está cavado.
      */
-    private static void furnishMouth(ServerWorld world, Mine mine) {
+    private static void furnishAndLight(ServerWorld world, Mine mine) {
         MineMouth.furnish(
                 world,
                 MinecraftTypeAdapter.toBlockPos(mine.shaft().entry()),
                 MinecraftTypeAdapter.toDirection(mine.shaft().descent()));
+
+        // E a luz do que já foi cavado — 2026-08-28. Mesma porta e mesma
+        // natureza: idempotente, de graça, e chamada a cada passagem em
+        // que a mina existe. Ver MineLighting.
+        MineLighting.light(world, mine);
     }
 
     /**
@@ -592,8 +608,16 @@ public final class MineDigging {
 
             BlockState state = world.getBlockState(at);
 
-            if (state.isAir() || !state.getFluidState().isEmpty()) {
+            if (state.isAir() || !state.getFluidState().isEmpty()
+                    || MineLighting.isLight(world, at, state)) {
+
                 // Já aberto, ou água e lava. Nenhum dos dois se cava.
+                //
+                // <b>E a tocha da própria mina</b> — 2026-08-28. Uma
+                // posição com luz é espaço aberto, não rocha: sem isto
+                // o mineiro cavaria a luz que acabou de pôr, que é o
+                // defeito do lampião no primeiro degrau de 08-27 de
+                // volta pela porta da frente.
                 continue;
             }
 
