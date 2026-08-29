@@ -311,7 +311,8 @@ public final class MinerWork {
                 WorkTargets.set(
                         workerId,
                         MinerReach.legTowards(
-                                villager.getBlockPos(), job.approach, mouthOf(job)));
+                                villager.getBlockPos(), job.approach, mouthOf(job)),
+                        MinerReach.ARRIVAL);
             }
 
             return false;
@@ -357,7 +358,7 @@ public final class MinerWork {
         job.required = 0;
         job.stalled = 0;
 
-        WorkTargets.set(workerId, job.approach);
+        WorkTargets.set(workerId, job.approach, MinerReach.ARRIVAL);
 
         return true;
     }

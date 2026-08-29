@@ -36,6 +36,37 @@ public final class MinerReach {
      */
     public static final int REACH = 4;
 
+    /**
+     * Com que folga a navegação pode se dar por chegada, para o mineiro.
+     *
+     * <p><b>A sessão de 2026-08-28, 23:19</b>, e o mineiro que enfim
+     * estava dentro da mina — y=44 é a galeria. Ele ficou lá parado
+     * seiscentos tiques:
+     *
+     * <pre>
+     * digging Pedra at 760, 44, 878, 4,2 blocks away
+     *   (out of reach, he is at 756, 44, 878, walking to 758, 44, 878)
+     * </pre>
+     *
+     * <p><b>Exatamente dois blocos do destino</b>, que era a folga de
+     * casa do {@code WorkTargets}. A navegação se deu por chegada e
+     * parou; o mod continuou dizendo "fora de alcance"; e ele moeu os
+     * últimos dois blocos até o guarda devolver a tarefa. É o "rodando na
+     * escada e não desce" que o autor viu.
+     *
+     * <p><b>Duas contas certas que não compunham.</b> O
+     * {@code approachTo} escolhe um lugar <b>dentro</b> do braço — 758
+     * está a 2,0 da pedra, e o braço é 4. O caminhante parava até dois
+     * antes desse lugar. Somadas, 4,2: fora do braço para sempre, sem
+     * que nenhuma das duas estivesse errada sozinha.
+     *
+     * <p>Um bloco, e não zero: exigir o bloco exato faria a navegação
+     * perseguir uma casa decimal, e o guarda de travamento devolveria a
+     * tarefa por outro motivo. Um deixa o pior caso em 3,0 de uma pedra
+     * a 4 — ver {@code MinerReachTest}.
+     */
+    public static final int ARRIVAL = 1;
+
     private MinerReach() {
     }
 

@@ -39,14 +39,6 @@ public final class GoToWorkTargetTask extends MultiTickTask<VillagerEntity> {
     private static final float SPEED = 0.5f;
 
     /**
-     * A que distância a navegação considera chegado.
-     *
-     * <p>Menor que o alcance de braço do lenhador, para ele parar dentro
-     * do alcance em vez de na borda dele.
-     */
-    private static final int COMPLETION_RANGE = 2;
-
-    /**
      * Quanto tempo a task pode correr sem ser reavaliada.
      *
      * <p>Um dia inteiro de caminhada não é excessivo: ela para sozinha
@@ -120,8 +112,14 @@ public final class GoToWorkTargetTask extends MultiTickTask<VillagerEntity> {
         BlockPosLookTarget look = new BlockPosLookTarget(target.get());
 
         villager.getBrain().remember(MemoryModuleType.LOOK_TARGET, look);
+        // <b>A folga é do destino, e não desta task</b> — 2026-08-29.
+        // Ela era uma constante só, valendo dois blocos para todo mundo:
+        // certa para o lenhador, cujo destino é a árvore, e fatal para o
+        // mineiro, cujo destino já é o lugar exato de ficar de pé. Ver
+        // WorkTargets.DEFAULT_ARRIVAL.
         villager.getBrain().remember(
-                MemoryModuleType.WALK_TARGET, new WalkTarget(look, SPEED, COMPLETION_RANGE));
+                MemoryModuleType.WALK_TARGET,
+                new WalkTarget(look, SPEED, WorkTargets.arrivalOf(villager.getUuid())));
     }
 
     private boolean isAlreadyAimedAt(VillagerEntity villager, BlockPos target) {
