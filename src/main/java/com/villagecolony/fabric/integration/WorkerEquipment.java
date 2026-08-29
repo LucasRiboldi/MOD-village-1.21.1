@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.ProfessionRegistry;
@@ -58,17 +59,34 @@ public final class WorkerEquipment {
     }
 
     /**
-     * Entrega a ferramenta a quem tem função e ainda não a recebeu.
+     * Faz a mão do aldeão combinar com a profissão dele.
      *
-     * <p>Nunca substitui o que o aldeão já segura. Um item posto ali pelo
-     * jogador, ou pelo próprio mod num ciclo anterior, fica onde está —
-     * sobrescrever a cada ciclo apagaria a mão de alguém trinta vezes por
-     * minuto.
+     * <p><b>O que o jogador pôs ali fica onde está.</b> Um diamante, uma
+     * flor, uma espada: a colônia não toma a mão de ninguém. Ela só mexe
+     * no que ela mesma dá — as ferramentas de profissão, e é o
+     * {@link #isProfessionTool} que as reconhece.
      *
-     * <p>Trabalhador sem profissão fica sem ferramenta, e profissão de
-     * mãos livres também: {@code ToolType.NONE} não vira item.
+     * <p><b>Era só "preencher mão vazia", e isso não se conserta
+     * sozinho</b> — 2026-08-29, visto em jogo: <i>"mineiro e pastor
+     * segurando picareta"</i>. Quem esvazia a mão é o {@link #unequip},
+     * que roda quando o trabalhador perde a função; só que ele depende de
+     * o aldeão estar <b>carregado no mundo</b>, e {@code world.getEntity}
+     * devolve nulo em chunk descarregado. Falhando uma vez, a ferramenta
+     * errada nunca mais era corrigida: a colônia recontratava o aldeão
+     * noutra profissão e esta passagem via a mão ocupada e seguia.
      *
-     * @return quantas ferramentas foram entregues agora
+     * <p>A regra passou a ser a <b>invariante</b> em vez do momento —
+     * <i>a mão combina com a profissão</i> —, e por isso ela se corrige
+     * na passagem seguinte em vez de depender de uma remoção acontecer
+     * na hora certa.
+     *
+     * <p>Quem já está com a ferramenta certa não é tocado, e é o que
+     * impede a mão de alguém de ser reescrita trinta vezes por minuto.
+     *
+     * @return quantas ferramentas foram <b>entregues</b> agora. Ferramenta
+     *     devolvida por profissão de mãos livres não conta: ela não é
+     *     entrega, e somá-las faria a linha do ciclo dizer que a colônia
+     *     equipou alguém quando ela desequipou
      */
     public static int equip(ServerWorld world, Collection<Worker> workers) {
         int equipped = 0;
@@ -80,18 +98,36 @@ public final class WorkerEquipment {
                 continue;
             }
 
-            Optional<Item> tool = MinecraftTypeAdapter.toItem(
-                    ProfessionRegistry.of(profession.get()).requiredTool());
-
-            if (tool.isEmpty()) {
-                continue;
-            }
-
             if (!(world.getEntity(worker.villagerId()) instanceof VillagerEntity villager)) {
                 continue;
             }
 
-            if (!villager.getEquippedStack(EquipmentSlot.MAINHAND).isEmpty()) {
+            Optional<Item> tool = MinecraftTypeAdapter.toItem(
+                    ProfessionRegistry.of(profession.get()).requiredTool());
+
+            ItemStack held = villager.getEquippedStack(EquipmentSlot.MAINHAND);
+
+            if (tool.isPresent() && held.isOf(tool.get())) {
+                continue;
+            }
+
+            if (!held.isEmpty() && !isProfessionTool(held)) {
+                // Do jogador. A Regra 3 vale para a mão do aldeão também.
+                continue;
+            }
+
+            if (!held.isEmpty()) {
+                VillageColonyMod.LOGGER.info(
+                        "Worker {} is a {} and was holding {} — the colony takes it back",
+                        worker.villagerId(),
+                        profession.get(),
+                        held.getItem());
+            }
+
+            if (tool.isEmpty()) {
+                // Mãos livres, e a mão não está livre.
+                villager.equipStack(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
+
                 continue;
             }
 

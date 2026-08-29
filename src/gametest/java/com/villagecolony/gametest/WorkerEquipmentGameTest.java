@@ -12,6 +12,7 @@ import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
@@ -207,5 +208,96 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
         villager.setBreedingAge(0);
 
         return villager;
+    }
+
+    /**
+     * Ferramenta de outra profissão é trocada pela certa — 2026-08-29.
+     *
+     * <p><b>Visto em jogo.</b> A frase do autor foi <i>"mineiro e pastor
+     * segurando picareta"</i>. Pastor com picareta de diamante na mão é
+     * uma vila que mente sobre quem faz o quê — e ela ficava assim para
+     * sempre.
+     *
+     * <p><b>Por que não se conserta sozinho.</b> O {@link
+     * WorkerEquipment#equip} só preenchia <b>mão vazia</b>, e quem
+     * esvazia a mão é o {@code unequip}, que roda quando o trabalhador
+     * perde a função. Só que o {@code unequip} depende de o aldeão estar
+     * <b>carregado no mundo</b>: {@code world.getEntity} devolve nulo em
+     * chunk descarregado, e ele sai sem fazer nada. Falhando uma vez, a
+     * ferramenta errada nunca mais é corrigida — a colônia recontrata o
+     * aldeão noutra profissão e o {@code equip} vê a mão ocupada e passa
+     * direto.
+     *
+     * <p>A regra passou a ser a invariante em vez do momento: <b>a mão
+     * combina com a profissão</b>, e quem não combina é trocado na
+     * passagem seguinte. Não depende mais de uma remoção acontecer na
+     * hora certa.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_equipment")
+    public void theToolOfAnotherProfessionIsSwappedForTheRightOne(TestContext context) {
+        VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
+
+        // A picareta do mineiro, na mão de quem virou pastor.
+        villager.equipStack(EquipmentSlot.MAINHAND, new ItemStack(Items.DIAMOND_PICKAXE));
+
+        Worker worker = Worker.restore(
+                villager.getUuid(), UUID.randomUUID(), ProfessionType.SHEPHERD);
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
+        ItemStack held = villager.getEquippedStack(EquipmentSlot.MAINHAND);
+
+        context.assertTrue(
+                held.isOf(Items.SHEARS),
+                "o pastor continua com " + (held.isEmpty() ? "nada" : held.getItem())
+                        + " na mão");
+
+        context.complete();
+    }
+
+    /**
+     * E quem perde a função de mãos livres devolve a ferramenta velha.
+     *
+     * <p>A outra ponta da mesma invariante: o fundidor trabalha de mãos
+     * livres, e uma picareta na mão dele mente igual.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_equipment")
+    public void aFreeHandedProfessionGivesTheOldToolBack(TestContext context) {
+        VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
+
+        villager.equipStack(EquipmentSlot.MAINHAND, new ItemStack(Items.DIAMOND_PICKAXE));
+
+        Worker worker = Worker.restore(
+                villager.getUuid(), UUID.randomUUID(), ProfessionType.SMELTER);
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
+        context.assertTrue(
+                villager.getEquippedStack(EquipmentSlot.MAINHAND).isEmpty(),
+                "o fundidor trabalha de mãos livres e continua com a picareta");
+
+        context.complete();
+    }
+
+    /**
+     * A ferramenta certa não é entregue duas vezes.
+     *
+     * <p>A conta de entregas é o que o ciclo registra, e ela não pode
+     * subir trinta vezes por minuto por causa de quem já está equipado.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_equipment")
+    public void theRightToolIsNotHandedTwice(TestContext context) {
+        VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
+
+        Worker worker = Worker.restore(
+                villager.getUuid(), UUID.randomUUID(), ProfessionType.SHEPHERD);
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
+        context.assertTrue(
+                WorkerEquipment.equip(context.getWorld(), List.of(worker)) == 0,
+                "a colônia entregou a mesma tesoura de novo");
+
+        context.complete();
     }
 }
