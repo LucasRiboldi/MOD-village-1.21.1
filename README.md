@@ -297,7 +297,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Defesa | ⬜ não começado |
 
 ```text
-558 testes unitários  ·  213 testes de jogo  ·  0 falhas  ·  ./gradlew build
+558 testes unitários  ·  217 testes de jogo  ·  0 falhas  ·  ./gradlew build
 ```
 
 **O que 🧪 quer dizer aqui.** A bateria roda o caso e ele passa. Não quer
@@ -468,8 +468,29 @@ sempre atual — o enunciado das 29 regras, uma a uma — em
 ---
 ## Último ciclo de desenvolvimento
 
-**2026-08-29, à noite** — o **E35 fechou**, e o instrumento que quase o
-escondeu junto.
+**2026-08-29, madrugada** — duas coisas que sobreviviam ao dono.
+
+| | |
+|---|---|
+| **O pastor com picareta** | `equip` só preenchia mão vazia, e quem esvazia é o `unequip` — que depende de o aldeão estar carregado no mundo e sai sem fazer nada em chunk descarregado. Falhando **uma vez**, a ferramenta errada nunca mais era corrigida. A regra passou a ser a invariante *a mão combina com a profissão*, e não um momento. O que o jogador pôs ali continua onde está |
+| **Os dois rodando no mesmo lugar** | O destino sobrevivia ao trabalho. Toda profissão larga o trabalho com um `removeIf` quando a tarefa fecha, e nenhuma soltava o destino junto — o `WorkTargets` só era limpo na dispensa e nas desistências, e **tarefa que termina bem não passa por nenhuma das duas**. O `GoToWorkTargetTask` não expira: o aldeão passava o expediente sendo empurrado para a ovelha já tosquiada |
+
+```text
+558 testes unitários     0 falhas
+217 testes de jogo       0 falhas
+```
+
+**As duas são a mesma forma de defeito**, e vale nomeá-la: *estado que
+sobrevive ao dono*. Nos dois casos havia uma limpeza — e ela dependia de
+um momento em vez de ser uma invariante conferida.
+
+**A sessão que as mostrou rodou o jar de ontem**, porque a troca do
+arquivo falha silenciosamente com o jogo aberto. Os consertos do mineiro
+continuam com zero sessões.
+
+### O ciclo antes — 2026-08-29, à noite
+
+O **E35 fechou**, e o instrumento que quase o escondeu junto.
 
 | | |
 |---|---|

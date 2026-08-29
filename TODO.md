@@ -1,6 +1,11 @@
 # TODO
 
-**Atualizado:** 2026-08-29, à noite. O **E35 fechou** — o segundo mineiro
+**Atualizado:** 2026-08-29, madrugada. **Sessão de jogo à 01:19** — e ela
+rodou com o jar de ontem, porque a troca do arquivo tinha falhado com o
+jogo aberto. Mesmo assim mostrou dois defeitos novos, os dois de
+**estado que sobrevive ao seu dono**: ferramenta de profissão que não é
+trocada, e destino de trabalho que não é solto. Antes deles, o **E35
+fechou** — o segundo mineiro
 oscilava na fronteira da perna, e a descida passou a ser dada pela ordem
 de cavar, um passo por vez. Antes dele, a mesma sessão respondeu quatro
 perguntas de uma vez, e três delas com a causa exata no
@@ -31,7 +36,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-558 testes unitários  ·  213 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
+558 testes unitários  ·  217 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 última sessão de jogo em 2026-08-28, 23:06  ·  ele desceu, e parou a 2 blocos
 ```
@@ -43,6 +48,67 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-29, madrugada — duas coisas que sobreviviam ao dono
+
+**Sessão de jogo à 01:19**, e ela rodou com o **jar de 28/08 00:54** — a
+troca do arquivo falhou porque o Minecraft estava aberto segurando o
+jar, e o `.jar.new` ficou ao lado sem ser aplicado. Confirmado no log:
+zero ocorrências de `lit the gallery`, `waiting for the shaft` e
+`pieces were laid`, e a frase antiga da barreira.
+
+**Nenhum dos consertos do dia estava rodando.** Ainda assim ela mostrou
+dois defeitos que nada tinham a ver com eles.
+
+#### O pastor com picareta
+
+> *"mineiro e pastor segurando picareta"*
+
+Pastor com picareta de diamante é uma vila que mente sobre quem faz o
+quê — e ela ficava assim **para sempre**.
+
+O `equip` só preenchia **mão vazia**. Quem esvazia a mão é o `unequip`,
+que roda quando o trabalhador perde a função — e ele depende de o aldeão
+estar **carregado no mundo**, porque `world.getEntity` devolve nulo em
+chunk descarregado e ele sai sem fazer nada. Falhando **uma vez**, a
+ferramenta errada nunca mais era corrigida: a colônia recontratava o
+aldeão noutra profissão, o `equip` via a mão ocupada, e seguia.
+
+**Uma ponta que só funciona se disparar na hora certa não é
+invariante.** A regra passou a ser *a mão combina com a profissão*,
+conferida a cada passagem. O que o jogador pôs ali continua onde está —
+a colônia só mexe no que ela mesma dá.
+
+#### E os dois rodando no mesmo lugar
+
+> *"os dois rodando no mesmo lugar, bug certamente"*
+
+Era. **O destino sobrevivia ao trabalho que o criou.**
+
+Toda profissão larga o trabalho da mesma forma quando a tarefa deixa de
+estar aberta — um `removeIf` sobre o mapa de trabalhos — e **nenhuma
+delas soltava o destino junto**. O `WorkTargets` só era limpo na
+dispensa do trabalhador e nas desistências de cada trabalho; **tarefa
+que termina bem não passa por nenhum dos dois**.
+
+E destino que fica é destino que manda: o `GoToWorkTargetTask` roda
+enquanto houver um, e **não expira**. O aldeão passa o resto do
+expediente sendo empurrado para o último lugar onde trabalhou — a ovelha
+que já foi tosquiada, a pedra que já caiu. De fora, ele fica rodando ali.
+
+Seis profissões consertadas, e a sétima conferida: o fundidor não tem
+destino nenhum, funde sem sair do lugar.
+
+> **As duas são a mesma forma de defeito**, e vale nomeá-la: *estado que
+> sobrevive ao dono*. Ferramenta que sobrevive à profissão, destino que
+> sobrevive à tarefa. Nos dois casos havia uma limpeza — e ela dependia
+> de um momento em vez de ser uma invariante conferida.
+
+| | |
+|---|---|
+| **Verificado rodando** | `gradlew build` → **558 unitários, 0 falhas**; `runGametest` → **217 de 217** |
+| **Fase vermelha conferida** | nos dois. E o teste do destino falhou primeiro por **exceção** e não pela afirmação — `Task.complete` exige `EXECUTING`, e completar uma reservada morria antes de medir. Vermelho que não é o vermelho que se quer não conta |
+| **O que a sessão não viu** | nada. Ela rodou o jar de ontem — os consertos do mineiro continuam com **zero sessões** |
 
 ### 2026-08-29, à noite — o E35, e o instrumento que o escondia
 
