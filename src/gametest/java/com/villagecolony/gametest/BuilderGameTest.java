@@ -28,6 +28,7 @@ import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.ChestBlockEntity;
+import net.minecraft.block.enums.BedPart;
 import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.brain.Schedule;
@@ -1187,5 +1188,100 @@ public class BuilderGameTest implements FabricGameTest {
                 "vestir pedra com o estado de um tronco não devolveu pedra");
 
         context.complete();
+    }
+
+    /**
+     * A cama entra inteira, e a cabeceira não vai para dentro da parede
+     * — 2026-08-29.
+     *
+     * <p><b>Visto em jogo.</b> A frase do autor foi <i>"aparece somente
+     * a metade da cama e na direção errada"</i>, e o log da sessão diz
+     * por quê, na letra:
+     *
+     * <pre>
+     * Could not finish the two-part block at 769, 64, 935
+     *     — Block{minecraft:cobblestone} is in the way
+     * </pre>
+     *
+     * <p>A planta guarda o nome do bloco e não o estado (ADR-005), então
+     * a cama saía no <b>padrão</b>, que olha para o norte. Na casa de
+     * planície o norte da cama é a parede: a cabeceira não coube, e
+     * sobrou meia cama.
+     *
+     * <p>A saída é perguntar ao mundo em vez de ao arquivo — e é ela que
+     * a Regra 32 torna possível, porque com a casa de pé a parede já
+     * está lá para ser vista. <b>A orientação fiel ao arquivo continua
+     * sendo a ADR-008</b>, e vale para o tronco e o degrau também; o que
+     * este teste trava é mais simples e mais urgente: cama que cabe.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_bed",
+            tickLimit = 300)
+    public void theBedGoesInWholeAndNotIntoTheWall(TestContext context) {
+        // <b>A cama no miolo da planta, e não na borda.</b> A Regra 17
+        // vira para fora o que está na parede, e numa planta de um bloco
+        // só tudo é parede: a primeira versão deste teste passava sem
+        // conserto nenhum, porque a regra da porta apontava a cama para
+        // longe do muro por acaso. Com dois cantos de pedregulho a caixa
+        // fica 3x3x3, a cama cai no centro dela, e volta a valer o que a
+        // casa de verdade faz — o estado padrão, que olha para o norte.
+        Fixture fixture = setUp(context, 0, bedInTheMiddle(), 1);
+
+        BlockPos bed = SITE.add(1, 1, 1);
+
+        // A parede para onde o padrão aponta. É a forma exata do que a
+        // casa de planície tem.
+        context.setBlockState(bed.north(), Blocks.COBBLESTONE.getDefaultState());
+
+        ChestDepositor.deposit(context.getWorld(), fixture.chest, Items.WHITE_BED, 1);
+        ChestDepositor.deposit(context.getWorld(), fixture.chest, Items.COBBLESTONE, 2);
+
+        context.runAtTick(120, () -> {
+            try {
+                BlockState foot = context.getBlockState(bed);
+
+                context.assertTrue(
+                        foot.isOf(Blocks.WHITE_BED),
+                        "o pé da cama não foi posto: "
+                                + foot.getBlock().getName().getString());
+
+                context.assertTrue(
+                        foot.get(Properties.BED_PART) == BedPart.FOOT,
+                        "o que entrou no lugar do pé foi a cabeceira");
+
+                BlockPos head = bed.offset(foot.get(Properties.HORIZONTAL_FACING));
+
+                context.assertFalse(
+                        head.equals(bed.north()),
+                        "a cama apontou para a parede, que é o defeito visto em jogo");
+
+                context.assertTrue(
+                        context.getBlockState(head).isOf(Blocks.WHITE_BED),
+                        "a cama ficou pela metade: em " + head.toShortString() + " está "
+                                + context.getBlockState(head).getBlock().getName().getString());
+            } finally {
+                fixture.owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * Uma cama no centro de uma caixa de 3x3x3.
+     *
+     * <p>Os dois cantos de pedregulho existem só para dar tamanho à
+     * caixa: sem eles a cama seria borda, e a Regra 17 a viraria para
+     * fora — que é o contrário do que este teste quer medir.
+     */
+    private static Blueprint bedInTheMiddle() {
+        return Blueprint.of(
+                new ResourceId("villagecolony", "test/bed"),
+                List.of(
+                        new BlueprintBlock(
+                                new ColonyPos(0, 0, 0), ResourceId.vanilla("cobblestone")),
+                        BlueprintBlock.furniture(
+                                new ColonyPos(1, 1, 1), ResourceId.vanilla("white_bed")),
+                        new BlueprintBlock(
+                                new ColonyPos(2, 2, 2), ResourceId.vanilla("cobblestone"))));
     }
 }

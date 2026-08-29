@@ -288,7 +288,8 @@ public final class BuilderWork {
             return true;
         }
 
-        BlockState state = facing(project, block, material.get().getDefaultState());
+        BlockState state = bedFacing(
+                world, target, facing(project, block, material.get().getDefaultState()));
 
         if (!world.getBlockState(target).isReplaceable()) {
             // Já tem coisa ali, e não é grama alta: pode ser peça de
@@ -409,6 +410,14 @@ public final class BuilderWork {
             return state;
         }
 
+        if (state.contains(Properties.BED_PART)) {
+            // O javadoc acima sempre disse que a cama fica de fora, e ela
+            // não ficava: basta a planta pôr a cama encostada na parede
+            // para esta regra virá-la para o meio da casa. Quem decide a
+            // cama é o bedFacing, que pergunta onde a cabeceira cabe.
+            return state;
+        }
+
         ColonyPos size = project.blueprint().size();
         ColonyPos at = block.offset();
 
@@ -429,6 +438,60 @@ public final class BuilderWork {
         }
 
         return state.with(Properties.HORIZONTAL_FACING, outward.getOpposite());
+    }
+
+    /**
+     * Para que lado a cama cabe — 2026-08-29.
+     *
+     * <p><b>Visto em jogo</b>, e o log diz na letra o que aconteceu:
+     *
+     * <pre>
+     * Could not finish the two-part block at 769, 64, 935
+     *     — Block{minecraft:cobblestone} is in the way
+     * </pre>
+     *
+     * <p>A planta guarda o nome do bloco e não o estado (ADR-005), então
+     * a cama saía no <b>padrão</b>, que olha para o norte. Na casa de
+     * planície o norte da cama é a parede: a cabeceira não coube, e
+     * sobrou meia cama — <i>"aparece somente a metade da cama e na
+     * direção errada"</i>.
+     *
+     * <p>A saída é perguntar ao mundo em vez de ao arquivo, e é a Regra
+     * 32 que a torna possível: com a mobília entrando depois da casa
+     * pronta, a parede já está lá para ser vista.
+     *
+     * <p><b>Encostada na parede quando dá</b>, que é onde uma cama fica
+     * numa casa: entre os lados livres, ganha aquele cujo bloco seguinte
+     * é sólido. Sem nenhum assim, qualquer lado livre serve; sem nenhum
+     * livre, fica o que estava — e aí o {@code placeSecondHalf} diz no
+     * log que a cabeceira não coube, como já dizia.
+     *
+     * <p><b>A orientação fiel ao arquivo continua sendo a ADR-008</b>,
+     * decidida e por escrever, e vale para o tronco e o degrau também.
+     * Isto aqui é mais simples e mais urgente: cama que cabe.
+     */
+    private static BlockState bedFacing(ServerWorld world, BlockPos foot, BlockState state) {
+        if (!state.contains(Properties.BED_PART) || !state.contains(Properties.HORIZONTAL_FACING)) {
+            return state;
+        }
+
+        Direction anywhere = null;
+
+        for (Direction side : Direction.Type.HORIZONTAL) {
+            if (!world.getBlockState(foot.offset(side)).isReplaceable()) {
+                continue;
+            }
+
+            if (!world.getBlockState(foot.offset(side, 2)).isReplaceable()) {
+                return state.with(Properties.HORIZONTAL_FACING, side);
+            }
+
+            if (anywhere == null) {
+                anywhere = side;
+            }
+        }
+
+        return anywhere == null ? state : state.with(Properties.HORIZONTAL_FACING, anywhere);
     }
 
     /**

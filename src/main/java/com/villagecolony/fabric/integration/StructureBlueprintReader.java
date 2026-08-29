@@ -325,15 +325,28 @@ public final class StructureBlueprintReader {
                     : new BlueprintBlock(offsetOf(entry), name));
         }
 
-        // De baixo para cima, e a ordem é do projeto, não do construtor:
-        // o arquivo do jogo não promete ordem nenhuma, e um construtor
-        // que seguisse a ordem do arquivo poria o telhado antes da
-        // parede. Dentro da mesma altura, por x e depois por z, para que
-        // duas leituras do mesmo arquivo deem exatamente a mesma casa —
-        // obra com ordem instável é impossível de depurar
-        // (Debugging-Strategy.md).
+        // <b>A mobília por último — a Regra 32, 2026-08-29.</b> Regra do
+        // autor depois de ver a casa em jogo: "criar uma regra para
+        // adicionar os móveis e cama depois da casa pronta". A sessão
+        // mostrou as duas razões, as duas no log: três tochas de parede
+        // riscadas com "nothing holds it", porque vinham antes da parede
+        // que as segura; e a cama pela metade, porque a cabeceira foi
+        // decidida contra um pedregulho que ainda não estava lá.
+        //
+        // Os dois são o mesmo defeito de ordem. A ordem de baixo para
+        // cima garante o que está <b>embaixo</b>, e mobília depende do
+        // que está <b>ao lado</b> — só a casa inteira responde isso.
+        //
+        // De baixo para cima dentro de cada grupo, e a ordem é do
+        // projeto, não do construtor: o arquivo do jogo não promete
+        // ordem nenhuma, e um construtor que seguisse a ordem do arquivo
+        // poria o telhado antes da parede. Dentro da mesma altura, por x
+        // e depois por z, para que duas leituras do mesmo arquivo deem
+        // exatamente a mesma casa — obra com ordem instável é impossível
+        // de depurar (Debugging-Strategy.md).
         blocks.sort(Comparator
-                .comparingInt((BlueprintBlock block) -> block.offset().y())
+                .comparing((BlueprintBlock block) -> block.furniture())
+                .thenComparingInt(block -> block.offset().y())
                 .thenComparingInt(block -> block.offset().x())
                 .thenComparingInt(block -> block.offset().z()));
 

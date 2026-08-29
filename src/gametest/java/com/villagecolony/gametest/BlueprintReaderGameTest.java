@@ -161,6 +161,57 @@ public class BlueprintReaderGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * A mobília entra depois da casa pronta — a Regra 32, 2026-08-29.
+     *
+     * <p><b>Regra do autor, dita depois de ver a casa em jogo:</b>
+     * <i>"criar uma regra para adicionar os móveis e cama depois da casa
+     * pronta"</i>. E a sessão mostrou as duas razões, as duas no log:
+     *
+     * <ul>
+     *   <li><b>três tochas de parede riscadas</b> com
+     *       {@code nothing holds it} — elas vinham antes da parede que as
+     *       segura, e um bloco que não tem em que se apoiar é riscado
+     *       para sempre;
+     *   <li><b>a cama pela metade</b>: a cabeceira foi para dentro de um
+     *       pedregulho que ainda nem estava lá quando a decisão foi
+     *       tomada.
+     * </ul>
+     *
+     * <p>Os dois são o mesmo defeito de ordem. Mobília precisa da casa
+     * inteira em volta para saber onde cabe, e a ordem de baixo para
+     * cima não dá isso: ela garante o que está <b>embaixo</b>, e mobília
+     * depende do que está <b>ao lado</b>.
+     *
+     * <p>A afirmação é de ordem e não de contagem, de propósito: quantas
+     * peças de mobília a casa tem é coisa que o Vanilla muda, e que
+     * nenhuma venha antes de estrutura é o que precisa continuar
+     * verdadeiro em casa nenhuma.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "blueprint_reader")
+    public void theFurnitureComesAfterTheHouseIsUp(TestContext context) {
+        boolean furnitureStarted = false;
+
+        for (BlueprintBlock block : read(context).blocks()) {
+            if (block.furniture()) {
+                furnitureStarted = true;
+
+                continue;
+            }
+
+            context.assertFalse(
+                    furnitureStarted,
+                    "a casa ainda estava subindo depois da mobília: " + block.block()
+                            + " em " + block.offset() + " vem depois de um móvel");
+        }
+
+        context.assertTrue(
+                furnitureStarted,
+                "a casa de planície não tem móvel nenhum, e este teste não mede nada");
+
+        context.complete();
+    }
+
     /** Estrutura que não existe devolve vazio, e não derruba o tick. */
     /**
      * A porta da casa é uma entrada só — o E8 do §17, do lado do leitor.
