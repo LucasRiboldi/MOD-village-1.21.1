@@ -187,8 +187,45 @@ public final class MinerReport {
         // interessa é o do travamento, não o do fim dele.
         return String.format("%.1f blocks away (out of reach", away)
                 + ", he is at " + villager.getBlockPos().toShortString()
+                + trapped(villager, workerId)
                 + ", walking to " + sentTo(workerId, target)
                 + ")";
+    }
+
+    /**
+     * Se ele está <b>abaixo</b> do destino, e por quanto — 2026-08-29.
+     *
+     * <p><b>A sessão das 04:40.</b> O mineiro passou seis minutos com a
+     * mesma linha, e ela dizia só <i>"out of reach"</i>:
+     *
+     * <pre>
+     * he is at 757, 42, 877, 5,4 blocks away;
+     * it was walking to 758, 44, 878;
+     * </pre>
+     *
+     * <p>Oito leituras, todas na <b>mesma posição</b>, sem andar um
+     * bloco. E o número que respondia estava ali sem ser lido: y=42
+     * contra y=44 do lugar de ficar de pé. <b>Dois blocos abaixo</b>, e
+     * aldeão sobe um. Ele não estava longe nem perdido — estava num poço.
+     *
+     * <p>"Fora de alcance" cobre três coisas com correções diferentes:
+     * longe demais, caminho que a navegação não traça, e <b>preso</b>. A
+     * terceira passou a ter nome, e é a que o log não sabia dizer.
+     *
+     * <p>Um bloco de diferença não é nada: o aldeão sobe um degrau. Do
+     * segundo em diante ele não sobe, e nenhuma correção de destino o
+     * tira de lá.
+     */
+    private static String trapped(VillagerEntity villager, UUID workerId) {
+        Optional<BlockPos> destination = WorkTargets.of(workerId);
+
+        if (destination.isEmpty()) {
+            return "";
+        }
+
+        int below = destination.get().getY() - villager.getBlockPos().getY();
+
+        return below < 2 ? "" : ", " + below + " blocks below it and unable to climb";
     }
 
     /**
@@ -271,6 +308,7 @@ public final class MinerReport {
                                 ? "" : ", which is flooded");
 
         return "the miner is at " + villager.getBlockPos().toShortString()
+                + trapped(villager, villager.getUuid())
                 + ", " + String.format("%.1f", MinerWork.distanceTo(villager, target))
                 + " blocks away; it was walking to " + sentTo(villager.getUuid(), target)
                 + "; the place to stand is " + stand

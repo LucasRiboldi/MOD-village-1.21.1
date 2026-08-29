@@ -2793,4 +2793,58 @@ public class MinerGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * A linha diz quando ele está preso <b>embaixo</b> — 2026-08-29.
+     *
+     * <p><b>A sessão das 04:40.</b> O mineiro passou seis minutos com a
+     * mesma linha, e ela dizia só <i>"out of reach"</i>:
+     *
+     * <pre>
+     * he is at 757, 42, 877, 5,4 blocks away;
+     * it was walking to 758, 44, 878;
+     * the place to stand is 758, 44, 878;
+     * </pre>
+     *
+     * <p>Oito leituras, todas na <b>mesma posição</b>, sem andar um
+     * bloco. E o número que respondia estava ali sem ser lido: y=42
+     * contra y=44 do lugar de ficar de pé. <b>Dois blocos abaixo</b>, e
+     * aldeão sobe um. Ele não estava longe nem perdido — estava num
+     * poço.
+     *
+     * <p>"Fora de alcance" cobre coisas com correções diferentes: longe
+     * demais, caminho que a navegação não traça, e preso. A terceira
+     * passou a ter nome.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_report",
+            tickLimit = 40)
+    public void theLineSaysWhenHeIsTrappedBelowTheWayUp(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        Colony colony = workingMiner(context);
+
+        UUID miner = minerOf(colony);
+
+        // Um destino acima da cabeça dele: é a forma do poço.
+        BlockPos above = world.getEntity(miner).getBlockPos().up(3);
+
+        WorkTargets.set(miner, above, MinerReach.ARRIVAL);
+
+        String line = MinerReport.report(world, colony).orElseThrow();
+
+        try {
+            context.assertTrue(
+                    line.contains("out of reach"),
+                    "o mineiro alcançou a pedra, e sem isso o teste não mede nada: " + line);
+
+            context.assertTrue(
+                    line.contains("below"),
+                    "a linha não diz que ele está preso embaixo: " + line);
+        } finally {
+            MineClaims.clearAll();
+            WorkTargets.clear(miner);
+        }
+
+        context.complete();
+    }
 }

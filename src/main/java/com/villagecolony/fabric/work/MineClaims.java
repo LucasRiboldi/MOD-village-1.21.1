@@ -46,6 +46,23 @@ public final class MineClaims {
     /** A mina de cada colônia, e o mineiro que está dentro dela. */
     private static final Map<UUID, UUID> DIGGERS = new HashMap<>();
 
+    /**
+     * Quem acabou de desistir de cada mina, e é recusado uma vez.
+     *
+     * <p><b>A sessão de 2026-08-29, 04:40.</b> Um mineiro ficou preso num
+     * poço a dois blocos abaixo da passarela — oito leituras seguidas em
+     * {@code 757, 42, 877}, sem andar um bloco em seis minutos, porque
+     * aldeão não sobe dois. E ele <b>segurava a mina</b>: o guarda de
+     * travamento devolvia a tarefa, ele a pegava de volta, e o segundo
+     * mineiro passou a sessão em {@code waiting for the shaft}. A colônia
+     * não recebeu uma pedra.
+     *
+     * <p>A reserva sozinha não responde isso. Ela impede dois na mesma
+     * escada, e não dizia nada sobre <b>rodar a vez</b> quando o de
+     * dentro não consegue trabalhar.
+     */
+    private static final Map<UUID, UUID> STOOD_ASIDE = new HashMap<>();
+
     private MineClaims() {
     }
 
@@ -58,9 +75,37 @@ public final class MineClaims {
      * renovasse expulsaria o dono na segunda pedra dele.
      */
     static boolean claim(UUID colonyId, UUID workerId) {
-        UUID digger = DIGGERS.putIfAbsent(colonyId, workerId);
+        UUID digger = DIGGERS.get(colonyId);
 
-        return digger == null || digger.equals(workerId);
+        if (digger != null) {
+            return digger.equals(workerId);
+        }
+
+        if (workerId.equals(STOOD_ASIDE.get(colonyId))) {
+            // Ele acabou de desistir desta mina: a vez é de outro, se
+            // houver outro. Uma recusa e só — mineiro sozinho numa vila
+            // não pode ser punido para sempre por um poço, e a passagem
+            // seguinte devolve a mina a ele.
+            STOOD_ASIDE.remove(colonyId);
+
+            return false;
+        }
+
+        DIGGERS.put(colonyId, workerId);
+
+        return true;
+    }
+
+    /**
+     * Este mineiro desistiu da mina, e cede a vez.
+     *
+     * <p>Chamado pelo guarda de travamento, e não pelo fim normal do
+     * trabalho: quem termina a pedra continua sendo o dono da escada.
+     */
+    static void stepAside(UUID colonyId, UUID workerId) {
+        release(workerId);
+
+        STOOD_ASIDE.put(colonyId, workerId);
     }
 
     /** Quem está na mina desta colônia, se alguém está. */
@@ -82,10 +127,12 @@ public final class MineClaims {
      */
     static void retainOnly(Set<UUID> working) {
         DIGGERS.values().retainAll(working);
+        STOOD_ASIDE.values().retainAll(working);
     }
 
     /** Esvazia o registro. Chamado ao parar o servidor. */
     public static void clearAll() {
         DIGGERS.clear();
+        STOOD_ASIDE.clear();
     }
 }

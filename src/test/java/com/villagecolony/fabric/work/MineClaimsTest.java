@@ -126,4 +126,63 @@ class MineClaimsTest {
     void anUnaskedShaftHasNoDigger() {
         assertTrue(MineClaims.diggerIn(COLONY).isEmpty());
     }
+
+    /**
+     * Quem desiste cede a vez — 2026-08-29, 04:40.
+     *
+     * <p><b>A sessão que mostrou por que isto faltava.</b> Um mineiro
+     * ficou preso num poço a dois blocos abaixo da passarela — oito
+     * leituras seguidas em {@code 757, 42, 877}, sem andar um bloco em
+     * seis minutos. Aldeão não sobe dois.
+     *
+     * <p>E ele <b>segurava a mina</b>. O guarda de travamento devolvia a
+     * tarefa a cada 2400 tiques, ele a pegava de volta, e o segundo
+     * mineiro — que não estava preso — passou a sessão inteira em
+     * {@code waiting for the shaft}. A colônia não recebeu uma pedra.
+     *
+     * <p>A reserva sozinha não resolve isso: ela impede dois na mesma
+     * escada, e nada dizia sobre <b>rodar a vez</b> quando o de dentro
+     * não consegue trabalhar. Agora quem desiste é recusado <b>uma
+     * vez</b>, e essa uma basta para o outro entrar.
+     */
+    @Test
+    void theMinerWhoGaveUpLetsTheOtherIn() {
+        MineClaims.claim(COLONY, first);
+
+        MineClaims.stepAside(COLONY, first);
+
+        assertTrue(
+                MineClaims.claim(COLONY, second),
+                "o segundo continuou de fora depois de o primeiro desistir");
+    }
+
+    /**
+     * E ele recupera a vez se não houver mais ninguém.
+     *
+     * <p>Uma recusa, e só. Mineiro sozinho numa vila não pode ser punido
+     * para sempre por um poço — se ninguém mais pede a mina, ela volta a
+     * ser dele na passagem seguinte.
+     */
+    @Test
+    void aLoneMinerGetsTheShaftBackOnTheNextPass() {
+        MineClaims.claim(COLONY, first);
+
+        MineClaims.stepAside(COLONY, first);
+
+        assertFalse(MineClaims.claim(COLONY, first));
+        assertTrue(MineClaims.claim(COLONY, first));
+    }
+
+    /** Ceder a vez numa mina não mexe na vez da outra. */
+    @Test
+    void steppingAsideInOneShaftDoesNotTouchTheOther() {
+        MineClaims.claim(COLONY, first);
+        MineClaims.claim(OTHER_COLONY, first);
+
+        MineClaims.stepAside(COLONY, first);
+
+        assertTrue(
+                MineClaims.claim(OTHER_COLONY, first),
+                "ele perdeu a mina da outra colônia sem ter desistido dela");
+    }
 }

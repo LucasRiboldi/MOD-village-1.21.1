@@ -532,6 +532,11 @@ public final class MinerWork {
 
         release(workerId, job);
 
+        // E a vez na mina, se havia uma — 2026-08-29. Um mineiro preso
+        // num poço devolvia a tarefa e a pegava de volta para sempre,
+        // enquanto o outro esperava do lado de fora. Ver MineClaims.
+        MineClaims.stepAside(job.task.colonyId(), workerId);
+
         // O cursor da varredura de areia sai junto: sem isso a passagem
         // seguinte reencontraria exatamente a mesma areia inalcançável,
         // que é a roda que a Regra 9 fechou do lado do lenhador.
