@@ -1,0 +1,17 @@
+{
+  "rodada-1-conhecimento": {
+    "objetivo": "medir se a skill corrige erros de API. RESULTADO: empate 12/12.",
+    "casos": [
+      {"id":"eval-0-walk-target","prompt":"No meu mod Fabric pra Minecraft 1.21.1 eu quero que o aldeão vá até uma posição que eu escolho no código. Fiz assim: villager.getNavigation().startMovingTo(pos.getX(), pos.getY(), pos.getZ(), 0.5f); mas ele anda uns dois blocos e volta pro que estava fazendo. Como eu faço ele ir de verdade?","skill":"minecraft-villager-systems"},
+      {"id":"eval-1-profession-trades","prompt":"Quero criar uma profissão nova de aldeão no meu mod Fabric 1.21.1: um ferreiro que trabalha numa forja (bloco meu) e vende ferramentas de ferro. Me mostra o que eu preciso registrar e como.","skill":"minecraft-villager-systems"},
+      {"id":"eval-2-poi-blockstates","prompt":"Fabric 1.21.1. Registrei um PointOfInterestType pro meu bloco forja e a profissão de aldeão que aponta pra ele. O aldeão pega a profissão certinho, mas assim que ele começa a trabalhar ele larga o emprego e vira desempregado de novo. O bloco tem uma propriedade booleana 'acesa' que fica true enquanto está fundindo. O que está errado?","skill":"minecraft-villager-systems"},
+      {"id":"eval-3-simple-item","prompt":"Adiciona um item martelo de cobre no meu mod Fabric 1.21.1. Durabilidade 180, não empilha.","skill":"fabric-development"}
+    ]
+  },
+  "rodada-2-processo": {
+    "objetivo": "medir disciplina (build, regressão, honestidade no relato). RESULTADO: empate 9/9.",
+    "armadilha": "static Map<UUID,Integer> resolve o pedido, compila e perde tudo no restart. Nenhum dos dois caiu.",
+    "isolamento": "git clone --local do repo para scratchpad, um por condição. NUNCA rodar no repo real.",
+    "prompt": "Adiciona no mod um contador, por colônia, de quantas árvores os lenhadores já derrubaram. Precisa sobreviver a fechar e reabrir o mundo. E quando o servidor parar, quero ver no log o total de cada colônia."
+  }
+}
