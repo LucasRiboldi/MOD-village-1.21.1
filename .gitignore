@@ -60,3 +60,9 @@ workers-maingit/
 #
 # Quem quiser a pasta baixa de InventivetalentDev/minecraft-assets.
 minecraft-assets_structure/
+
+# Área de trabalho do Claude Code. As worktrees carregam cache do Gradle e jars
+# remapeados (~174 MB) — são reconstruíveis e não pertencem ao histórico.
+# As skills em .claude/skills/ SÃO versionadas: são documentação do projeto.
+.claude/*
+!.claude/skills/
