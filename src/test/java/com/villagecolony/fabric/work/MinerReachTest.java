@@ -157,4 +157,46 @@ class MinerReachTest {
                 MinerReach.ARRIVAL < MinerReach.REACH,
                 "folga de " + MinerReach.ARRIVAL + " num braço de " + MinerReach.REACH);
     }
+
+    /**
+     * A folga de <b>um</b> ainda era demais — 2026-08-29, 04:26.
+     *
+     * <p><b>Segunda tentativa no mesmo número, e a sessão que a cobrou.</b>
+     * Com a folga em dois ele parava dois blocos antes; baixada para um,
+     * ele passou a parar um bloco antes — e continuou fora do braço:
+     *
+     * <pre>
+     * he is at 757, 44, 878, 4,4 blocks away;
+     * it was walking to 758, 44, 878;
+     * the place to stand is 758, 44, 878;
+     * </pre>
+     *
+     * <p>O lugar escolhido era bom — a frase não traz ressalva nenhuma —
+     * e de cima dele ele alcançaria a 3,35. Um bloco de folga jogou a
+     * conta para 4,27, e o braço é 4.
+     *
+     * <p><b>A lição é que folga nenhuma serve.</b> Enquanto ela existir,
+     * a composição depende de sorte: o {@code approachTo} escolhe um
+     * lugar <b>dentro</b> do braço, e qualquer sobra empurra para fora.
+     * Com folga zero a garantia é por construção — ele fica onde foi
+     * escolhido, e o lugar escolhido alcança.
+     *
+     * <p>Este caso é mais duro que o de 23:19 porque a pedra está uma
+     * camada <b>acima</b>: o {@code dy} de 1,5 come folga que o plano não
+     * come.
+     */
+    @Test
+    void oneBlockOfSlackWasStillTooMuch() {
+        BlockPos stone = new BlockPos(761, 45, 878);
+        BlockPos approach = new BlockPos(758, 44, 878);
+
+        double worstX = approach.getX() + 0.5 - MinerReach.ARRIVAL;
+
+        assertTrue(
+                MinerReach.isWithinReach(worstX, approach.getY(), approach.getZ() + 0.5, stone),
+                "parando a " + MinerReach.ARRIVAL + " bloco(s) do lugar escolhido ele fica a "
+                        + MinerReach.distanceTo(
+                                worstX, approach.getY(), approach.getZ() + 0.5, stone)
+                        + " da pedra, e o braço é " + MinerReach.REACH);
+    }
 }

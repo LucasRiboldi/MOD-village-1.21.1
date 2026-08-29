@@ -62,12 +62,35 @@ public final class MinerReach {
      * antes desse lugar. Somadas, 4,2: fora do braço para sempre, sem
      * que nenhuma das duas estivesse errada sozinha.
      *
-     * <p>Um bloco, e não zero: exigir o bloco exato faria a navegação
-     * perseguir uma casa decimal, e o guarda de travamento devolveria a
-     * tarefa por outro motivo. Um deixa o pior caso em 3,0 de uma pedra
-     * a 4 — ver {@code MinerReachTest}.
+     * <p><b>Zero, e a primeira tentativa foi um</b> — 2026-08-29, 04:26.
+     * Com a folga em dois ele parava dois blocos antes; baixada para um,
+     * ele passou a parar um bloco antes, e continuou fora do braço:
+     *
+     * <pre>
+     * he is at 757, 44, 878, 4,4 blocks away;
+     * it was walking to 758, 44, 878;
+     * the place to stand is 758, 44, 878;
+     * </pre>
+     *
+     * <p>O lugar escolhido era bom — a frase de desistência não traz
+     * ressalva nenhuma —, e de cima dele ele alcançaria a 3,35. Um bloco
+     * de folga jogou a conta para 4,27.
+     *
+     * <p><b>A lição é que folga nenhuma serve.</b> Enquanto ela existir,
+     * a composição depende de sorte: o {@code approachTo} escolhe um
+     * lugar <b>dentro</b> do braço, e qualquer sobra empurra para fora —
+     * mais ainda quando a pedra está uma camada acima, porque o
+     * {@code dy} come folga que o plano não come.
+     *
+     * <p>Com zero a garantia passa a ser <b>por construção</b>: ele fica
+     * onde foi escolhido, e o lugar escolhido alcança. O medo que
+     * segurava o zero — a navegação perseguir uma casa decimal e o
+     * guarda devolver a tarefa — não custa nada de novo: era exatamente
+     * isso que já acontecia, {@code stall 2399/2400}, com a diferença de
+     * que agora ele tenta fechar o último bloco em vez de parar de
+     * propósito.
      */
-    public static final int ARRIVAL = 1;
+    public static final int ARRIVAL = 0;
 
     private MinerReach() {
     }
