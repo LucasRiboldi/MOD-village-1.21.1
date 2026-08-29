@@ -239,6 +239,9 @@ public final class LumberjackWork {
                 closePlan(world, job);
                 entries.remove();
 
+                // O destino morre com a tarefa — ver WorkTargets.clear.
+                WorkTargets.clear(workerId);
+
                 continue;
             }
 
@@ -346,12 +349,15 @@ public final class LumberjackWork {
 
     /** Esquece o trabalho de quem já não tem tarefa aberta. */
     private static void dropClosedJobs() {
-        JOBS.values().removeIf(job -> {
-            if (isOngoing(job.task)) {
+        JOBS.entrySet().removeIf(entry -> {
+            if (isOngoing(entry.getValue().task)) {
                 return false;
             }
 
-            TreeClaims.unclaim(job.plan);
+            TreeClaims.unclaim(entry.getValue().plan);
+
+                // O destino morre com a tarefa — ver WorkTargets.clear.
+                WorkTargets.clear(entry.getKey());
 
             return true;
         });

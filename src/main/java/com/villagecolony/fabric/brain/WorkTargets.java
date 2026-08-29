@@ -105,6 +105,23 @@ public final class WorkTargets {
      *
      * <p>Chamado quando a tarefa termina, é solta ou o trabalhador
      * morre. É a "cessão imediata" da ADR-004 §5.
+     *
+     * <p><b>E ele não era chamado quando a tarefa terminava bem</b> —
+     * 2026-08-29, visto em jogo: <i>"mineiro e pastor rodando no mesmo
+     * lugar"</i>. Toda profissão larga o trabalho da mesma forma quando
+     * a tarefa deixa de estar aberta — um {@code removeIf} sobre o mapa
+     * de trabalhos —, e nenhuma delas soltava o destino junto. O destino
+     * só saía na <b>dispensa</b> do trabalhador e nas desistências de
+     * cada trabalho; tarefa cumprida não passa por nenhum dos dois.
+     *
+     * <p>E destino que fica é destino que manda: a
+     * {@link GoToWorkTargetTask} roda enquanto houver um, e não expira.
+     * O aldeão passa o resto do expediente sendo empurrado para o último
+     * lugar onde trabalhou — a ovelha que já foi tosquiada, a pedra que
+     * já caiu. De fora, ele fica rodando ali.
+     *
+     * <p>O fundidor é o único que não passa por aqui, e por não ter
+     * destino nenhum: ele funde sem sair do lugar.
      */
     public static void clear(UUID villagerId) {
         TARGETS.remove(villagerId);

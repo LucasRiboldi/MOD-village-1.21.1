@@ -127,7 +127,16 @@ public final class ShepherdWork {
             open++;
         }
 
-        JOBS.entrySet().removeIf(entry -> !isOngoing(entry.getValue().task));
+        JOBS.entrySet().removeIf(entry -> {
+            if (isOngoing(entry.getValue().task)) {
+                return false;
+            }
+
+            // O destino morre com a tarefa — ver WorkTargets.clear.
+            WorkTargets.clear(entry.getKey());
+
+            return true;
+        });
 
         if (open == 0) {
             reportIdle(colony);
@@ -161,6 +170,9 @@ public final class ShepherdWork {
         for (Map.Entry<UUID, Job> entry : Map.copyOf(JOBS).entrySet()) {
             if (!isOngoing(entry.getValue().task)) {
                 JOBS.remove(entry.getKey());
+
+                // O destino morre com a tarefa — ver WorkTargets.clear.
+                WorkTargets.clear(entry.getKey());
 
                 continue;
             }

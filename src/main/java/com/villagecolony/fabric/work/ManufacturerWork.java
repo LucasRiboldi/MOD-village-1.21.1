@@ -159,7 +159,16 @@ public final class ManufacturerWork {
             open++;
         }
 
-        JOBS.values().removeIf(job -> !isOngoing(job.task));
+        JOBS.entrySet().removeIf(entry -> {
+            if (isOngoing(entry.getValue().task)) {
+                return false;
+            }
+
+            // O destino morre com a tarefa — ver WorkTargets.clear.
+            WorkTargets.clear(entry.getKey());
+
+            return true;
+        });
 
         if (open == 0) {
             reportIdle(colony);

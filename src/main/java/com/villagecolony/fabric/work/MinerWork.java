@@ -236,6 +236,9 @@ public final class MinerWork {
             if (!isOngoing(entry.getValue().task)) {
                 entries.remove();
 
+                // O destino morre com a tarefa — ver WorkTargets.clear.
+                WorkTargets.clear(entry.getKey());
+
                 continue;
             }
 
@@ -591,7 +594,16 @@ public final class MinerWork {
     }
 
     private static void dropClosedJobs() {
-        JOBS.entrySet().removeIf(entry -> !isOngoing(entry.getValue().task));
+        JOBS.entrySet().removeIf(entry -> {
+            if (isOngoing(entry.getValue().task)) {
+                return false;
+            }
+
+            // O destino morre com a tarefa — ver WorkTargets.clear.
+            WorkTargets.clear(entry.getKey());
+
+            return true;
+        });
 
         // A reserva da mina segue os trabalhos abertos, e é o que a
         // impede de vazar: nem todo fim de trabalho passa por um lugar

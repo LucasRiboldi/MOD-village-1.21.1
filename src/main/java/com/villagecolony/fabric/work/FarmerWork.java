@@ -335,7 +335,16 @@ public final class FarmerWork {
     }
 
     private static void dropClosedJobs() {
-        JOBS.entrySet().removeIf(entry -> !isOngoing(entry.getValue().task));
+        JOBS.entrySet().removeIf(entry -> {
+            if (isOngoing(entry.getValue().task)) {
+                return false;
+            }
+
+            // O destino morre com a tarefa — ver WorkTargets.clear.
+            WorkTargets.clear(entry.getKey());
+
+            return true;
+        });
     }
 
     /** Esquece o trabalho deste aldeão. Morte, zumbificação, dispensa. */

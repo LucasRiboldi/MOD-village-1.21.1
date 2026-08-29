@@ -2733,4 +2733,64 @@ public class MinerGameTest implements FabricGameTest {
 
         return colony;
     }
+
+    /**
+     * O destino morre junto com a tarefa — 2026-08-29.
+     *
+     * <p><b>Visto em jogo:</b> <i>"mineiro e pastor rodando no mesmo
+     * lugar"</i>. O destino do aldeão sobrevivia ao trabalho que o
+     * criou.
+     *
+     * <p>Toda profissão larga o trabalho da mesma forma quando a tarefa
+     * deixa de estar aberta — um {@code removeIf} sobre o mapa de
+     * trabalhos —, e nenhuma delas soltava o destino junto. O
+     * {@code WorkTargets} só era limpo em dois lugares: quando o
+     * trabalhador é <b>dispensado</b>, e nas desistências de cada
+     * trabalho. Tarefa que <b>termina bem</b> não passa por nenhum dos
+     * dois.
+     *
+     * <p>E destino que fica é destino que manda: o
+     * {@code GoToWorkTargetTask} roda enquanto houver um, e não expira.
+     * O aldeão passa o resto do expediente sendo empurrado para o último
+     * lugar onde trabalhou — a ovelha que já foi tosquiada, a pedra que
+     * já caiu. De fora, ele fica rodando ali.
+     *
+     * <p>Este teste mede o mineiro, que é onde há montagem pronta. O
+     * conserto é o mesmo nas sete, e a razão é uma só.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_report",
+            tickLimit = 40)
+    public void theWorkTargetDiesWithTheTask(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        Colony colony = workingMiner(context);
+
+        UUID miner = minerOf(colony);
+
+        try {
+            context.assertTrue(
+                    WorkTargets.of(miner).isPresent(),
+                    "o mineiro saiu sem destino, e sem isso este teste não mede nada");
+
+            // A tarefa cumprida: reservada, executada, terminada. É o
+            // caminho que não passava por nenhuma limpeza de destino.
+            VillageColonyMod.TASKS.ofColony(colony.id()).forEach(task -> {
+                task.start();
+                task.complete();
+            });
+
+            MinerWork.run(world, colony);
+
+            context.assertTrue(
+                    WorkTargets.of(miner).isEmpty(),
+                    "a tarefa acabou e o destino ficou em "
+                            + WorkTargets.of(miner).map(BlockPos::toShortString).orElse("")
+                            + " — o aldeão vai passar o expediente rodando ali");
+        } finally {
+            MineClaims.clearAll();
+            WorkTargets.clear(miner);
+        }
+
+        context.complete();
+    }
 }
