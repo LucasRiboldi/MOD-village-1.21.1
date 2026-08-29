@@ -79,6 +79,35 @@ public final class MinerReport {
     }
 
     /**
+     * Por que este mineiro está sem pedra — 2026-08-28.
+     *
+     * <p><b>"Procurando" e "barrado" não são a mesma coisa</b>, e a
+     * linha as escrevia igual. A mina é de um mineiro só desde 08-28, e
+     * o segundo sai de {@code nextTarget} sem alvo: uma sessão inteira
+     * dele "looking for stone" mandaria o autor investigar a busca, que
+     * está certa.
+     *
+     * <p>É o E31 aplicado antes de custar sessão — relatório que afirma
+     * o que não mediu é pior que relatório que cala. Ver
+     * {@link MineClaims}.
+     */
+    private static String waitingFor(MinerWork.Job job, UUID workerId, boolean sand) {
+        if (sand) {
+            // A areia não passa pela mina: cada um tem seu cursor de
+            // espiral, e dois catando duna não se atrapalham.
+            return "looking for sand";
+        }
+
+        Optional<UUID> digger = MineClaims.diggerIn(job.task.colonyId());
+
+        if (digger.isPresent() && !digger.get().equals(workerId)) {
+            return "waiting for the shaft — " + shortId(digger.get()) + " is in it";
+        }
+
+        return "looking for stone";
+    }
+
+    /**
      * O que este mineiro está fazendo, numa frase.
      *
      * <p><b>A distinção que importa</b> é entre não ter pedra e não
@@ -93,7 +122,7 @@ public final class MinerReport {
         boolean sand = job.task.targetResource().group() == ResourceGroup.SAND;
 
         if (job.target == null) {
-            text.append(sand ? "looking for sand" : "looking for stone");
+            text.append(waitingFor(job, workerId, sand));
         } else {
             text.append("digging ")
                     .append(world.getBlockState(job.target).getBlock().getName().getString())

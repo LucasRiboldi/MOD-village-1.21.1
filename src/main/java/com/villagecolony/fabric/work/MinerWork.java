@@ -596,6 +596,12 @@ public final class MinerWork {
 
     private static void dropClosedJobs() {
         JOBS.entrySet().removeIf(entry -> !isOngoing(entry.getValue().task));
+
+        // A reserva da mina segue os trabalhos abertos, e é o que a
+        // impede de vazar: nem todo fim de trabalho passa por um lugar
+        // só, e mina trancada por um aldeão que já não existe é pior
+        // que dois cavando a mesma escada.
+        MineClaims.retainOnly(JOBS.keySet());
     }
 
     /** Esquece o trabalho deste aldeão. Morte, zumbificação, dispensa. */
@@ -604,6 +610,11 @@ public final class MinerWork {
 
         WorkTargets.clear(workerId);
         SandGathering.forget(workerId);
+
+        // Na hora, e não no ciclo seguinte: morte e zumbificação passam
+        // por aqui, e a mina não fica meio minuto fechada por causa de
+        // um aldeão que já morreu.
+        MineClaims.release(workerId);
     }
 
     /** Esvazia o registro. Chamado ao parar o servidor. */

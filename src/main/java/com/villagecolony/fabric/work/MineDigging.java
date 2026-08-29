@@ -203,6 +203,20 @@ public final class MineDigging {
 
         IdleLog.clear(colonyId, SURFACE_SUBJECT);
 
+        if (!MineClaims.claim(colonyId, workerId)) {
+            // <b>A escada é de um só</b> — 2026-08-28. O cursor da
+            // galeria mora no Mine e é um; dois mineiros perguntando na
+            // mesma passagem recebiam a mesma posição, andavam para o
+            // mesmo bloco, e escreviam "could not reach the stone" no
+            // mesmo tique. Esse aviso recua o cursor, e ele recuava duas
+            // vezes por um bloco.
+            //
+            // Quem não é o dono fica sem alvo, e não em alvo errado:
+            // ele volta a perguntar na passagem seguinte, e herda a mina
+            // no ciclo em que o dono largar o trabalho. Ver MineClaims.
+            return Optional.empty();
+        }
+
         return followingTheVein(world, mine.get())
                 .or(() -> nextCut(world, workerId, mine.get()));
     }

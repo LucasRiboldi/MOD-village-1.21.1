@@ -23,6 +23,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.work.WorkMaterials;
 import com.villagecolony.fabric.work.HousePlans;
+import com.villagecolony.fabric.work.MineClaims;
 import com.villagecolony.fabric.work.MineDigging;
 import com.villagecolony.fabric.integration.MineMouth;
 import com.villagecolony.fabric.integration.OreVein;
@@ -2285,5 +2286,150 @@ public class MinerGameTest implements FabricGameTest {
         }
 
         context.complete();
+    }
+
+    /**
+     * A escada é de um mineiro só — 2026-08-28.
+     *
+     * <p><b>A sessão de 2026-08-26, 23:23:08.</b> A colônia tinha dois
+     * mineiros e duas tarefas de pedra — o {@code ColonyCycle} abre uma
+     * por recurso pedido, e pedregulho e carvão são dois —, e as duas
+     * apontavam para a mesma escada. Havia reserva, e ela era da
+     * <b>tarefa</b>: cada um tinha a sua, e nenhuma delas falava da mina.
+     *
+     * <p>O cursor da galeria mora no {@code Mine} e é um. Os dois
+     * recebiam a mesma posição na mesma passagem e escreviam
+     * {@code could not reach the stone} no mesmo tique — e esse aviso
+     * recua o cursor, que recuava duas vezes por um bloco só.
+     *
+     * <p>O que este teste trava é o seam onde o cursor é lido: quem não
+     * é o dono sai sem alvo, e não com o alvo do outro.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_one_digger",
+            tickLimit = 20)
+    public void theShaftTakesOneMinerAndTurnsTheOtherAway(TestContext context) {
+        solidRock(context);
+
+        Colony colony = mineOwner(context);
+
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+
+        BlockPos center = context.getAbsolutePos(ROCK);
+
+        try {
+            Optional<BlockPos> his =
+                    MineDigging.nextTarget(context.getWorld(), first, colony.id(), center);
+
+            Optional<BlockPos> hers =
+                    MineDigging.nextTarget(context.getWorld(), second, colony.id(), center);
+
+            context.assertTrue(
+                    his.isPresent(),
+                    "o primeiro mineiro saiu sem alvo, e sem isso este teste não mede nada");
+
+            context.assertTrue(
+                    hers.isEmpty(),
+                    "o segundo mineiro recebeu "
+                            + hers.map(BlockPos::toShortString).orElse("")
+                            + " — os dois estão cavando a mesma escada");
+
+            context.assertTrue(
+                    MineClaims.diggerIn(colony.id()).orElseThrow().equals(first),
+                    "a mina não ficou com quem chegou primeiro");
+        } finally {
+            MineClaims.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * O mineiro que espera a escada diz que espera — 2026-08-28.
+     *
+     * <p><b>Sem isto ele mente por omissão.</b> A linha de quem não tem
+     * alvo é <i>"looking for stone"</i>, e ela é indistinguível de quem
+     * está de fato procurando. O segundo mineiro não procura nada: ele
+     * está barrado, e uma sessão inteira dele "procurando" mandaria o
+     * autor investigar a busca.
+     *
+     * <p>É a lição do E31 aplicada antes de custar sessão: relatório que
+     * afirma o que não mediu é pior que relatório que cala.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_one_digger",
+            tickLimit = 40)
+    public void theMinerWaitingForTheShaftSaysSoInTheLog(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        solidRock(context);
+
+        Colony colony = mineOwner(context);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        UUID first = miner(context, colony, chest, owned, new BlockPos(1, 9, 1));
+        UUID second = miner(context, colony, chest, owned, new BlockPos(5, 9, 5));
+
+        // Duas tarefas, uma por recurso pedido: é assim que a colônia as
+        // abre, e é a forma exata do defeito de 08-26.
+        reserveStone(colony, ResourceType.COBBLESTONE, first);
+        reserveStone(colony, ResourceType.COAL, second);
+
+        MinerWork.run(world, colony);
+
+        // O primeiro desce, e a mina passa a ter dono.
+        MineDigging.nextTarget(world, first, colony.id(), context.getAbsolutePos(ROCK));
+
+        try {
+            String line = MinerReport.report(world, colony).orElseThrow();
+
+            context.assertTrue(
+                    line.contains("waiting for the shaft"),
+                    "o mineiro barrado aparece procurando pedra, e não esperando: " + line);
+
+            context.assertTrue(
+                    line.contains("looking for stone"),
+                    "o dono da mina devia estar procurando pedra: " + line);
+        } finally {
+            MineClaims.clearAll();
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /** Um mineiro desta colônia, de pé onde se mandar. */
+    private static UUID miner(
+            TestContext context,
+            Colony colony,
+            ColonyPos chest,
+            ColonyFixture owned,
+            BlockPos stand) {
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, stand);
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        owned.owning(villager.getUuid());
+
+        return villager.getUuid();
+    }
+
+    /** Uma tarefa de pedra deste recurso, já reservada para este mineiro. */
+    private static void reserveStone(Colony colony, ResourceType resource, UUID workerId) {
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_STONE,
+                TaskPriority.PRODUCTION,
+                resource,
+                16);
+
+        task.reserveFor(workerId);
     }
 }
