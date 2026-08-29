@@ -23,6 +23,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.work.WorkMaterials;
 import com.villagecolony.fabric.work.HousePlans;
+import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.work.MineClaims;
 import com.villagecolony.fabric.work.MineDigging;
 import com.villagecolony.fabric.integration.MineMouth;
@@ -2599,5 +2600,137 @@ public class MinerGameTest implements FabricGameTest {
         }
 
         context.complete();
+    }
+
+    /**
+     * A linha diz para onde ele foi mandado, e não para onde ela acha
+     * que ele deveria ir — 2026-08-29.
+     *
+     * <p><b>O relatório recomputava o destino.</b> Ele chamava
+     * {@code approachTo} de novo, na hora de escrever a linha, e
+     * imprimia <b>esse</b> resultado como <i>"walking to"</i> — em vez
+     * de ler o destino que o aldeão de fato recebeu.
+     *
+     * <p>Enquanto os dois coincidem ninguém percebe. Eles deixam de
+     * coincidir exatamente no caso que interessa: quando o
+     * {@code MinerReach.legTowards} manda o mineiro à <b>boca da mina</b>
+     * porque a pedra está longe demais para a navegação. Aí a linha
+     * continua dizendo a pedra, e a sessão de 2026-08-28 saiu com o
+     * segundo mineiro parado na superfície, <i>"walking to 758, 44,
+     * 878"</i>, sem que desse para saber se a perna tinha sequer
+     * disparado.
+     *
+     * <p>É a mesma família do E31 e do E30: <b>instrumento que reporta o
+     * que recalculou, e não o que aconteceu</b>. E custa caro além da
+     * mentira — {@code approachTo} são umas seiscentas leituras de bloco
+     * por mineiro por ciclo, gastas para reimprimir um dado que já
+     * estava guardado.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_report",
+            tickLimit = 40)
+    public void theLineSaysWhereHeWasActuallySent(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        Colony colony = workingMiner(context);
+
+        // Um destino que o approachTo nunca escolheria: quem o repõe a
+        // cada tique é o legTowards, e é ele que manda para a boca.
+        BlockPos sentTo = context.getAbsolutePos(new BlockPos(0, 8, 0));
+
+        WorkTargets.set(minerOf(colony), sentTo, MinerReach.ARRIVAL);
+
+        String line = MinerReport.report(world, colony).orElseThrow();
+
+        try {
+            context.assertTrue(
+                    line.contains("out of reach"),
+                    "o mineiro alcançou a pedra, e sem isso o teste não mede nada: " + line);
+
+            context.assertTrue(
+                    line.contains(sentTo.toShortString()),
+                    "a linha não diz para onde ele foi mandado de verdade: " + line);
+        } finally {
+            MineClaims.clearAll();
+            WorkTargets.clear(minerOf(colony));
+        }
+
+        context.complete();
+    }
+
+    /**
+     * E ela nomeia a boca da mina, que é a resposta que faltava.
+     *
+     * <p>Ver o destino em números não basta: a pergunta da sessão é
+     * <b>se a perna disparou</b>, e para respondê-la o leitor teria de
+     * comparar coordenadas com a linha de abertura da mina, dez minutos
+     * de log acima. A linha diz por extenso.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_report",
+            tickLimit = 40)
+    public void theLineNamesTheMineMouthWhenHeWasSentThere(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        Colony colony = workingMiner(context);
+
+        BlockPos mouth = MinecraftTypeAdapter.toBlockPos(
+                VillageColonyMod.MINES.of(colony.id()).orElseThrow().shaft().entry());
+
+        WorkTargets.set(minerOf(colony), mouth, MinerReach.ARRIVAL);
+
+        String line = MinerReport.report(world, colony).orElseThrow();
+
+        try {
+            context.assertTrue(
+                    line.contains("out of reach"),
+                    "o mineiro alcançou a pedra, e sem isso o teste não mede nada: " + line);
+
+            context.assertTrue(
+                    line.contains("mine mouth"),
+                    "a linha não diz que ele foi mandado à boca da mina: " + line);
+        } finally {
+            MineClaims.clearAll();
+            WorkTargets.clear(minerOf(colony));
+        }
+
+        context.complete();
+    }
+
+    /** O mineiro desta colônia de teste, que é um só. */
+    private static UUID minerOf(Colony colony) {
+        return VillageColonyMod.WORKERS.ofColony(colony.id()).get(0).villagerId();
+    }
+
+    /**
+     * Uma colônia com mina, um mineiro dentro dela e uma pedra em mãos.
+     *
+     * <p>Mesmo cenário do {@code theCycleLineSaysWhereHeIsWhenOutOfReach}:
+     * o que estes testes medem é o que a linha <b>diz</b>, e para isso
+     * ela precisa existir com o mineiro fora de alcance.
+     */
+    private static Colony workingMiner(TestContext context) {
+        Colony colony = mineOwner(context);
+
+        galleryFace(context);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(1, 2, 3));
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(
+                villager.getUuid(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(1, 2, 1)))));
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(), TaskType.COLLECT_STONE, TaskPriority.PRODUCTION,
+                ResourceType.COBBLESTONE, 8);
+
+        task.reserveFor(villager.getUuid());
+
+        MinerWork.run(context.getWorld(), colony);
+        MinerWork.tick(context.getWorld());
+
+        return colony;
     }
 }

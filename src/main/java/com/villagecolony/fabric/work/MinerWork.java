@@ -556,6 +556,25 @@ public final class MinerWork {
                 .map(mine -> MinecraftTypeAdapter.toBlockPos(mine.shaft().entry()));
     }
 
+    /**
+     * A boca da mina em que este mineiro está trabalhando.
+     *
+     * <p>Existe para o relatório — 2026-08-29. A linha precisa poder
+     * dizer <i>"foi mandado à boca da mina"</i> por extenso, e não só em
+     * coordenadas: a pergunta que a sessão de 08-28 deixou é <b>se a
+     * perna do {@code legTowards} disparou</b>, e comparar números com a
+     * linha de abertura da mina, dez minutos de log acima, é trabalho que
+     * o instrumento deveria poupar.
+     *
+     * @return vazio para quem não tem trabalho aberto, e para o mineiro
+     *     de superfície e o de areia — nenhum dos dois tem mina
+     */
+    static Optional<BlockPos> mouthFor(UUID workerId) {
+        Job job = JOBS.get(workerId);
+
+        return job == null ? Optional.empty() : mouthOf(job);
+    }
+
     private static boolean isOngoing(Task task) {
         return task.state() == TaskState.RESERVED || task.state() == TaskState.EXECUTING;
     }

@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.fabric.brain.WorkHours;
+import com.villagecolony.fabric.brain.WorkTargets;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -184,13 +185,52 @@ public final class MinerReport {
         // guarda parou em 1177, e a sessão inteira passou sem que a única
         // linha capaz de responder chegasse a ser escrita. O estado que
         // interessa é o do travamento, não o do fim dele.
-        BlockPos spot = MinerWork.approachTo(world, target);
-
         return String.format("%.1f blocks away (out of reach", away)
                 + ", he is at " + villager.getBlockPos().toShortString()
-                + ", walking to "
-                + (spot.equals(target) ? "the stone itself" : spot.toShortString())
+                + ", walking to " + sentTo(workerId, target)
                 + ")";
+    }
+
+    /**
+     * Para onde este mineiro foi mandado — lido, e não recalculado.
+     *
+     * <p><b>A linha recomputava o destino</b>, e é a mesma família do
+     * E30 e do E31: instrumento que reporta o que recalculou em vez do
+     * que aconteceu. Ela chamava {@code approachTo} de novo na hora de
+     * escrever e imprimia <b>esse</b> resultado.
+     *
+     * <p>Enquanto os dois coincidem ninguém percebe. Eles deixam de
+     * coincidir exatamente no caso que interessa: quando o
+     * {@link MinerReach#legTowards} manda o mineiro à <b>boca da mina</b>
+     * porque a pedra está longe demais para a navegação traçar um
+     * caminho. A sessão de 2026-08-28 saiu com o segundo mineiro parado
+     * na superfície, <i>"walking to 758, 44, 878"</i>, sem que desse
+     * para saber se a perna tinha sequer disparado — e essa é a pergunta
+     * do E35.
+     *
+     * <p>Sai mais barato junto: {@code approachTo} são umas seiscentas
+     * leituras de bloco, gastas uma vez por mineiro por ciclo para
+     * reimprimir um dado que já estava guardado.
+     */
+    private static String sentTo(UUID workerId, BlockPos target) {
+        Optional<BlockPos> destination = WorkTargets.of(workerId);
+
+        if (destination.isEmpty()) {
+            // Sem destino ele é Vanilla: a task nem começa. É estado
+            // legítimo — fora do expediente, ou tarefa recém-solta.
+            return "nowhere";
+        }
+
+        if (destination.get().equals(target)) {
+            // O approachTo não achou lugar de ficar de pé e devolveu a
+            // própria pedra, que a navegação nunca cumpre.
+            return "the stone itself";
+        }
+
+        return MinerWork.mouthFor(workerId)
+                .filter(mouth -> mouth.equals(destination.get()))
+                .map(mouth -> "the mine mouth at " + mouth.toShortString())
+                .orElseGet(() -> destination.get().toShortString());
     }
 
     /**
@@ -215,9 +255,15 @@ public final class MinerReport {
     public static String whyNotReached(
             ServerWorld world, VillagerEntity villager, BlockPos target) {
 
+        // <b>Duas perguntas, e elas não são a mesma</b> — 2026-08-29.
+        // Para onde ele <b>foi mandado</b> é o destino que a task recebeu,
+        // e só o WorkTargets sabe; onde <b>haveria</b> de ficar de pé é o
+        // approachTo, e é ele que diz "não há lugar nenhum". A frase
+        // antiga misturava as duas e imprimia a segunda como se fosse a
+        // primeira — ver sentTo.
         BlockPos spot = MinerWork.approachTo(world, target);
 
-        String where = spot.equals(target)
+        String stand = spot.equals(target)
                 ? "the stone itself (no free neighbour to stand on)"
                 : spot.toShortString()
                         + (BuilderApproach.standable(world, spot) ? "" : ", which is not standable")
@@ -226,7 +272,8 @@ public final class MinerReport {
 
         return "the miner is at " + villager.getBlockPos().toShortString()
                 + ", " + String.format("%.1f", MinerWork.distanceTo(villager, target))
-                + " blocks away; it was walking to " + where
+                + " blocks away; it was walking to " + sentTo(villager.getUuid(), target)
+                + "; the place to stand is " + stand
                 + "; the stone at " + target.toShortString() + " is "
                 + world.getBlockState(target).getBlock().getName().getString();
     }
