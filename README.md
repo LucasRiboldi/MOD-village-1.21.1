@@ -297,7 +297,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Defesa | ⬜ não começado |
 
 ```text
-556 testes unitários  ·  211 testes de jogo  ·  0 falhas  ·  ./gradlew build
+558 testes unitários  ·  213 testes de jogo  ·  0 falhas  ·  ./gradlew build
 ```
 
 **O que 🧪 quer dizer aqui.** A bateria roda o caso e ele passa. Não quer
@@ -468,8 +468,31 @@ sempre atual — o enunciado das 29 regras, uma a uma — em
 ---
 ## Último ciclo de desenvolvimento
 
-**2026-08-29** — uma sessão de jogo respondeu quatro perguntas, e três
-delas com a causa exata no log ou no arquivo do próprio Vanilla.
+**2026-08-29, à noite** — o **E35 fechou**, e o instrumento que quase o
+escondeu junto.
+
+| | |
+|---|---|
+| **O mineiro de fora não estava parado: estava oscilando** | A perna que leva o mineiro à mina tinha duas pontas e nada no meio. Longe, o destino era a boca; a oito blocos dela, o destino virava a **pedra** — vinte blocos abaixo, do outro lado da rocha. Ele andava para a boca, cruzava a fronteira, recebia um destino que a navegação não cumpre, derivava, e recomeçava. As posições dele na sessão estão dos dois lados da linha: 8,77 / 7,55 / 9,00. **A descida tem vinte blocos e a perna tem oito: são três passos, e o sistema só sabia dar dois.** Agora quem dá o passo é a ordem de cavar da própria mina |
+| **A linha dizia para onde ele deveria ir, não para onde foi** | Ela recomputava o destino em vez de ler o que o aldeão recebeu. Enquanto os dois coincidem ninguém percebe — eles deixam de coincidir exatamente quando a perna manda o mineiro à boca, que é o caso acima. É a terceira vez que este projeto paga pela mesma coisa: E30, E31, e esta |
+
+```text
+558 testes unitários     0 falhas
+213 testes de jogo       0 falhas
+```
+
+**E um teste afirmava exatamente o defeito.** O `atTheMouthHeAimsForTheStone`
+foi escrito para impedir que o mineiro ficasse parado na entrada da mina.
+A intenção estava certa e a afirmação, errada — mirar a pedra dali é
+mirar através de vinte blocos de rocha.
+
+**O que continua sem prova:** o mineiro tem agora **três** consertos
+empilhados sem uma única sessão que os veja.
+
+### O ciclo antes — 2026-08-29, de manhã
+
+Uma sessão de jogo respondeu quatro perguntas, e três delas com a causa
+exata no log ou no arquivo do próprio Vanilla.
 
 | | |
 |---|---|

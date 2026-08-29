@@ -1,7 +1,9 @@
 # TODO
 
-**Atualizado:** 2026-08-29. **Sessão de jogo em 2026-08-28, 23:06.** Ela
-respondeu quatro perguntas de uma vez, e três delas com a causa exata no
+**Atualizado:** 2026-08-29, à noite. O **E35 fechou** — o segundo mineiro
+oscilava na fronteira da perna, e a descida passou a ser dada pela ordem
+de cavar, um passo por vez. Antes dele, a mesma sessão respondeu quatro
+perguntas de uma vez, e três delas com a causa exata no
 log ou no arquivo do Vanilla: o buraco no meio do chão, a cama pela
 metade, e — a nona tentativa — **por que o mineiro não desce**. Ele
 descia; parava dois blocos antes de chegar.
@@ -29,7 +31,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-556 testes unitários  ·  211 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
+558 testes unitários  ·  213 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 última sessão de jogo em 2026-08-28, 23:06  ·  ele desceu, e parou a 2 blocos
 ```
@@ -41,6 +43,71 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-29, à noite — o E35, e o instrumento que o escondia
+
+**Nenhuma sessão nova.** Os dois consertos saíram de reler o log da
+sessão de 08-28 com os números na mão.
+
+#### O E35: a perna tinha duas pontas e nada no meio
+
+O segundo mineiro passou a sessão inteira em volta da boca da mina. A
+mina daquela colônia veio do save, com a boca em `732, 63, 898`, e as
+posições dele estão **dos dois lados** da fronteira da perna:
+
+```text
+740, 65, 895  ->  8,77 da boca   FORA da perna  -> mandado à boca
+739, 65, 896  ->  7,55 da boca   DENTRO         -> mandado à pedra
+741, 63, 898  ->  9,00 da boca   FORA           -> mandado à boca
+```
+
+Longe, o destino era a boca; perto da boca, o destino virava **a pedra**
+— vinte blocos abaixo, do outro lado da rocha. A navegação não traça
+esse caminho, devolve caminho parcial, ele deriva, sai dos oito blocos, e
+o destino volta a ser a boca. Para sempre.
+
+**A descida tem vinte blocos e a perna tem oito: são três passos, e o
+sistema só sabia dar dois.**
+
+Agora quem dá o passo é a **ordem de cavar**. Ela é um corredor contínuo
+a partir da boca — tudo o que vem antes da frente já está aberto —, e o
+passo seguinte é o ponto mais avançado dela que ainda caiba numa perna,
+contado de onde ele está. Um degrau de cada vez, e sem fronteira nenhuma
+para oscilar em volta.
+
+> **A busca é contígua de propósito.** A ordem dobra: a escada desce para
+> um lado, a sala se abre, o segundo lance vira, a galeria corre para
+> outro. Um ponto avançado pode passar **perto** dele por fora da rocha
+> sem que haja caminho — pegar *"o último que estiver a oito blocos"*
+> mandaria o aldeão atravessar parede.
+
+**E um teste afirmava exatamente o defeito.** O
+`atTheMouthHeAimsForTheStone` foi escrito em 08-28 para impedir que ele
+ficasse parado na entrada. A intenção estava certa e a afirmação, errada.
+
+#### O relatório dizia para onde ele deveria ir, não para onde foi
+
+E foi ele que quase impediu o diagnóstico acima. A linha **recomputava**
+o destino — chamava `approachTo` de novo na hora de escrever — em vez de
+ler o que o aldeão recebeu. Enquanto os dois coincidem ninguém percebe;
+eles deixam de coincidir exatamente quando a perna manda o mineiro à
+boca, que é o caso do E35.
+
+É a terceira vez que este projeto paga pela mesma coisa — E30, E31, e
+agora esta. **Instrumento que reporta o que recalculou, e não o que
+aconteceu.** Sai mais barato junto: `approachTo` são umas seiscentas
+leituras de bloco por mineiro por ciclo, gastas para reimprimir um dado
+que já estava guardado.
+
+A frase de desistência também separou duas perguntas que misturava: *para
+onde ele foi mandado* é o destino da task, e *onde haveria de ficar de
+pé* é o `approachTo`. Ela imprimia a segunda como se fosse a primeira.
+
+| | |
+|---|---|
+| **Verificado rodando** | `gradlew build` → **558 unitários, 0 falhas**; `runGametest` → **213 de 213** |
+| **Fase vermelha conferida** | nos dois. Recolocada a regra de duas pontas, cai só o teste da boca; e o conserto do relatório derrubou `aStoneWithNowhereToStandSaysSo`, que é o teste que guarda a segunda pergunta |
+| **O que continua sem prova** | sessão. O mineiro tem agora **três** consertos empilhados sem uma única sessão que os veja: a folga de chegada, a reserva de mina e a perna pela ordem de cavar |
 
 ### 2026-08-29 — a sessão que respondeu quatro perguntas
 
@@ -1423,7 +1490,7 @@ conferido no volume · árvore grande deixando de ser recusada.
 | ~~**E33**~~ | ~~O mineiro não cavou um bloco em sete sessões~~ | ✅ **Fechado na bateria em 08-28.** Três testes em rocha maciça provam que ele cava a escada, desce cavando, e conserta a fronteira adiantada do save. Faltava a arena ser uma mina — todas as outras eram um piso de terra plano. **Falta ver em jogo** |
 | **E33-a** | **O mineiro desce, cava, e então trava.** Na sessão de 08-28, 23:19, ele estava **na galeria** (y=44) com **108 pedras** já trazidas, e parou | ⚙️ **Causa encontrada em 08-29, e é aritmética:** ele parava a **exatamente dois blocos** do lugar escolhido, porque dois era a folga com que a navegação se dá por chegada. `approachTo` escolhia um lugar a 2,0 da pedra; somada a folga, 4,2 — e o braço é 4. Duas contas certas que não compunham. A folga passou a ser do destino: o mineiro pede um. **Nenhuma sessão viu o conserto** — é o nono no mesmo sintoma, e o primeiro com a conta fechada em cima de um mineiro que já estava lá dentro |
 | **E34** | **Túnel cavado pelo jogador confunde a frente da galeria.** Um bolsão iluminado, desligado da escada, parecia frente | **Foi a causa do travamento de 08-28, 00:14.** O recuo passo a passo aceitava qualquer posição de onde desse para bater. Contornado ao ler a frente do mundo em ordem; o mod **ainda não distingue** o que ele cavou do que o jogador cavou |
-| **E35** | **Mineiro na superfície não caminha até a mina.** Na mesma sessão o segundo mineiro passou tudo a 33,5 blocos, `walking to 758, 44, 878`, sem sair de y=63-65 | **A perna do `legTowards` manda ele à boca da mina primeiro, e ele não chegou nem lá.** Não investigado. Parte dele some com a reserva de mina de 08-28 — os dois miravam a mesma pedra —, mas a caminhada em si continua sem prova |
+| ~~**E35**~~ | ~~Mineiro na superfície não caminha até a mina~~ | ✅ **Fechado em 08-29.** Ele não estava parado: estava **oscilando** na fronteira dos oito blocos da perna — 8,77 da boca ele era mandado à boca, 7,55 ele era mandado à pedra vinte blocos abaixo. A descida passou a ser dada pela ordem de cavar, um passo por vez. Ver a entrada no topo. **Falta a sessão** |
 | **E32** | **O mineiro não entra na própria escada quando começa do lado errado.** Vizinho pisável existe, o `approachTo` aponta para ele, e o aldeão continua estacionado a 4 blocos com `0/0 ticks` | **Medido, não consertado.** Era 20% das rodadas antes de a boca ser fixada no teste; agora a bateria não o exercita mais, e ele **continua em produção**. Descartado por sonda: não é falta de vizinho pisável — o lote vermelho não tinha uma linha sequer de `sem vizinho pisavel`. A suspeita é a navegação recusar descer no buraco de um bloco de largura, e é **suspeita, não diagnóstico**. O modelo de movimento supõe que o mineiro sempre alcança o alvo, e a geometria da mina não garante isso: enquanto o alcance era medido no plano, a suposição nunca era testada |
 | ~~**E30**~~ | ~~A galeria engoliu os dois mineiros~~ | ✅ **Fechado em 08-27** — era o alcance medido no plano. Ver a entrada no topo |
 | ~~**E31**~~ | ~~O relatório da barreira afirma o que não mediu~~ | ✅ **Fechado em 08-28.** A soma passou a contar a peça assentada, e o veredito tem três estados: sessão sem obra sai como `NOTHING_BUILT` e **não absolve** a Regra 28. Cinco unitários e um de jogo, fase vermelha conferida. Ver a entrada no topo |
