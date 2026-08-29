@@ -28,7 +28,6 @@ import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -91,18 +90,6 @@ public final class MinerWork {
      * picareta de madeira isso é uma sessão inteira.
      */
     private static final Item TOOL = Items.DIAMOND_PICKAXE;
-
-    /**
-     * Por onde se tenta chegar na pedra, na ordem da Regra 29.
-     *
-     * <p>Os quatro lados antes de cima e de baixo: entrar no túnel é como
-     * se anda numa mina, e ficar em cima da pedra é o degrau que se
-     * acabou de abrir. Ver {@link #approachTo}.
-     */
-    private static final Direction[] APPROACHES = {
-        Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST,
-        Direction.UP, Direction.DOWN,
-    };
 
     private static final int BREAKING_STAGES = 10;
 
@@ -375,28 +362,6 @@ public final class MinerWork {
         return true;
     }
 
-    /**
-     * Onde ficar de pé para bater nesta pedra — 2026-08-27.
-     *
-     * <p><b>Mandar o aldeão até a pedra era mandá-lo para dentro da
-     * rocha.</b> Bloco sólido nunca é alcançável: a navegação devolve
-     * caminho parcial, e ele estaciona onde parou. Enquanto o alcance era
-     * medido no plano isso não aparecia — ele batia de longe, de cima, e
-     * a pedra caía. Com o alcance honesto do E30, o mesmo aim virou um
-     * mineiro plantado a quatro blocos, {@code 0/0 ticks}, até o guarda
-     * devolver a tarefa.
-     *
-     * <p>A sonda de uma rodada vermelha mostrou o que faltava: o alvo
-     * <b>tinha</b> vizinho pisável — {@code up=ar(PISAVEL)}, os outros
-     * cinco sólidos —, e ninguém apontava para ele. Sete blocos e nove de
-     * distância, e a navegação sem destino que pudesse cumprir.
-     *
-     * <p>A ordem é a da Regra 29: os quatro lados primeiro, porque entrar
-     * no túnel é como se anda numa mina; depois em cima, que é o degrau
-     * recém-aberto da escada; e por último embaixo. Sem vizinho aberto
-     * fica a própria pedra, que é o que se fazia antes — pior destino,
-     * mas nunca pior que nenhum.
-     */
     /**
      * Onde ficar de pé para bater nesta pedra — 2026-08-27.
      *

@@ -126,7 +126,7 @@ você saber de relance quem é quem.
 | Profissão | O que já faz | O que falta |
 |---|---|---|
 | 🪓 **Lenhador** | Acha árvore, derruba bloco a bloco no tempo do machado de ferro, replanta a muda, guarda no seu baú. Reconhece árvore grande | Não escolhe espécie por necessidade; não corta a copa que fica pendurada |
-| ⛏️ **Mineiro** | Abre a boca da mina, mobilia com baú e lanterna, desce em escada de três blocos por degrau, abre duas salas de 7×4 e uma galeria sem fim. Segue veio de minério e abre degrau ao descer. Vira a galeria em barreira. Corrige sozinho a fronteira adiantada do save. Raspa afloramento quando a mina não tem onde nascer | **Nunca foi visto cavando em jogo** — fechado na bateria em 08-28. Dois mineiros dividem a mesma escada. Sem teto de inventário |
+| ⛏️ **Mineiro** | Abre a boca da mina, mobilia com baú e lanterna, desce em escada de três blocos por degrau, abre duas salas de 7×4 e uma galeria sem fim. Segue veio de minério e abre degrau ao descer. Vira a galeria em barreira. Corrige sozinho a fronteira adiantada do save. Raspa afloramento quando a mina não tem onde nascer. **A escada é de um mineiro só**, e o segundo espera a vez dizendo que espera | **Nunca foi visto cavando em jogo** — fechado na bateria em 08-28. Sem teto de inventário, e a galeria só tem luz na boca |
 | 🐑 **Pastor** | Acha ovelha adulta e lanosa, tosquia, guarda a lã da cor do rebanho | Não cria rebanho, não alimenta, não separa por cor |
 | 🔥 **Fundidor** | Funde pela receita do próprio jogo, sem forno no mundo: areia vira vidro, ferro cru vira lingote, arenito vira arenito liso | **Depende de a cadeia da areia começar** — o elo que ainda não fecha |
 | 🪚 **Fabricante** | Tira tronco do baú e faz tábua pela receita do jogo, até metade do estoque. Descasca tronco, monta tocha e monta vidraça | Porta, cama, janela e baú por estoque, sem depender de haver obra (Regra 10) |
@@ -297,7 +297,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Defesa | ⬜ não começado |
 
 ```text
-530 testes unitários  ·  202 testes de jogo  ·  0 falhas  ·  ./gradlew build
+543 testes unitários  ·  205 testes de jogo  ·  0 falhas  ·  ./gradlew build
 ```
 
 **O que 🧪 quer dizer aqui.** A bateria roda o caso e ele passa. Não quer
@@ -383,8 +383,6 @@ ficam os que mudam o que se vê no jogo.
 | 🟠 | **O mineiro nunca foi visto cavando em jogo** | O E33 **fechou na bateria** em 08-28, com três testes em rocha maciça — inclusive um que reproduz a mina travada do autor. Seis defeitos reais caíram no caminho, e **nenhum era a causa sozinho**. Falta a sessão |
 | 🟠 | **O túnel que o jogador cava à mão confunde o mod** | Foi o que travou a mina do autor: um bolsão iluminado, desligado da escada, parecia frente de galeria. A frente passou a ser lida do mundo em 08-28, mas o mod ainda não distingue o que ele cavou do que o jogador cavou |
 | 🔴 | **A vila fica presa numa obra só** | O planejador não sabe desistir. O catálogo do jogo já tem fazenda, curtume, ferraria — e a Regra 28 filtra tudo para uma casa por bioma |
-| 🟠 | **O relatório da barreira afirma o que não mediu** | Numa sessão com **zero obras** ele disse `covered for nothing — Rule 28 can go`. Ele só olha se pulou peça, e não se houve construção |
-| 🟠 | **Dois mineiros dividem a mesma escada** | A reserva é por tarefa, não por mina: os dois deram `could not reach the stone` no mesmo tique |
 | 🟠 | **Inventário do mineiro não tem teto nem retorno por lotação** | É onde mora o E3 — sobra de colheita vira perda de item |
 | 🟡 | **A mina só tem lanterna na boca**, e nem sempre | Saiu `lantern at nowhere it fits`. Galeria escura a 19 blocos é mob nascendo dentro dela |
 | 🟠 | **Nove arquivos de código acima de 500 linhas** | Recontados em 08-26. `VillageDetectionHandler` é o pior com 983. `LumberjackWork` saiu da lista no corte do E19 (1149 → 455), e quatro entraram com a mina e a estrada |
@@ -471,9 +469,30 @@ sempre atual — o enunciado das 29 regras, uma a uma — em
 ---
 ## Último ciclo de desenvolvimento
 
-**2026-08-27 e 28** — vinte e três commits, **oito sessões de jogo**, e
-um defeito que precisou de todas elas. As sete profissões passaram a
-trabalhar; o mineiro ainda não cavou.
+**2026-08-28, à noite** — dois relatórios que afirmavam o que não tinham
+medido, e os dois calaram. **Nenhuma sessão de jogo:** é trabalho de
+bateria, e o mineiro continua sem ter sido visto cavando.
+
+| | |
+|---|---|
+| **A barreira de teste absolvia a Regra 28 sem ter medido nada** — o E31 | Numa sessão com zero obras ela dizia `covered for nothing — Rule 28 can go`. A soma só sabia contar o que **foi riscado**; numa sessão sem obra a barreira não é exercitada uma vez, e o silêncio dela não é notícia boa, é ausência de notícia. O veredito passou a ter três estados, e sessão sem obra sai como `NOTHING_BUILT` |
+| **A escada da mina passou a ser de um mineiro só** | A reserva era da **tarefa**, e a colônia abre uma por recurso pedido. Mas o cursor da galeria mora no `Mine` e é um: os dois mineiros recebiam a mesma posição na mesma passagem e davam `could not reach the stone` no mesmo tique — e esse aviso **recua o cursor**, que recuava duas vezes por um bloco. Agora a mina tem dono, no molde do `TreeClaims` |
+| **O mineiro barrado diz que está barrado** | A linha de quem não tem alvo era `looking for stone` nos dois casos. Uma sessão inteira do segundo "procurando" mandaria investigar a busca, que está certa |
+
+```text
+543 testes unitários     0 falhas
+205 testes de jogo       0 falhas
+```
+
+**Fase vermelha conferida nos dois.** Sem a contagem da peça, a parede
+sobe e o teste de jogo da barreira cai; sem a reserva, os dois testes de
+mina caem na bateria inteira.
+
+### Os dois dias antes — 2026-08-27 e 28
+
+**Vinte e três commits, oito sessões de jogo**, e um defeito que precisou
+de todas elas. As sete profissões passaram a trabalhar; o mineiro ainda
+não cavou.
 
 ### O que ficou funcionando, e verificado em jogo
 

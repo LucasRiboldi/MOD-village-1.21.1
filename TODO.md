@@ -1,7 +1,9 @@
 # TODO
 
-**Atualizado:** 2026-08-28. O E33 fechou na bateria: o mineiro cava a
-escada dentro de rocha, e desce cavando. **Falta ver em jogo.**
+**Atualizado:** 2026-08-28, à noite. Dois relatórios que afirmavam o que
+não tinham medido calaram: o da barreira de teste (E31) e o do mineiro
+barrado. E a escada da mina passou a ser de **um mineiro só**. O E33
+continua fechado na bateria e **sem ver em jogo.**
 
 O **plano depois do MVP** — a economia inteira, as profissões que faltam
 e as cinco fases de crescimento — vive em
@@ -22,7 +24,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-530 testes unitários  ·  202 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+543 testes unitários  ·  205 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 última sessão de jogo em 2026-08-28, 00:14  ·  ele entrou, e parou no degrau 7
 ```
@@ -34,6 +36,84 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-28, à noite — dois relatórios que afirmavam o que não mediram
+
+**Nenhuma sessão de jogo neste ciclo.** É trabalho de bateria, e os dois
+achados são da mesma família: uma linha de log que conclui mais do que
+os dados dela sustentam.
+
+#### O E31 — a barreira absolvia a Regra 28 sem ter medido nada
+
+Sessão de 2026-08-26, 23:06: zero obras, zero projetos, nenhum bloco
+assentado — a vila passou os dois minutos varrendo. E o servidor parou
+dizendo `TEST BARRIER covered for nothing this session — every piece
+came from the colony's own chests. Rule 28 can go.`
+
+A frase é uma **conclusão sobre a Regra 28**, e a soma que a sustentava
+só sabia contar o que **foi riscado**. Numa sessão sem obra a barreira
+não é exercitada uma vez: o silêncio dela não é notícia boa, é ausência
+de notícia — e estava marcada como a notícia boa neste arquivo, que é
+onde a mentira custava.
+
+Nasceu a conta do outro lado. O veredito tem três estados:
+
+| | |
+|---|---|
+| `NOTHING_BUILT` | nada subiu — a barreira não teve o que medir, e não absolve ninguém |
+| `COVERED_FOR_NOTHING` | subiu, e nada precisou ser riscado. A única forma da notícia boa |
+| `COVERED` | a barreira trabalhou, e a lista diz em quê |
+
+A chamada sai da **única** passagem de `placeOne` em que uma peça encosta
+no mundo; as outras quatro riscam o bloco, e riscado não é assentado.
+
+#### Um mineiro por mina — a pendência do Nível 1
+
+Sessão de 2026-08-26, 23:23:08: os dois mineiros deram `could not reach
+the stone` **no mesmo tique**. Havia reserva, e ela era da **tarefa** —
+o `ColonyCycle` abre uma por recurso pedido, pedregulho e carvão são
+dois, e nada na cadeia falava da mina.
+
+Mas a mina é uma coisa só: o cursor da galeria mora no `Mine`, e os dois
+recebiam **a mesma posição na mesma passagem**. Pior que trabalho
+perdido — `could not reach` recua o cursor, e ele recuava duas vezes por
+um bloco.
+
+É o que o [`TreeClaims`](src/main/java/com/villagecolony/fabric/work/TreeClaims.java)
+resolveu do lado do lenhador, e a resposta é a mesma: **a coisa disputada
+é que tem dono**. Ali é a árvore, aqui é a mina. Quem não é o dono sai de
+`nextTarget` sem alvo, volta a perguntar na passagem seguinte, e herda a
+mina no ciclo em que o dono largar o trabalho.
+
+**A reserva não vaza, e é por construção.** Nem todo fim de trabalho
+passa pelo mesmo lugar — morte, zumbificação, dispensa, tarefa devolvida
+pelo guarda —, e mina trancada por um aldeão que já não existe é pior
+que o defeito que ela conserta. A conferência roda a cada ciclo contra
+os trabalhos abertos.
+
+**O que ela não reserva** é a pedra de superfície: aquela busca é por
+mineiro, cada um com seu cursor de espiral. O que é um só é a escada.
+
+#### E o relatório do mineiro parou de dizer que procura quando está barrado
+
+A linha de quem não tem alvo era `looking for stone` nos dois casos.
+Uma sessão inteira do segundo mineiro "procurando" mandaria o autor
+investigar a busca, que está certa. Agora ela diz
+`waiting for the shaft — <id> is in it`.
+
+#### Limpeza do caminho
+
+`MinerWork.approachTo` tinha **dois javadocs em sequência**, e o
+primeiro descrevia a busca por ordem de faces que a busca por distância
+aposentou em 08-27 — documentação que contradizia o código. Junto saiu
+`APPROACHES`, a constante daquela ordem, declarada e **lida por
+ninguém**.
+
+| | |
+|---|---|
+| **Fase vermelha conferida** | nos dois. Sem `laidOne`, a parede sobe e o teste de jogo cai; sem a reserva, os dois testes de mina caem na bateria inteira |
+| **Verificado rodando** | `gradlew build` → **543 unitários, 0 falhas**; `runGametest` → **205 de 205** |
+| **O que este ciclo não provou** | nada disso foi visto em jogo. São dois relatórios honestos e uma escada com dono — o mineiro continua sem ter sido visto cavando |
 
 ### 2026-08-28 — o E33 fechou na bateria: faltava a arena ser uma mina
 
@@ -1203,7 +1283,7 @@ conferido no volume · árvore grande deixando de ser recusada.
 | **E34** | **Túnel cavado pelo jogador confunde a frente da galeria.** Um bolsão iluminado, desligado da escada, parecia frente | **Foi a causa do travamento de 08-28, 00:14.** O recuo passo a passo aceitava qualquer posição de onde desse para bater. Contornado ao ler a frente do mundo em ordem; o mod **ainda não distingue** o que ele cavou do que o jogador cavou |
 | **E32** | **O mineiro não entra na própria escada quando começa do lado errado.** Vizinho pisável existe, o `approachTo` aponta para ele, e o aldeão continua estacionado a 4 blocos com `0/0 ticks` | **Medido, não consertado.** Era 20% das rodadas antes de a boca ser fixada no teste; agora a bateria não o exercita mais, e ele **continua em produção**. Descartado por sonda: não é falta de vizinho pisável — o lote vermelho não tinha uma linha sequer de `sem vizinho pisavel`. A suspeita é a navegação recusar descer no buraco de um bloco de largura, e é **suspeita, não diagnóstico**. O modelo de movimento supõe que o mineiro sempre alcança o alvo, e a geometria da mina não garante isso: enquanto o alcance era medido no plano, a suposição nunca era testada |
 | ~~**E30**~~ | ~~A galeria engoliu os dois mineiros~~ | ✅ **Fechado em 08-27** — era o alcance medido no plano. Ver a entrada no topo |
-| **E31** | **O relatório da barreira afirma o que não mediu.** [`TestBarrier.report()`](src/main/java/com/villagecolony/fabric/work/TestBarrier.java) decide só por `SKIPPED.isEmpty()`, e não sabe se houve obra | **Visto em jogo, na sessão das 23:06.** Zero obras, zero projetos, e mesmo assim saiu `covered for nothing this session — Rule 28 can go`. Numa sessão sem construção a linha é vazia, e ela está marcada como *a notícia boa* no §"falta ver em jogo" — o conserto é exigir que **alguma peça tenha sido assentada** antes de a frase valer |
+| ~~**E31**~~ | ~~O relatório da barreira afirma o que não mediu~~ | ✅ **Fechado em 08-28.** A soma passou a contar a peça assentada, e o veredito tem três estados: sessão sem obra sai como `NOTHING_BUILT` e **não absolve** a Regra 28. Cinco unitários e um de jogo, fase vermelha conferida. Ver a entrada no topo |
 | **E21** | **`theStoneLeavesTheWorldAndReachesTheChest`** disse "a pedra não chegou ao baú" uma vez | Suspeita: custo de ler estrutura no tique. **Suspeita, não diagnóstico**. Não repetiu em 7 rodadas de 08-25 |
 | **E9** | Colônia `ABANDONED` desmarcada no ciclo seguinte | **Silêncio na sessão de 08-25** — nenhuma colônia trocou de estado três vezes em 42 minutos. É notícia boa e não é prova: nenhuma colônia da sessão foi abandonada |
 | **E4** | `path held: no` e o aldeão chega assim mesmo | Provável, nunca verificado. Nenhuma linha dessas em 08-25 |
@@ -1254,7 +1334,7 @@ nível a que pertencem, e não como plano à parte.
 | | O que falta | O sintoma que já apareceu |
 |---|---|---|
 | 🟠 | **Inventário cheio dispara retorno.** Hoje o mineiro deposita e segue; não há teto nem volta por lotação | É onde mora o **E3** — sobra de colheita é perda de item |
-| 🟠 | **Um mineiro por mina.** A reserva é por **tarefa**, não por mina: os dois mineiros da sessão das 23:14 cavavam a mesma escada e deram `could not reach the stone` no mesmo tique | Sessão de 08-26, 23:23:08 |
+| ✅ | ~~**Um mineiro por mina.**~~ **Feito em 08-28** — a mina passou a ter dono, no molde do `TreeClaims`. Quem não é o dono sai sem alvo e herda a escada quando o dono largar o trabalho; a reserva não vaza porque é conferida a cada ciclo contra os trabalhos abertos. Oito unitários e dois de jogo, fase vermelha conferida | Sessão de 08-26, 23:23:08 |
 | 🟡 | **Iluminação além da boca.** Só a boca ganha lanterna, e nem sempre: saiu `lantern at nowhere it fits`. Galeria escura a 19 blocos é mob nascendo dentro da mina | Sessão de 08-26, 23:20:18 |
 | 🟢 | **Estoque-alvo além da conta da obra.** Hoje a colônia só quer o que a obra pede. Um piso mínimo de ferro e carvão é ideia legítima — e é **Nível 5**, o motor da ADR-009, não agora | nenhum; é desenho |
 
@@ -1324,6 +1404,14 @@ risco por bioma (§22, §23) — o Nível 1 ainda não foi visto em jogo.
 - 🟡 **O piso de pedra ignora o espaço do armazém.** Baú cheio continua
   pedindo pedra. Vale para lã, vidro e carvão também — é a família toda
   de metas de demanda, e nenhuma delas tem `room`.
+- 🟡 **`theMinerWithWorkLeavesALineInTheLog` não devolve a distância de
+  mina.** Achado em 08-28 lendo a bateria: ele chama
+  `MineDigging.shortenMineDistanceTo(2)` e não tem `restoreMineDistance`
+  no `finally`, então a constante fica em 2 para o resto da bateria.
+  Todos os outros testes que a encurtam a devolvem. **Não corrigido** —
+  não é deste ciclo, e mexer nela sem rodar a bateria inteira atrás é
+  trocar um risco por outro. É da mesma família da interferência entre
+  testes de jogo que já custou rodada.
 - 🟡 **`ColonySavedData.sync` tem sete parâmetros**, numa cadeia de
   sobrecargas 2→4→5→6→7. Cada agregado novo alonga a corrente. Não
   incomoda ainda; o dia em que incomodar, o conserto é um tipo que
@@ -1446,7 +1534,7 @@ acontecer, com a sessão que viu.
 | **2** | **A picareta de diamante na mão** | o mineiro segurando diamante, e não madeira. Cosmético e de velocidade ao mesmo tempo |
 | **2** | **O fundidor assando** | `Smelter ... made ...`. Não depende mais da mina — depende da **areia**, e é a cadeia 8 abaixo |
 | **3** | **A cadeia da areia inteira** | meta de `SAND` → praia → vidro → vidraça. Em 08-25 parou em `looking for sand, 0 of 6`; em 08-26 nem começou, e mandou 3 `glass_pane` para a barreira |
-| **4** | **A casa inteira sem a barreira** | `TEST BARRIER covered for nothing` **numa sessão que construiu**. Em 08-26 a casa subiu, mas com 19 peças da barreira — e a linha limpa da sessão anterior era o E31, não notícia boa |
+| **4** | **A casa inteira sem a barreira** | `TEST BARRIER covered for nothing` — e desde 08-28 a frase **só sai numa sessão que assentou peça**, então ela já não pode ser o E31 outra vez. Em 08-26 a casa subiu com 19 peças da barreira |
 | **5** | **A rua crescendo e a casa nascendo junto** | `extended the road N blocks ...` seguido de `planned ... at ...` **no mesmo ciclo**. Em 08-26 a casa nasceu sem a rua crescer: a varredura achou lote sozinha |
 | **6** | **A casa de deserto subindo** | `blocks left` caindo de 113. Nenhuma sessão em deserto ainda |
 | **7** | **A casa esperando a cama** | `WAITING_RESOURCES` por `white_bed`. Em 08-25 a obra esperou **pedregulho** e morreu antes da cama; em 08-26 fechou sem esperar nada |
