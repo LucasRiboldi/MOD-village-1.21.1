@@ -55,7 +55,7 @@ javap -cp "$MC_JAR" net.minecraft.item.Item | head -5
 public final class ModItems {
 
     public static final Item MARTELO_DE_COBRE = registrar("martelo_de_cobre",
-            new Item(new Item.Settings().maxCount(1).maxDamage(180)));
+            new Item(new Item.Settings().maxDamage(180)));
 
     private static Item registrar(String path, Item item) {
         return Registry.register(Registries.ITEM, Identifier.of(MeuMod.MOD_ID, path), item);
@@ -80,6 +80,21 @@ public void onInitialize() {
 O `register()` aparentemente vazio **não é enfeite**: registro por inicialização
 estática só roda quando a classe é carregada. Sem a chamada, nada acontece e o
 item simplesmente não existe.
+
+> **Por que não há `.maxCount(1)` aqui.** O pedido dizia "não empilha", e a
+> tentação é escrever `.maxCount(1).maxDamage(180)`.
+>
+> `[FATO]` verificado no bytecode de `Item$Settings` em 1.21.1: `maxDamage(int)`
+> já seta **três** componentes — `MAX_DAMAGE`, `DAMAGE = 0` e
+> **`MAX_STACK_SIZE = 1`**. Item com durabilidade não empilha por construção.
+>
+> Escrever `.maxCount(1)` junto é redundante; escrever `.maxCount(64)` **depois**
+> de `maxDamage` cria um item com durabilidade e pilha, que é um estado
+> inconsistente. Confira antes de encadear:
+>
+> ```bash
+> javap -c -p -cp "$MC_JAR" 'net.minecraft.item.Item$Settings' | sed -n '/maxDamage(int)/,/areturn/p'
+> ```
 
 ```bash
 ./gradlew build

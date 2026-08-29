@@ -104,8 +104,17 @@ public static void install(Brain<VillagerEntity> brain) {
 }
 ```
 
-`setTaskList` **acrescenta** à lista da Activity, não substitui. Nenhuma task
-Vanilla é removida — e por isso você não precisa remover nada.
+`[FATO]` verificado no bytecode de `Brain` em 1.21.1: a lista de tasks é montada
+com `Map.computeIfAbsent` + `Set.add`. `setTaskList` **acrescenta**, não
+substitui — nenhuma task Vanilla é removida, e por isso você não precisa remover
+nada.
+
+> **Cuidado com as sobrecargas que recebem `Set` de memórias.** No mesmo método,
+> `requiredActivityMemories` usa `Map.put`: os requisitos de memória da Activity
+> são **substituídos**, não acrescentados. Em `CORE` isso é inofensivo (o
+> conjunto Vanilla é vazio), mas numa Activity com requisitos, você os apaga.
+>
+> São **cinco** sobrecargas em 1.21.1. Prefira `(Activity, int, ImmutableList)`.
 
 Chamada por um Mixin mínimo em `initBrain` (`mixin-development.md`).
 

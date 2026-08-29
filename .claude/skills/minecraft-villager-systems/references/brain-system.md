@@ -163,8 +163,24 @@ O Brain nem tenta iniciar a task fora da condição. **Melhor que checar dentro 
 brain.setTaskList(Activity.CORE, PRIORIDADE, ImmutableList.of(new MinhaTask()));
 ```
 
-`[FATO]` `setTaskList` **acrescenta** à lista da Activity. Nenhuma task Vanilla é
-removida — **você não precisa remover nada.**
+`[FATO]` verificado no bytecode de `Brain` em 1.21.1: a implementação central usa
+`Map.computeIfAbsent` + `Set.add` para a lista de tasks. Ela **acrescenta** —
+nenhuma task Vanilla é removida, e **você não precisa remover nada.**
+
+> **A nuance que o bytecode revela.** No mesmo método, `requiredActivityMemories`
+> e `forgettingActivityMemories` usam `Map.put`, não `computeIfAbsent`: as
+> **memórias exigidas da Activity são substituídas**, não acrescentadas.
+>
+> Na prática isso é inofensivo em `CORE`, cujo conjunto de memórias exigidas é
+> vazio no Vanilla — passar vazio sobre vazio não muda nada. Mas se você usar
+> uma sobrecarga que recebe `Set` de memórias numa Activity que **tem**
+> requisitos, você os apaga.
+>
+> Regra prática: use a sobrecarga `(Activity, int, ImmutableList)` e não passe
+> conjuntos de memória, salvo se souber exatamente o que está substituindo.
+
+`[FATO]` São **cinco** sobrecargas de `setTaskList` em 1.21.1 — um Mixin que mire
+o método precisa de descriptor.
 
 Três cuidados:
 

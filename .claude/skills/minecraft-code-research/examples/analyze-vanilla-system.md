@@ -92,17 +92,31 @@ fecha a explicação:
 Antes de escrever qualquer linha, confirmar o método de registro de task:
 
 ```bash
-grep -P "\tsetTaskList$" "$MAPPINGS"
+grep -P "\tsetTaskList$" "$MAPPINGS" | head
+grep -cP "\tsetTaskList$" "$MAPPINGS"
 ```
 
 ```text
 m  (Lcom;ILcom/google/common/collect/ImmutableList;)V         a  method_18882  setTaskList
 m  (Lcom;ILcom/google/common/collect/ImmutableList;Lccs;)V    a  method_24527  setTaskList
 m  (Lcom;Lcom/google/common/collect/ImmutableList;)V          a  method_18881  setTaskList
+...
+5
 ```
 
-> `[FATO]` `setTaskList` tem três sobrecargas. Um Mixin que mire este método
-> precisa de descriptor.
+> `[FATO]` `setTaskList` tem **cinco** sobrecargas em 1.21.1. Um Mixin que mire
+> este método precisa de descriptor.
+
+> **Lição de método, aprendida errando:** a primeira versão desta análise disse
+> "três", porque o comando usava `grep -m3` e parava no terceiro resultado. O
+> número saiu da ferramenta, não do jogo. **Conte antes de afirmar quantidade**
+> (`grep -c`), e confira contra o `javap`, que lista todas:
+>
+> ```bash
+> javap -p -cp "$MC_JAR" net.minecraft.entity.ai.brain.Brain | grep -c setTaskList
+> ```
+>
+> Um `[FATO]` com fonte ainda pode estar errado se a fonte foi lida pela metade.
 
 E a classe base de task:
 

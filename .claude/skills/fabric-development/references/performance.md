@@ -30,8 +30,18 @@ WorldChunk chunk = world.getChunkManager().getWorldChunk(pos.getX() >> 4, pos.ge
 BlockState state = chunk == null ? null : chunk.getBlockState(pos);
 ```
 
-`[FATO]` verificado em MC 1.21.1: `getWorldChunk` devolve `null` para chunk não
-carregado, sem forçar geração.
+`[FATO]` verificado no bytecode de `ServerChunkManager` em MC 1.21.1:
+`getWorldChunk` devolve `null` para chunk não carregado, sem forçar geração
+(internamente é um "getChunkNow").
+
+> **E há um segundo `null` que quase ninguém espera:** a primeira instrução do
+> método compara `Thread.currentThread()` com a thread do servidor e **devolve
+> `null` imediatamente se não forem a mesma**.
+>
+> Ou seja, chamado de um handler de packet (thread de rede) ele devolve `null`
+> **mesmo com o chunk carregado**. Se a sua lógica interpretar `null` como "não
+> carregado", ela vai concluir a coisa errada. Faça o trabalho na thread do
+> servidor (`server.execute(...)`) antes de perguntar ao mundo.
 
 Tratar `null` como **"não sei agora, pulo"** é quase sempre a semântica correta —
 e costuma ser a regra de design certa também: o mod não deve segurar chunk que o
