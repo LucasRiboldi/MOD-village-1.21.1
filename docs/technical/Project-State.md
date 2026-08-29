@@ -2226,11 +2226,57 @@ Regra 30  o mineiro recolhe tudo o que cava;    08-22, feita em 08-22.
 Regra 31  o fazendeiro planta o que tiver no    08-26, ENUNCIADA e por
           baú, põe a água, colhe o que está     escrever. Decisão do
           pronto e guarda no próprio baú        autor na mesma data
+
+Regra 32  os móveis e a cama entram depois da   08-29, feita em 08-29.
+          casa pronta                           Decisão do autor depois
+                                                de ver a casa em jogo
 ```
 
 Duas previsões das primeiras se confirmaram e vale marcá-las: a fila que
 não esvaziava — o E1 do §17 — morreu junto, e o lugar onde as duas
 primeiras regras moram é de fato o mesmo.
+
+---
+
+## Regra 32 — os móveis entram depois da casa pronta
+
+```text
+o construtor levanta a casa inteira primeiro; cama, baú, tocha e
+lanterna só entram quando não falta mais estrutura
+```
+
+**Regra do autor, 2026-08-29**, dita depois de ver a casa em jogo:
+*"criar uma regra para adicionar os móveis e cama depois da casa
+pronta"*. A sessão de 08-28 mostrou as duas razões, e as duas estão no
+log.
+
+**Três tochas de parede riscadas** com `nothing holds it`. Elas vinham
+antes da parede que as segura, e um bloco sem apoio é riscado para
+sempre — a casa fica sem ele mesmo depois de a parede subir.
+
+**E a cama pela metade:**
+
+```text
+Could not finish the two-part block at 769, 64, 935
+    — Block{minecraft:cobblestone} is in the way
+```
+
+A cabeceira foi decidida contra um pedregulho que ainda nem estava lá
+quando a decisão foi tomada.
+
+**Os dois são o mesmo defeito de ordem.** A ordem de baixo para cima
+garante o que está **embaixo**, e mobília depende do que está **ao
+lado** — só a casa inteira responde isso.
+
+**O que a regra abre.** Com a casa de pé, quem assenta mobília pode
+perguntar ao mundo em vez de ao arquivo: a cama passou a escolher o lado
+em que a cabeceira cabe, encostada na parede quando dá. Não é orientação
+fiel à planta — essa é a **ADR-008**, decidida e por escrever, e vale
+para o tronco e o degrau junto.
+
+**O que ela não muda.** A mobília continua sendo bloco do projeto, com a
+mesma conta de material e a mesma barreira da Regra 28. O que mudou foi
+só **quando** ela entra.
 
 ---
 

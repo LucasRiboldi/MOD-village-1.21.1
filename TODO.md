@@ -1,10 +1,14 @@
 # TODO
 
-**Atualizado:** 2026-08-28, à noite. Dois relatórios que afirmavam o que
-não tinham medido calaram: o da barreira de teste (E31) e o do mineiro
-barrado. A escada da mina passou a ser de **um mineiro só**, e a galeria
-passou a **acender atrás do mineiro**. O E33 continua fechado na bateria
-e **sem ver em jogo.**
+**Atualizado:** 2026-08-29. **Sessão de jogo em 2026-08-28, 23:06.** Ela
+respondeu quatro perguntas de uma vez, e três delas com a causa exata no
+log ou no arquivo do Vanilla: o buraco no meio do chão, a cama pela
+metade, e — a nona tentativa — **por que o mineiro não desce**. Ele
+descia; parava dois blocos antes de chegar.
+
+Antes dela, no mesmo ciclo: o E31 e o relatório do mineiro barrado
+calaram, a escada virou de **um mineiro só**, e a galeria passou a
+**acender atrás do mineiro**.
 
 O **plano depois do MVP** — a economia inteira, as profissões que faltam
 e as cinco fases de crescimento — vive em
@@ -25,9 +29,9 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-549 testes unitários  ·  208 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+556 testes unitários  ·  211 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
-última sessão de jogo em 2026-08-28, 00:14  ·  ele entrou, e parou no degrau 7
+última sessão de jogo em 2026-08-28, 23:06  ·  ele desceu, e parou a 2 blocos
 ```
 
 > A contagem de jogo era 176 aqui e **175** no `runGametest`. Recontado
@@ -37,6 +41,115 @@ lista abaixo.
 ---
 
 ## ✅ Resolvido
+
+### 2026-08-29 — a sessão que respondeu quatro perguntas
+
+**Sessão de jogo em 2026-08-28, 23:06 às 23:20.** A casa subiu — 149
+planejados, **127 assentados** —, a mina abriu, e os dois mineiros
+travaram. O autor entrou e olhou, e o que ele viu tinha causa exata em
+três dos quatro casos.
+
+#### O mineiro descia, e parava dois blocos antes de chegar
+
+**É a nona tentativa no mesmo sintoma, e a primeira com a conta
+fechada.** Pela primeira vez o log pegou um mineiro **dentro** da mina —
+y=44 é a galeria:
+
+```text
+digging Pedra at 760, 44, 878, 4,2 blocks away
+  (out of reach, he is at 756, 44, 878, walking to 758, 44, 878),
+  0/0 ticks, stall 2140/2400
+```
+
+**Exatamente dois blocos do destino**, parado seiscentos tiques. Dois é
+o `COMPLETION_RANGE` do `GoToWorkTargetTask`: a navegação **se deu por
+chegada** e parou, o mod continuou dizendo *"fora de alcance"*, e ele
+moeu os últimos dois blocos até o guarda devolver a tarefa. É o
+*"rodando na escada e não desce"* que o autor descreveu.
+
+**Duas contas certas que não compunham.** O `approachTo` escolhe um
+lugar **dentro** do braço — 758 está a 2,0 da pedra, e o braço é 4. O
+caminhante parava até dois **antes** desse lugar. Somadas: 4,2, fora do
+braço para sempre, sem que nenhuma das duas estivesse errada sozinha.
+
+A folga de dois foi escrita para o **lenhador**, e ali ela é certa: o
+destino dele *é* a árvore, e parar dois antes é parar dentro do alcance.
+Para o mineiro o destino já é o lugar exato de ficar de pé.
+
+| | |
+|---|---|
+| **O conserto** | a folga deixou de ser constante da task e passou a ser **do destino**. Padrão continua dois; o mineiro pede um |
+| **Por que um e não zero** | exigir o bloco exato faria a navegação perseguir uma casa decimal, e o guarda devolveria a tarefa por outro motivo. Um deixa o pior caso em 3,0 de uma pedra a 4 |
+| **Fase vermelha** | com a folga em dois, `arrivingAtTheEdgeOfTheWalkStillReachesTheStone` cai |
+
+#### O bloco central do chão era um encaixe do gerador
+
+A frase do autor foi *"falta um bloco central no chão"*, e ela é exata.
+O piso da casa de planície é um quadrado de nove tábuas, e a **do meio**
+é um `jigsaw` no arquivo do Vanilla:
+
+```text
+camada y=0, vista de cima
+
+  cobblestone  cobblestone  cobblestone
+  cobblestone  <JIGSAW>     cobblestone      <- o buraco
+  cobblestone  cobblestone  cobblestone
+```
+
+O leitor tratava encaixe como **andaime do gerador** e o descartava
+junto com o ar. Mas encaixe não é andaime: bloco de estrutura não vira
+nada e o jogo o apaga, enquanto o encaixe carrega no próprio arquivo o
+`final_state` — o bloco em que ele se transforma quando a vila é gerada.
+Do encaixe do meio sai `oak_planks`; do que fica na porta, o **degrau da
+entrada**, que também faltava.
+
+**E o conserto desenterrou um teste que passava por acidente.** O
+`aSavedProjectComesBackFromTheWorld` punha de pé o primeiro bloco da
+planta **lida do arquivo** e esperava que a obra retomada o
+reconhecesse — mas a obra que volta do save é **girada para a rua**
+antes de medir o mundo. Enquanto a caixa da casa era quadrada, o
+primeiro bloco caía sobre si mesmo ao girar e era do mesmo material, e a
+conta fechava. O degrau da entrada alargou a caixa num eixo só, o giro
+deixou de ser inócuo, e o acidente apareceu — que é literalmente o que o
+javadoc de `blueprintOf` avisava que aconteceria.
+
+#### A cama, e a Regra 32
+
+*"Aparece somente a metade da cama e na direção errada."* O log diz por
+quê, na letra:
+
+```text
+Could not finish the two-part block at 769, 64, 935
+    — Block{minecraft:cobblestone} is in the way
+```
+
+A planta guarda o **nome** do bloco e não o estado (ADR-005), então a
+cama saía no padrão, que olha para o norte. No arquivo ela olha para
+**leste**. Na casa de planície o norte da cama é a parede: a cabeceira
+não coube, e sobrou meia cama.
+
+O autor pediu a regra junto com o defeito — *"criar uma regra para
+adicionar os móveis e cama depois da casa pronta"* —, e ela é a
+**Regra 32**, enunciada em `Project-State.md`. Ela resolve os dois de
+uma vez: as **três tochas de parede** riscadas com `nothing holds it`
+vinham antes da parede que as segura, e a cama era decidida contra um
+pedregulho que ainda não estava lá.
+
+Com a casa de pé, a cama passou a **perguntar ao mundo** para que lado
+cabe — encostada na parede quando dá. E a Regra 17 passou a deixar a
+cama em paz: o javadoc dela sempre disse que a cama ficava de fora, e
+não ficava.
+
+> **O que isto não faz** é orientação fiel ao arquivo. A cama da planta
+> olha para leste e a que sobe olha para onde couber. Isso é a
+> **ADR-008**, decidida e por escrever, e vale para o tronco e o degrau
+> junto.
+
+| | |
+|---|---|
+| **Verificado rodando** | `gradlew build` → **556 unitários, 0 falhas**; `runGametest` → **211 de 211** |
+| **Fase vermelha conferida** | nos quatro consertos |
+| **O que a sessão não respondeu** | nada disto foi visto em jogo depois do conserto. São quatro causas com prova de código e **zero sessões** |
 
 ### 2026-08-28, à noite — dois relatórios que afirmavam o que não mediram
 
@@ -1308,8 +1421,9 @@ conferido no volume · árvore grande deixando de ser recusada.
 | | Erro | Estado |
 |---|---|---|
 | ~~**E33**~~ | ~~O mineiro não cavou um bloco em sete sessões~~ | ✅ **Fechado na bateria em 08-28.** Três testes em rocha maciça provam que ele cava a escada, desce cavando, e conserta a fronteira adiantada do save. Faltava a arena ser uma mina — todas as outras eram um piso de terra plano. **Falta ver em jogo** |
-| **E33-a** | **O mineiro nunca foi visto cavando em jogo.** Ele **entra** na mina desde 08-28 — chegou ao degrau 7 —, e para no fim da escada de verdade | **Medido a fundo, cinco defeitos reais consertados no caminho, e nenhum era a causa sozinho:** mobília da boca no primeiro degrau; degrau seguinte diagonal e invisível para a busca de faces; cursor marchando por dentro da rocha; duas contas de distância; duas contas de "cabe um aldeão". O último conserto — a frente da galeria lida do mundo — é de 08-28 e **não foi visto**. É o mesmo sintoma da [issue #4297 do MineColonies](https://github.com/ldtteam/minecolonies/issues/4297), que eles resolveram trocando a navegação inteira |
+| **E33-a** | **O mineiro desce, cava, e então trava.** Na sessão de 08-28, 23:19, ele estava **na galeria** (y=44) com **108 pedras** já trazidas, e parou | ⚙️ **Causa encontrada em 08-29, e é aritmética:** ele parava a **exatamente dois blocos** do lugar escolhido, porque dois era a folga com que a navegação se dá por chegada. `approachTo` escolhia um lugar a 2,0 da pedra; somada a folga, 4,2 — e o braço é 4. Duas contas certas que não compunham. A folga passou a ser do destino: o mineiro pede um. **Nenhuma sessão viu o conserto** — é o nono no mesmo sintoma, e o primeiro com a conta fechada em cima de um mineiro que já estava lá dentro |
 | **E34** | **Túnel cavado pelo jogador confunde a frente da galeria.** Um bolsão iluminado, desligado da escada, parecia frente | **Foi a causa do travamento de 08-28, 00:14.** O recuo passo a passo aceitava qualquer posição de onde desse para bater. Contornado ao ler a frente do mundo em ordem; o mod **ainda não distingue** o que ele cavou do que o jogador cavou |
+| **E35** | **Mineiro na superfície não caminha até a mina.** Na mesma sessão o segundo mineiro passou tudo a 33,5 blocos, `walking to 758, 44, 878`, sem sair de y=63-65 | **A perna do `legTowards` manda ele à boca da mina primeiro, e ele não chegou nem lá.** Não investigado. Parte dele some com a reserva de mina de 08-28 — os dois miravam a mesma pedra —, mas a caminhada em si continua sem prova |
 | **E32** | **O mineiro não entra na própria escada quando começa do lado errado.** Vizinho pisável existe, o `approachTo` aponta para ele, e o aldeão continua estacionado a 4 blocos com `0/0 ticks` | **Medido, não consertado.** Era 20% das rodadas antes de a boca ser fixada no teste; agora a bateria não o exercita mais, e ele **continua em produção**. Descartado por sonda: não é falta de vizinho pisável — o lote vermelho não tinha uma linha sequer de `sem vizinho pisavel`. A suspeita é a navegação recusar descer no buraco de um bloco de largura, e é **suspeita, não diagnóstico**. O modelo de movimento supõe que o mineiro sempre alcança o alvo, e a geometria da mina não garante isso: enquanto o alcance era medido no plano, a suposição nunca era testada |
 | ~~**E30**~~ | ~~A galeria engoliu os dois mineiros~~ | ✅ **Fechado em 08-27** — era o alcance medido no plano. Ver a entrada no topo |
 | ~~**E31**~~ | ~~O relatório da barreira afirma o que não mediu~~ | ✅ **Fechado em 08-28.** A soma passou a contar a peça assentada, e o veredito tem três estados: sessão sem obra sai como `NOTHING_BUILT` e **não absolve** a Regra 28. Cinco unitários e um de jogo, fase vermelha conferida. Ver a entrada no topo |

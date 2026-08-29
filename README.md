@@ -297,7 +297,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Defesa | ⬜ não começado |
 
 ```text
-549 testes unitários  ·  208 testes de jogo  ·  0 falhas  ·  ./gradlew build
+556 testes unitários  ·  211 testes de jogo  ·  0 falhas  ·  ./gradlew build
 ```
 
 **O que 🧪 quer dizer aqui.** A bateria roda o caso e ele passa. Não quer
@@ -380,7 +380,7 @@ ficam os que mudam o que se vê no jogo.
 
 | | O que | Por quê |
 |---|---|---|
-| 🟠 | **O mineiro nunca foi visto cavando em jogo** | O E33 **fechou na bateria** em 08-28, com três testes em rocha maciça — inclusive um que reproduz a mina travada do autor. Seis defeitos reais caíram no caminho, e **nenhum era a causa sozinho**. Falta a sessão |
+| 🟠 | **O mineiro desce, cava, e trava** | Em 08-28 ele estava **na galeria** com 108 pedras trazidas. A causa é aritmética e foi consertada em 08-29 — ele parava a dois blocos do lugar escolhido, e a folga somada ao alcance dava 4,2 num braço de 4. **Falta a sessão que confirme** |
 | 🟠 | **O túnel que o jogador cava à mão confunde o mod** | Foi o que travou a mina do autor: um bolsão iluminado, desligado da escada, parecia frente de galeria. A frente passou a ser lida do mundo em 08-28, mas o mod ainda não distingue o que ele cavou do que o jogador cavou |
 | 🔴 | **A vila fica presa numa obra só** | O planejador não sabe desistir. O catálogo do jogo já tem fazenda, curtume, ferraria — e a Regra 28 filtra tudo para uma casa por bioma |
 | 🟠 | **Inventário do mineiro não tem teto nem retorno por lotação** | É onde mora o E3 — sobra de colheita vira perda de item |
@@ -468,9 +468,33 @@ sempre atual — o enunciado das 29 regras, uma a uma — em
 ---
 ## Último ciclo de desenvolvimento
 
-**2026-08-28, à noite** — dois relatórios que afirmavam o que não tinham
-medido, e os dois calaram. **Nenhuma sessão de jogo:** é trabalho de
-bateria, e o mineiro continua sem ter sido visto cavando.
+**2026-08-29** — uma sessão de jogo respondeu quatro perguntas, e três
+delas com a causa exata no log ou no arquivo do próprio Vanilla.
+
+| | |
+|---|---|
+| **O mineiro descia — e parava dois blocos antes de chegar** | Pela primeira vez em nove sessões o log pegou um mineiro **dentro** da mina, com 108 pedras já trazidas. Ele ficou a `4,2 blocks away (out of reach, he is at 756, 44, 878, walking to 758, 44, 878)` por seiscentos tiques. **Dois** era a folga com que a navegação se dá por chegada: ela parou, o mod continuou dizendo "fora de alcance", e ele moeu os últimos dois blocos. Duas contas certas que não compunham — o lugar escolhido estava a 2,0 da pedra, e o braço é 4. A folga passou a ser **do destino**: o lenhador continua com dois, o mineiro pede um |
+| **O bloco central do chão era um encaixe do gerador** | O piso da casa de planície é um quadrado de nove tábuas, e a **do meio** é um `jigsaw` no arquivo do Vanilla. O leitor o descartava como andaime — mas encaixe não é andaime: ele carrega o `final_state`, o bloco em que vira quando a vila é gerada. Do meio do piso sai tábua; da porta, o degrau da entrada, que também faltava |
+| **A cama pela metade, e a Regra 32** | `Could not finish the two-part block — cobblestone is in the way`. A planta guarda o nome e não o estado, então a cama saía olhando para o norte, que na casa de planície é a parede. O autor pediu a regra junto com o defeito: **móveis e cama entram depois da casa pronta**. Ela conserta os dois — as três tochas de parede riscadas com `nothing holds it` vinham antes da parede que as segura |
+
+```text
+556 testes unitários     0 falhas
+211 testes de jogo       0 falhas
+```
+
+**Fase vermelha conferida nos quatro consertos.** E dois testes que
+passavam por acidente caíram no caminho: o da retomada, que media a
+planta na orientação errada e só funcionava enquanto a casa era
+quadrada; e a primeira versão do teste da cama, onde uma planta de um
+bloco só fazia a regra da porta apontar a cama para longe do muro.
+
+**O que nada disto prova:** nenhuma sessão viu os consertos. São quatro
+causas com prova de código e **zero sessões**.
+
+### O ciclo antes — 2026-08-28, à noite
+
+Dois relatórios que afirmavam o que não tinham medido, e os dois
+calaram. **Nenhuma sessão de jogo:** é trabalho de bateria.
 
 | | |
 |---|---|
