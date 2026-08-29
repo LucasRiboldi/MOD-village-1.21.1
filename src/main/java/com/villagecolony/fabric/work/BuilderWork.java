@@ -370,6 +370,13 @@ public final class BuilderWork {
 
         job.placed++;
 
+        // A única passagem em que uma peça de verdade encosta no mundo,
+        // e é por isso que a conta da barreira sai daqui: as outras
+        // quatro saídas de placeOne riscam o bloco, e riscado não é
+        // assentado. Sem este número o relatório da sessão absolvia a
+        // Regra 28 sem ter tido o que medir — o E31.
+        TestBarrier.laidOne();
+
         return true;
     }
 

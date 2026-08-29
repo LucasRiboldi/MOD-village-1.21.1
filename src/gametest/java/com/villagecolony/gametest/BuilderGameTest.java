@@ -23,6 +23,7 @@ import com.villagecolony.fabric.work.BuilderApproach;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.MaterialChoice;
 import com.villagecolony.fabric.work.ConstructionPlanner;
+import com.villagecolony.fabric.work.TestBarrier;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -929,6 +930,52 @@ public class BuilderGameTest implements FabricGameTest {
                         "o baú devia ter pago duas tábuas e tem "
                                 + planksIn(context, fixture.chest));
             } finally {
+                fixture.owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * A barreira conta a peça que o construtor assentou de verdade — E31.
+     *
+     * <p><b>O teste unitário prova a conta; este prova o fio.</b> O
+     * veredito só deixa de mentir se {@code laidOne} for chamado de onde
+     * o bloco encosta no mundo, e nenhuma leitura de código garante
+     * isso. Aqui a parede sobe, e o veredito tem de sair de
+     * {@code NOTHING_BUILT} sozinho.
+     *
+     * <p>Tábua não é peça da barreira: numa parede de tábuas nada é
+     * riscado, e é por isso que o veredito esperado é a notícia boa —
+     * a única forma dela que continua valendo.
+     *
+     * <p>Batch próprio, e limpeza nas duas pontas: a soma da barreira é
+     * da sessão inteira, e uma casa levantada em outro teste entraria
+     * nesta conta.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_barrier_tally",
+            tickLimit = 300)
+    public void theBarrierCountsThePiecesTheBuilderActuallyLays(TestContext context) {
+        TestBarrier.clearAll();
+
+        context.assertTrue(
+                TestBarrier.verdict() == TestBarrier.Verdict.NOTHING_BUILT,
+                "a soma zerada já se dizia construída: " + TestBarrier.verdict());
+
+        Fixture fixture = setUp(context, 8);
+
+        context.runAtTick(90, () -> {
+            try {
+                context.assertTrue(
+                        isPlanks(context, SITE),
+                        "a parede não subiu, e sem parede este teste não mede nada");
+
+                context.assertTrue(
+                        TestBarrier.verdict() == TestBarrier.Verdict.COVERED_FOR_NOTHING,
+                        "a parede subiu e o veredito ficou em " + TestBarrier.verdict());
+            } finally {
+                TestBarrier.clearAll();
                 fixture.owned.cleanUp();
             }
 
