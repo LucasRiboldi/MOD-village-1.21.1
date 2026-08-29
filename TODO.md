@@ -2,8 +2,9 @@
 
 **Atualizado:** 2026-08-28, à noite. Dois relatórios que afirmavam o que
 não tinham medido calaram: o da barreira de teste (E31) e o do mineiro
-barrado. E a escada da mina passou a ser de **um mineiro só**. O E33
-continua fechado na bateria e **sem ver em jogo.**
+barrado. A escada da mina passou a ser de **um mineiro só**, e a galeria
+passou a **acender atrás do mineiro**. O E33 continua fechado na bateria
+e **sem ver em jogo.**
 
 O **plano depois do MVP** — a economia inteira, as profissões que faltam
 e as cinco fases de crescimento — vive em
@@ -24,7 +25,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-543 testes unitários  ·  205 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
+549 testes unitários  ·  208 testes de jogo  ·  31 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 última sessão de jogo em 2026-08-28, 00:14  ·  ele entrou, e parou no degrau 7
 ```
@@ -101,6 +102,34 @@ Uma sessão inteira do segundo mineiro "procurando" mandaria o autor
 investigar a busca, que está certa. Agora ela diz
 `waiting for the shaft — <id> is in it`.
 
+#### E a galeria passou a acender
+
+Só a boca tinha lanterna, e **nem sempre**: a sessão de 08-26 saiu com
+`lantern at nowhere it fits`. Vinte blocos abaixo dela a escada e a
+galeria ficam com **luz zero**, que é a condição exata de criatura
+nascer — dentro da mina, ao lado de um aldeão desarmado.
+
+Uma tocha por passagem, de oito em oito posições da ordem de cavar, e só
+no que já está aberto: fora disso seria obra, e obra é do construtor.
+Não custa material, pela mesma razão que a mobília da boca — cobrar
+tocha faria a mina ficar escura até a colônia ter carvão, e carvão vem
+da mina.
+
+**A bateria cobrou três coisas, e as três eram de verdade:**
+
+| | O que quebrou | O que ela ensinou |
+|---|---|---|
+| A tocha ia na posição da ordem, que na escada é o **bloco dos pés** | o E33 falhou com *"o primeiro degrau da escada continua fechado"* | numa escada de um bloco de largura **todo chão é caminho**. A tocha subiu para o teto da passagem, e virou tocha de parede porque no alto não há em que se apoiar de baixo |
+| O cursor conta posição **entregue**, não bloco **cavado** | o E33 falhou de novo, agora com *"o degrau saiu sem altura para o aldeão passar"* — a camada da cabeça virou tocha antes de a terceira ser cavada | coluna aberta pela metade **parece** ter teto. A luz passou a ficar um espaçamento inteiro atrás do cursor |
+| A subida parava **embaixo** da tocha que já estava lá | a mesma coluna acendia duas vezes, uma no teto e outra na cabeça | tocha não é ar, e "tem ar embaixo" não bastava. A subida passou a reconhecer luz e desistir |
+
+**E o mineiro não cava a própria luz** — a lição do lampião do primeiro
+degrau, de 08-27. Uma posição com luz é **espaço aberto**, e não rocha:
+sem isso o `findTheFrontier` recuaria até a tocha toda passagem, e a mina
+nunca mais passaria dali. A pergunta é feita ao jogo e não a uma lista de
+nomes — *acende e não fecha a passagem* —, então magma e pedra luminosa
+são bloco sólido e continuam sendo pedra a cavar.
+
 #### Limpeza do caminho
 
 `MinerWork.approachTo` tinha **dois javadocs em sequência**, e o
@@ -111,8 +140,8 @@ ninguém**.
 
 | | |
 |---|---|
-| **Fase vermelha conferida** | nos dois. Sem `laidOne`, a parede sobe e o teste de jogo cai; sem a reserva, os dois testes de mina caem na bateria inteira |
-| **Verificado rodando** | `gradlew build` → **543 unitários, 0 falhas**; `runGametest` → **205 de 205** |
+| **Fase vermelha conferida** | nos três, em rodadas separadas. Sem `laidOne`, a parede sobe e o teste de jogo cai; sem a reserva, os dois testes de mina caem; sem o `isLight` caem os dois da tocha, e sem a chamada cai o da galeria acesa |
+| **Verificado rodando** | `gradlew build` → **549 unitários, 0 falhas**; `runGametest` → **208 de 208** |
 | **O que este ciclo não provou** | nada disso foi visto em jogo. São dois relatórios honestos e uma escada com dono — o mineiro continua sem ter sido visto cavando |
 
 ### 2026-08-28 — o E33 fechou na bateria: faltava a arena ser uma mina
@@ -1335,7 +1364,7 @@ nível a que pertencem, e não como plano à parte.
 |---|---|---|
 | 🟠 | **Inventário cheio dispara retorno.** Hoje o mineiro deposita e segue; não há teto nem volta por lotação | É onde mora o **E3** — sobra de colheita é perda de item |
 | ✅ | ~~**Um mineiro por mina.**~~ **Feito em 08-28** — a mina passou a ter dono, no molde do `TreeClaims`. Quem não é o dono sai sem alvo e herda a escada quando o dono largar o trabalho; a reserva não vaza porque é conferida a cada ciclo contra os trabalhos abertos. Oito unitários e dois de jogo, fase vermelha conferida | Sessão de 08-26, 23:23:08 |
-| 🟡 | **Iluminação além da boca.** Só a boca ganha lanterna, e nem sempre: saiu `lantern at nowhere it fits`. Galeria escura a 19 blocos é mob nascendo dentro da mina | Sessão de 08-26, 23:20:18 |
+| ✅ | ~~**Iluminação além da boca.**~~ **Feita em 08-28** — uma tocha de parede por passagem, no alto do que já foi cavado, de oito em oito posições da ordem. A luz fica um espaçamento **atrás** do cursor, que é onde ela precisa estar: o mineiro acabou de sair de lá, e é por lá que ele volta. Seis unitários e três de jogo | Sessão de 08-26, 23:20:18 |
 | 🟢 | **Estoque-alvo além da conta da obra.** Hoje a colônia só quer o que a obra pede. Um piso mínimo de ferro e carvão é ideia legítima — e é **Nível 5**, o motor da ADR-009, não agora | nenhum; é desenho |
 
 **O que do plano foi deliberadamente recusado**, para não voltar como
