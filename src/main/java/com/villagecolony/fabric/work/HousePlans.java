@@ -211,7 +211,7 @@ public final class HousePlans {
      * acharia. Ela saiu, e ficou o caminho único: obra gravada aponta
      * para um arquivo do jogo, e é dele que a planta volta.
      */
-    static Optional<Blueprint> blueprintOf(
+    public static Optional<Blueprint> blueprintOf(
             ServerWorld world, ResourceId id, ColonyPos origin) {
 
         // Planta lida de arquivo: ela volta como o arquivo a gravou, e

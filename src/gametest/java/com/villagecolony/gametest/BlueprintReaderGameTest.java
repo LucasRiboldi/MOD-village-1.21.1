@@ -2,6 +2,7 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
@@ -12,6 +13,7 @@ import net.minecraft.block.DoorBlock;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -97,6 +99,64 @@ public class BlueprintReaderGameTest implements FabricGameTest {
                     "andaime do gerador entrou no projeto: " + block.block()
                             + " em " + block.offset());
         }
+
+        context.complete();
+    }
+
+    /**
+     * O marcador do gerador vira o bloco que ele promete — 2026-08-29.
+     *
+     * <p><b>O buraco no meio do chão, visto em jogo.</b> A frase do
+     * autor foi <i>"falta um bloco central no chão"</i>, e ela é exata:
+     * a casa de planície tem um piso de nove tábuas, e a <b>do meio</b>
+     * é um bloco de encaixe no arquivo do Vanilla.
+     *
+     * <pre>
+     * camada y=0        o piso, visto de cima
+     *
+     *   cobblestone  cobblestone  cobblestone
+     *   cobblestone  &lt;JIGSAW&gt;     cobblestone      &lt;- o buraco
+     *   cobblestone  cobblestone  cobblestone
+     * </pre>
+     *
+     * <p>O leitor tratava encaixe como <b>andaime do gerador</b> e o
+     * descartava junto com o ar. Mas encaixe não é andaime: ele carrega
+     * no próprio arquivo o bloco em que deve se transformar — o
+     * {@code final_state} —, e é isso que o Vanilla põe ali quando gera
+     * a vila. Do encaixe do meio do piso sai {@code oak_planks}; do que
+     * fica na porta, o degrau de entrada.
+     *
+     * <p>É a ADR-001 de novo: a resposta está no arquivo do jogo, e o
+     * mod só precisava lê-la em vez de inventar que não havia nada ali.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "blueprint_reader")
+    public void theGeneratorsMarkerBecomesTheBlockItPromises(TestContext context) {
+        Map<ColonyPos, ResourceId> planned = new HashMap<>();
+
+        for (BlueprintBlock block : read(context).blocks()) {
+            planned.put(block.offset(), block.block());
+        }
+
+        ColonyPos middleOfTheFloor = new ColonyPos(3, 0, 3);
+
+        context.assertTrue(
+                planned.containsKey(middleOfTheFloor),
+                "o piso da casa tem um buraco no meio, em " + middleOfTheFloor);
+
+        context.assertTrue(
+                planned.get(middleOfTheFloor).equals(ResourceId.vanilla("oak_planks")),
+                "o meio do piso saiu como " + planned.get(middleOfTheFloor)
+                        + ", e o arquivo promete oak_planks");
+
+        ColonyPos doorstep = new ColonyPos(0, 0, 3);
+
+        context.assertTrue(
+                planned.containsKey(doorstep),
+                "a casa ficou sem o degrau da entrada, em " + doorstep);
+
+        context.assertTrue(
+                planned.get(doorstep).equals(ResourceId.vanilla("oak_stairs")),
+                "o degrau da entrada saiu como " + planned.get(doorstep));
 
         context.complete();
     }

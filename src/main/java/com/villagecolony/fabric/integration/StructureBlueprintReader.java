@@ -107,6 +107,26 @@ public final class StructureBlueprintReader {
      */
     private static final String PROPERTIES_KEY = "Properties";
 
+    /**
+     * A chave dos dados de bloco de uma entrada de {@code blocks}.
+     *
+     * <p>É por posição, e não por entrada da paleta: dois encaixes com o
+     * mesmo estado podem prometer blocos diferentes, e prometem — na
+     * casa de planície um vira tábua e o outro vira degrau.
+     */
+    private static final String ENTRY_NBT_KEY = "nbt";
+
+    /**
+     * O bloco em que um encaixe se transforma quando a vila é gerada.
+     *
+     * <p>Mesma situação do {@link #BLOCK_NAME_KEY}: é o formato que o
+     * jogo grava, e ele não o expõe como constante.
+     */
+    private static final String FINAL_STATE_KEY = "final_state";
+
+    /** Onde começa o estado dentro de um {@code final_state}. */
+    private static final char STATE_OPENS = '[';
+
     private StructureBlueprintReader() {
     }
 
@@ -279,7 +299,20 @@ public final class StructureBlueprintReader {
 
             ResourceId name = names.get(index);
 
-            if (isScaffolding(name)) {
+            if (isJigsaw(name)) {
+                // <b>Encaixe não é andaime</b> — 2026-08-29. Ele carrega
+                // no próprio arquivo o bloco em que vira, e descartá-lo
+                // abria buraco: o piso da casa de planície tem nove
+                // tábuas, e a do meio é um encaixe. O autor viu em jogo,
+                // e a frase dele foi "falta um bloco central no chão".
+                Optional<ResourceId> promised = finalStateOf(entry);
+
+                if (promised.isEmpty()) {
+                    continue;
+                }
+
+                name = promised.get();
+            } else if (isScaffolding(name)) {
                 continue;
             }
 
@@ -328,7 +361,47 @@ public final class StructureBlueprintReader {
     private static boolean isScaffolding(ResourceId name) {
         return name.equals(MinecraftTypeAdapter.toResourceId(Blocks.AIR))
                 || name.equals(MinecraftTypeAdapter.toResourceId(Blocks.CAVE_AIR))
-                || name.equals(MinecraftTypeAdapter.toResourceId(Blocks.STRUCTURE_BLOCK))
-                || name.equals(MinecraftTypeAdapter.toResourceId(Blocks.JIGSAW));
+                || name.equals(MinecraftTypeAdapter.toResourceId(Blocks.STRUCTURE_BLOCK));
+    }
+
+    /**
+     * Se este é um bloco de encaixe do gerador de vilas.
+     *
+     * <p><b>Saiu do {@link #isScaffolding} em 2026-08-29</b>, e a
+     * diferença é de natureza. Bloco de estrutura é andaime de verdade:
+     * ele não vira nada, e o Vanilla o apaga. Encaixe <b>promete</b> um
+     * bloco — o {@code final_state} —, e é esse bloco que a vila gerada
+     * tem no lugar dele.
+     */
+    private static boolean isJigsaw(ResourceId name) {
+        return name.equals(MinecraftTypeAdapter.toResourceId(Blocks.JIGSAW));
+    }
+
+    /**
+     * O bloco que este encaixe promete virar.
+     *
+     * <p>O {@code final_state} vem como texto de estado completo —
+     * {@code minecraft:oak_stairs[facing=east,half=bottom,...]} —, e o
+     * que entra no projeto é só o nome: o estado é o que a ADR-005
+     * descarta, e a ADR-008 é quem vai devolvê-lo, para este bloco e
+     * para todos os outros ao mesmo tempo.
+     *
+     * @return vazio quando o encaixe não promete nada, ou promete ar —
+     *     os dois casos são "aqui não vai bloco", que é o que o leitor
+     *     já fazia com o encaixe inteiro
+     */
+    private static Optional<ResourceId> finalStateOf(NbtCompound entry) {
+        String promised = entry.getCompound(ENTRY_NBT_KEY).getString(FINAL_STATE_KEY);
+
+        if (promised.isEmpty()) {
+            return Optional.empty();
+        }
+
+        int state = promised.indexOf(STATE_OPENS);
+
+        ResourceId name =
+                ResourceId.parse(state < 0 ? promised : promised.substring(0, state));
+
+        return isScaffolding(name) || isJigsaw(name) ? Optional.empty() : Optional.of(name);
     }
 }

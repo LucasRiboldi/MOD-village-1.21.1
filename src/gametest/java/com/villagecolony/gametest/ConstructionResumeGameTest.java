@@ -13,6 +13,7 @@ import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.work.ConstructionPlanner;
+import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.WaitingWork;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Block;
@@ -62,11 +63,22 @@ public class ConstructionResumeGameTest implements FabricGameTest {
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "resume_project")
     public void aSavedProjectComesBackFromTheWorld(TestContext context) {
-        Blueprint house = StructureBlueprintReader
-                .read(context.getWorld(), StructureBlueprintReader.PLAINS_SMALL_HOUSE)
-                .orElseThrow(() -> new AssertionError("o jogo não devolveu a casa"));
-
         ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ORIGIN));
+
+        // <b>A planta como a retomada a vê</b>, e não como o arquivo a
+        // gravou — 2026-08-29. A obra que volta do save é virada para a
+        // rua antes de medir o mundo, e ler o arquivo cru dá offsets de
+        // outra orientação.
+        //
+        // O teste vinha passando por acidente: enquanto a caixa da casa
+        // era quadrada, o primeiro bloco da ordem caía sobre si mesmo ao
+        // girar, e era do mesmo material. O encaixe do degrau de entrada
+        // alargou a caixa num eixo só, o giro deixou de ser inócuo, e o
+        // acidente apareceu — é o que o javadoc de blueprintOf já
+        // avisava que aconteceria.
+        Blueprint house = HousePlans.blueprintOf(
+                        context.getWorld(), StructureBlueprintReader.PLAINS_SMALL_HOUSE, origin)
+                .orElseThrow(() -> new AssertionError("o jogo não devolveu a casa"));
 
         Colony colony = Colony.create(UUID.randomUUID(), origin);
 
@@ -88,6 +100,7 @@ public class ConstructionResumeGameTest implements FabricGameTest {
         context.getWorld().setBlockState(
                 MinecraftTypeAdapter.toBlockPos(where), material.getDefaultState());
 
+
         VillageColonyMod.CONSTRUCTIONS.registerPending(new ConstructionService.Pending(
                 UUID.randomUUID(),
                 colony.id(),
@@ -99,6 +112,7 @@ public class ConstructionResumeGameTest implements FabricGameTest {
 
         Optional<ConstructionProject> resumed =
                 VillageColonyMod.CONSTRUCTIONS.openOf(colony.id());
+
 
         try {
             context.assertTrue(resumed.isPresent(), "a obra do save não renasceu");
