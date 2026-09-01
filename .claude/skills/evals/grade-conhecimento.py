@@ -35,6 +35,23 @@ CHECKS = {
   ("SEM over-engineering",   lambda t: not has(t, r"itemfactory|itemmanager|itemservice|abstractitem\w*factory")),
   ("item group ou receita",  lambda t: has(t, r"itemgroup|item group|grupo.{0,20}criativ|recipe|receita")),
  ],
+ # eval-4/eval-5: nomes de método/classe abaixo foram confirmados por javap
+ # contra o jar merged 1.21.1+build.3 em 2026-09-01 (ver AVALIACAO.md). Os
+ # dois checks "NAO cita ... inventado" existem porque o Haiku 4.5 inventou
+ # exatamente esses nomes nessa data — sem generalizar demais, mas vale
+ # manter como sentinela de regressão conhecida, não como lista exaustiva.
+ "eval-4-mixin-vs-escada": [
+  ("cita metodo vanilla real (nao inventado)", lambda t: has(t, r"checkdespawn|canimmediatelydespawn|cannotdespawn|ispersistent\(\)|setpersistent\(\)")),
+  ("NAO cita metodo inventado conhecido (Haiku, 2026-09-01)", lambda t: not has(t, r"\bcandespawn\s*\(\)|\bshoulddespawn\s*\(\)")),
+  ("acha a solucao sem Mixin (recomenda setPersistent)", lambda t: has(t, r"setpersistent")),
+  ("aponta risco de colisao de Mixin com outro mod", lambda t: has(t, r"(colis|conflit|concorr).{0,150}mixin", r"mixin.{0,150}(colis|conflit|outro mod)")),
+ ],
+ "eval-5-perf-antes-de-otimizar": [
+  ("recomenda profiler de sampling (spark)", lambda t: has(t, r"\bspark\b")),
+  ("exige teste causal antes de mudar frequencia", lambda t: has(t, r"(a/b|stub|no-?op|desativ|comenta|stubad).{0,150}(sensor|frequ)", r"(sensor|frequ).{0,150}(a/b|stub|no-?op)")),
+  ("cita metodo POI real (nao inventado)", lambda t: has(t, r"getnearestposition|getinsquare|getincircle|pointofintereststorage")),
+  ("NAO cita metodo POI inventado conhecido (Haiku, 2026-09-01)", lambda t: not has(t, r"findclosestpoiposition|findclosestpoitypes")),
+ ],
 }
 
 results = {}
@@ -65,3 +82,14 @@ if tot_n:
     print("-" * 88)
     print(f"TOTAL  com skill: {tot_w}/{tot_n}   sem skill: {tot_o}/{tot_n}")
     print("<<< = a skill fez diferenca    !!! = a skill PIOROU (regressao)")
+
+# sentinela: pasta de eval sem critérios em CHECKS fica invisível no loop
+# acima (silenciosamente, sem nem aparecer como "(pendente)") — avisa em vez
+# de deixar passar. Aconteceu uma vez (eval-4/eval-5 rodaram sem critério
+# antes desta linha existir).
+if BASE.exists():
+    on_disk = {p.name for p in BASE.iterdir() if p.is_dir() and p.name.startswith("eval-")}
+    sem_criterio = sorted(on_disk - CHECKS.keys())
+    if sem_criterio:
+        print()
+        print(f"AVISO: {len(sem_criterio)} pasta(s) em '{BASE.name}' sem critério em CHECKS — não apareceram acima: " + ", ".join(sem_criterio))
