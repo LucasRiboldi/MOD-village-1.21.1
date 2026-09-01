@@ -23,8 +23,18 @@ arquivo se confirmando na prática. **Achado novo em `eval-5`, ainda hipótese
 (2 de 3, não regra):** o `with_skill` foi investigar arquivos reais do
 projeto (nomes de classe/método/linha conferidos e corretos) em 2 das 3
 rodadas; nenhuma resposta `without_skill` fez esse tipo de investigação
-específica. Detalhes em `AVALIACAO.md`, seções "Rodada 2026-09-01 (2)" a "(4)"
-— a (4) é a leitura mais completa.
+específica. Detalhes em `AVALIACAO.md`, seções "Rodada 2026-09-01 (2)" a "(4)".
+
+**Depois, `eval-0` a `eval-3` (os 4 casos originais de 2026-08-29) também
+rodaram em Haiku 4.5, n=1 (rodada "(5)").** Resultado diferente do padrão
+acima: pela primeira vez em toda a avaliação, `with_skill` ganhou de forma
+clara e não-ambígua — em `eval-1` e `eval-2` (os dois de
+`minecraft-villager-systems`), o `with_skill` usou API real onde o
+`without_skill` inventou construtor/mecanismo que não existe, e caiu na
+própria armadilha que `eval-2` testa. **Mas é n=1** — a mesma condição que
+já produziu, em `eval-4`, uma leitura que não sobreviveu à repetição. Repetir
+`eval-0..3` a n=3 é agora o item de maior prioridade na lista de pendências
+de `AVALIACAO.md`.
 
 ## As duas rodadas
 

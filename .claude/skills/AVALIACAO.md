@@ -13,13 +13,45 @@ errada.
 | 2 | 2026-09-01 | eval-4/eval-5 (novos) | `minecraft-code-research` | Opus 5 | 1 |
 | 3 | 2026-09-01 | eval-4 repetido | `minecraft-code-research` | Haiku 4.5 | 3 |
 | 4 | 2026-09-01 | eval-5 repetido | `minecraft-code-research` | Haiku 4.5 | 3 |
+| 5 | 2026-09-01 | eval-0..3 (originais) | `minecraft-villager-systems`, `fabric-development` | Haiku 4.5 | 1 |
+
+## Qualidade e usabilidade das três skills (síntese, atualizada após a rodada 5)
+
+Nota de método: "usabilidade" aqui não é opinião sobre organização do
+arquivo — é o que os testes acima realmente sustentam. Estrutura boa (todas
+as três têm) não é a mesma coisa que comportamento melhor medido (nenhuma das
+três provou isso ainda de forma robusta).
+
+| Skill | Estrutura | Evidência empírica | Usabilidade |
+|---|---|---|---|
+| `minecraft-code-research` | 355 linhas de `SKILL.md` + checklists/exemplos/referências/templates focados em investigação | Opus 5: única a mostrar diferença real — 2 erros factuais achados só no `without_skill` em `eval-5` (nomes de classe/método inventados que o `with_skill` não citou). Haiku 4.5 (n=3, `eval-4`+`eval-5`): não impede fabricação de API (6/6 respostas com pelo menos uma alegação inventada, com ou sem skill) — mas em 2 de 3 rodadas de `eval-5` o `with_skill` foi investigar arquivos reais do projeto (nomes/linhas conferidos certos), o que nenhum `without_skill` fez | 🟡 **Média-alta, parcialmente comprovada** — é a única com sinal real de valor (camada factual em Opus 5, tendência de investigar código real mesmo em Haiku), mas não resolve o problema que mais importa em modelo barato (fabricação de API) |
+| `minecraft-villager-systems` | 305 linhas de `SKILL.md`, a mais extensa em checklists/templates/workflows específicos de domínio (Brain, POI, trading, gossip, profissão) | Opus 5 (`eval-0..2`, n=1): empate comportamental nos três. **Haiku 4.5 (`eval-0..2`, n=1, rodada 5):** `with_skill` claramente melhor em 2 dos 3 — construtor/API corretos onde `without_skill` errou, e `without_skill` caiu na própria armadilha que `eval-2` testa. Ainda n=1, ainda não repetido | 🟡→🟢 **Média, subindo — primeiro sinal claro de vantagem, ainda não confirmado por repetição** — é a estrutura mais rica das três, e agora tem o único resultado com vantagem visível e não-ambígua de toda a avaliação (`eval-1`/`eval-2` em Haiku). Precisa de n=3 antes de virar nota definitiva — `eval-4` já mostrou que sinal de n=1 pode não sobreviver |
+| `fabric-development` | 358 linhas de `SKILL.md`, a maior em workflows/templates (o mais genérico — cobre todo o ciclo de implementação, não um subsistema) | Testada em `eval-3` (item simples: Opus 5 empate; Haiku, rodada 5, os dois erram de formas diferentes — `with_skill` inventa `ToolMaterials.COPPER`, `without_skill` repete o anti-padrão redundante já flagrado em 2026-08-29) e em `rodada-2-processo` (empate 9/9, mas **+14% de tokens**, só Opus 5) | 🟠 **Média-baixa, não comprovada + custo documentado** — é a única das três sem nenhum sinal de vantagem em nenhum teste, em nenhum modelo, até agora — e é a que mais dispara junto com as outras duas (descrição mais ampla) |
+
+**Achado que atravessa as três:** nenhuma provou, em Opus 5, gerar uma
+resposta melhor do que o modelo já daria sozinho — o valor medido ali é
+outro: referência verificada, documentação do projeto, convenção explícita.
+Em Haiku a leitura mudou: `minecraft-code-research` mostrou uma tendência
+(2/3) de investigar mais o código real do projeto sem reduzir fabricação de
+API; `minecraft-villager-systems` mostrou, pela primeira vez em toda a
+avaliação, vantagem clara e não-ambígua — mas em n=1, exatamente a condição
+que já produziu uma leitura que não sobreviveu à repetição (`eval-4`).
+`fabric-development` segue sem nenhum sinal, em nenhum modelo.
+
+**Por que isso é difícil de separar limpo:** as três têm gatilho por
+descrição, não por invocação manual, e `fabric-development` e
+`minecraft-code-research` dizem explicitamente no próprio `SKILL.md` que
+disparam junto em pedido de implementação. Nenhum teste até agora controlou
+qual skill efetivamente disparou em cada resposta (ver `aviso-metodologico`
+em `evals/prompts.json`) — o placar por skill acima é o melhor que dá pra
+afirmar com o que foi medido, não uma separação limpa e garantida.
 
 ## O que falta — dificuldade e importância
 
 | Item | Dificuldade | Importância | Por quê |
 |---|---|---|---|
+| **Repetir eval-0..3 em Haiku a n=3** | Baixa/Média — mesma mecânica já rodada 3x pra eval-4/eval-5, só volume maior (8 rodadas a mais) | **Alta, subiu de prioridade** — é a única vantagem clara de skill medida em toda a avaliação, e está em n=1, a mesma condição que já deu leitura errada uma vez (`eval-4`) | Sem isso, "`minecraft-villager-systems` funciona melhor em Haiku" não pode ser afirmado — só suspeitado |
 | Repetir eval-4/eval-5 em Opus 5 (hoje n=1) | Baixa — mesma mecânica já rodada, só repetir | Média | Confirma se o empate 12/12-estilo se sustenta com variância, como já foi feito pro Haiku |
-| Testar os 4 casos originais (eval-0..3) em Haiku | Baixa/Média — mecânica simples, mas 4 casos × repetição é volume grande (até ~24 rodadas pra n=3 completo) | **Alta** — é a base do resultado mais citado ("empate 12/12") e nunca foi testada em modelo menor nem repetida | — |
 | Repetir `rodada-2-processo` (Opus 5 ou Haiku) | **Alta** — precisa clone git isolado (cuidado com paths longos no Windows, já bateu nisso uma vez) + rodar `gradlew build` de verdade, muito mais lento que a rodada de conhecimento | **Alta** — é a única rodada que mede disciplina de processo real (build, regressão, honestidade), não só conhecimento de API | — |
 | Confirmar a hipótese "with_skill investiga mais o código real do projeto" (achada em eval-5, 2 de 3) | Média — precisa repetir em `eval-4` e nos casos originais pra ver se é geral ou específico do prompt | Média-alta — se confirmar, é o achado mais forte e citável de toda a avaliação | — |
 | Gatilho de migração de versão do Minecraft | N/A — depende de evento externo (mudar `minecraft_version` no `gradle.properties`) | Baixa agora, alta quando acontecer | Já documentado o que fazer (`evals/README.md`); não há nada a rodar hoje |
@@ -370,3 +402,63 @@ infinita, não sentinela útil. Registro aqui em vez de no script.
 - Com isso, `eval-4` e `eval-5` estão os dois em n=3. Os 4 casos originais
   (2026-08-29) e a `rodada-2-processo` continuam n=1 e nunca rodaram em
   Haiku.
+
+---
+
+# Rodada 2026-09-01 (5) — os 4 casos originais (eval-0..3), em Haiku 4.5 (n=1)
+
+Fechando a maior lacuna que sobrava: `minecraft-villager-systems` e
+`fabric-development` nunca tinham sido testadas fora do Opus 5. Rodei
+`eval-0` a `eval-3` em Haiku, mesmos prompts de 2026-08-29, n=1 por
+condição (ainda não repetido — ver Limites).
+
+## Veredito — ao contrário de eval-4/eval-5, aqui a skill fez diferença visível
+
+| Caso | Skill | Resultado |
+|---|---|---|
+| `eval-0` (WALK_TARGET) | `minecraft-villager-systems` | Empate raso no diagnóstico central; os dois erram uma API (`with_skill` inventa `Brain.setActivity()`, `without_skill` inventa `Brain.getTaskList()` — nenhum dos dois existe, confirmado por `javap`). Script: 3/4 × 4/4. |
+| `eval-1` (profissão/trades) | `minecraft-villager-systems` | **`with_skill` claramente melhor.** Construtor de `VillagerProfession` com os 6 argumentos certos (confirmado: `TradeOffers.PROFESSION_TO_LEVELED_TRADE` existe de verdade), dois predicados corretos, checagem de ciclo de lucro do trade, cobertura completa de recursos. `without_skill` usou um construtor de 3 argumentos (não existe essa sobrecarga), `new Identifier(...)` (forma antiga, não é mais construtor público em 1.21.1), import errado de `PointOfInterestTypes`, e **caiu exatamente na armadilha de só um `BlockState`** que o `eval-2` existe pra testar. Script: 5/5 × 2/5. |
+| `eval-2` (POI block states) | `minecraft-villager-systems` | **`with_skill` claramente melhor.** Deu o fix certo e concreto (`getStateManager().getStates()`). `without_skill` ficou vago, chegou a inventar um mecanismo de registro de POI via datapack JSON que não existe em Vanilla (POI é registrado em código, não datapack). Script: 3/3 × 2/3. |
+| `eval-3` (item simples) | `fabric-development` | Os dois erram, de formas diferentes. `with_skill` inventa `ToolMaterials.COPPER` (confirmado por `javap`: só existem `WOOD/STONE/IRON/DIAMOND/GOLD/NETHERITE`) — um erro que não compila. `without_skill` reproduz o **mesmo anti-padrão que o teste de 2026-08-29 já tinha flagrado** (`.maxCount(1)` redundante com `.maxDamage(180)`) e também usa `new Identifier(...)` antigo. Script marcou `with_skill` como regressão em "registro correto", mas isso é um artefato do critério: `with_skill` usou `getMaxCount()` sobrescrito em vez de `.maxCount(1)` no Settings — estilo diferente, não necessariamente errado; o erro real dele é outro (`ToolMaterials.COPPER`). |
+
+## O que isso muda na leitura de `minecraft-villager-systems`
+
+Essa é a primeira vez, em toda a avaliação, que `with_skill` ganha de forma
+clara e não-ambígua — e ganha duas vezes seguidas, nos dois casos que
+testam justamente o domínio que essa skill mais documenta (profissão, POI,
+trades). Isso muda a nota de usabilidade dela — mas com a ressalva de
+sempre: **n=1**. O padrão de `eval-4` (n=1 sugerindo algo que não sobreviveu
+a n=3) é o aviso vivo de que isso precisa ser repetido antes de virar
+conclusão.
+
+## Padrão que se repete de novo
+
+Em **6 de 8** respostas (todas menos as duas de `eval-2`, que não citaram
+API específica o bastante pra checar) há pelo menos uma alegação de
+API/construtor inventada, confirmada por `javap` — o mesmo padrão de
+`eval-4`/`eval-5`. A diferença aqui não é "menos fabricação com skill" — é
+"a fabricação, quando acontece, não impede a resposta de acertar a causa e
+a arquitetura certa" em `eval-1`/`eval-2` no `with_skill`.
+
+## Como foi medido
+
+Mesmo método das rodadas anteriores: 8 agentes em paralelo (4 casos ×
+2 condições), leitura manual completa, verificação por `javap` contra o
+mesmo jar merged 1.21.1+build.3 dos claims mais centrais e checáveis de
+cada resposta (não every single linha — orçamento de tempo já era alto
+nesta sessão).
+
+## Limites
+
+- **n=1.** Depois do que `eval-4` ensinou, esse é o aviso mais importante
+  desta seção: a vantagem clara de `with_skill` em `eval-1`/`eval-2` pode
+  não sobreviver a repetição, exatamente como "skill dá falsa sensação de
+  rigor" não sobreviveu. Repetir a n=3 é o próximo passo natural antes de
+  atualizar a nota de usabilidade de `minecraft-villager-systems` de forma
+  definitiva.
+- `eval-3` (`fabric-development`) continua sem nenhuma vantagem clara de
+  skill visível, em nenhum modelo testado até agora — Opus 5 (empate) ou
+  Haiku (os dois erram, de formas diferentes).
+- `rodada-2-processo` continua nunca testada em Haiku, e é o único teste
+  que mede disciplina de build real — não conhecimento de API, que é tudo
+  que as rodadas de conhecimento (0 a 5) medem.
