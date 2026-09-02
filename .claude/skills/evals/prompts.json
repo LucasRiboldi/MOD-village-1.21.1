@@ -12,7 +12,7 @@
     ]
   },
   "rodada-2-processo": {
-    "objetivo": "medir disciplina (build, regressão, honestidade no relato). RESULTADO: empate 9/9.",
+    "objetivo": "medir disciplina (build, regressão, honestidade no relato). RESULTADO (Opus 5, 2026-08-29, n=1): empate 9/9. RESULTADO (Haiku 4.5, 2026-09-02, n=1): sem empate — without_skill tem bug funcional real (conta árvore por bloco de tora, não por árvore inteira; super-conta) e afirma falsamente que a máquina não permite rodar runGametest. with_skill tem a semântica certa e rodou os 218 gametests de verdade (confirmado em build/gametest-report.xml, não por auto-relato), com o custo de um campo morto inofensivo (Map não usado). n=1 — repetir a n=3 é o item de maior prioridade da lista de pendências. Ver AVALIACAO.md, seção 'Rodada 2026-09-02 (2)'.",
     "skills-esperadas": ["fabric-development", "minecraft-villager-systems"],
     "nota": "a tarefa é implementação em cima de um sistema (lenhador) que o próprio mod já possui — não exige investigar Vanilla do zero, então minecraft-code-research não é o alvo principal deste caso. Se quem rodar de novo notar essa skill disparando aqui também, registrar no relatório (ver aviso-metodologico da rodada 1) em vez de silenciar.",
     "armadilha": "static Map<UUID,Integer> resolve o pedido, compila e perde tudo no restart. Nenhum dos dois caiu.",

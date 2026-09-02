@@ -44,9 +44,23 @@ interno do mod), não ausência de fabricação. `eval-0` e `eval-3`
 (`fabric-development`) seguem sem vantagem clara nas 3 rodadas. Um padrão
 novo cross-caso: `new Identifier(String,String)` (construtor privado em
 1.21.1) apareceu 4 vezes em 16 respostas, em `with_skill` e `without_skill`.
-Detalhes em `AVALIACAO.md`, seção "Rodada 2026-09-02". Com isso, `repetir
-rodada-2-processo em Haiku` passa a ser o item de maior prioridade da lista
-de pendências.
+Detalhes em `AVALIACAO.md`, seção "Rodada 2026-09-02".
+
+**`rodada-2-processo` rodou em Haiku pela primeira vez em 2026-09-02 (2), e
+achou o resultado mais forte de toda a avaliação até agora: um bug
+funcional real.** `without_skill` incrementa o contador de árvores por
+**bloco de tora**, não por árvore inteira (super-conta sistematicamente), e
+o relatório afirma falsamente que a máquina não permite rodar
+`runGametest` — falso, `with_skill` rodou os 218 testes de verdade no mesmo
+ciclo, mesma máquina (confirmado lendo `build/gametest-report.xml` e o log,
+não por auto-relato). `with_skill` tem a semântica certa (incrementa uma
+vez por árvore completa) com o custo de um campo morto inofensivo. Ainda
+n=1 — repetir a n=3 é agora o item de maior prioridade. Detalhes em
+`AVALIACAO.md`, seção "Rodada 2026-09-02 (2)", que também documenta dois
+bugs achados e corrigidos no `grade-processo.py` (`has()` sem
+`re.MULTILINE` fazia o detector da armadilha `static Map` nunca poder
+falhar; consertar isso sozinho, sem tirar o `re.DOTALL` que já estava lá,
+criava falsos positivos casando conteúdo de arquivos diferentes).
 
 ## As duas rodadas
 
@@ -159,6 +173,24 @@ favorecer a hipótese de quem escreveu os critérios.
    `CHECKS` — ela só desaparecia do relatório, silenciosamente (foi assim que
    o problema acima passou despercebido até agora). O script agora compara as
    pastas em disco contra `CHECKS.keys()` e avisa no fim se sobrar alguma.
+
+**2026-09-02 (2) — `grade-processo.py` tinha um bug pior: um check que
+nunca podia falhar.** `has()` usava `re.search(x, t, re.I|re.S)` sem
+`re.MULTILINE`. Todo critério com `^\+` (inclusive o detector da
+armadilha `static Map`, o motivo de a armadilha existir) esperava `^`
+ancorando em cada linha do diff — sem `re.M`, `^` só ancora no início do
+texto inteiro (que começa com `diff --git...`), nunca numa linha `+`. **O
+detector da armadilha nunca podia disparar, mesmo que a armadilha fosse
+pisada** — sempre PASS, desde que o script existe, em toda rodada de
+processo já feita (2026-08-29 incluída). Adicionar só `re.M` não bastava:
+com `re.S` (DOTALL) já presente, `.` cruza linha, e o padrão passou a
+"casar" o primeiro `+` do diff inteiro com conteúdo de um arquivo
+completamente diferente centenas de linhas depois — um falso positivo
+pior que o bug original. Corrigido tirando `re.S` (nenhum dos 9 critérios
+deste script precisa de `.` cruzando linha). **Limitação de design que
+ficou, sem solução ainda:** o detector da armadilha só olha `git diff`
+de arquivos rastreados — um arquivo inteiramente novo nunca passa por lá,
+então a armadilha, se morar só num arquivo novo, continua invisível.
 
 ## Como não enganar a si mesmo
 

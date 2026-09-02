@@ -19,7 +19,7 @@ def report(cfg):
     p = S/"iteration-2"/cfg/"RELATORIO.md"
     return p.read_text(errors="replace") if p.exists() else ""
 
-def has(t,*p): return any(re.search(x,t,re.I|re.S) for x in p)
+def has(t,*p): return any(re.search(x,t,re.I|re.M) for x in p)
 
 CHECKS = [
  ("CODIGO: nao usa static Map p/ estado persistido",

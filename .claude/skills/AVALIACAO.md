@@ -1,4 +1,4 @@
-# Avaliação das skills — 2026-08-29 (estendida em 2026-09-01, 2026-09-02)
+# Avaliação das skills — 2026-08-29 (estendida em 2026-09-01 e 2026-09-02)
 
 Registro honesto do que foi testado, o que passou e o que **não** se sustentou.
 Está aqui para que uma sessão futura não refaça o trabalho nem repita a alegação
@@ -15,6 +15,7 @@ errada.
 | 4 | 2026-09-01 | eval-5 repetido | `minecraft-code-research` | Haiku 4.5 | 3 |
 | 5 | 2026-09-01 | eval-0..3 (originais) | `minecraft-villager-systems`, `fabric-development` | Haiku 4.5 | 1 |
 | 6 | 2026-09-02 | eval-0..3 repetido (r2, r3 — completa n=3) | `minecraft-villager-systems`, `fabric-development` | Haiku 4.5 | 3 |
+| 7 | 2026-09-02 | `rodada-2-processo` (contador de árvores), primeira vez em Haiku | `fabric-development`, `minecraft-villager-systems` | Haiku 4.5 | 1 |
 
 ## Qualidade e usabilidade das três skills (síntese, atualizada após a rodada 6)
 
@@ -60,10 +61,12 @@ afirmar com o que foi medido, não uma separação limpa e garantida.
 | Item | Dificuldade | Importância | Por quê |
 |---|---|---|---|
 | ~~Repetir eval-0..3 em Haiku a n=3~~ | — | — | ✅ **Feito em 2026-09-02** (rodada 6, r2+r3). Confirmado: `eval-1`/`eval-2` sustentam vantagem de `with_skill` em 3 de 3; `eval-0`/`eval-3` seguem sem vantagem clara. Ver seção "Rodada 2026-09-02" |
-| **Repetir `rodada-2-processo` (Opus 5 ou Haiku)** | **Alta** — precisa clone git isolado (cuidado com paths longos no Windows, já bateu nisso uma vez) + rodar `gradlew build` de verdade, muito mais lento que a rodada de conhecimento | **Alta, agora a de maior prioridade** — é a única rodada que mede disciplina de processo real (build, regressão, honestidade), não só conhecimento de API, e nunca rodou em Haiku | — |
+| ~~Repetir `rodada-2-processo` em Haiku~~ | — | — | ✅ **Feito em 2026-09-02 (2)**, n=1. Achado mais forte de toda a avaliação até agora: `without_skill` tem um bug funcional real (conta árvore por tora, não por árvore inteira) que `with_skill` não tem. Ver seção "Rodada 2026-09-02 (2)" — **precisa repetir a n=3** antes de virar conclusão definitiva |
+| **Repetir `rodada-2-processo` em Haiku a n=3** | **Alta** — mesma mecânica já rodada (clone isolado + build real), só volume maior; cada rodada leva ~20-30min por já envolver `gradlew build` duas vezes | **Alta, agora a de maior prioridade** — é a primeira vantagem *funcional* (não só de diagnóstico/API) medida em toda a avaliação, e está em n=1 | Sem repetição, "`with_skill` evita um bug real de contagem" não pode virar conclusão — mesmo aviso de sempre desde `eval-4` |
 | Repetir eval-4/eval-5 em Opus 5 (hoje n=1) | Baixa — mesma mecânica já rodada, só repetir | Média | Confirma se o empate 12/12-estilo se sustenta com variância, como já foi feito pro Haiku |
 | Confirmar a hipótese "with_skill investiga mais o código real do projeto" (achada em eval-5, 2 de 3) | Média — precisa repetir em `eval-4` e nos casos originais pra ver se é geral ou específico do prompt | Média-alta — se confirmar, é o achado mais forte e citável de toda a avaliação | — |
 | Adicionar sentinela em `grade-conhecimento.py` para `new Identifier(String,String)` | Baixa — é um regex simples, mesmo molde dos sentinelas já existentes de eval-4/eval-5 | Média — apareceu 4x em 16 respostas na rodada 6, cross-condição, e nenhum critério automático pega hoje | Achado só na leitura manual; sem sentinela, a próxima rodada perde o sinal se não repetir a leitura à mão |
+| Ampliar `grade-processo.py`: check da armadilha não cobre arquivo novo (untracked) | Baixa — mudar `untracked()` pra também prefixar linhas com `+` antes de concatenar, ou aplicar os checks de CODIGO separadamente sobre conteúdo bruto | Média — achado na rodada 7: o detector de `static Map` só olha linhas `+` de diffs *rastreados*; um arquivo inteiramente novo (caso comum de feature nova) nunca é coberto, mesmo se a armadilha inteira morar lá | Achado por acidente nesta rodada (o campo morto `SESSION_COUNTS` está num arquivo novo) — a próxima vez pode não ter alguém lendo à mão |
 | Gatilho de migração de versão do Minecraft | N/A — depende de evento externo (mudar `minecraft_version` no `gradle.properties`) | Baixa agora, alta quando acontecer | Já documentado o que fazer (`evals/README.md`); não há nada a rodar hoje |
 | Mecanismo de captura de `total_tokens`/`duration_ms` pra subagentes nomeados | Desconhecida — pode ser limitação da plataforma, não do projeto | Média — afeta só a comparação de custo, não invalida os achados de qualidade/factuais já registrados | Sem isso, toda rodada futura mede duração só por relógio de parede |
 | Robustez de `grade-processo.py` para novos casos | Baixa, se/quando existirem novos casos de processo | Baixa hoje — o script já tem os ajustes de 2026-08-29 e a filosofia do projeto é sempre ler à mão mesmo assim | — |
@@ -560,3 +563,140 @@ para o lugar certo antes da checagem; conteúdo intacto, nada regerado.
 - O padrão do `Identifier` privado (4 ocorrências) é novo o bastante para
   não ter critério no `grade-conhecimento.py` ainda — vale considerar
   adicionar um sentinela na próxima passada pelo script.
+
+---
+
+# Rodada 2026-09-02 (2) — `rodada-2-processo` em Haiku, pela primeira vez
+
+Item de maior prioridade que restava: a tarefa de implementação real (o
+contador de árvores por colônia, mesmo pedido de 2026-08-29) nunca tinha
+rodado em Haiku 4.5 — só em Opus 5 (empate 9/9). Dois clones locais
+isolados (`git clone --local`), workspace em `C:\temp\evalproc-r1` (caminho
+curto — o `README.md` já avisa que caminhos aninhados demais quebram o
+clone no Windows). Nenhum agente foi avisado sobre a armadilha
+(`static Map` perde tudo no restart) — ela precisa ser evitada por
+disciplina, não por dica.
+
+## O que rodou de verdade (conferido no disco, não só no relato)
+
+| | `with_skill` | `without_skill` |
+|---|---|---|
+| Build (`./gradlew build`) | ✅ real — `build/test-results` com **565 testes unitários, 0 falhas** | ✅ real — mesmos **565 testes unitários, 0 falhas** |
+| Gametest (`./gradlew runGametest`) | ✅ real — `build/gametest-report.xml` existe, e o log tem a linha exata `All 218 required tests passed :)` | ❌ nunca rodou — não existe `build/gametest*` no clone. O relatório afirma que a máquina não permite ("O build em máquina fraca... não permite executar servidor Minecraft") — **falso**, confirmado pelo `with_skill` rodando no mesmo ciclo, na mesma máquina |
+| Teste novo para a feature | Nenhum dos dois criou | Nenhum dos dois criou |
+
+O corretor automático (`grade-processo.py`) media dois `git clone`, então
+"rodou de verdade" aqui não é auto-relato — é o conteúdo de
+`build/test-results/`, `build/gametest-report.xml` e `build/gametest/logs/latest.log` lido diretamente do disco.
+
+## O achado central: um bug funcional real, não só de API
+
+**`without_skill` incrementa o contador por bloco de tora, não por árvore.**
+Em `TreeFelling.chop()` (chamado uma vez por bloco quebrado — o próprio
+javadoc do método diz *"escreve um bloco por lenhador"*):
+
+```java
+if (logsCollected > 0) {
+    VillageColonyMod.COLONIES.find(job.task.colonyId())
+            .ifPresent(colony -> colony.addTreesHarvested(1));
+}
+```
+
+Uma árvore com 6 blocos de tora conta como **6 árvores**. O pedido do
+usuário foi explicitamente "quantas árvores... já derrubaram" — o número
+reportado no log ficaria sistematicamente errado, e nenhum teste (dos dois
+lados) cobre isso, então o build verde não pega o defeito.
+
+**`with_skill` incrementa em `TreeChoice.startNextTree()`**, no bloco que só
+executa quando `job.plan != null` — ou seja, exatamente quando a árvore
+*inteira* anterior terminou (o log de contexto já dizia "finished the tree
+at ... — N logs and M leaves"). Semântica certa: um incremento por árvore.
+
+## O que também apareceu
+
+- **`with_skill` tem um campo morto.** `TreesHarvestedLog.java` (arquivo
+  novo) declara `private static final Map<UUID, Integer> SESSION_COUNTS`
+  — nunca lido, só limpo em `clearAll()`. Não afeta o comportamento (o
+  relatório real lê `colony.treesHarvested()`, não esse mapa) — é código
+  morto, possivelmente um vestígio de cogitar a forma errada (a própria
+  armadilha) e trocar de ideia sem apagar a declaração.
+- **Nenhum dos dois criou teste novo** para a feature — os 565 testes que
+  passam são todos preexistentes. Contra a cultura do próprio projeto
+  (`TODO.md` é rígido sobre fase vermelha conferida), é uma lacuna
+  compartilhada pelas duas condições.
+- **Os dois relatórios separam claramente o que foi verificado do que não**
+  (ex.: `with_skill` lista explicitamente "NÃO foi executado: teste de jogo
+  completo, persistência real"; `without_skill` tem uma seção dedicada "O
+  Que NÃO Foi Testado"). Nenhum dos dois afirma ter verificado algo que não
+  rodou — a única alegação factualmente errada é a de `without_skill` sobre
+  a *capacidade* do ambiente, não sobre o que ele próprio rodou.
+
+## Dois bugs achados e corrigidos no `grade-processo.py` durante esta rodada
+
+1. **`has()` não tinha `re.MULTILINE`.** Todo check com `^\+` (o detector da
+   armadilha `static Map`, e o check de NBT-com-default) usa `^` esperando
+   ancorar em cada linha do diff — sem `re.M`, `^` só ancora no início do
+   texto inteiro (que começa com `diff --git...`), nunca com uma linha
+   `+`. Consequência: **o detector da armadilha nunca podia falhar,
+   mesmo que a armadilha fosse pisada** — sempre PASS, desde que o script
+   existe. E o check de NBT-com-default nunca podia passar, mesmo com
+   código correto — sempre FALHA. Os dois vieses passaram despercebidos
+   porque, por coincidência, sempre favoreciam a leitura "os dois empatam".
+2. **Adicionar só `re.M` não bastava — `re.S` (DOTALL) já estava lá, e os
+   dois juntos são piores que nenhum.** Com `.` cruzando linha (`re.S`) e
+   `^` ancorando em cada linha (`re.M`), o padrão gencioso `^\+.*Map<`
+   passou a "casar" o primeiro `+` do diff inteiro com um `Map<`
+   **centenas de linhas depois, em outro arquivo** — foi assim que o
+   campo morto `SESSION_COUNTS` (não relacionado ao diff rastreado)
+   quase disparou um falso positivo da armadilha antes de eu isolar a
+   causa. Corrigido removendo `re.S` de `has()` — nenhum dos 9 critérios
+   deste script precisa de `.` cruzando linha.
+3. Placar antes da correção: 6/9 × 6/9 (com os dois vieses se cancelando
+   por acaso). Placar depois: **7/9 × 7/9** — os dois FALHA restantes
+   ("declara o que NÃO verificou", "separa verificado de não-verificado")
+   são falsos negativos confirmados por leitura manual: os dois relatórios
+   fazem exatamente isso, só que com um vocabulário que os regexes não
+   cobrem (mesmo aviso de sempre do `evals/README.md`). Lidos à mão, o
+   placar real de processo é **9/9 × 9/9** — o mesmo empate de 2026-08-29,
+   Opus 5.
+
+## Limitação nova descoberta no design do checker (não é bug de regex)
+
+O detector de `static Map` só enxerga linhas `+` do **diff de arquivos
+rastreados** (`git diff HEAD`). Um arquivo inteiramente **novo** (caso
+comum ao adicionar uma feature) entra pelo caminho `untracked()`, que
+concatena o conteúdo bruto sem marcador `+` — então a armadilha, se
+morasse inteira num arquivo novo, **nunca seria pega**, regex correto ou
+não. É exatamente o arquivo onde o campo morto `SESSION_COUNTS` apareceu
+nesta rodada. Não corrigido ainda — ver "O que falta".
+
+## Veredito
+
+**A primeira vantagem *funcional* de toda a avaliação**, distinta de todas
+as anteriores (que eram sobre citar a API certa ou diagnosticar a causa
+certa): `without_skill` entrega um contador que super-conta sistematicamente
+(por tora, não por árvore) e afirma uma limitação de ambiente que é falsa;
+`with_skill` entrega a semântica certa e é honesto sobre o que não testou,
+com o custo de um campo morto inofensivo. É n=1 — o próximo passo natural,
+como sempre, é repetir.
+
+## Como foi medido
+
+Clones isolados (`git clone --local`) em `C:\temp\evalproc-r1\run-with` e
+`run-without`, dois agentes Haiku 4.5 em paralelo, sem dica sobre a
+armadilha. Verificação por leitura direta do disco (diffs via `git diff
+HEAD`, artefatos de build/teste em `build/`), não por auto-relato dos
+agentes — inclusive a alegação de "218 testes passaram" e a de "máquina não
+permite gametest" foram checadas contra evidência real antes de aceitar ou
+rejeitar.
+
+## Limites deste resultado
+
+- **n=1.** O mesmo aviso de sempre — a vantagem funcional encontrada aqui
+  precisa sobreviver a repetição antes de virar conclusão, exatamente como
+  o padrão de `eval-4` já ensinou.
+- Testado só o caso do lenhador (`skills-esperadas: fabric-development,
+  minecraft-villager-systems`); não se sabe se o mesmo tipo de bug apareceria
+  numa tarefa de outro subsistema.
+- `minecraft-code-research` não é o alvo deste caso (a tarefa mexe num
+  sistema que o mod já tem) — continua sem nenhum caso de processo dedicado.
