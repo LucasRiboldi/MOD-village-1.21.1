@@ -1904,6 +1904,88 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
+     * <b>O E32, em rocha de verdade.</b> A perna não aponta para pedra.
+     *
+     * <p>Os dois testes unitários do E32 afirmam a regra sobre uma escada
+     * <b>modelada por predicado</b>: eles dizem o que fazer com um mundo
+     * imaginário em que só o piso é pisável. Este aqui pergunta ao mundo.
+     *
+     * <p>A montagem é a forma exata do defeito: o cursor entregou a escada
+     * inteira — {@code cut} de trinta, o primeiro lance completo — e a
+     * picareta parou no <b>terceiro degrau</b>. Do quarto em diante a ordem
+     * de cavar aponta para rocha maciça que ninguém abriu.
+     *
+     * <pre>
+     * degraus 1 a 3   abertos, três camadas cada
+     * degraus 4 a 6   ainda maciços, e todos dentro da perna de oito
+     * </pre>
+     *
+     * <p><b>Sem o filtro, o passo é o degrau 6</b> — o ponto mais avançado
+     * da ordem dentro da perna, e pedra sólida. Entregue à navegação, o
+     * {@code MobNavigation.findPathTo} <b>sobe</b> alvo sólido até sair da
+     * rocha, e numa mina isso é a superfície. Com o filtro, o passo é o
+     * piso do degrau 3, que é o ponto mais avançado onde um aldeão fica de
+     * pé.
+     *
+     * <p><b>O que este teste não prova:</b> que o mineiro <i>anda</i> até
+     * lá. Ele afirma o destino, não a caminhada — a caminhada continua
+     * dependendo de sessão de jogo.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_e32",
+            tickLimit = 60)
+    public void theLegNeverAimsAtRockNobodyDug(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        for (int x = 0; x <= 7; x++) {
+            for (int y = 0; y <= 7; y++) {
+                for (int z = 0; z <= 7; z++) {
+                    context.setBlockState(
+                            new BlockPos(x, y, z), Blocks.STONE.getDefaultState());
+                }
+            }
+        }
+
+        BlockPos mouth = new BlockPos(6, 5, 4);
+
+        context.setBlockState(mouth, Blocks.AIR.getDefaultState());
+        context.setBlockState(mouth.up(), Blocks.AIR.getDefaultState());
+
+        // Os três primeiros degraus, abertos como a ordem de cavar os abre:
+        // três camadas cada, descendo um e andando um para o oeste.
+        for (int step = 1; step <= 3; step++) {
+            for (int layer = 0; layer < MineShaft.STAIR_HEADROOM; layer++) {
+                context.setBlockState(
+                        new BlockPos(mouth.getX() - step, mouth.getY() - step + layer, mouth.getZ()),
+                        Blocks.AIR.getDefaultState());
+            }
+        }
+
+        Mine mine = Mine.restore(
+                UUID.randomUUID(),
+                MineShaft.from(
+                        MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(mouth)),
+                        Side.WEST),
+                30);
+
+        BlockPos standing = context.getAbsolutePos(mouth);
+
+        // Um destino fora da perna, que é a condição para o passo existir:
+        // dentro dos oito blocos o destino vale por si e a perna nem corre.
+        BlockPos far = context.getAbsolutePos(new BlockPos(0, 0, 0));
+
+        BlockPos leg = MinerReach.legTowards(
+                standing, far, Optional.of(mine), at -> BuilderApproach.standable(world, at));
+
+        context.assertTrue(
+                BuilderApproach.standable(world, leg),
+                "a perna apontou para um bloco onde o aldeão não fica de pé: "
+                        + leg.toShortString()
+                        + " — é o E32, e o jogo levaria esse alvo para a superfície");
+
+        context.complete();
+    }
+
+    /**
      * E ele desce: cava o degrau que não se alcança da boca.
      *
      * <p>A segunda metade, e a que separa <i>cavar</i> de <i>descer</i>.
