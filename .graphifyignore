@@ -1,0 +1,8 @@
+# Definições de skill e config do Claude Code. Ver CLAUDE.md.
+#
+# O .gitignore reabre .claude/skills/ para versionar as skills, e o graphify
+# lê o .gitignore — então sem esta linha ele indexa os 158 markdowns de skill
+# e soma ~2.2k nós de títulos ao grafo do mod. Medido em 2026-09-02: 3.167 -> 5.422.
+#
+# .graphifyignore é lido depois do .gitignore e só exclui mais, nunca re-inclui.
+.claude/

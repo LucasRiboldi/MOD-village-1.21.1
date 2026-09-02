@@ -90,6 +90,37 @@ dois: uma regra que passa quando não acha nada fica verde para sempre no
 dia em que o detector cega. Esse caso exige que o padrão **ache** a
 conversão dentro do próprio adaptador.
 
+#### E o grafo que apontou o defeito quase se estragou sozinho
+
+`graphify update .` — o comando que o `CLAUDE.md` manda rodar após mexer
+em código — levava o grafo de **3.167 para 5.422 nós**, e passar de 5.000
+derruba o `graph.html` para visão agregada, que perde o detalhe por nó.
+
+**A primeira causa que levantei estava errada.** O `update` reescreve
+`graphify-out/.graphify_root` de caminho absoluto para `.`, e eu tomei
+isso por causa. Rodar de novo com a raiz restaurada deu **exatamente o
+mesmo** 5.422. Correlação, não causa.
+
+**A causa medida, pelo diff dos conjuntos de nós:** dos 2.256 nós
+somados, **2.243 vinham de `.claude/skills/`**. Dez eram o código deste
+ciclo e dois o `CLAUDE.md`. A exclusão do `.claude/`, escolhida no começo
+do build, valia só para aquela execução — o `update` re-detecta a árvore
+inteira. O sinal que fecha: ele re-extraiu **4 arquivos** e ainda assim
+inflou. O volume vinha da re-detecção, não da re-extração.
+
+Corrigido com um `.graphifyignore` na raiz excluindo `.claude/`. Ele é
+lido depois do `.gitignore` e só exclui mais, o que é necessário aqui
+porque o `.gitignore` **reabre** `.claude/skills/` para versionar as
+skills. Verificado: o `update` seguinte deu **3.179 nós** — os 12 a mais
+são o código deste ciclo, que é crescimento legítimo.
+
+| ainda aberto | |
+|---|---|
+| **`update` custa os nomes curados** | Ele re-clusteriza, os ids de comunidade mudam, e os 169 rótulos escritos à mão viram nomes de hub (`TaskService` no lugar de `Colony Cycle Orchestration`). O `.graphifyignore` resolveu a inflação, não isto. O grafo em uso hoje é o curado, 12 nós atrás do código; o atualizado está guardado em `graphify-out/atual-3179/` |
+
+Nada disso entra no histórico: `graphify-out/` é gitignorado desde
+`faa39c0`.
+
 ### 2026-08-29, madrugada — duas coisas que sobreviviam ao dono
 
 **Sessão de jogo à 01:19**, e ela rodou com o **jar de 28/08 00:54** — a
