@@ -208,6 +208,23 @@ ficou, sem solução ainda:** o detector da armadilha só olha `git diff`
 de arquivos rastreados — um arquivo inteiramente novo nunca passa por lá,
 então a armadilha, se morar só num arquivo novo, continua invisível.
 
+## A camada que este aparato não cobre
+
+**Ele mede a resposta, não a ferramenta.** Em 2026-09-02, uma sessão de
+**uso real** (consertar o E32 usando as skills, sem condição de controle e
+sem placar) achou **seis defeitos operacionais** nas skills — `javap` fora do
+PATH, snippet procurando o jar no cache errado, passo que faltava no roteiro
+FORENSIC, custo de comando não avisado, vocabulário de modos que se
+contradiz, e artefato final exigido onde é redundante e por isso ignorado.
+
+Nenhum deles apareceria aqui, por construção: o agente medido **nunca usa a
+skill** — ele responde como se estivesse usando. Comando que falha, caminho
+que não existe e instrução ambígua só doem em quem executa.
+
+Por isso o uso real virou camada própria de avaliação, ao lado das rodadas de
+conhecimento e de processo. Ela não produz placar; produz lista de fricção.
+Ver `AVALIACAO.md`, seção "Uso real como fonte de achado".
+
 ## Como não enganar a si mesmo
 
 - o baseline precisa ser instruído a **não** invocar skill (elas estão

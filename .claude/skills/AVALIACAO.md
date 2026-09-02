@@ -17,6 +17,7 @@ errada.
 | 6 | 2026-09-02 | eval-0..3 repetido (r2, r3 — completa n=3) | `minecraft-villager-systems`, `fabric-development` | Haiku 4.5 | 3 |
 | 7 | 2026-09-02 | `rodada-2-processo` (contador de árvores), primeira vez em Haiku | `fabric-development`, `minecraft-villager-systems` | Haiku 4.5 | 1 |
 | 8 | 2026-09-02 | `rodada-2-processo` repetida (r2, r3 — completa n=3) | `fabric-development`, `minecraft-villager-systems` | Haiku 4.5 | 3 |
+| — | 2026-09-02 | **uso real** (E32), não medição — ver "Uso real como fonte de achado" | `minecraft-code-research`, `fabric-development` | Opus 5 | — |
 
 ## Qualidade e usabilidade das três skills (síntese, atualizada após a rodada 6)
 
@@ -64,7 +65,9 @@ afirmar com o que foi medido, não uma separação limpa e garantida.
 | ~~Repetir eval-0..3 em Haiku a n=3~~ | — | — | ✅ **Feito em 2026-09-02** (rodada 6, r2+r3). Confirmado: `eval-1`/`eval-2` sustentam vantagem de `with_skill` em 3 de 3; `eval-0`/`eval-3` seguem sem vantagem clara. Ver seção "Rodada 2026-09-02" |
 | ~~Repetir `rodada-2-processo` em Haiku~~ | — | — | ✅ **Feito em 2026-09-02 (2)**, n=1. Achado mais forte de toda a avaliação até agora: `without_skill` tem um bug funcional real (conta árvore por tora, não por árvore inteira) que `with_skill` não tem. Ver seção "Rodada 2026-09-02 (2)" — **precisa repetir a n=3** antes de virar conclusão definitiva |
 | ~~Repetir `rodada-2-processo` em Haiku a n=3~~ | — | — | ✅ **Feito em 2026-09-02 (3)**. A vantagem de r1 **não se sustentou como regra**: `with_skill` acerta a semântica em 2/3, `without_skill` em 1/3 — vantagem parcial, não unânime como `eval-1`/`eval-2`. Ver seção "Rodada 2026-09-02 (3)" |
-| Repetir eval-4/eval-5 em Opus 5 (hoje n=1) | Baixa — mesma mecânica já rodada, só repetir | Média, agora a de maior prioridade que resta | Confirma se o empate 12/12-estilo se sustenta com variância, como já foi feito pro Haiku |
+| **Uma sessão de uso real por ciclo, anotando toda fricção** | Baixa — é trabalho que já seria feito de qualquer jeito; o custo é a disciplina de anotar | **Alta, e é a de maior retorno por hora** — uma sessão achou 6 defeitos operacionais que 8 rodadas de medição não achariam nunca (ver "Uso real como fonte de achado") | A medição observa a resposta; o uso observa a ferramenta. São camadas diferentes, e só uma delas estava coberta |
+| Repetir eval-4/eval-5 em Opus 5 (hoje n=1) | Baixa — mesma mecânica já rodada, só repetir | Média | Confirma se o empate 12/12-estilo se sustenta com variância, como já foi feito pro Haiku |
+| Exercitar `minecraft-villager-systems` em uso real | Baixa | Média-alta — é a skill com a melhor evidência de comportamento (`eval-1`/`eval-2`, 3 de 3) e **zero** verificação operacional; a sessão do E32 só exercitou as outras duas | Nada garante que ela não tenha defeitos do mesmo tipo dos seis achados nas irmãs |
 | Confirmar a hipótese "with_skill investiga mais o código real do projeto" (achada em eval-5, 2 de 3) | Média — precisa repetir em `eval-4` e nos casos originais pra ver se é geral ou específico do prompt | Média-alta — se confirmar, é o achado mais forte e citável de toda a avaliação | — |
 | Adicionar sentinela em `grade-conhecimento.py` para `new Identifier(String,String)` | Baixa — é um regex simples, mesmo molde dos sentinelas já existentes de eval-4/eval-5 | Média — apareceu 4x em 16 respostas na rodada 6, cross-condição, e nenhum critério automático pega hoje | Achado só na leitura manual; sem sentinela, a próxima rodada perde o sinal se não repetir a leitura à mão |
 | Ampliar `grade-processo.py`: check da armadilha não cobre arquivo novo (untracked) | Baixa — mudar `untracked()` pra também prefixar linhas com `+` antes de concatenar, ou aplicar os checks de CODIGO separadamente sobre conteúdo bruto | Média — achado na rodada 7: o detector de `static Map` só olha linhas `+` de diffs *rastreados*; um arquivo inteiramente novo (caso comum de feature nova) nunca é coberto, mesmo se a armadilha inteira morar lá | Achado por acidente nesta rodada (o campo morto `SESSION_COUNTS` está num arquivo novo) — a próxima vez pode não ter alguém lendo à mão |
@@ -796,3 +799,85 @@ do relatório, em vez de aceitar o auto-relato; e a armadilha (`static Map`).
   pra saber se existe uma quarta localização "errada" comum que ainda não
   apareceu, nem se a escolha de localização é influenciada pela skill de
   alguma forma sistemática (os dados atuais não sustentam essa afirmação).
+
+---
+
+# Uso real como fonte de achado — 2026-09-02
+
+**Isto não é uma rodada de medição, e é de propósito.** Depois das oito
+rodadas, as skills foram usadas para fazer um trabalho de verdade do mod: o
+**E32**, um erro aberto e em produção. Não houve condição `with`/`without`,
+não houve placar. O que houve foi trabalho, e o que se anota aqui é o que o
+trabalho mostrou.
+
+Resultado do trabalho em si: o E32 tem causa fechada, conserto escrito com
+fase vermelha conferida, 567 unitários e 218 de jogo passando. Está no
+commit `fix: E32 — a perna mandava o mineiro para onde não se fica de pé` e
+em [`docs/research/E32-miner-walk-target.md`](../../docs/research/E32-miner-walk-target.md).
+
+## O achado que importa para esta avaliação
+
+**Seis defeitos reais nas skills apareceram em uma sessão de uso — e as oito
+rodadas de medição não tinham como achar nenhum deles.**
+
+| # | Skill | Defeito | Por que a medição não pega |
+|---|---|---|---|
+| 1 | `minecraft-code-research` | `javap` não está no PATH; o comando da skill falha seco | O agente medido nunca roda os comandos: ele responde *sobre* o assunto |
+| 2 | `minecraft-code-research` | O snippet do `MC_JAR` procura só no cache global (o jar deste projeto está no cache local) e o glob casa o `-sources.jar` | idem |
+| 3 | `minecraft-code-research` | Faltava o passo zero do FORENSIC: ler o registro de sintoma do próprio projeto antes de abrir código Vanilla | Os casos de teste dão o sintoma pronto no prompt — nunca exercitam "vá procurar o sintoma" |
+| 4 | `minecraft-code-research` | `genSources` vendido como one-liner, sendo um build de vários minutos | Custo de comando não entra em critério de resposta |
+| 5 | `fabric-development` | Duas listas de vocabulário que não se encaixam: nove classificações de tarefa × quatro modos, sem mapeamento | Só aparece quando alguém **tem de escolher** um modo e anunciar. Eu anunciei "modo BUG", que não existe na skill |
+| 6 | `fabric-development` | O `implementation-summary` era exigido incondicionalmente, inclusive onde é redundante — e por isso é ignorado na prática | Nenhum critério mede se o artefato final foi produzido |
+
+**A diferença é de natureza, não de rigor.** As rodadas de 0 a 8 medem
+**qualidade da resposta**: acertou a API, achou a causa, evitou Mixin
+desnecessário. Nenhum desses seis defeitos é sobre a resposta. São comandos
+que falham, caminhos que não existem, vocabulário que se contradiz e regra
+que se ignora — a camada de **usabilidade da skill como ferramenta**, que o
+aparato nunca teve como observar porque o agente medido nunca *usa* a skill:
+ele escreve como se estivesse usando.
+
+## O que isso corrige na tabela de usabilidade deste documento
+
+A síntese lá em cima tem uma coluna "Estrutura" que sempre foi avaliada por
+inspeção — número de linhas, presença de checklists e templates — e uma nota
+de método dizendo que *"estrutura boa não é a mesma coisa que comportamento
+melhor medido"*. Faltava dizer a terceira coisa: **estrutura boa também não é
+a mesma coisa que ferramenta que funciona quando alguém a segue.** As três
+skills tinham estrutura aprovada e seis defeitos operacionais dentro dela.
+
+## Um erro meu, no mesmo dia, e ele é do tipo que este arquivo cataloga
+
+Nesta sessão eu reportei **dez referências cruzadas quebradas** entre as
+skills. Não havia nenhuma. Meu regex capturava só o fim do caminho
+(`references/mixin-analysis.md`) e descartava o prefixo da skill que estava
+lá o tempo todo (`minecraft-code-research/references/…`); depois eu procurei
+o arquivo dentro da skill errada e concluí que faltava. Conferido de novo com
+o caminho inteiro: **158 referências, zero quebradas.** Se eu tivesse
+"consertado" o que reportei, teria quebrado dez caminhos corretos.
+
+É exatamente o modo de falha que o `evals/README.md` documenta desde
+2026-08-29 — *"correção por palavra-chave não atravessa sinônimo nem
+markdown… e o viés dele tende a favorecer a hipótese de quem escreveu os
+critérios"*. O detalhe que vale registrar é **quando** aconteceu: no mesmo
+dia em que passei a sessão documentando esse viés nos outros, e num script
+que eu mesmo escrevi para confirmar um defeito que eu já suspeitava existir.
+A regra "leia à mão antes de concluir" não vale só para os corretores do
+`evals/` — vale para qualquer verificação automática, inclusive as de uma
+linha escritas na hora.
+
+## O que fica para a avaliação
+
+`[DECISÃO]` **Uso real vira uma camada própria de avaliação**, ao lado das
+rodadas de conhecimento e de processo. Ela não produz placar; produz lista de
+defeitos operacionais. Uma sessão de trabalho real por ciclo, com o
+compromisso de anotar toda fricção — comando que falhou, caminho que não
+existiu, instrução ambígua, regra que se ignorou — vale mais para a qualidade
+das skills, por hora gasta, do que uma nona rodada de medição.
+
+`[RISCO]` Achado de uso real é **n=1 por definição** e vem sem grupo de
+controle: não dá para dizer que a skill *causou* o bom resultado do E32. A
+impressão registrada é a oposta, aliás — a `fabric-development` contribuiu
+pouco de operacional ali; as decisões que importaram vieram da pesquisa e das
+convenções que já estavam no código. É impressão, não medição, e entra aqui
+com essa etiqueta.
