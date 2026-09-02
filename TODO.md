@@ -36,7 +36,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-558 testes unitários  ·  217 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
+565 testes unitários  ·  218 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 última sessão de jogo em 2026-08-28, 23:06  ·  ele desceu, e parou a 2 blocos
 ```
@@ -44,10 +44,51 @@ lista abaixo.
 > A contagem de jogo era 176 aqui e **175** no `runGametest`. Recontado
 > em 08-27 por `@GameTest`: são 175, e o número deste arquivo estava um
 > acima.
+>
+> **Recontado de novo em 09-02, e escorregou para o outro lado.** Este
+> arquivo dizia 217 de jogo e 558 de unidade; o `runGametest` diz *"All
+> **218** required tests passed"* e o `build` fecha **565** unitários,
+> zero falhas. O de jogo estava um **abaixo**, e o de unidade quatro —
+> antes ainda dos três deste ciclo. Quem conta é o runner.
 
 ---
 
 ## ✅ Resolvido
+
+### 2026-09-02 — a fronteira de conversão passou a ser conferida
+
+Não veio de sessão de jogo: veio de olhar o grafo do projeto. `ColonyPos`
+é o nó mais conectado do mod — 389 arestas, ponte entre 51 comunidades —
+e a pergunta era se a ADR-005 tinha funcionado ou se ele tinha virado
+god object.
+
+**Funcionou, e o susto era falso.** `ColonyPos` é um `record` de três
+campos com **um** método; das 389 arestas, 203 são de teste. Grau alto
+num tipo de valor é uso, não responsabilidade acumulada. E o `core` não
+importa Minecraft em lugar nenhum — o `DependencyRuleTest` já garantia.
+
+**O que estava errado era uma frase.** A ADR-005 §4 e o Javadoc do
+`MinecraftTypeAdapter` afirmam que a conversão acontece *apenas* ali.
+`MinerReach` tinha um `at(ColonyPos)` privado que refazia o `toBlockPos`
+inteiro — a única cópia fora da fronteira, e nada a impedia de virar
+duas.
+
+| | |
+|---|---|
+| `MinerReach.at()` | Passou a delegar a `MinecraftTypeAdapter.toBlockPos`. Comportamento idêntico — o método copiado era linha por linha o mesmo |
+| `ConversionBoundaryTest` | 3 casos novos. Proíbe montar um tipo a partir dos três acessores **puros** e do **mesmo** receptor do outro, fora de `fabric.adapter` |
+
+**O que a regra deliberadamente não proíbe.** Chamar
+`MinecraftTypeAdapter.toBlockPos` — 23 arquivos fazem, e é para isso que
+a fronteira existe. E posição **derivada**: `new BlockPos(origin.x() +
+dx, ...)` é aritmética de deslocamento, não conversão, e não há
+`toBlockPos` que a substitua. Proibi-la só faria a mesma conta ser
+escrita pior.
+
+**O terceiro caso é controle positivo**, e é o que dá valor aos outros
+dois: uma regra que passa quando não acha nada fica verde para sempre no
+dia em que o detector cega. Esse caso exige que o padrão **ache** a
+conversão dentro do próprio adaptador.
 
 ### 2026-08-29, madrugada — duas coisas que sobreviviam ao dono
 

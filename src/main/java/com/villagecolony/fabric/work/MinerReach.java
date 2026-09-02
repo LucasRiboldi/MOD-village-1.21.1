@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.Optional;
@@ -250,7 +251,22 @@ public final class MinerReach {
         return step;
     }
 
+    /**
+     * A posição do Core no vocabulário do jogo.
+     *
+     * <p>Era um {@code new BlockPos(position.x(), position.y(),
+     * position.z())} escrito aqui — o {@code toBlockPos} do adaptador
+     * refeito por inteiro, e a única conversão do mod que morava fora da
+     * fronteira. A ADR-005 §4 diz que ela acontece apenas lá; a frase
+     * passou a ser verificada por {@code ConversionBoundaryTest}, e este
+     * era o lugar que a desmentia.
+     *
+     * <p>Duas cópias não custam nada enquanto concordam. O dia em que o
+     * jogo mudar o construtor de {@code BlockPos} — já mudou de pacote
+     * uma vez, e é o argumento da própria ADR — só uma das duas seria
+     * consertada.
+     */
     private static BlockPos at(ColonyPos position) {
-        return new BlockPos(position.x(), position.y(), position.z());
+        return MinecraftTypeAdapter.toBlockPos(position);
     }
 }

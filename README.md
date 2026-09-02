@@ -297,7 +297,7 @@ O mod compila, carrega e roda em cliente e em servidor dedicado.
 | Defesa | ⬜ não começado |
 
 ```text
-558 testes unitários  ·  217 testes de jogo  ·  0 falhas  ·  ./gradlew build
+565 testes unitários  ·  218 testes de jogo  ·  0 falhas  ·  ./gradlew build
 ```
 
 **O que 🧪 quer dizer aqui.** A bateria roda o caso e ele passa. Não quer
@@ -467,6 +467,34 @@ sempre atual — o enunciado das 29 regras, uma a uma — em
 
 ---
 ## Último ciclo de desenvolvimento
+
+**2026-09-02** — a fronteira de conversão passou a ser conferida.
+
+| | |
+|---|---|
+| **A frase que ninguém verificava** | A ADR-005 §4 diz que a conversão `BlockPos <-> ColonyPos` acontece **apenas** em `MinecraftTypeAdapter`, e o Javadoc do adaptador repete: *"nenhuma conversão acontece fora daqui"*. Era falso. `MinerReach` tinha um `at(ColonyPos)` privado que refazia o `toBlockPos` inteiro — a única cópia da conversão fora da fronteira. Agora ele delega, e `ConversionBoundaryTest` derruba a compilação se outra aparecer |
+| **O detector tem controle positivo** | A regra é uma busca que passa quando não acha nada, e esse é o jeito clássico de um teste de arquitetura ficar verde para sempre sem olhar. Um segundo caso exige que o padrão **ache** a conversão dentro do próprio adaptador: se o dia em que ele for reescrito cegar a busca, é esse caso que quebra |
+
+```text
+565 testes unitários     0 falhas
+218 testes de jogo       0 falhas
+```
+
+**E a contagem estava atrás em dois lugares.** O número de jogo era 217
+nos documentos; o `runGametest` diz *"All 218 required tests passed"*, e
+o fonte tem 218 `@GameTest`. O de unidade era 558 e são 565 — quatro a
+mais já antes dos três deste ciclo. É a segunda vez que a contagem
+escorrega, e a regra continua a mesma de 08-27: **quem conta é o
+runner**, não o documento.
+
+**O que a regra não proíbe.** Vinte e três arquivos em `fabric/work` e
+`fabric/integration` chamam `MinecraftTypeAdapter.toBlockPos` — e todos
+estão certos. Chamar a fronteira é usá-la. O que passou a ser proibido é
+uma **segunda implementação**: montar um dos tipos a partir dos três
+acessores puros do outro. Posição derivada — `origin.x() + dx` — não é
+conversão e continua livre, porque não há `toBlockPos` que a substitua.
+
+### O ciclo antes — 2026-08-29, madrugada
 
 **2026-08-29, madrugada** — duas coisas que sobreviviam ao dono.
 
