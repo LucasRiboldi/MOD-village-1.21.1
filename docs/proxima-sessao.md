@@ -24,10 +24,33 @@ estava rodando**.
 3. Confirme no log que a build nova subiu, e não a anterior.
 
 **Duração.** A conta de 2026-08-26 estimou ~8,5 minutos só para a primeira
-varredura. Sessões curtas não chegam a ver o resto. Se der, deixe rodar
-**mais de dez minutos**.
+varredura. Sessões curtas não chegam a ver o resto. O piso desta lista é
+**~20 minutos** — a tabela de tempo logo abaixo diz de onde sai esse número
+e o que cai fora se a sessão for menor.
 
 **Se chegar de noite:** `/time set day`. Trabalhador só trabalha com sol.
+
+---
+
+## Quanto tempo cada resposta custa
+
+O relógio do mod é o **ciclo da colônia**: `VillageDetector.CYCLE_TICKS` =
+600 ticks = **30 segundos**. Toda espera abaixo está contada em ciclos,
+porque é assim que o log sai.
+
+| | O que responde | Quando dá para responder |
+|---|---|---|
+| 1 | a varredura acaba num ciclo | **~8,5 min** até a primeira varredura fechar (estimativa de 08-26; teto de 1.024 colunas por passagem). Antes disso, `still sweeping` ainda não é veredito |
+| 2 | o trabalhador fantasma | **1,5 min** de colônia ativa — `MISSES_BEFORE_NEWS = 3` ciclos. A linha sai **uma vez** e não repete |
+| 3 | o mineiro entra e cava | só **depois** do item 1. Reserve **10 min** a partir daí: ele caminha, abre a boca e desce um degrau por ordem de cavar |
+| 4 | ele para à noite | precisa **atravessar um anoitecer**. Sem tempo, force com `/time set night` e volte com `/time set day` |
+| 5 | a picareta certa na mão | **imediato** — é olhar a mão dos dois |
+| 6 | fundidor e cadeia da areia | **10 min**, que é o teto de paciência da obra (`PatienceClock.CYCLES = 20` ciclos) |
+| 7 | casa inteira sem a barreira | uma obra do começo ao fim; a frase só sai em sessão que assentou peça |
+| 8 | reabrir o mundo com a mina aberta | **~2 min** depois de fechar — e só vale se 1 e 3 já tiverem dado sinal |
+
+**Sessão de 10 minutos** responde 1, 2 e 5, e nada mais. **20 minutos** é o
+piso para o mineiro. **40 minutos** é o que os itens 4, 7 e 8 pedem.
 
 ---
 
