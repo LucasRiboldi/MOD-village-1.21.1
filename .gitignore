@@ -67,6 +67,11 @@ minecraft-assets_structure/
 .claude/*
 !.claude/skills/
 
+# Bytecode do Python. Os utilitários de manutenção em scripts/ e os testes
+# deles em tests/ geram isto ao rodar; é derivado e reconstruível.
+__pycache__/
+*.py[cod]
+
 # Grafo de conhecimento do projeto (graphify). 23 MB de saída derivada:
 # graph.json, graph.html, o relatório e o cache de extração.
 #

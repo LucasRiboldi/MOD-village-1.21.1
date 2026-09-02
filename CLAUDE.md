@@ -20,6 +20,8 @@ Rules:
 
      Run `--dry-run` first: it lists the communities with no clear majority, with sample members, which is exactly what you need to add a name to `scripts/community_names.json`. That file is keyed by **node id, not community id** — node ids are deterministic and survive re-clustering, community ids do not, so a number-keyed override would silently name the wrong community after the next `update`.
 
+     The script's decision logic is covered by `python -m unittest discover -s tests` (24 cases, stdlib only, no pytest needed). It is **not** wired into `./gradlew build` on purpose: this is a Java project, and making the build require a Python interpreter would break it on machines that do not have one, for a maintenance utility that never ships with the mod. Run it by hand when you touch the script.
+
   Do **not** expect `graphify label` to do this. With no LLM backend configured — there is no `GEMINI_API_KEY`/`GOOGLE_API_KEY` here — it prints `no LLM backend configured; keeping Community N placeholders`, does nothing useful, and still overwrites `graphify-out/<date>/`. The agent doing the labeling *is* the LLM; option 2 is that job.
 
   Re-clustering also moves nodes between communities, so a name can end up sitting oddly on a node you remember elsewhere. `ColonyPos` left `Geometry Helpers` for `Colony Center and Observation`, because 12 of that old community's 20 nodes went there; the 8 that stayed are now `ColonyPos Distance`. The name follows the majority of the members, not any one node.
