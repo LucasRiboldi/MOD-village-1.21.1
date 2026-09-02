@@ -44,6 +44,7 @@ from pathlib import Path
 DEFAULT_GRAPH = Path("graphify-out/graph.json")
 DEFAULT_LABELS = Path("graphify-out/.graphify_labels.json")
 DEFAULT_REPORT = Path("graphify-out/GRAPH_REPORT.md")
+DEFAULT_COST = Path("graphify-out/cost.json")
 
 # O `.sig` é assinado sobre os rótulos que ele acompanha. Reescrever os
 # rótulos sem apagá-lo deixa os dois discordando em silêncio.
@@ -194,6 +195,32 @@ def resolve(
     return labels, undecided
 
 
+def token_cost(cost_path: Path = DEFAULT_COST) -> dict[str, int]:
+    """O custo acumulado da extração, como o `cost.json` o registra.
+
+    O relatório tem de mostrar o custo — é regra do graphify, e existe para o
+    grafo não parecer de graça. A primeira versão desta função fixava zero, e
+    o `GRAPH_REPORT.md` passou a anunciar `0 input · 0 output` para um grafo
+    que custou 1.112.964 tokens de subagente. Não era estimativa errada: era
+    o número certo sendo apagado a cada regeneração.
+
+    Zero é a resposta honesta quando o arquivo não existe — aí não houve
+    extração registrada — e não um palpite.
+    """
+    if not cost_path.is_file():
+        return {"input": 0, "output": 0}
+
+    try:
+        cost = json.loads(cost_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {"input": 0, "output": 0}
+
+    return {
+        "input": int(cost.get("total_input_tokens", 0)),
+        "output": int(cost.get("total_output_tokens", 0)),
+    }
+
+
 def regenerate_report(graph: dict, labels: dict[int, str], report_path: Path) -> None:
     """Refaz o GRAPH_REPORT.md com os nomes novos.
 
@@ -248,7 +275,7 @@ def regenerate_report(graph: dict, labels: dict[int, str], report_path: Path) ->
         god_nodes(G),
         surprising_connections(G, communities),
         detection,
-        {"input": 0, "output": 0},
+        token_cost(),
         ".",
         suggested_questions=suggest_questions(G, communities, labels),
     )

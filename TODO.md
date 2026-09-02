@@ -114,9 +114,34 @@ porque o `.gitignore` **reabre** `.claude/skills/` para versionar as
 skills. Verificado: o `update` seguinte deu **3.179 nós** — os 12 a mais
 são o código deste ciclo, que é crescimento legítimo.
 
-| ainda aberto | |
+**E o `update` deixou de custar os nomes curados.** Ele re-clusteriza e
+troca os 169 rótulos escritos à mão por nomes de hub — o `.graphifyignore`
+resolveu a inflação, não isto. Até aqui havia duas saídas ruins: restaurar
+o backup, que devolve os nomes e joga fora o código novo, ou refazer o
+transporte à mão toda vez.
+
+`scripts/graphify_relabel.py` transporta os nomes por **votação**: cada
+comunidade nova fica com o nome curado que a maioria dos seus nós já
+carregava. Determinístico, sem LLM — a pergunta não pede julgamento quando
+a maioria concorda. **143 de 158 decidem sozinhas**; o `--dry-run` lista as
+que sobram com amostra de membros, e `scripts/community_names.json` guarda
+os 15 nomes escolhidos à mão.
+
+Esse arquivo é chaveado por **id de nó, não de comunidade**. O id de
+comunidade só vale para a clusterização que o produziu; o de nó é
+determinístico. Chaveado por número, o arquivo passaria a nomear a
+comunidade errada em silêncio depois do `update` seguinte.
+
+| defeitos encontrados testando, e corrigidos | |
 |---|---|
-| **`update` custa os nomes curados** | Ele re-clusteriza, os ids de comunidade mudam, e os 169 rótulos escritos à mão viram nomes de hub (`TaskService` no lugar de `Colony Cycle Orchestration`). O `.graphifyignore` resolveu a inflação, não isto. O grafo em uso hoje é o curado, 12 nós atrás do código; o atualizado está guardado em `graphify-out/atual-3179/` |
+| `UnicodeEncodeError` no console cp1252 | Morria ao imprimir rótulo com seta (`Tick → Update Colony`), e justamente na lista que o operador precisa ler para nomear o que faltou |
+| Apelido pegava o rótulo mais longo | Chamava de `net.minecraft.block.entity.ChestBlockEntity` uma comunidade de `VillageDetector`, `WorkAssignment` e `WorkHours`. Agora prefere tipo do projeto |
+| **O relatório anunciava custo zero** | `regenerate_report` fixava `0 input · 0 output` para um grafo que custou **1.112.964 tokens**, e reescrevia esse zero a cada regeneração. Contra a regra do próprio graphify, que manda sempre mostrar o custo. Passou a ler o `cost.json` |
+
+`tests/test_graphify_relabel.py` cobre a decisão com **28 casos**
+(`python -m unittest discover -s tests`, stdlib, fora do `gradlew build` de
+propósito — build de projeto Java não deve exigir Python). Conferidos por
+mutação: revertendo as correções, 9 casos falham.
 
 Nada disso entra no histórico: `graphify-out/` é gitignorado desde
 `faa39c0`.

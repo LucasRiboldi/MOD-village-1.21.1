@@ -17,6 +17,8 @@ estado nomeado de 3.179 nós.
 from __future__ import annotations
 
 import importlib.util
+import json
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -263,6 +265,40 @@ class ParseOverrides(unittest.TestCase):
 
         self.assertEqual(resolved, {})
         self.assertEqual(unresolved, ["src_sumiu"])
+
+
+class TokenCost(unittest.TestCase):
+    """O custo que o relatório é obrigado a mostrar."""
+
+    def setUp(self):
+        self._dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self._dir.cleanup)
+        self.path = Path(self._dir.name) / "cost.json"
+
+    def test_reads_the_accumulated_cost_from_the_file(self):
+        # A regressão: fixando zero aqui, o GRAPH_REPORT.md anunciava
+        # "0 input · 0 output" para um grafo que custou 1.112.964 tokens de
+        # subagente, e reescrevia esse zero a cada regeneração.
+        self.path.write_text(
+            json.dumps({"total_input_tokens": 1112964, "total_output_tokens": 12}),
+            encoding="utf-8",
+        )
+
+        self.assertEqual(relabel.token_cost(self.path), {"input": 1112964, "output": 12})
+
+    def test_a_missing_file_means_no_extraction_was_recorded(self):
+        self.assertEqual(relabel.token_cost(self.path), {"input": 0, "output": 0})
+
+    def test_a_corrupt_file_does_not_take_the_report_down_with_it(self):
+        # Relatório sem custo é ruim; nenhum relatório é pior.
+        self.path.write_text("{ isto nao e json", encoding="utf-8")
+
+        self.assertEqual(relabel.token_cost(self.path), {"input": 0, "output": 0})
+
+    def test_missing_keys_read_as_zero_rather_than_exploding(self):
+        self.path.write_text(json.dumps({"runs": []}), encoding="utf-8")
+
+        self.assertEqual(relabel.token_cost(self.path), {"input": 0, "output": 0})
 
 
 class CommunityMembers(unittest.TestCase):
