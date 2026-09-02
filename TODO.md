@@ -53,6 +53,18 @@ lista abaixo.
 
 ---
 
+## 🎮 A próxima sessão
+
+O gargalo do projeto **não é mais código**. A lista de conferência de uma
+sessão — o que preparar, o que olhar e em que ordem, e o que cada linha de
+log significa — vive em
+[`docs/proxima-sessao.md`](docs/proxima-sessao.md).
+
+Dez consertos do mineiro estão empilhados sem uma única sessão que os veja,
+e as três decisões em aberto esperam o que essa sessão mostrar.
+
+---
+
 ## ✅ Resolvido
 
 ### 2026-09-02, à tarde — duas decisões do autor, e o que cada uma virou

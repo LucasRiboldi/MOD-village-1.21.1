@@ -82,3 +82,7 @@ __pycache__/
 # O que É versionado é o CLAUDE.md da raiz, que ensina a usá-lo, e a skill
 # em .claude/skills/graphify/.
 graphify-out/
+
+# O jar publicado para download, apontado pelo README. É o único
+# artefato de build versionado de propósito.
+!downloads/*.jar
