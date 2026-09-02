@@ -32,9 +32,21 @@ clara e não-ambígua — em `eval-1` e `eval-2` (os dois de
 `minecraft-villager-systems`), o `with_skill` usou API real onde o
 `without_skill` inventou construtor/mecanismo que não existe, e caiu na
 própria armadilha que `eval-2` testa. **Mas é n=1** — a mesma condição que
-já produziu, em `eval-4`, uma leitura que não sobreviveu à repetição. Repetir
-`eval-0..3` a n=3 é agora o item de maior prioridade na lista de pendências
-de `AVALIACAO.md`.
+já produziu, em `eval-4`, uma leitura que não sobreviveu à repetição.
+
+**Repetido a n=3 em 2026-09-02 (r2, r3):** ao contrário de `eval-4`, esta
+vantagem de n=1 **sobreviveu** — `with_skill` ganhou em `eval-1`/`eval-2` nas
+3 de 3 rodadas testadas, a primeira vez em toda a avaliação que um achado de
+n=1 se confirma por repetição em vez de se desfazer. Mas não é vitória sem
+erro: `with_skill` também fabricou API própria em 2 de 3 rodadas em cada
+caso — a vantagem real é diagnosticar a causa e o sistema certo (vanilla vs.
+interno do mod), não ausência de fabricação. `eval-0` e `eval-3`
+(`fabric-development`) seguem sem vantagem clara nas 3 rodadas. Um padrão
+novo cross-caso: `new Identifier(String,String)` (construtor privado em
+1.21.1) apareceu 4 vezes em 16 respostas, em `with_skill` e `without_skill`.
+Detalhes em `AVALIACAO.md`, seção "Rodada 2026-09-02". Com isso, `repetir
+rodada-2-processo em Haiku` passa a ser o item de maior prioridade da lista
+de pendências.
 
 ## As duas rodadas
 
