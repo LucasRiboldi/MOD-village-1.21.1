@@ -1,5 +1,11 @@
 # Workflow — corrigir um bug
 
+> **O modo, antes de começar.** `BUG` é a classificação da tarefa, não um modo
+> — não anuncie "modo BUG". Com a causa já conhecida e a correção cabendo num
+> método, é **SMALL**. Sobe para **SURGERY** se tocar Mixin, persistência,
+> networking ou save; para **FEATURE** se a correção pedir desenho novo. Ver a
+> tabela em `SKILL.md`, seção "Os quatro modos".
+
 A regra que organiza tudo: **não corrija sintoma antes de encontrar a causa.**
 
 Corrigir sintoma é atraente porque funciona — o comportamento visível some. O que

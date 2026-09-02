@@ -102,6 +102,10 @@ segundos. Ver `references/migration.md` para o loop de verificação.
 
 ## Passo 2 — Classificar a tarefa
 
+**O que a tarefa é** — e isto não é a mesma pergunta que "quanta cerimônia
+ela pede". A segunda é o modo, logo abaixo; as duas listas compartilham duas
+palavras e não significam a mesma coisa nelas.
+
 ```text
 FEATURE · SYSTEM · BUG · REFACTOR · PERFORMANCE · COMPATIBILITY ·
 MIGRATION · EXPERIMENT · HOTFIX
@@ -129,8 +133,22 @@ sua ausência em tarefa grande é retrabalho.
 | **SYSTEM** | sistema grande, decisão que dura | domínio → pesquisa → contratos → arquitetura → plano → implementação incremental → integração → testes → performance → documentação |
 | **SURGERY** | Mixin crítico, persistência, networking, migração, compatibilidade | entender → pesquisar → **menor mudança possível** → compilar → testar → regressão → documentar risco |
 
-Anuncie o modo. Mudar no meio é normal — SMALL que revela decisão de arquitetura
-vira FEATURE. Diga que mudou e por quê.
+**Só existem estes quatro modos.** `BUG`, `REFACTOR`, `HOTFIX` e os outros do
+Passo 2 são o que a tarefa **é**; nenhum deles é um modo, e anunciar "modo BUG"
+é misturar as duas listas. De qual classificação sai qual modo:
+
+| A tarefa é… | O modo costuma ser | Quando sobe de modo |
+|---|---|---|
+| `BUG` | **SMALL**, se a causa já é conhecida e a correção cabe num método | **SURGERY** se toca Mixin, persistência, networking ou save; **FEATURE** se a correção pede desenho novo |
+| `HOTFIX` | **SMALL** | nunca sobe por vontade própria — hotfix que precisa de desenho não é hotfix |
+| `REFACTOR` | **FEATURE** | **SYSTEM** quando move fronteira entre pacotes ou muda contrato |
+| `PERFORMANCE` | **FEATURE** | **SURGERY** se a otimização mexe em tick, chunk ou estrutura de dados quente |
+| `COMPATIBILITY` · `MIGRATION` | **SURGERY** | — |
+| `EXPERIMENT` | **SMALL** | é para ser jogado fora; se virar permanente, reclassifique antes |
+| `FEATURE` · `SYSTEM` | o modo de mesmo nome | — |
+
+Anuncie o modo — **o modo, não a classificação**. Mudar no meio é normal —
+SMALL que revela decisão de arquitetura vira FEATURE. Diga que mudou e por quê.
 
 O roteiro executável de cada um está em `workflows/`.
 
@@ -332,8 +350,7 @@ rodando" são coisas diferentes, e as duas entram no relato separadas.
 
 ## Ao terminar
 
-Produza o resumo de `templates/implementation-summary.md` e devolva conhecimento
-novo à base:
+**Devolva conhecimento novo à base — isto vale em todo modo:**
 
 - descobriu algo sobre o Vanilla → `docs/research/`
 - mudou a arquitetura → `docs/architecture/`
@@ -342,6 +359,21 @@ novo à base:
 
 Conhecimento descoberto durante implementação é o mais caro que existe: custou o
 bug. Deixá-lo só na mensagem de commit é jogá-lo fora.
+
+**O resumo de `templates/implementation-summary.md` escala com o modo**, pela
+mesma razão que o roteiro escala: burocracia em tarefa pequena é desperdício.
+
+| Modo | Resumo |
+|---|---|
+| **SMALL** | **dispensado** quando o que ele diria já está em outro lugar do repositório — a mensagem de commit, o `docs/research/` que a investigação produziu, a linha do bug atualizada. Escreva-o se nada disso existir |
+| **FEATURE** · **SYSTEM** · **SURGERY** | **obrigatório** |
+
+O que **nunca** é dispensado, em modo nenhum: dizer o que foi verificado
+rodando e o que não foi. Se o resumo for dispensado, essas duas frases vão para
+a mensagem de commit — não somem junto com ele.
+
+Regra que se ignora na prática corrói as outras: se você dispensou o resumo,
+diga que dispensou e onde a informação ficou.
 
 ## Continuidade
 
