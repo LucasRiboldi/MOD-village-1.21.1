@@ -67,7 +67,7 @@ afirmar com o que foi medido, não uma separação limpa e garantida.
 | ~~Repetir `rodada-2-processo` em Haiku a n=3~~ | — | — | ✅ **Feito em 2026-09-02 (3)**. A vantagem de r1 **não se sustentou como regra**: `with_skill` acerta a semântica em 2/3, `without_skill` em 1/3 — vantagem parcial, não unânime como `eval-1`/`eval-2`. Ver seção "Rodada 2026-09-02 (3)" |
 | **Uma sessão de uso real por ciclo, anotando toda fricção** | Baixa — é trabalho que já seria feito de qualquer jeito; o custo é a disciplina de anotar | **Alta, e é a de maior retorno por hora** — uma sessão achou 6 defeitos operacionais que 8 rodadas de medição não achariam nunca (ver "Uso real como fonte de achado") | A medição observa a resposta; o uso observa a ferramenta. São camadas diferentes, e só uma delas estava coberta |
 | Repetir eval-4/eval-5 em Opus 5 (hoje n=1) | Baixa — mesma mecânica já rodada, só repetir | Média | Confirma se o empate 12/12-estilo se sustenta com variância, como já foi feito pro Haiku |
-| Exercitar `minecraft-villager-systems` em uso real | Baixa | Média-alta — é a skill com a melhor evidência de comportamento (`eval-1`/`eval-2`, 3 de 3) e **zero** verificação operacional; a sessão do E32 só exercitou as outras duas | Nada garante que ela não tenha defeitos do mesmo tipo dos seis achados nas irmãs |
+| ~~Exercitar `minecraft-villager-systems` em uso real~~ | — | — | ✅ **Feito em 2026-09-02** — auditoria do padrão "estado que sobrevive ao dono". Duas arestas achadas e corrigidas; a skill **acertou o diagnóstico do domínio** e foi o que apontou o buraco real. Ver "Uso real (2) — a auditoria de estado órfão" |
 | Confirmar a hipótese "with_skill investiga mais o código real do projeto" (achada em eval-5, 2 de 3) | Média — precisa repetir em `eval-4` e nos casos originais pra ver se é geral ou específico do prompt | Média-alta — se confirmar, é o achado mais forte e citável de toda a avaliação | — |
 | Adicionar sentinela em `grade-conhecimento.py` para `new Identifier(String,String)` | Baixa — é um regex simples, mesmo molde dos sentinelas já existentes de eval-4/eval-5 | Média — apareceu 4x em 16 respostas na rodada 6, cross-condição, e nenhum critério automático pega hoje | Achado só na leitura manual; sem sentinela, a próxima rodada perde o sinal se não repetir a leitura à mão |
 | Ampliar `grade-processo.py`: check da armadilha não cobre arquivo novo (untracked) | Baixa — mudar `untracked()` pra também prefixar linhas com `+` antes de concatenar, ou aplicar os checks de CODIGO separadamente sobre conteúdo bruto | Média — achado na rodada 7: o detector de `static Map` só olha linhas `+` de diffs *rastreados*; um arquivo inteiramente novo (caso comum de feature nova) nunca é coberto, mesmo se a armadilha inteira morar lá | Achado por acidente nesta rodada (o campo morto `SESSION_COUNTS` está num arquivo novo) — a próxima vez pode não ter alguém lendo à mão |
@@ -881,3 +881,59 @@ impressão registrada é a oposta, aliás — a `fabric-development` contribuiu
 pouco de operacional ali; as decisões que importaram vieram da pesquisa e das
 convenções que já estavam no código. É impressão, não medição, e entra aqui
 com essa etiqueta.
+
+---
+
+# Uso real (2) — a auditoria de estado órfão, 2026-09-02
+
+Segunda sessão de uso real, e a primeira a exercitar
+`minecraft-villager-systems` — a skill com a melhor evidência de
+comportamento (`eval-1`/`eval-2`, 3 de 3) e, até aqui, **zero** verificação
+operacional. Tarefa: auditar o padrão de defeito que o próprio projeto nomeou
+em 08-29, *estado que sobrevive ao dono*, nos sistemas de aldeão. Resultado
+técnico em [`docs/research/estado-que-sobrevive-ao-dono.md`](../../docs/research/estado-que-sobrevive-ao-dono.md).
+
+## O que a skill acertou, e é diferente das outras duas
+
+**Ela forneceu o critério que fechou a auditoria.** Duas regras do próprio
+`SKILL.md` — *"zumbificação não é morte"* e *"ausência não é morte"* —
+apontaram os dois caminhos de perda de dono cobertos por evento (o mod trata
+os dois, corretamente) e, em seguida, **o terceiro que ninguém cobre**: o
+aldeão que some sem disparar evento nenhum. A segunda regra é também o motivo
+de o buraco não ter conserto trivial: podar por ausência apagaria trabalhador
+vivo.
+
+Isso é qualitativamente diferente do que `fabric-development` produziu na
+sessão do E32, onde as decisões que importaram vieram de fora dela. Continua
+sendo **uma** observação, sem controle — mas é a primeira vez que uma skill
+contribui com o critério central de um resultado em uso real.
+
+## As duas arestas achadas
+
+| # | Aresta | Como apareceu |
+|---|---|---|
+| 7 | As 19 perguntas cobriam "qual estado PERSISTE?" e "o que acontece se FALHAR?", mas **nenhuma perguntava quem é o dono do estado e o que o limpa quando o dono some** — a classe de defeito que este projeto já pagou três vezes | A auditoria existia justamente porque o projeto descobriu o padrão sozinho, em jogo. A skill tinha as regras que descrevem o problema e não tinha a pergunta que o encontra |
+| 8 | Regra sem rota: as duas regras de ciclo de vida estavam no `SKILL.md`, mas a tabela de roteamento não tinha nenhuma linha que levasse a um procedimento de auditoria | A skill cobre **reserva** órfã em `multi-villager-systems.md` (com item de checklist), e é o padrão que o mod aplica certo em `MineClaims` — mas nada estende isso a estado cujo dono é o próprio aldeão |
+
+Entrou a pergunta 20 — *quem é o dono deste estado, e o que o limpa quando o
+dono some?* — com o nome do padrão e a instrução operativa: escrever a lista
+de caminhos pelos quais o dono some e o que limpa em cada um; havendo caminho
+sem limpeza, preferir invariante conferida a momento. E entrou a linha de
+roteamento que faltava.
+
+## O que isto acrescenta ao achado metodológico
+
+As oito arestas achadas em duas sessões de uso real seguem o mesmo padrão:
+**nenhuma delas é sobre a qualidade da resposta**, que é tudo o que as oito
+rodadas de medição sabem observar. As seis primeiras eram operacionais
+(comando, caminho, vocabulário, artefato). Estas duas são de **cobertura de
+domínio** — a skill sabe a regra e não tem a pergunta que a aplica —, e essa
+categoria também é invisível para a medição: um agente medido responde bem
+sobre ciclo de vida de aldeão sem nunca precisar auditar um.
+
+## Limite honesto
+
+Auditoria não é medição: não houve condição de controle, e não dá para dizer
+que sem a skill eu não teria chegado ao mesmo lugar. O que dá para dizer é
+mais modesto e verificável: **as duas frases que dirigiram a investigação
+estão escritas no `SKILL.md`, e eu as usei.**

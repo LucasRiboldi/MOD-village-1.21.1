@@ -29,6 +29,7 @@ Os fontes do Vanilla foram gerados (`./gradlew genSources`) e estão em
 | Sistema | Status | Documento |
 |---|---|---|
 | `MobNavigation.findPathTo(BlockPos, int)` — o que a navegação faz com alvo em ar e alvo sólido | concluído | [`E32-miner-walk-target.md`](E32-miner-walk-target.md) |
+| Ciclo de vida do trabalhador — o que limpa o quê quando o dono some | concluído (auditoria) | [`estado-que-sobrevive-ao-dono.md`](estado-que-sobrevive-ao-dono.md) |
 
 ## Fatos confirmados
 
@@ -63,3 +64,11 @@ Os fontes do Vanilla foram gerados (`./gradlew genSources`) e estão em
 | P1 | Teste **de jogo** com `cut` adiantado em relação ao que está aberto. Os dois testes novos são de unidade: eles provam a regra sobre uma escada modelada por predicado, não sobre blocos de verdade |
 | P2 | Sessão de jogo — o E32 nunca foi visto depois de conserto nenhum |
 | P3 | O E34 mora ao lado: o mod ainda não distingue o que ele cavou do que o jogador cavou. O filtro novo aceita como destino um bloco pisável que o **jogador** abriu, e a ordem de cavar continua sendo a única fonte de contiguidade |
+
+## Decisão pendente do autor
+
+**O trabalhador fantasma** — aldeão que some sem disparar `AFTER_DEATH` nem
+`MOB_CONVERSION` fica registrado para sempre, ocupando vaga de profissão e
+reserva de baú, e atravessa o save. Três saídas possíveis, todas com custo;
+a auditoria deliberadamente não escolheu. Ver
+[`estado-que-sobrevive-ao-dono.md`](estado-que-sobrevive-ao-dono.md).

@@ -62,7 +62,7 @@ Esta skill responde **onde encaixar**. Ela não repete a pesquisa (a primeira fa
 isso) nem a implementação (a terceira). Quando faltar fato sobre o Vanilla, ela
 **para e aciona a pesquisa** em vez de inventar API.
 
-## Antes de qualquer coisa: as 19 perguntas
+## Antes de qualquer coisa: as 20 perguntas
 
 Antes de implementar qualquer sistema de aldeão, responda mentalmente. Cada
 "não sei" é um gatilho para `minecraft-code-research`.
@@ -87,11 +87,27 @@ Antes de implementar qualquer sistema de aldeão, responda mentalmente. Cada
 17. Qual parte é do NOSSO mod?
 18. Precisamos MESMO de Mixin?
 19. Qual é a MENOR implementação correta?
+20. QUEM É O DONO deste estado, e o que o limpa quando o dono some?
 ```
 
 As perguntas 1–5 são a espinha. Se você não sabe responder qual **memória**
 representa o estado, provavelmente está prestes a guardar estado de IA num
 `static Map` — e isso é o anti-padrão número um deste domínio.
+
+**A 20 é a que ninguém faz, e ela tem nome: *estado que sobrevive ao dono*.**
+Ferramenta que sobrevive à profissão, destino que sobrevive à tarefa, reserva
+que sobrevive ao reservante, trabalhador que sobrevive ao aldeão. O erro nunca
+é esquecer de limpar — é **pendurar a limpeza num momento** em vez de conferir
+uma invariante. Momento falha: o aldeão está em chunk descarregado, o evento
+não dispara, a tarefa termina bem e não passa pela desistência.
+
+Some por mais caminhos do que se supõe — e dois deles estão nas regras deste
+arquivo, logo abaixo: **zumbificação não é morte** e **ausência não é morte**.
+Para cada estado que você criar, escreva a lista de caminhos pelos quais o
+dono some, e o que limpa em cada um. Se a lista tiver um caminho sem limpeza,
+prefira a invariante conferida a cada passagem — é o que
+`references/multi-villager-systems.md` já manda fazer com reserva, e vale
+igual para estado por aldeão.
 
 ## O fluxo da decisão
 
@@ -211,6 +227,7 @@ Ver `examples/guard-villager-decision.md`.
 | Novo local de trabalho / POI | `workflows/add-job-site.md` |
 | Alterar comportamento Vanilla (trabalho, trades, schedule, gossip, reprodução) | `workflows/modify-vanilla-behavior.md` |
 | Aldeão parado, indo ao lugar errado, ignorando ordem | `workflows/villager-debugging.md` |
+| **Auditar estado que sobrevive ao dono** (pergunta 20) | `references/villager-lifecycle.md` para os caminhos de perda de dono, e `references/multi-villager-systems.md` para a forma da invariante |
 | Lag com vila grande | `workflows/villager-performance.md` |
 | Garantir que nada quebrou | `workflows/villager-regression.md` |
 
