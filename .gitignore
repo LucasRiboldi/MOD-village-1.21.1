@@ -66,3 +66,14 @@ minecraft-assets_structure/
 # As skills em .claude/skills/ SÃO versionadas: são documentação do projeto.
 .claude/*
 !.claude/skills/
+
+# Grafo de conhecimento do projeto (graphify). 23 MB de saída derivada:
+# graph.json, graph.html, o relatório e o cache de extração.
+#
+# É reconstruível a partir do próprio código — `graphify update .` refaz a
+# parte de AST sem custo de API — e muda a cada commit, o que encheria o
+# histórico de diffs de arquivo gerado. Mesma razão de `build/`.
+#
+# O que É versionado é o CLAUDE.md da raiz, que ensina a usá-lo, e a skill
+# em .claude/skills/graphify/.
+graphify-out/
