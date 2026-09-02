@@ -246,6 +246,91 @@ class MineRegistryTest {
         assertEquals(mine.shaft().positionAt(7), mine.nextPosition());
     }
 
+    /**
+     * Bloco solto dentro de galeria aberta não é frente — 2026-09-02.
+     *
+     * <p><b>A sessão de 2026-09-02, 19:19.</b> O log e o código, lado a
+     * lado:
+     *
+     * <pre>
+     * The gallery really ends at 720, 44, 878 — the cursor was 83 steps ahead of it
+     * private static final int CUTS_PER_SEARCH = 64;
+     * </pre>
+     *
+     * <p>A procura varria a ordem inteira desde o primeiro degrau e
+     * parava no primeiro bloco fechado que achasse. Numa galeria <b>já
+     * cavada</b> — e o autor desceu e conferiu que ali começa corredor
+     * aberto — esse primeiro bloco fechado é um resto solto no meio do
+     * túnel, não a frente de escavação. O cursor recuava 83 passos, a
+     * busca só reanda 64, e nenhuma passagem reencontrava o que a
+     * anterior largou. Dois mineiros, vinte minutos, dois blocos.
+     *
+     * <p>O javadoc do {@code findTheFrontier} diz a premissa certa —
+     * <i>tudo o que vem antes já está aberto</i> — e a usava ao
+     * contrário, como se tudo o que vem <b>depois</b> estivesse fechado.
+     */
+    @Test
+    void aLooseBlockInsideAnOpenGalleryIsNotTheFrontier() {
+        Mine mine = Mine.open(UUID.randomUUID(), shaft());
+
+        for (int i = 0; i < 100; i++) {
+            mine.nextPosition();
+        }
+
+        assertTrue(mine.frontierWhereRockBegins(i -> i == 5).isEmpty());
+    }
+
+    /**
+     * A frente é a rocha que continua, e não o primeiro bloco fechado.
+     *
+     * <p>É a distinção inteira numa linha: um resto solto tem túnel
+     * aberto logo depois dele; a frente de escavação tem mais rocha.
+     */
+    @Test
+    void theFrontierIsTheRockThatKeepsGoing() {
+        Mine mine = Mine.open(UUID.randomUUID(), shaft());
+
+        for (int i = 0; i < 100; i++) {
+            mine.nextPosition();
+        }
+
+        assertEquals(60, mine.frontierWhereRockBegins(i -> i == 5 || i >= 60).orElseThrow());
+    }
+
+    /**
+     * O cursor que disparou volta inteiro, ainda que o mundo não confirme
+     * o caminho todo — o E33.
+     *
+     * <p>A outra ponta, e ela não pode ter teto nem depender do que há
+     * logo atrás do cursor: o save de 08-27 chegou com ele a milhares de
+     * passos, e o que se lê lá fora do limite de construção é <b>vazio</b>,
+     * não rocha. Procurar de trás para frente morria no primeiro vazio e
+     * deixava a mina presa — foi o que os dois gametests do E33 disseram
+     * em 2026-09-02, e é por isso que a procura anda a partir da boca.
+     */
+    @Test
+    void theCursorThatRanAheadOutOfTheWorldStillComesBack() {
+        Mine mine = Mine.open(UUID.randomUUID(), shaft());
+
+        for (int i = 0; i < 200; i++) {
+            mine.nextPosition();
+        }
+
+        assertEquals(40, mine.frontierWhereRockBegins(i -> i >= 40 && i < 120).orElseThrow());
+    }
+
+    /** Galeria inteira aberta: não há frente para recuar. */
+    @Test
+    void anOpenGalleryHasNoFrontierToBackUpTo() {
+        Mine mine = Mine.open(UUID.randomUUID(), shaft());
+
+        for (int i = 0; i < 100; i++) {
+            mine.nextPosition();
+        }
+
+        assertTrue(mine.frontierWhereRockBegins(i -> false).isEmpty());
+    }
+
     /** A frente nunca vai para antes do primeiro degrau, nem para trás do fim. */
     @Test
     void theFrontierStaysInsideTheOrder() {

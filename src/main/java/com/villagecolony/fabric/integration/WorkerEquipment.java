@@ -2,6 +2,7 @@ package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.core.worker.model.ToolType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.ProfessionRegistry;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -164,13 +165,29 @@ public final class WorkerEquipment {
         villager.equipStack(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
     }
 
-    /** Se este item é ferramenta que alguma profissão entrega. */
+    /**
+     * Se este item é ferramenta que a colônia entrega — ou já entregou.
+     *
+     * <p><b>A pergunta mudou em 2026-09-02</b>, e o que a mudou foi um
+     * pastor com picareta na mão. Ela era <i>"isto é ferramenta de alguma
+     * profissão?"</i>, feita ao registro de <b>hoje</b>. O mineiro usou
+     * {@code WOODEN_PICKAXE} até a picareta dele virar diamante, e no dia
+     * seguinte àquela troca a picareta de madeira que a própria colônia
+     * tinha entregado deixou de ser reconhecida: virou <b>item do
+     * jogador</b>, que a Regra 3 protege, e ficou naquela mão para
+     * sempre. O log não dizia nada porque o caminho que a mantinha é o
+     * que não escreve linha.
+     *
+     * <p>Quem responde agora é o {@link ToolType} inteiro, que é a
+     * memória do que a colônia já pôs em mão de aldeão — inclusive o que
+     * nenhuma profissão pede mais. O que o jogador deu continua dele:
+     * picareta de pedra, de ferro, espada, pão, nada disso está aqui.
+     */
     private static boolean isProfessionTool(ItemStack held) {
-        for (ProfessionType type : ProfessionType.values()) {
-            Optional<Item> tool = MinecraftTypeAdapter.toItem(
-                    ProfessionRegistry.of(type).requiredTool());
+        for (ToolType tool : ToolType.values()) {
+            Optional<Item> item = MinecraftTypeAdapter.toItem(tool);
 
-            if (tool.isPresent() && held.isOf(tool.get())) {
+            if (item.isPresent() && held.isOf(item.get())) {
                 return true;
             }
         }

@@ -4,7 +4,9 @@ import com.villagecolony.core.type.ColonyPos;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.UUID;
+import java.util.function.IntPredicate;
 
 /**
  * A mina de uma colônia, e até onde ela já foi cavada.
@@ -177,6 +179,54 @@ public final class Mine {
         if (cut > 0) {
             cut--;
         }
+    }
+
+    /**
+     * Onde a rocha recomeça e não para mais — 2026-09-02.
+     *
+     * <p>Quem lê o mundo é o {@code MineDigging}; aqui só se percorre a
+     * ordem de cavar a partir da boca e se pergunta. Vazio quer dizer
+     * <b>não recue</b>: não há rocha entre a boca e o cursor.
+     *
+     * <p><b>O primeiro bloco fechado não é a frente</b>, e foi o que a
+     * sessão de 2026-09-02 mostrou. Numa galeria já cavada ele costuma
+     * ser um <b>resto solto no meio do túnel</b> — o autor desceu e
+     * conferiu que ali começa corredor aberto. O cursor recuava 83 passos
+     * até um desses restos, e a busca só reanda 64: passagem após
+     * passagem ele voltava ao mesmo lugar, com o corredor à frente aberto
+     * e a mina parada. Dois mineiros, vinte minutos, dois blocos.
+     *
+     * <p><b>O que distingue os dois é o que vem depois.</b> Resto solto
+     * tem túnel aberto logo adiante; frente de escavação tem mais rocha.
+     * Por isso só vale como frente a posição fechada cuja seguinte também
+     * está fechada — ou que já é a última antes do cursor.
+     *
+     * <p><b>E por que a procura não anda de trás para frente</b>, que
+     * seria mais curta. O cursor que disparou — o E33, que o save de
+     * 08-27 trouxe a milhares de passos — aponta para fora do mundo
+     * carregado, e o que se lê lá é <b>vazio, não rocha</b>: a volta
+     * morria no primeiro vazio e deixava a mina presa. Os dois gametests
+     * do E33 disseram isso em 2026-09-02, nesta ordem. Andando a partir
+     * da boca, o recuo é tão longo quanto precise ser.
+     *
+     * <p>A premissa do recuo continua de pé: tudo o que vem antes da
+     * frente devolvida está aberto ou é resto solto dentro de túnel
+     * aberto, e nos dois casos há de onde alcançá-la.
+     *
+     * @param closed se a posição de índice {@code i} ainda está fechada
+     */
+    public OptionalInt frontierWhereRockBegins(IntPredicate closed) {
+        for (int i = 0; i < cut; i++) {
+            if (!closed.test(i)) {
+                continue;
+            }
+
+            if (i + 1 >= cut || closed.test(i + 1)) {
+                return OptionalInt.of(i);
+            }
+        }
+
+        return OptionalInt.empty();
     }
 
     /**

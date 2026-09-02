@@ -280,6 +280,51 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
     }
 
     /**
+     * A ferramenta que a colônia deu numa versão antiga também volta —
+     * 2026-09-02.
+     *
+     * <p><b>Visto em jogo, e o log provou por silêncio.</b> O autor viu o
+     * pastor com picareta na mão; a linha {@code was holding ... — the
+     * colony takes it back} não saiu uma vez na sessão inteira. Picareta
+     * de diamante teria saído — ela é a ferramenta do mineiro de hoje e
+     * {@code isProfessionTool} a reconhece. Logo não era de diamante.
+     *
+     * <p><b>Era de madeira.</b> O mineiro usou {@code WOODEN_PICKAXE} até
+     * o commit {@code 5227a2d}, e o {@code ToolType} ainda a tem, sem
+     * profissão nenhuma pedindo por ela. A invariante perguntava <i>"isto
+     * é ferramenta de alguma profissão?"</i> ao registro de hoje, e a
+     * resposta virou não — então a picareta que a própria colônia
+     * entregou passou a ser tratada como <b>item do jogador</b>, que a
+     * Regra 3 protege. Para sempre.
+     *
+     * <p>A pergunta certa é <i>"isto é ferramenta que a colônia já
+     * entregou?"</i>, e quem a responde é o {@code ToolType} inteiro, que
+     * é a memória dessas entregas. Picareta de pedra ou de ferro continua
+     * sendo do jogador — ver {@link #whatTheVillagerAlreadyHoldsIsKept}.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_equipment")
+    public void theToolOfAnOlderVersionIsAlsoTakenBack(TestContext context) {
+        VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
+
+        // A picareta que o mineiro usava antes de a dele virar diamante.
+        villager.equipStack(EquipmentSlot.MAINHAND, new ItemStack(Items.WOODEN_PICKAXE));
+
+        Worker worker = Worker.restore(
+                villager.getUuid(), UUID.randomUUID(), ProfessionType.SHEPHERD);
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
+        ItemStack held = villager.getEquippedStack(EquipmentSlot.MAINHAND);
+
+        context.assertTrue(
+                held.isOf(Items.SHEARS),
+                "o pastor continua com " + (held.isEmpty() ? "nada" : held.getItem())
+                        + " na mão");
+
+        context.complete();
+    }
+
+    /**
      * A ferramenta certa não é entregue duas vezes.
      *
      * <p>A conta de entregas é o que o ciclo registra, e ela não pode

@@ -3,6 +3,7 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.model.MineShaft;
+import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.core.coordination.IdleReason;
@@ -17,6 +18,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.UUID;
 
 /**
@@ -402,32 +404,51 @@ public final class MineDigging {
      * <p>Posição que não se cava — bedrock, casa da vila — é pulada: ela
      * ficaria sendo a frente para sempre. Quem a trata é o
      * {@code blockedAgain}, que vira a galeria.
+     *
+     * <p><b>E ela procura de trás para frente</b> — 2026-09-02. A
+     * premissa acima vale para um lado só: tudo o que vem <b>antes</b> da
+     * frente está aberto, e não o contrário. Numa galeria já cavada, o
+     * primeiro bloco fechado da ordem inteira é um resto solto dentro do
+     * túnel — e o cursor recuava 83 passos até ele, passagem após
+     * passagem, com o corredor à frente aberto. Ver
+     * {@link Mine#frontierWhereRockBegins}.
      */
     private static void findTheFrontier(ServerWorld world, Mine mine) {
-        for (int i = 0; i < mine.cut(); i++) {
-            BlockPos at = MinecraftTypeAdapter.toBlockPos(mine.shaft().positionAt(i));
+        OptionalInt frontier =
+                mine.frontierWhereRockBegins(i -> isStillClosed(world, mine.shaft().positionAt(i)));
 
-            if (!world.isInBuildLimit(at)) {
-                continue;
-            }
-
-            BlockState state = world.getBlockState(at);
-
-            if (state.isAir() || !state.getFluidState().isEmpty() || !canDig(world, at)) {
-                continue;
-            }
-
-            if (i < mine.cut()) {
-                VillageColonyMod.LOGGER.info(
-                        "The gallery really ends at {} — the cursor was {} steps ahead of it",
-                        at.toShortString(),
-                        mine.cut() - i);
-
-                mine.rewindTo(i);
-            }
-
+        if (frontier.isEmpty()) {
             return;
         }
+
+        int step = frontier.getAsInt();
+        BlockPos at = MinecraftTypeAdapter.toBlockPos(mine.shaft().positionAt(step));
+
+        VillageColonyMod.LOGGER.info(
+                "The gallery really ends at {} — the cursor was {} steps ahead of it",
+                at.toShortString(),
+                mine.cut() - step);
+
+        mine.rewindTo(step);
+    }
+
+    /**
+     * Se esta posição da ordem de cavar ainda é rocha que vale a picareta.
+     *
+     * <p>Ar, água, lava e a tocha da própria mina são espaço aberto; o
+     * que não se cava — bedrock, casa da vila — não é frente, porque
+     * ficaria sendo frente para sempre.
+     */
+    private static boolean isStillClosed(ServerWorld world, ColonyPos position) {
+        BlockPos at = MinecraftTypeAdapter.toBlockPos(position);
+
+        if (!world.isInBuildLimit(at)) {
+            return false;
+        }
+
+        BlockState state = world.getBlockState(at);
+
+        return !state.isAir() && state.getFluidState().isEmpty() && canDig(world, at);
     }
 
     /**
