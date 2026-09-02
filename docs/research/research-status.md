@@ -65,10 +65,22 @@ Os fontes do Vanilla foram gerados (`./gradlew genSources`) e estão em
 | P2 | Sessão de jogo — o E32 nunca foi visto depois de conserto nenhum |
 | ~~P3~~ | ✅ **Feito em 2026-09-02 (E34).** O risco que este item previa era real e maior do que eu escrevi: não era só bloco do jogador — o laço do E32 **pulava** posição fechada e seguia somando, então qualquer vão aberto num índice mais avançado (bolsão do jogador **ou caverna natural**) virava destino do outro lado de uma parede. O laço passou a parar na primeira posição não-atravessável. Nasceu daí a separação entre **atravessar** e **ficar de pé** (`MinerReach.Footing`): parar no que não é pisável travaria a descida no primeiro degrau, porque duas de cada três posições da escada são peito e cabeça |
 
-## Decisão pendente do autor
+## Decisões do autor — respondidas em 2026-09-02
 
-**O trabalhador fantasma** — aldeão que some sem disparar `AFTER_DEATH` nem
-`MOB_CONVERSION` fica registrado para sempre, ocupando vaga de profissão e
-reserva de baú, e atravessa o save. Três saídas possíveis, todas com custo;
-a auditoria deliberadamente não escolheu. Ver
-[`estado-que-sobrevive-ao-dono.md`](estado-que-sobrevive-ao-dono.md).
+**O trabalhador fantasma:** escolhida a saída de **medir antes de
+consertar**. `PhantomWorkerLog` conta ausências seguidas em colônia ativa e
+noticia na terceira, uma vez. A poda foi recusada porque *ausência não é
+morte* e o gatilho é raro. **A próxima sessão de jogo responde se o fantasma
+existe** — e essa resposta é a que decide se algum conserto vale.
+
+**A colônia abandonada no ciclo:** escolhido **pular só o planejamento de
+obra**, não o ciclo inteiro. Corta a varredura de lote e o crescimento de
+rua para colônia sem vila; trabalhadores seguem cuidados, porque a marca de
+abandono oscila (E9). Regra em `ColonyAbandonment.plansConstruction`.
+
+**A varredura:** escolhido **não mexer** até uma sessão dizer se o índice de
+ruas de 08-27 já a resolveu. A primeira linha a ler no log é `still
+sweeping`: uma vez seguida de `planned ... at` significa resolvido; a sessão
+inteira significa que é ali que está toda a fluidez.
+
+Ver [`estado-que-sobrevive-ao-dono.md`](estado-que-sobrevive-ao-dono.md).

@@ -88,6 +88,7 @@ public final class ServerLifecycleHandler {
         RoadExtension.clearAll();
         BuildSiteScanner.clearAll();
         SweepLog.clearAll();
+        PhantomWorkerLog.clearAll();
         TestBarrier.clearAll();
         ColonyStateLog.clearAll();
         VillageDetectionHandler.clearPending();
@@ -245,6 +246,7 @@ public final class ServerLifecycleHandler {
         RoadExtension.clearAll();
         BuildSiteScanner.clearAll();
         SweepLog.clearAll();
+        PhantomWorkerLog.clearAll();
         TestBarrier.clearAll();
         ColonyStateLog.clearAll();
         VillageDetectionHandler.clearPending();

@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -117,5 +118,30 @@ class ColonyAbandonmentTest {
         assertEquals(
                 Optional.of(ColonyState.ABANDONED),
                 ColonyAbandonment.judge(colony, probedFrom, List.of(villageAt(CENTER)), false));
+    }
+
+    /**
+     * <b>Colônia sem vila não planeja obra</b> — 2026-09-02.
+     *
+     * <p>O planejamento é onde moram a varredura de lote e o crescimento
+     * de rua, e a varredura tem teto de mil e vinte e quatro colunas por
+     * passagem. Colônia abandonada cobrava isso por ciclo sem ter o que
+     * construir.
+     */
+    @Test
+    void anAbandonedColonyDoesNotPlanConstruction() {
+        Colony colony = colonyAt(CENTER);
+
+        colony.setState(ColonyState.ABANDONED);
+
+        assertFalse(
+                ColonyAbandonment.plansConstruction(colony),
+                "a colônia abandonada continua pagando a varredura de lote");
+    }
+
+    /** E a que tem vila continua planejando, que é o caso normal. */
+    @Test
+    void aColonyWithAVillageStillPlans() {
+        assertTrue(ColonyAbandonment.plansConstruction(colonyAt(CENTER)));
     }
 }

@@ -55,6 +55,59 @@ lista abaixo.
 
 ## ✅ Resolvido
 
+### 2026-09-02, à tarde — duas decisões do autor, e o que cada uma virou
+
+Saíram da auditoria de *estado que sobrevive ao dono*
+([`docs/research/estado-que-sobrevive-ao-dono.md`](docs/research/estado-que-sobrevive-ao-dono.md)),
+e as duas foram escolhidas pelo autor entre alternativas com custo
+diferente.
+
+#### A colônia abandonada parou de pagar a varredura
+
+`runColonyCycles` filtra por `isActive()`, que é **chunk carregado**, e não
+por estado. Colônia `ABANDONED` rodava o ciclo inteiro — inclusive o
+`ConstructionPlanner`, que carrega a varredura de lote (**teto de 1.024
+colunas por passagem**) e o crescimento de rua. Sem vila, nada disso compra
+nada, e o orçamento de varredura é justamente o que o §"o que falta ver em
+jogo" chama de decisivo.
+
+**Só o planejamento foi cortado, e não o ciclo.** O trabalhador de uma
+colônia abandonada continua sendo cuidado — tarefa, depósito, dispensa. A
+marca de abandono **oscila** (é o E9), e pular o ciclo inteiro faria o
+aldeão trabalhar aos soluços. Pular só o planejamento custa, no pior caso,
+um ciclo de atraso para quem foi marcado por engano.
+
+A regra mora no Core (`ColonyAbandonment.plansConstruction`), onde a de
+abandono já morava; na camada fabric ficou só a aplicação.
+
+#### E o trabalhador fantasma passou a ser medido, não consertado
+
+A auditoria achou um caminho de perda de dono que **nenhum evento cobre**:
+o aldeão que some sem `AFTER_DEATH` nem `MOB_CONVERSION` fica registrado
+para sempre, segurando vaga de profissão e reserva de baú, e atravessa o
+save.
+
+**Não foi consertado de propósito.** *Ausência não é morte* — podar por
+"não achei a entidade" apagaria trabalhador legítimo sempre que o jogador
+se afastasse. E o gatilho é raro: aldeão não despawna sozinho, o que foi
+conferido no fonte durante o E32.
+
+Entrou `PhantomWorkerLog`, que conta ausências seguidas de trabalhador em
+colônia **ativa** e noticia na terceira — uma vez, porque a condição é
+permanente. A próxima sessão diz se o fantasma existe de verdade; até lá,
+qualquer conserto seria escrito contra suposição.
+
+> A instrumentação do estado órfão não podia virar estado órfão: o que
+> sobra nela sai por **invariante** (`retainAll` contra os trabalhadores
+> vivos), e não por evento. É a lição da própria auditoria aplicada a ela
+> mesma.
+
+| | |
+|---|---|
+| **Verificado rodando** | `gradlew build` → **575 unitários, 0 falhas**; `runGametest` → **219 de 219** |
+| **Fase vermelha conferida** | em `plansConstruction`. As cinco afirmações do `PhantomWorkerLog` são de regra nova, não de conserto |
+| **O que não foi verificado** | sessão de jogo. Nenhuma das duas foi vista rodando, e a segunda **existe justamente para ser vista** |
+
 ### 2026-09-02 — a fronteira de conversão passou a ser conferida
 
 Não veio de sessão de jogo: veio de olhar o grafo do projeto. `ColonyPos`

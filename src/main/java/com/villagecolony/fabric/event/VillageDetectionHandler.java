@@ -382,7 +382,22 @@ public final class VillageDetectionHandler {
         // entra na conta do mesmo ciclo, e não do seguinte. Planejar
         // depois faria a colônia passar um ciclo inteiro sem saber que
         // tem uma casa para levantar.
-        ConstructionPlanner.plan(overworld, colony);
+        // E a conta do trabalhador que o registro tem e o mundo não. Só
+        // mede — ver PhantomWorkerLog e a auditoria de estado órfão.
+        PhantomWorkerLog.probe(overworld, colony.id());
+
+        // Colônia sem vila não planeja obra — 2026-09-02. O planejamento
+        // carrega a varredura de lote e o crescimento de rua, e a
+        // varredura tem teto de 1.024 colunas por passagem: cada colônia
+        // abandonada com chunks carregados cobrava isso por ciclo sem ter
+        // o que construir. A regra é do Core; aqui mora a aplicação.
+        //
+        // Só o planejamento. O resto do ciclo continua rodando para ela,
+        // porque a marca de abandono oscila — é o E9 — e pular o ciclo
+        // inteiro faria o trabalhador dela andar aos soluços.
+        if (ColonyAbandonment.plansConstruction(colony)) {
+            ConstructionPlanner.plan(overworld, colony);
+        }
 
         // A tábua da vila, e não sempre a de carvalho — a Regra 20. A
         // obra de uma colônia de taiga pede pinheiro, e perguntar por

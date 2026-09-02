@@ -113,4 +113,28 @@ public final class ColonyAbandonment {
 
         return false;
     }
+
+    /**
+     * Se vale planejar obra para esta colônia — 2026-09-02.
+     *
+     * <p><b>Colônia sem vila não constrói</b>, e planejar para ela não é
+     * inofensivo: o planejamento é onde moram a varredura de lote e o
+     * crescimento de rua, e a varredura tem teto de mil e vinte e quatro
+     * colunas <b>por passagem</b>. Cada colônia abandonada com os chunks
+     * carregados cobrava isso por ciclo e não comprava nada.
+     *
+     * <p>É o orçamento que o {@code TODO.md} chama de decisivo — <i>"a
+     * varredura acabando num ciclo é o que decide se dá para ver qualquer
+     * outra coisa"</i>.
+     *
+     * <p><b>Só o planejamento, e não o ciclo.</b> O trabalhador de uma
+     * colônia abandonada continua sendo cuidado: tarefa, depósito e
+     * dispensa seguem. A marca de abandono <b>oscila</b> — é o E9 —, e um
+     * ciclo inteiro pulado faria o aldeão trabalhar aos soluços. Pular só
+     * o planejamento custa, no pior caso, um ciclo de atraso para uma
+     * colônia marcada por engano, que retoma no seguinte.
+     */
+    public static boolean plansConstruction(Colony colony) {
+        return colony.state() != ColonyState.ABANDONED;
+    }
 }
