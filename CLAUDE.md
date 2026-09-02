@@ -11,7 +11,14 @@ Rules:
   Two ways back, and they trade different things:
 
   1. **Restore the backup** — keeps the curated names, loses the new code. `cp` of `graph.json`, `GRAPH_REPORT.md`, `manifest.json`, `cost.json` and `.graphify_labels.json`, then delete `.graphify_labels.json.sig` (it belongs to the labels you just replaced), rewrite `.graphify_root` with the absolute path (`update` sets it to `.`), and re-run `graphify export html`.
-  2. **Carry the names onto the new graph** — keeps both. For each new community, take the curated `community_name` that the majority of its nodes carried in the previous `graph.json`; hand-name only the communities with no clear majority. Done 2026-09-02 against the 3,167-node curated graph: **145 of 158 mapped at ≥50% overlap**, 13 needed a name. Where one curated name won two communities, the larger overlap keeps it and the other gets its hub appended. Then write `community_name` into `graph.json` and `.graphify_labels.json`, and regenerate `GRAPH_REPORT.md` (`graphify.report.generate`) and `graph.html`.
+  2. **Carry the names onto the new graph** — keeps both, and this is the one to reach for. `scripts/graphify_relabel.py` does it: for each new community it takes the curated `community_name` that the majority of its nodes carried in the previous `graph.json`, then rewrites `graph.json`, `.graphify_labels.json`, `GRAPH_REPORT.md` and `graph.html`. Measured 2026-09-02 against the 3,167-node curated graph: **143 of 158 decided by vote**, the rest by `scripts/community_names.json`.
+
+     ```
+     python scripts/graphify_relabel.py --reference graphify-out/<backup>/graph.json --dry-run
+     python scripts/graphify_relabel.py --reference graphify-out/<backup>/graph.json --overrides scripts/community_names.json
+     ```
+
+     Run `--dry-run` first: it lists the communities with no clear majority, with sample members, which is exactly what you need to add a name to `scripts/community_names.json`. That file is keyed by **node id, not community id** — node ids are deterministic and survive re-clustering, community ids do not, so a number-keyed override would silently name the wrong community after the next `update`.
 
   Do **not** expect `graphify label` to do this. With no LLM backend configured — there is no `GEMINI_API_KEY`/`GOOGLE_API_KEY` here — it prints `no LLM backend configured; keeping Community N placeholders`, does nothing useful, and still overwrites `graphify-out/<date>/`. The agent doing the labeling *is* the LLM; option 2 is that job.
 

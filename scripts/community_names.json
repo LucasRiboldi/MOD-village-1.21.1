@@ -1,0 +1,17 @@
+{
+  "src_main_java_com_villagecolony_core_colony_service_villagedetector_villagedetector": "Work Assignment and Scheduling",
+  "src_main_java_com_villagecolony_core_construction_model_blueprintblock_blueprintblock": "Construction Types and State",
+  "src_main_java_com_villagecolony_fabric_adapter_minecrafttypeadapter_minecrafttypeadapter": "Storage and Type Adapter",
+  "docs_workers_analysis_01_overview_workers_mod": "Workers Mod Reverse Engineering",
+  "src_main_java_com_villagecolony_core_colony_model_colonylifecycle_colonylifecycle": "Colony Lifecycle and Abandonment",
+  "src_main_java_com_villagecolony_fabric_work_lumberjackreport_lumberjackreport": "Colony Identity and Reports",
+  "architecture_foundation_task_module": "Task States and MVP Scope",
+  "docs_technical_project_state_author_rules": "Authoring Rules and MVP Gates",
+  "class_architecture_constructionservice": "Simulation Loop and Services",
+  "construction_system_plains_small_house": "Organic Expansion and Blueprints",
+  "docs_technical_project_state_known_errors": "Exact Arrival and Known Errors",
+  "src_test_java_com_villagecolony_architecture_conversionboundarytest_conversionboundarytest": "Conversion Boundary Test",
+  "claude_graphify": "Graphify Setup",
+  "src_main_java_com_villagecolony_core_type_colonypos_colonypos": "Colony Center and Observation",
+  "src_test_java_com_villagecolony_core_type_colonypostest_colonypostest": "ColonyPos Distance"
+}
