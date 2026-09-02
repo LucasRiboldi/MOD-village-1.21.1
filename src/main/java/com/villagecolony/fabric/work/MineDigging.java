@@ -220,8 +220,28 @@ public final class MineDigging {
             return Optional.empty();
         }
 
-        return followingTheVein(world, mine.get())
+        Optional<BlockPos> found = followingTheVein(world, mine.get())
                 .or(() -> nextCut(world, workerId, mine.get()));
+
+        if (found.isEmpty()) {
+            // <b>Escada que ninguém está usando volta a ser de quem
+            // quiser</b> — 2026-09-02. A reserva seguia o trabalho
+            // <i>aberto</i>, e não o trabalho <i>que anda</i>: um mineiro
+            // que pegou a mina, cavou um bloco e parou de achar pedra
+            // segurava a escada por dezesseis minutos, com o outro em
+            // "waiting for the shaft" o tempo todo e a colônia recebendo
+            // duas pedras. Nenhuma das saídas existentes alcançava esse
+            // caso — o retainOnly só tira quem perdeu o trabalho, e o
+            // guarda de travamento conta tiques andando até a pedra, que
+            // é o que quem não tem alvo não faz.
+            //
+            // Uma passagem sem pedra não está usando o cursor, então
+            // largar é seguro: a passagem seguinte pergunta de novo, e a
+            // vez vai para quem estiver com trabalho.
+            MineClaims.release(workerId);
+        }
+
+        return found;
     }
 
     /**

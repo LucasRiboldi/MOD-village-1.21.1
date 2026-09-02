@@ -2499,6 +2499,86 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /** Um mineiro desta colônia, de pé onde se mandar. */
+    /**
+     * Quem não achou pedra larga a escada — 2026-09-02.
+     *
+     * <p><b>O impasse que a sessão de 2026-09-02 mostrou inteiro.</b> A
+     * reserva segue o <i>trabalho aberto</i>, e não o trabalho <i>que
+     * anda</i>: o mineiro {@code 45617d43} pegou a mina, cavou um bloco,
+     * e passou os dezesseis minutos seguintes em {@code looking for
+     * stone} sem soltá-la. O outro passou os mesmos dezesseis em
+     * {@code waiting for the shaft}. A colônia recebeu duas pedras.
+     *
+     * <p>Nenhuma das três saídas da mina servia. O {@code retainOnly} só
+     * tira quem perdeu o trabalho, e o dele estava aberto; o
+     * {@code stepAside} é chamado pelo guarda de travamento, que conta
+     * tiques <b>andando até a pedra</b> — e quem não tem alvo não anda,
+     * então o contador ficou em {@code stall 0/2400} nos dois. O de fora
+     * também não estourava, pela mesma razão.
+     *
+     * <p>A regra que faltava é a mais simples: passagem que não achou
+     * pedra não está usando o cursor, e escada que ninguém usa volta a
+     * ser de quem quiser.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_one_digger",
+            tickLimit = 40)
+    public void theMinerWhoFoundNoStoneLetsTheShaftGo(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        Colony colony = mineOwner(context);
+
+        // A galeria inteira já aberta, que é a forma do impasse: o dono
+        // da escada procura e não acha. Escrito posição a posição a
+        // partir da própria mina, e não com um bloco de ar sobre a
+        // arena, porque a ordem de cavar sai dela em poucos degraus.
+        hollowGallery(world, colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        UUID first = miner(context, colony, chest, owned, new BlockPos(1, 9, 1));
+        UUID second = miner(context, colony, chest, owned, new BlockPos(5, 9, 5));
+
+        reserveStone(colony, ResourceType.COBBLESTONE, first);
+        reserveStone(colony, ResourceType.COAL, second);
+
+        try {
+            Optional<BlockPos> found = MineDigging.nextTarget(
+                    world, first, colony.id(), context.getAbsolutePos(ROCK));
+
+            context.assertTrue(
+                    found.isEmpty(),
+                    "este teste precisa de uma galeria sem pedra, e ela achou " + found);
+
+            context.assertTrue(
+                    MineClaims.diggerIn(colony.id()).isEmpty(),
+                    "quem não achou pedra continua com a escada na mão — é o impasse"
+                            + " de 2026-09-02, e o segundo mineiro espera para sempre");
+        } finally {
+            MineClaims.clearAll();
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * Abre toda a janela de busca da galeria desta colônia.
+     *
+     * <p>Um pouco além das 64 posições que uma passagem examina, para
+     * que a busca chegue ao fim sem achar uma pedra sequer.
+     */
+    private static void hollowGallery(ServerWorld world, Colony colony) {
+        Mine mine = VillageColonyMod.MINES.of(colony.id()).orElseThrow();
+
+        for (int i = 0; i < 80; i++) {
+            world.setBlockState(
+                    MinecraftTypeAdapter.toBlockPos(mine.shaft().positionAt(i)),
+                    Blocks.AIR.getDefaultState());
+        }
+    }
+
     private static UUID miner(
             TestContext context,
             Colony colony,

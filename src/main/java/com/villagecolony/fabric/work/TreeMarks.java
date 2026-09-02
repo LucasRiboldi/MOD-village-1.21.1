@@ -117,7 +117,16 @@ public final class TreeMarks {
      * chegar é o guarda de travamento, depois de dois minutos de horário
      * de trabalho tentando. Ver {@link #giveUp}.
      */
-    private static final Map<BlockPos, Long> UNREACHABLE = new HashMap<>();
+    private static final Map<BlockPos, Refusal> UNREACHABLE = new HashMap<>();
+
+    /**
+     * Quando a árvore recusou pela última vez, e quantas vezes já recusou.
+     *
+     * <p>A contagem é o que faltava em 2026-09-02: sem ela toda recusa
+     * é a primeira, e o prazo nunca cresce.
+     */
+    private record Refusal(long since, int count) {
+    }
 
     /**
      * Por quantos ticks uma árvore fica marcada como inalcançável.
@@ -129,12 +138,56 @@ public final class TreeMarks {
      */
     private static final int UNREACHABLE_MEMORY = 10 * VillageDetector.CYCLE_TICKS;
 
+    /** Quantas vezes o prazo pode dobrar. Além disso ele para de crescer. */
+    private static final int MAX_DOUBLINGS = 3;
+
+    /** E o teto em múltiplos do prazo base: oitenta ciclos, mais de uma hora. */
+    private static final int MAX_MEMORY_FACTOR = 8;
+
     /**
-     * Anota que este grupo de tronco não é árvore.
+     * Por quanto tempo se lembra <b>quantas vezes</b> a árvore recusou.
      *
-     * <p>A busca deixa de devolvê-lo, e o lenhador passa ao próximo. Ver
-     * {@link #REJECTED} para o que acontece sem isto.
+     * <p>Mais longo que o maior castigo, e é o que faz a escada de
+     * prazos existir: se a contagem morresse junto com o castigo, a
+     * árvore voltaria a ser ré primária a cada volta, e o prazo nunca
+     * passaria de dez ciclos — que é exatamente o laço que a sessão de
+     * 2026-09-02 mediu.
      */
+    private static final int TALLY_MEMORY = 2 * UNREACHABLE_MEMORY * MAX_MEMORY_FACTOR;
+
+    /**
+     * Quanto tempo fica de fora a árvore que já recusou tantas vezes —
+     * 2026-09-02.
+     *
+     * <p><b>Um prazo só era curto demais para o que ele custa.</b> A
+     * sessão de 2026-09-02 mediu a volta inteira: marcada às 19:18:36
+     * por 6.000 ticks, a árvore de {@code 749, 63, 905} era de novo a
+     * mais próxima nove minutos e trinta e quatro segundos depois, e
+     * custou outros <b>dois minutos de expediente</b> — o
+     * {@link #stallLimit} inteiro — para o lenhador reaprender o que já
+     * sabia. Duas árvores, quatro tentativas, perto de metade do tempo
+     * dos dois lenhadores da vila.
+     *
+     * <p>A primeira recusa continua valendo dez ciclos, e é decisão do
+     * autor: o jogador constrói a ponte e vê o mod mudar de ideia na
+     * mesma sessão. <b>A segunda é outra coisa</b> — é prova de que a
+     * primeira não foi azar —, e por isso o prazo dobra a cada recusa.
+     *
+     * <p>Com teto, pela Regra 23: barranco aplainado vira floresta de
+     * novo, e castigo maior que a vida do servidor não é castigo, é
+     * esquecimento. Oito voltas do prazo base é mais de uma hora — tempo
+     * de sobra para o jogador mudar o terreno.
+     */
+    static long memoryFor(int refusals) {
+        if (refusals <= 0) {
+            return 0;
+        }
+
+        long doubled = (long) UNREACHABLE_MEMORY << Math.min(refusals - 1, MAX_DOUBLINGS);
+
+        return Math.min(doubled, (long) UNREACHABLE_MEMORY * MAX_MEMORY_FACTOR);
+    }
+
     /**
      * Marca uma árvore como fora de alcance por ora.
      *
@@ -156,12 +209,16 @@ public final class TreeMarks {
     public static void markUnreachable(ServerWorld world, BlockPos base) {
         forgetStaleMarks(world);
 
-        UNREACHABLE.put(base, world.getTime());
+        Refusal before = UNREACHABLE.get(base);
+        int count = before == null ? 1 : before.count() + 1;
+
+        UNREACHABLE.put(base, new Refusal(world.getTime(), count));
 
         VillageColonyMod.LOGGER.info(
-                "Tree at {} is out of reach — skipping it for {} ticks",
+                "Tree at {} is out of reach — refused {} times now, skipping it for {} ticks",
                 base.toShortString(),
-                UNREACHABLE_MEMORY);
+                count,
+                memoryFor(count));
     }
 
     /**
@@ -178,8 +235,11 @@ public final class TreeMarks {
      * esquecer tudo ao encher.
      */
     static void forgetStaleMarks(ServerWorld world) {
+        // O prazo do castigo é um; o da contagem é outro, e mais longo.
+        // Ver TALLY_MEMORY: é ele que faz a segunda recusa custar mais
+        // que a primeira em vez de recomeçar do zero.
         UNREACHABLE.values().removeIf(
-                since -> world.getTime() - since >= UNREACHABLE_MEMORY);
+                refusal -> world.getTime() - refusal.since() >= TALLY_MEMORY);
 
         // E as recusas de "não é árvore", pela Regra 23: o jogador
         // planta uma muda ao lado do pilar, e o que era construção passa
@@ -213,19 +273,16 @@ public final class TreeMarks {
      * fazia a primeira; a segunda entrou em 2026-08-26.
      */
     public static boolean isOutOfReach(ServerWorld world, BlockPos base) {
-        Long since = UNREACHABLE.get(base);
+        Refusal refusal = UNREACHABLE.get(base);
 
-        if (since == null) {
+        if (refusal == null) {
             return false;
         }
 
-        if (world.getTime() - since < UNREACHABLE_MEMORY) {
-            return true;
-        }
-
-        UNREACHABLE.remove(base);
-
-        return false;
+        // A entrada fica mesmo depois de o castigo vencer, e é de
+        // propósito: ela carrega a contagem, que é o que faz o castigo
+        // seguinte ser maior. Quem a apaga é forgetStaleMarks.
+        return world.getTime() - refusal.since() < memoryFor(refusal.count());
     }
 
     static void reject(ServerWorld world, List<BlockPos> trunk) {

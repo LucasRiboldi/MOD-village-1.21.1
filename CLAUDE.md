@@ -26,3 +26,32 @@ Rules:
 
   Re-clustering also moves nodes between communities, so a name can end up sitting oddly on a node you remember elsewhere. `ColonyPos` left `Geometry Helpers` for `Colony Center and Observation`, because 12 of that old community's 20 nodes went there; the 8 that stayed are now `ColonyPos Distance`. The name follows the majority of the members, not any one node.
 - `.graphifyignore` at the root excludes `.claude/`, and it has to. The `.gitignore` reopens `.claude/skills/` so the skills are versioned, graphify reads `.gitignore`, and without the exclusion `update` indexes the 158 skill markdowns and adds ~2.2k heading nodes to the mod's graph — measured 2026-09-02: 3,167 to 5,422 nodes, which pushed `graph.html` past the 5,000 limit into aggregated community view. `.graphifyignore` is read after `.gitignore` and can only ever exclude more, never re-include.
+
+## As skills do projeto: ofereça, não decida sozinho
+
+Este projeto carrega quatro skills próprias em `.claude/skills/`. Elas são
+versionadas de propósito — são o conhecimento acumulado do projeto, e não
+configuração de máquina.
+
+| skill | quando ela é a ferramenta certa |
+|---|---|
+| `fabric-development` | escrever ou alterar código de mod: registro, Mixin, networking, persistência, datagen, gametest, crash, lag, bug que só aparece em servidor |
+| `minecraft-villager-systems` | qualquer coisa que toque aldeão ou vila: Brain, Memory, Sensor, Activity, POI, profissão, local de trabalho, Schedule, trades, reprodução, aldeão parado |
+| `minecraft-code-research` | investigar como o Minecraft faz alguma coisa antes de imitá-la — precede as duas de cima |
+| `graphify` | pergunta sobre a base: onde está, como se liga, o que depende do quê |
+
+**A regra: quando você perceber que uma delas ajudaria na tarefa em mãos,
+diga isso e ofereça rodá-la — antes de sair fazendo à mão.** Uma linha
+basta: qual skill, o que ela acrescentaria aqui, e a pergunta. Quem
+decide é o autor.
+
+Ela vale inclusive — e principalmente — quando a tarefa parece que dá
+para tocar direto. O caso que a motivou é justamente esse: sai mais caro
+descobrir no meio do trabalho que a skill teria dado o caminho pronto do
+que gastar uma linha perguntando antes.
+
+**O que a regra não é.** Não é pedir permissão para trabalhar, e não é
+oferecer skill em toda mensagem. Se nenhuma se aplica, siga sem citar
+nenhuma; se o autor já disse que não quer, não repita a oferta no mesmo
+assunto. E oferecer não é esperar de braços cruzados: o que não depende
+da resposta continua andando.
