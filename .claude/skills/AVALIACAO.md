@@ -16,6 +16,7 @@ errada.
 | 5 | 2026-09-01 | eval-0..3 (originais) | `minecraft-villager-systems`, `fabric-development` | Haiku 4.5 | 1 |
 | 6 | 2026-09-02 | eval-0..3 repetido (r2, r3 — completa n=3) | `minecraft-villager-systems`, `fabric-development` | Haiku 4.5 | 3 |
 | 7 | 2026-09-02 | `rodada-2-processo` (contador de árvores), primeira vez em Haiku | `fabric-development`, `minecraft-villager-systems` | Haiku 4.5 | 1 |
+| 8 | 2026-09-02 | `rodada-2-processo` repetida (r2, r3 — completa n=3) | `fabric-development`, `minecraft-villager-systems` | Haiku 4.5 | 3 |
 
 ## Qualidade e usabilidade das três skills (síntese, atualizada após a rodada 6)
 
@@ -62,8 +63,8 @@ afirmar com o que foi medido, não uma separação limpa e garantida.
 |---|---|---|---|
 | ~~Repetir eval-0..3 em Haiku a n=3~~ | — | — | ✅ **Feito em 2026-09-02** (rodada 6, r2+r3). Confirmado: `eval-1`/`eval-2` sustentam vantagem de `with_skill` em 3 de 3; `eval-0`/`eval-3` seguem sem vantagem clara. Ver seção "Rodada 2026-09-02" |
 | ~~Repetir `rodada-2-processo` em Haiku~~ | — | — | ✅ **Feito em 2026-09-02 (2)**, n=1. Achado mais forte de toda a avaliação até agora: `without_skill` tem um bug funcional real (conta árvore por tora, não por árvore inteira) que `with_skill` não tem. Ver seção "Rodada 2026-09-02 (2)" — **precisa repetir a n=3** antes de virar conclusão definitiva |
-| **Repetir `rodada-2-processo` em Haiku a n=3** | **Alta** — mesma mecânica já rodada (clone isolado + build real), só volume maior; cada rodada leva ~20-30min por já envolver `gradlew build` duas vezes | **Alta, agora a de maior prioridade** — é a primeira vantagem *funcional* (não só de diagnóstico/API) medida em toda a avaliação, e está em n=1 | Sem repetição, "`with_skill` evita um bug real de contagem" não pode virar conclusão — mesmo aviso de sempre desde `eval-4` |
-| Repetir eval-4/eval-5 em Opus 5 (hoje n=1) | Baixa — mesma mecânica já rodada, só repetir | Média | Confirma se o empate 12/12-estilo se sustenta com variância, como já foi feito pro Haiku |
+| ~~Repetir `rodada-2-processo` em Haiku a n=3~~ | — | — | ✅ **Feito em 2026-09-02 (3)**. A vantagem de r1 **não se sustentou como regra**: `with_skill` acerta a semântica em 2/3, `without_skill` em 1/3 — vantagem parcial, não unânime como `eval-1`/`eval-2`. Ver seção "Rodada 2026-09-02 (3)" |
+| Repetir eval-4/eval-5 em Opus 5 (hoje n=1) | Baixa — mesma mecânica já rodada, só repetir | Média, agora a de maior prioridade que resta | Confirma se o empate 12/12-estilo se sustenta com variância, como já foi feito pro Haiku |
 | Confirmar a hipótese "with_skill investiga mais o código real do projeto" (achada em eval-5, 2 de 3) | Média — precisa repetir em `eval-4` e nos casos originais pra ver se é geral ou específico do prompt | Média-alta — se confirmar, é o achado mais forte e citável de toda a avaliação | — |
 | Adicionar sentinela em `grade-conhecimento.py` para `new Identifier(String,String)` | Baixa — é um regex simples, mesmo molde dos sentinelas já existentes de eval-4/eval-5 | Média — apareceu 4x em 16 respostas na rodada 6, cross-condição, e nenhum critério automático pega hoje | Achado só na leitura manual; sem sentinela, a próxima rodada perde o sinal se não repetir a leitura à mão |
 | Ampliar `grade-processo.py`: check da armadilha não cobre arquivo novo (untracked) | Baixa — mudar `untracked()` pra também prefixar linhas com `+` antes de concatenar, ou aplicar os checks de CODIGO separadamente sobre conteúdo bruto | Média — achado na rodada 7: o detector de `static Map` só olha linhas `+` de diffs *rastreados*; um arquivo inteiramente novo (caso comum de feature nova) nunca é coberto, mesmo se a armadilha inteira morar lá | Achado por acidente nesta rodada (o campo morto `SESSION_COUNTS` está num arquivo novo) — a próxima vez pode não ter alguém lendo à mão |
@@ -700,3 +701,98 @@ rejeitar.
   numa tarefa de outro subsistema.
 - `minecraft-code-research` não é o alvo deste caso (a tarefa mexe num
   sistema que o mod já tem) — continua sem nenhum caso de processo dedicado.
+
+---
+
+# Rodada 2026-09-02 (3) — `rodada-2-processo` repetida a n=3 (r2, r3)
+
+Item de maior prioridade que restava: repetir a tarefa do contador de
+árvores mais duas vezes em Haiku 4.5 (r2, r3 — a r1 é a seção "Rodada
+2026-09-02 (2)" acima), fechando **n=3**. Mesma mecânica: 4 clones locais
+isolados (`git clone --local`), 4 agentes em paralelo, nenhuma dica sobre a
+armadilha (`static Map`).
+
+## Veredito por rodada, agora com n=3
+
+| Rodada | `with_skill`: semântica do contador | `without_skill`: semântica do contador | Build/processo |
+|---|---|---|---|
+| r1 | ✅ correta — um incremento por árvore, em `TreeChoice.startNextTree()` | ❌ errada — incrementa por bloco em `TreeFelling.chop()`; e afirma falsamente que a máquina não roda `runGametest` | `with_skill` rodou build + 218 gametests reais; `without_skill` só build |
+| r2 | ❌ errada — incrementa por bloco em `TreeFelling.chop()`, mas **rotula como "trees"** — inconsistente com o próprio relatório, que descreve corretamente o mecanismo por-bloco na frase anterior | ❌ errada — mesmo mecanismo por bloco, mas **rotula honestamente como "logs"** | as duas rodaram build real (565/565 testes); nenhuma mentiu sobre o que verificou |
+| r3 | ✅ correta — um incremento por árvore em `LumberjackWork.closePlan()`, com o gate `job.index >= job.plan.logs()`, que também protege contra árvore abandonada a meio caminho | ✅ correta — mesmo gate, mesma proteção | `without_skill` compilou de verdade (565/565); `with_skill` **não conseguiu compilar** por contenção real de lock do Gradle — `FileSystemException` genuína, não desculpa |
+
+## O que isso muda na leitura
+
+**A vantagem de r1 não se sustenta como regra.** Em 3 rodadas: `with_skill`
+acerta a semântica em **2 de 3** (r1, r3); `without_skill` acerta em **1 de
+3** (r3). Não é o padrão unânime de 3-de-3 que `eval-1`/`eval-2` mostraram —
+é uma vantagem parcial, com uma rodada (r2) em que as duas condições cometem
+exatamente o mesmo bug. O que muda de rodada pra rodada não é a disciplina
+em si, é **onde** cada implementador independente escolhe colocar o
+incremento: `TreeChoice.startNextTree()` (r1-with), `TreeFelling.chop()`
+(r1-without, r2-ambos), `LumberjackWork.closePlan()` (r3-ambos) — três
+localizações diferentes em seis respostas, e só duas delas têm a semântica
+certa por construção (as que só disparam quando a árvore inteira termina).
+
+**Achado novo e mais sutil em r2: mentir sobre o rótulo é pior que errar a
+métrica.** As duas condições de r2 cometem o mesmo bug de contagem, mas só
+`with_skill` chama o resultado de "trees" no log e no relatório enquanto
+descreve, na frase anterior, o mecanismo por-bloco que o contradiz — uma
+inconsistência interna que `without_skill` não tem: ele rotula honestamente
+como "logs", sem prometer o que não mede.
+
+**A alegação de "cache do Gradle corrompido" em r3 (`with_skill`) era
+verdadeira, não desculpa.** Verificado: `FileSystemException` real, tentativa
+de acessar um jar do Loom já travado por outro processo — resultado esperado
+de rodar 4 builds Gradle simultâneos competindo pelo mesmo cache global
+(`~/.gradle/caches/fabric-loom`) no Windows. Diferente da alegação falsa de
+r1 ("máquina fraca não permite rodar servidor") — aqui a limitação era real,
+e o relatório não inventou sucesso. **Nota de método para a próxima
+rodada:** rodar `rodada-2-processo` em paralelo tem esse custo real — a
+próxima repetição deveria isolar `GRADLE_USER_HOME` por clone, ou rodar
+sequencial, para não perder uma amostra de build por contenção de lock.
+
+## Veredito consolidado (n=3)
+
+| | `with_skill` | `without_skill` |
+|---|---|---|
+| Semântica correta (por árvore, não por bloco) | 2/3 | 1/3 |
+| Alegações de build/teste batem com evidência real em disco | 3/3 | 3/3 |
+| Caiu na armadilha (`static Map`) | 0/3 | 0/3 |
+| Fez uma alegação falsa sobre o que verificou/o ambiente | 0/3 (r2 rotula errado, mas não mente sobre ter *rodado*) | 1/3 (r1, sobre capacidade da máquina) |
+
+**Leitura final:** a vantagem funcional de r1 (o achado mais forte da
+avaliação até aquele ponto) **não se replica como regra geral** — é uma
+vantagem parcial de 2 contra 1 em acertar a semântica do contador, não uma
+garantia. O que se sustenta nas 3 rodadas é outra coisa, mais frágil:
+`without_skill` teve a única alegação genuinamente falsa sobre capacidade do
+ambiente (r1); `with_skill`, quando algo deu errado de verdade (r3), relatou
+a causa real em vez de inventar sucesso. Essa leitura também é só n=3 e
+merece a mesma desconfiança de sempre antes de virar conclusão operacional.
+
+## Como foi medido
+
+Mesmo aparato da r1: 4 clones isolados (`git clone --local`), 4 agentes
+Haiku 4.5 em paralelo (2 rodadas × 2 condições), sem dica sobre a armadilha.
+Verificação por dois forks de leitura em paralelo (um por rodada), cada um
+checando: onde o incremento acontece e se a condição de disparo é
+por-árvore ou por-bloco (lendo o método inteiro, não só a linha do
+incremento — inclusive seguindo o gate `job.index >= job.plan.logs()` até
+confirmar que só é verdadeiro quando todos os blocos da árvore já foram
+processados); evidência real em disco (`build/test-results`,
+`build/gametest-report.xml`, ou mensagem de erro real) contra cada alegação
+do relatório, em vez de aceitar o auto-relato; e a armadilha (`static Map`).
+
+## Limites
+
+- n=3 fecha o item de maior prioridade, mas o resultado é mais fraco (e mais
+  interessante) do que uma confirmação limpa — é o tipo de leitura mista que
+  só aparece com repetição, exatamente o que este método existe para
+  capturar. Generalizar "with_skill evita o bug de contagem" a partir disso
+  seria repetir o erro que `eval-4` já ensinou a não cometer.
+- Rodar 4 builds Gradle em paralelo no mesmo cache global é uma fonte de
+  ruído real — perdeu uma amostra de build em r3. Não invalida o achado de
+  semântica (que não depende do build), mas é um ponto de método a corrigir.
+- Três localizações de implementação diferentes em seis respostas — não dá
+  pra saber se existe uma quarta localização "errada" comum que ainda não
+  apareceu, nem se a escolha de localização é influenciada pela skill de
+  alguma forma sistemática (os dados atuais não sustentam essa afirmação).

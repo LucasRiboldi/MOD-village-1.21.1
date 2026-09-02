@@ -62,6 +62,22 @@ bugs achados e corrigidos no `grade-processo.py` (`has()` sem
 falhar; consertar isso sozinho, sem tirar o `re.DOTALL` que já estava lá,
 criava falsos positivos casando conteúdo de arquivos diferentes).
 
+**Repetida a n=3 em 2026-09-02 (3): a vantagem de r1 não se sustentou como
+regra.** `with_skill` acerta a semântica do contador (por árvore, não por
+bloco) em 2 de 3 rodadas; `without_skill` acerta em 1 de 3 — vantagem
+parcial, não o padrão unânime que `eval-1`/`eval-2` mostraram. Em r2 as duas
+condições cometem o MESMO bug (contam por bloco), e a diferença que sobra é
+mais sutil que certo/errado: `with_skill` rotula o resultado errado como
+"trees" (mentindo sobre o que mede, inconsistente com o próprio relatório),
+`without_skill` rotula honestamente como "logs". Em r3 as duas acertam a
+semântica, mas `with_skill` não conseguiu compilar por uma contenção real de
+lock do Gradle (4 builds simultâneos competindo pelo mesmo cache global) —
+confirmado por `FileSystemException` real, não desculpa, diferente da
+alegação falsa que `without_skill` fez em r1. Detalhes em `AVALIACAO.md`,
+seção "Rodada 2026-09-02 (3)", que também nota o custo de método de rodar 4
+builds Gradle em paralelo no mesmo cache (perdeu uma amostra de build em
+r3 — a próxima repetição deveria isolar `GRADLE_USER_HOME` por clone).
+
 ## As duas rodadas
 
 **Conhecimento** (`prompts.json` → `rodada-1-conhecimento`)
