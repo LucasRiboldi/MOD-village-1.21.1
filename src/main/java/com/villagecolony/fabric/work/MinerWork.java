@@ -312,10 +312,21 @@ public final class MinerWork {
                 // a navegação não traça um caminho de vinte blocos por
                 // dentro da rocha, e ele ficava parado na superfície
                 // acima da galeria.
+                // E32 — 2026-09-02. A perna entregava um bloco cru da ordem
+                // de cavar, sem perguntar se dava para ficar de pé nele. Ordem
+                // não é lista de lugares onde se fica de pé: duas de cada três
+                // posições da escada são a cabeça, e as que o cursor entregou
+                // podem não ter sido cavadas. Alvo sólido não faz a navegação
+                // desistir — o MobNavigation SOBE o alvo até sair da rocha, e
+                // dentro de uma mina isso é a superfície. Ver
+                // docs/research/E32-miner-walk-target.md.
                 WorkTargets.set(
                         workerId,
                         MinerReach.legTowards(
-                                villager.getBlockPos(), job.approach, mineOf(job)),
+                                villager.getBlockPos(),
+                                job.approach,
+                                mineOf(job),
+                                at -> BuilderApproach.standable(world, at)),
                         MinerReach.ARRIVAL);
             }
 

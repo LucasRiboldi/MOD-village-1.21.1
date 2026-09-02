@@ -6,6 +6,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * A que distância o mineiro alcança a pedra — 2026-08-27.
@@ -184,7 +185,10 @@ public final class MinerReach {
      *     pedra de superfície e a areia não têm descida a fazer
      */
     public static BlockPos legTowards(
-            BlockPos villager, BlockPos destination, Optional<Mine> mine) {
+            BlockPos villager,
+            BlockPos destination,
+            Optional<Mine> mine,
+            Predicate<BlockPos> standable) {
 
         if (mine.isEmpty()) {
             return destination;
@@ -194,7 +198,7 @@ public final class MinerReach {
             return destination;
         }
 
-        BlockPos step = stepAlongTheShaft(villager, mine.get());
+        BlockPos step = stepAlongTheShaft(villager, mine.get(), standable);
 
         return step != null ? step : at(mine.get().shaft().entry());
     }
@@ -217,7 +221,8 @@ public final class MinerReach {
      * @return nulo quando ele não está na passagem — na superfície, longe
      *     da boca. Aí quem responde é a boca
      */
-    private static BlockPos stepAlongTheShaft(BlockPos villager, Mine mine) {
+    private static BlockPos stepAlongTheShaft(
+            BlockPos villager, Mine mine, Predicate<BlockPos> standable) {
         int scanned = Math.min(mine.cut(), STEPS_SCANNED);
 
         int here = -1;
@@ -236,7 +241,24 @@ public final class MinerReach {
             return null;
         }
 
-        BlockPos step = at(mine.shaft().positionAt(here));
+        // Só entra como destino o que aguenta um aldeão de pé — o E32,
+        // 2026-09-02. A ordem é uma lista de blocos A CAVAR: duas de cada
+        // três posições da escada são o peito e a cabeça, e as que o cursor
+        // entregou podem nunca ter sido cavadas (`cut` conta entrega, não
+        // picareta). Nenhuma das duas serve para caminhar até lá.
+        //
+        // O filtro pega as duas com a mesma pergunta, porque as duas
+        // reprovam por motivos que o `standable` já sabe ver: na camada de
+        // cabeça o que há embaixo é ar, e no bloco não cavado há colisão.
+        //
+        // A contiguidade continua sendo do laço, não do filtro: o `break`
+        // segue no alcance, e não na pisabilidade. Pular um buraco não
+        // pisável para continuar somando lá adiante é o que mandaria o
+        // aldeão atravessar parede — que é o motivo de esta busca ser
+        // contígua desde 2026-08-29.
+        BlockPos start = at(mine.shaft().positionAt(here));
+
+        BlockPos step = standable.test(start) ? start : null;
 
         for (int i = here + 1; i < scanned; i++) {
             BlockPos ahead = at(mine.shaft().positionAt(i));
@@ -245,9 +267,13 @@ public final class MinerReach {
                 break;
             }
 
-            step = ahead;
+            if (standable.test(ahead)) {
+                step = ahead;
+            }
         }
 
+        // Nulo quando nada da passagem serve: quem responde é a boca, que
+        // é superfície e onde se fica de pé por construção.
         return step;
     }
 

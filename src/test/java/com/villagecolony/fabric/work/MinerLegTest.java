@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -69,12 +70,39 @@ class MinerLegTest {
                 Mine.restore(UUID.randomUUID(), MineShaft.from(MOUTH, Side.NORTH), cut));
     }
 
+    /**
+     * Onde só a geometria está em jogo, o mundo não entra: tudo é pisável.
+     *
+     * <p>Preserva o que estas afirmações sempre mediram — para onde o passo
+     * aponta —, sem misturar a pergunta nova, que é <i>se dá para ficar de
+     * pé lá</i>.
+     */
+    private static final Predicate<BlockPos> ANYWHERE = at -> true;
+
+    /**
+     * O mundo de uma escada de verdade: só o piso de cada degrau é pisável.
+     *
+     * <p>A ordem de cavar abre <b>três</b> camadas por degrau — os pés, o
+     * peito e a cabeça. Só a de baixo tem bloco sólido embaixo; nas outras
+     * duas o que há embaixo é o próprio degrau, já cavado. É o que o
+     * {@code BuilderApproach.standable} responde no mundo de verdade, e é
+     * por isso que duas de cada três posições da ordem <b>não</b> servem
+     * como destino de caminhada.
+     *
+     * <p>O piso do degrau {@code s} fica em {@code y = 64 - s},
+     * {@code z = 898 - s}: a diferença entre os dois é constante, e é ela
+     * que identifica o piso sem precisar do índice.
+     */
+    private static Predicate<BlockPos> dugStaircase() {
+        return at -> at.getZ() - at.getY() == MOUTH.z() - MOUTH.y() - 1;
+    }
+
     /** Longe da pedra e longe da boca: entra pela boca. */
     @Test
     void fromTheSurfaceHeAimsForTheMouth() {
         assertEquals(
                 MOUTH_BLOCK,
-                MinerReach.legTowards(new BlockPos(734, 66, 878), DEEP, mine(30)));
+                MinerReach.legTowards(new BlockPos(734, 66, 878), DEEP, mine(30), ANYWHERE));
     }
 
     /**
@@ -88,7 +116,7 @@ class MinerLegTest {
      */
     @Test
     void atTheMouthTheLegIsAStepDownTheShaft() {
-        BlockPos leg = MinerReach.legTowards(new BlockPos(731, 63, 898), DEEP, mine(30));
+        BlockPos leg = MinerReach.legTowards(new BlockPos(731, 63, 898), DEEP, mine(30), ANYWHERE);
 
         assertNotEquals(
                 DEEP, leg,
@@ -113,7 +141,7 @@ class MinerLegTest {
     void fromInsideTheShaftTheLegKeepsGoingDown() {
         BlockPos onTheStairs = new BlockPos(732, 58, 893);
 
-        BlockPos leg = MinerReach.legTowards(onTheStairs, DEEP, mine(60));
+        BlockPos leg = MinerReach.legTowards(onTheStairs, DEEP, mine(60), ANYWHERE);
 
         assertTrue(
                 leg.getY() < onTheStairs.getY(),
@@ -129,7 +157,7 @@ class MinerLegTest {
     void insideTheGalleryHeKeepsAimingForTheStone() {
         assertEquals(
                 DEEP,
-                MinerReach.legTowards(new BlockPos(730, 45, 878), DEEP, mine(200)));
+                MinerReach.legTowards(new BlockPos(730, 45, 878), DEEP, mine(200), ANYWHERE));
     }
 
     /**
@@ -142,7 +170,7 @@ class MinerLegTest {
     void withoutAMineTheStoneIsTheOnlyLeg() {
         assertEquals(
                 DEEP,
-                MinerReach.legTowards(new BlockPos(734, 66, 878), DEEP, Optional.empty()));
+                MinerReach.legTowards(new BlockPos(734, 66, 878), DEEP, Optional.empty(), ANYWHERE));
     }
 
     /**
@@ -155,6 +183,60 @@ class MinerLegTest {
     void anUntouchedMineStillSendsHimToTheMouth() {
         assertEquals(
                 MOUTH_BLOCK,
-                MinerReach.legTowards(new BlockPos(734, 66, 878), DEEP, mine(0)));
+                MinerReach.legTowards(new BlockPos(734, 66, 878), DEEP, mine(0), ANYWHERE));
+    }
+
+    /**
+     * <b>O E32.</b> A perna não manda o mineiro para onde ele não fica de pé.
+     *
+     * <p>A ordem de cavar é uma lista de <b>blocos a cavar</b>, não de
+     * lugares onde se fica de pé — e a perna devolvia um deles cru. Da boca,
+     * o ponto mais avançado dentro dos oito blocos é a <b>cabeça</b> do
+     * degrau 6, {@code 732, 60, 892}, cujo bloco de baixo é o próprio degrau
+     * já cavado.
+     *
+     * <p><b>E alvo ruim não faz a navegação desistir.</b> O
+     * {@code MobNavigation.findPathTo} do 1.21.1 abaixa alvo no ar até o
+     * chão — esse caso ele perdoa — mas <b>sobe</b> alvo sólido até sair da
+     * rocha. Dentro de uma mina isso é a superfície, que é exatamente onde
+     * as sessões acharam o mineiro. Ver
+     * {@code docs/research/E32-miner-walk-target.md}.
+     */
+    @Test
+    void theLegNeverAimsAtABlockHeCannotStandOn() {
+        Predicate<BlockPos> dug = dugStaircase();
+
+        BlockPos leg = MinerReach.legTowards(new BlockPos(731, 63, 898), DEEP, mine(30), dug);
+
+        assertTrue(
+                dug.test(leg),
+                "a perna mandou o mineiro para um bloco onde ele não fica de pé: "
+                        + leg.toShortString());
+    }
+
+    /**
+     * E o que o cursor entregou mas ninguém cavou continua sendo rocha.
+     *
+     * <p>{@code Mine.cut} conta posição <b>entregue</b> — {@code nextPosition}
+     * é {@code positionAt(cut++)} —, não bloco cavado. Uma tarefa devolvida
+     * deixa posição entregue e fechada para trás. Mandar o aldeão para dentro
+     * dela é mandá-lo para dentro da pedra, e a navegação responde subindo o
+     * alvo até a superfície.
+     *
+     * <p>Aqui o cursor entregou a escada inteira e a picareta parou no degrau
+     * 6: tudo abaixo de {@code y = 58} ainda é maciço.
+     */
+    @Test
+    void theLegSkipsWhatTheCursorHandedOutButNobodyDug() {
+        Predicate<BlockPos> floors = dugStaircase();
+        Predicate<BlockPos> dugDownToStepSix = at -> floors.test(at) && at.getY() >= 58;
+
+        BlockPos leg = MinerReach.legTowards(
+                new BlockPos(732, 59, 893), DEEP, mine(30), dugDownToStepSix);
+
+        assertTrue(
+                dugDownToStepSix.test(leg),
+                "a perna mandou o mineiro para rocha que ninguém cavou: "
+                        + leg.toShortString());
     }
 }
