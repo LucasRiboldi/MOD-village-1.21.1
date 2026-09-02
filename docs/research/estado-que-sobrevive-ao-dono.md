@@ -87,3 +87,66 @@ sozinha o que fazer com risco desse tamanho passa do seu papel.
   `WorkTargets`): o mod as escreve, mas quem as expira é o Vanilla. Não foi
   verificado se alguma memória escrita pelo mod sobrevive à tarefa que a
   criou de um jeito que o Vanilla não limpe.
+
+---
+
+## Parte 2 — os registros por colônia, 2026-09-02
+
+A metade que a auditoria acima deixou explicitamente de fora.
+
+### O dono não morre, e isso muda a pergunta
+
+`[FATO]` `ColonyService.remove(UUID)` existe e **nunca é chamado em
+produção**. Só há `clear()`, no início e no fim do servidor. Colônia não é
+removida: ela é marcada `ABANDONED`, e o `ColonyStateLog` registra que a
+marca **também é desfeita** quando a sonda volta a achar vila.
+
+`[INFERÊNCIA]` Não há estado órfão por colônia no sentido da Parte 1 — o dono
+não some dentro da sessão. Os registros (`BuildSiteScanner.SWEEPS/ROADS/
+BUILDING`, `RingSweep.NEXT_RING`, `RoadExtension.ENDS/JUST_PAVED/GROWING`,
+`SweepLog.TALLIES`, `ColonyStateLog.FLIPS`) são limpos no `clearAll` do fim
+de servidor, e no meio da sessão pertencem a colônias que continuam
+existindo. Crescimento limitado pelo número de vilas detectadas.
+
+### O que apareceu no lugar, e é maior
+
+`[FATO]` `runColonyCycles` filtra por `colony.isActive()`, que é
+**lifecycle** — chunk carregado —, e **não** por estado. Colônia `ABANDONED`
+com chunks carregados roda o ciclo inteiro.
+
+`[FATO]` Dentro do ciclo, `ConstructionPlanner.plan(overworld, colony)` roda
+sem depender de a colônia ter trabalhador, e é ele que dispara a varredura de
+lote.
+
+`[FATO]` `BuildSiteScanner.MAX_COLUMNS = 1024`, e o teto é **por passagem**.
+
+`[INFERÊNCIA]` Cada colônia abandonada com chunks carregados custa até 1.024
+colunas de leitura por ciclo, e não compra nada: sem vila, não há o que
+construir. O custo escala com o número de colônias abandonadas perto do
+jogador.
+
+`[RISCO]` Isto encosta no item que o `TODO.md` chama de decisivo — *"a
+varredura acabando num ciclo… é o que decide se dá para ver qualquer outra
+coisa"*. A decisão 8 já mediu o aperto: raio 64 são 16.641 colunas, e a
+primeira varredura leva ~8,5 min de sessão.
+
+### Por que não consertei
+
+`[FATO]` Pular colônia `ABANDONED` no `runColonyCycles` **seria seguro
+quanto à ressurreição**: quem desmarca é `judgeAbandonment`, dentro de
+`detectFromColonyCenters`, que é outra passagem e não depende do ciclo de
+trabalho.
+
+`[RISCO]` Mas não é só a varredura que mora no ciclo. Uma colônia abandonada
+pode ter trabalhadores registrados — aldeões continuam lá, a vila é que
+deixou de ser reconhecida —, e pular o ciclo **congelaria esses
+trabalhadores**: ninguém decide tarefa, ninguém deposita, ninguém dispensa.
+Isso pode ser o certo (vila que acabou não deveria seguir construindo) ou o
+errado (a marca de abandono oscila, e o E9 é exatamente sobre isso).
+
+`[DECISÃO]` **Nenhuma mudança.** A escolha entre *pular o ciclo inteiro*,
+*pular só o planejamento de obra* e *deixar como está* é do autor, e a
+diferença entre elas é comportamento de jogo, não limpeza de estado. Uma
+auditoria que muda o laço principal do mod sem sessão de jogo para conferir
+passa do seu papel — e nesta mesma sessão um conserto meu, feito com
+confiança, abriu uma regressão (o E34).
