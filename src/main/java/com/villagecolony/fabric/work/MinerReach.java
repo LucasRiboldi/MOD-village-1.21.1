@@ -6,7 +6,6 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.Optional;
-import java.util.function.Predicate;
 
 /**
  * A que distância o mineiro alcança a pedra — 2026-08-27.
@@ -184,11 +183,25 @@ public final class MinerReach {
      * @param mine a mina desta colônia, vazia quando não há uma — a
      *     pedra de superfície e a areia não têm descida a fazer
      */
+    /**
+     * O que o mundo responde sobre uma posição da ordem de cavar.
+     *
+     * <p>São <b>duas</b> perguntas, e o E34 é o que acontece quando se
+     * usa uma no lugar da outra. Juntas num tipo só porque, soltas como
+     * dois {@code Predicate}, nada impede trocá-las de lugar na chamada —
+     * e o erro seria silencioso.
+     */
+    public interface Footing {
+
+        /** A passagem continua por aqui? */
+        boolean passable(BlockPos at);
+
+        /** Este serve de destino — o aldeão fica de pé nele? */
+        boolean standable(BlockPos at);
+    }
+
     public static BlockPos legTowards(
-            BlockPos villager,
-            BlockPos destination,
-            Optional<Mine> mine,
-            Predicate<BlockPos> standable) {
+            BlockPos villager, BlockPos destination, Optional<Mine> mine, Footing footing) {
 
         if (mine.isEmpty()) {
             return destination;
@@ -198,7 +211,7 @@ public final class MinerReach {
             return destination;
         }
 
-        BlockPos step = stepAlongTheShaft(villager, mine.get(), standable);
+        BlockPos step = stepAlongTheShaft(villager, mine.get(), footing);
 
         return step != null ? step : at(mine.get().shaft().entry());
     }
@@ -222,7 +235,7 @@ public final class MinerReach {
      *     da boca. Aí quem responde é a boca
      */
     private static BlockPos stepAlongTheShaft(
-            BlockPos villager, Mine mine, Predicate<BlockPos> standable) {
+            BlockPos villager, Mine mine, Footing footing) {
         int scanned = Math.min(mine.cut(), STEPS_SCANNED);
 
         int here = -1;
@@ -251,14 +264,28 @@ public final class MinerReach {
         // reprovam por motivos que o `standable` já sabe ver: na camada de
         // cabeça o que há embaixo é ar, e no bloco não cavado há colisão.
         //
-        // A contiguidade continua sendo do laço, não do filtro: o `break`
-        // segue no alcance, e não na pisabilidade. Pular um buraco não
-        // pisável para continuar somando lá adiante é o que mandaria o
-        // aldeão atravessar parede — que é o motivo de esta busca ser
-        // contígua desde 2026-08-29.
+        // E o laço para na primeira posição FECHADA — o E34, 2026-09-02.
+        //
+        // Escrito ao consertar o E32, este laço parava só no alcance e
+        // pulava o que não fosse pisável para continuar somando adiante.
+        // Isso é a contiguidade **perdida**: basta um vão aberto coincidir
+        // com um índice mais avançado da ordem para o passo saltar a
+        // parede que existe entre ele e o aldeão.
+        //
+        // Dois mundos produzem esse vão, e nenhum deles é raro: o túnel
+        // que o jogador cavou à mão — o E34 como ele apareceu em 08-28,
+        // com os dois mineiros mirando uma lanterna dentro de um bolsão
+        // que não se liga à escada — e a caverna natural que a ordem
+        // atravessa.
+        //
+        // São duas perguntas diferentes, e é por isso que existe o
+        // Footing. **Atravessar** decide se o corredor continua: as
+        // camadas do peito e da cabeça são abertas e ninguém fica de pé
+        // nelas, então parar nelas travaria a descida no primeiro degrau.
+        // **Ficar de pé** decide onde a perna termina.
         BlockPos start = at(mine.shaft().positionAt(here));
 
-        BlockPos step = standable.test(start) ? start : null;
+        BlockPos step = footing.standable(start) ? start : null;
 
         for (int i = here + 1; i < scanned; i++) {
             BlockPos ahead = at(mine.shaft().positionAt(i));
@@ -267,7 +294,11 @@ public final class MinerReach {
                 break;
             }
 
-            if (standable.test(ahead)) {
+            if (!footing.passable(ahead)) {
+                break;
+            }
+
+            if (footing.standable(ahead)) {
                 step = ahead;
             }
         }

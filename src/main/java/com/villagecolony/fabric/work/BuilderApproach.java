@@ -131,11 +131,24 @@ public final class BuilderApproach {
         return Optional.empty();
     }
 
+    /**
+     * Dá para atravessar esta posição — nada de sólido no caminho.
+     *
+     * <p>Não é a mesma pergunta que {@link #standable}, e confundir as
+     * duas custou o E34: a camada da cabeça de um degrau é
+     * <b>atravessável</b> e não é <b>pisável</b>. Quem decide se um
+     * corredor continua pergunta esta; quem escolhe onde parar pergunta a
+     * outra.
+     */
+    public static boolean passable(ServerWorld world, BlockPos at) {
+        return world.getBlockState(at).getCollisionShape(world, at).isEmpty();
+    }
+
     /** Dois blocos livres sobre bloco sólido: onde um aldeão cabe. */
     public static boolean standable(ServerWorld world, BlockPos at) {
         return world.getBlockState(at.down()).isSolidBlock(world, at.down())
-                && world.getBlockState(at).getCollisionShape(world, at).isEmpty()
-                && world.getBlockState(at.up()).getCollisionShape(world, at.up()).isEmpty();
+                && passable(world, at)
+                && passable(world, at.up());
     }
 
     /**

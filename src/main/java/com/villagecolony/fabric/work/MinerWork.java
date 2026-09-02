@@ -326,7 +326,7 @@ public final class MinerWork {
                                 villager.getBlockPos(),
                                 job.approach,
                                 mineOf(job),
-                                at -> BuilderApproach.standable(world, at)),
+                                footingIn(world)),
                         MinerReach.ARRIVAL);
             }
 
@@ -671,5 +671,31 @@ public final class MinerWork {
         Job job = JOBS.get(workerId);
 
         return job == null ? 0 : job.collected;
+    }
+
+    /**
+     * As duas perguntas da perna, respondidas pelo mundo de verdade.
+     *
+     * <p>Aqui, e não dentro do {@code MinerReach}, porque aquela classe é
+     * geometria e não carrega fora do jogo — é o que permite afirmá-la sem
+     * subir servidor. Quem tem o mundo é esta.
+     *
+     * <p>As duas saem do {@code BuilderApproach}, que é onde mora a conta
+     * de "cabe um aldeão aqui" desde 2026-08-28. Uma conta só, e é a do
+     * construtor.
+     */
+    private static MinerReach.Footing footingIn(ServerWorld world) {
+        return new MinerReach.Footing() {
+
+            @Override
+            public boolean passable(BlockPos at) {
+                return BuilderApproach.passable(world, at);
+            }
+
+            @Override
+            public boolean standable(BlockPos at) {
+                return BuilderApproach.standable(world, at);
+            }
+        };
     }
 }

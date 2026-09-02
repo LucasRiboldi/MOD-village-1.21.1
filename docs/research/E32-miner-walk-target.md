@@ -124,3 +124,32 @@ que o destino entregue é pisável.
 
 `[VALIDAÇÃO NECESSÁRIA]` Sessão de jogo: o E32 nunca foi visto depois de
 nenhum conserto, e a bateria deixou de exercitá-lo quando a boca foi fixada.
+
+---
+
+## Adendo, 2026-09-02 — o conserto abriu o E34, e o E34 fechou os dois
+
+`[FATO]` O laço escrito acima parava **só no alcance** e pulava o que não
+fosse pisável para continuar somando adiante. O comentário que eu deixei no
+código dizia que a contiguidade estava garantida pelo laço. **Estava errado.**
+
+`[FATO]` Basta um vão aberto coincidir com um índice mais avançado da ordem
+para o passo saltar a parede que existe entre ele e o aldeão. Dois mundos
+produzem esse vão, e nenhum é raro: o **túnel que o jogador cavou** — que é o
+E34 como apareceu em 2026-08-28 — e a **caverna natural** que a ordem
+atravessa.
+
+`[FATO]` São duas perguntas diferentes, e usar uma no lugar da outra é o
+defeito: *dá para atravessar* decide se o corredor continua; *dá para ficar
+de pé* decide onde a perna termina. Parar no que não é pisável travaria a
+descida no primeiro degrau, porque duas de cada três posições da escada são
+o peito e a cabeça.
+
+`[DECISÃO]` Nasceu o `MinerReach.Footing`, com as duas perguntas num tipo só
+— soltas como dois `Predicate`, nada impediria trocá-las de lugar na chamada,
+e o erro seria silencioso. `BuilderApproach.passable` foi extraído de dentro
+do `standable`, que passou a usá-lo: continua sendo uma conta só.
+
+`[FATO]` O E34 deixa de exigir que o mod **distinga** o que ele cavou do que
+o jogador cavou. A pergunta passou a ser *dá para chegar lá a partir daqui*,
+que é a que importa e que vale igual para os dois casos.

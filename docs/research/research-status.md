@@ -63,7 +63,7 @@ Os fontes do Vanilla foram gerados (`./gradlew genSources`) e estão em
 | ~~P0~~ | ✅ **Feito em 2026-09-02.** `legTowards` passou a receber um `Predicate<BlockPos>` — e não o `ServerWorld`, para que `MinerReach` continue testável sem subir jogo. `MinerWork` passa `at -> BuilderApproach.standable(world, at)`; o teste passa o mundo que quiser. Dois testes novos, fase vermelha conferida por `AssertionFailedError` |
 | ~~P1~~ | ✅ **Feito em 2026-09-02.** `theLegNeverAimsAtRockNobodyDug` monta rocha maciça, abre os três primeiros degraus, deixa o `cut` em trinta e afirma que o passo é pisável **perguntando ao mundo**. Fase vermelha conferida por `GameTestException` com a mensagem da afirmação. **O que ele não prova:** que o mineiro *anda* até lá — isso continua dependendo de sessão |
 | P2 | Sessão de jogo — o E32 nunca foi visto depois de conserto nenhum |
-| P3 | O E34 mora ao lado: o mod ainda não distingue o que ele cavou do que o jogador cavou. O filtro novo aceita como destino um bloco pisável que o **jogador** abriu, e a ordem de cavar continua sendo a única fonte de contiguidade |
+| ~~P3~~ | ✅ **Feito em 2026-09-02 (E34).** O risco que este item previa era real e maior do que eu escrevi: não era só bloco do jogador — o laço do E32 **pulava** posição fechada e seguia somando, então qualquer vão aberto num índice mais avançado (bolsão do jogador **ou caverna natural**) virava destino do outro lado de uma parede. O laço passou a parar na primeira posição não-atravessável. Nasceu daí a separação entre **atravessar** e **ficar de pé** (`MinerReach.Footing`): parar no que não é pisável travaria a descida no primeiro degrau, porque duas de cada três posições da escada são peito e cabeça |
 
 ## Decisão pendente do autor
 

@@ -1903,6 +1903,22 @@ public class MinerGameTest implements FabricGameTest {
         });
     }
 
+    /** As duas perguntas da perna, respondidas pelos blocos deste teste. */
+    private static MinerReach.Footing realFooting(ServerWorld world) {
+        return new MinerReach.Footing() {
+
+            @Override
+            public boolean passable(BlockPos at) {
+                return BuilderApproach.passable(world, at);
+            }
+
+            @Override
+            public boolean standable(BlockPos at) {
+                return BuilderApproach.standable(world, at);
+            }
+        };
+    }
+
     /**
      * <b>O E32, em rocha de verdade.</b> A perna não aponta para pedra.
      *
@@ -1973,8 +1989,7 @@ public class MinerGameTest implements FabricGameTest {
         // dentro dos oito blocos o destino vale por si e a perna nem corre.
         BlockPos far = context.getAbsolutePos(new BlockPos(0, 0, 0));
 
-        BlockPos leg = MinerReach.legTowards(
-                standing, far, Optional.of(mine), at -> BuilderApproach.standable(world, at));
+        BlockPos leg = MinerReach.legTowards(standing, far, Optional.of(mine), realFooting(world));
 
         context.assertTrue(
                 BuilderApproach.standable(world, leg),
