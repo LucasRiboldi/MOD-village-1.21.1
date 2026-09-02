@@ -77,6 +77,18 @@ Esta skill precisa funcionar sem o contexto da conversa anterior. Ao começar:
 4. Se o código mudou desde a última análise, marque as conclusões afetadas como a revalidar.
 5. Continue pela prioridade mais alta pendente. **Não repita pesquisa concluída.**
 
+**Passo zero, e ele vem antes de abrir código Vanilla:** leia o que o projeto
+já registrou sobre o sintoma. `TODO.md`, log de sessão, changelog, relatório
+de bug — é ali que moram os números de campo (posição do aldeão, distância,
+o que o log imprimiu), e eles valem mais que qualquer leitura de código para
+estreitar a busca. Em FORENSIC isso não é opcional: um sintoma com coordenada
+registrada transforma uma investigação aberta numa verificação de hipótese.
+
+E **desconfie da causa que o próprio registro sugere.** Suspeita anotada no
+bug tem o hábito de ser lida como diagnóstico pela sessão seguinte. Se o
+projeto escreveu "é suspeita, não diagnóstico", trate a suspeita como
+`[HIPÓTESE]` a derrubar — derrubá-la é resultado tão bom quanto confirmá-la.
+
 Se não houver nada disso, você está na primeira sessão: crie o `research-status.md`
 a partir de `templates/research-status.md` antes de fechar o trabalho.
 
@@ -204,8 +216,22 @@ da sua versão estão no disco — não é preciso confiar em tutorial nem em me
 
 ```bash
 grep -E "minecraft_version|yarn_mappings|loader_version|fabric_version" gradle.properties
-MC_JAR=$(find ~/.gradle/caches/fabric-loom/minecraftMaven -name "minecraft-merged-*.jar" | grep -v intermediary | head -1)
-MAPPINGS=$(find ~/.gradle/caches/fabric-loom -name "mappings.tiny" | head -1)
+
+# O jar pode estar no cache global OU no cache do próprio projeto — procure nos dois.
+# O -sources.jar é excluído de propósito: ele casa o mesmo glob e não serve para javap.
+MC_JAR=$(find ~/.gradle/caches/fabric-loom/minecraftMaven ./.gradle/loom-cache/minecraftMaven \
+           -name "minecraft-merged-*.jar" 2>/dev/null \
+         | grep -v intermediary | grep -v -- "-sources" | head -1)
+MAPPINGS=$(find ~/.gradle/caches/fabric-loom ./.gradle/loom-cache -name "mappings.tiny" 2>/dev/null | head -1)
+```
+
+**`javap` costuma não estar no PATH.** Em máquina com só o JRE, ou em Git Bash
+no Windows, `javap` falha com `command not found` mesmo havendo JDK — o do
+Gradle está fora do PATH. Ache o do toolchain antes de precisar dele:
+
+```bash
+JAVAP=$(find ~/.gradle/jdks "/c/Program Files/Java" -name "javap*" -type f 2>/dev/null | head -1)
+"$JAVAP" -cp "$MC_JAR" net.minecraft.entity.ai.brain.task.MultiTickTask | head
 ```
 
 **As três verificações que substituem o chute:**
@@ -215,14 +241,26 @@ MAPPINGS=$(find ~/.gradle/caches/fabric-loom -name "mappings.tiny" | head -1)
 unzip -l "$MC_JAR" | grep "VillagerEntity.class"
 
 # 2. Quais são as assinaturas REAIS? (não as que você lembra)
-javap -cp "$MC_JAR" net.minecraft.entity.ai.brain.task.MultiTickTask
+"$JAVAP" -cp "$MC_JAR" net.minecraft.entity.ai.brain.task.MultiTickTask
 
 # 3. Esse nome de método existe no mapping? (obf <-> intermediary <-> yarn)
 grep -P "\tsetTaskList$" "$MAPPINGS"
 ```
 
 **Para ler o corpo de um método Vanilla**, gere os fontes uma vez:
-`./gradlew genSources` — depois o `*-sources.jar` fica ao lado do `$MC_JAR`.
+`./gradlew genSources`. **Não é um one-liner instantâneo** — é um build de
+vários minutos em máquina modesta, e ele trava a sessão se você esperar
+parado. Rode em segundo plano e siga lendo o código do mod enquanto isso.
+
+O `-sources.jar` resultante **pode não ficar ao lado do `$MC_JAR`**: em
+projeto com cache local ele vai para `./.gradle/loom-cache/minecraftMaven/`,
+não para `~/.gradle/`. Procure nos dois:
+
+```bash
+SRC=$(find ~/.gradle/caches/fabric-loom ./.gradle/loom-cache \
+        -name "minecraft-merged*-sources.jar" 2>/dev/null | head -1)
+unzip -p "$SRC" net/minecraft/entity/ai/pathing/MobNavigation.java | sed -n '/findPathTo/,/^\t}/p'
+```
 
 **Os fontes da Fabric API já vêm com o projeto**, sem gerar nada:
 
