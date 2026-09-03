@@ -43,11 +43,20 @@ a madeira vai direto para o baú dele, e replanta a muda antes de sair.
 desce cavando **em escada** com picareta de diamante, para poder subir de
 volta. Dez blocos abaixo abre uma sala de 7×4; desce mais dez virando
 para outro lado, abre outra sala; e do vigésimo bloco em diante segue
-numa galeria sem fim, de dois blocos de altura. Barreira à frente — lava,
-bedrock, a casa de alguém — e a galeria vira.
+numa galeria — que **não é um cano reto**: a cada oito colunas ela abre
+um bolsão ao lado, o que dá mais parede exposta e mais minério à vista.
+Barreira à frente — bedrock, a casa de alguém, pedra sem onde pisar — e a
+galeria vira. Quatro curvas fecham a volta do nível, e a mina **desce mais
+um**, atrás do que só existe fundo.
 
-E ele **vê o minério**: carvão e ferro, comuns e de ardósia, e a veia é
-seguida até acabar — o minério colado na parede vem antes da parede.
+**Saiu água?** Ele tapa a nascente com pedregulho na hora e desvia a
+galeria. Mina inundada não é mina difícil — é mina onde o aldeão não fica
+de pé. Com lava, o mesmo, e ali é a vida dele.
+
+E ele **vê o minério** — todo tipo, pela etiqueta do próprio jogo, com as
+variantes de ardósia —, e vai **no mais raro primeiro**: entre carvão no
+chão e diamante na parede, ele escolhe o diamante. A veia é seguida até
+acabar, e o minério colado na parede vem antes da parede.
 
 Ele nunca cava vila gerada nem casa da colônia: a boca da mina não se
 abre sobre elas, e cada bloco é conferido de novo antes da picareta. A
@@ -152,6 +161,56 @@ no mato depois do escuro é trabalhador que os monstros pegam.
 
 ---
 
+## O que já funciona
+
+| | |
+|---|---|
+| ✅ **Sete profissões** | lenhador, mineiro, pastor, fundidor, fabricante, construtor e fazendeiro |
+| ✅ **A cadeia da madeira, ponta a ponta** | cortar → fabricar tábua → levantar casa. Vista funcionando numa vila de verdade |
+| ✅ **A mina** | escada, salas, galeria com bolsões, tocha atrás do mineiro, descida de nível, veio de minério, água tapada |
+| ✅ **Casas do próprio Minecraft** | planície, savana, taiga, nevada e deserto. O mod não inventa casa |
+| ✅ **A colônia nunca inventa material** | o que falta é fabricado do que houver nos baús; o que não dá, ela espera |
+| ✅ **Regra 3** | vila gerada e construção da colônia são intocáveis, conferidas bloco a bloco |
+| ✅ **Sem menu nenhum** | nada de GUI, nada de item de configuração. Você acha a vila e vai embora |
+| ✅ **Servidor dedicado** | quem entra não precisa do mod no cliente |
+
+## O que falta
+
+**Profissões que o modelo econômico prevê e ninguém escreveu** — a lista
+inteira, com as razões, está em
+[`Village-Economy.md`](docs/technical/Village-Economy.md):
+
+| Profissão | Por quê | Prioridade |
+|---|---|---|
+| **Pedreiro** | Fecha `mineiro → pedra → pedreiro → construtor`. Hoje o construtor consome pedregulho cru e não tem escada, laje nem muro | ★★★★★ |
+| **Pecuarista** | Couro, carne, ovo, leite — nenhuma entra na vila hoje | ★★★★ |
+| **Transportador** | Hoje cada um guarda no **próprio** baú. Com mais profissões isso não escala | ★★★★ |
+| **Armazenista** | Estoque central e tarefa criada por escassez | ★★★★ |
+| **Guarda** | A defesa, que o modelo prevê | ★★★ |
+| **Explorador** | Define a área de expansão | ★★ |
+
+**E o que ainda não está fechado no que já existe:**
+
+- 🔴 **A casa ainda sobe com a barreira de teste.** 19 peças vieram dela
+  na última verificação. É o que falta para a Fase 2 fechar.
+- 🟠 **A navegação dentro da rocha.** Seis defeitos numerados (E30–E35)
+  saíram todos da mesma raiz: a navegação do Vanilla não traça caminho
+  por dentro de uma mina. O mod contorna andando um passo de cada vez
+  pela ordem de cavar; os quatro mods de agente que resolveram isso de
+  verdade trocaram a navegação por um A\* próprio. É a decisão em aberto.
+- 🟠 **Mina de save antigo.** A galeria mudou de forma em 2026-09-03, e o
+  cursor gravado aponta para o desenho velho. A leitura do mundo deve
+  recuar sozinha — mas isso ainda não foi visto acontecendo.
+- 🟡 **O detector de imobilidade** foi visto em jogo só no mineiro. Nas
+  outras cinco profissões é a mesma peça, com teste, sem sessão.
+- 🟡 **Sem economia de moeda, sem comércio, sem crescimento populacional
+  dirigido.** As fases 3, 4 e 5 do modelo não começaram.
+
+> A lista canônica e datada do que está aberto vive em
+> [`TODO.md`](TODO.md). Este resumo é a versão curta.
+
+---
+
 ## Instalação
 
 **Requisitos**
@@ -188,9 +247,10 @@ para casa — se você chegar de noite, use `/time set day` e eles começam.
 ## Antes de instalar
 
 **Isto é um alpha, e o número da versão diz a verdade.** O mod carrega em
-cliente e em servidor dedicado, e a cadeia de madeira — cortar, fabricar,
-construir — já foi vista funcionando numa vila de verdade, do começo ao
-fim. A mineração e as profissões mais novas ainda estão sendo acertadas.
+cliente e em servidor dedicado. A cadeia de madeira — cortar, fabricar,
+construir — e **a mineração** já foram vistas funcionando numa vila de
+verdade. As profissões mais novas ainda estão sendo acertadas, e o que
+falta está na lista acima.
 
 Use num mundo de teste antes de usar no seu mundo de sempre. Ele mexe no
 mundo: derruba árvore, cava pedra e levanta casa.

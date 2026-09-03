@@ -69,6 +69,73 @@ recua é a primeira coisa a olhar.
 
 ---
 
+## 📒 A sessão de 2026-09-03 — o inventário
+
+Quatro ciclos num dia, e a primeira sessão de jogo em que o mineiro
+trabalhou. Este bloco é o resumo; cada ciclo tem sua entrada datada
+abaixo, com o porquê.
+
+### Arquivos criados (2)
+
+| Arquivo | O que é |
+|---|---|
+| `fabric/integration/MineFlooding.java` | Tapa a nascente que a picareta abriu. Pedregulho na **face** de onde vem o líquido, nunca na pedra cavada |
+| `fabric/work/WorkStall.java` | Os dois contadores do guarda num lugar só — *é expediente?* e *ele saiu do lugar?* |
+
+### Arquivos alterados (14)
+
+| Arquivo | O que mudou |
+|---|---|
+| `core/construction/model/MineShaft.java` | A galeria abre bolsões de 3×2×2 a cada 8 colunas; lado por ruído determinístico |
+| `fabric/integration/OreVein.java` | `rarityOf` e a escolha do mais raro entre as seis faces |
+| `fabric/work/MineDigging.java` | Guarda de emparedada estendida ao minério; `couldNotReach` larga a veia; `flooded` vira a galeria |
+| `fabric/work/MinerWork.java` | `approachTo` com saída antecipada; detector de imobilidade; vedação ao quebrar |
+| `fabric/work/MinerReach.java` | `APPROACH_OFFSETS` ordenado por distância |
+| `fabric/work/MinerReport.java` | A linha ganhou `still N/300` ao lado de `stall N/2400` |
+| `fabric/work/ShepherdWork.java` | **Gate de expediente** (era o defeito) + detector + `stallOf` |
+| `fabric/work/{Builder,Lumberjack,Farmer,Manufacturer}Work.java` | Detector de imobilidade |
+| `gametest/MinerGameTest.java` · `gametest/ShepherdGameTest.java` | 9 testes de jogo novos |
+| `test/…/MineShaftTest.java` · `test/…/MinerReachTest.java` | 8 testes unitários novos |
+| `TODO.md` · `README.md` | Registro e lista pública |
+
+### Erros encontrados e corrigidos (5)
+
+| # | Erro | Como aparecia |
+|---|---|---|
+| 1 | **A guarda de emparedada não valia para o minério** | `nextCut` conferia a posição do túnel e devolvia **outro bloco** — o minério colado nela, sem conferência. O mineiro andava para dentro da parede |
+| 2 | **Veio inalcançável era servido para sempre** | A veia mora no `Mine`, que é da colônia, e `couldNotReach` só recua o cursor do túnel. Laço fechado, sem saída, para os dois mineiros |
+| 3 | **`approachTo` custava até 38 mil leituras de bloco por tique** | O javadoc dizia "uma vez por pedra"; deixou de ser verdade em 09-02, quando a guarda o pôs dentro do laço de 64 candidatos |
+| 4 | **O guarda cobrava 2 minutos para notar o óbvio** | Contava tique *andando* e nunca perguntava se o aldeão andou. Congelado é a assinatura de **toda** sessão registrada |
+| 5 | **O pastor contava a noite** | Única profissão sem gate de expediente. O mesmo defeito de 08-26 do mineiro, ainda aberto noutro lugar |
+
+### Melhorias (5)
+
+| # | Melhoria | Pedido por |
+|---|---|---|
+| 1 | Detector de imobilidade: 15s em vez de 2 min, com o motivo no log | Achado na pesquisa (AnimaFabric, mc_aiplayer) |
+| 2 | Água e lava tapadas na hora, galeria desviada | Autor |
+| 3 | Minério mais raro tem prioridade | Autor |
+| 4 | Galeria com bolsões em vez de linha reta | Autor |
+| 5 | O detector virou peça das sete profissões | Pergunta do autor |
+
+### Contagens
+
+```text
+612 testes unitários  ·  233 testes de jogo  ·  0 falhas
++2 arquivos  ·  14 alterados  ·  ~1.700 linhas
+4 commits: ec31503 · eec09b0 · 245492e · fee3c17
+```
+
+### O que este dia NÃO provou
+
+- O detector em jogo fora do mineiro — mesma peça, com teste, sem sessão
+- A mina de **save antigo** com a galeria de forma nova
+- A decisão do A\*, que continua em aberto e agora tem instrumento para
+  ser decidida com evidência: `still` e `stall` lado a lado no log dizem
+  se o gargalo é navegação
+
+---
+
 ## ✅ Resolvido
 
 ### 2026-09-03 — o detector de imobilidade saiu do mineiro e virou das sete
