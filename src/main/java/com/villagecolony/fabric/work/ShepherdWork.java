@@ -10,6 +10,7 @@ import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import net.minecraft.block.Blocks;
@@ -77,6 +78,14 @@ public final class ShepherdWork {
         private int collected;
 
         private int stalled;
+
+        /**
+         * Se ele saiu do lugar, e há quanto tempo não sai — 2026-09-03.
+         *
+         * <p>O guarda acima conta tique de expediente <b>indo até o
+         * alvo</b> e nunca pergunta se o aldeão andou. Ver {@link WorkStall}.
+         */
+        final WorkStall stall = new WorkStall();
 
         private Job(Task task, BlockPos center) {
             this.task = task;
@@ -206,9 +215,21 @@ public final class ShepherdWork {
         }
 
         if (!isWithinReach(villager, sheep)) {
-            job.stalled++;
+            // <b>Só tique de expediente</b> — 2026-09-03, e o pastor era a
+            // única profissão que andava sem esta conferência. Fora da hora
+            // a GoToWorkTargetTask nem começa, então ele está PROIBIDO de
+            // andar até a ovelha, e o guarda existe para punir quem anda
+            // sem chegar. Sem isto ele queimava o orçamento dormindo — é o
+            // defeito que o mineiro teve em 2026-08-26, quando o contador
+            // foi de 886 a 2086 com o relatório dizendo "off hours".
+            if (WorkHours.isWorkTime(world, villager)) {
+                job.stalled++;
+            }
 
-            if (job.stalled >= STALL_LIMIT) {
+            // E parado no mesmo bloco há quinze segundos: oito vezes mais
+            // rápido que os dois minutos de baixo. Ver WorkStall, que faz a
+            // pergunta do expediente por conta própria.
+            if (job.stall.stuck(world, villager) || job.stalled >= STALL_LIMIT) {
                 giveUp(workerId, job);
             } else {
                 WorkTargets.set(workerId, sheep.getBlockPos());
@@ -243,6 +264,7 @@ public final class ShepherdWork {
 
         job.sheep = nearest.getUuid();
         job.stalled = 0;
+        job.stall.reset();
 
         WorkTargets.set(workerId, nearest.getBlockPos());
     }
@@ -335,6 +357,7 @@ public final class ShepherdWork {
     private static void release(UUID workerId, Job job) {
         job.sheep = null;
         job.stalled = 0;
+        job.stall.reset();
 
         WorkTargets.clear(workerId);
     }
@@ -365,6 +388,20 @@ public final class ShepherdWork {
     }
 
     /** Quanta lã este pastor já trouxe nesta tarefa. */
+    /**
+     * Quantos tiques de expediente este pastor já andou sem chegar.
+     *
+     * <p>Não é estado novo — é o contador do guarda de travamento, lido de
+     * fora, como o do mineiro. Existe porque a pergunta que ele responde
+     * não tem outro observável: o guarda só fala quando estoura, e o
+     * defeito era ele <b>contar</b> quando não devia.
+     */
+    public static int stallOf(UUID workerId) {
+        Job job = JOBS.get(workerId);
+
+        return job == null ? 0 : job.stalled;
+    }
+
     public static int collectedBy(UUID workerId) {
         Job job = JOBS.get(workerId);
 

@@ -91,6 +91,14 @@ public final class FarmerWork {
 
         int stalled;
 
+        /**
+         * Se ele saiu do lugar, e há quanto tempo não sai — 2026-09-03.
+         *
+         * <p>O guarda acima conta tique de expediente <b>indo até o
+         * alvo</b> e nunca pergunta se o aldeão andou. Ver {@link WorkStall}.
+         */
+        final WorkStall stall = new WorkStall();
+
         private Job(Task task, BlockPos center) {
             this.task = task;
             this.center = center;
@@ -196,7 +204,10 @@ public final class FarmerWork {
                 job.stalled++;
             }
 
-            if (job.stalled >= STALL_LIMIT) {
+            // Parado no mesmo bloco há quinze segundos de expediente —
+            // 2026-09-03. Oito vezes mais rápido que o guarda de baixo, e
+            // é o mesmo defeito. Ver WorkStall.
+            if (job.stall.stuck(world, villager) || job.stalled >= STALL_LIMIT) {
                 giveUp(workerId, job);
             }
 
@@ -230,6 +241,7 @@ public final class FarmerWork {
 
         job.target = found.get();
         job.stalled = 0;
+        job.stall.reset();
 
         WorkTargets.set(workerId, job.target);
     }
@@ -314,6 +326,7 @@ public final class FarmerWork {
     private static void release(UUID workerId, Job job) {
         job.target = null;
         job.stalled = 0;
+        job.stall.reset();
 
         WorkTargets.clear(workerId);
     }

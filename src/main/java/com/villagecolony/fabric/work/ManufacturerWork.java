@@ -126,6 +126,14 @@ public final class ManufacturerWork {
          */
         private int stalled;
 
+        /**
+         * Se ele saiu do lugar, e há quanto tempo não sai — 2026-09-03.
+         *
+         * <p>O guarda acima conta tique de expediente <b>indo até o
+         * alvo</b> e nunca pergunta se o aldeão andou. Ver {@link WorkStall}.
+         */
+        final WorkStall stall = new WorkStall();
+
         private Job(Task task) {
             this.task = task;
         }
@@ -279,6 +287,25 @@ public final class ManufacturerWork {
         if (!villager.getBlockPos().isWithinDistance(chest, REACH)) {
             WorkTargets.set(workerId, chest);
 
+            // Parado no mesmo bloco há quinze segundos de expediente —
+            // 2026-09-03. O guarda de baixo cobra dois minutos para notar
+            // o mesmo. Ver WorkStall.
+            if (job.stall.stuck(world, villager)) {
+                job.task.release();
+
+                WorkTargets.clear(workerId);
+
+                VillageColonyMod.LOGGER.info(
+                        "Worker {} has not moved a block in {} ticks of work time on the"
+                                + " way to its chest at {} — crafting task returned to"
+                                + " the queue",
+                        workerId,
+                        job.stall.ticks(),
+                        chest.toShortString());
+
+                return false;
+            }
+
             if (++job.stalled > STALL_LIMIT) {
                 // Andou dois minutos de horário de trabalho e não chegou
                 // ao próprio baú. Devolver a tarefa à fila é melhor que
@@ -302,6 +329,7 @@ public final class ManufacturerWork {
         }
 
         job.stalled = 0;
+        job.stall.reset();
 
         return craftOne(world, villager, job, storage.get());
     }

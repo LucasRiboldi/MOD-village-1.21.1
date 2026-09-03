@@ -36,7 +36,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-612 testes unitários  ·  232 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
+612 testes unitários  ·  233 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 última sessão de jogo em 2026-09-03  ·  o autor gostou, e pediu três coisas
 ```
@@ -70,6 +70,59 @@ recua é a primeira coisa a olhar.
 ---
 
 ## ✅ Resolvido
+
+### 2026-09-03 — o detector de imobilidade saiu do mineiro e virou das sete
+
+Pergunta do autor: *"a técnica utilizada para configurar o mineiro se
+aplica às outras profissões?"* Sim — e conferindo o código apareceu um
+defeito aberto.
+
+#### O que já era compartilhado
+
+O esqueleto do mineiro **é o do lenhador**, e está dito no javadoc dele.
+Despacho por ciclo, trabalho por tique, `Job` por trabalhador, guarda de
+travamento. Junto já eram comuns o `IdleLog`, o `WorkTargets`, o
+`BuilderApproach.standable`, o par `TreeClaims`/`MineClaims` e um
+`Report` por profissão. O mineiro não inventou a técnica — é onde ela foi
+mais longe.
+
+#### O defeito: o pastor contava a noite
+
+**Era a única profissão que andava sem gate de expediente.** Mineiro,
+lenhador e fazendeiro gateiam por `WorkHours`; construtor e fabricante
+saem cedo do tique inteiro quando não é hora. O pastor contava tudo.
+
+É o defeito de 2026-08-26 do mineiro, ainda aberto noutro lugar: o
+contador foi de 886 a 2086 com o relatório dizendo `off hours`, e metade
+do orçamento queimou com o aldeão dormindo. Fora da hora a
+`GoToWorkTargetTask` nem começa — ele está **proibido** de andar, e o
+guarda existe para punir quem anda sem chegar.
+
+> **Duas profissões foram acusadas por engano e absolvidas.** A primeira
+> leitura apontou construtor e fabricante também, por não achar
+> `isWorkTime` perto do contador. Os dois têm um `return` cedo no tique,
+> acima. Os comentários deles são honestos, e a acusação é que estava
+> errada — registrado porque grep perto do símbolo não é leitura do fluxo.
+
+#### E o detector virou peça compartilhada
+
+`WorkStall` — os dois contadores num lugar só, e o mineiro passou a usá-lo
+também, para não haver duas implementações.
+
+| | |
+|---|---|
+| **Quem ganhou** | construtor, lenhador, fazendeiro, pastor e fabricante. O fundidor não anda |
+| **O que muda** | 2 minutos cegos viram 15 segundos com o motivo no log, em cinco profissões |
+| **Por que classe e não campo no `Job`** | são duas perguntas que precisam ser feitas **juntas** — *é expediente?* e *ele saiu do lugar?* Soltas elas se separam, e o pastor é a prova: a primeira ficou por conta de cada profissão lembrar, e ele esqueceu |
+| **Sem mapa estático** | cada `Job` tem o seu, e ele morre com o trabalho. Morte, zumbificação e dispensa já derrubam o `Job` |
+
+| | |
+|---|---|
+| **Fase vermelha conferida** | sim: sem o gate cai `shepherdgametest.theStallGuardDoesNotCountOutsideWorkHours`, e só ele |
+| **Verificações que rodaram** | `./gradlew build` (**612** unitários, 0 falhas) e `runGametest --rerun-tasks` (**233** de jogo, todos passaram) |
+| **O que este ciclo NÃO provou** | o detector em jogo nas outras seis. No mineiro ele foi visto; nas demais é a mesma peça, no mesmo ramo, mas sem sessão |
+
+---
 
 ### 2026-09-03, à noite — três pedidos do autor, depois da primeira sessão boa
 

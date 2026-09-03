@@ -107,6 +107,14 @@ public final class BuilderWork {
          */
         int stalled;
 
+        /**
+         * Se ele saiu do lugar, e há quanto tempo não sai — 2026-09-03.
+         *
+         * <p>O guarda acima conta tique de expediente <b>indo até o
+         * alvo</b> e nunca pergunta se o aldeão andou. Ver {@link WorkStall}.
+         */
+        final WorkStall stall = new WorkStall();
+
         private Job(Task task, UUID projectId) {
             this.task = task;
             this.projectId = projectId;
@@ -240,6 +248,23 @@ public final class BuilderWork {
         if (!BuilderApproach.isWithinReach(villager.getBlockPos(), target)) {
             WorkTargets.set(workerId, BuilderApproach.footOf(world, project, target));
 
+            if (job.stall.stuck(world, villager)) {
+                // Parado no mesmo bloco há quinze segundos de expediente —
+                // 2026-09-03. O guarda de baixo cobra dois minutos para
+                // notar o mesmo, e o construtor congelado paga os dois
+                // inteiros com a obra reservada em nome dele.
+                finish(
+                        job,
+                        workerId,
+                        "the builder has not moved a block in " + job.stall.ticks()
+                                + " ticks of work time on the way to "
+                                + target.toShortString() + " — "
+                                + BuilderApproach.whyNotReached(
+                                        world, project, villager, target));
+
+                return false;
+            }
+
             if (++job.stalled > STALL_LIMIT) {
                 // Andou dois minutos de horário de trabalho e não chegou
                 // ao bloco. A obra continua de pé e volta para a fila; o
@@ -259,6 +284,7 @@ public final class BuilderWork {
         }
 
         job.stalled = 0;
+        job.stall.reset();
 
         if (++job.progress < TICKS_PER_BLOCK) {
             return true;

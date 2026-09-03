@@ -158,6 +158,14 @@ public final class LumberjackWork {
          */
         int stalled;
 
+        /**
+         * Se ele saiu do lugar, e há quanto tempo não sai — 2026-09-03.
+         *
+         * <p>O guarda acima conta tique de expediente <b>indo até o
+         * alvo</b> e nunca pergunta se o aldeão andou. Ver {@link WorkStall}.
+         */
+        final WorkStall stall = new WorkStall();
+
         Job(Task task, BlockPos center) {
             this.task = task;
             this.center = center;
@@ -309,6 +317,13 @@ public final class LumberjackWork {
             // relógio de travamento não corre: colônia dormindo não é
             // trabalhador preso.
             return Outcome.WORKED;
+        }
+
+        // Parado no mesmo bloco há quinze segundos de expediente —
+        // 2026-09-03. O guarda de baixo cobra dois minutos para notar o
+        // mesmo. Ver WorkStall.
+        if (job.stall.stuck(world, villager)) {
+            return TreeChoice.giveUp(world, job, workerId);
         }
 
         if (WorkHours.isWorkTime(world, villager) && ++job.stalled > TreeChoice.stallLimit) {

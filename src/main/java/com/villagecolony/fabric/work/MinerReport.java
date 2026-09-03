@@ -159,7 +159,8 @@ public final class MinerReport {
         // devagar</i> tem "still" perto de zero; <i>travado</i> tem os
         // dois subindo juntos. Toda sessão registrada era o segundo caso,
         // e o log não sabia dizer.
-        text.append(", still ").append(job.still).append("/").append(MinerWork.STILL_LIMIT);
+        text.append(", still ").append(job.stall.ticks())
+                .append("/").append(MinerWork.STILL_LIMIT);
 
         return text.toString();
     }

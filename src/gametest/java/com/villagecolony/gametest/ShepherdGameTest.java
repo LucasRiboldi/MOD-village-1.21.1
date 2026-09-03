@@ -115,6 +115,88 @@ public class ShepherdGameTest implements FabricGameTest {
         });
     }
 
+    /**
+     * O guarda do pastor não conta fora do expediente — 2026-09-03.
+     *
+     * <p><b>Ele era a única profissão que andava sem esta conferência.</b>
+     * Mineiro, lenhador e fazendeiro gateiam o contador por
+     * {@code WorkHours}; construtor e fabricante saem cedo do tique
+     * inteiro quando não é hora. O pastor contava a noite toda.
+     *
+     * <p>É o defeito que o mineiro teve em 2026-08-26: o contador foi de
+     * 886 a 2086 com o relatório dizendo {@code off hours}, e metade do
+     * orçamento de dois minutos queimou com o aldeão dormindo. Fora da
+     * hora a {@code GoToWorkTargetTask} nem começa — o aldeão está
+     * <b>proibido</b> de andar até a ovelha, e o guarda existe para punir
+     * quem anda sem chegar.
+     *
+     * <p><b>Por que criança e não noite.</b> {@code WorkHours} responde não
+     * para bebê sem depender do relógio. Mexer na hora do mundo é global e
+     * vaza para os testes vizinhos do mesmo lote.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "shepherd_off_hours",
+            tickLimit = 100)
+    public void theStallGuardDoesNotCountOutsideWorkHours(TestContext context) {
+        ground(context);
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        // A ovelha longe do braço, para o pastor ficar no ramo que conta.
+        SheepEntity sheep = context.spawnEntity(EntityType.SHEEP, new BlockPos(6, 2, 6));
+        sheep.setColor(DyeColor.WHITE);
+        sheep.setSheared(false);
+        sheep.setBreedingAge(0);
+
+        // Criança: WorkHours diz não sem que o relógio do mundo mude.
+        VillagerEntity child = context.spawnEntity(EntityType.VILLAGER, STAND);
+        child.setBreedingAge(-24_000);
+
+        Worker worker = VillageColonyMod.WORKERS.register(child.getUuid(), colony.id());
+        worker.assign(ProfessionType.SHEPHERD);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(child.getUuid(), chest));
+
+        owned.owning(child.getUuid());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_WOOL,
+                TaskPriority.PRODUCTION,
+                ResourceType.WHITE_WOOL,
+                8);
+
+        task.reserveFor(child.getUuid());
+
+        ShepherdWork.shortenSearchTo(8);
+
+        ShepherdWork.run(context.getWorld(), colony);
+
+        context.runAtTick(60, () -> {
+            int stalled = ShepherdWork.stallOf(child.getUuid());
+
+            try {
+                context.assertTrue(
+                        stalled == 0,
+                        "o guarda contou " + stalled + " tiques fora do expediente, e fora"
+                                + " dele o aldeão está proibido de andar até a ovelha");
+            } finally {
+                owned.cleanUp();
+
+                ShepherdWork.restoreSearch();
+            }
+
+            context.complete();
+        });
+    }
+
     private static void ground(TestContext context) {
         for (int x = 0; x <= 6; x++) {
             for (int z = 0; z <= 6; z++) {
