@@ -4,7 +4,10 @@ import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3i;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -320,6 +323,77 @@ public final class MinerReach {
         // Nulo quando nada da passagem serve: quem responde é a boca, que
         // é superfície e onde se fica de pé por construção.
         return step;
+    }
+
+    /**
+     * As posições de onde se pode bater numa pedra, da mais perto para a
+     * mais longe — 2026-09-03.
+     *
+     * <p><b>É a ordem que torna a busca barata.</b> O
+     * {@code MinerWork.approachTo} varria o cubo de raio quatro inteiro
+     * para ficar com o vizinho mais perto: setecentas e vinte e oito
+     * posições, umas seiscentas leituras de bloco, <b>sempre</b> — mesmo
+     * quando o lugar bom era o bloco colado ao lado.
+     *
+     * <p>O javadoc dele dizia que isso era aceitável porque rodava
+     * <i>uma vez por pedra</i>. Deixou de rodar: a guarda de emparedada
+     * de 2026-09-02 a chamou de dentro do laço do {@code nextCut}, que
+     * olha até sessenta e quatro posições por passagem. Seiscentas
+     * leituras viraram até <b>trinta e oito mil por tique</b>, e este
+     * ciclo ainda estende a guarda ao minério.
+     *
+     * <p>Com as posições ordenadas por distância, a resposta é a
+     * primeira que servir: dentro de um corredor o vizinho colado
+     * responde, e a varredura inteira só é paga quando a resposta é
+     * <i>não há nenhuma</i> — que é exatamente o caso em que ela
+     * precisa ser paga.
+     *
+     * <p>O resultado é <b>o mesmo bloco de antes</b>, e não um parecido:
+     * a distância é a mesma conta, o filtro do braço é o mesmo, e a
+     * ordenação é estável — entre empatadas continua vencendo a primeira
+     * na ordem {@code dx, dy, dz} do laço original.
+     */
+    public static final List<Vec3i> APPROACH_OFFSETS = approachOffsets();
+
+    /**
+     * A distância a que um aldeão de pé neste deslocamento fica da pedra.
+     *
+     * <p>O meio bloco de cada eixo se cancela no {@code x} e no
+     * {@code z} — os dois são medidos do centro da coluna —, e sobra no
+     * {@code y} porque quem fica de pé mede pelos <b>pés</b> e a pedra
+     * mede pelo centro. É a mesma conta do {@link #distanceTo}, escrita
+     * sem o bloco de referência.
+     */
+    static double offsetDistance(int dx, int dy, int dz) {
+        return Math.sqrt(dx * dx + (dy - 0.5) * (dy - 0.5) + dz * dz);
+    }
+
+    private static List<Vec3i> approachOffsets() {
+        List<Vec3i> offsets = new ArrayList<>();
+
+        for (int dx = -REACH; dx <= REACH; dx++) {
+            for (int dy = -REACH; dy <= REACH; dy++) {
+                for (int dz = -REACH; dz <= REACH; dz++) {
+
+                    if (dx == 0 && dy == 0 && dz == 0) {
+                        continue;
+                    }
+
+                    if (offsetDistance(dx, dy, dz) > REACH) {
+                        continue;
+                    }
+
+                    offsets.add(new Vec3i(dx, dy, dz));
+                }
+            }
+        }
+
+        // Estável de propósito — ver APPROACH_OFFSETS. List.sort é um
+        // merge sort, e empate nenhum troca de lugar.
+        offsets.sort(java.util.Comparator.comparingDouble(
+                offset -> offsetDistance(offset.getX(), offset.getY(), offset.getZ())));
+
+        return List.copyOf(offsets);
     }
 
     /**

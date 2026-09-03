@@ -30,6 +30,7 @@ import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3i;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -422,39 +423,36 @@ public final class MinerWork {
      * mesma linha de log: <i>"it was walking to 732,46,878, which is not
      * standable"</i>. Escolhedor e relator não podem responder diferente
      * à mesma pergunta; é a falha que a distância já tinha tido.
+     *
+     * <p><b>E a varredura inteira deixou de ser paga toda vez</b> —
+     * 2026-09-03. O parágrafo acima se defendia dizendo que as
+     * seiscentas leituras rodavam <i>uma vez por pedra</i>. Isso deixou
+     * de ser verdade em 2026-09-02, quando a guarda de emparedada passou
+     * a chamar este método de dentro do laço do {@code nextCut} — até
+     * sessenta e quatro posições por passagem, e uma passagem por tique.
+     * Seiscentas leituras viraram até trinta e oito mil por tique, e
+     * este ciclo ainda estende a guarda ao minério.
+     *
+     * <p>As posições agora vêm prontas e <b>ordenadas por distância</b>
+     * do {@link MinerReach#APPROACH_OFFSETS}, e a resposta é a primeira
+     * que servir. Num corredor o vizinho colado responde na primeira ou
+     * segunda leitura; a varredura completa só é paga quando a resposta
+     * é <i>não há lugar nenhum</i>, que é o caso em que ela vale.
+     *
+     * <p>O bloco devolvido é <b>o mesmo de antes</b>: mesma conta de
+     * distância, mesmo filtro do braço, e a ordenação é estável — entre
+     * empatadas continua vencendo a primeira na ordem do laço antigo.
      */
     public static BlockPos approachTo(ServerWorld world, BlockPos target) {
-        BlockPos nearest = null;
-        double nearestDistance = Double.MAX_VALUE;
+        for (Vec3i offset : MinerReach.APPROACH_OFFSETS) {
+            BlockPos at = target.add(offset);
 
-        for (int dx = -MinerReach.REACH; dx <= MinerReach.REACH; dx++) {
-            for (int dy = -MinerReach.REACH; dy <= MinerReach.REACH; dy++) {
-                for (int dz = -MinerReach.REACH; dz <= MinerReach.REACH; dz++) {
-
-                    if (dx == 0 && dy == 0 && dz == 0) {
-                        continue;
-                    }
-
-                    BlockPos at = target.add(dx, dy, dz);
-
-                    double distance = MinerReach.distanceTo(
-                            at.getX() + 0.5, at.getY(), at.getZ() + 0.5, target);
-
-                    if (distance > MinerReach.REACH || distance >= nearestDistance) {
-                        continue;
-                    }
-
-                    if (!BuilderApproach.standable(world, at)) {
-                        continue;
-                    }
-
-                    nearest = at;
-                    nearestDistance = distance;
-                }
+            if (BuilderApproach.standable(world, at)) {
+                return at;
             }
         }
 
-        return nearest == null ? target : nearest;
+        return target;
     }
 
 

@@ -314,6 +314,27 @@ public final class MineDigging {
             return Optional.empty();
         }
 
+        // A mesma guarda do nextCut, e aqui ela é a que fecha o laço —
+        // 2026-09-03. Este método roda ANTES do túnel a cada passagem, e
+        // a veia mora no Mine, que é da colônia: um minério sem lugar de
+        // onde bater era servido de novo, e de novo, e ao mineiro
+        // seguinte também. O couldNotReach não alcançava o caso — ele só
+        // recua o cursor do túnel, e diz por escrito que é "silencioso
+        // quando a pedra não era do túnel — veio, areia".
+        //
+        // O resultado em jogo era a colônia inteira parada num bolsão de
+        // carvão dentro da rocha: dezessete minutos, zero pedra.
+        //
+        // Desistir da veia é a saída barata, e é a que o stepBackUp já
+        // escolhe logo abaixo — <i>a colônia prefere perder o minério a
+        // perder o mineiro</i>. O túnel volta a mandar, e ele reabre o
+        // caminho até este mesmo minério pelo lado de onde se alcança.
+        if (nowhereToStand(world, more.get())) {
+            mine.veinExhausted();
+
+            return Optional.empty();
+        }
+
         if (more.get().getY() < from.get().getY()) {
             Optional<BlockPos> step = stepBackUp(world, from.get());
 
@@ -327,6 +348,15 @@ public final class MineDigging {
             }
 
             if (!step.get().equals(from.get())) {
+                // E o degrau é alvo como qualquer outro: se não há de
+                // onde bater nele, ele trava a veia do mesmo jeito que o
+                // minério travaria — 2026-09-03.
+                if (nowhereToStand(world, step.get())) {
+                    mine.veinExhausted();
+
+                    return Optional.empty();
+                }
+
                 // O degrau primeiro, e o veio NÃO avança: a passagem
                 // seguinte acha o mesmo minério com a saída pronta.
                 return step;
@@ -369,6 +399,29 @@ public final class MineDigging {
         }
 
         return canDig(world, ceiling) ? Optional.of(ceiling) : Optional.empty();
+    }
+
+    /**
+     * Se não há de onde bater nesta pedra — 2026-09-03.
+     *
+     * <p><b>Uma pergunta só, num lugar só.</b> O
+     * {@link MinerWork#approachTo} devolve <i>a própria pedra</i> quando
+     * não acha vizinho onde um aldeão caiba de pé, e essa igualdade é a
+     * resposta — escrita à mão em três lugares, ela seria a próxima a
+     * discordar de si mesma, que é a falha que o {@code standable} já
+     * teve em 2026-08-28.
+     *
+     * <p>Toda posição que vira alvo do mineiro passa por aqui: a do
+     * túnel, a do minério colado nela, o minério da veia e o degrau de
+     * volta. Alvo que não passa é alvo que custa dois minutos de
+     * expediente e devolve a tarefa.
+     *
+     * <p>Barato desde que as posições de aproximação vêm ordenadas por
+     * distância — ver {@link MinerReach#APPROACH_OFFSETS}. A varredura
+     * completa só é paga quando a resposta é <b>sim</b>.
+     */
+    private static boolean nowhereToStand(ServerWorld world, BlockPos at) {
+        return MinerWork.approachTo(world, at).equals(at);
     }
 
     /**
@@ -539,9 +592,36 @@ public final class MineDigging {
      */
     public static void couldNotReach(UUID colonyId, BlockPos stone) {
         VillageColonyMod.MINES.of(colonyId).ifPresent(mine -> {
-            if (mine.holdPositionAt(MinecraftTypeAdapter.toColonyPos(stone))) {
+            ColonyPos at = MinecraftTypeAdapter.toColonyPos(stone);
+
+            if (mine.holdPositionAt(at)) {
                 VillageColonyMod.LOGGER.info(
                         "The gallery keeps its place at {} — it was not dug",
+                        stone.toShortString());
+            }
+
+            // <b>E a veia se larga</b> — 2026-09-03. O javadoc acima diz
+            // que este método é silencioso quando a pedra é do veio, e
+            // era: o cursor do túnel recuava e a veia ficava.
+            //
+            // Só que a veia mora no Mine, que é da colônia, e o
+            // followingTheVein roda ANTES do túnel a cada passagem. Um
+            // minério que o mineiro não alcançou era servido de volta na
+            // passagem seguinte, ao mesmo mineiro e ao que herdasse a
+            // escada pelo MineClaims.stepAside — um laço fechado, sem
+            // saída, para a colônia inteira.
+            //
+            // A guarda do followingTheVein evita quase todos os casos na
+            // entrada; esta é a que fecha o resto, porque nem toda
+            // desistência é por falta de lugar: chunk descarregado,
+            // caminho que a navegação não traçou, o jogador tapando o
+            // buraco. Desistir da veia devolve o mineiro ao túnel, que é
+            // contínuo por construção.
+            if (mine.vein().filter(at::equals).isPresent()) {
+                mine.veinExhausted();
+
+                VillageColonyMod.LOGGER.info(
+                        "The vein at {} is dropped — the miner could not reach it",
                         stone.toShortString());
             }
         });
@@ -709,7 +789,7 @@ public final class MineDigging {
                 continue;
             }
 
-            if (MinerWork.approachTo(world, at).equals(at)) {
+            if (nowhereToStand(world, at)) {
                 // <b>Emparedada: não há vizinho onde um aldeão caiba</b> —
                 // 2026-09-02. O approachTo devolve a própria pedra quando
                 // não acha lugar de ficar de pé, e o javadoc dele
@@ -741,7 +821,27 @@ public final class MineDigging {
                     ? Optional.of(at)
                     : OreVein.beside(world, at);
 
-            if (ore.isEmpty()) {
+            // <b>E o minério da parede também precisa ter onde se ficar de
+            // pé</b> — 2026-09-03. A guarda de emparedada acima conferia a
+            // posição do túnel e devolvia <b>outro bloco</b>: o minério
+            // colado nela, que nunca passou por conferência nenhuma. A
+            // colônia mira o carvão dentro da rocha, o approachTo devolve
+            // "o próprio minério", o mineiro anda para dentro da parede, e
+            // dois minutos depois o guarda de travamento devolve a tarefa.
+            //
+            // É exatamente o defeito que 09-02 fechou, vazando pela porta
+            // do minério — e pela pior delas, porque é o minério que
+            // justifica a galeria existir.
+            //
+            // Sem lugar de onde bater, a parede vale mais que o minério
+            // atrás dela: devolve-se a posição do túnel, que já passou pela
+            // guarda. O veio NÃO é lembrado — lembrar um minério
+            // inalcançável é o que faz o followingTheVein reservi-lo para
+            // sempre. Aberto o túnel, a passagem seguinte o reencontra, e
+            // aí com lugar de onde bater.
+            if (ore.isEmpty()
+                    || (!ore.get().equals(at) && nowhereToStand(world, ore.get()))) {
+
                 return Optional.of(at);
             }
 

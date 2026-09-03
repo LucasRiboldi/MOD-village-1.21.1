@@ -2,7 +2,11 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.construction.model.Mine;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3i;
 import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -198,5 +202,111 @@ class MinerReachTest {
                         + MinerReach.distanceTo(
                                 worstX, approach.getY(), approach.getZ() + 0.5, stone)
                         + " da pedra, e o braço é " + MinerReach.REACH);
+    }
+
+    /**
+     * A ordem de aproximação é a varredura antiga, sem a varredura —
+     * 2026-09-03.
+     *
+     * <p>O {@code MinerWork.approachTo} varria o cubo inteiro para ficar
+     * com o vizinho mais perto, e passou a devolver o primeiro que
+     * servir de uma lista pronta. A troca só é segura se a lista
+     * <b>for</b> a ordem em que o laço antigo teria aceitado cada
+     * posição — e é isso que este teste afirma, refazendo o laço antigo
+     * aqui.
+     *
+     * <p>Sem ele, um deslize na conta de distância ou na estabilidade da
+     * ordenação escolheria um lugar de pé <i>parecido</i>. Parecido não
+     * serve: com {@link MinerReach#ARRIVAL} em zero, o lugar escolhido
+     * alcança a pedra <b>por construção</b>, e um bloco a mais joga a
+     * conta para fora do braço — é a lição de 2026-08-29, 04:26.
+     */
+    @Test
+    void theApproachOrderIsTheOldCubeScanInOrder() {
+        List<Vec3i> asTheOldLoopWouldHaveTakenThem = new ArrayList<>();
+
+        for (int dx = -MinerReach.REACH; dx <= MinerReach.REACH; dx++) {
+            for (int dy = -MinerReach.REACH; dy <= MinerReach.REACH; dy++) {
+                for (int dz = -MinerReach.REACH; dz <= MinerReach.REACH; dz++) {
+
+                    if (dx == 0 && dy == 0 && dz == 0) {
+                        continue;
+                    }
+
+                    BlockPos at = STONE.add(dx, dy, dz);
+
+                    double distance = MinerReach.distanceTo(
+                            at.getX() + 0.5, at.getY(), at.getZ() + 0.5, STONE);
+
+                    if (distance > MinerReach.REACH) {
+                        continue;
+                    }
+
+                    asTheOldLoopWouldHaveTakenThem.add(new Vec3i(dx, dy, dz));
+                }
+            }
+        }
+
+        asTheOldLoopWouldHaveTakenThem.sort(
+                java.util.Comparator.comparingDouble(offset -> MinerReach.distanceTo(
+                        STONE.getX() + offset.getX() + 0.5,
+                        STONE.getY() + offset.getY(),
+                        STONE.getZ() + offset.getZ() + 0.5,
+                        STONE)));
+
+        assertEquals(asTheOldLoopWouldHaveTakenThem, MinerReach.APPROACH_OFFSETS);
+    }
+
+    /**
+     * A lista vem ordenada, e é isso que torna a saída antecipada
+     * barata.
+     *
+     * <p>Se ela deixar de estar ordenada, o {@code approachTo} continua
+     * respondendo — só que o <b>primeiro que serve</b> deixa de ser o
+     * <b>mais perto</b>, e a garantia do {@link MinerReach#ARRIVAL} zero
+     * cai em silêncio.
+     */
+    @Test
+    void theApproachOrderRunsFromTheNearestOutwards() {
+        List<Vec3i> offsets = MinerReach.APPROACH_OFFSETS;
+
+        for (int i = 1; i < offsets.size(); i++) {
+            double before = MinerReach.offsetDistance(
+                    offsets.get(i - 1).getX(),
+                    offsets.get(i - 1).getY(),
+                    offsets.get(i - 1).getZ());
+
+            double now = MinerReach.offsetDistance(
+                    offsets.get(i).getX(), offsets.get(i).getY(), offsets.get(i).getZ());
+
+            assertTrue(
+                    before <= now,
+                    "a posição " + i + " está a " + now + " e a anterior a " + before);
+        }
+    }
+
+    /**
+     * Nenhuma posição da lista está fora do braço, e a própria pedra não
+     * está nela.
+     *
+     * <p>A pedra fora da lista é o que permite ao {@code approachTo}
+     * usar <i>"devolveu a própria pedra"</i> como resposta de <b>não há
+     * lugar nenhum</b> — que é a guarda de emparedada inteira, do
+     * {@code nextCut} ao veio.
+     */
+    @Test
+    void everyApproachIsWithinTheArmAndNoneIsTheStoneItself() {
+        for (Vec3i offset : MinerReach.APPROACH_OFFSETS) {
+            assertFalse(
+                    offset.getX() == 0 && offset.getY() == 0 && offset.getZ() == 0,
+                    "a própria pedra não é lugar de ficar de pé");
+
+            BlockPos at = STONE.add(offset);
+
+            assertTrue(
+                    MinerReach.isWithinReach(
+                            at.getX() + 0.5, at.getY(), at.getZ() + 0.5, STONE),
+                    at.toShortString() + " está fora do braço de " + MinerReach.REACH);
+        }
     }
 }

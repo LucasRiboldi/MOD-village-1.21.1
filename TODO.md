@@ -36,7 +36,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-565 testes unitários  ·  218 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
+607 testes unitários  ·  225 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 última sessão de jogo em 2026-08-28, 23:06  ·  ele desceu, e parou a 2 blocos
 ```
@@ -60,12 +60,80 @@ sessão — o que preparar, o que olhar e em que ordem, e o que cada linha de
 log significa — vive em
 [`docs/proxima-sessao.md`](docs/proxima-sessao.md).
 
-Dez consertos do mineiro estão empilhados sem uma única sessão que os veja,
-e as três decisões em aberto esperam o que essa sessão mostrar.
+Onze consertos do mineiro estão empilhados sem uma única sessão que os veja,
+e as três decisões em aberto esperam o que essa sessão mostrar. O de
+2026-09-03 é o que mais pede a sessão: ele fecha um **laço**, e laço se
+reconhece no log — a mesma pedra mirada passagem após passagem.
 
 ---
 
 ## ✅ Resolvido
+
+### 2026-09-03 — a guarda de emparedada não valia para o minério
+
+A guarda de 2026-09-02 ensinou o `nextCut` a recusar pedra sem lugar de
+onde bater. Ela conferia **a posição do túnel** — e o método devolve
+**outro bloco** logo abaixo: o minério colado nela. Esse nunca passou por
+conferência nenhuma, e o `followingTheVein`, que roda **antes** do túnel a
+cada passagem, também não conferia o dele.
+
+É o pior lugar possível para o vazamento: o minério é o que justifica a
+galeria existir.
+
+#### E ele fechava um laço, não só perdia uma passagem
+
+A veia mora no `Mine`, que é da colônia. O `couldNotReach` recua o cursor
+do **túnel** e diz por escrito que é *"silencioso quando a pedra não era
+do túnel — veio, areia"*. Então um minério inalcançável era servido de
+volta na passagem seguinte, ao mesmo mineiro **e ao que herdasse a escada
+pelo `MineClaims.stepAside`**:
+
+```text
+mira o minério -> anda 2 min de expediente contra a rocha
+-> o guarda devolve a tarefa -> a passagem seguinte mira o mesmo minério
+```
+
+Sem saída, para a colônia inteira. É a forma exata de *"dezessete minutos,
+zero pedra"*.
+
+| | |
+|---|---|
+| **A guarda de entrada** | `nowhereToStand` passou a ser uma pergunta só, num lugar só, e toda posição que vira alvo passa por ela: a do túnel, o minério colado nela, o minério da veia e o degrau de volta |
+| **O quebra-laço** | `couldNotReach` larga a veia quando a pedra largada **é** ela. A guarda de entrada pega quase tudo; esta pega o que não é falta de lugar — chunk descarregado, caminho que a navegação não traçou, o jogador tapando o buraco |
+| **Sem minério alcançável** | devolve-se a posição do túnel, que já passou pela guarda, e a veia **não** é lembrada. Aberto o túnel, a passagem seguinte reencontra o minério pelo lado de onde se alcança |
+
+#### E pagar por ela ficou barato
+
+O `approachTo` varria o cubo de raio quatro inteiro — 728 posições, umas
+600 leituras de bloco — para ficar com o vizinho mais perto. O javadoc se
+defendia dizendo que rodava *uma vez por pedra*. **Deixou de rodar em
+09-02**, quando a guarda o chamou de dentro do laço do `nextCut`: até 64
+posições por passagem, uma passagem por tique. Até **38 mil leituras por
+tique**, e este ciclo ainda estendeu a guarda ao minério.
+
+As posições agora vêm prontas e ordenadas por distância em
+`MinerReach.APPROACH_OFFSETS`, e a resposta é a primeira que servir. Num
+corredor o vizinho colado responde na primeira leitura; a varredura
+inteira só é paga quando a resposta é *não há lugar nenhum* — o caso em
+que ela vale.
+
+O bloco devolvido é **o mesmo de antes**, e há teste que afirma isso
+refazendo o laço antigo e comparando a lista inteira.
+
+| | |
+|---|---|
+| **Fase vermelha conferida** | sim, na bateria: sem os dois guardas caem `aVeinWithNowhereToStandIsDropped` e `givingUpOnTheOreDropsTheVein`, e só esses dois |
+| **`givingUpOnAnotherStoneKeepsTheVein`** | é guarda-corpo, não fase vermelha: ele fica verde nos dois lados, e existe para impedir que o quebra-laço largue veia boa |
+| **Verificações que rodaram** | `./gradlew build` (607 unitários, 0 falhas) e `runGametest --rerun-tasks` (**225** de jogo, todos passaram) |
+| **O que este ciclo NÃO provou** | nada disso foi visto em jogo. Continua valendo o parágrafo de cima: os consertos do mineiro estão empilhados sem sessão |
+
+> **As contagens deste arquivo estavam as duas erradas, de novo.** Ele
+> dizia 218 de jogo e 565 unitários. O baseline real era **222** de jogo
+> (contado por `@GameTest` no `HEAD`), e o `build` com `--rerun-tasks`
+> fecha **607** unitários — o 565 era contagem parcial de build
+> incremental. Com os três deste ciclo, 225 de jogo.
+
+---
 
 ### 2026-09-02, à tarde — duas decisões do autor, e o que cada uma virou
 

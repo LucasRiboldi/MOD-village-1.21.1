@@ -2643,6 +2643,137 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
+     * Veio sem onde pisar se larga, em vez de ser servido para sempre —
+     * 2026-09-03.
+     *
+     * <p><b>É a guarda de 2026-09-02 vazando pela porta do minério.</b>
+     * Aquele ciclo ensinou o {@code nextCut} a recusar pedra emparedada,
+     * e o {@code followingTheVein} nunca soube da regra: ele roda
+     * <b>antes</b> do túnel a cada passagem, e devolvia o minério colado
+     * no último sem perguntar se havia de onde bater nele.
+     *
+     * <p>E a veia mora no {@code Mine}, que é da colônia. Um minério
+     * dentro da rocha era servido de volta na passagem seguinte, ao mesmo
+     * mineiro e ao que herdasse a escada pelo
+     * {@code MineClaims.stepAside}. O {@code couldNotReach} não alcançava
+     * o caso — ele recua o cursor do <b>túnel</b>, e diz por escrito que é
+     * silencioso quando a pedra é do veio.
+     *
+     * <p>O ciclo fechado era: mira o minério, anda dois minutos de
+     * expediente contra a rocha, o guarda de travamento devolve a tarefa,
+     * a passagem seguinte mira o mesmo minério. A colônia inteira parada
+     * num bolsão de carvão que ninguém alcança.
+     *
+     * <p>A arena é rocha maciça — a mesma do
+     * {@code stoneWithNowhereToStandIsNotATarget} —, então não há um
+     * bloco onde um aldeão caiba em lugar nenhum, e o minério enterrado
+     * nela é inalcançável por construção.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_vein",
+            tickLimit = 20)
+    public void aVeinWithNowhereToStandIsDropped(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        solidRock(context);
+
+        Colony colony = mineOwner(context);
+
+        BlockPos taken = new BlockPos(3, 3, 3);
+        BlockPos buried = taken.north();
+
+        context.setBlockState(buried, Blocks.COPPER_ORE.getDefaultState());
+
+        Mine mine = VillageColonyMod.MINES.of(colony.id()).orElseThrow();
+
+        mine.followVein(MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(taken)));
+
+        BlockPos ore = context.getAbsolutePos(buried);
+
+        try {
+            context.assertTrue(
+                    MinerWork.approachTo(world, ore).equals(ore),
+                    "o cenário não reproduz o defeito: " + ore.toShortString()
+                            + " tem onde pisar ao lado");
+
+            Optional<BlockPos> next = veinTarget(context, colony);
+
+            context.assertFalse(
+                    next.isPresent() && next.get().equals(ore),
+                    "o veio mandou o mineiro para dentro da rocha, atrás do minério");
+
+            context.assertTrue(
+                    mine.vein().isEmpty(),
+                    "a veia inalcançável continua guardada, e a passagem seguinte a serve"
+                            + " de novo — é o laço que prendia a colônia");
+        } finally {
+            MineClaims.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * Desistir do minério larga a veia junto — 2026-09-03.
+     *
+     * <p>A guarda da entrada recusa o que já se sabe inalcançável; esta é
+     * a que fecha o resto, porque <b>nem toda desistência é por falta de
+     * lugar</b>: chunk descarregado, caminho que a navegação não traçou, o
+     * jogador tapando o buraco enquanto o mineiro anda até lá.
+     *
+     * <p>Sem ela, qualquer uma dessas fecha o mesmo laço: o
+     * {@code couldNotReach} recuava só o cursor do túnel, e a veia
+     * apontando para o minério que ele acabou de largar continuava lá
+     * para a passagem seguinte devolvê-lo.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_vein",
+            tickLimit = 20)
+    public void givingUpOnTheOreDropsTheVein(TestContext context) {
+        Colony colony = mineOwner(context);
+
+        BlockPos ore = context.getAbsolutePos(new BlockPos(3, 3, 3));
+
+        Mine mine = VillageColonyMod.MINES.of(colony.id()).orElseThrow();
+
+        mine.followVein(MinecraftTypeAdapter.toColonyPos(ore));
+
+        MineDigging.couldNotReach(colony.id(), ore);
+
+        context.assertTrue(
+                mine.vein().isEmpty(),
+                "o mineiro desistiu deste minério e a veia continua apontando para ele");
+
+        context.complete();
+    }
+
+    /**
+     * E ela larga <b>essa</b> veia, e não qualquer uma.
+     *
+     * <p>O {@code couldNotReach} recebe toda pedra largada — a do túnel, a
+     * da areia, a que o outro mineiro já ultrapassou. Largar a veia em
+     * todas seria jogar fora o minério que ainda está bom, que é
+     * exatamente o trabalho que a veia existe para poupar.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_vein",
+            tickLimit = 20)
+    public void givingUpOnAnotherStoneKeepsTheVein(TestContext context) {
+        Colony colony = mineOwner(context);
+
+        BlockPos ore = context.getAbsolutePos(new BlockPos(3, 3, 3));
+
+        Mine mine = VillageColonyMod.MINES.of(colony.id()).orElseThrow();
+
+        mine.followVein(MinecraftTypeAdapter.toColonyPos(ore));
+
+        MineDigging.couldNotReach(colony.id(), context.getAbsolutePos(new BlockPos(5, 6, 5)));
+
+        context.assertFalse(
+                mine.vein().isEmpty(),
+                "largou a veia por causa de uma pedra que não era ela");
+
+        context.complete();
+    }
+
+    /**
      * Abre toda a janela de busca da galeria desta colônia.
      *
      * <p>Um pouco além das 64 posições que uma passagem examina, para
