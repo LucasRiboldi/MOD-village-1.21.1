@@ -111,7 +111,7 @@ public final class WorkAssignment {
             // porque não é dele que a colônia precisa decidir agora.
             worker.aCycleWentBy();
 
-            if (takeOneTask(colonyId, worker, tasks, hasStorage)) {
+            if (takeOneTask(colonyId, worker, workers, tasks, hasStorage)) {
                 assigned++;
             }
         }
@@ -200,6 +200,7 @@ public final class WorkAssignment {
     private static boolean takeOneTask(
             java.util.UUID colonyId,
             Worker worker,
+            WorkerService workers,
             TaskService tasks,
             Predicate<java.util.UUID> hasStorage) {
 
@@ -228,9 +229,13 @@ public final class WorkAssignment {
         // perderia a especialização que ela mesma montou.
         if (own.stream().anyMatch(worker::isResting)) {
             for (Capability capability : LENDABLE) {
-                if (!own.contains(capability)
-                        && reserveOne(colonyId, worker, tasks, hasStorage, capability)) {
+                if (own.contains(capability)
+                        || alreadyLent(colonyId, capability, workers, tasks)) {
 
+                    continue;
+                }
+
+                if (reserveOne(colonyId, worker, tasks, hasStorage, capability)) {
                     return true;
                 }
             }
@@ -243,6 +248,47 @@ public final class WorkAssignment {
                     && reserveOne(colonyId, worker, tasks, hasStorage, capability)) {
 
                 return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Se alguém desta colônia já está com a mão emprestada nesta
+     * capacidade — 2026-09-02.
+     *
+     * <p><b>Uma por capacidade, e não a profissão inteira.</b> A sessão
+     * das 22:59 mostrou os dois lenhadores da vila travando na madeira no
+     * mesmo ciclo e indo os dois para a mina: dez minutos, zero pedra e
+     * zero árvore. E o segundo nem cavou — a escada é de um só, então ele
+     * trocou tentar outra árvore por uma fila de uma vaga.
+     *
+     * <p>Emprestar tem que render, e entrar em fila não rende. Com o
+     * teto, o segundo volta ao próprio trabalho pela 3ª passagem, que é
+     * onde ele rende mais que parado.
+     */
+    private static boolean alreadyLent(
+            java.util.UUID colonyId,
+            Capability capability,
+            WorkerService workers,
+            TaskService tasks) {
+
+        for (Worker other : workers.ofColony(colonyId)) {
+            Optional<ProfessionType> profession = other.profession();
+
+            if (profession.isEmpty()
+                    || ProfessionRegistry.of(profession.get())
+                            .capabilities().contains(capability)) {
+
+                // Dono da capacidade não é mão emprestada.
+                continue;
+            }
+
+            for (Task task : tasks.assignedTo(other.villagerId())) {
+                if (task.type().required() == capability) {
+                    return true;
+                }
             }
         }
 

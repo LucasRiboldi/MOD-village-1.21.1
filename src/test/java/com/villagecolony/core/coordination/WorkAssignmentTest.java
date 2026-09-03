@@ -358,4 +358,47 @@ class WorkAssignmentTest {
         assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
         assertEquals(TaskState.AVAILABLE, wood.state());
     }
+
+    /**
+     * Uma mão emprestada por capacidade — 2026-09-02, sessão das 22:59.
+     *
+     * <p><b>A regra da mão emprestada esvaziou a profissão inteira.</b>
+     * Os dois lenhadores da vila travaram na madeira no mesmo ciclo,
+     * descansaram a capacidade, e os dois foram para a mina:
+     *
+     * <pre>
+     * miners: 7b6909df (LUMBERJACK lending a hand) digging Diorito ...
+     *         fad43afc (LUMBERJACK lending a hand) waiting for the shaft
+     * </pre>
+     *
+     * <p>Dez minutos, zero pedra e <b>zero árvore</b> — a vila ficou sem
+     * quem cortasse lenha. E o segundo emprestado nem cavou: a escada é
+     * de um só, então ele trocou tentar outra árvore por ficar numa fila
+     * de uma vaga. Emprestar tem que render, e entrar em fila não rende.
+     *
+     * <p>A ADR-010 previu o risco — <i>"o especialista some da
+     * especialidade"</i> — e apostou que a 1ª passagem o seguraria. Não
+     * segurou, porque os dois travaram juntos. O teto é por capacidade:
+     * o segundo volta ao próprio trabalho pela 3ª passagem, que é onde
+     * ele rende mais que parado.
+     */
+    @Test
+    void onlyOneHandIsLentToTheSameCapability() {
+        Worker first = workerWith(ProfessionType.LUMBERJACK);
+        Worker second = workerWith(ProfessionType.LUMBERJACK);
+
+        first.rest(Capability.COLLECT_WOOD);
+        second.rest(Capability.COLLECT_WOOD);
+
+        stoneTask();
+        stoneTask();
+
+        Task wood = woodTask();
+
+        WorkAssignment.assign(COLONY, workers, tasks);
+
+        assertTrue(
+                wood.executor().isPresent(),
+                "os dois lenhadores foram para a mina, e a vila ficou sem quem corte lenha");
+    }
 }

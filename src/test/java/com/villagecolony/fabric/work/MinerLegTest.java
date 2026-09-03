@@ -306,4 +306,41 @@ class MinerLegTest {
                 new BlockPos(732, 61, 895), leg,
                 "a perna atravessou a rocha dos degraus 4 e 5 para chegar ao bolsão");
     }
+
+    /**
+     * A perna nunca manda ele andar para onde já está — 2026-09-02.
+     *
+     * <p><b>A sessão das 22:59, e ela custou a mina inteira:</b>
+     *
+     * <pre>
+     * digging Diorito at 709, 44, 878, 9,0 blocks away
+     * (out of reach, he is at 718, 44, 878, walking to 718, 44, 878)
+     * </pre>
+     *
+     * <p>Destino igual à posição dele. O aldeão chega no destino sem dar
+     * um passo, a navegação não tem o que fazer, e o contador de
+     * travamento sobe até 2.400 — dois minutos de expediente por vez,
+     * para não andar nada. Dez minutos de sessão, zero pedra.
+     *
+     * <p>Passo que não é passo é o mesmo que não achar passo nenhum, e
+     * para esse caso já havia saída: voltar à boca, de onde a ordem de
+     * cavar volta a funcionar.
+     */
+    @Test
+    void theLegNeverSendsHimToWhereHeAlreadyIs() {
+        Optional<Mine> mine = mine(60);
+
+        MineShaft shaft = mine.orElseThrow().shaft();
+
+        for (int i = 0; i < 60; i++) {
+            ColonyPos position = shaft.positionAt(i);
+
+            BlockPos where = new BlockPos(position.x(), position.y(), position.z());
+
+            assertNotEquals(
+                    where,
+                    MinerReach.legTowards(where, DEEP, mine, ANYWHERE),
+                    "a perna mandou o mineiro para onde ele já está, no passo " + i);
+        }
+    }
 }

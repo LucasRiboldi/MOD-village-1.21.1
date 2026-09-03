@@ -213,7 +213,21 @@ public final class MinerReach {
 
         BlockPos step = stepAlongTheShaft(villager, mine.get(), footing);
 
-        return step != null ? step : at(mine.get().shaft().entry());
+        // <b>Passo que não sai do lugar não é passo</b> — 2026-09-02. A
+        // ordem de cavar entregava a posição em que o mineiro já estava,
+        // e o destino igual à posição faz a navegação não ter o que
+        // fazer: ele "chega" sem andar, o contador de travamento sobe
+        // até 2.400, e a tarefa volta para a fila dois minutos depois
+        // sem um bloco cavado. Dez minutos de sessão, zero pedra:
+        //
+        //   digging Diorito at 709, 44, 878, 9,0 blocks away
+        //   (out of reach, he is at 718, 44, 878, walking to 718, 44, 878)
+        //
+        // Vale como não ter achado passo nenhum, e a saída para isso já
+        // existia: voltar à boca, de onde a ordem volta a funcionar.
+        return step != null && !step.equals(villager)
+                ? step
+                : at(mine.get().shaft().entry());
     }
 
     /**
