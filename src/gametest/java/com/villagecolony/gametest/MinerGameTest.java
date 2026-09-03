@@ -26,6 +26,8 @@ import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.fabric.brain.WorkHours;
+import com.villagecolony.fabric.integration.MineFlooding;
+import com.villagecolony.fabric.integration.OreVein;
 import com.villagecolony.fabric.work.MineClaims;
 import com.villagecolony.fabric.work.MineDigging;
 import com.villagecolony.fabric.integration.MineMouth;
@@ -2963,6 +2965,154 @@ public class MinerGameTest implements FabricGameTest {
 
             context.complete();
         });
+    }
+
+    /**
+     * Saiu água por ali, e o mineiro tapa — decisão do autor, 2026-09-03.
+     *
+     * <p>A frase dele: <i>"quando quebrar uma pedra e sair água por ali
+     * ele deve rapidamente colocar um bloco no lugar para encerrar o fluxo
+     * da água"</i>.
+     *
+     * <p>Sem isto a galeria inunda: a água corre pelo túnel, desce a
+     * escada, e a mina passa a ser um lugar onde o aldeão não fica de pé —
+     * {@code standable} pede dois blocos livres, e coluna de água não é
+     * livre para quem anda.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_flooding",
+            tickLimit = 20)
+    public void thePickThatOpensWaterSealsItAtOnce(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        solidRock(context);
+
+        BlockPos dug = new BlockPos(3, 4, 3);
+        BlockPos spring = dug.north();
+
+        context.setBlockState(dug, Blocks.AIR.getDefaultState());
+        context.setBlockState(spring, Blocks.WATER.getDefaultState());
+
+        BlockPos absolute = context.getAbsolutePos(dug);
+
+        int sealed = MineFlooding.seal(world, absolute);
+
+        context.assertTrue(sealed == 1, "tapou " + sealed + " faces, e havia uma nascente");
+
+        context.assertTrue(
+                world.getBlockState(context.getAbsolutePos(spring)).getFluidState().isEmpty(),
+                "a nascente continua correndo depois de tapada");
+
+        context.complete();
+    }
+
+    /**
+     * E rocha seca não ganha bloco nenhum.
+     *
+     * <p>O outro lado, e ele importa: um mineiro que tapasse toda face
+     * cavaria e reconstruiria a mina ao mesmo tempo, e a galeria nunca
+     * abriria.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_flooding",
+            tickLimit = 20)
+    public void dryRockIsNotSealed(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        solidRock(context);
+
+        BlockPos dug = new BlockPos(3, 4, 3);
+
+        context.setBlockState(dug, Blocks.AIR.getDefaultState());
+
+        int sealed = MineFlooding.seal(world, context.getAbsolutePos(dug));
+
+        context.assertTrue(sealed == 0, "tapou " + sealed + " faces de rocha seca");
+
+        context.complete();
+    }
+
+    /**
+     * E a galeria vira, que é a outra metade do pedido.
+     *
+     * <p><i>"...e seguir por outro caminho a continuidade de
+     * mineração"</i>. Insistir na mesma direção é cavar de volta para
+     * dentro do lençol.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_flooding",
+            tickLimit = 20)
+    public void theGalleryTurnsAwayFromTheWater(TestContext context) {
+        Colony colony = mineOwner(context);
+
+        Mine mine = VillageColonyMod.MINES.of(colony.id()).orElseThrow();
+
+        ColonyPos before = mine.shaft().positionAt(MineShaft.CARVED + 4);
+
+        MineDigging.flooded(colony.id(), context.getAbsolutePos(new BlockPos(3, 4, 3)));
+
+        context.assertFalse(
+                before.equals(mine.shaft().positionAt(MineShaft.CARVED + 4)),
+                "a galeria continua indo para dentro da água");
+
+        context.complete();
+    }
+
+    /**
+     * Entre duas faces com minério, ganha a mais rara — decisão do autor,
+     * 2026-09-03.
+     *
+     * <p>A frase dele: <i>"deve sempre priorizar os minerais diferentes e
+     * mais raros"</i>.
+     *
+     * <p><b>O laço devolvia a primeira das seis</b>, e o
+     * {@code Direction.values()} começa em {@code DOWN}. Carvão colado no
+     * chão ganhava do diamante colado na parede, toda vez, e o mineiro
+     * trazia o carvão.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ore_rarity",
+            tickLimit = 20)
+    public void theRarerOreWinsOverTheOneUnderfoot(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        solidRock(context);
+
+        BlockPos at = new BlockPos(3, 4, 3);
+
+        // Embaixo, que é a face que o laço antigo olhava primeiro.
+        context.setBlockState(at.down(), Blocks.COAL_ORE.getDefaultState());
+        context.setBlockState(at.north(), Blocks.DIAMOND_ORE.getDefaultState());
+
+        Optional<BlockPos> chosen = OreVein.beside(world, context.getAbsolutePos(at));
+
+        context.assertTrue(chosen.isPresent(), "não achou minério nenhum");
+
+        context.assertTrue(
+                chosen.get().equals(context.getAbsolutePos(at.north())),
+                "escolheu " + chosen.get().toShortString() + " — o carvão do chão ganhou"
+                        + " do diamante da parede");
+
+        context.complete();
+    }
+
+    /** E a ordem entre eles é a da raridade, e não a do catálogo. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ore_rarity",
+            tickLimit = 20)
+    public void rarityRunsFromDiamondDownToCoal(TestContext context) {
+        int diamond = OreVein.rarityOf(Blocks.DIAMOND_ORE.getDefaultState());
+        int gold = OreVein.rarityOf(Blocks.GOLD_ORE.getDefaultState());
+        int iron = OreVein.rarityOf(Blocks.IRON_ORE.getDefaultState());
+        int coal = OreVein.rarityOf(Blocks.COAL_ORE.getDefaultState());
+
+        context.assertTrue(
+                diamond < gold && gold < iron && iron < coal,
+                "a ordem saiu diamante=" + diamond + " ouro=" + gold + " ferro=" + iron
+                        + " carvão=" + coal);
+
+        // A ardósia é o mesmo minério mais fundo, e a galeria trabalha
+        // justamente onde ela está.
+        context.assertTrue(
+                OreVein.rarityOf(Blocks.DEEPSLATE_DIAMOND_ORE.getDefaultState()) == diamond,
+                "a variante de ardósia não vale o mesmo que a de pedra");
+
+        context.complete();
     }
 
     /**

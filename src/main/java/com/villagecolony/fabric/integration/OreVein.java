@@ -10,6 +10,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -80,7 +81,73 @@ public final class OreVein {
      */
     private static final TagKey<Block> COAL = BlockTags.COAL_ORES;
 
+    /**
+     * Do mais raro para o mais comum — decisão do autor, 2026-09-03.
+     *
+     * <p>A frase dele: <i>"deve sempre priorizar os minerais diferentes e
+     * mais raros"</i>. Até aqui não havia prioridade nenhuma: o
+     * {@link #beside} devolvia <b>a primeira das seis faces</b> na ordem
+     * do {@code Direction.values()}, que começa embaixo. Carvão colado no
+     * chão ganhava do diamante colado na parede, e o mineiro trazia o
+     * carvão.
+     *
+     * <p><b>Por que uma lista escrita, num projeto que não gosta
+     * delas.</b> A ADR-009 manda perguntar ao catálogo, e é o que o
+     * {@link #ORE} faz — <i>o que é minério</i> é fato do jogo. <b>Qual é
+     * mais raro não é.</b> Não há etiqueta de raridade, e nenhum dado do
+     * bloco serve de substituto: dureza mede picareta, e a experiência
+     * que cai empata ferro com cobre em zero.
+     *
+     * <p>Então isto é julgamento, e está escrito como julgamento — mas em
+     * <b>etiquetas</b>, e não em nomes de bloco. É o que preserva o que a
+     * troca de 08-27 comprou: a variante de ardósia, a de outra versão e
+     * a de datapack entram sozinhas na etiqueta que já as cobre.
+     *
+     * <p>A ordem é a da geração no mundo, com os escombros antigos na
+     * frente por serem do Nether e os mais escassos de lá. Minério que
+     * não está em nenhuma destas — de mod, de datapack — fica
+     * {@link #UNRANKED}, entre o ferro e o cobre: melhor que o comum,
+     * sem fingir que se sabe o quanto.
+     */
+    private static final List<TagKey<Block>> BY_RARITY = List.of(
+            ConventionalBlockTags.NETHERITE_SCRAP_ORES,
+            BlockTags.DIAMOND_ORES,
+            BlockTags.EMERALD_ORES,
+            BlockTags.GOLD_ORES,
+            BlockTags.LAPIS_ORES,
+            BlockTags.REDSTONE_ORES,
+            ConventionalBlockTags.QUARTZ_ORES,
+            BlockTags.IRON_ORES,
+            BlockTags.COPPER_ORES,
+            BlockTags.COAL_ORES);
+
+    /**
+     * Onde entra o minério que nenhuma etiqueta conhecida classifica.
+     *
+     * <p>Logo depois do ferro, e antes de cobre e carvão. Um minério de
+     * mod é quase sempre mais raro que carvão e quase nunca mais raro que
+     * diamante; no meio é onde se erra menos.
+     */
+    private static final int UNRANKED = 7;
+
     private OreVein() {
+    }
+
+    /**
+     * Quão raro é este minério — zero é o mais raro.
+     *
+     * <p>Público porque a escolha do alvo é de quem cava, e a resposta é
+     * a mesma para o veio e para o túnel: entre dois minérios à vista,
+     * ganha o de número menor.
+     */
+    public static int rarityOf(BlockState state) {
+        for (int rank = 0; rank < BY_RARITY.size(); rank++) {
+            if (state.isIn(BY_RARITY.get(rank))) {
+                return rank;
+            }
+        }
+
+        return UNRANKED;
     }
 
     /** Se este bloco é minério que a colônia usa. */
@@ -114,6 +181,9 @@ public final class OreVein {
      * é o dia em que esta linha vale o que custou.
      */
     public static Optional<BlockPos> beside(ServerWorld world, BlockPos at) {
+        BlockPos rarest = null;
+        int best = Integer.MAX_VALUE;
+
         for (Direction face : Direction.values()) {
             BlockPos next = at.offset(face);
 
@@ -121,7 +191,9 @@ public final class OreVein {
                 continue;
             }
 
-            if (!isOre(world.getBlockState(next))) {
+            BlockState state = world.getBlockState(next);
+
+            if (!isOre(state)) {
                 continue;
             }
 
@@ -130,9 +202,26 @@ public final class OreVein {
                 continue;
             }
 
-            return Optional.of(next);
+            // <b>O mais raro das seis, e não a primeira das seis</b> —
+            // 2026-09-03. O laço devolvia na primeira face que servisse, e
+            // o Direction.values() começa em DOWN: carvão no chão ganhava
+            // do diamante na parede. Ver BY_RARITY.
+            int rarity = rarityOf(state);
+
+            if (rarity >= best) {
+                continue;
+            }
+
+            rarest = next;
+            best = rarity;
+
+            if (rarity == 0) {
+                // Nada supera o primeiro da lista: as faces que faltam não
+                // podem mudar a resposta, e cada uma custa uma leitura.
+                break;
+            }
         }
 
-        return Optional.empty();
+        return Optional.ofNullable(rarest);
     }
 }

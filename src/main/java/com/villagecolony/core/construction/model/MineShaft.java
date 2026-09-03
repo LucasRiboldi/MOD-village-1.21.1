@@ -263,15 +263,90 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
     }
 
     /**
-     * A galeria sem fim, no nível da segunda sala.
+     * Quantas colunas de corredor antes de cada bolsão — 2026-09-03.
      *
-     * <p>Parte do canto oposto da sala para não recavá-la: a sala já
-     * está aberta, e a galeria é o que vem depois dela.
+     * <p>Oito, que é a distância entre duas tochas: o bolsão cai onde a
+     * luz já chega.
+     */
+    public static final int RUN = 8;
+
+    /** Quanto o bolsão avança ao lado do corredor, em colunas. */
+    public static final int POCKET_LONG = 3;
+
+    /** E quanto ele entra na parede. */
+    public static final int POCKET_WIDE = 2;
+
+    private static final int RUN_BLOCKS = RUN * HEADROOM;
+
+    private static final int POCKET_BLOCKS = POCKET_LONG * POCKET_WIDE * HEADROOM;
+
+    /**
+     * O ciclo da galeria: um trecho de corredor e o bolsão dele.
+     *
+     * <p><b>Fixo, e é o que mantém a conta em O(1).</b> A posição de
+     * índice {@code i} tem de sair de uma fórmula, e não de somar o
+     * caminho desde a boca: o {@code MinerReach.legTowards} percorre até
+     * duas mil posições <b>todo tique</b>, e uma ordem que precisasse ser
+     * acumulada custaria isso ao quadrado.
+     *
+     * <p>Por isso o bolsão é periódico e o que varia é de que <b>lado</b>
+     * ele fica — ver {@link #pocketSide}. Sorteio que mudasse o tamanho
+     * mudaria o passo do ciclo, e o passo do ciclo é o que fecha a
+     * fórmula.
+     */
+    private static final int GALLERY_CYCLE = RUN_BLOCKS + POCKET_BLOCKS;
+
+    /**
+     * A galeria: corredor com bolsões, e não um túnel reto sem fim —
+     * decisão do autor, 2026-09-03.
+     *
+     * <p>A frase dele: <i>"o caminho de mineração pode ser de modo mais
+     * aleatório em bolsões e não uma linha reta"</i>.
+     *
+     * <p>Parte do canto oposto da segunda sala para não recavá-la: a sala
+     * já está aberta, e a galeria é o que vem depois dela.
+     *
+     * <p><b>O corredor continua reto, e isso é de propósito.</b> Ele é o
+     * caminho de volta do aldeão, e é dele que o {@code legTowards}
+     * depende — <i>a ordem de cavar É um corredor contínuo a partir da
+     * boca</i>. Fazer a espinha serpentear poria dois blocos em diagonal,
+     * e de diagonal a navegação não passa sem que os cantos estejam
+     * abertos: é o E34 pela porta de trás.
+     *
+     * <p><b>O bolsão fica pendurado ao lado dela.</b> Cada bloco dele
+     * encosta no corredor ou no bloco anterior do próprio bolsão, então a
+     * contiguidade continua valendo — o que muda é que a mina passa a ter
+     * câmaras, e não um cano de um bloco de largura.
+     *
+     * <p>Ganha-se mais que a aparência: parede exposta é onde
+     * {@code OreVein.beside} enxerga minério, e um bolsão de três por dois
+     * mostra <b>doze</b> paredes novas onde o corredor mostraria duas.
      */
     private ColonyPos tunnel(int i) {
-        int step = i / HEADROOM + 1;
-        int high = i % HEADROOM;
+        int cycle = i / GALLERY_CYCLE;
+        int within = i % GALLERY_CYCLE;
 
+        int base = cycle * RUN;
+
+        if (within < RUN_BLOCKS) {
+            return at(base + within / HEADROOM + 1, 0, within % HEADROOM);
+        }
+
+        int j = within - RUN_BLOCKS;
+
+        int deep = j / (POCKET_LONG * HEADROOM) + 1;
+        int rest = j % (POCKET_LONG * HEADROOM);
+
+        // As últimas colunas do trecho, e não as primeiras: o bolsão se
+        // abre quando o corredor já passou por ele.
+        return at(base + RUN - rest / HEADROOM, pocketSide(cycle) * deep, rest % HEADROOM);
+    }
+
+    /**
+     * Uma posição da galeria: quantas colunas adiante, quanto de lado, e
+     * qual das duas alturas.
+     */
+    private ColonyPos at(int step, int lane, int high) {
         Side towards = descent.clockwise();
 
         ColonyPos floor = landingTwo();
@@ -281,9 +356,39 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
                 floor.y(),
                 floor.z() + towards.offsetZ() * ROOM_LONG);
 
+        Side sideways = gallery.clockwise();
+
         return new ColonyPos(
-                from.x() + gallery.offsetX() * step,
+                from.x() + gallery.offsetX() * step + sideways.offsetX() * lane,
                 from.y() + 1 + high,
-                from.z() + gallery.offsetZ() * step);
+                from.z() + gallery.offsetZ() * step + sideways.offsetZ() * lane);
+    }
+
+    /**
+     * De que lado do corredor este bolsão se abre: {@code -1} ou
+     * {@code +1}.
+     *
+     * <p><b>O "aleatório" do pedido, e ele não pode ser sorteio.</b> A
+     * ordem de cavar é indexada por um cursor gravado no save, então
+     * {@code positionAt} tem de responder a mesma coisa hoje e depois de
+     * reiniciar o servidor. Um {@code Random} daria uma mina diferente a
+     * cada carregamento, e o cursor passaria a apontar para outro lugar.
+     *
+     * <p>Então é ruído: função pura da boca da mina, do lado da galeria e
+     * do número do ciclo. Duas colônias cavam minas diferentes, a mesma
+     * colônia cava a mesma mina sempre, e as quatro direções da galeria
+     * não repetem o desenho uma da outra.
+     */
+    private int pocketSide(int cycle) {
+        int noise = entry.x() * 73_856_093 ^ entry.y() * 19_349_663 ^ entry.z() * 83_492_791;
+
+        noise = noise * 31 + gallery.ordinal();
+        noise = noise * 31 + cycle;
+
+        noise ^= noise >>> 15;
+        noise *= 0x2c1b3c6d;
+        noise ^= noise >>> 13;
+
+        return (noise & 1) == 0 ? -1 : 1;
     }
 }

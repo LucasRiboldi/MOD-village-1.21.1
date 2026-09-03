@@ -18,6 +18,7 @@ import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.BlockBreakTime;
 import com.villagecolony.fabric.integration.ChestDepositor;
+import com.villagecolony.fabric.integration.MineFlooding;
 import com.villagecolony.fabric.integration.OreVein;
 import com.villagecolony.fabric.integration.MineMouth;
 import net.minecraft.block.Block;
@@ -544,6 +545,17 @@ public final class MinerWork {
                 Block.getDroppedStacks(state, world, job.target, null, null, ItemStack.EMPTY));
 
         world.removeBlock(job.target, false);
+
+        // <b>E se saiu água por ali, tapa antes de sair de perto</b> —
+        // decisão do autor, 2026-09-03. Aqui, e não no ciclo seguinte: o
+        // líquido corre por tique, e um ciclo de colônia é tempo de
+        // sobra para ele descer a escada inteira. Ver MineFlooding.
+        //
+        // A galeria vira junto, que é a outra metade do pedido —
+        // "seguir por outro caminho". Ver MineDigging.flooded.
+        if (MineFlooding.seal(world, job.target) > 0) {
+            MineDigging.flooded(job.task.colonyId(), job.target);
+        }
 
         // Regra 30: o minério que não é carvão vai para o baú da boca
         // da mina, e só transborda para o do mineiro quando aquele

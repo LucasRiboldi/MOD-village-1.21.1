@@ -8,6 +8,7 @@ import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.fabric.integration.BlockProtection;
+import com.villagecolony.fabric.integration.MineFlooding;
 import com.villagecolony.fabric.integration.MineLighting;
 import com.villagecolony.fabric.integration.MineMouth;
 import com.villagecolony.fabric.integration.OreVein;
@@ -624,6 +625,35 @@ public final class MineDigging {
                         "The vein at {} is dropped — the miner could not reach it",
                         stone.toShortString());
             }
+        });
+    }
+
+    /**
+     * A picareta abriu um veio de água, e a galeria vira — 2026-09-03.
+     *
+     * <p><b>Decisão do autor:</b> <i>"colocar um bloco no lugar para
+     * encerrar o fluxo da água e seguir por outro caminho"</i>. O bloco é
+     * do {@link MineFlooding}; a outra metade — <i>seguir por outro
+     * caminho</i> — é esta.
+     *
+     * <p>Vai pela mesma porta do bedrock e da pedra sem onde pisar, que é
+     * a frase do autor de 2026-08-21: <i>sempre que encontrar uma barreira
+     * que impeça de realizar estas ações ele começa a recolher para outro
+     * lado</i>. Um lençol de água é exatamente isso — a diferença é que
+     * esta barreira <b>persegue</b> quem a ignora, porque escorre.
+     *
+     * <p><b>Vira na hora, e não depois de oito recusas.</b> O
+     * {@code blockedAgain} existe para não virar a galeria por causa de um
+     * bloco duro solto no meio do caminho; água não é solta. Insistir na
+     * mesma direção é cavar de volta para dentro do lençol, e o preço de
+     * errar é a mina inundada.
+     */
+    public static void flooded(UUID colonyId, BlockPos at) {
+        VillageColonyMod.MINES.of(colonyId).ifPresent(mine -> {
+            mine.turn();
+
+            VillageColonyMod.LOGGER.info(
+                    "The gallery turns away from the water at {}", at.toShortString());
         });
     }
 

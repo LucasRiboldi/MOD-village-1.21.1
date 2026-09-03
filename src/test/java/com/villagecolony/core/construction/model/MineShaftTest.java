@@ -296,4 +296,162 @@ class MineShaftTest {
     void aMineNearTheSurfaceMayDeepen() {
         assertTrue(MineShaft.from(new ColonyPos(40, 64, 0), Side.EAST).mayDeepen());
     }
+
+    /**
+     * A galeria deixou de ser uma linha reta — decisão do autor,
+     * 2026-09-03.
+     *
+     * <p>A frase dele: <i>"o caminho de mineração pode ser de modo mais
+     * aleatório em bolsões e não uma linha reta"</i>. Até aqui a galeria
+     * era um cano de um bloco de largura: toda posição dela caía sobre o
+     * mesmo eixo, e a mina inteira cabia numa linha.
+     */
+    @Test
+    void theGalleryOpensPocketsInsteadOfOneStraightLine() {
+        MineShaft mine = shaft();
+
+        ColonyPos first = mine.positionAt(MineShaft.CARVED);
+
+        boolean offTheAxis = false;
+
+        for (int i = MineShaft.CARVED; i < MineShaft.CARVED + 200; i++) {
+            if (mine.positionAt(i).z() != first.z()) {
+                offTheAxis = true;
+
+                break;
+            }
+        }
+
+        assertTrue(offTheAxis, "a galeria continua cabendo numa linha reta");
+    }
+
+    /**
+     * E o corredor continua reto, que é do que a navegação depende.
+     *
+     * <p><b>É o E34 pela porta de trás.</b> O {@code MinerReach.legTowards}
+     * anda pela ordem de cavar porque ela <i>é</i> um corredor contínuo a
+     * partir da boca. Serpentear a espinha poria dois blocos em diagonal,
+     * e de diagonal a navegação não passa sem que os cantos estejam
+     * abertos.
+     *
+     * <p>Então o bolsão fica <b>pendurado ao lado</b>: a espinha do
+     * corredor — as primeiras {@link MineShaft#RUN} colunas de cada ciclo
+     * — anda um bloco por coluna, sempre no mesmo eixo.
+     */
+    @Test
+    void theCorridorSpineStaysStraightUnderneathThePockets() {
+        MineShaft mine = shaft();
+
+        ColonyPos previous = null;
+
+        for (int column = 0; column < MineShaft.RUN; column++) {
+            ColonyPos feet = mine.positionAt(
+                    MineShaft.CARVED + column * MineShaft.HEADROOM);
+
+            if (previous != null) {
+                int walked = Math.abs(feet.x() - previous.x())
+                        + Math.abs(feet.y() - previous.y())
+                        + Math.abs(feet.z() - previous.z());
+
+                assertEquals(1, walked,
+                        "a espinha do corredor pulou de " + previous + " para " + feet);
+            }
+
+            previous = feet;
+        }
+    }
+
+    /**
+     * Todo bloco do bolsão encosta em algum que veio antes dele.
+     *
+     * <p>É a contiguidade que o {@code findTheFrontier} assume por
+     * escrito: <i>tudo o que vem antes da frente já está aberto, e a ordem
+     * é um caminho contínuo a partir da boca</i>. Um bolsão que se abrisse
+     * a dois blocos do corredor seria um bolsão dentro da rocha.
+     */
+    @Test
+    void everyPocketBlockTouchesSomethingAlreadyOpen() {
+        MineShaft mine = shaft();
+
+        Set<ColonyPos> open = new HashSet<>();
+
+        for (int i = 0; i < MineShaft.CARVED; i++) {
+            open.add(mine.positionAt(i));
+        }
+
+        for (int i = MineShaft.CARVED; i < MineShaft.CARVED + 200; i++) {
+            ColonyPos at = mine.positionAt(i);
+
+            assertTrue(
+                    touchesSomethingIn(at, open),
+                    "a posição " + i + " em " + at + " não encosta em nada já aberto");
+
+            open.add(at);
+        }
+    }
+
+    private static boolean touchesSomethingIn(ColonyPos at, Set<ColonyPos> open) {
+        for (int[] face : new int[][] {
+                {1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}}) {
+
+            if (open.contains(
+                    new ColonyPos(at.x() + face[0], at.y() + face[1], at.z() + face[2]))) {
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * A mesma mina cava os mesmos bolsões depois de reiniciar o servidor.
+     *
+     * <p><b>O "aleatório" do pedido não pode ser sorteio</b>, e é o que
+     * este teste tranca. O cursor da galeria é um <b>índice</b> gravado no
+     * save: se {@code positionAt} respondesse outra coisa no carregamento
+     * seguinte, o cursor passaria a apontar para um lugar que ninguém
+     * cavou, e a mina de ontem viraria rocha maciça com um número em cima.
+     */
+    @Test
+    void theSameMineDigsTheSamePocketsAfterAReload() {
+        MineShaft before = shaft();
+        MineShaft after = MineShaft.from(ENTRY, Side.EAST);
+
+        for (int i = MineShaft.CARVED; i < MineShaft.CARVED + 200; i++) {
+            assertEquals(before.positionAt(i), after.positionAt(i),
+                    "a posição " + i + " mudou entre duas leituras da mesma mina");
+        }
+    }
+
+    /** E minas diferentes não cavam o mesmo desenho. */
+    @Test
+    void twoMinesDoNotDigTheSamePocketPattern() {
+        MineShaft here = shaft();
+        MineShaft elsewhere = MineShaft.from(new ColonyPos(517, 64, 88), Side.EAST);
+
+        boolean differed = false;
+
+        for (int cycle = 0; cycle < 12 && !differed; cycle++) {
+            // O primeiro bloco do bolsão de cada ciclo: é nele que o lado
+            // sorteado aparece.
+            int pocket = MineShaft.CARVED
+                    + cycle * (MineShaft.RUN * MineShaft.HEADROOM
+                            + MineShaft.POCKET_LONG * MineShaft.POCKET_WIDE
+                                    * MineShaft.HEADROOM)
+                    + MineShaft.RUN * MineShaft.HEADROOM;
+
+            ColonyPos mine = here.positionAt(pocket);
+            ColonyPos other = elsewhere.positionAt(pocket);
+
+            // Só o lado interessa: as duas minas nascem em bocas
+            // diferentes, então as coordenadas absolutas diferem sempre.
+            int sideHere = mine.z() - here.positionAt(pocket - 1).z();
+            int sideThere = other.z() - elsewhere.positionAt(pocket - 1).z();
+
+            differed = sideHere != sideThere;
+        }
+
+        assertTrue(differed, "as duas minas abrem todos os bolsões para o mesmo lado");
+    }
 }

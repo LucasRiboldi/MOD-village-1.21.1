@@ -36,9 +36,9 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-607 testes unitários  ·  227 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
+612 testes unitários  ·  232 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
-última sessão de jogo em 2026-08-28, 23:06  ·  ele desceu, e parou a 2 blocos
+última sessão de jogo em 2026-09-03  ·  o autor gostou, e pediu três coisas
 ```
 
 > A contagem de jogo era 176 aqui e **175** no `runGametest`. Recontado
@@ -60,14 +60,84 @@ sessão — o que preparar, o que olhar e em que ordem, e o que cada linha de
 log significa — vive em
 [`docs/proxima-sessao.md`](docs/proxima-sessao.md).
 
-Doze consertos do mineiro estão empilhados sem uma única sessão que os veja,
-e as três decisões em aberto esperam o que essa sessão mostrar. O de
-2026-09-03 é o que mais pede a sessão: ele fecha um **laço**, e laço se
-reconhece no log — a mesma pedra mirada passagem após passagem.
+**A sessão aconteceu, e o mineiro trabalhou.** O que agora espera jogo são
+as três funcionalidades pedidas nela — vedar água, priorizar minério raro e
+abrir bolsões —, e uma pergunta que só o save responde: a mina de antes do
+bolsão tem o cursor apontando para outra forma de galeria. O
+`findTheFrontier` foi escrito para esse caso e deve recuar sozinho; ver se
+recua é a primeira coisa a olhar.
 
 ---
 
 ## ✅ Resolvido
+
+### 2026-09-03, à noite — três pedidos do autor, depois da primeira sessão boa
+
+**A sessão aconteceu, e ele gostou.** É a primeira vez que o mineiro é
+visto trabalhando desde que os consertos começaram a empilhar. Os três
+pedidos abaixo saíram dela.
+
+#### 1. Saiu água: tapa e segue por outro caminho
+
+> *"quando quebrar uma pedra e sair água por ali ele deve rapidamente
+> colocar um bloco no lugar para encerrar o fluxo da água e seguir por
+> outro caminho"*
+
+Sem isto a galeria inunda, e inundada ela não é só ruim — ela **deixa de
+existir**: `standable` pede dois blocos livres sobre sólido, e coluna de
+água não é livre para quem anda. Com lava é pior que perder a mina, porque
+`BlockBreakTime` não sabe de dano e o caminho mais curto até a pedra
+atravessa o que matou o aldeão.
+
+| | |
+|---|---|
+| **Onde o bloco vai** | na **face de onde o líquido vem**, e nunca na pedra recém-cavada — isso seria desfazer o trabalho e refazê-lo na passagem seguinte, para sempre |
+| **Com o quê** | pedregulho: sólido, é o que o mineiro tira o dia inteiro, e sem estado a acertar (tocha de parede já custou uma rodada por causa disso) |
+| **A Regra 3 vale** | água dentro do poço da vila é da vila |
+| **E não se lembra de nada** | a vedação não é gravada. Se a ordem voltar a passar por ali ele cava, a água volta, ele veda e a galeria vira de novo — e quatro curvas descem um nível. Laço que se resolve descendo é laço que fecha |
+| **A galeria vira na hora** | e não depois de oito recusas como o bedrock: água não é bloco duro solto, é barreira que **persegue** quem a ignora |
+
+#### 2. O minério mais raro ganha
+
+> *"deve sempre priorizar os minerais diferentes e mais raros"*
+
+`OreVein.beside` devolvia **a primeira das seis faces**, e o
+`Direction.values()` começa em `DOWN`. **Carvão colado no chão ganhava do
+diamante colado na parede**, toda vez.
+
+A ordem é por **etiqueta**, e não por nome de bloco — é o que preserva o
+que a troca de 08-27 comprou: ardósia, outra versão e datapack entram
+sozinhos. Mas é julgamento, e está escrito como julgamento: *o que é
+minério* é fato do jogo, *qual é mais raro* não é, e não há etiqueta de
+raridade nem dado do bloco que sirva de substituto.
+
+```
+escombros · diamante · esmeralda · ouro · lápis · redstone ·
+quartzo · ferro · [minério desconhecido] · cobre · carvão
+```
+
+#### 3. Bolsões, e não uma linha reta
+
+> *"o caminho de mineração pode ser de modo mais aleatório em bolsões e
+> não uma linha reta"*
+
+| | |
+|---|---|
+| **O que mudou** | a cada 8 colunas de corredor a galeria abre um bolsão de 3×2×2 ao lado |
+| **O corredor continua reto, de propósito** | ele é o caminho de volta do aldeão e é dele que o `legTowards` depende. Serpentear a espinha poria dois blocos em **diagonal**, e de diagonal a navegação não passa sem os cantos abertos — é o E34 pela porta de trás |
+| **O bolsão fica pendurado ao lado** | cada bloco encosta no corredor ou no anterior do próprio bolsão, então a contiguidade que o `findTheFrontier` assume continua valendo |
+| **Ganha-se mais que aparência** | parede exposta é onde `OreVein.beside` enxerga minério. Um bolsão mostra **doze** paredes novas onde o corredor mostraria duas |
+| **O "aleatório" não é sorteio** | o cursor é um **índice gravado no save**: `Random` daria uma mina diferente a cada carregamento e o cursor apontaria para rocha maciça. É ruído — função pura da boca, do lado da galeria e do número do ciclo |
+| **E o ciclo é fixo** | porque `legTowards` percorre até 2.000 posições **todo tique**: uma ordem que precisasse ser acumulada custaria isso ao quadrado. O que varia é de que **lado** o bolsão abre |
+
+| | |
+|---|---|
+| **Verificações que rodaram** | `./gradlew build` (**612** unitários, 0 falhas) e `runGametest --rerun-tasks` (**232** de jogo, todos passaram) |
+| **Testes novos** | 5 de geometria (bolsão, espinha reta, contiguidade, determinismo entre cargas, minas diferentes) e 5 de jogo (vedar, não vedar rocha seca, virar, raro ganha, ordem da raridade) |
+| **Fase vermelha** | **não conferida neste ciclo** — são três funcionalidades novas, e os testes delas falhariam por não compilar, não por medir. Os 227 anteriores continuam verdes, que é o que protege o que já existia |
+| **O que este ciclo NÃO provou** | nada em jogo. Em especial a **mina antiga do save**: a ordem da galeria mudou de forma, então o cursor gravado aponta para outro lugar. O `findTheFrontier` lê o mundo e recua sozinho, que é exatamente o caso para o qual ele foi escrito — mas isso é raciocínio, e não sessão |
+
+---
 
 ### 2026-09-03 — o mineiro percebe que está parado
 
