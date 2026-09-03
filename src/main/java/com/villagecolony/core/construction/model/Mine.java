@@ -82,6 +82,17 @@ public final class Mine {
      */
     private ColonyPos vein;
 
+    /**
+     * Quantas curvas a galeria já deu neste nível.
+     *
+     * <p><b>Não vai para o disco</b>, como o {@link #blocked} e pela
+     * mesma razão: é a contagem de uma passagem. Reabrir o mundo custa,
+     * no pior caso, um nível trabalhado mais tempo do que precisava — e
+     * gravá-la faria a mina reabrir prestes a descer por causa de curvas
+     * que ninguém está mais olhando.
+     */
+    private int turns;
+
     private Mine(UUID colonyId, MineShaft shaft, int cut) {
         this.colonyId = Objects.requireNonNull(colonyId, "colonyId");
         this.shaft = Objects.requireNonNull(shaft, "shaft");
@@ -139,10 +150,34 @@ public final class Mine {
      *
      * <p>Lava, bedrock, uma caverna. É a frase do autor sobre recolher
      * para outro lado, e agora ela sobrevive ao fechar do mundo.
+     *
+     * <p><b>E fechado o círculo, ela desce</b> — 2026-09-02. Quatro
+     * curvas e a galeria voltou à direção em que começou: ela deu a volta
+     * neste nível, e o que sobra está abaixo. A forma é a do MineColonies,
+     * onde a profundidade cresce aos poucos com o nível do prédio; aqui o
+     * gatilho é a volta completa, que o mod já tinha em mãos.
+     *
+     * <p>Por que isso importa: a sessão de 2026-09-02 trabalhou em
+     * {@code y=44}, e o pico do diamante em 1.21 é {@code y=-59}. Uma
+     * mina que não desce não tem como achar minério melhor, por mais que
+     * se conserte a busca. Ver {@link MineShaft#deepened}.
+     *
+     * <p>O cursor volta a zero porque o poço do nível novo ainda não foi
+     * cavado — são duas descidas e duas salas antes de a galeria começar.
      */
     public void turn() {
-        shaft = shaft.turned();
         blocked = 0;
+
+        if (++turns < TURNS_PER_LEVEL || !shaft.mayDeepen()) {
+            shaft = shaft.turned();
+
+            return;
+        }
+
+        shaft = shaft.deepened();
+
+        cut = 0;
+        turns = 0;
     }
 
     /**
@@ -161,6 +196,14 @@ public final class Mine {
 
         return true;
     }
+
+    /**
+     * Quantas curvas fecham o círculo de um nível.
+     *
+     * <p>Quatro: a curva é no sentido horário, e na quarta a galeria
+     * está de volta à direção em que começou. Ela deu a volta no nível.
+     */
+    public static final int TURNS_PER_LEVEL = 4;
 
     /** A picareta pegou. A contagem de recusas recomeça. */
     public void digging() {

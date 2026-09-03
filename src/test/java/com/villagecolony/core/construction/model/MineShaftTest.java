@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -234,5 +235,65 @@ class MineShaftTest {
         for (int i = 0; i < MineShaft.CARVED; i++) {
             assertTrue(seen.add(mine.positionAt(i)), "a mina repetiu a posição de índice " + i);
         }
+    }
+
+    /**
+     * A mina desce um nível de cada vez — 2026-09-02.
+     *
+     * <p><b>A galeria trabalhava a cem blocos do minério bom.</b> A
+     * sessão daquele dia mostrou os alvos em {@code y=44}, e o pico do
+     * diamante em 1.21 é {@code y=-59}: enquanto a mina ficar naquela
+     * altura, procurar minério melhor não tem o que achar.
+     *
+     * <p>A forma é a do MineColonies, e é decisão do autor: a
+     * profundidade <b>cresce aos poucos</b> em vez de mudar de uma vez.
+     * Lá quem manda é o nível do prédio; aqui é a galeria ter fechado o
+     * círculo — quatro curvas e ela voltou à direção em que começou,
+     * tendo dado a volta no nível.
+     *
+     * <p>O nível seguinte começa onde a galeria deste está, e por isso
+     * cada nível custa duas descidas: vinte blocos.
+     */
+    @Test
+    void theNextLevelIsTwoDescentsBelowThisOne() {
+        MineShaft shaft = MineShaft.from(new ColonyPos(40, 64, 0), Side.EAST);
+
+        MineShaft deeper = shaft.deepened();
+
+        assertEquals(
+                shaft.positionAt(MineShaft.CARVED).y() - 2 * MineShaft.DESCENT,
+                deeper.positionAt(MineShaft.CARVED).y());
+    }
+
+    /** E o resto da forma continua: mesma descida, mesma galeria. */
+    @Test
+    void theNextLevelKeepsTheShapeOfThisOne() {
+        MineShaft shaft = MineShaft.from(new ColonyPos(40, 64, 0), Side.EAST);
+
+        MineShaft deeper = shaft.deepened();
+
+        assertEquals(shaft.descent(), deeper.descent());
+        assertEquals(shaft.gallery(), deeper.gallery());
+    }
+
+    /**
+     * E ela para antes da rocha-mãe.
+     *
+     * <p>O fundo é o pico do diamante, e não o fundo do mundo: abaixo
+     * dele não há o que procurar, e a rocha-mãe começa cinco blocos
+     * depois.
+     */
+    @Test
+    void aMineAtTheBottomMayNotDeepen() {
+        MineShaft deep = MineShaft.from(
+                new ColonyPos(40, MineShaft.DEEPEST + 2 * MineShaft.DESCENT, 0), Side.EAST);
+
+        assertFalse(deep.mayDeepen());
+    }
+
+    /** Perto da superfície ela pode, e é o caso comum. */
+    @Test
+    void aMineNearTheSurfaceMayDeepen() {
+        assertTrue(MineShaft.from(new ColonyPos(40, 64, 0), Side.EAST).mayDeepen());
     }
 }

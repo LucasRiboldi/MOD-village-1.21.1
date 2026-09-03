@@ -127,6 +127,42 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
     }
 
     /**
+     * O nível mais fundo que a mina procura — 2026-09-02.
+     *
+     * <p>É o pico do diamante em 1.21, e não o fundo do mundo: abaixo
+     * dele a geração cai, e a rocha-mãe começa cinco blocos depois.
+     * Parar aqui é parar onde há mais o que achar.
+     */
+    public static final int DEEPEST = -59;
+
+    /**
+     * O poço do nível seguinte, que começa onde a galeria deste está.
+     *
+     * <p><b>A profundidade cresce aos poucos</b> — 2026-09-02, e a forma
+     * é a do MineColonies, onde a mina desce um nível a cada nível do
+     * prédio. Aqui quem manda é a galeria ter fechado o círculo: quatro
+     * curvas e ela voltou à direção em que começou, tendo dado a volta
+     * no nível. Ver {@code Mine.turn}.
+     *
+     * <p><b>Por que isso importa.</b> A sessão de 2026-09-02 trabalhou
+     * em {@code y=44}, e o pico do diamante é {@code y=-59}: cem blocos
+     * acima do que se estava procurando. Uma mina que não desce não tem
+     * como achar minério melhor, por mais que se conserte a busca.
+     *
+     * <p>Mesma descida e mesma galeria: o que muda é a altura de onde
+     * ela recomeça. Cada nível custa duas descidas, que são vinte
+     * blocos.
+     */
+    public MineShaft deepened() {
+        return new MineShaft(landingTwo(), descent, gallery);
+    }
+
+    /** Se ainda há nível abaixo deste, sem passar do {@link #DEEPEST}. */
+    public boolean mayDeepen() {
+        return deepened().landingTwo().y() >= DEEPEST;
+    }
+
+    /**
      * A posição de índice {@code i} na ordem de cavar.
      *
      * <p>Índice acima de {@link #CARVED} é galeria, e por isso não há

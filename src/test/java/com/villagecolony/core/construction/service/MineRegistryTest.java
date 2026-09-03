@@ -438,4 +438,54 @@ class MineRegistryTest {
         assertTrue(registry.of(colonyId).isEmpty());
         assertFalse(registry.all().iterator().hasNext());
     }
+
+    /**
+     * Fechado o círculo, a mina desce um nível — 2026-09-02.
+     *
+     * <p>Quatro curvas e a galeria voltou à direção em que começou: ela
+     * deu a volta neste nível, e o que sobra está abaixo. É a forma do
+     * MineColonies — profundidade que cresce aos poucos —, com o
+     * gatilho que este mod já tinha em mãos.
+     *
+     * <p>O cursor volta a zero porque o poço do nível novo ainda não foi
+     * cavado: são duas descidas e duas salas antes de a galeria começar.
+     */
+    @Test
+    void theGalleryDescendsAfterAFullCircle() {
+        Mine mine = Mine.open(UUID.randomUUID(), shaft());
+
+        for (int i = 0; i < 50; i++) {
+            mine.nextPosition();
+        }
+
+        int before = mine.shaft().positionAt(MineShaft.CARVED).y();
+
+        for (int i = 0; i < Mine.TURNS_PER_LEVEL; i++) {
+            mine.turn();
+        }
+
+        assertEquals(
+                before - 2 * MineShaft.DESCENT,
+                mine.shaft().positionAt(MineShaft.CARVED).y());
+
+        assertEquals(0, mine.cut());
+    }
+
+    /** No fundo ela volta a só virar: abaixo do pico não há o que procurar. */
+    @Test
+    void theGalleryKeepsTurningAtTheDeepestLevel() {
+        Mine mine = Mine.open(
+                UUID.randomUUID(),
+                MineShaft.from(
+                        new ColonyPos(40, MineShaft.DEEPEST + 2 * MineShaft.DESCENT, 0),
+                        Side.EAST));
+
+        int before = mine.shaft().positionAt(MineShaft.CARVED).y();
+
+        for (int i = 0; i < Mine.TURNS_PER_LEVEL + 1; i++) {
+            mine.turn();
+        }
+
+        assertEquals(before, mine.shaft().positionAt(MineShaft.CARVED).y());
+    }
 }
