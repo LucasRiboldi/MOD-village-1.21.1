@@ -5,6 +5,7 @@ import com.villagecolony.core.task.model.TaskPriority;
 import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.task.service.TaskService;
+import com.villagecolony.core.type.Capability;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
@@ -276,5 +277,85 @@ class WorkAssignmentTest {
         woodTask();
 
         assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
+    }
+
+    private Task stoneTask() {
+        return tasks.create(COLONY, TaskType.COLLECT_STONE, TaskPriority.PRODUCTION,
+                ResourceType.COBBLESTONE, 64);
+    }
+
+    /**
+     * Quem travou pega o que houver, e volta a produzir — ADR-010.
+     *
+     * <p>O mineiro cuja pedra acabou de travar continua mineiro: baú,
+     * ferramenta e nome não mudam. O que muda é a tarefa que ele aceita
+     * nesta passagem. Ver a ADR para por que trocar a profissão de
+     * verdade sairia caro — baú, Regra 11 e a invariante da mão.
+     */
+    @Test
+    void aWorkerWhoseWorkStalledBorrowsAnother() {
+        Worker miner = workerWith(ProfessionType.MINER);
+        miner.rest(Capability.COLLECT_STONE);
+
+        stoneTask();
+        Task wood = woodTask();
+
+        assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(Optional.of(miner.villagerId()), wood.executor());
+    }
+
+    /**
+     * Mas nunca fica parado para honrar um descanso.
+     *
+     * <p>A terceira passagem, e ela é o que impede a regra de virar o
+     * problema que conserta: sem nada emprestado ao alcance, a pedra
+     * dele volta a valer mesmo descansando.
+     */
+    @Test
+    void theRestNeverLeavesTheWorkerIdle() {
+        Worker miner = workerWith(ProfessionType.MINER);
+        miner.rest(Capability.COLLECT_STONE);
+
+        Task stone = stoneTask();
+
+        assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(Optional.of(miner.villagerId()), stone.executor());
+    }
+
+    /**
+     * Obra não se empresta.
+     *
+     * <p>Coleta é andar até um bloco e trazê-lo; qualquer um com baú faz.
+     * Obra tem projeto, cursor e barreira de teste, e um pedreiro
+     * emprestado entrando no meio de uma casa é defeito, não ajuda.
+     */
+    @Test
+    void buildingIsNotLent() {
+        Worker miner = workerWith(ProfessionType.MINER);
+        miner.rest(Capability.COLLECT_STONE);
+
+        Task build = tasks.create(COLONY, TaskType.BUILD, TaskPriority.CONSTRUCTION,
+                ResourceType.OAK_PLANKS, 1);
+
+        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(TaskState.AVAILABLE, build.state());
+    }
+
+    /**
+     * E quem não travou não pega o trabalho dos outros.
+     *
+     * <p>É o portão da regra inteira, e o que mantém de pé o
+     * {@link #aFarmerDoesNotTakeTheWoodTask}: emprestar é consequência de
+     * ter travado, e não de estar sem tarefa. Sem isto, toda profissão
+     * ociosa viraria lenhadora na primeira passagem.
+     */
+    @Test
+    void aWorkerWhoDidNotStallDoesNotBorrow() {
+        workerWith(ProfessionType.MINER);
+
+        Task wood = woodTask();
+
+        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(TaskState.AVAILABLE, wood.state());
     }
 }

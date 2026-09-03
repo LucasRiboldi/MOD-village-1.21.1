@@ -1,6 +1,8 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.worker.model.Worker;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.fabric.brain.WorkHours;
@@ -109,6 +111,10 @@ public final class LumberjackReport {
             }
 
             line.append(shortId(entry.getKey()))
+                    .append(LentHand.mark(
+                            VillageColonyMod.WORKERS.find(entry.getKey())
+                                    .flatMap(Worker::profession),
+                            ProfessionType.LUMBERJACK))
                     .append(" ")
                     .append(describe(world, entry.getKey(), job));
         }

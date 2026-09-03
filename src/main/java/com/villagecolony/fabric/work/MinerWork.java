@@ -7,6 +7,7 @@ import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
+import com.villagecolony.core.type.Capability;
 import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
@@ -547,6 +548,13 @@ public final class MinerWork {
         // num poço devolvia a tarefa e a pegava de volta para sempre,
         // enquanto o outro esperava do lado de fora. Ver MineClaims.
         MineClaims.stepAside(job.task.colonyId(), workerId);
+
+        // E a pedra descansa para ele — ADR-010. A vez na mina resolve
+        // dois mineiros disputando uma escada; não resolve a colônia
+        // inteira sem pedra alcançável, que é quando ele precisa ir
+        // ajudar noutra coisa em vez de repetir a mesma parede.
+        VillageColonyMod.WORKERS.find(workerId)
+                .ifPresent(worker -> worker.rest(Capability.COLLECT_STONE));
 
         // O cursor da varredura de areia sai junto: sem isso a passagem
         // seguinte reencontraria exatamente a mesma areia inalcançável,

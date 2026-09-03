@@ -11,9 +11,11 @@ import com.villagecolony.core.worker.service.ProfessionRegistry;
 import com.villagecolony.core.worker.service.WorkerService;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -59,6 +61,19 @@ public final class WorkAssignment {
      *
      * @return quantas tarefas foram reservadas agora
      */
+    /**
+     * As capacidades que um trabalhador travado pode pegar emprestadas —
+     * ADR-010.
+     *
+     * <p>Só coleta. Coleta é andar até um bloco e trazê-lo, e qualquer
+     * trabalhador com baú faz. Obra tem projeto, cursor e barreira de
+     * teste, e um pedreiro emprestado entrando no meio de uma casa é
+     * defeito, não ajuda; fundir e fabricar dependem do baú e do fogão
+     * certos.
+     */
+    private static final Set<Capability> LENDABLE = EnumSet.of(
+            Capability.COLLECT_WOOD, Capability.COLLECT_STONE, Capability.COLLECT_WOOL);
+
     public static int assign(
             java.util.UUID colonyId, WorkerService workers, TaskService tasks) {
 
@@ -90,6 +105,12 @@ public final class WorkAssignment {
         int assigned = 0;
 
         for (Worker worker : idleWorkers(colonyId, workers, tasks)) {
+            // O relógio dos descansos é esta passagem: ela roda uma vez
+            // por ciclo da colônia, e o Core não conhece world.getTime()
+            // (ADR-005). Quem está com tarefa aberta não gasta descanso,
+            // porque não é dele que a colônia precisa decidir agora.
+            worker.aCycleWentBy();
+
             if (takeOneTask(colonyId, worker, tasks, hasStorage)) {
                 assigned++;
             }
@@ -190,24 +211,64 @@ public final class WorkAssignment {
 
         Profession catalogued = ProfessionRegistry.of(profession.get());
 
-        for (Capability capability : catalogued.capabilities()) {
-            Optional<Task> task = tasks.nextFor(colonyId, capability);
+        Set<Capability> own = catalogued.capabilities();
 
-            if (task.isEmpty()) {
-                continue;
+        // 1ª passagem: o trabalho dele, tirando o que acabou de travar.
+        for (Capability capability : own) {
+            if (!worker.isResting(capability)
+                    && reserveOne(colonyId, worker, tasks, hasStorage, capability)) {
+
+                return true;
             }
+        }
 
-            if (task.get().type().needsOwnStorage()
-                    && !hasStorage.test(worker.villagerId())) {
+        // 2ª passagem: a mão emprestada, e só para quem travou. O portão
+        // é o descanso, e não a ociosidade — sem ele toda profissão sem
+        // tarefa viraria lenhadora na primeira passagem, e a colônia
+        // perderia a especialização que ela mesma montou.
+        if (own.stream().anyMatch(worker::isResting)) {
+            for (Capability capability : LENDABLE) {
+                if (!own.contains(capability)
+                        && reserveOne(colonyId, worker, tasks, hasStorage, capability)) {
 
-                continue;
+                    return true;
+                }
             }
+        }
 
-            task.get().reserveFor(worker.villagerId());
+        // 3ª passagem: a capacidade em descanso, antes de deixá-lo parado.
+        // É o que impede a regra de virar o problema que ela conserta.
+        for (Capability capability : own) {
+            if (worker.isResting(capability)
+                    && reserveOne(colonyId, worker, tasks, hasStorage, capability)) {
 
-            return true;
+                return true;
+            }
         }
 
         return false;
+    }
+
+    /** Reserva a próxima tarefa desta capacidade, se houver e se ele puder. */
+    private static boolean reserveOne(
+            java.util.UUID colonyId,
+            Worker worker,
+            TaskService tasks,
+            Predicate<java.util.UUID> hasStorage,
+            Capability capability) {
+
+        Optional<Task> task = tasks.nextFor(colonyId, capability);
+
+        if (task.isEmpty()) {
+            return false;
+        }
+
+        if (task.get().type().needsOwnStorage() && !hasStorage.test(worker.villagerId())) {
+            return false;
+        }
+
+        task.get().reserveFor(worker.villagerId());
+
+        return true;
     }
 }

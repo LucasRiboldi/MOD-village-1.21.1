@@ -1,5 +1,6 @@
 package com.villagecolony.core.worker.model;
 
+import com.villagecolony.core.type.Capability;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
@@ -133,5 +134,86 @@ class WorkerTest {
         assertEquals(ProfessionType.MANUFACTURER, ProfessionType.values()[4]);
         assertEquals(ProfessionType.FARMER, ProfessionType.values()[5]);
         assertEquals(ProfessionType.BUILDER, ProfessionType.values()[6]);
+    }
+
+    /**
+     * A capacidade que acabou de travar descansa — ADR-010, 2026-09-02.
+     *
+     * <p><b>Travado não é ocioso</b>, e essa é a descoberta que fez esta
+     * peça existir. A sessão de 2026-09-02 deixou dois trabalhadores
+     * parados por dezesseis e por dois minutos, e nenhum dos dois estava
+     * ocioso pela definição do {@code WorkAssignment}: os dois tinham
+     * tarefa aberta. Quem sabe a diferença é o guarda de travamento, e o
+     * que ele aprende precisa de onde morar.
+     *
+     * <p>Mora aqui, no trabalhador, e não num mapa estático: é estado
+     * dele, morre com ele, e não sobra atrás quando a colônia some. Não
+     * vai para o disco — reabrir o mundo já recusando o próprio trabalho
+     * seria pior que a tentativa a mais que isso custa.
+     */
+    @Test
+    void aCapabilityThatJustStalledIsRested() {
+        Worker worker = Worker.register(UUID.randomUUID(), UUID.randomUUID());
+
+        worker.rest(Capability.COLLECT_STONE);
+
+        assertTrue(worker.isResting(Capability.COLLECT_STONE));
+    }
+
+    /** E só ela: descansar pedra não pode calar a madeira. */
+    @Test
+    void restingOneCapabilityLeavesTheOthersAlone() {
+        Worker worker = Worker.register(UUID.randomUUID(), UUID.randomUUID());
+
+        worker.rest(Capability.COLLECT_STONE);
+
+        assertFalse(worker.isResting(Capability.COLLECT_WOOD));
+    }
+
+    /** Quem nunca travou não descansa nada. */
+    @Test
+    void aWorkerWhoNeverStalledRestsNothing() {
+        Worker worker = Worker.register(UUID.randomUUID(), UUID.randomUUID());
+
+        assertFalse(worker.isResting(Capability.COLLECT_STONE));
+    }
+
+    /**
+     * O descanso acaba, e conta em passagens de distribuição.
+     *
+     * <p>É o relógio que o {@code core} tem sem depender do mundo: a
+     * distribuição roda uma vez por ciclo da colônia, então contar
+     * passagens é contar ciclos — e a conta não precisa de
+     * {@code world.getTime()}, que o Core não conhece (ADR-005).
+     */
+    @Test
+    void theRestRunsOut() {
+        Worker worker = Worker.register(UUID.randomUUID(), UUID.randomUUID());
+
+        worker.rest(Capability.COLLECT_STONE);
+
+        for (int i = 0; i < Worker.REST_CYCLES; i++) {
+            assertTrue(worker.isResting(Capability.COLLECT_STONE));
+
+            worker.aCycleWentBy();
+        }
+
+        assertFalse(worker.isResting(Capability.COLLECT_STONE));
+    }
+
+    /** Travar de novo renova o prazo, e não o encurta. */
+    @Test
+    void restingAgainStartsTheClockOver() {
+        Worker worker = Worker.register(UUID.randomUUID(), UUID.randomUUID());
+
+        worker.rest(Capability.COLLECT_STONE);
+        worker.aCycleWentBy();
+        worker.rest(Capability.COLLECT_STONE);
+
+        for (int i = 0; i < Worker.REST_CYCLES - 1; i++) {
+            worker.aCycleWentBy();
+        }
+
+        assertTrue(worker.isResting(Capability.COLLECT_STONE));
     }
 }

@@ -1,5 +1,9 @@
 package com.villagecolony.core.worker.model;
 
+import com.villagecolony.core.type.Capability;
+
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,6 +28,20 @@ import java.util.UUID;
  */
 public final class Worker {
 
+    /**
+     * Por quantas passagens da distribuição uma capacidade descansa.
+     *
+     * <p>A distribuição roda uma vez por ciclo da colônia, então contar
+     * passagens é contar ciclos — e a conta não precisa de
+     * {@code world.getTime()}, que o Core não conhece (ADR-005).
+     *
+     * <p>Quatro ciclos são dois minutos, que é a mesma ordem de grandeza
+     * do guarda de travamento que põe a capacidade para descansar. Curto
+     * de propósito: o descanso existe para desempatar a escolha da
+     * passagem seguinte, e não para aposentar a profissão de ninguém.
+     */
+    public static final int REST_CYCLES = 4;
+
     private final UUID villagerId;
 
     private final UUID colonyId;
@@ -36,6 +54,20 @@ public final class Worker {
      * depois a colônia decide quem faz o quê. Ver TASK-012 e TASK-013.
      */
     private ProfessionType profession;
+
+    /**
+     * As capacidades que travaram para ele, e quantas passagens faltam.
+     *
+     * <p><b>Mora no trabalhador, e não num mapa estático</b>: é estado
+     * dele, morre com ele, e não sobra atrás quando a colônia some. É a
+     * diferença entre isto e o {@code TreeMarks}, que é da vila.
+     *
+     * <p><b>Não vai para o disco</b>, pelo mesmo argumento do
+     * {@code blocked} da {@code Mine}: é a contagem de uma sessão, e não
+     * um fato sobre o trabalhador. Reabrir o mundo já recusando o próprio
+     * trabalho seria pior que a tentativa a mais que isso custa.
+     */
+    private final Map<Capability, Integer> resting = new EnumMap<>(Capability.class);
 
     private Worker(UUID villagerId, UUID colonyId, ProfessionType profession) {
         this.villagerId = villagerId;
@@ -99,6 +131,44 @@ public final class Worker {
     /** Devolve o trabalhador ao estado sem função. */
     public void unassign() {
         this.profession = null;
+    }
+
+    /**
+     * Esta capacidade acabou de travar para ele — ADR-010, 2026-09-02.
+     *
+     * <p><b>Travado não é ocioso.</b> A sessão de 2026-09-02 deixou dois
+     * trabalhadores parados por dezesseis e por dois minutos, e nenhum
+     * deles estava ocioso pela definição do {@code WorkAssignment}: os
+     * dois tinham tarefa aberta. Quem sabe a diferença é o guarda de
+     * travamento, e é ele quem chama isto.
+     *
+     * <p>Não é a árvore nem a pedra que descansa — disso já cuidam o
+     * {@code TreeMarks} e o cursor da mina. É <b>este trabalhador
+     * tentando este tipo de trabalho</b>.
+     *
+     * <p>Travar de novo renova o prazo inteiro: a segunda parede é prova
+     * de que a primeira não foi azar.
+     */
+    public void rest(Capability capability) {
+        resting.put(Objects.requireNonNull(capability, "capability"), REST_CYCLES);
+    }
+
+    /** Se esta capacidade ainda está de molho para ele. */
+    public boolean isResting(Capability capability) {
+        return resting.containsKey(Objects.requireNonNull(capability, "capability"));
+    }
+
+    /**
+     * Passou uma distribuição, e os descansos andam com ela.
+     *
+     * <p>Chamado pela distribuição, e só para quem ela considera: quem
+     * está com tarefa aberta não gasta descanso, porque não é dele que a
+     * colônia precisa decidir agora.
+     */
+    public void aCycleWentBy() {
+        resting.replaceAll((capability, left) -> left - 1);
+
+        resting.values().removeIf(left -> left <= 0);
     }
 
     public boolean belongsTo(UUID colonyId) {

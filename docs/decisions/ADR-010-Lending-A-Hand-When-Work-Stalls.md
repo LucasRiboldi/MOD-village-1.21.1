@@ -1,7 +1,7 @@
 # ADR-010 — A mão emprestada: o trabalhador troca de foco quando o dele não anda
 
 **Data:** 2026-09-02
-**Estado:** proposto
+**Estado:** implementado em 2026-09-02
 **Minecraft:** 1.21.1 · **Fabric Loader:** 0.17.2
 **Skill que orientou:** `minecraft-villager-systems`
 
@@ -106,17 +106,33 @@ Sem isto a peça 1 não produz nada: quase toda profissão do mod tem **uma
 capacidade só** — `MINER` tem `COLLECT_STONE` e nada mais. Pôr a única
 capacidade dele para descansar o deixaria parado, que é o defeito com outro nome.
 
-`takeOneTask` ganha uma segunda passagem: esgotadas as capacidades da profissão,
-tenta as **emprestáveis** de outras.
+`takeOneTask` ganha duas passagens a mais:
 
 ```text
 1ª passagem   capacidades da profissão, menos as que estão descansando
-2ª passagem   capacidades emprestáveis de qualquer profissão
+2ª passagem   capacidades emprestáveis — só se alguma dele estiver descansando
 3ª passagem   as que estão descansando — antes de deixá-lo parado
 ```
 
 A terceira passagem é o que impede a regra de virar o problema que ela conserta:
 **nunca deixar o trabalhador parado para honrar um descanso.**
+
+### O portão da segunda passagem, apertado na implementação
+
+Este documento dizia, antes de o código existir, que a segunda passagem valia
+sempre que a primeira se esgotasse. **A bateria mostrou que não pode**, e o teste
+que a derrubou já existia desde a TASK-023:
+
+```java
+/** A capacidade é o critério, não o nome da profissão. */
+void aFarmerDoesNotTakeTheWoodTask()
+```
+
+Um fazendeiro sem colheita madura ficaria lenhador na primeira passagem, e a
+colônia perderia a especialização que ela mesma montou. **Emprestar é
+consequência de ter travado, e não de estar sem tarefa** — o portão é o
+descanso. Fica registrado porque é o tipo de aperto que se perde na conversa e
+volta como defeito.
 
 ## O que é emprestável
 
@@ -204,3 +220,23 @@ Gametest só para a linha do relatório.
 | 16/17 | vanilla ou nosso | inteiramente nosso |
 | 18 | precisa de Mixin | **não** |
 | 19 | menor implementação correta | um descanso por trabalhador+capacidade, e uma segunda passagem em `takeOneTask` |
+
+## Como ficou
+
+| peça | onde |
+|---|---|
+| o descanso | `Worker.rest` / `isResting` / `aCycleWentBy` — estado dele, `EnumMap`, não persiste |
+| o relógio | `WorkAssignment.assign`, uma passagem por ciclo, só para quem ela considera |
+| as três passagens | `WorkAssignment.takeOneTask` |
+| o que se empresta | `WorkAssignment.LENDABLE` — só coleta |
+| quem põe para descansar | `TreeChoice.giveUp` e o guarda do `MinerWork`, que são os que já sabiam da diferença entre travado e ocioso |
+| a linha que não mente | `LentHand.mark`, nas duas linhas de relatório |
+
+**Verificação:** `./gradlew build` e `runGametest` — 221 casos, zero falhas. Fase
+vermelha conferida nas doze provas novas.
+
+O trabalho é conduzido sem nenhum outro conserto porque as duas linhas de
+trabalho — `LumberjackWork` e `MinerWork` — iteram **tarefas**, e não
+trabalhadores por profissão. O mineiro que pegou tarefa de madeira já é
+conduzido pelo lenhador. Foi por isso que a linha do relatório precisou da
+marca: sem ela, uma colônia com dois lenhadores mostraria três.
