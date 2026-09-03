@@ -118,6 +118,9 @@ public final class MineDigging {
     /** O assunto do registrador para a boca que não se acha — 2026-08-22. */
     private static final String MOUTH_SUBJECT = "miner mine mouth";
 
+    /** O assunto do baú da boca, que não se acha onde pôr — 2026-09-02. */
+    private static final String CHEST_SUBJECT = "miner mouth chest";
+
     /** E o da pedra de superfície, que é a alternativa a ela — 2026-08-25. */
     private static final String SURFACE_SUBJECT = "miner surface stone";
 
@@ -618,10 +621,40 @@ public final class MineDigging {
      * natureza: de graça, idempotente, e no que já está cavado.
      */
     private static void furnishAndLight(ServerWorld world, Mine mine) {
-        MineMouth.furnish(
-                world,
-                MinecraftTypeAdapter.toBlockPos(mine.shaft().entry()),
-                MinecraftTypeAdapter.toDirection(mine.shaft().descent()));
+        BlockPos mouth = MinecraftTypeAdapter.toBlockPos(mine.shaft().entry());
+
+        Optional<BlockPos> chest = MineMouth.furnish(
+                world, mouth, MinecraftTypeAdapter.toDirection(mine.shaft().descent()));
+
+        if (chest.isEmpty()) {
+            // <b>As três saídas do furnish eram mudas</b> — 2026-09-02. O
+            // autor viu em jogo: "não nasceu baú de mineiro na entrada da
+            // mina, nem lanterna". As duas faltas são a mesma — a lanterna
+            // só é posta quando há baú —, e nenhuma delas escrevia linha:
+            // chunk fora de memória, ou nenhum dos três vizinhos da boca
+            // livre. Duas causas, duas correções diferentes, e o log não
+            // sabia escolher entre elas.
+            //
+            // Ela diz onde, para o autor poder ir olhar o lugar.
+            IdleLog.record(
+                    mine.colonyId(),
+                    CHEST_SUBJECT,
+                    IdleReason.NO_TARGET,
+                    "the mine mouth at " + mouth.toShortString() + " has no chest and none"
+                            + " could be placed — nothing beside it is free, or the chunk"
+                            + " is out of memory. The mouth lantern waits on the chest;"
+                            + " the gallery torches do not");
+        } else {
+            IdleLog.clear(mine.colonyId(), CHEST_SUBJECT);
+        }
+
+        // <b>A luz da galeria não espera pelo baú</b> — 2026-09-02. Sair
+        // aqui quando o baú falha apaga o túnel inteiro, e o gametest
+        // theGalleryIsLitWhereItWasAlreadyDug pegou isso na mesma
+        // passagem em que a linha nasceu. A lanterna da boca é do
+        // MineMouth e depende do baú; as tochas do túnel são outra
+        // coisa, e vinte blocos abaixo do chão sem luz é criatura
+        // nascendo dentro da mina.
 
         // E a luz do que já foi cavado — 2026-08-28. Mesma porta e mesma
         // natureza: idempotente, de graça, e chamada a cada passagem em
