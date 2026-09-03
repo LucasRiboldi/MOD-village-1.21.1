@@ -2564,6 +2564,85 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
+     * Pedra sem onde pisar não é alvo — 2026-09-02, sessão das 21:44.
+     *
+     * <p><b>O código já sabia, e falava tarde.</b> A frase saiu seis
+     * vezes em dezessete minutos, sempre depois de o mineiro ter andado
+     * dois minutos de expediente até lá:
+     *
+     * <pre>
+     * could not reach the stone at 763, 45, 878 ... the place to stand is
+     * the stone itself (no free neighbour to stand on)
+     * </pre>
+     *
+     * <p>Zero pedra na sessão inteira. O {@code approachTo} devolve a
+     * própria pedra quando não acha vizinho onde caiba um aldeão, e o
+     * javadoc dele delegava o caso ao guarda de travamento — que cobra
+     * 2.400 tiques por vez para descobrir o que a escolha já podia ter
+     * visto.
+     *
+     * <p>Aqui a arena é rocha maciça: não há um bloco onde um aldeão
+     * caiba, em lugar nenhum. Então não há pedra que valha a picareta, e
+     * a busca precisa dizer isso em vez de apontar para dentro da rocha.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_one_digger",
+            tickLimit = 40)
+    public void stoneWithNowhereToStandIsNotATarget(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        solidRock(context);
+
+        Colony colony = mineOwner(context);
+
+        // O vão: a galeria aberta e sem chão por baixo, que é o que uma
+        // caverna cortando o túnel faz. Ar não é onde se pisa.
+        Mine mine = VillageColonyMod.MINES.of(colony.id()).orElseThrow();
+
+        // A fresta de um bloco só, e é ela que reproduz o defeito: o
+        // aldeão precisa de dois blocos livres para caber, então um vão
+        // de altura um não é lugar de pisar em canto nenhum dele. É a
+        // geometria de 763, 45, 878 — a ordem de cavar alterna pé e
+        // cabeça da mesma coluna, e só os pés ficam abertos.
+        for (int i = 0; i < 12; i += 2) {
+            world.setBlockState(
+                    MinecraftTypeAdapter.toBlockPos(mine.shaft().positionAt(i)),
+                    Blocks.AIR.getDefaultState());
+        }
+
+        BlockPos walled = MinecraftTypeAdapter.toBlockPos(mine.shaft().positionAt(1));
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        UUID digger = miner(context, colony, chest, owned, new BlockPos(1, 9, 1));
+
+        reserveStone(colony, ResourceType.COBBLESTONE, digger);
+
+        try {
+            context.assertTrue(
+                    MinerWork.approachTo(world, walled).equals(walled),
+                    "o cenário não reproduz o defeito: " + walled.toShortString()
+                            + " tem onde pisar ao lado");
+
+            Optional<BlockPos> found = MineDigging.nextTarget(
+                    world, digger, colony.id(), context.getAbsolutePos(ROCK));
+
+            context.assertTrue(
+                    found.isEmpty()
+                            || !MinerWork.approachTo(world, found.get()).equals(found.get()),
+                    "a busca mandou o mineiro para " + found.orElseThrow().toShortString()
+                            + ", que não tem um bloco em volta onde ele caiba");
+
+        } finally {
+            MineClaims.clearAll();
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /**
      * Abre toda a janela de busca da galeria desta colônia.
      *
      * <p>Um pouco além das 64 posições que uma passagem examina, para

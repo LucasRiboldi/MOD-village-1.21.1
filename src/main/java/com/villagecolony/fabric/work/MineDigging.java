@@ -676,6 +676,28 @@ public final class MineDigging {
                 continue;
             }
 
+            if (MinerWork.approachTo(world, at).equals(at)) {
+                // <b>Emparedada: não há vizinho onde um aldeão caiba</b> —
+                // 2026-09-02. O approachTo devolve a própria pedra quando
+                // não acha lugar de ficar de pé, e o javadoc dele
+                // delegava o caso ao guarda de travamento. A sessão das
+                // 21:44 mostrou o preço: seis vezes a mesma frase — "the
+                // place to stand is the stone itself (no free neighbour
+                // to stand on)" —, dois minutos de expediente cada, e
+                // zero pedra em dezessete minutos.
+                //
+                // Impossível de trabalhar é impossível, e vai pela mesma
+                // porta do bedrock: conta para a curva, e a galeria
+                // contorna o vão em vez de mirar para dentro dele.
+                if (mine.blockedAgain(BLOCKED_BEFORE_TURNING)) {
+                    VillageColonyMod.LOGGER.info(
+                            "Miner {} hit stone with nowhere to stand - the gallery turns",
+                            workerId);
+                }
+
+                continue;
+            }
+
             mine.digging();
 
             // O minério da parede vem antes da parede — 2026-08-21. Um
