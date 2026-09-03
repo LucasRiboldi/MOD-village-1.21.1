@@ -153,6 +153,14 @@ public final class MinerReport {
 
         text.append(", stall ").append(job.stalled).append("/").append(MinerWork.STALL_LIMIT);
 
+        // E há quantos tiques ele não sai do bloco — 2026-09-03. Os dois
+        // contadores lado a lado separam as duas frases que a sessão
+        // precisa distinguir e que "stall" sozinho confundia: <i>andando
+        // devagar</i> tem "still" perto de zero; <i>travado</i> tem os
+        // dois subindo juntos. Toda sessão registrada era o segundo caso,
+        // e o log não sabia dizer.
+        text.append(", still ").append(job.still).append("/").append(MinerWork.STILL_LIMIT);
+
         return text.toString();
     }
 

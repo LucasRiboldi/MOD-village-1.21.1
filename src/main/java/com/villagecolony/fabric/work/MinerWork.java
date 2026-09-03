@@ -108,7 +108,44 @@ public final class MinerWork {
      * sempre sem chegar não está trabalhando, e sem isto a tarefa nunca
      * volta para a fila.
      */
-    static final int STALL_LIMIT = 4 * 600;
+    public static final int STALL_LIMIT = 4 * 600;
+
+    /**
+     * Quantos tiques de expediente parado no mesmo bloco antes de largar
+     * a pedra — 2026-09-03.
+     *
+     * <p><b>O guarda de cima cobra dois minutos para notar o óbvio.</b>
+     * Ele conta tique de expediente <i>andando até a pedra</i>, e não
+     * pergunta se o aldeão andou. Um mineiro congelado paga os 2.400
+     * inteiros, e o preço aparece em toda sessão registrada: <i>"seis
+     * vezes a mesma frase — dois minutos de expediente cada, e zero pedra
+     * em dezessete minutos"</i>.
+     *
+     * <p><b>E congelado é a assinatura de todas elas.</b> Não "andando
+     * devagar", não "quase lá" — parado no mesmo bloco, com destino
+     * posto:
+     *
+     * <pre>
+     * he is at 718, 44, 878, walking to 718, 44, 878     (E35)
+     * he is at 756, 44, 878, walking to 758, 44, 878     (folga de chegada)
+     * 757, 42, 877, oito leituras seguidas em seis minutos (o poço)
+     * </pre>
+     *
+     * <p>É a lição do {@code mineBlock} do AnimaFabric — <i>reports
+     * failure if the block is not broken</i> — aplicada ao passo anterior:
+     * <b>conferir que a ação surtiu efeito</b>, em vez de esperar o
+     * orçamento acabar. Um aldeão a quem se mandou andar e que não mudou
+     * de bloco em quinze segundos não está a caminho; está travado, e a
+     * tarefa rende mais na fila.
+     *
+     * <p>Trezentos, e não menos: aldeão para de verdade — porta, outro
+     * aldeão na passagem, o recalculo da rota. Quinze segundos é folgado
+     * para todos esses e ainda assim <b>oito vezes</b> mais rápido que o
+     * guarda de cima, que continua existindo como teto para quem anda sem
+     * chegar — oscilar entre dois blocos mexe o contador daqui e não
+     * escapa daquele.
+     */
+    public static final int STILL_LIMIT = 300;
 
     static final Map<UUID, Job> JOBS = new HashMap<>();
 
@@ -152,6 +189,12 @@ public final class MinerWork {
         int collected;
 
         int stalled;
+
+        /** Em que bloco ele estava na última conferência. */
+        BlockPos wasAt;
+
+        /** E há quantos tiques de expediente ele não sai dele. */
+        int still;
 
         private Job(Task task, BlockPos center, ResourceId wanted) {
             this.task = task;
@@ -297,10 +340,24 @@ public final class MinerWork {
             // "off hours".
             if (WorkHours.isWorkTime(world, villager)) {
                 job.stalled++;
+
+                // E se ele saiu do lugar — 2026-09-03. Ver STILL_LIMIT.
+                BlockPos now = villager.getBlockPos();
+
+                if (now.equals(job.wasAt)) {
+                    job.still++;
+                } else {
+                    job.wasAt = now;
+                    job.still = 0;
+                }
             }
 
-            if (job.stalled >= STALL_LIMIT) {
-                giveUp(world, workerId, job);
+            if (job.still >= STILL_LIMIT) {
+                giveUp(world, workerId, job, "it has not moved a block in "
+                        + job.still + " ticks of work time");
+            } else if (job.stalled >= STALL_LIMIT) {
+                giveUp(world, workerId, job, "it walked for "
+                        + job.stalled + " ticks of work time without arriving");
             } else {
                 // O mesmo destino da primeira vez, e pelo mesmo motivo:
                 // repor a pedra aqui era repor a rocha maciça, e a
@@ -374,6 +431,8 @@ public final class MinerWork {
         job.progress = 0;
         job.required = 0;
         job.stalled = 0;
+        job.wasAt = null;
+        job.still = 0;
 
         WorkTargets.set(workerId, job.approach, MinerReach.ARRIVAL);
 
@@ -514,6 +573,8 @@ public final class MinerWork {
         job.progress = 0;
         job.required = 0;
         job.stalled = 0;
+        job.wasAt = null;
+        job.still = 0;
 
         WorkTargets.clear(workerId);
     }
@@ -525,11 +586,12 @@ public final class MinerWork {
      * seguinte reencontraria exatamente a mesma pedra inalcançável, que é
      * a roda que a Regra 9 fechou do lado do lenhador.
      */
-    private static void giveUp(ServerWorld world, UUID workerId, Job job) {
+    private static void giveUp(ServerWorld world, UUID workerId, Job job, String why) {
         VillageColonyMod.LOGGER.info(
-                "Miner {} could not reach the stone at {} — task back to the queue. {}",
+                "Miner {} gave up the stone at {} — {}. Task back to the queue. {}",
                 workerId,
                 job.target.toShortString(),
+                why,
                 world.getEntity(workerId) instanceof VillagerEntity villager
                         ? MinerReport.whyNotReached(world, villager, job.target)
                         : "the miner left the world");
@@ -670,6 +732,19 @@ public final class MinerWork {
         Job job = JOBS.get(workerId);
 
         return job == null ? 0 : job.stalled;
+    }
+
+    /**
+     * Há quantos tiques de expediente este mineiro não sai do bloco.
+     *
+     * <p>Pelo mesmo motivo do {@link #stallOf}: o guarda só fala quando
+     * estoura, e a pergunta que ele responde — <i>ele está andando?</i> —
+     * não tem outro observável de fora.
+     */
+    public static int stillnessOf(UUID workerId) {
+        Job job = JOBS.get(workerId);
+
+        return job == null ? 0 : job.still;
     }
 
     /** Quanta pedra este mineiro já trouxe nesta tarefa. */

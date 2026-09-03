@@ -36,7 +36,7 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-607 testes unitários  ·  225 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
+607 testes unitários  ·  227 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
 última sessão de jogo em 2026-08-28, 23:06  ·  ele desceu, e parou a 2 blocos
 ```
@@ -60,7 +60,7 @@ sessão — o que preparar, o que olhar e em que ordem, e o que cada linha de
 log significa — vive em
 [`docs/proxima-sessao.md`](docs/proxima-sessao.md).
 
-Onze consertos do mineiro estão empilhados sem uma única sessão que os veja,
+Doze consertos do mineiro estão empilhados sem uma única sessão que os veja,
 e as três decisões em aberto esperam o que essa sessão mostrar. O de
 2026-09-03 é o que mais pede a sessão: ele fecha um **laço**, e laço se
 reconhece no log — a mesma pedra mirada passagem após passagem.
@@ -68,6 +68,44 @@ reconhece no log — a mesma pedra mirada passagem após passagem.
 ---
 
 ## ✅ Resolvido
+
+### 2026-09-03 — o mineiro percebe que está parado
+
+**O guarda de travamento conta tique de expediente *andando até a pedra*,
+e nunca pergunta se o aldeão andou.** Um mineiro travado paga os 2.400
+inteiros — dois minutos de expediente — antes de a tarefa voltar para a
+fila.
+
+E travado é a assinatura de **toda** sessão registrada. Não "andando
+devagar", não "quase lá": parado no mesmo bloco, com destino posto.
+
+```text
+he is at 718, 44, 878, walking to 718, 44, 878       (E35)
+he is at 756, 44, 878, walking to 758, 44, 878       (folga de chegada)
+757, 42, 877, oito leituras seguidas em seis minutos (o poço)
+```
+
+É por isso que *"seis vezes a mesma frase, dois minutos de expediente
+cada, e zero pedra em dezessete minutos"* — o orçamento inteiro da sessão
+cabe em oito desistências.
+
+| | |
+|---|---|
+| **O detector** | `STILL_LIMIT`, 300 tiques de expediente sem mudar de bloco. **Oito vezes** mais rápido que o guarda de cima, que continua existindo como teto para quem anda sem chegar — oscilar entre dois blocos mexe o contador novo e não escapa do antigo |
+| **Por que 300 e não menos** | aldeão para de verdade: porta, outro aldeão na passagem, recálculo de rota. Quinze segundos é folgado para todos esses |
+| **De onde veio** | é o `mineBlock` do AnimaFabric — *reports failure if the block is not broken* — aplicado ao passo anterior: **conferir que a ação surtiu efeito**, em vez de esperar o orçamento acabar |
+| **E ele não conta fora do expediente** | a mesma armadilha que o contador irmão caiu em 08-26, quando foi de 886 a 2086 com o relatório dizendo `off hours`. Tem teste próprio |
+| **A linha do relatório** | ganhou `still N/300` ao lado de `stall N/2400`. Os dois juntos separam as duas frases que a sessão precisa distinguir: *andando devagar* tem `still` perto de zero, *travado* tem os dois subindo juntos |
+| **A desistência diz qual dos dois foi** | `gave up the stone at X — it has not moved a block in N ticks of work time` |
+
+| | |
+|---|---|
+| **Fase vermelha conferida** | sim, na bateria: sem o detector cai `aFrozenMinerGivesUpLongBeforeTheStallGuard`, e só ele |
+| **`theStillnessGuardDoesNotCountOutsideWorkHours`** | é guarda-corpo, não fase vermelha — fica verde nos dois lados |
+| **Verificações que rodaram** | `./gradlew build` (607 unitários, 0 falhas) e `runGametest --rerun-tasks` (**227** de jogo, todos passaram) |
+| **O que este ciclo NÃO provou** | que o mineiro passa a produzir. Ele passa a **falhar rápido e dizer por quê** — o que muda é o custo do erro e a legibilidade do log, não a causa dele |
+
+---
 
 ### 2026-09-03 — a guarda de emparedada não valia para o minério
 

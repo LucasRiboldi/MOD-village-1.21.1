@@ -24,6 +24,8 @@ import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.work.WorkMaterials;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.core.task.model.TaskState;
+import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.work.MineClaims;
 import com.villagecolony.fabric.work.MineDigging;
 import com.villagecolony.fabric.integration.MineMouth;
@@ -2771,6 +2773,196 @@ public class MinerGameTest implements FabricGameTest {
                 "largou a veia por causa de uma pedra que não era ela");
 
         context.complete();
+    }
+
+    /**
+     * Mineiro congelado larga a pedra em quinze segundos, e não em dois
+     * minutos — 2026-09-03.
+     *
+     * <p><b>O guarda de travamento conta tique de expediente andando até
+     * a pedra, e nunca pergunta se o aldeão andou.</b> Um mineiro travado
+     * paga os 2.400 inteiros antes de a tarefa voltar para a fila, e é o
+     * que aparece em toda sessão registrada — <i>"seis vezes a mesma
+     * frase, dois minutos de expediente cada, e zero pedra em dezessete
+     * minutos"</i>.
+     *
+     * <p>E travado é a assinatura de todas elas: parado no mesmo bloco,
+     * com destino posto. {@code he is at 718, 44, 878, walking to 718, 44,
+     * 878}.
+     *
+     * <p>Aqui o alvo está longe e não há caminho até ele — o arranjo do
+     * {@code theStallGuardDoesNotCountOutsideWorkHours}, com um adulto no
+     * lugar da criança. O que se afirma é <b>quando</b> a tarefa volta: se
+     * ela voltou antes do {@code STALL_LIMIT}, quem a devolveu foi o
+     * detector de imobilidade, porque o outro guarda ainda nem chegou lá.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_stillness",
+            tickLimit = 400)
+    public void aFrozenMinerGivesUpLongBeforeTheStallGuard(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        ground(context);
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        Block rock = MinecraftTypeAdapter
+                .toBlock(HousePlans.paletteOf(world, chest).stone())
+                .orElseThrow();
+
+        context.setBlockState(DEEP_MOUTH.east(), rock.getDefaultState());
+
+        context.setBlockState(PERCH.down(), Blocks.DIRT.getDefaultState());
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, PERCH);
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        owned.owning(villager.getUuid());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_STONE,
+                TaskPriority.PRODUCTION,
+                ResourceType.COBBLESTONE,
+                16);
+
+        task.reserveFor(villager.getUuid());
+
+        ColonyPos mouth = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(DEEP_MOUTH));
+
+        VillageColonyMod.MINES.restore(
+                Mine.restore(colony.id(), MineShaft.from(mouth, Side.EAST), 0));
+
+        MineDigging.shortenMineDistanceTo(NEARBY);
+
+        MinerWork.run(world, colony);
+
+        context.runAtTick(360, () -> {
+            try {
+                context.assertTrue(
+                        WorkHours.isWorkTime(world, villager),
+                        "a arena não está em horário de expediente, e fora dele nenhum dos"
+                                + " dois guardas conta — este teste não mede o que promete");
+
+                context.assertTrue(
+                        MinerWork.STILL_LIMIT < MinerWork.STALL_LIMIT,
+                        "o detector de imobilidade precisa disparar ANTES do guarda de"
+                                + " travamento, senão ele não adianta nada");
+
+                context.assertFalse(
+                        task.state() == TaskState.RESERVED
+                                || task.state() == TaskState.EXECUTING,
+                        "o mineiro passou 360 tiques parado e a tarefa continua com ele —"
+                                + " ela só voltaria no tique " + MinerWork.STALL_LIMIT
+                                + ", que é o preço que toda sessão pagou");
+            } finally {
+                owned.cleanUp();
+
+                MineClaims.clearAll();
+
+                MineDigging.restoreMineDistance();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * E o detector de imobilidade também não conta fora do expediente.
+     *
+     * <p>É a mesma armadilha do contador irmão, e ela já custou uma
+     * sessão: fora da hora a {@code GoToWorkTargetTask} nem começa, então
+     * o aldeão está <b>proibido</b> de andar. Punir quem não pode andar é
+     * queimar o orçamento com ele dormindo — o contador foi de 886 a 2086
+     * com o relatório dizendo {@code off hours}.
+     *
+     * <p>Criança pelo mesmo motivo do outro teste: {@code WorkHours}
+     * responde não para bebê sem que o relógio do mundo mude, e mexer na
+     * hora vaza para os testes vizinhos do mesmo lote.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_off_hours",
+            tickLimit = 100)
+    public void theStillnessGuardDoesNotCountOutsideWorkHours(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        ground(context);
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        Block rock = MinecraftTypeAdapter
+                .toBlock(HousePlans.paletteOf(world, chest).stone())
+                .orElseThrow();
+
+        context.setBlockState(DEEP_MOUTH.east(), rock.getDefaultState());
+
+        context.setBlockState(PERCH.down(), Blocks.DIRT.getDefaultState());
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity child = context.spawnEntity(EntityType.VILLAGER, PERCH);
+        child.setBreedingAge(-24_000);
+
+        Worker worker = VillageColonyMod.WORKERS.register(child.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(child.getUuid(), chest));
+
+        owned.owning(child.getUuid());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_STONE,
+                TaskPriority.PRODUCTION,
+                ResourceType.COBBLESTONE,
+                16);
+
+        task.reserveFor(child.getUuid());
+
+        ColonyPos mouth = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(DEEP_MOUTH));
+
+        VillageColonyMod.MINES.restore(
+                Mine.restore(colony.id(), MineShaft.from(mouth, Side.EAST), 0));
+
+        MineDigging.shortenMineDistanceTo(NEARBY);
+
+        MinerWork.run(world, colony);
+
+        context.runAtTick(60, () -> {
+            int still = MinerWork.stillnessOf(child.getUuid());
+
+            try {
+                context.assertTrue(
+                        still == 0,
+                        "o detector contou " + still + " tiques parado fora do expediente,"
+                                + " e fora dele o aldeão está proibido de andar");
+            } finally {
+                owned.cleanUp();
+
+                MineClaims.clearAll();
+
+                MineDigging.restoreMineDistance();
+            }
+
+            context.complete();
+        });
     }
 
     /**
