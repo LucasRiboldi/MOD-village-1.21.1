@@ -343,4 +343,88 @@ class MinerLegTest {
                     "a perna mandou o mineiro para onde ele já está, no passo " + i);
         }
     }
+
+    /**
+     * <b>O "unable to climb" — 2026-09-04.</b> A perna leva de volta
+     * quando o destino ficou para trás.
+     *
+     * <p>Até aqui {@code stepAlongTheShaft} só sabia andar <b>para a
+     * frente</b> na ordem de cavar, rumo à frente de escavação — e o
+     * {@code destination} não chegava a entrar nele. Acertava por
+     * acidente no caso comum, que é entrar para cavar fundo; errava
+     * sempre que o alvo estava atrás, e o mineiro descia cada vez mais
+     * para longe dele.
+     *
+     * <p>Aqui ele está no degrau 12 e a pedra é lá em cima, perto da
+     * boca. O passo tem de subir.
+     */
+    @Test
+    void whenTheStoneIsBehindHimTheLegWalksBackUp() {
+        // Degrau 8 do primeiro lance, que é onde o piso fica em
+        // y = 64 - degrau, z = 898 - degrau.
+        BlockPos villager = new BlockPos(732, 56, 890);
+        BlockPos behind = new BlockPos(732, 63, 897);
+
+        BlockPos leg = MinerReach.legTowards(
+                villager, behind, mine(30), world(at -> true, dugStaircase()));
+
+        assertTrue(
+                leg.getY() > villager.getY(),
+                "a perna mandou o mineiro descer para alcançar uma pedra acima dele: "
+                        + leg.toShortString());
+    }
+
+    /**
+     * Destino na superfície tira o mineiro da mina.
+     *
+     * <p>A areia mora na praia, e a tarefa dela é do mesmo mineiro. Na
+     * sessão de 2026-09-04 ele estava a dezenove blocos de profundidade
+     * mirando areia em {@code y 62}, e a perna o mandava galeria adentro:
+     *
+     * <pre>
+     * digging Areia at 1472, 62, 48 ... he is at 1450, 44, 67,
+     * walking to 1454, 44, 70
+     * </pre>
+     *
+     * <p>Ele varreu a galeria inteira até a frente de escavação e nunca
+     * saiu. Alvo fora da mina não tem índice na ordem, e a saída é a
+     * boca: o passo aponta para trás.
+     */
+    @Test
+    void aTargetOnTheSurfaceSendsHimBackOut() {
+        BlockPos villager = new BlockPos(732, 56, 890);
+        BlockPos surface = new BlockPos(760, 64, 930);
+
+        BlockPos leg = MinerReach.legTowards(
+                villager, surface, mine(30), world(at -> true, dugStaircase()));
+
+        assertTrue(
+                leg.getY() > villager.getY(),
+                "a perna afundou o mineiro atrás de um alvo de superfície: "
+                        + leg.toShortString());
+    }
+
+    /**
+     * Fora da mina, dos dois lados, a boca não tem o que fazer.
+     *
+     * <p>A boca é o desvio de quem <b>vai entrar</b>. Quem já está na
+     * superfície indo para outro ponto da superfície não passa por ela —
+     * mandá-lo à boca é um desvio inventado, e era o que acontecia com o
+     * mineiro de areia depois de sair: ele saía e era devolvido à boca.
+     *
+     * <p>A navegação do jogo dá conta de um caminho a céu aberto. É
+     * justamente o caminho que ela <b>sabe</b> traçar, e a perna existe
+     * para os outros.
+     */
+    @Test
+    void onTheSurfaceHeWalksStraightToASurfaceTarget() {
+        BlockPos villager = new BlockPos(760, 64, 928);
+        BlockPos surface = new BlockPos(762, 64, 942);
+
+        assertEquals(
+                surface,
+                MinerReach.legTowards(
+                        villager, surface, mine(30), world(at -> true, dugStaircase())),
+                "o mineiro foi desviado para a boca sem ter de entrar na mina");
+    }
 }

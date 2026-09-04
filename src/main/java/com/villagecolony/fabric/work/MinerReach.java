@@ -214,7 +214,30 @@ public final class MinerReach {
             return destination;
         }
 
-        BlockPos step = stepAlongTheShaft(villager, mine.get(), footing);
+        int scanned = Math.min(mine.get().cut(), STEPS_SCANNED);
+
+        int there = orderIndexNear(destination, mine.get(), scanned);
+
+        // <b>Destino fora da mina</b> — 2026-09-04. Fora da ordem de
+        // cavar e não abaixo dele: dentro de uma mina o que se cava está
+        // sempre embaixo, então alvo que não está nem na ordem nem abaixo
+        // não é da mina. É a areia da praia, e a tarefa dela é do mesmo
+        // mineiro.
+        //
+        // A distinção importa porque "fora da ordem" sozinho não decide:
+        // a pedra que ele vai cavar também está fora dela enquanto a
+        // frente não chegou lá. Aquela é embaixo, e para aquela se desce.
+        boolean outside = there < 0 && destination.getY() >= villager.getY();
+
+        // Três destinos, e não dois. O que está na ordem tem índice e o
+        // passo vai até ele. O que está fora dela e <b>abaixo</b> é a
+        // pedra que a frente de escavação ainda não alcançou: para lá se
+        // desce, e o alvo é adiante da frente. O que está fora e não
+        // abaixo é a superfície, e para lá se sai pela boca, que é o
+        // índice zero.
+        int goal = there >= 0 ? there : outside ? 0 : scanned;
+
+        BlockPos step = stepAlongTheShaft(villager, goal, mine.get(), scanned, footing);
 
         // <b>Passo que não sai do lugar não é passo</b> — 2026-09-02. A
         // ordem de cavar entregava a posição em que o mineiro já estava,
@@ -228,9 +251,44 @@ public final class MinerReach {
         //
         // Vale como não ter achado passo nenhum, e a saída para isso já
         // existia: voltar à boca, de onde a ordem volta a funcionar.
-        return step != null && !step.equals(villager)
-                ? step
-                : at(mine.get().shaft().entry());
+        if (step != null && !step.equals(villager)) {
+            return step;
+        }
+
+        // A boca é o desvio de quem <b>vai entrar</b>. Quem já está fora
+        // indo para outro ponto de fora não passa por ela, e mandá-lo
+        // para lá era devolver à mina o mineiro de areia toda vez que ele
+        // conseguia sair. A céu aberto a navegação dá conta sozinha — é
+        // justamente o caminho que ela sabe traçar.
+        return outside ? destination : at(mine.get().shaft().entry());
+    }
+
+    /**
+     * O ponto da ordem de cavar mais perto desta posição, se algum estiver
+     * a uma perna dela.
+     *
+     * <p>É a pergunta <i>"isto está no corredor?"</i>, e serve às duas
+     * pontas: onde o aldeão está e para onde ele vai. Conta aritmética
+     * pura, sem leitura de bloco.
+     *
+     * @return o índice, ou {@code -1} quando nada da ordem está perto —
+     *     inclusive quando a mina não tem nada cavado
+     */
+    private static int orderIndexNear(BlockPos position, Mine mine, int scanned) {
+        int nearest = -1;
+        double best = Double.MAX_VALUE;
+
+        for (int i = 0; i < scanned; i++) {
+            double away =
+                    Math.sqrt(position.getSquaredDistance(at(mine.shaft().positionAt(i))));
+
+            if (away < best) {
+                best = away;
+                nearest = i;
+            }
+        }
+
+        return best <= LEG ? nearest : -1;
     }
 
     /**
@@ -252,24 +310,24 @@ public final class MinerReach {
      *     da boca. Aí quem responde é a boca
      */
     private static BlockPos stepAlongTheShaft(
-            BlockPos villager, Mine mine, Footing footing) {
-        int scanned = Math.min(mine.cut(), STEPS_SCANNED);
+            BlockPos villager, int goal, Mine mine, int scanned, Footing footing) {
 
-        int here = -1;
-        double nearest = Double.MAX_VALUE;
+        int here = orderIndexNear(villager, mine, scanned);
 
-        for (int i = 0; i < scanned; i++) {
-            double away = Math.sqrt(villager.getSquaredDistance(at(mine.shaft().positionAt(i))));
-
-            if (away < nearest) {
-                nearest = away;
-                here = i;
-            }
-        }
-
-        if (here < 0 || nearest > LEG) {
+        if (here < 0) {
             return null;
         }
+
+        // <b>Para que lado</b> — 2026-09-04. Até aqui o passo só sabia
+        // andar para a frente, rumo à frente de escavação, e o destino
+        // nem chegava a entrar nesta conta. Acertava por acidente no caso
+        // comum — entrar para cavar fundo é ir para a frente — e errava
+        // sempre que o alvo estava atrás: o mineiro descia cada vez mais
+        // para longe dele, galeria adentro, até a sessão acabar.
+        //
+        // De dentro da mina, sair é andar para trás — e quem decide se
+        // é o caso é o {@code goal} que o chamador montou.
+        int direction = goal >= here ? 1 : -1;
 
         // Só entra como destino o que aguenta um aldeão de pé — o E32,
         // 2026-09-02. A ordem é uma lista de blocos A CAVAR: duas de cada
@@ -304,7 +362,7 @@ public final class MinerReach {
 
         BlockPos step = footing.standable(start) ? start : null;
 
-        for (int i = here + 1; i < scanned; i++) {
+        for (int i = here + direction; i >= 0 && i < scanned; i += direction) {
             BlockPos ahead = at(mine.shaft().positionAt(i));
 
             if (Math.sqrt(villager.getSquaredDistance(ahead)) > LEG) {
