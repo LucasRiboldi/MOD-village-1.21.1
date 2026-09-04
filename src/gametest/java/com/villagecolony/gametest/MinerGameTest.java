@@ -106,6 +106,17 @@ public class MinerGameTest implements FabricGameTest {
     private static final BlockPos PERCH = new BlockPos(3, 7, 5);
 
     /**
+     * Passagens de mineiro congelado antes de se perguntar o que o
+     * contador marcava — E36, 2026-09-04.
+     *
+     * <p>Um terço do {@code STILL_LIMIT}, e de propósito longe dele: o
+     * que se afirma aqui não é que o guarda estourou, e sim que ele
+     * <b>lembra</b>. Encostar no limite mediria as duas coisas juntas e
+     * deixaria a falha ambígua.
+     */
+    private static final int FROZEN_PASSES = 100;
+
+    /**
      * O alcance de braço, e ele espelha {@code MinerWork.REACH}.
      *
      * <p>Escrito aqui e não lido de lá de propósito: abrir a constante
@@ -2897,6 +2908,127 @@ public class MinerGameTest implements FabricGameTest {
                                 + ", que é o preço que toda sessão pagou. O relatório diz o"
                                 + " que o contador marcava: "
                                 + MinerReport.report(world, colony).orElse("(sem relatório)"));
+            } finally {
+                owned.cleanUp();
+
+                MineClaims.clearAll();
+
+                MineDigging.restoreMineDistance();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * O detector de imobilidade não volta a zero porque o alvo mudou —
+     * E36, 2026-09-04.
+     *
+     * <p><b>A pergunta que o guarda faz não é sobre o alvo.</b> Ele
+     * pergunta <i>o aldeão saiu do bloco?</i>, e a resposta não muda
+     * quando a pedra à frente dele some: quem estava congelado continua
+     * congelado. Mas o {@code release} e o {@code startNextStone} zeravam
+     * o contador ao trocar de alvo, e com isso quem troca de alvo com
+     * frequência ficava <b>imune</b> aos dois guardas — foi o que os
+     * mineiros travados da sessão de 09-04 exibiram por vinte e cinco
+     * minutos, com {@code stall 0/2400, still 0/300} e nenhum passo dado.
+     *
+     * <p>É a forma do erro que a pergunta 20 desta casa já nomeia:
+     * <b>pendurar a limpeza num momento em vez de conferir uma
+     * invariante</b>. O momento certo de zerar não é "peguei alvo novo" —
+     * é "ele andou" (que o {@code WorkStall} já vê sozinho) ou "ele
+     * trabalhou", que é o que o construtor e o fabricante sempre fizeram.
+     *
+     * <p>Aqui o alvo some do jeito mais banal do mundo: o jogador cavou a
+     * pedra. O mineiro não se mexeu um bloco, e o contador não pode ter
+     * esquecido disso.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_e36",
+            tickLimit = 100)
+    public void theStillnessGuardSurvivesTheTargetChanging(TestContext context) {
+        // O relógio é do mundo inteiro e a bateria o faz andar — 09-04.
+        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+
+        ServerWorld world = context.getWorld();
+
+        ground(context);
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        Block rock = MinecraftTypeAdapter
+                .toBlock(HousePlans.paletteOf(world, chest).stone())
+                .orElseThrow();
+
+        context.setBlockState(DEEP_MOUTH.east(), rock.getDefaultState());
+
+        context.setBlockState(PERCH.down(), Blocks.DIRT.getDefaultState());
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, PERCH);
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        owned.owning(villager.getUuid());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_STONE,
+                TaskPriority.PRODUCTION,
+                ResourceType.COBBLESTONE,
+                16);
+
+        task.reserveFor(villager.getUuid());
+
+        ColonyPos mouth = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(DEEP_MOUTH));
+
+        VillageColonyMod.MINES.restore(
+                Mine.restore(colony.id(), MineShaft.from(mouth, Side.EAST), 0));
+
+        MineDigging.shortenMineDistanceTo(NEARBY);
+
+        MinerWork.run(world, colony);
+
+        // Passagens à mão, no mesmo tique — 09-04. O guarda conta uma vez
+        // por passagem pelo ramo "andando, fora de alcance", e não uma vez
+        // por tique do servidor. Dadas assim, o aldeão não muda de bloco
+        // entre uma e outra e o expediente não vira.
+        for (int pass = 0; pass <= FROZEN_PASSES; pass++) {
+            MinerWork.tick(world);
+        }
+
+        int before = MinerWork.stillnessOf(villager.getUuid());
+
+        // O jogador cavou a pedra. Nada mais mudou — e ele não andou.
+        context.setBlockState(DEEP_MOUTH.east(), Blocks.AIR.getDefaultState());
+
+        MinerWork.tick(world);
+
+        int after = MinerWork.stillnessOf(villager.getUuid());
+
+        context.runAtTick(5, () -> {
+            try {
+                context.assertTrue(
+                        before > 0,
+                        "o contador não subiu em " + FROZEN_PASSES + " passagens com o"
+                                + " mineiro congelado — este teste não mede o que promete");
+
+                context.assertTrue(
+                        after >= before,
+                        "o mineiro não saiu do lugar e o contador caiu de " + before
+                                + " para " + after + ": a pedra sumir zerou o guarda."
+                                + " Quem troca de alvo o tempo todo fica imune aos dois,"
+                                + " que é o E36");
             } finally {
                 owned.cleanUp();
 

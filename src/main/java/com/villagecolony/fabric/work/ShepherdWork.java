@@ -238,6 +238,11 @@ public final class ShepherdWork {
             return;
         }
 
+        // Chegou e vai tosquiar — E36, 2026-09-04. Trabalhar é a prova
+        // de que ele não está congelado; pegar ovelha nova não é. Ver
+        // findSheep.
+        job.stall.reset();
+
         shear(world, villager, sheep, job, storage.get());
     }
 
@@ -264,7 +269,20 @@ public final class ShepherdWork {
 
         job.sheep = nearest.getUuid();
         job.stalled = 0;
-        job.stall.reset();
+
+        // <b>E o guarda de imobilidade NÃO é zerado aqui</b> — E36,
+        // 2026-09-04. A pergunta que ele faz é <i>o aldeão saiu do
+        // bloco?</i>, e ela não tem nada a ver com qual é o alvo: quem
+        // estava congelado continua congelado depois de a pedra à frente
+        // dele sumir. Zerar por alvo novo deixava <b>imune</b> quem troca
+        // de alvo com frequência, e foi o que os mineiros travados da
+        // sessão de 09-04 exibiram por vinte e cinco minutos com
+        // {@code stall 0/2400, still 0/300} e nenhum passo dado.
+        //
+        // Quem zera é o movimento — o WorkStall vê sozinho — e o ramo em
+        // que ele trabalha, que é o que o construtor e o fabricante
+        // sempre fizeram. O de 2.400 continua por alvo, porque é isso que
+        // ele mede: andei demais até ESTE alvo.
 
         WorkTargets.set(workerId, nearest.getBlockPos());
     }
@@ -357,7 +375,9 @@ public final class ShepherdWork {
     private static void release(UUID workerId, Job job) {
         job.sheep = null;
         job.stalled = 0;
-        job.stall.reset();
+
+        // O guarda de imobilidade sobrevive a largar a ovelha — E36. Ver
+        // findSheep. Quem zera é o ramo de trabalho, antes do shear.
 
         WorkTargets.clear(workerId);
     }

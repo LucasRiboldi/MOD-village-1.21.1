@@ -51,9 +51,9 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-618 testes unitários  ·  237 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
+618 testes unitários  ·  238 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
-última sessão de jogo em 2026-09-04  ·  5 consertos, nenhum visto em jogo ainda
+última sessão de jogo em 2026-09-04  ·  6 consertos, nenhum visto em jogo ainda
 ```
 
 > A contagem de jogo era 176 aqui e **175** no `runGametest`. Recontado
@@ -75,7 +75,7 @@ sessão — o que preparar, o que olhar e em que ordem, e o que cada linha de
 log significa — vive em
 [`docs/proxima-sessao.md`](docs/proxima-sessao.md).
 
-**Cinco consertos esperam jogo, e nenhum foi visto rodar.** Em ordem do
+**Seis consertos esperam jogo, e nenhum foi visto rodar.** Em ordem do
 que olhar primeiro, porque é a ordem em que um falha esconde o outro:
 
 1. **O lenhador entrega madeira?** A linha a caçar é
@@ -94,6 +94,12 @@ que olhar primeiro, porque é a ordem em que um falha esconde o outro:
 5. **Alguma colônia cala?** A linha nova é
    `no cycle work: the chest count came in partial`. Se ela aparecer, a
    colônia estava parada e agora se sabe por quê.
+6. **O guarda de imobilidade morde?** A linha é
+   `has not moved a block in N ticks of work time`, e o relatório do
+   ciclo passa a mostrar `still` subindo em vez de `still 0/300`. Um
+   trabalhador congelado agora é devolvido em quinze segundos, e não em
+   dois minutos — se `still` continuar cravado em zero com trabalhador
+   parado, o E36 não era tudo.
 
 **E o estoque agora sai a cada ciclo em que muda** — é a série que faltava
 para responder "a colônia tinha material?" sem adivinhar.
@@ -311,6 +317,35 @@ Agora sai a cada ciclo, reaproveitando a varredura, e só quando muda.
 Nada em `src/test` ou `src/gametest` mencionava `isPartial` ou
 `ChestSurvey`: um baú a quatro milhões de blocos passou a provar que ele
 conta como **inalcançável**, e não como vazio. Commit `b2e4fc4`.
+
+### 2026-09-04 — o guarda de imobilidade para de esquecer que ele não andou
+
+**E36.** `startNextStone`, `findCrop`, `findSheep` e os três `release`
+zeravam o `WorkStall` ao pegar e ao largar alvo. A pergunta que esse
+guarda faz — *o aldeão saiu do bloco?* — **não tem nada a ver com qual é
+o alvo**: quem estava congelado continua congelado depois de a pedra à
+frente dele sumir. Zerar por alvo novo deixava imune quem troca de alvo
+com frequência, que é a forma de erro que a pergunta 20 da skill de
+aldeões já nomeia — *pendurar a limpeza num momento em vez de conferir
+uma invariante*.
+
+**E o conserto não é invenção nova.** Construtor e fabricante nunca
+tiveram este defeito porque sempre zeraram no **ramo em que trabalham**,
+e não ao pegar alvo. Mineiro, fazendeiro e pastor passaram a fazer o
+mesmo: sobram dois motivos para zerar, e os dois são prova de que ele não
+está congelado — *ele andou* (o `WorkStall` vê sozinho) e *ele
+trabalhou*. O contador de 2.400 **continua por alvo**, porque é isso que
+ele mede: andei demais até *este* alvo.
+
+`theStillnessGuardSurvivesTheTargetChanging` congela o mineiro por 100
+passagens e então o jogador cava a pedra que era o alvo. Fase vermelha
+conferida, e com medida: *o contador caiu de 99 para 0*. Verde em 3 de 3
+rodadas depois.
+
+> **O E36 não fechou o E37, e a suspeita registrada estava errada.** Ver
+> 🔴 abaixo: o relatório da falha mostra `stall 3/2400, still 2/300` em
+> 360 tiques **com os resets já removidos**. O que congela os contadores
+> naquele teste é outra coisa.
 
 ### 2026-09-04 — o teste instável se afirma em passagens, não em tiques
 
@@ -2198,9 +2233,10 @@ conferido no volume · árvore grande deixando de ser recusada.
 
 | | Erro | Estado |
 |---|---|---|
-| **E36** | **Os dois guardas são zerados a cada alvo novo — e isso está em seis profissões.** `startNextStone` faz `job.stalled = 0` e `job.stall.reset()` ao pegar alvo. Quem troca de alvo com frequência é **imune** ao detector de imobilidade (300) e ao de travamento (2.400) | ⚙️ **Achado em 09-04, com medida.** O mineiro troca de alvo o tempo todo porque `nextCut` entrega posições que já são ar: 320 passagens dadas à mão renderam `stall 49/2400`. **É a explicação verdadeira** do `stall 0/2400, still 0/300` que os mineiros travados exibiram por 25 minutos na sessão — o que eu tinha atribuído a "ninguém andava". O mesmo reset está em `Builder`, `Farmer`, `Manufacturer`, `Miner` (×2) e `Shepherd` (×2). **É o candidato mais forte do próximo ciclo, e é maior que o teste que o revelou** |
-| **E37** | **`aFrozenMinerGivesUpLongBeforeTheStallGuard` continua instável** — 7 passagens em 8 rodadas | ⚙️ **Melhorado, não curado, em 09-04.** Era 1 falha em 3. O que sobra é o **E36**: cada troca de alvo zera o contador que o teste espera ver chegar a 300. Fechar o E36 provavelmente fecha este. A mensagem de falha já traz o relatório do ciclo, então a próxima falha se explica sozinha |
+| **E36** | **Os dois guardas eram zerados a cada alvo novo.** `startNextStone`, `findCrop`, `findSheep` e os três `release` faziam `job.stall.reset()` ao trocar de alvo, e quem troca de alvo com frequência ficava **imune** ao detector de imobilidade (300) | ✅ **Fechado em 09-04.** Zerar passou a ser no ramo em que a profissão trabalha — onde `BuilderWork` e `ManufacturerWork` sempre zeraram, e por isso os dois nunca tiveram o defeito. **Eram três profissões, não seis:** o construtor e o fabricante já estavam certos, e o lenhador não zera em lugar nenhum — ver **E39**. O contador de 2.400 continua por alvo de propósito. `theStillnessGuardSurvivesTheTargetChanging`, fase vermelha conferida (*caiu de 99 para 0*) |
+| **E37** | **`aFrozenMinerGivesUpLongBeforeTheStallGuard` continua instável** — 1 falha em 3 rodadas medidas em 09-04, depois do E36 | ⚙️ **A suspeita anterior está morta, e foi medida.** Este arquivo dizia *"o que sobra é o E36: cada troca de alvo zera o contador"*. Com os resets **já removidos**, a falha voltou com `stall 3/2400, still 2/300` em 360 tiques — três passagens contadas de trezentas e sessenta. Os dois contadores são fechados por `WorkHours.isWorkTime`, e o `still` também zera quando o aldeão **muda de bloco**: o relatório mostra ele em y=-53 andando para y=-58, ou seja **o mineiro daquele teste não está congelado**. O próximo ciclo precisa de um instrumento que conte as passagens de expediente, e não de mais uma suspeita |
 | **E38** | **O baú do trabalhador assoreia e nada o esvazia.** Vara, maçã e muda não são `ResourceType`, nenhum trabalhador as retira, e cada uma ocupa um slot para sempre | ⚙️ **Metade fechada em 09-04.** O transbordo para a colônia tirou o lenhador do buraco e parou a destruição de item, mas **não move o assoreamento de lugar**: baú que só enche acaba cheio, e agora demora mais para chegar lá. Dar a esses itens consumidor ou descarte é **decisão de projeto** e está registrada no javadoc de `TreeFelling.deposit`, não decidida por conta própria |
+| **E39** | **O lenhador é o único que cobra o guarda de imobilidade enquanto trabalha.** `LumberjackWork:325` chama `stuck()` **antes** da conferência de alcance, ao contrário das outras seis profissões | ⚙️ **Achado ao ler, em 09-04, e não observado falhando.** O javadoc do `WorkStall` diz o contrário por escrito — *"chamá-la enquanto ele trabalha puniria quem está parado de propósito"* —, e um lenhador parado numa árvore que leve mais de 300 tiques de expediente é devolvido à fila por estar trabalhando. **O conserto foi escrito e revertido de propósito:** mudar uma quarta profissão sem ter visto nenhuma falhar é o erro nº 3 desta mesma lista, de 09-04. Quer o ciclo e o teste dele |
 | ~~**E33**~~ | ~~O mineiro não cavou um bloco em sete sessões~~ | ✅ **Fechado na bateria em 08-28.** Três testes em rocha maciça provam que ele cava a escada, desce cavando, e conserta a fronteira adiantada do save. Faltava a arena ser uma mina — todas as outras eram um piso de terra plano. **Falta ver em jogo** |
 | **E33-a** | **O mineiro desce, cava, e então trava.** Na sessão de 08-28, 23:19, ele estava **na galeria** (y=44) com **108 pedras** já trazidas, e parou | ⚙️ **Causa encontrada em 08-29, e é aritmética:** ele parava a **exatamente dois blocos** do lugar escolhido, porque dois era a folga com que a navegação se dá por chegada. `approachTo` escolhia um lugar a 2,0 da pedra; somada a folga, 4,2 — e o braço é 4. Duas contas certas que não compunham. A folga passou a ser do destino: o mineiro pede um. **Nenhuma sessão viu o conserto** — é o nono no mesmo sintoma, e o primeiro com a conta fechada em cima de um mineiro que já estava lá dentro |
 | **E34** | **Túnel cavado pelo jogador confunde a frente da galeria.** Um bolsão iluminado, desligado da escada, parecia frente | ⚙️ **Fechado nos caminhos conhecidos em 09-02, e o mod continua sem distinguir — de propósito.** A frente já era lida em ordem desde 08-28. O que faltava era a **perna**: o conserto do E32, na mesma manhã, fez o laço pular o que não fosse pisável e seguir somando adiante, o que **reabriu a forma exata do E34** — bastava um vão aberto coincidir com um índice mais avançado para o passo saltar a parede. Agora o laço para na primeira posição que **não se atravessa**. A pergunta deixou de ser *quem cavou* e passou a ser *dá para chegar lá a partir daqui*, que é a que importa — e vale igual para caverna natural. `theLegStopsAtTheWallInsteadOfJumpingToAPocketBehindIt`, fase vermelha conferida. **Nenhuma sessão viu** |

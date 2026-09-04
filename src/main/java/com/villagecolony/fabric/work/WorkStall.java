@@ -94,7 +94,32 @@ public final class WorkStall {
         return still >= LIMIT;
     }
 
-    /** Alvo novo, ou chegou: a contagem recomeça. */
+    /**
+     * Ele trabalhou: a contagem recomeça.
+     *
+     * <p><b>Alvo novo NÃO é motivo</b> — E36, 2026-09-04. A pergunta que
+     * esta classe faz é <i>o aldeão saiu do bloco?</i>, e a resposta não
+     * muda quando o alvo muda: quem estava congelado continua congelado
+     * depois de a pedra à frente dele sumir. Enquanto o mineiro, o
+     * fazendeiro e o pastor zeravam ao pegar e ao largar alvo, quem
+     * trocava de alvo com frequência ficava <b>imune</b> aos dois
+     * guardas — {@code stall 0/2400, still 0/300} por vinte e cinco
+     * minutos, com nenhum passo dado, na sessão de 09-04.
+     *
+     * <p>É a forma de erro que a pergunta 20 desta casa já nomeia:
+     * pendurar a limpeza num <b>momento</b> em vez de conferir uma
+     * <b>invariante</b>. Sobram dois motivos, e os dois são prova de que
+     * ele não está congelado:
+     *
+     * <ul>
+     *   <li><b>ele andou</b> — o {@link #stuck} vê sozinho, e não precisa
+     *       que ninguém o avise;
+     *   <li><b>ele trabalhou</b> — esta chamada, feita no ramo em que a
+     *       profissão age sobre o alvo. É onde o {@code BuilderWork} e o
+     *       {@code ManufacturerWork} sempre zeraram, e foi por isso que
+     *       os dois nunca tiveram o E36.
+     * </ul>
+     */
     public void reset() {
         wasAt = null;
         still = 0;

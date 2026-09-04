@@ -372,6 +372,12 @@ public final class MinerWork {
             return false;
         }
 
+        // <b>Ele chegou e vai bater na pedra</b> — E36, 2026-09-04. É
+        // aqui que o guarda de imobilidade recomeça, e não ao pegar alvo:
+        // trabalhar é a prova de que ele não está congelado. Mesmo lugar
+        // em que o BuilderWork e o ManufacturerWork sempre zeraram.
+        job.stall.reset();
+
         mine(world, villager, job, storage.get());
 
         return false;
@@ -428,7 +434,20 @@ public final class MinerWork {
         job.progress = 0;
         job.required = 0;
         job.stalled = 0;
-        job.stall.reset();
+
+        // <b>E o guarda de imobilidade NÃO é zerado aqui</b> — E36,
+        // 2026-09-04. A pergunta que ele faz é <i>o aldeão saiu do
+        // bloco?</i>, e ela não tem nada a ver com qual é o alvo: quem
+        // estava congelado continua congelado depois de a pedra à frente
+        // dele sumir. Zerar por alvo novo deixava <b>imune</b> quem troca
+        // de alvo com frequência, e foi o que os mineiros travados da
+        // sessão de 09-04 exibiram por vinte e cinco minutos com
+        // {@code stall 0/2400, still 0/300} e nenhum passo dado.
+        //
+        // Quem zera é o movimento — o WorkStall vê sozinho — e o ramo em
+        // que ele trabalha, que é o que o construtor e o fabricante
+        // sempre fizeram. O de 2.400 continua por alvo, porque é isso que
+        // ele mede: andei demais até ESTE alvo.
 
         WorkTargets.set(workerId, job.approach, MinerReach.ARRIVAL);
 
@@ -580,7 +599,11 @@ public final class MinerWork {
         job.progress = 0;
         job.required = 0;
         job.stalled = 0;
-        job.stall.reset();
+
+        // O guarda de imobilidade sobrevive a largar a pedra — E36. Ver
+        // startNextStone: largar não é andar, e este caminho é o mais
+        // percorrido de todos, porque toda pedra cavada passa por ele.
+        // Quem zera de verdade é o ramo de trabalho, logo antes do mine.
 
         WorkTargets.clear(workerId);
     }
