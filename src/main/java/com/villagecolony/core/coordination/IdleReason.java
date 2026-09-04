@@ -70,7 +70,23 @@ public enum IdleReason {
     NOT_IN_GAME("this game does not have what it asks for"),
 
     /** Falta o material, e a colônia não inventa recurso. */
-    MISSING_MATERIAL("the colony has none of the material");
+    MISSING_MATERIAL("the colony has none of the material"),
+
+    /**
+     * A contagem dos baús veio incompleta, e não se decide sobre ela.
+     *
+     * <p>Baú em chunk descarregado sai da soma <b>sem avisar</b>: a
+     * colônia concluiria "falta madeira" com metade do estoque fora de
+     * alcance e mandaria buscar o que já tem. Por isso o ciclo inteiro
+     * é pulado — a decisão certa desde 2026-08-07.
+     *
+     * <p>O que faltava era dizê-lo. Até 2026-09-04 o ciclo voltava em
+     * silêncio absoluto: uma colônia com um único baú fora de alcance
+     * não fazia nada, ciclo após ciclo, e o log não tinha uma linha
+     * sequer sobre isso. É o mesmo defeito que custou três sessões na
+     * boca da mina, e a mesma cura.
+     */
+    COUNT_PARTIAL("the chest count came in partial, and a partial count decides nothing");
 
     private final String message;
 

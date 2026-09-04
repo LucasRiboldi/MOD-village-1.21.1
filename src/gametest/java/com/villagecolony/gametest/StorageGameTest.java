@@ -6,6 +6,7 @@ import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.integration.VillagerScanner;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
@@ -13,6 +14,7 @@ import com.villagecolony.fabric.integration.ChestInventoryReader;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 
 import java.util.UUID;
+import java.util.List;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.ChestBlockEntity;
@@ -338,6 +340,79 @@ public class StorageGameTest implements FabricGameTest {
         VillageColonyMod.COLONIES.clear();
         VillageColonyMod.WORKERS.clear();
         VillageColonyMod.STORAGES.clear();
+
+        context.complete();
+    }
+
+    /**
+     * Baú em chunk descarregado torna a contagem parcial.
+     *
+     * <p>É a precondição de um congelamento inteiro, e não tinha teste
+     * nenhum. O {@code runCycleOf} pula o ciclo da colônia quando a
+     * varredura vem parcial — decisão certa desde 2026-08-07, porque
+     * decidir sobre meio estoque manda buscar o que já se tem —, e até
+     * 2026-09-04 ele pulava <b>calado</b>: uma colônia com um único baú
+     * fora de alcance não fazia nada, ciclo após ciclo, sem uma linha no
+     * log.
+     *
+     * <p>O que se fixa aqui é o gatilho: um baú registrado longe conta
+     * como inalcançável, e não como vazio. A diferença entre os dois é a
+     * diferença entre "a colônia não tem madeira" e "eu não consegui
+     * olhar" — o defeito-que-parece-número que o V5 do §7 nomeou.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "storage_partial_count")
+    public void aChestInAnUnloadedChunkMakesTheCountPartial(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        BlockPos here = new BlockPos(2, 2, 2);
+
+        context.setBlockState(here, Blocks.CHEST.getDefaultState());
+
+        Colony colony = Colony.create(
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(here)));
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        UUID near = UUID.randomUUID();
+        UUID far = UUID.randomUUID();
+
+        ColonyFixture owned = ColonyFixture.create()
+                .owning(colony)
+                .owning(near)
+                .owning(far);
+
+        VillageColonyMod.WORKERS.register(near, colony.id()).assign(ProfessionType.LUMBERJACK);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(
+                near, MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(here))));
+
+        // Quatro milhões de blocos: dentro da borda do mundo e fora de
+        // qualquer chunk que esta bateria carregue.
+        VillageColonyMod.WORKERS.register(far, colony.id()).assign(ProfessionType.LUMBERJACK);
+
+        VillageColonyMod.STORAGES.register(
+                WorkerStorage.of(far, new ColonyPos(4_000_000, 64, 4_000_000)));
+
+        try {
+            ChestInventoryReader.ChestSurvey survey = ChestInventoryReader.survey(
+                    world, List.of(near, far), VillageColonyMod.STORAGES);
+
+            context.assertTrue(
+                    survey.isPartial(),
+                    "o baú fora de alcance passou por lido, e a colônia decidiria sobre"
+                            + " meio estoque");
+
+            context.assertTrue(
+                    survey.chestsUnreachable() == 1,
+                    "esperava 1 baú inalcançável, deu " + survey.chestsUnreachable());
+
+            context.assertTrue(
+                    survey.chestsRead() == 1,
+                    "esperava 1 baú lido, deu " + survey.chestsRead());
+        } finally {
+            owned.cleanUp();
+        }
 
         context.complete();
     }

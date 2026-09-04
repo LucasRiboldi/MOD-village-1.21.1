@@ -3,6 +3,7 @@ package com.villagecolony.fabric.event;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.ClusterRejection;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.ColonyState;
 import com.villagecolony.core.colony.model.VillageCandidate;
@@ -29,6 +30,7 @@ import com.villagecolony.fabric.integration.VillageScanner;
 import com.villagecolony.fabric.integration.VillagerScanner;
 import com.villagecolony.fabric.integration.WorkerEquipment;
 import com.villagecolony.fabric.integration.WorkerNameplate;
+import com.villagecolony.fabric.work.IdleLog;
 import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.FarmerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
@@ -309,7 +311,31 @@ public final class VillageDetectionHandler {
     public static void clearPending() {
         pending.clear();
         overlapsReported.clear();
+        lastStock.clear();
     }
+
+    /** Os aldeões desta colônia, que é o que a varredura de baús pede. */
+    private static List<UUID> workerIdsOf(Colony colony) {
+        List<UUID> workerIds = new ArrayList<>();
+
+        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
+            workerIds.add(worker.villagerId());
+        }
+
+        return workerIds;
+    }
+
+    /**
+     * O assunto do ciclo inteiro no {@link IdleLog}.
+     *
+     * <p>Os outros assuntos são profissões — "lumberjacks", "building".
+     * Este é a colônia toda, e é o único que significa <b>nada
+     * aconteceu, ponto</b>.
+     */
+    private static final String CYCLE_SUBJECT = "cycle";
+
+    /** O último estoque que cada colônia mandou para o log. */
+    private static final Map<UUID, String> lastStock = new HashMap<>();
 
     /**
      * O ciclo de simulação da ADR-002, uma vez por colônia ativa.
@@ -354,18 +380,36 @@ public final class VillageDetectionHandler {
      * 2026-08-07.
      */
     private static void runCycleOf(ServerWorld overworld, Colony colony) {
-        List<UUID> workerIds = new ArrayList<>();
-
-        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
-            workerIds.add(worker.villagerId());
-        }
+        List<UUID> workerIds = workerIdsOf(colony);
 
         ChestInventoryReader.ChestSurvey survey = ChestInventoryReader.survey(
                 overworld, workerIds, VillageColonyMod.STORAGES);
 
         if (survey.isPartial()) {
+            // <b>E agora ele diz.</b> Pular era certo desde 2026-08-07;
+            // pular calado custou a sessão de 2026-09-04 inteira em
+            // dúvida — não havia como saber, do log, se uma colônia
+            // parada tinha decidido não decidir. Uma colônia inteira sem
+            // fazer nada é a maior omissão que este log podia ter.
+            IdleLog.record(
+                    colony.id(),
+                    CYCLE_SUBJECT,
+                    IdleReason.COUNT_PARTIAL,
+                    survey.chestsUnreachable() + " of "
+                            + (survey.chestsRead() + survey.chestsUnreachable())
+                            + " chests are in unloaded chunks");
+
             return;
         }
+
+        IdleLog.clear(colony.id(), CYCLE_SUBJECT);
+
+        // O estoque a cada ciclo, e não só quando um baú novo entra —
+        // 2026-09-04. A sessão daquele dia teve o último retrato às
+        // 00:08 e mais trinta e cinco minutos de escuro, justamente
+        // enquanto a obra parava por falta de material. A varredura já
+        // está em mãos: sai de graça.
+        logResources(colony, survey);
 
         // A Regra 1: a meta é o que está guardado mais o que ainda cabe.
         // O espaço é medido aqui porque é aqui que os baús existem — o
@@ -630,7 +674,10 @@ public final class VillageDetectionHandler {
                     colony.id(),
                     VillageColonyMod.STORAGES.count());
 
-            logResources(world, colony);
+            logResources(
+                    colony,
+                    ChestInventoryReader.survey(
+                            world, workerIdsOf(colony), VillageColonyMod.STORAGES));
         }
 
         // Antes de atribuir: um save anterior a 2026-08-12 chega com
@@ -785,22 +832,27 @@ public final class VillageDetectionHandler {
      * "nenhum baú tem madeira" e "não consegui ler baú nenhum" saíam com
      * o mesmo texto — o defeito-que-parece-número do V5.
      */
-    private static void logResources(ServerWorld world, Colony colony) {
-        List<UUID> workerIds = new ArrayList<>();
-
-        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
-            workerIds.add(worker.villagerId());
-        }
-
-        ChestInventoryReader.ChestSurvey survey = ChestInventoryReader.survey(
-                world, workerIds, VillageColonyMod.STORAGES);
-
+    private static void logResources(Colony colony, ChestInventoryReader.ChestSurvey survey) {
         ColonyResources resources = survey.resources();
+
+        String stock = resources.isEmpty()
+                ? "nothing tracked"
+                : resources.total().counts().toString();
+
+        // Só quando muda. A linha passou a sair todo ciclo, e estoque
+        // parado repetido oitenta vezes afogaria o relatório — que é o
+        // defeito que o IdleLog existe para não cometer.
+        String snapshot = stock + " | " + resources.byChest().size()
+                + " | " + survey.chestsRead() + " | " + survey.chestsUnreachable();
+
+        if (snapshot.equals(lastStock.put(colony.id(), snapshot))) {
+            return;
+        }
 
         VillageColonyMod.LOGGER.info(
                 "Colony {} stores {} in {} of {} chests read{}",
                 colony.id(),
-                resources.isEmpty() ? "nothing tracked" : resources.total().counts(),
+                stock,
                 resources.byChest().size(),
                 survey.chestsRead(),
                 survey.isPartial()
