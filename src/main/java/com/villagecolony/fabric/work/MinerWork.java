@@ -34,7 +34,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -123,7 +123,22 @@ public final class MinerWork {
      */
     public static final int STILL_LIMIT = WorkStall.LIMIT;
 
-    static final Map<UUID, Job> JOBS = new HashMap<>();
+    /**
+     * Os trabalhos abertos, <b>na ordem em que foram despachados</b>.
+     *
+     * <p>Era {@code HashMap} até 2026-09-04, e a ordem de hash decidia
+     * quem recebia o orçamento de buscas do tique — que é um só para a
+     * colônia. Quem calhasse de vir primeiro buscava todo tique e os
+     * outros nunca; qual deles era isso mudava a cada sessão, porque
+     * depende dos UUIDs sorteados.
+     *
+     * <p>É o mesmo princípio de {@code ColonyChests.nearestFirst}:
+     * empate não se deixa ao acaso, porque duas sessões com a mesma vila
+     * precisam se comportar igual — senão o relatório de uma não explica
+     * a outra, e um impasse como o daquele dia não se reproduz para ser
+     * consertado.
+     */
+    static final Map<UUID, Job> JOBS = new LinkedHashMap<>();
 
     static final String SUBJECT = "miner";
 
@@ -382,10 +397,27 @@ public final class MinerWork {
 
         UUID colonyId = job.task.colonyId();
 
-        Optional<BlockPos> found =
-                job.task.targetResource().group() == ResourceGroup.SAND
-                        ? SandGathering.nextTarget(world, workerId, colonyId, job.center)
-                        : MineDigging.nextTarget(world, workerId, colonyId, job.center);
+        boolean sand = job.task.targetResource().group() == ResourceGroup.SAND;
+
+        if (!sand && MineClaims.heldByOther(colonyId, workerId)) {
+            // <b>Recusa não é busca</b> — 2026-09-04. Quem é barrado no
+            // portão da escada não varre coluna nenhuma, e cobrar do
+            // orçamento o que não gastou foi o impasse daquele dia: o
+            // barrado vinha antes no mapa, levava a única busca do tique,
+            // e o dono ficava sem a passagem em que soltaria a mina por
+            // não achar pedra — a saída de 2026-09-02, que nunca chegava
+            // a rodar. Vinte e cinco minutos assim, uma pedra na colônia,
+            // e os dois guardas de travamento em zero porque ninguém
+            // andava para lugar nenhum.
+            //
+            // A areia não passa por aqui: ela não usa a escada, e o
+            // dono dela é o cursor de cada mineiro.
+            return false;
+        }
+
+        Optional<BlockPos> found = sand
+                ? SandGathering.nextTarget(world, workerId, colonyId, job.center)
+                : MineDigging.nextTarget(world, workerId, colonyId, job.center);
 
         if (found.isEmpty()) {
             return true;

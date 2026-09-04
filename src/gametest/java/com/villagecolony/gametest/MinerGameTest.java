@@ -3576,4 +3576,81 @@ public class MinerGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * O que espera a escada não gasta a busca de quem a tem —
+     * 2026-09-04.
+     *
+     * <p><b>O impasse inteiro da sessão daquele dia.</b> Vinte e cinco
+     * minutos com {@code 36f88641 waiting for the shaft — 0ca37494 is in
+     * it} em todo ciclo, os dois contadores em {@code stall 0/2400} e
+     * {@code still 0/300}, e a colônia recebendo <b>uma</b> pedra em
+     * meia hora.
+     *
+     * <p>A correção de 2026-09-02 não alcançava isto, e o motivo é
+     * cruel: ela solta a escada na passagem em que o <i>dono</i> procura
+     * e não acha, e o dono nunca conseguia uma passagem. O orçamento de
+     * buscas é de uma por tique para a colônia inteira; quem vinha antes
+     * no mapa a gastava, e quem vinha antes era o barrado — que não
+     * varre nada, porque o portão do {@code claim} o recusa antes.
+     *
+     * <p>A regra que faltava: <b>recusa não é busca</b>. Quem é barrado
+     * no portão não olhou pedra nenhuma, e não pode cobrar do orçamento
+     * o que não gastou.
+     *
+     * <p>A ordem aqui é escolhida, e não sorteada: o {@code JOBS} virou
+     * {@code LinkedHashMap} no mesmo dia, e a tarefa do barrado é criada
+     * primeiro de propósito — é essa a ordem que trava, e um teste que a
+     * deixasse ao acaso passaria metade das vezes sem medir nada.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_refusal_budget",
+            tickLimit = 60)
+    public void theMinerWaitingForTheShaftDoesNotSpendTheOwnersSearch(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        solidRock(context);
+
+        Colony colony = mineOwner(context);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        UUID waiter = miner(context, colony, chest, owned, new BlockPos(1, 9, 1));
+        UUID digger = miner(context, colony, chest, owned, new BlockPos(5, 9, 5));
+
+        // A do barrado primeiro: é ela que entra antes no JOBS, e é dele
+        // a primeira mão no orçamento do tique.
+        reserveStone(colony, ResourceType.COBBLESTONE, waiter);
+        reserveStone(colony, ResourceType.COAL, digger);
+
+        try {
+            MinerWork.run(world, colony);
+
+            // A escada passa a ser do segundo pela porta da frente, com a
+            // rocha ainda inteira — é assim que o jogo a entrega.
+            MineDigging.nextTarget(world, digger, colony.id(), context.getAbsolutePos(ROCK));
+
+            context.assertTrue(
+                    MineClaims.diggerIn(colony.id()).filter(digger::equals).isPresent(),
+                    "o teste precisa da escada na mão do segundo para medir alguma coisa");
+
+            // Agora ela se esvazia: a próxima passagem do dono não acha
+            // pedra, e é nela que ele soltaria a escada — se a tivesse.
+            hollowGallery(world, colony);
+
+            MinerWork.tick(world);
+
+            context.assertTrue(
+                    MineClaims.diggerIn(colony.id()).isEmpty(),
+                    "o dono não teve passagem para soltar a escada: o barrado gastou a busca"
+                            + " do tique sem ter varrido nada — é o impasse de 2026-09-04");
+        } finally {
+            MineClaims.clearAll();
+            MinerWork.clearAll();
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
 }

@@ -108,6 +108,26 @@ public final class MineClaims {
         STOOD_ASIDE.put(colonyId, workerId);
     }
 
+    /**
+     * Se a mina desta colônia está com <b>outro</b> mineiro.
+     *
+     * <p>Pergunta sem reservar, que é o que {@link #claim} não sabe
+     * fazer: claim responde e toma na mesma passagem, e quem só quer
+     * saber se vale a pena tentar não pode pagar esse efeito.
+     *
+     * <p>Existe por causa do impasse de 2026-09-04. O orçamento de
+     * buscas do tique é um para a colônia inteira, e quem chega primeiro
+     * o gasta — inclusive quem vai ser recusado no portão da escada sem
+     * varrer nada. O dono ficava sem passagem, e é a passagem dele que
+     * solta a mina quando ele não acha pedra. Ver
+     * {@code MinerWork.startNextStone}.
+     */
+    static boolean heldByOther(UUID colonyId, UUID workerId) {
+        UUID digger = DIGGERS.get(colonyId);
+
+        return digger != null && !digger.equals(workerId);
+    }
+
     /** Quem está na mina desta colônia, se alguém está. */
     public static Optional<UUID> diggerIn(UUID colonyId) {
         return Optional.ofNullable(DIGGERS.get(colonyId));

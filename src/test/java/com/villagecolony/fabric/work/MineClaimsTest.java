@@ -185,4 +185,37 @@ class MineClaimsTest {
                 MineClaims.claim(OTHER_COLONY, first),
                 "ele perdeu a mina da outra colônia sem ter desistido dela");
     }
+
+    /**
+     * Perguntar quem tem a mina não toma a mina.
+     *
+     * <p>A diferença entre {@code heldByOther} e {@code claim}, e ela é
+     * o ponto: {@code claim} responde e reserva na mesma passagem, então
+     * quem só quer saber se vale tentar não pode usá-lo — a pergunta
+     * mudaria a resposta.
+     */
+    @Test
+    void askingWhoHoldsTheShaftDoesNotTakeIt() {
+        assertFalse(MineClaims.heldByOther(COLONY, first));
+        assertTrue(MineClaims.diggerIn(COLONY).isEmpty(), "a pergunta reservou a mina");
+
+        assertTrue(MineClaims.claim(COLONY, first));
+    }
+
+    /** Para o dono, a mina não está com outro. */
+    @Test
+    void theOwnerIsNotAnotherMiner() {
+        MineClaims.claim(COLONY, first);
+
+        assertFalse(MineClaims.heldByOther(COLONY, first));
+        assertTrue(MineClaims.heldByOther(COLONY, second));
+    }
+
+    /** Mina de outra colônia não barra ninguém aqui. */
+    @Test
+    void aShaftInAnotherColonyDoesNotHoldThisOne() {
+        MineClaims.claim(OTHER_COLONY, first);
+
+        assertFalse(MineClaims.heldByOther(COLONY, second));
+    }
 }
