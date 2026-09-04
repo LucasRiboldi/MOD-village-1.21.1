@@ -3,7 +3,8 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
-import com.villagecolony.fabric.integration.ChestDepositor;
+import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.TreeHarvester;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.passive.VillagerEntity;
@@ -113,7 +114,7 @@ public final class TreeFelling {
 
         job.collected += countLogs(drops, job.plan);
 
-        deposit(world, storage, drops);
+        deposit(world, job, storage, drops);
 
         job.index++;
         job.progress = 0;
@@ -157,33 +158,61 @@ public final class TreeFelling {
     }
 
     /**
-     * Põe no baú tudo o que o bloco deu.
+     * Põe nos baús da colônia tudo o que o bloco deu.
      *
      * <p>Tronco, muda, maçã, graveto: o que a tabela de loot der. A
      * colônia só conta os troncos, e os outros ficam no baú sem contagem
      * — o que não é perda, é a regra de sempre: item fora da lista
      * continua no baú, apenas não é contado.
+     *
+     * <p><b>Mas não contado é diferente de inofensivo, e foi o que
+     * 2026-09-04 ensinou.</b> Vara e maçã não são {@code ResourceType}
+     * nenhum, então nenhum trabalhador as retira e nenhuma meta as
+     * enxerga — e cada uma ocupa um slot para sempre. O baú do lenhador
+     * assoreia, o espaço de madeira dele só desce, e ao chegar a zero ele
+     * morre em definitivo: naquela sessão foram cinquenta e nove ciclos
+     * sem derrubar nada e vinte e quatro troncos destruídos aqui dentro.
+     *
+     * <p>Transbordar para a colônia tira o lenhador do buraco sem mover o
+     * assoreamento de lugar — o tronco tem consumidor em qualquer baú.
+     * <b>O assoreamento em si continua de pé:</b> nada esvazia vara e
+     * maçã de baú nenhum, e baú que só enche acaba cheio. Dar consumidor
+     * ou descarte a esses itens é decisão de projeto, e está em aberto.
      */
     private static void deposit(
-            ServerWorld world, WorkerStorage storage, List<ItemStack> drops) {
+            ServerWorld world, LumberjackWork.Job job, WorkerStorage storage,
+            List<ItemStack> drops) {
+
+        // O baú do próprio primeiro, os da colônia depois. A retirada já
+        // percorre a colônia inteira desde 2026-08-14; o depósito ficou
+        // para trás, e a sessão de 2026-09-04 cobrou o outro lado — vinte
+        // e quatro troncos destruídos porque o baú do lenhador tinha
+        // assoreado de vara e maçã, que nada retira de baú nenhum.
+        //
+        // Transbordar não move o assoreamento de lugar: o tronco tem
+        // consumidor em qualquer baú, porque o fabricante retira de
+        // todos.
+        List<ColonyPos> chests =
+                ColonyChests.ownFirst(job.task.colonyId(), storage.chestPosition());
 
         for (ItemStack stack : drops) {
-            int leftOver = ChestDepositor.deposit(
-                    world, storage.chestPosition(), stack.getItem(), stack.getCount());
+            int leftOver = ColonyChests.deposit(
+                    world, chests, stack.getItem(), stack.getCount());
 
             if (leftOver == 0) {
                 continue;
             }
 
-            // O espaço do tronco foi conferido antes de derrubar, e o que
-            // a folha dá é pouco. Chegar aqui significa baú quase cheio
-            // ou alguém mexendo nele no meio da colheita — e precisa
-            // aparecer, porque o item já saiu do mundo.
+            // Agora só se chega aqui com a colônia inteira cheia, e aí é
+            // notícia de verdade: o jogador precisa esvaziar alguma
+            // coisa, e o item já saiu do mundo.
             VillageColonyMod.LOGGER.warn(
-                    "Chest of worker {} filled up mid-harvest — {} of {} were lost",
+                    "Colony of worker {} had no room mid-harvest — {} of {} were lost"
+                            + " across {} chests",
                     storage.workerId(),
                     leftOver,
-                    stack.getItem());
+                    stack.getItem(),
+                    chests.size());
         }
     }
 

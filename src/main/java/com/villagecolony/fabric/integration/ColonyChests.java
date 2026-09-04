@@ -3,6 +3,7 @@ package com.villagecolony.fabric.integration;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.worker.model.Worker;
 import net.minecraft.item.Item;
 import net.minecraft.server.world.ServerWorld;
@@ -124,6 +125,91 @@ public final class ColonyChests {
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * Guarda ao longo dos baús, e devolve o que não coube em nenhum.
+     *
+     * <p>O espelho de {@link #withdraw}, e pelo mesmo motivo. A retirada
+     * passou a percorrer a colônia inteira em 2026-08-14, quando a
+     * sessão mostrou o fabricante encerrando por "sem tronco" com 134
+     * troncos guardados a dois baús de distância. O depósito ficou para
+     * trás, e a sessão de 2026-09-04 cobrou o outro lado: o baú do
+     * lenhador assoreou de vara — que nenhum grupo de recurso cobre e
+     * nada no mod retira —, o espaço chegou a zero, e a partir daí cada
+     * tronco derrubado era um tronco destruído.
+     *
+     * <p><b>Sobra é sobra, e não perda.</b> Quem chamou decide: o
+     * lenhador registra e para, porque a essa altura o jogador precisa
+     * esvaziar alguma coisa e precisa poder descobrir isso.
+     *
+     * @return quantos itens não couberam em baú nenhum, entre zero e
+     *     {@code amount}
+     */
+    public static int deposit(
+            ServerWorld world, List<ColonyPos> chests, Item item, int amount) {
+
+        int remaining = amount;
+
+        for (ColonyPos chest : chests) {
+            if (remaining <= 0) {
+                break;
+            }
+
+            remaining = ChestDepositor.deposit(world, chest, item, remaining);
+        }
+
+        return remaining;
+    }
+
+    /**
+     * Quanto ainda cabe de um grupo, somando os baús da lista.
+     *
+     * <p>Existe para a pergunta ser feita onde a resposta será usada. A
+     * guarda que decide se vale derrubar a árvore e o depósito que
+     * guarda o tronco precisam medir o mesmo lugar — quando mediam
+     * lugares diferentes, a guarda dizia "não cabe" sobre um baú e o
+     * depósito destruía a colheita no outro. Foi o defeito de
+     * 2026-09-04.
+     */
+    public static int freeSpaceForGroup(
+            ServerWorld world, List<ColonyPos> chests, ResourceGroup group) {
+
+        int room = 0;
+
+        for (ColonyPos chest : chests) {
+            room += ChestDepositor.freeSpaceForGroup(world, chest, group);
+        }
+
+        return room;
+    }
+
+    /**
+     * Os baús da colônia com o do próprio trabalhador na frente.
+     *
+     * <p>A Regra 10 ordena por distância, e para quem procura material
+     * isso é o certo. Para quem guarda não é: o baú do trabalhador é
+     * dele, e a colheita ir para lá é o que faz o relatório de um
+     * lenhador falar do lenhador. O resto da colônia é o transbordo, e
+     * só isso.
+     *
+     * <p>Baú próprio que não está registrado na colônia entra assim
+     * mesmo — o trabalhador pode ter sido despachado antes de o registro
+     * alcançá-lo, e perder a colheita por causa disso seria trocar um
+     * defeito por outro.
+     */
+    public static List<ColonyPos> ownFirst(UUID colonyId, ColonyPos own) {
+        List<ColonyPos> chests = new ArrayList<>();
+
+        chests.add(own);
+
+        for (ColonyPos chest : nearestFirst(colonyId, own)) {
+            if (!chest.equals(own)) {
+                chests.add(chest);
+            }
+        }
+
+        return chests;
     }
 
     private static long squaredDistance(ColonyPos chest, ColonyPos from) {

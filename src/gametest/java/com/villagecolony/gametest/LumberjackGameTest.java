@@ -19,6 +19,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BlockBreakTime;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
+import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.TreeHarvester;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.TreeScanner;
@@ -1616,6 +1617,168 @@ public class LumberjackGameTest implements FabricGameTest {
         context.assertTrue(found, "a busca deu a volta e não voltou a olhar perto");
 
         TreeScanner.clearAll();
+
+        context.complete();
+    }
+
+    /**
+     * Baú assoreado transborda para a colônia — não destrói a colheita.
+     *
+     * <p>O mundo que a sessão de 2026-09-04 mostrou, e que nenhum teste
+     * desta classe modelava. A folha derruba vara, maçã e muda; nenhuma
+     * delas é de um {@code ResourceGroup}, e nada no mod as retira de baú
+     * nenhum — a muda replantada vem do mundo, não do baú. Cada uma
+     * ocupa um slot para sempre, e o espaço do baú do lenhador só desce.
+     *
+     * <p>Ao chegar a zero o lenhador morre em definitivo. A sessão
+     * mediu: cinquenta e nove ciclos seguidos de {@code filled the chest
+     * — 0 logs collected, 0 more would fit}, vinte e quatro troncos
+     * destruídos no meio da colheita, e a obra parada vinte ciclos
+     * esperando a madeira que ele não entregava mais.
+     *
+     * <p>A regra do conserto é a que a retirada já segue desde
+     * 2026-08-14: o baú do próprio primeiro, qualquer baú da colônia
+     * depois. Transbordar não muda o assoreamento de lugar porque o
+     * tronco tem consumidor em todo baú — o fabricante retira de todos —,
+     * e a vara não tem em nenhum.
+     *
+     * <p>O assoreamento aqui é de vara, que é o que a árvore dá. Assorear
+     * com diamante contaria outra história — a do item do jogador, que a
+     * Regra 1 trata de propósito de outro jeito, e que
+     * {@code anotherPlayersItemIsNotFreeSpace} já fixa.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_silted_chest",
+            tickLimit = 400)
+    public void theSiltedChestSpillsIntoTheColonyInsteadOfDestroying(TestContext context) {
+        BlockPos base = new BlockPos(4, 2, 4);
+        BlockPos own = new BlockPos(2, 2, 2);
+        BlockPos spare = new BlockPos(2, 2, 6);
+        BlockPos stand = new BlockPos(3, 2, 4);
+
+        plantTree(context, base);
+        context.setBlockState(own, Blocks.CHEST.getDefaultState());
+        context.setBlockState(spare, Blocks.CHEST.getDefaultState());
+        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+
+        ServerWorld world = context.getWorld();
+
+        ColonyPos ownChest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(own));
+        ColonyPos spareChest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(spare));
+
+        // Vinte e sete slots de vara: o assoreamento da sessão, no ponto
+        // em que ele mata o lenhador.
+        ChestDepositor.deposit(world, ownChest, Items.STICK, 27 * 64);
+
+        context.assertTrue(
+                ChestDepositor.freeSpaceForGroup(world, ownChest, ResourceGroup.WOOD) == 0,
+                "o baú do lenhador devia estar sem espaço de madeira para o teste valer");
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, stand);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(base)));
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        UUID neighbour = UUID.randomUUID();
+
+        ColonyFixture owned = ColonyFixture.create()
+                .owning(colony)
+                .owning(villager.getUuid())
+                .owning(neighbour);
+
+        VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id())
+                .assign(ProfessionType.LUMBERJACK);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), ownChest));
+
+        // O vizinho existe para ter baú, e o baú é o ponto: a colônia tem
+        // espaço, só não no baú deste lenhador.
+        VillageColonyMod.WORKERS.register(neighbour, colony.id())
+                .assign(ProfessionType.MANUFACTURER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(neighbour, spareChest));
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_WOOD,
+                TaskPriority.PRODUCTION,
+                ResourceType.OAK_LOG,
+                64);
+
+        task.reserveFor(villager.getUuid());
+
+        LumberjackWork.run(world, colony);
+
+        context.runAtTick(320, () -> {
+            int spilled = ChestInventoryReader
+                    .read(world, context.getAbsolutePos(spare))
+                    .amountOf(ResourceType.OAK_LOG);
+
+            int standing = logsStanding(context, base);
+
+            try {
+                context.assertTrue(
+                        standing < 4,
+                        "o lenhador não derrubou nada: de pé ainda são " + standing);
+
+                context.assertTrue(
+                        spilled > 0,
+                        "a madeira não transbordou para o baú vizinho — foi destruída");
+
+                context.assertTrue(
+                        spilled == 4 - standing,
+                        "tronco derrubado que não chegou a baú nenhum: caíram "
+                                + (4 - standing) + ", guardados " + spilled);
+            } finally {
+                owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * O contrato do transbordo, sem mundo ticando.
+     *
+     * <p>O teste de cima prova o comportamento; este prova a conta, que é
+     * onde um erro de um item se esconde. Baú cheio devolve o que não
+     * coube ao próximo da lista, e só o que não couber em nenhum volta
+     * como sobra — que é o número que o chamador usa para decidir se
+     * houve perda.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_spill_contract")
+    public void theColonyChestsTakeWhatTheOwnChestCannot(TestContext context) {
+        BlockPos full = new BlockPos(2, 2, 2);
+        BlockPos free = new BlockPos(2, 2, 4);
+
+        context.setBlockState(full, Blocks.CHEST.getDefaultState());
+        context.setBlockState(free, Blocks.CHEST.getDefaultState());
+
+        ServerWorld world = context.getWorld();
+
+        ColonyPos fullChest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(full));
+        ColonyPos freeChest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(free));
+
+        ChestDepositor.deposit(world, fullChest, Items.STICK, 27 * 64);
+
+        int leftOver = ColonyChests.deposit(
+                world, List.of(fullChest, freeChest), Items.OAK_LOG, 10);
+
+        context.assertTrue(leftOver == 0, "sobrou " + leftOver + " com baú livre na lista");
+
+        int stored = ChestInventoryReader
+                .read(world, context.getAbsolutePos(free))
+                .amountOf(ResourceType.OAK_LOG);
+
+        context.assertTrue(stored == 10, "esperava 10 no baú livre, deu " + stored);
+
+        // Sem baú livre na lista, a sobra é o total: nada some em silêncio.
+        int allLost = ColonyChests.deposit(world, List.of(fullChest), Items.OAK_LOG, 7);
+
+        context.assertTrue(allLost == 7, "esperava sobra de 7, deu " + allLost);
 
         context.complete();
     }

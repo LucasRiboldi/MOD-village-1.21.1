@@ -4,10 +4,11 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.type.Capability;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.storage.model.WorkerStorage;
+import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.fabric.brain.WorkTargets;
-import com.villagecolony.fabric.integration.ChestDepositor;
+import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.TreeHarvester;
 import com.villagecolony.fabric.integration.TreeScanner;
 import net.minecraft.entity.passive.VillagerEntity;
@@ -160,8 +161,22 @@ public final class TreeChoice {
         // conferido para o tronco inteiro sobra para eles.
         List<BlockPos> trunkGroup = TreeHarvester.trunkOf(world, tree.get());
 
-        int room = ChestDepositor.freeSpaceForGroup(
-                world, storage.chestPosition(), ResourceGroup.WOOD);
+        // A conta é da colônia, e não do baú deste lenhador. Foi a
+        // correção de 2026-09-04: o baú próprio assoreia de vara e maçã
+        // — que nenhum ResourceGroup cobre e nenhum trabalhador retira —,
+        // e o espaço dele só desce. Ao chegar a zero, esta guarda
+        // encerrava a tarefa antes de a primeira árvore cair; a colônia
+        // reabria a tarefa no ciclo seguinte, e o lenhador passou
+        // cinquenta e nove ciclos nascendo e morrendo sem derrubar nada,
+        // com a obra parada esperando a madeira.
+        //
+        // Medir aqui o que `TreeFelling.deposit` vai usar lá é o ponto:
+        // guarda e depósito discordando sobre onde a madeira cabe é o
+        // que destruía o tronco.
+        List<ColonyPos> chests =
+                ColonyChests.ownFirst(job.task.colonyId(), storage.chestPosition());
+
+        int room = ColonyChests.freeSpaceForGroup(world, chests, ResourceGroup.WOOD);
 
         if (room < trunkGroup.size()) {
             TreeFelling.finishTask(job, villager.getUuid(), storage, room);
