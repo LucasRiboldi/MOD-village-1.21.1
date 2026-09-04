@@ -1,9 +1,13 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Escrito em 2026-09-02.** Este arquivo existe porque o gargalo do projeto
-deixou de ser código: há **dez consertos do mineiro empilhados sem uma única
-sessão que os veja**, e nenhuma pergunta importante em aberto pode ser
-respondida sem abrir o jogo.
+**Escrito em 2026-09-02, atualizado em 2026-09-03 à noite.** Este arquivo
+existe porque o gargalo do projeto deixou de ser código: havia **dez
+consertos do mineiro empilhados sem uma única sessão que os veja**, e
+nenhuma pergunta importante em aberto pode ser respondida sem abrir o jogo.
+
+A sessão de 09-03 aconteceu e **o mineiro trabalhou** — a primeira boa. Ela
+não zerou a pilha: fechou o que dependia de vê-lo cavar, e abriu quatro
+coisas novas, que estão no **item 3-a**. A ordem abaixo continua valendo.
 
 Ele não é diário — quem conta a história é o `TODO.md`. Este aqui é a lista
 de conferência de uma sessão.
@@ -93,6 +97,32 @@ Dez consertos dependem desta resposta.
 | `the miner is at ... 66 ...` (y=66) | ❌ ele voltou para a **superfície acima da mina**. É o sintoma exato que o conserto do E32 atacou |
 | `could not reach` repetido no mesmo lugar | possível **E34**: ele foi mandado para um vão do outro lado de uma parede |
 
+### 3-a. O que entrou em 2026-09-03, e como conferir cada um
+
+Quatro coisas entraram **depois** que esta lista foi escrita, e três delas
+são pedido do autor na sessão anterior. Duas falam no log; duas só se veem
+com os olhos.
+
+| O que conferir | O que procurar |
+|---|---|
+| **o detector de imobilidade** | `Miner ... gave up the stone at ... — it has not moved a block in N ticks of work time`. É o conserto dos dois minutos: agora sai em **15 s**. A linha vizinha, `it walked for N ticks of work time without arriving`, continua existindo e quer dizer **outra coisa** — ele andou e não chegou |
+| **`still` ao lado de `stall`** | `..., stall N/2400, still N/300` no relatório do mineiro. É o instrumento que decide o A\*: `still` perto de zero com `stall` subindo = ele **anda** e não chega, e o gargalo é navegação. Os dois subindo juntos = congelado |
+| **água e lava tapadas** | `The mine sealed N face(s) at ... — the pick opened a flow`. Sai só quando a picareta abre fluxo de verdade; sessão sem nascente não diz nada, e isso não é defeito |
+| **minério raro primeiro** | **olho, não log** — `OreVein` não escreve nada. Num veio com dois tipos, qual some primeiro |
+| **galeria com bolsões** | **olho, não log** — `MineShaft` não escreve nada. Um vão de 3×2×2 a cada 8 colunas, de lado alternado |
+
+> **O detector deixou de ser do mineiro.** Ele está nas sete profissões
+> desde 09-03, e o pastor ganhou no mesmo commit o gate de expediente que
+> lhe faltava. Nenhuma das outras seis foi vista com ele em jogo — se
+> aparecer `gave up ... it has not moved` para lenhador, construtor,
+> fabricante, fazendeiro ou pastor, é a primeira vez.
+
+**E a pergunta que só um save antigo responde.** A mina de antes do bolsão
+tem o cursor apontando para a forma antiga de galeria. O `findTheFrontier`
+foi escrito para recuar sozinho — **ver se recua é a primeira coisa a
+olhar** no item 3. Se não recuar, o mineiro cava contra a parede de um
+plano que não existe mais.
+
 ### 4. Ele para à noite?
 
 | O que procurar | O que significa |
@@ -139,7 +169,13 @@ contra o mundo, é a hora de olhar.
 ## O que já está pronto e esperando esta sessão
 
 Consertos escritos, com teste e fase vermelha conferida, que **nenhuma
-sessão viu rodar**:
+sessão viu rodar**.
+
+> **Atualizado em 2026-09-03, à noite.** A sessão daquele dia aconteceu e
+> **o mineiro trabalhou** — a primeira desde que os consertos começaram a
+> empilhar. Ela toca as quatro primeiras linhas desta tabela, mas o log
+> não foi conferido item a item, então elas ficam onde estão: *provável,
+> não provado*. As cinco últimas entraram **depois** da sessão.
 
 | | O que espera prova |
 |---|---|
@@ -153,6 +189,11 @@ sessão viu rodar**:
 | — | destino solto quando a tarefa termina |
 | — | colônia abandonada não paga mais a varredura |
 | — | contagem do trabalhador fantasma |
+| — | vedação de água e lava, com a galeria virando na hora |
+| — | minério mais raro escolhido entre as seis faces |
+| — | galeria com bolsão de 3×2×2 a cada 8 colunas |
+| — | detector de imobilidade nas **sete** profissões — visto só no mineiro |
+| — | pastor com gate de expediente: ele para de contar a noite |
 
 ---
 
