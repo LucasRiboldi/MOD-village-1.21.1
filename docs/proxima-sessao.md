@@ -27,6 +27,15 @@ arquivo, a troca falhou em silêncio, e o `.jar.new` ficou ao lado sem ser
 aplicado. A sessão mostrou defeitos — e **nenhum dos consertos daquele dia
 estava rodando**.
 
+**E um degrau antes dela, que mordeu em 2026-09-04.** O jar de
+`downloads/` **não é gerado pelo Gradle** — nenhuma tarefa o copia. Ele é
+passo de mão, e por isso envelhece em silêncio: naquele dia o arquivo para
+o qual o README aponta estava uma correção atrás do código. Copiar um jar
+velho com o Minecraft fechado direitinho não adianta nada.
+
+0. `./gradlew build`, e **copie `build/libs/village-colony-0.3.0.jar` para
+   `downloads/`**. Se `git status` não acusar o jar como modificado, é
+   porque ele já estava em dia — e não porque a build falhou.
 1. **Feche o Minecraft** antes de copiar o jar.
 2. Copie `downloads/village-colony-0.3.0.jar` para a pasta `mods`, apagando
    o jar antigo.
