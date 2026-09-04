@@ -29,8 +29,22 @@ import net.minecraft.util.math.BlockPos;
  * mundo é global e a bateria roda testes concorrentes. A primeira
  * versão desta classe punha o relógio às 14.000 para afirmar "à noite
  * ninguém trabalha", e derrubou três testes de lenhador que rodavam
- * junto. As horas usadas aqui estão todas <b>dentro</b> do expediente,
- * e por isso não mexem com ninguém.
+ * junto. As horas usadas aqui estão todas <b>dentro</b> do expediente.
+ *
+ * <p><b>Dentro do expediente não é o bastante, e 2026-09-04 mostrou por
+ * quê.</b> O relógio continua andando depois daqui: {@link #AFTERNOON}
+ * é 10.000 e o {@code WorkClock.DUSK} é 11.000, então a bateria sai
+ * desta classe com mil tiques de pista e cruza para fora do expediente
+ * logo adiante — e, mais tarde, vira o dia. Onde cada teste seguinte
+ * cai depende de quantos tiques a bateria gastou antes dele, e isso
+ * muda quando alguém acrescenta um teste em qualquer lugar.
+ *
+ * <p>Foi assim que o {@code aFrozenMinerGivesUpLongBeforeTheStallGuard}
+ * passou a falhar de vez em quando: ele precisa de 300 tiques
+ * consecutivos de expediente e afirma no 360, e caiu em cima da virada
+ * do dia. A cura não é escolher hora melhor aqui — é cada teste que
+ * depende do relógio fixar o seu, que é o que os quinze expostos passaram
+ * a fazer.
  */
 public class WorkHoursGameTest implements FabricGameTest {
 

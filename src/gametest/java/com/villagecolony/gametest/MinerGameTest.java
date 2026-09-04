@@ -43,6 +43,7 @@ import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.ai.brain.Schedule;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
@@ -632,6 +633,7 @@ public class MinerGameTest implements FabricGameTest {
         // O poleiro: seis blocos acima do alvo, na mesma coluna. É a
         // superfície da sessão, em escala de arena.
         context.setBlockState(PERCH.down(), Blocks.DIRT.getDefaultState());
+
 
         // E a escada que desce dele até o chão, um bloco por degrau. Ela
         // existe para que a versão certa TENHA como descer: um teste que
@@ -1795,7 +1797,25 @@ public class MinerGameTest implements FabricGameTest {
 
         MinerWork.run(world, colony);
 
-        context.runAtTick(360, () -> {
+        // <b>Passagens, e não tiques de relógio</b> — 2026-09-04. O
+        // guarda conta uma vez por passagem do mineiro pelo ramo "andando,
+        // fora de alcance", e não uma vez por tique do servidor: o
+        // relatório da falha instável mostrou {@code stall 219/2400} com
+        // novecentos tiques gastos, porque nos outros seiscentos e tantos
+        // ele estava reprocurando alvo. Afirmar em tique de relógio era
+        // apostar numa razão que muda a cada rodada — e o teste falhava
+        // uma vez em três.
+        //
+        // Aqui as passagens são dadas à mão, no mesmo tique: o aldeão não
+        // muda de bloco entre uma e outra, o expediente não vira, e o
+        // contador chega a 300 por construção. Nada do que se mede muda —
+        // continua sendo "o detector de imobilidade devolve a tarefa antes
+        // do guarda de travamento".
+        for (int pass = 0; pass <= MinerWork.STILL_LIMIT + 20; pass++) {
+            MinerWork.tick(world);
+        }
+
+        context.runAtTick(5, () -> {
             try {
                 // O primeiro degrau: um bloco à frente, na altura da boca.
                 context.assertTrue(
@@ -2801,6 +2821,11 @@ public class MinerGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_stillness",
             tickLimit = 400)
     public void aFrozenMinerGivesUpLongBeforeTheStallGuard(TestContext context) {
+        // O relógio é do mundo inteiro e a bateria o faz andar: sem
+        // fixá-lo, onde este teste cai no dia depende de quantos
+        // tiques a bateria gastou antes dele. Ver 2026-09-04.
+        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+
         ServerWorld world = context.getWorld();
 
         ground(context);
@@ -2866,9 +2891,12 @@ public class MinerGameTest implements FabricGameTest {
                 context.assertFalse(
                         task.state() == TaskState.RESERVED
                                 || task.state() == TaskState.EXECUTING,
-                        "o mineiro passou 360 tiques parado e a tarefa continua com ele —"
+                        "o mineiro passou " + (MinerWork.STILL_LIMIT + 20) + " passagens parado"
+                                + " e a tarefa continua com ele —"
                                 + " ela só voltaria no tique " + MinerWork.STALL_LIMIT
-                                + ", que é o preço que toda sessão pagou");
+                                + ", que é o preço que toda sessão pagou. O relatório diz o"
+                                + " que o contador marcava: "
+                                + MinerReport.report(world, colony).orElse("(sem relatório)"));
             } finally {
                 owned.cleanUp();
 
