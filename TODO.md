@@ -1,6 +1,21 @@
 # TODO
 
-**Atualizado:** 2026-08-29, madrugada. **Sessão de jogo à 01:19** — e ela
+**Atualizado:** 2026-09-04. **Sessão de jogo de 43 minutos** (00:00–00:44),
+sem crash e sem exception do mod — e com noventa e nove `WARN` que
+contavam uma história ruim. Cinco ciclos saíram dela, todos de defeito
+encontrado no log: o **lenhador que morria no próprio baú** (silo sem
+dreno, 24 troncos destruídos), o **impasse do poço** de 25 minutos
+(recusa gastava a busca de quem tinha a escada), a **perna do mineiro**
+que nunca olhava para o destino, o **ciclo da colônia que pulava calado**
+com baú fora de alcance, e o **teste instável** — melhorado, não curado.
+
+O achado que sobrou é maior que todos eles e abriu o **E36**: os dois
+guardas de travamento são zerados a cada alvo novo, em seis profissões, e
+é isso que deixava os mineiros travados exibindo `stall 0/2400, still
+0/300` por vinte e cinco minutos. **Nenhum dos cinco consertos foi visto
+em jogo.**
+
+**Antes disso — 2026-08-29, madrugada.** **Sessão de jogo à 01:19** — e ela
 rodou com o jar de ontem, porque a troca do arquivo tinha falhado com o
 jogo aberto. Mesmo assim mostrou dois defeitos novos, os dois de
 **estado que sobrevive ao seu dono**: ferramenta de profissão que não é
@@ -36,9 +51,9 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-612 testes unitários  ·  233 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
+618 testes unitários  ·  237 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
 9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
-última sessão de jogo em 2026-09-03  ·  o autor gostou, e pediu três coisas
+última sessão de jogo em 2026-09-04  ·  5 consertos, nenhum visto em jogo ainda
 ```
 
 > A contagem de jogo era 176 aqui e **175** no `runGametest`. Recontado
@@ -60,12 +75,101 @@ sessão — o que preparar, o que olhar e em que ordem, e o que cada linha de
 log significa — vive em
 [`docs/proxima-sessao.md`](docs/proxima-sessao.md).
 
-**A sessão aconteceu, e o mineiro trabalhou.** O que agora espera jogo são
-as três funcionalidades pedidas nela — vedar água, priorizar minério raro e
-abrir bolsões —, e uma pergunta que só o save responde: a mina de antes do
-bolsão tem o cursor apontando para outra forma de galeria. O
-`findTheFrontier` foi escrito para esse caso e deve recuar sozinho; ver se
-recua é a primeira coisa a olhar.
+**Cinco consertos esperam jogo, e nenhum foi visto rodar.** Em ordem do
+que olhar primeiro, porque é a ordem em que um falha esconde o outro:
+
+1. **O lenhador entrega madeira?** A linha a caçar é
+   `filled the chest — N logs collected`. Se o `N` for zero ciclo após
+   ciclo, o transbordo não pegou. E `Colony ... had no room mid-harvest`
+   só deve aparecer com a colônia **inteira** cheia — se aparecer cedo, o
+   assoreamento (E38) chegou antes do esperado.
+2. **A obra anda sem a barreira?** O relatório de encerramento diz
+   `TEST BARRIER covered for N of M pieces`. Na sessão de 09-04 foram
+   **47 de 169**. Se cair, a cadeia de madeira passou a entregar.
+3. **Os mineiros se revezam na escada?** `waiting for the shaft` pode
+   aparecer — o que não pode é ficar. Se o mesmo par ficar 20 minutos, o
+   conserto não pegou.
+4. **O mineiro sai da mina para buscar areia?** É o
+   `digging Areia at ... y=62` com ele lá embaixo. Ele agora deve subir.
+5. **Alguma colônia cala?** A linha nova é
+   `no cycle work: the chest count came in partial`. Se ela aparecer, a
+   colônia estava parada e agora se sabe por quê.
+
+**E o estoque agora sai a cada ciclo em que muda** — é a série que faltava
+para responder "a colônia tinha material?" sem adivinhar.
+
+**A pergunta do save antigo continua aberta:** a mina de antes do bolsão
+tem o cursor apontando para outra forma de galeria. O `findTheFrontier`
+deve recuar sozinho; ver se recua.
+
+---
+
+## 📒 A sessão de 2026-09-04 — o inventário
+
+Cinco ciclos num dia, todos abertos por **uma sessão de jogo de 43
+minutos** (`latest.log`, 1.443 linhas, 00:00–00:44). Zero crash e zero
+exception do mod. Noventa e nove `WARN`, e eles contavam uma história
+ruim com uma causa só na raiz.
+
+**O estado em que a sessão terminou:** 6 colônias salvas com 78
+trabalhadores, mas só **uma** ciclou (`c4706b63`); 169 peças assentadas,
+das quais **47 pagas pela barreira de teste** — 28% da obra era falsa; 3
+lotes vazados com casa pela metade; 25 itens do jogador destruídos.
+
+### O que a sessão mostrou, em ordem de dano
+
+| # | O que era | A medida |
+|---|---|---|
+| 1 | **O baú do lenhador é um silo sem dreno.** Vara, maçã e muda não são `ResourceType` nenhum: nada as retira, e cada uma ocupa um slot para sempre | 59 ciclos de `filled the chest — 0 logs collected`; 24 `oak_log` destruídos |
+| 2 | **Guarda e depósito mediam lugares diferentes** — a meta da Regra 1 é da colônia, `TreeChoice` media um baú e `TreeFelling.deposit` guardava num baú | a obra parou 20 ciclos esperando madeira |
+| 3 | **Recusa no portão da escada gastava a busca do tique** | 25 min de `waiting for the shaft`, 1 pedra em meia hora |
+| 4 | **`legTowards` nunca olhava para onde o mineiro ia** — andava sempre para a frente na ordem de cavar | 17 `unable to climb`; 7 deles com alvo de areia em y=62 |
+| 5 | **O ciclo da colônia pulava calado** com varredura parcial de baús | nenhuma linha no log; nada no jogo |
+| 6 | **O estoque só ia ao log quando um baú novo entrava** | último retrato às 00:08, 35 min de escuro |
+
+### Arquivos alterados (10)
+
+| Arquivo | O que mudou |
+|---|---|
+| `fabric/integration/ColonyChests.java` | `deposit`, `ownFirst` e `freeSpaceForGroup` sobre lista — espelhos de `withdraw` e `nearestFirst` |
+| `fabric/work/TreeChoice.java` · `TreeFelling.java` | Guarda e depósito passam a percorrer a mesma lista: baú próprio na frente, colônia atrás |
+| `fabric/work/MineClaims.java` | `heldByOther`, que pergunta sem reservar |
+| `fabric/work/MinerWork.java` | Recusa não gasta busca; `JOBS` deixou de ser `HashMap` |
+| `fabric/work/MinerReach.java` | A perna ganhou direção e `orderIndexNear`; três estados de destino |
+| `core/coordination/IdleReason.java` | `COUNT_PARTIAL` |
+| `fabric/event/VillageDetectionHandler.java` | O ciclo parcial fala; o estoque sai a cada ciclo, sem repetir |
+| `gametest/{Lumberjack,Miner,Storage}GameTest.java` · `test/{MineClaims,MinerLeg}Test.java` | 5 de jogo e 6 unitários novos |
+
+### Erros meus, neste ciclo — e eles custaram tempo
+
+| # | O que eu fiz | Como se resolveu |
+|---|---|---|
+| 1 | **Dois testes passaram por motivo errado.** Pus o mineiro fora da escada; ele caía no atalho da boca, cujo `y` é maior, e a asserção "subiu" passava sozinha | Só apareceu ao ler `MineShaft.positionAt`. Aceitar aquele verde teria commitado conserto sem prova |
+| 2 | **Afirmei "mecanismo provado"** sobre o relógio do mundo tendo só suficiência, não necessidade | O pino de relógio não consertou o teste instável. Corrigido em voz alta na hora |
+| 3 | **Pinei o relógio em 14 testes preventivamente**, sem nenhum deles ter sido observado falhando | Quebrou um vizinho em 3 de 3 rodadas. Desfeito; ficou só o do teste que de fato falhava |
+| 4 | **`setAiDisabled(true)` e cercar o aldeão** — as duas curas "óbvias" para congelá-lo | As duas vazam: o aldeão sem IA sobrevive à limpeza da arena, e `PERCH.up()` é y=8, fora da arena |
+| 5 | **Levantei suspeita sobre a leitura de baús que estava errada** | `7 of 14 chests read` são 7 com recurso entre 14 **alcançados**. O código já separava "vazio" de "inalcançável" |
+
+### Contagens
+
+```text
+618 testes unitários  ·  237 testes de jogo  ·  0 falhas na rodada final
+10 arquivos alterados  ·  5 commits
+14f4fb6 · c5a08c0 · bdb6390 · b2e4fc4 · 84f0a10
+```
+
+> **A bateria não é determinística, e isso enfraquece os "0 falhas".**
+> `aFrozenMinerGivesUpLongBeforeTheStallGuard` passou **7 de 8** rodadas
+> seguidas depois do conserto; antes era 1 falha em 3. É melhora medida,
+> não cura.
+
+### O que este dia NÃO provou
+
+- **Nenhum dos cinco consertos foi visto em jogo.** Todos têm teste com
+  fase vermelha conferida, e nenhuma sessão rodou depois deles
+- A linha de log do ciclo parcial — forjar chunk descarregado dentro da
+  arena não dá. O teste fixa a **precondição**, não a linha
+- O transbordo do lenhador com a colônia inteira cheia
 
 ---
 
@@ -137,6 +241,89 @@ abaixo, com o porquê.
 ---
 
 ## ✅ Resolvido
+
+### 2026-09-04 — o lenhador parou de morrer no próprio baú
+
+O baú dele é um **silo sem dreno**: a folha derruba vara, maçã e muda,
+nenhuma é `ResourceType`, nada as retira, e cada uma ocupa um slot para
+sempre. O espaço de madeira só desce, e ao chegar a zero o lenhador morre
+em definitivo — 59 ciclos de `filled the chest — 0 logs collected, 0 more
+would fit` e 24 troncos destruídos no meio da colheita.
+
+A causa mecânica era guarda e depósito medindo lugares diferentes: a meta
+da Regra 1 é da colônia inteira, `TreeChoice` media **um** baú e
+`TreeFelling.deposit` guardava em **um** baú. Os dois passaram a percorrer
+a mesma lista — o próprio na frente, a colônia atrás —, que é a regra que
+a retirada já segue desde 08-14. Transbordar não move o assoreamento de
+lugar: tronco tem consumidor em qualquer baú, vara não tem em nenhum.
+`ColonyChests` ganhou `deposit`, `ownFirst` e `freeSpaceForGroup`. Dois
+testes de jogo, fase vermelha conferida (`o lenhador não derrubou nada`).
+**O assoreamento continua de pé** — ver 🔴 abaixo. Commit `14f4fb6`.
+
+### 2026-09-04 — quem espera a escada parou de gastar a busca de quem a tem
+
+O orçamento é de **uma busca por tique para a colônia**, e quem vinha
+antes no mapa a gastava — inclusive quem ia ser recusado no portão do
+`claim` sem varrer coluna nenhuma. O dono ficava sem passagem, e é a
+passagem dele que solta a mina quando ele não acha pedra: por isso a saída
+de 09-02 nunca chegava a rodar. Vinte e cinco minutos de
+`waiting for the shaft`, uma pedra em meia hora, e os dois guardas em zero.
+
+Recusa não é busca. `MineClaims.heldByOther` pergunta sem reservar, e
+`JOBS` deixou de ser `HashMap` — a ordem de hash decidia qual mineiro
+monopolizava o orçamento, e qual era mudava a cada sessão. Impasse que não
+se reproduz não se conserta; é o princípio que `nearestFirst` já aplica.
+Um teste de jogo com a ordem **escolhida**, fase vermelha conferida.
+Commit `c5a08c0`.
+
+### 2026-09-04 — a perna do mineiro passou a olhar para onde ele vai
+
+`legTowards` recebia o destino e **não o usava** fora do atalho de oito
+blocos: `stepAlongTheShaft` andava sempre para a frente na ordem de cavar.
+Acertava por acidente ao entrar para cavar fundo, e errava sempre que o
+alvo estava atrás ou em cima. Dos 17 `unable to climb` da sessão, **7 eram
+areia em y=62** — alvo de superfície roteado pela galeria, porque
+`mineOf(job)` devolve a mina para qualquer tarefa de mineiro. Ele varreu a
+galeria até o fim e nunca saiu; as linhas de granito vêm depois disso, com
+ele já perdido em z=110.
+
+O destino ganhou **três** estados, e o do meio é o que quase passou
+batido: na ordem → anda até o índice, para frente ou para trás; fora dela e
+**abaixo** → é a pedra que a frente não alcançou, desce como antes; fora e
+não abaixo → é a superfície, sai pela boca. Sem o caso do meio o conserto
+quebrava a descida — foi o que `fromInsideTheShaftTheLegKeepsGoingDown`
+pegou. Três testes unitários, fase vermelha conferida. Commit `bdb6390`.
+
+### 2026-09-04 — a colônia que decide não decidir passa a dizer isso
+
+`runCycleOf` pula o ciclo inteiro quando a varredura de baús vem parcial —
+decisão certa desde 08-07 — e pulava em **silêncio absoluto**. Uma colônia
+com um único baú em chunk descarregado não faz nada, ciclo após ciclo, sem
+uma linha no log. É o mesmo formato do defeito que custou três sessões na
+boca da mina, e a mesma cura: `IdleLog` com `COUNT_PARTIAL`, dizendo
+quantos baús ficaram fora.
+
+Junto, o estoque voltou ao log: `logResources` só rodava quando um baú novo
+entrava no registro, e a sessão teve o último retrato às 00:08 e 35 minutos
+de escuro **justamente enquanto a obra parava por falta de material**.
+Agora sai a cada ciclo, reaproveitando a varredura, e só quando muda.
+
+Nada em `src/test` ou `src/gametest` mencionava `isPartial` ou
+`ChestSurvey`: um baú a quatro milhões de blocos passou a provar que ele
+conta como **inalcançável**, e não como vazio. Commit `b2e4fc4`.
+
+### 2026-09-04 — o teste instável se afirma em passagens, não em tiques
+
+`aFrozenMinerGivesUpLongBeforeTheStallGuard` afirmava no tique 360 que o
+detector de imobilidade (300) já tinha devolvido a tarefa. Mas o guarda não
+conta tique de servidor: conta **passagem** do mineiro pelo ramo "andando,
+fora de alcance". A mensagem de falha passou a trazer o relatório do ciclo,
+e foi ela que mediu: `stall 219/2400` com novecentos tiques gastos — um em
+cada quatro. O teste dá as passagens à mão agora, no mesmo tique.
+
+**Não está curado:** 7 de 8 rodadas, contra 1 falha em 3 antes. Commit
+`84f0a10`.
+
 
 ### 2026-09-03 — o detector de imobilidade saiu do mineiro e virou das sete
 
@@ -2011,6 +2198,9 @@ conferido no volume · árvore grande deixando de ser recusada.
 
 | | Erro | Estado |
 |---|---|---|
+| **E36** | **Os dois guardas são zerados a cada alvo novo — e isso está em seis profissões.** `startNextStone` faz `job.stalled = 0` e `job.stall.reset()` ao pegar alvo. Quem troca de alvo com frequência é **imune** ao detector de imobilidade (300) e ao de travamento (2.400) | ⚙️ **Achado em 09-04, com medida.** O mineiro troca de alvo o tempo todo porque `nextCut` entrega posições que já são ar: 320 passagens dadas à mão renderam `stall 49/2400`. **É a explicação verdadeira** do `stall 0/2400, still 0/300` que os mineiros travados exibiram por 25 minutos na sessão — o que eu tinha atribuído a "ninguém andava". O mesmo reset está em `Builder`, `Farmer`, `Manufacturer`, `Miner` (×2) e `Shepherd` (×2). **É o candidato mais forte do próximo ciclo, e é maior que o teste que o revelou** |
+| **E37** | **`aFrozenMinerGivesUpLongBeforeTheStallGuard` continua instável** — 7 passagens em 8 rodadas | ⚙️ **Melhorado, não curado, em 09-04.** Era 1 falha em 3. O que sobra é o **E36**: cada troca de alvo zera o contador que o teste espera ver chegar a 300. Fechar o E36 provavelmente fecha este. A mensagem de falha já traz o relatório do ciclo, então a próxima falha se explica sozinha |
+| **E38** | **O baú do trabalhador assoreia e nada o esvazia.** Vara, maçã e muda não são `ResourceType`, nenhum trabalhador as retira, e cada uma ocupa um slot para sempre | ⚙️ **Metade fechada em 09-04.** O transbordo para a colônia tirou o lenhador do buraco e parou a destruição de item, mas **não move o assoreamento de lugar**: baú que só enche acaba cheio, e agora demora mais para chegar lá. Dar a esses itens consumidor ou descarte é **decisão de projeto** e está registrada no javadoc de `TreeFelling.deposit`, não decidida por conta própria |
 | ~~**E33**~~ | ~~O mineiro não cavou um bloco em sete sessões~~ | ✅ **Fechado na bateria em 08-28.** Três testes em rocha maciça provam que ele cava a escada, desce cavando, e conserta a fronteira adiantada do save. Faltava a arena ser uma mina — todas as outras eram um piso de terra plano. **Falta ver em jogo** |
 | **E33-a** | **O mineiro desce, cava, e então trava.** Na sessão de 08-28, 23:19, ele estava **na galeria** (y=44) com **108 pedras** já trazidas, e parou | ⚙️ **Causa encontrada em 08-29, e é aritmética:** ele parava a **exatamente dois blocos** do lugar escolhido, porque dois era a folga com que a navegação se dá por chegada. `approachTo` escolhia um lugar a 2,0 da pedra; somada a folga, 4,2 — e o braço é 4. Duas contas certas que não compunham. A folga passou a ser do destino: o mineiro pede um. **Nenhuma sessão viu o conserto** — é o nono no mesmo sintoma, e o primeiro com a conta fechada em cima de um mineiro que já estava lá dentro |
 | **E34** | **Túnel cavado pelo jogador confunde a frente da galeria.** Um bolsão iluminado, desligado da escada, parecia frente | ⚙️ **Fechado nos caminhos conhecidos em 09-02, e o mod continua sem distinguir — de propósito.** A frente já era lida em ordem desde 08-28. O que faltava era a **perna**: o conserto do E32, na mesma manhã, fez o laço pular o que não fosse pisável e seguir somando adiante, o que **reabriu a forma exata do E34** — bastava um vão aberto coincidir com um índice mais avançado para o passo saltar a parede. Agora o laço para na primeira posição que **não se atravessa**. A pergunta deixou de ser *quem cavou* e passou a ser *dá para chegar lá a partir daqui*, que é a que importa — e vale igual para caverna natural. `theLegStopsAtTheWallInsteadOfJumpingToAPocketBehindIt`, fase vermelha conferida. **Nenhuma sessão viu** |
@@ -2021,7 +2211,24 @@ conferido no volume · árvore grande deixando de ser recusada.
 | **E21** | **`theStoneLeavesTheWorldAndReachesTheChest`** disse "a pedra não chegou ao baú" uma vez | Suspeita: custo de ler estrutura no tique. **Suspeita, não diagnóstico**. Não repetiu em 7 rodadas de 08-25 |
 | **E9** | Colônia `ABANDONED` desmarcada no ciclo seguinte | **Silêncio na sessão de 08-25** — nenhuma colônia trocou de estado três vezes em 42 minutos. É notícia boa e não é prova: nenhuma colônia da sessão foi abandonada |
 | **E4** | `path held: no` e o aldeão chega assim mesmo | Provável, nunca verificado. Nenhuma linha dessas em 08-25 |
-| **E3** | Sobra de colheita é perda de item | Conhecido e aceito. Nenhum baú encheu em 08-25 |
+| **E3** | Sobra de colheita é perda de item | ⚙️ **Metade fechada em 09-04.** O lenhador deixou de destruir: o que não cabe no baú dele vai para outro da colônia, e só se perde com a colônia inteira cheia. **O mineiro continua sem teto de inventário** — ver a pendência do Nível 1. E em 08-25 nenhum baú encheu; em 09-04 encheu, e custou 24 troncos antes do conserto |
+
+---
+
+## 🟠 O que a sessão de 2026-09-04 deixou aberto
+
+Achados da leitura do log que **não** foram atacados neste ciclo. Todos
+têm medida, e nenhum tem conserto.
+
+| | O que é | A medida na sessão |
+|---|---|---|
+| 🟠 | **O lenhador rejeita as paredes da própria vila.** `Not a tree — N logs without a living canopy` sobre troncos de casa | **118 rejeições sobre 28 posições**, todas em x 1436–1506, y 63–65, dentro da vila. O castigo escalona (6.000→48.000 ticks) e funciona, mas ele redescobre a mesma parede seis vezes. **Nenhuma recusa veio com o número 24**, então a regressão de 08-19 não voltou |
+| 🟠 | **O agricultor fica ocioso quase o tempo todo.** `no ripe crop within 32 blocks of the village` | **86 ciclos**. Houve 15 colheitas com replantio, e depois disso o raio de 32 não alcança mais nada maduro. É afinação, não defeito — mas 86 de 81 ciclos é a profissão inteira parada |
+| 🟠 | **O fundidor não tem o que fundir.** `nothing in the colony chests to smelt` | **34 vezes**, com o minerador entregando 1 pedra em meia hora. Deve seguir o E36 |
+| 🟠 | **Mineiro longe do corredor não tem resgate.** Sem posição da ordem a uma perna dele, não há passo a dar e a boca continua sendo a resposta — 19 blocos acima e 30 de distância, que a navegação não cumpre | O conserto de 09-04 ataca **o que o levava para lá** (o alvo de areia), não o resgate de quem já está. Decisão de projeto: caminhar em linha reta aceitando trecho não navegável, ou devolver a tarefa e deixar a rotina Vanilla trazê-lo |
+| 🟡 | **Caso vizinho do impasse do poço.** Se o **dono** for despachado primeiro e a galeria estiver esgotada, ele solta a escada, gasta a busca e a retoma no tique seguinte — o outro nunca entra | Não é o travamento da sessão (a colônia não congela, o dono trabalha). O remédio seria trocar o `release` de "não achei pedra" por `stepAside`, que já existe — mas muda a semântica documentada dele e faria mineiro sozinho perder uma passagem por rodada |
+| 🟡 | **`Colony cycle took 81 ms`**, acima de um tique de servidor | Uma ocorrência, com 6 colônias e 78 trabalhadores salvos. Escala mal |
+| 🟡 | **Só uma das 6 colônias ciclou.** As outras 5 foram salvas e nunca apareceram no log | Provavelmente chunks descarregados, e o comportamento correto. Mas agora que o ciclo parcial **fala** (`COUNT_PARTIAL`), a próxima sessão distingue as duas coisas |
 
 ---
 

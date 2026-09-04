@@ -191,8 +191,15 @@ inteira, com as razões, está em
 
 **E o que ainda não está fechado no que já existe:**
 
-- 🔴 **A casa ainda sobe com a barreira de teste.** 19 peças vieram dela
-  na última verificação. É o que falta para a Fase 2 fechar.
+- 🔴 **A casa ainda sobe com a barreira de teste.** Na sessão de
+  2026-09-04 foram **47 peças de 169** — 28% da obra. Todas
+  `stripped_oak_log`, e a cadeia que deveria fazê-las não entregava
+  porque o lenhador não entregava tronco. É o que falta para a Fase 2
+  fechar.
+- 🔴 **Os dois guardas de travamento são zerados a cada alvo novo**, em
+  seis profissões. Quem troca de alvo com frequência não é pego por
+  nenhum dos dois — foi o que deixou dois mineiros parados vinte e cinco
+  minutos com os contadores em zero.
 - 🟠 **A navegação dentro da rocha.** Seis defeitos numerados (E30–E35)
   saíram todos da mesma raiz: a navegação do Vanilla não traça caminho
   por dentro de uma mina. O mod contorna andando um passo de cada vez
@@ -203,6 +210,10 @@ inteira, com as razões, está em
   recuar sozinha — mas isso ainda não foi visto acontecendo.
 - 🟡 **O detector de imobilidade** foi visto em jogo só no mineiro. Nas
   outras cinco profissões é a mesma peça, com teste, sem sessão.
+- 🟠 **O baú do trabalhador assoreia.** Vara, maçã e muda não são
+  recursos da colônia: nada as retira, e cada uma ocupa um slot para
+  sempre. Desde 2026-09-04 a colheita transborda para os outros baús em
+  vez de ser destruída — mas baú que só enche acaba cheio.
 - 🟡 **Sem economia de moeda, sem comércio, sem crescimento populacional
   dirigido.** As fases 3, 4 e 5 do modelo não começaram.
 
