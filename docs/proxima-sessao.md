@@ -1,13 +1,18 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Escrito em 2026-09-02, atualizado em 2026-09-03 à noite.** Este arquivo
-existe porque o gargalo do projeto deixou de ser código: havia **dez
-consertos do mineiro empilhados sem uma única sessão que os veja**, e
-nenhuma pergunta importante em aberto pode ser respondida sem abrir o jogo.
+**Escrito em 2026-09-02, atualizado em 2026-09-04.** Este arquivo existe
+porque o gargalo do projeto deixou de ser código: havia **dez consertos do
+mineiro empilhados sem uma única sessão que os veja**, e nenhuma pergunta
+importante em aberto pode ser respondida sem abrir o jogo.
 
 A sessão de 09-03 aconteceu e **o mineiro trabalhou** — a primeira boa. Ela
 não zerou a pilha: fechou o que dependia de vê-lo cavar, e abriu quatro
-coisas novas, que estão no **item 3-a**. A ordem abaixo continua valendo.
+coisas novas, que estão no **item 3-a**.
+
+A de **09-04** durou 43 minutos, não teve crash, e rendeu noventa e nove
+`WARN` que renderam cinco ciclos de conserto. Nenhum deles foi visto rodar,
+e um sexto entrou depois dela — estão no **item 3-b**, que é por onde esta
+lista deve começar agora. A ordem abaixo continua valendo para o resto.
 
 Ele não é diário — quem conta a história é o `TODO.md`. Este aqui é a lista
 de conferência de uma sessão.
@@ -106,7 +111,7 @@ com os olhos.
 | O que conferir | O que procurar |
 |---|---|
 | **o detector de imobilidade** | `Miner ... gave up the stone at ... — it has not moved a block in N ticks of work time`. É o conserto dos dois minutos: agora sai em **15 s**. A linha vizinha, `it walked for N ticks of work time without arriving`, continua existindo e quer dizer **outra coisa** — ele andou e não chegou |
-| **`still` ao lado de `stall`** | `..., stall N/2400, still N/300` no relatório do mineiro. É o instrumento que decide o A\*: `still` perto de zero com `stall` subindo = ele **anda** e não chega, e o gargalo é navegação. Os dois subindo juntos = congelado |
+| **`still` ao lado de `stall`** | `..., stall N/2400, still N/300` no relatório do mineiro. É o instrumento que decide o A\*: `still` perto de zero com `stall` subindo = ele **anda** e não chega, e o gargalo é navegação. Os dois subindo juntos = congelado. **E os dois perto de zero com ele parado é um terceiro estado**, medido em 09-04: quer dizer que a passagem não chega ao ramo que conta — ou não é expediente, ou o trabalho nem começou. Não confunda com "está tudo bem" |
 | **água e lava tapadas** | `The mine sealed N face(s) at ... — the pick opened a flow`. Sai só quando a picareta abre fluxo de verdade; sessão sem nascente não diz nada, e isso não é defeito |
 | **minério raro primeiro** | **olho, não log** — `OreVein` não escreve nada. Num veio com dois tipos, qual some primeiro |
 | **galeria com bolsões** | **olho, não log** — `MineShaft` não escreve nada. Um vão de 3×2×2 a cada 8 colunas, de lado alternado |
@@ -122,6 +127,30 @@ tem o cursor apontando para a forma antiga de galeria. O `findTheFrontier`
 foi escrito para recuar sozinho — **ver se recua é a primeira coisa a
 olhar** no item 3. Se não recuar, o mineiro cava contra a parede de um
 plano que não existe mais.
+
+### 3-b. O que entrou em 2026-09-04, e é por onde começar
+
+**Seis consertos, nenhum visto rodar.** A ordem é essa porque é a ordem em
+que um falhando esconde o outro.
+
+| | O que conferir | O que procurar |
+|---|---|---|
+| 1 | **o lenhador entrega madeira** | `filled the chest — N logs collected`. `N` zerado ciclo após ciclo = o transbordo não pegou. E `Colony ... had no room mid-harvest` só deve sair com a colônia **inteira** cheia; se sair cedo, o assoreamento (E38) chegou antes |
+| 2 | **a obra anda sem a barreira** | `TEST BARRIER covered for N of M pieces` no encerramento. Em 09-04 foram **47 de 169** — 28% da obra era falsa. Se cair, a cadeia da madeira passou a entregar |
+| 3 | **os mineiros se revezam na escada** | `waiting for the shaft` **pode** aparecer; o que não pode é ficar. Mesmo par por 20 minutos = o conserto não pegou |
+| 4 | **o mineiro sobe para buscar areia** | `digging Areia at ... y=62` com ele lá embaixo. A perna agora olha para o destino, e ele deve **sair pela boca** em vez de varrer a galeria |
+| 5 | **a colônia que cala diz por quê** | `no cycle work: the chest count came in partial`. Se aparecer, a colônia estava parada e agora se sabe o motivo. E o **estoque sai a cada ciclo em que muda** — é a série que faltava para responder "a colônia tinha material?" sem adivinhar |
+| 6 | **o guarda de imobilidade morde** | `has not moved a block in N ticks of work time`, e `still` **subindo** no relatório em vez de cravado em zero. Um congelado agora volta em 15 s. Se `still` continuar em zero com trabalhador visivelmente parado, o **E36 não era tudo** — ver o terceiro estado no item 3-a |
+
+> **O item 6 é o que esta sessão pode fechar sozinha.** O E36 saiu com teste
+> e fase vermelha conferida, mas o teste que deveria confirmá-lo em bateria
+> — o E37 — **continua instável, e o E36 não o curou**. Um trabalhador
+> congelado em jogo responde numa linha o que dois ciclos de teste não
+> responderam.
+
+**A pergunta do save antigo continua aberta** e é a mesma do item 3-a: a
+mina de antes do bolsão tem o cursor na forma antiga de galeria, e o
+`findTheFrontier` deve recuar sozinho.
 
 ### 4. Ele para à noite?
 
@@ -171,11 +200,11 @@ contra o mundo, é a hora de olhar.
 Consertos escritos, com teste e fase vermelha conferida, que **nenhuma
 sessão viu rodar**.
 
-> **Atualizado em 2026-09-03, à noite.** A sessão daquele dia aconteceu e
-> **o mineiro trabalhou** — a primeira desde que os consertos começaram a
-> empilhar. Ela toca as quatro primeiras linhas desta tabela, mas o log
-> não foi conferido item a item, então elas ficam onde estão: *provável,
-> não provado*. As cinco últimas entraram **depois** da sessão.
+> **Atualizado em 2026-09-04.** A sessão de 09-03 toca as quatro primeiras
+> linhas desta tabela, mas o log não foi conferido item a item, então elas
+> ficam onde estão: *provável, não provado*. As linhas do meio entraram
+> depois dela; **as seis últimas entraram depois da sessão de 09-04**, e
+> são as do item 3-b.
 
 | | O que espera prova |
 |---|---|
@@ -194,6 +223,12 @@ sessão viu rodar**.
 | — | galeria com bolsão de 3×2×2 a cada 8 colunas |
 | — | detector de imobilidade nas **sete** profissões — visto só no mineiro |
 | — | pastor com gate de expediente: ele para de contar a noite |
+| — | **09-04** · lenhador transborda para a colônia em vez de destruir tronco |
+| — | **09-04** · recusa no portão da escada não gasta mais a busca do tique |
+| — | **09-04** · a perna do mineiro olha para o destino, e sabe voltar |
+| — | **09-04** · o ciclo que pula por varredura parcial diz que pulou |
+| — | **09-04** · o estoque da colônia vai ao log a cada ciclo em que muda |
+| — | **E36** · o guarda de imobilidade deixou de ser zerado por alvo novo |
 
 ---
 

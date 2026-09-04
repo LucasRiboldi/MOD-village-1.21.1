@@ -196,10 +196,16 @@ inteira, com as razões, está em
   `stripped_oak_log`, e a cadeia que deveria fazê-las não entregava
   porque o lenhador não entregava tronco. É o que falta para a Fase 2
   fechar.
-- 🔴 **Os dois guardas de travamento são zerados a cada alvo novo**, em
-  seis profissões. Quem troca de alvo com frequência não é pego por
-  nenhum dos dois — foi o que deixou dois mineiros parados vinte e cinco
-  minutos com os contadores em zero.
+- 🟡 **O detector de imobilidade era zerado a cada alvo novo** — o que
+  deixou dois mineiros parados vinte e cinco minutos com os contadores em
+  zero. **Fechado em 2026-09-04:** ele passou a recomeçar quando o
+  trabalhador *anda* ou *trabalha*, e não quando pega alvo. Eram três
+  profissões e não seis — construtor e fabricante já estavam certos. Tem
+  teste, e **nenhuma sessão o viu rodar**.
+- 🟠 **O lenhador é o único que cobra imobilidade enquanto trabalha.**
+  Ele pergunta se o aldeão saiu do lugar *antes* de conferir se já está
+  na árvore, então uma árvore grande pode devolvê-lo à fila por estar
+  derrubando-a. Achado ao ler, e ainda não visto falhar.
 - 🟠 **A navegação dentro da rocha.** Seis defeitos numerados (E30–E35)
   saíram todos da mesma raiz: a navegação do Vanilla não traça caminho
   por dentro de uma mina. O mod contorna andando um passo de cada vez
