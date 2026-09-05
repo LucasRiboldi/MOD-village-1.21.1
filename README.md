@@ -173,7 +173,10 @@ no mato depois do escuro é trabalhador que os monstros pegam.
 |---|---|
 | ✅ **Sete profissões** | lenhador, mineiro, pastor, fundidor, fabricante, construtor e fazendeiro |
 | ✅ **A cadeia da madeira, ponta a ponta** | cortar → fabricar tábua → levantar casa. Vista funcionando numa vila de verdade |
-| ✅ **A mina** | escada, salas, galeria com bolsões, tocha atrás do mineiro, descida de nível, veio de minério, água tapada |
+| ✅ **A mina** | escada **dupla**, salas e galeria de **três de altura**, bolsões, tocha atrás do mineiro, descida de nível, veio de minério, água tapada, e um **arco de pedra com lanterna** na boca |
+| ✅ **Cada profissão com sua cor** | o nome sobre a cabeça sai colorido, sete cores distintas — e o nome que **você** deu continua seu |
+| ✅ **Ferramenta de ferro para todos** | e quem tiver ferramenta melhor no baú dele troca por ela sozinho |
+| ✅ **Metade da madeira fica em tora** | o fabricante não moe o estoque inteiro: parte da casa é feita de tora direto |
 | ✅ **Casas do próprio Minecraft** | planície, savana, taiga, nevada e deserto. O mod não inventa casa |
 | ✅ **A colônia nunca inventa material** | o que falta é fabricado do que houver nos baús; o que não dá, ela espera |
 | ✅ **Regra 3** | vila gerada e construção da colônia são intocáveis, conferidas bloco a bloco |

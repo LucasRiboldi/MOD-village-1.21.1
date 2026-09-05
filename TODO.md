@@ -88,38 +88,45 @@ sessão — o que preparar, o que olhar e em que ordem, e o que cada linha de
 log significa — vive em
 [`docs/proxima-sessao.md`](docs/proxima-sessao.md).
 
-**Seis consertos esperam jogo, e nenhum foi visto rodar.** Em ordem do
-que olhar primeiro, porque é a ordem em que um falha esconde o outro:
+**Antes de qualquer diagnóstico, confira o md5.** O jar de
+`.minecraft\mods` envelhece calado, e em 09-05 ele estava **onze commits
+atrás**: três das quatro queixas daquela sessão eram de código que já não
+existia. Desde 09-05 o agente copia o jar para as duas pastas e compara —
+ver o `CLAUDE.md`.
 
-1. **O lenhador entrega madeira?** A linha a caçar é
-   `filled the chest — N logs collected`. Se o `N` for zero ciclo após
-   ciclo, o transbordo não pegou. E `Colony ... had no room mid-harvest`
-   só deve aparecer com a colônia **inteira** cheia — se aparecer cedo, o
-   assoreamento (E38) chegou antes do esperado.
-2. **A obra anda sem a barreira?** O relatório de encerramento diz
-   `TEST BARRIER covered for N of M pieces`. Na sessão de 09-04 foram
-   **47 de 169**. Se cair, a cadeia de madeira passou a entregar.
-3. **Os mineiros se revezam na escada?** `waiting for the shaft` pode
-   aparecer — o que não pode é ficar. Se o mesmo par ficar 20 minutos, o
-   conserto não pegou.
-4. **O mineiro sai da mina para buscar areia?** É o
-   `digging Areia at ... y=62` com ele lá embaixo. Ele agora deve subir.
-5. **Alguma colônia cala?** A linha nova é
-   `no cycle work: the chest count came in partial`. Se ela aparecer, a
-   colônia estava parada e agora se sabe por quê.
-6. **O guarda de imobilidade morde?** A linha é
-   `has not moved a block in N ticks of work time`, e o relatório do
-   ciclo passa a mostrar `still` subindo em vez de `still 0/300`. Um
-   trabalhador congelado agora é devolvido em quinze segundos, e não em
-   dois minutos — se `still` continuar cravado em zero com trabalhador
-   parado, o E36 não era tudo.
+### O que a sessão de 09-05 (16:19) já provou
 
-**E o estoque agora sai a cada ciclo em que muda** — é a série que faltava
-para responder "a colônia tinha material?" sem adivinhar.
+Vale escrever, porque a lista de "falta ver" andou de verdade:
 
-**A pergunta do save antigo continua aberta:** a mina de antes do bolsão
-tem o cursor apontando para outra forma de galeria. O `findTheFrontier`
-deve recuar sozinho; ver se recua.
+- **O mineiro cava.** 152 blocos numa colônia, seguindo veio de cobre e
+  carvão, com **duas** desistências. Entregou 101 pedregulhos e 11 carvões.
+- **A separação de funções segura.** Zero `lending a hand` em meia hora.
+- **A reserva de tora converge.** O estoque parou em 62 toras para 232
+  tábuas — 58 toras-equivalentes, praticamente o empate que a regra
+  persegue.
+- **O lenhador corta** com `stall 19/2400`, que é saudável.
+
+### O que olhar agora, em ordem
+
+1. **A mina velha destrava?** A colônia `c4706b63` ficava parada porque a
+   reserva entregava um ramal já acabado. A linha a caçar é
+   `Mine ... finished every branch and went one level deeper`. Se em vez
+   dela vier `no miner branch work`, a conta ainda não fecha.
+2. **A escada dupla e o túnel alto aparecem?** Só em mina **nova**, ou na
+   parte que ainda não foi cavada — save antigo tem a forma velha gravada
+   no cursor.
+3. **O arco nasce com o baú?** As duas coisas disputavam os três vizinhos
+   livres da boca, e a primeira versão deixou a mina sem baú. Tem de haver
+   `got its miner chest` **e** o arco de pedra por cima.
+4. **Os nomes saem coloridos**, inclusive nos aldeões que já tinham nome.
+5. **A árvore recusada fica recusada?** A linha é
+   `skipping its N logs for N ticks`, com **N maior que 1**. Se voltar
+   `refused 2 times` na mesma árvore em menos de 6.000 tiques, o castigo
+   ainda não morde.
+6. **A viga descascada entra na casa?** `stripped a ... into
+   stripped_...`. Não apareceu ainda porque nenhuma colônia construiu.
+
+---
 
 ---
 
@@ -2598,7 +2605,7 @@ conferido no volume · árvore grande deixando de ser recusada.
 | | Erro | Estado |
 |---|---|---|
 | **E36** | **Os dois guardas eram zerados a cada alvo novo.** `startNextStone`, `findCrop`, `findSheep` e os três `release` faziam `job.stall.reset()` ao trocar de alvo, e quem troca de alvo com frequência ficava **imune** ao detector de imobilidade (300) | ✅ **Fechado em 09-04.** Zerar passou a ser no ramo em que a profissão trabalha — onde `BuilderWork` e `ManufacturerWork` sempre zeraram, e por isso os dois nunca tiveram o defeito. **Eram três profissões, não seis:** o construtor e o fabricante já estavam certos, e o lenhador não zera em lugar nenhum — ver **E39**. O contador de 2.400 continua por alvo de propósito. `theStillnessGuardSurvivesTheTargetChanging`, fase vermelha conferida (*caiu de 99 para 0*) |
-| **E37** | **`aFrozenMinerGivesUpLongBeforeTheStallGuard` continua instável** — 1 falha em 3 rodadas medidas em 09-04, depois do E36 | ⚙️ **A suspeita anterior está morta, e foi medida.** Este arquivo dizia *"o que sobra é o E36: cada troca de alvo zera o contador"*. Com os resets **já removidos**, a falha voltou com `stall 3/2400, still 2/300` em 360 tiques — três passagens contadas de trezentas e sessenta. Os dois contadores são fechados por `WorkHours.isWorkTime`, e o `still` também zera quando o aldeão **muda de bloco**: o relatório mostra ele em y=-53 andando para y=-58, ou seja **o mineiro daquele teste não está congelado**. O próximo ciclo precisa de um instrumento que conte as passagens de expediente, e não de mais uma suspeita |
+| ~~**E37**~~ | ~~`aFrozenMinerGivesUpLongBeforeTheStallGuard` instável~~ | ✅ **Fechado em 09-05, e não era instabilidade — era o cenário.** A geometria mudou (escada de duas pistas), o mineiro passou a **alcançar** a pedra e a trabalhar — `digging Cobblestone at ..., 0,6 blocks away, 163/200 ticks` —, e um mineiro ocupado não é um mineiro congelado: o guarda de imobilidade não tinha por que disparar. O teste vinha medindo isso havia semanas, ora passando ora não, conforme a arena. Agora ele **emparedado por construção** — seis paredes em volta dos dois blocos que ele ocupa —, e o cenário deixou de depender da forma da mina. Três rodadas seguidas de falha antes, duas de 252 verdes depois. A entrada abaixo fica como registro do caminho: **a suspeita anterior estava errada, e a medição é que a derrubou.** ⚙️ *(histórico)* **A suspeita anterior está morta, e foi medida.** Este arquivo dizia *"o que sobra é o E36: cada troca de alvo zera o contador"*. Com os resets **já removidos**, a falha voltou com `stall 3/2400, still 2/300` em 360 tiques — três passagens contadas de trezentas e sessenta. Os dois contadores são fechados por `WorkHours.isWorkTime`, e o `still` também zera quando o aldeão **muda de bloco**: o relatório mostra ele em y=-53 andando para y=-58, ou seja **o mineiro daquele teste não está congelado**. O próximo ciclo precisa de um instrumento que conte as passagens de expediente, e não de mais uma suspeita |
 | **E38** | **O baú do trabalhador assoreia e nada o esvazia.** Vara, maçã e muda não são `ResourceType`, nenhum trabalhador as retira, e cada uma ocupa um slot para sempre | ⚙️ **Metade fechada em 09-04.** O transbordo para a colônia tirou o lenhador do buraco e parou a destruição de item, mas **não move o assoreamento de lugar**: baú que só enche acaba cheio, e agora demora mais para chegar lá. Dar a esses itens consumidor ou descarte é **decisão de projeto** e está registrada no javadoc de `TreeFelling.deposit`, não decidida por conta própria |
 | **E39** | **O lenhador é o único que cobra o guarda de imobilidade enquanto trabalha.** `LumberjackWork:325` chama `stuck()` **antes** da conferência de alcance, ao contrário das outras seis profissões | ⚙️ **Achado ao ler, em 09-04, e não observado falhando.** O javadoc do `WorkStall` diz o contrário por escrito — *"chamá-la enquanto ele trabalha puniria quem está parado de propósito"* —, e um lenhador parado numa árvore que leve mais de 300 tiques de expediente é devolvido à fila por estar trabalhando. **O conserto foi escrito e revertido de propósito:** mudar uma quarta profissão sem ter visto nenhuma falhar é o erro nº 3 desta mesma lista, de 09-04. Quer o ciclo e o teste dele |
 | ~~**E33**~~ | ~~O mineiro não cavou um bloco em sete sessões~~ | ✅ **Fechado na bateria em 08-28.** Três testes em rocha maciça provam que ele cava a escada, desce cavando, e conserta a fronteira adiantada do save. Faltava a arena ser uma mina — todas as outras eram um piso de terra plano. **Falta ver em jogo** |
@@ -2648,15 +2655,38 @@ dos três foi visto em jogo.
 
 ---
 
-## 🟠 O ciclo de 2026-09-05 — o que ele deixou aberto
+## 🟠 O que 2026-09-05 deixou aberto
+
+Sete ciclos num dia, e o que sobrou. Ordenado por quanto dói.
 
 | nível | o quê | por quê |
 |---|---|---|
-| 🔴 | **Nenhum dos seis consertos foi visto em jogo** | são 638 unitários e 244 gametests, e nenhum deles é uma vila de verdade rodando vinte minutos. O da mina em especial: o `armToWalk` foi provado em geometria, e o que ele conserta é comportamento de navegação |
-| 🟠 | **A mão emprestada saiu, e o problema dela volta** | a ADR-010 existia porque o trabalhador travado repete a mesma parede até o fim da sessão. Isso volta a acontecer, por decisão do autor. A saída é consertar o travamento — foi o que este ciclo fez do lado do mineiro, e o lado do lenhador (`2400 ticks on the tree`, quatro vezes no log de 09-04) continua aberto |
-| 🟠 | **A casa passa a sair de espécies misturadas na escada e na porta** | já saía na parede desde 08-26; agora a calota do teto também. Uma casa de carvalho com escada de cerejeira é o preço de a casa **existir** — mas é mudança visível, e o autor pode não querer |
-| 🟡 | **A reserva de tora não distingue espécie** | ela conta `WOOD` e `PLANKS` como grupos. Uma colônia com 100 toras de cerejeira e nenhuma de carvalho tem "metade em tora" satisfeita e continua sem a tora de carvalho que a viga descascada pede. O caso não apareceu em jogo ainda |
-| 🟡 | **`LentHand.mark` virou guarda sem caminho previsto** | ele só dispara se a profissão mudar com a tarefa aberta. Se um `(X lending a hand)` aparecer no log, é notícia — ou recontratação em curso, ou a separação furada por caminho não mapeado |
+| 🔴 | **A escada que o jogador constrói ainda corre risco de picareta** | o `canDig` protege a vila gerada e o que a colônia construiu — a escada do jogador não é nenhuma das duas. A correção foi tentada e **desfeita**: exigir cubo cheio no `isStillClosed` apagou a mina inteira, porque aquela pergunta alimenta o recuo do cursor e recuo e escolha do alvo **têm de concordar**. Refazer pede as duas pontas juntas e um teste da concordância |
+| 🔴 | **Mina de save antigo continua com a forma velha** | o cursor gravado aponta para a ordem de antes da escada dupla e do túnel de três. O `findTheFrontier` lê o mundo e deve se acertar sozinho, mas a escada larga e o teto alto só aparecem no que ainda não foi cavado. **Não foi visto acontecer** |
+| 🟠 | **A mão emprestada saiu, e o problema dela volta** | a ADR-010 existia porque o trabalhador travado repete a mesma parede até o fim da sessão. Volta a acontecer, por decisão do autor. A saída é consertar o travamento — feito do lado do mineiro; o lado do lenhador continua aberto |
+| 🟠 | **A linha de desistência do lenhador mente** | ela imprime `stallLimit`, que é a **constante** 2.400, e não o contador: dizia *"made no progress for 2400 work ticks"* em desistências separadas por 600 tiques. Quase mandou procurar o defeito no guarda em vez de no castigo |
+| 🟠 | **A casa sai de espécies misturadas na escada, na porta e na viga** | já saía na parede desde 08-26. É o preço de a casa **existir** quando a vila corta cerejeira e a planta pede carvalho — mas é mudança visível, e o autor pode não querer |
+| 🟠 | **Nada na colônia fabrica ou deposita ferramenta** | a troca pela melhor do baú existe e tem teste, e **ninguém a alimenta**. Foi o que derrubou a decisão de começar de madeira: sem segundo degrau, o primeiro é teto. Com ferro isso dói menos, e continua aberto |
+| 🟡 | **A reserva de tora não distingue espécie** | conta `WOOD` e `PLANKS` como grupos. Cem toras de cerejeira e nenhuma de carvalho satisfazem "metade em tora" e continuam sem a tora de carvalho que a viga pede |
+| 🟡 | **`LentHand.mark` é guarda sem caminho previsto** | só dispara se a profissão mudar com a tarefa aberta. Um `(X lending a hand)` no log virou **notícia** |
+| 🟡 | **O `isStillClosed` não tem teste** | é privado, e o que se afirma hoje é o predicado do corredor. Foi por aí que a correção desfeita passou sem ninguém ver |
+| 🟢 | **Dois `## ✅ Resolvido` neste arquivo** | as entradas estão divididas em duas seções com o mesmo título. Ninguém se perdeu ainda, e um dia alguém se perde |
+
+### As três lições de método que este dia deixou
+
+Valem mais que qualquer item acima, porque cada uma custou horas:
+
+1. **Confira o build antes do diagnóstico.** Uma sessão inteira foi gasta
+   explicando comportamento de um jar onze commits atrás. Virou regra no
+   `CLAUDE.md`, com md5.
+2. **Teste que valida uma cópia da regra não valida a regra.** O
+   `MinerGameTest` reimplementava o `footingIn` do `MinerWork`: a correção
+   entrou na produção e o teste continuou medindo o predicado antigo.
+3. **Cenário de teste amarrado à forma quebra quando a forma muda.** Três
+   fixtures apostavam em coordenadas ou em "o alvo vai ficar longe". Com a
+   escada dupla, o mineiro "congelado" passou a alcançar a pedra e
+   trabalhar — o teste media um mineiro ocupado. Os três foram reescritos
+   para valer **por construção**.
 
 ## 🟠 Pendências, por nível de progressão lógica
 
@@ -2895,10 +2925,13 @@ acontecer, com a sessão que viu.
 
 | | O que | A linha que prova |
 |---|---|---|
-| **1** | **O mineiro descendo a escada** | `Miner ... took` com o aldeão **dentro** da mina. O E30 fechou em 08-27 e **nenhuma sessão viu o conserto**. Se ele voltar a estacionar com `0/0 ticks`, é o **E32** |
+| ~~1~~ | ~~**O mineiro descendo a escada**~~ | ✅ **09-05, 16:19** — 152 blocos numa colônia, seguindo veio de cobre e carvão, com duas desistências. `took 1 from` × 152, e o baú fechou com 101 pedregulhos e 11 carvões |
+| **1** | **A mina velha destravando** | `Mine ... finished every branch and went one level deeper`. A colônia `c4706b63` parou porque a reserva entregava um ramal acabado; a de 16:19 nunca chegou a descer de nível |
 | **1** | **A varredura acabando num ciclo** | `no building work: still sweeping` aparecendo **uma vez** e não a sessão inteira, seguido de `planned ... at`. É o índice de ruas de 08-27, e é o que decide se dá para ver qualquer outra coisa |
 | **2** | **O mineiro parando à noite** | o contador de `stall` **congelado** enquanto o relatório diz `off hours`. Em 08-26 ele foi de 886 a 2086 dormindo |
-| **2** | **A picareta de diamante na mão** | o mineiro segurando diamante, e não madeira. Cosmético e de velocidade ao mesmo tempo |
+| **2** | **A ferramenta de ferro na mão** | o mineiro segurando **ferro**, e não madeira nem diamante. Passou por três decisões: diamante em 08-27, madeira em 09-04, ferro em 09-05 — e o ferro é o grau que a Regra 2 já usava para medir o tempo de quebra desde o começo |
+| **2** | **O nome colorido** | sete cores distintas sobre as cabeças, e o nome que o jogador deu **sem** cor |
+| **2** | **O arco da boca** | dois pilares, verga e lanterna pendurada — **junto** com o baú do mineiro, que disputava o mesmo lugar |
 | **2** | **O fundidor assando** | `Smelter ... made ...`. Não depende mais da mina — depende da **areia**, e é a cadeia 8 abaixo |
 | **3** | **A cadeia da areia inteira** | meta de `SAND` → praia → vidro → vidraça. Em 08-25 parou em `looking for sand, 0 of 6`; em 08-26 nem começou, e mandou 3 `glass_pane` para a barreira |
 | **4** | **A casa inteira sem a barreira** | `TEST BARRIER covered for nothing` — e desde 08-28 a frase **só sai numa sessão que assentou peça**, então ela já não pode ser o E31 outra vez. Em 08-26 a casa subiu com 19 peças da barreira |
