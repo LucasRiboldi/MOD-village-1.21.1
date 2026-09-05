@@ -32,7 +32,7 @@ public final class ProfessionRegistry {
             new EnumMap<>(ProfessionType.class);
 
     static {
-        define(ProfessionType.LUMBERJACK, ToolType.WOODEN_AXE, Capability.COLLECT_WOOD);
+        define(ProfessionType.LUMBERJACK, ToolType.IRON_AXE, Capability.COLLECT_WOOD);
         // <b>Madeira, e não diamante</b> — decisão do autor, 2026-09-04:
         // "todos trabalhadores começam com a ferramenta nível 1 de
         // madeira". Desfaz a de 08-27, que dava diamante ao mineiro
@@ -41,11 +41,11 @@ public final class ProfessionRegistry {
         // agora existe saída: o ToolUpgrade troca pela melhor do baú
         // dele, e a colônia mesma põe picaretas lá. A descida lenta
         // deixou de ser um teto e virou o primeiro degrau.
-        define(ProfessionType.MINER, ToolType.WOODEN_PICKAXE, Capability.COLLECT_STONE);
+        define(ProfessionType.MINER, ToolType.IRON_PICKAXE, Capability.COLLECT_STONE);
         define(ProfessionType.SHEPHERD, ToolType.SHEARS, Capability.COLLECT_WOOL);
         define(ProfessionType.SMELTER, ToolType.NONE, Capability.SMELT_ITEMS);
         define(ProfessionType.MANUFACTURER, ToolType.NONE, Capability.CRAFT_ITEMS);
-        define(ProfessionType.FARMER, ToolType.WOODEN_HOE, Capability.MAINTAIN_FOOD);
+        define(ProfessionType.FARMER, ToolType.IRON_HOE, Capability.MAINTAIN_FOOD);
         define(ProfessionType.BUILDER, ToolType.NONE, Capability.BUILD_STRUCTURE);
     }
 

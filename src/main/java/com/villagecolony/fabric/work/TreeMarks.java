@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.service.VillageDetector;
+import com.villagecolony.fabric.integration.TreeHarvester;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
@@ -212,12 +213,44 @@ public final class TreeMarks {
         Refusal before = UNREACHABLE.get(base);
         int count = before == null ? 1 : before.count() + 1;
 
-        UNREACHABLE.put(base, new Refusal(world.getTime(), count));
+        Refusal refusal = new Refusal(world.getTime(), count);
+
+        // <b>O tronco inteiro, e não só a base</b> — 2026-09-05, e é o
+        // que fazia o castigo não valer nada.
+        //
+        // O filtro da busca pergunta por <b>cada bloco de tronco</b> —
+        // {@code TreeScanner.findNearestLog} varre logs, não árvores —, e
+        // esta marca ficava num bloco só. O scanner achava o tronco um
+        // bloco acima da base, que não estava marcado, e devolvia a mesma
+        // árvore: a contagem subia porque a base é a mesma, e o prazo
+        // nunca mordia.
+        //
+        // A sessão de 2026-09-05 mediu o preço: a árvore de
+        // {@code 1460, 63, 79} foi recusada <b>sete vezes em três
+        // minutos</b>, uma por ciclo da colônia, e cada volta custou os
+        // 300 tiques do guarda de imobilidade. Os dois lenhadores da vila
+        // terminaram cinco árvores em meia hora.
+        //
+        // O {@link #reject} nunca teve esse defeito: ele sempre marcou o
+        // grupo inteiro. Esta passa a fazer o mesmo, e é de lá que a
+        // forma vem.
+        List<BlockPos> trunk = TreeHarvester.trunkOf(world, base);
+
+        for (BlockPos log : trunk) {
+            UNREACHABLE.put(log.toImmutable(), refusal);
+        }
+
+        // Árvore que já saiu do mundo entre a desistência e esta linha
+        // não tem tronco a marcar, e a base ainda precisa carregar a
+        // contagem — é ela que faz a recusa seguinte custar mais.
+        UNREACHABLE.put(base.toImmutable(), refusal);
 
         VillageColonyMod.LOGGER.info(
-                "Tree at {} is out of reach — refused {} times now, skipping it for {} ticks",
+                "Tree at {} is out of reach — refused {} times now,"
+                        + " skipping its {} logs for {} ticks",
                 base.toShortString(),
                 count,
+                Math.max(trunk.size(), 1),
                 memoryFor(count));
     }
 

@@ -40,8 +40,8 @@ de um jogador com machado de ferro —, não carrega nada para casa porque
 a madeira vai direto para o baú dele, e replanta a muda antes de sair.
 
 ⛏️ **O mineiro abre uma mina de verdade.** Ele anda até o fim da vila e
-desce cavando **em escada** — de picareta de madeira, como todo
-trabalhador começa —, para poder subir de volta. Dez blocos abaixo abre uma sala de 7×4; desce mais dez virando
+desce cavando **em escada** — de picareta de ferro, como todo trabalhador
+começa —, para poder subir de volta. Dez blocos abaixo abre uma sala de 7×4; desce mais dez virando
 para outro lado, abre outra sala; e do vigésimo bloco em diante segue
 numa galeria — que **não é um cano reto**: a cada oito colunas ela abre
 um bolsão ao lado, o que dá mais parede exposta e mais minério à vista.

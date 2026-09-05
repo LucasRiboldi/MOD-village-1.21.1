@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-09-05. **Antes de qualquer coisa:** o jar que o autor
+**Atualizado:** 2026-09-05, à tarde. **Antes de qualquer coisa:** o jar que o autor
 joga em `.minecraft\mods` envelhece calado — copiar com o jogo aberto falha sem
 erro. Na sessão das 08:29 ele estava **onze commits atrás**, e três das quatro
 queixas eram de código já removido. Conferir o md5 contra `downloads/` é o
@@ -260,6 +260,67 @@ abaixo, com o porquê.
 ---
 
 ## ✅ Resolvido
+
+### 2026-09-05 — a árvore recusada fica recusada, e o ferro vira o primeiro degrau
+
+Sessão de 2026-09-05, 09:59–10:28, e a primeira que rodou o jar certo desde
+09-03. **A separação de funções segurou** — zero `lending a hand` em meia hora —
+e a reserva de tora apareceu 28 vezes (`half of the colony's wood stays in
+logs`). Sem crash.
+
+**O que o autor viu:** *"lenhadores desistindo de cortar arvore e ficando
+troncos esquecidos"*. **35 desistências para 5 árvores terminadas.**
+
+**A causa.** O filtro da busca pergunta por **cada bloco de tronco** — o
+`TreeScanner` varre logs, não árvores —, e `TreeMarks.markUnreachable` marcava
+**só a base**. O scanner achava o log um bloco acima, que não estava marcado, e
+devolvia a mesma árvore. A contagem subia (a base é a mesma) e o prazo nunca
+mordia:
+
+```text
+10:01:03  refused 1 times      10:02:30  refused 4 times
+10:01:30  refused 2 times      10:03:00  refused 5 times
+10:02:00  refused 3 times      10:03:30  refused 6 times
+```
+
+Trinta segundos entre uma e outra — **um ciclo da colônia** — com um castigo de
+6.000 tiques declarado no próprio log. Sete voltas na árvore de
+`1460, 63, 79`, cada uma custando os 300 tiques do guarda de imobilidade.
+
+O `TreeMarks.reject` nunca teve esse defeito: ele sempre marcou o grupo inteiro.
+`markUnreachable` passa a fazer o mesmo.
+
+**E o log mentia junto.** A linha de desistência imprime `stallLimit`, que é a
+**constante** 2.400, e não o contador: ela dizia *"made no progress for 2400
+work ticks"* em desistências separadas por 600 tiques. Foi o que quase mandou
+procurar o defeito no guarda em vez de no castigo. Fica registrado; a linha não
+foi corrigida neste ciclo.
+
+**A ferramenta inicial virou ferro** — decisão do autor: *"trocar todas
+ferramentas dos trabalhadores iniciais para ferramentas de ferro"*. Desfaz a de
+09-04. O que derrubou a de madeira foi o **degrau que nunca chegou**: o
+`ToolUpgrade` existe e tem teste, mas nada na colônia fabrica ou deposita
+ferramenta — é a pendência 🔴 aberta em 09-04, e sem o segundo degrau o primeiro
+vira teto. Ferro é o grau que a Regra 2 já usava para medir o tempo de quebra
+desde o começo, então a mão passou a combinar com a conta.
+
+**Verificação:** 638 unitários e 247 gametests, zero falhas em **quatro
+rodadas seguidas**. Fase vermelha conferida nos dois: com a marca só na base, o
+caso novo cai.
+
+**A bateria voltou a piscar, e vale dizer.** Duas rodadas antes dessas quatro
+falharam, cada uma num teste diferente — `miner_stillness` duas vezes, e uma vez
+`farmer_released` e `lumber_unreachable`. É a instabilidade que o ciclo de 09-04
+melhorou e não curou: o relógio do mundo é **um só** para a bateria inteira, e
+os guardas de imobilidade só contam em horário de trabalho. Um teste que mude a
+hora derruba o vizinho que está contando. Nenhuma das falhas se repetiu no mesmo
+teste duas rodadas seguidas.
+
+Duas delas foram minhas, e as duas se consertam do mesmo jeito — **lote
+próprio**: o teste novo do tronco acabava em vinte tiques e chamava
+`TreeMarks.clearAll()` enquanto o `theTreeMarkedOutOfReachIsSkipped`, no mesmo
+lote, ainda precisava da marca dele por trezentos e sessenta. Passou a lote
+separado e a limpeza estreitou para `forgetUnreachable`.
 
 ### 2026-09-05 — o fazendeiro parou de devolver duas vezes a mesma tarefa
 

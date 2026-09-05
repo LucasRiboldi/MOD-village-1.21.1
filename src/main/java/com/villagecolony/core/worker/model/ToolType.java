@@ -53,5 +53,28 @@ public enum ToolType {
     /** Do pastor. Tesoura não tem grau, então é ela mesma. */
     SHEARS,
 
-    WOODEN_HOE
+    WOODEN_HOE,
+
+    /**
+     * As três de ferro — decisão do autor, 2026-09-05: <i>"trocar todas
+     * ferramentas dos trabalhadores iniciais para ferramentas de
+     * ferro"</i>.
+     *
+     * <p>Desfaz a de 09-04, que pôs todo mundo em madeira. O que a
+     * derrubou foi o degrau que nunca chegou: a troca pela melhor do baú
+     * existe e tem teste, mas <b>nada na colônia fabrica ou deposita
+     * ferramenta</b> — está no TODO como pendência vermelha desde 09-04.
+     * Na prática o mineiro ficava na picareta de madeira para sempre,
+     * quatro vezes mais lento que a Regra 2 manda.
+     *
+     * <p>Ferro é o grau que a própria Regra 2 já usava para medir o
+     * tempo de quebra desde o começo — <i>"o trabalhador quebra um bloco
+     * no tempo de um jogador com ferramenta de ferro"</i>. A mão passa a
+     * combinar com a conta.
+     */
+    IRON_AXE,
+
+    IRON_PICKAXE,
+
+    IRON_HOE
 }

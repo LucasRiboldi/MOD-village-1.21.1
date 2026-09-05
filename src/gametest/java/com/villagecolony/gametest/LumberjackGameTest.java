@@ -1782,4 +1782,68 @@ public class LumberjackGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * <b>O castigo vale para o tronco inteiro, e não só para a base</b> —
+     * 2026-09-05, e é o que fazia a Regra 9 não valer nada em jogo.
+     *
+     * <p>O filtro da busca pergunta por <b>cada bloco de tronco</b> — o
+     * {@code TreeScanner} varre logs, não árvores —, e a marca ficava num
+     * bloco só. O scanner achava o log um bloco acima da base, que não
+     * estava marcado, e devolvia a mesma árvore: a contagem subia porque
+     * a base é a mesma, e o prazo nunca mordia.
+     *
+     * <p>A sessão de 2026-09-05 mediu o preço. A árvore de
+     * {@code 1460, 63, 79} foi recusada <b>sete vezes em três minutos</b>,
+     * uma por ciclo da colônia, cada volta custando os 300 tiques do
+     * guarda de imobilidade:
+     *
+     * <pre>
+     * 10:01:03  refused 1 times
+     * 10:01:30  refused 2 times
+     * 10:02:00  refused 3 times
+     * </pre>
+     *
+     * <p>Trinta segundos entre uma e outra, com um castigo de 6.000
+     * tiques declarado no log. Os dois lenhadores da vila terminaram
+     * cinco árvores em meia hora.
+     *
+     * <p>O {@code TreeMarks.reject} nunca teve esse defeito — ele sempre
+     * marcou o grupo inteiro —, e é de lá que a forma veio.
+     *
+     * <p>Rodado contra a correção desligada: a base fica marcada e o
+     * bloco de cima não, que é o buraco por onde a busca voltava.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_trunk_mark",
+            tickLimit = 20)
+    public void theWholeTrunkIsHeldOutAndNotOnlyItsBase(TestContext context) {
+        BlockPos base = new BlockPos(4, 2, 4);
+
+        plantTree(context, base);
+
+        ServerWorld world = context.getWorld();
+
+        TreeMarks.markUnreachable(world, context.getAbsolutePos(base));
+
+        context.assertTrue(
+                TreeMarks.isOutOfReach(world, context.getAbsolutePos(base)),
+                "a base da árvore recusada não ficou marcada");
+
+        for (int up = 1; up < 4; up++) {
+            context.assertTrue(
+                    TreeMarks.isOutOfReach(world, context.getAbsolutePos(base.up(up))),
+                    "o tronco " + up + " bloco(s) acima da base não ficou marcado — "
+                            + "a busca reencontra a mesma árvore por ele");
+        }
+
+        // <b>Lote próprio, e limpeza estreita.</b> Os testes de um mesmo
+        // lote correm juntos, e este acaba em vinte tiques enquanto o
+        // {@code theTreeMarkedOutOfReachIsSkipped} ainda precisa da marca
+        // dele por trezentos e sessenta. Dividir o lote é o que os separa;
+        // usar {@code forgetUnreachable} em vez de {@code clearAll} é o que
+        // impede esta limpeza de levar junto o que não é dela.
+        TreeMarks.forgetUnreachable();
+
+        context.complete();
+    }
 }

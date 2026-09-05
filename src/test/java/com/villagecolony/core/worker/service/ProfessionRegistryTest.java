@@ -55,10 +55,10 @@ class ProfessionRegistryTest {
 
     @Test
     void toolsMatchTheDesign() {
-        assertEquals(ToolType.WOODEN_AXE,
+        assertEquals(ToolType.IRON_AXE,
                 ProfessionRegistry.of(ProfessionType.LUMBERJACK).requiredTool());
 
-        assertEquals(ToolType.WOODEN_HOE,
+        assertEquals(ToolType.IRON_HOE,
                 ProfessionRegistry.of(ProfessionType.FARMER).requiredTool());
 
         assertEquals(ToolType.NONE,
@@ -69,31 +69,33 @@ class ProfessionRegistryTest {
     }
 
     /**
-     * O mineiro começa de madeira, como todo mundo — decisão do autor,
-     * 2026-09-04.
+     * O mineiro começa de ferro, como todo mundo — decisão do autor,
+     * 2026-09-05.
      *
-     * <p><b>A frase dele:</b> <i>"todos trabalhadores começam com a
-     * ferramenta nível 1 de madeira"</i>. Desfaz a de 08-27, que este
-     * teste afirmava, e que dava diamante ao mineiro porque <i>"são
-     * vinte blocos de descida antes de a mina render alguma coisa, e com
-     * picareta de madeira isso é uma sessão inteira"</i>.
+     * <p><b>A frase dele:</b> <i>"trocar todas ferramentas dos
+     * trabalhadores iniciais para ferramentas de ferro"</i>. Desfaz a de
+     * 09-04, que punha todo mundo em madeira, e que este teste afirmava.
      *
-     * <p>Continua sendo uma sessão inteira — o que mudou é que agora há
-     * saída. O {@code ToolUpgrade} troca pela melhor ferramenta do baú do
-     * trabalhador, e a colônia mesma põe picaretas lá: a descida lenta
-     * deixou de ser um teto e virou o primeiro degrau de uma progressão.
+     * <p><b>O que derrubou a de madeira</b> foi o degrau que nunca
+     * chegou. O argumento dela era que a descida lenta <i>"deixou de ser
+     * um teto e virou o primeiro degrau de uma progressão"</i>, porque o
+     * {@code ToolUpgrade} troca pela melhor ferramenta do baú — e a
+     * versão anterior deste javadoc chegava a afirmar que <i>"a colônia
+     * mesma põe picaretas lá"</i>. <b>Não põe</b>: nada no mod fabrica ou
+     * deposita ferramenta, e isso está no TODO como pendência vermelha
+     * desde 09-04. Sem o segundo degrau, o primeiro é o teto.
      *
-     * <p><b>E a discordância que este teste guardava fechou pelo outro
-     * lado.</b> Ele nasceu porque o catálogo entregava madeira e o
-     * {@code MinerWork} media a velocidade com uma constante de
-     * diamante: o aldeão minerava como diamante segurando madeira.
-     * Aquela constante não existe mais — o {@code BlockBreakTime}
-     * pergunta à mão. Os dois já não <b>podem</b> discordar, e o que
-     * este teste afirma hoje é o degrau inicial, não a concordância.
+     * <p>Ferro é o grau que a Regra 2 já usava para medir o tempo de
+     * quebra desde o começo — <i>"no tempo de um jogador com ferramenta
+     * de ferro"</i>. A mão passou a combinar com a conta.
+     *
+     * <p>A troca pela melhor do baú continua valendo, e passa a ser o que
+     * sempre deveria ter sido: um <b>bônus</b> do que o jogador puser
+     * ali, e não a única saída de um piso baixo demais.
      */
     @Test
-    void theMinerStartsWithWoodLikeEveryoneElse() {
-        assertEquals(ToolType.WOODEN_PICKAXE,
+    void theMinerStartsWithIronLikeEveryoneElse() {
+        assertEquals(ToolType.IRON_PICKAXE,
                 ProfessionRegistry.of(ProfessionType.MINER).requiredTool());
     }
 
@@ -106,18 +108,23 @@ class ProfessionRegistryTest {
      *
      * <p>A tesoura do pastor é a exceção, e é a exceção que o próprio
      * {@code ToolType} já documenta: <i>"tesoura não tem grau, então é
-     * ela mesma"</i>. Não há tesoura de madeira a exigir dele.
+     * ela mesma"</i>. Não há tesoura de ferro a exigir dele.
+     *
+     * <p><b>Era madeira até 2026-09-05</b>, e a troca é decisão do autor:
+     * <i>"trocar todas ferramentas dos trabalhadores iniciais para
+     * ferramentas de ferro"</i>. Ver
+     * {@link #theMinerStartsWithIronLikeEveryoneElse}.
      */
     @Test
-    void everyProfessionStartsAtTheFirstRung() {
+    void everyProfessionStartsAtIron() {
         for (ProfessionType profession : ProfessionType.values()) {
             ToolType tool = ProfessionRegistry.of(profession).requiredTool();
 
             assertTrue(
                     tool == ToolType.NONE
                             || tool == ToolType.SHEARS
-                            || tool.name().startsWith("WOODEN_"),
-                    profession + " começa com " + tool + ", que não é o primeiro degrau");
+                            || tool.name().startsWith("IRON_"),
+                    profession + " comeca com " + tool + ", que nao e ferro");
         }
     }
 

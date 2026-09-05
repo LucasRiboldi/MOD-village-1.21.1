@@ -372,29 +372,36 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
 
         Worker worker = storedMiner(context, villager, chest);
 
-        putInChest(context, chest, new ItemStack(Items.IRON_PICKAXE));
+        // <b>Diamante, e era ferro até 2026-09-05.</b> A inicial passou a
+        // ser a de ferro, e empate não troca — duas picaretas de ferro
+        // são a mesma picareta de ferro. Para provar que o baú alcança a
+        // mão, o teste precisa de um degrau que exista.
+        putInChest(context, chest, new ItemStack(Items.DIAMOND_PICKAXE));
 
         WorkerEquipment.equip(context.getWorld(), List.of(worker));
 
         context.assertTrue(
-                villager.getEquippedStack(EquipmentSlot.MAINHAND).isOf(Items.IRON_PICKAXE),
+                villager.getEquippedStack(EquipmentSlot.MAINHAND).isOf(Items.DIAMOND_PICKAXE),
                 "a mão ficou com "
                         + villager.getEquippedStack(EquipmentSlot.MAINHAND).getItem()
-                        + " — a picareta de ferro do baú não subiu");
+                        + " — a picareta de diamante do baú não subiu");
 
         context.assertTrue(
-                countIn(context, chest, Items.IRON_PICKAXE) == 0,
-                "a picareta de ferro continua no baú: a colônia duplicou o item");
+                countIn(context, chest, Items.DIAMOND_PICKAXE) == 0,
+                "a picareta de diamante continua no baú: a colônia duplicou o item");
 
         context.complete();
     }
 
     /**
-     * E a de madeira que ela substituiu não vira lixo no baú.
+     * E a de ferro que ela substituiu não vira lixo no baú.
      *
      * <p>Ela veio do nada — é a mesma conta do {@code NEVER_DROPS} —, e
      * devolvê-la faria da colônia uma fábrica: um degrau acima por ciclo,
-     * uma picareta de madeira por ciclo dentro do baú.
+     * uma picareta de ferro por ciclo dentro do baú.
+     *
+     * <p>Era a de madeira até 2026-09-05, quando a inicial virou ferro.
+     * A afirmação é a mesma: o que a colônia deu volta ao nada.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_equipment")
     public void theColonysOwnToolDoesNotPileUpInTheChest(TestContext context) {
@@ -402,7 +409,7 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
 
         VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
 
-        villager.equipStack(EquipmentSlot.MAINHAND, new ItemStack(Items.WOODEN_PICKAXE));
+        villager.equipStack(EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_PICKAXE));
 
         Worker worker = storedMiner(context, villager, chest);
 
@@ -411,8 +418,8 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
         WorkerEquipment.equip(context.getWorld(), List.of(worker));
 
         context.assertTrue(
-                countIn(context, chest, Items.WOODEN_PICKAXE) == 0,
-                "a picareta de madeira da colônia voltou para o baú");
+                countIn(context, chest, Items.IRON_PICKAXE) == 0,
+                "a picareta de ferro da colônia voltou para o baú");
 
         context.complete();
     }
@@ -470,7 +477,7 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
         WorkerEquipment.equip(context.getWorld(), List.of(worker));
 
         context.assertTrue(
-                villager.getEquippedStack(EquipmentSlot.MAINHAND).isOf(Items.WOODEN_PICKAXE),
+                villager.getEquippedStack(EquipmentSlot.MAINHAND).isOf(Items.IRON_PICKAXE),
                 "a mão ficou com "
                         + villager.getEquippedStack(EquipmentSlot.MAINHAND).getItem()
                         + " — o machado de diamante passou por picareta");

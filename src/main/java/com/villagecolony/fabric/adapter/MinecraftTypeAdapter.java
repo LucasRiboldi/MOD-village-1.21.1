@@ -257,6 +257,9 @@ public final class MinecraftTypeAdapter {
             case DIAMOND_PICKAXE -> Optional.of(Items.DIAMOND_PICKAXE);
             case SHEARS -> Optional.of(Items.SHEARS);
             case WOODEN_HOE -> Optional.of(Items.WOODEN_HOE);
+            case IRON_AXE -> Optional.of(Items.IRON_AXE);
+            case IRON_PICKAXE -> Optional.of(Items.IRON_PICKAXE);
+            case IRON_HOE -> Optional.of(Items.IRON_HOE);
         };
     }
 }
