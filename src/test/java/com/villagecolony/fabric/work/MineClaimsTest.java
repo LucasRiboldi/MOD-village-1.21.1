@@ -268,4 +268,53 @@ class MineClaimsTest {
 
         assertFalse(MineClaims.heldByOther(COLONY, second, Mine.ARMS));
     }
+
+    /**
+     * <b>Ramal acabado não é ramal livre</b> — 2026-09-05, e sem isto a
+     * mina trava de vez.
+     *
+     * <p>A reserva entregava o primeiro compartimento vazio, e "vazio"
+     * não é "serve". Com o ramal 0 encerrado, todo mineiro pegava o 0, o
+     * {@code nextTarget} via {@code isDone} e largava, e a passagem
+     * seguinte dava o 0 de novo. Os outros três nunca eram cavados — e
+     * como a mina só desce quando <b>todos</b> acabam, ela também nunca
+     * descia.
+     *
+     * <pre>
+     * no miner branch work: branch 0 is done, and the others are not
+     *   — waiting for them to finish to go deeper
+     * </pre>
+     */
+    @Test
+    void aFinishedBranchIsNotHandedOut() {
+        int branch = MineClaims
+                .claimArm(COLONY, first, Mine.ARMS, index -> index != 0)
+                .orElseThrow();
+
+        assertNotEquals(0, branch, "a reserva entregou o ramal que já acabou");
+    }
+
+    /**
+     * E o ramal do próprio dono também é conferido.
+     *
+     * <p>Ele acaba enquanto está reservado. Sem soltá-lo na mesma
+     * passagem, o dono fica preso nele — a mesma trava, com um mineiro
+     * só, e sem ninguém para notar.
+     */
+    @Test
+    void theOwnerLetsGoOfABranchThatFinishedUnderHim() {
+        int mine = MineClaims.claimArm(COLONY, first, Mine.ARMS).orElseThrow();
+
+        int next = MineClaims
+                .claimArm(COLONY, first, Mine.ARMS, index -> index != mine)
+                .orElseThrow();
+
+        assertNotEquals(mine, next, "o dono ficou preso no ramal que acabou debaixo dele");
+    }
+
+    /** E quando nenhum aceita picareta, ninguém entra — é a mina para descer. */
+    @Test
+    void noBranchIsHandedOutWhenEveryOneIsDone() {
+        assertTrue(MineClaims.claimArm(COLONY, first, Mine.ARMS, index -> false).isEmpty());
+    }
 }

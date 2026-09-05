@@ -217,10 +217,37 @@ public final class MineDigging {
 
         IdleLog.clear(colonyId, SURFACE_SUBJECT);
 
-        OptionalInt claimed =
-                MineClaims.claimArm(colonyId, workerId, mine.get().branchesOpenNow());
+        OptionalInt claimed = MineClaims.claimArm(
+                colonyId,
+                workerId,
+                mine.get().branchesOpenNow(),
+                index -> !mine.get().arm(index).isDone());
 
         if (claimed.isEmpty()) {
+            // <b>Nenhum ramal aceita picareta agora</b>: ou os abertos
+            // estão todos com outros mineiros, ou todos acabaram. O
+            // segundo caso é o que faz a mina descer, e é aqui que ele se
+            // decide — antes ficava no ramo do {@code isDone} logo
+            // abaixo, que a reserva nunca deixava alcançar quando o ramal
+            // acabado continuava sendo entregue.
+            if (mine.get().deepenIfEveryArmIsDone()) {
+                VillageColonyMod.LOGGER.info(
+                        "Mine {} finished every branch and went one level deeper",
+                        colonyId);
+
+                IdleLog.clear(colonyId, ARM_SUBJECT);
+
+                return Optional.empty();
+            }
+
+            IdleLog.record(
+                    colonyId,
+                    ARM_SUBJECT,
+                    IdleReason.NO_TARGET,
+                    "every open branch is taken or finished — "
+                            + MineClaims.diggersIn(colonyId) + " digger(s) in "
+                            + mine.get().branchesOpenNow() + " open branch(es)");
+
             // <b>A escada é de um só</b> — 2026-08-28. O cursor da
             // galeria mora no Mine e é um; dois mineiros perguntando na
             // mesma passagem recebiam a mesma posição, andavam para o
@@ -241,34 +268,6 @@ public final class MineDigging {
         }
 
         MineArm arm = mine.get().arm(claimed.getAsInt());
-
-        if (arm.isDone()) {
-            // O ramal acabou entre uma passagem e outra. Largar aqui é o
-            // que devolve este mineiro à fila dos ramais livres — e se
-            // não sobrou nenhum, é o deepenIfEveryArmIsDone que abre o
-            // nível seguinte.
-            MineClaims.releaseArm(colonyId, workerId);
-
-            boolean deepened = mine.get().deepenIfEveryArmIsDone();
-
-            // <b>Este caminho era mudo</b> — 2026-09-05. A sessão daquele
-            // dia passou meia hora com os dois mineiros em
-            // {@code looking for stone} e <b>nenhuma</b> linha de mina no
-            // log inteiro: nem fronteira, nem cursor, nem picareta. Sem
-            // uma frase aqui não dava para distinguir "o ramal acabou" de
-            // "a busca não achou pedra" de "a mina nem existe", e as três
-            // têm correções diferentes. É o §11 de novo.
-            IdleLog.record(
-                    colonyId,
-                    ARM_SUBJECT,
-                    IdleReason.NO_TARGET,
-                    deepened
-                            ? "every branch was done and the mine went one level deeper"
-                            : "branch " + claimed.getAsInt() + " is done, and the others"
-                                    + " are not — waiting for them to finish to go deeper");
-
-            return Optional.empty();
-        }
 
         IdleLog.clear(colonyId, ARM_SUBJECT);
 

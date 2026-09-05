@@ -261,6 +261,42 @@ abaixo, com o porquê.
 
 ## ✅ Resolvido
 
+### 2026-09-05 — ramal acabado deixa de ser ramal livre
+
+**A instrumentação pagou na primeira sessão.** As duas linhas postas no ciclo
+anterior apontaram o defeito sem nenhuma adivinhação:
+
+```text
+no miner branch work: branch 0 is done, and the others are not
+  — waiting for them to finish to go deeper
+no miner cut work: branch 0 gave no stone in 64 positions from cursor 256
+```
+
+**A trava.** `MineClaims.claimArm` entregava o primeiro compartimento **vazio**,
+e vazio não é *serve*: ramal acabado continua vazio. Com o ramal 0 encerrado,
+todo mineiro pegava o 0, o `nextTarget` via `isDone` e largava, e a passagem
+seguinte dava o 0 de novo. Os outros três nunca eram cavados — e como a mina só
+desce quando **todos** acabam, ela também nunca descia. Trava permanente, numa
+colônia que já tinha mina aberta.
+
+A reserva passa a receber quais ramais ainda aceitam picareta, e confere também
+**o do próprio dono**: ele acaba enquanto está reservado, e sem soltá-lo na mesma
+passagem o dono fica preso nele — a mesma trava, com um mineiro só.
+
+E a decisão de descer mudou de lugar: era o ramo do `isDone`, que a reserva
+nunca deixava alcançar, e passou a ser o caminho em que **nenhum** ramal aceita
+picareta. Quando ela acontece, escreve uma linha.
+
+**A outra metade da sessão foi boa, e vale registrar.** A colônia nova
+(`b27c5473`) minerou **152 blocos**, seguiu veio de cobre e carvão, entregou 101
+pedregulhos e 11 carvões, com **duas** desistências. Os lenhadores cortaram com
+`stall 19/2400`. Zero `lending a hand`, zero crash. E o estoque parou onde a
+reserva manda: **62 toras para 232 tábuas** — 58 toras-equivalentes, praticamente
+o empate que a regra persegue.
+
+**Verificação:** 641 unitários e 248 gametests, zero falhas. Fase vermelha
+conferida: sem o filtro, os três casos novos da reserva caem.
+
 ### 2026-09-05 — a mina volta a falar, e a metade sem teste é desfeita
 
 Sessão de 15:29–15:43: os mineiros pararam de travar — sem desistência, sem

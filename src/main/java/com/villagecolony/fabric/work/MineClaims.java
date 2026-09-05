@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.function.IntPredicate;
 import java.util.UUID;
 
 /**
@@ -96,14 +97,49 @@ public final class MineClaims {
      * renovasse expulsaria o dono na segunda pedra dele.
      */
     static OptionalInt claimArm(UUID colonyId, UUID workerId, int usable) {
+        return claimArm(colonyId, workerId, usable, index -> true);
+    }
+
+    /**
+     * O mesmo, sabendo quais ramais ainda aceitam picareta — 2026-09-05.
+     *
+     * <p><b>Sem esta pergunta a mina trava de vez.</b> A reserva entregava
+     * o primeiro compartimento <b>livre</b>, e "livre" não é "serve":
+     * ramal acabado continua livre. Com o ramal 0 encerrado, todo mineiro
+     * pegava o 0, o {@code nextTarget} via {@code isDone} e largava, e a
+     * passagem seguinte dava o 0 de novo. Os outros três nunca eram
+     * cavados — e como a mina só desce quando <b>todos</b> acabam, ela
+     * também nunca descia.
+     *
+     * <p>A linha que mostrou isso é de 2026-09-05, e só existe porque
+     * aquele caminho tinha acabado de deixar de ser mudo:
+     *
+     * <pre>
+     * no miner branch work: branch 0 is done, and the others are not
+     *   — waiting for them to finish to go deeper
+     * </pre>
+     *
+     * <p><b>E o ramal do próprio dono também é conferido.</b> Ele acaba
+     * enquanto está reservado, e sem soltá-lo aqui o dono ficaria preso
+     * nele — que é a mesma trava, com um mineiro só.
+     */
+    static OptionalInt claimArm(
+            UUID colonyId, UUID workerId, int usable, IntPredicate open) {
+
         UUID[] taken = DIGGERS.computeIfAbsent(colonyId, id -> new UUID[Mine.ARMS]);
 
         for (int index = 0; index < taken.length; index++) {
             if (workerId.equals(taken[index])) {
-                // Já é dele, e continua sendo: um mineiro que trocasse de
-                // ramal a cada passagem deixaria quatro túneis pela metade
-                // em vez de abrir um.
-                return OptionalInt.of(index);
+                if (open.test(index)) {
+                    // Já é dele, e continua sendo: um mineiro que trocasse
+                    // de ramal a cada passagem deixaria quatro túneis pela
+                    // metade em vez de abrir um.
+                    return OptionalInt.of(index);
+                }
+
+                // O dele acabou. Larga agora e procura outro na mesma
+                // passagem, em vez de voltar de mãos vazias.
+                taken[index] = null;
             }
         }
 
@@ -121,7 +157,7 @@ public final class MineClaims {
         // poço não está aberto, o único é o primeiro. Ver
         // Mine.branchesOpenNow.
         for (int index = 0; index < Math.min(usable, taken.length); index++) {
-            if (taken[index] == null) {
+            if (taken[index] == null && open.test(index)) {
                 taken[index] = workerId;
 
                 return OptionalInt.of(index);
