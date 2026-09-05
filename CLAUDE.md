@@ -55,3 +55,30 @@ oferecer skill em toda mensagem. Se nenhuma se aplica, siga sem citar
 nenhuma; se o autor já disse que não quer, não repita a oferta no mesmo
 assunto. E oferecer não é esperar de braços cruzados: o que não depende
 da resposta continua andando.
+
+## O jar de `downloads/` acompanha todo "commit push"
+
+**Regra do autor, 2026-09-04.** Sempre que houver `commit push`, o jar de
+`downloads/village-colony-0.3.0.jar` entra junto, atualizado.
+
+```
+./gradlew build && cp build/libs/village-colony-0.3.0.jar downloads/
+```
+
+**Por que ela existe.** Aquele arquivo **não é gerado pelo Gradle** —
+nenhuma tarefa o copia. Ele é passo de mão, e por isso envelhece em
+silêncio: o README aponta para ele, o autor o instala em `mods`, e nada
+avisa que ele está uma correção atrás do código. Aconteceu em 2026-09-04
+de manhã, e custou uma sessão de jogo inteira medindo um jar velho.
+
+**Como saber que deu certo:** depois do `cp`, `git status` acusa o jar
+como modificado. Se não acusar, ele já estava em dia — e não que a build
+tenha falhado. Na dúvida, `md5sum` nos dois caminhos.
+
+**A ordem importa:** a build vem antes do commit, porque um jar que não
+compila não deve ser publicado. E o `cp` vem antes do `git add`, senão o
+commit leva o jar da vez passada.
+
+**Fechar o Minecraft antes de trocar o arquivo em `mods`** continua sendo
+passo do autor, e não do agente — copiar com o jogo aberto falha calado.
+Ver `docs/proxima-sessao.md`.
