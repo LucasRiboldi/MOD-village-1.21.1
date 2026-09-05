@@ -261,6 +261,54 @@ abaixo, com o porquê.
 
 ## ✅ Resolvido
 
+### 2026-09-05 — a escada que o jogador constrói deixa de ser parede
+
+O autor trocou a descida da mina por uma **escada de tijolos de pedra**, e a
+colônia inteira parou na porta:
+
+```text
+miners: 6dccfd1e digging Escadas de Tijolos de Pedra at 1448, 44, 63,
+  29,0 blocks away (out of reach, he is at 1436, 64, 81,
+  walking to the mine mouth at 1436, 63, 81)
+```
+
+Ele estava **em cima da boca** e era mandado para a boca. Treze desistências,
+sem um passo dado.
+
+**A causa.** O predicado do corredor perguntava só *"a caixa de colisão é
+vazia?"*, e degrau tem colisão. O corredor quebrava no primeiro degrau, o passo
+não achava saída, e o desvio devolvia a boca — o bloco debaixo do pé dele.
+Passou a ser **"ou o lugar é vazio, ou dá para ficar de pé em cima dele"**, e a
+segunda metade é o que não o transforma em buraco na rocha: pedra maciça tem
+mais pedra em cima, então não se fica de pé ali e ela continua parede.
+
+E o chão do `standable` era `isSolidBlock` — cubo cheio e opaco —, por isso
+ninguém ficava de pé num degrau. O pé precisa de alguma coisa com colisão.
+
+**A outra ponta: a mina ia picaretar a escada dele.** O `canDig` protege a vila
+gerada e o que a colônia construiu, e a escada do jogador não é nenhuma das
+duas. `isStillClosed` passou a exigir **cubo cheio**: degrau, laje, tocha e
+porta já têm forma, e a mina cava rocha. É a Regra 3 chegando pela pergunta
+*"isto ainda é rocha?"* em vez de *"isto é de alguém?"*.
+
+**Um caminho errado que ficou registrado.** A primeira tentativa foi devolver o
+alvo de verdade quando o desvio apontava para onde o aldeão já estava. Ela
+**quebrou o E32**: alvo sólido entregue à navegação é levado por ela até a
+superfície, que é o defeito que a perna existe para evitar. O teste pegou, e a
+correção mudou de lugar. Fica dito porque a ideia é tentadora e volta.
+
+**E o teste do E32 estava validando uma cópia.** O `MinerGameTest.realFooting`
+reimplementava o `MinerWork.footingIn` linha por linha: a correção entrou na
+produção e o teste continuou medindo o predicado antigo. O `footingIn` virou
+público e o gametest passou a delegar.
+
+**Verificação:** 638 unitários e 248 gametests, zero falhas. Fase vermelha
+conferida: com os dois predicados antigos, o caso novo cai.
+
+**O que não tem teste:** a metade do `isStillClosed`. Ela é uma linha sobre
+`isFullCube`, e `isStillClosed` é privado — o que se afirma é o predicado do
+corredor, não a recusa de cavar.
+
 ### 2026-09-05 — a árvore recusada fica recusada, e o ferro vira o primeiro degrau
 
 Sessão de 2026-09-05, 09:59–10:28, e a primeira que rodou o jar certo desde

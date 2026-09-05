@@ -798,12 +798,46 @@ public final class MinerWork {
      * de "cabe um aldeão aqui" desde 2026-08-28. Uma conta só, e é a do
      * construtor.
      */
-    private static MinerReach.Footing footingIn(ServerWorld world) {
+    /**
+     * O que o mundo responde ao passo do mineiro.
+     *
+     * <p><b>Pública porque a bateria precisa da mesma.</b> O
+     * {@code MinerGameTest} tinha uma cópia destas duas linhas, e em
+     * 2026-09-05 a cópia ficou para trás: a correção da escada do jogador
+     * entrou aqui e o teste do E32 continuou medindo o predicado antigo.
+     * Teste que valida uma cópia da regra não valida a regra.
+     */
+    public static MinerReach.Footing footingIn(ServerWorld world) {
         return new MinerReach.Footing() {
 
+            /**
+             * <b>Ou o lugar é vazio, ou dá para ficar de pé em cima
+             * dele</b> — 2026-09-05, e é a escada que o jogador constrói.
+             *
+             * <p>Era só "a caixa de colisão é vazia", e degrau tem
+             * colisão. O autor trocou a descida da mina por uma escada de
+             * tijolos de pedra e a colônia inteira parou na porta: o
+             * corredor quebrava no primeiro degrau, o passo não achava
+             * saída, e o desvio devolvia a boca — o bloco debaixo do pé
+             * dele.
+             *
+             * <pre>
+             * he is at 1436, 64, 81, walking to the mine mouth at 1436, 63, 81
+             * </pre>
+             *
+             * <p>Treze desistências sem um passo dado.
+             *
+             * <p><b>A segunda metade é o que não deixa isto virar buraco
+             * na rocha.</b> Pedra maciça no meio de uma coluna também tem
+             * colisão, e ela continua sendo parede: em cima dela há mais
+             * pedra, então não se fica de pé ali. O que passa são as
+             * coisas que se sobe — degrau, laje —, porque acima delas
+             * cabe um aldeão.
+             */
             @Override
             public boolean passable(BlockPos at) {
-                return BuilderApproach.passable(world, at);
+                return BuilderApproach.passable(world, at)
+                        || BuilderApproach.standable(world, at.up());
             }
 
             @Override

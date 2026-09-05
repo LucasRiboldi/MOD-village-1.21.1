@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import net.minecraft.block.BlockState;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -140,13 +141,23 @@ public final class BuilderApproach {
      * corredor continua pergunta esta; quem escolhe onde parar pergunta a
      * outra.
      */
+    /** Onde um aldeão atravessa: caixa de colisão vazia. */
     public static boolean passable(ServerWorld world, BlockPos at) {
         return world.getBlockState(at).getCollisionShape(world, at).isEmpty();
     }
 
-    /** Dois blocos livres sobre bloco sólido: onde um aldeão cabe. */
+    /**
+     * Dois blocos livres sobre chão que segura um aldeão.
+     *
+     * <p><b>O chão era {@code isSolidBlock}</b>, que quer dizer cubo
+     * cheio e opaco — e por isso ninguém ficava de pé num degrau. O que
+     * um aldeão precisa embaixo do pé é alguma coisa com colisão, e é o
+     * que se pergunta desde 2026-09-05.
+     */
     public static boolean standable(ServerWorld world, BlockPos at) {
-        return world.getBlockState(at.down()).isSolidBlock(world, at.down())
+        BlockPos floor = at.down();
+
+        return !world.getBlockState(floor).getCollisionShape(world, floor).isEmpty()
                 && passable(world, at)
                 && passable(world, at.up());
     }

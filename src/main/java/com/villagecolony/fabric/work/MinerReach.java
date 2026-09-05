@@ -313,6 +313,7 @@ public final class MinerReach {
         // Alvo lá embaixo: entra-se pela boca. Não se pede à navegação um
         // caminho de vinte blocos por dentro da rocha, que é a razão de
         // esta classe existir.
+        //
         if (underground) {
             return mouth;
         }

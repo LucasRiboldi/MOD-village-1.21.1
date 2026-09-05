@@ -548,4 +548,5 @@ class MinerLegTest {
                 "a perna afundou o mineiro atrás de pedra que é de outro ramal: "
                         + leg.toShortString());
     }
+
 }

@@ -1958,19 +1958,16 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /** As duas perguntas da perna, respondidas pelos blocos deste teste. */
+    /**
+     * O piso de verdade, e é <b>o de produção</b>.
+     *
+     * <p>Eram duas linhas copiadas do {@code MinerWork}, e a cópia ficou
+     * para trás em 2026-09-05: a correção da escada do jogador entrou lá
+     * e o teste do E32 continuou medindo o predicado antigo. Teste que
+     * valida uma cópia da regra não valida a regra.
+     */
     private static MinerReach.Footing realFooting(ServerWorld world) {
-        return new MinerReach.Footing() {
-
-            @Override
-            public boolean passable(BlockPos at) {
-                return BuilderApproach.passable(world, at);
-            }
-
-            @Override
-            public boolean standable(BlockPos at) {
-                return BuilderApproach.standable(world, at);
-            }
-        };
+        return MinerWork.footingIn(world);
     }
 
     /**
@@ -3904,6 +3901,73 @@ public class MinerGameTest implements FabricGameTest {
             MinerWork.clearAll();
             owned.cleanUp();
         }
+
+        context.complete();
+    }
+
+    /**
+     * <b>A escada que o jogador constrói é corredor, e não parede</b> —
+     * 2026-09-05.
+     *
+     * <p>O autor trocou a descida da mina por uma escada de tijolos de
+     * pedra, e a colônia inteira parou na porta:
+     *
+     * <pre>
+     * miners: 6dccfd1e digging Escadas de Tijolos de Pedra at 1448, 44, 63,
+     *   29,0 blocks away (out of reach, he is at 1436, 64, 81,
+     *   walking to the mine mouth at 1436, 63, 81)
+     * </pre>
+     *
+     * <p>Ele estava <b>em cima da boca</b> e era mandado para a boca.
+     * {@code passable} perguntava se a caixa de colisão era vazia, degrau
+     * tem colisão, e o corredor quebrava no primeiro deles: o passo não
+     * achava saída e o desvio devolvia um bloco onde ele já estava.
+     * Treze desistências sem um passo dado.
+     *
+     * <p><b>O chão era {@code isSolidBlock}</b> — cubo cheio e opaco —, e
+     * por isso ninguém ficava de pé num degrau: a perna do mineiro nunca
+     * escolhia um como ponto de parada. O que o pé precisa embaixo é
+     * alguma coisa com colisão.
+     *
+     * <p>A segunda afirmação é a que segura a correção: <b>pedra maciça
+     * continua parede</b>. Uma correção que abrisse o corredor por dentro
+     * da rocha mandaria o mineiro atravessar o morro.
+     *
+     * <p>Rodado contra a correção desligada: ficar de pé no degrau
+     * reprova.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_player_stairs",
+            tickLimit = 20)
+    public void thePlayersStaircaseIsACorridorAndNotAWall(TestContext context) {
+        BlockPos step = new BlockPos(2, 2, 2);
+        BlockPos wall = new BlockPos(5, 2, 2);
+
+        context.setBlockState(step.down(), Blocks.STONE.getDefaultState());
+        context.setBlockState(step, Blocks.STONE_BRICK_STAIRS.getDefaultState());
+
+        // A parede é uma <b>coluna</b> maciça, que é a forma da frente de
+        // escavação: rocha com rocha em cima. Uma pedra solta com dois
+        // blocos de ar acima dela seria degrau, e se anda por cima —
+        // montá-la assim provaria o contrário do que este teste quer.
+        for (int up = 0; up < 3; up++) {
+            context.setBlockState(wall.up(up), Blocks.STONE.getDefaultState());
+        }
+
+        ServerWorld world = context.getWorld();
+
+        MinerReach.Footing corridor = MinerWork.footingIn(world);
+
+        context.assertTrue(
+                corridor.passable(context.getAbsolutePos(step)),
+                "o corredor quebra no degrau do jogador, e a colônia para na porta");
+
+        context.assertTrue(
+                BuilderApproach.standable(world, context.getAbsolutePos(step.up())),
+                "ninguém fica de pé em cima do degrau do jogador");
+
+        context.assertFalse(
+                corridor.passable(context.getAbsolutePos(wall)),
+                "rocha maciça virou corredor — o mineiro vai atravessar o morro");
 
         context.complete();
     }

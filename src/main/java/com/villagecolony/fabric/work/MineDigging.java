@@ -539,6 +539,20 @@ public final class MineDigging {
      * <p>Ar, água, lava e a tocha da própria mina são espaço aberto; o
      * que não se cava — bedrock, casa da vila — não é frente, porque
      * ficaria sendo frente para sempre.
+     *
+     * <p><b>E o que não é cubo cheio já não é rocha</b> —
+     * 2026-09-05. O autor trocou a descida da mina por uma escada de
+     * tijolos de pedra e a colônia mirou nela: {@code digging Escadas de
+     * Tijolos de Pedra at 1448, 44, 63}. A mina cava para <b>abrir
+     * caminho</b>, e onde já se passa não há caminho a abrir — picaretear
+     * ali é destruir a escada do jogador para reabrir o buraco que ela já
+     * é.
+     *
+     * <p>O {@link #canDig} não pegava este caso, e não é falha dele: ele
+     * protege a vila gerada e o que a colônia construiu, e a escada não é
+     * nenhuma das duas. É a Regra 3 chegando por onde faltava — pela
+     * pergunta <i>"isto ainda é rocha?"</i> em vez de <i>"isto é de
+     * alguém?"</i>.
      */
     private static boolean isStillClosed(ServerWorld world, ColonyPos position) {
         BlockPos at = MinecraftTypeAdapter.toBlockPos(position);
@@ -548,6 +562,12 @@ public final class MineDigging {
         }
 
         BlockState state = world.getBlockState(at);
+
+        if (!state.isFullCube(world, at)) {
+            // Degrau, laje, tocha, porta: alguém já deu forma a isto, e a
+            // mina cava rocha. Ver o javadoc acima.
+            return false;
+        }
 
         return !state.isAir() && state.getFluidState().isEmpty() && canDig(world, at);
     }
