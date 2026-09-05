@@ -1,6 +1,13 @@
 # TODO
 
-**Atualizado:** 2026-09-04. **Sessão de jogo de 43 minutos** (00:00–00:44),
+**Atualizado:** 2026-09-05. **O ciclo de hoje** saiu inteiro da sessão de
+jogo de 2026-09-04 às 22:37: seis queixas do autor, seis causas medidas no
+log — a mão emprestada trocando lenhador e mineiro de ofício, três defeitos
+compostos na caminhada do mineiro, a meta de tábua sem reserva de tora, e a
+calota do teto que a colônia não sabia fabricar na madeira que tinha. Ver
+*2026-09-05* em ✅ Resolvido. **Nenhum deles foi visto em jogo.**
+
+**Antes disso — 2026-09-04.** **Sessão de jogo de 43 minutos** (00:00–00:44),
 sem crash e sem exception do mod — e com noventa e nove `WARN` que
 contavam uma história ruim. Cinco ciclos saíram dela, todos de defeito
 encontrado no log: o **lenhador que morria no próprio baú** (silo sem
@@ -247,6 +254,67 @@ abaixo, com o porquê.
 ---
 
 ## ✅ Resolvido
+
+### 2026-09-05 — o lenhador saiu da mina, e o mineiro voltou a cavar
+
+**Sessão de jogo de 2026-09-04, 22:37–22:57** (`latest.log`, colônia
+`c4706b63`). Seis queixas do autor, seis causas medidas no log. Nenhum dos
+consertos foi visto em jogo ainda.
+
+**1 e 4 — a troca de funções.** O log tem as duas linhas no mesmo minuto:
+
+```text
+lumberjacks: d8560cec (MINER lending a hand) chopping — tree at 1422, 63, 40
+miners:      af897f92 (LUMBERJACK lending a hand) digging Diorito at 1398, 44, 64
+```
+
+É a 2ª passagem da ADR-010, e ela saiu. O portão dela era o **descanso**, e
+travar é o estado normal de quem tem trabalho a trinta blocos — a 1ª passagem
+nunca chegava a segurar a especialização. Ver a emenda na ADR-010: a peça 1 (o
+descanso) fica, a peça 2 sai, e o problema que ela resolvia volta a existir —
+por decisão do autor, um lenhador parado é melhor que um lenhador na mina.
+
+**2 — o mineiro não cavava, e eram três defeitos compostos** em
+`MinerReach.legTowards`:
+
+| defeito | o que ele fazia |
+|---|---|
+| `outside` media contra o **Y do aldeão** | o Y dele alterna entre 44 e 45 andando na galeria; o mesmo alvo era lido ora como superfície ora como fundo, e o destino alternava entre a boca e o alvo cru. Dezesseis minutos, distância parada em 50,7 |
+| o corredor era o do **ramal reservado** | uma passagem estéril devolve o ramal, e o `claimArm` seguinte dá outro — com o aldeão ainda dentro do primeiro. `stepAlongTheShaft` devolvia nulo para sempre |
+| tarefa de **areia** não reserva ramal | `armOf` vinha vazio, e a duna da superfície era entregue crua a um mineiro dezenove blocos abaixo dela. Oito desistências de 2.400 tiques na mesma sessão |
+
+A conta passou a medir contra a **boca**, que não anda; o corredor passou a ser
+**onde o aldeão está** (`MineDigging.armToWalk`); e quem está lá dentro sai pela
+boca antes de ir para qualquer outro lugar.
+
+**3 — a picareta de diamante já estava corrigida.** Commit `49cfb49`, das 21:34
+do mesmo dia; o jar de 22:29 tem a correção, e o log de 22:37 não traz nenhuma
+troca de ferramenta. O que o autor viu foi de sessão anterior. O que **estava**
+errado era o javadoc do `ToolType`, que ainda afirmava diamante e apontava para
+um `MinerWork.TOOL` que não existe mais.
+
+**5 — todo tronco virava tábua.** A meta era `(storedPlanks + plankRoom) / 2` e
+o único portão era "tem pelo menos um tronco". A sessão terminou com **1.257
+tábuas e 135 toras**. A regra nova conta tora e tábua na mesma moeda e empata as
+duas — vinte toras pedem dez conversões, e dez toras com quarenta tábuas já
+estão em equilíbrio. O portão está em **dois** lugares de propósito: o
+`ColonyCycle` só cancela tarefa *ainda disponível*, então a meta sozinha não
+segura um fabricante que já começou.
+
+**6 — o buraco no centro do teto.** Não era bloco faltando na planta: a camada
+y=5 da casa de planície tem um vão de 1×1 no centro **de propósito**, e a calota
+3×3 de y=6 o tapa. A obra parava em `13 blocks left ... waiting for
+minecraft:oak_stairs` — 40 das 49 escadas feitas. E não era falta de madeira:
+a colônia tinha 1.257 tábuas de **cerejeira** e duas de carvalho, e escada de
+carvalho sai de tábua de carvalho. `MaterialChoice` passou a oferecer a mesma
+peça em outra espécie, pelas tags do próprio jogo — que é a política que
+`WOOD`/`PLANKS`/`STONE` já tinham desde 08-26, e que parava na peça *feita* de
+tábua.
+
+**Verificação:** 638 testes de unidade e 244 gametests, zero falhas. Fase
+vermelha conferida nos três consertos com teste próprio — a mão emprestada
+reposta derruba 3 casos, o código de 09-04 do `legTowards` derruba 2, e a
+substituição desligada derruba os 2 do teto.
 
 ### 2026-09-04 — o lenhador parou de morrer no próprio baú
 
@@ -2283,6 +2351,16 @@ dos três foi visto em jogo.
 | 🟡 | **A picareta de ouro vence a de diamante** — 12 de velocidade contra 8 | É o Vanilla, e aqui não tem o defeito que o compensa: ferramenta de trabalhador não se gasta. Fica dito porque vai parecer defeito quando aparecer em jogo |
 
 ---
+
+## 🟠 O ciclo de 2026-09-05 — o que ele deixou aberto
+
+| nível | o quê | por quê |
+|---|---|---|
+| 🔴 | **Nenhum dos seis consertos foi visto em jogo** | são 638 unitários e 244 gametests, e nenhum deles é uma vila de verdade rodando vinte minutos. O da mina em especial: o `armToWalk` foi provado em geometria, e o que ele conserta é comportamento de navegação |
+| 🟠 | **A mão emprestada saiu, e o problema dela volta** | a ADR-010 existia porque o trabalhador travado repete a mesma parede até o fim da sessão. Isso volta a acontecer, por decisão do autor. A saída é consertar o travamento — foi o que este ciclo fez do lado do mineiro, e o lado do lenhador (`2400 ticks on the tree`, quatro vezes no log de 09-04) continua aberto |
+| 🟠 | **A casa passa a sair de espécies misturadas na escada e na porta** | já saía na parede desde 08-26; agora a calota do teto também. Uma casa de carvalho com escada de cerejeira é o preço de a casa **existir** — mas é mudança visível, e o autor pode não querer |
+| 🟡 | **A reserva de tora não distingue espécie** | ela conta `WOOD` e `PLANKS` como grupos. Uma colônia com 100 toras de cerejeira e nenhuma de carvalho tem "metade em tora" satisfeita e continua sem a tora de carvalho que a viga descascada pede. O caso não apareceu em jogo ainda |
+| 🟡 | **`LentHand.mark` virou guarda sem caminho previsto** | ele só dispara se a profissão mudar com a tarefa aberta. Se um `(X lending a hand)` aparecer no log, é notícia — ou recontratação em curso, ou a separação furada por caminho não mapeado |
 
 ## 🟠 Pendências, por nível de progressão lógica
 

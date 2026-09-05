@@ -37,6 +37,107 @@ class ColonyGoalsTest {
         return ResourceTally.of(counts);
     }
 
+    private static ResourceTally owned(
+            ResourceType first, int firstAmount, ResourceType second, int secondAmount) {
+
+        Map<ResourceType, Integer> counts = new EnumMap<>(ResourceType.class);
+        counts.put(first, firstAmount);
+        counts.put(second, secondAmount);
+
+        return ResourceTally.of(counts);
+    }
+
+    /**
+     * <b>Metade da madeira fica em tora</b> — a regra do autor de
+     * 2026-09-05, com o exemplo que ele deu: <i>"20 troncos → converter
+     * aproximadamente 10; manter aproximadamente 10"</i>.
+     *
+     * <p>Dez conversões são quarenta tábuas, e é isso que a meta pede.
+     * Antes ela pedia metade da capacidade dos baús — {@code plankRoom}
+     * inteiro — e o fabricante moía as vinte.
+     */
+    @Test
+    void onlyHalfTheLogsAreAskedToBecomePlanks() {
+        ResourceTally stock = owned(ResourceType.OAK_LOG, 20);
+
+        Map<ResourceType, Integer> goal = ColonyGoals.of(colony(), stock, 0, 1000);
+
+        assertEquals(40, goal.get(ResourceType.OAK_PLANKS));
+    }
+
+    /**
+     * E a reserva não escorre ciclo a ciclo.
+     *
+     * <p>É o defeito que a conta ingênua teria: "metade do que há agora"
+     * transforma vinte em dez, depois dez em cinco, e o baú esvazia em
+     * degraus. Aqui o estado <b>seguinte</b> ao teste de cima — dez toras
+     * e as quarenta tábuas que saíram das outras dez — já está em
+     * equilíbrio, e a meta para de pedir.
+     */
+    @Test
+    void theReserveDoesNotDrainCycleAfterCycle() {
+        ResourceTally after = owned(
+                ResourceType.OAK_LOG, 10, ResourceType.OAK_PLANKS, 40);
+
+        Map<ResourceType, Integer> goal = ColonyGoals.of(colony(), after, 0, 1000);
+
+        assertEquals(
+                40,
+                goal.get(ResourceType.OAK_PLANKS),
+                "a meta voltou a pedir tábua, e as dez toras reservadas vão embora");
+
+        assertFalse(
+                ResourceDemand.deficit(goal, after).containsKey(ResourceType.OAK_PLANKS),
+                "com a meta igual ao estoque nao pode sobrar deficit");
+    }
+
+    /**
+     * A colônia da sessão de 2026-09-04, com os números dela.
+     *
+     * <p>1.257 tábuas de cerejeira e 135 toras: a madeira já está muito
+     * mais em tábua do que em tora, e nenhuma conversão é pedida. É o
+     * caso que o autor viu — o fabricante moendo o estoque inteiro com a
+     * colônia afogada em tábua.
+     */
+    @Test
+    void aColonyDrowningInPlanksConvertsNothing() {
+        ResourceTally stock = owned(
+                ResourceType.CHERRY_LOG, 135, ResourceType.CHERRY_PLANKS, 1257);
+
+        Map<ResourceType, Integer> goal = ColonyGoals.of(colony(), stock, 0, 1000);
+
+        assertFalse(
+                ResourceDemand.deficit(goal, stock).containsKey(ResourceType.OAK_PLANKS),
+                "a colonia pediu mais tabua com 1257 delas no bau e 135 toras");
+    }
+
+    /**
+     * A obra manda, mas não fura a reserva.
+     *
+     * <p>Uma casa que peça quatrocentas tábuas com vinte toras no baú
+     * recebe as quarenta que a metade rende, e espera em
+     * WAITING_RESOURCES pelo resto — que é o estado previsto. Furar aqui
+     * seria devolver o defeito por onde ele entrou: a obra consome a
+     * tora que a obra seguinte precisa inteira.
+     */
+    @Test
+    void theWorkDemandDoesNotBreakTheReserve() {
+        ResourceTally stock = owned(ResourceType.OAK_LOG, 20);
+
+        Map<ResourceType, Integer> goal = ColonyGoals.of(colony(), stock, 0, 0, 400);
+
+        assertEquals(40, goal.get(ResourceType.OAK_PLANKS));
+    }
+
+    /** A conta da reserva, sozinha e sem colônia em volta. */
+    @Test
+    void theReserveIsHalfTheLogsMeasuredAgainstThePlanksAlreadyMade() {
+        assertEquals(10, ColonyGoals.logsToConvert(20, 0));
+        assertEquals(0, ColonyGoals.logsToConvert(10, 40));
+        assertEquals(0, ColonyGoals.logsToConvert(135, 1257));
+        assertEquals(0, ColonyGoals.logsToConvert(0, 0));
+    }
+
     /** A meta é o que se tem mais o que ainda cabe. */
     @Test
     void theGoalIsWhatIsStoredPlusWhatFits() {
@@ -217,17 +318,24 @@ class ColonyGoalsTest {
     // ----------------------------------------------------------------
 
     /**
-     * A meta de tábua é metade do que os baús comportam.
+     * A meta de tábua é metade do que os baús comportam, <b>até onde a
+     * reserva de tora deixa</b>.
      *
      * <p>O tronco no estoque é o que abre a meta: sem material não se
      * pede fabricação. Ver {@link #withoutLogsThereIsNoPlankGoal}.
+     *
+     * <p><b>Eram 100 até 2026-09-05</b> — metade dos duzentos que cabem.
+     * Oito toras não fazem cem tábuas, e a meta pedia assim mesmo: quem
+     * respondia era o fabricante, moendo as oito e parando em trinta e
+     * duas. Agora o teto é a reserva — quatro toras convertidas, quatro
+     * guardadas, dezesseis tábuas.
      */
     @Test
-    void thePlankGoalIsHalfOfWhatTheChestsHold() {
+    void thePlankGoalIsCappedByTheLogReserve() {
         Map<ResourceType, Integer> goal = ColonyGoals.of(
                 colony(), owned(ResourceType.OAK_LOG, 8), 0, 200);
 
-        assertEquals(100, goal.get(ResourceType.OAK_PLANKS));
+        assertEquals(16, goal.get(ResourceType.OAK_PLANKS));
     }
 
     /**
@@ -243,10 +351,18 @@ class ColonyGoalsTest {
         counts.put(ResourceType.BIRCH_PLANKS, 60);
         counts.put(ResourceType.OAK_LOG, 8);
 
-        Map<ResourceType, Integer> goal =
-                ColonyGoals.of(colony(), ResourceTally.of(counts), 0, 140);
+        ResourceTally stock = ResourceTally.of(counts);
 
-        assertEquals(100, goal.get(ResourceType.OAK_PLANKS));
+        Map<ResourceType, Integer> goal = ColonyGoals.of(colony(), stock, 0, 140);
+
+        // Sessenta tábuas valem quinze toras, e há oito: a madeira desta
+        // colônia já está mais em tábua do que em tora, e a reserva não
+        // libera nenhuma conversão. A meta fica no que ela tem.
+        assertEquals(60, goal.get(ResourceType.OAK_PLANKS));
+
+        assertFalse(
+                ResourceDemand.deficit(goal, stock).containsKey(ResourceType.OAK_PLANKS),
+                "a meta subiu acima do estoque, e ela nao pode subir a cada peca feita");
     }
 
     /**
@@ -320,7 +436,13 @@ class ColonyGoalsTest {
         assertFalse(missing.containsKey(ResourceType.OAK_PLANKS));
     }
 
-    /** Com tronco no baú, a meta de tábua abre. */
+    /**
+     * Com tronco no baú, a meta de tábua abre.
+     *
+     * <p>A afirmação é a mesma de sempre e é o par de
+     * {@link #withoutLogsThereIsNoPlankGoal}: o que muda com a reserva de
+     * 2026-09-05 é o tamanho do pedido, e não o fato de haver um.
+     */
     @Test
     void withLogsThePlankGoalOpens() {
         ResourceTally stock = owned(ResourceType.OAK_LOG, 8);
@@ -328,18 +450,25 @@ class ColonyGoalsTest {
         Map<ResourceType, Integer> missing = ResourceDemand.deficit(
                 ColonyGoals.of(colony(), stock, 0, 200), stock);
 
-        assertEquals(100, missing.get(ResourceType.OAK_PLANKS));
+        assertEquals(16, missing.get(ResourceType.OAK_PLANKS));
     }
 
     // --- a segunda metade da Regra 5: a obra manda ---
 
     /**
-     * Com obra, a meta de tábua é a da obra.
+     * Com obra, a meta de tábua é a da obra — <b>até a reserva</b>.
      *
      * <p>A metade do armazém deixa de ser teto e vira lote de partida.
+     *
+     * <p><b>Eram 33 até 2026-09-05</b>, que é o que a obra pedia. A
+     * reserva passa por cima porque é ela que responde à queixa do autor:
+     * a obra que consome a última tora deixa a obra seguinte sem os
+     * {@code stripped_oak_log}, que não saem de tábua. O que falta vem
+     * pela meta de madeira, e a obra espera em WAITING_RESOURCES — que é
+     * o estado previsto para isso.
      */
     @Test
-    void theWorkDemandReplacesTheHalf() {
+    void theWorkDemandIsCappedByTheReserve() {
         Map<ResourceType, Integer> counts = new EnumMap<>(ResourceType.class);
         counts.put(ResourceType.OAK_LOG, 10);
         counts.put(ResourceType.OAK_PLANKS, 4);
@@ -347,10 +476,10 @@ class ColonyGoalsTest {
         Map<ResourceType, Integer> goal =
                 ColonyGoals.of(colony(), ResourceTally.of(counts), 0, 100, 33);
 
-        assertEquals(33, goal.get(ResourceType.OAK_PLANKS));
+        assertEquals(20, goal.get(ResourceType.OAK_PLANKS));
     }
 
-    /** Sem obra, continua valendo a metade. */
+    /** Sem obra, continua valendo a metade — a da reserva, desde 09-05. */
     @Test
     void withoutWorkTheHalfStillRules() {
         Map<ResourceType, Integer> counts = new EnumMap<>(ResourceType.class);
@@ -360,7 +489,7 @@ class ColonyGoalsTest {
         Map<ResourceType, Integer> goal =
                 ColonyGoals.of(colony(), ResourceTally.of(counts), 0, 100, 0);
 
-        assertEquals(52, goal.get(ResourceType.OAK_PLANKS));
+        assertEquals(20, goal.get(ResourceType.OAK_PLANKS));
     }
 
     /**

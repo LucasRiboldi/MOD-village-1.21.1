@@ -742,6 +742,87 @@ public final class MineDigging {
     }
 
     /**
+     * Por qual corredor este aldeão anda agora — 2026-09-05.
+     *
+     * <p><b>O ramal reservado diz onde ele vai cavar; este diz por onde
+     * ele caminha</b>, e os dois deixaram de ser o mesmo no dia em que a
+     * mina ganhou quatro rumos. O passo do {@code MinerReach} percorre a
+     * ordem de cavar de um ramal só, e ela não é caminho para os outros
+     * três: pedir um passo pelo ramal reservado, com o aldeão parado
+     * dentro de outro, devolve nulo em todo tique — e o mineiro fica no
+     * fundo do túnel errado até o guarda devolver a tarefa.
+     *
+     * <p>Dois caminhos levam a esse descasamento, e os dois apareceram na
+     * sessão de 2026-09-04:
+     *
+     * <ul>
+     *   <li>a reserva muda de ramal. Uma passagem sem pedra chama
+     *       {@code MineClaims.release}, e o {@code claimArm} seguinte dá
+     *       o primeiro ramal livre, que pode ser outro — enquanto o
+     *       aldeão continua onde estava;</li>
+     *   <li>a tarefa de <b>areia</b> não reserva ramal nenhum. Ali o
+     *       reservado é vazio, e o corredor por onde ele precisa sair
+     *       existe do mesmo jeito.</li>
+     * </ul>
+     *
+     * <p>Por isso a resposta é <b>onde ele está</b>, e o reservado só
+     * responde quando nenhum corredor o contém — que é o caso de quem
+     * está na superfície, e ali quem conduz é a navegação do jogo.
+     */
+    public static Optional<MineArm> armToWalk(
+            UUID colonyId, UUID workerId, BlockPos villager) {
+
+        Optional<Mine> mine = VillageColonyMod.MINES.of(colonyId);
+
+        if (mine.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Optional<MineArm> held = armOf(colonyId, workerId);
+
+        // O caso comum, e é o primeiro de propósito: ele está cavando no
+        // ramal que reservou. Perguntar aos outros três seria pagar a
+        // varredura para chegar na mesma resposta.
+        if (held.isPresent() && MinerReach.isOnCorridorOf(villager, held.get())) {
+            return held;
+        }
+
+        for (MineArm arm : mine.get().arms()) {
+            if (MinerReach.isOnCorridorOf(villager, arm)) {
+                return Optional.of(arm);
+            }
+        }
+
+        return held;
+    }
+
+    /**
+     * Se avançar a frente deste corredor aproxima do alvo — 2026-09-05.
+     *
+     * <p>Dono do alvo é o ramal <b>reservado</b>: foi dele que a posição
+     * saiu, em {@link #nextTarget}. Corredor é onde o aldeão está. Quando
+     * são o mesmo, cavar para a frente é ir na direção certa; quando não
+     * são, o alvo está do outro lado do poço e a única ligação entre os
+     * dois ramais é a boca.
+     *
+     * <p>Recebe o corredor já resolvido em vez de calculá-lo: o
+     * {@link #armToWalk} varre as posições dos quatro ramais, e chamá-lo
+     * duas vezes por tique por mineiro seria pagar a varredura em dobro
+     * para responder à mesma pergunta.
+     *
+     * <p>Sem ramal reservado — a tarefa de areia — a resposta é
+     * <b>não</b>, e ela é a certa pelo mesmo caminho: quem cava areia não
+     * tem frente a avançar, e o que ele precisa é sair.
+     */
+    public static boolean leadsToTheTarget(
+            UUID colonyId, UUID workerId, Optional<MineArm> corridor) {
+
+        Optional<MineArm> owner = armOf(colonyId, workerId);
+
+        return owner.isPresent() && corridor.isPresent() && owner.get() == corridor.get();
+    }
+
+    /**
      * A mina desta colônia, aberta agora se ainda não existir.
      *
      * <p>A mina é da colônia, e não deste mineiro: o segundo a descer

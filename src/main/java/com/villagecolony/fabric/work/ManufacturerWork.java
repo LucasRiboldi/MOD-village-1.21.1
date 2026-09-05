@@ -9,8 +9,10 @@ import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
+import com.villagecolony.core.coordination.ColonyGoals;
 import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.core.coordination.WorkAssignment;
+import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
@@ -22,6 +24,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestDepositor;
+import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
 import com.villagecolony.fabric.integration.CraftingLookup;
 import net.minecraft.entity.passive.VillagerEntity;
@@ -30,6 +33,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -511,6 +515,12 @@ public final class ManufacturerWork {
      * onde a peça cabe.
      */
     private static boolean convertOne(ServerWorld world, Job job, UUID workerId) {
+        if (!halfTheWoodMayStillBeConverted(world, job.task.colonyId())) {
+            finish(job, workerId, "half of the colony's wood stays in logs");
+
+            return false;
+        }
+
         ColonyPos chest = null;
         List<ItemStack> logs = List.of();
 
@@ -572,6 +582,42 @@ public final class ManufacturerWork {
         job.crafted++;
 
         return true;
+    }
+
+    /**
+     * A colônia ainda pode moer tora, ou a reserva já bateu — 2026-09-05.
+     *
+     * <p><b>Por que o portão é aqui, e não só na meta.</b> A meta de
+     * tábua do {@link ColonyGoals} passou a respeitar a reserva no mesmo
+     * dia, e sozinha ela não segura nada: o {@code ColonyCycle} só
+     * cancela tarefa <b>ainda disponível</b> — <i>"quem já começou
+     * termina"</i> —, e esta aqui converte a cada vinte tiques até não
+     * sobrar tronco. Um fabricante que pegasse a tarefa antes de a meta
+     * baixar moeria o estoque inteiro dentro do mesmo ciclo, e a reserva
+     * existiria só no papel.
+     *
+     * <p><b>Lido dos baús na hora</b>, pelo argumento que o próprio
+     * {@code ChestInventoryReader} escreve: o jogador tira madeira do baú
+     * quando quer, e um total em cache erraria sem avisar. É a mesma
+     * varredura que este método já faria logo abaixo para achar o tronco.
+     *
+     * <p>Baú que não pôde ser lido conta como vazio, e isso é conservador
+     * na direção certa: menos madeira vista é menos conversão liberada,
+     * e o pior caso é a colônia guardar tora a mais.
+     */
+    private static boolean halfTheWoodMayStillBeConverted(ServerWorld world, UUID colonyId) {
+        List<UUID> workerIds = new ArrayList<>();
+
+        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colonyId)) {
+            workerIds.add(worker.villagerId());
+        }
+
+        ResourceTally owned =
+                ChestInventoryReader.readAll(world, workerIds, VillageColonyMod.STORAGES);
+
+        return ColonyGoals.logsToConvert(
+                owned.amountOfGroup(ResourceGroup.WOOD),
+                owned.amountOfGroup(ResourceGroup.PLANKS)) > 0;
     }
 
     /** Encerra a tarefa e devolve o aldeão à rotina. */

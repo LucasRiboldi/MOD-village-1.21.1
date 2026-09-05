@@ -11,7 +11,6 @@ import com.villagecolony.core.worker.service.ProfessionRegistry;
 import com.villagecolony.core.worker.service.WorkerService;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -62,18 +61,39 @@ public final class WorkAssignment {
      * @return quantas tarefas foram reservadas agora
      */
     /**
-     * As capacidades que um trabalhador travado pode pegar emprestadas —
-     * ADR-010.
+     * <b>A mão emprestada saiu daqui em 2026-09-05</b> — decisão do autor,
+     * e ela desfaz a segunda peça da ADR-010.
      *
-     * <p>Só coleta. Coleta é andar até um bloco e trazê-lo, e qualquer
-     * trabalhador com baú faz. Obra tem projeto, cursor e barreira de
-     * teste, e um pedreiro emprestado entrando no meio de uma casa é
-     * defeito, não ajuda; fundir e fabricar dependem do baú e do fogão
-     * certos.
+     * <p><b>A frase dele:</b> <i>"o lenhador não deve assumir tarefas de
+     * mineiro; o mineiro não deve assumir tarefas de lenhador"</i>, depois
+     * de ver a sessão de 2026-09-04 22:37. O log dela mostra a troca
+     * completa, e nos dois sentidos ao mesmo tempo:
+     *
+     * <pre>
+     * lumberjacks: d8560cec (MINER lending a hand) chopping — tree at ...
+     * miners:      af897f92 (LUMBERJACK lending a hand) digging Diorito ...
+     * </pre>
+     *
+     * <p>Os dois trocaram de ofício e nenhum dos dois rendeu: o lenhador
+     * emprestado passou dezesseis minutos preso na galeria, e o mineiro
+     * emprestado derrubou árvore enquanto a mina ficava sem ninguém que
+     * soubesse tocá-la. A ADR-010 previa o risco — <i>"o especialista
+     * some da especialidade"</i> — e apostava na 1ª passagem para
+     * segurá-lo. A aposta não pagou, porque o gatilho do empréstimo é
+     * justamente o travamento, e travar é o estado normal de quem tem
+     * trabalho longe.
+     *
+     * <p><b>O que fica no lugar dela é a 3ª passagem</b>, que a própria
+     * ADR-010 chamou de "o que impede a regra de virar o problema que ela
+     * conserta": o trabalhador travado volta à capacidade dele em vez de
+     * ficar parado. O descanso continua existindo e continua sendo lido
+     * pela 1ª passagem — ele só deixou de ter para onde mandar quem
+     * descansa.
+     *
+     * <p>Não se apaga o {@link Worker#rest}: profissão com mais de uma
+     * capacidade — e o modelo permite — continua preferindo a que não
+     * acabou de falhar. Ver {@link #takeOneTask}.
      */
-    private static final Set<Capability> LENDABLE = EnumSet.of(
-            Capability.COLLECT_WOOD, Capability.COLLECT_STONE, Capability.COLLECT_WOOL);
-
     public static int assign(
             java.util.UUID colonyId, WorkerService workers, TaskService tasks) {
 
@@ -111,7 +131,7 @@ public final class WorkAssignment {
             // porque não é dele que a colônia precisa decidir agora.
             worker.aCycleWentBy();
 
-            if (takeOneTask(colonyId, worker, workers, tasks, hasStorage)) {
+            if (takeOneTask(colonyId, worker, tasks, hasStorage)) {
                 assigned++;
             }
         }
@@ -200,7 +220,6 @@ public final class WorkAssignment {
     private static boolean takeOneTask(
             java.util.UUID colonyId,
             Worker worker,
-            WorkerService workers,
             TaskService tasks,
             Predicate<java.util.UUID> hasStorage) {
 
@@ -223,72 +242,18 @@ public final class WorkAssignment {
             }
         }
 
-        // 2ª passagem: a mão emprestada, e só para quem travou. O portão
-        // é o descanso, e não a ociosidade — sem ele toda profissão sem
-        // tarefa viraria lenhadora na primeira passagem, e a colônia
-        // perderia a especialização que ela mesma montou.
-        if (own.stream().anyMatch(worker::isResting)) {
-            for (Capability capability : LENDABLE) {
-                if (own.contains(capability)
-                        || alreadyLent(colonyId, capability, workers, tasks)) {
+        // <b>Aqui havia a mão emprestada</b>, e ela saiu em 2026-09-05.
+        // Ver o comentário de {@link #assign}: o trabalhador não pega
+        // mais tarefa de capacidade que a profissão dele não tem, e é
+        // isso que mantém lenhador na árvore e mineiro na mina.
 
-                    continue;
-                }
-
-                if (reserveOne(colonyId, worker, tasks, hasStorage, capability)) {
-                    return true;
-                }
-            }
-        }
-
-        // 3ª passagem: a capacidade em descanso, antes de deixá-lo parado.
-        // É o que impede a regra de virar o problema que ela conserta.
+        // 2ª passagem: a capacidade em descanso, antes de deixá-lo parado.
+        // É o que impede o descanso de virar o problema que ele conserta.
         for (Capability capability : own) {
             if (worker.isResting(capability)
                     && reserveOne(colonyId, worker, tasks, hasStorage, capability)) {
 
                 return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Se alguém desta colônia já está com a mão emprestada nesta
-     * capacidade — 2026-09-02.
-     *
-     * <p><b>Uma por capacidade, e não a profissão inteira.</b> A sessão
-     * das 22:59 mostrou os dois lenhadores da vila travando na madeira no
-     * mesmo ciclo e indo os dois para a mina: dez minutos, zero pedra e
-     * zero árvore. E o segundo nem cavou — a escada é de um só, então ele
-     * trocou tentar outra árvore por uma fila de uma vaga.
-     *
-     * <p>Emprestar tem que render, e entrar em fila não rende. Com o
-     * teto, o segundo volta ao próprio trabalho pela 3ª passagem, que é
-     * onde ele rende mais que parado.
-     */
-    private static boolean alreadyLent(
-            java.util.UUID colonyId,
-            Capability capability,
-            WorkerService workers,
-            TaskService tasks) {
-
-        for (Worker other : workers.ofColony(colonyId)) {
-            Optional<ProfessionType> profession = other.profession();
-
-            if (profession.isEmpty()
-                    || ProfessionRegistry.of(profession.get())
-                            .capabilities().contains(capability)) {
-
-                // Dono da capacidade não é mão emprestada.
-                continue;
-            }
-
-            for (Task task : tasks.assignedTo(other.villagerId())) {
-                if (task.type().required() == capability) {
-                    return true;
-                }
             }
         }
 

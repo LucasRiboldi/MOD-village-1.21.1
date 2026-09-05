@@ -206,6 +206,29 @@ public final class MinerReach {
     public static BlockPos legTowards(
             BlockPos villager, BlockPos destination, Optional<MineArm> mine, Footing footing) {
 
+        return legTowards(villager, destination, mine, true, footing);
+    }
+
+    /**
+     * O mesmo, sabendo se este corredor leva ao alvo — 2026-09-05.
+     *
+     * <p>A sobrecarga acima existe para quem tem uma frente só, que é o
+     * caso de toda a bateria de unidade e era o caso da mina inteira até
+     * 2026-09-04. Com quatro ramais os dois deixaram de coincidir: o
+     * aldeão pode estar dentro do corredor de um e com o alvo no de
+     * outro.
+     *
+     * @param corridorLeadsToTheTarget se avançar a frente <b>deste</b>
+     *     corredor aproxima do alvo. Falso manda sair pela boca, que é
+     *     por onde se chega a qualquer outro ramal e à superfície
+     */
+    public static BlockPos legTowards(
+            BlockPos villager,
+            BlockPos destination,
+            Optional<MineArm> mine,
+            boolean corridorLeadsToTheTarget,
+            Footing footing) {
+
         if (mine.isEmpty()) {
             return destination;
         }
@@ -213,6 +236,8 @@ public final class MinerReach {
         if (Math.sqrt(villager.getSquaredDistance(destination)) <= LEG) {
             return destination;
         }
+
+        BlockPos mouth = at(mine.get().shaft().entry());
 
         int scanned = Math.min(mine.get().cut(), STEPS_SCANNED);
 
@@ -227,7 +252,22 @@ public final class MinerReach {
         // A distinção importa porque "fora da ordem" sozinho não decide:
         // a pedra que ele vai cavar também está fora dela enquanto a
         // frente não chegou lá. Aquela é embaixo, e para aquela se desce.
-        boolean outside = there < 0 && destination.getY() >= villager.getY();
+        //
+        // <b>Medido contra a boca, e não contra o aldeão</b> — 2026-09-05,
+        // e é a diferença entre a conta parada e a conta que oscila. Era
+        // {@code destination.getY() >= villager.getY()}, e o Y do aldeão
+        // muda de 44 para 45 a cada passo que ele dá no chão da galeria.
+        // O mesmo alvo era lido ora como superfície, ora como fundo de
+        // mina, em tiques seguidos — e o destino de caminhada alternava
+        // junto. A sessão de 2026-09-04 22:40 tem os dois estados na
+        // mesma linha de relatório, trinta segundos um do outro:
+        //
+        //   he is at 1449, 45, 66, walking to 1448, 44, 64
+        //   he is at 1448, 45, 65, walking to 1455, 44, 67
+        //
+        // Dezesseis minutos assim, com a distância ao alvo parada em
+        // 50,7. A boca não anda, e por isso responde sempre igual.
+        boolean underground = destination.getY() < mouth.getY() - 1;
 
         // Três destinos, e não dois. O que está na ordem tem índice e o
         // passo vai até ele. O que está fora dela e <b>abaixo</b> é a
@@ -235,7 +275,20 @@ public final class MinerReach {
         // desce, e o alvo é adiante da frente. O que está fora e não
         // abaixo é a superfície, e para lá se sai pela boca, que é o
         // índice zero.
-        int goal = there >= 0 ? there : outside ? 0 : scanned;
+        //
+        // <b>Descer só vale se este corredor for o do alvo</b> —
+        // 2026-09-05. Desde que a mina ganhou quatro rumos a ordem de um
+        // ramal não é caminho para os outros três, e "abaixo e fora da
+        // ordem" deixou de bastar: a pedra de outro ramal também é
+        // abaixo, e avançar a frente <b>deste</b> enterra o mineiro cada
+        // vez mais longe do que ele foi buscar. Foi o que af897f92 fez
+        // por dezesseis minutos — o corredor dele corria para o sul e a
+        // pedra estava a oeste.
+        //
+        // Quem sabe a resposta é o chamador, e não a geometria: ele tem o
+        // ramal reservado, que é o dono do alvo, e o corredor em que o
+        // aldeão está. Ver MineDigging.armToWalk.
+        int goal = there >= 0 ? there : underground && corridorLeadsToTheTarget ? scanned : 0;
 
         BlockPos step = stepAlongTheShaft(villager, goal, mine.get(), scanned, footing);
 
@@ -255,12 +308,49 @@ public final class MinerReach {
             return step;
         }
 
+        // Nenhum passo pelo corredor deste ramal.
+        //
+        // Alvo lá embaixo: entra-se pela boca. Não se pede à navegação um
+        // caminho de vinte blocos por dentro da rocha, que é a razão de
+        // esta classe existir.
+        if (underground) {
+            return mouth;
+        }
+
         // A boca é o desvio de quem <b>vai entrar</b>. Quem já está fora
         // indo para outro ponto de fora não passa por ela, e mandá-lo
         // para lá era devolver à mina o mineiro de areia toda vez que ele
         // conseguia sair. A céu aberto a navegação dá conta sozinha — é
         // justamente o caminho que ela sabe traçar.
-        return outside ? destination : at(mine.get().shaft().entry());
+        //
+        // <b>Mas quem está lá dentro sai pela boca primeiro</b> —
+        // 2026-09-05. A frase acima só vale para quem <b>já está fora</b>,
+        // e a conta não perguntava isso: devolvia o destino cru a
+        // qualquer um. A tarefa de areia não reserva ramal, então o
+        // mineiro que acabava de cavar recebia a duna da superfície com
+        // {@code armOf} vazio e a galeria inteira entre ele e ela:
+        //
+        //   gave up the stone at 1434, 62, 67 — it walked for 2400 ticks
+        //   of work time without arriving. the miner is at 1448, 45, 65
+        //
+        // Vinte e dois blocos, dezenove deles de altura, sem escada que a
+        // navegação enxergue. Ele nunca chegou, em nenhuma das oito vezes
+        // que tentou naquela sessão.
+        return villager.getY() >= mouth.getY() - 1 ? destination : mouth;
+    }
+
+    /**
+     * Se este ponto está no corredor deste ramal — 2026-09-05.
+     *
+     * <p>A pergunta que faltava para o {@code MineDigging} saber por qual
+     * corredor mandar o aldeão andar. O passo do {@link #legTowards} anda
+     * pela ordem de cavar de <b>um</b> ramal, e com quatro rumos abertos
+     * o corredor de um não serve de caminho para o outro: pedir um passo
+     * pelo ramal que ele reservou, estando ele parado dentro de outro,
+     * devolve nulo em todo tique.
+     */
+    public static boolean isOnCorridorOf(BlockPos position, MineArm arm) {
+        return orderIndexNear(position, arm, Math.min(arm.cut(), STEPS_SCANNED)) >= 0;
     }
 
     /**

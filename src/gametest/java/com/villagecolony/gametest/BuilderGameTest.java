@@ -1284,4 +1284,145 @@ public class BuilderGameTest implements FabricGameTest {
                         new BlueprintBlock(
                                 new ColonyPos(2, 2, 2), ResourceId.vanilla("cobblestone"))));
     }
+
+    /**
+     * <b>A calota do teto sobe na madeira que a colônia tem</b> —
+     * 2026-09-05, e é o buraco no meio do teto que o autor viu.
+     *
+     * <p>A camada de cima da casa de planície é uma calota 3×3: oito
+     * {@code oak_stairs} em volta de uma tábua. A camada logo abaixo tem
+     * um vão de um bloco bem no centro, <b>de propósito</b> — a calota o
+     * tapa. Sem a calota, esse vão fica à mostra, e o que se vê de cima é
+     * um buraco no meio do telhado.
+     *
+     * <p>A obra parava antes dela:
+     *
+     * <pre>
+     * WAITING_RESOURCES ... 13 blocks left, waiting for minecraft:oak_stairs
+     * Builder stopped — no minecraft:oak_stairs in the colony chests
+     * </pre>
+     *
+     * <p>E não era falta de madeira: aquela colônia tinha <b>1.257 tábuas
+     * de cerejeira</b> e duas de carvalho. A escada de carvalho sai de
+     * tábua de carvalho, os lenhadores dali cortam cerejeira, e a casa
+     * esperava uma espécie que ninguém ia trazer — até a paciência acabar
+     * e a obra sair da frente com o vão aberto.
+     *
+     * <p><b>Duas afirmações, como no par de pedra.</b> A escada sobe — a
+     * obra não dorme. E ela é de <b>cerejeira</b>: a colônia não inventa
+     * matéria, e o que se assenta é o que saiu do baú.
+     *
+     * <p>Rodado contra a correção desligada: a obra fica em
+     * {@code WAITING_RESOURCES} e o lugar da escada continua vazio.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_wood",
+            tickLimit = 300)
+    public void theRoofCapGoesUpInTheWoodTheColonyHas(TestContext context) {
+        Fixture fixture = setUpRoofCap(context);
+
+        context.runAtTick(90, () -> {
+            try {
+                context.assertTrue(
+                        stateAt(context, SITE).isOf(Blocks.CHERRY_STAIRS),
+                        "a planta pedia escada de carvalho, o baú tinha tábua de cerejeira, "
+                                + "e o que subiu foi "
+                                + stateAt(context, SITE).getBlock().getName().getString());
+
+                context.assertTrue(
+                        !stateAt(context, SITE).isOf(Blocks.OAK_STAIRS),
+                        "entrou escada de carvalho que a colônia não tinha");
+            } finally {
+                fixture.owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * O carvalho continua sendo o preferido, e a cerejeira é o depois.
+     *
+     * <p>A ordem é metade da regra: a casa sai com o bloco certo enquanto
+     * ele existir, e o substituto entra quando o certo acabou. Uma
+     * correção que trocasse a espécie <b>sempre</b> passaria no teste de
+     * cima e estaria errada.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_wood",
+            tickLimit = 20)
+    public void theExactStairComesBeforeTheSubstitute(TestContext context) {
+        List<Item> order = MaterialChoice.forBlock(Blocks.OAK_STAIRS);
+
+        context.assertTrue(
+                order.get(0) == Items.OAK_STAIRS,
+                "o preferido deixou de ser o que a planta pediu: " + order.get(0));
+
+        context.assertTrue(
+                order.contains(Items.CHERRY_STAIRS),
+                "a escada de cerejeira não serve de substituta, e a colônia só tem cerejeira");
+
+        context.assertTrue(
+                !order.contains(Items.CHERRY_SLAB) && !order.contains(Items.OAK_DOOR),
+                "o que se substitui é a espécie, e nunca a peça: " + order);
+
+        context.complete();
+    }
+
+    /**
+     * Colônia com tábua de cerejeira no baú e uma escada de carvalho
+     * para assentar.
+     */
+    private static Fixture setUpRoofCap(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        world.setTimeOfDay(Schedule.WORK_TIME);
+
+        context.setBlockState(SITE.down(), Blocks.STONE.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        // Seis fazem quatro escadas; doze deixam folga para a receita ser
+        // consultada sem o baú raspar no meio.
+        ChestDepositor.deposit(world, chest, Items.CHERRY_PLANKS, 12);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.BUILDER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        Blueprint plan = Blueprint.of(HUT, List.of(new BlueprintBlock(
+                new ColonyPos(0, 0, 0),
+                MinecraftTypeAdapter.toResourceId(Blocks.OAK_STAIRS))));
+
+        ConstructionProject project = ConstructionProject.plan(
+                colony.id(),
+                plan,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(SITE)));
+
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(), TaskType.BUILD, TaskPriority.PRODUCTION,
+                ResourceType.OAK_PLANKS, 1);
+
+        task.reserveFor(villager.getUuid());
+
+        BuilderWork.run(world, colony);
+
+        return new Fixture(
+                colony,
+                project,
+                chest,
+                ColonyFixture.create().owning(colony).owning(villager.getUuid()));
+    }
 }

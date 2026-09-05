@@ -285,31 +285,59 @@ class WorkAssignmentTest {
     }
 
     /**
-     * Quem travou pega o que houver, e volta a produzir — ADR-010.
+     * <b>O mineiro travado não vira lenhador</b> — decisão do autor,
+     * 2026-09-05, depois da sessão de 22:37 de 04-09.
      *
-     * <p>O mineiro cuja pedra acabou de travar continua mineiro: baú,
-     * ferramenta e nome não mudam. O que muda é a tarefa que ele aceita
-     * nesta passagem. Ver a ADR para por que trocar a profissão de
-     * verdade sairia caro — baú, Regra 11 e a invariante da mão.
+     * <p>Era o contrário até aqui: a 2ª passagem da ADR-010 dava a ele a
+     * tarefa de madeira, e o log da sessão mostrou o resultado nos dois
+     * sentidos ao mesmo tempo — {@code (MINER lending a hand)} na árvore
+     * e {@code (LUMBERJACK lending a hand)} na galeria.
+     *
+     * <p>O que ele faz agora é voltar para a pedra dele pela 2ª passagem,
+     * que é a antiga terceira. A madeira fica para quem sabe cortá-la.
      */
     @Test
-    void aWorkerWhoseWorkStalledBorrowsAnother() {
+    void aStalledMinerDoesNotTakeTheWoodTask() {
         Worker miner = workerWith(ProfessionType.MINER);
         miner.rest(Capability.COLLECT_STONE);
 
-        stoneTask();
+        Task stone = stoneTask();
         Task wood = woodTask();
 
         assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
-        assertEquals(Optional.of(miner.villagerId()), wood.executor());
+        assertEquals(Optional.of(miner.villagerId()), stone.executor());
+        assertEquals(
+                TaskState.AVAILABLE,
+                wood.state(),
+                "o mineiro pegou a madeira, e a separação de funções é do autor");
+    }
+
+    /** E o inverso, que é a outra metade da mesma frase. */
+    @Test
+    void aStalledLumberjackDoesNotTakeTheStoneTask() {
+        Worker lumberjack = workerWith(ProfessionType.LUMBERJACK);
+        lumberjack.rest(Capability.COLLECT_WOOD);
+
+        Task stone = stoneTask();
+        Task wood = woodTask();
+
+        assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(Optional.of(lumberjack.villagerId()), wood.executor());
+        assertEquals(
+                TaskState.AVAILABLE,
+                stone.state(),
+                "o lenhador foi para a mina, que é o defeito visto em jogo");
     }
 
     /**
-     * Mas nunca fica parado para honrar um descanso.
+     * Nunca fica parado para honrar um descanso.
      *
-     * <p>A terceira passagem, e ela é o que impede a regra de virar o
-     * problema que conserta: sem nada emprestado ao alcance, a pedra
-     * dele volta a valer mesmo descansando.
+     * <p>A 2ª passagem, e ela é o que impede o descanso de virar o
+     * problema que conserta: sem mais nada da profissão dele ao alcance,
+     * a pedra volta a valer mesmo descansando.
+     *
+     * <p>Sobreviveu inteira à saída da mão emprestada — era a 3ª
+     * passagem, e é a mesma prova.
      */
     @Test
     void theRestNeverLeavesTheWorkerIdle() {
@@ -323,14 +351,15 @@ class WorkAssignmentTest {
     }
 
     /**
-     * Obra não se empresta.
+     * E obra continua sendo só do construtor.
      *
-     * <p>Coleta é andar até um bloco e trazê-lo; qualquer um com baú faz.
-     * Obra tem projeto, cursor e barreira de teste, e um pedreiro
-     * emprestado entrando no meio de uma casa é defeito, não ajuda.
+     * <p>Valia pela lista do que se emprestava; vale agora pela regra
+     * inteira, que é mais forte. O teste fica porque a afirmação é a
+     * mesma e o autor a cobra: um pedreiro emprestado entrando no meio
+     * de uma casa é defeito, não ajuda.
      */
     @Test
-    void buildingIsNotLent() {
+    void buildingStaysWithTheBuilder() {
         Worker miner = workerWith(ProfessionType.MINER);
         miner.rest(Capability.COLLECT_STONE);
 
@@ -342,63 +371,32 @@ class WorkAssignmentTest {
     }
 
     /**
-     * E quem não travou não pega o trabalho dos outros.
+     * Dois lenhadores travados continuam os dois na madeira.
      *
-     * <p>É o portão da regra inteira, e o que mantém de pé o
-     * {@link #aFarmerDoesNotTakeTheWoodTask}: emprestar é consequência de
-     * ter travado, e não de estar sem tarefa. Sem isto, toda profissão
-     * ociosa viraria lenhadora na primeira passagem.
+     * <p>É a sessão de 2026-09-02 22:59 relida com a regra de hoje. Lá
+     * os dois foram para a mina e a vila passou dez minutos com zero
+     * pedra e <b>zero árvore</b>. Aqui os dois voltam para a árvore, e a
+     * pedra espera o mineiro — que é quem sabe descer a escada.
      */
     @Test
-    void aWorkerWhoDidNotStallDoesNotBorrow() {
-        workerWith(ProfessionType.MINER);
-
-        Task wood = woodTask();
-
-        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
-        assertEquals(TaskState.AVAILABLE, wood.state());
-    }
-
-    /**
-     * Uma mão emprestada por capacidade — 2026-09-02, sessão das 22:59.
-     *
-     * <p><b>A regra da mão emprestada esvaziou a profissão inteira.</b>
-     * Os dois lenhadores da vila travaram na madeira no mesmo ciclo,
-     * descansaram a capacidade, e os dois foram para a mina:
-     *
-     * <pre>
-     * miners: 7b6909df (LUMBERJACK lending a hand) digging Diorito ...
-     *         fad43afc (LUMBERJACK lending a hand) waiting for the shaft
-     * </pre>
-     *
-     * <p>Dez minutos, zero pedra e <b>zero árvore</b> — a vila ficou sem
-     * quem cortasse lenha. E o segundo emprestado nem cavou: a escada é
-     * de um só, então ele trocou tentar outra árvore por ficar numa fila
-     * de uma vaga. Emprestar tem que render, e entrar em fila não rende.
-     *
-     * <p>A ADR-010 previu o risco — <i>"o especialista some da
-     * especialidade"</i> — e apostou que a 1ª passagem o seguraria. Não
-     * segurou, porque os dois travaram juntos. O teto é por capacidade:
-     * o segundo volta ao próprio trabalho pela 3ª passagem, que é onde
-     * ele rende mais que parado.
-     */
-    @Test
-    void onlyOneHandIsLentToTheSameCapability() {
+    void bothStalledLumberjacksStayOnWood() {
         Worker first = workerWith(ProfessionType.LUMBERJACK);
         Worker second = workerWith(ProfessionType.LUMBERJACK);
 
         first.rest(Capability.COLLECT_WOOD);
         second.rest(Capability.COLLECT_WOOD);
 
-        stoneTask();
-        stoneTask();
+        Task stone = stoneTask();
+        Task firstWood = woodTask();
+        Task secondWood = woodTask();
 
-        Task wood = woodTask();
+        assertEquals(2, WorkAssignment.assign(COLONY, workers, tasks));
 
-        WorkAssignment.assign(COLONY, workers, tasks);
-
-        assertTrue(
-                wood.executor().isPresent(),
-                "os dois lenhadores foram para a mina, e a vila ficou sem quem corte lenha");
+        assertTrue(firstWood.executor().isPresent());
+        assertTrue(secondWood.executor().isPresent());
+        assertEquals(
+                TaskState.AVAILABLE,
+                stone.state(),
+                "a vila ficou sem quem corte lenha, que é o defeito de 09-02 ao contrario");
     }
 }

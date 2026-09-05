@@ -40,8 +40,8 @@ de um jogador com machado de ferro —, não carrega nada para casa porque
 a madeira vai direto para o baú dele, e replanta a muda antes de sair.
 
 ⛏️ **O mineiro abre uma mina de verdade.** Ele anda até o fim da vila e
-desce cavando **em escada** com picareta de diamante, para poder subir de
-volta. Dez blocos abaixo abre uma sala de 7×4; desce mais dez virando
+desce cavando **em escada** — de picareta de madeira, como todo
+trabalhador começa —, para poder subir de volta. Dez blocos abaixo abre uma sala de 7×4; desce mais dez virando
 para outro lado, abre outra sala; e do vigésimo bloco em diante segue
 numa galeria — que **não é um cano reto**: a cada oito colunas ela abre
 um bolsão ao lado, o que dá mais parede exposta e mais minério à vista.
@@ -76,9 +76,11 @@ arenito em arenito liso, pela receita de fornalha do próprio jogo. Sem
 forno no mundo: ele transforma o que está no baú.
 
 🪚 **O fabricante** tira tronco do baú, faz tábua pela receita do próprio
-jogo, e devolve. Ele para quando metade do estoque da colônia é tábua,
-para que o lenhador sempre tenha onde pôr mais. Também **descasca
-tronco**, monta **tocha** e monta **vidraça**.
+jogo, e devolve. Ele **converte cerca de metade da madeira e deixa o
+resto em tora** — vinte troncos viram dez tábuas e dez troncos —, porque
+parte da casa é feita de tora direto: a de planície pede dezesseis vigas
+descascadas, e elas não saem de tábua. Também **descasca tronco**, monta
+**tocha** e monta **vidraça**.
 
 🏠 **O construtor** levanta a casa um bloco por segundo, na beira de uma
 rua que já existe, com a **porta virada para a rua** e o piso no nível

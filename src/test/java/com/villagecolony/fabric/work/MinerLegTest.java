@@ -436,4 +436,116 @@ class MinerLegTest {
                         villager, surface, mine(30), world(at -> true, dugStaircase())),
                 "o mineiro foi desviado para a boca sem ter de entrar na mina");
     }
+
+    /**
+     * <b>O mesmo alvo não pode mudar de resposta porque o aldeão subiu um
+     * bloco</b> — 2026-09-05, e é o ping-pong da sessão de 09-04.
+     *
+     * <p>A conta que decidia se o alvo era da superfície comparava o Y
+     * dele com o Y <b>do aldeão</b>. Andando pelo chão da galeria o
+     * aldeão alterna entre 44 e 45, e o mesmo alvo era lido ora como
+     * superfície, ora como fundo de mina — com destinos de caminhada
+     * opostos em tiques seguidos:
+     *
+     * <pre>
+     * he is at 1449, 45, 66, walking to 1448, 44, 64
+     * he is at 1448, 45, 65, walking to 1455, 44, 67
+     * </pre>
+     *
+     * <p>Dezesseis minutos assim, com a distância ao alvo parada em 50,7
+     * e zero pedra cavada. A boca não anda, e é contra ela que a conta
+     * passou a medir.
+     */
+    @Test
+    void oneBlockOfHeightDoesNotFlipTheAnswer() {
+        // A pedra no <b>mesmo</b> Y do aldeão, que é o caso do log: a
+        // galeria é plana, e ele alterna entre 44 e 45 andando nela. Com
+        // a comparação antiga — {@code alvo >= aldeão} — 44>=44 dizia
+        // "superfície, saia" e 44>=45 dizia "fundo, avance", em tiques
+        // seguidos e para o mesmo alvo.
+        BlockPos stone = new BlockPos(700, 44, 878);
+
+        Optional<MineArm> arm = mine(200);
+
+        // Sem lugar de pé na ordem, a perna não acha passo e a resposta
+        // é a saída — que é justamente onde as duas leituras divergiam
+        // no log: ora "walking to the mine mouth at 1436, 63, 81", ora o
+        // alvo cru, em tiques seguidos.
+        MinerReach.Footing nowhereToStand = world(at -> true, at -> false);
+
+        BlockPos lower = MinerReach.legTowards(
+                new BlockPos(735, 44, 878), stone, arm, nowhereToStand);
+
+        BlockPos higher = MinerReach.legTowards(
+                new BlockPos(735, 45, 878), stone, arm, nowhereToStand);
+
+        assertEquals(
+                lower,
+                higher,
+                "um bloco de altura trocou o destino, e o mineiro fica indo e voltando");
+
+        assertEquals(
+                MOUTH_BLOCK,
+                lower,
+                "pedra no fundo se alcança pela boca, e não em linha reta pela rocha");
+    }
+
+    /**
+     * Quem está lá dentro sai pela boca antes de ir para a areia.
+     *
+     * <p><b>A tarefa de areia não reserva ramal</b>, então o corredor
+     * chega vazio e a conta devolvia o destino cru: a duna da superfície,
+     * com a galeria inteira entre ele e ela. A navegação não traça esse
+     * caminho, e o mineiro moía os 2.400 tiques do guarda sem sair do
+     * lugar — oito vezes na mesma sessão:
+     *
+     * <pre>
+     * gave up the stone at 1434, 62, 67 — it walked for 2400 ticks of
+     * work time without arriving. the miner is at 1448, 45, 65
+     * </pre>
+     *
+     * <p>Vinte e dois blocos, dezenove deles de altura. Fora do corredor
+     * e abaixo da boca, a resposta é a boca.
+     */
+    @Test
+    void fromInsideTheMineASurfaceTargetGoesThroughTheMouth() {
+        BlockPos offTheOrder = new BlockPos(700, 44, 830);
+        BlockPos sand = new BlockPos(760, 64, 930);
+
+        BlockPos leg = MinerReach.legTowards(
+                offTheOrder, sand, mine(200), world(at -> true, dugStaircase()));
+
+        assertEquals(
+                MOUTH_BLOCK,
+                leg,
+                "o mineiro de areia recebeu a duna crua do fundo da galeria");
+    }
+
+    /**
+     * Pedra de outro ramal também se alcança saindo.
+     *
+     * <p>Desde que a mina ganhou quatro rumos, a ordem de cavar de um
+     * ramal não é caminho para os outros três. O alvo que está abaixo,
+     * fora da ordem e <b>longe</b> da frente não é deste ramal — e mandar
+     * o passo para a frente daqui enterra o mineiro cada vez mais longe
+     * do que ele foi buscar, que é o que af897f92 fez até a sessão
+     * acabar.
+     */
+    @Test
+    void aTargetInAnotherBranchWalksBackTowardsTheMouth() {
+        BlockPos inTheGallery = new BlockPos(732, 56, 890);
+        BlockPos anotherBranch = new BlockPos(600, 44, 878);
+
+        BlockPos leg = MinerReach.legTowards(
+                inTheGallery,
+                anotherBranch,
+                mine(200),
+                false,
+                world(at -> true, dugStaircase()));
+
+        assertTrue(
+                leg.getY() > inTheGallery.getY(),
+                "a perna afundou o mineiro atrás de pedra que é de outro ramal: "
+                        + leg.toShortString());
+    }
 }

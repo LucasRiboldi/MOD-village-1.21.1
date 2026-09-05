@@ -100,7 +100,49 @@ public final class ColonyGoals {
      */
     public static final int FOOD_FLOOR = 64;
 
+    /**
+     * Quantas tábuas saem de um tronco.
+     *
+     * <p>Convenção do jogo, e não conta desta classe: é o que a receita
+     * de tábua rende, e o Core não pode perguntar ao livro de receitas
+     * (ADR-005). Está aqui porque a reserva de tronco precisa comparar
+     * duas medidas da mesma madeira — o que está em tora e o que já
+     * virou tábua —, e sem um câmbio entre elas a comparação não existe.
+     *
+     * <p>Se alguma versão do jogo mudar o rendimento, o que sai errado é
+     * a proporção da reserva, e não a colônia: o pior caso é ela guardar
+     * tronco a mais.
+     */
+    public static final int PLANKS_PER_LOG = 4;
+
     private ColonyGoals() {
+    }
+
+    /**
+     * Quantas toras ainda podem virar tábua sem furar a reserva.
+     *
+     * <p><b>A regra do autor</b>, 2026-09-05: <i>"converter somente
+     * aproximadamente metade do estoque de troncos em tábuas e preservar
+     * o restante como troncos"</i>. Vinte toras pedem dez conversões, e
+     * as outras dez ficam — os {@code stripped_oak_log} da casa de
+     * planície saem de tora, e não de tábua.
+     *
+     * <p><b>Mora aqui, e é chamada de dois lugares</b> — a meta, logo
+     * abaixo, e o fabricante, que executa. Os dois têm de dizer o mesmo:
+     * uma meta que parasse de pedir com um executor que continuasse
+     * moendo seria a reserva existindo só no papel, que foi o defeito
+     * original com outro nome. É o mesmo argumento que
+     * {@code ColonySupply.canProvide} escreve para o par dele.
+     *
+     * <p>Zero quando a colônia já tem tábua bastante: {@code storedPlanks}
+     * é convertido de volta a toras equivalentes, e o que se compara são
+     * duas medidas da mesma madeira.
+     *
+     * @param logs quantas toras a colônia guarda, de qualquer espécie
+     * @param storedPlanks quantas tábuas ela guarda, de qualquer espécie
+     */
+    public static int logsToConvert(int logs, int storedPlanks) {
+        return Math.max(0, (logs - storedPlanks / PLANKS_PER_LOG) / 2);
     }
 
     /**
@@ -303,11 +345,41 @@ public final class ColonyGoals {
         // fabricante encerrá-la no tick seguinte. A obra espera em
         // WAITING_RESOURCES, que é o estado previsto para isso, e quem
         // destrava é a meta de madeira acima.
-        int planks = owned.amountOfGroup(ResourceGroup.WOOD) == 0
+        int logs = owned.amountOfGroup(ResourceGroup.WOOD);
+
+        int appetite = planksForWork > 0 ? planksForWork : (storedPlanks + plankRoom) / 2;
+
+        // <b>Metade da madeira fica em tora</b> — decisão do autor,
+        // 2026-09-05: <i>"converter somente aproximadamente metade do
+        // estoque de troncos em tábuas e preservar o restante como
+        // troncos"</i>.
+        //
+        // <b>O que ela conserta.</b> Nada acima reservava tronco: o
+        // portão era só "tem pelo menos um", e a meta pedia metade da
+        // capacidade em tábua — que numa colônia com baús vazios é
+        // praticamente tudo. O fabricante moía o estoque inteiro, e a
+        // obra que precisa de tronco <b>direto</b> — os dezesseis
+        // {@code stripped_oak_log} da casa de planície — ficava sem
+        // matéria-prima. A sessão de 2026-09-04 terminou com 1.257
+        // tábuas e 135 toras.
+        //
+        // <b>Por que a conta é esta, e não "metade do que há agora".</b>
+        // Metade do estoque corrente encolhe junto com ele: vinte toras
+        // viram dez, e no ciclo seguinte dez viram cinco. A reserva
+        // esvaziaria o baú em degraus, só que mais devagar — Zenão, e não
+        // reserva.
+        //
+        // O que fica parado é a <b>proporção</b>: a madeira da colônia é
+        // contada inteira, tora e tábua na mesma moeda, e a meta é
+        // empatá-las. Vinte toras e nenhuma tábua pedem dez conversões;
+        // dez toras e quarenta tábuas — que é o mesmo estoque, depois —
+        // já estão empatadas e não pedem nenhuma. O ponto de equilíbrio
+        // não se move, e é ele que o autor chamou de metade.
+        int planks = logs == 0
                 ? storedPlanks
-                : planksForWork > 0
-                        ? planksForWork
-                        : (storedPlanks + plankRoom) / 2;
+                : Math.min(
+                        appetite,
+                        storedPlanks + logsToConvert(logs, storedPlanks) * PLANKS_PER_LOG);
 
         Map<ResourceType, Integer> goals = new LinkedHashMap<>();
 

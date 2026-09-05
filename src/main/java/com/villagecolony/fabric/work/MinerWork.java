@@ -3,6 +3,7 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Mine;
+import com.villagecolony.core.construction.model.MineArm;
 import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.storage.model.WorkerStorage;
@@ -347,12 +348,23 @@ public final class MinerWork {
                 // desistir — o MobNavigation SOBE o alvo até sair da rocha, e
                 // dentro de uma mina isso é a superfície. Ver
                 // docs/research/E32-miner-walk-target.md.
+                // <b>O corredor é o de onde ele está</b> — 2026-09-05, e
+                // era o do ramal que ele reservou. Ver
+                // MineDigging.armToWalk: os dois deixaram de ser o mesmo
+                // quando a mina ganhou quatro rumos, e a tarefa de areia
+                // nunca reservou rumo nenhum.
+                Optional<MineArm> corridor =
+                        MineDigging.armToWalk(
+                                job.task.colonyId(), workerId, villager.getBlockPos());
+
                 WorkTargets.set(
                         workerId,
                         MinerReach.legTowards(
                                 villager.getBlockPos(),
                                 job.approach,
-                                MineDigging.armOf(job.task.colonyId(), workerId),
+                                corridor,
+                                MineDigging.leadsToTheTarget(
+                                        job.task.colonyId(), workerId, corridor),
                                 footingIn(world)),
                         MinerReach.ARRIVAL);
             }

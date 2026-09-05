@@ -1,7 +1,9 @@
 # ADR-010 — A mão emprestada: o trabalhador troca de foco quando o dele não anda
 
 **Data:** 2026-09-02
-**Estado:** implementado em 2026-09-02
+**Estado:** **revertida em parte em 2026-09-05** — ver a emenda no fim.
+A peça 1 (o descanso) continua de pé; a peça 2 (a mão emprestada) saiu.
+Implementada em 2026-09-02.
 **Minecraft:** 1.21.1 · **Fabric Loader:** 0.17.2
 **Skill que orientou:** `minecraft-villager-systems`
 
@@ -240,3 +242,72 @@ trabalho — `LumberjackWork` e `MinerWork` — iteram **tarefas**, e não
 trabalhadores por profissão. O mineiro que pegou tarefa de madeira já é
 conduzido pelo lenhador. Foi por isso que a linha do relatório precisou da
 marca: sem ela, uma colônia com dois lenhadores mostraria três.
+
+
+---
+
+## Emenda de 2026-09-05 — a mão emprestada sai, o descanso fica
+
+**Decisão do autor**, depois da sessão de 2026-09-04 22:37:
+
+> *"O lenhador deve trabalhar com árvores e madeira, e não com mineração. (…) O
+> lenhador não deve assumir tarefas de mineiro. O mineiro não deve assumir
+> tarefas de lenhador."*
+
+### O que a sessão mostrou
+
+A troca aconteceu **nos dois sentidos ao mesmo tempo**, e as duas linhas são do
+mesmo minuto:
+
+```text
+lumberjacks: d8560cec (MINER lending a hand) chopping — tree at 1422, 63, 40
+miners:      af897f92 (LUMBERJACK lending a hand) digging Diorito at 1398, 44, 64
+```
+
+Nenhum dos dois rendeu. O lenhador emprestado passou dezesseis minutos preso na
+galeria — ele não sabe sair de uma mina, e o passo pela escada foi escrito para
+o mineiro. O mineiro emprestado derrubou árvore enquanto as quatro frentes da
+mina ficavam sem quem as tocasse. A colônia terminou a sessão com **zero pedra
+nova** e 403 pedregulhos, os mesmos com que começou.
+
+### Por que a aposta original não pagou
+
+Esta ADR previu o risco e nomeou-o na tabela de "o que pode dar errado":
+
+| risco | o que o segura |
+|---|---|
+| o especialista some da especialidade | a 1ª passagem sempre prefere a profissão dele |
+
+O que a tabela não viu é que **o gatilho do empréstimo é o travamento**, e
+travar é o estado normal de quem tem trabalho longe: a árvore a trinta blocos, a
+galeria a cinquenta. O guarda de 2.400 tiques dispara no curso normal do
+trabalho, não só quando algo está errado. Com ele disparando, a 1ª passagem
+nunca chega a segurar nada — a capacidade está em descanso justamente quando
+seria a vez dela.
+
+O teto de 2026-09-02 (`alreadyLent`, uma mão por capacidade) tratou o sintoma de
+os **dois** lenhadores irem para a mina. Não tratou o de um ir.
+
+### O que fica
+
+A peça 1 — **a capacidade que falhou descansa** — continua inteira, e a 3ª
+passagem virou a 2ª. Uma profissão com mais de uma capacidade continua
+preferindo a que não acabou de falhar, e ninguém fica parado para honrar um
+descanso.
+
+O que saiu foi `LENDABLE` e `alreadyLent`. `LentHand.mark` fica como **guarda**
+do relatório, e não como caminho previsto: a profissão pode mudar com a tarefa
+aberta, e a linha não pode mentir nesse intervalo.
+
+### O que isso reabre, e é honesto dizer
+
+O problema que esta ADR foi escrita para resolver — *"trabalhador cuja profissão
+não está rendendo repete a mesma parede até o fim da sessão"* — **volta a
+existir**. A resposta do autor é que um lenhador parado é melhor que um lenhador
+dentro da mina, e que a saída para o travamento é consertar o travamento.
+
+Foi o que a mesma sessão pediu: o mineiro não cavava por três defeitos de
+caminhada, e não por falta de mão emprestada. Ver `MinerReach.legTowards` e
+`MineDigging.armToWalk`.
+
+**Verificação:** `./gradlew build` e `runGametest`.
