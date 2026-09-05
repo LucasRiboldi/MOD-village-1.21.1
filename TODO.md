@@ -261,6 +261,41 @@ abaixo, com o porquê.
 
 ## ✅ Resolvido
 
+### 2026-09-05 — a mina volta a falar, e a metade sem teste é desfeita
+
+Sessão de 15:29–15:43: os mineiros pararam de travar — sem desistência, sem
+ping-pong — e passaram a ficar em `looking for stone` **para sempre**, `0 of
+32`. E o log não tem **uma** linha de mina: nem fronteira, nem cursor recuado,
+nem picareta. A sessão anterior tinha dezesseis `keeps its place`.
+
+**A causa foi minha, e era a metade que eu mesmo declarei sem teste** — o
+`isStillClosed` exigindo cubo cheio, posto para a mina não picaretar a escada
+que o autor construiu. Ela foi desfeita.
+
+**Por que ela não podia ser local.** Aquela pergunta alimenta o **recuo do
+cursor**, e recuo e escolha do alvo têm de concordar: uma posição que o
+`nextCut` vai pular não pode ser a fronteira, senão o cursor recua até ela toda
+passagem. Mexer num lado só troca um defeito por outro maior — e o maior foi a
+mina inteira parar. Refazer pede as duas pontas juntas e um teste que prove a
+concordância. **A escada do jogador volta a correr risco de picareta** até lá.
+
+**O que fica, e é o que faltava para diagnosticar isto:** os dois caminhos
+vazios do `nextTarget` eram **mudos**. "O ramal acabou", "a busca não achou
+pedra" e "a mina nem existe" produziam exatamente o mesmo silêncio, e as três
+têm correções diferentes — é o §11 de novo. Agora cada um escreve a sua linha
+pelo `IdleLog`, com o número do ramal e a posição do cursor.
+
+**E um teste meu deixou de piscar.** O `ataskbackinthequeueisnolongerworked`
+falhava em rodadas alternadas: o ciclo da colônia **reatribuía** a tarefa
+liberada ao mesmo fazendeiro, e se isso caísse dentro dos 120 tiques ele
+colhia. Não era instabilidade da bateria — era o teste medindo duas coisas. O
+fazendeiro sai do registro depois da liberação, e o que sobra é o trabalho
+órfão, que é o que ele afirma.
+
+**Verificação:** 638 unitários e 248 gametests, zero falhas em **três rodadas
+seguidas**. Fase vermelha reconferida no guarda do fazendeiro depois da troca de
+montagem.
+
 ### 2026-09-05 — a escada que o jogador constrói deixa de ser parede
 
 O autor trocou a descida da mina por uma **escada de tijolos de pedra**, e a

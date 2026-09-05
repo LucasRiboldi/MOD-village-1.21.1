@@ -225,6 +225,12 @@ public class FarmerGameTest implements FabricGameTest {
             task.release();
         }
 
+        // <b>E o fazendeiro sai do registro</b> — senão o ciclo da colônia
+        // devolve a tarefa a ele antes do assert, e o teste pisca. Não é
+        // conveniência: o que se afirma é o trabalho <b>órfão</b>, e a
+        // reatribuição é outro caminho, legítimo, que apagaria a prova.
+        VillageColonyMod.WORKERS.remove(villager.getUuid());
+
         context.runAtTick(120, () -> {
             int wheat = ChestInventoryReader
                     .read(context.getWorld(), context.getAbsolutePos(CHEST))

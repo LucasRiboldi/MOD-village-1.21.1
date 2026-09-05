@@ -79,6 +79,29 @@ tenha falhado. Na dúvida, `md5sum` nos dois caminhos.
 compila não deve ser publicado. E o `cp` vem antes do `git add`, senão o
 commit leva o jar da vez passada.
 
-**Fechar o Minecraft antes de trocar o arquivo em `mods`** continua sendo
-passo do autor, e não do agente — copiar com o jogo aberto falha calado.
-Ver `docs/proxima-sessao.md`.
+**E o mesmo jar vai para a instalação de teste** — regra do autor,
+2026-09-05: *"sempre que salvar um .jar na pasta download do projeto,
+também substitua o arquivo na pasta mod do tlauncher desta maquina"*.
+
+```
+cp downloads/village-colony-0.3.0.jar "$APPDATA/.minecraft/mods/"
+```
+
+**Por que ela existe.** O passo era do autor, e envelhecia calado: em
+2026-09-05 o jar de `mods` estava **onze commits atrás**, e três das
+quatro queixas daquela sessão eram de código que já não existia. Uma
+sessão inteira de diagnóstico foi gasta contra o build errado.
+
+**Conferir por hash é parte da regra, e não um extra.** Copiar com o
+Minecraft aberto falha **sem erro**: o agente acha que instalou, o autor
+joga o jar velho, e o relato seguinte descreve outro código.
+
+```
+md5sum downloads/village-colony-0.3.0.jar        "$APPDATA/.minecraft/mods/village-colony-0.3.0.jar"
+```
+
+Hashes diferentes: **diga ao autor que a cópia não pegou** e peça para
+fechar o jogo. Nunca afirme que o jar foi instalado sem ter comparado.
+
+**Fechar o Minecraft** continua sendo do autor — o agente não fecha o
+jogo dele. Ver `docs/proxima-sessao.md`.

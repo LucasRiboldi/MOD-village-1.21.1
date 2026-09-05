@@ -123,6 +123,12 @@ public final class MineDigging {
     /** O assunto do baú da boca, que não se acha onde pôr — 2026-09-02. */
     private static final String CHEST_SUBJECT = "miner mouth chest";
 
+    /** O do ramal que acabou, e da mina que não tem para onde descer. */
+    private static final String ARM_SUBJECT = "miner branch";
+
+    /** E o da busca que olhou as 64 posições e não achou pedra. */
+    private static final String CUT_SUBJECT = "miner cut";
+
     /** E o da pedra de superfície, que é a alternativa a ela — 2026-08-25. */
     private static final String SURFACE_SUBJECT = "miner surface stone";
 
@@ -243,10 +249,28 @@ public final class MineDigging {
             // nível seguinte.
             MineClaims.releaseArm(colonyId, workerId);
 
-            mine.get().deepenIfEveryArmIsDone();
+            boolean deepened = mine.get().deepenIfEveryArmIsDone();
+
+            // <b>Este caminho era mudo</b> — 2026-09-05. A sessão daquele
+            // dia passou meia hora com os dois mineiros em
+            // {@code looking for stone} e <b>nenhuma</b> linha de mina no
+            // log inteiro: nem fronteira, nem cursor, nem picareta. Sem
+            // uma frase aqui não dava para distinguir "o ramal acabou" de
+            // "a busca não achou pedra" de "a mina nem existe", e as três
+            // têm correções diferentes. É o §11 de novo.
+            IdleLog.record(
+                    colonyId,
+                    ARM_SUBJECT,
+                    IdleReason.NO_TARGET,
+                    deepened
+                            ? "every branch was done and the mine went one level deeper"
+                            : "branch " + claimed.getAsInt() + " is done, and the others"
+                                    + " are not — waiting for them to finish to go deeper");
 
             return Optional.empty();
         }
+
+        IdleLog.clear(colonyId, ARM_SUBJECT);
 
         Optional<BlockPos> found = followingTheVein(world, arm)
                 .or(() -> nextCut(world, workerId, mine.get(), arm));
@@ -267,6 +291,19 @@ public final class MineDigging {
             // largar é seguro: a passagem seguinte pergunta de novo, e a
             // vez vai para quem estiver com trabalho.
             MineClaims.release(workerId);
+
+            // <b>E este também</b> — 2026-09-05, mesmo motivo. Sessenta e
+            // quatro posições olhadas e nenhuma que valha a picareta é
+            // uma frase, e a falta dela era silêncio idêntico ao do ramal
+            // acabado.
+            IdleLog.record(
+                    colonyId,
+                    CUT_SUBJECT,
+                    IdleReason.NO_TARGET,
+                    "branch " + claimed.getAsInt() + " gave no stone in "
+                            + CUTS_PER_SEARCH + " positions from cursor " + arm.cut());
+        } else {
+            IdleLog.clear(colonyId, CUT_SUBJECT);
         }
 
         return found;
@@ -540,19 +577,18 @@ public final class MineDigging {
      * que não se cava — bedrock, casa da vila — não é frente, porque
      * ficaria sendo frente para sempre.
      *
-     * <p><b>E o que não é cubo cheio já não é rocha</b> —
-     * 2026-09-05. O autor trocou a descida da mina por uma escada de
-     * tijolos de pedra e a colônia mirou nela: {@code digging Escadas de
-     * Tijolos de Pedra at 1448, 44, 63}. A mina cava para <b>abrir
-     * caminho</b>, e onde já se passa não há caminho a abrir — picaretear
-     * ali é destruir a escada do jogador para reabrir o buraco que ela já
-     * é.
+     * <p><b>Uma tentativa de exigir cubo cheio saiu daqui em
+     * 2026-09-05</b>, e vale ficar dita. A ideia era não picaretar a
+     * escada que o jogador construiu — {@code digging Escadas de Tijolos
+     * de Pedra} —, e ela apagou a mina inteira: a sessão seguinte não
+     * teve uma linha de fronteira, de cursor recuado nem de picareta.
      *
-     * <p>O {@link #canDig} não pegava este caso, e não é falha dele: ele
-     * protege a vila gerada e o que a colônia construiu, e a escada não é
-     * nenhuma das duas. É a Regra 3 chegando por onde faltava — pela
-     * pergunta <i>"isto ainda é rocha?"</i> em vez de <i>"isto é de
-     * alguém?"</i>.
+     * <p>O motivo é que esta pergunta não é local. Ela alimenta o recuo
+     * do cursor, e recuo e escolha do alvo <b>têm de concordar</b>: uma
+     * posição que o {@link #nextCut} vai pular não pode ser a fronteira,
+     * senão o cursor recua até ela toda passagem. Mexer num lado só troca
+     * um defeito por outro maior. Refazer isto pede as duas pontas juntas
+     * e um teste que prove a concordância.
      */
     private static boolean isStillClosed(ServerWorld world, ColonyPos position) {
         BlockPos at = MinecraftTypeAdapter.toBlockPos(position);
@@ -562,12 +598,6 @@ public final class MineDigging {
         }
 
         BlockState state = world.getBlockState(at);
-
-        if (!state.isFullCube(world, at)) {
-            // Degrau, laje, tocha, porta: alguém já deu forma a isto, e a
-            // mina cava rocha. Ver o javadoc acima.
-            return false;
-        }
 
         return !state.isAir() && state.getFluidState().isEmpty() && canDig(world, at);
     }
