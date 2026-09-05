@@ -399,6 +399,36 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
     }
 
     /**
+     * E ela <b>continua</b> na mão na passagem seguinte — 2026-09-05.
+     *
+     * <p>Todo teste de troca desta classe chama {@code equip} uma vez
+     * só, e a troca acontece a cada ciclo de colônia — 600 tiques. Uma
+     * passagem prova que o baú alcança a mão; ela não prova que a mão
+     * fica com o que subiu.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_equipment")
+    public void theUpgradedPickaxeSurvivesTheNextPass(TestContext context) {
+        BlockPos chest = new BlockPos(2, 1, 2);
+
+        VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
+
+        Worker worker = storedMiner(context, villager, chest);
+
+        putInChest(context, chest, new ItemStack(Items.DIAMOND_PICKAXE));
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
+        context.assertTrue(
+                villager.getEquippedStack(EquipmentSlot.MAINHAND).isOf(Items.DIAMOND_PICKAXE),
+                "na segunda passagem a mão ficou com "
+                        + villager.getEquippedStack(EquipmentSlot.MAINHAND).getItem()
+                        + " — a colônia desfez a própria troca");
+
+        context.complete();
+    }
+
+    /**
      * E a de ferro que ela substituiu não vira lixo no baú.
      *
      * <p>Ela veio do nada — é a mesma conta do {@code NEVER_DROPS} —, e

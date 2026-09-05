@@ -4027,6 +4027,94 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
+     * <b>E a picareta não a derruba</b> — pedido do autor, 2026-09-05:
+     * <i>"corrigir a escada que o player constrói, ou qualquer caminho
+     * que o próprio player cria dentro da mina"</i>.
+     *
+     * <p>A outra ponta do defeito acima. O corredor deixou de quebrar no
+     * degrau em 09-05; o que ficou de pé era o mineiro <b>cavando</b> o
+     * degrau — {@code digging Escadas de Tijolos de Pedra}. O
+     * {@code canDig} protege a vila gerada e o que a colônia construiu, e
+     * a escada do jogador não é nenhuma das duas.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_player_stairs",
+            tickLimit = 20)
+    public void theMinerDoesNotDigThePlayersStaircase(TestContext context) {
+        solidRock(context);
+
+        Colony colony = openedMine(context, 3);
+
+        BlockPos step = dug(context, colony, 3);
+
+        context.getWorld().setBlockState(step, Blocks.STONE_BRICK_STAIRS.getDefaultState());
+
+        try {
+            Optional<BlockPos> next = targetFor(context, colony);
+
+            context.assertTrue(
+                    next.isPresent(),
+                    "a mina não devolveu alvo nenhum, e sem isso o teste não mede nada");
+
+            context.assertFalse(
+                    next.get().equals(step),
+                    "o mineiro mirou a escada do jogador em " + step.toShortString());
+
+            context.assertTrue(
+                    next.get().equals(dug(context, colony, 4)),
+                    "ele devia ter passado por ela para a posição seguinte, e foi para "
+                            + next.get().toShortString());
+        } finally {
+            MineClaims.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * E o degrau do jogador não é o fim da galeria — 2026-09-05.
+     *
+     * <p><b>Esta é a metade que faltava, e é a que derrubou a primeira
+     * tentativa.</b> Ela mexeu só no {@code isStillClosed}, e a mina
+     * emudeceu: nem fronteira, nem cursor recuado, nem picareta numa
+     * sessão inteira. O motivo está escrito no {@code isOpenSpace} —
+     * recuo do cursor e escolha do alvo <b>têm de concordar</b>, e
+     * mexer num lado só troca um defeito por outro maior.
+     *
+     * <p>Os dois testes juntos são a concordância: o de cima afirma que
+     * a escolha do alvo pula o degrau, e este afirma que o recuo também
+     * o pula. Um sem o outro passa com a mina quebrada.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_player_stairs",
+            tickLimit = 20)
+    public void thePlayersStepInTheDigOrderIsNotTheFrontier(TestContext context) {
+        solidRock(context);
+
+        Colony colony = openedMine(context, 9);
+
+        // <b>A última posição já aberta</b>, e é ela que discrimina. O
+        // frontierWhereRockBegins só chama de frente a posição fechada
+        // cuja seguinte também é fechada — ou a última antes do cursor.
+        // Um degrau no meio do corredor tem ar depois e nunca seria
+        // frente; um degrau aqui é, e o cursor recua até ele.
+        BlockPos step = dug(context, colony, 8);
+
+        context.getWorld().setBlockState(step, Blocks.STONE_BRICK_STAIRS.getDefaultState());
+
+        try {
+            Optional<BlockPos> next = targetFor(context, colony);
+
+            context.assertTrue(
+                    next.isPresent() && next.get().equals(dug(context, colony, 9)),
+                    "a frente da galeria recuou até o degrau do jogador: foi para "
+                            + next.map(BlockPos::toShortString).orElse("lugar nenhum"));
+        } finally {
+            MineClaims.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
      * <b>A boca da mina ganha um arco de pedra com lanterna</b> —
      * decisão do autor, 2026-09-05: <i>"colocar um arco de pedra com
      * lanterna na entrada da mina"</i>.

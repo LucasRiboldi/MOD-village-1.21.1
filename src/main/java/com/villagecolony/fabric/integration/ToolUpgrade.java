@@ -136,6 +136,45 @@ public final class ToolUpgrade {
     }
 
     /**
+     * Se a mão já vale ao menos o que a profissão entrega de início —
+     * 2026-09-05.
+     *
+     * <p><b>É a outra metade de {@link #betterThan}, e ela faltava.</b>
+     * Aquele método punha a picareta de diamante do baú na mão do
+     * mineiro; a passagem seguinte do {@code WorkerEquipment} via uma
+     * mão que não era a picareta de ferro do registro, chamava aquilo de
+     * ferramenta errada e devolvia o ferro por cima — trinta segundos
+     * depois, e destruindo o diamante. A colônia desfazia a própria
+     * troca, e nenhum teste via porque todos chamavam {@code equip} uma
+     * vez só.
+     *
+     * <p>A invariante do {@code equip} era <i>a mão é a ferramenta da
+     * profissão</i>. Passa a ser <i>a mão não é pior que a ferramenta da
+     * profissão</i>, e quem mede é o mesmo bloco de prova de sempre: não
+     * há segunda tabela a manter, nem "diamante também vale" escrito em
+     * lugar nenhum.
+     *
+     * <p><b>Profissão sem bloco de prova não guarda nada</b>, e é
+     * deliberado. Pastor, construtor, fundidor e fabricante não medem
+     * ferramenta, e é justamente por isso que o pastor com picareta na
+     * mão — o defeito de 2026-09-02 — continua tendo a picareta tomada
+     * de volta.
+     */
+    public static boolean worthKeeping(
+            ProfessionType profession, ItemStack held, ItemStack starter) {
+
+        Block proof = PROOF.get(profession);
+
+        if (proof == null) {
+            return false;
+        }
+
+        BlockState state = proof.getDefaultState();
+
+        return speedOf(held, state) > speedOf(starter, state);
+    }
+
+    /**
      * Quão depressa esta pilha quebra este bloco.
      *
      * <p>Pilha vazia é a mão nua, e o jogo já responde 1,0 por ela — não

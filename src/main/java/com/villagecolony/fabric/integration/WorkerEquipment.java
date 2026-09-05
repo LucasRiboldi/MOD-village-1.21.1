@@ -119,6 +119,19 @@ public final class WorkerEquipment {
                 continue;
             }
 
+            // A mão já é melhor que a inicial da profissão, e por isso
+            // fica — 2026-09-05. Sem esta linha a colônia desfazia a
+            // própria troca no ciclo seguinte: o {@link ToolUpgrade}
+            // punha o diamante do baú na mão do mineiro, esta passagem
+            // via uma mão que não era a picareta de ferro do registro, e
+            // devolvia o ferro por cima — trinta segundos depois, com o
+            // diamante destruído no caminho.
+            if (ToolUpgrade.worthKeeping(
+                    profession.get(), held, tool.map(ItemStack::new).orElse(ItemStack.EMPTY))) {
+
+                continue;
+            }
+
             if (!held.isEmpty() && !isProfessionTool(held)) {
                 // Do jogador. A Regra 3 vale para a mão do aldeão também.
                 continue;

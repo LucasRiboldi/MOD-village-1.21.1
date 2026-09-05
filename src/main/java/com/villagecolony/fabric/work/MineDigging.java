@@ -16,6 +16,7 @@ import com.villagecolony.fabric.integration.OreVein;
 import com.villagecolony.fabric.integration.RingSweep;
 import com.villagecolony.fabric.integration.StonePatch;
 import net.minecraft.block.BlockState;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
@@ -459,7 +460,9 @@ public final class MineDigging {
             return Optional.of(from);
         }
 
-        return canDig(world, ceiling) ? Optional.of(ceiling) : Optional.empty();
+        // Rocha, e não só "cavável": uma laje que o jogador pôs de teto
+        // passa no canDig e não é degrau nenhum — 2026-09-05.
+        return isDiggableRock(world, ceiling) ? Optional.of(ceiling) : Optional.empty();
     }
 
     /**
@@ -483,6 +486,80 @@ public final class MineDigging {
      */
     private static boolean nowhereToStand(ServerWorld world, BlockPos at) {
         return MinerWork.approachTo(world, at).equals(at);
+    }
+
+    /**
+     * Se a picareta não tem o que fazer nesta posição da ordem —
+     * 2026-09-05.
+     *
+     * <p><b>Uma pergunta, dois donos.</b> O {@link #nextCut} pula o que
+     * já está aberto e o {@link #isStillClosed} recua o cursor até onde
+     * a rocha começa, e <b>os dois têm de concordar</b>: posição que a
+     * escolha do alvo pula não pode ser a fronteira, senão o cursor
+     * recua até ela toda passagem. Eles concordavam por cópia — a mesma
+     * lista escrita duas vezes —, e foi por aí que a tentativa de
+     * 2026-09-05 de proteger a escada do jogador saiu pela culatra:
+     * mexeu num lado só e a mina emudeceu. Agora a lista é uma.
+     *
+     * <p><b>E o que o jogador constrói entra aqui</b> — pedido do autor:
+     * <i>"corrigir a escada que o player constrói, ou qualquer caminho
+     * que o próprio player cria dentro da mina"</i>. O caminho dele é
+     * <b>espaço aberto</b>, e não obstáculo: a mina passa por ele como
+     * passa pelo corredor que ela mesma cavou. Tratá-lo como bloqueio
+     * faria a galeria virar depois de alguns degraus, e o corredor do
+     * jogador acabaria fechando o ramal.
+     *
+     * <p>É a mesma porta por onde a tocha da própria mina já passava
+     * desde 08-28, e pelo mesmo motivo.
+     */
+    static boolean isOpenSpace(ServerWorld world, BlockPos at, BlockState state) {
+        return state.isAir()
+                || !state.getFluidState().isEmpty()
+                || MineLighting.isLight(world, at, state)
+                || !isRock(world, at, state);
+    }
+
+    /**
+     * Se este bloco é rocha, e não coisa que alguém pôs ali.
+     *
+     * <p><b>O Minecraft não guarda quem pôs cada bloco</b> — está dito no
+     * cabeçalho do {@code BlockProtection}, e continua verdade. O que ele
+     * guarda é a <b>forma</b> e a <b>ferramenta</b>, e as duas juntas
+     * bastam para o que a mina precisa saber:
+     *
+     * <ul>
+     *   <li><b>cubo cheio</b> — degrau, laje, escada de mão, tocha,
+     *       trilho, porta, alçapão, placa e cerca já não são. É a
+     *       gramática inteira de um caminho feito à mão, e nenhuma
+     *       linha precisa nomeá-la;
+     *   <li><b>picareta ou pá</b> — o jogo diz com que se quebra cada
+     *       bloco, e o mineiro só tira o que sai com as duas. Tábua, lã
+     *       e baú caem fora sem serem citados;
+     *   <li><b>tijolo de pedra não</b> — é a única família de cubo cheio
+     *       que sai na picareta e que <b>nenhuma caverna gera</b>. É
+     *       dela que o autor fez a escada: {@code digging Escadas de
+     *       Tijolos de Pedra}.
+     * </ul>
+     *
+     * <p><b>O que ela erra, e para que lado.</b> Um piso de tijolo de
+     * barro ou de pedra polida ainda passa por rocha. Errar para este
+     * lado é o certo: a mina que para de cavar é pior que a mina que
+     * abre um bloco a mais — foi o que a tentativa desfeita provou.
+     *
+     * <p>E o que é natural e não é cubo cheio — estalactite, ametista,
+     * teia, líquen — a mina simplesmente contorna. Nenhum deles fecha
+     * passagem.
+     */
+    private static boolean isRock(ServerWorld world, BlockPos at, BlockState state) {
+        return state.isFullCube(world, at)
+                && (state.isIn(BlockTags.PICKAXE_MINEABLE)
+                        || state.isIn(BlockTags.SHOVEL_MINEABLE))
+                && !state.isIn(BlockTags.STONE_BRICKS);
+    }
+
+    /** Rocha que a picareta abre: nem espaço aberto, nem o que a Regra 3 protege. */
+    private static boolean isDiggableRock(ServerWorld world, BlockPos at) {
+        return canDig(world, at) && !isOpenSpace(world, at, world.getBlockState(at));
     }
 
     /**
@@ -596,9 +673,7 @@ public final class MineDigging {
             return false;
         }
 
-        BlockState state = world.getBlockState(at);
-
-        return !state.isAir() && state.getFluidState().isEmpty() && canDig(world, at);
+        return isDiggableRock(world, at);
     }
 
     /**
@@ -1021,9 +1096,7 @@ public final class MineDigging {
 
             BlockState state = world.getBlockState(at);
 
-            if (state.isAir() || !state.getFluidState().isEmpty()
-                    || MineLighting.isLight(world, at, state)) {
-
+            if (isOpenSpace(world, at, state)) {
                 // Já aberto, ou água e lava. Nenhum dos dois se cava.
                 //
                 // <b>E a tocha da própria mina</b> — 2026-08-28. Uma
@@ -1031,6 +1104,11 @@ public final class MineDigging {
                 // o mineiro cavaria a luz que acabou de pôr, que é o
                 // defeito do lampião no primeiro degrau de 08-27 de
                 // volta pela porta da frente.
+                //
+                // <b>E o degrau que o jogador construiu</b> — 2026-09-05.
+                // A lista mora no isOpenSpace, que é a mesma que o
+                // isStillClosed usa: recuo do cursor e escolha do alvo
+                // não podem discordar.
                 continue;
             }
 

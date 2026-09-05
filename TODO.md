@@ -268,6 +268,88 @@ abaixo, com o porquê.
 
 ## ✅ Resolvido
 
+### 2026-09-05 — o caminho que o jogador faz dentro da mina para de virar picareta
+
+**Pedido do autor:** *"corrigir a escada que o player constrói, ou qualquer
+caminho que o próprio player cria dentro da mina"*.
+
+A metade que faltava desde 09-05 de manhã. O corredor já parava de quebrar no
+degrau; o que continuava era o mineiro **cavando** o degrau —
+`digging Escadas de Tijolos de Pedra`. O `canDig` protege a vila gerada e o que
+a colônia construiu, e a escada do jogador não é nenhuma das duas.
+
+**Por que a primeira tentativa fracassou, e esta não repete o erro.** Ela mexeu
+só no `isStillClosed`, e a mina emudeceu — nem fronteira, nem cursor recuado,
+nem picareta numa sessão inteira. Aquela pergunta alimenta o recuo do cursor, e
+**recuo e escolha do alvo têm de concordar**: posição que o `nextCut` pula não
+pode ser a fronteira. Os dois concordavam **por cópia** — a mesma lista escrita
+duas vezes —, e mexer numa cópia só é o defeito.
+
+Agora a lista é uma: `MineDigging.isOpenSpace`. O `nextCut` a chama para pular,
+e o `isStillClosed` a chama para não recuar. A concordância deixou de ser
+coincidência e virou estrutura.
+
+**E o caminho do jogador é espaço aberto, não obstáculo.** Tratá-lo como
+bloqueio faria a galeria virar depois de alguns degraus e o corredor dele
+acabaria fechando o ramal. Ele entra pela mesma porta da tocha da própria mina,
+que já era assim desde 08-28.
+
+**Como o mod sabe que o bloco é dele**, sem o Minecraft guardar quem pôs nada:
+forma e ferramenta, que o jogo guarda. Rocha é **cubo cheio** que sai na
+**picareta ou pá**, e que **não é tijolo de pedra** — a única família de cubo
+cheio, picareteável, que nenhuma caverna gera, e é dela que o autor fez a
+escada. Degrau, laje, escada de mão, tocha, trilho, porta, placa e cerca já
+falham no cubo cheio; tábua, lã e baú falham na ferramenta. Nenhuma linha
+precisa nomeá-los.
+
+**O que ela erra, e para que lado:** um piso de tijolo de barro ou de pedra
+polida ainda passa por rocha. Errar assim é o certo — a mina que para de cavar
+é pior que a mina que abre um bloco a mais, e foi o que a tentativa desfeita
+provou.
+
+**Verificação:** fase vermelha conferida nos **dois** testes, que juntos são a
+concordância — `theMinerDoesNotDigThePlayersStaircase` (a escolha do alvo) e
+`thePlayersStepInTheDigOrderIsNotTheFrontier` (o recuo do cursor). Um sem o
+outro passa com a mina quebrada, e o segundo só discrimina com o degrau na
+**última** posição aberta. Depois: **644 unitários e 255 gametests, zero
+falhas**. **Não visto em jogo.**
+
+### 2026-09-05 — a colônia parou de desfazer a própria troca de ferramenta
+
+**Queixa do autor:** *"os trabalhadores não estão trocando suas ferramentas
+pela versão melhor que está em seus baús"*. E eles trocavam — por **um ciclo**.
+
+A invariante do `WorkerEquipment.equip` era *a mão é a ferramenta da profissão*,
+e o `ToolUpgrade` acabara de pôr na mão uma que **não** é ela. Na passagem
+seguinte — 600 tiques, meio minuto — o `equip` via picareta de diamante onde o
+registro diz picareta de ferro, chamava aquilo de ferramenta errada, e
+reequipava o ferro por cima. O diamante era destruído no caminho: `DIAMOND_PICKAXE`
+está no `ToolType`, então `isProfessionTool` diz que é da colônia, e o que a
+colônia deu volta ao nada.
+
+**O defeito era do miolo do enum, e por isso era invisível.** Picareta de ouro,
+de pedra ou de netherita **ficavam** na mão: não estão no `ToolType`, então
+passam por item do jogador, que a Regra 3 protege. Só o diamante — a única que
+o jogador de fato põe no baú do mineiro — era desfeita.
+
+**Nenhum teste via**, e o motivo é uma frase: os cinco testes de troca chamam
+`equip` **uma vez**. Uma passagem prova que o baú alcança a mão; não prova que a
+mão fica com o que subiu. É a lição 2 do dia anterior noutra roupa.
+
+A invariante passou a ser *a mão não é pior que a ferramenta da profissão*, e
+quem mede é o mesmo bloco de prova de sempre — `ToolUpgrade.worthKeeping`. Não
+há segunda tabela: nada em lugar nenhum diz "diamante também vale". Profissão
+sem bloco de prova continua sem guardar nada, e é por isso que o pastor com
+picareta na mão — o defeito de 2026-09-02 — continua tendo a picareta tomada.
+
+**Verificação:** fase vermelha conferida — `theUpgradedPickaxeSurvivesTheNextPass`
+falha sem o conserto com *"na segunda passagem a mão ficou com
+minecraft:iron_pickaxe"*. Depois: **644 testes de unidade e 253 gametests, zero
+falhas**. **Não visto em jogo.**
+
+E a pendência 🔴 vizinha continua de pé: **nada na colônia fabrica ou deposita
+ferramenta**. Quem alimenta a troca ainda é o jogador.
+
 ### 2026-09-05 — nome colorido, escada dupla, túnel mais alto e o arco da boca
 
 Quatro pedidos do autor, e três deles mexem na geometria da mina.
