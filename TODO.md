@@ -2268,6 +2268,20 @@ têm medida, e nenhum tem conserto.
 
 ---
 
+## 🟠 O ciclo de 2026-09-04, à noite — o que ele deixou aberto
+
+Quatro pedidos do autor entraram; **três foram feitos, um não**. Nenhum
+dos três foi visto em jogo.
+
+| | O que é | Estado |
+|---|---|---|
+| 🔴 | **Ramais da mesma escada, um por mineiro.** Decisão do autor: os mineiros deixam de esperar a vez e cada um ganha um braço próprio a partir do poço | **Não feito, e é o próximo ciclo.** O bloqueio tem nome: `Mine.cut` é um cursor só, e ele é compartilhado com o `MineLighting.spotFor` e com a perna do `MinerReach`. Ramal por mineiro exige cursor por braço e a mudança se espalha por essas três. A migração sai de graça — `MineSave.SHAPE_VERSION` já faz a mina voltar ao primeiro degrau quando a geometria muda, e basta ir a 3 |
+| 🟠 | **Os 49 `assign()` que criam trabalhador de mãos vazias.** Só `WorkerEquipmentGameTest` chama `equip`; três testes de `MinerGameTest` passaram a chamar neste ciclo | Passam hoje por folga no `tickLimit`, não por estarem certos. Desde que o `BlockBreakTime` pergunta à mão, teste que mede tempo sem equipar mede a mão nua |
+| 🟠 | **`MineDigging` tem 1.078 linhas** e passou o `VillageDetectionHandler` (983) como o pior arquivo do projeto | A lista de arquivos acima de 500 linhas, mais abaixo, ainda não o traz |
+| 🟡 | **A picareta de ouro vence a de diamante** — 12 de velocidade contra 8 | É o Vanilla, e aqui não tem o defeito que o compensa: ferramenta de trabalhador não se gasta. Fica dito porque vai parecer defeito quando aparecer em jogo |
+
+---
+
 ## 🟠 Pendências, por nível de progressão lógica
 
 A ordem é de dependência: cada nível precisa do anterior de pé.
