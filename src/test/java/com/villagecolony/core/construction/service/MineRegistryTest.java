@@ -1,12 +1,15 @@
 package com.villagecolony.core.construction.service;
 
 import com.villagecolony.core.construction.model.Mine;
+import com.villagecolony.core.construction.model.MineArm;
 import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.Side;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -77,10 +80,10 @@ class MineRegistryTest {
         Mine mine = registry.open(colonyId, shaft());
 
         for (int i = 0; i < 5; i++) {
-            mine.nextPosition();
+            mine.arm(0).nextPosition();
         }
 
-        assertEquals(5, registry.of(colonyId).orElseThrow().cut());
+        assertEquals(5, registry.of(colonyId).orElseThrow().arm(0).cut());
     }
 
     /**
@@ -94,26 +97,44 @@ class MineRegistryTest {
     void theFrontierIsWhereTheNextCutBegins() {
         Mine mine = Mine.open(UUID.randomUUID(), shaft());
 
-        ColonyPos first = mine.nextPosition();
-        ColonyPos second = mine.nextPosition();
+        ColonyPos first = mine.arm(0).nextPosition();
+        ColonyPos second = mine.arm(0).nextPosition();
 
         assertEquals(shaft().positionAt(0), first);
         assertEquals(shaft().positionAt(1), second);
 
-        Mine reopened = Mine.restore(UUID.randomUUID(), shaft(), mine.cut());
+        Mine reopened = Mine.restore(UUID.randomUUID(), shaft(), mine.arm(0).cut());
 
-        assertEquals(shaft().positionAt(2), reopened.nextPosition());
+        assertEquals(shaft().positionAt(2), reopened.arm(0).nextPosition());
     }
 
+    /**
+     * Os quatro ramais apontam para quatro lados — 2026-09-04.
+     *
+     * <p>Este teste dizia outra coisa até hoje: <i>a galeria guarda a
+     * curva que deu</i>, porque um cursor só visitava os quatro rumos em
+     * sequência e o rumo da vez tinha de sobreviver ao fechar do mundo.
+     *
+     * <p>Com um ramal por mineiro os quatro rumos existem ao mesmo tempo,
+     * e o que se afirma passou a ser isso — nenhum ramal cava para onde
+     * outro já cava. A boca continua sendo uma só, que é o que faz deles
+     * ramais da mesma escada e não quatro minas.
+     */
     @Test
-    void theGalleryKeepsTheTurnItTook() {
+    void theFourBranchesFaceFourDifferentWays() {
         Mine mine = Mine.open(UUID.randomUUID(), shaft());
 
-        Side before = mine.shaft().gallery();
+        Set<Side> headings = new HashSet<>();
 
-        mine.turn();
+        for (MineArm arm : mine.arms()) {
+            headings.add(arm.shaft().gallery());
 
-        assertNotEquals(before, mine.shaft().gallery());
+            assertEquals(MOUTH, arm.shaft().entry());
+        }
+
+        assertEquals(Mine.ARMS, headings.size(),
+                "dois ramais cavam para o mesmo lado: " + headings);
+
         assertEquals(MOUTH, mine.entry());
     }
 
@@ -135,11 +156,11 @@ class MineRegistryTest {
     void theTunnelPositionWaitsWhileTheOreIsTaken() {
         Mine mine = Mine.open(UUID.randomUUID(), shaft());
 
-        ColonyPos first = mine.nextPosition();
+        ColonyPos first = mine.arm(0).nextPosition();
 
-        mine.holdPosition();
+        mine.arm(0).holdPosition();
 
-        assertEquals(first, mine.nextPosition());
+        assertEquals(first, mine.arm(0).nextPosition());
     }
 
     /**
@@ -162,11 +183,11 @@ class MineRegistryTest {
     void aStoneThatCouldNotBeReachedIsOfferedAgain() {
         Mine mine = Mine.open(UUID.randomUUID(), shaft());
 
-        ColonyPos unreachable = mine.nextPosition();
+        ColonyPos unreachable = mine.arm(0).nextPosition();
 
-        assertTrue(mine.holdPositionAt(unreachable), "o cursor não desandou");
+        assertTrue(mine.arm(0).holdPositionAt(unreachable), "o cursor não desandou");
 
-        assertEquals(unreachable, mine.nextPosition());
+        assertEquals(unreachable, mine.arm(0).nextPosition());
     }
 
     /**
@@ -180,16 +201,16 @@ class MineRegistryTest {
     void onlyTheLastHandedOutPositionRollsBack() {
         Mine mine = Mine.open(UUID.randomUUID(), shaft());
 
-        ColonyPos mine_ = mine.nextPosition();
-        ColonyPos theOther = mine.nextPosition();
+        ColonyPos mine_ = mine.arm(0).nextPosition();
+        ColonyPos theOther = mine.arm(0).nextPosition();
 
         assertFalse(
-                mine.holdPositionAt(mine_),
+                mine.arm(0).holdPositionAt(mine_),
                 "desandou por cima do bloco que o outro mineiro pegou");
 
-        assertTrue(mine.holdPositionAt(theOther));
+        assertTrue(mine.arm(0).holdPositionAt(theOther));
 
-        assertEquals(theOther, mine.nextPosition());
+        assertEquals(theOther, mine.arm(0).nextPosition());
     }
 
     /**
@@ -206,16 +227,16 @@ class MineRegistryTest {
         Mine mine = Mine.open(UUID.randomUUID(), shaft());
 
         for (int i = 0; i < 10; i++) {
-            mine.nextPosition();
+            mine.arm(0).nextPosition();
         }
 
-        assertEquals(10, mine.cut());
+        assertEquals(10, mine.arm(0).cut());
 
-        mine.backUp();
-        mine.backUp();
+        mine.arm(0).backUp();
+        mine.arm(0).backUp();
 
-        assertEquals(8, mine.cut());
-        assertEquals(mine.shaft().positionAt(8), mine.nextPosition());
+        assertEquals(8, mine.arm(0).cut());
+        assertEquals(mine.shaft().positionAt(8), mine.arm(0).nextPosition());
     }
 
     /**
@@ -237,13 +258,13 @@ class MineRegistryTest {
         Mine mine = Mine.open(UUID.randomUUID(), shaft());
 
         for (int i = 0; i < 40; i++) {
-            mine.nextPosition();
+            mine.arm(0).nextPosition();
         }
 
-        mine.rewindTo(7);
+        mine.arm(0).rewindTo(7);
 
-        assertEquals(7, mine.cut());
-        assertEquals(mine.shaft().positionAt(7), mine.nextPosition());
+        assertEquals(7, mine.arm(0).cut());
+        assertEquals(mine.shaft().positionAt(7), mine.arm(0).nextPosition());
     }
 
     /**
@@ -274,10 +295,10 @@ class MineRegistryTest {
         Mine mine = Mine.open(UUID.randomUUID(), shaft());
 
         for (int i = 0; i < 100; i++) {
-            mine.nextPosition();
+            mine.arm(0).nextPosition();
         }
 
-        assertTrue(mine.frontierWhereRockBegins(i -> i == 5).isEmpty());
+        assertTrue(mine.arm(0).frontierWhereRockBegins(i -> i == 5).isEmpty());
     }
 
     /**
@@ -291,10 +312,10 @@ class MineRegistryTest {
         Mine mine = Mine.open(UUID.randomUUID(), shaft());
 
         for (int i = 0; i < 100; i++) {
-            mine.nextPosition();
+            mine.arm(0).nextPosition();
         }
 
-        assertEquals(60, mine.frontierWhereRockBegins(i -> i == 5 || i >= 60).orElseThrow());
+        assertEquals(60, mine.arm(0).frontierWhereRockBegins(i -> i == 5 || i >= 60).orElseThrow());
     }
 
     /**
@@ -313,10 +334,10 @@ class MineRegistryTest {
         Mine mine = Mine.open(UUID.randomUUID(), shaft());
 
         for (int i = 0; i < 200; i++) {
-            mine.nextPosition();
+            mine.arm(0).nextPosition();
         }
 
-        assertEquals(40, mine.frontierWhereRockBegins(i -> i >= 40 && i < 120).orElseThrow());
+        assertEquals(40, mine.arm(0).frontierWhereRockBegins(i -> i >= 40 && i < 120).orElseThrow());
     }
 
     /** Galeria inteira aberta: não há frente para recuar. */
@@ -325,10 +346,10 @@ class MineRegistryTest {
         Mine mine = Mine.open(UUID.randomUUID(), shaft());
 
         for (int i = 0; i < 100; i++) {
-            mine.nextPosition();
+            mine.arm(0).nextPosition();
         }
 
-        assertTrue(mine.frontierWhereRockBegins(i -> false).isEmpty());
+        assertTrue(mine.arm(0).frontierWhereRockBegins(i -> false).isEmpty());
     }
 
     /** A frente nunca vai para antes do primeiro degrau, nem para trás do fim. */
@@ -336,9 +357,9 @@ class MineRegistryTest {
     void theFrontierStaysInsideTheOrder() {
         Mine mine = Mine.open(UUID.randomUUID(), shaft());
 
-        mine.rewindTo(-5);
+        mine.arm(0).rewindTo(-5);
 
-        assertEquals(0, mine.cut());
+        assertEquals(0, mine.arm(0).cut());
     }
 
     /** Recuar do começo não leva a picareta para antes do primeiro degrau. */
@@ -346,10 +367,10 @@ class MineRegistryTest {
     void backingUpNeverGoesBehindTheStart() {
         Mine mine = Mine.open(UUID.randomUUID(), shaft());
 
-        mine.backUp();
-        mine.backUp();
+        mine.arm(0).backUp();
+        mine.arm(0).backUp();
 
-        assertEquals(0, mine.cut());
+        assertEquals(0, mine.arm(0).cut());
     }
 
     /** Desandar do começo não leva a picareta para antes do primeiro degrau. */
@@ -357,9 +378,9 @@ class MineRegistryTest {
     void theCursorNeverGoesBehindTheStart() {
         Mine mine = Mine.open(UUID.randomUUID(), shaft());
 
-        mine.holdPosition();
+        mine.arm(0).holdPosition();
 
-        assertEquals(0, mine.cut());
+        assertEquals(0, mine.arm(0).cut());
     }
 
     /**
@@ -372,17 +393,17 @@ class MineRegistryTest {
     void theVeinIsRememberedUntilItRunsOut() {
         Mine mine = Mine.open(UUID.randomUUID(), shaft());
 
-        assertTrue(mine.vein().isEmpty());
+        assertTrue(mine.arm(0).vein().isEmpty());
 
         ColonyPos ore = new ColonyPos(41, 54, 3);
 
-        mine.followVein(ore);
+        mine.arm(0).followVein(ore);
 
-        assertEquals(ore, mine.vein().orElseThrow());
+        assertEquals(ore, mine.arm(0).vein().orElseThrow());
 
-        mine.veinExhausted();
+        mine.arm(0).veinExhausted();
 
-        assertTrue(mine.vein().isEmpty());
+        assertTrue(mine.arm(0).vein().isEmpty());
     }
 
     /**
@@ -396,17 +417,22 @@ class MineRegistryTest {
     void theGalleryTurnsOnceTheRefusalsAddUp() {
         Mine mine = Mine.open(UUID.randomUUID(), shaft());
 
-        Side before = mine.shaft().gallery();
-
         for (int i = 0; i < 7; i++) {
-            assertFalse(mine.blockedAgain(8), "virou cedo demais, na recusa " + (i + 1));
+            assertFalse(mine.arm(0).blockedAgain(8), "fechou cedo demais, na recusa " + (i + 1));
         }
 
-        assertTrue(mine.blockedAgain(8));
-        assertNotEquals(before, mine.shaft().gallery());
+        // <b>Fecha o ramal, e não vira a galeria</b> — 2026-09-04. Este
+        // teste media o rumo da galeria mudando, e media certo: com um
+        // cursor só, oito recusas o giravam. Com um ramal por mineiro o
+        // rumo é fixo, e desistir de uma barreira é desistir do ramal.
+        assertTrue(mine.arm(0).blockedAgain(8));
+        assertTrue(mine.arm(0).isDone());
 
-        // E a contagem recomeça: a curva seguinte também pede oito.
-        assertFalse(mine.blockedAgain(8));
+        // E os outros três continuam de pé: a lava é de um lugar.
+        assertFalse(mine.everyArmIsDone());
+
+        // A contagem do ramal seguinte também pede oito, do zero.
+        assertFalse(mine.arm(1).blockedAgain(8));
     }
 
     /** Picareta que pega zera a conta das recusas. */
@@ -417,12 +443,12 @@ class MineRegistryTest {
         Side before = mine.shaft().gallery();
 
         for (int i = 0; i < 7; i++) {
-            mine.blockedAgain(8);
+            mine.arm(0).blockedAgain(8);
         }
 
-        mine.digging();
+        mine.arm(0).digging();
 
-        assertFalse(mine.blockedAgain(8));
+        assertFalse(mine.arm(0).blockedAgain(8));
         assertEquals(before, mine.shaft().gallery());
     }
 
@@ -440,38 +466,48 @@ class MineRegistryTest {
     }
 
     /**
-     * Fechado o círculo, a mina desce um nível — 2026-09-02.
+     * Fechado o círculo, a mina desce um nível — 2026-09-02, e a conta
+     * mudou de forma em 2026-09-04 sem mudar de conteúdo.
      *
-     * <p>Quatro curvas e a galeria voltou à direção em que começou: ela
-     * deu a volta neste nível, e o que sobra está abaixo. É a forma do
-     * MineColonies — profundidade que cresce aos poucos —, com o
-     * gatilho que este mod já tinha em mãos.
+     * <p>Eram quatro curvas do mesmo cursor: a galeria voltava à direção
+     * em que começou, tinha dado a volta no nível, e o que sobrava estava
+     * abaixo. São quatro <b>ramais fechados</b> — os mesmos quatro rumos,
+     * agora podendo ser fechados por quatro aldeões ao mesmo tempo.
      *
-     * <p>O cursor volta a zero porque o poço do nível novo ainda não foi
-     * cavado: são duas descidas e duas salas antes de a galeria começar.
+     * <p>Os cursores voltam a zero porque o poço do nível novo ainda não
+     * foi cavado: são duas descidas e duas salas antes de a galeria
+     * começar.
      */
     @Test
     void theGalleryDescendsAfterAFullCircle() {
         Mine mine = Mine.open(UUID.randomUUID(), shaft());
 
         for (int i = 0; i < 50; i++) {
-            mine.nextPosition();
+            mine.arm(0).nextPosition();
         }
 
         int before = mine.shaft().positionAt(MineShaft.CARVED).y();
 
-        for (int i = 0; i < Mine.TURNS_PER_LEVEL; i++) {
-            mine.turn();
+        for (MineArm arm : mine.arms()) {
+            arm.finish();
         }
+
+        assertTrue(mine.deepenIfEveryArmIsDone(), "os quatro ramais fecharam e ela não desceu");
 
         assertEquals(
                 before - 2 * MineShaft.DESCENT,
                 mine.shaft().positionAt(MineShaft.CARVED).y());
 
-        assertEquals(0, mine.cut());
+        assertEquals(0, mine.arm(0).cut());
     }
 
-    /** No fundo ela volta a só virar: abaixo do pico não há o que procurar. */
+    /**
+     * No fundo ela não desce: abaixo do pico não há o que procurar.
+     *
+     * <p>Os ramais reabrem no mesmo nível em vez de a mina parar — é pior
+     * recavar do que deixar a colônia sem mineiro para sempre, e o
+     * {@code findTheFrontier} passa por cima do que já é ar.
+     */
     @Test
     void theGalleryKeepsTurningAtTheDeepestLevel() {
         Mine mine = Mine.open(
@@ -482,10 +518,15 @@ class MineRegistryTest {
 
         int before = mine.shaft().positionAt(MineShaft.CARVED).y();
 
-        for (int i = 0; i < Mine.TURNS_PER_LEVEL + 1; i++) {
-            mine.turn();
+        for (MineArm arm : mine.arms()) {
+            arm.finish();
         }
 
+        assertFalse(mine.deepenIfEveryArmIsDone(), "ela desceu abaixo do pico");
+
         assertEquals(before, mine.shaft().positionAt(MineShaft.CARVED).y());
+
+        // E os ramais voltaram a aceitar picareta, no mesmo nível.
+        assertFalse(mine.everyArmIsDone(), "a mina do fundo ficou sem frente nenhuma");
     }
 }

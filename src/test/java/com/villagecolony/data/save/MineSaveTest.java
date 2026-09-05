@@ -83,15 +83,22 @@ class MineSaveTest {
         assertEquals(MOUTH, back.entry());
         assertEquals(mine.shaft().descent(), back.shaft().descent());
         assertEquals(mine.shaft().gallery(), back.shaft().gallery());
-        assertEquals(437, back.cut());
+        assertEquals(437, back.arm(0).cut());
     }
 
     /**
-     * A galeria virada continua virada.
+     * O rumo da galeria continua no disco.
      *
-     * <p>É a metade que mais escondia o erro: sem gravar o lado, a mina
-     * reabria apontada para a lava que já a tinha feito virar, e o
-     * mineiro batia oito vezes na mesma barreira para virar de novo.
+     * <p>Chamava-se <i>a galeria virada continua virada</i>, e o motivo
+     * era este: sem gravar o lado, a mina reabria apontada para a lava
+     * que já a tinha feito virar, e o mineiro batia oito vezes na mesma
+     * barreira para virar de novo.
+     *
+     * <p><b>Desde 2026-09-04 o rumo gravado é o do primeiro ramal</b>, e
+     * os outros três saem dele girando — não há mais uma curva a
+     * preservar, há quatro rumos a reconstruir. A propriedade que
+     * importa é a mesma: o que o disco devolve aponta para onde a mina
+     * apontava.
      */
     @Test
     void theTurnedGalleryComesBackTurned() {
@@ -101,11 +108,17 @@ class MineSaveTest {
 
         Side straight = mine.shaft().gallery();
 
-        mine.turn();
-
         Mine back = roundTrip(savedWith(colonyAt(colonyId), mine)).mines().get(0);
 
-        assertEquals(straight.clockwise(), back.shaft().gallery());
+        assertEquals(straight, back.shaft().gallery());
+
+        // E os quatro ramais renascem apontando para os quatro lados.
+        for (int index = 0; index < Mine.ARMS; index++) {
+            assertEquals(
+                    mine.arm(index).shaft().gallery(),
+                    back.arm(index).shaft().gallery(),
+                    "o ramal " + index + " reabriu para outro lado");
+        }
     }
 
     /**
@@ -124,14 +137,14 @@ class MineSaveTest {
         ColonyPos last = null;
 
         for (int i = 0; i < 60; i++) {
-            last = mine.nextPosition();
+            last = mine.arm(0).nextPosition();
         }
 
         Mine back = roundTrip(savedWith(colonyAt(colonyId), mine)).mines().get(0);
 
-        assertEquals(60, back.cut());
+        assertEquals(60, back.arm(0).cut());
         assertEquals(mine.shaft().positionAt(59), last);
-        assertEquals(mine.shaft().positionAt(60), back.nextPosition());
+        assertEquals(mine.shaft().positionAt(60), back.arm(0).nextPosition());
     }
 
     /** Mina de colônia que não voltou é escada de dono nenhum. */
@@ -194,7 +207,7 @@ class MineSaveTest {
 
         Mine back = ColonySavedData.TYPE.deserializer().apply(nbt, null).mines().get(0);
 
-        assertEquals(0, back.cut());
+        assertEquals(0, back.arm(0).cut());
         assertEquals(MOUTH, back.entry());
         assertEquals(mine.shaft().gallery(), back.shaft().gallery());
     }
@@ -206,7 +219,9 @@ class MineSaveTest {
 
         Mine mine = Mine.restore(colonyId, MineShaft.from(MOUTH, Side.EAST), 437);
 
-        assertEquals(437, roundTrip(savedWith(colonyAt(colonyId), mine)).mines().get(0).cut());
+        assertEquals(
+                437,
+                roundTrip(savedWith(colonyAt(colonyId), mine)).mines().get(0).arm(0).cut());
     }
 
     /**

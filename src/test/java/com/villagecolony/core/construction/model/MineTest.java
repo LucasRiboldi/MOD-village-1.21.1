@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * A mina em uso: o cursor, a curva e o braço.
+ * A mina em uso: os ramais, os cursores e a descida.
  *
  * <p>{@link MineShaftTest} afirma a <b>forma</b>; aqui se afirma o que a
  * colônia faz com ela ao longo de uma sessão.
@@ -25,100 +25,200 @@ class MineTest {
     }
 
     /**
-     * A curva devolve o cursor ao começo da galeria — decisão do autor,
-     * 2026-09-04.
+     * Cada ramal tem o cursor dele — decisão do autor, 2026-09-04.
      *
-     * <p><b>Era o defeito de verdade por trás do "out of reach".</b> A
-     * galeria já sabia virar desde 2026-09-02, e virar não adiantava: o
-     * cursor era guardado, então a direção nova começava na mesma
-     * distância. Na sessão de 09-04 isso pôs o mineiro a 70,7 blocos da
-     * frente, parado, por vinte minutos.
+     * <p><b>É a propriedade inteira do pedido.</b> Havia um cursor só, e
+     * era por isso que a mina tinha um dono: dois mineiros perguntando na
+     * mesma passagem recebiam a mesma posição. Na sessão de 09-04 o
+     * terceiro mineiro passou os trinta e sete minutos em {@code waiting
+     * for the shaft}.
+     *
+     * <p>Cavar num ramal não pode mover a frente de nenhum outro.
      */
     @Test
-    void turningBringsTheCursorBackToTheRoom() {
+    void diggingInOneBranchDoesNotMoveTheOthers() {
         Mine mine = opened();
 
-        while (mine.cut() < MineShaft.CARVED + 100) {
-            mine.nextPosition();
+        for (int i = 0; i < 40; i++) {
+            mine.arm(0).nextPosition();
         }
 
-        assertTrue(mine.cut() > MineShaft.CARVED,
-                "o cursor não chegou a entrar na galeria");
+        assertEquals(40, mine.arm(0).cut());
 
-        mine.turn();
-
-        assertEquals(MineShaft.CARVED, mine.cut(),
-                "a curva manteve o cursor longe da sala");
+        for (int index = 1; index < Mine.ARMS; index++) {
+            assertEquals(0, mine.arm(index).cut(),
+                    "o ramal " + index + " andou junto com o primeiro");
+        }
     }
 
     /**
-     * E o poço não é recavado: o cursor volta ao <b>começo da galeria</b>,
-     * não ao começo da mina.
+     * E dois ramais na mesma posição da ordem cavam blocos diferentes.
      *
-     * <p>Voltar a zero mandaria o mineiro cavar de novo a escada e as duas
-     * salas, que já estão abertas — o {@code findTheFrontier} passaria por
-     * elas, mas gastando passagem atrás de passagem.
+     * <p>É o que faz deles ramais, e não turnos: o índice é o mesmo, o
+     * rumo da galeria não é. Abaixo de {@link MineShaft#CARVED} eles
+     * <b>coincidem</b> de propósito — a escada e as salas são do poço, e
+     * quem chegar primeiro as abre.
      */
     @Test
-    void turningDoesNotSendThePickaxeBackUpTheStair() {
+    void twoBranchesAtTheSameIndexDigDifferentBlocks() {
         Mine mine = opened();
 
-        while (mine.cut() < MineShaft.CARVED + 50) {
-            mine.nextPosition();
+        int gallery = MineShaft.CARVED + 4;
+
+        assertEquals(
+                mine.arm(0).shaft().positionAt(MineShaft.CARVED - 1),
+                mine.arm(1).shaft().positionAt(MineShaft.CARVED - 1),
+                "os ramais cavaram escadas diferentes");
+
+        for (int index = 1; index < Mine.ARMS; index++) {
+            assertFalse(
+                    mine.arm(0).shaft().positionAt(gallery)
+                            .equals(mine.arm(index).shaft().positionAt(gallery)),
+                    "o ramal " + index + " cava o mesmo bloco que o primeiro");
         }
-
-        mine.turn();
-
-        assertTrue(mine.cut() >= MineShaft.CARVED,
-                "o cursor voltou para dentro do poço, que já está aberto");
     }
 
     /**
-     * O braço acaba, e a mina avisa antes de gastar a posição.
+     * O ramal acaba, e a mina avisa antes de gastar a posição.
      *
      * <p>É o que o {@code MineDigging} pergunta a cada olhada, e é onde o
      * teto de raio do autor vira comportamento.
      */
     @Test
-    void theMineSaysWhenTheArmIsOver() {
-        Mine mine = opened();
+    void theBranchSaysWhenItIsOver() {
+        MineArm arm = opened().arm(0);
 
-        assertFalse(mine.reachedTheEndOfTheArm(),
+        assertFalse(arm.reachedTheEndOfTheArm(),
                 "a mina recém-aberta já se diz no fim do braço");
 
-        while (!mine.reachedTheEndOfTheArm()) {
-            mine.nextPosition();
+        while (!arm.reachedTheEndOfTheArm()) {
+            arm.nextPosition();
 
-            assertTrue(mine.cut() < MineShaft.CARVED + 10_000,
+            assertTrue(arm.cut() < MineShaft.CARVED + 10_000,
                     "o braço nunca acabou — o teto de raio não pegou");
         }
 
-        assertTrue(mine.cut() > MineShaft.CARVED,
+        assertTrue(arm.cut() > MineShaft.CARVED,
                 "o fim do braço caiu antes de a galeria começar");
     }
 
     /**
-     * Quatro curvas fecham o nível e a mina desce — e é aí, e só aí, que
-     * o cursor volta a zero.
+     * Um ramal que fecha não fecha os outros.
      *
-     * <p>O nível novo tem poço e salas próprios: eles ainda são rocha, e
-     * por isso a ordem recomeça do primeiro degrau.
+     * <p>A lava é de um lugar. Encerrar os quatro tiraria três mineiros
+     * de frentes que estão secas — e foi por isso que a contagem de
+     * recusas saiu da {@link Mine} e passou para o {@link MineArm}.
      */
     @Test
-    void theFourthTurnGoesDownAndStartsTheOrderOver() {
+    void aFinishedBranchLeavesTheOthersOpen() {
+        Mine mine = opened();
+
+        mine.arm(0).finish();
+
+        assertTrue(mine.arm(0).isDone());
+        assertFalse(mine.everyArmIsDone(), "um ramal fechado fechou a mina inteira");
+
+        assertEquals(1, mine.firstArmStillOpen().orElseThrow(),
+                "o mineiro seguinte não foi mandado ao primeiro ramal livre");
+    }
+
+    /**
+     * Fechados os quatro, a mina desce e a ordem recomeça.
+     *
+     * <p>É a regra das quatro curvas de 2026-09-02, contada de outro
+     * jeito: os mesmos quatro rumos, agora podendo ser fechados por
+     * quatro aldeões ao mesmo tempo em vez de um só, quatro vezes.
+     */
+    @Test
+    void theFourthFinishedBranchTakesTheMineDown() {
         Mine mine = opened();
 
         int y = mine.shaft().positionAt(MineShaft.CARVED).y();
 
-        for (int turn = 0; turn < Mine.TURNS_PER_LEVEL; turn++) {
-            mine.nextPosition();
-            mine.turn();
+        for (int index = 0; index < Mine.ARMS - 1; index++) {
+            mine.arm(index).finish();
+
+            assertFalse(mine.deepenIfEveryArmIsDone(),
+                    "ela desceu com o ramal " + index + " ainda aberto");
         }
 
-        assertEquals(0, mine.cut(),
-                "a descida não recomeçou a ordem de cavar");
+        mine.arm(Mine.ARMS - 1).finish();
+
+        assertTrue(mine.deepenIfEveryArmIsDone(), "o quarto ramal fechou e ela não desceu");
 
         assertTrue(mine.shaft().positionAt(MineShaft.CARVED).y() < y,
-                "a quarta curva não desceu de nível");
+                "a mina não desceu de nível");
+
+        for (int index = 0; index < Mine.ARMS; index++) {
+            assertEquals(0, mine.arm(index).cut(),
+                    "o ramal " + index + " não recomeçou do primeiro degrau");
+
+            assertFalse(mine.arm(index).isDone(),
+                    "o ramal " + index + " desceu já fechado");
+        }
+    }
+
+    /**
+     * O save de um ramal só reabre os outros três no primeiro degrau.
+     *
+     * <p>É o caminho do disco anterior a 2026-09-04. Nenhum dos três
+     * aponta para lugar errado: são rumos que ninguém cavou ainda.
+     */
+    @Test
+    void anOldSaveComesBackWithOneBranchAdvanced() {
+        Mine mine = Mine.restore(UUID.randomUUID(), MineShaft.from(ENTRY, Side.NORTH), 437);
+
+        assertEquals(437, mine.arm(0).cut());
+
+        for (int index = 1; index < Mine.ARMS; index++) {
+            assertEquals(0, mine.arm(index).cut(),
+                    "o ramal " + index + " herdou a fronteira do primeiro");
+        }
+    }
+
+    /** E a fronteira de cada ramal volta inteira pelo disco. */
+    @Test
+    void everyBranchFrontierSurvivesTheRoundTrip() {
+        int[] cuts = {200, 180, 160, 0};
+
+        Mine mine = Mine.restore(UUID.randomUUID(), MineShaft.from(ENTRY, Side.NORTH), cuts);
+
+        assertEquals(cuts.length, mine.cuts().length);
+
+        for (int index = 0; index < cuts.length; index++) {
+            assertEquals(cuts[index], mine.cuts()[index],
+                    "a fronteira do ramal " + index + " não voltou");
+        }
+    }
+
+    /**
+     * O poço é de um mineiro só até a galeria começar — 2026-09-04.
+     *
+     * <p><b>Foi um gametest que pegou isto</b>, e ele pegou com dois
+     * mineiros recebendo o <b>mesmo bloco</b>. Abaixo de
+     * {@link MineShaft#CARVED} os quatro ramais apontam para as mesmas
+     * posições — é o que faz deles ramais da mesma escada —, e repartir
+     * antes disso é o defeito de 2026-08-26 de volta: os dois andam para
+     * o mesmo lugar, os dois escrevem {@code could not reach the stone}
+     * no mesmo tique, e o recuo do cursor roda duas vezes por um bloco.
+     */
+    @Test
+    void theSharedPitIsDugByOneMinerAtATime() {
+        Mine mine = opened();
+
+        assertEquals(1, mine.branchesOpenNow(),
+                "a mina recém-aberta já repartiu o poço");
+
+        while (mine.arm(0).cut() < MineShaft.CARVED - 1) {
+            mine.arm(0).nextPosition();
+        }
+
+        assertEquals(1, mine.branchesOpenNow(),
+                "repartiu com o último bloco do poço ainda por olhar");
+
+        mine.arm(0).nextPosition();
+
+        assertEquals(Mine.ARMS, mine.branchesOpenNow(),
+                "aberto o poço, os quatro ramais deviam abrir");
     }
 }

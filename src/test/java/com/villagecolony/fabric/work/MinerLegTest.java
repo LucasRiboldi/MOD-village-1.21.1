@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.construction.model.Mine;
+import com.villagecolony.core.construction.model.MineArm;
 import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.Side;
@@ -66,9 +67,17 @@ class MinerLegTest {
     private static final BlockPos DEEP = new BlockPos(735, 45, 878);
 
     /** A mina desta colônia, com a escada já aberta até certa posição. */
-    private static Optional<Mine> mine(int cut) {
+    /**
+     * O ramal em que a perna anda.
+     *
+     * <p>Devolvia a {@code Mine} inteira até 2026-09-04; devolve o
+     * primeiro ramal desde que a mina passou a ter quatro. A perna sempre
+     * andou por <b>uma</b> ordem de cavar — o que mudou é que agora há
+     * quatro, e o corredor de um não serve de caminho para o outro.
+     */
+    private static Optional<MineArm> mine(int cut) {
         return Optional.of(
-                Mine.restore(UUID.randomUUID(), MineShaft.from(MOUTH, Side.NORTH), cut));
+                Mine.restore(UUID.randomUUID(), MineShaft.from(MOUTH, Side.NORTH), cut).arm(0));
     }
 
     /** Um mundo de mentira, feito das duas respostas que a perna pede. */
@@ -328,7 +337,7 @@ class MinerLegTest {
      */
     @Test
     void theLegNeverSendsHimToWhereHeAlreadyIs() {
-        Optional<Mine> mine = mine(60);
+        Optional<MineArm> mine = mine(60);
 
         MineShaft shaft = mine.orElseThrow().shaft();
 

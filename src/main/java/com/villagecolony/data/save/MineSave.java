@@ -39,6 +39,16 @@ final class MineSave {
     private static final String DESCENT = "descent";
     private static final String GALLERY = "gallery";
     private static final String CUT = "cut";
+
+    /**
+     * A fronteira de cada ramal — 2026-09-04.
+     *
+     * <p>Chave nova ao lado da antiga, e nao no lugar dela: {@code cut}
+     * continua sendo escrito com a fronteira do primeiro ramal, para que
+     * um save desta versao lido por uma anterior reabra a mina onde o
+     * ramal principal parou em vez de no primeiro degrau.
+     */
+    private static final String CUTS = "cuts";
     private static final String SHAPE = "shape";
 
     /**
@@ -60,7 +70,7 @@ final class MineSave {
      * <p>Um, e nao zero, para o save anterior a esta chave — onde
      * {@code getInt} devolve zero — cair no ramo do recomeco.
      */
-    private static final int SHAPE_VERSION = 2;
+    private static final int SHAPE_VERSION = 3;
 
     private MineSave() {
     }
@@ -77,7 +87,10 @@ final class MineSave {
             entry.putInt(ENTRY_Z, mine.entry().z());
             entry.putString(DESCENT, mine.shaft().descent().name());
             entry.putString(GALLERY, mine.shaft().gallery().name());
-            entry.putInt(CUT, mine.cut());
+            int[] cuts = mine.cuts();
+
+            entry.putInt(CUT, cuts.length > 0 ? cuts[0] : 0);
+            entry.putIntArray(CUTS, cuts);
             entry.putInt(SHAPE, SHAPE_VERSION);
 
             list.add(entry);
@@ -124,16 +137,34 @@ final class MineSave {
                 continue;
             }
 
-            int cut = entry.getInt(CUT);
-
-            if (cut < 0) {
-                continue;
-            }
+            // Save anterior a 2026-09-04 nao tem a chave dos ramais, e
+            // getIntArray devolve vetor vazio: a mina volta com o ramal
+            // principal na fronteira antiga e os outros tres no primeiro
+            // degrau. Nenhum deles aponta para lugar errado — sao rumos
+            // que ninguem cavou ainda.
+            int[] cuts = entry.contains(CUTS)
+                    ? entry.getIntArray(CUTS)
+                    : new int[] {entry.getInt(CUT)};
 
             if (entry.getInt(SHAPE) != SHAPE_VERSION) {
                 // Fronteira escrita noutra geometria. Ver SHAPE: a mina
                 // volta inteira, so que do primeiro degrau.
-                cut = 0;
+                cuts = new int[0];
+            }
+
+            // <b>A chave antiga tambem e conferida</b>, e nao so a nova:
+            // esta e a fronteira do sistema, e ela desconfia de tudo o
+            // que le. Uma entrada com "cut" negativo escapava por aqui
+            // desde que o vetor "cuts" passou a ter a preferencia — o
+            // campo corrompido deixava de ser lido, e nao de existir.
+            boolean negative = entry.getInt(CUT) < 0;
+
+            for (int cut : cuts) {
+                negative |= cut < 0;
+            }
+
+            if (negative) {
+                continue;
             }
 
             ColonyPos entrance = new ColonyPos(
@@ -144,7 +175,7 @@ final class MineSave {
             found.add(Mine.restore(
                     colonyId,
                     new MineShaft(entrance, descent.get(), gallery.get()),
-                    cut));
+                    cuts));
         }
 
         return found;

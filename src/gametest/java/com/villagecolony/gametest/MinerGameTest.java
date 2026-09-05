@@ -8,6 +8,7 @@ import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.model.VillagePalette;
+import com.villagecolony.core.construction.model.MineArm;
 import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
@@ -401,12 +402,12 @@ public class MinerGameTest implements FabricGameTest {
                         "a colônia trocou de boca: " + mine.entry() + " em vez de " + mouth);
 
                 context.assertTrue(
-                        mine.cut() < FRONTIER,
+                        mine.arm(0).cut() < FRONTIER,
                         "acreditou num número que o mundo não confirma — ficou em "
-                                + mine.cut() + " com o túnel fechado");
+                                + mine.arm(0).cut() + " com o túnel fechado");
 
                 context.assertTrue(
-                        mine.cut() > 0,
+                        mine.arm(0).cut() > 0,
                         "a picareta não andou a partir da frente de verdade");
             } finally {
                 owned.cleanUp();
@@ -1147,6 +1148,7 @@ public class MinerGameTest implements FabricGameTest {
         context.setBlockState(taken.down(), Blocks.COPPER_ORE.getDefaultState());
 
         VillageColonyMod.MINES.of(colony.id()).orElseThrow()
+                .arm(0)
                 .followVein(MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(taken)));
 
         return colony;
@@ -1272,6 +1274,7 @@ public class MinerGameTest implements FabricGameTest {
         context.setBlockState(taken.up(), Blocks.STONE.getDefaultState());
 
         VillageColonyMod.MINES.of(colony.id()).orElseThrow()
+                .arm(0)
                 .followVein(MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(taken)));
 
         Optional<BlockPos> next = veinTarget(context, colony);
@@ -2040,7 +2043,8 @@ public class MinerGameTest implements FabricGameTest {
         // dentro dos oito blocos o destino vale por si e a perna nem corre.
         BlockPos far = context.getAbsolutePos(new BlockPos(0, 0, 0));
 
-        BlockPos leg = MinerReach.legTowards(standing, far, Optional.of(mine), realFooting(world));
+        BlockPos leg = MinerReach.legTowards(
+                standing, far, Optional.of(mine.arm(0)), realFooting(world));
 
         context.assertTrue(
                 BuilderApproach.standable(world, leg),
@@ -2461,10 +2465,23 @@ public class MinerGameTest implements FabricGameTest {
      *
      * <p>O que este teste trava é o seam onde o cursor é lido: quem não
      * é o dono sai sem alvo, e não com o alvo do outro.
+     *
+     * <p><b>E ele continua valendo depois dos ramais de 2026-09-04</b>,
+     * para a fase que esta arena consegue hospedar. Os índices abaixo de
+     * {@link MineShaft#CARVED} — a escada e as duas salas — apontam para
+     * as <b>mesmas</b> posições nos quatro ramais, e por isso o poço é de
+     * um mineiro só até a galeria começar. Ver {@code Mine.branchesOpenNow}.
+     *
+     * <p><b>A fase da galeria não cabe aqui</b>, e fica dito: a arena
+     * assenta no fundo do mundo — o bedrock aparece em {@code y=-64} —, e
+     * a segunda sala fica vinte blocos abaixo dela, em {@code y=-76}.
+     * Fora do limite de construção, medido em 2026-09-04. Quem afirma a
+     * divergência dos ramais é o {@code MineTest}, na geometria, e o
+     * {@code MineClaimsTest}, na repartição.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_one_digger",
             tickLimit = 20)
-    public void theShaftTakesOneMinerAndTurnsTheOtherAway(TestContext context) {
+    public void theSharedPitStillTakesOneMinerAtATime(TestContext context) {
         solidRock(context);
 
         Colony colony = mineOwner(context);
@@ -2489,11 +2506,11 @@ public class MinerGameTest implements FabricGameTest {
                     hers.isEmpty(),
                     "o segundo mineiro recebeu "
                             + hers.map(BlockPos::toShortString).orElse("")
-                            + " — os dois estão cavando a mesma escada");
+                            + " — os dois estão cavando o mesmo poço");
 
             context.assertTrue(
-                    MineClaims.diggerIn(colony.id()).orElseThrow().equals(first),
-                    "a mina não ficou com quem chegou primeiro");
+                    MineClaims.diggersIn(colony.id()) == 1,
+                    "o poço aceitou " + MineClaims.diggersIn(colony.id()) + " mineiros");
         } finally {
             MineClaims.clearAll();
         }
@@ -2526,6 +2543,9 @@ public class MinerGameTest implements FabricGameTest {
 
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
 
+        // <b>São cinco mineiros desde 2026-09-04</b>, e não dois: a mina
+        // tem quatro ramais, então o primeiro que espera é o quinto. Era
+        // o segundo enquanto a escada era uma só.
         UUID first = miner(context, colony, chest, owned, new BlockPos(1, 9, 1));
         UUID second = miner(context, colony, chest, owned, new BlockPos(5, 9, 5));
 
@@ -2536,14 +2556,15 @@ public class MinerGameTest implements FabricGameTest {
 
         MinerWork.run(world, colony);
 
-        // O primeiro desce, e a mina passa a ter dono.
+        // O primeiro desce, e o poço passa a ter dono. Enquanto ele for
+        // rocha é de um só — ver Mine.branchesOpenNow.
         MineDigging.nextTarget(world, first, colony.id(), context.getAbsolutePos(ROCK));
 
         try {
             String line = MinerReport.report(world, colony).orElseThrow();
 
             context.assertTrue(
-                    line.contains("waiting for the shaft"),
+                    line.contains("waiting for a branch"),
                     "o mineiro barrado aparece procurando pedra, e não esperando: " + line);
 
             context.assertTrue(
@@ -2744,7 +2765,7 @@ public class MinerGameTest implements FabricGameTest {
 
         Mine mine = VillageColonyMod.MINES.of(colony.id()).orElseThrow();
 
-        mine.followVein(MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(taken)));
+        mine.arm(0).followVein(MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(taken)));
 
         BlockPos ore = context.getAbsolutePos(buried);
 
@@ -2761,7 +2782,7 @@ public class MinerGameTest implements FabricGameTest {
                     "o veio mandou o mineiro para dentro da rocha, atrás do minério");
 
             context.assertTrue(
-                    mine.vein().isEmpty(),
+                    mine.arm(0).vein().isEmpty(),
                     "a veia inalcançável continua guardada, e a passagem seguinte a serve"
                             + " de novo — é o laço que prendia a colônia");
         } finally {
@@ -2793,12 +2814,12 @@ public class MinerGameTest implements FabricGameTest {
 
         Mine mine = VillageColonyMod.MINES.of(colony.id()).orElseThrow();
 
-        mine.followVein(MinecraftTypeAdapter.toColonyPos(ore));
+        mine.arm(0).followVein(MinecraftTypeAdapter.toColonyPos(ore));
 
         MineDigging.couldNotReach(colony.id(), ore);
 
         context.assertTrue(
-                mine.vein().isEmpty(),
+                mine.arm(0).vein().isEmpty(),
                 "o mineiro desistiu deste minério e a veia continua apontando para ele");
 
         context.complete();
@@ -2821,12 +2842,12 @@ public class MinerGameTest implements FabricGameTest {
 
         Mine mine = VillageColonyMod.MINES.of(colony.id()).orElseThrow();
 
-        mine.followVein(MinecraftTypeAdapter.toColonyPos(ore));
+        mine.arm(0).followVein(MinecraftTypeAdapter.toColonyPos(ore));
 
         MineDigging.couldNotReach(colony.id(), context.getAbsolutePos(new BlockPos(5, 6, 5)));
 
         context.assertFalse(
-                mine.vein().isEmpty(),
+                mine.arm(0).vein().isEmpty(),
                 "largou a veia por causa de uma pedra que não era ela");
 
         context.complete();
@@ -3215,28 +3236,49 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
-     * E a galeria vira, que é a outra metade do pedido.
+     * E o ramal é abandonado, que é a outra metade do pedido.
      *
      * <p><i>"...e seguir por outro caminho a continuidade de
      * mineração"</i>. Insistir na mesma direção é cavar de volta para
      * dentro do lençol.
+     *
+     * <p><b>Este teste media a curva da galeria até 2026-09-04</b>, e
+     * media certo: com um cursor só, "seguir por outro caminho" era
+     * girar o rumo dele. Com um ramal por mineiro o rumo é fixo, e seguir
+     * por outro caminho é <b>trocar de ramal</b> — o inundado fecha, e o
+     * aldeão recebe um dos três que sobraram.
+     *
+     * <p>O que se afirma é o mesmo de sempre: depois da água, aquele
+     * mineiro não volta a ser mandado para dentro dela.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_flooding",
             tickLimit = 20)
-    public void theGalleryTurnsAwayFromTheWater(TestContext context) {
+    public void theBranchTurnsAwayFromTheWater(TestContext context) {
         Colony colony = mineOwner(context);
 
         Mine mine = VillageColonyMod.MINES.of(colony.id()).orElseThrow();
 
-        ColonyPos before = mine.shaft().positionAt(MineShaft.CARVED + 4);
+        // O mineOwner monta colônia e mina, e nenhum trabalhador: quem
+        // cava aqui é este identificador, e o ramal dele é o primeiro
+        // livre — o primeiro.
+        UUID worker = UUID.randomUUID();
 
-        MineDigging.flooded(colony.id(), context.getAbsolutePos(new BlockPos(3, 4, 3)));
+        try {
+            MineDigging.flooded(
+                    colony.id(), worker, context.getAbsolutePos(new BlockPos(3, 4, 3)));
 
-        context.assertFalse(
-                before.equals(mine.shaft().positionAt(MineShaft.CARVED + 4)),
-                "a galeria continua indo para dentro da água");
+            context.assertTrue(
+                    mine.arm(0).isDone(),
+                    "o ramal inundado continua aceitando picareta");
 
-        context.complete();
+            context.assertTrue(
+                    mine.firstArmStillOpen().isPresent(),
+                    "a água fechou a mina inteira, e não só o ramal dela");
+
+            context.complete();
+        } finally {
+            MineClaims.clearAll();
+        }
     }
 
     /**
@@ -3827,34 +3869,35 @@ public class MinerGameTest implements FabricGameTest {
 
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
 
+        // A do barrado primeiro: é ela que entra antes no JOBS, e é dele
+        // a primeira mão no orçamento do tique.
         UUID waiter = miner(context, colony, chest, owned, new BlockPos(1, 9, 1));
         UUID digger = miner(context, colony, chest, owned, new BlockPos(5, 9, 5));
 
-        // A do barrado primeiro: é ela que entra antes no JOBS, e é dele
-        // a primeira mão no orçamento do tique.
         reserveStone(colony, ResourceType.COBBLESTONE, waiter);
         reserveStone(colony, ResourceType.COAL, digger);
 
         try {
             MinerWork.run(world, colony);
 
-            // A escada passa a ser do segundo pela porta da frente, com a
-            // rocha ainda inteira — é assim que o jogo a entrega.
+            // O poço passa a ser do segundo pela porta da frente, com a
+            // rocha ainda inteira — é assim que o jogo o entrega, e
+            // enquanto ele é rocha é de um mineiro só.
             MineDigging.nextTarget(world, digger, colony.id(), context.getAbsolutePos(ROCK));
 
             context.assertTrue(
-                    MineClaims.diggerIn(colony.id()).filter(digger::equals).isPresent(),
-                    "o teste precisa da escada na mão do segundo para medir alguma coisa");
+                    MineDigging.armOf(colony.id(), digger).isPresent(),
+                    "o teste precisa de um ramal na mão do segundo para medir alguma coisa");
 
-            // Agora ela se esvazia: a próxima passagem do dono não acha
-            // pedra, e é nela que ele soltaria a escada — se a tivesse.
+            // Agora ela se esvazia: a próxima passagem dos donos não acha
+            // pedra, e é nela que eles soltariam os ramais.
             hollowGallery(world, colony);
 
             MinerWork.tick(world);
 
             context.assertTrue(
-                    MineClaims.diggerIn(colony.id()).isEmpty(),
-                    "o dono não teve passagem para soltar a escada: o barrado gastou a busca"
+                    MineDigging.armOf(colony.id(), digger).isEmpty(),
+                    "o dono não teve passagem para soltar o ramal: o barrado gastou a busca"
                             + " do tique sem ter varrido nada — é o impasse de 2026-09-04");
         } finally {
             MineClaims.clearAll();

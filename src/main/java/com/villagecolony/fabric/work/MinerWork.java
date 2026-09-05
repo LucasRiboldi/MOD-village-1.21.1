@@ -352,7 +352,7 @@ public final class MinerWork {
                         MinerReach.legTowards(
                                 villager.getBlockPos(),
                                 job.approach,
-                                mineOf(job),
+                                MineDigging.armOf(job.task.colonyId(), workerId),
                                 footingIn(world)),
                         MinerReach.ARRIVAL);
             }
@@ -393,7 +393,11 @@ public final class MinerWork {
 
         boolean sand = job.task.targetResource().group() == ResourceGroup.SAND;
 
-        if (!sand && MineClaims.heldByOther(colonyId, workerId)) {
+        int branches = VillageColonyMod.MINES.of(colonyId)
+                .map(Mine::branchesOpenNow)
+                .orElse(Mine.ARMS);
+
+        if (!sand && MineClaims.heldByOther(colonyId, workerId, branches)) {
             // <b>Recusa não é busca</b> — 2026-09-04. Quem é barrado no
             // portão da escada não varre coluna nenhuma, e cobrar do
             // orçamento o que não gastou foi o impasse daquele dia: o
@@ -556,7 +560,7 @@ public final class MinerWork {
         // A galeria vira junto, que é a outra metade do pedido —
         // "seguir por outro caminho". Ver MineDigging.flooded.
         if (MineFlooding.seal(world, job.target) > 0) {
-            MineDigging.flooded(job.task.colonyId(), job.target);
+            MineDigging.flooded(job.task.colonyId(), villager.getUuid(), job.target);
         }
 
         // Regra 30: o minério que não é carvão vai para o baú da boca

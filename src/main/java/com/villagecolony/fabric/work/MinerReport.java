@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.colony.model.Colony;
@@ -105,10 +106,14 @@ public final class MinerReport {
             return "looking for sand";
         }
 
-        Optional<UUID> digger = MineClaims.diggerIn(job.task.colonyId());
+        Optional<UUID> digger = MineClaims.otherDiggerIn(job.task.colonyId(), workerId);
 
-        if (digger.isPresent() && !digger.get().equals(workerId)) {
-            return "waiting for the shaft — " + shortId(digger.get()) + " is in it";
+        if (digger.isPresent()) {
+            // <b>Quatro ramais desde 2026-09-04</b>, e por isso a linha
+            // diz quantos: esperar com um ocupado é fila, esperar com os
+            // quatro ocupados é a geometria da mina no teto dela.
+            return "waiting for a branch — " + MineClaims.diggersIn(job.task.colonyId())
+                    + " of " + Mine.ARMS + " taken, " + shortId(digger.get()) + " in one";
         }
 
         return "looking for stone";

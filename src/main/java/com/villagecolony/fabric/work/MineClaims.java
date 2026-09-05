@@ -1,8 +1,12 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.construction.model.Mine;
+
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.UUID;
 
@@ -28,6 +32,16 @@ import java.util.UUID;
  * guarda: árvore é tronco e há muitas, mina é uma por colônia, então a
  * chave é a colônia e o valor é o mineiro.
  *
+ * <p><b>E o valor virou quatro mineiros em 2026-09-04</b> — decisão do
+ * autor: <i>"mineiros distintos escolhem caminhos de perfuração
+ * distintos dentro das minas"</i>. A coisa disputada deixou de ser a
+ * mina e passou a ser o <b>ramal</b>: a {@code Mine} tem
+ * {@link com.villagecolony.core.construction.model.Mine#ARMS} frentes,
+ * cada uma com o cursor dela, e duas frentes diferentes não se
+ * atropelam. O raciocínio de cima continua inteiro — dois na
+ * <b>mesma</b> frente ainda recuariam o cursor duas vezes por um bloco;
+ * o que mudou é que agora há mais de uma frente para repartir.
+ *
  * <p><b>A reserva não vaza, e é por construção.</b> Nem todo fim de
  * trabalho passa pelo mesmo lugar — morte, zumbificação, dispensa,
  * tarefa devolvida pelo guarda de travamento —, e uma mina trancada por
@@ -43,8 +57,15 @@ import java.util.UUID;
  */
 public final class MineClaims {
 
-    /** A mina de cada colônia, e o mineiro que está dentro dela. */
-    private static final Map<UUID, UUID> DIGGERS = new HashMap<>();
+    /**
+     * Os ramais de cada colônia, e o mineiro que está em cada um.
+     *
+     * <p>Um vetor por colônia, indexado pelo número do ramal, com
+     * {@code null} onde não há ninguém. Vetor e não mapa porque o índice
+     * <b>é</b> a identidade do ramal: ele diz para que lado a galeria
+     * daquele mineiro anda.
+     */
+    private static final Map<UUID, UUID[]> DIGGERS = new HashMap<>();
 
     /**
      * Quem acabou de desistir de cada mina, e é recusado uma vez.
@@ -74,11 +95,16 @@ public final class MineClaims {
      * uma vez por pedra, e não uma vez por mina — uma reserva que não se
      * renovasse expulsaria o dono na segunda pedra dele.
      */
-    static boolean claim(UUID colonyId, UUID workerId) {
-        UUID digger = DIGGERS.get(colonyId);
+    static OptionalInt claimArm(UUID colonyId, UUID workerId, int usable) {
+        UUID[] taken = DIGGERS.computeIfAbsent(colonyId, id -> new UUID[Mine.ARMS]);
 
-        if (digger != null) {
-            return digger.equals(workerId);
+        for (int index = 0; index < taken.length; index++) {
+            if (workerId.equals(taken[index])) {
+                // Já é dele, e continua sendo: um mineiro que trocasse de
+                // ramal a cada passagem deixaria quatro túneis pela metade
+                // em vez de abrir um.
+                return OptionalInt.of(index);
+            }
         }
 
         if (workerId.equals(STOOD_ASIDE.get(colonyId))) {
@@ -88,12 +114,60 @@ public final class MineClaims {
             // seguinte devolve a mina a ele.
             STOOD_ASIDE.remove(colonyId);
 
-            return false;
+            return OptionalInt.empty();
         }
 
-        DIGGERS.put(colonyId, workerId);
+        // <b>Só os ramais que já podem ser repartidos</b>: enquanto o
+        // poço não está aberto, o único é o primeiro. Ver
+        // Mine.branchesOpenNow.
+        for (int index = 0; index < Math.min(usable, taken.length); index++) {
+            if (taken[index] == null) {
+                taken[index] = workerId;
 
-        return true;
+                return OptionalInt.of(index);
+            }
+        }
+
+        return OptionalInt.empty();
+    }
+
+    /**
+     * Qual ramal já é deste mineiro, sem reservar nenhum.
+     *
+     * <p>Par do {@link #claimArm}, e existe pelo mesmo motivo que o
+     * {@link #heldByOther}: aquele responde e toma na mesma passagem, e
+     * quem só quer saber por onde o aldeão volta tiraria a última frente
+     * livre de quem ia cavar nela.
+     */
+    static OptionalInt armAlreadyHeld(UUID colonyId, UUID workerId) {
+        UUID[] taken = DIGGERS.get(colonyId);
+
+        if (taken == null) {
+            return OptionalInt.empty();
+        }
+
+        for (int index = 0; index < taken.length; index++) {
+            if (workerId.equals(taken[index])) {
+                return OptionalInt.of(index);
+            }
+        }
+
+        return OptionalInt.empty();
+    }
+
+    /** Este mineiro larga o ramal em que estiver desta colônia. */
+    static void releaseArm(UUID colonyId, UUID workerId) {
+        UUID[] taken = DIGGERS.get(colonyId);
+
+        if (taken == null) {
+            return;
+        }
+
+        for (int index = 0; index < taken.length; index++) {
+            if (workerId.equals(taken[index])) {
+                taken[index] = null;
+            }
+        }
     }
 
     /**
@@ -122,20 +196,100 @@ public final class MineClaims {
      * solta a mina quando ele não acha pedra. Ver
      * {@code MinerWork.startNextStone}.
      */
-    static boolean heldByOther(UUID colonyId, UUID workerId) {
-        UUID digger = DIGGERS.get(colonyId);
+    static boolean heldByOther(UUID colonyId, UUID workerId, int usable) {
+        UUID[] taken = DIGGERS.get(colonyId);
 
-        return digger != null && !digger.equals(workerId);
+        if (taken == null) {
+            return false;
+        }
+
+        boolean full = true;
+
+        // <b>Só os ramais que já podem ser repartidos contam</b> —
+        // 2026-09-04, e a falta disto reabriu o impasse do mesmo dia por
+        // uma passagem. Enquanto o poço é rocha, o único ramal
+        // repartível é o primeiro: olhar os quatro compartimentos fazia o
+        // vetor parecer com vaga, o barrado deixava de ser barrado, e ele
+        // voltava a gastar a busca do tique antes de quem cava — para ser
+        // recusado logo depois no portão. Ver Mine.branchesOpenNow.
+        for (int index = 0; index < Math.min(usable, taken.length); index++) {
+            if (workerId.equals(taken[index])) {
+                return false;
+            }
+
+            full &= taken[index] != null;
+        }
+
+        // E quem já tem ramal fora da faixa repartível continua com ele.
+        for (int index = Math.min(usable, taken.length); index < taken.length; index++) {
+            if (workerId.equals(taken[index])) {
+                return false;
+            }
+        }
+
+        return full;
     }
 
-    /** Quem está na mina desta colônia, se alguém está. */
+    /**
+     * Alguém que está na mina desta colônia e não é este mineiro.
+     *
+     * <p>É o que o relatório precisa dizer a quem ficou de fora: com
+     * quatro ramais, quem espera espera porque <b>todos</b> estão
+     * ocupados, e nomear um deles basta para o log ter onde começar.
+     */
+    public static Optional<UUID> otherDiggerIn(UUID colonyId, UUID workerId) {
+        UUID[] taken = DIGGERS.get(colonyId);
+
+        if (taken == null) {
+            return Optional.empty();
+        }
+
+        for (UUID digger : taken) {
+            if (digger != null && !digger.equals(workerId)) {
+                return Optional.of(digger);
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Alguém que está em algum ramal desta colônia, se alguém está.
+     *
+     * <p>Sobreviveu à troca de 2026-09-04 porque a pergunta sobreviveu:
+     * <i>a mina está em uso?</i>. Qual dos quatro ramais é quem responde
+     * já não importa a quem pergunta isso.
+     */
     public static Optional<UUID> diggerIn(UUID colonyId) {
-        return Optional.ofNullable(DIGGERS.get(colonyId));
+        UUID[] taken = DIGGERS.get(colonyId);
+
+        if (taken == null) {
+            return Optional.empty();
+        }
+
+        return Arrays.stream(taken).filter(digger -> digger != null).findFirst();
     }
 
-    /** Este mineiro sai da mina em que estiver. */
+    /** Quantos mineiros estão nos ramais desta colônia. */
+    public static int diggersIn(UUID colonyId) {
+        UUID[] taken = DIGGERS.get(colonyId);
+
+        if (taken == null) {
+            return 0;
+        }
+
+        return (int) Arrays.stream(taken).filter(digger -> digger != null).count();
+    }
+
+    /** Este mineiro sai do ramal em que estiver, em qualquer colônia. */
     static void release(UUID workerId) {
-        DIGGERS.values().removeIf(workerId::equals);
+        for (UUID[] taken : DIGGERS.values()) {
+            for (int index = 0; index < taken.length; index++) {
+                if (workerId.equals(taken[index])) {
+                    taken[index] = null;
+                }
+            }
+        }
     }
 
     /**
@@ -146,7 +300,14 @@ public final class MineClaims {
      * {@link MinerWork}.
      */
     static void retainOnly(Set<UUID> working) {
-        DIGGERS.values().retainAll(working);
+        for (UUID[] taken : DIGGERS.values()) {
+            for (int index = 0; index < taken.length; index++) {
+                if (taken[index] != null && !working.contains(taken[index])) {
+                    taken[index] = null;
+                }
+            }
+        }
+
         STOOD_ASIDE.values().retainAll(working);
     }
 

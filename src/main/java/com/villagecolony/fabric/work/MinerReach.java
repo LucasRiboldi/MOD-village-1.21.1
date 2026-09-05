@@ -1,6 +1,6 @@
 package com.villagecolony.fabric.work;
 
-import com.villagecolony.core.construction.model.Mine;
+import com.villagecolony.core.construction.model.MineArm;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.util.math.BlockPos;
@@ -204,7 +204,7 @@ public final class MinerReach {
     }
 
     public static BlockPos legTowards(
-            BlockPos villager, BlockPos destination, Optional<Mine> mine, Footing footing) {
+            BlockPos villager, BlockPos destination, Optional<MineArm> mine, Footing footing) {
 
         if (mine.isEmpty()) {
             return destination;
@@ -274,7 +274,7 @@ public final class MinerReach {
      * @return o índice, ou {@code -1} quando nada da ordem está perto —
      *     inclusive quando a mina não tem nada cavado
      */
-    private static int orderIndexNear(BlockPos position, Mine mine, int scanned) {
+    private static int orderIndexNear(BlockPos position, MineArm mine, int scanned) {
         int nearest = -1;
         double best = Double.MAX_VALUE;
 
@@ -310,7 +310,7 @@ public final class MinerReach {
      *     da boca. Aí quem responde é a boca
      */
     private static BlockPos stepAlongTheShaft(
-            BlockPos villager, int goal, Mine mine, int scanned, Footing footing) {
+            BlockPos villager, int goal, MineArm mine, int scanned, Footing footing) {
 
         int here = orderIndexNear(villager, mine, scanned);
 

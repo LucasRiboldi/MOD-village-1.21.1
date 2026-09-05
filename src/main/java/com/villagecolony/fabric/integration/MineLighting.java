@@ -2,6 +2,7 @@ package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.Mine;
+import com.villagecolony.core.construction.model.MineArm;
 import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.BlockState;
@@ -141,12 +142,19 @@ public final class MineLighting {
      * @return onde a tocha foi posta, ou vazio quando não havia o que
      *     fazer — nada aberto, tudo aceso, ou nenhum apoio
      */
-    public static Optional<BlockPos> light(ServerWorld world, Mine mine) {
+    public static Optional<BlockPos> light(ServerWorld world, Mine mine, MineArm arm) {
+        // <b>A luz é do ramal</b> — 2026-09-04. O cursor e a forma vêm
+        // dele, porque cada ramal cava para um lado: acender pela
+        // fronteira de outro poria a tocha dentro da rocha.
+        //
+        // O nome na linha continua sendo o da mina: para quem lê o log, a
+        // escada é uma só.
+        //
         // De propósito atrás do cursor — ver BEHIND.
-        int newest = spotFor(mine.cut()) - BEHIND;
+        int newest = spotFor(arm.cut()) - BEHIND;
 
         for (int spot = newest; spot >= 0 && spot > newest - LOOK_BACK; spot -= SPACING) {
-            BlockPos at = MinecraftTypeAdapter.toBlockPos(mine.shaft().positionAt(spot));
+            BlockPos at = MinecraftTypeAdapter.toBlockPos(arm.shaft().positionAt(spot));
 
             if (world.getChunkManager().getWorldChunk(at.getX() >> 4, at.getZ() >> 4) == null) {
                 // Nunca forçar carregamento de dentro do ciclo — §11.
