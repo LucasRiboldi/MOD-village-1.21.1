@@ -21,6 +21,7 @@ import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
+import com.villagecolony.fabric.integration.WorkerEquipment;
 import com.villagecolony.fabric.work.WorkMaterials;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.brain.WorkTargets;
@@ -537,6 +538,14 @@ public class MinerGameTest implements FabricGameTest {
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
 
+        // <b>A arena passa a equipar, como a colônia equipa</b> —
+        // 2026-09-04. O tempo de quebra deixou de ser a constante de
+        // diamante e passou a ser o da ferramenta na mão, e a mão deste
+        // aldeão estava vazia: a pedra saltou de 6 ticks para 150 e o
+        // teste estourou o limite. A constante escondia que a bateria
+        // media uma picareta que ninguém segurava.
+        WorkerEquipment.equip(world, List.of(worker));
+
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
         owned.owning(villager.getUuid());
@@ -665,6 +674,11 @@ public class MinerGameTest implements FabricGameTest {
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
+
+        // Os seis tiques do javadoc são os da picareta de diamante, e
+        // desde 2026-09-04 o tempo sai da ferramenta na mão em vez de
+        // uma constante. Sem equipar, esta pedra pede 150.
+        WorkerEquipment.equip(world, List.of(worker));
 
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
@@ -2079,6 +2093,14 @@ public class MinerGameTest implements FabricGameTest {
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
 
+        // <b>A arena passa a equipar, como a colônia equipa</b> —
+        // 2026-09-04. O tempo de quebra deixou de ser a constante de
+        // diamante e passou a ser o da ferramenta na mão, e a mão deste
+        // aldeão estava vazia: a pedra saltou de 6 ticks para 150 e o
+        // teste estourou o limite. A constante escondia que a bateria
+        // media uma picareta que ninguém segurava.
+        WorkerEquipment.equip(world, List.of(worker));
+
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
         owned.owning(villager.getUuid());
@@ -3216,29 +3238,37 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
-     * Entre duas faces com minério, ganha a mais rara — decisão do autor,
-     * 2026-09-03.
+     * Entre duas faces com minério, ganha o que a vila usa antes —
+     * decisão do autor, 2026-09-04.
      *
-     * <p>A frase dele: <i>"deve sempre priorizar os minerais diferentes e
-     * mais raros"</i>.
+     * <p><b>Este teste afirmava o contrário até hoje</b>, e afirmava
+     * certo: em 2026-09-03 a ordem era a raridade — <i>"deve sempre
+     * priorizar os minerais diferentes e mais raros"</i> — e o diamante
+     * da parede ganhava do carvão do chão. O autor trocou o critério
+     * para a utilidade, e o carvão passou a ser o primeiro de dez: é
+     * dele que sai a tocha que impede monstro de nascer na fundação.
      *
-     * <p><b>O laço devolvia a primeira das seis</b>, e o
-     * {@code Direction.values()} começa em {@code DOWN}. Carvão colado no
-     * chão ganhava do diamante colado na parede, toda vez, e o mineiro
-     * trazia o carvão.
+     * <p>O que a inversão <b>não</b> desfaz é o defeito que o teste
+     * original pegou: o laço devolvia a primeira das seis faces, e o
+     * {@code Direction.values()} começa em {@code DOWN}. A geometria
+     * continua a mesma de propósito — o vencedor é que mudou de lado, e
+     * com ele a prova de que a escolha é da lista e não da ordem das
+     * faces.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ore_rarity",
             tickLimit = 20)
-    public void theRarerOreWinsOverTheOneUnderfoot(TestContext context) {
+    public void theMoreUsefulOreWinsOverTheRarerOne(TestContext context) {
         ServerWorld world = context.getWorld();
 
         solidRock(context);
 
         BlockPos at = new BlockPos(3, 4, 3);
 
-        // Embaixo, que é a face que o laço antigo olhava primeiro.
-        context.setBlockState(at.down(), Blocks.COAL_ORE.getDefaultState());
-        context.setBlockState(at.north(), Blocks.DIAMOND_ORE.getDefaultState());
+        // O diamante embaixo, que é a face que o laço olha primeiro: se a
+        // escolha viesse da ordem das faces em vez da lista, ele venceria
+        // por acidente e o teste passaria sem provar nada.
+        context.setBlockState(at.down(), Blocks.DIAMOND_ORE.getDefaultState());
+        context.setBlockState(at.north(), Blocks.COAL_ORE.getDefaultState());
 
         Optional<BlockPos> chosen = OreVein.beside(world, context.getAbsolutePos(at));
 
@@ -3246,31 +3276,50 @@ public class MinerGameTest implements FabricGameTest {
 
         context.assertTrue(
                 chosen.get().equals(context.getAbsolutePos(at.north())),
-                "escolheu " + chosen.get().toShortString() + " — o carvão do chão ganhou"
-                        + " do diamante da parede");
+                "escolheu " + chosen.get().toShortString() + " — o diamante do chão ganhou"
+                        + " do carvão da parede, e a vila precisa da tocha primeiro");
 
         context.complete();
     }
 
-    /** E a ordem entre eles é a da raridade, e não a do catálogo. */
+    /**
+     * E a ordem entre eles é a do uso da vila, e não a do catálogo nem a
+     * da raridade.
+     *
+     * <p>Os dez postos da {@code BY_USE}, conferidos nas pontas e no
+     * meio: o carvão abre, o ferro vem depois dele, e o diamante — que
+     * era o primeiro sob a ordem antiga — cai para depois do ouro.
+     */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "ore_rarity",
             tickLimit = 20)
-    public void rarityRunsFromDiamondDownToCoal(TestContext context) {
-        int diamond = OreVein.rarityOf(Blocks.DIAMOND_ORE.getDefaultState());
-        int gold = OreVein.rarityOf(Blocks.GOLD_ORE.getDefaultState());
-        int iron = OreVein.rarityOf(Blocks.IRON_ORE.getDefaultState());
-        int coal = OreVein.rarityOf(Blocks.COAL_ORE.getDefaultState());
+    public void priorityRunsFromCoalDownToTheRareOnes(TestContext context) {
+        int coal = OreVein.priorityOf(Blocks.COAL_ORE.getDefaultState());
+        int iron = OreVein.priorityOf(Blocks.IRON_ORE.getDefaultState());
+        int copper = OreVein.priorityOf(Blocks.COPPER_ORE.getDefaultState());
+        int gold = OreVein.priorityOf(Blocks.GOLD_ORE.getDefaultState());
+        int diamond = OreVein.priorityOf(Blocks.DIAMOND_ORE.getDefaultState());
 
         context.assertTrue(
-                diamond < gold && gold < iron && iron < coal,
-                "a ordem saiu diamante=" + diamond + " ouro=" + gold + " ferro=" + iron
-                        + " carvão=" + coal);
+                coal < iron && iron < copper && copper < gold && gold < diamond,
+                "a ordem saiu carvão=" + coal + " ferro=" + iron + " cobre=" + copper
+                        + " ouro=" + gold + " diamante=" + diamond);
+
+        // O carvão é o primeiro de todos, e é disso que o beside() se
+        // aproveita para parar a varredura das seis faces.
+        context.assertTrue(coal == 0, "o carvão não é o primeiro: " + coal);
 
         // A ardósia é o mesmo minério mais fundo, e a galeria trabalha
         // justamente onde ela está.
         context.assertTrue(
-                OreVein.rarityOf(Blocks.DEEPSLATE_DIAMOND_ORE.getDefaultState()) == diamond,
+                OreVein.priorityOf(Blocks.DEEPSLATE_DIAMOND_ORE.getDefaultState()) == diamond,
                 "a variante de ardósia não vale o mesmo que a de pedra");
+
+        // O desconhecido fica depois de todos, e não no meio: a colônia
+        // não tem receita para ele. Pedra não é minério e nem entra aqui,
+        // então o número de fora da lista é o maior que priorityOf devolve.
+        context.assertTrue(
+                OreVein.priorityOf(Blocks.ANCIENT_DEBRIS.getDefaultState()) > gold,
+                "os escombros antigos passaram à frente do ouro");
 
         context.complete();
     }

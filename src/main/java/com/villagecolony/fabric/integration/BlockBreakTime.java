@@ -1,6 +1,8 @@
 package com.villagecolony.fabric.integration;
 
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
@@ -59,6 +61,38 @@ public final class BlockBreakTime {
     }
 
     /**
+     * Quantos ticks este bloco pede da ferramenta que este trabalhador
+     * tem na mão — decisão do autor, 2026-09-04.
+     *
+     * <p><b>A frase dele:</b> <i>"cada trabalhador deve coletar o recurso
+     * na velocidade de sua ferramenta"</i>.
+     *
+     * <p>Até aqui os dois chamadores passavam uma <b>constante</b>:
+     * {@code MinerWork} media com picareta de diamante e
+     * {@code TreeFelling} com machado de ferro, independentemente do que
+     * o aldeão segurasse. O javadoc do {@code TreeFelling} dizia por
+     * quê, e dizia também quando isso mudaria: <i>"o dia de perguntar é
+     * o dia em que a evolução de ferramenta existir"</i>. É hoje.
+     *
+     * <p><b>Mão vazia é uma resposta, e não um erro.</b> O
+     * {@code WorkerEquipment} depende de o aldeão estar carregado no
+     * mundo para pôr a ferramenta na mão, e falha calado em chunk
+     * descarregado. Quem trabalha sem ferramenta trabalha com as mãos, e
+     * a fórmula do Vanilla já sabe o que isso custa — pedra sai de 6
+     * ticks para 150. Devolver o tempo da ferramenta que ele <i>deveria</i>
+     * ter seria a colônia mentindo sobre o próprio estado.
+     *
+     * <p>O que o jogador pôs na mão do aldeão vale como ferramenta dele,
+     * pela mesma Regra 3 que impede a colônia de tomá-la: se o jogador
+     * dá uma picareta de ferro ao mineiro, o mineiro cava com ela.
+     */
+    public static int ticksFor(
+            ServerWorld world, BlockPos pos, BlockState state, LivingEntity worker) {
+
+        return ticksFor(world, pos, state, worker.getEquippedStack(EquipmentSlot.MAINHAND));
+    }
+
+    /**
      * Quantos ticks este bloco pede desta ferramenta.
      *
      * <p>Nunca menos de um: um bloco de dureza zero ainda custa o tick
@@ -67,6 +101,19 @@ public final class BlockBreakTime {
      * veio desfazer.
      */
     public static int ticksFor(ServerWorld world, BlockPos pos, BlockState state, Item tool) {
+        return ticksFor(world, pos, state, new ItemStack(tool));
+    }
+
+    /**
+     * O cálculo, com a ferramenta já em forma de pilha.
+     *
+     * <p>Separado porque a pilha vazia — o trabalhador de mãos livres —
+     * não se constrói a partir de um {@code Item}, e é justamente ela
+     * que o caminho novo precisa saber medir.
+     */
+    private static int ticksFor(
+            ServerWorld world, BlockPos pos, BlockState state, ItemStack held) {
+
         float hardness = state.getHardness(world, pos);
 
         if (hardness < 0.0f) {
@@ -76,8 +123,6 @@ public final class BlockBreakTime {
         if (hardness == 0.0f) {
             return 1;
         }
-
-        ItemStack held = new ItemStack(tool);
 
         float speed = held.getMiningSpeedMultiplier(state);
         float divisor = harvests(held, state) ? HARVESTABLE : UNHARVESTABLE;

@@ -25,9 +25,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.VillagerEntity;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
@@ -84,16 +82,6 @@ public final class MinerWork {
      * existem justamente para ele caber de pé lá dentro.
      */
     static final int REACH = MinerReach.REACH;
-
-    /**
-     * A picareta de diamante, e é decisão do autor.
-     *
-     * <p>A Regra 2 mede a velocidade pela ferramenta de um jogador; o
-     * autor pediu diamante para o mineiro, e faz sentido: são vinte
-     * blocos de descida antes de a mina render alguma coisa, e com
-     * picareta de madeira isso é uma sessão inteira.
-     */
-    private static final Item TOOL = Items.DIAMOND_PICKAXE;
 
     private static final int BREAKING_STAGES = 10;
 
@@ -537,7 +525,7 @@ public final class MinerWork {
         BlockState state = world.getBlockState(job.target);
 
         if (job.required == 0) {
-            job.required = BlockBreakTime.ticksFor(world, job.target, state, TOOL);
+            job.required = BlockBreakTime.ticksFor(world, job.target, state, villager);
         }
 
         job.progress++;

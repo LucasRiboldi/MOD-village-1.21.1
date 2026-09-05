@@ -82,67 +82,100 @@ public final class OreVein {
     private static final TagKey<Block> COAL = BlockTags.COAL_ORES;
 
     /**
-     * Do mais raro para o mais comum — decisão do autor, 2026-09-03.
+     * Do mais útil para o menos útil — decisão do autor, 2026-09-04.
      *
-     * <p>A frase dele: <i>"deve sempre priorizar os minerais diferentes e
-     * mais raros"</i>. Até aqui não havia prioridade nenhuma: o
-     * {@link #beside} devolvia <b>a primeira das seis faces</b> na ordem
-     * do {@code Direction.values()}, que começa embaixo. Carvão colado no
-     * chão ganhava do diamante colado na parede, e o mineiro trazia o
-     * carvão.
+     * <p><b>Esta ordem substitui a de 2026-09-03, e a inverte quase
+     * inteira.</b> Aquela era a raridade — <i>"deve sempre priorizar os
+     * minerais diferentes e mais raros"</i> — e punha os escombros
+     * antigos na frente e o carvão no fim. O autor trocou o critério: o
+     * que decide não é quão raro o minério é no mundo, e sim <b>o que a
+     * vila faz com ele</b>, na ordem em que ela precisa fazer.
+     *
+     * <p>Diamante numa vila sem tocha é diamante numa vila cujo chão
+     * gera monstro. A justificativa de cada posto é do autor, e fica
+     * escrita porque é ela que torna a lista conferível:
+     *
+     * <ol>
+     * <li><b>Carvão</b> — tocha e fornalha. Ilumina a fundação e impede
+     *     que monstro nasça nela; é o único que a colônia já consome
+     *     hoje, pelas duas pontas.
+     * <li><b>Ferro</b> — estações de trabalho, lampião, sino, e o Golem
+     *     que defende a vila.
+     * <li><b>Cobre</b> — para-raios. Telhado sem ele é aldeão virando
+     *     bruxa.
+     * <li><b>Ouro</b> — maçã dourada, que cura aldeão zumbi; e trilho
+     *     elétrico.
+     * <li><b>Esmeralda</b> — a moeda. Sem ela a profissão não evolui.
+     * <li><b>Redstone</b> — automação: porta noturna, fazenda,
+     *     procriador.
+     * <li><b>Lápis-lazúli</b> — o clérigo, e o encantamento de quem
+     *     protege.
+     * <li><b>Diamante</b> — comércio de nível avançado.
+     * <li><b>Quartzo do Nether</b> — sensor de luz solar e circuito.
+     * <li><b>Escombros antigos</b> — a fase final, na mesa de ferraria.
+     * </ol>
      *
      * <p><b>Por que uma lista escrita, num projeto que não gosta
      * delas.</b> A ADR-009 manda perguntar ao catálogo, e é o que o
-     * {@link #ORE} faz — <i>o que é minério</i> é fato do jogo. <b>Qual é
-     * mais raro não é.</b> Não há etiqueta de raridade, e nenhum dado do
-     * bloco serve de substituto: dureza mede picareta, e a experiência
-     * que cai empata ferro com cobre em zero.
+     * {@link #ORE} faz — <i>o que é minério</i> é fato do jogo. <b>Para
+     * que a vila usa cada um não é.</b> Não há etiqueta de utilidade, e
+     * não haveria: ela é do mod, e muda quando a colônia aprende uma
+     * receita nova.
      *
      * <p>Então isto é julgamento, e está escrito como julgamento — mas em
      * <b>etiquetas</b>, e não em nomes de bloco. É o que preserva o que a
      * troca de 08-27 comprou: a variante de ardósia, a de outra versão e
      * a de datapack entram sozinhas na etiqueta que já as cobre.
      *
-     * <p>A ordem é a da geração no mundo, com os escombros antigos na
-     * frente por serem do Nether e os mais escassos de lá. Minério que
-     * não está em nenhuma destas — de mod, de datapack — fica
-     * {@link #UNRANKED}, entre o ferro e o cobre: melhor que o comum,
-     * sem fingir que se sabe o quanto.
+     * <p>Minério que não está em nenhuma destas — de mod, de datapack —
+     * fica {@link #UNRANKED}, <b>depois de todos</b>. Ver o javadoc de lá:
+     * a troca de critério mudou também o lugar do desconhecido.
      */
-    private static final List<TagKey<Block>> BY_RARITY = List.of(
-            ConventionalBlockTags.NETHERITE_SCRAP_ORES,
-            BlockTags.DIAMOND_ORES,
-            BlockTags.EMERALD_ORES,
-            BlockTags.GOLD_ORES,
-            BlockTags.LAPIS_ORES,
-            BlockTags.REDSTONE_ORES,
-            ConventionalBlockTags.QUARTZ_ORES,
+    private static final List<TagKey<Block>> BY_USE = List.of(
+            BlockTags.COAL_ORES,
             BlockTags.IRON_ORES,
             BlockTags.COPPER_ORES,
-            BlockTags.COAL_ORES);
+            BlockTags.GOLD_ORES,
+            BlockTags.EMERALD_ORES,
+            BlockTags.REDSTONE_ORES,
+            BlockTags.LAPIS_ORES,
+            BlockTags.DIAMOND_ORES,
+            ConventionalBlockTags.QUARTZ_ORES,
+            ConventionalBlockTags.NETHERITE_SCRAP_ORES);
 
     /**
      * Onde entra o minério que nenhuma etiqueta conhecida classifica.
      *
-     * <p>Logo depois do ferro, e antes de cobre e carvão. Um minério de
-     * mod é quase sempre mais raro que carvão e quase nunca mais raro que
-     * diamante; no meio é onde se erra menos.
+     * <p><b>Depois de todos, e isso mudou em 2026-09-04.</b> Sob a ordem
+     * de raridade ele ficava no meio — logo após o ferro —, porque
+     * <i>"um minério de mod é quase sempre mais raro que carvão"</i>.
+     * Sob a ordem de utilidade a pergunta é outra, e a resposta se
+     * inverte: <b>a colônia não tem receita nenhuma para ele</b>. Um
+     * minério que ela não sabe usar não deve ganhar do carvão que ela
+     * queima nem do ferro que vira Golem.
+     *
+     * <p>Ele continua ganhando da pedra comum, e sem precisar de linha
+     * para isso: o {@link #beside} só olha o que é minério.
      */
-    private static final int UNRANKED = 7;
+    private static final int UNRANKED = 10;
 
     private OreVein() {
     }
 
     /**
-     * Quão raro é este minério — zero é o mais raro.
+     * Quanto a vila precisa deste minério — zero é o que ela precisa antes.
      *
      * <p>Público porque a escolha do alvo é de quem cava, e a resposta é
      * a mesma para o veio e para o túnel: entre dois minérios à vista,
      * ganha o de número menor.
+     *
+     * <p>Chamava-se {@code rarityOf} até 2026-09-04, e o nome mentia
+     * desde a troca de critério: o número já não mede raridade. Ver
+     * {@link #BY_USE}.
      */
-    public static int rarityOf(BlockState state) {
-        for (int rank = 0; rank < BY_RARITY.size(); rank++) {
-            if (state.isIn(BY_RARITY.get(rank))) {
+    public static int priorityOf(BlockState state) {
+        for (int rank = 0; rank < BY_USE.size(); rank++) {
+            if (state.isIn(BY_USE.get(rank))) {
                 return rank;
             }
         }
@@ -181,7 +214,7 @@ public final class OreVein {
      * é o dia em que esta linha vale o que custou.
      */
     public static Optional<BlockPos> beside(ServerWorld world, BlockPos at) {
-        BlockPos rarest = null;
+        BlockPos chosen = null;
         int best = Integer.MAX_VALUE;
 
         for (Direction face : Direction.values()) {
@@ -202,26 +235,27 @@ public final class OreVein {
                 continue;
             }
 
-            // <b>O mais raro das seis, e não a primeira das seis</b> —
-            // 2026-09-03. O laço devolvia na primeira face que servisse, e
-            // o Direction.values() começa em DOWN: carvão no chão ganhava
-            // do diamante na parede. Ver BY_RARITY.
-            int rarity = rarityOf(state);
+            // <b>O mais útil das seis, e não a primeira das seis</b> —
+            // 2026-09-03 pela raridade, 2026-09-04 pela utilidade. O laço
+            // devolvia na primeira face que servisse, e o
+            // Direction.values() começa em DOWN. Ver BY_USE.
+            int priority = priorityOf(state);
 
-            if (rarity >= best) {
+            if (priority >= best) {
                 continue;
             }
 
-            rarest = next;
-            best = rarity;
+            chosen = next;
+            best = priority;
 
-            if (rarity == 0) {
-                // Nada supera o primeiro da lista: as faces que faltam não
-                // podem mudar a resposta, e cada uma custa uma leitura.
+            if (priority == 0) {
+                // Nada supera o primeiro da lista — hoje o carvão: as
+                // faces que faltam não podem mudar a resposta, e cada uma
+                // custa uma leitura.
                 break;
             }
         }
 
-        return Optional.ofNullable(rarest);
+        return Optional.ofNullable(chosen);
     }
 }

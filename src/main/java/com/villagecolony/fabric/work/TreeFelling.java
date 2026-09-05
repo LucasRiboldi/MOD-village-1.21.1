@@ -10,7 +10,6 @@ import net.minecraft.block.BlockState;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.util.Hand;
 import net.minecraft.world.chunk.WorldChunk;
 import com.villagecolony.core.task.model.TaskState;
@@ -39,23 +38,6 @@ public final class TreeFelling {
 
     private TreeFelling() {
     }
-
-    /**
-     * A ferramenta que o tempo de quebra assume.
-     *
-     * <p>É a Regra 2 ao pé da letra: ferramenta de ferro. Isto é o
-     * relógio da colheita, não um inventário.
-     *
-     * <p>Desde 2026-08-13 o lenhador <b>carrega</b> um machado de
-     * madeira, entregue por {@code WorkerEquipment} porque
-     * Profession-System.md manda entregá-lo. E mesmo assim esta linha
-     * continua de ferro, de propósito: perguntar ao trabalhador o que ele
-     * tem na mão tornaria a colheita mais lenta do que a Regra 2 manda —
-     * seria trocar uma regra do autor por uma consequência de
-     * implementação. O dia de perguntar é o dia em que a evolução de
-     * ferramenta existir, e ela não pertence ao MVP.
-     */
-    private static final Item TOOL = Items.IRON_AXE;
 
     /**
      * Quantos estágios de rachadura o cliente conhece.
@@ -90,7 +72,7 @@ public final class TreeFelling {
         }
 
         if (job.required == 0) {
-            job.required = BlockBreakTime.ticksFor(world, pos, state, TOOL);
+            job.required = BlockBreakTime.ticksFor(world, pos, state, villager);
         }
 
         job.progress++;
