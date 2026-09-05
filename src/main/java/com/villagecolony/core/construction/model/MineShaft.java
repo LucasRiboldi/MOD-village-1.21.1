@@ -297,6 +297,47 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
     private static final int GALLERY_CYCLE = RUN_BLOCKS + POCKET_BLOCKS;
 
     /**
+     * Quantas colunas a galeria avança antes de virar — decisão do
+     * autor, 2026-09-04.
+     *
+     * <p><b>A frase dele:</b> <i>"o mineiro deve priorizar o perímetro da
+     * vila"</i>, e a forma escolhida foi um teto de raio a partir da
+     * boca.
+     *
+     * <p><b>O que ela conserta está medido.</b> Na sessão de 2026-09-04,
+     * às 21:03, o mineiro estava em {@code 1456,44,87} e a ordem de cavar
+     * apontava para {@code 1454,44,158}: <b>70,7 blocos</b>, {@code out
+     * of reach}, {@code 0/0 ticks}. A galeria não tinha teto — o
+     * {@code cycle} do {@link #tunnel} cresce sem fim —, e nem virar
+     * resolvia: {@code Mine.turn} trocava a direção e <b>guardava o
+     * cursor</b>, então a curva punha o aldeão à mesma distância, noutro
+     * rumo.
+     *
+     * <p>Vinte e quatro colunas são três trechos de {@link #RUN} com os
+     * bolsões deles. Somadas à sala e à descida, põem a frente mais
+     * distante a cerca de quarenta blocos da boca — dentro do que a perna
+     * do mineiro percorre num expediente.
+     *
+     * <p>Com {@link Mine#TURNS_PER_LEVEL} curvas, o nível vira um anel de
+     * quatro braços em volta do poço, e só então a mina desce. É a forma
+     * que o autor pediu: nem uma reta sem fim, nem sorteio — um perímetro.
+     */
+    public static final int ARM = 24;
+
+    /**
+     * Se este índice da ordem já passou do fim do braço.
+     *
+     * <p>Índice, e não distância medida no mundo: o corredor sai reto da
+     * sala, então contar colunas <b>é</b> medir o raio, e sem custo. O
+     * {@code MinerReach.legTowards} percorre até duas mil posições por
+     * tique, e uma pergunta que precisasse de raiz quadrada estaria nesse
+     * laço.
+     */
+    public boolean beyondTheArm(int i) {
+        return i >= CARVED && (i - CARVED) / GALLERY_CYCLE >= ARM / RUN;
+    }
+
+    /**
      * A galeria: corredor com bolsões, e não um túnel reto sem fim —
      * decisão do autor, 2026-09-03.
      *

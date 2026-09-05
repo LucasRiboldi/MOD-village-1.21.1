@@ -782,6 +782,16 @@ public final class MineDigging {
         findTheFrontier(world, mine);
 
         for (int look = 0; look < CUTS_PER_SEARCH; look++) {
+            if (mine.reachedTheEndOfTheArm()) {
+                // <b>O teto de raio do autor</b> — 2026-09-04: "o mineiro
+                // deve priorizar o perímetro da vila". A galeria virou e
+                // o cursor voltou para junto da sala; a volta do laço já
+                // olha o braço novo. Ver MineShaft.ARM.
+                mine.turn();
+
+                continue;
+            }
+
             BlockPos at = MinecraftTypeAdapter.toBlockPos(mine.nextPosition());
 
             if (!world.isInBuildLimit(at)) {

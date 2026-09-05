@@ -178,6 +178,13 @@ class MineShaftTest {
      *
      * <p>É a frase do autor: <i>"na camada 20 ele começa a recolher na
      * altura do aldeão mais 1 infinitamente"</i>.
+     *
+     * <p><b>Continua verdadeiro depois do braço de 2026-09-04</b>, e a
+     * distinção importa: a <b>forma</b> não tem fim — {@code positionAt}
+     * responde para qualquer índice, e tem de responder, porque o cursor
+     * do save pode estar em qualquer um. Quem tem fim é o <b>trecho que
+     * se cava antes de virar</b>, e quem o faz virar é o
+     * {@code MineDigging}, perguntando ao {@link MineShaft#beyondTheArm}.
      */
     @Test
     void theGalleryRunsForeverOnOneLevel() {
@@ -453,5 +460,89 @@ class MineShaftTest {
         }
 
         assertTrue(differed, "as duas minas abrem todos os bolsões para o mesmo lado");
+    }
+
+    /**
+     * A galeria tem fim, e ele é o perímetro — decisão do autor,
+     * 2026-09-04.
+     *
+     * <p>Até aqui o {@code cycle} do túnel crescia sem teto, e a sessão
+     * de 09-04 mostrou o preço: o mineiro em {@code 1456,44,87} mirando
+     * a ordem em {@code 1454,44,158} — 70,7 blocos, {@code out of reach},
+     * {@code 0/0 ticks} por vinte minutos.
+     */
+    @Test
+    void theGalleryStopsAtTheEndOfTheArm() {
+        MineShaft shaft = MineShaft.from(ENTRY, Side.NORTH);
+
+        assertFalse(shaft.beyondTheArm(MineShaft.CARVED),
+                "o primeiro bloco da galeria já estaria além do braço");
+
+        assertFalse(shaft.beyondTheArm(MineShaft.CARVED - 1),
+                "o poço e as salas não são galeria, e não têm braço");
+
+        // Vinte e quatro colunas são três trechos de RUN=8 com os bolsões
+        // deles: dentro do último ciclo ainda cava, no seguinte não.
+        int lastCycle = MineShaft.ARM / MineShaft.RUN - 1;
+        int inside = MineShaft.CARVED + lastCycle * galleryCycle();
+        int outside = MineShaft.CARVED + (lastCycle + 1) * galleryCycle();
+
+        assertFalse(shaft.beyondTheArm(inside),
+                "o último ciclo do braço foi cortado antes da hora");
+
+        assertTrue(shaft.beyondTheArm(outside),
+                "a galeria passou do braço e continuou andando");
+    }
+
+    /**
+     * E o mais distante do braço cabe na perna do mineiro.
+     *
+     * <p>É o que dá sentido ao número: um teto que ainda pusesse a frente
+     * fora de alcance não seria teto nenhum. Medido da <b>boca</b>, que é
+     * de onde o aldeão desce.
+     */
+    @Test
+    void theFarthestCutOfAnArmStaysWithinReach() {
+        MineShaft shaft = MineShaft.from(ENTRY, Side.NORTH);
+
+        int last = MineShaft.CARVED
+                + (MineShaft.ARM / MineShaft.RUN) * galleryCycle() - 1;
+
+        ColonyPos far = shaft.positionAt(last);
+
+        int flat = Math.abs(far.x() - ENTRY.x()) + Math.abs(far.z() - ENTRY.z());
+
+        assertTrue(flat <= 48,
+                "a ponta do braço ficou a " + flat + " blocos da boca, no plano");
+    }
+
+    /** O ciclo da galeria, deduzido da forma em vez de repetido aqui. */
+    private static int galleryCycle() {
+        MineShaft shaft = MineShaft.from(ENTRY, Side.NORTH);
+
+        ColonyPos first = shaft.positionAt(MineShaft.CARVED);
+
+        for (int i = MineShaft.CARVED + 1; i < MineShaft.CARVED + 400; i++) {
+            ColonyPos here = shaft.positionAt(i);
+
+            if (here.y() == first.y() && sameLane(first, here)
+                    && stepOf(shaft, i) == stepOf(shaft, MineShaft.CARVED) + MineShaft.RUN) {
+
+                return i - MineShaft.CARVED;
+            }
+        }
+
+        throw new IllegalStateException("não achei o ciclo da galeria");
+    }
+
+    private static boolean sameLane(ColonyPos a, ColonyPos b) {
+        return a.x() == b.x() || a.z() == b.z();
+    }
+
+    private static int stepOf(MineShaft shaft, int i) {
+        ColonyPos at = shaft.positionAt(i);
+        ColonyPos origin = shaft.positionAt(MineShaft.CARVED);
+
+        return Math.abs(at.x() - origin.x()) + Math.abs(at.z() - origin.z());
     }
 }

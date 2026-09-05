@@ -171,6 +171,18 @@ public final class Mine {
         if (++turns < TURNS_PER_LEVEL || !shaft.mayDeepen()) {
             shaft = shaft.turned();
 
+            // <b>E o cursor volta ao começo da galeria</b> — 2026-09-04.
+            // Ele era guardado, e guardá-lo tornava a curva inútil contra
+            // a distância: virar no índice 70 punha o aldeão a setenta
+            // colunas da sala, noutra direção. Era isto que deixava o
+            // mineiro da sessão daquele dia a 70,7 blocos, "out of
+            // reach", sem render nada.
+            //
+            // Voltar é barato e é seguro: o que vem antes de CARVED é o
+            // poço e as duas salas, já abertos, e o findTheFrontier passa
+            // por eles sem cavar. O braço novo começa colado na sala.
+            cut = MineShaft.CARVED;
+
             return;
         }
 
@@ -178,6 +190,16 @@ public final class Mine {
 
         cut = 0;
         turns = 0;
+    }
+
+    /**
+     * Se a galeria chegou ao fim do braço e tem de virar — 2026-09-04.
+     *
+     * <p>O teto de raio do autor, perguntado antes de a posição ser
+     * gasta. Ver {@link MineShaft#ARM}.
+     */
+    public boolean reachedTheEndOfTheArm() {
+        return shaft.beyondTheArm(cut);
     }
 
     /**
