@@ -180,16 +180,22 @@ public class FarmerGameTest implements FabricGameTest {
     }
 
     /**
-     * <b>A terra ao lado da água vira canteiro</b> — 2026-09-05.
+     * <b>E ele não ara terra solta</b> — queixa do autor, 2026-09-05:
+     * <i>"não podem arar qualquer lugar"</i>.
      *
-     * <p>O degrau anterior ao de semear, e o que de fato faz a roça
-     * crescer. <b>Perto de água não é capricho:</b> terra arada sem água
-     * na caixa seca e volta a ser terra, e o fazendeiro passaria a sessão
-     * arando o mesmo canteiro.
+     * <p>Ele arava toda terra hidratada que a varredura achasse, e a
+     * sessão das 20:30 deixou o resultado no chão: <b>trinta e quatro
+     * blocos arados em trinta e três posições distintas, espalhados por
+     * catorze blocos de vila</b> — quadradinhos soltos no meio das casas,
+     * e não uma roça.
+     *
+     * <p>Abrir roça virou obra, com a planta do próprio jogo e num lote
+     * livre — ver {@code FarmPlans}. O fazendeiro cuida da lavoura; ele
+     * não é mais quem decide onde ela fica.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sowing",
             tickLimit = 200)
-    public void theSoilNextToWaterIsTilled(TestContext context) {
+    public void looseSoilNextToWaterIsLeftAlone(TestContext context) {
         context.setBlockState(FIELD.down(), Blocks.DIRT.getDefaultState());
         context.setBlockState(FIELD.down().east(), Blocks.WATER.getDefaultState());
 
@@ -198,10 +204,9 @@ public class FarmerGameTest implements FabricGameTest {
         putInChest(context, new ItemStack(Items.WHEAT_SEEDS, 4));
 
         context.runAtTick(120, () -> {
-            context.assertTrue(
+            context.assertFalse(
                     CropPatch.isFarmland(context.getBlockState(FIELD.down())),
-                    "a terra ao lado da água não foi arada: "
-                            + context.getBlockState(FIELD.down()).getBlock());
+                    "o fazendeiro arou terra solta no meio da vila");
 
             FarmerWork.clearAll();
 

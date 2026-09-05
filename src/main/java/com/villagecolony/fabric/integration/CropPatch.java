@@ -7,8 +7,6 @@ import net.minecraft.block.CropBlock;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.registry.tag.FluidTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.chunk.WorldChunk;
@@ -82,7 +80,6 @@ public final class CropPatch {
      */
     public static Field survey(ServerWorld world, BlockPos center, int radius) {
         BlockPos plot = null;
-        BlockPos soil = null;
 
         int looked = 0;
 
@@ -98,7 +95,7 @@ public final class CropPatch {
                     }
 
                     if (++looked > COLUMNS_PER_SEARCH) {
-                        return new Field(null, plot, soil);
+                        return new Field(null, plot);
                     }
 
                     int x = center.getX() + dx;
@@ -114,31 +111,34 @@ public final class CropPatch {
                         BlockPos at = new BlockPos(x, center.getY() + dy, z);
 
                         if (isRipe(world.getBlockState(at))) {
-                            return new Field(at, plot, soil);
+                            return new Field(at, plot);
                         }
 
                         if (plot == null && isEmptyPlot(world, at)) {
                             plot = at;
-                        } else if (soil == null && isTillable(world, at)) {
-                            soil = at;
                         }
                     }
                 }
             }
         }
 
-        return new Field(null, plot, soil);
+        return new Field(null, plot);
     }
 
     /**
      * O que a varredura achou: o mais perto de cada coisa, ou nada.
      *
-     * <p>A ordem dos campos é a ordem de prioridade do fazendeiro, e ela
-     * é a mesma frase dita duas vezes: colher ganha de semear, e semear
-     * ganha de arar. Arar com um canteiro vazio ao lado seria a colônia
-     * fazendo campo em vez de fazer comida.
+     * <p>A ordem dos campos é a ordem de prioridade do fazendeiro:
+     * colher ganha de semear.
+     *
+     * <p><b>Arar saiu daqui em 2026-09-05</b>, e saiu por queixa do
+     * autor: <i>"não podem arar qualquer lugar"</i>. Ele arava toda terra
+     * hidratada que achasse, e a sessão das 20:30 deixou <b>trinta e três
+     * quadrados soltos espalhados por catorze blocos de vila</b>. Quem
+     * abre roça agora é a obra, com a planta do próprio jogo — ver
+     * {@code FarmPlans}.
      */
-    public record Field(BlockPos nearestRipe, BlockPos nearestPlot, BlockPos nearestSoil) {
+    public record Field(BlockPos nearestRipe, BlockPos nearestPlot) {
 
         /** A lavoura madura mais perto. */
         public Optional<BlockPos> ripe() {
@@ -148,11 +148,6 @@ public final class CropPatch {
         /** O canteiro arado e vazio mais perto. */
         public Optional<BlockPos> emptyPlot() {
             return Optional.ofNullable(nearestPlot);
-        }
-
-        /** A terra que dá para arar mais perto. */
-        public Optional<BlockPos> tillable() {
-            return Optional.ofNullable(nearestSoil);
         }
     }
 
@@ -222,60 +217,6 @@ public final class CropPatch {
     /** Terra arada com nada plantada em cima — 2026-09-05. */
     public static boolean isEmptyPlot(ServerWorld world, BlockPos at) {
         return isFarmland(world.getBlockState(at)) && world.getBlockState(at.up()).isAir();
-    }
-
-    /**
-     * Terra que dá para arar — 2026-09-05.
-     *
-     * <p>Três perguntas, e as três são do jogo: é da família da terra
-     * ({@code BlockTags.DIRT} cobre grama, terra e terra grossa sem
-     * nomeá-las), tem céu em cima para a muda crescer, e tem água na
-     * caixa que hidrata.
-     *
-     * <p><b>E não se ara o que é de alguém.</b> A Regra 3 vale aqui como
-     * vale na mina: o chão de uma casa da vila ou de uma que a colônia
-     * levantou não vira canteiro.
-     */
-    public static boolean isTillable(ServerWorld world, BlockPos at) {
-        BlockState state = world.getBlockState(at);
-
-        return state.isIn(BlockTags.DIRT)
-                && !isFarmland(state)
-                && world.getBlockState(at.up()).isAir()
-                && BlockProtection.mayBreak(world, at, state)
-                && hasWaterNearby(world, at);
-    }
-
-    /**
-     * A caixa que o {@code FarmlandBlock} usa para se dizer hidratado.
-     *
-     * <p>Nove por nove em volta, do nível do bloco ao de cima. Está
-     * escrita aqui porque a do jogo é privada — e é a única coisa desta
-     * classe copiada dele em vez de perguntada a ele.
-     */
-    private static boolean hasWaterNearby(ServerWorld world, BlockPos at) {
-        for (BlockPos around : BlockPos.iterate(at.add(-4, 0, -4), at.add(4, 1, 4))) {
-            if (world.getFluidState(around).isIn(FluidTags.WATER)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Ara este bloco — 2026-09-05.
-     *
-     * @return se virou terra arada agora
-     */
-    public static boolean till(ServerWorld world, BlockPos at) {
-        if (!isTillable(world, at)) {
-            return false;
-        }
-
-        world.setBlockState(at, Blocks.FARMLAND.getDefaultState(), Block.NOTIFY_ALL);
-
-        return true;
     }
 
     /**

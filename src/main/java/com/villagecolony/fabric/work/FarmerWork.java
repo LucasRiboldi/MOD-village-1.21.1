@@ -99,10 +99,7 @@ public final class FarmerWork {
         HARVEST,
 
         /** Canteiro arado e vazio: plantar semente do baú. */
-        SOW,
-
-        /** Terra perto de água: arar, para o SOW da passagem seguinte. */
-        TILL
+        SOW
     }
 
     private static final class Job {
@@ -288,7 +285,6 @@ public final class FarmerWork {
         switch (job.chore) {
             case HARVEST -> harvest(world, villager, job, storage.get());
             case SOW -> sow(world, villager, job, storage.get());
-            case TILL -> till(world, villager, job);
         }
     }
 
@@ -306,7 +302,6 @@ public final class FarmerWork {
             case HARVEST -> CropPatch.isRipe(world.getBlockState(job.target));
             case SOW -> CropPatch.isEmptyPlot(world, job.target)
                     && ChestWithdrawer.seedIn(world, storage.chestPosition()).isPresent();
-            case TILL -> CropPatch.isTillable(world, job.target);
         };
     }
 
@@ -335,11 +330,6 @@ public final class FarmerWork {
             if (ChestWithdrawer.seedIn(world, storage.chestPosition()).isPresent()) {
                 found = field.emptyPlot();
                 chore = Chore.SOW;
-
-                if (found.isEmpty()) {
-                    found = field.tillable();
-                    chore = Chore.TILL;
-                }
             }
         }
 
@@ -348,7 +338,7 @@ public final class FarmerWork {
                     job.task.colonyId(),
                     SUBJECT,
                     IdleReason.NO_TARGET,
-                    "nothing ripe, no empty plot and no soil to till within "
+                    "nothing ripe and no empty plot within "
                             + searchRadius + " blocks of the village");
 
             return;
@@ -407,27 +397,6 @@ public final class FarmerWork {
                     job.target.toShortString());
         } else {
             ChestDepositor.deposit(world, storage.chestPosition(), seed.get(), 1);
-        }
-
-        release(villager.getUuid(), job);
-    }
-
-    /**
-     * Ara a terra, para a semeadura da passagem seguinte — 2026-09-05.
-     *
-     * <p>Não planta junto de propósito: o canteiro recém-arado é o alvo
-     * mais perto da passagem seguinte, e passar por ele de novo custa uma
-     * varredura que já ia acontecer. Arar e plantar no mesmo instante
-     * faria o fazendeiro abrir campo sem nunca ir ver o que plantou.
-     */
-    private static void till(ServerWorld world, VillagerEntity villager, Job job) {
-        villager.swingHand(Hand.MAIN_HAND);
-
-        if (CropPatch.till(world, job.target)) {
-            VillageColonyMod.LOGGER.info(
-                    "Farmer {} tilled new soil at {}",
-                    villager.getUuid(),
-                    job.target.toShortString());
         }
 
         release(villager.getUuid(), job);
