@@ -6,6 +6,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 
 import java.util.Collection;
 
@@ -57,11 +58,25 @@ public final class WorkerNameplate {
                 continue;
             }
 
-            if (nameOf(villager) != null) {
+            Text current = nameOf(villager);
+
+            if (current != null && !isColonyLabel(current)) {
+                // Nome que o jogador deu. A Regra 3 vale aqui como vale
+                // na mão do aldeão.
                 continue;
             }
 
-            villager.setCustomName(Text.literal(labelFor(worker.profession().get())));
+            Text label = labelFor(worker.profession().get());
+
+            if (current != null && current.getString().equals(label.getString())
+                    && sameColour(current, label)) {
+
+                // Já está certo, e reescrevê-lo toda passagem seria mexer
+                // no nome de um aldeão trinta vezes por minuto.
+                continue;
+            }
+
+            villager.setCustomName(label);
             villager.setCustomNameVisible(true);
 
             labelled++;
@@ -75,12 +90,50 @@ public final class WorkerNameplate {
     }
 
     /**
+     * Se este nome é um dos que a colônia mesma põe.
+     *
+     * <p>Mesma pergunta — e pelo mesmo motivo — que o
+     * {@code WorkerEquipment.isProfessionTool} faz da ferramenta: sem
+     * ela, o nome que a colônia escreveu ontem vira <b>nome do
+     * jogador</b> hoje, e a Regra 3 o protege para sempre.
+     *
+     * <p><b>Foi o que a cor pediu</b>, em 2026-09-05. O nome só era posto
+     * quando não havia nenhum, então numa vila já batizada a cor não
+     * apareceria em ninguém — a colônia inteira ficaria com os nomes
+     * brancos de antes, e o autor veria a mudança não acontecer.
+     *
+     * <p>Compara o <b>texto</b>, e não o estilo: é o mesmo nome com ou
+     * sem cor, e é isso que permite pintar o que já estava escrito.
+     */
+    private static boolean isColonyLabel(Text name) {
+        String written = name.getString();
+
+        for (ProfessionType profession : ProfessionType.values()) {
+            if (labelFor(profession).getString().equals(written)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** Se os dois já estão da mesma cor. */
+    private static boolean sameColour(Text current, Text label) {
+        return java.util.Objects.equals(
+                current.getStyle().getColor(), label.getStyle().getColor());
+    }
+
+    /**
      * O nome que vai aparecer.
      *
      * <p>Em português porque é a língua do jogo do autor, e porque texto
      * literal não passa pelo sistema de tradução — ver a nota da classe.
      */
-    private static String labelFor(ProfessionType profession) {
+    private static Text labelFor(ProfessionType profession) {
+        return Text.literal(nameFor(profession)).formatted(colourOf(profession));
+    }
+
+    private static String nameFor(ProfessionType profession) {
         return switch (profession) {
             case LUMBERJACK -> "Lenhador";
             case MINER -> "Mineiro";
@@ -89,6 +142,36 @@ public final class WorkerNameplate {
             case MANUFACTURER -> "Fabricante";
             case FARMER -> "Fazendeiro";
             case BUILDER -> "Construtor";
+        };
+    }
+
+    /**
+     * A cor de cada profissão — decisão do autor, 2026-09-05: <i>"coloque
+     * um nome colorido para cada profissão"</i>.
+     *
+     * <p>Cada uma puxa do material que ela traz, porque é o que o jogador
+     * já associa a ela sem precisar decorar tabela: folha para quem corta
+     * árvore, pedra para quem cava, lã para quem tosquia, fogo para quem
+     * funde, tábua para quem fabrica, lavoura para quem planta.
+     *
+     * <p>O construtor é o único sem material próprio — ele assenta o dos
+     * outros —, e por isso fica com a cor que sobra e não se confunde com
+     * nenhuma das seis.
+     *
+     * <p><b>Sete cores distintas, e é o requisito.</b> Nome colorido que
+     * se confunde com o do vizinho não diz profissão nenhuma: as duas
+     * verdes são clara e escura, e as duas quentes são vermelho e
+     * dourado.
+     */
+    private static Formatting colourOf(ProfessionType profession) {
+        return switch (profession) {
+            case LUMBERJACK -> Formatting.DARK_GREEN;
+            case MINER -> Formatting.GRAY;
+            case SHEPHERD -> Formatting.WHITE;
+            case SMELTER -> Formatting.RED;
+            case MANUFACTURER -> Formatting.GOLD;
+            case FARMER -> Formatting.YELLOW;
+            case BUILDER -> Formatting.AQUA;
         };
     }
 }

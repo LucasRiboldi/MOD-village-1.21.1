@@ -53,8 +53,23 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
     /** A largura da sala, para o lado. */
     public static final int ROOM_WIDE = 4;
 
-    /** Altura do aldeão mais um: os pés e a cabeça. */
-    public static final int HEADROOM = 2;
+    /**
+     * Quanto a galeria e as salas abrem de altura — três desde
+     * 2026-09-05, e é decisão do autor: <i>"adicionar um bloco na altura
+     * da mina cavada"</i>.
+     *
+     * <p>Eram dois, que é exatamente o que um aldeão ocupa parado. A
+     * escada já abria três desde 08-27, pelo motivo que o
+     * {@link #STAIR_HEADROOM} conta — descer não é cair —, e o corredor
+     * plano ficou sendo o único lugar da mina onde ele anda com a cabeça
+     * raspando o teto.
+     *
+     * <p><b>Custa, e a conta é a que estava escrita ali:</b> a galeria é
+     * o trecho que não acaba, e cinquenta por cento a mais de altura é
+     * cinquenta por cento a mais de picareta por coluna. O autor pediu
+     * sabendo — a mina é lugar de aldeão trabalhar, e não um cano.
+     */
+    public static final int HEADROOM = 3;
 
     /**
      * Quanto um degrau abre — três, e não dois. Visto em jogo em
@@ -82,8 +97,25 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
      */
     public static final int STAIR_HEADROOM = 3;
 
+    /**
+     * Quantas pistas a escada tem — duas, desde 2026-09-05.
+     *
+     * <p>Decisão do autor: <i>"a mina deve descer sempre em escadas
+     * duplas para o aldeão descer e subir sem se atrapalharem"</i>.
+     *
+     * <p>Um corredor de uma coluna é uma via de mão única: dois aldeões
+     * em sentidos opostos se empurram, e o de baixo perde a descida que
+     * acabou de fazer. Com duas colunas lado a lado cada um tem por onde
+     * passar, e a navegação do jogo resolve o desvio sozinha — não é
+     * preciso mão nem regra dizendo quem sobe por qual.
+     *
+     * <p>A segunda pista sai para o lado do rumo da descida, que é o
+     * mesmo lado por onde a sala se abre.
+     */
+    public static final int STAIR_LANES = 2;
+
     /** Quantas posições um lance de escada pede. */
-    private static final int STAIR_BLOCKS = DESCENT * STAIR_HEADROOM;
+    private static final int STAIR_BLOCKS = DESCENT * STAIR_HEADROOM * STAIR_LANES;
 
     /** Quantas posições uma sala pede. */
     private static final int ROOM_BLOCKS = ROOM_LONG * ROOM_WIDE * HEADROOM;
@@ -190,17 +222,29 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
     }
 
     /**
-     * Um degrau: o bloco dos pés e o da cabeça, um passo adiante e um
-     * abaixo do anterior.
+     * Um degrau: as camadas de uma pista, um passo adiante e um abaixo
+     * do anterior — e depois as da pista ao lado.
+     *
+     * <p>As duas pistas do mesmo degrau vêm <b>juntas</b> na ordem, e não
+     * uma escada inteira depois da outra: assim o mineiro abre o degrau
+     * completo antes de descer para o seguinte, e nunca fica com meia
+     * largura aberta debaixo do pé. Ver {@link #STAIR_LANES}.
      */
     private static ColonyPos stair(ColonyPos top, Side towards, int i) {
-        int step = i / STAIR_HEADROOM + 1;
-        int layer = i % STAIR_HEADROOM;
+        int perStep = STAIR_HEADROOM * STAIR_LANES;
+
+        int step = i / perStep + 1;
+        int within = i % perStep;
+
+        int lane = within / STAIR_HEADROOM;
+        int layer = within % STAIR_HEADROOM;
+
+        Side sideways = towards.clockwise();
 
         return new ColonyPos(
-                top.x() + towards.offsetX() * step,
+                top.x() + towards.offsetX() * step + sideways.offsetX() * lane,
                 top.y() - step + 1 + layer,
-                top.z() + towards.offsetZ() * step);
+                top.z() + towards.offsetZ() * step + sideways.offsetZ() * lane);
     }
 
     /** Onde o primeiro lance para: dez blocos abaixo da entrada. */

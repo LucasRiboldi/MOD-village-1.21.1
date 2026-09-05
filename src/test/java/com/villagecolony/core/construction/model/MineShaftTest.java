@@ -33,13 +33,19 @@ class MineShaftTest {
      *
      * <p>É a frase do autor: <i>"de modo que ele possa subir de volta"</i>.
      * Um degrau de dois blocos é um poço com aparência de escada.
+     *
+     * <p>O passo do índice conta as duas pistas desde 2026-09-05 — um
+     * degrau são {@link MineShaft#STAIR_HEADROOM} camadas vezes
+     * {@link MineShaft#STAIR_LANES} colunas.
      */
     @Test
     void theStairDropsOneBlockPerStep() {
         MineShaft mine = shaft();
 
+        int perStep = MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
+
         for (int step = 1; step <= MineShaft.DESCENT; step++) {
-            ColonyPos feet = mine.positionAt((step - 1) * MineShaft.STAIR_HEADROOM);
+            ColonyPos feet = mine.positionAt((step - 1) * perStep);
 
             assertEquals(ENTRY.y() - step + 1, feet.y(),
                     "o degrau " + step + " não desceu um bloco");
@@ -116,8 +122,9 @@ class MineShaftTest {
     /** Dez degraus levam a dez blocos abaixo da entrada. */
     @Test
     void tenStepsReachTenBlocksDown() {
-        ColonyPos last = shaft().positionAt(
-                MineShaft.DESCENT * MineShaft.STAIR_HEADROOM - MineShaft.STAIR_HEADROOM);
+        int perStep = MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
+
+        ColonyPos last = shaft().positionAt(MineShaft.DESCENT * perStep - perStep);
 
         assertEquals(ENTRY.y() - MineShaft.DESCENT + 1, last.y());
     }
@@ -138,15 +145,15 @@ class MineShaftTest {
         assertNotEquals(first.z(), second.z(), "o segundo lance não virou para lado nenhum");
     }
 
-    /** A sala é sete por quatro, e de dois de altura. */
+    /** A sala é sete por quatro, e da altura que o autor pediu. */
     @Test
-    void eachRoomIsSevenByFourAndTwoTall() {
+    void eachRoomIsSevenByFourAndAsTallAsTheHeadroom() {
         MineShaft mine = shaft();
 
         Set<String> floor = new HashSet<>();
         Set<Integer> heights = new HashSet<>();
 
-        int from = MineShaft.DESCENT * MineShaft.STAIR_HEADROOM;
+        int from = MineShaft.DESCENT * MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
         int upTo = from + MineShaft.ROOM_LONG * MineShaft.ROOM_WIDE * MineShaft.HEADROOM;
 
         for (int i = from; i < upTo; i++) {
@@ -159,7 +166,10 @@ class MineShaftTest {
         assertEquals(MineShaft.ROOM_LONG * MineShaft.ROOM_WIDE, floor.size(),
                 "a sala não tem sete por quatro de chão");
 
-        assertEquals(MineShaft.HEADROOM, heights.size(), "a sala não tem dois de altura");
+        assertEquals(
+                MineShaft.HEADROOM,
+                heights.size(),
+                "a sala não tem " + MineShaft.HEADROOM + " de altura");
     }
 
     /** A segunda sala fica vinte blocos abaixo da entrada. */
@@ -196,7 +206,7 @@ class MineShaftTest {
             int y = mine.positionAt(i).y();
 
             assertTrue(
-                    y == level || y == level + 1,
+                    y >= level && y < level + MineShaft.HEADROOM,
                     "a galeria saiu do nível dela em " + y);
         }
     }
@@ -544,5 +554,86 @@ class MineShaftTest {
         ColonyPos origin = shaft.positionAt(MineShaft.CARVED);
 
         return Math.abs(at.x() - origin.x()) + Math.abs(at.z() - origin.z());
+    }
+
+    /**
+     * <b>A escada desce em duas pistas</b> — decisão do autor,
+     * 2026-09-05: <i>"a mina deve descer sempre em escadas duplas para o
+     * aldeão descer e subir sem se atrapalharem"</i>.
+     *
+     * <p>Um corredor de uma coluna é via de mão única: dois aldeões em
+     * sentidos opostos se empurram, e o de baixo perde a descida que
+     * acabou de fazer.
+     *
+     * <p>O que se afirma é a <b>largura</b>, e não a contagem de blocos:
+     * cada degrau tem de ocupar duas colunas lado a lado, no mesmo nível
+     * e no mesmo passo adiante.
+     */
+    @Test
+    void everyStepOfTheStairIsTwoLanesWide() {
+        MineShaft mine = shaft();
+
+        int perStep = MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
+
+        for (int step = 1; step <= MineShaft.DESCENT; step++) {
+            Set<String> columns = new HashSet<>();
+
+            for (int i = 0; i < perStep; i++) {
+                ColonyPos at = mine.positionAt((step - 1) * perStep + i);
+
+                columns.add(at.x() + ":" + at.z());
+            }
+
+            assertEquals(
+                    MineShaft.STAIR_LANES,
+                    columns.size(),
+                    "o degrau " + step + " não tem duas colunas: " + columns);
+        }
+    }
+
+    /**
+     * E as duas pistas ficam <b>lado a lado</b>, não uma atrás da outra.
+     *
+     * <p>Duas colunas em fila são um corredor de uma pista com o dobro do
+     * comprimento, e não resolvem nada: quem sobe continua de frente para
+     * quem desce. A segunda sai para o lado do rumo.
+     */
+    @Test
+    void theTwoLanesSitSideBySide() {
+        MineShaft mine = shaft();
+
+        ColonyPos first = mine.positionAt(0);
+        ColonyPos second = mine.positionAt(MineShaft.STAIR_HEADROOM);
+
+        assertEquals(first.y(), second.y(), "as duas pistas do degrau não estão no mesmo nível");
+
+        int apart = Math.abs(first.x() - second.x()) + Math.abs(first.z() - second.z());
+
+        assertEquals(1, apart, "as duas pistas não estão encostadas");
+    }
+
+    /**
+     * O túnel abre a altura que o autor pediu — 2026-09-05.
+     *
+     * <p><i>"adicionar um bloco na altura da mina cavada"</i>: eram dois,
+     * que é o que um aldeão ocupa parado, e a galeria era o único lugar
+     * da mina onde ele andava raspando o teto.
+     */
+    @Test
+    void theGalleryOpensThreeBlocksTall() {
+        MineShaft mine = shaft();
+
+        assertEquals(3, MineShaft.HEADROOM, "a altura do túnel deixou de ser a que o autor pediu");
+
+        Set<Integer> heights = new HashSet<>();
+
+        for (int i = MineShaft.CARVED; i < MineShaft.CARVED + MineShaft.HEADROOM * 4; i++) {
+            heights.add(mine.positionAt(i).y());
+        }
+
+        assertEquals(
+                MineShaft.HEADROOM,
+                heights.size(),
+                "a galeria não abre " + MineShaft.HEADROOM + " de altura");
     }
 }

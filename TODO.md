@@ -261,6 +261,49 @@ abaixo, com o porquê.
 
 ## ✅ Resolvido
 
+### 2026-09-05 — nome colorido, escada dupla, túnel mais alto e o arco da boca
+
+Quatro pedidos do autor, e três deles mexem na geometria da mina.
+
+**O nome de cada profissão ganhou cor** — sete, distintas, cada uma puxando do
+material que a profissão traz: folha, pedra, lã, fogo, tábua, lavoura, e uma que
+sobra para o construtor, que não tem material próprio.
+
+O rótulo só era posto **quando não havia nenhum**, então numa vila já batizada a
+cor não apareceria em ninguém. A pergunta passou a ser a mesma do
+`isProfessionTool`: *este nome é dos que a colônia põe?* — se for, ela o pinta; o
+nome que o **jogador** deu continua dele, sem cor.
+
+**A escada desce em duas pistas.** Uma coluna é via de mão única: dois aldeões em
+sentidos opostos se empurram. As duas pistas do mesmo degrau vêm **juntas** na
+ordem de cavar, e não uma escada inteira depois da outra — assim o mineiro abre o
+degrau completo antes de descer para o seguinte.
+
+**Túnel e salas abrem três de altura**, e não dois. Dois é o que o aldeão ocupa
+parado; a escada já abria três desde 08-27, e o corredor plano era o único lugar
+da mina onde ele andava raspando o teto.
+
+**A boca ganhou arco de pedra com lanterna pendurada.** Dois pilares nos lados
+perpendiculares à descida, verga por cima, lanterna no centro.
+
+**Três voltas até o arco parar de brigar com a mobília**, e vale registrar: baú e
+lanterna da boca escolhem entre os **três vizinhos livres** do nível do chão, e o
+arco queria dois deles. A primeira versão deixou a mina sem baú; a segunda tentou
+dar o fundo ao baú e derrubou mais testes ainda. O que resolveu foi tirar o arco
+da disputa — ele **começa um bloco acima**, e nasce depois da mobília, sem
+depender dela.
+
+**E cinco fixtures estavam presas à forma antiga.** Duas foram reescritas para
+não gravar coordenada nenhuma: a da luz procura a tocha em vez de saber onde ela
+cai, e a do vão de um bloco **sela a vizinhança** em vez de abrir posições da
+ordem e torcer. A do mineiro congelado é a que mais ensina — ela apostava que o
+alvo ficaria fora de alcance por causa da geometria, e com a escada mais larga o
+mineiro passou a **alcançar** a pedra e trabalhar: o teste media um mineiro
+ocupado e o chamava de congelado. Agora ele é emparedado por construção.
+
+**Verificação:** 644 unitários e 252 gametests, zero falhas em duas rodadas
+seguidas.
+
 ### 2026-09-05 — ramal acabado deixa de ser ramal livre
 
 **A instrumentação pagou na primeira sessão.** As duas linhas postas no ciclo

@@ -4,10 +4,13 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.worker.model.ProfessionType;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.state.property.Properties;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -72,6 +75,14 @@ public final class MineMouth {
             chest = placeChest(world, mouth, descent);
         }
 
+        // <b>Depois do baú e sem depender dele.</b> Depois porque o baú
+        // escolhe entre os vizinhos do nível do chão e o arco começa um
+        // bloco acima deles — a primeira versão levantava os pilares no
+        // chão e a mina ficava sem baú. Sem depender porque a boca que
+        // não tem onde pôr baú também merece ser vista de longe: o arco
+        // não é mobília, é a marca da entrada.
+        raiseArch(world, mouth, descent);
+
         if (chest.isEmpty()) {
             // Sem baú não há de que a lanterna ser o outro lado, e a
             // passagem seguinte tenta os dois de novo.
@@ -81,6 +92,70 @@ public final class MineMouth {
         placeLanternIfMissing(world, mouth, chest.get(), descent);
 
         return chest;
+    }
+
+    /** Quantos blocos os pilares do arco sobem antes da verga. */
+    private static final int ARCH_HIGH = 3;
+
+    /**
+     * O arco de pedra da entrada — decisão do autor, 2026-09-05:
+     * <i>"colocar um arco de pedra com lanterna na entrada da mina"</i>.
+     *
+     * <p>Dois pilares nos lados da boca, uma verga ligando os dois por
+     * cima, e a lanterna <b>pendurada</b> no centro da verga. Os lados
+     * são os perpendiculares ao rumo da descida, que é o que emoldura a
+     * entrada em vez de tapá-la.
+     *
+     * <p>A lanterna fica dois blocos acima da boca: o aldeão ocupa os
+     * dois de baixo, e uma lanterna na cabeça dele seria uma porta
+     * fechada com luz.
+     *
+     * <p><b>Pedregulho, e não a paleta da vila.</b> A paleta mora em
+     * {@code fabric.work} e esta classe é {@code fabric.integration} —
+     * puxá-la daqui inverteria a dependência que o
+     * {@code DependencyRuleTest} guarda. Pedregulho é o que a própria
+     * mina produz, e lê como pedra em qualquer bioma.
+     *
+     * <p><b>Só onde cabe.</b> Cada bloco é posto apenas sobre o que é
+     * substituível — a Regra 3 vale para o arco como vale para o resto:
+     * pilar que teria de derrubar a casa de alguém simplesmente não
+     * nasce, e o arco sai incompleto em vez de sair por cima.
+     *
+     * <p>Idempotente: com o arco lá, isto não faz nada.
+     */
+    private static void raiseArch(ServerWorld world, BlockPos mouth, Direction descent) {
+        Direction side = descent.rotateYClockwise();
+
+        // <b>Começa um bloco acima do chão</b> — e é o que faz o arco
+        // conviver com a mobília. O baú e a lanterna da boca moram nos
+        // vizinhos do nível do chão, e um pilar ali disputaria o lugar
+        // deles: a primeira versão deixou a mina sem baú. Daqui para
+        // cima não há disputa, e o arco emoldura a entrada na altura em
+        // que ela é vista.
+        for (int up = 1; up < ARCH_HIGH; up++) {
+            layStone(world, mouth.offset(side).up(up));
+            layStone(world, mouth.offset(side.getOpposite()).up(up));
+        }
+
+        layStone(world, mouth.offset(side).up(ARCH_HIGH));
+        layStone(world, mouth.up(ARCH_HIGH));
+        layStone(world, mouth.offset(side.getOpposite()).up(ARCH_HIGH));
+
+        BlockPos lamp = mouth.up(ARCH_HIGH - 1);
+
+        if (world.getBlockState(lamp).isReplaceable()) {
+            world.setBlockState(
+                    lamp,
+                    Blocks.LANTERN.getDefaultState().with(Properties.HANGING, true),
+                    Block.NOTIFY_ALL);
+        }
+    }
+
+    /** Uma pedra do arco, se o lugar aceitar. */
+    private static void layStone(ServerWorld world, BlockPos at) {
+        if (world.getBlockState(at).isReplaceable()) {
+            world.setBlockState(at, Blocks.COBBLESTONE.getDefaultState(), Block.NOTIFY_ALL);
+        }
     }
 
     /** O baú da boca, recém-posto e marcado como do mineiro. */

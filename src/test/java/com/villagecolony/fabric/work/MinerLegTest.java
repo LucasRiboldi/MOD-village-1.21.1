@@ -311,8 +311,13 @@ class MinerLegTest {
                 new BlockPos(731, 63, 898), DEEP, mine(30),
                 world(passable, at -> passable.test(at) && floors.test(at)));
 
+        // A pista de fora do degrau 3, e era a de dentro até 2026-09-05:
+        // a escada passou a ter duas colunas, as duas do mesmo degrau vêm
+        // juntas na ordem, e o laço fica com a última que se pisa. O que
+        // o teste afirma continua sendo o degrau 3 — a parede dos degraus
+        // 4 e 5 segue de pé.
         assertEquals(
-                new BlockPos(732, 61, 895), leg,
+                new BlockPos(733, 61, 895), leg,
                 "a perna atravessou a rocha dos degraus 4 e 5 para chegar ao bolsão");
     }
 

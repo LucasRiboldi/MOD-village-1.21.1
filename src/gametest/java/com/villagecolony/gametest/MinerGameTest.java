@@ -43,6 +43,7 @@ import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.SandGathering;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.brain.Schedule;
@@ -2677,16 +2678,45 @@ public class MinerGameTest implements FabricGameTest {
 
         // A fresta de um bloco só, e é ela que reproduz o defeito: o
         // aldeão precisa de dois blocos livres para caber, então um vão
-        // de altura um não é lugar de pisar em canto nenhum dele. É a
-        // geometria de 763, 45, 878 — a ordem de cavar alterna pé e
-        // cabeça da mesma coluna, e só os pés ficam abertos.
-        for (int i = 0; i < 12; i += 2) {
+        // de altura um não é lugar de pisar em canto nenhum dele.
+        //
+        // Abre <b>só o pé da primeira pista</b> de cada degrau, e a
+        // conta sai da forma em vez de vir escrita: um degrau são
+        // {@link MineShaft#STAIR_HEADROOM} camadas vezes
+        // {@link MineShaft#STAIR_LANES} colunas, e passou de dois para
+        // seis índices em 2026-09-05. A versão anterior abria um índice
+        // sim outro não, o que naquela forma calhava de deixar só os
+        // pés — e nesta deixava meia escada aberta, com onde pisar ao
+        // lado.
+        int perStep = MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
+
+        for (int step = 0; step < 6; step++) {
             world.setBlockState(
-                    MinecraftTypeAdapter.toBlockPos(mine.shaft().positionAt(i)),
+                    MinecraftTypeAdapter.toBlockPos(mine.shaft().positionAt(step * perStep)),
                     Blocks.AIR.getDefaultState());
         }
 
-        BlockPos walled = MinecraftTypeAdapter.toBlockPos(mine.shaft().positionAt(1));
+        // O peito de um degrau <b>fundo</b>, e não o do primeiro: perto
+        // da boca o próprio vão da entrada é lugar de pisar.
+        BlockPos walled = MinecraftTypeAdapter.toBlockPos(
+                mine.shaft().positionAt(perStep * 4 + 1));
+
+        // <b>E a vizinhança é selada à mão.</b> Abrir posições da ordem
+        // de cavar e torcer para que nada mais fique pisável amarra o
+        // cenário à forma da mina — e a forma mudou em 2026-09-05, com a
+        // segunda pista da escada e o bloco a mais de altura. Selar e
+        // abrir exatamente um vão de altura um faz o cenário valer por
+        // construção, em qualquer forma que a mina venha a ter.
+        for (int dx = -ARM_REACH - 1; dx <= ARM_REACH + 1; dx++) {
+            for (int dy = -ARM_REACH - 1; dy <= ARM_REACH + 1; dy++) {
+                for (int dz = -ARM_REACH - 1; dz <= ARM_REACH + 1; dz++) {
+                    world.setBlockState(
+                            walled.add(dx, dy, dz), Blocks.STONE.getDefaultState());
+                }
+            }
+        }
+
+        world.setBlockState(walled.down(), Blocks.AIR.getDefaultState());
 
         ColonyFixture owned = ColonyFixture.create().owning(colony);
 
@@ -2903,6 +2933,31 @@ public class MinerGameTest implements FabricGameTest {
 
         VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, PERCH);
         villager.setBreedingAge(0);
+
+        // <b>Emparedado, e não só longe</b> — 2026-09-05. O cenário
+        // apostava que o alvo ficaria fora de alcance por causa da
+        // geometria da mina, e a geometria mudou: com a segunda pista da
+        // escada o mineiro passou a <b>alcançar</b> a pedra
+        // ({@code 0,6 blocks away, 163/200 ticks}), trabalhar, e zerar o
+        // guarda — o teste media um mineiro ocupado e o chamava de
+        // congelado.
+        //
+        // Congelar por construção não depende de forma nenhuma: seis
+        // paredes em volta dos dois blocos que ele ocupa. Ele não anda, e
+        // é isso que o teste promete medir.
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 2; dy++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    BlockPos at = PERCH.add(dx, dy, dz);
+
+                    if (at.equals(PERCH) || at.equals(PERCH.up())) {
+                        continue;
+                    }
+
+                    context.setBlockState(at, Blocks.STONE.getDefaultState());
+                }
+            }
+        }
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
@@ -3480,24 +3535,23 @@ public class MinerGameTest implements FabricGameTest {
         try {
             targetFor(context, colony);
 
-            // O alto da coluna do índice 8: o cursor está em 18, e a luz
-            // fica um espaçamento inteiro atrás dele.
-            BlockPos lit = context.getAbsolutePos(new BlockPos(3, 6, 3));
+            // <b>Procurada, e não escrita à mão.</b> As coordenadas
+            // estavam fixas — (3,6,3) e (3,4,3) —, e a forma da mina
+            // mudou em 2026-09-05: a escada ganhou uma segunda pista e o
+            // túnel um bloco de altura, então todo índice andou de
+            // lugar. Um teste que grava a coordenada mede a forma de
+            // ontem; o que ele quer afirmar é que <b>a galeria acendeu</b>.
+            Optional<BlockPos> lit = wallTorchIn(context);
 
             context.assertTrue(
-                    context.getWorld().getBlockState(lit).isOf(Blocks.WALL_TORCH),
-                    "a galeria continuou escura: "
-                            + context.getWorld().getBlockState(lit).getBlock().getName()
-                                    .getString()
-                            + " em " + lit.toShortString());
+                    lit.isPresent(),
+                    "a galeria continuou escura: nenhuma tocha de parede na mina");
 
-            // E o chão da mesma coluna continua sendo degrau — a tocha
-            // no piso foi o primeiro defeito desta feature.
-            BlockPos floor = context.getAbsolutePos(new BlockPos(3, 4, 3));
-
+            // E o chão da coluna da tocha continua sendo degrau — a
+            // tocha no piso foi o primeiro defeito desta feature.
             context.assertTrue(
-                    context.getWorld().getBlockState(floor).isAir(),
-                    "a tocha comeu o degrau em " + floor.toShortString());
+                    !context.getWorld().getBlockState(lit.get().down()).isOf(Blocks.WALL_TORCH),
+                    "a tocha comeu o degrau em " + lit.get().toShortString());
         } finally {
             MineClaims.clearAll();
         }
@@ -3970,5 +4024,88 @@ public class MinerGameTest implements FabricGameTest {
                 "rocha maciça virou corredor — o mineiro vai atravessar o morro");
 
         context.complete();
+    }
+
+    /**
+     * <b>A boca da mina ganha um arco de pedra com lanterna</b> —
+     * decisão do autor, 2026-09-05: <i>"colocar um arco de pedra com
+     * lanterna na entrada da mina"</i>.
+     *
+     * <p>Dois pilares nos lados, uma verga por cima ligando os dois, e a
+     * lanterna pendurada no centro. Os lados são os perpendiculares ao
+     * rumo da descida — é isso que emoldura a entrada em vez de tapá-la.
+     *
+     * <p><b>E a lanterna fica acima da cabeça.</b> O aldeão ocupa os dois
+     * blocos de baixo, e uma lanterna ali seria uma porta fechada com
+     * luz: o teste afirma que a boca e o bloco sobre ela continuam
+     * livres, porque o arco não pode custar a passagem que ele decora.
+     *
+     * <p>Os pilares começam <b>um bloco acima do chão</b>. O baú e a
+     * lanterna lateral da boca moram nos vizinhos do nível do chão, e a
+     * primeira versão deste arco disputou o lugar deles — a mina ficou
+     * sem baú. Daqui para cima não há disputa.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_arch",
+            tickLimit = 20)
+    public void theMineMouthGetsAStoneArchWithALantern(TestContext context) {
+        BlockPos mouth = new BlockPos(3, 2, 3);
+
+        // Chão em volta, e não só sob a boca: a mobília da boca pede ar
+        // sobre bloco sólido, e uma arena sem piso não tem onde pôr o
+        // baú — foi assim que a primeira versão deste teste mediu uma
+        // boca que nunca chegou a ser mobiliada.
+        for (int x = 1; x <= 5; x++) {
+            for (int z = 1; z <= 5; z++) {
+                context.setBlockState(new BlockPos(x, 1, z), Blocks.STONE.getDefaultState());
+            }
+        }
+
+        ServerWorld world = context.getWorld();
+
+        MineMouth.furnish(world, context.getAbsolutePos(mouth), Direction.NORTH);
+
+        Direction side = Direction.NORTH.rotateYClockwise();
+
+        context.assertTrue(
+                archBlockAt(context, mouth.offset(side).up()).isOf(Blocks.COBBLESTONE)
+                        && archBlockAt(context, mouth.offset(side.getOpposite()).up())
+                                .isOf(Blocks.COBBLESTONE),
+                "a boca da mina ficou sem os pilares do arco");
+
+        context.assertTrue(
+                archBlockAt(context, mouth.up(3)).isOf(Blocks.COBBLESTONE),
+                "o arco ficou sem a verga por cima da boca");
+
+        context.assertTrue(
+                archBlockAt(context, mouth.up(2)).isOf(Blocks.LANTERN),
+                "o arco ficou sem a lanterna pendurada no centro");
+
+        context.assertTrue(
+                archBlockAt(context, mouth).isAir() && archBlockAt(context, mouth.up()).isAir(),
+                "o arco tapou a passagem que ele decora");
+
+        context.complete();
+    }
+
+    /** A primeira tocha de parede da arena, se a mina acendeu alguma. */
+    private static Optional<BlockPos> wallTorchIn(TestContext context) {
+        for (int x = 0; x <= 15; x++) {
+            for (int y = 0; y <= 15; y++) {
+                for (int z = 0; z <= 15; z++) {
+                    BlockPos at = context.getAbsolutePos(new BlockPos(x, y, z));
+
+                    if (context.getWorld().getBlockState(at).isOf(Blocks.WALL_TORCH)) {
+                        return Optional.of(at);
+                    }
+                }
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /** O bloco daquela posição relativa, lido do mundo. */
+    private static BlockState archBlockAt(TestContext context, BlockPos relative) {
+        return context.getWorld().getBlockState(context.getAbsolutePos(relative));
     }
 }

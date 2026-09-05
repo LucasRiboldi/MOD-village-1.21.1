@@ -40,14 +40,18 @@ de um jogador com machado de ferro —, não carrega nada para casa porque
 a madeira vai direto para o baú dele, e replanta a muda antes de sair.
 
 ⛏️ **O mineiro abre uma mina de verdade.** Ele anda até o fim da vila e
-desce cavando **em escada** — de picareta de ferro, como todo trabalhador
-começa —, para poder subir de volta. Dez blocos abaixo abre uma sala de 7×4; desce mais dez virando
+desce cavando **em escada dupla** — duas colunas lado a lado, para quem
+sobe não esbarrar em quem desce —, de picareta de ferro, como todo
+trabalhador começa. A boca ganha um **arco de pedra com lanterna
+pendurada**, que é o que a faz ser vista de longe. Dez blocos abaixo abre uma sala de 7×4; desce mais dez virando
 para outro lado, abre outra sala; e do vigésimo bloco em diante segue
 numa galeria — que **não é um cano reto**: a cada oito colunas ela abre
 um bolsão ao lado, o que dá mais parede exposta e mais minério à vista.
 Barreira à frente — bedrock, a casa de alguém, pedra sem onde pisar — e a
 galeria vira. Quatro curvas fecham a volta do nível, e a mina **desce mais
-um**, atrás do que só existe fundo.
+um**, atrás do que só existe fundo. Túnel e salas abrem **três blocos de
+altura**: dois é o que o aldeão ocupa parado, e andar raspando o teto não
+é andar.
 
 **Saiu água?** Ele tapa a nascente com pedregulho na hora e desvia a
 galeria. Mina inundada não é mina difícil — é mina onde o aldeão não fica

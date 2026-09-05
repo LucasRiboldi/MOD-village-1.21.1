@@ -5,6 +5,7 @@ import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
+import com.villagecolony.fabric.integration.WorkerNameplate;
 import com.villagecolony.core.worker.service.ProfessionRegistry;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.WorkerEquipment;
@@ -19,13 +20,17 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.test.GameTest;
+import net.minecraft.text.Text;
+import net.minecraft.text.TextColor;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -527,5 +532,93 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
         }
 
         return found;
+    }
+
+    /**
+     * <b>Cada profissão tem a sua cor</b> — decisão do autor, 2026-09-05:
+     * <i>"coloque um nome colorido para cada profissão"</i>.
+     *
+     * <p>Duas afirmações, e a segunda é a que faz a primeira valer alguma
+     * coisa: a cor existe, e as sete são <b>distintas</b>. Nome colorido
+     * que se confunde com o do vizinho não diz profissão nenhuma.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_colour",
+            tickLimit = 20)
+    public void everyProfessionWearsItsOwnColour(TestContext context) {
+        Set<TextColor> colours = new HashSet<>();
+
+        for (ProfessionType profession : ProfessionType.values()) {
+            VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
+
+            Worker worker = Worker.restore(villager.getUuid(), UUID.randomUUID(), profession);
+
+            WorkerNameplate.label(context.getWorld(), List.of(worker));
+
+            Text name = villager.getCustomName();
+
+            context.assertTrue(name != null, profession + " ficou sem nome");
+
+            TextColor colour = name.getStyle().getColor();
+
+            context.assertTrue(colour != null, profession + " ficou com o nome sem cor");
+
+            context.assertTrue(
+                    colours.add(colour),
+                    profession + " repetiu a cor de outra profissão: " + colour);
+
+            villager.discard();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * E o nome que a colônia já tinha escrito <b>ganha</b> a cor.
+     *
+     * <p>O rótulo só era posto quando não havia nenhum, então numa vila
+     * já batizada — que é toda vila em curso — a cor não apareceria em
+     * ninguém: o autor veria a mudança não acontecer. A pergunta é a
+     * mesma do {@code isProfessionTool}: <i>este nome é dos que a colônia
+     * põe?</i>
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_colour",
+            tickLimit = 20)
+    public void theNameTheColonyAlreadyWroteGetsPainted(TestContext context) {
+        VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
+
+        // O rótulo de antes da cor: o texto certo, sem estilo nenhum.
+        villager.setCustomName(Text.literal("Mineiro"));
+
+        Worker worker = Worker.restore(
+                villager.getUuid(), UUID.randomUUID(), ProfessionType.MINER);
+
+        WorkerNameplate.label(context.getWorld(), List.of(worker));
+
+        context.assertTrue(
+                villager.getCustomName().getStyle().getColor() != null,
+                "o nome que a colônia já tinha escrito continuou sem cor");
+
+        context.complete();
+    }
+
+    /** E o nome que o <b>jogador</b> deu continua dele, sem cor nenhuma. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_colour",
+            tickLimit = 20)
+    public void theNameThePlayerGaveIsLeftAlone(TestContext context) {
+        VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
+
+        villager.setCustomName(Text.literal("Joaquim"));
+
+        Worker worker = Worker.restore(
+                villager.getUuid(), UUID.randomUUID(), ProfessionType.MINER);
+
+        WorkerNameplate.label(context.getWorld(), List.of(worker));
+
+        context.assertTrue(
+                "Joaquim".equals(villager.getCustomName().getString()),
+                "a colônia reescreveu o nome que o jogador deu: "
+                        + villager.getCustomName().getString());
+
+        context.complete();
     }
 }
