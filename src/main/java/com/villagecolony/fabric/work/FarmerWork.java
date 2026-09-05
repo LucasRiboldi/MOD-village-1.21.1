@@ -24,6 +24,7 @@ import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -166,9 +167,48 @@ public final class FarmerWork {
                 able + " able to farm");
     }
 
-    /** Um passo de cada fazendeiro, a cada tique do servidor. */
+    /**
+     * Um passo de cada fazendeiro, a cada tique do servidor.
+     *
+     * <p><b>Tarefa que já voltou para a fila não se trabalha</b> —
+     * 2026-09-05, e a falta desta linha derrubou o servidor:
+     *
+     * <pre>
+     * java.lang.IllegalStateException: Cannot release a task that is AVAILABLE
+     *   at Task.release(Task.java:201)
+     *   at FarmerWork.giveUp(FarmerWork.java:360)
+     * </pre>
+     *
+     * <p>O laço é o do {@code giveUp}: o guarda de imobilidade dispara,
+     * a tarefa volta para a fila, o {@link #release} zera o alvo — e
+     * <b>não</b> o contador de imobilidade, que é o E36 de 2026-09-04 e
+     * está certo. Na passagem seguinte o fazendeiro escolhe outra
+     * lavoura, continua sem andar, e o guarda dispara de novo: segundo
+     * {@code release} numa tarefa que já está AVAILABLE.
+     *
+     * <p>O {@code dropClosedJobs} tiraria o trabalho da lista, só que ele
+     * roda uma vez por ciclo da colônia — seiscentos tiques — e o guarda
+     * dispara em trezentos. Cabem dois na janela.
+     *
+     * <p><b>As outras seis profissões já tinham esta linha</b>, e é a
+     * única razão de ter sido o fazendeiro a cair. Ver
+     * {@code MinerWork.tick}, de onde a forma foi copiada.
+     */
     public static void tick(ServerWorld world) {
-        for (Map.Entry<UUID, Job> entry : new ArrayList<>(JOBS.entrySet())) {
+        for (Iterator<Map.Entry<UUID, Job>> entries = JOBS.entrySet().iterator();
+                entries.hasNext(); ) {
+
+            Map.Entry<UUID, Job> entry = entries.next();
+
+            if (!isOngoing(entry.getValue().task)) {
+                entries.remove();
+
+                // O destino morre com a tarefa — ver WorkTargets.clear.
+                WorkTargets.clear(entry.getKey());
+
+                continue;
+            }
+
             step(world, entry.getKey(), entry.getValue());
         }
     }
@@ -350,14 +390,31 @@ public final class FarmerWork {
         WorkTargets.clear(workerId);
     }
 
-    /** Devolve a tarefa quando o fazendeiro não chega à lavoura. */
+    /**
+     * Devolve a tarefa quando o fazendeiro não chega à lavoura.
+     *
+     * <p><b>Quem responde se ela pode ser devolvida é a própria tarefa</b>
+     * — {@link Task#isHeld()}. É a mesma lição que o {@code BuilderWork}
+     * registrou depois de derrubar o servidor duas vezes, e o fazendeiro
+     * a repetiu em 2026-09-05: uma tarefa que já voltou para a fila é
+     * AVAILABLE, que não está encerrada e também não está na mão de
+     * ninguém.
+     *
+     * <p>O laço que levava até aqui foi fechado no {@link #tick}, e este
+     * guarda é a segunda linha: nem todo caminho que solta uma tarefa
+     * passa pelo laço do tique — morte, zumbificação e dispensa soltam
+     * pelo {@code VillagerLifecycleHandler}, e podem cair no meio de uma
+     * passagem.
+     */
     private static void giveUp(UUID workerId, Job job) {
         VillageColonyMod.LOGGER.info(
                 "Farmer {} could not reach the crop at {} — task back to the queue",
                 workerId,
                 job.target.toShortString());
 
-        job.task.release();
+        if (job.task.isHeld()) {
+            job.task.release();
+        }
 
         release(workerId, job);
     }

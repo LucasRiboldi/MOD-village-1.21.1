@@ -185,4 +185,59 @@ public class FarmerGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * <b>Tarefa devolvida à fila não é mais trabalhada</b> — 2026-09-05,
+     * e a falta disto derrubou o servidor do autor na primeira sessão que
+     * rodou o jar novo:
+     *
+     * <pre>
+     * java.lang.IllegalStateException: Cannot release a task that is AVAILABLE
+     *   at Task.release(Task.java:201)
+     *   at FarmerWork.giveUp(FarmerWork.java:360)
+     *   at FarmerWork.step(FarmerWork.java:211)
+     * </pre>
+     *
+     * <p>O laço: o guarda de imobilidade dispara aos 300 tiques, a tarefa
+     * volta para a fila, e o contador <b>não</b> zera — é o E36, e está
+     * certo. Na passagem seguinte o fazendeiro pega outra lavoura,
+     * continua sem andar, e o guarda dispara de novo sobre uma tarefa que
+     * já é de ninguém. O {@code dropClosedJobs} limparia o trabalho, mas
+     * roda uma vez por ciclo da colônia — 600 tiques — e cabem dois
+     * disparos na janela.
+     *
+     * <p>Aqui a devolução é feita à mão, que é o mesmo estado sem esperar
+     * os 300 tiques. O que se afirma é que o fazendeiro <b>para</b>: o
+     * trigo fica no pé e o baú vazio, porque aquela tarefa deixou de ser
+     * dele.
+     *
+     * <p>Rodado contra a correção desligada: ele colhe assim mesmo — e é
+     * o mesmo trabalho fantasma que a exceção acima interrompe à força.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_released",
+            tickLimit = 200)
+    public void aTaskBackInTheQueueIsNoLongerWorked(TestContext context) {
+        ripeWheat(context, FIELD);
+
+        VillagerEntity villager = farmer(context);
+
+        for (Task task : VillageColonyMod.TASKS.assignedTo(villager.getUuid())) {
+            task.release();
+        }
+
+        context.runAtTick(120, () -> {
+            int wheat = ChestInventoryReader
+                    .read(context.getWorld(), context.getAbsolutePos(CHEST))
+                    .amountOf(ResourceType.WHEAT);
+
+            context.assertTrue(
+                    wheat == 0,
+                    "o fazendeiro colheu com a tarefa já de volta na fila — "
+                            + wheat + " no baú");
+
+            FarmerWork.clearAll();
+
+            context.complete();
+        });
+    }
 }

@@ -261,6 +261,39 @@ abaixo, com o porquê.
 
 ## ✅ Resolvido
 
+### 2026-09-05 — o fazendeiro parou de devolver duas vezes a mesma tarefa
+
+**Crash de servidor às 09:48**, na primeira sessão que rodou o jar novo:
+
+```text
+java.lang.IllegalStateException: Cannot release a task that is AVAILABLE
+  at Task.release(Task.java:201)
+  at FarmerWork.giveUp(FarmerWork.java:360)
+  at FarmerWork.step(FarmerWork.java:211)
+```
+
+**O laço.** O guarda de imobilidade dispara aos 300 tiques, `giveUp` devolve a
+tarefa à fila, e o `release` do fazendeiro zera o alvo — mas **não** o contador
+de imobilidade, que é o E36 de 2026-09-04 e está certo. Na passagem seguinte ele
+escolhe outra lavoura, continua sem andar, e o guarda dispara de novo sobre uma
+tarefa que já é de ninguém.
+
+O `dropClosedJobs` tiraria o trabalho da lista, só que roda uma vez por **ciclo
+da colônia** — 600 tiques — e o guarda dispara em **300**. Cabem dois na janela.
+
+**Por que só o fazendeiro.** As outras seis profissões já derrubavam o trabalho
+cujo alvo saiu da fila no próprio `tick`; ele era o único sem essa linha. E o
+`BuilderWork` já tinha aprendido a segunda metade — `Task.isHeld()` em vez de
+"não está encerrada" — depois de derrubar o servidor duas vezes, em §17 e em
+2026-08-25. O fazendeiro repetiu as duas.
+
+**Não é regressão do ciclo da manhã**: o E36 é de 09-04 e nunca tinha rodado em
+jogo, porque o jar instalado estava parado em 09-03. Foi a instalação correta
+que expôs o defeito.
+
+**Verificação:** 638 unitários e 246 gametests, zero falhas. Fase vermelha
+conferida — com o `tick` de volta ao que era, o novo caso cai.
+
 ### 2026-09-05 — a viga descascada sai da madeira que a colônia tem
 
 **Sessão de jogo de 2026-09-05, 08:29–09:20**, e a primeira coisa que ela
