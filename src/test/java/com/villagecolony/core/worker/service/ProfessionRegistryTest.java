@@ -69,27 +69,56 @@ class ProfessionRegistryTest {
     }
 
     /**
-     * O mineiro segura a picareta com que ele mina — 2026-08-27.
+     * O mineiro começa de madeira, como todo mundo — decisão do autor,
+     * 2026-09-04.
      *
-     * <p><b>A discordância que existia.</b> O catálogo entregava
-     * {@code WOODEN_PICKAXE} e o {@code MinerWork} calculava o tempo de
-     * quebra com {@code Items.DIAMOND_PICKAXE}: o aldeão minerava na
-     * velocidade do diamante segurando uma picareta de madeira.
+     * <p><b>A frase dele:</b> <i>"todos trabalhadores começam com a
+     * ferramenta nível 1 de madeira"</i>. Desfaz a de 08-27, que este
+     * teste afirmava, e que dava diamante ao mineiro porque <i>"são
+     * vinte blocos de descida antes de a mina render alguma coisa, e com
+     * picareta de madeira isso é uma sessão inteira"</i>.
      *
-     * <p>Qual dos dois manda está escrito no javadoc do próprio
-     * {@code MinerWork.TOOL}, e é decisão do autor: <i>"o autor pediu
-     * diamante para o mineiro, e faz sentido: são vinte blocos de descida
-     * antes de a mina render alguma coisa, e com picareta de madeira isso
-     * é uma sessão inteira"</i>. Então quem estava errado era o catálogo.
+     * <p>Continua sendo uma sessão inteira — o que mudou é que agora há
+     * saída. O {@code ToolUpgrade} troca pela melhor ferramenta do baú do
+     * trabalhador, e a colônia mesma põe picaretas lá: a descida lenta
+     * deixou de ser um teto e virou o primeiro degrau de uma progressão.
      *
-     * <p>Achado ao conferir um plano de implementação externo contra o
-     * código — ele especificava picareta de diamante, e a conferência
-     * mostrou que o mod concordava com ele em metade dos lugares.
+     * <p><b>E a discordância que este teste guardava fechou pelo outro
+     * lado.</b> Ele nasceu porque o catálogo entregava madeira e o
+     * {@code MinerWork} media a velocidade com uma constante de
+     * diamante: o aldeão minerava como diamante segurando madeira.
+     * Aquela constante não existe mais — o {@code BlockBreakTime}
+     * pergunta à mão. Os dois já não <b>podem</b> discordar, e o que
+     * este teste afirma hoje é o degrau inicial, não a concordância.
      */
     @Test
-    void theMinerHoldsThePickaxeItMinesWith() {
-        assertEquals(ToolType.DIAMOND_PICKAXE,
+    void theMinerStartsWithWoodLikeEveryoneElse() {
+        assertEquals(ToolType.WOODEN_PICKAXE,
                 ProfessionRegistry.of(ProfessionType.MINER).requiredTool());
+    }
+
+    /**
+     * E a regra é de <b>todos</b>, não só do mineiro.
+     *
+     * <p>Escrito como varredura do catálogo inteiro de propósito: a
+     * profissão nova que nascer amanhã cai aqui sozinha, e é isso que
+     * torna esta uma regra em vez de quatro afirmações soltas.
+     *
+     * <p>A tesoura do pastor é a exceção, e é a exceção que o próprio
+     * {@code ToolType} já documenta: <i>"tesoura não tem grau, então é
+     * ela mesma"</i>. Não há tesoura de madeira a exigir dele.
+     */
+    @Test
+    void everyProfessionStartsAtTheFirstRung() {
+        for (ProfessionType profession : ProfessionType.values()) {
+            ToolType tool = ProfessionRegistry.of(profession).requiredTool();
+
+            assertTrue(
+                    tool == ToolType.NONE
+                            || tool == ToolType.SHEARS
+                            || tool.name().startsWith("WOODEN_"),
+                    profession + " começa com " + tool + ", que não é o primeiro degrau");
+        }
     }
 
     @Test

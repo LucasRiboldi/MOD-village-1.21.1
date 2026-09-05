@@ -626,8 +626,10 @@ public class MinerGameTest implements FabricGameTest {
      * de verdade: seis.
      *
      * <p>A medida é tirada <b>no tique da quebra</b>, e não no fim: a
-     * pedra cai em seis tiques, e num teste que só olhasse no fim o
-     * aldeão teria descido sozinho depois e a prova passaria por engano.
+     * pedra cai depressa — seis tiques com a picareta de diamante que o
+     * mineiro tinha até 2026-09-04, vinte e três com a de madeira que
+     * ele passou a ter —, e num teste que só olhasse no fim o aldeão
+     * teria descido sozinho depois e a prova passaria por engano.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_descent",
             tickLimit = 400)

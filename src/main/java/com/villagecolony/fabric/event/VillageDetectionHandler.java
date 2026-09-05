@@ -723,8 +723,15 @@ public final class VillageDetectionHandler {
 
         // A ferramenta vem junto do nome, e pelo mesmo motivo: a
         // profissão foi decidida agora, e Profession-System.md diz que o
-        // trabalhador a recebe ao assumir a função. Não muda a velocidade
-        // do trabalho — a Regra 2 fixou isso em ferro.
+        // trabalhador a recebe ao assumir a função.
+        //
+        // <b>E agora muda a velocidade do trabalho</b> — 2026-09-04.
+        // Estas linhas diziam o contrário — "a Regra 2 fixou isso em
+        // ferro" — e diziam certo até o dia em que o BlockBreakTime
+        // passou a perguntar à mão do aldeão em vez de a uma constante.
+        // Esta passagem é a que põe a ferramenta naquela mão, e é
+        // também a que troca pela melhor do baú: é aqui que a colônia
+        // fica mais rápida ao longo da partida.
         int equipped = WorkerEquipment.equip(
                 world, VillageColonyMod.WORKERS.ofColony(colony.id()));
 

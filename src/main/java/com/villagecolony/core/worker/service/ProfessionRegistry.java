@@ -33,7 +33,15 @@ public final class ProfessionRegistry {
 
     static {
         define(ProfessionType.LUMBERJACK, ToolType.WOODEN_AXE, Capability.COLLECT_WOOD);
-        define(ProfessionType.MINER, ToolType.DIAMOND_PICKAXE, Capability.COLLECT_STONE);
+        // <b>Madeira, e não diamante</b> — decisão do autor, 2026-09-04:
+        // "todos trabalhadores começam com a ferramenta nível 1 de
+        // madeira". Desfaz a de 08-27, que dava diamante ao mineiro
+        // porque "vinte blocos de descida com picareta de madeira é uma
+        // sessão inteira" — e continua sendo, com a diferença de que
+        // agora existe saída: o ToolUpgrade troca pela melhor do baú
+        // dele, e a colônia mesma põe picaretas lá. A descida lenta
+        // deixou de ser um teto e virou o primeiro degrau.
+        define(ProfessionType.MINER, ToolType.WOODEN_PICKAXE, Capability.COLLECT_STONE);
         define(ProfessionType.SHEPHERD, ToolType.SHEARS, Capability.COLLECT_WOOL);
         define(ProfessionType.SMELTER, ToolType.NONE, Capability.SMELT_ITEMS);
         define(ProfessionType.MANUFACTURER, ToolType.NONE, Capability.CRAFT_ITEMS);

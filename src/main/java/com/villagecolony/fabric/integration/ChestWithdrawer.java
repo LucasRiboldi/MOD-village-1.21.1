@@ -203,8 +203,63 @@ public final class ChestWithdrawer {
         taken.add(new ItemStack(item, count));
     }
 
-    /** O baú, ou {@code null} se o chunk não está carregado. */
-    private static ChestBlockEntity chestAt(ServerWorld world, ColonyPos chest) {
+    /**
+     * Tira uma unidade deste item do baú, seja ele recurso ou não —
+     * 2026-09-04.
+     *
+     * <p>Par do {@link #chestAt} logo abaixo, e pelo mesmo motivo: a
+     * ferramenta que o {@link ToolUpgrade} escolheu não é
+     * {@link ResourceType}, e as portas públicas desta classe recusam o
+     * que a colônia não conta. Recusam <b>certo</b> — é o que impede o
+     * fabricante de comer a espada do jogador —, e por isso a exceção
+     * fica aqui, estreita e no pacote, em vez de virar um parâmetro
+     * "pode pegar qualquer coisa" nas portas de todo mundo.
+     *
+     * @return quantas tirou: 1 ou 0
+     */
+    static int takeOne(ServerWorld world, ColonyPos chest, Item item) {
+        ChestBlockEntity inventory = chestAt(world, chest);
+
+        if (inventory == null) {
+            return 0;
+        }
+
+        for (int slot = 0; slot < inventory.size(); slot++) {
+            ItemStack stack = inventory.getStack(slot);
+
+            if (!stack.isOf(item)) {
+                continue;
+            }
+
+            stack.decrement(1);
+
+            if (stack.isEmpty()) {
+                inventory.setStack(slot, ItemStack.EMPTY);
+            }
+
+            inventory.markDirty();
+
+            return 1;
+        }
+
+        return 0;
+    }
+
+    /**
+     * O baú, ou {@code null} se o chunk não está carregado.
+     *
+     * <p><b>Visível ao pacote desde 2026-09-04</b>, e para um caso só: o
+     * {@link ToolUpgrade}. As portas públicas daqui recusam o que não é
+     * {@link ResourceType} — é a regra estreita do topo desta classe, e
+     * ela está certa —, mas <b>ferramenta não é recurso</b>: a colônia
+     * não a conta, não a produz e não a consome. Trocar a picareta do
+     * mineiro pela melhor do baú dele não cabe naquela porta sem alargá-la
+     * para todo o resto junto.
+     *
+     * <p>Fica no pacote, e não pública, porque é exatamente esse o
+     * alcance do caso.
+     */
+    static ChestBlockEntity chestAt(ServerWorld world, ColonyPos chest) {
         BlockPos position = MinecraftTypeAdapter.toBlockPos(chest);
 
         WorldChunk chunk = world.getChunkManager()

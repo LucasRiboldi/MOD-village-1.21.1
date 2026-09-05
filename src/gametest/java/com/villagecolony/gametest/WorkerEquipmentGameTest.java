@@ -1,11 +1,16 @@
 package com.villagecolony.gametest;
 
+import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.storage.model.WorkerStorage;
+import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.ProfessionRegistry;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.WorkerEquipment;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.ItemEntity;
@@ -344,5 +349,176 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
                 "a colônia entregou a mesma tesoura de novo");
 
         context.complete();
+    }
+
+    /**
+     * A picareta melhor do baú vai para a mão — decisão do autor,
+     * 2026-09-04.
+     *
+     * <p><b>A frase dele:</b> <i>"se houver uma ferramenta de qualidade
+     * maior dentro do seu baú o trabalhador troca pela que está
+     * usando"</i>. É o outro degrau da mesma decisão que fez todo
+     * trabalhador começar de madeira: sem a troca, começar de madeira
+     * seria um teto em vez de um começo.
+     *
+     * <p>Ninguém escreveu aqui que ferro é melhor que madeira. Quem diz
+     * é o jogo, medindo as duas contra a pedra — ver {@code ToolUpgrade}.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_equipment")
+    public void theBetterPickaxeInTheChestReachesTheHand(TestContext context) {
+        BlockPos chest = new BlockPos(2, 1, 2);
+
+        VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
+
+        Worker worker = storedMiner(context, villager, chest);
+
+        putInChest(context, chest, new ItemStack(Items.IRON_PICKAXE));
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
+        context.assertTrue(
+                villager.getEquippedStack(EquipmentSlot.MAINHAND).isOf(Items.IRON_PICKAXE),
+                "a mão ficou com "
+                        + villager.getEquippedStack(EquipmentSlot.MAINHAND).getItem()
+                        + " — a picareta de ferro do baú não subiu");
+
+        context.assertTrue(
+                countIn(context, chest, Items.IRON_PICKAXE) == 0,
+                "a picareta de ferro continua no baú: a colônia duplicou o item");
+
+        context.complete();
+    }
+
+    /**
+     * E a de madeira que ela substituiu não vira lixo no baú.
+     *
+     * <p>Ela veio do nada — é a mesma conta do {@code NEVER_DROPS} —, e
+     * devolvê-la faria da colônia uma fábrica: um degrau acima por ciclo,
+     * uma picareta de madeira por ciclo dentro do baú.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_equipment")
+    public void theColonysOwnToolDoesNotPileUpInTheChest(TestContext context) {
+        BlockPos chest = new BlockPos(2, 1, 2);
+
+        VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
+
+        villager.equipStack(EquipmentSlot.MAINHAND, new ItemStack(Items.WOODEN_PICKAXE));
+
+        Worker worker = storedMiner(context, villager, chest);
+
+        putInChest(context, chest, new ItemStack(Items.DIAMOND_PICKAXE));
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
+        context.assertTrue(
+                countIn(context, chest, Items.WOODEN_PICKAXE) == 0,
+                "a picareta de madeira da colônia voltou para o baú");
+
+        context.complete();
+    }
+
+    /**
+     * O que o jogador pôs na mão volta ao baú, e não some.
+     *
+     * <p>A Regra 3 diz que a colônia não toma o que é do jogador. A troca
+     * não toma: ela devolve. Sem esta metade, dar uma ferramenta melhor
+     * ao aldeão seria o jogador perder a que ele mesmo tinha dado.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_equipment")
+    public void whatThePlayerGaveComesBackWhenSomethingBetterArrives(TestContext context) {
+        BlockPos chest = new BlockPos(2, 1, 2);
+
+        VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
+
+        villager.equipStack(EquipmentSlot.MAINHAND, new ItemStack(Items.STONE_PICKAXE));
+
+        Worker worker = storedMiner(context, villager, chest);
+
+        putInChest(context, chest, new ItemStack(Items.DIAMOND_PICKAXE));
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
+        context.assertTrue(
+                villager.getEquippedStack(EquipmentSlot.MAINHAND).isOf(Items.DIAMOND_PICKAXE),
+                "o diamante do baú não subiu para a mão");
+
+        context.assertTrue(
+                countIn(context, chest, Items.STONE_PICKAXE) == 1,
+                "a picareta de pedra do jogador não voltou ao baú — a colônia a destruiu");
+
+        context.complete();
+    }
+
+    /**
+     * Ferramenta de outra família não é melhora, por mais cara que seja.
+     *
+     * <p>Um machado de diamante no baú do mineiro continua sendo um
+     * machado. Esta é a prova de que a escolha vem da velocidade contra
+     * a pedra e não do material: ninguém escreveu "picareta" em lugar
+     * nenhum, e mesmo assim o machado perde.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_equipment")
+    public void aDiamondAxeIsNoUpgradeForTheMiner(TestContext context) {
+        BlockPos chest = new BlockPos(2, 1, 2);
+
+        VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
+
+        Worker worker = storedMiner(context, villager, chest);
+
+        putInChest(context, chest, new ItemStack(Items.DIAMOND_AXE));
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
+        context.assertTrue(
+                villager.getEquippedStack(EquipmentSlot.MAINHAND).isOf(Items.WOODEN_PICKAXE),
+                "a mão ficou com "
+                        + villager.getEquippedStack(EquipmentSlot.MAINHAND).getItem()
+                        + " — o machado de diamante passou por picareta");
+
+        context.assertTrue(
+                countIn(context, chest, Items.DIAMOND_AXE) == 1,
+                "o machado saiu do baú do mineiro");
+
+        context.complete();
+    }
+
+    /** Um mineiro com baú registrado, que é o que a troca exige. */
+    private static Worker storedMiner(
+            TestContext context, VillagerEntity villager, BlockPos chest) {
+
+        context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+
+        ColonyPos position = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chest));
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), position));
+
+        return Worker.restore(villager.getUuid(), UUID.randomUUID(), ProfessionType.MINER);
+    }
+
+    private static void putInChest(TestContext context, BlockPos chest, ItemStack stack) {
+        if (context.getWorld().getBlockEntity(context.getAbsolutePos(chest))
+                instanceof ChestBlockEntity inventory) {
+
+            inventory.setStack(0, stack);
+            inventory.markDirty();
+        }
+    }
+
+    private static int countIn(TestContext context, BlockPos chest, Item item) {
+        if (!(context.getWorld().getBlockEntity(context.getAbsolutePos(chest))
+                instanceof ChestBlockEntity inventory)) {
+
+            return 0;
+        }
+
+        int found = 0;
+
+        for (int slot = 0; slot < inventory.size(); slot++) {
+            if (inventory.getStack(slot).isOf(item)) {
+                found += inventory.getStack(slot).getCount();
+            }
+        }
+
+        return found;
     }
 }

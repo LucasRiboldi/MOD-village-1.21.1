@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.ToolType;
 import com.villagecolony.core.worker.model.Worker;
+import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.worker.service.ProfessionRegistry;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.entity.EquipmentSlot;
@@ -108,6 +109,12 @@ public final class WorkerEquipment {
 
             ItemStack held = villager.getEquippedStack(EquipmentSlot.MAINHAND);
 
+            if (upgrade(world, worker, profession.get(), villager, held, tool)) {
+                equipped++;
+
+                continue;
+            }
+
             if (tool.isPresent() && held.isOf(tool.get())) {
                 continue;
             }
@@ -139,6 +146,86 @@ public final class WorkerEquipment {
         }
 
         return equipped;
+    }
+
+    /**
+     * Troca a ferramenta da mão pela melhor do baú do trabalhador —
+     * decisão do autor, 2026-09-04.
+     *
+     * <p><b>A frase dele:</b> <i>"se houver uma ferramenta de qualidade
+     * maior dentro do seu baú o trabalhador troca pela que está
+     * usando"</i>. Quem julga "maior" é o {@link ToolUpgrade}, e ele
+     * julga pela velocidade que o jogo mede.
+     *
+     * <p><b>Vem antes de tudo, inclusive de "a mão é do jogador".</b> A
+     * Regra 3 impede a colônia de <i>tomar</i> o que o jogador deu, e
+     * nada aqui toma: o que sai da mão volta para o baú, a menos que
+     * seja ferramenta que a própria colônia entregou — essa veio do
+     * nada e volta ao nada, que é a mesma conta do
+     * {@link #NEVER_DROPS}. O aldeão fica com a melhor das duas, e o
+     * jogador não perde item nenhum.
+     *
+     * <p><b>Baú cheio cancela a troca.</b> Devolver a ferramenta antiga
+     * é parte da troca, e não um passo depois dela: fazer a metade que
+     * equipa sem a metade que devolve seria a colônia destruindo o que
+     * o jogador pôs no baú do aldeão. Se não cabe, não troca — e a
+     * passagem seguinte tenta de novo.
+     *
+     * @return se a mão mudou agora
+     */
+    private static boolean upgrade(
+            ServerWorld world,
+            Worker worker,
+            ProfessionType profession,
+            VillagerEntity villager,
+            ItemStack held,
+            Optional<Item> starter) {
+
+        Optional<WorkerStorage> storage = VillageColonyMod.STORAGES.of(worker.villagerId());
+
+        if (storage.isEmpty()) {
+            return false;
+        }
+
+        ItemStack floor = starter.map(ItemStack::new).orElse(ItemStack.EMPTY);
+
+        Optional<ItemStack> better = ToolUpgrade.betterThan(
+                world, profession, held, floor, storage.get().chestPosition());
+
+        if (better.isEmpty()) {
+            return false;
+        }
+
+        ItemStack take = better.get();
+        boolean givesBack = !held.isEmpty() && !isProfessionTool(held);
+
+        if (givesBack
+                && ChestDepositor.freeSpaceFor(world, storage.get().chestPosition(),
+                        held.getItem()) < 1) {
+
+            return false;
+        }
+
+        if (ChestWithdrawer.takeOne(world, storage.get().chestPosition(), take.getItem()) < 1) {
+            return false;
+        }
+
+        if (givesBack) {
+            ChestDepositor.deposit(
+                    world, storage.get().chestPosition(), held.getItem(), held.getCount());
+        }
+
+        villager.equipStack(EquipmentSlot.MAINHAND, take);
+        villager.setEquipmentDropChance(EquipmentSlot.MAINHAND, NEVER_DROPS);
+
+        VillageColonyMod.LOGGER.info(
+                "Worker {} is a {} and traded {} for the {} in its chest",
+                worker.villagerId(),
+                profession,
+                held.isEmpty() ? "empty hands" : held.getItem(),
+                take.getItem());
+
+        return true;
     }
 
     /**
