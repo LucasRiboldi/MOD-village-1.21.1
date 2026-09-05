@@ -12,11 +12,13 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestDepositor;
+import com.villagecolony.fabric.integration.ChestWithdrawer;
 import com.villagecolony.fabric.integration.CropPatch;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
@@ -80,6 +82,29 @@ public final class FarmerWork {
 
     private static final String SUBJECT = "farmer";
 
+    /**
+     * O que o fazendeiro foi fazer neste alvo — 2026-09-05.
+     *
+     * <p>Ele só colhia, e por isso ficava parado: a lavoura da vila é
+     * pequena, e depois de colhida não há nada maduro por muito tempo —
+     * 86 ciclos ociosos de 81 na sessão de 2026-09-04. <b>Aumentar o raio
+     * não resolvia</b>, porque o que falta não é distância, é lavoura.
+     *
+     * <p>Decisão do autor, 2026-09-05: ele passa a <b>criar roça</b>. A
+     * ordem é de prioridade, e ela se lê de cima para baixo.
+     */
+    private enum Chore {
+
+        /** Lavoura madura: colher e replantar do que caiu. */
+        HARVEST,
+
+        /** Canteiro arado e vazio: plantar semente do baú. */
+        SOW,
+
+        /** Terra perto de água: arar, para o SOW da passagem seguinte. */
+        TILL
+    }
+
     private static final class Job {
 
         final Task task;
@@ -87,6 +112,8 @@ public final class FarmerWork {
         final BlockPos center;
 
         BlockPos target;
+
+        Chore chore = Chore.HARVEST;
 
         int collected;
 
@@ -227,12 +254,12 @@ public final class FarmerWork {
         }
 
         if (job.target == null) {
-            findCrop(world, workerId, job);
+            findWork(world, workerId, job, storage.get());
 
             return;
         }
 
-        if (!CropPatch.isRipe(world.getBlockState(job.target))) {
+        if (!stillWorth(world, job, storage.get())) {
             // Alguém colheu entre planejar e chegar, ou o bloco mudou.
             release(workerId, job);
 
@@ -255,10 +282,32 @@ public final class FarmerWork {
         }
 
         // Chegou e vai colher — E36, 2026-09-04. Trabalhar é a prova de
-        // que ele não está congelado; pegar alvo novo não é. Ver findCrop.
+        // que ele não está congelado; pegar alvo novo não é. Ver findWork.
         job.stall.reset();
 
-        harvest(world, villager, job, storage.get());
+        switch (job.chore) {
+            case HARVEST -> harvest(world, villager, job, storage.get());
+            case SOW -> sow(world, villager, job, storage.get());
+            case TILL -> till(world, villager, job);
+        }
+    }
+
+    /**
+     * Se o alvo ainda vale a caminhada.
+     *
+     * <p>A pergunta é a do próprio trabalho, e é por isso que ela mora
+     * aqui e não no {@code step}: colher pede lavoura madura, semear pede
+     * canteiro vazio <b>e</b> semente no baú, arar pede a terra ainda de
+     * pé. Perguntar sempre "está maduro?" mandaria o semeador embora na
+     * primeira passagem.
+     */
+    private static boolean stillWorth(ServerWorld world, Job job, WorkerStorage storage) {
+        return switch (job.chore) {
+            case HARVEST -> CropPatch.isRipe(world.getBlockState(job.target));
+            case SOW -> CropPatch.isEmptyPlot(world, job.target)
+                    && ChestWithdrawer.seedIn(world, storage.chestPosition()).isPresent();
+            case TILL -> CropPatch.isTillable(world, job.target);
+        };
     }
 
     /**
@@ -268,15 +317,39 @@ public final class FarmerWork {
      * vila, e dois fazendeiros que buscassem cada um a partir de si
      * acabariam em cantos opostos do mesmo campo.
      */
-    private static void findCrop(ServerWorld world, UUID workerId, Job job) {
-        Optional<BlockPos> found = CropPatch.ripeNear(world, job.center, searchRadius);
+    private static void findWork(
+            ServerWorld world, UUID workerId, Job job, WorkerStorage storage) {
+
+        CropPatch.Field field = CropPatch.survey(world, job.center, searchRadius);
+
+        Optional<BlockPos> found = field.ripe();
+        Chore chore = Chore.HARVEST;
+
+        if (found.isEmpty()) {
+            // <b>Sem semente não há o que semear nem por que arar</b> —
+            // 2026-09-05, e é este gate que dá teto ao campo sem uma
+            // constante inventada. Os dois trabalhos gastam semente, e a
+            // semente só sobra quando a colheita sobra: a roça cresce no
+            // ritmo em que a lavoura paga por ela, e para de crescer
+            // quando o baú seca.
+            if (ChestWithdrawer.seedIn(world, storage.chestPosition()).isPresent()) {
+                found = field.emptyPlot();
+                chore = Chore.SOW;
+
+                if (found.isEmpty()) {
+                    found = field.tillable();
+                    chore = Chore.TILL;
+                }
+            }
+        }
 
         if (found.isEmpty()) {
             IdleLog.record(
                     job.task.colonyId(),
                     SUBJECT,
                     IdleReason.NO_TARGET,
-                    "no ripe crop within " + searchRadius + " blocks of the village");
+                    "nothing ripe, no empty plot and no soil to till within "
+                            + searchRadius + " blocks of the village");
 
             return;
         }
@@ -284,6 +357,7 @@ public final class FarmerWork {
         IdleLog.clear(job.task.colonyId(), SUBJECT);
 
         job.target = found.get();
+        job.chore = chore;
         job.stalled = 0;
 
         // <b>E o guarda de imobilidade NÃO é zerado aqui</b> — E36,
@@ -301,6 +375,62 @@ public final class FarmerWork {
         // ele mede: andei demais até ESTE alvo.
 
         WorkTargets.set(workerId, job.target);
+    }
+
+    /**
+     * Planta a semente do baú no canteiro — 2026-09-05.
+     *
+     * <p><b>A semente sai antes de a muda entrar, e volta se não
+     * entrar.</b> É a mesma conta do fundidor: tirar do baú e não
+     * entregar nada seria a colônia destruindo material do jogador.
+     */
+    private static void sow(
+            ServerWorld world, VillagerEntity villager, Job job, WorkerStorage storage) {
+
+        Optional<Item> seed = ChestWithdrawer.seedIn(world, storage.chestPosition());
+
+        if (seed.isEmpty()
+                || !ChestWithdrawer.takeSeed(world, storage.chestPosition(), seed.get())) {
+
+            release(villager.getUuid(), job);
+
+            return;
+        }
+
+        villager.swingHand(Hand.MAIN_HAND);
+
+        if (CropPatch.sow(world, job.target, seed.get())) {
+            VillageColonyMod.LOGGER.info(
+                    "Farmer {} sowed {} at {}",
+                    villager.getUuid(),
+                    seed.get(),
+                    job.target.toShortString());
+        } else {
+            ChestDepositor.deposit(world, storage.chestPosition(), seed.get(), 1);
+        }
+
+        release(villager.getUuid(), job);
+    }
+
+    /**
+     * Ara a terra, para a semeadura da passagem seguinte — 2026-09-05.
+     *
+     * <p>Não planta junto de propósito: o canteiro recém-arado é o alvo
+     * mais perto da passagem seguinte, e passar por ele de novo custa uma
+     * varredura que já ia acontecer. Arar e plantar no mesmo instante
+     * faria o fazendeiro abrir campo sem nunca ir ver o que plantou.
+     */
+    private static void till(ServerWorld world, VillagerEntity villager, Job job) {
+        villager.swingHand(Hand.MAIN_HAND);
+
+        if (CropPatch.till(world, job.target)) {
+            VillageColonyMod.LOGGER.info(
+                    "Farmer {} tilled new soil at {}",
+                    villager.getUuid(),
+                    job.target.toShortString());
+        }
+
+        release(villager.getUuid(), job);
     }
 
     /**
@@ -385,7 +515,7 @@ public final class FarmerWork {
         job.stalled = 0;
 
         // O guarda de imobilidade sobrevive a largar a lavoura — E36.
-        // Ver findCrop. Quem zera é o ramo de trabalho, antes do harvest.
+        // Ver findWork. Quem zera é o ramo de trabalho, antes do harvest.
 
         WorkTargets.clear(workerId);
     }

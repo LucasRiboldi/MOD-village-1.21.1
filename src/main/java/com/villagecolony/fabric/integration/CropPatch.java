@@ -5,7 +5,10 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.CropBlock;
 import net.minecraft.item.BlockItem;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.registry.tag.BlockTags;
+import net.minecraft.registry.tag.FluidTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.chunk.WorldChunk;
@@ -58,6 +61,29 @@ public final class CropPatch {
      * forçar carregamento — ADR-002.
      */
     public static Optional<BlockPos> ripeNear(ServerWorld world, BlockPos center, int radius) {
+        return survey(world, center, radius).ripe();
+    }
+
+    /**
+     * O que o fazendeiro tem para fazer em volta do centro — 2026-09-05.
+     *
+     * <p><b>Uma varredura, três respostas.</b> A lavoura madura, o
+     * canteiro arado e vazio e a terra de arar percorrem exatamente as
+     * mesmas colunas: perguntar as três em passagens separadas
+     * triplicaria o custo justamente no caso que virou comum — a vila com
+     * a lavoura toda plantada e nada maduro, que é onde o fazendeiro
+     * passou 86 dos 81 ciclos da sessão de 2026-09-04.
+     *
+     * <p><b>E ela para cedo quando pode.</b> Lavoura madura ganha de
+     * tudo, então achá-la encerra a busca na hora; sem ela, a varredura
+     * segue até o orçamento de colunas acabar.
+     *
+     * <p>Chunk fora de memória é pulado sem forçar carregamento — ADR-002.
+     */
+    public static Field survey(ServerWorld world, BlockPos center, int radius) {
+        BlockPos plot = null;
+        BlockPos soil = null;
+
         int looked = 0;
 
         for (int ring = 0; ring <= radius; ring++) {
@@ -72,38 +98,62 @@ public final class CropPatch {
                     }
 
                     if (++looked > COLUMNS_PER_SEARCH) {
-                        return Optional.empty();
+                        return new Field(null, plot, soil);
                     }
 
-                    Optional<BlockPos> found = ripeInColumn(
-                            world, center.getX() + dx, center.getZ() + dz, center.getY());
+                    int x = center.getX() + dx;
+                    int z = center.getZ() + dz;
 
-                    if (found.isPresent()) {
-                        return found;
+                    WorldChunk chunk = world.getChunkManager().getWorldChunk(x >> 4, z >> 4);
+
+                    if (chunk == null) {
+                        continue;
+                    }
+
+                    for (int dy = LEVELS; dy >= -LEVELS; dy--) {
+                        BlockPos at = new BlockPos(x, center.getY() + dy, z);
+
+                        if (isRipe(world.getBlockState(at))) {
+                            return new Field(at, plot, soil);
+                        }
+
+                        if (plot == null && isEmptyPlot(world, at)) {
+                            plot = at;
+                        } else if (soil == null && isTillable(world, at)) {
+                            soil = at;
+                        }
                     }
                 }
             }
         }
 
-        return Optional.empty();
+        return new Field(null, plot, soil);
     }
 
-    private static Optional<BlockPos> ripeInColumn(ServerWorld world, int x, int z, int aroundY) {
-        WorldChunk chunk = world.getChunkManager().getWorldChunk(x >> 4, z >> 4);
+    /**
+     * O que a varredura achou: o mais perto de cada coisa, ou nada.
+     *
+     * <p>A ordem dos campos é a ordem de prioridade do fazendeiro, e ela
+     * é a mesma frase dita duas vezes: colher ganha de semear, e semear
+     * ganha de arar. Arar com um canteiro vazio ao lado seria a colônia
+     * fazendo campo em vez de fazer comida.
+     */
+    public record Field(BlockPos nearestRipe, BlockPos nearestPlot, BlockPos nearestSoil) {
 
-        if (chunk == null) {
-            return Optional.empty();
+        /** A lavoura madura mais perto. */
+        public Optional<BlockPos> ripe() {
+            return Optional.ofNullable(nearestRipe);
         }
 
-        for (int dy = LEVELS; dy >= -LEVELS; dy--) {
-            BlockPos at = new BlockPos(x, aroundY + dy, z);
-
-            if (isRipe(world.getBlockState(at))) {
-                return Optional.of(at);
-            }
+        /** O canteiro arado e vazio mais perto. */
+        public Optional<BlockPos> emptyPlot() {
+            return Optional.ofNullable(nearestPlot);
         }
 
-        return Optional.empty();
+        /** A terra que dá para arar mais perto. */
+        public Optional<BlockPos> tillable() {
+            return Optional.ofNullable(nearestSoil);
+        }
     }
 
     /**
@@ -167,5 +217,92 @@ public final class CropPatch {
     /** Se este bloco é terra arada — onde a lavoura cabe. */
     public static boolean isFarmland(BlockState state) {
         return state.isOf(Blocks.FARMLAND);
+    }
+
+    /** Terra arada com nada plantada em cima — 2026-09-05. */
+    public static boolean isEmptyPlot(ServerWorld world, BlockPos at) {
+        return isFarmland(world.getBlockState(at)) && world.getBlockState(at.up()).isAir();
+    }
+
+    /**
+     * Terra que dá para arar — 2026-09-05.
+     *
+     * <p>Três perguntas, e as três são do jogo: é da família da terra
+     * ({@code BlockTags.DIRT} cobre grama, terra e terra grossa sem
+     * nomeá-las), tem céu em cima para a muda crescer, e tem água na
+     * caixa que hidrata.
+     *
+     * <p><b>E não se ara o que é de alguém.</b> A Regra 3 vale aqui como
+     * vale na mina: o chão de uma casa da vila ou de uma que a colônia
+     * levantou não vira canteiro.
+     */
+    public static boolean isTillable(ServerWorld world, BlockPos at) {
+        BlockState state = world.getBlockState(at);
+
+        return state.isIn(BlockTags.DIRT)
+                && !isFarmland(state)
+                && world.getBlockState(at.up()).isAir()
+                && BlockProtection.mayBreak(world, at, state)
+                && hasWaterNearby(world, at);
+    }
+
+    /**
+     * A caixa que o {@code FarmlandBlock} usa para se dizer hidratado.
+     *
+     * <p>Nove por nove em volta, do nível do bloco ao de cima. Está
+     * escrita aqui porque a do jogo é privada — e é a única coisa desta
+     * classe copiada dele em vez de perguntada a ele.
+     */
+    private static boolean hasWaterNearby(ServerWorld world, BlockPos at) {
+        for (BlockPos around : BlockPos.iterate(at.add(-4, 0, -4), at.add(4, 1, 4))) {
+            if (world.getFluidState(around).isIn(FluidTags.WATER)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Ara este bloco — 2026-09-05.
+     *
+     * @return se virou terra arada agora
+     */
+    public static boolean till(ServerWorld world, BlockPos at) {
+        if (!isTillable(world, at)) {
+            return false;
+        }
+
+        world.setBlockState(at, Blocks.FARMLAND.getDefaultState(), Block.NOTIFY_ALL);
+
+        return true;
+    }
+
+    /**
+     * Planta esta semente no canteiro — 2026-09-05.
+     *
+     * <p>Quem sabe o que a semente vira é o item, e não uma tabela:
+     * {@code BlockItem} carrega o bloco que ele coloca, e se esse bloco é
+     * {@code CropBlock} então é semente. Trigo, cenoura, batata,
+     * beterraba e o que um datapack acrescentar entram sem serem citados
+     * — é a mesma escolha que o {@link #replant} já fazia.
+     *
+     * @return se a muda entrou
+     */
+    public static boolean sow(ServerWorld world, BlockPos plot, Item seed) {
+        if (!isEmptyPlot(world, plot) || !(seed instanceof BlockItem item)
+                || !(item.getBlock() instanceof CropBlock crop)) {
+
+            return false;
+        }
+
+        world.setBlockState(plot.up(), crop.getDefaultState(), Block.NOTIFY_ALL);
+
+        return true;
+    }
+
+    /** Se este item é semente de lavoura — a pergunta do {@link #sow}. */
+    public static boolean isSeed(Item item) {
+        return item instanceof BlockItem block && block.getBlock() instanceof CropBlock;
     }
 }

@@ -268,6 +268,55 @@ abaixo, com o porquê.
 
 ## ✅ Resolvido
 
+### 2026-09-05 — o fazendeiro passou a criar roça, e parou de ser ornamento
+
+**Decisão do autor, 2026-09-05:** ele vira fazendeiro de verdade.
+
+Ele só **colhia**, e por isso ficava parado: **86 ciclos ociosos de 81** na
+sessão de 09-04, sempre com `no ripe crop within 32 blocks of the village`.
+Aumentar o raio não resolveria nada — o que falta não é distância, é **lavoura**.
+A vila gera um punhado de canteiros; colhidos, não há nada maduro por muito
+tempo, e ele não sabia fazer mais nenhum.
+
+**Três trabalhos em vez de um**, e a ordem é a prioridade:
+
+| | |
+|---|---|
+| `HARVEST` | lavoura madura: colhe e replanta do que caiu — a Regra 7, como antes |
+| `SOW` | canteiro arado e vazio: planta semente **do baú** |
+| `TILL` | terra perto de água: ara, para o `SOW` da passagem seguinte |
+
+**O teto do campo não é uma constante inventada.** Semear e arar gastam
+semente, e semente só sobra quando a colheita sobra: a roça cresce no ritmo em
+que a lavoura paga por ela, e para de crescer quando o baú seca. Um número
+escrito à mão — *"a colônia quer 40 canteiros"* — envelheceria na primeira vila
+diferente.
+
+**Perto de água não é capricho:** terra arada sem água na caixa seca e volta a
+ser terra, e ele passaria a sessão arando o mesmo canteiro. A caixa é a do
+próprio `FarmlandBlock`, e é a única coisa do `CropPatch` copiada do jogo em vez
+de perguntada a ele — a do jogo é privada.
+
+**E a Regra 3 vale no campo como vale na mina:** o `isTillable` passa pelo
+`BlockProtection.mayBreak`, então o chão de uma casa da vila ou de uma que a
+colônia levantou não vira canteiro.
+
+**Uma varredura, três respostas.** As três perguntas percorrem as mesmas
+colunas, e fazê-las em passagens separadas triplicaria o custo **justamente no
+caso que virou comum** — a vila com tudo plantado e nada maduro. O
+`CropPatch.survey` responde as três de uma vez e para cedo quando acha lavoura
+madura, que ganha de tudo. O orçamento de colunas continua o de antes.
+
+**Verificação:** fase vermelha conferida — `theEmptyPlotIsSownFromTheChest` e
+`theSoilNextToWaterIsTilled` reprovam com o ramo desligado. Depois: **644
+unitários e 258 gametests, zero falhas**. **Não visto em jogo.**
+
+> **O `aFrozenMinerGivesUpLongBeforeTheStallGuard` piscou uma vez** em cinco
+> rodadas deste ciclo, e passou nas outras quatro — três delas seguidas. É a
+> instabilidade já registrada em 09-04 como *melhorada, não curada*, e não uma
+> regressão deste ciclo. Fica anotado porque piscar em silêncio é como ela
+> some.
+
 ### 2026-09-05 — o caminho que o jogador faz dentro da mina para de virar picareta
 
 **Pedido do autor:** *"corrigir a escada que o player constrói, ou qualquer

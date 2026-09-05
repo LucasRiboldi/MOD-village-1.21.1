@@ -16,8 +16,11 @@ import com.villagecolony.fabric.work.FarmerWork;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.CropBlock;
+import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.property.IntProperty;
 import net.minecraft.test.GameTest;
@@ -85,6 +88,125 @@ public class FarmerGameTest implements FabricGameTest {
         FarmerWork.run(context.getWorld(), colony);
 
         return villager;
+    }
+
+    /** Põe uma pilha no baú do fazendeiro. */
+    private static void putInChest(TestContext context, ItemStack stack) {
+        if (context.getWorld().getBlockEntity(context.getAbsolutePos(CHEST))
+                instanceof ChestBlockEntity inventory) {
+
+            inventory.setStack(0, stack);
+            inventory.markDirty();
+        }
+    }
+
+    /** Quantos deste item há no baú. */
+    private static int countInChest(TestContext context, net.minecraft.item.Item item) {
+        if (!(context.getWorld().getBlockEntity(context.getAbsolutePos(CHEST))
+                instanceof ChestBlockEntity inventory)) {
+
+            return 0;
+        }
+
+        int total = 0;
+
+        for (int slot = 0; slot < inventory.size(); slot++) {
+            if (inventory.getStack(slot).isOf(item)) {
+                total += inventory.getStack(slot).getCount();
+            }
+        }
+
+        return total;
+    }
+
+    /**
+     * <b>O canteiro vazio é semeado com a semente do baú</b> — decisão do
+     * autor, 2026-09-05: o fazendeiro passa a <i>criar roça</i>.
+     *
+     * <p>Ele só colhia, e por isso ficava parado: 86 ciclos ociosos de 81
+     * na sessão de 2026-09-04, com {@code no ripe crop within 32 blocks}.
+     * O que faltava não era distância — era lavoura.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sowing",
+            tickLimit = 200)
+    public void theEmptyPlotIsSownFromTheChest(TestContext context) {
+        context.setBlockState(FIELD.down(), Blocks.FARMLAND.getDefaultState());
+
+        farmer(context);
+
+        putInChest(context, new ItemStack(Items.WHEAT_SEEDS, 4));
+
+        context.runAtTick(120, () -> {
+            context.assertTrue(
+                    context.getBlockState(FIELD).getBlock() instanceof CropBlock,
+                    "o canteiro continuou vazio: " + context.getBlockState(FIELD).getBlock());
+
+            context.assertTrue(
+                    countInChest(context, Items.WHEAT_SEEDS) == 3,
+                    "a semente plantada não saiu do baú — a colônia duplicou o item");
+
+            FarmerWork.clearAll();
+
+            context.complete();
+        });
+    }
+
+    /**
+     * E sem semente ele não semeia — o teto do campo, sem constante
+     * inventada.
+     *
+     * <p><b>É este portão que impede a roça de crescer sem fim.</b>
+     * Semear e arar gastam semente, e semente só sobra quando a colheita
+     * sobra: o campo cresce no ritmo em que a lavoura paga por ele, e
+     * para quando o baú seca. Um número escrito à mão — "a colônia quer
+     * 40 canteiros" — envelheceria na primeira vila diferente.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sowing",
+            tickLimit = 200)
+    public void withoutSeedThePlotStaysEmpty(TestContext context) {
+        context.setBlockState(FIELD.down(), Blocks.FARMLAND.getDefaultState());
+
+        farmer(context);
+
+        context.runAtTick(120, () -> {
+            context.assertTrue(
+                    context.getBlockState(FIELD).isAir(),
+                    "ele plantou sem ter semente: " + context.getBlockState(FIELD).getBlock());
+
+            FarmerWork.clearAll();
+
+            context.complete();
+        });
+    }
+
+    /**
+     * <b>A terra ao lado da água vira canteiro</b> — 2026-09-05.
+     *
+     * <p>O degrau anterior ao de semear, e o que de fato faz a roça
+     * crescer. <b>Perto de água não é capricho:</b> terra arada sem água
+     * na caixa seca e volta a ser terra, e o fazendeiro passaria a sessão
+     * arando o mesmo canteiro.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sowing",
+            tickLimit = 200)
+    public void theSoilNextToWaterIsTilled(TestContext context) {
+        context.setBlockState(FIELD.down(), Blocks.DIRT.getDefaultState());
+        context.setBlockState(FIELD.down().east(), Blocks.WATER.getDefaultState());
+
+        farmer(context);
+
+        putInChest(context, new ItemStack(Items.WHEAT_SEEDS, 4));
+
+        context.runAtTick(120, () -> {
+            context.assertTrue(
+                    CropPatch.isFarmland(context.getBlockState(FIELD.down())),
+                    "a terra ao lado da água não foi arada: "
+                            + context.getBlockState(FIELD.down()).getBlock());
+
+            FarmerWork.clearAll();
+
+            context.complete();
+        });
     }
 
     /**

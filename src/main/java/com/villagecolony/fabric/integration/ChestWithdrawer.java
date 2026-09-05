@@ -13,6 +13,7 @@ import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Tira do baú o que o trabalhador vai consumir — Fase 9.
@@ -243,6 +244,44 @@ public final class ChestWithdrawer {
         }
 
         return 0;
+    }
+
+    /**
+     * A semente que houver neste baú, sem tirá-la — 2026-09-05.
+     *
+     * <p>Porta estreita, e de propósito: as públicas desta classe
+     * recusam o que não é {@link ResourceType}, e semente de trigo não é
+     * — a colônia conta o trigo, não a semente dele. Esta pergunta serve
+     * a um caso só, o do fazendeiro que vai semear, e é por isso que ela
+     * pergunta por <i>semente</i> em vez de por <i>item qualquer</i>: um
+     * parâmetro livre aqui seria o fabricante comendo a espada do
+     * jogador pela porta dos fundos.
+     */
+    public static Optional<Item> seedIn(ServerWorld world, ColonyPos chest) {
+        ChestBlockEntity inventory = chestAt(world, chest);
+
+        if (inventory == null) {
+            return Optional.empty();
+        }
+
+        for (int slot = 0; slot < inventory.size(); slot++) {
+            ItemStack stack = inventory.getStack(slot);
+
+            if (!stack.isEmpty() && CropPatch.isSeed(stack.getItem())) {
+                return Optional.of(stack.getItem());
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Tira uma semente do baú — o par de {@link #seedIn}.
+     *
+     * @return se ela saiu
+     */
+    public static boolean takeSeed(ServerWorld world, ColonyPos chest, Item seed) {
+        return CropPatch.isSeed(seed) && takeOne(world, chest, seed) == 1;
     }
 
     /**
