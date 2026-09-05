@@ -44,7 +44,9 @@ class MineShaftTest {
 
         int perStep = MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
 
-        for (int step = 1; step <= MineShaft.DESCENT; step++) {
+        // Um lance, e não a descida inteira: o caracol vira a cada
+        // HELIX_SIDE degraus, e daí em diante o x já não cresce.
+        for (int step = 1; step <= MineShaft.HELIX_SIDE; step++) {
             ColonyPos feet = mine.positionAt((step - 1) * perStep);
 
             assertEquals(ENTRY.y() - step + 1, feet.y(),
@@ -91,20 +93,20 @@ class MineShaftTest {
     void theVillagerWalksDownWithoutDiggingAgain() {
         MineShaft mine = shaft();
 
-        for (int flight = 0; flight < 2; flight++) {
-            int base = flight == 0
-                    ? 0
-                    : MineShaft.DESCENT * MineShaft.STAIR_HEADROOM
-                            + MineShaft.ROOM_LONG * MineShaft.ROOM_WIDE * MineShaft.HEADROOM;
+        int perStep = MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
+        int perFlight = MineShaft.HELIX_SIDE * perStep;
 
-            for (int step = 1; step < MineShaft.DESCENT; step++) {
+        for (int flight = 0; flight < MineShaft.HELIX_FLIGHTS; flight++) {
+            int base = flight * perFlight;
+
+            for (int step = 1; step < MineShaft.HELIX_SIDE; step++) {
                 Set<Integer> ahead = new HashSet<>();
 
                 for (int k = 0; k < MineShaft.STAIR_HEADROOM; k++) {
-                    ahead.add(mine.positionAt(base + step * MineShaft.STAIR_HEADROOM + k).y());
+                    ahead.add(mine.positionAt(base + step * perStep + k).y());
                 }
 
-                int feet = mine.positionAt(base + (step - 1) * MineShaft.STAIR_HEADROOM).y();
+                int feet = mine.positionAt(base + (step - 1) * perStep).y();
 
                 assertTrue(
                         ahead.contains(feet),
@@ -119,68 +121,86 @@ class MineShaftTest {
         }
     }
 
-    /** Dez degraus levam a dez blocos abaixo da entrada. */
+    /**
+     * <b>O caracol fecha a volta debaixo da boca</b> — decisão do autor,
+     * 2026-09-05: <i>"o caminho que o mineiro cava deve ser espiral
+     * circular"</i>.
+     *
+     * <p>É a afirmação inteira da forma nova, e o que ela vale está na
+     * caminhada do mineiro: a escada reta deixava o fundo do nível vinte
+     * blocos <b>de lado</b>, e essa distância entrava toda vez que ele
+     * subia para depositar. Quatro curvas e o x e o z voltam a ser os da
+     * entrada.
+     */
     @Test
-    void tenStepsReachTenBlocksDown() {
+    void theHelixClosesTheTurnUnderTheMouth() {
+        MineShaft mine = shaft();
+
+        int perStep = MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
+        int perFlight = MineShaft.HELIX_SIDE * perStep;
+
+        // O último degrau do último lance, na primeira pista: é ele que
+        // pousa na coluna da boca — a segunda pista sai um para o lado.
+        ColonyPos last = mine.positionAt(
+                (MineShaft.HELIX_FLIGHTS - 1) * perFlight + (MineShaft.HELIX_SIDE - 1) * perStep);
+
+        assertEquals(ENTRY.x(), last.x(), "o caracol não voltou para a coluna da boca em x");
+        assertEquals(ENTRY.z(), last.z(), "o caracol não voltou para a coluna da boca em z");
+    }
+
+    /** E a volta inteira desce o que um nível desce. */
+    @Test
+    void theWholeTurnDropsOneLevel() {
         int perStep = MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
 
-        ColonyPos last = shaft().positionAt(MineShaft.DESCENT * perStep - perStep);
+        ColonyPos last = shaft().positionAt(MineShaft.CARVED - perStep);
 
         assertEquals(ENTRY.y() - MineShaft.DESCENT + 1, last.y());
     }
 
     /**
-     * O segundo lance vira, e não continua reto.
+     * Cada lance vira à direita do anterior.
      *
-     * <p>Continuar reto daria um corredor inclinado de vinte blocos; a
-     * curva é o que mantém a mina compacta e a subida curta.
+     * <p>Continuar reto daria o corredor inclinado de vinte blocos que a
+     * forma velha tinha; a curva a cada cinco degraus é o que faz dela um
+     * caracol e não uma rampa.
      */
     @Test
-    void theSecondFlightTurns() {
+    void everyFlightTurnsFromTheOneBefore() {
         MineShaft mine = shaft();
 
-        ColonyPos first = mine.positionAt(0);
-        ColonyPos second = mine.positionAt(MineShaft.CARVED - 1);
+        int perFlight = MineShaft.HELIX_SIDE * MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
 
-        assertNotEquals(first.z(), second.z(), "o segundo lance não virou para lado nenhum");
-    }
+        Set<String> ways = new HashSet<>();
 
-    /** A sala é sete por quatro, e da altura que o autor pediu. */
-    @Test
-    void eachRoomIsSevenByFourAndAsTallAsTheHeadroom() {
-        MineShaft mine = shaft();
+        for (int flight = 0; flight < MineShaft.HELIX_FLIGHTS; flight++) {
+            ColonyPos first = mine.positionAt(flight * perFlight);
+            ColonyPos later = mine.positionAt(flight * perFlight + perFlight - 1);
 
-        Set<String> floor = new HashSet<>();
-        Set<Integer> heights = new HashSet<>();
-
-        int from = MineShaft.DESCENT * MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
-        int upTo = from + MineShaft.ROOM_LONG * MineShaft.ROOM_WIDE * MineShaft.HEADROOM;
-
-        for (int i = from; i < upTo; i++) {
-            ColonyPos at = mine.positionAt(i);
-
-            floor.add(at.x() + ":" + at.z());
-            heights.add(at.y());
+            ways.add(Integer.signum(later.x() - first.x())
+                    + ":" + Integer.signum(later.z() - first.z()));
         }
 
-        assertEquals(MineShaft.ROOM_LONG * MineShaft.ROOM_WIDE, floor.size(),
-                "a sala não tem sete por quatro de chão");
-
         assertEquals(
-                MineShaft.HEADROOM,
-                heights.size(),
-                "a sala não tem " + MineShaft.HEADROOM + " de altura");
+                MineShaft.HELIX_FLIGHTS,
+                ways.size(),
+                "dois lances do caracol desceram para o mesmo lado: " + ways);
     }
 
-    /** A segunda sala fica vinte blocos abaixo da entrada. */
+    /** A pegada do caracol cabe num quadrado do lado dele. */
     @Test
-    void theSecondRoomSitsTwentyBlocksDown() {
-        ColonyPos at = shaft().positionAt(MineShaft.CARVED - 1);
+    void theHelixFitsInItsOwnSquare() {
+        MineShaft mine = shaft();
 
-        assertTrue(
-                at.y() <= ENTRY.y() - 2 * MineShaft.DESCENT + MineShaft.HEADROOM,
-                "a segunda sala ficou em " + at.y() + ", e devia estar por volta de "
-                        + (ENTRY.y() - 2 * MineShaft.DESCENT));
+        int wide = MineShaft.HELIX_SIDE + MineShaft.STAIR_LANES;
+
+        for (int i = 0; i < MineShaft.CARVED; i++) {
+            ColonyPos at = mine.positionAt(i);
+
+            assertTrue(
+                    Math.abs(at.x() - ENTRY.x()) <= wide && Math.abs(at.z() - ENTRY.z()) <= wide,
+                    "o caracol saiu do quadrado em " + at);
+        }
     }
 
     /**
@@ -272,13 +292,13 @@ class MineShaftTest {
      * cada nível custa duas descidas: vinte blocos.
      */
     @Test
-    void theNextLevelIsTwoDescentsBelowThisOne() {
+    void theNextLevelIsOneDescentBelowThisOne() {
         MineShaft shaft = MineShaft.from(new ColonyPos(40, 64, 0), Side.EAST);
 
         MineShaft deeper = shaft.deepened();
 
         assertEquals(
-                shaft.positionAt(MineShaft.CARVED).y() - 2 * MineShaft.DESCENT,
+                shaft.positionAt(MineShaft.CARVED).y() - MineShaft.DESCENT,
                 deeper.positionAt(MineShaft.CARVED).y());
     }
 
@@ -302,8 +322,10 @@ class MineShaftTest {
      */
     @Test
     void aMineAtTheBottomMayNotDeepen() {
+        // Um DESCENT é o nível inteiro desde que a descida virou caracol:
+        // eram dois lances de dez, agora são quatro de cinco.
         MineShaft deep = MineShaft.from(
-                new ColonyPos(40, MineShaft.DEEPEST + 2 * MineShaft.DESCENT, 0), Side.EAST);
+                new ColonyPos(40, MineShaft.DEEPEST + MineShaft.DESCENT, 0), Side.EAST);
 
         assertFalse(deep.mayDeepen());
     }

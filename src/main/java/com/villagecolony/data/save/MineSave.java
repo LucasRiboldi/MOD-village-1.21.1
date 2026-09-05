@@ -69,8 +69,13 @@ final class MineSave {
      *
      * <p>Um, e nao zero, para o save anterior a esta chave — onde
      * {@code getInt} devolve zero — cair no ramo do recomeco.
+     *
+     * <p><b>Quatro desde 2026-09-05</b>, quando a descida virou caracol:
+     * quatro lances de cinco girando, em vez de dois lances retos de dez
+     * com uma sala em cada patamar. A ordem mudou do indice zero em
+     * diante, e um cursor antigo apontaria para dentro da rocha.
      */
-    private static final int SHAPE_VERSION = 3;
+    private static final int SHAPE_VERSION = 4;
 
     private MineSave() {
     }

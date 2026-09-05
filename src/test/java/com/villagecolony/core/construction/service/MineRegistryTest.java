@@ -495,7 +495,7 @@ class MineRegistryTest {
         assertTrue(mine.deepenIfEveryArmIsDone(), "os quatro ramais fecharam e ela não desceu");
 
         assertEquals(
-                before - 2 * MineShaft.DESCENT,
+                before - MineShaft.DESCENT,
                 mine.shaft().positionAt(MineShaft.CARVED).y());
 
         assertEquals(0, mine.arm(0).cut());
@@ -513,7 +513,10 @@ class MineRegistryTest {
         Mine mine = Mine.open(
                 UUID.randomUUID(),
                 MineShaft.from(
-                        new ColonyPos(40, MineShaft.DEEPEST + 2 * MineShaft.DESCENT, 0),
+                        // Um DESCENT é o nível inteiro desde o caracol de
+                        // 2026-09-05: quatro lances de cinco, e não dois
+                        // lances de dez.
+                        new ColonyPos(40, MineShaft.DEEPEST + MineShaft.DESCENT, 0),
                         Side.EAST));
 
         int before = mine.shaft().positionAt(MineShaft.CARVED).y();

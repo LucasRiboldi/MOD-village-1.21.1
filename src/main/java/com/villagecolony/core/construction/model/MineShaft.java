@@ -44,14 +44,36 @@ import java.util.Objects;
  */
 public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
 
-    /** Blocos por lance de escada. Dois lances até o fundo. */
-    public static final int DESCENT = 10;
+    /**
+     * Quantos degraus cada lance do caracol dá antes de virar — decisão
+     * do autor, 2026-09-05: <i>"o caminho que o mineiro cava deve ser
+     * espiral circular"</i>.
+     *
+     * <p><b>A descida virou um caracol.</b> Eram dois lances retos de dez
+     * com uma sala em cada patamar; agora são quatro lances de cinco,
+     * cada um virando à direita do anterior. Quatro curvas fecham a
+     * volta, e a escada <b>volta à coluna da boca</b> vinte blocos
+     * abaixo — que é a mesma profundidade de nível de antes, no lugar de
+     * um rastro de vinte blocos de comprimento.
+     *
+     * <p><b>O que se ganha é alcance.</b> A boca ficava a vinte blocos
+     * horizontais do fundo do nível, e essa distância entrava inteira na
+     * caminhada do mineiro toda vez que ele voltava para depositar —
+     * era ela que punha a frente a setenta blocos em 2026-09-04. Um
+     * caracol de cinco por cinco não tem rastro: o fundo fica <b>debaixo
+     * da boca</b>.
+     *
+     * <p>E ele resolve de graça o que a escada reta pedia por escrito: um
+     * degrau de caracol tem parede dos dois lados o tempo todo, então
+     * nunca há o vão de onde o aldeão não alcança nada.
+     */
+    public static final int HELIX_SIDE = 5;
 
-    /** O comprimento da sala, no sentido em que se descia. */
-    public static final int ROOM_LONG = 7;
+    /** Quantos lances o caracol dá por nível — quatro é a volta inteira. */
+    public static final int HELIX_FLIGHTS = 4;
 
-    /** A largura da sala, para o lado. */
-    public static final int ROOM_WIDE = 4;
+    /** Quanto o caracol desce por nível. Vinte, como os dois lances de antes. */
+    public static final int DESCENT = HELIX_SIDE * HELIX_FLIGHTS;
 
     /**
      * Quanto a galeria e as salas abrem de altura — três desde
@@ -114,21 +136,13 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
      */
     public static final int STAIR_LANES = 2;
 
-    /** Quantas posições um lance de escada pede. */
-    private static final int STAIR_BLOCKS = DESCENT * STAIR_HEADROOM * STAIR_LANES;
-
-    /** Quantas posições uma sala pede. */
-    private static final int ROOM_BLOCKS = ROOM_LONG * ROOM_WIDE * HEADROOM;
-
-    /** Onde cada trecho começa, na ordem em que se cava. */
-    private static final int ROOM_ONE = STAIR_BLOCKS;
-
-    private static final int STAIR_TWO = ROOM_ONE + ROOM_BLOCKS;
-
-    private static final int ROOM_TWO = STAIR_TWO + STAIR_BLOCKS;
+    /** Quantas posições um lance do caracol pede. */
+    private static final int FLIGHT_BLOCKS = HELIX_SIDE * STAIR_HEADROOM * STAIR_LANES;
 
     /** A partir daqui é galeria, e ela não acaba. */
-    public static final int CARVED = ROOM_TWO + ROOM_BLOCKS;
+    public static final int CARVED = FLIGHT_BLOCKS * HELIX_FLIGHTS;
+
+
 
     public MineShaft {
         Objects.requireNonNull(entry, "entry");
@@ -186,12 +200,12 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
      * blocos.
      */
     public MineShaft deepened() {
-        return new MineShaft(landingTwo(), descent, gallery);
+        return new MineShaft(levelFloor(), descent, gallery);
     }
 
     /** Se ainda há nível abaixo deste, sem passar do {@link #DEEPEST}. */
     public boolean mayDeepen() {
-        return deepened().landingTwo().y() >= DEEPEST;
+        return deepened().levelFloor().y() >= DEEPEST;
     }
 
     /**
@@ -202,23 +216,76 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
      * paciência do jogador ou o fim do mundo.
      */
     public ColonyPos positionAt(int i) {
-        if (i < ROOM_ONE) {
-            return stair(entry, descent, i);
-        }
-
-        if (i < STAIR_TWO) {
-            return room(landingOne(), descent, i - ROOM_ONE);
-        }
-
-        if (i < ROOM_TWO) {
-            return stair(cornerOne(), descent.clockwise(), i - STAIR_TWO);
-        }
-
         if (i < CARVED) {
-            return room(landingTwo(), descent.clockwise(), i - ROOM_TWO);
+            return helix(i);
         }
 
         return tunnel(i - CARVED);
+    }
+
+    /**
+     * Um degrau do caracol — 2026-09-05.
+     *
+     * <p>Quatro lances por volta, cada um virando à direita do anterior,
+     * e cada um usando o mesmo degrau de sempre: duas pistas, três de
+     * altura, um bloco adiante e um abaixo. A curva é a única coisa nova.
+     */
+    private ColonyPos helix(int i) {
+        int flight = i / FLIGHT_BLOCKS;
+
+        return stair(cornerOf(flight), facingOn(flight), i % FLIGHT_BLOCKS);
+    }
+
+    /**
+     * De onde parte o lance de número {@code flight}.
+     *
+     * <p><b>Fórmula, e não soma do caminho.</b> O
+     * {@code MinerReach.legTowards} percorre até duas mil posições todo
+     * tique, e uma ordem que precisasse ser acumulada custaria isso ao
+     * quadrado — é a mesma razão que já mantinha a galeria periódica.
+     *
+     * <p>E ela fecha porque o caracol é periódico em quatro: os dois
+     * primeiros lances afastam, os dois seguintes trazem de volta, e ao
+     * fim da volta o x e o z são os da boca outra vez. Só o y desce.
+     */
+    private ColonyPos cornerOf(int flight) {
+        Side first = descent;
+        Side second = descent.clockwise();
+
+        int dx = 0;
+        int dz = 0;
+
+        // P[0]=nada, P[1]=primeiro, P[2]=primeiro+segundo, P[3]=segundo.
+        if (flight % HELIX_FLIGHTS >= 1) {
+            dx += first.offsetX();
+            dz += first.offsetZ();
+        }
+
+        if (flight % HELIX_FLIGHTS >= 2) {
+            dx += second.offsetX();
+            dz += second.offsetZ();
+        }
+
+        if (flight % HELIX_FLIGHTS == 3) {
+            dx -= first.offsetX();
+            dz -= first.offsetZ();
+        }
+
+        return new ColonyPos(
+                entry.x() + dx * HELIX_SIDE,
+                entry.y() - flight * HELIX_SIDE,
+                entry.z() + dz * HELIX_SIDE);
+    }
+
+    /** Para que lado o lance de número {@code flight} desce. */
+    private Side facingOn(int flight) {
+        Side towards = descent;
+
+        for (int turn = 0; turn < flight % HELIX_FLIGHTS; turn++) {
+            towards = towards.clockwise();
+        }
+
+        return towards;
     }
 
     /**
@@ -239,7 +306,13 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
         int lane = within / STAIR_HEADROOM;
         int layer = within % STAIR_HEADROOM;
 
-        Side sideways = towards.clockwise();
+        // <b>Para a esquerda, e é o caracol que manda</b> — 2026-09-05. O
+        // lance seguinte vira à direita, então uma segunda pista à
+        // direita cairia dentro dele: a última posição de um lance e a
+        // primeira do outro seriam a mesma coluna, e o mineiro bateria a
+        // picareta em bloco já aberto duas vezes por curva. À esquerda
+        // ela sai por trás da curva, onde ninguém mais cava.
+        Side sideways = towards.clockwise().opposite();
 
         return new ColonyPos(
                 top.x() + towards.offsetX() * step + sideways.offsetX() * lane,
@@ -247,63 +320,18 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
                 top.z() + towards.offsetZ() * step + sideways.offsetZ() * lane);
     }
 
-    /** Onde o primeiro lance para: dez blocos abaixo da entrada. */
-    private ColonyPos landingOne() {
-        return new ColonyPos(
-                entry.x() + descent.offsetX() * DESCENT,
-                entry.y() - DESCENT,
-                entry.z() + descent.offsetZ() * DESCENT);
-    }
-
     /**
-     * O canto da primeira sala de onde o segundo lance parte.
+     * O chão do nível: debaixo da boca, {@link #DESCENT} blocos abaixo.
      *
-     * <p><b>O canto, e não a ponta.</b> Partir da ponta punha os
-     * primeiros degraus dentro da largura da sala — o teste da forma
-     * pegou isso, e a sobreposição custaria ao aldeão bater a picareta
-     * no ar oito vezes.
+     * <p><b>Debaixo da boca, e é o ponto do caracol.</b> A escada reta
+     * deixava o fundo vinte blocos <b>de lado</b>, e essa distância
+     * entrava na caminhada do mineiro toda vez que ele subia para
+     * depositar. Quatro curvas fecham a volta e o x e o z voltam a ser os
+     * da entrada — a galeria do nível nasce embaixo de quem a mandou
+     * cavar.
      */
-    private ColonyPos cornerOne() {
-        Side sideways = descent.clockwise();
-
-        ColonyPos floor = landingOne();
-
-        return new ColonyPos(
-                floor.x() + descent.offsetX() * ROOM_LONG + sideways.offsetX() * (ROOM_WIDE - 1),
-                floor.y(),
-                floor.z() + descent.offsetZ() * ROOM_LONG + sideways.offsetZ() * (ROOM_WIDE - 1));
-    }
-
-    /** Onde o segundo lance para: vinte blocos abaixo da entrada. */
-    private ColonyPos landingTwo() {
-        Side towards = descent.clockwise();
-
-        ColonyPos from = cornerOne();
-
-        return new ColonyPos(
-                from.x() + towards.offsetX() * DESCENT,
-                from.y() - DESCENT,
-                from.z() + towards.offsetZ() * DESCENT);
-    }
-
-    /**
-     * Uma posição da sala: sete de fundo, quatro de largura, duas de alto.
-     *
-     * <p><b>Começa um bloco adiante do patamar</b>, e não sobre ele. O
-     * último degrau abre os blocos que seriam o canto da sala, e cavá-los
-     * de novo seria o aldeão batendo a picareta no ar.
-     */
-    private static ColonyPos room(ColonyPos floor, Side towards, int i) {
-        int high = i % HEADROOM;
-        int wide = i / HEADROOM % ROOM_WIDE;
-        int deep = i / (HEADROOM * ROOM_WIDE) + 1;
-
-        Side sideways = towards.clockwise();
-
-        return new ColonyPos(
-                floor.x() + towards.offsetX() * deep + sideways.offsetX() * wide,
-                floor.y() + 1 + high,
-                floor.z() + towards.offsetZ() * deep + sideways.offsetZ() * wide);
+    private ColonyPos levelFloor() {
+        return cornerOf(HELIX_FLIGHTS);
     }
 
     /**
@@ -432,21 +460,20 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
      * qual das duas alturas.
      */
     private ColonyPos at(int step, int lane, int high) {
-        Side towards = descent.clockwise();
-
-        ColonyPos floor = landingTwo();
-
-        ColonyPos from = new ColonyPos(
-                floor.x() + towards.offsetX() * ROOM_LONG,
-                floor.y(),
-                floor.z() + towards.offsetZ() * ROOM_LONG);
+        ColonyPos floor = levelFloor();
 
         Side sideways = gallery.clockwise();
 
+        // <b>A galeria nasce no chão do caracol</b>, e não a alguns
+        // blocos dele — 2026-09-05. A sala de sete por quatro fazia a
+        // ligação na forma velha; sem ela, começar longe deixaria o
+        // corredor solto dentro da rocha, sem tocar a escada por lugar
+        // nenhum. As primeiras colunas atravessam a pegada do caracol, e
+        // as que já estiverem abertas o nextCut pula de graça.
         return new ColonyPos(
-                from.x() + gallery.offsetX() * step + sideways.offsetX() * lane,
-                from.y() + 1 + high,
-                from.z() + gallery.offsetZ() * step + sideways.offsetZ() * lane);
+                floor.x() + gallery.offsetX() * step + sideways.offsetX() * lane,
+                floor.y() + 1 + high,
+                floor.z() + gallery.offsetZ() * step + sideways.offsetZ() * lane);
     }
 
     /**

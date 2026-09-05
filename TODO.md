@@ -268,6 +268,52 @@ abaixo, com o porquê.
 
 ## ✅ Resolvido
 
+### 2026-09-05 — a descida da mina virou caracol
+
+**Pedido do autor:** *"o caminho que o mineiro cava deve ser espiral circular"*.
+
+Eram **dois lances retos de dez** com uma sala 7×4 em cada patamar. Agora são
+**quatro lances de cinco**, cada um virando à direita do anterior — e quatro
+curvas fecham a volta, então a escada **volta à coluna da boca** vinte blocos
+abaixo. Mesma profundidade de nível; nenhum rastro.
+
+**O que se ganha é alcance, e ele está medido no log antigo.** A boca ficava a
+vinte blocos horizontais do fundo do nível, e essa distância entrava inteira na
+caminhada toda vez que o mineiro subia para depositar — foi ela que pôs a frente
+a **70,7 blocos** em 2026-09-04, `out of reach`. Um caracol de cinco por cinco
+não tem rastro: o fundo fica **debaixo da boca**, e a galeria do nível nasce ali.
+
+**Duas coisas quebraram e foram consertadas na forma, não no teste:**
+
+- **A segunda pista passou a sair para a esquerda.** À direita ela caía dentro do
+  lance seguinte — a última posição de um lance e a primeira do outro eram a
+  mesma coluna, e o `theCarvedPartNeverDigsTheSameBlockTwice` pegou: duas
+  picaretadas em bloco já aberto por curva.
+- **A galeria nasce no chão do caracol**, e não a sete blocos dele. A sala fazia
+  essa ligação na forma velha; sem ela, o corredor ficaria solto dentro da rocha
+  sem tocar a escada em lugar nenhum. O `everyPocketBlockTouchesSomethingAlreadyOpen`
+  pegou esse.
+
+**`SHAPE_VERSION` foi a 4.** A ordem mudou do índice zero em diante, e um cursor
+antigo apontaria para dentro da rocha. Mina de save antigo recomeça a forma.
+
+**E uma lição de método pela terceira vez.** O `MinerLegTest` afirmava
+`new BlockPos(733, 61, 895)`, e o `733` era a coluna da segunda pista: quando o
+caracol a virou de lado o teste reprovou sem que nada do que ele afirma tivesse
+mudado. Reescrito **por construção** — o degrau 3 e o chão da escada.
+
+**A outra metade do pedido — *"sempre que achar um veio de minério de prioridade
+focar nele"* — já existia**, e ficou conferida: `OreVein.priorityOf` ordena por
+uso, `beside` escolhe o melhor vizinho, e `followingTheVein` roda **antes** do
+túnel a cada passagem, então o veio manda enquanto durar. Entrou em 09-03 e
+09-04, com as baterias `mine_vein` e `ore_rarity`.
+
+**Verificação:** **644 unitários e 258 gametests, zero falhas**. **Não visto em
+jogo.**
+
+**Fica aberto:** a **galeria do nível ainda é um braço reto** com bolsões, e não
+uma espiral que se abre. É o segundo pedaço da mesma decisão.
+
 ### 2026-09-05 — o fazendeiro passou a criar roça, e parou de ser ornamento
 
 **Decisão do autor, 2026-09-05:** ele vira fazendeiro de verdade.
