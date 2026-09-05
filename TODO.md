@@ -1,6 +1,12 @@
 # TODO
 
-**Atualizado:** 2026-09-05. **O ciclo de hoje** saiu inteiro da sessão de
+**Atualizado:** 2026-09-05. **Antes de qualquer coisa:** o jar que o autor
+joga em `.minecraft\mods` envelhece calado — copiar com o jogo aberto falha sem
+erro. Na sessão das 08:29 ele estava **onze commits atrás**, e três das quatro
+queixas eram de código já removido. Conferir o md5 contra `downloads/` é o
+primeiro passo de todo relato de jogo.
+
+**O ciclo da manhã** saiu inteiro da sessão de
 jogo de 2026-09-04 às 22:37: seis queixas do autor, seis causas medidas no
 log — a mão emprestada trocando lenhador e mineiro de ofício, três defeitos
 compostos na caminhada do mineiro, a meta de tábua sem reserva de tora, e a
@@ -254,6 +260,40 @@ abaixo, com o porquê.
 ---
 
 ## ✅ Resolvido
+
+### 2026-09-05 — a viga descascada sai da madeira que a colônia tem
+
+**Sessão de jogo de 2026-09-05, 08:29–09:20**, e a primeira coisa que ela
+ensinou não é sobre o mod: **o jar em `.minecraft\mods` era de 09-03 01:38**,
+onze commits atrás. Três das quatro queixas do autor eram de código que já não
+existe — a mão emprestada aparece **114 vezes** naquele log, e ela saiu de manhã.
+O `ToolUpgrade` que ele diz não funcionar nem existia no jar que ele rodou.
+Conferir o md5 de `mods` contra `downloads` passou a ser o primeiro passo de
+qualquer relato de jogo.
+
+**A quarta queixa é real e é de hoje** — *"na construção da casa não está sendo
+utilizado tronco e está ficando vazio"*. A barreira riscou **17
+`stripped_oak_log` numa sessão que assentou 11 peças no total**, e o log não tem
+uma única linha de `stripped a … into …`: a descascagem nunca aconteceu.
+
+A causa é a mesma incompatibilidade de espécie do teto, num caminho que não
+passava pelo `MaterialChoice`. A colônia tinha **295 toras de cerejeira e quatro
+de carvalho**, e `ManufacturerWork.strip` procurava `oak_log` pelo nome:
+
+```java
+ResourceId bark = new ResourceId(wanted.namespace(),
+        wanted.path().substring("stripped_".length()));   // stripped_oak_log → oak_log
+```
+
+Agora ele percorre a ordem do `MaterialChoice` — carvalho primeiro, cerejeira
+quando não há carvalho —, e a família das descascadas entrou lá pela convenção
+de nome `stripped_<madeira>_log`, e **não** por `#minecraft:logs`: aquela tag
+mistura tora com casca e madeira de seis faces, e aceitá-la poria uma tora com
+casca no lugar de uma viga pelada.
+
+**Verificação:** 638 unitários e 245 gametests, zero falhas; `stripped a
+cherry_log into stripped_cherry_log` seis vezes na bateria. Fase vermelha
+conferida — sem a correção, 2 casos caem.
 
 ### 2026-09-05 — o lenhador saiu da mina, e o mineiro voltou a cavar
 

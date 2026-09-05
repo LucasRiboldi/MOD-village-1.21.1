@@ -156,6 +156,10 @@ public final class MaterialChoice {
      * que peça isso.
      */
     private static List<Item> sameShapeInAnotherWood(Item exact, List<Item> order) {
+        if (isStrippedLog(exact)) {
+            return strippedLogInAnotherWood(order);
+        }
+
         for (TagKey<Item> shape : WOODEN_SHAPES) {
             if (!Registries.ITEM.getEntry(exact).isIn(shape)) {
                 continue;
@@ -173,6 +177,45 @@ public final class MaterialChoice {
         }
 
         return List.copyOf(order);
+    }
+
+    /**
+     * A viga descascada, na madeira que a colônia tiver — 2026-09-05.
+     *
+     * <p><b>A queixa do autor:</b> <i>"na construção da casa não está
+     * sendo utilizado tronco e está ficando vazio"</i>. A casa de
+     * planície tem dezesseis {@code stripped_oak_log} nos cantos, e a
+     * barreira de teste riscou <b>dezessete</b> numa sessão que assentou
+     * onze peças no total — mais buraco que parede.
+     *
+     * <p>É a mesma incompatibilidade de espécie do teto, num caminho que
+     * não passava por aqui: a colônia tinha <b>295 toras de cerejeira e
+     * quatro de carvalho</b>, e {@code ManufacturerWork.strip} procurava
+     * {@code oak_log} pelo nome. Nem uma descascagem aconteceu na sessão
+     * inteira — não há uma linha de <i>stripped a … into …</i> no log.
+     *
+     * <p><b>Por convenção de nome, e não por tag.</b> O jogo não publica
+     * uma tag de item só das descascadas: {@code #minecraft:logs} mistura
+     * tora com casca, madeira de seis faces e descascada, e aceitar
+     * aquela lista poria uma tora com casca no lugar de uma viga pelada —
+     * defeito visível. A convenção {@code stripped_<madeira>_log} é a
+     * mesma de que o {@code strip} já vive, e vale para as nove madeiras.
+     */
+    private static List<Item> strippedLogInAnotherWood(List<Item> order) {
+        Registries.ITEM.getEntryList(ItemTags.LOGS).ifPresent(logs -> logs.forEach(entry -> {
+            if (isStrippedLog(entry.value()) && !order.contains(entry.value())) {
+                order.add(entry.value());
+            }
+        }));
+
+        return List.copyOf(order);
+    }
+
+    /** Se este item é uma tora descascada, pela convenção de nome. */
+    private static boolean isStrippedLog(Item item) {
+        String path = MinecraftTypeAdapter.toResourceId(Block.getBlockFromItem(item)).path();
+
+        return path.startsWith("stripped_") && path.endsWith("_log");
     }
 
     /**

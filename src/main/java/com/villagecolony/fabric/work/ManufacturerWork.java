@@ -453,13 +453,51 @@ public final class ManufacturerWork {
             return false;
         }
 
+        Optional<Block> asked = MinecraftTypeAdapter.toBlock(wanted);
+
+        if (asked.isEmpty()) {
+            return false;
+        }
+
+        // <b>A espécie que a colônia tem, e não a que a planta escreveu</b>
+        // — 2026-09-05. Era {@code oak_log} pelo nome, e a queixa do autor
+        // foi <i>"na construção da casa não está sendo utilizado tronco e
+        // está ficando vazio"</i>: a sessão de 09-05 riscou dezessete
+        // {@code stripped_oak_log} tendo <b>295 toras de cerejeira</b> no
+        // baú, e não descascou uma única vez.
+        //
+        // A ordem é a do MaterialChoice, então a preferida continua sendo
+        // a da planta — o carvalho primeiro, e a cerejeira quando não há
+        // carvalho. É a mesma lista que o construtor vai consultar na
+        // hora de assentar, e as duas têm de concordar: descascar uma
+        // espécie que a parede recusasse seria gastar tora à toa.
+        for (Item naked : MaterialChoice.forBlock(asked.get())) {
+            if (stripOne(world, colony, naked, workerId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** Descasca a tora desta espécie, se ela estiver em algum baú. */
+    private static boolean stripOne(
+            ServerWorld world, Colony colony, Item naked, UUID workerId) {
+
+        ResourceId id = MinecraftTypeAdapter.toResourceId(Block.getBlockFromItem(naked));
+
+        String path = id.path();
+
+        if (!path.startsWith("stripped_")) {
+            return false;
+        }
+
         ResourceId bark = new ResourceId(
-                wanted.namespace(), wanted.path().substring("stripped_".length()));
+                id.namespace(), path.substring("stripped_".length()));
 
         Optional<Item> log = MinecraftTypeAdapter.toBlock(bark).map(Block::asItem);
-        Optional<Item> naked = MinecraftTypeAdapter.toBlock(wanted).map(Block::asItem);
 
-        if (log.isEmpty() || naked.isEmpty()) {
+        if (log.isEmpty()) {
             return false;
         }
 
@@ -469,8 +507,7 @@ public final class ManufacturerWork {
             return false;
         }
 
-        Optional<ColonyPos> room =
-                ColonyChests.firstWithRoomFor(world, chests, naked.get(), 1);
+        Optional<ColonyPos> room = ColonyChests.firstWithRoomFor(world, chests, naked, 1);
 
         if (room.isEmpty()) {
             // Não cabe em baú nenhum. Devolve o tronco: descascar sem
@@ -481,10 +518,10 @@ public final class ManufacturerWork {
             return false;
         }
 
-        ChestDepositor.deposit(world, room.get(), naked.get(), 1);
+        ChestDepositor.deposit(world, room.get(), naked, 1);
 
         VillageColonyMod.LOGGER.info(
-                "Manufacturer {} stripped a {} into {}", workerId, bark.path(), wanted.path());
+                "Manufacturer {} stripped a {} into {}", workerId, bark.path(), path);
 
         return true;
     }

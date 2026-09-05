@@ -2,6 +2,11 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.construction.model.ConstructionProject;
+import com.villagecolony.core.construction.model.ConstructionState;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskPriority;
@@ -16,6 +21,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
+import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.ColonySupply;
 import com.villagecolony.fabric.work.ManufacturerWork;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -29,6 +35,7 @@ import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -442,5 +449,101 @@ public class ManufacturerGameTest implements FabricGameTest {
         }
 
         context.complete();
+    }
+
+    /**
+     * <b>A viga descascada sai da madeira que a colônia tem</b> —
+     * 2026-09-05, e é a queixa do autor: <i>"na construção da casa não
+     * está sendo utilizado tronco e está ficando vazio"</i>.
+     *
+     * <p>A casa de planície tem dezesseis {@code stripped_oak_log} nos
+     * cantos. A sessão daquela manhã riscou <b>dezessete</b> peças por
+     * falta deles, tendo assentado onze no total — e não descascou uma
+     * única vez em cinquenta minutos: não há uma linha de
+     * <i>stripped a … into …</i> no log inteiro.
+     *
+     * <p>A colônia tinha <b>295 toras de cerejeira e quatro de
+     * carvalho</b>, e o {@code strip} procurava {@code oak_log} pelo
+     * nome. É a mesma incompatibilidade de espécie do teto, num caminho
+     * que não passava pelo {@code MaterialChoice}.
+     *
+     * <p>Rodado contra a correção desligada: o baú fica sem descascada
+     * nenhuma e as toras de cerejeira ficam intactas.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_strip",
+            tickLimit = 300)
+    public void theBeamIsStrippedFromTheWoodTheColonyHas(TestContext context) {
+        Fixture fixture = setUpStripping(context);
+
+        context.runAtTick(120, () -> {
+            try {
+                context.assertTrue(
+                        ColonyChests.countIn(
+                                context.getWorld(),
+                                List.of(fixture.chest),
+                                Items.STRIPPED_CHERRY_LOG) > 0,
+                        "a obra pedia viga descascada, o baú tinha 8 toras de cerejeira, "
+                                + "e nenhuma foi descascada");
+            } finally {
+                fixture.owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /** Colônia com tora de cerejeira e uma obra que pede viga de carvalho. */
+    private static Fixture setUpStripping(TestContext context) {
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+
+        ServerWorld world = context.getWorld();
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        ChestDepositor.deposit(world, chest, Items.CHERRY_LOG, 8);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MANUFACTURER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        // A obra fica longe do baú de propósito: quem tem de andar é o
+        // construtor, e aqui não há nenhum. O que se mede é o fabricante.
+        Blueprint plan = Blueprint.of(
+                ResourceId.vanilla("village/plains/houses/test_beam"),
+                List.of(new BlueprintBlock(
+                        new ColonyPos(0, 0, 0),
+                        MinecraftTypeAdapter.toResourceId(Blocks.STRIPPED_OAK_LOG))));
+
+        ConstructionProject project = ConstructionProject.plan(colony.id(), plan, chest);
+
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.CRAFT_MATERIAL,
+                TaskPriority.PRODUCTION,
+                ResourceType.OAK_PLANKS,
+                16);
+
+        task.reserveFor(villager.getUuid());
+
+        ManufacturerWork.run(world, colony);
+
+        return new Fixture(
+                colony,
+                task,
+                chest,
+                ColonyFixture.create().owning(colony).owning(villager.getUuid()));
     }
 }
