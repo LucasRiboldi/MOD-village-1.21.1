@@ -366,7 +366,7 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
      * mudaria o passo do ciclo, e o passo do ciclo é o que fecha a
      * fórmula.
      */
-    private static final int GALLERY_CYCLE = RUN_BLOCKS + POCKET_BLOCKS;
+    public static final int GALLERY_CYCLE = RUN_BLOCKS + POCKET_BLOCKS;
 
     /**
      * Quantas colunas a galeria avança antes de virar — decisão do
@@ -385,16 +385,26 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
      * cursor</b>, então a curva punha o aldeão à mesma distância, noutro
      * rumo.
      *
-     * <p>Vinte e quatro colunas são três trechos de {@link #RUN} com os
-     * bolsões deles. Somadas à sala e à descida, põem a frente mais
-     * distante a cerca de quarenta blocos da boca — dentro do que a perna
-     * do mineiro percorre num expediente.
+     * <p><b>Dezesseis desde 2026-09-05</b>, e eram vinte e quatro. O
+     * braço deixou de ser uma reta e virou uma espiral de dois anéis: a
+     * ponta mais distante já não é uma coluna a vinte e quatro blocos, é
+     * o <b>canto</b> do anel de fora, a dezesseis para um lado e
+     * dezesseis para o outro. Manter vinte e quatro poria esse canto a
+     * trinta e quatro blocos em linha reta do poço, que é a distância que
+     * a perna do mineiro não cumpre — o defeito de 09-04 pela porta nova.
+     *
+     * <p><b>E o alcance não piorou: melhorou.</b> A boca ficava vinte
+     * blocos horizontais do fundo do nível, e o caracol devolveu esses
+     * vinte — o poço fica debaixo dela. Dezesseis mais dezesseis a partir
+     * do poço são vinte e três em linha reta da boca, contra os quarenta
+     * e quatro de antes. E a espiral cobre <b>área</b> onde a reta cobria
+     * uma linha: trinta e duas colunas por braço, contra vinte e quatro.
      *
      * <p>Com {@link Mine#TURNS_PER_LEVEL} curvas, o nível vira um anel de
      * quatro braços em volta do poço, e só então a mina desce. É a forma
      * que o autor pediu: nem uma reta sem fim, nem sorteio — um perímetro.
      */
-    public static final int ARM = 24;
+    public static final int ARM = 16;
 
     /**
      * Se este índice da ordem já passou do fim do braço.
@@ -405,8 +415,17 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
      * tique, e uma pergunta que precisasse de raiz quadrada estaria nesse
      * laço.
      */
+    /** Quantos anéis a espiral abre antes de o nível acabar. */
+    public static final int RINGS = ARM / RUN;
+
+    /**
+     * Quantos trechos a espiral tem: dois por anel — o que sai e o que
+     * contorna.
+     */
+    private static final int LEGS = 2 * RINGS;
+
     public boolean beyondTheArm(int i) {
-        return i >= CARVED && (i - CARVED) / GALLERY_CYCLE >= ARM / RUN;
+        return i >= CARVED && (i - CARVED) / GALLERY_CYCLE >= LEGS;
     }
 
     /**
@@ -419,12 +438,22 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
      * <p>Parte do canto oposto da segunda sala para não recavá-la: a sala
      * já está aberta, e a galeria é o que vem depois dela.
      *
-     * <p><b>O corredor continua reto, e isso é de propósito.</b> Ele é o
-     * caminho de volta do aldeão, e é dele que o {@code legTowards}
-     * depende — <i>a ordem de cavar É um corredor contínuo a partir da
-     * boca</i>. Fazer a espinha serpentear poria dois blocos em diagonal,
-     * e de diagonal a navegação não passa sem que os cantos estejam
-     * abertos: é o E34 pela porta de trás.
+     * <p><b>E ela espirala desde 2026-09-05</b> — decisão do autor:
+     * <i>"o caminho que o mineiro cava deve ser espiral circular"</i>.
+     * Dois trechos por anel — um sai do poço, o seguinte contorna —, e o
+     * braço passou de uma reta de vinte e quatro colunas para um quadrado
+     * que se abre em {@link #RINGS} anéis. Cobre <b>área</b> onde a reta
+     * cobria uma linha, e a parede exposta, que é onde o minério aparece,
+     * cresce junto.
+     *
+     * <p><b>A espinha continua andando um bloco por passo, inclusive na
+     * curva.</b> Ela é o caminho de volta do aldeão, e é dela que o
+     * {@code legTowards} depende — <i>a ordem de cavar É um corredor
+     * contínuo a partir da boca</i>. Uma curva que pulasse para a
+     * diagonal seria o E34 pela porta de trás: de diagonal a navegação
+     * não passa sem que os cantos estejam abertos. Os trechos se
+     * encontram em ângulo reto, e o teste da espinha mede isso anel a
+     * anel.
      *
      * <p><b>O bolsão fica pendurado ao lado dela.</b> Cada bloco dele
      * encosta no corredor ou no bloco anterior do próprio bolsão, então a
@@ -439,20 +468,41 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
         int cycle = i / GALLERY_CYCLE;
         int within = i % GALLERY_CYCLE;
 
-        int base = cycle * RUN;
+        // Dois trechos por anel: o que sai do poço e o que contorna.
+        int ring = cycle / 2;
+        boolean around = cycle % 2 == 1;
+
+        int corner = ring * RUN;
 
         if (within < RUN_BLOCKS) {
-            return at(base + within / HEADROOM + 1, 0, within % HEADROOM);
+            int step = within / HEADROOM + 1;
+            int high = within % HEADROOM;
+
+            return around
+                    ? at(corner + RUN, corner + step, high)
+                    : at(corner + step, corner, high);
         }
 
         int j = within - RUN_BLOCKS;
 
-        int deep = j / (POCKET_LONG * HEADROOM) + 1;
+        int deep = pocketSide(cycle) * (j / (POCKET_LONG * HEADROOM) + 1);
         int rest = j % (POCKET_LONG * HEADROOM);
 
-        // As últimas colunas do trecho, e não as primeiras: o bolsão se
-        // abre quando o corredor já passou por ele.
-        return at(base + RUN - rest / HEADROOM, pocketSide(cycle) * deep, rest % HEADROOM);
+        // <b>No meio do trecho, e não na ponta</b> — 2026-09-05. Eram as
+        // últimas colunas, e com a espiral a ponta de um trecho é a
+        // <b>curva</b> para o seguinte: o bolsão caía em cima do corredor
+        // que vinha depois dele, dos dois lados. No meio nenhum dos dois
+        // sinais alcança curva nenhuma, e o {@link #pocketSide} continua
+        // podendo sortear o lado.
+        //
+        // E ele pende <b>perpendicular ao trecho</b>, que no que contorna
+        // é o eixo que sai — senão cairia sobre o próprio corredor.
+        int along = corner + RUN / 2 + rest / HEADROOM;
+        int high = rest % HEADROOM;
+
+        return around
+                ? at(corner + RUN + deep, along, high)
+                : at(along, corner + deep, high);
     }
 
     /**

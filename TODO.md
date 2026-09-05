@@ -268,6 +268,49 @@ abaixo, com o porquê.
 
 ## ✅ Resolvido
 
+### 2026-09-05 — e a galeria do nível virou espiral
+
+O segundo pedaço do mesmo pedido. O braço era uma **reta de vinte e quatro
+colunas** com bolsões pendurados; virou um **quadrado que se abre em dois
+anéis** — dois trechos por anel, um que sai do poço e um que contorna.
+
+Cobre **área** onde a reta cobria uma linha: **32 colunas por braço** contra 24,
+e parede exposta — que é onde `OreVein.beside` enxerga minério — cresce junto.
+
+**O braço caiu de 24 para 16, e isso é conserto e não corte.** A ponta da
+espiral não é mais uma coluna a 24 blocos: é o **canto** do anel de fora, a 16
+para um lado e 16 para o outro. Manter 24 poria esse canto a **34 blocos em
+linha reta** do poço — a distância que a perna do mineiro não cumpre, que é o
+defeito de 09-04 voltando pela porta nova.
+
+**E o alcance melhorou, não piorou.** O caracol devolveu os vinte blocos de
+rastro: 16+16 a partir do poço são **23 em linha reta da boca**, contra os
+**44** de antes.
+
+**Duas colisões que a espiral criou, e como cada uma foi fechada:**
+
+- **O bolsão saiu da ponta do trecho para o meio dele.** Na ponta, o trecho
+  seguinte é a **curva**, e o bolsão caía em cima do corredor que vinha depois —
+  dos dois sinais. No meio, nenhum dos dois alcança curva nenhuma, e o
+  `pocketSide` continua podendo sortear o lado.
+- **No trecho que contorna, o bolsão pende no eixo que sai**, e não no de lado —
+  senão cairia sobre o próprio corredor.
+
+**A espinha continua andando um bloco por passo, inclusive na curva**, e agora
+o teste mede isso **anel a anel** em vez de só no primeiro trecho. Era aí que o
+E34 moraria: de diagonal a navegação não passa sem que os cantos estejam
+abertos.
+
+**E um instrumento que só funcionava em reta foi trocado.** O `galleryCycle()`
+do teste **deduzia** o ciclo procurando a posição `RUN` colunas adiante na mesma
+pista — com a curva, ele rodava 400 posições e lançava exceção. O ciclo é
+propriedade da forma, e a forma passou a publicá-lo.
+
+**Verificação:** fase vermelha conferida — com a curva desligada caem
+`theGallerySpiralsInsteadOfRunningStraight`, o da espinha, o das repetições e o
+dos bolsões. Depois: **646 unitários e 258 gametests, zero falhas**. **Não visto
+em jogo.**
+
 ### 2026-09-05 — a descida da mina virou caracol
 
 **Pedido do autor:** *"o caminho que o mineiro cava deve ser espiral circular"*.

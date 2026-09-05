@@ -383,21 +383,75 @@ class MineShaftTest {
 
         ColonyPos previous = null;
 
-        for (int column = 0; column < MineShaft.RUN; column++) {
-            ColonyPos feet = mine.positionAt(
-                    MineShaft.CARVED + column * MineShaft.HEADROOM);
+        // <b>A espiral inteira, e não só o primeiro trecho</b> —
+        // 2026-09-05. Ela mede um bloco por passo <b>inclusive na
+        // curva</b>, e é aí que o E34 moraria: dois blocos em diagonal e
+        // a navegação não passa sem que os cantos estejam abertos.
+        for (int leg = 0; leg < 2 * MineShaft.RINGS; leg++) {
+            for (int column = 0; column < MineShaft.RUN; column++) {
+                ColonyPos feet = mine.positionAt(MineShaft.CARVED
+                        + leg * MineShaft.GALLERY_CYCLE + column * MineShaft.HEADROOM);
 
-            if (previous != null) {
-                int walked = Math.abs(feet.x() - previous.x())
-                        + Math.abs(feet.y() - previous.y())
-                        + Math.abs(feet.z() - previous.z());
+                if (previous != null) {
+                    int walked = Math.abs(feet.x() - previous.x())
+                            + Math.abs(feet.y() - previous.y())
+                            + Math.abs(feet.z() - previous.z());
 
-                assertEquals(1, walked,
-                        "a espinha do corredor pulou de " + previous + " para " + feet);
+                    assertEquals(1, walked,
+                            "a espinha do corredor pulou de " + previous + " para " + feet);
+                }
+
+                previous = feet;
             }
-
-            previous = feet;
         }
+    }
+
+    /**
+     * <b>E ela espirala em vez de sair reta</b> — decisão do autor,
+     * 2026-09-05: <i>"o caminho que o mineiro cava deve ser espiral
+     * circular"</i>.
+     *
+     * <p>Dois trechos por anel: um sai do poço, o seguinte contorna. O
+     * corredor era uma reta de vinte e quatro colunas com bolsões
+     * pendurados; agora é um quadrado que se abre, e cobre <b>área</b>
+     * onde a reta cobria uma linha.
+     */
+    @Test
+    void theGallerySpiralsInsteadOfRunningStraight() {
+        MineShaft mine = shaft();
+
+        Set<String> ways = new HashSet<>();
+
+        for (int leg = 0; leg < 2 * MineShaft.RINGS; leg++) {
+            int from = MineShaft.CARVED + leg * MineShaft.GALLERY_CYCLE;
+
+            ColonyPos first = mine.positionAt(from);
+            ColonyPos last = mine.positionAt(from + (MineShaft.RUN - 1) * MineShaft.HEADROOM);
+
+            ways.add(Integer.signum(last.x() - first.x())
+                    + ":" + Integer.signum(last.z() - first.z()));
+        }
+
+        assertTrue(ways.size() > 1, "a galeria saiu reta: todos os trechos no mesmo rumo");
+    }
+
+    /** E o canto de fora fica a um anel de distância do poço, nos dois eixos. */
+    @Test
+    void theSpiralOpensOneRingAtATime() {
+        MineShaft mine = shaft();
+
+        int last = MineShaft.CARVED
+                + (2 * MineShaft.RINGS - 1) * MineShaft.GALLERY_CYCLE
+                + (MineShaft.RUN - 1) * MineShaft.HEADROOM;
+
+        ColonyPos corner = mine.positionAt(last);
+
+        assertEquals(
+                MineShaft.RINGS * MineShaft.RUN,
+                Math.max(
+                        Math.abs(corner.x() - ENTRY.x()),
+                        Math.abs(corner.z() - ENTRY.z())),
+                "o anel de fora não chegou ao raio do braço");
     }
 
     /**
@@ -513,11 +567,12 @@ class MineShaftTest {
         assertFalse(shaft.beyondTheArm(MineShaft.CARVED - 1),
                 "o poço e as salas não são galeria, e não têm braço");
 
-        // Vinte e quatro colunas são três trechos de RUN=8 com os bolsões
-        // deles: dentro do último ciclo ainda cava, no seguinte não.
-        int lastCycle = MineShaft.ARM / MineShaft.RUN - 1;
-        int inside = MineShaft.CARVED + lastCycle * galleryCycle();
-        int outside = MineShaft.CARVED + (lastCycle + 1) * galleryCycle();
+        // <b>Dois trechos por anel</b> desde a espiral de 2026-09-05: o
+        // que sai do poço e o que contorna. Dentro do último ainda cava,
+        // no seguinte não.
+        int lastCycle = 2 * MineShaft.RINGS - 1;
+        int inside = MineShaft.CARVED + lastCycle * MineShaft.GALLERY_CYCLE;
+        int outside = MineShaft.CARVED + (lastCycle + 1) * MineShaft.GALLERY_CYCLE;
 
         assertFalse(shaft.beyondTheArm(inside),
                 "o último ciclo do braço foi cortado antes da hora");
@@ -537,36 +592,30 @@ class MineShaftTest {
     void theFarthestCutOfAnArmStaysWithinReach() {
         MineShaft shaft = MineShaft.from(ENTRY, Side.NORTH);
 
-        int last = MineShaft.CARVED
-                + (MineShaft.ARM / MineShaft.RUN) * galleryCycle() - 1;
+        int last = MineShaft.CARVED + 2 * MineShaft.RINGS * MineShaft.GALLERY_CYCLE - 1;
 
         ColonyPos far = shaft.positionAt(last);
 
         int flat = Math.abs(far.x() - ENTRY.x()) + Math.abs(far.z() - ENTRY.z());
 
-        assertTrue(flat <= 48,
-                "a ponta do braço ficou a " + flat + " blocos da boca, no plano");
+        // <b>Metade do que era, e mede a partir da boca</b> — 2026-09-05.
+        // O caracol pôs o poço debaixo da entrada, então os vinte blocos
+        // de rastro que a escada reta somava aqui sumiram; e o braço caiu
+        // a dezesseis porque a ponta da espiral é o canto do anel, e não
+        // uma coluna.
+        assertTrue(flat <= 2 * MineShaft.ARM + MineShaft.POCKET_WIDE,
+                "a ponta da espiral ficou a " + flat + " blocos da boca, no plano");
     }
 
-    /** O ciclo da galeria, deduzido da forma em vez de repetido aqui. */
-    private static int galleryCycle() {
-        MineShaft shaft = MineShaft.from(ENTRY, Side.NORTH);
-
-        ColonyPos first = shaft.positionAt(MineShaft.CARVED);
-
-        for (int i = MineShaft.CARVED + 1; i < MineShaft.CARVED + 400; i++) {
-            ColonyPos here = shaft.positionAt(i);
-
-            if (here.y() == first.y() && sameLane(first, here)
-                    && stepOf(shaft, i) == stepOf(shaft, MineShaft.CARVED) + MineShaft.RUN) {
-
-                return i - MineShaft.CARVED;
-            }
-        }
-
-        throw new IllegalStateException("não achei o ciclo da galeria");
-    }
-
+    /**
+     * <b>Perguntado à forma</b>, e era deduzido percorrendo-a — 2026-09-05.
+     *
+     * <p>A dedução procurava a posição {@code RUN} colunas adiante na
+     * mesma pista, e isso só existe num corredor reto: com a espiral o
+     * segundo trecho <b>vira</b>, e o laço rodava quatrocentas posições
+     * sem achar nada. O ciclo é propriedade da forma, e a forma que o
+     * publique.
+     */
     private static boolean sameLane(ColonyPos a, ColonyPos b) {
         return a.x() == b.x() || a.z() == b.z();
     }
