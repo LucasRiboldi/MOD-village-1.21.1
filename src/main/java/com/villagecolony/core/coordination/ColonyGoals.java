@@ -101,6 +101,28 @@ public final class ColonyGoals {
     public static final int FOOD_FLOOR = 64;
 
     /**
+     * Quanta comida a colônia quer <b>por cama</b> — 2026-09-05.
+     *
+     * <p><b>O piso fixo era um piso sem dreno</b>, e a sessão das 20:03
+     * mostrou o fim dessa história: a colônia tinha exatamente 64 —
+     * {@code WHEAT=26, CARROT=18, POTATO=17, BEETROOT=3} —, a meta estava
+     * batida, e o log dizia {@code no farmer work: no task open for it —
+     * 2 able to farm} a sessão inteira. <b>Nada neste mod consome
+     * comida</b>, então uma meta atingida fica atingida para sempre: o
+     * fazendeiro se aposentava no dia em que enchia a despensa.
+     *
+     * <p>É o mesmo defeito do baú do lenhador em 09-04, noutro lugar —
+     * uma conta que só sobe, e nada que a faça descer.
+     *
+     * <p>A cama é a medida porque é a que a colônia já tem: uma cama é um
+     * aldeão que mora ali, e a vila come todo dia. Oito por cama é uma
+     * pilha a cada oito moradores. Quando alguma coisa de fato consumir
+     * comida — Nível 6 —, isto vira reserva de verdade sem mudar de
+     * forma.
+     */
+    public static final int FOOD_PER_BED = 8;
+
+    /**
      * Quantas tábuas saem de um tronco.
      *
      * <p>Convenção do jogo, e não conta desta classe: é o que a receita
@@ -391,8 +413,12 @@ public final class ColonyGoals {
         // a colônia mantém para a casa seguinte.
         goals.put(stone, Math.max(stoneForWork, STONE_FLOOR));
 
-        // A despensa — 2026-08-27. Qualquer lavoura conta, pelo grupo.
-        goals.put(ResourceType.WHEAT, FOOD_FLOOR);
+        // A despensa — 2026-08-27, e por cama desde 2026-09-05. Qualquer
+        // lavoura conta, pelo grupo. O piso continua valendo para a
+        // colônia pequena, que tem poucas camas e come do mesmo jeito.
+        goals.put(
+                ResourceType.WHEAT,
+                Math.max(FOOD_FLOOR, colony.observedBeds() * FOOD_PER_BED));
 
         if (woolForBeds > 0) {
             goals.put(ResourceType.WHITE_WOOL, woolForBeds);

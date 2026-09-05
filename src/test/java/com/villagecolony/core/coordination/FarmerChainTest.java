@@ -105,6 +105,43 @@ class FarmerChainTest {
         assertEquals(ColonyGoals.FOOD_FLOOR, goal.get(ResourceType.WHEAT));
     }
 
+    /**
+     * <b>E a despensa cresce com a vila</b> — 2026-09-05, visto em jogo.
+     *
+     * <p>O piso era fixo em 64, e a sessão das 20:03 mostrou o que isso
+     * vira: a colônia tinha exatamente 64 — {@code WHEAT=26, CARROT=18,
+     * POTATO=17, BEETROOT=3} —, a meta estava batida, e o log repetiu
+     * {@code no farmer work: no task open for it — 2 able to farm} os
+     * quinze minutos inteiros, com dois fazendeiros de baú na mão.
+     *
+     * <p><b>Nada neste mod consome comida</b>, então meta atingida fica
+     * atingida para sempre: era um piso sem dreno, e o fazendeiro se
+     * aposentava no dia em que enchia a despensa.
+     */
+    @Test
+    void theLarderGrowsWithTheVillage() {
+        Colony big = colony();
+        big.observe(new ColonyPos(0, 64, 0), 17);
+
+        Map<ResourceType, Integer> goal = ColonyGoals.of(big, ResourceTally.empty(), 64);
+
+        assertEquals(
+                17 * ColonyGoals.FOOD_PER_BED,
+                goal.get(ResourceType.WHEAT),
+                "dezessete camas continuaram pedindo a despensa de uma vila vazia");
+    }
+
+    /** E a vila pequena continua com o piso: ela come do mesmo jeito. */
+    @Test
+    void aSmallVillageStillGetsTheFloor() {
+        Colony small = colony();
+        small.observe(new ColonyPos(0, 64, 0), 2);
+
+        assertEquals(
+                ColonyGoals.FOOD_FLOOR,
+                ColonyGoals.of(small, ResourceTally.empty(), 64).get(ResourceType.WHEAT));
+    }
+
     /** Alcançado o piso, a colônia para de pedir. */
     @Test
     void aFedColonyStopsAsking() {

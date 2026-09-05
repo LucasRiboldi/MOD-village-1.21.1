@@ -142,6 +142,54 @@ public class ManufacturerGameTest implements FabricGameTest {
     }
 
     /**
+     * <b>Baú sem lugar para a tábua não moe a tora</b> — 2026-09-05,
+     * visto em jogo.
+     *
+     * <p>A sessão das 20:03 encerrou com <b>118 avisos</b> de
+     * {@code crafted N planks that did not fit — chest is full} em quinze
+     * minutos: cento e dezoito toras retiradas, moídas e jogadas fora,
+     * com o estoque de tábua subindo cento e trinta e oito no mesmo
+     * período. Perdeu-se perto de metade da produção do fabricante.
+     *
+     * <p><b>A garantia estava escrita e era falsa.</b> O javadoc do
+     * {@code convertOne} dizia que <i>"o lugar aberto pela retirada é o
+     * lugar onde a peça cabe"</i> — e tirar uma tora de uma pilha de
+     * sessenta e quatro <b>não abre slot nenhum</b>, enquanto quatro
+     * tábuas precisam de um.
+     *
+     * <p>Vinte e seis slots de pedregulho e um de tora é exatamente esse
+     * baú: há tora de sobra e não há para onde ir.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_no_room",
+            tickLimit = 300)
+    public void aChestWithNoRoomForPlanksKeepsItsLogs(TestContext context) {
+        Fixture fixture = setUp(context, 64);
+
+        // Os vinte e seis slots que sobram, e nada que empilhe com tábua.
+        ChestDepositor.deposit(context.getWorld(), fixture.chest, Items.COBBLESTONE, 26 * 64);
+
+        context.runAtTick(90, () -> {
+            int planks = planksIn(context, fixture.chest);
+            int logs = logsIn(context, fixture.chest);
+
+            try {
+                context.assertTrue(
+                        planks == 0,
+                        "apareceram " + planks + " tábuas num baú sem slot livre");
+
+                context.assertTrue(
+                        logs == 64,
+                        "a colônia moeu tora sem ter onde pôr a tábua: sobraram " + logs
+                                + " de 64, e a diferença foi destruída");
+            } finally {
+                fixture.owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
      * Nada sai do baú antes de a peça ficar pronta.
      *
      * <p>É a regra que o lenhador não tem e esta profissão precisa: o

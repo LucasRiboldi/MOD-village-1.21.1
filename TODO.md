@@ -268,6 +268,71 @@ abaixo, com o porquê.
 
 ## ✅ Resolvido
 
+### 2026-09-05, 20:03 — a sessão que mediu o caracol, e os dois defeitos que ela achou
+
+**Quinze minutos, jar conferido por md5, zero exception do mod e zero WARN além
+de um.** Esse um valia a sessão inteira.
+
+#### O que a sessão PROVOU (visto em jogo, enfim)
+
+- **O caracol desce, e desce mais fundo que tudo que já se mediu aqui:** 83
+  blocos tirados por um mineiro só, de **y=43 até y=26**. As sessões anteriores
+  paravam em y=44. A ordem encurtou de 288 posições por nível para 120, e o
+  poço deixou de ter rastro.
+- **A espiral e o recuo do cursor funcionam:** `The gallery really ends at ... the
+  cursor was N steps ahead of it` quatro vezes, e a galeria acesa onze.
+- **A escada do jogador não foi picaretada nenhuma vez** — zero ocorrências de
+  `Escadas`, contra a queixa que abriu o ciclo.
+- **Nenhum `lending a hand`, nenhuma exception, nenhum crash.**
+
+#### 🔴 1 — o fabricante destruía quase metade do que produzia
+
+**118 WARN em quinze minutos:** `crafted N planks that did not fit — chest is
+full`. Cento e dezoito toras retiradas, moídas e **jogadas fora**, com o estoque
+de tábua subindo 138 no mesmo período.
+
+**A garantia estava escrita no javadoc e era falsa** — *"o lugar aberto pela
+retirada é o lugar onde a peça cabe"*. Tirar uma tora de uma pilha de 64 **não
+abre slot nenhum**, e quatro tábuas precisam de um.
+
+O descascar, na mesma classe, já perguntava certo: `firstWithRoomFor` **antes**
+de consumir, e devolve o tronco se não houver lugar. A moagem passou a fazer o
+mesmo, e a tábua vai para o baú da tora quando cabe, ou para o mais próximo que
+couber.
+
+#### 🔴 2 — o fazendeiro nunca trabalhou, e não ia trabalhar nunca mais
+
+`no farmer work: no task open for it — 2 able to farm`, os quinze minutos
+inteiros, com dois fazendeiros de baú na mão. A colônia tinha **exatamente 64**
+de comida — `WHEAT=26, CARROT=18, POTATO=17, BEETROOT=3` — e o `FOOD_FLOOR` era
+64.
+
+**Piso batido, e nada neste mod consome comida:** meta atingida ficava atingida
+**para sempre**. Era um piso sem dreno, e o fazendeiro se aposentava no dia em
+que enchia a despensa. O mesmo defeito do baú do lenhador em 09-04, noutro lugar.
+
+A despensa passou a ser **por cama** — `FOOD_PER_BED = 8`, uma pilha a cada oito
+moradores —, com o piso de 64 valendo para a vila pequena. A cama é a medida
+porque é a que a colônia já tem, e porque a vila come todo dia. Quando o Nível 6
+puser algo consumindo comida, isto vira reserva de verdade sem mudar de forma.
+
+**E isso destrava o ciclo inteiro que entrou hoje:** colher → semear → arar só
+roda quando há tarefa aberta.
+
+#### 🟠 O que ficou, e não é regressão
+
+- **83 `Not a tree — N logs without a living canopy`** — o lenhador redescobrindo
+  as paredes da própria vila. Pendência conhecida desde 09-04.
+- **Um mineiro travado 2,5 minutos**, quatro vezes no mesmo granito a 1448,43,63,
+  parado 19,5 blocos **em linha reta acima** dele. É a pendência 🟠 *"mineiro
+  longe do corredor não tem resgate"*, e o save antigo é o gatilho: o mundo tem
+  a escada velha cavada e a ordem nova desce debaixo da boca. **O guarda
+  recuperou** — ele voltou e tirou os 83 blocos. Continua precisando da decisão
+  de projeto que o TODO já registra.
+
+**Verificação:** fase vermelha conferida nos dois consertos. **648 unitários e
+259 gametests, zero falhas.**
+
 ### 2026-09-05 — e a galeria do nível virou espiral
 
 O segundo pedaço do mesmo pedido. O braço era uma **reta de vinte e quatro

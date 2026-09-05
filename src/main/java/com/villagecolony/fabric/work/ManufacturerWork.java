@@ -546,10 +546,24 @@ public final class ManufacturerWork {
      * discordância entre os dois é que abria tarefa por ciclo para
      * encerrá-la no tick seguinte.
      *
-     * <p>A tábua volta para o mesmo baú de onde o tronco veio, e não para
-     * o do fabricante: é o que preserva a regra do mesmo baú no mesmo
-     * tick, e o que garante que o lugar aberto pela retirada é o lugar
-     * onde a peça cabe.
+     * <p>A tábua volta para o baú de onde o tronco veio <b>quando cabe</b>,
+     * e para o mais próximo que couber quando não — 2026-09-05.
+     *
+     * <p><b>Esta linha dizia outra coisa, e a outra coisa era falsa.</b>
+     * Ela garantia que <i>"o lugar aberto pela retirada é o lugar onde a
+     * peça cabe"</i>, e o mundo não sustenta isso: tirar uma tora de uma
+     * pilha de quarenta <b>não abre slot nenhum</b>, e quatro tábuas
+     * voltam. Com o baú cheio a peça era destruída e só sobrava um WARN.
+     *
+     * <p><b>A sessão de 2026-09-05, às 20:03, contou 118 delas em quinze
+     * minutos</b> — cento e dezoito toras moídas e jogadas fora, com o
+     * estoque de tábua subindo cento e trinta e oito no mesmo período.
+     * Perdeu-se perto de metade da produção do fabricante.
+     *
+     * <p>Agora ele pergunta <b>antes</b> de moer, como o descascar ao
+     * lado já perguntava: sem lugar para a tábua, a tora volta inteira e
+     * a tarefa encerra dizendo por quê. É o mesmo E3 do lenhador, e a
+     * mesma resposta.
      */
     private static boolean convertOne(ServerWorld world, Job job, UUID workerId) {
         if (!halfTheWoodMayStillBeConverted(world, job.task.colonyId())) {
@@ -602,19 +616,27 @@ public final class ManufacturerWork {
 
         ItemStack result = planks.get();
 
-        int leftOver = ChestDepositor.deposit(
-                world, chest, result.getItem(), result.getCount());
+        // O do tronco na frente, os da colônia atrás: quando ele cabe no
+        // baú de onde a tora saiu, nada muda; quando não cabe, a peça
+        // deixa de ser destruída.
+        List<ColonyPos> chests = ColonyChests.ownFirst(job.task.colonyId(), chest);
 
-        if (leftOver > 0) {
-            // O baú encheu no meio. O que não coube volta como tronco não
-            // dá: o tronco já virou tábua. Devolver o que sobrou ao baú é
-            // impossível por definição — ele está cheio —, então o que se
-            // pode fazer é parar antes de acontecer de novo.
-            VillageColonyMod.LOGGER.warn(
-                    "Worker {} crafted {} planks that did not fit — chest is full",
-                    workerId,
-                    leftOver);
+        Optional<ColonyPos> room = ColonyChests.firstWithRoomFor(
+                world, chests, result.getItem(), result.getCount());
+
+        if (room.isEmpty()) {
+            // Não cabe em baú nenhum da colônia. Devolve a tora inteira —
+            // moer sem onde guardar destrói material, e é o E3 de novo.
+            ColonyChests.firstWithRoomFor(world, chests, log.getItem(), log.getCount())
+                    .ifPresent(back ->
+                            ChestDepositor.deposit(world, back, log.getItem(), log.getCount()));
+
+            finish(job, workerId, "no room in the colony chests for " + result.getItem());
+
+            return false;
         }
+
+        ChestDepositor.deposit(world, room.get(), result.getItem(), result.getCount());
 
         job.crafted++;
 
