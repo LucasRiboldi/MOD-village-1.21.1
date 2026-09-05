@@ -268,6 +268,59 @@ abaixo, com o porquê.
 
 ## ✅ Resolvido
 
+### 2026-09-05, 20:30 — a roça deixou de ser quadradinho solto e virou obra
+
+**Queixa do autor:** *"os fazendeiros não podem construir plantações em qualquer
+lugar, não podem arar qualquer lugar; eles precisam construir o espaço de
+plantação padrão e idêntico aos que já vêm na vila do Minecraft; precisam de um
+espaço livre dentro da vila e não colado em outra estrutura"*.
+
+**A medida no chão:** o fazendeiro arava toda terra hidratada que a varredura
+achasse, e a sessão deixou **34 blocos arados em 33 posições distintas,
+espalhados por catorze blocos de vila** — quadradinhos soltos entre as casas.
+
+#### O ofício de arar saiu
+
+`TILL` deixou de existir, e com ele o `isTillable`, o `till` e a caixa de
+hidratação copiada do `FarmlandBlock`. O fazendeiro **colhe, replanta e semeia
+canteiro vazio**; ele não decide mais onde a lavoura fica. A varredura ficou
+mais barata de quebra: eram três perguntas por coluna, agora são duas.
+
+#### E abrir roça virou obra
+
+**As duas exigências saíram de graça do que já existia**, e é o motivo de o
+conserto ser pequeno:
+
+| exigência | quem já resolvia |
+|---|---|
+| *padrão e idêntica à da vila* | a roça **já está no catálogo do jogo**, ao lado das casas — `plains_small_farm_1` e as equivalentes dos cinco estilos. Regra 27, nenhum `.nbt` novo |
+| *lote livre, não colado em outra estrutura* | é exatamente o que a busca de lote da casa garante. A roça passa pela **mesma porta**, e nenhuma regra de espaçamento foi escrita duas vezes |
+
+**Três peças novas, todas pequenas:**
+
+- `VillageStructures.farmsFor` — as roças moram na pasta `houses` porque é lá
+  que o gerador de vilas as põe; a busca é por **nome**. Sem a barreira de
+  teste, que é sobre casas.
+- `FarmPlans` — lê a planta e **tira a lavoura**. A obra faz o canteiro, o
+  fazendeiro planta: cobrar trigo e beterraba do baú faria a roça parar
+  esperando semente, que é o vão do teto de 09-04 noutro lugar. Oferece a
+  **menor primeiro**, ao contrário das casas — roça pequena que nasce alimenta
+  mais que roça grande que nunca cabe.
+- **Bloco de chão não sai de baú** — terra, terra arada e água. `farmland` não
+  tem item nenhum e `water` só existiria como balde: cobrá-los deixaria a obra
+  em `waiting for minecraft:water` para sempre. E é honesto — quem abre canteiro
+  move o chão que já está ali.
+
+**O pedido vem do próprio fazendeiro** (`wantsAField`), de onde a resposta já
+foi calculada: quem varreu o raio e não achou nem lavoura madura nem canteiro
+vazio sabe, sem custo, que falta campo. **Ele se fecha sozinho** — a roça que
+nascer dá canteiro para semear, e a colônia volta a levantar casa.
+
+**Verificação:** fase vermelha conferida nas duas regras novas — desligadas, caem
+dois testes. **648 unitários e 264 gametests, zero falhas.** A classe nova foi
+registrada no `fabric.mod.json`; sem isso ela sumiria da bateria e ela ainda
+diria "todos passaram". **Não visto em jogo.**
+
 ### 2026-09-05, 20:03 — a sessão que mediu o caracol, e os dois defeitos que ela achou
 
 **Quinze minutos, jar conferido por md5, zero exception do mod e zero WARN além

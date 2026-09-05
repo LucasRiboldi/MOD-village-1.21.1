@@ -26,10 +26,12 @@ import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -83,6 +85,21 @@ public final class FarmerWork {
     private static final String SUBJECT = "farmer";
 
     /**
+     * As colônias cujo fazendeiro não achou o que fazer — 2026-09-05.
+     *
+     * <p><b>É o pedido de roça</b>, e ele nasce onde a resposta já foi
+     * calculada: quem varreu o raio inteiro e não achou lavoura madura
+     * nem canteiro vazio sabe, sem custo nenhum, que falta <b>campo</b>.
+     * Perguntar isso de novo no planejador de obra seria pagar a mesma
+     * varredura duas vezes por ciclo.
+     *
+     * <p>Some quando ele acha trabalho, e é por isso que a colônia não
+     * abre roça atrás de roça: a primeira que nascer dá canteiro vazio
+     * para semear, e o pedido se fecha sozinho.
+     */
+    private static final Set<UUID> WANTS_A_FIELD = new HashSet<>();
+
+    /**
      * O que o fazendeiro foi fazer neste alvo — 2026-09-05.
      *
      * <p>Ele só colhia, e por isso ficava parado: a lavoura da vila é
@@ -131,6 +148,17 @@ public final class FarmerWork {
     }
 
     private FarmerWork() {
+    }
+
+    /**
+     * Se esta colônia precisa de uma roça — 2026-09-05.
+     *
+     * <p>Pergunta do planejador de obra, e a resposta é a do fazendeiro:
+     * <i>varri o raio e não há nem lavoura madura nem canteiro vazio</i>.
+     * Ver {@link #WANTS_A_FIELD}.
+     */
+    public static boolean wantsAField(UUID colonyId) {
+        return WANTS_A_FIELD.contains(colonyId);
     }
 
     /** Encurta a busca. Só para teste de jogo, como a do mineiro. */
@@ -341,8 +369,12 @@ public final class FarmerWork {
                     "nothing ripe and no empty plot within "
                             + searchRadius + " blocks of the village");
 
+            WANTS_A_FIELD.add(job.task.colonyId());
+
             return;
         }
+
+        WANTS_A_FIELD.remove(job.task.colonyId());
 
         IdleLog.clear(job.task.colonyId(), SUBJECT);
 
@@ -545,6 +577,7 @@ public final class FarmerWork {
     /** Esquece tudo. Chamado ao descarregar o mundo. */
     public static void clearAll() {
         JOBS.clear();
+        WANTS_A_FIELD.clear();
 
         restoreSearch();
     }

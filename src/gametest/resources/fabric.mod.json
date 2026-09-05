@@ -9,6 +9,7 @@
   "entrypoints": {
     "fabric-gametest": [
       "com.villagecolony.gametest.FarmerGameTest",
+      "com.villagecolony.gametest.FarmPlanGameTest",
       "com.villagecolony.gametest.ColonyDetectionGameTest",
       "com.villagecolony.gametest.StorageGameTest",
       "com.villagecolony.gametest.LumberjackGameTest",

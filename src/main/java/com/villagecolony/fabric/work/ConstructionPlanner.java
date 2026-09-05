@@ -246,7 +246,30 @@ public final class ConstructionPlanner {
         // todas do catálogo do jogo, que é a Regra 27. O mod não inventa
         // casa: se a lista vier vazia, não há o que construir, e dizê-lo
         // é melhor que levantar algo que ninguém pediu.
-        List<Blueprint> plans = HousePlans.plansFor(world, colony);
+        // <b>Roça quando o fazendeiro não tem campo</b> — decisão do
+        // autor, 2026-09-05: "precisam construir o espaço de plantação
+        // padrão e idêntico aos que já vêm na vila do Minecraft" e
+        // "precisam de um espaço livre dentro da vila e não colado em
+        // outra estrutura".
+        //
+        // A segunda exigência não custa nada: é exatamente o que a busca
+        // de lote abaixo já garante para a casa, e a roça passa pela
+        // mesma porta. Nenhuma regra de espaçamento foi escrita duas
+        // vezes.
+        //
+        // O pedido vem do fazendeiro, que já varreu o raio e sabe que não
+        // há nem lavoura madura nem canteiro vazio — ver
+        // FarmerWork.wantsAField. Ele se fecha sozinho: a roça que nascer
+        // dá canteiro para semear, e a colônia volta a levantar casa.
+        List<Blueprint> plans = List.of();
+
+        if (FarmerWork.wantsAField(colony.id())) {
+            plans = FarmPlans.plansFor(world, colony);
+        }
+
+        if (plans.isEmpty()) {
+            plans = HousePlans.plansFor(world, colony);
+        }
 
         if (plans.isEmpty()) {
             return silent(
@@ -445,7 +468,15 @@ public final class ConstructionPlanner {
 
         Optional<ResourceId> target = HousePlans.houseFor(world, colony).map(Blueprint::id);
 
-        if (target.isPresent() && project.isSupersededBy(target.get())) {
+        // <b>Roça não é versão velha de casa</b> — 2026-09-05. O alvo
+        // desta pergunta é sempre uma casa, e o pedido de roça é estado
+        // de memória que nasce vazio ao ligar o servidor: sem esta
+        // ressalva, toda roça planejada e ainda intocada seria descartada
+        // no primeiro carregamento do save. São propósitos diferentes, e
+        // não duas plantas disputando o mesmo lugar.
+        if (target.isPresent()
+                && !FarmPlans.isFarm(project.blueprint().id())
+                && project.isSupersededBy(target.get())) {
             // Obra de uma planta que não é mais o alvo, e sem um bloco de
             // pé. Nada se perde ao abandoná-la — e mantê-la trava a
             // colônia para sempre, porque `plan` não abre obra nova

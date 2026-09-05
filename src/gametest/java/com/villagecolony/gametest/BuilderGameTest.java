@@ -573,6 +573,47 @@ public class BuilderGameTest implements FabricGameTest {
                 ColonyFixture.create().owning(colony).owning(villager.getUuid()));
     }
 
+    /**
+     * <b>A roça é cavada, não carregada</b> — 2026-09-05.
+     *
+     * <p>Terra, terra arada e água não saem de baú: {@code farmland} não
+     * tem item nenhum, e {@code water} só existiria como balde, que a
+     * colônia não produz. Cobrá-los deixaria a roça parada para sempre em
+     * {@code waiting for minecraft:water} — o defeito do vão do teto de
+     * 09-04, agora impedindo a colônia de plantar.
+     *
+     * <p>O baú entra <b>vazio</b> de propósito: é o que separa "assentou
+     * porque tinha material" de "assentou porque não precisa de
+     * material".
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_ground",
+            tickLimit = 400)
+    public void groundBlocksAreShapedWithoutTheChest(TestContext context) {
+        Fixture fixture = setUp(context, 0, ground(), 2);
+
+        context.runAtTick(200, () -> {
+            try {
+                context.assertTrue(
+                        stateAt(context, SITE).isOf(Blocks.FARMLAND),
+                        "o canteiro não foi assentado: ficou "
+                                + stateAt(context, SITE).getBlock()
+                                + " — a obra está esperando um item que não existe");
+            } finally {
+                fixture.owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /** Um canteiro, que é o bloco que nenhum baú pode entregar. */
+    private static Blueprint ground() {
+        return Blueprint.of(HUT, List.of(
+                new BlueprintBlock(
+                        new ColonyPos(0, 0, 0),
+                        MinecraftTypeAdapter.toResourceId(Blocks.FARMLAND))));
+    }
+
     /** Uma porta, uma entrada — como o projeto passou a guardá-la. */
     private static Blueprint door() {
         return Blueprint.of(HUT, List.of(

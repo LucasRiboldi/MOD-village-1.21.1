@@ -73,6 +73,9 @@ public final class VillageStructures {
     /** As ruas, pela mesma porta e no mesmo catálogo — 2026-08-21. */
     private static final Map<String, List<ResourceId>> STREETS = new HashMap<>();
 
+    /** As roças, pela mesma porta — 2026-09-05. */
+    private static final Map<String, List<ResourceId>> FARMS = new HashMap<>();
+
     private VillageStructures() {
     }
 
@@ -102,6 +105,33 @@ public final class VillageStructures {
      */
     public static synchronized List<ResourceId> streetsFor(String style) {
         return STREETS.computeIfAbsent(style, found -> load(found, "streets", false));
+    }
+
+    /**
+     * As roças que uma vila deste estilo tem — decisão do autor,
+     * 2026-09-05.
+     *
+     * <p><b>A frase dele:</b> <i>"precisam construir o espaço de
+     * plantação padrão e idêntico aos que já vêm na vila do
+     * Minecraft"</i>. E a resposta é a Regra 27 outra vez: a roça padrão
+     * já está no catálogo do jogo, ao lado das casas —
+     * {@code plains_small_farm_1}, {@code plains_large_farm_1}, e as
+     * equivalentes dos outros quatro estilos. Nenhum {@code .nbt} novo,
+     * nenhum byte da Mojang.
+     *
+     * <p>Moram na pasta {@code houses} porque é lá que o gerador de vilas
+     * as põe — para o Vanilla, a roça é uma das peças que um lote pode
+     * receber. É por isso que a busca é por <b>nome</b> e não por pasta.
+     *
+     * <p><b>Sem a barreira de teste.</b> Ela limita quantas <i>casas</i> a
+     * colônia tenta levantar, para que uma sessão que falha diga qual
+     * regra falhou; a roça é uma peça só por estilo e não polui essa
+     * comparação.
+     */
+    public static synchronized List<ResourceId> farmsFor(String style) {
+        return FARMS.computeIfAbsent(style, found -> load(found, "houses", false).stream()
+                .filter(id -> id.path().contains("farm"))
+                .toList());
     }
 
     private static List<ResourceId> load(String style, String kind, boolean onlyWhileTesting) {
@@ -158,5 +188,6 @@ public final class VillageStructures {
     public static synchronized void clearAll() {
         HOUSES.clear();
         STREETS.clear();
+        FARMS.clear();
     }
 }

@@ -25,8 +25,10 @@ import net.minecraft.block.enums.BedPart;
 import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.state.property.Properties;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Item;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -357,6 +359,25 @@ public final class BuilderWork {
             return true;
         }
 
+        if (isShapedFromTheGround(state)) {
+            // <b>A roça é cavada, não carregada</b> — 2026-09-05. Terra,
+            // terra arada e água não saem de baú: {@code farmland} não
+            // tem item nenhum, e {@code water} só existiria como balde,
+            // que a colônia não produz. Cobrá-los deixaria a roça parada
+            // para sempre em {@code waiting for minecraft:water}, que é
+            // exatamente o defeito do vão do teto de 09-04.
+            //
+            // E é honesto: quem abre um canteiro move o chão que já está
+            // ali. A regra vale para qualquer obra porque é sobre o
+            // <b>bloco</b>, e não sobre a planta — uma casa com terra no
+            // piso ganha o mesmo tratamento, e ganha certo.
+            world.setBlockState(target, state, Block.NOTIFY_ALL);
+
+            project.markPlaced(block);
+
+            return true;
+        }
+
         Optional<Item> taken = takeMaterial(world, project, material.get());
 
         if (taken.isEmpty()) {
@@ -609,6 +630,19 @@ public final class BuilderWork {
      *
      * @return o item que saiu do baú, ou vazio quando nenhum servia
      */
+    /**
+     * Se este bloco a colônia molda do chão em vez de tirar do baú.
+     *
+     * <p>Três famílias, e as três pela mesma razão: nenhuma delas chega
+     * ao baú de um trabalhador. {@code BlockTags.DIRT} cobre terra,
+     * grama, terra grossa e barro sem nomeá-los.
+     */
+    private static boolean isShapedFromTheGround(BlockState state) {
+        return state.isIn(BlockTags.DIRT)
+                || state.isOf(Blocks.FARMLAND)
+                || state.isOf(Blocks.WATER);
+    }
+
     private static Optional<Item> takeMaterial(
             ServerWorld world, ConstructionProject project, Block wanted) {
 
