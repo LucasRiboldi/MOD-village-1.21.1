@@ -268,6 +268,58 @@ abaixo, com o porquê.
 
 ## ✅ Resolvido
 
+### 2026-09-05, 21:06 — o crash, e o travamento silencioso ao lado dele
+
+**O servidor caiu.**
+
+```text
+java.lang.IllegalStateException: Cannot go from WAITING_RESOURCES to COMPLETED
+  at ConstructionProject.moveTo(ConstructionProject.java:141)
+  at BuilderWork.complete(BuilderWork.java:741)
+  at BuilderWork.step / tick / onServerTick
+```
+
+**A causa é uma marca que ninguém tira.** O `waitForResources` põe a obra em
+`WAITING_RESOURCES`, e **assentar um bloco não a tira de lá** — quem tira é o
+`WaitingWork.wakeIfSupplied`, que roda no ciclo da colônia, seiscentos tiques
+depois. Entre uma coisa e outra o construtor pode acabar a obra e chegar ao fim
+com a marca velha na mão.
+
+**E há mais de um jeito de acabar sem passar pelo baú:** a barreira de teste
+risca peça — esta sessão riscou **17** —, o assentador pula o que já tem coisa
+no lugar, e desde hoje o bloco de chão é posto sem material. O defeito é antigo;
+a regra de chão abriu mais uma porta para ele.
+
+Encerrar a espera é a saída, e não afrouxar a máquina de estados:
+`WAITING_RESOURCES → COMPLETED` continua proibido, e continua certo que esteja —
+o que estava errado era chegar lá com a marca velha.
+
+#### E o travamento que ninguém veria
+
+O outro lado do mesmo defeito, e o pior dos dois. O `wakeIfSupplied` só tira a
+obra da espera quando o baú tem **o item do próximo bloco** — e `farmland` não
+tem item nenhum. **A roça que parasse uma vez nunca mais acordaria**, e nada no
+log diria por quê. Não derruba nada, e é por isso que ela ganhou teste próprio.
+
+#### O que a sessão provou dos consertos anteriores
+
+- **`crafted N planks that did not fit`: de 118 para ZERO.** O fabricante parou
+  de destruir quase metade do que produzia.
+- **O fazendeiro trabalhou** — colheu, replantou e **semeou** nove vezes. A
+  despensa por cama destravou a tarefa.
+- **E não arou nada.** Zero `tilled`, contra 34 na sessão anterior.
+
+#### O que ficou aberto
+
+**A roça não chegou a ser planejada:** `one is already open`, e **20 de 20**
+passagens do planejador desistiram antes da varredura. A colônia está atrás de
+uma obra aberta que não fecha — é o "uma obra por vez" encontrando um projeto
+travado. É a próxima linha a puxar.
+
+**Verificação:** fase vermelha conferida nos dois — o teste do crash reproduz
+`Cannot go from WAITING_RESOURCES to COMPLETED` sem o conserto. **648 unitários
+e 266 gametests, zero falhas.**
+
 ### 2026-09-05, 20:30 — a roça deixou de ser quadradinho solto e virou obra
 
 **Queixa do autor:** *"os fazendeiros não podem construir plantações em qualquer

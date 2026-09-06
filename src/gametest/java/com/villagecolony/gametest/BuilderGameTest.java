@@ -606,6 +606,77 @@ public class BuilderGameTest implements FabricGameTest {
         });
     }
 
+    /**
+     * <b>E a obra marcada como esperando ainda consegue acabar</b> —
+     * crash de 2026-09-05, às 21:06, com o servidor no chão:
+     *
+     * <pre>
+     * IllegalStateException: Cannot go from WAITING_RESOURCES to COMPLETED
+     *   at ConstructionProject.moveTo(ConstructionProject.java:141)
+     *   at BuilderWork.complete(BuilderWork.java:741)
+     * </pre>
+     *
+     * <p>A marca de espera é posta pelo {@code waitForResources} e
+     * <b>ninguém a tira ao assentar um bloco</b> — quem a tira roda no
+     * ciclo da colônia, seiscentos tiques depois. Entre uma coisa e outra
+     * o construtor pode acabar a obra, e chegava ao fim com a marca velha
+     * na mão.
+     *
+     * <p>O canteiro é o cenário mais curto que reproduz isso: ele não
+     * pede material, então a obra termina sem nunca passar pelo baú.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_ground",
+            tickLimit = 400)
+    public void aProjectMarkedWaitingStillFinishes(TestContext context) {
+        Fixture fixture = setUp(context, 0, ground(), 2);
+
+        // A marca que o construtor não tira sozinho.
+        fixture.project.moveTo(ConstructionState.WAITING_RESOURCES);
+
+        context.runAtTick(200, () -> {
+            try {
+                context.assertTrue(
+                        fixture.project.state() == ConstructionState.COMPLETED,
+                        "a obra ficou em " + fixture.project.state()
+                                + " — antes deste conserto isto derrubava o servidor");
+            } finally {
+                fixture.owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * <b>E o despertador não a deixa dormir para sempre</b> — 2026-09-05.
+     *
+     * <p>O outro lado do mesmo defeito, e o mais silencioso dos dois.
+     * {@code WaitingWork.wakeIfSupplied} só tira a obra da espera quando
+     * o baú tem <b>o item do próximo bloco</b> — e {@code farmland} não
+     * tem item nenhum. Sem esta regra, a roça que parasse uma vez
+     * <b>nunca mais acordaria</b>, e nada no log diria por quê: a obra
+     * ficaria em WAITING_RESOURCES esperando um item que não existe.
+     *
+     * <p>Não derruba o servidor, e é justamente por isso que ela precisa
+     * de teste próprio — o crash a gente vê.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_ground",
+            tickLimit = 100)
+    public void aGroundBlockNeverKeepsTheProjectWaiting(TestContext context) {
+        Fixture fixture = setUp(context, 0, ground(), 2);
+
+        try {
+            context.assertTrue(
+                    BuilderWork.hasMaterialForNextBlock(context.getWorld(), fixture.project),
+                    "o despertador achou que faltava material para um canteiro — a roça"
+                            + " dormiria para sempre esperando um item que não existe");
+        } finally {
+            fixture.owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
     /** Um canteiro, que é o bloco que nenhum baú pode entregar. */
     private static Blueprint ground() {
         return Blueprint.of(HUT, List.of(

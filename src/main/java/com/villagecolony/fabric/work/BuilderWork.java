@@ -683,6 +683,17 @@ public final class BuilderWork {
             return true;
         }
 
+        if (isShapedFromTheGround(material.get().getDefaultState())) {
+            // Terra, terra arada e água não pedem material nenhum — ver
+            // isShapedFromTheGround. Sem esta linha a roça que parasse
+            // uma vez <b>nunca mais acordaria</b>: o despertador pergunta
+            // se o baú tem o item do próximo bloco, e farmland não tem
+            // item nenhum. É a mesma resposta que a barreira de teste dá
+            // logo abaixo, e pelo mesmo motivo — o que o assentador vai
+            // pôr sem baú não segura obra nenhuma.
+            return true;
+        }
+
         if (TestBarrier.chainFor(next.get().block()).isPresent()) {
             // Peça que a barreira risca nunca segura a obra: quando o
             // construtor chegar nela vai passar por cima, então dizer
@@ -736,8 +747,30 @@ public final class BuilderWork {
         finish(job, workerId, "no " + block.block() + " in the colony chests");
     }
 
-    /** A casa ficou de pé. */
+    /**
+     * A casa ficou de pé.
+     *
+     * <p><b>Inclusive quando a obra estava marcada como esperando</b> —
+     * crash de 2026-09-05, às 21:06: {@code IllegalStateException: Cannot
+     * go from WAITING_RESOURCES to COMPLETED}, e o servidor caiu.
+     *
+     * <p>A marca de espera é posta pelo {@link #waitForResources} e
+     * <b>ninguém a tira ao assentar um bloco</b>: quem a tira é o
+     * {@code WaitingWork.wakeIfSupplied}, que roda no ciclo da colônia.
+     * Entre a espera e o ciclo seguinte o construtor pode acabar a obra
+     * — os blocos que faltavam eram do chão, ou riscados pela barreira —,
+     * e aí ele chegava aqui com a marca velha na mão.
+     *
+     * <p><b>Não há o que esperar quando não falta bloco</b>, e é por isso
+     * que a saída é encerrar a espera em vez de afrouxar a máquina de
+     * estados: {@code WAITING_RESOURCES → COMPLETED} continua proibido, e
+     * continua certo que esteja.
+     */
     private static void complete(ConstructionProject project, Job job, UUID workerId) {
+        if (project.state() == ConstructionState.WAITING_RESOURCES) {
+            project.moveTo(ConstructionState.BUILDING);
+        }
+
         project.moveTo(ConstructionState.COMPLETED);
 
         Building building = Building.of(project);
