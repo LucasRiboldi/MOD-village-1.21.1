@@ -43,15 +43,25 @@ a madeira vai direto para o baú dele, e replanta a muda antes de sair.
 desce cavando **em escada dupla** — duas colunas lado a lado, para quem
 sobe não esbarrar em quem desce —, de picareta de ferro, como todo
 trabalhador começa. A boca ganha um **arco de pedra com lanterna
-pendurada**, que é o que a faz ser vista de longe. Dez blocos abaixo abre uma sala de 7×4; desce mais dez virando
-para outro lado, abre outra sala; e do vigésimo bloco em diante segue
-numa galeria — que **não é um cano reto**: a cada oito colunas ela abre
-um bolsão ao lado, o que dá mais parede exposta e mais minério à vista.
-Barreira à frente — bedrock, a casa de alguém, pedra sem onde pisar — e a
-galeria vira. Quatro curvas fecham a volta do nível, e a mina **desce mais
-um**, atrás do que só existe fundo. Túnel e salas abrem **três blocos de
-altura**: dois é o que o aldeão ocupa parado, e andar raspando o teto não
-é andar.
+pendurada**, que é o que a faz ser vista de longe.
+
+A descida é um **caracol**: quatro lances de cinco degraus, cada um
+virando à direita do anterior, e a volta fecha **debaixo da própria
+boca** vinte blocos abaixo. É o que faz a mina não ter rastro — o fundo
+do nível fica sob a entrada, e não a vinte blocos de lado, que era a
+distância que o mineiro refazia toda vez que subia para depositar.
+
+Lá embaixo a galeria **espirala**: dois anéis que se abrem em volta do
+poço, um trecho que sai e um que contorna, com um **bolsão** pendurado no
+meio de cada — mais parede exposta é mais minério à vista. Barreira à
+frente — bedrock, a casa de alguém, pedra sem onde pisar — e ela vira.
+Fechada a volta do nível, a mina **desce mais um**, atrás do que só
+existe fundo. Túnel e bolsões abrem **três blocos de altura**: dois é o
+que o aldeão ocupa parado, e andar raspando o teto não é andar.
+
+**E o que você constrói dentro da mina fica de pé.** Escada, laje,
+tocha, trilho, porta: a picareta dele reconhece que aquilo não é rocha e
+passa ao lado.
 
 **Saiu água?** Ele tapa a nascente com pedregulho na hora e desvia a
 galeria. Mina inundada não é mina difícil — é mina onde o aldeão não fica
@@ -99,15 +109,67 @@ casa: cada vila levanta o que a pasta de estruturas do jogo tem para o
 bioma dela — planície, savana, taiga, nevada e deserto.
 
 🌾 **O fazendeiro** colhe a lavoura madura, **replanta com a semente da
-própria colheita** e guarda a comida no baú dele. Ele procura do centro
-da vila para fora, e só toca no que está pronto.
+própria colheita**, **semeia o canteiro vazio** com o que houver no baú
+dele, e guarda a comida. Ele procura do centro da vila para fora, e só
+toca no que está pronto.
 
 Quem diz se está madura é o **bloco**, e não uma lista escrita no mod:
 vale para trigo, cenoura, batata e beterraba, e para o que um datapack
 plantar depois.
 
+**Ele não ara terra solta.** Quem abre roça é a obra: a colônia levanta
+a **mesma roça que vem na vila do Minecraft**, lida do catálogo do
+próprio jogo, num lote livre dentro da vila e não colado em outra
+estrutura — o mesmo lote que uma casa teria. O canteiro nasce arado e
+**vazio**, e é o fazendeiro que planta. Uma roça a cada **quinze
+aldeões**.
+
 Cada um ganha um nome sobre a cabeça e um quadro pregado no baú, para
 você saber de relance quem é quem.
+
+---
+
+## As sete profissões, em tabela
+
+### Quem é quem
+
+| | profissão | ferramenta inicial | o que ela faz | tarefa |
+|---|---|---|---|---|
+| 🪓 | **Lenhador** | machado de ferro | derruba a árvore um bloco por vez e replanta a muda | `COLLECT_WOOD` |
+| ⛏️ | **Mineiro** | picareta de ferro | cava a mina em caracol, espirala a galeria e segue o veio | `COLLECT_STONE` |
+| 🐑 | **Pastor** | tesoura | tosquia a ovelha, que continua viva | `COLLECT_WOOL` |
+| 🌾 | **Fazendeiro** | enxada de ferro | colhe, replanta e semeia canteiro vazio | `COLLECT_FOOD` |
+| 🔥 | **Fundidor** | mãos livres | funde pela receita de fornalha do jogo | `SMELT_MATERIAL` |
+| 🪚 | **Fabricante** | mãos livres | tora → tábua, descasca viga, monta tocha e vidraça | `CRAFT_MATERIAL` |
+| 🏠 | **Construtor** | mãos livres | levanta a casa e a roça | `BUILD` |
+
+A ferramenta é a de **ferro**, e é onde ele começa: havendo uma melhor
+dentro do baú dele, o trabalhador troca. Quem julga "melhor" é o jogo,
+medindo a velocidade contra o bloco que aquela profissão quebra o dia
+inteiro — nenhuma escada de material está escrita no mod.
+
+### O que cada um guarda, e onde
+
+| profissão | onde guarda | o que entra no baú |
+|---|---|---|
+| **Lenhador** | o dele, e transborda para os da colônia | tora, muda, vara, maçã |
+| **Mineiro** | o baú da boca da mina primeiro, o dele com a sobra | pedregulho, arenito, carvão, ferro cru, cobre — o que o bloco largar |
+| **Pastor** | só o dele | lã, na cor do rebanho |
+| **Fazendeiro** | só o dele | trigo, cenoura, batata, beterraba e as sementes |
+| **Fundidor** | de volta no baú de onde a matéria crua saiu | vidro, lingote de ferro, arenito liso |
+| **Fabricante** | o da tora primeiro, os da colônia se não couber | tábua, tora descascada, tocha, vidraça |
+| **Construtor** | não guarda — ele só retira | — |
+
+### Quanto a colônia quer de cada coisa
+
+| o quê | quanto | de onde sai a conta |
+|---|---|---|
+| **comida** | 8 por cama, nunca menos que 64 | a vila come todo dia, e a despensa cresce com ela |
+| **roça** | 1 a cada **15 aldeões** | uma zona de plantio por quinze moradores |
+| **pedra** | 64, ou o que a obra pedir se for mais | piso de estoque para a casa seguinte |
+| **madeira** | metade em tábua, metade em tora | a casa pede viga descascada, e viga não sai de tábua |
+| **lã** | o que as camas da obra pedirem | sem cama não nasce aldeão |
+| **ferramenta** | a melhor que houver no baú do trabalhador | trocada pela velocidade que o jogo mede |
 
 ---
 
@@ -173,7 +235,9 @@ no mato depois do escuro é trabalhador que os monstros pegam.
 |---|---|
 | ✅ **Sete profissões** | lenhador, mineiro, pastor, fundidor, fabricante, construtor e fazendeiro |
 | ✅ **A cadeia da madeira, ponta a ponta** | cortar → fabricar tábua → levantar casa. Vista funcionando numa vila de verdade |
-| ✅ **A mina** | escada **dupla**, salas e galeria de **três de altura**, bolsões, tocha atrás do mineiro, descida de nível, veio de minério, água tapada, e um **arco de pedra com lanterna** na boca |
+| ✅ **A mina** | descida em **caracol** que fecha debaixo da própria boca, galeria em **espiral** de dois anéis, **três de altura**, bolsões, tocha atrás do mineiro, descida de nível, veio de minério, água tapada, e um **arco de pedra com lanterna** na boca |
+| ✅ **A roça** | a colônia levanta a **mesma roça que vem na vila**, num lote livre dentro dela, e o fazendeiro semeia o canteiro. Uma a cada quinze aldeões |
+| ✅ **O que você constrói fica de pé** | escada, laje e tocha que **você** puser dentro da mina não viram picareta |
 | ✅ **Cada profissão com sua cor** | o nome sobre a cabeça sai colorido, sete cores distintas — e o nome que **você** deu continua seu |
 | ✅ **Ferramenta de ferro para todos** | e quem tiver ferramenta melhor no baú dele troca por ela sozinho |
 | ✅ **Metade da madeira fica em tora** | o fabricante não moe o estoque inteiro: parte da casa é feita de tora direto |
