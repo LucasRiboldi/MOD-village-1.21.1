@@ -1,5 +1,6 @@
 package com.villagecolony.gametest;
 
+import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
@@ -151,6 +152,59 @@ public class FarmPlanGameTest implements FabricGameTest {
                 ConstructionPlanner.withinTheFarmersReach(colony, far),
                 "um lote fora do alcance do fazendeiro passou — é a roça de 105 blocos"
                         + " que ninguém planta, de volta");
+
+        context.complete();
+    }
+
+    /**
+     * <b>Uma roça a cada quinze aldeões</b> — decisão do autor,
+     * 2026-09-05: <i>"a quantidade de espaços de plantação deve [ser]
+     * 1/15 avos da quantidade de aldeões"</i>.
+     *
+     * <p><b>O que ela fecha.</b> O pedido de roça vinha do fazendeiro —
+     * <i>varri o raio e não achei campo</i> —, e um pedido assim não tem
+     * teto: a sessão das 21:17 levantou <b>duas roças em quatro
+     * minutos</b>, porque a primeira nasceu longe demais para ele ver e o
+     * pedido nunca se fechava.
+     *
+     * <p>Divisão inteira, que é a frase ao pé da letra: catorze aldeões
+     * não pedem roça nenhuma, quinze pedem a primeira.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farm_quota")
+    public void oneFarmForEveryFifteenVillagers(TestContext context) {
+        Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(0, 64, 0));
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        try {
+            context.assertFalse(
+                    FarmPlans.owedToThePopulation(colony.id()),
+                    "uma vila sem aldeão nenhum pediu roça");
+
+            for (int villager = 0; villager < FarmPlans.VILLAGERS_PER_FARM - 1; villager++) {
+                UUID id = UUID.randomUUID();
+
+                VillageColonyMod.WORKERS.register(id, colony.id());
+                owned.owning(id);
+            }
+
+            context.assertFalse(
+                    FarmPlans.owedToThePopulation(colony.id()),
+                    "catorze aldeões já pediram roça — a cota é de quinze");
+
+            UUID last = UUID.randomUUID();
+
+            VillageColonyMod.WORKERS.register(last, colony.id());
+            owned.owning(last);
+
+            context.assertTrue(
+                    FarmPlans.owedToThePopulation(colony.id()),
+                    "quinze aldeões e nenhuma roça, e a colônia não pediu a primeira");
+        } finally {
+            owned.cleanUp();
+        }
 
         context.complete();
     }

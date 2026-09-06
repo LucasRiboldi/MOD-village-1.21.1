@@ -268,6 +268,49 @@ abaixo, com o porquê.
 
 ## ✅ Resolvido
 
+### 2026-09-05, 21:39 — o laço da roça fechou, e ela ganhou cota
+
+**Vinte e nove minutos, sem crash.** A sessão mediu os dois consertos das 21:32,
+e os dois pegaram:
+
+| | |
+|---|---|
+| roças levantadas | **1**, contra 2 em quatro minutos na véspera |
+| onde | `x=1439, z=77`, com o centro em `x=1466, z=81` — **27 blocos**, dentro dos 32 |
+| lotes recusados por distância | **2** — `the only free lot is outside the farmer's reach` |
+| `Farmer ... sowed` | **28** |
+
+**O laço fechou:** a roça nasceu dentro da vila, o fazendeiro a achou, e semeou.
+É a sequência inteira que estava faltando desde que a profissão existe.
+
+#### E a cota, que é o teto que faltava
+
+**Decisão do autor:** *"a quantidade de espaços de plantação deve [ser] 1/15
+avos da quantidade de aldeões (zona de plantação criada a cada 15 aldeões
+existentes na vila)"*.
+
+O gatilho era o fazendeiro — *varri o raio e não achei campo* —, e **um pedido
+assim não tem teto**: enquanto ele não achasse lavoura, a colônia levantava
+roça. A guarda de alcance já tinha cortado o pior do sintoma; a cota corta a
+causa.
+
+`FarmPlans.owedToThePopulation` conta os aldeões da colônia e as roças que ela
+levantou, e é divisão inteira — catorze aldeões não pedem roça nenhuma, quinze
+pedem a primeira, trinta pedem a segunda. A vila da sessão tem **38 camas**:
+duas roças, e ela construiu uma.
+
+**Conta as roças que a colônia levantou**, e não as que a vila já tinha: é o que
+o `BuildingRegistry` responde sem varrer o mundo, e erra para o lado seguro —
+vila que nasceu com roça ganha um pouco mais de lavoura, e lavoura a mais é
+comida a mais.
+
+**E o sinal antigo saiu.** `FarmerWork.wantsAField` e o conjunto que o
+alimentava viraram código morto no mesmo movimento, e foram removidos.
+
+**Verificação:** fase vermelha conferida — sem a cota, o teste dos quinze
+aldeões reprova. **648 unitários e 268 gametests, zero falhas.** **Não visto em
+jogo.**
+
 ### 2026-09-05, 21:17 — a roça nasceu, e nasceu no lugar errado
 
 **Nove minutos, sem crash, sem exception.** O conserto das 21:11 segurou, e a

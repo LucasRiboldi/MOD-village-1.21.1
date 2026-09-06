@@ -1,6 +1,8 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.type.ResourceId;
@@ -16,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * A roça padrão da vila, lida do catálogo do próprio jogo — decisão do
@@ -53,7 +56,53 @@ public final class FarmPlans {
     /** As plantas lidas, por id. Ler um template não é barato. */
     private static final Map<ResourceId, Optional<Blueprint>> READ = new HashMap<>();
 
+    /**
+     * Quantos aldeões cada roça alimenta — decisão do autor, 2026-09-05:
+     * <i>"a quantidade de espaços de plantação deve [ser] 1/15 avos da
+     * quantidade de aldeões (zona de plantação criada a cada 15 aldeões
+     * existentes na vila)"</i>.
+     *
+     * <p><b>O que ela substitui é o defeito da véspera.</b> O pedido de
+     * roça vinha do fazendeiro — <i>varri o raio e não achei campo</i> —,
+     * e um pedido assim não tem teto: enquanto ele não achasse lavoura a
+     * colônia levantava roça, e a sessão das 21:17 mostrou <b>duas em
+     * quatro minutos</b>, a caminho de encher o mapa. Uma cota fecha
+     * isso por construção — quinze aldeões, uma roça, e ponto.
+     *
+     * <p>E ela é a medida certa por outra razão: roça existe para
+     * alimentar gente, então quem manda no tamanho da lavoura é o tamanho
+     * da vila, e não o humor da varredura do fazendeiro.
+     */
+    public static final int VILLAGERS_PER_FARM = 15;
+
     private FarmPlans() {
+    }
+
+    /**
+     * Se esta colônia ainda deve uma roça à própria população.
+     *
+     * <p>Divisão inteira, que é a frase do autor ao pé da letra: catorze
+     * aldeões não pedem roça nenhuma, quinze pedem a primeira, e a
+     * segunda só com trinta.
+     *
+     * <p><b>Conta as roças que a colônia levantou</b>, e não as que a
+     * vila já tinha. É o que o {@code BuildingRegistry} sabe responder
+     * sem varrer o mundo — e erra para o lado seguro: uma vila que nasceu
+     * com roça ganha um pouco mais de lavoura do que a conta pede, e
+     * lavoura a mais é comida a mais.
+     */
+    public static boolean owedToThePopulation(UUID colonyId) {
+        int villagers = VillageColonyMod.WORKERS.countOfColony(colonyId);
+
+        int built = 0;
+
+        for (Building building : VillageColonyMod.BUILDINGS.ofColony(colonyId)) {
+            if (isFarm(building.blueprint())) {
+                built++;
+            }
+        }
+
+        return built < villagers / VILLAGERS_PER_FARM;
     }
 
     /**

@@ -257,13 +257,17 @@ public final class ConstructionPlanner {
         // mesma porta. Nenhuma regra de espaçamento foi escrita duas
         // vezes.
         //
-        // O pedido vem do fazendeiro, que já varreu o raio e sabe que não
-        // há nem lavoura madura nem canteiro vazio — ver
-        // FarmerWork.wantsAField. Ele se fecha sozinho: a roça que nascer
-        // dá canteiro para semear, e a colônia volta a levantar casa.
+        // <b>Quantas, é a população que diz</b> — decisão do autor,
+        // 2026-09-05: "zona de plantação criada a cada 15 aldeões
+        // existentes na vila".
+        //
+        // O pedido vinha do fazendeiro — "varri o raio e não achei
+        // campo" — e um pedido assim não tem teto: a sessão das 21:17
+        // levantou duas roças em quatro minutos porque a primeira nasceu
+        // longe demais para ele ver. A cota fecha isso por construção.
         List<Blueprint> plans = List.of();
 
-        if (FarmerWork.wantsAField(colony.id())) {
+        if (FarmPlans.owedToThePopulation(colony.id())) {
             plans = FarmPlans.plansFor(world, colony);
         }
 
