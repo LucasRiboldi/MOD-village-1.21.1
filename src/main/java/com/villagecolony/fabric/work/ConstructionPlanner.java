@@ -280,13 +280,30 @@ public final class ConstructionPlanner {
 
         Blueprint blueprint = plans.get(0);
 
+        // <b>Roça não sai atrás da estrada</b> — 2026-09-05, visto em
+        // jogo. A primeira roça da colônia nasceu em {x=1517, z=113} com
+        // o centro em {x=1435, z=47}: <b>105 blocos</b>, porque o lote
+        // veio da ponta da estrada que a vila estava esticando. O
+        // fazendeiro procura lavoura a 32 do centro, então ele nunca a
+        // veria — e a linha do log logo depois de ela ficar pronta era
+        // exatamente "no empty plot within 32 blocks of the village".
+        //
+        // Pior: o pedido de roça nunca se fechava, e a colônia levantou
+        // <b>duas</b> em quatro minutos, a caminho de encher o mapa.
+        //
+        // A extensão de rua existe para a vila <b>crescer</b>, e casa
+        // nova na ponta é o que ela quer. Roça é o contrário: o autor
+        // pediu "um espaço livre <b>dentro da vila</b>", e a varredura em
+        // anéis a partir do centro já devolve o lote livre mais perto.
+        boolean farming = FarmPlans.isFarm(blueprint.id());
+
         // A ponta que já rendeu continua rendendo, e isso vem antes da
         // varredura — 2026-08-26. Sem isto a colônia pagava dezessete
         // ciclos por bloco de rua, e a sessão das 03:11 mediu o custo:
         // um bloco calçado, e o lote de sete por sete continuou sem
         // caber. Quem autorizou a rua a crescer foi a varredura que
         // terminou sem lote, e essa autorização vale para o trecho.
-        if (RoadExtension.isGrowing(colony.id())) {
+        if (!farming && RoadExtension.isGrowing(colony.id())) {
             Optional<ConstructionProject> onTheStretch =
                     keepGrowing(world, colony, blueprint, plans, builders);
 
@@ -337,6 +354,17 @@ public final class ConstructionPlanner {
         //
         // A pergunta desceu para `BuildSiteScanner.isClearAbove`, que é
         // onde a varredura ainda pode seguir para o anel seguinte.
+
+        if (farming && !withinTheFarmersReach(colony, site.get())) {
+            // Lote livre, mas longe demais: o fazendeiro procura lavoura
+            // a FarmerWork.reach() do centro, e roça que ele não vê é
+            // roça que ninguém planta — e que não fecha o pedido, então
+            // a colônia levantaria outra, e outra.
+            return silent(
+                    colony,
+                    IdleReason.NO_TARGET,
+                    "the only free lot is outside the farmer's reach");
+        }
 
         return open(world, colony, site.get(), plans, blueprint, builders);
     }
@@ -521,6 +549,28 @@ public final class ConstructionPlanner {
                 project.origin(),
                 standing,
                 project.remainingCount());
+    }
+
+    /**
+     * Se este lote está onde o fazendeiro trabalha.
+     *
+     * <p>Medido em quadrado e a partir do centro da vila, que é
+     * exatamente como {@code CropPatch.survey} varre: usar aqui uma
+     * conta diferente da dele poria a roça na borda que ele nunca
+     * alcança, e é esse o defeito que esta guarda existe para não
+     * repetir.
+     *
+     * <p><b>Pública para o teste chamá-la</b>, e não por precisar de
+     * fora. É o precedente do {@code MinerWork.footingIn}, e pelo mesmo
+     * motivo: um teste que reimplementasse esta conta afirmaria a cópia
+     * dele, e não a regra — foi assim que a correção do E32 passou sem
+     * ninguém ver, em 2026-09-05.
+     */
+    public static boolean withinTheFarmersReach(Colony colony, BuildSiteScanner.Site site) {
+        int dx = Math.abs(site.origin().x() - colony.center().x());
+        int dz = Math.abs(site.origin().z() - colony.center().z());
+
+        return Math.max(dx, dz) <= FarmerWork.reach();
     }
 
     /**

@@ -3,18 +3,26 @@ package com.villagecolony.gametest;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
+import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.VillageStructures;
+import com.villagecolony.fabric.work.ConstructionPlanner;
+import com.villagecolony.fabric.work.FarmPlans;
+import com.villagecolony.fabric.work.FarmerWork;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.CropBlock;
 import net.minecraft.test.GameTest;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.test.TestContext;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * A roça que a colônia levanta é a do jogo, e ela sai vazia.
@@ -82,12 +90,11 @@ public class FarmPlanGameTest implements FabricGameTest {
                 "a roça do jogo veio sem lavoura, e aí este teste não mede nada");
 
         Colony colony = Colony.create(
-                java.util.UUID.randomUUID(),
+                UUID.randomUUID(),
                 MinecraftTypeAdapter.toColonyPos(
-                        context.getAbsolutePos(new net.minecraft.util.math.BlockPos(1, 2, 1))));
+                        context.getAbsolutePos(new BlockPos(1, 2, 1))));
 
-        List<Blueprint> plans = com.villagecolony.fabric.work.FarmPlans
-                .plansFor(context.getWorld(), colony);
+        List<Blueprint> plans = FarmPlans.plansFor(context.getWorld(), colony);
 
         context.assertTrue(!plans.isEmpty(), "a colônia não recebeu planta de roça nenhuma");
 
@@ -96,6 +103,54 @@ public class FarmPlanGameTest implements FabricGameTest {
                     plan.blocks().stream().noneMatch(FarmPlanGameTest::isCrop),
                     "a planta da roça saiu com lavoura plantada, e a obra vai esperar semente");
         }
+
+        context.complete();
+    }
+
+    /**
+     * <b>A roça nasce dentro da vila, e não na ponta da estrada</b> —
+     * 2026-09-05, visto em jogo.
+     *
+     * <p>A primeira roça da colônia nasceu em {@code x=1517, z=113} com o
+     * centro em {@code x=1435, z=47}: <b>105 blocos</b>, porque o lote
+     * veio da ponta da estrada que a vila estava esticando. O fazendeiro
+     * procura lavoura a {@code FarmerWork.reach()} do centro, então ele
+     * nunca a viu — e a linha logo depois de ela ficar pronta era
+     * exatamente {@code no empty plot within 32 blocks of the village}.
+     *
+     * <p><b>E o pedido de roça nunca se fechava:</b> a colônia levantou
+     * duas em quatro minutos, a caminho de encher o mapa.
+     *
+     * <p>O autor pediu <i>"um espaço livre <b>dentro da vila</b>"</i>, e é
+     * essa a conta que esta guarda faz.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farm_plan")
+    public void theFarmLotStaysWithinTheFarmersReach(TestContext context) {
+        Colony colony = Colony.create(
+                UUID.randomUUID(), new ColonyPos(0, 64, 0));
+
+        int reach = FarmerWork.reach();
+
+        ColonyPos size = new ColonyPos(5, 3, 5);
+
+        BuildSiteScanner.Site near = new BuildSiteScanner.Site(
+                new ColonyPos(reach, 64, 0),
+                Direction.NORTH,
+                size);
+
+        BuildSiteScanner.Site far = new BuildSiteScanner.Site(
+                new ColonyPos(reach + 1, 64, 0),
+                Direction.NORTH,
+                size);
+
+        context.assertTrue(
+                ConstructionPlanner.withinTheFarmersReach(colony, near),
+                "o lote na borda do alcance do fazendeiro foi recusado");
+
+        context.assertFalse(
+                ConstructionPlanner.withinTheFarmersReach(colony, far),
+                "um lote fora do alcance do fazendeiro passou — é a roça de 105 blocos"
+                        + " que ninguém planta, de volta");
 
         context.complete();
     }

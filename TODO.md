@@ -268,6 +268,60 @@ abaixo, com o porquê.
 
 ## ✅ Resolvido
 
+### 2026-09-05, 21:17 — a roça nasceu, e nasceu no lugar errado
+
+**Nove minutos, sem crash, sem exception.** O conserto das 21:11 segurou, e a
+obra que estava travada se destravou sozinha: `Project eb8b3a13 has what it was
+waiting for — back to building, 21 blocks left`, e a casa fechou 39 segundos
+depois.
+
+#### A roça funcionou de ponta a ponta, pela primeira vez
+
+```text
+21:20:37 planned  village/plains/houses/plains_small_farm_1 at {x=1517, z=113} — 64 blocos
+21:21:52 finished village/plains/houses/plains_small_farm_1 — 29 blocos assentados
+```
+
+**Setenta e cinco segundos do plano à obra pronta**, com a planta do próprio
+jogo, num lote que a mesma busca das casas achou. As duas exigências do autor
+saíram exatamente de onde se esperava.
+
+#### 🔴 E ela nasceu a 105 blocos do centro
+
+| | |
+|---|---|
+| centro da colônia | `x=1435, z=47` |
+| roça | `x=1517, z=113` |
+| distância | **~105 blocos** |
+| alcance do fazendeiro | **32** |
+
+O lote veio da **ponta da estrada** que a vila estava esticando — o
+`RoadExtension`, que existe para a vila *crescer*. E a linha logo depois de a
+roça ficar pronta é a prova: `no empty plot within 32 blocks of the village`.
+
+**Pior que o desperdício: o pedido de roça nunca se fechava.** Como o fazendeiro
+não a vê, `wantsAField` continua verdadeiro — e a colônia levantou **duas roças
+em quatro minutos**, a caminho de encher o mapa. A frase *"se fecha sozinho"* do
+ciclo anterior estava errada, e é este o defeito que a desmente.
+
+**Dois consertos, um em cada ponta:**
+
+- **Roça não sai atrás da estrada.** A extensão de rua é para casa nova na
+  ponta; roça é o contrário — o autor pediu *"um espaço livre dentro da
+  vila"*, e a varredura em anéis a partir do centro já devolve o lote livre mais
+  perto.
+- **E o lote é recusado se estiver fora do alcance do fazendeiro.**
+  `FarmerWork.reach()` virou público para que as duas contas concordem **por
+  construção**: duas constantes separadas discordando é o mesmo defeito que o
+  `isOpenSpace` da mina já tinha tido.
+
+A guarda ficou pública para o teste chamá-la, no precedente do
+`MinerWork.footingIn` — teste que reimplementa a conta afirma a cópia, e não a
+regra.
+
+**Verificação:** **648 unitários e 267 gametests, zero falhas.** **Não visto em
+jogo.**
+
 ### 2026-09-05, 21:06 — o crash, e o travamento silencioso ao lado dele
 
 **O servidor caiu.**

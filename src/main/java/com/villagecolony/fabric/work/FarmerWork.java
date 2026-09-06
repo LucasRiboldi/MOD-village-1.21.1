@@ -151,6 +151,20 @@ public final class FarmerWork {
     }
 
     /**
+     * Até onde o fazendeiro enxerga lavoura, a partir do centro da vila.
+     *
+     * <p><b>É a mesma medida que limita onde a roça pode nascer</b> —
+     * 2026-09-05, e ela é publicada para que as duas concordem por
+     * construção. A primeira roça da colônia nasceu a 105 blocos do
+     * centro, na ponta de uma estrada nova, e o fazendeiro nunca a viu:
+     * duas constantes separadas discordando é exatamente o defeito que
+     * o {@code isOpenSpace} da mina já tinha tido.
+     */
+    public static int reach() {
+        return searchRadius;
+    }
+
+    /**
      * Se esta colônia precisa de uma roça — 2026-09-05.
      *
      * <p>Pergunta do planejador de obra, e a resposta é a do fazendeiro:
