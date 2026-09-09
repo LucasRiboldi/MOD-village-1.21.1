@@ -135,6 +135,46 @@ class MinerLegTest {
     }
 
     /**
+     * E <b>em cima</b> da mina também — 2026-09-09.
+     *
+     * <p>O teste acima passava desde sempre, e não cobria isto: ele põe o
+     * aldeão a vinte blocos do poço, onde a ordem de cavar já está fora
+     * de alcance e a resposta sai pelo caminho de nunca ter achado passo.
+     * O buraco estava no aldeão que está <b>perto</b> — em cima da mina,
+     * na superfície, com a escada correndo debaixo dele.
+     *
+     * <p>Ali {@code orderIndexNear} achava uma posição da ordem a menos de
+     * uma perna e o passo saía por dentro da rocha. É a queixa do autor
+     * de 09-09 — <i>"o mineiro está perdido, rodando no próprio eixo"</i>
+     * —, e a sessão dela tem a linha inteira:
+     *
+     * <pre>
+     * digging Diorito at 2434, 44, -1428, 21,2 blocks away
+     * (out of reach, he is at 2430, 64, -1435, walking to 2427, 61, -1429)
+     * stall 1198/2400 → 1798/2400 → 2398/2400,  still 0/300
+     * </pre>
+     *
+     * <p>A boca daquela vila estava em {@code 2426, 63, -1432}: <b>cinco
+     * blocos dele</b>. Ele não estava longe da mina — estava por cima
+     * dela, e entre ele e o passo havia chão.
+     *
+     * <p>O {@code still 0/300} é a parte que explica o que o autor viu:
+     * o guarda de imobilidade não o pegava, porque ele <b>se mexia</b>. A
+     * navegação não tem caminho até um ponto dentro da rocha, então ela o
+     * vira na direção do alvo e o deixa lá, girando, até o guarda de
+     * travamento devolver a tarefa dois minutos depois.
+     */
+    @Test
+    void fromOnTopOfTheMineHeStillGoesInThroughTheMouth() {
+        BlockPos aboveTheStaircase = new BlockPos(735, 64, 895);
+
+        assertEquals(
+                MOUTH_BLOCK,
+                MinerReach.legTowards(aboveTheStaircase, DEEP, mine(30), ANYWHERE),
+                "o passo saiu por dentro da rocha, e a navegação não tem caminho até ele");
+    }
+
+    /**
      * <b>O E35.</b> Já na boca, o passo é escada abaixo — e não a pedra.
      *
      * <p>Este teste afirmava o contrário até 2026-08-29, e o que ele

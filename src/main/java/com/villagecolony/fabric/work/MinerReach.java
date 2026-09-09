@@ -138,6 +138,32 @@ public final class MinerReach {
     private static final int STEPS_SCANNED = 2000;
 
     /**
+     * A que distância da ordem de cavar o aldeão ainda está <b>dentro</b>
+     * da passagem — 2026-09-09.
+     *
+     * <p>Dois blocos, e o número foi medido, não escolhido. O caracol
+     * entrega cada degrau como três posições — piso, peito e cabeça — e
+     * isso muda a resposta conforme <b>de onde</b> se olha:
+     *
+     * <pre>
+     * na boca,     731,63,898 → 731,63,897 (piso)    1,00
+     * em cima,     735,64,895 → 732,64,896 (cabeça)  3,16
+     * </pre>
+     *
+     * <p>Quem está no corredor está encostado no piso dele. Quem está na
+     * superfície em cima da mina só alcança a <b>cabeça</b> da escada,
+     * que passa perto da superfície e é o que confundia a conta: há
+     * posição da ordem a três blocos dele, e entre os dois há chão.
+     *
+     * <p>Não é {@link #REACH} nem {@link #LEG}, e as três perguntas são
+     * diferentes: o braço é o que ele alcança para <b>cavar</b>, a perna
+     * é o que ele cumpre <b>andando</b>, e esta é onde ele <b>está</b>.
+     * Usar a perna aqui foi o defeito de 09-09; o braço também não
+     * serve, porque a cabeça da escada cabe nele.
+     */
+    private static final int IN_THE_PASSAGE = 2;
+
+    /**
      * Para onde mandar o aldeão agora — um passo pela escada.
      *
      * <p><b>A sessão da meia-noite mostrou onde ele estava</b>, e foi a
@@ -406,6 +432,35 @@ public final class MinerReach {
         int here = orderIndexNear(villager, mine, scanned);
 
         if (here < 0) {
+            return null;
+        }
+
+        // <b>Estar perto da passagem não é estar nela</b> — 2026-09-09.
+        //
+        // O javadoc acima sempre prometeu <i>"nulo quando ele não está na
+        // passagem"</i>, e o {@link #orderIndexNear} respondia outra
+        // pergunta: se havia posição da ordem a menos de uma <b>perna</b>
+        // — oito blocos. Quem está na superfície em cima da mina passa
+        // nesse teste, e a escada corre debaixo dele.
+        //
+        // A partir daí a cadeia inteira mente. Ela é contígua <b>dentro
+        // da ordem de cavar</b>, e é isso que os dois guardas ao lado
+        // protegem — a parede do E34, o bloco não cavado do E32. Nenhum
+        // dos dois olha o primeiro elo: se o aldeão não está no corredor,
+        // não há corredor entre ele e o passo, por mais contíguo que o
+        // trecho seja daí para frente.
+        //
+        // A sessão de 09-09 pagou por isso, e a queixa do autor foi
+        // <i>"o mineiro está perdido, rodando no próprio eixo"</i>: com a
+        // boca a cinco blocos dele, o passo saiu três blocos abaixo, do
+        // outro lado do chão. A navegação não traça caminho para dentro
+        // da rocha, então ela o virou para o alvo e o deixou lá — e o
+        // guarda de imobilidade não pega quem <b>gira</b>. Dois minutos
+        // por tentativa, até o guarda de travamento devolver a tarefa.
+        //
+        if (Math.sqrt(villager.getSquaredDistance(at(mine.shaft().positionAt(here))))
+                > IN_THE_PASSAGE) {
+
             return null;
         }
 
