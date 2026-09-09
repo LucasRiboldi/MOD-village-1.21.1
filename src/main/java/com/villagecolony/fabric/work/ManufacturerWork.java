@@ -412,6 +412,24 @@ public final class ManufacturerWork {
             return false;
         }
 
+        // <b>Este laço para no primeiro material que ele consegue
+        // produzir, então a ordem é a prioridade do fabricante</b> — e
+        // ela não era escolhida. {@code remainingMaterials} devolvia
+        // mapa sem ordem até 2026-09-09, e o fabricante atendia o que o
+        // sorteio mandasse.
+        //
+        // A sessão de 09-09 mediu o preço: treze lotes de escada, sete
+        // de tábua, uma porta, uma vidraça — e <b>zero troncos
+        // descascados</b>, com 59 toras no baú e o construtor parado em
+        // "waiting for minecraft:stripped_oak_log". Descascar é o único
+        // material que só sai daqui, e era o único que nunca ganhava a
+        // vez; as dezesseis peças riscadas naquela casa foram todas ela.
+        //
+        // Agora a ordem é a da planta, e o primeiro material da lista é
+        // o do bloco em que o construtor está parado — {@code nextBlock}
+        // é a primeira posição que falta, e é dela que a lista começa a
+        // ser contada. Não há prioridade a escrever aqui: basta a ordem
+        // chegar inteira.
         for (ResourceId wanted : open.get().remainingMaterials().keySet()) {
             Optional<Item> item = MinecraftTypeAdapter.toBlock(wanted).map(Block::asItem);
 

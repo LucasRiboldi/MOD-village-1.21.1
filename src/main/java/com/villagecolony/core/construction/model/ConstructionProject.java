@@ -4,6 +4,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -168,7 +169,20 @@ public final class ConstructionProject {
             tally.merge(block.block(), 1, Integer::sum);
         }
 
-        return Map.copyOf(tally);
+        // <b>E a ordem da planta chega inteira a quem pergunta</b> —
+        // 2026-09-09. Era {@code Map.copyOf}, que devolve mapa imutável
+        // <b>sem ordem</b> — e embaralhado a cada execução da máquina
+        // virtual. O {@code LinkedHashMap} acima existia para nada: a
+        // última linha jogava fora a ordem que ele guardava.
+        //
+        // Quem pagou foi o fabricante. {@code ManufacturerWork} percorre
+        // este mapa e para no primeiro material que consegue produzir,
+        // então a ordem <b>é</b> a prioridade dele — e ela era sorteada.
+        // A sessão de 09-09 mediu o preço: treze lotes de escada, sete
+        // de tábua, e <b>zero troncos descascados</b> com 59 toras no
+        // baú, porque descascar nunca ganhava a vez. As dezesseis peças
+        // riscadas pela barreira naquela casa saíram daqui.
+        return Collections.unmodifiableMap(tally);
     }
 
     /** Quantos blocos ainda faltam. */

@@ -5,6 +5,7 @@ import com.villagecolony.core.type.ResourceId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -62,6 +63,79 @@ class ConstructionProjectTest {
     @Test
     void theMaterialListCountsTheWholeHouse() {
         assertEquals(Map.of(COBBLE, 2, PLANKS, 1), project.materials());
+    }
+
+    /**
+     * A lista sai na ordem da planta — 2026-09-09, o E4.
+     *
+     * <p>Ela saía de {@code Map.copyOf}, que devolve mapa imutável
+     * <b>sem ordem</b> e embaralhado a cada execução da máquina virtual.
+     * O {@code LinkedHashMap} que a monta existia para nada.
+     *
+     * <p>Parece detalhe e não é: {@code ManufacturerWork} percorre esta
+     * lista e para no primeiro material que consegue produzir, então a
+     * ordem <b>é</b> a prioridade dele. Sorteada, ela deixou a sessão de
+     * 09-09 com treze lotes de escada e zero troncos descascados, com o
+     * construtor parado esperando justamente o descascado.
+     */
+    @Test
+    void theShoppingListKeepsTheBlueprintsOrder() {
+        // Seis materiais, e não dois: a ordem de {@code Map.copyOf} é
+        // sorteada, e com dois ela acertaria metade das vezes. Um teste
+        // que passa por acaso em código quebrado não prova nada — com
+        // seis, o acaso é uma vez em setecentas e vinte.
+        List<ResourceId> planned = List.of(
+                ResourceId.vanilla("stripped_oak_log"),
+                PLANKS,
+                COBBLE,
+                ResourceId.vanilla("oak_stairs"),
+                ResourceId.vanilla("oak_door"),
+                ResourceId.vanilla("glass_pane"));
+
+        List<BlueprintBlock> blocks = new ArrayList<>();
+
+        for (int i = 0; i < planned.size(); i++) {
+            blocks.add(block(i, 0, 0, planned.get(i)));
+        }
+
+        ConstructionProject ordered = ConstructionProject.plan(
+                UUID.randomUUID(), Blueprint.of(HOUSE, blocks), ORIGIN);
+
+        assertEquals(
+                planned,
+                List.copyOf(ordered.remainingMaterials().keySet()),
+                "a ordem da planta se perdeu, e a prioridade do fabricante vira sorteio");
+    }
+
+    /**
+     * E o primeiro da lista é o material do bloco que vem agora.
+     *
+     * <p><b>É o contrato de que o fabricante depende</b>, e é por isso
+     * que ele não escreve prioridade nenhuma: ele percorre esta lista e
+     * para no primeiro que consegue produzir, então basta a ordem chegar
+     * inteira para ele atender primeiro o que trava a obra.
+     *
+     * <p>Fica travado aqui porque é uma ligação silenciosa — nada em
+     * {@code ConstructionProject} diz que alguém depende desta ordem, e
+     * foi assim que o {@code Map.copyOf} a apagou sem ninguém notar.
+     */
+    @Test
+    void theFirstMaterialIsTheOneTheBuilderNeedsNext() {
+        assertEquals(COBBLE, project.nextBlock().orElseThrow().block());
+        assertEquals(COBBLE, List.copyOf(project.remainingMaterials().keySet()).get(0));
+
+        project.markPlaced(block(0, 0, 0, COBBLE));
+        project.markPlaced(block(1, 0, 0, COBBLE));
+
+        assertEquals(
+                PLANKS,
+                project.nextBlock().orElseThrow().block(),
+                "o bloco que vem mudou e a lista não acompanhou");
+
+        assertEquals(
+                PLANKS,
+                List.copyOf(project.remainingMaterials().keySet()).get(0),
+                "o fabricante deixaria de produzir justamente o que trava a obra");
     }
 
     /** Pedir de novo o que já está na parede mandaria cortar madeira à toa. */
