@@ -3068,6 +3068,30 @@ public class MinerGameTest implements FabricGameTest {
         MinerWork.run(world, colony);
 
         context.runAtTick(360, () -> {
+            // <b>KF-001, e esta linha existe porque a falha é rara.</b>
+            //
+            // A mensagem de uma asserção de gametest <b>não aparece no
+            // log da bateria</b> — o console imprime só o nome do teste
+            // que falhou. Numa falha de uma em doze, isso é a diferença
+            // entre diagnosticar e adivinhar: a sessão de 2026-09-09
+            // gastou catorze execuções tentando reproduzir e voltou sem
+            // nada porque o estado do momento não estava escrito em
+            // lugar nenhum.
+            //
+            // Fala só quando algo está errado, para não somar ruído às
+            // 269 passagens de uma bateria verde.
+            if (task.state() == TaskState.RESERVED
+                    || task.state() == TaskState.EXECUTING
+                    || !WorkHours.isWorkTime(world, villager)) {
+
+                VillageColonyMod.LOGGER.warn(
+                        "KF-001 — o mineiro emparedado ainda está com a tarefa no tique 360."
+                                + " task={}, expediente={}, relatório={}",
+                        task.state(),
+                        WorkHours.isWorkTime(world, villager),
+                        MinerReport.report(world, colony).orElse("(sem relatório)"));
+            }
+
             try {
                 context.assertTrue(
                         WorkHours.isWorkTime(world, villager),

@@ -15,8 +15,9 @@ presumido; onde não houve medição, está escrito que não houve.
 | unidade | `./gradlew test --rerun-tasks` | **669 testes, 59 classes, 0 falhas** |
 | gametest | `./gradlew runGametest --rerun-tasks` | **269 testes, 30 classes registradas** |
 
-**A bateria de gametest não é confiavelmente verde.** Em 12 execuções seguidas na
-mesma máquina e no mesmo commit, **3 falharam** — sempre o mesmo teste. Ver
+**A bateria de gametest não é confiavelmente verde.** Em 30 execuções na mesma
+máquina, **3 falharam** — sempre o mesmo teste, e todas as três nas 12 primeiras.
+As 18 seguintes passaram, e a falha não foi reproduzida sob demanda. Ver
 [known-failures.md](known-failures.md), KF-001.
 
 Isto é o achado mais importante da auditoria. Uma rede de segurança que passa

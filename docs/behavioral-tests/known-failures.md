@@ -53,5 +53,36 @@ esbarra no ciclo (medido acima), e afrouxar a asserção mascararia o defeito, q
 do orçamento global — dar alvo ao mineiro sem passar pela busca disputada, ou
 isolar o cenário num lote sem outros mineiros. Nenhuma das duas foi tentada.
 
+**Segunda investida, 2026-09-09 — não reproduzida.** Depois de instrumentar o
+teste, **18 execuções seguidas passaram**:
+
+| tentativa | execuções | falhas |
+|---|---|---|
+| descoberta | 12 | 3 |
+| com sonda incondicional | 14 | 0 |
+| com instrumento condicional | 4 | 0 |
+| **total** | **30** | **3, todas nas 12 primeiras** |
+
+A 25%, dezoito verdes seguidos têm ~0,6% de chance. Duas leituras possíveis, e
+não há dado para escolher entre elas: ou a instrumentação perturbou o cenário
+(Heisenbug), ou as três falhas dependeram de **carga da máquina** — elas
+aconteceram durante uma sequência de builds encadeados, e não voltaram no laço
+estável.
+
+**Estado: aberto, não corrigido.** Nenhuma alteração de produção foi feita, e a
+causa segue sem prova. O que mudou é que a próxima falha vai deixar rastro.
+
+**O que ficou no lugar.** A mensagem de uma asserção de gametest **não aparece no
+log da bateria** — o console imprime só o nome do teste. Era por isso que as três
+falhas não puderam ser diagnosticadas depois. O teste agora escreve um `WARN` com
+`task`, expediente e o relatório do mineiro **quando, e só quando**, a asserção
+está prestes a falhar. Bateria verde continua silenciosa.
+
+**Próxima investida, quando ela reaparecer:** ler o `WARN`. Se `task` vier
+`RESERVED`, a hipótese é re-reserva pelo ciclo da colônia; se vier `AVAILABLE`
+com expediente `false`, é o relógio; se o relatório mostrar `still` baixo, é a
+fila global de buscas. As três levam a correções diferentes, e é essa escolha que
+faltou hoje.
+
 **O que NÃO fazer:** marcar o teste como ignorado, aumentar `tickLimit` sem
 entender, ou reexecutar a bateria até dar verde e chamar isso de aprovação.
