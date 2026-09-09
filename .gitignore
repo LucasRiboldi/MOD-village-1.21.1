@@ -64,8 +64,15 @@ minecraft-assets_structure/
 # Área de trabalho do Claude Code. As worktrees carregam cache do Gradle e jars
 # remapeados (~174 MB) — são reconstruíveis e não pertencem ao histórico.
 # As skills em .claude/skills/ SÃO versionadas: são documentação do projeto.
+#
+# Pela mesma razão, desde 2026-09-09: .claude/agents/ e .claude/commands/.
+# O gauntlet-verifier e o laço /gauntlet são regra de trabalho deste
+# repositório — quem clonar sem eles perde o portão de qualidade e não
+# fica sabendo. Configuração de máquina continua fora (settings.local.json).
 .claude/*
 !.claude/skills/
+!.claude/agents/
+!.claude/commands/
 
 # Bytecode do Python. Os utilitários de manutenção em scripts/ e os testes
 # deles em tests/ geram isto ao rodar; é derivado e reconstruível.

@@ -27,6 +27,64 @@ Rules:
   Re-clustering also moves nodes between communities, so a name can end up sitting oddly on a node you remember elsewhere. `ColonyPos` left `Geometry Helpers` for `Colony Center and Observation`, because 12 of that old community's 20 nodes went there; the 8 that stayed are now `ColonyPos Distance`. The name follows the majority of the members, not any one node.
 - `.graphifyignore` at the root excludes `.claude/`, and it has to. The `.gitignore` reopens `.claude/skills/` so the skills are versioned, graphify reads `.gitignore`, and without the exclusion `update` indexes the 158 skill markdowns and adds ~2.2k heading nodes to the mod's graph — measured 2026-09-02: 3,167 to 5,422 nodes, which pushed `graph.html` past the 5,000 limit into aggregated community view. `.graphifyignore` is read after `.gitignore` and can only ever exclude more, never re-include.
 
+## O Gauntlet Loop: quem escreve o código não libera o código
+
+**Alteração relevante de código não está pronta porque o agente terminou
+de escrevê-la.** Ela está pronta quando o `gauntlet-verifier` devolve
+`PASS`.
+
+| papel | quem | pode |
+|---|---|---|
+| **Builder** | o fio principal | implementar, criar e atualizar teste, corrigir o que for apontado, rodar a conferência rápida |
+| **Verifier** | subagente `gauntlet-verifier` | rodar os comandos reais, procurar o que quebra, e **só ele** liberar |
+
+```
+BUILD → VERIFY → PASS → entrega
+            └──→ FAIL → relatório → BUILD/FIX → VERIFY → ...
+```
+
+Com teto: `MAX_ITERATIONS = 5`. Estourou sem PASS, o resultado é
+`BLOCKED` — e `BLOCKED` nunca é anunciado como pronto.
+
+**Como rodar:** `/gauntlet <o requisito em uma linha>`. O laço está em
+[`.claude/commands/gauntlet.md`](.claude/commands/gauntlet.md) e o crítico
+em [`.claude/agents/gauntlet-verifier.md`](.claude/agents/gauntlet-verifier.md).
+
+**A evidência é de máquina, não de opinião.** `scripts/gauntlet_checks.py`
+roda as camadas na ordem em que ficam caras — diff, typecheck, unitários,
+testes de Python, gametest —, para na primeira falha bloqueante e lê a
+contagem dos **XML de relatório**, não do que o Gradle imprimiu;
+`scripts/gauntlet.py` decide e grava `build/gauntlet/iteration-N.json` e o
+histórico do laço em `build/gauntlet/ledger.json`. São dois arquivos
+porque juntos passavam de 580 linhas, e a regra deste projeto é 500 — a
+mesma que o gate acusa.
+
+Três coisas que ele faz e que valem saber:
+
+- **Relatório mais velho que o código é `BLOCKED`, não `PASS`.** Tarefa
+  `UP-TO-DATE` do Gradle não reescreve o XML, e sem essa conferência uma
+  bateria que não rodou passaria por bateria verde.
+- **O agente pode rebaixar o veredito do script, nunca promovê-lo.** A
+  única exceção é a camada `security`, e ela exige `--security-reviewed
+  "<o que foi conferido>"` — a promoção fica escrita no relatório.
+- **Sem `--deep` não há `PASS`.** A bateria de gametest sobe um servidor
+  e leva minutos; pular é legítimo para confirmar um FAIL barato, e nunca
+  para aprovar.
+
+**Não existe lint neste projeto** — sem checkstyle, spotless ou PMD —, e
+o script diz isso em vez de inventar um comando. Quem faz esse papel são
+os testes de arquitetura, na camada unitária: `DependencyRuleTest` e
+`ConversionBoundaryTest`.
+
+**A decisão do gate tem teste**, em `tests/test_gauntlet.py` (74 casos,
+stdlib). Como o `graphify_relabel.py`, ele **não** está no `./gradlew
+build`: fazer o build de um projeto Java exigir Python quebraria a
+máquina que não tem Python, por causa de um utilitário que não vai no jar.
+Rode à mão ao mexer no script — e o próprio laço o roda quando o diff
+toca `scripts/` ou `tests/`.
+
+---
+
 ## As skills do projeto: ofereça, não decida sozinho
 
 Este projeto carrega quatro skills próprias em `.claude/skills/`. Elas são

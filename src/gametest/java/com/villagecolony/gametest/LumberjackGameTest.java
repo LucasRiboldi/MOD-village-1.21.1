@@ -11,6 +11,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
+import com.villagecolony.fabric.work.LumberjackReport;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.TreeChoice;
 import com.villagecolony.fabric.work.TreeMarks;
@@ -24,6 +25,10 @@ import com.villagecolony.fabric.integration.TreeHarvester;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.TreeScanner;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Property;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.LeavesBlock;
 import net.minecraft.entity.EntityType;
@@ -37,6 +42,7 @@ import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -1025,7 +1031,31 @@ public class LumberjackGameTest implements FabricGameTest {
         // Sessenta ticks de horário de trabalho em vez de 2.400.
         TreeChoice.shortenStallLimitTo(60);
 
-        LumberjackWork.run(world, colony);
+        // <b>E o que ele escreve no log entra no que se afirma</b> —
+        // 2026-09-09, achado do gauntlet-verifier. Este teste provava que
+        // a tarefa volta e que a árvore é esquecida, e nada provava o
+        // NÚMERO da linha de desistência: ela imprimia a constante 2.400
+        // em desistências separadas por 600 tiques, e a mesma frase saía
+        // para os dois guardas.
+        //
+        // A afirmação tem de ser sobre o texto emitido, e não sobre os
+        // construtores dele: o mutante que recria o defeito —
+        // `TreeChoice.noProgress(TreeChoice.stallLimit)` nos dois pontos
+        // de desistência — passa por cima de qualquer unitário de função
+        // pura, porque erra no ARGUMENTO. Medido: com o mutante aplicado,
+        // 681 unitários e 274 gametests passaram.
+        Captured captured = Captured.attached();
+
+        // Um appender que fica para trás contamina a bateria inteira, e
+        // o `finally` lá embaixo só existe depois que o `runAtTick` foi
+        // registrado — achado do gauntlet-verifier na iteração 2.
+        try {
+            LumberjackWork.run(world, colony);
+        } catch (RuntimeException | Error failure) {
+            captured.detach();
+
+            throw failure;
+        }
 
         context.runAtTick(300, () -> {
             TreeChoice.restoreStallLimit();
@@ -1053,7 +1083,32 @@ public class LumberjackGameTest implements FabricGameTest {
                         "o guarda devolveu a tarefa e não esqueceu a árvore de "
                                 + marooned.toShortString()
                                 + " — o substituto vai travar no mesmo lugar");
+                // <b>Procurado pelo trabalhador, e não pelo sufixo da
+                // frase</b> — achado do gauntlet-verifier na iteração 2.
+                // Os lotes de gametest rodam concorrentes, e uma busca por
+                // substring solta casaria com a linha de outro teste que
+                // desistisse no mesmo instante. O identificador curto é o
+                // do LumberjackReport, e não um recorte reescrito aqui.
+                String said = captured.lineFor(villager.getUuid());
+
+                context.assertTrue(
+                        said != null,
+                        "o lenhador desistiu sem escrever a linha de desistência");
+
+                // O guarda que falou aqui é o de travamento, e ele fala
+                // no tique seguinte ao limite: `++job.stalled > 60` sai
+                // com 61. Sessenta é a CONSTANTE — se ela aparecer, a
+                // linha voltou a imprimir o limite em vez do contador.
+                context.assertTrue(
+                        said.contains("made no progress for 61 work ticks"),
+                        "a linha não trouxe o contador do guarda que falou: " + said);
+
+                context.assertFalse(
+                        said.contains("for 60 work ticks"),
+                        "a linha voltou a imprimir a constante do limite: " + said);
             } finally {
+                captured.detach();
+
                 TreeMarks.forgetUnreachable();
 
                 owned.cleanUp();
@@ -1061,6 +1116,62 @@ public class LumberjackGameTest implements FabricGameTest {
 
             context.complete();
         });
+    }
+
+    /**
+     * O que o mod escreveu no log durante o teste.
+     *
+     * <p>Existe porque a única afirmação capaz de pegar o defeito de
+     * 09-05 é sobre <b>o texto emitido</b>: o número errado entrava como
+     * argumento, e argumento errado passa por qualquer teste que
+     * exercite só a função que o formata.
+     *
+     * <p>Anexa-se ao logger do mod e sai no {@code finally} — um
+     * appender esquecido acumularia linha de todos os testes seguintes
+     * da bateria.
+     */
+    private static final class Captured extends AbstractAppender {
+
+        private final List<String> lines = new ArrayList<>();
+
+        private Captured() {
+            super("village-colony-gametest-capture", null, null, true, Property.EMPTY_ARRAY);
+        }
+
+        static Captured attached() {
+            Captured captured = new Captured();
+
+            captured.start();
+
+            ((org.apache.logging.log4j.core.Logger)
+                    LogManager.getLogger(VillageColonyMod.MOD_ID)).addAppender(captured);
+
+            return captured;
+        }
+
+        void detach() {
+            ((org.apache.logging.log4j.core.Logger)
+                    LogManager.getLogger(VillageColonyMod.MOD_ID)).removeAppender(this);
+
+            stop();
+        }
+
+        @Override
+        public void append(LogEvent event) {
+            lines.add(event.getMessage().getFormattedMessage());
+        }
+
+        String lineFor(java.util.UUID workerId) {
+            String who = LumberjackReport.shortId(workerId);
+
+            for (String line : lines) {
+                if (line.contains(who) && line.contains("wood task returned to the queue")) {
+                    return line;
+                }
+            }
+
+            return null;
+        }
     }
 
     /**

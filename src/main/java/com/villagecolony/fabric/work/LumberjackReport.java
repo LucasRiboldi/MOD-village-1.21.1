@@ -172,8 +172,16 @@ public final class LumberjackReport {
                 + ", stall " + job.stalled + "/" + TreeChoice.stallLimit;
     }
 
-    /** Os oito primeiros dígitos do UUID, como no resto do log. */
-    static String shortId(UUID id) {
+    /**
+     * Os oito primeiros dígitos do UUID, como no resto do log.
+     *
+     * <p><b>Público desde 2026-09-09</b>, e pelo motivo que o
+     * {@code MinerWork.footingIn} já abriu em 09-05: o gametest que
+     * afirma a linha de desistência precisa procurar o trabalhador certo
+     * no log, e um teste que recalcula o recorte do UUID passa a medir a
+     * própria cópia dele.
+     */
+    public static String shortId(UUID id) {
         return id.toString().substring(0, 8);
     }
 }

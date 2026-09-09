@@ -213,6 +213,44 @@ public final class TreeChoice {
     }
 
     /**
+     * Ele parou de andar, e há quantos tiques — o guarda de imobilidade.
+     *
+     * <p>Método, e não string montada no lugar da chamada, pelo motivo
+     * que o {@code footingIn} do mineiro já registrou em 2026-09-05: o
+     * que não é função o teste reimplementa, e aí passa a medir a cópia.
+     * Aqui o que se afirma é justamente que o <b>número é o contador</b>,
+     * e não a constante.
+     */
+    static String motionless(int ticks) {
+        return "has not moved a block in " + ticks + " work ticks";
+    }
+
+    /** Ele andou e não chegou, e há quantos tiques — o guarda de travamento. */
+    static String noProgress(int ticks) {
+        return "made no progress for " + ticks + " work ticks";
+    }
+
+    /**
+     * Qual dos dois guardas falou, e com que contador — 2026-09-09.
+     *
+     * <p><b>A escolha é que precisa ser função, e não só a frase.</b> Um
+     * teste que só exercita {@link #motionless} e {@link #noProgress}
+     * mede a interpolação, e o defeito de 09-05 não estava lá: estava no
+     * <b>argumento</b>, que era {@link #stallLimit}. Com os dois ramos
+     * aqui dentro, a asserção enxerga o que o chamador não pode mais
+     * escolher errado — passar a constante deixou de ser uma opção
+     * porque a constante não é parâmetro.
+     *
+     * @param motionless se quem devolveu a tarefa foi o guarda de
+     *     imobilidade, que fala aos {@code WorkStall.LIMIT}
+     * @param stillTicks há quantos tiques ele não sai do bloco
+     * @param stalledTicks há quantos tiques ele anda sem chegar
+     */
+    static String reasonFor(boolean motionless, int stillTicks, int stalledTicks) {
+        return motionless ? motionless(stillTicks) : noProgress(stalledTicks);
+    }
+
+    /**
      * Devolve à fila a tarefa de um lenhador que parou de andar.
      *
      * <p>Mesmo desfecho do trabalhador sem baú, e pelo mesmo motivo: a
@@ -221,17 +259,34 @@ public final class TreeChoice {
      * aldeão voltar à agenda Vanilla, e diz o que houve — este caminho
      * em silêncio seria indistinguível de trabalho acontecendo, que é a
      * forma que o E1 assume toda vez que reaparece.
+     *
+     * <p><b>E o motivo vem de quem desistiu</b> — 2026-09-09. A linha
+     * imprimia {@link #stallLimit}, que é a <b>constante</b>: ela dizia
+     * <i>"made no progress for 2400 work ticks"</i> em desistências
+     * separadas por 600 tiques, e a mesma frase saía para os dois
+     * guardas — o de imobilidade, que fala aos 300, e o de travamento,
+     * que fala aos 2.400. Oito vezes de diferença com o mesmo texto.
+     * Quase mandou procurar o defeito no guarda em vez de no castigo,
+     * na sessão de 09-05.
+     *
+     * <p>É o molde que o mineiro já usa: {@code MinerWork.giveUp} recebe
+     * o motivo pronto de quem o chamou, com o número que aquele guarda
+     * de fato contou.
+     *
+     * @param why o que aconteceu, com o contador de verdade — não a
+     *     constante do limite
      */
-    static LumberjackWork.Outcome giveUp(ServerWorld world, LumberjackWork.Job job, UUID workerId) {
+    static LumberjackWork.Outcome giveUp(
+            ServerWorld world, LumberjackWork.Job job, UUID workerId, String why) {
+
         job.task.release();
 
         WorkTargets.clear(workerId);
 
         VillageColonyMod.LOGGER.info(
-                "Worker {} made no progress for {} work ticks{} — wood task"
-                        + " returned to the queue",
+                "Worker {} {}{} — wood task returned to the queue",
                 LumberjackReport.shortId(workerId),
-                stallLimit,
+                why,
                 job.plan == null
                         ? " while looking for a tree"
                         : " on the tree at " + job.plan.base().toShortString());

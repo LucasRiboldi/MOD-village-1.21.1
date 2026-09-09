@@ -11,6 +11,11 @@ da produção. **A regra de leitura continua valendo mesmo assim:** uma execuç�
 verde não é aprovação, e contar verdes não distingue corrigido de sortudo — quem
 distingue é a reprodução sob demanda, e foi ela que fechou os quatro.
 
+**E desde 09-09, à noite, isso deixou de depender de eu lembrar:** o
+[Gauntlet Loop](#-o-gauntlet-loop--instalado-em-2026-09-09-e-a-última-verificação-não-rodou)
+põe um crítico independente entre o código escrito e o código entregue. Ele
+**não está pronto** — a última verificação não chegou a rodar.
+
 **Antes de qualquer coisa:** o jar que o autor
 joga em `.minecraft\mods` envelhece calado — copiar com o jogo aberto falha sem
 erro. Na sessão das 08:29 ele estava **onze commits atrás**, e três das quatro
@@ -158,6 +163,71 @@ Vale escrever, porque a lista de "falta ver" andou de verdade:
    stripped_...`. Não apareceu ainda porque nenhuma colônia construiu.
 
 ---
+
+---
+
+## 🔁 O Gauntlet Loop — instalado em 2026-09-09, e a última verificação NÃO rodou
+
+**Estado: 🟡 BLOCKED, e não pronto.** O mecanismo está de pé e funcionando —
+quatro rodadas de verificação independente, três delas concluídas — mas a
+**iteração 5 não foi verificada**: o subagente estourou limite de sessão no meio.
+Pela regra do próprio laço, ambiente que impede uma validação necessária é
+`BLOCKED`, e `BLOCKED` não vira `PASS`. Ver "O que falta", abaixo.
+
+### O que existe
+
+| arquivo | o quê |
+|---|---|
+| `scripts/gauntlet_checks.py` | as camadas: diff, typecheck, unitários, testes de Python, gametest, persistência |
+| `scripts/gauntlet.py` | a decisão: Quality Gate, teto de iterações, relatório, livro-razão |
+| `tests/test_gauntlet.py` | 74 casos sobre a decisão do gate |
+| `.claude/agents/gauntlet-verifier.md` | o crítico. Read/Grep/Glob/Bash, sem Edit/Write |
+| `.claude/commands/gauntlet.md` | `/gauntlet`, o laço |
+| `CLAUDE.md` | a regra: quem escreve o código não libera o código |
+
+Roda com `/gauntlet <requisito>`. `build/gauntlet/iteration-N.json` guarda cada
+rodada e `ledger.json` o histórico.
+
+### O que o laço achou contra o próprio Builder — que é o ponto
+
+Três defeitos reais na primeira rodada, nenhum deles visível de dentro:
+
+1. **O teste novo não sabia falhar.** Ele media os construtores da frase, e o
+   defeito era o **argumento**. Medido: com o mutante `noProgress(stallLimit)`
+   nos dois pontos de desistência, **681 unitários passam**. Quem pega é afirmar
+   o texto emitido — o gametest ganhou captura de log.
+2. **A camada `scope` era cega para arquivo novo.** `git diff` não mostra
+   arquivo não-rastreado, e ela varria só o diff: cinco dos nove caminhos
+   daquela entrega nunca foram abertos, e ela saía PASS com `findings: []`. Um
+   `@Disabled` em arquivo novo passava inteiro.
+3. **`git status` colapsa diretório novo**, então a guarda de relatório velho
+   era pulada e um XML de ontem passaria por bateria de hoje.
+
+E mais quatro na quarta rodada, sendo o principal **um teste que virava vácuo em
+árvore limpa** — percorria os arquivos não-rastreados que houvesse, e sem nenhum
+o laço não roda e nada é afirmado. Virou sonda criada e desmontada (`ProbeCase`).
+
+### O modo de falha do próprio mecanismo, e ele é grave
+
+**Na iteração 2 o Verifier aprovou sobre premissa errada.** Um achado da rodada
+anterior chegou truncado, ele não conseguiu lê-lo, encaixou nele a correção que
+o Builder tinha *descrito*, deu por fechado e devolveu `PASS`/`DELIVER` — com o
+defeito de verdade ainda aberto. Não entreguei porque tinha o texto original em
+mãos.
+
+A regra que saiu disso está no arquivo do agente: **descrição do Builder é
+alegação, não achado**, e o que o Verifier não conseguir reproduzir vai para
+`unverified`, com status diferente de `PASS`. Ela ainda **não foi exercitada**.
+
+### O que falta
+
+| | o quê |
+|---|---|
+| 🟡 | **A iteração 5 não foi verificada.** O gate objetivo passou (681 unitários, 274 gametests, 4 achados `low`/`medium`), mas as correções dos quatro achados da iteração 4 nunca passaram por um crítico independente. **É rodar `/gauntlet` quando a cota voltar** |
+| 🟠 | **A regra nova do agente não foi testada.** Ela nasceu do erro da iteração 2 e nenhuma rodada a exercitou |
+| 🟡 | **Três achados `medium` permanentes** em `tests/test_gauntlet.py`: um teste que prova o detector precisa conter o que ele detecta. Estão certos e não bloqueiam |
+| 🟡 | **`LumberjackGameTest` tem 1.960 linhas**, contra a regra de 500. O gate acusa como `low` |
+| 🟢 | **`lint` não existe neste projeto** e o gate diz isso em vez de inventar comando. Se um dia entrar checkstyle ou spotless, é uma linha em `collect()` |
 
 ---
 
@@ -3358,7 +3428,7 @@ Sete ciclos num dia, e o que sobrou. Ordenado por quanto dói.
 | ✅ | ~~**A escada que o jogador constrói ainda corre risco de picareta**~~ | **A linha estava vencida — o conserto entrou no mesmo dia, às 18:06, em `212c2ee`.** A tentativa desfeita mexia só no `isStillClosed`; a que ficou uniu as duas pontas numa lista só, `isOpenSpace` → `isRock`, e os dois lados a chamam. O critério é **forma e ferramenta**: cubo cheio, quebrável com picareta ou pá, e tijolo de pedra não — que é a única família de cubo cheio que nenhuma caverna gera, e é dela que a escada do autor é feita. **E o teste da concordância que esta linha pedia existe**, em par: `theMinerDoesNotDigThePlayersStaircase` afirma que a escolha do alvo pula o degrau, e `thePlayersStepInTheDigOrderIsNotTheFrontier` afirma que o recuo do cursor também o pula — um sem o outro passa com a mina quebrada. Conferido verde em 09-09. **O que fica, e é decisão registrada:** bloco de cubo cheio que o jogador ponha — piso de tijolo de barro, pedra polida — ainda passa por rocha. Errar para esse lado é o certo, porque a mina que para de cavar é pior que a mina que abre um bloco a mais |
 | ✅ | ~~**Mina de save antigo continua com a forma velha**~~ | **Medido em 09-09, e a mina conserta.** A pendência era suspeita — ela mesma dizia *"não foi visto acontecer"*. A metade do save já tinha teste desde 08-27 (`aMineFromBeforeTheTallerStairStartsOver`: forma diferente devolve a fronteira ao primeiro degrau, sem traduzir). A que faltava era **o que a mina faz depois**, e a resposta é que o já aberto é pulado de graça, 64 por passagem, e a picareta cai no que a forma nova acrescentou. `theMineFromAnOldShapeDigsWhatTheOldOneLeftBehind` põe as posições 0 a 8 abertas **com um buraco na 5** e o cursor em zero, e exige o buraco como alvo. **Fase vermelha conferida**: obedecida a fronteira gravada — que é o que a pendência temia —, ela passa por cima do buraco e desce três níveis. **Nenhuma sessão abriu mina de save antigo desde a mudança de forma:** o provado é o mecanismo, não a sessão. Ver [R-010](docs/behavioral-tests/REGRESSION-HISTORY.md) |
 | 🟠 | **A mão emprestada saiu, e o problema dela volta** | a ADR-010 existia porque o trabalhador travado repete a mesma parede até o fim da sessão. Volta a acontecer, por decisão do autor. A saída é consertar o travamento — feito do lado do mineiro; o lado do lenhador continua aberto |
-| 🟠 | **A linha de desistência do lenhador mente** | ela imprime `stallLimit`, que é a **constante** 2.400, e não o contador: dizia *"made no progress for 2400 work ticks"* em desistências separadas por 600 tiques. Quase mandou procurar o defeito no guarda em vez de no castigo |
+| ✅ | ~~**A linha de desistência do lenhador mente**~~ | **Fechado em 09-09, à tarde.** Ela imprimia `stallLimit` — a **constante** 2.400 — e usava o **mesmo texto** para os dois guardas, o de imobilidade (300) e o de travamento (2.400). `TreeChoice.giveUp` passou a receber o motivo pronto de quem desistiu, no molde que o `MinerWork.giveUp` já usava. **A cobertura foi achada pelo gauntlet-verifier, e a primeira tentativa não servia:** um unitário sobre os construtores da frase não cai sobre o defeito, porque o defeito era o **argumento** — com o mutante `noProgress(stallLimit)` nos dois pontos, 681 unitários passam. Quem pega é afirmar o **texto emitido**: `theStallGuardReturnsTheTaskAndForgetsTheTree` captura o log por appender e exige `made no progress for 61 work ticks`, recusando o 60 da constante. Sob o mutante falha exatamente esse teste; revertido, a bateria fecha em 274. Ver `LumberjackGiveUpReasonTest` |
 | 🟠 | **A casa sai de espécies misturadas na escada, na porta e na viga** | já saía na parede desde 08-26. É o preço de a casa **existir** quando a vila corta cerejeira e a planta pede carvalho — mas é mudança visível, e o autor pode não querer |
 | ✅ | ~~**Nada na colônia fabrica ou deposita ferramenta**~~ | **Decisão do autor, 09-09:** *"ferramenta caindo como drop, as ferramentas novas serão entregues nos baús pelo player"*. A colônia não fabrica ferramenta nenhuma — quem alimenta a escada é o jogador, e o degrau que faltava era **onde ele pode largar**. A troca passou a procurar em **todos os baús da colônia**, o do próprio primeiro e os outros por distância: o jogador não tem como saber qual baú é do mineiro, e exigir o certo manteria o degrau fechado com outra aparência. Quem separa quem fica com o quê continua sendo a velocidade contra o bloco de prova da profissão, sem regra nova. Ver [R-011](docs/behavioral-tests/REGRESSION-HISTORY.md) |
 | 🟡 | **A reserva de tora não distingue espécie** | conta `WOOD` e `PLANKS` como grupos. Cem toras de cerejeira e nenhuma de carvalho satisfazem "metade em tora" e continuam sem a tora de carvalho que a viga pede |

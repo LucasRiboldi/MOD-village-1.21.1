@@ -323,11 +323,13 @@ public final class LumberjackWork {
         // 2026-09-03. O guarda de baixo cobra dois minutos para notar o
         // mesmo. Ver WorkStall.
         if (job.stall.stuck(world, villager)) {
-            return TreeChoice.giveUp(world, job, workerId);
+            return TreeChoice.giveUp(world, job, workerId,
+                    TreeChoice.reasonFor(true, job.stall.ticks(), job.stalled));
         }
 
         if (WorkHours.isWorkTime(world, villager) && ++job.stalled > TreeChoice.stallLimit) {
-            return TreeChoice.giveUp(world, job, workerId);
+            return TreeChoice.giveUp(world, job, workerId,
+                    TreeChoice.reasonFor(false, job.stall.ticks(), job.stalled));
         }
 
         if (job.isBetweenTrees()) {
