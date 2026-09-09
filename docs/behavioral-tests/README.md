@@ -152,10 +152,20 @@ Ordenados por quanto custam quando quebram.
 
 Medido, não estimado.
 
-- **Persistência (§22 do mandato): não coberta.** Não há teste de
-  salvar → parar → carregar → continuar. O `data/save` existe e o log de jogo
-  mostra `Saved 19 colonies with 338 workers`, mas nada afirma que a tarefa em
-  curso sobrevive ao restart.
+- **Persistência (§22): ~~não coberta~~ — a auditoria errou, e o erro está
+  corrigido em 2026-09-09.** Existem **43 testes** de persistência
+  (`ColonySavedDataTest`, `ConstructionSaveTest`, `MineSaveTest`,
+  `RoadIndexSaveTest`, `SweepCursorSaveTest`) mais 4 gametests de retomada de
+  obra. Eles cobrem `SAVE → LOAD → RESTORE`, inclusive corrupção e saves
+  antigos.
+
+  A lacuna real era mais estreita e mais perigosa: nenhum deles perguntava
+  `→ CONTINUE → VERIFY`. Toda colônia volta **dormente**, o ciclo pula quem não
+  está ACTIVE, e ninguém provava que um aldeão **restaurado** volta a receber
+  trabalho depois do despertar. Fechado por `SessionResumeTest` (5 casos).
+
+  **Continua fora:** que a tarefa *em curso* sobreviva ao restart — ela não é
+  salva por decisão de projeto, e é o ciclo que a recria.
 - **Ciclo longo (§23): não coberto.** O teste mais longo é de centenas de
   tiques. Nenhum mede degradação ao longo de muitos ciclos.
 - **Deadlock entre profissões (§19): não coberto** por teste. Dois casos reais
@@ -173,8 +183,12 @@ bateria instável mede ruído.
 
 Nesta ordem, e o motivo é a dependência entre eles:
 
-1. **Corrigir o KF-001.** Sem bateria confiável, nada abaixo é verificável.
-2. **Teste de persistência**, que é a maior lacuna e protege o que o jogador
-   mais percebe — voltar ao mundo e a vila continuar trabalhando.
-3. **Teste de ciclo longo**, uma profissão de cada vez.
-4. Só então escalar para muitos aldeões.
+1. **KF-001** — atacado em 09-09 e **não corrigido**: 3 falhas em 30 execuções,
+   nenhuma reproduzível sob demanda depois. O teste ganhou um instrumento que
+   registra o estado quando a asserção falha, para a próxima ser diagnosticável.
+2. ~~Teste de persistência~~ — **feito** em 09-09, `SessionResumeTest`.
+3. **Teste de ciclo longo**, uma profissão de cada vez. Continua aberto, e é
+   agora a maior lacuna.
+4. **Deadlock entre profissões**, que rendeu dois defeitos reais achados em jogo
+   e nenhum achado pela bateria.
+5. Só então escalar para muitos aldeões.
