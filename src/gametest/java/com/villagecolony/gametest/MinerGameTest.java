@@ -233,6 +233,89 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
+     * Atendido o pedido, o mineiro para — 2026-09-09, o E3.
+     *
+     * <p><b>A tarefa não tinha como terminar.</b> Nada em produção
+     * comparava o que o mineiro trouxe com o que a tarefa pediu:
+     * {@code task.amount()} era lido por um lugar só no mod inteiro, o
+     * {@code MinerReport}, para escrever a linha do log. A sessão de
+     * 2026-09-06 mostrou o número virando enfeite — <b>496 amostras com
+     * a meta ultrapassada</b>, 442 delas no mesmo mineiro em
+     * <i>"105 of 32 so far"</i>, cavando pedra que a colônia já tinha.
+     *
+     * <p>O ciclo da colônia sabia parar e não alcançava: ele tira da fila
+     * o pedido que perdeu o motivo, mas só o que ainda não começou.
+     *
+     * <p>Pedido de um: o teste quer a fronteira, e não a resistência.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner",
+            tickLimit = 400)
+    public void theMinerStopsOnceTheOrderIsFilled(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        ground(context);
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        Block rock = MinecraftTypeAdapter
+                .toBlock(HousePlans.paletteOf(world, chest).stone())
+                .orElseThrow();
+
+        context.setBlockState(ROCK, rock.getDefaultState());
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        owned.owning(villager.getUuid());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_STONE,
+                TaskPriority.PRODUCTION,
+                ResourceType.COBBLESTONE,
+                1);
+
+        task.reserveFor(villager.getUuid());
+
+        ColonyPos mouth = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(STAND));
+
+        VillageColonyMod.MINES.restore(
+                Mine.restore(colony.id(), MineShaft.from(mouth, Side.NORTH), 0));
+
+        MineDigging.shortenMineDistanceTo(NEARBY);
+
+        MinerWork.run(world, colony);
+
+        context.runAtTick(320, () -> {
+            try {
+                context.assertTrue(
+                        task.state() == TaskState.COMPLETED,
+                        "o pedido de um pedregulho foi atendido e a tarefa ficou em "
+                                + task.state() + " — o mineiro não para de cavar");
+            } finally {
+                owned.cleanUp();
+
+                MineDigging.restoreMineDistance();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
      * Pedra de vila gerada e de casa da colônia não se toca.
      *
      * <p>A Regra 3, e para o mineiro ela morde mais que para o lenhador:

@@ -168,6 +168,17 @@ public final class MinerWork {
 
         int collected;
 
+        /**
+         * Quanto do recurso pedido já entrou no baú nesta tarefa.
+         *
+         * <p>Separado de {@link #collected} desde 2026-09-09, e é o E3:
+         * {@code collected} conta <b>tudo</b> o que o mineiro guardou —
+         * terra, carvão, minério —, e comparar isso com a meta de um
+         * recurso só é comparar coisas diferentes. É este número que a
+         * meta enfrenta, e é ele que encerra a tarefa.
+         */
+        int toward;
+
         int stalled;
 
         /** Se ele saiu do lugar, e há quanto tempo não sai. */
@@ -579,21 +590,75 @@ public final class MinerWork {
         // da mina, e só transborda para o do mineiro quando aquele
         // lotar. Decidido aqui, com o bloco em mãos: no baú só
         // chegam itens, e minério cru não diz de que pedra veio.
-        int took = MinerHaul.deposit(
-                world, storage, drops, MinerHaul.treasureChestFor(world, job, state));
+        MinerHaul.Haul haul = MinerHaul.deposit(
+                world,
+                storage,
+                drops,
+                MinerHaul.treasureChestFor(world, job, state),
+                MinecraftTypeAdapter.toBlock(job.wanted).map(Block::asItem).orElse(null));
 
-        job.collected += took;
+        job.collected += haul.stored();
+        job.toward += haul.wanted();
 
         // A linha que faltava. Trabalho mudo não se diagnostica — é o
         // §11, e foi ele que custou quatro sessões à Fase 10.
         VillageColonyMod.LOGGER.info(
                 "Miner {} took {} from {} — {} this task",
                 villager.getUuid(),
-                took,
+                haul.stored(),
                 job.target.toShortString(),
                 job.collected);
 
+        if (job.toward >= job.task.amount()) {
+            finishTask(villager.getUuid(), job);
+
+            return;
+        }
+
         release(villager.getUuid(), job);
+    }
+
+    /**
+     * Encerra a tarefa quando o pedido foi atendido — 2026-09-09.
+     *
+     * <p><b>Ela não terminava.</b> Nada em produção comparava o que o
+     * mineiro trouxe com o que a tarefa pediu: {@code task.amount()} era
+     * lido por um lugar só no mod inteiro, o {@code MinerReport}, para
+     * escrever a linha do log. O número era um enfeite, e a sessão de
+     * 2026-09-06 mostrou o enfeite crescendo — <b>496 amostras com a meta
+     * ultrapassada</b>, 442 delas no mesmo mineiro em
+     * <i>"105 of 32 so far"</i>, cavando pedra que a colônia já tinha.
+     *
+     * <p>O ciclo da colônia sabia parar e não alcançava: {@code
+     * ColonyCycle.cancelSatisfied} tira da fila o pedido que perdeu o
+     * motivo, mas só o que <b>ainda não começou</b> — "quem já começou
+     * termina", e quem já começou não tinha como terminar.
+     *
+     * <p>Aqui, e não a cada tique: a pergunta é feita com a pedra já
+     * depositada, que é a fronteira em que o lenhador e o fabricante
+     * também param — a pedra da vez não é interrompida, e é o que aquela
+     * decisão do ciclo protege.
+     *
+     * <p>Chega com a tarefa em RESERVED no caso comum, e a transição é a
+     * mesma que {@code TreeFelling.finishTask} faz pelo mesmo motivo:
+     * {@code Task.complete} exige EXECUTING, e completar direto lançava
+     * dentro do tick do servidor.
+     */
+    private static void finishTask(UUID workerId, Job job) {
+        if (job.task.state() == TaskState.RESERVED) {
+            job.task.start();
+        }
+
+        job.task.complete();
+
+        VillageColonyMod.LOGGER.info(
+                "Miner {} filled the order — {} {} of the {} asked, and stopped",
+                workerId,
+                job.toward,
+                job.wanted.path(),
+                job.task.amount());
+
+        release(workerId, job);
     }
 
     /** Larga a pedra de agora e volta a procurar. */

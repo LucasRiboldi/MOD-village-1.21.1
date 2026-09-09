@@ -153,8 +153,19 @@ public final class MinerReport {
 
         text.append(", wants ").append(job.wanted.path());
 
-        text.append(", ").append(job.collected).append(" of ")
+        // <b>O que a meta enfrenta, e não tudo o que ele guardou</b> —
+        // 2026-09-09, o E3. Esta linha dizia "105 of 32 so far" somando
+        // terra e carvão contra a meta de pedregulho: dois números que
+        // não se comparam, e a leitura natural — "ele passou da meta e
+        // não parou" — só era verdadeira por acidente.
+        text.append(", ").append(job.toward).append(" of ")
                 .append(job.task.amount()).append(" so far");
+
+        // E o que ele trouxe ao todo, que é outra pergunta e continua
+        // valendo: baú que enche de cascalho é o que trava o mineiro.
+        if (job.collected != job.toward) {
+            text.append(" (").append(job.collected).append(" hauled)");
+        }
 
         text.append(", stall ").append(job.stalled).append("/").append(MinerWork.STALL_LIMIT);
 

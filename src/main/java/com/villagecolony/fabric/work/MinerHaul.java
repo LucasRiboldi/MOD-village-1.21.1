@@ -8,6 +8,7 @@ import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.MineMouth;
 import com.villagecolony.fabric.integration.OreVein;
 import net.minecraft.block.BlockState;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 
@@ -54,20 +55,48 @@ final class MinerHaul {
     }
 
     /**
+     * O que entrou no baú, e quanto disso era o que a tarefa pediu.
+     *
+     * <p><b>São dois números porque são duas perguntas</b>, e confundi-las
+     * foi o E3 da sessão de 2026-09-06: o relatório do mineiro dizia
+     * <i>"105 of 32 so far"</i> comparando <b>tudo o que ele guardou</b>
+     * — pedregulho, terra, carvão, minério — com a meta de <b>um</b>
+     * recurso. Os dois lados da frase nem falavam da mesma coisa.
+     *
+     * @param stored tudo o que coube no baú, de qualquer item
+     * @param wanted quanto disso era o recurso que a tarefa pediu
+     */
+    record Haul(int stored, int wanted) {
+    }
+
+    /**
      * Guarda o que caiu no baú do mineiro.
      *
      * <p>O que não couber é perdido, e é o mesmo E3 do lenhador: o bloco
      * já saiu do mundo. Fica em WARN para não sumir em silêncio.
      *
-     * @return quantas peças entraram
+     * @param wanted o item que a tarefa pediu, para a conta sair separada
+     *     — nulo quando o pedido não vira item deste jogo, e aí o
+     *     {@link Haul#wanted()} sai zero
+     * @return o que entrou, separado em tudo e no que foi pedido
      */
-    static int deposit(
-            ServerWorld world, WorkerStorage storage, List<ItemStack> drops, ColonyPos treasure) {
+    static Haul deposit(
+            ServerWorld world,
+            WorkerStorage storage,
+            List<ItemStack> drops,
+            ColonyPos treasure,
+            Item wanted) {
 
         ColonyPos chest = storage.chestPosition();
         int stored = 0;
+        int asked = 0;
 
         for (ItemStack drop : drops) {
+            // Antes de o laço mexer no stack: o desvio do tesouro o
+            // reescreve com o que sobrou, e contar depois perderia a
+            // parte que foi para o baú da boca da mina.
+            boolean isAsked = wanted != null && drop.isOf(wanted);
+            int before = stored;
             if (treasure != null) {
                 // O baú da boca primeiro, e o do mineiro com o que sobrar
                 // — a Regra 30 dita por inteiro.
@@ -99,8 +128,12 @@ final class MinerHaul {
                         leftOver,
                         drop.getCount());
             }
+
+            if (isAsked) {
+                asked += stored - before;
+            }
         }
 
-        return stored;
+        return new Haul(stored, asked);
     }
 }
