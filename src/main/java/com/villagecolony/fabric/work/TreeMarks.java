@@ -72,18 +72,29 @@ public final class TreeMarks {
      * <p>É a Regra 23 — <i>o que já foi analisado pode ser analisado de
      * novo</i> —, e agora esta marca é igual à de {@link #UNREACHABLE}:
      * guarda quando nasceu e esquece sozinha.
-     */
-    private static final Map<BlockPos, Long> REJECTED = new HashMap<>();
-
-    /**
-     * Quanto tempo um grupo de troncos fica marcado como "não é árvore".
      *
-     * <p>Dez ciclos da colônia, o mesmo prazo de {@link #UNREACHABLE_MEMORY}
-     * e pelo mesmo motivo: é tempo bastante para a busca não reencontrar
-     * a mesma parede a cada passagem, e curto bastante para o jogador
-     * ver o mod mudar de ideia dentro da mesma sessão.
+     * <p><b>E o prazo dela cresce, desde 2026-09-09.</b> Ele era fixo em
+     * dez ciclos, e a sessão de 09-06 mostrou o que isso custa: <b>925
+     * linhas de {@code Not a tree} sobre 140 coordenadas</b> — cada
+     * parede reavaliada sete vezes, exatamente de cinco em cinco minutos
+     * —, 273 desistências por travamento e <b>48 árvores derrubadas</b>
+     * na sessão inteira. Das amostras de estado, 749 tinham o lenhador
+     * procurando e 93 cortando: sete por cento do expediente com machado
+     * na mão.
+     *
+     * <p>O argumento da Regra 23 continua de pé, e é por isso que a
+     * primeira recusa não mudou. O que ele não previa é que <b>pilar sem
+     * copa não vira árvore sozinho</b>: o mundo muda quando o jogador
+     * planta a muda, e não a cada cinco minutos. Reperguntar à mesma
+     * parede na mesma cadência é pagar para reaprender o que não mudou.
+     *
+     * <p>Então a segunda recusa vale o dobro, e assim por diante até o
+     * teto de {@link #memoryFor} — a mesma escada que {@link #UNREACHABLE}
+     * subiu em 2026-09-02, pelo mesmo motivo e com o mesmo teto. O
+     * jogador que planta a muda continua vendo o mod mudar de ideia; a
+     * parede de sempre sai da frente por mais de uma hora.
      */
-    private static final int REJECTED_MEMORY = 10 * VillageDetector.CYCLE_TICKS;
+    private static final Map<BlockPos, Refusal> REJECTED = new HashMap<>();
 
     /**
      * Quantos troncos recusados se guarda antes de esquecer tudo.
@@ -178,6 +189,12 @@ public final class TreeMarks {
      * novo, e castigo maior que a vida do servidor não é castigo, é
      * esquecimento. Oito voltas do prazo base é mais de uma hora — tempo
      * de sobra para o jogador mudar o terreno.
+     *
+     * <p><b>Serve as duas marcas desde 2026-09-09</b>, e o prazo base é
+     * o mesmo para ambas — {@link #UNREACHABLE_MEMORY} responde pelo
+     * nome mais velho, e não só pelo que ele diz. {@link #REJECTED}
+     * subiu a mesma escada pelo mesmo argumento: a segunda recusa é
+     * prova de que a primeira não foi azar, e vale mais que ela.
      */
     static long memoryFor(int refusals) {
         if (refusals <= 0) {
@@ -268,17 +285,40 @@ public final class TreeMarks {
      * esquecer tudo ao encher.
      */
     static void forgetStaleMarks(ServerWorld world) {
+        forgetStaleMarksAt(world.getTime());
+    }
+
+    /**
+     * O mesmo, pelo relógio que quem chama entrega.
+     *
+     * <p><b>Separado do mundo de propósito</b>, e as três irmãs abaixo
+     * também — {@link #rejectAt} e {@link #isRejectedAt}. Nenhuma
+     * decisão desta classe precisa de um {@link ServerWorld}: o que ela
+     * pergunta ao mundo é <b>que horas são</b>, e mais nada.
+     *
+     * <p>Sem isso a escada de prazos não teria como ser provada. A
+     * bateria não avança o relógio do mundo — o castigo mais curto é de
+     * 6.000 tiques, e nenhum {@code tickLimit} de gametest chega perto
+     * —, então a única forma de medir "a segunda recusa dura mais que a
+     * primeira" é entregar o relógio. Ver {@code TreeMarksTest}, que
+     * vive neste pacote justamente para alcançar estes métodos.
+     */
+    static void forgetStaleMarksAt(long now) {
         // O prazo do castigo é um; o da contagem é outro, e mais longo.
         // Ver TALLY_MEMORY: é ele que faz a segunda recusa custar mais
         // que a primeira em vez de recomeçar do zero.
         UNREACHABLE.values().removeIf(
-                refusal -> world.getTime() - refusal.since() >= TALLY_MEMORY);
+                refusal -> now - refusal.since() >= TALLY_MEMORY);
 
         // E as recusas de "não é árvore", pela Regra 23: o jogador
         // planta uma muda ao lado do pilar, e o que era construção passa
         // a ser floresta.
+        //
+        // Pelo prazo da contagem, e não pelo do castigo — desde
+        // 2026-09-09 esta marca também sobe a escada, e vale para ela a
+        // mesma razão escrita em TALLY_MEMORY.
         REJECTED.values().removeIf(
-                since -> world.getTime() - since >= REJECTED_MEMORY);
+                refusal -> now - refusal.since() >= TALLY_MEMORY);
     }
 
     /**
@@ -319,42 +359,90 @@ public final class TreeMarks {
     }
 
     static void reject(ServerWorld world, List<BlockPos> trunk) {
+        rejectAt(world.getTime(), trunk);
+    }
+
+    /** A recusa medida pelo relógio de quem chama — ver {@link #forgetStaleMarksAt}. */
+    static void rejectAt(long now, List<BlockPos> trunk) {
+        forgetStaleMarksAt(now);
+
         if (REJECTED.size() + trunk.size() > MAX_REJECTED) {
             REJECTED.clear();
         }
 
+        // A contagem é do grupo, e vem do maior que algum tronco dele
+        // carregue — não da primeira posição da lista.
+        //
+        // {@link TreeHarvester#trunkOf} devolve o grupo conectado a
+        // partir do tronco que a busca achou, e a busca não acha o mesmo
+        // bloco toda vez: {@code logInColumn} varre a coluna de baixo
+        // para cima e devolve o primeiro tronco de <b>cada</b> coluna, de
+        // modo que uma parede de vinte e cinco troncos entra por
+        // qualquer um deles. Ler a contagem só de {@code trunk.get(0)}
+        // faria a parede voltar a ser ré primária sempre que a busca
+        // entrasse por outro canto, e a escada nunca subiria — que é o
+        // mesmo defeito que markUnreachable teve até 2026-09-05.
+        int before = 0;
+
         for (BlockPos log : trunk) {
-            REJECTED.put(log.toImmutable(), world.getTime());
+            Refusal refusal = REJECTED.get(log);
+
+            if (refusal != null) {
+                before = Math.max(before, refusal.count());
+            }
+        }
+
+        Refusal refusal = new Refusal(now, before + 1);
+
+        for (BlockPos log : trunk) {
+            REJECTED.put(log.toImmutable(), refusal);
         }
 
         VillageColonyMod.LOGGER.info(
                 "Not a tree at {} — {} logs without a living canopy,"
-                        + " skipping it for {} ticks",
+                        + " refused {} times now, skipping it for {} ticks",
                 trunk.isEmpty() ? "?" : trunk.get(0).toShortString(),
                 trunk.size(),
-                REJECTED_MEMORY);
+                refusal.count(),
+                memoryFor(refusal.count()));
     }
 
     /**
      * Se este grupo de troncos ainda está marcado como "não é árvore".
      *
-     * <p>Tira a marca vencida ao perguntar, do mesmo jeito que
-     * {@link #isOutOfReach} faz — quem reencontra o lugar é quem paga
-     * por limpá-lo.
+     * <p><b>A marca vencida fica</b>, e é igual ao que
+     * {@link #isOutOfReach} faz. Isto apagava a entrada ao ver o prazo
+     * vencido, e apagar era o que impedia a escada de subir: a contagem
+     * morre junto com o castigo, a parede volta a ser ré primária na
+     * volta seguinte e o prazo nunca passa de dez ciclos. É o laço que
+     * {@link #TALLY_MEMORY} descreve, e a sessão de 09-06 o mediu do
+     * lado desta marca — sete recusas por parede, todas de dez ciclos.
+     *
+     * <p>Quem apaga é {@link #forgetStaleMarks}, no prazo mais longo da
+     * contagem.
      */
     static boolean isRejected(ServerWorld world, BlockPos log) {
-        Long since = REJECTED.get(log);
+        return isRejectedAt(world.getTime(), log);
+    }
 
-        if (since == null) {
+    /** A pergunta medida pelo relógio de quem chama — ver {@link #forgetStaleMarksAt}. */
+    static boolean isRejectedAt(long now, BlockPos log) {
+        Refusal refusal = REJECTED.get(log);
+
+        if (refusal == null) {
             return false;
         }
 
-        if (world.getTime() - since >= REJECTED_MEMORY) {
-            REJECTED.remove(log);
+        return now - refusal.since() < memoryFor(refusal.count());
+    }
 
-            return false;
-        }
-
-        return true;
+    /**
+     * Esquece as recusas de "não é árvore". Só os testes precisam disso,
+     * como {@link #forgetUnreachable} — e pelo mesmo motivo: a marca é
+     * estática, e um teste que recusa uma parede a deixaria recusada
+     * para o teste seguinte.
+     */
+    static void forgetRejected() {
+        REJECTED.clear();
     }
 }

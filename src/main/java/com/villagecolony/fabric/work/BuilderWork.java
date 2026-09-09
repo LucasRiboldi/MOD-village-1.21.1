@@ -383,7 +383,19 @@ public final class BuilderWork {
         if (taken.isEmpty()) {
             Optional<String> chain = TestBarrier.chainFor(block.block());
 
-            if (chain.isPresent()) {
+            // <b>A barreira espera antes de riscar</b> — 2026-09-09. A
+            // carência está em TestBarrier, e o que ela corrige é um
+            // grito falso: 24 stripped_oak_log riscados na sessão de
+            // 09-06 com cinquenta toras no baú, porque o construtor
+            // riscava no mesmo tique em que via a falta e o fabricante
+            // nunca teve o ciclo de descascar.
+            //
+            // Só o construtor começa a contar, e é por isso que a
+            // chamada mora aqui: quem tentou tirar do baú foi ele.
+            if (chain.isPresent()
+                    && TestBarrier.graceExpired(
+                            world.getTime(), project.id(), block.block())) {
+
                 // <b>Barreira de teste</b> — a Regra 28, provisória por
                 // declaração do autor: o bloco é riscado, e a casa fica
                 // sem ele.
@@ -402,6 +414,11 @@ public final class BuilderWork {
             // Fora dessas quatro, <b>o construtor aguarda o bloco
             // específico de que precisa</b> — a Regra 27, aberta para
             // pedra em 2026-08-26 e inteira no resto.
+            //
+            // E a peça da barreira dentro da carência passa por aqui
+            // também, de propósito: enquanto a barreira ainda espera,
+            // ela é peça como qualquer outra e a Regra 27 vale inteira
+            // para ela.
             //
             // O que impede a colônia de morrer esperando é o
             // PatienceClock: a obra sai da frente depois de vinte ciclos,
@@ -694,7 +711,7 @@ public final class BuilderWork {
             return true;
         }
 
-        if (TestBarrier.chainFor(next.get().block()).isPresent()) {
+        if (TestBarrier.willStrike(world.getTime(), project.id(), next.get().block())) {
             // Peça que a barreira risca nunca segura a obra: quando o
             // construtor chegar nela vai passar por cima, então dizer
             // "tem" aqui é dizer a verdade sobre o que vai acontecer.
@@ -704,6 +721,15 @@ public final class BuilderWork {
             // perguntas coincidiam enquanto a Regra 21 vivia; deixar a
             // antiga poria a obra a acordar dizendo que tem a cama,
             // tentar, falhar e dormir de novo — todo ciclo, para sempre.
+            //
+            // <b>E era {@code chainFor} até 2026-09-09</b>, que respondia
+            // "tem" desde a primeira falta. Com a carência isso passou a
+            // ser mentira durante cinco ciclos: a obra acordaria, o
+            // construtor esperaria, e ela dormiria de novo — o mesmo laço
+            // do parágrafo acima, pela porta nova. Agora a pergunta é
+            // sobre a peça <b>de que a barreira já desistiu</b>; a que
+            // ela ainda espera cai no teste de material logo abaixo e
+            // segura a obra, que é o que faz a colônia ir produzi-la.
             return true;
         }
 

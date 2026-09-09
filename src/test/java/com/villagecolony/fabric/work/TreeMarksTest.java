@@ -1,8 +1,15 @@
 package com.villagecolony.fabric.work;
 
+import net.minecraft.util.math.BlockPos;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -67,5 +74,130 @@ class TreeMarksTest {
     @Test
     void aTreeThatNeverRefusedIsNotHeldOut() {
         assertEquals(0, TreeMarks.memoryFor(0));
+    }
+
+    /**
+     * E a mesma escada vale para a parede — 2026-09-09.
+     *
+     * <p>Estes cinco travam o E1 da sessão de 09-06, que é a marca
+     * {@code REJECTED} pagando dez ciclos <b>para sempre</b>: 925 linhas
+     * de {@code Not a tree} sobre 140 coordenadas, sete voltas por
+     * parede, e 48 árvores derrubadas na sessão inteira.
+     *
+     * <p>Rodam sem mundo de propósito — ver
+     * {@code TreeMarks.forgetStaleMarksAt}. A bateria de gametest não
+     * avança o relógio, e o castigo mais curto é de 6.000 tiques: sem
+     * entregar a hora não há como provar que a segunda recusa dura mais
+     * que a primeira, que é a coisa toda que mudou.
+     */
+    @BeforeEach
+    void forgetWhatOtherTestsRefused() {
+        TreeMarks.forgetRejected();
+    }
+
+    /** A primeira recusa não mudou, e é decisão do autor: dez ciclos. */
+    @Test
+    void theFirstRefusalOfAWallStillLastsTenCycles() {
+        List<BlockPos> wall = wallAt(0);
+
+        TreeMarks.rejectAt(0, wall);
+
+        assertTrue(TreeMarks.isRejectedAt(5999, wall.get(0)));
+        assertFalse(TreeMarks.isRejectedAt(6000, wall.get(0)));
+    }
+
+    /**
+     * A segunda dura mais, e é o E1 inteiro.
+     *
+     * <p>A parede é recusada, o prazo vence, ela é recusada de novo — e
+     * agora o castigo é outro. Sem isto a busca reencontra o mesmo pilar
+     * de cinco em cinco minutos, que é o que a sessão mediu.
+     */
+    @Test
+    void aWallRefusedTwiceSitsOutLongerThanTheFirstTime() {
+        List<BlockPos> wall = wallAt(0);
+
+        TreeMarks.rejectAt(0, wall);
+        TreeMarks.rejectAt(6000, wall);
+
+        assertTrue(
+                TreeMarks.isRejectedAt(6000 + 6000, wall.get(0)),
+                "a segunda recusa venceu no mesmo prazo da primeira, e a parede volta à busca");
+    }
+
+    /**
+     * E a contagem sobrevive ao castigo vencido.
+     *
+     * <p>Era o defeito: {@code isRejected} apagava a marca ao vê-la
+     * vencida, então toda recusa era a primeira e o prazo nunca passava
+     * de dez ciclos. Perguntar não pode custar a memória de ter
+     * perguntado.
+     */
+    @Test
+    void askingAfterTheDeadlineDoesNotEraseTheTally() {
+        List<BlockPos> wall = wallAt(0);
+
+        TreeMarks.rejectAt(0, wall);
+
+        assertFalse(TreeMarks.isRejectedAt(6000, wall.get(0)), "o castigo devia ter vencido");
+
+        TreeMarks.rejectAt(6000, wall);
+
+        assertTrue(
+                TreeMarks.isRejectedAt(11999, wall.get(0)),
+                "a pergunta apagou a contagem, e a segunda recusa voltou a valer dez ciclos");
+    }
+
+    /**
+     * A contagem é do grupo, e não do bloco por onde a busca entrou.
+     *
+     * <p>{@code logInColumn} devolve o primeiro tronco de <b>cada</b>
+     * coluna, então uma parede é reencontrada por qualquer um dos seus
+     * blocos. Ler a contagem só da primeira posição faria a parede voltar
+     * a ser ré primária sempre que a busca entrasse por outro canto.
+     */
+    @Test
+    void theTallyBelongsToTheWallAndNotToTheBlockTheSearchFound() {
+        List<BlockPos> wall = wallAt(0);
+
+        TreeMarks.rejectAt(0, wall);
+
+        // A mesma parede, reencontrada de trás para frente.
+        List<BlockPos> fromTheOtherEnd = new ArrayList<>(wall);
+        Collections.reverse(fromTheOtherEnd);
+
+        TreeMarks.rejectAt(6000, fromTheOtherEnd);
+
+        assertTrue(
+                TreeMarks.isRejectedAt(6000 + 6000, wall.get(0)),
+                "entrar pelo outro canto zerou a contagem da mesma parede");
+    }
+
+    /**
+     * Mas a parede do jogador volta a valer, e é a Regra 23.
+     *
+     * <p>O teto de {@link TreeMarks#memoryFor} é o que garante isto: por
+     * mais que ela recuse, o castigo para de crescer e o mundo tem a
+     * chance de ter mudado.
+     */
+    @Test
+    void evenTheMostRefusedWallComesBackEventually() {
+        List<BlockPos> wall = wallAt(0);
+
+        for (int refusal = 0; refusal < 20; refusal++) {
+            TreeMarks.rejectAt(refusal * 100_000L, wall);
+        }
+
+        long last = 19 * 100_000L;
+
+        assertFalse(
+                TreeMarks.isRejectedAt(last + TreeMarks.memoryFor(9), wall.get(0)),
+                "o castigo passou do teto, e a floresta que voltou a crescer ficou de fora");
+    }
+
+    /** Um pilar de troncos, que é a forma que a marca guarda. */
+    private static List<BlockPos> wallAt(int x) {
+        return List.of(
+                new BlockPos(x, 64, 0), new BlockPos(x, 65, 0), new BlockPos(x, 66, 0));
     }
 }

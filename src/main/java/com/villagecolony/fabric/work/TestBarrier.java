@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.type.ResourceId;
 
 import java.util.LinkedHashMap;
@@ -62,6 +63,40 @@ public final class TestBarrier {
 
     /** Quantas vezes cada peça foi riscada nesta sessão. */
     private static final Map<String, Integer> SKIPPED = new LinkedHashMap<>();
+
+    /**
+     * Desde quando cada peça de cada obra está faltando no baú.
+     *
+     * <p>A chave é a obra <b>e</b> o bloco: a mesma peça faltando em
+     * duas casas são duas esperas, e a carência de uma não conta para a
+     * outra.
+     */
+    private static final Map<String, Long> FIRST_MISSED = new LinkedHashMap<>();
+
+    /**
+     * Quanto tempo a barreira espera antes de riscar — 2026-09-09.
+     *
+     * <p><b>Ela riscava na primeira falta</b>, e a sessão de 09-06
+     * mostrou o que isso esconde: 24 {@code stripped_oak_log} riscados
+     * com <b>cinquenta toras de carvalho no baú</b> da mesma colônia.
+     * O fabricante sabe descascar — {@code ManufacturerWork.strip} roda
+     * antes da guarda de conversão e escolhe a espécie que a colônia
+     * tem, desde 09-05 —, mas o construtor chega ao bloco, não acha a
+     * peça pronta e risca no mesmo tique. Na sessão inteira o fabricante
+     * descascou <b>um</b> tronco.
+     *
+     * <p>A cadeia não deixou de entregar: ela nunca teve o ciclo para
+     * entregar. E o grito da barreira dizia o contrário, que é pior que
+     * o buraco na parede — manda o autor procurar defeito numa cadeia
+     * inteira.
+     *
+     * <p>Cinco ciclos da colônia. Bastante para o fabricante pegar a
+     * tarefa, chegar ao baú e descascar; e bem dentro dos vinte ciclos
+     * do {@code PatienceClock}, que é quem tira a obra da frente se a
+     * espera não terminar. Passado o prazo a Regra 28 vale como sempre
+     * valeu: risca, e grita — só que agora o grito é verdadeiro.
+     */
+    private static final int GRACE_TICKS = 5 * VillageDetector.CYCLE_TICKS;
 
     /**
      * Quantas peças a obra assentou de verdade nesta sessão.
@@ -157,6 +192,51 @@ public final class TestBarrier {
     }
 
     /**
+     * A obra bateu na falta desta peça: começa a contar, e diz se a
+     * carência já venceu.
+     *
+     * <p>Quem chama é o construtor, e só ele — é ele que de fato tentou
+     * tirar a peça do baú. O despertador da obra usa
+     * {@link #willStrike}, que lê sem começar a contar: carência que
+     * corresse sem ninguém ter tentado venceria antes da primeira
+     * tentativa, e a espera não teria existido.
+     *
+     * @return {@code true} quando a peça já esperou {@link #GRACE_TICKS}
+     *     e a Regra 28 pode riscá-la
+     */
+    public static boolean graceExpired(long now, UUID projectId, ResourceId block) {
+        long since = FIRST_MISSED.computeIfAbsent(key(projectId, block), any -> now);
+
+        return now - since >= GRACE_TICKS;
+    }
+
+    /**
+     * Se a barreira já desistiu desta peça, sem mexer no relógio dela.
+     *
+     * <p>É a pergunta que {@code BuilderWork.hasMaterialForNextBlock}
+     * faz, e as duas respostas têm de casar com o que o construtor vai
+     * fazer — senão a obra acorda, tenta, falha e dorme, todo ciclo,
+     * que é o laço que aquele método já evitava por outro caminho.
+     *
+     * <p>Peça que a barreira ainda espera <b>segura a obra como
+     * qualquer outra</b>: o despertador cai no teste de material de
+     * verdade, a obra dorme enquanto a colônia não tiver a peça, e
+     * acorda quando o fabricante a puser no baú. Peça de que a barreira
+     * já desistiu não segura nada, porque o construtor vai passar por
+     * cima dela — e aí dizer "tem" é dizer a verdade sobre o que vai
+     * acontecer, que é o que esta pergunta sempre respondeu.
+     */
+    public static boolean willStrike(long now, UUID projectId, ResourceId block) {
+        Long since = FIRST_MISSED.get(key(projectId, block));
+
+        return since != null && now - since >= GRACE_TICKS;
+    }
+
+    private static String key(UUID projectId, ResourceId block) {
+        return projectId + "/" + block.path();
+    }
+
+    /**
      * Uma peça riscada, e o grito que a acompanha.
      *
      * <p>{@code WARN} de propósito: a linha existe para ser achada num
@@ -223,6 +303,7 @@ public final class TestBarrier {
     /** Esquece a soma inteira. Chamado ao parar o servidor, depois do relatório. */
     public static void clearAll() {
         SKIPPED.clear();
+        FIRST_MISSED.clear();
         laid = 0;
     }
 }
