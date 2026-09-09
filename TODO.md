@@ -12,9 +12,10 @@ verde não é aprovação, e contar verdes não distingue corrigido de sortudo �
 distingue é a reprodução sob demanda, e foi ela que fechou os quatro.
 
 **E desde 09-09, à noite, isso deixou de depender de eu lembrar:** o
-[Gauntlet Loop](#-o-gauntlet-loop--instalado-em-2026-09-09-e-a-última-verificação-não-rodou)
-põe um crítico independente entre o código escrito e o código entregue. Ele
-**não está pronto** — a última verificação não chegou a rodar.
+[Gauntlet Loop](#-o-gauntlet-loop--instalado-e-liberado-em-2026-09-09) põe um
+crítico independente entre o código escrito e o código entregue — e quem
+escreveu não libera. Ele já reprovou quatro entregas minhas, uma delas **sem um
+único teste vermelho**.
 
 **Antes de qualquer coisa:** o jar que o autor
 joga em `.minecraft\mods` envelhece calado — copiar com o jogo aberto falha sem
@@ -166,13 +167,21 @@ Vale escrever, porque a lista de "falta ver" andou de verdade:
 
 ---
 
-## 🔁 O Gauntlet Loop — instalado em 2026-09-09, e a última verificação NÃO rodou
+## 🔁 O Gauntlet Loop — instalado e liberado em 2026-09-09
 
-**Estado: 🟡 BLOCKED, e não pronto.** O mecanismo está de pé e funcionando —
-quatro rodadas de verificação independente, três delas concluídas — mas a
-**iteração 5 não foi verificada**: o subagente estourou limite de sessão no meio.
-Pela regra do próprio laço, ambiente que impede uma validação necessária é
-`BLOCKED`, e `BLOCKED` não vira `PASS`. Ver "O que falta", abaixo.
+**Estado: ✅ PASS na iteração 5, e o veredito não é meu.** Cinco rodadas de
+verificação independente, e a última — a que faltava, e que na primeira tentativa
+morreu por limite de sessão — passou com recomendação `DELIVER`.
+
+**O que o Verifier provou por execução, e não por leitura:** o script roda de
+fora do repositório; o gate pode ser rebaixado e não promovido (a exceção da
+persistência foi testada com um caminho sensível de verdade — sem texto e com
+texto só de espaço dá `BLOCKED`, com texto real dá `PASS` e o texto fica
+gravado); as duas guardas contra verde falso bloqueiam mesmo quando forçadas
+(relatório mais velho que o código, e relatório sem um único caso); `gate()`
+devolve `BLOCKED` na iteração 6 de 5 mesmo com tudo verde. Ele também abriu o
+jar de `downloads/` e conferiu que o `TreeChoice.class` de dentro traz as frases
+novas — o jar foi reconstruído, e não só recarimbado.
 
 ### O que existe
 
@@ -180,7 +189,7 @@ Pela regra do próprio laço, ambiente que impede uma validação necessária é
 |---|---|
 | `scripts/gauntlet_checks.py` | as camadas: diff, typecheck, unitários, testes de Python, gametest, persistência |
 | `scripts/gauntlet.py` | a decisão: Quality Gate, teto de iterações, relatório, livro-razão |
-| `tests/test_gauntlet.py` | 74 casos sobre a decisão do gate |
+| `tests/test_gauntlet.py` | 46 casos sobre a decisão do gate (a pasta `tests/` inteira dá 74) |
 | `.claude/agents/gauntlet-verifier.md` | o crítico. Read/Grep/Glob/Bash, sem Edit/Write |
 | `.claude/commands/gauntlet.md` | `/gauntlet`, o laço |
 | `CLAUDE.md` | a regra: quem escreve o código não libera o código |
@@ -241,8 +250,7 @@ alegação, não achado**, e o que o Verifier não conseguir reproduzir vai para
 
 | | o quê |
 |---|---|
-| 🟡 | **A iteração 5 não foi verificada.** O gate objetivo passou (681 unitários, 274 gametests, 4 achados `low`/`medium`), mas as correções dos quatro achados da iteração 4 nunca passaram por um crítico independente. **É rodar `/gauntlet` quando a cota voltar** |
-| 🟠 | **A regra nova do agente não foi testada.** Ela nasceu do erro da iteração 2 e nenhuma rodada a exercitou |
+| 🟠 | **O guarda de imobilidade do lenhador não tem gametest de ponta a ponta.** Achado da iteração 5. O guarda de travamento ganhou a captura de log; o irmão dele, em `LumberjackWork:325-327`, tem só prova unitária. A assimetria existe porque `WorkStall.LIMIT` é `public static final` e não tem o equivalente ao `shortenStallLimitTo` do `TreeChoice` — forçar o ramo pede um gancho de teste novo, ou imobilizar o aldeão por 300 tiques de expediente |
 | 🟡 | **Três achados `medium` permanentes** em `tests/test_gauntlet.py`: um teste que prova o detector precisa conter o que ele detecta. Estão certos e não bloqueiam |
 | 🟡 | **`LumberjackGameTest` tem 1.960 linhas**, contra a regra de 500. O gate acusa como `low` |
 | 🟢 | **`lint` não existe neste projeto** e o gate diz isso em vez de inventar comando. Se um dia entrar checkstyle ou spotless, é uma linha em `collect()` |

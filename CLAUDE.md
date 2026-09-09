@@ -76,8 +76,8 @@ o script diz isso em vez de inventar um comando. Quem faz esse papel são
 os testes de arquitetura, na camada unitária: `DependencyRuleTest` e
 `ConversionBoundaryTest`.
 
-**A decisão do gate tem teste**, em `tests/test_gauntlet.py` (74 casos,
-stdlib). Como o `graphify_relabel.py`, ele **não** está no `./gradlew
+**A decisão do gate tem teste**, em `tests/test_gauntlet.py` (46 casos,
+stdlib; `tests/` inteiro dá 74, somando os 28 do `graphify_relabel`). Como o `graphify_relabel.py`, ele **não** está no `./gradlew
 build`: fazer o build de um projeto Java exigir Python quebraria a
 máquina que não tem Python, por causa de um utilitário que não vai no jar.
 Rode à mão ao mexer no script — e o próprio laço o roda quando o diff
