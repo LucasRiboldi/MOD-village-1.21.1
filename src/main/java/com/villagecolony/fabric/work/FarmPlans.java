@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
@@ -106,6 +107,62 @@ public final class FarmPlans {
     }
 
     /**
+     * As colônias que tentaram roça e não acharam lote ao alcance do
+     * fazendeiro, e desde quando — 2026-09-09.
+     */
+    private static final Map<UUID, Long> POSTPONED = new HashMap<>();
+
+    /**
+     * Quanto tempo a roça sai da frente depois de não caber.
+     *
+     * <p>Vinte ciclos, o mesmo fôlego do {@code PatienceClock}: tempo de
+     * uma casa subir e mudar o desenho da vila, que é o que pode abrir o
+     * lote perto que faltava.
+     */
+    private static final int POSTPONE_TICKS = 20 * VillageDetector.CYCLE_TICKS;
+
+    /**
+     * A roça espera, e as casas passam à frente — 2026-09-09.
+     *
+     * <p><b>Uma roça que não cabia parava a vila inteira.</b> A sessão de
+     * 09-09 mediu a colônia {@code 634bf5cc} presa nisto por uma hora:
+     * <b>108 passagens do planejador, 108 respondidas pelo índice</b>, e
+     * nenhuma obra aberta. O lote livre mais perto estava fora do alcance
+     * do fazendeiro, e a recusa daquele lote encerrava a passagem — sem
+     * nunca tentar uma casa.
+     *
+     * <p>O efeito era a vila parada de verdade, e não só sem roça: sem
+     * obra não há pedido de tábua nem de pedra, então o construtor e o
+     * mineiro ficavam sem tarefa e o autor viu <b>78 de 108 ciclos com
+     * "assigned 0 tasks (0 open)"</b>. A queixa dele foi exatamente essa
+     * — <i>"não vi os trabalhadores trabalhando"</i>.
+     *
+     * <p>A cota continua de pé: a roça não foi cancelada, só cedeu a vez.
+     * Passado o prazo ela volta a ser tentada, e a vila que cresceu no
+     * meio-tempo pode ter aberto o lote que faltava.
+     */
+    static boolean postponed(UUID colonyId, long now) {
+        Long since = POSTPONED.get(colonyId);
+
+        if (since == null) {
+            return false;
+        }
+
+        if (now - since >= POSTPONE_TICKS) {
+            POSTPONED.remove(colonyId);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /** A roça desta colônia cede a vez — ver {@link #postponed}. */
+    static void postpone(UUID colonyId, long now) {
+        POSTPONED.put(colonyId, now);
+    }
+
+    /**
      * As roças que esta vila pode levantar, da menor para a maior.
      *
      * <p>Vazio quer dizer catálogo ausente ou estilo sem roça, e quem
@@ -175,6 +232,8 @@ public final class FarmPlans {
     /** Esquece as plantas lidas. Chamado ao parar o servidor. */
     public static void clearAll() {
         READ.clear();
+
+        POSTPONED.clear();
     }
 
     /** Se esta planta é uma roça, e não uma casa. */

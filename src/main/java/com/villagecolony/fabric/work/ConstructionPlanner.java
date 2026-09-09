@@ -267,7 +267,13 @@ public final class ConstructionPlanner {
         // longe demais para ele ver. A cota fecha isso por construção.
         List<Blueprint> plans = List.of();
 
-        if (FarmPlans.owedToThePopulation(colony.id())) {
+        // <b>E a roça que já não coube cede a vez</b> — 2026-09-09. Sem
+        // esta segunda pergunta a colônia repetia a mesma recusa para
+        // sempre: a vila de 09-09 gastou uma hora em 108 passagens sem
+        // abrir obra nenhuma. Ver FarmPlans.postponed.
+        if (FarmPlans.owedToThePopulation(colony.id())
+                && !FarmPlans.postponed(colony.id(), world.getTime())) {
+
             plans = FarmPlans.plansFor(world, colony);
         }
 
@@ -364,10 +370,21 @@ public final class ConstructionPlanner {
             // a FarmerWork.reach() do centro, e roça que ele não vê é
             // roça que ninguém planta — e que não fecha o pedido, então
             // a colônia levantaria outra, e outra.
+            //
+            // <b>E a recusa não pode parar a vila</b> — 2026-09-09. Ela
+            // encerrava a passagem inteira, e como o lote de amanhã é o
+            // mesmo de hoje, a colônia repetia a recusa para sempre sem
+            // nunca tentar uma casa: uma hora de jogo, 108 passagens do
+            // planejador, nenhuma obra aberta, e o autor sem ver
+            // trabalhador nenhum trabalhando. A roça cede a vez por
+            // vinte ciclos e as casas passam — ver FarmPlans.postponed.
+            FarmPlans.postpone(colony.id(), world.getTime());
+
             return silent(
                     colony,
                     IdleReason.NO_TARGET,
-                    "the only free lot is outside the farmer's reach");
+                    "the only free lot is outside the farmer's reach"
+                            + " — the houses go first for now");
         }
 
         return open(world, colony, site.get(), plans, blueprint, builders);
