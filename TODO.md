@@ -1,6 +1,15 @@
 # TODO
 
-**Atualizado:** 2026-09-05, à tarde. **Antes de qualquer coisa:** o jar que o autor
+**Atualizado:** 2026-09-09, madrugada. **O inventário da sessão de 09-09 está
+logo abaixo da próxima sessão** — seis defeitos vistos em jogo e corrigidos, o
+catálogo de casas reaberto, e uma auditoria comportamental com baseline em
+[`docs/behavioral-tests/`](docs/behavioral-tests/).
+
+**A bateria de gametest não é confiavelmente verde** (E37-b): 3 falhas em 30
+execuções, sempre o mesmo teste. Uma execução verde **não é aprovação** — repita
+antes de afirmar que passou.
+
+**Antes de qualquer coisa:** o jar que o autor
 joga em `.minecraft\mods` envelhece calado — copiar com o jogo aberto falha sem
 erro. Na sessão das 08:29 ele estava **onze commits atrás**, e três das quatro
 queixas eram de código já removido. Conferir o md5 contra `downloads/` é o
@@ -108,6 +117,22 @@ Vale escrever, porque a lista de "falta ver" andou de verdade:
 
 ### O que olhar agora, em ordem
 
+**Primeiro, o que entrou em 09-09 e ainda não foi visto em jogo:**
+
+1. **A casa grande e a média sobem?** O catálogo abriu de 1 para 36 plantas em
+   planície. A linha é `planned minecraft:village/plains/houses/...` com um nome
+   que **não** termine em `_small_house_1`, e casas diferentes entre si.
+2. **O tronco descascado entra na parede?** `stripped a oak_log into
+   stripped_oak_log`. Se vier, o `TEST BARRIER covered for ...` do fim da sessão
+   cai — e se a cadeia fechar de vez, ele vira `covered for nothing`, que é a
+   notícia que a Regra 28 existe para poder dar.
+3. **O mineiro para de girar?** As linhas a caçar são `Miner ... took N from`
+   voltando, e `walked for 2400 ticks without arriving` sumindo.
+4. **O mineiro para na meta?** `filled the order — N cobblestone of the N asked`.
+   E o relatório agora separa: `12 of 16 so far (37 hauled)`.
+
+**Depois, o que já estava na fila:**
+
 1. **A mina velha destrava?** A colônia `c4706b63` ficava parada porque a
    reserva entregava um ramal já acabado. A linha a caçar é
    `Mine ... finished every branch and went one level deeper`. Se em vez
@@ -127,6 +152,106 @@ Vale escrever, porque a lista de "falta ver" andou de verdade:
    stripped_...`. Não apareceu ainda porque nenhuma colônia construiu.
 
 ---
+
+---
+
+## 📒 A sessão de 2026-09-09 — o inventário
+
+**Seis defeitos vistos em jogo, seis corrigidos, e um mandato de engenharia
+comportamental no fim.** Todos foram achados lendo log de sessão; **nenhum** foi
+encontrado pela bateria de testes. Cada um está em
+[`docs/behavioral-tests/REGRESSION-HISTORY.md`](docs/behavioral-tests/REGRESSION-HISTORY.md)
+com medida, causa, correção e teste — R-001 a R-007.
+
+### O que a sessão mostrou, em ordem de dano
+
+1. **Uma roça sem lote parava a vila inteira.** 78 de 108 ciclos com
+   `assigned 0 tasks (0 open)`, 86 pedregulhos e 83 tábuas paradas no baú. O
+   planejador recusava o lote fora do alcance do fazendeiro e **encerrava a
+   passagem sem tentar uma casa**. Era a queixa *"não vi os trabalhadores
+   trabalhando"*, e o defeito não era de trabalhador nenhum.
+2. **O mineiro girava no próprio eixo.** Mandado para um passo dentro da rocha,
+   com `still 0/300` — o guarda de imobilidade não pega quem se mexe sem sair
+   do lugar. Dois minutos por tentativa.
+3. **O lenhador reavaliava a mesma parede a cada cinco minutos.** 925 recusas
+   sobre 140 coordenadas, 48 árvores derrubadas na sessão.
+4. **A prioridade do fabricante era sorteio.** `Map.copyOf` apagava a ordem da
+   planta; 13 lotes de escada e **zero** troncos descascados com 59 toras no
+   baú.
+5. **A barreira acusava uma cadeia que nunca teve a vez** — 24 peças riscadas
+   com a matéria-prima no baú.
+6. **O mineiro não parava na meta**, e o relatório comparava tudo o que ele
+   carregou com a meta de um recurso só (`105 of 32`).
+
+### Melhorias
+
+- **O catálogo inteiro do bioma voltou a valer.** A restrição provisória de
+  08-20 — só `_small_house_1` — saiu: planície passou de **1 para 36 casas**,
+  e os outros quatro estilos de 27 a 31. O "maiores primeiro" já existia e
+  nunca tinha o que fazer.
+- **Sorteio entre as plantas que empatam no tamanho do lote**, para a vila
+  parar de repetir a mesma casa. Não disputa com a prioridade: quem decide o
+  tamanho é a varredura.
+- **Tamanhos desduplicados** antes da varredura, senão a mesma medida seria
+  refeita dezenas de vezes por coluna e o custo sairia do raio alcançado.
+- **Auditoria comportamental** e baseline executada, em
+  [`docs/behavioral-tests/`](docs/behavioral-tests/).
+
+### Arquivos alterados (produção, 7)
+
+```text
+TreeMarks.java              escada de prazos na recusa de árvore
+TestBarrier.java            carência antes de riscar
+BuilderWork.java            espera a cadeia; despertador casa com o risco
+MinerWork.java + MinerHaul  conta o recurso pedido, encerra na meta
+MinerReport.java            compara os dois números certos
+FarmPlans.java              a roça cede a vez
+ConstructionPlanner.java    recuo da roça, sorteio, tamanhos únicos
+ConstructionProject.java    a ordem da planta chega inteira
+MinerReach.java             estar perto da passagem não é estar nela
+VillageStructures.java      catálogo inteiro do bioma
+```
+
+### Testes criados (25 casos em 5 arquivos)
+
+```text
+TreeMarksTest            +5   escada de prazos
+TestBarrierGraceTest      7   carência da barreira
+FarmPostponementTest      6   recuo da roça
+ConstructionProjectTest  +2   ordem da planta
+MinerLegTest             +1   aldeão em cima da mina
+MinerGameTest            +1   mineiro para na meta
+SessionResumeTest         5   a vila restaurada volta a trabalhar
+```
+
+**Quatro deles foram conferidos nos dois sentidos** — desligada a correção, o
+teste fica vermelho. Os outros não; está dito qual é qual no histórico.
+
+### Erros meus, neste ciclo
+
+Custaram tempo e ficam escritos:
+
+- **A primeira correção do mineiro girando estava errada**, e a premissa era
+  falsa: eu disse que ele estava longe da mina, e ele estava a **5 blocos** da
+  boca. Três testes vermelhos me pararam. Revertida.
+- **`REACH` como limiar não bastava** — a cabeça da escada cabe nele. Só saí do
+  chute quando **medi** a geometria do caracol.
+- **A auditoria afirmou "persistência não coberta"**, e havia **43 testes**.
+  Corrigido no próprio documento, com o erro visível.
+- **Reportei "269/269 passaram" como prova.** A bateria é instável (KF-001):
+  uma execução verde é um sorteio, não uma aprovação.
+- **A hipótese da folga do KF-001 foi refutada pelo experimento** — piorou de
+  1/9 para 2/6. Fica registrada como refutada para ninguém repetir.
+- **Escrevi um `inOrderOfNeed` e o descartei**: a correção da ordem já o tornava
+  redundante, e complexidade que finge fazer algo é pior que ausência.
+
+### O que este dia NÃO provou
+
+- **Nada do que foi corrigido depois das 03:52 foi visto em jogo.** O catálogo
+  aberto, o sorteio de casas e a correção do mineiro girando só têm teste.
+- **O KF-001 continua aberto** e não foi reproduzido sob demanda.
+- A ligação entre o recuo da roça e o planejador não tem teste — são duas
+  linhas, confirmadas só pela sessão em jogo.
 
 ---
 
@@ -3091,6 +3216,10 @@ conferido no volume · árvore grande deixando de ser recusada.
 
 | | Erro | Estado |
 |---|---|---|
+| **E37-b** | **O teste do mineiro congelado voltou a oscilar.** É o **E37 reaberto** — a linha abaixo o dá por fechado em 09-05 | 🔴 **Aberto desde 09-09, e a medição de hoje derruba a de então.** 30 execuções da bateria na mesma máquina: **3 falhas, todas nas 12 primeiras**; as 18 seguintes passaram e a falha **não foi reproduzida sob demanda**. O fechamento de 09-05 se apoiou em *"duas rodadas de 252 verdes"* — e duas rodadas verdes não distinguem corrigido de sortudo, que é exatamente o que esta entrada existe para lembrar. Evidência do mecanismo: mesmo aldeão emparedado, `still 280/300` numa bateria e `still 99/300` noutra — não é o guarda que oscila, é **quando ele começa a contar**, e contar exige alvo, que exige uma busca do orçamento **global** (`SEARCHES_PER_TICK` = 1 para o servidor inteiro, com 18 cenários de mineiro na bateria). **Hipótese testada e refutada:** aumentar a folga de 360 para 700 tiques piorou para 2 falhas em 6, porque 700 passa da fronteira do ciclo (600) e o ciclo re-reserva a tarefa liberada. O teste ganhou um `WARN` que registra `task`, expediente e o relatório **quando a asserção está prestes a falhar** — a mensagem de asserção de gametest não chega ao log da bateria, e era por isso que as três falhas de hoje não puderam ser diagnosticadas. Ver [`known-failures.md`](docs/behavioral-tests/known-failures.md) KF-001 |
+| **E40** | **Pedra entregue pelo cursor dois blocos acima do mineiro, e ele não sobe.** `gave up the stone at 2427,48,-1437 — 2 blocks below it and unable to climb`, a **mesma pedra** reservada de novo a cada ciclo — três vezes em dois minutos na sessão de 09-09 | 🔴 **Aberto, visto em jogo e não investigado.** Vizinho do defeito que foi corrigido hoje (R-006), e diferente dele: ali o passo ia parar dentro da rocha, aqui o alvo é alcançável em linha reta e o aldeão não tem como **subir** até o lugar de ficar de pé. `MineDigging.couldNotReach` deveria tirar a posição do caminho e ela volta |
+| **E41** | **Nada mede degradação ao longo de muitos ciclos.** O teste mais longo do projeto tem centenas de tiques | 🟠 **Maior lacuna de cobertura depois do E37-b.** É onde moram vazamento de estado, tarefa abandonada, acúmulo de objetivo e perda de referência — e nenhum dos seis defeitos de hoje teria sido pego por ela, o que não a torna menos necessária: os que ela pega ninguém achou ainda |
+| **E42** | **Nenhum teste de impasse entre profissões.** Os dois casos reais — a roça que travava toda a construção, e o fabricante que nunca descascava — foram achados **em jogo**, não pela bateria | 🟠 **Aberto.** Os dois eram dependência circular ou fome de prioridade, e a bateria não tem cenário que os produza |
 | **E36** | **Os dois guardas eram zerados a cada alvo novo.** `startNextStone`, `findCrop`, `findSheep` e os três `release` faziam `job.stall.reset()` ao trocar de alvo, e quem troca de alvo com frequência ficava **imune** ao detector de imobilidade (300) | ✅ **Fechado em 09-04.** Zerar passou a ser no ramo em que a profissão trabalha — onde `BuilderWork` e `ManufacturerWork` sempre zeraram, e por isso os dois nunca tiveram o defeito. **Eram três profissões, não seis:** o construtor e o fabricante já estavam certos, e o lenhador não zera em lugar nenhum — ver **E39**. O contador de 2.400 continua por alvo de propósito. `theStillnessGuardSurvivesTheTargetChanging`, fase vermelha conferida (*caiu de 99 para 0*) |
 | ~~**E37**~~ | ~~`aFrozenMinerGivesUpLongBeforeTheStallGuard` instável~~ | ✅ **Fechado em 09-05, e não era instabilidade — era o cenário.** A geometria mudou (escada de duas pistas), o mineiro passou a **alcançar** a pedra e a trabalhar — `digging Cobblestone at ..., 0,6 blocks away, 163/200 ticks` —, e um mineiro ocupado não é um mineiro congelado: o guarda de imobilidade não tinha por que disparar. O teste vinha medindo isso havia semanas, ora passando ora não, conforme a arena. Agora ele **emparedado por construção** — seis paredes em volta dos dois blocos que ele ocupa —, e o cenário deixou de depender da forma da mina. Três rodadas seguidas de falha antes, duas de 252 verdes depois. A entrada abaixo fica como registro do caminho: **a suspeita anterior estava errada, e a medição é que a derrubou.** ⚙️ *(histórico)* **A suspeita anterior está morta, e foi medida.** Este arquivo dizia *"o que sobra é o E36: cada troca de alvo zera o contador"*. Com os resets **já removidos**, a falha voltou com `stall 3/2400, still 2/300` em 360 tiques — três passagens contadas de trezentas e sessenta. Os dois contadores são fechados por `WorkHours.isWorkTime`, e o `still` também zera quando o aldeão **muda de bloco**: o relatório mostra ele em y=-53 andando para y=-58, ou seja **o mineiro daquele teste não está congelado**. O próximo ciclo precisa de um instrumento que conte as passagens de expediente, e não de mais uma suspeita |
 | **E38** | **O baú do trabalhador assoreia e nada o esvazia.** Vara, maçã e muda não são `ResourceType`, nenhum trabalhador as retira, e cada uma ocupa um slot para sempre | ⚙️ **Metade fechada em 09-04.** O transbordo para a colônia tirou o lenhador do buraco e parou a destruição de item, mas **não move o assoreamento de lugar**: baú que só enche acaba cheio, e agora demora mais para chegar lá. Dar a esses itens consumidor ou descarte é **decisão de projeto** e está registrada no javadoc de `TreeFelling.deposit`, não decidida por conta própria |
