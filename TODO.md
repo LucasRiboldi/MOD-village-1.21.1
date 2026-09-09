@@ -1,13 +1,15 @@
 # TODO
 
-**Atualizado:** 2026-09-09, madrugada. **O inventário da sessão de 09-09 está
-logo abaixo da próxima sessão** — seis defeitos vistos em jogo e corrigidos, o
-catálogo de casas reaberto, e uma auditoria comportamental com baseline em
+**Atualizado:** 2026-09-09, à tarde. **O inventário da tarde está logo abaixo do
+da madrugada**: quatro pendências fechadas, nenhuma sessão de jogo, e todas as
+provas são de bateria. A da madrugada — seis defeitos vistos em jogo, o catálogo
+de casas reaberto e a auditoria comportamental — continua em
 [`docs/behavioral-tests/`](docs/behavioral-tests/).
 
-**A bateria de gametest não é confiavelmente verde** (E37-b): 3 falhas em 30
-execuções, sempre o mesmo teste. Uma execução verde **não é aprovação** — repita
-antes de afirmar que passou.
+**A bateria voltou a ser confiável** (E37-b fechado): o defeito era do teste, não
+da produção. **A regra de leitura continua valendo mesmo assim:** uma execução
+verde não é aprovação, e contar verdes não distingue corrigido de sortudo — quem
+distingue é a reprodução sob demanda, e foi ela que fechou os quatro.
 
 **Antes de qualquer coisa:** o jar que o autor
 joga em `.minecraft\mods` envelhece calado — copiar com o jogo aberto falha sem
@@ -130,6 +132,10 @@ Vale escrever, porque a lista de "falta ver" andou de verdade:
    voltando, e `walked for 2400 ticks without arriving` sumindo.
 4. **O mineiro para na meta?** `filled the order — N cobblestone of the N asked`.
    E o relatório agora separa: `12 of 16 so far (37 hauled)`.
+5. **O `unable to climb` sumiu?** (E40, corrigido em 09-09 à tarde.) A linha a
+   caçar é a **ausência** de `N blocks below it and unable to climb` no relatório
+   do mineiro. Se ela voltar, é o caso em que nenhum lugar alcançável existe —
+   o E44 —, e aí o que interessa é se a **mesma** pedra se repete a cada ciclo.
 
 **Depois, o que já estava na fila:**
 
@@ -152,6 +158,76 @@ Vale escrever, porque a lista de "falta ver" andou de verdade:
    stripped_...`. Não apareceu ainda porque nenhuma colônia construiu.
 
 ---
+
+---
+
+## 📒 A tarde de 2026-09-09 — o inventário
+
+**Quatro pendências fechadas, nenhuma sessão de jogo.** Todas as provas são de
+bateria, e nenhuma correção foi vista rodando. Cada uma está em
+[`REGRESSION-HISTORY.md`](docs/behavioral-tests/REGRESSION-HISTORY.md) —
+R-008 a R-011.
+
+### O que fechou, e o que cada um era de verdade
+
+| | era | e o defeito estava |
+|---|---|---|
+| **E37-b** | a bateria não era confiavelmente verde — 3 falhas em 30 | **no teste.** Ele lia `task.state()` no tique 360, e o ciclo da colônia devolve a tarefa a quem acabou de largá-la (2ª passagem do `WorkAssignment`, deliberada e com teste). A fase do contador de 600 é do servidor: ~55 tiques em 600 ≈ os 10% medidos |
+| **E40** | pedra entregue dois blocos acima do mineiro | **na escolha do lugar de ficar de pé.** O primeiro deslocamento da lista é em cima da própria pedra, e em cima da pedra é dois acima de quem está no chão ao lado |
+| a escada do jogador | 🔴 "ainda corre risco de picareta" | **em lugar nenhum — a linha estava vencida.** O conserto entrou em `212c2ee`, no mesmo dia, com o par de testes da concordância que a linha pedia |
+| mina de save antigo | 🔴 "continua com a forma velha" | **em lugar nenhum — era suspeita, e a própria linha dizia "não foi visto acontecer".** Medida: a mina conserta |
+| a escada de ferramentas | 🔴 sem primeiro degrau automático | **na pergunta.** Não faltava produção: faltava o jogador ter onde largar. A troca só olhava um baú |
+
+### O método que fechou os quatro
+
+**Reproduzir sob demanda antes de consertar, e conferir a fase vermelha depois.**
+Duas investidas anteriores no E37-b falharam por tentar reproduzir a falha rara
+em vez de **forçar a condição** que a produz. Os quatro seguiram a mesma receita,
+e em três deles o vermelho saiu com o número exato da sessão de jogo — *"2 blocos
+acima dos pés dele"* no E40, `task=RESERVED, still 45/300` no E37-b.
+
+### Erros meus, neste ciclo
+
+- **Contei cinco execuções verdes como prova** do E37-b antes de fazer a conta:
+  a 10%, cinco verdes têm 59% de chance de acontecer por sorte. Corrigido no
+  mesmo relato — o que sustenta é o vermelho determinístico, não a contagem.
+- **A primeira versão da busca por ferramenta quebrou três testes antigos.** Ela
+  tirava a lista inteira de baús do registro de trabalhadores, e o baú de quem
+  tem baú não pode depender de o registro conhecê-lo.
+
+### O que a tarde corrigiu no próprio registro
+
+Duas linhas 🔴 desta lista **não descreviam mais o código**. Uma dava por aberto
+um conserto que entrou no mesmo dia; a outra chamava de pendência uma suspeita
+que ninguém tinha medido. Ler uma pendência não é o mesmo que ela ser verdade,
+e as duas custaram investigação antes de cair.
+
+### Arquivos alterados (produção, 3)
+
+```text
+MinerWork.java        approachTo sabe de onde o mineiro vem (E40)
+MineDigging.java      javadoc do isStillClosed deixa de pedir o que já foi feito
+WorkerEquipment.java  a troca de ferramenta alcança todos os baús da colônia
+```
+
+### Testes criados (5 casos, e um refeito)
+
+```text
+MinerGameTest             aFrozenMinerGivesUpLongBeforeTheStallGuard, refeito
+MinerGameTest         +2  o lugar de ficar de pé, e o de quem vem de cima
+MinerGameTest         +1  a mina de forma velha conserta o que ficou fechado
+WorkerEquipmentGameTest +2  o baú da colônia alcança a mão, e o machado fica
+```
+
+**Todos conferidos nos dois sentidos.** 674 unitários e 274 gametests, verde.
+
+### O que esta tarde NÃO provou
+
+- **Nada foi visto em jogo.** Nem uma sessão. O que está provado é mecanismo.
+- **O E40 fecha a metade que tinha conserto.** Quando nenhum lugar alcançável
+  existe, o laço continua — é o E44, e é decisão de projeto.
+- **A entrega de ferramenta é no baú.** Ferramenta no chão não é recolhida por
+  ninguém.
 
 ---
 
@@ -3216,10 +3292,12 @@ conferido no volume · árvore grande deixando de ser recusada.
 
 | | Erro | Estado |
 |---|---|---|
-| **E37-b** | **O teste do mineiro congelado voltou a oscilar.** É o **E37 reaberto** — a linha abaixo o dá por fechado em 09-05 | 🔴 **Aberto desde 09-09, e a medição de hoje derruba a de então.** 30 execuções da bateria na mesma máquina: **3 falhas, todas nas 12 primeiras**; as 18 seguintes passaram e a falha **não foi reproduzida sob demanda**. O fechamento de 09-05 se apoiou em *"duas rodadas de 252 verdes"* — e duas rodadas verdes não distinguem corrigido de sortudo, que é exatamente o que esta entrada existe para lembrar. Evidência do mecanismo: mesmo aldeão emparedado, `still 280/300` numa bateria e `still 99/300` noutra — não é o guarda que oscila, é **quando ele começa a contar**, e contar exige alvo, que exige uma busca do orçamento **global** (`SEARCHES_PER_TICK` = 1 para o servidor inteiro, com 18 cenários de mineiro na bateria). **Hipótese testada e refutada:** aumentar a folga de 360 para 700 tiques piorou para 2 falhas em 6, porque 700 passa da fronteira do ciclo (600) e o ciclo re-reserva a tarefa liberada. O teste ganhou um `WARN` que registra `task`, expediente e o relatório **quando a asserção está prestes a falhar** — a mensagem de asserção de gametest não chega ao log da bateria, e era por isso que as três falhas de hoje não puderam ser diagnosticadas. Ver [`known-failures.md`](docs/behavioral-tests/known-failures.md) KF-001 |
-| **E40** | **Pedra entregue pelo cursor dois blocos acima do mineiro, e ele não sobe.** `gave up the stone at 2427,48,-1437 — 2 blocks below it and unable to climb`, a **mesma pedra** reservada de novo a cada ciclo — três vezes em dois minutos na sessão de 09-09 | 🔴 **Aberto, visto em jogo e não investigado.** Vizinho do defeito que foi corrigido hoje (R-006), e diferente dele: ali o passo ia parar dentro da rocha, aqui o alvo é alcançável em linha reta e o aldeão não tem como **subir** até o lugar de ficar de pé. `MineDigging.couldNotReach` deveria tirar a posição do caminho e ela volta |
+| ~~**E37-b**~~ | ~~O teste do mineiro congelado voltou a oscilar~~ | ✅ **Fechado em 09-09, à tarde, e não era o mineiro: era o teste.** Ele afirmava `task.state()` no tique 360, e estado de tarefa não é só do mineiro — o guarda de imobilidade devolvia a pedra por volta do 305, como promete, e a fronteira do ciclo da colônia caindo nos ~55 tiques seguintes **reservava a mesma tarefa de novo para o mesmo mineiro** (`runColonyCycles` → `ColonyCycle.run` → `WorkAssignment.assign`, 2ª passagem, que é deliberada e tem teste: `theRestNeverLeavesTheWorkerIdle`). A fase do contador de 600 é do servidor inteiro e depende de quanto a bateria andou antes: ~55/600 ≈ 10%, que é a medida de 3 em 30. **A hipótese registrada estava errada** — não era o orçamento de buscas (`miner_stillness` é lote de **um** teste, e lote roda um de cada vez), e o `still 280` contra `still 99` eram duas amostras do relatório impressas pelo ciclo em fases diferentes, nunca o mesmo instante. **Reproduzido sob demanda** (ciclo forçado no 340 → `task=RESERVED, still 45/300`) e **fase vermelha conferida** (`WorkStall.LIMIT` em 3.000 acusa exatamente este teste). A correção guarda o **instante em que a tarefa voltou**, e força o ciclo de propósito. Ver [R-008](docs/behavioral-tests/REGRESSION-HISTORY.md) |
+| ~~**E40**~~ | ~~Pedra entregue pelo cursor dois blocos acima do mineiro, e ele não sobe~~ | ✅ **Fechado em 09-09, à tarde — e a causa era a escolha do lugar de ficar de pé.** `APPROACH_OFFSETS` está ordenada por distância e o primeiro deslocamento de todos é `(0, +1, 0)`, **em cima da própria pedra**, a meio bloco. Com o teto dela aberto — numa mina, o tempo todo — a busca para ali, e em cima da pedra é **dois** acima de quem está no chão ao lado, com aldeão subindo um. A pedra voltava porque `couldNotReach` → `holdPositionAt` segura o cursor, e faz certo: pular posição por desistência custou três sessões com a galeria intacta em 08-27. `approachTo` passou a saber de onde ele vem e prefere lugar até `CLIMB` (=1) acima dos pés; sem nenhum, devolve o de antes — nunca pior. **Fase vermelha conferida com o número da sessão** (o teste falhou dizendo *"2 blocos acima dos pés dele"*), e um teste vizinho impede a troca de um destino bom por um pior. **Não foi visto em jogo.** Ver [R-009](docs/behavioral-tests/REGRESSION-HISTORY.md) |
 | **E41** | **Nada mede degradação ao longo de muitos ciclos.** O teste mais longo do projeto tem centenas de tiques | 🟠 **Maior lacuna de cobertura depois do E37-b.** É onde moram vazamento de estado, tarefa abandonada, acúmulo de objetivo e perda de referência — e nenhum dos seis defeitos de hoje teria sido pego por ela, o que não a torna menos necessária: os que ela pega ninguém achou ainda |
 | **E42** | **Nenhum teste de impasse entre profissões.** Os dois casos reais — a roça que travava toda a construção, e o fabricante que nunca descascava — foram achados **em jogo**, não pela bateria | 🟠 **Aberto.** Os dois eram dependência circular ou fome de prioridade, e a bateria não tem cenário que os produza |
+| **E43** | **O descanso de quatro ciclos é anulado no ciclo seguinte.** O `giveUp` do mineiro marca `worker.rest(COLLECT_STONE)`, e a 2ª passagem do `takeOneTask` devolve a mesma tarefa ao mesmo trabalhador sempre que a colônia não tem outro trabalho da profissão dele | 🟠 **Aberto, achado ao ler em 09-09 investigando o E37-b, e não observado em jogo como defeito.** A 2ª passagem é deliberada — *"nunca fica parado para honrar um descanso"* — e tem teste (`theRestNeverLeavesTheWorkerIdle`). Mas o descanso existe para que ele não repita a mesma parede, que é o problema que a ADR-010 tratava, e numa colônia de uma tarefa só ele não dura um ciclo. O que salva hoje é o resto do `giveUp`: `MineDigging.couldNotReach` recua o cursor e `MineClaims.stepAside` passa a vez, então a pedra seguinte tende a ser outra. **Decisão de projeto, e é do autor** |
+| **E44** | **A mina não tem escada de recusas.** Posição que o mineiro não alcança é **segurada** pelo cursor (`couldNotReach` → `holdPositionAt`) e servida de novo na passagem seguinte, sem prazo nenhum | 🟠 **Aberto, e é a metade do E40 que a correção não fecha.** Segurar está certo — pular por uma desistência deixou três sessões com a galeria intacta em 08-27 —, mas segurar *sem prazo* é o laço: mesma pedra, mesmo mineiro, todo ciclo. O lenhador já resolveu isto com o `TreeMarks`, que sobe uma escada de prazos e não apaga a marca (R-001). A mina não tem equivalente. Com o E40 fechado o caso ficou raro — só quando **nenhum** lugar alcançável existe —, e continua sendo laço quando acontece. **Decisão de projeto, e é do autor** |
 | **E36** | **Os dois guardas eram zerados a cada alvo novo.** `startNextStone`, `findCrop`, `findSheep` e os três `release` faziam `job.stall.reset()` ao trocar de alvo, e quem troca de alvo com frequência ficava **imune** ao detector de imobilidade (300) | ✅ **Fechado em 09-04.** Zerar passou a ser no ramo em que a profissão trabalha — onde `BuilderWork` e `ManufacturerWork` sempre zeraram, e por isso os dois nunca tiveram o defeito. **Eram três profissões, não seis:** o construtor e o fabricante já estavam certos, e o lenhador não zera em lugar nenhum — ver **E39**. O contador de 2.400 continua por alvo de propósito. `theStillnessGuardSurvivesTheTargetChanging`, fase vermelha conferida (*caiu de 99 para 0*) |
 | ~~**E37**~~ | ~~`aFrozenMinerGivesUpLongBeforeTheStallGuard` instável~~ | ✅ **Fechado em 09-05, e não era instabilidade — era o cenário.** A geometria mudou (escada de duas pistas), o mineiro passou a **alcançar** a pedra e a trabalhar — `digging Cobblestone at ..., 0,6 blocks away, 163/200 ticks` —, e um mineiro ocupado não é um mineiro congelado: o guarda de imobilidade não tinha por que disparar. O teste vinha medindo isso havia semanas, ora passando ora não, conforme a arena. Agora ele **emparedado por construção** — seis paredes em volta dos dois blocos que ele ocupa —, e o cenário deixou de depender da forma da mina. Três rodadas seguidas de falha antes, duas de 252 verdes depois. A entrada abaixo fica como registro do caminho: **a suspeita anterior estava errada, e a medição é que a derrubou.** ⚙️ *(histórico)* **A suspeita anterior está morta, e foi medida.** Este arquivo dizia *"o que sobra é o E36: cada troca de alvo zera o contador"*. Com os resets **já removidos**, a falha voltou com `stall 3/2400, still 2/300` em 360 tiques — três passagens contadas de trezentas e sessenta. Os dois contadores são fechados por `WorkHours.isWorkTime`, e o `still` também zera quando o aldeão **muda de bloco**: o relatório mostra ele em y=-53 andando para y=-58, ou seja **o mineiro daquele teste não está congelado**. O próximo ciclo precisa de um instrumento que conte as passagens de expediente, e não de mais uma suspeita |
 | **E38** | **O baú do trabalhador assoreia e nada o esvazia.** Vara, maçã e muda não são `ResourceType`, nenhum trabalhador as retira, e cada uma ocupa um slot para sempre | ⚙️ **Metade fechada em 09-04.** O transbordo para a colônia tirou o lenhador do buraco e parou a destruição de item, mas **não move o assoreamento de lugar**: baú que só enche acaba cheio, e agora demora mais para chegar lá. Dar a esses itens consumidor ou descarte é **decisão de projeto** e está registrada no javadoc de `TreeFelling.deposit`, não decidida por conta própria |
@@ -3263,7 +3341,7 @@ dos três foi visto em jogo.
 | | O que é | Estado |
 |---|---|---|
 | ✅ | ~~**Ramais da mesma escada, um por mineiro.**~~ | **Feito em 09-04, à noite.** Nasceu o `MineArm` — cursor, recusas e veia por ramal —, a `Mine` passou a ter quatro, e o `MineClaims` reparte em vez de trancar. O `SHAPE_VERSION` foi a 3 e o save de um ramal só reabre os outros três no primeiro degrau. **O poço continua de um mineiro só até a galeria começar**, e isso não é limitação: abaixo de `MineShaft.CARVED` os quatro ramais apontam para as mesmas posições, e repartir antes disso era o defeito de 08-26 de volta — um gametest o pegou com dois mineiros recebendo o mesmo bloco. Fase vermelha conferida: 8 testes caem sem a função |
-| 🔴 | **A escada de ferramentas não tem primeiro degrau automático.** Todo trabalhador começa de madeira e troca pela melhor do baú — mas **nada na colônia fabrica ou deposita ferramenta**. `ResourceType` não tem ferramenta nenhuma, e o `IRON_PICKAXE` do `ChestMarker` é o crachá no quadro do baú, não um item usável | **Achado em 09-04 conferindo uma afirmação minha que estava errada:** duas mensagens de commit daquele dia dizem *"a colônia mesma põe picaretas lá"*, e é falso. Na prática o mineiro fica na picareta de madeira — pedra a 23 tiques em vez dos 6 do diamante, quase 4× mais lento — até **o jogador** pôr uma melhor no baú dele. A troca funciona e tem teste; o que falta é a colônia alimentá-la. Saídas: o fabricante aprender a fazer picareta (precisa de `ResourceType` de ferramenta), ou uma reserva inicial por profissão |
+| ✅ | ~~**A escada de ferramentas não tem primeiro degrau automático.**~~ | **Fechado em 09-09, e não do jeito que esta linha supunha.** Ela cobrava um degrau *automático* — algo na colônia fabricando ou depositando ferramenta. O autor decidiu o contrário: quem entrega é o jogador, nos baús. O que faltava, então, não era produção: era a troca alcançar **qualquer** baú da colônia, e não só o do próprio trabalhador. Ver a linha de 09-05 e [R-011](docs/behavioral-tests/REGRESSION-HISTORY.md) |
 | 🟠 | **A arena de gametest não hospeda a galeria.** Ela assenta no fundo do mundo — bedrock em `y=-64` — e a segunda sala fica vinte blocos abaixo, em `y=-76`: fora do limite de construção | Medido em 09-04 instrumentando o `nextCut`. Toda a bateria de mineração exercita **só o poço**, que é a parte partilhada pelos quatro ramais. A divergência dos ramais é provada por unitário (`MineTest`, `MineClaimsTest`) e **não** de ponta a ponta. Uma arena mais alta consertaria, e é trabalho próprio |
 | 🟠 | **Os 49 `assign()` que criam trabalhador de mãos vazias.** Só `WorkerEquipmentGameTest` chama `equip`; três testes de `MinerGameTest` passaram a chamar neste ciclo | Passam hoje por folga no `tickLimit`, não por estarem certos. Desde que o `BlockBreakTime` pergunta à mão, teste que mede tempo sem equipar mede a mão nua |
 | 🟠 | **`MineDigging` tem 1.078 linhas** e passou o `VillageDetectionHandler` (983) como o pior arquivo do projeto | A lista de arquivos acima de 500 linhas, mais abaixo, ainda não o traz |
@@ -3277,12 +3355,12 @@ Sete ciclos num dia, e o que sobrou. Ordenado por quanto dói.
 
 | nível | o quê | por quê |
 |---|---|---|
-| 🔴 | **A escada que o jogador constrói ainda corre risco de picareta** | o `canDig` protege a vila gerada e o que a colônia construiu — a escada do jogador não é nenhuma das duas. A correção foi tentada e **desfeita**: exigir cubo cheio no `isStillClosed` apagou a mina inteira, porque aquela pergunta alimenta o recuo do cursor e recuo e escolha do alvo **têm de concordar**. Refazer pede as duas pontas juntas e um teste da concordância |
-| 🔴 | **Mina de save antigo continua com a forma velha** | o cursor gravado aponta para a ordem de antes da escada dupla e do túnel de três. O `findTheFrontier` lê o mundo e deve se acertar sozinho, mas a escada larga e o teto alto só aparecem no que ainda não foi cavado. **Não foi visto acontecer** |
+| ✅ | ~~**A escada que o jogador constrói ainda corre risco de picareta**~~ | **A linha estava vencida — o conserto entrou no mesmo dia, às 18:06, em `212c2ee`.** A tentativa desfeita mexia só no `isStillClosed`; a que ficou uniu as duas pontas numa lista só, `isOpenSpace` → `isRock`, e os dois lados a chamam. O critério é **forma e ferramenta**: cubo cheio, quebrável com picareta ou pá, e tijolo de pedra não — que é a única família de cubo cheio que nenhuma caverna gera, e é dela que a escada do autor é feita. **E o teste da concordância que esta linha pedia existe**, em par: `theMinerDoesNotDigThePlayersStaircase` afirma que a escolha do alvo pula o degrau, e `thePlayersStepInTheDigOrderIsNotTheFrontier` afirma que o recuo do cursor também o pula — um sem o outro passa com a mina quebrada. Conferido verde em 09-09. **O que fica, e é decisão registrada:** bloco de cubo cheio que o jogador ponha — piso de tijolo de barro, pedra polida — ainda passa por rocha. Errar para esse lado é o certo, porque a mina que para de cavar é pior que a mina que abre um bloco a mais |
+| ✅ | ~~**Mina de save antigo continua com a forma velha**~~ | **Medido em 09-09, e a mina conserta.** A pendência era suspeita — ela mesma dizia *"não foi visto acontecer"*. A metade do save já tinha teste desde 08-27 (`aMineFromBeforeTheTallerStairStartsOver`: forma diferente devolve a fronteira ao primeiro degrau, sem traduzir). A que faltava era **o que a mina faz depois**, e a resposta é que o já aberto é pulado de graça, 64 por passagem, e a picareta cai no que a forma nova acrescentou. `theMineFromAnOldShapeDigsWhatTheOldOneLeftBehind` põe as posições 0 a 8 abertas **com um buraco na 5** e o cursor em zero, e exige o buraco como alvo. **Fase vermelha conferida**: obedecida a fronteira gravada — que é o que a pendência temia —, ela passa por cima do buraco e desce três níveis. **Nenhuma sessão abriu mina de save antigo desde a mudança de forma:** o provado é o mecanismo, não a sessão. Ver [R-010](docs/behavioral-tests/REGRESSION-HISTORY.md) |
 | 🟠 | **A mão emprestada saiu, e o problema dela volta** | a ADR-010 existia porque o trabalhador travado repete a mesma parede até o fim da sessão. Volta a acontecer, por decisão do autor. A saída é consertar o travamento — feito do lado do mineiro; o lado do lenhador continua aberto |
 | 🟠 | **A linha de desistência do lenhador mente** | ela imprime `stallLimit`, que é a **constante** 2.400, e não o contador: dizia *"made no progress for 2400 work ticks"* em desistências separadas por 600 tiques. Quase mandou procurar o defeito no guarda em vez de no castigo |
 | 🟠 | **A casa sai de espécies misturadas na escada, na porta e na viga** | já saía na parede desde 08-26. É o preço de a casa **existir** quando a vila corta cerejeira e a planta pede carvalho — mas é mudança visível, e o autor pode não querer |
-| 🟠 | **Nada na colônia fabrica ou deposita ferramenta** | a troca pela melhor do baú existe e tem teste, e **ninguém a alimenta**. Foi o que derrubou a decisão de começar de madeira: sem segundo degrau, o primeiro é teto. Com ferro isso dói menos, e continua aberto |
+| ✅ | ~~**Nada na colônia fabrica ou deposita ferramenta**~~ | **Decisão do autor, 09-09:** *"ferramenta caindo como drop, as ferramentas novas serão entregues nos baús pelo player"*. A colônia não fabrica ferramenta nenhuma — quem alimenta a escada é o jogador, e o degrau que faltava era **onde ele pode largar**. A troca passou a procurar em **todos os baús da colônia**, o do próprio primeiro e os outros por distância: o jogador não tem como saber qual baú é do mineiro, e exigir o certo manteria o degrau fechado com outra aparência. Quem separa quem fica com o quê continua sendo a velocidade contra o bloco de prova da profissão, sem regra nova. Ver [R-011](docs/behavioral-tests/REGRESSION-HISTORY.md) |
 | 🟡 | **A reserva de tora não distingue espécie** | conta `WOOD` e `PLANKS` como grupos. Cem toras de cerejeira e nenhuma de carvalho satisfazem "metade em tora" e continuam sem a tora de carvalho que a viga pede |
 | 🟡 | **`LentHand.mark` é guarda sem caminho previsto** | só dispara se a profissão mudar com a tarefa aberta. Um `(X lending a hand)` no log virou **notícia** |
 | 🟡 | **O `isStillClosed` não tem teste** | é privado, e o que se afirma hoje é o predicado do corredor. Foi por aí que a correção desfeita passou sem ninguém ver |

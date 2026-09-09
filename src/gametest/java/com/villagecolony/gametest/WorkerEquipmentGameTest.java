@@ -525,6 +525,133 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
     }
 
     /** Um mineiro com baú registrado, que é o que a troca exige. */
+    /**
+     * <b>A ferramenta que o jogador deixou em outro baú da colônia
+     * também chega à mão</b> — decisão do autor, 2026-09-09:
+     * <i>"ferramenta caindo como drop, as ferramentas novas serão
+     * entregues nos baús pelo player"</i>.
+     *
+     * <p>É o primeiro degrau da escada de ferramentas, e ele estava
+     * aberto desde 09-04: a troca pela melhor do baú existe e tem teste,
+     * e <b>ninguém a alimentava</b> — nada na colônia fabrica ou deposita
+     * ferramenta. A decisão fecha o buraco pelo lado de fora: quem
+     * alimenta é o jogador.
+     *
+     * <p><b>E aí o baú não pode ser só o do próprio trabalhador.</b> O
+     * jogador não tem como saber qual dos baús da vila é do mineiro —
+     * eles são iguais, e a marca é um crachá pequeno. Exigir o baú certo
+     * seria manter o degrau fechado com outra aparência.
+     *
+     * <p>Quem separa quem fica com o quê é o mesmo critério de sempre, e
+     * não uma regra nova: a velocidade contra o bloco de prova da
+     * profissão. Um machado no baú do mineiro não vira picareta, e a
+     * picareta no baú do lenhador vai para quem cava.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_equipment")
+    public void theToolThePlayerLeftInAnotherChestReachesTheHand(TestContext context) {
+        UUID colonyId = UUID.randomUUID();
+
+        BlockPos own = new BlockPos(2, 1, 2);
+        BlockPos mates = new BlockPos(4, 1, 2);
+
+        context.setBlockState(own, Blocks.CHEST.getDefaultState());
+        context.setBlockState(mates, Blocks.CHEST.getDefaultState());
+
+        VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
+        VillagerEntity mate = spawn(context, new BlockPos(5, 1, 1));
+
+        Worker miner = colonyWorker(context, colonyId, villager, ProfessionType.MINER, own);
+        Worker lumberjack =
+                colonyWorker(context, colonyId, mate, ProfessionType.LUMBERJACK, mates);
+
+        // O jogador deixou a picareta num baú da vila — e não no do
+        // mineiro, que ele não tem como distinguir.
+        putInChest(context, mates, new ItemStack(Items.DIAMOND_PICKAXE));
+
+        try {
+            WorkerEquipment.equip(context.getWorld(), List.of(miner));
+
+            context.assertTrue(
+                    villager.getEquippedStack(EquipmentSlot.MAINHAND)
+                            .isOf(Items.DIAMOND_PICKAXE),
+                    "a mão ficou com "
+                            + villager.getEquippedStack(EquipmentSlot.MAINHAND).getItem()
+                            + " — a picareta que o jogador deixou no baú da colônia não subiu");
+
+            context.assertTrue(
+                    countIn(context, mates, Items.DIAMOND_PICKAXE) == 0,
+                    "a picareta continua no baú: a colônia duplicou o item");
+        } finally {
+            VillageColonyMod.WORKERS.remove(miner.villagerId());
+            VillageColonyMod.WORKERS.remove(lumberjack.villagerId());
+            VillageColonyMod.STORAGES.remove(miner.villagerId());
+            VillageColonyMod.STORAGES.remove(lumberjack.villagerId());
+        }
+
+        context.complete();
+    }
+
+    /**
+     * E o machado do lenhador continua sendo dele.
+     *
+     * <p>A outra metade, e a de sempre: alcançar todos os baús não pode
+     * virar todo mundo pegando tudo. O bloco de prova do mineiro é a
+     * pedra, e machado em pedra vale o mesmo que a mão vazia — ele nunca
+     * ganha da picareta que o mineiro já tem, sem uma linha que o diga.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_equipment")
+    public void theMinerLeavesTheAxeInTheOtherChest(TestContext context) {
+        UUID colonyId = UUID.randomUUID();
+
+        BlockPos own = new BlockPos(2, 1, 2);
+        BlockPos mates = new BlockPos(4, 1, 2);
+
+        context.setBlockState(own, Blocks.CHEST.getDefaultState());
+        context.setBlockState(mates, Blocks.CHEST.getDefaultState());
+
+        VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
+        VillagerEntity mate = spawn(context, new BlockPos(5, 1, 1));
+
+        Worker miner = colonyWorker(context, colonyId, villager, ProfessionType.MINER, own);
+        Worker lumberjack =
+                colonyWorker(context, colonyId, mate, ProfessionType.LUMBERJACK, mates);
+
+        putInChest(context, mates, new ItemStack(Items.DIAMOND_AXE));
+
+        try {
+            WorkerEquipment.equip(context.getWorld(), List.of(miner));
+
+            context.assertTrue(
+                    countIn(context, mates, Items.DIAMOND_AXE) == 1,
+                    "o mineiro levou o machado de diamante do baú do lenhador");
+        } finally {
+            VillageColonyMod.WORKERS.remove(miner.villagerId());
+            VillageColonyMod.WORKERS.remove(lumberjack.villagerId());
+            VillageColonyMod.STORAGES.remove(miner.villagerId());
+            VillageColonyMod.STORAGES.remove(lumberjack.villagerId());
+        }
+
+        context.complete();
+    }
+
+    /** Um trabalhador da colônia, com baú, no registro — o que o ColonyChests lê. */
+    private static Worker colonyWorker(
+            TestContext context,
+            UUID colonyId,
+            VillagerEntity villager,
+            ProfessionType profession,
+            BlockPos chest) {
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colonyId);
+        worker.assign(profession);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(
+                villager.getUuid(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chest))));
+
+        return worker;
+    }
+
     private static Worker storedMiner(
             TestContext context, VillagerEntity villager, BlockPos chest) {
 

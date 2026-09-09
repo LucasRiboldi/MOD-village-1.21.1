@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.ToolType;
 import com.villagecolony.core.worker.model.Worker;
@@ -13,7 +14,9 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -200,32 +203,78 @@ public final class WorkerEquipment {
             return false;
         }
 
+        ColonyPos ownChest = storage.get().chestPosition();
+
         ItemStack floor = starter.map(ItemStack::new).orElse(ItemStack.EMPTY);
 
-        Optional<ItemStack> better = ToolUpgrade.betterThan(
-                world, profession, held, floor, storage.get().chestPosition());
+        // <b>Todos os baús da colônia, e não só o dele</b> — decisão do
+        // autor, 2026-09-09: <i>"as ferramentas novas serão entregues nos
+        // baús pelo player"</i>. O jogador não tem como saber qual dos
+        // baús da vila é do mineiro — eles são iguais, e a marca é um
+        // crachá pequeno. Exigir o baú certo manteria fechado o degrau
+        // que esta decisão existe para abrir.
+        //
+        // <b>A barra sobe a cada baú</b>, e é o que faz a busca devolver
+        // a melhor da colônia em vez da primeira que serviu: o candidato
+        // de agora entra como "o que ele segura" na pergunta seguinte.
+        //
+        // Quem separa quem fica com o quê continua sendo a velocidade
+        // contra o bloco de prova da profissão — ver ToolUpgrade. Um
+        // machado no baú do mineiro não vira picareta.
+        // <b>E o baú dele entra primeiro, à mão</b> — 2026-09-09. O
+        // {@code nearestFirst} monta a lista percorrendo o registro de
+        // trabalhadores, e o baú do próprio não pode depender de o
+        // registro conhecê-lo: quem tem baú tem baú. Foi o que três
+        // testes desta casa acusaram no primeiro minuto — eles guardam o
+        // baú e não registram o trabalhador, e a troca que funcionava
+        // parou.
+        List<ColonyPos> chests = new ArrayList<>();
 
-        if (better.isEmpty()) {
+        chests.add(ownChest);
+
+        for (ColonyPos chest : ColonyChests.nearestFirst(worker.colonyId(), ownChest)) {
+            if (!chest.equals(ownChest)) {
+                chests.add(chest);
+            }
+        }
+
+        ColonyPos from = null;
+        ItemStack take = null;
+        ItemStack bar = held;
+
+        for (ColonyPos chest : chests) {
+            Optional<ItemStack> better =
+                    ToolUpgrade.betterThan(world, profession, bar, floor, chest);
+
+            if (better.isEmpty()) {
+                continue;
+            }
+
+            take = better.get();
+            bar = take;
+            from = chest;
+        }
+
+        if (take == null) {
             return false;
         }
 
-        ItemStack take = better.get();
         boolean givesBack = !held.isEmpty() && !isProfessionTool(held);
 
-        if (givesBack
-                && ChestDepositor.freeSpaceFor(world, storage.get().chestPosition(),
-                        held.getItem()) < 1) {
-
+        // <b>O que sai da mão volta para o baú DELE</b>, e não para o de
+        // onde a nova veio: o baú do trabalhador é o lugar dele no mundo,
+        // e é lá que o resto desta classe já procura. O item do jogador
+        // não se perde de nenhum dos dois jeitos.
+        if (givesBack && ChestDepositor.freeSpaceFor(world, ownChest, held.getItem()) < 1) {
             return false;
         }
 
-        if (ChestWithdrawer.takeOne(world, storage.get().chestPosition(), take.getItem()) < 1) {
+        if (ChestWithdrawer.takeOne(world, from, take.getItem()) < 1) {
             return false;
         }
 
         if (givesBack) {
-            ChestDepositor.deposit(
-                    world, storage.get().chestPosition(), held.getItem(), held.getCount());
+            ChestDepositor.deposit(world, ownChest, held.getItem(), held.getCount());
         }
 
         villager.equipStack(EquipmentSlot.MAINHAND, take);

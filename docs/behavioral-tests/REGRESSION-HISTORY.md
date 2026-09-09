@@ -163,3 +163,161 @@ fica parada para sempre.
 
 **Teste.** `SessionResumeTest`, 5 casos, conferido nos dois sentidos.
 Commit `bbc274a`.
+
+---
+
+## 2026-09-09, à tarde — o defeito era do teste
+
+---
+
+### R-008 — a bateria não era confiavelmente verde, e a produção estava certa
+
+**Medida.** 3 falhas em 30 execuções (~10%), sempre
+`MinerGameTest.aFrozenMinerGivesUpLongBeforeTheStallGuard`. Duas investidas
+anteriores no mesmo dia não acharam a causa e não reproduziram a falha sob
+demanda. Ver [`known-failures.md`](known-failures.md) KF-001.
+
+**Causa.** O teste afirmava `task.state()` **no tique 360**, e estado de tarefa
+não é só do mineiro. O guarda de imobilidade devolvia a pedra por volta do tique
+305 — o que o teste promete medir —, e a fronteira do ciclo da colônia, quando
+caía nos ~55 tiques seguintes, **reservava a mesma tarefa de novo para o mesmo
+mineiro**: `runColonyCycles` → `ColonyCycle.run` → `WorkAssignment.assign`, 2ª
+passagem, que dá trabalho a quem está de descanso quando não há mais nada da
+profissão dele (`theRestNeverLeavesTheWorkerIdle` afirma isso). A fase do
+`tickCounter` de 600 é do servidor inteiro e depende de quanto a bateria andou
+antes — daí o sorteio, e daí ~55/600 ≈ 10%.
+
+**A hipótese registrada estava errada, e o dado que a sustentava também.** Não
+era o orçamento global de buscas: `miner_stillness` é lote de um teste só, e
+lote roda um de cada vez. E o `still 280/300` contra `still 99/300` eram duas
+amostras do `MinerReport` impressas pelo ciclo em fases diferentes — nunca
+foram o mesmo instante. O `99` é o contador de um `Job` novo, nascido da
+re-reserva.
+
+**Correção.** No teste. Guarda-se o **instante em que a tarefa voltou**
+(`runAtEveryTick`), e não o estado num tique escolhido: devolver é evento, e
+nada o desfaz depois. E o ciclo passou a ser forçado no tique 340 — o que era
+sorteio virou parte do que o teste afirma.
+
+**Teste.** O próprio `aFrozenMinerGivesUpLongBeforeTheStallGuard`.
+**Reproduzido sob demanda** antes de consertar (ciclo forçado → `task=RESERVED`,
+`still 45/300`), e **fase vermelha conferida** depois: com `WorkStall.LIMIT` em
+3.000, a bateria acusa exatamente um teste, esse.
+
+---
+
+### R-009 — o lugar de ficar de pé era em cima da pedra, e o mineiro não sobe dois
+
+**Medida.** Sessão de 09-09, três vezes em dois minutos, sempre a mesma pedra:
+
+```
+gave up the stone at 2427,48,-1437 — 2 blocks below it and unable to climb
+```
+
+**Causa.** `MinerWork.approachTo` devolve o **primeiro** deslocamento pisável da
+lista `APPROACH_OFFSETS`, que está ordenada por distância. O primeiro de todos é
+`(0, +1, 0)` — **em cima da própria pedra**, a meio bloco. Com o teto acima dela
+aberto, o lugar é pisável e a busca para ali. Só que em cima da pedra é **dois**
+acima de quem está de pé no chão ao lado dela, e aldeão sobe **um**: a navegação
+não cumpre o destino, ele não anda, o guarda de imobilidade devolve a tarefa.
+
+E a pedra volta na passagem seguinte porque `couldNotReach` → `holdPositionAt`
+**segura o cursor** — e faz certo: pular a posição por uma desistência foi o que
+deixou três sessões com a galeria intacta em 08-27. O laço fecha entre as duas
+coisas, e quem o abre é a escolha do lugar.
+
+**Correção.** `approachTo` passou a saber de onde o mineiro vem. Prefere o
+primeiro lugar pisável que esteja no máximo `CLIMB` (= 1) acima dos pés dele; sem
+nenhum, devolve o mesmo de antes. O filtro é de um lado só — descer é de graça,
+subir é que tem degrau.
+
+**Teste.** `MinerGameTest.theStandingPlaceIsOneTheMinerCanClimbTo`, escrito
+**antes** da correção e falhando com o número exato da sessão — *"o mineiro foi
+mandado para **2** blocos acima dos pés dele"*. Ao lado dele,
+`fromAboveTheTopOfTheStoneIsStillTheAnswer`, que impede a troca de um destino bom
+por um pior: quem vem do nível de cima continua ficando em cima da pedra.
+
+**O que isto NÃO fecha.** Quando não existe **nenhum** lugar que ele alcance, a
+resposta continua sendo a de antes e o laço continua — a saída seria uma escada
+de recusas para a posição da mina, no molde do `TreeMarks` do lenhador (R-001),
+e ela esbarra na invariante que o `holdPositionAt` protege. É decisão de projeto,
+e está anotada como **E44**. E nada disto foi visto em jogo: a sessão de 09-09
+não está nesta máquina, e a correção tem teste, não sessão.
+
+---
+
+### R-010 — a mina de save antigo consertar a forma velha era suspeita, e não medida
+
+**Não é defeito: é uma pendência 🔴 de 09-05 que se dissolveu ao ser medida.**
+
+A linha dizia: *"o cursor gravado aponta para a ordem de antes da escada dupla e
+do túnel de três. O `findTheFrontier` lê o mundo e deve se acertar sozinho, mas a
+escada larga e o teto alto só aparecem no que ainda não foi cavado"* — e dizia
+também **não foi visto acontecer**. Era suspeita, e suspeita se responde
+medindo.
+
+**O que já existia.** `MineSave` não traduz a fronteira quando a forma muda: ela
+volta ao primeiro degrau (`cuts = new int[0]`, e todo ramal nasce em zero), e
+`MineSaveTest.aMineFromBeforeTheTallerStairStartsOver` afirma isso desde 08-27.
+O que ninguém tinha perguntado é a outra metade — **o que a mina faz depois**.
+
+**A resposta é que ela conserta.** Com o cursor em zero sobre uma escavação da
+forma velha, o já aberto é pulado de graça (64 por passagem) e a picareta cai no
+que a forma nova acrescentou.
+
+**Teste.** `MinerGameTest.theMineFromAnOldShapeDigsWhatTheOldOneLeftBehind`: as
+posições 0 a 8 da ordem abertas, **com um buraco na 5** — o bloco que a forma de
+hoje abre e a de ontem não abria —, o cursor devolvido a zero, e o alvo tem de
+ser o buraco. **Fase vermelha conferida**: com a fronteira gravada obedecida
+(cursor em 9, que é o que a pendência temia), ela passa por cima do buraco e vai
+três níveis abaixo — falha exatamente um teste, esse.
+
+**O que isto não diz.** Nenhuma sessão de jogo abriu uma mina de save antigo
+desde a mudança de forma. O que está provado é o mecanismo, não a sessão.
+
+---
+
+### R-011 — a escada de ferramentas não tinha primeiro degrau, e o degrau era o baú
+
+**Decisão do autor, 2026-09-09:** *"ferramenta caindo como drop, as ferramentas
+novas serão entregues nos baús pelo player"*.
+
+**A pendência.** Aberta em 09-04 e repetida em 09-05: todo trabalhador começa com
+a ferramenta da profissão e troca pela melhor do baú — o `ToolUpgrade` existe e
+tem teste desde 09-04 —, e **nada na colônia fabrica ou deposita ferramenta**.
+Sem segundo degrau, o primeiro é teto. Foi o que derrubou a decisão de começar de
+madeira em 09-05.
+
+**A decisão muda a pergunta.** Não é produção que falta: a colônia não vai
+fabricar ferramenta nenhuma. Quem alimenta a escada é o jogador, e o que faltava
+era **onde ele pode largar**.
+
+**Causa.** `WorkerEquipment.upgrade` perguntava a um baú só — o do próprio
+trabalhador (`WorkerStorage.chestPosition`). O jogador não tem como saber qual
+dos baús da vila é do mineiro: eles são iguais, e a marca é um crachá pequeno.
+Exigir o baú certo manteria fechado o degrau que a decisão existe para abrir.
+
+**Correção.** A troca passou a percorrer **todos os baús da colônia** —
+`ColonyChests.nearestFirst` —, com o do próprio trabalhador **primeiro e à mão**:
+aquela lista se monta percorrendo o registro de trabalhadores, e o baú de quem
+tem baú não pode depender de o registro conhecê-lo. A barra sobe a cada baú, então
+o que sai é a melhor da colônia, e não a primeira que serviu. O que sai da mão
+volta para o baú **dele**, e não para o de onde a nova veio.
+
+**Quem separa quem fica com o quê não é regra nova.** É a velocidade contra o
+bloco de prova da profissão, que o `ToolUpgrade` já usava: machado em pedra vale o
+mesmo que a mão vazia, então o mineiro nunca leva o machado do lenhador — sem uma
+linha escrita para dizê-lo.
+
+**Testes.** `WorkerEquipmentGameTest.theToolThePlayerLeftInAnotherChestReachesTheHand`,
+escrito **antes** da correção e falhando com a mão em `iron_pickaxe`; e
+`theMinerLeavesTheAxeInTheOtherChest` ao lado dele, para que alcançar todos os
+baús não vire todo mundo pegando tudo.
+
+**E a correção quebrou três testes antigos antes de ficar de pé**, o que vale
+registrar: eles guardam o baú sem registrar o trabalhador, e a primeira versão
+tirava a lista inteira do registro. Foi o que mostrou que o baú do próprio tem de
+entrar à mão. Os três voltaram ao verde sem serem tocados.
+
+**O que fica de fora, e é o que a frase pede:** ferramenta **no chão** não é
+recolhida por ninguém. A entrega é no baú.

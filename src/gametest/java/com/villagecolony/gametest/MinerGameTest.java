@@ -10,6 +10,7 @@ import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.construction.model.MineArm;
 import com.villagecolony.core.construction.model.MineShaft;
+import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskPriority;
@@ -1563,6 +1564,102 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
+     * <b>E o lugar de ficar de pé tem de ser um que ele alcance</b> —
+     * E40, 2026-09-09.
+     *
+     * <p>Sessão de 09-09, três vezes em dois minutos, sempre a mesma
+     * pedra:
+     *
+     * <pre>
+     * gave up the stone at 2427,48,-1437 — 2 blocks below it and unable to climb
+     * </pre>
+     *
+     * <p><b>A geometria, e ela é a lista de deslocamentos.</b> O
+     * {@code APPROACH_OFFSETS} está ordenado por distância, e o primeiro
+     * de todos é {@code (0, +1, 0)} — <b>em cima da própria pedra</b>, a
+     * meio bloco. Quando o teto acima dela está aberto, esse lugar é
+     * pisável e a resposta sai dali sem mais nenhuma leitura.
+     *
+     * <p>Só que em cima da pedra é <b>dois</b> acima de quem está de pé
+     * no chão do túnel ao lado dela, e aldeão sobe um. A navegação não
+     * cumpre o destino, ele não anda, o guarda devolve a tarefa — e o
+     * cursor da galeria <b>segura a posição</b> ({@code couldNotReach} →
+     * {@code holdPositionAt}, e com razão: pular a pedra por uma
+     * desistência custou três sessões com a galeria intacta). A mesma
+     * pedra volta na passagem seguinte, e o laço fecha.
+     *
+     * <p>O lugar bom existia — o próprio chão onde ele está, atrás e um
+     * abaixo do alvo, a 1,8. A busca é que não perguntava de onde ele
+     * vem.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_approach",
+            tickLimit = 20)
+    public void theStandingPlaceIsOneTheMinerCanClimbTo(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        galleryFace(context);
+
+        // O teto acima da frente sai, e é isso que torna "em cima da
+        // pedra" pisável — a diferença entre este caso e o do vizinho.
+        context.setBlockState(new BlockPos(5, 4, 3), Blocks.AIR.getDefaultState());
+        context.setBlockState(new BlockPos(5, 5, 3), Blocks.AIR.getDefaultState());
+
+        BlockPos target = context.getAbsolutePos(new BlockPos(5, 3, 3));
+
+        BlockPos miner = context.getAbsolutePos(new BlockPos(4, 2, 3));
+
+        BlockPos stand = MinerWork.approachTo(world, target, miner);
+
+        context.assertTrue(
+                stand.getY() - miner.getY() <= 1,
+                "o mineiro foi mandado para " + (stand.getY() - miner.getY())
+                        + " blocos acima dos pés dele, e aldeão sobe um: "
+                        + stand.toShortString());
+
+        context.assertTrue(
+                BuilderApproach.standable(world, stand),
+                "o lugar escolhido não cabe um aldeão: " + stand.toShortString());
+
+        context.assertTrue(
+                MinerReach.isWithinReach(
+                        stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5, target),
+                "o lugar escolhido está fora de alcance do alvo: "
+                        + stand.toShortString());
+
+        context.complete();
+    }
+
+    /**
+     * E em cima da pedra continua valendo quando é de lá que ele vem.
+     *
+     * <p>A outra metade, e a mesma de sempre: o conserto não pode trocar
+     * um destino bom por um pior. O mineiro no nível de cima alcança a
+     * pedra por cima, e é o lugar mais perto que existe.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_approach",
+            tickLimit = 20)
+    public void fromAboveTheTopOfTheStoneIsStillTheAnswer(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        galleryFace(context);
+
+        context.setBlockState(new BlockPos(5, 4, 3), Blocks.AIR.getDefaultState());
+        context.setBlockState(new BlockPos(5, 5, 3), Blocks.AIR.getDefaultState());
+
+        BlockPos target = context.getAbsolutePos(new BlockPos(5, 3, 3));
+
+        BlockPos above = context.getAbsolutePos(new BlockPos(4, 4, 3));
+
+        context.assertTrue(
+                MinerWork.approachTo(world, target, above)
+                        .equals(context.getAbsolutePos(new BlockPos(5, 4, 3))),
+                "quem vem de cima deixou de ficar em cima da pedra: "
+                        + MinerWork.approachTo(world, target, above).toShortString());
+
+        context.complete();
+    }
+
+    /**
      * A frase de "não cheguei" diz onde ele está e para onde foi —
      * 2026-08-27.
      *
@@ -2983,6 +3080,18 @@ public class MinerGameTest implements FabricGameTest {
      * lugar da criança. O que se afirma é <b>quando</b> a tarefa volta: se
      * ela voltou antes do {@code STALL_LIMIT}, quem a devolveu foi o
      * detector de imobilidade, porque o outro guarda ainda nem chegou lá.
+     *
+     * <p><b>E "voltou" é evento, não estado</b> — KF-001 fechado em
+     * 2026-09-09. A afirmação antiga lia {@code task.state()} no tique
+     * 360, e esse estado não é só do mineiro: a fronteira do ciclo da
+     * colônia, quando calha de cair na janela, devolve a tarefa a quem
+     * acabou de largá-la, e o teste reprovava a produção por ter feito
+     * exatamente o que ele promete medir. Eram ~10% das execuções — 3 em
+     * 30 —, porque a janela entre a devolução e a afirmação é de umas
+     * cinco dezenas de tiques nos 600 do ciclo, e a fase do ciclo depende
+     * de quanto a bateria andou nos lotes anteriores. Agora o instante da
+     * devolução é guardado quando acontece, e o ciclo é forçado de
+     * propósito depois dele.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_stillness",
             tickLimit = 400)
@@ -3067,6 +3176,54 @@ public class MinerGameTest implements FabricGameTest {
 
         MinerWork.run(world, colony);
 
+        // <b>O que se afirma é o evento, e não o estado no tique 360</b>
+        // — KF-001, 2026-09-09.
+        //
+        // Estado de tarefa é global, e outra coisa o escreve: a fronteira
+        // do ciclo da colônia caindo dentro da janela deste teste devolve
+        // a mesma tarefa ao mesmo mineiro que acabou de largá-la. É a 2ª
+        // passagem do {@code WorkAssignment}, que existe de propósito e
+        // tem teste — {@code theRestNeverLeavesTheWorkerIdle}: descanso
+        // não deixa trabalhador parado quando não há mais nada da
+        // profissão dele. O contador de 600 tiques é do servidor inteiro,
+        // e a fase dele depende de quantos tiques a bateria gastou nos
+        // lotes anteriores; a janela entre a devolução (~tique 305) e a
+        // afirmação (360) é de umas cinco dezenas em 600, que são os
+        // ~10% medidos — 3 falhas em 30 execuções.
+        //
+        // O guarda de imobilidade devolve a tarefa <b>uma vez</b>, e
+        // nada pode desfazer que ela tenha voltado. É esse instante que
+        // se guarda, e é dele que a promessa fala.
+        int[] passes = { 0 };
+
+        int[] releasedAt = { -1 };
+
+        context.runAtEveryTick(() -> {
+            passes[0]++;
+
+            if (releasedAt[0] >= 0) {
+                return;
+            }
+
+            if (task.state() != TaskState.RESERVED
+                    && task.state() != TaskState.EXECUTING) {
+
+                releasedAt[0] = passes[0];
+            }
+        });
+
+        // <b>E a interferência entra de propósito.</b> Ela era sorteio —
+        // ora a fronteira do ciclo caía na janela, ora não —, e sorteio
+        // num teste é o que o KF-001 foi. Aqui o ciclo é forçado depois
+        // de o guarda ter falado: se a afirmação sobrevive a ele, ela
+        // sobrevive a qualquer fase.
+        context.runAtTick(340, () -> {
+            WorkAssignment.assign(
+                    colony.id(), VillageColonyMod.WORKERS, VillageColonyMod.TASKS);
+
+            MinerWork.run(world, colony);
+        });
+
         context.runAtTick(360, () -> {
             // <b>KF-001, e esta linha existe porque a falha é rara.</b>
             //
@@ -3080,12 +3237,9 @@ public class MinerGameTest implements FabricGameTest {
             //
             // Fala só quando algo está errado, para não somar ruído às
             // 269 passagens de uma bateria verde.
-            if (task.state() == TaskState.RESERVED
-                    || task.state() == TaskState.EXECUTING
-                    || !WorkHours.isWorkTime(world, villager)) {
-
+            if (releasedAt[0] < 0 || !WorkHours.isWorkTime(world, villager)) {
                 VillageColonyMod.LOGGER.warn(
-                        "KF-001 — o mineiro emparedado ainda está com a tarefa no tique 360."
+                        "KF-001 — a tarefa do mineiro emparedado nunca voltou para a fila."
                                 + " task={}, expediente={}, relatório={}",
                         task.state(),
                         WorkHours.isWorkTime(world, villager),
@@ -3103,15 +3257,20 @@ public class MinerGameTest implements FabricGameTest {
                         "o detector de imobilidade precisa disparar ANTES do guarda de"
                                 + " travamento, senão ele não adianta nada");
 
-                context.assertFalse(
-                        task.state() == TaskState.RESERVED
-                                || task.state() == TaskState.EXECUTING,
+                context.assertTrue(
+                        releasedAt[0] >= 0,
                         "o mineiro passou " + (MinerWork.STILL_LIMIT + 20) + " passagens parado"
-                                + " e a tarefa continua com ele —"
+                                + " e a tarefa nunca voltou para a fila —"
                                 + " ela só voltaria no tique " + MinerWork.STALL_LIMIT
                                 + ", que é o preço que toda sessão pagou. O relatório diz o"
                                 + " que o contador marcava: "
                                 + MinerReport.report(world, colony).orElse("(sem relatório)"));
+
+                context.assertTrue(
+                        releasedAt[0] < MinerWork.STALL_LIMIT,
+                        "a tarefa voltou no tique " + releasedAt[0] + ", e o guarda de"
+                                + " travamento só falaria no " + MinerWork.STALL_LIMIT
+                                + " — quem a devolveu não foi o detector de imobilidade");
             } finally {
                 owned.cleanUp();
 
@@ -4213,6 +4372,61 @@ public class MinerGameTest implements FabricGameTest {
             context.assertTrue(
                     next.isPresent() && next.get().equals(dug(context, colony, 9)),
                     "a frente da galeria recuou até o degrau do jogador: foi para "
+                            + next.map(BlockPos::toShortString).orElse("lugar nenhum"));
+        } finally {
+            MineClaims.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * <b>A mina de save antigo conserta a forma velha</b> — 2026-09-09,
+     * e a pergunta é de 09-05.
+     *
+     * <p>A pendência dizia: <i>"o cursor gravado aponta para a ordem de
+     * antes da escada dupla e do túnel de três; o findTheFrontier lê o
+     * mundo e deve se acertar sozinho, mas a escada larga e o teto alto
+     * só aparecem no que ainda não foi cavado"</i>. E dizia também
+     * <b>não foi visto acontecer</b> — era suspeita, e suspeita se
+     * responde medindo.
+     *
+     * <p><b>O arranjo é o que o {@code MineSave} faz de verdade.</b>
+     * Save de forma diferente não traduz a fronteira: ela volta ao
+     * primeiro degrau ({@code cuts = new int[0]}, e todo ramal nasce em
+     * zero). O mundo aqui tem a escavação da forma velha — as posições 0
+     * a 8 abertas — com <b>um buraco</b>: a 5 continua rocha, que é o
+     * bloco que a forma de hoje abre e a de ontem não abria.
+     *
+     * <p>O que se afirma é que a mina volta a ele em vez de marchar para
+     * a frente do que já está aberto. O já aberto é pulado de graça, 64
+     * por passagem, e a picareta cai no que a forma nova acrescentou.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_old_shape",
+            tickLimit = 20)
+    public void theMineFromAnOldShapeDigsWhatTheOldOneLeftBehind(TestContext context) {
+        solidRock(context);
+
+        Colony colony = openedMine(context, 9);
+
+        MineShaft shaft = VillageColonyMod.MINES.of(colony.id()).orElseThrow().shaft();
+
+        BlockPos missing = dug(context, colony, 5);
+
+        context.getWorld().setBlockState(missing, Blocks.STONE.getDefaultState());
+
+        // A fronteira que o save de outra forma devolve: o primeiro
+        // degrau, e não o número gravado.
+        VillageColonyMod.MINES.restore(Mine.restore(colony.id(), shaft, 0));
+
+        try {
+            Optional<BlockPos> next = targetFor(context, colony);
+
+            context.assertTrue(
+                    next.isPresent() && next.get().equals(missing),
+                    "a mina passou por cima do que a forma velha deixou fechado —"
+                            + " o buraco está em " + missing.toShortString()
+                            + " e ela foi para "
                             + next.map(BlockPos::toShortString).orElse("lugar nenhum"));
         } finally {
             MineClaims.clearAll();

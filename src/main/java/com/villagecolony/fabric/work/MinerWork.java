@@ -84,6 +84,17 @@ public final class MinerWork {
      */
     static final int REACH = MinerReach.REACH;
 
+    /**
+     * Quantos blocos um aldeão sobe de um passo — E40, 2026-09-09.
+     *
+     * <p>Um. É o degrau do jogo, e não uma folga escolhida aqui: a
+     * navegação sobe um bloco e não sobe dois. O relatório já dizia o
+     * número desde 2026-08-29 — <i>"N blocks below it and unable to
+     * climb"</i>, que só sai a partir de dois —, e faltava alguém
+     * perguntar antes de mandar.
+     */
+    static final int CLIMB = 1;
+
     private static final int BREAKING_STAGES = 10;
 
     private static final int SWING_INTERVAL = 5;
@@ -445,7 +456,7 @@ public final class MinerWork {
         }
 
         job.target = found.get();
-        job.approach = approachTo(world, job.target);
+        job.approach = approachTo(world, job.target, villager.getBlockPos());
         job.progress = 0;
         job.required = 0;
         job.stalled = 0;
@@ -542,6 +553,64 @@ public final class MinerWork {
         }
 
         return target;
+    }
+
+    /**
+     * O mesmo, sabendo de onde ele vem — E40, 2026-09-09.
+     *
+     * <p><b>O primeiro deslocamento da lista é em cima da própria
+     * pedra</b>, a meio bloco, e ele ganha de todos os outros por
+     * distância. Com o teto acima dela aberto — que numa mina acontece o
+     * tempo todo — a resposta sai dali. Só que em cima da pedra é
+     * <b>dois</b> acima de quem está de pé no chão ao lado dela, e aldeão
+     * sobe um:
+     *
+     * <pre>
+     * gave up the stone at 2427,48,-1437 — 2 blocks below it and unable to climb
+     * </pre>
+     *
+     * <p>Três vezes em dois minutos na sessão de 09-09, sempre a mesma
+     * pedra: a navegação não cumpre o destino, o guarda de imobilidade
+     * devolve a tarefa, e o cursor da galeria segura a posição — como
+     * deve, porque pular a pedra por uma desistência já custou três
+     * sessões com a galeria intacta. O laço fecha aí, e quem o abre é
+     * esta escolha.
+     *
+     * <p><b>O filtro é de um lado só.</b> Descer é de graça — aldeão cai
+     * sem se machucar a esta altura, e a navegação desce —; subir é que
+     * tem degrau de um. Por isso a conta é {@code at.getY() - villager}
+     * contra {@link #CLIMB}, e não uma distância.
+     *
+     * <p><b>E não há resposta pior que a de antes.</b> Sem nenhum lugar
+     * ao alcance dele, vale o primeiro pisável que a busca achou, que é
+     * exatamente o que a sobrecarga de duas mãos devolve. O mineiro que
+     * pergunta de longe — do alto da boca, com a galeria vinte blocos
+     * abaixo — não muda de resposta: lá embaixo nada está acima dele.
+     */
+    public static BlockPos approachTo(
+            ServerWorld world, BlockPos target, BlockPos villager) {
+
+        BlockPos tooHigh = null;
+
+        for (Vec3i offset : MinerReach.APPROACH_OFFSETS) {
+            BlockPos at = target.add(offset);
+
+            if (!BuilderApproach.standable(world, at)) {
+                continue;
+            }
+
+            if (at.getY() - villager.getY() <= CLIMB) {
+                return at;
+            }
+
+            // Guardado, e a busca segue: é a resposta de antes, para o
+            // caso de não existir nenhuma que ele alcance.
+            if (tooHigh == null) {
+                tooHigh = at;
+            }
+        }
+
+        return tooHigh != null ? tooHigh : target;
     }
 
 
