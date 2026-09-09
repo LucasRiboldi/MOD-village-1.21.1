@@ -13,6 +13,7 @@ import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskPriority;
 import com.villagecolony.core.task.model.TaskType;
+import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -329,7 +330,7 @@ public final class ConstructionPlanner {
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 world, colony.id(), colony.center(), searchRadius,
-                plans.stream().map(Blueprint::size).toList());
+                sizesOf(plans));
 
         if (site.isEmpty()) {
             // Duas respostas, e a diferença importa: uma diz que não há
@@ -399,16 +400,59 @@ public final class ConstructionPlanner {
      * trecho é o mesmo nos dois, e duas cópias dele seriam duas versões
      * da Regra 17.
      */
+    /**
+     * Os tamanhos que a varredura precisa testar, sem repetição —
+     * 2026-09-09.
+     *
+     * <p>Cada coluna candidata é testada contra <b>cada</b> tamanho desta
+     * lista, e o catálogo do jogo repete muito a pegada: em planície são
+     * dezenas de casas com um punhado de tamanhos distintos. Passar a
+     * lista crua faria a mesma medida ser refeita dezenas de vezes por
+     * coluna, e a varredura tem teto de colunas por passagem — o custo
+     * sairia do raio que ela alcança, e não do relógio.
+     *
+     * <p>Não existia antes porque não fazia falta: até 09-09 a colônia
+     * recebia uma casa por estilo, e uma lista de um elemento não tem o
+     * que deduplicar. Ela nasce junto com o catálogo inteiro.
+     *
+     * <p>A ordem se mantém — maior primeiro, que é a Regra 25 —, e é ela
+     * que decide o tamanho do lote. A variedade entra depois, entre as
+     * plantas que empatam nesse tamanho; ver {@link #open}.
+     */
+    private static List<ColonyPos> sizesOf(List<Blueprint> plans) {
+        return plans.stream().map(Blueprint::size).distinct().toList();
+    }
+
     private static Optional<ConstructionProject> open(
             ServerWorld world, Colony colony, BuildSiteScanner.Site site,
             List<Blueprint> plans, Blueprint blueprint, int builders) {
 
         // A planta que coube naquele lote — a maior das oferecidas que
         // serviu ali. Decisão do autor de 2026-08-20.
-        Blueprint chosen = plans.stream()
+        //
+        // <b>E entre as que empatam no tamanho, o sorteio</b> — decisão
+        // do autor, 2026-09-09: <i>"criando uma aleatoriedade simples
+        // para todas as construções possíveis do bioma"</i>.
+        //
+        // O sorteio não disputa com o "maior primeiro", e é por isso que
+        // ele mora aqui e não na escolha do lote: quem decide o tamanho é
+        // a varredura, que testa cada coluna da planta maior para a
+        // menor e já devolve o lote com o tamanho que venceu. O que
+        // sobra para sortear são as plantas <b>daquele mesmo tamanho</b>
+        // — e em planície são muitas, porque o catálogo do jogo repete a
+        // pegada em casas de aparência bem diferente.
+        //
+        // {@code findFirst} sempre devolvia a mesma, então a colônia
+        // levantava a mesma casa a vida inteira: a sessão de 09-09 subiu
+        // {@code plains_small_house_1} outra vez, que era a única que a
+        // barreira daquele dia deixava passar.
+        List<Blueprint> fitting = plans.stream()
                 .filter(plan -> plan.size().equals(site.size()))
-                .findFirst()
-                .orElse(blueprint);
+                .toList();
+
+        Blueprint chosen = fitting.isEmpty()
+                ? blueprint
+                : fitting.get(world.getRandom().nextInt(fitting.size()));
 
         // Agora que há lote, a planta é virada para a rua: é a Regra 17,
         // e o lado sai de quem achou o lote.
@@ -650,7 +694,7 @@ public final class ConstructionPlanner {
                         world,
                         colony.id(),
                         colony.center(),
-                        plans.stream().map(Blueprint::size).toList(),
+                        sizesOf(plans),
                         RoadExtension.justPaved(colony.id()))
                 .flatMap(beside -> open(world, colony, beside, plans, blueprint, builders));
     }
@@ -687,7 +731,7 @@ public final class ConstructionPlanner {
                                 world,
                                 colony.id(),
                                 colony.center(),
-                                plans.stream().map(Blueprint::size).toList(),
+                                sizesOf(plans),
                                 RoadExtension.justPaved(colony.id()))
                         .flatMap(beside ->
                                 open(world, colony, beside, plans, blueprint, builders));

@@ -41,27 +41,17 @@ import java.util.Map;
  * <p><b>As variantes zumbi ficam de fora</b>, e não por gosto: são as
  * mesmas casas em ruína, com teia e tocha apagada. Uma colônia que as
  * levantasse estaria construindo a própria decadência.
+ *
+ * <p><b>O catálogo inteiro vale desde 2026-09-09</b>, por decisão do
+ * autor: <i>"permitir que o construtor possa construir casa grande e
+ * média, se houver espaço para elas"</i>. Até essa data uma linha em
+ * {@code load} descartava tudo o que não terminasse em
+ * {@code _small_house_1} — a barreira provisória de 08-20, que existia
+ * para uma sessão de depuração ser comparável com a anterior. Ela
+ * cumpriu o prazo: as cadeias fecharam, e a vila de uma casa só era o
+ * que restava dela.
  */
 public final class VillageStructures {
-
-    /**
-     * <b>Barreira de teste, e ela sai inteira quando o autor mandar.</b>
-     *
-     * <p>Regra do autor de 2026-08-20, e ela é explicitamente
-     * provisória: <i>"enquanto este projeto não estiver formalmente
-     * acabado, a única estrutura que o construtor pode construir é a
-     * casa pequena do seu bioma"</i>.
-     *
-     * <p>Vinte e oito a trinta e seis casas por bioma é variedade demais
-     * para depurar: cada uma pede materiais diferentes, e uma sessão que
-     * falha não diz se falhou pela regra nova ou pela casa sorteada. Uma
-     * casa por bioma torna toda sessão comparável com a anterior.
-     *
-     * <p><b>Para desligar:</b> apague este campo e a linha que o usa em
-     * {@link #load}. A lista volta a ser a pasta inteira, que é a
-     * Regra 27, e nada mais precisa mudar.
-     */
-    private static final String ONLY_WHILE_TESTING = "_small_house_1";
 
     /** Onde o índice da pasta mora dentro do jar. */
     private static final String CATALOG =
@@ -88,7 +78,7 @@ public final class VillageStructures {
      * esta regra proíbe.
      */
     public static synchronized List<ResourceId> housesFor(String style) {
-        return HOUSES.computeIfAbsent(style, found -> load(found, "houses", true));
+        return HOUSES.computeIfAbsent(style, found -> load(found, "houses"));
     }
 
     /**
@@ -98,13 +88,12 @@ public final class VillageStructures {
      * bloco o jogo pavimenta a rua deste bioma. A colônia precisa saber
      * para reconhecer beira de rua e para estender a que existe.
      *
-     * <p>Sem a barreira de teste: a Regra 28 limita quantas <b>casas</b>
-     * a colônia tenta construir, e uma rua não é casa — restringir a
-     * lista aqui só esconderia estilos cujo nome de peça não bate com a
-     * convenção da casa pequena.
+     * <p>Nunca teve a restrição da casa pequena, e não passou a precisar
+     * quando ela caiu em 2026-09-09: rua não é casa, e o nome da peça de
+     * rua nunca seguiu a convenção da casa.
      */
     public static synchronized List<ResourceId> streetsFor(String style) {
-        return STREETS.computeIfAbsent(style, found -> load(found, "streets", false));
+        return STREETS.computeIfAbsent(style, found -> load(found, "streets"));
     }
 
     /**
@@ -123,18 +112,17 @@ public final class VillageStructures {
      * as põe — para o Vanilla, a roça é uma das peças que um lote pode
      * receber. É por isso que a busca é por <b>nome</b> e não por pasta.
      *
-     * <p><b>Sem a barreira de teste.</b> Ela limita quantas <i>casas</i> a
-     * colônia tenta levantar, para que uma sessão que falha diga qual
-     * regra falhou; a roça é uma peça só por estilo e não polui essa
-     * comparação.
+     * <p>A busca por nome também a livrava da restrição da casa pequena,
+     * que valeu até 2026-09-09: filtrar a pasta {@code houses} pelo
+     * sufixo da casa apagaria a roça do catálogo inteiro.
      */
     public static synchronized List<ResourceId> farmsFor(String style) {
-        return FARMS.computeIfAbsent(style, found -> load(found, "houses", false).stream()
+        return FARMS.computeIfAbsent(style, found -> load(found, "houses").stream()
                 .filter(id -> id.path().contains("farm"))
                 .toList());
     }
 
-    private static List<ResourceId> load(String style, String kind, boolean onlyWhileTesting) {
+    private static List<ResourceId> load(String style, String kind) {
         String folder = "village/" + style + "/" + kind + "/";
 
         List<ResourceId> found = new ArrayList<>();
@@ -155,11 +143,6 @@ public final class VillageStructures {
                 String path = entry.getAsString();
 
                 if (!path.startsWith(folder) || path.contains("zombie")) {
-                    continue;
-                }
-
-                // A barreira de teste. Some com esta linha.
-                if (onlyWhileTesting && !path.endsWith(ONLY_WHILE_TESTING)) {
                     continue;
                 }
 
