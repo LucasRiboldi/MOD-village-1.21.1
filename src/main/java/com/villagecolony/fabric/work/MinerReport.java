@@ -178,6 +178,23 @@ public final class MinerReport {
         text.append(", still ").append(job.stall.ticks())
                 .append("/").append(MinerWork.STILL_LIMIT);
 
+        // E há quantos tiques ele não encurta a distância — E44,
+        // 2026-09-10. É o terceiro contador porque é a terceira
+        // pergunta, e é a que separa <i>indo</i> de <i>indo a lugar
+        // nenhum</i>: quem contorna um morro tem "adrift" perto de zero
+        // e "closest" caindo; quem anda 19 blocos abaixo do alvo tem
+        // "adrift" subindo com "closest" parado. A sessão das 08:33 era
+        // o segundo caso, e nenhum dos dois contadores de cima sabia
+        // dizer isso. Ver MineLease.
+        text.append(", adrift ").append(job.lease.ticks())
+                .append("/").append(MineLease.LIMIT);
+
+        if (job.lease.closest() >= 0) {
+            text.append(" (closest ")
+                    .append(String.format("%.1f", job.lease.closest()))
+                    .append(")");
+        }
+
         return text.toString();
     }
 

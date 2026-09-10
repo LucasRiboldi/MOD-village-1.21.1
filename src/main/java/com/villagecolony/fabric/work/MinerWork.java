@@ -194,6 +194,9 @@ public final class MinerWork {
         /** Se ele saiu do lugar, e há quanto tempo não sai. */
         final WorkStall stall = new WorkStall();
 
+        /** Se ele está encurtando a distância até a pedra — E44. Ver MineLease. */
+        final MineLease lease = new MineLease();
+
         private Job(Task task, BlockPos center, ResourceId wanted) {
             this.task = task;
             this.center = center;
@@ -345,6 +348,16 @@ public final class MinerWork {
             if (job.stall.stuck(world, villager)) {
                 giveUp(world, workerId, job, "it has not moved a block in "
                         + job.stall.ticks() + " ticks of work time");
+            } else if (job.lease.outOfTime(world, villager, job.target)) {
+                // <b>E se ele anda sem chegar mais perto</b> — E44,
+                // 2026-09-10. Este é o caso que os outros dois não
+                // pegam: quem contorna sem fim sai do bloco (escapa do
+                // guarda de imobilidade) e ainda tem 2.400 tiques de
+                // orçamento pela frente. Ver MineLease.
+                giveUp(world, workerId, job, "it got no closer than "
+                        + String.format("%.1f", job.lease.closest())
+                        + " blocks in " + job.lease.ticks()
+                        + " ticks of work time");
             } else if (job.stalled >= STALL_LIMIT) {
                 giveUp(world, workerId, job, "it walked for "
                         + job.stalled + " ticks of work time without arriving");
@@ -459,6 +472,13 @@ public final class MinerWork {
         job.progress = 0;
         job.required = 0;
         job.stalled = 0;
+
+        // <b>E o prazo de aproximação recomeça</b> — E44, 2026-09-10, e
+        // aqui alvo novo É motivo, ao contrário do guarda de
+        // imobilidade logo abaixo. A régua do MineLease é a distância
+        // ATÉ ESTA PEDRA; herdá-la da anterior faria ele desistir de uma
+        // pedra mais distante sem ter dado um passo por ela.
+        job.lease.reset();
 
         // <b>E o guarda de imobilidade NÃO é zerado aqui</b> — E36,
         // 2026-09-04. A pergunta que ele faz é <i>o aldeão saiu do
@@ -742,6 +762,7 @@ public final class MinerWork {
         job.progress = 0;
         job.required = 0;
         job.stalled = 0;
+        job.lease.reset();
 
         // O guarda de imobilidade sobrevive a largar a pedra — E36. Ver
         // startNextStone: largar não é andar, e este caminho é o mais
@@ -938,6 +959,34 @@ public final class MinerWork {
         Job job = JOBS.get(workerId);
 
         return job == null ? 0 : job.stall.ticks();
+    }
+
+    /**
+     * Há quantos tiques de expediente este mineiro não encurta a distância.
+     *
+     * <p>E qual pedra ele mira — {@link #targetOf}. As duas juntas são o
+     * que a bateria do E44 precisa saber: a de cima prova que o prazo
+     * venceu, e a de baixo diz de qual posição estamos falando quando se
+     * pergunta se o segundo mineiro recebeu a mesma.
+     */
+    public static int adriftOf(UUID workerId) {
+        Job job = JOBS.get(workerId);
+
+        return job == null ? 0 : job.lease.ticks();
+    }
+
+    /**
+     * A pedra que este mineiro mira agora, se ele mira alguma.
+     *
+     * <p>Pelo mesmo motivo do {@link #stallOf}: de fora não há outro
+     * observável: o alvo nasce e morre dentro do {@code Job}, e a única
+     * pista era o texto do relatório — que é para ler, e não para
+     * afirmar contra.
+     */
+    public static Optional<BlockPos> targetOf(UUID workerId) {
+        Job job = JOBS.get(workerId);
+
+        return Optional.ofNullable(job == null ? null : job.target);
     }
 
     /** Quanta pedra este mineiro já trouxe nesta tarefa. */

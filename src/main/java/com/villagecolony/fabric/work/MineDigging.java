@@ -858,7 +858,7 @@ public final class MineDigging {
                 continue;
             }
 
-            if (false && MineMarks.isOutOfReach(world, at)) {
+            if (MineMarks.isOutOfReach(world, at)) {
                 // <b>Já cobrou o preço e não foi alcançada</b> — E44,
                 // 2026-09-10. Um mineiro andou os 2.400 tiques de
                 // expediente até aqui e não chegou; enquanto o prazo
