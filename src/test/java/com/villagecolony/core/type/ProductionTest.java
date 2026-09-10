@@ -31,9 +31,16 @@ class ProductionTest {
         }
     }
 
-    /** O que sai da fornalha, e é o que a exceção nominal listava. */
+    /**
+     * O que sai da fornalha, e é o que a exceção nominal listava.
+     *
+     * <p>A <b>pedra</b> entrou em 2026-09-10, com a divisão do
+     * fabricante: o tijolo que o pedreiro lavra é feito dela e não do
+     * pedregulho cru, então a cadeia ganhou o degrau do meio —
+     * pedregulho, fornalha, pedra, bancada, tijolo.
+     */
     @Test
-    void theFurnaceMakesGlassIngotsAndSmoothSandstone() {
+    void theFurnaceMakesGlassIngotsSmoothSandstoneAndStone() {
         Set<ResourceType> smelted = EnumSet.noneOf(ResourceType.class);
 
         for (ResourceType type : ResourceType.values()) {
@@ -46,7 +53,8 @@ class ProductionTest {
                 EnumSet.of(
                         ResourceType.GLASS,
                         ResourceType.IRON_INGOT,
-                        ResourceType.SMOOTH_SANDSTONE),
+                        ResourceType.SMOOTH_SANDSTONE,
+                        ResourceType.STONE),
                 smelted,
                 "a lista do que sai de fornalha mudou sem que ninguém dissesse");
     }
@@ -61,7 +69,7 @@ class ProductionTest {
     @Test
     void eachTradeKeepsWhatIsItsOwn() {
         assertEquals(Production.HARVESTED, ResourceType.OAK_LOG.production());
-        assertEquals(Production.CRAFTED, ResourceType.OAK_PLANKS.production());
+        assertEquals(Production.CRAFTED_WOOD, ResourceType.OAK_PLANKS.production());
         assertEquals(Production.SHEARED, ResourceType.WHITE_WOOL.production());
 
         for (ResourceType mined : EnumSet.of(

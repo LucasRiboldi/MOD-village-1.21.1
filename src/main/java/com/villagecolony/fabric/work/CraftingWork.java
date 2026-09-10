@@ -67,7 +67,7 @@ import java.util.UUID;
  * ser desligado. Ver o E3 do §17 para o que acontece quando alguma coisa
  * sai do mundo antes de ter para onde ir.
  */
-public final class ManufacturerWork {
+public final class CraftingWork {
 
     /**
      * Quantos ticks uma peça leva.
@@ -106,10 +106,19 @@ public final class ManufacturerWork {
     /** O trabalho em curso de cada fabricante. */
     private static final Map<UUID, Job> JOBS = new HashMap<>();
 
-    /** Como esta profissão aparece na linha de {@link IdleLog}. */
-    private static final String SUBJECT = "manufacturer";
+    /**
+     * Como cada oficina aparece na linha de {@link IdleLog}.
+     *
+     * <p><b>Uma por profissão, e não uma só</b> — 2026-09-09. O
+     * registrador compara colônia e assunto: com um assunto partilhado,
+     * a colônia sem carpinteiro calaria a linha da colônia sem pedreiro,
+     * e o segundo silêncio nunca seria dito.
+     */
+    private static String subjectOf(TaskType type) {
+        return type == TaskType.CRAFT_STONE_MATERIAL ? "mason" : "carpenter";
+    }
 
-    private ManufacturerWork() {
+    private CraftingWork() {
     }
 
     /** Uma tarefa de fabricação em curso. */
@@ -153,10 +162,28 @@ public final class ManufacturerWork {
      * @return quantos fabricantes desta colônia estão com trabalho aberto
      */
     public static int run(ServerWorld world, Colony colony) {
+        return run(world, colony, TaskType.CRAFT_WOOD_MATERIAL)
+                + run(world, colony, TaskType.CRAFT_STONE_MATERIAL);
+    }
+
+    /**
+     * O mesmo, para uma das duas oficinas.
+     *
+     * <p><b>A divisão do fabricante é de 2026-09-09</b>, a pedido do
+     * autor, e ela é de <b>profissão</b>, não de implementação: a
+     * máquina é a mesma — reservar, andar até o baú, contar os tiques e
+     * trocar a peça —, e o que muda é qual tarefa ela atende e qual
+     * família de material ela lavra. Duplicar seiscentas linhas para
+     * mudar duas seria pior que o problema.
+     *
+     * @param type {@code CRAFT_WOOD_MATERIAL} para o carpinteiro,
+     *     {@code CRAFT_STONE_MATERIAL} para o pedreiro
+     */
+    public static int run(ServerWorld world, Colony colony, TaskType type) {
         int open = 0;
 
         for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
-            if (task.type() != TaskType.CRAFT_MATERIAL || !isOngoing(task)) {
+            if (task.type() != type || !isOngoing(task)) {
                 continue;
             }
 
@@ -183,9 +210,9 @@ public final class ManufacturerWork {
         });
 
         if (open == 0) {
-            reportIdle(colony);
+            reportIdle(colony, type);
         } else {
-            IdleLog.clear(colony.id(), SUBJECT);
+            IdleLog.clear(colony.id(), subjectOf(type));
         }
 
         report(world, colony);
@@ -206,12 +233,14 @@ public final class ManufacturerWork {
      * 134 troncos guardados. O que faltava não era a tarefa — era saber
      * de qual dos lados vinha o silêncio.
      */
-    private static void reportIdle(Colony colony) {
+    private static void reportIdle(Colony colony, TaskType type) {
+        String subject = subjectOf(type);
+
         int hands = WorkAssignment.countCapableOf(
-                colony.id(), TaskType.CRAFT_MATERIAL.required(), VillageColonyMod.WORKERS);
+                colony.id(), type.required(), VillageColonyMod.WORKERS);
 
         if (hands == 0) {
-            IdleLog.record(colony.id(), SUBJECT, IdleReason.NO_WORKER);
+            IdleLog.record(colony.id(), subject, IdleReason.NO_WORKER);
 
             return;
         }
@@ -219,7 +248,7 @@ public final class ManufacturerWork {
         boolean anyTask = false;
 
         for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
-            if (task.type() == TaskType.CRAFT_MATERIAL && isOngoing(task)) {
+            if (task.type() == type && isOngoing(task)) {
                 anyTask = true;
 
                 break;
@@ -228,7 +257,7 @@ public final class ManufacturerWork {
 
         IdleLog.record(
                 colony.id(),
-                SUBJECT,
+                subject,
                 anyTask ? IdleReason.NO_EXECUTOR : IdleReason.NO_TASK,
                 hands + " able to");
     }
@@ -398,6 +427,56 @@ public final class ManufacturerWork {
      *
      * @return se fez alguma coisa nesta passagem
      */
+    /**
+     * As marcas de nome que fazem uma peça ser da pedra.
+     *
+     * <p><b>Por nome, e é o idioma desta base.</b> A conta da parede já
+     * pergunta {@code material.path().contains(family)}, a cama já é
+     * {@code endsWith("_bed")} e o descascado já é o prefixo
+     * {@code stripped_}. Perguntar ao {@code ResourceType} não serviria:
+     * a maior parte destas peças — escada, laje, muro — não é recurso
+     * declarado, e é por isso que o {@link #produceForWork} existe.
+     *
+     * <p>{@code sandstone} entra por {@code stone}, e é o certo: no
+     * deserto a parede é dela.
+     */
+    private static final List<String> MASONRY = List.of(
+            "stone", "cobble", "brick", "granite", "diorite", "andesite",
+            "deepslate", "tuff", "quartz", "terracotta", "basalt", "calcite");
+
+    /**
+     * Se esta peça é do pedreiro.
+     *
+     * <p><b>A tocha de redstone é a exceção que o nome cobra</b>: o
+     * caminho dela contém {@code stone} e ela não é alvenaria nenhuma.
+     * Classificá-la mal mandaria o carpinteiro ignorar a peça e o
+     * pedreiro tentar uma receita que não é dele, e a obra esperaria
+     * pelos dois.
+     *
+     * <p><b>Visível ao pacote para o teste, e com uma ressalva honesta:</b>
+     * {@code CraftingWorkFamilyTest} afirma a <b>classificação</b>, que é
+     * o que se pode afirmar sem subir um mundo. Que o filtro de fato
+     * reparta o trabalho entre as duas oficinas de uma colônia rodando
+     * <b>não tem teste</b> — medido em 2026-09-10: removido o
+     * {@code continue} que o usa, 701 unitários e 275 testes de jogo
+     * continuam verdes. Está na lista de pendências, e é gametest.
+     */
+    static boolean isMasonry(ResourceId wanted) {
+        String path = wanted.path();
+
+        if (path.contains("redstone")) {
+            return false;
+        }
+
+        for (String mark : MASONRY) {
+            if (path.contains(mark)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static boolean produceForWork(ServerWorld world, Job job, UUID workerId) {
         Optional<Colony> colony = VillageColonyMod.COLONIES.find(job.task.colonyId());
 
@@ -430,7 +509,17 @@ public final class ManufacturerWork {
         // é a primeira posição que falta, e é dela que a lista começa a
         // ser contada. Não há prioridade a escrever aqui: basta a ordem
         // chegar inteira.
+        boolean masonry = job.task.type() == TaskType.CRAFT_STONE_MATERIAL;
+
         for (ResourceId wanted : open.get().remainingMaterials().keySet()) {
+            // Cada oficina lavra a sua família — 2026-09-09. Sem esta
+            // linha a divisão do fabricante seria só de nome: os dois
+            // percorreriam a mesma lista e fariam a mesma peça, e o
+            // segundo chegaria sempre para achar o trabalho feito.
+            if (isMasonry(wanted) != masonry) {
+                continue;
+            }
+
             Optional<Item> item = MinecraftTypeAdapter.toBlock(wanted).map(Block::asItem);
 
             if (item.isEmpty()) {

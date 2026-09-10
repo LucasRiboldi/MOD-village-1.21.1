@@ -79,7 +79,7 @@ public final class TestBarrier {
      * <p><b>Ela riscava na primeira falta</b>, e a sessão de 09-06
      * mostrou o que isso esconde: 24 {@code stripped_oak_log} riscados
      * com <b>cinquenta toras de carvalho no baú</b> da mesma colônia.
-     * O fabricante sabe descascar — {@code ManufacturerWork.strip} roda
+     * O fabricante sabe descascar — {@code CraftingWork.strip} roda
      * antes da guarda de conversão e escolhe a espécie que a colônia
      * tem, desde 09-05 —, mas o construtor chega ao bloco, não acha a
      * peça pronta e risca no mesmo tique. Na sessão inteira o fabricante

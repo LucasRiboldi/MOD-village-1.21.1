@@ -44,8 +44,24 @@ public enum Production {
     /** Da tesoura do pastor. */
     SHEARED,
 
-    /** Da bancada do fabricante, por receita do jogo. */
-    CRAFTED,
+    /**
+     * Da bancada do carpinteiro, por receita do jogo.
+     *
+     * <p><b>Era {@code CRAFTED}, e virou duas em 2026-09-09</b> com a
+     * divisão do fabricante. A separação é aqui, e não numa lista de
+     * nomes, pelo mesmo motivo que separou {@link #FARMED} de
+     * {@link #HARVESTED}: é a produção declarada que manda a tarefa para
+     * a profissão certa, e sem um valor próprio a pedra iria para a
+     * bancada do carpinteiro.
+     *
+     * <p>E o {@code switch} de {@code ColonyCycle.typeFor} não tem
+     * {@code default}: material novo que se lavre precisa dizer de qual
+     * das duas oficinas sai, ou não compila.
+     */
+    CRAFTED_WOOD,
+
+    /** Da bancada do pedreiro, por receita do jogo. */
+    CRAFTED_STONE,
 
     /** Da fornalha do fundidor, por receita do jogo. */
     SMELTED

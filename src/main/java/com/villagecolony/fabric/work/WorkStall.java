@@ -116,7 +116,7 @@ public final class WorkStall {
      *       que ninguém o avise;
      *   <li><b>ele trabalhou</b> — esta chamada, feita no ramo em que a
      *       profissão age sobre o alvo. É onde o {@code BuilderWork} e o
-     *       {@code ManufacturerWork} sempre zeraram, e foi por isso que
+     *       {@code CraftingWork} sempre zeraram, e foi por isso que
      *       os dois nunca tiveram o E36.
      * </ul>
      */

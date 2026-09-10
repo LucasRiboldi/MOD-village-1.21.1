@@ -131,6 +131,17 @@ public final class WorkMaterials {
      *
      * <p>O <b>cru</b> não sai daqui: a meta de pedra já conta a família
      * inteira, e é dela que o mineiro tira o que a fornalha vai assar.
+     *
+     * <p><b>E a alvenaria entra pela mesma porta desde 2026-09-10</b>,
+     * com a divisão do fabricante. Não foi preciso um caminho novo: quem
+     * decide de quem é a tarefa é {@code ColonyCycle.typeFor}, pela
+     * produção declarada — a pedra sai daqui como {@code SMELTED} e vai
+     * ao fundidor, o tijolo sai como {@code CRAFTED_STONE} e vai ao
+     * pedreiro. Uma peneira, dois ofícios.
+     *
+     * <p><b>A tábua fica de fora de propósito.</b> Ela é
+     * {@code CRAFTED_WOOD} e já tem meta própria, com teto de armazém e
+     * conta de obra; deixá-la passar aqui a contaria duas vezes.
      */
     public static Map<ResourceType, Integer> smeltedNeeds(Colony colony) {
         Map<ResourceType, Integer> wanted = new LinkedHashMap<>();
@@ -141,7 +152,8 @@ public final class WorkMaterials {
             MinecraftTypeAdapter.toBlock(entry.getKey())
                     .map(Block::asItem)
                     .flatMap(MinecraftTypeAdapter::toResourceType)
-                    .filter(type -> type.production() == Production.SMELTED)
+                    .filter(type -> type.production() == Production.SMELTED
+                            || type.production() == Production.CRAFTED_STONE)
                     .ifPresent(type -> wanted.merge(type, entry.getValue(), Integer::sum));
         }
 

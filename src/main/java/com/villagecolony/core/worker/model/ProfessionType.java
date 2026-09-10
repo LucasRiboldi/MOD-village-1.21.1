@@ -42,8 +42,36 @@ public enum ProfessionType {
      */
     SMELTER,
 
-    /** Transforma matéria-prima em material de construção. */
-    MANUFACTURER,
+    /**
+     * O carpinteiro: transforma madeira em material de construção.
+     *
+     * <p><b>Era o {@code MANUFACTURER}, e a divisão é de 2026-09-09</b>,
+     * a pedido do autor. O fabricante fazia os dois ofícios — a tábua e a
+     * pedra lavrada — em um arquivo de 639 linhas, acima do limite de
+     * 500 que este projeto se impôs.
+     *
+     * <p><b>Save antigo não quebra.</b> {@code ColonySavedData}
+     * devolve {@code null} para profissão que não reconhece, e o aldeão é
+     * recontratado no ciclo seguinte: quem estava gravado como
+     * {@code MANUFACTURER} volta sem função e ganha uma nova. Perde-se a
+     * atribuição, não o mundo.
+     */
+    CARPENTER,
+
+    /**
+     * O pedreiro: transforma pedra bruta em material de construção.
+     *
+     * <p>A outra metade da divisão de 2026-09-09. <b>Ele não nasceu
+     * decorativo</b>: profissão sem material declarado nunca recebe
+     * pedido, e o aldeão ficaria com placa, baú e ferramenta sem nunca
+     * trabalhar — que foi o estado do fazendeiro até 2026-08-27 e o que
+     * {@code ProfessionResponsibilityTest} existe para impedir.
+     *
+     * <p>O material dele é o tijolo de pedra, e a cadeia inteira nasceu
+     * junto: o mineiro traz pedregulho, o fundidor o assa em pedra, e o
+     * pedreiro a lavra. Ver {@code ResourceType.STONE_BRICKS}.
+     */
+    MASON,
 
     /** Cuida das plantações. */
     FARMER,

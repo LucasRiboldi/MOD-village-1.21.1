@@ -71,7 +71,7 @@ class WorkerTest {
     @Test
     void unassignRemovesTheProfession() {
         Worker worker = Worker.register(VILLAGER, COLONY);
-        worker.assign(ProfessionType.MANUFACTURER);
+        worker.assign(ProfessionType.CARPENTER);
 
         worker.unassign();
 
@@ -122,7 +122,9 @@ class WorkerTest {
 
     @Test
     void everyProfessionOfTheProductionChainExists() {
-        assertEquals(7, ProfessionType.values().length);
+        // Oito desde 2026-09-10, quando o fabricante virou carpinteiro e
+        // pedreiro a pedido do autor.
+        assertEquals(8, ProfessionType.values().length);
 
         // A ordem é a da cadeia produtiva, e ela importa: o distribuidor
         // preenche nessa sequência, então quem colhe vem antes de quem
@@ -131,9 +133,14 @@ class WorkerTest {
         assertEquals(ProfessionType.MINER, ProfessionType.values()[1]);
         assertEquals(ProfessionType.SHEPHERD, ProfessionType.values()[2]);
         assertEquals(ProfessionType.SMELTER, ProfessionType.values()[3]);
-        assertEquals(ProfessionType.MANUFACTURER, ProfessionType.values()[4]);
-        assertEquals(ProfessionType.FARMER, ProfessionType.values()[5]);
-        assertEquals(ProfessionType.BUILDER, ProfessionType.values()[6]);
+        assertEquals(ProfessionType.CARPENTER, ProfessionType.values()[4]);
+
+        // O pedreiro entra ao lado do carpinteiro, e não no fim: os dois
+        // transformam, e a regra da ordem é que quem transforma vem
+        // depois de quem colhe e antes de quem constrói.
+        assertEquals(ProfessionType.MASON, ProfessionType.values()[5]);
+        assertEquals(ProfessionType.FARMER, ProfessionType.values()[6]);
+        assertEquals(ProfessionType.BUILDER, ProfessionType.values()[7]);
     }
 
     /**

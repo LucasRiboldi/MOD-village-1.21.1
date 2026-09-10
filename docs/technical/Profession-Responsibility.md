@@ -46,7 +46,7 @@ Colony 020ad427 — no collect_stone work: no worker in the village
 
 ---
 
-## A matriz de hoje — 7 profissões
+## A matriz de hoje — 8 profissões
 
 | profissão | ferramenta | capacidade | produção que a convoca | materiais |
 |---|---|---|---|---|
@@ -54,9 +54,49 @@ Colony 020ad427 — no collect_stone work: no worker in the village
 | **Mineiro** | picareta de ferro | `COLLECT_STONE` | `MINED` | pedregulho, arenito, areia, carvão, ferro cru |
 | **Pastor** | tesoura | `COLLECT_WOOL` | `SHEARED` | lã branca |
 | **Fazendeiro** | enxada de ferro | `MAINTAIN_FOOD` | `FARMED` | trigo, cenoura, batata, beterraba |
-| **Fabricante** | nenhuma | `CRAFT_ITEMS` | `CRAFTED` | as 8 tábuas |
-| **Fundidor** | nenhuma | `SMELT_ITEMS` | `SMELTED` | vidro, lingote de ferro, arenito liso |
+| **Carpinteiro** | nenhuma | `CRAFT_WOOD` | `CRAFTED_WOOD` | as 8 tábuas |
+| **Pedreiro** | nenhuma | `CRAFT_STONE` | `CRAFTED_STONE` | tijolo de pedra |
+| **Fundidor** | nenhuma | `SMELT_ITEMS` | `SMELTED` | vidro, lingote de ferro, arenito liso, **pedra** |
 | **Construtor** | nenhuma | `BUILD_STRUCTURE` | — *(consome, não produz)* | — |
+
+### A divisão do Fabricante — 2026-09-10
+
+Ele fazia os dois ofícios. O autor mandou dividir, e a divisão **não é só de
+nome**: cada oficina tem capacidade própria, tarefa própria, produção própria
+e assunto próprio no log.
+
+**O risco era a profissão decorativa**, e ele tinha duas camadas. A primeira é
+a óbvia: pedreiro sem material declarado nunca recebe pedido — o estado do
+fazendeiro até 08-27. A segunda quase passou: **declarar o material não
+basta.** `ProfessionResponsibilityTest` ficaria verde com um pedreiro que
+nunca recebesse tarefa, porque nada criava meta de tijolo. Quem fecha o degrau
+é `MasonAndCarpenterTest.theMasonGetsATaskOfItsOwn`.
+
+**A cadeia do tijolo nasceu junto, e é toda do jogo:**
+
+```text
+pedregulho  →  mineiro
+    ↓ fornalha
+pedra       →  fundidor      (ResourceType.STONE, novo)
+    ↓ bancada
+tijolo      →  pedreiro      (ResourceType.STONE_BRICKS, novo)
+```
+
+**Nenhum caminho novo foi preciso para a demanda.** A peneira de
+`WorkMaterials.smeltedNeeds` passou a deixar passar `CRAFTED_STONE` além de
+`SMELTED`, e o roteamento já estava certo por declaração: a pedra vai ao
+fundidor e o tijolo ao pedreiro, pelo mesmo `typeFor`. Uma peneira, dois
+ofícios. A tábua fica de fora de propósito — ela já tem meta própria, com teto
+de armazém, e passaria a ser contada duas vezes.
+
+**Save antigo não quebra:** `ColonySavedData` devolve `null` para profissão que
+não reconhece, e quem estava gravado como `MANUFACTURER` volta sem função e é
+recontratado no ciclo seguinte. Perde-se a atribuição, não o mundo.
+
+**O que a divisão NÃO resolveu:** o arquivo continua com mais de 500 linhas.
+`ManufacturerWork` virou `CraftingWork` e serve as duas oficinas parametrizado
+pela tarefa — duplicar seiscentas linhas para mudar duas seria pior que o
+problema. A divisão pedida era de profissão, e é essa que está feita.
 
 **O construtor é a exceção declarada.** O trabalho dele não nasce de uma meta
 de recurso: nasce do `ConstructionPlanner`. Por isso ele não aparece em
@@ -201,7 +241,8 @@ Ordenada por quanto dói, no formato do `TODO.md`.
 | | o quê | por quê |
 |---|---|---|
 | ✅ | ~~**`requestMissing` pula calado quando ninguém sabe fazer.**~~ | **Fechado em 2026-09-09.** `ProductionHands` (`core.coordination`) leva o número de mãos até a camada Fabric, e `VillageDetectionHandler.reportHands` escreve a linha via `IdleLog` — a interface existe porque a ADR-006 §6 proíbe `core` de importar `fabric`, e é o mesmo caminho do `hasStorage`. Recebe o **número**, não só a ausência: sem o caso `hands > 0` o registrador nunca é mandado esquecer. Guardado por `ProductionHandsTest` (4 casos) e `IdleLogTest` (6 — o `IdleLog` não tinha nenhum). Visto na bateria: `no collect_stone work: no worker in the village can do it — COBBLESTONE needs COLLECT_STONE` |
-| 🟠 | **Dividir o Fabricante em Carpinteiro e Pedreiro** | `ManufacturerWork` tem 639 linhas e faz dois ofícios: tábua/descascado (madeira) e o que vier de pedra. A proposta externa levantou isto, e o limite de 500 linhas concorda. **Decisão de projeto, e é do autor**: mais uma profissão é mais um aldeão a contratar numa vila pequena |
+| ✅ | ~~**Dividir o Fabricante em Carpinteiro e Pedreiro**~~ | **Feito em 2026-09-10, por decisão do autor.** Ver a seção acima. **O que fica:** o arquivo ainda tem mais de 500 linhas — a divisão foi de profissão, e uma implementação parametrizada serve as duas |
+| 🟠 | **O filtro de família não tem gametest.** `CraftingWork.isMasonry` decide de quem é cada peça da obra, e a classificação tem teste — mas que ele de fato **reparta o trabalho** numa colônia rodando, não | **Lacuna medida, não suposta:** removido o `continue` que usa o predicado, 701 unitários e 275 testes de jogo continuam verdes. O teste que falta é uma arena com obra de peça mista, um carpinteiro e um pedreiro, e a afirmação de que cada um fez só a sua |
 | 🟡 | **`MINED` responde por areia, carvão e ferro além da pedra** | O nome `COLLECT_STONE` mente um pouco: o mineiro traz cinco materiais. Não é defeito — a picareta é a mesma —, mas o dia em que a areia tiver origem própria (praia, não mina) vai pedir separação |
 | 🟡 | **A colônia não assenta o bloco de profissão nas casas que constrói** | A casa do catálogo já traz o bloco quando a planta o tem; casa levantada pela colônia herda o que a planta disser. Não há código que escolha *qual* ofício aquela casa hospeda. É aqui que a tabela vanilla da proposta serve |
 | 🟡 | **Nada lê a profissão que o jogo já atribuiu ao aldeão** | O mod atribui a sua própria por escassez (`ProfessionAssigner`). Um aldeão que já era ferreiro do vanilla vira lenhador sem cerimônia. Pode ser o certo — são sistemas paralelos —, mas nunca foi decidido por escrito |

@@ -139,7 +139,8 @@ public final class WorkerNameplate {
             case MINER -> "Mineiro";
             case SHEPHERD -> "Pastor";
             case SMELTER -> "Fundidor";
-            case MANUFACTURER -> "Fabricante";
+            case CARPENTER -> "Carpinteiro";
+            case MASON -> "Pedreiro";
             case FARMER -> "Fazendeiro";
             case BUILDER -> "Construtor";
         };
@@ -169,7 +170,8 @@ public final class WorkerNameplate {
             case MINER -> Formatting.GRAY;
             case SHEPHERD -> Formatting.WHITE;
             case SMELTER -> Formatting.RED;
-            case MANUFACTURER -> Formatting.GOLD;
+            case CARPENTER -> Formatting.GOLD;
+            case MASON -> Formatting.DARK_PURPLE;
             case FARMER -> Formatting.YELLOW;
             case BUILDER -> Formatting.AQUA;
         };

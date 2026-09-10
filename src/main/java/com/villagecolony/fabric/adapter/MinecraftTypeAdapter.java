@@ -85,6 +85,14 @@ public final class MinecraftTypeAdapter {
 
         // A parede da vila de deserto — 2026-08-22. Sai da fornalha, e
         // é o que a casa de deserto do catálogo pede aos sessenta.
+        if (item == Items.STONE) {
+            return Optional.of(ResourceType.STONE);
+        }
+
+        if (item == Items.STONE_BRICKS) {
+            return Optional.of(ResourceType.STONE_BRICKS);
+        }
+
         if (item == Items.SMOOTH_SANDSTONE) {
             return Optional.of(ResourceType.SMOOTH_SANDSTONE);
         }

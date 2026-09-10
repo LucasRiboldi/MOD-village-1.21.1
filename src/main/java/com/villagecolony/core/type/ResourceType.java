@@ -36,21 +36,21 @@ public enum ResourceType {
 
     MANGROVE_LOG(ResourceCategory.NATURAL, ResourceGroup.WOOD, Production.HARVESTED),
 
-    OAK_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED),
+    OAK_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED_WOOD),
 
-    BIRCH_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED),
+    BIRCH_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED_WOOD),
 
-    SPRUCE_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED),
+    SPRUCE_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED_WOOD),
 
-    JUNGLE_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED),
+    JUNGLE_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED_WOOD),
 
-    ACACIA_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED),
+    ACACIA_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED_WOOD),
 
-    DARK_OAK_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED),
+    DARK_OAK_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED_WOOD),
 
-    CHERRY_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED),
+    CHERRY_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED_WOOD),
 
-    MANGROVE_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED),
+    MANGROVE_PLANKS(ResourceCategory.PROCESSED, ResourceGroup.PLANKS, Production.CRAFTED_WOOD),
 
     COBBLESTONE(ResourceCategory.NATURAL, ResourceGroup.STONE, Production.MINED),
 
@@ -102,7 +102,41 @@ public enum ResourceType {
      * assado. Entrou porque a casa de deserto do catálogo é feita dele —
      * sessenta blocos — e a colônia só sabia cavar o arenito cru.
      */
-    SMOOTH_SANDSTONE(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.SMELTED);
+    SMOOTH_SANDSTONE(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.SMELTED),
+
+    /**
+     * A pedra assada, e o degrau do meio da cadeia do pedreiro —
+     * 2026-09-09.
+     *
+     * <p>Sai da <b>fornalha</b>, como o arenito liso: pedregulho assado é
+     * pedra. Entrou com a divisão do fabricante, porque o tijolo que o
+     * pedreiro lavra é feito dela e não do pedregulho cru — é a receita
+     * do jogo, e o mod não inventa receita.
+     *
+     * <p><b>Grupo {@code NONE} de propósito</b>, como todo processado
+     * daqui. Pô-la no grupo da pedra faria pedra contar como pedregulho
+     * na meta do mineiro, e a conta da parede é da paleta do bioma, por
+     * nome — ver {@code ResourceSubstitution} e a discordância de
+     * 2026-08-22.
+     */
+    STONE(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.SMELTED),
+
+    /**
+     * O que o pedreiro lavra, e a razão de ele não nascer decorativo —
+     * 2026-09-09.
+     *
+     * <p>Profissão sem material declarado nunca recebe pedido: o aldeão
+     * ganharia placa, baú e ferramenta e nunca trabalharia, que foi o
+     * estado do fazendeiro até 2026-08-27. {@code MASON} nasceu com esta
+     * linha no mesmo commit, e é ela que
+     * {@code ProfessionResponsibilityTest.everyProfessionAnswersForSomeMaterial}
+     * encontra.
+     *
+     * <p>A cadeia inteira é do jogo: o mineiro traz <b>pedregulho</b>, o
+     * fundidor o assa em <b>pedra</b>, e o pedreiro lavra quatro delas
+     * em quatro <b>tijolos</b>. A casa de planície do catálogo os usa.
+     */
+    STONE_BRICKS(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_STONE);
 
     private final ResourceCategory category;
     private final ResourceGroup group;

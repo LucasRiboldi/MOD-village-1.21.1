@@ -175,7 +175,7 @@ public final class ConstructionProject {
         // virtual. O {@code LinkedHashMap} acima existia para nada: a
         // última linha jogava fora a ordem que ele guardava.
         //
-        // Quem pagou foi o fabricante. {@code ManufacturerWork} percorre
+        // Quem pagou foi o fabricante. {@code CraftingWork} percorre
         // este mapa e para no primeiro material que consegue produzir,
         // então a ordem <b>é</b> a prioridade dele — e ela era sorteada.
         // A sessão de 09-09 mediu o preço: treze lotes de escada, sete

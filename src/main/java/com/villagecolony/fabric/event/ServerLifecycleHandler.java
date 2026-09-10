@@ -34,7 +34,7 @@ import com.villagecolony.fabric.work.TestBarrier;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.WaitingWork;
 import com.villagecolony.fabric.work.ConstructionPlanner;
-import com.villagecolony.fabric.work.ManufacturerWork;
+import com.villagecolony.fabric.work.CraftingWork;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.server.MinecraftServer;
 
@@ -79,7 +79,7 @@ public final class ServerLifecycleHandler {
         FarmPlans.clearAll();
         RingSweep.clearAll();
         ChestPlacer.clearAll();
-        ManufacturerWork.clearAll();
+        CraftingWork.clearAll();
         BuilderWork.clearAll();
         ConstructionPlanner.clearAll();
         HousePlans.clearAll();
@@ -238,7 +238,7 @@ public final class ServerLifecycleHandler {
         FarmPlans.clearAll();
         RingSweep.clearAll();
         ChestPlacer.clearAll();
-        ManufacturerWork.clearAll();
+        CraftingWork.clearAll();
         BuilderWork.clearAll();
         ConstructionPlanner.clearAll();
         HousePlans.clearAll();

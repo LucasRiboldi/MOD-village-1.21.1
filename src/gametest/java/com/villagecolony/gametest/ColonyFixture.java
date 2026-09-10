@@ -6,7 +6,7 @@ import com.villagecolony.core.task.model.Task;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.LumberjackWork;
-import com.villagecolony.fabric.work.ManufacturerWork;
+import com.villagecolony.fabric.work.CraftingWork;
 import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
@@ -85,7 +85,7 @@ final class ColonyFixture {
             SmelterWork.forget(worker);
             ShepherdWork.forget(worker);
             LumberjackWork.forget(worker);
-            ManufacturerWork.forget(worker);
+            CraftingWork.forget(worker);
             BuilderWork.forget(worker);
             WorkTargets.clear(worker);
 

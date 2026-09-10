@@ -1808,7 +1808,7 @@ public class LumberjackGameTest implements FabricGameTest {
         // O vizinho existe para ter baú, e o baú é o ponto: a colônia tem
         // espaço, só não no baú deste lenhador.
         VillageColonyMod.WORKERS.register(neighbour, colony.id())
-                .assign(ProfessionType.MANUFACTURER);
+                .assign(ProfessionType.CARPENTER);
 
         VillageColonyMod.STORAGES.register(WorkerStorage.of(neighbour, spareChest));
 

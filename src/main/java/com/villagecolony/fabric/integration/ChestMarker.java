@@ -357,7 +357,8 @@ public final class ChestMarker {
             case SHEPHERD -> Items.SHEARS;
             case SMELTER -> Items.FURNACE;
             case FARMER -> Items.IRON_HOE;
-            case MANUFACTURER -> Items.CRAFTING_TABLE;
+            case CARPENTER -> Items.CRAFTING_TABLE;
+            case MASON -> Items.STONECUTTER;
             case BUILDER -> Items.BRICKS;
         };
     }
@@ -370,7 +371,8 @@ public final class ChestMarker {
             case SHEPHERD -> "Baú do Pastor";
             case SMELTER -> "Baú do Fundidor";
             case FARMER -> "Baú do Fazendeiro";
-            case MANUFACTURER -> "Baú do Fabricante";
+            case CARPENTER -> "Baú do Carpinteiro";
+            case MASON -> "Baú do Pedreiro";
             case BUILDER -> "Baú do Construtor";
         };
     }

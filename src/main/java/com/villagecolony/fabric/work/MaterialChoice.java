@@ -190,7 +190,7 @@ public final class MaterialChoice {
      *
      * <p>É a mesma incompatibilidade de espécie do teto, num caminho que
      * não passava por aqui: a colônia tinha <b>295 toras de cerejeira e
-     * quatro de carvalho</b>, e {@code ManufacturerWork.strip} procurava
+     * quatro de carvalho</b>, e {@code CraftingWork.strip} procurava
      * {@code oak_log} pelo nome. Nem uma descascagem aconteceu na sessão
      * inteira — não há uma linha de <i>stripped a … into …</i> no log.
      *

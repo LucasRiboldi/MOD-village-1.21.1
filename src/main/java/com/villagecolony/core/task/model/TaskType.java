@@ -36,8 +36,11 @@ public enum TaskType {
     /** Fundir: areia em vidro, e o que mais a fornalha fizer. */
     SMELT_MATERIAL(Capability.SMELT_ITEMS, true, true),
 
-    /** Transformar matéria-prima em material. */
-    CRAFT_MATERIAL(Capability.CRAFT_ITEMS, true, true),
+    /** Lavrar madeira: tronco em tábua. */
+    CRAFT_WOOD_MATERIAL(Capability.CRAFT_WOOD, true, true),
+
+    /** Lavrar pedra: pedra em tijolo. */
+    CRAFT_STONE_MATERIAL(Capability.CRAFT_STONE, true, true),
 
     /**
      * Erguer parte de uma expansão.
@@ -99,7 +102,7 @@ public enum TaskType {
      * Se o executor precisa ter baú próprio para sequer começar.
      *
      * <p>Colher e fabricar terminam guardando: {@code LumberjackWork} e
-     * {@code ManufacturerWork} soltam a tarefa no primeiro tick quando
+     * {@code CraftingWork} soltam a tarefa no primeiro tick quando
      * {@code STORAGES.of(worker)} vem vazio, porque não há onde pôr o que
      * o trabalho produz. Dar a tarefa a quem não tem baú é abrir e fechar
      * o mesmo trabalho todo ciclo — e, de fora, isso parece trabalho

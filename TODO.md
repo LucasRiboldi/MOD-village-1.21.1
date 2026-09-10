@@ -257,6 +257,57 @@ alegação, não achado**, e o que o Verifier não conseguir reproduzir vai para
 
 ---
 
+## 📒 2026-09-10 — o Fabricante virou dois ofícios
+
+**Decisão do autor**, e a divisão não é só de nome: carpinteiro e pedreiro têm
+capacidade própria, tarefa própria, produção própria e assunto próprio no log.
+São **8 profissões** agora.
+
+### O risco era a profissão decorativa, e ele tinha duas camadas
+
+A primeira é a óbvia: pedreiro sem material declarado nunca recebe pedido — o
+estado do fazendeiro até 08-27. **A segunda quase passou:** declarar o material
+não basta. O `ProfessionResponsibilityTest` de ontem ficaria **verde** com um
+pedreiro que nunca recebesse tarefa, porque nada criava meta de tijolo. Quem
+fecha o degrau é `MasonAndCarpenterTest.theMasonGetsATaskOfItsOwn`.
+
+### A cadeia do tijolo nasceu junto, e é toda do jogo
+
+```text
+pedregulho → mineiro → [fornalha] → pedra → fundidor → [bancada] → tijolo → pedreiro
+```
+
+`ResourceType.STONE` e `STONE_BRICKS` entraram. **Nenhum caminho novo foi
+preciso para a demanda:** a peneira de `WorkMaterials` passou a deixar passar
+`CRAFTED_STONE` além de `SMELTED`, e o `typeFor` já roteia certo por
+declaração. Uma peneira, dois ofícios.
+
+### Verificação
+
+**704 unitários e 275 gametests.** Três mutações: pedreiro com a capacidade do
+carpinteiro — a divisão decorativa — derruba **5 casos**, três deles o guarda
+de ontem; exceção da redstone removida derruba 1. E as duas oficinas relatam
+separado na mesma colônia, visto na bateria: `no carpenter work` e
+`no mason work` lado a lado.
+
+**Duas guardas pinadas foram atualizadas de propósito**, não contornadas: a
+lista da fornalha (ganhou `STONE`) e a contagem de profissões (7 → 8, com a
+ordem da cadeia produtiva preservada — os dois transformadores depois do
+fundidor).
+
+### O que fica aberto
+
+| | o quê |
+|---|---|
+| 🟠 | **O filtro de família não tem gametest.** `CraftingWork.isMasonry` classifica cada peça, e a classificação tem teste — mas que ele **reparta o trabalho** numa colônia rodando, não. **Medido:** removido o `continue` que o usa, 701 unitários e 275 gametests continuam verdes. Falta arena com obra de peça mista, um carpinteiro, um pedreiro, e a afirmação de que cada um fez só a sua |
+| 🟡 | **`CraftingWork` continua acima de 500 linhas.** A divisão pedida era de profissão e está feita; a implementação é uma só, parametrizada pela tarefa, porque duplicar seiscentas linhas para mudar duas seria pior |
+| 🟡 | **Save antigo perde a atribuição.** Quem estava gravado como `MANUFACTURER` volta sem função e é recontratado no ciclo seguinte — o mundo não quebra, mas o aldeão pode trocar de ofício |
+
+**Nada visto em jogo.** A sessão que veria o pedreiro trabalhando ainda não
+aconteceu.
+
+---
+
 ## 📒 A noite de 2026-09-09 — a matriz de responsabilidade
 
 **Uma proposta externa foi avaliada, e o que ela recomenda fazer o projeto já
@@ -330,7 +381,7 @@ doem:
 | | o quê |
 |---|---|
 | ✅ | ~~**`requestMissing` pula calado quando ninguém sabe fazer**~~ — **fechado no mesmo dia.** Nasceu `ProductionHands`, uma interface em `core.coordination`: a coordenação entrega o número de mãos e a camada Fabric escreve a linha, porque o `IdleLog` vive em `fabric.work` e a ADR-006 §6 proíbe `core` de importar `fabric` — é o mesmo caminho que o `hasStorage` já usava. A linha sai assim, e foi vista na bateria: `no collect_stone work: no worker in the village can do it — COBBLESTONE needs COLLECT_STONE`. **O número, e não só a ausência:** sem o caso `hands > 0` o `IdleLog` nunca é mandado esquecer, e a colônia que perde a profissão duas vezes fica muda na segunda |
-| 🟠 | **Dividir o Fabricante em Carpinteiro e Pedreiro** — ele faz dois ofícios em 639 linhas, acima do limite de 500. A proposta externa levantou, e o limite concorda. **Decisão de projeto, e é do autor:** mais uma profissão é mais um aldeão a contratar numa vila pequena |
+| ✅ | ~~**Dividir o Fabricante em Carpinteiro e Pedreiro**~~ — **feito em 2026-09-10, por decisão do autor.** Ver o inventário abaixo |
 
 ---
 

@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * 19:25:02  TEST BARRIER skipped stripped_oak_log — that chain did not deliver
  * </pre>
  *
- * <p>A cadeia entrega: {@code ManufacturerWork.strip} roda antes da
+ * <p>A cadeia entrega: {@code CraftingWork.strip} roda antes da
  * guarda de conversão e escolhe a espécie que a colônia tem, desde
  * 09-05. Ela só nunca teve o ciclo — o construtor via a falta e riscava
  * no mesmo tique. Na sessão inteira o fabricante descascou <b>um</b>

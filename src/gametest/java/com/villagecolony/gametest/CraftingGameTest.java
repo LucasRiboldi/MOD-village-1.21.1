@@ -23,7 +23,7 @@ import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.ColonySupply;
-import com.villagecolony.fabric.work.ManufacturerWork;
+import com.villagecolony.fabric.work.CraftingWork;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
@@ -44,7 +44,7 @@ import java.util.UUID;
  * <p>A primeira profissão que consome. Estes testes olham tanto o que ela
  * produz quanto o que ela **não** faz com o que estava no baú.
  */
-public class ManufacturerGameTest implements FabricGameTest {
+public class CraftingGameTest implements FabricGameTest {
 
     private static final BlockPos CHEST = new BlockPos(2, 2, 2);
     private static final BlockPos STAND = new BlockPos(3, 2, 2);
@@ -80,20 +80,20 @@ public class ManufacturerGameTest implements FabricGameTest {
         VillageColonyMod.COLONIES.register(colony);
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
-        worker.assign(ProfessionType.MANUFACTURER);
+        worker.assign(ProfessionType.CARPENTER);
 
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
         Task task = VillageColonyMod.TASKS.create(
                 colony.id(),
-                TaskType.CRAFT_MATERIAL,
+                TaskType.CRAFT_WOOD_MATERIAL,
                 TaskPriority.PRODUCTION,
                 ResourceType.OAK_PLANKS,
                 16);
 
         task.reserveFor(villager.getUuid());
 
-        ManufacturerWork.run(world, colony);
+        CraftingWork.run(world, colony);
 
         return new Fixture(
                 colony,
@@ -345,7 +345,7 @@ public class ManufacturerGameTest implements FabricGameTest {
                 .owning(villager.getUuid());
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
-        worker.assign(ProfessionType.MANUFACTURER);
+        worker.assign(ProfessionType.CARPENTER);
 
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
@@ -354,7 +354,7 @@ public class ManufacturerGameTest implements FabricGameTest {
         int crafting = 0;
 
         for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
-            if (task.type() == TaskType.CRAFT_MATERIAL) {
+            if (task.type() == TaskType.CRAFT_WOOD_MATERIAL) {
                 crafting++;
             }
         }
@@ -412,7 +412,7 @@ public class ManufacturerGameTest implements FabricGameTest {
         villager.setBreedingAge(0);
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
-        worker.assign(ProfessionType.MANUFACTURER);
+        worker.assign(ProfessionType.CARPENTER);
 
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
@@ -478,7 +478,7 @@ public class ManufacturerGameTest implements FabricGameTest {
         villager.setBreedingAge(0);
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
-        worker.assign(ProfessionType.MANUFACTURER);
+        worker.assign(ProfessionType.CARPENTER);
 
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
@@ -558,7 +558,7 @@ public class ManufacturerGameTest implements FabricGameTest {
         VillageColonyMod.COLONIES.register(colony);
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
-        worker.assign(ProfessionType.MANUFACTURER);
+        worker.assign(ProfessionType.CARPENTER);
 
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
@@ -579,14 +579,14 @@ public class ManufacturerGameTest implements FabricGameTest {
 
         Task task = VillageColonyMod.TASKS.create(
                 colony.id(),
-                TaskType.CRAFT_MATERIAL,
+                TaskType.CRAFT_WOOD_MATERIAL,
                 TaskPriority.PRODUCTION,
                 ResourceType.OAK_PLANKS,
                 16);
 
         task.reserveFor(villager.getUuid());
 
-        ManufacturerWork.run(world, colony);
+        CraftingWork.run(world, colony);
 
         return new Fixture(
                 colony,

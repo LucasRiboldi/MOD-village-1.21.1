@@ -72,7 +72,7 @@ class ConstructionProjectTest {
      * <b>sem ordem</b> e embaralhado a cada execução da máquina virtual.
      * O {@code LinkedHashMap} que a monta existia para nada.
      *
-     * <p>Parece detalhe e não é: {@code ManufacturerWork} percorre esta
+     * <p>Parece detalhe e não é: {@code CraftingWork} percorre esta
      * lista e para no primeiro material que consegue produzir, então a
      * ordem <b>é</b> a prioridade dele. Sorteada, ela deixou a sessão de
      * 09-09 com treze lotes de escada e zero troncos descascados, com o

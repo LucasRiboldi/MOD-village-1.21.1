@@ -41,7 +41,7 @@ import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.ConstructionPlanner;
-import com.villagecolony.fabric.work.ManufacturerWork;
+import com.villagecolony.fabric.work.CraftingWork;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.block.Blocks;
@@ -249,7 +249,7 @@ public final class VillageDetectionHandler {
         ShepherdWork.tick(server.getOverworld());
         FarmerWork.tick(server.getOverworld());
         LumberjackWork.tick(server.getOverworld());
-        ManufacturerWork.tick(server.getOverworld());
+        CraftingWork.tick(server.getOverworld());
         BuilderWork.tick(server.getOverworld());
 
         tickCounter++;
@@ -519,7 +519,7 @@ public final class VillageDetectionHandler {
         SmelterWork.run(overworld, colony);
         ShepherdWork.run(overworld, colony);
         FarmerWork.run(overworld, colony);
-        ManufacturerWork.run(overworld, colony);
+        CraftingWork.run(overworld, colony);
         BuilderWork.run(overworld, colony);
 
     }
@@ -843,7 +843,7 @@ public final class VillageDetectionHandler {
             ShepherdWork.forget(villagerId);
             FarmerWork.forget(villagerId);
             LumberjackWork.forget(villagerId);
-            ManufacturerWork.forget(villagerId);
+            CraftingWork.forget(villagerId);
             BuilderWork.forget(villagerId);
 
             // A marca do baú sai: um machado pendurado no baú de quem já

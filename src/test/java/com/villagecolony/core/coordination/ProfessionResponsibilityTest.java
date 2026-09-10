@@ -222,7 +222,7 @@ class ProfessionResponsibilityTest {
         assertSameTask(ResourceType.SANDSTONE, TaskType.COLLECT_STONE);
         assertSameTask(ResourceType.SAND, TaskType.COLLECT_STONE);
         assertSameTask(ResourceType.WHITE_WOOL, TaskType.COLLECT_WOOL);
-        assertSameTask(ResourceType.OAK_PLANKS, TaskType.CRAFT_MATERIAL);
+        assertSameTask(ResourceType.OAK_PLANKS, TaskType.CRAFT_WOOD_MATERIAL);
         assertSameTask(ResourceType.GLASS, TaskType.SMELT_MATERIAL);
         assertSameTask(ResourceType.SMOOTH_SANDSTONE, TaskType.SMELT_MATERIAL);
         assertSameTask(ResourceType.IRON_INGOT, TaskType.SMELT_MATERIAL);

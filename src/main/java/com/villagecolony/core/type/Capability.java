@@ -33,8 +33,16 @@ public enum Capability {
     /** Fundir: areia em vidro, e o que mais a fornalha fizer. */
     SMELT_ITEMS,
 
-    /** Transformar matéria-prima em material de construção. */
-    CRAFT_ITEMS,
+    /**
+     * Lavrar madeira: tronco em tábua, e o que a bancada fizer dela.
+     *
+     * <p>Era {@code CRAFT_ITEMS}, e virou duas em 2026-09-09 com a
+     * divisão do fabricante em carpinteiro e pedreiro.
+     */
+    CRAFT_WOOD,
+
+    /** Lavrar pedra: pedra em tijolo, e o que a bancada fizer dele. */
+    CRAFT_STONE,
 
     /** Manter a plantação e o estoque de comida da colônia. */
     MAINTAIN_FOOD,

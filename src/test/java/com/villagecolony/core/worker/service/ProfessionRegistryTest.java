@@ -33,8 +33,8 @@ class ProfessionRegistryTest {
         assertTrue(ProfessionRegistry.of(ProfessionType.LUMBERJACK)
                 .canPerform(Capability.COLLECT_WOOD));
 
-        assertTrue(ProfessionRegistry.of(ProfessionType.MANUFACTURER)
-                .canPerform(Capability.CRAFT_ITEMS));
+        assertTrue(ProfessionRegistry.of(ProfessionType.CARPENTER)
+                .canPerform(Capability.CRAFT_WOOD));
 
         assertTrue(ProfessionRegistry.of(ProfessionType.FARMER)
                 .canPerform(Capability.MAINTAIN_FOOD));
@@ -62,7 +62,7 @@ class ProfessionRegistryTest {
                 ProfessionRegistry.of(ProfessionType.FARMER).requiredTool());
 
         assertEquals(ToolType.NONE,
-                ProfessionRegistry.of(ProfessionType.MANUFACTURER).requiredTool());
+                ProfessionRegistry.of(ProfessionType.CARPENTER).requiredTool());
 
         assertEquals(ToolType.NONE,
                 ProfessionRegistry.of(ProfessionType.BUILDER).requiredTool());

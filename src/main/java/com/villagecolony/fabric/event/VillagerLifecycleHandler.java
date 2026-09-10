@@ -9,7 +9,7 @@ import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.FarmerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
-import com.villagecolony.fabric.work.ManufacturerWork;
+import com.villagecolony.fabric.work.CraftingWork;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.entity.LivingEntity;
@@ -123,7 +123,7 @@ public final class VillagerLifecycleHandler {
         ShepherdWork.forget(villagerId);
         FarmerWork.forget(villagerId);
         LumberjackWork.forget(villagerId);
-        ManufacturerWork.forget(villagerId);
+        CraftingWork.forget(villagerId);
         BuilderWork.forget(villagerId);
 
         boolean wasWorker = VillageColonyMod.WORKERS.remove(villagerId);

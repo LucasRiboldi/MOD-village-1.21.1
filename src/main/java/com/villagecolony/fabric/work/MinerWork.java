@@ -397,7 +397,7 @@ public final class MinerWork {
         // <b>Ele chegou e vai bater na pedra</b> — E36, 2026-09-04. É
         // aqui que o guarda de imobilidade recomeça, e não ao pegar alvo:
         // trabalhar é a prova de que ele não está congelado. Mesmo lugar
-        // em que o BuilderWork e o ManufacturerWork sempre zeraram.
+        // em que o BuilderWork e o CraftingWork sempre zeraram.
         job.stall.reset();
 
         mine(world, villager, job, storage.get());

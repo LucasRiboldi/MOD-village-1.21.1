@@ -271,7 +271,8 @@ public final class ColonyCycle {
             case FARMED -> TaskType.COLLECT_FOOD;
             case MINED -> TaskType.COLLECT_STONE;
             case SHEARED -> TaskType.COLLECT_WOOL;
-            case CRAFTED -> TaskType.CRAFT_MATERIAL;
+            case CRAFTED_WOOD -> TaskType.CRAFT_WOOD_MATERIAL;
+            case CRAFTED_STONE -> TaskType.CRAFT_STONE_MATERIAL;
             case SMELTED -> TaskType.SMELT_MATERIAL;
         };
     }

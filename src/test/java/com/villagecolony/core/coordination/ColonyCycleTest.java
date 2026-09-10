@@ -393,7 +393,7 @@ class ColonyCycleTest {
      */
     @Test
     void aBuildTaskDoesNotCountAsAnOpenRequestForItsNominalResource() {
-        workers.register(UUID.randomUUID(), COLONY).assign(ProfessionType.MANUFACTURER);
+        workers.register(UUID.randomUUID(), COLONY).assign(ProfessionType.CARPENTER);
 
         buildTask();
 
@@ -405,7 +405,7 @@ class ColonyCycleTest {
                 workers);
 
         long crafting = tasks.ofColony(COLONY).stream()
-                .filter(task -> task.type() == TaskType.CRAFT_MATERIAL)
+                .filter(task -> task.type() == TaskType.CRAFT_WOOD_MATERIAL)
                 .count();
 
         assertTrue(
