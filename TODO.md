@@ -267,6 +267,79 @@ alegação, não achado**, e o que o Verifier não conseguir reproduzir vai para
 
 ---
 
+## 🎮 Sessão de jogo de 2026-09-10, 01:17 — a primeira desde 09-05
+
+**5min40, sem crash e sem exception do mod.** 19 colônias carregadas, 338
+trabalhadores, uma colônia ativa (`634bf5cc`). Jar conferido por md5 antes:
+`333921e9`, o do commit `0687caf`.
+
+### O que foi visto pela primeira vez
+
+| | a prova no log |
+|---|---|
+| **A divisão do fabricante está viva** | `MASON 78716f52 claimed the chest` e `CARPENTER be3b77ab claimed the chest`. As oito profissões apareceram |
+| **O carpinteiro descasca** | `Carpenter be3b77ab stripped a oak_log into stripped_oak_log`, 4 vezes — e a linha já sai com o nome novo |
+| **O mineiro para na meta** | `filled the order — 1 cobblestone of the 1 asked, and stopped`, 10 vezes. Era o item 4 da lista de conferência |
+| **A vila destravou** | **10 ciclos, nenhum com `assigned 0 tasks`** — 2, 4, 5 e até 10 tarefas, fila fechando vazia. Em 09-09 eram **78 de 108 ciclos com zero**. É o conserto da roça confirmado em jogo |
+
+### 🔴 O defeito que a sessão achou, e ele é estrutural
+
+**A demanda da obra não gera tarefa para a oficina.** O construtor passou a
+sessão inteira em `WAITING_RESOURCES ... waiting for minecraft:stripped_oak_log`,
+parado em **15 blocos restantes**, com 6 `stopped — no minecraft:stripped_oak_log
+in the colony chests` e **8 peças riscadas pela barreira**. E o carpinteiro
+descascou 4 no mesmo período.
+
+A causa não é o descascar: é o **veículo**. O `produceForWork` só roda dentro
+de uma tarefa, e a única tarefa de carpintaria nasce da meta de **tábua** —
+com 15 tábuas no estoque, a meta estava satisfeita e nenhuma tarefa abria.
+Quatro `no carpenter work: no task open for it — 2 able to` /
+`no mason work: no task open for it — 2 able to` dizem isso por escrito.
+
+**O pedreiro tem o mesmo problema, e por isso não trabalhou nenhuma vez.** É
+exatamente a segunda camada do risco que a divisão registrou: *declarar o
+material não basta*.
+
+### 🟠 O outro achado: a colônia lê um terço dos próprios baús
+
+`stores {...} in 5 of 16 chests read` — e nunca passou de **6 de 16**. O
+javadoc de `ColonyCycle.run` já avisa que contagem parcial produz pedido a
+mais; o que a sessão mostra é o tamanho da fatia. É provavelmente por isso que
+a meta de pedregulho saiu **1** dez vezes seguidas: com 72 pedregulhos vistos
+e o piso em 64, o déficit é 1, e o mineiro abre tarefa de um bloco.
+
+### 🟡 Conhecidos que se repetiram
+
+Lenhador rejeitando parede de vila (`Not a tree — N logs without a living
+canopy`) · fazendeiro ocioso os 10 ciclos (`nothing ripe and no empty plot
+within 32 blocks`) · lenhador travado 2× (`has not moved a block in 300 work
+ticks`).
+
+---
+
+## 📒 2026-09-10 — o MineDigging cai para 913 linhas, e um método morto sai
+
+**Terceira extração, e a dívida daquele arquivo caiu 35% no total: 1.403 → 913.**
+
+`MineFrontier` (130 linhas) leva `findTheFrontier` e `isStillClosed` — um é a
+pergunta do outro, e é a discordância entre esse par e o `MineRock.isOpenSpace`
+que emudeceu a mina em 09-05.
+
+**E `backUpToTheRealFrontier` saiu inteiro: 51 linhas de código morto.** Vivia
+ali desde `dbb2c14`, privado e **sem um único chamador** — superado pelo
+`findTheFrontier` e esquecido. O compilador não reclama de método privado sem
+uso, então ninguém o veria.
+
+**Refatoração pura, e a fronteira é exercitada:** neutralizado o
+`findTheFrontier`, caem 2 gametests. 704 unitários e 278 gametests, iguais à
+baseline.
+
+**O que fica:** `MineDigging` ainda tem 913 linhas. As costuras seguintes são
+a escolha de alvo (`nextTarget`, `exposedStone`, `followingTheVein`,
+`stepBackUp`, ~280) e a ordem de cavar (`nextCut`, ~150).
+
+---
+
 ## 📒 2026-09-10 — o MineDigging perde um quarto, e a refatoração acha um buraco
 
 **1.403 → 1.055 linhas** (−25%), em duas extrações verificadas. Nasceram
