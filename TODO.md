@@ -267,6 +267,66 @@ alegação, não achado**, e o que o Verifier não conseguir reproduzir vai para
 
 ---
 
+## 🎮 Sessão de 2026-09-10, 08:31 — o E44 aparece em jogo, e a viga fica sem veredito
+
+**13 minutos**, jar conferido: `f06dfc59`, o do commit `71dbeee`. Zero exceções
+do mod. 19 colônias carregadas, uma ciclou (`634bf5cc`), 23 ciclos.
+
+### A viga: sem veredito, e não por ter falhado
+
+**Zero descascadas — porque não havia obra nenhuma aberta.** Nenhuma linha de
+construtor, nenhum projeto, e a barreira fechou dizendo *"TEST BARRIER has
+nothing to say this session — no piece was laid"*. O planejador respondeu
+`no building work: nothing to work on in the whole radius`: não achou lote.
+
+Sem casa ninguém pede viga, e o veículo não tem o que carregar. **O conserto de
+`71dbeee` continua sem prova em jogo**, e a obra que estava em 12 blocos na
+sessão anterior já não existe.
+
+### 🔴 E44 confirmado em jogo, e ele prende os dois mineiros
+
+**A queixa do autor foi:** *"mineiros não estão trabalhando e estão
+posicionados no mesmo túnel, um atrás do outro"*. É um defeito só, e o log o
+explica inteiro.
+
+```text
+08:33     4c4171a4 mira a pedra 2442,44,-1424 — out of reach, 9,9 blocos
+08:34:13  desiste: "walked for 2400 ticks of work time without arriving",
+          com "19 blocks below it and unable to climb"
+08:34:43  d5f6de43 assume o ramal e recebe A MESMA pedra 2442,44,-1424
+08:36:17  desiste com a mesma frase
+```
+
+A linha que fecha o diagnóstico é `d5f6de43 waiting for a branch — 2 of 4
+taken, 4c4171a4 in one`: **um mineiro segura o ramal por vez**, e isso é de
+projeto. O que está errado é o que o ramal serve — **o cursor segura uma
+posição inalcançável e a serve de novo, sem prazo**. Cada mineiro gasta 2.400
+tiques de expediente caminhando para ela, desiste, o outro assume, mesma
+pedra. Enfileirados no mesmo túnel porque se revezam no mesmo alvo impossível.
+
+**Trabalho houve, e pouco:** `4c4171a4` fechou uma encomenda antes de travar —
+`filled the order — 12 cobblestone of the 12 asked`, 60 blocos naquela tarefa.
+
+**O que isto muda no registro.** O E44 dizia que, com o E40 fechado, o caso
+ficaria *raro*. Ficou raro e continua fatal: quando acontece, prende **os
+dois** mineiros da colônia. E a linha `unable to climb`, que a lista de
+conferência mandava caçar pela **ausência**, voltou — e é o E44, como aquela
+lista previa.
+
+**O conserto recomendado, e ele é decisão do autor:** a escada de prazos do
+lenhador aplicada ao cursor da mina. Segurar continua certo — pular por uma
+desistência deixou três sessões com a galeria intacta em 08-27 —, mas segurar
+**sem prazo** é o laço. O `TreeMarks` sobe 6.000 → 48.000 tiques e nunca apaga
+a marca; a mina não tem equivalente.
+
+### 🟠 E o planejador não acha lote
+
+`no building work: nothing to work on in the whole radius`. É o outro fio, e
+ele bloqueia a verificação da viga: sem obra aberta, o conserto do veículo não
+pode ser exercitado em jogo.
+
+---
+
 ## 🎮 Sessão de 2026-09-10, 03:49 — 4h20, e o veículo consertado
 
 **Zero exceções do mod.** Jar conferido: `e6da18f4`, o do commit `9089b3c`.
@@ -3776,7 +3836,7 @@ conferido no volume · árvore grande deixando de ser recusada.
 | **E41** | **Nada mede degradação ao longo de muitos ciclos.** O teste mais longo do projeto tem centenas de tiques | 🟠 **Maior lacuna de cobertura depois do E37-b.** É onde moram vazamento de estado, tarefa abandonada, acúmulo de objetivo e perda de referência — e nenhum dos seis defeitos de hoje teria sido pego por ela, o que não a torna menos necessária: os que ela pega ninguém achou ainda |
 | **E42** | **Nenhum teste de impasse entre profissões.** Os dois casos reais — a roça que travava toda a construção, e o fabricante que nunca descascava — foram achados **em jogo**, não pela bateria | 🔴 **Aberto, e a tentativa de 09-09 à noite foi retirada pelo gauntlet-verifier — vale mais que o teste.** Escrevi `CrossProfessionStandoffTest` supondo fome de prioridade no `WorkAssignment`, e **não era isso**: o `assign()` nunca teve saída antecipada, e o caso do fabricante já tinha duas causas documentadas e corrigidas — R-002 (a barreira riscava a peça antes de o fabricante ter vez) e a ordem em `ManufacturerWork.remainingMaterials`. Os três casos que escrevi caem exatamente junto com `twoLumberjacksTakeTwoTasks` e `everyCapableWorkerGetsATaskOfItsOwn` sob a mesma mutação: eram a invariante de vários trabalhadores, com outro nome. **E a metade da roça não está coberta:** `FarmPostponementTest` afirma só o cronômetro do `FarmPlans` e nunca chama `ConstructionPlanner.plan`, que é onde a passagem encerrava sem tentar uma casa — nenhum gametest toca esse ramo. **O trabalho de verdade é esse gametest:** lote de roça fora do alcance do fazendeiro, planta de casa disponível, duas passagens do planejador, e a segunda tem de abrir projeto de CASA |
 | **E43** | **O descanso de quatro ciclos é anulado no ciclo seguinte.** O `giveUp` do mineiro marca `worker.rest(COLLECT_STONE)`, e a 2ª passagem do `takeOneTask` devolve a mesma tarefa ao mesmo trabalhador sempre que a colônia não tem outro trabalho da profissão dele | 🟠 **Aberto, achado ao ler em 09-09 investigando o E37-b, e não observado em jogo como defeito.** A 2ª passagem é deliberada — *"nunca fica parado para honrar um descanso"* — e tem teste (`theRestNeverLeavesTheWorkerIdle`). Mas o descanso existe para que ele não repita a mesma parede, que é o problema que a ADR-010 tratava, e numa colônia de uma tarefa só ele não dura um ciclo. O que salva hoje é o resto do `giveUp`: `MineDigging.couldNotReach` recua o cursor e `MineClaims.stepAside` passa a vez, então a pedra seguinte tende a ser outra. **Decisão de projeto, e é do autor** |
-| **E44** | **A mina não tem escada de recusas.** Posição que o mineiro não alcança é **segurada** pelo cursor (`couldNotReach` → `holdPositionAt`) e servida de novo na passagem seguinte, sem prazo nenhum | 🟠 **Aberto, e é a metade do E40 que a correção não fecha.** Segurar está certo — pular por uma desistência deixou três sessões com a galeria intacta em 08-27 —, mas segurar *sem prazo* é o laço: mesma pedra, mesmo mineiro, todo ciclo. O lenhador já resolveu isto com o `TreeMarks`, que sobe uma escada de prazos e não apaga a marca (R-001). A mina não tem equivalente. Com o E40 fechado o caso ficou raro — só quando **nenhum** lugar alcançável existe —, e continua sendo laço quando acontece. **Decisão de projeto, e é do autor** |
+| **E44** | **A mina não tem escada de recusas.** Posição que o mineiro não alcança é **segurada** pelo cursor (`couldNotReach` → `holdPositionAt`) e servida de novo na passagem seguinte, sem prazo nenhum | 🟠 **Aberto, e é a metade do E40 que a correção não fecha.** Segurar está certo — pular por uma desistência deixou três sessões com a galeria intacta em 08-27 —, mas segurar *sem prazo* é o laço: mesma pedra, mesmo mineiro, todo ciclo. O lenhador já resolveu isto com o `TreeMarks`, que sobe uma escada de prazos e não apaga a marca (R-001). A mina não tem equivalente. Com o E40 fechado o caso ficou raro — só quando **nenhum** lugar alcançável existe —, e continua sendo laço quando acontece. 🔴 **Visto em jogo em 2026-09-10, 08:33, e é pior do que esta linha dizia: ele prende os DOIS mineiros da colônia.** Um segura o ramal e gasta 2.400 tiques andando para a pedra `2442,44,-1424`; desiste; o outro assume e recebe **a mesma pedra**. É a queixa do autor — *"mineiros no mesmo túnel, um atrás do outro"* — e eles se revezam no mesmo alvo impossível. A frase `unable to climb` voltou, como a lista de conferência previa. **Decisão de projeto, e é do autor** |
 | **E36** | **Os dois guardas eram zerados a cada alvo novo.** `startNextStone`, `findCrop`, `findSheep` e os três `release` faziam `job.stall.reset()` ao trocar de alvo, e quem troca de alvo com frequência ficava **imune** ao detector de imobilidade (300) | ✅ **Fechado em 09-04.** Zerar passou a ser no ramo em que a profissão trabalha — onde `BuilderWork` e `ManufacturerWork` sempre zeraram, e por isso os dois nunca tiveram o defeito. **Eram três profissões, não seis:** o construtor e o fabricante já estavam certos, e o lenhador não zera em lugar nenhum — ver **E39**. O contador de 2.400 continua por alvo de propósito. `theStillnessGuardSurvivesTheTargetChanging`, fase vermelha conferida (*caiu de 99 para 0*) |
 | ~~**E37**~~ | ~~`aFrozenMinerGivesUpLongBeforeTheStallGuard` instável~~ | ✅ **Fechado em 09-05, e não era instabilidade — era o cenário.** A geometria mudou (escada de duas pistas), o mineiro passou a **alcançar** a pedra e a trabalhar — `digging Cobblestone at ..., 0,6 blocks away, 163/200 ticks` —, e um mineiro ocupado não é um mineiro congelado: o guarda de imobilidade não tinha por que disparar. O teste vinha medindo isso havia semanas, ora passando ora não, conforme a arena. Agora ele **emparedado por construção** — seis paredes em volta dos dois blocos que ele ocupa —, e o cenário deixou de depender da forma da mina. Três rodadas seguidas de falha antes, duas de 252 verdes depois. A entrada abaixo fica como registro do caminho: **a suspeita anterior estava errada, e a medição é que a derrubou.** ⚙️ *(histórico)* **A suspeita anterior está morta, e foi medida.** Este arquivo dizia *"o que sobra é o E36: cada troca de alvo zera o contador"*. Com os resets **já removidos**, a falha voltou com `stall 3/2400, still 2/300` em 360 tiques — três passagens contadas de trezentas e sessenta. Os dois contadores são fechados por `WorkHours.isWorkTime`, e o `still` também zera quando o aldeão **muda de bloco**: o relatório mostra ele em y=-53 andando para y=-58, ou seja **o mineiro daquele teste não está congelado**. O próximo ciclo precisa de um instrumento que conte as passagens de expediente, e não de mais uma suspeita |
 | **E38** | **O baú do trabalhador assoreia e nada o esvazia.** Vara, maçã e muda não são `ResourceType`, nenhum trabalhador as retira, e cada uma ocupa um slot para sempre | ⚙️ **Metade fechada em 09-04.** O transbordo para a colônia tirou o lenhador do buraco e parou a destruição de item, mas **não move o assoreamento de lugar**: baú que só enche acaba cheio, e agora demora mais para chegar lá. Dar a esses itens consumidor ou descarte é **decisão de projeto** e está registrada no javadoc de `TreeFelling.deposit`, não decidida por conta própria |
