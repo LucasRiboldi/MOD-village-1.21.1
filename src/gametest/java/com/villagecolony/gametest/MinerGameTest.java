@@ -33,6 +33,8 @@ import com.villagecolony.fabric.integration.MineFlooding;
 import com.villagecolony.fabric.integration.OreVein;
 import com.villagecolony.fabric.work.MineClaims;
 import com.villagecolony.fabric.work.MineDigging;
+import com.villagecolony.fabric.work.MineRock;
+import com.villagecolony.fabric.work.MineSite;
 import com.villagecolony.fabric.integration.MineMouth;
 import com.villagecolony.fabric.integration.OreVein;
 import com.villagecolony.fabric.integration.RingSweep;
@@ -2406,7 +2408,7 @@ public class MinerGameTest implements FabricGameTest {
         boolean covered = VillageColonyMod.BUILDINGS.isColonyInfrastructure(
                 MinecraftTypeAdapter.toColonyPos(ideal.down()));
 
-        Optional<BlockPos> mouth = MineDigging.mouthOf(world, center, Side.NORTH);
+        Optional<BlockPos> mouth = MineSite.mouthOf(world, center, Side.NORTH);
 
         MineDigging.restoreMineDistance();
 
@@ -2603,7 +2605,7 @@ public class MinerGameTest implements FabricGameTest {
         MineDigging.shortenMineDistanceTo(near);
 
         try {
-            Optional<BlockPos> mouth = MineDigging.mouthOf(world, center, Side.NORTH);
+            Optional<BlockPos> mouth = MineSite.mouthOf(world, center, Side.NORTH);
 
             context.assertTrue(
                     mouth.isPresent(),
@@ -4303,6 +4305,59 @@ public class MinerGameTest implements FabricGameTest {
      * {@code canDig} protege a vila gerada e o que a colônia construiu, e
      * a escada do jogador não é nenhuma das duas.
      */
+    /**
+     * <b>E o bloco cheio de tijolo também fica de pé</b> — 2026-09-10.
+     *
+     * <p><b>A lacuna que ele fecha foi achada refatorando</b>, não em
+     * jogo: o par de testes da escada do jogador usa
+     * {@code STONE_BRICK_STAIRS}, e escada não é cubo cheio — ela já é
+     * barrada pelo {@code isFullCube}, <b>antes</b> de a regra do tijolo
+     * ser consultada. Removida a exclusão
+     * {@code !state.isIn(BlockTags.STONE_BRICKS)} de {@code MineRock},
+     * <b>704 unitários e 277 testes de jogo continuavam verdes</b>.
+     *
+     * <p>E é essa exclusão que carrega a decisão do autor de 2026-09-05.
+     * O critério é <i>forma e ferramenta</i>: cubo cheio, quebrável com
+     * picareta ou pá, <b>e tijolo de pedra não</b> — porque é a única
+     * família de cubo cheio que nenhuma caverna gera, e é dela que a
+     * escada dele é feita. Sem o cubo cheio no cenário, a regra que
+     * distingue tijolo de pedregulho nunca é exercitada.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_player_stairs",
+            tickLimit = 20)
+    public void theMinerDoesNotDigThePlayersStoneBricks(TestContext context) {
+        solidRock(context);
+
+        Colony colony = openedMine(context, 3);
+
+        BlockPos step = dug(context, colony, 3);
+
+        // Cubo cheio, e não escada: é aqui que a regra do tijolo manda,
+        // porque o isFullCube já não filtrou nada.
+        context.getWorld().setBlockState(step, Blocks.STONE_BRICKS.getDefaultState());
+
+        try {
+            context.assertFalse(
+                    MineRock.isRock(
+                            context.getWorld(), step, context.getWorld().getBlockState(step)),
+                    "o tijolo de pedra do jogador passou por rocha, e a picareta o abriria");
+
+            Optional<BlockPos> next = targetFor(context, colony);
+
+            context.assertTrue(
+                    next.isPresent(),
+                    "a mina não devolveu alvo nenhum, e sem isso o teste não mede nada");
+
+            context.assertFalse(
+                    next.get().equals(step),
+                    "o mineiro mirou o tijolo do jogador em " + step.toShortString());
+        } finally {
+            MineClaims.clearAll();
+        }
+
+        context.complete();
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_player_stairs",
             tickLimit = 20)
     public void theMinerDoesNotDigThePlayersStaircase(TestContext context) {

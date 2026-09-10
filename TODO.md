@@ -267,6 +267,53 @@ alegação, não achado**, e o que o Verifier não conseguir reproduzir vai para
 
 ---
 
+## 📒 2026-09-10 — o MineDigging perde um quarto, e a refatoração acha um buraco
+
+**1.403 → 1.055 linhas** (−25%), em duas extrações verificadas. Nasceram
+`MineRock` (142) e `MineSite` (336), os dois abaixo do limite de 500.
+
+| classe | o que levou |
+|---|---|
+| `MineRock` | o vocabulário da rocha — `isOpenSpace`, `isRock`, `isDiggableRock`, `canDig`. Eles já eram obrigados a concordar entre si, e em 09-05 existiam como cópias da mesma lista: a tentativa de proteger a escada do jogador mexeu num lado só e a mina emudeceu |
+| `MineSite` | a cadeia fechada da boca — `mouthOf` → `mouthWithin` → `surfaceAt` → `surfaceOn` —, com as oito constantes que não servem a mais nada e a distância de busca, que o `MineDigging` só lia para escrever num log |
+
+**Refatoração pura:** nenhum corpo de método mudou. A bateria bateu com a
+baseline nas duas extrações — 704 e 277.
+
+### O buraco que ela achou, e é o mais valioso deste ciclo
+
+**A regra que protege a escada do jogador não tinha teste.** Removida a
+exclusão `!state.isIn(BlockTags.STONE_BRICKS)`, **704 unitários e 277
+gametests continuavam verdes**.
+
+A causa é fina: o par de testes que a lista dava por guardando a regra usa
+`STONE_BRICK_STAIRS`, e **escada não é cubo cheio** — ela é barrada pelo
+`isFullCube` antes de a regra do tijolo ser consultada. Sem um cubo cheio no
+cenário, a linha que distingue tijolo de pedregulho nunca roda.
+
+`theMinerDoesNotDigThePlayersStoneBricks` fecha, e a fase vermelha confere:
+sob a mutação cai exatamente ele. **278 gametests.**
+
+### Dois erros meus no caminho
+
+- **Batizei a classe nova de `MineMouth`, e o nome já existia** em
+  `fabric.integration` — a boca **mobiliada**, a Regra 30. O compilador
+  resolvia para a antiga e dizia "cannot find symbol" em métodos que estavam
+  lá. Virou `MineSite`, no paralelo do `BuildSiteScanner`, com a distinção
+  escrita no javadoc.
+- **`./gradlew build` não compila o source set de gametest.** A segunda
+  extração passou no `build` e quebrou dois chamadores em `MinerGameTest`.
+  Verificação de refatoração aqui precisa de `compileGametestJava` junto.
+
+### O que fica
+
+| | o quê |
+|---|---|
+| 🟠 | **`MineDigging` ainda tem 1.055 linhas**, o dobro do limite. As costuras seguintes, na ordem em que valem: a escolha de alvo (`nextTarget`, `exposedStone`, `followingTheVein`, `stepBackUp`, ~280 linhas), a ordem de cavar (`nextCut`, ~165) e a fronteira (`findTheFrontier`, `isStillClosed`, `backUpToTheRealFrontier`, ~120) |
+| 🟡 | **O total subiu**: 1.403 viraram 1.533 somando os três arquivos. É o preço do cabeçalho e do javadoc de cada casa nova, e foi pago de propósito |
+
+---
+
 ## 📒 Ciclo encerrado em 2026-09-10 — o inventário
 
 **Cinco commits, 41 arquivos, +2.098/−89.** Nenhuma sessão de jogo: **tudo

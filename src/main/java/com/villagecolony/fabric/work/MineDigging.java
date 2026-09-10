@@ -16,7 +16,6 @@ import com.villagecolony.fabric.integration.OreVein;
 import com.villagecolony.fabric.integration.RingSweep;
 import com.villagecolony.fabric.integration.StonePatch;
 import net.minecraft.block.BlockState;
-import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
@@ -50,73 +49,13 @@ public final class MineDigging {
     /** Recusas seguidas antes de a galeria virar. */
     private static final int BLOCKED_BEFORE_TURNING = 8;
 
-    /** A que distância do centro a mina se abre — o fim da vila. */
-    private static final int MINE_DISTANCE = 40;
 
-    /**
-     * As frações da distância que a busca tenta, em centésimos.
-     *
-     * <p>Cheia primeiro, que é a intenção do autor, e depois mais perto.
-     * <b>Nunca mais longe:</b> "o fim da vila" é um teto, e a bateria
-     * encurta essa distância para o mineiro não comer a pedra da arena
-     * do lado.
-     */
-    private static final int[] REACHES = {100, 75, 50};
 
-    /**
-     * As frações que a segunda passagem tenta, quando a primeira falha.
-     *
-     * <p><b>Aqui a busca vai mais longe de propósito</b>, e é decisão do
-     * autor em 2026-08-26: <i>ela aceita uma boca ruim, procura mais
-     * longe</i>. "O fim da vila" deixa de ser teto quando a alternativa
-     * é a colônia sem pedra.
-     *
-     * <p>Continua proporcional a {@link #mineDistance}, e não um número
-     * solto: a bateria encurta essa distância para o mineiro não comer a
-     * arena vizinha, e uma segunda passagem em blocos absolutos furaria
-     * essa garantia.
-     */
-    private static final int[] FARTHER = {150, 200};
 
-    /**
-     * A janela de altura da boca ruim, para cima e para baixo.
-     *
-     * <p>Mais larga que {@link #LOOK_UP} e {@link #LOOK_DOWN}: a boca
-     * boa é o fim da vila, no nível dela; a ruim aceita subir o morro ou
-     * descer a depressão, porque a alternativa é não haver mina.
-     *
-     * <p><b>O que ela não relaxa:</b> água em cima e a Regra 3. Mina
-     * inundada não é mina ruim, é mina quebrada; e peça de vila gerada
-     * ou construção da colônia continua intocável em qualquer passagem.
-     */
-    private static final int POOR_UP = 12;
 
-    private static final int POOR_DOWN = 24;
 
-    /**
-     * Quanto anda a diagonal, em centésimos da distância cheia.
-     *
-     * <p>Setenta, que é o cateto de um quadrado de hipotenusa cem. Assim
-     * a boca na diagonal fica <b>à mesma distância</b> do centro que a
-     * boca no eixo, e o teto de "o fim da vila" continua sendo teto.
-     */
-    private static final int DIAGONAL = 70;
 
-    /** Mais perto que isto a escada desceria sob a própria vila. */
-    private static final int NEAREST_MOUTH = 2;
 
-    /**
-     * Quanto acima do nível da vila a boca pode nascer.
-     *
-     * <p>Curto de propósito: a boca é <b>o fim da vila</b>, e não o topo
-     * do morro ao lado. Foi por olhar oito para cima que a primeira
-     * versão desta busca abriu uma mina seis blocos acima do centro, em
-     * cima do piso da arena vizinha.
-     */
-    private static final int LOOK_UP = 3;
-
-    /** E quanto abaixo, para a boca numa depressão. */
-    private static final int LOOK_DOWN = 12;
 
     /** O assunto do registrador para a boca que não se acha — 2026-08-22. */
     private static final String MOUTH_SUBJECT = "miner mine mouth";
@@ -142,15 +81,6 @@ public final class MineDigging {
      */
     private static final int SURFACE_RADIUS = 48;
 
-    /**
-     * A distância em vigor. É {@link #MINE_DISTANCE}, menos nos testes.
-     *
-     * <p>A bateria roda arenas lado a lado no mesmo mundo, e uma mina
-     * aberta a quarenta blocos sai da arena dela e cava o cenário do
-     * teste vizinho. Um teste que destrói o cenário de outro é pior que
-     * um teste que não existe.
-     */
-    private static int mineDistance = MINE_DISTANCE;
 
     /** O raio de superfície em vigor. É {@link #SURFACE_RADIUS}, menos nos testes. */
     private static int surfaceRadius = SURFACE_RADIUS;
@@ -160,16 +90,12 @@ public final class MineDigging {
 
     /** Aproxima a boca da mina. Só os testes precisam disso. */
     public static void shortenMineDistanceTo(int blocks) {
-        if (blocks <= 0) {
-            throw new IllegalArgumentException("Distance must be positive: " + blocks);
-        }
-
-        mineDistance = blocks;
+        MineSite.shortenTo(blocks);
     }
 
     /** Devolve a distância ao valor de jogo. */
     public static void restoreMineDistance() {
-        mineDistance = MINE_DISTANCE;
+        MineSite.restore();
     }
 
     /**
@@ -462,7 +388,9 @@ public final class MineDigging {
 
         // Rocha, e não só "cavável": uma laje que o jogador pôs de teto
         // passa no canDig e não é degrau nenhum — 2026-09-05.
-        return isDiggableRock(world, ceiling) ? Optional.of(ceiling) : Optional.empty();
+        return MineRock.isDiggableRock(world, ceiling)
+                ? Optional.of(ceiling)
+                : Optional.empty();
     }
 
     /**
@@ -488,109 +416,6 @@ public final class MineDigging {
         return MinerWork.approachTo(world, at).equals(at);
     }
 
-    /**
-     * Se a picareta não tem o que fazer nesta posição da ordem —
-     * 2026-09-05.
-     *
-     * <p><b>Uma pergunta, dois donos.</b> O {@link #nextCut} pula o que
-     * já está aberto e o {@link #isStillClosed} recua o cursor até onde
-     * a rocha começa, e <b>os dois têm de concordar</b>: posição que a
-     * escolha do alvo pula não pode ser a fronteira, senão o cursor
-     * recua até ela toda passagem. Eles concordavam por cópia — a mesma
-     * lista escrita duas vezes —, e foi por aí que a tentativa de
-     * 2026-09-05 de proteger a escada do jogador saiu pela culatra:
-     * mexeu num lado só e a mina emudeceu. Agora a lista é uma.
-     *
-     * <p><b>E o que o jogador constrói entra aqui</b> — pedido do autor:
-     * <i>"corrigir a escada que o player constrói, ou qualquer caminho
-     * que o próprio player cria dentro da mina"</i>. O caminho dele é
-     * <b>espaço aberto</b>, e não obstáculo: a mina passa por ele como
-     * passa pelo corredor que ela mesma cavou. Tratá-lo como bloqueio
-     * faria a galeria virar depois de alguns degraus, e o corredor do
-     * jogador acabaria fechando o ramal.
-     *
-     * <p>É a mesma porta por onde a tocha da própria mina já passava
-     * desde 08-28, e pelo mesmo motivo.
-     */
-    static boolean isOpenSpace(ServerWorld world, BlockPos at, BlockState state) {
-        return state.isAir()
-                || !state.getFluidState().isEmpty()
-                || MineLighting.isLight(world, at, state)
-                || !isRock(world, at, state);
-    }
-
-    /**
-     * Se este bloco é rocha, e não coisa que alguém pôs ali.
-     *
-     * <p><b>O Minecraft não guarda quem pôs cada bloco</b> — está dito no
-     * cabeçalho do {@code BlockProtection}, e continua verdade. O que ele
-     * guarda é a <b>forma</b> e a <b>ferramenta</b>, e as duas juntas
-     * bastam para o que a mina precisa saber:
-     *
-     * <ul>
-     *   <li><b>cubo cheio</b> — degrau, laje, escada de mão, tocha,
-     *       trilho, porta, alçapão, placa e cerca já não são. É a
-     *       gramática inteira de um caminho feito à mão, e nenhuma
-     *       linha precisa nomeá-la;
-     *   <li><b>picareta ou pá</b> — o jogo diz com que se quebra cada
-     *       bloco, e o mineiro só tira o que sai com as duas. Tábua, lã
-     *       e baú caem fora sem serem citados;
-     *   <li><b>tijolo de pedra não</b> — é a única família de cubo cheio
-     *       que sai na picareta e que <b>nenhuma caverna gera</b>. É
-     *       dela que o autor fez a escada: {@code digging Escadas de
-     *       Tijolos de Pedra}.
-     * </ul>
-     *
-     * <p><b>O que ela erra, e para que lado.</b> Um piso de tijolo de
-     * barro ou de pedra polida ainda passa por rocha. Errar para este
-     * lado é o certo: a mina que para de cavar é pior que a mina que
-     * abre um bloco a mais — foi o que a tentativa desfeita provou.
-     *
-     * <p>E o que é natural e não é cubo cheio — estalactite, ametista,
-     * teia, líquen — a mina simplesmente contorna. Nenhum deles fecha
-     * passagem.
-     */
-    private static boolean isRock(ServerWorld world, BlockPos at, BlockState state) {
-        return state.isFullCube(world, at)
-                && (state.isIn(BlockTags.PICKAXE_MINEABLE)
-                        || state.isIn(BlockTags.SHOVEL_MINEABLE))
-                && !state.isIn(BlockTags.STONE_BRICKS);
-    }
-
-    /** Rocha que a picareta abre: nem espaço aberto, nem o que a Regra 3 protege. */
-    private static boolean isDiggableRock(ServerWorld world, BlockPos at) {
-        return canDig(world, at) && !isOpenSpace(world, at, world.getBlockState(at));
-    }
-
-    /**
-     * Se este bloco pode ser cavado — a Regra 3 e o impossível.
-     *
-     * <p>A mesma pergunta que {@link #nextCut} faz na sua volta, aqui
-     * porque o veio precisa saber se consegue abrir a saída antes de
-     * descer. Bedrock, lava e o que é da vila respondem não.
-     */
-    private static boolean canDig(ServerWorld world, BlockPos at) {
-        if (!world.isInBuildLimit(at)) {
-            return false;
-        }
-
-        BlockState state = world.getBlockState(at);
-
-        if (!state.getFluidState().isEmpty()) {
-            return false;
-        }
-
-        if (MineLighting.isLight(world, at, state)) {
-            // A luz da mina não se cava, e o findTheFrontier a pula por
-            // aqui: uma tocha na ordem de cavar seria "fronteira" para
-            // sempre, e o cursor recuaria até ela toda passagem.
-            return false;
-        }
-
-        return state.getHardness(world, at) >= 0
-                && !BlockProtection.isVillageOriginal(world, at)
-                && !BlockProtection.isColonyBuilt(at);
-    }
 
     /**
      * Onde a galeria de fato acaba, lido do mundo — 2026-08-28.
@@ -680,7 +505,7 @@ public final class MineDigging {
             return false;
         }
 
-        return isDiggableRock(world, at);
+        return MineRock.isDiggableRock(world, at);
     }
 
     /**
@@ -976,7 +801,7 @@ public final class MineDigging {
 
         Side descent = sideOf(colonyId);
 
-        Optional<BlockPos> mouth = mouthOf(world, center, descent);
+        Optional<BlockPos> mouth = MineSite.mouthOf(world, center, descent);
 
         if (mouth.isEmpty()) {
             // A linha que faltava, e a falta dela custou três sessões.
@@ -988,7 +813,7 @@ public final class MineDigging {
                     colonyId,
                     MOUTH_SUBJECT,
                     IdleReason.NO_TARGET,
-                    "no column within " + mineDistance + " blocks of " + center.toShortString()
+                    "no column within " + MineSite.distance() + " blocks of " + center.toShortString()
                             + " can hold a mine mouth — tried 8 directions at 5 distances,"
                             + " the last two settling for a poor one");
 
@@ -1103,7 +928,7 @@ public final class MineDigging {
 
             BlockState state = world.getBlockState(at);
 
-            if (isOpenSpace(world, at, state)) {
+            if (MineRock.isOpenSpace(world, at, state)) {
                 // Já aberto, ou água e lava. Nenhum dos dois se cava.
                 //
                 // <b>E a tocha da própria mina</b> — 2026-08-28. Uma
@@ -1215,179 +1040,6 @@ public final class MineDigging {
         return Optional.empty();
     }
 
-    /**
-     * A boca da mina: o fim da vila, na direção em que ela se abre.
-     *
-     * <p>É a frase do autor — <i>anda até o final da vila</i>. Longe o
-     * bastante para a escada não descer sob as casas, perto o bastante
-     * para o aldeão ir e voltar dentro do expediente.
-     *
-     * <p><b>Era uma coluna só, e por isso a mina nunca abriu.</b> Até
-     * 2026-08-22 esta busca olhava exatamente um ponto — centro mais
-     * quarenta blocos numa direção fixa — e desistia se ele não
-     * servisse. Sem alternativa, sem nova tentativa e <b>sem uma linha
-     * de log</b>: três sessões de jogo terminaram com {@code 0 mines} no
-     * save e mineiros mudos com tarefa aberta.
-     *
-     * <p>Agora ela tenta <b>vinte e quatro colunas</b>: oito direções —
-     * os quatro lados e as quatro diagonais entre eles —, em três
-     * distâncias. Eram doze até 2026-08-25, e as quatro do eixo caíram
-     * todas na água da mesma vila. A ordem é determinística e começa na intenção do autor
-     * — o lado da colônia, na distância cheia —, e só depois encurta.
-     * <b>Nunca vai mais longe</b> que a distância pedida: "o fim da
-     * vila" é um teto, e a bateria encurta essa distância justamente
-     * para o mineiro não comer a pedra da arena vizinha.
-     *
-     * <p>Pública para o teste de jogo, e é uma leitura sem efeito: nada
-     * no mundo muda por perguntar onde a boca caberia.
-     */
-    public static Optional<BlockPos> mouthOf(
-            ServerWorld world, BlockPos center, Side towards) {
-
-        return mouthWithin(world, center, towards, REACHES, LOOK_UP, LOOK_DOWN)
-                .or(() -> mouthWithin(world, center, towards, FARTHER, POOR_UP, POOR_DOWN));
-    }
-
-    /**
-     * As oito direções, nestas distâncias, com esta janela de altura.
-     *
-     * <p>Chamada duas vezes: a primeira com a boca boa — o fim da vila,
-     * no nível dela —, a segunda com a ruim, mais longe e menos exigente
-     * quanto à altura. Decisão do autor em 2026-08-26.
-     */
-    private static Optional<BlockPos> mouthWithin(
-            ServerWorld world, BlockPos center, Side towards,
-            int[] reaches, int up, int down) {
-
-        for (int part : reaches) {
-            int away = Math.max(NEAREST_MOUTH, mineDistance * part / 100);
-
-            int corner = Math.max(NEAREST_MOUTH, away * DIAGONAL / 100);
-
-            Side side = towards;
-
-            for (int turn = 0; turn < 4; turn++) {
-                Side next = side.clockwise();
-
-                // O eixo primeiro — é a intenção do autor, "anda até o
-                // fim da vila" —, e a diagonal entre ele e o seguinte
-                // logo depois. Oito por distância, e não quatro: em 08-25
-                // as quatro do eixo caíram todas na água da mesma vila, e
-                // a colônia ficou sem pedra por falta de amostra.
-                Optional<BlockPos> found = surfaceAt(
-                        world, center, side.offsetX() * away, side.offsetZ() * away, up, down);
-
-                if (found.isPresent()) {
-                    return found;
-                }
-
-                found = surfaceAt(
-                        world,
-                        center,
-                        (side.offsetX() + next.offsetX()) * corner,
-                        (side.offsetZ() + next.offsetZ()) * corner,
-                        up,
-                        down);
-
-                if (found.isPresent()) {
-                    return found;
-                }
-
-                side = next;
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    /**
-     * O chão desta coluna, se ela servir de boca.
-     *
-     * <p><b>O topo sólido, e não o primeiro sólido.</b> A busca antiga
-     * descia do centro mais quatro e devolvia o que encontrasse — numa
-     * encosta, isso é o <b>miolo do morro</b>, e a boca nascia enterrada.
-     * Aqui um bloco só vale se o que está sobre ele puder ser ocupado.
-     *
-     * <p><b>Nem debaixo d'água.</b> Água é substituível, então o leito do
-     * lago passaria por superfície. A boca de uma mina dentro de um lago
-     * é a mina inundada no primeiro degrau.
-     *
-     * <p>Vazio quando a coluna não serve — e vazio é "tente a próxima",
-     * e não "desista", que era o defeito.
-     */
-    private static Optional<BlockPos> surfaceAt(
-            ServerWorld world, BlockPos center, int dx, int dz, int up, int down) {
-
-        int x = center.getX() + dx;
-        int z = center.getZ() + dz;
-
-        if (world.getChunkManager().getWorldChunk(x >> 4, z >> 4) == null) {
-            // Nunca forçar carregamento de dentro do ciclo — §11.
-            return Optional.empty();
-        }
-
-        // Do nível da vila para fora, e não do céu para baixo. "O fim da
-        // vila" é um lugar no chão dela: pegar o topo sólido da coluna
-        // punha a boca em cima do que estivesse acima — numa arena de
-        // bateria, o piso do teste vizinho; num mundo, o galho de uma
-        // árvore ou a laje de um morro que a vila não ocupa.
-        //
-        // Desce primeiro: o chão costuma estar abaixo do marco do centro,
-        // que é cama ou baú e fica um bloco acima dele.
-        for (int step = 0; step <= Math.max(up, down); step++) {
-            for (int sign = -1; sign <= 1; sign += 2) {
-                int offset = step * sign;
-
-                if (offset > up || offset < -down) {
-                    continue;
-                }
-
-                int y = center.getY() + offset;
-
-                Optional<BlockPos> found = surfaceOn(world, new BlockPos(x, y, z));
-
-                if (found.isPresent()) {
-                    return found;
-                }
-
-                if (step == 0) {
-                    break;
-                }
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    /**
-     * Se esta posição é chão de verdade: sólida, com espaço livre em cima.
-     *
-     * <p><b>Nem debaixo d'água.</b> Água é substituível, então o leito do
-     * lago passaria por superfície — e boca de mina dentro de um lago é
-     * a mina inundada no primeiro degrau.
-     *
-     * <p>Vazio também quando o bloco é peça de vila gerada ou construção
-     * da colônia: a Regra 3 vale para a boca como vale para o resto.
-     */
-    private static Optional<BlockPos> surfaceOn(ServerWorld world, BlockPos at) {
-        if (!world.getBlockState(at).isSolidBlock(world, at)) {
-            return Optional.empty();
-        }
-
-        BlockPos above = at.up();
-
-        if (!world.getBlockState(above).isReplaceable()
-                || !world.getFluidState(above).isEmpty()) {
-
-            return Optional.empty();
-        }
-
-        if (BlockProtection.isVillageOriginal(world, at) || BlockProtection.isColonyBuilt(at)) {
-            return Optional.empty();
-        }
-
-        return Optional.of(at);
-    }
 
     /**
      * Para que lado esta colônia abre a mina.
