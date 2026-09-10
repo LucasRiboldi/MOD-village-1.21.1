@@ -24,6 +24,7 @@ import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.ColonySupply;
 import com.villagecolony.fabric.work.CraftingWork;
+import com.villagecolony.fabric.work.WorkMaterials;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
@@ -36,6 +37,7 @@ import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -669,6 +671,80 @@ public class CraftingGameTest implements FabricGameTest {
 
             context.complete();
         });
+    }
+
+    /**
+     * <b>A obra pede viga, e a peneira a transforma em meta</b> —
+     * 2026-09-10, o conserto do veículo.
+     *
+     * <p><b>O defeito que ele fecha durou quatro horas e vinte em jogo:</b>
+     * 477 toras e 1.911 tábuas nos baús, a casa parada em doze blocos
+     * esperando {@code stripped_oak_log}, e <b>zero descascadas</b>. Tarefa
+     * de carpintaria só nascia da meta de tábua, e com 1.911 delas a meta
+     * estava satisfeita para sempre.
+     *
+     * <p><b>Este é o degrau que os unitários não alcançam.</b>
+     * {@code CraftingVehicleTest} afirma que uma meta de viga vira tarefa do
+     * carpinteiro — mas ele <b>entrega a meta pronta</b>. Quem a cria é a
+     * peneira daqui, lendo a demanda da obra, e a lacuna foi medida:
+     * revertida a peneira para ignorar a madeira lavrada, <b>todos os
+     * unitários continuavam verdes</b>.
+     *
+     * <p>A tábua na mesma lista é a outra metade da afirmação: ela tem meta
+     * própria, com teto de armazém, e passar por aqui a contaria duas vezes.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_vehicle",
+            tickLimit = 20)
+    public void theWorkAsksForTheBeamAndTheSieveTurnsItIntoAGoal(TestContext context) {
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        // Uma planta com as duas peças: a viga, que ninguém mais pede, e a
+        // tábua, que já tem meta própria.
+        Blueprint plan = Blueprint.of(
+                ResourceId.vanilla("village/plains/houses/test_vehicle"),
+                List.of(
+                        new BlueprintBlock(
+                                new ColonyPos(0, 0, 0),
+                                MinecraftTypeAdapter.toResourceId(Blocks.STRIPPED_OAK_LOG)),
+                        new BlueprintBlock(
+                                new ColonyPos(1, 0, 0),
+                                MinecraftTypeAdapter.toResourceId(Blocks.OAK_PLANKS))));
+
+        ConstructionProject project = ConstructionProject.plan(colony.id(), plan, chest);
+
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+
+        try {
+            Map<ResourceType, Integer> wanted = WorkMaterials.smeltedNeeds(colony);
+
+            context.assertTrue(
+                    wanted.containsKey(ResourceType.STRIPPED_OAK_LOG),
+                    "a obra pedia viga e a peneira não a colheu — é a casa parada em doze"
+                            + " blocos com 1.911 tábuas no baú: " + wanted);
+
+            context.assertFalse(
+                    wanted.containsKey(ResourceType.OAK_PLANKS),
+                    "a tábua passou pela peneira, e a meta dela — com teto de armazém e a"
+                            + " regra de deixar metade da madeira em tora — seria contada"
+                            + " duas vezes: " + wanted);
+        } finally {
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
+
+            owned.cleanUp();
+        }
+
+        context.complete();
     }
 
     /**

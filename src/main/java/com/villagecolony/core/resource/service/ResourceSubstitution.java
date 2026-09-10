@@ -149,7 +149,11 @@ public final class ResourceSubstitution {
      * voltam a dizer a mesma coisa: a conta aceita, e a parede também.
      */
     private static final Set<ResourceGroup> INTERCHANGEABLE_IN_THE_WALL =
-            EnumSet.of(ResourceGroup.WOOD, ResourceGroup.PLANKS, ResourceGroup.STONE);
+            EnumSet.of(
+                    ResourceGroup.WOOD,
+                    ResourceGroup.PLANKS,
+                    ResourceGroup.STONE,
+                    ResourceGroup.STRIPPED);
 
     /**
      * O que cada exigência aceita, e em que nível.

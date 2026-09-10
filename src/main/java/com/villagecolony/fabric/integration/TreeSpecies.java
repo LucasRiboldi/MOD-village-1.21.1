@@ -33,25 +33,32 @@ import java.util.Optional;
 public enum TreeSpecies {
 
     OAK(Blocks.OAK_LOG, Blocks.OAK_LEAVES, Blocks.OAK_SAPLING, ResourceType.OAK_LOG,
-            Blocks.OAK_PLANKS, ResourceType.OAK_PLANKS),
+            Blocks.OAK_PLANKS, ResourceType.OAK_PLANKS,
+            Blocks.STRIPPED_OAK_LOG, ResourceType.STRIPPED_OAK_LOG),
 
     BIRCH(Blocks.BIRCH_LOG, Blocks.BIRCH_LEAVES, Blocks.BIRCH_SAPLING, ResourceType.BIRCH_LOG,
-            Blocks.BIRCH_PLANKS, ResourceType.BIRCH_PLANKS),
+            Blocks.BIRCH_PLANKS, ResourceType.BIRCH_PLANKS,
+            Blocks.STRIPPED_BIRCH_LOG, ResourceType.STRIPPED_BIRCH_LOG),
 
     SPRUCE(Blocks.SPRUCE_LOG, Blocks.SPRUCE_LEAVES, Blocks.SPRUCE_SAPLING,
-            ResourceType.SPRUCE_LOG, Blocks.SPRUCE_PLANKS, ResourceType.SPRUCE_PLANKS),
+            ResourceType.SPRUCE_LOG, Blocks.SPRUCE_PLANKS, ResourceType.SPRUCE_PLANKS,
+            Blocks.STRIPPED_SPRUCE_LOG, ResourceType.STRIPPED_SPRUCE_LOG),
 
     JUNGLE(Blocks.JUNGLE_LOG, Blocks.JUNGLE_LEAVES, Blocks.JUNGLE_SAPLING,
-            ResourceType.JUNGLE_LOG, Blocks.JUNGLE_PLANKS, ResourceType.JUNGLE_PLANKS),
+            ResourceType.JUNGLE_LOG, Blocks.JUNGLE_PLANKS, ResourceType.JUNGLE_PLANKS,
+            Blocks.STRIPPED_JUNGLE_LOG, ResourceType.STRIPPED_JUNGLE_LOG),
 
     ACACIA(Blocks.ACACIA_LOG, Blocks.ACACIA_LEAVES, Blocks.ACACIA_SAPLING,
-            ResourceType.ACACIA_LOG, Blocks.ACACIA_PLANKS, ResourceType.ACACIA_PLANKS),
+            ResourceType.ACACIA_LOG, Blocks.ACACIA_PLANKS, ResourceType.ACACIA_PLANKS,
+            Blocks.STRIPPED_ACACIA_LOG, ResourceType.STRIPPED_ACACIA_LOG),
 
     DARK_OAK(Blocks.DARK_OAK_LOG, Blocks.DARK_OAK_LEAVES, Blocks.DARK_OAK_SAPLING,
-            ResourceType.DARK_OAK_LOG, Blocks.DARK_OAK_PLANKS, ResourceType.DARK_OAK_PLANKS),
+            ResourceType.DARK_OAK_LOG, Blocks.DARK_OAK_PLANKS, ResourceType.DARK_OAK_PLANKS,
+            Blocks.STRIPPED_DARK_OAK_LOG, ResourceType.STRIPPED_DARK_OAK_LOG),
 
     CHERRY(Blocks.CHERRY_LOG, Blocks.CHERRY_LEAVES, Blocks.CHERRY_SAPLING,
-            ResourceType.CHERRY_LOG, Blocks.CHERRY_PLANKS, ResourceType.CHERRY_PLANKS),
+            ResourceType.CHERRY_LOG, Blocks.CHERRY_PLANKS, ResourceType.CHERRY_PLANKS,
+            Blocks.STRIPPED_CHERRY_LOG, ResourceType.STRIPPED_CHERRY_LOG),
 
     /**
      * Mangue, o caso difícil do Overworld.
@@ -62,7 +69,8 @@ public enum TreeSpecies {
      * simplesmente não replanta, como já acontece com muda em pedra.
      */
     MANGROVE(Blocks.MANGROVE_LOG, Blocks.MANGROVE_LEAVES, Blocks.MANGROVE_PROPAGULE,
-            ResourceType.MANGROVE_LOG, Blocks.MANGROVE_PLANKS, ResourceType.MANGROVE_PLANKS);
+            ResourceType.MANGROVE_LOG, Blocks.MANGROVE_PLANKS, ResourceType.MANGROVE_PLANKS,
+            Blocks.STRIPPED_MANGROVE_LOG, ResourceType.STRIPPED_MANGROVE_LOG);
 
     private final Block log;
     private final Block leaves;
@@ -71,13 +79,19 @@ public enum TreeSpecies {
     private final Block planks;
     private final ResourceType plankResource;
 
+    private final Block strippedLog;
+
+    private final ResourceType strippedResource;
+
     TreeSpecies(
             Block log,
             Block leaves,
             Block sapling,
             ResourceType resource,
             Block planks,
-            ResourceType plankResource) {
+            ResourceType plankResource,
+            Block strippedLog,
+            ResourceType strippedResource) {
 
         this.log = log;
         this.leaves = leaves;
@@ -85,6 +99,27 @@ public enum TreeSpecies {
         this.resource = resource;
         this.planks = planks;
         this.plankResource = plankResource;
+        this.strippedLog = strippedLog;
+        this.strippedResource = strippedResource;
+    }
+
+    /**
+     * A viga descascada desta espécie — 2026-09-10.
+     *
+     * <p>Entrou aqui, e não numa segunda lista, pelo motivo que o
+     * {@code MinecraftTypeAdapter} já dá para o tronco e a tábua: duas
+     * listas divergem no dia em que alguém lembra de uma e esquece a
+     * outra. Acrescentar uma árvore aqui a faz contar sozinha no
+     * estoque, e é isso que faltava à viga — a colônia não sabia que
+     * lhe faltava porque a viga não era recurso.
+     */
+    public Block strippedLog() {
+        return strippedLog;
+    }
+
+    /** O recurso da viga descascada desta espécie. */
+    public ResourceType strippedResource() {
+        return strippedResource;
     }
 
     public Block log() {

@@ -58,6 +58,25 @@ public enum ResourceGroup {
      */
     STONE,
 
+    /**
+     * Viga descascada, de qualquer espécie — 2026-09-10.
+     *
+     * <p><b>Nasceu de uma regressão, e ela custou uma rodada.</b> Ao
+     * declarar a viga como recurso, ela deixou de cair no ramo da família
+     * de madeira do {@code MaterialChoice} — que devolvia todas as
+     * espécies — e passou pelo da substituição declarada, que para grupo
+     * {@code NONE} devolve só ela mesma. O carpinteiro parou de descascar
+     * cerejeira para uma planta que pede carvalho, que é exatamente o
+     * defeito de 2026-09-05: dezessete vigas riscadas com <b>295 toras de
+     * cerejeira</b> no baú.
+     *
+     * <p>O grupo devolve o comportamento <b>pelo caminho declarado</b>, e
+     * não pela varredura de nome: a viga substitui-se entre espécies na
+     * parede, como tábua e tora, e é membro de
+     * {@code INTERCHANGEABLE_IN_THE_WALL}.
+     */
+    STRIPPED,
+
     /** Areia — o que o fundidor recebe para dar vidro. */
     SAND,
 

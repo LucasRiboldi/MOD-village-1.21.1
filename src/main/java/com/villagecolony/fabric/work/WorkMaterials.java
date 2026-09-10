@@ -3,6 +3,7 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.type.Production;
+import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -141,8 +142,40 @@ public final class WorkMaterials {
      *
      * <p><b>A tábua fica de fora de propósito.</b> Ela é
      * {@code CRAFTED_WOOD} e já tem meta própria, com teto de armazém e
-     * conta de obra; deixá-la passar aqui a contaria duas vezes.
+     * conta de obra; deixá-la passar aqui a contaria duas vezes. Ver
+     * {@link #nobodyElseAsksFor}.
      */
+    /**
+     * Se este material da obra precisa da peneira para virar meta.
+     *
+     * <p><b>A pergunta é "quem mais pede por ele?"</b>, e a resposta
+     * divide o mundo em dois. A <b>tábua</b> tem meta própria em
+     * {@code ColonyGoals}, com teto de armazém e a regra de deixar
+     * metade da madeira em tora; deixá-la passar aqui sobrescreveria
+     * aquela meta pela conta crua da obra, e as duas contas não são a
+     * mesma. Todo o resto que sai de fornalha ou de bancada <b>não tem
+     * ninguém</b> — e é por isso que precisa passar.
+     *
+     * <p><b>A viga descascada é o caso que obrigou a escrever isto</b>,
+     * e ele custou uma sessão de quatro horas e vinte: 477 toras e 1.911
+     * tábuas no baú, a casa parada em doze blocos esperando
+     * {@code stripped_oak_log}, e zero descascadas. A meta de tábua
+     * estava satisfeita, e era ela o único veículo de tarefa do
+     * carpinteiro — a obra pedia a viga e ninguém abria trabalho.
+     *
+     * <p>O cru também não entra: a meta de pedra já conta a família
+     * inteira, e é dela que o mineiro tira o que a fornalha vai assar.
+     */
+    private static boolean nobodyElseAsksFor(ResourceType type) {
+        if (type.group() == ResourceGroup.PLANKS) {
+            return false;
+        }
+
+        return type.production() == Production.SMELTED
+                || type.production() == Production.CRAFTED_STONE
+                || type.production() == Production.CRAFTED_WOOD;
+    }
+
     public static Map<ResourceType, Integer> smeltedNeeds(Colony colony) {
         Map<ResourceType, Integer> wanted = new LinkedHashMap<>();
 
@@ -152,8 +185,7 @@ public final class WorkMaterials {
             MinecraftTypeAdapter.toBlock(entry.getKey())
                     .map(Block::asItem)
                     .flatMap(MinecraftTypeAdapter::toResourceType)
-                    .filter(type -> type.production() == Production.SMELTED
-                            || type.production() == Production.CRAFTED_STONE)
+                    .filter(WorkMaterials::nobodyElseAsksFor)
                     .ifPresent(type -> wanted.merge(type, entry.getValue(), Integer::sum));
         }
 

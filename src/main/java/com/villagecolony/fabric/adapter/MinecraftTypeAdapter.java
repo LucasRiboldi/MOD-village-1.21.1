@@ -62,6 +62,10 @@ public final class MinecraftTypeAdapter {
             if (item == species.planks().asItem()) {
                 return Optional.of(species.plankResource());
             }
+
+            if (item == species.strippedLog().asItem()) {
+                return Optional.of(species.strippedResource());
+            }
         }
 
         if (item == Items.COBBLESTONE) {

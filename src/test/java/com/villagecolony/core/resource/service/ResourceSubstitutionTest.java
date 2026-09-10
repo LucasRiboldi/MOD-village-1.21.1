@@ -216,8 +216,18 @@ class ResourceSubstitutionTest {
      */
     @Test
     void theWallOnlyEverAcceptsTheBuildingFamilies() {
+        // A viga descascada é a quarta desde 2026-09-10, e ela não alarga
+        // a Regra 27: ela já se substituía entre espécies antes, pelo ramo
+        // da família de madeira do MaterialChoice. O que mudou é o
+        // caminho — declarar a viga como recurso a tirou daquele ramo, e
+        // sem esta linha o carpinteiro parava de descascar cerejeira para
+        // uma planta que pede carvalho. Este guarda pegou a regressão, e é
+        // para isso que ele existe.
         Set<ResourceGroup> building = EnumSet.of(
-                ResourceGroup.WOOD, ResourceGroup.PLANKS, ResourceGroup.STONE);
+                ResourceGroup.WOOD,
+                ResourceGroup.PLANKS,
+                ResourceGroup.STONE,
+                ResourceGroup.STRIPPED);
 
         for (ResourceType required : ResourceType.values()) {
             for (ResourceType offered : ResourceType.values()) {

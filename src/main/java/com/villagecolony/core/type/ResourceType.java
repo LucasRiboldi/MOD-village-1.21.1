@@ -136,7 +136,52 @@ public enum ResourceType {
      * fundidor o assa em <b>pedra</b>, e o pedreiro lavra quatro delas
      * em quatro <b>tijolos</b>. A casa de planície do catálogo os usa.
      */
-    STONE_BRICKS(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_STONE);
+    STONE_BRICKS(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_STONE),
+
+    /**
+     * A viga descascada, e a razão de ela existir — 2026-09-10.
+     *
+     * <p><b>Ela não era recurso, e é isso que travava a casa.</b> A
+     * sessão de 03:49 mediu: a colônia tinha <b>477 toras e 1.911
+     * tábuas</b> no baú, a obra parada em doze blocos esperando
+     * {@code stripped_oak_log}, e <b>zero descascadas em quatro horas e
+     * vinte</b>.
+     *
+     * <p>A causa não era o descascar: era o <b>veículo</b>. Tarefa de
+     * carpintaria só nascia da meta de <b>tábua</b>, e com 1.911 delas a
+     * meta estava satisfeita para sempre — o carpinteiro passou a sessão
+     * em {@code no carpenter work: no task open for it}, o motivo de
+     * ociosidade mais frequente do log. E como a viga não era recurso
+     * declarado, a colônia <b>nem sabia que lhe faltava</b>: ela nunca
+     * apareceu na linha de estoque.
+     *
+     * <p>Declarada, a peneira de {@code WorkMaterials} a colhe da
+     * demanda da obra, o {@code ColonyCycle.typeFor} a manda ao
+     * carpinteiro pela produção, e o veículo existe. Mesmo caminho do
+     * tijolo do pedreiro, e sem mecanismo novo.
+     *
+     * <p><b>Grupo {@link ResourceGroup#STRIPPED}</b>, e ele não é
+     * decoração: sem uma família a viga deixaria de se substituir entre
+     * espécies, e o carpinteiro pararia de descascar cerejeira para uma
+     * planta que pede carvalho — o defeito de 2026-09-05, com 295 toras
+     * no baú. A primeira versão desta linha dizia {@code NONE} e a
+     * bateria a derrubou.
+     */
+    STRIPPED_OAK_LOG(ResourceCategory.PROCESSED, ResourceGroup.STRIPPED, Production.CRAFTED_WOOD),
+
+    STRIPPED_BIRCH_LOG(ResourceCategory.PROCESSED, ResourceGroup.STRIPPED, Production.CRAFTED_WOOD),
+
+    STRIPPED_SPRUCE_LOG(ResourceCategory.PROCESSED, ResourceGroup.STRIPPED, Production.CRAFTED_WOOD),
+
+    STRIPPED_JUNGLE_LOG(ResourceCategory.PROCESSED, ResourceGroup.STRIPPED, Production.CRAFTED_WOOD),
+
+    STRIPPED_ACACIA_LOG(ResourceCategory.PROCESSED, ResourceGroup.STRIPPED, Production.CRAFTED_WOOD),
+
+    STRIPPED_DARK_OAK_LOG(ResourceCategory.PROCESSED, ResourceGroup.STRIPPED, Production.CRAFTED_WOOD),
+
+    STRIPPED_CHERRY_LOG(ResourceCategory.PROCESSED, ResourceGroup.STRIPPED, Production.CRAFTED_WOOD),
+
+    STRIPPED_MANGROVE_LOG(ResourceCategory.PROCESSED, ResourceGroup.STRIPPED, Production.CRAFTED_WOOD);
 
     private final ResourceCategory category;
     private final ResourceGroup group;

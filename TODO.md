@@ -267,6 +267,73 @@ alegação, não achado**, e o que o Verifier não conseguir reproduzir vai para
 
 ---
 
+## 🎮 Sessão de 2026-09-10, 03:49 — 4h20, e o veículo consertado
+
+**Zero exceções do mod.** Jar conferido: `e6da18f4`, o do commit `9089b3c`.
+
+### O que ela provou, e é o pior número da lista
+
+| medida | valor |
+|---|---|
+| ciclos | 517, e **281 com `assigned 0 tasks`** (54%) |
+| motivo de ociosidade nº 1 | **`no carpenter work: no task open for it`, 67 transições** |
+| descascadas em 4h20 | **zero** |
+| estoque no fim | **477 toras, 1.911 tábuas** |
+| a casa | parada em **12 blocos**, `waiting for minecraft:stripped_oak_log` |
+
+A colônia tinha 477 toras e a obra precisava de viga descascada. Ninguém
+descascou uma vez.
+
+### O conserto: o veículo, e ele tinha duas metades
+
+**A viga não era `ResourceType`.** Ela nunca apareceu na linha de estoque —
+que listava tora, tábua, pedregulho, areia e batata — porque não existia para
+a contagem. **Uma colônia não pede o que não sabe que lhe falta.**
+
+**E a tarefa de carpintaria só nascia da meta de tábua.** Com 1.911 delas a
+meta estava satisfeita para sempre, e o `produceForWork` — que é quem
+descasca — só roda dentro de uma tarefa. O pedreiro tinha o mesmo problema, e
+por isso não trabalhou uma vez sequer.
+
+As oito vigas entraram em `TreeSpecies`, que já era a tabela única de tronco e
+tábua, e a peneira de `WorkMaterials` passou a colher da obra tudo que sai de
+bancada ou fornalha **e não tem outro dono** — a tábua fica de fora de
+propósito, senão a meta dela, com teto de armazém, seria contada duas vezes.
+
+### A regressão que a bateria pegou, e ela é a parte instrutiva
+
+Declarar a viga como recurso **quebrou o descascar entre espécies**. O
+`MaterialChoice` tem dois ramos: recurso conhecido vai pela substituição
+declarada, desconhecido cai na família de madeira por nome. A viga vivia no
+segundo — era assim que a cerejeira era descascada para uma planta de carvalho
+(conserto de 09-05, quando 17 vigas foram riscadas com **295 toras** no baú).
+Declarada, ela mudou de ramo e passou a devolver só ela mesma.
+
+Nasceu o grupo `STRIPPED`, membro de `INTERCHANGEABLE_IN_THE_WALL`. Ele
+**não alarga a Regra 27**: devolve pelo caminho declarado o que já valia pelo
+nome. Dois guardas pinados foram atualizados de propósito — o das famílias da
+parede, e uma afirmação minha que dizia `NONE` e estava errada.
+
+### Verificação
+
+**709 unitários e 279 gametests.** Fase vermelha do conserto de verdade: sem a
+madeira lavrada na peneira, cai exatamente
+`theWorkAsksForTheBeamAndTheSieveTurnsItIntoAGoal` — e essa cobertura precisou
+ser escrita, porque os unitários entregam a meta pronta e não exercitam quem a
+cria.
+
+**Não foi visto em jogo.** A próxima sessão procura `Carpenter ... stripped a`
+voltando, a casa passando de 12 blocos, e `Mason ... ` trabalhando pela
+primeira vez.
+
+### 🟠 O outro achado, não consertado
+
+**A colônia lê um terço dos próprios baús** — `in 5 of 16 chests read`, nunca
+mais que 6 de 16. É provavelmente daí que saiu a meta de **1 pedregulho** dez
+vezes seguidas na sessão anterior.
+
+---
+
 ## 🎮 Sessão de jogo de 2026-09-10, 01:17 — a primeira desde 09-05
 
 **5min40, sem crash e sem exception do mod.** 19 colônias carregadas, 338
