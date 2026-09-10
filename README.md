@@ -89,12 +89,20 @@ rebanho, e não branca sempre.
 arenito em arenito liso, pela receita de fornalha do próprio jogo. Sem
 forno no mundo: ele transforma o que está no baú.
 
-🪚 **O fabricante** tira tronco do baú, faz tábua pela receita do próprio
-jogo, e devolve. Ele **converte cerca de metade da madeira e deixa o
-resto em tora** — vinte troncos viram dez tábuas e dez troncos —, porque
-parte da casa é feita de tora direto: a de planície pede dezesseis vigas
-descascadas, e elas não saem de tábua. Também **descasca tronco**, monta
-**tocha** e monta **vidraça**.
+🪚 **O carpinteiro** tira tronco do baú, faz tábua pela receita do
+próprio jogo, e devolve. Ele **converte cerca de metade da madeira e
+deixa o resto em tora** — vinte troncos viram dez tábuas e dez troncos —,
+porque parte da casa é feita de tora direto: a de planície pede dezesseis
+vigas descascadas, e elas não saem de tábua. Também **descasca tronco**,
+monta **tocha** e monta **vidraça**.
+
+🧱 **O pedreiro** faz o mesmo do lado da pedra: lavra o que a obra pede em
+alvenaria — tijolo, escada, laje, arenito cortado — pela receita do jogo.
+A cadeia dele tem três donos e é toda vanilla: o **mineiro** traz
+pedregulho, o **fundidor** o assa em pedra, e o pedreiro a lavra.
+
+Os dois eram um só até 2026-09-10, e a divisão não é de nome: cada um tem
+capacidade, tarefa e material próprios, e **nenhum faz a peça do outro**.
 
 🏠 **O construtor** levanta a casa um bloco por segundo, na beira de uma
 rua que já existe, com a **porta virada para a rua** e o piso no nível
@@ -129,7 +137,7 @@ você saber de relance quem é quem.
 
 ---
 
-## As sete profissões, em tabela
+## As oito profissões, em tabela
 
 ### Quem é quem
 
@@ -140,7 +148,8 @@ você saber de relance quem é quem.
 | 🐑 | **Pastor** | tesoura | tosquia a ovelha, que continua viva | `COLLECT_WOOL` |
 | 🌾 | **Fazendeiro** | enxada de ferro | colhe, replanta e semeia canteiro vazio | `COLLECT_FOOD` |
 | 🔥 | **Fundidor** | mãos livres | funde pela receita de fornalha do jogo | `SMELT_MATERIAL` |
-| 🪚 | **Fabricante** | mãos livres | tora → tábua, descasca viga, monta tocha e vidraça | `CRAFT_MATERIAL` |
+| 🪚 | **Carpinteiro** | mãos livres | tora → tábua, descasca viga, monta tocha e vidraça | `CRAFT_WOOD_MATERIAL` |
+| 🧱 | **Pedreiro** | mãos livres | pedra → tijolo, e a alvenaria que a obra pedir | `CRAFT_STONE_MATERIAL` |
 | 🏠 | **Construtor** | mãos livres | levanta a casa e a roça | `BUILD` |
 
 A ferramenta é a de **ferro**, e é onde ele começa: havendo uma melhor
@@ -157,7 +166,8 @@ inteiro — nenhuma escada de material está escrita no mod.
 | **Pastor** | só o dele | lã, na cor do rebanho |
 | **Fazendeiro** | só o dele | trigo, cenoura, batata, beterraba e as sementes |
 | **Fundidor** | de volta no baú de onde a matéria crua saiu | vidro, lingote de ferro, arenito liso |
-| **Fabricante** | o da tora primeiro, os da colônia se não couber | tábua, tora descascada, tocha, vidraça |
+| **Carpinteiro** | o da tora primeiro, os da colônia se não couber | tábua, tora descascada, tocha, vidraça |
+| **Pedreiro** | o da pedra primeiro, os da colônia se não couber | tijolo e a alvenaria da obra |
 | **Construtor** | não guarda — ele só retira | — |
 
 ### Quanto a colônia quer de cada coisa
@@ -233,14 +243,14 @@ no mato depois do escuro é trabalhador que os monstros pegam.
 
 | | |
 |---|---|
-| ✅ **Sete profissões** | lenhador, mineiro, pastor, fundidor, fabricante, construtor e fazendeiro |
+| ✅ **Oito profissões** | lenhador, mineiro, pastor, fundidor, carpinteiro, pedreiro, construtor e fazendeiro |
 | ✅ **A cadeia da madeira, ponta a ponta** | cortar → fabricar tábua → levantar casa. Vista funcionando numa vila de verdade |
 | ✅ **A mina** | descida em **caracol** que fecha debaixo da própria boca, galeria em **espiral** de dois anéis, **três de altura**, bolsões, tocha atrás do mineiro, descida de nível, veio de minério, água tapada, e um **arco de pedra com lanterna** na boca |
 | ✅ **A roça** | a colônia levanta a **mesma roça que vem na vila**, num lote livre dentro dela, e o fazendeiro semeia o canteiro. Uma a cada quinze aldeões |
 | ✅ **O que você constrói fica de pé** | escada, laje e tocha que **você** puser dentro da mina não viram picareta |
-| ✅ **Cada profissão com sua cor** | o nome sobre a cabeça sai colorido, sete cores distintas — e o nome que **você** deu continua seu |
+| ✅ **Cada profissão com sua cor** | o nome sobre a cabeça sai colorido, oito cores distintas — e o nome que **você** deu continua seu |
 | ✅ **Ferramenta de ferro para todos** | e quem tiver ferramenta melhor no baú dele troca por ela sozinho |
-| ✅ **Metade da madeira fica em tora** | o fabricante não moe o estoque inteiro: parte da casa é feita de tora direto |
+| ✅ **Metade da madeira fica em tora** | o carpinteiro não moe o estoque inteiro: parte da casa é feita de tora direto |
 | ✅ **Casas do próprio Minecraft** | planície, savana, taiga, nevada e deserto. O mod não inventa casa |
 | ✅ **A colônia nunca inventa material** | o que falta é fabricado do que houver nos baús; o que não dá, ela espera |
 | ✅ **Regra 3** | vila gerada e construção da colônia são intocáveis, conferidas bloco a bloco |
@@ -273,7 +283,7 @@ inteira, com as razões, está em
   deixou dois mineiros parados vinte e cinco minutos com os contadores em
   zero. **Fechado em 2026-09-04:** ele passou a recomeçar quando o
   trabalhador *anda* ou *trabalha*, e não quando pega alvo. Eram três
-  profissões e não seis — construtor e fabricante já estavam certos. Tem
+  profissões e não seis — construtor e carpinteiro já estavam certos. Tem
   teste, e **nenhuma sessão o viu rodar**.
 - 🟠 **O lenhador é o único que cobra imobilidade enquanto trabalha.**
   Ele pergunta se o aldeão saiu do lugar *antes* de conferir se já está
@@ -284,11 +294,13 @@ inteira, com as razões, está em
   por dentro de uma mina. O mod contorna andando um passo de cada vez
   pela ordem de cavar; os quatro mods de agente que resolveram isso de
   verdade trocaram a navegação por um A\* próprio. É a decisão em aberto.
-- 🟠 **Mina de save antigo.** A galeria mudou de forma em 2026-09-03, e o
-  cursor gravado aponta para o desenho velho. A leitura do mundo deve
-  recuar sozinha — mas isso ainda não foi visto acontecendo.
+- 🟡 **Mina de save antigo.** A galeria mudou de forma em 2026-09-03, e o
+  cursor gravado aponta para o desenho velho. **Medido em 2026-09-09: a
+  mina conserta** — o já aberto é pulado de graça e a picareta cai no que
+  a forma nova acrescentou. O mecanismo tem teste; **nenhuma sessão abriu
+  mina de save antigo desde a mudança**.
 - 🟡 **O detector de imobilidade** foi visto em jogo só no mineiro. Nas
-  outras cinco profissões é a mesma peça, com teste, sem sessão.
+  outras seis profissões é a mesma peça, com teste, sem sessão.
 - 🟠 **O baú do trabalhador assoreia.** Vara, maçã e muda não são
   recursos da colônia: nada as retira, e cada uma ocupa um slot para
   sempre. Desde 2026-09-04 a colheita transborda para os outros baús em

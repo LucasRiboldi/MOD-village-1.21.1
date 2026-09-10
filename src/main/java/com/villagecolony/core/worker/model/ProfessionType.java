@@ -45,7 +45,7 @@ public enum ProfessionType {
     /**
      * O carpinteiro: transforma madeira em material de construção.
      *
-     * <p><b>Era o {@code MANUFACTURER}, e a divisão é de 2026-09-09</b>,
+     * <p><b>Era o {@code MANUFACTURER}, e a divisão é de 2026-09-10</b>,
      * a pedido do autor. O fabricante fazia os dois ofícios — a tábua e a
      * pedra lavrada — em um arquivo de 639 linhas, acima do limite de
      * 500 que este projeto se impôs.
@@ -61,7 +61,7 @@ public enum ProfessionType {
     /**
      * O pedreiro: transforma pedra bruta em material de construção.
      *
-     * <p>A outra metade da divisão de 2026-09-09. <b>Ele não nasceu
+     * <p>A outra metade da divisão de 2026-09-10. <b>Ele não nasceu
      * decorativo</b>: profissão sem material declarado nunca recebe
      * pedido, e o aldeão ficaria com placa, baú e ferramenta sem nunca
      * trabalhar — que foi o estado do fazendeiro até 2026-08-27 e o que

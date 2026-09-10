@@ -36,7 +36,7 @@ public enum Capability {
     /**
      * Lavrar madeira: tronco em tábua, e o que a bancada fizer dela.
      *
-     * <p>Era {@code CRAFT_ITEMS}, e virou duas em 2026-09-09 com a
+     * <p>Era {@code CRAFT_ITEMS}, e virou duas em 2026-09-10 com a
      * divisão do fabricante em carpinteiro e pedreiro.
      */
     CRAFT_WOOD,

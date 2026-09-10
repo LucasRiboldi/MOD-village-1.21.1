@@ -55,9 +55,9 @@ public final class TestBarrier {
     private static final Map<String, String> CHAINS = new LinkedHashMap<>();
 
     static {
-        CHAINS.put("_door", "the manufacturer's planks");
-        CHAINS.put("chest", "the manufacturer's planks");
-        CHAINS.put("torch", "the miner's coal and the manufacturer's sticks");
+        CHAINS.put("_door", "the carpenter's planks");
+        CHAINS.put("chest", "the carpenter's planks");
+        CHAINS.put("torch", "the miner's coal and the carpenter's sticks");
         CHAINS.put("_pane", "the miner's sand and the smelter's glass");
     }
 
@@ -179,7 +179,7 @@ public final class TestBarrier {
         String name = block.path();
 
         if (name.startsWith("stripped_")) {
-            return Optional.of("the manufacturer's stripping");
+            return Optional.of("the carpenter's stripping");
         }
 
         for (Map.Entry<String, String> chain : CHAINS.entrySet()) {

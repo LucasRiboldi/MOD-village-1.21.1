@@ -86,10 +86,10 @@ public class TestBarrierGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "test_barrier")
     public void everyPieceNamesTheChainThatShouldHaveMadeIt(TestContext context) {
         assertChain(context, "glass_pane", "smelter");
-        assertChain(context, "stripped_oak_log", "manufacturer");
+        assertChain(context, "stripped_oak_log", "carpenter");
         assertChain(context, "torch", "miner");
-        assertChain(context, "oak_door", "manufacturer");
-        assertChain(context, "chest", "manufacturer");
+        assertChain(context, "oak_door", "carpenter");
+        assertChain(context, "chest", "carpenter");
 
         context.complete();
     }

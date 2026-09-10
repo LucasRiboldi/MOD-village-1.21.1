@@ -47,7 +47,7 @@ public enum Production {
     /**
      * Da bancada do carpinteiro, por receita do jogo.
      *
-     * <p><b>Era {@code CRAFTED}, e virou duas em 2026-09-09</b> com a
+     * <p><b>Era {@code CRAFTED}, e virou duas em 2026-09-10</b> com a
      * divisão do fabricante. A separação é aqui, e não numa lista de
      * nomes, pelo mesmo motivo que separou {@link #FARMED} de
      * {@link #HARVESTED}: é a produção declarada que manda a tarefa para

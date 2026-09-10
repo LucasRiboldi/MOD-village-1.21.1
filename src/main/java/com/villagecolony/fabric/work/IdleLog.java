@@ -40,7 +40,7 @@ public final class IdleLog {
     private IdleLog() {
     }
 
-    /** Colônia e assunto — "lumberjack", "manufacturer", "building". */
+    /** Colônia e assunto — "lumberjack", "carpenter", "mason", "building". */
     private record Key(UUID colonyId, String subject) {
     }
 

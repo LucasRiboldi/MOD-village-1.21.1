@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-09-09, à tarde. **O inventário da tarde está logo abaixo do
+**Atualizado:** 2026-09-10. **O inventário da tarde está logo abaixo do
 da madrugada**: quatro pendências fechadas, nenhuma sessão de jogo, e todas as
 provas são de bateria. A da madrugada — seis defeitos vistos em jogo, o catálogo
 de casas reaberto e a auditoria comportamental — continua em
@@ -81,10 +81,20 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-618 testes unitários  ·  238 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
-9 arquivos de código acima de 500 linhas  ·  6 de teste  (recontados em 08-26)
-última sessão de jogo em 2026-09-04  ·  6 consertos, nenhum visto em jogo ainda
+704 testes unitários  ·  277 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
+13 arquivos de código acima de 500 linhas  ·  11 de teste  (recontados em 09-10)
+última sessão de jogo em 2026-09-05  ·  nada deste ciclo foi visto em jogo
 ```
+
+> **Recontado em 09-10, e os dois números estavam muito atrás.** Este
+> arquivo dizia 618 e 238; o `build` fecha **704** unitários e o
+> `runGametest` diz *"All **277** required tests passed"*. Quem conta é o
+> runner, e a distância vinha de ninguém recontar desde 08-26.
+>
+> **E a dívida de linha cresceu, não encolheu.** Eram 9 arquivos de
+> código acima de 500 linhas e são **13**; de teste eram 6 e são **11**.
+> O pior do projeto agora é `MineDigging` com **1.403**, e o
+> `MinerGameTest` chegou a **4.520**.
 
 > A contagem de jogo era 176 aqui e **175** no `runGametest`. Recontado
 > em 08-27 por `@GameTest`: são 175, e o número deste arquivo estava um
@@ -254,6 +264,64 @@ alegação, não achado**, e o que o Verifier não conseguir reproduzir vai para
 | 🟡 | **Três achados `medium` permanentes** em `tests/test_gauntlet.py`: um teste que prova o detector precisa conter o que ele detecta. Estão certos e não bloqueiam |
 | 🟡 | **`LumberjackGameTest` tem 1.960 linhas**, contra a regra de 500. O gate acusa como `low` |
 | 🟢 | **`lint` não existe neste projeto** e o gate diz isso em vez de inventar comando. Se um dia entrar checkstyle ou spotless, é uma linha em `collect()` |
+
+---
+
+## 📒 Ciclo encerrado em 2026-09-10 — o inventário
+
+**Cinco commits, 41 arquivos, +2.098/−89.** Nenhuma sessão de jogo: **tudo
+aqui é prova de bateria.**
+
+### Implementado
+
+| | o quê |
+|---|---|
+| **E42** | O gametest do impasse roça/casa. A lacuna foi medida antes de escrever: sem a consulta ao adiamento, **681 unitários e 274 gametests passavam** |
+| **Matriz de responsabilidade** | `docs/technical/Profession-Responsibility.md` vira a fonte única de *"qual profissão responde por qual material"* — a corrente vivia em quatro arquivos |
+| **`ProductionHands`** | O material que ninguém sabe fazer deixa de ser pulado calado. `IdleLog` recebe o número de mãos, não só a ausência — sem o caso `hands > 0` o registrador nunca é mandado esquecer |
+| **Carpinteiro e Pedreiro** | O fabricante virou dois ofícios, com capacidade, tarefa, produção e assunto de log próprios. Nasceram `ResourceType.STONE` e `STONE_BRICKS`, e a cadeia do tijolo tem três donos |
+| **Filtro de família** | Dois gametests no batch `craft_family` provam que ele **reparta o trabalho**, não só que classifica |
+
+### Corrigido
+
+- **A linha do relatório saía duplicada** — achado relendo o ciclo, não em
+  jogo. O `run` de dois argumentos chama o parametrizado uma vez por oficina,
+  e o relatório varria **todos** os jobs da colônia nas duas: a mesma linha,
+  duas vezes por ciclo. Agora filtra por tarefa, e diz `carpenters:` /
+  `masons:` em vez de `manufacturers:`.
+- **Nomes vencidos da divisão** em texto que o autor lê: a linha
+  `Manufacturer ... stripped a ...` virou `Carpenter`, e as quatro cadeias da
+  Regra 28 diziam *"the manufacturer's planks"*.
+- **Três linhas 🔴 vencidas** derrubadas por leitura: `ChestWithdrawer.takeGroup`
+  (o método não existe), o item da mina de save antigo no README, e as datas
+  09-09 nos javadocs da divisão, que caiu em 09-10.
+
+### Melhorado
+
+- **`IdleLog` ganhou teste** — ele não tinha nenhum, e a correção do silêncio
+  depende do par `record`/`clear` dele. Seis casos.
+- **`ColonyCycle.typeFor` ficou visível ao pacote**, para o teste chamá-lo em
+  vez de copiar o `switch`.
+
+### Pendente
+
+Ver a seção de cada ciclo abaixo. As três que mais doem:
+
+| | o quê |
+|---|---|
+| 🟠 | **Nada deste ciclo foi visto em jogo.** Cinco entregas, todas prova de mecanismo. O pedreiro trabalhando, a linha do silêncio e a segunda passagem do planejador esperam sessão |
+| 🟠 | **A dívida de linha cresceu:** 13 arquivos de código acima de 500 (eram 9) e 11 de teste (eram 6). `MineDigging` tem **1.403** e `MinerGameTest` **4.520** |
+| 🟡 | **Save antigo perde a atribuição** de quem era `MANUFACTURER` — o mundo não quebra, o aldeão é recontratado |
+
+### Verificações executadas neste encerramento
+
+| o quê | resultado |
+|---|---|
+| `./gradlew build --rerun-tasks` | ✅ exit 0 |
+| Unitários (XML de `build/test-results`) | ✅ **704**, zero falhas |
+| `./gradlew runGametest --rerun-tasks` | ✅ **All 277 required tests passed** |
+| Regras de arquitetura (`DependencyRuleTest`, `ConversionBoundaryTest`) | ✅ 5 e 3 casos, zero falhas |
+| Lint | ⚠️ **não existe neste projeto** — sem checkstyle, spotless ou PMD. Quem faz esse papel são os dois testes acima |
 
 ---
 

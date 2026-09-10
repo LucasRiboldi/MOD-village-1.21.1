@@ -215,7 +215,7 @@ public final class CraftingWork {
             IdleLog.clear(colony.id(), subjectOf(type));
         }
 
-        report(world, colony);
+        report(world, colony, type);
 
         return open;
     }
@@ -629,7 +629,7 @@ public final class CraftingWork {
         ChestDepositor.deposit(world, room.get(), naked, 1);
 
         VillageColonyMod.LOGGER.info(
-                "Manufacturer {} stripped a {} into {}", workerId, bark.path(), path);
+                "Carpenter {} stripped a {} into {}", workerId, bark.path(), path);
 
         return true;
     }
@@ -836,7 +836,7 @@ public final class CraftingWork {
      * por falta de baú, por horário, por chunk descarregado ou por falta
      * de tronco produzem exatamente o mesmo silêncio.
      */
-    private static void report(ServerWorld world, Colony colony) {
+    private static void report(ServerWorld world, Colony colony, TaskType type) {
         StringBuilder line = new StringBuilder();
         int reported = 0;
 
@@ -844,6 +844,16 @@ public final class CraftingWork {
             Job job = entry.getValue();
 
             if (!job.task.belongsTo(colony.id())) {
+                continue;
+            }
+
+            // Só a oficina desta passagem — 2026-09-10, e é conserto de
+            // um defeito que a divisão do fabricante trouxe. Sem este
+            // filtro a linha saía DUAS VEZES por ciclo, idêntica: o run
+            // de dois argumentos chama o parametrizado uma vez por
+            // oficina, e o relatório varria todos os jobs da colônia nas
+            // duas. Achado relendo o ciclo, não em jogo.
+            if (job.task.type() != type) {
                 continue;
             }
 
@@ -860,7 +870,11 @@ public final class CraftingWork {
             return;
         }
 
-        VillageColonyMod.LOGGER.info("Colony {} manufacturers: {}", colony.id(), line);
+        // "manufacturers" morreu com a divisão, e o nome no log tem de
+        // dizer de qual oficina se fala — senão duas linhas parecidas na
+        // mesma colônia ficam indistinguíveis.
+        VillageColonyMod.LOGGER.info(
+                "Colony {} {}s: {}", colony.id(), subjectOf(type), line);
     }
 
     private static String describe(ServerWorld world, UUID workerId, Job job) {
