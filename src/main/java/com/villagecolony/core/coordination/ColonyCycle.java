@@ -209,8 +209,21 @@ public final class ColonyCycle {
      * <p>É a cadeia produtiva de Resource-System.md: o que se tira do
      * mundo é coletado, o que se faz a partir de outro é fabricado, e o
      * que uma obra consome é erguido.
+     *
+     * <p><b>Visível ao pacote desde 2026-09-09, e por um motivo:</b> esta
+     * é a resposta do projeto à pergunta <i>"qual profissão é responsável
+     * por este material?"</i>, e ela não tinha guarda. O elo seguinte —
+     * {@code TaskType} → {@code Capability} → profissão registrada — pode
+     * ficar aberto sem que nada acuse: {@link #requestMissing} faz
+     * {@code continue} <b>calado</b> quando ninguém sabe fazer, e o
+     * sintoma em jogo é a linha {@code assigned 0 tasks (0 open)} sem
+     * causa aparente, que já custou sessão a este projeto.
+     *
+     * <p>Quem a guarda é {@code ProfessionResponsibilityTest}, e ele a
+     * chama <b>daqui</b> de propósito: reimplementar o switch no teste
+     * validaria a cópia e não a regra, que é a armadilha de 2026-09-05.
      */
-    private static TaskType typeFor(ResourceType resource) {
+    static TaskType typeFor(ResourceType resource) {
         // Pela produção declarada, e não por uma lista de nomes —
         // 2026-08-22, ADR-009.
         //

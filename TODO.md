@@ -257,6 +257,65 @@ alegação, não achado**, e o que o Verifier não conseguir reproduzir vai para
 
 ---
 
+## 📒 A noite de 2026-09-09 — a matriz de responsabilidade
+
+**Uma proposta externa foi avaliada, e o que ela recomenda fazer o projeto já
+fazia.** O que ficou dela virou guarda, documento e lista — em
+[`docs/technical/Profession-Responsibility.md`](docs/technical/Profession-Responsibility.md),
+que passa a ser a fonte única de *"qual profissão responde por qual material"*.
+
+**Nota da proposta: 4/10 como plano, 7/10 como referência.** O diagnóstico da
+parte final é o mesmo que este projeto adotou; a recomendação central desfaria
+as Emendas 1 e 2 da Regra 27.
+
+### O que já existia, e ela pedia
+
+`Production` declarada no recurso (ADR-009, 08-22) · `ColonyCycle.typeFor`
+traduzindo produção em tarefa · `WorkMaterials.smeltedNeeds` genérico por
+`SMELTED` · a separação coletor/processador. E um passo além do que ela previu:
+o `switch` de `typeFor` não tem `default`, então **o compilador** cobra resposta
+para produção nova.
+
+### O que ela erra, e está registrado para não voltar
+
+Separar `SANDSTONE` de `COBBLESTONE` em grupos diferentes. O defeito que ela
+descreve é real e **aconteceu** em 08-22 — mas o diagnóstico do projeto é mais
+fino e está em `ResourceSubstitution:143-148`: *o defeito era a discordância
+entre a conta e o construtor, e não a substituição em si*. Separar hoje custaria
+as alternativas de bioma que o autor pediu em 08-26. **E o grupo já não é usado
+para a pedra**: `amountOfGroup` só é chamado para `WOOD` e `PLANKS`, e a meta de
+pedra é posta por nome, com a paleta dizendo qual.
+
+### O buraco que existia de verdade
+
+Os dois últimos elos da corrente — `TaskType` → `Capability` → profissão
+registrada — **não tinham guarda nenhuma**, e `ColonyCycle.requestMissing` faz
+`continue` **calado** quando ninguém sabe fazer. Nasceu
+`ProfessionResponsibilityTest`, 5 casos.
+
+**Fase vermelha conferida em duas mutações.** A que vale: trocar
+`case FARMED -> COLLECT_FOOD` por `COLLECT_WOOD` — a lavoura virando trabalho de
+lenhador, o defeito exato que o valor `FARMED` existe para impedir — faz cair
+**só os 2 casos deste arquivo, de 686 unitários**. Sem ele a troca passava calada.
+
+Produção mudou uma linha: `typeFor` de `private` para pacote, para o teste
+chamá-lo em vez de copiar o `switch` — a lição de 09-05.
+
+686 unitários e 275 gametests, verde. **Nada visto em jogo, e nada aqui pede
+sessão:** o que entrou é guarda e documento.
+
+### O que fica aberto deste ciclo
+
+A lista inteira, com o porquê de cada uma, está no documento. As duas que
+doem:
+
+| | o quê |
+|---|---|
+| 🟠 | **`requestMissing` pula calado quando ninguém sabe fazer** — `ColonyCycle:168` faz `continue` sem log. O teste garante que o buraco não existe *no registro*; em jogo, colônia sem aldeão daquela profissão cai no mesmo `continue`, e o sintoma é `assigned 0 tasks (0 open)` sem causa. Uma linha de `IdleLog` com o material e a profissão que falta cura, e é a mesma receita que o `SweepLog` já aplicou |
+| 🟠 | **Dividir o Fabricante em Carpinteiro e Pedreiro** — ele faz dois ofícios em 639 linhas, acima do limite de 500. A proposta externa levantou, e o limite concorda. **Decisão de projeto, e é do autor:** mais uma profissão é mais um aldeão a contratar numa vila pequena |
+
+---
+
 ## 📒 A tarde de 2026-09-09 — o inventário
 
 **Quatro pendências fechadas, nenhuma sessão de jogo.** Todas as provas são de
@@ -3666,7 +3725,7 @@ comércio entre vilas.
 |---|---|
 | ✅ | **Os quatro níveis da ADR-009 §3.10 — resolvida em 08-26.** A política está escrita, a ordem funciona, e a Regra 27 abriu para pedra pela Emenda 1: `ALTERNATIVE` é o nível que o construtor assenta. Fora da pedra, `ACCEPTABLE` conta para a meta e não vai para a parede |
 | 🔴 | **Regra 28 vs ADR-009 §3.6.** A barreira é o remendo do problema que a ADR quer resolver: ela esconde o travamento em vez de a vila mudar de objetivo |
-| 🟠 | **`ChestWithdrawer.takeGroup` ainda usa grupo como equivalência.** Hoje é inócuo — só o fundidor o chama, com `SAND` e `IRON`, que têm um membro só. É o resto do buraco |
+| ✅ | ~~**`ChestWithdrawer.takeGroup` ainda usa grupo como equivalência.**~~ **Linha vencida, medida em 2026-09-09 à noite: o método não existe.** `grep -rn takeGroup src/` devolve zero. O que existe hoje é `withdrawGroup`, e a contradição que esta linha registrava morreu com o método. Terceira linha desta lista a ser derrubada por leitura em vez de conserto — ver a tarde do mesmo dia |
 | 🟠 | **Regra 25 inerte** enquanto a 28 valer: "a maior planta que couber" precisa de mais de uma planta |
 | 🟠 | **`furniture()` do `BlueprintBlock` sem dono** desde a morte da Regra 21 |
 | ✅ | **ADR-009 §17 (população por capacidade) vs o vanilla — resolvida por decisão em 08-26.** O jogo controla o *breeding* e o mod não tem como segurá-lo. A §17 **não cabe**, e fica registrada como ideia recusada em vez de pendência aberta |
