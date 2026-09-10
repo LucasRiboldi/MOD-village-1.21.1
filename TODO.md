@@ -299,7 +299,7 @@ fundidor).
 
 | | o quê |
 |---|---|
-| 🟠 | **O filtro de família não tem gametest.** `CraftingWork.isMasonry` classifica cada peça, e a classificação tem teste — mas que ele **reparta o trabalho** numa colônia rodando, não. **Medido:** removido o `continue` que o usa, 701 unitários e 275 gametests continuam verdes. Falta arena com obra de peça mista, um carpinteiro, um pedreiro, e a afirmação de que cada um fez só a sua |
+| ✅ | ~~**O filtro de família não tem gametest**~~ — **fechado em 2026-09-10.** Dois casos em `CraftingGameTest`, batch `craft_family`: a obra pede **só** tijolo de pedra e o baú tem a pedra. `theCarpenterLeavesTheMasonryAlone` exige que o carpinteiro não faça nada; `theMasonMakesWhatTheCarpenterSkipped` exige que o pedreiro faça. **Os dois são necessários:** sem o segundo, um filtro que recusasse *tudo* passaria — nenhuma oficina faria nada e a obra esperaria para sempre. **Fase vermelha em duas mutações:** sem o `continue`, cai o do carpinteiro (ele lavra o tijolo); com o filtro invertido, caem os dois e mais o do descascado. 277 gametests |
 | 🟡 | **`CraftingWork` continua acima de 500 linhas.** A divisão pedida era de profissão e está feita; a implementação é uma só, parametrizada pela tarefa, porque duplicar seiscentas linhas para mudar duas seria pior |
 | 🟡 | **Save antigo perde a atribuição.** Quem estava gravado como `MANUFACTURER` volta sem função e é recontratado no ciclo seguinte — o mundo não quebra, mas o aldeão pode trocar de ofício |
 

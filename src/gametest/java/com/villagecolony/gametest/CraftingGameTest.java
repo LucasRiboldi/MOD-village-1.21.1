@@ -594,4 +594,148 @@ public class CraftingGameTest implements FabricGameTest {
                 chest,
                 ColonyFixture.create().owning(colony).owning(villager.getUuid()));
     }
+
+    /**
+     * <b>O carpinteiro deixa a alvenaria em paz</b> — 2026-09-10.
+     *
+     * <p>Com a divisão do fabricante, {@code produceForWork} percorre a
+     * lista da obra e pula o que não é da família de quem trabalha. Este
+     * teste e o irmão abaixo são a prova de que o filtro <b>reparta o
+     * trabalho</b>, e não só de que ele classifica: a classificação já
+     * tinha unitário em {@code CraftingWorkFamilyTest}.
+     *
+     * <p><b>A lacuna que eles fecham foi medida, não suposta.</b> No dia
+     * da divisão, removido o {@code continue} que usa o predicado,
+     * <b>701 unitários e 275 testes de jogo continuavam verdes</b> — o
+     * filtro inteiro era código que nada exercitava.
+     *
+     * <p>O cenário é o mínimo que separa os dois: a obra pede
+     * <b>só</b> tijolo de pedra, e o baú tem a pedra para fazê-lo. Um
+     * carpinteiro nessa colônia não pode produzir nada. Sem o filtro ele
+     * produz, e este teste cai.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_family",
+            tickLimit = 300)
+    public void theCarpenterLeavesTheMasonryAlone(TestContext context) {
+        Fixture fixture = setUpMasonry(context, ProfessionType.CARPENTER,
+                TaskType.CRAFT_WOOD_MATERIAL);
+
+        context.runAtTick(120, () -> {
+            try {
+                context.assertTrue(
+                        ColonyChests.countIn(
+                                context.getWorld(),
+                                List.of(fixture.chest()),
+                                Items.STONE_BRICKS) == 0,
+                        "o carpinteiro lavrou o tijolo de pedra — a divisão do"
+                                + " fabricante é só de nome, e as duas oficinas"
+                                + " disputam a mesma peça");
+            } finally {
+                fixture.owned().cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * <b>E o pedreiro faz a peça que o carpinteiro pulou.</b>
+     *
+     * <p>A outra metade, e ela importa tanto quanto: sem esta, o teste
+     * acima passaria com um filtro que recusa <b>tudo</b> — nenhuma
+     * oficina faria nada, a obra esperaria para sempre, e o log diria que
+     * está tudo bem.
+     *
+     * <p>Mesmo cenário, mesma obra, mesmo baú. Muda o ofício.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_family",
+            tickLimit = 300)
+    public void theMasonMakesWhatTheCarpenterSkipped(TestContext context) {
+        Fixture fixture = setUpMasonry(context, ProfessionType.MASON,
+                TaskType.CRAFT_STONE_MATERIAL);
+
+        context.runAtTick(120, () -> {
+            try {
+                context.assertTrue(
+                        ColonyChests.countIn(
+                                context.getWorld(),
+                                List.of(fixture.chest()),
+                                Items.STONE_BRICKS) > 0,
+                        "a obra pedia tijolo, o baú tinha oito pedras, e o pedreiro"
+                                + " não lavrou nenhum — a oficina dele é decorativa");
+            } finally {
+                fixture.owned().cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * Colônia com pedra no baú e uma obra que pede tijolo.
+     *
+     * <p>Só alvenaria de propósito: com uma peça de madeira na lista, o
+     * carpinteiro teria o que fazer e o teste mediria outra coisa.
+     *
+     * @param profession de quem é o aldeão da vez
+     * @param type a tarefa que ele carrega, e é ela que o
+     *     {@code produceForWork} lê para saber que família lavrar
+     */
+    private static Fixture setUpMasonry(
+            TestContext context, ProfessionType profession, TaskType type) {
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+
+        ServerWorld world = context.getWorld();
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        // Oito pedras: o tijolo custa quatro, e a folga evita que o teste
+        // dependa de a receita render exatamente o pedido.
+        ChestDepositor.deposit(world, chest, Items.STONE, 8);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(profession);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        Blueprint plan = Blueprint.of(
+                ResourceId.vanilla("village/plains/houses/test_masonry"),
+                List.of(new BlueprintBlock(
+                        new ColonyPos(0, 0, 0),
+                        MinecraftTypeAdapter.toResourceId(Blocks.STONE_BRICKS))));
+
+        ConstructionProject project = ConstructionProject.plan(colony.id(), plan, chest);
+
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                type,
+                TaskPriority.PRODUCTION,
+                type == TaskType.CRAFT_STONE_MATERIAL
+                        ? ResourceType.STONE_BRICKS
+                        : ResourceType.OAK_PLANKS,
+                16);
+
+        task.reserveFor(villager.getUuid());
+
+        CraftingWork.run(world, colony, type);
+
+        return new Fixture(
+                colony,
+                task,
+                chest,
+                ColonyFixture.create().owning(colony).owning(villager.getUuid()));
+    }
 }

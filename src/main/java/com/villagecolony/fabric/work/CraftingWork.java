@@ -453,13 +453,14 @@ public final class CraftingWork {
      * pedreiro tentar uma receita que não é dele, e a obra esperaria
      * pelos dois.
      *
-     * <p><b>Visível ao pacote para o teste, e com uma ressalva honesta:</b>
-     * {@code CraftingWorkFamilyTest} afirma a <b>classificação</b>, que é
-     * o que se pode afirmar sem subir um mundo. Que o filtro de fato
-     * reparta o trabalho entre as duas oficinas de uma colônia rodando
-     * <b>não tem teste</b> — medido em 2026-09-10: removido o
-     * {@code continue} que o usa, 701 unitários e 275 testes de jogo
-     * continuam verdes. Está na lista de pendências, e é gametest.
+     * <p><b>Visível ao pacote para o teste.</b>
+     * {@code CraftingWorkFamilyTest} afirma a <b>classificação</b> — a
+     * lista de nomes e a armadilha da redstone. Que o filtro de fato
+     * <b>reparta o trabalho</b> é do batch {@code craft_family} em
+     * {@code CraftingGameTest}, e ele precisou existir: quando a divisão
+     * entrou, removido o {@code continue} abaixo, <b>701 unitários e 275
+     * testes de jogo continuavam verdes</b> — o filtro inteiro era código
+     * que nada exercitava.
      */
     static boolean isMasonry(ResourceId wanted) {
         String path = wanted.path();
