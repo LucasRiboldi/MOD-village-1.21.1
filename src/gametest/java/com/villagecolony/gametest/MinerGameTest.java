@@ -33,6 +33,7 @@ import com.villagecolony.fabric.integration.MineFlooding;
 import com.villagecolony.fabric.integration.OreVein;
 import com.villagecolony.fabric.work.MineClaims;
 import com.villagecolony.fabric.work.MineDigging;
+import com.villagecolony.fabric.work.MineMarks;
 import com.villagecolony.fabric.work.MineRock;
 import com.villagecolony.fabric.work.MineSite;
 import com.villagecolony.fabric.integration.MineMouth;
@@ -2511,6 +2512,84 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
+     * <b>E a pedra de superfície também tem prazo</b> — E44, o segundo
+     * achado do {@code gauntlet-verifier} em 2026-09-10.
+     *
+     * <p>O {@code MinerWork.giveUp} marca <b>toda</b> pedra largada, e a
+     * primeira versão do conserto só tinha ensinado o lado da escada a
+     * perguntar pela marca. Numa colônia sem boca de mina viável — o caso
+     * que o teste acima monta — o E44 continuava inteiro: mesma pedra
+     * exposta, mesma desistência, todo ciclo, sem prazo nenhum.
+     *
+     * <p><b>E aqui o prazo é de mão dupla</b>, ao contrário do cursor do
+     * túnel: esta busca é por proximidade e refaz a volta a cada passagem,
+     * então vencido o castigo o afloramento volta a ser candidato sozinho.
+     * É a metade da promessa que se cumpre de verdade, e as duas fases
+     * deste teste são as duas metades — sem a segunda, um filtro que
+     * recusasse o afloramento <b>para sempre</b> passaria igual.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_surface",
+            tickLimit = 20)
+    public void theRefusedOutcropSitsOutAndThenComesBack(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        BlockPos center = context.getAbsolutePos(new BlockPos(2, 6, 2));
+        BlockPos outcrop = context.getAbsolutePos(new BlockPos(7, 6, 7));
+
+        world.setBlockState(outcrop, Blocks.STONE.getDefaultState());
+
+        UUID worker = UUID.randomUUID();
+        UUID colony = UUID.randomUUID();
+
+        int reach = NEARBY * 2;
+
+        VillageColonyMod.BUILDINGS.register(new Building(
+                UUID.randomUUID(),
+                colony,
+                ResourceId.vanilla("village/plains/houses/plains_small_house_1"),
+                MinecraftTypeAdapter.toColonyPos(center.add(-reach, -26, -reach)),
+                MinecraftTypeAdapter.toColonyPos(center.add(reach, 14, reach))));
+
+        MineDigging.shortenMineDistanceTo(NEARBY);
+        MineDigging.shortenSurfaceRadiusTo(6);
+
+        MineMarks.refuse(world, outcrop);
+
+        try {
+            Optional<BlockPos> during =
+                    MineDigging.nextTarget(world, worker, colony, center);
+
+            context.assertFalse(
+                    during.isPresent() && during.get().equals(outcrop),
+                    "a pedra de castigo foi servida de novo — o E44 pela porta"
+                            + " da superfície");
+
+            // O prazo vence, e a volta seguinte da varredura a reencontra.
+            MineMarks.dug(outcrop);
+
+            RingSweep.forget(worker);
+
+            Optional<BlockPos> after =
+                    MineDigging.nextTarget(world, worker, colony, center);
+
+            context.assertTrue(
+                    after.isPresent() && after.get().equals(outcrop),
+                    "vencido o prazo o afloramento não voltou: o filtro virou exílio");
+        } finally {
+            MineDigging.restoreMineDistance();
+            MineDigging.restoreSurfaceRadius();
+
+            RingSweep.forget(worker);
+
+            MineMarks.clearAll();
+
+            VillageColonyMod.BUILDINGS.removeOfColony(colony);
+        }
+
+        context.complete();
+    }
+
+    /**
      * O que conta como pedra exposta, e o que não conta.
      *
      * <p>As três condições do {@code StonePatch}, e as três juntas: é da
@@ -4430,6 +4509,197 @@ public class MinerGameTest implements FabricGameTest {
                             + next.map(BlockPos::toShortString).orElse("lugar nenhum"));
         } finally {
             MineClaims.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * <b>A pedra que ninguém alcançou sai da vez</b> — E44, 2026-09-10.
+     *
+     * <p>A sessão daquele dia, às 08:33, mediu o laço inteiro e ele
+     * prendeu <b>os dois</b> mineiros da colônia:
+     *
+     * <pre>
+     * 08:33     4c4171a4 mira 2442,44,-1424 — out of reach, 9,9 blocos
+     * 08:34:13  desiste: "walked for 2400 ticks ... without arriving"
+     * 08:34:43  d5f6de43 assume o ramal e recebe A MESMA pedra
+     * 08:36:17  desiste com a mesma frase
+     * </pre>
+     *
+     * <p>O {@code couldNotReach} devolve a posição ao cursor, e isso está
+     * certo — pular por uma desistência deixou três sessões com a galeria
+     * intacta em 2026-08-27. O que faltava era o prazo: segurar <i>sem
+     * prazo</i> é o laço, e enquanto ele corre a picareta deve ir adiante.
+     *
+     * <p>É a metade da <b>escolha do alvo</b>. A do recuo é o teste
+     * seguinte, e um sem o outro passa com a mina quebrada — ver o
+     * {@code MineFrontier.isStillClosed}.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_refused_stone",
+            tickLimit = 20)
+    public void theGalleryStepsPastTheStoneNobodyCouldReach(TestContext context) {
+        solidRock(context);
+
+        Colony colony = openedMine(context, 9);
+
+        BlockPos refused = dug(context, colony, 9);
+
+        MineMarks.refuse(context.getWorld(), refused);
+
+        try {
+            Optional<BlockPos> next = targetFor(context, colony);
+
+            context.assertTrue(
+                    next.isPresent(),
+                    "a mina não devolveu alvo nenhum, e sem isso o teste não mede nada");
+
+            context.assertFalse(
+                    next.get().equals(refused),
+                    "o cursor serviu de novo a pedra de " + refused.toShortString()
+                            + ", que é o E44 inteiro");
+
+            context.assertTrue(
+                    next.get().equals(dug(context, colony, 10)),
+                    "ele devia ter passado para a posição seguinte, e foi para "
+                            + next.get().toShortString());
+        } finally {
+            MineClaims.clearAll();
+            MineMarks.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * <b>A pedra pulada fica para trás, e isto é o comportamento, não um
+     * acidente</b> — achado do {@code gauntlet-verifier}, 2026-09-10.
+     *
+     * <p>Ele reprovou a primeira versão do E44 por uma promessa que o
+     * javadoc fazia e o código não cumpria: <i>"curto o bastante para a
+     * escada que o jogador acabou de construir valer na mesma sessão"</i>.
+     * Vale nos três leitores que procuram por proximidade — veia, pedra de
+     * superfície, areia —, e <b>não</b> vale no cursor do túnel.
+     *
+     * <p>O motivo é uma regra de 2026-09-02 que veio antes desta:
+     * {@code frontierWhereRockBegins} só chama de frente a posição fechada
+     * cuja seguinte também está fechada, para o cursor não recuar 83
+     * passos até um resto solto dentro do túnel. Uma pedra pulada por
+     * castigo cujo vizinho seguinte foi cavado <b>é</b> um resto solto.
+     *
+     * <p>Este teste fixa isso por escrito, e é de propósito que ele afirme
+     * o que afirma: um teste que exigisse o retorno estaria pedindo o laço
+     * de recuo de volta. Se um dia o bloco esquecido doer em jogo, o lugar
+     * de mexer é o {@code frontierWhereRockBegins} — e este teste é o que
+     * vai falhar primeiro, avisando que a troca está sendo feita.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_refused_stone",
+            tickLimit = 20)
+    public void theSkippedStoneStaysBehindOnceTheGalleryMovedPast(TestContext context) {
+        solidRock(context);
+
+        Colony colony = openedMine(context, 9);
+
+        BlockPos refused = dug(context, colony, 9);
+
+        MineMarks.refuse(context.getWorld(), refused);
+
+        try {
+            Optional<BlockPos> first = targetFor(context, colony);
+
+            context.assertTrue(
+                    first.isPresent() && first.get().equals(dug(context, colony, 10)),
+                    "o teste não chegou a montar o cenário: a galeria não passou adiante");
+
+            // A picareta pega na seguinte, e o cursor fica além dela.
+            context.getWorld().setBlockState(first.get(), Blocks.AIR.getDefaultState());
+
+            // E o prazo da recusada vence.
+            MineMarks.dug(refused);
+
+            MineClaims.clearAll();
+
+            Optional<BlockPos> second = targetFor(context, colony);
+
+            context.assertTrue(
+                    second.isPresent(),
+                    "a mina parou de dar alvo depois de pular uma pedra");
+
+            context.assertFalse(
+                    second.get().equals(refused),
+                    "o cursor voltou até " + refused.toShortString()
+                            + " — é o recuo de 09-02 de volta, e ele custou uma sessão");
+        } finally {
+            MineClaims.clearAll();
+            MineMarks.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * <b>E a pedra de castigo não é a frente da galeria</b> — E44, e esta
+     * é a metade que derruba a correção pela metade.
+     *
+     * <p>O {@code MineFrontier} já trazia a lição por escrito, de uma
+     * tentativa de 2026-09-05 que apagou a mina inteira: <i>"uma posição
+     * que o nextCut vai pular não pode ser a fronteira, senão o cursor
+     * recua até ela toda passagem"</i>. Marcar só na escolha do alvo
+     * devolveria o laço pela porta do recuo — a picareta pula a pedra, a
+     * busca da fronteira recua o cursor de volta para ela, e o mineiro
+     * volta a mirá-la na passagem seguinte.
+     *
+     * <p><b>E o dano do recuo não é o alvo desta passagem — é o ramal.</b>
+     * Uma marca só não serviria de prova: com o cursor recuado, o
+     * {@code nextCut} pula a pedra e devolve a mesma posição seguinte, e
+     * o teste passaria com a mina quebrada. É o buraco que o teste irmão
+     * do degrau do jogador também tem, e vale dito.
+     *
+     * <p>O que discrimina é a <b>curva</b>. Toda posição pulada por
+     * castigo conta para o {@code BLOCKED_BEFORE_TURNING}, que existe
+     * para a galeria inteiramente inalcançável não marchar pela ordem de
+     * cavar — a lição de 2026-08-27. Com o cursor recuando até a primeira
+     * marca, as oito são recontadas <b>a cada passagem</b> e o ramal
+     * morre: {@code arm.finish()}, alvo nenhum, e a colônia sem pedra.
+     *
+     * <p>Por isso o arranjo é de oito: as posições 2 a 9 voltam a ser
+     * rocha e recebem a marca, e o que se afirma é que a mina segue para
+     * a décima em vez de recuar até a segunda e encerrar o ramal.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_refused_stone",
+            tickLimit = 20)
+    public void theRefusedStoneIsNotTheFrontier(TestContext context) {
+        solidRock(context);
+
+        Colony colony = openedMine(context, 10);
+
+        // De volta a rocha: só assim elas são fronteira candidata, e é
+        // exatamente o caso que o cursor recuava para pegar. Duas
+        // seguidas bastam para o frontierWhereRockBegins morder; são
+        // oito porque é a conta da curva que o recuo estraga.
+        for (int i = 2; i <= 9; i++) {
+            BlockPos refused = dug(context, colony, i);
+
+            context.getWorld().setBlockState(refused, Blocks.STONE.getDefaultState());
+
+            MineMarks.refuse(context.getWorld(), refused);
+        }
+
+        try {
+            Optional<BlockPos> next = targetFor(context, colony);
+
+            context.assertTrue(
+                    next.isPresent(),
+                    "o ramal encerrou: o cursor recuou até a primeira pedra de castigo"
+                            + " e recontou as oito, que é a curva morrendo por engano");
+
+            context.assertTrue(
+                    next.get().equals(dug(context, colony, 10)),
+                    "a frente da galeria recuou até a pedra de castigo: foi para "
+                            + next.get().toShortString());
+        } finally {
+            MineClaims.clearAll();
+            MineMarks.clearAll();
         }
 
         context.complete();

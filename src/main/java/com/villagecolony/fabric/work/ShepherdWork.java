@@ -388,6 +388,9 @@ public final class ShepherdWork {
 
         job.task.release();
 
+        // A desistência passa a contar — 2026-09-10. Ver WorkerStrikes.
+        WorkerStrikes.gaveUp(workerId, job.task);
+
         release(workerId, job);
     }
 

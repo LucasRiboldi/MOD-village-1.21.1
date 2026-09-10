@@ -8,7 +8,6 @@ import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
-import com.villagecolony.core.type.Capability;
 import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
@@ -644,6 +643,12 @@ public final class MinerWork {
 
         world.removeBlock(job.target, false);
 
+        // A picareta pegou: a posição deixa de ser suspeita — E44. A
+        // marca é por posição e o servidor vive dias; sem isto uma
+        // recusa velha continuaria contando contra a pedra que veio
+        // depois no mesmo lugar, quando a mina descer um nível.
+        MineMarks.dug(job.target);
+
         // <b>E se saiu água por ali, tapa antes de sair de perto</b> —
         // decisão do autor, 2026-09-03. Aqui, e não no ciclo seguinte: o
         // líquido corre por tique, e um ciclo de colônia é tempo de
@@ -765,6 +770,15 @@ public final class MinerWork {
 
         job.task.release();
 
+        // <b>E a pedra ganha prazo</b> — E44, 2026-09-10. Segurar a
+        // posição (logo abaixo) continua certo; segurar SEM PRAZO é o
+        // laço que a sessão das 08:33 mediu: o mineiro gasta 2.400
+        // tiques andando até ela, desiste, o outro assume o ramal e
+        // recebe A MESMA pedra. Marcar vem antes de segurar de
+        // propósito — quem lê a marca é a passagem seguinte, e ela
+        // precisa achá-la já posta. Ver MineMarks.
+        MineMarks.refuse(world, job.target);
+
         // A posição volta para o cursor da galeria — 2026-08-27. Sem
         // isto o mod marchava pela ordem de cavar com o mundo intacto.
         MineDigging.couldNotReach(job.task.colonyId(), job.target);
@@ -780,8 +794,12 @@ public final class MinerWork {
         // dois mineiros disputando uma escada; não resolve a colônia
         // inteira sem pedra alcançável, que é quando ele precisa ir
         // ajudar noutra coisa em vez de repetir a mesma parede.
-        VillageColonyMod.WORKERS.find(workerId)
-                .ifPresent(worker -> worker.rest(Capability.COLLECT_STONE));
+        //
+        // <b>E passa pela porta única desde 2026-09-10</b>: a contagem de
+        // desistências que tira o trabalhador do ofício mora no rest, e
+        // chamá-lo por fora do WorkerStrikes deixaria o mineiro sem a
+        // linha do relatório que as outras seis têm.
+        WorkerStrikes.gaveUp(workerId, job.task);
 
         // O cursor da varredura de areia sai junto: sem isso a passagem
         // seguinte reencontraria exatamente a mesma areia inalcançável,
@@ -879,6 +897,14 @@ public final class MinerWork {
     /** Esvazia o registro. Chamado ao parar o servidor. */
     public static void clearAll() {
         JOBS.clear();
+
+        // E as pedras de castigo — E44, 2026-09-10. Pelo mesmo motivo
+        // que o LumberjackWork.clearAll leva o TreeMarks junto: o mapa é
+        // estático e vive enquanto o servidor viver, o que em jogo é o
+        // certo e numa bateria é o contrário — as áreas de teste são
+        // reaproveitadas, e uma posição marcada por um teste reaparece
+        // como rocha boa no seguinte.
+        MineMarks.clearAll();
     }
 
     /** Quantos mineiros estão com trabalho aberto agora. */

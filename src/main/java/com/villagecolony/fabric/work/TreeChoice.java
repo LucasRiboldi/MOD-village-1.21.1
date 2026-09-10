@@ -1,7 +1,6 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
-import com.villagecolony.core.type.Capability;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
@@ -304,8 +303,9 @@ public final class TreeChoice {
         // manda o lenhador para a seguinte; quando é a floresta inteira
         // que não se alcança, a seguinte também não vai render, e o que
         // faz a colônia continuar produzindo é ele mudar de foco.
-        VillageColonyMod.WORKERS.find(workerId)
-                .ifPresent(worker -> worker.rest(Capability.COLLECT_WOOD));
+        //
+        // <b>Pela porta única desde 2026-09-10</b> — ver WorkerStrikes.
+        WorkerStrikes.gaveUp(workerId, job.task);
 
         return LumberjackWork.Outcome.DONE;
     }

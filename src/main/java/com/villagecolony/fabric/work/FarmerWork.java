@@ -530,6 +530,12 @@ public final class FarmerWork {
             job.task.release();
         }
 
+        // A desistência passa a contar — 2026-09-10. Ver WorkerStrikes:
+        // até aqui o fazendeiro devolvia a tarefa sem deixar rastro no
+        // trabalhador, e repetia o mesmo lote fora de alcance a cada
+        // ciclo.
+        WorkerStrikes.gaveUp(workerId, job.task);
+
         release(workerId, job);
     }
 

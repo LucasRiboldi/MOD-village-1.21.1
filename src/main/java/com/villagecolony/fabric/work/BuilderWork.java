@@ -255,6 +255,14 @@ public final class BuilderWork {
                 // 2026-09-03. O guarda de baixo cobra dois minutos para
                 // notar o mesmo, e o construtor congelado paga os dois
                 // inteiros com a obra reservada em nome dele.
+                // A desistência passa a contar — 2026-09-10. Só nos dois
+                // guardas de caminhada, e não no "sem material no baú"
+                // logo abaixo: falta de material é problema de
+                // abastecimento da colônia, e tirar o construtor do
+                // ofício por causa dela trocaria a obra parada por
+                // ninguém sabendo construir. Ver WorkerStrikes.
+                WorkerStrikes.gaveUp(workerId, job.task);
+
                 finish(
                         job,
                         workerId,
@@ -271,6 +279,8 @@ public final class BuilderWork {
                 // Andou dois minutos de horário de trabalho e não chegou
                 // ao bloco. A obra continua de pé e volta para a fila; o
                 // que não continua é este construtor sendo dono dela.
+                WorkerStrikes.gaveUp(workerId, job.task);
+
                 finish(
                         job,
                         workerId,

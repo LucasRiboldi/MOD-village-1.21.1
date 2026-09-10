@@ -113,6 +113,34 @@ public final class ProfessionAssigner {
      * o que fazer.
      */
     public static Optional<ProfessionType> vacancy(Collection<Worker> colonyWorkers) {
+        return vacancyFor(null, colonyWorkers);
+    }
+
+    /**
+     * A vaga desta colônia que <b>este</b> candidato pode ocupar.
+     *
+     * <p><b>É o que separa a linha de reserva de um descanso caro</b> —
+     * 2026-09-10. Sem o candidato, a escolha é só "de quem a colônia mais
+     * precisa", e a resposta para quem acabou de largar o ofício é o
+     * ofício que ele largou: devolver o posto <b>abre a própria vaga</b>,
+     * e ele passa a ser o mais escasso. O mineiro voltaria a ser mineiro
+     * no ciclo seguinte, para o mesmo ramal, e a reavaliação teria custado
+     * uma escrita no save para não mudar nada.
+     *
+     * <p>Ofício de que ele desistiu fica de fora enquanto o castigo
+     * corre — ver {@link Worker#giveUpProfession}. Esgotados os que
+     * sobram, devolve vazio: ele fica sem função por algumas passagens,
+     * que é o <b>piso</b> desta linha e é seguro por construção — sem
+     * função não há alvo distante nem material exigido, e portanto não há
+     * como falhar de novo. Os castigos andam mesmo assim, porque a
+     * distribuição conta ciclo para quem está ocioso.
+     *
+     * @param candidate quem vai ocupar a vaga, ou {@code null} para a
+     *     pergunta sem dono — que é a da contagem da colônia
+     */
+    public static Optional<ProfessionType> vacancyFor(
+            Worker candidate, Collection<Worker> colonyWorkers) {
+
         Objects.requireNonNull(colonyWorkers, "colonyWorkers");
 
         Map<ProfessionType, Integer> counts = countByProfession(colonyWorkers);
@@ -121,6 +149,10 @@ public final class ProfessionAssigner {
 
         for (ProfessionType type : ProfessionType.values()) {
             if (counts.get(type) >= MAX_PER_PROFESSION) {
+                continue;
+            }
+
+            if (candidate != null && candidate.isShunning(type)) {
                 continue;
             }
 
@@ -340,14 +372,34 @@ public final class ProfessionAssigner {
                 continue;
             }
 
-            Optional<ProfessionType> vacancy = vacancy(workers.ofColony(colonyId));
+            // <b>A vaga é perguntada por candidato</b> — 2026-09-10. Ver
+            // vacancyFor: quem largou o ofício não pode recebê-lo de
+            // volta na passagem seguinte, e é justamente ele o mais
+            // escasso depois de abrir a própria vaga.
+            Optional<ProfessionType> vacancy = vacancyFor(worker, workers.ofColony(colonyId));
 
             if (vacancy.isEmpty()) {
-                // As oito vagas estão preenchidas. Os demais aldeões
-                // continuam sendo o que já eram — é o que a regra de
-                // duas vagas por profissão quer dizer numa vila de
+                // <b>Vazio por dois motivos, e eles não se tratam
+                // igual</b> — 2026-09-10.
+                //
+                // Se a colônia inteira está sem vaga, não há o que fazer
+                // por ninguém: as oito estão preenchidas, e os demais
+                // aldeões continuam sendo o que já eram — é o que a regra
+                // de duas vagas por profissão quer dizer numa vila de
                 // quarenta.
-                break;
+                //
+                // Se a vaga existe mas ESTE candidato a está evitando,
+                // parar aqui seria deixar sem função todos os que vêm
+                // depois dele na fila, por causa do castigo de um. Ele
+                // passa a vez, e a vaga fica para o próximo — que é o
+                // comportamento que a linha de reserva quer: um
+                // trabalhador de molho não pode congelar a contratação da
+                // colônia.
+                if (vacancy(workers.ofColony(colonyId)).isEmpty()) {
+                    break;
+                }
+
+                continue;
             }
 
             worker.assign(vacancy.get());

@@ -125,6 +125,19 @@ public final class MineFrontier {
             return false;
         }
 
+        // <b>E a pedra que está de castigo não é a frente</b> — E44,
+        // 2026-09-10, e esta é a metade que o javadoc acima já exigia por
+        // escrito: <i>"uma posição que o nextCut vai pular não pode ser a
+        // fronteira, senão o cursor recua até ela toda passagem"</i>.
+        //
+        // Sem esta linha a marca não valeria nada: o nextCut pularia a
+        // pedra, esta busca recuaria o cursor de volta para ela na
+        // passagem seguinte, e o laço voltaria pela porta do recuo. É o
+        // par de sempre, e ele tem o par de testes que pede.
+        if (MineMarks.isOutOfReach(world, at)) {
+            return false;
+        }
+
         return MineRock.isDiggableRock(world, at);
     }
 }

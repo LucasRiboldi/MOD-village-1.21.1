@@ -326,6 +326,10 @@ public final class CraftingWork {
             if (job.stall.stuck(world, villager)) {
                 job.task.release();
 
+                // A desistência passa a contar — 2026-09-10. Ver
+                // WorkerStrikes.
+                WorkerStrikes.gaveUp(workerId, job.task);
+
                 WorkTargets.clear(workerId);
 
                 VillageColonyMod.LOGGER.info(
@@ -345,6 +349,10 @@ public final class CraftingWork {
                 // guardá-la para quem não a fará — e em silêncio isto
                 // seria indistinguível de trabalho acontecendo.
                 job.task.release();
+
+                // A desistência passa a contar — 2026-09-10. Ver
+                // WorkerStrikes.
+                WorkerStrikes.gaveUp(workerId, job.task);
 
                 WorkTargets.clear(workerId);
 

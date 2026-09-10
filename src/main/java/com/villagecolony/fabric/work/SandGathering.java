@@ -79,7 +79,12 @@ public final class SandGathering {
                 workerId,
                 center,
                 sandRadius,
-                column -> SandPatch.in(world, column, center.getY()));
+                // A areia entra pela mesma porta — E44, 2026-09-10. O
+                // MinerWork.giveUp marca o alvo seja ele pedra ou areia,
+                // e uma duna inalcançável tem exatamente a mesma forma de
+                // laço. Ver MineMarks.
+                column -> SandPatch.in(world, column, center.getY())
+                        .filter(sand -> !MineMarks.isOutOfReach(world, sand)));
 
         if (found.isEmpty()) {
             // Pelo IdleLog, e não direto no logger: uma varredura de raio

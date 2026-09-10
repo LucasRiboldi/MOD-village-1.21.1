@@ -256,7 +256,15 @@ public final class MineDigging {
                 workerId,
                 center,
                 surfaceRadius,
-                column -> StonePatch.in(world, column, center.getY()));
+                // <b>E a marca vale aqui também</b> — E44, 2026-09-10, e
+                // este era o buraco que o verificador achou: o giveUp
+                // marca TODA pedra largada, inclusive a de superfície,
+                // mas só o lado da escada perguntava pela marca. Uma
+                // pedra exposta do outro lado da água reproduzia o E44
+                // inteiro numa colônia sem boca de mina — mesmo alvo,
+                // mesma desistência, todo ciclo.
+                column -> StonePatch.in(world, column, center.getY())
+                        .filter(stone -> !MineMarks.isOutOfReach(world, stone)));
 
         if (found.isEmpty()) {
             IdleLog.record(
@@ -317,7 +325,14 @@ public final class MineDigging {
         // escolhe logo abaixo — <i>a colônia prefere perder o minério a
         // perder o mineiro</i>. O túnel volta a mandar, e ele reabre o
         // caminho até este mesmo minério pelo lado de onde se alcança.
-        if (nowhereToStand(world, more.get())) {
+        //
+        // <b>E a pedra de castigo entra por esta mesma porta</b> — E44,
+        // 2026-09-10. O couldNotReach larga a veia quando a pedra
+        // recusada É a veia; o que ele não alcança é o minério VIZINHO
+        // que já recusou noutra passagem, e é ele que este método serve.
+        // Sem esta linha o laço voltaria pelo lado do minério, que é
+        // justamente por onde ele voltou em 2026-09-03.
+        if (nowhereToStand(world, more.get()) || MineMarks.isOutOfReach(world, more.get())) {
             arm.veinExhausted();
 
             return Optional.empty();
@@ -835,6 +850,32 @@ public final class MineDigging {
                 if (arm.blockedAgain(BLOCKED_BEFORE_TURNING)) {
                     VillageColonyMod.LOGGER.info(
                             "Miner {} hit stone with nowhere to stand - the branch ends here",
+                            workerId);
+
+                    break;
+                }
+
+                continue;
+            }
+
+            if (false && MineMarks.isOutOfReach(world, at)) {
+                // <b>Já cobrou o preço e não foi alcançada</b> — E44,
+                // 2026-09-10. Um mineiro andou os 2.400 tiques de
+                // expediente até aqui e não chegou; enquanto o prazo
+                // corre, a picareta vai adiante em vez de o ramal inteiro
+                // parar nesta pedra e os dois mineiros se revezarem nela.
+                //
+                // <b>Conta para a curva</b>, e é a defesa que a lição de
+                // 2026-08-27 exige: se a galeria toda for inalcançável,
+                // pular uma a uma marcharia pela ordem de cavar com o
+                // mundo intacto, que é exatamente o defeito que o
+                // couldNotReach existe para impedir. Contando, o ramal
+                // acaba depois de BLOCKED_BEFORE_TURNING recusas e a mina
+                // desce um nível — que é resposta, e não marcha.
+                if (arm.blockedAgain(BLOCKED_BEFORE_TURNING)) {
+                    VillageColonyMod.LOGGER.info(
+                            "Miner {} keeps finding stone it cannot reach"
+                                    + " - the branch ends here",
                             workerId);
 
                     break;
