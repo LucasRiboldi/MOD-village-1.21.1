@@ -79,6 +79,30 @@ public final class ColonyCycle {
             WorkerService workers,
             Predicate<UUID> hasStorage) {
 
+        return run(colonyId, owned, goal, tasks, workers, hasStorage, ProductionHands.IGNORED);
+    }
+
+    /**
+     * O mesmo, dizendo quantas mãos há para cada material que falta.
+     *
+     * <p><b>Quebra o silêncio de {@link #requestMissing}</b> — 2026-09-09.
+     * Material que nenhuma profissão da colônia sabe fazer era pulado sem
+     * uma linha, e o que se via em jogo era {@code assigned 0 tasks
+     * (0 open)} sem causa. Ver {@link ProductionHands}.
+     *
+     * @param hands recebe cada material que falta com o número de
+     *     trabalhadores capazes — zero quer dizer pedido não aberto
+     */
+    public static int run(
+            UUID colonyId,
+            ResourceTally owned,
+            Map<ResourceType, Integer> goal,
+            TaskService tasks,
+            WorkerService workers,
+            Predicate<UUID> hasStorage,
+            ProductionHands hands) {
+
+        Objects.requireNonNull(hands, "hands");
         Objects.requireNonNull(colonyId, "colonyId");
         Objects.requireNonNull(owned, "owned");
         Objects.requireNonNull(goal, "goal");
@@ -89,7 +113,7 @@ public final class ColonyCycle {
         Map<ResourceType, Integer> missing = ResourceDemand.deficit(goal, owned);
 
         cancelSatisfied(colonyId, missing, tasks);
-        requestMissing(colonyId, missing, tasks, workers);
+        requestMissing(colonyId, missing, tasks, workers, hands);
 
         return WorkAssignment.assign(colonyId, workers, tasks, hasStorage);
     }
@@ -157,7 +181,8 @@ public final class ColonyCycle {
             UUID colonyId,
             Map<ResourceType, Integer> missing,
             TaskService tasks,
-            WorkerService workers) {
+            WorkerService workers,
+            ProductionHands report) {
 
         for (Map.Entry<ResourceType, Integer> entry : missing.entrySet()) {
             ResourceType resource = entry.getKey();
@@ -165,9 +190,17 @@ public final class ColonyCycle {
 
             int hands = WorkAssignment.countCapableOf(colonyId, type.required(), workers);
 
+            // Antes de decidir, e nos dois casos: quem escuta precisa do
+            // número para saber quando calar e quando voltar a falar —
+            // ver ProductionHands.
+            report.counted(resource, type, hands);
+
             if (hands == 0) {
                 // Ninguém sabe fazer. Abrir a tarefa mesmo assim a
                 // deixaria na fila para sempre, sem executor possível.
+                //
+                // Pular continua certo; o que era errado é pular calado,
+                // e quem fala agora é o relatório acima — 2026-09-09.
                 continue;
             }
 

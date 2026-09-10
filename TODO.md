@@ -304,6 +304,24 @@ chamá-lo em vez de copiar o `switch` — a lição de 09-05.
 686 unitários e 275 gametests, verde. **Nada visto em jogo, e nada aqui pede
 sessão:** o que entrou é guarda e documento.
 
+### E o silêncio foi fechado ainda nesta noite
+
+O 🟠 de cima virou trabalho. `ProductionHands` leva o número de mãos de `core`
+para a camada Fabric, e `VillageDetectionHandler.reportHands` escreve a linha —
+**e o `clear` é metade da correção**, senão a colônia que perde a profissão duas
+vezes só conta a primeira.
+
+Pelo caminho apareceu que **o `IdleLog` não tinha teste nenhum**, e a correção
+depende do par `record`/`clear` dele. Ganhou seis casos.
+
+**Quatro mutações, cada uma pega pelo teste certo:** relatório dentro do `if`
+(2 casos), relatório removido (3), `clear` virado no-op (**1 de 696** — a metade
+que estava inteiramente descoberta), e o guarda de transição removido (1).
+
+696 unitários e 275 gametests. **A linha foi vista saindo na bateria**, que é
+mais do que ter teste: `no collect_stone work: no worker in the village can do
+it — COBBLESTONE needs COLLECT_STONE`.
+
 ### O que fica aberto deste ciclo
 
 A lista inteira, com o porquê de cada uma, está no documento. As duas que
@@ -311,7 +329,7 @@ doem:
 
 | | o quê |
 |---|---|
-| 🟠 | **`requestMissing` pula calado quando ninguém sabe fazer** — `ColonyCycle:168` faz `continue` sem log. O teste garante que o buraco não existe *no registro*; em jogo, colônia sem aldeão daquela profissão cai no mesmo `continue`, e o sintoma é `assigned 0 tasks (0 open)` sem causa. Uma linha de `IdleLog` com o material e a profissão que falta cura, e é a mesma receita que o `SweepLog` já aplicou |
+| ✅ | ~~**`requestMissing` pula calado quando ninguém sabe fazer**~~ — **fechado no mesmo dia.** Nasceu `ProductionHands`, uma interface em `core.coordination`: a coordenação entrega o número de mãos e a camada Fabric escreve a linha, porque o `IdleLog` vive em `fabric.work` e a ADR-006 §6 proíbe `core` de importar `fabric` — é o mesmo caminho que o `hasStorage` já usava. A linha sai assim, e foi vista na bateria: `no collect_stone work: no worker in the village can do it — COBBLESTONE needs COLLECT_STONE`. **O número, e não só a ausência:** sem o caso `hands > 0` o `IdleLog` nunca é mandado esquecer, e a colônia que perde a profissão duas vezes fica muda na segunda |
 | 🟠 | **Dividir o Fabricante em Carpinteiro e Pedreiro** — ele faz dois ofícios em 639 linhas, acima do limite de 500. A proposta externa levantou, e o limite concorda. **Decisão de projeto, e é do autor:** mais uma profissão é mais um aldeão a contratar numa vila pequena |
 
 ---

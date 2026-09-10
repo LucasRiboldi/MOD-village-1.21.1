@@ -29,10 +29,20 @@ sem uma resposta.
 
 **Os dois últimos não tinham guarda nenhuma até 2026-09-09.** Quando nenhuma
 profissão registrada tem a capacidade exigida, `ColonyCycle.requestMissing`
-faz `continue` — **calado**, sem log e sem exceção. A colônia nunca produz
-aquele material, e o que se vê em jogo é `assigned 0 tasks (0 open)` sem
-causa aparente. É o mesmo sintoma que custou uma hora de sessão em 09-09
-pela roça que travava a vila.
+pula o pedido — e pular está certo: tarefa sem executor possível ficaria na
+fila para sempre. O que estava errado é que ele pulava **calado**, e o que se
+via em jogo era `assigned 0 tasks (0 open)` sem causa aparente — o mesmo
+sintoma que custou uma hora de sessão em 09-09 pela roça que travava a vila.
+
+**As duas metades foram fechadas no mesmo dia.** `ProfessionResponsibilityTest`
+garante que a corrente não tem elo aberto *no registro*; `ProductionHands`
+quebra o silêncio *na sessão*, para o caso que o registro não alcança — a
+colônia que simplesmente não tem aldeão daquela profissão. A linha:
+
+```text
+Colony 020ad427 — no collect_stone work: no worker in the village
+                  can do it — COBBLESTONE needs COLLECT_STONE
+```
 
 ---
 
@@ -190,7 +200,7 @@ Ordenada por quanto dói, no formato do `TODO.md`.
 
 | | o quê | por quê |
 |---|---|---|
-| 🟠 | **`requestMissing` pula calado quando ninguém sabe fazer.** `ColonyCycle:168` faz `continue` sem log | Hoje o teste garante que o buraco não existe *no registro*; em jogo, uma colônia sem aldeão daquela profissão cai no mesmo `continue`, e o sintoma é `assigned 0 tasks (0 open)` sem causa. Uma linha de `IdleLog` com o material e a profissão que falta resolveria — é a mesma cura que o `SweepLog` e o `IdleLog` já deram a outros silêncios |
+| ✅ | ~~**`requestMissing` pula calado quando ninguém sabe fazer.**~~ | **Fechado em 2026-09-09.** `ProductionHands` (`core.coordination`) leva o número de mãos até a camada Fabric, e `VillageDetectionHandler.reportHands` escreve a linha via `IdleLog` — a interface existe porque a ADR-006 §6 proíbe `core` de importar `fabric`, e é o mesmo caminho do `hasStorage`. Recebe o **número**, não só a ausência: sem o caso `hands > 0` o registrador nunca é mandado esquecer. Guardado por `ProductionHandsTest` (4 casos) e `IdleLogTest` (6 — o `IdleLog` não tinha nenhum). Visto na bateria: `no collect_stone work: no worker in the village can do it — COBBLESTONE needs COLLECT_STONE` |
 | 🟠 | **Dividir o Fabricante em Carpinteiro e Pedreiro** | `ManufacturerWork` tem 639 linhas e faz dois ofícios: tábua/descascado (madeira) e o que vier de pedra. A proposta externa levantou isto, e o limite de 500 linhas concorda. **Decisão de projeto, e é do autor**: mais uma profissão é mais um aldeão a contratar numa vila pequena |
 | 🟡 | **`MINED` responde por areia, carvão e ferro além da pedra** | O nome `COLLECT_STONE` mente um pouco: o mineiro traz cinco materiais. Não é defeito — a picareta é a mesma —, mas o dia em que a areia tiver origem própria (praia, não mina) vai pedir separação |
 | 🟡 | **A colônia não assenta o bloco de profissão nas casas que constrói** | A casa do catálogo já traz o bloco quando a planta o tem; casa levantada pela colônia herda o que a planta disser. Não há código que escolha *qual* ofício aquela casa hospeda. É aqui que a tabela vanilla da proposta serve |
