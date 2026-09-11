@@ -730,6 +730,87 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
     }
 
     /**
+     * <b>Quem perde a profissão perde a plaquinha</b> — 2026-09-11, e é
+     * a queixa que o autor trouxe da sessão das 00:04.
+     *
+     * <p>O {@code label} <i>pulava</i> quem não tinha profissão. Isso
+     * está certo para o bebê e o nitwit — nunca tiveram nome —, e
+     * deixava intacto o caso que importa: o trabalhador que <b>largou</b>
+     * o ofício continuava com a plaquinha do ofício que largou.
+     *
+     * <p>E ficar sem função não é acidente, é projeto: o
+     * {@code ProfessionAssigner.vacancyFor} diz que, esgotados os ofícios
+     * que ele não está evitando, <i>"ele fica sem função por algumas
+     * passagens"</i>. Some o {@code WorkerStrikes}, que desde 09-10 tira
+     * do ofício quem desiste três vezes, e o que o autor vê é
+     * <i>"aldeões parados com nome de profissão, aglomerados na mina"</i>
+     * — cinco deles tendo largado o ofício ali mesmo.
+     *
+     * <p>Um nome que mente é pior que nome nenhum: ele faz procurar
+     * defeito no mineiro que já não existe.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_colour",
+            tickLimit = 20)
+    public void theWorkerWhoLostTheTradeLosesTheNameplate(TestContext context) {
+        VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
+
+        Worker worker = Worker.restore(
+                villager.getUuid(), UUID.randomUUID(), ProfessionType.MINER);
+
+        WorkerNameplate.label(context.getWorld(), List.of(worker));
+
+        context.assertTrue(
+                villager.getCustomName() != null,
+                "a montagem falhou: o mineiro tinha de ter nome");
+
+        // Ele larga o ofício — é o que o WorkerStrikes faz depois de três
+        // desistências na mesma capacidade.
+        worker.giveUpProfession();
+
+        WorkerNameplate.label(context.getWorld(), List.of(worker));
+
+        context.assertTrue(
+                villager.getCustomName() == null,
+                "o aldeão sem profissão continuou com a plaquinha de mineiro: "
+                        + villager.getCustomName());
+
+        villager.discard();
+
+        context.complete();
+    }
+
+    /**
+     * <b>E o nome que o jogador deu não se perde nisso.</b> A Regra 3
+     * vale para tirar como vale para pôr: o mod só desfaz o que o mod
+     * escreveu.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_colour",
+            tickLimit = 20)
+    public void thePlayerNameSurvivesLosingTheTrade(TestContext context) {
+        VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
+
+        Worker worker = Worker.restore(
+                villager.getUuid(), UUID.randomUUID(), ProfessionType.MINER);
+
+        Text given = Text.literal("Joaquim");
+
+        villager.setCustomName(given);
+
+        worker.giveUpProfession();
+
+        WorkerNameplate.label(context.getWorld(), List.of(worker));
+
+        context.assertTrue(
+                villager.getCustomName() != null
+                        && villager.getCustomName().getString().equals("Joaquim"),
+                "o mod apagou um nome que o jogador deu");
+
+        villager.discard();
+
+        context.complete();
+    }
+
+    /**
      * E o nome que a colônia já tinha escrito <b>ganha</b> a cor.
      *
      * <p>O rótulo só era posto quando não havia nenhum, então numa vila

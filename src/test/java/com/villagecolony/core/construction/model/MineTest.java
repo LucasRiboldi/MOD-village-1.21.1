@@ -221,4 +221,70 @@ class MineTest {
         assertEquals(Mine.ARMS, mine.branchesOpenNow(),
                 "aberto o poço, os quatro ramais deviam abrir");
     }
+
+    // ------------------------------------------------------------------
+    // A curva do ramal — 2026-09-11, sessão das 00:04.
+    // ------------------------------------------------------------------
+
+    /**
+     * <b>Recusas seguidas acabam com o ramal.</b> É a lição de
+     * 2026-08-27: se a frente inteira é inalcançável, pular pedra a pedra
+     * marcharia pela ordem de cavar com o mundo intacto. A curva junta as
+     * recusas e manda a mina virar.
+     */
+    @Test
+    void refusalsInARowEndTheBranch() {
+        MineArm arm = opened().arm(0);
+
+        for (int i = 1; i < 8; i++) {
+            assertFalse(arm.blockedAgain(8), "o ramal acabou cedo, na recusa " + i);
+        }
+
+        assertTrue(arm.blockedAgain(8), "a oitava recusa tinha de encerrar o ramal");
+    }
+
+    /**
+     * <b>E só a picareta zera a conta</b> — 2026-09-11, e é o conserto
+     * inteiro deste ciclo.
+     *
+     * <p>O {@code digging()} é chamado de um lugar só, e até esta data
+     * era do {@code MineDigging.nextCut}, no ponto em que o cursor
+     * <i>serve</i> a pedra ao mineiro. Servir é uma aposta: só depois se
+     * descobre se ele chega nela. Zerar na aposta apagava justamente a
+     * prova que a curva existe para juntar.
+     *
+     * <p>O efeito em jogo é a curva nunca virar. Bastava o cursor achar
+     * uma pedra nova sem marca por passagem — e a galeria tem pedra de
+     * sobra atrás de um vão intransponível — para a contagem voltar a
+     * zero antes de chegar a oito. A sessão das 00:04 mediu <b>nove
+     * desistências em oito minutos</b> sem um único {@code went one
+     * level deeper}, com a colônia respondendo {@code no miner branch
+     * work} cinco vezes e os mineiros parados nos mesmos dois lugares da
+     * sessão anterior.
+     *
+     * <p>Agora quem zera é o {@code MinerWork}, com o bloco já fora do
+     * mundo. Ver {@code MineDigging.pickaxeTook}.
+     */
+    @Test
+    void onlyThePickaxeResetsTheCurve() {
+        MineArm arm = opened().arm(0);
+
+        for (int i = 1; i < 8; i++) {
+            arm.blockedAgain(8);
+        }
+
+        // A picareta pegou de verdade: a frente rende, e a curva
+        // recomeça.
+        arm.digging();
+
+        for (int i = 1; i < 8; i++) {
+            assertFalse(
+                    arm.blockedAgain(8),
+                    "a contagem não recomeçou do zero depois da picareta");
+        }
+
+        assertTrue(
+                arm.blockedAgain(8),
+                "e a oitava recusa depois dela tinha de encerrar o ramal");
+    }
 }

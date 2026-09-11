@@ -4706,6 +4706,87 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
+     * <b>A curva vira quando as recusas se somam</b> — 2026-09-11, e este
+     * teste existe porque a primeira tentativa dele não media nada.
+     *
+     * <p>O {@code BLOCKED_BEFORE_TURNING} existe desde 2026-08-27 para
+     * uma coisa: se a frente é inalcançável, juntar as recusas e encerrar
+     * o ramal, em vez de marchar pela ordem de cavar com o mundo intacto.
+     * <b>E ele não virava.</b> A contagem era zerada por
+     * {@code arm.digging()} no ponto em que o cursor <i>serve</i> a
+     * pedra, e não no em que a picareta a quebra — e servir é uma aposta,
+     * só depois se sabe se o mineiro chega nela. Bastava uma pedra nova
+     * sem marca por passagem, e uma galeria atrás de um vão
+     * intransponível tem pedra de sobra.
+     *
+     * <p>A sessão de 2026-09-11 às 00:04 mediu o preço: nove
+     * desistências em oito minutos, catorze marcas <b>todas dizendo
+     * {@code refused 1}</b>, nenhum {@code went one level deeper}, cinco
+     * {@code no miner branch work}, e os mineiros parados nos mesmos dois
+     * lugares da sessão anterior. A queixa do autor foi <i>"todos parados
+     * sem trabalhar, muitos aldeões aglomerados na mina"</i>.
+     *
+     * <p><b>O par de chamadas aqui é o que o {@code MinerWork} faz de
+     * verdade</b>, e é isso que faltava na primeira versão deste teste:
+     * quem desiste chama {@code MineMarks.refuse} <b>e</b>
+     * {@code MineDigging.couldNotReach}. Só com a marca, o
+     * {@code findTheFrontier} reserva e reenvia a mesma pedra para
+     * sempre, o ramal encerra na segunda volta por outro motivo, e o
+     * teste passa com e sem o conserto — que foi o que aconteceu, e é
+     * pior que não ter teste. A receita correta veio do
+     * {@code gauntlet-verifier}, que a montou para provar a lacuna.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_refused_stone",
+            tickLimit = 20)
+    public void onlyThePickaxeResetsTheBranchCurve(TestContext context) {
+        solidRock(context);
+
+        Colony colony = openedMine(context, 5);
+
+        UUID miner = UUID.randomUUID();
+
+        try {
+            for (int refusal = 1; refusal <= 9; refusal++) {
+                Optional<BlockPos> target = MineDigging.nextTarget(
+                        context.getWorld(),
+                        miner,
+                        colony.id(),
+                        context.getAbsolutePos(LIT_ENTRY));
+
+                if (target.isEmpty()) {
+                    // Oito é o BLOCKED_BEFORE_TURNING do MineDigging,
+                    // que é privado de lá. Escrito à mão e de propósito:
+                    // se alguém mudar a curva, este teste tem de ser
+                    // lido junto, porque é o número que ele afirma.
+                    context.assertTrue(
+                            refusal > 8,
+                            "o ramal acabou na recusa " + refusal
+                                    + ", antes da curva de oito — não foi a curva"
+                                    + " que o encerrou, e o teste não mede o que promete");
+
+                    context.complete();
+
+                    return;
+                }
+
+                // O par que o MinerWork chama quando o mineiro não chega:
+                // marca a pedra E devolve a posição ao cursor. Nenhuma
+                // picareta no meio, de propósito.
+                MineMarks.refuse(context.getWorld(), target.get());
+
+                MineDigging.couldNotReach(colony.id(), target.get());
+            }
+
+            context.throwGameTestException(
+                    "o ramal não acabou depois de nove recusas seguidas: a curva está"
+                            + " sendo zerada por quem SERVE a pedra, e não por quem a CAVA");
+        } finally {
+            MineClaims.clearAll();
+            MineMarks.clearAll();
+        }
+    }
+
+    /**
      * <b>A mina de save antigo conserta a forma velha</b> — 2026-09-09,
      * e a pergunta é de 09-05.
      *

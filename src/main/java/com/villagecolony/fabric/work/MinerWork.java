@@ -669,6 +669,11 @@ public final class MinerWork {
         // depois no mesmo lugar, quando a mina descer um nível.
         MineMarks.dug(job.target);
 
+        // E a curva do ramal recomeça — 2026-09-11. Aqui, e não onde o
+        // cursor escolhe a pedra: é este bloco saindo do mundo que prova
+        // que a frente rende. Ver MineDigging.pickaxeTook.
+        MineDigging.pickaxeTook(job.task.colonyId(), villager.getUuid());
+
         // <b>E se saiu água por ali, tapa antes de sair de perto</b> —
         // decisão do autor, 2026-09-03. Aqui, e não no ciclo seguinte: o
         // líquido corre por tique, e um ciclo de colônia é tempo de

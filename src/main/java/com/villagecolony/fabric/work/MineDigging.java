@@ -544,6 +544,32 @@ public final class MineDigging {
     }
 
     /**
+     * A picareta tirou um bloco: a curva deste ramal recomeça —
+     * 2026-09-11.
+     *
+     * <p><b>Irmã do {@link #flooded}, e pelo mesmo motivo</b>: quem sabe
+     * que o bloco saiu do mundo é o {@code MinerWork}, e quem guarda a
+     * contagem é o braço. O que muda em relação ao que havia antes é
+     * <i>quando</i> a conta volta a zero — era ao servir a pedra, e
+     * passa a ser ao quebrá-la.
+     *
+     * <p>A distinção é o conserto inteiro. Servir é uma aposta: o
+     * cursor escolhe a posição e só depois se descobre se o mineiro
+     * chega nela. Zerar na aposta apagava justamente a prova que a curva
+     * existe para juntar — a de que esta frente não está rendendo —, e
+     * bastava uma pedra nova sem marca por passagem para a contagem
+     * nunca passar de zero. Quebrar não é aposta: é o ramal rendendo, e
+     * aí a curva deve mesmo recomeçar.
+     *
+     * <p>Sem reserva de ramal, como o {@link #armOf}: quem acabou de
+     * cavar já tem o seu, e pedir outro tiraria a última frente livre de
+     * quem ia cavar nela.
+     */
+    public static void pickaxeTook(UUID colonyId, UUID workerId) {
+        armOf(colonyId, workerId).ifPresent(MineArm::digging);
+    }
+
+    /**
      * O ramal em que este mineiro está cavando — 2026-09-04.
      *
      * <p>Existe para quem precisa da <b>ordem de cavar</b> dele e não da
@@ -885,7 +911,19 @@ public final class MineDigging {
                 continue;
             }
 
-            arm.digging();
+            // <b>E aqui NÃO se zera a curva</b> — 2026-09-11. Esta linha
+            // era {@code arm.digging()}, e ela zerava a contagem de
+            // recusas ao <i>servir</i> a pedra, não ao quebrá-la. É a
+            // razão de a curva nunca virar: o cursor pulava as marcadas
+            // contando 1, 2, 3, achava a primeira sem marca, zerava, e o
+            // mineiro ia falhar nela. Na passagem seguinte a conta
+            // recomeçava do zero, e assim para sempre — a sessão de
+            // 2026-09-11 às 00:04 mostrou nove desistências em oito
+            // minutos sem um único "went one level deeper", e a colônia
+            // respondendo "no miner branch work" cinco vezes.
+            //
+            // Quem zera agora é a picareta, de dentro do MinerWork,
+            // quando o bloco de verdade sai do mundo. Ver pickaxeTook.
 
             // O minério da parede vem antes da parede — 2026-08-21. Um
             // túnel de dois blocos de altura mostra o que está colado

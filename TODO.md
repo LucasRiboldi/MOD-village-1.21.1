@@ -304,6 +304,109 @@ alegação, não achado**, e o que o Verifier não conseguir reproduzir vai para
 
 ---
 
+## 🎮 Sessão de 2026-09-11, 00:04 — o nome mente, e a curva nunca virou
+
+**13 minutos**, jar conferido: `512f0b3a`, o do commit `4b2e9a2`. Zero exceções
+do mod. Colônia `634bf5cc`, 15 ciclos.
+
+**A queixa do autor foi:** *"as profissões parecem erradas, o nome da profissão
+no aldeão e sua profissão, todos parados sem trabalhar, muitos aldeões
+aglomerados na mina de diversas profissões diferentes nos nomes"*. São três
+coisas, e o log explica as três.
+
+### 🔴 O nome mente — e é o que ele viu primeiro
+
+`giveUpProfession()` faz `profession = null`, e o `WorkerNameplate.label`
+**pulava quem não tem profissão**. Havia um único `setCustomName` no arquivo, e
+nenhuma limpeza: **o aldeão ficava com a plaquinha do ofício que largou.**
+
+E ficar sem função não é acidente. O javadoc do `ProfessionAssigner.vacancyFor`
+diz: *"esgotados os que sobram, devolve vazio: ele fica sem função por algumas
+passagens, que é o piso desta linha"*. Some a isso o `WorkerStrikes`, que desde
+09-10 tira do ofício quem desiste três vezes — **cinco largaram nesta sessão**,
+três de `COLLECT_STONE` e dois de `COLLECT_WOOD`, todos na mina.
+
+**Consertado:** quem perde a profissão perde a plaquinha. O nome dado pelo
+jogador continua intocado — a Regra 3 vale para tirar como vale para pôr, e o
+`isColonyLabel` já sabia fazer essa distinção.
+
+### 🔴 A curva nunca virou, e é a causa dos parados
+
+**`BLOCKED_BEFORE_TURNING = 8` existe desde 08-27** para que uma frente
+inalcançável encerre o ramal em vez de marchar pela ordem de cavar. Ela não
+virava.
+
+A contagem era zerada por `arm.digging()`, chamado de um lugar só: o ponto do
+`nextCut` em que o cursor **serve** a pedra. Servir é uma aposta — só depois se
+descobre se o mineiro chega nela. Bastava haver **uma pedra nova sem marca por
+passagem**, e uma galeria atrás de um vão intransponível tem pedra de sobra,
+para a conta voltar a zero antes de chegar a oito.
+
+O que a sessão mediu, e fecha o diagnóstico:
+
+| medida | valor |
+|---|---|
+| desistências de mineiro | 9, em 8 minutos |
+| marcas emitidas | 14, **todas dizendo `refused 1`** |
+| alvos distintos | 9, agrupados em volta de duas posições |
+| `went one level deeper` | **zero** |
+| `no miner branch work` | 5 |
+| onde os mineiros paravam | `2433,44,-1429` e `2425,42,-1424` — **os mesmos da sessão anterior** |
+| ciclos com `assigned 0 tasks` | 4, com 3 e 4 tarefas abertas |
+
+**Consertado:** quem zera a curva passa a ser a picareta, de dentro do
+`MinerWork`, com o bloco já fora do mundo — `MineDigging.pickaxeTook`, irmão do
+`flooded`. Quebrar não é aposta: é o ramal rendendo, e aí a curva deve mesmo
+recomeçar.
+
+### E o beco de ontem não servia aqui — duas tentativas, as duas reprovadas
+
+**A decisão do autor foi ligar o beco no cursor do túnel "como prazo, e não como
+veto"**, e não dá: o `theRefusedStoneIsNotTheFrontier` reprovou as duas formas.
+
+A razão é **geometria, e vale escrita**: na galeria a ordem de cavar sobe em
+caracol e as posições consecutivas ficam a **um ou dois blocos** umas das
+outras — medido com uma sonda descartável. O cubo de oito blocos do beco engole
+a frente legítima junto com as recusadas, então ele não discrimina nada ali,
+**nem pulando nem vetando**. O beco continua sendo pergunta só dos três
+leitores de proximidade.
+
+O conserto que serve é o da curva, acima — que é a defesa que o túnel já tinha
+e que estava desarmada.
+
+### Verificação
+
+| o quê | resultado |
+|---|---|
+| `./gradlew build --rerun-tasks` | ✅ exit 0 |
+| Unitários (XML) | ✅ **749**, zero falhas (2 novos, em `MineTest`) |
+| `./gradlew runGametest --rerun-tasks` | ✅ **All 288 required tests passed** (3 novos) |
+| Mutação do nome (volta a pular quem não tem profissão) | ✅ pega, 1 falha |
+| Mutação da curva (`digging()` de volta ao `nextCut`) | ✅ pega, 1 falha |
+| `gauntlet-verifier` | **FAIL** na iteração 1 → conserto → o achado dele fechado |
+
+### O FAIL do Verifier, e ele estava inteiramente certo
+
+**A primeira entrega tinha o conserto da curva sem teste nenhum.** Ele mediu o
+que eu não tinha medido: revertendo os dois arquivos, **a bateria inteira passa
+igual** — 749 unitários e 287 de jogo, zero falhas. Os dois casos que eu
+escrevera em `MineTest` exercitam o `MineArm` isolado, e o que mudou não foi o
+`MineArm`: foi **o call-site**.
+
+**E ele conseguiu o teste que eu tinha desistido de escrever.** A peça que me
+faltava estava no `MinerWork`: quem desiste chama `MineMarks.refuse` **e**
+`MineDigging.couldNotReach`. Eu só chamava a marca — e só com ela o
+`findTheFrontier` reserva e reenvia a mesma pedra para sempre, o ramal encerra
+na segunda volta por outro motivo, e o teste passa com e sem o conserto. Foi
+exatamente o que aconteceu comigo, e por isso eu o tinha removido: **teste que
+passa dos dois jeitos é pior que teste nenhum.**
+
+Com o par correto, o `onlyThePickaxeResetsTheBranchCurve` fecha o ramal na
+oitava recusa real e é o **único** teste da bateria que cai quando a regressão
+volta. Medido nos dois sentidos.
+
+---
+
 ## 📒 2026-09-10 — a rua ganha rumo, e o beco vira coisa da região
 
 **Os dois defeitos que a sessão das 22:57 mediu, consertados e liberados

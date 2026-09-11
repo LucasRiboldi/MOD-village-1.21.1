@@ -44,16 +44,31 @@ public final class WorkerNameplate {
      * <p>Trabalhador sem profissão fica sem nome. Bebê e nitwit são o
      * caso comum, e nomeá-los de "trabalhador" diria algo falso.
      *
-     * @return quantos nomes foram postos agora
+     * <p><b>E quem PERDEU a profissão perde o nome junto</b> — 2026-09-11,
+     * e até esta data o nome mentia. O laço abaixo <i>pulava</i> quem não
+     * tinha profissão, o que resolve o bebê — ele nunca teve nome — e
+     * deixa intacto o caso que importa: o trabalhador que largou o
+     * ofício continuava com a plaquinha do ofício que largou.
+     *
+     * <p>E ficar sem função não é acidente, é <b>projeto</b>: o
+     * {@code ProfessionAssigner.vacancyFor} diz que, esgotados os ofícios
+     * que ele não está evitando, <i>"ele fica sem função por algumas
+     * passagens, que é o piso desta linha"</i>. Some a isso o
+     * {@code WorkerStrikes}, que desde 09-10 tira do ofício quem desiste
+     * três vezes, e o resultado é o que o autor viu na sessão de 00:04:
+     * <b>aldeões parados com nome de profissão, aglomerados na mina</b>,
+     * cinco deles tendo largado o ofício ali mesmo.
+     *
+     * <p>A plaquinha é a única coisa que o jogador tem para saber quem é
+     * quem, e um nome que mente é pior que nome nenhum: ele faz procurar
+     * defeito no mineiro que não existe mais.
+     *
+     * @return quantos nomes foram postos ou tirados agora
      */
     public static int label(ServerWorld world, Collection<Worker> workers) {
         int labelled = 0;
 
         for (Worker worker : workers) {
-            if (worker.profession().isEmpty()) {
-                continue;
-            }
-
             if (!(world.getEntity(worker.villagerId()) instanceof VillagerEntity villager)) {
                 continue;
             }
@@ -62,7 +77,20 @@ public final class WorkerNameplate {
 
             if (current != null && !isColonyLabel(current)) {
                 // Nome que o jogador deu. A Regra 3 vale aqui como vale
-                // na mão do aldeão.
+                // na mão do aldeão — e vale também para tirar: o mod só
+                // desfaz o que o mod escreveu.
+                continue;
+            }
+
+            if (worker.profession().isEmpty()) {
+                if (current != null) {
+                    // A plaquinha era de um ofício que ele não tem mais.
+                    villager.setCustomName(null);
+                    villager.setCustomNameVisible(false);
+
+                    labelled++;
+                }
+
                 continue;
             }
 
