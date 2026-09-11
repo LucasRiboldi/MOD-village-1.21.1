@@ -15,6 +15,7 @@ import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -133,20 +134,6 @@ public final class ChestInventoryReader {
     }
 
     /**
-     * O estoque de uma colônia, repartido por baú.
-     *
-     * <p>Difere de {@link #readAll} por guardar de onde veio cada
-     * parcela: o trabalhador vai até o baú, e o total sozinho não diz
-     * a ninguém para onde andar. Ver Resource-System.md §"Registro de
-     * Recursos".
-     */
-    public static ColonyResources readColony(
-            ServerWorld world, Iterable<UUID> workerIds, StorageRegistry storages) {
-
-        return survey(world, workerIds, storages).resources();
-    }
-
-    /**
      * O resultado de uma varredura de baús, com o que ela não conseguiu
      * olhar.
      *
@@ -234,21 +221,21 @@ public final class ChestInventoryReader {
      * decidir alguma coisa: uma colônia que conclui "falta madeira"
      * porque metade dos baús estava descarregada mandaria um trabalhador
      * buscar o que ela já tem.
+     *
+     * <p><b>Recebe a lista pronta desde 2026-09-11</b>, e não mais os
+     * trabalhadores — P0.3. Montá-la aqui, a partir do registro de
+     * trabalhadores, era o que deixava o baú da boca da mina fora da
+     * conta: ele não é registro de ninguém. Quem responde onde estão os
+     * baús de uma colônia é o {@link ColonyChests}, num lugar só, para
+     * que a conta e quem consome dela nunca olhem conjuntos diferentes.
+     *
+     * @param chests os baús da colônia, de {@code ColonyChests}
      */
-    public static ChestSurvey survey(
-            ServerWorld world, Iterable<UUID> workerIds, StorageRegistry storages) {
-
+    public static ChestSurvey survey(ServerWorld world, List<ColonyPos> chests) {
         Map<ColonyPos, ResourceTally> byChest = new LinkedHashMap<>();
         int unreachable = 0;
 
-        for (UUID workerId : workerIds) {
-            Optional<WorkerStorage> storage = storages.of(workerId);
-
-            if (storage.isEmpty()) {
-                continue;
-            }
-
-            ColonyPos position = storage.get().chestPosition();
+        for (ColonyPos position : chests) {
             BlockPos blockPos = MinecraftTypeAdapter.toBlockPos(position);
             WorldChunk chunk = chunkAt(world, blockPos);
 

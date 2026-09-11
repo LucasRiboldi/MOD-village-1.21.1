@@ -11,6 +11,7 @@ import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
+import com.villagecolony.fabric.integration.ColonyChests;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 
 import java.util.UUID;
@@ -395,8 +396,13 @@ public class StorageGameTest implements FabricGameTest {
                 WorkerStorage.of(far, new ColonyPos(4_000_000, 64, 4_000_000)));
 
         try {
+            // Pela lista da colônia desde 2026-09-11 — P0.3. Ela é quem
+            // sabe que baús existem, e é a mesma que a varredura do ciclo
+            // usa; montar uma lista à parte aqui faria este teste medir
+            // um caminho que a produção não percorre.
             ChestInventoryReader.ChestSurvey survey = ChestInventoryReader.survey(
-                    world, List.of(near, far), VillageColonyMod.STORAGES);
+                    world,
+                    ColonyChests.nearestFirst(world, colony.id(), colony.center()));
 
             context.assertTrue(
                     survey.isPartial(),

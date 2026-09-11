@@ -232,7 +232,7 @@ public final class WorkerEquipment {
 
         chests.add(ownChest);
 
-        for (ColonyPos chest : ColonyChests.nearestFirst(worker.colonyId(), ownChest)) {
+        for (ColonyPos chest : ColonyChests.nearestFirst(world, worker.colonyId(), ownChest)) {
             if (!chest.equals(ownChest)) {
                 chests.add(chest);
             }

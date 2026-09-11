@@ -175,7 +175,7 @@ public final class TreeFelling {
         // consumidor em qualquer baú, porque o fabricante retira de
         // todos.
         List<ColonyPos> chests =
-                ColonyChests.ownFirst(job.task.colonyId(), storage.chestPosition());
+                ColonyChests.ownFirst(world, job.task.colonyId(), storage.chestPosition());
 
         for (ItemStack stack : drops) {
             int leftOver = ColonyChests.deposit(

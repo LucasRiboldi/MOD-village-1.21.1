@@ -16,6 +16,7 @@ import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
+import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.MineMouth;
 import com.villagecolony.fabric.work.SmelterWork;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -194,9 +195,25 @@ public class SmelterGameTest implements FabricGameTest {
         });
     }
 
+    /** Os lingotes nos dois baús do cenário: o do fundidor e o da boca. */
+    private static int totalIronIngots(
+            ServerWorld world, TestContext context, BlockPos mouthChest) {
+
+        return ChestInventoryReader.read(world, context.getAbsolutePos(CHEST))
+                        .amountOf(ResourceType.IRON_INGOT)
+                + ChestInventoryReader.read(world, context.getAbsolutePos(mouthChest))
+                        .amountOf(ResourceType.IRON_INGOT);
+    }
+
     /**
-     * <b>Onde a cadeia mineiro → armazenamento → fundidor se rompe</b> —
+     * <b>A cadeia mineiro → armazenamento → fundidor, remendada</b> —
      * P0.3, 2026-09-11.
+     *
+     * <p><b>Este teste nasceu provando o defeito e passou a provar o
+     * conserto</b>, no mesmo dia. A primeira versão afirmava que a
+     * colônia <i>não</i> enxergava o minério da boca da mina, e trazia um
+     * recado para quem o visse falhar: <i>"a ruptura não é mais esta, e
+     * este teste precisa ser relido"</i>. Foi o que aconteceu.
      *
      * <p>Na sessão de 09-04 o fundidor disse
      * {@code nothing in the colony chests to smelt} <b>34 vezes</b>, com
@@ -211,24 +228,36 @@ public class SmelterGameTest implements FabricGameTest {
      * {@code WorkerStorage} é {@code ChestScanner.scan}, que procura baú
      * ao redor da <b>cama</b> do aldeão; mina não tem cama ao lado.
      *
-     * <p>E tudo o que conta o estoque da colônia — {@code ColonyChests},
-     * {@code ChestInventoryReader.survey} e este fundidor — percorre
-     * baús de trabalhador. Então o minério entra num baú que a
-     * contabilidade da colônia não lê: <b>o fundidor está certo, e está
-     * faminto ao lado do ferro</b>.
+     * <p>E tudo o que contava o estoque da colônia — {@code ColonyChests},
+     * {@code ChestInventoryReader.survey} e este fundidor — percorria
+     * baús de <b>trabalhador</b>. O minério entrava num baú que a
+     * contabilidade não lia: o fundidor estava certo, e faminto ao lado
+     * do ferro.
      *
-     * <p>Este teste fixa as duas metades. Que é mesmo ali que o minério
-     * cai, pelo caminho que o {@code MinerHaul.treasureChestFor} percorre
-     * — registro da mina, entrada do poço, baú encostado. E que a colônia
-     * não o enxerga estando ele cheio.
+     * <p><b>O conserto foi do lado de quem lê.</b> A Regra 30 é decisão
+     * do autor de 2026-08-22 com motivo escrito — o mineiro não carrega
+     * minério montanha acima —, e revogá-la para a conta fechar trocaria
+     * um defeito de contabilidade por um de desenho. Então o
+     * {@code ColonyChests} passou a ser a <b>única</b> resposta a "onde
+     * estão os baús desta colônia", com o da boca da mina entre eles, e
+     * os três que montavam a própria lista passaram a perguntar a ele.
      *
-     * <p><b>O que ele não decide</b> é o conserto. São dois caminhos, e a
-     * escolha é do autor: o baú da boca entra na lista da colônia, ou a
-     * Regra 30 para de mandar minério para fora dela.
+     * <p><b>Os três juntos, e não um por vez.</b> Contar num conjunto e
+     * consumir de outro é a discordância que o javadoc do
+     * {@code ResourceSubstitution} guarda de 2026-09-10 — <i>"a colônia
+     * concluía que a meta estava cumprida e o mineiro não ia cavar,
+     * enquanto o construtor esperava pelo arenito"</i>. Meia correção
+     * aqui seria pior que nenhuma.
+     *
+     * <p>Este teste fixa as duas metades, agora do lado certo. Que é
+     * mesmo ali que o minério cai, pelo caminho que o
+     * {@code MinerHaul.treasureChestFor} percorre — registro da mina,
+     * entrada do poço, baú encostado. E que a colônia <b>o enxerga</b>,
+     * conta o ferro e funde.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "smelter_mine_mouth",
             tickLimit = 200)
-    public void theOreInTheMineMouthChestIsInvisibleToTheColony(TestContext context) {
+    public void theOreInTheMineMouthChestIsCountedAndSmelted(TestContext context) {
         ServerWorld world = context.getWorld();
 
         context.setBlockState(new BlockPos(3, 1, 3), Blocks.DIRT.getDefaultState());
@@ -282,6 +311,15 @@ public class SmelterGameTest implements FabricGameTest {
 
         task.reserveFor(villager.getUuid());
 
+        // Montagem, e antes de o fundidor rodar: o minério está lá de
+        // verdade. Aferir isto no fim seria medir o contrário do que se
+        // quer — a partir do conserto o cru sai do baú, que é o ponto.
+        context.assertTrue(
+                ChestInventoryReader
+                        .read(world, context.getAbsolutePos(mouthChest))
+                        .amountOf(ResourceType.RAW_IRON) == 8,
+                "o cenário não pôs o ferro no baú da boca");
+
         SmelterWork.run(world, colony);
 
         context.runAtTick(150, () -> {
@@ -298,35 +336,36 @@ public class SmelterGameTest implements FabricGameTest {
                         context.getAbsolutePos(mouthChest).equals(reached),
                         "a Regra 30 não chega a este baú — o cenário não prova nada");
 
-                // E o minério está lá de verdade. Sem isto o teste
-                // passaria com o baú vazio, provando coisa nenhuma.
-                context.assertTrue(
-                        ChestInventoryReader
-                                .read(world, context.getAbsolutePos(mouthChest))
-                                .amountOf(ResourceType.RAW_IRON) == 8,
-                        "o ferro cru não está no baú da boca");
-
-                // Segunda metade: a colônia não o enxerga.
+                // Segunda metade: a colônia o enxerga, pela mesma lista
+                // que o ciclo usa. Montar uma lista à parte aqui faria o
+                // teste medir um caminho que a produção não percorre.
                 ChestInventoryReader.ChestSurvey survey = ChestInventoryReader.survey(
-                        world, List.of(villager.getUuid()), VillageColonyMod.STORAGES);
+                        world,
+                        ColonyChests.nearestFirst(world, colony.id(), colony.center()));
 
                 context.assertTrue(
-                        survey.resources().amountOf(ResourceType.RAW_IRON) == 0,
-                        "a varredura achou o ferro da boca — a ruptura não é mais esta, "
-                                + "e este teste precisa ser relido: " + survey.coverage());
+                        survey.resources().amountOf(ResourceType.RAW_IRON) > 0,
+                        "a varredura não achou o ferro da boca da mina: "
+                                + survey.coverage());
 
-                // E por isso o fundidor passa fome ao lado do ferro.
+                // E o baú da boca entra na cobertura, e não só no total:
+                // um baú somado sem ser contado voltaria a ser o
+                // defeito-que-parece-número do P0.2.
                 context.assertTrue(
-                        ChestInventoryReader
-                                .read(world, context.getAbsolutePos(CHEST))
-                                .amountOf(ResourceType.IRON_INGOT) == 0,
-                        "saiu lingote sem o fundidor ver o cru");
+                        survey.chestsRead() == 2,
+                        "esperava dois baús lidos — o do fundidor e o da boca —, deu "
+                                + survey.coverage());
 
+                // E o fundidor come: o cru saiu da boca e o lingote entrou.
                 context.assertTrue(
                         ChestInventoryReader
                                 .read(world, context.getAbsolutePos(mouthChest))
-                                .amountOf(ResourceType.RAW_IRON) == 8,
-                        "alguém tirou o cru do baú da boca");
+                                .amountOf(ResourceType.RAW_IRON) < 8,
+                        "o fundidor não tocou no ferro da boca da mina");
+
+                context.assertTrue(
+                        totalIronIngots(world, context, mouthChest) > 0,
+                        "o cru saiu e não virou lingote nenhum — matéria perdida");
             } finally {
                 owned.cleanUp();
             }

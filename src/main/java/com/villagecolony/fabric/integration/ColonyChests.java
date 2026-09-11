@@ -5,6 +5,7 @@ import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.worker.model.Worker;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.item.Item;
 import net.minecraft.server.world.ServerWorld;
 
@@ -48,7 +49,9 @@ public final class ColonyChests {
      * colônias com o mesmo mapa precisam crescer igual entre sessões,
      * senão o relatório de uma não explica a outra.
      */
-    public static List<ColonyPos> nearestFirst(UUID colonyId, ColonyPos from) {
+    public static List<ColonyPos> nearestFirst(
+            ServerWorld world, UUID colonyId, ColonyPos from) {
+
         List<ColonyPos> chests = new ArrayList<>();
 
         for (Worker worker : VillageColonyMod.WORKERS.ofColony(colonyId)) {
@@ -58,6 +61,8 @@ public final class ColonyChests {
                 chests.add(storage.get().chestPosition());
             }
         }
+
+        addMineMouth(world, colonyId, chests);
 
         chests.sort(Comparator
                 .comparingLong((ColonyPos chest) -> squaredDistance(chest, from))
@@ -198,18 +203,63 @@ public final class ColonyChests {
      * alcançá-lo, e perder a colheita por causa disso seria trocar um
      * defeito por outro.
      */
-    public static List<ColonyPos> ownFirst(UUID colonyId, ColonyPos own) {
+    public static List<ColonyPos> ownFirst(
+            ServerWorld world, UUID colonyId, ColonyPos own) {
+
         List<ColonyPos> chests = new ArrayList<>();
 
         chests.add(own);
 
-        for (ColonyPos chest : nearestFirst(colonyId, own)) {
+        for (ColonyPos chest : nearestFirst(world, colonyId, own)) {
             if (!chest.equals(own)) {
                 chests.add(chest);
             }
         }
 
         return chests;
+    }
+
+    /**
+     * O baú da boca da mina, que não é registro de trabalhador nenhum.
+     *
+     * <p><b>A ruptura que o P0.3 achou em 2026-09-11.</b> A Regra 30
+     * manda o minério que não é carvão para o baú da boca da mina, e esse
+     * baú é achado por geometria — {@link MineMouth#chestAt} procura um
+     * baú encostado na entrada do poço. O único lugar do mod que cria
+     * {@code WorkerStorage} é o {@code ChestScanner.scan}, que procura
+     * baú ao redor da <b>cama</b> do aldeão, e mina não tem cama ao lado.
+     *
+     * <p>Então o minério entrava num baú que a contabilidade da colônia
+     * não lia: o fundidor dizia {@code nothing in the colony chests to
+     * smelt} <b>34 vezes</b> na sessão de 09-04, com o mineiro cavando, e
+     * estava certo ao pé da letra.
+     *
+     * <p><b>Consertou-se o lado de quem lê, e não o de quem escreve.</b> A
+     * Regra 30 é decisão do autor de 2026-08-22 com motivo escrito — o
+     * mineiro não carrega minério montanha acima —, e revogá-la para
+     * fazer a conta fechar trocaria um defeito de contabilidade por um de
+     * desenho.
+     *
+     * <p><b>E entra aqui, num lugar só</b>, de propósito. Contar num
+     * conjunto e consumir de outro é a discordância que o javadoc do
+     * {@code ResourceSubstitution} guarda de 2026-09-10: <i>"a colônia
+     * concluía que a meta estava cumprida e o mineiro não ia cavar,
+     * enquanto o construtor esperava pelo arenito"</i>. Meia correção
+     * aqui seria pior que nenhuma.
+     *
+     * <p>Perguntado ao mundo a cada chamada, e não guardado: o jogador
+     * quebra o baú quando quer, e uma posição guardada envelheceria
+     * calada. São oito leituras de bloco, com o chunk conferido antes.
+     */
+    private static void addMineMouth(
+            ServerWorld world, UUID colonyId, List<ColonyPos> chests) {
+
+        VillageColonyMod.MINES.of(colonyId)
+                .map(mine -> MinecraftTypeAdapter.toBlockPos(mine.shaft().entry()))
+                .flatMap(mouth -> MineMouth.chestAt(world, mouth))
+                .map(MinecraftTypeAdapter::toColonyPos)
+                .filter(chest -> !chests.contains(chest))
+                .ifPresent(chests::add);
     }
 
     private static long squaredDistance(ColonyPos chest, ColonyPos from) {

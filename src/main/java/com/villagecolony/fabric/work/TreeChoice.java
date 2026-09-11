@@ -173,7 +173,7 @@ public final class TreeChoice {
         // guarda e depósito discordando sobre onde a madeira cabe é o
         // que destruía o tronco.
         List<ColonyPos> chests =
-                ColonyChests.ownFirst(job.task.colonyId(), storage.chestPosition());
+                ColonyChests.ownFirst(world, job.task.colonyId(), storage.chestPosition());
 
         int room = ColonyChests.freeSpaceForGroup(world, chests, ResourceGroup.WOOD);
 

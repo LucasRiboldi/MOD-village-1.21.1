@@ -25,6 +25,7 @@ import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.ChestMarker;
+import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageBiomes;
 import com.villagecolony.fabric.integration.VillageScanner;
@@ -408,10 +409,16 @@ public final class VillageDetectionHandler {
     private static void runCycleOf(ServerWorld overworld, Colony colony) {
         long mark = System.nanoTime();
 
-        List<UUID> workerIds = workerIdsOf(colony);
+        // <b>Uma lista, e os três consumidores dela</b> — P0.3, 2026-09-11.
+        // A varredura e as duas medidas de espaço montavam cada uma a
+        // própria lista, a partir do registro de trabalhadores, e por
+        // isso nenhuma delas via o baú da boca da mina. Contar num
+        // conjunto e consumir de outro é a discordância de 2026-09-10.
+        List<ColonyPos> chests = ColonyChests.nearestFirst(
+                overworld, colony.id(), colony.center());
 
-        ChestInventoryReader.ChestSurvey survey = ChestInventoryReader.survey(
-                overworld, workerIds, VillageColonyMod.STORAGES);
+        ChestInventoryReader.ChestSurvey survey =
+                ChestInventoryReader.survey(overworld, chests);
 
         if (survey.isPartial()) {
             // A leitura aconteceu e custou, mesmo sem decidir nada: cobrar
@@ -447,13 +454,11 @@ public final class VillageDetectionHandler {
         // A Regra 1: a meta é o que está guardado mais o que ainda cabe.
         // O espaço é medido aqui porque é aqui que os baús existem — o
         // Core não conhece baú, só recebe o número. Ver ColonyGoals.
-        int room = ChestDepositor.freeSpaceForGroup(
-                overworld, workerIds, VillageColonyMod.STORAGES, ResourceGroup.WOOD);
+        int room = ColonyChests.freeSpaceForGroup(overworld, chests, ResourceGroup.WOOD);
 
         // E a Regra 5, a da Fase 9: metade do que os baús comportam em
         // tábua. Medida do mesmo jeito e pelo mesmo motivo.
-        int plankRoom = ChestDepositor.freeSpaceForGroup(
-                overworld, workerIds, VillageColonyMod.STORAGES, ResourceGroup.PLANKS);
+        int plankRoom = ColonyChests.freeSpaceForGroup(overworld, chests, ResourceGroup.PLANKS);
 
         // Até aqui é baú: a varredura, o retrato do estoque e as duas
         // medidas de espaço percorrem os mesmos inventários.
@@ -768,7 +773,8 @@ public final class VillageDetectionHandler {
             logResources(
                     colony,
                     ChestInventoryReader.survey(
-                            world, workerIdsOf(colony), VillageColonyMod.STORAGES));
+                            world,
+                            ColonyChests.nearestFirst(world, colony.id(), colony.center())));
         }
 
         // Antes de atribuir: um save anterior a 2026-08-12 chega com

@@ -12,6 +12,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.integration.ChestDepositor;
+import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
 import com.villagecolony.fabric.integration.CraftingLookup;
 import net.minecraft.item.ItemStack;
@@ -21,11 +22,9 @@ import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -153,10 +152,12 @@ public final class SmelterWork {
     /**
      * Funde uma peça do que houver nos baús da colônia.
      *
-     * <p>Os baús são percorridos na ordem de registro dos trabalhadores,
-     * como o fabricante fazia antes de {@code ColonyChests} existir. É
-     * dívida conhecida e está no backlog: o certo é por distância, e
-     * somando entre baús.
+     * <p><b>Pela lista da colônia, e por distância</b> — P0.3, 2026-09-11.
+     * Até aqui os baús eram percorridos na ordem de registro dos
+     * trabalhadores, como o fabricante fazia antes de
+     * {@link ColonyChests} existir; era dívida conhecida, e ela cobrou
+     * mais caro do que a ordem: o registro de trabalhadores não contém o
+     * baú da boca da mina, e é lá que a Regra 30 põe o minério.
      *
      * @return se ainda há o que fundir
      */
@@ -190,26 +191,29 @@ public final class SmelterWork {
             return false;
         }
 
-        // Os baús vistos, e não os trabalhadores percorridos: dois
-        // aldeões podem dividir baú, e contar o laço diria "procurei em
-        // 6" sobre três baús. O número existe para ser confrontado com o
-        // que a varredura da colônia relata, e um número inflado não
-        // confronta nada.
-        Set<ColonyPos> searched = new LinkedHashSet<>();
+        // <b>Pelo ColonyChests, e não pelo registro de trabalhadores</b> —
+        // P0.3, 2026-09-11. Percorrer os trabalhadores era o que deixava
+        // o baú da boca da mina de fora, e é lá que a Regra 30 põe o
+        // minério: o fundidor dizia "nothing in the colony chests to
+        // smelt" 34 vezes na sessão de 09-04 ao lado do ferro dele.
+        //
+        // Do baú do próprio fundidor para fora, que é a Regra 10: a
+        // fornalha fica onde ele está, e andar menos com o cru é o certo.
+        Optional<ColonyPos> from = VillageColonyMod.STORAGES.of(workerId)
+                .map(WorkerStorage::chestPosition)
+                .or(() -> VillageColonyMod.COLONIES.find(job.task.colonyId())
+                        .map(Colony::center));
 
-        for (Worker worker : VillageColonyMod.WORKERS.ofColony(job.task.colonyId())) {
-            Optional<WorkerStorage> owned = VillageColonyMod.STORAGES.of(worker.villagerId());
+        if (from.isEmpty()) {
+            finish(job, workerId, "no colony chest to look in");
 
-            if (owned.isEmpty()) {
-                continue;
-            }
+            return false;
+        }
 
-            ColonyPos chest = owned.get().chestPosition();
+        List<ColonyPos> searched =
+                ColonyChests.nearestFirst(world, job.task.colonyId(), from.get());
 
-            if (!searched.add(chest)) {
-                continue;
-            }
-
+        for (ColonyPos chest : searched) {
             for (Item raw : raws) {
                 if (ChestWithdrawer.withdraw(world, chest, raw, 1) == 0) {
                     continue;

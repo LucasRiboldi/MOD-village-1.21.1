@@ -63,7 +63,7 @@ public final class ColonySupply {
      * @return true quando a peça está em mãos
      */
     public static boolean take(ServerWorld world, UUID colonyId, ColonyPos near, Item item) {
-        List<ColonyPos> chests = ColonyChests.nearestFirst(colonyId, near);
+        List<ColonyPos> chests = ColonyChests.nearestFirst(world, colonyId, near);
 
         if (ColonyChests.withdraw(world, chests, item, 1) > 0) {
             return true;
@@ -86,7 +86,7 @@ public final class ColonySupply {
     public static boolean canProvide(
             ServerWorld world, UUID colonyId, ColonyPos near, Item item) {
 
-        List<ColonyPos> chests = ColonyChests.nearestFirst(colonyId, near);
+        List<ColonyPos> chests = ColonyChests.nearestFirst(world, colonyId, near);
 
         return ColonyChests.countIn(world, chests, item) > 0 || enoughFor(world, chests, item);
     }

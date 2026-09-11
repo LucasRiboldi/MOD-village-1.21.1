@@ -536,7 +536,7 @@ public final class CraftingWork {
             }
 
             List<ColonyPos> chests =
-                    ColonyChests.nearestFirst(colony.get().id(), colony.get().center());
+                    ColonyChests.nearestFirst(world, colony.get().id(), colony.get().center());
 
             if (ColonyChests.countIn(world, chests, item.get()) > 0) {
                 // A colônia já tem. Não é o fabricante quem falta.
@@ -617,7 +617,7 @@ public final class CraftingWork {
             return false;
         }
 
-        List<ColonyPos> chests = ColonyChests.nearestFirst(colony.id(), colony.center());
+        List<ColonyPos> chests = ColonyChests.nearestFirst(world, colony.id(), colony.center());
 
         if (ColonyChests.withdraw(world, chests, log.get(), 1) < 1) {
             return false;
@@ -735,7 +735,7 @@ public final class CraftingWork {
         // O do tronco na frente, os da colônia atrás: quando ele cabe no
         // baú de onde a tora saiu, nada muda; quando não cabe, a peça
         // deixa de ser destruída.
-        List<ColonyPos> chests = ColonyChests.ownFirst(job.task.colonyId(), chest);
+        List<ColonyPos> chests = ColonyChests.ownFirst(world, job.task.colonyId(), chest);
 
         Optional<ColonyPos> room = ColonyChests.firstWithRoomFor(
                 world, chests, result.getItem(), result.getCount());

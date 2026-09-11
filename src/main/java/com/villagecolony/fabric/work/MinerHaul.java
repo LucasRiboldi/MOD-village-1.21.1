@@ -109,7 +109,7 @@ final class MinerHaul {
 
         // Uma vez, e não por bloco: a lista sai de percorrer trabalhadores
         // e registros, e isto roda a cada picareta — Performance-Rules §6.
-        List<ColonyPos> colonyChests = ColonyChests.ownFirst(colonyId, chest);
+        List<ColonyPos> colonyChests = ColonyChests.ownFirst(world, colonyId, chest);
 
         int stored = 0;
         int asked = 0;
