@@ -4787,6 +4787,88 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
+     * <b>O beco da vizinhança não vale para o cursor do túnel</b> —
+     * P1.10, e este teste existe porque o {@code gauntlet-verifier}
+     * provou que a bateria inteira passava sem ele.
+     *
+     * <p>O {@code MineMarks} tem duas perguntas desde 2026-09-10: a
+     * marca <b>do bloco</b> ({@code isOutOfReach}) e o <b>beco</b>
+     * ({@code isUnreachableAround}, três recusas vivas num cubo de oito
+     * blocos). O beco é pergunta dos três leitores de proximidade — veia,
+     * pedra de superfície, areia — e <b>não</b> deste cursor, porque aqui
+     * ele vira veto: a posição deixa de ser fronteira candidata, o cursor
+     * não acha frente e o ramal morre. Na galeria a ordem de cavar sobe
+     * em caracol e posições consecutivas ficam a um ou dois blocos, então
+     * o cubo engole a frente legítima junto com as recusadas.
+     *
+     * <p><b>Por que o teste irmão não bastava.</b> O
+     * {@code theRefusedStoneIsNotTheFrontier} recusa as oito posições
+     * <i>uma a uma</i>, e aí a marca de bloco sozinha já produz o
+     * resultado que ele afirma: trocar a pergunta daqui pela do beco
+     * passava por ele sem falhar — medido pelo Verifier rodando a bateria
+     * inteira duas vezes com a mutação aplicada. Ele prova que a marca de
+     * bloco vale; não prova que a de região não deve valer.
+     *
+     * <p>O que discrimina é uma posição <b>sem marca própria</b> cercada
+     * de recusadas. As três recusas ficam em posições <b>já cavadas</b>,
+     * que continuam ar: elas não são fronteira candidata e não mudam nada
+     * para a marca de bloco — o que fazem é uma coisa só, encher o cubo
+     * em volta da fronteira legítima.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_refused_stone",
+            tickLimit = 20)
+    public void theNeighbourhoodDeadEndIsNotTheTunnelCursorsQuestion(TestContext context) {
+        solidRock(context);
+
+        Colony colony = openedMine(context, 10);
+
+        try {
+            // As duas últimas voltam a ser rocha: assim a 8 é resto
+            // sólido com a seguinte também sólida, que é o que o
+            // frontierWhereRockBegins chama de frente.
+            BlockPos frontier = dug(context, colony, 8);
+
+            context.getWorld().setBlockState(frontier, Blocks.STONE.getDefaultState());
+
+            context.getWorld().setBlockState(
+                    dug(context, colony, 9), Blocks.STONE.getDefaultState());
+
+            // E três recusas em volta, em posições que continuam AR.
+            for (int i : new int[] {5, 6, 7}) {
+                MineMarks.refuse(context.getWorld(), dug(context, colony, i));
+            }
+
+            context.assertTrue(
+                    !MineMarks.isOutOfReach(context.getWorld(), frontier),
+                    "a montagem falhou: a fronteira não pode ter marca própria,"
+                            + " senão o teste passa pelo motivo errado");
+
+            context.assertTrue(
+                    MineMarks.isUnreachableAround(context.getWorld(), frontier),
+                    "a montagem falhou: as três recusas tinham de fazer beco em"
+                            + " volta da fronteira — sem isso as duas perguntas"
+                            + " respondem igual e o teste não discrimina nada");
+
+            Optional<BlockPos> next = targetFor(context, colony);
+
+            context.assertTrue(
+                    next.isPresent(),
+                    "o ramal encerrou: o cursor do túnel passou a perguntar pelo"
+                            + " beco, e a galeria inteira ficou fechada");
+
+            context.assertTrue(
+                    next.get().equals(frontier),
+                    "a fronteira sem marca própria foi descartada por causa das"
+                            + " vizinhas: o cursor foi para " + next.get().toShortString());
+        } finally {
+            MineClaims.clearAll();
+            MineMarks.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
      * <b>A mina de save antigo conserta a forma velha</b> — 2026-09-09,
      * e a pergunta é de 09-05.
      *

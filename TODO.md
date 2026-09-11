@@ -582,7 +582,7 @@ teste isolado próprio.
 
 | | o quê |
 |---|---|
-| 🟠 | **Nenhum teste pega a troca de escopo no `MineFrontier`.** Trocar `isOutOfReach` por `isUnreachableAround` lá passa pela bateria inteira — medido, duas vezes. O `theRefusedStoneIsNotTheFrontier` não serve porque recusa as oito posições uma a uma |
+| ✅ | ~~**Nenhum teste pega a troca de escopo no `MineFrontier`.** Trocar `isOutOfReach` por `isUnreachableAround` lá passa pela bateria inteira — medido, duas vezes. O `theRefusedStoneIsNotTheFrontier` não serve porque recusa as oito posições uma a uma~~ — **fechado em 2026-09-11** pelo `theNeighbourhoodDeadEndIsNotTheTunnelCursorsQuestion`, com a mutação conferida nos dois sentidos |
 | 🟡 | `regionRefusalsAt` varre o mapa de recusas linearmente, com saída barata só enquanto ele tiver menos de três entradas. O teto é 4.096, e não foi medido em jogo — medir antes de otimizar é o certo |
 
 ---
