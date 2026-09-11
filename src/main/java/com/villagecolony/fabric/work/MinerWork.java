@@ -691,6 +691,7 @@ public final class MinerWork {
         // chegam itens, e minério cru não diz de que pedra veio.
         MinerHaul.Haul haul = MinerHaul.deposit(
                 world,
+                job.task.colonyId(),
                 storage,
                 drops,
                 MinerHaul.treasureChestFor(world, job, state),

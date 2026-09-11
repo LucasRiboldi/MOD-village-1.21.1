@@ -31,6 +31,7 @@
       "com.villagecolony.gametest.WorkHoursGameTest",
       "com.villagecolony.gametest.VillageBiomesGameTest",
       "com.villagecolony.gametest.MinerGameTest",
+      "com.villagecolony.gametest.MinerOverflowGameTest",
       "com.villagecolony.gametest.SmelterGameTest",
       "com.villagecolony.gametest.ShepherdGameTest",
       "com.villagecolony.gametest.VillageStructuresGameTest",

@@ -5,6 +5,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestDepositor;
+import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.MineMouth;
 import com.villagecolony.fabric.integration.OreVein;
 import net.minecraft.block.BlockState;
@@ -13,6 +14,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Onde vai o que o mineiro cava — a Regra 30.
@@ -70,11 +72,26 @@ final class MinerHaul {
     }
 
     /**
-     * Guarda o que caiu no baú do mineiro.
+     * Guarda o que caiu no baú do mineiro, e na colônia o que não coube.
      *
-     * <p>O que não couber é perdido, e é o mesmo E3 do lenhador: o bloco
-     * já saiu do mundo. Fica em WARN para não sumir em silêncio.
+     * <p><b>O transbordo entrou em 2026-09-11, e fecha a outra metade do
+     * E3.</b> Até aqui o que não coubesse no baú do mineiro era
+     * destruído — o bloco já tinha saído do mundo, e o WARN só contava a
+     * perda. O lenhador deixou de destruir em 2026-09-04, quando ganhou
+     * {@link ColonyChests#ownFirst}; o mineiro ficou para trás, e o
+     * {@code TODO.md} registrava a metade aberta desde então.
      *
+     * <p>A ordem é a mesma do lenhador, e é a que faz o relatório de um
+     * mineiro falar do mineiro: o baú dele primeiro, o resto da colônia
+     * como transbordo. A boca da mina continua antes de tudo, porque é a
+     * Regra 30 e ela vale enquanto houver minério.
+     *
+     * <p><b>Ainda se perde com a colônia inteira cheia</b>, e aí o WARN é
+     * a notícia certa: a essa altura o jogador precisa esvaziar alguma
+     * coisa, e precisa poder descobrir isso. O que deixou de acontecer é
+     * perder tendo espaço a vinte blocos.
+     *
+     * @param colonyId de quem são os baús do transbordo
      * @param wanted o item que a tarefa pediu, para a conta sair separada
      *     — nulo quando o pedido não vira item deste jogo, e aí o
      *     {@link Haul#wanted()} sai zero
@@ -82,12 +99,18 @@ final class MinerHaul {
      */
     static Haul deposit(
             ServerWorld world,
+            UUID colonyId,
             WorkerStorage storage,
             List<ItemStack> drops,
             ColonyPos treasure,
             Item wanted) {
 
         ColonyPos chest = storage.chestPosition();
+
+        // Uma vez, e não por bloco: a lista sai de percorrer trabalhadores
+        // e registros, e isto roda a cada picareta — Performance-Rules §6.
+        List<ColonyPos> colonyChests = ColonyChests.ownFirst(colonyId, chest);
+
         int stored = 0;
         int asked = 0;
 
@@ -116,17 +139,22 @@ final class MinerHaul {
             // Ler ao contrário foi o defeito que este mineiro cometeu no
             // primeiro teste dele: todo pedregulho guardado virava uma
             // linha de "filled up" com o baú vazio ao lado.
-            int leftOver = ChestDepositor.deposit(
-                    world, chest, drop.getItem(), drop.getCount());
+            //
+            // E a lista inteira, não só o baú dele: é o E3 do lenhador,
+            // que atravessa os baús da colônia antes de desistir.
+            int leftOver = ColonyChests.deposit(
+                    world, colonyChests, drop.getItem(), drop.getCount());
 
             stored += drop.getCount() - leftOver;
 
             if (leftOver > 0) {
                 VillageColonyMod.LOGGER.warn(
-                        "Chest of miner at {} filled up — {} of {} lost",
+                        "Colony chests of miner at {} are full — {} of {} lost"
+                                + " ({} chests tried)",
                         chest,
                         leftOver,
-                        drop.getCount());
+                        drop.getCount(),
+                        colonyChests.size());
             }
 
             if (isAsked) {
