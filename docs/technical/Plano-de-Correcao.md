@@ -294,7 +294,7 @@ Depende de P0 verde.
 | **P1.10** | ✅ **feito em 2026-09-11.** `theNeighbourhoodDeadEndIsNotTheTunnelCursorsQuestion`: três recusas em posições **já cavadas** enchem o cubo em volta de uma fronteira **sem marca própria**. Duas asserções de montagem garantem que o cenário discrimina de verdade, e a mutação que o Verifier provou que passava pela bateria inteira agora derruba este teste e só ele |
 | **P1.11** | ⚠️ **medido em 2026-09-11, e é maior que esta linha.** A arena não é só rasa: ela vive em **y=-58..-52** (medido no log da bateria), o mundo acaba em -64, e **`MineShaft.DEEPEST = -59`** já proíbe aprofundar nessa faixa. Um nível custa 20 blocos, então a sala 2 cairia em **-76** — fora do mundo, não só fora da arena. E a altura da arena é do runner de gametest, que o mod não controla: não há `vmArg` nem configuração no `build.gradle`. **O caminho que resta** é um gancho de teste que encurte a descida entre níveis, no molde do `sandRadius` e do `searchRadius` que o projeto já tem — com 4 blocos por nível a sala 2 cai em -60 e cabe. Não é afrouxar limite para passar; é encurtar geometria para caber. Mas mexe no `MineShaft`, que é Core e governa a forma da mina inteira, então é trabalho próprio e não uma linha |
 | **P1.12** | ✅ **feito em 2026-09-11, com uma parte recusada.** `TestWorkers` dá os dois helpers com a diferença no nome, e um teste prova que ela é observável. Os 26 call-sites de mineiro e lenhador passaram a equipar — e a bateria seguiu verde, então **nenhum dependia da mão nua**. ❌ **A asserção defensiva no `assign()` não entra:** na produção o `assignMissing` roda antes do `equip`, no mesmo ciclo, então mão vazia ali é o desenho — recusá-la quebraria a contratação inteira |
-| **P1.13** | **E41: teste de degradação longa.** 200+ ciclos, amostra por ciclo, falha **por tendência** e não por valor absoluto. Precisa de fonte de trabalho infinita (`TestWorkSource`), senão mede "nothing to work on" — que é o P0.1 — e não degradação. O `chestScanCompleted` vem do P0.2: as frentes andam juntas |
+| **P1.13** | ✅ **entregue em 2026-09-11.** `ColonyEnduranceGameTest`: 200 ciclos, um por tique, pela costura do `runCycleNow` — 120.000 tiques não cabem num `tickLimit`, um ciclo síncrono por tique cabe. Amostra quatro contagens por ciclo e compara janela tardia com inicial, descontando 50 ciclos de aquecimento: falha por **tendência**, como o item pede. **A fonte de trabalho infinita é o baú vazio**, e não uma classe inventada — a colônia pede madeira todo ciclo e ninguém entrega. ⚠️ **A primeira versão passava com o `purgeClosed` desligado**: nenhuma tarefa chegava a `COMPLETED` naquele cenário, então não havia o que acumular. O caso só passou a medir depois que o teste fechou as tarefas distribuídas, fazendo o ciclo de vida girar |
 
 ---
 
@@ -479,7 +479,8 @@ mutação conferida; a coluna *em jogo* é a que a régua cobra.
 | **P1.4** | ⚠️ **parece vencido.** O guarda existe (`job.stall.stuck`, `TreeChoice.stallLimit`), o gancho de teste que o item manda criar já existe (`shortenStallLimitTo`) e o gametest ponta a ponta também (`LumberjackGameTest.theStallGuardReturnsTheTaskAndForgetsTheTree`) | — |
 | **P1.5** | ✅ **entregue em 2026-09-11** — a busca do fazendeiro alcançava 22 dos 32 blocos prometidos; agora atravessa passagens pelo `RingSweep`, distingue "não achei" de "não terminei" e descansa depois de uma volta inteira | ⬜ **espera sessão** |
 | P1.6 | ❌ já implementado — `INTERCHANGEABLE_IN_THE_WALL` | — |
-| P1.9, P1.13 | ⬜ | — |
+| **P1.13** | ✅ **2026-09-11** — 200 ciclos, falha por tendência; mutação conferida (desligar o `purgeClosed` derruba só ele) | ⬜ **espera sessão** |
+| P1.9 | ⬜ | — |
 | P1.7 | ❌ não se faz — ver acima | — |
 | P1.8 | ❌ não se faz — ver acima | — |
 | P1.10 | ✅ 2026-09-11 | — |
@@ -491,8 +492,8 @@ mutação conferida; a coluna *em jogo* é a que a régua cobra.
 **Bateria no fim do ciclo de 2026-09-11:** 753 unitários e 295 de gametest,
 zero falhas, medidos pelos XML de relatório e pelo `runGametest`.
 
-**Depois do P0.0, do que ele liberou, do P1.5 e do P2.1:** **772
-unitários e 298 de gametest**, zero falhas, com os XML mais novos que o fonte. Os dez
+**Depois do P0.0, do que ele liberou, do P1.5, do P2.1, do conserto do
+P0.3 e do P1.13:** **772 unitários e 299 de gametest**, zero falhas, com os XML mais novos que o fonte. Os dez
 unitários novos são `ChestSurveyCoverageTest` (5) e `RingSweepResumeTest`
 (5); os três de jogo são a prova da ruptura do P0.3, o transbordo do P0.5
 e a retomada da varredura do P1.5.
