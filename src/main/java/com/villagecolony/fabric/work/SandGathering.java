@@ -84,7 +84,7 @@ public final class SandGathering {
                 // e uma duna inalcançável tem exatamente a mesma forma de
                 // laço. Ver MineMarks.
                 column -> SandPatch.in(world, column, center.getY())
-                        .filter(sand -> !MineMarks.isOutOfReach(world, sand)));
+                        .filter(sand -> !MineMarks.isUnreachableAround(world, sand)));
 
         if (found.isEmpty()) {
             // Pelo IdleLog, e não direto no logger: uma varredura de raio

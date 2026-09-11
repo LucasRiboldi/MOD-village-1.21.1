@@ -317,6 +317,11 @@ public final class BuildSiteScanner {
 
             // Varredura nova: a ponta que a anterior anotou pode não
             // existir mais, e o mundo é a única fonte que continua certa.
+            //
+            // Só as pontas candidatas — 2026-09-10. Apagar aqui o trecho
+            // em crescimento era o ziguezague da rua: este método roda
+            // uma vez por ciclo, e matava a inércia de rumo antes de ela
+            // poder ser usada. Ver RoadExtension.forgetEnds.
             RoadExtension.forgetEnds(colonyId);
 
             // E o índice recomeça junto: o que a lapa anterior juntou
@@ -392,9 +397,10 @@ public final class BuildSiteScanner {
                         SweepLog.pass(colonyId, columns);
 
                         // Há lote: a rua não precisa crescer, e a ponta
-                        // anotada até aqui sai. A Regra 15 é o que fazer
-                        // quando NÃO há.
-                        RoadExtension.forgetEnds(colonyId);
+                        // anotada até aqui sai — junto com o trecho em
+                        // curso, que perdeu a razão de ser. A Regra 15 é
+                        // o que fazer quando NÃO há.
+                        RoadExtension.lotFound(colonyId);
 
                         return site;
                     }
@@ -545,7 +551,8 @@ public final class BuildSiteScanner {
             List<ColonyPos> plans) {
 
         // Volta nova, pontas novas: a mesma razão da varredura do
-        // quadrado, e o mesmo lugar onde a Regra 15 as recolhe.
+        // quadrado, e o mesmo lugar onde a Regra 15 as recolhe. O trecho
+        // em crescimento fica — ver RoadExtension.forgetEnds.
         RoadExtension.forgetEnds(colonyId);
 
         for (long column : roads.columns()) {
@@ -554,7 +561,7 @@ public final class BuildSiteScanner {
                     ColonyRoads.xOf(column), ColonyRoads.zOf(column), from.getY(), plans);
 
             if (site.isPresent()) {
-                RoadExtension.forgetEnds(colonyId);
+                RoadExtension.lotFound(colonyId);
 
                 return site;
             }

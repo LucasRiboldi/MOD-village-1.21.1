@@ -435,15 +435,34 @@ public class RoadExtensionGameTest implements FabricGameTest {
     }
 
     /**
-     * Varredura nova apaga a insistência.
+     * <b>Varredura nova NÃO apaga o rumo</b> — 2026-09-10, e este teste
+     * dizia o contrário até esta data.
      *
-     * <p>A autorização para a rua crescer é filha de uma varredura que
-     * terminou sem lote. Uma varredura nova refaz a pergunta, e a
-     * resposta velha sai junto — senão a colônia calçaria por causa de
-     * uma decisão que já não vale.
+     * <p>A regra antiga era <i>"uma varredura nova refaz a pergunta, e a
+     * resposta velha sai junto"</i>, e ela ia longe demais: a varredura
+     * recomeça <b>uma vez por ciclo</b>, então o trecho em crescimento
+     * era apagado antes de a passagem seguinte poder retomá-lo. O
+     * {@code GROWING} existia e quase nunca era usado.
+     *
+     * <p>O que se vê em jogo é a rua andando em ziguezague. A sessão de
+     * 2026-09-10 às 22:57 mediu: <b>quinze ciclos de
+     * {@code extended the road} contra três de {@code grew the road}</b>,
+     * com o rumo trocando quase todo ciclo — sul, norte, oeste, sul,
+     * leste —, porque cada passagem reescolhia a ponta do zero e o
+     * {@code openSideOf} devolve o primeiro lado aberto da ordem fixa de
+     * {@code Direction}. Quarenta e três blocos de calçamento em treze
+     * minutos, sem rumo, e foi a queixa de <i>"buracos sendo cavados em
+     * lugares aleatórios"</i>.
+     *
+     * <p><b>A garantia que a regra antiga protegia continua de pé</b>, e
+     * é o que a segunda metade deste teste afirma: a colônia não calça
+     * por causa de uma decisão que já não vale, porque quem revalida é o
+     * {@code keepGrowing} — ele assenta de verdade, e a ponta que parou
+     * de render sai na hora. E quando a varredura acha lote, aí sim o
+     * trecho perde a razão de ser: quem o encerra é o {@code lotFound}.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_extension")
-    public void aFreshSweepDropsTheGrowingEnd(TestContext context) {
+    public void aFreshSweepKeepsTheGrowingEnd(TestContext context) {
         UUID colony = UUID.randomUUID();
 
         strip(context);
@@ -470,8 +489,44 @@ public class RoadExtensionGameTest implements FabricGameTest {
                 SMALL_HOUSE);
 
         context.assertTrue(
+                RoadExtension.isGrowing(colony),
+                "a varredura nova apagou o rumo, e a rua volta a ziguezaguear");
+
+        context.complete();
+    }
+
+    /**
+     * E o lote encontrado encerra o trecho — a outra metade do antigo
+     * {@code forgetEnds}, e a que continua certa.
+     *
+     * <p>A Regra 15 manda a rua crescer <b>quando não há lote</b>.
+     * Havendo, o trecho em curso perde a razão de ser: insistir nele
+     * seria calçar por uma decisão que o mundo já desmentiu.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_extension")
+    public void aFoundLotEndsTheStretch(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        strip(context);
+
+        BuildSiteScanner.find(
+                context.getWorld(),
+                colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        RoadExtension.extend(context.getWorld(), colony, ResourceId.vanilla("dirt_path"));
+
+        context.assertTrue(
+                RoadExtension.isGrowing(colony),
+                "a montagem falhou: era para haver ponta em crescimento");
+
+        RoadExtension.lotFound(colony);
+
+        context.assertTrue(
                 !RoadExtension.isGrowing(colony),
-                "a varredura nova não apagou a insistência da anterior");
+                "achou lote e a colônia continuou calçando assim mesmo");
 
         context.complete();
     }

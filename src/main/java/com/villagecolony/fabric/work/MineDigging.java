@@ -264,7 +264,7 @@ public final class MineDigging {
                 // inteiro numa colônia sem boca de mina — mesmo alvo,
                 // mesma desistência, todo ciclo.
                 column -> StonePatch.in(world, column, center.getY())
-                        .filter(stone -> !MineMarks.isOutOfReach(world, stone)));
+                        .filter(stone -> !MineMarks.isUnreachableAround(world, stone)));
 
         if (found.isEmpty()) {
             IdleLog.record(
@@ -332,7 +332,8 @@ public final class MineDigging {
         // que já recusou noutra passagem, e é ele que este método serve.
         // Sem esta linha o laço voltaria pelo lado do minério, que é
         // justamente por onde ele voltou em 2026-09-03.
-        if (nowhereToStand(world, more.get()) || MineMarks.isOutOfReach(world, more.get())) {
+        if (nowhereToStand(world, more.get())
+                || MineMarks.isUnreachableAround(world, more.get())) {
             arm.veinExhausted();
 
             return Optional.empty();

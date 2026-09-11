@@ -304,6 +304,116 @@ alegação, não achado**, e o que o Verifier não conseguir reproduzir vai para
 
 ---
 
+## 📒 2026-09-10 — a rua ganha rumo, e o beco vira coisa da região
+
+**Os dois defeitos que a sessão das 22:57 mediu, consertados e liberados
+pelo `gauntlet-verifier` — PASS na iteração 1, `deep`, com recomendação
+`DELIVER`.** Nenhum dos dois foi visto em jogo.
+
+### A rua: o rumo tinha inércia, e ela estava desligada
+
+**O `GROWING` já existia desde 08-26 para isto**, e quase nunca era usado: o
+`forgetEnds` apagava o trecho em crescimento junto com as pontas candidatas, e
+a varredura o chama **uma vez por ciclo**. A inércia morria antes de a
+passagem seguinte poder retomá-la.
+
+O conserto separa as duas memórias. `forgetEnds` passa a limpar só as pontas;
+nasce `lotFound`, que limpa as duas e é chamado nos dois lugares em que a
+varredura **acha lote** — que é a única notícia capaz de dizer que a rua não
+precisa mais crescer. Quem encerra o trecho por esgotamento continua sendo o
+`keepGrowing`, pelas duas saídas que ele já tinha (`MAX_RUN` e ponta que parou
+de render).
+
+**Um gametest foi reescrito, e isso merece ser dito em voz alta.** O
+`aFreshSweepDropsTheGrowingEnd` fixava de propósito o comportamento antigo —
+*"uma varredura nova refaz a pergunta, e a resposta velha sai junto"*. Ele
+virou `aFreshSweepKeepsTheGrowingEnd`, e a garantia que ele protegia não foi
+abandonada: passou para o `aFoundLotEndsTheStretch`, novo. O Verifier atacou
+exatamente este ponto — *"isso é legítimo ou é apagar prova que me
+incomodava?"* — e quebrou os dois isoladamente para confirmar que cada um
+ainda mede o que promete.
+
+### O beco: a marca era do bloco, e o vão é da região
+
+`MineMarks` ganha `isInADeadEndAt` — **três recusas ainda de castigo num cubo
+de oito blocos** fecham a região, não só os blocos marcados. Três, e não duas,
+pela mesma razão que a segunda recusa vale mais que a primeira: duas vizinhas
+ainda podem ser azar de navegação.
+
+E `dug()` passa a limpar a vizinhança inteira. **Cavar prova por execução que
+o trecho é alcançável**, e isso vale mais que qualquer contagem de recusas —
+sem isso o beco seria de mão única: o jogador constrói a rampa, a primeira
+pedra volta a ser cavável, e as outras duas manteriam a região fechada.
+
+### A assimetria que o teste antigo pegou, e é a parte instrutiva
+
+**A primeira versão punha o beco em todos os quatro leitores, e o
+`theRefusedStoneIsNotTheFrontier` a reprovou.** Ele marca oito posições
+**consecutivas da ordem de cavar** de propósito — e elas cabem todas no mesmo
+cubo, então a região inteira fechava, o cursor não achava frente e o ramal
+morria.
+
+O erro era meu, não do teste. **O túnel já tem a sua defesa contra galeria
+inalcançável**, e é outra: a curva do `BLOCKED_BEFORE_TURNING`, que manda a
+mina *virar* em vez de marchar — a lição de 08-27. O beco existe para o caso
+que a curva não cobre: escolher alvo por **distância**, onde não há ordem
+nenhuma para marchar e a próxima pedra mais perto é outra atrás do mesmo vão.
+
+Então o beco é pergunta dos **três leitores de proximidade** — veia, pedra de
+superfície e areia, por `isUnreachableAround` — e não do cursor do túnel, que
+segue com `isOutOfReach`.
+
+### E o achado do Verifier contra mim, que é o mais valioso
+
+**A justificativa do escopo estava certa; o teste que eu citei como prova dela
+não a provava.** O `theRefusedStoneIsNotTheFrontier` recusa as oito posições
+*uma a uma*, então `isOutOfReach` sozinho já basta para o resultado que ele
+afirma — e o Verifier mediu: com a mutação aplicada no `MineFrontier`, a
+bateria inteira passa, **duas vezes**. Ele prova que a marca de bloco vale;
+não prova que a de região não deve valer ali.
+
+**O teste que fecharia o buraco não foi entregue, e a razão fica escrita.**
+Tentei três arranjos de `theNeighbourhoodDeadEndDoesNotCloseTheTunnelCursor` —
+uma posição sem marca própria dentro do cubo das recusadas — e nenhum mediu o
+que promete. O que aprendi no caminho, e vale para quem tentar de novo:
+
+- **O `frontierWhereRockBegins` só percorre `i < cut`**, isto é, o que já foi
+  cavado, procurando resto sólido lá dentro. Marcar a frente da galeria não
+  diz nada: ela nem chega a ser visitada.
+- **Posição que é ar não é fronteira candidata**, então recusas em posições
+  cavadas enchem o cubo sem mudar o que a marca de bloco faria — que era
+  exatamente a propriedade que eu queria.
+- **A ordem de cavar sobe em caracol**, e as posições 2 a 10 ficam todas a
+  dois blocos umas das outras. Medido com uma sonda descartável, porque eu
+  vinha supondo a geometria e supondo errado.
+
+O terceiro arranjo ainda falhou com a produção correta, e a essa altura eu
+estava iterando por tentativa em vez de por medida — que é a hora de parar. O
+teste foi revertido; **o buraco de cobertura segue aberto e está na lista de
+pendências**. A distinção de escopo em si é real: o Verifier a provou com um
+teste isolado próprio.
+
+### Verificação
+
+| o quê | resultado |
+|---|---|
+| `./gradlew build --rerun-tasks` | ✅ exit 0 |
+| Unitários (XML de `build/test-results`) | ✅ **747**, zero falhas (6 casos novos do beco) |
+| `./gradlew runGametest --rerun-tasks` | ✅ **All 285 required tests passed** (2 novos, na estrada) |
+| `gauntlet-verifier` | ✅ **PASS** na iteração 1, `deep`, `DELIVER` |
+| Mutação do escopo (`MineFrontier` → `isUnreachableAround`) | ⚠️ **não é pega pela bateria** — é o buraco aberto |
+| Mutação do beco (`isInADeadEndAt` → `false`) | ✅ 3 casos caem |
+| Mutação do `dug` (só a pedra) | ✅ 1 caso cai |
+
+**Fica aberto**, e os dois são do Verifier:
+
+| | o quê |
+|---|---|
+| 🟠 | **Nenhum teste pega a troca de escopo no `MineFrontier`.** Trocar `isOutOfReach` por `isUnreachableAround` lá passa pela bateria inteira — medido, duas vezes. O `theRefusedStoneIsNotTheFrontier` não serve porque recusa as oito posições uma a uma |
+| 🟡 | `regionRefusalsAt` varre o mapa de recusas linearmente, com saída barata só enquanto ele tiver menos de três entradas. O teto é 4.096, e não foi medido em jogo — medir antes de otimizar é o certo |
+
+---
+
 ## 🎮 Sessão de 2026-09-10, 22:57 — o E44 não voltou, e três defeitos novos
 
 **13 minutos**, jar conferido: `54138d70`, o do commit `a1ce82c` — **a primeira

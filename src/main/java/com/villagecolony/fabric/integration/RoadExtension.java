@@ -229,12 +229,43 @@ public final class RoadExtension {
         }
     }
 
-    /** Esquece as pontas desta colônia. A varredura recomeçou. */
+    /**
+     * Esquece as pontas candidatas desta colônia. A varredura recomeçou.
+     *
+     * <p><b>E não esquece o trecho em crescimento</b> — 2026-09-10. Isto
+     * era uma linha só, {@code GROWING.remove}, e ela desligava a
+     * inércia de rumo que o {@link #GROWING} existe para dar: a
+     * varredura chama este método toda vez que recomeça, uma vez por
+     * ciclo, então o trecho era apagado antes de a passagem seguinte
+     * poder retomá-lo.
+     *
+     * <p>O efeito em jogo é a rua andando em ziguezague. A sessão das
+     * 22:57 mediu: <b>quinze ciclos de {@code extended the road} contra
+     * três de {@code grew the road}</b>, com o rumo trocando quase todo
+     * ciclo — sul, norte, oeste, sul, leste — porque cada passagem
+     * reescolhia a ponta do zero e {@link #openSideOf} devolve o
+     * primeiro lado aberto da ordem fixa de {@code Direction}. Quarenta e
+     * três blocos de calçamento em treze minutos, sem rumo.
+     *
+     * <p><b>Quem encerra o trecho continua sendo quem deve:</b>
+     * {@link #keepGrowing} quando a ponta para de render ou chega ao
+     * {@link #MAX_RUN}, e {@link #lotFound} quando a varredura acha lote
+     * — que é a única notícia capaz de dizer que a rua não precisa mais
+     * crescer. Uma varredura que <i>recomeça</i> não é nenhuma das duas.
+     */
     public static void forgetEnds(UUID colonyId) {
         ENDS.remove(colonyId);
+    }
 
-        // A insistência é filha da varredura que terminou sem lote. Uma
-        // varredura nova refaz a pergunta, e a resposta velha sai junto.
+    /**
+     * A varredura achou lote: a rua não precisa mais crescer — 2026-09-10.
+     *
+     * <p>É a metade do antigo {@code forgetEnds} que continua certa. A
+     * Regra 15 manda a rua crescer <b>quando não há lote</b>; havendo,
+     * o trecho em curso perde a razão de ser e sai junto com as pontas.
+     */
+    public static void lotFound(UUID colonyId) {
+        ENDS.remove(colonyId);
         GROWING.remove(colonyId);
     }
 

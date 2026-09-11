@@ -146,4 +146,135 @@ class MineMarksTest {
 
         assertEquals(0, MineMarks.size(), "a marca vencida saiu do mapa");
     }
+
+    // ------------------------------------------------------------------
+    // O beco — 2026-09-10, sessão das 22:57.
+    //
+    // Pergunta dos TRÊS leitores de proximidade (veia, pedra de
+    // superfície, areia), e não do cursor do túnel: lá a defesa é a
+    // curva do BLOCKED_BEFORE_TURNING, e o beco a destruiria. Ver o
+    // javadoc de MineMarks.isInADeadEndAt.
+    //
+    // A escada de cima funcionou em jogo e não bastou: os alvos andavam
+    // 2423 → 2422 → 2421 sem repetir um único, e os oito mineiros
+    // paravam nos mesmos dois lugares, dois blocos abaixo do ponto de
+    // apoio com "unable to climb". A pedra nunca se repetia porque o
+    // cursor tinha pedra de sobra ATRÁS DO MESMO VÃO.
+    // ------------------------------------------------------------------
+
+    /** As três pedras do beco de -1424, na ordem em que a sessão as viu. */
+    private static final BlockPos FIRST_OF_THE_DEAD_END = new BlockPos(2423, 45, -1424);
+
+    private static final BlockPos SECOND_OF_THE_DEAD_END = new BlockPos(2422, 45, -1424);
+
+    private static final BlockPos THIRD_OF_THE_DEAD_END = new BlockPos(2421, 44, -1424);
+
+    /** E uma pedra do outro ramal, a vinte blocos. */
+    private static final BlockPos FAR_AWAY = new BlockPos(2442, 44, -1424);
+
+    private void refuseTheDeadEnd(long now) {
+        MineMarks.refuseAt(now, FIRST_OF_THE_DEAD_END);
+        MineMarks.refuseAt(now, SECOND_OF_THE_DEAD_END);
+        MineMarks.refuseAt(now, THIRD_OF_THE_DEAD_END);
+    }
+
+    /**
+     * <b>O caso da sessão.</b> Uma pedra nunca recusada, cercada de
+     * recusas, não deve ser servida: é o vão que é intransponível, e não
+     * cada bloco.
+     */
+    @Test
+    void aStoneInsideADeadEndIsSkippedEvenIfItNeverRefused() {
+        refuseTheDeadEnd(1000);
+
+        BlockPos neverRefused = new BlockPos(2420, 45, -1424);
+
+        assertFalse(
+                MineMarks.isInADeadEndAt(1000, FAR_AWAY),
+                "o outro ramal continua valendo");
+
+        assertTrue(
+                MineMarks.isInADeadEndAt(1000, neverRefused),
+                "a pedra atrás do mesmo vão não é servida");
+    }
+
+    /** Duas recusas vizinhas ainda são azar; três são padrão. */
+    @Test
+    void twoRefusalsNearbyAreNotYetADeadEnd() {
+        MineMarks.refuseAt(1000, FIRST_OF_THE_DEAD_END);
+        MineMarks.refuseAt(1000, SECOND_OF_THE_DEAD_END);
+
+        assertFalse(
+                MineMarks.isInADeadEndAt(1000, new BlockPos(2420, 45, -1424)),
+                "duas ainda podem ser dois alvos ruins");
+
+        MineMarks.refuseAt(1000, THIRD_OF_THE_DEAD_END);
+
+        assertTrue(
+                MineMarks.isInADeadEndAt(1000, new BlockPos(2420, 45, -1424)),
+                "a terceira faz padrão");
+    }
+
+    /** O beco é local: um ramal distante não paga pelo vão daqui. */
+    @Test
+    void aDeadEndDoesNotCloseTheWholeMine() {
+        refuseTheDeadEnd(1000);
+
+        assertFalse(
+                MineMarks.isInADeadEndAt(1000, FAR_AWAY),
+                "vinte blocos adiante é outro lugar");
+    }
+
+    /**
+     * <b>O beco não é eterno.</b> A entrada sobrevive ao castigo para
+     * carregar a contagem — ver isOutOfReachAt —, então contar entradas
+     * em vez de recusas vivas faria a região ressuscitar sozinha.
+     */
+    @Test
+    void aDeadEndOpensWhenItsRefusalsExpire() {
+        refuseTheDeadEnd(1000);
+
+        long afterTheFirstPunishment = 1000 + MineMarks.memoryFor(1);
+
+        assertFalse(
+                MineMarks.isInADeadEndAt(afterTheFirstPunishment, FIRST_OF_THE_DEAD_END),
+                "vencido o castigo das três, o beco abre");
+    }
+
+    /**
+     * <b>E a picareta desfaz o beco na hora.</b> Cavar aqui prova por
+     * execução que o trecho é alcançável, e isso vale mais que qualquer
+     * previsão: é assim que "o jogador constrói a rampa e o mod muda de
+     * ideia" se cumpre para a região.
+     */
+    @Test
+    void diggingInsideTheDeadEndOpensTheWholeNeighbourhood() {
+        refuseTheDeadEnd(1000);
+
+        MineMarks.dug(SECOND_OF_THE_DEAD_END);
+
+        assertFalse(
+                MineMarks.isOutOfReachAt(1000, FIRST_OF_THE_DEAD_END),
+                "a vizinha sai do castigo junto");
+
+        assertFalse(
+                MineMarks.isOutOfReachAt(1000, THIRD_OF_THE_DEAD_END),
+                "e a outra também");
+
+        assertFalse(
+                MineMarks.isInADeadEndAt(1000, FIRST_OF_THE_DEAD_END),
+                "e o beco deixa de existir");
+    }
+
+    /** Cavar longe não abre o beco: a prova é local, como o beco. */
+    @Test
+    void diggingFarAwayLeavesTheDeadEndClosed() {
+        refuseTheDeadEnd(1000);
+
+        MineMarks.dug(FAR_AWAY);
+
+        assertTrue(
+                MineMarks.isInADeadEndAt(1000, FIRST_OF_THE_DEAD_END),
+                "o beco continua fechado");
+    }
 }
