@@ -17,12 +17,15 @@ import com.villagecolony.fabric.integration.CraftingLookup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Item;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -187,6 +190,13 @@ public final class SmelterWork {
             return false;
         }
 
+        // Os baús vistos, e não os trabalhadores percorridos: dois
+        // aldeões podem dividir baú, e contar o laço diria "procurei em
+        // 6" sobre três baús. O número existe para ser confrontado com o
+        // que a varredura da colônia relata, e um número inflado não
+        // confronta nada.
+        Set<ColonyPos> searched = new LinkedHashSet<>();
+
         for (Worker worker : VillageColonyMod.WORKERS.ofColony(job.task.colonyId())) {
             Optional<WorkerStorage> owned = VillageColonyMod.STORAGES.of(worker.villagerId());
 
@@ -195,6 +205,10 @@ public final class SmelterWork {
             }
 
             ColonyPos chest = owned.get().chestPosition();
+
+            if (!searched.add(chest)) {
+                continue;
+            }
 
             for (Item raw : raws) {
                 if (ChestWithdrawer.withdraw(world, chest, raw, 1) == 0) {
@@ -205,9 +219,42 @@ public final class SmelterWork {
             }
         }
 
-        finish(job, workerId, "nothing in the colony chests to smelt");
+        // <b>O motivo passa a dizer o que ele mediu</b> — P0.3, 2026-09-11.
+        // A frase era só "nothing in the colony chests to smelt", e com
+        // ela "não há baú nenhum registrado", "há seis e estão vazios" e
+        // "há seis e nenhum tem ferro cru" saíam idênticas. Na sessão de
+        // 09-04 ela saiu 34 vezes e não disse qual das três era.
+        //
+        // Nenhum baú é caso à parte, e de propósito: essa é a única das
+        // três em que o fundidor não é o assunto.
+        String looked = searched.isEmpty()
+                ? "no colony chest to look in"
+                : "none of " + searched.size() + " colony chests had "
+                        + names(raws) + " to smelt";
+
+        finish(job, workerId, looked);
 
         return false;
+    }
+
+    /**
+     * Os nomes dos itens crus, para o motivo de falha dizer o que faltou.
+     *
+     * <p>Os nomes do jogo, e não os do mod: quem lê o log procura o item
+     * no baú, e o baú fala {@code minecraft:raw_iron}.
+     */
+    private static String names(List<Item> raws) {
+        StringBuilder names = new StringBuilder();
+
+        for (Item raw : raws) {
+            if (names.length() > 0) {
+                names.append(" or ");
+            }
+
+            names.append(Registries.ITEM.getId(raw));
+        }
+
+        return names.toString();
     }
 
     /** Põe a peça fundida de volta no baú de onde a crua saiu. */
