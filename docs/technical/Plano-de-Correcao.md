@@ -128,7 +128,7 @@ Depende de P0 verde.
 | **P1.5** | **Agricultor: busca progressiva + cooldown.** Não 32 → 64 direto: 0–16 → 16–32 → 32–48 → ocioso. Procurou, nada, cooldown, comportamento secundário |
 | **P1.6** | **Aceitar espécies misturadas na casa.** Identidade de material vira **preferência**, não barreira |
 | **P1.7** | **Reserva de tora por espécie.** `WOOD → { OAK, SPRUCE, BIRCH, CHERRY }` com contagens separadas. Cem de cerejeira não satisfazem "Oak Log × 20" |
-| **P1.8** | **Remover `furniture()` do `BlueprintBlock`** — campo morto desde a morte da Regra 21 |
+| ~~**P1.8**~~ | ❌ **NÃO SE FAZ — o campo não está morto.** Conferido em 2026-09-11: `furniture()` é o **primeiro critério de ordenação** da obra em `StructureBlueprintReader`, e o javadoc de lá diz por quê — *"a ordem de baixo para cima garante o que está embaixo, e mobília depende do que está ao lado; só a casa inteira responde isso"*. Removê-lo faria a cama e a mesa serem assentadas junto com a parede. A premissa do item era que a morte da Regra 21 o tinha deixado sem dono; ele mudou de dono, e o dono novo é a ordem de construção |
 | **P1.9** | **Regra 25: não mexer agora.** Só ganha sentido com múltiplas plantas, depois da §3.6 |
 | **P1.10** | **`MineFrontier`: teste que diferencia `isOutOfReach` de `isUnreachableAround`.** O `theRefusedStoneIsNotTheFrontier` não serve — recusa as oito posições uma a uma. Construir posição que **não** está fora de alcance dentro de região que é |
 | **P1.11** | **GameTest: criar a segunda sala.** A arena assenta em bedrock `y=-64` e a segunda sala cairia em `y=-76`, fora do limite. Atravessar os ramais de verdade: poço → ramal A/B/C → sala 2. **Não** substituir por unitário equivalente |

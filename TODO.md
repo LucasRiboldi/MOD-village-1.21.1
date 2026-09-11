@@ -4604,7 +4604,7 @@ comércio entre vilas.
 | 🔴 | **Regra 28 vs ADR-009 §3.6.** A barreira é o remendo do problema que a ADR quer resolver: ela esconde o travamento em vez de a vila mudar de objetivo |
 | ✅ | ~~**`ChestWithdrawer.takeGroup` ainda usa grupo como equivalência.**~~ **Linha vencida, medida em 2026-09-09 à noite: o método não existe.** `grep -rn takeGroup src/` devolve zero. O que existe hoje é `withdrawGroup`, e a contradição que esta linha registrava morreu com o método. Terceira linha desta lista a ser derrubada por leitura em vez de conserto — ver a tarde do mesmo dia |
 | 🟠 | **Regra 25 inerte** enquanto a 28 valer: "a maior planta que couber" precisa de mais de uma planta |
-| 🟠 | **`furniture()` do `BlueprintBlock` sem dono** desde a morte da Regra 21 |
+| ✅ | ~~**`furniture()` do `BlueprintBlock` sem dono** desde a morte da Regra 21~~ — **linha vencida, medida em 2026-09-11.** Ele tem dono: é o primeiro critério de ordenação da obra no `StructureBlueprintReader`, e é o que põe mobília depois da casa inteira. Quarta linha desta lista derrubada por leitura em vez de conserto |
 | ✅ | **ADR-009 §17 (população por capacidade) vs o vanilla — resolvida por decisão em 08-26.** O jogo controla o *breeding* e o mod não tem como segurá-lo. A §17 **não cabe**, e fica registrada como ideia recusada em vez de pendência aberta |
 | ✅ | **ADR-009 §14 vs Regra 27 — resolvida.** O propósito da estrutura sai do nome, e o catálogo do jogo já os tem. Nenhuma contradição |
 
