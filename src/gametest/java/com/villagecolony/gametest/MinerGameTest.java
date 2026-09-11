@@ -768,6 +768,34 @@ public class MinerGameTest implements FabricGameTest {
         // superfície da sessão, em escala de arena.
         context.setBlockState(PERCH.down(), Blocks.DIRT.getDefaultState());
 
+        // <b>E um parapeito em volta dele</b> — 2026-09-11, e ele é a
+        // correção de uma instabilidade medida, não enfeite.
+        //
+        // O poleiro era <b>um bloco só</b>, seis no ar. O aldeão nasce em
+        // cima dele e a IA dele mexe — olhar em volta, ajustar a posição
+        // — antes de a primeira ordem chegar. Um passo para qualquer lado
+        // que não a escada e ele <b>cai</b>, e cai para fora da estrutura,
+        // no terreno natural do mundo de teste, que a arena não controla.
+        // Daí ele não volta, e o caso falhava dizendo apenas que a pedra
+        // não saiu do mundo.
+        //
+        // A medição que fechou o diagnóstico: quando dá certo, a pedra cai
+        // no <b>tique 45</b> de uma janela de 320 — margem de sete vezes,
+        // com travamento, imobilidade e deriva todos em zero. Não era
+        // lentidão; era ele não chegar a trabalhar.
+        //
+        // O parapeito fecha os três lados que não levam a lugar nenhum e
+        // deixa o leste aberto, que é por onde a escada desce. A prova
+        // continua inteira: ele ainda precisa <b>descer</b> para alcançar
+        // a pedra, que é a única coisa que este caso afirma.
+        for (Direction side : Direction.Type.HORIZONTAL) {
+            if (side == Direction.EAST) {
+                continue;
+            }
+
+            context.setBlockState(PERCH.offset(side), Blocks.DIRT.getDefaultState());
+        }
+
 
         // E a escada que desce dele até o chão, um bloco por degrau. Ela
         // existe para que a versão certa TENHA como descer: um teste que
@@ -824,19 +852,45 @@ public class MinerGameTest implements FabricGameTest {
         // ela estiver de pé, e escrita uma vez só.
         int[] whenBroken = { -1 };
 
+        // <b>O que este caso via quando falhava: nada</b> — 2026-09-11. Ele
+        // dizia "não chegou nela de jeito nenhum" e mais nada, e com isso
+        // "o mineiro não recebeu alvo", "recebeu e não achou caminho" e
+        // "desceu e a picareta foi lenta" saíam com a mesma frase. É o §11
+        // cobrado num teste em vez de em produção: trabalho mudo não se
+        // diagnostica, e teste mudo menos ainda.
+        int[] closest = { Integer.MAX_VALUE };
+        int[] lowest = { Integer.MAX_VALUE };
+        int[] tick = { 0 };
+
         context.runAtEveryTick(() -> {
+            tick[0]++;
+
+            BlockPos at = villager.getBlockPos();
+
+            closest[0] = Math.min(
+                    closest[0], (int) Math.sqrt(at.getSquaredDistance(stone)));
+            lowest[0] = Math.min(lowest[0], at.getY());
+
             if (whenBroken[0] >= 0 || context.getBlockState(target).isOf(rock)) {
                 return;
             }
 
-            whenBroken[0] = (int) Math.sqrt(villager.getBlockPos().getSquaredDistance(stone));
+            whenBroken[0] = (int) Math.sqrt(at.getSquaredDistance(stone));
         });
 
         context.runAtTick(320, () -> {
             try {
                 context.assertTrue(
                         whenBroken[0] >= 0,
-                        "a pedra não saiu do mundo — o mineiro não chegou nela de jeito nenhum");
+                        "a pedra não saiu do mundo — chegou a "
+                                + closest[0] + " blocos dela, desceu até y=" + lowest[0]
+                                + " (a pedra está em y=" + stone.getY()
+                                + ", o poleiro em y=" + context.getAbsolutePos(PERCH).getY()
+                                + "); alvo=" + MinerWork.targetOf(villager.getUuid())
+                                + " travamento=" + MinerWork.stallOf(villager.getUuid())
+                                + " imobilidade=" + MinerWork.stillnessOf(villager.getUuid())
+                                + " deriva=" + MinerWork.adriftOf(villager.getUuid())
+                                + " trabalhos abertos=" + MinerWork.activeJobs());
 
                 context.assertTrue(
                         whenBroken[0] <= ARM_REACH,
