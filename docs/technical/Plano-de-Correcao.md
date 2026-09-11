@@ -207,7 +207,9 @@ mutação conferida; a coluna *em jogo* é a que a régua cobra.
 
 | item | estado | em jogo |
 |---|---|---|
-| P0.1 | ✅ entregue em 2026-09-11 — o índice de ruas voltou a valer para vila grande | ❌ |
+| P0.1 | ✅ entregue em 2026-09-11 — o índice de ruas voltou a valer para vila grande | ✅ **visto na sessão de 02:03**: a colônia planejou o açougue e abriu a obra |
+| **P0.1-b** | ✅ **o caminho de terra não sai de baú.** A obra do P0.1 abriu e travou em `waiting for minecraft:dirt_path`, 30 vezes — o bloco não tem item, nasce de pá na grama. Uma linha no `isShapedFromTheGround`, que já cobria `farmland` e `water` pelo mesmo motivo | ❌ |
+| **P0.6** | 🔴 **novo, e é bloqueador de diagnóstico:** a busca de areia oscila entre *"ainda varrendo"* e *"varri tudo"* a cada passagem, e o `IdleLog` registra as duas. **4.389 linhas de 6.117 na sessão de 02:03** — 72% do log. A próxima sessão fica cega | — |
 | P0.2 | ⬜ | — |
 | P0.3 | ⬜ | — |
 | P0.4 | ⬜ | — |

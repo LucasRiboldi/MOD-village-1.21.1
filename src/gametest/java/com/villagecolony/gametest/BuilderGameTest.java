@@ -574,6 +574,46 @@ public class BuilderGameTest implements FabricGameTest {
     }
 
     /**
+     * <b>E o caminho de terra também é batido, não carregado</b> —
+     * 2026-09-11, e este é o defeito que impediu a casa de subir em jogo.
+     *
+     * <p>O {@code dirt_path} <b>não está</b> na {@code BlockTags.DIRT} e
+     * por isso escapava da regra irmã abaixo. No jogo ele nasce de uma pá
+     * batendo na grama e, quebrado, devolve terra — <b>não existe item
+     * dele</b>, então a obra que o pedia esperava para sempre.
+     *
+     * <p>A sessão de 2026-09-11 às 02:03 mediu, e foi a queixa do autor
+     * de não ver casa nenhuma: o planejador achou lote e abriu o açougue
+     * — o que o conserto do índice de ruas tinha acabado de destravar —,
+     * o construtor chegou a {@code BUILDING}, e parou <b>trinta vezes</b>
+     * em {@code waiting for minecraft:dirt_path}.
+     *
+     * <p>O baú entra <b>vazio</b> pelo mesmo motivo do irmão: é o que
+     * separa "assentou porque tinha material" de "assentou porque não
+     * precisa de material".
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_ground",
+            tickLimit = 400)
+    public void theDirtPathIsBeatenWithoutTheChest(TestContext context) {
+        Fixture fixture = setUp(context, 0, path(), 2);
+
+        context.runAtTick(200, () -> {
+            try {
+                context.assertTrue(
+                        stateAt(context, SITE).isOf(Blocks.DIRT_PATH),
+                        "o caminho não foi assentado: ficou "
+                                + stateAt(context, SITE).getBlock()
+                                + " — a obra está esperando um item que não existe,"
+                                + " e a casa não sobe");
+            } finally {
+                fixture.owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
      * <b>A roça é cavada, não carregada</b> — 2026-09-05.
      *
      * <p>Terra, terra arada e água não saem de baú: {@code farmland} não
@@ -683,6 +723,14 @@ public class BuilderGameTest implements FabricGameTest {
                 new BlueprintBlock(
                         new ColonyPos(0, 0, 0),
                         MinecraftTypeAdapter.toResourceId(Blocks.FARMLAND))));
+    }
+
+    /** Um bloco de caminho de terra — a peça que travou a casa em jogo. */
+    private static Blueprint path() {
+        return Blueprint.of(HUT, List.of(
+                new BlueprintBlock(
+                        new ColonyPos(0, 0, 0),
+                        MinecraftTypeAdapter.toResourceId(Blocks.DIRT_PATH))));
     }
 
     /** Uma porta, uma entrada — como o projeto passou a guardá-la. */

@@ -660,14 +660,32 @@ public final class BuilderWork {
     /**
      * Se este bloco a colônia molda do chão em vez de tirar do baú.
      *
-     * <p>Três famílias, e as três pela mesma razão: nenhuma delas chega
-     * ao baú de um trabalhador. {@code BlockTags.DIRT} cobre terra,
+     * <p>Quatro famílias, e as quatro pela mesma razão: nenhuma delas
+     * chega ao baú de um trabalhador. {@code BlockTags.DIRT} cobre terra,
      * grama, terra grossa e barro sem nomeá-los.
+     *
+     * <p><b>E o caminho de terra é a quarta</b> — 2026-09-11, visto em
+     * jogo. O {@code dirt_path} <b>não está</b> na
+     * {@code BlockTags.DIRT}, e por isso escapava das três: a obra pedia
+     * o item, o item não existe — no jogo ele nasce de uma pá batendo na
+     * grama, e quebrado devolve terra —, e a casa esperava por ele para
+     * sempre.
+     *
+     * <p>Foi o que a sessão de 2026-09-11 às 02:03 mediu, e é a queixa do
+     * autor de não ver casa nenhuma subir: o planejador achou lote e
+     * abriu a obra do açougue — o que o conserto do índice de ruas
+     * destravou —, o construtor chegou a {@code BUILDING}, e então parou
+     * <b>trinta vezes</b> em {@code waiting for minecraft:dirt_path}.
+     *
+     * <p>É o mesmo defeito do {@code farmland} e do {@code water} de
+     * 09-04, num bloco que ninguém tinha visto ainda. E o mod já sabia
+     * assentá-lo sem item: é o que a Regra 15 faz quando calça a rua.
      */
     private static boolean isShapedFromTheGround(BlockState state) {
         return state.isIn(BlockTags.DIRT)
                 || state.isOf(Blocks.FARMLAND)
-                || state.isOf(Blocks.WATER);
+                || state.isOf(Blocks.WATER)
+                || state.isOf(Blocks.DIRT_PATH);
     }
 
     private static Optional<Item> takeMaterial(

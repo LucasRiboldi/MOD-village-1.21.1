@@ -311,6 +311,69 @@ alegação, não achado**, e o que o Verifier não conseguir reproduzir vai para
 
 ---
 
+## 🎮 Sessão de 2026-09-11, 02:03 — a casa abre e para no caminho de terra
+
+**Jar conferido:** `3696e49c`, o do commit `2dc1e0c`. Zero exceções do mod.
+
+### ✅ O P0.1 funcionou, e a prova é a obra ter aberto
+
+**A colônia achou lote, planejou e abriu obra** — coisa que nenhuma sessão
+anterior conseguiu:
+
+```text
+planned minecraft:village/plains/houses/plains_butcher_shop_
+... opened a build task — N blocks left
+builders: N working, BUILDING at ColonyPos[...]
+```
+
+O índice de ruas voltou a valer, e o planejador voltou a achar lote. **É o
+primeiro veredito em jogo de um item do plano.**
+
+### 🔴 E aí a casa parou no caminho de terra
+
+**A queixa do autor foi *"não vi construção de casas"*.** A obra abriu e
+travou: `Builder stopped — no minecraft:dirt_path in the colony chests`, **31
+vezes**, com a obra em `WAITING_RESOURCES ... waiting for
+minecraft:dirt_path` outras 30.
+
+**O `dirt_path` não tem item.** No jogo ele nasce de uma pá batendo na grama,
+e quebrado devolve terra — nenhum baú vai ter um. A obra esperava por ele para
+sempre.
+
+**É o mesmo defeito do `farmland` e do `water` de 09-04**, num bloco que
+ninguém tinha visto. O `isShapedFromTheGround` já era a resposta certa e cobria
+três famílias; o `dirt_path` escapava porque **não está na
+`BlockTags.DIRT`**. O conserto é uma linha, e o mod já sabia assentá-lo sem
+item — é o que a Regra 15 faz quando calça a rua.
+
+Medido: com a linha removida, o `theDirtPathIsBeatenWithoutTheChest` cai, e é o
+único.
+
+### 🔴 E a areia inunda o log: 4.389 linhas de 6.117
+
+O achado que a sessão deu de brinde, e ele é grave:
+
+```text
+2195  no miner sand work: still sweeping — the budget ran out before an answer
+2194  no miner sand work: nothing to work on in the whole radius
+```
+
+**Elas se alternam.** O `IdleLog` só registra quando o motivo **muda** — e o
+motivo muda a cada passagem, porque a busca de areia oscila entre *"ainda
+varrendo"* e *"varri tudo"*. Duas linhas por ciclo, para sempre.
+
+**72% do log é isso.** Um log assim não serve para diagnosticar mais nada, e é
+por isso que entra como bloqueador: a próxima sessão fica cega.
+
+Não foi investigado ainda. A suspeita é o mesmo desenho de cursor que o
+`BuildSiteScanner` tem, sem a guarda que impede o oscilador.
+
+### 🟠 E o ciclo piorou de novo
+
+`Colony cycle took 122 ms`, contra 112 ms na sessão anterior e o limite de 50.
+
+---
+
 ## 🎮 Sessão de 2026-09-11, 00:04 — o nome mente, e a curva nunca virou
 
 **13 minutos**, jar conferido: `512f0b3a`, o do commit `4b2e9a2`. Zero exceções
