@@ -342,8 +342,8 @@ Só otimizar de verdade se passar de 100 ms ou o TPS cair.
 
 | | o quê |
 |---|---|
-| **P3.1** | Extrair `VillagerMigration`, `VillagerDataVersion` e `ColonyMigrationStats`. Comando `/colony debug migration [summary\|reset\|inspect\|migrate <radius>]` e `/colony debug chest scan` |
-| **P3.2** | Teste de migração com NBT sintético: sem profissão + POI perto → `MANUFACTURER`; sem POI + `LastProfession` → usa a última; sem nada → `ColonyNeedsRehire`; já migrado → não toca; `DataVersion` gravada de volta. `PoiLookup` injetável |
+| ~~**P3.1**~~ | ❌ **NÃO SE FAZ — não há o que extrair, e o comando não tem para onde ir.** Conferido em 2026-09-11: não existem `VillagerMigration`, `VillagerDataVersion`, `ColonyMigrationStats`, `LastProfession` nem `ColonyNeedsRehire` no projeto. "Extrair" pressupõe código que nunca foi escrito — seria construir do zero. E **o mod não registra comando nenhum**: não há `CommandRegistrationCallback` em lugar algum, então `/colony debug ...` é infraestrutura inteira por fora do item. O `/colony debug chest scan` ainda era do P0.2, que está vencido |
+| ~~**P3.2**~~ | ❌ **NÃO SE FAZ — ele contradiz uma decisão posterior, e mira uma profissão que não existe mais.** O `MANUFACTURER` foi **dividido** em `CARPENTER` e `MASON` em 2026-09-10, então a regra *"sem profissão + POI perto → MANUFACTURER"* não tem alvo. E a política de save antigo já foi decidida no mesmo dia, no javadoc do `CARPENTER`: *"**Save antigo não quebra.** `ColonySavedData` devolve `null` para profissão que não reconhece, e o aldeão é recontratado no ciclo seguinte... **Perde-se a atribuição, não o mundo**"*. **As duas metades já têm teste** — `ColonySavedDataTest.unknownProfessionFallsBackToNone`, cujo cabeçalho é *"enum removido do código não pode impedir de abrir o mundo"*, e os 14 casos do `ProfessionAssignerTest` para a recontratação, que roda no ciclo pelo `assignMissing`. Construir a migração agora acrescentaria `DataVersion` e `LastProfession` ao formato de save para preservar uma atribuição que o projeto decidiu soltar, e obrigaria a **apagar** o teste que prova a decisão. O próprio plano já o rebaixou na lista "Baixo": *"só com bug report real"* |
 | **P3.3** | Rodar o `gauntlet-verifier` depois de P0 e de P1 |
 
 ---
@@ -446,12 +446,27 @@ lição não é sobre estes dois itens: é que **sintoma de log envelhece mais
 devagar do que o código que o produz**, e uma lista feita de sintomas
 precisa ser relida contra o código antes de virar trabalho.
 
-**O que a varredura não fez:** os P1 não foram varridos item a item. Eles
-dependem de P0 verde, e P0 verde ainda depende da sessão de jogo que o
-P0.1-c e o P0.6 esperam. O P1.6 apareceu de passagem e está implementado
-(`INTERCHANGEABLE_IN_THE_WALL`), como o próprio texto do P1.7 já dizia; o
-P1.5 continua de pé (raio fixo de 32 no `FarmerWork`, sem busca
-progressiva).
+**A varredura foi até o fim em 2026-09-11**, depois que o P0 fechou. O
+placar final dela, somando P0, P1, P2 e P3:
+
+| | confirmados e entregues | vencidos |
+|---|---|---|
+| **P0** | P0.3, P0.5 | P0.2 (premissa), P0.4 |
+| **P1** | P1.5, P1.11, P1.13 | P1.1, P1.2, P1.4, P1.6, P1.7, P1.8 |
+| **P2** | P2.1 (instrumentado) | — |
+| **P3** | — | P3.1, P3.2 |
+
+**Doze itens vencidos contra sete entregues.** Não é um plano ruim: é um
+plano escrito a partir de sintomas, e sintoma de log envelhece mais
+devagar do que o código que o produz. Três deles foram derrubados por
+decisões tomadas <b>depois</b> de o plano ser escrito — a escada do
+`TreeMarks` em 09-09, a ADR-010 em 09-02 e a divisão do `MANUFACTURER` em
+09-10 —, e um, o P3.2, pedia para desfazer a decisão de 09-10 e apagar o
+teste que a prova.
+
+**A lição, e ela vale mais que os itens:** lista feita de sintomas precisa
+ser relida contra o código antes de virar trabalho. Cada um dos doze
+custaria dias, e dois deles — P0.2 e P3.2 — teriam piorado o mod.
 
 ---
 
@@ -473,10 +488,10 @@ mutação conferida; a coluna *em jogo* é a que a régua cobra.
 | P0.3 | ✅ **fechado em 2026-09-11.** A ruptura era estática — o baú da boca da mina não é `WorkerStorage` de ninguém — e o conserto foi do lado de quem lê: o `ColonyChests` virou a única resposta a "onde estão os baús desta colônia", e os três que montavam a própria lista passaram a perguntar a ele | ⬜ **espera sessão** |
 | ~~P0.4~~ | ❌ **vencido** — a escada 6.000→48.000 que o item pede entrou em 2026-09-09 e o `TODO.md` diz que funciona. O que sobrava, "por trabalhador", pioraria o sintoma | — |
 | P0.5 | ✅ **entregue em 2026-09-11** — o transbordo do mineiro atravessa os baús da colônia em vez de ser destruído. Era a única das cinco que ainda descrevia defeito vivo | ⬜ **espera sessão** |
-| **P1.1** | ⚠️ **parece vencido — a §3.6 está no código.** `giveUp` faz `task.release()` com motivo explícito → cooldown na posição (`MineMarks.refuse`) → `stepAside` → `WorkerStrikes.gaveUp` → `Worker.rest(capability)`, e **as sete profissões passam pela mesma porta**. Falta a leitura cláusula a cláusula antes de riscar | — |
-| **P1.2** | ⚠️ **parece vencido.** `Worker.REST_CYCLES = 4`, e o E43 está citado nominalmente: o descanso curto demais foi resolvido com `SHUN_CYCLES = 8` e escada até ×8. A pergunta que o item mandava documentar, o código respondeu | — |
-| **P1.3** | ⬜ **precisa de leitura própria.** A desistência por distância existe (`"it got no closer than"`, `"it walked for"`) e o prazo de aproximação mudou em 09-11; *"estado explícito de perdido"* é outra coisa | — |
-| **P1.4** | ⚠️ **parece vencido.** O guarda existe (`job.stall.stuck`, `TreeChoice.stallLimit`), o gancho de teste que o item manda criar já existe (`shortenStallLimitTo`) e o gametest ponta a ponta também (`LumberjackGameTest.theStallGuardReturnsTheTaskAndForgetsTheTree`) | — |
+| ~~**P1.1**~~ | ❌ **VENCIDO — lido cláusula a cláusula em 2026-09-11.** *Abandonar tarefa que não progride*: os guardas de travamento e imobilidade, em todas as sete. *Motivo de falha explícito*: `giveUp(…, why)`. *Cooldown*: `MineMarks.refuse` na posição e `Worker.rest(capability)` no ofício. *Outra tarefa*: `task.release()` devolve à fila e o descanso desempata a passagem seguinte. *Voltar depois*: o prazo expira. E **as sete profissões passam pela mesma porta**, `WorkerStrikes.gaveUp` — Builder, Crafting, Farmer, Miner, Shepherd e TreeChoice. A última cláusula, *"a Regra 28 vira diagnóstico, não inteligência definitiva"*, foi cumprida em **2026-08-21**: o javadoc do `TestBarrier` já a declara provisória, diz que *"a razão dela caducou"* e que *"ela deixa de ser silenciosa: cada peça riscada sai como WARN"* | — |
+| ~~**P1.2**~~ | ❌ **VENCIDO.** `Worker.REST_CYCLES = 4` é o descanso que o item pede, e o E43 está citado nominalmente ao lado dele. **A pergunta que o item mandava documentar já tem resposta escrita**, e ela é a segunda das duas: *"curto demais e ele volta antes de a colônia ter mudado de estado; era esse o defeito do descanso, que numa colônia de uma tarefa só não dura um ciclo (E43)"* — daí `SHUN_CYCLES = 8` com escada até ×8. O item pedia a nota no `WorkStall` e ela ficou no `Worker`, que é onde a constante mora; mudar de arquivo não é trabalho de plano | — |
+| **P1.3** | ⚠️ **decidido por implementação, e o resto é de jogo.** O próprio item oferecia dois caminhos — *"caminhar em linha reta aceitando trecho não navegável, ou devolver a tarefa e deixar a rotina Vanilla trazê-lo"* — e **o segundo está feito**: `giveUp` por distância (`"it got no closer than"`, `"it walked for"`), `task.release()`, `MineMarks.refuse` dando prazo àquela posição e `MineDigging.couldNotReach` devolvendo-a ao cursor. O prazo de aproximação foi afinado em 2026-09-11. O *"estado explícito de perdido"* só acrescentaria um nome ao que já acontece. ⬜ **O que falta é a outra metade, e ela é de sessão:** se a rotina Vanilla de fato traz de volta o mineiro que já está longe | ⬜ **espera sessão** |
+| ~~**P1.4**~~ | ❌ **VENCIDO — as três cláusulas estão cumpridas.** *Consertar o travamento*: `job.stall.stuck` e `TreeChoice.stallLimit`, e o lenhador passa pela mesma porta das outras seis. *Criar gancho equivalente ao `shortenStallLimitTo`*: ele **é** o `shortenStallLimitTo`, e já existe. *GameTest ponta a ponta — força stall, abandona, entra em cooldown, escolhe outro objetivo*: `LumberjackGameTest.theStallGuardReturnsTheTaskAndForgetsTheTree`, e o javadoc dele nomeia as duas metades, incluindo a que importa — sem esquecer a árvore, *"a busca reescolhe a mesma no ciclo seguinte e o lenhador seguinte trava no mesmo lugar"* | — |
 | **P1.5** | ✅ **entregue em 2026-09-11** — a busca do fazendeiro alcançava 22 dos 32 blocos prometidos; agora atravessa passagens pelo `RingSweep`, distingue "não achei" de "não terminei" e descansa depois de uma volta inteira | ⬜ **espera sessão** |
 | P1.6 | ❌ já implementado — `INTERCHANGEABLE_IN_THE_WALL` | — |
 | **P1.13** | ✅ **2026-09-11** — 200 ciclos, falha por tendência; mutação conferida (desligar o `purgeClosed` derruba só ele) | ⬜ **espera sessão** |
@@ -487,7 +502,8 @@ mutação conferida; a coluna *em jogo* é a que a régua cobra.
 | P1.11 | ✅ **2026-09-11** — a segunda sala provada em unitário; o gancho na hélice foi medido e recusado (52 usos de `CARVED`). A lacuna era o x/z do nível de baixo, que ninguém prendia | — |
 | P1.12 | ✅ 2026-09-11, com a asserção defensiva recusada | — |
 | P2.1 | ✅ **instrumentado em 2026-09-11** — o aviso de ciclo lento reparte por fase, da mais cara para a mais barata, e acusa quando ele próprio se contradiz. "Persistence", que o item lista, não roda no ciclo. Otimizar segue em aberto: a régua é medir em jogo | ⬜ **espera sessão** |
-| P3.1 – P3.3 | ⬜ | — |
+| P3.1, P3.2 | ❌ não se fazem — ver acima | — |
+| P3.3 | ⬜ rodar o `gauntlet-verifier`, quando o autor pedir | — |
 
 **Bateria no fim do ciclo de 2026-09-11:** 753 unitários e 295 de gametest,
 zero falhas, medidos pelos XML de relatório e pelo `runGametest`.
