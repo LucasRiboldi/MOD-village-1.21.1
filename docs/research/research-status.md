@@ -30,8 +30,21 @@ Os fontes do Vanilla foram gerados (`./gradlew genSources`) e estão em
 |---|---|---|
 | `MobNavigation.findPathTo(BlockPos, int)` — o que a navegação faz com alvo em ar e alvo sólido | concluído | [`E32-miner-walk-target.md`](E32-miner-walk-target.md) |
 | Ciclo de vida do trabalhador — o que limpa o quê quando o dono some | concluído (auditoria) | [`estado-que-sobrevive-ao-dono.md`](estado-que-sobrevive-ao-dono.md) |
+| Adaptação de terreno na geração de aldeia — `StructureTerrainAdaptation`, `StructurePool$Projection`, `StructureWeightSampler` | concluído; **descartado com razão** | [`terraplanagem-da-vila.md`](terraplanagem-da-vila.md) |
 
 ## Fatos confirmados
+
+- **O Vanilla adapta terreno só na geração do chunk.** O
+  `StructureWeightSampler` **é uma função de densidade**
+  (`implements DensityFunctionTypes$Beardifying`, com `sample(NoisePos)`): o
+  platô da aldeia é inventado enquanto o terreno ainda é ruído, antes de
+  existir bloco. Chunk gerado não pode ser re-beardificado, e por isso as cinco
+  adaptações (`NONE`, `BURY`, `BEARD_THIN`, `BEARD_BOX`, `ENCAPSULATE`) não
+  servem para um mod que trabalha em mundo carregado. Conferido por `javap` em
+  2026-09-11.
+- **As ruas de aldeia do Vanilla acompanham o relevo**, não o aplainam: as
+  peças são `TERRAIN_MATCHING`. É por isso que aldeia em morro tem rua em
+  degrau — e por que imitar o Vanilla não daria o nivelamento pedido.
 
 - `MobNavigation.findPathTo` trata os dois casos de forma **oposta**: alvo no
   **ar** é abaixado até o chão da coluna; alvo **sólido** é subido até o
