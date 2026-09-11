@@ -1,8 +1,12 @@
 # TODO
 
-**Atualizado:** 2026-09-10. **O inventário da tarde está logo abaixo do
-da madrugada**: quatro pendências fechadas, nenhuma sessão de jogo, e todas as
-provas são de bateria. A da madrugada — seis defeitos vistos em jogo, o catálogo
+**Atualizado:** 2026-09-10, depois de alinhar o local com o GitHub. **O E44
+está fechado no código e aberto em jogo** — os dois commits que o consertam
+(`d304d38` e `a1ce82c`) não têm uma única prova de sessão, e o segundo deles
+nem veredito do `gauntlet-verifier` tem. É a primeira coisa da lista de
+conferência. **O inventário da tarde está logo abaixo do da madrugada**:
+quatro pendências fechadas, nenhuma sessão de jogo, e todas as provas são de
+bateria. A da madrugada — seis defeitos vistos em jogo, o catálogo
 de casas reaberto e a auditoria comportamental — continua em
 [`docs/behavioral-tests/`](docs/behavioral-tests/).
 
@@ -81,20 +85,27 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-704 testes unitários  ·  277 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
+741 testes unitários  ·  284 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
 13 arquivos de código acima de 500 linhas  ·  11 de teste  (recontados em 09-10)
-última sessão de jogo em 2026-09-05  ·  nada deste ciclo foi visto em jogo
+última sessão de jogo em 2026-09-10, 08:31  ·  nada do E44 foi visto em jogo
 ```
 
-> **Recontado em 09-10, e os dois números estavam muito atrás.** Este
-> arquivo dizia 618 e 238; o `build` fecha **704** unitários e o
-> `runGametest` diz *"All **277** required tests passed"*. Quem conta é o
-> runner, e a distância vinha de ninguém recontar desde 08-26.
+> **Recontado de novo em 09-10, depois dos dois commits do E44.** O
+> `build` fecha **741** unitários (XML de `build/test-results`, zero
+> falhas) contra os 704 de antes, e a bateria de jogo vai a **284**.
+> Quem conta é o runner.
 >
-> **E a dívida de linha cresceu, não encolheu.** Eram 9 arquivos de
-> código acima de 500 linhas e são **13**; de teste eram 6 e são **11**.
-> O pior do projeto agora é `MineDigging` com **1.403**, e o
-> `MinerGameTest` chegou a **4.520**.
+> **A dívida de linha andou nas duas direções, e vale ler separado.**
+> São **13** arquivos de produção acima de 500 linhas e **11** de teste —
+> os mesmos totais de antes, mas não os mesmos arquivos. O `MineDigging`
+> **caiu de 1.403 para 954** pelas duas refatorações de 09-10, e quem
+> assumiu o pior lugar da produção é o `VillageDetectionHandler`, com
+> **1.107**. Do lado dos testes a dívida só cresceu: o `MinerGameTest`
+> foi de 4.520 a **4.845**, e o `LumberjackGameTest` segue em **1.960**.
+>
+> **Recontado antes, em 09-10 de manhã:** este arquivo dizia 618 e 238,
+> quando o real era 704 e 277 — a distância vinha de ninguém recontar
+> desde 08-26.
 
 > A contagem de jogo era 176 aqui e **175** no `runGametest`. Recontado
 > em 08-27 por `@GameTest`: são 175, e o número deste arquivo estava um
@@ -135,7 +146,30 @@ Vale escrever, porque a lista de "falta ver" andou de verdade:
 
 ### O que olhar agora, em ordem
 
-**Primeiro, o que entrou em 09-09 e ainda não foi visto em jogo:**
+**Primeiro, o E44 — o conserto de 09-10, e ele é o mais urgente da lista.**
+Foi o defeito que o autor viu com os próprios olhos, e as duas camadas que o
+fecham não têm uma única prova em jogo:
+
+1. **A pedra impossível fica de fora?** A linha nova é `The stone at {} is out
+   of reach — refused N times now, the gallery skips it for N ticks`, com **N
+   dobrando** a cada recusa. Se a **mesma** pedra voltar a ser servida no ciclo
+   seguinte, o `MineMarks` não está mordendo.
+2. **O terceiro guarda dispara?** A frase é `it got no closer than N.N blocks
+   in N ticks of work time` — é o `MineLease`, e ela só aparece em quem anda
+   sem se aproximar. O relatório do mineiro ganhou o contador: `adrift N/400
+   (closest N.N)`. **`adrift` subindo com `closest` parado é a assinatura do
+   E44**; quem contorna um morro tem `adrift` perto de zero e `closest` caindo.
+3. **Os dois mineiros se separam?** A linha que fechava o diagnóstico era
+   `d5f6de43 waiting for a branch — 2 of 4 taken, 4c4171a4 in one`. Se ela
+   sumir e cada um pegar seu ramal, o laço morreu.
+4. **Quem desiste demais troca de ofício?** `Worker {} gave up {} once too
+   often and left the trade — the colony will hire it into something else`. É o
+   `WorkerStrikes`, e ele nunca rodou em jogo.
+5. **O `false &&` não voltou?** O filtro de marca do cursor esteve desligado
+   por um literal em `MineDigging.nextCut`. Se `The stone at ... skips it`
+   aparecer e a pedra **ainda assim** for servida de volta, é esse o caso.
+
+**Depois, o que entrou em 09-09 e ainda não foi visto em jogo:**
 
 1. **A casa grande e a média sobem?** O catálogo abriu de 1 para 36 plantas em
    planície. A linha é `planned minecraft:village/plains/houses/...` com um nome
@@ -145,13 +179,16 @@ Vale escrever, porque a lista de "falta ver" andou de verdade:
    cai — e se a cadeia fechar de vez, ele vira `covered for nothing`, que é a
    notícia que a Regra 28 existe para poder dar.
 3. **O mineiro para de girar?** As linhas a caçar são `Miner ... took N from`
-   voltando, e `walked for 2400 ticks without arriving` sumindo.
+   voltando, e `walked for 2400 ticks without arriving` sumindo. **Ver o E44
+   acima** — é o mesmo fio, e agora tem conserto a verificar.
 4. **O mineiro para na meta?** `filled the order — N cobblestone of the N asked`.
    E o relatório agora separa: `12 of 16 so far (37 hauled)`.
 5. **O `unable to climb` sumiu?** (E40, corrigido em 09-09 à tarde.) A linha a
    caçar é a **ausência** de `N blocks below it and unable to climb` no relatório
-   do mineiro. Se ela voltar, é o caso em que nenhum lugar alcançável existe —
-   o E44 —, e aí o que interessa é se a **mesma** pedra se repete a cada ciclo.
+   do mineiro. **Ela voltou em 09-10 às 08:33** — era o E44, como esta lista
+   previa. Agora que o E44 tem conserto, a pergunta mudou: se ela voltar, o que
+   interessa é se a **mesma** pedra se repete, porque isso é o `MineMarks`
+   falhando e não o E40.
 
 **Depois, o que já estava na fila:**
 
@@ -264,6 +301,76 @@ alegação, não achado**, e o que o Verifier não conseguir reproduzir vai para
 | 🟡 | **Três achados `medium` permanentes** em `tests/test_gauntlet.py`: um teste que prova o detector precisa conter o que ele detecta. Estão certos e não bloqueiam |
 | 🟡 | **`LumberjackGameTest` tem 1.960 linhas**, contra a regra de 500. O gate acusa como `low` |
 | 🟢 | **`lint` não existe neste projeto** e o gate diz isso em vez de inventar comando. Se um dia entrar checkstyle ou spotless, é uma linha em `collect()` |
+
+---
+
+## 📒 2026-09-10 — o E44 fecha no código, e o gatilho que faltava
+
+**Dois commits, e o segundo existe porque o primeiro não bastava.** O E44 —
+os dois mineiros enfileirados no mesmo túnel, revezando-se na mesma pedra
+inalcançável — tinha sido medido em jogo às 08:33 e foi fechado em duas
+camadas. **Nenhuma das duas foi vista em jogo.**
+
+### `d304d38` — a pedra sai de cena, e desistir passa a contar
+
+**`MineMarks`** põe a pedra recusada de fora por um prazo que **dobra a cada
+recusa**, na forma que `TreeMarks` já usava desde 09-02. Os números foram
+repetidos de propósito e não importados: a árvore some quando alguém a
+derruba, a pedra fica onde está.
+
+São **quatro leitores, e não dois** — `nextCut`, `isStillClosed`, o
+`exposedStone` da colônia sem boca de mina, e a areia. O `gauntlet-verifier`
+achou os dois últimos, e **sem eles o E44 se reproduzia inteiro pelo outro
+caminho**.
+
+**`WorkerStrikes`** fecha a outra metade. O verificador de desistência já
+existia pela metade desde 09-03: os guardas disparavam nas sete profissões,
+mas devolviam a tarefa para a mesma fila e só mineiro e lenhador chegavam a
+contar. Agora é porta única — três desistências na janela e o aldeão larga o
+ofício. A vaga passou a ser perguntada **por candidato** (`vacancyFor`), senão
+quem largou o posto abre a própria vaga e volta a ele no ciclo seguinte, para
+o mesmo ramal.
+
+### `a1ce82c` — o prazo de aproximação, e a guarda que estava desligada
+
+**O E44 tinha cooldown e escada de castigo, e não tinha gatilho.** O mineiro
+só largava a pedra depois de 300 tiques congelado ou 2.400 andando — e **quem
+anda em círculos escapa dos dois**. Foi exatamente o que a sessão das 08:33
+mediu: `19 blocks below it and unable to climb` pagando o orçamento inteiro,
+duas vezes, um mineiro de cada vez.
+
+**`MineLease` faz a terceira pergunta: ele está chegando mais perto?** A régua
+é a **menor distância já vista nesta pedra**, e não o tique anterior — contra
+o anterior, um mineiro que anda de verdade seria punido, porque a navegação
+entrega passos de centésimos de bloco. Prazo de 400 tiques de expediente,
+margem de um quarto de bloco. Ele entra **entre** os dois guardas antigos sem
+substituir nenhum.
+
+Alvo novo zera a régua, e **aqui alvo novo é motivo** — ao contrário do guarda
+de imobilidade, porque *"mais perto de quê"* é pergunta sobre a pedra.
+
+### O achado que não estava no pedido, e é o mais grave do ciclo
+
+**O filtro de marca do cursor da galeria estava desligado por um `false &&`
+literal** em `MineDigging.nextCut`, entregue no próprio `d304d38` sem
+comentário que o justificasse. Com ele, o cursor **servia de volta a pedra
+recém-recusada** — ou seja, a primeira camada do conserto estava neutralizada
+por dentro.
+
+Os dois gametests que o E44 ganhou falhavam em `HEAD` de forma reproduzível:
+**cinco rodadas, inclusive com o mundo da bateria apagado e os lotes
+separados. O PASS relatado às 14:29 não se reproduzia.**
+
+### Verificação, e ela é desigual entre os dois commits
+
+| commit | veredito |
+|---|---|
+| `d304d38` | ✅ **Gauntlet PASS na iteração 2, `deep`** — 734 unitários, 283 de gametest, zero falhas |
+| `a1ce82c` | ⚠️ **medido à mão, sem veredito do `gauntlet-verifier`** — o limite de sessão estourou antes de ele responder. 741 unitários e 284 de gametest, zero falhas |
+
+**A distinção importa e está aqui de propósito:** pela regra deste projeto,
+número medido pelo Builder não é liberação. O `a1ce82c` tem bateria verde e
+**não** tem crítico independente.
 
 ---
 
@@ -556,8 +663,10 @@ Ver a seção de cada ciclo abaixo. As três que mais doem:
 
 | | o quê |
 |---|---|
+| 🔴 | **O E44 não foi visto em jogo.** É o defeito que o autor viu com os próprios olhos, tem conserto em duas camadas e zero prova de sessão. Ver a lista de conferência no topo |
+| 🔴 | **O `a1ce82c` não tem veredito do `gauntlet-verifier`** — limite de sessão. Bateria verde medida pelo Builder, que pela regra deste projeto não é liberação |
 | 🟠 | **Nada deste ciclo foi visto em jogo.** Cinco entregas, todas prova de mecanismo. O pedreiro trabalhando, a linha do silêncio e a segunda passagem do planejador esperam sessão |
-| 🟠 | **A dívida de linha cresceu:** 13 arquivos de código acima de 500 (eram 9) e 11 de teste (eram 6). `MineDigging` tem **1.403** e `MinerGameTest` **4.520** |
+| 🟠 | **A dívida de linha andou nas duas direções:** 13 arquivos de código acima de 500 e 11 de teste. `MineDigging` **caiu para 954**, o `VillageDetectionHandler` assumiu o pior lugar com **1.107**, e o `MinerGameTest` subiu para **4.845** |
 | 🟡 | **Save antigo perde a atribuição** de quem era `MANUFACTURER` — o mundo não quebra, o aldeão é recontratado |
 
 ### Verificações executadas neste encerramento
