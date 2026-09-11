@@ -172,6 +172,58 @@ public final class ChestInventoryReader {
         public boolean isPartial() {
             return chestsUnreachable > 0;
         }
+
+        /**
+         * Quantos baús a colônia conhece: os lidos mais os que o chunk
+         * não entregou.
+         */
+        public int chestsKnown() {
+            return chestsRead + chestsUnreachable;
+        }
+
+        /**
+         * Quantos dos baús lidos tinham alguma coisa dentro.
+         *
+         * <p>Baú vazio é lido e não entra aqui: a agregação descarta a
+         * conta zerada. Quem quiser saber se a varredura <b>alcançou</b>
+         * o baú pergunta a {@link #chestsRead()}, e são perguntas
+         * diferentes — ver {@link #coverage()}.
+         */
+        public int chestsWithItems() {
+            return resources.byChest().size();
+        }
+
+        /**
+         * A cobertura desta varredura, numa frase que não se lê ao
+         * contrário.
+         *
+         * <p><b>Existe por causa de um defeito de leitura que custou um
+         * bloqueador inteiro.</b> A linha antiga saía como
+         * {@code "stores {...} in 1 of 8 chests read"}, e os dois números
+         * eram <i>baús com conteúdo</i> e <i>baús lidos</i>. Em 2026-09-11
+         * ela foi lida como cobertura — <i>"a colônia lê 1 de 8 baús"</i> —
+         * e virou o P0.2 do plano de correção, com varredura em fila,
+         * cache por evento e relatório de scan pendurados numa premissa
+         * que o log nunca afirmou. A varredura tinha lido os oito.
+         *
+         * <p>É o mesmo <i>defeito-que-parece-número</i> do V5 que o
+         * javadoc de {@link ChestSurvey} nomeia, cometido do lado de fora:
+         * não no que a varredura mede, mas no que a frase deixa concluir.
+         *
+         * <p>Então a forma {@code "X of Y chests read"} fica <b>reservada
+         * para cobertura de verdade</b>, e só aparece quando algum baú
+         * ficou sem ser lido. Varredura completa não tem "de": diz
+         * {@code "8 chests read, 1 with items"}, e não há como ler isso
+         * como oito baús dos quais um foi alcançado.
+         */
+        public String coverage() {
+            String read = isPartial()
+                    ? chestsRead + " of " + chestsKnown() + " chests read ("
+                            + chestsUnreachable + " in unloaded chunks)"
+                    : chestsRead + " chests read";
+
+            return read + ", " + chestsWithItems() + " with items";
+        }
     }
 
     /**

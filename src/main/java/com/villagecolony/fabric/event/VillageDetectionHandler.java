@@ -895,22 +895,21 @@ public final class VillageDetectionHandler {
         // Só quando muda. A linha passou a sair todo ciclo, e estoque
         // parado repetido oitenta vezes afogaria o relatório — que é o
         // defeito que o IdleLog existe para não cometer.
-        String snapshot = stock + " | " + resources.byChest().size()
-                + " | " + survey.chestsRead() + " | " + survey.chestsUnreachable();
+        String coverage = survey.coverage();
+        String snapshot = stock + " | " + coverage;
 
         if (snapshot.equals(lastStock.put(colony.id(), snapshot))) {
             return;
         }
 
+        // A cobertura vem pronta de ChestSurvey, e de propósito: montar a
+        // frase aqui foi o que deixou "in 1 of 8 chests read" passar por
+        // cobertura em 2026-09-11. Ver ChestSurvey#coverage.
         VillageColonyMod.LOGGER.info(
-                "Colony {} stores {} in {} of {} chests read{}",
+                "Colony {} stores {} — {}",
                 colony.id(),
                 stock,
-                resources.byChest().size(),
-                survey.chestsRead(),
-                survey.isPartial()
-                        ? " (" + survey.chestsUnreachable() + " unreachable, chunk unloaded)"
-                        : "");
+                coverage);
     }
 
     /**
