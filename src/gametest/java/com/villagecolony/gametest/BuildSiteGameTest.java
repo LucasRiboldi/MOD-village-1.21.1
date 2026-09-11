@@ -2,16 +2,19 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.SweepLog;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -851,6 +854,173 @@ public class BuildSiteGameTest implements FabricGameTest {
                         center.add(dx, 0, dz), Blocks.GRASS_BLOCK.getDefaultState());
             }
         }
+    }
+
+    // ------------------------------------------------------------------
+    // O índice de ruas da vila grande — 2026-09-11.
+    //
+    // O índice existe para a colônia não varrer as 16.641 colunas do
+    // raio de 64 toda vez que quer um lote. Ele guarda só as colunas
+    // CALÇADAS, e perguntar a ele é a diferença entre duas passagens e
+    // dezessete.
+    //
+    // E ele tinha um teto: índice com mais de MAX_COLUMNS colunas era
+    // recusado, "porque perguntar por um que não cabe custa o mesmo que
+    // varrer". Custa muito menos — e o preço do teto era pago pela vila
+    // que deu certo: ela cresce, a rua cresce com ela, o índice passa de
+    // mil e vinte e quatro colunas e o atalho morre. A colônia volta aos
+    // oito minutos e meio por resposta, e não sai mais de lá, porque a
+    // vila não encolhe.
+    //
+    // Medido na sessão de 2026-09-11 às 00:04: DEZESSETE das DEZENOVE
+    // colônias do mundo estavam sem índice, e a que ciclou passou as
+    // quinze passagens da sessão sem completar uma volta — quinze mil
+    // trezentas e sessenta colunas, zero voltas completas, nenhuma obra
+    // aberta. A queixa do autor foi o planejador que não acha lote.
+    // ------------------------------------------------------------------
+
+    /** Um índice sintético com mais colunas do que cabe numa passagem. */
+    private static ColonyRoads bigIndex(UUID colony, ColonyPos from, int howMany) {
+        List<Long> columns = new ArrayList<>(howMany);
+
+        for (int i = 0; i < howMany; i++) {
+            // Longe do centro de propósito: nenhuma destas é rua de
+            // verdade, então o siteBesideRoadAt responde não a todas e o
+            // que se mede é a CONTAGEM, não o terreno.
+            columns.add(ColonyRoads.column(from.x() + 1000 + i, from.z() + 1000));
+        }
+
+        return new ColonyRoads(colony, from, columns);
+    }
+
+    /**
+     * <b>Índice maior que uma passagem é aceito.</b> Era recusado, e a
+     * recusa é que tirava o atalho da vila grande.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site",
+            tickLimit = 20)
+    public void theRoadIndexMayOutgrowOnePass(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        ColonyPos from = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(1, 1, 1)));
+
+        try {
+            BuildSiteScanner.restore(
+                    bigIndex(colony, from, BuildSiteScanner.MAX_COLUMNS * 2));
+
+            // Se o índice tivesse sido recusado, a colônia cairia na
+            // varredura do quadrado — e ela deixa cursor de anel.
+            BuildSiteScanner.find(context.getWorld(), colony, from, 64, SMALL_HOUSE);
+
+            context.assertTrue(
+                    BuildSiteScanner.sweepPausedAt(colony).isEmpty(),
+                    "o índice grande foi recusado e a colônia voltou a varrer o quadrado");
+        } finally {
+            BuildSiteScanner.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * <b>E perguntar a ele gasta orçamento.</b> É o que substitui o teto:
+     * o custo por tique continua o mesmo, e o que muda é quantas
+     * passagens uma resposta custa.
+     *
+     * <p>A segunda metade é a que importa mais: parar no meio <b>não</b>
+     * autoriza a Regra 15 a crescer a rua. Crescer é o que se faz quando
+     * não há lote, e quem parou no meio não sabe se há.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site",
+            tickLimit = 20)
+    public void askingTheRoadIndexIsPagedAndSaysSo(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        ColonyPos from = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(1, 1, 1)));
+
+        try {
+            BuildSiteScanner.restore(
+                    bigIndex(colony, from, BuildSiteScanner.MAX_COLUMNS * 2));
+
+            BuildSiteScanner.find(context.getWorld(), colony, from, 64, SMALL_HOUSE);
+
+            context.assertTrue(
+                    BuildSiteScanner.stillLookingForALot(colony),
+                    "a volta pelo índice não cabe numa passagem, e a busca disse"
+                            + " que terminou — a Regra 15 cresceria a rua sem ninguém"
+                            + " ter visto o raio inteiro");
+
+            // A segunda passagem termina o que sobrou.
+            BuildSiteScanner.find(context.getWorld(), colony, from, 64, SMALL_HOUSE);
+
+            context.assertTrue(
+                    !BuildSiteScanner.stillLookingForALot(colony),
+                    "duas passagens dão conta de duas vezes o orçamento, e a busca"
+                            + " continuou dizendo que não terminou");
+        } finally {
+            BuildSiteScanner.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * <b>E a vila saudável continua respondendo de graça</b> —
+     * 2026-09-11, e este teste existe porque a primeira versão do
+     * conserto acima quebrou exatamente isto.
+     *
+     * <p>O {@code SweepLog} separa duas coisas que o diagnóstico de
+     * sessão precisa distinguir: <i>respondeu pelo índice</i> e
+     * <i>varreu</i>. Foi essa distinção que achou o defeito do índice —
+     * a linha <code>23 planner runs, 0 passes, 23 answered by the
+     * index</code> de uma sessão contra <code>15 passes over 15360
+     * columns, 0 answered by the index</code> da seguinte.
+     *
+     * <p>Ao paginar a volta pelo índice eu passei a chamar
+     * {@code SweepLog.pass} em todo retorno, e com isso uma vila pequena
+     * — cujo índice cabe inteiro numa chamada — passou a contar passagem
+     * junto com <code>indexed</code>. A assinatura que achou o defeito
+     * teria desaparecido no próprio conserto dele. O achado é do
+     * {@code gauntlet-verifier}, que montou este cenário para provar.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site",
+            tickLimit = 20)
+    public void aSmallVillageStillAnswersFromTheIndexForFree(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        ColonyPos from = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(1, 1, 1)));
+
+        try {
+            SweepLog.clearAll();
+
+            // Índice pequeno: cabe inteiro numa chamada, que é a vila
+            // saudável.
+            BuildSiteScanner.restore(bigIndex(colony, from, 5));
+
+            BuildSiteScanner.find(context.getWorld(), colony, from, 64, SMALL_HOUSE);
+
+            SweepLog.Tally tally = SweepLog.tallyOf(colony).orElseThrow();
+
+            context.assertTrue(
+                    tally.indexed() == 1,
+                    "a resposta não foi contada como vinda do índice: indexed="
+                            + tally.indexed());
+
+            context.assertTrue(
+                    tally.passes() == 0,
+                    "o índice coube numa chamada e mesmo assim contou passagem de"
+                            + " varredura: passes=" + tally.passes()
+                            + " — é a assinatura que achou este defeito sumindo no"
+                            + " conserto dele");
+        } finally {
+            BuildSiteScanner.clearAll();
+            SweepLog.clearAll();
+        }
+
+        context.complete();
     }
 
     /**

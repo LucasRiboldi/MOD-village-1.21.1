@@ -207,6 +207,23 @@ public final class BuildSiteScanner {
      */
     private static final Map<UUID, Set<Long>> BUILDING = new HashMap<>();
 
+    /**
+     * Onde a passagem anterior parou de perguntar ao índice — 2026-09-11.
+     *
+     * <p><b>O índice deixou de caber numa passagem, e por isso ele
+     * precisa de cursor.</b> Ele cabia por imposição do {@link #fits},
+     * que recusava índice maior que {@link #MAX_COLUMNS} — e o preço
+     * dessa recusa era a vila grande perder o atalho <i>justamente por
+     * ter crescido</i>, voltando para as dezessete passagens do
+     * quadrado. Ver o javadoc do {@code fits}.
+     *
+     * <p>É posição na lista, e não anel: a lista só cresce pelo fim —
+     * {@link #remember} acrescenta —, então um cursor posicional
+     * continua apontando para a mesma coluna entre uma passagem e outra.
+     * Quando o índice é <b>substituído</b>, o cursor sai junto.
+     */
+    private static final Map<UUID, Integer> ROAD_CURSOR = new HashMap<>();
+
     private BuildSiteScanner() {
     }
 
@@ -284,6 +301,7 @@ public final class BuildSiteScanner {
             SweepLog.drifted(colonyId, roads.from(), center);
 
             ROADS.remove(colonyId);
+            ROAD_CURSOR.remove(colonyId);
             BUILDING.remove(colonyId);
             SWEEPS.remove(colonyId);
 
@@ -425,13 +443,20 @@ public final class BuildSiteScanner {
     /**
      * Promove a índice o que a volta completa juntou.
      *
-     * <p><b>Índice maior que o orçamento não vira índice.</b> Ele existe
-     * para caber numa passagem — se não couber, perguntar por ele custa o
-     * mesmo que varrer e ainda mente sobre ter visto tudo, porque pararia
-     * no meio. Vila assim continua no quadrado, que é o que ela já fazia.
+     * <p><b>Índice maior que o orçamento também vira índice</b> —
+     * 2026-09-11. Até esta data ele era recusado, e a recusa tirava o
+     * atalho justamente da vila que cresceu: ver o javadoc do
+     * {@link #fits}. Quem paga o custo de um índice grande agora é o
+     * {@link #ROAD_CURSOR}, que pagina a volta como a varredura do
+     * quadrado.
      */
     private static void indexWhatWasSeen(UUID colonyId, ColonyPos center) {
         Set<Long> seen = BUILDING.remove(colonyId);
+
+        // Índice novo é outra lista: a posição guardada falava da
+        // anterior, e mantê-la faria a volta começar no meio de uma
+        // lista que ela nunca viu.
+        ROAD_CURSOR.remove(colonyId);
 
         if (seen == null || !fits(seen)) {
             ROADS.remove(colonyId);
@@ -449,12 +474,30 @@ public final class BuildSiteScanner {
      * o raio inteiro e não achei nenhuma", e uma colônia que acreditasse
      * nisso pararia de procurar lote para sempre.
      *
-     * <p>Maior que o orçamento também não: o índice existe para caber
-     * numa passagem, e perguntar por um que não cabe custa o mesmo que
-     * varrer e ainda pararia no meio.
+     * <p><b>Maior que o orçamento pode</b> — 2026-09-11, e este teto era
+     * o defeito. A regra anterior recusava índice com mais de
+     * {@link #MAX_COLUMNS} colunas, dizendo que <i>"perguntar por um que
+     * não cabe custa o mesmo que varrer"</i>. Não custa: o índice tem as
+     * colunas <b>calçadas</b>, e o quadrado tem todas as do raio — numa
+     * vila de duas mil colunas de rua a diferença é de duas passagens
+     * contra dezessete.
+     *
+     * <p>E o preço do teto era pago pela vila que dava certo: ela cresce,
+     * a rua cresce com ela, o índice passa de mil e vinte e quatro
+     * colunas, e na volta seguinte o atalho morre. A colônia volta para
+     * as dezessete passagens — oito minutos e meio de jogo sem nenhuma
+     * obra abrir — e nunca mais sai de lá, porque a vila não encolhe. Na
+     * sessão de 2026-09-11 às 00:04, <b>dezessete das dezenove colônias
+     * do mundo estavam sem índice</b>, e a que ciclou passou as quinze
+     * passagens da sessão sem completar uma volta.
+     *
+     * <p>O que substitui o teto é o {@link #ROAD_CURSOR}: perguntar ao
+     * índice passou a gastar orçamento e a parar na conta como a
+     * varredura do quadrado. O custo por tique continua o mesmo; o que
+     * muda é quantas passagens uma resposta custa.
      */
     private static boolean fits(Collection<Long> columns) {
-        return !columns.isEmpty() && columns.size() <= MAX_COLUMNS;
+        return !columns.isEmpty();
     }
 
     /**
@@ -486,6 +529,10 @@ public final class BuildSiteScanner {
         if (!fits(roads.columns())) {
             return;
         }
+
+        // Lista nova, cursor novo: o mundo abriu agora, e ninguém parou
+        // no meio desta volta.
+        ROAD_CURSOR.remove(roads.colonyId());
 
         ROADS.put(roads.colonyId(), roads);
     }
@@ -541,33 +588,117 @@ public final class BuildSiteScanner {
     /**
      * A passagem que pergunta só às ruas.
      *
-     * <p>É uma volta inteira por definição — o índice tem todas as
-     * colunas calçadas do raio, e cabe no orçamento —, então ela não
-     * deixa cursor: quem não achou lote aqui não achou em lugar nenhum, e
-     * é isso que autoriza a Regra 15 a crescer a rua.
+     * <p><b>E ela pode não terminar numa passagem</b> — 2026-09-11.
+     * Terminava por imposição do {@link #fits}, que recusava índice
+     * maior que o orçamento; o preço era a vila grande perder o atalho
+     * por ter crescido, e voltar às dezessete passagens do quadrado.
+     * Agora o índice tem o tamanho que a vila tem, e perguntar a ele
+     * gasta orçamento e para na conta, como a varredura.
+     *
+     * <p><b>Parar no meio não autoriza a Regra 15.</b> É a mesma
+     * disciplina do cursor do quadrado, e pela mesma razão: crescer a
+     * rua é o que se faz quando <i>não há</i> lote, e quem parou no meio
+     * não sabe disso. Quem responde ao planejador é o
+     * {@link #stillLookingForALot}.
      */
     private static Optional<Site> findAmongRoads(
             ServerWorld world, UUID colonyId, BlockPos from, ColonyRoads roads,
             List<ColonyPos> plans) {
 
-        // Volta nova, pontas novas: a mesma razão da varredura do
-        // quadrado, e o mesmo lugar onde a Regra 15 as recolhe. O trecho
-        // em crescimento fica — ver RoadExtension.forgetEnds.
-        RoadExtension.forgetEnds(colonyId);
+        List<Long> columns = roads.columns();
 
-        for (long column : roads.columns()) {
+        int start = ROAD_CURSOR.getOrDefault(colonyId, 0);
+
+        if (start >= columns.size()) {
+            // O índice encolheu debaixo do cursor — coluna que deixou de
+            // ser rua sai quando reconferida. Recomeça do princípio.
+            start = 0;
+        }
+
+        if (start == 0) {
+            // Volta nova, pontas novas: a mesma razão da varredura do
+            // quadrado, e o mesmo lugar onde a Regra 15 as recolhe. O
+            // trecho em crescimento fica — ver RoadExtension.forgetEnds.
+            RoadExtension.forgetEnds(colonyId);
+        }
+
+        int looked = 0;
+
+        for (int at = start; at < columns.size(); at++) {
+            if (++looked > MAX_COLUMNS) {
+                ROAD_CURSOR.put(colonyId, at);
+
+                // Aqui houve passagem de verdade: o orçamento foi gasto
+                // inteiro e a volta parou no meio.
+                SweepLog.pass(colonyId, looked - 1);
+
+                return Optional.empty();
+            }
+
+            long column = columns.get(at);
+
             Optional<Site> site = siteBesideRoadAt(
                     world, colonyId, from,
                     ColonyRoads.xOf(column), ColonyRoads.zOf(column), from.getY(), plans);
 
             if (site.isPresent()) {
+                // Uma adiante, pelo mesmo motivo do cursor do quadrado:
+                // esta acabou de responder, e a passagem seguinte tem
+                // mais o que perguntar.
+                ROAD_CURSOR.put(colonyId, at + 1);
+
+                if (start > 0) {
+                    countTheIndexPass(colonyId, looked);
+                }
+
                 RoadExtension.lotFound(colonyId);
 
                 return site;
             }
         }
 
+        // Perguntou a todas: aqui, e só aqui, a Regra 15 está autorizada.
+        ROAD_CURSOR.remove(colonyId);
+
+        if (start > 0) {
+            countTheIndexPass(colonyId, looked);
+        }
+
         return Optional.empty();
+    }
+
+    /**
+     * A volta pelo índice que <b>custou passagem</b> entra na conta do
+     * relatório — 2026-09-11, e a assimetria é de propósito.
+     *
+     * <p>O {@code SweepLog} existe para separar duas coisas que o
+     * diagnóstico de sessão precisa distinguir: <i>a colônia respondeu
+     * pelo índice, de graça</i> e <i>a colônia varreu</i>. Foi essa
+     * distinção que achou este defeito — a linha <code>23 planner runs,
+     * 0 passes, 23 answered by the index</code> de uma sessão contra
+     * <code>15 passes over 15360 columns, 0 answered by the index</code>
+     * da seguinte.
+     *
+     * <p>Uma volta pelo índice que <b>cabe numa chamada</b> continua
+     * sendo de graça, e não conta passagem: é a vila saudável, e o
+     * relatório dela tem de continuar dizendo <code>0 passes</code>.
+     * Contar aqui apagaria a assinatura, que foi o achado do
+     * {@code gauntlet-verifier} contra a primeira versão deste conserto.
+     */
+    private static void countTheIndexPass(UUID colonyId, int looked) {
+        SweepLog.pass(colonyId, looked);
+    }
+
+    /**
+     * Se esta colônia ainda não terminou de procurar lote — 2026-09-11.
+     *
+     * <p>Cobre os <b>dois</b> jeitos de procurar: o quadrado em anéis e
+     * a volta pelo índice de ruas. O planejador pergunta isto antes de
+     * mandar a rua crescer, porque a Regra 15 é o que se faz quando não
+     * há lote — e quem parou no meio não sabe se há.
+     */
+    public static boolean stillLookingForALot(UUID colonyId) {
+        return SWEEPS.containsKey(colonyId) || ROAD_CURSOR.containsKey(colonyId);
     }
 
     /**
@@ -663,6 +794,7 @@ public final class BuildSiteScanner {
     public static void clearAll() {
         SWEEPS.clear();
         ROADS.clear();
+        ROAD_CURSOR.clear();
         BUILDING.clear();
     }
 

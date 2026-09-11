@@ -341,7 +341,12 @@ public final class ConstructionPlanner {
             // Sem o número do anel de propósito: IdleLog só registra
             // quando o motivo muda, e um anel diferente por ciclo faria a
             // linha voltar toda vez.
-            if (BuildSiteScanner.sweepPausedAt(colony.id()).isPresent()) {
+            // Os dois jeitos de procurar contam — 2026-09-11. Esta
+            // linha perguntava só pelo cursor do quadrado, e desde que a
+            // volta pelo índice de ruas também pode parar no meio, ela
+            // deixaria a Regra 15 crescer a rua sem ninguém ter visto o
+            // raio inteiro. Ver BuildSiteScanner.stillLookingForALot.
+            if (BuildSiteScanner.stillLookingForALot(colony.id())) {
                 return silent(colony, IdleReason.SWEEP_INCOMPLETE, "looking for a lot");
             }
 
