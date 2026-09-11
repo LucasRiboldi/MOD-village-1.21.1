@@ -330,7 +330,17 @@ public final class FarmerWork {
     private static void findWork(
             ServerWorld world, UUID workerId, Job job, WorkerStorage storage) {
 
-        CropPatch.Field field = CropPatch.survey(world, job.center, searchRadius);
+        UUID colonyId = job.task.colonyId();
+
+        // <b>Volta inteira sem nada compra silêncio</b> — P1.5, 2026-09-11.
+        // O motivo já foi dito quando a volta fechou; aqui não se fala de
+        // novo, senão o descanso vira a enxurrada que ele evita. Ver
+        // FieldRest para por que ele existe e por que é curto.
+        if (FieldRest.isResting(colonyId, world.getTime())) {
+            return;
+        }
+
+        CropPatch.Field field = CropPatch.survey(world, colonyId, job.center, searchRadius);
 
         Optional<BlockPos> found = field.ripe();
         Chore chore = Chore.HARVEST;
@@ -349,17 +359,36 @@ public final class FarmerWork {
         }
 
         if (found.isEmpty()) {
-            IdleLog.record(
-                    job.task.colonyId(),
+            // <b>Pelo recordAt, e não pelo record</b> — o molde do P0.6.
+            // Este método roda por tique e os dois motivos alternam por
+            // construção: toda volta termina em NO_TARGET e a seguinte
+            // recomeça em SWEEP_INCOMPLETE. A regra de transição sozinha
+            // deixou 4.389 linhas num log de 6.117 na areia.
+            //
+            // E são dois motivos, não um: até 2026-09-11 esta linha saía
+            // sempre como NO_TARGET, cujo texto é <i>"nothing to work on
+            // in the whole radius"</i> — e o raio inteiro nunca tinha
+            // sido olhado. O enum afirmava a cobertura que a varredura
+            // truncada não entregava. Ver CropPatch#survey.
+            IdleLog.recordAt(
+                    colonyId,
                     SUBJECT,
-                    IdleReason.NO_TARGET,
+                    field.incomplete() ? IdleReason.SWEEP_INCOMPLETE : IdleReason.NO_TARGET,
                     "nothing ripe and no empty plot within "
-                            + searchRadius + " blocks of the village");
+                            + searchRadius + " blocks of the village",
+                    world.getTime());
+
+            if (!field.incomplete()) {
+                FieldRest.sweptAndFoundNothing(colonyId, world.getTime());
+            }
 
             return;
         }
 
-        IdleLog.clear(job.task.colonyId(), SUBJECT);
+        // Achou: o campo voltou a render, e o descanso não vale mais.
+        FieldRest.thereIsWorkAgain(colonyId);
+
+        IdleLog.clear(colonyId, SUBJECT);
 
         job.target = found.get();
         job.chore = chore;
@@ -567,7 +596,22 @@ public final class FarmerWork {
     public static void clearAll() {
         JOBS.clear();
 
+        FieldRest.clearAll();
+
         restoreSearch();
+    }
+
+    /**
+     * Esquece a varredura de uma colônia — o cursor e o descanso.
+     *
+     * <p>Existe para o teste de jogo, e é necessário: os dois estados são
+     * por colônia, e o mundo do gametest é um só. Um descanso deixado
+     * para trás faria o fazendeiro do teste seguinte não varrer o campo
+     * que o teste acabou de plantar — e a falha apareceria no teste
+     * errado.
+     */
+    public static void forgetColony(UUID colonyId) {
+        FieldRest.forget(colonyId);
     }
 
     /** Quanto este fazendeiro já colheu nesta tarefa. */

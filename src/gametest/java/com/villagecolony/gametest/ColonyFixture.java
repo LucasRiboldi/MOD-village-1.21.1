@@ -7,6 +7,7 @@ import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.CraftingWork;
+import com.villagecolony.fabric.work.FarmerWork;
 import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
@@ -109,6 +110,12 @@ final class ColonyFixture {
             // atrás faria o teste seguinte herdar uma escada aberta em
             // outra arena, e o mineiro dele desceria por ela.
             VillageColonyMod.MINES.removeOfColony(colony.id());
+
+            // E a varredura da lavoura, pelo mesmo motivo — P1.5,
+            // 2026-09-11. O cursor e o descanso são por colônia: um
+            // descanso deixado para trás faria o fazendeiro do teste
+            // seguinte não varrer o campo que ele acabou de plantar.
+            FarmerWork.forgetColony(colony.id());
 
             VillageColonyMod.COLONIES.remove(colony.id());
         }

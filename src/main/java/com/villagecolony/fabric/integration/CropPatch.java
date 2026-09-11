@@ -13,6 +13,7 @@ import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * A lavoura: o que está maduro, e como se replanta — 2026-08-27.
@@ -31,15 +32,6 @@ import java.util.Optional;
  */
 public final class CropPatch {
 
-    /**
-     * Quantas colunas se olham por busca.
-     *
-     * <p>A lavoura da vila fica em volta do centro e é pequena; o teto
-     * existe para o caso de não haver nenhuma, e é o mesmo espírito do
-     * orçamento da varredura de lote — Performance-Rules.md §6.
-     */
-    private static final int COLUMNS_PER_SEARCH = 2048;
-
     /** Quanto acima e abaixo do centro se procura. */
     private static final int LEVELS = 6;
 
@@ -52,14 +44,25 @@ public final class CropPatch {
     }
 
     /**
-     * A lavoura madura mais perto deste centro.
+     * A lavoura madura mais perto deste centro, numa passagem só.
      *
      * <p>Em anéis, do centro para fora: a primeira que aparece é a mais
      * perto, e a busca acaba nela. Chunk fora de memória é pulado sem
      * forçar carregamento — ADR-002.
+     *
+     * <p><b>Sem cursor, e por isso sem retomada</b>: a pergunta aqui é
+     * <i>"há lavoura madura agora?"</i>, feita de fora do ciclo de
+     * trabalho. Quem varre o campo de verdade é {@link #survey}, que
+     * atravessa passagens. O dono sorteado garante que esta chamada não
+     * mexa no cursor de colônia nenhuma.
+     *
+     * <p>Vale para raio pequeno, que é onde ela é usada: acima de
+     * {@link RingSweep#MAX_COLUMNS} colunas a resposta vazia passa a
+     * querer dizer <i>"não terminei de olhar"</i>, e esta assinatura não
+     * tem como dizer isso.
      */
     public static Optional<BlockPos> ripeNear(ServerWorld world, BlockPos center, int radius) {
-        return survey(world, center, radius).ripe();
+        return survey(world, UUID.randomUUID(), center, radius).ripe();
     }
 
     /**
@@ -74,55 +77,69 @@ public final class CropPatch {
      *
      * <p><b>E ela para cedo quando pode.</b> Lavoura madura ganha de
      * tudo, então achá-la encerra a busca na hora; sem ela, a varredura
-     * segue até o orçamento de colunas acabar.
+     * segue até o orçamento de colunas da passagem acabar.
+     *
+     * <p><b>E ela retoma de onde parou</b> — P1.5, 2026-09-11. Antes
+     * disto a espiral era escrita aqui à mão, com orçamento de 2.048
+     * colunas e <b>sem cursor</b>: toda passagem recomeçava do centro, e
+     * o quadrado de raio 32 tem <b>4.225 colunas</b>. A varredura fechava
+     * o anel 22 (45² = 2.025 colunas) e abortava no 23 — <b>48% da área
+     * prometida</b>, sempre a mesma metade, para sempre.
+     *
+     * <p>Isso não era só desperdício. O {@code ConstructionPlanner} abre
+     * roça até {@code FarmerWork.reach()} do centro, que valia 32 — então
+     * <b>uma roça que a própria colônia mandou construir entre 23 e 32
+     * blocos era invisível ao fazendeiro dela</b>. É o defeito da roça a
+     * 105 blocos de 2026-09-05 de novo, em escala menor e por dentro: as
+     * duas medidas concordavam no nome e discordavam no efeito.
+     *
+     * <p>O conserto não foi aumentar o teto — isso multiplicaria por dois
+     * o custo da passagem justamente no caso comum, com o ciclo da
+     * colônia já em 112 ms. Foi passar a espiral para o
+     * {@link RingSweep}, que guarda anel <b>e coluna</b> por dono e já
+     * carrega as três lições que as outras três espirais do projeto
+     * aprenderam uma por vez. Esta era a quarta escrita à mão.
      *
      * <p>Chunk fora de memória é pulado sem forçar carregamento — ADR-002.
+     *
+     * @param colonyId de quem é a varredura, para o cursor saber onde
+     *     retomar. A lavoura da vila é da vila, e dois fazendeiros
+     *     dividem a mesma volta em vez de varrerem o mesmo campo duas
+     *     vezes
      */
-    public static Field survey(ServerWorld world, BlockPos center, int radius) {
-        BlockPos plot = null;
+    public static Field survey(
+            ServerWorld world, UUID colonyId, BlockPos center, int radius) {
 
-        int looked = 0;
+        // O canteiro vazio é achado de passagem: a busca só <b>para</b>
+        // por lavoura madura, e guarda o primeiro canteiro que cruzar
+        // para o caso de não haver nenhuma. Uma casa, e não duas
+        // varreduras — é a razão de este método existir.
+        BlockPos[] plot = {null};
 
-        for (int ring = 0; ring <= radius; ring++) {
-            for (int dx = -ring; dx <= ring; dx++) {
-                for (int dz = -ring; dz <= ring; dz++) {
+        Optional<BlockPos> ripe = RingSweep.around(colonyId, center, radius, at -> {
+            WorldChunk chunk = world.getChunkManager()
+                    .getWorldChunk(at.getX() >> 4, at.getZ() >> 4);
 
-                    // Só a casca do anel; o miolo já foi visto.
-                    if (Math.abs(dx) != ring && Math.abs(dz) != ring) {
-                        dz = ring - 1;
+            if (chunk == null) {
+                return Optional.empty();
+            }
 
-                        continue;
-                    }
+            for (int dy = LEVELS; dy >= -LEVELS; dy--) {
+                BlockPos column = new BlockPos(at.getX(), center.getY() + dy, at.getZ());
 
-                    if (++looked > COLUMNS_PER_SEARCH) {
-                        return new Field(null, plot);
-                    }
+                if (isRipe(world.getBlockState(column))) {
+                    return Optional.of(column);
+                }
 
-                    int x = center.getX() + dx;
-                    int z = center.getZ() + dz;
-
-                    WorldChunk chunk = world.getChunkManager().getWorldChunk(x >> 4, z >> 4);
-
-                    if (chunk == null) {
-                        continue;
-                    }
-
-                    for (int dy = LEVELS; dy >= -LEVELS; dy--) {
-                        BlockPos at = new BlockPos(x, center.getY() + dy, z);
-
-                        if (isRipe(world.getBlockState(at))) {
-                            return new Field(at, plot);
-                        }
-
-                        if (plot == null && isEmptyPlot(world, at)) {
-                            plot = at;
-                        }
-                    }
+                if (plot[0] == null && isEmptyPlot(world, column)) {
+                    plot[0] = column;
                 }
             }
-        }
 
-        return new Field(null, plot);
+            return Optional.empty();
+        });
+
+        return new Field(ripe.orElse(null), plot[0], RingSweep.pausedAt(colonyId).isPresent());
     }
 
     /**
@@ -138,7 +155,7 @@ public final class CropPatch {
      * abre roça agora é a obra, com a planta do próprio jogo — ver
      * {@code FarmPlans}.
      */
-    public record Field(BlockPos nearestRipe, BlockPos nearestPlot) {
+    public record Field(BlockPos nearestRipe, BlockPos nearestPlot, boolean incomplete) {
 
         /** A lavoura madura mais perto. */
         public Optional<BlockPos> ripe() {
@@ -148,6 +165,20 @@ public final class CropPatch {
         /** O canteiro arado e vazio mais perto. */
         public Optional<BlockPos> emptyPlot() {
             return Optional.ofNullable(nearestPlot);
+        }
+
+        /**
+         * Se o orçamento acabou antes de a volta fechar.
+         *
+         * <p><b>"Não achei" e "não terminei de olhar" são respostas
+         * diferentes</b>, e confundi-las é o log mentindo justamente no
+         * caso que ele existe para explicar — a frase é do
+         * {@link RingSweep}, e vale aqui pelo mesmo motivo. Enquanto isto
+         * for verdade, nada de vazio prova que o campo está vazio: prova
+         * só que esta passagem não chegou ao fim.
+         */
+        public boolean incomplete() {
+            return incomplete;
         }
     }
 

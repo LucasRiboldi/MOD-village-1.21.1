@@ -12,6 +12,7 @@ import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.CropPatch;
+import com.villagecolony.fabric.integration.RingSweep;
 import com.villagecolony.fabric.work.FarmerWork;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
@@ -309,6 +310,74 @@ public class FarmerGameTest implements FabricGameTest {
         context.assertTrue(
                 found.get().equals(context.getAbsolutePos(FIELD)),
                 "a busca achou outro lugar: " + found.get().toShortString());
+
+        context.complete();
+    }
+
+    /**
+     * <b>A varredura do campo atravessa passagens</b> — P1.5, 2026-09-11.
+     *
+     * <p>O {@code CropPatch} tinha a própria espiral escrita à mão, com
+     * orçamento de 2.048 colunas e <b>sem cursor</b>: toda passagem
+     * recomeçava do centro, e o quadrado de raio 32 do fazendeiro tem
+     * <b>4.225 colunas</b>. Ela fechava o anel 22 e abortava no 23 —
+     * metade da área prometida, sempre a mesma metade. E o
+     * {@code ConstructionPlanner} abre roça até 32 do centro, então uma
+     * roça da própria colônia entre 23 e 32 blocos era invisível ao
+     * fazendeiro dela.
+     *
+     * <p>Este caso prende o conserto no lugar certo. O
+     * {@code RingSweepResumeTest} prova que o {@link RingSweep} retoma;
+     * só este prova que o <b>{@code CropPatch} passou a usá-lo</b>. Uma
+     * espiral escrita à mão de volta aqui derruba este teste e nenhum
+     * outro.
+     *
+     * <p><b>O centro vai quarenta blocos acima do piso</b>, e é montagem,
+     * não enfeite: a bateria roda arenas vizinhas no mesmo mundo, e raio
+     * trinta alcança a lavoura madura que os outros testes plantam. Uma
+     * delas pararia a varredura cedo e o caso passaria a medir sorte.
+     * Lá em cima não há lavoura de ninguém, e o orçamento morde por
+     * geometria — que é justamente o que se quer medir.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sweep",
+            tickLimit = 120)
+    public void theFieldSweepResumesWhereTheBudgetStoppedIt(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        // Raio 30: 61² = 3.721 colunas, contra as 1.024 de uma passagem.
+        // Duas passagens ainda não fecham a volta, e é isso que deixa a
+        // segunda asserção determinística.
+        int radius = 30;
+
+        BlockPos center = context.getAbsolutePos(CHEST).up(40);
+
+        UUID colonyId = UUID.randomUUID();
+
+        try {
+            CropPatch.Field first = CropPatch.survey(world, colonyId, center, radius);
+
+            context.assertTrue(
+                    first.incomplete(),
+                    "uma passagem não fecha o raio 30, e o campo tinha de dizer isso "
+                            + "em vez de devolver um vazio que parece resposta");
+
+            int pausedAt = RingSweep.pausedAt(colonyId).orElse(-1);
+
+            context.assertTrue(
+                    pausedAt > 0,
+                    "a varredura não deixou cursor — não há de onde retomar");
+
+            CropPatch.survey(world, colonyId, center, radius);
+
+            int resumedAt = RingSweep.pausedAt(colonyId).orElse(-1);
+
+            context.assertTrue(
+                    resumedAt > pausedAt,
+                    "a segunda passagem recomeçou do centro em vez de retomar: anel "
+                            + pausedAt + " para " + resumedAt);
+        } finally {
+            RingSweep.forget(colonyId);
+        }
 
         context.complete();
     }
