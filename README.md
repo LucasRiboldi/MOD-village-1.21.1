@@ -259,6 +259,12 @@ no mato depois do escuro é trabalhador que os monstros pegam.
 
 ## O que falta
 
+**O que está sendo consertado agora**, em ordem, com o critério de aceite de
+cada item: [`Plano-de-Correcao.md`](docs/technical/Plano-de-Correcao.md). Ele
+manda enquanto houver bloqueador aberto — **nenhuma profissão nova entra
+antes do P0 fechar**. O estado item a item fica no fim daquele arquivo, e o
+estado geral do projeto continua no [`TODO.md`](TODO.md).
+
 **Profissões que o modelo econômico prevê e ninguém escreveu** — a lista
 inteira, com as razões, está em
 [`Village-Economy.md`](docs/technical/Village-Economy.md):

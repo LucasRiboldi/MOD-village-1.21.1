@@ -71,6 +71,13 @@ e as cinco fases de crescimento — vive em
 [`Village-Economy.md`](docs/technical/Village-Economy.md). Este arquivo
 continua sendo o que está aberto **agora**.
 
+**E desde 2026-09-11 há um roteiro por cima desta lista.** O
+[`Plano-de-Correcao.md`](docs/technical/Plano-de-Correcao.md) é do autor e
+diz **o que fazer e em que ordem** — P0 bloqueadores, P1 comportamento, P2
+performance, P3 confiabilidade —, com critério de aceite por item e a regra
+de um item por commit. Este arquivo continua dizendo **o que é verdade
+hoje**; onde os dois discordarem sobre o que já foi feito, vale este.
+
 Este arquivo é a **lista canônica**. Onde ele discordar do
 [`Backlog.md`](docs/technical/Backlog.md) ou do
 [`Project-State.md`](docs/technical/Project-State.md), vale este — os
