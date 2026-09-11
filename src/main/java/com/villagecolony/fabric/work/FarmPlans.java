@@ -58,10 +58,13 @@ public final class FarmPlans {
     private static final Map<ResourceId, Optional<Blueprint>> READ = new HashMap<>();
 
     /**
-     * Quantos aldeões cada roça alimenta — decisão do autor, 2026-09-05:
-     * <i>"a quantidade de espaços de plantação deve [ser] 1/15 avos da
-     * quantidade de aldeões (zona de plantação criada a cada 15 aldeões
-     * existentes na vila)"</i>.
+     * Quantos aldeões cada roça alimenta — decisão do autor, 2026-09-05,
+     * <b>revista por ele em 2026-09-10</b>: <i>"a vila deve ter uma
+     * plantacao a cada 20 aldoes na vila"</i>. Eram quinze, e a sessão
+     * das 22:57 mostrou lavoura demais para o tamanho da vila.
+     *
+     * <p>O pedido original de 09-05 era <i>"1/15 avos da quantidade de
+     * aldeões"</i>; a forma da regra não mudou, só o divisor.
      *
      * <p><b>O que ela substitui é o defeito da véspera.</b> O pedido de
      * roça vinha do fazendeiro — <i>varri o raio e não achei campo</i> —,
@@ -74,7 +77,7 @@ public final class FarmPlans {
      * alimentar gente, então quem manda no tamanho da lavoura é o tamanho
      * da vila, e não o humor da varredura do fazendeiro.
      */
-    public static final int VILLAGERS_PER_FARM = 15;
+    public static final int VILLAGERS_PER_FARM = 20;
 
     private FarmPlans() {
     }
@@ -82,9 +85,9 @@ public final class FarmPlans {
     /**
      * Se esta colônia ainda deve uma roça à própria população.
      *
-     * <p>Divisão inteira, que é a frase do autor ao pé da letra: catorze
-     * aldeões não pedem roça nenhuma, quinze pedem a primeira, e a
-     * segunda só com trinta.
+     * <p>Divisão inteira, que é a frase do autor ao pé da letra:
+     * dezenove aldeões não pedem roça nenhuma, vinte pedem a primeira, e
+     * a segunda só com quarenta.
      *
      * <p><b>Conta as roças que a colônia levantou</b>, e não as que a
      * vila já tinha. É o que o {@code BuildingRegistry} sabe responder

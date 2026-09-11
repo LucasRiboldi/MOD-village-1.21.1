@@ -304,6 +304,107 @@ alegação, não achado**, e o que o Verifier não conseguir reproduzir vai para
 
 ---
 
+## 🎮 Sessão de 2026-09-10, 22:57 — o E44 não voltou, e três defeitos novos
+
+**13 minutos**, jar conferido: `54138d70`, o do commit `a1ce82c` — **a primeira
+sessão a rodar o conserto do E44**. Zero exceções do mod. Colônia `634bf5cc`,
+24 ciclos.
+
+### ✅ O E44 não voltou, e o log prova
+
+**A pergunta que a lista de conferência mandava fazer era se a *mesma* pedra
+voltava.** Não volta. O cursor anda:
+
+```text
+23:00:29  2423,45,-1424    23:02:16  2422,46,-1424
+23:00:51  2423,46,-1424    23:02:46  2421,44,-1424
+23:01:17  2422,45,-1424    23:03:18  2421,45,-1424
+```
+
+Nenhuma repetição — o `MineMarks` está mordendo. **O terceiro guarda também
+disparou**, cinco vezes, com a frase que `MineLease` estreou: `it got no closer
+than N,N blocks in N ticks of work time`. E o `WorkerStrikes` rodou pela
+primeira vez em jogo: **nove demissões**, seis de `COLLECT_STONE` e três de
+`COLLECT_WOOD`.
+
+**As três camadas de 09-10 funcionam.** O que a sessão mostrou é que elas não
+bastavam, e é outro defeito.
+
+### 🔴 Os mineiros se enfileiram — e agora é o beco, não a pedra
+
+**A queixa do autor:** *"aldeões se juntando e entrando no buraco"*. O log
+explica inteiro, e **não é o E44**.
+
+Os alvos são granito em `2421-2423, 44-46, -1424`, e todos os mineiros param
+nos mesmos dois lugares:
+
+| onde eles empacam | vezes |
+|---|---|
+| `2425, 42, -1424` | 9 |
+| `2433, 44, -1429` | 5 |
+| `2426, 42, -1425` | 3 |
+
+Em **todas** as desistências o `place to stand` está em Y=44, e o mineiro está
+em Y=42 — **dois blocos abaixo, com `unable to climb`**. Ele cai num vão da
+galeria e não sobe.
+
+**O rodízio é a parte nova.** O `WorkerStrikes` demite quem trava, e **o
+substituto herda o mesmo beco**: 8 mineiros distintos passaram pelo cargo, 6
+largaram o ofício. É por isso que eles se acumulam no mesmo túnel — não é um
+alvo compartilhado, é uma **fila de sucessores caindo no mesmo buraco**.
+
+**Por que o `MineMarks` não salva:** ele marca **pedra a pedra**, e o cursor
+tem pedra de sobra. Marca 2423, serve 2422; marca 2422, serve 2421 — todas
+atrás do mesmo vão intransponível. **A marca precisa ser da região, não do
+bloco.** Decisão do autor em 09-10: a colônia marca o beco.
+
+### 🔴 Os buracos aleatórios são a estrada, e ela anda em ziguezague
+
+**A queixa do autor:** *"buracos sendo cavados em lugares aleatórios"*. Não é o
+mineiro — **tudo que ele cavou está em Y 43-46**, dentro da galeria, em ordem
+de dig order. Quem mexe na superfície é a estrada, em Y=62:
+
+```text
+22:59:31  2b sul      23:02:01  3b leste
+23:00:01  4b norte    23:02:31  2b sul
+23:00:31  2b oeste    23:03:01  4b leste
+23:01:01  3b sul      23:04:31  4b norte
+23:01:31  3b leste    23:05:01  3b oeste
+```
+
+**43 blocos em 13 minutos, e o rumo troca quase todo ciclo.** A contagem é a
+prova: **15 ciclos de `extended the road` contra 3 de `grew the road`** — a
+continuação de rumo quase nunca acontece.
+
+**A causa está em `RoadExtension`.** `consider()` reavalia as pontas a cada
+varredura e `openSideOf()` devolve o **primeiro** lado aberto na ordem fixa de
+`Direction.Type.HORIZONTAL` — não há memória de rumo entre ciclos. `keepGrowing`
+existe e mantém a direção, mas `forgetEnds` limpa o `GROWING` a cada varredura
+nova. Decisão do autor em 09-10: **o rumo passa a ter inércia**.
+
+### 🟠 A roça: uma só nesta sessão, e a cota mudou de 15 para 20
+
+**"Construindo plantações demais" não se reproduziu no log desta sessão** — uma
+única `planned minecraft:village/plains/houses/plains_small_farm_`. O que o
+autor viu é lavoura **acumulada** de sessões anteriores, quando a cota era 15.
+
+**A cota foi para 20** por decisão dele nesta data: `VILLAGERS_PER_FARM` em
+`FarmPlans`. Build verde, **741 unitários**, zero falhas — os gametests usam a
+constante e não o literal, então nenhum quebrou.
+
+**O que a cota não faz é desfazer o passado:** as roças já levantadas continuam
+lá, e `owedToThePopulation` conta as construídas. Uma vila que já passou da
+conta simplesmente para de pedir mais.
+
+### 🟠 E o fazendeiro não acha o que fazer
+
+**31 dos 24 ciclos** (a linha se repete por fazendeiro) disseram `no farmer
+work: nothing ripe and no empty plot within 32 blocks`. Houve sementeira — 18
+batatas em `2473-2476, 63` — mas a roça nova fica perto do limite dos 32
+blocos.
+
+---
+
 ## 📒 2026-09-10 — o E44 fecha no código, e o gatilho que faltava
 
 **Dois commits, e o segundo existe porque o primeiro não bastava.** O E44 —
