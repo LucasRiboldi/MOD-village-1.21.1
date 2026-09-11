@@ -1,6 +1,21 @@
 # TODO
 
-**Atualizado:** 2026-09-10, depois de alinhar o local com o GitHub. **O E44
+**Atualizado:** 2026-09-11, no fim do ciclo do plano de correção.
+
+> ### ⏭️ A próxima sessão começa por aqui
+>
+> **Primeiro, uma varredura de validação do plano contra o código** — pedido do
+> autor, e o ciclo de 09-11 explica por quê: **três dos seus itens caíram por
+> leitura**, e os três porque o plano foi escrito a partir deste arquivo quando
+> algumas linhas dele já estavam vencidas. Vale conferir os itens restantes
+> antes de atacá-los, em vez de descobrir um a um.
+>
+> **Depois, a sessão de jogo que destrava o resto.** Ela entrega o número do
+> `LotRefusals` — quantos lotes são recusados por `OFF_ROAD_LEVEL` contra os
+> outros quatro motivos —, e é esse número que abre ou fecha a terraplanagem
+> (P0.7). O jar instalado já conta.
+
+**Antes disso — 2026-09-10, ao alinhar o local com o GitHub.** **O E44
 está fechado no código e aberto em jogo** — os dois commits que o consertam
 (`d304d38` e `a1ce82c`) não têm uma única prova de sessão, e o segundo deles
 nem veredito do `gauntlet-verifier` tem. É a primeira coisa da lista de
@@ -92,9 +107,9 @@ funcionando em jogo* são coisas diferentes, e estão separadas em toda
 lista abaixo.
 
 ```text
-741 testes unitários  ·  284 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
-13 arquivos de código acima de 500 linhas  ·  11 de teste  (recontados em 09-10)
-última sessão de jogo em 2026-09-10, 08:31  ·  nada do E44 foi visto em jogo
+753 testes unitários  ·  295 testes de jogo  ·  32 regras (2 emendas)  ·  9 ADRs
+13 arquivos de código acima de 500 linhas  ·  12 de teste  (recontados em 09-11)
+última sessão de jogo em 2026-09-11, 02:58  ·  o P0.1 foi visto; o resto não
 ```
 
 > **Recontado de novo em 09-10, depois dos dois commits do E44.** O
@@ -153,7 +168,28 @@ Vale escrever, porque a lista de "falta ver" andou de verdade:
 
 ### O que olhar agora, em ordem
 
-**Primeiro, o E44 — o conserto de 09-10, e ele é o mais urgente da lista.**
+**Primeiro, a linha nova de 09-11, e ela é o motivo da sessão.** O relatório de
+fim de sessão passou a dizer por que cada lote foi recusado:
+
+```text
+Colony <id> lot refusals: N candidates turned down —
+  N the ground is not at street level; N something stands inside...
+```
+
+**É esse número que abre ou fecha a terraplanagem da vila** (P0.7). Se
+`not at street level` dominar, a inferência de que o terreno impede a vila de
+crescer vira fato; se não dominar, a causa é outra. Ver
+[`terraplanagem-da-vila.md`](docs/research/terraplanagem-da-vila.md).
+
+**E duas coisas devem estar diferentes no log, das quais uma se vê pela
+ausência:**
+
+- **A areia calou.** Eram 4.389 linhas de 6.117; se voltarem, o amortecedor do
+  `IdleLog` não pegou.
+- **A casa sobe.** O `dirt_path` deixou de segurar a obra, e a linha a caçar é
+  a **ausência** de `waiting for minecraft:dirt_path`.
+
+**Depois, o E44 — o conserto de 09-10.**
 Foi o defeito que o autor viu com os próprios olhos, e as duas camadas que o
 fecham não têm uma única prova em jogo:
 
@@ -308,6 +344,68 @@ alegação, não achado**, e o que o Verifier não conseguir reproduzir vai para
 | 🟡 | **Três achados `medium` permanentes** em `tests/test_gauntlet.py`: um teste que prova o detector precisa conter o que ele detecta. Estão certos e não bloqueiam |
 | 🟡 | **`LumberjackGameTest` tem 1.960 linhas**, contra a regra de 500. O gate acusa como `low` |
 | 🟢 | **`lint` não existe neste projeto** e o gate diz isso em vez de inventar comando. Se um dia entrar checkstyle ou spotless, é uma linha em `collect()` |
+
+---
+
+## 📒 Ciclo de 2026-09-11 — o plano entra, e três itens dele caem por leitura
+
+**Onze commits sobre o `9385db6`.** O plano de correção do autor virou arquivo
+do projeto, cinco itens foram entregues e **três foram recusados com razão
+escrita** — o achado mais útil do ciclo, e o que motiva a próxima sessão.
+
+### Entregue
+
+| item | o quê |
+|---|---|
+| **P0.1** | **O índice de ruas voltou a valer para vila grande.** O `fits()` recusava índice acima de 1.024 colunas, e o preço era pago pela vila que cresceu: ela perde o atalho por ter crescido e volta às dezessete passagens — 8,1 minutos por resposta. Em lugar do teto, paginação com cursor |
+| **P0.1-b** | **O caminho de terra é batido, não carregado.** `dirt_path` não tem item; a obra o pedia e esperava para sempre. Uma linha no `isShapedFromTheGround`, que já cobria `farmland` e `water` pelo mesmo motivo |
+| **P0.1-c** | **A recusa de lote diz por quê.** `LotRefusals` conta os cinco motivos do `flatGroundAt`. É o P0.1 ao pé da letra, e é o número que decide a terraplanagem |
+| **P0.6** | **A enxurrada da areia calou.** Era 72% do log — 4.389 linhas de 6.117. Amortecedor de um ciclo no `IdleLog`, para quem pergunta por tique |
+| **P1.10** | **O escopo do beco ganhou o teste que faltava.** A mutação que o Verifier provou que escapava agora derruba um teste e só ele |
+| **P1.12** | **Os helpers dizem se a mão está vazia.** E a auditoria foi por medição: equipei os 26 e a bateria seguiu verde — nenhum dependia da mão nua |
+
+### Recusado, e é o que vale ler
+
+**Três itens do plano não se fazem, e os três pelo mesmo motivo:** o plano foi
+escrito a partir deste arquivo, e as linhas que ele copiou **já estavam
+vencidas**.
+
+| item | por quê |
+|---|---|
+| **P1.8** | O `furniture()` **não está morto**: é o primeiro critério de ordenação da obra, e é o que põe mobília depois da casa inteira. A Regra 21 levou o dono antigo; ninguém notou que ele ganhou dono novo |
+| **P1.12** (parte) | A asserção defensiva no `assign()` **quebraria a contratação**: na produção o `assignMissing` roda antes do `equip`, no mesmo ciclo, então mão vazia ali é o desenho |
+| **P1.7** | Separar `WOOD` por espécie **refaria o defeito de 09-10**. `INTERCHANGEABLE_IN_THE_WALL` já traz `WOOD` e `PLANKS`; a conta e o construtor concordam, e é isso que a Regra 27 pede. E o item contradiz o P1.6 do próprio plano |
+
+### Medido e devolvido maior do que entrou
+
+**P1.11 — a arena não hospeda a segunda sala, e há um segundo teto.** A linha
+dizia que ela assenta no bedrock. Está certa e é menos da metade:
+
+```text
+arena mede           y = -58 .. -52   (medido no log da bateria)
+mundo acaba em       y = -64
+MineShaft.DEEPEST    y = -59          ← o teto que ninguém tinha ligado
+um nível custa       20 blocos  →  sala 2 em -76
+```
+
+Na arena `mayDeepen()` é falso **por construção**, e não por falta de espaço. E
+a altura da arena é do runner: não há `vmArg` que a mova. O caminho que resta é
+um gancho que encurte a descida — não é afrouxar limite para passar, é encurtar
+geometria para caber —, mas mexe no `MineShaft`, que governa a forma da mina
+inteira.
+
+### E a pesquisa que não virou código
+
+**A terraplanagem da vila** foi pesquisada e está represada de propósito, em
+[`terraplanagem-da-vila.md`](docs/research/terraplanagem-da-vila.md). O Vanilla
+**não serve**, e a razão é boa de saber: o `StructureWeightSampler` é função de
+densidade, e o platô da aldeia é inventado enquanto o terreno ainda é ruído —
+chunk gerado não pode ser re-beardificado.
+
+Metade da regra pedida já existe no mod desde 08-21 (`RoadExtension.MAX_STEP`),
+e o que falta é alguém que **conserte** em vez de **recusar**. As decisões do
+autor estão tomadas — capacidade do construtor, teto de quatro blocos — e a
+frente abre **com o número do P0.1-c**, não com inferência.
 
 ---
 

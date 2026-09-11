@@ -175,7 +175,10 @@ Só otimizar de verdade se passar de 100 ms ou o TPS cair.
 
 ```text
 bateria verde
-  → P0.1 → P0.2 → P0.3 (investigação) → P0.4 → P0.5
+  → P0.0  validar o plano contra o código          ← 2026-09-11, o autor
+  → uma sessão de jogo, que entrega o número do LotRefusals
+  → P0.2 → P0.3 (investigação) → P0.4 → P0.5
+  → P0.7 terraplanagem, SE o número a justificar
   → PARAR E REPORTAR
   → P1.1 → P1.2 → P1.3 → P1.4 → P1.5 → P1.6 → P1.7 → P1.8
   → P1.10 → P1.11 → P1.12 → P1.13
@@ -200,6 +203,33 @@ bateria verde
 
 ---
 
+## ⏭️ P0.0 — validar este plano contra o código
+
+**Pedido do autor em 2026-09-11, e ele vem antes de tudo o que sobrou.**
+
+No ciclo de 09-11 três itens deste plano caíram por leitura: o `furniture()`
+que não estava morto, a asserção defensiva no `assign()` que quebraria a
+contratação, e a reserva de tora por espécie que refaria a discordância de
+09-10. Um quarto — o P1.11 — devolveu-se maior do que entrou.
+
+**Os quatro têm a mesma forma.** Este plano foi escrito a partir do `TODO.md`,
+e o `TODO.md` guarda pendências desde agosto. Algumas delas pararam de ser
+verdade sem que ninguém as relesse — quatro linhas daquela lista já tinham sido
+derrubadas por leitura antes, e o padrão se repetiu aqui.
+
+**O que a varredura faz**, por item ainda aberto:
+
+1. Achar no código o que o item afirma — a constante, o método, a linha.
+2. Conferir se a afirmação ainda vale **hoje**, e não quando foi escrita.
+3. Marcar o item como `confirmado`, `vencido` ou `maior do que parece`,
+   com a evidência ao lado.
+
+**O que ela não é:** não é refazer o plano. Os itens confirmados seguem na
+ordem em que estão; o que muda é parar de descobrir a vencidura um a um, no
+meio da implementação.
+
+---
+
 ## Estado da execução
 
 Atualizado a cada item entregue. `✅` só entra com bateria verde **e**
@@ -217,6 +247,15 @@ mutação conferida; a coluna *em jogo* é a que a régua cobra.
 | P0.3 | ⬜ | — |
 | P0.4 | ⬜ | — |
 | P0.5 | ⬜ | — |
-| P1.1 – P1.13 | ⬜ | — |
+| **P0.0** | ⏭️ **próxima sessão** — validar este plano contra o código, antes de atacar o que sobrou | — |
+| P1.1 – P1.6, P1.9, P1.13 | ⬜ | — |
+| P1.7 | ❌ não se faz — ver acima | — |
+| P1.8 | ❌ não se faz — ver acima | — |
+| P1.10 | ✅ 2026-09-11 | — |
+| P1.11 | ⚠️ medido, e é maior que a linha — ver acima | — |
+| P1.12 | ✅ 2026-09-11, com a asserção defensiva recusada | — |
 | P2.1 | ⬜ | — |
 | P3.1 – P3.3 | ⬜ | — |
+
+**Bateria no fim do ciclo de 2026-09-11:** 753 unitários e 295 de gametest,
+zero falhas, medidos pelos XML de relatório e pelo `runGametest`.
