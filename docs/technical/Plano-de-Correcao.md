@@ -132,7 +132,7 @@ Depende de P0 verde.
 | **P1.9** | **Regra 25: não mexer agora.** Só ganha sentido com múltiplas plantas, depois da §3.6 |
 | **P1.10** | ✅ **feito em 2026-09-11.** `theNeighbourhoodDeadEndIsNotTheTunnelCursorsQuestion`: três recusas em posições **já cavadas** enchem o cubo em volta de uma fronteira **sem marca própria**. Duas asserções de montagem garantem que o cenário discrimina de verdade, e a mutação que o Verifier provou que passava pela bateria inteira agora derruba este teste e só ele |
 | **P1.11** | **GameTest: criar a segunda sala.** A arena assenta em bedrock `y=-64` e a segunda sala cairia em `y=-76`, fora do limite. Atravessar os ramais de verdade: poço → ramal A/B/C → sala 2. **Não** substituir por unitário equivalente |
-| **P1.12** | **Os 49 `assign()` de mãos vazias.** Auditar; equipar antes quando o comportamento depende de ferramenta. Criar `createWorker()` e `createEquippedWorker()`. Na produção, asserção defensiva no `assign()` |
+| **P1.12** | ✅ **feito em 2026-09-11, com uma parte recusada.** `TestWorkers` dá os dois helpers com a diferença no nome, e um teste prova que ela é observável. Os 26 call-sites de mineiro e lenhador passaram a equipar — e a bateria seguiu verde, então **nenhum dependia da mão nua**. ❌ **A asserção defensiva no `assign()` não entra:** na produção o `assignMissing` roda antes do `equip`, no mesmo ciclo, então mão vazia ali é o desenho — recusá-la quebraria a contratação inteira |
 | **P1.13** | **E41: teste de degradação longa.** 200+ ciclos, amostra por ciclo, falha **por tendência** e não por valor absoluto. Precisa de fonte de trabalho infinita (`TestWorkSource`), senão mede "nothing to work on" — que é o P0.1 — e não degradação. O `chestScanCompleted` vem do P0.2: as frentes andam juntas |
 
 ---

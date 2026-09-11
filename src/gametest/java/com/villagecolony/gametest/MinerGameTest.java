@@ -173,6 +173,8 @@ public class MinerGameTest implements FabricGameTest {
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
 
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
         owned.owning(villager.getUuid());
@@ -281,6 +283,8 @@ public class MinerGameTest implements FabricGameTest {
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
 
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
         owned.owning(villager.getUuid());
@@ -371,6 +375,8 @@ public class MinerGameTest implements FabricGameTest {
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
 
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
         owned.owning(villager.getUuid());
@@ -455,6 +461,8 @@ public class MinerGameTest implements FabricGameTest {
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
 
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
@@ -545,6 +553,8 @@ public class MinerGameTest implements FabricGameTest {
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
 
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
         owned.owning(villager.getUuid());
@@ -626,6 +636,8 @@ public class MinerGameTest implements FabricGameTest {
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
 
         // <b>A arena passa a equipar, como a colônia equipa</b> —
         // 2026-09-04. O tempo de quebra deixou de ser a constante de
@@ -766,6 +778,8 @@ public class MinerGameTest implements FabricGameTest {
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
 
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
         // Os seis tiques do javadoc são os da picareta de diamante, e
         // desde 2026-09-04 o tempo sai da ferramenta na mão em vez de
         // uma constante. Sem equipar, esta pedra pede 150.
@@ -887,6 +901,8 @@ public class MinerGameTest implements FabricGameTest {
         Worker worker = VillageColonyMod.WORKERS.register(child.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
 
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
         VillageColonyMod.STORAGES.register(WorkerStorage.of(child.getUuid(), chest));
 
         owned.owning(child.getUuid());
@@ -975,6 +991,8 @@ public class MinerGameTest implements FabricGameTest {
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
 
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
@@ -1760,6 +1778,8 @@ public class MinerGameTest implements FabricGameTest {
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
 
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
         VillageColonyMod.STORAGES.register(WorkerStorage.of(
                 villager.getUuid(),
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(1, 2, 1)))));
@@ -1991,6 +2011,8 @@ public class MinerGameTest implements FabricGameTest {
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
 
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
         owned.owning(villager.getUuid());
@@ -2106,6 +2128,8 @@ public class MinerGameTest implements FabricGameTest {
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
 
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
@@ -2279,6 +2303,8 @@ public class MinerGameTest implements FabricGameTest {
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
 
         // <b>A arena passa a equipar, como a colônia equipa</b> —
         // 2026-09-04. O tempo de quebra deixou de ser a constante de
@@ -3235,6 +3261,8 @@ public class MinerGameTest implements FabricGameTest {
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
 
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
         owned.owning(villager.getUuid());
@@ -3421,6 +3449,8 @@ public class MinerGameTest implements FabricGameTest {
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
 
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
         owned.owning(villager.getUuid());
@@ -3528,6 +3558,8 @@ public class MinerGameTest implements FabricGameTest {
 
         Worker worker = VillageColonyMod.WORKERS.register(child.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
 
         VillageColonyMod.STORAGES.register(WorkerStorage.of(child.getUuid(), chest));
 
@@ -3795,6 +3827,8 @@ public class MinerGameTest implements FabricGameTest {
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
 
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
 
@@ -4097,6 +4131,8 @@ public class MinerGameTest implements FabricGameTest {
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.MINER);
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
 
         VillageColonyMod.STORAGES.register(WorkerStorage.of(
                 villager.getUuid(),

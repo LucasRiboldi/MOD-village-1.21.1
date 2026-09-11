@@ -730,6 +730,67 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
     }
 
     /**
+     * <b>Os dois jeitos de pôr trabalhador na arena não são o mesmo</b>
+     * — P1.12, 2026-09-11.
+     *
+     * <p>Sessenta e quatro lugares da bateria criam trabalhador com
+     * {@code register} + {@code assign}, e isso deixa a mão <b>vazia</b>.
+     * O nome não conta: parece que atribuir a profissão entrega o ofício
+     * inteiro, e entrega metade.
+     *
+     * <p>A metade que falta virou comportamento em 2026-09-04, quando o
+     * {@code BlockBreakTime} passou a perguntar à mão do aldeão em vez de
+     * a uma constante. Desde então, teste que mede tempo de quebra sem
+     * equipar mede a <b>mão nua</b> — uma situação que no jogo real não
+     * existe, porque a colônia equipa no mesmo ciclo em que contrata.
+     *
+     * <p>Este teste afirma que a diferença é <b>real e observável</b>,
+     * que é o que impede {@link TestWorkers} de ser dois nomes para a
+     * mesma coisa. Se um dia o equipamento parar de chegar à mão, é aqui
+     * que se vê — e os testes de tempo param de mentir por acidente.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_colour",
+            tickLimit = 20)
+    public void theEquippedWorkerIsNotTheSameAsTheAssignedOne(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        try {
+            Worker bare = TestWorkers.createWorker(
+                    context, colony, ProfessionType.MINER, new BlockPos(1, 1, 1));
+
+            Worker equipped = TestWorkers.createEquippedWorker(
+                    context, colony, ProfessionType.MINER, new BlockPos(2, 1, 1));
+
+            context.assertTrue(
+                    handOf(context, bare).isEmpty(),
+                    "o createWorker entregou ferramenta — então os dois helpers são"
+                            + " a mesma coisa, e o nome mente");
+
+            context.assertTrue(
+                    !handOf(context, equipped).isEmpty(),
+                    "o createEquippedWorker deixou a mão vazia — os testes que medem"
+                            + " tempo de quebra continuam medindo a mão nua");
+        } finally {
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /** O que está na mão deste trabalhador agora. */
+    private static ItemStack handOf(TestContext context, Worker worker) {
+        if (!(context.getWorld().getEntity(worker.villagerId())
+                instanceof VillagerEntity villager)) {
+
+            return ItemStack.EMPTY;
+        }
+
+        return villager.getEquippedStack(EquipmentSlot.MAINHAND);
+    }
+
+    /**
      * <b>Quem perde a profissão perde a plaquinha</b> — 2026-09-11, e é
      * a queixa que o autor trouxe da sessão das 00:04.
      *

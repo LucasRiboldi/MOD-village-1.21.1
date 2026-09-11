@@ -1,6 +1,7 @@
 package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.fabric.integration.WorkerEquipment;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
@@ -894,6 +895,8 @@ public class LumberjackGameTest implements FabricGameTest {
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.LUMBERJACK);
 
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
         VillageColonyMod.STORAGES.register(WorkerStorage.of(
                 villager.getUuid(),
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chest))));
@@ -1014,6 +1017,8 @@ public class LumberjackGameTest implements FabricGameTest {
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.LUMBERJACK);
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
 
         VillageColonyMod.STORAGES.register(WorkerStorage.of(
                 villager.getUuid(),
@@ -1239,6 +1244,8 @@ public class LumberjackGameTest implements FabricGameTest {
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.LUMBERJACK);
 
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
         VillageColonyMod.STORAGES.register(WorkerStorage.of(
                 villager.getUuid(),
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chest))));
@@ -1322,6 +1329,8 @@ public class LumberjackGameTest implements FabricGameTest {
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.LUMBERJACK);
 
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
         VillageColonyMod.STORAGES.register(WorkerStorage.of(
                 villager.getUuid(),
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chest))));
@@ -1388,6 +1397,8 @@ public class LumberjackGameTest implements FabricGameTest {
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.LUMBERJACK);
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
 
         VillageColonyMod.STORAGES.register(WorkerStorage.of(
                 villager.getUuid(),
@@ -1495,6 +1506,8 @@ public class LumberjackGameTest implements FabricGameTest {
 
             Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
             worker.assign(ProfessionType.LUMBERJACK);
+
+            WorkerEquipment.equip(context.getWorld(), List.of(worker));
 
             VillageColonyMod.STORAGES.register(WorkerStorage.of(
                     villager.getUuid(),
@@ -1635,6 +1648,8 @@ public class LumberjackGameTest implements FabricGameTest {
 
         Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
         worker.assign(ProfessionType.LUMBERJACK);
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
 
         VillageColonyMod.STORAGES.register(WorkerStorage.of(
                 villager.getUuid(),
@@ -1802,6 +1817,8 @@ public class LumberjackGameTest implements FabricGameTest {
 
         VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id())
                 .assign(ProfessionType.LUMBERJACK);
+
+                WorkerEquipment.equip(context.getWorld(), List.of());
 
         VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), ownChest));
 
