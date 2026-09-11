@@ -91,13 +91,20 @@ public final class SandGathering {
             // 48 são dez passagens, e dizer "não achei" em cada uma daria
             // duas linhas por segundo numa vila sem praia. Fala na
             // primeira vez e cala enquanto o motivo não mudar.
-            IdleLog.record(
+            // Pelo recordAt, e não pelo record — 2026-09-11. Este
+            // método roda no laço de trabalho do mineiro, por tique, e o
+            // motivo alterna por construção: toda volta da varredura
+            // termina em NO_TARGET e a seguinte recomeça em
+            // SWEEP_INCOMPLETE. A regra de transição sozinha deixou
+            // 4.389 linhas num log de 6.117 na sessão das 02:03.
+            IdleLog.recordAt(
                     colonyId,
                     SUBJECT,
                     RingSweep.pausedAt(workerId).isPresent()
                             ? IdleReason.SWEEP_INCOMPLETE
                             : IdleReason.NO_TARGET,
-                    "sand within " + sandRadius + " blocks");
+                    "sand within " + sandRadius + " blocks",
+                    world.getTime());
 
             return Optional.empty();
         }

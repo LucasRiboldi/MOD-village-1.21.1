@@ -267,14 +267,21 @@ public final class MineDigging {
                         .filter(stone -> !MineMarks.isUnreachableAround(world, stone)));
 
         if (found.isEmpty()) {
-            IdleLog.record(
+            // Pelo recordAt, como a areia — 2026-09-11. Este é o irmão
+            // da busca de areia e tem o mesmo desenho: roda por tique, e
+            // a varredura em anéis alterna pausada e completa a cada
+            // volta. Ele não apareceu na enxurrada das 02:03 porque
+            // aquela colônia tinha boca de mina — o que é sorte, e não
+            // defesa.
+            IdleLog.recordAt(
                     colonyId,
                     SURFACE_SUBJECT,
                     RingSweep.pausedAt(workerId).isPresent()
                             ? IdleReason.SWEEP_INCOMPLETE
                             : IdleReason.NO_TARGET,
                     "no mine mouth, and no exposed stone within "
-                            + surfaceRadius + " blocks either");
+                            + surfaceRadius + " blocks either",
+                    world.getTime());
 
             return Optional.empty();
         }

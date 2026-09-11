@@ -206,4 +206,85 @@ class IdleLogTest {
             lines.add(event.getMessage().getFormattedMessage());
         }
     }
+
+    // ------------------------------------------------------------------
+    // O amortecedor — 2026-09-11, sessão das 02:03.
+    //
+    // A regra de transição supõe que quem pergunta é o ciclo da colônia,
+    // uma vez a cada trinta segundos. A busca de areia pergunta no laço
+    // do mineiro, POR TIQUE, e o motivo dela alterna por construção:
+    // toda volta da varredura em anéis termina em NO_TARGET e a seguinte
+    // recomeça em SWEEP_INCOMPLETE. Duas transições por volta, uma volta
+    // a cada dez tiques: quatro linhas por segundo.
+    //
+    // Medido naquela sessão: 4.389 linhas de areia num log de 6.117 —
+    // 72% da sessão, e a próxima fica cega para qualquer outra coisa.
+    // ------------------------------------------------------------------
+
+    /** <b>O caso da sessão:</b> motivo que oscila não vira enxurrada. */
+    @Test
+    void anOscillatingReasonDoesNotFlood() {
+        for (int tick = 0; tick < 600; tick++) {
+            IdleLog.recordAt(
+                    colony,
+                    SUBJECT,
+                    tick % 2 == 0 ? IdleReason.SWEEP_INCOMPLETE : IdleReason.NO_TARGET,
+                    "sand within 48 blocks",
+                    tick);
+        }
+
+        assertEquals(
+                1,
+                captured.lines.size(),
+                "seiscentos tiques de motivo alternante deram "
+                        + captured.lines.size() + " linhas — é a enxurrada de volta");
+    }
+
+    /** E passado o silêncio ele volta a falar: a notícia não se perde. */
+    @Test
+    void afterTheQuietPeriodItSpeaksAgain() {
+        IdleLog.recordAt(colony, SUBJECT, IdleReason.SWEEP_INCOMPLETE, "", 0);
+
+        IdleLog.recordAt(colony, SUBJECT, IdleReason.NO_TARGET, "", 600);
+
+        assertEquals(
+                2,
+                captured.lines.size(),
+                "passado um ciclo inteiro o assunto continuou calado");
+    }
+
+    /**
+     * <b>E o amortecedor não fala do que não mudou.</b> Ele se soma à
+     * regra de transição, não a substitui: motivo igual continua calado
+     * mesmo depois do silêncio.
+     */
+    @Test
+    void theQuietPeriodDoesNotResurrectTheSameReason() {
+        IdleLog.recordAt(colony, SUBJECT, IdleReason.NO_TARGET, "", 0);
+
+        IdleLog.recordAt(colony, SUBJECT, IdleReason.NO_TARGET, "", 6000);
+
+        assertEquals(
+                1,
+                captured.lines.size(),
+                "o mesmo motivo foi dito duas vezes só porque o tempo passou");
+    }
+
+    /**
+     * <b>Quem pergunta por ciclo não paga o amortecedor.</b> O
+     * {@code record} sem relógio continua falando em toda transição, e é
+     * de propósito: lá a transição já é rara, e atrasar uma notícia
+     * legítima seria o preço errado.
+     */
+    @Test
+    void theCycleCallerIsNotDamped() {
+        IdleLog.record(colony, SUBJECT, IdleReason.SWEEP_INCOMPLETE, "");
+
+        IdleLog.record(colony, SUBJECT, IdleReason.NO_TARGET, "");
+
+        assertEquals(
+                2,
+                captured.lines.size(),
+                "quem pergunta uma vez por ciclo foi calado pelo amortecedor");
+    }
 }
