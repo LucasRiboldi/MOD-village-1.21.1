@@ -323,10 +323,4 @@ public final class SmelterWork {
         JOBS.clear();
     }
 
-    /** Quantas peças este fundidor já fez nesta tarefa. */
-    public static int smeltedBy(UUID workerId) {
-        Job job = JOBS.get(workerId);
-
-        return job == null ? 0 : job.smelted;
-    }
 }

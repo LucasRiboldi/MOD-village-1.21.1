@@ -117,37 +117,18 @@ public final class ChestScanner {
     }
 
     /**
-     * Se este aldeão conseguiria um baú, sem reivindicar nenhum.
-     *
-     * <p>A mesma pergunta de {@link #scan}, feita antes de o aldeão ter
-     * função. Existe porque a atribuição passou a preferir quem consegue
-     * baú: sem isso a vaga podia ir para um aldeão cuja cama não alcança
-     * baú nenhum, e ele passava a sessão pegando a tarefa e devolvendo —
-     * foi o que o log de 2026-08-13 mostrou, com dois lenhadores sem baú
-     * numa vila que tinha baú livre.
-     *
-     * <p>É uma preferência, não uma promessa: dois candidatos podem
-     * enxergar o mesmo baú livre, e só um fica com ele.
-     *
-     * <p>Custa uma varredura de baús por candidato, e por isso quem
-     * chama só pergunta quando há vaga aberta — que é raro depois dos
-     * primeiros ciclos. Ver {@code VillagerScanner}.
-     */
-    public static boolean hasFreeChest(
-            ServerWorld world, VillagerEntity villager, StorageRegistry storages,
-            Optional<ProfessionType> wants) {
-
-        return freeChestFor(world, villager, storages, wants).isPresent();
-    }
-
-    /**
      * <b>Qual</b> baú este aldeão conseguiria, sem reivindicá-lo.
      *
      * <p>Existe porque contar candidatos não é contar baús, e a diferença
      * é o E11 do §17. Até 2026-08-15 a colônia dispensava um trabalhador
-     * sem baú para cada <em>candidato</em> que respondesse sim a
-     * {@link #hasFreeChest} — e dois aldeões do mesmo cômodo respondem
-     * sim olhando para o <b>mesmo</b> baú.
+     * sem baú para cada <em>candidato</em> que dissesse conseguir um — e
+     * dois aldeões do mesmo cômodo dizem sim olhando para o <b>mesmo</b>
+     * baú.
+     *
+     * <p>O método que respondia aquela pergunta por candidato — o
+     * {@code hasFreeChest} — <b>saiu em 2026-09-11</b>, sem chamador
+     * nenhum desde que este o substituiu. Ele era invólucro deste, e
+     * deixá-lo ali era deixar o E11 a uma chamada de distância.
      *
      * <p>Três candidatos enxergando um baú só rendiam três dispensas,
      * uma reivindicação e dois trabalhadores novos sem baú. No ciclo

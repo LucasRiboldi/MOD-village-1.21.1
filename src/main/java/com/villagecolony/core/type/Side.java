@@ -44,7 +44,6 @@ public enum Side {
         };
     }
 
-    /** O lado oposto a este. */
     /**
      * Quanto este lado anda em x — a mesma convenção do jogo.
      *
@@ -79,6 +78,7 @@ public enum Side {
         };
     }
 
+    /** O lado oposto a este. */
     public Side opposite() {
         return switch (this) {
             case NORTH -> SOUTH;

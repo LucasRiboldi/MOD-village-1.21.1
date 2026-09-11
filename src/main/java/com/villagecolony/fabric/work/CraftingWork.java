@@ -826,12 +826,6 @@ public final class CraftingWork {
         JOBS.clear();
     }
 
-    /** Quantas peças este trabalhador já fez na tarefa atual. */
-    public static int craftedBy(UUID workerId) {
-        Job job = JOBS.get(workerId);
-
-        return job == null ? 0 : job.crafted;
-    }
 
     private static boolean isOngoing(Task task) {
         return task.state() == TaskState.RESERVED || task.state() == TaskState.EXECUTING;

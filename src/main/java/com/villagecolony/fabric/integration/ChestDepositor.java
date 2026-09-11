@@ -159,36 +159,6 @@ public final class ChestDepositor {
     }
 
     /**
-     * O espaço de todos os baús registrados de uma colônia.
-     *
-     * <p>É a medida que vira meta em {@code ColonyGoals}: a colônia
-     * colhe até isto chegar a zero.
-     *
-     * <p>Baú em chunk descarregado entra como zero, e não como erro.
-     * Quem decide sobre esta soma já recusa decidir quando a varredura
-     * de {@code ChestInventoryReader.survey} vier parcial, então um baú
-     * fora de alcance nunca chega a virar meta a menos.
-     */
-    public static int freeSpaceForGroup(
-            ServerWorld world,
-            Iterable<UUID> workerIds,
-            StorageRegistry storages,
-            ResourceGroup group) {
-
-        int room = 0;
-
-        for (UUID workerId : workerIds) {
-            Optional<WorkerStorage> storage = storages.of(workerId);
-
-            if (storage.isPresent()) {
-                room += freeSpaceForGroup(world, storage.get().chestPosition(), group);
-            }
-        }
-
-        return room;
-    }
-
-    /**
      * Se este stack é do grupo em questão.
      *
      * <p>A pergunta passa pelo adaptador, e não por uma lista de itens

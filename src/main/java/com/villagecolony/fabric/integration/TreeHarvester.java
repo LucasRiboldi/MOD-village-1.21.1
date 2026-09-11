@@ -360,17 +360,6 @@ public final class TreeHarvester {
     }
 
     /**
-     * Quantos troncos esta árvore tem, sem tocar em nada.
-     *
-     * <p>Serve para perguntar antes de derrubar: o tronco é removido sem
-     * drop no mundo, então madeira que não caiba no baú do trabalhador é
-     * madeira destruída. Ver {@code ChestDepositor.freeSpaceFor}.
-     */
-    public static int trunkSize(ServerWorld world, BlockPos anyLog) {
-        return trunkOf(world, anyLog).size();
-    }
-
-    /**
      * Os troncos ligados a este, sem tocar em nada.
      *
      * <p>Serve a quem precisa apontar o grupo inteiro, e não só contá-lo:

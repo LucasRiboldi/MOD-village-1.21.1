@@ -410,7 +410,6 @@ public final class ShepherdWork {
         JOBS.clear();
     }
 
-    /** Quanta lã este pastor já trouxe nesta tarefa. */
     /**
      * Quantos tiques de expediente este pastor já andou sem chegar.
      *

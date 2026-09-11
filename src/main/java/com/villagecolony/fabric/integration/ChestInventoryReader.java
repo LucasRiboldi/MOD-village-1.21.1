@@ -249,16 +249,4 @@ public final class ChestInventoryReader {
 
         return new ChestSurvey(ColonyResources.of(byChest), byChest.size(), unreachable);
     }
-
-    /** Atalho para somar tudo o que está registrado. */
-    public static ResourceTally readEverything(ServerWorld world, StorageRegistry storages) {
-        ResourceTally total = ResourceTally.empty();
-
-        for (WorkerStorage storage : storages.all()) {
-            total = total.plus(
-                    read(world, MinecraftTypeAdapter.toBlockPos(storage.chestPosition())));
-        }
-
-        return total;
-    }
 }
