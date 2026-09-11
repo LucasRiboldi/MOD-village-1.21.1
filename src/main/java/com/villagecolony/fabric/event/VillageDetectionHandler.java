@@ -262,16 +262,29 @@ public final class VillageDetectionHandler {
 
         long startedAt = System.nanoTime();
 
+        // O bastão do P2.1: cada fase cobra o próprio trecho, e o que
+        // nenhuma cobrar sai como `other`. Ver CycleCost.
+        CycleCost.startOver();
+
+        long mark = startedAt;
+
         for (ServerWorld world : server.getWorlds()) {
             for (ServerPlayerEntity player : world.getPlayers()) {
                 detectAround(world, player.getBlockPos());
             }
         }
 
+        mark = CycleCost.since(CycleCost.Phase.DETECT, mark);
+
         updateLifecycles(server.getOverworld());
+
+        mark = CycleCost.since(CycleCost.Phase.LIFECYCLE, mark);
 
         detectFromColonyCenters(server.getOverworld());
 
+        CycleCost.since(CycleCost.Phase.DETECT, mark);
+
+        // As fases de dentro se cobram sozinhas, em runCycleOf.
         runColonyCycles(server.getOverworld());
 
         reportIfSlow(startedAt);
@@ -287,19 +300,30 @@ public final class VillageDetectionHandler {
      * transforma palpite em número.
      *
      * <p>Silencioso no caso normal, de propósito.
+     *
+     * <p><b>E desde 2026-09-11 ela diz onde</b> — P2.1. Dizer só o total
+     * é meia notícia: o ciclo de 112 ms da sessão de 09-04 mandou abrir
+     * uma frente de performance sem que nada no log apontasse o culpado,
+     * e otimizar por palpite é o que o §11 existe para impedir. A
+     * repartição sai da fase mais cara para a mais barata, então o
+     * primeiro nome da linha é por onde começar. Ver {@link CycleCost}.
      */
     private static void reportIfSlow(long startedAt) {
-        long millis = (System.nanoTime() - startedAt) / 1_000_000L;
+        long elapsed = System.nanoTime() - startedAt;
+
+        long millis = elapsed / 1_000_000L;
 
         if (millis < TICK_MILLIS) {
             return;
         }
 
         VillageColonyMod.LOGGER.warn(
-                "Colony cycle took {} ms — longer than a server tick ({} colonies, {} pending chunks)",
+                "Colony cycle took {} ms — longer than a server tick"
+                        + " ({} colonies, {} pending chunks) — {}",
                 millis,
                 VillageColonyMod.COLONIES.count(),
-                pending.size());
+                pending.size(),
+                CycleCost.breakdown(elapsed));
     }
 
     /**
@@ -382,12 +406,19 @@ public final class VillageDetectionHandler {
      * 2026-08-07.
      */
     private static void runCycleOf(ServerWorld overworld, Colony colony) {
+        long mark = System.nanoTime();
+
         List<UUID> workerIds = workerIdsOf(colony);
 
         ChestInventoryReader.ChestSurvey survey = ChestInventoryReader.survey(
                 overworld, workerIds, VillageColonyMod.STORAGES);
 
         if (survey.isPartial()) {
+            // A leitura aconteceu e custou, mesmo sem decidir nada: cobrar
+            // só o caminho feliz esconderia justamente a colônia cara que
+            // não produz — que é o caso que o P2.1 foi medir.
+            CycleCost.since(CycleCost.Phase.CHESTS, mark);
+
             // <b>E agora ele diz.</b> Pular era certo desde 2026-08-07;
             // pular calado custou a sessão de 2026-09-04 inteira em
             // dúvida — não havia como saber, do log, se uma colônia
@@ -423,6 +454,10 @@ public final class VillageDetectionHandler {
         // tábua. Medida do mesmo jeito e pelo mesmo motivo.
         int plankRoom = ChestDepositor.freeSpaceForGroup(
                 overworld, workerIds, VillageColonyMod.STORAGES, ResourceGroup.PLANKS);
+
+        // Até aqui é baú: a varredura, o retrato do estoque e as duas
+        // medidas de espaço percorrem os mesmos inventários.
+        mark = CycleCost.since(CycleCost.Phase.CHESTS, mark);
 
         // A obra é decidida antes de a colônia pensar: o que ela pede
         // entra na conta do mesmo ciclo, e não do seguinte. Planejar
@@ -486,6 +521,11 @@ public final class VillageDetectionHandler {
                 WorkMaterials.iron(overworld, colony),
                 WorkMaterials.smeltedNeeds(colony));
 
+        // A obra inteira: varredura de lote, crescimento de rua, paleta e
+        // a conta do que a construção pede. É a fase que o plano suspeita
+        // ser a cara, e agora ela responde por si.
+        mark = CycleCost.since(CycleCost.Phase.PLANNER, mark);
+
         int assigned = ColonyCycle.run(
                 colony.id(),
                 survey.resources().total(),
@@ -512,6 +552,10 @@ public final class VillageDetectionHandler {
                 assigned,
                 VillageColonyMod.TASKS.availableFor(colony.id()).size());
 
+        // A linha entra na conta da distribuição, e não na das profissões:
+        // o `availableFor` que ela chama é trabalho de fila.
+        mark = CycleCost.since(CycleCost.Phase.ASSIGN, mark);
+
         // Depois da distribuição: quem recebeu tarefa neste ciclo já
         // começa a andar nele, em vez de esperar o próximo.
         LumberjackWork.run(overworld, colony);
@@ -522,6 +566,7 @@ public final class VillageDetectionHandler {
         CraftingWork.run(overworld, colony);
         BuilderWork.run(overworld, colony);
 
+        CycleCost.since(CycleCost.Phase.WORKERS, mark);
     }
 
     /**
