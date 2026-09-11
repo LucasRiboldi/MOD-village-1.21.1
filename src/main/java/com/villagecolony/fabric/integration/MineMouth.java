@@ -4,7 +4,6 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.worker.model.ProfessionType;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
-import net.minecraft.state.property.Properties;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -36,6 +35,16 @@ public final class MineMouth {
 
     /** Quantos blocos abaixo da boca ainda contam como "ao lado dela". */
     private static final int DROP = 1;
+
+    /**
+     * Até quantos blocos ao redor da boca a mobília dela pode estar.
+     *
+     * <p>Dois desde 2026-09-11, quando o baú saiu de debaixo do pilar e
+     * foi para o lado do arco. Um continua valendo porque as minas
+     * abertas antes dessa data têm o baú encostado na boca, e elas não
+     * podem perder o que já guardam.
+     */
+    private static final int REACH = 2;
 
     private MineMouth() {
     }
@@ -69,46 +78,47 @@ public final class MineMouth {
             return Optional.empty();
         }
 
+        // <b>O arco primeiro, e o baú ao lado dele</b> — 2026-09-11. A
+        // ordem era a inversa, e ela nasceu de um defeito real: a
+        // primeira versão levantava os pilares no chão e comia o lugar do
+        // baú. O conserto de então foi começar os pilares um bloco acima
+        // — o que deixou o baú livre para cair <b>debaixo</b> de um
+        // deles. Ver besideTheArch.
+        raiseArch(world, mouth, descent);
+
         Optional<BlockPos> chest = chestAt(world, mouth);
 
         if (chest.isEmpty()) {
             chest = placeChest(world, mouth, descent);
         }
 
-        // <b>Depois do baú e sem depender dele.</b> Depois porque o baú
-        // escolhe entre os vizinhos do nível do chão e o arco começa um
-        // bloco acima deles — a primeira versão levantava os pilares no
-        // chão e a mina ficava sem baú. Sem depender porque a boca que
-        // não tem onde pôr baú também merece ser vista de longe: o arco
-        // não é mobília, é a marca da entrada.
-        raiseArch(world, mouth, descent);
-
-        if (chest.isEmpty()) {
-            // Sem baú não há de que a lanterna ser o outro lado, e a
-            // passagem seguinte tenta os dois de novo.
-            return Optional.empty();
-        }
-
-        placeLanternIfMissing(world, mouth, chest.get(), descent);
-
         return chest;
     }
 
-    /** Quantos blocos os pilares do arco sobem antes da verga. */
-    private static final int ARCH_HIGH = 3;
+    /**
+     * A altura do arco — quatro, por decisão do autor em 2026-09-11.
+     *
+     * <p>Os pilares sobem até {@code ARCH_HIGH - 1} e a verga fecha em
+     * {@code ARCH_HIGH}, então a passagem por baixo tem quatro blocos de
+     * vão: a boca e os três acima dela. Eram três, e a entrada ficava da
+     * altura de quem passa.
+     */
+    private static final int ARCH_HIGH = 4;
 
     /**
      * O arco de pedra da entrada — decisão do autor, 2026-09-05:
      * <i>"colocar um arco de pedra com lanterna na entrada da mina"</i>.
      *
-     * <p>Dois pilares nos lados da boca, uma verga ligando os dois por
-     * cima, e a lanterna <b>pendurada</b> no centro da verga. Os lados
-     * são os perpendiculares ao rumo da descida, que é o que emoldura a
-     * entrada em vez de tapá-la.
+     * <p>Dois pilares nos lados da boca e uma verga ligando os dois por
+     * cima. Os lados são os perpendiculares ao rumo da descida, que é o
+     * que emoldura a entrada em vez de tapá-la.
      *
-     * <p>A lanterna fica dois blocos acima da boca: o aldeão ocupa os
-     * dois de baixo, e uma lanterna na cabeça dele seria uma porta
-     * fechada com luz.
+     * <p><b>A lanterna fica em cima da verga</b> — decisão do autor em
+     * 2026-09-11, e ela é a <b>única</b> da boca. Havia duas: uma
+     * pendurada sob a verga, dentro do vão, e outra no chão ao lado do
+     * buraco, da primeira versão da Regra 30. A de dentro roubava altura
+     * da passagem e a de fora disputava o lugar do baú. Em cima do arco
+     * ela ilumina de mais longe e não atrapalha ninguém.
      *
      * <p><b>Pedregulho, e não a paleta da vila.</b> A paleta mora em
      * {@code fabric.work} e esta classe é {@code fabric.integration} —
@@ -141,13 +151,31 @@ public final class MineMouth {
         layStone(world, mouth.up(ARCH_HIGH));
         layStone(world, mouth.offset(side.getOpposite()).up(ARCH_HIGH));
 
-        BlockPos lamp = mouth.up(ARCH_HIGH - 1);
+        lightTheTop(world, mouth);
+    }
+
+    /**
+     * A lanterna, de pé sobre o meio da verga.
+     *
+     * <p><b>Só se a verga existe.</b> O arco nasce incompleto onde a
+     * Regra 3 o impede — pilar que teria de derrubar casa não nasce —, e
+     * uma lanterna posta assim mesmo ficaria boiando no ar sobre o
+     * buraco. Ela pergunta pelo bloco de baixo antes de existir.
+     *
+     * <p>Idempotente pelo mesmo teste de sempre: lugar que não é
+     * substituível já tem alguma coisa, e o mod não discorda do dono do
+     * mundo — inclusive quando a coisa é a lanterna da passagem anterior.
+     */
+    private static void lightTheTop(ServerWorld world, BlockPos mouth) {
+        BlockPos lintel = mouth.up(ARCH_HIGH);
+        BlockPos lamp = lintel.up();
+
+        if (!world.getBlockState(lintel).isSolidBlock(world, lintel)) {
+            return;
+        }
 
         if (world.getBlockState(lamp).isReplaceable()) {
-            world.setBlockState(
-                    lamp,
-                    Blocks.LANTERN.getDefaultState().with(Properties.HANGING, true),
-                    Block.NOTIFY_ALL);
+            world.setBlockState(lamp, Blocks.LANTERN.getDefaultState(), Block.NOTIFY_ALL);
         }
     }
 
@@ -162,7 +190,7 @@ public final class MineMouth {
     private static Optional<BlockPos> placeChest(
             ServerWorld world, BlockPos mouth, Direction descent) {
 
-        Optional<BlockPos> spot = freeSpotNear(world, mouth, null, descent);
+        Optional<BlockPos> spot = besideTheArch(world, mouth, descent);
 
         if (spot.isEmpty()) {
             return Optional.empty();
@@ -181,52 +209,6 @@ public final class MineMouth {
     }
 
     /**
-     * A lanterna, do outro lado do buraco — o que faz a boca ser achável
-     * de longe no escuro, que é para o que o autor a pediu.
-     *
-     * <p>A que já está lá conta, inclusive a que o <b>jogador</b> pôs: a
-     * de 08-27 apareceu assim, e pôr uma segunda ao lado dela seria o
-     * mod discordando do dono do mundo por nada.
-     */
-    private static void placeLanternIfMissing(
-            ServerWorld world, BlockPos mouth, BlockPos chest, Direction descent) {
-
-        if (lanternAt(world, mouth).isPresent()) {
-            return;
-        }
-
-        Optional<BlockPos> lamp = freeSpotNear(world, mouth, chest, descent);
-
-        if (lamp.isEmpty()) {
-            // Não cabe agora. A passagem seguinte tenta de novo, que é
-            // exatamente o que faltava antes desta versão.
-            return;
-        }
-
-        world.setBlockState(lamp.get(), Blocks.LANTERN.getDefaultState(), Block.NOTIFY_ALL);
-
-        VillageColonyMod.LOGGER.info(
-                "Mine mouth at {} got its lantern at {}",
-                mouth.toShortString(),
-                lamp.get().toShortString());
-    }
-
-    /** A lanterna desta boca, se ela existe — lida do mundo, como o baú. */
-    private static Optional<BlockPos> lanternAt(ServerWorld world, BlockPos mouth) {
-        for (int drop = 0; drop <= DROP; drop++) {
-            for (Direction side : Direction.Type.HORIZONTAL) {
-                BlockPos at = mouth.offset(side).down(drop);
-
-                if (world.getBlockState(at).isOf(Blocks.LANTERN)) {
-                    return Optional.of(at);
-                }
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    /**
      * O baú da boca desta mina, se ele existe.
      *
      * <p>Lido do mundo, e por isso sobrevive ao servidor parar sem
@@ -237,12 +219,19 @@ public final class MineMouth {
             return Optional.empty();
         }
 
-        for (int drop = 0; drop <= DROP; drop++) {
-            for (Direction side : Direction.Type.HORIZONTAL) {
-                BlockPos at = mouth.offset(side).down(drop);
+        // <b>Um e dois blocos, e os dois importam</b> — 2026-09-11. O baú
+        // passou a nascer a dois, ao lado do arco; procurar só a dois
+        // deixaria sem baú toda mina aberta antes desta data, e procurar
+        // só a um faria o furnish pôr um baú novo a cada passagem por
+        // não achar o que ele mesmo acabou de pôr.
+        for (int out = 1; out <= REACH; out++) {
+            for (int drop = 0; drop <= DROP; drop++) {
+                for (Direction side : Direction.Type.HORIZONTAL) {
+                    BlockPos at = mouth.offset(side, out).down(drop);
 
-                if (world.getBlockState(at).isOf(Blocks.CHEST)) {
-                    return Optional.of(at);
+                    if (world.getBlockState(at).isOf(Blocks.CHEST)) {
+                        return Optional.of(at);
+                    }
                 }
             }
         }
@@ -275,26 +264,56 @@ public final class MineMouth {
      *     não disputar com ela; {@code null} na primeira
      * @param descent para que lado a escada desce
      */
-    private static Optional<BlockPos> freeSpotNear(
-            ServerWorld world, BlockPos mouth, BlockPos taken, Direction descent) {
+    /**
+     * Onde o baú cabe ao lado do arco — decisão do autor, 2026-09-11:
+     * <i>"ao seu lado o baú que nasce com o arco"</i>.
+     *
+     * <p><b>Fora da pegada do arco, e isso é a correção de um defeito de
+     * jogo.</b> A busca antiga olhava os quatro vizinhos da boca, e dois
+     * deles são exatamente onde os pilares sobem. O baú que caísse ali
+     * ficava com pedregulho em cima — e <b>baú com bloco sólido em cima
+     * não abre</b>, é regra do próprio Minecraft. O jogador via o baú do
+     * mineiro na entrada e não conseguia olhar dentro dele.
+     *
+     * <p>O conserto do arco de 2026-09-05 começou os pilares um bloco
+     * acima do chão justamente para não <b>substituir</b> a mobília, e
+     * resolveu metade: o baú deixou de ser apagado e passou a ser
+     * tapado. Esta busca fecha a outra metade, saindo dois blocos para o
+     * lado — encostado no arco, e não debaixo dele.
+     *
+     * <p>Os dois pés, na ordem, e a coluna da descida nunca: a escada
+     * desce por ali e o baú taparia a entrada.
+     */
+    private static Optional<BlockPos> besideTheArch(
+            ServerWorld world, BlockPos mouth, Direction descent) {
 
-        for (int drop = 0; drop <= DROP; drop++) {
-            for (Direction side : Direction.Type.HORIZONTAL) {
-                if (side == descent) {
-                    continue;
+        Direction side = descent.rotateYClockwise();
+
+        for (Direction leg : List.of(side, side.getOpposite())) {
+            for (int drop = 0; drop <= DROP; drop++) {
+                BlockPos at = mouth.offset(leg, 2).down(drop);
+
+                if (isGoodSpot(world, at) && opensFrom(world, at)) {
+                    return Optional.of(at);
                 }
-
-                BlockPos at = mouth.offset(side).down(drop);
-
-                if (at.equals(taken) || !isGoodSpot(world, at)) {
-                    continue;
-                }
-
-                return Optional.of(at);
             }
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * Se um baú posto aqui poderia ser aberto.
+     *
+     * <p>A regra é do jogo, e não do mod: {@code ChestBlock} recusa abrir
+     * com bloco sólido inteiro em cima. Perguntar antes é mais barato que
+     * descobrir em sessão — foi assim que o baú debaixo do pilar passou
+     * despercebido de 2026-09-05 a 09-11.
+     */
+    private static boolean opensFrom(ServerWorld world, BlockPos at) {
+        BlockPos above = at.up();
+
+        return !world.getBlockState(above).isSolidBlock(world, above);
     }
 
     /** Ar sobre chão sólido: onde uma peça da boca pode ficar. */

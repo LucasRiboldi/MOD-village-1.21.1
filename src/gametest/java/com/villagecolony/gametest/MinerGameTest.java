@@ -90,6 +90,17 @@ public class MinerGameTest implements FabricGameTest {
     private static final BlockPos MOUTH = new BlockPos(6, 1, 6);
 
     /**
+     * A altura da verga do arco, contada da boca — quatro desde
+     * 2026-09-11, decisão do autor.
+     *
+     * <p>Escrito aqui e não em {@code MineMouth}: a constante de lá é
+     * privada, e um teste que a importasse passaria a concordar com o
+     * código por construção em vez de afirmar o número que o autor
+     * pediu. Se os dois divergirem, é isto que precisa cair.
+     */
+    private static final int ARCH_TOP = 4;
+
+    /**
      * A fronteira gravada: já além de {@link MineShaft#CARVED}, que é
      * onde acabam os dois lances e as duas salas e começa a galeria.
      */
@@ -1051,10 +1062,14 @@ public class MinerGameTest implements FabricGameTest {
 
         BlockPos mouth = context.getAbsolutePos(ROCK);
 
-        // Chão sólido em volta: sem ele nenhum vizinho serve, e o teste
-        // mediria a ausência de lugar em vez da regra.
+        // Chão sólido em volta, até dois blocos: o baú nasce ao lado do
+        // arco desde 2026-09-11, e sem piso lá o teste mediria a
+        // ausência de lugar em vez da regra.
         for (Direction side : Direction.Type.HORIZONTAL) {
-            context.setBlockState(ROCK.offset(side).down(), Blocks.STONE.getDefaultState());
+            for (int out = 1; out <= 2; out++) {
+                context.setBlockState(
+                        ROCK.offset(side, out).down(), Blocks.STONE.getDefaultState());
+            }
         }
 
         Optional<BlockPos> chest = MineMouth.furnish(world, mouth, Direction.SOUTH);
@@ -1065,15 +1080,21 @@ public class MinerGameTest implements FabricGameTest {
                 world.getBlockState(chest.get()).isOf(Blocks.CHEST),
                 "o que a boca ganhou não é um baú");
 
-        boolean lantern = false;
+        // Em cima da verga, e é a única — 2026-09-11. Eram duas: uma
+        // pendurada no vão do arco e outra no chão ao lado do buraco.
+        context.assertTrue(
+                world.getBlockState(mouth.up(ARCH_TOP + 1)).isOf(Blocks.LANTERN),
+                "a boca da mina ficou sem a lanterna em cima do arco");
 
-        for (Direction side : Direction.Type.HORIZONTAL) {
-            if (world.getBlockState(mouth.offset(side)).isOf(Blocks.LANTERN)) {
-                lantern = true;
-            }
-        }
+        // E o baú abre: bloco sólido em cima é baú que o jogador não
+        // consegue olhar por dentro, e era o que acontecia quando ele
+        // nascia debaixo de um pilar.
+        BlockPos over = chest.get().up();
 
-        context.assertTrue(lantern, "a boca da mina ficou sem lanterna");
+        context.assertFalse(
+                world.getBlockState(over).isSolidBlock(world, over),
+                "o baú da boca ficou tapado, e baú tapado não abre: "
+                        + world.getBlockState(over).getBlock());
 
         Optional<BlockPos> again = MineMouth.furnish(world, mouth, Direction.SOUTH);
 
@@ -1108,8 +1129,14 @@ public class MinerGameTest implements FabricGameTest {
 
         BlockPos mouth = context.getAbsolutePos(ROCK);
 
+        // Chão sólido em volta, até dois blocos: o baú nasce ao lado do
+        // arco desde 2026-09-11, e sem piso lá o teste mediria a
+        // ausência de lugar em vez da regra.
         for (Direction side : Direction.Type.HORIZONTAL) {
-            context.setBlockState(ROCK.offset(side).down(), Blocks.STONE.getDefaultState());
+            for (int out = 1; out <= 2; out++) {
+                context.setBlockState(
+                        ROCK.offset(side, out).down(), Blocks.STONE.getDefaultState());
+            }
         }
 
         // Mobiliada pela metade: o baú está lá, a lanterna não.
@@ -1117,15 +1144,17 @@ public class MinerGameTest implements FabricGameTest {
 
         MineMouth.furnish(world, mouth, Direction.SOUTH);
 
-        boolean lantern = false;
+        context.assertTrue(
+                world.getBlockState(mouth.up(ARCH_TOP + 1)).isOf(Blocks.LANTERN),
+                "a boca que já tinha baú ficou sem lanterna para sempre");
 
-        for (Direction side : Direction.Type.HORIZONTAL) {
-            if (world.getBlockState(mouth.offset(side)).isOf(Blocks.LANTERN)) {
-                lantern = true;
-            }
-        }
-
-        context.assertTrue(lantern, "a boca que já tinha baú ficou sem lanterna para sempre");
+        // <b>E o baú encostado na boca continua sendo o dela</b>: é o
+        // arranjo de toda mina aberta antes de 2026-09-11, e o chestAt
+        // alcança um bloco e dois justamente para não as deserdar.
+        context.assertTrue(
+                MineMouth.chestAt(world, mouth).orElseThrow()
+                        .equals(context.getAbsolutePos(ROCK.offset(Direction.NORTH))),
+                "a boca perdeu de vista o baú que já era dela");
 
         context.complete();
     }
@@ -1145,20 +1174,31 @@ public class MinerGameTest implements FabricGameTest {
 
         BlockPos mouth = context.getAbsolutePos(ROCK);
 
+        // Chão sólido em volta, até dois blocos: o baú nasce ao lado do
+        // arco desde 2026-09-11, e sem piso lá o teste mediria a
+        // ausência de lugar em vez da regra.
         for (Direction side : Direction.Type.HORIZONTAL) {
-            context.setBlockState(ROCK.offset(side).down(), Blocks.STONE.getDefaultState());
+            for (int out = 1; out <= 2; out++) {
+                context.setBlockState(
+                        ROCK.offset(side, out).down(), Blocks.STONE.getDefaultState());
+            }
         }
 
         MineMouth.furnish(world, mouth, Direction.SOUTH);
         MineMouth.furnish(world, mouth, Direction.SOUTH);
         MineMouth.furnish(world, mouth, Direction.SOUTH);
 
+        // Num cubo em volta da boca, e não só no chão: a lanterna mudou
+        // de lugar em 2026-09-11 e contar onde ela estava antes deixaria
+        // este caso cego para a duplicata que ele existe para pegar.
         int lanterns = 0;
 
-        for (Direction side : Direction.Type.HORIZONTAL) {
-            for (int drop = 0; drop <= 1; drop++) {
-                if (world.getBlockState(mouth.offset(side).down(drop)).isOf(Blocks.LANTERN)) {
-                    lanterns++;
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dy = -1; dy <= ARCH_TOP + 2; dy++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    if (world.getBlockState(mouth.add(dx, dy, dz)).isOf(Blocks.LANTERN)) {
+                        lanterns++;
+                    }
                 }
             }
         }
@@ -1192,8 +1232,14 @@ public class MinerGameTest implements FabricGameTest {
 
         BlockPos mouth = context.getAbsolutePos(ROCK);
 
+        // Chão sólido em volta, até dois blocos: o baú nasce ao lado do
+        // arco desde 2026-09-11, e sem piso lá o teste mediria a
+        // ausência de lugar em vez da regra.
         for (Direction side : Direction.Type.HORIZONTAL) {
-            context.setBlockState(ROCK.offset(side).down(), Blocks.STONE.getDefaultState());
+            for (int out = 1; out <= 2; out++) {
+                context.setBlockState(
+                        ROCK.offset(side, out).down(), Blocks.STONE.getDefaultState());
+            }
         }
 
         MineMouth.furnish(world, mouth, Direction.WEST);
@@ -1210,21 +1256,14 @@ public class MinerGameTest implements FabricGameTest {
                         || world.getBlockState(firstStep.down()).isOf(Blocks.LANTERN),
                 "a mobília ocupou a coluna da descida um abaixo");
 
-        // E as duas peças continuam aparecendo, nos três lados que sobram.
-        boolean chest = false;
-        boolean lantern = false;
+        // E as duas peças continuam aparecendo, cada uma no lugar novo:
+        // o baú ao lado do arco, a lanterna em cima dele.
+        context.assertTrue(
+                MineMouth.chestAt(world, mouth).isPresent(), "a boca ficou sem baú");
 
-        for (Direction side : Direction.Type.HORIZONTAL) {
-            for (int drop = 0; drop <= 1; drop++) {
-                BlockPos at = mouth.offset(side).down(drop);
-
-                chest |= world.getBlockState(at).isOf(Blocks.CHEST);
-                lantern |= world.getBlockState(at).isOf(Blocks.LANTERN);
-            }
-        }
-
-        context.assertTrue(chest, "a boca ficou sem baú");
-        context.assertTrue(lantern, "a boca ficou sem lanterna");
+        context.assertTrue(
+                world.getBlockState(mouth.up(ARCH_TOP + 1)).isOf(Blocks.LANTERN),
+                "a boca ficou sem lanterna");
 
         context.complete();
     }
@@ -4964,19 +5003,24 @@ public class MinerGameTest implements FabricGameTest {
      * decisão do autor, 2026-09-05: <i>"colocar um arco de pedra com
      * lanterna na entrada da mina"</i>.
      *
-     * <p>Dois pilares nos lados, uma verga por cima ligando os dois, e a
-     * lanterna pendurada no centro. Os lados são os perpendiculares ao
-     * rumo da descida — é isso que emoldura a entrada em vez de tapá-la.
+     * <p>Dois pilares nos lados e uma verga por cima ligando os dois. Os
+     * lados são os perpendiculares ao rumo da descida — é isso que
+     * emoldura a entrada em vez de tapá-la.
      *
-     * <p><b>E a lanterna fica acima da cabeça.</b> O aldeão ocupa os dois
-     * blocos de baixo, e uma lanterna ali seria uma porta fechada com
-     * luz: o teste afirma que a boca e o bloco sobre ela continuam
-     * livres, porque o arco não pode custar a passagem que ele decora.
+     * <p><b>Quatro blocos de altura, e a lanterna em cima</b> — decisão
+     * do autor em 2026-09-11. Eram três, e a lanterna ficava pendurada
+     * <b>dentro</b> do vão, roubando a altura que o arco tinha. Agora ela
+     * é a única da boca e mora sobre a verga, de onde se vê de mais
+     * longe sem custar passagem.
      *
-     * <p>Os pilares começam <b>um bloco acima do chão</b>. O baú e a
-     * lanterna lateral da boca moram nos vizinhos do nível do chão, e a
-     * primeira versão deste arco disputou o lugar deles — a mina ficou
-     * sem baú. Daqui para cima não há disputa.
+     * <p>O caso afirma o vão inteiro — a boca e os três blocos acima
+     * dela —, porque o arco não pode custar a passagem que ele decora.
+     *
+     * <p>Os pilares começam <b>um bloco acima do chão</b>, e o baú nasce
+     * dois blocos ao lado: a primeira versão deste arco disputou o lugar
+     * da mobília e a mina ficou sem baú, e o conserto de então deixou o
+     * baú livre para nascer <b>debaixo</b> de um pilar — que é baú que
+     * não abre. Ver {@code MineMouth.besideTheArch}.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_arch",
             tickLimit = 20)
@@ -5006,16 +5050,21 @@ public class MinerGameTest implements FabricGameTest {
                 "a boca da mina ficou sem os pilares do arco");
 
         context.assertTrue(
-                archBlockAt(context, mouth.up(3)).isOf(Blocks.COBBLESTONE),
+                archBlockAt(context, mouth.up(ARCH_TOP)).isOf(Blocks.COBBLESTONE),
                 "o arco ficou sem a verga por cima da boca");
 
         context.assertTrue(
-                archBlockAt(context, mouth.up(2)).isOf(Blocks.LANTERN),
-                "o arco ficou sem a lanterna pendurada no centro");
+                archBlockAt(context, mouth.up(ARCH_TOP + 1)).isOf(Blocks.LANTERN),
+                "o arco ficou sem a lanterna em cima da verga");
 
-        context.assertTrue(
-                archBlockAt(context, mouth).isAir() && archBlockAt(context, mouth.up()).isAir(),
-                "o arco tapou a passagem que ele decora");
+        // O vão inteiro: a boca e os três acima dela. É a altura que o
+        // autor pediu, e afirmá-la bloco a bloco é o que impede o arco de
+        // encolher sem ninguém notar.
+        for (int up = 0; up < ARCH_TOP; up++) {
+            context.assertTrue(
+                    archBlockAt(context, mouth.up(up)).isAir(),
+                    "o arco tapou a passagem que ele decora, em " + up + " acima da boca");
+        }
 
         context.complete();
     }
