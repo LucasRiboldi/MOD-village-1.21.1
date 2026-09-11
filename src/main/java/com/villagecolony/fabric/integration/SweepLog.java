@@ -231,6 +231,12 @@ public final class SweepLog {
                     tally.farthestDrift(),
                     tally.rounds());
 
+            // E o que ela recusou no caminho — 2026-09-11. As duas
+            // contagens respondem à mesma pergunta e lidas juntas valem
+            // mais: quantas passagens a busca custou, e por que os
+            // candidatos que ela viu não serviram. Ver LotRefusals.
+            LotRefusals.report(colonyId);
+
             if (tally.restarting()) {
                 VillageColonyMod.LOGGER.warn(
                         "Colony {} restarted its sweep {} times without ever finishing the"

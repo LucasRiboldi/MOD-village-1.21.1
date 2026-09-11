@@ -209,6 +209,8 @@ mutação conferida; a coluna *em jogo* é a que a régua cobra.
 |---|---|---|
 | P0.1 | ✅ entregue em 2026-09-11 — o índice de ruas voltou a valer para vila grande | ✅ **visto na sessão de 02:03**: a colônia planejou o açougue e abriu a obra |
 | **P0.1-b** | ✅ **o caminho de terra não sai de baú.** A obra do P0.1 abriu e travou em `waiting for minecraft:dirt_path`, 30 vezes — o bloco não tem item, nasce de pá na grama. Uma linha no `isShapedFromTheGround`, que já cobria `farmland` e `water` pelo mesmo motivo | ❌ |
+| **P0.1-c** | ✅ **a recusa de lote diz por quê.** `LotRefusals` conta os cinco motivos do `flatGroundAt` e o relatório de sessão os diz junto do `SweepLog`. É o P0.1 ao pé da letra, e é o número que decide a terraplanagem | ⬜ **espera sessão** |
+| **P0.7** | ⬜ **terraplanagem da vila** — pesquisada em [`terraplanagem-da-vila.md`](../research/terraplanagem-da-vila.md), decidida (capacidade do construtor, teto de 4 blocos) e **represada de propósito**: abre com o número do P0.1-c, não com inferência | — |
 | **P0.6** | 🔴 **novo, e é bloqueador de diagnóstico:** a busca de areia oscila entre *"ainda varrendo"* e *"varri tudo"* a cada passagem, e o `IdleLog` registra as duas. **4.389 linhas de 6.117 na sessão de 02:03** — 72% do log. A próxima sessão fica cega | — |
 | P0.2 | ⬜ | — |
 | P0.3 | ⬜ | — |

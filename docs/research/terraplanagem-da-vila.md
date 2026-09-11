@@ -200,15 +200,30 @@ quem a cumpra.
 
 ---
 
-## 8. O que decidir antes de escrever código
+## 8. As decisões — respondidas pelo autor em 2026-09-11
 
-Três perguntas, e as três são do autor:
+| pergunta | decisão |
+|---|---|
+| **Quem faz o trabalho** | **Capacidade do construtor.** Nada de profissão nova: o ofício que já existe ganha a tarefa de terreno e reusa o estado `PREPARING`. Respeita o plano, e o teto de dois por profissão não engole a novidade |
+| **Quanto vale aplainar** | **Quatro blocos de desnível** — o dobro do `MAX_SLOPE` de hoje. Corrige ondulação e barranco pequeno; **morro continua sendo recusa**, e a vila cresce para outro lado. Conservador de propósito, porque esta é a frente que mais mexe no mundo do jogador |
+| **A ordem** | **Medir primeiro.** A frente não abre com a inferência do §4 — abre com número |
 
-1. **Quem faz o trabalho** — profissão nova, ou capacidade do construtor que já
-   existe? O plano diz *não abrir profissão nova antes do P0*; o pedido diz
-   *alguns aldeões*.
-2. **Quanto vale aplainar** — qual o teto que separa terreno irregular de morro.
-3. **A ordem contra o plano** — esta frente entra antes ou depois do P0?
+### E a terceira decisão manda no que vem antes
+
+O autor não aceitou a inferência como causa, e está certo: ela é `[INFERÊNCIA]`,
+não `[FATO]`, e o §4 já dizia que o log de hoje não a distingue.
+
+**O que vem antes, então:**
+
+1. **Consertar a instrumentação do P0.1** — o `IdleLog` compara só o
+   `IdleReason` e engole o detalhe, então *"o único lote livre está fora do
+   alcance do fazendeiro"* e *"nenhuma ponta de rua pôde ser calçada"* são a
+   mesma linha e só a primeira aparece.
+2. **Contar a recusa de lote por motivo**, que é o que o P0.1 pede ao pé da
+   letra: *"rejeitei 12 lotes por X, Y, Z"*.
+3. **Uma sessão de jogo.** Se a recusa por desnível dominar, a inferência do §4
+   vira fato e a frente abre. Se não dominar, a causa é outra e esta pesquisa
+   evitou uma frente grande pelo motivo errado.
 
 ---
 

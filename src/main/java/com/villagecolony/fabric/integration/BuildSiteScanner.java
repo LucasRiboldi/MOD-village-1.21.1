@@ -913,7 +913,7 @@ public final class BuildSiteScanner {
         int roadY = ground.get().getY();
 
         for (ColonyPos size : plans) {
-            Optional<Site> site = siteFor(world, x, z, aroundY, roadY, size);
+            Optional<Site> site = siteFor(world, colonyId, x, z, aroundY, roadY, size);
 
             if (site.isPresent()) {
                 return site;
@@ -925,7 +925,8 @@ public final class BuildSiteScanner {
 
     /** O lote desta planta ao lado desta rua, se houver. */
     private static Optional<Site> siteFor(
-            ServerWorld world, int x, int z, int aroundY, int roadY, ColonyPos size) {
+            ServerWorld world, UUID colonyId, int x, int z, int aroundY, int roadY,
+            ColonyPos size) {
 
         for (Direction side : Direction.Type.HORIZONTAL) {
             // O lote começa no bloco seguinte à estrada — encostado nela,
@@ -940,7 +941,7 @@ public final class BuildSiteScanner {
             int originZ = side.getOffsetZ() < 0 ? lotZ - size.z() + 1 : lotZ;
 
             Optional<Integer> floor =
-                    flatGroundAt(world, originX, originZ, aroundY, roadY, size);
+                    flatGroundAt(world, colonyId, originX, originZ, aroundY, roadY, size);
 
             if (floor.isPresent()) {
                 // A rua fica do lado oposto àquele para onde o lote
@@ -1061,7 +1062,7 @@ public final class BuildSiteScanner {
      *     ficar acima é degrau que a preparação resolve
      */
     private static Optional<Integer> flatGroundAt(
-            ServerWorld world, int originX, int originZ, int aroundY,
+            ServerWorld world, UUID colonyId, int originX, int originZ, int aroundY,
             int roadY, ColonyPos size) {
 
         for (int dx = 0; dx < size.x(); dx++) {
@@ -1072,16 +1073,22 @@ public final class BuildSiteScanner {
                 Optional<BlockPos> found = groundInColumn(world, x, z, aroundY);
 
                 if (found.isEmpty()) {
+                    LotRefusals.refused(colonyId, LotRefusals.Reason.NO_GROUND);
+
                     return Optional.empty();
                 }
 
                 BlockPos ground = found.get();
 
                 if (!isNaturalGround(world.getBlockState(ground))) {
+                    LotRefusals.refused(colonyId, LotRefusals.Reason.NOT_NATURAL_GROUND);
+
                     return Optional.empty();
                 }
 
                 if (BlockProtection.isVillageOriginal(world, ground)) {
+                    LotRefusals.refused(colonyId, LotRefusals.Reason.PROTECTED);
+
                     return Optional.empty();
                 }
 
@@ -1090,6 +1097,12 @@ public final class BuildSiteScanner {
                 // plano e é uma varanda sem escada — a porta da Regra 17
                 // daria para o alto de um degrau que ninguém sobe.
                 if (ground.getY() != roadY) {
+                    // A contagem que decide a terraplanagem — 2026-09-11.
+                    // Ver docs/research/terraplanagem-da-vila.md: a
+                    // pergunta é EXATA, e uma coluna um bloco fora
+                    // reprova o lote inteiro.
+                    LotRefusals.refused(colonyId, LotRefusals.Reason.OFF_ROAD_LEVEL);
+
                     return Optional.empty();
                 }
 
@@ -1097,6 +1110,8 @@ public final class BuildSiteScanner {
                 // basta o chão estar bom; a coluna inteira, até o teto
                 // da planta, precisa estar livre.
                 if (!isClearAbove(world, x, z, roadY + 1, size.y())) {
+                    LotRefusals.refused(colonyId, LotRefusals.Reason.OCCUPIED);
+
                     return Optional.empty();
                 }
             }

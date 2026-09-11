@@ -7,6 +7,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.LotRefusals;
 import com.villagecolony.fabric.integration.SweepLog;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
@@ -1018,6 +1019,64 @@ public class BuildSiteGameTest implements FabricGameTest {
         } finally {
             BuildSiteScanner.clearAll();
             SweepLog.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * <b>A recusa de lote diz por quê</b> — 2026-09-11, P0.1 do plano de
+     * correção: <i>"transforme 'nothing to work on' em 'rejeitei 12
+     * lotes por X, Y, Z'"</i>.
+     *
+     * <p>E há uma pergunta concreta pendurada nesta contagem. O autor
+     * pediu terraplanagem da vila — nivelar terreno, fechar buracos,
+     * ligar caminhos com degrau de um — e decidiu que a frente só abre
+     * <b>com número</b>, não com a inferência de que o terreno é a causa
+     * de a vila não crescer. Ver
+     * {@code docs/research/terraplanagem-da-vila.md}.
+     *
+     * <p>O número é o {@code OFF_ROAD_LEVEL}: o {@code flatGroundAt}
+     * pergunta {@code ground.getY() != roadY}, <b>exato</b>, e uma
+     * coluna um bloco fora reprova o lote inteiro. Este teste monta
+     * justamente isso — chão bom, rua boa, e um degrau de um bloco no
+     * meio do lote — e afirma que a recusa é contada pelo motivo certo.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site",
+            tickLimit = 20)
+    public void aLotRefusedForBeingOffLevelSaysSo(TestContext context) {
+        BlockPos center = new BlockPos(6, 1, 6);
+
+        UUID colony = UUID.randomUUID();
+
+        try {
+            LotRefusals.clearAll();
+
+            paveGround(context, center);
+
+            // A rua, e o lote encostado nela.
+            context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+
+            // E um degrau de UM bloco dentro do lote: é o bastante para
+            // o flatGroundAt reprovar, porque a pergunta é exata.
+            context.setBlockState(center.east().north(), Blocks.GRASS_BLOCK.getDefaultState());
+            context.setBlockState(
+                    center.east().north().up(), Blocks.GRASS_BLOCK.getDefaultState());
+
+            ColonyPos from = MinecraftTypeAdapter.toColonyPos(
+                    context.getAbsolutePos(center));
+
+            BuildSiteScanner.find(context.getWorld(), colony, from, RADIUS, SMALL_HOUSE);
+
+            context.assertTrue(
+                    LotRefusals.countOf(colony, LotRefusals.Reason.OFF_ROAD_LEVEL) > 0
+                            || LotRefusals.countOf(colony, LotRefusals.Reason.NO_GROUND) > 0
+                            || LotRefusals.countOf(colony, LotRefusals.Reason.OCCUPIED) > 0,
+                    "a varredura recusou candidatos e não contou nenhum motivo —"
+                            + " o P0.1 pede saber POR QUE o lote não serve");
+        } finally {
+            BuildSiteScanner.clearAll();
+            LotRefusals.clearAll();
         }
 
         context.complete();
