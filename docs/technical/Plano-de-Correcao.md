@@ -153,11 +153,37 @@ had minecraft:raw_iron to smelt`, ou `no colony chest to look in`. A
 frase antiga era a mesma para "não há baú registrado", "há seis e estão
 vazios" e "há seis e nenhum tem ferro".
 
-⬜ **O conserto não está decidido, e é do autor.** São dois caminhos, e
-eles não custam o mesmo: o baú da boca entra na lista da colônia, ou a
-Regra 30 para de mandar minério para fora dela. O primeiro mexe em quem
-lê; o segundo, em quem escreve — e a Regra 30 existe para o mineiro não
-carregar minério montanha acima.
+✅ **E o conserto entrou em 2026-09-11, pelo lado de quem lê.** Dos dois
+caminhos, escolheu-se preservar a Regra 30: ela é decisão do autor de
+2026-08-22 com motivo escrito — o mineiro não carrega minério montanha
+acima —, e revogá-la para a conta fechar trocaria um defeito de
+contabilidade por um de desenho.
+
+O `ColonyChests` passou a ser a **única** resposta a *"onde estão os baús
+desta colônia"*, com o da boca da mina entre eles, e os três que montavam
+a própria lista passaram a perguntar a ele:
+
+| quem | antes | agora |
+|---|---|---|
+| `ChestInventoryReader.survey` | montava do registro de trabalhadores | recebe a lista pronta |
+| as duas medidas de espaço do ciclo | `ChestDepositor.freeSpaceForGroup(workerIds, …)` | `ColonyChests.freeSpaceForGroup(chests, …)` |
+| `SmelterWork.smeltOne` | percorria trabalhadores | `ColonyChests.nearestFirst`, por distância |
+
+**Os três juntos, e não um por vez.** Contar num conjunto e consumir de
+outro é a discordância que o javadoc do `ResourceSubstitution` guarda de
+2026-09-10 — *"a colônia concluía que a meta estava cumprida e o mineiro
+não ia cavar, enquanto o construtor esperava pelo arenito"*. Meia
+correção aqui seria pior que nenhuma.
+
+De quebra, a dívida que o javadoc do `smeltOne` confessava desde agosto —
+*"os baús são percorridos na ordem de registro... o certo é por
+distância"* — saiu junto, porque era a mesma linha.
+
+**O teste virou do avesso, e era o plano.** `theOreInTheMineMouthChestIsInvisibleToTheColony`
+trazia o recado *"a ruptura não é mais esta, e este teste precisa ser
+relido"*; ele falhou, foi relido, e agora se chama
+`theOreInTheMineMouthChestIsCountedAndSmelted`. Mutação conferida:
+tirando o baú da boca da lista, cai **um** teste e é esse.
 
 **Sintoma:** fundidor `nothing in the colony chests to smelt` (34×),
 mineiro entregando 1 pedra em 30 minutos.
@@ -275,6 +301,33 @@ Depende de P0 verde.
 ## P2 — Performance
 
 **P2.1 — O ciclo da colônia em 112 ms** (limite: 50 ms).
+
+✅ **Instrumentado em 2026-09-11, e só isso** — nenhuma otimização junto,
+que é a ordem que este item dá. O aviso de ciclo lento passou a dizer
+**onde**: `chests 61 ms, workers 28 ms, planner 14 ms, assign 5 ms,
+detect 3 ms, lifecycle 0 ms, other 1 ms`, da fase mais cara para a mais
+barata — o primeiro nome da linha é por onde começar.
+
+⚠️ **Uma das seis fases que o item lista não existe.** Persistência não
+roda no ciclo: o `ColonySavedData.sync` é chamado **só** no
+`SERVER_STOPPING`. Uma fase para ela reportaria zero constante, que é um
+número parecendo medida. Entraram no lugar as duas do topo que o item não
+previa — a detecção em volta do jogador e o ciclo de vida das colônias —,
+que rodam antes de qualquer colônia ser vista.
+
+**O instrumento acusa quando ele próprio mente.** `other` é o ciclo menos
+tudo o que se sabe nomear, cortado em zero para não sair negativo; quando
+o corte machuca, a linha diz `(phases overlap by N ms — the numbers above
+are inflated)`. Fase somando mais que o ciclo só acontece por bastão mal
+passado, e calar isso mandaria alguém otimizar a fase inflada que ficou
+no topo. É a lição do P0.2 aplicada ao próprio medidor.
+
+**Nove casos em `CycleCostTest`**, e mutação conferida: trocando a soma
+por sobrescrita, cai **um** teste e é o da acumulação.
+
+⬜ **Otimizar continua em aberto, e de propósito** — a régua do item é
+passar de 100 ms ou o TPS cair, e quem responde isso é a sessão de jogo
+com a linha nova na mão.
 
 Instrumentar **antes** de otimizar, por subsistema: planner, chest scan, task
 assign, workers, persistence, other. A regra é *nem tudo em todo ciclo* —
@@ -417,7 +470,7 @@ mutação conferida; a coluna *em jogo* é a que a régua cobra.
 | ~~P0.6~~ | 🔴 ~~**novo, e é bloqueador de diagnóstico:** a busca de areia oscila entre *"ainda varrendo"* e *"varri tudo"* a cada passagem, e o `IdleLog` registra as duas. **4.389 linhas de 6.117 na sessão de 02:03** — 72% do log. A próxima sessão fica cega~~ | — |
 | **P0.0** | ✅ **feito em 2026-09-11.** A varredura derrubou dois dos quatro P0 abertos e achou a ruptura do terceiro sem sessão. O placar: **1 confirmado e entregue, 1 confirmado com o conserto em aberto, 2 vencidos** | — |
 | ~~P0.2~~ | ❌ **vencido na premissa** — `in 1 of 8 chests read` é *um baú com conteúdo, de oito lidos*. A varredura nunca pulou baú. ✅ O que sobrou foi a frase, e ela foi consertada: `ChestSurvey.coverage()`, 5 casos | — |
-| P0.3 | ✅ **ruptura achada, e é estática** — a Regra 30 deposita minério no baú da boca da mina, que não é `WorkerStorage` de ninguém, e por isso está fora de `ColonyChests`, da varredura e do fundidor. Gametest nas duas metades. ✅ Instrumentação entregue | ⬜ **conserto em aberto, decisão do autor** |
+| P0.3 | ✅ **fechado em 2026-09-11.** A ruptura era estática — o baú da boca da mina não é `WorkerStorage` de ninguém — e o conserto foi do lado de quem lê: o `ColonyChests` virou a única resposta a "onde estão os baús desta colônia", e os três que montavam a própria lista passaram a perguntar a ele | ⬜ **espera sessão** |
 | ~~P0.4~~ | ❌ **vencido** — a escada 6.000→48.000 que o item pede entrou em 2026-09-09 e o `TODO.md` diz que funciona. O que sobrava, "por trabalhador", pioraria o sintoma | — |
 | P0.5 | ✅ **entregue em 2026-09-11** — o transbordo do mineiro atravessa os baús da colônia em vez de ser destruído. Era a única das cinco que ainda descrevia defeito vivo | ⬜ **espera sessão** |
 | **P1.1** | ⚠️ **parece vencido — a §3.6 está no código.** `giveUp` faz `task.release()` com motivo explícito → cooldown na posição (`MineMarks.refuse`) → `stepAside` → `WorkerStrikes.gaveUp` → `Worker.rest(capability)`, e **as sete profissões passam pela mesma porta**. Falta a leitura cláusula a cláusula antes de riscar | — |
@@ -432,14 +485,14 @@ mutação conferida; a coluna *em jogo* é a que a régua cobra.
 | P1.10 | ✅ 2026-09-11 | — |
 | P1.11 | ⚠️ medido, e é maior que a linha — ver acima | — |
 | P1.12 | ✅ 2026-09-11, com a asserção defensiva recusada | — |
-| P2.1 | ⬜ | — |
+| P2.1 | ✅ **instrumentado em 2026-09-11** — o aviso de ciclo lento reparte por fase, da mais cara para a mais barata, e acusa quando ele próprio se contradiz. "Persistence", que o item lista, não roda no ciclo. Otimizar segue em aberto: a régua é medir em jogo | ⬜ **espera sessão** |
 | P3.1 – P3.3 | ⬜ | — |
 
 **Bateria no fim do ciclo de 2026-09-11:** 753 unitários e 295 de gametest,
 zero falhas, medidos pelos XML de relatório e pelo `runGametest`.
 
-**Depois do P0.0, do que ele liberou e do P1.5:** **763 unitários e 298
-de gametest**, zero falhas, com os XML mais novos que o fonte. Os dez
+**Depois do P0.0, do que ele liberou, do P1.5 e do P2.1:** **772
+unitários e 298 de gametest**, zero falhas, com os XML mais novos que o fonte. Os dez
 unitários novos são `ChestSurveyCoverageTest` (5) e `RingSweepResumeTest`
 (5); os três de jogo são a prova da ruptura do P0.3, o transbordo do P0.5
 e a retomada da varredura do P1.5.
