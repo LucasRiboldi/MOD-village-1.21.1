@@ -37,18 +37,6 @@ import java.util.Set;
 public final class OreVein {
 
     /**
-     * O que se reconhece, com as variantes de ardósia.
-     *
-     * <p>A ardósia é o mesmo minério mais fundo, e a segunda sala da mina
-     * fica no nível -20: sem as duas variantes, metade da mina seria cega
-     * justamente onde há mais minério.
-     *
-     * <p><b>Eram dois em 2026-08-21 — carvão e ferro — e são oito desde
-     * a Regra 30.</b> A regra manda o mineiro ir atrás de recurso
-     * normalmente e recolher tudo o que cavar; seguir só a veia de dois
-     * minérios era o mineiro passando ao lado de diamante sem ver.
-     */
-    /**
      * O que é minério — perguntado ao jogo, e não escrito aqui.
      *
      * <p><b>Decisão do autor, 2026-08-27:</b> <i>"ele deve minerar todo

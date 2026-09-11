@@ -799,6 +799,18 @@ public final class BuildSiteScanner {
     }
 
     /**
+     * Quantas colunas de rua esta colônia tem indexadas, se tem índice.
+     *
+     * <p>Vazio quer dizer que nenhuma varredura completou o raio ainda, e
+     * que a próxima passagem vai perguntar o quadrado inteiro.
+     */
+    public static OptionalInt roadIndexSize(UUID colonyId) {
+        ColonyRoads roads = ROADS.get(colonyId);
+
+        return roads == null ? OptionalInt.empty() : OptionalInt.of(roads.columns().size());
+    }
+
+    /**
      * Em que anel a busca desta colônia parou por falta de orçamento.
      *
      * <p>Existe para separar duas respostas que {@link #find} devolve
@@ -817,32 +829,12 @@ public final class BuildSiteScanner {
      * mil por ciclo, e a sessão não durou os dezessete ciclos que a conta
      * pede. Ver o E14 do §17.
      */
-    /**
-     * Quantas colunas de rua esta colônia tem indexadas, se tem índice.
-     *
-     * <p>Vazio quer dizer que nenhuma varredura completou o raio ainda, e
-     * que a próxima passagem vai perguntar o quadrado inteiro.
-     */
-    public static OptionalInt roadIndexSize(UUID colonyId) {
-        ColonyRoads roads = ROADS.get(colonyId);
-
-        return roads == null ? OptionalInt.empty() : OptionalInt.of(roads.columns().size());
-    }
-
     public static OptionalInt sweepPausedAt(UUID colonyId) {
         Sweep paused = SWEEPS.get(colonyId);
 
         return paused == null ? OptionalInt.empty() : OptionalInt.of(paused.ring());
     }
 
-    /**
-     * Se esta coluna é estrada, o lote livre ao lado dela.
-     *
-     * <p>Testa as quatro direções na ordem do enum, e a primeira que
-     * servir vence. Não há critério melhor no MVP: as quatro são
-     * igualmente boas, e escolher por sorteio faria a mesma vila crescer
-     * diferente a cada sessão, o que é ruim de depurar.
-     */
     /**
      * Um lote encostado <b>nestas</b> colunas, sem varrer o raio — E26.
      *
@@ -881,6 +873,14 @@ public final class BuildSiteScanner {
         return Optional.empty();
     }
 
+    /**
+     * Se esta coluna é estrada, o lote livre ao lado dela.
+     *
+     * <p>Testa as quatro direções na ordem do enum, e a primeira que
+     * servir vence. Não há critério melhor no MVP: as quatro são
+     * igualmente boas, e escolher por sorteio faria a mesma vila crescer
+     * diferente a cada sessão, o que é ruim de depurar.
+     */
     private static Optional<Site> siteBesideRoadAt(
             ServerWorld world, UUID colonyId, BlockPos center,
             int x, int z, int aroundY, List<ColonyPos> plans) {

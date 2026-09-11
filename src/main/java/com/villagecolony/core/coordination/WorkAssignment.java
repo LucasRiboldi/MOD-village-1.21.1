@@ -58,10 +58,7 @@ public final class WorkAssignment {
      * são o caso comum, e a atribuição de profissão é passo separado.
      * Ver TASK-014.
      *
-     * @return quantas tarefas foram reservadas agora
-     */
-    /**
-     * <b>A mão emprestada saiu daqui em 2026-09-05</b> — decisão do autor,
+     * <p><b>A mão emprestada saiu daqui em 2026-09-05</b> — decisão do autor,
      * e ela desfaz a segunda peça da ADR-010.
      *
      * <p><b>A frase dele:</b> <i>"o lenhador não deve assumir tarefas de
@@ -93,6 +90,8 @@ public final class WorkAssignment {
      * <p>Não se apaga o {@link Worker#rest}: profissão com mais de uma
      * capacidade — e o modelo permite — continua preferindo a que não
      * acabou de falhar. Ver {@link #takeOneTask}.
+     *
+     * @return quantas tarefas foram reservadas agora
      */
     public static int assign(
             java.util.UUID colonyId, WorkerService workers, TaskService tasks) {

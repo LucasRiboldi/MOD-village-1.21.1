@@ -152,13 +152,6 @@ public final class ServerLifecycleHandler {
     }
 
     /**
-     * Copia o registro para o saved data antes de o mundo fechar.
-     *
-     * <p>O registro é esvaziado em seguida: o processo pode abrir outro
-     * save sem reiniciar, e colônias do mundo anterior não podem vazar
-     * para ele.
-     */
-    /**
      * As obras em andamento, reduzidas ao que vai para o disco.
      *
      * <p>Identidade, estrutura, lugar e estado. O progresso não: quem
@@ -188,6 +181,13 @@ public final class ServerLifecycleHandler {
         return saving;
     }
 
+    /**
+     * Copia o registro para o saved data antes de o mundo fechar.
+     *
+     * <p>O registro é esvaziado em seguida: o processo pode abrir outro
+     * save sem reiniciar, e colônias do mundo anterior não podem vazar
+     * para ele.
+     */
     private static void onServerStopping(MinecraftServer server) {
         List<ColonyRoads> roads = BuildSiteScanner.saved();
         List<ColonySweepCursor> sweeps = BuildSiteScanner.pausedSweeps();

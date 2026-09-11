@@ -397,15 +397,6 @@ public final class ConstructionPlanner {
     }
 
     /**
-     * O lote vira obra aberta.
-     *
-     * <p>Separado de {@link #plan} em 2026-08-25, quando passou a haver
-     * <b>dois</b> caminhos até um lote: a varredura em anéis, e o atalho
-     * de quem acabou de calçar a rua e sabe onde nasceu beira nova. O
-     * trecho é o mesmo nos dois, e duas cópias dele seriam duas versões
-     * da Regra 17.
-     */
-    /**
      * Os tamanhos que a varredura precisa testar, sem repetição —
      * 2026-09-09.
      *
@@ -428,6 +419,15 @@ public final class ConstructionPlanner {
         return plans.stream().map(Blueprint::size).distinct().toList();
     }
 
+    /**
+     * O lote vira obra aberta.
+     *
+     * <p>Separado de {@link #plan} em 2026-08-25, quando passou a haver
+     * <b>dois</b> caminhos até um lote: a varredura em anéis, e o atalho
+     * de quem acabou de calçar a rua e sabe onde nasceu beira nova. O
+     * trecho é o mesmo nos dois, e duas cópias dele seriam duas versões
+     * da Regra 17.
+     */
     private static Optional<ConstructionProject> open(
             ServerWorld world, Colony colony, BuildSiteScanner.Site site,
             List<Blueprint> plans, Blueprint blueprint, int builders) {
@@ -654,19 +654,6 @@ public final class ConstructionPlanner {
     }
 
     /**
-     * Prolonga a rua quando não há mais beira livre — a Regra 15.
-     *
-     * <p>A ponta já foi escolhida: a varredura que acabou de falhar
-     * anotou a mais distante do centro enquanto procurava lote. Aqui só
-     * se calça, e o que se decide é o que dizer quando não dá.
-     *
-     * <p><b>Três respostas, e as três são diferentes no log.</b> Sem rua
-     * nenhuma para prolongar, a vila realmente parou e o motivo é o
-     * antigo. Com ponta e sem poder calçar — encosta, água, peça de vila
-     * — a vila também parou, mas por outra razão, e confundir as duas
-     * mandaria o autor procurar no lugar errado.
-     */
-    /**
      * Continua a rua que esta colônia começou, sem varrer de novo.
      *
      * <p>Irmão de {@link #extendTheRoad}, e a diferença é de onde vem a
@@ -704,6 +691,19 @@ public final class ConstructionPlanner {
                 .flatMap(beside -> open(world, colony, beside, plans, blueprint, builders));
     }
 
+    /**
+     * Prolonga a rua quando não há mais beira livre — a Regra 15.
+     *
+     * <p>A ponta já foi escolhida: a varredura que acabou de falhar
+     * anotou a mais distante do centro enquanto procurava lote. Aqui só
+     * se calça, e o que se decide é o que dizer quando não dá.
+     *
+     * <p><b>Três respostas, e as três são diferentes no log.</b> Sem rua
+     * nenhuma para prolongar, a vila realmente parou e o motivo é o
+     * antigo. Com ponta e sem poder calçar — encosta, água, peça de vila
+     * — a vila também parou, mas por outra razão, e confundir as duas
+     * mandaria o autor procurar no lugar errado.
+     */
     private static Optional<ConstructionProject> extendTheRoad(
             ServerWorld world, Colony colony, Blueprint blueprint,
             List<Blueprint> plans, int builders) {
@@ -774,18 +774,6 @@ public final class ConstructionPlanner {
     }
 
     /**
-     * O mesmo, para uma família de materiais — 2026-08-21.
-     *
-     * <p>A cama tem dezesseis cores e a planta grava a que está no
-     * arquivo. Perguntar por {@code white_bed} devolve zero numa casa que
-     * pede {@code red_bed}, e zero é o pastor sem tarefa — o mesmo
-     * defeito que o vidro teve por pedir vidraça.
-     *
-     * <p>A lã que a colônia produz é branca, e a cama colorida ainda
-     * pede tinta que ninguém faz. O que isto conserta é a <b>demanda</b>
-     * aparecer; a cor é problema do dia em que a colônia souber tingir.
-     */
-    /**
      * Tudo o que a obra aberta ainda pede, material por material.
      *
      * <p>Existe para quem precisa <b>classificar</b> o que falta em vez
@@ -800,6 +788,18 @@ public final class ConstructionPlanner {
                 .orElse(Map.of());
     }
 
+    /**
+     * O mesmo, para uma família de materiais — 2026-08-21.
+     *
+     * <p>A cama tem dezesseis cores e a planta grava a que está no
+     * arquivo. Perguntar por {@code white_bed} devolve zero numa casa que
+     * pede {@code red_bed}, e zero é o pastor sem tarefa — o mesmo
+     * defeito que o vidro teve por pedir vidraça.
+     *
+     * <p>A lã que a colônia produz é branca, e a cama colorida ainda
+     * pede tinta que ninguém faz. O que isto conserta é a <b>demanda</b>
+     * aparecer; a cor é problema do dia em que a colônia souber tingir.
+     */
     public static int materialNeededBy(Predicate<ResourceId> family, Colony colony) {
         return VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
                 .map(project -> project.remainingMaterials().entrySet().stream()

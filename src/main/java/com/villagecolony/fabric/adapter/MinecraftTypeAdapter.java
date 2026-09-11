@@ -145,31 +145,6 @@ public final class MinecraftTypeAdapter {
     }
 
     /**
-     * O item correspondente à ferramenta de uma profissão.
-     *
-     * <p>Profession-System.md §"Ferramentas das Profissões" diz que o
-     * trabalhador recebe a ferramenta inicial ao assumir a função.
-     * {@link ToolType} existia e a profissão já a declarava desde a Fase
-     * 4; o que faltava era esta conversão, e por isso nada chegava à mão
-     * de ninguém.
-     *
-     * <p>{@link ToolType#NONE} devolve vazio, e não um item vazio: o
-     * fabricante e o construtor trabalham de mãos livres por decisão do
-     * MVP, e um {@code ItemStack.EMPTY} circulando obrigaria todo mundo a
-     * checá-lo.
-     *
-     * <p>A evolução madeira → pedra → ferro não pertence ao MVP. Quando
-     * pertencer, é este método que ganha o nível, não quem o chama.
-     */
-    /**
-     * O nome do jogo, como {@code Identifier}.
-     *
-     * <p>{@code Identifier.of} valida os caracteres e estoura se o nome
-     * for impossível. Deixar estourar é o certo: um id malformado só
-     * chega aqui vindo de código, e {@link ResourceId} de propósito não
-     * valida o que o jogo aceita — quem sabe disso é o jogo.
-     */
-    /**
      * O lado do horizonte do jogo, no vocabulário do Core.
      *
      * <p>Cima e baixo não são lado de casa e não chegam aqui: quem
@@ -199,6 +174,14 @@ public final class MinecraftTypeAdapter {
         };
     }
 
+    /**
+     * O nome do jogo, como {@code Identifier}.
+     *
+     * <p>{@code Identifier.of} valida os caracteres e estoura se o nome
+     * for impossível. Deixar estourar é o certo: um id malformado só
+     * chega aqui vindo de código, e {@link ResourceId} de propósito não
+     * valida o que o jogo aceita — quem sabe disso é o jogo.
+     */
     public static Identifier toIdentifier(ResourceId id) {
         return Identifier.of(id.namespace(), id.path());
     }
@@ -261,6 +244,23 @@ public final class MinecraftTypeAdapter {
         return Optional.empty();
     }
 
+    /**
+     * O item correspondente à ferramenta de uma profissão.
+     *
+     * <p>Profession-System.md §"Ferramentas das Profissões" diz que o
+     * trabalhador recebe a ferramenta inicial ao assumir a função.
+     * {@link ToolType} existia e a profissão já a declarava desde a Fase
+     * 4; o que faltava era esta conversão, e por isso nada chegava à mão
+     * de ninguém.
+     *
+     * <p>{@link ToolType#NONE} devolve vazio, e não um item vazio: o
+     * fabricante e o construtor trabalham de mãos livres por decisão do
+     * MVP, e um {@code ItemStack.EMPTY} circulando obrigaria todo mundo a
+     * checá-lo.
+     *
+     * <p>A evolução madeira → pedra → ferro não pertence ao MVP. Quando
+     * pertencer, é este método que ganha o nível, não quem o chama.
+     */
     public static Optional<Item> toItem(ToolType tool) {
         return switch (tool) {
             case NONE -> Optional.empty();

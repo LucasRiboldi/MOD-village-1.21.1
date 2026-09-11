@@ -636,28 +636,6 @@ public final class BuilderWork {
     }
 
     /**
-     * Tira uma peça de material dos baús da colônia.
-     *
-     * <p>De qualquer baú dela, e não só do baú do construtor — a obra é
-     * da colônia, não dele.
-     *
-     * <p>Era o contrário do fabricante, que tirava só do próprio baú. Em
-     * 2026-08-14 deixou de ser: aquela intenção não sobrevivia ao mundo,
-     * onde quem colhe deposita no baú dele e nada nunca enche o baú de um
-     * fabricante. As duas profissões que consomem material da colônia
-     * passaram a lê-lo do mesmo lugar.
-     *
-     * @return false quando não há esse material em baú nenhum
-     */
-    /**
-     * Tira do baú o primeiro material que servir, e diz qual foi.
-     *
-     * <p>Do preferido ao último — {@link MaterialChoice}. Fora da pedra a
-     * lista tem um item só, que é a Regra 27 valendo inteira.
-     *
-     * @return o item que saiu do baú, ou vazio quando nenhum servia
-     */
-    /**
      * Se este bloco a colônia molda do chão em vez de tirar do baú.
      *
      * <p>Quatro famílias, e as quatro pela mesma razão: nenhuma delas
@@ -688,6 +666,14 @@ public final class BuilderWork {
                 || state.isOf(Blocks.DIRT_PATH);
     }
 
+    /**
+     * Tira do baú o primeiro material que servir, e diz qual foi.
+     *
+     * <p>Do preferido ao último — {@link MaterialChoice}. Fora da pedra a
+     * lista tem um item só, que é a Regra 27 valendo inteira.
+     *
+     * @return o item que saiu do baú, ou vazio quando nenhum servia
+     */
     private static Optional<Item> takeMaterial(
             ServerWorld world, ConstructionProject project, Block wanted) {
 

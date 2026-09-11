@@ -240,31 +240,6 @@ public final class MineMouth {
     }
 
     /**
-     * Um vizinho da boca onde caiba coisa nova, fora da escada.
-     *
-     * <p><b>Fora da escada — visto no log de 2026-08-27, 21:39.</b> O
-     * primeiro degrau é {@code mouth.offset(descent)}, na mesma altura da
-     * boca, e este método o tratava como qualquer outro vizinho. O
-     * lampião foi parar exatamente ali:
-     *
-     * <pre>
-     * Mine mouth at 732, 63, 898 got its lantern at 731, 63, 898
-     * miners: 68f4dcde digging Lanterna at 731, 63, 898, 48 blocks away
-     * </pre>
-     *
-     * <p>O mineiro recebeu ordem de cavar a própria lanterna. E desde que
-     * a mobília virou idempotente, o mod a reporia na passagem seguinte:
-     * põe, o mineiro quebra, põe de novo. Sobram três lados, e três
-     * bastam para duas peças.
-     *
-     * <p>A coluna inteira sai, e não só o degrau: um bloco abaixo dele é
-     * onde o aldeão põe os pés ao descer.
-     *
-     * @param taken o lugar que a peça anterior ocupou, para a seguinte
-     *     não disputar com ela; {@code null} na primeira
-     * @param descent para que lado a escada desce
-     */
-    /**
      * Onde o baú cabe ao lado do arco — decisão do autor, 2026-09-11:
      * <i>"ao seu lado o baú que nasce com o arco"</i>.
      *

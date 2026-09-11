@@ -140,7 +140,7 @@ public final class BuilderApproach {
      * <b>atravessável</b> e não é <b>pisável</b>. Quem decide se um
      * corredor continua pergunta esta; quem escolhe onde parar pergunta a
      * outra.
-     */
+     *
     /** Onde um aldeão atravessa: caixa de colisão vazia. */
     public static boolean passable(ServerWorld world, BlockPos at) {
         return world.getBlockState(at).getCollisionShape(world, at).isEmpty();

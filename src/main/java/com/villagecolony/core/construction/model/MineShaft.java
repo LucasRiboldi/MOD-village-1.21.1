@@ -406,15 +406,6 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
      */
     public static final int ARM = 16;
 
-    /**
-     * Se este índice da ordem já passou do fim do braço.
-     *
-     * <p>Índice, e não distância medida no mundo: o corredor sai reto da
-     * sala, então contar colunas <b>é</b> medir o raio, e sem custo. O
-     * {@code MinerReach.legTowards} percorre até duas mil posições por
-     * tique, e uma pergunta que precisasse de raiz quadrada estaria nesse
-     * laço.
-     */
     /** Quantos anéis a espiral abre antes de o nível acabar. */
     public static final int RINGS = ARM / RUN;
 
@@ -424,6 +415,15 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
      */
     private static final int LEGS = 2 * RINGS;
 
+    /**
+     * Se este índice da ordem já passou do fim do braço.
+     *
+     * <p>Índice, e não distância medida no mundo: o corredor sai reto da
+     * sala, então contar colunas <b>é</b> medir o raio, e sem custo. O
+     * {@code MinerReach.legTowards} percorre até duas mil posições por
+     * tique, e uma pergunta que precisasse de raiz quadrada estaria nesse
+     * laço.
+     */
     public boolean beyondTheArm(int i) {
         return i >= CARVED && (i - CARVED) / GALLERY_CYCLE >= LEGS;
     }

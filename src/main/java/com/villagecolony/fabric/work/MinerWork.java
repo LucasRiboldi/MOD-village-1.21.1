@@ -1012,8 +1012,7 @@ public final class MinerWork {
      * <p>As duas saem do {@code BuilderApproach}, que é onde mora a conta
      * de "cabe um aldeão aqui" desde 2026-08-28. Uma conta só, e é a do
      * construtor.
-     */
-    /**
+     *
      * O que o mundo responde ao passo do mineiro.
      *
      * <p><b>Pública porque a bateria precisa da mesma.</b> O

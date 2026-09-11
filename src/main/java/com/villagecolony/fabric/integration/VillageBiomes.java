@@ -86,14 +86,6 @@ public final class VillageBiomes {
     }
 
     /**
-     * A madeira da vila deste bioma.
-     *
-     * <p>Vazio quer dizer que o jogo não gera vila aqui, e é assim que
-     * a varredura decide se o aglomerado vira colônia. Não é recusa: a
-     * vila que exista fora desta lista continua lá, viva, e o mod é que
-     * não a atende — ver ADR-003 §5.
-     */
-    /**
      * A paleta desta vila — a Regra 20 dita por inteiro, 2026-08-20.
      *
      * <p>Até aqui o estilo do bioma era a espécie da madeira e nada
@@ -147,6 +139,14 @@ public final class VillageBiomes {
                 .flatMap(VillageBiomes::paletteFor);
     }
 
+    /**
+     * A madeira da vila deste bioma.
+     *
+     * <p>Vazio quer dizer que o jogo não gera vila aqui, e é assim que
+     * a varredura decide se o aglomerado vira colônia. Não é recusa: a
+     * vila que exista fora desta lista continua lá, viva, e o mod é que
+     * não a atende — ver ADR-003 §5.
+     */
     public static Optional<ResourceId> woodFor(RegistryKey<Biome> biome) {
         return Optional.ofNullable(WOOD.get(biome));
     }

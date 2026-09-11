@@ -164,55 +164,6 @@ public final class MinerReach {
     private static final int IN_THE_PASSAGE = 2;
 
     /**
-     * Para onde mandar o aldeão agora — um passo pela escada.
-     *
-     * <p><b>A sessão da meia-noite mostrou onde ele estava</b>, e foi a
-     * primeira vez que se soube: <i>"the miner is at 734, 66, 878"</i>.
-     * Y 66 é a superfície. Ele estava vinte e um blocos em linha reta
-     * <b>acima</b> da galeria, em cima do chão, mirando uma pedra no
-     * fundo da mina.
-     *
-     * <p>A navegação do jogo recebe um destino a vinte blocos
-     * atravessando rocha maciça, devolve caminho parcial, e ele
-     * estaciona no ponto mais próximo que consegue — bem ali em cima. É
-     * o sintoma que o MineColonies registrou na issue 4297 com as mesmas
-     * palavras, e o remendo do jogador é o mesmo que o autor fez: cavar
-     * até lá.
-     *
-     * <p><b>Não se pede à navegação um caminho que ela não sabe
-     * traçar.</b> Pede-se um passo de cada vez.
-     *
-     * <p><b>E a primeira versão só sabia dar dois passos — o E35.</b>
-     * Longe, o destino era a boca; perto da boca, o destino virava a
-     * pedra, vinte blocos abaixo e do outro lado da rocha. A sessão de
-     * 2026-08-28 pegou o segundo mineiro <b>oscilando na fronteira</b>:
-     *
-     * <pre>
-     * 740, 65, 895  ->  8,77 da boca   FORA da perna  -> mandado à boca
-     * 739, 65, 896  ->  7,55 da boca   DENTRO         -> mandado à pedra
-     * 741, 63, 898  ->  9,00 da boca   FORA           -> mandado à boca
-     * </pre>
-     *
-     * <p>Ele andava para a boca, cruzava os oito blocos, recebia um
-     * destino que a navegação não cumpre, derivava, saía dos oito, e
-     * recomeçava. Para sempre. A descida tem vinte blocos e a perna tem
-     * oito: são três passos, e o sistema só sabia dar dois.
-     *
-     * <p><b>Agora a mina sabe o caminho dela.</b> A ordem de cavar
-     * <b>é</b> um corredor contínuo a partir da boca — tudo o que vem
-     * antes da frente já está aberto —, e o passo seguinte é o ponto
-     * mais avançado dessa ordem que ainda caiba numa perna, contado a
-     * partir de onde ele está. Um degrau de cada vez, escada abaixo, e
-     * sem fronteira nenhuma para oscilar em volta.
-     *
-     * <p>Não é a solução do MineColonies, que trocou a navegação inteira
-     * por um A* próprio. É a que cabe aqui, e usa um dado que o mod já
-     * tem de graça.
-     *
-     * @param mine a mina desta colônia, vazia quando não há uma — a
-     *     pedra de superfície e a areia não têm descida a fazer
-     */
-    /**
      * O que o mundo responde sobre uma posição da ordem de cavar.
      *
      * <p>São <b>duas</b> perguntas, e o E34 é o que acontece quando se

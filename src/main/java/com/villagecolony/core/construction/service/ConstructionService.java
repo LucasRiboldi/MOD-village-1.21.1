@@ -170,19 +170,6 @@ public final class ConstructionService {
     }
 
     /**
-     * Tira do registro as obras terminadas.
-     *
-     * <p>Chamado ao fim do ciclo, como {@code TaskService.purgeClosed} —
-     * e existe pelo mesmo motivo: obra é objeto em memória, e sem alguém
-     * que a remova o registro só cresce. A casa continua de pé; o que sai
-     * é o papel do canteiro.
-     *
-     * <p>Quem guarda que a casa existe é o registro de construções da
-     * Fase 11, não este.
-     *
-     * @return quantas saíram
-     */
-    /**
      * Tira esta obra do registro, terminada ou não.
      *
      * <p>Existe para a obra que esperou demais por material e saiu da
@@ -200,6 +187,19 @@ public final class ConstructionService {
         return projectId != null && projects.remove(projectId) != null;
     }
 
+    /**
+     * Tira do registro as obras terminadas.
+     *
+     * <p>Chamado ao fim do ciclo, como {@code TaskService.purgeClosed} —
+     * e existe pelo mesmo motivo: obra é objeto em memória, e sem alguém
+     * que a remova o registro só cresce. A casa continua de pé; o que sai
+     * é o papel do canteiro.
+     *
+     * <p>Quem guarda que a casa existe é o registro de construções da
+     * Fase 11, não este.
+     *
+     * @return quantas saíram
+     */
     public int purgeFinished() {
         int before = projects.size();
 

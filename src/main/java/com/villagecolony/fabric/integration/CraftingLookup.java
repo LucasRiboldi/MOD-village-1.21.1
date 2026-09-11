@@ -38,16 +38,6 @@ public final class CraftingLookup {
     }
 
     /**
-     * O que sai de um item só, se alguma receita o aceitar sozinho.
-     *
-     * <p>Vazio quando nada é feito só com ele — que é o caso da maioria
-     * das coisas, e não é erro.
-     *
-     * <p>A quantidade do resultado é a da receita: quatro tábuas por
-     * tronco, hoje, porque é o que o jogo diz. O mod não conta com esse
-     * número em lugar nenhum.
-     */
-    /**
      * O que a fornalha faz com este item — 2026-08-20.
      *
      * <p>A exceção honesta que a Regra 10 registrou em 08-18: a vidraça
@@ -113,6 +103,16 @@ public final class CraftingLookup {
         return inputs;
     }
 
+    /**
+     * O que sai de um item só, se alguma receita o aceitar sozinho.
+     *
+     * <p>Vazio quando nada é feito só com ele — que é o caso da maioria
+     * das coisas, e não é erro.
+     *
+     * <p>A quantidade do resultado é a da receita: quatro tábuas por
+     * tronco, hoje, porque é o que o jogo diz. O mod não conta com esse
+     * número em lugar nenhum.
+     */
     public static Optional<ItemStack> resultOfOne(ServerWorld world, ItemStack input) {
         if (input.isEmpty()) {
             return Optional.empty();

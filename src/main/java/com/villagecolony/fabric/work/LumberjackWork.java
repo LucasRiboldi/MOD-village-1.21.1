@@ -386,8 +386,7 @@ public final class LumberjackWork {
      * <p>Chamado em toda saída — árvore terminada, tarefa encerrada,
      * trabalhador morto. Uma reserva esquecida é uma árvore que ninguém
      * mais pode cortar até o servidor reiniciar.
-     */
-    /**
+     *
      * Encerra o plano de um trabalho que acaba agora.
      *
      * <p>A regra do autor, de 2026-08-15: <b>o lenhador sempre planta no

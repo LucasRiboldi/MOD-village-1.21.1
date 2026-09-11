@@ -413,29 +413,6 @@ public final class CraftingWork {
     }
 
     /**
-     * Faz a primeira peça que a obra pede e a colônia não tem.
-     *
-     * <p>Pedido do autor em 2026-08-20: <i>"o fabricante deve descascar
-     * stripped_oak, criar tocha e a vidraça, se os materiais necessários
-     * existirem nos baús da vila"</i>.
-     *
-     * <p>São dois caminhos, e a diferença entre eles é do jogo e não do
-     * mod:
-     *
-     * <pre>
-     * descascar   não é receita de bancada — é machado no tronco. Sai
-     *             de uma conversão nominal: oak_log vira
-     *             stripped_oak_log, e o nome basta porque é convenção
-     *             do próprio jogo
-     *
-     * montar      tocha e vidraça são receitas de verdade, e quem as
-     *             conhece é o livro do jogo. CraftingLookup.billFor
-     *             procura pelo RESULTADO, que é a pergunta certa aqui
-     * </pre>
-     *
-     * @return se fez alguma coisa nesta passagem
-     */
-    /**
      * As marcas de nome que fazem uma peça ser da pedra.
      *
      * <p><b>Por nome, e é o idioma desta base.</b> A conta da parede já
@@ -486,6 +463,29 @@ public final class CraftingWork {
         return false;
     }
 
+    /**
+     * Faz a primeira peça que a obra pede e a colônia não tem.
+     *
+     * <p>Pedido do autor em 2026-08-20: <i>"o fabricante deve descascar
+     * stripped_oak, criar tocha e a vidraça, se os materiais necessários
+     * existirem nos baús da vila"</i>.
+     *
+     * <p>São dois caminhos, e a diferença entre eles é do jogo e não do
+     * mod:
+     *
+     * <pre>
+     * descascar   não é receita de bancada — é machado no tronco. Sai
+     *             de uma conversão nominal: oak_log vira
+     *             stripped_oak_log, e o nome basta porque é convenção
+     *             do próprio jogo
+     *
+     * montar      tocha e vidraça são receitas de verdade, e quem as
+     *             conhece é o livro do jogo. CraftingLookup.billFor
+     *             procura pelo RESULTADO, que é a pergunta certa aqui
+     * </pre>
+     *
+     * @return se fez alguma coisa nesta passagem
+     */
     private static boolean produceForWork(ServerWorld world, Job job, UUID workerId) {
         Optional<Colony> colony = VillageColonyMod.COLONIES.find(job.task.colonyId());
 

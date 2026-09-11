@@ -207,14 +207,6 @@ public final class VillagerScanner {
     }
 
     /**
-     * Se este aldeão tem função na colônia.
-     *
-     * <p>A função vem de um passo posterior a esta varredura, então quem
-     * acabou de ser registrado só reivindica baú no ciclo seguinte. Um
-     * ciclo de atraso é barato; deixar os quarenta desempregados
-     * reivindicarem primeiro não era.
-     */
-    /**
      * A profissão deste aldeão, para o baú saber se serve — 2026-08-27.
      *
      * <p>Vazia para quem ainda não foi contratado, e é o que se quer:
@@ -227,8 +219,29 @@ public final class VillagerScanner {
         return workers.find(villagerId).flatMap(Worker::profession);
     }
 
+    /**
+     * Se este aldeão tem função na colônia.
+     *
+     * <p>A função vem de um passo posterior a esta varredura, então quem
+     * acabou de ser registrado só reivindica baú no ciclo seguinte. Um
+     * ciclo de atraso é barato; deixar os quarenta desempregados
+     * reivindicarem primeiro não era.
+     */
     private static boolean isEmployed(WorkerService workers, UUID villagerId) {
         return workers.find(villagerId).filter(Worker::hasProfession).isPresent();
+    }
+
+    /** Alguém desta colônia tem função e não tem onde guardar. */
+    private static boolean hasEmployedWithoutStorage(
+            WorkerService workers, java.util.UUID colonyId, StorageRegistry storages) {
+
+        for (Worker worker : workers.ofColony(colonyId)) {
+            if (worker.hasProfession() && !storages.hasStorage(worker.villagerId())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -247,19 +260,6 @@ public final class VillagerScanner {
      * próprio jogo criou — e o PROJECT_CONSTITUTION §4 manda respeitar
      * o comportamento Vanilla do aldeão.
      */
-    /** Alguém desta colônia tem função e não tem onde guardar. */
-    private static boolean hasEmployedWithoutStorage(
-            WorkerService workers, java.util.UUID colonyId, StorageRegistry storages) {
-
-        for (Worker worker : workers.ofColony(colonyId)) {
-            if (worker.hasProfession() && !storages.hasStorage(worker.villagerId())) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     private static boolean canWork(VillagerEntity villager) {
         return !villager.isBaby()
                 && villager.getVillagerData().getProfession() != VillagerProfession.NITWIT;
@@ -275,8 +275,7 @@ public final class VillagerScanner {
      * É subconjunto de {@code employable} e só é preenchido quando a
      * colônia tem vaga aberta — perguntar custa uma varredura de baús por
      * candidato, e depois dos primeiros ciclos não há vaga nenhuma.
-     */
-    /**
+     *
      * @param freeChests os baús <b>distintos</b> que os {@code equippable}
      *     conseguiriam. Menor que {@code equippable} sempre que dois
      *     candidatos olharem para o mesmo baú, que é o caso comum de dois
