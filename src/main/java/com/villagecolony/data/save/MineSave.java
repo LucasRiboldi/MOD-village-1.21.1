@@ -52,6 +52,21 @@ final class MineSave {
     private static final String SHAPE = "shape";
 
     /**
+     * Se o arco da boca já subiu — 2026-09-11.
+     *
+     * <p>Save sem a chave lê {@code false} em {@code getBoolean}, e é a
+     * resposta certa: mina anterior ao arco ganha o dele na primeira
+     * passagem. Ver {@code Mine.archRaised}.
+     *
+     * <p><b>Fora do {@code SHAPE_VERSION} de propósito.</b> A versão de
+     * forma existe para fronteira escrita noutra geometria, e o arco não
+     * é geometria de túnel: mudar a forma da mina não derruba o arco que
+     * está de pé, e zerar este campo ali o faria renascer — justamente o
+     * defeito que ele veio consertar.
+     */
+    private static final String ARCH = "arch";
+
+    /**
      * Qual geometria de mina escreveu esta fronteira — 2026-08-27.
      *
      * <p>{@code cut} é um indice na ordem de cavar do {@code MineShaft},
@@ -97,6 +112,7 @@ final class MineSave {
             entry.putInt(CUT, cuts.length > 0 ? cuts[0] : 0);
             entry.putIntArray(CUTS, cuts);
             entry.putInt(SHAPE, SHAPE_VERSION);
+            entry.putBoolean(ARCH, mine.archRaised());
 
             list.add(entry);
         }
@@ -177,10 +193,18 @@ final class MineSave {
                     entry.getInt(ENTRY_Y),
                     entry.getInt(ENTRY_Z));
 
-            found.add(Mine.restore(
+            Mine mine = Mine.restore(
                     colonyId,
                     new MineShaft(entrance, descent.get(), gallery.get()),
-                    cuts));
+                    cuts);
+
+            // Sem chave, getBoolean devolve falso e a mina ganha o arco na
+            // primeira passagem — o conserto das minas anteriores a ele.
+            if (entry.getBoolean(ARCH)) {
+                mine.archIsUp();
+            }
+
+            found.add(mine);
         }
 
         return found;

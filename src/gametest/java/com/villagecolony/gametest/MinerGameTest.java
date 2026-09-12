@@ -58,6 +58,7 @@ import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -1126,7 +1127,7 @@ public class MinerGameTest implements FabricGameTest {
             }
         }
 
-        Optional<BlockPos> chest = MineMouth.furnish(world, mouth, Direction.SOUTH);
+        Optional<BlockPos> chest = MineMouth.furnish(world, mouth, Direction.SOUTH, false).chest();
 
         context.assertTrue(chest.isPresent(), "a boca da mina não ganhou baú");
 
@@ -1150,7 +1151,7 @@ public class MinerGameTest implements FabricGameTest {
                 "o baú da boca ficou tapado, e baú tapado não abre: "
                         + world.getBlockState(over).getBlock());
 
-        Optional<BlockPos> again = MineMouth.furnish(world, mouth, Direction.SOUTH);
+        Optional<BlockPos> again = MineMouth.furnish(world, mouth, Direction.SOUTH, false).chest();
 
         context.assertTrue(
                 again.isPresent() && again.get().equals(chest.get()),
@@ -1196,7 +1197,7 @@ public class MinerGameTest implements FabricGameTest {
         // Mobiliada pela metade: o baú está lá, a lanterna não.
         context.setBlockState(ROCK.offset(Direction.NORTH), Blocks.CHEST.getDefaultState());
 
-        MineMouth.furnish(world, mouth, Direction.SOUTH);
+        MineMouth.furnish(world, mouth, Direction.SOUTH, false);
 
         context.assertTrue(
                 world.getBlockState(mouth.up(ARCH_TOP + 1)).isOf(Blocks.LANTERN),
@@ -1209,6 +1210,273 @@ public class MinerGameTest implements FabricGameTest {
                 MineMouth.chestAt(world, mouth).orElseThrow()
                         .equals(context.getAbsolutePos(ROCK.offset(Direction.NORTH))),
                 "a boca perdeu de vista o baú que já era dela");
+
+        context.complete();
+    }
+
+    /**
+     * Arco quebrado fica quebrado — visto em jogo, 2026-09-11.
+     *
+     * <p>A frase do autor: <i>"deve permitir que seja destruído
+     * normalmente e não reaparecendo infinitamente"</i>. Ele quebrava o
+     * arco, e na passagem seguinte o arco estava de volta.
+     *
+     * <p><b>O que falhava, e por quê.</b> O único portão do
+     * {@code raiseArch} era {@code isReplaceable()}: pedra quebrada deixa
+     * ar, ar é substituível, e o mod repunha. <i>"O dono do mundo
+     * desfez"</i> e <i>"ainda não construí"</i> eram o mesmo estado do
+     * mundo, e nenhum teste distinguia os dois porque todos mediam a
+     * primeira passagem.
+     *
+     * <p><b>Por que ele passa a pergunta em vez de ler o mundo.</b> É o
+     * caso que prova a necessidade do campo no save: este teste derruba a
+     * verga e os dois pilares, deixando a boca <b>idêntica</b> a uma que
+     * nunca foi mobiliada. Nenhuma inspeção do mundo poderia acertar aqui
+     * — só a memória de que o arco já subiu uma vez.
+     *
+     * <p>O baú segue fora da regra, e o caso confere isso: ele é lido do
+     * mundo por {@code ColonyChests} e {@code MinerHaul}, e tem de
+     * continuar renascendo quando falta.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+            tickLimit = 20)
+    public void anArchTheOwnerBrokeIsNotRaisedAgain(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        BlockPos mouth = context.getAbsolutePos(ROCK);
+
+        // Chão sólido em volta, até dois blocos: o baú nasce ao lado do
+        // arco desde 2026-09-11, e sem piso lá o teste mediria a
+        // ausência de lugar em vez da regra.
+        for (Direction side : Direction.Type.HORIZONTAL) {
+            for (int out = 1; out <= 2; out++) {
+                context.setBlockState(
+                        ROCK.offset(side, out).down(), Blocks.STONE.getDefaultState());
+            }
+        }
+
+        MineMouth.furnish(world, mouth, Direction.SOUTH, false);
+
+        // A verga do topo, que é o que a lanterna pisa.
+        BlockPos lintel = mouth.up(ARCH_TOP);
+
+        context.assertTrue(
+                world.getBlockState(lintel).isOf(Blocks.COBBLESTONE),
+                "o arco não subiu, e sem ele este caso não mede nada");
+
+        // <b>O jogador derruba o arco inteiro</b> — verga, lanterna e os
+        // dois pilares. Deixa a boca como se nunca tivesse sido
+        // mobiliada, que é justamente o ponto: só o save sabe a diferença.
+        Direction side = Direction.SOUTH.rotateYClockwise();
+
+        world.setBlockState(lintel.up(), Blocks.AIR.getDefaultState());
+
+        for (int up = 1; up <= ARCH_TOP; up++) {
+            world.setBlockState(mouth.offset(side).up(up), Blocks.AIR.getDefaultState());
+            world.setBlockState(
+                    mouth.offset(side.getOpposite()).up(up), Blocks.AIR.getDefaultState());
+        }
+
+        world.setBlockState(lintel, Blocks.AIR.getDefaultState());
+
+        // A passagem seguinte, com a mina lembrando que o arco já subiu.
+        MineMouth.furnish(world, mouth, Direction.SOUTH, true);
+
+        context.assertFalse(
+                world.getBlockState(lintel).isOf(Blocks.COBBLESTONE),
+                "o arco voltou depois de o jogador o derrubar");
+
+        context.assertFalse(
+                world.getBlockState(lintel.up()).isOf(Blocks.LANTERN),
+                "a lanterna voltou sozinha, boiando sobre o buraco");
+
+        context.assertFalse(
+                world.getBlockState(mouth.offset(side).up(1)).isOf(Blocks.COBBLESTONE),
+                "um pilar do arco voltou");
+
+        // <b>E o baú não é governado pelo arco</b>: quebrá-lo tem de o
+        // trazer de volta, porque o resto do mod o procura no mundo.
+        BlockPos chest = MineMouth.chestAt(world, mouth).orElseThrow();
+
+        world.setBlockState(chest, Blocks.AIR.getDefaultState());
+
+        MineMouth.furnish(world, mouth, Direction.SOUTH, true);
+
+        context.assertTrue(
+                MineMouth.chestAt(world, mouth).isPresent(),
+                "o baú da boca não voltou, e o mod o procura no mundo");
+
+        context.complete();
+    }
+
+    /**
+     * O arco é marcado mesmo quando o baú não acha lugar — 2026-09-12.
+     *
+     * <p><b>Achado do {@code gauntlet-verifier}</b>, que o provou com um
+     * teste próprio e o apagou ao terminar. Este é o permanente: a
+     * regressão merece ficar guardada, porque ela é o defeito original
+     * sobrevivendo num canto.
+     *
+     * <p>A primeira correção do arco exigia {@code chest.isPresent()}
+     * para marcar a mina. Boca cercada — nenhum vizinho livre para o baú
+     * — nunca satisfaz isso, então nunca era marcada, e o arco derrubado
+     * <b>voltava para sempre</b> ali. O arco e o baú não têm relação, e
+     * amarrá-los foi conveniência minha, não desenho.
+     *
+     * <p>Mede pelo {@code archRaisedNow}, que é o sinal que o chamador
+     * usa: se ele vem falso na primeira passagem de uma boca sem baú, a
+     * mina nunca será marcada e o defeito está de volta.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+            tickLimit = 20)
+    public void theArchIsMarkedEvenWhenNoChestFits(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        BlockPos mouth = context.getAbsolutePos(ROCK);
+
+        // <b>Boca cercada</b>: bedrock em tudo o que o baú poderia ocupar
+        // — os dois alcances, as quatro direções, e um abaixo, que é o
+        // DROP do MineMouth. Bedrock porque não é substituível e o
+        // placeChest não o derruba.
+        for (Direction side : Direction.Type.HORIZONTAL) {
+            for (int out = 1; out <= 2; out++) {
+                for (int dy = -1; dy <= 0; dy++) {
+                    world.setBlockState(
+                            mouth.offset(side, out).up(dy), Blocks.BEDROCK.getDefaultState());
+                }
+            }
+        }
+
+        MineMouth.Furnished first = MineMouth.furnish(world, mouth, Direction.SOUTH, false);
+
+        context.assertTrue(
+                first.chest().isEmpty(),
+                "o cerco falhou e o baú achou lugar — o caso não mede o que devia");
+
+        context.assertTrue(
+                first.archRaisedNow(),
+                "boca sem baú não marcou o arco, e ele voltará para sempre aqui");
+
+        context.complete();
+    }
+
+    /**
+     * Posição do arco já ocupada é deixada em paz, e conta — 2026-09-12.
+     *
+     * <p><b>Aqui dois achados do {@code gauntlet-verifier} se contradizem,
+     * e o requisito do autor decide.</b> A iteração 2 pediu que boca com
+     * as nove posições bloqueadas <b>não</b> fosse marcada, para voltar a
+     * tentar quando o lugar abrisse. A iteração 3 pediu que pedra natural
+     * nas mesmas posições <b>fosse</b> marcada, senão o mod repõe o que o
+     * jogador cava ali. Os dois casos são o mesmo estado do mundo — bloco
+     * firme que o {@code layStone} respeita —, e os dois pedidos não cabem
+     * juntos.
+     *
+     * <p>Vale o do autor: <i>"deve permitir que seja destruído normalmente
+     * e não reaparecendo infinitamente"</i>. <b>Não repor o que o jogador
+     * desfaz ganha de erguer arco num caso raro</b>, e o preço aceito está
+     * escrito: boca que nasceu com as posições tomadas não ganha arco de
+     * pedregulho mais tarde.
+     *
+     * <p>Mede a Regra 3 junto: o bloco de quem estava lá primeiro não é
+     * substituído.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+            tickLimit = 20)
+    public void anArchPositionAlreadyTakenIsLeftAloneAndCounts(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        BlockPos mouth = context.getAbsolutePos(ROCK);
+        Direction side = Direction.SOUTH.rotateYClockwise();
+
+        // As nove posições do arco: dois pilares de três e a verga de
+        // três. Bedrock porque não é substituível e o layStone o respeita.
+        List<BlockPos> arch = new ArrayList<>();
+
+        for (int up = 1; up <= ARCH_TOP; up++) {
+            arch.add(mouth.offset(side).up(up));
+            arch.add(mouth.offset(side.getOpposite()).up(up));
+        }
+
+        arch.add(mouth.up(ARCH_TOP));
+
+        for (BlockPos at : arch) {
+            world.setBlockState(at, Blocks.BEDROCK.getDefaultState());
+        }
+
+        MineMouth.Furnished taken = MineMouth.furnish(world, mouth, Direction.SOUTH, false);
+
+        context.assertTrue(
+                taken.archRaisedNow(),
+                "posições tomadas não contaram como arco, e o mod reporá o que o jogador"
+                        + " cavar ali");
+
+        // <b>A Regra 3</b>: nada do que já estava lá foi trocado por
+        // pedregulho.
+        for (BlockPos at : arch) {
+            context.assertTrue(
+                    world.getBlockState(at).isOf(Blocks.BEDROCK),
+                    "o arco passou por cima do bloco que já estava em " + at.toShortString());
+        }
+
+        context.complete();
+    }
+
+    /**
+     * Pedra natural já é o arco — 2026-09-12.
+     *
+     * <p><b>Terceiro achado do {@code gauntlet-verifier}</b>, e o mais
+     * provável dos três em jogo. O critério <i>"uma pedra posta"</i> media
+     * a substituição ter dado certo, e pedra natural ocupando a posição
+     * nunca passa por substituição: boca cavada dentro de rocha intacta —
+     * o caso comum, porque o {@code MineSite} só valida a coluna da
+     * própria boca e não os nove vizinhos do arco — não marcava nada.
+     *
+     * <p>E o preço era o defeito relatado, de volta com outra roupa: o
+     * jogador cava uma pedra lateral para abrir espaço, e a passagem
+     * seguinte <b>repõe pedregulho no buraco</b>, porque a mina nunca
+     * considerou aquele arco erguido.
+     *
+     * <p>O critério passou a ser <i>"há pedra firme aqui"</i>, de quem
+     * quer que seja: o pedregulho do mod, a rocha do mundo, ou o bloco do
+     * jogador.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+            tickLimit = 20)
+    public void naturalStoneAlreadyCountsAsTheArch(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        BlockPos mouth = context.getAbsolutePos(ROCK);
+        Direction side = Direction.SOUTH.rotateYClockwise();
+
+        // Rocha intacta nas nove posições — pedra, e não bedrock: é o que
+        // o mineiro encontra ao abrir a boca dentro de um morro.
+        for (int up = 1; up <= ARCH_TOP; up++) {
+            world.setBlockState(mouth.offset(side).up(up), Blocks.STONE.getDefaultState());
+            world.setBlockState(
+                    mouth.offset(side.getOpposite()).up(up), Blocks.STONE.getDefaultState());
+        }
+
+        world.setBlockState(mouth.up(ARCH_TOP), Blocks.STONE.getDefaultState());
+
+        MineMouth.Furnished inRock = MineMouth.furnish(world, mouth, Direction.SOUTH, false);
+
+        context.assertTrue(
+                inRock.archRaisedNow(),
+                "a rocha que já fazia o papel do arco não contou, e o mod vai repor o que"
+                        + " o jogador cavar ali");
+
+        // <b>E a prova do que aquilo custava</b>: com o arco dado por
+        // erguido, cavar uma pedra lateral é definitivo.
+        BlockPos dug = mouth.offset(side).up(1);
+
+        world.setBlockState(dug, Blocks.AIR.getDefaultState());
+
+        MineMouth.furnish(world, mouth, Direction.SOUTH, true);
+
+        context.assertFalse(
+                world.getBlockState(dug).isOf(Blocks.COBBLESTONE),
+                "o mod repôs pedra onde o jogador cavou");
 
         context.complete();
     }
@@ -1238,9 +1506,9 @@ public class MinerGameTest implements FabricGameTest {
             }
         }
 
-        MineMouth.furnish(world, mouth, Direction.SOUTH);
-        MineMouth.furnish(world, mouth, Direction.SOUTH);
-        MineMouth.furnish(world, mouth, Direction.SOUTH);
+        MineMouth.furnish(world, mouth, Direction.SOUTH, false);
+        MineMouth.furnish(world, mouth, Direction.SOUTH, false);
+        MineMouth.furnish(world, mouth, Direction.SOUTH, false);
 
         // Num cubo em volta da boca, e não só no chão: a lanterna mudou
         // de lugar em 2026-09-11 e contar onde ela estava antes deixaria
@@ -1296,7 +1564,7 @@ public class MinerGameTest implements FabricGameTest {
             }
         }
 
-        MineMouth.furnish(world, mouth, Direction.WEST);
+        MineMouth.furnish(world, mouth, Direction.WEST, false);
 
         BlockPos firstStep = mouth.offset(Direction.WEST);
 
@@ -5093,7 +5361,7 @@ public class MinerGameTest implements FabricGameTest {
 
         ServerWorld world = context.getWorld();
 
-        MineMouth.furnish(world, context.getAbsolutePos(mouth), Direction.NORTH);
+        MineMouth.furnish(world, context.getAbsolutePos(mouth), Direction.NORTH, false);
 
         Direction side = Direction.NORTH.rotateYClockwise();
 

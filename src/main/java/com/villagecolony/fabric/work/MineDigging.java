@@ -761,8 +761,42 @@ public final class MineDigging {
     private static void furnishAndLight(ServerWorld world, Mine mine) {
         BlockPos mouth = MinecraftTypeAdapter.toBlockPos(mine.shaft().entry());
 
-        Optional<BlockPos> chest = MineMouth.furnish(
-                world, mouth, MinecraftTypeAdapter.toDirection(mine.shaft().descent()));
+        MineMouth.Furnished furnished = MineMouth.furnish(
+                world,
+                mouth,
+                MinecraftTypeAdapter.toDirection(mine.shaft().descent()),
+                mine.archRaised());
+
+        Optional<BlockPos> chest = furnished.chest();
+
+        // <b>Marca o arco na passagem em que ele sobe</b> — 2026-09-11, e
+        // <b>pelo arco, não pelo baú</b> desde 2026-09-12. A primeira
+        // versão exigia {@code chest.isPresent()} aqui, e o
+        // gauntlet-verifier provou o buraco: boca sem nenhum vizinho
+        // livre nunca ganha baú, logo nunca marcava o arco, logo o arco
+        // derrubado voltava para sempre — o defeito sobrevivendo num canto
+        // dele. Os dois sinais são independentes, e o {@code Furnished}
+        // existe para os manter assim.
+        //
+        // A linha sai <b>uma vez</b>, e não por ciclo, porque é aqui que o
+        // falso vira verdadeiro. O autor pediu por ela depois de quebrar
+        // um arco em jogo e o arco voltar: sem esta linha, um arco que
+        // reaparecesse por outro motivo não deixaria pista nenhuma.
+        //
+        // <b>E ela não diz que o mod ergueu</b> — 2026-09-12. Dizia "got
+        // its stone arch", e passou a mentir quando o critério virou
+        // "posição firme, de quem quer que seja": boca cavada em rocha
+        // intacta fecha o assunto sem o mod pôr uma pedra, e o log
+        // reivindicava a obra. Num projeto em que log torto já custou
+        // sessões de diagnóstico, "resolvido" é o que aconteceu.
+        if (furnished.archRaisedNow()) {
+            mine.archIsUp();
+
+            VillageColonyMod.LOGGER.info(
+                    "Mine mouth at {} has its stone arch settled — it will not be raised"
+                            + " again, so breaking it is final",
+                    mouth.toShortString());
+        }
 
         if (chest.isEmpty()) {
             // <b>As três saídas do furnish eram mudas</b> — 2026-09-02. O

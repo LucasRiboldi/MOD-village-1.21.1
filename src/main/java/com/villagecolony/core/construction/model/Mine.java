@@ -73,6 +73,30 @@ public final class Mine {
 
     private final List<MineArm> arms = new ArrayList<>(ARMS);
 
+    /**
+     * Se o arco da boca já foi erguido uma vez — 2026-09-11.
+     *
+     * <p><b>Existe porque ler o mundo não basta aqui.</b> O arco é posto
+     * de graça e reconferido a cada passagem de {@code MineDigging.mineOf},
+     * e o único teste que ele tinha era se o lugar estava substituível.
+     * Quebrar a pedra deixa ar, ar é substituível, e o arco voltava: para
+     * o código, <i>"o dono do mundo desfez"</i> e <i>"ainda não construí"</i>
+     * eram o mesmo estado. O autor achou em jogo, e a frase foi <i>"deve
+     * permitir que seja destruído normalmente e não reaparecendo
+     * infinitamente"</i>.
+     *
+     * <p>O baú da boca <b>não</b> é governado por isto, e de propósito:
+     * ele é lido do mundo por {@code ColonyChests} e {@code MinerHaul},
+     * que precisam achá-lo onde ele está. O vestígio dele é ele mesmo —
+     * um baú é um baú, e {@code furnish} já sai quando acha um.
+     *
+     * <p>Falso numa mina que o save trouxe sem a chave, e é o que mantém
+     * o conserto que a chamada repetida existia para fazer: mina anterior
+     * à Regra 30 (2026-08-22) ganha o arco na primeira passagem, registra,
+     * e não tenta mais.
+     */
+    private boolean archRaised;
+
     private Mine(UUID colonyId, MineShaft shaft, int[] cuts) {
         this.colonyId = Objects.requireNonNull(colonyId, "colonyId");
         this.shaft = Objects.requireNonNull(shaft, "shaft");
@@ -239,6 +263,29 @@ public final class Mine {
         }
 
         return true;
+    }
+
+    /**
+     * Se o arco da boca já foi erguido alguma vez — 2026-09-11.
+     *
+     * <p>Quem põe o arco pergunta isto antes, e <b>não</b> pergunta ao
+     * mundo: o mundo não sabe a diferença entre pedra que nunca subiu e
+     * pedra que o jogador derrubou. Ver {@link #archRaised}.
+     */
+    public boolean archRaised() {
+        return archRaised;
+    }
+
+    /**
+     * Marca o arco como erguido, de uma vez por todas.
+     *
+     * <p>Chamado na passagem em que o arco sobe, e não na que o confere:
+     * marcar sem ter tentado faria uma boca em chunk descarregado perder
+     * o arco para sempre — é o mesmo motivo por que {@code furnish} sai
+     * mudo quando o chunk não está carregado.
+     */
+    public void archIsUp() {
+        this.archRaised = true;
     }
 
     /** A fronteira de cada ramal, na ordem, para o disco. */

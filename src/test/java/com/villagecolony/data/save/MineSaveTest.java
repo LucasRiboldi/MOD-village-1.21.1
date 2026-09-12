@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -84,6 +85,50 @@ class MineSaveTest {
         assertEquals(mine.shaft().descent(), back.shaft().descent());
         assertEquals(mine.shaft().gallery(), back.shaft().gallery());
         assertEquals(437, back.arm(0).cut());
+    }
+
+    /**
+     * O arco erguido continua erguido depois do disco — 2026-09-11.
+     *
+     * <p>É o campo que distingue <i>"o jogador derrubou"</i> de <i>"ainda
+     * não construí"</i>, e ele só serve se atravessar o save: um
+     * sinalizador que zera no reinício faria o arco voltar no dia
+     * seguinte, que é metade do defeito que o autor relatou.
+     */
+    @Test
+    void theRaisedArchSurvivesTheRoundTrip() {
+        UUID colonyId = UUID.randomUUID();
+
+        Mine mine = Mine.open(colonyId, MineShaft.from(MOUTH, Side.EAST));
+
+        mine.archIsUp();
+
+        List<Mine> read = roundTrip(savedWith(colonyAt(colonyId), mine)).mines();
+
+        assertEquals(1, read.size());
+        assertTrue(read.get(0).archRaised(), "a mina esqueceu que o arco dela já subiu");
+    }
+
+    /**
+     * Mina que nunca ergueu arco volta do disco sem ele — 2026-09-11.
+     *
+     * <p>O outro lado, e é o que mantém o conserto que a chamada repetida
+     * de {@code furnishAndLight} existe para fazer: save anterior ao arco
+     * não tem a chave, {@code getBoolean} devolve falso, e a boca ganha o
+     * dela na primeira passagem em vez de ficar sem para sempre.
+     */
+    @Test
+    void aMineThatNeverRaisedAnArchComesBackWithout() {
+        UUID colonyId = UUID.randomUUID();
+
+        Mine mine = Mine.open(colonyId, MineShaft.from(MOUTH, Side.EAST));
+
+        List<Mine> read = roundTrip(savedWith(colonyAt(colonyId), mine)).mines();
+
+        assertEquals(1, read.size());
+        assertFalse(
+                read.get(0).archRaised(),
+                "mina sem arco voltou dizendo que já tinha um, e nunca ganhará o dela");
     }
 
     /**
