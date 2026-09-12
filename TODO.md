@@ -1,19 +1,129 @@
 # TODO
 
-**Atualizado:** 2026-09-11, no fim do ciclo do plano de correção.
+**Atualizado:** 2026-09-12, depois de duas sessões de jogo do autor.
 
 > ### ⏭️ A próxima sessão começa por aqui
 >
-> **Primeiro, uma varredura de validação do plano contra o código** — pedido do
-> autor, e o ciclo de 09-11 explica por quê: **três dos seus itens caíram por
-> leitura**, e os três porque o plano foi escrito a partir deste arquivo quando
-> algumas linhas dele já estavam vencidas. Vale conferir os itens restantes
-> antes de atacá-los, em vez de descobrir um a um.
+> **O P0.7 está decidido pelo número, e o número não era o esperado.** A
+> sessão de 09-11 entregou o `LotRefusals` que este bloco pedia, e a
+> terraplanagem **não** é o gargalo: das 6.583 recusas,
+> **4.578 (70%) são `NOT_NATURAL_GROUND`** — *"the ground there is not
+> natural soil"* — contra 905 de `OFF_ROAD_LEVEL`. `isNaturalGround` aceita
+> grama, terra, terra grossa, podzol e areia; **pedra não entra**, por
+> decisão registrada (*"pedra à mostra é montanha"*). A vila do autor é
+> rochosa, e é por isso que a roça não tem onde nascer.
 >
-> **Depois, a sessão de jogo que destrava o resto.** Ela entrega o número do
-> `LotRefusals` — quantos lotes são recusados por `OFF_ROAD_LEVEL` contra os
-> outros quatro motivos —, e é esse número que abre ou fecha a terraplanagem
-> (P0.7). O jar instalado já conta.
+> **Mexer nisso é decisão do autor**, porque toca a Regra 3 e a Regra 19 — e
+> [[grupo-de-pedra-e-decisao]] registra que separar grupos de pedra já
+> desfez uma regra antes.
+>
+> **E a varredura não era a culpada — o instrumento do projeto disse isso
+> por escrito.** O `SweepLog` gravou no encerramento:
+> `47 planner runs, 0 passes over 0 columns, 0 complete rounds`, com
+> `46 of 47 planner runs gave up before reaching the sweep` e o aviso
+> *"the sweep is not why: most cycles gave up before reaching it. Look at
+> what the planner refused, not at the sweep."* **Zero passagens em 47
+> tentativas.** A hipótese de orçamento de varredura foi descartada por
+> medição, não por leitura.
+>
+> **Pendente de conferência:** o `CropPatch.survey` tem um defeito latente
+> real — o canteiro vazio achado numa fatia da varredura é guardado numa
+> variável **local** e descartado na fatia seguinte, porque a busca é
+> fatiada e retomável. Não foi o defeito de 09-11 (a varredura não rodou),
+> e vai aparecer quando ela voltar a rodar.
+
+## ✅ 2026-09-12 — duas sessões de jogo, dois defeitos de "uma vez só"
+
+O autor entrou e testou duas vezes. As duas queixas eram sobre o mod
+**desfazer o que ele desfez**, e as duas saíram do mesmo erro de forma.
+
+### O arco da mina voltava depois de quebrado
+
+> *"portal com lanterna na entrada da mina ok, mas deve permitir que seja
+> destruído normalmente e não reaparecendo infinitamente"*
+
+O único portão de `raiseArch` era `isReplaceable()`. Pedra quebrada deixa
+ar, ar é substituível, e o mod repunha: **"o dono do mundo desfez" e "ainda
+não construí" eram o mesmo estado do mundo.** O baú da boca nunca teve o
+defeito, e a diferença explica tudo — o vestígio dele é ele mesmo, e
+`furnish` sai na primeira linha quando acha um.
+
+`Mine.archRaised` entrou no save sob a chave `arch`, **fora do
+`SHAPE_VERSION` de propósito**: o arco não é geometria de túnel, e zerá-lo
+ali o faria renascer. Save sem a chave lê falso e ganha o arco na primeira
+passagem — que é o conserto que a chamada repetida de `furnishAndLight`
+existia para fazer.
+
+**O critério levou três reprovações do `gauntlet-verifier` para ficar
+certo, e as três viraram gametest:**
+
+| tentativa | o que marcava | por que estava errado |
+|---|---|---|
+| 1ª | `!archWasUp && chest.isPresent()` | boca sem vizinho livre nunca ganha baú, logo nunca marcava, logo **o arco voltava para sempre ali** |
+| 2ª | a intenção (`!archAlreadyRaised`) | boca com as nove posições tomadas não punha pedra e era marcada — ficava **sem arco para sempre**, inclusive depois de o obstáculo sair |
+| 3ª | a substituição ter dado certo | pedra **natural** nunca passa por substituição: boca cavada em rocha não marcava, e o mod **repunha a pedra lateral que o jogador cavasse** — o defeito relatado, com outra roupa |
+
+**Vale o estado do mundo:** uma posição do arco firme basta, de quem quer
+que seja. O record `MineMouth.Furnished` separa esse sinal do baú, que segue
+sendo reconferido porque `ColonyChests` e `MinerHaul` o leem do mundo.
+
+**Dois achados do verificador se contradiziam** — posições tomadas deviam e
+não deviam marcar —, e decidiu o pedido do autor: **não repor o que ele
+desfaz ganha de erguer arco num caso raro.** O preço está escrito no código.
+
+**E uma correção dele foi recusada, com o motivo no código:** ele pediu para
+acender a lanterna a cada passagem, por ela ser "naturalmente idempotente".
+Isso a faria **voltar quando o jogador a quebrasse** — `lightTheTop` é
+idempotente quanto a *não duplicar*, e isso não é o mesmo que *não
+ressuscitar*. Ele concordou na iteração seguinte.
+
+### O lenhador deixava tronco de pé — e era o E39
+
+> *"o lenhador tem que cortar todo o tronco das arvores sem deixar troncos
+> da arvora sem cortar, mesmo que nao alcance"*
+
+**A causa não era alcance.** O log mostra `0 blocks away` e expulso. Ver o
+**E39** na tabela de erros: o projeto conhecia o defeito desde 09-04 e o
+conserto havia sido **revertido de propósito** por não ter sido visto
+falhando. Agora foi.
+
+**E o ciclo vicioso que ninguém havia medido:** expulsão deixa tora de pé →
+`markUnreachable` pula a árvore por 6.000 tiques → a copa decai nesse tempo
+→ o resto vira `N logs without a living canopy`, que é recusa **definitiva**.
+É a causa do `no oak_log in the colony chests` que parou o construtor em
+09-11 — as duas queixas eram o mesmo defeito.
+
+**O teto de colheita de 24 troncos saiu, por decisão do autor**, avisado do
+preço. A árvore sai sempre inteira. Sobrou **uma** defesa para construção de
+tronco — a regra da copa —, e ficou exposta a construção **encostada numa
+árvore viva**, que partilha a copa dela. Não há como fazer melhor lendo o
+mundo: `BlockProtection.isPlayerPlaced` só funciona para folha
+(`LeavesBlock.PERSISTENT`), porque o Minecraft **não registra autoria de
+tronco**. Se isso morder em jogo, a saída é heurística de forma (largura do
+tronco), não o teto de volta.
+
+Saiu junto o código morto que o teto sustentava: o campo `complete` dos
+records `Plan` e `Harvest` (virou sempre-verdadeiro, e ninguém o lia) e o
+ramo de `finish` que não replantava.
+
+### O que esta sessão também produziu
+
+- **A casa não estava travada — passava fome.** A obra andava 16 blocos em
+  30 segundos e morreu esperando material. Ver
+  [[casa-nao-sobe-e-fome-nao-travamento]].
+- **`Website/index.html`** deixou de ser um shell React sem bundler — não
+  havia `package.json` em lugar nenhum do repositório, e JSX não roda no
+  navegador sem build: aquela página nunca pôde ter funcionado. Virou HTML
+  estático autocontido com a ficha das oito profissões — o que cada uma
+  executa, onde falha e o que falta. **`Website/src/` ficou órfã** e não foi
+  apagada: é decisão do autor. A pasta é `Website` com **W maiúsculo**, e
+  `git log -- website/` em minúsculo devolve vazio.
+
+**Verificado:** 780 unitários e 304 gametests, `DependencyRuleTest` 5/5 e
+`ConversionBoundaryTest` 3/3. Cada um dos quatro testes novos foi visto
+falhando contra a versão que acusa.
+
+---
 
 **Antes disso — 2026-09-10, ao alinhar o local com o GitHub.** **O E44
 está fechado no código e aberto em jogo** — os dois commits que o consertam
@@ -4431,7 +4541,7 @@ conferido no volume · árvore grande deixando de ser recusada.
 | **E36** | **Os dois guardas eram zerados a cada alvo novo.** `startNextStone`, `findCrop`, `findSheep` e os três `release` faziam `job.stall.reset()` ao trocar de alvo, e quem troca de alvo com frequência ficava **imune** ao detector de imobilidade (300) | ✅ **Fechado em 09-04.** Zerar passou a ser no ramo em que a profissão trabalha — onde `BuilderWork` e `ManufacturerWork` sempre zeraram, e por isso os dois nunca tiveram o defeito. **Eram três profissões, não seis:** o construtor e o fabricante já estavam certos, e o lenhador não zera em lugar nenhum — ver **E39**. O contador de 2.400 continua por alvo de propósito. `theStillnessGuardSurvivesTheTargetChanging`, fase vermelha conferida (*caiu de 99 para 0*) |
 | ~~**E37**~~ | ~~`aFrozenMinerGivesUpLongBeforeTheStallGuard` instável~~ | ✅ **Fechado em 09-05, e não era instabilidade — era o cenário.** A geometria mudou (escada de duas pistas), o mineiro passou a **alcançar** a pedra e a trabalhar — `digging Cobblestone at ..., 0,6 blocks away, 163/200 ticks` —, e um mineiro ocupado não é um mineiro congelado: o guarda de imobilidade não tinha por que disparar. O teste vinha medindo isso havia semanas, ora passando ora não, conforme a arena. Agora ele **emparedado por construção** — seis paredes em volta dos dois blocos que ele ocupa —, e o cenário deixou de depender da forma da mina. Três rodadas seguidas de falha antes, duas de 252 verdes depois. A entrada abaixo fica como registro do caminho: **a suspeita anterior estava errada, e a medição é que a derrubou.** ⚙️ *(histórico)* **A suspeita anterior está morta, e foi medida.** Este arquivo dizia *"o que sobra é o E36: cada troca de alvo zera o contador"*. Com os resets **já removidos**, a falha voltou com `stall 3/2400, still 2/300` em 360 tiques — três passagens contadas de trezentas e sessenta. Os dois contadores são fechados por `WorkHours.isWorkTime`, e o `still` também zera quando o aldeão **muda de bloco**: o relatório mostra ele em y=-53 andando para y=-58, ou seja **o mineiro daquele teste não está congelado**. O próximo ciclo precisa de um instrumento que conte as passagens de expediente, e não de mais uma suspeita |
 | **E38** | **O baú do trabalhador assoreia e nada o esvazia.** Vara, maçã e muda não são `ResourceType`, nenhum trabalhador as retira, e cada uma ocupa um slot para sempre | ⚙️ **Metade fechada em 09-04.** O transbordo para a colônia tirou o lenhador do buraco e parou a destruição de item, mas **não move o assoreamento de lugar**: baú que só enche acaba cheio, e agora demora mais para chegar lá. Dar a esses itens consumidor ou descarte é **decisão de projeto** e está registrada no javadoc de `TreeFelling.deposit`, não decidida por conta própria |
-| **E39** | **O lenhador é o único que cobra o guarda de imobilidade enquanto trabalha.** `LumberjackWork:325` chama `stuck()` **antes** da conferência de alcance, ao contrário das outras seis profissões | ⚙️ **Achado ao ler, em 09-04, e não observado falhando.** O javadoc do `WorkStall` diz o contrário por escrito — *"chamá-la enquanto ele trabalha puniria quem está parado de propósito"* —, e um lenhador parado numa árvore que leve mais de 300 tiques de expediente é devolvido à fila por estar trabalhando. **O conserto foi escrito e revertido de propósito:** mudar uma quarta profissão sem ter visto nenhuma falhar é o erro nº 3 desta mesma lista, de 09-04. Quer o ciclo e o teste dele |
+| ~~**E39**~~ | ~~O lenhador é o único que cobra o guarda de imobilidade enquanto trabalha~~ | ✅ **Fechado em 09-12, e a observação em jogo que faltava chegou.** O autor: *"o lenhador tem que cortar todo o tronco das arvores sem deixar troncos da arvora sem cortar, mesmo que nao alcance"*. O log tem a assinatura exata que esta linha previu: `chopping — tree at 2428,67,-2056, 1 blocks away, block 38 of 180, 20 logs so far` e, no tique seguinte, `has not moved a block in 300 work ticks`. Uma das amostras estava a **zero blocos** da árvore. O conserto é o que havia sido escrito e revertido em 09-04: `TreeFelling.chop` passou a chamar `job.stall.reset()` ao quebrar bloco — o ramo em que a profissão age sobre o alvo, onde as outras cinco sempre zeraram. **O que esta linha não previa é o custo:** a desistência marca a árvore como inalcançável, a copa decai nos 6.000 tiques de castigo, e o tronco órfão vira `logs without a living canopy`, que é recusa definitiva. Era a madeira da colônia saindo tora por tora, e **a causa do `no oak_log` que parou o construtor em 09-11**. Teste novo `theStallGuardDoesNotEvictALumberjackWhoIsChopping`, espelho do `theStallGuardReturnsTheTaskAndForgetsTheTree` — os dois precisam existir, porque guarda que nunca fala e guarda que fala sempre erram de formas diferentes. Fase vermelha conferida. ⚙️ *(histórico)* **Achado ao ler, em 09-04, e não observado falhando.** O javadoc do `WorkStall` diz o contrário por escrito — *"chamá-la enquanto ele trabalha puniria quem está parado de propósito"* —, e um lenhador parado numa árvore que leve mais de 300 tiques de expediente é devolvido à fila por estar trabalhando. **O conserto foi escrito e revertido de propósito:** mudar uma quarta profissão sem ter visto nenhuma falhar é o erro nº 3 desta mesma lista, de 09-04. Quer o ciclo e o teste dele |
 | ~~**E33**~~ | ~~O mineiro não cavou um bloco em sete sessões~~ | ✅ **Fechado na bateria em 08-28.** Três testes em rocha maciça provam que ele cava a escada, desce cavando, e conserta a fronteira adiantada do save. Faltava a arena ser uma mina — todas as outras eram um piso de terra plano. **Falta ver em jogo** |
 | **E33-a** | **O mineiro desce, cava, e então trava.** Na sessão de 08-28, 23:19, ele estava **na galeria** (y=44) com **108 pedras** já trazidas, e parou | ⚙️ **Causa encontrada em 08-29, e é aritmética:** ele parava a **exatamente dois blocos** do lugar escolhido, porque dois era a folga com que a navegação se dá por chegada. `approachTo` escolhia um lugar a 2,0 da pedra; somada a folga, 4,2 — e o braço é 4. Duas contas certas que não compunham. A folga passou a ser do destino: o mineiro pede um. **Nenhuma sessão viu o conserto** — é o nono no mesmo sintoma, e o primeiro com a conta fechada em cima de um mineiro que já estava lá dentro |
 | **E34** | **Túnel cavado pelo jogador confunde a frente da galeria.** Um bolsão iluminado, desligado da escada, parecia frente | ⚙️ **Fechado nos caminhos conhecidos em 09-02, e o mod continua sem distinguir — de propósito.** A frente já era lida em ordem desde 08-28. O que faltava era a **perna**: o conserto do E32, na mesma manhã, fez o laço pular o que não fosse pisável e seguir somando adiante, o que **reabriu a forma exata do E34** — bastava um vão aberto coincidir com um índice mais avançado para o passo saltar a parede. Agora o laço para na primeira posição que **não se atravessa**. A pergunta deixou de ser *quem cavou* e passou a ser *dá para chegar lá a partir daqui*, que é a que importa — e vale igual para caverna natural. `theLegStopsAtTheWallInsteadOfJumpingToAPocketBehindIt`, fase vermelha conferida. **Nenhuma sessão viu** |

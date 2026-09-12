@@ -86,28 +86,29 @@ public class LumberjackGameTest implements FabricGameTest {
     }
 
     /**
-     * Árvore alta demais para o teto de colheita continua sendo árvore.
+     * O plano leva o tronco inteiro, e não um pedaço dele — 2026-09-12.
      *
-     * <p>O defeito de 2026-08-19, visto em jogo: quatro recusas seguidas
-     * de {@code 24 logs without a living canopy}, sempre com o mesmo
-     * número — e 24 é o teto de colheita, não uma medida de árvore. A
-     * copa era procurada a partir do grupo de troncos <b>já cortado no
-     * teto</b>; num abeto gigante os 24 primeiros troncos são a base, e
-     * a copa fica muito acima deles. A árvore virava "não é árvore", e a
-     * recusa é permanente.
+     * <p><b>Decisão do autor, vista em jogo:</b> <i>"o lenhador tem que
+     * cortar todo o tronco das árvores sem deixar troncos da árvore sem
+     * cortar, mesmo que não alcance"</i>. Havia um teto de 24 troncos por
+     * colheita, e a árvore maior descia pela base deixando o resto de pé.
      *
-     * <p>O teto é encurtado aqui porque a arena tem oito blocos de
-     * altura e um abeto gigante não cabe nela. A geometria é a mesma: um
-     * tronco mais alto que o teto, com a copa em cima.
+     * <p>Este caso mede o que substituiu o teto: <b>todo tronco ligado
+     * entra no plano</b>. Mede pela contagem, e não por "o plano não está
+     * vazio" — era o que o teste anterior afirmava, e ele passaria
+     * inteirinho com o teto de volta cortando o tronco em quatro.
      *
-     * <p>Rodado contra a correção desligada: o plano volta vazio e a
-     * afirmação falha.
+     * <p>Herdeiro de {@code aTreeTallerThanTheHarvestCeilingIsStillATree},
+     * de 2026-08-19, que guardava a outra metade disto: a copa é procurada
+     * a partir do tronco <b>inteiro</b>, e não do pedaço que a colheita
+     * levava. Quando a recusa dizia {@code 24 logs without a living
+     * canopy} quatro vezes com o mesmo número, o limite era a causa.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_tall_tree")
-    public void aTreeTallerThanTheHarvestCeilingIsStillATree(TestContext context) {
+    public void thePlanTakesTheWholeTrunk(TestContext context) {
         BlockPos base = new BlockPos(3, 2, 3);
 
-        // Seis troncos e a copa no alto, com o teto em quatro.
+        // Seis troncos e a copa no alto — mais alto que o teto que havia.
         context.setBlockState(base.down(), Blocks.DIRT.getDefaultState());
 
         for (int y = 0; y < 6; y++) {
@@ -117,19 +118,17 @@ public class LumberjackGameTest implements FabricGameTest {
         context.setBlockState(base.up(5).north(), Blocks.OAK_LEAVES.getDefaultState());
         context.setBlockState(base.up(6), Blocks.OAK_LEAVES.getDefaultState());
 
-        TreeHarvester.shortenHarvestCeilingTo(4);
+        TreeHarvester.Plan plan = TreeHarvester.plan(
+                context.getWorld(), context.getAbsolutePos(base));
 
-        try {
-            TreeHarvester.Plan plan = TreeHarvester.plan(
-                    context.getWorld(), context.getAbsolutePos(base));
+        context.assertTrue(
+                !plan.isEmpty(),
+                "o tronco tem copa viva no alto e foi recusado como 'não é árvore'");
 
-            context.assertTrue(
-                    !plan.isEmpty(),
-                    "o tronco tem copa viva no alto e foi recusado como 'não é árvore'"
-                            + " — o teto de colheita não pode decidir isso");
-        } finally {
-            TreeHarvester.restoreHarvestCeiling();
-        }
+        context.assertTrue(
+                plan.logs() == 6,
+                "o plano levou " + plan.logs() + " dos 6 troncos — o resto fica de pé,"
+                        + " e é isso que o autor vê em jogo");
 
         context.complete();
     }
@@ -140,6 +139,20 @@ public class LumberjackGameTest implements FabricGameTest {
      * <p>A outra metade: a correção acima não pode ter afrouxado a
      * regra que protege a construção do jogador. Um pilar de troncos
      * sem copa é casa, e a Regra 3 manda não tocar.
+     *
+     * <p><b>E desde 2026-09-12 esta é a única defesa que a construção
+     * tem.</b> Eram duas — a regra da copa e o teto de 24 troncos —, e o
+     * teto saiu para que a árvore deixasse de ficar pela metade. O autor
+     * escolheu sabendo o preço: construção de tronco <b>encostada numa
+     * árvore viva</b> partilha a copa dela e entra no corte. O que este
+     * caso garante é o resto, que é a maioria: pilar, parede e viga sem
+     * folha viva ligada não são tocados.
+     *
+     * <p>Não há como fazer melhor lendo o mundo: o Minecraft registra
+     * quem pôs uma <b>folha</b> ({@code LeavesBlock.PERSISTENT}, que o
+     * {@code BlockProtection.isPlayerPlaced} usa), e não guarda nada
+     * equivalente para tronco. Tronco do jogador e tronco nascido ali são
+     * o mesmo bloco.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_tall_tree")
     public void aTallBareTrunkIsStillNotATree(TestContext context) {
@@ -147,18 +160,12 @@ public class LumberjackGameTest implements FabricGameTest {
 
         raiseLogs(context, base, 6);
 
-        TreeHarvester.shortenHarvestCeilingTo(4);
+        TreeHarvester.Plan plan = TreeHarvester.plan(
+                context.getWorld(), context.getAbsolutePos(base));
 
-        try {
-            TreeHarvester.Plan plan = TreeHarvester.plan(
-                    context.getWorld(), context.getAbsolutePos(base));
-
-            context.assertTrue(
-                    plan.isEmpty(),
-                    "um pilar de troncos sem copa virou árvore — a Regra 3 caiu junto");
-        } finally {
-            TreeHarvester.restoreHarvestCeiling();
-        }
+        context.assertTrue(
+                plan.isEmpty(),
+                "um pilar de troncos sem copa virou árvore — a Regra 3 caiu junto");
 
         context.complete();
     }
@@ -1114,6 +1121,125 @@ public class LumberjackGameTest implements FabricGameTest {
             } finally {
                 captured.detach();
 
+                TreeMarks.forgetUnreachable();
+
+                owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * Quem está cortando não é expulso pelo guarda — 2026-09-12.
+     *
+     * <p><b>Relato do autor, em jogo:</b> <i>"o lenhador tem que cortar
+     * todo o tronco das árvores sem deixar troncos da árvore sem cortar,
+     * mesmo que não alcance"</i>. O log daquela sessão mostrou o mecanismo:
+     * <i>"chopping — tree at 2428,67,-2056, 1 blocks away, block 38 of 180,
+     * 20 logs so far"</i> e, no tique seguinte, <i>"has not moved a block
+     * in 300 work ticks — wood task returned to the queue"</i>.
+     *
+     * <p><b>O que acontecia.</b> O {@code WorkStall} pergunta "o aldeão
+     * saiu do bloco?" e dispara aos 300 tiques — e cortar árvore é ficar
+     * parado. O lenhador era a única das seis profissões que não zerava
+     * esse guarda ao agir sobre o alvo: construtor, fabricante, fazendeiro,
+     * mineiro e pastor sempre zeraram. Ele era expulso no meio da árvore,
+     * a desistência marcava o tronco como inalcançável, a copa decaía nos
+     * 6.000 tiques de castigo, e o resto virava
+     * {@code logs without a living canopy} — recusa definitiva. A madeira
+     * da colônia ia embora tora por tora, e o construtor parava por falta
+     * de {@code oak_log}.
+     *
+     * <p><b>O espelho de {@link #theStallGuardReturnsTheTaskAndForgetsTheTree}</b>,
+     * e os dois precisam existir: aquele prova que o guarda pega quem está
+     * travado, este que ele solta quem está trabalhando. Um guarda que
+     * nunca fala e um que fala sempre erram de formas diferentes.
+     *
+     * <p>A árvore é larga em vez de alta porque a arena tem oito blocos de
+     * altura: o tronco é percorrido por vizinhança, inclusive na diagonal,
+     * então um bloco de toras com copa em cima é uma árvore de cinquenta
+     * troncos que cabe aqui. São blocos suficientes para o corte ainda
+     * estar em curso quando o guarda antigo falava.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_stall_guard",
+            tickLimit = 400)
+    public void theStallGuardDoesNotEvictALumberjackWhoIsChopping(TestContext context) {
+        BlockPos base = new BlockPos(3, 2, 3);
+        BlockPos chest = new BlockPos(1, 2, 7);
+        BlockPos stand = new BlockPos(2, 2, 2);
+
+        for (int x = 1; x <= 8; x++) {
+            for (int z = 1; z <= 8; z++) {
+                context.setBlockState(new BlockPos(x, 1, z), Blocks.DIRT.getDefaultState());
+            }
+        }
+
+        // Cinquenta troncos ligados em dois níveis, e a copa viva em cima:
+        // árvore pela regra da copa, e grande o bastante para o corte
+        // atravessar os 300 tiques do guarda de imobilidade.
+        for (int x = 3; x <= 7; x++) {
+            for (int z = 3; z <= 7; z++) {
+                context.setBlockState(new BlockPos(x, 2, z), Blocks.OAK_LOG.getDefaultState());
+                context.setBlockState(new BlockPos(x, 3, z), Blocks.OAK_LOG.getDefaultState());
+                context.setBlockState(new BlockPos(x, 4, z), Blocks.OAK_LEAVES.getDefaultState());
+            }
+        }
+
+        context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+
+        ServerWorld world = context.getWorld();
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, stand);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(base)));
+
+        // Fora de COLONIES, como o teste vizinho — ver o E20 lá.
+        ColonyFixture owned = ColonyFixture.create()
+                .owning(colony)
+                .owning(villager.getUuid());
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.LUMBERJACK);
+
+        WorkerEquipment.equip(world, List.of(worker));
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(
+                villager.getUuid(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chest))));
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_WOOD,
+                TaskPriority.PRODUCTION,
+                ResourceType.OAK_LOG,
+                64);
+
+        task.reserveFor(villager.getUuid());
+
+        LumberjackWork.run(world, colony);
+
+        // Passados os 300 do guarda de imobilidade, com folga.
+        context.runAtTick(340, () -> {
+            try {
+                // <b>A afirmação que pega o defeito.</b> Com o guarda
+                // expulsando quem corta, a desistência marca o tronco — e é
+                // a marca que condena a árvore, não a tarefa devolvida: ela
+                // some da vida da colônia por 6.000 tiques e a copa decai
+                // nesse tempo.
+                context.assertFalse(
+                        TreeMarks.isOutOfReach(world, context.getAbsolutePos(base)),
+                        "a árvore que ele estava cortando foi marcada como inalcançável —"
+                                + " o guarda expulsou quem estava trabalhando");
+
+                context.assertFalse(
+                        task.state() == TaskState.AVAILABLE,
+                        "a tarefa voltou para a fila no meio do corte");
+            } finally {
                 TreeMarks.forgetUnreachable();
 
                 owned.cleanUp();

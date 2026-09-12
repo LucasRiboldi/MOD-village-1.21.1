@@ -58,21 +58,17 @@ import java.util.Set;
 public final class TreeHarvester {
 
     /**
-     * Teto de troncos por árvore.
+     * Até quantos troncos se percorre — o único teto que restou.
      *
-     * <p>Carvalho comum tem entre quatro e sete. O teto não existe para
-     * eles: existe para o carvalho gigante de bioma escuro e para
-     * qualquer construção de tronco que o jogador tenha feito e que
-     * esteja encostada numa árvore. Sem teto, uma casa de madeira ligada
-     * a uma árvore viraria estoque da colônia.
-     */
-    private static final int MAX_LOGS = 24;
-
-    /**
-     * Até quantos troncos se percorre <b>só para saber se é árvore</b>.
+     * <p>Havia um segundo, de 24 troncos por colheita, e ele decidia
+     * <b>o que descia nesta volta</b>: a árvore maior era cortada pela
+     * base e o resto ficava para depois. Saiu em 2026-09-12, por decisão
+     * do autor — ver {@link #plan}. Este continua, e é de natureza
+     * diferente: limita a <b>travessia</b>, para que uma floresta de
+     * troncos encostados não vire uma busca sem fim dentro de um tique.
      *
-     * <p>Bem acima de {@link #MAX_LOGS}, e a diferença entre os dois é a
-     * correção de 2026-08-19.
+     * <p>A nota de 2026-08-19 abaixo continua valendo como história, e
+     * explica por que os dois números nunca foram o mesmo.
      *
      * <p>O que acontecia: a copa era procurada a partir do grupo de
      * troncos, e o grupo já vinha cortado no teto de colheita. A busca
@@ -87,11 +83,11 @@ public final class TreeHarvester {
      * quatro é o teto, não uma medida da árvore — quando o número da
      * recusa é exatamente o limite, o limite é a causa.
      *
-     * <p>São duas perguntas diferentes e agora têm dois limites: o teto
-     * de colheita continua cortando o trabalho em pedaços de 24, e este
-     * só serve para responder "existe copa viva ligada a este tronco?".
-     * Custa uma travessia maior, e ela acontece na escolha da árvore,
-     * que é limitada a uma por tick no servidor inteiro.
+     * <p>Eram duas perguntas e dois limites: o teto de colheita cortava o
+     * trabalho em pedaços de 24, e este respondia "existe copa viva ligada
+     * a este tronco?". Sobrou a segunda — e agora é ela que também decide
+     * o tamanho da colheita. Custa uma travessia maior, e ela acontece na
+     * escolha da árvore, que é limitada a uma por tick no servidor inteiro.
      */
     private static final int CANOPY_SEARCH_LOGS = 256;
 
@@ -123,34 +119,7 @@ public final class TreeHarvester {
      */
     private static final int SAPLING_CLEARANCE = 8;
 
-    /**
-     * O teto de colheita em vigor. É {@link #MAX_LOGS}, menos nos
-     * testes.
-     *
-     * <p>Mesma saída de {@code LumberjackWork.shortenStallLimitTo}, e
-     * pelo mesmo motivo: a arena da bateria tem oito blocos de altura e
-     * um abeto gigante não cabe nela. Baixar o teto reproduz a mesma
-     * geometria — tronco mais alto que o teto, copa acima dele — numa
-     * árvore que cabe.
-     *
-     * <p>Note qual dos dois limites é o ajustável. O que a correção de
-     * 2026-08-19 separou foi <b>o teto de colheita</b> da <b>busca de
-     * copa</b>; encurtar a busca de copa reproduziria o defeito em vez
-     * de testar a correção.
-     */
-    private static int harvestCeiling = MAX_LOGS;
-
     private TreeHarvester() {
-    }
-
-    /** Só para a bateria: encurta o teto de colheita. */
-    public static void shortenHarvestCeilingTo(int logs) {
-        harvestCeiling = logs;
-    }
-
-    /** Devolve o teto de colheita ao valor de jogo. */
-    public static void restoreHarvestCeiling() {
-        harvestCeiling = MAX_LOGS;
     }
 
     /**
@@ -159,13 +128,11 @@ public final class TreeHarvester {
      * @param logs quantos troncos caíram
      * @param leaves quantas folhas foram colhidas
      * @param drops tudo o que os blocos deram, já somado por item
-     * @param complete se a árvore desceu inteira — falso quando o teto
-     *     cortou o tronco, e então não se replanta
      */
-    public record Harvest(int logs, int leaves, List<ItemStack> drops, boolean complete) {
+    public record Harvest(int logs, int leaves, List<ItemStack> drops) {
 
         public static Harvest nothing() {
-            return new Harvest(0, 0, List.of(), false);
+            return new Harvest(0, 0, List.of());
         }
 
         public boolean isEmpty() {
@@ -187,19 +154,16 @@ public final class TreeHarvester {
      * começa e em mais nenhum.
      *
      * @param blocks troncos primeiro, copa depois, na ordem em que caem
-     * @param complete se a árvore desce inteira — falso quando o teto
-     *     cortou o tronco, e então não se replanta
      */
     public record Plan(
             TreeSpecies species,
             BlockPos base,
             List<BlockPos> blocks,
             int logs,
-            int leaves,
-            boolean complete) {
+            int leaves) {
 
         public static Plan nothing() {
-            return new Plan(null, null, List.of(), 0, 0, false);
+            return new Plan(null, null, List.of(), 0, 0);
         }
 
         public boolean isEmpty() {
@@ -245,19 +209,30 @@ public final class TreeHarvester {
             return Plan.nothing();
         }
 
-        // E só agora o teto de colheita: o que desce nesta volta são os
-        // troncos mais baixos, e o resto fica para a próxima.
-        boolean complete = trunk.size() <= harvestCeiling;
+        // <b>A árvore inteira, e não um pedaço dela</b> — decisão do autor,
+        // 2026-09-12: <i>"o lenhador tem que cortar todo o tronco das
+        // árvores sem deixar troncos da árvore sem cortar, mesmo que não
+        // alcance"</i>.
+        //
+        // Havia um teto de 24 troncos aqui, e o que descia numa volta eram
+        // os mais baixos. Ele existia para o carvalho gigante e para a
+        // construção de tronco encostada numa árvore — sem teto, a casa
+        // viraria estoque da colônia. O autor foi avisado disso e decidiu
+        // assim mesmo: tronco de pé ao lado de um toco é o que ele vê em
+        // jogo, e não o risco teórico.
+        //
+        // <b>A defesa que resta é a regra da copa</b>, e ela é a principal:
+        // tronco sem folha viva ligada não é árvore e não se toca — é o
+        // que o {@code aTallBareTrunkIsStillNotATree} guarda. O que ficou
+        // exposto é a construção de tronco <b>encostada numa árvore
+        // viva</b>, que partilha a copa dela.
+        //
+        // O único limite que sobra é o {@link #CANOPY_SEARCH_LOGS} da
+        // travessia, e ele é de segurança — não de política.
+        List<BlockPos> blocks = new ArrayList<>(trunk);
+        blocks.addAll(canopy);
 
-        List<BlockPos> logs = complete ? trunk : List.copyOf(trunk.subList(0, harvestCeiling));
-
-        List<BlockPos> leaves = complete ? canopy : List.of();
-
-        List<BlockPos> blocks = new ArrayList<>(logs);
-        blocks.addAll(leaves);
-
-        return new Plan(
-                species, lowest(logs), List.copyOf(blocks), logs.size(), leaves.size(), complete);
+        return new Plan(species, lowest(trunk), List.copyOf(blocks), trunk.size(), canopy.size());
     }
 
     /**
@@ -309,21 +284,10 @@ public final class TreeHarvester {
             return;
         }
 
-        if (!plan.complete()) {
-            // Tronco cortado no teto é árvore pela metade: o que sobrou
-            // continua de pé e ainda é o tronco desta árvore. Replantar
-            // agora poria uma muda debaixo dele. A árvore desce na
-            // colheita seguinte — a busca reencontra o que ficou — e a
-            // muda entra quando o último tronco tiver caído.
-            VillageColonyMod.LOGGER.info(
-                    "Tree at {} hit the {}-log ceiling — felling continues next time,"
-                            + " no sapling yet",
-                    plan.base().toShortString(),
-                    harvestCeiling);
-
-            return;
-        }
-
+        // <b>Sem o ramo do teto</b> — 2026-09-12. Havia aqui uma saída para
+        // a árvore cortada pela metade: ela não replantava, e a linha dizia
+        // que a derrubada continuava na próxima. Com o teto fora, toda
+        // colheita desce a árvore inteira, e a muda entra sempre.
         clearAbove(world, plan.base());
 
         replant(world, plan.species(), plan.base());
@@ -356,7 +320,7 @@ public final class TreeHarvester {
 
         finish(world, plan);
 
-        return new Harvest(plan.logs(), plan.leaves(), merge(drops), plan.complete());
+        return new Harvest(plan.logs(), plan.leaves(), merge(drops));
     }
 
     /**

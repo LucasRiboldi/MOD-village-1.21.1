@@ -2,120 +2,1243 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
-
-    <meta
-      name="theme-color"
-      content="#11110f"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#14110d" />
 
     <meta
       name="description"
-      content="Village Colony — transforme vilas do Minecraft em colônias vivas."
+      content="Village Colony — aldeias do Minecraft que trabalham. Ficha aberta do que cada profissão já faz, onde falha e o que falta."
     />
-
     <meta
       name="keywords"
       content="Village Colony, Minecraft Mod, Minecraft, Fabric, Village, Colony, Mod Minecraft"
     />
-
-    <meta
-      name="author"
-      content="Village Colony"
-    />
+    <meta name="author" content="Village Colony" />
 
     <!-- Open Graph -->
-    <meta
-      property="og:type"
-      content="website"
-    />
-
-    <meta
-      property="og:title"
-      content="Village Colony — Dê vida à sua vila"
-    />
-
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Village Colony — Dê vida à sua vila" />
     <meta
       property="og:description"
-      content="Transforme aldeias do Minecraft em colônias vivas que trabalham, produzem e crescem enquanto você explora."
+      content="Oito profissões, e a ficha honesta de cada uma: o que já executa, o que falha, o que falta."
     />
-
-    <meta
-      property="og:image"
-      content="/assets/readme/hero.png"
-    />
+    <meta property="og:image" content="/assets/readme/hero.png" />
 
     <!-- Twitter / X -->
-    <meta
-      name="twitter:card"
-      content="summary_large_image"
-    />
-
-    <meta
-      name="twitter:title"
-      content="Village Colony — Dê vida à sua vila"
-    />
-
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Village Colony — Dê vida à sua vila" />
     <meta
       name="twitter:description"
       content="Uma nova forma de viver as vilas do Minecraft."
     />
+    <meta name="twitter:image" content="/assets/readme/hero.png" />
 
-    <meta
-      name="twitter:image"
-      content="/assets/readme/hero.png"
-    />
+    <link rel="icon" type="image/png" href="/assets/readme/favicon.png" />
 
-    <!-- Favicon -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      rel="icon"
-      type="image/png"
-      href="/assets/readme/favicon.png"
-    />
-
-    <!-- Preconnect para fontes -->
-    <link
-      rel="preconnect"
-      href="https://fonts.googleapis.com"
-    />
-
-    <link
-      rel="preconnect"
-      href="https://fonts.gstatic.com"
-      crossorigin
-    />
-
-    <!-- Tipografia -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,400..900,0..100,0..1;1,9..144,400..900,0..100,0..1&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
 
-    <title>
-      Village Colony — Dê vida à sua vila
-    </title>
+    <title>Village Colony — a ficha da colônia</title>
+
+    <style>
+      :root {
+        --soot: #14110d;
+        --soot-2: #1b1713;
+        --soot-3: #231e18;
+        --cream: #f0e7d8;
+        --cream-dim: #b8ab97;
+        --cream-faint: #7d7366;
+        --lantern: #e8a33d;
+        --moss: #8aa35b;
+        --rust: #c9613c;
+        --slate: #6f8296;
+        --line: #342c23;
+
+        --display: "Fraunces", Georgia, serif;
+        --mono: "IBM Plex Mono", ui-monospace, monospace;
+        --sans: "IBM Plex Sans", system-ui, sans-serif;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        background: var(--soot);
+        color: var(--cream);
+        font-family: var(--sans);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Grão de lanterna: textura em vez de cor chapada. */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 100;
+        opacity: 0.035;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
+
+      img {
+        max-width: 100%;
+      }
+
+      a {
+        color: var(--lantern);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+      }
+
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 0 28px;
+      }
+
+      /* ───────────────── cabeçalho ───────────────── */
+
+      .hero {
+        position: relative;
+        overflow: hidden;
+        padding: 92px 0 64px;
+        border-bottom: 1px solid var(--line);
+        background:
+          radial-gradient(
+            ellipse 70% 50% at 18% 0%,
+            rgba(232, 163, 61, 0.13),
+            transparent 65%
+          ),
+          linear-gradient(180deg, var(--soot-2), var(--soot));
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image: linear-gradient(
+            90deg,
+            var(--line) 1px,
+            transparent 1px
+          ),
+          linear-gradient(180deg, var(--line) 1px, transparent 1px);
+        background-size: 64px 64px;
+        opacity: 0.35;
+        mask-image: radial-gradient(ellipse 80% 70% at 50% 20%, #000, transparent);
+      }
+
+      .hero .wrap {
+        position: relative;
+        z-index: 1;
+      }
+
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--lantern);
+        margin: 0 0 22px;
+      }
+
+      h1 {
+        font-family: var(--display);
+        font-variation-settings: "SOFT" 18, "WONK" 1, "opsz" 120;
+        font-weight: 800;
+        font-size: clamp(2.9rem, 8vw, 6rem);
+        line-height: 0.92;
+        letter-spacing: -0.025em;
+        margin: 0 0 10px;
+      }
+
+      h1 em {
+        font-style: italic;
+        color: var(--lantern);
+        font-variation-settings: "SOFT" 40, "WONK" 1;
+      }
+
+      .tagline {
+        font-family: var(--display);
+        font-size: clamp(1.1rem, 2.4vw, 1.5rem);
+        font-weight: 400;
+        font-style: italic;
+        color: var(--cream-dim);
+        max-width: 38ch;
+        margin: 0 0 38px;
+        line-height: 1.45;
+      }
+
+      .meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 14px;
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        color: var(--cream-faint);
+      }
+
+      .chip {
+        border: 1px solid var(--line);
+        background: rgba(0, 0, 0, 0.25);
+        padding: 5px 11px;
+        border-radius: 2px;
+      }
+
+      .chip b {
+        color: var(--cream);
+        font-weight: 500;
+      }
+
+      /* ───────────────── números ───────────────── */
+
+      .counts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        border-bottom: 1px solid var(--line);
+      }
+
+      .count {
+        padding: 30px 28px;
+        border-right: 1px solid var(--line);
+      }
+
+      .count:last-child {
+        border-right: none;
+      }
+
+      .count .n {
+        font-family: var(--display);
+        font-variation-settings: "WONK" 1;
+        font-size: 2.6rem;
+        font-weight: 700;
+        line-height: 1;
+        color: var(--lantern);
+        display: block;
+      }
+
+      .count .l {
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--cream-faint);
+        margin-top: 9px;
+        display: block;
+      }
+
+      /* ───────────────── seções ───────────────── */
+
+      section {
+        padding: 72px 0;
+      }
+
+      .section-head {
+        margin-bottom: 44px;
+        max-width: 64ch;
+      }
+
+      h2 {
+        font-family: var(--display);
+        font-variation-settings: "SOFT" 20, "WONK" 1, "opsz" 90;
+        font-weight: 700;
+        font-size: clamp(1.8rem, 4vw, 2.7rem);
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+        margin: 0 0 14px;
+      }
+
+      .section-head p {
+        color: var(--cream-dim);
+        margin: 0;
+      }
+
+      .num-tag {
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        letter-spacing: 0.2em;
+        color: var(--lantern);
+        display: block;
+        margin-bottom: 12px;
+      }
+
+      /* ───────────────── legenda ───────────────── */
+
+      .legend {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 1px;
+        background: var(--line);
+        border: 1px solid var(--line);
+        margin-bottom: 52px;
+      }
+
+      .legend div {
+        background: var(--soot-2);
+        padding: 18px 20px;
+      }
+
+      .legend h4 {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin: 0 0 7px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+
+      .legend p {
+        margin: 0;
+        font-size: 0.86rem;
+        color: var(--cream-faint);
+        line-height: 1.55;
+      }
+
+      .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        flex: none;
+      }
+
+      .dot.ok {
+        background: var(--moss);
+      }
+
+      .dot.bad {
+        background: var(--rust);
+      }
+
+      .dot.todo {
+        background: var(--slate);
+      }
+
+      /* ───────────────── fichas de profissão ───────────────── */
+
+      .trades {
+        display: flex;
+        flex-direction: column;
+        gap: 26px;
+      }
+
+      .trade {
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, var(--soot-2), var(--soot));
+        position: relative;
+      }
+
+      .trade::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: var(--accent, var(--lantern));
+      }
+
+      .trade-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 8px 16px;
+        padding: 24px 28px 20px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .trade-id {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        color: var(--cream-faint);
+        letter-spacing: 0.12em;
+      }
+
+      .trade-name {
+        font-family: var(--display);
+        font-variation-settings: "SOFT" 22, "WONK" 1;
+        font-weight: 700;
+        font-size: 1.7rem;
+        line-height: 1.1;
+        margin: 0;
+        letter-spacing: -0.015em;
+      }
+
+      .trade-enum {
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        color: var(--accent, var(--lantern));
+        opacity: 0.85;
+      }
+
+      .trade-tool {
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        color: var(--cream-faint);
+      }
+
+      .trade-tool code {
+        font-size: 0.95em;
+        background: none;
+        border: none;
+        padding: 0;
+        color: var(--cream-faint);
+      }
+
+      .trade-state {
+        margin-left: auto;
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        border: 1px solid currentColor;
+        border-radius: 2px;
+      }
+
+      .s-live {
+        color: var(--moss);
+      }
+
+      .s-hurt {
+        color: var(--rust);
+      }
+
+      .s-thin {
+        color: var(--slate);
+      }
+
+      .trade-body {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1px;
+        background: var(--line);
+      }
+
+      .col {
+        background: var(--soot);
+        padding: 22px 24px 26px;
+      }
+
+      .col h5 {
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        margin: 0 0 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--cream-dim);
+      }
+
+      .col ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 11px;
+      }
+
+      .col li {
+        font-size: 0.88rem;
+        line-height: 1.55;
+        padding-left: 14px;
+        position: relative;
+        color: var(--cream-dim);
+      }
+
+      .col li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0.62em;
+        width: 5px;
+        height: 1px;
+        background: var(--cream-faint);
+      }
+
+      .col li b {
+        color: var(--cream);
+        font-weight: 600;
+      }
+
+      .col.fix li::before {
+        background: var(--rust);
+        width: 6px;
+        height: 6px;
+        top: 0.5em;
+        border-radius: 50%;
+      }
+
+      .col.gap li::before {
+        background: var(--slate);
+      }
+
+      .col.does li::before {
+        background: var(--moss);
+      }
+
+      code {
+        font-family: var(--mono);
+        font-size: 0.84em;
+        background: rgba(232, 163, 61, 0.1);
+        border: 1px solid rgba(232, 163, 61, 0.18);
+        padding: 0.5px 4px;
+        border-radius: 2px;
+        color: var(--lantern);
+        word-break: break-word;
+      }
+
+      .seen {
+        font-family: var(--mono);
+        font-size: 0.66rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--rust);
+        border: 1px solid currentColor;
+        padding: 1px 6px;
+        border-radius: 2px;
+        white-space: nowrap;
+      }
+
+      .empty {
+        font-size: 0.88rem;
+        color: var(--cream-faint);
+        font-style: italic;
+        margin: 0;
+      }
+
+      /* ───────────────── método ───────────────── */
+
+      .method {
+        border-top: 1px solid var(--line);
+        background: var(--soot-2);
+      }
+
+      .method-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 34px;
+      }
+
+      .method h3 {
+        font-family: var(--display);
+        font-variation-settings: "WONK" 1;
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin: 0 0 10px;
+      }
+
+      .method p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--cream-dim);
+      }
+
+      footer {
+        border-top: 1px solid var(--line);
+        padding: 34px 0 56px;
+        font-family: var(--mono);
+        font-size: 0.74rem;
+        color: var(--cream-faint);
+      }
+
+      footer .wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 26px;
+        justify-content: space-between;
+      }
+
+      @media (max-width: 860px) {
+        .trade-body {
+          grid-template-columns: 1fr;
+        }
+
+        .trade-state {
+          margin-left: 0;
+        }
+
+        section {
+          padding: 54px 0;
+        }
+
+        .hero {
+          padding: 64px 0 48px;
+        }
+      }
+    </style>
   </head>
 
   <body>
+    <header class="hero">
+      <div class="wrap">
+        <p class="eyebrow">Minecraft 1.21.1 · Fabric · v0.3.0</p>
 
-    <!--
-      ROOT
-      A aplicação React será renderizada aqui.
-    -->
-    <div id="root"></div>
+        <h1>Village<br />Colony<em>.</em></h1>
 
-    <!--
-      Entrada principal da aplicação.
-      O Vite resolve este arquivo durante o desenvolvimento/build.
-    -->
-    <script
-      type="module"
-      src="/src/main.jsx"
-    ></script>
+        <p class="tagline">
+          A aldeia deixa de esperar por você. Oito ofícios que derrubam,
+          cavam, fundem, lavram e levantam casa — sozinhos, enquanto você
+          explora.
+        </p>
 
+        <div class="meta-row">
+          <span class="chip"><b>8</b> profissões</span>
+          <span class="chip"><b>5</b> espécies de árvore</span>
+          <span class="chip"><b>4</b> ramais por mina</span>
+          <span class="chip">atualizado em <b>12/09/2026</b></span>
+        </div>
+      </div>
+    </header>
+
+    <div class="counts wrap" style="max-width: 1120px">
+      <div class="count">
+        <span class="n">780</span>
+        <span class="l">testes de unidade</span>
+      </div>
+      <div class="count">
+        <span class="n">304</span>
+        <span class="l">testes de jogo</span>
+      </div>
+      <div class="count">
+        <span class="n">8</span>
+        <span class="l">ofícios vivos</span>
+      </div>
+      <div class="count">
+        <span class="n">4</span>
+        <span class="l">erros abertos</span>
+      </div>
+    </div>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <span class="num-tag">01 — COMO LER ESTA PÁGINA</span>
+          <h2>Uma ficha por ofício, e nada de vitrine.</h2>
+          <p>
+            Cada profissão aparece com as três colunas que importam: o que
+            ela <b>já faz</b>, onde ela <b>falha</b> e o que <b>falta</b>.
+            O que está marcado como falha foi medido — em log de sessão de
+            jogo ou na bateria de testes —, não suposto. Onde um defeito
+            foi visto em jogo, a data está ali.
+          </p>
+        </div>
+
+        <div class="legend">
+          <div>
+            <h4><span class="dot ok"></span> Executa</h4>
+            <p>
+              Está no código e tem teste. Quando também foi visto rodando
+              em jogo, a linha diz.
+            </p>
+          </div>
+          <div>
+            <h4><span class="dot bad"></span> Falha</h4>
+            <p>
+              Defeito com medida: número de log, coordenada, ou teste que
+              falha. Sem medida não entra.
+            </p>
+          </div>
+          <div>
+            <h4><span class="dot todo"></span> Falta</h4>
+            <p>
+              Não é defeito — é trecho que ninguém escreveu ainda, ou
+              decisão de projeto em aberto.
+            </p>
+          </div>
+        </div>
+
+        <div class="trades">
+          <!-- ───────── LENHADOR ───────── -->
+          <article class="trade" style="--accent: #8aa35b">
+            <div class="trade-head">
+              <span class="trade-id">01</span>
+              <h3 class="trade-name">Lenhador</h3>
+              <span class="trade-enum">LUMBERJACK</span>
+              <span class="trade-tool">machado de ferro · <code>COLLECT_WOOD</code></span>
+              <span class="trade-state s-live">em jogo</span>
+            </div>
+            <div class="trade-body">
+              <div class="col does">
+                <h5><span class="dot ok"></span> Executa</h5>
+                <ul>
+                  <li>
+                    Derruba a árvore <b>inteira</b>, seguindo o tronco por
+                    vizinhança — inclusive na diagonal, porque árvore
+                    cresce torta.
+                  </li>
+                  <li>Cinco espécies, e só tronco com <b>copa viva</b> ligada.</li>
+                  <li>
+                    Nada cai no chão: o drop vai direto ao baú, calculado
+                    pela tabela de loot do próprio jogo.
+                  </li>
+                  <li>Replanta muda na base e abre a coluna acima dela.</li>
+                  <li>
+                    Árvore que ele não alcança entra numa <b>escada de
+                    prazos</b> — 6.000 ticks, dobrando — em vez de ser
+                    tentada para sempre.
+                  </li>
+                  <li>Baú cheio transborda para outro baú da colônia.</li>
+                </ul>
+              </div>
+              <div class="col fix">
+                <h5><span class="dot bad"></span> Falha</h5>
+                <ul>
+                  <li>
+                    <span class="seen">visto 12/09</span> O guarda de
+                    imobilidade o <b>expulsava no meio da árvore</b>:
+                    cortar é ficar parado, e ele disparava aos 300 ticks.
+                    <code>block 38 of 180</code> e fora, a zero blocos do
+                    tronco. Era o <b>E39</b>, conhecido desde 09-04.
+                    <b>Corrigido em 12/09</b> — ele era o único dos oito
+                    ofícios que não zerava o guarda ao trabalhar.
+                  </li>
+                  <li>
+                    Rejeita as paredes de tronco da própria vila:
+                    <b>118 recusas sobre 28 posições</b> numa sessão, e
+                    redescobre a mesma parede seis vezes.
+                  </li>
+                  <li>
+                    O baú dele <b>assoreia</b>: vara, maçã e muda não são
+                    recurso de ninguém e ocupam slot para sempre
+                    (<b>E38</b>, metade fechado).
+                  </li>
+                </ul>
+              </div>
+              <div class="col gap">
+                <h5><span class="dot todo"></span> Falta</h5>
+                <ul>
+                  <li>
+                    Dar consumidor ou descarte a vara, maçã e muda — é
+                    decisão de projeto, não foi decidida por conta própria.
+                  </li>
+                  <li>
+                    Proteger construção de tronco <b>encostada numa
+                    árvore viva</b>: o teto de 24 troncos saiu em 12/09
+                    para a árvore sair inteira, e sobrou só a regra da
+                    copa. O Minecraft não registra quem pôs um tronco.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </article>
+
+          <!-- ───────── MINEIRO ───────── -->
+          <article class="trade" style="--accent: #9aa3ad">
+            <div class="trade-head">
+              <span class="trade-id">02</span>
+              <h3 class="trade-name">Mineiro</h3>
+              <span class="trade-enum">MINER</span>
+              <span class="trade-tool">picareta de ferro · <code>COLLECT_STONE</code></span>
+              <span class="trade-state s-hurt">defeito aberto</span>
+            </div>
+            <div class="trade-body">
+              <div class="col does">
+                <h5><span class="dot ok"></span> Executa</h5>
+                <ul>
+                  <li>
+                    Abre a mina: escolhe a boca, ergue um <b>arco de
+                    pedra</b> de quatro de vão com lanterna no topo, e põe
+                    o baú do mineiro ao lado.
+                  </li>
+                  <li>Cava a escada, duas salas e a galeria com <b>quatro ramais</b>.</li>
+                  <li>
+                    Ilumina o que já cavou — uma tocha de parede a cada
+                    oito posições, sempre um vão atrás do cursor.
+                  </li>
+                  <li>Segue o veio quando acha minério.</li>
+                  <li>
+                    <b>Uma mina por mineiro</b>: quem não é o dono sai sem
+                    alvo e herda a escada se o dono largar.
+                  </li>
+                  <li>No deserto tira arenito, que ali é a parede.</li>
+                </ul>
+              </div>
+              <div class="col fix">
+                <h5><span class="dot bad"></span> Falha</h5>
+                <ul>
+                  <li>
+                    <span class="seen">visto 10/09</span>
+                    <b>E44 — a mina não tem escada de recusas.</b> Pedra
+                    inalcançável é <b>segurada pelo cursor sem prazo</b> e
+                    servida de novo todo ciclo. Prende os <b>dois</b>
+                    mineiros: um gasta 2.400 ticks andando, desiste, e o
+                    outro recebe a mesma pedra. É a queixa
+                    <i>"mineiros no mesmo túnel, um atrás do outro"</i>.
+                  </li>
+                  <li>
+                    <b>E32/E33-a</b> — em parte das geometrias ele não
+                    entra na própria escada. Corrigido com teste;
+                    <b>nenhuma sessão viu o conserto</b>.
+                  </li>
+                  <li>
+                    Sem teto de inventário: ele deposita e segue, e não
+                    volta por lotação (<b>E3</b>).
+                  </li>
+                </ul>
+              </div>
+              <div class="col gap">
+                <h5><span class="dot todo"></span> Falta</h5>
+                <ul>
+                  <li>
+                    Uma escada de prazos para a pedra, no molde do
+                    <code>TreeMarks</code> do lenhador — é o conserto do
+                    E44.
+                  </li>
+                  <li>Retorno por inventário cheio.</li>
+                  <li>
+                    Resgate do mineiro que ficou longe do corredor: hoje a
+                    resposta é a boca da mina, 19 blocos acima.
+                  </li>
+                  <li>
+                    A pedra de superfície nunca foi exercitada — a busca
+                    nunca precisou dela.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </article>
+
+          <!-- ───────── FAZENDEIRO ───────── -->
+          <article class="trade" style="--accent: #d8b24a">
+            <div class="trade-head">
+              <span class="trade-id">03</span>
+              <h3 class="trade-name">Fazendeiro</h3>
+              <span class="trade-enum">FARMER</span>
+              <span class="trade-tool">enxada de ferro · <code>COLLECT_FOOD</code></span>
+              <span class="trade-state s-hurt">defeito aberto</span>
+            </div>
+            <div class="trade-body">
+              <div class="col does">
+                <h5><span class="dot ok"></span> Executa</h5>
+                <ul>
+                  <li>Colhe a lavoura madura e <b>replanta</b> no mesmo lugar.</li>
+                  <li>
+                    Abre lote novo quando há semente no baú — a roça cresce
+                    no ritmo em que a colheita paga por ela.
+                  </li>
+                  <li>
+                    Varredura em anel <b>retomável</b>: o cursor é
+                    persistido no save e a volta continua de onde parou.
+                  </li>
+                  <li>Colher ganha de semear, por ordem de prioridade.</li>
+                </ul>
+              </div>
+              <div class="col fix">
+                <h5><span class="dot bad"></span> Falha</h5>
+                <ul>
+                  <li>
+                    <span class="seen">visto 11/09</span>
+                    <b>A roça nunca abriu.</b> Treze vezes
+                    <code>no farmer work: still sweeping — the budget ran
+                    out before an answer</code>. O instrumento do projeto
+                    apontou a causa real: <b>0 passagens de varredura em 47
+                    tentativas</b> — <i>"most cycles gave up before
+                    reaching it"</i>.
+                  </li>
+                  <li>
+                    <b>70% dos lotes são recusados por serem pedra.</b>
+                    4.578 de 6.583 recusas dizem
+                    <i>"the ground there is not natural soil"</i>:
+                    <code>isNaturalGround</code> aceita grama, terra,
+                    podzol e areia — pedra, não. Numa vila rochosa, a roça
+                    não tem onde nascer.
+                  </li>
+                  <li>
+                    Defeito latente: o canteiro vazio achado numa fatia da
+                    varredura é <b>descartado na fatia seguinte</b> — a
+                    variável é local e a busca é fatiada.
+                  </li>
+                  <li>
+                    Numa sessão anterior, <b>86 ciclos</b> sem achar nada
+                    maduro no raio de 32.
+                  </li>
+                </ul>
+              </div>
+              <div class="col gap">
+                <h5><span class="dot todo"></span> Falta</h5>
+                <ul>
+                  <li>
+                    <b>O P0.7</b>: decidir se a colônia terraplana, ou se
+                    pedra passa a servir de chão de lote. Mexe na Regra 3 e
+                    na Regra 19 — é decisão do autor.
+                  </li>
+                  <li>
+                    Preservar o canteiro achado entre fatias da varredura.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </article>
+
+          <!-- ───────── PASTOR ───────── -->
+          <article class="trade" style="--accent: #e3dcd0">
+            <div class="trade-head">
+              <span class="trade-id">04</span>
+              <h3 class="trade-name">Pastor</h3>
+              <span class="trade-enum">SHEPHERD</span>
+              <span class="trade-tool">tesoura · <code>COLLECT_WOOL</code></span>
+              <span class="trade-state s-live">em jogo</span>
+            </div>
+            <div class="trade-body">
+              <div class="col does">
+                <h5><span class="dot ok"></span> Executa</h5>
+                <ul>
+                  <li>
+                    Tosquia a ovelha e traz a lã. <b>A ovelha não morre</b>
+                    — a lã volta a crescer, e o rebanho fica.
+                  </li>
+                  <li>
+                    Fecha o laço da vila: lã vira cama, cama vira aldeão
+                    novo, aldeão novo vira trabalhador.
+                  </li>
+                  <li>
+                    Tem gate de expediente e guarda de imobilidade — foi a
+                    última profissão a ganhar os dois.
+                  </li>
+                </ul>
+              </div>
+              <div class="col fix">
+                <h5><span class="dot bad"></span> Falha</h5>
+                <p class="empty">
+                  Nada aberto com medida. É o ofício mais quieto do mod —
+                  e o que tem menos tempo de jogo acumulado, então o
+                  silêncio vale menos do que parece.
+                </p>
+              </div>
+              <div class="col gap">
+                <h5><span class="dot todo"></span> Falta</h5>
+                <ul>
+                  <li>
+                    Sessão longa que o veja sustentar a produção de lã —
+                    hoje a prova é de bateria.
+                  </li>
+                  <li>
+                    A lã só tem um consumidor: a cama. Tapete, estandarte e
+                    tinta não existem na cadeia.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </article>
+
+          <!-- ───────── FUNDIDOR ───────── -->
+          <article class="trade" style="--accent: #d98038">
+            <div class="trade-head">
+              <span class="trade-id">05</span>
+              <h3 class="trade-name">Fundidor</h3>
+              <span class="trade-enum">SMELTER</span>
+              <span class="trade-tool">mãos livres · <code>SMELT_MATERIAL</code></span>
+              <span class="trade-state s-thin">sem insumo</span>
+            </div>
+            <div class="trade-body">
+              <div class="col does">
+                <h5><span class="dot ok"></span> Executa</h5>
+                <ul>
+                  <li>
+                    Funde o que a fornalha funde, e <b>pergunta ao livro de
+                    receitas do próprio jogo</b> em vez de carregar uma
+                    tabela que envelhece no primeiro datapack.
+                  </li>
+                  <li>Areia vira vidro, e vidro vira vidraça.</li>
+                  <li>Pedregulho vira pedra — o insumo do pedreiro.</li>
+                </ul>
+              </div>
+              <div class="col fix">
+                <h5><span class="dot bad"></span> Falha</h5>
+                <ul>
+                  <li>
+                    <span class="seen">visto 11/09</span> Fica sem o que
+                    fazer porque <b>ninguém traz o insumo</b>:
+                    <code>none of 19 colony chests had sand or red_sand to
+                    smelt</code>. Em sessão anterior, <b>34 vezes</b> a
+                    mesma linha, com o mineiro entregando uma pedra em meia
+                    hora.
+                  </li>
+                </ul>
+              </div>
+              <div class="col gap">
+                <h5><span class="dot todo"></span> Falta</h5>
+                <ul>
+                  <li>
+                    A cadeia da areia: o mineiro tem busca de areia, e ela
+                    estoura o mesmo orçamento de varredura da roça
+                    (<code>no miner sand work: still sweeping</code>).
+                  </li>
+                  <li>
+                    O defeito dele é de <b>suprimento</b>, não de ofício —
+                    conserta-se no mineiro.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </article>
+
+          <!-- ───────── CARPINTEIRO ───────── -->
+          <article class="trade" style="--accent: #b98a55">
+            <div class="trade-head">
+              <span class="trade-id">06</span>
+              <h3 class="trade-name">Carpinteiro</h3>
+              <span class="trade-enum">CARPENTER</span>
+              <span class="trade-tool">mãos livres · <code>CRAFT_WOOD_MATERIAL</code></span>
+              <span class="trade-state s-thin">sem prova em jogo</span>
+            </div>
+            <div class="trade-body">
+              <div class="col does">
+                <h5><span class="dot ok"></span> Executa</h5>
+                <ul>
+                  <li>
+                    Transforma madeira em material de construção: tora vira
+                    tábua, e monta <b>tocha e vidraça</b>.
+                  </li>
+                  <li>
+                    <b>Descasca tronco</b> e faz o que a obra pede dois
+                    degraus abaixo na cadeia.
+                  </li>
+                  <li>
+                    <b>Filtro de família</b>: deixa a alvenaria para o
+                    pedreiro em vez de lavrar tijolo. Dois gametests
+                    guardam isso, e os dois são necessários — sem o
+                    segundo, um filtro que recusasse tudo passaria.
+                  </li>
+                </ul>
+              </div>
+              <div class="col fix">
+                <h5><span class="dot bad"></span> Falha</h5>
+                <ul>
+                  <li>
+                    <b>A tarefa só nasce da meta de material.</b> Com 15
+                    tábuas no estoque a meta está satisfeita e nenhuma
+                    tarefa abre:
+                    <code>no carpenter work: no task open for it — 2 able
+                    to</code>. Ele tem placa, baú e ferramenta, e fica
+                    parado.
+                  </li>
+                </ul>
+              </div>
+              <div class="col gap">
+                <h5><span class="dot todo"></span> Falta</h5>
+                <ul>
+                  <li>
+                    Sessão de jogo que o veja descascando — a divisão do
+                    antigo fabricante é de 10/09 e
+                    <b>nada dela foi visto em jogo</b>.
+                  </li>
+                  <li>
+                    Um piso de estoque, em vez de produzir só contra a
+                    conta da obra.
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </article>
+
+          <!-- ───────── PEDREIRO ───────── -->
+          <article class="trade" style="--accent: #7f8a93">
+            <div class="trade-head">
+              <span class="trade-id">07</span>
+              <h3 class="trade-name">Pedreiro</h3>
+              <span class="trade-enum">MASON</span>
+              <span class="trade-tool">mãos livres · <code>CRAFT_STONE_MATERIAL</code></span>
+              <span class="trade-state s-hurt">nunca trabalhou</span>
+            </div>
+            <div class="trade-body">
+              <div class="col does">
+                <h5><span class="dot ok"></span> Executa</h5>
+                <ul>
+                  <li>
+                    Lavra pedra bruta em <b>tijolo de pedra</b>, e a cadeia
+                    inteira nasceu com ele: o mineiro traz pedregulho, o
+                    fundidor o assa em pedra, ele o lavra.
+                  </li>
+                  <li>
+                    Não nasceu decorativo: tem material declarado, que é o
+                    que faz uma profissão receber pedido.
+                  </li>
+                </ul>
+              </div>
+              <div class="col fix">
+                <h5><span class="dot bad"></span> Falha</h5>
+                <ul>
+                  <li>
+                    <b>Não trabalhou nenhuma vez.</b> Mesmo veículo do
+                    carpinteiro — a produção só roda dentro de uma tarefa,
+                    e a tarefa só nasce da meta:
+                    <code>no mason work: no task open for it — 2 able
+                    to</code>. É a segunda camada do risco que a divisão
+                    registrou: <i>declarar o material não basta</i>.
+                  </li>
+                </ul>
+              </div>
+              <div class="col gap">
+                <h5><span class="dot todo"></span> Falta</h5>
+                <ul>
+                  <li>
+                    Uma obra que <b>peça</b> tijolo de pedra, ou um piso de
+                    estoque que abra tarefa sem obra.
+                  </li>
+                  <li>Ver o ofício acontecer uma vez em jogo.</li>
+                </ul>
+              </div>
+            </div>
+          </article>
+
+          <!-- ───────── CONSTRUTOR ───────── -->
+          <article class="trade" style="--accent: #c9613c">
+            <div class="trade-head">
+              <span class="trade-id">08</span>
+              <h3 class="trade-name">Construtor</h3>
+              <span class="trade-enum">BUILDER</span>
+              <span class="trade-tool">mãos livres · <code>BUILD</code></span>
+              <span class="trade-state s-hurt">passa fome</span>
+            </div>
+            <div class="trade-body">
+              <div class="col does">
+                <h5><span class="dot ok"></span> Executa</h5>
+                <ul>
+                  <li>
+                    Levanta casa do <b>catálogo do próprio jogo</b> — 36
+                    plantas no estilo planície.
+                  </li>
+                  <li>
+                    É o único ofício que <b>acrescenta</b> bloco ao mundo, e
+                    por isso o mais guardado: o lote é recusado se houver
+                    qualquer coisa dentro do volume.
+                  </li>
+                  <li>Prepara o terreno e retoma obra do save.</li>
+                  <li>
+                    Desiste da obra depois de 20 ciclos sem material, em vez
+                    de esperar para sempre.
+                  </li>
+                </ul>
+              </div>
+              <div class="col fix">
+                <h5><span class="dot bad"></span> Falha</h5>
+                <ul>
+                  <li>
+                    <span class="seen">visto 11/09</span>
+                    <b>A obra não trava: ela passa fome.</b> A casa andava
+                    16 blocos em 30 segundos e morreu esperando material —
+                    <code>no oak_log</code>, depois <code>no wheat</code>.
+                    De 58 para 28 blocos restantes em 20 minutos, e então
+                    desistiu.
+                  </li>
+                  <li>
+                    <b>A obra abandonada trava o lote para sempre:</b>
+                    <i>"The half-built house and its lot stay taken"</i>.
+                    Meia casa de pé e o terreno fora de circulação.
+                  </li>
+                  <li>
+                    O ciclo da colônia passou de um tique do servidor:
+                    <code>116 ms</code>, dos quais <b>83 ms no
+                    planejador</b>.
+                  </li>
+                </ul>
+              </div>
+              <div class="col gap">
+                <h5><span class="dot todo"></span> Falta</h5>
+                <ul>
+                  <li>
+                    Devolver à circulação o lote de obra abandonada, ou
+                    demolir o que ficou.
+                  </li>
+                  <li>
+                    A cadeia de suprimento — o defeito dele é dos
+                    <b>outros</b>: lenhador e roça. Consertados os dois, a
+                    casa sobe.
+                  </li>
+                  <li>Custo do planejador dentro de um tique.</li>
+                </ul>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="method">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="num-tag">02 — COMO ISTO É VERIFICADO</span>
+          <h2>Quem escreve o código não libera o código.</h2>
+          <p>
+            As três regras que decidem o que entra nesta página — e o que
+            fica de fora dela.
+          </p>
+        </div>
+
+        <div class="method-grid">
+          <div>
+            <h3>O laço do Gauntlet</h3>
+            <p>
+              Toda alteração passa por um verificador independente que tenta
+              <b>provar que ela está errada</b>, rodando os comandos reais.
+              Ele já reprovou quatro entregas — uma delas sem um único teste
+              vermelho.
+            </p>
+          </div>
+          <div>
+            <h3>Contagem lida do XML</h3>
+            <p>
+              Os números acima vêm dos relatórios de teste, não do que o
+              build imprimiu. Tarefa que o Gradle marca como
+              <code>UP-TO-DATE</code> não reescreve o relatório — e uma
+              bateria que não rodou passaria por bateria verde.
+            </p>
+          </div>
+          <div>
+            <h3>Fase vermelha obrigatória</h3>
+            <p>
+              Um teste só conta depois de ser visto <b>falhando</b> contra a
+              versão que ele acusa. Teste que nunca falhou não prova nada —
+              pode estar medindo uma cópia do próprio código.
+            </p>
+          </div>
+          <div>
+            <h3>Teste não é prova de jogo</h3>
+            <p>
+              <i>"Tem teste"</i> e <i>"foi visto rodando"</i> são coisas
+              diferentes, e esta página as separa. Vários consertos têm
+              bateria verde e <b>nenhuma sessão</b> que os viu.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap">
+        <span>Village Colony · Minecraft 1.21.1 · Fabric · v0.3.0</span>
+        <span>
+          <a href="https://github.com/LucasRiboldi/MOD-village-1.21.1">
+            código
+          </a>
+          ·
+          <a
+            href="https://github.com/LucasRiboldi/MOD-village-1.21.1/releases"
+          >
+            download
+          </a>
+        </span>
+      </div>
+    </footer>
   </body>
 </html>

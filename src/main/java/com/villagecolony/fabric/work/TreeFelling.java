@@ -102,6 +102,29 @@ public final class TreeFelling {
         job.progress = 0;
         job.required = 0;
         job.stalled = 0;
+
+        // <b>E o guarda de imobilidade também</b> — 2026-09-12. O lenhador
+        // era a única das seis profissões que não zerava aqui: o
+        // construtor, o fabricante, o fazendeiro, o mineiro e o pastor
+        // sempre zeraram, e a javadoc do {@code WorkStall#reset} já dizia
+        // onde é o lugar — <i>"o ramo em que a profissão age sobre o
+        // alvo"</i>.
+        //
+        // <b>A falta era grave porque cortar árvore é ficar parado.</b> O
+        // guarda pergunta "o aldeão saiu do bloco?" e dispara aos 300
+        // tiques; uma cerejeira de 180 blocos leva mais que isso de pé no
+        // mesmo lugar. O autor viu em jogo: <i>"block 38 of 180"</i> e
+        // expulso, <i>"block 6 of 61"</i> e expulso — sempre a um ou zero
+        // blocos da árvore.
+        //
+        // E o resto não voltava: a desistência marca a árvore como
+        // inalcançável, a copa decai nos 6.000 tiques de castigo, e o
+        // tronco órfão vira "logs without a living canopy", que é recusa
+        // definitiva. Era a madeira da colônia indo embora tora por tora,
+        // e o construtor parando por falta de oak_log.
+        //
+        // Quebrar um bloco é a prova de que ele não está congelado.
+        job.stall.reset();
     }
 
     /**
