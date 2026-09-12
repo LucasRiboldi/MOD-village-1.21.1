@@ -96,7 +96,65 @@ public final class HousePlans {
      * planície, e a Regra 20 manda a cabana ser da madeira do bioma.
      */
     static List<Blueprint> plansFor(ServerWorld world, Colony colony) {
-        return catalogPlans(world, paletteOf(world, colony.center()).style());
+        List<Blueprint> plans = catalogPlans(world, paletteOf(world, colony.center()).style());
+
+        // <b>Fora as que esta colônia já tentou e não conseguiu</b> —
+        // 2026-09-12. A ordem da Regra 25 fica intacta; o que muda é que a
+        // lista <b>desce um degrau</b> em vez de reoferecer a casa que
+        // morreu esperando material. É o que o autor pediu — preferir a
+        // planta menor que resolve o gargalo — sem inverter a regra dele,
+        // que faria a vila nunca mais tentar casa grande.
+        //
+        // A marca é por condição e não por prazo: a planta volta sozinha
+        // quando a colônia passar a alcançar o que faltou. Ver
+        // PlanRefusals.
+        Set<ResourceId> skipped = new HashSet<>();
+
+        for (Blueprint plan : plans) {
+            if (PlanRefusals.skip(world, colony.id(), colony.center(), plan.id())) {
+                skipped.add(plan.id());
+            }
+        }
+
+        return without(plans, skipped);
+    }
+
+    /**
+     * A lista sem as plantas marcadas — e nunca vazia.
+     *
+     * <p><b>Separada de {@link #plansFor} porque é a decisão, e decisão se
+     * afirma sem mundo.</b> Perguntar ao {@code PlanRefusals} varre baú;
+     * escolher o que fica da lista não precisa de nada. Com as duas juntas,
+     * o único teste possível seria de jogo — e a base já registrou o preço
+     * de um filtro que nada exercitava: quando a divisão do fabricante
+     * entrou, removido o {@code continue}, <b>701 unitários e 275 testes de
+     * jogo continuavam verdes</b>.
+     *
+     * <p><b>Nunca devolve vazio tendo planta no catálogo.</b> Se todas
+     * estiverem marcadas, vale a menor — a última, porque a ordem é
+     * decrescente pela Regra 25. A alternativa é a vila parar de planejar
+     * por completo, e a Regra 25 existe justamente para isso não acontecer.
+     * Ela vai morrer esperando material de novo, e a linha de desistência
+     * continua dizendo o que falta, que é melhor que silêncio.
+     *
+     * <p><b>Visível ao pacote para o teste.</b> {@code HousePlansTest}
+     * afirma as duas coisas: que a marcada sai, e que a lista não fica
+     * vazia.
+     */
+    static List<Blueprint> without(List<Blueprint> plans, Set<ResourceId> skipped) {
+        List<Blueprint> offered = new ArrayList<>();
+
+        for (Blueprint plan : plans) {
+            if (!skipped.contains(plan.id())) {
+                offered.add(plan);
+            }
+        }
+
+        if (offered.isEmpty() && !plans.isEmpty()) {
+            return List.of(plans.get(plans.size() - 1));
+        }
+
+        return List.copyOf(offered);
     }
 
     /**

@@ -32,6 +32,7 @@ import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
 import com.villagecolony.fabric.work.TestBarrier;
 import com.villagecolony.fabric.work.HousePlans;
+import com.villagecolony.fabric.work.PlanRefusals;
 import com.villagecolony.fabric.work.WaitingWork;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.CraftingWork;
@@ -83,6 +84,7 @@ public final class ServerLifecycleHandler {
         BuilderWork.clearAll();
         ConstructionPlanner.clearAll();
         HousePlans.clearAll();
+        PlanRefusals.clearAll();
         WaitingWork.clearAll();
         ChestMarker.clearAll();
         TreeScanner.clearAll();

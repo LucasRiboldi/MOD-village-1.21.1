@@ -147,6 +147,21 @@ public final class WaitingWork {
     public static void giveUp(Colony colony, ConstructionProject project) {
         WAITING_SINCE.remove(project.id());
 
+        // <b>E a colônia aprende qual planta não conseguiu levantar</b> —
+        // 2026-09-12. Sem isto a escolha reoferece a mesma casa no ciclo
+        // seguinte: a Regra 25 é determinística, e a sessão daquele dia
+        // mostrou o laço — plains_butcher_shop_2 escolhida duas vezes,
+        // vinte ciclos de espera por smooth_stone_slab cada, e o autor
+        // dizendo "não vi nenhuma construção nascendo". A laje está a três
+        // degraus de receita e o teto é dois: aquela casa era impossível
+        // para aquela colônia, e continuaria sendo.
+        //
+        // Marcar aqui, e não na escolha, porque é aqui que se sabe o que
+        // faltou. Ver PlanRefusals — a marca é por condição, e se desfaz
+        // quando a colônia passar a alcançar o material.
+        PlanRefusals.refused(
+                colony.id(), project.blueprint().id(), project.remainingMaterials());
+
         VillageColonyMod.BUILDINGS.register(Building.of(project));
         VillageColonyMod.CONSTRUCTIONS.forget(project.id());
 
