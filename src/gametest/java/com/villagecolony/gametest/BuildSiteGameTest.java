@@ -848,6 +848,93 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * Vila em rocha também tem lote — decisão do autor, 2026-09-12.
+     *
+     * <p><b>O número que derrubou a regra anterior.</b> A sessão de 09-12
+     * recusou <b>9.388 lotes</b>, e <b>6.527 deles — 69,5% — porque o chão
+     * não era solo natural</b>. {@code isNaturalGround} aceitava grama,
+     * terra, terra grossa, podzol e areia; pedra ficava fora por decisão
+     * escrita — <i>"pedra à mostra é montanha"</i>. A vila do autor nasceu
+     * em terreno rochoso e não tinha onde crescer.
+     *
+     * <p>Ele foi avisado do preço — casa sobre afloramento pode ficar de
+     * aparência estranha — e escolheu assim, porque era a menor
+     * intervenção que resolvia o gargalo. A alternativa era terraplanar,
+     * que gasta material e mexe mais no mundo dele.
+     *
+     * <p><b>Rocha nua, e não pedregulho.</b> Pedregulho é o que o mineiro
+     * produz e o que a vila gerada usa de parede; aceitá-lo como chão
+     * convidaria a casa a nascer sobre obra. Este caso mede os dois lados.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_rock")
+    public void aVillageOnBedrockStillHasLots(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+
+        // Rocha em vez de grama, no lote inteiro: é a encosta em que a
+        // vila do autor nasceu.
+        for (int dx = -RADIUS; dx <= RADIUS; dx++) {
+            for (int dz = -RADIUS; dz <= RADIUS; dz++) {
+                context.setBlockState(
+                        center.add(dx, 0, dz), Blocks.STONE.getDefaultState());
+            }
+        }
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+
+        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                context.getWorld(),
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        context.assertTrue(
+                site.isPresent(),
+                "a rocha reprovou o lote — e em vila de encosta isso é todo lote");
+
+        context.complete();
+    }
+
+    /**
+     * Pedregulho continua não sendo chão de lote — 2026-09-12.
+     *
+     * <p>A outra metade da decisão acima, e ela precisa existir: sem este
+     * caso, aceitar <b>tudo</b> o que é pedra passaria, e a casa nasceria
+     * sobre a parede da vila gerada. Pedregulho é material de obra — é o
+     * que o mineiro traz e o que a casa de planície usa —, então chão de
+     * pedregulho é indício de construção, não de morro.
+     *
+     * <p>A Regra 3 cobre o caso por outro lado, perguntando <b>de quem é</b>
+     * o bloco. Esta guarda é a que não depende de registro nenhum.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_rock")
+    public void cobblestoneIsStillNotLotGround(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+
+        for (int dx = -RADIUS; dx <= RADIUS; dx++) {
+            for (int dz = -RADIUS; dz <= RADIUS; dz++) {
+                context.setBlockState(
+                        center.add(dx, 0, dz), Blocks.COBBLESTONE.getDefaultState());
+            }
+        }
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+
+        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                context.getWorld(),
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        context.assertFalse(
+                site.isPresent(),
+                "pedregulho passou por chão, e a casa vai nascer sobre parede de vila");
+
+        context.complete();
+    }
+
     private static void paveGround(TestContext context, BlockPos center) {
         for (int dx = -RADIUS; dx <= RADIUS; dx++) {
             for (int dz = -RADIUS; dz <= RADIUS; dz++) {

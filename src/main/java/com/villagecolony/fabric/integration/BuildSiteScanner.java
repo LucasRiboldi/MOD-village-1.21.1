@@ -1080,7 +1080,7 @@ public final class BuildSiteScanner {
 
                 BlockPos ground = found.get();
 
-                if (!isNaturalGround(world.getBlockState(ground))) {
+                if (!isLotGround(world.getBlockState(ground))) {
                     LotRefusals.refused(colonyId, LotRefusals.Reason.NOT_NATURAL_GROUND);
 
                     return Optional.empty();
@@ -1194,5 +1194,61 @@ public final class BuildSiteScanner {
                 || state.isOf(Blocks.COARSE_DIRT)
                 || state.isOf(Blocks.PODZOL)
                 || state.isIn(BlockTags.SAND);
+    }
+
+    /**
+     * Se dá para assentar uma casa sobre este bloco — 2026-09-12.
+     *
+     * <p><b>Duas perguntas, dois predicados.</b> Isto era o
+     * {@link #isNaturalGround}, e os dois clientes dele querem coisas
+     * diferentes: o lote pergunta <i>"dá para assentar casa aqui?"</i> e a
+     * estrada pergunta <i>"dá para calçar aqui?"</i>. A rocha entrou na
+     * primeira por decisão do autor, e a bateria mostrou na hora que
+     * arrastar a segunda junto estava errado — dois casos de
+     * {@code RoadExtensionGameTest} usam pedra como barreira de propósito,
+     * e a estrada passaria a pavimentar morro acima.
+     *
+     * <p>A estrada fica com o predicado antigo. Quem cresce sobre rocha é
+     * o lote.
+     */
+    static boolean isLotGround(BlockState state) {
+        return isNaturalGround(state) || isBareRock(state);
+    }
+
+    /**
+     * A rocha exposta também serve de chão de lote — decisão do autor,
+     * 2026-09-12.
+     *
+     * <p><b>A linha de cima dizia o contrário</b>, e com motivo escrito:
+     * <i>"pedra à mostra é montanha"</i>. O número derrubou o motivo. Na
+     * sessão de 09-12 a vila recusou <b>9.388 lotes</b>, e
+     * <b>6.527 deles — 69,5% — por isto</b>: o chão ali não era solo
+     * natural. A vila do autor nasceu em terreno rochoso, e a colônia não
+     * tinha onde crescer.
+     *
+     * <p>Ele foi avisado do preço e escolheu assim: casa sobre afloramento
+     * pode ficar de aparência estranha em terreno muito irregular. Era a
+     * <b>menor intervenção que resolvia o gargalo</b> — a alternativa era
+     * terraplanar, que gasta material e mexe mais no mundo dele.
+     *
+     * <p><b>O que isto não afrouxa.</b> As outras quatro recusas continuam
+     * inteiras: nível de rua (Regra 19), peça de vila ou do jogador
+     * (Regra 3), janela vertical, e volume da casa ocupado. Rocha que é
+     * parede de construção continua protegida pela Regra 3, que pergunta
+     * de quem é o bloco e não de que ele é feito.
+     *
+     * <p>Só rocha <b>nua</b>, e é o que o nome diz: pedra, granito,
+     * diorito, andesito, tufo e deepslate — o que a geração de mundo põe
+     * à mostra num morro. Pedregulho fica de fora de propósito: ele é o
+     * que o <b>mineiro produz</b> e o que a vila gerada usa de parede, e
+     * aceitá-lo como chão convidaria a casa a nascer sobre obra.
+     */
+    private static boolean isBareRock(BlockState state) {
+        return state.isOf(Blocks.STONE)
+                || state.isOf(Blocks.GRANITE)
+                || state.isOf(Blocks.DIORITE)
+                || state.isOf(Blocks.ANDESITE)
+                || state.isOf(Blocks.TUFF)
+                || state.isOf(Blocks.DEEPSLATE);
     }
 }
