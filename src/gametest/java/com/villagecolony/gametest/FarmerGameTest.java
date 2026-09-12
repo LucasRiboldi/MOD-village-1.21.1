@@ -383,6 +383,102 @@ public class FarmerGameTest implements FabricGameTest {
     }
 
     /**
+     * <b>O canteiro vazio sobrevive à pausa</b> — 2026-09-12.
+     *
+     * <p>O {@link CropPatch#survey} varre por fatias. Até aqui, o
+     * primeiro canteiro arado e vazio morava numa variável local: a
+     * primeira passagem o via, pausava pelo orçamento, e a segunda
+     * retomava adiante sem saber que ele existia. O fazendeiro ficava
+     * alternando entre "incompleto" e "nada aqui" mesmo com roça
+     * semeável já vista pela colônia.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sweep",
+            tickLimit = 120)
+    public void theEmptyPlotFoundBeforeThePauseSurvivesTheNextPass(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        int radius = 30;
+
+        BlockPos center = context.getAbsolutePos(CHEST).up(40);
+        BlockPos plot = center.toImmutable();
+
+        world.setBlockState(plot.down(), Blocks.DIRT.getDefaultState(), 3);
+        world.setBlockState(plot, Blocks.FARMLAND.getDefaultState(), 3);
+
+        UUID colonyId = UUID.randomUUID();
+
+        try {
+            CropPatch.Field first = CropPatch.survey(world, colonyId, center, radius);
+
+            context.assertTrue(first.incomplete(), "a primeira passagem tinha de pausar");
+
+            context.assertTrue(
+                    first.emptyPlot().filter(plot::equals).isPresent(),
+                    "a primeira passagem não viu o canteiro vazio no centro");
+
+            CropPatch.Field second = CropPatch.survey(world, colonyId, center, radius);
+
+            context.assertTrue(
+                    second.emptyPlot().filter(plot::equals).isPresent(),
+                    "a segunda passagem esqueceu o canteiro visto antes da pausa");
+        } finally {
+            FarmerWork.forgetColony(colonyId);
+        }
+
+        context.complete();
+    }
+
+    /**
+     * <b>Lavoura madura ainda ganha do canteiro lembrado</b> — 2026-09-12.
+     *
+     * <p>A memória do canteiro vazio é só uma resposta reserva. Se a
+     * retomada da varredura acha trigo maduro, a colheita continua sendo
+     * o trabalho certo.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farmer_sweep",
+            tickLimit = 120)
+    public void theRipeCropFoundAfterThePauseBeatsTheRememberedPlot(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        int radius = 30;
+
+        BlockPos center = context.getAbsolutePos(CHEST).up(40);
+        BlockPos plot = center.toImmutable();
+        BlockPos ripe = center.add(20, 0, 0);
+
+        world.setBlockState(plot.down(), Blocks.DIRT.getDefaultState(), 3);
+        world.setBlockState(plot, Blocks.FARMLAND.getDefaultState(), 3);
+
+        UUID colonyId = UUID.randomUUID();
+
+        try {
+            CropPatch.Field first = CropPatch.survey(world, colonyId, center, radius);
+
+            context.assertTrue(
+                    first.emptyPlot().filter(plot::equals).isPresent(),
+                    "a primeira passagem não guardou o canteiro vazio");
+
+            world.setBlockState(ripe.down(), Blocks.FARMLAND.getDefaultState(), 3);
+            world.setBlockState(
+                    ripe,
+                    Blocks.WHEAT.getDefaultState()
+                            .with((IntProperty) Blocks.WHEAT.getStateManager()
+                                    .getProperty("age"), ((CropBlock) Blocks.WHEAT).getMaxAge()),
+                    3);
+
+            CropPatch.Field second = CropPatch.survey(world, colonyId, center, radius);
+
+            context.assertTrue(
+                    second.ripe().filter(ripe::equals).isPresent(),
+                    "o canteiro lembrado passou na frente da lavoura madura");
+        } finally {
+            FarmerWork.forgetColony(colonyId);
+        }
+
+        context.complete();
+    }
+
+    /**
      * <b>Tarefa devolvida à fila não é mais trabalhada</b> — 2026-09-05,
      * e a falta disto derrubou o servidor do autor na primeira sessão que
      * rodou o jar novo:

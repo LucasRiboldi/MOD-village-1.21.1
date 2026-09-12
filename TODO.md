@@ -26,11 +26,21 @@
 > tentativas.** A hipótese de orçamento de varredura foi descartada por
 > medição, não por leitura.
 >
-> **Pendente de conferência:** o `CropPatch.survey` tem um defeito latente
-> real — o canteiro vazio achado numa fatia da varredura é guardado numa
-> variável **local** e descartado na fatia seguinte, porque a busca é
-> fatiada e retomável. Não foi o defeito de 09-11 (a varredura não rodou),
-> e vai aparecer quando ela voltar a rodar.
+> ✅ **Resolvido em 2026-09-12:** o defeito latente do `CropPatch.survey`
+> foi confirmado com GameTest e corrigido. O canteiro vazio achado numa
+> fatia pausada agora é lembrado por colônia enquanto o `RingSweep` não
+> fecha a volta; a lembrança é validada contra o mundo antes de ser
+> reaproveitada e limpa junto com a varredura do fazendeiro.
+>
+> ✅ **Auditoria 1.9 registrada em 2026-09-12:** nenhum CRÍTICO novo foi
+> confirmado. O ALTO era de release: não havia workflow de CI/CD, e o
+> manifesto publicado aceitava qualquer Fabric API com `"*"`. Entrou
+> `.github/workflows/ci.yml` com actions pinados por SHA, Java 21,
+> unitários, Python, `build`, `runGametest`, artefato do jar e relatórios
+> em falha. O `fabric.mod.json` agora exige a Fabric API da matriz por
+> expansão do Gradle, e `ModMetadataTest` impede o curinga de voltar.
+> Registro completo em
+> [`docs/technical/Auditoria-2026-09-12.md`](docs/technical/Auditoria-2026-09-12.md).
 
 ## ✅ 2026-09-12 — duas sessões de jogo, dois defeitos de "uma vez só"
 

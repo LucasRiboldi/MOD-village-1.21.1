@@ -596,6 +596,7 @@ public final class FarmerWork {
     public static void clearAll() {
         JOBS.clear();
 
+        CropPatch.clearAll();
         FieldRest.clearAll();
 
         restoreSearch();
@@ -611,6 +612,7 @@ public final class FarmerWork {
      * errado.
      */
     public static void forgetColony(UUID colonyId) {
+        CropPatch.forget(colonyId);
         FieldRest.forget(colonyId);
     }
 

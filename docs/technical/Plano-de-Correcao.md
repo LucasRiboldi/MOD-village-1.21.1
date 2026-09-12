@@ -370,7 +370,7 @@ bateria verde
   ✅ P0.5  entregue
   → uma sessão de jogo, que entrega o número do LotRefusals
      e confere P0.1-b, P0.1-c, P0.6 e P0.5
-  → P0.7 terraplanagem, SE o número a justificar
+  → P0.7 virou decisão de regra: o número chegou e não justificou terraplanagem automática
   → PARAR E REPORTAR
   → P1.1 → P1.2 → P1.3 → P1.4 → P1.5 → P1.6 → P1.7 → P1.8
   → P1.10 → P1.11 → P1.12 → P1.13
@@ -480,7 +480,7 @@ mutação conferida; a coluna *em jogo* é a que a régua cobra.
 | P0.1 | ✅ entregue em 2026-09-11 — o índice de ruas voltou a valer para vila grande | ✅ **visto na sessão de 02:03**: a colônia planejou o açougue e abriu a obra |
 | **P0.1-b** | ✅ **o caminho de terra não sai de baú.** A obra do P0.1 abriu e travou em `waiting for minecraft:dirt_path`, 30 vezes — o bloco não tem item, nasce de pá na grama. Uma linha no `isShapedFromTheGround`, que já cobria `farmland` e `water` pelo mesmo motivo | ❌ |
 | **P0.1-c** | ✅ **a recusa de lote diz por quê.** `LotRefusals` conta os cinco motivos do `flatGroundAt` e o relatório de sessão os diz junto do `SweepLog`. É o P0.1 ao pé da letra, e é o número que decide a terraplanagem | ⬜ **espera sessão** |
-| **P0.7** | ⬜ **terraplanagem da vila** — pesquisada em [`terraplanagem-da-vila.md`](../research/terraplanagem-da-vila.md), decidida (capacidade do construtor, teto de 4 blocos) e **represada de propósito**: abre com o número do P0.1-c, não com inferência | — |
+| **P0.7** | ⬜ **decisão do autor, não correção automática.** O número do P0.1-c chegou em 2026-09-12 e não era o esperado: 4.578 de 6.583 recusas (70%) foram `NOT_NATURAL_GROUND`, contra 905 `OFF_ROAD_LEVEL`. Terraplanagem não é o gargalo principal; aceitar pedra como terreno natural tocaria a Regra 3 e a Regra 19 | ✅ **número visto em sessão** |
 | **P0.6** | ✅ **a enxurrada da areia calou.** Amortecedor de um ciclo no `IdleLog`, para quem pergunta por tique: motivo que oscila deixa de virar quatro linhas por segundo. O irmão da pedra de superfície foi junto | ⬜ **espera sessão** |
 | ~~P0.6~~ | 🔴 ~~**novo, e é bloqueador de diagnóstico:** a busca de areia oscila entre *"ainda varrendo"* e *"varri tudo"* a cada passagem, e o `IdleLog` registra as duas. **4.389 linhas de 6.117 na sessão de 02:03** — 72% do log. A próxima sessão fica cega~~ | — |
 | **P0.0** | ✅ **feito em 2026-09-11.** A varredura derrubou dois dos quatro P0 abertos e achou a ruptura do terceiro sem sessão. O placar: **1 confirmado e entregue, 1 confirmado com o conserto em aberto, 2 vencidos** | — |

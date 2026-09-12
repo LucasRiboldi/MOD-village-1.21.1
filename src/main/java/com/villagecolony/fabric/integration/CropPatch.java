@@ -11,7 +11,9 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.chunk.WorldChunk;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -34,6 +36,16 @@ public final class CropPatch {
 
     /** Quanto acima e abaixo do centro se procura. */
     private static final int LEVELS = 6;
+
+    /**
+     * O primeiro canteiro vazio já visto numa volta pausada.
+     *
+     * <p>O cursor do {@link RingSweep} guarda só onde retomar. Mas o
+     * canteiro vazio é uma resposta colhida de passagem, e precisa
+     * atravessar a mesma pausa: se a primeira fatia o vê e a segunda
+     * fatia não, a colônia ainda viu o canteiro.
+     */
+    private static final Map<UUID, BlockPos> EMPTY_PLOTS = new HashMap<>();
 
     private CropPatch() {
     }
@@ -114,11 +126,11 @@ public final class CropPatch {
         // por lavoura madura, e guarda o primeiro canteiro que cruzar
         // para o caso de não haver nenhuma. Uma casa, e não duas
         // varreduras — é a razão de este método existir.
-        BlockPos[] plot = {null};
+        BlockPos remembered = rememberedEmptyPlot(world, colonyId, center, radius);
+        BlockPos[] plot = {remembered};
 
         Optional<BlockPos> ripe = RingSweep.around(colonyId, center, radius, at -> {
-            WorldChunk chunk = world.getChunkManager()
-                    .getWorldChunk(at.getX() >> 4, at.getZ() >> 4);
+            WorldChunk chunk = loadedChunk(world, at);
 
             if (chunk == null) {
                 return Optional.empty();
@@ -126,20 +138,86 @@ public final class CropPatch {
 
             for (int dy = LEVELS; dy >= -LEVELS; dy--) {
                 BlockPos column = new BlockPos(at.getX(), center.getY() + dy, at.getZ());
+                BlockState state = chunk.getBlockState(column);
 
-                if (isRipe(world.getBlockState(column))) {
+                if (isRipe(state)) {
                     return Optional.of(column);
                 }
 
-                if (plot[0] == null && isEmptyPlot(world, column)) {
-                    plot[0] = column;
+                if (plot[0] == null && isEmptyPlot(chunk, column)) {
+                    plot[0] = column.toImmutable();
                 }
             }
 
             return Optional.empty();
         });
 
-        return new Field(ripe.orElse(null), plot[0], RingSweep.pausedAt(colonyId).isPresent());
+        boolean incomplete = RingSweep.pausedAt(colonyId).isPresent();
+
+        if (ripe.isPresent() || !incomplete || plot[0] == null) {
+            EMPTY_PLOTS.remove(colonyId);
+        } else {
+            EMPTY_PLOTS.put(colonyId, plot[0]);
+        }
+
+        return new Field(ripe.orElse(null), plot[0], incomplete);
+    }
+
+    /**
+     * O canteiro vazio lembrado ainda pertence a esta busca e ainda está
+     * vazio.
+     */
+    private static BlockPos rememberedEmptyPlot(
+            ServerWorld world, UUID colonyId, BlockPos center, int radius) {
+
+        BlockPos remembered = EMPTY_PLOTS.get(colonyId);
+
+        if (remembered == null) {
+            return null;
+        }
+
+        if (!insideSurvey(remembered, center, radius)) {
+            EMPTY_PLOTS.remove(colonyId);
+
+            return null;
+        }
+
+        WorldChunk chunk = loadedChunk(world, remembered);
+
+        if (chunk == null || !isEmptyPlot(chunk, remembered)) {
+            EMPTY_PLOTS.remove(colonyId);
+
+            return null;
+        }
+
+        return remembered;
+    }
+
+    /** O chunk já carregado desta coluna, ou nada se ele está fora de memória. */
+    private static WorldChunk loadedChunk(ServerWorld world, BlockPos at) {
+        return world.getChunkManager().getWorldChunk(at.getX() >> 4, at.getZ() >> 4);
+    }
+
+    /** Se este bloco ainda cabe na janela vertical e horizontal da volta. */
+    private static boolean insideSurvey(BlockPos plot, BlockPos center, int radius) {
+        return Math.abs(plot.getX() - center.getX()) <= radius
+                && Math.abs(plot.getZ() - center.getZ()) <= radius
+                && Math.abs(plot.getY() - center.getY()) <= LEVELS;
+    }
+
+    /** Terra arada vazia já lida de um chunk carregado. */
+    private static boolean isEmptyPlot(WorldChunk chunk, BlockPos at) {
+        return isFarmland(chunk.getBlockState(at)) && chunk.getBlockState(at.up()).isAir();
+    }
+
+    /** Esquece a memória de uma colônia. Chamado por testes e limpeza. */
+    public static void forget(UUID colonyId) {
+        EMPTY_PLOTS.remove(colonyId);
+    }
+
+    /** Esquece todos os canteiros lembrados. Chamado ao descarregar. */
+    public static void clearAll() {
+        EMPTY_PLOTS.clear();
     }
 
     /**
