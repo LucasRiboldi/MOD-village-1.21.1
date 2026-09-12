@@ -1156,6 +1156,15 @@ public class LumberjackGameTest implements FabricGameTest {
      * travado, este que ele solta quem está trabalhando. Um guarda que
      * nunca fala e um que fala sempre erram de formas diferentes.
      *
+     * <p><b>Ele supõe que esta árvore é um plano só</b>, e isso é
+     * acoplamento — achado do {@code gauntlet-verifier} em 09-12. É verdade
+     * sob o código de hoje, porque não há teto de colheita: os cinquenta
+     * troncos entram num plano e o aldeão corta sem replanejar. Com um teto
+     * de volta, a mesma árvore viraria vários planos, o
+     * {@code TreeScanner} reancoraria no centro a cada um, e este caso cai
+     * por renavegação — não por defeito do guarda. Quem reintroduzir teto de
+     * qualquer forma precisa revisitar isto de propósito.
+     *
      * <p>A árvore é larga em vez de alta porque a arena tem oito blocos de
      * altura: o tronco é percorrido por vizinhança, inclusive na diagonal,
      * então um bloco de toras com copa em cima é uma árvore de cinquenta

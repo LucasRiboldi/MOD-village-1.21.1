@@ -123,6 +123,30 @@ ramo de `finish` que não replantava.
 `ConversionBoundaryTest` 3/3. Cada um dos quatro testes novos foi visto
 falhando contra a versão que acusa.
 
+**O veredito do lenhador chegou depois do commit, e isso é registro e não
+nota de rodapé.** A primeira execução do `gauntlet-verifier` morreu por
+limite de API no instante em que anunciava um achado, sem dizer qual. O
+autor pediu `commit push`, e o commit `b7fe154` foi para `main` sem veredito
+— declarado na própria mensagem dele. A segunda execução devolveu **PASS /
+DELIVER**, rodando `scripts/gauntlet.py --base 5d766ee --deep` do zero em
+vez de confiar no `iteration-1.json` de duas horas antes, e nenhum dos cinco
+pontos de suspeita revelou defeito de aplicação.
+
+**O achado perdido era esse mesmo:** commit em `main` antes do veredito. Ele
+o classificou como `high`, e tem razão quanto à regra do projeto — que a
+ordem direta do autor sobrepôs naquele momento. Fica a lição de forma: perto
+do limite de sessão e sem veredito, o lugar é ramo ou `WIP`, não `main` com
+mensagem de `fix:` definitiva.
+
+**E um achado que é sobre o relato, não sobre o código.** Ao descrever a
+mutação do teto eu disse que **um** teste caía. Caíam **dois** — a linha
+`2 required tests failed` estava na minha própria saída e o grep cortou o
+nome do segundo. A causa é um acoplamento real do teste novo do guarda: ele
+supõe que a árvore de cinquenta toras é **um plano só**, o que é verdade sem
+teto e deixa de ser com ele, porque o `TreeScanner` reancora a cada plano
+novo. Está escrito no javadoc do caso agora. Mutação relatada pela metade é
+evidência pior do que parece, e foi o verificador que a completou.
+
 ---
 
 **Antes disso — 2026-09-10, ao alinhar o local com o GitHub.** **O E44
