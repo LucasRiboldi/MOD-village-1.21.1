@@ -202,6 +202,26 @@ contra o mundo, é a hora de olhar.
 - **o que você viu com os olhos** e o log não disse. Foi assim que o E34
   nasceu: o autor cavou até a galeria e viu que não havia nada lá.
 
+### Playtest de 2026-09-12, jar 0.3.0
+
+- **Casa parada no meio:** confirmado no log. A obra ficou com **1 bloco
+  faltando**, em `WAITING_RESOURCES`, esperando `minecraft:composter`. A
+  carpintaria fabricava composteiras, mas usava a porta de consumo
+  (`ColonySupply.take`) e retirava do baú a peça que acabou de produzir.
+  Corrigido em 2026-09-13: `CraftingWork` passa a chamar
+  `ColonySupply.stock`, que fabrica e deixa a peça no estoque para o
+  construtor assentar.
+- **Mineiros não vistos trabalhando:** o log mostra produção real no começo
+  da sessão (`38 hauled`), seguida de muitos ciclos em `looking for stone`.
+  Próximo diagnóstico: separar mina realmente sem alvo de limbo de ramal
+  (`no miner branch work: every open branch is taken or finished`) depois de
+  recusa/cedência da frente.
+- **Lenhadores e fazendeiros vistos trabalhando:** confirmado pelo relato e
+  pelo log. Ainda há recusas de alvo fora de alcance, mas havia produção.
+- **Outras profissões pouco visíveis:** carpinteiros trabalharam no log; para
+  fundidor, pedreiro e pastor, próxima sessão deve conferir se havia tarefa
+  aberta, trabalhador com profissão e material de entrada.
+
 ---
 
 ## O que já está pronto e esperando esta sessão

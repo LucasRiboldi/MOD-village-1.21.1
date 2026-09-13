@@ -77,6 +77,20 @@ public final class ColonySupply {
     }
 
     /**
+     * Deixa uma peça deste item disponível em algum baú da colônia.
+     *
+     * <p>É a irmã produtora de {@link #take}: quem chama {@code take}
+     * quer consumir a peça agora. Quem chama este método quer que outra
+     * profissão a encontre depois, como a carpintaria que faz a
+     * composteira da obra para o construtor assentar.
+     */
+    public static boolean stock(ServerWorld world, UUID colonyId, ColonyPos near, Item item) {
+        List<ColonyPos> chests = ColonyChests.nearestFirst(world, colonyId, near);
+
+        return ColonyChests.countIn(world, chests, item) > 0 || craft(world, chests, item);
+    }
+
+    /**
      * A colônia tem, ou consegue fazer, este item? Sem tirar nada.
      *
      * <p>Precisa concordar com {@link #take}: uma que dissesse "tem" e

@@ -544,7 +544,7 @@ public final class CraftingWork {
             }
 
             if (strip(world, colony.get(), wanted, workerId)
-                    || ColonySupply.take(
+                    || ColonySupply.stock(
                             world, colony.get().id(), colony.get().center(), item.get())) {
 
                 return true;

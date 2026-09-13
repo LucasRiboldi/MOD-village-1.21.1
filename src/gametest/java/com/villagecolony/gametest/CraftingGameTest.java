@@ -542,6 +542,94 @@ public class CraftingGameTest implements FabricGameTest {
         });
     }
 
+    /**
+     * <b>A peça que o fabricante faz para a obra fica no baú</b> —
+     * 2026-09-12, visto em jogo.
+     *
+     * <p>A casa parou faltando só {@code minecraft:composter}. O log
+     * dizia primeiro que a colônia fabricou composteiras, e depois que o
+     * construtor não achava nenhuma no baú. O defeito era a carpintaria
+     * usar a porta de consumo da obra: fabricava a peça, retirava ela do
+     * baú no mesmo ato, e o construtor acordava para encontrar zero.
+     *
+     * <p>Com sete lajes no baú, uma obra que pede composteira deve deixar
+     * exatamente a peça fabricada visível no estoque da colônia.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_stock",
+            tickLimit = 300)
+    public void theWorkPieceMadeByTheCarpenterStaysInTheChest(TestContext context) {
+        Fixture fixture = setUpComposterWork(context);
+
+        context.runAtTick(120, () -> {
+            try {
+                int composters = ColonyChests.countIn(
+                        context.getWorld(), List.of(fixture.chest), Items.COMPOSTER);
+
+                context.assertTrue(
+                        composters > 0,
+                        "a carpintaria fabricou a composteira da obra, mas ela não"
+                                + " ficou em nenhum baú da colônia");
+            } finally {
+                fixture.owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /** Colônia com lajes e uma obra que pede composteira. */
+    private static Fixture setUpComposterWork(TestContext context) {
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+
+        ServerWorld world = context.getWorld();
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        ChestDepositor.deposit(world, chest, Items.OAK_SLAB, 7);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.CARPENTER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        Blueprint plan = Blueprint.of(
+                ResourceId.vanilla("village/plains/houses/test_composter"),
+                List.of(new BlueprintBlock(
+                        new ColonyPos(0, 0, 0),
+                        MinecraftTypeAdapter.toResourceId(Blocks.COMPOSTER))));
+
+        ConstructionProject project = ConstructionProject.plan(colony.id(), plan, chest);
+
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.CRAFT_WOOD_MATERIAL,
+                TaskPriority.PRODUCTION,
+                ResourceType.OAK_PLANKS,
+                16);
+
+        task.reserveFor(villager.getUuid());
+
+        CraftingWork.run(world, colony);
+
+        return new Fixture(
+                colony,
+                task,
+                chest,
+                ColonyFixture.create().owning(colony).owning(villager.getUuid()));
+    }
+
     /** Colônia com tora de cerejeira e uma obra que pede viga de carvalho. */
     private static Fixture setUpStripping(TestContext context) {
         context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
