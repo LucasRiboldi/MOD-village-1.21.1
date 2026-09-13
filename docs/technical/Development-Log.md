@@ -7475,5 +7475,6 @@ round-trip.
 `./gradlew.bat build`: 808 testes unitários passaram. `runGametest`: 314/314
 passaram. O playtest no mundo do autor continua necessário para confirmar que
 o mineiro alcança e trabalha na rota alternativa; nenhuma validação visual é
-inferida dos testes automatizados. O JAR será atualizado em `downloads/` e
-no launcher após commit e push.
+inferida dos testes automatizados. Após o commit e push do código, o JAR foi
+copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256
+`D8548BAD17A87FED10E0EFBBA92ADC129ED36047E1FC451AAE27248AE3B930F3`.

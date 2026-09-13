@@ -25,7 +25,9 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 
 ## Sessão de 2026-09-13
 
-**Jar atualizado em 2026-09-13:** `CD29B5F8BC61871BCE74A910C57DB28E` — em `downloads/` e `%APPDATA%/.minecraft/mods/`.
+**Jar atualizado após E45 em 2026-09-13:** SHA-256
+`D8548BAD17A87FED10E0EFBBA92ADC129ED36047E1FC451AAE27248AE3B930F3` — em
+`downloads/` e `%APPDATA%/.minecraft/mods/`.
 
 **O que o autor viu no jogo:**
 
