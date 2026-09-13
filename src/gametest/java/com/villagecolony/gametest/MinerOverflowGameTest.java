@@ -23,11 +23,13 @@ import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.ChestBlockEntity;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.UUID;
@@ -103,11 +105,10 @@ public class MinerOverflowGameTest implements FabricGameTest {
     }
 
     /**
-     * O baú do mineiro está cheio, e a pedra vai para outro da colônia.
+     * O baú do mineiro está cheio; a pedra não deve contaminar outro baú.
      *
-     * <p>A afirmação central é sobre o <b>baú de transbordo</b>: antes de
-     * 2026-09-11 ele terminava vazio, e a pedra não estava em lugar
-     * nenhum do mundo.
+     * <p>A afirmação central é que a produção não vai para o baú do
+     * fundidor. Sem espaço pessoal, o drop real permanece no mundo.
      *
      * <p>Duas asserções de montagem seguram o cenário, porque sem elas
      * este teste passaria por motivo errado. Que o baú do mineiro
@@ -118,7 +119,7 @@ public class MinerOverflowGameTest implements FabricGameTest {
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_overflow",
             tickLimit = 400)
-    public void theHaulThatDoesNotFitGoesToAnotherColonyChest(TestContext context) {
+    public void theHaulThatDoesNotFitDoesNotEnterAnotherProfessionChest(TestContext context) {
         ServerWorld world = context.getWorld();
 
         ground(context);
@@ -207,11 +208,17 @@ public class MinerOverflowGameTest implements FabricGameTest {
                         inOwn == 0,
                         "coube pedra no baú do mineiro — o cenário não força o transbordo");
 
-                // A prova.
+                // O minério não é depósito de transbordo de outra profissão.
                 context.assertTrue(
-                        inSpare > 0,
-                        "a pedra que não coube no baú do mineiro se perdeu, "
-                                + "com baú vazio registrado na colônia");
+                        inSpare == 0,
+                        "a produção do mineiro contaminou o baú do fundidor com " + inSpare);
+
+                boolean itemOnGround = !world.getEntitiesByClass(
+                        ItemEntity.class,
+                        new Box(context.getAbsolutePos(ROCK)).expand(2),
+                        entity -> true).isEmpty();
+
+                context.assertTrue(itemOnGround, "a pedra saiu do mundo e não foi guardada nem dropada");
             } finally {
                 owned.cleanUp();
 

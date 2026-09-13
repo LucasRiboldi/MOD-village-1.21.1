@@ -213,13 +213,22 @@ public final class SmelterWork {
         List<ColonyPos> searched =
                 ColonyChests.nearestFirst(world, job.task.colonyId(), from.get());
 
+        Optional<ColonyPos> output = VillageColonyMod.STORAGES.of(workerId)
+                .map(WorkerStorage::chestPosition);
+
+        if (output.isEmpty()) {
+            finish(job, workerId, "no personal chest for smelted output");
+
+            return false;
+        }
+
         for (ColonyPos chest : searched) {
             for (Item raw : raws) {
                 if (ChestWithdrawer.withdraw(world, chest, raw, 1) == 0) {
                     continue;
                 }
 
-                return convert(world, chest, new ItemStack(raw, 1), job, workerId);
+                return convert(world, chest, output.get(), new ItemStack(raw, 1), job, workerId);
             }
         }
 
@@ -261,16 +270,21 @@ public final class SmelterWork {
         return names.toString();
     }
 
-    /** Põe a peça fundida de volta no baú de onde a crua saiu. */
+    /** Lê a matéria-prima em qualquer baú e guarda o produto no baú do fundidor. */
     private static boolean convert(
-            ServerWorld world, ColonyPos chest, ItemStack raw, Job job, UUID workerId) {
+            ServerWorld world,
+            ColonyPos source,
+            ColonyPos output,
+            ItemStack raw,
+            Job job,
+            UUID workerId) {
 
         Optional<ItemStack> result = CraftingLookup.smelted(world, raw);
 
         if (result.isEmpty()) {
             // O forno não faz nada com isto. Devolve intacto: tirar do
             // baú e não devolver seria a colônia destruindo material.
-            ChestDepositor.deposit(world, chest, raw.getItem(), raw.getCount());
+            ChestDepositor.deposit(world, source, raw.getItem(), raw.getCount());
 
             finish(job, workerId, "the furnace makes nothing out of " + raw.getItem());
 
@@ -279,12 +293,20 @@ public final class SmelterWork {
 
         ItemStack made = result.get();
 
-        int leftOver = ChestDepositor.deposit(world, chest, made.getItem(), made.getCount());
+        if (ChestDepositor.freeSpaceFor(world, output, made.getItem()) < made.getCount()) {
+            ChestDepositor.deposit(world, source, raw.getItem(), raw.getCount());
+
+            finish(job, workerId, "no room in the personal chest for " + made.getItem());
+
+            return false;
+        }
+
+        int leftOver = ChestDepositor.deposit(world, output, made.getItem(), made.getCount());
 
         if (leftOver == made.getCount()) {
             // Não coube nada. Devolve a matéria-prima e para: fundir sem
             // onde guardar gasta o ingrediente à toa.
-            ChestDepositor.deposit(world, chest, raw.getItem(), raw.getCount());
+            ChestDepositor.deposit(world, source, raw.getItem(), raw.getCount());
 
             finish(job, workerId, "no room in the chest for " + made.getItem());
 

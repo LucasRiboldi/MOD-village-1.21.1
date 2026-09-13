@@ -619,22 +619,34 @@ public final class CraftingWork {
 
         List<ColonyPos> chests = ColonyChests.nearestFirst(world, colony.id(), colony.center());
 
-        if (ColonyChests.withdraw(world, chests, log.get(), 1) < 1) {
+        Optional<ColonyPos> output = VillageColonyMod.STORAGES.of(workerId)
+                .map(WorkerStorage::chestPosition);
+
+        if (output.isEmpty()) {
             return false;
         }
 
-        Optional<ColonyPos> room = ColonyChests.firstWithRoomFor(world, chests, naked, 1);
+        ColonyPos source = null;
 
-        if (room.isEmpty()) {
-            // Não cabe em baú nenhum. Devolve o tronco: descascar sem
-            // onde guardar destruiria material do jogador.
-            ColonyChests.firstWithRoomFor(world, chests, log.get(), 1)
-                    .ifPresent(back -> ChestDepositor.deposit(world, back, log.get(), 1));
+        for (ColonyPos chest : chests) {
+            if (ChestWithdrawer.withdraw(world, chest, log.get(), 1) > 0) {
+                source = chest;
+
+                break;
+            }
+        }
+
+        if (source == null) {
+            return false;
+        }
+
+        if (ChestDepositor.freeSpaceFor(world, output.get(), naked) < 1) {
+            ChestDepositor.deposit(world, source, log.get(), 1);
 
             return false;
         }
 
-        ChestDepositor.deposit(world, room.get(), naked, 1);
+        ChestDepositor.deposit(world, output.get(), naked, 1);
 
         VillageColonyMod.LOGGER.info(
                 "Carpenter {} stripped a {} into {}", workerId, bark.path(), path);
@@ -688,6 +700,15 @@ public final class CraftingWork {
             return false;
         }
 
+        Optional<ColonyPos> output = VillageColonyMod.STORAGES.of(workerId)
+                .map(WorkerStorage::chestPosition);
+
+        if (output.isEmpty()) {
+            finish(job, workerId, "no personal chest for crafted output");
+
+            return false;
+        }
+
         ColonyPos chest = null;
         List<ItemStack> logs = List.of();
 
@@ -732,27 +753,15 @@ public final class CraftingWork {
 
         ItemStack result = planks.get();
 
-        // O do tronco na frente, os da colônia atrás: quando ele cabe no
-        // baú de onde a tora saiu, nada muda; quando não cabe, a peça
-        // deixa de ser destruída.
-        List<ColonyPos> chests = ColonyChests.ownFirst(world, job.task.colonyId(), chest);
+        if (ChestDepositor.freeSpaceFor(world, output.get(), result.getItem()) < result.getCount()) {
+            ChestDepositor.deposit(world, chest, log.getItem(), log.getCount());
 
-        Optional<ColonyPos> room = ColonyChests.firstWithRoomFor(
-                world, chests, result.getItem(), result.getCount());
-
-        if (room.isEmpty()) {
-            // Não cabe em baú nenhum da colônia. Devolve a tora inteira —
-            // moer sem onde guardar destrói material, e é o E3 de novo.
-            ColonyChests.firstWithRoomFor(world, chests, log.getItem(), log.getCount())
-                    .ifPresent(back ->
-                            ChestDepositor.deposit(world, back, log.getItem(), log.getCount()));
-
-            finish(job, workerId, "no room in the colony chests for " + result.getItem());
+            finish(job, workerId, "no room in the personal chest for " + result.getItem());
 
             return false;
         }
 
-        ChestDepositor.deposit(world, room.get(), result.getItem(), result.getCount());
+        ChestDepositor.deposit(world, output.get(), result.getItem(), result.getCount());
 
         job.crafted++;
 

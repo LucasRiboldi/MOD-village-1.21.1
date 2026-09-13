@@ -1950,7 +1950,7 @@ public class LumberjackGameTest implements FabricGameTest {
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_silted_chest",
             tickLimit = 400)
-    public void theSiltedChestSpillsIntoTheColonyInsteadOfDestroying(TestContext context) {
+    public void theSiltedChestDoesNotFillAnotherProfessionChest(TestContext context) {
         BlockPos base = new BlockPos(4, 2, 4);
         BlockPos own = new BlockPos(2, 2, 2);
         BlockPos spare = new BlockPos(2, 2, 6);
@@ -2024,17 +2024,12 @@ public class LumberjackGameTest implements FabricGameTest {
 
             try {
                 context.assertTrue(
-                        standing < 4,
-                        "o lenhador não derrubou nada: de pé ainda são " + standing);
+                        standing == 4,
+                        "o lenhador derrubou a árvore apesar do baú pessoal cheio: " + standing);
 
                 context.assertTrue(
-                        spilled > 0,
-                        "a madeira não transbordou para o baú vizinho — foi destruída");
-
-                context.assertTrue(
-                        spilled == 4 - standing,
-                        "tronco derrubado que não chegou a baú nenhum: caíram "
-                                + (4 - standing) + ", guardados " + spilled);
+                        spilled == 0,
+                        "a produção do lenhador contaminou o baú de outra profissão: " + spilled);
             } finally {
                 owned.cleanUp();
             }

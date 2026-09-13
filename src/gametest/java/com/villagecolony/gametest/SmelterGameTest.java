@@ -363,9 +363,21 @@ public class SmelterGameTest implements FabricGameTest {
                                 .amountOf(ResourceType.RAW_IRON) < 8,
                         "o fundidor não tocou no ferro da boca da mina");
 
+                int inSmelterChest = ChestInventoryReader
+                        .read(world, context.getAbsolutePos(CHEST))
+                        .amountOf(ResourceType.IRON_INGOT);
+
+                int inMineMouth = ChestInventoryReader
+                        .read(world, context.getAbsolutePos(mouthChest))
+                        .amountOf(ResourceType.IRON_INGOT);
+
                 context.assertTrue(
-                        totalIronIngots(world, context, mouthChest) > 0,
-                        "o cru saiu e não virou lingote nenhum — matéria perdida");
+                        inSmelterChest > 0,
+                        "o lingote produzido não foi para o baú pessoal do fundidor");
+
+                context.assertTrue(
+                        inMineMouth == 0,
+                        "o lingote do fundidor contaminou o baú da boca da mina: " + inMineMouth);
             } finally {
                 owned.cleanUp();
             }

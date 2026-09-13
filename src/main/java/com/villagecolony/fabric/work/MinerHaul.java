@@ -5,16 +5,16 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestDepositor;
-import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.MineMouth;
 import com.villagecolony.fabric.integration.OreVein;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.BlockPos;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Onde vai o que o mineiro cava — a Regra 30.
@@ -72,26 +72,14 @@ final class MinerHaul {
     }
 
     /**
-     * Guarda o que caiu no baú do mineiro, e na colônia o que não coube.
+     * Guarda o que caiu no baú do mineiro ou, se for minério, no baú da
+     * boca da mina. O excedente fica como item no mundo, sem contaminar o
+     * baú de outro trabalhador.
      *
-     * <p><b>O transbordo entrou em 2026-09-11, e fecha a outra metade do
-     * E3.</b> Até aqui o que não coubesse no baú do mineiro era
-     * destruído — o bloco já tinha saído do mundo, e o WARN só contava a
-     * perda. O lenhador deixou de destruir em 2026-09-04, quando ganhou
-     * {@link ColonyChests#ownFirst}; o mineiro ficou para trás, e o
-     * {@code TODO.md} registrava a metade aberta desde então.
+     * <p>O baú da boca mantém prioridade pela Regra 30; toda outra saída
+     * pertence ao trabalhador. A retirada de insumos continua compartilhada
+     * e é independente deste destino de produção.
      *
-     * <p>A ordem é a mesma do lenhador, e é a que faz o relatório de um
-     * mineiro falar do mineiro: o baú dele primeiro, o resto da colônia
-     * como transbordo. A boca da mina continua antes de tudo, porque é a
-     * Regra 30 e ela vale enquanto houver minério.
-     *
-     * <p><b>Ainda se perde com a colônia inteira cheia</b>, e aí o WARN é
-     * a notícia certa: a essa altura o jogador precisa esvaziar alguma
-     * coisa, e precisa poder descobrir isso. O que deixou de acontecer é
-     * perder tendo espaço a vinte blocos.
-     *
-     * @param colonyId de quem são os baús do transbordo
      * @param wanted o item que a tarefa pediu, para a conta sair separada
      *     — nulo quando o pedido não vira item deste jogo, e aí o
      *     {@link Haul#wanted()} sai zero
@@ -99,17 +87,13 @@ final class MinerHaul {
      */
     static Haul deposit(
             ServerWorld world,
-            UUID colonyId,
             WorkerStorage storage,
             List<ItemStack> drops,
             ColonyPos treasure,
+            BlockPos dropPosition,
             Item wanted) {
 
         ColonyPos chest = storage.chestPosition();
-
-        // Uma vez, e não por bloco: a lista sai de percorrer trabalhadores
-        // e registros, e isto roda a cada picareta — Performance-Rules §6.
-        List<ColonyPos> colonyChests = ColonyChests.ownFirst(world, colonyId, chest);
 
         int stored = 0;
         int asked = 0;
@@ -140,21 +124,25 @@ final class MinerHaul {
             // primeiro teste dele: todo pedregulho guardado virava uma
             // linha de "filled up" com o baú vazio ao lado.
             //
-            // E a lista inteira, não só o baú dele: é o E3 do lenhador,
-            // que atravessa os baús da colônia antes de desistir.
-            int leftOver = ColonyChests.deposit(
-                    world, colonyChests, drop.getItem(), drop.getCount());
+            int leftOver = ChestDepositor.deposit(
+                    world, chest, drop.getItem(), drop.getCount());
 
             stored += drop.getCount() - leftOver;
 
             if (leftOver > 0) {
+                world.spawnEntity(new ItemEntity(
+                        world,
+                        dropPosition.getX() + 0.5,
+                        dropPosition.getY() + 0.5,
+                        dropPosition.getZ() + 0.5,
+                        new ItemStack(drop.getItem(), leftOver)));
+
                 VillageColonyMod.LOGGER.warn(
-                        "Colony chests of miner at {} are full — {} of {} lost"
-                                + " ({} chests tried)",
+                        "Miner chest at {} is full — dropped {} of {} at {}",
                         chest,
                         leftOver,
-                        drop.getCount(),
-                        colonyChests.size());
+                        drop.getItem(),
+                        dropPosition);
             }
 
             if (isAsked) {

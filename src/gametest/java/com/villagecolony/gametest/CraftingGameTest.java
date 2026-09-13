@@ -244,8 +244,8 @@ public class CraftingGameTest implements FabricGameTest {
      * A meta da Regra 5 se mede na colônia inteira; o executor media um baú
      * só, e os dois discordavam sobre onde estava o estoque.
      *
-     * <p>A tábua volta para o baú de onde o tronco saiu, que é o que
-     * preserva a regra do mesmo baú no mesmo tick.
+     * <p>O tronco pode ser consumido de qualquer baú da colônia; a tábua
+     * pertence ao fabricante e volta para o baú dele.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_colony_wide",
             tickLimit = 300)
@@ -269,7 +269,8 @@ public class CraftingGameTest implements FabricGameTest {
         fixture.owned.owning(lumberjack);
 
         context.runAtTick(90, () -> {
-            int planks = planksIn(context, lumberjackChest);
+            int planks = planksIn(context, fixture.chest);
+            int foreignPlanks = planksIn(context, lumberjackChest);
             int logs = logsIn(context, lumberjackChest);
 
             try {
@@ -280,6 +281,11 @@ public class CraftingGameTest implements FabricGameTest {
                 context.assertTrue(
                         logs < 4,
                         "nenhum tronco foi consumido do baú do lenhador: ainda são " + logs);
+
+                context.assertTrue(
+                        foreignPlanks == 0,
+                        "as tábuas do carpinteiro foram depositadas no baú do lenhador: "
+                                + foreignPlanks);
             } finally {
                 fixture.owned.cleanUp();
             }

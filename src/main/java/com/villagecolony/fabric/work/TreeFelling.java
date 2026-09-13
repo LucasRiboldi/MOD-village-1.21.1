@@ -3,11 +3,11 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
-import com.villagecolony.core.type.ColonyPos;
-import com.villagecolony.fabric.integration.ColonyChests;
+import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.TreeHarvester;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
@@ -96,7 +96,7 @@ public final class TreeFelling {
 
         job.collected += countLogs(drops, job.plan);
 
-        deposit(world, job, storage, drops);
+        deposit(world, job, storage, pos, drops);
 
         job.index++;
         job.progress = 0;
@@ -163,7 +163,7 @@ public final class TreeFelling {
     }
 
     /**
-     * Põe nos baús da colônia tudo o que o bloco deu.
+     * Põe no baú do lenhador tudo o que o bloco deu.
      *
      * <p>Tronco, muda, maçã, graveto: o que a tabela de loot der. A
      * colônia só conta os troncos, e os outros ficam no baú sem contagem
@@ -178,46 +178,36 @@ public final class TreeFelling {
      * morre em definitivo: naquela sessão foram cinquenta e nove ciclos
      * sem derrubar nada e vinte e quatro troncos destruídos aqui dentro.
      *
-     * <p>Transbordar para a colônia tira o lenhador do buraco sem mover o
-     * assoreamento de lugar — o tronco tem consumidor em qualquer baú.
-     * <b>O assoreamento em si continua de pé:</b> nada esvazia vara e
-     * maçã de baú nenhum, e baú que só enche acaba cheio. Dar consumidor
-     * ou descarte a esses itens é decisão de projeto, e está em aberto.
+     * <p>A saída fica no baú pessoal, conforme ADR-001 §7. Vara e maçã
+     * ainda podem assorear esse baú; dar consumidor ou descarte a esses
+     * itens continua em aberto (E38). Se não houver espaço, o drop fica
+     * no mundo em vez de ser transferido para outro ofício.
      */
     private static void deposit(
             ServerWorld world, LumberjackWork.Job job, WorkerStorage storage,
-            List<ItemStack> drops) {
-
-        // O baú do próprio primeiro, os da colônia depois. A retirada já
-        // percorre a colônia inteira desde 2026-08-14; o depósito ficou
-        // para trás, e a sessão de 2026-09-04 cobrou o outro lado — vinte
-        // e quatro troncos destruídos porque o baú do lenhador tinha
-        // assoreado de vara e maçã, que nada retira de baú nenhum.
-        //
-        // Transbordar não move o assoreamento de lugar: o tronco tem
-        // consumidor em qualquer baú, porque o fabricante retira de
-        // todos.
-        List<ColonyPos> chests =
-                ColonyChests.ownFirst(world, job.task.colonyId(), storage.chestPosition());
+            BlockPos position, List<ItemStack> drops) {
 
         for (ItemStack stack : drops) {
-            int leftOver = ColonyChests.deposit(
-                    world, chests, stack.getItem(), stack.getCount());
+            int leftOver = ChestDepositor.deposit(
+                    world, storage.chestPosition(), stack.getItem(), stack.getCount());
 
             if (leftOver == 0) {
                 continue;
             }
 
-            // Agora só se chega aqui com a colônia inteira cheia, e aí é
-            // notícia de verdade: o jogador precisa esvaziar alguma
-            // coisa, e o item já saiu do mundo.
+            world.spawnEntity(new ItemEntity(
+                    world,
+                    position.getX() + 0.5,
+                    position.getY() + 0.5,
+                    position.getZ() + 0.5,
+                    new ItemStack(stack.getItem(), leftOver)));
+
             VillageColonyMod.LOGGER.warn(
-                    "Colony of worker {} had no room mid-harvest — {} of {} were lost"
-                            + " across {} chests",
+                    "Worker {} chest had no room mid-harvest — dropped {} of {} at {}",
                     storage.workerId(),
                     leftOver,
                     stack.getItem(),
-                    chests.size());
+                    position);
         }
     }
 
