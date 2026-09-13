@@ -125,19 +125,20 @@ public final class MinerWork {
     /**
      * Os trabalhos abertos, <b>na ordem em que foram despachados</b>.
      *
-     * <p>Era {@code HashMap} até 2026-09-04, e a ordem de hash decidia
-     * quem recebia o orçamento de buscas do tique — que é um só para a
-     * colônia. Quem calhasse de vir primeiro buscava todo tique e os
-     * outros nunca; qual deles era isso mudava a cada sessão, porque
-     * depende dos UUIDs sorteados.
+     * <p>Era {@code HashMap} até 2026-09-04. A ordem estável tornou a
+     * contenção reproduzível, mas não justa: o primeiro trabalho sem alvo
+     * podia consumir a única busca global por tique para sempre, mesmo
+     * sem encontrar pedra. O cursor {@link #lastSearchWorker} agora gira
+     * somente entre quem precisa buscar, sem mudar o limite global nem a
+     * ordem dos mineiros que já têm alvo.
      *
-     * <p>É o mesmo princípio de {@code ColonyChests.nearestFirst}:
-     * empate não se deixa ao acaso, porque duas sessões com a mesma vila
-     * precisam se comportar igual — senão o relatório de uma não explica
-     * a outra, e um impasse como o daquele dia não se reproduz para ser
-     * consertado.
+     * <p>A ordem continua estável para reproduzir sessões; a concessão da
+     * busca, porém, avança em rodízio para nenhum UUID ficar favorecido.
      */
     static final Map<UUID, Job> JOBS = new LinkedHashMap<>();
+
+    /** Último mineiro que realmente recebeu o orçamento de busca. */
+    private static UUID lastSearchWorker;
 
     static final String SUBJECT = "miner";
 
@@ -272,26 +273,57 @@ public final class MinerWork {
             return;
         }
 
-        int searches = SEARCHES_PER_TICK;
+        List<UUID> searchCandidates = new ArrayList<>();
 
         for (Iterator<Map.Entry<UUID, Job>> entries = JOBS.entrySet().iterator();
                 entries.hasNext(); ) {
-
             Map.Entry<UUID, Job> entry = entries.next();
+            UUID workerId = entry.getKey();
+            Job job = entry.getValue();
 
-            if (!isOngoing(entry.getValue().task)) {
+            if (!isOngoing(job.task)) {
                 entries.remove();
 
                 // O destino morre com a tarefa — ver WorkTargets.clear.
-                WorkTargets.clear(entry.getKey());
+                WorkTargets.clear(workerId);
 
                 continue;
             }
 
-            if (step(world, entry.getKey(), entry.getValue(), searches > 0)) {
-                searches--;
+            if (job.target == null) {
+                searchCandidates.add(workerId);
+            } else {
+                step(world, workerId, job, false);
             }
         }
+
+        if (searchCandidates.isEmpty()) {
+            return;
+        }
+
+        int start = searchStartIndex(searchCandidates, lastSearchWorker);
+
+        for (int offset = 0; offset < searchCandidates.size(); offset++) {
+            UUID workerId = searchCandidates.get((start + offset) % searchCandidates.size());
+            Job job = JOBS.get(workerId);
+
+            if (job != null && step(world, workerId, job, SEARCHES_PER_TICK > 0)) {
+                lastSearchWorker = workerId;
+
+                return;
+            }
+        }
+    }
+
+    /** Índice do próximo candidato depois do mineiro que consumiu a busca. */
+    static int searchStartIndex(List<UUID> candidates, UUID previousWorker) {
+        if (candidates.isEmpty() || previousWorker == null) {
+            return 0;
+        }
+
+        int previousIndex = candidates.indexOf(previousWorker);
+
+        return previousIndex < 0 ? 0 : (previousIndex + 1) % candidates.size();
     }
 
     /**
@@ -924,6 +956,7 @@ public final class MinerWork {
     /** Esvazia o registro. Chamado ao parar o servidor. */
     public static void clearAll() {
         JOBS.clear();
+        lastSearchWorker = null;
 
         // E as pedras de castigo — E44, 2026-09-10. Pelo mesmo motivo
         // que o LumberjackWork.clearAll leva o TreeMarks junto: o mapa é

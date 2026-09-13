@@ -153,6 +153,7 @@ Um por vez, teste antes de seguir.
 
 | | o quê |
 |---|---|
+| **Mina de vila nova sem portal visível** | Confirmado no escalonador: uma única busca global por tique ficava presa no primeiro trabalho sem alvo, impedindo os mineiros seguintes de iniciar a busca. O rodízio foi corrigido sem aumentar a cota; `build` e 314 GameTests verdes. **Aguardar validação em jogo**: portal aparece e o mineiro inicia a escavação. |
 | **Terra comum em blueprint** | Corrigido localmente: agora exige estoque. 313 GameTests e build verdes; **aguarda validação em jogo**. |
 | **P0.7 — pedra como solo de lote** | 70% das recusas. Toca a Regra 3 e a Regra 19. **Recomendação registrada: aceitar pedra** |
 | **A casa ainda sobe com a barreira de teste** | Última medição: 47 de 169 peças em 09-04. É o item que fecha a Fase 2 de verdade |
@@ -253,6 +254,7 @@ Em ordem do que mais precisa ser visto.
 
 | | o quê | a linha que prova |
 |---|---|---|
+| **1** | **Portal da mina em vila recém-descoberta** | log `opens a mine at ...`; confirmar entrada visível e mineiro iniciando trabalho |
 | **1** | **A mina velha destravando** | `Mine ... finished every branch and went one level deeper` |
 | **1** | **A varredura acabando num ciclo** | `no building work: still sweeping` aparecendo **uma vez** e não a sessão inteira |
 | **2** | **P0.1-b, P0.1-c, P0.3, P0.5, P0.6** | entregues em 09-11, **nunca vistos** |

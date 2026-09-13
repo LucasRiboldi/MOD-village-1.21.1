@@ -126,7 +126,7 @@ verificação em jogo**.
 
 ## Bateria
 
-Última medição: **808 unitários**, **314 GameTests** e **74 testes Python**;
+Última medição: **809 unitários**, **314 GameTests** e **74 testes Python**;
 zero falhas nos dois primeiros nesta sessão. Python não foi reexecutado.
 
 ---
@@ -143,6 +143,18 @@ zero falhas nos dois primeiros nesta sessão. Python não foi reexecutado.
 
 MVP previamente verificado em jogo; o playtest de 09-13 contradiz o estado da mina: o minerador repete uma frente bloqueada no limite. O falso material `structure_void` da casa média foi corrigido e ainda precisa de verificação visual. O log mostra uma obra antiga retomada, mas não prova que era a casa do relato. Lenhadores e fazendeiros foram vistos funcionando pelo autor.
 
-**O gargalo não é código.** É verificação em jogo e decisões do autor. Cada item entregue acumula dívida de "não visto em jogo", e a fila cresce mais rápido do que drena.
+**O gargalo recorrente é verificação em jogo e decisões do autor**, embora
+o playtest ainda revele defeitos de código, como a fome de buscas da mina
+corrigida nesta sessão. Cada item entregue acumula dívida de "não visto em
+jogo", e a fila cresce mais rápido do que drena.
 
-**Próximo passo natural:** revisão do diagnóstico E45 e da decisão sobre geometria/save; depois, sessão de jogo para validar a casa, a mineração e as correções pendentes de 09-13. P0.7 e E43 seguem como decisões do autor; E44 aguarda validação em jogo.
+**Próximo passo natural:** sessão de jogo para validar o portal da mina em
+vila nova, a rota E45, a casa e as correções pendentes de 09-13. P0.7 e E43
+seguem como decisões do autor; E44 aguarda validação em jogo.
+
+**Nova vila sem portal da mina (09-13):** o log mostra mineiros das vilas
+novas repetindo `looking for stone, 0 of 64`, sem linha de abertura. A causa
+no código era a cota global de uma busca por tique presa ao primeiro
+trabalho sem alvo. O rodízio foi corrigido e passou em `build` (809
+unitários) e 314 GameTests; portal visível e início da escavação **aguardam
+validação em jogo**.

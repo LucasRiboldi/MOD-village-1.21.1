@@ -19,6 +19,20 @@ Se encontrar uma assinatura nova, adicione aqui ao encerrar a sessão.
 
 ## Ciclo e tempo
 
+### Vila nova sem portal/mina; mineiro fica em `looking for stone, 0 of 64`
+
+**Causa confirmada no escalonador:** a cota de uma busca é global. Um
+trabalho sem alvo que vem primeiro no mapa podia gastar a busca todo tique,
+mesmo quando não encontrava pedra; os demais mineiros nunca tentavam abrir
+sua mina. A ordem estável tornava o bloqueio reproduzível, mas não o evitava.
+
+**Onde olhar:** `MinerWork.tick`, `startNextStone` e
+`lastSearchWorker`. A busca gira entre candidatos sem alvo e mantém o limite
+de uma por tique. O log de 2026-09-13 é compatível com o defeito nas vilas
+novas; confirmar no jogo se o portal aparece e a escavação começa.
+
+---
+
 ### `stall N/2400` subindo, `still 0/300` cravado
 
 **Causa:** o aldeão **gira no próprio eixo**. Ele se move, então o guarda

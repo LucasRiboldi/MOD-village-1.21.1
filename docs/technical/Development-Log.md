@@ -7478,3 +7478,26 @@ o mineiro alcança e trabalha na rota alternativa; nenhuma validação visual é
 inferida dos testes automatizados. Após o commit e push do código, o JAR foi
 copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256
 `D8548BAD17A87FED10E0EFBBA92ADC129ED36047E1FC451AAE27248AE3B930F3`.
+
+## 2026-09-13 — rodízio das buscas do mineiro
+
+O log da sessão mostrou três vilas novas e um mineiro repetindo
+`looking for stone, 0 of 64`, sem linha de abertura da mina. No código,
+`MinerWork.tick` entregava a única busca global por tique ao primeiro
+trabalho sem alvo; `startNextStone` consumia essa busca até quando não
+encontrava pedra. Assim, trabalhos posteriores podiam nunca criar/abrir a
+própria mina. A ordem estável de `JOBS` reproduzia o bloqueio, não o
+resolvia.
+
+O despacho agora deixa o trabalho de quem já tem alvo na ordem original e
+gira os candidatos sem alvo depois do último mineiro que consumiu a busca.
+Tentativas recusadas (por exemplo, sem aldeão/armazenamento ou ramal
+reservado) não gastam a cota. O limite global continua em uma busca por
+tique. `MinerSearchScheduleTest` cobre início, rotação, volta e cursor cujo
+trabalho saiu da fila.
+
+Antes da implementação, o teste novo falhou na compilação porque o cursor
+de busca ainda não existia; após a implementação, os dois casos passaram.
+`./gradlew.bat runGametest`: 314/314 passaram. A validação visual da entrada
+em vila recém-descoberta segue pendente; a bateria não reproduz múltiplas
+vilas competindo pelo orçamento.
