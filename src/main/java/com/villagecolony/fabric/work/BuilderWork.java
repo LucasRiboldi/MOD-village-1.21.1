@@ -26,6 +26,7 @@ import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.state.property.Properties;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.CropBlock;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.registry.tag.BlockTags;
@@ -663,7 +664,8 @@ public final class BuilderWork {
         return state.isIn(BlockTags.DIRT)
                 || state.isOf(Blocks.FARMLAND)
                 || state.isOf(Blocks.WATER)
-                || state.isOf(Blocks.DIRT_PATH);
+                || state.isOf(Blocks.DIRT_PATH)
+                || state.getBlock() instanceof CropBlock;
     }
 
     /**

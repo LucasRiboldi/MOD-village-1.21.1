@@ -290,7 +290,7 @@ public final class TreeChoice {
                         ? " while looking for a tree"
                         : " on the tree at " + job.plan.base().toShortString());
 
-        if (job.plan != null) {
+        if (shouldMarkUnreachable(job)) {
             // A outra metade da Regra 9, e o que fecha o G2. Soltar a
             // tarefa sem esquecer a árvore troca de trabalhador e não de
             // problema: a busca é determinística a partir do centro, essa
@@ -308,6 +308,17 @@ public final class TreeChoice {
         WorkerStrikes.gaveUp(workerId, job.task);
 
         return LumberjackWork.Outcome.DONE;
+    }
+
+    /**
+     * Só árvore intacta entra no castigo longo.
+     *
+     * <p>Quando já caiu pelo menos uma tora, marcar o grupo como fora de
+     * alcance esconde justamente o resto que o próximo lenhador deveria
+     * continuar antes de a copa desaparecer.
+     */
+    static boolean shouldMarkUnreachable(LumberjackWork.Job job) {
+        return job.plan != null && job.index == 0;
     }
 
     /**

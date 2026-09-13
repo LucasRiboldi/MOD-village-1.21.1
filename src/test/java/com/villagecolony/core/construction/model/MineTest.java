@@ -152,6 +152,41 @@ class MineTest {
     }
 
     /**
+     * No fundo, uma frente ruim não pode reabrir no mesmo desenho.
+     *
+     * <p>O teste em jogo de 2026-09-13 mostrou o mineiro repetindo
+     * {@code hit stone with nowhere to stand} e {@code no miner branch work}
+     * a cada tique. A mina já tinha chegado ao limite de descida; ao fechar
+     * todos os braços, ela reabria no mesmo padrão e servia a mesma frente
+     * emparedada de novo.
+     */
+    @Test
+    void theDeepestLevelRotatesInsteadOfRepeatingTheSameBlockedPattern() {
+        Mine mine = Mine.open(
+                UUID.randomUUID(),
+                MineShaft.from(
+                        new ColonyPos(40, MineShaft.DEEPEST + MineShaft.DESCENT, 0),
+                        Side.EAST));
+
+        Side before = mine.shaft().gallery();
+
+        for (MineArm arm : mine.arms()) {
+            arm.finish();
+        }
+
+        assertFalse(mine.deepenIfEveryArmIsDone(), "ela desceu abaixo do pico");
+
+        assertEquals(
+                before.clockwise(),
+                mine.shaft().gallery(),
+                "a mina do fundo reabriu no mesmo padrão que acabou de travar");
+
+        for (MineArm arm : mine.arms()) {
+            assertFalse(arm.isDone(), "o ramal reabriu já fechado");
+        }
+    }
+
+    /**
      * Fechados os quatro, a mina desce e a ordem recomeça.
      *
      * <p>É a regra das quatro curvas de 2026-09-02, contada de outro

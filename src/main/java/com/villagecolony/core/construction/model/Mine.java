@@ -258,9 +258,12 @@ public final class Mine {
         }
 
         if (!shaft.mayDeepen()) {
-            // Chegou ao fundo. Os ramais reabrem no mesmo nível: é pior
-            // recavar do que deixar a colônia sem mineiro para sempre, e
-            // o findTheFrontier passa por cima do que já é ar.
+            // Chegou ao fundo. Os ramais reabrem no mesmo nível, mas não
+            // no mesmo desenho: se o último padrão fechou por água, lava,
+            // bedrock ou pedra sem lugar para ficar, repetir a mesma
+            // galeria serviria a mesma barreira de novo.
+            shaft = shaft.turned();
+
             MineShaft heading = shaft;
 
             for (MineArm arm : arms) {

@@ -717,12 +717,56 @@ public class BuilderGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * <b>Trigo de planta não vem do baú</b> — 2026-09-13.
+     *
+     * <p>A casa de planície pequena do save do autor continuou até os
+     * últimos blocos e parou em {@code waiting for minecraft:wheat}. O
+     * defeito é o mesmo de água, canteiro e caminho: cultivo em estrutura é
+     * parte do chão da roça. Cobrar item de trigo faz a casa depender de um
+     * estoque que o construtor não deveria consumir para assentar planta.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_ground",
+            tickLimit = 500)
+    public void cropBlocksAreShapedWithoutTheChest(TestContext context) {
+        Fixture fixture = setUp(context, 0, crop(), 2);
+
+        context.runAtTick(300, () -> {
+            try {
+                context.assertTrue(
+                        stateAt(context, SITE).isOf(Blocks.FARMLAND),
+                        "o chão da roça não foi assentado antes do trigo");
+
+                context.assertTrue(
+                        stateAt(context, SITE.up()).isOf(Blocks.WHEAT),
+                        "o trigo não foi assentado: ficou "
+                                + stateAt(context, SITE.up()).getBlock()
+                                + " — a obra está esperando minecraft:wheat no baú");
+            } finally {
+                fixture.owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
     /** Um canteiro, que é o bloco que nenhum baú pode entregar. */
     private static Blueprint ground() {
         return Blueprint.of(HUT, List.of(
                 new BlueprintBlock(
                         new ColonyPos(0, 0, 0),
                         MinecraftTypeAdapter.toResourceId(Blocks.FARMLAND))));
+    }
+
+    /** Um canteiro com cultivo em cima: os dois são moldados no lugar. */
+    private static Blueprint crop() {
+        return Blueprint.of(HUT, List.of(
+                new BlueprintBlock(
+                        new ColonyPos(0, 0, 0),
+                        MinecraftTypeAdapter.toResourceId(Blocks.FARMLAND)),
+                new BlueprintBlock(
+                        new ColonyPos(0, 1, 0),
+                        MinecraftTypeAdapter.toResourceId(Blocks.WHEAT))));
     }
 
     /** Um bloco de caminho de terra — a peça que travou a casa em jogo. */
