@@ -98,6 +98,26 @@ insumos compartilhados. Sem espaço, transformações devolvem o insumo e
 drops ficam no mundo. `build` e 313 GameTests verdes; **aguarda validação em
 jogo**. A investigação da construção e da mineração segue aberta.
 
+**Diagnóstico do log de 09-13:** o mineiro completou 64/64 pedregulhos e
+ficou sem tarefa; depois recebeu areia para vidro, mas `MinerWork.Job` usava
+a pedra da paleta e mantinha o progresso em `0 of 3`. Corrigido e coberto
+por teste; `build`: 810 unitários, `runGametest`: 314/314. Depois da correção,
+a tarefa ainda depende de encontrar areia: o log diz repetidamente que não
+há areia num raio de 48 blocos. **Aberto:** implementar/validar o retorno
+explícito do mineiro à boca quando a tarefa termina; `MinerWork.tick` hoje
+descarta o Job encerrado sem criar uma rota de volta.
+
+A obra `plains_butcher_shop_2` esperou `grass_block` (382 blocos restantes),
+desistiu e manteve lote/obra parcial. Nenhuma profissão do catálogo produz
+`grass_block`. **Aberto:** impedir seleção/reserva de blueprint sem cadeia de
+materiais possível e definir recuperação da obra parcial, respeitando a
+propriedade do lote. Fazenda: sem cultivo maduro ou lote vazio em 32 blocos.
+Lenhadores cortaram e produziram durante a mesma sessão, embora às vezes
+tenham ficado sem árvore próxima. Carpinteiros, fundidores, pedreiros e
+pastor registraram "no task open"; o carpinteiro também ficou no baú em
+`0/20` ticks fora do expediente. Isso aponta falta de demanda/insumos no
+recorte observado, não falha de execução confirmada dessas profissões.
+
 **Alterações do jogador, aplicadas em 2026-09-13 (ADR-012):** quebras e
 interações que mudam blocos agora invalidam a busca local de lotes; trechos
 abertos pelo jogador reabrem braços já percorridos da mina. A busca continua

@@ -12,7 +12,7 @@ import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
-import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
@@ -158,7 +158,7 @@ public final class MinerWork {
 
         final BlockPos center;
 
-        final ResourceId wanted;
+        final ResourceType wanted;
 
         /** A pedra de agora. Nulo entre uma e a próxima. */
         BlockPos target;
@@ -198,10 +198,10 @@ public final class MinerWork {
         /** Se ele está encurtando a distância até a pedra — E44. Ver MineLease. */
         final MineLease lease = new MineLease();
 
-        private Job(Task task, BlockPos center, ResourceId wanted) {
+        Job(Task task, BlockPos center) {
             this.task = task;
             this.center = center;
-            this.wanted = wanted;
+            this.wanted = task.targetResource();
         }
     }
 
@@ -216,8 +216,6 @@ public final class MinerWork {
     public static int run(ServerWorld world, Colony colony) {
         BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
 
-        ResourceId wanted = HousePlans.paletteOf(world, colony.center()).stone();
-
         int open = 0;
 
         for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
@@ -231,7 +229,7 @@ public final class MinerWork {
                 continue;
             }
 
-            JOBS.computeIfAbsent(executor.get(), worker -> new Job(task, center, wanted));
+            JOBS.computeIfAbsent(executor.get(), worker -> new Job(task, center));
 
             open++;
         }
@@ -727,7 +725,7 @@ public final class MinerWork {
                 drops,
                 MinerHaul.treasureChestFor(world, job, state),
                 job.target,
-                MinecraftTypeAdapter.toBlock(job.wanted).map(Block::asItem).orElse(null));
+                MinecraftTypeAdapter.toItem(job.wanted).orElse(null));
 
         job.collected += haul.stored();
         job.toward += haul.wanted();
@@ -787,7 +785,7 @@ public final class MinerWork {
                 "Miner {} filled the order — {} {} of the {} asked, and stopped",
                 workerId,
                 job.toward,
-                job.wanted.path(),
+                job.wanted.name().toLowerCase(java.util.Locale.ROOT),
                 job.task.amount());
 
         release(workerId, job);

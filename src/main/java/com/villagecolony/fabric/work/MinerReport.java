@@ -13,6 +13,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.Map;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -151,7 +152,7 @@ public final class MinerReport {
 
         text.append(", ").append(hoursOf(world, workerId));
 
-        text.append(", wants ").append(job.wanted.path());
+        text.append(", wants ").append(job.wanted.name().toLowerCase(Locale.ROOT));
 
         // <b>O que a meta enfrenta, e não tudo o que ele guardou</b> —
         // 2026-09-09, o E3. Esta linha dizia "105 of 32 so far" somando

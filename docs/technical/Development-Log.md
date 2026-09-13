@@ -7501,3 +7501,34 @@ de busca ainda não existia; após a implementação, os dois casos passaram.
 `./gradlew.bat runGametest`: 314/314 passaram. A validação visual da entrada
 em vila recém-descoberta segue pendente; a bateria não reproduz múltiplas
 vilas competindo pelo orçamento.
+
+## 2026-09-13 — areia não contava para a meta do mineiro
+
+O log do playtest mostra que a colônia abriu uma coleta de areia para a
+produção de vidro. O minerador transportou areia, mas o progresso permaneceu
+`0 of 3`; `MinerWork.run` atribuía a toda tarefa o bloco de pedra da paleta
+da vila, e `MinerHaul.deposit` compara o drop com esse item. A tarefa de
+areia nunca poderia completar. O Job agora usa `task.targetResource()` e a
+conversão para item parte desse recurso. O teste unitário verifica que uma
+tarefa `COLLECT_STONE` cujo alvo é `SAND` produz Job que acompanha `SAND`.
+O teste focado, `build` (810 unitários) e `runGametest` (314/314) passaram.
+
+O mesmo log mostra uma construção em `plains_butcher_shop_2` parada com 382
+blocos restantes à espera de `minecraft:grass_block`; após o prazo ela
+desistiu, mas conservou lote e obra parcial. Nenhum fornecedor desse material
+foi identificado entre as profissões do mod. Agricultores informaram não
+encontrar cultivo maduro ou lote vazio próximo, indicando falta de alvo
+naquelas amostras. Carpinteiro, fundidor, pedreiro e pastor reportaram sem
+tarefa aberta; os lenhadores aparecem cortando e contabilizando madeira,
+embora também passem períodos sem árvore próxima. O carpinteiro aparece no
+baú em `0/20` durante folga e depois sem tarefa, compatível com ausência de
+produção solicitada nesse recorte.
+
+O mineiro completou 64/64 pedregulhos, depois ficou sem tarefa e recebeu a
+demanda de areia. A busca registrou repetidamente não haver areia num raio
+de 48 blocos. Além da falta local do recurso, `MinerWork.tick` remove Jobs
+concluídos sem escolher um destino de retorno à boca: a volta explícita
+depois de cumprir a cota é uma lacuna confirmada no fluxo atual. Pré-validar
+blueprints, recuperar a obra parcial e implementar/validar essa volta são
+pendências distintas. A posição final do mineiro naquela sessão continua
+sem medição em log e requer observação em jogo.

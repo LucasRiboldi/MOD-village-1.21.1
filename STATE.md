@@ -126,8 +126,21 @@ verificação em jogo**.
 
 ## Bateria
 
-Última medição: **809 unitários**, **314 GameTests** e **74 testes Python**;
+Última medição: **810 unitários**, **314 GameTests** e **74 testes Python**;
 zero falhas nos dois primeiros nesta sessão. Python não foi reexecutado.
+
+**Diagnóstico do playtest/log de 09-13:** uma tarefa de areia foi criada para
+vidro, mas `MinerWork` gravava no Job a pedra da paleta da vila. O log mostra
+`0 of 3` apesar de areia transportada; corrigido para o Job acompanhar o
+recurso da tarefa. Antes disso, ele completou 64/64 pedregulhos; depois a
+busca de areia não encontrou bloco num raio de 48. `MinerWork.tick` remove
+Jobs concluídos sem uma etapa explícita de volta à boca da mina; retorno
+segue aberto. A obra esperou `minecraft:grass_block` com 382 blocos restantes
+e desistiu mantendo o lote ocupado; nenhuma profissão fornece esse recurso
+no catálogo atual. Agricultores não acharam plantio maduro/lote vazio em 32
+blocos. Carpinteiro, fundidor, pedreiro e pastor reportaram sem tarefa aberta;
+lenhadores foram vistos cortando e aumentando a produção. `build`: 810
+unitários; GameTests: 314/314.
 
 ---
 
