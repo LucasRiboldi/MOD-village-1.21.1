@@ -359,13 +359,25 @@ class WorkAssignmentTest {
      * de uma casa é defeito, não ajuda.
      */
     @Test
-    void buildingStaysWithTheBuilder() {
+    void aProducerCanTakeConstructionWithoutChangingProfession() {
         Worker miner = workerWith(ProfessionType.MINER);
-        miner.rest(Capability.COLLECT_STONE);
 
         Task build = tasks.create(COLONY, TaskType.BUILD, TaskPriority.CONSTRUCTION,
                 ResourceType.OAK_PLANKS, 1);
 
+        assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(Optional.of(miner.villagerId()), build.executor());
+        assertEquals(Optional.of(ProfessionType.MINER), miner.profession());
+    }
+
+    @Test
+    void legacyShepherdDoesNotBecomeAConstructionWorker() {
+        workerWith(ProfessionType.SHEPHERD);
+        Task build = tasks.create(COLONY, TaskType.BUILD, TaskPriority.CONSTRUCTION,
+                ResourceType.OAK_PLANKS, 1);
+
+        assertEquals(0, WorkAssignment.countCapableOf(
+                COLONY, Capability.BUILD_STRUCTURE, workers));
         assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
         assertEquals(TaskState.AVAILABLE, build.state());
     }

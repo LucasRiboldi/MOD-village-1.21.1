@@ -18,6 +18,7 @@ import net.minecraft.util.math.Box;
 import net.minecraft.village.VillagerProfession;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -100,6 +101,7 @@ public final class VillagerScanner {
 
         Set<UUID> employable = new HashSet<>();
         Set<UUID> equippable = new HashSet<>();
+        int adultPopulation = 0;
 
         // Os baús distintos que os candidatos conseguiriam, e não os
         // candidatos. Dois aldeões do mesmo cômodo enxergam o MESMO baú,
@@ -111,11 +113,20 @@ public final class VillagerScanner {
         // e só serve quando a resposta muda alguma coisa: quando há vaga
         // aberta, ou quando alguém está ocupando uma sem baú — e nesse
         // caso a resposta decide se ele perde a vaga para quem consegue.
-        boolean hiring = ProfessionAssigner.vacancy(workers.ofColony(colony.id())).isPresent()
+        List<VillagerEntity> villagers = world.getEntitiesByClass(
+                VillagerEntity.class, area, VillagerEntity::isAlive);
+
+        for (VillagerEntity villager : villagers) {
+            if (!villager.isBaby()) {
+                adultPopulation++;
+            }
+        }
+
+        boolean hiring = ProfessionAssigner.vacancy(
+                        workers.ofColony(colony.id()), adultPopulation).isPresent()
                 || hasEmployedWithoutStorage(workers, colony.id(), storages);
 
-        for (VillagerEntity villager
-                : world.getEntitiesByClass(VillagerEntity.class, area, VillagerEntity::isAlive)) {
+        for (VillagerEntity villager : villagers) {
 
             if (!workers.isRegistered(villager.getUuid())) {
                 workers.register(villager.getUuid(), colony.id());
@@ -164,6 +175,7 @@ public final class VillagerScanner {
         return new ScanResult(
                 registered,
                 storagesFound,
+                adultPopulation,
                 Set.copyOf(employable),
                 Set.copyOf(equippable),
                 Set.copyOf(freeChests));
@@ -285,6 +297,7 @@ public final class VillagerScanner {
     public record ScanResult(
             int registeredWorkers,
             int registeredStorages,
+            int adultPopulation,
             Set<UUID> employable,
             Set<UUID> equippable,
             Set<ColonyPos> freeChests) {

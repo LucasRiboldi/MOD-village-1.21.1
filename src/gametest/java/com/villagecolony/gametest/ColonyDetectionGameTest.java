@@ -3,7 +3,6 @@ package com.villagecolony.gametest;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
-import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -116,22 +115,8 @@ public class ColonyDetectionGameTest implements FabricGameTest {
     // O que sobra aqui é o que só o jogo prova: POI vira detecção, que
     // vira colônia, que vira trabalhador com profissão.
 
-    /**
-     * Aldeões de sobra para as vagas que existem.
-     *
-     * <p>Um a mais do que o teto, por profissão. É o número que põe as duas
-     * afirmações deste teste em contato com a regra: com {@link #CROWD}
-     * candidatos, as {@value ProfessionAssigner#MAX_PER_PROFESSION} vagas
-     * de cada profissão têm quem as dispute, e as que sobram não têm para
-     * onde ir. Um teto que deixasse de valer produziria o terceiro
-     * lenhador na hora.
-     *
-     * <p>Derivado, e não escrito: mudar o teto para três muda este número
-     * junto, e o teste continua afirmando a regra em vigor em vez de uma
-     * que já foi.
-     */
-    private static final int CROWD =
-            (ProfessionAssigner.MAX_PER_PROFESSION + 1) * ProfessionType.values().length;
+    /** Trinta adultos abrem duas vagas para cada profissão produtora. */
+    private static final int CROWD = 30;
 
     /**
      * Os aldeões da colônia viram trabalhadores com profissão.
@@ -185,8 +170,7 @@ public class ColonyDetectionGameTest implements FabricGameTest {
                     crew.size() >= CROWD,
                     "esperava ao menos " + CROWD + " trabalhadores, achei " + crew.size());
 
-            assertProfessionsWithinCap(context, crew);
-            assertNoVacancyLeftOpen(context, crew);
+            assertTwoWorkersPerProducer(context, crew);
         } finally {
             forgetColony(colony);
         }
@@ -194,69 +178,17 @@ public class ColonyDetectionGameTest implements FabricGameTest {
         context.complete();
     }
 
-    // A afirmação daqui era "todo trabalhador tem profissão", e ela só
-    // valia por acidente de população.
-    //
-    // Descoberto em 2026-08-13: "trabalhador sem profissão: 4 de 12". A
-    // colônia tinha doze trabalhadores e oito vagas — dois de cada uma
-    // das quatro profissões, conforme ProfessionAssigner.MAX_PER_PROFESSION
-    // —, e os quatro restantes continuavam Vanilla, que é exatamente o que
-    // a regra manda acontecer. Nada estava quebrado; a afirmação é que
-    // dizia mais do que a regra promete.
-    //
-    // Os doze vêm da mesma contaminação dos dois casos comentados acima:
-    // as estruturas vizinhas ficam a menos de VillageDetector.SEARCH_RADIUS
-    // e seus aldeões entram na caixa de varredura desta colônia. Quantos
-    // entram depende de quais batches estão rodando junto, então a
-    // afirmação antiga passava ou falhava conforme o relógio da bateria.
-    //
-    // O que a regra promete, e o que fica afirmado aqui, são duas coisas:
-    // nenhuma profissão passa do teto, e nenhuma vaga fica aberta enquanto
-    // existe trabalhador sem função. Juntas elas fixam o número de
-    // empregados em min(trabalhadores, vagas) sem depender de quantos
-    // trabalhadores apareceram — e continuam locais à colônia desta
-    // estrutura, como ColonyFixture exige.
-    //
-    // E o teste planta os próprios CROWD aldeões, em vez de contar com os
-    // dois mínimos mais o que a vizinhança emprestar. As duas afirmações
-    // só têm o que dizer com mais candidatos do que vagas: com dois
-    // aldeões nenhum teto é excedido nem quando o teto some, e foi
-    // exatamente assim que a primeira tentativa de conferir esta correção
-    // passou com a regra desligada. O que a vizinhança mandar continua
-    // entrando na conta e continua não importando — as duas afirmações
-    // valem para qualquer população acima do piso.
-
-    /** Nenhuma profissão passa das vagas que tem. */
-    private static void assertProfessionsWithinCap(TestContext context, List<Worker> crew) {
-        for (ProfessionType type : ProfessionType.values()) {
+    /** Trinta adultos precisam preencher as duas vagas de cada produtor. */
+    private static void assertTwoWorkersPerProducer(TestContext context, List<Worker> crew) {
+        for (var type : ProfessionAssigner.PRODUCER_ORDER) {
             long employed = crew.stream()
                     .filter(worker -> worker.profession().filter(type::equals).isPresent())
                     .count();
 
             context.assertTrue(
-                    employed <= ProfessionAssigner.MAX_PER_PROFESSION,
-                    type + ": " + employed + " trabalhadores para "
-                            + ProfessionAssigner.MAX_PER_PROFESSION + " vagas");
+                    employed >= 2,
+                    type + ": esperava ao menos 2 trabalhadores, achei " + employed);
         }
-    }
-
-    /**
-     * Nenhuma vaga sobrou aberta com trabalhador sem função à espera.
-     *
-     * <p>É a outra metade da regra. Sem ela, uma colônia que não
-     * atribuísse nada passaria no teto — zero também está abaixo de dois.
-     */
-    private static void assertNoVacancyLeftOpen(TestContext context, List<Worker> crew) {
-        long idle = crew.stream().filter(worker -> !worker.hasProfession()).count();
-
-        if (idle == 0) {
-            return;
-        }
-
-        context.assertTrue(
-                ProfessionAssigner.vacancy(crew).isEmpty(),
-                "vaga de " + ProfessionAssigner.vacancy(crew).orElse(null) + " aberta com "
-                        + idle + " de " + crew.size() + " trabalhadores sem função");
     }
 
     // O encolhimento da colônia também não mora aqui, e a razão é a

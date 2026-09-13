@@ -78,7 +78,7 @@ class ProfessionFloorTest {
     private Map<ProfessionType, Integer> headcount() {
         Map<ProfessionType, Integer> counts = new EnumMap<>(ProfessionType.class);
 
-        for (ProfessionType type : ProfessionType.values()) {
+        for (ProfessionType type : ProfessionAssigner.PRODUCER_ORDER) {
             counts.put(type, 0);
         }
 
@@ -128,14 +128,14 @@ class ProfessionFloorTest {
     }
 
     /**
-     * Nenhuma função chega a dois antes de todas terem uma.
+     * As sete funções produtoras recebem uma vaga antes de duplicar.
      *
      * <p>O piso e o teto na mesma frase, e é a propriedade que sustenta a
      * regra: enquanto houver função vazia, o aldeão novo vai para ela.
      */
     @Test
     void noJobIsDoubledWhileAnotherIsEmpty() {
-        int professions = ProfessionType.values().length;
+        int professions = ProfessionAssigner.PRODUCER_ORDER.size();
 
         addWorkers(professions + 1);
 
@@ -143,7 +143,7 @@ class ProfessionFloorTest {
 
         Map<ProfessionType, Integer> counts = headcount();
 
-        for (ProfessionType type : ProfessionType.values()) {
+        for (ProfessionType type : ProfessionAssigner.PRODUCER_ORDER) {
             assertTrue(
                     counts.get(type) >= 1,
                     "a função " + type + " ficou vazia com aldeão de sobra na vila");
@@ -151,7 +151,7 @@ class ProfessionFloorTest {
     }
 
     /**
-     * A dispensa por falta de baú <b>pode</b> esvaziar uma função.
+     * A troca por falta de baú pode deixar uma vaga temporariamente aberta.
      *
      * <p>É a ressalva que estava por verificar, e a verificação diz que
      * sim. Cada profissão tem um trabalhador e nenhum tem baú; pedindo
@@ -166,7 +166,7 @@ class ProfessionFloorTest {
      */
     @Test
     void theDismissalDoesNotKnowAboutTheFloor() {
-        List<UUID> everyone = addWorkers(ProfessionType.values().length);
+        List<UUID> everyone = addWorkers(ProfessionAssigner.PRODUCER_ORDER.size());
 
         ProfessionAssigner.assignMissing(workers, COLONY, new HashSet<>(everyone));
 
@@ -175,7 +175,9 @@ class ProfessionFloorTest {
 
         assertEquals(3, demoted.size());
 
-        long empty = headcount().values().stream().filter(count -> count == 0).count();
+        long empty = ProfessionAssigner.PRODUCER_ORDER.stream()
+                .filter(type -> headcount().get(type) == 0)
+                .count();
 
         assertEquals(3, empty, "as três trocas deviam ter esvaziado três funções");
     }
@@ -191,7 +193,7 @@ class ProfessionFloorTest {
      */
     @Test
     void withOneSubstitutePerSwapTheFloorHolds() {
-        List<UUID> employed = addWorkers(ProfessionType.values().length);
+        List<UUID> employed = addWorkers(ProfessionAssigner.PRODUCER_ORDER.size());
 
         ProfessionAssigner.assignMissing(workers, COLONY, new HashSet<>(employed));
 
@@ -206,7 +208,7 @@ class ProfessionFloorTest {
         ProfessionAssigner.assignMissing(
                 workers, COLONY, everyone(), withChest::contains);
 
-        for (ProfessionType type : ProfessionType.values()) {
+        for (ProfessionType type : ProfessionAssigner.PRODUCER_ORDER) {
             assertTrue(
                     headcount().get(type) >= 1,
                     "a função " + type + " ficou vazia depois da troca");
@@ -234,7 +236,7 @@ class ProfessionFloorTest {
         assertEquals(
                 1,
                 new ScanResult(
-                        0, 0, Set.of(first, second), Set.of(first, second), oneChest)
+                        0, 0, 2, Set.of(first, second), Set.of(first, second), oneChest)
                         .substitutes());
 
         // Um candidato, dois baús: uma troca, e não duas.
@@ -243,6 +245,7 @@ class ProfessionFloorTest {
                 new ScanResult(
                         0,
                         0,
+                        1,
                         Set.of(first),
                         Set.of(first),
                         Set.of(
@@ -254,14 +257,14 @@ class ProfessionFloorTest {
         assertEquals(
                 0,
                 new ScanResult(
-                        0, 0, Set.of(first), Set.of(first), Set.of())
+                        0, 0, 1, Set.of(first), Set.of(first), Set.of())
                         .substitutes());
     }
 
     /** Sem substituto, ninguém é dispensado e o piso nem é ameaçado. */
     @Test
     void withoutSubstitutesNobodyIsDismissed() {
-        List<UUID> everyone = addWorkers(ProfessionType.values().length);
+        List<UUID> everyone = addWorkers(ProfessionAssigner.PRODUCER_ORDER.size());
 
         ProfessionAssigner.assignMissing(workers, COLONY, new HashSet<>(everyone));
 
@@ -270,7 +273,7 @@ class ProfessionFloorTest {
                         workers, COLONY, villagerId -> false, 0).isEmpty(),
                 "dispensou alguém sem ter quem pusesse no lugar");
 
-        for (ProfessionType type : ProfessionType.values()) {
+        for (ProfessionType type : ProfessionAssigner.PRODUCER_ORDER) {
             assertEquals(1, headcount().get(type));
         }
     }

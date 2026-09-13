@@ -801,6 +801,7 @@ public final class VillageDetectionHandler {
                 VillageColonyMod.WORKERS,
                 colony.id(),
                 result.employable(),
+                result.adultPopulation(),
                 result.equippable()::contains);
 
         if (assigned > 0) {
@@ -915,11 +916,10 @@ public final class VillageDetectionHandler {
 
         VillageColonyMod.LOGGER.info(
                 "Colony {} dismissed {} workers ({} of them had no chest and lost the job"
-                        + " to someone who can get one) — at most {} of each profession",
+                        + " to someone who can get one)",
                 colony.id(),
                 demoted.size(),
-                chestless,
-                ProfessionAssigner.MAX_PER_PROFESSION);
+                chestless);
     }
 
     /**

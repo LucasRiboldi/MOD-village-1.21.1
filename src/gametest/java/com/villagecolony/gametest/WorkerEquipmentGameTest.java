@@ -5,6 +5,7 @@ import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
+import com.villagecolony.core.worker.service.ProfessionAssigner;
 import com.villagecolony.fabric.integration.WorkerNameplate;
 import com.villagecolony.core.worker.service.ProfessionRegistry;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -704,7 +705,7 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
     public void everyProfessionWearsItsOwnColour(TestContext context) {
         Set<TextColor> colours = new HashSet<>();
 
-        for (ProfessionType profession : ProfessionType.values()) {
+        for (ProfessionType profession : ProfessionAssigner.PRODUCER_ORDER) {
             VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
 
             Worker worker = Worker.restore(villager.getUuid(), UUID.randomUUID(), profession);

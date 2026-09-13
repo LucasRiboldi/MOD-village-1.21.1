@@ -31,40 +31,47 @@ import java.util.UUID;
  */
 public final class ProfessionAssigner {
 
+    /** Ordem de crescimento definida para as sete profissões produtoras. */
+    public static final List<ProfessionType> PRODUCER_ORDER = List.of(
+            ProfessionType.MINER,
+            ProfessionType.LUMBERJACK,
+            ProfessionType.MASON,
+            ProfessionType.SMELTER,
+            ProfessionType.CARPENTER,
+            ProfessionType.FARMER,
+            ProfessionType.BREEDER);
+
+    private static final int ADULTS_PER_BATCH = 15;
+
     private ProfessionAssigner() {
     }
 
     /**
      * De qual profissão a colônia mais precisa, dado quem ela já tem.
      *
-     * <p>Escolhe a de menor contagem, o que cobre as quatro funções antes
-     * de duplicar qualquer uma — a necessidade mínima do
-     * Profession-System.md: seis aldeões, um de cada.
+     * <p>Escolhe a de menor contagem, respeitando a ordem dos sete
+     * produtores definida pela regra de crescimento da colônia.
      *
-     * <p>Empate resolvido pela ordem de declaração de
-     * {@link ProfessionType}, que é a ordem da cadeia produtiva do MVP:
-     * lenhador antes de fabricante, fabricante antes de construtor. Numa
-     * colônia recém-detectada todas as contagens são zero, então é essa
-     * ordem que decide as primeiras quatro atribuições — e começar pelo
-     * construtor, sem madeira nem material, daria um trabalhador sem o
-     * que fazer.
+     * <p>Empate resolvido por {@link #PRODUCER_ORDER}, que põe o Mineiro
+     * primeiro e o Criador por último.
      */
     public static ProfessionType mostNeeded(Collection<Worker> colonyWorkers) {
         Objects.requireNonNull(colonyWorkers, "colonyWorkers");
 
         Map<ProfessionType, Integer> counts = new EnumMap<>(ProfessionType.class);
 
-        for (ProfessionType type : ProfessionType.values()) {
+        for (ProfessionType type : PRODUCER_ORDER) {
             counts.put(type, 0);
         }
 
         for (Worker worker : colonyWorkers) {
-            worker.profession().ifPresent(type -> counts.merge(type, 1, Integer::sum));
+            worker.profession().map(ProfessionAssigner::quotaType)
+                    .ifPresent(type -> counts.merge(type, 1, Integer::sum));
         }
 
-        ProfessionType scarcest = ProfessionType.values()[0];
+        ProfessionType scarcest = PRODUCER_ORDER.get(0);
 
-        for (ProfessionType type : ProfessionType.values()) {
+        for (ProfessionType type : PRODUCER_ORDER) {
             if (counts.get(type) < counts.get(scarcest)) {
                 scarcest = type;
             }
@@ -74,46 +81,24 @@ public final class ProfessionAssigner {
     }
 
     /**
-     * Quantos trabalhadores de cada profissão uma colônia tem.
-     *
-     * <p>Dois. Decisão do autor em 2026-08-13: a vila começa com dois
-     * lenhadores, dois fabricantes, dois fazendeiros e dois construtores.
-     * Os demais aldeões continuam os que já eram — o mod não os emprega,
-     * e eles seguem a rotina Vanilla.
-     *
-     * <p>Era um até 2026-08-13, e antes disso a vaga era ilimitada: a
-     * vila de 43 aldeões do autor acabou com seis lenhadores, e o
-     * servidor mostrou os seis disputando tarefa a cada ciclo. O teto
-     * existe por isso; o valor dele é do autor.
-     *
-     * <p>Oito trabalhadores numa vila de quarenta continua sendo uma
-     * minoria empregada, que é o ponto: a vila continua sendo a vila do
-     * jogador, com a colônia dentro dela.
-     */
-    public static final int MAX_PER_PROFESSION = 2;
-
-    /**
      * Qual profissão ainda tem vaga nesta colônia.
      *
-     * <p>Vazio quando as quatro estão no teto, e é isso que faz o nono
-     * aldeão continuar Vanilla em vez de virar o terceiro lenhador.
+     * <p>Vazio quando todas as vagas abertas pela população adulta estão
+     * preenchidas.
      *
-     * <p>Devolve a profissão mais escassa que ainda tem vaga, e não a
-     * primeira da lista: com teto de dois, ir por ordem daria dois
-     * lenhadores antes do primeiro fabricante. Uma vila com dois
-     * lenhadores e nenhum construtor é pior do que uma com um de cada,
-     * então a colônia cobre as quatro funções antes de dobrar qualquer
-     * uma.
-     *
-     * <p>Empate resolvido pela ordem de {@link ProfessionType}, que é a
-     * da cadeia produtiva: lenhador antes de fabricante, fabricante antes
-     * de construtor. Numa colônia recém-detectada todas as contagens são
-     * zero, então é essa ordem que decide as primeiras quatro — e começar
-     * pelo construtor, sem madeira nem material, daria um trabalhador sem
-     * o que fazer.
+     * <p>Os slots crescem em lotes ligados à população adulta: uma vaga
+     * inicial de cada produtor e, a cada novo slot, a próxima profissão
+     * na ordem declarada. O empate é resolvido por
+     * {@link #PRODUCER_ORDER}.
      */
     public static Optional<ProfessionType> vacancy(Collection<Worker> colonyWorkers) {
-        return vacancyFor(null, colonyWorkers);
+        return vacancy(colonyWorkers, colonyWorkers.size());
+    }
+
+    /** Vaga conforme a população adulta observada no scanner Fabric. */
+    public static Optional<ProfessionType> vacancy(
+            Collection<Worker> colonyWorkers, int adultPopulation) {
+        return vacancyFor(null, colonyWorkers, adultPopulation);
     }
 
     /**
@@ -141,14 +126,23 @@ public final class ProfessionAssigner {
     public static Optional<ProfessionType> vacancyFor(
             Worker candidate, Collection<Worker> colonyWorkers) {
 
+        return vacancyFor(candidate, colonyWorkers, colonyWorkers.size());
+    }
+
+    /** Vaga que este candidato pode ocupar na população adulta observada. */
+    public static Optional<ProfessionType> vacancyFor(
+            Worker candidate, Collection<Worker> colonyWorkers, int adultPopulation) {
+
         Objects.requireNonNull(colonyWorkers, "colonyWorkers");
+
+        if (adultPopulation < 0) {
+            throw new IllegalArgumentException("adultPopulation must not be negative");
+        }
 
         Map<ProfessionType, Integer> counts = countByProfession(colonyWorkers);
 
-        ProfessionType scarcest = null;
-
-        for (ProfessionType type : ProfessionType.values()) {
-            if (counts.get(type) >= MAX_PER_PROFESSION) {
+        for (ProfessionType type : PRODUCER_ORDER) {
+            if (counts.get(type) >= targetCount(type, adultPopulation)) {
                 continue;
             }
 
@@ -156,30 +150,35 @@ public final class ProfessionAssigner {
                 continue;
             }
 
-            if (scarcest == null || counts.get(type) < counts.get(scarcest)) {
-                scarcest = type;
-            }
+            return Optional.of(type);
         }
 
-        return Optional.ofNullable(scarcest);
+        return Optional.empty();
+    }
+
+    private static int targetCount(ProfessionType type, int adults) {
+        int slots;
+
+        if (adults < ADULTS_PER_BATCH) {
+            slots = Math.min(adults, PRODUCER_ORDER.size());
+        } else {
+            slots = (adults / ADULTS_PER_BATCH) * PRODUCER_ORDER.size()
+                    + Math.min(adults % ADULTS_PER_BATCH, PRODUCER_ORDER.size());
+        }
+
+        int perProfession = slots / PRODUCER_ORDER.size();
+        int extras = slots % PRODUCER_ORDER.size();
+        int position = PRODUCER_ORDER.indexOf(type);
+
+        return perProfession + (position >= 0 && position < extras ? 1 : 0);
     }
 
     /**
-     * Tira a função de quem excede a vaga.
+     * Substitui trabalhadores sem baú quando há candidatos equipáveis.
      *
-     * <p>Existe para os saves anteriores a 2026-08-12: a colônia do autor
-     * chegou com seis lenhadores gravados, e uma regra que só valesse para
-     * aldeão novo nunca os desfaria.
-     *
-     * <p>Mantém os {@value #MAX_PER_PROFESSION} primeiros de cada
-     * profissão, na ordem em que o registro os devolve — que é a ordem de
-     * inserção, e portanto estável entre ciclos. Escolher por critério
-     * mais fino (quem está mais perto, quem trabalhou mais) exigiria
-     * dados que este pacote não tem.
-     *
-     * <p>Quem perde a função não é removido: continua trabalhador da
-     * colônia, sem profissão, e volta a ser candidato à primeira vaga que
-     * abrir — quando o lenhador morrer, por exemplo.
+     * <p>Profissões existentes nunca são removidas apenas porque a
+     * população caiu. A substituição aqui só trata a falta de baú, e só
+     * quando existe candidato que possa receber a vaga.
      *
      * @return os aldeões que perderam a função, para quem chama soltar o
      *     que eles seguravam
@@ -226,7 +225,6 @@ public final class ProfessionAssigner {
         Objects.requireNonNull(colonyId, "colonyId");
         Objects.requireNonNull(equipped, "equipped");
 
-        Map<ProfessionType, Set<Worker>> keeping = new EnumMap<>(ProfessionType.class);
         List<Worker> employed = new ArrayList<>();
 
         for (Worker worker : workers.ofColony(colonyId)) {
@@ -235,27 +233,7 @@ public final class ProfessionAssigner {
             }
         }
 
-        // Duas passadas: primeiro quem pode trabalhar fica com as vagas,
-        // depois os demais preenchem o que sobrou. Numa passada só, os
-        // primeiros da lista ficariam com elas mesmo sem baú.
-        for (Worker worker : employed) {
-            if (equipped.test(worker.villagerId())) {
-                keep(keeping, worker);
-            }
-        }
-
-        for (Worker worker : employed) {
-            keep(keeping, worker);
-        }
-
         Set<UUID> demoted = new LinkedHashSet<>();
-
-        for (Worker worker : employed) {
-            if (!keeping.get(worker.profession().orElseThrow()).contains(worker)) {
-                worker.unassign();
-                demoted.add(worker.villagerId());
-            }
-        }
 
         // E a troca: quem ficou com a vaga sem conseguir baú a perde
         // para quem consegue, enquanto houver quem consiga.
@@ -279,16 +257,6 @@ public final class ProfessionAssigner {
         return demoted;
     }
 
-    /** Guarda este trabalhador na vaga da profissão dele, se ainda couber. */
-    private static void keep(Map<ProfessionType, Set<Worker>> keeping, Worker worker) {
-        Set<Worker> kept = keeping.computeIfAbsent(
-                worker.profession().orElseThrow(), type -> new LinkedHashSet<>());
-
-        if (kept.size() < MAX_PER_PROFESSION) {
-            kept.add(worker);
-        }
-    }
-
     private static Map<ProfessionType, Integer> countByProfession(
             Collection<Worker> colonyWorkers) {
 
@@ -299,10 +267,15 @@ public final class ProfessionAssigner {
         }
 
         for (Worker worker : colonyWorkers) {
-            worker.profession().ifPresent(type -> counts.merge(type, 1, Integer::sum));
+            worker.profession().map(ProfessionAssigner::quotaType)
+                    .ifPresent(type -> counts.merge(type, 1, Integer::sum));
         }
 
         return counts;
+    }
+
+    private static ProfessionType quotaType(ProfessionType type) {
+        return type == ProfessionType.SHEPHERD ? ProfessionType.BREEDER : type;
     }
 
     /**
@@ -327,7 +300,15 @@ public final class ProfessionAssigner {
     public static int assignMissing(
             WorkerService workers, UUID colonyId, Set<UUID> employable) {
 
-        return assignMissing(workers, colonyId, employable, villagerId -> true);
+        return assignMissing(workers, colonyId, employable,
+                workers.ofColony(colonyId).size(), villagerId -> true);
+    }
+
+    /** Dá função usando a população adulta observada pela camada Fabric. */
+    public static int assignMissing(
+            WorkerService workers, UUID colonyId, Set<UUID> employable, int adultPopulation) {
+
+        return assignMissing(workers, colonyId, employable, adultPopulation, villagerId -> true);
     }
 
     /**
@@ -348,19 +329,33 @@ public final class ProfessionAssigner {
             WorkerService workers, UUID colonyId, Set<UUID> employable,
             Predicate<UUID> equipped) {
 
+        return assignMissing(workers, colonyId, employable,
+                workers.ofColony(colonyId).size(), equipped);
+    }
+
+    /** Atribui vagas sem ultrapassar a população adulta informada. */
+    public static int assignMissing(
+            WorkerService workers, UUID colonyId, Set<UUID> employable,
+            int adultPopulation, Predicate<UUID> equipped) {
+
         Objects.requireNonNull(workers, "workers");
         Objects.requireNonNull(colonyId, "colonyId");
         Objects.requireNonNull(employable, "employable");
         Objects.requireNonNull(equipped, "equipped");
 
-        int assigned = assignPass(workers, colonyId, employable, equipped);
+        if (adultPopulation < 0) {
+            throw new IllegalArgumentException("adultPopulation must not be negative");
+        }
 
-        return assigned + assignPass(workers, colonyId, employable, villagerId -> true);
+        int assigned = assignPass(workers, colonyId, employable, adultPopulation, equipped);
+
+        return assigned + assignPass(
+                workers, colonyId, employable, adultPopulation, villagerId -> true);
     }
 
     /** Uma passada de atribuição sobre quem o filtro aceitar. */
     private static int assignPass(
-            WorkerService workers, UUID colonyId, Set<UUID> employable,
+            WorkerService workers, UUID colonyId, Set<UUID> employable, int adultPopulation,
             Predicate<UUID> accepts) {
 
         int assigned = 0;
@@ -376,17 +371,16 @@ public final class ProfessionAssigner {
             // vacancyFor: quem largou o ofício não pode recebê-lo de
             // volta na passagem seguinte, e é justamente ele o mais
             // escasso depois de abrir a própria vaga.
-            Optional<ProfessionType> vacancy = vacancyFor(worker, workers.ofColony(colonyId));
+            Optional<ProfessionType> vacancy = vacancyFor(
+                    worker, workers.ofColony(colonyId), adultPopulation);
 
             if (vacancy.isEmpty()) {
                 // <b>Vazio por dois motivos, e eles não se tratam
                 // igual</b> — 2026-09-10.
                 //
                 // Se a colônia inteira está sem vaga, não há o que fazer
-                // por ninguém: as oito estão preenchidas, e os demais
-                // aldeões continuam sendo o que já eram — é o que a regra
-                // de duas vagas por profissão quer dizer numa vila de
-                // quarenta.
+                // por ninguém: todos os slots abertos pela população
+                // adulta estão preenchidos.
                 //
                 // Se a vaga existe mas ESTE candidato a está evitando,
                 // parar aqui seria deixar sem função todos os que vêm
@@ -395,7 +389,7 @@ public final class ProfessionAssigner {
                 // comportamento que a linha de reserva quer: um
                 // trabalhador de molho não pode congelar a contratação da
                 // colônia.
-                if (vacancy(workers.ofColony(colonyId)).isEmpty()) {
+                if (vacancy(workers.ofColony(colonyId), adultPopulation).isEmpty()) {
                     break;
                 }
 

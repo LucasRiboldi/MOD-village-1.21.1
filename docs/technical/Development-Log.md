@@ -7403,3 +7403,22 @@ O log da mina repete “hit stone with nowhere to stand” e fecha a frente;
 no limite, a mina reabre uma hélice com o mesmo `descent`. E45 continua
 aberto: geometria persistida e migração `MineSave` (`SHAPE_VERSION` 4)
 aguardam ADR/revisão do autor. Nenhum código de mineração foi alterado.
+
+## 2026-09-13 — profissões produtoras e crescimento (ADR-011)
+
+O contrato passou a ter sete profissões produtoras na ordem Mineiro,
+Lenhador, Pedreiro, Fundidor, Carpinteiro, Agricultor e Criador. A
+população adulta observada pela camada Fabric abre as vagas: sete iniciais,
+uma vaga por adulto até completar cada sequência de sete, com novo lote a
+cada 15 adultos. Aos 15 há uma vaga por ofício; aos 30, duas; adultos 31 e
+32 abrem o terceiro Mineiro e Lenhador. Nitwits entram na contagem, bebês
+não; adultos aptos recebem vagas. Redução populacional não demite quem já
+tem ofício.
+
+`BUILDER` e `SHEPHERD` continuam legíveis em saves antigos. O Pastor legado
+conta para a cota do Criador, sem mudar o valor salvo. Construção virou
+capacidade temporária dos sete produtores; o ofício persistido não muda.
+Atualizados os testes unitários e o GameTest integrado de distribuição; a
+paleta de cores exclusiva cobre só profissões ativas. Verificação: suíte
+unitária completa verde e 313 GameTests verdes. A confirmação visual em
+jogo permanece pendente.

@@ -56,6 +56,16 @@ O mineiro fecha a frente sem espaço para ficar e reabre a mesma hélice no
 fundo. E45 continua sem mudança de código até revisão/ADR sobre rota e
 migração do save (`SHAPE_VERSION` 4).
 
+**ADR-011 — profissões e crescimento:** implementadas as sete funções
+produtoras (Mineiro, Lenhador, Pedreiro, Fundidor, Carpinteiro, Agricultor,
+Criador) e as vagas por população adulta: 1 de cada aos 15, 2 de cada aos
+30, 3º Mineiro aos 31 e 3º Lenhador aos 32. Nitwits contam para a população,
+mas não são contratados; bebês só contam quando adultos. `BUILDER` e
+`SHEPHERD` permanecem compatíveis com saves, e Pastor legado conta na cota
+de Criador. Qualquer produtor pode construir temporariamente sem trocar de
+profissão. Build, testes unitários e 313 GameTests passaram; **aguarda
+verificação em jogo**.
+
 ---
 
 ## P1 — em fila (depende de P0 verde)

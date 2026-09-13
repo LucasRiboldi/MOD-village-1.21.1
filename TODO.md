@@ -233,7 +233,8 @@ Em ordem do que mais precisa ser visto.
 | **2** | **As quatro correções de 09-13** | sessão do autor |
 | **2** | **O mineiro parando à noite** | o contador de `stall` **congelado** com `off hours` |
 | **2** | **A ferramenta de ferro na mão** | ferro, e não madeira nem diamante |
-| **2** | **O nome colorido** | oito cores distintas, e o nome do jogador **sem** cor |
+| **2** | **Profissões e crescimento (ADR-011)** | sete funções produtoras, ordem de vagas nos adultos 15/16/30/31/32 e produtor construindo sem perder o ofício |
+| **2** | **O nome colorido** | sete cores distintas para as profissões ativas, e o nome do jogador **sem** cor |
 | **2** | **O arco da boca** | dois pilares, verga e lanterna — **junto** com o baú do mineiro |
 | **3** | **A cadeia da areia inteira** | meta de `SAND` → praia → vidro → vidraça |
 | **4** | **A casa inteira sem a barreira** | `TEST BARRIER covered for nothing` |

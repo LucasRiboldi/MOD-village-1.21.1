@@ -12,26 +12,14 @@ package com.villagecolony.core.worker.model;
  */
 public enum ProfessionType {
 
+    /** Extrai recursos minerais e materiais do terreno. */
+    MINER,
+
     /** Derruba árvores e replanta. Produz madeira. */
     LUMBERJACK,
 
-    /**
-     * Tira pedra do mundo — 2026-08-20.
-     *
-     * <p>Destrava duas coisas de uma vez: os 43 pedregulhos da casa de
-     * planície, que o jogador tinha de guardar no baú, e a vila de
-     * deserto, que nascia e nunca construía por não haver árvore. No
-     * deserto o que ele tira é arenito, que ali é a parede.
-     */
-    MINER,
-
-    /**
-     * Tosquia ovelha — 2026-08-20.
-     *
-     * <p>A lã da cama. Sem cama não há aldeão novo, e sem aldeão novo a
-     * vila não cresce: era o laço aberto que a Regra 21 deixou.
-     */
-    SHEPHERD,
+    /** Transforma materiais minerais em blocos de construção. */
+    MASON,
 
     /**
      * Funde o que a fornalha funde — 2026-08-20.
@@ -58,24 +46,15 @@ public enum ProfessionType {
      */
     CARPENTER,
 
-    /**
-     * O pedreiro: transforma pedra bruta em material de construção.
-     *
-     * <p>A outra metade da divisão de 2026-09-10. <b>Ele não nasceu
-     * decorativo</b>: profissão sem material declarado nunca recebe
-     * pedido, e o aldeão ficaria com placa, baú e ferramenta sem nunca
-     * trabalhar — que foi o estado do fazendeiro até 2026-08-27 e o que
-     * {@code ProfessionResponsibilityTest} existe para impedir.
-     *
-     * <p>O material dele é o tijolo de pedra, e a cadeia inteira nasceu
-     * junto: o mineiro traz pedregulho, o fundidor o assa em pedra, e o
-     * pedreiro a lavra. Ver {@code ResourceType.STONE_BRICKS}.
-     */
-    MASON,
-
     /** Cuida das plantações. */
     FARMER,
 
-    /** Constrói as expansões da vila. */
+    /** Produz materiais de origem animal. */
+    BREEDER,
+
+    /** Compatibilidade com saves anteriores; novas vagas usam BREEDER. */
+    SHEPHERD,
+
+    /** Compatibilidade com saves anteriores; construção agora é uma tarefa. */
     BUILDER
 }

@@ -354,6 +354,7 @@ public final class ChestMarker {
         return switch (profession) {
             case LUMBERJACK -> Items.IRON_AXE;
             case MINER -> Items.IRON_PICKAXE;
+            case BREEDER -> Items.SHEARS;
             case SHEPHERD -> Items.SHEARS;
             case SMELTER -> Items.FURNACE;
             case FARMER -> Items.IRON_HOE;
@@ -368,6 +369,7 @@ public final class ChestMarker {
         return switch (profession) {
             case LUMBERJACK -> "Baú do Lenhador";
             case MINER -> "Baú do Mineiro";
+            case BREEDER -> "Baú do Criador";
             case SHEPHERD -> "Baú do Pastor";
             case SMELTER -> "Baú do Fundidor";
             case FARMER -> "Baú do Fazendeiro";

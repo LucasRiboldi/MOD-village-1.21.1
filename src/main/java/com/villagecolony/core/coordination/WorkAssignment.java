@@ -7,6 +7,7 @@ import com.villagecolony.core.type.Capability;
 import com.villagecolony.core.worker.model.Profession;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
+import com.villagecolony.core.worker.service.ProfessionAssigner;
 import com.villagecolony.core.worker.service.ProfessionRegistry;
 import com.villagecolony.core.worker.service.WorkerService;
 
@@ -187,10 +188,7 @@ public final class WorkAssignment {
         int capable = 0;
 
         for (Worker worker : workers.ofColony(colonyId)) {
-            if (worker.profession()
-                    .map(ProfessionRegistry::of)
-                    .filter(catalogued -> catalogued.capabilities().contains(capability))
-                    .isPresent()) {
+            if (worker.profession().filter(type -> canPerform(type, capability)).isPresent()) {
 
                 capable++;
             }
@@ -231,9 +229,15 @@ public final class WorkAssignment {
         Profession catalogued = ProfessionRegistry.of(profession.get());
 
         Set<Capability> own = catalogued.capabilities();
+        List<Capability> taskCapabilities = new ArrayList<>(own);
+        if ((ProfessionAssigner.PRODUCER_ORDER.contains(profession.get())
+                || profession.get() == ProfessionType.BUILDER)
+                && !own.contains(Capability.BUILD_STRUCTURE)) {
+            taskCapabilities.add(Capability.BUILD_STRUCTURE);
+        }
 
         // 1ª passagem: o trabalho dele, tirando o que acabou de travar.
-        for (Capability capability : own) {
+        for (Capability capability : taskCapabilities) {
             if (!worker.isResting(capability)
                     && reserveOne(colonyId, worker, tasks, hasStorage, capability)) {
 
@@ -248,7 +252,7 @@ public final class WorkAssignment {
 
         // 2ª passagem: a capacidade em descanso, antes de deixá-lo parado.
         // É o que impede o descanso de virar o problema que ele conserta.
-        for (Capability capability : own) {
+        for (Capability capability : taskCapabilities) {
             if (worker.isResting(capability)
                     && reserveOne(colonyId, worker, tasks, hasStorage, capability)) {
 
@@ -257,6 +261,13 @@ public final class WorkAssignment {
         }
 
         return false;
+    }
+
+    private static boolean canPerform(ProfessionType profession, Capability capability) {
+        boolean canBuild = ProfessionAssigner.PRODUCER_ORDER.contains(profession)
+                || profession == ProfessionType.BUILDER;
+        return (capability == Capability.BUILD_STRUCTURE && canBuild)
+                || ProfessionRegistry.of(profession).capabilities().contains(capability);
     }
 
     /** Reserva a próxima tarefa desta capacidade, se houver e se ele puder. */

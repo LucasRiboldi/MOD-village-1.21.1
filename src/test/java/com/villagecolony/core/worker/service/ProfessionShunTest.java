@@ -87,12 +87,12 @@ class ProfessionShunTest {
             open.add(type);
         }
 
-        for (ProfessionType type : ProfessionType.values()) {
+        for (ProfessionType type : ProfessionAssigner.PRODUCER_ORDER) {
             if (open.contains(type)) {
                 continue;
             }
 
-            for (int i = 0; i < ProfessionAssigner.MAX_PER_PROFESSION; i++) {
+            for (int i = 0; i < 2; i++) {
                 aWorker().assign(type);
             }
         }
@@ -216,7 +216,7 @@ class ProfessionShunTest {
 
         worker.giveUpProfession();
 
-        for (ProfessionType type : ProfessionType.values()) {
+        for (ProfessionType type : ProfessionAssigner.PRODUCER_ORDER) {
             assertFalse(worker.isShunning(type), type + " ficou de castigo à toa");
         }
     }
@@ -268,7 +268,7 @@ class ProfessionShunTest {
 
         worker.giveUpProfession();
 
-        ProfessionAssigner.assignMissing(workers, COLONY, everyone());
+        ProfessionAssigner.assignMissing(workers, COLONY, everyone(), 30);
 
         assertEquals(
                 ProfessionType.FARMER,

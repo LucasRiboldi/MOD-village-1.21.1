@@ -42,6 +42,7 @@ public final class ProfessionRegistry {
         // dele, e a colônia mesma põe picaretas lá. A descida lenta
         // deixou de ser um teto e virou o primeiro degrau.
         define(ProfessionType.MINER, ToolType.IRON_PICKAXE, Capability.COLLECT_STONE);
+        define(ProfessionType.BREEDER, ToolType.SHEARS, Capability.COLLECT_WOOL);
         define(ProfessionType.SHEPHERD, ToolType.SHEARS, Capability.COLLECT_WOOL);
         define(ProfessionType.SMELTER, ToolType.NONE, Capability.SMELT_ITEMS);
         define(ProfessionType.CARPENTER, ToolType.NONE, Capability.CRAFT_WOOD);
