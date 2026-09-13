@@ -103,6 +103,21 @@ public class BlueprintReaderGameTest implements FabricGameTest {
         context.complete();
     }
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "blueprint_reader")
+    public void structureVoidDoesNotBecomeAHouseMaterial(TestContext context) {
+        Blueprint mediumHouse = StructureBlueprintReader.read(
+                        context.getWorld(),
+                        ResourceId.vanilla("village/plains/houses/plains_medium_house_1"))
+                .orElseThrow(() -> new AssertionError("a casa media de planicie nao foi encontrada"));
+        ResourceId structureVoid = MinecraftTypeAdapter.toResourceId(Blocks.STRUCTURE_VOID);
+
+        context.assertFalse(
+                mediumHouse.materials().containsKey(structureVoid),
+                "o andaime structure_void entrou na conta de materiais da casa");
+
+        context.complete();
+    }
+
     /**
      * O marcador do gerador vira o bloco que ele promete — 2026-08-29.
      *

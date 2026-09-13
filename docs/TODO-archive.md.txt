@@ -1,0 +1,65 @@
+# TODO-archive.md
+
+> **Arquivo histórico.** Contém tudo o que saiu do `TODO.md` para que ele
+> voltasse a ser uma lista de pendências vivas, com ~150 linhas.
+>
+> **Regra:** nada aqui é editado depois de arquivado. Se uma conclusão se
+> revela errada, a correção entra como entrada nova no `TODO.md` — a
+> entrada antiga fica onde está.
+>
+> Para o estado atual: [`STATE.md`](../STATE.md).
+> Para as pendências vivas: [`TODO.md`](../TODO.md).
+
+---
+
+## Índice
+
+- [📒 Ciclo de 2026-09-11](#ciclo-de-2026-09-11)
+- [🎮 Sessões de 2026-09-11](#sessões-de-2026-09-11)
+- [📒 Ciclo de 2026-09-10](#ciclo-de-2026-09-10)
+- [🎮 Sessões de 2026-09-10](#sessões-de-2026-09-10)
+- [📒 A noite de 2026-09-09](#a-noite-de-2026-09-09)
+- [📒 A tarde de 2026-09-09](#a-tarde-de-2026-09-09)
+- [📒 A sessão de 2026-09-09](#a-sessão-de-2026-09-09)
+- [📒 A sessão de 2026-09-04](#a-sessão-de-2026-09-04)
+- [📒 A sessão de 2026-09-03](#a-sessão-de-2026-09-03)
+- [✅ Resolvido](#-resolvido)
+- [🔴 Erros fechados](#-erros-fechados)
+- [🟠 Ciclos anteriores](#-ciclos-anteriores)
+
+---
+
+## 📒 Ciclo de 2026-09-11
+
+**Onze commits sobre o `9385db6`.** O plano de correção do autor virou arquivo do projeto, cinco itens foram entregues e **três foram recusados com razão escrita** — o achado mais útil do ciclo, e o que motiva a próxima sessão.
+
+### Entregue
+
+| item | o quê |
+|---|---|
+| **P0.1** | **O índice de ruas voltou a valer para vila grande.** O `fits()` recusava índice acima de 1.024 colunas, e o preço era pago pela vila que cresceu: ela perde o atalho por ter crescido e volta às dezessete passagens — 8,1 minutos por resposta. Em lugar do teto, paginação com cursor |
+| **P0.1-b** | **O caminho de terra é batido, não carregado.** `dirt_path` não tem item; a obra o pedia e esperava para sempre. Uma linha no `isShapedFromTheGround`, que já cobria `farmland` e `water` pelo mesmo motivo |
+| **P0.1-c** | **A recusa de lote diz por quê.** `LotRefusals` conta os cinco motivos do `flatGroundAt`. É o P0.1 ao pé da letra, e é o número que decide a terraplanagem |
+| **P0.6** | **A enxurrada da areia calou.** Era 72% do log — 4.389 linhas de 6.117. Amortecedor de um ciclo no `IdleLog`, para quem pergunta por tique |
+| **P1.10** | **O escopo do beco ganhou o teste que faltava.** A mutação que o Verifier provou que escapava agora derruba um teste e só ele |
+| **P1.12** | **Os helpers dizem se a mão está vazia.** E a auditoria foi por medição: equipei os 26 e a bateria seguiu verde — nenhum dependia da mão nua |
+
+### Recusado, e é o que vale ler
+
+**Três itens do plano não se fazem, e os três pelo mesmo motivo:** o plano foi escrito a partir deste arquivo, e as linhas que ele copiou **já estavam vencidas**.
+
+| item | por quê |
+|---|---|
+| **P1.8** | O `furniture()` **não está morto**: é o primeiro critério de ordenação da obra, e é o que põe mobília depois da casa inteira. A Regra 21 levou o dono antigo; ninguém notou que ele ganhou dono novo |
+| **P1.12** (parte) | A asserção defensiva no `assign()` **quebraria a contratação**: na produção o `assignMissing` roda antes do `equip`, no mesmo ciclo, então mão vazia ali é o desenho |
+| **P1.7** | Separar `WOOD` por espécie **refaria o defeito de 09-10**. `INTERCHANGEABLE_IN_THE_WALL` já traz `WOOD` e `PLANKS`; a conta e o construtor concordam, e é isso que a Regra 27 pede. E o item contradiz o P1.6 do próprio plano |
+
+### Medido e devolvido maior do que entrou
+
+**P1.11 — a arena não hospeda a segunda sala, e há um segundo teto.** A linha dizia que ela assenta no bedrock. Está certa e é menos da metade:
+
+```text
+arena mede           y = -58 .. -52   (medido no log da bateria)
+mundo acaba em       y = -64
+MineShaft.DEEPEST    y = -59          ← o teto que ninguém tinha ligado
+um nível custa       20 blocos  →  sala 2 em -76

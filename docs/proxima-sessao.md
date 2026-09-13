@@ -1,6 +1,6 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Escrito em 2026-09-02, atualizado em 2026-09-04.** Este arquivo existe
+**Escrito em 2026-09-02, atualizado em 2026-09-13.** Este arquivo existe
 porque o gargalo do projeto deixou de ser código: havia **dez consertos do
 mineiro empilhados sem uma única sessão que os veja**, e nenhuma pergunta
 importante em aberto pode ser respondida sem abrir o jogo.
@@ -25,7 +25,15 @@ ao lado da árvore em vez do tronco; `SweepLog` deixou de acusar ciclos que
 saíram antes de pedir lote; `ABANDONED` precisa de duas leituras positivas
 seguidas para voltar a `STABLE`, reduzindo o E9. O jar copiado em
 `downloads/` e em `.minecraft/mods` tem MD5
-`C20A21AA0DFDE483EF9177F3E85C9CF7`.
+`DD663BF1241F13F287C2EE5FB20E12A7`.
+
+O novo GameTest encontrou terra comum de blueprint sendo colocada sem
+estoque; agora ela exige item no baú. Na obra real, observe se terra aparece
+sem material disponível e se a construção continua quando o estoque existe.
+Para a mina, `latest.log` repetiu `hit stone with nowhere to stand` antes de
+fechar e reabrir a mesma descida. E45 segue sem correção até decisão/ADR;
+registre se isso se repete com este jar, sem tratar a atualização como
+correção da geometria.
 
 ---
 
@@ -120,6 +128,7 @@ Dez consertos dependem desta resposta.
 | `0/0 ticks` com ele parado | ❌ o **E32** não fechou — o `mine()` nunca roda |
 | `the miner is at ... 66 ...` (y=66) | ❌ ele voltou para a **superfície acima da mina**. É o sintoma exato que o conserto do E32 atacou |
 | `could not reach` repetido no mesmo lugar | possível **E34**: ele foi mandado para um vão do outro lado de uma parede |
+| `hit stone with nowhere to stand` e a mesma descida reaparece | assinatura observada em 09-13, **E45 aberto**; o jar atualizado ainda não troca a geometria da mina |
 
 ### 3-a. O que entrou em 2026-09-03, e como conferir cada um
 
@@ -231,6 +240,17 @@ contra o mundo, é a hora de olhar.
 - **Outras profissões pouco visíveis:** carpinteiros trabalharam no log; para
   fundidor, pedreiro e pastor, próxima sessão deve conferir se havia tarefa
   aberta, trabalhador com profissão e material de entrada.
+
+### Validação pendente de 2026-09-13, jar 0.3.0
+
+- O MD5 esperado em `downloads/` e `.minecraft/mods` é
+  `DD663BF1241F13F287C2EE5FB20E12A7`.
+- **Construtor:** conferir que terra comum não é colocada sem estoque; anotar
+  o bloco/posição e o estado da obra. A linha do log anterior não identificou
+  qual terra foi vista.
+- **Mineiro:** nenhum ajuste de geometria foi incluído. Anotar se `hit stone
+  with nowhere to stand` reaparece e se a mesma hélice reinicia; isso decide o
+  próximo diagnóstico, mas E45 precisa de aprovação/ADR antes do código.
 
 ---
 

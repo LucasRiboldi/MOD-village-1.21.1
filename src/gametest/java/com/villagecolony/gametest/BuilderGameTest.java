@@ -646,6 +646,29 @@ public class BuilderGameTest implements FabricGameTest {
         });
     }
 
+    /** Terra comum é material de construção, não bloco moldado gratuitamente. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_ground",
+            tickLimit = 300)
+    public void aHouseNeedsStockForDirt(TestContext context) {
+        Fixture fixture = setUp(context, 0, dirt(), 1);
+
+        context.runAtTick(90, () -> {
+            try {
+                context.assertTrue(
+                        fixture.project.state() == ConstructionState.WAITING_RESOURCES,
+                        "a obra colocou terra sem material; estado=" + fixture.project.state());
+
+                context.assertTrue(
+                        !stateAt(context, SITE).isOf(Blocks.DIRT),
+                        "a planta pediu terra, mas o baú vazio não impediu a colocação");
+            } finally {
+                fixture.owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
     /**
      * <b>E a obra marcada como esperando ainda consegue acabar</b> —
      * crash de 2026-09-05, às 21:06, com o servidor no chão:
@@ -756,6 +779,11 @@ public class BuilderGameTest implements FabricGameTest {
                 new BlueprintBlock(
                         new ColonyPos(0, 0, 0),
                         MinecraftTypeAdapter.toResourceId(Blocks.FARMLAND))));
+    }
+
+    private static Blueprint dirt() {
+        return Blueprint.of(HUT, List.of(new BlueprintBlock(
+                new ColonyPos(0, 0, 0), MinecraftTypeAdapter.toResourceId(Blocks.DIRT))));
     }
 
     /** Um canteiro com cultivo em cima: os dois são moldados no lugar. */

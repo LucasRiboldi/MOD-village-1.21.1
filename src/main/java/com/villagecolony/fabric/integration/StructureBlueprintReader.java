@@ -363,18 +363,19 @@ public final class StructureBlueprintReader {
     /**
      * Se este bloco existe para o gerador e não para a casa.
      *
-     * <p>O ar entra aqui junto com os dois blocos de encaixe: os três
+     * <p>O ar entra aqui junto com os três blocos de estrutura: os quatro
      * são "não é para colocar", e separá-los em duas perguntas só faria
      * quem chama perguntar duas vezes.
      *
-     * <p>Compara por nome porque é nome o que a paleta traz. Os três
+     * <p>Compara por nome porque é nome o que a paleta traz. Os quatro
      * saem do registro em vez de virem escritos: {@code Blocks.AIR} é a
      * fonte, e uma string "minecraft:air" aqui envelheceria sozinha.
      */
     private static boolean isScaffolding(ResourceId name) {
         return name.equals(MinecraftTypeAdapter.toResourceId(Blocks.AIR))
                 || name.equals(MinecraftTypeAdapter.toResourceId(Blocks.CAVE_AIR))
-                || name.equals(MinecraftTypeAdapter.toResourceId(Blocks.STRUCTURE_BLOCK));
+                || name.equals(MinecraftTypeAdapter.toResourceId(Blocks.STRUCTURE_BLOCK))
+                || name.equals(MinecraftTypeAdapter.toResourceId(Blocks.STRUCTURE_VOID));
     }
 
     /**

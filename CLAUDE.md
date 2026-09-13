@@ -1,165 +1,58 @@
-## graphify
+# CLAUDE.md — Village Colony
 
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
-
-Rules:
-- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost). **It costs the curated community names:** `update` re-clusters, the community ids shift, and the 169 hand-written labels are replaced by hub-derived ones (`TaskService` instead of `Colony Cycle Orchestration`). It backs the old graph up to `graphify-out/<date>/` first — and overwrites that directory if run twice in one day, so copy it aside before a second run.
-
-  Two ways back, and they trade different things:
-
-  1. **Restore the backup** — keeps the curated names, loses the new code. `cp` of `graph.json`, `GRAPH_REPORT.md`, `manifest.json`, `cost.json` and `.graphify_labels.json`, then delete `.graphify_labels.json.sig` (it belongs to the labels you just replaced), rewrite `.graphify_root` with the absolute path (`update` sets it to `.`), and re-run `graphify export html`.
-  2. **Carry the names onto the new graph** — keeps both, and this is the one to reach for. `scripts/graphify_relabel.py` does it: for each new community it takes the curated `community_name` that the majority of its nodes carried in the previous `graph.json`, then rewrites `graph.json`, `.graphify_labels.json`, `GRAPH_REPORT.md` and `graph.html`. Measured 2026-09-02 against the 3,167-node curated graph: **143 of 158 decided by vote**, the rest by `scripts/community_names.json`.
-
-     ```
-     python scripts/graphify_relabel.py --reference graphify-out/<backup>/graph.json --dry-run
-     python scripts/graphify_relabel.py --reference graphify-out/<backup>/graph.json --overrides scripts/community_names.json
-     ```
-
-     Run `--dry-run` first: it lists the communities with no clear majority, with sample members, which is exactly what you need to add a name to `scripts/community_names.json`. That file is keyed by **node id, not community id** — node ids are deterministic and survive re-clustering, community ids do not, so a number-keyed override would silently name the wrong community after the next `update`.
-
-     The script's decision logic is covered by `python -m unittest discover -s tests` (28 cases, stdlib only, no pytest needed). It is **not** wired into `./gradlew build` on purpose: this is a Java project, and making the build require a Python interpreter would break it on machines that do not have one, for a maintenance utility that never ships with the mod. Run it by hand when you touch the script.
-
-  Do **not** expect `graphify label` to do this. With no LLM backend configured — there is no `GEMINI_API_KEY`/`GOOGLE_API_KEY` here — it prints `no LLM backend configured; keeping Community N placeholders`, does nothing useful, and still overwrites `graphify-out/<date>/`. The agent doing the labeling *is* the LLM; option 2 is that job.
-
-  Re-clustering also moves nodes between communities, so a name can end up sitting oddly on a node you remember elsewhere. `ColonyPos` left `Geometry Helpers` for `Colony Center and Observation`, because 12 of that old community's 20 nodes went there; the 8 that stayed are now `ColonyPos Distance`. The name follows the majority of the members, not any one node.
-- `.graphifyignore` at the root excludes `.claude/`, and it has to. The `.gitignore` reopens `.claude/skills/` so the skills are versioned, graphify reads `.gitignore`, and without the exclusion `update` indexes the 158 skill markdowns and adds ~2.2k heading nodes to the mod's graph — measured 2026-09-02: 3,167 to 5,422 nodes, which pushed `graph.html` past the 5,000 limit into aggregated community view. `.graphifyignore` is read after `.gitignore` and can only ever exclude more, never re-include.
-
-## O Gauntlet Loop: quem escreve o código não libera o código
-
-**Alteração relevante de código não está pronta porque o agente terminou
-de escrevê-la.** Ela está pronta quando o `gauntlet-verifier` devolve
-`PASS`.
-
-| papel | quem | pode |
-|---|---|---|
-| **Builder** | o fio principal | implementar, criar e atualizar teste, corrigir o que for apontado, rodar a conferência rápida |
-| **Verifier** | subagente `gauntlet-verifier` | rodar os comandos reais, procurar o que quebra, e **só ele** liberar |
-
-```
-BUILD → VERIFY → PASS → entrega
-            └──→ FAIL → relatório → BUILD/FIX → VERIFY → ...
-```
-
-Com teto: `MAX_ITERATIONS = 5`. Estourou sem PASS, o resultado é
-`BLOCKED` — e `BLOCKED` nunca é anunciado como pronto.
-
-**Como rodar:** `/gauntlet <o requisito em uma linha>`. O laço está em
-[`.claude/commands/gauntlet.md`](.claude/commands/gauntlet.md) e o crítico
-em [`.claude/agents/gauntlet-verifier.md`](.claude/agents/gauntlet-verifier.md).
-
-**A evidência é de máquina, não de opinião.** `scripts/gauntlet_checks.py`
-roda as camadas na ordem em que ficam caras — diff, typecheck, unitários,
-testes de Python, gametest —, para na primeira falha bloqueante e lê a
-contagem dos **XML de relatório**, não do que o Gradle imprimiu;
-`scripts/gauntlet.py` decide e grava `build/gauntlet/iteration-N.json` e o
-histórico do laço em `build/gauntlet/ledger.json`. São dois arquivos
-porque juntos passavam de 580 linhas, e a regra deste projeto é 500 — a
-mesma que o gate acusa.
-
-Três coisas que ele faz e que valem saber:
-
-- **Relatório mais velho que o código é `BLOCKED`, não `PASS`.** Tarefa
-  `UP-TO-DATE` do Gradle não reescreve o XML, e sem essa conferência uma
-  bateria que não rodou passaria por bateria verde.
-- **O agente pode rebaixar o veredito do script, nunca promovê-lo.** A
-  única exceção é a camada `security`, e ela exige `--security-reviewed
-  "<o que foi conferido>"` — a promoção fica escrita no relatório.
-- **Sem `--deep` não há `PASS`.** A bateria de gametest sobe um servidor
-  e leva minutos; pular é legítimo para confirmar um FAIL barato, e nunca
-  para aprovar.
-
-**Não existe lint neste projeto** — sem checkstyle, spotless ou PMD —, e
-o script diz isso em vez de inventar um comando. Quem faz esse papel são
-os testes de arquitetura, na camada unitária: `DependencyRuleTest` e
-`ConversionBoundaryTest`.
-
-**A decisão do gate tem teste**, em `tests/test_gauntlet.py` (46 casos,
-stdlib; `tests/` inteiro dá 74, somando os 28 do `graphify_relabel`). Como o `graphify_relabel.py`, ele **não** está no `./gradlew
-build`: fazer o build de um projeto Java exigir Python quebraria a
-máquina que não tem Python, por causa de um utilitário que não vai no jar.
-Rode à mão ao mexer no script — e o próprio laço o roda quando o diff
-toca `scripts/` ou `tests/`.
+> Mod Fabric para **Minecraft 1.21.1** que transforma vilas Vanilla em
+> colônias autônomas. Os aldeões trabalham, produzem e constroem sozinhos
+> — o jogador acha a vila e vai embora.
+>
+> **Este arquivo é o ponto de entrada.** Em divergência com qualquer outro
+> documento, **este vence** — exceto onde ele delega explicitamente.
 
 ---
 
-## As skills do projeto: ofereça, não decida sozinho
+## 0. Contexto — leia isto antes de qualquer coisa
 
-Este projeto carrega quatro skills próprias em `.claude/skills/`. Elas são
-versionadas de propósito — são o conhecimento acumulado do projeto, e não
-configuração de máquina.
+### 0.1 Quanto contexto você deve carregar
 
-| skill | quando ela é a ferramenta certa |
+**O erro mais comum é ler demais.** O projeto tem documentação excelente
+e longa, e o histórico tem mais de 4.600 linhas que **não** precisam ser
+lidas para trabalhar. O tempo gasto lendo é tempo que não sobra para
+implementar.
+
+**Ordem canônica de leitura, para qualquer tarefa:**
+
+| Ordem | Documento | Por quê |
+|---|---|---|
+| 1º | `STATE.md` | **o estado vivo** — P0 aberto, sessão em curso, verificação pendente |
+| 2º | Este arquivo, §1 e §2 | as regras e o workflow |
+| 3º | `docs/PATTERNS.md` | a assinatura do defeito que você está caçando |
+| 4º | ADR ou doc específico do subsistema | a decisão que governa o que você vai tocar |
+
+**Depois disso, procure por trecho.** Nunca leia inteiro:
+
+| Documento | Regra |
 |---|---|
-| `fabric-development` | escrever ou alterar código de mod: registro, Mixin, networking, persistência, datagen, gametest, crash, lag, bug que só aparece em servidor |
-| `minecraft-villager-systems` | qualquer coisa que toque aldeão ou vila: Brain, Memory, Sensor, Activity, POI, profissão, local de trabalho, Schedule, trades, reprodução, aldeão parado |
-| `minecraft-code-research` | investigar como o Minecraft faz alguma coisa antes de imitá-la — precede as duas de cima |
-| `graphify` | pergunta sobre a base: onde está, como se liga, o que depende do quê |
+| `Development-Log.md` | **histórico.** Só `grep` por data ou símbolo. Nunca inteiro. |
+| `Project-State.md` | **histórico** desde 2026-08-26. Usar `docs/RULES.md` no lugar. |
+| `Backlog.md` | **histórico** desde 2026-08-15. Usar `TODO.md` no lugar. |
+| `TODO.md` | **vivo** — mas 700 linhas. Ler o topo (primeiros 100) e `grep` o resto. |
+| `docs/technical/Plano-de-Correcao.md` | **vivo.** Ler a régua (§1) e o item atual. |
 
-**A regra: quando você perceber que uma delas ajudaria na tarefa em mãos,
-diga isso e ofereça rodá-la — antes de sair fazendo à mão.** Uma linha
-basta: qual skill, o que ela acrescentaria aqui, e a pergunta. Quem
-decide é o autor.
+**Regra dura:** se você não sabe o que procura, você está lendo o
+documento errado. Vá para `STATE.md` primeiro.
 
-Ela vale inclusive — e principalmente — quando a tarefa parece que dá
-para tocar direto. O caso que a motivou é justamente esse: sai mais caro
-descobrir no meio do trabalho que a skill teria dado o caminho pronto do
-que gastar uma linha perguntando antes.
+### 0.2 Estado em uma linha
 
-**O que a regra não é.** Não é pedir permissão para trabalhar, e não é
-oferecer skill em toda mensagem. Se nenhuma se aplica, siga sem citar
-nenhuma; se o autor já disse que não quer, não repita a oferta no mesmo
-assunto. E oferecer não é esperar de braços cruzados: o que não depende
-da resposta continua andando.
+**MVP completo e verificado em jogo, 8 profissões funcionando — o gargalo
+não é mais código, é verificação em jogo e decisões do autor.** Detalhe
+em `STATE.md`.
 
-## O jar de `downloads/` acompanha todo "commit push"
+### 0.3 Não comece criando classes
 
-**Regra do autor, 2026-09-04.** Sempre que houver `commit push`, o jar de
-`downloads/village-colony-0.3.0.jar` entra junto, atualizado.
+Não suponha arquitetura. Não simplifique decisões existentes. Não escreva
+código antes de responder:
 
-```
-./gradlew build && cp build/libs/village-colony-0.3.0.jar downloads/
-```
-
-**Por que ela existe.** Aquele arquivo **não é gerado pelo Gradle** —
-nenhuma tarefa o copia. Ele é passo de mão, e por isso envelhece em
-silêncio: o README aponta para ele, o autor o instala em `mods`, e nada
-avisa que ele está uma correção atrás do código. Aconteceu em 2026-09-04
-de manhã, e custou uma sessão de jogo inteira medindo um jar velho.
-
-**Como saber que deu certo:** depois do `cp`, `git status` acusa o jar
-como modificado. Se não acusar, ele já estava em dia — e não que a build
-tenha falhado. Na dúvida, `md5sum` nos dois caminhos.
-
-**A ordem importa:** a build vem antes do commit, porque um jar que não
-compila não deve ser publicado. E o `cp` vem antes do `git add`, senão o
-commit leva o jar da vez passada.
-
-**E o mesmo jar vai para a instalação de teste** — regra do autor,
-2026-09-05: *"sempre que salvar um .jar na pasta download do projeto,
-também substitua o arquivo na pasta mod do tlauncher desta maquina"*.
-
-```
-cp downloads/village-colony-0.3.0.jar "$APPDATA/.minecraft/mods/"
-```
-
-**Por que ela existe.** O passo era do autor, e envelhecia calado: em
-2026-09-05 o jar de `mods` estava **onze commits atrás**, e três das
-quatro queixas daquela sessão eram de código que já não existia. Uma
-sessão inteira de diagnóstico foi gasta contra o build errado.
-
-**Conferir por hash é parte da regra, e não um extra.** Copiar com o
-Minecraft aberto falha **sem erro**: o agente acha que instalou, o autor
-joga o jar velho, e o relato seguinte descreve outro código.
-
-```
-md5sum downloads/village-colony-0.3.0.jar        "$APPDATA/.minecraft/mods/village-colony-0.3.0.jar"
-```
-
-Hashes diferentes: **diga ao autor que a cópia não pegou** e peça para
-fechar o jogo. Nunca afirme que o jar foi instalado sem ter comparado.
-
-**Fechar o Minecraft** continua sendo do autor — o agente não fecha o
-jogo dele. Ver `docs/proxima-sessao.md`.
+```text
+1. Qual problema está sendo resolvido?
+2. Qual sistema é responsável?
+3. Quais arquivos serão alterados?
+4. Existe decisão arquitetural envolvida?

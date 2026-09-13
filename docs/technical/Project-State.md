@@ -2,6 +2,16 @@
 
 # Village Colony — Project State
 
+> ⚠️ **ARQUIVO HISTÓRICO — congelado em 2026-08-26.**
+>
+> Para o estado atual, veja [`STATE.md`](../../STATE.md) na raiz.
+> Para as regras do autor, veja [`docs/RULES.md`](../RULES.md).
+> Para o roteiro, veja [`Plano-de-Correcao.md`](Plano-de-Correcao.md).
+>
+> Este arquivo tem valor **arqueológico**: contém o texto original das
+> regras, o histórico das decisões e o raciocínio de cada emenda. Ele
+> **não** é fonte viva.
+
 **Status:** MVP escrito por inteiro — Fases 1 a 9 verificadas em jogo,
 10 e 11 só por teste
 **Version:** 0.1.0

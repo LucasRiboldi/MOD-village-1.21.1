@@ -8,7 +8,13 @@ Este arquivo é o **roteiro**; a lista canônica do estado continua sendo o
 [`TODO.md`](../../TODO.md). Onde os dois discordarem sobre *o que já foi
 feito*, vale o TODO; sobre *o que fazer e em que ordem*, vale este.
 
----
+> **A varredura do plano contra o código** — feita em 2026-09-11 para
+> descobrir quais itens já estavam vencidos antes de virar trabalho — está
+> em [`varredura-do-plano-2026-09-11.md`](varredura-do-plano-2026-09-11.md).
+> O placar final dela: **12 itens vencidos contra 7 entregues.** A lição
+> mais útil do ciclo, e a razão de o plano ser relido antes de virar
+> trabalho.
+
 
 ## A régua (não negociável)
 
@@ -27,7 +33,6 @@ feito*, vale o TODO; sobre *o que fazer e em que ordem*, vale este.
 
 **Antes de começar:** rodar a bateria. Verde? seguir. Vermelha? parar e reportar.
 
----
 
 ## P0 — Bloqueadores
 
@@ -52,10 +57,45 @@ Um por vez, com teste antes de seguir.
 **Critério:** log com motivo por candidato; nenhum `nothing to work on`
 quando há lote válido.
 
-### ~~P0.2~~ — A colônia lê 1 de 8 baús
+✅ **Entregue em 2026-09-11.** O índice de ruas voltou a valer para vila
+grande; o `fits()` recusava índice acima de 1.024 colunas, e o preço era
+pago pela vila que cresceu. Em lugar do teto, paginação com cursor.
+**Visto em jogo na sessão de 02:03:** a colônia planejou o açougue e
+abriu a obra.
 
-❌ **VENCIDO NA PREMISSA — a varredura tinha lido os oito.** Conferido
-pelo P0.0 em 2026-09-11, e é o achado que mais justifica a varredura.
+
+### P0.1-b — O caminho de terra não sai de baú
+
+**Sintoma:** `Builder stopped — no minecraft:dirt_path in the colony
+chests`, 31 vezes na sessão de 02:03, com a obra em `WAITING_RESOURCES`
+outras 30.
+
+**Causa:** o `dirt_path` não tem item. No jogo ele nasce de uma pá batendo
+na grama, e quebrado devolve terra. A obra esperava por ele para sempre.
+
+**Correção:** uma linha no `isShapedFromTheGround`, que já cobria
+`farmland` e `water` pelo mesmo motivo.
+
+✅ **Entregue em 2026-09-11.** ⬜ **Espera sessão.**
+
+
+### P0.1-c — A recusa de lote diz por quê
+
+**Sintoma:** o `SweepLog` dizia "não há lote" quando o que ele sabia era
+"não terminei de olhar".
+
+**Correção:** `LotRefusals` conta os cinco motivos do `flatGroundAt`. É o
+P0.1 ao pé da letra, e é o número que decide a terraplanagem.
+
+✅ **Entregue em 2026-09-11.** O número chegou na sessão de 09-12: das
+6.583 recusas, **4.578 (70%) são `NOT_NATURAL_GROUND`** — pedra não entra
+como solo natural. ⬜ **Espera decisão do autor — ver P0.7.**
+
+
+### P0.2 — A colônia lê 1 de 8 baús
+
+❌ **VENCIDO NA PREMISSA — a varredura tinha lido os oito.** Conferido pelo
+P0.0 em 2026-09-11, e é o achado que mais justifica a varredura.
 
 A linha é montada assim, em `VillageDetectionHandler.logResources`:
 
@@ -64,217 +104,113 @@ A linha é montada assim, em `VillageDetectionHandler.logResources`:
     colony.id(), stock,
     resources.byChest().size(),   // baús COM CONTEÚDO
     survey.chestsRead(),          // baús LIDOS
-```
 
-Os dois números são **baús com conteúdo** e **baús lidos** — nunca uma
-fração de cobertura. `in 1 of 8 chests read` quer dizer *"um baú tinha
-alguma coisa, dos oito que li"*. O javadoc de `ChestSurvey` diz isso em
-tantas palavras: *"`chestsRead` — baús alcançados, **incluindo os que
-estavam vazios**"*. E quando a varredura **de fato** não alcança um baú,
-a linha antiga ganhava o sufixo `(N unreachable, chunk unloaded)` — que
-não aparece em nenhuma das duas medições citadas aqui.
+Os dois números são baús com conteúdo e baús lidos — nunca uma
+fração de cobertura. in 1 of 8 chests read quer dizer "um baú tinha
+alguma coisa, dos oito que li". O javadoc de ChestSurvey diz isso em
+tantas palavras: "chestsRead — baús alcançados, incluindo os que
+estavam vazios".
 
-Então o "piorou" de `5 of 16` → `1 of 8` também não é o que parece: são
-menos baús registrados e menos baús com estoque, e não menos leitura.
+O que ficava pendurado nessa premissa: ColonyChestScanReport,
+ColonyChestCache com invalidação por evento, CHESTS_PER_TICK = 4,
+MAX_STALENESS_TICKS e o log por ciclo. Nada disso tem defeito que o
+justifique — o alarme que eles construiriam (scanCompleted=false) já
+existe como ChestSurvey.isPartial().
 
-**O que ficava pendurado nessa premissa:** `ColonyChestScanReport`,
-`ColonyChestCache` com invalidação por evento, `CHESTS_PER_TICK = 4`,
-`MAX_STALENESS_TICKS` e o log por ciclo. Nada disso tem defeito que o
-justifique — o alarme que eles construiriam (`scanCompleted=false`) já
-existe como `ChestSurvey.isPartial()`.
+✅ O que sobrou, e foi entregue: a frase enganava, e enganou. Foi ela
+que custou um bloqueador inteiro de plano. ChestSurvey.coverage() monta
+a cobertura num lugar só, e reserva a forma X of Y chests read para
+cobertura de verdade — varredura completa sai como 8 chests read, 1 with items, que não se lê ao contrário. Cinco casos em
+ChestSurveyCoverageTest.
+P0.3 — A cadeia mineiro → armazenamento → fundidor
 
-✅ **O que sobrou, e foi entregue:** a frase enganava, e enganou. Foi ela
-que custou um bloqueador inteiro de plano. `ChestSurvey.coverage()` monta
-a cobertura num lugar só, e **reserva a forma `X of Y chests read` para
-cobertura de verdade** — varredura completa sai como `8 chests read, 1
-with items`, que não se lê ao contrário. Cinco casos em
-`ChestSurveyCoverageTest`.
+✅ CONFIRMADO, e a ruptura está achada — é estática.
 
-É o mesmo *defeito-que-parece-número* do V5 que o javadoc do
-`ChestSurvey` nomeia, cometido do lado de fora: não no que a varredura
-mede, mas no que a frase deixa concluir.
-
-**Sintoma original, para o registro:** `in 5 of 16 chests read` (09-10) →
-`in 1 of 8 chests read` (11 set). **Piorou.**
-
-- Criar `ColonyChestScanReport`: `chestsInRadius`, `chestsScanned`,
-  `chestsSkipped`, `chestsFailed`, `itemsObserved`, `scanStartTick`,
-  `scanEndTick`, `scanCompleted`.
-- `scanCompleted=false` é o alarme. Envolver a varredura em `try/finally`.
-- `ColonyChestCache` com invalidação **por evento** — bloco quebrado ou
-  colocado, baú aberto ou fechado, trabalhador move item —, não por tique.
-  `MAX_STALENESS_TICKS = 200–400` como válvula.
-- Varredura em fila: `CHESTS_PER_TICK = 4`. Não ler tudo num tique.
-- Log por ciclo:
-  `[Colony/chest] cycle=N in=X scanned=Y skipped=Z failed=W items=V duration=Tt completed=B`
-- **Não aumentar a frequência de leitura.** Se lê 1 de 8, ler 20×/min
-  continua 1 de 8.
-
-**Teste:** `chestsScanned == chestsInRadius` quando `scanCompleted=true`;
-nenhuma linha `completed=false` com `scanned < in`.
-**Critério:** 8 encontrados → 8 válidos → 8 lidos → 8 contabilizados.
-
-### P0.3 — A cadeia mineiro → armazenamento → fundidor
-
-✅ **CONFIRMADO, e a ruptura está achada — é estática.** O critério do
-item era *"prova de que a cadeia está correta, **ou** prova de onde ela
-quebra"*, e a segunda saiu por leitura em 2026-09-11, sem precisar de
-sessão.
-
-**A Regra 30 manda o minério que não é carvão para o baú da boca da
-mina.** Esse baú é achado por geometria — `MineMouth.chestAt` procura um
-baú encostado na entrada do poço — e **não é registro de ninguém**: o
-único lugar do mod que cria `WorkerStorage` é `ChestScanner.scan`, que
-procura baú ao redor da **cama** do aldeão. Mina não tem cama ao lado.
+A Regra 30 manda o minério que não é carvão para o baú da boca da
+mina. Esse baú é achado por geometria — MineMouth.chestAt procura um
+baú encostado na entrada do poço — e não é registro de ninguém: o
+único lugar do mod que cria WorkerStorage é ChestScanner.scan, que
+procura baú ao redor da cama do aldeão. Mina não tem cama ao lado.
 
 E tudo o que conta o estoque da colônia percorre baús de trabalhador:
+quem	de onde tira a lista
+ColonyChests.nearestFirst	WORKERS.ofColony → STORAGES.of(...)
+ChestInventoryReader.survey	os mesmos WorkerStorage
+SmelterWork.smeltOne	percorre os trabalhadores direto
 
-| quem | de onde tira a lista |
-|---|---|
-| `ColonyChests.nearestFirst` | `WORKERS.ofColony` → `STORAGES.of(...)` |
-| `ChestInventoryReader.survey` | os mesmos `WorkerStorage` |
-| `SmelterWork.smeltOne` | percorre os trabalhadores direto |
+Provado por SmelterGameTest.theOreInTheMineMouthChestIsInvisibleToTheColony,
+nas duas metades.
 
-Então o minério entra num baú que a contabilidade da colônia **não lê**.
-O fundidor está certo, e está faminto ao lado do ferro — e a linha
-`nothing in the colony chests to smelt` é verdadeira no pé da letra.
+✅ Conserto entregue em 2026-09-11, pelo lado de quem lê. O
+ColonyChests passou a ser a única resposta a "onde estão os baús
+desta colônia", com o da boca da mina entre eles, e os três que montavam
+a própria lista passaram a perguntar a ele. ⬜ Espera sessão.
+P0.4 — O lenhador corta a parede da própria vila
 
-Isso também fecha a conta do P0.2: oito baús lidos com estoque em um só
-é exatamente o que se espera quando o minério está fora da lista.
-
-**Provado por** `SmelterGameTest.theOreInTheMineMouthChestIsInvisibleToTheColony`,
-nas duas metades — que é mesmo ali que a Regra 30 deposita, pelo caminho
-que o `MinerHaul.treasureChestFor` percorre, e que a colônia não o
-enxerga estando ele com oito ferros dentro.
-
-✅ **E a instrumentação que o item pedia foi entregue junto:** o motivo de
-falha do fundidor passou a dizer o que mediu — `none of 3 colony chests
-had minecraft:raw_iron to smelt`, ou `no colony chest to look in`. A
-frase antiga era a mesma para "não há baú registrado", "há seis e estão
-vazios" e "há seis e nenhum tem ferro".
-
-✅ **E o conserto entrou em 2026-09-11, pelo lado de quem lê.** Dos dois
-caminhos, escolheu-se preservar a Regra 30: ela é decisão do autor de
-2026-08-22 com motivo escrito — o mineiro não carrega minério montanha
-acima —, e revogá-la para a conta fechar trocaria um defeito de
-contabilidade por um de desenho.
-
-O `ColonyChests` passou a ser a **única** resposta a *"onde estão os baús
-desta colônia"*, com o da boca da mina entre eles, e os três que montavam
-a própria lista passaram a perguntar a ele:
-
-| quem | antes | agora |
-|---|---|---|
-| `ChestInventoryReader.survey` | montava do registro de trabalhadores | recebe a lista pronta |
-| as duas medidas de espaço do ciclo | `ChestDepositor.freeSpaceForGroup(workerIds, …)` | `ColonyChests.freeSpaceForGroup(chests, …)` |
-| `SmelterWork.smeltOne` | percorria trabalhadores | `ColonyChests.nearestFirst`, por distância |
-
-**Os três juntos, e não um por vez.** Contar num conjunto e consumir de
-outro é a discordância que o javadoc do `ResourceSubstitution` guarda de
-2026-09-10 — *"a colônia concluía que a meta estava cumprida e o mineiro
-não ia cavar, enquanto o construtor esperava pelo arenito"*. Meia
-correção aqui seria pior que nenhuma.
-
-De quebra, a dívida que o javadoc do `smeltOne` confessava desde agosto —
-*"os baús são percorridos na ordem de registro... o certo é por
-distância"* — saiu junto, porque era a mesma linha.
-
-**O teste virou do avesso, e era o plano.** `theOreInTheMineMouthChestIsInvisibleToTheColony`
-trazia o recado *"a ruptura não é mais esta, e este teste precisa ser
-relido"*; ele falhou, foi relido, e agora se chama
-`theOreInTheMineMouthChestIsCountedAndSmelted`. Mutação conferida:
-tirando o baú da boca da lista, cai **um** teste e é esse.
-
-**Sintoma:** fundidor `nothing in the colony chests to smelt` (34×),
-mineiro entregando 1 pedra em 30 minutos.
-
-- **Não mexer na lógica do fundidor ainda.**
-- Instrumentar a cadeia: quantos itens fundíveis existem nos baús no momento
-  da falha?
-- Correlacionar coleta, depósito, leitura do baú e decisão de fundição.
-- Zero fundíveis → o fundidor está certo, e é sintoma do P0.2.
-- Só alterar o fundidor se a cadeia anterior estiver comprovadamente correta.
-
-**Critério:** prova de que a cadeia está correta, **ou** prova de onde ela quebra.
-
-### ~~P0.4~~ — O lenhador corta a parede da própria vila
-
-❌ **VENCIDO — o item pede o que entrou em 2026-09-09.** Conferido pelo
+❌ VENCIDO — o item pede o que entrou em 2026-09-09. Conferido pelo
 P0.0 em 2026-09-11, item por item:
+o que o plano pede	onde já está
+conjunto de posições rejeitadas	TreeMarks.REJECTED, teto MAX_REJECTED = 4096
+consultar antes de tentar	sim, e guarda o grupo inteiro
+rejeitada N vezes → cooldown	Refusal(since, count)
+6.000 → 12.000 → 24.000 → 48.000	memoryFor: UNREACHABLE_MEMORY = 10 × 600 = 6000, dobrando até × MAX_MEMORY_FACTOR = 8 — a escada exata
+invalidação, não lista negra	Regra 23, a marca envelhece sozinha
+não persistir entre sessões	mapa estático
 
-| o que o plano pede | onde já está |
-|---|---|
-| conjunto de posições rejeitadas | `TreeMarks.REJECTED`, teto `MAX_REJECTED = 4096` |
-| consultar antes de tentar | sim, e guarda o **grupo** inteiro, não o tronco |
-| rejeitada N vezes → cooldown | `Refusal(since, count)` |
-| **6.000 → 12.000 → 24.000 → 48.000** | `memoryFor`: `UNREACHABLE_MEMORY = 10 × 600 = 6000`, dobrando até `× MAX_MEMORY_FACTOR = 8` — **a escada exata** |
-| invalidação, não lista negra | Regra 23, a marca envelhece sozinha |
-| não persistir entre sessões | mapa estático |
+Sobrou "por trabalhador", e ele não deve ser feito: o conjunto é
+global de propósito, e por trabalhador seria pior — dois lenhadores
+redescobririam a mesma parede em separado.
+P0.5 — E3: perda de item por inventário cheio
 
-Sobrou **"por trabalhador"**, e ele não deve ser feito: o conjunto é
-global de propósito, e por trabalhador seria **pior** para o sintoma
-medido — dois lenhadores redescobririam a mesma parede em separado,
-dobrando as rejeições em vez de cortá-las.
-
-**E a medida de 118 é posterior à escada.** O próprio `TODO.md` diz, na
-linha de onde o número saiu: *"o castigo escalona (6.000→48.000 ticks) **e
-funciona**, mas ele redescobre a mesma parede seis vezes"*. Com 28
-posições e ~51.600 ticks de sessão, 118 rejeições é **o que a escada
-prevê** — quatro reperguntas por posição, cada uma ao dobro do prazo
-anterior.
-
-⬜ **O que resta é outro item, e não este.** O custo não está no prazo,
-está em a primeira recusa de cada parede pagar uma busca inteira. Atacar
-isso pede medir a busca, e não mexer no cooldown — que é onde o plano
-mandava mexer.
-
-**Sintoma:** `Not a tree — N logs without a living canopy` sobre troncos de
-casa. 118 rejeições sobre 28 posições; redescobre a mesma parede 6×.
-
-- Conjunto de posições rejeitadas **por trabalhador**.
-- Consultar antes de tentar. Rejeitada N vezes → cooldown.
-- Cooldown progressivo: 6.000 → 12.000 → 24.000 → 48.000 ticks.
-- Durante o cooldown a posição **não é candidata**.
-- Invalidação, não lista negra permanente: bloco mudou, ambiente mudou, ou
-  cooldown expirou.
-- **Não persistir entre sessões.**
-
-**Teste:** a mesma posição não é reavaliada antes do cooldown; redescobertas ≤ 2.
-**Critério:** 118 rejeições caem para poucas.
-
-### P0.5 — E3: perda de item por inventário cheio
-
-✅ **CONFIRMADO e ENTREGUE em 2026-09-11.** Era a única das cinco
+✅ CONFIRMADO e ENTREGUE em 2026-09-11. Era a única das cinco
 pendências de P0 que descrevia um defeito ainda vivo, e era literal.
 
-O `MinerHaul.deposit` tentava o baú da boca da mina e depois o baú do
-mineiro; o que sobrasse virava uma linha de WARN contando a perda — *"O
-que não couber é perdido, e é o mesmo E3 do lenhador"*, dizia o javadoc.
-Colônia com seis baús vazios a vinte blocos não mudava nada: a pergunta
-nunca chegava a eles. O lenhador tinha ganhado `ColonyChests.ownFirst` em
-2026-09-04, e o `TODO.md` registrava desde então que *"o mineiro continua
-sem teto de inventário"*.
+O MinerHaul.deposit tentava o baú da boca da mina e depois o baú do
+mineiro; o que sobrasse virava uma linha de WARN contando a perda.
+Colônia com seis baús vazios a vinte blocos não mudava nada.
 
 Agora o transbordo atravessa os baús da colônia pelo mesmo caminho do
-lenhador — o baú do dono primeiro, o resto como transbordo —, e o WARN
-passou a dizer quantos baús foram tentados. **Ainda se perde com a
-colônia inteira cheia**, e aí a linha é a notícia certa: o jogador
-precisa esvaziar alguma coisa e precisa poder descobrir isso.
+lenhador — o baú do dono primeiro, o resto como transbordo.
 
-**Provado por** `MinerOverflowGameTest.theHaulThatDoesNotFitGoesToAnotherColonyChest`,
-com duas asserções de montagem — que a pedra saiu do mundo, e que o baú
-do mineiro continua sem espaço até o fim. Sem elas o teste passaria por
-motivo errado: mineiro que não cavou e mineiro que cavou e perdeu tudo
-dariam o mesmo baú vazio.
+Provado por MinerOverflowGameTest.theHaulThatDoesNotFitGoesToAnotherColonyChest.
+⬜ Espera sessão.
+P0.6 — A enxurrada da areia calou
 
-- Coleta → inventário cheio → tenta depósito → falha → procura armazenamento
-  válido → deposita → continua.
-- Sem armazenamento: retorna a um conhecido; impossível → estado de espera.
-- **Nunca destruir o item.**
+✅ Entregue em 2026-09-11. Amortecedor de um ciclo no IdleLog, para
+quem pergunta por tique: motivo que oscila deixa de virar quatro linhas
+por segundo. O irmão da pedra de superfície foi junto. ⬜ Espera sessão.
 
-**Critério:** o recurso é preservado.
 
----
+### P0.7 — Setenta por cento dos lotes são recusados por serem pedra
+
+⬜ **DECISÃO DO AUTOR, não correção automática.**
+
+`isNaturalGround` aceita grama, terra, terra grossa, podzol e areia.
+**Pedra não entra**, por decisão registrada (*"pedra à mostra é
+montanha"*). A vila do autor é rochosa: **4.578 de 6.583 recusas**.
+
+**É decisão do autor**, porque toca a Regra 3 e a Regra 19, e porque
+separar grupos de pedra já desfez uma regra antes. Três caminhos, e o
+custo muda muito entre eles:
+
+| caminho | custo em recurso | risco |
+|---|---|---|
+| aceitar pedra como chão de lote | **zero** | casa nasce em afloramento, e pode ficar esquisita |
+| terraplanar o lote antes de construir | terra ou o próprio bloco do chão; ~1 bloco por coluna fora de nível | mexe no mundo do jogador; mais código |
+| ampliar o raio de busca de lote | zero em material, custo de tique | a casa nasce longe, e piora a logística |
+
+**Recomendação registrada:** aceitar pedra é a intervenção menor que
+resolve o gargalo — e é literalmente o que a especificação manda fazer
+(*"qual é a menor e mais eficiente intervenção que resolve esse gargalo?"*).
+
+**A pesquisa da terraplanagem** está represada em
+[`docs/research/terraplanagem-da-vila.md`](../../docs/research/terraplanagem-da-vila.md),
+e o Vanilla não serve de atalho: o `StructureWeightSampler` é função de
+densidade, e o platô da aldeia é inventado enquanto o terreno ainda é
+ruído — chunk gerado não pode ser re-beardificado. Metade da regra pedida
+já existe no mod desde 08-21 (`RoadExtension.MAX_STEP`), e o que falta é
+alguém que **conserte** em vez de **recusar**.
+
 
 ## P1 — Estabilizar comportamento
 
@@ -282,21 +218,19 @@ Depende de P0 verde.
 
 | | o quê |
 |---|---|
-| **P1.1** | **Implementar a ADR-009 §3.6** — a decisão mais importante. Abandonar tarefa que não progride, trocar de objetivo, voltar depois. Arquitetura `Task → Attempt → Progress?` — sim continua, não → motivo de falha → cooldown → outra tarefa. A Regra 28 vira **diagnóstico**, não inteligência definitiva. Vem antes do P1.2, porque o descanso depende do abandono funcionar |
-| **P1.2** | **Honrar o descanso de quatro ciclos (E43).** `giveUp()` = desistir daquela tarefa; não pode recebê-la de volta por 4 ciclos. Sem outra: ocioso, e **ociosidade é aceitável**. Documentar no `WorkStall` qual das duas regras vale — *"só se aplica quando há alternativa"* ou *"estende-se se a única tarefa é a mesma"* |
-| **P1.3** | **Mineiro longe do corredor: devolver a tarefa.** Nada de linha reta — NPC preso, atravessa montanha, cai em buraco. Estado explícito de *perdido*, independente do planejador que o levou lá. Cooldown para aquela ordem/localização |
-| **P1.4** | **Lenhador: consertar o travamento**, não ressuscitar a mão emprestada. Comparar `assign()` do mineiro e do lenhador lado a lado antes de portar. Criar gancho de teste equivalente ao `shortenStallLimitTo`. GameTest ponta a ponta: força stall, abandona, entra em cooldown, escolhe outro objetivo |
-| **P1.5** | ✅ **entregue em 2026-09-11, e o item estava pequeno.** A premissa era afinação de raio; o defeito era **cobertura**. O `CropPatch` tinha a própria espiral à mão, orçamento de 2.048 colunas e **sem cursor**: toda passagem recomeçava do centro, e o quadrado de raio 32 tem **4.225 colunas**. A varredura fechava o anel 22 e abortava no 23 — **48% da área prometida, sempre a mesma metade**. E como o `ConstructionPlanner` abre roça até `FarmerWork.reach()` = 32, **uma roça que a colônia mandou construir entre 23 e 32 blocos era invisível ao fazendeiro dela**. A escada 0–16 → 16–32 → 32–48 teria mudado o número da mentira, não a cobertura. Conserto: a espiral passou ao `RingSweep` (que retoma por anel **e** coluna, e era a quarta escrita à mão no projeto), o motivo passou a distinguir `SWEEP_INCOMPLETE` de `NO_TARGET`, e **volta inteira sem nada compra quatro ciclos de silêncio** — que é o cooldown que o item pedia |
-| **P1.6** | **Aceitar espécies misturadas na casa.** Identidade de material vira **preferência**, não barreira |
-| ~~**P1.7**~~ | ❌ **NÃO SE FAZ — refaria o defeito de 2026-09-10.** A premissa é que cem toras de cerejeira não deviam satisfazer "Oak Log × 20". Mas **elas satisfazem de verdade**: `INTERCHANGEABLE_IN_THE_WALL` já traz `WOOD`, `PLANKS`, `STONE` e `STRIPPED`, então a cerejeira substitui o carvalho na parede pela Regra 27, e o `MaterialChoice` descasca cerejeira para planta de carvalho desde 09-05. A conta por grupo e o construtor **concordam** — e é essa concordância que importa. O javadoc do `ResourceSubstitution` guarda a lição, que custou uma sessão: *"a colônia concluía que a meta estava cumprida e o mineiro não ia cavar, enquanto o construtor esperava pelo arenito. O defeito era a **discordância** entre a conta e o construtor, e não a substituição em si"*. Separar `WOOD` por espécie recria exatamente isso, do outro lado: a conta passaria a exigir carvalho enquanto a parede aceita cerejeira. **Este item também contradiz o P1.6** do próprio plano, que manda aceitar espécies misturadas — e o P1.6 é o que já está implementado |
-| ~~**P1.8**~~ | ❌ **NÃO SE FAZ — o campo não está morto.** Conferido em 2026-09-11: `furniture()` é o **primeiro critério de ordenação** da obra em `StructureBlueprintReader`, e o javadoc de lá diz por quê — *"a ordem de baixo para cima garante o que está embaixo, e mobília depende do que está ao lado; só a casa inteira responde isso"*. Removê-lo faria a cama e a mesa serem assentadas junto com a parede. A premissa do item era que a morte da Regra 21 o tinha deixado sem dono; ele mudou de dono, e o dono novo é a ordem de construção |
-| **P1.9** | **Regra 25: não mexer agora.** Só ganha sentido com múltiplas plantas, depois da §3.6 |
-| **P1.10** | ✅ **feito em 2026-09-11.** `theNeighbourhoodDeadEndIsNotTheTunnelCursorsQuestion`: três recusas em posições **já cavadas** enchem o cubo em volta de uma fronteira **sem marca própria**. Duas asserções de montagem garantem que o cenário discrimina de verdade, e a mutação que o Verifier provou que passava pela bateria inteira agora derruba este teste e só ele |
-| **P1.11** | ✅ **entregue em 2026-09-11, e não pelo caminho que a linha previa.** O gancho que encurtaria a hélice foi **medido antes de ser tomado**: `DESCENT`, `FLIGHT_BLOCKS` e `CARVED` saem todos de `HELIX_SIDE` no carregamento da classe, então torná-lo variável obriga os três a virarem método — e só `CARVED` tem **52 usos**. Cirurgia de geometria no Core, que governa a forma da mina inteira e o que o `MineSave` grava, pelo alcance de um caso. Então a segunda sala foi provada **onde ela é pura**, em `MineSecondLevelTest`: o que a versão em jogo acrescentaria é o mineiro batendo a picareta, e essa rotina não muda de nível para nível. ⚠️ **E a lacuna era real, só que outra:** das afirmações sobre o `deepened`, uma olhava o **y** de uma posição e a outra os lados — **ninguém olhava o x e o z**. Uma mina que descesse um bloco torta por nível passava por toda a bateria, e traria de volta, um nível por vez, a caminhada de lado que o caracol foi feito para acabar. Mutação conferida: descendo torto, cai **um** teste da bateria inteira e é o novo. ⬜ Segue sem cobertura o mineiro cavando o segundo nível em mundo de verdade — só uma arena mais funda o alcança, e ela não é do mod. **A medição original, para o registro:** A arena não é só rasa: ela vive em **y=-58..-52** (medido no log da bateria), o mundo acaba em -64, e **`MineShaft.DEEPEST = -59`** já proíbe aprofundar nessa faixa. Um nível custa 20 blocos, então a sala 2 cairia em **-76** — fora do mundo, não só fora da arena. E a altura da arena é do runner de gametest, que o mod não controla: não há `vmArg` nem configuração no `build.gradle`. **O caminho que resta** é um gancho de teste que encurte a descida entre níveis, no molde do `sandRadius` e do `searchRadius` que o projeto já tem — com 4 blocos por nível a sala 2 cai em -60 e cabe. Não é afrouxar limite para passar; é encurtar geometria para caber. Mas mexe no `MineShaft`, que é Core e governa a forma da mina inteira, então é trabalho próprio e não uma linha |
-| **P1.12** | ✅ **feito em 2026-09-11, com uma parte recusada.** `TestWorkers` dá os dois helpers com a diferença no nome, e um teste prova que ela é observável. Os 26 call-sites de mineiro e lenhador passaram a equipar — e a bateria seguiu verde, então **nenhum dependia da mão nua**. ❌ **A asserção defensiva no `assign()` não entra:** na produção o `assignMissing` roda antes do `equip`, no mesmo ciclo, então mão vazia ali é o desenho — recusá-la quebraria a contratação inteira |
-| **P1.13** | ✅ **entregue em 2026-09-11.** `ColonyEnduranceGameTest`: 200 ciclos, um por tique, pela costura do `runCycleNow` — 120.000 tiques não cabem num `tickLimit`, um ciclo síncrono por tique cabe. Amostra quatro contagens por ciclo e compara janela tardia com inicial, descontando 50 ciclos de aquecimento: falha por **tendência**, como o item pede. **A fonte de trabalho infinita é o baú vazio**, e não uma classe inventada — a colônia pede madeira todo ciclo e ninguém entrega. ⚠️ **A primeira versão passava com o `purgeClosed` desligado**: nenhuma tarefa chegava a `COMPLETED` naquele cenário, então não havia o que acumular. O caso só passou a medir depois que o teste fechou as tarefas distribuídas, fazendo o ciclo de vida girar |
-
----
+| **P1.1** | ❌ **VENCIDO — lido cláusula a cláusula em 2026-09-11.** Abandonar tarefa que não progride: os guardas de travamento e imobilidade, em todas as sete. Motivo de falha explícito: `giveUp(…, why)`. Cooldown: `MineMarks.refuse` na posição e `Worker.rest(capability)` no ofício. Outra tarefa: `task.release()` devolve à fila. Voltar depois: o prazo expira. E **as sete profissões passam pela mesma porta**, `WorkerStrikes.gaveUp`. A última cláusula, *"a Regra 28 vira diagnóstico, não inteligência definitiva"*, foi cumprida em 2026-08-21 |
+| **P1.2** | ❌ **VENCIDO.** `Worker.REST_CYCLES = 4` é o descanso que o item pede, e o E43 está citado nominalmente ao lado dele. **A pergunta que o item mandava documentar já tem resposta escrita** |
+| **P1.3** | ⚠️ **decidido por implementação, e o resto é de jogo.** O segundo caminho — *"devolver a tarefa e deixar a rotina Vanilla trazê-lo"* — está feito. ⬜ **O que falta é a outra metade:** se a rotina Vanilla de fato traz de volta o mineiro que já está longe |
+| **P1.4** | ❌ **VENCIDO — as três cláusulas estão cumpridas.** `job.stall.stuck` e `TreeChoice.stallLimit`, e o lenhador passa pela mesma porta das outras seis |
+| **P1.5** | ✅ **Entregue em 2026-09-11.** A busca do fazendeiro alcançava 22 dos 32 blocos prometidos; agora atravessa passagens pelo `RingSweep`, distingue "não achei" de "não terminei" e descansa depois de uma volta inteira. ⬜ **Espera sessão** |
+| **P1.6** | ❌ já implementado — `INTERCHANGEABLE_IN_THE_WALL` |
+| **P1.7** | ❌ **NÃO SE FAZ — refaria o defeito de 2026-09-10.** Separar `WOOD` por espécie recria a discordância entre conta e construtor. **E contradiz o P1.6 do próprio plano** |
+| **P1.8** | ❌ **NÃO SE FAZ — o campo não está morto.** `furniture()` é o **primeiro critério de ordenação** da obra em `StructureBlueprintReader`. Removê-lo faria a cama e a mesa serem assentadas junto com a parede |
+| **P1.9** | ⬜ **Regra 25: não mexer agora.** Só ganha sentido com múltiplas plantas, depois da §3.6 |
+| **P1.10** | ✅ **Feito em 2026-09-11.** `theNeighbourhoodDeadEndIsNotTheTunnelCursorsQuestion`: três recusas em posições já cavadas enchem o cubo em volta de uma fronteira sem marca própria. A mutação que o Verifier provou que passava pela bateria inteira agora derruba este teste e só ele |
+| **P1.11** | ✅ **Entregue em 2026-09-11, e não pelo caminho que a linha previa.** O gancho que encurtaria a hélice foi **medido antes de ser tomado**: torná-lo variável obriga três constantes a virarem método, e só `CARVED` tem **52 usos**. A segunda sala foi provada **onde ela é pura**, em `MineSecondLevelTest`. ⚠️ **E a lacuna era real, só que outra:** ninguém prendia o **x/z** do nível de baixo. Uma mina que descesse torta por nível passava por toda a bateria. Mutação conferida |
+| **P1.12** | ✅ **Feito em 2026-09-11, com uma parte recusada.** `TestWorkers` dá os dois helpers com a diferença no nome, e um teste prova que ela é observável. Os 26 call-sites passaram a equipar. ❌ **A asserção defensiva no `assign()` não entra:** na produção o `assignMissing` roda antes do `equip`, no mesmo ciclo, então mão vazia ali é o desenho |
+| **P1.13** | ✅ **Entregue em 2026-09-11.** `ColonyEnduranceGameTest`: 200 ciclos, um por tique. Amostra quatro contagens por ciclo e compara janela tardia com inicial. ⚠️ **A primeira versão passava com o `purgeClosed` desligado** — o caso só passou a medir depois que o teste fechou as tarefas distribuídas |
 
 ## P2 — Performance
 
@@ -306,35 +240,23 @@ Depende de P0 verde.
 que é a ordem que este item dá. O aviso de ciclo lento passou a dizer
 **onde**: `chests 61 ms, workers 28 ms, planner 14 ms, assign 5 ms,
 detect 3 ms, lifecycle 0 ms, other 1 ms`, da fase mais cara para a mais
-barata — o primeiro nome da linha é por onde começar.
+barata.
 
 ⚠️ **Uma das seis fases que o item lista não existe.** Persistência não
 roda no ciclo: o `ColonySavedData.sync` é chamado **só** no
-`SERVER_STOPPING`. Uma fase para ela reportaria zero constante, que é um
-número parecendo medida. Entraram no lugar as duas do topo que o item não
-previa — a detecção em volta do jogador e o ciclo de vida das colônias —,
-que rodam antes de qualquer colônia ser vista.
+`SERVER_STOPPING`. Entraram no lugar as duas do topo que o item não
+previa — a detecção em volta do jogador e o ciclo de vida das colônias.
 
 **O instrumento acusa quando ele próprio mente.** `other` é o ciclo menos
 tudo o que se sabe nomear, cortado em zero para não sair negativo; quando
 o corte machuca, a linha diz `(phases overlap by N ms — the numbers above
-are inflated)`. Fase somando mais que o ciclo só acontece por bastão mal
-passado, e calar isso mandaria alguém otimizar a fase inflada que ficou
-no topo. É a lição do P0.2 aplicada ao próprio medidor.
+are inflated)`.
 
-**Nove casos em `CycleCostTest`**, e mutação conferida: trocando a soma
-por sobrescrita, cai **um** teste e é o da acumulação.
+**Nove casos em `CycleCostTest`**, e mutação conferida.
 
 ⬜ **Otimizar continua em aberto, e de propósito** — a régua do item é
 passar de 100 ms ou o TPS cair, e quem responde isso é a sessão de jogo
 com a linha nova na mão.
-
-Instrumentar **antes** de otimizar, por subsistema: planner, chest scan, task
-assign, workers, persistence, other. A regra é *nem tudo em todo ciclo* —
-planejamento de obras a cada X ciclos, scanner com cache incremental, seleção
-de tarefas quando necessário, IA do trabalhador em frequência normal.
-
-Só otimizar de verdade se passar de 100 ms ou o TPS cair.
 
 ---
 
@@ -342,8 +264,8 @@ Só otimizar de verdade se passar de 100 ms ou o TPS cair.
 
 | | o quê |
 |---|---|
-| ~~**P3.1**~~ | ❌ **NÃO SE FAZ — não há o que extrair, e o comando não tem para onde ir.** Conferido em 2026-09-11: não existem `VillagerMigration`, `VillagerDataVersion`, `ColonyMigrationStats`, `LastProfession` nem `ColonyNeedsRehire` no projeto. "Extrair" pressupõe código que nunca foi escrito — seria construir do zero. E **o mod não registra comando nenhum**: não há `CommandRegistrationCallback` em lugar algum, então `/colony debug ...` é infraestrutura inteira por fora do item. O `/colony debug chest scan` ainda era do P0.2, que está vencido |
-| ~~**P3.2**~~ | ❌ **NÃO SE FAZ — ele contradiz uma decisão posterior, e mira uma profissão que não existe mais.** O `MANUFACTURER` foi **dividido** em `CARPENTER` e `MASON` em 2026-09-10, então a regra *"sem profissão + POI perto → MANUFACTURER"* não tem alvo. E a política de save antigo já foi decidida no mesmo dia, no javadoc do `CARPENTER`: *"**Save antigo não quebra.** `ColonySavedData` devolve `null` para profissão que não reconhece, e o aldeão é recontratado no ciclo seguinte... **Perde-se a atribuição, não o mundo**"*. **As duas metades já têm teste** — `ColonySavedDataTest.unknownProfessionFallsBackToNone`, cujo cabeçalho é *"enum removido do código não pode impedir de abrir o mundo"*, e os 14 casos do `ProfessionAssignerTest` para a recontratação, que roda no ciclo pelo `assignMissing`. Construir a migração agora acrescentaria `DataVersion` e `LastProfession` ao formato de save para preservar uma atribuição que o projeto decidiu soltar, e obrigaria a **apagar** o teste que prova a decisão. O próprio plano já o rebaixou na lista "Baixo": *"só com bug report real"* |
+| **P3.1** | ❌ **NÃO SE FAZ — não há o que extrair, e o comando não tem para onde ir.** Não existem `VillageMigration`, `VillagerDataVersion`, `ColonyMigrationStats`, `LastProfession` nem `ColonyNeedsRehire` no projeto. E **o mod não registra comando nenhum** |
+| **P3.2** | ❌ **NÃO SE FAZ — ele contradiz uma decisão posterior, e mira uma profissão que não existe mais.** O `MANUFACTURER` foi **dividido** em `CARPENTER` e `MASON` em 2026-09-10. As duas metades já têm teste. Construir a migração agora acrescentaria `DataVersion` e `LastProfession` ao formato de save para preservar uma atribuição que o projeto decidiu soltar |
 | **P3.3** | Rodar o `gauntlet-verifier` depois de P0 e de P1 |
 
 ---
@@ -364,165 +286,80 @@ Só otimizar de verdade se passar de 100 ms ou o TPS cair.
 ```text
 bateria verde
   ✅ P0.0  validar o plano contra o código          ← 2026-09-11, feito
+  ✅ P0.1  entregue (visto em jogo)
+  ✅ P0.1-b, P0.1-c  entregues (esperam sessão)
   ✅ P0.2  vencido na premissa; a frase consertada
-  ✅ P0.3  ruptura achada e instrumentada; conserto em aberto
+  ✅ P0.3  ruptura achada, conserto entregue (espera sessão)
   ✅ P0.4  vencido
-  ✅ P0.5  entregue
-  → uma sessão de jogo, que entrega o número do LotRefusals
-     e confere P0.1-b, P0.1-c, P0.6 e P0.5
-  → P0.7 virou decisão de regra: o número chegou e não justificou terraplanagem automática
+  ✅ P0.5  entregue (espera sessão)
+  ✅ P0.6  entregue (espera sessão)
+  → P0.7  DECISÃO DO AUTOR: aceitar pedra como solo de lote?
   → PARAR E REPORTAR
-  → P1.1 → P1.2 → P1.3 → P1.4 → P1.5 → P1.6 → P1.7 → P1.8
-  → P1.10 → P1.11 → P1.12 → P1.13
-  → P2.1
-  → P3.1 → P3.2 → P3.3
+  → P1.1 (vencido) → P1.2 (vencido) → P1.3 → P1.4 (vencido) → P1.5 (entregue)
+  → P1.6 (implementado) → P1.7 (recusado) → P1.8 (recusado)
+  → P1.10 (feito) → P1.11 (feito) → P1.12 (feito) → P1.13 (feito)
+  → P2.1 (instrumentado, otimização aberta)
+  → P3.1 (recusado) → P3.2 (recusado) → P3.3
   → gauntlet-verifier
-```
 
-**Um item por commit**, com mensagem no formato
-`P0.1: <o que mudou> (<teste que prova>)`. Não agrupar P0.1 com P0.2.
+Um item por commit, com mensagem no formato
+P0.1: <o que mudou> (<teste que prova>). Não agrupar P0.1 com P0.2.
 
----
+Regras finais
 
-## Regras finais
+    Se um teste passa só por folga de tickLimit, o teste está errado.
 
-- Se um teste passa só por folga de `tickLimit`, **o teste está errado**.
-- Se um teste mede mão nua, **o teste está errado**.
-- Se um teste unitário cobre comportamento de integração, **o teste está errado**.
-- Se foi preciso aumentar um limite para o teste passar, **o teste está errado**.
-- Se o defeito some quando a frequência aumenta, **o defeito não sumiu**.
-- Se não dá para reproduzir em jogo, **não foi consertado**.
+    Se um teste mede mão nua, o teste está errado.
 
----
+    Se um teste unitário cobre comportamento de integração, o teste está errado.
 
-## ⏭️ P0.0 — validar este plano contra o código
+    Se foi preciso aumentar um limite para o teste passar, o teste está errado.
 
-**Pedido do autor em 2026-09-11, e ele vem antes de tudo o que sobrou.**
+    Se o defeito some quando a frequência aumenta, o defeito não sumiu.
 
-No ciclo de 09-11 três itens deste plano caíram por leitura: o `furniture()`
-que não estava morto, a asserção defensiva no `assign()` que quebraria a
-contratação, e a reserva de tora por espécie que refaria a discordância de
-09-10. Um quarto — o P1.11 — devolveu-se maior do que entrou.
+    Se não dá para reproduzir em jogo, não foi consertado.
 
-**Os quatro têm a mesma forma.** Este plano foi escrito a partir do `TODO.md`,
-e o `TODO.md` guarda pendências desde agosto. Algumas delas pararam de ser
-verdade sem que ninguém as relesse — quatro linhas daquela lista já tinham sido
-derrubadas por leitura antes, e o padrão se repetiu aqui.
+Estado da execução
 
-**O que a varredura faz**, por item ainda aberto:
+Atualizado a cada item entregue. ✅ só entra com bateria verde e
+mutação conferida; a coluna em jogo é a que a régua cobra.
+item	estado	em jogo
+P0.0	✅ feito em 2026-09-11. A varredura derrubou dois dos quatro P0 abertos e achou a ruptura do terceiro sem sessão	—
+P0.1	✅ entregue em 2026-09-11 — o índice de ruas voltou a valer para vila grande	✅ visto na sessão de 02:03
+P0.1-b	✅ o caminho de terra não sai de baú. Uma linha no isShapedFromTheGround	⬜ espera sessão
+P0.1-c	✅ a recusa de lote diz por quê. LotRefusals conta os cinco motivos	⬜ espera sessão
+P0.2	❌ vencido na premissa — a varredura nunca pulou baú. ✅ O que sobrou foi a frase, e ela foi consertada	—
+P0.3	✅ fechado em 2026-09-11 — o ColonyChests virou a única resposta a "onde estão os baús desta colônia"	⬜ espera sessão
+P0.4	❌ vencido — a escada que o item pede entrou em 2026-09-09	—
+P0.5	✅ entregue em 2026-09-11 — o transbordo do mineiro atravessa os baús da colônia	⬜ espera sessão
+P0.6	✅ entregue em 2026-09-11 — a enxurrada da areia calou	⬜ espera sessão
+P0.7	⬜ decisão do autor, não correção automática. O número chegou em 2026-09-12 e não era o esperado: 4.578 de 6.583 recusas foram NOT_NATURAL_GROUND	✅ número visto em sessão
+P1.1	❌ vencido — lido cláusula a cláusula em 2026-09-11	—
+P1.2	❌ vencido — Worker.REST_CYCLES = 4 é o descanso que o item pede	—
+P1.3	⚠️ decidido por implementação. ⬜ o resto é de jogo	⬜ espera sessão
+P1.4	❌ vencido — as três cláusulas estão cumpridas	—
+P1.5	✅ entregue em 2026-09-11 — a busca do fazendeiro atravessa passagens	⬜ espera sessão
+P1.6	❌ já implementado — INTERCHANGEABLE_IN_THE_WALL	—
+P1.7	❌ não se faz — refaria o defeito de 2026-09-10	—
+P1.8	❌ não se faz — o campo não está morto	—
+P1.9	⬜	—
+P1.10	✅ 2026-09-11	—
+P1.11	✅ 2026-09-11 — a segunda sala provada em unitário; o gancho na hélice foi medido e recusado	—
+P1.12	✅ 2026-09-11, com a asserção defensiva recusada	—
+P1.13	✅ 2026-09-11 — 200 ciclos, falha por tendência; mutação conferida	⬜ espera sessão
+P2.1	✅ instrumentado em 2026-09-11 — o aviso de ciclo lento reparte por fase. Otimizar segue em aberto	⬜ espera sessão
+P3.1, P3.2	❌ não se fazem	—
+P3.3	⬜ rodar o gauntlet-verifier, quando o autor pedir	—
 
-1. Achar no código o que o item afirma — a constante, o método, a linha.
-2. Conferir se a afirmação ainda vale **hoje**, e não quando foi escrita.
-3. Marcar o item como `confirmado`, `vencido` ou `maior do que parece`,
-   com a evidência ao lado.
+Bateria no fim do ciclo de 2026-09-11: 753 unitários e 295 de gametest, zero falhas, medidos pelos XML de relatório e pelo runGametest.
 
-**O que ela não é:** não é refazer o plano. Os itens confirmados seguem na
-ordem em que estão; o que muda é parar de descobrir a vencidura um a um, no
-meio da implementação.
+Depois do P0.0, do que ele liberou, do P1.5, do P2.1, do conserto do P0.3, do P1.13 e do P1.11: 778 unitários e 299 de gametest, zero falhas, com os XML mais novos que o fonte.
 
-### ✅ O que a varredura devolveu — 2026-09-11
+Mutação conferida nos três. Com o MinerHaul voltando a depositar só no baú do mineiro, um teste cai e é o do P0.5. Com o coverage() voltando à forma ambígua, caem os cinco do P0.2 e nenhum outro. Com o CropPatch voltando a varrer sempre do centro, um teste cai e é o FarmerGameTest.theFieldSweepResumesWhereTheBudgetStoppedIt.
+Nota sobre a manutenção deste arquivo
 
-Quatro P0 abertos, e o placar foi **2 vencidos, 1 confirmado e entregue,
-1 confirmado com a ruptura achada**:
+A varredura do plano contra o código (P0.0) mora em varredura-do-plano-2026-09-11.md.
 
-| item | veredito | a evidência |
-|---|---|---|
-| P0.2 | ❌ **vencido na premissa** | os dois números da linha são *baús com conteúdo* e *baús lidos*; o sufixo `(N unreachable)` não aparece em nenhuma das medições citadas |
-| P0.3 | ✅ **confirmado, ruptura achada** | o baú da boca da mina não é `WorkerStorage` de ninguém, e as três contagens da colônia só percorrem `WorkerStorage` |
-| P0.4 | ❌ **vencido** | `memoryFor` dá 6.000→12.000→24.000→48.000 desde 09-09, e o `TODO.md` diz que funciona |
-| P0.5 | ✅ **confirmado e entregue** | `MinerHaul.deposit` descartava o que não coubesse, com a colônia tendo espaço |
+A tabela de estado da execução é atualizada quando um item é entregue. A coluna em jogo só marca ✅ com sessão real.
 
-**A varredura se pagou.** O P0.2 sozinho era o item nº 2 do plano e
-carregava cinco frentes — relatório de scan, cache por evento, varredura
-em fila, válvula de obsolescência, log por ciclo. Nenhuma delas tinha
-defeito que a justificasse. Implementá-las teria custado dias e mexido no
-caminho mais quente do ciclo da colônia para corrigir uma leitura errada
-de log.
-
-**E o padrão que o P0.0 previa se repetiu inteiro.** Os dois vencidos
-foram escritos a partir de sintomas de sessão que o código já tinha
-respondido — o P0.4 em 09-09, dois dias antes de o plano ser escrito. A
-lição não é sobre estes dois itens: é que **sintoma de log envelhece mais
-devagar do que o código que o produz**, e uma lista feita de sintomas
-precisa ser relida contra o código antes de virar trabalho.
-
-**A varredura foi até o fim em 2026-09-11**, depois que o P0 fechou. O
-placar final dela, somando P0, P1, P2 e P3:
-
-| | confirmados e entregues | vencidos |
-|---|---|---|
-| **P0** | P0.3, P0.5 | P0.2 (premissa), P0.4 |
-| **P1** | P1.5, P1.11, P1.13 | P1.1, P1.2, P1.4, P1.6, P1.7, P1.8 |
-| **P2** | P2.1 (instrumentado) | — |
-| **P3** | — | P3.1, P3.2 |
-
-**Doze itens vencidos contra sete entregues.** Não é um plano ruim: é um
-plano escrito a partir de sintomas, e sintoma de log envelhece mais
-devagar do que o código que o produz. Três deles foram derrubados por
-decisões tomadas <b>depois</b> de o plano ser escrito — a escada do
-`TreeMarks` em 09-09, a ADR-010 em 09-02 e a divisão do `MANUFACTURER` em
-09-10 —, e um, o P3.2, pedia para desfazer a decisão de 09-10 e apagar o
-teste que a prova.
-
-**A lição, e ela vale mais que os itens:** lista feita de sintomas precisa
-ser relida contra o código antes de virar trabalho. Cada um dos doze
-custaria dias, e dois deles — P0.2 e P3.2 — teriam piorado o mod.
-
----
-
-## Estado da execução
-
-Atualizado a cada item entregue. `✅` só entra com bateria verde **e**
-mutação conferida; a coluna *em jogo* é a que a régua cobra.
-
-| item | estado | em jogo |
-|---|---|---|
-| P0.1 | ✅ entregue em 2026-09-11 — o índice de ruas voltou a valer para vila grande | ✅ **visto na sessão de 02:03**: a colônia planejou o açougue e abriu a obra |
-| **P0.1-b** | ✅ **o caminho de terra não sai de baú.** A obra do P0.1 abriu e travou em `waiting for minecraft:dirt_path`, 30 vezes — o bloco não tem item, nasce de pá na grama. Uma linha no `isShapedFromTheGround`, que já cobria `farmland` e `water` pelo mesmo motivo | ❌ |
-| **P0.1-c** | ✅ **a recusa de lote diz por quê.** `LotRefusals` conta os cinco motivos do `flatGroundAt` e o relatório de sessão os diz junto do `SweepLog`. É o P0.1 ao pé da letra, e é o número que decide a terraplanagem | ⬜ **espera sessão** |
-| **P0.7** | ⬜ **decisão do autor, não correção automática.** O número do P0.1-c chegou em 2026-09-12 e não era o esperado: 4.578 de 6.583 recusas (70%) foram `NOT_NATURAL_GROUND`, contra 905 `OFF_ROAD_LEVEL`. Terraplanagem não é o gargalo principal; aceitar pedra como terreno natural tocaria a Regra 3 e a Regra 19 | ✅ **número visto em sessão** |
-| **P0.6** | ✅ **a enxurrada da areia calou.** Amortecedor de um ciclo no `IdleLog`, para quem pergunta por tique: motivo que oscila deixa de virar quatro linhas por segundo. O irmão da pedra de superfície foi junto | ⬜ **espera sessão** |
-| ~~P0.6~~ | 🔴 ~~**novo, e é bloqueador de diagnóstico:** a busca de areia oscila entre *"ainda varrendo"* e *"varri tudo"* a cada passagem, e o `IdleLog` registra as duas. **4.389 linhas de 6.117 na sessão de 02:03** — 72% do log. A próxima sessão fica cega~~ | — |
-| **P0.0** | ✅ **feito em 2026-09-11.** A varredura derrubou dois dos quatro P0 abertos e achou a ruptura do terceiro sem sessão. O placar: **1 confirmado e entregue, 1 confirmado com o conserto em aberto, 2 vencidos** | — |
-| ~~P0.2~~ | ❌ **vencido na premissa** — `in 1 of 8 chests read` é *um baú com conteúdo, de oito lidos*. A varredura nunca pulou baú. ✅ O que sobrou foi a frase, e ela foi consertada: `ChestSurvey.coverage()`, 5 casos | — |
-| P0.3 | ✅ **fechado em 2026-09-11.** A ruptura era estática — o baú da boca da mina não é `WorkerStorage` de ninguém — e o conserto foi do lado de quem lê: o `ColonyChests` virou a única resposta a "onde estão os baús desta colônia", e os três que montavam a própria lista passaram a perguntar a ele | ⬜ **espera sessão** |
-| ~~P0.4~~ | ❌ **vencido** — a escada 6.000→48.000 que o item pede entrou em 2026-09-09 e o `TODO.md` diz que funciona. O que sobrava, "por trabalhador", pioraria o sintoma | — |
-| P0.5 | ✅ **entregue em 2026-09-11** — o transbordo do mineiro atravessa os baús da colônia em vez de ser destruído. Era a única das cinco que ainda descrevia defeito vivo | ⬜ **espera sessão** |
-| ~~**P1.1**~~ | ❌ **VENCIDO — lido cláusula a cláusula em 2026-09-11.** *Abandonar tarefa que não progride*: os guardas de travamento e imobilidade, em todas as sete. *Motivo de falha explícito*: `giveUp(…, why)`. *Cooldown*: `MineMarks.refuse` na posição e `Worker.rest(capability)` no ofício. *Outra tarefa*: `task.release()` devolve à fila e o descanso desempata a passagem seguinte. *Voltar depois*: o prazo expira. E **as sete profissões passam pela mesma porta**, `WorkerStrikes.gaveUp` — Builder, Crafting, Farmer, Miner, Shepherd e TreeChoice. A última cláusula, *"a Regra 28 vira diagnóstico, não inteligência definitiva"*, foi cumprida em **2026-08-21**: o javadoc do `TestBarrier` já a declara provisória, diz que *"a razão dela caducou"* e que *"ela deixa de ser silenciosa: cada peça riscada sai como WARN"* | — |
-| ~~**P1.2**~~ | ❌ **VENCIDO.** `Worker.REST_CYCLES = 4` é o descanso que o item pede, e o E43 está citado nominalmente ao lado dele. **A pergunta que o item mandava documentar já tem resposta escrita**, e ela é a segunda das duas: *"curto demais e ele volta antes de a colônia ter mudado de estado; era esse o defeito do descanso, que numa colônia de uma tarefa só não dura um ciclo (E43)"* — daí `SHUN_CYCLES = 8` com escada até ×8. O item pedia a nota no `WorkStall` e ela ficou no `Worker`, que é onde a constante mora; mudar de arquivo não é trabalho de plano | — |
-| **P1.3** | ⚠️ **decidido por implementação, e o resto é de jogo.** O próprio item oferecia dois caminhos — *"caminhar em linha reta aceitando trecho não navegável, ou devolver a tarefa e deixar a rotina Vanilla trazê-lo"* — e **o segundo está feito**: `giveUp` por distância (`"it got no closer than"`, `"it walked for"`), `task.release()`, `MineMarks.refuse` dando prazo àquela posição e `MineDigging.couldNotReach` devolvendo-a ao cursor. O prazo de aproximação foi afinado em 2026-09-11. O *"estado explícito de perdido"* só acrescentaria um nome ao que já acontece. ⬜ **O que falta é a outra metade, e ela é de sessão:** se a rotina Vanilla de fato traz de volta o mineiro que já está longe | ⬜ **espera sessão** |
-| ~~**P1.4**~~ | ❌ **VENCIDO — as três cláusulas estão cumpridas.** *Consertar o travamento*: `job.stall.stuck` e `TreeChoice.stallLimit`, e o lenhador passa pela mesma porta das outras seis. *Criar gancho equivalente ao `shortenStallLimitTo`*: ele **é** o `shortenStallLimitTo`, e já existe. *GameTest ponta a ponta — força stall, abandona, entra em cooldown, escolhe outro objetivo*: `LumberjackGameTest.theStallGuardReturnsTheTaskAndForgetsTheTree`, e o javadoc dele nomeia as duas metades, incluindo a que importa — sem esquecer a árvore, *"a busca reescolhe a mesma no ciclo seguinte e o lenhador seguinte trava no mesmo lugar"* | — |
-| **P1.5** | ✅ **entregue em 2026-09-11** — a busca do fazendeiro alcançava 22 dos 32 blocos prometidos; agora atravessa passagens pelo `RingSweep`, distingue "não achei" de "não terminei" e descansa depois de uma volta inteira | ⬜ **espera sessão** |
-| P1.6 | ❌ já implementado — `INTERCHANGEABLE_IN_THE_WALL` | — |
-| **P1.13** | ✅ **2026-09-11** — 200 ciclos, falha por tendência; mutação conferida (desligar o `purgeClosed` derruba só ele) | ⬜ **espera sessão** |
-| P1.9 | ⬜ | — |
-| P1.7 | ❌ não se faz — ver acima | — |
-| P1.8 | ❌ não se faz — ver acima | — |
-| P1.10 | ✅ 2026-09-11 | — |
-| P1.11 | ✅ **2026-09-11** — a segunda sala provada em unitário; o gancho na hélice foi medido e recusado (52 usos de `CARVED`). A lacuna era o x/z do nível de baixo, que ninguém prendia | — |
-| P1.12 | ✅ 2026-09-11, com a asserção defensiva recusada | — |
-| P2.1 | ✅ **instrumentado em 2026-09-11** — o aviso de ciclo lento reparte por fase, da mais cara para a mais barata, e acusa quando ele próprio se contradiz. "Persistence", que o item lista, não roda no ciclo. Otimizar segue em aberto: a régua é medir em jogo | ⬜ **espera sessão** |
-| P3.1, P3.2 | ❌ não se fazem — ver acima | — |
-| P3.3 | ⬜ rodar o `gauntlet-verifier`, quando o autor pedir | — |
-
-**Bateria no fim do ciclo de 2026-09-11:** 753 unitários e 295 de gametest,
-zero falhas, medidos pelos XML de relatório e pelo `runGametest`.
-
-**Depois do P0.0, do que ele liberou, do P1.5, do P2.1, do conserto do
-P0.3, do P1.13 e do P1.11:** **778 unitários e 299 de gametest**, zero falhas, com os XML mais novos que o fonte. Os dez
-unitários novos são `ChestSurveyCoverageTest` (5) e `RingSweepResumeTest`
-(5); os três de jogo são a prova da ruptura do P0.3, o transbordo do P0.5
-e a retomada da varredura do P1.5.
-
-**Mutação conferida nos três.** Com o `MinerHaul` voltando a depositar só
-no baú do mineiro, **um** teste cai e é o do P0.5. Com o `coverage()`
-voltando à forma ambígua, caem os cinco do P0.2 e nenhum outro. Com o
-`CropPatch` voltando a varrer sempre do centro, **um** teste cai e é o
-`FarmerGameTest.theFieldSweepResumesWhereTheBudgetStoppedIt`.
-
-**Uma dívida que ficou pior, e fica dita.** O `FarmerWork` foi de 579
-para 624 linhas, acima do teto de 500 do projeto — onde já estava antes.
-O que dava para separar saiu para o `FieldRest` (100 linhas, uma pergunta
-só, no corte que o `LumberjackWork` levou em 2026-08-20); o resto é o
-motivo honesto dentro do `findWork`. O arquivo pede o mesmo corte em
-quatro — procurar, andar, agir, guardar —, e isso é frente própria.
+Itens vencidos não saem do arquivo — ficam com o ❌ e a razão escrita. A lição mais útil do ciclo é justamente quais eram vencidos, e por quê.

@@ -29,7 +29,6 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.CropBlock;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Item;
-import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -371,17 +370,12 @@ public final class BuilderWork {
         }
 
         if (isShapedFromTheGround(state)) {
-            // <b>A roça é cavada, não carregada</b> — 2026-09-05. Terra,
-            // terra arada e água não saem de baú: {@code farmland} não
-            // tem item nenhum, e {@code water} só existiria como balde,
-            // que a colônia não produz. Cobrá-los deixaria a roça parada
-            // para sempre em {@code waiting for minecraft:water}, que é
-            // exatamente o defeito do vão do teto de 09-04.
+            // A colônia molda no local apenas blocos sem item de inventário
+            // utilizável (canteiro, água, caminho e cultivos). Terra comum
+            // tem item e deve sair fisicamente do estoque.
             //
-            // E é honesto: quem abre um canteiro move o chão que já está
-            // ali. A regra vale para qualquer obra porque é sobre o
-            // <b>bloco</b>, e não sobre a planta — uma casa com terra no
-            // piso ganha o mesmo tratamento, e ganha certo.
+            // Quem abre um canteiro move o chão que já está ali. A regra
+            // vale para qualquer obra porque depende do bloco, não da planta.
             world.setBlockState(target, state, Block.NOTIFY_ALL);
 
             project.markPlaced(block);
@@ -639,30 +633,16 @@ public final class BuilderWork {
     /**
      * Se este bloco a colônia molda do chão em vez de tirar do baú.
      *
-     * <p>Quatro famílias, e as quatro pela mesma razão: nenhuma delas
-     * chega ao baú de um trabalhador. {@code BlockTags.DIRT} cobre terra,
-     * grama, terra grossa e barro sem nomeá-los.
+     * <p>São blocos que se formam no local ou não têm item próprio para
+     * o estoque. Terra, grama, terra grossa e barro têm itens e continuam
+     * sendo materiais físicos de construção.
      *
-     * <p><b>E o caminho de terra é a quarta</b> — 2026-09-11, visto em
-     * jogo. O {@code dirt_path} <b>não está</b> na
-     * {@code BlockTags.DIRT}, e por isso escapava das três: a obra pedia
-     * o item, o item não existe — no jogo ele nasce de uma pá batendo na
-     * grama, e quebrado devolve terra —, e a casa esperava por ele para
-     * sempre.
-     *
-     * <p>Foi o que a sessão de 2026-09-11 às 02:03 mediu, e é a queixa do
-     * autor de não ver casa nenhuma subir: o planejador achou lote e
-     * abriu a obra do açougue — o que o conserto do índice de ruas
-     * destravou —, o construtor chegou a {@code BUILDING}, e então parou
-     * <b>trinta vezes</b> em {@code waiting for minecraft:dirt_path}.
-     *
-     * <p>É o mesmo defeito do {@code farmland} e do {@code water} de
-     * 09-04, num bloco que ninguém tinha visto ainda. E o mod já sabia
-     * assentá-lo sem item: é o que a Regra 15 faz quando calça a rua.
+     * <p>O {@code dirt_path} permanece nesta lista porque não tem item
+     * próprio; terra comum não entra aqui, pois pode ser fornecida pelo
+     * baú como qualquer outro material de construção.
      */
     private static boolean isShapedFromTheGround(BlockState state) {
-        return state.isIn(BlockTags.DIRT)
-                || state.isOf(Blocks.FARMLAND)
+        return state.isOf(Blocks.FARMLAND)
                 || state.isOf(Blocks.WATER)
                 || state.isOf(Blocks.DIRT_PATH)
                 || state.getBlock() instanceof CropBlock;
@@ -717,13 +697,8 @@ public final class BuilderWork {
         }
 
         if (isShapedFromTheGround(material.get().getDefaultState())) {
-            // Terra, terra arada e água não pedem material nenhum — ver
-            // isShapedFromTheGround. Sem esta linha a roça que parasse
-            // uma vez <b>nunca mais acordaria</b>: o despertador pergunta
-            // se o baú tem o item do próximo bloco, e farmland não tem
-            // item nenhum. É a mesma resposta que a barreira de teste dá
-            // logo abaixo, e pelo mesmo motivo — o que o assentador vai
-            // pôr sem baú não segura obra nenhuma.
+            // Estes blocos são formados no local ou não têm item próprio;
+            // por isso não podem deixar a obra esperando por estoque.
             return true;
         }
 

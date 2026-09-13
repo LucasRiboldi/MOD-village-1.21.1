@@ -2,6 +2,9 @@
 
 # Village Colony — O que está feito e o que falta
 
+> ⚠️ **ARQUIVO HISTÓRICO — congelado em 2026-08-15.**
+> Precedência: [`TODO.md`](../../TODO.md) → [`STATE.md`](../../STATE.md) → este.
+
 **Atualizado:** 2026-08-15
 **Natureza:** índice consolidado. **Este documento não decide nada.**
 

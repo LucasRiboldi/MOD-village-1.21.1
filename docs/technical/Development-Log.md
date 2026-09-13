@@ -7360,3 +7360,46 @@ apareceu quatro vezes: a regra da copa e o `REJECTED` trabalhando.
 antigo guardado como `village-colony-0.1.0.jar.bak-0109`. A próxima
 sessão é a primeira que roda o `ensureTask`, o guarda de travamento, a
 correção do baú e as duas instrumentações.
+
+## 2026-09-13 — auditoria técnica e falso material em blueprint
+
+O log de jogo mostrou uma casa média parada com 435 blocos restantes,
+esperando `minecraft:structure_void`. O leitor de estruturas não ignorava
+esse marcador Vanilla. `BlueprintReaderGameTest` foi executado antes da
+correção e falhou pela presença do marcador no BOM; `isScaffolding` passou
+a filtrá-lo, e o teste passou. Verificação final: 798 unitários, 312
+GameTests e 74 testes Python, todos verdes.
+
+A auditoria também encontrou a mina repetindo frentes bloqueadas no limite
+de profundidade. `turned()` muda apenas a galeria, enquanto a helice parte
+da descida; o teste existente só conferia a rotação, não uma rota realmente
+diferente. Registrado como E45, sem alterar a geometria: orientar a boca e
+a rota separadamente afeta o save (`SHAPE_VERSION` 4) e exige uma ADR. O
+próximo lote aguarda revisão do autor. P0.7, E44 e E43 continuam sem
+alteração.
+
+Categoria 1.9 preservada: CI executa build, testes Python, unitários e
+GameTests e publica artefatos de execução; release formal segue manual.
+Ver [Auditoria Técnica 2026-09-13](Auditoria-Tecnica-2026-09-13.md).
+
+## 2026-09-13 — terra de blueprint e ciclo da mina após playtest
+
+O autor voltou a observar o construtor assentando terra de forma errática e
+nenhum mineiro trabalhando. A auditoria qualitativa foi revisitada antes do
+histórico. O `latest.log` ainda carregava o jar anterior à filtragem de
+`structure_void`; além disso, ele não registra o bloco/posição da terra
+observada.
+
+Na investigação do construtor, `BuilderWork.isShapedFromTheGround` aceitava
+qualquer bloco em `BlockTags.DIRT`; `placeOne` podia portanto colocar terra,
+grama, terra grossa ou barro sem consumir item do baú. O teste
+`aHouseNeedsStockForDirt` falhou antes da correção (312 dos 313 GameTests
+passaram, somente o teste novo falhou) e passou depois. A exceção agora
+cobre só farmland, água, `dirt_path` e cultivos; terra comum exige estoque.
+Verificação final: 313 GameTests e `build` verdes. Nenhuma conclusão de
+validação visual foi registrada.
+
+O log da mina repete “hit stone with nowhere to stand” e fecha a frente;
+no limite, a mina reabre uma hélice com o mesmo `descent`. E45 continua
+aberto: geometria persistida e migração `MineSave` (`SHAPE_VERSION` 4)
+aguardam ADR/revisão do autor. Nenhum código de mineração foi alterado.

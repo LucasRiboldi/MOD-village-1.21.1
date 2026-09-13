@@ -124,8 +124,11 @@ mas a **assinatura** vale como padrão de diagnóstico.
 Ordenados por quanto custam quando quebram.
 
 1. **Orçamento global de busca.** `SEARCHES_PER_TICK = 1` no mineiro e no
-   lenhador é do **servidor inteiro**, não da colônia. Vale em jogo e distorce
-   a bateria, que roda ~18 cenários de mineiro em paralelo. É a raiz do KF-001.
+   lenhador é compartilhado pelos jobs atendidos por cada chamada de tick,
+   portanto limita a vazão quando há muitos alvos novos. É um risco de
+   fairness em jogo; **não foi a causa do KF-001**. A bateria roda batches
+   sequenciais, e o KF-001 foi corrigido no teste após provar a re-reserva da
+   tarefa pelo ciclo da colônia.
 
 2. **Ordem de mapa como contrato.** `Map.copyOf` devolve mapa sem ordem e
    embaralhado por execução. Já causou um defeito real (a prioridade do
@@ -174,8 +177,9 @@ Medido, não estimado.
 - **Multi-agente (§18): parcial.** Há testes com dois trabalhadores
   (`lumber_two_workers`, disputa de ramal na mina), mas nenhum com dezenas.
 
-Estas lacunas **não devem ser preenchidas antes do KF-001**. Teste novo sobre
-bateria instável mede ruído.
+O KF-001 não bloqueia a cobertura destas lacunas: a instabilidade vinha da
+asserção após a re-reserva, e foi corrigida no próprio teste. Continue a rodar
+a bateria completa e acrescente cenários que provem os fluxos de produção.
 
 ---
 
@@ -183,12 +187,11 @@ bateria instável mede ruído.
 
 Nesta ordem, e o motivo é a dependência entre eles:
 
-1. **KF-001** — atacado em 09-09 e **não corrigido**: 3 falhas em 30 execuções,
-   nenhuma reproduzível sob demanda depois. O teste ganhou um instrumento que
-   registra o estado quando a asserção falha, para a próxima ser diagnosticável.
-2. ~~Teste de persistência~~ — **feito** em 09-09, `SessionResumeTest`.
-3. **Teste de ciclo longo**, uma profissão de cada vez. Continua aberto, e é
+1. **Teste de ciclo longo**, uma profissão de cada vez. Continua aberto, e é
    agora a maior lacuna.
-4. **Deadlock entre profissões**, que rendeu dois defeitos reais achados em jogo
+2. **Deadlock entre profissões**, que rendeu dois defeitos reais achados em jogo
    e nenhum achado pela bateria.
+3. **Vazão do orçamento global de busca**, apenas se medição mostrar que o
+   limite de um alvo novo por tique deixa colônias concorrentes sem progresso.
+4. ~~Teste de persistência~~ — **feito** em 09-09, `SessionResumeTest`.
 5. Só então escalar para muitos aldeões.
