@@ -134,6 +134,17 @@ conferência — trabalhador fantasma.
 
 ## Ordem e prioridade
 
+### `no miner branch work` repete no limite da mina
+
+**Causa:** se todos os braços acabam no nível mais fundo, girar apenas a
+galeria não muda a hélice que o mineiro precisa atravessar. O mesmo bloqueio
+volta a ser servido.
+
+**Onde olhar:** `Mine.deepenIfEveryArmIsDone`, `MineShaft.rerouted` e
+`MineSave.SHAPE_VERSION`. A rotação só deve acontecer após todos os braços
+terminarem; ao mudar a ordem, o save reinicia cursores e mantém a boca.
+ADR-013 registra a decisão. Ainda exige validação em jogo.
+
 ### Uma lista de materiais vira prioridade por acaso
 
 **Causa:** `Map.copyOf` devolve mapa **sem ordem**, embaralhada a cada

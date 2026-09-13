@@ -173,6 +173,17 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
     }
 
     /**
+     * A mesma boca, com a hélice orientada para o próximo lado.
+     *
+     * <p>Usada quando todos os ramais chegaram a uma barreira no limite de
+     * profundidade. Girar só a galeria preserva a escada que levou à frente
+     * bloqueada; esta troca o rumo da escada sem deslocar a entrada.
+     */
+    public MineShaft rerouted() {
+        return from(entry, descent.clockwise());
+    }
+
+    /**
      * O nível mais fundo que a mina procura — 2026-09-02.
      *
      * <p>É o pico do diamante em 1.21, e não o fundo do mundo: abaixo

@@ -259,10 +259,9 @@ public final class Mine {
 
         if (!shaft.mayDeepen()) {
             // Chegou ao fundo. Os ramais reabrem no mesmo nível, mas não
-            // no mesmo desenho: se o último padrão fechou por água, lava,
-            // bedrock ou pedra sem lugar para ficar, repetir a mesma
-            // galeria serviria a mesma barreira de novo.
-            shaft = shaft.turned();
+            // na mesma hélice: virar só a galeria serviria de novo a escada
+            // bloqueada por água, lava, bedrock ou falta de espaço.
+            shaft = shaft.rerouted();
 
             MineShaft heading = shaft;
 

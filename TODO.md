@@ -101,9 +101,17 @@ jogo**. A investigação da construção e da mineração segue aberta.
 interações que mudam blocos agora invalidam a busca local de lotes; trechos
 abertos pelo jogador reabrem braços já percorridos da mina. A busca continua
 limitada por tick e sem forçar chunks. `build` e 314 GameTests verdes. **Na
-próxima sessão, verificar retomada da casa e reabertura da mina.** Isso não
-resolve E45 (geometria/ramais) e não cadastra baús arbitrários: o estoque é
-vivo nos baús já vinculados ao trabalhador e na boca da mina.
+próxima sessão, verificar retomada da casa e reabertura da mina.** ADR-013
+resolveu E45 (geometria/ramais), sem cadastrar baús arbitrários: o estoque
+é vivo nos baús já vinculados ao trabalhador e na boca da mina.
+
+**E45 resolvido em 2026-09-13 (ADR-013):** no fundo da mina, quando todos os
+braços terminam, a hélice muda de orientação sem mover a boca. A galeria
+continua usando `turned()` para seus quatro braços. A geometria agora é
+`SHAPE_VERSION` 5; saves v4 zeram os cursores e preservam entrada, rumo e
+arco. Testes focados reproduziram as duas falhas antes da correção; `build`
+passou com 808 unitários e `runGametest` com 314/314. Falta confirmar no
+mundo do autor se o mineiro percorre e trabalha na nova hélice.
 
 ---
 
@@ -127,7 +135,6 @@ Um por vez, teste antes de seguir.
 
 | | erro | estado |
 |---|---|---|
-| **E45** | No limite de profundidade, `MineShaft.turned()` gira `gallery`, mas preserva `descent`; a hélice bloqueada volta a ser servida. O log mostra ciclos repetidos sem trabalho. A correção precisa separar orientação da boca e da rota e definir migração de `MineSave` (versão 4). **Revisão/ADR antes do código** | 🔴 aberto |
 | **E44** | A escada de recusas já existe em `MineMarks` e é consultada pela mineração e pela fronteira da galeria; há unitários e GameTests. O playtest ainda observou o mineiro parado, então a integração completa segue **sem validação em jogo**. Não reabrir a decisão original sem reproduzir um defeito residual. | ⬜ validar em jogo |
 | **E43** | O descanso de quatro ciclos é anulado no ciclo seguinte. O `giveUp` do mineiro marca `worker.rest(COLLECT_STONE)`, e a 2ª passagem do `takeOneTask` devolve a mesma tarefa ao mesmo trabalhador sempre que a colônia não tem outro trabalho da profissão dele. **Decisão de projeto, e é do autor** | 🟠 aberto |
 | **E41** | Nada mede degradação ao longo de muitos ciclos. O teste mais longo do projeto tem centenas de tiques. **Maior lacuna de cobertura depois do E37-b.** | 🟠 aberto |

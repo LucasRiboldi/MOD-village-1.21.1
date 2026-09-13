@@ -52,9 +52,11 @@ aguarda validação em jogo. O log anterior carregou o JAR antigo e não
 registra bloco/posição da terra observada, então a causa está confirmada
 no código, mas não pode ser atribuída com certeza àquela posição específica.
 
-O mineiro fecha a frente sem espaço para ficar e reabre a mesma hélice no
-fundo. E45 continua sem mudança de código até revisão/ADR sobre rota e
-migração do save (`SHAPE_VERSION` 4).
+O mineiro fechava a frente sem espaço para ficar e reabria a mesma hélice no
+fundo. E45 foi resolvido em 2026-09-13 pela ADR-013: no limite, a rota gira
+sem mover a boca; saves v4 reiniciam os cursores e mantêm o arco. `build`
+passou com 808 testes unitários e `runGametest` com 314/314; confirmação
+visual ainda pendente.
 
 **Playtest de 2026-09-13, após o JAR anterior:** nenhuma construção visível;
 mineiros sem atividade percebida; baús de profissões misturando produção.
@@ -96,7 +98,6 @@ verificação em jogo**.
 
 | Item | Descrição | Decisão |
 |---|---|---|
-| E45 | No limite de profundidade, girar a galeria reabre a hélice/descida bloqueada | **revisão de geometria e ADR antes do código** |
 | E44 | Recusa de alvos inalcançáveis | ✅ escada em `MineMarks`; **aguarda validação em jogo** |
 | E43 | O descanso de 4 ciclos é anulado no ciclo seguinte | **autor** |
 | E41 | Nada mede degradação ao longo de muitos ciclos | — |
@@ -123,7 +124,8 @@ verificação em jogo**.
 
 ## Bateria
 
-Última medição: **798 unitários**, **312 gametests** e **74 testes Python**, zero falhas (09-13).
+Última medição: **808 unitários**, **314 GameTests** e **74 testes Python**;
+zero falhas nos dois primeiros nesta sessão. Python não foi reexecutado.
 
 ---
 

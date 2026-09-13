@@ -89,8 +89,12 @@ final class MineSave {
      * quatro lances de cinco girando, em vez de dois lances retos de dez
      * com uma sala em cada patamar. A ordem mudou do indice zero em
      * diante, e um cursor antigo apontaria para dentro da rocha.
+     *
+     * <p><b>Cinco desde 2026-09-13</b>, quando a rota no limite passou a
+     * mudar tambem o rumo da helice. A entrada e o rumo atual sao mantidos;
+     * só o cursor reinicia para que a ordem nova seja comparada ao mundo.
      */
-    private static final int SHAPE_VERSION = 4;
+    private static final int SHAPE_VERSION = 5;
 
     private MineSave() {
     }

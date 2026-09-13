@@ -7456,3 +7456,24 @@ promovido automaticamente a depósito. A confirmação de retomada no mundo do
 autor permanece pendente; E45 e novos padrões de escavação não fazem parte
 deste lote. O JAR 0.3.0 foi reconstruído e copiado para `downloads/` e
 `%APPDATA%/.minecraft/mods/` (MD5 `CD29B5F8BC61871BCE74A910C57DB28E`).
+
+## 2026-09-13 — rota alternativa da mina no limite (E45 / ADR-013)
+
+O log de jogo mostrava a mina no limite de profundidade encerrando os braços
+por falta de espaço para o mineiro ficar e voltando à mesma hélice. O teste
+`theDeepestLevelRotatesInsteadOfRepeatingTheSameBlockedPattern` falhou antes
+da correção na orientação preservada; o teste de save v4 também falhou porque
+o cursor antigo não era invalidado. Ambos passaram depois da mudança.
+
+`MineShaft.rerouted()` gira o rumo da hélice, recalcula a galeria e mantém a
+boca. `MineShaft.turned()` segue sendo usado para orientar os quatro braços.
+Ao esgotar os braços no nível mais fundo, `Mine` reinicia todos no desenho
+seguinte. `MineSave.SHAPE_VERSION` subiu de 4 para 5: cursores v4 reiniciam,
+mas entrada, rumo e arco sobrevivem; a orientação v5 também passa no
+round-trip.
+
+`./gradlew.bat build`: 808 testes unitários passaram. `runGametest`: 314/314
+passaram. O playtest no mundo do autor continua necessário para confirmar que
+o mineiro alcança e trabalha na rota alternativa; nenhuma validação visual é
+inferida dos testes automatizados. O JAR será atualizado em `downloads/` e
+no launcher após commit e push.

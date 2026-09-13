@@ -194,7 +194,8 @@ class MineTest {
                         new ColonyPos(40, MineShaft.DEEPEST + MineShaft.DESCENT, 0),
                         Side.EAST));
 
-        Side before = mine.shaft().gallery();
+        Side before = mine.shaft().descent();
+        ColonyPos entry = mine.entry();
 
         for (MineArm arm : mine.arms()) {
             arm.finish();
@@ -204,8 +205,9 @@ class MineTest {
 
         assertEquals(
                 before.clockwise(),
-                mine.shaft().gallery(),
-                "a mina do fundo reabriu no mesmo padrão que acabou de travar");
+                mine.shaft().descent(),
+                "a mina do fundo reabriu com a mesma orientação de hélice que acabou de travar");
+        assertEquals(entry, mine.entry(), "a rota alternativa mudou a boca da mina");
 
         for (MineArm arm : mine.arms()) {
             assertFalse(arm.isDone(), "o ramal reabriu já fechado");
