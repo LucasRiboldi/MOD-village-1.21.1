@@ -215,6 +215,26 @@ public final class Mine {
     }
 
     /**
+     * Se todos os ramais entregáveis neste momento terminaram.
+     *
+     * <p>Antes de {@link MineShaft#CARVED}, só o ramal zero é entregável:
+     * os outros três ainda são a mesma escada. Se o zero fecha nesse
+     * trecho, esperar pelos outros prende a mina entre "não posso
+     * entregar" e "não posso descer".
+     */
+    private boolean everyOpenArmIsDone() {
+        int open = branchesOpenNow();
+
+        for (int index = 0; index < open; index++) {
+            if (!arms.get(index).isDone()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Fechados os quatro ramais, a mina desce um nível.
      *
      * <p><b>É a regra de antes, e ela não mudou de conteúdo.</b> Quatro
@@ -263,6 +283,28 @@ public final class Mine {
         }
 
         return true;
+    }
+
+    /**
+     * Desce quando tudo que a reserva pode entregar agora terminou.
+     *
+     * <p>No poço partilhado, os ramais ainda fechados são só outras
+     * vistas da mesma escada. Encerrá-los junto evita o limbo em que só
+     * o ramal zero está aberto, ele acabou, e os outros ainda não podem
+     * receber mineiro.
+     */
+    public boolean deepenIfEveryOpenArmIsDone() {
+        if (!everyOpenArmIsDone()) {
+            return false;
+        }
+
+        if (!everyArmIsDone()) {
+            for (MineArm arm : arms) {
+                arm.finish();
+            }
+        }
+
+        return deepenIfEveryArmIsDone();
     }
 
     /**

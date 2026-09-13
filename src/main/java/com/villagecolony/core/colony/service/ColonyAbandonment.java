@@ -6,8 +6,11 @@ import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.type.ColonyPos;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Decide quando uma colônia deixou de ter vila.
@@ -39,6 +42,10 @@ public final class ColonyAbandonment {
 
     private static final long VIABLE_DISTANCE_SQUARED =
             (long) VillageDetector.DUPLICATE_DISTANCE * VillageDetector.DUPLICATE_DISTANCE;
+
+    private static final int READS_TO_REVIVE = 2;
+
+    private static final Map<UUID, Integer> REVIVAL_READS = new HashMap<>();
 
     private ColonyAbandonment() {
     }
@@ -78,10 +85,24 @@ public final class ColonyAbandonment {
             // o estado anterior descrevia uma decisão tomada sobre uma
             // vila que, no meio, deixou de existir. STABLE é o mesmo
             // ponto de partida de uma colônia recém-criada.
-            return colony.state() == ColonyState.ABANDONED
-                    ? Optional.of(ColonyState.STABLE)
-                    : Optional.empty();
+            if (colony.state() == ColonyState.ABANDONED) {
+                int reads = REVIVAL_READS.merge(colony.id(), 1, Integer::sum);
+
+                if (reads >= READS_TO_REVIVE) {
+                    REVIVAL_READS.remove(colony.id());
+
+                    return Optional.of(ColonyState.STABLE);
+                }
+
+                return Optional.empty();
+            }
+
+            REVIVAL_READS.remove(colony.id());
+
+            return Optional.empty();
         }
+
+        REVIVAL_READS.remove(colony.id());
 
         if (sawIgnoredCluster || colony.state() == ColonyState.ABANDONED) {
             return Optional.empty();
@@ -136,5 +157,10 @@ public final class ColonyAbandonment {
      */
     public static boolean plansConstruction(Colony colony) {
         return colony.state() != ColonyState.ABANDONED;
+    }
+
+    /** Esquece confirmações de sessão. Chamado ao carregar ou parar o servidor. */
+    public static void clearAll() {
+        REVIVAL_READS.clear();
     }
 }

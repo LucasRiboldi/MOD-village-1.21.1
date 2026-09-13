@@ -17,6 +17,16 @@ lista deve começar agora. A ordem abaixo continua valendo para o resto.
 Ele não é diário — quem conta a história é o `TODO.md`. Este aqui é a lista
 de conferência de uma sessão.
 
+**Atualização de 2026-09-13.** A sessão do autor mostrou casa parada no
+meio, mineiro invisível/parado, lenhadores e fazendeiros funcionando. Já
+entraram quatro correções para a próxima sessão: mina desce quando o poço
+partilhado fica fechado antes da bifurcação; lenhador mira um ponto de pé
+ao lado da árvore em vez do tronco; `SweepLog` deixou de acusar ciclos que
+saíram antes de pedir lote; `ABANDONED` precisa de duas leituras positivas
+seguidas para voltar a `STABLE`, reduzindo o E9. O jar copiado em
+`downloads/` e em `.minecraft/mods` tem MD5
+`C20A21AA0DFDE483EF9177F3E85C9CF7`.
+
 ---
 
 ## Antes de abrir o jogo

@@ -157,7 +157,7 @@ public final class MineDigging {
             // decide — antes ficava no ramo do {@code isDone} logo
             // abaixo, que a reserva nunca deixava alcançar quando o ramal
             // acabado continuava sendo entregue.
-            if (mine.get().deepenIfEveryArmIsDone()) {
+            if (mine.get().deepenIfEveryOpenArmIsDone()) {
                 VillageColonyMod.LOGGER.info(
                         "Mine {} finished every branch and went one level deeper",
                         colonyId);

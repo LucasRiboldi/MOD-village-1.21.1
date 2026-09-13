@@ -2,6 +2,7 @@ package com.villagecolony.fabric.event;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.service.ColonyAbandonment;
 import com.villagecolony.core.worker.model.Worker;
 import java.util.ArrayList;
 import java.util.List;
@@ -95,6 +96,7 @@ public final class ServerLifecycleHandler {
         PhantomWorkerLog.clearAll();
         TestBarrier.clearAll();
         ColonyStateLog.clearAll();
+        ColonyAbandonment.clearAll();
         VillageDetectionHandler.clearPending();
 
         ColonySavedData data = ColonySavedData.get(server);
@@ -254,6 +256,7 @@ public final class ServerLifecycleHandler {
         PhantomWorkerLog.clearAll();
         TestBarrier.clearAll();
         ColonyStateLog.clearAll();
+        ColonyAbandonment.clearAll();
         VillageDetectionHandler.clearPending();
     }
 }

@@ -206,7 +206,7 @@ public final class TreeChoice {
             job.task.start();
         }
 
-        walkTo(villager, plan.base());
+        walkTo(world, villager, plan.base());
 
         return LumberjackWork.Outcome.SEARCHED;
     }
@@ -326,7 +326,46 @@ public final class TreeChoice {
      * é a reposição — não a primeira escrita — que faz o caminho
      * acontecer. Ver §17, E4.
      */
-    static void walkTo(VillagerEntity villager, BlockPos tree) {
-        WorkTargets.set(villager.getUuid(), tree);
+    static void walkTo(ServerWorld world, VillagerEntity villager, BlockPos tree) {
+        BlockPos stand = approachTo(world, tree);
+
+        if (stand.equals(tree)) {
+            WorkTargets.set(villager.getUuid(), tree);
+
+            return;
+        }
+
+        WorkTargets.set(villager.getUuid(), stand, 0);
+    }
+
+    /**
+     * Onde vale pedir que o aldeão pare para cortar esta árvore.
+     *
+     * <p>O alvo antigo era o próprio tronco. Em barranco ou copa baixa a
+     * navegação podia escolher um ponto ruim, passar o expediente andando
+     * e só então marcar a árvore. Para cortar, basta um lugar de pé
+     * dentro do alcance do braço; se nenhum aparece, preserva o alvo
+     * antigo e deixa o guarda de travamento decidir.
+     */
+    public static BlockPos approachTo(ServerWorld world, BlockPos tree) {
+        BlockPos best = tree;
+        double bestDistance = Double.MAX_VALUE;
+
+        for (BlockPos at : BlockPos.iterateOutwards(
+                tree, LumberjackWork.REACH, 2, LumberjackWork.REACH)) {
+
+            if (at.equals(tree) || !BuilderApproach.standable(world, at)) {
+                continue;
+            }
+
+            double distance = at.getSquaredDistance(tree);
+
+            if (distance < bestDistance) {
+                best = at.toImmutable();
+                bestDistance = distance;
+            }
+        }
+
+        return best;
     }
 }

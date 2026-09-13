@@ -123,6 +123,35 @@ class MineTest {
     }
 
     /**
+     * O poço partilhado é um caso diferente de ramal comum.
+     *
+     * <p>Antes de {@link MineShaft#CARVED}, só o ramal zero é entregue,
+     * porque os quatro ainda apontam para a mesma escada. Se ele fecha
+     * nesse trecho, esperar pelos outros três cria um impasse: eles não
+     * podem ser entregues ainda, e a mina também não desce.
+     */
+    @Test
+    void aFinishedSharedPitLetsTheMineTryTheNextLevel() {
+        Mine mine = opened();
+
+        int y = mine.shaft().positionAt(MineShaft.CARVED).y();
+
+        mine.arm(0).finish();
+
+        assertTrue(
+                mine.deepenIfEveryOpenArmIsDone(),
+                "o único ramal aberto acabou antes da galeria e a mina ficou presa nele");
+
+        assertTrue(mine.shaft().positionAt(MineShaft.CARVED).y() < y,
+                "a mina não tentou outro nível depois de fechar o poço");
+
+        for (int index = 0; index < Mine.ARMS; index++) {
+            assertFalse(mine.arm(index).isDone(),
+                    "o ramal " + index + " desceu já fechado");
+        }
+    }
+
+    /**
      * Fechados os quatro, a mina desce e a ordem recomeça.
      *
      * <p>É a regra das quatro curvas de 2026-09-02, contada de outro
@@ -144,7 +173,7 @@ class MineTest {
 
         mine.arm(Mine.ARMS - 1).finish();
 
-        assertTrue(mine.deepenIfEveryArmIsDone(), "o quarto ramal fechou e ela não desceu");
+        assertTrue(mine.deepenIfEveryOpenArmIsDone(), "o quarto ramal fechou e ela não desceu");
 
         assertTrue(mine.shaft().positionAt(MineShaft.CARVED).y() < y,
                 "a mina não desceu de nível");

@@ -337,7 +337,7 @@ public final class LumberjackWork {
         }
 
         if (!villager.getBlockPos().isWithinDistance(job.plan.base(), REACH)) {
-            TreeChoice.walkTo(villager, job.plan.base());
+            TreeChoice.walkTo(world, villager, job.plan.base());
 
             return Outcome.WORKED;
         }

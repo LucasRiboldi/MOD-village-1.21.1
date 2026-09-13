@@ -32,6 +32,11 @@ class ColonyAbandonmentTest {
         return new VillageCandidate(center, VillageDetector.MIN_BEDS);
     }
 
+    @org.junit.jupiter.api.BeforeEach
+    void forgetTheLastProbeStreaks() {
+        ColonyAbandonment.clearAll();
+    }
+
     @Test
     void aColonyThatStillSeesItsVillageIsNotTouched() {
         Colony colony = colonyAt(CENTER);
@@ -61,9 +66,31 @@ class ColonyAbandonmentTest {
         Colony colony = colonyAt(CENTER);
         colony.setState(ColonyState.ABANDONED);
 
+        assertTrue(
+                ColonyAbandonment.judge(colony, CENTER, List.of(villageAt(CENTER)), false)
+                        .isEmpty(),
+                "uma única leitura positiva ainda pode ser o pisca-pisca do E9");
+
         assertEquals(
                 Optional.of(ColonyState.STABLE),
                 ColonyAbandonment.judge(colony, CENTER, List.of(villageAt(CENTER)), false));
+    }
+
+    /** Uma falha entre duas leituras positivas zera a confirmação de volta. */
+    @Test
+    void revivingAnAbandonedColonyNeedsConsecutiveVillageReadings() {
+        Colony colony = colonyAt(CENTER);
+        colony.setState(ColonyState.ABANDONED);
+
+        assertTrue(ColonyAbandonment.judge(
+                colony, CENTER, List.of(villageAt(CENTER)), false).isEmpty());
+
+        assertTrue(ColonyAbandonment.judge(colony, CENTER, List.of(), false).isEmpty());
+
+        assertTrue(
+                ColonyAbandonment.judge(colony, CENTER, List.of(villageAt(CENTER)), false)
+                        .isEmpty(),
+                "a leitura positiva depois de uma negativa contou como segunda confirmação");
     }
 
     /** Uma vez marcada, não se marca de novo a cada ciclo. */

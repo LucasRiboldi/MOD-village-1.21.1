@@ -210,11 +210,6 @@ public final class ConstructionPlanner {
      * @return a obra recém-planejada, quando nasce uma agora
      */
     public static Optional<ConstructionProject> plan(ServerWorld world, Colony colony) {
-        // O denominador da conta do SweepLog: quantas vezes o planejador
-        // rodou. Sem ele, "oito passagens de varredura" não diz se foram
-        // oito de oito ou oito de vinte e seis.
-        SweepLog.asked(colony.id());
-
         resume(world, colony);
 
         Optional<ConstructionProject> open = VillageColonyMod.CONSTRUCTIONS.openOf(colony.id());
@@ -327,6 +322,11 @@ public final class ConstructionPlanner {
             // A ponta parou de render. A varredura volta a mandar, e
             // nesta mesma passagem.
         }
+
+        // O denominador da conta do SweepLog: quantas vezes o planejador
+        // chegou a pedir lote. Obra já aberta, falta de construtor e
+        // planta ausente saem antes daqui e não são dívida da varredura.
+        SweepLog.asked(colony.id());
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 world, colony.id(), colony.center(), searchRadius,

@@ -227,6 +227,24 @@ class SweepLogTest {
         assertFalse(tally.restarting());
     }
 
+    /**
+     * Chamadas que nem pediram lote não pertencem ao denominador.
+     *
+     * <p>Obra já aberta, falta de construtor ou planta ausente são
+     * decisões do planejador antes da busca. Contá-las como "planner
+     * runs" fazia a linha final acusar a varredura por ciclos que nunca
+     * tinham motivo para chegar nela.
+     */
+    @Test
+    void plannerSkipsBeforeLookingForALotAreNotSweepDebt() {
+        for (int i = 0; i < 50; i++) {
+            // Sem SweepLog.asked(): é o caminho que ConstructionPlanner
+            // deve tomar quando sai antes de procurar lote.
+        }
+
+        assertTrue(SweepLog.tallyOf(colonyId).isEmpty());
+    }
+
     /** Ao parar o servidor a soma sai, para a sessão seguinte nascer limpa. */
     @Test
     void theTallyIsForgottenAtShutdown() {

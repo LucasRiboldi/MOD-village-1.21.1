@@ -19,6 +19,7 @@ import com.villagecolony.fabric.work.TreeMarks;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BlockBreakTime;
+import com.villagecolony.fabric.work.BuilderApproach;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.ColonyChests;
@@ -83,6 +84,45 @@ public class LumberjackGameTest implements FabricGameTest {
         context.setBlockState(base.up(3).north(), Blocks.OAK_LEAVES.getDefaultState());
 
         return base;
+    }
+
+    /**
+     * O destino de caminhada é um lugar de pé, não o bloco de tronco.
+     *
+     * <p>Na sessão de 2026-09-13 apareceram muitas árvores "fora de
+     * alcance". Parte do custo vinha de mandar o Brain para o tronco e
+     * deixar a navegação escolher onde parar; quando há chão bom ao
+     * lado, a escolha deve ser explícita.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_approach",
+            tickLimit = 20)
+    public void theTreeTargetIsAStandingSpotBesideTheTrunk(TestContext context) {
+        BlockPos tree = new BlockPos(4, 2, 4);
+
+        for (int x = 2; x <= 6; x++) {
+            for (int z = 2; z <= 6; z++) {
+                context.setBlockState(new BlockPos(x, 1, z), Blocks.DIRT.getDefaultState());
+            }
+        }
+
+        plantTree(context, tree);
+
+        BlockPos absoluteTree = context.getAbsolutePos(tree);
+        BlockPos stand = TreeChoice.approachTo(context.getWorld(), absoluteTree);
+
+        context.assertFalse(
+                stand.equals(absoluteTree),
+                "o lenhador ainda está sendo enviado para o tronco, não para onde fica de pé");
+
+        context.assertTrue(
+                BuilderApproach.standable(context.getWorld(), stand),
+                "o alvo escolhido para o lenhador não é caminhável: " + stand.toShortString());
+
+        context.assertTrue(
+                stand.isWithinDistance(absoluteTree, 4),
+                "o alvo caminhável ficou fora do alcance do machado: " + stand.toShortString());
+
+        context.complete();
     }
 
     /**
