@@ -7422,3 +7422,37 @@ Atualizados os testes unitários e o GameTest integrado de distribuição; a
 paleta de cores exclusiva cobre só profissões ativas. Verificação: suíte
 unitária completa verde e 313 GameTests verdes. A confirmação visual em
 jogo permanece pendente.
+
+## 2026-09-13 — isolamento da produção por profissão
+
+Playtest em `latest.log`: houve mistura observável nos depósitos. A ADR-001
+§7 define armazenamento pessoal; a regra foi aplicada aos destinos de
+mineiro, lenhador, fundidor, carpinteiro e pedreiro, preservando retirada
+compartilhada de insumos. Minério continua priorizando o baú da boca da
+mina (Regra 30). Drops sem espaço ficam no mundo; transformações sem espaço
+devolvem a matéria-prima ao baú de origem.
+
+Quatro GameTests de regressão falharam antes da correção e passaram depois;
+`./gradlew build` e 313/313 GameTests passaram. JARs de distribuição e do
+launcher foram atualizados. Sem confirmação visual pós-build. O próximo
+lote deve revisar construção interrompida e mineração sem posição de
+trabalho; este registro não os considera corrigidos.
+
+## 2026-09-13 — releitura após alterações do jogador (ADR-012)
+
+`PlayerWorldChangeHandler` observa quebras e interações de bloco no servidor;
+compara o estado antes/depois e ignora operações sem mudança efetiva ou
+chunks descarregados. Alterações invalidam o índice e os cursores do
+`BuildSiteScanner` apenas nas colônias dentro do alcance, que retomam a
+varredura limitada do mundo. Quando o jogador abre espaço sobre um trecho já
+percorrido, o braço correspondente da mina reabre do primeiro índice afetado
+e limpa bloqueio/veio transitórios. Geometria e save da mina não mudam.
+
+Regressões: o unitário de `MineArm.reopenFrom` foi demonstrado vermelho antes
+da implementação; o GameTest de construção confirma que uma estrada nova é
+indexada após invalidação. `./gradlew build` e 314/314 GameTests passaram.
+Baús elegíveis já são lidos do inventário atual; nenhum baú arbitrário foi
+promovido automaticamente a depósito. A confirmação de retomada no mundo do
+autor permanece pendente; E45 e novos padrões de escavação não fazem parte
+deste lote. O JAR 0.3.0 foi reconstruído e copiado para `downloads/` e
+`%APPDATA%/.minecraft/mods/` (MD5 `CD29B5F8BC61871BCE74A910C57DB28E`).

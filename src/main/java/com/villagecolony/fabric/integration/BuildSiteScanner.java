@@ -798,6 +798,18 @@ public final class BuildSiteScanner {
         BUILDING.clear();
     }
 
+    /** Invalida os dados derivados de uma colônia após mudança do terreno. */
+    public static void invalidate(UUID colonyId) {
+        if (colonyId == null) {
+            return;
+        }
+
+        SWEEPS.remove(colonyId);
+        ROADS.remove(colonyId);
+        ROAD_CURSOR.remove(colonyId);
+        BUILDING.remove(colonyId);
+    }
+
     /**
      * Quantas colunas de rua esta colônia tem indexadas, se tem índice.
      *

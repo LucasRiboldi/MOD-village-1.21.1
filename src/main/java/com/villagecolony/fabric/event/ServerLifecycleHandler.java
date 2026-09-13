@@ -98,6 +98,7 @@ public final class ServerLifecycleHandler {
         ColonyStateLog.clearAll();
         ColonyAbandonment.clearAll();
         VillageDetectionHandler.clearPending();
+        PlayerWorldChangeHandler.clearAll();
 
         ColonySavedData data = ColonySavedData.get(server);
 

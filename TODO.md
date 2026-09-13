@@ -55,8 +55,8 @@ Registro completo em
 
 ## 🎮 Sessão de 2026-09-13
 
-**Jar em teste:** `C20A21AA0DFDE483EF9177F3E85C9CF7`, em `downloads/` e em
-`.minecraft/mods/`.
+**Jar atualizado em 2026-09-13:** `CD29B5F8BC61871BCE74A910C57DB28E`, em
+`downloads/` e `%APPDATA%/.minecraft/mods/`.
 
 **O que o autor viu:**
 
@@ -87,6 +87,24 @@ em jogo com o JAR atualizado se a obra deixa de assentar terra sem material
 e continua construindo; o log anterior veio de um JAR antigo e não registra
 o bloco/posição exata da terra vista.
 
+**Playtest seguinte, 2026-09-13:** nenhuma construção visível e baús de
+profissões recebendo produção cruzada. O log associado mostra somente três
+peças assentadas; construtor encerrou por falta de `grass_block` e
+`cobblestone`; mineiros repetiram falta de espaço para ficar em pé e
+produziram zero; lenhadores e agricultores colheram; fundidores pararam por
+falta de areia. A produção agora vai ao baú pessoal do profissional, com
+insumos compartilhados. Sem espaço, transformações devolvem o insumo e
+drops ficam no mundo. `build` e 313 GameTests verdes; **aguarda validação em
+jogo**. A investigação da construção e da mineração segue aberta.
+
+**Alterações do jogador, aplicadas em 2026-09-13 (ADR-012):** quebras e
+interações que mudam blocos agora invalidam a busca local de lotes; trechos
+abertos pelo jogador reabrem braços já percorridos da mina. A busca continua
+limitada por tick e sem forçar chunks. `build` e 314 GameTests verdes. **Na
+próxima sessão, verificar retomada da casa e reabertura da mina.** Isso não
+resolve E45 (geometria/ramais) e não cadastra baús arbitrários: o estoque é
+vivo nos baús já vinculados ao trabalhador e na boca da mina.
+
 ---
 
 ## 🔴 P0 — bloqueadores
@@ -99,7 +117,7 @@ Um por vez, teste antes de seguir.
 | **P0.1-b** | O caminho de terra não sai de baú | ✅ entregue 09-11 · ⬜ **espera sessão** |
 | **P0.1-c** | A recusa de lote diz por quê | ✅ entregue 09-11 · ⬜ **espera sessão** |
 | **P0.3** | Mineiro → armazenamento → fundidor | ✅ conserto entregue 09-11 · ⬜ **espera sessão** |
-| **P0.5** | Perda de item por inventário cheio (E3) | ✅ entregue 09-11 · ⬜ **espera sessão** |
+| **P0.5** | Perda de item por inventário cheio (E3) | ✅ corrigido e testado · ⬜ **espera sessão**; depósito pessoal revisto em 09-13 |
 | **P0.6** | A enxurrada da areia calou | ✅ entregue 09-11 · ⬜ **espera sessão** |
 | **P0.7** | Pedra como solo de lote | ⬜ **decisão do autor pendente** |
 
@@ -114,7 +132,7 @@ Um por vez, teste antes de seguir.
 | **E43** | O descanso de quatro ciclos é anulado no ciclo seguinte. O `giveUp` do mineiro marca `worker.rest(COLLECT_STONE)`, e a 2ª passagem do `takeOneTask` devolve a mesma tarefa ao mesmo trabalhador sempre que a colônia não tem outro trabalho da profissão dele. **Decisão de projeto, e é do autor** | 🟠 aberto |
 | **E41** | Nada mede degradação ao longo de muitos ciclos. O teste mais longo do projeto tem centenas de tiques. **Maior lacuna de cobertura depois do E37-b.** | 🟠 aberto |
 | **E42** | Nenhum teste de impasse entre profissões. Os dois casos reais — a roça que travava toda a construção, e o fabricante que nunca descascava — foram achados **em jogo**, não pela bateria. **A tentativa de 09-09 à noite foi retirada pelo gauntlet-verifier** — os três casos escritos eram a invariante de vários trabalhadores, com outro nome. **O trabalho de verdade é outro gametest:** lote de roça fora do alcance do fazendeiro, planta de casa disponível, duas passagens do planejador, e a segunda tem de abrir projeto de CASA | 🔴 aberto |
-| **E38** | O baú do trabalhador assoreia e nada o esvazia. Vara, maçã e muda não são `ResourceType`, nenhum trabalhador as retira, e cada uma ocupa um slot para sempre. **Metade fechada em 09-04:** o transbordo para a colônia tirou o lenhador do buraco e parou a destruição de item, mas **não move o assoreamento de lugar**. Dar a esses itens consumidor ou descarte é **decisão de projeto** | ⚙️ metade fechada |
+| **E38** | O baú pessoal pode assorear com vara, maçã e muda sem consumidor; a colheita não transborda para outra profissão e itens sem espaço viram drops no mundo. Definir tratamento sustentável dos resíduos sem misturar depósitos | ⚙️ aberto |
 | **KF-001** | Instabilidade de `aFrozenMinerGivesUpLongBeforeTheStallGuard`. **Fechado em 09-09:** a afirmação lia o estado da tarefa depois que o ciclo podia reservá-la novamente; o teste passou a registrar o instante da devolução e força a fase do ciclo. O orçamento global de uma busca/tique continua sendo um risco separado de vazão, não a causa provada da falha. | ✅ teste corrigido; medir vazão se houver evidência |
 | **E21** | `theStoneLeavesTheWorldAndReachesTheChest` disse "a pedra não chegou ao baú" uma vez. Suspeita: custo de ler estrutura no tique. **Suspeita, não diagnóstico** | 🟡 aberto |
 | **E4** | `path held: no` e o aldeão chega assim mesmo. Provável, nunca verificado | 🟡 aberto |

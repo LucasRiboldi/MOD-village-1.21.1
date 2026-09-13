@@ -174,6 +174,27 @@ lenhador — o baú do dono primeiro, o resto como transbordo.
 
 Provado por MinerOverflowGameTest.theHaulThatDoesNotFitGoesToAnotherColonyChest.
 ⬜ Espera sessão.
+
+**Revisão após playtest, 2026-09-13:** o transbordo entre profissões
+contradizia o armazenamento pessoal definido na ADR-001 §7 e foi observado
+em jogo. A saída agora vai ao baú de quem produziu; o insumo continua
+retirável de qualquer baú da colônia. Se faltar espaço para o produto,
+fundidor/carpinteiro devolvem a matéria-prima ao baú de origem; drops de
+mina e árvore ficam no mundo em vez de migrar para outro ofício. Os
+GameTests novos falharam antes da alteração e passaram depois. O tratamento
+de resíduos que assoreiam o baú pessoal continua como E38; confirmação
+visual deste contrato está pendente.
+
+**Atualização do lote, 2026-09-13:** build e 313/313 GameTests passaram.
+JAR atualizado para distribuição e launcher. Não houve novo playtest após
+esta cópia; a validação visual segue pendente. O lote para aqui, antes de
+investigar/alterar retomada de construção e navegação/mineração.
+
+**Lote seguinte, 2026-09-13 — ADR-012:** alterações reais de blocos pelo
+jogador invalidam os índices locais de construção; abrir espaço sobre braço
+da mina já percorrido reabre a frente do primeiro ponto afetado. Build e
+314/314 GameTests passaram. A sessão em jogo deve verificar se a obra e a
+mina retomam; novos ramais e migração E45 continuam fora do lote.
 P0.6 — A enxurrada da areia calou
 
 ✅ Entregue em 2026-09-11. Amortecedor de um ciclo no IdleLog, para

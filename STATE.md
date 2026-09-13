@@ -25,7 +25,7 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 
 ## Sessão de 2026-09-13
 
-**Jar em teste:** `C20A21AA0DFDE483EF9177F3E85C9CF7` — em `downloads/` e em `.minecraft/mods/`.
+**Jar atualizado em 2026-09-13:** `CD29B5F8BC61871BCE74A910C57DB28E` — em `downloads/` e `%APPDATA%/.minecraft/mods/`.
 
 **O que o autor viu no jogo:**
 
@@ -55,6 +55,30 @@ no código, mas não pode ser atribuída com certeza àquela posição específi
 O mineiro fecha a frente sem espaço para ficar e reabre a mesma hélice no
 fundo. E45 continua sem mudança de código até revisão/ADR sobre rota e
 migração do save (`SHAPE_VERSION` 4).
+
+**Playtest de 2026-09-13, após o JAR anterior:** nenhuma construção visível;
+mineiros sem atividade percebida; baús de profissões misturando produção.
+No log, a obra assentou só três peças e parou por falta de grama/pedregulho;
+mineiros ficaram sem espaço para ficar em pé e produziram zero; lenhadores
+e agricultores registraram colheitas, e fundidores pararam repetidamente
+por falta de areia. Revisão dos depósitos confirmou saídas em baús de
+colegas: agora a produção de mineiro, lenhador, fundidor, carpinteiro e
+pedreiro vai ao baú pessoal; insumos continuam compartilhados. Se não há
+espaço, transformações devolvem o insumo e drops de mineração/derrubada
+permanecem no mundo. `build` e 313 GameTests passaram. **Aguardar validação
+em jogo.** Próximo lote: causa da mina sem espaço para ficar em pé e
+construção bloqueada por estoque/retomada.
+
+**Releitura após alterações do jogador (lote aplicado em 2026-09-13):**
+interações que realmente mudam blocos e quebras invalidam os índices/cursor
+de construção das colônias próximas; a varredura limitada relê estradas e
+terreno no mundo. Abrir espaço sobre trecho já percorrido da mina reabre o
+braço desde o primeiro ponto afetado e limpa seu bloqueio transitório.
+`build` e 314 GameTests passaram, inclusive a reindexação após estrada nova.
+Pendente confirmar em jogo que casa e mina retomam no mundo do autor. Isto
+não cria novas galerias nem corrige geometria E45. Baús registrados e o da
+boca da mina já são consultados ao vivo; baú arbitrário continua dependendo
+de vínculo de armazenamento.
 
 **ADR-011 — profissões e crescimento:** implementadas as sete funções
 produtoras (Mineiro, Lenhador, Pedreiro, Fundidor, Carpinteiro, Agricultor,

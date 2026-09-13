@@ -122,6 +122,32 @@ class MineTest {
                 "o mineiro seguinte não foi mandado ao primeiro ramal livre");
     }
 
+    @Test
+    void aChangedSectionReopensOnlyTheAffectedBranch() {
+        Mine mine = opened();
+        MineArm affected = mine.arm(1);
+        MineArm untouched = mine.arm(2);
+
+        for (int i = 0; i < 40; i++) {
+            affected.nextPosition();
+        }
+        for (int i = 0; i < 3; i++) {
+            affected.blockedAgain(8);
+        }
+        affected.followVein(new ColonyPos(14, 20, 14));
+        untouched.nextPosition();
+
+        affected.reopenFrom(12);
+
+        assertFalse(affected.isDone(), "o trecho alterado continuou encerrado");
+        assertEquals(12, affected.cut(), "o cursor não voltou ao primeiro trecho afetado");
+        assertEquals(1, untouched.cut(), "a edição reabriu outro ramal");
+        assertTrue(affected.vein().isEmpty(), "a veia anterior sobreviveu à mudança do terreno");
+        for (int i = 0; i < 7; i++) {
+            assertFalse(affected.blockedAgain(8), "a contagem antiga de bloqueio sobreviveu");
+        }
+    }
+
     /**
      * O poço partilhado é um caso diferente de ramal comum.
      *

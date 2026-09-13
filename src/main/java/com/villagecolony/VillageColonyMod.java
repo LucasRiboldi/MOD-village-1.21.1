@@ -8,6 +8,7 @@ import com.villagecolony.core.construction.service.MineRegistry;
 import com.villagecolony.core.task.service.TaskService;
 import com.villagecolony.core.worker.service.WorkerService;
 import com.villagecolony.fabric.event.ServerLifecycleHandler;
+import com.villagecolony.fabric.event.PlayerWorldChangeHandler;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
 import com.villagecolony.fabric.event.VillagerLifecycleHandler;
 import net.fabricmc.api.ModInitializer;
@@ -138,6 +139,7 @@ public class VillageColonyMod implements ModInitializer {
     @Override
     public void onInitialize() {
         ServerLifecycleHandler.register();
+        PlayerWorldChangeHandler.register();
         VillageDetectionHandler.register();
         VillagerLifecycleHandler.register();
 

@@ -205,6 +205,14 @@ public final class MineArm {
         cut = Math.max(0, index);
     }
 
+    /** Reabre este braço no primeiro trecho afetado por uma mudança do mundo. */
+    public void reopenFrom(int index) {
+        cut = Math.max(0, index);
+        blocked = 0;
+        vein = null;
+        done = false;
+    }
+
     /**
      * Onde a rocha recomeça e não para mais.
      *

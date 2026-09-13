@@ -24,8 +24,8 @@ partilhado fica fechado antes da bifurcação; lenhador mira um ponto de pé
 ao lado da árvore em vez do tronco; `SweepLog` deixou de acusar ciclos que
 saíram antes de pedir lote; `ABANDONED` precisa de duas leituras positivas
 seguidas para voltar a `STABLE`, reduzindo o E9. O jar copiado em
-`downloads/` e em `.minecraft/mods` tem MD5
-`DD663BF1241F13F287C2EE5FB20E12A7`.
+`downloads/` e em `%APPDATA%/.minecraft/mods` tem MD5
+`CD29B5F8BC61871BCE74A910C57DB28E`.
 
 O novo GameTest encontrou terra comum de blueprint sendo colocada sem
 estoque; agora ela exige item no baú. Na obra real, observe se terra aparece
@@ -34,6 +34,23 @@ Para a mina, `latest.log` repetiu `hit stone with nowhere to stand` antes de
 fechar e reabrir a mesma descida. E45 segue sem correção até decisão/ADR;
 registre se isso se repete com este jar, sem tratar a atualização como
 correção da geometria.
+
+**Atualização 2026-09-13 — depósitos por profissão:** baús pessoais recebem
+a produção do próprio trabalhador; a retirada de insumos continua
+compartilhada. Verifique se minério fica na boca da mina conforme a Regra
+30, e lingotes/tábuas/blocos transformados ficam no baú do produtor. Nenhum
+baú deve receber produção de outro ofício. Quando o baú pessoal estiver
+cheio, confira o drop no chão e recolha-o; resíduos como gravetos e maçãs
+continuam sem consumidor (E38). A casa e a mina permanecem bloqueadores
+principais, sem correção neste lote.
+
+**Atualização 2026-09-13 — releitura do mundo (ADR-012):** depois de
+colocar/quebrar blocos perto da vila, dê tempo para o scanner limitado reler
+a área e confira se a obra encontra os novos lotes/estradas. Se abrir espaço
+sobre trecho já escavado da mina, observe se o mineiro retoma daquele braço.
+Registre posição e mensagens do `latest.log` se continuar parado; esta
+correção não cria ramais novos nem altera E45. Baús fora dos vínculos atuais
+não entram no estoque automaticamente.
 
 ---
 
@@ -243,8 +260,8 @@ contra o mundo, é a hora de olhar.
 
 ### Validação pendente de 2026-09-13, jar 0.3.0
 
-- O MD5 esperado em `downloads/` e `.minecraft/mods` é
-  `DD663BF1241F13F287C2EE5FB20E12A7`.
+- O MD5 esperado em `downloads/` e `%APPDATA%/.minecraft/mods` é
+  `CD29B5F8BC61871BCE74A910C57DB28E`.
 - **Construtor:** conferir que terra comum não é colocada sem estoque; anotar
   o bloco/posição e o estado da obra. A linha do log anterior não identificou
   qual terra foi vista.

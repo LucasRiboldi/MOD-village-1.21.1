@@ -343,6 +343,32 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.complete();
     }
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_refresh")
+    public void invalidatingAfterAPlayerRoadChangeReindexesTheWorld(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+        paveGround(context, center);
+        context.setBlockState(center, Blocks.SMOOTH_SANDSTONE.getDefaultState());
+
+        UUID colony = UUID.randomUUID();
+        ColonyPos absoluteCenter = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center));
+        ColonyPos impossibleHouse = new ColonyPos(40, 20, 40);
+
+        BuildSiteScanner.find(context.getWorld(), colony, absoluteCenter, RADIUS, impossibleHouse);
+        int indexedBefore = BuildSiteScanner.roadIndexSize(colony).orElse(0);
+        context.assertTrue(indexedBefore > 0, "a varredura completa não indexou a rua inicial");
+
+        context.setBlockState(center.add(RADIUS, 0, 0), Blocks.SMOOTH_SANDSTONE.getDefaultState());
+        BuildSiteScanner.invalidate(colony);
+        BuildSiteScanner.find(context.getWorld(), colony, absoluteCenter, RADIUS, impossibleHouse);
+
+        context.assertTrue(
+                BuildSiteScanner.roadIndexSize(colony).orElse(0) > indexedBefore,
+                "o índice manteve só as ruas antigas depois da invalidação");
+
+        BuildSiteScanner.clearAll();
+        context.complete();
+    }
+
     /**
      * Terreno acidentado é recusado.
      *
