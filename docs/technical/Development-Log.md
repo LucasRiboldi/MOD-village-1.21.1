@@ -7575,5 +7575,5 @@ validação visual em jogo continua necessária.
 `build/libs/village-colony-0.3.0.jar` foi copiado para `downloads/` e
 `%APPDATA%/.minecraft/mods/` com o cliente Minecraft fechado. SHA-256 nas três
 cópias: `E41063395BFC20A8D5D3182A9732B6FAF1E7265E96446E8909F32A623B1BE1D9`.
-O commit e o push desta publicação serão registrados após a confirmação do
-repositório remoto; a validação visual em jogo continua pendente.
+O lote foi commitado e enviado para `origin/main`; a validação visual em jogo
+continua pendente.
