@@ -18,7 +18,8 @@ regra que foi emendada. O corpo de cada regra vive em
 |---|---|---|---|---|
 | 1 | Colher até os baús encherem | 08-08 | ✅ feita | `ColonyGoals` (meta = guardado + espaço) |
 | 2 | Colher no tempo de um jogador com ferro | 08-08 | ✅ feita | `BlockBreakTime`, `LumberjackWork.tick` |
-| 3 | Nunca destruir vila original nem bloco do jogador | 08-13 | ✅ feita | `BlockProtection`, regra da copa |
+| 3 | Nunca destruir construções da vila original, da colônia ou do jogador | 08-13 | ✅ feita, com limite de autoria manual | `BlockProtection`, `TreeHarvester` |
+| 3-e1 | **Emenda 1:** lenhador respeita estruturas protegidas ao cortar árvores | 09-14 | ✅ feita | `TreeHarvester.plan`, `breakOne` |
 | 4 | Dois trabalhadores por profissão | 08-13 | ✅ feita | `ProfessionAssigner`, `MAX_PER_PROFESSION` |
 | 5 | Fabricar até metade do armazém | 08-13 | ✅ feita | `ColonyGoals` (tábua) |
 | 6 | Estrada primeiro, casa ligada a ela | 08-14 | ✅ feita | `RoadExtension`, `BuildSiteScanner` |
@@ -48,8 +49,10 @@ regra que foi emendada. O corpo de cada regra vive em
 | 28 | Barreira de teste: casa pequena, mobília dispensada | 08-20 | ⚠️ **provisória** | `VillageStructures.ONLY_WHILE_TESTING` |
 | 29 | A mina em escada, duas salas, galeria sem fim | 08-20 | ✅ feita | `MineShaft` |
 | 30 | O mineiro recolhe tudo, e a boca tem endereço | 08-22 | ✅ feita | `MineMouth`, `MinerHaul` |
+| 30-e1 | **Emenda 1:** manter piso de carvão e ferro bruto mesmo sem obra ativa | 09-14 | ✅ feita | `ColonyGoals.MINERAL_FLOOR` |
 | 31 | O fazendeiro planta o que tem e colhe o que está pronto | 08-26 | ✅ feita | `FarmerWork`, `CropPatch` |
 | 32 | Móveis e cama entram depois da casa pronta | 08-29 | ✅ feita | `BuilderWork.furnish` (segunda passada) |
+| 33 | Pedido de commit+push também atualiza o JAR local | 09-14 | ✅ registrada | `build/libs/` → `downloads/` → `%APPDATA%/.minecraft/mods/`; conferir SHA-256 |
 
 ---
 
@@ -74,6 +77,8 @@ Regras que o autor declarou **temporárias** e vão sair.
 |---|---|---|
 | 27 | Emenda 1 (08-26) | Abriu substituição **só para pedra** na parede |
 | 27 | Emenda 2 (08-26) | Estendeu para **madeira, tábua e pedra** |
+| 3 | Emenda 1 (09-14) | A árvore não é exceção: o lenhador não corta bloco que pertença a estrutura protegida; consulta no plano e em cada quebra |
+| 30 | Emenda 1 (09-14) | A colônia mantém 64 carvão e 64 minério de ferro bruto; demanda de obra soma ao piso |
 
 **As emendas nasceram do mesmo defeito:** a conta e o construtor
 discordavam. A conta aceitava o substituto, a parede exigia o exato.

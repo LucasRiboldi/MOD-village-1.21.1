@@ -798,16 +798,48 @@ public final class BuildSiteScanner {
         BUILDING.clear();
     }
 
-    /** Invalida os dados derivados de uma colônia após mudança do terreno. */
-    public static void invalidate(UUID colonyId) {
+    /** Reconcilia uma coluna depois de uma alteração efetiva do jogador. */
+    public static void reconcileWorldChange(
+            UUID colonyId, ServerWorld world, BlockPos changed, ColonyPos center) {
         if (colonyId == null) {
             return;
         }
 
-        SWEEPS.remove(colonyId);
-        ROADS.remove(colonyId);
+        long column = ColonyRoads.column(changed.getX(), changed.getZ());
+        Set<Long> building = BUILDING.get(colonyId);
+
+        if (building != null) {
+            building.remove(column);
+        }
+
+        ColonyRoads roads = ROADS.get(colonyId);
+
+        if (roads != null && roads.columns().contains(column)) {
+            List<Long> reconciled = new ArrayList<>(roads.columns());
+            reconciled.remove(column);
+
+            if (reconciled.isEmpty()) {
+                ROADS.remove(colonyId);
+            } else {
+                ROADS.put(colonyId, new ColonyRoads(colonyId, roads.from(), reconciled));
+            }
+        }
+
+        // A área indexada permanece válida, mas candidatos anteriores ao
+        // cursor precisam ser reconsiderados contra o terreno recém-editado.
         ROAD_CURSOR.remove(colonyId);
-        BUILDING.remove(colonyId);
+
+        if (!world.isChunkLoaded(changed)) {
+            return;
+        }
+
+        Optional<BlockPos> ground = groundInColumn(
+                world, changed.getX(), changed.getZ(), center.y());
+
+        if (ground.isPresent()
+                && VillageRoad.isPaving(world, world.getBlockState(ground.get()))) {
+            remember(colonyId, ground.get());
+        }
     }
 
     /**

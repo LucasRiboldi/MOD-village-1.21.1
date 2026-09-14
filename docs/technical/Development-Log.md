@@ -7597,3 +7597,89 @@ verificação visual.
 O JAR 0.3.0 deste lote foi copiado de `build/libs/` para `downloads/` e
 `%APPDATA%/.minecraft/mods/` com o cliente fechado. SHA-256 nas três cópias:
 `F41920D7DA1FBEADA94D4F886F5047F7A3242F850011DE7DFA2F4A9CAE28DB77`.
+
+### 2026-09-14 — log de construção parada e rota de terra
+
+O `latest.log` do playtest registra `plains_butcher_shop_2` aberta às
+00:50:15 com 382 blocos. A construção colocou dois blocos e ficou com 380
+em `WAITING_RESOURCES`, repetindo a espera por `minecraft:dirt` até
+01:01:15. O inventário agregado de 18 baús tinha 33 `GRASS_BLOCK` e nenhum
+`DIRT`. Isso confirma que a seleção do plano funcionou; a lacuna imediata era
+a inexistência de rota para o recurso requerido. O aviso de alcance do
+construtor aparece depois da primeira espera e não prova a causa inicial.
+
+`ResourceType.DIRT` agora declara produção `SURFACE_GATHERED`;
+`MinecraftTypeAdapter` reconhece `Items.DIRT`, e `SurfaceGatheringWork`
+procura `DirtPatch` fora da zona protegida, no setor externo e somente em
+chunks já carregados. O trabalho usa a ferramenta equipada do fundidor,
+confere os drops e só quebra se puder armazená-los. Os testes verificam que
+terra mapeia para `COLLECT_SURFACE_RESOURCE`, que o alvo está fora da zona,
+que o bloco é removido e que o drop chega ao baú pessoal. A classe de
+GameTest foi registrada em `fabric.mod.json`, pois os testes anteriores de
+superfície não eram descobertos pelo runner.
+
+Verificação desta sessão: `build` passou e `runGametest` passou com 320/320.
+O JAR de distribuição/launcher não foi atualizado. Falta instalar/testar o
+artefato em jogo: observar coleta, retomada da obra e medir se o alerta de
+alcance persiste depois que o material deixa de ser o bloqueio.
+
+### 2026-09-14 — ociosidade do mineiro e proteção das construções
+
+O `latest.log` do launcher foi produzido por um JAR antigo, diferente do
+artefato em `build/libs/`; por isso ele não valida a coleta de terra já
+implementada. O log anterior registra obras escolhidas e paradas em
+`WAITING_RESOURCES` por `minecraft:dirt`. Também registra três mineiros aptos,
+mas sem tarefa; havia 3 carvões e não existia meta de carvão ou ferro bruto
+sem obra aberta. A causa imediata é falta de demanda de reserva, não evidência
+de bloqueio de caminho na mina.
+
+`ColonyGoals.MINERAL_FLOOR` mantém 64 carvão e 64 minério bruto, somando a
+necessidade da obra; atingida a meta, o déficit zera. Testes unitários cobrem
+metas, demanda de obra e parada ao completar o estoque.
+
+O lenhador contornava `BlockProtection` por uma exceção antiga da regra da
+árvore. `TreeHarvester.plan` agora recusa a árvore inteira se qualquer tronco
+ou folha estiver protegido; `breakOne` repete a checagem antes de remover cada
+bloco. Dois GameTests reproduzem estrutura da colônia registrada antes do
+plano e construção registrada depois do plano. A suíte vermelha anterior
+falhou exatamente nesses dois cenários. Limite conhecido: Minecraft não
+persiste autoria de troncos manuais sem marca; não se pode distingui-los de
+árvores sem nova política e estado.
+
+A Regra 3 recebeu emenda para proteção estrutural e a Regra 30 recebeu piso
+mineral. A casa não foi replanejada: o log já confirma seleção; falta observar
+se passa do bloqueio de terra com o artefato atualizado. Verificação: `build`
+verde e 322/322 GameTests verdes. O JAR foi copiado de `build/libs/` para
+`downloads/` e `%APPDATA%/.minecraft/mods/` com o cliente fechado. SHA-256 nas
+três cópias: `9783536ED2B357FA0EA89EA8F5C36385297FBD512EA57C21AD13B684523114DB`.
+Continua pendente a confirmação visual no mundo do jogador.
+
+### 2026-09-14 — plano de continuidade e reconciliação do scanner
+
+Foi criado `docs/superpowers/plans/2026-09-14-worker-continuity-and-construction.md`
+para decompor em lotes revisáveis: continuidade/recuperação de mineiros,
+variedade de projetos por construtor, estratégias distintas de avaliação de
+lotes e revalidação após falhas repetidas. O pedido para aplicar a emenda foi
+atendido no primeiro lote; os lotes de comportamento seguem pausados para
+revisão antes de implementar.
+
+A ADR-012 foi emendada. Antes, cada edição de bloco invalidava toda a
+varredura incremental próxima, perdendo o cursor e achados parciais. Agora o
+handler reconcilia a coluna alterada no índice de estradas, preserva a
+varredura em andamento e reinicia apenas o cursor de consulta das estradas,
+cujos candidatos são conferidos contra o mundo atual. Não força chunks.
+
+Prova TDD: `playerEditKeepsAnIncrementalSweepCursor` falhou antes da mudança,
+porque a invalidação removia a passagem parcial. Depois, `build` passou e
+`runGametest` passou com 324/324. Isso valida o contrato local do scanner;
+não demonstra por si só que construções nascem ou retomam no mundo do autor.
+Nenhum JAR foi distribuído nesta tarefa.
+
+### 2026-09-14 — publicação da emenda ADR-012
+
+Após `build` e 324/324 GameTests verdes, o JAR 0.3.0 foi copiado de
+`build/libs/` para `downloads/` e `%APPDATA%/.minecraft/mods/`. SHA-256 nas
+três cópias: `EF0138BE7180FC47FB905C42EF7F64A8A31FE68CFCFCBCE4C07CAF72DB467231`.
+O launcher TLauncher estava aberto, mas o cliente Minecraft não mantinha o
+arquivo bloqueado e a cópia foi verificada por hash. A confirmação visual em
+jogo continua pendente.

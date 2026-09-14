@@ -20,17 +20,10 @@ import net.minecraft.world.gen.StructureAccessor;
  *   <li>nunca destruir um bloco colocado pelo jogador.
  * </ul>
  *
- * <p><b>A árvore é a exceção, e é a única.</b> Ela fica fora desta regra
- * por decisão do autor: o lenhador derruba árvore onde a achar, inclusive
- * dentro da caixa da vila. Sem essa exceção não haveria colheita — vila
- * de planície nasce cercada de carvalho, e boa parte dele cai dentro dos
- * limites que o jogo registra para a vila.
- *
- * <p>Árvore que nasceu junto com a vila é derrubável como qualquer
- * outra — perguntado ao autor em 2026-08-13 e confirmado por ele. A
- * exceção é da árvore, não do lugar onde ela está. O que separa a casa
- * da floresta não é esta classe: é a regra da copa, e tronco sem folha
- * viva não é árvore.
+ * <p>Árvores não têm exceção estrutural: troncos e folhas que pertencem
+ * a uma construção da vila original ou da colônia são protegidos. O
+ * lenhador consulta esta porta ao planejar a árvore e novamente antes de
+ * quebrar cada bloco.
  *
  * <p><b>Por que "colocado pelo jogador" é uma pergunta difícil.</b> O
  * Minecraft não guarda quem pôs cada bloco. A única marca que o mundo
@@ -55,9 +48,6 @@ public final class BlockProtection {
 
     /**
      * Se o trabalhador pode quebrar este bloco.
-     *
-     * <p>Não pergunta sobre árvore: quem colhe árvore não passa por aqui,
-     * pela exceção do autor. Ver o cabeçalho desta classe.
      *
      * @param state o estado já lido pelo chamador, que tem o cuidado de
      *     não forçar chunk. Passar o estado em vez de lê-lo aqui evita

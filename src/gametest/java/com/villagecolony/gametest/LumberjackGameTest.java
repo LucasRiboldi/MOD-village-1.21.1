@@ -9,9 +9,11 @@ import com.villagecolony.core.task.model.TaskPriority;
 import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
+import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.fabric.work.LumberjackReport;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.TreeChoice;
@@ -206,6 +208,68 @@ public class LumberjackGameTest implements FabricGameTest {
         context.assertTrue(
                 plan.isEmpty(),
                 "um pilar de troncos sem copa virou árvore — a Regra 3 caiu junto");
+
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_building_protection")
+    public void aTreeWhoseTrunkBelongsToAColonyBuildingIsNotPlanned(TestContext context) {
+        BlockPos base = new BlockPos(5, 2, 5);
+        plantTree(context, base);
+        ServerWorld world = context.getWorld();
+        BlockPos absoluteBase = context.getAbsolutePos(base);
+        ColonyPos here = MinecraftTypeAdapter.toColonyPos(absoluteBase);
+        Colony colony = Colony.create(UUID.randomUUID(), here);
+        VillageColonyMod.COLONIES.register(colony);
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        try {
+            VillageColonyMod.BUILDINGS.register(new Building(
+                    UUID.randomUUID(),
+                    colony.id(),
+                    new ResourceId("minecraft", "village/plains/houses/plains_small_house_1"),
+                    here,
+                    new ColonyPos(here.x(), here.y() + 3, here.z())));
+
+            context.assertTrue(
+                    TreeHarvester.plan(world, absoluteBase).isEmpty(),
+                    "o lenhador planejou cortar troncos pertencentes a uma construção da colônia");
+        } finally {
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_building_protection")
+    public void aBuildingRegisteredAfterPlanningStillProtectsItsLogs(TestContext context) {
+        BlockPos base = new BlockPos(5, 2, 5);
+        plantTree(context, base);
+        ServerWorld world = context.getWorld();
+        BlockPos absoluteBase = context.getAbsolutePos(base);
+        TreeHarvester.Plan plan = TreeHarvester.plan(world, absoluteBase);
+        ColonyPos here = MinecraftTypeAdapter.toColonyPos(absoluteBase);
+        Colony colony = Colony.create(UUID.randomUUID(), here);
+        VillageColonyMod.COLONIES.register(colony);
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        try {
+            VillageColonyMod.BUILDINGS.register(new Building(
+                    UUID.randomUUID(),
+                    colony.id(),
+                    new ResourceId("minecraft", "village/plains/houses/plains_small_house_1"),
+                    here,
+                    new ColonyPos(here.x(), here.y() + 3, here.z())));
+
+            List<ItemStack> drops = TreeHarvester.breakOne(world, plan, absoluteBase);
+
+            context.assertTrue(drops.isEmpty(), "um tronco protegido gerou drops");
+            context.assertTrue(
+                    world.getBlockState(absoluteBase).isOf(Blocks.OAK_LOG),
+                    "o tronco da casa foi removido após a construção ser registrada");
+        } finally {
+            owned.cleanUp();
+        }
 
         context.complete();
     }

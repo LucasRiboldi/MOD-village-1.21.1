@@ -234,6 +234,28 @@ class ColonyGoalsTest {
         assertEquals(ColonyGoals.STONE_FLOOR, goal.get(ResourceType.COBBLESTONE));
     }
 
+    @Test
+    void coalAndIronAreMaintainedWithoutConstructionDemand() {
+        Map<ResourceType, Integer> goal = ColonyGoals.of(
+                colony(), ResourceTally.empty(), 64);
+
+        assertEquals(64, goal.get(ResourceType.COAL));
+        assertEquals(64, goal.get(ResourceType.RAW_IRON));
+    }
+
+    @Test
+    void mineralTasksStopWhenTheirReservesAreFull() {
+        ResourceTally stock = owned(
+                ResourceType.COAL, ColonyGoals.MINERAL_FLOOR,
+                ResourceType.RAW_IRON, ColonyGoals.MINERAL_FLOOR);
+
+        Map<ResourceType, Integer> missing = ResourceDemand.deficit(
+                ColonyGoals.of(colony(), stock, 64), stock);
+
+        assertFalse(missing.containsKey(ResourceType.COAL));
+        assertFalse(missing.containsKey(ResourceType.RAW_IRON));
+    }
+
     /**
      * O piso é meta, e não fome sem fim.
      *
@@ -599,7 +621,7 @@ class ColonyGoalsTest {
                 0,
                 new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 2, 0, Map.of()));
 
-        assertEquals(2, goal.get(ResourceType.COAL));
+        assertEquals(ColonyGoals.MINERAL_FLOOR + 2, goal.get(ResourceType.COAL));
         assertFalse(goal.containsKey(ResourceType.SAND));
     }
 
@@ -620,10 +642,10 @@ class ColonyGoalsTest {
                 new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 0, 2, Map.of()));
 
         assertEquals(2, goal.get(ResourceType.IRON_INGOT));
-        assertEquals(2, goal.get(ResourceType.RAW_IRON));
+        assertEquals(ColonyGoals.MINERAL_FLOOR + 2, goal.get(ResourceType.RAW_IRON));
     }
 
-    /** Fundido o bastante, o minério sai da lista e a mina descansa. */
+    /** O piso de minério continua mesmo quando a obra já tem seus lingotes. */
     @Test
     void theOreGoalDriesUpWhenTheIngotsAreThere() {
         Map<ResourceType, Integer> goal = ColonyGoals.of(
@@ -634,10 +656,10 @@ class ColonyGoalsTest {
                 new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 0, 2, Map.of()));
 
         assertEquals(2, goal.get(ResourceType.IRON_INGOT));
-        assertFalse(goal.containsKey(ResourceType.RAW_IRON));
+        assertEquals(ColonyGoals.MINERAL_FLOOR, goal.get(ResourceType.RAW_IRON));
     }
 
-    /** Obra sem tocha não manda ninguém para a mina atrás de carvão. */
+    /** Sem tocha, permanece apenas a reserva mineral da colônia. */
     @Test
     void aWorkWithoutTorchesAsksForNoCoal() {
         Map<ResourceType, Integer> goal = ColonyGoals.of(
@@ -647,7 +669,7 @@ class ColonyGoalsTest {
                 0,
                 WorkDemand.none());
 
-        assertFalse(goal.containsKey(ResourceType.COAL));
+        assertEquals(ColonyGoals.MINERAL_FLOOR, goal.get(ResourceType.COAL));
     }
 
     /**

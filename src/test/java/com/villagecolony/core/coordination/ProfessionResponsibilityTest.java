@@ -236,6 +236,10 @@ class ProfessionResponsibilityTest {
                 "COLLECT_SURFACE_RESOURCE",
                 ColonyCycle.typeFor(ResourceType.SAND).name(),
                 "a areia para vidro pertence à coleta de superfície do fundidor");
+        assertEquals(
+                "COLLECT_SURFACE_RESOURCE",
+                ColonyCycle.typeFor(ResourceType.DIRT).name(),
+                "a terra pedida pela construção pertence à coleta de superfície do fundidor");
         assertSameTask(ResourceType.WHITE_WOOL, TaskType.COLLECT_WOOL);
         assertSameTask(ResourceType.OAK_PLANKS, TaskType.CRAFT_WOOD_MATERIAL);
         assertSameTask(ResourceType.GLASS, TaskType.SMELT_MATERIAL);
@@ -257,6 +261,7 @@ class ProfessionResponsibilityTest {
 
         assertEquals("SURFACE_GATHERED", grassBlock.production().name());
         assertEquals("COLLECT_SURFACE_RESOURCE", ColonyCycle.typeFor(grassBlock).name());
+        assertEquals("SURFACE_GATHERED", ResourceType.DIRT.production().name());
     }
 
     private static void assertSameTask(ResourceType resource, TaskType expected) {

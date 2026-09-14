@@ -60,6 +60,9 @@ public enum ResourceType {
     /** O que o fundidor recebe para dar vidro. */
     SAND(ResourceCategory.NATURAL, ResourceGroup.SAND, Production.SURFACE_GATHERED),
 
+    /** Terra recolhida fora da zona protegida para materiais de construção. */
+    DIRT(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SURFACE_GATHERED),
+
     /** Terra com grama retirada fora da zona protegida da vila. */
     GRASS_BLOCK(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SURFACE_GATHERED),
 

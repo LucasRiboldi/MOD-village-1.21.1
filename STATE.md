@@ -23,6 +23,15 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 
 ---
 
+## Sessão de 2026-09-14
+
+**Distribuição após a emenda ADR-012:** o JAR 0.3.0 foi reconstruído e
+copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`. SHA-256 nas três
+cópias (`build/libs/`, distribuição e launcher):
+`EF0138BE7180FC47FB905C42EF7F64A8A31FE68CFCFCBCE4C07CAF72DB467231`.
+`build` e 324/324 GameTests passaram; falta a validação visual das obras e da
+mineração no mundo do jogador.
+
 ## Sessão de 2026-09-13
 
 **Distribuição desta sessão:** JAR 0.3.0 copiado de `build/libs/` para
@@ -58,6 +67,38 @@ material moldado no local. A exceção foi limitada a farmland, água,
 aguarda validação em jogo. O log anterior carregou o JAR antigo e não
 registra bloco/posição da terra observada, então a causa está confirmada
 no código, mas não pode ser atribuída com certeza àquela posição específica.
+
+## Sessão de 2026-09-14 — obra esperando terra
+
+O log mais recente mostra que o planejador **abriu** `plains_butcher_shop_2`
+com 382 blocos às 00:50:15. A obra assentou dois blocos e então ficou em
+`WAITING_RESOURCES`, com 380 restantes, aguardando `minecraft:dirt` até
+01:01:15. Os 18 baús lidos tinham `GRASS_BLOCK=33`, mas nenhum `DIRT`; o
+fundidor não tinha rota para coletar terra. Portanto, a ausência visual de
+construções neste teste decorre de uma obra ativa bloqueada por insumo, não
+de falha de seleção do planejador. Um aviso posterior de alcance do construtor
+é secundário e precisa de nova medição depois que a terra chegar.
+
+`DIRT` agora é recurso `SURFACE_GATHERED`, tem conversão do item Vanilla e
+entra na mesma coleta externa e protegida por setor usada para `grass_block`.
+GameTests cobrem catálogo, atribuição ao coletor, coleta real de terra fora do
+raio protegido e depósito no baú pessoal. `build` e 320/320 GameTests passaram.
+**Pendente:** instalar o JAR atualizado e validar em jogo se o fundidor coleta
+terra, se a obra retoma além dos 380 blocos e se o aviso de alcance reaparece.
+
+**Reanálise do playtest de 09-14:** o JAR do launcher tinha SHA diferente do
+`build/libs/`; o log veio do artefato anterior à correção de terra. Nele,
+construções abriram mas pararam esperando `dirt`; três mineiros estavam aptos,
+mas sem tarefa, porque havia 3 carvões e não existiam metas de carvão/ferro
+sem obra. Lenhadores também ignoravam `BlockProtection` durante a derrubada.
+Correções atuais: piso de 64 carvão + 64 minério bruto (obra soma ao piso) e
+proteção de árvores no plano e em cada quebra. Construções Vanilla e da colônia
+são cobertas; troncos manuais sem marca não têm autoria recuperável pelo jogo.
+`build` passou, 322/322 GameTests passaram, e o JAR foi copiado para
+`downloads/` e o launcher. SHA-256 nas três cópias:
+`9783536ED2B357FA0EA89EA8F5C36385297FBD512EA57C21AD13B684523114DB`.
+**Pendente apenas validação em jogo** da construção, mineração e preservação
+estrutural; troncos manuais sem marca seguem como limite conhecido.
 
 **ADR-016 / Lote 1 em andamento (09-14):** `ResourceTally`,
 `ColonyResources` e a leitura de baús agora preservam contagens por `ResourceId`
@@ -203,3 +244,12 @@ GameTests passaram; aguarda validação visual. ADR-015 registra a escolha C,
 sem teto numérico arbitrário de reserva. **Ainda não implementado:** tarefas,
 contagem e estoque de blocos arbitrários, nem o fallback genérico para
 fundidor/criador; o catálogo de recursos atual é enum fechado. Ver TODO.
+
+**Plano de continuidade e construção (09-14):** plano por lotes em
+`docs/superpowers/plans/2026-09-14-worker-continuity-and-construction.md`.
+Lote 1 aplicado: ADR-012 reconcilia a coluna editada pelo jogador, preserva
+a varredura parcial e reinicia apenas o cursor de consulta de ruas. `build` e
+324/324 GameTests passaram; **sem confirmação em jogo**. Próximo lote para
+revisão: continuidade do mineiro; depois diversidade de estruturas entre
+construtores, estratégias distintas para avaliar lotes e revalidação após
+falhas repetidas.

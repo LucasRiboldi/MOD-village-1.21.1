@@ -52,6 +52,20 @@ não há pedido de material; sem pedido, ninguém trabalha.
 **Onde olhar:** `ConstructionPlanner.ensureTask` — verificar se a tarefa
 BUILD existe e está `isOpen()`. Foi o E14 (R-004).
 
+### Obra aberta, `WAITING_RESOURCES` repetindo o mesmo item
+
+**Causa provável:** o item pedido pela planta não tem rota da demanda até
+um produtor executável. O projeto pode estar selecionado e a construção
+corretamente bloqueada; acrescentar planos não resolve a ausência do
+fornecedor.
+
+**Onde olhar:** `ConstructionProject.remainingMaterials`,
+`WorkMaterials` por `Production`, `ColonyGoals`, `ColonyCycle.typeFor` e a
+ação física do executor. No log de 2026-09-14, a casa abriu com 382 blocos,
+colocou dois e esperou `minecraft:dirt`; `DIRT` não existia no catálogo nem
+no coletor de superfície. A correção precisa provar a cadeia inteira e o
+depósito, não somente que o item é reconhecido pelo adaptador.
+
 ---
 
 ### Guardas não disparam, mas o trabalhador está preso
@@ -249,6 +263,28 @@ passar, não está afirmando — está acompanhando.
 
 ## Quando o defeito é grande
 
+### Mineiro disponível, mas nenhuma tarefa aberta
+
+**Causa a verificar:** metas de carvão e ferro bruto dependiam de uma
+obra. Pedregulho acima do piso podia deixar a profissão sem demanda,
+mesmo com reservas minerais vazias.
+
+**Onde olhar:** `ColonyGoals.MINERAL_FLOOR`, `ResourceDemand.deficit` e
+log `no miner work: no task open`. Confirme estoque e meta antes de
+atribuir a ociosidade à geometria da mina.
+
+### Lenhador remove tronco de uma estrutura
+
+**Causa:** planejamento ou execução de `TreeHarvester` ignorou
+`BlockProtection`; copa viva compartilhada fazia troncos estruturais
+parecerem parte da árvore.
+
+**Onde olhar:** a proteção deve recusar a árvore inteira no plano e ser
+revalidada em cada quebra. O jogo não distingue autoria de troncos
+colocados manualmente; estruturas Vanilla registradas e construções da
+colônia são reconhecíveis, mas construções manuais sem marca são uma
+limitação explícita.
+
 ### Casa sobe com barreira de teste
 
 **Causa:** a cadeia de produção não entregou a peça antes de o
@@ -290,6 +326,23 @@ Pico de carregamento, não regressão. Não investigar sem ver repetir.
 
 Não é bug. `day` = 1000, antes da janela `WORK` (2000..9000). Use
 `/time set noon`.
+
+---
+
+### Edição do jogador faz a descoberta de lotes recomeçar
+
+**Causa confirmada:** cada alteração efetiva de bloco perto da colônia
+chamava a invalidação ampla do scanner, que descartava o cursor da varredura
+incremental e os candidatos parciais já encontrados. Uma sequência de obras
+do jogador podia impedir a busca de terminar.
+
+**Onde olhar:** `PlayerWorldChangeHandler` e `BuildSiteScanner`. A reconciliação
+atualiza somente a coluna de estrada afetada, preserva a passagem parcial e
+reinicia o cursor que consulta as estradas. GameTests:
+`playerEditKeepsAnIncrementalSweepCursor`,
+`reconcilingAPlayerRoadChangeUpdatesTheIndex` e
+`removingAPlayerRoadRemovesOnlyThatIndexedColumn`. Isso melhora a descoberta
+de lotes, mas não prova retomada de construção em jogo.
 
 ---
 

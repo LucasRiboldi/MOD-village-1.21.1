@@ -38,13 +38,10 @@ import java.util.Set;
  *       repor.
  * </ul>
  *
- * <p><b>A árvore é a exceção da regra de 2026-08-13</b> — nunca destruir
- * bloco da vila original nem bloco posto pelo jogador. O lenhador derruba
- * árvore onde a achar, inclusive dentro dos limites que o jogo registra
- * para a vila, e por isso a colheita não consulta
- * {@link BlockProtection}. Quem separa a casa da floresta aqui é a regra
- * da copa, não a proteção. A única parte desta classe que pergunta é a
- * limpeza da coluna da muda, que toca bloco de outra árvore.
+ * <p>A colheita respeita {@link BlockProtection}: uma árvore inteira é
+ * recusada se qualquer tronco ou folha pertencer a uma estrutura
+ * protegida, e cada bloco é validado outra vez antes de ser removido.
+ * Isso também cobre construções registradas depois do planejamento.
  *
  * <p>A ordem é a pedida pelo autor: derrubar a árvore inteira, recolher
  * tudo o que ela dropa, e só então replantar. Replantar antes planta uma
@@ -194,6 +191,10 @@ public final class TreeHarvester {
             return Plan.nothing();
         }
 
+        if (trunk.stream().anyMatch(pos -> !mayHarvest(world, pos))) {
+            return Plan.nothing();
+        }
+
         // A copa é achada antes de o tronco cair. Depois seria tarde: a
         // folha é alcançada a partir dos troncos, e sem eles não haveria
         // de onde partir.
@@ -209,6 +210,10 @@ public final class TreeHarvester {
             return Plan.nothing();
         }
 
+        if (canopy.stream().anyMatch(pos -> !mayHarvest(world, pos))) {
+            return Plan.nothing();
+        }
+
         // <b>A árvore inteira, e não um pedaço dela</b> — decisão do autor,
         // 2026-09-12: <i>"o lenhador tem que cortar todo o tronco das
         // árvores sem deixar troncos da árvore sem cortar, mesmo que não
@@ -220,12 +225,6 @@ public final class TreeHarvester {
         // viraria estoque da colônia. O autor foi avisado disso e decidiu
         // assim mesmo: tronco de pé ao lado de um toco é o que ele vê em
         // jogo, e não o risco teórico.
-        //
-        // <b>A defesa que resta é a regra da copa</b>, e ela é a principal:
-        // tronco sem folha viva ligada não é árvore e não se toca — é o
-        // que o {@code aTallBareTrunkIsStillNotATree} guarda. O que ficou
-        // exposto é a construção de tronco <b>encostada numa árvore
-        // viva</b>, que partilha a copa dela.
         //
         // O único limite que sobra é o {@link #CANOPY_SEARCH_LOGS} da
         // travessia, e ele é de segurança — não de política.
@@ -257,6 +256,10 @@ public final class TreeHarvester {
         // Folha do jogador não entra nem por engano: entre planejar e
         // chegar aqui ele pode ter posto uma no lugar da que caiu.
         if (!isBlock(world, pos, species.log()) && !isNaturalLeaf(world, pos, species)) {
+            return List.of();
+        }
+
+        if (!mayHarvest(world, pos)) {
             return List.of();
         }
 
@@ -614,6 +617,12 @@ public final class TreeHarvester {
         BlockState state = stateAt(world, pos);
 
         return state != null && state.isOf(block);
+    }
+
+    private static boolean mayHarvest(ServerWorld world, BlockPos pos) {
+        BlockState state = stateAt(world, pos);
+
+        return state != null && BlockProtection.mayBreak(world, pos, state);
     }
 
     private static BlockPos lowest(List<BlockPos> logs) {

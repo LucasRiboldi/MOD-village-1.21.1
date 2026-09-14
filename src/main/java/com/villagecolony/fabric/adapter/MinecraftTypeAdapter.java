@@ -87,6 +87,10 @@ public final class MinecraftTypeAdapter {
             return Optional.of(ResourceType.GRASS_BLOCK);
         }
 
+        if (item == Items.DIRT) {
+            return Optional.of(ResourceType.DIRT);
+        }
+
         if (item == Items.GLASS) {
             return Optional.of(ResourceType.GLASS);
         }

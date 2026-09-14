@@ -106,7 +106,7 @@ public final class PlayerWorldChangeHandler {
             if (Math.abs((long) center.x() - changedPos.x()) <= VillageDetector.SEARCH_RADIUS
                     && Math.abs((long) center.z() - changedPos.z()) <= VillageDetector.SEARCH_RADIUS
                     && Math.abs((long) center.y() - changedPos.y()) <= BUILD_VERTICAL_RANGE) {
-                BuildSiteScanner.invalidate(colony.id());
+                BuildSiteScanner.reconcileWorldChange(colony.id(), world, changed, center);
             }
         }
 

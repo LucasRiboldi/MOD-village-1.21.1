@@ -344,7 +344,7 @@ public class BuildSiteGameTest implements FabricGameTest {
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_refresh")
-    public void invalidatingAfterAPlayerRoadChangeReindexesTheWorld(TestContext context) {
+    public void reconcilingAPlayerRoadChangeUpdatesTheIndex(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         paveGround(context, center);
         context.setBlockState(center, Blocks.SMOOTH_SANDSTONE.getDefaultState());
@@ -357,15 +357,114 @@ public class BuildSiteGameTest implements FabricGameTest {
         int indexedBefore = BuildSiteScanner.roadIndexSize(colony).orElse(0);
         context.assertTrue(indexedBefore > 0, "a varredura completa não indexou a rua inicial");
 
-        context.setBlockState(center.add(RADIUS, 0, 0), Blocks.SMOOTH_SANDSTONE.getDefaultState());
-        BuildSiteScanner.invalidate(colony);
-        BuildSiteScanner.find(context.getWorld(), colony, absoluteCenter, RADIUS, impossibleHouse);
+        BlockPos changedLocal = center.add(RADIUS, 0, 0);
+        context.setBlockState(changedLocal, Blocks.SMOOTH_SANDSTONE.getDefaultState());
+        BlockPos changedRoad = context.getAbsolutePos(changedLocal);
+        BuildSiteScanner.reconcileWorldChange(
+                colony, context.getWorld(), changedRoad, absoluteCenter);
 
         context.assertTrue(
                 BuildSiteScanner.roadIndexSize(colony).orElse(0) > indexedBefore,
-                "o índice manteve só as ruas antigas depois da invalidação");
+                "a rua nova não entrou no índice sem descartar a medição existente");
 
         BuildSiteScanner.clearAll();
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_refresh")
+    public void playerEditKeepsAnIncrementalSweepCursor(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+        paveGround(context, center);
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+
+        UUID colony = UUID.randomUUID();
+        ColonyPos absoluteCenter = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center));
+        ColonyPos impossibleHouse = new ColonyPos(40, 20, 40);
+
+        BuildSiteScanner.find(context.getWorld(), colony, absoluteCenter, 64, impossibleHouse);
+        int pausedAt = BuildSiteScanner.sweepPausedAt(colony).orElse(0);
+        int foundBefore = BuildSiteScanner.pausedSweeps().stream()
+                .filter(cursor -> cursor.colonyId().equals(colony))
+                .mapToInt(cursor -> cursor.found().size())
+                .findFirst()
+                .orElse(0);
+        context.assertTrue(pausedAt > 0, "a varredura devia pausar no limite por chamada");
+        context.assertTrue(foundBefore > 0, "a fatia inicial devia acumular ruas encontradas");
+
+        long centerColumn = ColonyRoads.column(absoluteCenter.x(), absoluteCenter.z());
+        context.assertTrue(
+                BuildSiteScanner.pausedSweeps().stream()
+                        .filter(cursor -> cursor.colonyId().equals(colony))
+                        .anyMatch(cursor -> cursor.found().contains(centerColumn)),
+                "a rua editada precisa estar entre os achados parciais");
+
+        context.setBlockState(center, Blocks.DIRT.getDefaultState());
+        BuildSiteScanner.reconcileWorldChange(
+                colony, context.getWorld(), context.getAbsolutePos(center), absoluteCenter);
+        int afterRemovingRoad = BuildSiteScanner.pausedSweeps().stream()
+                .filter(cursor -> cursor.colonyId().equals(colony))
+                .mapToInt(cursor -> cursor.found().size())
+                .findFirst()
+                .orElse(0);
+        context.assertTrue(
+                afterRemovingRoad == foundBefore - 1,
+                "a rua removida permaneceu nos achados parciais");
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        BuildSiteScanner.reconcileWorldChange(
+                colony, context.getWorld(), context.getAbsolutePos(center), absoluteCenter);
+        int afterRestoringRoad = BuildSiteScanner.pausedSweeps().stream()
+                .filter(cursor -> cursor.colonyId().equals(colony))
+                .mapToInt(cursor -> cursor.found().size())
+                .findFirst()
+                .orElse(0);
+        context.assertTrue(
+                afterRestoringRoad == foundBefore,
+                "a pavimentação restaurada não voltou aos achados parciais");
+
+        for (int offset = 1; offset <= 3; offset++) {
+            BlockPos changedLocal = center.add(offset, 0, 1);
+            context.setBlockState(changedLocal, Blocks.DIRT.getDefaultState());
+            BuildSiteScanner.reconcileWorldChange(
+                    colony, context.getWorld(), context.getAbsolutePos(changedLocal), absoluteCenter);
+        }
+
+        int resumedAt = BuildSiteScanner.sweepPausedAt(colony).orElse(-1);
+        int foundRoads = BuildSiteScanner.pausedSweeps().stream()
+                .filter(cursor -> cursor.colonyId().equals(colony))
+                .mapToInt(cursor -> cursor.found().size())
+                .findFirst()
+                .orElse(0);
+        BuildSiteScanner.clearAll();
+
+        context.assertTrue(
+                resumedAt == pausedAt && foundRoads == foundBefore,
+                "cursor antes/depois=" + pausedAt + "/" + resumedAt
+                        + ", ruas parciais antes/depois=" + foundBefore + "/" + foundRoads);
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_refresh")
+    public void removingAPlayerRoadRemovesOnlyThatIndexedColumn(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+        paveGround(context, center);
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+
+        UUID colony = UUID.randomUUID();
+        ColonyPos absoluteCenter = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center));
+        ColonyPos impossibleHouse = new ColonyPos(40, 20, 40);
+
+        BuildSiteScanner.find(context.getWorld(), colony, absoluteCenter, RADIUS, impossibleHouse);
+        int indexedBefore = BuildSiteScanner.roadIndexSize(colony).orElse(0);
+        context.setBlockState(center, Blocks.DIRT.getDefaultState());
+        BuildSiteScanner.reconcileWorldChange(
+                colony, context.getWorld(), context.getAbsolutePos(center), absoluteCenter);
+        int indexedAfter = BuildSiteScanner.roadIndexSize(colony).orElse(0);
+        BuildSiteScanner.clearAll();
+
+        context.assertTrue(
+                indexedBefore == 1 && indexedAfter == 0,
+                "remover uma rua apagou informação demais ou deixou a coluna indexada");
         context.complete();
     }
 

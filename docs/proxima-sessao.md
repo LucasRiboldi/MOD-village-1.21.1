@@ -17,12 +17,29 @@ lista deve começar agora. A ordem abaixo continua valendo para o resto.
 Ele não é diário — quem conta a história é o `TODO.md`. Este aqui é a lista
 de conferência de uma sessão.
 
+**JAR atualizado após a emenda ADR-012 (2026-09-14):** 0.3.0, SHA-256
+`EF0138BE7180FC47FB905C42EF7F64A8A31FE68CFCFCBCE4C07CAF72DB467231` em
+`build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`. `build` e
+324/324 GameTests passaram. Falta confirmação visual no mundo.
+
 **Atualização de 2026-09-14 — ADR-016, Lote 1 parcial.** Este JAR registra
 IDs e quantidades reais de itens em baús, inclusive materiais fora do catálogo
 tipado. Isso ainda não cria metas, tarefas ou execução para profissões; confira
 o progresso das construções sem assumir que a cobertura genérica já funciona.
 JAR 0.3.0 em `downloads/` e `%APPDATA%/.minecraft/mods/`, cliente fechado na
 cópia. SHA-256: `F41920D7DA1FBEADA94D4F886F5047F7A3242F850011DE7DFA2F4A9CAE28DB77`.
+
+**Reanálise do playtest de 09-14:** o log carregou um JAR anterior à coleta de
+terra. Após instalar o novo artefato, observe a casa além dos 380 blocos, se o
+mineiro pega carvão e ferro até formar o piso de 64, e se árvores naturais são
+cortadas por inteiro sem remover peças de estruturas Vanilla ou da colônia.
+Construções manuais feitas de troncos sem marcas não são identificáveis com
+certeza pelo estado atual do mundo.
+
+**JAR atualizado para esta sessão:** 0.3.0, SHA-256
+`9783536ED2B357FA0EA89EA8F5C36385297FBD512EA57C21AD13B684523114DB` em
+`build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`. `build` e
+322/322 GameTests passaram. Falta confirmação visual no mundo.
 
 **Atualização de 2026-09-13.** A sessão do autor mostrou casa parada no
 meio, mineiro invisível/parado, lenhadores e fazendeiros funcionando. Já
@@ -87,13 +104,17 @@ passo de mão, e por isso envelhece em silêncio: naquele dia o arquivo para
 o qual o README aponta estava uma correção atrás do código. Copiar um jar
 velho com o Minecraft fechado direitinho não adianta nada.
 
+Ao pedir **commit e push**, o autor também pede a atualização local do JAR
+(Regra 33): esta sequência passa a ser obrigatória nessa entrega.
+
 0. `./gradlew build`, e **copie `build/libs/village-colony-0.3.0.jar` para
    `downloads/`**. Se `git status` não acusar o jar como modificado, é
    porque ele já estava em dia — e não porque a build falhou.
 1. **Feche o Minecraft** antes de copiar o jar.
 2. Copie `downloads/village-colony-0.3.0.jar` para a pasta `mods`, apagando
    o jar antigo.
-3. Confirme no log que a build nova subiu, e não a anterior.
+3. Compare o SHA-256 das três cópias (`build/libs/`, `downloads/` e
+   `%APPDATA%/.minecraft/mods/`) e confirme no log que a build nova subiu.
 
 **Duração.** A conta de 2026-08-26 estimou ~8,5 minutos só para a primeira
 varredura. Sessões curtas não chegam a ver o resto. O piso desta lista é

@@ -85,6 +85,7 @@ public final class ColonyGoals {
      * uma casa com sobra pequena.
      */
     public static final int STONE_FLOOR = 64;
+    public static final int MINERAL_FLOOR = 64;
 
     /**
      * Quanta comida a colônia mantém guardada — 2026-08-27.
@@ -437,9 +438,7 @@ public final class ColonyGoals {
         // O carvão da tocha — 2026-08-21. Direto, e sem o passo do meio
         // que o vidro tem: o mineiro traz o carvão pronto da galeria, e
         // não há fornalha entre a mina e a tocha.
-        if (work.coal() > 0) {
-            goals.put(ResourceType.COAL, work.coal());
-        }
+        goals.put(ResourceType.COAL, MINERAL_FLOOR + work.coal());
 
         // O que a obra pede e sai da FORNALHA — 2026-08-22, ADR-009.
         //
@@ -471,9 +470,9 @@ public final class ColonyGoals {
 
             int ingotsMissing = work.iron() - owned.amountOf(ResourceType.IRON_INGOT);
 
-            if (ingotsMissing > 0) {
-                goals.put(ResourceType.RAW_IRON, ingotsMissing);
-            }
+            goals.put(ResourceType.RAW_IRON, MINERAL_FLOOR + Math.max(0, ingotsMissing));
+        } else {
+            goals.put(ResourceType.RAW_IRON, MINERAL_FLOOR);
         }
 
         return Map.copyOf(goals);

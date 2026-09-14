@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-09-13, depois do playtest e auditoria técnica da sessão de 09-13.
+**Atualizado:** 2026-09-14, depois do log de playtest e correção da coleta de terra.
 
 > **Este arquivo é a lista viva.** Só o que está aberto agora.
 > O histórico — sessões por data, ciclos fechados, erros resolvidos — está
@@ -9,6 +9,22 @@
 > Onde este arquivo e o `Backlog.md` discordarem, **vale este**.
 > Onde este arquivo e o `Plano-de-Correcao.md` discordarem sobre *o que já
 > foi feito*, vale este. Sobre *o que fazer e em que ordem*, vale o plano.
+
+---
+
+## Plano de trabalho por lotes — 2026-09-14
+
+Plano solicitado para manter mineiros em atividade, variar as estruturas
+tentadas pelos construtores, ampliar a avaliação de espaços e revalidar após
+falhas repetidas: [plano completo](docs/superpowers/plans/2026-09-14-worker-continuity-and-construction.md).
+
+**Lote 1 concluído em código:** emenda da ADR-012 e reconciliação local de
+alterações do jogador no scanner; 324/324 GameTests e `build` passaram. Ainda
+aguarda validação em jogo. **Próximo lote, sujeito à revisão do autor:**
+continuidade/recuperação do mineiro; lotes seguintes cobrem variedade dos
+construtores, estratégias de avaliação de espaço e revalidação escalonada.
+“Continuar trabalhando” respeitará expediente, recursos, perigo e chunks
+carregados, sem criar recursos ou tarefas fisicamente impossíveis.
 
 ---
 
@@ -53,6 +69,26 @@ Registro completo em
 
 ---
 
+## Playtest de 2026-09-14 — casa sem avanço visível
+
+O log registra seleção e abertura de `plains_butcher_shop_2` às 00:50:15,
+com 382 blocos. Dois foram assentados; a obra ficou com 380 em
+`WAITING_RESOURCES` esperando `minecraft:dirt` por mais de seis minutos. Os
+18 baús tinham 33 `grass_block` e nenhum `dirt`. A causa imediata era uma
+lacuna na cadeia de produção: o catálogo reconhecia areia e grama, mas não
+terra, então nenhum trabalho de superfície do fundidor atendia essa demanda.
+
+**Corrigido e testado:** `DIRT` entrou no catálogo de recursos e no conversor
+Vanilla; o fundidor busca terra exposta fora do raio protegido, no setor
+cardinal definido para coleta externa, sem carregar chunks. GameTests cobrem
+tipo/tarefa e o ciclo físico de quebrar e guardar terra. `build` passou e
+`runGametest` passou com 320/320. **Ainda requer JAR atualizado e confirmação
+em jogo:** coleta de terra, retomada dos 380 blocos e eventual bloqueio de
+alcance observado depois da espera por material. Não foi alterada a escolha
+da construção: o log prova que ela já foi aberta.
+
+---
+
 ## 🎮 Sessão de 2026-09-13
 
 **Jar atualizado após E45 em 2026-09-13:** SHA-256
@@ -87,6 +123,30 @@ cultivos. `runGametest` (313) e `build` passaram. **Pendente:** confirmar
 em jogo com o JAR atualizado se a obra deixa de assentar terra sem material
 e continua construindo; o log anterior veio de um JAR antigo e não registra
 o bloco/posição exata da terra vista.
+
+## Reanálise do playtest de 2026-09-14
+
+O log usado pelo launcher veio de JAR anterior à correção de terra. As casas
+foram selecionadas, mas aguardaram `dirt`; o mineiro estava sem tarefa, não
+preso na mina: havia apenas 3 carvões e nenhuma reserva de carvão/ferro definida.
+Lenhadores cortavam sem consultar a proteção de estruturas e podiam confundir
+troncos de casas com árvore de copa compartilhada.
+
+**Implementado neste ciclo:** metas de 64 carvões e 64 minérios de ferro brutos,
+somadas à demanda da obra; proteção da árvore no planejamento e revalidação de
+cada bloco antes de quebrar. Testes de jogo cobrem estrutura da colônia
+registrada antes/depois do plano. Troncos manuais sem marca ou folha persistente
+continuam indistinguíveis de árvores; proteção adicional exige decisão sobre
+marcação/persistência.
+
+**Verificado e distribuído:** `build` passou, 322/322 GameTests passaram, e
+`build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/` têm SHA-256
+`9783536ED2B357FA0EA89EA8F5C36385297FBD512EA57C21AD13B684523114DB`.
+
+**Próximo passo: validar em jogo.** A casa deve avançar além de 380 blocos; o
+mineiro deve abrir tarefas e manter os pisos minerais; o lenhador deve cortar
+árvores naturais por inteiro e preservar estruturas Vanilla e da colônia.
+Fazenda e demais profissões não têm falha comprovada neste log.
 
 **Playtest seguinte, 2026-09-13:** nenhuma construção visível e baús de
 profissões recebendo produção cruzada. O log associado mostra somente três

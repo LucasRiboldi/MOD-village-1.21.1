@@ -2240,7 +2240,27 @@ Regra 31  o fazendeiro planta o que tiver no    08-26, ENUNCIADA e por
 Regra 32  os móveis e a cama entram depois da   08-29, feita em 08-29.
           casa pronta                           Decisão do autor depois
                                                 de ver a casa em jogo
+Regra 33  pedido de commit e push também       09-14, permanente
+          atualiza o JAR local do launcher
+Regra 3-e1 lenhador respeita estrutura ao       09-14, feita, limitada
+          cortar árvore                         pelo que o mundo registra
+Regra 30-e1 manter piso de carvão e ferro      09-14, feita
+          bruto mesmo sem obra ativa
 ```
+
+## Regra 33 — commit e push também atualizam o JAR local
+
+```text
+sempre que eu pedir commit e push, atualize o jar também local
+```
+
+Enunciada pelo autor em 2026-09-14. Ao atender um pedido de commit e push,
+depois de compilar e verificar o projeto, copiar o artefato gerado em
+`build/libs/` para `downloads/` e para `%APPDATA%/.minecraft/mods/`.
+Confirmar que as cópias têm o mesmo SHA-256 do artefato. Fechar o Minecraft
+antes da cópia; não encerrar o jogo à força. Se o arquivo estiver bloqueado,
+informar o impedimento e concluir a atualização assim que estiver disponível,
+sem declarar a entrega completa enquanto o JAR local estiver desatualizado.
 
 Duas previsões das primeiras se confirmaram e vale marcá-las: a fila que
 não esvaziava — o E1 do §17 — morreu junto, e o lugar onde as duas
@@ -2425,18 +2445,11 @@ nunca um bloco da vila original
 nunca um bloco colocado pelo jogador
 ```
 
-**A árvore é a exceção, e é a única.** O lenhador derruba árvore onde a
-achar, inclusive dentro dos limites que o jogo registra para a vila —
-sem isso não haveria colheita, porque vila de planície nasce cercada de
-carvalho e boa parte dele cai dentro desses limites.
-
-**Árvore que nasceu junto com a vila é derrubável como qualquer outra**
-— perguntado ao autor em 2026-08-13 e confirmado por ele. A exceção é da
-árvore, não do lugar onde ela está: estar dentro da vila não muda o que
-um bloco é.
-
-O que protege a casa não é esta regra, é a da copa — tronco sem folha
-viva não é árvore.
+**Emenda 1, 2026-09-14:** árvore não é exceção estrutural. O lenhador
+recusa a árvore inteira se qualquer tronco ou folha pertence a uma peça
+de vila Vanilla ou a uma construção registrada pela colônia. A proteção
+é consultada no planejamento e novamente para cada bloco removido.
+Tronco sem copa viva continua não sendo árvore.
 
 ---
 
@@ -2455,10 +2468,11 @@ jogador            única marca é a folha: colocada à mão vem
                    persistent, nascida de árvore não
 ```
 
-Para tudo o mais, o mod não tem como saber — e por isso a proteção real
-é a inversa, e não mora numa lista de proibições: **o trabalhador só
-quebra o que consegue provar ser floresta.** A regra da copa é o que faz
-esse trabalho hoje.
+O Minecraft não registra quem colocou um tronco manualmente. Assim,
+estruturas Vanilla registradas e construções da colônia são protegidas
+com precisão; uma construção manual sem folhas persistentes ou registro
+de estrutura pode ser indistinguível de uma árvore. Não se afirma
+proteção universal de blocos cuja autoria o mundo não guarda.
 
 Vila construída pelo jogador não tem estrutura registrada, e a primeira
 pergunta responde "não" para ela. Não é buraco: é a segunda metade da
@@ -2468,9 +2482,8 @@ regra que a cobre, pela via inversa.
 
 ### Onde isto vive
 
-`fabric/integration/BlockProtection` é a porta única. Hoje quem passa por
-ela é só a limpeza da coluna da muda — o único bloco que a colheita
-quebra sem que ele seja da árvore que ela planejou.
+`fabric/integration/BlockProtection` é a porta única. O lenhador consulta
+no plano e na quebra, e a limpeza da coluna da muda também a consulta.
 
 A porta existe para as fases seguintes: fabricar e construir vão tocar no
 mundo, e a pergunta "posso quebrar isto?" tem de ser feita num lugar só.
@@ -4267,6 +4280,15 @@ segunda verdade que o jogador desfaz com uma picareta.
 
 **Onde ela mora:** `MineMouth`, `OreVein.isTreasure` e
 `MinerWork.treasureChestFor`.
+
+### Emenda 1 — reserva de carvão e ferro bruto (2026-09-14)
+
+Mesmo sem construção aberta, a meta mantém 64 unidades de carvão e 64 de
+minério de ferro bruto. Uma obra soma sua necessidade ao piso; quando o
+estoque alcança a meta, o déficit zera e o mineiro não abre tarefa por
+esses dois recursos. A decisão corrige a ociosidade observada com três
+mineiros disponíveis, 219 pedregulhos no estoque e nenhuma demanda ativa
+de carvão/ferro. Implementação: `ColonyGoals.MINERAL_FLOOR`.
 
 ---
 

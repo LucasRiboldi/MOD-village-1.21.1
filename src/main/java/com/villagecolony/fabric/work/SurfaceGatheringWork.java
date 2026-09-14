@@ -15,6 +15,7 @@ import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.BlockBreakTime;
 import com.villagecolony.fabric.integration.ChestDepositor;
+import com.villagecolony.fabric.integration.DirtPatch;
 import com.villagecolony.fabric.integration.FarthestVillageSector;
 import com.villagecolony.fabric.integration.GrassPatch;
 import com.villagecolony.fabric.integration.RingSweep;
@@ -37,7 +38,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-/** Coleta areia e grass_block para as metas do fundidor. */
+/** Coleta materiais de superfície para as metas do fundidor. */
 public final class SurfaceGatheringWork {
 
     private static final int BREAKING_STAGES = 10;
@@ -52,7 +53,7 @@ public final class SurfaceGatheringWork {
     private static final class Job {
         private final Task task;
         private final BlockPos center;
-        private final Direction grassSector;
+        private final Direction surfaceSector;
         private BlockPos target;
         private int progress;
         private int required;
@@ -60,10 +61,10 @@ public final class SurfaceGatheringWork {
         private int still;
         private BlockPos lastPosition;
 
-        private Job(Task task, BlockPos center, Direction grassSector) {
+        private Job(Task task, BlockPos center, Direction surfaceSector) {
             this.task = task;
             this.center = center;
-            this.grassSector = grassSector;
+            this.surfaceSector = surfaceSector;
         }
     }
 
@@ -197,8 +198,10 @@ public final class SurfaceGatheringWork {
     }
 
     private static boolean findTarget(ServerWorld world, UUID workerId, Job job) {
-        BlockPos searchCenter = job.task.targetResource() == ResourceType.GRASS_BLOCK
-                ? job.center.offset(job.grassSector, FarthestVillageSector.PROTECTED_RADIUS + 1)
+        boolean outsideVillage = job.task.targetResource() == ResourceType.GRASS_BLOCK
+                || job.task.targetResource() == ResourceType.DIRT;
+        BlockPos searchCenter = outsideVillage
+                ? job.center.offset(job.surfaceSector, FarthestVillageSector.PROTECTED_RADIUS + 1)
                 : job.center;
         Optional<BlockPos> found = RingSweep.around(workerId, searchCenter, SEARCH_RADIUS, column -> {
             if (job.task.targetResource() == ResourceType.SAND) {
@@ -206,7 +209,10 @@ public final class SurfaceGatheringWork {
                         .filter(pos -> BlockProtection.mayBreak(world, pos, world.getBlockState(pos)));
             }
             if (job.task.targetResource() == ResourceType.GRASS_BLOCK) {
-                return GrassPatch.in(world, column, job.center.getY(), job.center, job.grassSector);
+                return GrassPatch.in(world, column, job.center.getY(), job.center, job.surfaceSector);
+            }
+            if (job.task.targetResource() == ResourceType.DIRT) {
+                return DirtPatch.in(world, column, job.center.getY(), job.center, job.surfaceSector);
             }
             return Optional.empty();
         });
