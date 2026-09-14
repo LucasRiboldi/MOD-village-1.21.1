@@ -2,6 +2,7 @@ package com.villagecolony.fabric.integration;
 
 import com.villagecolony.core.resource.model.ColonyResources;
 import com.villagecolony.core.resource.model.ResourceTally;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.storage.service.StorageRegistry;
@@ -27,8 +28,8 @@ import java.util.UUID;
  * jogador tanto quanto do aldeão, e o MVP não mexe no seu conteúdo. Ver
  * Storage-System.md §"Capacidade de Armazenamento".
  *
- * <p>Conta apenas os três recursos que a colônia acompanha; o resto do
- * inventário é ignorado, não apagado. Ver {@link ResourceType}.
+ * <p>Preserva a identidade de todo item no estoque e mantém a contagem
+ * tipada para os recursos que já participam das cadeias de trabalho.
  */
 public final class ChestInventoryReader {
 
@@ -85,6 +86,7 @@ public final class ChestInventoryReader {
         }
 
         Map<ResourceType, Integer> counts = new EnumMap<>(ResourceType.class);
+        Map<ResourceId, Integer> idCounts = new LinkedHashMap<>();
 
         for (int slot = 0; slot < chest.size(); slot++) {
             ItemStack stack = chest.getStack(slot);
@@ -93,11 +95,15 @@ public final class ChestInventoryReader {
                 continue;
             }
 
+            idCounts.merge(
+                    MinecraftTypeAdapter.toResourceId(stack.getItem()),
+                    stack.getCount(),
+                    Integer::sum);
             MinecraftTypeAdapter.toResourceType(stack.getItem()).ifPresent(
                     type -> counts.merge(type, stack.getCount(), Integer::sum));
         }
 
-        return ResourceTally.of(counts);
+        return ResourceTally.of(counts, idCounts);
     }
 
     /** O que há no baú de um trabalhador, se ele tiver um. */

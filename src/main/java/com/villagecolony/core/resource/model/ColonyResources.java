@@ -1,6 +1,7 @@
 package com.villagecolony.core.resource.model;
 
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
 
 import java.util.Collections;
@@ -84,6 +85,10 @@ public final class ColonyResources {
         return total.amountOf(type);
     }
 
+    public int amountOf(ResourceId id) {
+        return total.amountOf(id);
+    }
+
     /** A repartição por baú, sem os vazios. Somente leitura. */
     public Map<ColonyPos, ResourceTally> byChest() {
         return byChest;
@@ -96,6 +101,20 @@ public final class ColonyResources {
         for (Map.Entry<ColonyPos, ResourceTally> entry : byChest.entrySet()) {
             int amount = entry.getValue().amountOf(type);
 
+            if (amount > 0) {
+                locations.put(entry.getKey(), amount);
+            }
+        }
+
+        return Collections.unmodifiableMap(locations);
+    }
+
+    /** Onde está um ID exato, inclusive recursos fora do catálogo tipado. */
+    public Map<ColonyPos, Integer> locationsOf(ResourceId id) {
+        Map<ColonyPos, Integer> locations = new LinkedHashMap<>();
+
+        for (Map.Entry<ColonyPos, ResourceTally> entry : byChest.entrySet()) {
+            int amount = entry.getValue().amountOf(id);
             if (amount > 0) {
                 locations.put(entry.getKey(), amount);
             }

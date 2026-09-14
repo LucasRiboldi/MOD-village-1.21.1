@@ -212,6 +212,11 @@ public final class MinecraftTypeAdapter {
         return toResourceId(Registries.BLOCK.getId(block));
     }
 
+    /** O nome com que este item está registrado, inclusive itens de outros mods. */
+    public static ResourceId toResourceId(Item item) {
+        return toResourceId(Registries.ITEM.getId(item));
+    }
+
     /**
      * O bloco que este nome designa, se o jogo o conhece.
      *

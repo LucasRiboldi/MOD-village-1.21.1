@@ -1,4 +1,4 @@
-# STATE — 2026-09-13
+# STATE — 2026-09-14
 
 > Arquivo de estado vivo. Sobrescreve, não acumula.
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -58,6 +58,15 @@ material moldado no local. A exceção foi limitada a farmland, água,
 aguarda validação em jogo. O log anterior carregou o JAR antigo e não
 registra bloco/posição da terra observada, então a causa está confirmada
 no código, mas não pode ser atribuída com certeza àquela posição específica.
+
+**ADR-016 / Lote 1 em andamento (09-14):** `ResourceTally`,
+`ColonyResources` e a leitura de baús agora preservam contagens por `ResourceId`
+para itens fora de `ResourceType`, mantendo a visão tipada existente. `build`
+verde e 317/317 GameTests; ainda não há metas/tarefas nem executor genérico para
+esses IDs, portanto a cobertura de materiais continua pendente. Validação em
+mundo de desenvolvimento ainda não realizada. JAR 0.3.0 distribuído em
+`downloads/` e `%APPDATA%/.minecraft/mods/`, com cliente fechado; SHA-256 nas
+três cópias: `F41920D7DA1FBEADA94D4F886F5047F7A3242F850011DE7DFA2F4A9CAE28DB77`.
 
 O mineiro fechava a frente sem espaço para ficar e reabria a mesma hélice no
 fundo. E45 foi resolvido em 2026-09-13 pela ADR-013: no limite, a rota gira

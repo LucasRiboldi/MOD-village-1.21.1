@@ -8,6 +8,7 @@ import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
@@ -163,6 +164,30 @@ public class StorageGameTest implements FabricGameTest {
                 counted == 12,
                 "esperava 12 toras contadas, achei " + counted);
 
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "storage_count")
+    public void theColonyCountsTypedAndUncataloguedItemsByExactId(TestContext context) {
+        BlockPos chest = new BlockPos(1, 1, 1);
+        context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+        BlockPos absoluteChest = context.getAbsolutePos(chest);
+        if (context.getWorld().getBlockEntity(absoluteChest) instanceof ChestBlockEntity inventory) {
+            inventory.setStack(0, new ItemStack(Items.OAK_LOG, 12));
+            inventory.setStack(1, new ItemStack(Items.DIRT, 9));
+        } else {
+            context.throwGameTestException("não há baú em " + chest.toShortString());
+        }
+
+        var tally = ChestInventoryReader.read(
+                context.getWorld(), absoluteChest);
+
+        context.assertTrue(tally.amountOf(ResourceType.OAK_LOG) == 12,
+                "a madeira tipada deve continuar chegando à cadeia existente");
+        context.assertTrue(tally.amountOf(ResourceId.vanilla("oak_log")) == 12,
+                "o ID exato da madeira deve estar disponível");
+        context.assertTrue(tally.amountOf(ResourceId.vanilla("dirt")) == 9,
+                "item fora do catálogo deve ser contado pelo ID registrado");
         context.complete();
     }
 

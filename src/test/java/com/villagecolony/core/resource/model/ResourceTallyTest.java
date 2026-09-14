@@ -1,6 +1,7 @@
 package com.villagecolony.core.resource.model;
 
 import com.villagecolony.core.type.ResourceCategory;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
 import org.junit.jupiter.api.Test;
 
@@ -29,6 +30,75 @@ class ResourceTallyTest {
 
         assertEquals(64, result.amountOf(ResourceType.OAK_LOG));
         assertTrue(result.has(ResourceType.OAK_LOG));
+    }
+
+    @Test
+    void countsIdsOutsideTheClosedResourceCatalog() {
+        ResourceId dirt = ResourceId.vanilla("dirt");
+        ResourceTally result = ResourceTally.ofIds(Map.of(dirt, 12));
+
+        assertEquals(12, result.amountOf(dirt));
+        assertEquals(Map.of(dirt, 12), result.idCounts());
+        assertTrue(result.counts().isEmpty());
+    }
+
+    @Test
+    void combinesGenericIdsWithAnEmptyTypedView() {
+        ResourceId dirt = ResourceId.vanilla("dirt");
+        ResourceTally result = ResourceTally.of(Map.of(), Map.of(dirt, 12));
+
+        assertEquals(12, result.amountOf(dirt));
+        assertTrue(result.counts().isEmpty());
+    }
+
+    @Test
+    void omitsZeroGenericCountsAndRejectsNegativeOnes() {
+        ResourceId dirt = ResourceId.vanilla("dirt");
+        assertTrue(ResourceTally.ofIds(Map.of(dirt, 0)).isEmpty());
+        assertThrows(IllegalArgumentException.class,
+                () -> ResourceTally.ofIds(Map.of(dirt, -1)));
+    }
+
+    @Test
+    void genericCountsAreImmutableSnapshots() {
+        ResourceId dirt = ResourceId.vanilla("dirt");
+        Map<ResourceId, Integer> source = new HashMap<>();
+        source.put(dirt, 3);
+
+        ResourceTally result = ResourceTally.ofIds(source);
+        source.put(dirt, 8);
+
+        assertEquals(3, result.amountOf(dirt));
+        assertThrows(UnsupportedOperationException.class,
+                () -> result.idCounts().clear());
+    }
+
+    @Test
+    void typedCountsAlsoHaveAnIdViewWithoutBeingCountedTwice() {
+        ResourceTally result = tally(ResourceType.OAK_LOG, 12);
+
+        assertEquals(12, result.amountOf(ResourceId.vanilla("oak_log")));
+        assertEquals(Map.of(ResourceId.vanilla("oak_log"), 12), result.idCounts());
+    }
+
+    @Test
+    void mergingTalliesPreservesTypedAndGenericCounts() {
+        ResourceId dirt = ResourceId.vanilla("dirt");
+        ResourceTally result = tally(ResourceType.OAK_LOG, 5)
+                .plus(ResourceTally.ofIds(Map.of(dirt, 7)));
+
+        assertEquals(5, result.amountOf(ResourceType.OAK_LOG));
+        assertEquals(5, result.amountOf(ResourceId.vanilla("oak_log")));
+        assertEquals(7, result.amountOf(dirt));
+    }
+
+    @Test
+    void genericTalliesCanBeMergedWithEachOther() {
+        ResourceId dirt = ResourceId.vanilla("dirt");
+        ResourceTally result = ResourceTally.ofIds(Map.of(dirt, 3))
+                .plus(ResourceTally.ofIds(Map.of(dirt, 4)));
+
+        assertEquals(7, result.amountOf(dirt));
     }
 
     /** Ausência é zero, não erro: um baú sem tábua tem zero tábuas. */

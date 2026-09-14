@@ -7577,3 +7577,23 @@ validação visual em jogo continua necessária.
 cópias: `E41063395BFC20A8D5D3182A9732B6FAF1E7265E96446E8909F32A623B1BE1D9`.
 O lote foi commitado e enviado para `origin/main`; a validação visual em jogo
 continua pendente.
+
+### 2026-09-14 — ADR-016, Lote 1: contagem aberta de materiais
+
+`ResourceTally` passou a manter contagens tipadas e por `ResourceId` em paralelo;
+`ColonyResources` agrega e localiza ambas, e `ChestInventoryReader` registra o
+ID real de todo item em baús sem forçar chunks. Um GameTest cobre madeira tipada
+e terra fora do catálogo no mesmo baú. Durante a primeira suíte foi encontrado
+um caso de mapa tipado vazio que causava `IllegalArgumentException`; o modelo foi
+corrigido e a suíte completa passou depois: `build` verde, 317/317 GameTests.
+
+O lote ainda não está completo: metas, tarefas e executores continuam tipados
+por `ResourceType`. O fallback para fundidor/criador da ADR-015 não pode ser
+aplicado genericamente sem uma ação física/receita executável para o material;
+nenhuma produção foi inventada. Encerrar o roteamento antes de iniciar o Lote 2.
+TPS e comportamento sustentado requerem mundo de desenvolvimento e seguem sem
+verificação visual.
+
+O JAR 0.3.0 deste lote foi copiado de `build/libs/` para `downloads/` e
+`%APPDATA%/.minecraft/mods/` com o cliente fechado. SHA-256 nas três cópias:
+`F41920D7DA1FBEADA94D4F886F5047F7A3242F850011DE7DFA2F4A9CAE28DB77`.

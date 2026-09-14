@@ -1,6 +1,6 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Escrito em 2026-09-02, atualizado em 2026-09-13.** Este arquivo existe
+**Escrito em 2026-09-02, atualizado em 2026-09-14.** Este arquivo existe
 porque o gargalo do projeto deixou de ser código: havia **dez consertos do
 mineiro empilhados sem uma única sessão que os veja**, e nenhuma pergunta
 importante em aberto pode ser respondida sem abrir o jogo.
@@ -16,6 +16,13 @@ lista deve começar agora. A ordem abaixo continua valendo para o resto.
 
 Ele não é diário — quem conta a história é o `TODO.md`. Este aqui é a lista
 de conferência de uma sessão.
+
+**Atualização de 2026-09-14 — ADR-016, Lote 1 parcial.** Este JAR registra
+IDs e quantidades reais de itens em baús, inclusive materiais fora do catálogo
+tipado. Isso ainda não cria metas, tarefas ou execução para profissões; confira
+o progresso das construções sem assumir que a cobertura genérica já funciona.
+JAR 0.3.0 em `downloads/` e `%APPDATA%/.minecraft/mods/`, cliente fechado na
+cópia. SHA-256: `F41920D7DA1FBEADA94D4F886F5047F7A3242F850011DE7DFA2F4A9CAE28DB77`.
 
 **Atualização de 2026-09-13.** A sessão do autor mostrou casa parada no
 meio, mineiro invisível/parado, lenhadores e fazendeiros funcionando. Já
@@ -59,7 +66,7 @@ com uma construção que demande o material e se a coleta acontece além de 64
 blocos, no setor mais afastado das estruturas da vila. A proteção também é
 verificada a cada alvo; registre qualquer bloco de estrutura removido.
 
-**JAR para esta sessão:** atualizado após ADR-014/015 em 2026-09-13. SHA-256
+**JAR da sessão anterior (09-13):** atualizado após ADR-014/015. SHA-256
 `E41063395BFC20A8D5D3182A9732B6FAF1E7265E96446E8909F32A623B1BE1D9`;
 `downloads/village-colony-0.3.0.jar` e `%APPDATA%/.minecraft/mods/` têm
 bytes idênticos. O cliente não estava aberto durante a cópia.

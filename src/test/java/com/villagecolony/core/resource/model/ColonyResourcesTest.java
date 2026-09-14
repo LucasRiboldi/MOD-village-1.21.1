@@ -2,6 +2,7 @@ package com.villagecolony.core.resource.model;
 
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.type.ResourceId;
 import org.junit.jupiter.api.Test;
 
 import java.util.EnumMap;
@@ -14,6 +15,18 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ColonyResourcesTest {
+
+    @Test
+    void aggregatesGenericIdsAndReportsTheirChestLocations() {
+        ResourceId dirt = ResourceId.vanilla("dirt");
+        Map<ColonyPos, ResourceTally> byChest = new LinkedHashMap<>();
+        byChest.put(CHEST_A, ResourceTally.ofIds(Map.of(dirt, 12)));
+
+        ColonyResources resources = ColonyResources.of(byChest);
+
+        assertEquals(12, resources.amountOf(dirt));
+        assertEquals(Map.of(CHEST_A, 12), resources.locationsOf(dirt));
+    }
 
     private static final ColonyPos CHEST_A = new ColonyPos(10, 64, 20);
     private static final ColonyPos CHEST_B = new ColonyPos(30, 64, 40);
