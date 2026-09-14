@@ -102,7 +102,22 @@ public final class ColonyCycle {
             Predicate<UUID> hasStorage,
             ProductionHands hands) {
 
+        return run(colonyId, owned, goal, tasks, workers, hasStorage, hands, Map.of());
+    }
+
+    /** O mesmo ciclo, marcando quais faltas pertencem à obra aberta. */
+    public static int run(
+            UUID colonyId,
+            ResourceTally owned,
+            Map<ResourceType, Integer> goal,
+            TaskService tasks,
+            WorkerService workers,
+            Predicate<UUID> hasStorage,
+            ProductionHands hands,
+            Map<ResourceType, Integer> constructionMaterials) {
+
         Objects.requireNonNull(hands, "hands");
+        Objects.requireNonNull(constructionMaterials, "constructionMaterials");
         Objects.requireNonNull(colonyId, "colonyId");
         Objects.requireNonNull(owned, "owned");
         Objects.requireNonNull(goal, "goal");
@@ -113,7 +128,7 @@ public final class ColonyCycle {
         Map<ResourceType, Integer> missing = ResourceDemand.deficit(goal, owned);
 
         cancelSatisfied(colonyId, missing, tasks);
-        requestMissing(colonyId, missing, tasks, workers, hands);
+        requestMissing(colonyId, owned, missing, constructionMaterials, tasks, workers, hands);
 
         return WorkAssignment.assign(colonyId, workers, tasks, hasStorage);
     }
@@ -179,7 +194,9 @@ public final class ColonyCycle {
      */
     private static void requestMissing(
             UUID colonyId,
+            ResourceTally owned,
             Map<ResourceType, Integer> missing,
+            Map<ResourceType, Integer> constructionMaterials,
             TaskService tasks,
             WorkerService workers,
             ProductionHands report) {
@@ -206,9 +223,35 @@ public final class ColonyCycle {
 
             int open = countOpenRequestsFor(colonyId, resource, tasks);
             int share = Math.max(1, entry.getValue() / hands);
+            int workDeficit = Math.max(0,
+                    constructionMaterials.getOrDefault(resource, 0) - owned.amountOf(resource));
+            int constructionHands = Math.min(hands, (workDeficit + share - 1) / share);
+
+            prioritizeOpenRequests(colonyId, resource, constructionHands, tasks);
 
             for (int i = open; i < hands; i++) {
-                tasks.create(colonyId, type, TaskPriority.PRODUCTION, resource, share);
+                TaskPriority priority = i < constructionHands
+                        ? TaskPriority.CONSTRUCTION_MATERIAL
+                        : TaskPriority.PRODUCTION;
+                tasks.create(colonyId, type, priority, resource, share);
+            }
+        }
+    }
+
+    private static void prioritizeOpenRequests(
+            UUID colonyId, ResourceType resource, int constructionHands, TaskService tasks) {
+        int slot = 0;
+        for (Task task : tasks.ofColony(colonyId)) {
+            if (task.type().isResourceRequest()
+                    && task.targetResource() == resource
+                    && task.state() != TaskState.CANCELLED
+                    && task.state() != TaskState.COMPLETED) {
+                if (slot < constructionHands) {
+                    task.reprioritize(TaskPriority.CONSTRUCTION_MATERIAL);
+                } else {
+                    task.reprioritize(TaskPriority.PRODUCTION);
+                }
+                slot++;
             }
         }
     }
@@ -270,6 +313,7 @@ public final class ColonyCycle {
             case HARVESTED -> TaskType.COLLECT_WOOD;
             case FARMED -> TaskType.COLLECT_FOOD;
             case MINED -> TaskType.COLLECT_STONE;
+            case SURFACE_GATHERED -> TaskType.COLLECT_SURFACE_RESOURCE;
             case SHEARED -> TaskType.COLLECT_WOOL;
             case CRAFTED_WOOD -> TaskType.CRAFT_WOOD_MATERIAL;
             case CRAFTED_STONE -> TaskType.CRAFT_STONE_MATERIAL;

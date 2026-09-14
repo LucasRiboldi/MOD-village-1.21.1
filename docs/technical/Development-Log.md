@@ -7532,3 +7532,48 @@ depois de cumprir a cota é uma lacuna confirmada no fluxo atual. Pré-validar
 blueprints, recuperar a obra parcial e implementar/validar essa volta são
 pendências distintas. A posição final do mineiro naquela sessão continua
 sem medição em log e requer observação em jogo.
+
+### 2026-09-13 — coleta de superfície do fundidor
+
+Areia para vidro e `grass_block` necessário a obras abertas passaram a ser
+coletados pelo fundidor com pá de ferro e Toque Suave I. A grama só é elegível
+além de 64 blocos horizontais do centro e no setor cardinal com maior
+distância mínima às peças de estruturas de vila observadas em chunks já
+carregados; a busca permanece limitada aos chunks carregados e o raio de
+trabalho continua 48. A coleta consulta o loot com a ferramenta real e não
+quebra o alvo se o baú pessoal não comportar os drops. Testes Core cobrem
+roteamento/demanda; `build` passou (815 unitários) e `runGametest` passou
+(315/315). Uma premissa obsoleta no teste de profissão sem ferramenta foi
+atualizada: fundidor agora usa ferramenta; pedreiro mantém a verificação.
+Validação visual em jogo pendente; JAR de distribuição/launcher não foi
+atualizado.
+
+### 2026-09-13 — prioridade híbrida de obra e pedra lisa (ADR-015)
+
+Decisão do autor: modelo C. Materiais em falta na obra ativa precedem produção
+de estoque; mãos restantes continuam produzindo. Não há teto numérico arbitrário
+para reservas, mas os baús mantêm sua capacidade física. Materiais sem produtor
+dedicado devem usar fundidor e criador como cobertura, preservando a tosquia no
+criador.
+
+O planejador agora identifica os pedidos da obra e marca as tarefas necessárias
+como `CONSTRUCTION_MATERIAL`; tarefas excedentes ficam em `PRODUCTION`. O
+catálogo reconhece `smooth_stone_slab` como trabalho do pedreiro e deriva
+`smooth_stone` necessário pela receita Vanilla da laje. O teste de unidade da
+distribuição e o GameTest da receita passaram. `build` e `runGametest` passaram;
+316/316 GameTests.
+
+O escopo de cobertura geral ainda está aberto: estoque e tarefas usam
+`ResourceType`, um enum fechado, então blocos arbitrários ainda não podem ser
+contados/produzidos genericamente. ADR-015 registra essa segunda etapa e TODO a
+mantém pendente; nenhum JAR de distribuição ou launcher foi atualizado. A
+validação visual em jogo continua necessária.
+
+### 2026-09-13 — publicação do lote ADR-014/015
+
+`./gradlew.bat build runGametest` passou; 316/316 GameTests. O JAR de
+`build/libs/village-colony-0.3.0.jar` foi copiado para `downloads/` e
+`%APPDATA%/.minecraft/mods/` com o cliente Minecraft fechado. SHA-256 nas três
+cópias: `E41063395BFC20A8D5D3182A9732B6FAF1E7265E96446E8909F32A623B1BE1D9`.
+O commit e o push desta publicação serão registrados após a confirmação do
+repositório remoto; a validação visual em jogo continua pendente.

@@ -27,6 +27,9 @@ public enum Capability {
     /** Tirar pedra do mundo: pedregulho, ou arenito no deserto. */
     COLLECT_STONE,
 
+    /** Recolher areia e blocos naturais expostos fora da vila. */
+    COLLECT_SURFACE_RESOURCE,
+
     /** Tosquiar ovelha. */
     COLLECT_WOOL,
 

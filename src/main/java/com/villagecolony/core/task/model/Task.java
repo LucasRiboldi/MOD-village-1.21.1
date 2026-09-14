@@ -32,7 +32,7 @@ public final class Task {
 
     private final TaskType type;
 
-    private final TaskPriority priority;
+    private TaskPriority priority;
 
     private final ResourceType targetResource;
 
@@ -111,6 +111,14 @@ public final class Task {
 
     public TaskPriority priority() {
         return priority;
+    }
+
+    /** Atualiza a urgência de uma tarefa que ainda aguarda trabalhador. */
+    public void reprioritize(TaskPriority priority) {
+        Objects.requireNonNull(priority, "priority");
+        if (state == TaskState.AVAILABLE) {
+            this.priority = priority;
+        }
     }
 
     public ResourceType targetResource() {

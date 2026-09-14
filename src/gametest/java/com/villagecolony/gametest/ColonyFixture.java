@@ -11,6 +11,7 @@ import com.villagecolony.fabric.work.FarmerWork;
 import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
+import com.villagecolony.fabric.work.SurfaceGatheringWork;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,6 +85,7 @@ final class ColonyFixture {
             // trabalhador vivo para o resto da bateria.
             MinerWork.forget(worker);
             SmelterWork.forget(worker);
+            SurfaceGatheringWork.forget(worker);
             ShepherdWork.forget(worker);
             LumberjackWork.forget(worker);
             CraftingWork.forget(worker);

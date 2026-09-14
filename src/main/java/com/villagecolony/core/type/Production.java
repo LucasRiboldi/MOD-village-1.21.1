@@ -41,6 +41,9 @@ public enum Production {
     /** Da picareta do mineiro, na mina ou na superfície. */
     MINED,
 
+    /** Da coleta seletiva de materiais expostos na superfície. */
+    SURFACE_GATHERED,
+
     /** Da tesoura do pastor. */
     SHEARED,
 

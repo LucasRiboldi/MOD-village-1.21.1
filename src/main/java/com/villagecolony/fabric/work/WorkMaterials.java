@@ -177,6 +177,11 @@ public final class WorkMaterials {
      * {@link #nobodyElseAsksFor}.
      */
     public static Map<ResourceType, Integer> smeltedNeeds(Colony colony) {
+        return smeltedNeeds(null, colony);
+    }
+
+    /** Materiais da obra e ingredientes assados exigidos pelas receitas Vanilla. */
+    public static Map<ResourceType, Integer> smeltedNeeds(ServerWorld world, Colony colony) {
         Map<ResourceType, Integer> wanted = new LinkedHashMap<>();
 
         for (Map.Entry<ResourceId, Integer> entry
@@ -186,6 +191,35 @@ public final class WorkMaterials {
                     .map(Block::asItem)
                     .flatMap(MinecraftTypeAdapter::toResourceType)
                     .filter(WorkMaterials::nobodyElseAsksFor)
+                    .ifPresent(type -> wanted.merge(type, entry.getValue(), Integer::sum));
+        }
+
+        if (world != null) {
+            int slabs = ConstructionPlanner.materialNeededBy(
+                    ResourceId.vanilla("smooth_stone_slab"), colony);
+            int smoothStone = through(
+                    world, ResourceId.vanilla("smooth_stone_slab"), ResourceType.SMOOTH_STONE, slabs);
+            if (smoothStone > 0) {
+                wanted.merge(ResourceType.SMOOTH_STONE, smoothStone, Integer::sum);
+            }
+        }
+
+        return wanted;
+    }
+
+    /** Materiais naturais pedidos diretamente por uma construção aberta. */
+    public static Map<ResourceType, Integer> surfaceGatheredNeeds(Colony colony) {
+        Map<ResourceType, Integer> wanted = new LinkedHashMap<>();
+
+        for (Map.Entry<ResourceId, Integer> entry
+                : ConstructionPlanner.materialsNeededBy(colony).entrySet()) {
+
+            MinecraftTypeAdapter.toBlock(entry.getKey())
+                    .map(Block::asItem)
+                    .flatMap(MinecraftTypeAdapter::toResourceType)
+                    .filter(type -> type.production() == Production.SURFACE_GATHERED)
+                    // Areia já é derivada da falta de vidro em ColonyGoals.
+                    .filter(type -> type != ResourceType.SAND)
                     .ifPresent(type -> wanted.merge(type, entry.getValue(), Integer::sum));
         }
 

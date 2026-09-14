@@ -10,8 +10,13 @@ import com.villagecolony.core.worker.service.ProfessionRegistry;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.NbtComponent;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.enchantment.Enchantments;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.world.ServerWorld;
 
 import java.util.ArrayList;
@@ -59,6 +64,7 @@ public final class WorkerEquipment {
      * chance de queda fecha isso.
      */
     private static final float NEVER_DROPS = 0.0f;
+    private static final String COLONY_TOOL_MARKER = "villagecolony_profession_tool";
 
     private WorkerEquipment() {
     }
@@ -118,7 +124,13 @@ public final class WorkerEquipment {
                 continue;
             }
 
-            if (tool.isPresent() && held.isOf(tool.get())) {
+            boolean correctStarter = tool.isPresent() && held.isOf(tool.get());
+
+            if (ProfessionRegistry.of(profession.get()).requiredTool() == ToolType.SILK_TOUCH_IRON_SHOVEL) {
+                correctStarter = isColonySilkTouchShovel(held);
+            }
+
+            if (correctStarter) {
                 continue;
             }
 
@@ -155,7 +167,13 @@ public final class WorkerEquipment {
                 continue;
             }
 
-            villager.equipStack(EquipmentSlot.MAINHAND, new ItemStack(tool.get()));
+            ItemStack starter = new ItemStack(tool.get());
+
+            if (ProfessionRegistry.of(profession.get()).requiredTool() == ToolType.SILK_TOUCH_IRON_SHOVEL) {
+                equipSilkTouchShovel(world, starter);
+            }
+
+            villager.equipStack(EquipmentSlot.MAINHAND, starter);
             villager.setEquipmentDropChance(EquipmentSlot.MAINHAND, NEVER_DROPS);
 
             equipped++;
@@ -334,6 +352,14 @@ public final class WorkerEquipment {
      */
     private static boolean isProfessionTool(ItemStack held) {
         for (ToolType tool : ToolType.values()) {
+            if (tool == ToolType.SILK_TOUCH_IRON_SHOVEL) {
+                if (isColonySilkTouchShovel(held)) {
+                    return true;
+                }
+
+                continue;
+            }
+
             Optional<Item> item = MinecraftTypeAdapter.toItem(tool);
 
             if (item.isPresent() && held.isOf(item.get())) {
@@ -342,5 +368,25 @@ public final class WorkerEquipment {
         }
 
         return false;
+    }
+
+    private static void equipSilkTouchShovel(ServerWorld world, ItemStack stack) {
+        var silkTouch = world.getRegistryManager()
+                .get(RegistryKeys.ENCHANTMENT)
+                .getEntry(Enchantments.SILK_TOUCH)
+                .orElseThrow();
+
+        EnchantmentHelper.apply(stack, enchantments -> enchantments.set(silkTouch, 1));
+        NbtComponent.set(
+                DataComponentTypes.CUSTOM_DATA,
+                stack,
+                nbt -> nbt.putBoolean(COLONY_TOOL_MARKER, true));
+    }
+
+    private static boolean isColonySilkTouchShovel(ItemStack stack) {
+        NbtComponent customData = stack.get(DataComponentTypes.CUSTOM_DATA);
+        return stack.isOf(net.minecraft.item.Items.IRON_SHOVEL)
+                && customData != null
+                && customData.getNbt().getBoolean(COLONY_TOOL_MARKER);
     }
 }

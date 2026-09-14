@@ -5,7 +5,7 @@ import java.util.Objects;
 /**
  * Um recurso que a colônia sabe contar.
  *
- * <p>Três no MVP, conforme TASK-017. Não é a lista de tudo que existe no
+ * <p>Recursos acompanhados pela colônia, conforme TASK-017. Não é a lista de tudo que existe no
  * Minecraft: é a lista do que a colônia acompanha. Um item fora dela
  * continua no baú, apenas não é contado.
  *
@@ -58,7 +58,10 @@ public enum ResourceType {
     SANDSTONE(ResourceCategory.NATURAL, ResourceGroup.STONE, Production.MINED),
 
     /** O que o fundidor recebe para dar vidro. */
-    SAND(ResourceCategory.NATURAL, ResourceGroup.SAND, Production.MINED),
+    SAND(ResourceCategory.NATURAL, ResourceGroup.SAND, Production.SURFACE_GATHERED),
+
+    /** Terra com grama retirada fora da zona protegida da vila. */
+    GRASS_BLOCK(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SURFACE_GATHERED),
 
     /** O que o fundidor devolve. A vidraça sai daqui. */
     GLASS(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.SMELTED),
@@ -120,6 +123,12 @@ public enum ResourceType {
      * 2026-08-22.
      */
     STONE(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.SMELTED),
+
+    /** Pedra lisa, produzida pelo fundidor para receitas de alvenaria. */
+    SMOOTH_STONE(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.SMELTED),
+
+    /** Laje usada por plantas de vila; a receita final é do pedreiro. */
+    SMOOTH_STONE_SLAB(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_STONE),
 
     /**
      * O que o pedreiro lavra, e a razão de ele não nascer decorativo —

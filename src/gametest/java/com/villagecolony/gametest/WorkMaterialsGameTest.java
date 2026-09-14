@@ -90,6 +90,23 @@ public class WorkMaterialsGameTest implements FabricGameTest {
         context.complete();
     }
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_materials",
+            tickLimit = 20)
+    public void smoothStoneSlabsRequestSmeltedSmoothStone(TestContext context) {
+        ServerWorld world = context.getWorld();
+        int smoothStone = WorkMaterials.through(
+                world, ResourceId.vanilla("smooth_stone_slab"),
+                ResourceType.SMOOTH_STONE, 6);
+
+        context.assertTrue(smoothStone == 3,
+                "seis lajes de pedra lisa devem pedir três pedras lisas pela receita Vanilla; veio "
+                        + smoothStone);
+        context.assertTrue(
+                CraftingLookup.smeltingInputsFor(world, Items.SMOOTH_STONE).contains(Items.STONE),
+                "a fornalha Vanilla precisa transformar stone em smooth_stone");
+        context.complete();
+    }
+
     /**
      * A tocha da parede vira carvão pela receita do jogo — 2026-08-21.
      *

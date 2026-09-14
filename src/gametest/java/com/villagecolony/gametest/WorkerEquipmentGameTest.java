@@ -17,6 +17,8 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.enchantment.Enchantments;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -27,6 +29,7 @@ import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.registry.RegistryKeys;
 
 import java.util.HashSet;
 import java.util.List;
@@ -97,6 +100,16 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
                         held.isOf(expected.get()),
                         profession + " deveria segurar " + expected.get()
                                 + " e segura " + (held.isEmpty() ? "nada" : held.getItem()));
+
+                if (profession == ProfessionType.SMELTER) {
+                    var silkTouch = context.getWorld().getRegistryManager()
+                            .get(RegistryKeys.ENCHANTMENT)
+                            .getEntry(Enchantments.SILK_TOUCH)
+                            .orElseThrow();
+                    context.assertTrue(
+                            EnchantmentHelper.getLevel(silkTouch, held) == 1,
+                            "a pá do fundidor precisa de Toque Suave I");
+                }
             }
         }
 
@@ -123,6 +136,29 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
         context.assertTrue(
                 villager.getEquippedStack(EquipmentSlot.MAINHAND).isOf(net.minecraft.item.Items.DIAMOND),
                 "a colônia tomou a mão do aldeão");
+
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_equipment")
+    public void anUnmarkedIronShovelRemainsThePlayersTool(TestContext context) {
+        VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
+        villager.equipStack(EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_SHOVEL));
+
+        Worker worker = Worker.restore(
+                villager.getUuid(), UUID.randomUUID(), ProfessionType.SMELTER);
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
+        context.assertTrue(
+                villager.getEquippedStack(EquipmentSlot.MAINHAND).isOf(Items.IRON_SHOVEL),
+                "a colônia substituiu a pá comum do jogador");
+        context.assertTrue(
+                EnchantmentHelper.getLevel(
+                        context.getWorld().getRegistryManager().get(RegistryKeys.ENCHANTMENT)
+                                .getEntry(Enchantments.SILK_TOUCH).orElseThrow(),
+                        villager.getEquippedStack(EquipmentSlot.MAINHAND)) == 0,
+                "a colônia encantou a ferramenta que pertence ao jogador");
 
         context.complete();
     }
@@ -269,8 +305,8 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
     /**
      * E quem perde a função de mãos livres devolve a ferramenta velha.
      *
-     * <p>A outra ponta da mesma invariante: o fundidor trabalha de mãos
-     * livres, e uma picareta na mão dele mente igual.
+     * <p>O pedreiro trabalha de mãos livres. Uma ferramenta da colônia
+     * que ficou da profissão anterior deve voltar ao estado vazio.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_equipment")
     public void aFreeHandedProfessionGivesTheOldToolBack(TestContext context) {
@@ -279,13 +315,13 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
         villager.equipStack(EquipmentSlot.MAINHAND, new ItemStack(Items.DIAMOND_PICKAXE));
 
         Worker worker = Worker.restore(
-                villager.getUuid(), UUID.randomUUID(), ProfessionType.SMELTER);
+                villager.getUuid(), UUID.randomUUID(), ProfessionType.MASON);
 
         WorkerEquipment.equip(context.getWorld(), List.of(worker));
 
         context.assertTrue(
                 villager.getEquippedStack(EquipmentSlot.MAINHAND).isEmpty(),
-                "o fundidor trabalha de mãos livres e continua com a picareta");
+                "o pedreiro trabalha de mãos livres e continua com a ferramenta da colônia");
 
         context.complete();
     }

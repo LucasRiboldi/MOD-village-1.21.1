@@ -46,10 +46,11 @@ import java.util.UUID;
  * verdade no mundo é escrever bloco fora da planta, e a Regra 3 tem
  * opinião sobre isso.
  *
- * <p><b>O que falta desta cadeia</b>, e está dito para não passar por
- * pronto: ninguém <b>colhe areia</b> ainda. O fundidor funde a areia que
- * houver nos baús da colônia — do jogador, ou do mineiro no dia em que
- * ele receber meta de areia. Sem areia, ele diz que não tem e para.
+ * <p>A coleta de areia e de {@code grass_block} é feita por
+ * {@link SurfaceGatheringWork}, usando a pá de Toque Suave do fundidor.
+ * A grama só é coletada fora da zona protegida da vila e quando há uma
+ * necessidade real de construção; areia continua atendendo à demanda de
+ * vidro. Este componente permanece responsável apenas pela fundição.
  */
 public final class SmelterWork {
 

@@ -55,8 +55,8 @@ public final class ToolUpgrade {
      * fato quebra o dia inteiro.
      *
      * <p>Profissão que não aparece aqui não troca de ferramenta. São as
-     * de mãos livres — construtor, fundidor, fabricante —, e o pastor:
-     * tesoura não tem grau, então não há por que medir.
+     * de mãos livres — construtor, pedreiro, carpinteiro —, o fundidor:
+     * a pá especial mantém Toque Suave, e o pastor: tesoura não tem grau.
      */
     private static final Map<ProfessionType, Block> PROOF =
             new EnumMap<>(ProfessionType.class);

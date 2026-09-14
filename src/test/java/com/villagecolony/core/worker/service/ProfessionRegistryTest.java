@@ -123,6 +123,7 @@ class ProfessionRegistryTest {
             assertTrue(
                     tool == ToolType.NONE
                             || tool == ToolType.SHEARS
+                            || tool == ToolType.SILK_TOUCH_IRON_SHOVEL
                             || tool.name().startsWith("IRON_"),
                     profession + " comeca com " + tool + ", que nao e ferro");
         }

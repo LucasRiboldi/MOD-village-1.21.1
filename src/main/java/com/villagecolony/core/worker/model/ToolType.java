@@ -76,5 +76,8 @@ public enum ToolType {
 
     IRON_PICKAXE,
 
-    IRON_HOE
+    IRON_HOE,
+
+    /** Pá inicial do fundidor; Silk Touch preserva o grass_block coletado. */
+    SILK_TOUCH_IRON_SHOVEL
 }

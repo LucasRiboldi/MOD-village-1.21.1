@@ -25,6 +25,11 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 
 ## Sessão de 2026-09-13
 
+**Distribuição desta sessão:** JAR 0.3.0 copiado de `build/libs/` para
+`downloads/` e `%APPDATA%/.minecraft/mods/`. SHA-256:
+`E41063395BFC20A8D5D3182A9732B6FAF1E7265E96446E8909F32A623B1BE1D9`.
+`build` e 316/316 GameTests passaram; validação visual continua pendente.
+
 **Jar atualizado após E45 em 2026-09-13:** SHA-256
 `D8548BAD17A87FED10E0EFBBA92ADC129ED36047E1FC451AAE27248AE3B930F3` — em
 `downloads/` e `%APPDATA%/.minecraft/mods/`.
@@ -171,3 +176,21 @@ no código era a cota global de uma busca por tique presa ao primeiro
 trabalho sem alvo. O rodízio foi corrigido e passou em `build` (809
 unitários) e 314 GameTests; portal visível e início da escavação **aguardam
 validação em jogo**.
+
+**Coleta superficial do fundidor (09-13):** pá de ferro com Toque Suave I;
+areia para a cadeia do vidro e `grass_block` apenas quando uma obra aberta
+precisa dele. A grama é buscada estritamente além de 64 blocos, no setor
+cardinal mais distante das peças de estruturas de vila conhecidas em chunks
+carregados; nenhum chunk é forçado e o raio de busca de trabalho continua 48.
+`build` e 315/315 GameTests passaram. **Aguardam validação em jogo** a coleta,
+o baú pessoal do fundidor e a preservação visual das estruturas. JAR de
+`downloads/` e launcher não atualizado nesta tarefa.
+
+**Distribuição híbrida e pedra lisa (09-13):** faltas da obra aberta recebem
+`CONSTRUCTION_MATERIAL` antes das tarefas de estoque; trabalhadores restantes
+mantêm `PRODUCTION`. O pedreiro reconhece `smooth_stone_slab`, e a demanda
+deriva a quantidade de `smooth_stone` da receita Vanilla. `build` e 316/316
+GameTests passaram; aguarda validação visual. ADR-015 registra a escolha C,
+sem teto numérico arbitrário de reserva. **Ainda não implementado:** tarefas,
+contagem e estoque de blocos arbitrários, nem o fallback genérico para
+fundidor/criador; o catálogo de recursos atual é enum fechado. Ver TODO.

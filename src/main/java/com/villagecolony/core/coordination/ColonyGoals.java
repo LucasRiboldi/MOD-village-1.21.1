@@ -457,6 +457,12 @@ public final class ColonyGoals {
             }
         });
 
+        work.surfaceGathered().forEach((gathered, amount) -> {
+            if (amount > 0) {
+                goals.put(gathered, amount);
+            }
+        });
+
         // O ferro do lampião — 2026-08-21, e com o passo do meio de volta:
         // o lingote é da fornalha, e o cru é da mina. Sem as duas metas o
         // fundidor sabia fundir ferro e nenhuma tarefa lhe chegava.

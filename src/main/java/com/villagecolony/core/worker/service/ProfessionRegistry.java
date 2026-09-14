@@ -44,7 +44,8 @@ public final class ProfessionRegistry {
         define(ProfessionType.MINER, ToolType.IRON_PICKAXE, Capability.COLLECT_STONE);
         define(ProfessionType.BREEDER, ToolType.SHEARS, Capability.COLLECT_WOOL);
         define(ProfessionType.SHEPHERD, ToolType.SHEARS, Capability.COLLECT_WOOL);
-        define(ProfessionType.SMELTER, ToolType.NONE, Capability.SMELT_ITEMS);
+        define(ProfessionType.SMELTER, ToolType.SILK_TOUCH_IRON_SHOVEL,
+                Capability.SMELT_ITEMS, Capability.COLLECT_SURFACE_RESOURCE);
         define(ProfessionType.CARPENTER, ToolType.NONE, Capability.CRAFT_WOOD);
         define(ProfessionType.MASON, ToolType.NONE, Capability.CRAFT_STONE);
         define(ProfessionType.FARMER, ToolType.IRON_HOE, Capability.MAINTAIN_FOOD);

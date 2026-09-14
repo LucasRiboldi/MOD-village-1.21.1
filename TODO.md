@@ -179,6 +179,7 @@ Um por vez, teste antes de seguir.
 | **A casa ainda sobe com a barreira de teste** | Última medição: 47 de 169 peças em 09-04. É o item que fecha a Fase 2 de verdade |
 | **O lenhador rejeita as paredes da própria vila** | 118 rejeições sobre 28 posições. O castigo escalona (6.000→48.000) e funciona, mas ele redescobre a mesma parede seis vezes. **Nenhuma recusa veio com o número 24** |
 | **O fundidor não tem o que fundir** | `nothing in the colony chests to smelt`, 34× na sessão de 09-04. Deve seguir o E44 |
+| **Cobertura de qualquer material de construção** | A escolha do autor é fallback para fundidor e criador e estoque sem teto numérico quando não houver obra prioritária. Ainda falta suportar IDs arbitrários na contagem dos baús, metas/tarefas e execução; qualquer bloco deve poder ocupar a capacidade física disponível. ADR-015; implementar em lote separado. |
 | **Mineiro longe do corredor não tem resgate** | Sem posição da ordem a uma perna dele, não há passo a dar e a boca continua sendo a resposta. Decisão de projeto: caminhar em linha reta, ou devolver a tarefa |
 | **A arena de gametest não hospeda a galeria** | Ela assenta no fundo do mundo. Toda a bateria de mineração exercita **só o poço**. A divergência dos ramais é provada por unitário, não de ponta a ponta |
 | **Os 49 `assign()` que criam trabalhador de mãos vazias** | Passam hoje por folga no `tickLimit`, não por estarem certos |
@@ -284,7 +285,8 @@ Em ordem do que mais precisa ser visto.
 | **2** | **Profissões e crescimento (ADR-011)** | sete funções produtoras, ordem de vagas nos adultos 15/16/30/31/32 e produtor construindo sem perder o ofício |
 | **2** | **O nome colorido** | sete cores distintas para as profissões ativas, e o nome do jogador **sem** cor |
 | **2** | **O arco da boca** | dois pilares, verga e lanterna — **junto** com o baú do mineiro |
-| **3** | **A cadeia da areia inteira** | meta de `SAND` → praia → vidro → vidraça |
+| **2** | **Coleta de superfície do fundidor (ADR-014)** | pá com Toque Suave I; areia no baú pessoal e `grass_block` só com obra solicitando, além de 64 blocos e longe das estruturas |
+| **3** | **A cadeia da areia inteira** | meta de vidro → fundidor busca areia → vidro → vidraça |
 | **4** | **A casa inteira sem a barreira** | `TEST BARRIER covered for nothing` |
 | **5** | **A rua crescendo e a casa nascendo junto** | `extended the road N blocks ...` seguido de `planned ... at ...` no mesmo ciclo |
 | **6** | **A casa de deserto subindo** | `blocks left` caindo de 113 |

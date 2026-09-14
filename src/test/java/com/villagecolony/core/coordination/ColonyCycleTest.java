@@ -4,6 +4,7 @@ import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
+import com.villagecolony.core.task.model.TaskPriority;
 import com.villagecolony.core.task.service.TaskService;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.ProfessionType;
@@ -67,6 +68,24 @@ class ColonyCycleTest {
         assertEquals(1, created.size());
         assertEquals(TaskType.COLLECT_WOOD, created.get(0).type());
         assertEquals(54, created.get(0).amount(), "pede o que falta, não a meta inteira");
+    }
+
+    @Test
+    void constructionMaterialsTakeOneWorkerBeforeSurplusStockpiles() {
+        workers.register(UUID.randomUUID(), COLONY).assign(ProfessionType.MASON);
+        workers.register(UUID.randomUUID(), COLONY).assign(ProfessionType.MASON);
+        Map<ResourceType, Integer> goal = Map.of(ResourceType.SMOOTH_STONE_SLAB, 64);
+        Map<ResourceType, Integer> project = Map.of(ResourceType.SMOOTH_STONE_SLAB, 8);
+
+        ColonyCycle.run(COLONY, ResourceTally.empty(), goal, tasks, workers,
+                worker -> true, com.villagecolony.core.coordination.ProductionHands.IGNORED, project);
+
+        List<Task> created = tasks.ofColony(COLONY);
+        assertEquals(2, created.size());
+        assertEquals(1, created.stream()
+                .filter(task -> task.priority() == TaskPriority.CONSTRUCTION_MATERIAL).count());
+        assertEquals(1, created.stream()
+                .filter(task -> task.priority() == TaskPriority.PRODUCTION).count());
     }
 
     @Test

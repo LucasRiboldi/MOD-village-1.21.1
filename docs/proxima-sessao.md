@@ -52,6 +52,18 @@ Registre posição e mensagens do `latest.log` se continuar parado; esta
 correção não cria ramais novos nem altera E45. Baús fora dos vínculos atuais
 não entram no estoque automaticamente.
 
+**Atualização 2026-09-13 — coleta do fundidor (ADR-014):** confira se ele
+recebe pá de ferro com Toque Suave I, busca areia quando faltar vidro e
+armazena os drops no próprio baú. Para `grass_block`, observe se só inicia
+com uma construção que demande o material e se a coleta acontece além de 64
+blocos, no setor mais afastado das estruturas da vila. A proteção também é
+verificada a cada alvo; registre qualquer bloco de estrutura removido.
+
+**JAR para esta sessão:** atualizado após ADR-014/015 em 2026-09-13. SHA-256
+`E41063395BFC20A8D5D3182A9732B6FAF1E7265E96446E8909F32A623B1BE1D9`;
+`downloads/village-colony-0.3.0.jar` e `%APPDATA%/.minecraft/mods/` têm
+bytes idênticos. O cliente não estava aberto durante a cópia.
+
 ---
 
 ## Antes de abrir o jogo

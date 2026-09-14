@@ -9,6 +9,7 @@ import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.FarmerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
+import com.villagecolony.fabric.work.SurfaceGatheringWork;
 import com.villagecolony.fabric.work.CraftingWork;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.server.world.ServerWorld;
@@ -120,6 +121,7 @@ public final class VillagerLifecycleHandler {
         // carregado", e explodia quando a obra fechasse.
         MinerWork.forget(villagerId);
         SmelterWork.forget(villagerId);
+        SurfaceGatheringWork.forget(villagerId);
         ShepherdWork.forget(villagerId);
         FarmerWork.forget(villagerId);
         LumberjackWork.forget(villagerId);

@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -61,6 +63,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * produção já estava corrigida.
  */
 class ProfessionResponsibilityTest {
+
+    @Test
+    void smoothStoneSlabsBelongToMasonryAndSmoothStoneToTheKiln() {
+        assertEquals(Production.CRAFTED_STONE, ResourceType.SMOOTH_STONE_SLAB.production());
+        assertEquals(Production.SMELTED, ResourceType.SMOOTH_STONE.production());
+        assertEquals(TaskType.CRAFT_STONE_MATERIAL,
+                ColonyCycle.typeFor(ResourceType.SMOOTH_STONE_SLAB));
+        assertEquals(TaskType.SMELT_MATERIAL,
+                ColonyCycle.typeFor(ResourceType.SMOOTH_STONE));
+    }
 
     /**
      * Todo recurso do jogo tem quem o produza.
@@ -220,7 +232,10 @@ class ProfessionResponsibilityTest {
         assertSameTask(ResourceType.WHEAT, TaskType.COLLECT_FOOD);
         assertSameTask(ResourceType.COBBLESTONE, TaskType.COLLECT_STONE);
         assertSameTask(ResourceType.SANDSTONE, TaskType.COLLECT_STONE);
-        assertSameTask(ResourceType.SAND, TaskType.COLLECT_STONE);
+        assertEquals(
+                "COLLECT_SURFACE_RESOURCE",
+                ColonyCycle.typeFor(ResourceType.SAND).name(),
+                "a areia para vidro pertence à coleta de superfície do fundidor");
         assertSameTask(ResourceType.WHITE_WOOL, TaskType.COLLECT_WOOL);
         assertSameTask(ResourceType.OAK_PLANKS, TaskType.CRAFT_WOOD_MATERIAL);
         assertSameTask(ResourceType.GLASS, TaskType.SMELT_MATERIAL);
@@ -233,6 +248,15 @@ class ProfessionResponsibilityTest {
                 ColonyCycle.typeFor(ResourceType.WHEAT) == TaskType.COLLECT_WOOD,
                 "a lavoura virou tarefa de madeira, e o lenhador vai derrubar"
                         + " árvore para atender fome");
+    }
+
+    @Test
+    void grassBlocksAreRecognizedAsSurfaceGatheredMaterial() {
+        ResourceType grassBlock = assertDoesNotThrow(
+                () -> ResourceType.valueOf("GRASS_BLOCK"));
+
+        assertEquals("SURFACE_GATHERED", grassBlock.production().name());
+        assertEquals("COLLECT_SURFACE_RESOURCE", ColonyCycle.typeFor(grassBlock).name());
     }
 
     private static void assertSameTask(ResourceType resource, TaskType expected) {

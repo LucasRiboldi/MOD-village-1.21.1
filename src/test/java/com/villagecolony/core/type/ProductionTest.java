@@ -54,7 +54,8 @@ class ProductionTest {
                         ResourceType.GLASS,
                         ResourceType.IRON_INGOT,
                         ResourceType.SMOOTH_SANDSTONE,
-                        ResourceType.STONE),
+                        ResourceType.STONE,
+                        ResourceType.SMOOTH_STONE),
                 smelted,
                 "a lista do que sai de fornalha mudou sem que ninguém dissesse");
     }
@@ -62,7 +63,7 @@ class ProductionTest {
     /**
      * Cada profissão fica com o que é dela.
      *
-     * <p>Areia e pedregulho são os dois naturais e os dois minerados;
+     * <p>Pedregulho é minerado e areia é recolhida na superfície;
      * tábua e vidro são os dois processados, e um sai da bancada e o
      * outro da fornalha. É por isso que a produção não é a categoria.
      */
@@ -75,12 +76,14 @@ class ProductionTest {
         for (ResourceType mined : EnumSet.of(
                 ResourceType.COBBLESTONE,
                 ResourceType.SANDSTONE,
-                ResourceType.SAND,
                 ResourceType.COAL,
                 ResourceType.RAW_IRON)) {
 
             assertEquals(Production.MINED, mined.production(), mined + " saiu da mina");
         }
+
+        assertEquals(Production.SURFACE_GATHERED, ResourceType.SAND.production());
+        assertEquals(Production.SURFACE_GATHERED, ResourceType.GRASS_BLOCK.production());
     }
 
     /**

@@ -37,6 +37,7 @@ import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.FarmerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
+import com.villagecolony.fabric.work.SurfaceGatheringWork;
 import com.villagecolony.fabric.work.WorkMaterials;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.LumberjackWork;
@@ -247,6 +248,7 @@ public final class VillageDetectionHandler {
         // árvore, tem orçamento próprio dentro de LumberjackWork.
         MinerWork.tick(server.getOverworld());
         SmelterWork.tick(server.getOverworld());
+        SurfaceGatheringWork.tick(server.getOverworld());
         ShepherdWork.tick(server.getOverworld());
         FarmerWork.tick(server.getOverworld());
         LumberjackWork.tick(server.getOverworld());
@@ -524,7 +526,8 @@ public final class VillageDetectionHandler {
                 WorkMaterials.glass(overworld, palette, colony),
                 WorkMaterials.coal(overworld, colony),
                 WorkMaterials.iron(overworld, colony),
-                WorkMaterials.smeltedNeeds(colony));
+                WorkMaterials.smeltedNeeds(overworld, colony),
+                WorkMaterials.surfaceGatheredNeeds(colony));
 
         // A obra inteira: varredura de lote, crescimento de rua, paleta e
         // a conta do que a construção pede. É a fase que o plano suspeita
@@ -539,7 +542,8 @@ public final class VillageDetectionHandler {
                 VillageColonyMod.TASKS,
                 VillageColonyMod.WORKERS,
                 VillageColonyMod.STORAGES::hasStorage,
-                (resource, type, hands) -> reportHands(colony.id(), resource, type, hands));
+                (resource, type, hands) -> reportHands(colony.id(), resource, type, hands),
+                work.constructionMaterials());
 
         // Sem o `if (assigned > 0)` que estava aqui. A linha calava
         // exatamente quando havia algo a dizer: distribuição parada é
@@ -566,6 +570,7 @@ public final class VillageDetectionHandler {
         LumberjackWork.run(overworld, colony);
         MinerWork.run(overworld, colony);
         SmelterWork.run(overworld, colony);
+        SurfaceGatheringWork.run(overworld, colony);
         ShepherdWork.run(overworld, colony);
         FarmerWork.run(overworld, colony);
         CraftingWork.run(overworld, colony);
@@ -892,6 +897,7 @@ public final class VillageDetectionHandler {
             WorkTargets.clear(villagerId);
             MinerWork.forget(villagerId);
             SmelterWork.forget(villagerId);
+            SurfaceGatheringWork.forget(villagerId);
             ShepherdWork.forget(villagerId);
             FarmerWork.forget(villagerId);
             LumberjackWork.forget(villagerId);

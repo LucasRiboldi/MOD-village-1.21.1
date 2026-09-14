@@ -3,6 +3,7 @@ package com.villagecolony.core.coordination;
 import com.villagecolony.core.type.ResourceType;
 
 import java.util.Map;
+import java.util.EnumMap;
 
 import java.util.Objects;
 
@@ -39,13 +40,16 @@ public record WorkDemand(
         int glass,
         int coal,
         int iron,
-        Map<ResourceType, Integer> smelted) {
+        Map<ResourceType, Integer> smelted,
+        Map<ResourceType, Integer> surfaceGathered) {
 
     public WorkDemand {
         Objects.requireNonNull(stone, "stone");
         Objects.requireNonNull(smelted, "smelted");
 
         smelted = Map.copyOf(smelted);
+        Objects.requireNonNull(surfaceGathered, "surfaceGathered");
+        surfaceGathered = Map.copyOf(surfaceGathered);
 
         refuseNegative(planks, "plank");
         refuseNegative(stoneAmount, "stone");
@@ -55,9 +59,41 @@ public record WorkDemand(
         refuseNegative(iron, "iron");
     }
 
+    public WorkDemand(
+            int planks,
+            ResourceType stone,
+            int stoneAmount,
+            int wool,
+            int glass,
+            int coal,
+            int iron,
+            Map<ResourceType, Integer> smelted) {
+        this(planks, stone, stoneAmount, wool, glass, coal, iron, smelted, Map.of());
+    }
+
     /** Nenhuma obra aberta: a colônia decide pela Regra 1 e nada mais. */
     public static WorkDemand none() {
-        return new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 0, 0, Map.of());
+        return new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 0, 0, Map.of(), Map.of());
+    }
+
+    /** Materiais que destravam a obra e devem preceder produção de reserva. */
+    public Map<ResourceType, Integer> constructionMaterials() {
+        Map<ResourceType, Integer> materials = new EnumMap<>(ResourceType.class);
+        add(materials, stone, stoneAmount);
+        add(materials, ResourceType.OAK_PLANKS, planks);
+        add(materials, ResourceType.WHITE_WOOL, wool);
+        add(materials, ResourceType.GLASS, glass);
+        add(materials, ResourceType.COAL, coal);
+        add(materials, ResourceType.IRON_INGOT, iron);
+        smelted.forEach((type, amount) -> add(materials, type, amount));
+        surfaceGathered.forEach((type, amount) -> add(materials, type, amount));
+        return Map.copyOf(materials);
+    }
+
+    private static void add(Map<ResourceType, Integer> target, ResourceType type, int amount) {
+        if (amount > 0) {
+            target.merge(type, amount, Integer::sum);
+        }
     }
 
     private static void refuseNegative(int amount, String what) {

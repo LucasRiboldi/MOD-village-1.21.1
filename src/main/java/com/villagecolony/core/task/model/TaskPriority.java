@@ -17,6 +17,9 @@ public enum TaskPriority {
     /** Comida e recursos básicos. Sem isto a vila encolhe. */
     SURVIVAL,
 
+    /** Materiais que destravam a obra aberta têm precedência sobre estoque. */
+    CONSTRUCTION_MATERIAL,
+
     /** Coletar e transformar matéria-prima. */
     PRODUCTION,
 

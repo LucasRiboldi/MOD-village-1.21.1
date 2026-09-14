@@ -31,6 +31,7 @@ import com.villagecolony.fabric.work.FarmPlans;
 import com.villagecolony.fabric.work.FarmerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
+import com.villagecolony.fabric.work.SurfaceGatheringWork;
 import com.villagecolony.fabric.work.TestBarrier;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.PlanRefusals;
@@ -76,6 +77,7 @@ public final class ServerLifecycleHandler {
         MinerWork.clearAll();
         MineClaims.clearAll();
         SmelterWork.clearAll();
+        SurfaceGatheringWork.clearAll();
         ShepherdWork.clearAll();
         FarmerWork.clearAll();
         FarmPlans.clearAll();
@@ -238,6 +240,7 @@ public final class ServerLifecycleHandler {
         MinerWork.clearAll();
         MineClaims.clearAll();
         SmelterWork.clearAll();
+        SurfaceGatheringWork.clearAll();
         ShepherdWork.clearAll();
         FarmerWork.clearAll();
         FarmPlans.clearAll();

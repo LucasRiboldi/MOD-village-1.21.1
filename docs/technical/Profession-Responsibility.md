@@ -51,12 +51,12 @@ Colony 020ad427 — no collect_stone work: no worker in the village
 | profissão | ferramenta | capacidade | produção que a convoca | materiais |
 |---|---|---|---|---|
 | **Lenhador** | machado de ferro | `COLLECT_WOOD` | `HARVESTED` | os 8 troncos |
-| **Mineiro** | picareta de ferro | `COLLECT_STONE` | `MINED` | pedregulho, arenito, areia, carvão, ferro cru |
+| **Mineiro** | picareta de ferro | `COLLECT_STONE` | `MINED` | pedregulho, arenito, carvão, ferro cru |
 | **Pastor** | tesoura | `COLLECT_WOOL` | `SHEARED` | lã branca |
 | **Fazendeiro** | enxada de ferro | `MAINTAIN_FOOD` | `FARMED` | trigo, cenoura, batata, beterraba |
 | **Carpinteiro** | nenhuma | `CRAFT_WOOD` | `CRAFTED_WOOD` | as 8 tábuas |
 | **Pedreiro** | nenhuma | `CRAFT_STONE` | `CRAFTED_STONE` | tijolo de pedra |
-| **Fundidor** | nenhuma | `SMELT_ITEMS` | `SMELTED` | vidro, lingote de ferro, arenito liso, **pedra** |
+| **Fundidor** | pá de ferro com Toque Suave I | `SMELT_ITEMS`, `COLLECT_SURFACE_RESOURCE` | `SMELTED`, `SURFACE_GATHERED` | areia para vidro, `grass_block` pedido por obra, lingote de ferro, arenito liso, **pedra** |
 | **Construtor** | nenhuma | `BUILD_STRUCTURE` | — *(consome, não produz)* | — |
 
 ### A divisão do Fabricante — 2026-09-10
@@ -243,7 +243,7 @@ Ordenada por quanto dói, no formato do `TODO.md`.
 | ✅ | ~~**`requestMissing` pula calado quando ninguém sabe fazer.**~~ | **Fechado em 2026-09-09.** `ProductionHands` (`core.coordination`) leva o número de mãos até a camada Fabric, e `VillageDetectionHandler.reportHands` escreve a linha via `IdleLog` — a interface existe porque a ADR-006 §6 proíbe `core` de importar `fabric`, e é o mesmo caminho do `hasStorage`. Recebe o **número**, não só a ausência: sem o caso `hands > 0` o registrador nunca é mandado esquecer. Guardado por `ProductionHandsTest` (4 casos) e `IdleLogTest` (6 — o `IdleLog` não tinha nenhum). Visto na bateria: `no collect_stone work: no worker in the village can do it — COBBLESTONE needs COLLECT_STONE` |
 | ✅ | ~~**Dividir o Fabricante em Carpinteiro e Pedreiro**~~ | **Feito em 2026-09-10, por decisão do autor.** Ver a seção acima. **O que fica:** o arquivo ainda tem mais de 500 linhas — a divisão foi de profissão, e uma implementação parametrizada serve as duas |
 | ✅ | ~~**O filtro de família não tem gametest.**~~ | **Fechado em 2026-09-10**, batch `craft_family` em `CraftingGameTest`. A obra pede só tijolo de pedra e o baú tem a pedra: `theCarpenterLeavesTheMasonryAlone` exige que o carpinteiro não produza nada, `theMasonMakesWhatTheCarpenterSkipped` exige que o pedreiro produza. **O par é necessário** — sem o segundo, um filtro que recusasse tudo passaria. Fase vermelha em duas mutações: sem o `continue` cai o do carpinteiro; invertido, caem os dois e o do descascado |
-| 🟡 | **`MINED` responde por areia, carvão e ferro além da pedra** | O nome `COLLECT_STONE` mente um pouco: o mineiro traz cinco materiais. Não é defeito — a picareta é a mesma —, mas o dia em que a areia tiver origem própria (praia, não mina) vai pedir separação |
+| ✅ | ~~**Areia e `grass_block` sem origem de coleta própria**~~ | **Fechado em 2026-09-13 (ADR-014).** Areia para vidro e `grass_block` de obras abertas são coletados na superfície pelo fundidor; a grama fica além de 64 blocos e usa o setor mais afastado das estruturas de vila observáveis. Busca de trabalho continua em 48 blocos; validação visual pendente |
 | 🟡 | **A colônia não assenta o bloco de profissão nas casas que constrói** | A casa do catálogo já traz o bloco quando a planta o tem; casa levantada pela colônia herda o que a planta disser. Não há código que escolha *qual* ofício aquela casa hospeda. É aqui que a tabela vanilla da proposta serve |
 | 🟡 | **Nada lê a profissão que o jogo já atribuiu ao aldeão** | O mod atribui a sua própria por escassez (`ProfessionAssigner`). Um aldeão que já era ferreiro do vanilla vira lenhador sem cerimônia. Pode ser o certo — são sistemas paralelos —, mas nunca foi decidido por escrito |
 | 🟢 | **Materiais que as vilas usam e a colônia não sabe produzir** | Terracota, podzol, neve, gelo, feno, cascalho. Hoje a Regra 28 risca o que falta; quando ela cair, cada um vira uma cadeia ou uma espera. Levantar a lista **lendo as estruturas do jogo**, não à mão |

@@ -21,6 +21,9 @@ public enum TaskType {
     /** Tirar pedra do mundo — pedregulho, ou arenito no deserto. */
     COLLECT_STONE(Capability.COLLECT_STONE, true, true),
 
+    /** Recolher recursos expostos da superfície, como areia e grama. */
+    COLLECT_SURFACE_RESOURCE(Capability.COLLECT_SURFACE_RESOURCE, true, true),
+
     /** Tosquiar ovelha e trazer a lã. */
     COLLECT_WOOL(Capability.COLLECT_WOOL, true, true),
 

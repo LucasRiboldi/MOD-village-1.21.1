@@ -83,6 +83,10 @@ public final class MinecraftTypeAdapter {
             return Optional.of(ResourceType.SAND);
         }
 
+        if (item == Items.GRASS_BLOCK) {
+            return Optional.of(ResourceType.GRASS_BLOCK);
+        }
+
         if (item == Items.GLASS) {
             return Optional.of(ResourceType.GLASS);
         }
@@ -91,6 +95,14 @@ public final class MinecraftTypeAdapter {
         // é o que a casa de deserto do catálogo pede aos sessenta.
         if (item == Items.STONE) {
             return Optional.of(ResourceType.STONE);
+        }
+
+        if (item == Items.SMOOTH_STONE) {
+            return Optional.of(ResourceType.SMOOTH_STONE);
+        }
+
+        if (item == Items.SMOOTH_STONE_SLAB) {
+            return Optional.of(ResourceType.SMOOTH_STONE_SLAB);
         }
 
         if (item == Items.STONE_BRICKS) {
@@ -272,6 +284,7 @@ public final class MinecraftTypeAdapter {
             case IRON_AXE -> Optional.of(Items.IRON_AXE);
             case IRON_PICKAXE -> Optional.of(Items.IRON_PICKAXE);
             case IRON_HOE -> Optional.of(Items.IRON_HOE);
+            case SILK_TOUCH_IRON_SHOVEL -> Optional.of(Items.IRON_SHOVEL);
         };
     }
 }
