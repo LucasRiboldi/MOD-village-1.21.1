@@ -23,7 +23,7 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 
 **Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
 
-**JAR atual 0.3.0:** `build`, 828 unitarios e 329/329 GameTests passaram. O artefato, que inclui P0.7, a limpeza imediata da claim e as duas correcoes do playtest de 09-15, foi copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `65CB3701EB68F474189784302446BF6B860CDB61BAD11C24947D3897967E9B96`. Falta apenas playtest.
+**JAR atual 0.3.0:** `build`, 833 unitarios e 330/330 GameTests passaram. O artefato inclui P0.7, a limpeza imediata da claim, as duas correcoes do playtest de 09-15 (toco orfao e minerio recusado), a retirada do bau da boca da mina e as duas otimizacoes do planejador. Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `87714385DA1C49031DF6F0DD6BF66D51AA31C4D17B07EF43AFA85F0E3F0CAE53`. Falta apenas playtest.
 
 ---
 
