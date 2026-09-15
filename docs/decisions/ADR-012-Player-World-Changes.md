@@ -20,8 +20,8 @@ cópia de inventário desatualizada.
    persistir cópias do terreno nem forçar chunks.
 2. Reconciliar a coluna alterada nos índices de estrada das colônias
    próximas, sem apagar o cursor de varredura nem os resultados parciais já
-   acumulados. Se o bloco final for pavimentação elegível, acrescentá-lo ao
-   índice. Reiniciar apenas o cursor de consulta das estradas para que os
+   acumulados. Pavimentacao colocada pelo jogador nao cria indice por si so;
+   a reserva espacial segue a ADR-017. Reiniciar apenas o cursor de consulta das estradas para que os
    candidatos sejam reavaliados com o estado atual do mundo. A elegibilidade
    de terreno, volume e acesso continua sendo lida ao vivo; não há cache de
    decisão de lote.
@@ -59,7 +59,7 @@ mundo Fabric; a confirmação visual ainda depende de sessão em jogo.
 O verbo "invalidar" da decisão original apagava também os cursores e a
 acumulação incremental. Com várias alterações do jogador, a busca podia
 recomeçar repetidamente sem terminar. A emenda limita a invalidação aos dados
-afetados: remove ou acrescenta a coluna de pavimentação alterada e reinicia o
-cursor de consulta, mantendo a varredura parcial. As condições do lote são
+afetados: remove a coluna de pavimentacao alterada e reinicia o
+cursor de consulta, mantendo a varredura parcial. As condicoes do lote sao
 recalculadas contra o mundo em cada consulta; nenhuma decisão de elegibilidade
 fica em cache.

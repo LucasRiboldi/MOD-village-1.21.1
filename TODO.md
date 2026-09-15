@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-09-14, depois do log de playtest e correção da coleta de terra.
+**Atualizado:** 2026-09-15, depois da reavaliacao controlada da falha de CI e da entrega P0.7.
 
 > **Este arquivo é a lista viva.** Só o que está aberto agora.
 > O histórico — sessões por data, ciclos fechados, erros resolvidos — está
@@ -20,27 +20,31 @@ falhas repetidas: [plano completo](docs/superpowers/plans/2026-09-14-worker-cont
 
 **Lote 1 concluído em código:** emenda da ADR-012 e reconciliação local de
 alterações do jogador no scanner; 324/324 GameTests e `build` passaram. Ainda
-aguarda validação em jogo. **Próximo lote, sujeito à revisão do autor:**
-continuidade/recuperação do mineiro; lotes seguintes cobrem variedade dos
-construtores, estratégias de avaliação de espaço e revalidação escalonada.
+aguarda validação em jogo. **Lote 2 começou com uma correção pontual
+aprovada:** job fechado agora libera imediatamente a claim do ramal do
+mineiro. A continuidade/recuperação restante segue sujeita a revisão do
+autor; lotes seguintes cobrem variedade dos construtores, estratégias de
+avaliação de espaço e revalidação escalonada.
 “Continuar trabalhando” respeitará expediente, recursos, perigo e chunks
 carregados, sem criar recursos ou tarefas fisicamente impossíveis.
+
+**AUD-001 continua aberto:** a asserção Linux histórica foi recuperada e a
+contraprova confirmou que o teste acusa a ausência real de coleta quando a
+regra de terra é desligada. A suíte local fresca passa 324/324; porém a perda
+do aldeao entre `spawnEntity` e o tick 1 ainda nao tem causa deterministica,
+e a execucao Linux da revisao ainda nao existe. Nao fechar o Lote 0 nem
+aumentar timeout por este achado; P0.7 e uma decisao independente ja entregue.
 
 ---
 
 ## ⏭️ Por onde começar
 
-**O P0.7 está decidido pelo número, e o número não era o esperado.** A
-sessão de 09-11 entregou o `LotRefusals`, e a terraplanagem **não** é o
-gargalo: das 6.583 recusas, **4.578 (70%) são `NOT_NATURAL_GROUND`** — *"the
-ground there is not natural soil"* — contra 905 de `OFF_ROAD_LEVEL`.
-`isNaturalGround` aceita grama, terra, terra grossa, podzol e areia;
-**pedra não entra**, por decisão registrada (*"pedra à mostra é montanha"*).
-A vila do autor é rochosa, e é por isso que a roça não tem onde nascer.
-
-**Mexer nisso é decisão do autor**, porque toca a Regra 3 e a Regra 19 — e
-[[grupo-de-pedra-e-decisao]] registra que separar grupos de pedra já desfez
-uma regra antes.
+**P0.7 entregue em codigo e no JAR, espera playtest.** A politica aceita qualquer piso
+solido disponivel, sem taxonomia geologica e sem terraplanagem. Os unicos
+materiais de estrada sao `dirt_path`, `gravel` e `terracotta`, e so bloqueiam
+o lote dentro de `ROAD_AREA`. A decisao e a verificacao de 327/327 GameTests
+estao na ADR-017. O JAR 0.3.0 foi distribuido em 2026-09-15 com SHA-256
+`7B2C820AA298FF72DF1D0BC00B0BC0AD66A5359417B7F5C9950B66FA14725F44`.
 
 **E a varredura não era a culpada — o instrumento do projeto disse isso por
 escrito.** O `SweepLog` gravou no encerramento:
@@ -208,7 +212,7 @@ Um por vez, teste antes de seguir.
 | **P0.3** | Mineiro → armazenamento → fundidor | ✅ conserto entregue 09-11 · ⬜ **espera sessão** |
 | **P0.5** | Perda de item por inventário cheio (E3) | ✅ corrigido e testado · ⬜ **espera sessão**; depósito pessoal revisto em 09-13 |
 | **P0.6** | A enxurrada da areia calou | ✅ entregue 09-11 · ⬜ **espera sessão** |
-| **P0.7** | Pedra como solo de lote | ⬜ **decisão do autor pendente** |
+| **P0.7** | Elegibilidade simplificada de lotes | ✅ entregue 09-15 · ⬜ **espera playtest** |
 
 ---
 
@@ -235,7 +239,7 @@ Um por vez, teste antes de seguir.
 |---|---|
 | **Mina de vila nova sem portal visível** | Confirmado no escalonador: uma única busca global por tique ficava presa no primeiro trabalho sem alvo, impedindo os mineiros seguintes de iniciar a busca. O rodízio foi corrigido sem aumentar a cota; `build` e 314 GameTests verdes. **Aguardar validação em jogo**: portal aparece e o mineiro inicia a escavação. |
 | **Terra comum em blueprint** | Corrigido localmente: agora exige estoque. 313 GameTests e build verdes; **aguarda validação em jogo**. |
-| **P0.7 — pedra como solo de lote** | 70% das recusas. Toca a Regra 3 e a Regra 19. **Recomendação registrada: aceitar pedra** |
+| **P0.7 — elegibilidade simplificada de lotes** | ✅ entregue 09-15; piso solido e elegivel, estrada exige `ROAD_AREA`; 327/327 GameTests e JAR atualizado. Espera playtest. |
 | **A casa ainda sobe com a barreira de teste** | Última medição: 47 de 169 peças em 09-04. É o item que fecha a Fase 2 de verdade |
 | **O lenhador rejeita as paredes da própria vila** | 118 rejeições sobre 28 posições. O castigo escalona (6.000→48.000) e funciona, mas ele redescobre a mesma parede seis vezes. **Nenhuma recusa veio com o número 24** |
 | **O fundidor não tem o que fundir** | `nothing in the colony chests to smelt`, 34× na sessão de 09-04. Deve seguir o E44 |
@@ -301,7 +305,7 @@ Comida · água · o fazendeiro (tem enxada e baú desde a Fase 4 e nunca teve c
 - **Regra 16** — distância mínima e máxima entre construções.
 - **O ícone** — 1,95 MB num jar de 2,29 MB.
 - **Cenário de teste por bioma.** A planície escondeu **duas vezes** que o deserto estava quebrado.
-- **O `Development-Log`** parou em 08-15. Quarenta e seis commits e três sessões de jogo não estão nele.
+- **O `Development-Log`** está atualizado até 09-15. Cada lote futuro deve registrar ali a evidência, o escopo e o artefato distribuído.
 
 ---
 
@@ -319,11 +323,10 @@ Comida · água · o fazendeiro (tem enxada e baú desde a Fase 4 e nunca teve c
 
 | | decisão | trava |
 |---|---|---|
-| 1 | **P0.7 — aceitar pedra como solo de lote?** | 70% das recusas. Toca a Regra 3 e a Regra 19 |
-| 2 | **E43 — o descanso de 4 ciclos deve valer sempre?** | Anulado pela 2ª passagem do `takeOneTask`. Decisão de projeto |
-| 3 | **TASK-048 — o que uma colônia ABANDONED deixa de fazer?** | Hoje nada. Ela é marcada e continua sendo simulada |
-| 4 | **TASK-044 — a fusão de vilas** | ADR-007 escrita em 08-21, não implementada |
-| 5 | **TASK-046 — a orientação dos blocos** | ADR-008 escrita em 08-21, forma (a). Metade do E8 fechou em 08-15; a orientação fica |
+| 1 | **E43 — o descanso de 4 ciclos deve valer sempre?** | Anulado pela 2ª passagem do `takeOneTask`. Decisão de projeto |
+| 2 | **TASK-048 — o que uma colônia ABANDONED deixa de fazer?** | Hoje nada. Ela é marcada e continua sendo simulada |
+| 3 | **TASK-044 — a fusão de vilas** | ADR-007 escrita em 08-21, não implementada |
+| 4 | **TASK-046 — a orientação dos blocos** | ADR-008 escrita em 08-21, forma (a). Metade do E8 fechou em 08-15; a orientação fica |
 | 6 | **E38 — o baú do trabalhador assoreia** | Dar consumidor ou descarte a vara, maçã e muda. **Decisão de projeto** |
 | 7 | **E45 — como a mina troca de rota no fundo?** | Geometria, boca estável, migração do save e novo GameTest; não há ADR atual |
 

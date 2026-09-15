@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * O que esta colônia sabe levantar, e virado para onde.
@@ -270,14 +271,14 @@ public final class HousePlans {
      * para um arquivo do jogo, e é dele que a planta volta.
      */
     public static Optional<Blueprint> blueprintOf(
-            ServerWorld world, ResourceId id, ColonyPos origin) {
+            ServerWorld world, UUID colonyId, ResourceId id, ColonyPos origin) {
 
         // Planta lida de arquivo: ela volta como o arquivo a gravou, e
         // precisa ser virada de novo para a rua. Sem isto a obra que
         // volta do save mede o mundo com a planta na orientação errada,
         // conclui que nada está de pé e reconstrói por cima, torto.
         return StructureBlueprintReader.read(world, id)
-                .map(house -> turnedToTheRoad(house, roadSideOf(world, origin, house)));
+                .map(house -> turnedToTheRoad(house, roadSideOf(world, colonyId, origin, house)));
     }
 
     /**
@@ -288,8 +289,8 @@ public final class HousePlans {
      * jogador mexer nele. Sem rua em volta — o jogador arrancou o
      * caminho —, fica o norte, que é onde a planta antiga punha a porta.
      */
-    static Side roadSideOf(ServerWorld world, ColonyPos origin, Blueprint house) {
-        return BuildSiteScanner.roadSideOf(world, origin, house.size())
+    static Side roadSideOf(ServerWorld world, UUID colonyId, ColonyPos origin, Blueprint house) {
+        return BuildSiteScanner.roadSideOf(world, colonyId, origin, house.size())
                 .map(MinecraftTypeAdapter::toSide)
                 .orElse(Side.NORTH);
     }

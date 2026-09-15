@@ -1,6 +1,6 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Escrito em 2026-09-02, atualizado em 2026-09-14.** Este arquivo existe
+**Escrito em 2026-09-02, atualizado em 2026-09-15.** Este arquivo existe
 porque o gargalo do projeto deixou de ser código: havia **dez consertos do
 mineiro empilhados sem uma única sessão que os veja**, e nenhuma pergunta
 importante em aberto pode ser respondida sem abrir o jogo.
@@ -16,6 +16,13 @@ lista deve começar agora. A ordem abaixo continua valendo para o resto.
 
 Ele não é diário — quem conta a história é o `TODO.md`. Este aqui é a lista
 de conferência de uma sessão.
+
+**JAR P0.7 atualizado em 2026-09-15:** 0.3.0, SHA-256
+`7B2C820AA298FF72DF1D0BC00B0BC0AD66A5359417B7F5C9950B66FA14725F44` em
+`build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`. O cliente estava
+fechado durante a copia. `build` e 327/327 GameTests passaram. No jogo,
+confira que gravel e terracotta naturais aceitam lote, enquanto os mesmos
+materiais dentro de `ROAD_AREA` continuam bloqueados.
 
 **JAR atualizado após a emenda ADR-012 (2026-09-14):** 0.3.0, SHA-256
 `EF0138BE7180FC47FB905C42EF7F64A8A31FE68CFCFCBCE4C07CAF72DB467231` em

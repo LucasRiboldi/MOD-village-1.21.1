@@ -2,6 +2,7 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
@@ -63,6 +64,7 @@ public class RoadExtensionGameTest implements FabricGameTest {
         UUID colony = UUID.randomUUID();
 
         strip(context);
+        reserveInitialRoad(context, colony);
 
         // A varredura é quem anota a ponta, e é ela que precisa falhar:
         // é o "não há mais lote" dela que autoriza a rua a crescer.
@@ -117,6 +119,7 @@ public class RoadExtensionGameTest implements FabricGameTest {
             context.setBlockState(
                     ROAD_START.add(step, 0, 0), Blocks.DIRT_PATH.getDefaultState());
         }
+        reserveInitialRoad(context, colony);
 
         context.assertTrue(
                 BuildSiteScanner.find(
@@ -148,6 +151,7 @@ public class RoadExtensionGameTest implements FabricGameTest {
         UUID colony = UUID.randomUUID();
 
         strip(context);
+        reserveInitialRoad(context, colony);
 
         // Pedra à frente da ponta: não é chão de vila, e não se calça.
         context.setBlockState(ROAD_END.add(1, 0, 0), Blocks.STONE.getDefaultState());
@@ -194,6 +198,7 @@ public class RoadExtensionGameTest implements FabricGameTest {
         UUID colony = UUID.randomUUID();
 
         strip(context);
+        reserveInitialRoad(context, colony);
 
         // A ponta mais distante, murada. É a que a colônia escolhia, e
         // era a única que ela tentava.
@@ -251,6 +256,7 @@ public class RoadExtensionGameTest implements FabricGameTest {
         ColonyPos where = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START));
 
         Colony colony = Colony.create(UUID.randomUUID(), where);
+        reserveInitialRoad(context, colony.id());
 
         VillageColonyMod.COLONIES.register(colony);
 
@@ -303,6 +309,27 @@ public class RoadExtensionGameTest implements FabricGameTest {
                     ROAD_END.add(step, 0, 0), Blocks.DIRT.getDefaultState());
         }
     }
+
+    private static void reserveInitialRoad(TestContext context, UUID colony) {
+        List<BlockPos> road = new java.util.ArrayList<>();
+
+        for (int step = 0; step <= 2; step++) {
+            road.add(ROAD_START.add(step, 0, 0));
+        }
+
+        reserveRoad(context, colony, road);
+    }
+
+    private static void reserveRoad(TestContext context, UUID colony, List<BlockPos> road) {
+        List<Long> columns = road.stream()
+                .map(context::getAbsolutePos)
+                .map(pos -> ColonyRoads.column(pos.getX(), pos.getZ()))
+                .toList();
+        BuildSiteScanner.restore(new ColonyRoads(
+                colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
+                columns));
+    }
     /**
      * O lote nasce no trecho que a colônia acabou de calçar — E26.
      *
@@ -345,6 +372,13 @@ public class RoadExtensionGameTest implements FabricGameTest {
             context.setBlockState(
                     ROAD_END.add(step, 0, 0), Blocks.DIRT_PATH.getDefaultState());
         }
+        reserveRoad(context, colony, List.of(
+                ROAD_START,
+                ROAD_START.add(1, 0, 0),
+                ROAD_START.add(2, 0, 0),
+                ROAD_END.add(1, 0, 0),
+                ROAD_END.add(2, 0, 0),
+                ROAD_END.add(3, 0, 0)));
 
         ColonyPos center = MinecraftTypeAdapter.toColonyPos(
                 context.getAbsolutePos(ROAD_START));
@@ -398,6 +432,7 @@ public class RoadExtensionGameTest implements FabricGameTest {
         UUID colony = UUID.randomUUID();
 
         strip(context);
+        reserveInitialRoad(context, colony);
 
         BuildSiteScanner.find(
                 context.getWorld(),
@@ -466,6 +501,7 @@ public class RoadExtensionGameTest implements FabricGameTest {
         UUID colony = UUID.randomUUID();
 
         strip(context);
+        reserveInitialRoad(context, colony);
 
         BuildSiteScanner.find(
                 context.getWorld(),
@@ -508,6 +544,7 @@ public class RoadExtensionGameTest implements FabricGameTest {
         UUID colony = UUID.randomUUID();
 
         strip(context);
+        reserveInitialRoad(context, colony);
 
         BuildSiteScanner.find(
                 context.getWorld(),

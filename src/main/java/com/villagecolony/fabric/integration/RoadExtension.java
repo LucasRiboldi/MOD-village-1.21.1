@@ -203,7 +203,7 @@ public final class RoadExtension {
             return;
         }
 
-        Optional<Direction> towards = openSideOf(world, road);
+        Optional<Direction> towards = openSideOf(world, colonyId, road);
 
         if (towards.isEmpty()) {
             return;
@@ -502,7 +502,7 @@ public final class RoadExtension {
 
             BlockState state = world.getBlockState(at);
 
-            if (VillageRoad.isPaving(world, state)) {
+            if (BuildSiteScanner.isRoadArea(world, colonyId, at)) {
                 // Já é rua: a ponta encostou noutro trecho. Segue por
                 // cima dela sem gastar nada, que é o que dois calçamentos
                 // que se encontram fazem.
@@ -572,13 +572,14 @@ public final class RoadExtension {
      * <p>Olha um acima e um abaixo junto com o nível: a rua de vila sobe e
      * desce, e exigir o mesmo y faria toda ladeira parecer uma ponta.
      */
-    private static Optional<Direction> openSideOf(ServerWorld world, BlockPos road) {
+    private static Optional<Direction> openSideOf(
+            ServerWorld world, UUID colonyId, BlockPos road) {
         for (Direction side : Direction.Type.HORIZONTAL) {
-            if (!isRoadNear(world, road.offset(side.getOpposite()), road.getY())) {
+            if (!isRoadNear(world, colonyId, road.offset(side.getOpposite()), road.getY())) {
                 continue;
             }
 
-            if (isRoadNear(world, road.offset(side), road.getY())) {
+            if (isRoadNear(world, colonyId, road.offset(side), road.getY())) {
                 continue;
             }
 
@@ -588,11 +589,12 @@ public final class RoadExtension {
         return Optional.empty();
     }
 
-    private static boolean isRoadNear(ServerWorld world, BlockPos column, int aroundY) {
+    private static boolean isRoadNear(
+            ServerWorld world, UUID colonyId, BlockPos column, int aroundY) {
         for (int dy = MAX_STEP; dy >= -MAX_STEP; dy--) {
             BlockPos at = new BlockPos(column.getX(), aroundY + dy, column.getZ());
 
-            if (VillageRoad.isPaving(world, world.getBlockState(at))) {
+            if (BuildSiteScanner.isRoadArea(world, colonyId, at)) {
                 return true;
             }
         }

@@ -526,7 +526,8 @@ public final class ConstructionPlanner {
 
         ConstructionService.Pending saved = pending.get();
 
-        Optional<Blueprint> blueprint = HousePlans.blueprintOf(world, saved.blueprint(), saved.origin());
+        Optional<Blueprint> blueprint = HousePlans.blueprintOf(
+                world, colony.id(), saved.blueprint(), saved.origin());
 
         if (blueprint.isEmpty()) {
             // O jogo não conhece mais essa estrutura — datapack que saiu,

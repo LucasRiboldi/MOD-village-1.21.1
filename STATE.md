@@ -1,4 +1,4 @@
-# STATE — 2026-09-14
+# STATE — 2026-09-15
 
 > Arquivo de estado vivo. Sobrescreve, não acumula.
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -17,9 +17,9 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 | P0.3 | Mineiro → armazenamento → fundidor | ✅ conserto entregue 09-11, **espera sessão** |
 | P0.5 | Perda de item por inventário cheio (E3) | ✅ entregue 09-11, **espera sessão** |
 | P0.6 | A enxurrada da areia calou | ✅ entregue 09-11, **espera sessão** |
-| P0.7 | Pedra como solo de lote | ⬜ **decisão do autor pendente** |
+| P0.7 | Elegibilidade simplificada de lotes | ✅ entregue 09-15, **espera playtest** |
 
-**P0.7 — o número chegou e não era o esperado.** Das 6.583 recusas de lote, **4.578 (70%)** são `NOT_NATURAL_GROUND` — pedra não entra como solo natural, por decisão registrada (*"pedra à mostra é montanha"*). A vila do autor é rochosa. Mexer nisso toca a Regra 3 e a Regra 19 — é decisão do autor, não correção automática.
+**P0.7 — politica aplicada em 2026-09-15.** Piso solido disponivel e candidato a lote; pedra, gravilha e terracota nao sao recusadas pela composicao. Estrada exige material oficial mais `ROAD_AREA`; gravilha ou terracota fora da reserva continuam elegiveis. O scanner nao terraplana nem muda o mundo. `build` e 327/327 GameTests passaram. O JAR 0.3.0 foi copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`, com SHA-256 `7B2C820AA298FF72DF1D0BC00B0BC0AD66A5359417B7F5C9950B66FA14725F44`; falta apenas playtest. Ver ADR-017.
 
 ---
 
@@ -31,6 +31,22 @@ cópias (`build/libs/`, distribuição e launcher):
 `EF0138BE7180FC47FB905C42EF7F64A8A31FE68CFCFCBCE4C07CAF72DB467231`.
 `build` e 324/324 GameTests passaram; falta a validação visual das obras e da
 mineração no mundo do jogador.
+
+**Correção local de continuidade do mineiro:** quando `MinerWork.tick` remove
+um job cuja tarefa foi encerrada, ele agora libera a claim do ramal no mesmo
+tique. O teste foi escrito vermelho antes do patch; depois, `build` e
+324/324 GameTests passaram. O JAR em `downloads/` e no launcher não foi
+atualizado nesta sessão; a observação em jogo continua pendente.
+
+**AUD-001 — falha de CI reavaliada, ainda aberta:** o artefato do run Linux
+`34814235426` no commit `2a0a4b7` registra a asserção
+`fundidor criado no setor não está registrado no ServerWorld` no tick 1. A
+suíte local fresca passa 324/324; desligar temporariamente a descoberta de
+terra faz falhar somente `o fundidor não removeu a terra do setor externo
+escolhido`, provando que a coleta é exercitada. A troca experimental para
+`TestContext.spawnEntity` também falhou na asserção de registro e foi
+revertida. Sem causa determinística, não houve aumento de timeout nem patch
+de comportamento; falta executar o job Linux em uma revisão publicada.
 
 ## Sessão de 2026-09-13
 
@@ -201,9 +217,7 @@ unitários; GameTests: 314/314.
 
 ## Decisões que esperam o autor
 
-1. **P0.7 — aceitar pedra como solo de lote.** Toca a Regra 3 e a Regra 19. Três caminhos: aceitar pedra (zero custo, casa pode ficar esquisita em afloramento), terraplanar o lote (mexe no mundo, mais código), ampliar o raio de busca (casa nasce longe). **Recomendação registrada: aceitar pedra.**
-
-2. **E43 — o descanso de 4 ciclos é anulado no ciclo seguinte.** A 2ª passagem do `takeOneTask` devolve a mesma tarefa ao mesmo trabalhador quando a colônia não tem outro trabalho da profissão dele.
+1. **E43 — o descanso de 4 ciclos é anulado no ciclo seguinte.** A 2ª passagem do `takeOneTask` devolve a mesma tarefa ao mesmo trabalhador quando a colônia não tem outro trabalho da profissão dele.
 
 ---
 
@@ -216,9 +230,9 @@ o playtest ainda revele defeitos de código, como a fome de buscas da mina
 corrigida nesta sessão. Cada item entregue acumula dívida de "não visto em
 jogo", e a fila cresce mais rápido do que drena.
 
-**Próximo passo natural:** sessão de jogo para validar o portal da mina em
-vila nova, a rota E45, a casa e as correções pendentes de 09-13. P0.7 e E43
-seguem como decisões do autor; E44 aguarda validação em jogo.
+**Próximo passo natural:** sessao de jogo para validar o portal da mina em
+vila nova, a rota E45, a casa e a politica P0.7 no mundo do autor. E43 segue
+como decisao do autor; E44 aguarda validacao em jogo.
 
 **Nova vila sem portal da mina (09-13):** o log mostra mineiros das vilas
 novas repetindo `looking for stone, 0 of 64`, sem linha de abertura. A causa

@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
@@ -283,8 +284,15 @@ public class FarmPlanGameTest implements FabricGameTest {
 
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
 
+        UUID colonyId = UUID.randomUUID();
+        BlockPos absoluteRoad = context.getAbsolutePos(center);
+        BuildSiteScanner.restore(new ColonyRoads(
+                colonyId,
+                MinecraftTypeAdapter.toColonyPos(absoluteRoad),
+                List.of(ColonyRoads.column(absoluteRoad.getX(), absoluteRoad.getZ()))));
+
         Colony colony = Colony.create(
-                UUID.randomUUID(),
+                colonyId,
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)));
 
         VillageColonyMod.COLONIES.register(colony);

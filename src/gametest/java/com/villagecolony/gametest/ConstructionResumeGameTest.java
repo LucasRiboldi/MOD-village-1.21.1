@@ -76,11 +76,12 @@ public class ConstructionResumeGameTest implements FabricGameTest {
         // alargou a caixa num eixo só, o giro deixou de ser inócuo, e o
         // acidente apareceu — é o que o javadoc de blueprintOf já
         // avisava que aconteceria.
+        UUID colonyId = UUID.randomUUID();
         Blueprint house = HousePlans.blueprintOf(
-                        context.getWorld(), StructureBlueprintReader.PLAINS_SMALL_HOUSE, origin)
+                        context.getWorld(), colonyId, StructureBlueprintReader.PLAINS_SMALL_HOUSE, origin)
                 .orElseThrow(() -> new AssertionError("o jogo não devolveu a casa"));
 
-        Colony colony = Colony.create(UUID.randomUUID(), origin);
+        Colony colony = Colony.create(colonyId, origin);
 
         VillageColonyMod.COLONIES.register(colony);
 

@@ -49,35 +49,129 @@ public class BuildSiteGameTest implements FabricGameTest {
     private static final ColonyPos TALL_HOUSE = new ColonyPos(2, 5, 2);
 
     /**
-     * A rua do deserto também é rua — 2026-08-21.
+     * P0.7: solo sólido disponível não é recusado por sua composição.
      *
-     * <p>Ela é de <b>arenito liso</b>, e a busca de lote reconhecia rua
-     * por um nome escrito no código: {@code dirt_path}. Enquanto foi
-     * assim, a vila de deserto nunca teve beira de rua nenhuma, e
-     * terminava toda varredura dizendo que não havia lote.
-     *
-     * <p>A arena da bateria tem bioma fixo de planície, e é por isso que
-     * nada disso aparecia: o teste do lote é o mesmo, e o que muda é o
-     * bloco que faz de rua.
+     * <p>A marca da rua é espacial: os materiais da estrada só bloqueiam
+     * quando a colônia os reservou no índice de ruas. Isto permite ao
+     * jogador preparar o chão com qualquer material de apoio sem criar
+     * uma taxonomia geológica paralela.
      */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site")
-    public void aLotBesideASandstoneRoadIsFound(TestContext context) {
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_p0_7")
+    public void stoneGravelAndTerracottaOutsideARoadAreLots(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
 
-        paveGround(context, center);
+        for (net.minecraft.block.Block ground : new net.minecraft.block.Block[] {
+                Blocks.STONE, Blocks.GRAVEL, Blocks.TERRACOTTA, Blocks.CALCITE}) {
+            UUID colony = UUID.randomUUID();
 
-        context.setBlockState(center, Blocks.SMOOTH_SANDSTONE.getDefaultState());
+            paveGround(context, center);
+            paveGroundWith(context, center, ground);
+            context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+            reserveRoad(context, colony, center);
+
+            Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                    context.getWorld(),
+                    colony,
+                    MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                    RADIUS,
+                    SMALL_HOUSE);
+
+            context.assertTrue(
+                    site.isPresent(),
+                    ground + " fora de ROAD_AREA foi recusado como lote no P0.7");
+
+            BuildSiteScanner.clearAll();
+        }
+
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_p0_7")
+    public void everyReservedRoadMaterialBlocksTheWholeFootprint(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+
+        for (net.minecraft.block.Block paving : new net.minecraft.block.Block[] {
+                Blocks.DIRT_PATH, Blocks.GRAVEL, Blocks.TERRACOTTA}) {
+            UUID colony = UUID.randomUUID();
+
+            LotRefusals.clearAll();
+            paveGround(context, center);
+            reserveRoadFootprint(context, colony, center, paving);
+
+            Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                    context.getWorld(),
+                    colony,
+                    MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                    0,
+                    SMALL_HOUSE);
+
+            context.assertTrue(
+                    site.isEmpty(),
+                    paving + " reservado como ROAD_AREA deixou uma casa atravessar a estrada");
+            context.assertTrue(
+                    LotRefusals.countOf(colony, LotRefusals.Reason.ROAD) > 0,
+                    paving + " reservado como ROAD_AREA nao registrou a recusa da estrada");
+
+            BuildSiteScanner.clearAll();
+            LotRefusals.clearAll();
+        }
+
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_p0_7")
+    public void findingALotNeverTerraformsPreparedGround(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
+
+        paveGround(context, center);
+        paveGroundWith(context, center, Blocks.STONE);
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
+
+        BlockPos checked = context.getAbsolutePos(center.east());
+        net.minecraft.block.BlockState before = context.getWorld().getBlockState(checked);
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
-                UUID.randomUUID(),
+                colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        context.assertTrue(site.isPresent(), "o terreno preparado deveria permitir lote");
+        context.assertTrue(
+                context.getWorld().getBlockState(checked).equals(before),
+                "a busca de lote alterou o terreno preparado no P0.7");
+
+        BuildSiteScanner.clearAll();
+        context.complete();
+    }
+
+    /**
+     * Uma rua de cascalho so conta como rua quando sua coluna esta reservada
+     * em {@code ROAD_AREA}; cascalho natural continua elegivel para lote.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site")
+    public void aLotBesideAReservedGravelRoadIsFound(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
+
+        paveGround(context, center);
+
+        context.setBlockState(center, Blocks.GRAVEL.getDefaultState());
+        reserveRoad(context, colony, center);
+
+        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                context.getWorld(),
+                colony,
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 SMALL_HOUSE);
 
         context.assertTrue(
                 site.isPresent(),
-                "não achou lote ao lado da rua de arenito — o deserto continua sem construir");
+                "não achou lote ao lado da estrada de gravel reservada");
 
         context.complete();
     }
@@ -88,14 +182,17 @@ public class BuildSiteGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site")
     public void aLotBesideTheRoadIsFound(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
 
         paveGround(context, center);
 
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
 
+        reserveRoad(context, colony, center);
+
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
-                UUID.randomUUID(),
+                colony,
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 SMALL_HOUSE);
@@ -133,10 +230,12 @@ public class BuildSiteGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_grass")
     public void aFieldOfGrassDoesNotDisqualifyTheLot(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
 
         paveGround(context, center);
 
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
 
         // O campo inteiro coberto, e não um tufo só: com um tufo, a busca
         // tenta as quatro direções e o lote escapa pelo lado limpo — foi
@@ -155,7 +254,7 @@ public class BuildSiteGameTest implements FabricGameTest {
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
-                UUID.randomUUID(),
+                colony,
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 SMALL_HOUSE);
@@ -344,103 +443,51 @@ public class BuildSiteGameTest implements FabricGameTest {
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_refresh")
-    public void reconcilingAPlayerRoadChangeUpdatesTheIndex(TestContext context) {
+    public void playerRoadMaterialDoesNotCreateARoadArea(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         paveGround(context, center);
-        context.setBlockState(center, Blocks.SMOOTH_SANDSTONE.getDefaultState());
 
         UUID colony = UUID.randomUUID();
         ColonyPos absoluteCenter = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center));
-        ColonyPos impossibleHouse = new ColonyPos(40, 20, 40);
-
-        BuildSiteScanner.find(context.getWorld(), colony, absoluteCenter, RADIUS, impossibleHouse);
-        int indexedBefore = BuildSiteScanner.roadIndexSize(colony).orElse(0);
-        context.assertTrue(indexedBefore > 0, "a varredura completa não indexou a rua inicial");
-
-        BlockPos changedLocal = center.add(RADIUS, 0, 0);
-        context.setBlockState(changedLocal, Blocks.SMOOTH_SANDSTONE.getDefaultState());
-        BlockPos changedRoad = context.getAbsolutePos(changedLocal);
+        context.setBlockState(center, Blocks.GRAVEL.getDefaultState());
         BuildSiteScanner.reconcileWorldChange(
-                colony, context.getWorld(), changedRoad, absoluteCenter);
+                colony, context.getWorld(), context.getAbsolutePos(center), absoluteCenter);
 
         context.assertTrue(
-                BuildSiteScanner.roadIndexSize(colony).orElse(0) > indexedBefore,
-                "a rua nova não entrou no índice sem descartar a medição existente");
+                !BuildSiteScanner.isRoadArea(context.getWorld(), colony, context.getAbsolutePos(center)),
+                "gravel do jogador sem reserva espacial virou rua");
+        context.assertTrue(
+                BuildSiteScanner.roadIndexSize(colony).isEmpty(),
+                "material de rua sem ROAD_AREA entrou no índice");
 
         BuildSiteScanner.clearAll();
         context.complete();
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_refresh")
-    public void playerEditKeepsAnIncrementalSweepCursor(TestContext context) {
+    public void playerEditDoesNotRecreateARoadArea(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         paveGround(context, center);
-        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
 
         UUID colony = UUID.randomUUID();
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
         ColonyPos absoluteCenter = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center));
-        ColonyPos impossibleHouse = new ColonyPos(40, 20, 40);
-
-        BuildSiteScanner.find(context.getWorld(), colony, absoluteCenter, 64, impossibleHouse);
-        int pausedAt = BuildSiteScanner.sweepPausedAt(colony).orElse(0);
-        int foundBefore = BuildSiteScanner.pausedSweeps().stream()
-                .filter(cursor -> cursor.colonyId().equals(colony))
-                .mapToInt(cursor -> cursor.found().size())
-                .findFirst()
-                .orElse(0);
-        context.assertTrue(pausedAt > 0, "a varredura devia pausar no limite por chamada");
-        context.assertTrue(foundBefore > 0, "a fatia inicial devia acumular ruas encontradas");
-
-        long centerColumn = ColonyRoads.column(absoluteCenter.x(), absoluteCenter.z());
-        context.assertTrue(
-                BuildSiteScanner.pausedSweeps().stream()
-                        .filter(cursor -> cursor.colonyId().equals(colony))
-                        .anyMatch(cursor -> cursor.found().contains(centerColumn)),
-                "a rua editada precisa estar entre os achados parciais");
 
         context.setBlockState(center, Blocks.DIRT.getDefaultState());
         BuildSiteScanner.reconcileWorldChange(
                 colony, context.getWorld(), context.getAbsolutePos(center), absoluteCenter);
-        int afterRemovingRoad = BuildSiteScanner.pausedSweeps().stream()
-                .filter(cursor -> cursor.colonyId().equals(colony))
-                .mapToInt(cursor -> cursor.found().size())
-                .findFirst()
-                .orElse(0);
         context.assertTrue(
-                afterRemovingRoad == foundBefore - 1,
-                "a rua removida permaneceu nos achados parciais");
+                BuildSiteScanner.roadIndexSize(colony).orElse(0) == 0,
+                "a área de rua removida permaneceu no índice");
 
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
         BuildSiteScanner.reconcileWorldChange(
                 colony, context.getWorld(), context.getAbsolutePos(center), absoluteCenter);
-        int afterRestoringRoad = BuildSiteScanner.pausedSweeps().stream()
-                .filter(cursor -> cursor.colonyId().equals(colony))
-                .mapToInt(cursor -> cursor.found().size())
-                .findFirst()
-                .orElse(0);
         context.assertTrue(
-                afterRestoringRoad == foundBefore,
-                "a pavimentação restaurada não voltou aos achados parciais");
-
-        for (int offset = 1; offset <= 3; offset++) {
-            BlockPos changedLocal = center.add(offset, 0, 1);
-            context.setBlockState(changedLocal, Blocks.DIRT.getDefaultState());
-            BuildSiteScanner.reconcileWorldChange(
-                    colony, context.getWorld(), context.getAbsolutePos(changedLocal), absoluteCenter);
-        }
-
-        int resumedAt = BuildSiteScanner.sweepPausedAt(colony).orElse(-1);
-        int foundRoads = BuildSiteScanner.pausedSweeps().stream()
-                .filter(cursor -> cursor.colonyId().equals(colony))
-                .mapToInt(cursor -> cursor.found().size())
-                .findFirst()
-                .orElse(0);
+                BuildSiteScanner.roadIndexSize(colony).orElse(0) == 0,
+                "material restaurado sem reserva espacial recriou a área de rua");
         BuildSiteScanner.clearAll();
-
-        context.assertTrue(
-                resumedAt == pausedAt && foundRoads == foundBefore,
-                "cursor antes/depois=" + pausedAt + "/" + resumedAt
-                        + ", ruas parciais antes/depois=" + foundBefore + "/" + foundRoads);
         context.complete();
     }
 
@@ -451,6 +498,7 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
 
         UUID colony = UUID.randomUUID();
+        reserveRoad(context, colony, center);
         ColonyPos absoluteCenter = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center));
         ColonyPos impossibleHouse = new ColonyPos(40, 20, 40);
 
@@ -478,10 +526,13 @@ public class BuildSiteGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site")
     public void brokenGroundIsRefused(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
 
         paveGround(context, center);
 
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
+        reserveRoad(context, colony, center);
 
         // Uma torre em cada vizinho da rua: qualquer lote que encoste
         // nela passa do desnível.
@@ -500,7 +551,7 @@ public class BuildSiteGameTest implements FabricGameTest {
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
-                UUID.randomUUID(),
+                colony,
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 SMALL_HOUSE);
@@ -528,10 +579,12 @@ public class BuildSiteGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site")
     public void aBlockInsideTheHouseRefusesTheLot(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
 
         paveGround(context, center);
 
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
 
         // Uma pedra no ar, em cada uma das quatro vizinhanças da rua:
         // não importa para que lado o lote cresça, ele encontra isto.
@@ -553,7 +606,7 @@ public class BuildSiteGameTest implements FabricGameTest {
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
-                UUID.randomUUID(),
+                colony,
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 TALL_HOUSE);
@@ -578,10 +631,12 @@ public class BuildSiteGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site")
     public void flowersInsideTheHouseDoNotRefuseTheLot(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
 
         paveGround(context, center);
 
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
 
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
@@ -596,7 +651,7 @@ public class BuildSiteGameTest implements FabricGameTest {
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
-                UUID.randomUUID(),
+                colony,
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 SMALL_HOUSE);
@@ -622,10 +677,12 @@ public class BuildSiteGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site")
     public void aLotAboveTheRoadIsRefused(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
 
         paveGround(context, center);
 
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
 
         // Tudo em volta da rua sobe um degrau. O lote continua plano
         // entre si, e deixa de estar no nível de quem anda na rua.
@@ -642,7 +699,7 @@ public class BuildSiteGameTest implements FabricGameTest {
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
-                UUID.randomUUID(),
+                colony,
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 SMALL_HOUSE);
@@ -668,14 +725,16 @@ public class BuildSiteGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site")
     public void theLotKnowsWhichSideTheRoadIsOn(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
 
         paveGround(context, center);
 
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
 
         Optional<BuildSiteScanner.Site> found = BuildSiteScanner.find(
                 context.getWorld(),
-                UUID.randomUUID(),
+                colony,
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 SMALL_HOUSE);
@@ -733,17 +792,19 @@ public class BuildSiteGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_fallback")
     public void theBiggestPlanThatFitsIsTheOneChosen(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
 
         paveGround(context, center);
 
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
 
         // Uma planta maior do que o chão que este teste montou.
         ColonyPos tooBig = new ColonyPos(6, 5, 6);
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
-                UUID.randomUUID(),
+                colony,
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 List.of(tooBig, SMALL_HOUSE));
@@ -765,14 +826,16 @@ public class BuildSiteGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_fallback")
     public void theBigPlanWinsWhereItFits(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
 
         paveGround(context, center);
 
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
-                UUID.randomUUID(),
+                colony,
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 List.of(TALL_HOUSE, SMALL_HOUSE));
@@ -822,7 +885,7 @@ public class BuildSiteGameTest implements FabricGameTest {
                 context.getAbsolutePos(center.add(-RADIUS, 0, -RADIUS)));
 
         VillageColonyMod.BUILDINGS.register(new Building(
-                UUID.randomUUID(),
+                colony,
                 colony,
                 ResourceId.vanilla("village/plains/houses/plains_small_house_1"),
                 from,
@@ -845,33 +908,9 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /**
-     * Achar lote não faz a varredura esquecer onde estava.
-     *
-     * <p><b>O que isto custa hoje.</b> Ao achar lote a varredura apagava
-     * o cursor, e a seguinte recomeçava do centro: raio 64 são 16.641
-     * colunas, o teto é 1.024 por passagem, e a 30 s por ciclo isso dá
-     * <b>dezessete passagens, ~8,5 minutos</b> entre uma casa e a
-     * próxima ter chance de nascer. Não é conta de papel — é o número que
-     * o comentário do {@code ConstructionPlanner} já dizia, e foi medido
-     * em jogo três vezes: a sessão de 08-26 às 23:25:22 recomeçou do zero
-     * logo depois da primeira casa e não nasceu segunda obra em oito
-     * minutos, e as sessões das 23:06 e das 01:33 <b>terminaram sem sair
-     * da primeira varredura</b>.
-     *
-     * <p>É a decisão 8 aplicada como ela foi escrita: <i>o conserto é no
-     * jeito de procurar, não no volume</i>. O teto de mil colunas fica
-     * onde está — o ciclo já avisa 95 ms com ele.
-     *
-     * <p><b>Por que retomar é o certo, e não só o barato.</b> Os anéis de
-     * perto acabaram de ser varridos e agora estão <b>mais</b> ocupados,
-     * porque a casa nova está neles. Recomeçar do centro é reperguntar
-     * dezesseis mil colunas que já responderam não. Quando o cursor
-     * termina o raio ele sai sozinho e a próxima recomeça do centro — a
-     * vila muda, e o lote de ontem pode existir amanhã.
-     */
+    /** Uma estrada previamente indexada encontra lote sem iniciar varredura completa. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_resume")
-    public void theSweepKeepsItsPlaceAfterFindingALot(TestContext context) {
+    public void indexedRoadFindsALotWithoutStartingFullSweep(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
 
         UUID colony = UUID.randomUUID();
@@ -879,6 +918,7 @@ public class BuildSiteGameTest implements FabricGameTest {
         paveGround(context, center);
 
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
@@ -892,9 +932,8 @@ public class BuildSiteGameTest implements FabricGameTest {
                 "o arranjo não deu lote, então este teste não chega a afirmar nada");
 
         context.assertTrue(
-                BuildSiteScanner.sweepPausedAt(colony).isPresent(),
-                "a varredura esqueceu onde estava depois de achar o lote — a próxima"
-                        + " recomeça do centro e paga as dezessete passagens de novo");
+                BuildSiteScanner.sweepPausedAt(colony).isEmpty(),
+                "uma ROAD_AREA indexada iniciou uma varredura completa sem necessidade");
 
         context.complete();
     }
@@ -932,6 +971,7 @@ public class BuildSiteGameTest implements FabricGameTest {
         paveGround(context, center);
 
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
 
         // Rua existe, lote não: torre em cada vizinho põe o desnível
         // acima do limite. É o arranjo do brokenGroundIsRefused, e o que
@@ -995,6 +1035,7 @@ public class BuildSiteGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_rock")
     public void aVillageOnBedrockStillHasLots(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
 
         // Rocha em vez de grama, no lote inteiro: é a encosta em que a
         // vila do autor nasceu.
@@ -1006,10 +1047,11 @@ public class BuildSiteGameTest implements FabricGameTest {
         }
 
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
-                UUID.randomUUID(),
+                colony,
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 SMALL_HOUSE);
@@ -1022,20 +1064,16 @@ public class BuildSiteGameTest implements FabricGameTest {
     }
 
     /**
-     * Pedregulho continua não sendo chão de lote — 2026-09-12.
+     * Solo sólido preparado pelo jogador também pode ser lote no P0.7.
      *
-     * <p>A outra metade da decisão acima, e ela precisa existir: sem este
-     * caso, aceitar <b>tudo</b> o que é pedra passaria, e a casa nasceria
-     * sobre a parede da vila gerada. Pedregulho é material de obra — é o
-     * que o mineiro traz e o que a casa de planície usa —, então chão de
-     * pedregulho é indício de construção, não de morro.
-     *
-     * <p>A Regra 3 cobre o caso por outro lado, perguntando <b>de quem é</b>
-     * o bloco. Esta guarda é a que não depende de registro nenhum.
+     * <p>A prioridade de proteção e de construções existentes continua
+     * bloqueando obra registrada. Sem esse contexto espacial, o bloco
+     * isolado não revela a origem do terreno e permanece elegível.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_rock")
-    public void cobblestoneIsStillNotLotGround(TestContext context) {
+    public void preparedCobblestoneCanBeLotGround(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
 
         for (int dx = -RADIUS; dx <= RADIUS; dx++) {
             for (int dz = -RADIUS; dz <= RADIUS; dz++) {
@@ -1045,17 +1083,18 @@ public class BuildSiteGameTest implements FabricGameTest {
         }
 
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
                 context.getWorld(),
-                UUID.randomUUID(),
+                colony,
                 MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
                 RADIUS,
                 SMALL_HOUSE);
 
-        context.assertFalse(
+        context.assertTrue(
                 site.isPresent(),
-                "pedregulho passou por chão, e a casa vai nascer sobre parede de vila");
+                "solo sólido preparado fora de construção registrada foi recusado no P0.7");
 
         context.complete();
     }
@@ -1067,6 +1106,44 @@ public class BuildSiteGameTest implements FabricGameTest {
                         center.add(dx, 0, dz), Blocks.GRASS_BLOCK.getDefaultState());
             }
         }
+    }
+
+    private static void paveGroundWith(
+            TestContext context, BlockPos center, net.minecraft.block.Block ground) {
+        for (int dx = -RADIUS; dx <= RADIUS; dx++) {
+            for (int dz = -RADIUS; dz <= RADIUS; dz++) {
+                context.setBlockState(center.add(dx, 0, dz), ground.getDefaultState());
+            }
+        }
+    }
+
+    private static void reserveRoad(TestContext context, UUID colony, BlockPos road) {
+        reserveRoadColumns(context, colony, List.of(road));
+    }
+
+    private static void reserveRoadFootprint(
+            TestContext context, UUID colony, BlockPos center, net.minecraft.block.Block paving) {
+        List<BlockPos> road = new ArrayList<>();
+
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                BlockPos at = center.add(dx, 0, dz);
+                context.setBlockState(at, paving.getDefaultState());
+                road.add(at);
+            }
+        }
+
+        reserveRoadColumns(context, colony, road);
+    }
+
+    private static void reserveRoadColumns(TestContext context, UUID colony, List<BlockPos> road) {
+        List<Long> columns = road.stream()
+                .map(context::getAbsolutePos)
+                .map(at -> ColonyRoads.column(at.getX(), at.getZ()))
+                .toList();
+
+        ColonyPos center = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(road.get(0)));
+        BuildSiteScanner.restore(new ColonyRoads(colony, center, columns));
     }
 
     // ------------------------------------------------------------------
@@ -1268,6 +1345,7 @@ public class BuildSiteGameTest implements FabricGameTest {
 
             // A rua, e o lote encostado nela.
             context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+            reserveRoad(context, colony, center);
 
             // E um degrau de UM bloco dentro do lote: é o bastante para
             // o flatGroundAt reprovar, porque a pergunta é exata.

@@ -35,8 +35,8 @@ limitado existente.
    quando a capacidade de camas não atende os aldeões adultos, estruturas
    profissionais necessárias à cadeia ainda ausentes e, depois, outras
    estruturas elegíveis. A regra não altera empregos Vanilla nem remove obras
-   abertas. A decisão de P0.7 sobre aceitar pedra como solo continua pendente e
-   não é alterada por esta ADR.
+   abertas. A elegibilidade de solo e estrada e definida pela ADR-017 e nao e
+   alterada por esta ADR.
 4. A seleção de lote deve rejeitar locais sem ponto de aproximação
    navegável/alcançável antes de reservar a obra. Diagnóstico em jogo será
    solicitado por comando e exibirá partículas temporárias e motivos para
@@ -62,5 +62,5 @@ limitado existente.
   e respeitar proteção da vila, origem física e ferramentas.
 - A prioridade de construção usa estado observado no mundo e mantém obras já
   iniciadas. Dados Vanilla não serão duplicados em save.
-- Nenhum lote pode forçar chunk loading, escavar solo protegido ou modificar a
-  regra de terreno rochoso pendente do autor.
+- Nenhum lote pode forçar chunk loading, escavar solo protegido ou modificar o
+  terreno; a politica de elegibilidade e estrada permanece a da ADR-017.

@@ -7683,3 +7683,83 @@ três cópias: `EF0138BE7180FC47FB905C42EF7F64A8A31FE68CFCFCBCE4C07CAF72DB467231
 O launcher TLauncher estava aberto, mas o cliente Minecraft não mantinha o
 arquivo bloqueado e a cópia foi verificada por hash. A confirmação visual em
 jogo continua pendente.
+
+### 2026-09-14 — limpeza imediata de claim de mineração
+
+`MinerWork.tick` removia um job cuja tarefa já tinha encerrado, mas deixava a
+claim do ramal até o próximo ciclo de despacho. Nesse intervalo, outro mineiro
+continuava vendo a frente como ocupada apesar de não existir mais trabalho que
+a usasse. A remoção no tick agora libera também `MineClaims` do trabalhador.
+
+Prova TDD: `aClosedJobReleasesItsMineClaimOnTheNextTick` falhou antes do
+patch, pois o job sumia e a claim permanecia. Após a alteração, o teste focado,
+`build` e `runGametest` passaram; a suíte Fabric executou 324/324 GameTests.
+Não houve distribuição de JAR nem validação visual desta correção em jogo.
+
+### 2026-09-15 — reavaliação controlada da falha de CI AUD-001
+
+O artefato `ci-reports-34814235426` do run Linux no commit `2a0a4b7` trouxe a
+asserção antes ausente: `(-11356540, -60, 8083215) fundidor criado no setor
+não está registrado no ServerWorld`. A falha ocorre no tick 1, antes de o
+teste criar o trabalhador ou chamar `SurfaceGatheringWork`.
+
+`runGametest --rerun-tasks --console=plain` passou localmente com 324/324.
+Como contraprova, a descoberta de `DIRT` foi desligada temporariamente: 323
+testes passaram e somente a coleta de terra falhou com `o fundidor não removeu
+a terra do setor externo escolhido`. A regra foi restaurada e a suíte voltou
+a 324/324. A tentativa de trocar a criação manual pelo `TestContext` também
+produziu a mesma asserção de registro nos dois cenários e foi revertida.
+
+Assim, a coleta está provada pelo teste, mas a perda de registro da entidade
+entre o spawn e o tick ainda não tem mecanismo causal confirmado. Não houve
+mudança de timeout, alteração de gameplay, distribuição de JAR ou fechamento
+do Lote 0; falta o job Linux de uma revisão publicada e o playtest do autor.
+
+### 2026-09-15 — P0.7, elegibilidade simplificada de lotes
+
+O autor decidiu a politica de terreno: piso solido disponivel e candidato a
+lote, sem taxonomia geologica e sem escavar, preencher, nivelar ou
+terraplanar. Pedra, gravilha e terracota deixam de ser recusadas apenas pela
+composicao. A decisao esta registrada na ADR-017.
+
+Estrada passou a exigir dois sinais: um dos tres materiais oficiais
+(`dirt_path`, `gravel`, `terracotta`) e a reserva espacial `ROAD_AREA` da
+colonia. A reserva vem de `ColonyRoads`, de obra em andamento ou de
+pavimentacao original protegida; trocar um bloco pelo material de rua nao cria
+estrada. A prioridade do footprint agora e protecao, construcao existente,
+estrada, piso, nivel e volume livre.
+
+Prova TDD: antes do patch, o novo GameTest recusou `gravel` fora de
+`ROAD_AREA` com a assercao `Block{minecraft:gravel} fora de ROAD_AREA foi
+recusado como lote no P0.7`. Depois, `build` e
+`runGametest --rerun-tasks` passaram com 327/327 GameTests. Os cenarios cobrem
+pedra, gravilha, terracota, materiais de rua reservados, footprint que cruza
+estrada, protecao/construcao e leitura sem modificacao do mundo. A falha de CI
+do fundidor AUD-001 permaneceu fora deste escopo. Em seguida, o JAR 0.3.0 foi
+copiado de `build/libs/` para `downloads/` e `%APPDATA%/.minecraft/mods/`, com
+o cliente fechado. O SHA-256 nas tres copias foi
+`7B2C820AA298FF72DF1D0BC00B0BC0AD66A5359417B7F5C9950B66FA14725F44`.
+Falta playtest no mundo do autor.
+
+### 2026-09-15 — revisão de pendências, erros e publicação
+
+O backlog canônico foi revisado contra `STATE.md`, `TODO.md`, ADRs, documentação
+de testes e GitHub. Não há issues nem pull requests abertos. O último workflow
+publicado, `34838382297`, concluiu com sucesso; isso não apaga duas falhas
+históricas, que permaneceram separadas dos defeitos confirmados atuais.
+
+O workflow `34798347382` falhou no commit anterior ao lote atual com um único
+GameTest obrigatório: `minergametest.theminergoesdowntothestoneinsteadofdiggingitfromabove`.
+O workflow `34814235426` falhou depois com a asserção do fundidor que não ficou
+registrado no `ServerWorld` no tick 1. Esta segunda evidência segue como
+`AUD-001`: a contraprova local mostrou que a ausência de coleta é real quando a
+regra de terra é desligada, mas ainda não há uma causa determinística para a
+perda do aldeão nem uma execução Linux da revisão. Nenhum timeout foi alterado
+e nenhum desses registros foi marcado como corrigido.
+
+O README foi reconciliado com o estado vivo: E44 agora é integração pendente de
+playtest, KF-001 é uma correção de teste já verificada e P0.7 é entrega em vez
+de decisão aberta. Os erros ativos continuam centralizados em `TODO.md`: E43,
+E41, E42, E38, E21, E4, E3 e E9, além das pendências de validação em jogo. A
+implementação local do mineiro e seu teste unitário ficaram deliberadamente
+fora deste lote e não foram adicionados ao artefato.

@@ -88,8 +88,8 @@ na grama, e quebrado devolve terra. A obra esperava por ele para sempre.
 P0.1 ao pé da letra, e é o número que decide a terraplanagem.
 
 ✅ **Entregue em 2026-09-11.** O número chegou na sessão de 09-12: das
-6.583 recusas, **4.578 (70%) são `NOT_NATURAL_GROUND`** — pedra não entra
-como solo natural. ⬜ **Espera decisão do autor — ver P0.7.**
+6.583 recusas, **4.578 (70%) são `NOT_NATURAL_GROUND`**. A politica P0.7
+foi entregue em 2026-09-15; espera validacao visual, ver ADR-017.
 
 
 ### P0.2 — A colônia lê 1 de 8 baús
@@ -202,35 +202,14 @@ quem pergunta por tique: motivo que oscila deixa de virar quatro linhas
 por segundo. O irmão da pedra de superfície foi junto. ⬜ Espera sessão.
 
 
-### P0.7 — Setenta por cento dos lotes são recusados por serem pedra
+### P0.7 — Elegibilidade simplificada de lotes
 
-⬜ **DECISÃO DO AUTOR, não correção automática.**
-
-`isNaturalGround` aceita grama, terra, terra grossa, podzol e areia.
-**Pedra não entra**, por decisão registrada (*"pedra à mostra é
-montanha"*). A vila do autor é rochosa: **4.578 de 6.583 recusas**.
-
-**É decisão do autor**, porque toca a Regra 3 e a Regra 19, e porque
-separar grupos de pedra já desfez uma regra antes. Três caminhos, e o
-custo muda muito entre eles:
-
-| caminho | custo em recurso | risco |
-|---|---|---|
-| aceitar pedra como chão de lote | **zero** | casa nasce em afloramento, e pode ficar esquisita |
-| terraplanar o lote antes de construir | terra ou o próprio bloco do chão; ~1 bloco por coluna fora de nível | mexe no mundo do jogador; mais código |
-| ampliar o raio de busca de lote | zero em material, custo de tique | a casa nasce longe, e piora a logística |
-
-**Recomendação registrada:** aceitar pedra é a intervenção menor que
-resolve o gargalo — e é literalmente o que a especificação manda fazer
-(*"qual é a menor e mais eficiente intervenção que resolve esse gargalo?"*).
-
-**A pesquisa da terraplanagem** está represada em
-[`docs/research/terraplanagem-da-vila.md`](../../docs/research/terraplanagem-da-vila.md),
-e o Vanilla não serve de atalho: o `StructureWeightSampler` é função de
-densidade, e o platô da aldeia é inventado enquanto o terreno ainda é
-ruído — chunk gerado não pode ser re-beardificado. Metade da regra pedida
-já existe no mod desde 08-21 (`RoadExtension.MAX_STEP`), e o que falta é
-alguém que **conserte** em vez de **recusar**.
+✅ **Entregue em 2026-09-15; espera playtest.** Todo piso solido disponivel
+e candidato a lote, sem taxonomia geologica e sem terraplanagem. Os materiais
+de estrada sao `dirt_path`, `gravel` e `terracotta`, mas so bloqueiam quando
+pertencem a `ROAD_AREA`. O footprint inteiro e recusado ao tocar estrada,
+protecao ou construcao existente. `build` e 327/327 GameTests passaram; o JAR
+distribuido nao foi atualizado. Ver ADR-017.
 
 
 ## P1 — Estabilizar comportamento
@@ -314,8 +293,7 @@ bateria verde
   ✅ P0.4  vencido
   ✅ P0.5  entregue (espera sessão)
   ✅ P0.6  entregue (espera sessão)
-  → P0.7  DECISÃO DO AUTOR: aceitar pedra como solo de lote?
-  → PARAR E REPORTAR
+  ✅ P0.7  elegibilidade simplificada entregue (espera playtest)
   → P1.1 (vencido) → P1.2 (vencido) → P1.3 → P1.4 (vencido) → P1.5 (entregue)
   → P1.6 (implementado) → P1.7 (recusado) → P1.8 (recusado)
   → P1.10 (feito) → P1.11 (feito) → P1.12 (feito) → P1.13 (feito)
@@ -354,7 +332,7 @@ P0.3	✅ fechado em 2026-09-11 — o ColonyChests virou a única resposta a "ond
 P0.4	❌ vencido — a escada que o item pede entrou em 2026-09-09	—
 P0.5	✅ entregue em 2026-09-11 — o transbordo do mineiro atravessa os baús da colônia	⬜ espera sessão
 P0.6	✅ entregue em 2026-09-11 — a enxurrada da areia calou	⬜ espera sessão
-P0.7	⬜ decisão do autor, não correção automática. O número chegou em 2026-09-12 e não era o esperado: 4.578 de 6.583 recusas foram NOT_NATURAL_GROUND	✅ número visto em sessão
+P0.7	✅ entregue em 2026-09-15 — piso solido e elegivel; estrada exige ROAD_AREA; 327/327 GameTests	⬜ espera playtest
 P1.1	❌ vencido — lido cláusula a cláusula em 2026-09-11	—
 P1.2	❌ vencido — Worker.REST_CYCLES = 4 é o descanso que o item pede	—
 P1.3	⚠️ decidido por implementação. ⬜ o resto é de jogo	⬜ espera sessão

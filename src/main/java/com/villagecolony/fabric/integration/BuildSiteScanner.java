@@ -750,7 +750,7 @@ public final class BuildSiteScanner {
      *     porque é sobre ela que se anda
      */
     public static Optional<Direction> roadSideOf(
-            ServerWorld world, ColonyPos origin, ColonyPos size) {
+            ServerWorld world, UUID colonyId, ColonyPos origin, ColonyPos size) {
 
         int roadY = origin.y() - 1;
 
@@ -768,7 +768,7 @@ public final class BuildSiteScanner {
                     break;
                 }
 
-                if (VillageRoad.isPaving(world, world.getBlockState(new BlockPos(x, roadY, z)))) {
+                if (isRoadArea(world, colonyId, new BlockPos(x, roadY, z))) {
                     return Optional.of(side);
                 }
             }
@@ -833,13 +833,6 @@ public final class BuildSiteScanner {
             return;
         }
 
-        Optional<BlockPos> ground = groundInColumn(
-                world, changed.getX(), changed.getZ(), center.y());
-
-        if (ground.isPresent()
-                && VillageRoad.isPaving(world, world.getBlockState(ground.get()))) {
-            remember(colonyId, ground.get());
-        }
     }
 
     /**
@@ -852,6 +845,31 @@ public final class BuildSiteScanner {
         ColonyRoads roads = ROADS.get(colonyId);
 
         return roads == null ? OptionalInt.empty() : OptionalInt.of(roads.columns().size());
+    }
+
+    /**
+     * Se a coluna e uma rua reservada desta colonia.
+     *
+     * <p>O material oficial evita que qualquer bloco seja promovido a rua;
+     * o indice ou a protecao estrutural da vila original fornece o contexto
+     * espacial. Uma troca manual de bloco jamais cria essa reserva sozinha.
+     */
+    public static boolean isRoadArea(ServerWorld world, UUID colonyId, BlockPos pos) {
+        if (!VillageRoad.isPaving(world, world.getBlockState(pos))) {
+            return false;
+        }
+
+        long column = ColonyRoads.column(pos.getX(), pos.getZ());
+        ColonyRoads roads = ROADS.get(colonyId);
+
+        if (roads != null && roads.columns().contains(column)) {
+            return true;
+        }
+
+        Set<Long> building = BUILDING.get(colonyId);
+
+        return (building != null && building.contains(column))
+                || BlockProtection.isVillageOriginal(world, pos);
     }
 
     /**
@@ -931,11 +949,8 @@ public final class BuildSiteScanner {
 
         Optional<BlockPos> ground = groundInColumn(world, x, z, aroundY);
 
-        // Rua é o que o jogo calça, e não um nome escrito aqui —
-        // 2026-08-21. A vila de deserto calça com arenito liso, e
-        // enquanto esta linha dizia `dirt_path` ela nunca teve beira de
-        // rua: nascia, contratava, contava recurso e nunca achava lote.
-        if (ground.isEmpty() || !VillageRoad.isPaving(world, world.getBlockState(ground.get()))) {
+        // Material oficial so vira rua quando pertence a ROAD_AREA.
+        if (ground.isEmpty() || !isRoadArea(world, colonyId, ground.get())) {
             return Optional.empty();
         }
 
@@ -1088,6 +1103,7 @@ public final class BuildSiteScanner {
      */
     private static boolean isNothing(BlockState state) {
         return state.isAir()
+                || state.isReplaceable()
                 || state.isIn(BlockTags.REPLACEABLE)
                 || state.isIn(BlockTags.SMALL_FLOWERS);
     }
@@ -1124,14 +1140,26 @@ public final class BuildSiteScanner {
 
                 BlockPos ground = found.get();
 
-                if (!isLotGround(world.getBlockState(ground))) {
-                    LotRefusals.refused(colonyId, LotRefusals.Reason.NOT_NATURAL_GROUND);
+                if (BlockProtection.isVillageOriginal(world, ground)) {
+                    LotRefusals.refused(colonyId, LotRefusals.Reason.PROTECTED);
 
                     return Optional.empty();
                 }
 
-                if (BlockProtection.isVillageOriginal(world, ground)) {
-                    LotRefusals.refused(colonyId, LotRefusals.Reason.PROTECTED);
+                if (BlockProtection.isColonyBuilt(ground)) {
+                    LotRefusals.refused(colonyId, LotRefusals.Reason.OCCUPIED);
+
+                    return Optional.empty();
+                }
+
+                if (isRoadArea(world, colonyId, ground)) {
+                    LotRefusals.refused(colonyId, LotRefusals.Reason.ROAD);
+
+                    return Optional.empty();
+                }
+
+                if (!isLotGround(world, ground)) {
+                    LotRefusals.refused(colonyId, LotRefusals.Reason.NOT_NATURAL_GROUND);
 
                     return Optional.empty();
                 }
@@ -1241,58 +1269,13 @@ public final class BuildSiteScanner {
     }
 
     /**
-     * Se dá para assentar uma casa sobre este bloco — 2026-09-12.
+     * Se a coluna sólida pode sustentar um lote no P0.7.
      *
-     * <p><b>Duas perguntas, dois predicados.</b> Isto era o
-     * {@link #isNaturalGround}, e os dois clientes dele querem coisas
-     * diferentes: o lote pergunta <i>"dá para assentar casa aqui?"</i> e a
-     * estrada pergunta <i>"dá para calçar aqui?"</i>. A rocha entrou na
-     * primeira por decisão do autor, e a bateria mostrou na hora que
-     * arrastar a segunda junto estava errado — dois casos de
-     * {@code RoadExtensionGameTest} usam pedra como barreira de propósito,
-     * e a estrada passaria a pavimentar morro acima.
-     *
-     * <p>A estrada fica com o predicado antigo. Quem cresce sobre rocha é
-     * o lote.
+     * <p>A composição não identifica origem: terreno natural e preparo do
+     * jogador são elegíveis. Proteção, construção existente, {@code ROAD_AREA},
+     * nível e volume já foram verificados antes desta pergunta.
      */
-    static boolean isLotGround(BlockState state) {
-        return isNaturalGround(state) || isBareRock(state);
-    }
-
-    /**
-     * A rocha exposta também serve de chão de lote — decisão do autor,
-     * 2026-09-12.
-     *
-     * <p><b>A linha de cima dizia o contrário</b>, e com motivo escrito:
-     * <i>"pedra à mostra é montanha"</i>. O número derrubou o motivo. Na
-     * sessão de 09-12 a vila recusou <b>9.388 lotes</b>, e
-     * <b>6.527 deles — 69,5% — por isto</b>: o chão ali não era solo
-     * natural. A vila do autor nasceu em terreno rochoso, e a colônia não
-     * tinha onde crescer.
-     *
-     * <p>Ele foi avisado do preço e escolheu assim: casa sobre afloramento
-     * pode ficar de aparência estranha em terreno muito irregular. Era a
-     * <b>menor intervenção que resolvia o gargalo</b> — a alternativa era
-     * terraplanar, que gasta material e mexe mais no mundo dele.
-     *
-     * <p><b>O que isto não afrouxa.</b> As outras quatro recusas continuam
-     * inteiras: nível de rua (Regra 19), peça de vila ou do jogador
-     * (Regra 3), janela vertical, e volume da casa ocupado. Rocha que é
-     * parede de construção continua protegida pela Regra 3, que pergunta
-     * de quem é o bloco e não de que ele é feito.
-     *
-     * <p>Só rocha <b>nua</b>, e é o que o nome diz: pedra, granito,
-     * diorito, andesito, tufo e deepslate — o que a geração de mundo põe
-     * à mostra num morro. Pedregulho fica de fora de propósito: ele é o
-     * que o <b>mineiro produz</b> e o que a vila gerada usa de parede, e
-     * aceitá-lo como chão convidaria a casa a nascer sobre obra.
-     */
-    private static boolean isBareRock(BlockState state) {
-        return state.isOf(Blocks.STONE)
-                || state.isOf(Blocks.GRANITE)
-                || state.isOf(Blocks.DIORITE)
-                || state.isOf(Blocks.ANDESITE)
-                || state.isOf(Blocks.TUFF)
-                || state.isOf(Blocks.DEEPSLATE);
+    static boolean isLotGround(ServerWorld world, BlockPos pos) {
+        return world.getBlockState(pos).isSolidBlock(world, pos);
     }
 }

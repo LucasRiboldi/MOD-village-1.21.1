@@ -53,6 +53,9 @@ public final class LotRefusals {
         /** Peça da vila gerada ou coisa do jogador. A Regra 3. */
         PROTECTED("village-original or player-placed, and Rule 3 protects it"),
 
+        /** A coluna está na área espacial reservada de uma estrada. */
+        ROAD("the ground is inside a reserved road area"),
+
         /**
          * O chão não está <b>no nível da rua</b> — a Regra 19.
          *

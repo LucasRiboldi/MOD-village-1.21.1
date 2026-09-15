@@ -216,19 +216,20 @@ em TODO.md. O que segue é o resumo.
 
 Defeitos abertos, em ordem de dor:
 	o quê	gravidade
-E44	A mina não tem escada de recusas — prende os dois mineiros da colônia	🔴 aguarda decisão do autor
+E44	A escada de recusas da mina existe e tem testes; falta a validação integrada em jogo	⬜ aguarda playtest
 E43	O descanso de quatro ciclos é anulado no ciclo seguinte	🟠 aguarda decisão do autor
 E41	Nada mede degradação ao longo de muitos ciclos	🟠 maior lacuna de cobertura
 E42	Nenhum teste de impasse entre profissões	🔴 tentativa retirada pelo gauntlet
 E38	O baú do trabalhador assoreia	⚙️ metade fechada
-KF-001	A bateria é ~10% instável (SEARCHES_PER_TICK por coluna fecharia)	🟡 fechado o sintoma, não a raiz
+KF-001	A falha instável do teste foi corrigida; a vazão global só volta a ser assunto com nova evidência	✅ teste fechado
 
-P0 aberto, um só — e é decisão do autor:
+P0.7 foi entregue em 15-09:
 
-    P0.7 — pedra como solo de lote. Das 6.583 recusas de lote, 4.578
-    (70%) são NOT_NATURAL_GROUND: pedra não entra como solo natural,
-    por decisão registrada ("pedra à mostra é montanha"). A vila do autor
-    é rochosa. Três caminhos, com custos diferentes — ver STATE.md §P0.7.
+    Todo piso sólido disponível pode receber lote; materiais de estrada só
+    bloqueiam dentro de ROAD_AREA, e a seleção não terraplana o mundo.
+    A regra está na ADR-017 e passou 327/327 GameTests. O JAR 0.3.0
+    distribuído tem SHA-256 7B2C820AA298FF72DF1D0BC00B0BC0AD66A5359417B7F5C9950B66FA14725F44.
+    Falta o playtest no mundo do autor.
 
 E o que já está entregue mas ainda não foi visto em jogo — uma lista
 que cresce mais rápido do que drena. As linhas a procurar estão em
@@ -258,8 +259,8 @@ Passos
 
     Ponha a Fabric API na pasta mods.
 
-    Baixe o village-colony-0.3.0.jar
-    e ponha ao lado dela.
+    Baixe o village-colony-0.3.0.jar, confira o SHA-256 publicado no
+    STATE.md e ponha-o ao lado dela.
 
     Abra o jogo, carregue um mundo, e ache uma vila.
 
@@ -297,7 +298,7 @@ Se você chegou aqui para contribuir ou entender como o mod é feito:
 
     PROJECT_CONSTITUTION.md — os princípios
 
-    docs/decisions/ — as 10 ADRs
+    docs/decisions/ — as ADRs de arquitetura
 
 <div align="center">
 
