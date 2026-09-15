@@ -4969,6 +4969,70 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
+     * <b>E o minério da parede também sai da vez</b> — 2026-09-15.
+     *
+     * <p><b>Relato do autor, em jogo:</b> <i>"os mineiros estavam parados
+     * no fundo da mina em local que não chegaram escavando"</i>. O log
+     * daquela sessão mediu o laço, e ele é o E44 vazando por outra porta:
+     *
+     * <pre>
+     * 19:43:47  c8c33662 desiste de 665,32,-2866 (Minério de Cobre)
+     *           marca: "out of reach — refused 1 times, skips it for 6000 ticks"
+     * 19:44:45  RECEBE A MESMA PEDRA — 60s depois, com 6000 ticks de castigo
+     * 19:44:47  desiste; marca de novo, agora 12000 ticks
+     * 19:45:45  recebe a mesma pedra pela terceira vez
+     * 19:45:53  demitido do ofício: "gave up COLLECT_STONE once too often"
+     * </pre>
+     *
+     * <p><b>O furo.</b> O {@code nextCut} pergunta pela marca — mas só
+     * para a posição do túnel. O minério <b>colado</b> nela sai por outra
+     * porta: ele passa pelo {@code nowhereToStand} e é servido direto,
+     * sem nunca passar pelo {@code MineMarks.isOutOfReach}. O
+     * {@code giveUp} escreve a marca, o {@code couldNotReach} larga a
+     * veia — e nada disso é lido por quem serve o minério da parede.
+     *
+     * <p>A pedra deste caso tem onde se ficar de pé, e é de propósito:
+     * sem isso o {@code nowhereToStand} a barraria antes e o teste
+     * passaria com o furo aberto — que é a armadilha registrada no
+     * {@code aTallBareTrunkIsStillNotATree} do lenhador.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_refused_wall_ore",
+            tickLimit = 20)
+    public void theGalleryStepsPastTheWallOreNobodyCouldReach(TestContext context) {
+        solidRock(context);
+
+        Colony colony = openedMine(context, 9);
+
+        BlockPos ahead = dug(context, colony, 9);
+
+        // O minério colado na parede do túnel: é ele que o cursor serve
+        // em vez da própria posição, e é ele que nunca passou pela marca.
+        BlockPos wallOre = ahead.up();
+
+        context.getWorld().setBlockState(wallOre, Blocks.COPPER_ORE.getDefaultState());
+
+        MineMarks.refuse(context.getWorld(), wallOre);
+
+        try {
+            Optional<BlockPos> next = targetFor(context, colony);
+
+            context.assertTrue(
+                    next.isPresent(),
+                    "a mina não devolveu alvo nenhum, e sem isso o teste não mede nada");
+
+            context.assertFalse(
+                    next.get().equals(wallOre),
+                    "o cursor serviu de novo o minério de " + wallOre.toShortString()
+                            + ", que é o que prendeu o mineiro do autor três vezes");
+        } finally {
+            MineClaims.clearAll();
+            MineMarks.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
      * <b>A pedra pulada fica para trás, e isto é o comportamento, não um
      * acidente</b> — achado do {@code gauntlet-verifier}, 2026-09-10.
      *

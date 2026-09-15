@@ -992,8 +992,29 @@ public final class MineDigging {
             // inalcançável é o que faz o followingTheVein reservi-lo para
             // sempre. Aberto o túnel, a passagem seguinte o reencontra, e
             // aí com lugar de onde bater.
+            // <b>E a marca do minério da parede vale aqui</b> — 2026-09-15.
+            // O autor viu em jogo: <i>"os mineiros estavam parados no fundo
+            // da mina em local que não chegaram escavando"</i>, e o log
+            // mostrou a mesma pedra servida três vezes em dois minutos —
+            // 665,32,-2866, com 6.000 tiques de castigo já escritos na
+            // primeira desistência, e o mineiro demitido do ofício na
+            // terceira.
+            //
+            // O furo era de porta, não de marca: a guarda do E44 acima
+            // pergunta pelo `at`, que é a posição do TÚNEL. O minério
+            // colado nela sai por esta linha, e só passava pelo
+            // nowhereToStand — de modo que o giveUp escrevia a marca e
+            // ninguém a lia. Enquanto o prazo corre, a picareta vai
+            // adiante, como já vai para a posição do túnel.
+            //
+            // Devolve o `at` em vez de pular a passagem inteira: a parede
+            // ainda vale a picareta, e abri-la é justamente o que dá ao
+            // minério um lado de onde se alcance — a mesma saída que o
+            // ramo do `nowhereToStand` escolhe, e pelo mesmo motivo.
             if (ore.isEmpty()
-                    || (!ore.get().equals(at) && nowhereToStand(world, ore.get()))) {
+                    || (!ore.get().equals(at)
+                            && (nowhereToStand(world, ore.get())
+                                    || MineMarks.isOutOfReach(world, ore.get())))) {
 
                 return Optional.of(at);
             }

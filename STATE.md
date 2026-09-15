@@ -23,7 +23,49 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 
 **Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
 
-**JAR atual 0.3.0:** `build`, 828 unitarios e 327/327 GameTests passaram. O artefato, que inclui P0.7 e a limpeza imediata da claim, foi copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `C5D0790F996082CE3B7D2AA55CED93936DF04063568A03B0B521F50245A0BA1A`. Falta apenas playtest.
+**JAR atual 0.3.0:** `build`, 828 unitarios e 329/329 GameTests passaram. O artefato, que inclui P0.7, a limpeza imediata da claim e as duas correcoes do playtest de 09-15, foi copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `65CB3701EB68F474189784302446BF6B860CDB61BAD11C24947D3897967E9B96`. Falta apenas playtest.
+
+---
+
+## Playtest de 2026-09-15 — dois defeitos vistos e corrigidos
+
+Log: `%APPDATA%/.minecraft/logs/latest.log`, 19:41–19:49, colonia `111d6ee5`.
+
+**1. Lenhador deixava toco de 3 a 4 troncos de pe.** Relato do autor:
+*"lenhador esta deixando 3 a 4 blocos de troncos sem cortar, todos troncos
+devem ser cortados e replantar"*. O log mediu: **114** recusas `Not a tree`,
+com a moda exata em **4 troncos** (34 dos 114). O lenhador **nao** abandonava
+arvore no meio — as 18 que comecou, terminou, e o guarda de imobilidade de
+09-12 segurou (stall 0–4). Os tocos nunca foram cortados: a regra da copa
+viva (`TreeHarvester.plan`) recusa tronco sem folha `PERSISTENT=false` ao
+alcance, e o tronco que **perdeu** a copa para o decaimento — o que sobra ao
+lado de uma arvore derrubada — virava recusa permanente, com o castigo
+crescendo a cada volta. Sem plano, tambem nunca era replantado.
+**Decisao do autor (09-15):** toco sem copa cai quando o grupo e pequeno e
+nao e protegido. `BARE_TRUNK_LIMIT = 8`, e o numero saiu do log: os 114
+grupos se separam num vale limpo entre 7 e 10 — 93 tem de 1 a 7 troncos, os
+21 restantes vao de 10 a 57. Grupo acima do limite continua intocado, que e a
+Regra 3. Nao se usou `BlockProtection` como criterio porque ela nao responde
+por tronco: o Vanilla marca quem pos uma **folha**, nao um tronco, entao a
+cabana que o jogador ergueu em terreno livre ela nao ve. **Limite conhecido:**
+cabana de ate 8 troncos, a mao, em terreno livre, entra no corte.
+
+**2. Mineiro parado no fundo da mina.** Relato do autor: *"os mineiros
+estavam parados no fundo da mina em local que nao chegaram escavando"*. O log
+mostrou `c8c33662` recebendo **a mesma pedra tres vezes** — cobre em
+665,32,-2866 — com 6.000 tiques de castigo ja escritos na primeira
+desistencia, e o trabalhador demitido do oficio na terceira
+(`gave up COLLECT_STONE once too often`). O furo era de **porta, nao de
+marca**: a guarda do E44 em `MineDigging.nextCut` pergunta
+`MineMarks.isOutOfReach` para a posicao do **tunel**; o minerio **colado** na
+parede e servido por outra linha, passando so pelo `nowhereToStand`. O
+`giveUp` escrevia a marca e ninguem a lia. Corrigido: o minerio da parede
+passa pela mesma marca, e a passagem devolve a posicao do tunel — abrir a
+parede e o que da ao minerio um lado de onde se alcance.
+
+Os dois tiveram GameTest **vermelho antes do patch**, com a mensagem de
+falha citando o relato. `build` verde (828 unitarios) e 329/329 GameTests.
+**Pendente: validacao em jogo dos dois.**
 
 ---
 

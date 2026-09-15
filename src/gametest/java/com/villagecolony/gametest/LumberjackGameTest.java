@@ -186,21 +186,29 @@ public class LumberjackGameTest implements FabricGameTest {
      * tem.</b> Eram duas — a regra da copa e o teto de 24 troncos —, e o
      * teto saiu para que a árvore deixasse de ficar pela metade. O autor
      * escolheu sabendo o preço: construção de tronco <b>encostada numa
-     * árvore viva</b> partilha a copa dela e entra no corte. O que este
-     * caso garante é o resto, que é a maioria: pilar, parede e viga sem
-     * folha viva ligada não são tocados.
+     * árvore viva</b> partilha a copa dela e entra no corte.
      *
      * <p>Não há como fazer melhor lendo o mundo: o Minecraft registra
      * quem pôs uma <b>folha</b> ({@code LeavesBlock.PERSISTENT}, que o
      * {@code BlockProtection.isPlayerPlaced} usa), e não guarda nada
      * equivalente para tronco. Tronco do jogador e tronco nascido ali são
      * o mesmo bloco.
+     *
+     * <p><b>Em 2026-09-15 a defesa passou a ser o tamanho do grupo.</b> A
+     * regra da copa sozinha deixava 114 tocos de floresta de pé — ver
+     * {@link #aSmallBareStumpIsFelled} —, e o autor mandou derrubá-los.
+     * Sem copa viva, o que separa toco de construção é quantos troncos o
+     * grupo tem: o pilar deste caso passa do {@code BARE_TRUNK_LIMIT} e
+     * continua intocado.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_tall_tree")
     public void aTallBareTrunkIsStillNotATree(TestContext context) {
         BlockPos base = new BlockPos(5, 2, 5);
 
-        raiseLogs(context, base, 6);
+        // Acima do limite de troncos pelados, que é onde a Regra 3 passa a
+        // valer sozinha. Eram 6 até 2026-09-15, quando 6 deixou de ser
+        // construção e passou a ser o toco que o autor quer derrubado.
+        raiseLogs(context, base, 12);
 
         TreeHarvester.Plan plan = TreeHarvester.plan(
                 context.getWorld(), context.getAbsolutePos(base));
@@ -208,6 +216,70 @@ public class LumberjackGameTest implements FabricGameTest {
         context.assertTrue(
                 plan.isEmpty(),
                 "um pilar de troncos sem copa virou árvore — a Regra 3 caiu junto");
+
+        context.complete();
+    }
+
+    /**
+     * O toco órfão da floresta cai — 2026-09-15.
+     *
+     * <p><b>Relato do autor, em jogo:</b> <i>"lenhador está deixando 3 a 4
+     * blocos de troncos sem cortar, todos troncos devem ser cortados e
+     * replantar"</i>. O log da sessão mostrou o mecanismo em número:
+     * <b>114</b> recusas {@code Not a tree}, e a moda exata da distribuição
+     * era <b>4 troncos</b> — 34 dos 114 grupos.
+     *
+     * <p><b>O que acontecia.</b> A regra da copa pergunta por folha viva a
+     * até {@link TreeHarvester} {@code LEAF_REACH} do tronco. Quando a
+     * colônia derruba uma árvore, a folha da vizinha que ficou no ar decai
+     * sozinha; o tronco baixo que dependia daquela copa vira "não é
+     * árvore" — e a recusa cresce a cada volta, de modo que o toco fica de
+     * pé para sempre. Nunca entrando num plano, ele também nunca é
+     * replantado.
+     *
+     * <p><b>A decisão do autor, 2026-09-15:</b> toco sem copa cai quando o
+     * grupo é pequeno e não é protegido. O número saiu do log, e não de
+     * chute: os grupos recusados se separam num vale entre 7 e 10 — 93 dos
+     * 114 têm de 1 a 7 troncos, tamanho de toco de floresta, e os de 10 a
+     * 57 têm cara de construção. Ver {@code BARE_TRUNK_LIMIT}.
+     *
+     * <p>Este caso é a primeira metade. A segunda é
+     * {@link #aTallBareTrunkIsStillNotATree}, que guarda a Regra 3.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_bare_stump")
+    public void aSmallBareStumpIsFelled(TestContext context) {
+        BlockPos base = new BlockPos(5, 2, 5);
+
+        // Quatro troncos: a moda exata do log do autor.
+        raiseLogs(context, base, 4);
+
+        TreeHarvester.Plan plan = TreeHarvester.plan(
+                context.getWorld(), context.getAbsolutePos(base));
+
+        context.assertFalse(
+                plan.isEmpty(),
+                "o toco de 4 troncos foi recusado de novo — é o que o autor vê de pé em jogo");
+
+        context.assertTrue(
+                plan.logs() == 4,
+                "o plano levou " + plan.logs() + " dos 4 troncos — sobra tronco de pé");
+
+        // "todos troncos devem ser cortados <b>e replantar</b>" — a segunda
+        // metade do pedido. A muda vem de `finish`, que roda para todo
+        // plano não-vazio; era justamente por não haver plano que o toco
+        // nunca era replantado.
+        TreeHarvester.Harvest harvest =
+                TreeHarvester.fell(context.getWorld(), context.getAbsolutePos(base));
+
+        context.assertTrue(
+                harvest.logs() == 4,
+                "a colheita levou " + harvest.logs() + " dos 4 troncos");
+
+        for (int y = 0; y < 4; y++) {
+            context.expectBlock(Blocks.AIR, base.up(y).up());
+        }
+
+        context.expectBlock(Blocks.OAK_SAPLING, base);
 
         context.complete();
     }
@@ -492,12 +564,18 @@ public class LumberjackGameTest implements FabricGameTest {
      * casa é exatamente o mesmo da floresta: espécie, bloco e drop. A
      * copa é a única diferença que o mundo registra entre uma coisa e a
      * outra, e é nela que a regra se apoia.
+     *
+     * <p><b>Desde 2026-09-15 a copa não decide sozinha.</b> Ela deixava de
+     * pé o toco de floresta que perdeu a copa para o decaimento, e o autor
+     * mandou derrubá-lo — ver {@link #aSmallBareStumpIsFelled}. O que a
+     * copa ainda decide é o grupo grande, que é onde mora a casa: este
+     * caso subiu de 4 para 12 troncos por isso.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_no_canopy")
     public void aTrunkWithoutACanopyIsNotATree(TestContext context) {
         BlockPos base = new BlockPos(2, 2, 2);
 
-        raiseLogs(context, base, 4);
+        raiseLogs(context, base, 12);
 
         TreeHarvester.Harvest harvest =
                 TreeHarvester.fell(context.getWorld(), context.getAbsolutePos(base));
@@ -506,7 +584,7 @@ public class LumberjackGameTest implements FabricGameTest {
                 harvest.isEmpty(),
                 "colheu " + harvest.logs() + " troncos de uma construção");
 
-        for (int y = 0; y < 4; y++) {
+        for (int y = 0; y < 12; y++) {
             context.expectBlock(Blocks.OAK_LOG, base.up(y));
         }
 
@@ -520,13 +598,18 @@ public class LumberjackGameTest implements FabricGameTest {
      * decorativa no canto da casa devolveria a casa inteira à colheita. A
      * marca {@code persistent} do Vanilla é o que separa a folha que
      * nasceu ali da que alguém colocou.
+     *
+     * <p>O pilar tem 12 troncos desde 2026-09-15, pelo mesmo motivo de
+     * {@link #aTrunkWithoutACanopyIsNotATree}: abaixo do
+     * {@code BARE_TRUNK_LIMIT} ele agora é toco de floresta e cai por
+     * decisão do autor, e o que este caso afirma é sobre a folha.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_hung_leaves")
     public void leavesHungByHandAreNotACanopy(TestContext context) {
         BlockPos base = new BlockPos(2, 2, 2);
         BlockPos hung = base.up(3).north();
 
-        raiseLogs(context, base, 4);
+        raiseLogs(context, base, 12);
         hangLeaf(context, hung);
 
         TreeHarvester.Harvest harvest =
@@ -1859,9 +1942,12 @@ public class LumberjackGameTest implements FabricGameTest {
         BlockPos pillar = new BlockPos(2, 2, 2);
         BlockPos tree = new BlockPos(6, 2, 6);
 
-        // O pilar é construção: tronco sem copa. Fica entre o centro e a
-        // árvore, e a busca chega nele primeiro.
-        raiseLogs(context, pillar, 3);
+        // O pilar é construção: tronco sem copa, e alto o bastante para
+        // continuar recusado depois do BARE_TRUNK_LIMIT de 2026-09-15 —
+        // com 3 troncos ele viraria o toco de floresta que o autor mandou
+        // derrubar, e o teste deixaria de exercitar a busca travada. Fica
+        // entre o centro e a árvore, e a busca chega nele primeiro.
+        raiseLogs(context, pillar, 12);
 
         plantTree(context, tree);
 

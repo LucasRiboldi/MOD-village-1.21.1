@@ -108,6 +108,43 @@ public final class TreeHarvester {
     private static final int LEAF_REACH = 6;
 
     /**
+     * Até quantos troncos um grupo sem copa viva ainda é toco de floresta.
+     *
+     * <p><b>Decisão do autor, 2026-09-15:</b> <i>"lenhador está deixando 3
+     * a 4 blocos de troncos sem cortar, todos troncos devem ser cortados e
+     * replantar"</i>.
+     *
+     * <p>A regra da copa — ver {@link #plan} — existe para separar árvore
+     * de construção, e faz isso bem enquanto a copa está lá. O que ela não
+     * previa é o tronco que <b>perdeu</b> a copa: quando a colônia derruba
+     * uma árvore, a folha da vizinha que ficou no ar decai sozinha, e o
+     * tronco baixo que dependia dela vira "não é árvore" para sempre — a
+     * contagem de {@code TreeMarks.rejectAt} só cresce, e o castigo com
+     * ela. O toco fica de pé, e como nunca entra num plano, também nunca é
+     * replantado.
+     *
+     * <p><b>O número saiu do log, não de chute.</b> A sessão de 2026-09-15
+     * recusou 114 grupos, e eles se separam num vale limpo entre 7 e 10:
+     * 93 têm de 1 a 7 troncos — com a moda exata em 4, que é o que o autor
+     * relatou —, e os 21 restantes vão de 10 a 57. As árvores realmente
+     * colhidas naquela sessão tinham 4, 5, 6 ou 27 troncos. Oito fica no
+     * vale: cobre o toco de floresta e deixa de fora o grupo grande.
+     *
+     * <p><b>Por que o tamanho, e não a proteção.</b> A pergunta natural
+     * seria {@link BlockProtection}, mas ela não responde por tronco: o
+     * Vanilla marca quem pôs uma <b>folha</b> ({@code PERSISTENT}) e não
+     * guarda nada equivalente para tronco, de modo que o tronco do jogador
+     * e o nascido ali são o mesmo bloco. A proteção cobre a vila que o
+     * jogo gerou e a obra da colônia; a cabana que o jogador ergueu em
+     * terreno livre ela não vê. O tamanho do grupo é o que resta, e é o
+     * que separa o toco de quatro da parede de vinte e oito.
+     *
+     * <p>Grupo acima disto continua intocado mesmo sem copa — é a Regra 3,
+     * e {@code aTallBareTrunkIsStillNotATree} a guarda.
+     */
+    private static final int BARE_TRUNK_LIMIT = 8;
+
+    /**
      * Quanto acima da muda o caminho precisa estar livre.
      *
      * <p>Um carvalho comum sobe até sete blocos. Abrir oito deixa a muda
@@ -200,13 +237,21 @@ public final class TreeHarvester {
         // de onde partir.
         List<BlockPos> canopy = connectedLeaves(world, species, trunk);
 
-        // Sem copa viva não é árvore, e não se toca. Ver #isNaturalLeaf.
+        // Sem copa viva não é árvore — <b>a menos que seja toco</b>. Ver
+        // #isNaturalLeaf e BARE_TRUNK_LIMIT.
         //
         // Achada antes do teto de propósito: até 2026-08-12 a copa só era
         // procurada quando a árvore cabia no teto, e era justamente a
         // construção grande — a que passa de 24 troncos — que escapava do
         // teste sem nunca ser olhada.
-        if (canopy.isEmpty()) {
+        //
+        // A exceção do toco entrou em 2026-09-15, por decisão do autor: o
+        // grupo pequeno que perdeu a copa para o decaimento é lenha, e
+        // ficava de pé para sempre. O grupo grande sem copa continua sendo
+        // construção, e continua intocado. Note que o `mayHarvest` acima
+        // já correu sobre o tronco, então vila-original e obra da colônia
+        // não chegam aqui.
+        if (canopy.isEmpty() && trunk.size() > BARE_TRUNK_LIMIT) {
             return Plan.nothing();
         }
 
