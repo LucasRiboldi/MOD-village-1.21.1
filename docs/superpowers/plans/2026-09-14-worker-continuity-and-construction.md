@@ -36,6 +36,12 @@
 
 ### Batch 2: Miner continuity under recoverable failures
 
+**Status em 2026-09-15: parcialmente integrado.** A limpeza de claim de job
+encerrado foi entregue com `MinerWorkLifecycleTest`; ela remove o bloqueio
+invalido no mesmo tique, sem fingir que resolve as demais transicoes desta
+matriz. Alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada
+apos o prazo continuam pendentes de testes red/green e de revisao do autor.
+
 **Problem:** Miners can abandon a target or branch without visibly selecting useful follow-up work.
 
 **Files to inspect before editing:** `MinerWork.java`, `MineDigging.java`, `MineFrontier.java`, `MineReach.java`, `MineClaims.java`, `MineMarks.java`, miner GameTests, `WorkHours` and the task reservation lifecycle.

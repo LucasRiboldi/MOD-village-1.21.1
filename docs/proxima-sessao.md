@@ -17,12 +17,15 @@ lista deve começar agora. A ordem abaixo continua valendo para o resto.
 Ele não é diário — quem conta a história é o `TODO.md`. Este aqui é a lista
 de conferência de uma sessão.
 
-**JAR P0.7 atualizado em 2026-09-15:** 0.3.0, SHA-256
-`7B2C820AA298FF72DF1D0BC00B0BC0AD66A5359417B7F5C9950B66FA14725F44` em
+**JAR atual em 2026-09-15:** 0.3.0, SHA-256
+`C5D0790F996082CE3B7D2AA55CED93936DF04063568A03B0B521F50245A0BA1A` em
 `build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`. O cliente estava
-fechado durante a copia. `build` e 327/327 GameTests passaram. No jogo,
-confira que gravel e terracotta naturais aceitam lote, enquanto os mesmos
-materiais dentro de `ROAD_AREA` continuam bloqueados.
+fechado durante a copia. `build`, 828 unitarios e 327/327 GameTests passaram.
+Ele inclui P0.7 e a liberacao imediata da claim quando um job mineiro encerra.
+No jogo, confira que gravel e terracotta naturais aceitam lote, enquanto os
+mesmos materiais dentro de `ROAD_AREA` continuam bloqueados; ao terminar ou
+cancelar uma tarefa de mineracao, outro mineiro deve poder usar o ramal sem
+esperar o proximo ciclo da colonia.
 
 **JAR atualizado após a emenda ADR-012 (2026-09-14):** 0.3.0, SHA-256
 `EF0138BE7180FC47FB905C42EF7F64A8A31FE68CFCFCBCE4C07CAF72DB467231` em

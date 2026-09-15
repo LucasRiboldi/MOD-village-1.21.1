@@ -19,7 +19,11 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 | P0.6 | A enxurrada da areia calou | ✅ entregue 09-11, **espera sessão** |
 | P0.7 | Elegibilidade simplificada de lotes | ✅ entregue 09-15, **espera playtest** |
 
-**P0.7 — politica aplicada em 2026-09-15.** Piso solido disponivel e candidato a lote; pedra, gravilha e terracota nao sao recusadas pela composicao. Estrada exige material oficial mais `ROAD_AREA`; gravilha ou terracota fora da reserva continuam elegiveis. O scanner nao terraplana nem muda o mundo. `build` e 327/327 GameTests passaram. O JAR 0.3.0 foi copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`, com SHA-256 `7B2C820AA298FF72DF1D0BC00B0BC0AD66A5359417B7F5C9950B66FA14725F44`; falta apenas playtest. Ver ADR-017.
+**P0.7 — politica aplicada em 2026-09-15.** Piso solido disponivel e candidato a lote; pedra, gravilha e terracota nao sao recusadas pela composicao. Estrada exige material oficial mais `ROAD_AREA`; gravilha ou terracota fora da reserva continuam elegiveis. O scanner nao terraplana nem muda o mundo. Ver ADR-017.
+
+**Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
+
+**JAR atual 0.3.0:** `build`, 828 unitarios e 327/327 GameTests passaram. O artefato, que inclui P0.7 e a limpeza imediata da claim, foi copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `C5D0790F996082CE3B7D2AA55CED93936DF04063568A03B0B521F50245A0BA1A`. Falta apenas playtest.
 
 ---
 

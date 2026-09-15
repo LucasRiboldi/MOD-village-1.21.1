@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-09-15, depois da reavaliacao controlada da falha de CI e da entrega P0.7.
+**Atualizado:** 2026-09-15, depois da integracao da primeira fatia do Lote 2 do mineiro.
 
 > **Este arquivo é a lista viva.** Só o que está aberto agora.
 > O histórico — sessões por data, ciclos fechados, erros resolvidos — está
@@ -20,11 +20,12 @@ falhas repetidas: [plano completo](docs/superpowers/plans/2026-09-14-worker-cont
 
 **Lote 1 concluído em código:** emenda da ADR-012 e reconciliação local de
 alterações do jogador no scanner; 324/324 GameTests e `build` passaram. Ainda
-aguarda validação em jogo. **Lote 2 começou com uma correção pontual
-aprovada:** job fechado agora libera imediatamente a claim do ramal do
-mineiro. A continuidade/recuperação restante segue sujeita a revisão do
-autor; lotes seguintes cobrem variedade dos construtores, estratégias de
-avaliação de espaço e revalidação escalonada.
+aguarda validação em jogo. **Lote 2 teve a primeira correção integrada:** job
+fechado libera imediatamente a claim do ramal do mineiro; o novo
+`MinerWorkLifecycleTest` prova a limpeza no mesmo tique. A
+continuidade/recuperação restante segue sujeita a revisão do autor; lotes
+seguintes cobrem variedade dos construtores, estratégias de avaliação de
+espaço e revalidação escalonada.
 “Continuar trabalhando” respeitará expediente, recursos, perigo e chunks
 carregados, sem criar recursos ou tarefas fisicamente impossíveis.
 
@@ -43,8 +44,9 @@ aumentar timeout por este achado; P0.7 e uma decisao independente ja entregue.
 solido disponivel, sem taxonomia geologica e sem terraplanagem. Os unicos
 materiais de estrada sao `dirt_path`, `gravel` e `terracotta`, e so bloqueiam
 o lote dentro de `ROAD_AREA`. A decisao e a verificacao de 327/327 GameTests
-estao na ADR-017. O JAR 0.3.0 foi distribuido em 2026-09-15 com SHA-256
-`7B2C820AA298FF72DF1D0BC00B0BC0AD66A5359417B7F5C9950B66FA14725F44`.
+estao na ADR-017. O JAR 0.3.0 atual tambem inclui a liberacao imediata de
+claim do job mineiro encerrado; foi distribuido em 2026-09-15 com SHA-256
+`C5D0790F996082CE3B7D2AA55CED93936DF04063568A03B0B521F50245A0BA1A`.
 
 **E a varredura não era a culpada — o instrumento do projeto disse isso por
 escrito.** O `SweepLog` gravou no encerramento:

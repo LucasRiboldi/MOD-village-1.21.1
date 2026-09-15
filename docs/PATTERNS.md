@@ -135,6 +135,12 @@ lenhador (`TreeChoice.giveUp`).
 **Onde olhar:** `TreeClaims`, `MineClaims`, `Task.reserveFor`. A regra:
 **a coisa disputada é que tem dono** — não a tarefa.
 
+O fim de um job tambem encerra sua reserva: `MinerWork.tick` limpa
+`WorkTargets` e libera `MineClaims` no mesmo tique. A regressao
+`MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` protege
+esse contrato; a poda posterior por `retainOnly(JOBS.keySet())` e apenas a
+rede de seguranca, nao o mecanismo normal de liberacao.
+
 ---
 
 ### Alvo ruim é servido para sempre

@@ -7763,3 +7763,31 @@ de decisão aberta. Os erros ativos continuam centralizados em `TODO.md`: E43,
 E41, E42, E38, E21, E4, E3 e E9, além das pendências de validação em jogo. A
 implementação local do mineiro e seu teste unitário ficaram deliberadamente
 fora deste lote e não foram adicionados ao artefato.
+
+### 2026-09-15 — integração da limpeza de claim do mineiro
+
+Por decisão posterior do autor, a implementação local antes mantida fora do
+lote P0.7 foi integrada. Quando `MinerWork.tick` encontra uma tarefa
+encerrada, remove o job, limpa o destino e agora chama
+`MineClaims.release(workerId)` no mesmo tique. Assim, um ramal não permanece
+ocupado por um trabalho que já não existe.
+
+`MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` cria a
+tarefa concluída e sua claim, executa um tique e prova que não restam job nem
+claim. A evidência vermelha anterior está registrada na entrada de 2026-09-14;
+ela não foi fabricada removendo a correção do diretório de trabalho.
+
+Verificação final sequencial: `./gradlew.bat test --rerun-tasks` passou com
+828 testes unitários, `./gradlew.bat runGametest --rerun-tasks` passou com
+327/327 GameTests e `./gradlew.bat build --rerun-tasks` passou. Uma primeira
+tentativa de rodar os dois comandos `--rerun-tasks` em paralelo falhou antes
+dos GameTests por `NoSuchFileException` de classes internas no `build/`; a
+execução isolada posterior ficou verde, portanto o problema é a disputa do
+diretório de build, não uma falha de compilação do mod. Futuras reexecuções
+devem permanecer sequenciais neste checkout.
+
+O JAR 0.3.0 foi copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`, com
+o cliente fechado. SHA-256 nas três cópias:
+`C5D0790F996082CE3B7D2AA55CED93936DF04063568A03B0B521F50245A0BA1A`.
+P0.7 continua aguardando playtest, e a matriz ampla de recuperação do
+mineiro continua aberta para os demais cenários.

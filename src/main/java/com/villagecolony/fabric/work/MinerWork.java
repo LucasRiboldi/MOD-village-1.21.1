@@ -285,6 +285,10 @@ public final class MinerWork {
                 // O destino morre com a tarefa — ver WorkTargets.clear.
                 WorkTargets.clear(workerId);
 
+                // A reserva também morre com a tarefa: esperar o ciclo
+                // seguinte manteria o ramal fechado sem um job que o use.
+                MineClaims.release(workerId);
+
                 continue;
             }
 

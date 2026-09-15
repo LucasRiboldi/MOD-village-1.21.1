@@ -227,8 +227,10 @@ P0.7 foi entregue em 15-09:
 
     Todo piso sólido disponível pode receber lote; materiais de estrada só
     bloqueiam dentro de ROAD_AREA, e a seleção não terraplana o mundo.
-    A regra está na ADR-017 e passou 327/327 GameTests. O JAR 0.3.0
-    distribuído tem SHA-256 7B2C820AA298FF72DF1D0BC00B0BC0AD66A5359417B7F5C9950B66FA14725F44.
+    A regra está na ADR-017 e passou 327/327 GameTests. O mesmo JAR também
+    libera no mesmo tique a claim de um ramal quando o job do mineiro encerra;
+    `MinerWorkLifecycleTest` cobre esse contrato. O JAR 0.3.0 distribuído tem
+    SHA-256 C5D0790F996082CE3B7D2AA55CED93936DF04063568A03B0B521F50245A0BA1A.
     Falta o playtest no mundo do autor.
 
 E o que já está entregue mas ainda não foi visto em jogo — uma lista

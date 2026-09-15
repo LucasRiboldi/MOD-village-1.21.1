@@ -209,7 +209,8 @@ e candidato a lote, sem taxonomia geologica e sem terraplanagem. Os materiais
 de estrada sao `dirt_path`, `gravel` e `terracotta`, mas so bloqueiam quando
 pertencem a `ROAD_AREA`. O footprint inteiro e recusado ao tocar estrada,
 protecao ou construcao existente. `build` e 327/327 GameTests passaram; o JAR
-distribuido nao foi atualizado. Ver ADR-017.
+foi atualizado na entrega P0.7 e o artefato atual e registrado em
+`docs/proxima-sessao.md`. Ver ADR-017.
 
 
 ## P1 — Estabilizar comportamento
