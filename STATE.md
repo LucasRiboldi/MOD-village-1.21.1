@@ -86,12 +86,68 @@ smelt` com o ferro a dez blocos. Ele vira fonte que so drena. Quando o
 jogador o quebrar, `MineMouth.chestAt` deixa de acha-lo e a leitura fica
 silenciosa sozinha.
 
+**4. Planejador: as duas otimizacoes que o autor escolheu (09-15).** O log
+mediu ciclos de 98, 57 e 54 ms contra o orcamento de 50 ms do tique, com o
+planejador levando 72 ms do pior deles, 29 colonias e 192.448 recusas de lote
+num ciclo.
+
+*Opcao 1 — a recusa barata responde antes da cara.* Das 192.448 recusas,
+126.315 eram a Regra 3, a pergunta mais cara da fila
+(`BlockProtection.isVillageOriginal` consulta o `StructureAccessor`), e ela
+rodava em **segundo** de sete; a comparacao de dois inteiros da Regra 19, com
+24.350 recusas, rodava em **sexto**. Toda coluna reprovada pela regua da rua
+pagava a consulta de estrutura antes de chegar a comparacao que a reprovaria
+de graca. A guarda barata do `isVillageOriginal` nao salvava o caso: ela sai
+cedo quando o bloco nao tem referencia de estrutura, e dentro de uma vila os
+blocos tem — que e onde a colonia procura lote.
+
+Foram movidos **so os dois extremos**: `OFF_ROAD_LEVEL` para o topo e
+`isVillageOriginal` para o fim. As tres do meio ficaram na ordem original de
+proposito — custam o mesmo (uma consulta em memoria, duas leituras de bloco),
+entao trocar nao compra desempenho e estraga o diagnostico: a primeira
+tentativa pos `isLotGround` na frente e o `dirt_path` reservado como estrada
+passou a ser recusado por "nao e solo natural", porque caminho de terra nao e
+cubo inteiro. A recusa continuava certa e o log passava a mentir sobre o
+motivo; quem pegou foi o
+`everyReservedRoadMaterialBlocksTheWholeFootprint`.
+
+*Opcao 3 — a vez de planejar e repartida.* Nada limitava quantas colonias
+decidiam obra por ciclo: o laco percorria as 29, e o custo era a soma delas. A
+varredura ja tinha teto **por colonia** (1.024 colunas por passagem) e faltava
+o teto **global**. `PlannerTurns` da a vez a `PER_CYCLE = 8` colonias por
+ciclo, em rodizio que retoma de onde parou. O numero saiu da medicao: 72 ms
+para 29 colonias sao ~2,5 ms cada, e oito devolvem a fase para perto de 20 ms.
+
+**O preco, dito por inteiro:** num mundo de 29 colonias cada uma passa a
+decidir obra a cada quatro ciclos — dois minutos, e nao trinta segundos. A
+construcao fica mais lenta onde ha muitas colonias, que e onde o tique
+estourava. Com oito colonias ou menos nada muda. So o planejamento espera a
+vez; trabalhador, bau e tarefa continuam andando todo ciclo para todas.
+
+**Ao ler o log depois disto:** os numeros de recusa mudam de caixa sem que
+nada de comportamento tenha mudado — espere a Regra 3 cair muito e a regua da
+rua subir. O sinal de sucesso e a linha `Colony cycle took N ms` parar de
+aparecer.
+
+**Ainda nao verificado em jogo.** O ganho foi deduzido da medicao do log e da
+ordem dos predicados; nenhum dos dois foi cronometrado em partida. Gametest
+nao mede milissegundos de forma confiavel — o teste novo
+(`theCheapRefusalAnswersBeforeTheExpensiveOne`) afirma a **ordem**, que e a
+otimizacao, pela atribuicao da recusa.
+
 Tres GameTests que afirmavam a Regra 30 foram convertidos:
 `theMineMouthGetsALanternAndAChest` virou
 `theMineMouthGetsALanternAndNoChest`, e a cauda do bau saiu de
 `anArchTheOwnerBrokeIsNotRaisedAgain` e de
-`theMouthFurnitureStaysOutOfTheStaircase`. `build` verde (828 unitarios) e
-329/329 GameTests.
+`theMouthFurnitureStaysOutOfTheStaircase`.
+
+**Verificacao desta sessao:** `build` verde com **833 unitarios** (5 novos do
+`PlannerTurnsTest`) e **330/330 GameTests**. A bateria foi repetida **tres
+vezes** por causa da instabilidade conhecida: na primeira rodada caiu
+`smeltergathersgrassoutsidetheprotectedvillageradius` com *"fundidor criado no
+setor nao esta registrado no ServerWorld"* — que e o AUD-001 ja registrado —, e
+as duas rodadas seguintes passaram limpas. Nao e regressao desta sessao, e o
+AUD-001 continua aberto.
 
 ---
 

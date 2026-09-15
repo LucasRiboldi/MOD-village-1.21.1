@@ -99,6 +99,7 @@ public final class ServerLifecycleHandler {
         TestBarrier.clearAll();
         ColonyStateLog.clearAll();
         ColonyAbandonment.clearAll();
+        PlannerTurns.clearAll();
         VillageDetectionHandler.clearPending();
         PlayerWorldChangeHandler.clearAll();
 
@@ -261,6 +262,7 @@ public final class ServerLifecycleHandler {
         TestBarrier.clearAll();
         ColonyStateLog.clearAll();
         ColonyAbandonment.clearAll();
+        PlannerTurns.clearAll();
         VillageDetectionHandler.clearPending();
     }
 }

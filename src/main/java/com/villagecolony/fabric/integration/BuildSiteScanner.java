@@ -1140,40 +1140,91 @@ public final class BuildSiteScanner {
 
                 BlockPos ground = found.get();
 
-                if (BlockProtection.isVillageOriginal(world, ground)) {
-                    LotRefusals.refused(colonyId, LotRefusals.Reason.PROTECTED);
-
-                    return Optional.empty();
-                }
-
-                if (BlockProtection.isColonyBuilt(ground)) {
-                    LotRefusals.refused(colonyId, LotRefusals.Reason.OCCUPIED);
-
-                    return Optional.empty();
-                }
-
-                if (isRoadArea(world, colonyId, ground)) {
-                    LotRefusals.refused(colonyId, LotRefusals.Reason.ROAD);
-
-                    return Optional.empty();
-                }
-
-                if (!isLotGround(world, ground)) {
-                    LotRefusals.refused(colonyId, LotRefusals.Reason.NOT_NATURAL_GROUND);
-
-                    return Optional.empty();
-                }
+                // <b>Do mais barato para o mais caro</b> — 2026-09-15. A
+                // ordem desta fila é decisão de custo, e não de regra:
+                // toda pergunta aqui reprova o lote inteiro, então a
+                // resposta final não depende de quem pergunta primeiro —
+                // só o preço de chegar nela depende.
+                //
+                // <b>O que o log do autor mediu:</b> ciclos de 98, 57 e 54
+                // ms, acima do tique de 50 ms, com o planejador levando 72
+                // ms do pior; 192.448 recusas num ciclo, das quais 126.315
+                // pela Regra 3. A Regra 3 era a SEGUNDA pergunta da fila e
+                // é a mais cara de todas — {@code isVillageOriginal}
+                // consulta o {@code StructureAccessor} —, enquanto a
+                // comparação de dois inteiros da Regra 19, que respondeu
+                // por 24.350 recusas, era a SEXTA. Toda coluna reprovada
+                // pela régua da rua pagava a consulta de estrutura antes
+                // de chegar à comparação que a reprovaria de graça.
+                //
+                // <b>A guarda barata do isVillageOriginal não salvava o
+                // caso</b>, e é o que torna a troca valiosa: ela sai cedo
+                // quando o bloco não tem referência de estrutura nenhuma,
+                // e dentro de uma vila os blocos têm — que é justamente
+                // onde a colônia procura lote.
+                //
+                // <b>O que muda no log</b>, sem nada mudar no jogo: uma
+                // coluna reprovável por mais de um motivo passa a ser
+                // contada pelo motivo mais barato. Espere a Regra 3 cair e
+                // a régua da rua subir. Ver
+                // {@code theCheapRefusalAnswersBeforeTheExpensiveOne}.
 
                 // A Regra 19: no nível da rua, e não apenas plano entre
                 // si. Um lote inteiro dois blocos acima do caminho é
                 // plano e é uma varanda sem escada — a porta da Regra 17
                 // daria para o alto de um degrau que ninguém sobe.
+                //
+                // Primeira da fila por ser a única que não lê o mundo: o
+                // chão já está na mão, e a pergunta é a comparação de dois
+                // inteiros.
                 if (ground.getY() != roadY) {
                     // A contagem que decide a terraplanagem — 2026-09-11.
                     // Ver docs/research/terraplanagem-da-vila.md: a
                     // pergunta é EXATA, e uma coluna um bloco fora
                     // reprova o lote inteiro.
                     LotRefusals.refused(colonyId, LotRefusals.Reason.OFF_ROAD_LEVEL);
+
+                    return Optional.empty();
+                }
+
+                // <b>E as três do meio ficam na ordem em que sempre
+                // estiveram</b>, de propósito. Custam a mesma coisa — uma
+                // consulta em memória, uma leitura de bloco, uma leitura
+                // de bloco —, então trocá-las não compra desempenho e
+                // <b>estraga o diagnóstico</b>: pôr o {@code isLotGround}
+                // na frente fez o caminho de terra reservado como estrada
+                // passar a ser recusado por "não é solo natural", porque
+                // {@code dirt_path} não é cubo inteiro. A recusa continuava
+                // certa e o log passava a mentir sobre o motivo. Foi o
+                // {@code everyReservedRoadMaterialBlocksTheWholeFootprint}
+                // que pegou, na primeira tentativa desta mudança.
+
+                // Consulta em memória, ao registro de obras da colônia.
+                if (BlockProtection.isColonyBuilt(ground)) {
+                    LotRefusals.refused(colonyId, LotRefusals.Reason.OCCUPIED);
+
+                    return Optional.empty();
+                }
+
+                // Uma leitura de bloco e uma consulta ao índice de ruas, e
+                // a guarda do isPaving sai cedo no caso comum.
+                if (isRoadArea(world, colonyId, ground)) {
+                    LotRefusals.refused(colonyId, LotRefusals.Reason.ROAD);
+
+                    return Optional.empty();
+                }
+
+                // Uma leitura do bloco que já está na mão.
+                if (!isLotGround(world, ground)) {
+                    LotRefusals.refused(colonyId, LotRefusals.Reason.NOT_NATURAL_GROUND);
+
+                    return Optional.empty();
+                }
+
+                // A Regra 3, e a pergunta mais cara da fila: por último,
+                // depois de as baratas terem tirado o que podiam.
+                if (BlockProtection.isVillageOriginal(world, ground)) {
+                    LotRefusals.refused(colonyId, LotRefusals.Reason.PROTECTED);
 
                     return Optional.empty();
                 }

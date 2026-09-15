@@ -378,12 +378,26 @@ public final class VillageDetectionHandler {
      * pode atender.
      */
     private static void runColonyCycles(ServerWorld overworld) {
-        for (Colony colony : List.copyOf(VillageColonyMod.COLONIES.all())) {
-            if (!colony.isActive()) {
-                continue;
-            }
+        List<Colony> active = List.copyOf(VillageColonyMod.COLONIES.all()).stream()
+                .filter(Colony::isActive)
+                .toList();
 
-            runCycleOf(overworld, colony);
+        // <b>A vez de planejar é repartida</b> — 2026-09-15. O log do autor
+        // mediu o ciclo em 98 ms contra os 50 do tique, com 72 ms de
+        // planejador e 29 colônias planejando todas aqui dentro. A
+        // varredura de lote já tinha teto por colônia — 1.024 colunas por
+        // passagem —, e faltava o teto global: mil colunas vezes vinte e
+        // nove cabem num tique só, e coube.
+        //
+        // Só o planejamento espera a vez. O resto do ciclo continua
+        // rodando para todas, pelo mesmo motivo que a guarda de abandono
+        // registrou em 09-02: pular o ciclo inteiro faz o trabalhador
+        // andar aos soluços. Ver PlannerTurns.
+        Set<UUID> planners = PlannerTurns.chooseFrom(
+                active.stream().map(Colony::id).toList());
+
+        for (Colony colony : active) {
+            runCycleOf(overworld, colony, planners.contains(colony.id()));
         }
 
         // As tarefas encerradas saem do registro depois de todas as
@@ -408,7 +422,7 @@ public final class VillageDetectionHandler {
      * {@code ChestInventoryReader.ChestSurvey} e a entrada de §15 de
      * 2026-08-07.
      */
-    private static void runCycleOf(ServerWorld overworld, Colony colony) {
+    private static void runCycleOf(ServerWorld overworld, Colony colony, boolean mayPlan) {
         long mark = System.nanoTime();
 
         // <b>Uma lista, e os três consumidores dela</b> — P0.3, 2026-09-11.
@@ -483,7 +497,11 @@ public final class VillageDetectionHandler {
         // Só o planejamento. O resto do ciclo continua rodando para ela,
         // porque a marca de abandono oscila — é o E9 — e pular o ciclo
         // inteiro faria o trabalhador dela andar aos soluços.
-        if (ColonyAbandonment.plansConstruction(colony)) {
+        // <b>E a vez dela no rodízio</b> — 2026-09-15. A guarda de abandono
+        // pergunta "esta colônia tem o que construir?"; esta pergunta "é a
+        // vez dela?". São duas perguntas distintas e ambas dizem não à
+        // mesma chamada. Ver PlannerTurns.
+        if (mayPlan && ColonyAbandonment.plansConstruction(colony)) {
             ConstructionPlanner.plan(overworld, colony);
         }
 

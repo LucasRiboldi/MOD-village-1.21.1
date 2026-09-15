@@ -86,6 +86,107 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * A recusa barata responde antes da cara — 2026-09-15.
+     *
+     * <p><b>É um teste de custo</b>, e ele mede a ordem porque a ordem
+     * <i>é</i> a otimização. Não há como cronometrar um tique de servidor
+     * dentro de um gametest sem virar um caso instável; o que dá para
+     * afirmar é <b>qual critério respondeu primeiro</b>, e é isso que a
+     * contagem do {@link LotRefusals} guarda.
+     *
+     * <p><b>O que o log do autor mediu, em 2026-09-15:</b> ciclos de 98,
+     * 57 e 54 ms — acima do tique de 50 ms —, com o planejador levando 72
+     * ms do pior deles, e <b>192.448</b> recusas de lote num ciclo. Delas,
+     * <b>126.315</b> eram a Regra 3, que é a pergunta mais cara da fila:
+     * {@code BlockProtection.isVillageOriginal} consulta o
+     * {@code StructureAccessor}. Ela rodava em <b>terceiro</b> de sete, e
+     * a comparação de dois inteiros da Regra 19 — que respondeu por 24.350
+     * recusas — rodava em <b>sexto</b>, depois dela.
+     *
+     * <p>Toda coluna reprovada pela régua da rua pagava a consulta de
+     * estrutura antes de chegar à comparação que a reprovaria de graça.
+     *
+     * <p><b>O cenário</b> monta uma coluna reprovável por dois motivos ao
+     * mesmo tempo: um bloco acima do nível da rua <b>e</b> feita de
+     * caminho de terra, que não é cubo inteiro e por isso também não passa
+     * no {@code isLotGround}. Antes respondia o {@code isLotGround}, em
+     * quinto, que lê o bloco; agora responde a Regra 19, em segundo, que
+     * não lê nada. A resposta final é a mesma — o lote é recusado dos dois
+     * jeitos —, e é justamente por isso que a contagem é a única
+     * testemunha da ordem.
+     *
+     * <p><b>Só o centro entra no índice de ruas</b>, e isso é o cuidado
+     * que a primeira versão deste caso não teve: reservar as vinte e cinco
+     * colunas fazia cada uma virar rua candidata, com o próprio
+     * {@code roadY} tirado do chão dela — e aí o lote levantado estava no
+     * nível da sua própria rua, e a régua nunca reprovava nada.
+     *
+     * <p><b>Ao ler o log depois desta mudança:</b> os números mudam de
+     * caixa sem que nada de comportamento tenha mudado. Espere a Regra 3
+     * cair muito e a régua da rua subir — uma coluna reprovável por mais
+     * de um motivo passa a ser contada pelo mais barato deles.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_refusal_order")
+    public void theCheapRefusalAnswersBeforeTheExpensiveOne(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
+
+        LotRefusals.clearAll();
+        paveGround(context, center);
+
+        // A rua de partida, e a única coluna do índice: é dela que sai o
+        // roadY, e ela fica no nível de baixo para haver régua.
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
+
+        // <b>O degrau</b>: as colunas em volta sobem um bloco, em caminho
+        // de terra — fora do nível da rua e não sendo cubo inteiro, as
+        // duas coisas de uma vez. Fora do índice, para não virarem ruas.
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (dx == 0 && dz == 0) {
+                    continue;
+                }
+
+                context.setBlockState(center.add(dx, 1, dz), Blocks.DIRT_PATH.getDefaultState());
+            }
+        }
+
+        try {
+            Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                    context.getWorld(),
+                    colony,
+                    MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                    0,
+                    SMALL_HOUSE);
+
+            context.assertTrue(
+                    site.isEmpty(),
+                    "o lote fora do nível da rua foi aceito, e sem a recusa o teste não"
+                            + " mede ordem nenhuma");
+
+            context.assertTrue(
+                    LotRefusals.countOf(colony, LotRefusals.Reason.OFF_ROAD_LEVEL) > 0,
+                    "a régua da rua não respondeu: ela é a comparação de dois inteiros, e"
+                            + " precisa vir antes das perguntas que leem o mundo");
+
+            context.assertTrue(
+                    LotRefusals.countOf(colony, LotRefusals.Reason.NOT_NATURAL_GROUND) == 0,
+                    "a pergunta do solo respondeu primeiro, e ela lê o bloco — a régua da"
+                            + " rua devia ter reprovado a coluna de graça antes dela."
+                            + " off_road=" + LotRefusals.countOf(
+                                    colony, LotRefusals.Reason.OFF_ROAD_LEVEL)
+                            + " not_natural=" + LotRefusals.countOf(
+                                    colony, LotRefusals.Reason.NOT_NATURAL_GROUND));
+        } finally {
+            BuildSiteScanner.clearAll();
+            LotRefusals.clearAll();
+        }
+
+        context.complete();
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_p0_7")
     public void everyReservedRoadMaterialBlocksTheWholeFootprint(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
