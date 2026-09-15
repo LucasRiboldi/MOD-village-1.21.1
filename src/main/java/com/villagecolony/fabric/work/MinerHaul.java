@@ -3,10 +3,7 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.storage.model.WorkerStorage;
-import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestDepositor;
-import com.villagecolony.fabric.integration.MineMouth;
-import com.villagecolony.fabric.integration.OreVein;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.item.Item;
@@ -21,10 +18,13 @@ import java.util.List;
  *
  * <p>Saiu de {@code MinerWork} em 2026-08-22, quando ele cruzou as
  * quinhentas linhas. É uma pergunta inteira e separada de "o que cavar"
- * e "como cavar": <b>o minério vai para o baú da boca da mina, e o resto
- * para o baú do mineiro na vila</b>.
+ * e "como cavar".
  *
- * <p>O corte é por responsabilidade, e não por contagem — ADR-009 §6.
+ * <p>Era <i>"o minério vai para o baú da boca da mina, e o resto para o
+ * baú do mineiro na vila"</i> — a Regra 30, ADR-009 §6. <b>Desde
+ * 2026-09-15 é um destino só</b>, por decisão do autor: <i>"retire o baú
+ * da boca da mina, use só o baú de cada mineiro"</i>. Ver
+ * {@link #treasureChestFor}.
  */
 final class MinerHaul {
 
@@ -32,28 +32,28 @@ final class MinerHaul {
     }
 
     /**
-     * O baú da boca da mina desta colônia, quando o que caiu é tesouro.
+     * Sempre nulo: tudo o que o mineiro cava vai para o baú dele.
      *
-     * <p>Regra 30, 2026-08-22. Nulo em tudo o mais: pedra, terra e
-     * carvão vão direto para o baú do mineiro na vila, que é de onde a
-     * obra e a fornalha tiram o que consomem.
+     * <p><b>Decisão do autor, 2026-09-15</b>: <i>"retire o baú da boca da
+     * mina, use só o baú de cada mineiro"</i>. Revoga o desvio do tesouro
+     * que a Regra 30 criou em 2026-08-22.
      *
-     * <p>Nulo também quando a mina não tem baú — boca em encosta, chunk
-     * fora de memória —, e aí o tesouro segue o caminho de sempre. É o
-     * lado seguro do erro: guardado no lugar errado, nunca perdido.
+     * <p>Era: minério que não fosse carvão ia para o baú da boca, e o
+     * resto para o do mineiro. Passa a ser um destino só — o mesmo que a
+     * pedra e o carvão sempre tiveram, e de onde a obra e a fornalha já
+     * tiram o que consomem.
+     *
+     * <p><b>Fica como método, e nulo, em vez de sumir</b>: ele é a porta
+     * única por onde o depósito pergunta pelo desvio, e o
+     * {@link #deposit} já trata o nulo como "sem desvio" desde 2026-08-22
+     * — é o caminho que a mina sem baú sempre percorreu. Apagá-lo
+     * espalharia a decisão pelo corpo do laço, que é onde ela seria a
+     * próxima a discordar de si mesma.
      */
     static ColonyPos treasureChestFor(
             ServerWorld world, MinerWork.Job job, BlockState state) {
 
-        if (!OreVein.isTreasure(state)) {
-            return null;
-        }
-
-        return VillageColonyMod.MINES.of(job.task.colonyId())
-                .map(mine -> MinecraftTypeAdapter.toBlockPos(mine.shaft().entry()))
-                .flatMap(mouth -> MineMouth.chestAt(world, mouth))
-                .map(MinecraftTypeAdapter::toColonyPos)
-                .orElse(null);
+        return null;
     }
 
     /**

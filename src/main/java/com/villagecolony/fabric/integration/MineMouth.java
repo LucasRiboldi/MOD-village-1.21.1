@@ -110,13 +110,27 @@ public final class MineMouth {
         // marca é não haver arco nenhum depois da tentativa.
         boolean archRaisedNow = !archAlreadyRaised && raiseArch(world, mouth, descent);
 
-        Optional<BlockPos> chest = chestAt(world, mouth);
-
-        if (chest.isEmpty()) {
-            chest = placeChest(world, mouth, descent);
-        }
-
-        return new Furnished(chest, archRaisedNow);
+        // <b>A boca não ganha mais baú</b> — decisão do autor, 2026-09-15:
+        // <i>"retire o baú da boca da mina, use só o baú de cada
+        // mineiro"</i>. Revoga a Regra 30, que mandava o minério que não é
+        // carvão para cá.
+        //
+        // O que o autor viu em jogo foi a boca sem lugar onde pôr o baú —
+        // <i>"nothing beside it is free"</i>, repetido a cada passagem —, e
+        // a decisão resolve a causa em vez do sintoma: sem baú de boca não
+        // há posição a procurar, não há linha de recusa, e o minério vai
+        // para o mesmo lugar que a pedra e o carvão já iam.
+        //
+        // O baú que o jogador já tem na boca <b>continua lá</b>, com o que
+        // guarda: nada é removido do mundo. Ele deixa de ser destino de
+        // depósito, e {@code ColonyChests} deixa de somá-lo ao estoque da
+        // colônia — o que ele guarda a colônia passa a não ver, e é o preço
+        // conhecido desta decisão.
+        //
+        // A lanterna não vem por aqui: ela é peça do arco, posta pelo
+        // {@code raiseArch}. A linha de log que dizia "the mouth lantern
+        // waits on the chest" descrevia uma dependência que já não existia.
+        return new Furnished(Optional.empty(), archRaisedNow);
     }
 
     /**

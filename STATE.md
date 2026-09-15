@@ -67,6 +67,32 @@ Os dois tiveram GameTest **vermelho antes do patch**, com a mensagem de
 falha citando o relato. `build` verde (828 unitarios) e 329/329 GameTests.
 **Pendente: validacao em jogo dos dois.**
 
+**3. Regra 30 revogada — a boca da mina nao ganha mais bau.** Decisao do
+autor, 2026-09-15: *"retire o bau da boca da mina, use so o bau de cada
+mineiro"*. Era: minerio que nao fosse carvao ia para o bau da boca
+(`MinerHaul.treasureChestFor`), o resto para o bau do mineiro. Passa a ser um
+destino so. `MineMouth.furnish` nao poe mais bau; a lanterna fica, porque e
+peca do arco e nunca dependeu do bau — a linha de log *"the mouth lantern
+waits on the chest"* descrevia uma dependencia que ja nao existia, e a queixa
+*"has no chest and none could be placed"* que o autor viu no log sumiu com a
+causa.
+
+**O que NAO mudou, de proposito:** `ColonyChests.addMineMouth` continua
+**lendo** o bau da boca. O bau que a colonia ja pos em saves anteriores fica
+de pe com todo o minerio que a Regra 30 mandou para la; parar de le-lo
+apagaria esse estoque da contabilidade e devolveria o defeito que o P0.3
+corrigiu em 09-11 — o fundidor dizendo `nothing in the colony chests to
+smelt` com o ferro a dez blocos. Ele vira fonte que so drena. Quando o
+jogador o quebrar, `MineMouth.chestAt` deixa de acha-lo e a leitura fica
+silenciosa sozinha.
+
+Tres GameTests que afirmavam a Regra 30 foram convertidos:
+`theMineMouthGetsALanternAndAChest` virou
+`theMineMouthGetsALanternAndNoChest`, e a cauda do bau saiu de
+`anArchTheOwnerBrokeIsNotRaisedAgain` e de
+`theMouthFurnitureStaysOutOfTheStaircase`. `build` verde (828 unitarios) e
+329/329 GameTests.
+
 ---
 
 ## Sessão de 2026-09-14

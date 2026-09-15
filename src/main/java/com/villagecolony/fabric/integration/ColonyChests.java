@@ -240,6 +240,21 @@ public final class ColonyChests {
      * fazer a conta fechar trocaria um defeito de contabilidade por um de
      * desenho.
      *
+     * <p><b>A Regra 30 foi revogada em 2026-09-15</b>, e esta leitura
+     * <b>fica</b>. O autor mandou parar de <i>depositar</i> na boca — ver
+     * {@code MinerHaul.treasureChestFor} —, e nada foi removido do mundo:
+     * o baú que a colônia já pôs ali continua de pé, com todo o minério
+     * que a Regra 30 mandou para lá enquanto vigorou. Parar de lê-lo
+     * apagaria esse estoque da contabilidade e devolveria exatamente o
+     * defeito que esta função nasceu para corrigir — o fundidor dizendo
+     * {@code nothing in the colony chests to smelt} com o ferro a dez
+     * blocos dali.
+     *
+     * <p>Ela deixa de receber depósito novo e vira fonte que só drena, que
+     * é o fim certo para um baú aposentado. Quando o jogador o quebrar,
+     * {@link MineMouth#chestAt} deixa de achá-lo e esta chamada volta a
+     * ser silenciosa — sem nada a fazer no código.
+     *
      * <p><b>E entra aqui, num lugar só</b>, de propósito. Contar num
      * conjunto e consumir de outro é a discordância que o javadoc do
      * {@code ResourceSubstitution} guarda de 2026-09-10: <i>"a colônia
