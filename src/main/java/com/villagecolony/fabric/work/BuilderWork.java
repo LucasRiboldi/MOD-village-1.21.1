@@ -790,7 +790,9 @@ public final class BuilderWork {
 
         project.moveTo(ConstructionState.COMPLETED);
 
-        Building building = Building.of(project);
+        // Terminada: é a única porta por onde uma casa de verdade entra no
+        // registro — ver HousePlans.hasNoHouseYet e Building.finished.
+        Building building = Building.of(project, true);
 
         VillageColonyMod.BUILDINGS.register(building);
 

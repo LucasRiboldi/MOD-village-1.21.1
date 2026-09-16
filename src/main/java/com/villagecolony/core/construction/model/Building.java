@@ -32,7 +32,22 @@ import java.util.UUID;
  * @param max canto de maior coordenada, inclusive
  */
 public record Building(
-        UUID id, UUID colonyId, ResourceId blueprint, ColonyPos min, ColonyPos max) {
+        UUID id, UUID colonyId, ResourceId blueprint, ColonyPos min, ColonyPos max,
+        boolean finished) {
+
+    /**
+     * A caixa sem dizer se a casa foi terminada — vale <b>terminada</b>.
+     *
+     * <p>Existe para quem só descreve uma construção de pé: os testes que
+     * montam o registro, e a leitura de save anterior a 2026-09-15. A obra
+     * abandonada usa o construtor completo, com {@code false}, porque ela é
+     * a exceção — ver {@link #finished()}.
+     */
+    public Building(
+            UUID id, UUID colonyId, ResourceId blueprint, ColonyPos min, ColonyPos max) {
+
+        this(id, colonyId, blueprint, min, max, true);
+    }
 
     public Building {
         Objects.requireNonNull(id, "id");
@@ -55,7 +70,25 @@ public record Building(
      * proteção. Do contrário a casa teria buracos por onde outra obra
      * poderia passar.
      */
+    /**
+     * A caixa de uma obra <b>abandonada</b> — ela ocupa o lote e não é casa.
+     *
+     * <p>Ver {@link #finished()}: quem larga a obra guarda a caixa para o
+     * lote não voltar a parecer livre, e essa caixa não pode contar como
+     * casa levantada.
+     */
     public static Building of(ConstructionProject project) {
+        return of(project, false);
+    }
+
+    /**
+     * A caixa desta obra, dizendo se ela chegou ao fim.
+     *
+     * @param finished verdadeiro só quando o construtor assentou o último
+     *     bloco. A obra largada por falta de material, ou por ter ficado
+     *     fora do raio, entra como falso
+     */
+    public static Building of(ConstructionProject project, boolean finished) {
         Objects.requireNonNull(project, "project");
 
         ColonyPos origin = project.origin();
@@ -69,7 +102,8 @@ public record Building(
                 new ColonyPos(
                         origin.x() + size.x() - 1,
                         origin.y() + size.y() - 1,
-                        origin.z() + size.z() - 1));
+                        origin.z() + size.z() - 1),
+                finished);
     }
 
     /** Se esta posição está dentro da construção. */

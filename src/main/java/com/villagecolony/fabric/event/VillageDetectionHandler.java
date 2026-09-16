@@ -394,7 +394,8 @@ public final class VillageDetectionHandler {
         // registrou em 09-02: pular o ciclo inteiro faz o trabalhador
         // andar aos soluços. Ver PlannerTurns.
         Set<UUID> planners = PlannerTurns.chooseFrom(
-                active.stream().map(Colony::id).toList());
+                active.stream().map(Colony::id).toList(),
+                coloniesNearPlayers(overworld, active));
 
         for (Colony colony : active) {
             runCycleOf(overworld, colony, planners.contains(colony.id()));
@@ -410,6 +411,60 @@ public final class VillageDetectionHandler {
         // memória, e sem alguém que o remova o registro só cresce. A casa
         // fica em BUILDINGS.
         VillageColonyMod.CONSTRUCTIONS.purgeFinished();
+    }
+
+    /**
+     * As colônias que algum jogador está vendo agora — 2026-09-15.
+     *
+     * <p>Elas furam a fila do {@link PlannerTurns}, e o motivo é o relato
+     * do autor de 09-15: <i>"entrei no jogo, não vi nenhuma casa
+     * crescendo"</i>. O log daquela sessão mostrou o sistema funcionando —
+     * a rua cresceu três vezes em vinte minutos — e a colônia observada
+     * esperando quatro ciclos por vez, enquanto 28 das 29 colônias do
+     * mundo estavam dormentes e gastavam a fila sem ter o que fazer.
+     *
+     * <p><b>A régua é a mesma da vila</b>, {@code SEARCH_RADIUS}: dentro
+     * dela o jogador tem os chunks carregados e vê o que a colônia faz.
+     * Fora dela, o trabalho acontece sem plateia e pode esperar a vez.
+     *
+     * <p>Horizontal, como todo raio de vila neste projeto — ver
+     * {@code ConstructionProject.isOutOfReach}. O jogador no fundo da mina
+     * continua sendo o jogador daquela vila.
+     *
+     * <p>Custa uma volta pelos jogadores online vezes as colônias ativas,
+     * com aritmética de inteiros e nenhuma leitura de mundo. Num servidor
+     * cheio isso cresce, e o teto da cota continua sendo o que protege o
+     * tique: ver {@code PlannerTurns.PER_CYCLE}.
+     */
+    private static Set<UUID> coloniesNearPlayers(
+            ServerWorld overworld, List<Colony> active) {
+
+        List<ServerPlayerEntity> players = overworld.getPlayers();
+
+        if (players.isEmpty()) {
+            // Servidor sem ninguém online: não há o que priorizar, e o
+            // rodízio puro é a resposta certa.
+            return Set.of();
+        }
+
+        Set<UUID> near = new HashSet<>();
+
+        for (Colony colony : active) {
+            for (ServerPlayerEntity player : players) {
+                long dx = (long) player.getBlockX() - colony.center().x();
+                long dz = (long) player.getBlockZ() - colony.center().z();
+
+                if (dx * dx + dz * dz
+                        <= (long) VillageDetector.SEARCH_RADIUS * VillageDetector.SEARCH_RADIUS) {
+
+                    near.add(colony.id());
+
+                    break;
+                }
+            }
+        }
+
+        return near;
     }
 
     /**

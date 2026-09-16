@@ -3,6 +3,7 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
@@ -124,7 +125,28 @@ public final class HousePlans {
         // casa grande que travou a vila contaria como casa levantada.
         return smallestFirst(
                 without(plans, skipped),
-                VillageColonyMod.BUILDINGS.ofColony(colony.id()).isEmpty());
+                hasNoHouseYet(VillageColonyMod.BUILDINGS.ofColony(colony.id())));
+    }
+
+    /**
+     * Se esta colônia ainda não levantou nenhuma casa — 2026-09-15.
+     *
+     * <p><b>Conta só a casa terminada</b>, e é o conserto de um defeito que
+     * a investigação de 21:50 achou na correção da véspera. A pergunta era
+     * "o registro de construções está vazio?", e a obra <b>abandonada</b>
+     * também entra nesse registro: {@code WaitingWork.giveUp} guarda a
+     * caixa dela para o lote não voltar a parecer livre.
+     *
+     * <p>O açougue que a colônia largou às 21:42 virou {@code Building}, a
+     * colônia passou a "ter casa" sem ter nenhuma, e a preferência pela
+     * planta pequena <b>nunca dispararia</b> ali. O save do mundo do autor
+     * tem <b>56 buildings</b> e <b>zero</b> {@code house is up}.
+     *
+     * <p><b>Visível ao pacote para o teste</b>, como {@link #without} e
+     * {@link #smallestFirst}: é decisão, e decisão se afirma sem mundo.
+     */
+    static boolean hasNoHouseYet(List<Building> buildings) {
+        return buildings.stream().noneMatch(Building::finished);
     }
 
     /**

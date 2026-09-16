@@ -139,4 +139,88 @@ class PlannerTurnsTest {
                 PlannerTurns.chooseFrom(List.of()).isEmpty(),
                 "sem colônia nenhuma, alguém foi escolhido");
     }
+    /**
+     * <b>A colônia que o jogador está vendo não espera na fila</b> —
+     * 2026-09-15.
+     *
+     * <p><b>O que o autor viu em jogo, às 21:50:</b> nenhuma casa
+     * crescendo. O log mostra que o sistema <b>funciona</b> — a rua cresceu
+     * três vezes em 20 minutos, {@code extended the road} às 21:45, 21:46 e
+     * 21:47 —, só que devagar demais para se ver: a colônia teve a vez do
+     * planejador <b>16 vezes em 20 minutos</b>, porque o rodízio de
+     * {@link #PER_CYCLE} reparte 29 colônias em oito por ciclo.
+     *
+     * <p><b>E 28 daquelas 29 estavam dormentes</b>, com os chunks
+     * descarregados — o log registra uma única colônia reportando
+     * atividade. O rodízio gastava a vez com colônias que não tinham o que
+     * fazer, enquanto a que o jogador observava esperava quatro ciclos.
+     *
+     * <p>A vez preferencial é para a colônia de perto, e o resto da fila
+     * continua andando atrás dela — ninguém fica para trás, que é o que
+     * {@link #everyColonyGetsItsTurnWithinOneFullRound} guarda.
+     */
+    @Test
+    void theColonyNearThePlayerGoesFirst() {
+        List<UUID> many = colonies(29);
+
+        UUID watched = many.get(20);
+
+        Set<UUID> chosen = PlannerTurns.chooseFrom(many, Set.of(watched));
+
+        assertTrue(
+                chosen.contains(watched),
+                "a colônia que o jogador está vendo esperou na fila, e é a única que ele"
+                        + " tem como observar");
+
+        assertEquals(
+                PlannerTurns.PER_CYCLE,
+                chosen.size(),
+                "a prioridade alargou a cota em vez de ocupar uma vaga dela");
+    }
+
+    /** Duas colônias observadas cabem juntas, e as duas passam. */
+    @Test
+    void everyWatchedColonyGoesFirst() {
+        List<UUID> many = colonies(29);
+
+        Set<UUID> watched = Set.of(many.get(3), many.get(27));
+
+        Set<UUID> chosen = PlannerTurns.chooseFrom(many, watched);
+
+        assertTrue(
+                chosen.containsAll(watched),
+                "alguma colônia observada ficou de fora da vez");
+    }
+
+    /**
+     * Mais colônias observadas que a cota não estoura o orçamento.
+     *
+     * <p>É o caso do servidor com jogadores espalhados: a prioridade não
+     * pode virar uma porta para o pico de tique que o rodízio foi criado
+     * para evitar — 214 ms medidos no arranque de 09-15.
+     */
+    @Test
+    void moreWatchedColoniesThanTheQuotaStillRespectTheBudget() {
+        List<UUID> many = colonies(29);
+
+        Set<UUID> watched = Set.copyOf(many.subList(0, 20));
+
+        Set<UUID> chosen = PlannerTurns.chooseFrom(many, watched);
+
+        assertEquals(
+                PlannerTurns.PER_CYCLE,
+                chosen.size(),
+                "vinte colônias observadas furaram a cota e devolveram o pico de tique");
+    }
+
+    /** Sem ninguém observando, o rodízio é o de sempre. */
+    @Test
+    void withNobodyWatchingTheRotationIsUnchanged() {
+        List<UUID> many = colonies(29);
+
+        assertEquals(
+                PlannerTurns.PER_CYCLE,
+                PlannerTurns.chooseFrom(many, Set.of()).size(),
+                "sem colônia observada a cota mudou de tamanho");
+    }
 }

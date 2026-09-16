@@ -89,6 +89,42 @@ final class PlannerTurns {
      *     que a cota
      */
     static Set<UUID> chooseFrom(List<UUID> active) {
+        return chooseFrom(active, Set.of());
+    }
+
+    /**
+     * O mesmo, com as colônias que algum jogador está vendo na frente.
+     *
+     * <p><b>Decisão do autor, 2026-09-15</b>, depois de entrar no jogo e
+     * não ver casa crescendo pela terceira sessão seguida.
+     *
+     * <p><b>O log daquela sessão mostrou que o sistema funciona, e que a
+     * lentidão era a fila.</b> A rua cresceu três vezes em vinte minutos —
+     * {@code extended the road} às 21:45, 21:46 e 21:47 —, mas a colônia
+     * só teve a vez do planejador <b>16 vezes</b> nesse período, porque
+     * este rodízio reparte 29 colônias em oito por ciclo. Nesse ritmo
+     * abrir espaço para uma casa leva mais que uma sessão inteira.
+     *
+     * <p><b>E 28 daquelas 29 estavam dormentes</b>, com os chunks
+     * descarregados: o log registra uma única colônia reportando
+     * atividade. A fila gastava a vez com colônias que não tinham o que
+     * fazer, enquanto a que o jogador observava esperava quatro ciclos.
+     *
+     * <p><b>A cota não muda</b> — as observadas ocupam vagas dela, e não
+     * vagas a mais. O rodízio nasceu para tirar o pico de tique de 214 ms
+     * medido no arranque de 09-15, e uma prioridade que alargasse o
+     * orçamento o devolveria pela porta dos fundos. Com mais colônias
+     * observadas que a cota, passam as primeiras da cota e as outras
+     * esperam a vez normal.
+     *
+     * <p>O resto da fila continua andando atrás delas, e o cursor avança
+     * pelas que entraram por rodízio — de modo que ninguém fica para trás,
+     * que é o que {@code everyColonyGetsItsTurnWithinOneFullRound} guarda.
+     *
+     * @param watched as colônias com jogador por perto. Vazio no servidor
+     *     sem ninguém online, e aí vale o rodízio puro
+     */
+    static Set<UUID> chooseFrom(List<UUID> active, Set<UUID> watched) {
         if (active.isEmpty()) {
             resumeAfter = null;
 
@@ -104,15 +140,38 @@ final class PlannerTurns {
             return Set.copyOf(active);
         }
 
-        int from = startingAt(active);
-
         Set<UUID> chosen = new LinkedHashSet<>(PER_CYCLE);
 
-        for (int step = 0; step < active.size() && chosen.size() < PER_CYCLE; step++) {
-            chosen.add(active.get((from + step) % active.size()));
+        // As observadas primeiro, e só as que estão mesmo no mundo: um
+        // jogador pode estar perto de colônia que já saiu do registro.
+        for (UUID near : active) {
+            if (chosen.size() >= PER_CYCLE) {
+                break;
+            }
+
+            if (watched.contains(near)) {
+                chosen.add(near);
+            }
         }
 
-        resumeAfter = active.get((from + chosen.size() - 1) % active.size());
+        int from = startingAt(active);
+
+        // E o rodízio preenche o que sobrou da cota. O cursor anda só pelas
+        // que entraram por aqui: a colônia observada passa todo ciclo, e
+        // contá-la moveria a fila sem que ninguém tivesse esperado.
+        UUID last = null;
+
+        for (int step = 0; step < active.size() && chosen.size() < PER_CYCLE; step++) {
+            UUID next = active.get((from + step) % active.size());
+
+            if (chosen.add(next)) {
+                last = next;
+            }
+        }
+
+        if (last != null) {
+            resumeAfter = last;
+        }
 
         return chosen;
     }

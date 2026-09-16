@@ -23,7 +23,62 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 
 **Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
 
-**JAR atual 0.3.0:** `build`, 840 unitarios e 330/330 GameTests passaram. O artefato inclui P0.7, a limpeza imediata da claim, as duas correcoes do playtest de 09-15 (toco orfao e minerio recusado), a retirada do bau da boca da mina e as duas otimizacoes do planejador. Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `1C362B8BED4AF570436091623EEA6C0DFA1275762987BEEC6642B9F58EC8CF7C`. Falta apenas playtest.
+**JAR atual 0.3.0:** `build`, 847 unitarios e 330/330 GameTests passaram. O artefato inclui P0.7, a limpeza imediata da claim, as duas correcoes do playtest de 09-15 (toco orfao e minerio recusado), a retirada do bau da boca da mina e as duas otimizacoes do planejador. Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `79D9774C4DCA09209742BAFC856ADDD5BA340BD71BE9DF25EE3F7FA328E04E8D`. Falta apenas playtest.
+
+---
+
+## Playtest de 2026-09-15, 21:50 — "nenhuma casa crescendo"
+
+Log: `latest.log`, 21:30-21:50, colonia `111d6ee5`, JAR `1c362b8b`.
+
+**A correcao da obra orfa funcionou:** as 21:42:41 o acougue foi liberado com
+a linha nova (`lets go of ... outside the 64-block radius`).
+
+**DIAGNOSTICO CORRIGIDO NO MEIO DO CAMINHO.** A primeira leitura do log foi
+**errada** e esta registrada aqui porque custou uma tentativa de patch. Eu
+concluira "impasse fechado: a rua nao cresce", e escrevi um patch que largava
+o indice de ruas ao fim da volta vazia. **Onze GameTests quebraram** e
+mostraram o porque: a Regra 15 (crescer a rua) roda exatamente nesse ponto — o
+fim da volta sem lote — e o patch consumia o momento dela. Tudo foi revertido.
+
+**O que o log diz de verdade:** a rua **cresce**. Tres extensoes em 20
+minutos, as 21:45 (2 blocos oeste), 21:46 (3 norte) e 21:47 (5 sul). O sistema
+funciona; esta lento demais para se ver.
+
+**A causa da lentidao e a fila que eu criei na vespera.** A colonia teve vez do
+planejador **16 vezes em 20 minutos**, porque `PlannerTurns` reparte 29
+colonias em oito por ciclo. E **28 daquelas 29 estavam dormentes** — o log
+registra uma unica colonia reportando atividade. A fila gastava a vez com quem
+nao tinha o que fazer, enquanto a colonia observada esperava quatro ciclos.
+
+**Correcao 1 — a colonia que o jogador ve fura a fila.** `PlannerTurns` ganhou
+a sobrecarga `chooseFrom(active, watched)`, e `VillageDetectionHandler`
+calcula `watched` pelo mesmo `SEARCH_RADIUS` da vila. **A cota nao muda**: as
+observadas ocupam vagas dela, nao vagas a mais — alargar o orcamento
+devolveria o pico de 214 ms pela porta dos fundos. O cursor do rodizio avanca
+so pelas que entraram por rodizio, entao ninguem fica para tras.
+
+**Correcao 2 — obra abandonada deixa de contar como casa.** Defeito **meu**, da
+vespera: `smallestFirst` perguntava se `BUILDINGS.ofColony()` estava vazio, e
+`WaitingWork.giveUp` registra a obra largada como `Building` para o lote nao
+parecer livre. O save do mundo tem **56 buildings e zero** `house is up`, entao
+a preferencia pela planta pequena **nunca dispararia**. `Building` ganhou o
+campo `finished`, e so `BuilderWork.complete` o marca verdadeiro.
+
+**Save retrocompativel:** a chave `finished` ausente vale **terminada**. O save
+anterior a 09-15 nao a tem, e nele quase toda construcao e casa de verdade —
+o registro so passou a receber obra abandonada em 09-12. Ler as antigas como
+inacabadas faria toda vila ja construida voltar a preferir a planta pequena. O
+preco e a obra abandonada de um save antigo contar como casa naquela colonia,
+e isso se apaga na primeira casa que ela terminar.
+
+**Verificacao:** `build` verde com **847 unitarios** (7 novos) e **330/330**
+GameTests, bateria repetida **tres vezes, todas limpas**. **Pendente: validacao
+em jogo.**
+
+**Proxima frente decidida pelo autor:** menu do mod comecando por comando
+(`/vc log`, `/vc watch <profissao>`), nao por tela. Ver a pesquisa na secao
+seguinte.
 
 ---
 

@@ -1,12 +1,14 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -50,6 +52,17 @@ class HousePlansTest {
                 id,
                 List.of(new BlueprintBlock(
                         new ColonyPos(0, 0, 0), ResourceId.vanilla("oak_planks"))));
+    }
+
+    /** Uma construção qualquer daquela planta, terminada ou não. */
+    private static Building building(ResourceId blueprint, boolean finished) {
+        return new Building(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                blueprint,
+                new ColonyPos(0, 0, 0),
+                new ColonyPos(1, 1, 1),
+                finished);
     }
 
     /** A ordem da Regra 25: da maior para a menor. */
@@ -184,5 +197,50 @@ class HousePlansTest {
 
         assertEquals(SMALL, HousePlans.smallestFirst(one, true).get(0).id());
         assertEquals(SMALL, HousePlans.smallestFirst(one, false).get(0).id());
+    }
+    /**
+     * <b>Obra abandonada não conta como casa</b> — 2026-09-15.
+     *
+     * <p><b>O defeito que a investigação de 21:50 achou</b>, e ele estava
+     * na correção da véspera. A preferência pela planta menor pergunta se
+     * a colônia ainda não tem casa, e perguntava isso ao registro de
+     * construções — onde a obra <b>abandonada</b> também entra, porque
+     * {@code WaitingWork.giveUp} guarda a caixa dela para o lote não
+     * parecer livre.
+     *
+     * <p>O açougue que a colônia largou às 21:42 virou {@code Building}, a
+     * colônia passou a "ter casa" sem ter nenhuma, e a preferência pela
+     * pequena <b>nunca dispararia</b> naquela vila. O log do mundo do autor
+     * registra <b>56 buildings</b> e <b>zero</b> {@code house is up}.
+     *
+     * <p>Quem responde agora é {@link Building#finished()}: verdadeiro só
+     * para a casa que o construtor terminou.
+     */
+    @Test
+    void anAbandonedProjectDoesNotCountAsAHouse() {
+        List<Building> onlyAbandoned = List.of(
+                building(BIG, false),
+                building(MEDIUM, false));
+
+        assertTrue(
+                HousePlans.hasNoHouseYet(onlyAbandoned),
+                "duas obras abandonadas passaram por casa levantada, e é o que impede a"
+                        + " colônia de preferir a planta pequena");
+    }
+
+    /** Uma casa terminada conta, e a Regra 25 volta. */
+    @Test
+    void aFinishedHouseCounts() {
+        List<Building> one = List.of(building(BIG, false), building(SMALL, true));
+
+        assertFalse(
+                HousePlans.hasNoHouseYet(one),
+                "a colônia tem uma casa de pé e continuou preferindo a planta pequena");
+    }
+
+    /** Sem construção nenhuma, a colônia obviamente não tem casa. */
+    @Test
+    void anEmptyRegistryMeansNoHouse() {
+        assertTrue(HousePlans.hasNoHouseYet(List.of()), "registro vazio não é colônia com casa");
     }
 }

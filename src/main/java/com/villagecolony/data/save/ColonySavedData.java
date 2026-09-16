@@ -74,6 +74,22 @@ public final class ColonySavedData extends PersistentState {
     private static final String MAX_Y = "maxY";
     private static final String MAX_Z = "maxZ";
 
+    /**
+     * Se esta construção é uma casa terminada — 2026-09-15.
+     *
+     * <p><b>Ausente vale terminada</b>, e é decisão. O save anterior a esta
+     * data não guardava o campo, e nele a esmagadora maioria das
+     * construções É casa levantada — o registro só passou a receber obra
+     * abandonada em 09-12, com o {@code PatienceClock}. Ler as antigas como
+     * inacabadas faria toda vila já construída voltar a preferir a planta
+     * pequena, que é o oposto da Regra 25.
+     *
+     * <p>O preço é a obra abandonada de um save antigo continuar contando
+     * como casa naquela colônia. É um erro que se apaga sozinho na primeira
+     * casa que ela terminar, e menor que o outro.
+     */
+    private static final String FINISHED = "finished";
+
     /** As peças da Regra 21 que esta casa já recebeu, uma vez cada. */
 
     public static final PersistentState.Type<ColonySavedData> TYPE = new PersistentState.Type<>(
@@ -352,6 +368,7 @@ public final class ColonySavedData extends PersistentState {
             entry.putInt(MAX_X, building.max().x());
             entry.putInt(MAX_Y, building.max().y());
             entry.putInt(MAX_Z, building.max().z());
+            entry.putBoolean(FINISHED, building.finished());
 
             buildingList.add(entry);
         }
@@ -470,7 +487,8 @@ public final class ColonySavedData extends PersistentState {
                     colonyId,
                     blueprint,
                     new ColonyPos(entry.getInt(MIN_X), entry.getInt(MIN_Y), entry.getInt(MIN_Z)),
-                    new ColonyPos(entry.getInt(MAX_X), entry.getInt(MAX_Y), entry.getInt(MAX_Z))));
+                    new ColonyPos(entry.getInt(MAX_X), entry.getInt(MAX_Y), entry.getInt(MAX_Z)),
+                    !entry.contains(FINISHED) || entry.getBoolean(FINISHED)));
         }
     }
 
