@@ -125,4 +125,64 @@ class HousePlansTest {
 
         assertEquals(3, offered.size(), "uma marca de outro bioma encurtou a lista");
     }
+    /**
+     * <b>A primeira casa da colônia é a menor</b> — decisão do autor,
+     * 2026-09-15: <i>"dar preferência para a primeira ser uma casa
+     * pequena"</i>.
+     *
+     * <p><b>O que o autor viu em jogo, às 21:02:</b> nenhuma construção
+     * nascendo. O log mostrou a colônia abrindo
+     * {@code plains_butcher_shop_2} — 382 blocos — às 20:54:35, e a obra
+     * parada em <i>"382 blocks left"</i> por sete minutos e meio, segurando
+     * a vaga única: <i>"no building work: one is already open"</i>. É a
+     * terceira sessão seguida em que a maior planta do catálogo trava a
+     * vila antes de a primeira casa existir.
+     *
+     * <p><b>A Regra 25 continua valendo, e ganha uma exceção.</b> Ela
+     * manda levantar a maior planta que couber, e o motivo dela é real —
+     * em 2026-08-20 exigir a casa grande em todo lugar fez a vila parar de
+     * crescer. O que muda é só o <b>arranque</b>: sem nenhuma casa de pé,
+     * a colônia começa pela menor, que é a que ela levanta sozinha. Da
+     * segunda em diante a Regra 25 volta inteira.
+     */
+    @Test
+    void theFirstHouseOfAColonyIsTheSmallest() {
+        List<Blueprint> offered = HousePlans.smallestFirst(catalog(), true);
+
+        assertEquals(
+                SMALL,
+                offered.get(0).id(),
+                "a primeira casa da colônia não foi a menor planta");
+
+        assertEquals(
+                3,
+                offered.size(),
+                "a preferência da primeira casa encurtou o catálogo em vez de reordená-lo");
+    }
+
+    /**
+     * Com uma casa de pé, a Regra 25 volta a mandar.
+     *
+     * <p>É a metade que protege a decisão de 2026-08-20: a exceção é do
+     * arranque, e não uma inversão. Uma vila que só levantasse cabana
+     * perderia as casas do jogo para sempre.
+     */
+    @Test
+    void afterTheFirstHouseTheBiggestPlanLeadsAgain() {
+        List<Blueprint> offered = HousePlans.smallestFirst(catalog(), false);
+
+        assertEquals(
+                BIG,
+                offered.get(0).id(),
+                "a Regra 25 não voltou depois de a colônia ter a primeira casa");
+    }
+
+    /** Catálogo de uma planta só não tem o que reordenar. */
+    @Test
+    void asinglePlanIsTheSameEitherWay() {
+        List<Blueprint> one = List.of(plan(SMALL));
+
+        assertEquals(SMALL, HousePlans.smallestFirst(one, true).get(0).id());
+        assertEquals(SMALL, HousePlans.smallestFirst(one, false).get(0).id());
+    }
 }

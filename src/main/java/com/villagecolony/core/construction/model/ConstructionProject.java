@@ -123,6 +123,49 @@ public final class ConstructionProject {
         return origin;
     }
 
+    /**
+     * Se esta obra ficou fora do alcance do centro da vila.
+     *
+     * <p><b>Decisão de 2026-09-15</b>, e o log do autor traz a aritmética
+     * inteira. Às 21:02 ele relatou não ver construção nascendo; a sessão
+     * tinha uma obra aberta às 20:54:35 — {@code plains_butcher_shop_2} em
+     * {@code 638,65,-2793} — parada em <i>"382 blocks left"</i> por sete
+     * minutos e meio, sem um bloco assentado, segurando a vaga única:
+     * <i>"no building work: one is already open"</i>.
+     *
+     * <p><b>O centro da vila não é estável.</b> A mesma sessão registrou
+     * oito centros diferentes, de {@code 616,-2863} a {@code 640,-2891} —
+     * ele é recalculado das camas vistas, e camas entram e saem de chunk
+     * carregado. A obra nasceu quando o centro era {@code 625,-2854}, a
+     * 62,4 blocos: dentro do raio. O centro que prevaleceu,
+     * {@code 637,-2871}, a deixa a <b>78</b> — fora dele, e portanto fora
+     * do alcance de qualquer trabalhador.
+     *
+     * <p><b>Por que ninguém reclamava.</b> O relógio de paciência só conta
+     * para obra em {@code WAITING_RESOURCES}, e esta estava em
+     * {@code BUILDING}; o passo do construtor sai em silêncio quando o
+     * aldeão não está em chunk carregado. Obra viva, inalcançável, calada
+     * e ocupando a única vaga, as quatro coisas ao mesmo tempo.
+     *
+     * <p><b>Horizontal, como o raio da vila.</b> A altura fica de fora de
+     * propósito: a mina desce dezenas de blocos abaixo do centro e não
+     * está fora da vila por isso.
+     *
+     * <p>Aqui, e não no {@code fabric}, porque é aritmética de dois pontos
+     * e não precisa de mundo — o que a torna afirmável sem servidor. Quem
+     * decide o que fazer com a resposta é {@code ConstructionPlanner}.
+     *
+     * @param origin onde a obra está
+     * @param centre o centro da vila agora
+     * @param radius o raio da vila, inclusivo na borda
+     */
+    public static boolean isOutOfReach(ColonyPos origin, ColonyPos centre, int radius) {
+        long dx = (long) origin.x() - centre.x();
+        long dz = (long) origin.z() - centre.z();
+
+        return dx * dx + dz * dz > (long) radius * radius;
+    }
+
     public ConstructionState state() {
         return state;
     }

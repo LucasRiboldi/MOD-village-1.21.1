@@ -145,6 +145,28 @@ public final class WaitingWork {
      * o lote não pertence a ninguém.
      */
     public static void giveUp(Colony colony, ConstructionProject project) {
+        giveUp(colony, project, true);
+    }
+
+    /**
+     * O mesmo, dizendo se a planta leva a culpa.
+     *
+     * <p><b>A distinção entrou em 2026-09-15</b>, com o abandono por
+     * distância. Marcar a planta só faz sentido quando foi <b>ela</b> que
+     * não coube no que a colônia alcança: a marca do {@code PlanRefusals}
+     * é por material que faltou, e se desfaz quando o material aparecer.
+     *
+     * <p>A obra que o centro da vila deixou para trás não faltou material
+     * nenhum — a do log de 09-15 tinha 2.743 tábuas e 621 pedregulhos em
+     * estoque. Marcá-la pelo primeiro item da lista de restantes acusaria
+     * um material inocente e faria a colônia pular aquela casa até que
+     * esse item aparecesse, por uma razão que nada tem a ver com ele.
+     *
+     * @param blamePlan se a planta deve ser marcada como a que a colônia
+     *     não conseguiu levantar. Falso quando a causa é a posição, e não
+     *     a planta
+     */
+    public static void giveUp(Colony colony, ConstructionProject project, boolean blamePlan) {
         WAITING_SINCE.remove(project.id());
 
         // <b>E a colônia aprende qual planta não conseguiu levantar</b> —
@@ -159,8 +181,10 @@ public final class WaitingWork {
         // Marcar aqui, e não na escolha, porque é aqui que se sabe o que
         // faltou. Ver PlanRefusals — a marca é por condição, e se desfaz
         // quando a colônia passar a alcançar o material.
-        PlanRefusals.refused(
-                colony.id(), project.blueprint().id(), project.remainingMaterials());
+        if (blamePlan) {
+            PlanRefusals.refused(
+                    colony.id(), project.blueprint().id(), project.remainingMaterials());
+        }
 
         VillageColonyMod.BUILDINGS.register(Building.of(project));
         VillageColonyMod.CONSTRUCTIONS.forget(project.id());

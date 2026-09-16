@@ -23,7 +23,64 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 
 **Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
 
-**JAR atual 0.3.0:** `build`, 833 unitarios e 330/330 GameTests passaram. O artefato inclui P0.7, a limpeza imediata da claim, as duas correcoes do playtest de 09-15 (toco orfao e minerio recusado), a retirada do bau da boca da mina e as duas otimizacoes do planejador. Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `87714385DA1C49031DF6F0DD6BF66D51AA31C4D17B07EF43AFA85F0E3F0CAE53`. Falta apenas playtest.
+**JAR atual 0.3.0:** `build`, 840 unitarios e 330/330 GameTests passaram. O artefato inclui P0.7, a limpeza imediata da claim, as duas correcoes do playtest de 09-15 (toco orfao e minerio recusado), a retirada do bau da boca da mina e as duas otimizacoes do planejador. Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `1C362B8BED4AF570436091623EEA6C0DFA1275762987BEEC6642B9F58EC8CF7C`. Falta apenas playtest.
+
+---
+
+## Playtest de 2026-09-15, 21:02 — nenhuma construcao nascendo
+
+Log: `%APPDATA%/.minecraft/logs/latest.log`, 20:44-21:02, colonia `111d6ee5`.
+
+**As otimizacoes do planejador funcionaram.** A Regra 3 caiu de 126.315 para
+28.333 recusas, e o aviso `Colony cycle took` saiu de varios por minuto para
+**um** na sessao inteira (214 ms as 20:45:35, no arranque). O gargalo do tique
+deixou de ser o problema.
+
+**A causa de nada nascer eram outras duas, e ambas foram corrigidas.**
+
+**1. A obra ficou fora do raio quando o centro da vila derivou.** As 20:54:35 a
+colonia abriu `plains_butcher_shop_2` em `638,65,-2793` — 382 blocos — e sete
+minutos e meio depois continuava em *"382 blocks left"*, sem **um unico bloco
+assentado**, segurando a vaga unica: *"no building work: one is already open"*.
+Nao era falta de material: o estoque tinha 2.743 tabuas e 621 pedregulhos.
+
+A aritmetica esta no proprio log. O centro da vila **nao e estavel** — a mesma
+sessao registrou oito centros, de `616,-2863` a `640,-2891`, porque ele e
+recalculado das camas vistas e camas entram e saem de chunk carregado. A obra
+nasceu com o centro em `625,-2854`, a **62,4** blocos: dentro do raio de 64. O
+centro que prevaleceu, `637,-2871`, a deixa a **78** — fora do raio, e portanto
+fora do alcance de qualquer trabalhador.
+
+Ninguem reclamava porque o relogio de paciencia so conta para
+`WAITING_RESOURCES`, e esta obra estava em `BUILDING`; o passo do construtor sai
+em silencio quando o aldeao nao esta em chunk carregado. Obra viva,
+inalcancavel, calada e ocupando a vaga unica, as quatro coisas ao mesmo tempo.
+
+`ConstructionProject.isOutOfReach` (Core, sem mundo) responde a pergunta, e o
+planejador larga a obra antes do relogio de paciencia. **A planta nao leva a
+culpa:** `WaitingWork.giveUp` ganhou o parametro `blamePlan`, porque marcar a
+casa pelo primeiro material restante acusaria um item inocente — nao faltou
+material nenhum. A casa pela metade e o lote continuam ocupados, como no
+abandono por paciencia.
+
+**2. A primeira casa da colonia passa a ser a menor.** Decisao do autor:
+*"dar preferencia para a primeira ser uma casa pequena"*. Era a terceira sessao
+seguida em que a maior planta do catalogo trava a vila antes de a primeira casa
+existir. `HousePlans.smallestFirst` poe a menor na frente **enquanto a colonia
+nao tem nenhuma construcao de pe**; levantada a primeira, a Regra 25 volta
+inteira. A lista e **reordenada, nao encurtada**: se a pequena nao couber
+naquele lote, a varredura desce para a seguinte.
+
+A Regra 25 (2026-08-20) continua valendo e o motivo dela segue real — exigir a
+casa grande em toda parte fez a vila parar de crescer. O que entrou e uma
+excecao de **arranque**, e nao uma inversao: inverter de vez faria a vila virar
+um bairro de cabanas.
+
+**Verificacao:** `build` verde com **840 unitarios** (7 novos) e **330/330**
+GameTests. Bateria repetida **tres vezes**: duas limpas e uma com o AUD-001
+conhecido (`smeltergathers...` / *"fundidor criado no setor nao esta registrado
+no ServerWorld"*), que nao tem relacao com construcao. **Pendente: validacao em
+jogo das duas.**
 
 ---
 

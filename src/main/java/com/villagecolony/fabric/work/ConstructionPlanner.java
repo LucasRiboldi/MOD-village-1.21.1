@@ -217,10 +217,29 @@ public final class ConstructionPlanner {
         if (open.isPresent()) {
             WaitingWork.wakeIfSupplied(world, open.get());
 
-            // A obra que esperou demais sai da frente, e o planejamento
-            // segue nesta mesma passagem: fazer a colônia esperar mais um
-            // ciclo depois de já ter esperado vinte não serve a ninguém.
-            if (!WaitingWork.giveUpIfStalled(world, colony, open.get())) {
+            // <b>E a obra que o centro deixou para trás</b> — 2026-09-15.
+            // Vem antes do relógio de paciência porque não é caso dele: ele
+            // só conta para WAITING_RESOURCES, e esta obra fica em BUILDING
+            // para sempre, calada, com a vaga única ocupada. Ver
+            // ConstructionProject.isOutOfReach, que traz a aritmética do log
+            // do autor.
+            if (ConstructionProject.isOutOfReach(
+                    open.get().origin(), colony.center(), searchRadius)) {
+
+                VillageColonyMod.LOGGER.info(
+                        "Colony {} lets go of {} at {} — the village centre moved to {},"
+                                + " and the work is now outside the {}-block radius."
+                                + " The half-built house and its lot stay taken",
+                        colony.id(),
+                        open.get().blueprint().id(),
+                        open.get().origin(),
+                        colony.center(),
+                        searchRadius);
+
+                // A planta nao leva a culpa: nao faltou material, a obra ficou
+                // longe. Ver WaitingWork.giveUp(colony, project, blamePlan).
+                WaitingWork.giveUp(colony, open.get(), false);
+            } else if (!WaitingWork.giveUpIfStalled(world, colony, open.get())) {
                 ensureTask(colony, open.get());
 
                 return silent(colony, IdleReason.ALREADY_OPEN, "");
