@@ -64,6 +64,25 @@ public final class ColonyChests {
 
         addMineMouth(world, colonyId, chests);
 
+        // <b>E os baús que estão na vila e não são de ninguém</b> —
+        // 2026-09-16, decisão do autor: <i>"permitir que o recurso que
+        // falta possa ser recolhido de qualquer baú que esteja na vila
+        // automaticamente"</i>.
+        //
+        // O log de 01:19 mostrou a biblioteca parada esperando lectern; um
+        // baú do jogador com o material dentro da vila era invisível para a
+        // colônia, porque esta lista só tinha os baús reivindicados por
+        // trabalhador e o da boca da mina.
+        //
+        // Baú nomeado fica de fora — ver VillageChestRule. Entram por
+        // último de propósito: a ordenação abaixo é por distância, então a
+        // posição na lista não os privilegia nem os prejudica, e o baú do
+        // próprio trabalhador continua sendo o primeiro quando é o mais
+        // perto.
+        VillageColonyMod.COLONIES.find(colonyId)
+                .ifPresent(colony ->
+                        chests.addAll(VillageChests.around(world, colony.center(), chests)));
+
         chests.sort(Comparator
                 .comparingLong((ColonyPos chest) -> squaredDistance(chest, from))
                 .thenComparingInt(ColonyPos::x)

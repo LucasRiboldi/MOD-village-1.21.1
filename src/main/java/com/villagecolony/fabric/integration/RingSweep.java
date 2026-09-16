@@ -82,6 +82,41 @@ public final class RingSweep {
     public static <T> Optional<T> around(
             UUID owner, BlockPos center, int radius, Function<BlockPos, Optional<T>> test) {
 
+        return around(owner, center, radius, column -> true, test);
+    }
+
+    /**
+     * O mesmo, pulando de graça a coluna que nem vale a pergunta —
+     * 2026-09-16.
+     *
+     * <p><b>O defeito que isto corrige.</b> A coleta de terra e grama
+     * procura <b>fora</b> da vila, num cone de 90° — é a Regra 3
+     * protegendo a vila de ser escavada —, mas a varredura é um
+     * <b>círculo</b>: das 9.409 colunas de um raio 48, só cerca de um
+     * quarto cai no cone, e as outras gastavam orçamento para serem
+     * descartadas lá dentro do {@code test}.
+     *
+     * <p>O log de 01:19 mostrou o preço: <b>24 de 26</b> ciclos sem coleta
+     * diziam <i>"still sweeping — the budget ran out before an answer —
+     * dirt"</i>, e as obras esperaram {@code dirt} 93 vezes e
+     * {@code grass_block} 42 na semana — 78% de todas as esperas.
+     *
+     * <p><b>O filtro tem de ser barato</b>, e é o contrato desta porta: o
+     * que entra aqui é aritmética de coordenada, nunca leitura de mundo.
+     * Um filtro que lesse bloco só teria movido o custo de lugar. Ver
+     * {@code FarthestVillageSector.isInSector}, que é a conta de dois
+     * produtos escalares para a qual isto foi escrito.
+     *
+     * @param worth a pergunta barata: falso pula a coluna sem gastar
+     *     orçamento nem ler o mundo
+     */
+    public static <T> Optional<T> around(
+            UUID owner,
+            BlockPos center,
+            int radius,
+            java.util.function.Predicate<BlockPos> worth,
+            Function<BlockPos, Optional<T>> test) {
+
         int columns = 0;
 
         Sweep paused = NEXT_RING.get(owner);
@@ -110,6 +145,13 @@ public final class RingSweep {
                     if (ring == startRing && column < startColumn) {
                         // Já respondida, e sair daqui não custa leitura
                         // nem gasta orçamento.
+                        continue;
+                    }
+
+                    // A coluna que o chamador já sabe não servir sai
+                    // aqui, antes do orçamento: é a diferença entre pagar
+                    // por um círculo e pagar por um cone.
+                    if (!worth.test(center.add(dx, 0, dz))) {
                         continue;
                     }
 

@@ -203,7 +203,23 @@ public final class SurfaceGatheringWork {
         BlockPos searchCenter = outsideVillage
                 ? job.center.offset(job.surfaceSector, FarthestVillageSector.PROTECTED_RADIUS + 1)
                 : job.center;
-        Optional<BlockPos> found = RingSweep.around(workerId, searchCenter, SEARCH_RADIUS, column -> {
+        // <b>A coluna fora do setor sai de graça</b> — 2026-09-16. A busca
+        // de terra e grama é um cone de 90° fora da vila, e a varredura é
+        // um círculo: das 9.409 colunas de um raio 48, só um quarto servia,
+        // e as outras gastavam orçamento para serem descartadas dentro do
+        // teste. O log de 01:19 registrou 24 de 26 ciclos em "still
+        // sweeping — the budget ran out — dirt", com as obras esperando
+        // terra 93 vezes na semana.
+        //
+        // A pergunta é a mesma que o DirtPatch e o GrassPatch já faziam lá
+        // dentro; o que muda é a hora — antes do orçamento, e sem tocar o
+        // mundo. Ver RingSweep.around com filtro.
+        java.util.function.Predicate<BlockPos> worthLooking = outsideVillage
+                ? column -> FarthestVillageSector.isInSector(job.center, column, job.surfaceSector)
+                : column -> true;
+
+        Optional<BlockPos> found = RingSweep.around(
+                workerId, searchCenter, SEARCH_RADIUS, worthLooking, column -> {
             if (job.task.targetResource() == ResourceType.SAND) {
                 return SandPatch.in(world, column, job.center.getY())
                         .filter(pos -> BlockProtection.mayBreak(world, pos, world.getBlockState(pos)));

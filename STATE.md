@@ -23,7 +23,60 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 
 **Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
 
-**JAR atual 0.3.0:** `build`, 857 unitarios e 333/333 GameTests passaram. O artefato inclui P0.7, a limpeza imediata da claim, as duas correcoes do playtest de 09-15 (toco orfao e minerio recusado), a retirada do bau da boca da mina e as duas otimizacoes do planejador. Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `A781A3D9C3500464C99F8AE36BEF30A9D15806EB58070C4B5F4032890E2D62A8`. Falta apenas playtest.
+**JAR atual 0.3.0:** `build`, 864 unitarios e 333/333 GameTests passaram. O artefato inclui P0.7, a limpeza imediata da claim, as duas correcoes do playtest de 09-15 (toco orfao e minerio recusado), a retirada do bau da boca da mina e as duas otimizacoes do planejador. Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `9F4794232147202A6E8C5530465146C0C6E24DFF2F4837337D7FDAE3BEEB73E5`. Falta apenas playtest.
+
+---
+
+## 2026-09-16 — baus da vila e o gargalo real da cadeia
+
+**A MEDICAO QUE MUDOU O ESCOPO.** O autor pediu que *"tudo que falta para a
+construcao entre na cadeia produtiva"*. Antes de abrir a frente, medi o que as
+obras esperaram na semana:
+
+| material | esperas | a colonia sabe fazer? |
+|---|---|---|
+| `dirt` | 93 | **sim** |
+| `grass_block` | 42 | **sim** |
+| `lectern` | 19 | nao |
+| `smooth_stone_slab` | 16 | sim |
+
+**78% do problema e material que a colonia JA sabe coletar** e mesmo assim
+falta. O `lectern` e 12%, e a cadeia dele exige couro (matar vaca) e papel
+(cana) — duas profissoes que o mod nao tem. O autor escolheu atacar os 78%
+primeiro.
+
+**1. A varredura pagava por um circulo para usar um cone.** A coleta de terra e
+grama procura **fora** da vila, num cone de 90° (Regra 3), mas `RingSweep`
+varre um **circulo** de raio 48: 9.409 colunas contra orcamento de 1.024. Das
+26 falhas de coleta no log, **24** eram *"still sweeping — the budget ran out —
+dirt"*. Tres quartos de cada passagem eram gastos para descartar.
+
+`RingSweep.around` ganhou uma sobrecarga com filtro barato, aplicado **antes**
+do orcamento. O contrato e explicito: o filtro e aritmetica de coordenada,
+nunca leitura de mundo — senao so moveria o custo de lugar.
+
+**2. Baus da vila (`VillageChests`).** Decisao do autor: *"permitir que o
+recurso que falta possa ser recolhido de qualquer bau que esteja na vila
+automaticamente"*, com a ressalva **menos os marcados**.
+
+O bau privado e o que o **jogador nomeia** (`VillageChestRule`): nomear exige
+bigorna e e ato deliberado, e e simetrico ao que o mod ja faz com aldeao desde
+08-08 — nome dado a mao e intocavel. Nome padrao do jogo ("Chest", "Baú") nao
+conta como nome, senao a regra seria letra morta.
+
+**"Na vila" quer dizer DENTRO de uma casa**, e esta restricao veio de nove
+gametests quebrados. Um raio solto de 64 alcancava o bau da vila vizinha e, no
+gametest, o das arenas ao lado: *"8 chests read"* onde se esperavam dois, e um
+caso chegou a **construir com o bau vazio** porque lia o bau de outro teste. O
+mesmo risco existe em jogo com duas vilas proximas. Agora vale o bau dentro da
+caixa de uma construcao — peca de vila gerada ou obra da colonia —, reusando a
+pergunta que `BlockProtection` ja faz.
+
+**Verificacao:** `build` verde com **864 unitarios** (7 novos) e **333/333**
+GameTests, bateria repetida **tres vezes, todas limpas**.
+
+**Pendente e dito por inteiro:** o `lectern` continua sem cadeia. A frente de
+couro/papel nao foi aberta, e enquanto nao for, a biblioteca nao sobe.
 
 ---
 
