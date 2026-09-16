@@ -97,6 +97,24 @@ public final class VillageDetectionHandler {
     private static final int TICK_MILLIS = 50;
 
     /**
+     * Até onde uma colônia trabalha — decisão do autor, 2026-09-15.
+     *
+     * <p>A frase dele: <i>"não trabalhar nas vilas que o jogador não está
+     * perto"</i>. O log de 23:41 mostrou <b>seis colônias</b> reportando
+     * atividade no mesmo período, e o jogador estava numa.
+     *
+     * <p><b>O dobro do raio da vila</b>, e a folga é o ponto. Com os 64 de
+     * {@code SEARCH_RADIUS} a colônia congelaria assim que o autor
+     * caminhasse para a borda dela ou descesse à mina — e o centro da vila
+     * oscila entre oito posições, como a sessão de 21:50 mediu, de modo que
+     * a régua justa ficaria piscando.
+     *
+     * <p>Horizontal, como todo raio deste projeto: o jogador no fundo da
+     * mina continua sendo o jogador daquela vila.
+     */
+    private static final int WORKING_DISTANCE = 2 * VillageDetector.SEARCH_RADIUS;
+
+    /**
      * Chunks com cama esperando varredura, um por chunk.
      *
      * <p>{@code LinkedHashMap} para drenar na ordem em que chegaram: os
@@ -146,7 +164,16 @@ public final class VillageDetectionHandler {
 
         detectFromColonyCenters(world);
 
-        runColonyCycles(world);
+        // <b>Sem o filtro de proximidade</b> — 2026-09-15. O gametest não
+        // tem jogador no mundo, e a regra de "só trabalha perto de alguém"
+        // pararia toda colônia de teste em silêncio: três casos de ciclo
+        // caíram assim, dizendo "abriu 0 tarefas".
+        //
+        // Isto NÃO é um atalho que esconde a regra. Esta porta existe para
+        // o teste poder rodar um ciclo sem esperar trinta segundos, e o
+        // ponto dela é exercitar o que a colônia DECIDE. Quem afirma a
+        // regra de proximidade é o caminho de produção, em onServerTick.
+        runColonyCycles(world, false);
     }
 
     /**
@@ -293,7 +320,7 @@ public final class VillageDetectionHandler {
         CycleCost.since(CycleCost.Phase.DETECT, mark);
 
         // As fases de dentro se cobram sozinhas, em runCycleOf.
-        runColonyCycles(server.getOverworld());
+        runColonyCycles(server.getOverworld(), true);
 
         reportIfSlow(startedAt);
     }
@@ -382,9 +409,10 @@ public final class VillageDetectionHandler {
      * concluiria que falta tudo e encheria a fila de pedidos que ninguém
      * pode atender.
      */
-    private static void runColonyCycles(ServerWorld overworld) {
+    private static void runColonyCycles(ServerWorld overworld, boolean onlyNearPlayers) {
         List<Colony> active = List.copyOf(VillageColonyMod.COLONIES.all()).stream()
                 .filter(Colony::isActive)
+                .filter(colony -> !onlyNearPlayers || isNearAPlayer(overworld, colony))
                 .toList();
 
         // <b>A vez de planejar é repartida</b> — 2026-09-15. O log do autor
@@ -444,9 +472,7 @@ public final class VillageDetectionHandler {
     private static Set<UUID> coloniesNearPlayers(
             ServerWorld overworld, List<Colony> active) {
 
-        List<ServerPlayerEntity> players = overworld.getPlayers();
-
-        if (players.isEmpty()) {
+        if (overworld.getPlayers().isEmpty()) {
             // Servidor sem ninguém online: não há o que priorizar, e o
             // rodízio puro é a resposta certa.
             return Set.of();
@@ -455,21 +481,48 @@ public final class VillageDetectionHandler {
         Set<UUID> near = new HashSet<>();
 
         for (Colony colony : active) {
-            for (ServerPlayerEntity player : players) {
-                long dx = (long) player.getBlockX() - colony.center().x();
-                long dz = (long) player.getBlockZ() - colony.center().z();
-
-                if (dx * dx + dz * dz
-                        <= (long) VillageDetector.SEARCH_RADIUS * VillageDetector.SEARCH_RADIUS) {
-
-                    near.add(colony.id());
-
-                    break;
-                }
+            if (isWithin(overworld, colony, VillageDetector.SEARCH_RADIUS)) {
+                near.add(colony.id());
             }
         }
 
         return near;
+    }
+
+    /**
+     * Se esta colônia tem jogador perto o bastante para trabalhar —
+     * 2026-09-15.
+     *
+     * <p>Decisão do autor: <i>"não trabalhar nas vilas que o jogador não
+     * está perto"</i>. Ver {@link #WORKING_DISTANCE}.
+     *
+     * <p><b>Para o ciclo inteiro</b>, e não só o planejamento: trabalhador,
+     * leitura de baú e tarefa. A colônia longe fica inerte até alguém
+     * chegar, e retoma de onde parou — os cursores de varredura, mina e
+     * índice de ruas são guardados, e nada disso depende de ciclos
+     * contínuos.
+     *
+     * <p><b>Servidor sem ninguém online não trabalha</b>, e isso é a
+     * consequência honesta da regra. Antes disto as 29 colônias do mundo do
+     * autor ciclavam para sempre; agora o mundo vazio não gasta tique com
+     * vila nenhuma.
+     */
+    private static boolean isNearAPlayer(ServerWorld overworld, Colony colony) {
+        return isWithin(overworld, colony, WORKING_DISTANCE);
+    }
+
+    /** Se algum jogador está dentro deste raio do centro da colônia. */
+    private static boolean isWithin(ServerWorld overworld, Colony colony, int radius) {
+        for (ServerPlayerEntity player : overworld.getPlayers()) {
+            long dx = (long) player.getBlockX() - colony.center().x();
+            long dz = (long) player.getBlockZ() - colony.center().z();
+
+            if (dx * dx + dz * dz <= (long) radius * radius) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -606,6 +659,12 @@ public final class VillageDetectionHandler {
                 WorkMaterials.iron(overworld, colony),
                 WorkMaterials.smeltedNeeds(overworld, colony),
                 WorkMaterials.surfaceGatheredNeeds(colony));
+
+        // E a placa da obra fica sabendo do estoque — 2026-09-15. O ciclo
+        // acabou de ler os baús; a placa desenha uma vez por segundo e
+        // reler ali multiplicaria por trinta o custo da fase `chests`.
+        // Ver SiteMarker.remember.
+        SiteMarker.remember(colony.id(), survey.resources().total());
 
         // A obra inteira: varredura de lote, crescimento de rua, paleta e
         // a conta do que a construção pede. É a fase que o plano suspeita

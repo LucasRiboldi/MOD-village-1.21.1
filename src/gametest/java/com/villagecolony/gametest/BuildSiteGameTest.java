@@ -149,7 +149,12 @@ public class BuildSiteGameTest implements FabricGameTest {
                     continue;
                 }
 
-                context.setBlockState(center.add(dx, 1, dz), Blocks.DIRT_PATH.getDefaultState());
+                // Dois blocos: um so deixou de ser recusa em 2026-09-15,
+                // quando o autor mandou tolerar um bloco de desnivel.
+                for (int dy = 1; dy <= 2; dy++) {
+                    context.setBlockState(
+                            center.add(dx, dy, dz), Blocks.DIRT_PATH.getDefaultState());
+                }
             }
         }
 
@@ -179,6 +184,132 @@ public class BuildSiteGameTest implements FabricGameTest {
                                     colony, LotRefusals.Reason.OFF_ROAD_LEVEL)
                             + " not_natural=" + LotRefusals.countOf(
                                     colony, LotRefusals.Reason.NOT_NATURAL_GROUND));
+        } finally {
+            BuildSiteScanner.clearAll();
+            LotRefusals.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * <b>Um bloco de desnível da rua ainda é lote</b> — decisão do autor,
+     * 2026-09-15: <i>"desnivel, permitir somente 1 bloco de desnivel da
+     * estrada"</i>.
+     *
+     * <p><b>A medição que autorizou isto.</b> A pesquisa de 09-11
+     * ({@code docs/research/terraplanagem-da-vila.md} §8) registrou a regra
+     * do autor: <i>"Medir primeiro. Se a recusa por desnível dominar, a
+     * inferência vira fato"</i>. Duas sessões responderam, e o número é
+     * estável: <b>35,0%</b> e <b>33,6%</b> das recusas de lote eram
+     * {@code OFF_ROAD_LEVEL} — a segunda maior causa, atrás só da área de
+     * estrada.
+     *
+     * <p>A régua era <b>exata</b>: uma coluna um bloco fora reprovava o
+     * lote inteiro, e num terreno de planície ondulada isso reprova quase
+     * tudo. Um bloco de tolerância é o degrau que um jogador sobe sem
+     * pensar, e é o que a Regra 19 queria impedir quando falava de
+     * <i>"varanda sem escada"</i> — ela mirava o lote dois acima, não o
+     * ondulado.
+     *
+     * <p><b>O que NÃO entra nesta decisão:</b> mover terra. A preparação
+     * do canteiro tira planta e não aterra — ver {@code SitePreparation} —,
+     * então a coluna um abaixo fica com um vão sob o piso. O autor foi
+     * avisado disso e escolheu assim mesmo, para a vila voltar a crescer;
+     * aterrar é a frente de terraplanagem, que continua aberta.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_slope_one")
+    public void oneBlockOffTheRoadLevelIsStillALot(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
+
+        LotRefusals.clearAll();
+        paveGround(context, center);
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
+
+        // O lote em volta sobe um bloco: é o ondulado que a régua exata
+        // reprovava, e que agora tem de passar.
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (dx == 0 && dz == 0) {
+                    continue;
+                }
+
+                context.setBlockState(center.add(dx, 1, dz), Blocks.GRASS_BLOCK.getDefaultState());
+            }
+        }
+
+        try {
+            Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                    context.getWorld(),
+                    colony,
+                    MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                    0,
+                    SMALL_HOUSE);
+
+            context.assertTrue(
+                    site.isPresent(),
+                    "um bloco de desnível continuou reprovando o lote — é a segunda maior"
+                            + " causa de recusa no log do autor, com 35% e 34% em duas"
+                            + " sessões. off_road=" + LotRefusals.countOf(
+                                    colony, LotRefusals.Reason.OFF_ROAD_LEVEL)
+                            + " no_ground=" + LotRefusals.countOf(
+                                    colony, LotRefusals.Reason.NO_GROUND)
+                            + " occupied=" + LotRefusals.countOf(
+                                    colony, LotRefusals.Reason.OCCUPIED)
+                            + " road=" + LotRefusals.countOf(colony, LotRefusals.Reason.ROAD));
+        } finally {
+            BuildSiteScanner.clearAll();
+            LotRefusals.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * E dois blocos continuam sendo recusa.
+     *
+     * <p>A outra metade da decisão: o autor pediu <b>somente</b> um bloco.
+     * Sem este caso, afrouxar a régua viraria afrouxá-la sem limite, e a
+     * casa voltaria a nascer na varanda sem escada que a Regra 19 descreve.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_slope_one")
+    public void twoBlocksOffTheRoadLevelIsStillRefused(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
+
+        LotRefusals.clearAll();
+        paveGround(context, center);
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
+
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (dx == 0 && dz == 0) {
+                    continue;
+                }
+
+                for (int dy = 1; dy <= 2; dy++) {
+                    context.setBlockState(
+                            center.add(dx, dy, dz), Blocks.GRASS_BLOCK.getDefaultState());
+                }
+            }
+        }
+
+        try {
+            Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                    context.getWorld(),
+                    colony,
+                    MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                    0,
+                    SMALL_HOUSE);
+
+            context.assertTrue(
+                    site.isEmpty(),
+                    "dois blocos de desnível viraram lote, e o autor pediu somente um");
         } finally {
             BuildSiteScanner.clearAll();
             LotRefusals.clearAll();
@@ -785,16 +916,24 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
         reserveRoad(context, colony, center);
 
-        // Tudo em volta da rua sobe um degrau. O lote continua plano
+        // Tudo em volta da rua sobe DOIS degraus. O lote continua plano
         // entre si, e deixa de estar no nível de quem anda na rua.
+        //
+        // Era um degrau até 2026-09-15, quando o autor mandou tolerar um
+        // bloco — ver oneBlockOffTheRoadLevelIsStillALot. Com um, este
+        // caso passaria a medir a tolerância em vez da Regra 19; dois é
+        // a varanda sem escada que a regra descreve, e é o que ela ainda
+        // recusa.
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
                 if (dx == 0 && dz == 0) {
                     continue;
                 }
 
-                context.setBlockState(
-                        center.add(dx, 1, dz), Blocks.GRASS_BLOCK.getDefaultState());
+                for (int dy = 1; dy <= 2; dy++) {
+                    context.setBlockState(
+                            center.add(dx, dy, dz), Blocks.GRASS_BLOCK.getDefaultState());
+                }
             }
         }
 
@@ -1448,11 +1587,19 @@ public class BuildSiteGameTest implements FabricGameTest {
             context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
             reserveRoad(context, colony, center);
 
-            // E um degrau de UM bloco dentro do lote: é o bastante para
-            // o flatGroundAt reprovar, porque a pergunta é exata.
+            // E um degrau de DOIS blocos dentro do lote, que é o bastante
+            // para o flatGroundAt reprovar.
+            //
+            // Era um até 2026-09-15, quando o autor mandou tolerar um bloco
+            // — ver oneBlockOffTheRoadLevelIsStillALot. O que este caso
+            // afirma é que a recusa é CONTADA pelo motivo certo, e para
+            // isso ele precisa de um desnível que ainda seja recusa.
+            for (int dy = 1; dy <= 2; dy++) {
+                context.setBlockState(
+                        center.east().north().up(dy), Blocks.GRASS_BLOCK.getDefaultState());
+            }
+
             context.setBlockState(center.east().north(), Blocks.GRASS_BLOCK.getDefaultState());
-            context.setBlockState(
-                    center.east().north().up(), Blocks.GRASS_BLOCK.getDefaultState());
 
             ColonyPos from = MinecraftTypeAdapter.toColonyPos(
                     context.getAbsolutePos(center));

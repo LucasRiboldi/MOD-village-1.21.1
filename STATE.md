@@ -23,7 +23,71 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 
 **Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
 
-**JAR atual 0.3.0:** `build`, 852 unitarios e 330/330 GameTests passaram. O artefato inclui P0.7, a limpeza imediata da claim, as duas correcoes do playtest de 09-15 (toco orfao e minerio recusado), a retirada do bau da boca da mina e as duas otimizacoes do planejador. Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `5C03426262F521471CD72F0784A6FF5D42586A148D0290F4F58E27F0EA28EF4E`. Falta apenas playtest.
+**JAR atual 0.3.0:** `build`, 857 unitarios e 332/332 GameTests passaram. O artefato inclui P0.7, a limpeza imediata da claim, as duas correcoes do playtest de 09-15 (toco orfao e minerio recusado), a retirada do bau da boca da mina e as duas otimizacoes do planejador. Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `3428DCFBC4563B8AF770F4736AC9ECF2892DA436AD6DA84249A30F2CE0E99B71`. Falta apenas playtest.
+
+---
+
+## Playtest de 2026-09-15, 23:41 — desnivel, vila perto e a placa da obra
+
+Log: `latest.log`, 23:15-23:41, JAR `5c034262`.
+
+**O marcador funcionou, e o log explica a duvida do autor** (*"nao vi bordas
+de particulas"* seguido de *"vi as particulas"*): a unica obra da sessao abriu
+numa vila **nova** (`9da5460c`, em `2503,63,-3031`) e ficou em
+`WAITING_RESOURCES` esperando `grass_block` — entao o contorno era de
+**fumaca**, nao de chama. O estoque daquela colonia era
+`{OAK_LOG=21, OAK_PLANKS=86, COBBLESTONE=96, DIRT=17}`: zero grama.
+
+**1. Desnivel de 1 bloco (`ROAD_LEVEL_TOLERANCE = 1`).** Decisao do autor:
+*"permitir somente 1 bloco de desnivel da estrada"*. A regua era **exata**, e
+o desnivel respondia por 35,0% e 33,6% das recusas em duas sessoes — a segunda
+maior causa. Isto cumpre a condicao que o proprio autor impos em 09-11 na
+pesquisa de terraplanagem §8.
+
+**Um defeito que a mudanca expos:** `isClearAbove` contava o volume sempre a
+partir de `roadY + 1`, o que estava certo enquanto toda coluna tinha o chao em
+`roadY`. Com a tolerancia, a coluna um acima tem o proprio chao em `roadY + 1`
+— e a pergunta lia esse chao como obstrucao, recusando por `OCCUPIED` o lote
+que a regua acabara de aprovar. Agora conta a partir do chao **daquela**
+coluna.
+
+**O que NAO mudou:** a preparacao do canteiro nao aterra (so tira planta), e o
+autor foi avisado. A coluna um abaixo fica com vao de um bloco sob o piso.
+Aterrar continua sendo a frente de terraplanagem.
+
+**2. Vila longe nao trabalha (`WORKING_DISTANCE = 128`).** Decisao do autor:
+*"nao trabalhar nas vilas que o jogador nao esta perto"*. O log mostrava
+**seis colonias** reportando atividade no mesmo periodo. Para o **ciclo
+inteiro**, nao so o planejamento. O dobro do raio da vila, para a colonia nao
+congelar quando o autor anda pela borda ou desce a mina — o centro oscila entre
+oito posicoes, como 21:50 mediu.
+
+`runCycleNow` (costura de gametest) **nao** aplica o filtro: o gametest nao tem
+jogador, e tres casos de ciclo caiam em silencio dizendo "abriu 0 tarefas".
+Quem afirma a regra e o caminho de producao.
+
+**3. Placa da obra.** Pedido do autor: *"um texto igual o nome dos aldeoes
+mostrando o material que falta, quantos tem em estoque e quantos falta"*.
+`SiteLabel` (Core, testavel) monta a linha; quem a carrega e o **nome flutuante
+do construtor** — o mesmo mecanismo do `WorkerNameplate`, e literalmente "igual
+o nome dos aldeoes".
+
+- Formato: `Obra · falta grass_block: 0/64 · 382 blocos`.
+- **Texto, nao icone de item:** icone exigiria render no cliente (mixin,
+  networking, entrypoint), e o mod deixaria de funcionar com cliente Vanilla —
+  a mesma escolha que o `WorkerNameplate` fez em 08-08.
+- **Nao usa ArmorStand:** seria entidade nova que persiste no save do jogador.
+- **Um material por vez**, senao vira parede de texto sobre o lote.
+- O estoque vem do que o ciclo **ja leu** (`SiteMarker.remember`); reler no
+  tique da placa multiplicaria por trinta o custo da fase `chests`.
+
+**Armadilha evitada:** `WorkerNameplate` so desfaz nome que o mod escreveu, e
+a placa nao e rotulo de profissao — sem `SiteLabel.MARK`, o construtor ficaria
+com a placa na cabeca **para sempre**.
+
+**Verificacao:** `build` verde com **857 unitarios** (5 novos do `SiteLabel`) e
+**332/332** GameTests, repetida ate duas rodadas limpas seguidas (a primeira
+teve o AUD-001 conhecido). **Pendente: validacao em jogo dos tres.**
 
 ---
 

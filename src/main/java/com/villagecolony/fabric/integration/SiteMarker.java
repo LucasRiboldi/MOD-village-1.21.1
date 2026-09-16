@@ -3,14 +3,25 @@ package com.villagecolony.fabric.integration;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
+import com.villagecolony.core.construction.model.SiteLabel;
 import com.villagecolony.core.construction.model.SiteOutline;
+import com.villagecolony.core.resource.model.ResourceTally;
+import com.villagecolony.core.task.model.Task;
+import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * O contorno do lote, desenhado no mundo — 2026-09-15.
@@ -56,7 +67,31 @@ public final class SiteMarker {
 
     private static int tickCounter;
 
+    /**
+     * O estoque que o último ciclo de cada colônia leu.
+     *
+     * <p><b>Guardado em vez de relido</b>, e é o que torna a placa barata:
+     * contar baú é varredura de inventário, e a placa desenha uma vez por
+     * segundo contra os trinta segundos do ciclo. Reler aqui multiplicaria
+     * por trinta o custo que o {@code CycleCost} mede como {@code chests}.
+     *
+     * <p>O número pode estar até trinta segundos velho, e isso é honesto
+     * para o que a placa responde — <i>"a colônia tem o material?"</i> não
+     * muda de segundo em segundo. Quem precisa do número exato é o
+     * construtor, e ele lê o baú na hora.
+     */
+    private static final Map<UUID, ResourceTally> STOCK = new HashMap<>();
+
     private SiteMarker() {
+    }
+
+    /**
+     * Guarda o que esta colônia tem, para a placa poder dizer.
+     *
+     * <p>Chamado do ciclo, que já leu os baús — ver {@link #STOCK}.
+     */
+    public static void remember(UUID colonyId, ResourceTally stock) {
+        STOCK.put(colonyId, stock);
     }
 
     /**
@@ -106,6 +141,8 @@ public final class SiteMarker {
         // ver o javadoc da classe. O estado é lido uma vez, fora do laço.
         boolean waiting = project.state() == ConstructionState.WAITING_RESOURCES;
 
+        label(world, project);
+
         for (ColonyPos at : border) {
             BlockPos pos = MinecraftTypeAdapter.toBlockPos(at);
 
@@ -121,6 +158,55 @@ public final class SiteMarker {
                     0.0,
                     0.0,
                     0.0);
+        }
+    }
+
+    /**
+     * A placa sobre o lote, com o material que falta — 2026-09-15.
+     *
+     * <p>Pedido do autor: <i>"precisa sinalizar um texto igual o nome dos
+     * aldeoes mostrando o material que falta, quantos tem em estoque e
+     * quantos falta para a construcao finalizar"</i>.
+     *
+     * <p><b>Quem carrega a linha é o construtor da obra</b>, pelo nome
+     * flutuante que ele já tem — o mesmo mecanismo do
+     * {@code WorkerNameplate}, e "igual o nome dos aldeões" é literalmente
+     * o que o autor pediu.
+     *
+     * <p><b>Por que não um suporte de armadura invisível sobre o lote.</b>
+     * Seria entidade nova no mundo do jogador: persiste no save, entra na
+     * contagem de mob, e sobrevive ao mod ser removido — lixo no mundo dele
+     * que ninguém recolhe. O construtor já está vivo, já está ali, e volta
+     * ao nome da profissão sozinho quando a obra fecha, porque o
+     * {@code WorkerNameplate} renomeia a cada ciclo.
+     *
+     * <p>Texto literal, e não {@code Text.translatable}, pelo motivo que o
+     * {@code WorkerNameplate} registrou em 2026-08-08: o mod roda no
+     * servidor e o cliente pode ser Vanilla puro.
+     */
+    private static void label(ServerWorld world, ConstructionProject project) {
+        ResourceTally stock = STOCK.get(project.colonyId());
+
+        String line = SiteLabel.of(
+                project.remainingMaterials(),
+                stock == null ? Map.of() : stock.idCounts(),
+                project.remainingCount());
+
+        for (Task task : VillageColonyMod.TASKS.ofColony(project.colonyId())) {
+            if (task.type() != TaskType.BUILD) {
+                continue;
+            }
+
+            Optional<UUID> executor = task.executor();
+
+            if (executor.isEmpty()) {
+                continue;
+            }
+
+            if (world.getEntity(executor.get()) instanceof VillagerEntity builder) {
+                builder.setCustomName(Text.literal(line).formatted(Formatting.AQUA));
+                builder.setCustomNameVisible(true);
+            }
         }
     }
 

@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.construction.model.SiteLabel;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import net.minecraft.entity.Entity;
@@ -135,6 +136,15 @@ public final class WorkerNameplate {
      */
     private static boolean isColonyLabel(Text name) {
         String written = name.getString();
+
+        // <b>E a placa da obra também é do mod</b> — 2026-09-15. Ela não é
+        // rótulo de profissão, e sem esta linha o laço acima a tomaria por
+        // nome que o jogador deu: o construtor ficaria com
+        // "Obra · falta grass_block..." sobre a cabeça para sempre, porque
+        // o mod se recusa a desfazer o que não escreveu. Ver SiteLabel.
+        if (written.startsWith(SiteLabel.MARK)) {
+            return true;
+        }
 
         for (ProfessionType profession : ProfessionType.values()) {
             if (labelFor(profession).getString().equals(written)) {

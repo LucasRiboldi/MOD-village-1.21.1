@@ -105,6 +105,35 @@ public final class BuildSiteScanner {
     private static final int WINDOW_DOWN = 8;
 
     /**
+     * Quanto uma coluna do lote pode fugir do nível da rua.
+     *
+     * <p><b>Decisão do autor, 2026-09-15:</b> <i>"permitir somente 1 bloco
+     * de desnivel da estrada"</i>.
+     *
+     * <p><b>A medição que autorizou a mudança.</b> A pesquisa de 09-11
+     * ({@code docs/research/terraplanagem-da-vila.md} §8) registrou a regra
+     * que o próprio autor impôs: <i>"Medir primeiro. Se a recusa por
+     * desnível dominar, a inferência vira fato e a frente abre"</i>. Duas
+     * sessões responderam, e o número é estável: <b>35,0%</b> e
+     * <b>33,6%</b> das recusas de lote eram {@code OFF_ROAD_LEVEL},
+     * a segunda maior causa atrás só da área de estrada.
+     *
+     * <p>A régua era <b>exata</b> — {@code ground.getY() != roadY} —, e num
+     * terreno de planície ondulada isso reprova quase tudo. A Regra 19
+     * mirava o lote <i>"dois blocos acima do caminho"</i>, a varanda sem
+     * escada; um bloco é o degrau que um jogador sobe sem pensar, e o
+     * Vanilla o trata assim em toda parte.
+     *
+     * <p><b>O que isto NÃO faz: mover terra.</b> A preparação do canteiro
+     * tira planta e não aterra — ver {@code SitePreparation} —, então a
+     * coluna um abaixo da rua fica com um vão de um bloco sob o piso, que
+     * assenta em {@code roadY + 1}. O autor foi avisado e escolheu assim
+     * para a vila voltar a crescer. Aterrar continua sendo a frente de
+     * terraplanagem que a pesquisa desenhou (§6), e ela segue aberta.
+     */
+    private static final int ROAD_LEVEL_TOLERANCE = 1;
+
+    /**
      * Quanto desnível o lote pode ter, em blocos.
      *
      * <p>Dois é o que um jogador aplaina sem pensar. Três já é degrau, e
@@ -1177,11 +1206,9 @@ public final class BuildSiteScanner {
                 // Primeira da fila por ser a única que não lê o mundo: o
                 // chão já está na mão, e a pergunta é a comparação de dois
                 // inteiros.
-                if (ground.getY() != roadY) {
+                if (Math.abs(ground.getY() - roadY) > ROAD_LEVEL_TOLERANCE) {
                     // A contagem que decide a terraplanagem — 2026-09-11.
-                    // Ver docs/research/terraplanagem-da-vila.md: a
-                    // pergunta é EXATA, e uma coluna um bloco fora
-                    // reprova o lote inteiro.
+                    // Ver docs/research/terraplanagem-da-vila.md.
                     LotRefusals.refused(colonyId, LotRefusals.Reason.OFF_ROAD_LEVEL);
 
                     return Optional.empty();
@@ -1232,7 +1259,24 @@ public final class BuildSiteScanner {
                 // E a Regra 22: a casa não sobe onde já há coisa. Não
                 // basta o chão estar bom; a coluna inteira, até o teto
                 // da planta, precisa estar livre.
-                if (!isClearAbove(world, x, z, roadY + 1, size.y())) {
+                //
+                // <b>Conta a partir do chão DESTA coluna</b> — 2026-09-15,
+                // e foi a tolerância de um bloco que expôs o defeito. A
+                // conta era sempre {@code roadY + 1}, o que estava certo
+                // enquanto toda coluna tinha o chão exatamente em
+                // {@code roadY}: aí as duas alturas eram a mesma. Com um
+                // bloco de tolerância, a coluna um acima tem o próprio
+                // chão em {@code roadY + 1} — e a pergunta lia esse chão
+                // como coisa no caminho, reprovando por OCCUPIED o lote que
+                // a régua acabara de aprovar.
+                //
+                // O teto continua sendo o da planta contado da rua, e é o
+                // certo: a casa assenta em {@code roadY + 1} e sobe
+                // {@code size.y()} dali. O que muda é só onde a conferência
+                // começa.
+                int floorOf = Math.max(roadY, ground.getY()) + 1;
+
+                if (!isClearAbove(world, x, z, floorOf, roadY + 1 + size.y() - floorOf)) {
                     LotRefusals.refused(colonyId, LotRefusals.Reason.OCCUPIED);
 
                     return Optional.empty();
