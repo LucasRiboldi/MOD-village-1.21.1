@@ -23,7 +23,58 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 
 **Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
 
-**JAR atual 0.3.0:** `build`, 847 unitarios e 330/330 GameTests passaram. O artefato inclui P0.7, a limpeza imediata da claim, as duas correcoes do playtest de 09-15 (toco orfao e minerio recusado), a retirada do bau da boca da mina e as duas otimizacoes do planejador. Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `79D9774C4DCA09209742BAFC856ADDD5BA340BD71BE9DF25EE3F7FA328E04E8D`. Falta apenas playtest.
+**JAR atual 0.3.0:** `build`, 852 unitarios e 330/330 GameTests passaram. O artefato inclui P0.7, a limpeza imediata da claim, as duas correcoes do playtest de 09-15 (toco orfao e minerio recusado), a retirada do bau da boca da mina e as duas otimizacoes do planejador. Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `5C03426262F521471CD72F0784A6FF5D42586A148D0290F4F58E27F0EA28EF4E`. Falta apenas playtest.
+
+---
+
+## Playtest de 2026-09-15, 22:54 — marcador, lenhador e a medicao do terreno
+
+Log: `latest.log`, 22:43-22:54, colonia `111d6ee5`, JAR `79d9774c`.
+
+**A prioridade da colonia observada funcionou:** 20 passagens do planejador
+contra 16 na sessao anterior. A rua cresceu (22:47:09, 3 blocos oeste).
+
+**1. Lenhador so recolhe tronco.** Decisao do autor: *"os lenhadores devem se
+focar apenas em recolher todos troncos, nao devem recolher as folhas"*. Era o
+contrario desde 2026-08-08. A conta explica: uma copa de carvalho tem ~80
+folhas contra 6 troncos, e cada bloco custa os mesmos tiques de picareta — o
+lenhador passava a maior parte do expediente quebrando folha.
+
+**A copa continua sendo PROCURADA**, e isso e essencial: ela e a unica coisa
+que separa arvore de construcao (`isNaturalLeaf`). O que muda e que ela nao
+entra mais na colheita. A folha que sobra decai sozinha pelo Vanilla, e
+`clearAbove` continua abrindo a coluna da muda.
+
+**2. Marcador visual do lote.** Pedido do autor: *"um efeito que demonstre onde
+no terreno esta o espaco alocado para a construcao escolhida"*. `SiteOutline`
+(Core, sem mundo, testavel) da as colunas da borda; `SiteMarker` (Fabric)
+desenha com `spawnParticles` do **servidor** — sem entrypoint de cliente, sem
+networking proprio, sem travessia de thread.
+
+- **Chama** = obra construindo; **fumaca** = obra esperando material.
+- So a borda (o miolo esconderia o terreno) e so na altura do piso (subir ate
+  o telhado viraria parede opaca).
+- Uma vez por segundo (`EVERY_TICKS = 20`), so com jogador em 64 blocos.
+
+**3. A MEDICAO QUE O AUTOR EXIGIU EM 09-11 ESTA PRONTA.** A pesquisa
+`docs/research/terraplanagem-da-vila.md` §8 registrou a decisao dele: *"Medir
+primeiro. Se a recusa por desnivel dominar, a inferencia vira fato e a frente
+abre."*
+
+| sessao | total de recusas | area de estrada | fora do nivel | soma |
+|---|---|---|---|---|
+| 21:50 | 187.152 | 46,7% | 35,0% | **81,7%** |
+| 22:54 | 279.648 | 47,6% | 33,6% | **81,2%** |
+
+**A condicao foi satisfeita, e o numero e estavel entre sessoes.** A frente de
+terraplanagem esta autorizada pelo criterio do proprio autor; falta ele decidir
+abri-la. A pesquisa ja tem o desenho (§6), as decisoes (§8: capacidade do
+construtor, 4 blocos de desnivel) e os tres pontos de contato
+(`BuildSiteScanner.flatGroundAt`, `RoadExtension.pave`, `SitePreparation`).
+
+**Verificacao:** `build` verde com **852 unitarios** (5 novos do `SiteOutline`)
+e **330/330** GameTests, bateria repetida **tres vezes, todas limpas**.
+**Pendente: validacao em jogo do marcador e do lenhador.**
 
 ---
 

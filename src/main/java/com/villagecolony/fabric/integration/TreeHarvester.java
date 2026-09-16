@@ -273,10 +273,29 @@ public final class TreeHarvester {
         //
         // O único limite que sobra é o {@link #CANOPY_SEARCH_LOGS} da
         // travessia, e ele é de segurança — não de política.
-        List<BlockPos> blocks = new ArrayList<>(trunk);
-        blocks.addAll(canopy);
-
-        return new Plan(species, lowest(trunk), List.copyOf(blocks), trunk.size(), canopy.size());
+        // <b>E só o tronco desce</b> — decisão do autor, 2026-09-15: <i>"os
+        // lenhadores devem se focar apenas em recolher todos troncos, nao
+        // devem recolher as folhas"</i>.
+        //
+        // Era o contrário desde 2026-08-08, quando a regra era recolher
+        // tudo o que a árvore dropa — muda, maçã e graveto vêm da folha. O
+        // autor mudou de ideia vendo em jogo, e a conta explica: uma copa
+        // de carvalho tem cerca de oitenta folhas contra seis troncos, e
+        // cada bloco custa os mesmos tiques de picareta. O lenhador passava
+        // a maior parte do expediente quebrando folha, e a obra esperando
+        // tora.
+        //
+        // <b>A copa continua sendo procurada logo acima</b>, e é o ponto:
+        // ela é a única coisa que separa árvore de construção — ver
+        // isNaturalLeaf e a regra da copa viva. O que ela deixa de ser é
+        // alvo de colheita.
+        //
+        // O que sobra no ar decai sozinho pelo Vanilla quando o tronco que
+        // a sustentava sai, e {@link #clearAbove} continua abrindo a coluna
+        // da muda — de modo que a muda replantada não nasce debaixo do que
+        // ficou. A contagem de folhas do Plan vai a zero, e é honesto: ela
+        // diz quantas foram COLHIDAS.
+        return new Plan(species, lowest(trunk), List.copyOf(trunk), trunk.size(), 0);
     }
 
     /**

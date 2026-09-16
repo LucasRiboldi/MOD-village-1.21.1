@@ -21,6 +21,7 @@ import com.villagecolony.fabric.integration.RoadExtension;
 import com.villagecolony.fabric.integration.VillageRoad;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.SiteMarker;
 import com.villagecolony.fabric.integration.SweepLog;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.integration.ChestPlacer;
@@ -100,6 +101,7 @@ public final class ServerLifecycleHandler {
         ColonyStateLog.clearAll();
         ColonyAbandonment.clearAll();
         PlannerTurns.clearAll();
+        SiteMarker.clearAll();
         VillageDetectionHandler.clearPending();
         PlayerWorldChangeHandler.clearAll();
 
@@ -263,6 +265,7 @@ public final class ServerLifecycleHandler {
         ColonyStateLog.clearAll();
         ColonyAbandonment.clearAll();
         PlannerTurns.clearAll();
+        SiteMarker.clearAll();
         VillageDetectionHandler.clearPending();
     }
 }

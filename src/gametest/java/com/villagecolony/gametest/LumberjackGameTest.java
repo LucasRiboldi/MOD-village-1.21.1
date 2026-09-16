@@ -483,14 +483,28 @@ public class LumberjackGameTest implements FabricGameTest {
     }
 
     /**
-     * A copa da árvore derrubada vem junto.
+     * <b>A copa fica de pé — o lenhador só recolhe tronco</b>, decisão do
+     * autor de 2026-09-15: <i>"os lenhadores devem se focar apenas em
+     * recolher todos troncos, nao devem recolher as folhas"</i>.
      *
-     * <p>Regra nova de 2026-08-08: o lenhador recolhe tudo o que a
-     * árvore dropa, e muda, maçã e graveto vêm da folha. A folha ligada
-     * ao tronco que caiu é copa dele.
+     * <p>Era o contrário desde 2026-08-08: <i>"o lenhador recolhe tudo o
+     * que a árvore dropa, e muda, maçã e graveto vêm da folha"</i>. O
+     * autor mudou de ideia vendo em jogo, e o motivo é o tempo: uma copa
+     * de carvalho tem cerca de oitenta folhas contra seis troncos, e o
+     * lenhador passava a maior parte do expediente quebrando folha —
+     * quebra que rende muda e graveto, e nenhuma tora para a obra.
+     *
+     * <p><b>A copa continua sendo PROCURADA</b>, e isso não é sobra: ela é
+     * a única coisa que separa árvore de construção — ver
+     * {@code TreeHarvester.plan} e {@code isNaturalLeaf}. O que muda é que
+     * ela deixa de entrar na colheita depois de encontrada.
+     *
+     * <p>A folha deixada decai sozinha pelo Vanilla quando o tronco que a
+     * sustentava sai, e o {@code clearAbove} continua abrindo a coluna da
+     * muda — de modo que a muda replantada não fica debaixo do que sobrou.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_canopy")
-    public void thecanopyComesDownWithTheTrunk(TestContext context) {
+    public void theCanopyIsLeftStandingWhenTheTrunkComesDown(TestContext context) {
         BlockPos base = new BlockPos(2, 2, 2);
         BlockPos canopy = base.up(3).east();
 
@@ -500,12 +514,17 @@ public class LumberjackGameTest implements FabricGameTest {
         TreeHarvester.Harvest harvest =
                 TreeHarvester.fell(context.getWorld(), context.getAbsolutePos(base));
 
-        context.expectBlock(Blocks.AIR, canopy);
-
-        // Duas: a que o teste pendurou aqui, e a que a árvore já tinha.
         context.assertTrue(
-                harvest.leaves() == 2,
-                "esperava 2 folhas colhidas, foram " + harvest.leaves());
+                harvest.leaves() == 0,
+                "o lenhador colheu " + harvest.leaves() + " folhas — o autor pediu só tronco");
+
+        context.assertTrue(
+                harvest.logs() > 0,
+                "não colheu tronco nenhum, e é justamente o que ele deve recolher");
+
+        // A folha de lado fica onde está: ela não é da coluna da muda, e
+        // quem a derruba é o decaimento do Vanilla.
+        context.expectBlock(Blocks.OAK_LEAVES, canopy);
 
         context.complete();
     }
@@ -885,6 +904,14 @@ public class LumberjackGameTest implements FabricGameTest {
      * a colheita inteira é uma soma de esperas. Antes de 2026-08-08 uma
      * árvore de seis troncos e oitenta folhas desaparecia no mesmo
      * instante — visível, errado, e um pico de custo dentro de um tick.
+     *
+     * <p>O piso era {@code >= 5} e caiu para o número de troncos em
+     * 2026-09-15: a colheita deixou de levar a copa, por decisão do autor
+     * — ver {@link #theCanopyIsLeftStandingWhenTheTrunkComesDown} —, e o
+     * cinco contava tronco mais folha. O que este caso afirma é o
+     * <b>custo por bloco</b>, e não o tamanho do plano; amarrá-lo a um
+     * número que a política mudou faria ele reprovar a decisão em vez do
+     * defeito.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_break_cost")
     public void everyBlockOfTheHarvestCostsAtLeastOneTick(TestContext context) {
@@ -897,7 +924,10 @@ public class LumberjackGameTest implements FabricGameTest {
 
         TreeHarvester.Plan plan = TreeHarvester.plan(world, context.getAbsolutePos(base));
 
-        context.assertTrue(plan.blocks().size() >= 5, "o plano não pegou a árvore inteira");
+        context.assertTrue(
+                plan.blocks().size() == plan.logs() && plan.logs() > 0,
+                "o plano não é o tronco inteiro e só ele: blocos=" + plan.blocks().size()
+                        + " troncos=" + plan.logs());
 
         for (BlockPos pos : plan.blocks()) {
             int ticks = BlockBreakTime.ticksFor(
