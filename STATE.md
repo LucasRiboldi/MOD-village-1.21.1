@@ -23,7 +23,48 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 
 **Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
 
-**JAR atual 0.3.0:** `build`, 882 unitarios e 333/333 GameTests passaram. O artefato inclui P0.7, a limpeza imediata da claim, as duas correcoes do playtest de 09-15 (toco orfao e minerio recusado), a retirada do bau da boca da mina e as duas otimizacoes do planejador. Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `DF0C704D7CFE3CDD1C7050C22B1B4E65C088F04BA366A347806E90CA88DD6F96`. Falta apenas playtest.
+**JAR atual 0.3.0:** `build`, 884 unitarios e 335/335 GameTests passaram. O artefato inclui P0.7, a limpeza imediata da claim, as duas correcoes do playtest de 09-15 (toco orfao e minerio recusado), a retirada do bau da boca da mina e as duas otimizacoes do planejador. Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `41BF1FD3406C635F95BB593D80E055A0AF6489EE0E9BBDFC12DC4CD84AAA1177`. Falta apenas playtest.
+
+---
+
+## Playtest de 2026-09-16, 03:31 — a casa acavalou na roça da vila
+
+Log: `latest.log`, 03:19-03:31, JAR `df0c704d`.
+
+**Relato do autor:** *"a segunda construcao acavalou em cima de uma fazenda da
+vila, entao a verificacao do local para construir deve ter dado erro"*. Ele
+estava certo, e a causa era **ordem de operacoes**, nao o filtro de solo.
+
+**O que o log mostrou.** O acougue foi planejado em `2503,63,-3045`, limpou
+plantas **ali**, e dezoito segundos depois riscou **onze** posicoes de
+`farmland` em `z=-3031..-3033` — **catorze blocos** alem da origem, numa planta
+de onze de profundidade. Uma caixa continua nao faz isso.
+
+**A causa: a planta era girada DEPOIS de o lote ser aprovado.** O filtro em
+`ConstructionPlanner.open` comparava `plan.size()` com `site.size()`, e so
+entao a Regra 17 girava a planta para a porta olhar a rua. Num retangulo o giro
+de 90° **troca os eixos**: a casa 13×11 aprovada num lote 13×11 virava 11×13 e
+ocupava treze blocos de profundidade onde onze foram verificados. O excedente
+caia em terreno que ninguem olhou — no caso, a comida da vila virando piso de
+casa.
+
+**Duas correcoes, porque o furo tinha dois lados:**
+
+1. `open` gira **antes** de filtrar, entao o filtro ve a pegada que a obra vai
+   de fato ocupar.
+2. `sizesOf` passa ao scanner **as duas orientacoes**. Sem isso, o filtro
+   corrigido nao acharia planta nenhuma para um lote 13×11 quando todas viram
+   11×13, e a vila deixaria de construir **em silencio** — troca de um defeito
+   visivel por um mudo.
+
+**Hipotese descartada pelo caminho, e fica registrada:** suspeitei que
+`isLotGround` aceitasse `farmland` por ela ser solida. Escrevi o teste, e ele
+passou **sem patch** — `farmland` nao e `isSolidBlock`, e o scanner ja a
+recusava por `NOT_NATURAL_GROUND`. Os dois GameTests ficaram como regressao.
+
+**Verificacao:** `build` verde com **884 unitarios** e **335/335** GameTests
+(2 novos), bateria repetida ate **duas rodadas limpas seguidas** — a primeira
+teve o AUD-001 conhecido, sem relacao com construcao.
 
 ---
 

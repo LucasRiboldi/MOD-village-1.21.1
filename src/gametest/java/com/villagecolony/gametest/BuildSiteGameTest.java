@@ -318,6 +318,134 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * <b>A casa não nasce em cima da roça</b> — 2026-09-16.
+     *
+     * <p><b>Relato do autor, em jogo:</b> <i>"a segunda construção acavalou
+     * em cima de uma fazenda da vila, então a verificação do local para
+     * construir deve ter dado erro"</i>. Ele está certo, e o log de 03:23
+     * mostra o estrago: o açougue foi planejado em {@code 2503,63,-3045} e
+     * o construtor riscou <b>onze</b> posições dizendo
+     * <i>"Block{minecraft:farmland} is in the way"</i>.
+     *
+     * <p><b>A verificação falhou no lugar mais simples.</b>
+     * {@code isLotGround} pergunta apenas <i>"é bloco sólido?"</i> — e
+     * farmland é sólido. A roça passava por terreno livre.
+     *
+     * <p>E as outras guardas não a pegavam: a roça de uma vila de planície
+     * não é peça de estrutura registrada, então {@code isVillageOriginal}
+     * responde não; e {@code isClearAbove} olha o que está <b>acima</b> do
+     * chão, não o chão em si — o trigo por cima é substituível e passa.
+     *
+     * <p>O dano é do tipo que não se desfaz sozinho: a comida da vila
+     * vira piso de casa, e os aldeões que comiam dali passam fome.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_farmland")
+    public void farmlandIsNeverALot(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
+
+        LotRefusals.clearAll();
+        paveGround(context, center);
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
+
+        // A roça da vila, encostada na rua: é exatamente o arranjo de
+        // 2503,-3032, onde o açougue do autor passou por cima.
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (dx == 0 && dz == 0) {
+                    continue;
+                }
+
+                context.setBlockState(center.add(dx, 0, dz), Blocks.FARMLAND.getDefaultState());
+            }
+        }
+
+        try {
+            Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                    context.getWorld(),
+                    colony,
+                    MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                    0,
+                    SMALL_HOUSE);
+
+            context.assertTrue(
+                    site.isEmpty(),
+                    "a colônia escolheu a roça como lote — é a fazenda da vila virando"
+                            + " piso de casa, e o autor viu isso em jogo");
+
+            context.assertTrue(
+                    LotRefusals.countOf(colony, LotRefusals.Reason.NOT_NATURAL_GROUND) > 0,
+                    "a roça foi recusada por outro motivo que não o solo — o cenário não"
+                            + " reproduz o defeito. off_road=" + LotRefusals.countOf(
+                                    colony, LotRefusals.Reason.OFF_ROAD_LEVEL)
+                            + " no_ground=" + LotRefusals.countOf(
+                                    colony, LotRefusals.Reason.NO_GROUND)
+                            + " occupied=" + LotRefusals.countOf(
+                                    colony, LotRefusals.Reason.OCCUPIED)
+                            + " road=" + LotRefusals.countOf(colony, LotRefusals.Reason.ROAD)
+                            + " protected=" + LotRefusals.countOf(
+                                    colony, LotRefusals.Reason.PROTECTED));
+        } finally {
+            BuildSiteScanner.clearAll();
+            LotRefusals.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * E o cultivo por cima também reprova o lote.
+     *
+     * <p>A roça madura tem trigo sobre a terra arada, e o trigo é
+     * <b>substituível</b> — passa por "nada em cima" no
+     * {@code isClearAbove}. Sem este caso, bastaria a planta estar crescida
+     * para a guarda da terra arada ser contornada por cima.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_farmland")
+    public void aGrownCropDoesNotHideTheFarm(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
+
+        LotRefusals.clearAll();
+        paveGround(context, center);
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
+
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (dx == 0 && dz == 0) {
+                    continue;
+                }
+
+                context.setBlockState(center.add(dx, 0, dz), Blocks.FARMLAND.getDefaultState());
+                context.setBlockState(center.add(dx, 1, dz), Blocks.WHEAT.getDefaultState());
+            }
+        }
+
+        try {
+            Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                    context.getWorld(),
+                    colony,
+                    MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                    0,
+                    SMALL_HOUSE);
+
+            context.assertTrue(
+                    site.isEmpty(),
+                    "o trigo por cima escondeu a roça, e a casa nasceria sobre a comida"
+                            + " da vila");
+        } finally {
+            BuildSiteScanner.clearAll();
+            LotRefusals.clearAll();
+        }
+
+        context.complete();
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_p0_7")
     public void everyReservedRoadMaterialBlocksTheWholeFootprint(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);

@@ -15,6 +15,7 @@ import com.villagecolony.core.task.model.TaskPriority;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.type.Side;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
@@ -26,6 +27,7 @@ import net.minecraft.block.Block;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -435,7 +437,34 @@ public final class ConstructionPlanner {
      * plantas que empatam nesse tamanho; ver {@link #open}.
      */
     private static List<ColonyPos> sizesOf(List<Blueprint> plans) {
-        return plans.stream().map(Blueprint::size).distinct().toList();
+        // <b>E a pegada girada também</b> — 2026-09-16. A Regra 17 gira a
+        // planta para a porta olhar a rua, e numa planta retangular o giro
+        // troca os eixos: a 13×11 do arquivo pode precisar de um lote 11×13.
+        //
+        // Passar só a pegada do arquivo fazia o scanner procurar o lote
+        // errado, e o filtro do {@code open} — que hoje compara depois do
+        // giro — não acharia planta nenhuma para um lote 13×11 quando
+        // todas viram 11×13. A vila deixaria de construir em silêncio.
+        //
+        // Ambas as orientações entram, e a de origem primeiro: a Regra 25
+        // manda tentar a maior antes, e a ordem da lista é que decide.
+        List<ColonyPos> sizes = new ArrayList<>();
+
+        for (Blueprint plan : plans) {
+            ColonyPos size = plan.size();
+
+            if (!sizes.contains(size)) {
+                sizes.add(size);
+            }
+
+            ColonyPos turned = new ColonyPos(size.z(), size.y(), size.x());
+
+            if (!sizes.contains(turned)) {
+                sizes.add(turned);
+            }
+        }
+
+        return List.copyOf(sizes);
     }
 
     /**
@@ -470,18 +499,37 @@ public final class ConstructionPlanner {
         // levantava a mesma casa a vida inteira: a sessão de 09-09 subiu
         // {@code plains_small_house_1} outra vez, que era a única que a
         // barreira daquele dia deixava passar.
+        // <b>Girada ANTES de conferir se cabe</b> — 2026-09-16, e esta
+        // ordem é o conserto de um defeito que o autor viu em jogo: <i>"a
+        // segunda construção acavalou em cima de uma fazenda da vila,
+        // então a verificação do local para construir deve ter dado
+        // erro"</i>.
+        //
+        // <b>O que acontecia.</b> O filtro comparava o tamanho da planta
+        // <b>antes</b> do giro, e a Regra 17 girava depois. Numa planta
+        // retangular o giro de 90° troca os eixos — ver
+        // {@code BlueprintRotationTest}: a casa 13×11 aprovada num lote
+        // 13×11 virava 11×13 e ocupava treze blocos de profundidade onde
+        // só onze foram verificados.
+        //
+        // O excedente caía em terreno que ninguém olhou. No log de 03:23
+        // caiu na roça: o açougue foi planejado em 2503,63,-3045 e o
+        // construtor riscou onze posições de farmland catorze blocos
+        // adiante, com a linha "Block{minecraft:farmland} is in the way".
+        // A comida da vila virou piso de casa.
+        //
+        // Girar primeiro faz o filtro ver a pegada que a obra <b>vai</b>
+        // ocupar, e não a que ela tinha no arquivo.
+        Side road = MinecraftTypeAdapter.toSide(site.doorSide());
+
         List<Blueprint> fitting = plans.stream()
+                .map(plan -> HousePlans.turnedToTheRoad(plan, road))
                 .filter(plan -> plan.size().equals(site.size()))
                 .toList();
 
-        Blueprint chosen = fitting.isEmpty()
-                ? blueprint
+        Blueprint facingTheRoad = fitting.isEmpty()
+                ? HousePlans.turnedToTheRoad(blueprint, road)
                 : fitting.get(world.getRandom().nextInt(fitting.size()));
-
-        // Agora que há lote, a planta é virada para a rua: é a Regra 17,
-        // e o lado sai de quem achou o lote.
-        Blueprint facingTheRoad = HousePlans.turnedToTheRoad(
-                chosen, MinecraftTypeAdapter.toSide(site.doorSide()));
 
         ConstructionProject project = ConstructionProject.plan(
                 colony.id(), facingTheRoad, site.origin());

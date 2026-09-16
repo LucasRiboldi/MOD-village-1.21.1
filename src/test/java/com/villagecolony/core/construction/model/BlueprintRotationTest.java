@@ -139,4 +139,64 @@ class BlueprintRotationTest {
                 .findFirst()
                 .orElseThrow();
     }
+    /**
+     * <b>Girar troca largura por profundidade</b> — 2026-09-16.
+     *
+     * <p><b>Relato do autor, em jogo:</b> <i>"a segunda construção acavalou
+     * em cima de uma fazenda da vila, então a verificação do local para
+     * construir deve ter dado erro"</i>. Ele está certo, e este caso é a
+     * aritmética do erro.
+     *
+     * <p><b>O que o log de 03:23 mostrou.</b> O açougue foi planejado em
+     * {@code 2503,63,-3045} e o construtor riscou onze posições de
+     * {@code farmland} em {@code z=-3031} a {@code -3033} — <b>catorze
+     * blocos</b> além da origem, numa planta de onze de profundidade.
+     *
+     * <p><b>A causa.</b> O planejador escolhe a planta cujo
+     * {@code size()} bate com o lote aprovado, e <b>depois</b> a gira para
+     * a porta ficar de frente para a rua (Regra 17). Numa planta
+     * retangular o giro de 90° troca os eixos: a casa 13×11 validada no
+     * lote 13×11 vira 11×13 e ocupa treze blocos de profundidade onde só
+     * onze foram verificados. O excedente cai em terreno que ninguém
+     * olhou — no caso do autor, a roça da vila.
+     *
+     * <p>Este caso guarda a troca de eixos; quem guarda a consequência é
+     * {@code BuildSiteGameTest}.
+     */
+    @Test
+    void aQuarterTurnSwapsWidthAndDepth() {
+        Blueprint wide = Blueprint.of(
+                ResourceId.vanilla("test"),
+                List.of(
+                        new BlueprintBlock(new ColonyPos(0, 0, 0), PLANKS),
+                        new BlueprintBlock(new ColonyPos(12, 0, 10), PLANKS)));
+
+        assertEquals(13, wide.size().x(), "a planta de partida não é 13 de largura");
+        assertEquals(11, wide.size().z(), "a planta de partida não é 11 de profundidade");
+
+        Blueprint turned = wide.rotated(1);
+
+        assertEquals(
+                11,
+                turned.size().x(),
+                "o giro não trocou a largura — e é essa troca que faz a casa sair do lote");
+
+        assertEquals(
+                13,
+                turned.size().z(),
+                "o giro não trocou a profundidade: a casa passou a ocupar treze onde o"
+                        + " scanner aprovou onze");
+    }
+
+    /** Meia volta preserva o tamanho: só o giro ímpar troca os eixos. */
+    @Test
+    void ahalfTurnKeepsTheSize() {
+        Blueprint wide = Blueprint.of(
+                ResourceId.vanilla("test"),
+                List.of(
+                        new BlueprintBlock(new ColonyPos(0, 0, 0), PLANKS),
+                        new BlueprintBlock(new ColonyPos(12, 0, 10), PLANKS)));
+
+        assertEquals(wide.size(), wide.rotated(2).size(), "meia volta mudou o tamanho");
+    }
 }
