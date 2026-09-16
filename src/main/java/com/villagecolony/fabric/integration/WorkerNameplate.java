@@ -137,11 +137,16 @@ public final class WorkerNameplate {
     private static boolean isColonyLabel(Text name) {
         String written = name.getString();
 
-        // <b>E a placa da obra também é do mod</b> — 2026-09-15. Ela não é
-        // rótulo de profissão, e sem esta linha o laço acima a tomaria por
-        // nome que o jogador deu: o construtor ficaria com
-        // "Obra · falta grass_block..." sobre a cabeça para sempre, porque
-        // o mod se recusa a desfazer o que não escreveu. Ver SiteLabel.
+        // <b>A placa da obra passou por aqui</b>, entre 09-15 e 09-16. Ela
+        // morava no nome do construtor, e o autor a recusou: <i>"deve ficar
+        // flutuando no espaço da construção e não no lugar do nome do
+        // trabalhador"</i>. Hoje ela é um suporte de armadura sobre o lote
+        // — ver SiteMarker —, e o nome do trabalhador voltou a dizer só o
+        // ofício dele.
+        //
+        // A linha fica como reconhecimento de nome antigo: quem carregar um
+        // save feito naquela janela tem construtores com a placa na cabeça,
+        // e sem isto o mod se recusaria a desfazê-la para sempre.
         if (written.startsWith(SiteLabel.MARK)) {
             return true;
         }

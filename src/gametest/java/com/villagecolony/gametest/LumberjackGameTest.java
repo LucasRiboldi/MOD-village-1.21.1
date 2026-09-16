@@ -13,7 +13,10 @@ import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
+import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.construction.model.ConstructionProject;
+import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.fabric.work.LumberjackReport;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.TreeChoice;
@@ -307,6 +310,75 @@ public class LumberjackGameTest implements FabricGameTest {
                     TreeHarvester.plan(world, absoluteBase).isEmpty(),
                     "o lenhador planejou cortar troncos pertencentes a uma construção da colônia");
         } finally {
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * <b>O canteiro em obra também é intocável</b> — 2026-09-16.
+     *
+     * <p><b>Relato do autor, em jogo:</b> <i>"casa começou e não continuou,
+     * mas confundiu colocar tronco com recolher tronco e plantar
+     * árvore"</i>. O log de 00:59:51 mostra as duas linhas lado a lado, na
+     * <b>mesma coordenada</b>:
+     *
+     * <pre>
+     * lumberjacks: 4661287a walking — tree at 2503, 63, -3035, block 1 of 1
+     * builders:    1 working, BUILDING at ColonyPos[x=2503, y=63, z=-3035]
+     * </pre>
+     *
+     * <p>O construtor assentava tronco na parede e o lenhador ia colhê-lo
+     * como árvore — {@code block 1 of 1}, um tronco solto. A casa caía
+     * enquanto subia. Em seguida vinha
+     * <i>"No OAK sapling at 2509,63,-3033 — Block{minecraft:oak_log} is in
+     * the way"</i>: ele tentava replantar no meio do canteiro.
+     *
+     * <p><b>A causa.</b> {@code BlockProtection.isColonyBuilt} pergunta ao
+     * registro de {@code Building}, e um {@code Building} só nasce quando a
+     * obra <b>termina</b> — ou quando é abandonada. A obra <b>em
+     * andamento</b> não estava em lugar nenhum que a proteção consultasse,
+     * de modo que o canteiro ficava desprotegido exatamente durante as
+     * horas em que há material solto nele.
+     *
+     * <p>Não é regressão da decisão de 09-15 — o lenhador cortava tronco de
+     * canteiro desde sempre. Ficou visível agora porque a casa finalmente
+     * chegou a subir.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_building_protection")
+    public void aTreeInsideAnOpenConstructionSiteIsNotPlanned(TestContext context) {
+        BlockPos base = new BlockPos(5, 2, 5);
+        plantTree(context, base);
+
+        ServerWorld world = context.getWorld();
+        BlockPos absoluteBase = context.getAbsolutePos(base);
+        ColonyPos here = MinecraftTypeAdapter.toColonyPos(absoluteBase);
+
+        Colony colony = Colony.create(UUID.randomUUID(), here);
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        try {
+            // A obra ABERTA, e não uma construção terminada: é o estado em
+            // que o canteiro tem tronco solto e ninguém o protegia.
+            VillageColonyMod.CONSTRUCTIONS.register(ConstructionProject.plan(
+                    colony.id(),
+                    Blueprint.of(
+                            new ResourceId(
+                                    "minecraft", "village/plains/houses/plains_small_house_1"),
+                            List.of(new BlueprintBlock(
+                                    new ColonyPos(0, 0, 0), ResourceId.vanilla("oak_log")))),
+                    here));
+
+            context.assertTrue(
+                    TreeHarvester.plan(world, absoluteBase).isEmpty(),
+                    "o lenhador planejou cortar o tronco que o construtor acabou de"
+                            + " assentar — é a casa caindo enquanto sobe");
+        } finally {
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
+
             owned.cleanUp();
         }
 

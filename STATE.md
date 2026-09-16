@@ -23,7 +23,66 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 
 **Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
 
-**JAR atual 0.3.0:** `build`, 857 unitarios e 332/332 GameTests passaram. O artefato inclui P0.7, a limpeza imediata da claim, as duas correcoes do playtest de 09-15 (toco orfao e minerio recusado), a retirada do bau da boca da mina e as duas otimizacoes do planejador. Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `37F943FC0DAAD6F3F7B3331A8652FEDDC91782A1FA52F8429EE02FAA473AF699`. Falta apenas playtest.
+**JAR atual 0.3.0:** `build`, 857 unitarios e 333/333 GameTests passaram. O artefato inclui P0.7, a limpeza imediata da claim, as duas correcoes do playtest de 09-15 (toco orfao e minerio recusado), a retirada do bau da boca da mina e as duas otimizacoes do planejador. Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `A781A3D9C3500464C99F8AE36BEF30A9D15806EB58070C4B5F4032890E2D62A8`. Falta apenas playtest.
+
+---
+
+## Playtest de 2026-09-16, 01:19 — a casa subiu, e o lenhador a derrubou
+
+Log: `latest.log`, 00:57-01:19, colonia `9da5460c`, JAR `37f943fc`.
+
+**Progresso real:** a casa pequena de 64 blocos abriu as 00:58:21
+(`plains_small_farm_1`) e o construtor chegou a assentar — de 64 para 55
+blocos restantes. Depois uma biblioteca de 628 blocos foi planejada. A
+preferencia pela planta menor e o desnivel de 1 bloco funcionaram.
+
+**1. O DEFEITO GRAVE: o canteiro em obra nao era protegido.** Relato do autor:
+*"confundiu colocar tronco com recolher tronco e plantar arvore"*. O log tem
+as duas linhas na **mesma coordenada**, as 00:59:51:
+
+```
+lumberjacks: 4661287a walking — tree at 2503, 63, -3035, block 1 of 1
+builders:    1 working, BUILDING at ColonyPos[x=2503, y=63, z=-3035]
+```
+
+O construtor assentava tronco na parede e o lenhador ia colhe-lo como arvore
+— `block 1 of 1`, um tronco solto. **A casa caia enquanto subia.** Em seguida:
+*"No OAK sapling at 2509,63,-3033 — Block{minecraft:oak_log} is in the way"*,
+o lenhador tentando replantar no meio do canteiro.
+
+**A causa era de momento, nao de regra.** `BlockProtection.isColonyBuilt`
+pergunta ao registro de `Building`, e um `Building` so nasce quando a obra
+**termina** — ou e abandonada. A obra **em andamento** nao estava em lugar
+nenhum que a protecao consultasse, entao o canteiro ficava desprotegido
+justamente durante as horas em que ha material solto nele. E o material solto
+de uma casa de planicie e tronco de carvalho, que e o que o lenhador procura.
+
+**Nao e regressao da decisao de 09-15** (lenhador so recolhe tronco): ele
+cortava tronco de canteiro desde sempre. Ficou visivel agora porque a casa
+finalmente chegou a subir. As duas perguntas juntas cobrem a vida inteira de
+uma casa: obra aberta pelo registro de construcoes, casa pronta pelo de
+construcoes levantadas.
+
+**2. A placa saiu do nome do trabalhador.** Correcao de rumo pedida pelo
+autor: *"os itens que faltam da obra deve ficar flutuando no espaco da
+construcao e nao no lugar do nome do trabalhador"*. Ele esta certo — o nome do
+trabalhador diz o oficio dele, e sobrescreve-lo trocava uma informacao por
+outra.
+
+Agora e um **suporte de armadura invisivel** sobre o centro do lote, acima do
+teto da planta. A escolha foi entre ele e o `TextDisplayEntity` do 1.21: o
+segundo e feito para isso, mas o texto so se escreve por NBT — nao ha setter —,
+e montar NBT a mao e mais fragil que o `setCustomName` que o mod ja usa.
+
+**O lixo no save era o medo, e esta tratado:** a placa e marcada com etiqueta
+propria (suporte do jogador nao vira placa da colonia), procurada antes de ser
+criada, e **removida assim que a obra fecha** (`clearStale`, que roda mesmo sem
+jogador perto). `WorkerNameplate` ainda reconhece a marca antiga, para desfazer
+a placa na cabeca de quem carregar um save da janela de 09-15.
+
+**Verificacao:** `build` verde com **857 unitarios** e **333/333** GameTests
+(1 novo), bateria repetida **duas vezes, ambas limpas**. **Pendente: validacao
+em jogo.**
 
 ---
 

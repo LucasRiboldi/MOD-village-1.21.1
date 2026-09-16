@@ -6,21 +6,20 @@ import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.model.SiteLabel;
 import com.villagecolony.core.construction.model.SiteOutline;
 import com.villagecolony.core.resource.model.ResourceTally;
-import com.villagecolony.core.task.model.Task;
-import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -82,6 +81,18 @@ public final class SiteMarker {
      */
     private static final Map<UUID, ResourceTally> STOCK = new HashMap<>();
 
+    /**
+     * A etiqueta que marca um suporte de armadura como placa nossa.
+     *
+     * <p>Sem ela, um suporte que o jogador tenha posto sobre o lote seria
+     * tomado por placa da colônia — e reescrito, ou removido ao fim da
+     * obra. A Regra 3 aplicada à decoração dele.
+     */
+    private static final String SIGN_TAG = "villagecolony_site_sign";
+
+    /** A placa de cada obra, para achá-la de volta e removê-la no fim. */
+    private static final Map<UUID, UUID> SIGNS = new HashMap<>();
+
     private SiteMarker() {
     }
 
@@ -106,6 +117,10 @@ public final class SiteMarker {
         }
 
         tickCounter = 0;
+
+        // As placas de obra fechada saem primeiro, e saem mesmo sem
+        // ninguém por perto: entidade órfã no save não espera plateia.
+        clearStale(world);
 
         if (world.getPlayers().isEmpty()) {
             // Ninguém para ver. Partícula sem plateia é pacote jogado fora.
@@ -141,7 +156,7 @@ public final class SiteMarker {
         // ver o javadoc da classe. O estado é lido uma vez, fora do laço.
         boolean waiting = project.state() == ConstructionState.WAITING_RESOURCES;
 
-        label(world, project);
+        label(world, project, origin, size);
 
         for (ColonyPos at : border) {
             BlockPos pos = MinecraftTypeAdapter.toBlockPos(at);
@@ -162,29 +177,30 @@ public final class SiteMarker {
     }
 
     /**
-     * A placa sobre o lote, com o material que falta — 2026-09-15.
+     * A placa que flutua sobre o lote — 2026-09-16.
      *
-     * <p>Pedido do autor: <i>"precisa sinalizar um texto igual o nome dos
-     * aldeoes mostrando o material que falta, quantos tem em estoque e
-     * quantos falta para a construcao finalizar"</i>.
+     * <p><b>Correção de rumo.</b> A primeira versão, de 09-15, pôs a linha
+     * no nome do <b>construtor</b>, e o autor a recusou: <i>"os itens que
+     * faltam da obra deve ficar flutuando no espaço da construção e não no
+     * lugar do nome do trabalhador"</i>. Ele está certo — o nome do
+     * trabalhador diz o ofício dele, e sobrescrevê-lo trocava uma
+     * informação por outra em vez de somar.
      *
-     * <p><b>Quem carrega a linha é o construtor da obra</b>, pelo nome
-     * flutuante que ele já tem — o mesmo mecanismo do
-     * {@code WorkerNameplate}, e "igual o nome dos aldeões" é literalmente
-     * o que o autor pediu.
+     * <p><b>Um suporte de armadura invisível</b>, marcado, sobre o centro
+     * do lote. A escolha foi entre ele e o {@code TextDisplayEntity} do
+     * 1.21: o segundo é feito para isto, mas o texto dele só se escreve por
+     * NBT — não há setter — e montar NBT à mão para uma placa é mais
+     * frágil do que o {@code setCustomName} que o mod já usa desde 08-08.
      *
-     * <p><b>Por que não um suporte de armadura invisível sobre o lote.</b>
-     * Seria entidade nova no mundo do jogador: persiste no save, entra na
-     * contagem de mob, e sobrevive ao mod ser removido — lixo no mundo dele
-     * que ninguém recolhe. O construtor já está vivo, já está ali, e volta
-     * ao nome da profissão sozinho quando a obra fecha, porque o
-     * {@code WorkerNameplate} renomeia a cada ciclo.
-     *
-     * <p>Texto literal, e não {@code Text.translatable}, pelo motivo que o
-     * {@code WorkerNameplate} registrou em 2026-08-08: o mod roda no
-     * servidor e o cliente pode ser Vanilla puro.
+     * <p><b>O lixo no save era o medo, e ele é tratado</b>: a placa é
+     * procurada antes de ser criada, reusada enquanto a obra existe, e
+     * removida assim que ela fecha — ver {@link #clearStale}. Um suporte
+     * que sobrevivesse ao fim da obra seria entidade órfã no mundo do
+     * jogador, e disso o projeto já tem cicatriz.
      */
-    private static void label(ServerWorld world, ConstructionProject project) {
+    private static void label(
+            ServerWorld world, ConstructionProject project, ColonyPos origin, ColonyPos size) {
+
         ResourceTally stock = STOCK.get(project.colonyId());
 
         String line = SiteLabel.of(
@@ -192,22 +208,107 @@ public final class SiteMarker {
                 stock == null ? Map.of() : stock.idCounts(),
                 project.remainingCount());
 
-        for (Task task : VillageColonyMod.TASKS.ofColony(project.colonyId())) {
-            if (task.type() != TaskType.BUILD) {
-                continue;
-            }
+        // O centro do lote, e acima do teto da planta: a placa fica sobre a
+        // obra em vez de dentro da parede que está subindo.
+        double x = origin.x() + size.x() / 2.0;
+        double y = origin.y() + size.y() + 0.5;
+        double z = origin.z() + size.z() / 2.0;
 
-            Optional<UUID> executor = task.executor();
+        ArmorStandEntity sign = findSign(world, project, x, y, z);
 
-            if (executor.isEmpty()) {
-                continue;
-            }
-
-            if (world.getEntity(executor.get()) instanceof VillagerEntity builder) {
-                builder.setCustomName(Text.literal(line).formatted(Formatting.AQUA));
-                builder.setCustomNameVisible(true);
-            }
+        if (sign == null) {
+            return;
         }
+
+        Text text = Text.literal(line).formatted(Formatting.AQUA);
+
+        if (!text.getString().equals(sign.getCustomName() == null
+                ? "" : sign.getCustomName().getString())) {
+
+            // Reescrever a cada segundo mandaria pacote de metadado para
+            // todo cliente perto sem nada ter mudado.
+            sign.setCustomName(text);
+        }
+    }
+
+    /**
+     * A placa desta obra: a que já existe, ou uma nova.
+     *
+     * <p>Procurada pela caixa em volta do ponto, e reconhecida pela marca
+     * de {@link SiteLabel}: sem a marca, um suporte de armadura que o
+     * jogador tenha posto ali viraria placa da colônia.
+     */
+    private static ArmorStandEntity findSign(
+            ServerWorld world, ConstructionProject project, double x, double y, double z) {
+
+        Box around = new Box(x - 1.5, y - 1.5, z - 1.5, x + 1.5, y + 1.5, z + 1.5);
+
+        for (ArmorStandEntity found
+                : world.getEntitiesByClass(ArmorStandEntity.class, around, SiteMarker::isSign)) {
+
+            SIGNS.put(project.id(), found.getUuid());
+
+            return found;
+        }
+
+        return raiseSign(world, x, y, z);
+    }
+
+    /** Um suporte novo, invisível e sem colisão, só para carregar o nome. */
+    private static ArmorStandEntity raiseSign(
+            ServerWorld world, double x, double y, double z) {
+
+        ArmorStandEntity sign = EntityType.ARMOR_STAND.create(world);
+
+        if (sign == null) {
+            return null;
+        }
+
+        sign.setPosition(x, y, z);
+
+        // Invisível, sem gravidade, sem colisão e sem braços: o que o
+        // jogador vê é só o nome flutuando. Marcado, para ser encontrado
+        // de novo e removido depois.
+        sign.setInvisible(true);
+        sign.setNoGravity(true);
+        sign.setInvulnerable(true);
+        sign.setSilent(true);
+        sign.setCustomNameVisible(true);
+        sign.addCommandTag(SIGN_TAG);
+
+        world.spawnEntity(sign);
+
+        return sign;
+    }
+
+    /** Se este suporte é uma placa nossa, e não decoração do jogador. */
+    private static boolean isSign(ArmorStandEntity candidate) {
+        return candidate.getCommandTags().contains(SIGN_TAG);
+    }
+
+    /**
+     * Tira as placas de obra que já fecharam — 2026-09-16.
+     *
+     * <p>É a metade que impede o lixo no save. Sem ela, cada casa terminada
+     * deixaria um suporte de armadura invisível de pé para sempre, com o
+     * último recado congelado.
+     */
+    private static void clearStale(ServerWorld world) {
+        SIGNS.entrySet().removeIf(entry -> {
+            boolean open = VillageColonyMod.CONSTRUCTIONS.find(entry.getKey())
+                    .filter(project -> project.state().isOpen())
+                    .isPresent();
+
+            if (open) {
+                return false;
+            }
+
+            if (world.getEntity(entry.getValue()) instanceof ArmorStandEntity sign) {
+                sign.discard();
+            }
+
+            return true;
+        });
     }
 
     /**
@@ -228,5 +329,8 @@ public final class SiteMarker {
     /** Esquece o contador. Chamado ao parar o servidor. */
     public static void clearAll() {
         tickCounter = 0;
+
+        STOCK.clear();
+        SIGNS.clear();
     }
 }

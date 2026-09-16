@@ -1,6 +1,9 @@
 package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.construction.model.ConstructionProject;
+import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.LeavesBlock;
@@ -77,10 +80,54 @@ public final class BlockProtection {
      * que {@code Building} guarda, e é de propósito. Um bloco que o
      * construtor pulou continua sendo parte da casa, senão a casa teria
      * buracos por onde uma demolição passaria.
+     *
+     * <p><b>E a obra EM ANDAMENTO conta</b> — 2026-09-16. O autor viu em
+     * jogo: <i>"casa começou e não continuou, mas confundiu colocar tronco
+     * com recolher tronco e plantar árvore"</i>. O log de 00:59:51 tem as
+     * duas linhas na mesma coordenada — o construtor assentando em
+     * {@code 2503,63,-3035} e o lenhador indo colher <i>"tree at 2503, 63,
+     * -3035, block 1 of 1"</i>. A casa caía enquanto subia.
+     *
+     * <p>A causa era de <b>momento</b>, não de regra: {@code Building} só
+     * nasce quando a obra termina, ou quando ela é abandonada. O canteiro
+     * ficava desprotegido justamente durante as horas em que há material
+     * solto nele — e o material solto de uma casa de planície é tronco de
+     * carvalho, que é exatamente o que o lenhador procura.
+     *
+     * <p>As duas perguntas juntas cobrem a vida inteira de uma casa: a
+     * obra aberta pelo registro de construções, a casa pronta pelo de
+     * construções levantadas.
      */
     public static boolean isColonyBuilt(BlockPos pos) {
-        return VillageColonyMod.BUILDINGS.isColonyInfrastructure(
-                MinecraftTypeAdapter.toColonyPos(pos));
+        ColonyPos at = MinecraftTypeAdapter.toColonyPos(pos);
+
+        if (VillageColonyMod.BUILDINGS.isColonyInfrastructure(at)) {
+            return true;
+        }
+
+        return isOpenSite(at);
+    }
+
+    /**
+     * Se esta posição está dentro de uma obra aberta — 2026-09-16.
+     *
+     * <p>Percorre as obras em curso, e são poucas: uma por colônia, pela
+     * vaga única que {@code ConstructionService.register} guarda. O custo
+     * é uma comparação de caixa por colônia ativa, e esta pergunta só é
+     * feita quando as duas anteriores já disseram não.
+     */
+    private static boolean isOpenSite(ColonyPos at) {
+        for (ConstructionProject project : VillageColonyMod.CONSTRUCTIONS.all()) {
+            if (!project.state().isOpen()) {
+                continue;
+            }
+
+            if (Building.of(project).contains(at)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
