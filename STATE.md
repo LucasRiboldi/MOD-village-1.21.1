@@ -23,7 +23,75 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 
 **Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
 
-**JAR atual 0.3.0:** `build`, 864 unitarios e 333/333 GameTests passaram. O artefato inclui P0.7, a limpeza imediata da claim, as duas correcoes do playtest de 09-15 (toco orfao e minerio recusado), a retirada do bau da boca da mina e as duas otimizacoes do planejador. Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `9F4794232147202A6E8C5530465146C0C6E24DFF2F4837337D7FDAE3BEEB73E5`. Falta apenas playtest.
+**JAR atual 0.3.0:** `build`, 882 unitarios e 333/333 GameTests passaram. O artefato inclui P0.7, a limpeza imediata da claim, as duas correcoes do playtest de 09-15 (toco orfao e minerio recusado), a retirada do bau da boca da mina e as duas otimizacoes do planejador. Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `DF0C704D7CFE3CDD1C7050C22B1B4E65C088F04BA366A347806E90CA88DD6F96`. Falta apenas playtest.
+
+---
+
+## Playtest de 2026-09-16, 02:58 — a casa sobe, e tres defeitos
+
+Log: `latest.log`, 02:23-02:58, JAR `9f479423`. **A casa esta sendo
+construida** — a obra foi de 61 para 37 blocos restantes. Nenhuma terminou.
+
+**1. Porta por ultimo (`BuildOrder`).** Pedido do autor. O construtor
+**risca** o que nao tem apoio (*"skips ... nothing holds it"*), e a porta fica
+na base da parede: a ordem de baixo para cima a colocava **antes** do batente,
+e ela era perdida — a casa terminava sem porta. Agora sao tres grupos:
+estrutura, porta, mobilia. A porta vem antes da mobilia porque a cama decide a
+cabeceira contra a casa pronta, e o vao da porta precisa ja existir.
+
+A ordem saiu do leitor de estrutura para o Core: era decisao sem teste proprio,
+porque o leitor precisa de servidor para rodar.
+
+**2. O construtor travava ao subir na obra (`ClimbLimit`).** Pedido do autor:
+*"nao fazer uma diferenca maior de 2 blocos"*. O log mostra por que:
+
+```
+on the way to 2515, 67, -3054
+the worker is at 2506, 68, -3051
+the lot floor at 2515, 63, -3054 is Pedregulho
+```
+
+Ele estava em **y=68**, em cima da propria obra, e `footOf` mandava sempre ao
+**piso do lote, y=63** — cinco blocos abaixo. Um aldeao desce degrau de um; a
+navegacao Vanilla nao anda para uma queda dessas, e ele ficava parado ate o
+guarda devolver a tarefa. Agora, quando o pe da coluna esta longe demais na
+vertical, o destino vira o **patamar** a dois blocos, e a passagem seguinte o
+leva mais um degrau.
+
+**Andaime nao foi preciso.** O alcance do construtor ja ignora a vertical de
+proposito — ele constroi do chao ao telhado —, entao o problema nunca foi
+alcancar: era o **caminho de volta**. Fica registrado porque o autor pediu as
+duas saidas, e a segunda so se justificaria se a primeira nao bastasse.
+
+**3. A enxurrada de 19.193 linhas (`ColonyEdits`).** O log tinha **7 MB**, e
+quase metade era a mesma linha: *"Miner d492ef6b hit stone with nowhere to
+stand"*, dez por segundo, um unico mineiro, por trinta e dois minutos.
+
+`PlayerWorldChangeHandler` reabre o ramal da mina quando o mundo muda perto do
+tunel — existe para o **jogador** abrir caminho. Mas reagia a qualquer
+mudanca, sem perguntar quem a fez, e quem mais mexe no tunel e o proprio
+mineiro: cada pedra tirada reabria o ramal com a contagem de recusas zerada, o
+ramal batia na mesma pedra sem lugar de ficar de pe, e fechava de novo. A mina
+**nunca desceu** naquela sessao — `went one level deeper` nao aparece uma vez.
+
+Agora a colonia anuncia a propria picareta, e a marca **vale uma leitura**: se
+ficasse, o jogador que depois mexesse ali seria ignorado para sempre, e
+trocariamos a enxurrada por um silencio pior.
+
+**4. Lenhador construindo NAO e defeito.** O autor perguntou; a ADR-011 decidiu
+que *"qualquer produtor pode construir temporariamente sem trocar de
+profissao"* (`WorkAssignment.canPerform`). O nome sobre a cabeca continua
+dizendo o oficio dele, que e o correto.
+
+**5. Orientacao — decisao do autor: corrigir por bloco, nao por arquitetura.**
+A ADR-005 decidiu que `Blueprint` **nao** guarda `BlockState`, e hoje o mod
+infere a direcao pela posicao na caixa (`BuilderWork.facing`): acerta parede,
+erra escada e tronco deitado. O autor escolheu tratar caso a caso. **Fica
+pendente ate ele dizer quais blocos viu virados errado** — sem isso eu estaria
+adivinhando qual bloco corrigir.
+
+**Verificacao:** `build` verde com **882 unitarios** (18 novos) e **333/333**
+GameTests, bateria repetida **tres vezes, todas limpas**.
 
 ---
 

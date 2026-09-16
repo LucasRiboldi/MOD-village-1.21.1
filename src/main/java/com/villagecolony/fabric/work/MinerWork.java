@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.construction.model.ColonyEdits;
 import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.model.MineArm;
 import com.villagecolony.core.coordination.IdleReason;
@@ -694,6 +695,13 @@ public final class MinerWork {
 
         List<ItemStack> drops = new ArrayList<>(
                 Block.getDroppedStacks(state, world, job.target, null, null, ItemStack.EMPTY));
+
+        // <b>A colônia avisa que foi ela</b> — 2026-09-16. Sem isto o
+        // PlayerWorldChangeHandler via a própria picareta como edição do
+        // jogador e reabria o ramal com a contagem de recusas zerada: o log
+        // de 02:58 teve 19.193 linhas de "hit stone with nowhere to stand",
+        // dez por segundo, e a mina nunca desceu. Ver ColonyEdits.
+        ColonyEdits.remember(MinecraftTypeAdapter.toColonyPos(job.target));
 
         world.removeBlock(job.target, false);
 

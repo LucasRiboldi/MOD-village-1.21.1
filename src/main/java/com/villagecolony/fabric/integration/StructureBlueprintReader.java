@@ -2,6 +2,7 @@ package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.construction.model.BuildOrder;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -344,11 +345,12 @@ public final class StructureBlueprintReader {
         // e depois por z, para que duas leituras do mesmo arquivo deem
         // exatamente a mesma casa — obra com ordem instável é impossível
         // de depurar (Debugging-Strategy.md).
-        blocks.sort(Comparator
-                .comparing((BlueprintBlock block) -> block.furniture())
-                .thenComparingInt(block -> block.offset().y())
-                .thenComparingInt(block -> block.offset().x())
-                .thenComparingInt(block -> block.offset().z()));
+        // <b>E a porta entre a estrutura e a mobília</b> — 2026-09-16,
+        // pedido do autor. A ordem saiu daqui para o Core em
+        // {@code BuildOrder}, onde ela é decisão e tem teste próprio:
+        // esta classe precisa de servidor para rodar, e a ordem nunca
+        // pôde ser afirmada sozinha.
+        blocks.sort(BuildOrder.COMPARATOR);
 
         return blocks;
     }

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.construction.model.ColonyEdits;
 import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.ColonySweepCursor;
 import com.villagecolony.core.construction.model.ConstructionProject;
@@ -102,6 +103,7 @@ public final class ServerLifecycleHandler {
         ColonyAbandonment.clearAll();
         PlannerTurns.clearAll();
         SiteMarker.clearAll();
+        ColonyEdits.clearAll();
         VillageDetectionHandler.clearPending();
         PlayerWorldChangeHandler.clearAll();
 
@@ -266,6 +268,7 @@ public final class ServerLifecycleHandler {
         ColonyAbandonment.clearAll();
         PlannerTurns.clearAll();
         SiteMarker.clearAll();
+        ColonyEdits.clearAll();
         VillageDetectionHandler.clearPending();
     }
 }

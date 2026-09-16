@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.event;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.construction.model.ColonyEdits;
 import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.model.MineArm;
 import com.villagecolony.core.colony.model.Colony;
@@ -108,6 +109,16 @@ public final class PlayerWorldChangeHandler {
                     && Math.abs((long) center.y() - changedPos.y()) <= BUILD_VERTICAL_RANGE) {
                 BuildSiteScanner.reconcileWorldChange(colony.id(), world, changed, center);
             }
+        }
+
+        // <b>E a mudança da própria colônia não reabre nada</b> —
+        // 2026-09-16. Esta porta existe para o jogador: ele abre caminho e
+        // a mina retoma por ali. Reagir à picareta do próprio mineiro era o
+        // laço que encheu o log de 02:58 com 19.193 linhas iguais, dez por
+        // segundo, com a mina sem descer uma vez. Ver ColonyEdits — a marca
+        // vale uma leitura, para o jogador nunca ficar ignorado.
+        if (ColonyEdits.wasOurs(changedPos)) {
+            return;
         }
 
         if (MineRock.isOpenSpace(world, changed, after)) {

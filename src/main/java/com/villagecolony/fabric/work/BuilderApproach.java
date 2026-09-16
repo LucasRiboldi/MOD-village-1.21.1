@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.construction.model.ClimbLimit;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.BlockState;
@@ -78,6 +79,55 @@ public final class BuilderApproach {
         BlockPos ground = new BlockPos(target.getX(), project.origin().y(), target.getZ());
 
         return standingSpotNear(world, ground).orElse(ground);
+    }
+
+    /**
+     * O mesmo, sabendo de onde o construtor vem — 2026-09-16.
+     *
+     * <p><b>O travamento que isto corrige.</b> O log de 02:58 mostrou a
+     * obra progredindo — de 61 para 37 blocos — e nenhuma casa terminando.
+     * O construtor parava com <i>"has not moved a block in 300 ticks"</i>,
+     * e as três linhas dizem tudo:
+     *
+     * <pre>
+     * on the way to 2515, 67, -3054
+     * the worker is at 2506, 68, -3051
+     * the lot floor at 2515, 63, -3054 is Pedregulho
+     * </pre>
+     *
+     * <p>Ele estava em <b>y=68</b>, em cima da própria obra, e o destino
+     * era o <b>piso do lote, y=63</b>. Cinco blocos abaixo: um aldeão desce
+     * degrau de um, e a navegação Vanilla não anda para uma queda dessas.
+     * Ele ficava parado até o guarda devolver a tarefa, e a obra recomeçava
+     * com outro construtor no mesmo lugar.
+     *
+     * <p><b>A saída é o patamar</b>, e não o piso: quando o pé da coluna
+     * está longe demais de onde ele já está, o destino vira o degrau
+     * intermediário que ele alcança — ver {@link ClimbLimit#landingBetween}.
+     * A passagem seguinte o leva mais um degrau, e assim por diante.
+     *
+     * <p>O chão continua sendo o destino quando ele está no chão, que é o
+     * caso comum e o que o {@code standingSpotNear} já resolvia para a
+     * duna e a depressão.
+     */
+    static BlockPos footOf(
+            ServerWorld world, ConstructionProject project, BlockPos target, BlockPos worker) {
+
+        BlockPos ground = footOf(world, project, target);
+
+        if (ClimbLimit.reachableFrom(worker.getY(), ground.getY())) {
+            return ground;
+        }
+
+        // Longe demais na vertical: o destino é o patamar que ele alcança,
+        // na mesma coluna do pé. Subir um degrau de cada vez é o que a
+        // navegação sabe fazer.
+        BlockPos landing = new BlockPos(
+                ground.getX(),
+                ClimbLimit.landingBetween(worker.getY(), ground.getY()),
+                ground.getZ());
+
+        return standingSpotNear(world, landing).orElse(landing);
     }
 
     /**
