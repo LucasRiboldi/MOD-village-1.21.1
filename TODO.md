@@ -1,6 +1,31 @@
 # TODO
 
-**Atualizado:** 2026-09-15, depois da integracao da primeira fatia do Lote 2 do mineiro.
+**Atualizado:** 2026-09-16, depois do playtest que achou o E45 (mina presa na boca).
+
+---
+
+## 🔴 P0.8 — E45: a mina fica presa na boca (aberto, não corrigido)
+
+Playtest de 2026-09-16, 03:44–08:23: **4h40 sem uma construção concluída**.
+O mineiro girou em falso a sessão inteira (166.559 linhas iguais, 10/s,
+**zero pedra quebrada**), o cobblestone caiu de 411 para 10 e o builder parou
+46 vezes por falta dele.
+
+Causa provada e correção proposta em
+[`docs/technical/E45-mina-presa-na-boca.md`](docs/technical/E45-mina-presa-na-boca.md).
+**Nada foi alterado no código.** Ordem sugerida:
+
+- [ ] 🔴 **C1** — o reinício do braço não pode ser mudo (`restartAt` roda 166 mil vezes sem uma linha)
+- [ ] 🟠 **C3** — `everyOpenArmIsDone` não pode aceitar 1 de 4 como "todos" ⚠️ preservar o limbo de 09-04
+- [ ] 🔴 **C2** — repetição sem progresso tem de custar (contador que `restartAt` não zera)
+- [ ] 🟠 **C4** — **decisão do autor:** boca intransponível → (a) mudar a boca, (b) girar a hélice, (c) desistir por um prazo. Recomendado: (b) com (a) como escalada.
+
+**Defeito de fundo a tratar junto:** `stall`, `still` e `adrift` ficaram
+zerados as 4h40 — o caminho de falha zera os contadores no mesmo tique.
+Terceira volta do mesmo laço; os consertos anteriores fecharam portas
+específicas, e o guarda genérico nunca disparou em nenhuma das três.
+
+---
 
 > **Este arquivo é a lista viva.** Só o que está aberto agora.
 > O histórico — sessões por data, ciclos fechados, erros resolvidos — está

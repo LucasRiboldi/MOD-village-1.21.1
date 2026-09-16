@@ -1,4 +1,4 @@
-# STATE — 2026-09-15
+# STATE — 2026-09-16
 
 > Arquivo de estado vivo. Sobrescreve, não acumula.
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -18,12 +18,57 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 | P0.5 | Perda de item por inventário cheio (E3) | ✅ entregue 09-11, **espera sessão** |
 | P0.6 | A enxurrada da areia calou | ✅ entregue 09-11, **espera sessão** |
 | P0.7 | Elegibilidade simplificada de lotes | ✅ entregue 09-15, **espera playtest** |
+| **P0.8** | **A mina fica presa na boca — 4h40 sem uma pedra** | 🔴 **aberto, diagnosticado, não corrigido** |
+
+**P0.8 é o bloqueador de agora, e vence os demais.** O playtest de 09-16
+(03:44–08:23) rodou 4h40 e **não concluiu uma construção**: o mineiro girou
+em falso a sessão inteira, o cobblestone caiu de 411 para 10 e o builder
+parou 46 vezes por falta dele. Causa provada, correção proposta em quatro
+itens, **nada alterado no código** — ver
+[`docs/technical/E45-mina-presa-na-boca.md`](docs/technical/E45-mina-presa-na-boca.md).
+**C4 exige decisão do autor** antes de implementar.
 
 **P0.7 — politica aplicada em 2026-09-15.** Piso solido disponivel e candidato a lote; pedra, gravilha e terracota nao sao recusadas pela composicao. Estrada exige material oficial mais `ROAD_AREA`; gravilha ou terracota fora da reserva continuam elegiveis. O scanner nao terraplana nem muda o mundo. Ver ADR-017.
 
 **Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
 
 **JAR atual 0.3.0:** `build`, 884 unitarios e 335/335 GameTests passaram. O artefato inclui P0.7, a limpeza imediata da claim, as duas correcoes do playtest de 09-15 (toco orfao e minerio recusado), a retirada do bau da boca da mina e as duas otimizacoes do planejador. Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `41BF1FD3406C635F95BB593D80E055A0AF6489EE0E9BBDFC12DC4CD84AAA1177`. Falta apenas playtest.
+
+---
+
+## Playtest de 2026-09-16, 03:44–08:23 — a mina presa na boca (P0.8)
+
+Log: `latest.log`, 341.196 linhas, JAR 0.3.0.
+
+**97,6% do log é um laço só:** 166.559 `hit stone with nowhere to stand` mais
+166.558 `no miner branch work`, **10 por segundo, por 16.657 segundos sem uma
+interrupção**. E os dois números que fecham o caso: **zero** `Miner … took` —
+nenhuma pedra saiu do mundo — e **zero** `went one level deeper`.
+
+**O custo não é o log, é a vila parada:** cobblestone 411 → 10 sem reposição,
+builder parado 46 vezes por falta dele, a obra em `2442,64,-2972` morta com
+**12 blocos restantes**, e **zero construções concluídas em 4h40**.
+
+**A causa.** Com o poço ainda não cavado, `branchesOpenNow()` vale 1, e o
+braço 0 sozinho satisfaz `everyOpenArmIsDone()`. Ele fecha na oitava recusa,
+`deepenIfEveryOpenArmIsDone` fecha os outros três — **que nunca foram
+trabalhados** — e `restartAt` devolve `cut = 0`: o cursor volta à boca, no
+mesmo bloco emparedado. A aritmética torna o laço inevitável: **o poço exige
+120 posições (`CARVED`) e o cursor nunca passa de 8 (`BLOCKED_BEFORE_TURNING`)**.
+
+**Duas hipóteses descartadas, registradas para não voltarem:** não é o conserto
+do `ColonyEdits` (só age depois que a picareta pega, e ela nunca pegou); não é
+o lenhador via `reopenFrom` (~1 árvore/55 s não sustenta 10/s); não é o ramo do
+fundo da mina (todos os Y do log entre 59 e 65, superfície).
+
+**E o defeito de fundo:** `stall 0/2400`, `still 0/300`, `adrift 0/400` ficaram
+**zerados as 4h40** — o caminho de falha zera os contadores no mesmo tique em
+que falha. **Guarda que o caminho de falha zera não é guarda**, e esta é a
+terceira volta do mesmo laço (19.193 linhas em 02:58; nove desistências em
+09-11; 166.559 agora).
+
+Análise completa, correção em quatro itens e o que falta decidir:
+[`docs/technical/E45-mina-presa-na-boca.md`](docs/technical/E45-mina-presa-na-boca.md).
 
 ---
 
