@@ -551,15 +551,61 @@ public final class ConstructionPlanner {
 
         IdleLog.clear(colony.id(), SUBJECT);
 
+        // <b>E a linha diz de onde o lote foi medido</b> — E46, 2026-09-16.
+        // A obra que nasce aqui pode ser largada no ciclo seguinte pelo
+        // guarda de alcance, e o log não permitia saber por quê: ele dizia
+        // onde a casa ficava, e não a que distância do centro ela estava
+        // nem por qual régua. Duas obras morreram assim no playtest de
+        // 21:41, planejadas e abandonadas em trinta segundos, e descobrir
+        // que o índice de ruas não tem teto de raio custou ler o scanner
+        // inteiro.
+        //
+        // As duas contas saem juntas de propósito: é a divergência entre
+        // elas que condena a obra, e vê-las lado a lado torna o defeito
+        // legível na hora. Ver ConstructionProject.isOutOfReach, que usa a
+        // euclidiana, e BuildSiteScanner, que varre em quadrado.
         VillageColonyMod.LOGGER.info(
-                "Colony {} planned {} at {} — {} blocks, {} builders",
+                "Colony {} planned {} at {} — {} blocks, {} builders."
+                        + " Measured from {}: {} blocks square, {} blocks straight,"
+                        + " and the radius is {}",
                 colony.id(),
                 project.blueprint().id(),
                 project.origin(),
                 project.blueprint().blockCount(),
-                builders);
+                builders,
+                colony.center(),
+                squareDistance(project.origin(), colony.center()),
+                straightDistance(project.origin(), colony.center()),
+                searchRadius);
 
         return Optional.of(project);
+    }
+
+    /**
+     * A distância em quadrado, que é como a varredura mede — E46.
+     *
+     * <p>Chebyshev: o lado do menor quadrado centrado em {@code centre}
+     * que contém {@code origin}. É a conta dos anéis do
+     * {@code BuildSiteScanner} e a do {@link #withinTheFarmersReach}.
+     */
+    private static int squareDistance(ColonyPos origin, ColonyPos centre) {
+        return Math.max(
+                Math.abs(origin.x() - centre.x()),
+                Math.abs(origin.z() - centre.z()));
+    }
+
+    /**
+     * A distância em linha reta, que é como o guarda de alcance mede — E46.
+     *
+     * <p>Euclidiana, arredondada: a conta do
+     * {@code ConstructionProject.isOutOfReach}. Quando ela passa do raio e
+     * a {@link #squareDistance} não passa, a obra nasce condenada.
+     */
+    private static int straightDistance(ColonyPos origin, ColonyPos centre) {
+        long dx = (long) origin.x() - centre.x();
+        long dz = (long) origin.z() - centre.z();
+
+        return (int) Math.round(Math.sqrt(dx * dx + dz * dz));
     }
 
     /**

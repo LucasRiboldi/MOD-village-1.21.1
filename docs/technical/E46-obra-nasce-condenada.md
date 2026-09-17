@@ -1,8 +1,14 @@
-# E46 — A obra que nasce condenada: quadrado para achar, círculo para manter
+# E46 — A obra que nasce condenada: a estrada leva o lote para fora do raio
 
 > Diagnóstico do playtest de **2026-09-16, 21:41–22:12** (37.041 linhas).
-> A causa está **provada por aritmética e conferida no log**. Nada foi
-> alterado no código; a correção é uma decisão pequena e de uma linha.
+>
+> **Atualizado em 2026-09-16, depois de executar o C2**, que mudou a causa
+> raiz. A primeira versão culpava a divergência quadrado/círculo (§2); ela é
+> real, mas **não foi o que matou estas obras**. A causa é o **índice de
+> ruas sem teto de raio** (§2-bis).
+>
+> **O C2 está implementado e verificado** (build + 886 testes, 0 falhas).
+> **C4, C1 e C3 seguem abertos e esperam decisão do autor.**
 
 ---
 
@@ -55,9 +61,60 @@ varrido**.
 
 ⚠️ **E aqui o diagnóstico aperta mais.** As duas obras estão fora **das
 duas** réguas. O scanner não deveria tê-las achado nem pela conta dele.
-Logo, além da divergência de forma, **o scanner procurou fora do próprio
-raio** — ou procurou a partir de um centro que não é o
-`2495,-3003` usado no abandono.
+
+✅ **Resolvido pelo C2, em 2026-09-16 — e a resposta é a §2-bis.**
+
+## 2-bis. A causa raiz: o índice de ruas não tem teto de raio
+
+**Executado como C2 em 2026-09-16.** A pergunta era de qual centro o scanner
+parte. A resposta estava no relatório de fim de sessão que o `SweepLog` já
+escrevia, e ninguém tinha lido:
+
+```text
+Colony 9da5460c sweep: 40 planner runs, 6 passes over 6144 columns,
+  40 answered by the index — 0 restarts (0 by drift, farthest 0 blocks),
+  0 complete rounds
+```
+
+**40 de 40 consultas foram respondidas pelo índice de ruas**, e o centro
+**não derivou uma vez** (`0 by drift`). O caminho dos anéis — o único que
+tem `ring <= radius` — **não rodou para decidir esses lotes**.
+
+### Os dois caminhos, e só um tem teto
+
+`BuildSiteScanner.find` bifurca logo no começo:
+
+| Caminho | Quando | Teto de raio |
+|---|---|---|
+| `findAmongRoads` | há índice de ruas (o caso normal, depois da 1ª volta) | **nenhum** — percorre a lista inteira |
+| anéis (`for ring…`) | não há índice | `ring <= radius` |
+
+`findAmongRoads` sequer **recebia** o raio, e nem `siteBesideRoadAt` nem
+`siteFor` o consultam. E o índice cresce sem teto: `BuildSiteScanner.remember`
+acrescenta **qualquer** coluna de rua nova, e o log traz 31 linhas de
+`extended the road N blocks …`.
+
+**O mecanismo completo, então:**
+
+1. A vila calça estrada para fora do raio de 64 — 31 vezes nesta sessão.
+2. `remember` absorve cada coluna nova no índice, sem perguntar a distância.
+3. `findAmongRoads` percorre o índice inteiro e serve um lote de lá.
+4. O guarda de alcance, que **tem** raio, larga a obra no ciclo seguinte.
+
+**O lote nasce de onde a estrada chegou, e não de onde o centro alcança.**
+
+### O que isso muda no diagnóstico
+
+A divergência quadrado/círculo da §2 é **real e continua valendo** — 21% da
+área varrida cai nela. Mas **não foi ela que matou estas duas obras**: elas
+estavam a 67 e 71 blocos **em quadrado**, fora das duas réguas. Unificar as
+contas (C1) **não teria salvado nenhuma das duas**.
+
+São dois defeitos na mesma família, e a ordem de correção se inverte:
+
+- **O que matou o playtest:** o índice sem teto (C4, novo).
+- **A armadilha latente:** as duas réguas (C1) — que ainda condena 21% dos
+  lotes quando o índice for corrigido.
 
 ## 3. A pista do segundo centro
 
@@ -86,10 +143,15 @@ camas e **recusou** mover o centro, porque a regra de completude não deixou.
 O `colony.center()` ficou em `2495,-3003`, a 77 blocos de onde a vila de
 fato está.
 
-⚠️ **Não confirmado:** de qual dos dois pontos o `BuildSiteScanner`
-realmente partiu nesta sessão. O código lê `colony.center()`
-(`ConstructionPlanner.java:353`), mas as coordenadas achadas só fazem
-sentido a partir do anchor. **Essa é a primeira coisa a instrumentar.**
+✅ **Respondido pelo C2, e a suspeita estava errada.** O scanner **parte de
+`colony.center()`**, como o código diz. As coordenadas achadas não vinham de
+outro centro: vinham do **índice de ruas**, que não tem teto de raio — ver
+§2-bis. O `0 by drift` do `SweepLog` fecha a questão.
+
+**Mas o fato desta seção continua de pé, e é o C3:** o centro da colônia está
+a 77 blocos do aglomerado real de camas, e a detecção recusa movê-lo. Isso
+não causou o E46, e continua sendo uma vila que mede tudo de um ponto onde
+ela não está.
 
 ## 4. O que já foi descartado
 
@@ -127,19 +189,60 @@ que o próprio scanner aprova.
 quadrado. O círculo em `isOutOfReach` é o **forasteiro** — e trocá-lo alinha
 três réguas de uma vez, em uma linha.
 
-**Prova.** Teste de unidade que põe a obra no canto do quadrado
-(`dx = dz = radius`) e afirma que ela **não** é considerada fora de alcance.
-A conta é pública e testável sem servidor — `isOutOfReach` é `static` e não
-conhece Minecraft.
+**Prova.** ✅ **Os dois testes já existem**, escritos junto com o C2 em
+`ConstructionProjectTest`:
 
-### C2 — Instrumentar de qual centro o lote foi escolhido 🔴
+- `theCornerOfTheSweptSquareIsOutOfReachByTheStraightLine` — fixa a
+  divergência de hoje: o canto do quadrado varrido (`64,64`) é recusado pela
+  reta. **Quando o C1 for decidido em favor de (a), este `assertTrue` vira
+  `assertFalse`** — e é ele quem avisa que o comportamento mudou de propósito.
+- `theEdgeOfTheSweptSquareIsWithinReachByBothRulers` — a beira reta passa
+  pelas duas réguas, mostrando que o problema é a diagonal e não o raio.
 
-**Problema.** As obras achadas estão fora das **duas** contas medidas do
-`colony.center()`, o que só se explica se o scanner partiu de outro ponto.
-O log não diz de onde ele partiu.
+A conta é testável sem servidor: `isOutOfReach` é `static` e não conhece
+Minecraft.
 
-**Correção.** A linha `planned …` passa a registrar o centro e a distância
-usados na escolha. Uma linha, e ela responde a pergunta de vez.
+### C2 — Instrumentar de qual centro o lote foi escolhido ✅ feito
+
+**Entregue em 2026-09-16.** Duas linhas, e elas respondem a pergunta em
+qualquer log futuro:
+
+- `ConstructionPlanner` — a linha `planned …` agora termina com
+  `Measured from <centro>: N blocks square, N blocks straight, and the
+  radius is N`. As duas contas lado a lado, porque é a divergência entre
+  elas que condena a obra.
+- `BuildSiteScanner.warnIfBeyondTheRadius` — um `WARN` quando o índice de
+  ruas serve um lote de fora do raio: *"the road index served a lot at …
+  from outside the sweep … The sweep would never have offered it"*.
+  **Avisa e não corrige** — recusar a coluna muda onde a vila constrói, e
+  isso é o C4.
+
+**Verificado:** `build` passou; **886 testes unitários, 0 falhas**, conferido
+no XML de `build/test-results`. Dois testes novos em
+`ConstructionProjectTest` fixam a divergência das réguas — ver C1.
+
+### C4 — O índice de ruas precisa de teto de raio 🔴 **(é o que matou o playtest)**
+
+**Problema.** `findAmongRoads` percorre o índice inteiro e não consulta o
+raio; `remember` acrescenta qualquer rua nova. A vila calça estrada para
+fora do raio e passa a receber lotes de lá. Ver §2-bis.
+
+**Correção, e a escolha é do autor:**
+
+| Saída | O que faz | Preço |
+|---|---|---|
+| **(a) Filtrar ao servir** | `findAmongRoads` pula coluna fora do raio | Índice continua crescendo; custo por passagem sobe um pouco |
+| **(b) Filtrar ao lembrar** | `remember` recusa coluna fora do raio | Índice fica enxuto; se o centro mudar, o índice fica velho |
+| **(c) Deixar como está** | A vila cresce ao longo das estradas, sem teto | Exige então que o **guarda** aceite — vira decisão de design, não correção |
+
+**Recomendação: (a).** O teto é uma pergunta do momento de servir, e o
+centro pode mudar entre lembrar e servir. (c) é defensável como decisão de
+design — "a vila cresce pela estrada" —, mas aí o guarda de alcance é que
+está errado, e não o scanner.
+
+**Prova.** Teste que põe uma coluna fora do raio no índice e afirma que ela
+não é servida. ⚠️ `findAmongRoads` é privado e toca `ServerWorld` — o teste
+provavelmente é gametest, não unitário.
 
 ### C3 — O centro que a detecção recusa mover 🟠
 
@@ -157,16 +260,31 @@ própria.
 
 ## 6. Estado para a próxima sessão
 
-**Nada foi alterado no código.** Esta análise é o único artefato.
+**O C2 foi implementado; C1, C3 e C4 seguem abertos e esperam decisão.**
 
-**Ordem sugerida:** C2 (descobrir de onde o scanner parte — pode mudar o
-diagnóstico de C1) → C1 (unificar a régua) → C3 (decisão à parte).
+**Ordem revisada, depois do que o C2 achou:** **C4** (o índice sem teto — é
+o que matou o playtest) → **C1** (unificar a régua — a armadilha latente dos
+21%) → C3 (o centro que a detecção recusa mover, investigação própria).
 
-**Não verificado:** nenhum build, teste ou gametest foi executado nesta
-sessão — foi leitura de log e código.
+**Verificado nesta sessão:**
+
+- `./gradlew build` — **passou**
+- `./gradlew test` — **886 testes, 0 falhas, 0 erros**, conferido no XML de
+  `build/test-results/test`, e não só na saída do Gradle
+- Um teste de arquitetura (`ConversionBoundaryTest`) pegou uma violação da
+  ADR-005 §4 na primeira tentativa — conversão de tipo fora do
+  `MinecraftTypeAdapter` — e foi corrigida antes de o commit sair
+
+**Não verificado:** **nenhum gametest foi executado**, e **nada foi visto em
+jogo**. A instrumentação do C2 é código novo que ainda não rodou num
+servidor — o próximo playtest é quem confirma que as duas linhas saem como
+esperado.
 
 **Ponto de partida concreto:**
 
+- `BuildSiteScanner.findAmongRoads` — **o caminho sem teto de raio, a causa** — `src/main/java/com/villagecolony/fabric/integration/BuildSiteScanner.java:634`
+- `BuildSiteScanner.remember` — quem enche o índice sem perguntar distância — `src/main/java/com/villagecolony/fabric/integration/BuildSiteScanner.java:745`
+- `BuildSiteScanner.warnIfBeyondTheRadius` — o aviso do C2 — `src/main/java/com/villagecolony/fabric/integration/BuildSiteScanner.java:849`
 - `ConstructionProject.isOutOfReach` — a conta euclidiana — `src/main/java/com/villagecolony/core/construction/model/ConstructionProject.java:162`
 - `ConstructionPlanner.plan` — o guarda que abandona — `src/main/java/com/villagecolony/fabric/work/ConstructionPlanner.java:229`
 - `ConstructionPlanner` — a busca do lote — `src/main/java/com/villagecolony/fabric/work/ConstructionPlanner.java:353`

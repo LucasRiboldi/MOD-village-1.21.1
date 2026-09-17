@@ -253,4 +253,42 @@ class ConstructionProjectTest {
 
         assertFalse(project.isSupersededBy(OTHER_HOUSE));
     }
+
+    /**
+     * <b>O canto do quadrado é o E46</b> — 2026-09-16.
+     *
+     * <p>Este teste não afirma que a conta está certa: afirma que ela
+     * <b>discorda</b> de quem acha o lote, e é essa discordância que é o
+     * defeito. O {@code BuildSiteScanner} varre em anéis quadrados e
+     * aceita tudo com {@code max(|dx|,|dz|) <= radius}; este guarda
+     * recusa pela reta. Uma obra no canto passa por um e morre no outro.
+     *
+     * <p>Fixa os números do playtest de 21:41 para o dia em que o C1 for
+     * decidido: com a régua unificada em Chebyshev, o
+     * {@code assertTrue} vira {@code assertFalse} e <b>este teste é quem
+     * avisa</b> que o comportamento mudou de propósito.
+     */
+    @Test
+    void theCornerOfTheSweptSquareIsOutOfReachByTheStraightLine() {
+        ColonyPos centre = new ColonyPos(0, 64, 0);
+
+        // O canto exato do quadrado que a varredura percorre: dentro dela
+        // pela régua dos anéis, a 90,5 blocos pela reta.
+        ColonyPos corner = new ColonyPos(64, 64, 64);
+
+        assertEquals(64, Math.max(Math.abs(corner.x()), Math.abs(corner.z())));
+
+        assertTrue(ConstructionProject.isOutOfReach(corner, centre, 64));
+    }
+
+    /**
+     * E a beira reta continua dentro, pelas duas réguas — o contraste que
+     * mostra que o problema é a diagonal, e não o raio.
+     */
+    @Test
+    void theEdgeOfTheSweptSquareIsWithinReachByBothRulers() {
+        ColonyPos centre = new ColonyPos(0, 64, 0);
+
+        assertFalse(ConstructionProject.isOutOfReach(new ColonyPos(64, 64, 0), centre, 64));
+    }
 }

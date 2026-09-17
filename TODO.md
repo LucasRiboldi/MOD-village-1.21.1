@@ -29,27 +29,30 @@ específicas, e o guarda genérico nunca disparou em nenhuma das três.
 
 ---
 
-## 🔴 P0.9 — E46: a obra nasce condenada (causa provada, não corrigida)
+## 🔴 P0.9 — E46: a obra nasce condenada (causa raiz achada, espera decisão)
 
 Playtest de 21:41. A biblioteca foi planejada **duas vezes** e as duas
 morreram em ~30 s com **628 blocos restantes de 628**, sem um bloco posto.
 
-**A causa é geométrica:** quem acha o lote mede em **quadrado**
-(`BuildSiteScanner`, anéis `max(|dx|,|dz|) ≤ 64`); quem mantém a obra mede em
-**círculo** (`isOutOfReach`, `dx²+dz² ≤ 64²`). Mesmo centro, mesmo raio,
-formas diferentes — e a faixa entre as duas é **21% da área varrida**.
-Detalhe em
+**O C2 mudou a causa raiz.** Não é a divergência quadrado/círculo — as obras
+estavam fora das **duas** réguas. É o **índice de ruas sem teto de raio**:
+`findAmongRoads` percorre o índice inteiro sem consultar o raio, e
+`remember` acrescenta qualquer rua nova. A vila calçou estrada 31 vezes, e o
+lote passou a nascer de onde a estrada chegou. Prova: `40 answered by the
+index — 0 by drift`, do `SweepLog`. Detalhe em
 [`docs/technical/E46-obra-nasce-condenada.md`](docs/technical/E46-obra-nasce-condenada.md).
 
 **É independente do E45** — corrigir o mineiro sozinho não faz a vila
 construir.
 
-- [ ] 🔴 **C2** — instrumentar de qual centro o scanner parte (as obras estão fora das **duas** contas de `colony.center()`, e dentro das duas do anchor de camas). **Fazer antes de C1:** pode mudar o diagnóstico.
-- [ ] 🔴 **C1** — **decisão do autor:** uma régua só → (a) `isOutOfReach` vira Chebyshev, (b) scanner vira euclidiano. Recomendado **(a)**: `withinTheFarmersReach` e `VillageDetector` já medem em quadrado; o círculo é o forasteiro. Teste: obra no canto (`dx = dz = radius`) não pode estar fora de alcance.
-- [ ] 🟠 **C3** — o centro que a detecção recusa mover (59× `view not provably complete`, centro a 77 blocos do aglomerado real). ⚠️ investigação própria — afrouxar a regra de completude ressuscita o E2.
+- [x] ✅ **C2** — instrumentado: a linha `planned …` diz o centro e as duas distâncias; o scanner emite `WARN` ao servir lote de fora do raio. **Verificado:** build + 886 testes, 0 falhas (XML conferido). ⚠️ sem gametest e sem jogo.
+- [ ] 🔴 **C4** — **decisão do autor, e é o que matou o playtest:** teto do índice → (a) filtrar ao servir em `findAmongRoads`, (b) filtrar ao lembrar em `remember`, (c) assumir que a vila cresce pela estrada e corrigir o guarda. Recomendado **(a)**: o centro pode mudar entre lembrar e servir.
+- [ ] 🔴 **C1** — **decisão do autor:** uma régua só → (a) `isOutOfReach` vira Chebyshev, (b) scanner vira euclidiano. Recomendado **(a)**: `withinTheFarmersReach` e `VillageDetector` já medem em quadrado. Os dois testes que fixam a divergência **já existem** em `ConstructionProjectTest` — ao decidir (a), o `assertTrue` de `theCornerOfTheSweptSquareIsOutOfReachByTheStraightLine` vira `assertFalse`.
+- [ ] 🟠 **C3** — o centro que a detecção recusa mover (59× `view not provably complete`, centro a 77 blocos do aglomerado real). **Não causou o E46.** ⚠️ investigação própria — afrouxar a regra de completude ressuscita o E2.
 - [x] 🟢 ~~`isSupersededBy` do planejador~~ — **descartado:** `drops the untouched` = 0
 - [x] 🟢 ~~`PatienceClock` / obra sem material~~ — **descartado:** `WAITING_RESOURCES` não aparece no log, e a paciência é de 10 min contra 29 s observados
 - [x] 🟢 ~~`ConstructionService.forget` chamado de outro lugar~~ — **descartado:** único chamador é `WaitingWork:190`
+- [x] 🟢 ~~o scanner partir de outro centro~~ — **descartado pelo C2:** parte de `colony.center()`, e `0 by drift`
 
 ---
 

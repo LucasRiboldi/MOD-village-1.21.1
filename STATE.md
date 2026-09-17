@@ -19,7 +19,7 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 | P0.6 | A enxurrada da areia calou | ✅ entregue 09-11, **espera sessão** |
 | P0.7 | Elegibilidade simplificada de lotes | ✅ entregue 09-15, **espera playtest** |
 | **P0.8** | **A mina fica presa na boca (E45)** | 🔴 **aberto, causa provada, não corrigido** |
-| **P0.9** | **A obra nasce condenada: quadrado acha, círculo larga (E46)** | 🔴 **aberto, causa provada, não corrigido** |
+| **P0.9** | **A obra nasce condenada: a estrada leva o lote para fora (E46)** | 🔴 **causa raiz achada, instrumentada, correção espera decisão** |
 
 **Dois bloqueadores, e são independentes.** O playtest de 09-16 21:41–22:12
 **reproduziu o E45** e revelou o E46. Corrigir só o E45 **não** faz a vila
@@ -37,24 +37,26 @@ pedra quebrada**, idêntico ao playtest de 03:44 (166.559). A causa foi
 [`docs/technical/E45-mina-presa-na-boca.md`](docs/technical/E45-mina-presa-na-boca.md).
 **C4 exige decisão do autor** antes de implementar.
 
-**P0.9 — E46, a obra nasce condenada.** Diagnosticado em 23:00, e a causa é
-**geométrica**: quem acha o lote mede em **quadrado** (`BuildSiteScanner`,
-anéis `max(|dx|,|dz|) ≤ 64`) e quem mantém a obra mede em **círculo**
-(`ConstructionProject.isOutOfReach`, `dx²+dz² ≤ 64²`). Os dois recebem o
-mesmo centro e o mesmo raio — diverge a **forma**, e a faixa entre o círculo
-e o quadrado é **21% da área varrida**. A obra é aprovada por uma régua e
-abandonada pela outra no ciclo seguinte, com 628/628 blocos.
+**P0.9 — E46, a obra nasce condenada.** O **C2 foi executado**, e ele mudou
+a causa raiz. A suspeita inicial — divergência quadrado/círculo — é real mas
+**não matou estas obras**: elas estavam fora das **duas** réguas.
 
-**A correção é de uma linha, e a escolha é do autor:** alinhar
-`isOutOfReach` ao Chebyshev (recomendado — `withinTheFarmersReach` e o
-`VillageDetector` **já** medem em quadrado; o círculo é o forasteiro), ou
-tornar o scanner euclidiano.
+**A causa é o índice de ruas sem teto de raio.** O `SweepLog` já dizia, e
+ninguém tinha lido: `40 planner runs, 40 answered by the index — 0 by
+drift`. O caminho `findAmongRoads` percorre o índice inteiro e **não
+consulta o raio** (nem o recebia); `remember` acrescenta **qualquer** rua
+nova, e a vila calçou estrada 31 vezes nesta sessão. **O lote nasce de onde
+a estrada chegou, não de onde o centro alcança.**
 
-⚠️ **Um fio solto:** as duas obras estavam fora das **duas** contas medidas
-de `colony.center()` (`2495,-3003`), e **dentro** das duas se medidas do
-anchor de camas `2448,-2942` — que a detecção viu 59 vezes e recusou adotar
-(`view not provably complete`). Instrumentar de qual centro o scanner parte é
-o primeiro passo, e pode mudar o diagnóstico. Ver
+**Entregue e verificado:** a linha `planned …` agora diz o centro e as duas
+distâncias (quadrado e reta), e o scanner emite `WARN` quando o índice serve
+lote de fora do raio. `build` passou; **886 testes, 0 falhas**, conferido no
+XML. ⚠️ **Nenhum gametest rodou e nada foi visto em jogo** — a
+instrumentação é código novo que ainda não rodou num servidor.
+
+**Três decisões abertas, e são suas:** **C4** (teto do índice — filtrar ao
+servir, ao lembrar, ou assumir que a vila cresce pela estrada), **C1** (qual
+régua fica) e **C3** (o centro a 77 blocos do aglomerado de camas). Ver
 [`docs/technical/E46-obra-nasce-condenada.md`](docs/technical/E46-obra-nasce-condenada.md).
 
 **P0.7 — politica aplicada em 2026-09-15.** Piso solido disponivel e candidato a lote; pedra, gravilha e terracota nao sao recusadas pela composicao. Estrada exige material oficial mais `ROAD_AREA`; gravilha ou terracota fora da reserva continuam elegiveis. O scanner nao terraplana nem muda o mundo. Ver ADR-017.

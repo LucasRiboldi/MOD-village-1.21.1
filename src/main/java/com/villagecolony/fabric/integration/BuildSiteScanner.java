@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.ColonySweepCursor;
 import com.villagecolony.core.type.ColonyPos;
@@ -340,7 +341,7 @@ public final class BuildSiteScanner {
         if (roads != null) {
             SweepLog.indexed(colonyId);
 
-            return findAmongRoads(world, colonyId, from, roads, plans);
+            return findAmongRoads(world, colonyId, from, roads, radius, plans);
         }
 
         Sweep paused = SWEEPS.get(colonyId);
@@ -632,7 +633,7 @@ public final class BuildSiteScanner {
      */
     private static Optional<Site> findAmongRoads(
             ServerWorld world, UUID colonyId, BlockPos from, ColonyRoads roads,
-            List<ColonyPos> plans) {
+            int radius, List<ColonyPos> plans) {
 
         List<Long> columns = roads.columns();
 
@@ -681,6 +682,8 @@ public final class BuildSiteScanner {
                 }
 
                 RoadExtension.lotFound(colonyId);
+
+                warnIfBeyondTheRadius(colonyId, site.get(), from, radius);
 
                 return site;
             }
@@ -817,6 +820,54 @@ public final class BuildSiteScanner {
         long dz = (long) from.z() - now.z();
 
         return dx * dx + dz * dz > (long) CENTER_DRIFT * CENTER_DRIFT;
+    }
+
+    /**
+     * O lote que o índice serviu de fora do raio — E46, 2026-09-16.
+     *
+     * <p><b>A varredura em anéis tem teto; o índice de ruas não.</b> Ela
+     * para em {@code ring <= radius}, e por isso nunca devolve coluna de
+     * fora. O índice é uma lista, percorrida inteira, e
+     * {@link #remember} acrescenta a ele <b>qualquer</b> rua nova — a
+     * vila calça estrada para fora do raio e o índice a absorve. Daí em
+     * diante o lote sai de onde a estrada chegou, e não de onde o centro
+     * alcança.
+     *
+     * <p>Isso não é sintoma: é o E46. O playtest de 2026-09-16 21:41
+     * respondeu <b>40 de 40</b> consultas pelo índice, com zero deriva de
+     * centro, e as duas obras nasceram a 67 e 71 blocos em quadrado — de
+     * um raio de 64. As duas foram largadas no ciclo seguinte.
+     *
+     * <p><b>Avisa, e não corrige.</b> Recusar a coluna aqui mudaria onde
+     * a vila constrói, e essa é decisão do autor — ver o C1 do E46, que
+     * pergunta qual das duas réguas fica. Enquanto ela não vem, o log
+     * deixa de ser mudo.
+     *
+     * <p>Fala das duas contas porque é a divergência entre elas que
+     * condena a obra: quadrado é como se acha, reta é como se mantém.
+     */
+    private static void warnIfBeyondTheRadius(
+            UUID colonyId, Site site, BlockPos centre, int radius) {
+
+        int dx = Math.abs(site.origin().x() - centre.getX());
+        int dz = Math.abs(site.origin().z() - centre.getZ());
+
+        int square = Math.max(dx, dz);
+
+        if (square <= radius) {
+            return;
+        }
+
+        VillageColonyMod.LOGGER.warn(
+                "Colony {} — the road index served a lot at {} from outside the sweep:"
+                        + " {} blocks square and {} straight from {}, and the radius is {}."
+                        + " The sweep would never have offered it",
+                colonyId,
+                site.origin(),
+                square,
+                Math.round(Math.sqrt((long) dx * dx + (long) dz * dz)),
+                MinecraftTypeAdapter.toColonyPos(centre),
+                radius);
     }
 
     /** Esquece os cursores. Chamado ao descarregar o mundo. */
