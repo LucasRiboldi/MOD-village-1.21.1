@@ -27,8 +27,16 @@ explica tudo (a varredura precisa de ~17 ciclos e teve 6). Ver
 `lento-nao-e-travado` — este diagnóstico já foi errado antes.
 
 - [x] ✅ **Instrumentar** quantas colunas sobrevivem a todas as recusas — `LotRefusals.accepted`, com linha própria no relatório. **Verificado:** build + 902 unitários + 336 GameTests em 5/5. Gametest `theSurvivingColumnsAreCounted` conferido no XML.
-- [ ] 🔴 **Playtest de 15–20 min** — o relatório sai ao fechar o mundo. `0 survived` ⇒ afrouxar recusa; `N > 0` ⇒ orçamento de varredura.
-- [ ] 🟠 **Decisão do autor, depois do número:** o calçamento original da vila deve mesmo bloquear lote? A Regra 3 protege a vila do jogador, mas talvez a rua não precise ser intocável.
+- [x] ✅ **Playtest de 42 min** — a resposta foi **zero**: `0 survived every check, 960672 were turned down`. Não é orçamento de varredura; a vila não tem chão que sirva. Distribuição idêntica à da sessão curta, então não é amostra pequena.
+- [x] ✅ **Decidido pelo autor (opção 1):** a reserva vale só para a rua que a colônia calçou. `isReservedAgainstLots` é nova e substitui `isRoadArea` **só na recusa de lote** — a função antiga continua servindo aos três usos positivos, senão a colônia deixaria de reconhecer as ruas Vanilla. **Verificado:** build + 902 unitários + 337 GameTests em 5/5.
+- [ ] 🔴 **Playtest do JAR novo** — `N > 0` ⇒ abriu chão; `0` de novo ⇒ o calçamento de gravel/terracotta não existe nessa vila.
+
+⚠️ **Expectativa honesta:** `dirt_path` não é bloco sólido cheio e continuará
+caindo em `NOT_NATURAL_GROUND` adiante. Quem passa a poder virar lote é o
+calçamento de **gravel e terracotta** — quanto disso existe na vila do
+playtest, ninguém mediu ainda. **O efeito pode ser bem menor que os 54,8%.**
+
+- [ ] 🟠 **A vila também não estende estrada** — `none of the road ends this colony can see may be paved`, 23 tentativas na sessão de 42 min. Sem lote a regra manda crescer a rua, e a rua não cresce: é um círculo fechado, e vale investigação própria.
 
 ---
 

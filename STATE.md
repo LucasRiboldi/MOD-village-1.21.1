@@ -19,7 +19,7 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 | P0.6 | A enxurrada da areia calou | ✅ entregue 09-11, **espera sessão** |
 | P0.7 | Elegibilidade simplificada de lotes | ✅ entregue 09-15, **espera playtest** |
 | **P0.8** | **A mina fica presa na boca (E45)** | ✅ **corrigido e CONFIRMADO EM JOGO 09-17** |
-| **P1.0** | **Nenhum lote aprovado — a vila não planeja obra** | 🔴 **aberto, instrumentado 09-17** |
+| **P1.0** | **Nenhum lote aprovado — a vila não planeja obra** | 🟠 **medido e afrouxado 09-17, espera playtest** |
 | **P0.9** | **A obra nasce condenada: a estrada leva o lote para fora (E46)** | ✅ **C4 corrigido 09-16, espera playtest** |
 
 **Dois bloqueadores, e são independentes.** O playtest de 09-16 21:41–22:12
@@ -100,42 +100,96 @@ aglomerado de camas, que não causou o E46). Ver
 
 **Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
 
-**JAR atual 0.3.0 — gerado em 2026-09-17, 00:25.** Sobre o anterior, entra
-**só a instrumentação do P1.0**: a contagem de colunas que sobrevivem a
-todas as recusas. Nenhuma correção nova de comportamento — o E45 já está
-confirmado em jogo e o E46 segue sem poder ser testado.
+**JAR atual 0.3.0 — gerado em 2026-09-17, 08:10.** Entra o **afrouxamento da
+reserva de estrada** (P1.0): o calçamento original da vila deixa de reservar
+chão contra lote, e a reserva passa a valer só para a rua que a colônia
+calçou.
 
-**A pergunta que este JAR existe para responder**, e ela decide o próximo
-conserto. Ao fechar o mundo, procurar:
+**A pergunta que este JAR existe para responder.** Ao fechar o mundo:
 
 ```text
 Colony … lot columns: N survived every check, N were turned down — N%
 ```
 
-- **`0 survived`** ⇒ a vila não tem um palmo livre. O conserto é afrouxar
-  uma recusa, e a candidata é a reserva de estrada (53%), que hoje inclui
-  todo calçamento original da vila.
-- **`N survived` com N > 0** ⇒ há chão, e o problema é o orçamento da
-  varredura não fechar a volta. Conserto completamente diferente.
+- **`N > 0`** ⇒ o afrouxamento abriu chão. Se vier obra planejada junto, o
+  P1.0 está resolvido e o E46 finalmente pode ser testado.
+- **`0 survived` de novo** ⇒ o calçamento de gravel/terracotta não existe
+  nessa vila, e a próxima candidata é a Regra 3 (18,5%) ou a régua da rua
+  (9,1%). **Não afrouxar nada antes desse número.**
 
-⚠️ **Jogue 15–20 minutos sem fechar.** A varredura precisa de ~17 ciclos
-(8 min) para completar uma volta; a sessão de 00:09 teve 6 e marcou
-`0 complete rounds`. O relatório só sai **ao parar o servidor**.
+⚠️ **Jogue 15–20 minutos sem fechar** — a varredura precisa de ~17 ciclos e
+o relatório só sai ao parar o servidor.
 
 **Verificado:** `build` passou; **902 unitários, 0 falhas** (XML conferido);
-**336 GameTests** (+1: `theSurvivingColumnsAreCounted`), **5 rodadas verdes
-em 5** — o KF-002 não apareceu desta vez. Conferido **dentro do JAR** que a
-linha nova está na classe compilada, e no XML que o teste novo de fato
-rodou.
+**337 GameTests** (+1: `theVillageOwnPavingIsNotAReserveAgainstLots`),
+**5 rodadas verdes em 5**. Conferido no XML que o teste novo rodou, e dentro
+do JAR que o método novo está na classe compilada. Os quatro testes de
+reserva que já existiam continuam verdes — inclusive
+`everyReservedRoadMaterialBlocksTheWholeFootprint`.
 
 Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas três
-cópias: `EABD11D21068BF8206D56893E2CA90BE717EADCE4B2E73F7C3E39E875F51266E`
+cópias: `CD66E3C8ACE8709A414655E091D0EFCC2736D68F2C7905752281424A06AA4823`
 (o anterior era `B7E505BF…`).
 
 *JAR anterior, para referência: `build`, 884 unitários e 335/335 GameTests;
 incluía P0.7, a limpeza imediata da claim, as duas correções do playtest de
 09-15 (toco órfão e minério recusado), a retirada do baú da boca da mina e
 as duas otimizações do planejador.*
+
+---
+
+## Playtest de 2026-09-17, 00:34–01:17 — a instrumentação respondeu: zero
+
+42 minutos, 2.093 linhas. **A linha nova deu a resposta que a sessão curta
+não podia dar:**
+
+```text
+Colony 9da5460c lot columns: 0 survived every check, 960672 were turned down — 0%
+```
+
+**Zero colunas aprovadas em quase um milhão testadas.** Não é orçamento de
+varredura: **a vila não tem um palmo de chão que sirva.** A distribuição é
+idêntica à da sessão de 6 minutos (54,8% / 18,5%), então não foi amostra
+pequena.
+
+| Recusa | % |
+|---|---|
+| **reserva de estrada** | **54,8%** |
+| Regra 3 protege | 18,5% |
+| fora do nível da rua | 9,1% |
+| algo no volume da casa | 6,2% |
+| sem chão na janela | 5,9% |
+| chão não natural | 5,5% |
+
+**E a vila está num círculo fechado:** sem lote, a regra manda estender a
+estrada; a estrada não consegue crescer (`none of the road ends this colony
+can see may be paved`, 23 tentativas). Sem estrada nova, não há lote novo.
+
+**O mineiro segue vivo:** `Miner … took` = 5, `turning the helix` = 8,
+`tried all 4 helices` = 2. O guarda girou e trocou a boca em vez de travar.
+
+### O afrouxamento, decidido pelo autor em 09-17
+
+A reserva de estrada passa a valer **só para a rua que a colônia calçou**.
+`BuildSiteScanner.isReservedAgainstLots` é nova e substitui `isRoadArea`
+**apenas na recusa de lote**.
+
+⚠️ **Por que uma função nova, e não mudar a que havia.** `isRoadArea` é
+usada em **dois sentidos opostos**: em três lugares responde *"isto é rua, a
+casa pode encostar aqui"* e num quarto *"isto é reserva, não construa"*.
+Afrouxar a única função afrouxaria as duas, e a colônia deixaria de
+reconhecer as ruas Vanilla — que é justamente por onde ela cresce.
+
+**A Regra 3 continua inteira:** quem protege a vila do jogador é a recusa
+`PROTECTED`, uma pergunta adiante. Bloco original que não é calçamento segue
+intocável.
+
+⚠️ **Expectativa honesta, e ela é menor que os 54,8%.** `dirt_path` não é
+bloco sólido cheio, então o calçamento de terra continuará caindo em
+`NOT_NATURAL_GROUND` logo adiante. Quem passa a poder virar lote é o
+calçamento de **gravel e terracotta**. **Quanto disso existe na vila do
+playtest, não sei** — o próximo log é que dirá, e a linha `lot columns` mede
+exatamente isso.
 
 ---
 

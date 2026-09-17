@@ -972,6 +972,55 @@ public final class BuildSiteScanner {
     }
 
     /**
+     * Se esta coluna é reserva que <b>impede</b> lote — P1.0, 2026-09-17.
+     *
+     * <p><b>Por que não basta o {@link #isRoadArea}.</b> Aquela pergunta
+     * é usada nos dois sentidos, e são opostos: em três lugares ela
+     * responde <i>"isto é rua, a casa pode encostar aqui"</i>, e num
+     * quarto responde <i>"isto é reserva, não construa"</i>. Enquanto as
+     * duas foram a mesma pergunta, afrouxar uma afrouxava a outra — e
+     * tirar a vila original de ambas faria a colônia deixar de reconhecer
+     * as ruas Vanilla, que é justamente por onde ela cresce.
+     *
+     * <p><b>A decisão do autor, 2026-09-17:</b> a reserva vale para a rua
+     * que a <b>colônia</b> calçou, e não para o calçamento que já estava
+     * na vila. Numa vila gerada a rua é onde o terreno é plano, e reservar
+     * todo ele era recusar o melhor chão que existe.
+     *
+     * <p><b>O número que decidiu.</b> Playtest de 2026-09-17, 42 minutos:
+     * <b>960.672 colunas testadas e zero aprovadas</b>, com 54,8% das
+     * recusas nesta reserva e 18,5% na Regra 3 — 73% do território
+     * bloqueado por proteção. A linha
+     * {@code lot columns: 0 survived every check} é o instrumento que
+     * separou "não há chão" de "faltou tempo de varredura", e ela
+     * respondeu a primeira.
+     *
+     * <p><b>A Regra 3 continua inteira, e isto não a toca.</b> Quem
+     * protege a vila do jogador é a recusa {@code PROTECTED}, uma
+     * pergunta adiante em {@code flatGroundAt}: bloco original que não é
+     * calçamento segue intocável. O que muda é só que o <b>calçamento</b>
+     * original deixa de contar como reserva espacial da colônia.
+     */
+    public static boolean isReservedAgainstLots(
+            ServerWorld world, UUID colonyId, BlockPos pos) {
+
+        if (!VillageRoad.isPaving(world, world.getBlockState(pos))) {
+            return false;
+        }
+
+        long column = ColonyRoads.column(pos.getX(), pos.getZ());
+        ColonyRoads roads = ROADS.get(colonyId);
+
+        if (roads != null && roads.columns().contains(column)) {
+            return true;
+        }
+
+        Set<Long> building = BUILDING.get(colonyId);
+
+        return building != null && building.contains(column);
+    }
+
+    /**
      * Em que anel a busca desta colônia parou por falta de orçamento.
      *
      * <p>Existe para separar duas respostas que {@link #find} devolve
@@ -1305,7 +1354,15 @@ public final class BuildSiteScanner {
 
                 // Uma leitura de bloco e uma consulta ao índice de ruas, e
                 // a guarda do isPaving sai cedo no caso comum.
-                if (isRoadArea(world, colonyId, ground)) {
+                //
+                // <b>A reserva é da rua que a colônia calçou</b> — P1.0,
+                // 2026-09-17. Era o isRoadArea, que conta o calçamento
+                // original da vila como reserva; numa vila gerada isso é
+                // 54,8% das recusas, e o playtest de 42 minutos fechou com
+                // 960.672 colunas testadas e zero aprovadas. Ver
+                // isReservedAgainstLots — a Regra 3 continua adiante, e
+                // bloco original que não é calçamento segue intocável.
+                if (isReservedAgainstLots(world, colonyId, ground)) {
                     LotRefusals.refused(colonyId, LotRefusals.Reason.ROAD);
 
                     return Optional.empty();

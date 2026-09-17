@@ -862,6 +862,51 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * A reserva é da rua que a colônia calçou — P1.0, 2026-09-17.
+     *
+     * <p><b>O número que motivou.</b> Playtest de 42 minutos:
+     * <b>960.672 colunas testadas, zero aprovadas</b>, e 54,8% das
+     * recusas em reserva de estrada. A reserva incluía o calçamento
+     * original da vila, e numa vila gerada a rua é exatamente onde o
+     * terreno é plano.
+     *
+     * <p><b>As duas asserções são um par, e a segunda é a que importa.</b>
+     * Afrouxar a reserva não pode afrouxar a Regra 3: quem protege a vila
+     * do jogador é a pergunta {@code isRoadArea}, que continua vendo o
+     * calçamento original — é ela que faz a casa reconhecer a rua Vanilla
+     * como rua e encostar nela.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_p0_7")
+    public void theVillageOwnPavingIsNotAReserveAgainstLots(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
+
+        paveGround(context, center);
+
+        // Calçamento sem reserva da colônia: é o caso do calçamento que
+        // já estava na vila, que nenhuma varredura desta colônia indexou.
+        context.setBlockState(center, Blocks.GRAVEL.getDefaultState());
+
+        BlockPos at = context.getAbsolutePos(center);
+
+        context.assertTrue(
+                !BuildSiteScanner.isReservedAgainstLots(context.getWorld(), colony, at),
+                "calçamento que a colônia não calçou não pode reservar o chão contra lote");
+
+        // E o par, que é o que impede a regressão: a coluna reservada
+        // pela colônia continua barrando lote. Sem esta metade, o teste
+        // acima passaria com a reserva inteira desligada.
+        reserveRoad(context, colony, center);
+
+        context.assertTrue(
+                BuildSiteScanner.isReservedAgainstLots(context.getWorld(), colony, at),
+                "a rua que a própria colônia calçou tem de continuar reservada");
+
+        BuildSiteScanner.clearAll();
+        context.complete();
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_refresh")
     public void playerRoadMaterialDoesNotCreateARoadArea(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
