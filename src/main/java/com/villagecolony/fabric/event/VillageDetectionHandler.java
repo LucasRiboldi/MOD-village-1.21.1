@@ -39,6 +39,7 @@ import com.villagecolony.fabric.work.FarmerWork;
 import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
 import com.villagecolony.fabric.work.SurfaceGatheringWork;
+import com.villagecolony.fabric.work.WaitingWork;
 import com.villagecolony.fabric.work.WorkMaterials;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.LumberjackWork;
@@ -710,6 +711,19 @@ public final class VillageDetectionHandler {
         SurfaceGatheringWork.run(overworld, colony);
         ShepherdWork.run(overworld, colony);
         FarmerWork.run(overworld, colony);
+
+        // <b>A peça que a obra espera e ninguém faz</b> — P1.1,
+        // 2026-09-17. Vem antes do fabricante, para a tarefa aberta agora
+        // já ser atendida neste ciclo — a mesma razão de todo este bloco
+        // vir depois da distribuição.
+        //
+        // <b>E aqui, e não no planejador.</b> O ConstructionPlanner só
+        // roda para as colônias da vez no rodízio — oito por ciclo desde
+        // 2026-09-15 —, e uma obra parada esperando escada não pode
+        // depender de sorteio para ser destravada. Ver
+        // WaitingWork.askTheCraftsmanFor.
+        WaitingWork.askForWhatTheWorkIsWaitingOn(overworld, colony);
+
         CraftingWork.run(overworld, colony);
         BuilderWork.run(overworld, colony);
 

@@ -908,4 +908,110 @@ public class CraftingGameTest implements FabricGameTest {
                 chest,
                 ColonyFixture.create().owning(colony).owning(villager.getUuid()));
     }
+
+    /**
+     * A obra manda fabricar a peça que não é recurso — P1.1, 2026-09-17.
+     *
+     * <p><b>O defeito que este teste tranca.</b> Playtest de 2026-09-17,
+     * 08:43: a biblioteca passou oito minutos em
+     * {@code WAITING_RESOURCES} com <b>628 de 628</b> blocos, esperando
+     * {@code cobblestone_stairs}, com <b>69 pedregulhos</b> no baú, um
+     * pedreiro na vila e a receita do próprio jogo. O log do mesmo ciclo:
+     * {@code no mason work: no task open for it}.
+     *
+     * <p>Quem abre pedido é {@code ColonyCycle.requestMissing}, iterando
+     * {@code Map<ResourceType, Integer>} — e escada não é
+     * {@code ResourceType}. A peça sumia do planejador de tarefas por não
+     * ser um recurso que a colônia conta.
+     *
+     * <p><b>O cenário é o do log, reduzido ao osso:</b> pedregulho no
+     * baú, pedreiro na vila, obra parada esperando a escada. Se a tarefa
+     * do pedreiro nascer, o defeito morreu.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_waiting",
+            tickLimit = 100)
+    public void theWorkAsksForAPieceThatIsNotAResource(TestContext context) {
+        BlockPos stand = new BlockPos(3, 2, 2);
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+
+        ServerWorld world = context.getWorld();
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        // O que a vila do playtest tinha: pedregulho de sobra e nenhuma
+        // escada.
+        ChestDepositor.deposit(world, chest, Items.COBBLESTONE, 32);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, stand);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create()
+                .owning(colony)
+                .owning(villager.getUuid());
+
+        try {
+            Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+            worker.assign(ProfessionType.MASON);
+
+            VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+            // A planta pede uma escada de pedregulho, que não é
+            // ResourceType nenhum — é o caso exato do log.
+            Blueprint plan = Blueprint.of(
+                    ResourceId.vanilla("village/plains/houses/test_waiting_stairs"),
+                    List.of(new BlueprintBlock(
+                            new ColonyPos(0, 0, 0),
+                            MinecraftTypeAdapter.toResourceId(Blocks.COBBLESTONE_STAIRS))));
+
+            ConstructionProject project = ConstructionProject.plan(colony.id(), plan, chest);
+
+            VillageColonyMod.CONSTRUCTIONS.register(project);
+
+            project.moveTo(ConstructionState.PREPARING);
+            project.moveTo(ConstructionState.BUILDING);
+            project.moveTo(ConstructionState.WAITING_RESOURCES);
+
+            context.assertTrue(
+                    countOf(colony, TaskType.CRAFT_STONE_MATERIAL) == 0,
+                    "o cenário precisa começar sem tarefa de pedreiro");
+
+            VillageDetectionHandler.runCycleNow(world, context.getAbsolutePos(stand));
+
+            context.assertTrue(
+                    countOf(colony, TaskType.CRAFT_STONE_MATERIAL) == 1,
+                    "a obra esperava uma escada que ninguém fazia, e o ciclo abriu "
+                            + countOf(colony, TaskType.CRAFT_STONE_MATERIAL)
+                            + " tarefa(s) de pedreiro");
+
+            // E não uma por ciclo: a obra fica em espera muitos ciclos, e
+            // um pedido a cada um encheria a fila com a mesma peça.
+            VillageDetectionHandler.runCycleNow(world, context.getAbsolutePos(stand));
+
+            context.assertTrue(
+                    countOf(colony, TaskType.CRAFT_STONE_MATERIAL) == 1,
+                    "o segundo ciclo abriu tarefa repetida: "
+                            + countOf(colony, TaskType.CRAFT_STONE_MATERIAL));
+        } finally {
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    private static int countOf(Colony colony, TaskType type) {
+        int found = 0;
+
+        for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
+            if (task.type() == type && task.isOpen()) {
+                found++;
+            }
+        }
+
+        return found;
+    }
 }
