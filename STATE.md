@@ -50,9 +50,23 @@ a estrada chegou, não de onde o centro alcança.**
 
 **Entregue e verificado:** a linha `planned …` agora diz o centro e as duas
 distâncias (quadrado e reta), e o scanner emite `WARN` quando o índice serve
-lote de fora do raio. `build` passou; **886 testes, 0 falhas**, conferido no
-XML. ⚠️ **Nenhum gametest rodou e nada foi visto em jogo** — a
-instrumentação é código novo que ainda não rodou num servidor.
+lote de fora do raio. `build` passou; **886 unitários, 0 falhas**, conferido
+no XML.
+
+**GameTests: 335 por rodada, e a bateria é instável — 13 verdes em 16
+rodadas.** As 3 falhas são o **KF-002**, aberto hoje: o cenário perde o
+aldeão entre `spawnEntity` e o tique 1, e a asserção que cai é a do próprio
+cenário, antes do comportamento sob teste. **É pré-existente e isso foi
+medido:** 6 rodadas no commit anterior (`e209e1f`, só documentação) deram 1
+falha. Mesmo sintoma do AUD-001. Ver
+[`docs/behavioral-tests/known-failures.md`](docs/behavioral-tests/known-failures.md).
+
+Confirmado que a contagem é honesta: **335 anotações `@GameTest` no código e
+34 classes registradas** no `fabric.mod.json` do gametest — nenhuma classe
+sumiu da bateria.
+
+⚠️ **Nada foi visto em jogo** — a instrumentação é código novo que ainda não
+rodou num servidor de verdade.
 
 **Três decisões abertas, e são suas:** **C4** (teto do índice — filtrar ao
 servir, ao lembrar, ou assumir que a vila cresce pela estrada), **C1** (qual

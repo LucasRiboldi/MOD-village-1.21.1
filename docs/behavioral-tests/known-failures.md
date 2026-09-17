@@ -5,6 +5,55 @@ número de execuções e evidência; nenhuma sai daqui sem correção verificada
 
 ---
 
+## KF-002 — o fundidor some entre o `spawnEntity` e o tique 1
+
+**ABERTO.** Medido em **2026-09-16**, commit `c76b96b`, mesma máquina, mesma
+sessão.
+
+**Classificação:** P4 (comportamento inconsistente do cenário) — com o mesmo
+efeito P0 do KF-001 sobre a rede de segurança: **a bateria não é
+confiavelmente verde**, e "335/335 passaram" de uma rodada é um sorteio.
+
+| lote de execuções | resultado |
+|---|---|
+| 4 execuções | 2 falhas |
+| 5 execuções | 0 falhas |
+| 6 execuções | 1 falha |
+| **total 15** (em `c76b96b`) | **3 falhas (~20%)** |
+| 6 execuções em `e209e1f` | **1 falha** |
+
+**Os testes que caem**, todos com a **mesma** mensagem:
+
+- `SurfaceGatheringGameTest.smelterGathersDirtOutsideTheProtectedVillageRadius`
+- `SurfaceGatheringGameTest.smelterGathersGrassOutsideTheProtectedVillageRadius`
+- `LumberjackGameTest.aBlockReplacedMidHarvestIsLeftAlone` (uma vez)
+
+```text
+(-488275, -60, 7471660) fundidor criado no setor não está registrado no ServerWorld
+```
+
+**O que o cenário faz.** Cria o aldeão com `world.spawnEntity` num setor
+devolvido por `FarthestVillageSector.farthestLoadedSector`, e no
+`runAtTick(1)` confere `world.getEntity(uuid) == villager`. A asserção que
+falha é essa — **antes** de o comportamento sob teste rodar. Não é o
+fundidor que erra: é o cenário que perde a entidade.
+
+**É pré-existente, e isso foi medido, não suposto.** Seis execuções em
+`e209e1f` — o commit anterior, que só mexeu em documentação — deram uma
+falha. A instrumentação do E46 não introduziu a instabilidade.
+
+⚠️ **É o mesmo sintoma do AUD-001** (`TODO.md`): *"a perda do aldeão entre
+`spawnEntity` e o tick 1 ainda não tem causa determinística"*. As
+coordenadas do erro são absurdas (`-488275`, `7471660`), o que aponta para o
+setor escolhido, e não para o spawn em si — **a primeira coisa a medir é o
+que `farthestLoadedSector` devolve quando falha**.
+
+**Consequência prática:** para afirmar que uma mudança está boa, repita a
+bateria e diga o número honesto com o nome do que caiu. Para acusar ou
+inocentar um commit, rode também no commit **anterior**.
+
+---
+
 ## ~~KF-001~~ — `MinerGameTest.aFrozenMinerGivesUpLongBeforeTheStallGuard` era instável
 
 **FECHADO em 2026-09-09, à tarde.** A causa está no fim desta entrada. O que
