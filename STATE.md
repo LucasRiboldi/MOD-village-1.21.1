@@ -138,6 +138,65 @@ as duas otimizações do planejador.*
 
 ---
 
+## Playtest de 2026-09-17, 08:23–08:51 — o afrouxamento abriu chão, e a obra travou noutro ponto
+
+28 minutos. **O P1.0 andou**, e o número mostra:
+
+```text
+lot columns: 313 survived every check, 370716 were turned down
+```
+
+**313 colunas aprovadas, contra zero na sessão anterior.** A reserva de
+estrada caiu de 54,8% para 49,6% das recusas, e **uma obra foi planejada** —
+a primeira em quatro playtests.
+
+### Mas ela não subiu um bloco, e a causa é outra 🔴 P1.1
+
+```text
+08:43:36  planned plains_library_1 at 2498,64,-2981 — 628 blocks
+08:44:36  WAITING_RESOURCES … waiting for minecraft:cobblestone_stairs
+          (e assim por 8 minutos, 628 de 628)
+Builder … stopped — no minecraft:cobblestone_stairs in the colony chests
+```
+
+**A colônia tem 69 `COBBLESTONE` no baú e ninguém os transforma em
+`cobblestone_stairs`.** É o laço fechado que
+[`analise-plano-crescimento.md`](../analise-plano-crescimento.md) descreveu
+em 09-12 por outra porta — a obra pede uma peça que o mod sabe fazer, e a
+tarefa de fabricá-la não abre.
+
+O log ainda traz, no mesmo ciclo:
+
+```text
+no collect_stone work: no worker in the village can do it — COBBLESTONE needs COLLECT_STONE
+no craft_wood_material work: no worker in the village can do it — OAK_PLANKS needs CRAFT_WOOD
+```
+
+⚠️ **Não é falta de material: é falta de quem transforme.** O estoque tinha
+4.258 tábuas, 1.686 toras e 69 pedregulhos.
+
+### E a água trava o mineiro — confirmado 🔴 P1.2
+
+O autor: *"quando aldeão encontra água ou lava ele se perde e trava"*. **O
+log concorda, e a assinatura é exata:**
+
+```text
+Miner … gave up the stone at 2455,20,-2999 — it has not moved a block in
+300 ticks … the place to stand is 2455,21,-2999, which is flooded
+```
+
+**15 desistências** por `which is flooded`, e `flooded` aparece 30 vezes.
+O guarda de imobilidade dispara (300 tiques parado) e devolve a tarefa — o
+aldeão não afoga, mas perde 300 tiques toda vez.
+
+**O que já existe:** `MineDigging.flooded` vira o ramal na hora
+(`The branch turns away from the water`, 5 ocorrências). **O que falta é o
+que o autor pediu:** tapar o bloco que verte e seguir por outro caminho, em
+vez de ficar parado até o guarda expirar. Lava não apareceu nesta sessão
+(`lava` = 0).
+
+---
+
 ## Playtest de 2026-09-17, 00:34–01:17 — a instrumentação respondeu: zero
 
 42 minutos, 2.093 linhas. **A linha nova deu a resposta que a sessão curta

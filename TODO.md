@@ -29,7 +29,57 @@ explica tudo (a varredura precisa de ~17 ciclos e teve 6). Ver
 - [x] ✅ **Instrumentar** quantas colunas sobrevivem a todas as recusas — `LotRefusals.accepted`, com linha própria no relatório. **Verificado:** build + 902 unitários + 336 GameTests em 5/5. Gametest `theSurvivingColumnsAreCounted` conferido no XML.
 - [x] ✅ **Playtest de 42 min** — a resposta foi **zero**: `0 survived every check, 960672 were turned down`. Não é orçamento de varredura; a vila não tem chão que sirva. Distribuição idêntica à da sessão curta, então não é amostra pequena.
 - [x] ✅ **Decidido pelo autor (opção 1):** a reserva vale só para a rua que a colônia calçou. `isReservedAgainstLots` é nova e substitui `isRoadArea` **só na recusa de lote** — a função antiga continua servindo aos três usos positivos, senão a colônia deixaria de reconhecer as ruas Vanilla. **Verificado:** build + 902 unitários + 337 GameTests em 5/5.
-- [ ] 🔴 **Playtest do JAR novo** — `N > 0` ⇒ abriu chão; `0` de novo ⇒ o calçamento de gravel/terracotta não existe nessa vila.
+- [x] ✅ **Playtest do JAR novo (08:23)** — **abriu chão: 313 colunas aprovadas**, contra zero antes, e **uma obra foi planejada**. A reserva caiu de 54,8% para 49,6% das recusas.
+
+---
+
+## 🔴 P1.1 — A obra espera uma peça que ninguém fabrica (playtest 08:23)
+
+A biblioteca nasceu às 08:43 e passou **8 minutos em `WAITING_RESOURCES` com
+628 de 628 blocos**, esperando `cobblestone_stairs`. A colônia tinha **69
+`COBBLESTONE`** no baú.
+
+```text
+Builder … stopped — no minecraft:cobblestone_stairs in the colony chests
+no collect_stone work: no worker in the village can do it — COBBLESTONE needs COLLECT_STONE
+no craft_wood_material work: no worker in the village can do it — OAK_PLANKS needs CRAFT_WOOD
+```
+
+**Não é falta de material — é falta de quem transforme.** Estoque: 4.258
+tábuas, 1.686 toras, 69 pedregulhos. É o laço fechado que
+`analise-plano-crescimento.md` já descrevia em 09-12.
+
+- [ ] 🔴 Descobrir por que a tarefa de fabricar `cobblestone_stairs` não abre, dado que há pedregulho e fabricante
+- [ ] 🔴 `no worker in the village can do it` para COLLECT_STONE e CRAFT_WOOD com trabalhadores ociosos — pode ser a mesma raiz
+
+---
+
+## 🔴 P1.2 — Água trava o mineiro (pedido do autor + confirmado no log)
+
+O autor: *"quando aldeão encontra água ou lava ele se perde e trava, ele
+deve tentar fechar o bloco que gerou a água ou lava rapidamente e trocar de
+caminho"*.
+
+**Confirmado:** 15 desistências com `the place to stand is …, which is
+flooded`, e `flooded` 30 vezes no log de 28 min. O aldeão fica parado até o
+guarda de imobilidade expirar (300 tiques) e devolve a tarefa.
+
+**O que já existe:** `MineDigging.flooded` vira o ramal
+(`The branch turns away from the water`, 5×). **O que falta:** tapar o bloco
+que verte e seguir, em vez de esperar o guarda. Lava não apareceu
+(`lava` = 0).
+
+- [ ] 🔴 Tapar a fonte e trocar de caminho, em vez de só virar o ramal
+- [ ] 🟠 Conferir se o caso da lava tem tratamento próprio — não foi exercitado neste log
+
+---
+
+## 🟠 P1.3 — Pedidos de design do autor sobre a mina (09-17)
+
+Duas ideias que **não são defeito** e precisam de decisão antes de código:
+
+- [ ] 🟠 *"a zona de cada camada da mina deve ser mais explorada"* — hoje o nível fecha quando os quatro ramais acabam (`ARM = 16`, `RINGS`). Explorar mais significa aumentar o raio do ramal ou adensar a galeria; muda o custo por nível e o tempo até descer.
+- [ ] 🟠 *"quando o mineiro encontrar um veio de minério o foco deve ser o veio todo"* — já existe `MineArm.followVein`/`veinExhausted` e `OreVein.beside`. Verificar o que falta: seguir o veio **até acabar** antes de voltar à ordem de cavar.
 
 ⚠️ **Expectativa honesta:** `dirt_path` não é bloco sólido cheio e continuará
 caindo em `NOT_NATURAL_GROUND` adiante. Quem passa a poder virar lote é o
