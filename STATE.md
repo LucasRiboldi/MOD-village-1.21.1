@@ -101,41 +101,69 @@ aglomerado de camas, que não causou o E46). Ver
 
 **Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
 
-**JAR atual 0.3.0 — gerado em 2026-09-17, 08:10.** Entra o **afrouxamento da
-reserva de estrada** (P1.0): o calçamento original da vila deixa de reservar
-chão contra lote, e a reserva passa a valer só para a rua que a colônia
-calçou.
+**JAR atual 0.3.0 — gerado em 2026-09-17, 13:16.** Acumula **quatro
+correções sem playtest**: o afrouxamento da reserva de estrada (P1.0), a
+tarefa aberta pela peça que a obra espera (P1.1), a água recusada na escolha
+do alvo (P1.2) e o cortador de pedra (B1).
 
-**A pergunta que este JAR existe para responder.** Ao fechar o mundo:
+**O que procurar no log do próximo playtest, em ordem de importância:**
 
-```text
-Colony … lot columns: N survived every check, N were turned down — N%
-```
-
-- **`N > 0`** ⇒ o afrouxamento abriu chão. Se vier obra planejada junto, o
-  P1.0 está resolvido e o E46 finalmente pode ser testado.
-- **`0 survived` de novo** ⇒ o calçamento de gravel/terracotta não existe
-  nessa vila, e a próxima candidata é a Regra 3 (18,5%) ou a régua da rua
-  (9,1%). **Não afrouxar nada antes desse número.**
+1. **A casa sobe?** É a pergunta que fecha P1.0 + P1.1 juntos. Se a
+   biblioteca passar de 628/628, os dois funcionaram.
+2. **`which is flooded` deve sumir ou quase.** Eram **30** em 28 minutos.
+   Se continuar alto, o P1.2 não pegou o caso real.
+3. `Colony … lot columns: N survived every check` — era **313** na última
+   sessão, contra 0 antes.
+4. **`The mine sealed N face(s)`** deve continuar aparecendo: é o outro
+   caso da água, e ele não foi tocado.
 
 ⚠️ **Jogue 15–20 minutos sem fechar** — a varredura precisa de ~17 ciclos e
-o relatório só sai ao parar o servidor.
+o relatório de lote só sai ao parar o servidor.
 
 **Verificado:** `build` passou; **902 unitários, 0 falhas** (XML conferido);
-**337 GameTests** (+1: `theVillageOwnPavingIsNotAReserveAgainstLots`),
-**5 rodadas verdes em 5**. Conferido no XML que o teste novo rodou, e dentro
-do JAR que o método novo está na classe compilada. Os quatro testes de
-reserva que já existiam continuam verdes — inclusive
-`everyReservedRoadMaterialBlocksTheWholeFootprint`.
+**340 GameTests** (+2: `aFloodedSpotIsNeverAPlaceToStand` e
+`theStonecutterMakesStairsFromOneCobblestone`), **4 rodadas verdes em 5** —
+a falha é o KF-002, pré-existente e alheio. Conferido dentro do JAR que
+`isDry`, `cutFor` e `cheaperOf` estão nas classes compiladas.
 
 Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas três
-cópias: `CD66E3C8ACE8709A414655E091D0EFCC2736D68F2C7905752281424A06AA4823`
-(o anterior era `B7E505BF…`).
+cópias: `9FCED11831C8197A7FF50531B47A4F1F0E7246ECAD8812007B293D4891CA0959`
+(o anterior era `A8B68809…`).
 
 *JAR anterior, para referência: `build`, 884 unitários e 335/335 GameTests;
 incluía P0.7, a limpeza imediata da claim, as duas correções do playtest de
 09-15 (toco órfão e minério recusado), a retirada do baú da boca da mina e
 as duas otimizações do planejador.*
+
+---
+
+## Melhorias de 2026-09-17 — água na escolha do alvo, e o cortador de pedra
+
+Duas implementadas, as duas saídas da pesquisa em
+[`opcoes-de-melhoria-das-profissoes.md`](research/opcoes-de-melhoria-das-profissoes.md).
+
+**P1.2 — água (30 travamentos medidos).** `BuilderApproach.isDry` entrou no
+`standable`, o predicado que **mineiro e construtor compartilham**. Água tem
+caixa de colisão vazia e passava por `passable`; agora a coluna alagada é
+recusada **na escolha**, e não depois de 300 tiques de caminhada.
+
+⚠️ **O conserto de 2026-09-03 continua, e é outro caso.** `MineFlooding.seal`
+tapa a fonte que a **picareta** abriu — agiu 5 vezes no log, com acerto. O
+que ele não alcança é a água que já estava lá: a picareta nunca chega a
+bater. Um cobre 1 caso em 6; juntos cobrem os dois.
+
+**B1 — cortador de pedra.** `CraftingLookup.cutFor` lê
+`RecipeType.STONECUTTING`, e `cheaperOf` escolhe a receita que gasta menos
+**por peça**. A escada de pedregulho cai de **6→4** para **1→1**.
+
+⚠️ **Duas versões minhas foram corrigidas pela medição, e ficam registradas:**
+o `isDry` perguntava também pela camada da cabeça e reprovou um teste do
+mineiro (4 verdes em 4 no baseline provaram que era regressão, não flaky); e
+o cortador entrou primeiro como *segunda pergunta*, o que não economizava
+nada porque a bancada responde antes.
+
+**Verificado:** build; **902 unitários, 0 falhas**; **340 GameTests
+(+2), 4 rodadas verdes em 5** — a falha é o KF-002, pré-existente.
 
 ---
 

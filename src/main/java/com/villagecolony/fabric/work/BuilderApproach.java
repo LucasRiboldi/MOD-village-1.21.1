@@ -209,7 +209,52 @@ public final class BuilderApproach {
 
         return !world.getBlockState(floor).getCollisionShape(world, floor).isEmpty()
                 && passable(world, at)
-                && passable(world, at.up());
+                && passable(world, at.up())
+                && isDry(world, at);
+    }
+
+    /**
+     * Um lugar de ficar de pé não pode estar alagado — P1.2, 2026-09-17.
+     *
+     * <p><b>Água tem caixa de colisão vazia</b>, e é por isso que ela
+     * passava por {@link #passable}: para o Vanilla ela não obstrui, mas
+     * para um aldeão que precisa <b>parar ali e trabalhar</b> ela é
+     * exatamente o que o impede.
+     *
+     * <p><b>O defeito, medido.</b> Playtest de 2026-09-17: <b>trinta</b>
+     * desistências com a frase {@code the place to stand is …, which is
+     * flooded}, e nelas o aldeão estava a <b>onze blocos</b> do alvo,
+     * andando, até o guarda de imobilidade expirar em trezentos tiques e
+     * devolver a tarefa. Perdia-se o expediente inteiro para descobrir no
+     * fim o que dava para saber na escolha.
+     *
+     * <p><b>Por que aqui, e não num guarda novo.</b> O mod já sabia:
+     * {@code MinerReport} imprimia <i>"which is flooded"</i> na linha da
+     * desistência — a informação existia e era jogada fora. O conserto é
+     * fazer a escolha usar o que o diagnóstico já dizia.
+     *
+     * <p><b>E o conserto de 2026-09-03 continua, porque é outro caso.</b>
+     * {@code MineFlooding.seal} tapa a fonte que a <b>picareta</b> abriu,
+     * e no mesmo log ele agiu cinco vezes, com acerto. O que ele não
+     * alcança é a água que já estava lá antes de o aldeão chegar: ela
+     * nunca vira {@code seal} porque a picareta não chega a bater. Um
+     * cobre um caso em seis; juntos cobrem os dois.
+     *
+     * <p>Lava entra pela mesma porta — {@code getFluidState} não
+     * distingue —, e é o que o autor pediu ao citar <i>"água ou lava"</i>.
+     *
+     * <p><b>Só o bloco dos pés, e a camada da cabeça fica de fora</b> —
+     * e isto foi medido, não escolhido. A primeira versão perguntava
+     * pelos dois, e o
+     * {@code theMinerGoesDownToTheStoneInsteadOfDiggingItFromAbove}
+     * reprovou numa rodada em três; sem a mudança, o mesmo teste deu
+     * quatro verdes em quatro. Num túnel de dois blocos a camada de cima
+     * é a da cabeça, e água ali não impede o aldeão de ficar de pé e
+     * bater a picareta — exigi-la seca recusava lugar bom e mandava o
+     * mineiro procurar outro que não existia.
+     */
+    public static boolean isDry(ServerWorld world, BlockPos at) {
+        return world.getBlockState(at).getFluidState().isEmpty();
     }
 
     /**

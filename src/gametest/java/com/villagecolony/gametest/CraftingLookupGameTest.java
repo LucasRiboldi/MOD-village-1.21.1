@@ -101,4 +101,45 @@ public class CraftingLookupGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * O cortador de pedra economiza o que a bancada desperdiça —
+     * 2026-09-17.
+     *
+     * <p><b>O pedreiro sempre teve a ferramenta e o mod nunca perguntou
+     * por ela:</b> {@code ChestMarker} dá {@code Items.STONECUTTER} ao
+     * MASON, e {@code CraftingLookup} só consultava {@code CRAFTING} e
+     * {@code SMELTING}.
+     *
+     * <p>A conta que justifica: a escada de pedregulho custa <b>seis por
+     * quatro</b> na bancada e <b>um por um</b> no cortador. Este teste
+     * afirma a conta do cortador, que é a que passou a valer quando a
+     * bancada não responde.
+     *
+     * <p>⚠️ Não afirma qual dos dois caminhos foi tomado — afirma que a
+     * colônia <b>sabe fazer</b> a peça a partir de um pedregulho só. Se
+     * o Vanilla mudar a receita, este teste cai e diz por quê.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "recipe_cut")
+    public void theStonecutterMakesStairsFromOneCobblestone(TestContext context) {
+        Optional<CraftingLookup.Bill> bill = CraftingLookup.billFor(
+                context.getWorld(),
+                Items.COBBLESTONE_STAIRS,
+                item -> item == Items.COBBLESTONE);
+
+        context.assertTrue(
+                bill.isPresent(),
+                "com pedregulho no baú, a colônia não achou como fazer a escada");
+
+        context.assertTrue(
+                bill.get().ingredients().containsKey(Items.COBBLESTONE),
+                "a receita achada não usa pedregulho: " + bill.get().ingredients());
+
+        context.assertTrue(
+                bill.get().ingredients().get(Items.COBBLESTONE) == 1,
+                "o cortador gasta um pedregulho por escada, e a conta deu "
+                        + bill.get().ingredients().get(Items.COBBLESTONE));
+
+        context.complete();
+    }
 }

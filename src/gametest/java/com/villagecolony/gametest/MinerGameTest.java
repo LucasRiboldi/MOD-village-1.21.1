@@ -1903,6 +1903,52 @@ public class MinerGameTest implements FabricGameTest {
     }
 
     /**
+     * O lugar de ficar de pé não pode estar alagado — P1.2, 2026-09-17.
+     *
+     * <p><b>O defeito, medido em jogo.</b> Playtest de 2026-09-17:
+     * <b>trinta</b> desistências com {@code the place to stand is …,
+     * which is flooded}, e nelas o aldeão estava a <b>onze blocos</b> do
+     * alvo, andando, até o guarda de imobilidade devolver a tarefa em
+     * trezentos tiques. Água tem caixa de colisão <b>vazia</b>, então ela
+     * passava por {@code passable} e a coluna alagada era escolhida como
+     * destino.
+     *
+     * <p><b>O par de asserções é o teste.</b> A primeira afirma que a
+     * água é recusada; a segunda, que o mesmo lugar <b>seco</b> é aceito
+     * — sem ela, o teste passaria com o {@code standable} inteiro
+     * quebrado.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_approach",
+            tickLimit = 20)
+    public void aFloodedSpotIsNeverAPlaceToStand(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        BlockPos floor = new BlockPos(3, 1, 3);
+        BlockPos spot = floor.up();
+
+        context.setBlockState(floor, Blocks.DIRT.getDefaultState());
+        context.setBlockState(spot, Blocks.WATER.getDefaultState());
+
+        BlockPos flooded = context.getAbsolutePos(spot);
+
+        context.assertFalse(
+                BuilderApproach.standable(world, flooded),
+                "a coluna alagada foi aceita como lugar de ficar de pé: "
+                        + flooded.toShortString());
+
+        // E o mesmo lugar, seco, continua servindo — senão este teste
+        // passaria com o standable inteiro quebrado.
+        context.setBlockState(spot, Blocks.AIR.getDefaultState());
+
+        context.assertTrue(
+                BuilderApproach.standable(world, flooded),
+                "secar a coluna não bastou para ela voltar a servir: "
+                        + flooded.toShortString());
+
+        context.complete();
+    }
+
+    /**
      * O bloco de baixo continua sendo alcançado de lado.
      *
      * <p>A outra metade: o conserto não podia trocar um destino bom por

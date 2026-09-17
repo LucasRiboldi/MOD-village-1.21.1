@@ -76,6 +76,24 @@ o bloco ser quebrado. O caso morre antes de o conserto existir.
 is flooded"*), e a informação é jogada fora — ela vira texto de log em vez de
 recusa. É o menor conserto com o maior efeito medido.
 
+### ✅ A1 implementado em 2026-09-17
+
+`BuilderApproach.isDry` entrou no `standable`, que é o predicado que **o
+mineiro e o construtor compartilham** — corrigir na raiz atende os dois, e
+evita a discordância de réguas que produziu o E46.
+
+⚠️ **A primeira versão quebrou um teste, e o ajuste veio da medição.** Eu
+perguntava também pela camada da cabeça (`at.up()`), e o
+`theMinerGoesDownToTheStoneInsteadOfDiggingItFromAbove` reprovou numa rodada
+em três — contra **4 verdes em 4 no commit anterior**, o que provou
+regressão minha e não instabilidade. Num túnel de dois blocos a camada de
+cima é a da cabeça, e água ali não impede o aldeão de bater a picareta.
+**Só o bloco dos pés é perguntado.**
+
+**Prova:** `aFloodedSpotIsNeverAPlaceToStand` — a coluna alagada é recusada,
+e a **mesma** coluna seca é aceita. Sem a segunda asserção, o teste passaria
+com o `standable` inteiro quebrado.
+
 ### 1.4 O que o Vanilla oferece de graça
 
 `[FATO]` Conferido por `javap` no JAR de 1.21.1:
@@ -125,11 +143,27 @@ jogo.
 |---|---|---|---|---|
 | **B1** | Ler também `RecipeType.STONECUTTING` | 1 | baixo | O pedreiro tem cortador de pedra (`ChestMarker` dá `Items.STONECUTTER` ao MASON), e o cortador faz escada e laje **1 para 1**, contra 6→4 da bancada |
 
-`[FATO]` `CraftingLookup` **não lê** `STONECUTTING` hoje — só `SMELTING` e
+`[FATO]` `CraftingLookup` **não lia** `STONECUTTING` — só `SMELTING` e
 `CRAFTING`.
 
-`[INFERÊNCIA]` Isso é desperdício de material, não travamento: a bancada
-resolve, só que mais caro. **Não é urgente.**
+### ✅ B1 implementado em 2026-09-17
+
+`CraftingLookup.cutFor` consulta `RecipeType.STONECUTTING`, e
+`cheaperOf` escolhe **a receita que gasta menos por peça**.
+
+⚠️ **A primeira versão não economizava nada, e o teste provou.** Eu havia
+posto o cortador como *segunda pergunta*, respondida só quando a bancada
+falhasse — e para a escada de pedregulho a bancada **responde**, a seis por
+quatro. O cortador nunca era alcançado. A ordem foi corrigida: agora os dois
+são consultados e vence o mais barato.
+
+A comparação é **ingrediente por resultado**, não ingrediente solto: 6→4
+custa 1,5 por peça e 1→1 custa 1,0. Comparar só o total escolheria errado
+sempre que a bancada rendesse mais. **Empate fica com a bancada**, que é o
+caminho que o mod já andava.
+
+**Prova:** `theStonecutterMakesStairsFromOneCobblestone` — com pedregulho no
+baú, a escada custa **1**, e não 6.
 
 ---
 

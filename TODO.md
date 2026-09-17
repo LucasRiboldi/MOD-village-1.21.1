@@ -87,8 +87,19 @@ guarda de imobilidade expirar (300 tiques) e devolve a tarefa.
 que verte e seguir, em vez de esperar o guarda. Lava não apareceu
 (`lava` = 0).
 
-- [ ] 🔴 Tapar a fonte e trocar de caminho, em vez de só virar o ramal
-- [ ] 🟠 Conferir se o caso da lava tem tratamento próprio — não foi exercitado neste log
+- [x] ✅ **Corrigido em 09-17.** A pesquisa mostrou que *tapar a fonte e virar o ramal* **já existia** desde 2026-09-03 (`MineFlooding.seal` + `MineDigging.flooded`) e funciona — agiu 5 vezes no log. O que faltava era o **outro caso**: a água que já estava lá antes de a picareta bater, com o aldeão a 11 blocos andando para um `place to stand` alagado. `BuilderApproach.isDry` recusa na escolha. **Verificado:** 340 GameTests, 4/5 rodadas.
+- [x] ✅ **Lava entra pela mesma porta** — `getFluidState` não distingue.
+- [ ] 🟠 Confirmar em jogo que `which is flooded` caiu dos 30 medidos
+
+---
+
+## 🟢 B1 — Cortador de pedra (melhoria de economia, 09-17)
+
+`CraftingLookup` não lia `RecipeType.STONECUTTING`, e o pedreiro recebe
+`Items.STONECUTTER` do `ChestMarker`. A escada de pedregulho custava **6→4**
+na bancada; no cortador é **1→1**.
+
+- [x] ✅ `cutFor` + `cheaperOf`: os dois caminhos são consultados e vence o que gasta menos **por peça**. Empate fica com a bancada.
 
 ---
 

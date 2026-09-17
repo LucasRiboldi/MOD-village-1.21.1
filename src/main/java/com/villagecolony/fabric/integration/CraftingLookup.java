@@ -6,6 +6,7 @@ import net.minecraft.recipe.CraftingRecipe;
 import net.minecraft.recipe.Ingredient;
 import net.minecraft.recipe.RecipeEntry;
 import net.minecraft.recipe.SmeltingRecipe;
+import net.minecraft.recipe.StonecuttingRecipe;
 import net.minecraft.recipe.RecipeType;
 import net.minecraft.recipe.input.CraftingRecipeInput;
 import net.minecraft.server.world.ServerWorld;
@@ -183,8 +184,99 @@ public final class CraftingLookup {
             Optional<Map<Item, Integer>> needed = resolve(entry.value(), available);
 
             if (needed.isPresent() && !needed.get().isEmpty()) {
-                return Optional.of(new Bill(target, result.getCount(), needed.get()));
+                Bill bench = new Bill(target, result.getCount(), needed.get());
+
+                // <b>E o cortador, se ele sair mais barato</b> —
+                // 2026-09-17. A escada de pedregulho custa seis por
+                // quatro na bancada e um por um no cortador; a laje,
+                // três por seis contra um por dois. Preferir a bancada
+                // sempre era gastar pedra tendo a ferramenta certa no
+                // baú do pedreiro. Ver cutFor.
+                return Optional.of(cheaperOf(bench, cutFor(world, target, available)));
             }
+        }
+
+        return cutFor(world, target, available);
+    }
+
+    /**
+     * Entre a bancada e o cortador, a que gasta menos por peça.
+     *
+     * <p>Compara <b>ingrediente por resultado</b>, e não ingrediente
+     * solto: uma receita que pede seis e devolve quatro custa 1,5 por
+     * peça, e uma que pede um e devolve um custa 1,0. Comparar só o
+     * total escolheria a errada toda vez que a bancada rendesse mais.
+     *
+     * <p>Empate fica com a bancada, que é o caminho que o mod já andava
+     * — mudar o que já funciona precisa de motivo, e empate não é.
+     */
+    private static Bill cheaperOf(Bill bench, Optional<Bill> cut) {
+        if (cut.isEmpty()) {
+            return bench;
+        }
+
+        return costPerPiece(cut.get()) < costPerPiece(bench) ? cut.get() : bench;
+    }
+
+    private static double costPerPiece(Bill bill) {
+        int total = 0;
+
+        for (int amount : bill.ingredients().values()) {
+            total += amount;
+        }
+
+        return bill.resultCount() <= 0 ? total : (double) total / bill.resultCount();
+    }
+
+    /**
+     * A mesma peça, no cortador de pedra — 2026-09-17.
+     *
+     * <p><b>Consultado sempre, e escolhido só quando é mais barato</b> —
+     * ver {@link #cheaperOf}. A primeira versão o punha como segunda
+     * pergunta, respondida só quando a bancada falhasse, e o gametest
+     * mostrou que isso não economizava nada: para a escada de pedregulho
+     * a bancada <b>responde</b>, a seis por quatro, e o cortador nunca
+     * era alcançado. A ordem foi corrigida pela medição.
+     *
+     * <p><b>Por que existe.</b> O pedreiro recebe {@code Items.STONECUTTER}
+     * do {@code ChestMarker}, e o mod nunca consultava
+     * {@code RecipeType.STONECUTTING}: só {@code CRAFTING} e
+     * {@code SMELTING}. A escada de pedregulho custa <b>seis por quatro</b>
+     * na bancada e <b>um por um</b> no cortador, e a laje custa três por
+     * seis contra um por dois — a colônia gastava pedra que não precisava
+     * gastar, tendo a ferramenta certa no baú.
+     *
+     * <p><b>Uma entrada só, e é o que torna isto barato.</b>
+     * {@code StonecuttingRecipe} estende {@code CuttingRecipe} e carrega
+     * um {@code Ingredient} único — não é grade. Conferido por
+     * {@code javap} no JAR de 1.21.1.
+     */
+    private static Optional<Bill> cutFor(
+            ServerWorld world, Item target, Predicate<Item> available) {
+
+        for (RecipeEntry<StonecuttingRecipe> entry
+                : world.getRecipeManager().listAllOfType(RecipeType.STONECUTTING)) {
+
+            ItemStack result = entry.value().getResult(world.getRegistryManager());
+
+            if (!result.isOf(target) || result.isEmpty()) {
+                continue;
+            }
+
+            List<Ingredient> slots = entry.value().getIngredients();
+
+            if (slots.isEmpty()) {
+                continue;
+            }
+
+            Optional<Item> chosen = firstAvailable(slots.get(0), available);
+
+            if (chosen.isEmpty()) {
+                continue;
+            }
+
+            return Optional.of(new Bill(
+                    target, result.getCount(), Map.of(chosen.get(), 1)));
         }
 
         return Optional.empty();
