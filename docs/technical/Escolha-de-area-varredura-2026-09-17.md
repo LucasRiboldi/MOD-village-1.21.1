@@ -192,14 +192,47 @@ inteira e ainda marcou `0 complete rounds`.**
 toda, mais um terço**. E como a translação não é viável, o conserto tem de
 atacar **a deriva**, não o cursor.
 
-⚠️ **Isso aponta para o C3 do E46**, que está aberto desde ontem: a
-detecção vê dois aglomerados de camas (`2448,-2942` e `2491,-3043`) e o
-centro oscila entre eles. **Estabilizar o centro conserta a varredura, a
-obra órfã e o lote — os três de uma vez.**
+### 4.3 ✅ A causa da deriva — e ela **não é defeito**
 
-**É o item de maior alavancagem do subsistema, e é decisão do autor**,
-porque mexe na regra de completude que existe para não encolher a colônia
-por leitura pobre (E2, 2026-08-07).
+Eu ia atacar a deriva do centro. **Investiguei antes de mexer, e ainda bem.**
+
+`[FATO]` O centro se moveu **uma vez só** na sessão (`1 restarts`). E a
+sequência de camas observadas explica por quê:
+
+```text
+3 → 4 → 6 → 8 → 17 → 24 → 30 → 33 → 35 → 36 → 37 → 43 → 46 → 51 → 53 → 55 → 63 → 65 → 69
+```
+
+**A colônia foi de 37 para 69 camas** — a sonda descobriu quase o dobro da
+vila, e o centro se mudou para o meio verdadeiro. `[FATO]` Só a sonda move
+o centro (ADR-003 Emenda 4, `Colony.java:253`), e ela parte do centro e a
+ele volta: não é o jogador arrastando nada.
+
+**O movimento estava certo. O que estava errado era o preço.**
+
+### 4.4 ✅ O conserto: o cursor cai, o índice fica
+
+`[FATO]` No `drifted`, o código descartava **quatro coisas**: `ROADS`,
+`ROAD_CURSOR`, `BUILDING` e `SWEEPS`. Mas os dois primeiros são naturezas
+diferentes:
+
+| Estado | O que guarda | Sobrevive ao centro mudar? |
+|---|---|---|
+| `SWEEPS` (cursor) | `(anel, coluna)` **relativo** ao centro | ❌ vira lixo — ver §4.1 |
+| `ROADS` (índice) | **colunas absolutas do mundo** | ✅ rua continua sendo rua |
+
+`[FATO]` O preço de descartar os dois: **16 de 32** consultas foram
+respondidas pelo índice — as de antes do movimento. Depois, a vila voltou
+a varrer do zero.
+
+**Implementado:** `ColonyRoads.rebasedTo(centre, radius)` reancora o índice
+no centro novo e **descarta só as colunas que saíram do raio** — porque
+servir lote de fora do raio é o E46. Índice que fica sem nenhuma coluna
+devolve vazio, que quer dizer "varra de novo" e é a resposta certa.
+
+**Prova:** 3 testes em `ColonyRoadsTest` — o índice sobrevive, a coluna
+distante sai, e índice esvaziado devolve vazio em vez de mentir que já se
+olhou.
 
 ---
 

@@ -2,8 +2,10 @@ package com.villagecolony.core.construction.model;
 
 import com.villagecolony.core.type.ColonyPos;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
 
@@ -105,5 +107,51 @@ public record ColonyRoads(UUID colonyId, ColonyPos from, List<Long> columns) {
         }
 
         return nearest == Integer.MAX_VALUE ? OptionalInt.empty() : OptionalInt.of(nearest);
+    }
+
+    /**
+     * O mesmo índice, medido de um centro novo — 2026-09-17.
+     *
+     * <p><b>Rua não deixa de existir porque o centro se mudou.</b> Até
+     * aqui, deriva de centro descartava o índice inteiro junto com o
+     * cursor da varredura, e o preço está medido: no playtest de 09-17 a
+     * colônia respondeu <b>16 de 32</b> consultas pelo índice — as de
+     * antes do movimento — e depois voltou a varrer o quadrado do zero,
+     * sem nunca mais fechar uma volta.
+     *
+     * <p><b>Por que o cursor cai e o índice não.</b> O cursor é
+     * {@code (anel, coluna)} <b>relativo</b> ao centro: mover o centro o
+     * torna sem sentido, e a aritmética mostra que transladá-lo não
+     * recupera nada — com deriva de 40 e anel visto de 27, o anel seguro
+     * no centro novo é zero. Já o índice guarda <b>colunas absolutas do
+     * mundo</b>, e elas continuam sendo rua.
+     *
+     * <p>O que muda é o alcance: coluna que ficou fora do raio do centro
+     * novo sai, porque servir lote de fora do raio é o E46. Em quadrado,
+     * que é a régua do scanner.
+     *
+     * @param centre o centro de agora
+     * @param radius o raio da vila
+     * @return o índice reancorado, ou vazio se nenhuma rua sobreviveu —
+     *     e aí varrer de novo é mesmo a resposta certa
+     */
+    public Optional<ColonyRoads> rebasedTo(ColonyPos centre, int radius) {
+        Objects.requireNonNull(centre, "centre");
+
+        List<Long> kept = new ArrayList<>();
+
+        for (long column : columns) {
+            int square = Math.max(
+                    Math.abs(xOf(column) - centre.x()),
+                    Math.abs(zOf(column) - centre.z()));
+
+            if (square <= radius) {
+                kept.add(column);
+            }
+        }
+
+        return kept.isEmpty()
+                ? Optional.empty()
+                : Optional.of(new ColonyRoads(colonyId, centre, kept));
     }
 }

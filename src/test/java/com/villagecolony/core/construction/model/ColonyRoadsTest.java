@@ -4,6 +4,7 @@ import com.villagecolony.core.type.ColonyPos;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.UUID;
 
@@ -104,5 +105,66 @@ class ColonyRoadsTest {
         assertEquals(
                 OptionalInt.of(0),
                 roads.blocksToTheNearestRoad(new ColonyPos(100, 200, 100)));
+    }
+
+    // --- rebasedTo: o índice sobrevive ao centro que anda ---
+
+    /**
+     * <b>Rua não deixa de existir porque o centro se mudou.</b>
+     *
+     * <p>O caso do playtest de 2026-09-17: a colônia foi de 37 para 69
+     * camas — a sonda descobriu quase o dobro da vila — e o centro andou
+     * 40 blocos para o meio verdadeiro. O movimento estava <b>certo</b>;
+     * errado era jogar o índice fora junto com o cursor.
+     */
+    @Test
+    void theIndexSurvivesTheCentreMoving() {
+        ColonyRoads roads = roadsAt(
+                ColonyRoads.column(10, 10),
+                ColonyRoads.column(20, 20));
+
+        Optional<ColonyRoads> kept =
+                roads.rebasedTo(new ColonyPos(15, 64, 15), 64);
+
+        assertTrue(kept.isPresent(), "perdeu o índice inteiro com as duas ruas dentro do raio");
+
+        assertEquals(2, kept.get().columns().size());
+
+        assertEquals(
+                new ColonyPos(15, 64, 15),
+                kept.get().from(),
+                "o índice tinha de passar a dizer que foi medido do centro novo");
+    }
+
+    /**
+     * A coluna que ficou fora do raio novo sai.
+     *
+     * <p>Guardá-la seria servir lote de fora do alcance, que é o E46.
+     */
+    @Test
+    void whatFellOutsideTheNewRadiusIsDropped() {
+        ColonyRoads roads = roadsAt(
+                ColonyRoads.column(0, 0),
+                ColonyRoads.column(500, 500));
+
+        Optional<ColonyRoads> kept = roads.rebasedTo(new ColonyPos(0, 64, 0), 64);
+
+        assertTrue(kept.isPresent());
+
+        assertEquals(1, kept.get().columns().size(), "a coluna a 500 blocos tinha de sair");
+    }
+
+    /**
+     * Nenhuma rua sobrevivendo devolve vazio, e não um índice vazio.
+     *
+     * <p>Vazio quer dizer "varra de novo", que é a resposta certa quando
+     * o centro se mudou para longe de tudo o que se conhecia. Um índice
+     * com zero colunas mentiria dizendo que já se olhou.
+     */
+    @Test
+    void anIndexWithNothingLeftIsEmptyAndNotHollow() {
+        ColonyRoads roads = roadsAt(ColonyRoads.column(0, 0));
+
+        assertTrue(roads.rebasedTo(new ColonyPos(500, 64, 500), 64).isEmpty());
     }
 }

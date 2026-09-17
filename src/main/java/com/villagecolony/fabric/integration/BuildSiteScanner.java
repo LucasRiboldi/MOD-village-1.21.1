@@ -326,16 +326,39 @@ public final class BuildSiteScanner {
         ColonyRoads roads = ROADS.get(colonyId);
 
         if (roads != null && drifted(roads.from(), center)) {
-            // Mesma régua do cursor: centro que andou demais invalida a
-            // medida, porque ela foi feita de outro lugar.
             SweepLog.drifted(colonyId, roads.from(), center);
 
-            ROADS.remove(colonyId);
+            // <b>O cursor cai, o índice fica</b> — 2026-09-17. O cursor é
+            // anel relativo ao centro e vira lixo quando ele anda; o
+            // índice guarda coluna absoluta do mundo, e rua não deixa de
+            // ser rua porque a vila descobriu que era maior.
+            //
+            // O preço de descartar os dois está medido: no playtest de
+            // 09-17 a colônia respondeu 16 de 32 consultas pelo índice —
+            // as de antes do movimento — e depois varreu do zero sem
+            // nunca mais fechar volta, em 22.116 colunas contra as 16.641
+            // que uma volta pede. Ver ColonyRoads.rebasedTo.
+            Optional<ColonyRoads> kept = roads.rebasedTo(center, radius);
+
             ROAD_CURSOR.remove(colonyId);
             BUILDING.remove(colonyId);
             SWEEPS.remove(colonyId);
 
-            roads = null;
+            if (kept.isPresent()) {
+                ROADS.put(colonyId, kept.get());
+
+                VillageColonyMod.LOGGER.info(
+                        "Colony {} kept {} of {} road columns after the center moved"
+                                + " — the index is measured from {} now",
+                        colonyId,
+                        kept.get().columns().size(),
+                        roads.columns().size(),
+                        center);
+            } else {
+                ROADS.remove(colonyId);
+            }
+
+            roads = kept.orElse(null);
         }
 
         if (roads != null) {
