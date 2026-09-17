@@ -19,7 +19,7 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 | P0.6 | A enxurrada da areia calou | ✅ entregue 09-11, **espera sessão** |
 | P0.7 | Elegibilidade simplificada de lotes | ✅ entregue 09-15, **espera playtest** |
 | **P0.8** | **A mina fica presa na boca (E45)** | 🔴 **aberto, causa provada, não corrigido** |
-| **P0.9** | **A obra nasce condenada: a estrada leva o lote para fora (E46)** | 🔴 **causa raiz achada, instrumentada, correção espera decisão** |
+| **P0.9** | **A obra nasce condenada: a estrada leva o lote para fora (E46)** | ✅ **C4 corrigido 09-16, espera playtest** |
 
 **Dois bloqueadores, e são independentes.** O playtest de 09-16 21:41–22:12
 **reproduziu o E45** e revelou o E46. Corrigir só o E45 **não** faz a vila
@@ -68,33 +68,51 @@ sumiu da bateria.
 ⚠️ **Nada foi visto em jogo** — a instrumentação é código novo que ainda não
 rodou num servidor de verdade.
 
-**Três decisões abertas, e são suas:** **C4** (teto do índice — filtrar ao
-servir, ao lembrar, ou assumir que a vila cresce pela estrada), **C1** (qual
-régua fica) e **C3** (o centro a 77 blocos do aglomerado de camas). Ver
+**C4 corrigido em 09-16 — decisão do autor: o scanner estava certo, e o
+guarda errado.** A estrada é projetada para sair do raio (`RoadExtension`
+ordena as pontas da **mais distante** para a mais perto), então o raio de 64
+é da **detecção de vila**, não um limite de crescimento. O guarda passou a
+medir da **rede de ruas**: larga a obra a mais de 16 blocos de qualquer rua,
+e **sem índice cai na régua antiga** — não saber onde estão as ruas não é o
+mesmo que não haver nenhuma.
+
+**O defeito de 09-15 continua pego**, e há teste que o afirma: obra longe do
+centro **e** de qualquer rua continua sendo largada. É o que impede o
+conserto de ser um afrouxamento.
+
+**Duas decisões seguem abertas:** **C1** — rebaixado a 🟡, porque o círculo
+só governa agora o caso sem índice — e **C3** (o centro a 77 blocos do
+aglomerado de camas, que não causou o E46). Ver
 [`docs/technical/E46-obra-nasce-condenada.md`](docs/technical/E46-obra-nasce-condenada.md).
 
 **P0.7 — politica aplicada em 2026-09-15.** Piso solido disponivel e candidato a lote; pedra, gravilha e terracota nao sao recusadas pela composicao. Estrada exige material oficial mais `ROAD_AREA`; gravilha ou terracota fora da reserva continuam elegiveis. O scanner nao terraplana nem muda o mundo. Ver ADR-017.
 
 **Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
 
-**JAR atual 0.3.0 — gerado em 2026-09-16 23:12, commit `262aba1`.** Sobre o
-artefato anterior, o que entra é **só a instrumentação do C2 do E46**:
-nenhuma correção de comportamento, nenhum defeito fechado. Ele serve para
-**medir** o E45 e o E46 no jogo, e não para consertá-los.
+**JAR atual 0.3.0 — gerado em 2026-09-16 23:35.** Traz a instrumentação do
+C2 **e a correção do C4**: é o primeiro artefato desde 09-15 que muda
+comportamento. O E45 (mineiro) **continua aberto** — a mina vai travar de
+novo.
 
-Duas linhas novas a procurar no log do próximo playtest:
+O que procurar no log do próximo playtest:
 
+- **A obra ao lado da rua deve sobreviver.** Se `lets go of` sumir e a
+  biblioteca passar de 628/628, o C4 funcionou.
 - `… planned … Measured from <centro>: N blocks square, N blocks straight, and the radius is N`
-- `WARN … the road index served a lot at … from outside the sweep … The sweep would never have offered it`
+- `WARN … the road index served a lot at … from outside the sweep` — este
+  **ainda deve aparecer**: ele descreve o scanner, que por decisão não
+  mudou. Agora é informação, não sintoma.
+- Se `lets go of` aparecer, a linha agora diz **a distância até a rua**, e
+  não culpa o centro.
 
-**Verificado:** `build` passou; **886 unitários, 0 falhas** (XML conferido);
-**335 GameTests por rodada, 13 verdes em 16** — as 3 falhas são o KF-002,
-pré-existente. Conferido **dentro do JAR** que as duas linhas estão nas
-classes, e não só no fonte.
+**Verificado:** `build` passou; **896 unitários, 0 falhas** (XML conferido,
++10 do C4); **335 GameTests, 4 rodadas verdes em 5** — a falha é o KF-002,
+pré-existente e alheio a isto. Conferido **dentro do JAR** que a linha nova
+está na classe compilada.
 
 Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas três
-cópias: `4BE567F205E479028FD2374847C4B21588E8901A41940B67534A17CAF35C23EA`
-(o anterior era `41BF1FD3…`). **Falta playtest.**
+cópias: `D7AB2596731CA22E9E86C3481396EF51F6813F28A0C48A7A8BD3BE878F1B1E58`
+(o anterior era `4BE567F2…`). **Falta playtest.**
 
 *JAR anterior, para referência: `build`, 884 unitários e 335/335 GameTests;
 incluía P0.7, a limpeza imediata da claim, as duas correções do playtest de

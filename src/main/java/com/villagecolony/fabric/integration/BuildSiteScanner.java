@@ -544,6 +544,25 @@ public final class BuildSiteScanner {
     }
 
     /**
+     * O índice de ruas desta colônia, se ela já o tem — E46, 2026-09-16.
+     *
+     * <p>Quem pergunta é o guarda de alcance da obra. Ele media do
+     * centro, e o centro é o lugar errado: a rua cresce <b>pela ponta
+     * mais distante</b> — ver {@code RoadExtension.consider}, que ordena
+     * as candidatas da mais longe para a mais perto —, então uma vila que
+     * se estende ao longo da estrada larga a própria obra.
+     *
+     * <p>Vazio tem dois significados aqui, e os dois levam o guarda a
+     * <b>não</b> largar nada: colônia que ainda não varreu o raio, e
+     * colônia cujo índice foi descartado por deriva do centro. Em nenhum
+     * dos casos se sabe onde estão as ruas, e largar obra por ignorância
+     * é o defeito que este conserto veio tirar.
+     */
+    public static Optional<ColonyRoads> roadsOf(UUID colonyId) {
+        return colonyId == null ? Optional.empty() : Optional.ofNullable(ROADS.get(colonyId));
+    }
+
+    /**
      * Recoloca um índice que veio do disco — 2026-08-27.
      *
      * <p>É o que apaga os dezessete ciclos da primeira busca de lote de

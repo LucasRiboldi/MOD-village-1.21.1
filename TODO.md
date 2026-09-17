@@ -29,7 +29,7 @@ específicas, e o guarda genérico nunca disparou em nenhuma das três.
 
 ---
 
-## 🔴 P0.9 — E46: a obra nasce condenada (causa raiz achada, espera decisão)
+## ✅ P0.9 — E46: a obra nasce condenada (C4 corrigido 09-16, espera playtest)
 
 Playtest de 21:41. A biblioteca foi planejada **duas vezes** e as duas
 morreram em ~30 s com **628 blocos restantes de 628**, sem um bloco posto.
@@ -46,8 +46,8 @@ index — 0 by drift`, do `SweepLog`. Detalhe em
 construir.
 
 - [x] ✅ **C2** — instrumentado: a linha `planned …` diz o centro e as duas distâncias; o scanner emite `WARN` ao servir lote de fora do raio. **Verificado:** build + 886 testes, 0 falhas (XML conferido). ⚠️ sem gametest e sem jogo.
-- [ ] 🔴 **C4** — **decisão do autor, e é o que matou o playtest:** teto do índice → (a) filtrar ao servir em `findAmongRoads`, (b) filtrar ao lembrar em `remember`, (c) assumir que a vila cresce pela estrada e corrigir o guarda. Recomendado **(a)**: o centro pode mudar entre lembrar e servir.
-- [ ] 🔴 **C1** — **decisão do autor:** uma régua só → (a) `isOutOfReach` vira Chebyshev, (b) scanner vira euclidiano. Recomendado **(a)**: `withinTheFarmersReach` e `VillageDetector` já medem em quadrado. Os dois testes que fixam a divergência **já existem** em `ConstructionProjectTest` — ao decidir (a), o `assertTrue` de `theCornerOfTheSweptSquareIsOutOfReachByTheStraightLine` vira `assertFalse`.
+- [x] ✅ **C4** — **corrigido em 09-16. Decisão do autor: (c)** — o scanner estava certo, o guarda errado. A estrada é projetada para sair do raio (`RoadExtension` ordena as pontas da mais distante para a mais perto), e o raio de 64 é da **detecção de vila**, não um limite de crescimento. O guarda passou a medir da **rede de ruas** (`ColonyRoads.blocksToTheNearestRoad`), larga a obra a mais de 16 blocos de qualquer rua, e **sem índice cai na régua antiga**. **Verificado:** build + 896 unitários (0 falhas) + 335 GameTests em 4/5 rodadas. ⚠️ sem playtest.
+- [ ] 🟡 **C1** — **rebaixado pelo C4.** O círculo só governa agora o caso **sem índice de ruas**; no caminho normal quem decide é a distância à rua, em quadrado. A divergência continua no caso residual, mas os 21% já não descrevem a vila em operação.
 - [ ] 🟠 **C3** — o centro que a detecção recusa mover (59× `view not provably complete`, centro a 77 blocos do aglomerado real). **Não causou o E46.** ⚠️ investigação própria — afrouxar a regra de completude ressuscita o E2.
 - [x] 🟢 ~~`isSupersededBy` do planejador~~ — **descartado:** `drops the untouched` = 0
 - [x] 🟢 ~~`PatienceClock` / obra sem material~~ — **descartado:** `WAITING_RESOURCES` não aparece no log, e a paciência é de 10 min contra 29 s observados

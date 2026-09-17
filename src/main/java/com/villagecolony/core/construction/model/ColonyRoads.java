@@ -4,6 +4,7 @@ import com.villagecolony.core.type.ColonyPos;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.OptionalInt;
 import java.util.UUID;
 
 /**
@@ -65,5 +66,44 @@ public record ColonyRoads(UUID colonyId, ColonyPos from, List<Long> columns) {
     /** O z de uma coluna empacotada. */
     public static int zOf(long column) {
         return (int) column;
+    }
+
+    /**
+     * A quantos blocos daqui está a rua mais próxima — E46, 2026-09-16.
+     *
+     * <p>Em quadrado, que é a régua do resto do projeto: o
+     * {@code BuildSiteScanner} varre em anéis, o
+     * {@code ConstructionPlanner.withinTheFarmersReach} mede assim, e o
+     * {@code VillageDetector} também. Ver o C1 do E46 — o círculo era o
+     * forasteiro entre três réguas.
+     *
+     * <p>Horizontal, pelo mesmo motivo que o alcance da obra: a altura
+     * da rua é lida do mundo, e uma vila em encosta não fica mais longe
+     * de si mesma por isso.
+     *
+     * <p>Índice vazio devolve vazio, e não "infinitamente longe": não
+     * saber onde estão as ruas não é o mesmo que não haver nenhuma, e
+     * quem pergunta precisa distinguir os dois casos para não largar uma
+     * obra por ignorância.
+     *
+     * @return a distância em quadrado até a rua mais próxima, ou vazio
+     *     se esta colônia ainda não tem índice de ruas
+     */
+    public OptionalInt blocksToTheNearestRoad(ColonyPos at) {
+        Objects.requireNonNull(at, "at");
+
+        int nearest = Integer.MAX_VALUE;
+
+        for (long column : columns) {
+            int distance = Math.max(
+                    Math.abs(xOf(column) - at.x()),
+                    Math.abs(zOf(column) - at.z()));
+
+            if (distance < nearest) {
+                nearest = distance;
+            }
+        }
+
+        return nearest == Integer.MAX_VALUE ? OptionalInt.empty() : OptionalInt.of(nearest);
     }
 }

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -290,5 +291,79 @@ class ConstructionProjectTest {
         ColonyPos centre = new ColonyPos(0, 64, 0);
 
         assertFalse(ConstructionProject.isOutOfReach(new ColonyPos(64, 64, 0), centre, 64));
+    }
+
+    // --- E46 / C4: quem responde "alcançável" é a rua, não o centro ---
+
+    /**
+     * <b>O caso do playtest de 2026-09-16 21:41.</b> A obra está a 77
+     * blocos do centro — fora do raio por qualquer régua — e encostada na
+     * rua que a vila acabou de calçar. Ela <b>fica</b>.
+     *
+     * <p>Antes deste conserto morria em trinta segundos, com 628 blocos
+     * restantes de 628, duas vezes seguidas.
+     */
+    @Test
+    void theWorkBesideTheRoadStaysEvenFarFromTheCentre() {
+        ColonyPos centre = new ColonyPos(2495, 65, -3003);
+        ColonyPos work = new ColonyPos(2456, 63, -2936);
+
+        assertTrue(ConstructionProject.isOutOfReach(work, centre, 64),
+                "o cenário precisa ser uma obra que a régua antiga largava");
+
+        assertFalse(ConstructionProject.isOutOfReach(work, centre, 64, OptionalInt.of(1)));
+    }
+
+    /**
+     * <b>E o defeito de 2026-09-15 continua pego</b> — é o ponto de não
+     * afrouxar o guarda à toa.
+     *
+     * <p>Aquela obra ficou longe do centro <b>e</b> longe de qualquer rua,
+     * segurando a vaga única por sete minutos e meio. Longe dos dois
+     * continua sendo largada.
+     */
+    @Test
+    void theWorkStrandedFarFromAnyRoadIsStillLetGo() {
+        ColonyPos centre = new ColonyPos(637, 65, -2871);
+        ColonyPos stranded = new ColonyPos(638, 65, -2793);
+
+        assertTrue(ConstructionProject.isOutOfReach(
+                stranded, centre, 64, OptionalInt.of(40)));
+    }
+
+    /**
+     * Sem índice de ruas, o centro volta a valer.
+     *
+     * <p>Não saber onde estão as ruas não é o mesmo que não haver
+     * nenhuma, e a colônia que ainda não varreu o raio decide como antes
+     * deste conserto — nem mais frouxa, nem mais dura.
+     */
+    @Test
+    void withoutARoadIndexTheCentreDecidesAsBefore() {
+        ColonyPos centre = new ColonyPos(0, 64, 0);
+
+        assertTrue(ConstructionProject.isOutOfReach(
+                new ColonyPos(100, 64, 0), centre, 64, OptionalInt.empty()));
+
+        assertFalse(ConstructionProject.isOutOfReach(
+                new ColonyPos(30, 64, 0), centre, 64, OptionalInt.empty()));
+    }
+
+    /**
+     * A borda da folga é inclusiva, e o bloco seguinte já é campo aberto.
+     *
+     * <p>Fixa {@code BESIDE_THE_ROAD} como contrato: mudá-lo é decisão, e
+     * quem a tomar vê este teste cair.
+     */
+    @Test
+    void theEdgeOfTheRoadsideToleranceIsInclusive() {
+        ColonyPos centre = new ColonyPos(0, 64, 0);
+        ColonyPos far = new ColonyPos(1000, 64, 1000);
+
+        assertFalse(ConstructionProject.isOutOfReach(
+                far, centre, 64, OptionalInt.of(ConstructionProject.BESIDE_THE_ROAD)));
+
+        assertTrue(ConstructionProject.isOutOfReach(
+                far, centre, 64, OptionalInt.of(ConstructionProject.BESIDE_THE_ROAD + 1)));
     }
 }

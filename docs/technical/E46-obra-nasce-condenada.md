@@ -172,7 +172,18 @@ ela não está.
 
 ## 5. Correção proposta
 
-### C1 — As duas réguas têm de ser a mesma 🔴
+### C1 — As duas réguas têm de ser a mesma 🟡 (rebaixado pelo C4)
+
+⚠️ **Rebaixado de 🔴 para 🟡 em 2026-09-16, depois do C4.** O círculo deixou
+de governar o caminho normal: com índice de ruas, quem decide é a distância
+até a rua, em **quadrado**. A régua euclidiana só é consultada agora no caso
+sem índice — colônia que ainda não varreu o raio, ou que perdeu o índice por
+deriva.
+
+A divergência **continua existindo** nesse caso residual, e por isso o item
+fica aberto. Mas os 21% já não descrevem a vila em operação normal, e o
+`assertTrue` que o C2 deixou fixado continua valendo: ele guarda a
+sobrecarga de dois pontos, que não mudou.
 
 **Problema.** Achar em quadrado e manter em círculo condena 21% dos lotes
 que o próprio scanner aprova.
@@ -221,28 +232,53 @@ qualquer log futuro:
 no XML de `build/test-results`. Dois testes novos em
 `ConstructionProjectTest` fixam a divergência das réguas — ver C1.
 
-### C4 — O índice de ruas precisa de teto de raio 🔴 **(é o que matou o playtest)**
+### C4 — Quem responde "alcançável" é a rua, não o centro ✅ feito
 
-**Problema.** `findAmongRoads` percorre o índice inteiro e não consulta o
-raio; `remember` acrescenta qualquer rua nova. A vila calça estrada para
-fora do raio e passa a receber lotes de lá. Ver §2-bis.
+**Decisão do autor em 2026-09-16: a saída (c)** — o scanner está certo, e
+quem estava errado era o guarda.
 
-**Correção, e a escolha é do autor:**
+**O argumento que decidiu.** A estrada **foi projetada para sair do raio**.
+`RoadExtension.consider` ordena as pontas candidatas da **mais distante para
+a mais perto**, e o comentário no código diz por quê: *"a rua cresce pela
+ponta, e não pelo meio"*. Pôr teto no scanner seria remendar o sintoma de
+uma intenção deliberada. **O raio de 64 é da detecção de vila, não um limite
+de crescimento.**
 
-| Saída | O que faz | Preço |
-|---|---|---|
-| **(a) Filtrar ao servir** | `findAmongRoads` pula coluna fora do raio | Índice continua crescendo; custo por passagem sobe um pouco |
-| **(b) Filtrar ao lembrar** | `remember` recusa coluna fora do raio | Índice fica enxuto; se o centro mudar, o índice fica velho |
-| **(c) Deixar como está** | A vila cresce ao longo das estradas, sem teto | Exige então que o **guarda** aceite — vira decisão de design, não correção |
+**O que mudou.** O guarda deixou de medir do centro e passou a medir da
+**rede de ruas**:
 
-**Recomendação: (a).** O teto é uma pergunta do momento de servir, e o
-centro pode mudar entre lembrar e servir. (c) é defensável como decisão de
-design — "a vila cresce pela estrada" —, mas aí o guarda de alcance é que
-está errado, e não o scanner.
+- `ColonyRoads.blocksToTheNearestRoad(at)` — a distância em quadrado até a
+  rua mais próxima do índice. Devolve **vazio** quando não há índice, e isso
+  é diferente de "infinitamente longe".
+- `ConstructionProject.isOutOfReach(origin, centre, radius, toTheRoad)` — a
+  sobrecarga nova. Com índice, larga a obra que está a mais de
+  `BESIDE_THE_ROAD` (**16**) blocos de qualquer rua. Sem índice, **cai na
+  régua antiga** — não saber onde estão as ruas não é o mesmo que não haver
+  nenhuma, e largar obra por ignorância era o defeito.
+- `BuildSiteScanner.roadsOf(colonyId)` — o acessor que faltava.
+- A linha do abandono agora diz a distância até a rua, em vez de culpar o
+  centro por ter se movido.
 
-**Prova.** Teste que põe uma coluna fora do raio no índice e afirma que ela
-não é servida. ⚠️ `findAmongRoads` é privado e toca `ServerWorld` — o teste
-provavelmente é gametest, não unitário.
+**Por que 16.** A casa nasce encostada na rua, mas o *canto de origem* da
+planta grande (13×11) fica a treze blocos dela. Dezesseis é esse número com
+margem, e é deliberadamente apertado: o que se quer excluir é a obra **solta
+no campo**, não a obra na ponta da estrada.
+
+**Prova — 10 testes novos, e o que importa é o par:**
+
+- `theWorkBesideTheRoadStaysEvenFarFromTheCentre` — o caso exato do playtest
+  (obra a 77 blocos do centro, encostada na rua) **fica**. O teste afirma
+  antes que a régua antiga a largava, para não passar por acidente.
+- `theWorkStrandedFarFromAnyRoadIsStillLetGo` — **o defeito de 2026-09-15
+  continua pego**: a obra de `638,65,-2793`, longe do centro *e* de qualquer
+  rua, continua sendo largada. É o que impede este conserto de virar um
+  afrouxamento.
+- `withoutARoadIndexTheCentreDecidesAsBefore`, `theEdgeOfTheRoadsideToleranceIsInclusive`,
+  e seis em `ColonyRoadsTest` para a conta da distância.
+
+**Verificado:** `build` passou; **896 unitários, 0 falhas** (XML conferido);
+**335 GameTests, 4 rodadas verdes em 5** — a falha é o KF-002, alheio a isto.
+⚠️ **Sem playtest.**
 
 ### C3 — O centro que a detecção recusa mover 🟠
 

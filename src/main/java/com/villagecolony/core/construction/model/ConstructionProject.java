@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.UUID;
 
 /**
@@ -164,6 +165,73 @@ public final class ConstructionProject {
         long dz = (long) origin.z() - centre.z();
 
         return dx * dx + dz * dz > (long) radius * radius;
+    }
+
+    /**
+     * Quantos blocos da rua uma obra pode estar e ainda ser da vila.
+     *
+     * <p>A casa nasce <b>encostada</b> na rua — é a decisão 1 do
+     * {@code BuildSiteScanner}, e o lote começa no bloco seguinte ao
+     * calçamento. A folga aqui é para a obra grande, cujo canto de origem
+     * fica a uma casa de distância da rua que a serve: a maior planta em
+     * uso é 13×11, e o canto mais longe dela está a treze blocos.
+     *
+     * <p>Dezesseis é esse número com margem, e ele é deliberadamente
+     * apertado: o que se quer excluir é a obra <b>solta no campo</b>, e
+     * não a obra na ponta da estrada.
+     */
+    public static final int BESIDE_THE_ROAD = 16;
+
+    /**
+     * O mesmo, sabendo a que distância da rua a obra está — E46,
+     * 2026-09-16.
+     *
+     * <p><b>O defeito que isto conserta.</b> Medir do centro larga obra
+     * legítima, e não por acidente: a rua cresce <b>pela ponta mais
+     * distante</b> do centro — {@code RoadExtension.consider} ordena as
+     * candidatas da mais longe para a mais perto, e a frase no código é
+     * <i>"a rua cresce pela ponta, e não pelo meio"</i>. Uma vila que se
+     * estende ao longo da estrada passa a receber lote de fora do raio, e
+     * o guarda antigo matava essa obra no ciclo seguinte. No playtest de
+     * 2026-09-16 21:41 foram duas bibliotecas, planejadas e abandonadas em
+     * trinta segundos, com 628 blocos restantes de 628.
+     *
+     * <p><b>O raio de 64 é da detecção de vila, não um limite de
+     * crescimento.</b> Quem responde "esta obra é alcançável" é a rede de
+     * ruas: obra encostada na rua está ligada à vila por onde o
+     * trabalhador anda, esteja o centro onde estiver.
+     *
+     * <p><b>E o defeito de 2026-09-15 continua pego</b>, que é o ponto de
+     * não afrouxar isto à toa. A obra daquele log — {@code 638,65,-2793},
+     * 382 blocos parados por sete minutos e meio segurando a vaga única —
+     * ficou longe do centro <b>e</b> longe de qualquer rua; ela continua
+     * sendo largada. O que deixa de ser largada é a obra que a estrada
+     * alcança.
+     *
+     * <p><b>Sem índice, o centro volta a valer.</b> Colônia que ainda não
+     * varreu o raio, ou que perdeu o índice por deriva, não sabe onde
+     * estão as ruas — e não saber não é o mesmo que não haver. Nesse caso
+     * a pergunta cai na sobrecarga de dois pontos, que é o comportamento
+     * de antes deste conserto.
+     *
+     * @param origin onde a obra está
+     * @param centre o centro da vila agora
+     * @param radius o raio da vila, inclusivo na borda
+     * @param blocksToTheNearestRoad a distância em quadrado até a rua mais
+     *     próxima, ou vazio quando a colônia não tem índice de ruas. Ver
+     *     {@code ColonyRoads.blocksToTheNearestRoad}
+     */
+    public static boolean isOutOfReach(
+            ColonyPos origin, ColonyPos centre, int radius,
+            OptionalInt blocksToTheNearestRoad) {
+
+        Objects.requireNonNull(blocksToTheNearestRoad, "blocksToTheNearestRoad");
+
+        if (blocksToTheNearestRoad.isEmpty()) {
+            return isOutOfReach(origin, centre, radius);
+        }
+
+        return blocksToTheNearestRoad.getAsInt() > BESIDE_THE_ROAD;
     }
 
     public ConstructionState state() {

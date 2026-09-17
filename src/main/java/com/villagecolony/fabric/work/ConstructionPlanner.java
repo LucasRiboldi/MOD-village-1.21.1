@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.function.Predicate;
 
 /**
@@ -225,18 +226,31 @@ public final class ConstructionPlanner {
             // para sempre, calada, com a vaga única ocupada. Ver
             // ConstructionProject.isOutOfReach, que traz a aritmética do log
             // do autor.
+            //
+            // <b>E quem responde "alcançável" é a rua, não o centro</b> —
+            // E46, 2026-09-16. A rua cresce pela ponta mais distante do
+            // centro, de propósito, e medir do centro largava a obra que a
+            // própria estrada acabara de alcançar. Sem índice de ruas a
+            // pergunta cai no centro, que é o comportamento de antes.
+            OptionalInt toTheRoad = BuildSiteScanner.roadsOf(colony.id())
+                    .map(roads -> roads.blocksToTheNearestRoad(open.get().origin()))
+                    .orElseGet(OptionalInt::empty);
+
             if (ConstructionProject.isOutOfReach(
-                    open.get().origin(), colony.center(), searchRadius)) {
+                    open.get().origin(), colony.center(), searchRadius, toTheRoad)) {
 
                 VillageColonyMod.LOGGER.info(
-                        "Colony {} lets go of {} at {} — the village centre moved to {},"
-                                + " and the work is now outside the {}-block radius."
+                        "Colony {} lets go of {} at {} — the village centre is at {},"
+                                + " the radius is {}, and the nearest road is {}."
                                 + " The half-built house and its lot stay taken",
                         colony.id(),
                         open.get().blueprint().id(),
                         open.get().origin(),
                         colony.center(),
-                        searchRadius);
+                        searchRadius,
+                        toTheRoad.isPresent()
+                                ? toTheRoad.getAsInt() + " blocks away"
+                                : "not indexed yet");
 
                 // A planta nao leva a culpa: nao faltou material, a obra ficou
                 // longe. Ver WaitingWork.giveUp(colony, project, blamePlan).
