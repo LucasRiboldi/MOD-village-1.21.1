@@ -1,29 +1,54 @@
 # TODO
 
-**Atualizado:** 2026-09-16, depois do playtest que achou o E45 (mina presa na boca).
+**Atualizado:** 2026-09-16 22:30, depois do segundo playtest — E45 reproduzido, causa corrigida, E46 descoberto.
 
 ---
 
 ## 🔴 P0.8 — E45: a mina fica presa na boca (aberto, não corrigido)
 
-Playtest de 2026-09-16, 03:44–08:23: **4h40 sem uma construção concluída**.
-O mineiro girou em falso a sessão inteira (166.559 linhas iguais, 10/s,
-**zero pedra quebrada**), o cobblestone caiu de 411 para 10 e o builder parou
-46 vezes por falta dele.
+Reproduzido no playtest de 21:41–22:12: 17.518 recusas em 31 min, 10/s,
+**zero pedra quebrada** (em 03:44 foram 166.559 em 4h40 — mesma assinatura).
 
-Causa provada e correção proposta em
+⚠️ **A causa mudou na revisão de 22:30.** Não é o reinício por
+`deepenIfEveryOpenArmIsDone`/`restartAt` — o log prova que esse caminho
+**nunca é alcançado**. O laço é a **mesma passagem repetida**: o braço fecha
+em 8 recusas dentro de um orçamento de 64, `claimArm` o solta, e a passagem
+seguinte o reocupa no mesmo `cut`. Detalhe em
 [`docs/technical/E45-mina-presa-na-boca.md`](docs/technical/E45-mina-presa-na-boca.md).
-**Nada foi alterado no código.** Ordem sugerida:
+**Nada foi alterado no código.** Ordem revisada:
 
-- [ ] 🔴 **C1** — o reinício do braço não pode ser mudo (`restartAt` roda 166 mil vezes sem uma linha)
-- [ ] 🟠 **C3** — `everyOpenArmIsDone` não pode aceitar 1 de 4 como "todos" ⚠️ preservar o limbo de 09-04
-- [ ] 🔴 **C2** — repetição sem progresso tem de custar (contador que `restartAt` não zera)
-- [ ] 🟠 **C4** — **decisão do autor:** boca intransponível → (a) mudar a boca, (b) girar a hélice, (c) desistir por um prazo. Recomendado: (b) com (a) como escalada.
+- [ ] 🔴 **C4** — **a correção de verdade, e exige decisão do autor:** boca intransponível → (a) mudar a boca, (b) girar a hélice, (c) desistir por um prazo. Recomendado: (b) com (a) como escalada.
+- [ ] 🔴 **C1** — o braço servido sem picareta não pode ser mudo (17.518 repetições, nenhuma linha própria)
+- [ ] 🔴 **C2** — repetição sem progresso tem de custar (contador na `Mine` que sobrevive ao **`finish()`**, não ao `restartAt`)
+- [x] 🟢 ~~**C3** — `everyOpenArmIsDone`~~ — **retirado:** premissa refutada pelo log, e mexer ali arriscaria o limbo de 09-04
 
 **Defeito de fundo a tratar junto:** `stall`, `still` e `adrift` ficaram
-zerados as 4h40 — o caminho de falha zera os contadores no mesmo tique.
-Terceira volta do mesmo laço; os consertos anteriores fecharam portas
+zerados nas duas sessões — o caminho de falha zera os contadores no mesmo
+tique. Terceira volta do mesmo laço; os consertos anteriores fecharam portas
 específicas, e o guarda genérico nunca disparou em nenhuma das três.
+
+---
+
+## 🔴 P0.9 — E46: a obra fecha sozinha com 628/628 blocos (não diagnosticado)
+
+Playtest de 21:41. A biblioteca foi planejada **duas vezes**, em posições
+diferentes, e as duas morreram em ~30 s com **628 blocos restantes de 628** —
+nenhum bloco posto. A frase é `Builder … stopped — the project is closed`.
+
+**É independente do E45**, e corrigir o mineiro sozinho não faz a vila
+construir. Em 03:44 o builder parava por falta de cobblestone; aqui não é
+falta de material.
+
+- [ ] 🔴 Separar no log as duas causas de `BuilderWork.java:224` — projeto **não encontrado** vs. projeto **não aberto**. Hoje são indistinguíveis.
+- [ ] 🔴 Investigar `ConstructionService` removendo o projeto enquanto o builder o segura (`removeIf(!isOpen)`, `ConstructionService.java:206`)
+- [x] 🟢 ~~`isSupersededBy` do planejador~~ — **descartado:** `drops the untouched` aparece 0 vezes
+
+---
+
+## 🟠 Achados de fundo do playtest de 21:41
+
+- [ ] 🟠 **36 colônias ativas**, `Colony cycle took` até **486 ms** — 40 ciclos acima de um tique do servidor. O custo do ciclo cresce com o número de colônias, e o playtest carrega muito mais que os cenários de teste.
+- [ ] 🟠 **Só uma colônia planeja** (`9da5460c`); as outras 35 dão `assigned 0 tasks (0 open)`. Conferir se é esperado — é o padrão de `roca-sem-lote-trava-a-vila`.
 
 ---
 

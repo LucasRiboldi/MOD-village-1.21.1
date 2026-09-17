@@ -4,6 +4,12 @@
 > 341.196 linhas). Escrito para ser executado numa sessão seguinte: a
 > causa está provada, a correção está proposta, nada foi alterado no
 > código ainda.
+>
+> **Revisado em 2026-09-16, 22:30**, contra um segundo playtest
+> (21:41–22:12, 37.041 linhas) que **reproduziu o defeito**. A revisão
+> **corrigiu o mecanismo da §3**: a primeira versão atribuía o laço ao
+> reinício por `deepenIfEveryOpenArmIsDone`, e o log **refuta** isso. A
+> causa real está provada abaixo, e **C2 e C3 mudaram por causa dela**.
 
 ---
 
@@ -46,55 +52,98 @@ mineiro travado mata o builder**.
 
 ## 3. O mecanismo, tique a tique
 
-Provado por leitura do código e conferido contra o log. Vale enquanto
-`Mine.branchesOpenNow() == 1`, isto é, enquanto o poço não foi cavado.
+Provado por leitura do código e **medido no log do playtest de 21:41**.
+Vale enquanto `Mine.branchesOpenNow() == 1`, isto é, enquanto o poço não
+foi cavado.
+
+O laço inteiro cabe numa passagem só, e se repete dez vezes por segundo:
 
 1. Mineiro A pede braço. `MineClaims.claimArm` dá o braço 0 — `taken[0] = A`,
    e `open.test(0)` é `true` porque `done == false`.
-2. A cava, bate no emparedado, `MineArm.blockedAgain(8)` chama `finish()`:
-   `done = true`. → **log `hit stone`**.
-3. Mineiro B pede. Em `claimArm`, `taken[0]` não é B, e `open.test(0)` agora
-   é `false`. Nenhum braço serve → vazio. → **log `no branch work`**.
-4. `MineDigging.nextTarget` chama `Mine.deepenIfEveryOpenArmIsDone()`.
-   Como `branchesOpenNow() == 1`, **só o braço 0 conta**: `everyOpenArmIsDone()`
-   é `true`. O método fecha os quatro braços e chama `deepenIfEveryArmIsDone()`,
-   que desce e roda `restartAt` em todos — **`done = false`, `cut = 0`**.
-5. O braço 0 está aberto de novo, **com o cursor de volta na boca da mina**,
-   no mesmo bloco emparedado. Volta ao passo 1.
+2. `nextCut` roda até `CUTS_PER_SEARCH = 64` posições **na mesma passagem**.
+   A boca está emparedada: `nowhereToStand` é verdade, e cada volta do laço
+   chama `blockedAgain`. Na **oitava** (`BLOCKED_BEFORE_TURNING = 8`) vem
+   `finish()` — `done = true` — e o `break`. → **log `hit stone`**, uma linha
+   por passagem.
+3. Mineiro B pede na mesma passagem. `open.test(0)` agora é `false`, e
+   `claimArm` **solta** o braço (`taken[0] = null`) sem achar outro: com
+   `branchesOpenNow() == 1`, não há segundo braço a oferecer. → **log
+   `no branch work`**, com `0 digger(s) in 1 open branch(es)`.
+4. Na passagem seguinte o braço 0 volta a ser servido, **com o cursor onde
+   estava**, contra o mesmo bloco emparedado. Volta ao passo 1.
 
 ### A aritmética que fecha o caso
 
 - `CARVED = HELIX_SIDE(5) × STAIR_HEADROOM(3) × STAIR_LANES(2) × HELIX_FLIGHTS(4) = 120`.
   O poço só é considerado aberto — e `branchesOpenNow()` só passa de 1 para 4 —
   depois de **120** posições vencidas.
-- `BLOCKED_BEFORE_TURNING = 8`. O braço fecha na oitava recusa e `restartAt`
-  devolve `cut = 0`.
-- **O cursor nunca passa de 8 num universo que exige 120.** A mina não tinha
+- `BLOCKED_BEFORE_TURNING = 8` contra `CUTS_PER_SEARCH = 64`: o braço **fecha
+  em toda passagem**, sempre antes de o orçamento de busca acabar.
+- **Nenhuma posição é vencida num universo que exige 120.** A mina não tinha
   como abrir o poço; o laço era inevitável, não azar.
 
-### Por que `went one level deeper` não aparece
+### Por que o reinício **não** é o culpado — e o log prova
 
-`MineDigging` só registra a frase quando `deepenIfEveryOpenArmIsDone()`
-retorna `true`. Esse retorno é o de `deepenIfEveryArmIsDone()`, que devolve
-`false` quando a mina **não pôde descer de fato**. O estado foi reiniciado
-(`restartAt` rodou) sem que o retorno dissesse isso. **O reinício é mudo**:
-acontece 166 mil vezes e não deixa uma linha.
+A primeira versão desta análise dizia que `deepenIfEveryOpenArmIsDone`
+fechava os quatro braços e `restartAt` devolvia o cursor à boca. **É falso, e
+o log de 21:41 refuta em dois números.**
 
-## 4. Duas hipóteses testadas e descartadas
+Na superfície (`y ≈ 64`), `levelFloor()` é `64 − DESCENT(20) = 44`, e
+`DEEPEST` é `−59` — portanto `mayDeepen()` é **verdadeiro**. Se aquele
+caminho fosse tomado, `deepenIfEveryArmIsDone` desceria de fato, retornaria
+`true`, e `MineDigging` escreveria `went one level deeper`.
 
-Ficam registradas para não serem repetidas.
+| Frase | Esperado se o reinício fosse a causa | Medido |
+|---|---|---|
+| `went one level deeper` | ~17.500 | **0** |
+| `no miner branch work` | ~0 (o braço reabriria) | **17.517** |
+| `The gallery really ends at` | — | **1** |
+
+`no branch work` só é escrito **depois** de `deepenIfEveryOpenArmIsDone()`
+retornar `false`. Ele aparece 17.517 vezes: o reinício **nunca aconteceu**.
+
+Pelo mesmo motivo, `MineFrontier.findTheFrontier` também não é o culpado —
+ele escreveria `The gallery really ends at` a cada reposição, e escreveu
+**uma vez em toda a sessão**.
+
+**O braço não precisa ser reaberto por ninguém.** Ele é servido de novo na
+passagem seguinte simplesmente porque `claimArm` o soltou no passo 3, e
+`done` volta a ser consultado num braço que o próximo `claimArm` reocupa.
+O que se repete não é um reinício: é a **mesma passagem inteira**, de graça,
+dez vezes por segundo.
+
+### O que continua mudo
+
+O laço não deixa **uma linha própria**. As duas frases que ele emite dizem
+"este braço acabou" e "não há trabalho" — as duas são estados normais. Nada
+no log diz *"a mina serviu a mesma posição pela milésima vez sem uma
+picareta"*, e é por isso que o defeito só apareceu pelo efeito colateral.
+
+## 4. Cinco hipóteses testadas e descartadas
+
+Ficam registradas para não serem repetidas. As duas últimas foram
+descartadas na revisão de 22:30 — e a quarta era a tese da própria
+primeira versão.
 
 - **Não é o conserto do `ColonyEdits`** (2026-09-16, `MinerWork.java:704`).
   Ele só age depois que a picareta pega. Com **zero** quebras, esse guarda
   nunca chegou a rodar.
 - **Não é o lenhador via `PlayerWorldChangeHandler.reopenFrom`.** Ele
   derrubou ~65 árvores/hora, cerca de uma a cada 55 s. **Uma causa de 1/55 s
-  não sustenta um efeito de 10/s.**
+  não sustenta um efeito de 10/s.** E `MINE_NEIGHBOR_DISTANCE` é **1**: só
+  bloco colado ao túnel reabre um braço.
 - **Não é o ramo do fundo da mina** (`!shaft.mayDeepen()` → `rerouted()`).
   Todos os Y do log estão entre **59 e 65** — superfície. `DEEPEST` é `-59`,
   ~120 blocos abaixo. Esse ramo nunca foi tomado, e o teste que o cobre
   (`theDeepestLevelRotatesInsteadOfRepeatingTheSameBlockedPattern`) está
   correto e continua valendo.
+- **Não é o reinício por `deepenIfEveryOpenArmIsDone` + `restartAt`** — era
+  a tese da primeira versão. `went one level deeper` aparece **0** vezes e
+  `no miner branch work` **17.517**; a segunda frase só é escrita quando o
+  reinício **não** ocorreu. Ver §3.
+- **Não é `MineFrontier.findTheFrontier` repondo o cursor.** Ele registra
+  `The gallery really ends at` a cada reposição: **1** linha na sessão
+  inteira, contra 17.518 recusas.
 
 ## 5. O defeito de fundo: guarda que o caminho de falha zera
 
@@ -122,55 +171,59 @@ três.
 Quatro itens. Os três primeiros são independentes e podem entrar juntos; o
 quarto é decisão do autor.
 
-### C1 — O reinício do braço não pode ser mudo 🔴
+### C1 — O braço servido sem picareta não pode ser mudo 🔴
 
-**Problema.** `restartAt` roda 166 mil vezes sem deixar rastro, e por isso o
-laço só foi visível pelo efeito colateral.
+**Problema.** O laço não emite uma linha própria: as duas frases que ele
+escreve — "o braço acabou", "não há trabalho" — descrevem estados normais.
+17.518 repetições e nenhuma delas diz que **nada progrediu**.
 
-**Correção.** Registrar em `Mine.deepenIfEveryArmIsDone` quando os braços são
-reiniciados **sem que a mina desça** — o caso `!shaft.mayDeepen()` e o caso em
-que `deepened()` não muda o nível. Uma linha por reinício, com o `y` de
-origem e destino.
+**Correção.** Contar, na `Mine`, as passagens em que o braço foi servido e
+fechado **sem uma única quebra**, e registrar uma linha quando esse contador
+passa de um patamar (ex.: a cada 100), com a posição em que o cursor está
+parado. O que se registra é a **falta de progresso**, não o reinício — que,
+como a §3 mostra, não acontece.
 
-**Prova.** Teste que chama o reinício com a mina impedida de descer e afirma
-que o evento foi comunicado (contador ou callback observável no core, sem
-depender do logger do Fabric).
+**Prova.** Teste que serve o braço N vezes sem nunca chamar `pickaxeTook` e
+afirma que o evento foi comunicado (contador ou callback observável no core,
+sem depender do logger do Fabric).
 
 ### C2 — Repetição sem progresso tem de custar 🔴
 
-**Problema.** O braço fecha e reabre no mesmo `cut`, indefinidamente, e
-nenhum contador sobrevive ao `restartAt` (`blocked = 0`).
+**Problema.** `finish()` zera `blocked`, e o braço é reocupado na passagem
+seguinte no mesmo `cut`. Nada lembra, entre passagens, que a anterior não
+rendeu pedra.
 
-**Correção.** Dar à `Mine` um contador de **reinícios sem picareta**, que
-`restartAt` **não zera** e que só `MineDigging.pickaxeTook` zera — mesmo dono
-do zeramento adotado em 2026-09-11, pelo mesmo motivo: quem zera é o bloco
-saindo do mundo, não o servir da posição. Ao passar de um limite (sugestão: 3),
-a mina para de servir aquele desenho e toma a saída de C4.
+⚠️ **Mudou na revisão de 22:30.** A versão anterior propunha um contador
+"que `restartAt` não zera". Isso não resolve: `restartAt` **não roda** neste
+laço. O contador precisa sobreviver ao **`finish()`**, que é quem o apaga
+hoje — e é a `Mine`, não o `MineArm`, que deve guardá-lo, porque o braço é
+solto e reocupado a cada passagem.
 
-**Prova.** Teste que fecha o braço N+1 vezes sem nunca chamar `pickaxeTook` e
-afirma que a mina deixou de devolver a mesma posição.
+**Correção.** Contador de **passagens servidas sem picareta**, guardado na
+`Mine`, que **só** `MineDigging.pickaxeTook` zera — mesmo dono do zeramento
+adotado em 2026-09-11, pelo mesmo motivo: quem zera é o bloco saindo do
+mundo, não o servir da posição. Ao passar de um limite, a mina para de servir
+aquele desenho e toma a saída de C4.
 
-### C3 — `everyOpenArmIsDone` não pode aceitar 1 de 4 como "todos" 🟠
+**Prova.** Teste que serve e fecha o braço N+1 vezes sem nunca chamar
+`pickaxeTook` e afirma que a mina deixou de devolver a mesma posição.
 
-**Problema.** Com `branchesOpenNow() == 1`, o braço 0 sozinho satisfaz
-`everyOpenArmIsDone()`, e o método então chama `finish()` nos outros três
-— que **nunca foram trabalhados**. Fechar braço não trabalhado para declarar
-o nível terminado é o que aciona o reinício global a cada oitava recusa.
+### C3 — ~~`everyOpenArmIsDone` não pode aceitar 1 de 4 como "todos"~~ 🟢 retirado
 
-**Correção.** Exigir que o braço 0 tenha **avançado** (por exemplo,
-`cut() > BLOCKED_BEFORE_TURNING`, ou pelo menos uma quebra registrada) antes
-que o fechamento dos outros três seja permitido. Sem avanço, o caso não é
-"nível terminado", é "boca intransponível" — e pertence a C4.
+⚠️ **Retirado na revisão de 22:30.** A premissa era que
+`deepenIfEveryOpenArmIsDone` fechava os outros três braços e disparava o
+reinício. O log refuta: esse caminho **nunca é alcançado** (`went one level
+deeper` = 0; ver §3 e §4).
 
-**Prova.** Teste que fecha o braço 0 com `cut()` abaixo do limiar e afirma que
-os outros três **continuam abertos** e que a mina **não** reinicia.
+Mexer em `everyOpenArmIsDone` não tocaria neste defeito, e **arriscaria o
+limbo de 2026-09-04** ("não posso entregar / não posso descer") que aquela
+lógica existe para evitar. Fica como não-fazer registrado.
 
-⚠️ **Cuidado:** o comentário em `Mine.deepenIfEveryOpenArmIsDone` documenta um
-limbo real de 2026-09-04 ("não posso entregar / não posso descer") que essa
-lógica existe para evitar. A correção precisa preservar aquele caso — por isso
-o critério é *avanço*, não simplesmente exigir os quatro braços.
+### C4 — Decisão do autor: o que fazer quando a boca é intransponível 🔴
 
-### C4 — Decisão do autor: o que fazer quando a boca é intransponível 🟠
+> **Promovido a 🔴 na revisão de 22:30.** Com C3 retirado e C2 reduzido a
+> uma rede de segurança, **C4 é a correção de verdade**: enquanto a boca for
+> intransponível, nenhum contador faz a mina cavar.
 
 **O caso.** O poço exige 120 posições; a primeira é emparedada e não há
 onde o aldeão fique de pé. Hoje a resposta é repetir para sempre.
@@ -193,22 +246,98 @@ colônia nunca ficar sem pedra nenhuma enquanto isso se resolve.
 ## 7. O que falta — estado para a próxima sessão
 
 **Nada foi alterado no código.** O repositório está como estava ao fim do
-ciclo de 2026-09-15; esta análise é o único artefato novo.
+ciclo de 2026-09-15; esta análise e sua revisão são os únicos artefatos
+novos.
 
-**Ordem sugerida:** C1 (torna o laço visível) → C3 (impede o reinício
-indevido) → C2 (dá custo à repetição) → C4 (decisão + implementação).
+**Ordem sugerida (revisada em 22:30):** **C4** (a correção de verdade —
+decisão + implementação) → C1 (torna o laço visível) → C2 (rede de
+segurança). **C3 foi retirado.**
 
 **Antes de implementar C4, o autor precisa escolher** entre (a), (b) e (c).
 
+**Por que a boca está emparedada.** `nowhereToStand` é
+`MinerWork.approachTo(world, at).equals(at)` — não há vizinho onde um
+aldeão caiba. No primeiro degrau da escada, dentro da rocha maciça, isso é
+**estrutural**, não azar de terreno: é um argumento a favor de (b)/(a) e
+contra (c).
+
 **Não verificado nesta sessão:** nenhum build, teste ou gametest foi
-executado — a sessão foi de leitura de log e código. Os números de
+executado — as duas sessões foram de leitura de log e código. Os números de
 `STATE.md` (884 unitários, 335/335 GameTests) são do ciclo anterior e
 **não** foram reconfirmados aqui.
 
-**Ponto de partida concreto:**
+**Ponto de partida concreto** (caminhos corrigidos em 22:30 — `MineClaims`
+e `MineDigging` estão em `fabric/work/`, não em `core/construction/model/`):
 
-- `Mine.deepenIfEveryOpenArmIsDone` — `src/main/java/com/villagecolony/core/construction/model/Mine.java:298`
-- `Mine.deepenIfEveryArmIsDone` — `Mine.java:255`
-- `MineArm.restartAt` — `MineArm.java:252`
-- `MineClaims.claimArm` — `MineClaims.java:126`
-- `MineDigging.nextTarget` — `MineDigging.java:134`
+- `MineDigging.nextCut` — o laço, onde o braço fecha — `src/main/java/com/villagecolony/fabric/work/MineDigging.java:825`
+- `MineDigging.nextTarget` — `src/main/java/com/villagecolony/fabric/work/MineDigging.java:134`
+- `MineClaims.claimArm` — solta o braço fechado — `src/main/java/com/villagecolony/fabric/work/MineClaims.java:126`
+- `MineArm.blockedAgain` / `finish` — `src/main/java/com/villagecolony/core/construction/model/MineArm.java:153`
+- `Mine.branchesOpenNow` — `src/main/java/com/villagecolony/core/construction/model/Mine.java:208`
+- `Mine.deepenIfEveryOpenArmIsDone` — **nunca alcançado neste defeito** — `src/main/java/com/villagecolony/core/construction/model/Mine.java:298`
+
+---
+
+## 8. Playtest de 2026-09-16, 21:41–22:12 — reproduzido
+
+Segunda sessão do autor, 31 minutos, log de 37.041 linhas. **O defeito é o
+mesmo, e a cadência é idêntica:** 10 recusas por segundo, sem uma
+interrupção, do minuto 2 ao fim.
+
+| Medida | 03:44 (4h40) | 21:41 (31 min) |
+|---|---|---|
+| `hit stone with nowhere to stand` | 166.559 | **17.518** |
+| `no miner branch work` | 166.558 | **17.517** |
+| `Miner … took` (pedra quebrada) | 0 | **0** |
+| `went one level deeper` | 0 | **0** |
+| Construções concluídas | 0 | **0** |
+| `stall / still / adrift` | 0 / 0 / 0 | **0 / 0 / 0** |
+
+O que a segunda sessão acrescenta — e que provou a causa — é a instrumentação
+da linha de recusa, que agora diz **`0 digger(s) in 1 open branch(es)`**, nas
+17.517 vezes, sem exceção. É a medida direta de `branchesOpenNow() == 1`.
+
+**O relato do autor bate com o log:** "construções pararam e mineiro não foi
+visto". O mineiro não é visto porque nunca sai da boca.
+
+### 8.1 E as construções param por um segundo defeito, não pelo mineiro 🔴
+
+**Isto é novo, e é independente do E45.** Em 03:44 o builder parava por falta
+de cobblestone; em 21:41 **não é isso**. A biblioteca foi planejada **duas
+vezes**, e as duas morreram **sem um único bloco posto**:
+
+```text
+[21:47:06] opened a build task — 628 blocks left of .../plains_library_1
+[21:47:06] planned .../plains_library_1 at ColonyPos[x=2456, y=63, z=-2936]
+[21:47:35] Builder f1962d31 stopped — the project is closed     ← 29 s depois
+[21:50:35] planned .../plains_library_1 at ColonyPos[x=2439, y=63, z=-2932]
+[21:51:06] Builder f1962d31 stopped — the project is closed     ← 31 s depois
+```
+
+Nas duas vezes: **628 blocos restantes de 628** — nada foi construído.
+
+**O que já se sabe.** `BuilderWork.step` escreve essa frase quando
+`CONSTRUCTIONS.find(projectId)` volta vazio **ou** o projeto deixou de estar
+`isOpen()` ([`BuilderWork.java:224`](../../src/main/java/com/villagecolony/fabric/work/BuilderWork.java)).
+
+**O que já foi descartado:** não é o `isSupersededBy` do
+`ConstructionPlanner` — aquele caminho registra `drops the untouched`, e essa
+frase aparece **0** vezes.
+
+**Suspeita a investigar primeiro:** `ConstructionService.forget` /
+`removeIf(!isOpen)` ([`ConstructionService.java:206`](../../src/main/java/com/villagecolony/core/construction/service/ConstructionService.java))
+— quem remove o projeto do registro enquanto o builder ainda o segura. O
+`find` vazio e o `!isOpen` **são frases indistinguíveis no log de hoje**, e
+separá-las é o primeiro passo.
+
+⚠️ **Este defeito merece número próprio (E46) e um diagnóstico próprio.**
+Corrigir o E45 sozinho **não** faz a vila construir.
+
+### 8.2 Dois achados de fundo, fora do mineiro 🟠
+
+- **36 colônias ativas.** `Colony cycle took 486 ms` no pior caso, 40 ciclos
+  acima de um tique do servidor. O playtest carrega muito mais colônia do que
+  os cenários de teste, e o custo do ciclo cresce com ela.
+- **A vila do defeito é uma só** (`9da5460c`). As outras 35 não planejam nem
+  constroem — `assigned 0 tasks (0 open)` —, o que é o padrão de
+  `roca-sem-lote-trava-a-vila` e vale conferir se é esperado.

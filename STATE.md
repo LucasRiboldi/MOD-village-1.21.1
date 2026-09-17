@@ -18,21 +18,66 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 | P0.5 | Perda de item por inventário cheio (E3) | ✅ entregue 09-11, **espera sessão** |
 | P0.6 | A enxurrada da areia calou | ✅ entregue 09-11, **espera sessão** |
 | P0.7 | Elegibilidade simplificada de lotes | ✅ entregue 09-15, **espera playtest** |
-| **P0.8** | **A mina fica presa na boca — 4h40 sem uma pedra** | 🔴 **aberto, diagnosticado, não corrigido** |
+| **P0.8** | **A mina fica presa na boca (E45)** | 🔴 **aberto, causa provada, não corrigido** |
+| **P0.9** | **A obra fecha sozinha com 628/628 blocos (E46)** | 🔴 **aberto, não diagnosticado** |
 
-**P0.8 é o bloqueador de agora, e vence os demais.** O playtest de 09-16
-(03:44–08:23) rodou 4h40 e **não concluiu uma construção**: o mineiro girou
-em falso a sessão inteira, o cobblestone caiu de 411 para 10 e o builder
-parou 46 vezes por falta dele. Causa provada, correção proposta em quatro
-itens, **nada alterado no código** — ver
+**Dois bloqueadores, e são independentes.** O playtest de 09-16 21:41–22:12
+**reproduziu o E45** e revelou o E46. Corrigir só o E45 **não** faz a vila
+construir.
+
+**P0.8 — E45, a mina presa na boca.** 17.518 recusas em 31 min, 10/s, **zero
+pedra quebrada**, idêntico ao playtest de 03:44 (166.559). A causa foi
+**corrigida na revisão de 22:30**: não é o reinício por
+`deepenIfEveryOpenArmIsDone` — esse caminho **nunca é alcançado**
+(`went one level deeper` = 0 contra `no branch work` = 17.517). O laço é a
+**mesma passagem repetida**: o braço fecha em 8 recusas
+(`BLOCKED_BEFORE_TURNING`) dentro de um orçamento de 64 (`CUTS_PER_SEARCH`),
+`claimArm` o solta, e a passagem seguinte o reocupa no mesmo `cut`.
+**C3 foi retirado e C4 virou a correção principal** — ver
 [`docs/technical/E45-mina-presa-na-boca.md`](docs/technical/E45-mina-presa-na-boca.md).
 **C4 exige decisão do autor** antes de implementar.
+
+**P0.9 — E46, a obra que fecha sozinha.** A biblioteca foi planejada duas
+vezes (21:47 e 21:50), em posições diferentes, e as duas morreram em ~30 s
+com **628 blocos restantes de 628** — nenhum bloco posto, e a frase é
+`Builder … stopped — the project is closed`. **Não é** o `isSupersededBy` do
+planejador (`drops the untouched` = 0). Suspeita a investigar:
+`ConstructionService` removendo o projeto enquanto o builder o segura. Sem
+diagnóstico próprio ainda — ver §8.1 do documento do E45.
 
 **P0.7 — politica aplicada em 2026-09-15.** Piso solido disponivel e candidato a lote; pedra, gravilha e terracota nao sao recusadas pela composicao. Estrada exige material oficial mais `ROAD_AREA`; gravilha ou terracota fora da reserva continuam elegiveis. O scanner nao terraplana nem muda o mundo. Ver ADR-017.
 
 **Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
 
 **JAR atual 0.3.0:** `build`, 884 unitarios e 335/335 GameTests passaram. O artefato inclui P0.7, a limpeza imediata da claim, as duas correcoes do playtest de 09-15 (toco orfao e minerio recusado), a retirada do bau da boca da mina e as duas otimizacoes do planejador. Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `41BF1FD3406C635F95BB593D80E055A0AF6489EE0E9BBDFC12DC4CD84AAA1177`. Falta apenas playtest.
+
+---
+
+## Playtest de 2026-09-16, 21:41–22:12 — E45 reproduzido, E46 descoberto
+
+Log: `%APPDATA%/.minecraft/logs/latest.log`, 37.041 linhas, 31 minutos.
+
+**O E45 reproduziu com a mesma assinatura:** 17.518 `hit stone with nowhere
+to stand`, 10 por segundo sem interrupção, **zero** `Miner … took`, **zero**
+`went one level deeper`, e `stall/still/adrift` em **0/0/0** a sessão
+inteira. A linha de recusa agora traz a medida que fechou o caso:
+**`0 digger(s) in 1 open branch(es)`**, nas 17.517 vezes.
+
+**E a causa da primeira análise estava errada.** O reinício por
+`deepenIfEveryOpenArmIsDone` + `restartAt` **nunca acontece** — se
+acontecesse, `went one level deeper` apareceria (na superfície `mayDeepen()`
+é verdadeiro), e `no branch work` não apareceria. O laço é a **mesma
+passagem repetida**, não um reinício. `MineFrontier` também foi descartado:
+`The gallery really ends at` aparece **1** vez contra 17.518 recusas.
+
+**E46 — a obra fecha sozinha, e é outro defeito.** Biblioteca planejada duas
+vezes, duas posições, as duas mortas em ~30 s com **628/628 blocos**. Em
+03:44 o builder parava por falta de cobblestone; aqui **não é falta de
+material** — é o projeto sumindo debaixo do builder. Ver §8.1 do documento.
+
+**Dois achados de fundo:** 36 colônias ativas, `Colony cycle took` até
+**486 ms** (40 ciclos acima de um tique); e só a colônia `9da5460c` planeja
+— as outras 35 dão `assigned 0 tasks (0 open)`.
 
 ---
 
