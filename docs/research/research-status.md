@@ -6,6 +6,18 @@ primeiro. Criado em 2026-09-02, na primeira sessão que usou a skill
 
 ## Objetivo atual
 
+**2026-09-17 — base de opções de melhoria das profissões.** Aplicar a
+hierarquia Vanilla → Fabric API → mod sobre os pontos que travam a execução,
+para o autor decidir com evidência. Status: **concluída**, em
+[`opcoes-de-melhoria-das-profissoes.md`](opcoes-de-melhoria-das-profissoes.md).
+
+⚠️ **O pedido citava pesquisar MineColonies, Ancient Warfare e Millénaire, e
+isso NÃO foi feito** — nenhum está no disco e a busca web não estava
+disponível. Descrever o que fazem seria inventar. Se os `.jar` forem
+apontados, a comparação vira matriz por `references/mod-analysis.md`.
+
+### Objetivo anterior (concluído)
+
 Diagnosticar o **E32** — o mineiro não entra na própria escada e fica
 estacionado com `0/0 ticks`. Status: **causa encontrada e conserto escrito**,
 com fase vermelha conferida. Falta a sessão de jogo.
@@ -31,6 +43,8 @@ Os fontes do Vanilla foram gerados (`./gradlew genSources`) e estão em
 | `MobNavigation.findPathTo(BlockPos, int)` — o que a navegação faz com alvo em ar e alvo sólido | concluído | [`E32-miner-walk-target.md`](E32-miner-walk-target.md) |
 | Ciclo de vida do trabalhador — o que limpa o quê quando o dono some | concluído (auditoria) | [`estado-que-sobrevive-ao-dono.md`](estado-que-sobrevive-ao-dono.md) |
 | Adaptação de terreno na geração de aldeia — `StructureTerrainAdaptation`, `StructurePool$Projection`, `StructureWeightSampler` | concluído; **descartado com razão** | [`terraplanagem-da-vila.md`](terraplanagem-da-vila.md) |
+| Pathfinding e água — `PathNodeType`, `MobEntity.setPathfindingPenalty`, `LandPathNodeMaker.getLandNodeType` | concluído | [`opcoes-de-melhoria-das-profissoes.md`](opcoes-de-melhoria-das-profissoes.md) |
+| Livro de receitas — `RecipeType.CRAFTING`, `SMELTING`, `STONECUTTING` | concluído | idem |
 
 ## Fatos confirmados
 
@@ -53,6 +67,24 @@ Os fontes do Vanilla foram gerados (`./gradlew genSources`) e estão em
 - `MinerReach.legTowards` não recebe `ServerWorld` e não pode checar
   pisabilidade; `MinerWork.approachTo` checa (`BuilderApproach.standable`).
 - `GoToWorkTargetTask` não valida o alvo — só o embrulha num `WalkTarget`.
+
+### Conferidos em 2026-09-17, por `javap` no JAR de 1.21.1
+
+- **`MobEntity.setPathfindingPenalty(PathNodeType, float)` é API pública do
+  Vanilla**, e o mod **não a usa** — `grep` em `src/main` não retorna nada.
+- **`PathNodeType` já distingue `WATER`, `WATER_BORDER` e `LAVA`** de
+  `BLOCKED` e `DANGER_OTHER`.
+- **`LandPathNodeMaker.getLandNodeType(MobEntity, BlockPos)` é público e
+  estático** — dá para perguntar ao Vanilla se uma posição serve, com a mesma
+  régua que a navegação usará.
+- **`CraftingLookup` lê `RecipeType.SMELTING` e `CRAFTING`, e não
+  `STONECUTTING`** — o pedreiro recebe `Items.STONECUTTER` do `ChestMarker`
+  e a receita de cortador (1→1) nunca é consultada.
+- **O conserto de água de 2026-09-03 funciona e cobre 1 caso em 6:** no log
+  de 09-17, `sealed` = 5 e `turns away from the water` = 5, contra **30**
+  desistências por `which is flooded`. A causa é o momento — `seal` roda
+  depois da picareta, e nos 30 o aldeão trava a 11 blocos, andando, porque o
+  **`place to stand`** é que está alagado.
 
 ## Inferências importantes
 
