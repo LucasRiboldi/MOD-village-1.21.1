@@ -77,7 +77,29 @@ régua fica) e **C3** (o centro a 77 blocos do aglomerado de camas). Ver
 
 **Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
 
-**JAR atual 0.3.0:** `build`, 884 unitarios e 335/335 GameTests passaram. O artefato inclui P0.7, a limpeza imediata da claim, as duas correcoes do playtest de 09-15 (toco orfao e minerio recusado), a retirada do bau da boca da mina e as duas otimizacoes do planejador. Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas tres copias: `41BF1FD3406C635F95BB593D80E055A0AF6489EE0E9BBDFC12DC4CD84AAA1177`. Falta apenas playtest.
+**JAR atual 0.3.0 — gerado em 2026-09-16 23:12, commit `262aba1`.** Sobre o
+artefato anterior, o que entra é **só a instrumentação do C2 do E46**:
+nenhuma correção de comportamento, nenhum defeito fechado. Ele serve para
+**medir** o E45 e o E46 no jogo, e não para consertá-los.
+
+Duas linhas novas a procurar no log do próximo playtest:
+
+- `… planned … Measured from <centro>: N blocks square, N blocks straight, and the radius is N`
+- `WARN … the road index served a lot at … from outside the sweep … The sweep would never have offered it`
+
+**Verificado:** `build` passou; **886 unitários, 0 falhas** (XML conferido);
+**335 GameTests por rodada, 13 verdes em 16** — as 3 falhas são o KF-002,
+pré-existente. Conferido **dentro do JAR** que as duas linhas estão nas
+classes, e não só no fonte.
+
+Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas três
+cópias: `4BE567F205E479028FD2374847C4B21588E8901A41940B67534A17CAF35C23EA`
+(o anterior era `41BF1FD3…`). **Falta playtest.**
+
+*JAR anterior, para referência: `build`, 884 unitários e 335/335 GameTests;
+incluía P0.7, a limpeza imediata da claim, as duas correções do playtest de
+09-15 (toco órfão e minério recusado), a retirada do baú da boca da mina e
+as duas otimizações do planejador.*
 
 ---
 
