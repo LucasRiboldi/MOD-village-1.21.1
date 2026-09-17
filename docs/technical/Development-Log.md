@@ -1,5 +1,9 @@
 # Development-Log.md
 
+> ⚠️ **HISTÓRICO — 7.793 linhas. Nunca leia inteiro.**
+> Use `grep` por data ou por símbolo, como manda `CLAUDE.md` §0.1. O
+> estado de hoje está em [`STATE.md`](../../STATE.md).
+
 # Village Colony — Development Log
 
 Arquivo cronológico do desenvolvimento. Uma entrada por sessão, na ordem

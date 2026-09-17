@@ -19,7 +19,8 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 | P0.6 | A enxurrada da areia calou | ✅ entregue 09-11, **espera sessão** |
 | P0.7 | Elegibilidade simplificada de lotes | ✅ entregue 09-15, **espera playtest** |
 | **P0.8** | **A mina fica presa na boca (E45)** | ✅ **corrigido e CONFIRMADO EM JOGO 09-17** |
-| **P1.0** | **Nenhum lote aprovado — a vila não planeja obra** | 🟠 **medido e afrouxado 09-17, espera playtest** |
+| **P1.0** | **Nenhum lote aprovado — a vila não planeja obra** | ✅ **abriu chão 09-17: 313 colunas, obra planejada** |
+| **P1.1** | **A obra espera peça que ninguém fabrica** | ✅ **corrigido 09-17, espera playtest** |
 | **P0.9** | **A obra nasce condenada: a estrada leva o lote para fora (E46)** | ✅ **C4 corrigido 09-16, espera playtest** |
 
 **Dois bloqueadores, e são independentes.** O playtest de 09-16 21:41–22:12
@@ -135,6 +136,36 @@ cópias: `CD66E3C8ACE8709A414655E091D0EFCC2736D68F2C7905752281424A06AA4823`
 incluía P0.7, a limpeza imediata da claim, as duas correções do playtest de
 09-15 (toco órfão e minério recusado), a retirada do baú da boca da mina e
 as duas otimizações do planejador.*
+
+---
+
+## Ciclo de 2026-09-17 — P1.1 corrigido e revisão completa do projeto
+
+**P1.1 corrigido** (`4cee104`): a obra agora abre a tarefa do fabricante
+**pela peça que espera**. A causa era `ColonyCycle.requestMissing` iterar
+`Map<ResourceType,Integer>` — e escada, porta e cerca não são recursos
+contados, então sumiam do planejador por mais pedregulho que houvesse.
+Declarar mais um `ResourceType` seria a terceira vez, e a ADR-009 §2 chama
+isso pelo nome.
+
+⚠️ **O ponto de chamada foi escolhido depois de uma tentativa errada, e
+vale o registro:** primeiro pus no `wakeIfSupplied`, dentro do
+`ConstructionPlanner` — e o gametest falhou. A instrumentação temporária
+mostrou que o método **nunca era chamado**: o planejador só roda para as
+colônias da vez no rodízio, oito por ciclo. Obra parada esperando escada não
+pode depender de sorteio. A chamada foi para o ciclo por colônia.
+
+**Revisão completa do projeto**, pedida pelo autor:
+[`docs/technical/Revisao-2026-09-17.md`](docs/technical/Revisao-2026-09-17.md).
+391 arquivos `.md`, 40.838 linhas, 23 parados desde 08-08. Três documentos
+descrevem classes que **nunca existiram** (`ColonyManager`, `TaskManager`,
+`BuildingStatus`). O `Development-Log.md` ganhou cabeçalho de histórico; os
+outros dois já tinham.
+
+**As oito profissões passam** — 338 GameTests, 5 rodadas verdes em 5. Mas a
+cobertura é desigual: **79 testes para o mineiro, 2 para o pastor.** Quatro
+estão provadas em jogo (mineiro, lenhador, carpinteiro, fazendeiro); as
+outras quatro passam nos testes sem terem tido oportunidade no playtest.
 
 ---
 

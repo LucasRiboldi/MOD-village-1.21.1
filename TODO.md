@@ -49,8 +49,26 @@ no craft_wood_material work: no worker in the village can do it — OAK_PLANKS n
 tábuas, 1.686 toras, 69 pedregulhos. É o laço fechado que
 `analise-plano-crescimento.md` já descrevia em 09-12.
 
-- [ ] 🔴 Descobrir por que a tarefa de fabricar `cobblestone_stairs` não abre, dado que há pedregulho e fabricante
-- [ ] 🔴 `no worker in the village can do it` para COLLECT_STONE e CRAFT_WOOD com trabalhadores ociosos — pode ser a mesma raiz
+- [x] ✅ **Corrigido em 09-17** (`4cee104`). A causa: `ColonyCycle.requestMissing` itera `Map<ResourceType,Integer>`, e `cobblestone_stairs` **não é um `ResourceType`** — escada, porta e cerca são peças da planta, não recursos contados. Agora a obra abre a tarefa **pela peça que espera**, e quem decide se dá para fazer é o jogo (`ColonySupply.canProvide` → `CraftingLookup`), não uma lista. **Verificado:** build + 902 unitários + 338 GameTests em 5/5. ⚠️ sem playtest.
+- [ ] 🔴 Confirmar em jogo que o P1.1 destrava o pedreiro e o construtor
+- [ ] 🟠 `no worker in the village can do it` para COLLECT_STONE e CRAFT_WOOD com trabalhadores ociosos — pode ter a mesma raiz, não foi investigado
+
+---
+
+## 🟠 Revisão completa de 2026-09-17 — o que ficou sinalizado
+
+Inventário em
+[`docs/technical/Revisao-2026-09-17.md`](docs/technical/Revisao-2026-09-17.md).
+**391 arquivos `.md`, 40.838 linhas, 23 documentos parados desde 08-08.**
+
+**Decisões do autor, pendentes** (o pedido foi sinalizar para decidir depois):
+
+- [ ] 🔴 Destino de `Class-Architecture.md`, `Fabric-Implementation-Plan.md`, `Data-Model.md` — descrevem `ColonyManager`, `TaskManager`, `BuildingStatus` e outras classes que **nunca existiram**. Recomendado: `docs/historical/`.
+- [ ] 🟠 Destino de `MVP.md`, `MVP-Tasks.md`, `START_PROJECT.md`, `Development-Roadmap.md` — planos concluídos ou superados
+- [ ] 🟠 **`STATE.md` tem 1.193 linhas** contra o teto de 150 que ele mesmo declara. Precisa de poda.
+- [ ] 🟠 `ConstructionService.forget` sem chamador em `src/main` — confirmar se é gancho ou resto
+- [ ] 🟠 **Pastor tem 2 gametests; mineiro tem 79.** As profissões calmas são as menos protegidas, não as mais sólidas.
+- [ ] 🟠 Playtest que exercite **fundidor** e **pastor**
 
 ---
 
