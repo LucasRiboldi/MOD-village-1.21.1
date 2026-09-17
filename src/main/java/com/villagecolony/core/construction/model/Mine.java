@@ -97,6 +97,40 @@ public final class Mine {
      */
     private boolean archRaised;
 
+    /**
+     * Quantas vezes o ramal fechou sem uma picareta — E45, 2026-09-16.
+     *
+     * <p><b>Guarda que o caminho de falha zera não é guarda.</b> O
+     * {@code MineArm.blocked} é apagado por {@code finish()} e por
+     * {@code restartAt}, isto é, exatamente pelo caminho que o laço
+     * percorre — e por isso ele nunca chegou a limite nenhum. Este
+     * contador mora na <b>mina</b>, e não no braço, porque o braço é
+     * solto e reocupado a cada passagem: só o que sobrevive à passagem
+     * consegue contá-las.
+     *
+     * <p>Quem o zera é a picareta tirando bloco do mundo — ver
+     * {@link #pickaxeTook()} —, e <b>só</b> ela. É o mesmo dono adotado
+     * em 2026-09-11, pelo mesmo motivo: quem prova progresso é o bloco
+     * saindo, não o servir da posição.
+     *
+     * <p>O playtest de 2026-09-16 fez esta conta chegar a 17.518 em
+     * trinta e um minutos, com zero pedra quebrada.
+     */
+    private int turnsWithoutAPickaxe;
+
+    /**
+     * Quantas hélices já foram tentadas neste nível — E45, 2026-09-16.
+     *
+     * <p>Separado de {@link #turnsWithoutAPickaxe} porque conta outra
+     * coisa: aquele mede a paciência com <b>este</b> desenho, e este
+     * mede quantos desenhos já se tentou antes de culpar a boca. Girar
+     * zera o primeiro e incrementa o segundo.
+     *
+     * <p>Não é gravado no save: uma sessão nova merece tentar de novo, e
+     * a mina que renasce do disco pode ter o mundo mudado em volta.
+     */
+    private int helicesTried;
+
     private Mine(UUID colonyId, MineShaft shaft, int[] cuts) {
         this.colonyId = Objects.requireNonNull(colonyId, "colonyId");
         this.shaft = Objects.requireNonNull(shaft, "shaft");
@@ -307,6 +341,102 @@ public final class Mine {
         }
 
         return deepenIfEveryArmIsDone();
+    }
+
+    /**
+     * Quantas hélices a mina tenta antes de culpar a boca — E45.
+     *
+     * <p>Quatro, que é o número de rumos que {@link MineShaft#rerouted()}
+     * percorre antes de voltar ao primeiro: girar uma quinta vez seria
+     * reofertar a escada que já falhou. Esgotadas as quatro, o
+     * impedimento não é o rumo — é a boca.
+     */
+    public static final int HELICES_BEFORE_BLAMING_THE_MOUTH = MineShaft.HELIX_FLIGHTS;
+
+    /**
+     * Quantas voltas sem picareta bastam para desconfiar do desenho.
+     *
+     * <p>Três, e o número é folgado de propósito. Uma volta sem picareta
+     * é normal — o ramal pode ter acabado num vão, e o
+     * {@code BLOCKED_BEFORE_TURNING} já absorve oito recusas antes de
+     * fechar. Três voltas <b>seguidas</b> sem um bloco sair do mundo é
+     * outra coisa: é o desenho que não se cava.
+     *
+     * <p>O playtest de 2026-09-16 passaria deste limite em menos de um
+     * segundo, contra os 16.657 segundos que ele de fato girou.
+     */
+    public static final int TURNS_BEFORE_REROUTING = 3;
+
+    /**
+     * O ramal fechou e nenhuma pedra saiu — E45, 2026-09-16.
+     *
+     * <p>Chamado por quem fecha o ramal, uma vez por passagem. Ver
+     * {@link #turnsWithoutAPickaxe} para por que a conta mora aqui.
+     *
+     * @return se esta foi a volta que encheu a conta
+     */
+    public boolean turnedWithoutAPickaxe() {
+        return ++turnsWithoutAPickaxe >= TURNS_BEFORE_REROUTING;
+    }
+
+    /**
+     * A picareta tirou um bloco: a mina está progredindo.
+     *
+     * <p>É o <b>único</b> jeito de zerar a conta, e é o ponto inteiro do
+     * E45 — ver {@link #turnsWithoutAPickaxe}.
+     */
+    public void pickaxeTook() {
+        turnsWithoutAPickaxe = 0;
+    }
+
+    /** Quantas voltas seguidas sem picareta a mina acumulou. */
+    public int turnsWithoutAPickaxe() {
+        return turnsWithoutAPickaxe;
+    }
+
+    /**
+     * Gira a hélice sem descer, e recomeça os ramais nela — E45.
+     *
+     * <p><b>A saída da boca intransponível</b>, e a decisão do autor em
+     * 2026-09-16: girar primeiro, porque é barato e reusa
+     * {@link MineShaft#rerouted()}, que já existe e já é usada quando a
+     * mina chega ao fundo. Se as quatro hélices falharem, o impedimento
+     * é a boca, e aí {@link #mouthIsHopeless()} responde.
+     *
+     * <p>Zera a conta de voltas: o desenho é outro agora, e cobrar da
+     * hélice nova o que a anterior não cavou faria a mina desistir da
+     * boca sem ter tentado de verdade. Quem conta as hélices é
+     * {@link #helicesTried}.
+     */
+    public void reroute() {
+        shaft = shaft.rerouted();
+
+        helicesTried++;
+
+        turnsWithoutAPickaxe = 0;
+
+        MineShaft heading = shaft;
+
+        for (MineArm arm : arms) {
+            arm.restartAt(heading);
+
+            heading = heading.turned();
+        }
+    }
+
+    /**
+     * Se as quatro hélices já falharam e a boca é que está ruim — E45.
+     *
+     * <p>Quem pergunta é quem pode trocar a boca: a decisão de abandonar
+     * o poço iniciado não é da mina, é de quem a plantou no mundo.
+     */
+    public boolean mouthIsHopeless() {
+        return helicesTried >= HELICES_BEFORE_BLAMING_THE_MOUTH;
+    }
+
+    /** Quantas hélices esta mina já tentou neste nível. */
+    public int helicesTried() {
+        return helicesTried;
     }
 
     /**

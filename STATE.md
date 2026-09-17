@@ -18,7 +18,7 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 | P0.5 | Perda de item por inventário cheio (E3) | ✅ entregue 09-11, **espera sessão** |
 | P0.6 | A enxurrada da areia calou | ✅ entregue 09-11, **espera sessão** |
 | P0.7 | Elegibilidade simplificada de lotes | ✅ entregue 09-15, **espera playtest** |
-| **P0.8** | **A mina fica presa na boca (E45)** | 🔴 **aberto, causa provada, não corrigido** |
+| **P0.8** | **A mina fica presa na boca (E45)** | ✅ **corrigido 09-16, espera playtest** |
 | **P0.9** | **A obra nasce condenada: a estrada leva o lote para fora (E46)** | ✅ **C4 corrigido 09-16, espera playtest** |
 
 **Dois bloqueadores, e são independentes.** O playtest de 09-16 21:41–22:12
@@ -33,9 +33,19 @@ pedra quebrada**, idêntico ao playtest de 03:44 (166.559). A causa foi
 **mesma passagem repetida**: o braço fecha em 8 recusas
 (`BLOCKED_BEFORE_TURNING`) dentro de um orçamento de 64 (`CUTS_PER_SEARCH`),
 `claimArm` o solta, e a passagem seguinte o reocupa no mesmo `cut`.
-**C3 foi retirado e C4 virou a correção principal** — ver
+**Corrigido em 09-16 — decisão do autor: girar a hélice, mudar a boca se as
+quatro falharem.** C2 e C4 fecharam juntos, porque um é a medida e o outro a
+saída. `Mine.turnsWithoutAPickaxe` conta as voltas em que o ramal fechou sem
+uma pedra sair, **mora na mina e não no braço** (o braço é solto e reocupado
+a cada passagem), e **só a picareta o zera**. Cheias 3 voltas, a mina gira a
+hélice com o `rerouted()` que já existia; esgotadas as 4 hélices — o giro
+completo —, pede boca nova. Sem boca melhor, a mina fica e o mineiro cai no
+`exposedStone`.
+
+**Guarda que o caminho de falha zera não é guarda**, e há teste que afirma
+isso: `theTurnCounterSurvivesTheBranchClosingAndRestarting` fecha e reinicia
+os ramais e exige que a conta sobreviva. Ver
 [`docs/technical/E45-mina-presa-na-boca.md`](docs/technical/E45-mina-presa-na-boca.md).
-**C4 exige decisão do autor** antes de implementar.
 
 **P0.9 — E46, a obra nasce condenada.** O **C2 foi executado**, e ele mudou
 a causa raiz. A suspeita inicial — divergência quadrado/círculo — é real mas
@@ -89,30 +99,35 @@ aglomerado de camas, que não causou o E46). Ver
 
 **Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
 
-**JAR atual 0.3.0 — gerado em 2026-09-16 23:35.** Traz a instrumentação do
-C2 **e a correção do C4**: é o primeiro artefato desde 09-15 que muda
-comportamento. O E45 (mineiro) **continua aberto** — a mina vai travar de
-novo.
+**JAR atual 0.3.0 — gerado em 2026-09-17, com E45 e E46 corrigidos.** É o
+primeiro artefato desde 09-15 que ataca os dois bloqueadores ao mesmo tempo.
 
 O que procurar no log do próximo playtest:
 
-- **A obra ao lado da rua deve sobreviver.** Se `lets go of` sumir e a
-  biblioteca passar de 628/628, o C4 funcionou.
-- `… planned … Measured from <centro>: N blocks square, N blocks straight, and the radius is N`
-- `WARN … the road index served a lot at … from outside the sweep` — este
-  **ainda deve aparecer**: ele descreve o scanner, que por decisão não
-  mudou. Agora é informação, não sintoma.
-- Se `lets go of` aparecer, a linha agora diz **a distância até a rua**, e
-  não culpa o centro.
+**Mineiro (E45)** — a pergunta é se ele quebra pedra:
+- `Miner … took` com contagem **maior que zero** é a prova de que o laço
+  morreu.
+- `turned in place 3 times without a pickaxe — turning the helix from … to …`
+  — o guarda disparando. **Deve aparecer poucas vezes**, não milhares.
+- `tried all 4 helices … the mine starts over at …` — a escalada para boca
+  nova.
+- Se `hit stone with nowhere to stand` ainda vier a 10/s, o conserto falhou.
 
-**Verificado:** `build` passou; **896 unitários, 0 falhas** (XML conferido,
-+10 do C4); **335 GameTests, 4 rodadas verdes em 5** — a falha é o KF-002,
-pré-existente e alheio a isto. Conferido **dentro do JAR** que a linha nova
-está na classe compilada.
+**Construção (E46)** — a obra ao lado da rua deve sobreviver:
+- Se `lets go of` sumir e a biblioteca passar de 628/628, funcionou.
+- `… planned … Measured from <centro>: N blocks square, N blocks straight`
+- `WARN … the road index served a lot at … from outside the sweep` — este
+  **ainda deve aparecer**: descreve o scanner, que por decisão não mudou.
+  Agora é informação, não sintoma.
+
+**Verificado:** `build` passou; **902 unitários, 0 falhas** (XML conferido);
+**335 GameTests, 4 rodadas verdes em 5** — a falha é o KF-002,
+pré-existente. Conferido **dentro do JAR** que o código novo está nas
+classes compiladas.
 
 Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas três
-cópias: `D7AB2596731CA22E9E86C3481396EF51F6813F28A0C48A7A8BD3BE878F1B1E58`
-(o anterior era `4BE567F2…`). **Falta playtest.**
+cópias: `B7E505BFE414730C62F0F53C73EFBC306E2FC6CCBB9DAC5F6DEBF5F06134D4AF`
+(o anterior era `D7AB2596…`). **Falta playtest.**
 
 *JAR anterior, para referência: `build`, 884 unitários e 335/335 GameTests;
 incluía P0.7, a limpeza imediata da claim, as duas correções do playtest de

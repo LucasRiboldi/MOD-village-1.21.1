@@ -4,7 +4,7 @@
 
 ---
 
-## 🔴 P0.8 — E45: a mina fica presa na boca (aberto, não corrigido)
+## ✅ P0.8 — E45: a mina fica presa na boca (corrigido 09-16, espera playtest)
 
 Reproduzido no playtest de 21:41–22:12: 17.518 recusas em 31 min, 10/s,
 **zero pedra quebrada** (em 03:44 foram 166.559 em 4h40 — mesma assinatura).
@@ -17,9 +17,8 @@ seguinte o reocupa no mesmo `cut`. Detalhe em
 [`docs/technical/E45-mina-presa-na-boca.md`](docs/technical/E45-mina-presa-na-boca.md).
 **Nada foi alterado no código.** Ordem revisada:
 
-- [ ] 🔴 **C4** — **a correção de verdade, e exige decisão do autor:** boca intransponível → (a) mudar a boca, (b) girar a hélice, (c) desistir por um prazo. Recomendado: (b) com (a) como escalada.
-- [ ] 🔴 **C1** — o braço servido sem picareta não pode ser mudo (17.518 repetições, nenhuma linha própria)
-- [ ] 🔴 **C2** — repetição sem progresso tem de custar (contador na `Mine` que sobrevive ao **`finish()`**, não ao `restartAt`)
+- [x] ✅ **C4 + C2** — **corrigidos em 09-16. Decisão do autor: (b) com (a) como escalada.** `Mine.turnsWithoutAPickaxe` conta as voltas sem pedra, mora na mina (o braço é solto a cada passagem) e **só a picareta zera**. Cheias 3 voltas → gira a hélice com o `rerouted()` existente; esgotadas as 4 → boca nova; sem boca melhor → `exposedStone`. **6 testes novos**, e o principal fecha e reinicia os ramais exigindo que a conta sobreviva. **Verificado:** build + 902 unitários (0 falhas) + 335 GameTests em 4/5. ⚠️ sem playtest.
+- [x] ✅ **C1** — resolvido junto: o giro e a escalada emitem linha própria (`turning the helix from … to …`, `tried all 4 helices …`), e o laço deixou de ser mudo.
 - [x] 🟢 ~~**C3** — `everyOpenArmIsDone`~~ — **retirado:** premissa refutada pelo log, e mexer ali arriscaria o limbo de 09-04
 
 **Defeito de fundo a tratar junto:** `stall`, `still` e `adrift` ficaram
@@ -53,6 +52,26 @@ construir.
 - [x] 🟢 ~~`PatienceClock` / obra sem material~~ — **descartado:** `WAITING_RESOURCES` não aparece no log, e a paciência é de 10 min contra 29 s observados
 - [x] 🟢 ~~`ConstructionService.forget` chamado de outro lugar~~ — **descartado:** único chamador é `WaitingWork:190`
 - [x] 🟢 ~~o scanner partir de outro centro~~ — **descartado pelo C2:** parte de `colony.center()`, e `0 by drift`
+
+---
+
+## 🟠 P1 — Village Growth Planner (especificado 09-16, nada implementado)
+
+A vila que **nunca termina**: diagnóstico do que já existe → `NEED_SCORE`
+por estrutura → estrutura → lote → construção, em ciclo permanente. Não uma
+fila fixa que acaba na vigésima casa. Especificação inteira do autor em
+[`docs/technical/village-growth-planner.md`](docs/technical/village-growth-planner.md).
+
+A [ADR-009](docs/decisions/ADR-009-Autonomous-Village-Evolution.md) já
+estabelece o princípio desde 08-22 e **não é contradita** por isto. A lacuna
+real é concreta: `HousePlans.houseFor` escolhe a planta **pelo tamanho** (a
+maior que cabe), e não por necessidade da vila.
+
+- [ ] 🟠 **Playtest primeiro** — confirmar E45 e E46 antes de construir por cima
+- [ ] 🟠 ADR do Growth Planner: onde mora, como se liga ao `ConstructionPlanner`, o que acontece com a Regra 25
+- [ ] 🟠 `VillageInventory` (Estágio 0) — o diagnóstico do que a vila já tem. É `core` puro e testável sem servidor
+- [ ] 🟡 `NEED_SCORE` — substitui `houseFor` como quem escolhe o alvo
+- [ ] 🟢 Estágios de desbloqueio e expansão permanente, em fatias
 
 ---
 

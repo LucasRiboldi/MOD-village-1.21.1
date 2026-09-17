@@ -167,6 +167,20 @@ public final class MineDigging {
                 return Optional.empty();
             }
 
+            // <b>A volta que não deu pedra custa</b> — E45, 2026-09-16.
+            // Chegar aqui é a mina ter servido o ramal, ele ter fechado, e
+            // nada ter descido: se isso se repete, o desenho é que não se
+            // cava. Só conta quando não há mineiro trabalhando — com
+            // digger ocupado a volta ainda pode render, e cobrá-la seria
+            // punir a mina cheia.
+            if (MineClaims.diggersIn(colonyId) == 0
+                    && mine.get().turnedWithoutAPickaxe()) {
+
+                rerouteOrBlameTheMouth(world, colonyId, mine.get(), center);
+
+                return Optional.empty();
+            }
+
             IdleLog.record(
                     colonyId,
                     ARM_SUBJECT,
@@ -572,8 +586,88 @@ public final class MineDigging {
      * cavar já tem o seu, e pedir outro tiraria a última frente livre de
      * quem ia cavar nela.
      */
+    /**
+     * A mina girou em falso: troca a hélice, ou a boca — E45, 2026-09-16.
+     *
+     * <p><b>A decisão do autor, 2026-09-16:</b> girar primeiro, mudar a
+     * boca só quando as quatro hélices falharem. Girar é barato e reusa
+     * {@code MineShaft.rerouted()}, que já existe para o fundo da mina;
+     * trocar a boca abandona o poço iniciado, e isso se paga só depois de
+     * o rumo estar descartado.
+     *
+     * <p><b>O laço que isto fecha.</b> Com a boca emparedada, o ramal
+     * fechava em oito recusas, era solto, e a passagem seguinte o servia
+     * no mesmo cursor: 17.518 vezes em trinta e um minutos, dez por
+     * segundo, sem uma pedra sair do mundo. Nenhum guarda pegava porque
+     * todos eram zerados pelo próprio caminho de falha — ver
+     * {@code Mine.turnsWithoutAPickaxe}.
+     *
+     * <p><b>E sem boca nova a mina fica onde está.</b> Esquecer a mina
+     * sem ter onde recriá-la deixaria a colônia sem mina nenhuma e sem
+     * nada dizendo por quê; o mineiro cai no {@code exposedStone}, que é
+     * a rede de segurança que já existe, e a passagem seguinte tenta de
+     * novo.
+     */
+    private static void rerouteOrBlameTheMouth(
+            ServerWorld world, UUID colonyId, Mine mine, BlockPos center) {
+
+        if (!mine.mouthIsHopeless()) {
+            MineShaft before = mine.shaft();
+
+            mine.reroute();
+
+            VillageColonyMod.LOGGER.info(
+                    "Mine {} turned in place {} times without a pickaxe — turning the helix"
+                            + " from {} to {} (helix {} of {})",
+                    colonyId,
+                    Mine.TURNS_BEFORE_REROUTING,
+                    before.descent(),
+                    mine.shaft().descent(),
+                    mine.helicesTried(),
+                    Mine.HELICES_BEFORE_BLAMING_THE_MOUTH);
+
+            return;
+        }
+
+        Side descent = sideOf(colonyId);
+
+        Optional<BlockPos> mouth = MineSite.mouthOf(world, center, descent);
+
+        if (mouth.isEmpty()) {
+            VillageColonyMod.LOGGER.warn(
+                    "Mine {} tried all {} helices and found no better mouth within {} blocks"
+                            + " of {} — the miner falls back to exposed stone",
+                    colonyId,
+                    Mine.HELICES_BEFORE_BLAMING_THE_MOUTH,
+                    MineSite.distance(),
+                    center.toShortString());
+
+            return;
+        }
+
+        VillageColonyMod.LOGGER.info(
+                "Mine {} tried all {} helices without a pickaxe — the mouth is the problem,"
+                        + " and the mine starts over at {}",
+                colonyId,
+                Mine.HELICES_BEFORE_BLAMING_THE_MOUTH,
+                mouth.get().toShortString());
+
+        VillageColonyMod.MINES.removeOfColony(colonyId);
+
+        VillageColonyMod.MINES.open(
+                colonyId,
+                MineShaft.from(MinecraftTypeAdapter.toColonyPos(mouth.get()), descent));
+    }
+
     public static void pickaxeTook(UUID colonyId, UUID workerId) {
         armOf(colonyId, workerId).ifPresent(MineArm::digging);
+
+        // <b>E a mina inteira sai da desconfiança</b> — E45, 2026-09-16.
+        // O contador do braço é apagado por finish() e por restartAt, que
+        // é justamente o caminho do laço; o da mina só sai daqui, porque
+        // só aqui houve prova de que o desenho se cava. Ver
+        // Mine.turnsWithoutAPickaxe.
+        VillageColonyMod.MINES.of(colonyId).ifPresent(Mine::pickaxeTook);
     }
 
     /**

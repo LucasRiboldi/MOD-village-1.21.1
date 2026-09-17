@@ -241,6 +241,55 @@ reusa código já testado; se as quatro hélices falharem, a boca é que está
 ruim, e aí (a) se justifica. (c) fica como rede de segurança de C2, para a
 colônia nunca ficar sem pedra nenhuma enquanto isso se resolve.
 
+### ✅ Decidido e implementado em 2026-09-16: **(b) com (a) como escalada**
+
+**O que entrou.** C2 e C4 fecharam juntos, porque um é a medida e o outro é
+a saída:
+
+| Peça | Onde | O que faz |
+|---|---|---|
+| `Mine.turnsWithoutAPickaxe` | `core` | Conta as voltas em que o ramal fechou sem uma pedra sair. **Mora na mina, não no braço** — o braço é solto e reocupado a cada passagem. |
+| `Mine.pickaxeTook()` | `core` | O **único** jeito de zerar a conta. Mesmo dono de 2026-09-11: quem prova progresso é o bloco saindo do mundo. |
+| `Mine.reroute()` | `core` | Gira a hélice com `MineShaft.rerouted()`, reinicia os ramais nela, zera a paciência e conta a hélice. |
+| `Mine.mouthIsHopeless()` | `core` | Verdadeiro depois de **4** hélices — que é o giro completo: a quinta reofereceria a escada que já falhou. |
+| `MineDigging.rerouteOrBlameTheMouth` | `fabric` | Gira; esgotadas as quatro, pede boca nova ao `MineSite.mouthOf` e replanta a mina. |
+
+**As duas constantes, e de onde saem:**
+
+- `TURNS_BEFORE_REROUTING = 3` — folgado de propósito. Uma volta sem
+  picareta é normal (o ramal pode ter acabado num vão, e
+  `BLOCKED_BEFORE_TURNING` já absorve oito recusas). Três **seguidas** é o
+  desenho que não se cava. No playtest, esse limite estouraria em **menos de
+  um segundo**, contra os 16.657 segundos que a mina de fato girou.
+- `HELICES_BEFORE_BLAMING_THE_MOUTH = 4` = `MineShaft.HELIX_FLIGHTS` — o
+  giro completo, e há teste que afirma que quatro voltas retornam ao rumo de
+  origem.
+
+**O guarda só conta com `diggersIn == 0`.** Com mineiro trabalhando a volta
+ainda pode render, e cobrá-la puniria a mina cheia.
+
+**Se não houver boca melhor**, a mina **fica onde está** e o mineiro cai no
+`exposedStone` — a rede de segurança que já existia. Esquecer a mina sem ter
+onde recriá-la deixaria a colônia sem mina nenhuma e sem nada dizendo por
+quê.
+
+**Prova — 6 testes novos em `MineTest`**, e o primeiro é a propriedade
+inteira do E45:
+
+- `theTurnCounterSurvivesTheBranchClosingAndRestarting` — fecha os ramais e
+  reinicia (o caminho de falha exato) e afirma que **a conta não zera**. É o
+  que nenhum guarda anterior fazia.
+- `onlyThePickaxeClearsTheTurnCounter`, `theCounterFillsExactlyAtTheLimit`
+- `reroutingTurnsTheHelixAndRestartsTheArms` — o giro troca o rumo **e**
+  devolve o cursor ao primeiro degrau.
+- `theMouthIsOnlyBlamedAfterEveryHelixHasBeenTried` — fixa a ordem da
+  escalada.
+- `fourHelicesComeFullCircle` — justifica o teto de 4.
+
+**Verificado:** `build` passou; **902 unitários, 0 falhas** (XML conferido);
+**335 GameTests, 4 rodadas verdes em 5** — a falha é o KF-002, alheio à
+mineração. ⚠️ **Sem playtest.**
+
 ---
 
 ## 7. O que falta — estado para a próxima sessão

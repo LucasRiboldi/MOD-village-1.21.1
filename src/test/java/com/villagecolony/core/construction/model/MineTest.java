@@ -379,4 +379,127 @@ class MineTest {
                 arm.blockedAgain(8),
                 "e a oitava recusa depois dela tinha de encerrar o ramal");
     }
+
+    // --- E45: a mina presa na boca, 2026-09-16 ---
+
+    /**
+     * <b>O contador tem de sobreviver ao caminho de falha.</b>
+     *
+     * <p>É a propriedade inteira do E45. O {@code MineArm.blocked} era
+     * apagado por {@code finish()} e por {@code restartAt} — o próprio
+     * caminho que o laço percorre —, e por isso nenhum guarda disparou em
+     * 17.518 voltas. Este vive na mina e só a picareta o zera.
+     */
+    @Test
+    void theTurnCounterSurvivesTheBranchClosingAndRestarting() {
+        Mine mine = opened();
+
+        mine.turnedWithoutAPickaxe();
+
+        // O caminho de falha inteiro: fechar os ramais e reiniciá-los.
+        for (MineArm arm : mine.arms()) {
+            arm.finish();
+        }
+
+        mine.deepenIfEveryArmIsDone();
+
+        assertEquals(
+                1,
+                mine.turnsWithoutAPickaxe(),
+                "fechar e reiniciar o ramal não pode apagar a conta");
+    }
+
+    /** E a picareta, essa sim, zera. */
+    @Test
+    void onlyThePickaxeClearsTheTurnCounter() {
+        Mine mine = opened();
+
+        mine.turnedWithoutAPickaxe();
+        mine.turnedWithoutAPickaxe();
+
+        mine.pickaxeTook();
+
+        assertEquals(0, mine.turnsWithoutAPickaxe());
+    }
+
+    /** A conta enche na volta combinada, e não antes. */
+    @Test
+    void theCounterFillsExactlyAtTheLimit() {
+        Mine mine = opened();
+
+        for (int turn = 1; turn < Mine.TURNS_BEFORE_REROUTING; turn++) {
+            assertFalse(
+                    mine.turnedWithoutAPickaxe(),
+                    "a volta " + turn + " ainda não podia mandar girar");
+        }
+
+        assertTrue(mine.turnedWithoutAPickaxe());
+    }
+
+    /**
+     * Girar troca o rumo da escada e devolve os cursores ao começo dela.
+     *
+     * <p>É o que faz a hélice nova ser outra tentativa de verdade, e não
+     * a mesma escada com outro nome.
+     */
+    @Test
+    void reroutingTurnsTheHelixAndRestartsTheArms() {
+        Mine mine = opened();
+
+        Side before = mine.shaft().descent();
+
+        for (int i = 0; i < 5; i++) {
+            mine.arm(0).nextPosition();
+        }
+
+        mine.reroute();
+
+        assertEquals(before.clockwise(), mine.shaft().descent());
+
+        assertEquals(0, mine.arm(0).cut(), "o cursor tinha de voltar ao primeiro degrau");
+
+        assertEquals(0, mine.turnsWithoutAPickaxe(), "a hélice nova merece paciência nova");
+    }
+
+    /**
+     * <b>Quatro hélices, e só então a boca é a culpada.</b>
+     *
+     * <p>A ordem importa: girar é barato e reusa código já testado;
+     * trocar a boca abandona o poço iniciado. A escalada só se paga
+     * depois de o rumo estar descartado — decisão do autor, 2026-09-16.
+     */
+    @Test
+    void theMouthIsOnlyBlamedAfterEveryHelixHasBeenTried() {
+        Mine mine = opened();
+
+        for (int helix = 1; helix <= Mine.HELICES_BEFORE_BLAMING_THE_MOUTH; helix++) {
+            assertFalse(
+                    mine.mouthIsHopeless(),
+                    "com " + (helix - 1) + " hélices tentadas a boca ainda não é a culpada");
+
+            mine.reroute();
+        }
+
+        assertTrue(mine.mouthIsHopeless());
+    }
+
+    /**
+     * E quatro giros voltam ao rumo de origem — é por isso que o teto é
+     * quatro, e não um número escolhido no chute.
+     */
+    @Test
+    void fourHelicesComeFullCircle() {
+        Mine mine = opened();
+
+        Side origin = mine.shaft().descent();
+
+        for (int helix = 0; helix < Mine.HELICES_BEFORE_BLAMING_THE_MOUTH; helix++) {
+            mine.reroute();
+        }
+
+        assertEquals(
+                origin,
+                mine.shaft().descent(),
+                "girar uma quinta vez reofereceria a escada que já falhou");
+    }
 }
