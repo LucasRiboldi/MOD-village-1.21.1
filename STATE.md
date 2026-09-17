@@ -101,8 +101,8 @@ aglomerado de camas, que não causou o E46). Ver
 
 **Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
 
-**JAR atual 0.3.0 — gerado em 2026-09-17, 13:48.** Acumula **seis
-correções sem playtest**: o afrouxamento da reserva de estrada (P1.0), a
+**JAR atual 0.3.0 — gerado em 2026-09-17, 17:33.** Acumula **sete
+entregas sem playtest**: o afrouxamento da reserva de estrada (P1.0), a
 tarefa aberta pela peça que a obra espera (P1.1), a água recusada na escolha
 do alvo (P1.2) e o cortador de pedra (B1).
 
@@ -127,13 +127,45 @@ a falha é o KF-002, pré-existente e alheio. Conferido dentro do JAR que
 `isDry`, `cutFor` e `cheaperOf` estão nas classes compiladas.
 
 Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas três
-cópias: `530B209A6606242E346EBA671F3F484F04D9FF9F14A0E27AC6E4B339F776C4FF`
-(o anterior era `48CF7548…`).
+cópias: `D49961B2209BD121D1DABBEE229AFE05F1BB2A1B768CB3D3C17EFF5ECD560594`
+(o anterior era `530B209A…`).
 
 *JAR anterior, para referência: `build`, 884 unitários e 335/335 GameTests;
 incluía P0.7, a limpeza imediata da claim, as duas correções do playtest de
 09-15 (toco órfão e minério recusado), a retirada do baú da boca da mina e
 as duas otimizações do planejador.*
+
+---
+
+## A placa da obra em português — 2026-09-17
+
+Pedido do autor: *"o identificador visual dos elementos que faltam para a
+estrutura ser construída deve estar escrito com o nome dos blocos em
+português, sinalizando quantos tem nos estoques e quantos faltam"*.
+
+**Metade já existia.** A placa flutuante sobre o lote (`SiteMarker` +
+`SiteLabel`, de 09-15/09-16) já mostrava estoque e falta. O que faltava era
+o **nome**: ela dizia `grass_block` onde o jogo diz *Bloco de Grama*.
+
+**Agora:** `SiteLabel.of` recebe uma função de nomes, e o `SiteMarker` passa
+`Block.getName()` — a tradução do próprio Vanilla. Nada de tabela própria,
+que envelheceria e quebraria em outro idioma.
+
+```text
+antes:  Obra · falta grass_block: 17/64 · 382 blocos
+agora:  Obra · falta Bloco de Grama: 17/64 · 382 blocos
+```
+
+⚠️ **A função entra por parâmetro por causa da ADR-005:** `SiteLabel` é
+`core` e não conhece Minecraft. O `fabric` passa a tradução; os testes
+passam o que quiserem, e a regra segue afirmável sem servidor.
+
+**Prova em dois níveis:** 3 unitários para a regra, e **1 gametest** que
+pergunta ao Vanilla de verdade — porque regra provada só com nome de
+mentira não prova que o jogo traduz.
+
+`[FATO]` O log do autor já traz `Pedra`, `Terra` e `Andesito` pela mesma
+chamada, o que confirma que o cliente dele está em português.
 
 ---
 

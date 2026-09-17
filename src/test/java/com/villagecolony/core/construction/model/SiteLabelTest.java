@@ -110,4 +110,58 @@ class SiteLabelTest {
                 line.indexOf("oak_planks"),
                 "a placa listou tudo e vira parede de texto: " + line);
     }
+
+    // --- o nome na língua do jogo, 2026-09-17 ---
+
+    /**
+     * <b>A placa diz o nome do bloco, e não o id.</b>
+     *
+     * <p>Pedido do autor: <i>"deve estar escrito com o nome dos blocos em
+     * português, sinalizando quantos tem nos estoques e quantos faltam na
+     * estrutura"</i>. A conta já existia desde 09-15; o nome não.
+     *
+     * <p>Quem traduz é o jogo, por {@code Block.getName()} — aqui a
+     * função é dada pelo teste, e é justamente isso que mantém a regra
+     * afirmável sem servidor.
+     */
+    @Test
+    void theLabelUsesTheBlockNameAndNotTheId() {
+        String line = SiteLabel.of(
+                remaining(64),
+                Map.of(GRASS, 17),
+                382,
+                id -> "Bloco de Grama");
+
+        assertTrue(line.contains("Bloco de Grama"), "a placa não traduziu o nome: " + line);
+
+        assertEquals(
+                -1,
+                line.indexOf("grass_block"),
+                "o id vazou para a placa junto com o nome: " + line);
+
+        // E as três contas do pedido continuam na linha.
+        assertTrue(line.contains("17"), "sumiu o estoque: " + line);
+        assertTrue(line.contains("64"), "sumiu o que falta do material: " + line);
+        assertTrue(line.contains("382"), "sumiu o que falta da obra: " + line);
+    }
+
+    /**
+     * Nome vazio cai no id, em vez de deixar a placa muda.
+     *
+     * <p>É o bloco que este jogo não conhece — mod removido, versão
+     * diferente. O id é feio e informa; uma placa dizendo
+     * {@code "falta : 0/64"} não informa nada.
+     */
+    @Test
+    void anUnknownBlockFallsBackToTheId() {
+        String line = SiteLabel.of(remaining(64), Map.of(), 382, id -> "");
+
+        assertTrue(line.contains("grass_block"), "ficou sem nome e sem id: " + line);
+    }
+
+    /** E a sobrecarga sem tradução continua valendo, com o id. */
+    @Test
+    void theOverloadWithoutNamingStillUsesTheId() {
+        assertTrue(SiteLabel.of(remaining(64), Map.of(), 382).contains("grass_block"));
+    }
 }

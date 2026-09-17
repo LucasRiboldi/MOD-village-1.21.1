@@ -7,6 +7,7 @@ import com.villagecolony.core.construction.model.SiteLabel;
 import com.villagecolony.core.construction.model.SiteOutline;
 import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.decoration.ArmorStandEntity;
@@ -206,7 +207,8 @@ public final class SiteMarker {
         String line = SiteLabel.of(
                 project.remainingMaterials(),
                 stock == null ? Map.of() : stock.idCounts(),
-                project.remainingCount());
+                project.remainingCount(),
+                SiteMarker::nameOf);
 
         // O centro do lote, e acima do teto da planta: a placa fica sobre a
         // obra em vez de dentro da parede que está subindo.
@@ -229,6 +231,31 @@ public final class SiteMarker {
             // todo cliente perto sem nada ter mudado.
             sign.setCustomName(text);
         }
+    }
+
+    /**
+     * O nome do bloco na língua do jogo — 2026-09-17.
+     *
+     * <p><b>Quem traduz é o Vanilla</b>, por {@code Block.getName()}: a
+     * placa dizia {@code grass_block} onde o jogo diz <i>Bloco de
+     * Grama</i>. O mod já fazia assim em três lugares — o
+     * {@code MinerReport} escreve "Terra" e "Pedra" no log desde 09-03 —,
+     * e esta linha só leva o mesmo padrão para a placa.
+     *
+     * <p><b>Nada de tabela própria.</b> Escrever os nomes aqui seria
+     * refazer o que o jogo mantém traduzido em toda língua, com risco de
+     * errar e de envelhecer; e quebraria em espanhol, inglês ou qualquer
+     * idioma que o jogador escolher. Ver {@code SiteLabel.of}, que recebe
+     * esta função justamente para o {@code core} não precisar conhecer
+     * Minecraft.
+     *
+     * <p>Bloco que este jogo não conhece devolve vazio, e o
+     * {@code SiteLabel} cai no id — feio, e informa.
+     */
+    private static String nameOf(ResourceId material) {
+        return MinecraftTypeAdapter.toBlock(material)
+                .map(block -> block.getName().getString())
+                .orElse("");
     }
 
     /**

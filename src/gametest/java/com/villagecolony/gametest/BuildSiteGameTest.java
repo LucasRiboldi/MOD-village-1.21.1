@@ -1897,4 +1897,47 @@ public class BuildSiteGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * O nome do bloco sai na língua do jogo, e não como id — 2026-09-17.
+     *
+     * <p><b>Pedido do autor:</b> <i>"deve estar escrito com o nome dos
+     * blocos em português, sinalizando quantos tem nos estoques e quantos
+     * faltam na estrutura"</i>.
+     *
+     * <p><b>Por que este teste é gametest e não unitário.</b> O
+     * {@code SiteLabelTest} afirma a <b>regra</b> passando uma função de
+     * nomes escrita por ele — e uma regra que só é provada com nome de
+     * mentira não prova que o jogo traduz. Aqui a pergunta é feita ao
+     * Vanilla de verdade, por {@code Block.getName()}, que é a mesma
+     * chamada que o {@code SiteMarker} faz em produção.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site")
+    public void theLabelNamesTheBlockInTheGameLanguage(TestContext context) {
+        ResourceId grass = MinecraftTypeAdapter.toResourceId(Blocks.GRASS_BLOCK);
+
+        String named = Blocks.GRASS_BLOCK.getName().getString();
+
+        context.assertTrue(
+                !named.isBlank() && !named.equals("grass_block"),
+                "o jogo devolveu o id em vez do nome: " + named);
+
+        String line = com.villagecolony.core.construction.model.SiteLabel.of(
+                java.util.Map.of(grass, 64),
+                java.util.Map.of(grass, 17),
+                382,
+                id -> MinecraftTypeAdapter.toBlock(id)
+                        .map(block -> block.getName().getString())
+                        .orElse(""));
+
+        context.assertTrue(
+                line.contains(named),
+                "a placa não usou o nome do jogo (" + named + "): " + line);
+
+        context.assertTrue(
+                line.contains("17") && line.contains("64") && line.contains("382"),
+                "a placa perdeu estoque, falta ou blocos restantes: " + line);
+
+        context.complete();
+    }
 }

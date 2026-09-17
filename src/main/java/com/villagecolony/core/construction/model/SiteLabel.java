@@ -4,6 +4,7 @@ import com.villagecolony.core.type.ResourceId;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * A linha que flutua sobre o lote — 2026-09-15.
@@ -68,8 +69,43 @@ public final class SiteLabel {
             Map<ResourceId, Integer> stock,
             int blocksLeft) {
 
+        return of(missing, stock, blocksLeft, ResourceId::path);
+    }
+
+    /**
+     * O mesmo, com o nome do bloco na língua do jogo — 2026-09-17.
+     *
+     * <p><b>Pedido do autor:</b> <i>"deve estar escrito com o nome dos
+     * blocos em português, sinalizando quantos tem nos estoques e quantos
+     * faltam na estrutura"</i>. A conta de estoque e falta já estava aqui
+     * desde 09-15; o que faltava era o nome — a placa dizia
+     * {@code grass_block} onde o jogo diz <i>Bloco de Grama</i>.
+     *
+     * <p><b>Por que uma função, e não uma tabela aqui dentro.</b> Quem
+     * sabe traduzir é o próprio jogo, por {@code Block.getName()}, e essa
+     * chamada é do {@code fabric} — este arquivo é {@code core} e não
+     * conhece Minecraft, pela ADR-005. Escrever uma tabela de nomes aqui
+     * seria refazer, com risco de errar e de envelhecer, o que o Vanilla
+     * já mantém traduzido em toda língua. É o mesmo argumento do
+     * {@code MaterialChoice} ao preferir as tags do jogo a uma lista de
+     * espécies.
+     *
+     * <p>O {@code fabric} passa {@code Block::getName}; os testes passam o
+     * que quiserem, e é por isso que a regra continua afirmável sem
+     * servidor.
+     *
+     * @param naming como escrever o nome de um material para o jogador.
+     *     Recebe o id e devolve o nome na língua do jogo
+     */
+    public static String of(
+            Map<ResourceId, Integer> missing,
+            Map<ResourceId, Integer> stock,
+            int blocksLeft,
+            Function<ResourceId, String> naming) {
+
         Objects.requireNonNull(missing, "missing");
         Objects.requireNonNull(stock, "stock");
+        Objects.requireNonNull(naming, "naming");
 
         if (missing.isEmpty()) {
             // Nada a esperar: a obra está andando, e o número que importa
@@ -87,9 +123,14 @@ public final class SiteLabel {
         // placa não o conhece.
         int have = stock.getOrDefault(material, 0);
 
-        // Só o path: "minecraft:" gasta dez caracteres dizendo o que o
-        // jogador já sabe, e a placa é para ler de longe.
-        return MARK + " · falta " + material.path() + ": " + have + "/" + first.getValue()
+        String name = naming.apply(material);
+
+        // Nome vazio seria placa muda: cai no id, que é feio e informa.
+        if (name == null || name.isBlank()) {
+            name = material.path();
+        }
+
+        return MARK + " · falta " + name + ": " + have + "/" + first.getValue()
                 + " · " + blocksLeft + " blocos";
     }
 }
