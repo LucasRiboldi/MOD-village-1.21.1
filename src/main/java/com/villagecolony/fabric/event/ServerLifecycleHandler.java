@@ -22,6 +22,7 @@ import com.villagecolony.fabric.integration.RoadExtension;
 import com.villagecolony.fabric.integration.VillageRoad;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.LotRefusals;
 import com.villagecolony.fabric.integration.SiteMarker;
 import com.villagecolony.fabric.integration.SweepLog;
 import com.villagecolony.fabric.work.BuilderWork;
@@ -97,6 +98,11 @@ public final class ServerLifecycleHandler {
         RoadExtension.clearAll();
         BuildSiteScanner.clearAll();
         SweepLog.clearAll();
+        // E a contagem de recusa de lote junto — 2026-09-17. Ela
+        // ficava de fora enquanto os quatro vizinhos eram limpos, e a
+        // assimetria piorou quando o contador de colunas aceitas entrou
+        // nela. Ver LotRefusals.
+        LotRefusals.clearAll();
         PhantomWorkerLog.clearAll();
         TestBarrier.clearAll();
         ColonyStateLog.clearAll();
@@ -262,6 +268,11 @@ public final class ServerLifecycleHandler {
         RoadExtension.clearAll();
         BuildSiteScanner.clearAll();
         SweepLog.clearAll();
+        // E a contagem de recusa de lote junto — 2026-09-17. Ela
+        // ficava de fora enquanto os quatro vizinhos eram limpos, e a
+        // assimetria piorou quando o contador de colunas aceitas entrou
+        // nela. Ver LotRefusals.
+        LotRefusals.clearAll();
         PhantomWorkerLog.clearAll();
         TestBarrier.clearAll();
         ColonyStateLog.clearAll();

@@ -101,7 +101,7 @@ aglomerado de camas, que não causou o E46). Ver
 
 **Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
 
-**JAR atual 0.3.0 — gerado em 2026-09-17, 13:16.** Acumula **quatro
+**JAR atual 0.3.0 — gerado em 2026-09-17, 13:31.** Acumula **cinco
 correções sem playtest**: o afrouxamento da reserva de estrada (P1.0), a
 tarefa aberta pela peça que a obra espera (P1.1), a água recusada na escolha
 do alvo (P1.2) e o cortador de pedra (B1).
@@ -127,8 +127,8 @@ a falha é o KF-002, pré-existente e alheio. Conferido dentro do JAR que
 `isDry`, `cutFor` e `cheaperOf` estão nas classes compiladas.
 
 Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas três
-cópias: `9FCED11831C8197A7FF50531B47A4F1F0E7246ECAD8812007B293D4891CA0959`
-(o anterior era `A8B68809…`).
+cópias: `48CF7548EC8CD735371DA17767C012C286B7EEE45F67B38AF74CB2D8F17DEC80`
+(o anterior era `9FCED118…`).
 
 *JAR anterior, para referência: `build`, 884 unitários e 335/335 GameTests;
 incluía P0.7, a limpeza imediata da claim, as duas correções do playtest de

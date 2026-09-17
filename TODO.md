@@ -93,6 +93,28 @@ que verte e seguir, em vez de esperar o guarda. Lava não apareceu
 
 ---
 
+## 🔴 P1.4 — A escolha de área: a varredura nunca fecha a volta
+
+Varredura completa do subsistema em
+[`docs/technical/Escolha-de-area-varredura-2026-09-17.md`](docs/technical/Escolha-de-area-varredura-2026-09-17.md).
+
+**O achado que manda:** a vila varreu **22.116 colunas** em 27 passagens —
+mais que os **16.641** de uma volta inteira — e ainda marcou
+`0 complete rounds`. O reinício por deriva de centro custou a volta toda.
+
+- [x] ✅ **S5** — `LotRefusals.clearAll` entrou no ciclo de vida. Era o único dos cinco vizinhos que ficava de fora, e a assimetria piorou quando o `ACCEPTED` entrou nele hoje.
+- [x] ✅ **S3 verificado, já funciona** — `coloniesNearPlayers` faz a vila observada furar a fila do rodízio. Derruba metade do custo estimado: 32 `planner runs` em 32 min é vez quase todo ciclo. **Nada a fazer.**
+- [x] 🟢 ~~**S1** — transladar o cursor em vez de descartar~~ — **descartado pela aritmética**, e o motivo está no §4.1: com deriva de 40, o anel seguro no centro novo é **0**. Translação não recupera nada.
+- [ ] 🔴 **A deriva do centro é o item de maior alavancagem.** Dois anchors de cama (`2448,-2942` e `2491,-3043`), centro oscilando 40 blocos. **Estabilizá-lo conserta varredura, obra órfã e lote de uma vez.** É o C3 do E46, e é decisão do autor — mexe na regra de completude que evita o E2.
+- [ ] 🟠 **S6 → S4** — duas réguas de chão: a **estrada** usa `isNaturalGround` (5 blocos) e o **lote** usa `isLotGround` (qualquer sólido). A estrada é mais exigente que a casa. Medir antes de unificar.
+- [ ] 🟡 `BuildSiteScanner` tem **1.509 linhas** contra o teto de 500 do `CLAUDE.md`, com 36 métodos e 5 mapas de estado
+
+⚠️ **Correção de afirmação minha:** na sessão anterior escrevi que *"a vila
+não consegue estender estrada"*. **Errado** — `extended/grew the road` = 10
+contra 3 recusas. A estrada cresce.
+
+---
+
 ## 🟢 B1 — Cortador de pedra (melhoria de economia, 09-17)
 
 `CraftingLookup` não lia `RecipeType.STONECUTTING`, e o pedreiro recebe
