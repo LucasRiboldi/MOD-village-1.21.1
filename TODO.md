@@ -4,7 +4,40 @@
 
 ---
 
-## ✅ P0.8 — E45: a mina fica presa na boca (corrigido 09-16, espera playtest)
+## 🔴 P1.0 — Nenhum lote aprovado: a vila não chega a planejar obra
+
+Playtest de 2026-09-17, 00:09. O autor: *"não vi as zonas de construção
+marcadas, não vi casa crescendo"*. E o log concorda: **`planned` = 0**,
+`opened a build task` = 0 em 6 minutos, com 8 pedidos de lote.
+
+```text
+lot refusals: 174912 candidates turned down
+  92972 (53%) the ground is inside a reserved road area
+  33597 (19%) village-original or player-placed, Rule 3 protects it
+sweep: 8 planner runs, 2055 columns, 0 complete rounds
+```
+
+**É anterior ao E46:** aquele conserta a obra que morre depois de nascer, e
+aqui nenhuma nasceu. A causa suspeita é `BuildSiteScanner.isRoadArea`, que
+trata **todo calçamento original da vila** como reserva de estrada — com a
+Regra 3, 72% do território fica bloqueado.
+
+⚠️ **Duas leituras, e a sessão não separou:** `0 complete rounds` também
+explica tudo (a varredura precisa de ~17 ciclos e teve 6). Ver
+`lento-nao-e-travado` — este diagnóstico já foi errado antes.
+
+- [x] ✅ **Instrumentar** quantas colunas sobrevivem a todas as recusas — `LotRefusals.accepted`, com linha própria no relatório. **Verificado:** build + 902 unitários + 336 GameTests em 5/5. Gametest `theSurvivingColumnsAreCounted` conferido no XML.
+- [ ] 🔴 **Playtest de 15–20 min** — o relatório sai ao fechar o mundo. `0 survived` ⇒ afrouxar recusa; `N > 0` ⇒ orçamento de varredura.
+- [ ] 🟠 **Decisão do autor, depois do número:** o calçamento original da vila deve mesmo bloquear lote? A Regra 3 protege a vila do jogador, mas talvez a rua não precise ser intocável.
+
+---
+
+## ✅ P0.8 — E45: a mina presa na boca (CONFIRMADO EM JOGO 09-17)
+
+**O conserto funcionou.** Playtest de 00:09: `Miner … took` = **37** (era
+**0**), `hit stone with nowhere to stand` = **15** (era 17.518), e
+`turning the helix` = **4** — o guarda novo girou a hélice em vez de travar.
+Primeira sessão desde 09-15 com pedra saindo do mundo.
 
 Reproduzido no playtest de 21:41–22:12: 17.518 recusas em 31 min, 10/s,
 **zero pedra quebrada** (em 03:44 foram 166.559 em 4h40 — mesma assinatura).

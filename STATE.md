@@ -18,7 +18,8 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 | P0.5 | Perda de item por inventário cheio (E3) | ✅ entregue 09-11, **espera sessão** |
 | P0.6 | A enxurrada da areia calou | ✅ entregue 09-11, **espera sessão** |
 | P0.7 | Elegibilidade simplificada de lotes | ✅ entregue 09-15, **espera playtest** |
-| **P0.8** | **A mina fica presa na boca (E45)** | ✅ **corrigido 09-16, espera playtest** |
+| **P0.8** | **A mina fica presa na boca (E45)** | ✅ **corrigido e CONFIRMADO EM JOGO 09-17** |
+| **P1.0** | **Nenhum lote aprovado — a vila não planeja obra** | 🔴 **aberto, instrumentado 09-17** |
 | **P0.9** | **A obra nasce condenada: a estrada leva o lote para fora (E46)** | ✅ **C4 corrigido 09-16, espera playtest** |
 
 **Dois bloqueadores, e são independentes.** O playtest de 09-16 21:41–22:12
@@ -99,40 +100,101 @@ aglomerado de camas, que não causou o E46). Ver
 
 **Lote 2 — continuidade do mineiro, primeira fatia integrada em 2026-09-15.** Ao encerrar a tarefa, `MinerWork.tick` agora libera a claim do ramal no mesmo tique em que remove o job. `MinerWorkLifecycleTest.aClosedJobReleasesItsMineClaimOnTheNextTick` prova que nem o job nem a claim sobrevivem. Isto corrige apenas a limpeza de claim; alvo inalcançavel, ramo bloqueado, veio exaurido, fluido e retomada apos backoff continuam na matriz aberta de recuperacao.
 
-**JAR atual 0.3.0 — gerado em 2026-09-17, com E45 e E46 corrigidos.** É o
-primeiro artefato desde 09-15 que ataca os dois bloqueadores ao mesmo tempo.
+**JAR atual 0.3.0 — gerado em 2026-09-17, 00:25.** Sobre o anterior, entra
+**só a instrumentação do P1.0**: a contagem de colunas que sobrevivem a
+todas as recusas. Nenhuma correção nova de comportamento — o E45 já está
+confirmado em jogo e o E46 segue sem poder ser testado.
 
-O que procurar no log do próximo playtest:
+**A pergunta que este JAR existe para responder**, e ela decide o próximo
+conserto. Ao fechar o mundo, procurar:
 
-**Mineiro (E45)** — a pergunta é se ele quebra pedra:
-- `Miner … took` com contagem **maior que zero** é a prova de que o laço
-  morreu.
-- `turned in place 3 times without a pickaxe — turning the helix from … to …`
-  — o guarda disparando. **Deve aparecer poucas vezes**, não milhares.
-- `tried all 4 helices … the mine starts over at …` — a escalada para boca
-  nova.
-- Se `hit stone with nowhere to stand` ainda vier a 10/s, o conserto falhou.
+```text
+Colony … lot columns: N survived every check, N were turned down — N%
+```
 
-**Construção (E46)** — a obra ao lado da rua deve sobreviver:
-- Se `lets go of` sumir e a biblioteca passar de 628/628, funcionou.
-- `… planned … Measured from <centro>: N blocks square, N blocks straight`
-- `WARN … the road index served a lot at … from outside the sweep` — este
-  **ainda deve aparecer**: descreve o scanner, que por decisão não mudou.
-  Agora é informação, não sintoma.
+- **`0 survived`** ⇒ a vila não tem um palmo livre. O conserto é afrouxar
+  uma recusa, e a candidata é a reserva de estrada (53%), que hoje inclui
+  todo calçamento original da vila.
+- **`N survived` com N > 0** ⇒ há chão, e o problema é o orçamento da
+  varredura não fechar a volta. Conserto completamente diferente.
+
+⚠️ **Jogue 15–20 minutos sem fechar.** A varredura precisa de ~17 ciclos
+(8 min) para completar uma volta; a sessão de 00:09 teve 6 e marcou
+`0 complete rounds`. O relatório só sai **ao parar o servidor**.
 
 **Verificado:** `build` passou; **902 unitários, 0 falhas** (XML conferido);
-**335 GameTests, 4 rodadas verdes em 5** — a falha é o KF-002,
-pré-existente. Conferido **dentro do JAR** que o código novo está nas
-classes compiladas.
+**336 GameTests** (+1: `theSurvivingColumnsAreCounted`), **5 rodadas verdes
+em 5** — o KF-002 não apareceu desta vez. Conferido **dentro do JAR** que a
+linha nova está na classe compilada, e no XML que o teste novo de fato
+rodou.
 
 Copiado para `downloads/` e `%APPDATA%/.minecraft/mods/`; SHA-256 nas três
-cópias: `B7E505BFE414730C62F0F53C73EFBC306E2FC6CCBB9DAC5F6DEBF5F06134D4AF`
-(o anterior era `D7AB2596…`). **Falta playtest.**
+cópias: `EABD11D21068BF8206D56893E2CA90BE717EADCE4B2E73F7C3E39E875F51266E`
+(o anterior era `B7E505BF…`).
 
 *JAR anterior, para referência: `build`, 884 unitários e 335/335 GameTests;
 incluía P0.7, a limpeza imediata da claim, as duas correções do playtest de
 09-15 (toco órfão e minério recusado), a retirada do baú da boca da mina e
 as duas otimizações do planejador.*
+
+---
+
+## Playtest de 2026-09-17, 00:09–00:17 — E45 CONFIRMADO CORRIGIDO, e um terceiro defeito
+
+Log: 1.317 linhas, 8 minutos. Relato do autor: *"não vi as zonas de
+construção marcadas, não vi casa crescendo"*.
+
+**O E45 está morto, e os números provam:**
+
+| Medida | 21:41 (antes) | 00:09 (agora) |
+|---|---|---|
+| `Miner … took` — pedra quebrada | **0** | **37** ✅ |
+| `hit stone with nowhere to stand` | 17.518 | **15** |
+| `turning the helix` — o guarda novo | — | **4** |
+
+O guarda girou a hélice quatro vezes em vez de travar, e o mineiro passou a
+produzir. **É o primeiro playtest desde 09-15 com pedra saindo do mundo.**
+
+**Mas o E46 não pôde ser testado.** A colônia rodou 6 minutos, o planejador
+pediu lote 8 vezes e **nenhuma obra chegou a ser planejada** — `planned` = 0,
+`opened a build task` = 0. O E46 conserta a obra que morre *depois* de
+nascer; aqui nenhuma nasceu. Por isso não houve zona marcada nem casa.
+
+**P1.0 — o terceiro defeito, e ele é anterior aos outros dois.**
+
+```text
+no building work: still sweeping — the budget ran out before an answer
+sweep: 8 planner runs, 2055 columns, 0 complete rounds
+lot refusals: 174912 candidates turned down
+  92972 (53%) the ground is inside a reserved road area
+  33597 (19%) village-original or player-placed, Rule 3 protects it
+  17051 (10%) the ground is not at street level
+```
+
+**53% das recusas são a reserva de estrada**, e a causa está em
+`BuildSiteScanner.isRoadArea`: ela trata **todo caminho original da vila
+Vanilla** como reserva (`BlockProtection.isVillageOriginal`). Numa vila
+gerada, o calçamento é justamente onde há chão plano. Com a Regra 3 somada,
+**72% do território está bloqueado por proteção**.
+
+⚠️ **Duas leituras possíveis, e a sessão foi curta demais para separá-las:**
+a varredura precisa de ~17 ciclos (8 min) para fechar uma volta e teve 6, e
+`0 complete rounds` diz que ela nunca terminou. Pode ser orçamento, pode ser
+falta de chão. **Ver [[lento-nao-e-travado]]** — já errei este diagnóstico
+antes.
+
+**Instrumentado em 09-17 para decidir sem chutar:** `LotRefusals.accepted`
+conta as colunas que sobrevivem a **todas** as recusas, e o relatório agora
+sai com as duas linhas:
+
+```text
+Colony … lot refusals: N candidates turned down — …
+Colony … lot columns: N survived every check, N were turned down — N% of what was looked at
+```
+
+**Zero aceitas** ⇒ a vila não tem um palmo livre, e alguma recusa precisa
+afrouxar. **Poucas aceitas** ⇒ há chão, e o problema é o orçamento da
+varredura. São consertos opostos, e o número decide qual.
 
 ---
 

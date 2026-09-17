@@ -539,6 +539,66 @@ public class BuildSiteGameTest implements FabricGameTest {
     /**
      * Chão liso com rua ao lado: a colônia acha onde construir.
      */
+    /**
+     * A coluna que sobrevive a tudo é contada — 2026-09-17.
+     *
+     * <p><b>O numerador que faltava.</b> O {@code LotRefusals} contava só
+     * o que some, e o playtest de 2026-09-17 às 00:09 mostrou o preço:
+     * 174.912 recusas, 53% delas por reserva de estrada, e <b>nenhuma
+     * resposta</b> para a única pergunta que decide o conserto — sobrou
+     * chão ou não sobrou?
+     *
+     * <p>Zero aceitas e poucas aceitas pedem consertos opostos: a
+     * primeira diz que a vila não tem um palmo livre e alguma recusa
+     * precisa afrouxar; a segunda diz que há chão e o problema é o
+     * orçamento da varredura. Sem o numerador, o log não distinguia as
+     * duas.
+     *
+     * <p>Conta <b>colunas</b>, na mesma unidade das recusas, para que os
+     * dois números se somem. Uma pegada aprovada entra inteira, porque
+     * {@code flatGroundAt} só chega ao fim quando nenhuma coluna dela
+     * reprovou.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site")
+    public void theSurvivingColumnsAreCounted(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
+
+        LotRefusals.clearAll();
+
+        paveGround(context, center);
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+
+        reserveRoad(context, colony, center);
+
+        context.assertTrue(
+                LotRefusals.acceptedIn(colony) == 0,
+                "o cenário precisa começar sem coluna aceita nenhuma");
+
+        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                context.getWorld(),
+                colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        context.assertTrue(site.isPresent(), "o cenário precisa achar lote para haver o que contar");
+
+        // A pegada inteira da planta, e não um lote: é a unidade das
+        // recusas, e é o que faz os dois números somarem.
+        int footprint = SMALL_HOUSE.x() * SMALL_HOUSE.z();
+
+        context.assertTrue(
+                LotRefusals.acceptedIn(colony) >= footprint,
+                "achou lote e contou " + LotRefusals.acceptedIn(colony)
+                        + " colunas aceitas, mas a pegada tem " + footprint);
+
+        LotRefusals.clearAll();
+
+        context.complete();
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site")
     public void aLotBesideTheRoadIsFound(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);

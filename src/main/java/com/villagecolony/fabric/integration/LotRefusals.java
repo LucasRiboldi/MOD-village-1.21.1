@@ -94,6 +94,23 @@ public final class LotRefusals {
      */
     private static final int MAX_COLONIES = 256;
 
+    /**
+     * Quantas colunas sobreviveram a todas as recusas, por colônia.
+     *
+     * <p><b>O numerador que faltava</b> — 2026-09-17. Até aqui só o que
+     * some era contado, e o playtest de 00:09 mostrou o preço: 174.912
+     * recusas e nenhuma resposta para <i>"sobrou alguma coluna?"</i>.
+     * Sem este número, "53% caem na reserva de estrada" não distingue
+     * uma vila apertada de uma vila sem um palmo de chão livre — e as
+     * duas pedem consertos diferentes.
+     *
+     * <p>Conta <b>colunas</b>, como as recusas, e não lotes: é a única
+     * forma de os dois números se somarem na mesma unidade. Uma pegada
+     * aprovada acrescenta todas as colunas dela de uma vez, porque
+     * {@code flatGroundAt} só chega ao fim quando nenhuma reprovou.
+     */
+    private static final Map<UUID, Integer> ACCEPTED = new HashMap<>();
+
     /** Esta coluna não deu lote, e este foi o motivo. */
     public static void refused(UUID colonyId, Reason reason) {
         if (COUNTED.size() >= MAX_COLONIES && !COUNTED.containsKey(colonyId)) {
@@ -102,6 +119,22 @@ public final class LotRefusals {
 
         COUNTED.computeIfAbsent(colonyId, id -> new EnumMap<>(Reason.class))
                 .merge(reason, 1, Integer::sum);
+    }
+
+    /**
+     * Uma pegada inteira passou: estas colunas sobreviveram a tudo.
+     *
+     * <p>Chamado de {@code BuildSiteScanner.flatGroundAt}, no único
+     * ponto em que ele devolve piso — ver {@link #ACCEPTED}.
+     *
+     * @param columns quantas colunas a pegada tem
+     */
+    public static void accepted(UUID colonyId, int columns) {
+        if (ACCEPTED.size() >= MAX_COLONIES && !ACCEPTED.containsKey(colonyId)) {
+            ACCEPTED.clear();
+        }
+
+        ACCEPTED.merge(colonyId, columns, Integer::sum);
     }
 
     /**
@@ -119,7 +152,11 @@ public final class LotRefusals {
     public static void report(UUID colonyId) {
         Map<Reason, Integer> counted = COUNTED.remove(colonyId);
 
-        if (counted == null || counted.isEmpty()) {
+        Integer survivors = ACCEPTED.remove(colonyId);
+
+        int accepted = survivors == null ? 0 : survivors;
+
+        if ((counted == null || counted.isEmpty()) && accepted == 0) {
             return;
         }
 
@@ -127,14 +164,16 @@ public final class LotRefusals {
 
         int total = 0;
 
-        for (Map.Entry<Reason, Integer> entry : counted.entrySet()) {
-            if (text.length() > 0) {
-                text.append("; ");
+        if (counted != null) {
+            for (Map.Entry<Reason, Integer> entry : counted.entrySet()) {
+                if (text.length() > 0) {
+                    text.append("; ");
+                }
+
+                text.append(entry.getValue()).append(" ").append(entry.getKey());
+
+                total += entry.getValue();
             }
-
-            text.append(entry.getValue()).append(" ").append(entry.getKey());
-
-            total += entry.getValue();
         }
 
         VillageColonyMod.LOGGER.info(
@@ -142,6 +181,23 @@ public final class LotRefusals {
                 colonyId,
                 total,
                 text);
+
+        // <b>E a linha que responde se sobrou chão</b> — 2026-09-17.
+        // Separada da de cima de propósito: aquela é o inventário do que
+        // some, e esta é a única pergunta que decide o conserto. Ler as
+        // duas juntas e fazer a conta de cabeça foi o que esta sessão
+        // teve de fazer, e é o que ela deixa de exigir.
+        //
+        // Zero aceitas não é o mesmo que poucas: zero diz que a vila não
+        // tem um palmo livre e o conserto é afrouxar alguma recusa;
+        // poucas dizem que há chão e o problema é orçamento de varredura.
+        VillageColonyMod.LOGGER.info(
+                "Colony {} lot columns: {} survived every check, {} were turned down"
+                        + " — {}% of what was looked at",
+                colonyId,
+                accepted,
+                total,
+                accepted + total == 0 ? 0 : Math.round(100.0 * accepted / (accepted + total)));
     }
 
     /** Quantas recusas deste motivo a colônia acumulou. Para a bateria. */
@@ -149,8 +205,14 @@ public final class LotRefusals {
         return COUNTED.getOrDefault(colonyId, Map.of()).getOrDefault(reason, 0);
     }
 
+    /** Quantas colunas sobreviveram a tudo nesta colônia. Para a bateria. */
+    public static int acceptedIn(UUID colonyId) {
+        return ACCEPTED.getOrDefault(colonyId, 0);
+    }
+
     /** Esquece tudo. Os testes e o fim do servidor. */
     public static void clearAll() {
         COUNTED.clear();
+        ACCEPTED.clear();
     }
 }

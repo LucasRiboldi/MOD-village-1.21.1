@@ -1354,6 +1354,12 @@ public final class BuildSiteScanner {
             }
         }
 
+        // <b>A pegada inteira passou</b> — 2026-09-17. É o par que
+        // faltava ao LotRefusals: ele contava só o que some, e um
+        // denominador sem numerador não diz se a vila está apertada ou
+        // sem chão nenhum. Ver LotRefusals.accepted.
+        LotRefusals.accepted(colonyId, size.x() * size.z());
+
         // O piso da casa vai sobre o chão, e não dentro dele. Como o
         // chão está no nível da rua, o piso fica na altura em que se
         // anda sobre ela.
