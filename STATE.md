@@ -19,7 +19,7 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 | P0.6 | A enxurrada da areia calou | ✅ entregue 09-11, **espera sessão** |
 | P0.7 | Elegibilidade simplificada de lotes | ✅ entregue 09-15, **espera playtest** |
 | **P0.8** | **A mina fica presa na boca (E45)** | 🔴 **aberto, causa provada, não corrigido** |
-| **P0.9** | **A obra fecha sozinha com 628/628 blocos (E46)** | 🔴 **aberto, não diagnosticado** |
+| **P0.9** | **A obra nasce condenada: quadrado acha, círculo larga (E46)** | 🔴 **aberto, causa provada, não corrigido** |
 
 **Dois bloqueadores, e são independentes.** O playtest de 09-16 21:41–22:12
 **reproduziu o E45** e revelou o E46. Corrigir só o E45 **não** faz a vila
@@ -37,13 +37,25 @@ pedra quebrada**, idêntico ao playtest de 03:44 (166.559). A causa foi
 [`docs/technical/E45-mina-presa-na-boca.md`](docs/technical/E45-mina-presa-na-boca.md).
 **C4 exige decisão do autor** antes de implementar.
 
-**P0.9 — E46, a obra que fecha sozinha.** A biblioteca foi planejada duas
-vezes (21:47 e 21:50), em posições diferentes, e as duas morreram em ~30 s
-com **628 blocos restantes de 628** — nenhum bloco posto, e a frase é
-`Builder … stopped — the project is closed`. **Não é** o `isSupersededBy` do
-planejador (`drops the untouched` = 0). Suspeita a investigar:
-`ConstructionService` removendo o projeto enquanto o builder o segura. Sem
-diagnóstico próprio ainda — ver §8.1 do documento do E45.
+**P0.9 — E46, a obra nasce condenada.** Diagnosticado em 23:00, e a causa é
+**geométrica**: quem acha o lote mede em **quadrado** (`BuildSiteScanner`,
+anéis `max(|dx|,|dz|) ≤ 64`) e quem mantém a obra mede em **círculo**
+(`ConstructionProject.isOutOfReach`, `dx²+dz² ≤ 64²`). Os dois recebem o
+mesmo centro e o mesmo raio — diverge a **forma**, e a faixa entre o círculo
+e o quadrado é **21% da área varrida**. A obra é aprovada por uma régua e
+abandonada pela outra no ciclo seguinte, com 628/628 blocos.
+
+**A correção é de uma linha, e a escolha é do autor:** alinhar
+`isOutOfReach` ao Chebyshev (recomendado — `withinTheFarmersReach` e o
+`VillageDetector` **já** medem em quadrado; o círculo é o forasteiro), ou
+tornar o scanner euclidiano.
+
+⚠️ **Um fio solto:** as duas obras estavam fora das **duas** contas medidas
+de `colony.center()` (`2495,-3003`), e **dentro** das duas se medidas do
+anchor de camas `2448,-2942` — que a detecção viu 59 vezes e recusou adotar
+(`view not provably complete`). Instrumentar de qual centro o scanner parte é
+o primeiro passo, e pode mudar o diagnóstico. Ver
+[`docs/technical/E46-obra-nasce-condenada.md`](docs/technical/E46-obra-nasce-condenada.md).
 
 **P0.7 — politica aplicada em 2026-09-15.** Piso solido disponivel e candidato a lote; pedra, gravilha e terracota nao sao recusadas pela composicao. Estrada exige material oficial mais `ROAD_AREA`; gravilha ou terracota fora da reserva continuam elegiveis. O scanner nao terraplana nem muda o mundo. Ver ADR-017.
 

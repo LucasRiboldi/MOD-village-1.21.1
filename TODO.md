@@ -29,19 +29,27 @@ específicas, e o guarda genérico nunca disparou em nenhuma das três.
 
 ---
 
-## 🔴 P0.9 — E46: a obra fecha sozinha com 628/628 blocos (não diagnosticado)
+## 🔴 P0.9 — E46: a obra nasce condenada (causa provada, não corrigida)
 
-Playtest de 21:41. A biblioteca foi planejada **duas vezes**, em posições
-diferentes, e as duas morreram em ~30 s com **628 blocos restantes de 628** —
-nenhum bloco posto. A frase é `Builder … stopped — the project is closed`.
+Playtest de 21:41. A biblioteca foi planejada **duas vezes** e as duas
+morreram em ~30 s com **628 blocos restantes de 628**, sem um bloco posto.
 
-**É independente do E45**, e corrigir o mineiro sozinho não faz a vila
-construir. Em 03:44 o builder parava por falta de cobblestone; aqui não é
-falta de material.
+**A causa é geométrica:** quem acha o lote mede em **quadrado**
+(`BuildSiteScanner`, anéis `max(|dx|,|dz|) ≤ 64`); quem mantém a obra mede em
+**círculo** (`isOutOfReach`, `dx²+dz² ≤ 64²`). Mesmo centro, mesmo raio,
+formas diferentes — e a faixa entre as duas é **21% da área varrida**.
+Detalhe em
+[`docs/technical/E46-obra-nasce-condenada.md`](docs/technical/E46-obra-nasce-condenada.md).
 
-- [ ] 🔴 Separar no log as duas causas de `BuilderWork.java:224` — projeto **não encontrado** vs. projeto **não aberto**. Hoje são indistinguíveis.
-- [ ] 🔴 Investigar `ConstructionService` removendo o projeto enquanto o builder o segura (`removeIf(!isOpen)`, `ConstructionService.java:206`)
-- [x] 🟢 ~~`isSupersededBy` do planejador~~ — **descartado:** `drops the untouched` aparece 0 vezes
+**É independente do E45** — corrigir o mineiro sozinho não faz a vila
+construir.
+
+- [ ] 🔴 **C2** — instrumentar de qual centro o scanner parte (as obras estão fora das **duas** contas de `colony.center()`, e dentro das duas do anchor de camas). **Fazer antes de C1:** pode mudar o diagnóstico.
+- [ ] 🔴 **C1** — **decisão do autor:** uma régua só → (a) `isOutOfReach` vira Chebyshev, (b) scanner vira euclidiano. Recomendado **(a)**: `withinTheFarmersReach` e `VillageDetector` já medem em quadrado; o círculo é o forasteiro. Teste: obra no canto (`dx = dz = radius`) não pode estar fora de alcance.
+- [ ] 🟠 **C3** — o centro que a detecção recusa mover (59× `view not provably complete`, centro a 77 blocos do aglomerado real). ⚠️ investigação própria — afrouxar a regra de completude ressuscita o E2.
+- [x] 🟢 ~~`isSupersededBy` do planejador~~ — **descartado:** `drops the untouched` = 0
+- [x] 🟢 ~~`PatienceClock` / obra sem material~~ — **descartado:** `WAITING_RESOURCES` não aparece no log, e a paciência é de 10 min contra 29 s observados
+- [x] 🟢 ~~`ConstructionService.forget` chamado de outro lugar~~ — **descartado:** único chamador é `WaitingWork:190`
 
 ---
 

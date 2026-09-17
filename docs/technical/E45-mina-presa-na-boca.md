@@ -316,22 +316,22 @@ vezes**, e as duas morreram **sem um único bloco posto**:
 
 Nas duas vezes: **628 blocos restantes de 628** — nada foi construído.
 
-**O que já se sabe.** `BuilderWork.step` escreve essa frase quando
-`CONSTRUCTIONS.find(projectId)` volta vazio **ou** o projeto deixou de estar
-`isOpen()` ([`BuilderWork.java:224`](../../src/main/java/com/villagecolony/fabric/work/BuilderWork.java)).
+✅ **Diagnosticado em 2026-09-16, 23:00 — ver
+[`E46-obra-nasce-condenada.md`](E46-obra-nasce-condenada.md).**
 
-**O que já foi descartado:** não é o `isSupersededBy` do
-`ConstructionPlanner` — aquele caminho registra `drops the untouched`, e essa
-frase aparece **0** vezes.
+A causa é **geométrica**: quem acha o lote mede em **quadrado**
+(`BuildSiteScanner`, anéis `max(|dx|,|dz|) ≤ 64`) e quem mantém a obra mede
+em **círculo** (`ConstructionProject.isOutOfReach`, `dx²+dz² ≤ 64²`). A obra
+nasce aprovada por uma régua e é abandonada pela outra no ciclo seguinte —
+`lets go of … the work is now outside the 64-block radius`, 2 ocorrências,
+casando com os 2 `project is closed`.
 
-**Suspeita a investigar primeiro:** `ConstructionService.forget` /
-`removeIf(!isOpen)` ([`ConstructionService.java:206`](../../src/main/java/com/villagecolony/core/construction/service/ConstructionService.java))
-— quem remove o projeto do registro enquanto o builder ainda o segura. O
-`find` vazio e o `!isOpen` **são frases indistinguíveis no log de hoje**, e
-separá-las é o primeiro passo.
+A suspeita que eu havia levantado aqui — `ConstructionService.forget` /
+`removeIf(!isOpen)` — **estava errada** e foi descartada: o único chamador de
+`forget` é `WaitingWork:190`, dentro de `giveUp`.
 
-⚠️ **Este defeito merece número próprio (E46) e um diagnóstico próprio.**
-Corrigir o E45 sozinho **não** faz a vila construir.
+⚠️ **Corrigir o E45 sozinho não faz a vila construir.** Os dois são
+independentes.
 
 ### 8.2 Dois achados de fundo, fora do mineiro 🟠
 
