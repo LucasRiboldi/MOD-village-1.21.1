@@ -569,6 +569,21 @@ public final class ConstructionPlanner {
                 ? HousePlans.turnedToTheRoad(blueprint, road)
                 : fitting.get(world.getRandom().nextInt(fitting.size()));
 
+        // <b>Quantas concorreram, e é o §11</b> — 2026-09-18. O playtest
+        // de 02:25 levantou duas plantas diferentes, e isso <b>não</b>
+        // provou que o sorteio entre irmãs funcionou: as duas tinham
+        // pegadas diferentes — 517 e 382 blocos —, então a variedade
+        // podia ter vindo da lista de tamanhos que já existia antes, pela
+        // Regra 25 descendo um degrau. Do lado de fora, "sorteou entre
+        // oito" e "só havia uma" eram a mesma linha.
+        //
+        // A conta vai na linha do {@code planned}, logo abaixo, e não numa
+        // segunda linha por obra: é a mesma decisão vista de um outro
+        // ângulo, e duas linhas por obra seriam ruído no log de uma
+        // sessão longa.
+        //
+        String drawnFrom = drawnFrom(fitting.size());
+
         ConstructionProject project = ConstructionProject.plan(
                 colony.id(), facingTheRoad, site.origin());
 
@@ -603,7 +618,8 @@ public final class ConstructionPlanner {
         // legível na hora. Ver ConstructionProject.isOutOfReach, que usa a
         // euclidiana, e BuildSiteScanner, que varre em quadrado.
         VillageColonyMod.LOGGER.info(
-                "Colony {} planned {} at {} — {} blocks, {} builders."
+                "Colony {} planned {} at {} — {} blocks, {} builders,"
+                        + " drawn from {}."
                         + " Measured from {}: {} blocks square, {} blocks straight,"
                         + " and the radius is {}",
                 colony.id(),
@@ -611,12 +627,36 @@ public final class ConstructionPlanner {
                 project.origin(),
                 project.blueprint().blockCount(),
                 builders,
+                drawnFrom,
                 colony.center(),
                 squareDistance(project.origin(), colony.center()),
                 straightDistance(project.origin(), colony.center()),
                 searchRadius);
 
         return Optional.of(project);
+    }
+
+    /**
+     * De quantas plantas saiu a escolha, dito para quem lê o log.
+     *
+     * <p><b>Lista vazia não é "sorteou entre zero".</b> É o caminho de
+     * reserva — nenhuma planta coube na pegada do lote e vale a que veio
+     * de fora. Imprimir {@code 0} ali faria um caminho <b>diferente</b>
+     * parecer um sorteio degenerado, que é justamente o tipo de silêncio
+     * que este log existe para desfazer.
+     *
+     * <p><b>Visível ao pacote para o teste, e é o motivo de existir
+     * separada.</b> A linha do {@code planned} <b>não sai na bateria de
+     * jogo</b> — medido em 2026-09-18, zero ocorrências com e sem esta
+     * mudança: os gametests montam o projeto sem passar pelo
+     * {@code open}. Deixar a formatação embutida no {@code LOGGER.info}
+     * seria deixá-la sem nenhuma verificação possível, e esta base já
+     * pagou o preço de um trecho que nada exercitava.
+     */
+    static String drawnFrom(int fitting) {
+        return fitting == 0
+                ? "none fitting, the offered plan"
+                : fitting + " of that footprint";
     }
 
     /**

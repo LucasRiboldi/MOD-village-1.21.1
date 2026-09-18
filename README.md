@@ -96,6 +96,16 @@ que houver nos baús; o que não dá para fabricar, ele espera.
 casa: cada vila levanta o que a pasta de estruturas do jogo tem para o
 bioma dela — planície, savana, taiga, nevada e deserto.
 
+**E não repete a mesma casa.** O catálogo do jogo tem dezenas de peças por
+bioma — 36 na planície — e muitas dividem a mesma pegada: oito casas
+pequenas diferentes ocupam o mesmo retângulo. Achado o lote, a colônia
+sorteia entre **todas** as que cabem ali, e não só a primeira delas.
+
+**Ela levanta moradia.** A pasta de estruturas guarda junto tudo que um
+lote da vila pode receber — cerca de bicho, ponto de encontro, templo,
+estábulo. A colônia constrói casa; a roça é decidida à parte, pela
+população.
+
 🌾 **O fazendeiro** colhe a lavoura madura, **replanta com a semente da
 própria colheita**, **semeia o canteiro vazio** com o que houver no baú
 dele, e guarda a comida. Quem diz se está madura é o **bloco**, e não
