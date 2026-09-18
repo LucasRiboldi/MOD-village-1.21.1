@@ -385,4 +385,99 @@ public class SmelterGameTest implements FabricGameTest {
             context.complete();
         });
     }
+
+    /**
+     * Baú cheio não faz a areia sumir — 2026-09-18, o E3 no fundidor.
+     *
+     * <p><b>A metade que faltava.</b> Os três testes acima exercitam o
+     * caminho feliz: areia vira vidro, ferro cru vira lingote, o minério
+     * da boca da mina é contado. Nenhum media o instante perigoso — o
+     * material <b>já saiu do baú</b> e ainda não virou produto. Se não
+     * houver onde guardar o vidro, a areia tem de voltar.
+     *
+     * <p>O código promete isso em três lugares de
+     * {@code SmelterWork.convert}: <i>"tirar do baú e não devolver seria
+     * a colônia destruindo material"</i>. A promessa não tinha teste, e
+     * material do jogador sumindo em silêncio é o defeito mais caro que
+     * este mod pode ter.
+     *
+     * <p><b>Como o cenário força o caminho, e por que a primeira versão
+     * não forçava.</b> A tentativa de 09-18 pôs pedregulho num baú e
+     * pediu vidro: o fundidor saía em <i>"nenhum baú tinha areia"</i>
+     * sem tocar em nada, e o teste passava mesmo com a devolução
+     * <b>apagada do código</b> — afirmava o verdadeiro pelo motivo
+     * errado. Aqui há areia de verdade, e o baú é entupido de pedregulho
+     * até não sobrar espaço para o vidro: o fundidor tira a areia,
+     * descobre que não tem onde pôr o produto, e precisa recolocá-la.
+     *
+     * <p><b>Conferido por mutação:</b> removida a devolução do
+     * {@code convert}, este teste falha.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "smelter_full",
+            tickLimit = 200)
+    public void afullChestDoesNotSwallowTheSand(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        context.setBlockState(new BlockPos(3, 1, 3), Blocks.DIRT.getDefaultState());
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        // Um baú tem 27 espaços. A areia ocupa um, e o pedregulho toma
+        // todos os outros: não sobra onde o vidro caiba, e o fundidor
+        // encontra a parede depois de já ter a areia na mão.
+        ChestDepositor.deposit(world, chest, Items.SAND, 4);
+        ChestDepositor.deposit(world, chest, Items.COBBLESTONE, 26 * 64);
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.SMELTER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        owned.owning(villager.getUuid());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.SMELT_MATERIAL,
+                TaskPriority.PRODUCTION,
+                ResourceType.GLASS,
+                4);
+
+        task.reserveFor(villager.getUuid());
+
+        SmelterWork.run(world, colony);
+
+        context.runAtTick(150, () -> {
+            try {
+                int sand = ChestInventoryReader
+                        .read(world, context.getAbsolutePos(CHEST))
+                        .amountOf(ResourceType.SAND);
+
+                int glass = ChestInventoryReader
+                        .read(world, context.getAbsolutePos(CHEST))
+                        .amountOf(ResourceType.GLASS);
+
+                // Ou a areia voltou, ou ela virou vidro. O que não pode é
+                // ter sumido sem deixar nada no lugar: essa é a conta que
+                // o jogador vê ao abrir o baú.
+                context.assertTrue(
+                        sand + glass >= 4,
+                        "areia + vidro = " + (sand + glass) + ", e eram 4 areias."
+                                + " O fundidor tirou do baú e não devolveu");
+            } finally {
+                owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
 }

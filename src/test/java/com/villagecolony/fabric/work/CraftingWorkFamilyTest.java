@@ -60,6 +60,82 @@ class CraftingWorkFamilyTest {
         }
     }
 
+    /**
+     * A pedra que o jogo tem além da vila também é do pedreiro —
+     * 2026-09-18.
+     *
+     * <p><b>O que este teste protege.</b> A lista {@code MASONRY} tem
+     * doze marcas de nome, e os testes acima exercitam as das cinco
+     * vilas. Quatro delas — {@code deepslate}, {@code tuff},
+     * {@code basalt}, {@code calcite} — <b>nenhum teste tocava</b>: apagar
+     * qualquer uma deixaria a bateria inteira verde.
+     *
+     * <p>Uma marca sem teste é uma marca que some na primeira limpeza,
+     * junto com a decisão que a pôs lá. A mesma família já produziu o
+     * defeito de 09-12: quando a divisão do fabricante entrou, removido o
+     * {@code continue} dela, 701 unitários e 275 testes de jogo
+     * continuavam verdes.
+     */
+    @Test
+    void theStoneBeyondTheVillageIsMasonryToo() {
+        for (String path : new String[] {
+                "deepslate",
+                "cobbled_deepslate",
+                "polished_deepslate",
+                "deepslate_tiles",
+                "deepslate_brick_stairs",
+                "tuff",
+                "tuff_bricks",
+                "chiseled_tuff",
+                "basalt",
+                "polished_basalt",
+                "smooth_basalt",
+                "calcite",
+                "blackstone",
+                "end_stone_bricks",
+                "nether_bricks",
+                "mud_bricks"}) {
+
+            assertTrue(
+                    CraftingWork.isMasonry(block(path)),
+                    path + " não foi para o pedreiro, e é pedra");
+        }
+    }
+
+    /**
+     * A fronteira da lista, dita de propósito — 2026-09-18.
+     *
+     * <p><b>Isto não é defeito, é escopo, e o teste existe para a
+     * diferença não se perder.</b> {@code packed_mud} e {@code prismarine}
+     * são pedra para quem joga, e o predicado os manda ao carpinteiro:
+     * nenhuma das doze marcas casa com eles.
+     *
+     * <p>Fica assim porque <b>nenhum</b> deles aparece nas casas das cinco
+     * vilas que a Regra 27 oferece — conferido em 09-18, o mod não os cita
+     * em lugar nenhum. Alargar a lista por eles seria pagar por material
+     * que a colônia nunca vai levantar.
+     *
+     * <p><b>O que este teste dá</b> é o aviso no dia em que isso mudar:
+     * atendida uma vila que use lama, ele falha e mostra onde mexer, em
+     * vez de a obra ficar esperando um pedreiro que ignora a peça e um
+     * carpinteiro que não sabe fazê-la.
+     */
+    @Test
+    void theMudAndTheSeaStoneAreOutsideTheListOnPurpose() {
+        for (String path : new String[] {"packed_mud", "prismarine", "purpur_block"}) {
+            assertFalse(
+                    CraftingWork.isMasonry(block(path)),
+                    path + " entrou na alvenaria: se foi de propósito, esta fronteira"
+                            + " mudou e o comentário da lista MASONRY precisa dizer");
+        }
+
+        // A vizinhança é o que torna a fronteira visível: a lama cozida é
+        // do pedreiro e a crua não, e é só o sufixo que as separa.
+        assertTrue(
+                CraftingWork.isMasonry(block("mud_bricks")),
+                "mud_bricks saiu da alvenaria, e o par com packed_mud perdeu o sentido");
+    }
+
     /** A madeira e o acabamento continuam do carpinteiro. */
     @Test
     void theWoodAndTheTrimBelongToTheCarpenter() {

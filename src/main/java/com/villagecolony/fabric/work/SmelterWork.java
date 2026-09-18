@@ -241,14 +241,39 @@ public final class SmelterWork {
         //
         // Nenhum baú é caso à parte, e de propósito: essa é a única das
         // três em que o fundidor não é o assunto.
-        String looked = searched.isEmpty()
-                ? "no colony chest to look in"
-                : "none of " + searched.size() + " colony chests had "
-                        + names(raws) + " to smelt";
-
-        finish(job, workerId, looked);
+        finish(job, workerId, lookedButFound(searched.size(), names(raws)));
 
         return false;
+    }
+
+    /**
+     * O motivo de o fundidor não ter achado o que fundir — P0.3.
+     *
+     * <p><b>A frase era só</b> {@code "nothing in the colony chests to
+     * smelt"}, e com ela <i>"não há baú nenhum registrado"</i>, <i>"há
+     * seis e estão vazios"</i> e <i>"há seis e nenhum tem ferro cru"</i>
+     * saíam idênticas. Na sessão de 2026-09-04 ela saiu <b>34 vezes</b>
+     * ao lado do ferro dele e não disse qual das três era.
+     *
+     * <p><b>Nenhum baú é caso à parte</b>, e de propósito: é a única das
+     * três em que o fundidor não é o assunto — não adianta olhar o que
+     * ele procura se não há onde procurar.
+     *
+     * <p><b>Visível ao pacote para o teste, e é o motivo de existir
+     * separada.</b> O caminho que produz esta linha é o de <b>falha</b>,
+     * e os três gametests do fundidor exercitam o caminho feliz — areia
+     * vira vidro, ferro cru vira lingote, minério da boca da mina é
+     * contado. Embutida no {@code finish}, a frase que existe para
+     * diagnosticar ficaria ela mesma sem diagnóstico, que é o §11 se
+     * voltando contra o próprio remédio.
+     *
+     * @param chests quantos baús da colônia foram percorridos
+     * @param raws   os nomes do que ele procurava, já formatados
+     */
+    static String lookedButFound(int chests, String raws) {
+        return chests == 0
+                ? "no colony chest to look in"
+                : "none of " + chests + " colony chests had " + raws + " to smelt";
     }
 
     /**
