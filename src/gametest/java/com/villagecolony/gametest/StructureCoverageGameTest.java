@@ -18,6 +18,7 @@ import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.Identifier;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -69,6 +70,14 @@ public class StructureCoverageGameTest implements FabricGameTest {
             Map.entry("_leaves", "lenhador"),
             Map.entry("_sapling", "lenhador"),
             Map.entry("dirt", "fundidor (superfície)"),
+            // <b>O caminho de terra é o calçamento da colônia</b>, e ele
+            // empatava: "dirt" e "path" têm quatro caracteres cada, e
+            // {@code dirt_path} casa com as duas. A regra da mais longa
+            // não desempata e a ordem do mapa decidia — o teste
+            // noRealBlockLandsOnATie o achou em 09-18, e este é o dono
+            // certo: VillageRoad.DEFAULT_PAVING o assenta, e ele sai da
+            // terra que a superfície junta.
+            Map.entry("dirt_path", "fundidor (superfície)"),
             Map.entry("grass_block", "fundidor (superfície)"),
             Map.entry("sand", "fundidor (superfície)"),
             Map.entry("gravel", "fundidor (superfície)"),
@@ -236,6 +245,108 @@ public class StructureCoverageGameTest implements FabricGameTest {
                 expected.equals(found),
                 block + " é de '" + found + "' e devia ser de '" + expected
                         + "' — a família mais específica deixou de vencer");
+    }
+
+    /**
+     * Nenhuma peça real fica no empate — 2026-09-18.
+     *
+     * <p><b>Por que este teste existe, tendo o de cima.</b> Aquele afirma
+     * <b>quatro peças</b>: as duas que colidem hoje e duas que não. Ele
+     * tranca o defeito conhecido e <b>não</b> tranca o próximo — quem
+     * acrescentar amanhã uma família que colida passa por ele sem ser
+     * notado. Tratar por amostra um defeito estrutural é o que o deixa
+     * traiçoeiro.
+     *
+     * <p><b>A condição que quebra a regra da chave mais longa</b> é duas
+     * chaves de <b>mesmo comprimento</b> casando no <b>mesmo nome</b>,
+     * com donos diferentes: aí {@code >} não desempata, a primeira a
+     * chegar vence, e a ordem de {@code Map.ofEntries} volta a decidir.
+     *
+     * <p><b>A primeira versão deste teste era vazia</b>, e vale registrar
+     * porque é o mesmo erro do gametest do fundidor: ela exigia que uma
+     * chave <i>contivesse</i> a outra tendo o mesmo comprimento — o que
+     * as torna idênticas, e um {@code Map} não admite chave repetida. A
+     * condição nunca ocorreria e o teste passaria para sempre sem medir
+     * nada. O empate real não precisa que uma contenha a outra: o nome
+     * {@code x_ab_cd} casa com {@code ab} e com {@code cd}, que têm dois
+     * caracteres cada.
+     *
+     * <p>Por isso a varredura é sobre os <b>nomes que o jogo tem</b>, e
+     * não sobre as chaves entre si: é lá que o empate aparece.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "structure_coverage",
+            tickLimit = 400)
+    public void noRealBlockLandsOnATie(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        List<String> ties = new ArrayList<>();
+
+        Set<String> checked = new TreeSet<>();
+
+        for (String style : STYLES) {
+            for (ResourceId id : VillageStructures.housesFor(style)) {
+                if (!HousePlans.isDwelling(id)) {
+                    continue;
+                }
+
+                Optional<Blueprint> plan = StructureBlueprintReader.read(world, id);
+
+                if (plan.isEmpty()) {
+                    continue;
+                }
+
+                for (BlueprintBlock block : plan.get().blocks()) {
+                    String path = placed(block.block());
+
+                    if (checked.add(path)) {
+                        tieOn(path).ifPresent(ties::add);
+                    }
+                }
+            }
+        }
+
+        context.assertTrue(
+                !checked.isEmpty(), "nenhuma planta foi lida — a varredura não mediu nada");
+
+        context.assertTrue(
+                ties.isEmpty(),
+                "peças em que duas famílias do mesmo comprimento disputam, e a ordem"
+                        + " do mapa decide: " + ties);
+
+        context.complete();
+    }
+
+    /** O empate desta peça, se houver: duas chaves do mesmo tamanho e donos diferentes. */
+    private static Optional<String> tieOn(String path) {
+        int longest = 0;
+
+        Set<String> owners = new TreeSet<>();
+
+        Set<String> marks = new TreeSet<>();
+
+        for (Map.Entry<String, String> family : GATHERED.entrySet()) {
+            String mark = family.getKey();
+
+            if (!path.contains(mark)) {
+                continue;
+            }
+
+            if (mark.length() > longest) {
+                longest = mark.length();
+
+                owners.clear();
+                marks.clear();
+            }
+
+            if (mark.length() == longest) {
+                owners.add(family.getValue());
+                marks.add(mark);
+            }
+        }
+
+        return owners.size() > 1
+                ? Optional.of(path + " disputada por " + marks + " -> " + owners)
+                : Optional.empty();
     }
 
     /**
