@@ -12,16 +12,16 @@ Um por vez, teste antes de seguir. Nada mais entra antes de fechar.
 | Item | Descrição | Estado |
 |---|---|---|
 | P0.1 | O planejador não acha lote | ✅ entregue 09-11, **visto em jogo** |
-| P0.1-b | O caminho de terra não sai de baú | ✅ entregue 09-11, **espera sessão** |
-| P0.1-c | A recusa de lote diz por quê | ✅ entregue 09-11, **espera sessão** |
-| P0.3 | Mineiro → armazenamento → fundidor | ✅ conserto entregue 09-11, **espera sessão** |
-| P0.5 | Perda de item por inventário cheio (E3) | ✅ entregue 09-11, **espera sessão** |
+| P0.1-b | O caminho de terra não sai de baú | ✅ **VERIFICADO no log de 09-18** (`extended the road`) |
+| P0.1-c | A recusa de lote diz por quê | ✅ **VERIFICADO no log de 09-18** (`lot refusals:`, 2×) |
+| P0.3 | Mineiro → armazenamento → fundidor | ✅ **VERIFICADO no log de 09-18** (184 fundições) |
+| P0.5 | Perda de item por inventário cheio (E3) | ⬜ **NÃO EXERCITADO** — nenhum baú encheu em 09-18 |
 | P0.6 | A enxurrada da areia calou | ✅ entregue 09-11, **espera sessão** |
-| P0.7 | Elegibilidade simplificada de lotes | ✅ entregue 09-15, **espera playtest** |
+| P0.7 | Elegibilidade simplificada de lotes | ✅ **VERIFICADO no log de 09-18** (`survived every check`) |
 | **P0.8** | **A mina fica presa na boca (E45)** | ✅ **corrigido e CONFIRMADO EM JOGO 09-17** |
 | **P1.0** | **Nenhum lote aprovado — a vila não planeja obra** | ✅ **abriu chão 09-17: 313 colunas, obra planejada** |
-| **P1.1** | **A obra espera peça que ninguém fabrica** | ✅ **corrigido 09-17, espera playtest** |
-| **P0.9** | **A obra nasce condenada: a estrada leva o lote para fora (E46)** | ✅ **C4 corrigido 09-16, espera playtest** |
+| **P1.1** | **A obra espera peça que ninguém fabrica** | 🔴 **REFUTADO em 09-18** — `OAK_PLANKS needs CRAFT_WOOD`, 2× |
+| **P0.9** | **A obra nasce condenada: a estrada leva o lote para fora (E46)** | ✅ **VERIFICADO em 09-18** — obra planejada, nenhuma largada |
 
 **Dois bloqueadores, e são independentes.** O playtest de 09-16 21:41–22:12
 **reproduziu o E45** e revelou o E46. Corrigir só o E45 **não** faz a vila
@@ -134,6 +134,50 @@ cópias: `D49961B2209BD121D1DABBEE229AFE05F1BB2A1B768CB3D3C17EFF5ECD560594`
 incluía P0.7, a limpeza imediata da claim, as duas correções do playtest de
 09-15 (toco órfão e minério recusado), a retirada do baú da boca da mina e
 as duas otimizações do planejador.*
+
+---
+
+## O veredito de sessão — 2026-09-18
+
+**O gargalo não era medir, era ler.** A instrumentação já é rica — `SweepLog`,
+`LotRefusals.accepted`, o motivo de parada de cada trabalhador. O que faltava
+é que ninguém lia o log depois da sessão: a frase do P1.1 estava lá **23
+vezes** e ninguém a tinha visto, e o E46 ficou dias escondido numa linha já
+escrita.
+
+`scripts/verdict.py` fecha o laço. Joga-se, roda-se o script, e ele responde
+por item: **VERIFICADO**, **REFUTADO** ou **NÃO EXERCITADO**. O terceiro é o
+que não existia, e é o mais útil: diz o que a próxima sessão precisa cobrir,
+em vez de deixar o item envelhecendo numa fila indistinta.
+
+`scripts/test_verdict.py` confere que cada assinatura existe em `src/main` —
+uma assinatura errada faria o item sair como "não exercitado" para sempre, que
+é o pior veredito possível porque parece inofensivo.
+
+**A fila de 19 encolheu na primeira rodada:** 7 verificados, 1 refutado, 2 não
+exercitados — sem jogar nada, contra o log que já existia.
+
+**Duas assinaturas minhas estavam erradas, e o exame as pegou:**
+
+- **P1.1** usava `no worker in the village can do it`, que sai 2× por profissão
+  numa vila que simplesmente não tem aquele trabalhador. "Não há pedreiro aqui"
+  não é "a peça não tem quem faça". Corrigida para citar a capacidade de
+  fabricação.
+- **E45** usava `is out of reach` como refutação, e pedra inalcançável é rotina
+  de mineração. O defeito era a **ausência** de `went one level deeper`, não a
+  presença de recusas. Com 29 descidas medidas, o item está **verificado**.
+
+---
+
+## 🔴 P1.2 — Tábua sem carpinteiro (achado pelo veredito, 09-18)
+
+`OAK_PLANKS needs CRAFT_WOOD`, 2× na sessão de 01:43–02:25. A obra espera
+tábua e a vila não tem quem a fabrique. **É o P1.1 refutado**: a correção de
+09-17 tratou a peça que não é `ResourceType`, e este é outro caminho — o
+recurso existe, a capacidade não está na vila.
+
+Não investigado. O próximo passo é descobrir se é falta de aldeão livre, de
+baú, ou se o `ProfessionAssigner` não está criando carpinteiro.
 
 ---
 
