@@ -137,6 +137,46 @@ as duas otimizações do planejador.*
 
 ---
 
+## 🔴 P1.3 — No deserto a Regra 3 tranca a vila inteira (playtest 19:01–19:33)
+
+**Sessão do autor num mundo só de deserto, 32 min.** O mod detectou o bioma
+certo — `Village style desert has 28 houses` —, varreu **o raio inteiro** e
+**nenhuma obra nasceu**.
+
+```text
+lot columns: 0 survived every check, 11284 were turned down
+  7821 (69%)  village-original or player-placed, and Rule 3 protects it
+  2316 (21%)  the ground is inside a reserved road area
+   930 ( 8%)  the ground is not at street level
+   217 ( 2%)  no ground in the village's vertical window
+sweep: 47 planner runs, 17 passes over 16641 columns, 1 complete rounds
+```
+
+**Não é falta de orçamento de varredura**, e essa distinção importa porque
+foi a dúvida que atrasou o P1.0: **1 rodada completa** sobre 16.641 colunas.
+A varredura terminou e a resposta foi zero.
+
+**A Regra 3 recusa 3,6× mais no deserto que na planície:**
+
+| | Regra 3 | reserva de estrada | aprovadas |
+|---|---|---|---|
+| planície (09-18 01:43) | 19% | 53% | 313 |
+| **deserto (09-18 19:01)** | **69%** | 21% | **0** |
+
+**A causa suspeita** é `BlockProtection.isVillageOriginal`, que pergunta
+`structureContains` — se o bloco está dentro da **caixa delimitadora** da
+estrutura da vila. No deserto as casas são baixas e espalhadas, então a caixa
+cobre boa parte da areia **vazia** entre elas, e areia vazia não é construção
+de ninguém. ⚠️ **Suspeita, não medida:** falta confirmar que os 7.821 caem em
+chão vazio dentro da caixa, e não em casa de verdade.
+
+**O que isto ensina sobre o P1.0.** O afrouxamento de 09-15 atacou a reserva
+de estrada, que era o topo na planície, e funcionou lá (0 → 313). No deserto o
+topo é outro, e o conserto anterior não alcança — **cada bioma tem seu
+gargalo**, e o mod só foi medido em planície.
+
+---
+
 ## O veredito de sessão — 2026-09-18
 
 **O gargalo não era medir, era ler.** A instrumentação já é rica — `SweepLog`,

@@ -68,8 +68,13 @@ ITEMS: list[Item] = [
         "P0.1-b",
         "O caminho de terra nao sai de bau",
         proves=("extended the road", "grew the road"),
-        refutes=("found no road end it may pave",),
-        note="a colonia calca rua com o que junta, sem pedir ao bau",
+        note="a colonia calcou rua; o item e sobre o material NAO vir de bau",
+        # <b>"found no road end it may pave" NAO refuta</b>, e a primeira
+        # versao o usava: ponta em descanso e rotina — sai varias vezes
+        # numa sessao em que a rua cresceu. No deserto de 09-18 deu
+        # REFUTADO com 5 recusas ao lado de uma extensao de 2 blocos, que
+        # e a prova de que o item funciona. O defeito seria a estrada
+        # parar por falta de MATERIAL, nao por falta de ponta livre.
     ),
     Item(
         "P0.1-c",
