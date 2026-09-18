@@ -10,7 +10,9 @@ import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.LotRefusals;
 import com.villagecolony.fabric.integration.SweepLog;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
@@ -1937,6 +1939,79 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.assertTrue(
                 line.contains("17") && line.contains("64") && line.contains("382"),
                 "a placa perdeu estoque, falta ou blocos restantes: " + line);
+
+        context.complete();
+    }
+
+    /**
+     * O chão do bioma passa; a peça construída, não — P1.3, 2026-09-18.
+     *
+     * <p><b>O defeito que este teste tranca.</b> Num mundo só de deserto a
+     * colônia varreu 16.016 colunas e aprovou <b>zero</b> lotes: 69% das
+     * recusas vinham da Regra 3, contra 19% na planície. A amostra de
+     * {@code ProtectionSample} disse de que eram feitas — <b>87% areia e
+     * arenito liso</b>, o terreno em que a vila foi assentada. O gerador
+     * inclui o chão na caixa da estrutura, e no deserto esse chão é quase
+     * tudo que existe.
+     *
+     * <p><b>As duas metades são o conserto</b>, e por isso as duas estão
+     * aqui: soltar o chão sem segurar a peça faria a colônia construir em
+     * cima da casa do jogador, que é a Regra 3 existindo ao contrário.
+     * Um teste que afirmasse só a primeira metade passaria com a
+     * proteção inteira apagada.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_biome_ground")
+    public void theBiomeGroundIsNotAVillagePiece(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        BlockPos at = new BlockPos(2, 2, 2);
+
+        BlockPos absolute = context.getAbsolutePos(at);
+
+        // O chão de cada bioma que o mod atende: a vila senta nele, e ele
+        // nunca foi construção de ninguém.
+        for (Block ground : new Block[] {
+                Blocks.SAND,
+                Blocks.SANDSTONE,
+                Blocks.SMOOTH_SANDSTONE,
+                Blocks.CUT_SANDSTONE,
+                Blocks.RED_SANDSTONE,
+                Blocks.GRASS_BLOCK,
+                Blocks.DIRT,
+                Blocks.STONE,
+                Blocks.GRAVEL,
+                Blocks.SNOW_BLOCK,
+                Blocks.TERRACOTTA}) {
+
+            context.setBlockState(at, ground.getDefaultState());
+
+            context.assertTrue(
+                    BuildSiteScanner.isBiomeGround(world, absolute),
+                    ground + " é chão de bioma e foi tratado como peça de vila —"
+                            + " a colônia volta a não achar lote");
+        }
+
+        // E a peça que o gerador pôs continua protegida. Arenito em
+        // escada, laje ou muro É construção, e é por isso que o predicado
+        // nomeia os seis blocos inteiros em vez de casar "sandstone".
+        for (Block piece : new Block[] {
+                Blocks.CHEST,
+                Blocks.OAK_LOG,
+                Blocks.OAK_PLANKS,
+                Blocks.OAK_DOOR,
+                Blocks.WHITE_BED,
+                Blocks.SANDSTONE_STAIRS,
+                Blocks.SANDSTONE_SLAB,
+                Blocks.SANDSTONE_WALL,
+                Blocks.COBBLESTONE}) {
+
+            context.setBlockState(at, piece.getDefaultState());
+
+            context.assertTrue(
+                    !BuildSiteScanner.isBiomeGround(world, absolute),
+                    piece + " é peça de construção e passou como chão —"
+                            + " a colônia constrói em cima da vila do jogador");
+        }
 
         context.complete();
     }

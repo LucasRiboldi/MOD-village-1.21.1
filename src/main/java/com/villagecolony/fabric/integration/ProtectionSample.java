@@ -7,7 +7,9 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * O que a Regra 3 está de fato protegendo — P1.3, 2026-09-18.
@@ -54,11 +56,39 @@ public final class ProtectionSample {
      */
     private static final int MAX_KINDS = 30;
 
-    /** Quantos blocos de cada tipo a Regra 3 protegeu. */
+    /** Quantas POSIÇÕES distintas de cada tipo a Regra 3 protegeu. */
     private static final Map<String, Integer> SEEN = new HashMap<>();
+
+    /**
+     * As posições já contadas, para não contar a mesma duas vezes.
+     *
+     * <p><b>Sem isto a amostra mente sobre a proporção</b> — medido no
+     * playtest de 19:45. A varredura repassa as mesmas colunas a cada
+     * passagem, e a primeira versão contava <b>visitas</b>: deu
+     * <i>1.548 chest</i> numa vila que tem um punhado deles, porque os
+     * mesmos baús foram revisitados. A conclusão de fundo não mudou —
+     * areia e arenito dominavam de qualquer jeito —, mas uma linha que
+     * diz "1.548 baús" sobre uma vila de três camas é uma linha que
+     * ensina a desconfiar do número, e um diagnóstico em que não se
+     * confia não serve para decidir conserto.
+     */
+    private static final Set<Long> COUNTED = new HashSet<>();
+
+    /**
+     * Quantas posições distintas guardar antes de parar de aprender.
+     *
+     * <p>A varredura vê dezenas de milhares de colunas; guardar todas
+     * seria um vazamento lento num mapa que vive enquanto o servidor
+     * vive. Vinte mil bastam para a proporção se estabelecer e têm teto.
+     */
+    private static final int MAX_POSITIONS = 20_000;
 
     /** A Regra 3 protegeu este bloco. */
     public static void saw(ServerWorld world, BlockPos pos) {
+        if (COUNTED.size() >= MAX_POSITIONS || !COUNTED.add(pos.asLong())) {
+            return;
+        }
+
         Block block = world.getBlockState(pos).getBlock();
 
         String name = Registries.BLOCK.getId(block).getPath();
@@ -99,5 +129,6 @@ public final class ProtectionSample {
     /** Esquece a amostra. Chamado ao parar o servidor. */
     public static void clearAll() {
         SEEN.clear();
+        COUNTED.clear();
     }
 }

@@ -137,7 +137,34 @@ as duas otimizações do planejador.*
 
 ---
 
-## 🔴 P1.3 — No deserto a Regra 3 tranca a vila inteira (playtest 19:01–19:33)
+## ✅ P1.3 — No deserto a Regra 3 trancava a vila (corrigido 09-18, espera playtest)
+
+**A amostra decidiu, e a suspeita estava certa.** Playtest de 19:45 com a
+instrumentação nova:
+
+```text
+Rule 3 protected these blocks — 5696 smooth_sandstone; 5403 sand;
+                                1548 chest; 2 oak_log; 2 oak_leaves
+```
+
+**87% é areia e arenito** — o terreno em que a vila foi assentada. O gerador
+inclui o chão na caixa da estrutura, e no deserto esse chão é quase tudo.
+
+**O conserto:** `BuildSiteScanner.isBiomeGround` separa chão de peça, e a
+Regra 3 deixa de recusar solo natural. É o mesmo movimento de 09-15 em
+`isReservedAgainstLots`, que separou calçamento de reserva e abriu 313 lotes
+na planície. Baú, tronco, porta, cama e **escada/laje/muro de arenito**
+seguem intocáveis — arenito inteiro é chão, arenito lavrado é construção.
+
+**Conferido por mutação nas duas metades:** soltar tudo falha 2 testes,
+segurar tudo falha 1. Um teste que afirmasse só uma metade passaria com a
+proteção inteira apagada.
+
+⚠️ **Espera playtest** — a correção não foi vista em jogo.
+
+---
+
+### O diagnóstico original (19:01–19:33)
 
 **Sessão do autor num mundo só de deserto, 32 min.** O mod detectou o bioma
 certo — `Village style desert has 28 houses` —, varreu **o raio inteiro** e

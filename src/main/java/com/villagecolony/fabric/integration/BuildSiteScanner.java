@@ -1400,7 +1400,31 @@ public final class BuildSiteScanner {
 
                 // A Regra 3, e a pergunta mais cara da fila: por último,
                 // depois de as baratas terem tirado o que podiam.
-                if (BlockProtection.isVillageOriginal(world, ground)) {
+                //
+                // <b>Mas o chão do bioma não é peça de vila</b> — P1.3,
+                // 2026-09-18, e o número que decidiu veio do jogo. Num
+                // mundo só de deserto: 16.016 colunas, <b>zero
+                // aprovadas</b>, 69% recusadas aqui — contra 19% na
+                // planície. A amostra disse de que eram feitas:
+                //
+                //   5696 smooth_sandstone; 5403 sand; 1548 chest; 2 oak_log
+                //
+                // <b>87% é areia e arenito</b>, que no deserto é o terreno
+                // em que a vila foi assentada — o gerador inclui o chão na
+                // caixa da estrutura. Proibir construir sobre o chão do
+                // bioma é proibir a colônia de trabalhar dentro da própria
+                // vila, que é literalmente o que o javadoc de
+                // {@code isVillageOriginal} diz que não deve acontecer.
+                //
+                // <b>A Regra 3 continua inteira para o que ela existe.</b>
+                // Baú, tronco, porta, cama — peça posta pelo gerador —
+                // seguem intocáveis; o que deixa de recusar é o solo
+                // natural. É o mesmo movimento de 09-15 em
+                // {@code isReservedAgainstLots}, que separou calçamento de
+                // reserva e abriu 313 lotes na planície.
+                if (BlockProtection.isVillageOriginal(world, ground)
+                        && !isBiomeGround(world, ground)) {
+
                     LotRefusals.refused(colonyId, LotRefusals.Reason.PROTECTED);
 
                     return Optional.empty();
@@ -1517,6 +1541,72 @@ public final class BuildSiteScanner {
                 || state.isOf(Blocks.COARSE_DIRT)
                 || state.isOf(Blocks.PODZOL)
                 || state.isIn(BlockTags.SAND);
+    }
+
+    /**
+     * Se este bloco é o chão do bioma, e não peça que o gerador pôs —
+     * P1.3, 2026-09-18.
+     *
+     * <p><b>O número que decidiu.</b> Playtest num mundo só de deserto:
+     * 16.016 colunas, <b>zero aprovadas</b>, 69% recusadas pela Regra 3
+     * contra 19% na planície. A amostra de
+     * {@code ProtectionSample} disse de que eram feitas:
+     *
+     * <pre>
+     * 5696 smooth_sandstone;  5403 sand;  1548 chest;  2 oak_log
+     * </pre>
+     *
+     * <p><b>87% é areia e arenito</b> — o terreno em que a vila foi
+     * assentada. O gerador de vilas inclui o chão na caixa da estrutura,
+     * e no deserto esse chão é quase tudo que existe. Proibir construir
+     * sobre ele é proibir a colônia de trabalhar dentro da própria vila,
+     * que é justamente o que o javadoc de
+     * {@code BlockProtection.isVillageOriginal} diz que não deve
+     * acontecer.
+     *
+     * <p><b>Por que não bastava {@link #isNaturalGround}.</b> Ele já
+     * aceita areia pela etiqueta {@code SAND}, e <b>não</b> aceita
+     * {@code smooth_sandstone}, que é 45% da amostra: arenito liso é
+     * pedra, e para quem procura chão de lote ele continua não sendo
+     * solo. A pergunta aqui é outra — <i>isto é peça de construção ou é
+     * o material de que este bioma é feito?</i> — e por isso o predicado
+     * é próprio em vez de um alargamento daquele, que mudaria a resposta
+     * de quem pergunta "dá para assentar casa aqui?".
+     *
+     * <p><b>Pela etiqueta do jogo onde existe etiqueta</b> — a ADR-009.
+     * {@code BASE_STONE_OVERWORLD} traz pedra, granito, diorito e
+     * andesito; {@code TERRACOTTA} cobre o barro cozido dos ermos;
+     * {@code SAND} e {@code DIRT} vêm de {@link #isNaturalGround}.
+     *
+     * <p><b>O arenito é a exceção, e ela é do jogo e não deste mod:</b>
+     * <b>não existe</b> etiqueta de arenito em 1.21.1 — conferido no
+     * {@code BlockTags} do jar mapeado, que tem {@code SAND},
+     * {@code TERRACOTTA} e {@code BASE_STONE_OVERWORLD} e nenhuma
+     * família de {@code sandstone}. Os seis nomes ficam escritos porque
+     * a alternativa seria pior: casar por substring {@code "sandstone"}
+     * pegaria escada, laje e muro de arenito, que <b>são</b> peça de
+     * construção — exatamente o que esta pergunta precisa continuar
+     * recusando.
+     *
+     * <p><b>A Regra 3 continua inteira para o que ela existe:</b> baú,
+     * tronco, porta, cama — peça posta pelo gerador — seguem intocáveis.
+     */
+    public static boolean isBiomeGround(ServerWorld world, BlockPos pos) {
+        BlockState state = world.getBlockState(pos);
+
+        return isNaturalGround(state)
+                || state.isIn(BlockTags.BASE_STONE_OVERWORLD)
+                || state.isIn(BlockTags.TERRACOTTA)
+                || state.isOf(Blocks.SANDSTONE)
+                || state.isOf(Blocks.SMOOTH_SANDSTONE)
+                || state.isOf(Blocks.CUT_SANDSTONE)
+                || state.isOf(Blocks.RED_SANDSTONE)
+                || state.isOf(Blocks.SMOOTH_RED_SANDSTONE)
+                || state.isOf(Blocks.CUT_RED_SANDSTONE)
+                || state.isOf(Blocks.GRAVEL)
+                || state.isOf(Blocks.CLAY)
+                || state.isOf(Blocks.SNOW_BLOCK)
+                || state.isOf(Blocks.PACKED_ICE);
     }
 
     /**
