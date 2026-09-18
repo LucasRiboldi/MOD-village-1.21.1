@@ -160,6 +160,42 @@ inteiro — nenhuma escada de material está escrita no mod.
 | **lã** | o que as camas da obra pedirem | sem cama não nasce aldeão |
 | **ferramenta** | a melhor que houver no baú do trabalhador | trocada pela velocidade que o jogo mede |
 
+### A cadeia de produção, ponta a ponta
+
+**Toda peça que uma casa de vila pede tem dono** — e não só a peça da
+planta: a cadeia inteira até a folha. A estante pede tábua **e livro**; o
+livro pede papel **e couro**; o papel pede cana. Se um degrau não tiver
+quem o faça, a obra espera para sempre, e foi assim que uma biblioteca
+passou oito minutos parada esperando uma escada de pedregulho com 69
+pedregulhos no baú.
+
+Levantamento sobre as **189 peças distintas** das cinco vilas, seguindo
+cada receita até o fim:
+
+| quem | peças | o que cai aqui |
+|---|---|---|
+| 🪚 **carpinteiro** | 104 | tudo de madeira e o acabamento: tábua, porta, cerca, escada, cama, **livro, papel**, vidraça, tocha |
+| 🧱 **pedreiro** | 28 | alvenaria: pedra, tijolo, laje, muro, terracota, e as escadas de pedra |
+| 🔥 **fundidor** | 12 | o que sai da fornalha: vidro, lingote, pedra lisa, arenito liso |
+| ⛏️ **superfície** | 8 | areia, cascalho, argila, terra, neve, **sílex** |
+| 🪓 **lenhador** | 10 | tronco, tronco descascado, muda |
+| 🌾 **fazendeiro** | 7 | cana, bambu, cacto, terra arada, **flor de jarro e flor-de-tocha** |
+| 🐑 **pastor** | 3 | **fio, saco de tinta, pele de coelho** — a matéria do couro |
+| ⛏️ **mineiro** | 1 | pedregulho, de onde desce quase toda a alvenaria |
+| 🌍 **o mundo** | 16 | água, lava, flor silvestre, capim — o que já está lá |
+
+**Nenhuma peça fica órfã.** Isso é verificado a cada bateria de testes por
+`StructureCoverageGameTest`, que relê as plantas do jogo, desce cada
+receita e **falha** se aparecer peça sem dono. A tabela acima sai do
+relatório dele, em `build/gametest/structure-coverage.txt` — para regerá-la,
+rode `gradlew runGametest`.
+
+**Onde o pastor entrou.** Ele não tinha nenhuma peça da cadeia até
+2026-09-18: fio, saco de tinta e pele de coelho eram órfãos, e a pele é
+matéria do couro que o livro pede. Foram para ele por serem de bicho, que é
+o mundo dele, e porque era quem tinha menos — a mesma razão levou a flor de
+jarro ao fazendeiro e o sílex à superfície.
+
 ---
 
 ## As regras do jogo dele

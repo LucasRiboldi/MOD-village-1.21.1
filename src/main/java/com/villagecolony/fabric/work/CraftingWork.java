@@ -447,7 +447,7 @@ public final class CraftingWork {
      * testes de jogo continuavam verdes</b> — o filtro inteiro era código
      * que nada exercitava.
      */
-    static boolean isMasonry(ResourceId wanted) {
+    public static boolean isMasonry(ResourceId wanted) {
         String path = wanted.path();
 
         if (path.contains("redstone")) {
