@@ -177,12 +177,12 @@ cada receita até o fim:
 | 🪚 **carpinteiro** | 104 | tudo de madeira e o acabamento: tábua, porta, cerca, escada, cama, **livro, papel**, vidraça, tocha |
 | 🧱 **pedreiro** | 28 | alvenaria: pedra, tijolo, laje, muro, terracota, e as escadas de pedra |
 | 🔥 **fundidor** | 12 | o que sai da fornalha: vidro, lingote, pedra lisa, arenito liso |
-| ⛏️ **superfície** | 8 | areia, cascalho, argila, terra, neve, **sílex** |
+| ⛏️ **superfície** | 8 | areia, cascalho, argila, terra, neve, **sílex**, bloco de grama |
 | 🪓 **lenhador** | 10 | tronco, tronco descascado, muda |
-| 🌾 **fazendeiro** | 7 | cana, bambu, cacto, terra arada, **flor de jarro e flor-de-tocha** |
+| 🌾 **fazendeiro** | 8 | cana, bambu, cacto, terra arada, trigo, **flor de jarro e flor-de-tocha** |
 | 🐑 **pastor** | 3 | **fio, saco de tinta, pele de coelho** — a matéria do couro |
 | ⛏️ **mineiro** | 1 | pedregulho, de onde desce quase toda a alvenaria |
-| 🌍 **o mundo** | 16 | água, lava, flor silvestre, capim — o que já está lá |
+| 🌍 **o mundo** | 15 | água, lava, flor silvestre, capim — o que já está lá |
 
 **Nenhuma peça fica órfã.** Isso é verificado a cada bateria de testes por
 `StructureCoverageGameTest`, que relê as plantas do jogo, desce cada
@@ -195,6 +195,14 @@ rode `gradlew runGametest`.
 matéria do couro que o livro pede. Foram para ele por serem de bicho, que é
 o mundo dele, e porque era quem tinha menos — a mesma razão levou a flor de
 jarro ao fazendeiro e o sílex à superfície.
+
+**O bloco no arquivo não é o item no baú.** A tocha pregada é `wall_torch` e
+o item é `torch`; o vaso com flor é `potted_dandelion` e o item é
+`flower_pot`; o caldeirão com água é `water_cauldron` e o item custa sete
+lingotes. Quem responde qual item vale é o próprio jogo, e não uma lista de
+nomes no mod — sem isso o levantamento acusava peça fabricável como se
+ninguém a fizesse, e uma lista de órfãos com falso positivo é pior que
+nenhuma: ela ensina a ignorar a lista.
 
 ---
 

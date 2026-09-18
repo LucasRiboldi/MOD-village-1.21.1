@@ -9,7 +9,9 @@ import com.villagecolony.fabric.integration.VillageStructures;
 import com.villagecolony.fabric.work.CraftingWork;
 import com.villagecolony.fabric.work.HousePlans;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.block.Block;
 import net.minecraft.item.Item;
+import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
@@ -101,14 +103,12 @@ public class StructureCoverageGameTest implements FabricGameTest {
             Map.entry("sugar_cane", "fazendeiro"),
             Map.entry("bamboo", "fazendeiro"),
             Map.entry("farmland", "fazendeiro"),
-            Map.entry("dead_bush", "o mundo"),
             Map.entry("vine", "o mundo"),
             Map.entry("moss", "o mundo"),
             Map.entry("mushroom", "o mundo"),
             Map.entry("flower", "o mundo"),
             Map.entry("tulip", "o mundo"),
             Map.entry("daisy", "o mundo"),
-            Map.entry("cornflower", "o mundo"),
             Map.entry("poppy", "o mundo"),
             Map.entry("dandelion", "o mundo"),
             Map.entry("allium", "o mundo"),
@@ -116,9 +116,10 @@ public class StructureCoverageGameTest implements FabricGameTest {
             Map.entry("bluet", "o mundo"),
             Map.entry("lilac", "o mundo"),
             Map.entry("peony", "o mundo"),
-            Map.entry("rose_bush", "o mundo"),
-            Map.entry("sunflower", "o mundo"),
             Map.entry("bush", "o mundo"),
+            // O capim alto e o baixo: sem esta, os dois ficam órfãos —
+            // medido em 09-18 ao tentar enxugar a tabela.
+            Map.entry("grass", "o mundo"),
             Map.entry("fern", "o mundo"),
             Map.entry("seagrass", "o mundo"),
             Map.entry("lily", "o mundo"),
@@ -126,7 +127,6 @@ public class StructureCoverageGameTest implements FabricGameTest {
             Map.entry("podzol", "o mundo"),
             Map.entry("mycelium", "o mundo"),
             Map.entry("path", "o mundo"),
-            Map.entry("grass", "o mundo"),
             Map.entry("sea_pickle", "o mundo"),
             Map.entry("kelp", "o mundo"),
             Map.entry("coral", "o mundo"),
@@ -188,6 +188,57 @@ public class StructureCoverageGameTest implements FabricGameTest {
     }
 
     /**
+     * A resposta não depende da ordem do mapa — 2026-09-18.
+     *
+     * <p><b>O defeito que este teste tranca.</b> O {@code ownerOf} parava
+     * na primeira chave que casasse, e {@code Map.ofEntries} <b>não tem
+     * ordem</b>: a iteração é embaralhada a cada JVM. Duas peças casavam
+     * com chaves de donos diferentes — {@code grass_block} contra
+     * {@code grass}, {@code torchflower} contra {@code flower} — e o dono
+     * saía por sorteio. Medido em cinco execuções: quatro deram um dono,
+     * uma deu outro.
+     *
+     * <p>Um levantamento que muda de resposta entre rodadas não serve
+     * para o que ele existe, e o pior é que ele <b>passa</b>: nenhuma
+     * peça fica órfã nos dois casos, só muda de dono. Sem este teste o
+     * defeito volta em silêncio na próxima chave que colidir.
+     *
+     * <p>É a mesma armadilha que {@code ColonyGoals} pagou quando
+     * {@code Map.copyOf} virou a prioridade do fabricante em sorteio.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "structure_coverage",
+            tickLimit = 200)
+    public void theMostSpecificFamilyWinsAndNotTheFirstOne(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        // As duas peças que colidem hoje. A chave curta e a longa têm
+        // donos diferentes, e a longa é a que descreve a peça.
+        assertOwner(context, world, "grass_block", "fundidor (superfície)");
+
+        assertOwner(context, world, "torchflower", "fazendeiro");
+
+        // E o que só casa com a chave curta continua com ela: a regra é
+        // "a mais específica", não "a mais longa da tabela".
+        assertOwner(context, world, "short_grass", "o mundo");
+
+        assertOwner(context, world, "cornflower", "o mundo");
+
+        context.complete();
+    }
+
+    /** Afirma de quem é uma peça, pelo nome do bloco. */
+    private static void assertOwner(
+            TestContext context, ServerWorld world, String block, String expected) {
+
+        String found = ownerOf(world, ResourceId.vanilla(block));
+
+        context.assertTrue(
+                expected.equals(found),
+                block + " é de '" + found + "' e devia ser de '" + expected
+                        + "' — a família mais específica deixou de vencer");
+    }
+
+    /**
      * Quem produz esta peça, ou {@code null} se ninguém.
      *
      * <p>A ordem das perguntas é a da colônia: fabricar vem antes de
@@ -197,7 +248,7 @@ public class StructureCoverageGameTest implements FabricGameTest {
      * por mineração.
      */
     private static String ownerOf(ServerWorld world, ResourceId material) {
-        String path = standing(material.path());
+        String path = placed(material);
 
         Optional<Item> item = Registries.ITEM
                 .getOrEmpty(Identifier.of(material.namespace(), path));
@@ -212,41 +263,89 @@ public class StructureCoverageGameTest implements FabricGameTest {
             return "fundidor";
         }
 
+        String owner = null;
+
+        int matched = 0;
+
+        // <b>A chave mais longa vence, e não a primeira</b> — 2026-09-18.
+        //
+        // <b>O defeito que isto conserta.</b> O laço parava na primeira
+        // chave que casasse, e {@code Map.ofEntries} <b>não tem ordem</b>:
+        // ela é deliberadamente embaralhada a cada JVM. Com
+        // {@code "grass"} valendo "o mundo" e {@code "grass_block"}
+        // valendo a superfície, o dono de {@code grass_block} saía por
+        // sorteio — medido em cinco execuções, quatro deram "o mundo" e
+        // uma deu "superfície". O mesmo com {@code torchflower} contra
+        // {@code flower}, que alternou duas contra três.
+        //
+        // Um levantamento que muda de resposta entre rodadas não serve
+        // para o que ele existe. É a mesma armadilha que
+        // {@code ColonyGoals} pagou quando {@code Map.copyOf} virou a
+        // prioridade do fabricante em sorteio.
+        //
+        // A chave mais longa é a mais específica, e isso <b>dispensa
+        // ordenar a tabela</b>: quem acrescentar uma família nova não
+        // precisa saber onde a põe.
         for (Map.Entry<String, String> family : GATHERED.entrySet()) {
-            if (path.contains(family.getKey())) {
-                return family.getValue();
+            String mark = family.getKey();
+
+            if (path.contains(mark) && mark.length() > matched) {
+                matched = mark.length();
+
+                owner = family.getValue();
             }
         }
 
         // Pedra que não é fabricável nem casou com família nenhuma ainda
         // é do mineiro: ele quebra o que for pedra.
-        return CraftingWork.isMasonry(material) ? "mineiro" : null;
+        return owner != null
+                ? owner
+                : CraftingWork.isMasonry(material) ? "mineiro" : null;
     }
 
     /**
-     * O nome do item que se coloca para obter este bloco.
+     * O item que se coloca na mão para obter este bloco — e é o jogo
+     * quem responde.
      *
-     * <p><b>A variante de parede não é peça nova.</b> No arquivo da casa
-     * a tocha pregada é {@code wall_torch} e a do chão é {@code torch},
-     * mas o item é o mesmo e a receita é a mesma — o jogo só guarda de
-     * que lado ele ficou. O mesmo vale para placa e estandarte.
+     * <p><b>O bloco no arquivo não é o item no baú</b>, e a diferença tem
+     * várias formas: a tocha pregada é {@code wall_torch} e o item é
+     * {@code torch}; o vaso com flor é {@code potted_dandelion} e o item
+     * é {@code flower_pot}; o caldeirão com água é
+     * {@code water_cauldron} e o item é {@code cauldron}. São o mesmo
+     * item posto de jeitos diferentes, e o construtor coloca o item.
      *
-     * <p>Sem esta tradução as três apareciam como órfãs de um levantamento
-     * que existe para achar peça sem dono, e uma lista de órfãos com
-     * falso positivo é pior que nenhuma: ela ensina a ignorar a lista.
+     * <p><b>Por pergunta ao jogo, e não por lista de nomes</b> —
+     * 2026-09-18. A primeira versão tinha seis {@code replace}
+     * encadeados: {@code wall_torch}, {@code _wall_sign},
+     * {@code _wall_banner}, {@code _wall_fan}, {@code wall_head},
+     * {@code _wall_skull}. Ela tratava <b>sintomas</b>, cobria só a
+     * família da parede, e deixava passar vaso e caldeirão — que caíram
+     * em "o mundo" como se ninguém os fabricasse, quando o caldeirão
+     * custa sete lingotes.
      *
-     * <p>É a mesma conta que {@code WorkMaterials.coal} já faz para a
-     * tocha — <i>"as duas saem do mesmo item e da mesma receita;
-     * separá-las daria duas contas para uma fornada"</i> —, aqui
-     * generalizada para o levantamento.
+     * <p>{@code Block.asItem()} é a pergunta certa e responde a todas as
+     * formas de uma vez, inclusive as que o jogo inventar depois. É a
+     * ADR-009 outra vez: <i>quem sabe é o jogo</i>, e material novo não
+     * pode custar mais um nome no código.
+     *
+     * <p>Bloco sem item — o ar, a água, o fogo — devolve
+     * {@code Items.AIR}; nesse caso vale o nome do próprio bloco, e a
+     * tabela das famílias o classifica.
      */
-    private static String standing(String path) {
-        return path.replace("wall_torch", "torch")
-                .replace("_wall_sign", "_sign")
-                .replace("_wall_banner", "_banner")
-                .replace("_wall_fan", "_fan")
-                .replace("wall_head", "head")
-                .replace("_wall_skull", "_skull");
+    private static String placed(ResourceId material) {
+        Identifier id = Identifier.of(material.namespace(), material.path());
+
+        Optional<Block> block = Registries.BLOCK.getOrEmpty(id);
+
+        if (block.isEmpty()) {
+            return material.path();
+        }
+
+        Item item = block.get().asItem();
+
+        return item == Items.AIR
+                ? material.path()
+                : Registries.ITEM.getId(item).getPath();
     }
 
     /**
