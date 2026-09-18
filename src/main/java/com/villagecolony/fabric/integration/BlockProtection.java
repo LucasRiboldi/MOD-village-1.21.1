@@ -163,7 +163,13 @@ public final class BlockProtection {
             return false;
         }
 
-        return structures.structureContains(pos, village);
+        boolean inside = structures.structureContains(pos, village);
+
+        if (inside) {
+            ProtectionSample.saw(world, pos);
+        }
+
+        return inside;
     }
 
     /**

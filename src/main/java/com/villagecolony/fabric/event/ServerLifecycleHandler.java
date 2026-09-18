@@ -23,6 +23,7 @@ import com.villagecolony.fabric.integration.VillageRoad;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.LotRefusals;
+import com.villagecolony.fabric.integration.ProtectionSample;
 import com.villagecolony.fabric.integration.SiteMarker;
 import com.villagecolony.fabric.integration.SweepLog;
 import com.villagecolony.fabric.work.BuilderWork;
@@ -103,6 +104,7 @@ public final class ServerLifecycleHandler {
         // assimetria piorou quando o contador de colunas aceitas entrou
         // nela. Ver LotRefusals.
         LotRefusals.clearAll();
+        ProtectionSample.clearAll();
         PhantomWorkerLog.clearAll();
         TestBarrier.clearAll();
         ColonyStateLog.clearAll();
@@ -273,6 +275,7 @@ public final class ServerLifecycleHandler {
         // assimetria piorou quando o contador de colunas aceitas entrou
         // nela. Ver LotRefusals.
         LotRefusals.clearAll();
+        ProtectionSample.clearAll();
         PhantomWorkerLog.clearAll();
         TestBarrier.clearAll();
         ColonyStateLog.clearAll();

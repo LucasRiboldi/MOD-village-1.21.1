@@ -198,6 +198,13 @@ public final class LotRefusals {
                 accepted,
                 total,
                 accepted + total == 0 ? 0 : Math.round(100.0 * accepted / (accepted + total)));
+
+        // <b>E o que a Regra 3 protegeu</b> — P1.3, 2026-09-18. A linha
+        // acima diz quantas foram, e esta diz de que são feitas: areia de
+        // terreno e casa de verdade recusam pelo mesmo motivo e pedem
+        // consertos opostos. Sai junto porque é aqui que quem investiga
+        // já está olhando. Ver ProtectionSample.
+        ProtectionSample.report();
     }
 
     /** Quantas recusas deste motivo a colônia acumulou. Para a bateria. */

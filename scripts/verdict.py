@@ -146,6 +146,13 @@ ITEMS: list[Item] = [
         # descidas medidas em 09-18, o item esta verificado.
     ),
     Item(
+        "P1.3",
+        "No deserto a Regra 3 tranca a vila",
+        proves=("survived every check",),
+        refutes=("0 survived every check",),
+        note="a amostra 'Rule 3 protected these blocks' diz de que sao feitas",
+    ),
+    Item(
         "09-18",
         "A vila levanta casas diferentes",
         proves=("drawn from",),
