@@ -137,7 +137,35 @@ as duas otimizações do planejador.*
 
 ---
 
-## ✅ P1.3 — No deserto a Regra 3 trancava a vila (corrigido 09-18, espera playtest)
+## ✅ P1.3 — No deserto a Regra 3 trancava a vila (CONFIRMADO EM JOGO 09-18)
+
+**Playtest de 20:21, mesma colônia `9c9e465f` das duas sessões que deram
+zero:**
+
+```text
+planned minecraft:village/desert/houses/desert_small_house_6
+  at ColonyPos[x=-342, y=70, z=594] — 322 blocks, 4 builders,
+  drawn from 1 of that footprint
+opened a build task — 322 blocks left
+```
+
+**Mesmo mundo, mesma vila, mesmo centro.** Antes: 16.016 colunas, zero
+aprovadas, nenhuma obra. Depois: obra planejada e aberta. A comparação é
+controlada — só o jar mudou.
+
+**E a linha do sorteio apareceu pela primeira vez:** `drawn from 1 of that
+footprint`. Um, e é o esperado — a colônia não tem casa de pé, então o
+`smallestFirst` põe a menor pegada na frente e nesse tamanho o deserto tem
+uma planta só. A instrumentação de 09-18 funciona; a variedade entre irmãs
+ainda espera uma vila com casa terminada.
+
+⚠️ **O que esta sessão NÃO mostrou:** a obra subindo. Foram 4 minutos e ela
+nasceu no fim — `322 blocks left` é o estado inicial, não progresso. Falta
+ver bloco assentado no deserto.
+
+---
+
+### Como estava antes da correção
 
 **A amostra decidiu, e a suspeita estava certa.** Playtest de 19:45 com a
 instrumentação nova:
