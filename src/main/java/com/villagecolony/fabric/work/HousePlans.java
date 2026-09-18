@@ -268,6 +268,14 @@ public final class HousePlans {
      * <p>Tamanhos repetidos entram uma vez só. Oferecer duas casas da
      * mesma pegada faria a busca medir o mesmo lote duas vezes para dar a
      * mesma resposta.
+     *
+     * <p><b>Mas a irmã descartada não some</b> — 2026-09-18. O corte
+     * acima é da <b>busca</b>, e só dela: quem mede lote não ganha nada
+     * vendo duas casas 9×9. Quem <b>levanta</b> ganha tudo. Até hoje a
+     * vila saía com a mesma estrutura sempre, e a causa era esta linha
+     * jogando fora as sete outras {@code small_house} antes de qualquer
+     * escolha. Ver {@link #siblingsOf}, que as devolve ao planejador
+     * depois de o lote estar achado — custo zero na varredura.
      */
     private static List<Blueprint> catalogPlans(ServerWorld world, String style) {
         List<Blueprint> plans = new ArrayList<>();
@@ -275,6 +283,10 @@ public final class HousePlans {
         Set<ColonyPos> sizes = new HashSet<>();
 
         for (ResourceId id : VillageStructures.housesFor(style)) {
+            if (!isDwelling(id)) {
+                continue;
+            }
+
             Optional<Blueprint> house = READ.computeIfAbsent(
                     id, missing -> StructureBlueprintReader.read(world, missing));
 
@@ -302,6 +314,114 @@ public final class HousePlans {
         }
 
         return List.copyOf(offered);
+    }
+
+    /**
+     * As peças da pasta {@code houses} que não são moradia — decisão do
+     * autor, 2026-09-18.
+     *
+     * <p>O gerador de vilas do jogo põe na mesma pasta tudo que um lote
+     * pode receber, e nem tudo ali é casa: cerca de bicho, ponto de
+     * encontro, templo, estábulo e a peça decorativa avulsa da planície.
+     * A colônia levanta <b>moradia</b>, e o autor pediu variedade de
+     * casas — não um poço no lugar de uma.
+     *
+     * <p>A roça sai por este mesmo filtro e <b>não</b> pelo catálogo:
+     * {@code FarmPlans.farmsFor} lê da mesma pasta e depende dela. O que
+     * o filtro diz é "isto não é casa", e não "isto não existe".
+     *
+     * <p><b>Por substring, e é de propósito.</b> Os nomes do jogo não
+     * têm convenção entre estilos — {@code butcher_shop} na planície e
+     * {@code butchers_shop} na savana, {@code mason_1} no deserto e
+     * {@code masons_house_1} na taiga. Uma lista de nomes exatos
+     * quebraria em quatro dos cinco biomas; a substring atravessa os
+     * cinco, que é o que {@code FarmPlans.isFarm} já faz desde 09-05.
+     *
+     * <p>Medido nos cinco estilos: 36→24 na planície, 27→22 na taiga,
+     * 31→23 na savana, 30→25 na nevada, 28→21 no deserto. Nenhuma
+     * moradia cai.
+     */
+    private static final List<String> NOT_A_DWELLING = List.of(
+            "animal_pen", "meeting_point", "temple", "stable", "accessory", "farm");
+
+    /** Se esta peça é casa de morar, e não cerca, poço ou templo. */
+    public static boolean isDwelling(ResourceId id) {
+        for (String other : NOT_A_DWELLING) {
+            if (id.path().contains(other)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * As casas desta vila com a mesma pegada de uma planta — 2026-09-18.
+     *
+     * <p><b>O defeito que ela fecha:</b> a vila levantava sempre a mesma
+     * estrutura. De 36 peças de planície, {@link #catalogPlans} entrega
+     * 4 ao planejador — uma por pegada, cortada em {@link #PLANS_OFFERED}
+     * —, e ele levanta a {@code get(0)}. As oito {@code small_house} do
+     * jogo colapsavam em <b>uma</b>, e a escolhida era a mesma em toda
+     * passagem, toda sessão, toda vila do mesmo bioma.
+     *
+     * <p><b>Por que aqui e não lá.</b> Devolver as irmãs ao
+     * {@code catalogPlans} desfaria a razão do corte: a varredura de lote
+     * mediria a mesma pegada oito vezes para dar oito vezes a mesma
+     * resposta, e o comentário do {@code PLANS_OFFERED} já registra que
+     * ela leva dez minutos. Esta pergunta é feita <b>depois</b> de o lote
+     * estar achado, quando a pegada já é conhecida e medir acabou. A
+     * varredura não fica um byte mais cara.
+     *
+     * <p>A leitura é do cache {@link #READ}, então as irmãs de uma
+     * pegada já oferecida saem sem tocar o disco.
+     *
+     * <p><b>A pegada casa nos dois eixos, e isso não é descuido.</b> Quem
+     * chama compara o tamanho <b>depois</b> do giro da Regra 17 — é o
+     * conserto de 09-16, que existe porque uma casa 13×11 aprovada num
+     * lote 13×11 vira 11×13 ao girar e ocupa treze blocos onde só onze
+     * foram verificados. Se aqui a comparação fosse só pelo eixo do
+     * arquivo, duas coisas quebrariam: a irmã retangular que chega seria
+     * descartada logo adiante pelo filtro pós-giro, e — pior — a irmã que
+     * <b>só cabe girada</b> nunca chegaria a ser considerada. Quem decide
+     * se cabe continua sendo o filtro pós-giro de quem chama; o que esta
+     * função faz é não esconder dele a candidata.
+     */
+    static List<Blueprint> siblingsOf(ServerWorld world, String style, ColonyPos footprint) {
+        List<Blueprint> siblings = new ArrayList<>();
+
+        for (ResourceId id : VillageStructures.housesFor(style)) {
+            if (!isDwelling(id)) {
+                continue;
+            }
+
+            Optional<Blueprint> house = READ.computeIfAbsent(
+                    id, missing -> StructureBlueprintReader.read(world, missing));
+
+            if (house.isPresent() && fitsEitherWay(house.get().size(), footprint)) {
+                siblings.add(house.get());
+            }
+        }
+
+        return List.copyOf(siblings);
+    }
+
+    /**
+     * Se duas pegadas são a mesma, de pé ou deitada.
+     *
+     * <p>A altura tem de bater sempre — girar não muda o que é alto. O
+     * que o giro troca são os dois eixos do chão.
+     *
+     * <p><b>Visível ao pacote para o teste</b>, como {@link #without} e
+     * {@link #smallestFirst}: é decisão, e decisão se afirma sem mundo.
+     */
+    static boolean fitsEitherWay(ColonyPos plan, ColonyPos site) {
+        if (plan.y() != site.y()) {
+            return false;
+        }
+
+        return (plan.x() == site.x() && plan.z() == site.z())
+                || (plan.x() == site.z() && plan.z() == site.x());
     }
 
     private static int volumeOf(Blueprint plan) {

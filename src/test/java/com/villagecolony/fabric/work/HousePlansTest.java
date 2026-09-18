@@ -243,4 +243,122 @@ class HousePlansTest {
     void anEmptyRegistryMeansNoHouse() {
         assertTrue(HousePlans.hasNoHouseYet(List.of()), "registro vazio não é colônia com casa");
     }
+
+    /**
+     * A moradia passa, e a peça que não é casa não — 2026-09-18.
+     *
+     * <p>O autor pediu variedade de <b>casas</b>, e a pasta
+     * {@code houses} do jogo guarda junto tudo que um lote pode receber.
+     * Sem este filtro a vila podia levantar um poço no lugar de uma casa
+     * e a variedade sairia errada.
+     */
+    @Test
+    void theDwellingPassesAndTheRestDoesNot() {
+        assertTrue(
+                HousePlans.isDwelling(SMALL),
+                "a casa pequena é moradia e foi barrada");
+
+        assertTrue(
+                HousePlans.isDwelling(BIG),
+                "o açougue é moradia de profissão e foi barrado");
+
+        for (String other : List.of(
+                "minecraft:village/plains/houses/plains_animal_pen_1",
+                "minecraft:village/plains/houses/plains_meeting_point_4",
+                "minecraft:village/plains/houses/plains_temple_3",
+                "minecraft:village/plains/houses/plains_stable_1",
+                "minecraft:village/plains/houses/plains_accessory_1")) {
+
+            assertFalse(
+                    HousePlans.isDwelling(ResourceId.parse(other)),
+                    other + " não é moradia e passou pelo filtro");
+        }
+    }
+
+    /**
+     * A roça sai da lista de casas — e continua no catálogo.
+     *
+     * <p>Duas afirmações numa: {@code FarmPlans.farmsFor} lê da mesma
+     * pasta e depende dessas peças, então o filtro tinha de dizer "isto
+     * não é casa" sem dizer "isto não existe". Se um dia alguém movê-lo
+     * para o {@code load}, este teste continua verde e o
+     * {@code FarmPlans.isFarm} abaixo é quem cai.
+     */
+    @Test
+    void theFarmIsNotADwellingButStaysInTheCatalog() {
+        ResourceId farm =
+                ResourceId.parse("minecraft:village/plains/houses/plains_small_farm_1");
+
+        assertFalse(HousePlans.isDwelling(farm), "a roça entrou na lista de casas");
+
+        assertTrue(FarmPlans.isFarm(farm), "a roça sumiu do catálogo de roças");
+    }
+
+    /**
+     * A irmã que só cabe girada não fica de fora — 2026-09-18.
+     *
+     * <p>Quem chama {@code siblingsOf} compara o tamanho <b>depois</b> do
+     * giro da Regra 17 — o conserto de 09-16, feito porque uma 13×11
+     * aprovada num lote 13×11 vira 11×13 e ocupa treze blocos onde onze
+     * foram conferidos.
+     *
+     * <p>Se a busca de irmãs casasse só o eixo do arquivo, a irmã
+     * retangular seria trazida e descartada logo adiante, e a que
+     * <b>só cabe girada</b> nunca seria considerada — a variedade voltaria
+     * a morrer justamente nas plantas retangulares.
+     */
+    @Test
+    void theSiblingThatOnlyFitsRotatedStillCounts() {
+        ColonyPos site = new ColonyPos(13, 7, 11);
+
+        assertTrue(
+                HousePlans.fitsEitherWay(new ColonyPos(13, 7, 11), site),
+                "a pegada idêntica foi recusada");
+
+        assertTrue(
+                HousePlans.fitsEitherWay(new ColonyPos(11, 7, 13), site),
+                "a irmã que cabe girada ficou de fora do sorteio");
+
+        assertFalse(
+                HousePlans.fitsEitherWay(new ColonyPos(13, 9, 11), site),
+                "girar não muda altura, e a planta mais alta passou");
+
+        assertFalse(
+                HousePlans.fitsEitherWay(new ColonyPos(9, 7, 11), site),
+                "uma pegada que não cabe de jeito nenhum passou");
+    }
+
+    /**
+     * O filtro atravessa os cinco estilos — 2026-09-18.
+     *
+     * <p>Os nomes do jogo não têm convenção entre biomas:
+     * {@code butcher_shop} na planície e {@code butchers_shop} na savana,
+     * {@code mason_1} no deserto e {@code masons_house_1} na taiga. Uma
+     * lista de nomes exatos quebraria em quatro dos cinco, e é por isso
+     * que o filtro é por substring.
+     */
+    @Test
+    void theFilterCrossesEveryStyle() {
+        for (String dwelling : List.of(
+                "minecraft:village/savanna/houses/savanna_butchers_shop_1",
+                "minecraft:village/desert/houses/desert_mason_1",
+                "minecraft:village/taiga/houses/taiga_masons_house_1",
+                "minecraft:village/snowy/houses/snowy_weapon_smith_1")) {
+
+            assertTrue(
+                    HousePlans.isDwelling(ResourceId.parse(dwelling)),
+                    dwelling + " é moradia e foi barrada");
+        }
+
+        for (String other : List.of(
+                "minecraft:village/savanna/houses/savanna_animal_pen_3",
+                "minecraft:village/desert/houses/desert_temple_2",
+                "minecraft:village/taiga/houses/taiga_large_farm_2",
+                "minecraft:village/snowy/houses/snowy_farm_1")) {
+
+            assertFalse(
+                    HousePlans.isDwelling(ResourceId.parse(other)),
+                    other + " não é moradia e passou pelo filtro");
+        }
+    }
 }

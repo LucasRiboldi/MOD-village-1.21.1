@@ -28,10 +28,12 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -536,7 +538,29 @@ public final class ConstructionPlanner {
         // ocupar, e não a que ela tinha no arquivo.
         Side road = MinecraftTypeAdapter.toSide(site.doorSide());
 
-        List<Blueprint> fitting = plans.stream()
+        // <b>E o sorteio de 09-09 finalmente tem o que sortear</b> —
+        // 2026-09-18. Ele nasceu para acabar com "a colônia levanta a
+        // mesma casa a vida inteira", e não acabou: a lista que chega
+        // aqui vem do {@code catalogPlans}, que corta as pegadas
+        // repetidas <b>antes</b>. Sortear entre plantas de tamanhos todos
+        // distintos, filtradas pelo tamanho do lote, é sortear entre uma.
+        //
+        // As irmãs são pedidas agora, com o lote já achado e a pegada já
+        // conhecida — ver HousePlans.siblingsOf, e por que ela não
+        // encarece a varredura.
+        // A deduplicação é por {@code id} e não por {@code distinct()}:
+        // Blueprint é classe sem equals, então distinct compararia
+        // referência e deixaria a planta oferecida duas vezes no sorteio
+        // — com peso dobrado sobre as irmãs.
+        List<Blueprint> candidates = new ArrayList<>(plans);
+
+        candidates.addAll(HousePlans.siblingsOf(
+                world, HousePlans.paletteOf(world, colony.center()).style(), site.size()));
+
+        Set<ResourceId> seen = new HashSet<>();
+
+        List<Blueprint> fitting = candidates.stream()
+                .filter(plan -> seen.add(plan.id()))
                 .map(plan -> HousePlans.turnedToTheRoad(plan, road))
                 .filter(plan -> plan.size().equals(site.size()))
                 .toList();

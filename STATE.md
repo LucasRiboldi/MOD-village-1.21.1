@@ -137,6 +137,66 @@ as duas otimizações do planejador.*
 
 ---
 
+## A vila levantava sempre a mesma casa — 2026-09-18
+
+**O autor viu em jogo:** *"está criando sempre a mesma estrutura, porém
+precisa alterar mais, criar casas"*.
+
+**A causa não era o sorteio, era o que sobrava para sortear.** O sorteio
+entre plantas de mesma pegada existe desde 09-09 e está em
+`ConstructionPlanner.open` — mas ele nunca teve mais de uma opção. A lista
+que chega ali vem de `HousePlans.catalogPlans`, que corta as pegadas
+repetidas (`sizes.add(plan.size())`) e depois corta em `PLANS_OFFERED = 4`.
+Das **36 peças de planície** sobravam **4**, uma por pegada, e o planejador
+levanta a `get(0)`. As oito `small_house` do jogo colapsavam em **uma**.
+Sortear entre plantas de tamanhos todos distintos, filtradas pelo tamanho
+do lote, é sortear entre uma — a mesma casa, toda passagem, toda sessão,
+toda vila do mesmo bioma.
+
+**O corte é legítimo e ficou.** Ele serve à busca de lote, que o comentário
+do `PLANS_OFFERED` registra em dez minutos. O que mudou é **quando** as
+irmãs voltam: `HousePlans.siblingsOf` é chamada **depois** de o lote estar
+achado, com a pegada já conhecida e a medição encerrada. A varredura não
+ficou um byte mais cara.
+
+**E a pasta `houses` não é só casa.** O gerador do jogo põe ali tudo que um
+lote pode receber — cerca de bicho, ponto de encontro, templo, estábulo, a
+peça decorativa da planície. Decisão do autor: a colônia levanta
+**moradia**. `HousePlans.isDwelling` filtra por substring e não por lista de
+nomes, porque os nomes do jogo não têm convenção entre biomas
+(`butcher_shop`/`butchers_shop`, `mason_1`/`masons_house_1`,
+`weaponsmith`/`weapon_smith`). Medido nos cinco estilos: planície 36→24,
+taiga 27→22, savana 31→23, nevada 30→25, deserto 28→21 — **nenhuma moradia
+cai**. A roça sai da lista de casas e **continua no catálogo**, porque
+`FarmPlans.farmsFor` lê da mesma pasta.
+
+**Um defeito achado na própria correção, antes de commitar.** A primeira
+versão de `siblingsOf` casava a pegada só pelo eixo do arquivo, e quem
+chama compara o tamanho **depois** do giro da Regra 17. Numa planta
+retangular isso fazia duas coisas erradas: trazia a irmã para ser
+descartada logo adiante, e — pior — escondia do sorteio a irmã que **só
+cabe girada**. A variedade voltaria a morrer justamente nas plantas
+retangulares. Corrigido por `fitsEitherWay`, que casa os dois eixos do chão
+e exige a altura igual, com unitário próprio
+(`theSiblingThatOnlyFitsRotatedStillCounts`).
+
+**O que foi verificado rodando:** `gradlew test` — **912 unitários, 0
+falhas, 0 erros**, `HousePlansTest` de 11 para 15; `gradlew runGametest` —
+**343 gametests, todos passaram**, `village_catalog` de 5 para 7. Uma rodada
+da bateria falhou uma vez e as **quatro seguintes passaram**, consistente
+com a instabilidade já registrada da bateria, não com este ciclo.
+
+**O que NÃO foi verificado:** nada disto foi visto em jogo. Os testes provam
+que as irmãs existem no catálogo real e que o filtro não come moradia; eles
+**não** provam que a vila agora levanta casas visivelmente diferentes ao
+longo de uma sessão. Isso é playtest, e é o próximo passo. O
+`smallestFirst` **não foi tocado** — decisão do autor de manter a exceção de
+arranque de 09-15 —, então enquanto nenhuma casa **terminar** a colônia
+continua começando pela menor pegada; a variedade nova aparece **dentro**
+dessa pegada.
+
+---
+
 ## A placa da obra em português — 2026-09-17
 
 Pedido do autor: *"o identificador visual dos elementos que faltam para a
