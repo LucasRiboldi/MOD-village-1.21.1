@@ -137,6 +137,55 @@ as duas otimizações do planejador.*
 
 ---
 
+## 🔴 P1.5 — O índice de ruas é um beco sem saída (investigado 09-19)
+
+**A assinatura, medida em duas sessões seguidas:**
+
+```text
+sweep: 32 planner runs, 0 passes over 0 columns, 32 answered by the index
+       — 0 restarts, 0 complete rounds
+```
+
+**O laço, lido no código:**
+
+```text
+1. há índice          -> findAmongRoads, e o return é INCONDICIONAL
+2. o índice se esgota -> Optional.empty()
+3. o chamador já deu return  -> a varredura NUNCA roda
+4. o índice NÃO é invalidado por ter falhado
+5. passagem seguinte: volta ao 1
+```
+
+`BuildSiteScanner` linha 366: `if (roads != null) return findAmongRoads(...)`.
+O índice só é descartado quando **o centro se muda** (`rebasedTo`) ou
+quando **uma coluna é consumida** — nunca por ter dado a volta completa
+sem achar lote.
+
+**Onde a volta completa é detectável:** linha 734,
+`ROAD_CURSOR.remove(colonyId)`, com o comentário *"Perguntou a todas:
+aqui, e só aqui"*. É a única saída do laço que significa **índice
+esgotado**, e é diferente de parar no meio por orçamento
+(`MAX_COLUMNS`), que é legítimo e deve continuar voltando ao índice.
+
+**Por que descartar é o certo, e está escrito na própria base:** o javadoc
+do `ROADS` diz que o índice *"só nasce de uma varredura que visitou o raio
+inteiro"* — ele **promete cobertura completa**. Dar a volta inteira sem
+lote é a promessa falhando, e a resposta é refazer a varredura, não
+reperguntar à mesma lista para sempre.
+
+**E a outra saída também está fechada.** A Regra 15 manda a rua crescer
+quando não há lote, e nesta sessão ela disse `found no road end it may
+pave` **12 vezes**. A vila está com as duas saídas bloqueadas ao mesmo
+tempo, e é por isso que o gargalo migrou para *"volume ocupado"* (39,7%)
+sem nunca chegar a varrer chão novo.
+
+⚠️ **Investigado, não corrigido.** O conserto é pequeno — descartar o
+índice no ponto da volta completa — mas mexe na porta de entrada de todo
+planejamento de obra, e a régua de orçamento (`MAX_COLUMNS`) precisa
+continuar distinguível do esgotamento. Decisão do autor.
+
+---
+
 ## 🔴 P1.4 — O pedreiro existe e não tem tarefa (achado 09-19)
 
 **A investigação do pedreiro terminou, e a resposta não era a que eu
