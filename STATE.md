@@ -137,7 +137,27 @@ as duas otimizações do planejador.*
 
 ---
 
-## 🔴 P1.5 — O índice de ruas é um beco sem saída (investigado 09-19)
+## ✅ P1.5 — O índice de ruas era um beco sem saída (corrigido 09-19)
+
+**O conserto:** o índice que dá **quatro voltas seguidas** sem um único
+lote é descartado, e a passagem seguinte varre o chão de novo. A conta
+morre assim que um lote aparece.
+
+**Uma volta vazia NÃO derruba**, e essa metade é o conserto de um furo que
+a bateria pegou: a primeira versão descartava na primeira volta, e dois
+testes caíram — `removingAPlayerRoadRemovesOnlyThatIndexedColumn` e
+`theCompletedSweepLeavesTheRoadColumnsIndexed`. Eles estavam certos: a vila
+muda, o jogador abre espaço, e o lote de ontem existe amanhã. O que não é
+normal é a **repetição**.
+
+**Conferido por mutação nas duas metades:** nunca descartar falha 1 teste,
+descartar na primeira volta falha 4.
+
+⚠️ **Espera playtest.**
+
+---
+
+### O diagnóstico original
 
 **A assinatura, medida em duas sessões seguidas:**
 

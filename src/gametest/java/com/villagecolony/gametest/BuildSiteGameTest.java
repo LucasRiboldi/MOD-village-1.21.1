@@ -2015,4 +2015,80 @@ public class BuildSiteGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    /**
+     * O índice que nunca dá lote cai, e o que deu uma volta vazia fica —
+     * P1.5, 2026-09-19.
+     *
+     * <p><b>O beco que isto fecha.</b> O chamador devolve o resultado de
+     * {@code findAmongRoads} <b>incondicionalmente</b>: havendo índice, a
+     * varredura não roda. E o índice só era descartado quando o centro se
+     * mudava ou quando uma coluna era consumida — <b>nunca por ter
+     * falhado</b>. A colônia reperguntava à mesma lista para sempre:
+     * medido em duas sessões no deserto, {@code 32 planner runs, 0 passes
+     * over 0 columns, 32 answered by the index}, e zero obras.
+     *
+     * <p><b>As duas metades estão aqui de propósito, e a primeira é o
+     * conserto de um furo que a bateria pegou.</b> A primeira versão
+     * derrubava o índice na <b>primeira</b> volta vazia, e dois testes
+     * caíram — {@code removingAPlayerRoadRemovesOnlyThatIndexedColumn} e
+     * {@code theCompletedSweepLeavesTheRoadColumnsIndexed}. Eles estavam
+     * certos: uma volta sem lote é normal, porque a vila muda e o lote de
+     * ontem existe amanhã. O que não é normal é a <b>repetição</b>.
+     *
+     * <p>Um teste que afirmasse só a queda passaria com o índice sendo
+     * descartado sempre — e aí a colônia varre o raio inteiro a cada
+     * passagem, que é o custo que este caminho existe para evitar.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_stale_index")
+    public void theIndexThatNeverAnswersIsDropped(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+
+        paveGround(context, center);
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+
+        UUID colony = UUID.randomUUID();
+
+        reserveRoad(context, colony, center);
+
+        ColonyPos absoluteCenter =
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center));
+
+        // Uma casa que não cabe em lugar nenhum: o índice nasce da
+        // varredura e nunca responde, que é o cenário do deserto.
+        ColonyPos impossibleHouse = new ColonyPos(40, 20, 40);
+
+        BuildSiteScanner.find(
+                context.getWorld(), colony, absoluteCenter, RADIUS, impossibleHouse);
+
+        context.assertTrue(
+                BuildSiteScanner.roadIndexSize(colony).orElse(0) > 0,
+                "a varredura não deixou índice — o cenário deste teste não se montou");
+
+        // A primeira volta vazia NÃO derruba: a vila muda, e o lote de
+        // ontem pode existir amanhã.
+        BuildSiteScanner.find(
+                context.getWorld(), colony, absoluteCenter, RADIUS, impossibleHouse);
+
+        context.assertTrue(
+                BuildSiteScanner.roadIndexSize(colony).orElse(0) > 0,
+                "uma volta vazia derrubou o índice — a colônia vai varrer o raio"
+                        + " inteiro a cada passagem, que é o custo que o índice evita");
+
+        // Insistindo, ele cai: a lista já provou não ter resposta, e a
+        // varredura precisa da vez dela.
+        for (int round = 0; round < 8; round++) {
+            BuildSiteScanner.find(
+                    context.getWorld(), colony, absoluteCenter, RADIUS, impossibleHouse);
+        }
+
+        context.assertTrue(
+                BuildSiteScanner.roadIndexSize(colony).isEmpty(),
+                "o índice sobreviveu a dez voltas sem um único lote — é o beco do"
+                        + " deserto, onde 32 passagens deram 32 respostas do índice"
+                        + " e zero obras");
+
+        context.complete();
+    }
 }

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -230,6 +231,57 @@ public final class BuildSiteScanner {
     private static final Map<UUID, ColonyRoads> ROADS = new HashMap<>();
 
     /**
+     * As colônias cujo índice deu a volta inteira sem achar lote — P1.5,
+     * 2026-09-19.
+     *
+     * <p><b>O laço que isto abre.</b> O chamador devolve o resultado de
+     * {@link #findAmongRoads} <b>incondicionalmente</b>: havendo índice, a
+     * varredura não roda. E o índice só era descartado quando o centro se
+     * mudava ou quando uma coluna era consumida — <b>nunca por ter
+     * falhado</b>. A colônia reperguntava à mesma lista para sempre.
+     * Medido em duas sessões seguidas no deserto:
+     * {@code 32 planner runs, 0 passes over 0 columns, 32 answered by the
+     * index, 0 complete rounds}, e zero obras.
+     *
+     * <p><b>Por que descartar é o certo, e está escrito no {@link #ROADS}:</b>
+     * o índice <i>"só nasce de uma varredura que visitou o raio
+     * inteiro"</i>. Ele <b>promete cobertura completa</b>. Dar a volta sem
+     * um lote é essa promessa falhando, e a resposta é refazer a
+     * varredura — não reperguntar à mesma lista.
+     *
+     * <p><b>Marca em vez de apagar, e a separação é o conserto de um furo
+     * que a bateria pegou.</b> A primeira versão removia o índice dentro
+     * do {@code findAmongRoads}, e dois testes caíram:
+     * {@code theCompletedSweepLeavesTheRoadColumnsIndexed} e
+     * {@code removingAPlayerRoadRemovesOnlyThatIndexedColumn}. Eles
+     * estavam certos — a varredura completa <b>cria</b> o índice no fim da
+     * mesma chamada, e apagar antes matava um índice recém-nascido que
+     * ninguém tinha consultado. Marcando, quem decide é o caminho de
+     * fora, depois de a varredura ter tido sua vez.
+     *
+     * <p><b>Só o esgotamento, e nunca o orçamento.</b> A saída pelo
+     * {@code MAX_COLUMNS} guarda o cursor e volta: ali a lista não acabou,
+     * só o tique. Confundir as duas faria a colônia varrer o raio inteiro
+     * a cada passagem.
+     */
+    private static final Map<UUID, Integer> EXHAUSTED = new HashMap<>();
+
+    /**
+     * Quantas voltas seguidas sem lote antes de o índice cair.
+     *
+     * <p><b>Uma volta vazia é normal</b>, e a bateria defende isso: o
+     * cenário impossível de {@code removingAPlayerRoadRemovesOnlyThatIndexedColumn}
+     * consulta o índice e não acha nada, e o índice tem de ficar — a
+     * vila muda, o jogador abre espaço, e o lote de ontem existe amanhã.
+     *
+     * <p><b>Trinta e duas voltas seguidas não é.</b> É o número que o
+     * deserto mediu, e a essa altura a lista já provou não ter resposta.
+     * Quatro dá à vila folga para mudar sozinha — duas passagens de ciclo
+     * por minuto — e corta o laço em dois minutos em vez de nunca.
+     */
+    private static final int EMPTY_ROUNDS_BEFORE_DROP = 4;
+
+    /**
      * O índice em construção, enquanto a varredura não terminou o raio.
      *
      * <p>Separado do {@link #ROADS} de propósito: índice pela metade é
@@ -364,7 +416,38 @@ public final class BuildSiteScanner {
         if (roads != null) {
             SweepLog.indexed(colonyId);
 
-            return findAmongRoads(world, colonyId, from, roads, radius, plans);
+            Optional<Site> fromIndex =
+                    findAmongRoads(world, colonyId, from, roads, radius, plans);
+
+            // <b>Índice esgotado sai agora</b> — P1.5, 2026-09-19. A marca
+            // foi posta lá dentro e é consumida aqui, fora da chamada que
+            // a varredura usa para criar índice novo — ver EXHAUSTED.
+            //
+            // A varredura roda na passagem SEGUINTE, e não nesta: o
+            // orçamento desta já foi gasto perguntando ao índice, e varrer
+            // por cima dobraria o custo do tique que este caminho existe
+            // para evitar.
+            if (fromIndex.isPresent()) {
+                // Achou: a lista serve, e a conta de voltas vazias morre.
+                EXHAUSTED.remove(colonyId);
+            }
+
+            if (fromIndex.isEmpty()
+                    && EXHAUSTED.getOrDefault(colonyId, 0) >= EMPTY_ROUNDS_BEFORE_DROP) {
+
+                EXHAUSTED.remove(colonyId);
+                ROADS.remove(colonyId);
+
+                VillageColonyMod.LOGGER.info(
+                        "Colony {} dropped its road index — {} columns asked over {}"
+                                + " rounds and no lot came of any. The next pass sweeps"
+                                + " the ground again",
+                        colonyId,
+                        roads.columns().size(),
+                        EMPTY_ROUNDS_BEFORE_DROP);
+            }
+
+            return fromIndex;
         }
 
         Sweep paused = SWEEPS.get(colonyId);
@@ -738,6 +821,10 @@ public final class BuildSiteScanner {
             countTheIndexPass(colonyId, looked);
         }
 
+        // <b>E a volta vazia é contada</b> — P1.5, 2026-09-19. Quem
+        // decide descartar é o chamador; ver {@link #EXHAUSTED}.
+        EXHAUSTED.merge(colonyId, 1, Integer::sum);
+
         return Optional.empty();
     }
 
@@ -918,6 +1005,7 @@ public final class BuildSiteScanner {
         ROADS.clear();
         ROAD_CURSOR.clear();
         BUILDING.clear();
+        EXHAUSTED.clear();
     }
 
     /** Reconcilia uma coluna depois de uma alteração efetiva do jogador. */
