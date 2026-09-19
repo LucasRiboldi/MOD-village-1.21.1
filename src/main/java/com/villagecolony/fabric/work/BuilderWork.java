@@ -29,6 +29,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.CropBlock;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Item;
+import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -374,6 +375,23 @@ public final class BuilderWork {
             return true;
         }
 
+        if (PottedPlant.isPotted(state)) {
+            // <b>O vaso com planta é montado, e pago</b> — 2026-09-19. O
+            // bloco não tem item e ninguém o traria; o que a colônia tem
+            // é o vaso e a planta, e é deles que ele sai. Montar de graça
+            // seria a colônia CRIANDO recurso, que a primeira regra de
+            // arquitetura do Construction-System proíbe.
+            //
+            // Espera pelos dois como esperaria por qualquer material: a
+            // Regra 27 continua valendo, só que sobre os ingredientes em
+            // vez de sobre um item que não existe.
+            if (!assemblePotted(world, project, job, workerId, block, target, state)) {
+                return false;
+            }
+
+            return true;
+        }
+
         if (isShapedFromTheGround(state)) {
             // A colônia molda no local apenas blocos sem item de inventário
             // utilizável (canteiro, água, caminho e cultivos). Terra comum
@@ -650,7 +668,92 @@ public final class BuilderWork {
         return state.isOf(Blocks.FARMLAND)
                 || state.isOf(Blocks.WATER)
                 || state.isOf(Blocks.DIRT_PATH)
-                || state.getBlock() instanceof CropBlock;
+                || state.getBlock() instanceof CropBlock
+                || hasNoItemOfItsOwn(state);
+    }
+
+    /**
+     * Bloco que <b>não tem item</b> — e por isso ninguém pode trazê-lo.
+     *
+     * <p><b>O que isto conserta, medido na sessão de 14:47.</b> A obra
+     * parou em {@code waiting for minecraft:potted_cactus} com 148 blocos
+     * por pôr, e ia esperar <b>para sempre</b>: no Minecraft o vaso com
+     * cacto só existe como <i>bloco</i> — o jogador põe o vaso e planta o
+     * cacto nele —, e {@code Items.POTTED_CACTUS} não existe. A colônia
+     * esperava um item que <b>não pode existir</b>.
+     *
+     * <p>E não era só ele. As casas do catálogo pedem oito blocos assim:
+     * os cinco vasos com planta, {@code water}, {@code lava} e
+     * {@code water_cauldron}.
+     *
+     * <p><b>Pergunta ao jogo em vez de crescer a lista acima</b> —
+     * ADR-009. A lista era quatro nomes escritos à mão, e cada bloco novo
+     * sem item pedia mais um; {@code asItem()} devolve <b>ar</b>
+     * exatamente quando não há item, e essa é a pergunta que importa.
+     * Quem sabe é o jogo.
+     *
+     * <p>O bloco entra montado, como já entram o canteiro e o caminho de
+     * terra: é a mesma decisão de 2026-08-27, aplicada à sua própria
+     * definição.
+     */
+    private static boolean hasNoItemOfItsOwn(BlockState state) {
+        return state.getBlock().asItem() == Items.AIR;
+    }
+
+    /**
+     * Monta o vaso com planta do vaso e da planta que a colônia tem.
+     *
+     * <p>Os dois saem do baú <b>antes</b> de o bloco entrar no mundo, que
+     * é a mesma ordem de todo material: sem ingrediente não há bloco.
+     *
+     * <p><b>O vaso primeiro, e a planta só se o vaso saiu.</b> Tirar a
+     * planta e falhar no vaso gastaria a planta sem pôr nada — o defeito
+     * que o lenhador teve em 09-04 com outro nome.
+     *
+     * @return {@code false} quando falta ingrediente e a obra espera
+     */
+    private static boolean assemblePotted(
+            ServerWorld world,
+            ConstructionProject project,
+            Job job,
+            UUID workerId,
+            BlueprintBlock block,
+            BlockPos target,
+            BlockState state) {
+
+        Optional<Item> plant = PottedPlant.plantOf(state.getBlock());
+
+        if (!ColonySupply.canProvide(
+                world, project.colonyId(), project.origin(), PottedPlant.pot())) {
+
+            waitForResources(project, job, workerId, block);
+
+            return false;
+        }
+
+        if (plant.isPresent()
+                && !ColonySupply.canProvide(
+                        world, project.colonyId(), project.origin(), plant.get())) {
+
+            waitForResources(project, job, workerId, block);
+
+            return false;
+        }
+
+        // Os dois estão lá: agora sim se gasta, e na ordem em que se
+        // conferiu.
+        ColonySupply.take(world, project.colonyId(), project.origin(), PottedPlant.pot());
+
+        plant.ifPresent(item ->
+                ColonySupply.take(world, project.colonyId(), project.origin(), item));
+
+        world.setBlockState(target, state, Block.NOTIFY_ALL);
+
+        project.markPlaced(block);
+
+        job.placed++;
+
+        return true;
     }
 
     /**

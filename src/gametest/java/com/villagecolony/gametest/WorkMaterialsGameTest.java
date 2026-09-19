@@ -5,13 +5,19 @@ import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.construction.model.ConstructionProject;
+import com.villagecolony.fabric.work.BuilderWork;
+import java.util.UUID;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.work.PottedPlant;
 import com.villagecolony.fabric.integration.CraftingLookup;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.WorkMaterials;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.block.Blocks;
 import net.minecraft.item.Items;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.server.world.ServerWorld;
@@ -419,6 +425,92 @@ public class WorkMaterialsGameTest implements FabricGameTest {
         // vira pedido de material.
         if (MinecraftTypeAdapter.toItem(ResourceType.SANDSTONE_WALL).isEmpty()) {
             throw new AssertionError("o recurso nao acha o item — a meta nunca vira pedido");
+        }
+
+        context.complete();
+    }
+
+    /**
+     * O vaso com planta não tem item, e por isso a obra travava —
+     * 2026-09-19.
+     *
+     * <p><b>Pergunta do autor:</b> <i>"algum aldeão produz cacto num
+     * vaso? cria vaso? colhe cacto e replanta?"</i>. Não, não e não — e a
+     * obra pagou: ela parou em {@code waiting for minecraft:potted_cactus}
+     * com 148 blocos por pôr, esperando um item que <b>não pode
+     * existir</b>. No Minecraft o vaso com cacto só existe como bloco.
+     *
+     * <p>São oito blocos assim no catálogo: os cinco vasos, a água, a
+     * lava e o caldeirão.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_materials",
+            tickLimit = 100)
+    public void thePottedPlantHasNoItemAndIsMadeOfTwo(TestContext context) {
+        if (Blocks.POTTED_CACTUS.asItem() != Items.AIR) {
+            throw new AssertionError(
+                    "o vaso com cacto passou a ter item — o conserto partia de ele NAO"
+                            + " ter, e essa premissa mudou");
+        }
+
+        if (!PottedPlant.isPotted(Blocks.POTTED_CACTUS)) {
+            throw new AssertionError("o vaso com cacto nao foi reconhecido como vaso");
+        }
+
+        // Os dois ingredientes de verdade, que é o que a colônia busca.
+        if (PottedPlant.plantOf(Blocks.POTTED_CACTUS).filter(Items.CACTUS::equals).isEmpty()) {
+            throw new AssertionError(
+                    "o vaso com cacto nao achou o cacto: "
+                            + PottedPlant.plantOf(Blocks.POTTED_CACTUS));
+        }
+
+        if (PottedPlant.pot() != Items.FLOWER_POT) {
+            throw new AssertionError("o vaso deixou de ser o vaso");
+        }
+
+        // E um bloco comum NAO e vaso: sem esta metade a regra viraria
+        // "tudo e montado de graca", e a casa sairia sem custo nenhum.
+        if (PottedPlant.isPotted(Blocks.SANDSTONE)) {
+            throw new AssertionError("o arenito foi tratado como vaso com planta");
+        }
+
+        context.complete();
+    }
+
+    /**
+     * Bloco sem item não segura a obra — 2026-09-19.
+     *
+     * <p><b>É o defeito exato de 14:47</b>, e ele merece afirmação
+     * própria: a obra ficou em {@code waiting for minecraft:potted_cactus}
+     * com 148 blocos por pôr, esperando um item que não existe. A
+     * pergunta que decide é <i>"a obra tem material para o próximo
+     * bloco?"</i> — e para bloco sem item a resposta tem de ser <b>sim</b>,
+     * porque ele é montado, não trazido.
+     *
+     * <p>A primeira versão deste conserto passou sem teste que o medisse:
+     * desligar {@code hasNoItemOfItsOwn} deixava os 366 verdes. Foi a
+     * mutação que cobrou.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_materials",
+            tickLimit = 100)
+    public void theBlockWithNoItemNeverHoldsTheBuild(TestContext context) {
+        UUID colonyId = UUID.randomUUID();
+
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(1, 1, 1)));
+
+        // Uma obra de um bloco só, e esse bloco é a lava — que não tem
+        // item e nunca sairá de baú nenhum.
+        Blueprint plan = Blueprint.of(
+                ResourceId.vanilla("village/desert/houses/desert_small_house_1"),
+                List.of(new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("lava"))));
+
+        ConstructionProject project = ConstructionProject.plan(colonyId, plan, origin);
+
+        if (!BuilderWork.hasMaterialForNextBlock(context.getWorld(), project)) {
+            throw new AssertionError(
+                    "a obra disse que falta material para um bloco SEM ITEM — ela vai"
+                            + " esperar para sempre por algo que ninguem pode trazer,"
+                            + " que e o defeito de 14:47 com o potted_cactus");
         }
 
         context.complete();

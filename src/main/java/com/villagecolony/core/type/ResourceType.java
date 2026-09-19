@@ -178,6 +178,42 @@ public enum ResourceType {
      */
     CUT_SANDSTONE(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_STONE),
 
+    /**
+     * O cacto, e a cadeia inteira do vaso — 2026-09-19.
+     *
+     * <p><b>Decisão do autor</b>, depois de perguntar se algum aldeão
+     * produzia cacto em vaso: <i>"economia completa do cacto"</i>. A
+     * resposta era <b>não</b> nos três pontos — ninguém plantava, ninguém
+     * colhia, ninguém fazia o vaso.
+     *
+     * <p><b>Colhido da superfície</b>, como a areia: o cacto cresce
+     * sozinho no deserto, e o que a colônia faz é <b>cortar o topo e
+     * deixar a base</b> — que é replantio por construção, do mesmo modo
+     * que o fazendeiro replanta a lavoura (Regra 7).
+     */
+    CACTUS(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SURFACE_GATHERED),
+
+    /**
+     * A argila do fundo do lago, primeira pedra da cadeia do vaso.
+     *
+     * <p>O vaso é <b>três tijolos</b>, e tijolo é bola de argila
+     * <b>assada</b> — receita do jogo, e o mod não inventa receita. Sem
+     * esta linha a cadeia começaria no meio.
+     */
+    CLAY_BALL(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SURFACE_GATHERED),
+
+    /** O tijolo, que sai da fornalha como o arenito liso. */
+    BRICK(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.SMELTED),
+
+    /**
+     * O vaso, que o fabricante lavra de três tijolos.
+     *
+     * <p>É a peça que faltava: a casa do deserto pede
+     * {@code potted_cactus}, e esse bloco <b>não tem item</b> — ele nasce
+     * de vaso mais cacto, no lugar. Ver {@code PottedPlant}.
+     */
+    FLOWER_POT(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_STONE),
+
     /** A escada de arenito liso, que a casa de deserto usa no telhado. */
     SMOOTH_SANDSTONE_STAIRS(
             ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_STONE),

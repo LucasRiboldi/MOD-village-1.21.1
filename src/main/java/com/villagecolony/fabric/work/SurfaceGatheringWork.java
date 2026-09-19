@@ -19,6 +19,8 @@ import com.villagecolony.fabric.integration.DirtPatch;
 import com.villagecolony.fabric.integration.FarthestVillageSector;
 import com.villagecolony.fabric.integration.GrassPatch;
 import com.villagecolony.fabric.integration.RingSweep;
+import com.villagecolony.fabric.integration.CactusPatch;
+import com.villagecolony.fabric.integration.ClayPatch;
 import com.villagecolony.fabric.integration.SandPatch;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -229,6 +231,17 @@ public final class SurfaceGatheringWork {
             }
             if (job.task.targetResource() == ResourceType.DIRT) {
                 return DirtPatch.in(world, column, job.center.getY(), job.center, job.surfaceSector);
+            }
+            // <b>E o cacto</b> — 2026-09-19, pergunta do autor. Só o
+            // TOPO: deixar a base é o replantio, e o cacto volta a
+            // crescer dali. Ver CactusPatch.
+            if (job.task.targetResource() == ResourceType.CACTUS) {
+                return CactusPatch.in(world, column, job.center.getY());
+            }
+            // A argila do fundo do lago, primeira pedra da cadeia do
+            // vaso: argila -> tijolo (fornalha) -> vaso (bancada).
+            if (job.task.targetResource() == ResourceType.CLAY_BALL) {
+                return ClayPatch.in(world, column, job.center.getY());
             }
             return Optional.empty();
         });

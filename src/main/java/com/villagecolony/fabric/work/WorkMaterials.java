@@ -192,6 +192,16 @@ public final class WorkMaterials {
                     .flatMap(MinecraftTypeAdapter::toResourceType)
                     .filter(WorkMaterials::nobodyElseAsksFor)
                     .ifPresent(type -> wanted.merge(type, entry.getValue(), Integer::sum));
+
+            // <b>E o vaso que o bloco sem item esconde</b> — 2026-09-19.
+            // Mesma razão da planta, do outro lado da cadeia: o vaso é
+            // fabricado de três tijolos, e o tijolo é argila assada.
+            // Sem esta linha ninguém faria vaso nenhum. Ver PottedPlant.
+            MinecraftTypeAdapter.toBlock(entry.getKey())
+                    .filter(PottedPlant::isPotted)
+                    .flatMap(potted -> MinecraftTypeAdapter.toResourceType(PottedPlant.pot()))
+                    .filter(WorkMaterials::nobodyElseAsksFor)
+                    .ifPresent(type -> wanted.merge(type, entry.getValue(), Integer::sum));
         }
 
         if (world != null) {
@@ -220,6 +230,19 @@ public final class WorkMaterials {
                     .filter(type -> type.production() == Production.SURFACE_GATHERED)
                     // Areia já é derivada da falta de vidro em ColonyGoals.
                     .filter(type -> type != ResourceType.SAND)
+                    .ifPresent(type -> wanted.merge(type, entry.getValue(), Integer::sum));
+
+            // <b>E o que o vaso com planta esconde</b> — 2026-09-19. O
+            // bloco `potted_cactus` NÃO TEM ITEM, então o `asItem()`
+            // acima devolve ar e a demanda dele sumia inteira: a obra
+            // pedia o vaso e ninguém colhia o cacto. Aqui a peça é
+            // aberta nos dois ingredientes que a colônia realmente
+            // busca. Ver PottedPlant.
+            MinecraftTypeAdapter.toBlock(entry.getKey())
+                    .filter(PottedPlant::isPotted)
+                    .flatMap(PottedPlant::plantOf)
+                    .flatMap(MinecraftTypeAdapter::toResourceType)
+                    .filter(type -> type.production() == Production.SURFACE_GATHERED)
                     .ifPresent(type -> wanted.merge(type, entry.getValue(), Integer::sum));
         }
 

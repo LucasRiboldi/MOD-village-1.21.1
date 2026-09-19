@@ -226,6 +226,58 @@ continuar distinguível do esgotamento. Decisão do autor.
 
 ---
 
+## ✅ A economia do cacto — 2026-09-19, 14:47→14:59
+
+**O P1.4 foi confirmado em jogo:** `no mason work` caiu para **zero**, e
+as variantes novas saem por demanda — `sandstone_wall`,
+`smooth_sandstone_slab`, `cut_sandstone` 3×.
+
+### As três perguntas do autor: não, não e não
+
+Não havia **uma linha** de cacto ou vaso no mod. E a obra parou em
+`waiting for minecraft:potted_cactus` com 148 blocos por pôr.
+
+**Ela ia esperar para sempre:** `potted_cactus` **não tem item** — no
+Minecraft o vaso com cacto só existe como bloco. A colônia esperava algo
+que não pode existir. São **oito** blocos assim no catálogo: os cinco
+vasos, `water`, `lava` e `water_cauldron`.
+
+### Duas metades independentes
+
+**1. Bloco sem item é montado, não esperado.** Pergunta ao jogo
+(`asItem() == AIR`) em vez de crescer a lista de quatro nomes escritos à
+mão — ADR-009. Destrava os oito de uma vez.
+
+**2. E é montado do que a colônia TEM.** Montar de graça seria a colônia
+criando recurso, que a primeira regra do Construction-System proíbe. A
+cadeia inteira, toda com receita do jogo:
+
+```text
+argila (colhida) → tijolo (fornalha) → vaso (bancada, 3 tijolos)
+cacto  (colhido, só o topo — deixar a base É o replantio)
+vaso + cacto → potted_cactus, montado no lugar
+```
+
+**O replantio não é um método:** cortar só o topo e deixar a base faz o
+cacto crescer de novo dali. É a Regra 7 do lenhador aplicada a outra
+planta.
+
+**Verificado:** build verde, **938 unitários**, **367 gametests** (+2),
+duas rodadas. Mutação nas duas metades.
+
+**A mutação cobrou de novo:** desligar `hasNoItemOfItsOwn` deixava os 366
+verdes — o conserto do defeito real não tinha teste. Escrevi o cenário da
+obra de um bloco de lava, e aí quebra.
+
+**E um teste-guarda me cobrou a declaração:**
+`theFurnaceMakesGlassIngotsSmoothSandstoneAndStone` falhou porque `BRICK`
+entrou na fornalha. É o serviço dele — a lista da fornalha não muda em
+silêncio.
+
+⚠️ **Espera playtest.**
+
+---
+
 ## ✅ A CASA SUBIU — 2026-09-19, 14:01→14:22
 
 **`Builder stopped — the house is up`.** A primeira casa terminada depois

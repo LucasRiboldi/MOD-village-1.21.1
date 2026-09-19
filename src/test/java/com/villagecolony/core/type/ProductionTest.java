@@ -55,7 +55,16 @@ class ProductionTest {
                         ResourceType.IRON_INGOT,
                         ResourceType.SMOOTH_SANDSTONE,
                         ResourceType.STONE,
-                        ResourceType.SMOOTH_STONE),
+                        ResourceType.SMOOTH_STONE,
+
+                        // <b>O tijolo entrou em 2026-09-19</b>, e este
+                        // teste cobrou a declaração — que é o serviço
+                        // dele. Ele é a segunda pedra da cadeia do vaso:
+                        // argila é colhida, o fundidor a assa em tijolo,
+                        // e o fabricante lavra três tijolos num vaso.
+                        // Receita do jogo, decisão do autor ("economia
+                        // completa do cacto").
+                        ResourceType.BRICK),
                 smelted,
                 "a lista do que sai de fornalha mudou sem que ninguém dissesse");
     }
