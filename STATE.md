@@ -137,6 +137,49 @@ as duas otimizações do planejador.*
 
 ---
 
+## A casa do deserto começou e parou — 2026-09-18, 20:40
+
+**Veredito da sessão: 8 verificados, 0 refutados.** A obra andou de 323 para
+**256 blocos** — 67 assentados, a primeira casa a subir no deserto.
+
+### Por que parou: a vila tem UM trabalhador
+
+```text
+21x  stopped — no minecraft:cut_sandstone in the colony chests
+ 7x  stopped — no minecraft:sand in the colony chests
+ 3x  no miner work: no worker in the village can do it
+```
+
+**Não é falha de cobertura.** O levantamento diz `nobody-makes-these: none`,
+e os donos existem: `cut_sandstone` é do **pedreiro**, `sand` da
+**superfície**, `sandstone` do **pedreiro** — todo o arenito tem quem o
+faça. O que falta é **gente**: `Equipped 1 workers`, cinco vezes. A colônia
+tem um aldeão, ele virou construtor, e não sobrou ninguém para minerar.
+
+**É o P1.2 outra vez, noutro material** — `OAK_PLANKS needs CRAFT_WOOD` na
+planície, `cut_sandstone` no deserto. A causa comum é população, não
+catálogo.
+
+### A placa invisível: estava no telhado
+
+**Causa medida, não suposta.** A placa ficava em `origin.y + size.y` — o
+**topo** da planta. As alturas do deserto, medidas pelo levantamento:
+
+```text
+desert_medium_house_2  11x8x7     <- a obra desta sessão
+desert_small_house_6   6x18x5     <- dezoito de altura
+desert_small_house_4   5x5x5
+```
+
+A placa da obra nasceu **8 blocos acima do chão**, fora do campo de visão de
+quem está ao lado dela. Corrigido para `LABEL_HEIGHT = 2.5` — acima da
+cabeça do jogador, abaixo de todo telhado do catálogo. O nome flutuante
+atravessa bloco, então não precisa de céu aberto para ser lido.
+
+⚠️ **Espera playtest.**
+
+---
+
 ## ✅ P1.3 — No deserto a Regra 3 trancava a vila (CONFIRMADO EM JOGO 09-18)
 
 **Playtest de 20:21, mesma colônia `9c9e465f` das duas sessões que deram

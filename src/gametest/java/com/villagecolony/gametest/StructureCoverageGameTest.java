@@ -164,6 +164,8 @@ public class StructureCoverageGameTest implements FabricGameTest {
 
         Set<String> seen = new TreeSet<>();
 
+        Set<String> sizes = new TreeSet<>();
+
         for (String style : STYLES) {
             for (ResourceId id : VillageStructures.housesFor(style)) {
                 if (!HousePlans.isDwelling(id)) {
@@ -176,13 +178,25 @@ public class StructureCoverageGameTest implements FabricGameTest {
                     continue;
                 }
 
+                // <b>A altura entra no relatorio</b> — 2026-09-18. A placa
+                // da obra fica em {@code origin.y + size.y}, e no deserto o
+                // autor nao a viu: se a planta for alta, a placa nasce
+                // fora do campo de visao de quem olha a obra do chao.
+                // Medir e mais barato que supor.
+                sizes.add(String.format(
+                        "%s %dx%dx%d",
+                        id.path().substring(id.path().lastIndexOf('/') + 1),
+                        plan.get().size().x(),
+                        plan.get().size().y(),
+                        plan.get().size().z()));
+
                 for (BlueprintBlock block : plan.get().blocks()) {
                     walkTheChain(world, block.block(), byOwner, orphans, seen, CHAIN_DEPTH);
                 }
             }
         }
 
-        report(byOwner, orphans, seen.size());
+        report(byOwner, orphans, seen.size(), sizes);
 
         context.assertTrue(
                 !seen.isEmpty(),
@@ -546,7 +560,10 @@ public class StructureCoverageGameTest implements FabricGameTest {
      * lê.
      */
     private static void report(
-            Map<String, Set<String>> byOwner, Set<String> orphans, int total) {
+            Map<String, Set<String>> byOwner,
+            Set<String> orphans,
+            int total,
+            Set<String> sizes) {
 
         StringBuilder out = new StringBuilder();
 
@@ -566,6 +583,17 @@ public class StructureCoverageGameTest implements FabricGameTest {
 
             out.append('\n');
         }
+
+        // A pegada de cada planta, com a ALTURA no meio. A placa da obra
+        // fica em origin.y + size.y, entao planta alta poe a placa fora
+        // do campo de visao de quem olha do chao — 2026-09-18.
+        out.append("footprints (x by HEIGHT by z)\n");
+
+        for (String size : sizes) {
+            out.append("    ").append(size).append('\n');
+        }
+
+        out.append('\n');
 
         if (orphans.isEmpty()) {
             out.append("nobody-makes-these: none\n");

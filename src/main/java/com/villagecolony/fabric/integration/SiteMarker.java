@@ -199,6 +199,16 @@ public final class SiteMarker {
      * que sobrevivesse ao fim da obra seria entidade órfã no mundo do
      * jogador, e disso o projeto já tem cicatriz.
      */
+    /**
+     * A que altura do chão do lote a placa flutua — 2026-09-18.
+     *
+     * <p>Dois e meio: acima da cabeça do jogador, abaixo de todo telhado
+     * do catálogo. Medido: as casas de deserto vão de 5 a 18 de altura, e
+     * a placa ficava no <b>topo</b> da planta — invisível de perto, que
+     * foi como o autor a perdeu.
+     */
+    private static final double LABEL_HEIGHT = 2.5;
+
     private static void label(
             ServerWorld world, ConstructionProject project, ColonyPos origin, ColonyPos size) {
 
@@ -210,10 +220,24 @@ public final class SiteMarker {
                 project.remainingCount(),
                 SiteMarker::nameOf);
 
-        // O centro do lote, e acima do teto da planta: a placa fica sobre a
-        // obra em vez de dentro da parede que está subindo.
+        // O centro do lote, e à <b>altura dos olhos</b> — 2026-09-18.
+        //
+        // <b>O defeito que isto conserta.</b> O autor construiu no deserto
+        // e não viu placa nenhuma. Ela estava lá: ficava em
+        // {@code origin.y + size.y}, o <b>topo</b> da planta, e as casas
+        // do deserto medem de 5 a 18 de altura — a
+        // {@code desert_medium_house_2} daquela obra tem 8, e a
+        // {@code desert_small_house_6} tem <b>dezoito</b>. A placa nascia
+        // acima do telhado, fora do campo de visão de quem está ao lado
+        // da obra.
+        //
+        // Dois e meio é acima da cabeça do jogador e abaixo de qualquer
+        // telhado do catálogo, então ela fica legível de perto sem entrar
+        // na parede que está subindo — que era o motivo de ela ter ido
+        // para o topo. O nome flutuante atravessa bloco, então não
+        // precisa estar no ar livre para ser lido.
         double x = origin.x() + size.x() / 2.0;
-        double y = origin.y() + size.y() + 0.5;
+        double y = origin.y() + LABEL_HEIGHT;
         double z = origin.z() + size.z() / 2.0;
 
         ArmorStandEntity sign = findSign(world, project, x, y, z);
