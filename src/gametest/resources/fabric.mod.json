@@ -9,6 +9,7 @@
   "entrypoints": {
     "fabric-gametest": [
       "com.villagecolony.gametest.MineSettlingGameTest",
+      "com.villagecolony.gametest.VolumeSampleGameTest",
       "com.villagecolony.gametest.FarmerGameTest",
       "com.villagecolony.gametest.FarmPlanGameTest",
       "com.villagecolony.gametest.ColonyDetectionGameTest",

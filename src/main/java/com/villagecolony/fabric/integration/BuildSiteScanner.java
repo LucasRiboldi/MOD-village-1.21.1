@@ -1458,6 +1458,8 @@ public final class BuildSiteScanner {
 
                 // Consulta em memória, ao registro de obras da colônia.
                 if (BlockProtection.isColonyBuilt(ground)) {
+                    VolumeSample.colonyBuilt();
+
                     LotRefusals.refused(colonyId, LotRefusals.Reason.OCCUPIED);
 
                     return Optional.empty();
@@ -1592,6 +1594,12 @@ public final class BuildSiteScanner {
             BlockPos at = new BlockPos(x, y, z);
 
             if (!isNothing(chunk.getBlockState(at))) {
+                // <b>Qual bloco barrou</b> — P1.6, 2026-09-19. A Regra 22
+                // é 70% das recusas em duas sessões seguidas e não dizia
+                // de que era feita. Aqui, e só aqui, porque este é o
+                // bloco que parou a conferência. Ver VolumeSample.
+                VolumeSample.inTheColumn(world, at);
+
                 return false;
             }
 
@@ -1608,6 +1616,10 @@ public final class BuildSiteScanner {
             // A recusa precisa acontecer aqui dentro, onde a varredura
             // pode seguir para o anel seguinte.
             if (BlockProtection.isColonyBuilt(at)) {
+                // Miolo da propria cabana: e a colonia cheia, nao coisa
+                // no caminho. Separar as duas e o P1.6. Ver VolumeSample.
+                VolumeSample.colonyBuilt();
+
                 return false;
             }
         }

@@ -248,7 +248,29 @@ a amostra decidiu o P1.3 numa leitura. Sem ela, "algo está no caminho"
 pode ser cacto, pode ser a própria casa vizinha, pode ser mato: três
 consertos opostos.
 
-⚠️ **Próximo passo natural**, e é instrumentação antes de conserto.
+### ✅ A amostra foi construída (09-19)
+
+`VolumeSample` separa as **duas causas** que dividiam a linha, e elas
+pedem consertos opostos:
+
+| causa | o que significa | o conserto |
+|---|---|---|
+| `COLONY_BUILT` | a própria colônia já construiu ali | procurar mais longe / crescer a rua |
+| `IN_THE_COLUMN` | tem bloco físico na coluna | depende **do bloco**, e agora ele é nomeado |
+
+A linha nova sai junto do `LotRefusals`:
+
+```text
+Rule 22 turned lots down — N the colony had already built there,
+                           M had something in the column — 120 cactus; 45 sandstone; ...
+```
+
+Conta **por posição, não por visita** — a lição de 09-18, em que o
+`ProtectionSample` relatou "1548 chest" numa vila de três camas porque a
+varredura repassa a mesma coluna a cada ciclo.
+
+⚠️ **Espera playtest.** A amostra não conserta nada; ela decide qual
+conserto fazer.
 
 ---
 

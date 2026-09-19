@@ -205,6 +205,9 @@ public final class LotRefusals {
         // consertos opostos. Sai junto porque é aqui que quem investiga
         // já está olhando. Ver ProtectionSample.
         ProtectionSample.report();
+
+        // E de que a Regra 22 e feita — P1.6. Ver VolumeSample.
+        VolumeSample.report();
     }
 
     /** Quantas recusas deste motivo a colônia acumulou. Para a bateria. */
