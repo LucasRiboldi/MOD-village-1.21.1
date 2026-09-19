@@ -226,6 +226,77 @@ continuar distinguível do esgotamento. Decisão do autor.
 
 ---
 
+## 🟠 P1.6 — O gargalo mudou de dono: Regra 22 sem amostra (09-19, 10:36→11:02)
+
+**O P1.5 está funcionando** e isso está medido: 39 passagens sobre
+**39.163 colunas**, índice descartado 2×, 2 voltas completas. A varredura
+voltou a existir.
+
+**Mas a vila não planejou obra nenhuma** — `0 survived every check` de 532
+candidatas. E a recusa dominante agora é outra:
+
+| recusa | quantas | % |
+|---|---|---|
+| **algo dentro do volume (Regra 22)** | **371** | **70%** |
+| janela vertical | 65 | 12% |
+| Regra 3 | 50 | 9% |
+| nível de rua | 46 | 9% |
+
+**A Regra 22 é 70% das recusas e não diz de que é feita.** É a mesma
+cegueira que o `ProtectionSample` desfez para a Regra 3 em 09-18 — e ali
+a amostra decidiu o P1.3 numa leitura. Sem ela, "algo está no caminho"
+pode ser cacto, pode ser a própria casa vizinha, pode ser mato: três
+consertos opostos.
+
+⚠️ **Próximo passo natural**, e é instrumentação antes de conserto.
+
+---
+
+## ✅ Duas entregas do deserto — 2026-09-19, pedido do autor
+
+### A areia da planta vira arenito
+
+**Emenda à Regra 27, decidida pelo autor** — a terceira (pedra em 08-26,
+espécie de madeira em 09-05, areia agora). As casas do deserto pedem
+`sand` **junto com nove variantes de arenito**; a areia é o punhado do
+piso e da moldura, e ela **cai** — casa entregue com areia na parede
+desaba no primeiro vizinho quebrado.
+
+**A troca é na PLANTA, e essa foi a decisão de projeto que quase saiu
+errada.** Trocar só no `BuilderWork` faria a obra **pedir areia** ao baú e
+**assentar arenito**, porque a demanda sai de `remainingMaterials()`, que
+conta o bloco da planta. Conta e parede discordando é exatamente o defeito
+de **2026-08-22**. Trocando no único ponto em que a planta é montada
+(`StructureBlueprintReader`), as três pontas voltam a falar do mesmo
+bloco.
+
+Fora do deserto **nada muda**: a areia da praia de uma vila de planície é
+da planta dela.
+
+### O mineiro espera a areia assentar
+
+Areia e cascalho caem; enquanto caem, aquele espaço não é pedra nem ar —
+é `FallingBlockEntity`. Cavar durante a queda é cavar no escuro: o alvo
+desce, o buraco se reenche, a picareta bate no ar. No deserto isso é a
+regra, não a exceção.
+
+**Decisão do autor:** espera assentar e **recalcula o alvo** — o que caiu
+ocupou o lugar, e insistir na pedra de antes seria bater onde não há mais
+nada. A areia que desce é minério que chega sozinho até a mão dele.
+
+Pergunta pela **entidade**, não pelo bloco: *"está caindo agora"* em vez
+de *"vai cair"*. Paciência de 100 tiques impede que uma queda infinita
+(areia sobre água, gerador de jogador) aposente o mineiro.
+
+**Verificado:** `build` verde, **931 unitários** (+5), **352 gametests**
+(+3), **duas rodadas verdes**. Mutação nas duas direções de cada um: não
+trocar / trocar em todo estilo; nunca esperar / esperar para sempre —
+esta última é a que produziria um mineiro que nunca mais cava.
+
+⚠️ **Espera playtest.**
+
+---
+
 ## ✅ O leitor de log mentia em três itens de uma vez (corrigido 09-19)
 
 **O falso positivo:** a assinatura de refutação `"0 survived every check"`

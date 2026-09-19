@@ -6,6 +6,7 @@ import com.villagecolony.core.construction.model.BuildOrder;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.work.DesertSand;
 import com.villagecolony.core.type.ColonyPos;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.enums.BedPart;
@@ -240,7 +241,13 @@ public final class StructureBlueprintReader {
             return Optional.empty();
         }
 
-        return Optional.of(Blueprint.of(structure, blocks));
+        // A areia da planta do deserto vira arenito aqui, e só aqui —
+        // 2026-09-19. Este é o único ponto em que a planta é montada, e é
+        // por isso que a troca mora nele: quem pergunta o que a obra
+        // precisa, quem espera o bloco e quem o assenta leem todos a
+        // MESMA planta. Trocar mais adiante faria a colônia estocar areia
+        // e o construtor assentar arenito, que é o defeito de 08-22.
+        return Optional.of(Blueprint.of(structure, DesertSand.baked(structure, blocks)));
     }
 
     /**

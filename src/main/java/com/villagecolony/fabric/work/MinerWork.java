@@ -181,6 +181,15 @@ public final class MinerWork {
         int collected;
 
         /**
+         * Tiques esperando a areia assentar — 2026-09-19.
+         *
+         * <p>Mora no {@code Job} porque é ele que sobrevive entre tiques.
+         * Zera quando o alvo muda: a paciência é <b>desta</b> queda, e
+         * não do turno inteiro. Ver {@link MineSettling}.
+         */
+        int settling;
+
+        /**
          * Quanto do recurso pedido já entrou no baú nesta tarefa.
          *
          * <p>Separado de {@link #collected} desde 2026-09-09, e é o E3:
@@ -446,6 +455,46 @@ public final class MinerWork {
         // trabalhar é a prova de que ele não está congelado. Mesmo lugar
         // em que o BuilderWork e o CraftingWork sempre zeraram.
         job.stall.reset();
+
+        // <b>Ele espera a areia assentar antes de bater</b> — pedido do
+        // autor, 2026-09-19. Cavar no meio da queda é cavar no escuro: o
+        // alvo desce um bloco, o buraco se reenche, e a picareta bate no
+        // ar. Ver MineSettling.
+        //
+        // O guarda de imobilidade já foi zerado acima, e é de propósito:
+        // esperar a duna assentar é trabalho, não congelamento — o mesmo
+        // argumento do lenhador parado cortando árvore.
+        if (MineSettling.waits(world, job.target, job.settling)) {
+            job.settling++;
+
+            return false;
+        }
+
+        if (job.settling > 0) {
+            // <b>Assentou: o alvo é recalculado antes da próxima batida</b>
+            // — decisão do autor entre as duas opções. O que caiu ocupou o
+            // lugar, então a pedra de antes pode estar soterrada; insistir
+            // nela seria bater onde não há mais nada. Soltar o alvo faz a
+            // passagem seguinte escolher de novo, e o que desceu é minério
+            // que chegou sozinho até a mão dele.
+            VillageColonyMod.LOGGER.info(
+                    "Miner {} waited {} ticks for the sand to settle at {} — picking a target again",
+                    villager.getUuid().toString().substring(0, 8),
+                    job.settling,
+                    job.target.toShortString());
+
+            job.settling = 0;
+
+            job.target = null;
+
+            job.approach = null;
+
+            job.progress = 0;
+
+            job.required = 0;
+
+            return false;
+        }
 
         mine(world, villager, job, storage.get());
 
