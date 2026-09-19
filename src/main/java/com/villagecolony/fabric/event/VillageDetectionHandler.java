@@ -19,6 +19,7 @@ import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.Worker;
+import com.villagecolony.core.worker.service.HiringLog;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.core.storage.model.WorkerStorage;
@@ -963,6 +964,23 @@ public final class VillageDetectionHandler {
         if (assigned > 0) {
             VillageColonyMod.LOGGER.info(
                     "Assigned {} professions in colony {}", assigned, colony.id());
+        }
+
+        // <b>E por que as outras não saíram</b> — 2026-09-18. A linha
+        // acima só fala quando alguém foi contratado, e o caso que
+        // interessa é justamente o mudo: a vila do deserto parou 28 vezes
+        // esperando cut_sandstone, que é do pedreiro, sem nunca ter tido
+        // pedreiro — e nada no log dizia se a vaga não abriu, se abriu e
+        // ninguém a quis, ou se a colônia estava lotada.
+        //
+        // Sai a cada passagem que tenha algo a dizer, e o HiringLog só
+        // devolve texto para profissão NÃO preenchida: quem conseguiu
+        // gente não é o assunto.
+        String hiring = HiringLog.report(colony.id());
+
+        if (!hiring.isEmpty()) {
+            VillageColonyMod.LOGGER.info(
+                    "Colony {} hiring — {}", colony.id(), hiring);
         }
 
         // Depois da atribuição, e não só quando ela muda algo: um

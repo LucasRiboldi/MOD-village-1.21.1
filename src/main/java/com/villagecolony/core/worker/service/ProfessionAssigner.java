@@ -141,16 +141,47 @@ public final class ProfessionAssigner {
 
         Map<ProfessionType, Integer> counts = countByProfession(colonyWorkers);
 
+        // <b>Por que cada vaga não saiu</b> — 2026-09-18. As duas recusas
+        // abaixo eram silenciosas, e do lado de fora "a conta não abre a
+        // vaga" e "a vaga abre e o candidato está de castigo" são o mesmo
+        // nada: a vila simplesmente não tem pedreiro. Foi o que custou a
+        // investigação do deserto — 28 paradas esperando cut_sandstone,
+        // que é do pedreiro, com o pedreiro sendo o TERCEIRO da ordem e o
+        // fundidor, que é o quarto, com 109 linhas no log.
+        //
+        // Só conta quando há candidato: a pergunta sem dono é a contagem
+        // da colônia, e ela roda a cada passagem por motivo próprio —
+        // registrá-la encheria o relatório de ruído que não é decisão de
+        // contratação. Ver HiringLog.
+        UUID colonyId = candidate == null ? null : candidate.colonyId();
+
         for (ProfessionType type : PRODUCER_ORDER) {
             if (counts.get(type) >= targetCount(type, adultPopulation)) {
+                if (colonyId != null) {
+                    HiringLog.record(colonyId, type, HiringLog.Outcome.AT_TARGET);
+                }
+
                 continue;
             }
 
             if (candidate != null && candidate.isShunning(type)) {
+                HiringLog.record(colonyId, type, HiringLog.Outcome.SHUNNED);
+
                 continue;
             }
 
+            if (colonyId != null) {
+                HiringLog.record(colonyId, type, HiringLog.Outcome.FILLED);
+            }
+
             return Optional.of(type);
+        }
+
+        if (colonyId != null) {
+            // Nenhuma profissão serviu a este candidato. A conta por
+            // profissão acima já disse quais e por quê; esta linha existe
+            // para o caso de a ordem ficar vazia, que seria outro defeito.
+            HiringLog.record(colonyId, PRODUCER_ORDER.get(0), HiringLog.Outcome.NO_VACANCY);
         }
 
         return Optional.empty();

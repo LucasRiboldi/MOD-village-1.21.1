@@ -22,6 +22,7 @@ import com.villagecolony.fabric.integration.RoadExtension;
 import com.villagecolony.fabric.integration.VillageRoad;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.core.worker.service.HiringLog;
 import com.villagecolony.fabric.integration.LotRefusals;
 import com.villagecolony.fabric.integration.ProtectionSample;
 import com.villagecolony.fabric.integration.SiteMarker;
@@ -104,6 +105,7 @@ public final class ServerLifecycleHandler {
         // assimetria piorou quando o contador de colunas aceitas entrou
         // nela. Ver LotRefusals.
         LotRefusals.clearAll();
+        HiringLog.clearAll();
         ProtectionSample.clearAll();
         PhantomWorkerLog.clearAll();
         TestBarrier.clearAll();
@@ -275,6 +277,7 @@ public final class ServerLifecycleHandler {
         // assimetria piorou quando o contador de colunas aceitas entrou
         // nela. Ver LotRefusals.
         LotRefusals.clearAll();
+        HiringLog.clearAll();
         ProtectionSample.clearAll();
         PhantomWorkerLog.clearAll();
         TestBarrier.clearAll();
