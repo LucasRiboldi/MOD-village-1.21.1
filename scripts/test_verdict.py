@@ -19,7 +19,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from verdict import ITEMS, judge  # noqa: E402
+from verdict import ITEMS, count, judge  # noqa: E402
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -102,6 +102,46 @@ def test_the_three_verdicts_are_reachable() -> list[str]:
     return broken
 
 
+def test_a_number_does_not_match_inside_another() -> list[str]:
+    """`0 survived` nao casa dentro de `30 survived` -- 2026-09-19.
+
+    O falso positivo REAL: a sessao das 02:19 escreveu
+    `lot columns: 30 survived every check`, que e a linha de SUCESSO, e
+    tres itens sairam REFUTADO porque a refutacao `"0 survived every
+    check"` casa dentro de `"30 ..."`. Nao era um veredito errado, eram
+    tres -- P0.7, P1.0 e P1.3 dividem essa assinatura.
+
+    O teste fixa as duas metades, porque um conserto que so silencie o
+    falso positivo pode ter matado a refutacao de verdade junto -- e af
+    o item nunca mais sai REFUTADO, que e a falha silenciosa que este
+    arquivo inteiro existe para impedir.
+    """
+    broken = []
+
+    mark = "0 survived every check"
+
+    real_success = "lot columns: 30 survived every check, 616 were turned down"
+
+    if count(real_success, mark) != 0:
+        broken.append(
+            "'30 survived every check' contou como refutacao -- o falso"
+            " positivo que derrubou tres itens em 09-19"
+        )
+
+    # A outra metade: o zero de verdade AINDA refuta. Sem isto o conserto
+    # poderia ser "nunca casar nada", que passa neste teste e cega a
+    # ferramenta.
+    real_failure = "lot columns: 0 survived every check, 900 were turned down"
+
+    if count(real_failure, mark) != 1:
+        broken.append(
+            "'0 survived every check' de verdade deixou de refutar -- o"
+            " conserto cegou a ferramenta em vez de afina-la"
+        )
+
+    return broken
+
+
 def main() -> int:
     code = production_text()
 
@@ -114,6 +154,7 @@ def main() -> int:
         test_every_signature_exists(code)
         + test_every_item_can_be_proven()
         + test_the_three_verdicts_are_reachable()
+        + test_a_number_does_not_match_inside_another()
     )
 
     if failures:

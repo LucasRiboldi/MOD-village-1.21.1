@@ -171,7 +171,31 @@ class Result:
 
 
 def count(text: str, needle: str) -> int:
-    return text.count(needle)
+    """Quantas vezes a assinatura aparece, sem casar no meio de um numero.
+
+    <b>O falso positivo que isto conserta, medido em 2026-09-19.</b> A
+    assinatura de refutacao `"0 survived every check"` casava dentro de
+    `"30 survived every check"` -- a linha de SUCESSO da sessao, que dizia
+    que trinta colunas sobreviveram. `str.count` nao sabe onde comeca um
+    numero, entao o `0` do `30` servia de assinatura.
+
+    O estrago nao foi um veredito: foram <b>tres</b>. P0.7, P1.0 e P1.3
+    compartilham essa refutacao, e os tres sairam REFUTADO na sessao em que
+    a vila planejou casa. E o pior tipo de erro de ferramenta, porque o
+    numero errado era plausivel -- eu quase fui investigar tres regressoes
+    que nunca existiram.
+
+    E nao era so o 30: qualquer contagem terminada em zero -- 10, 20, 100 --
+    dispararia a mesma refutacao para sempre.
+
+    O conserto: assinatura que COMECA com digito so casa em inicio de
+    numero. O texto da assinatura continua literal, que e o que o
+    test_verdict.py confere contra src/main.
+    """
+    if not needle[:1].isdigit():
+        return text.count(needle)
+
+    return len(re.findall(r"(?<![0-9])" + re.escape(needle), text))
 
 
 def judge(item: Item, text: str) -> Result:

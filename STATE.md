@@ -153,7 +153,27 @@ normal é a **repetição**.
 **Conferido por mutação nas duas metades:** nunca descartar falha 1 teste,
 descartar na primeira volta falha 4.
 
-⚠️ **Espera playtest.**
+### ✅ CONFIRMADO EM JOGO — sessão 02:19→02:47 de 09-19
+
+A cadeia inteira saiu no log, em ordem e com um minuto de intervalo:
+
+```text
+02:22:33  dropped its road index — 5 columns asked over 4 rounds
+          and no lot came of any. The next pass sweeps the ground again
+02:23:33  planned minecraft:village/desert/houses/desert_small_house_6
+          at [-344, 71, 584] — 322 blocks, 7 builders
+```
+
+E a varredura voltou a existir, que era o sintoma:
+
+| | antes | depois |
+|---|---|---|
+| `sweep` | 32 runs, **0 passes over 0 columns** | 11 runs, **7 passes over 6.407 columns** |
+| lotes aprovados | 0 | **30 survived every check** (5% de 646) |
+
+O beco sem saída está desfeito: o índice foi descartado depois de quatro
+voltas vazias, a varredura correu, e a casa foi planejada na passagem
+seguinte.
 
 ---
 
@@ -203,6 +223,32 @@ sem nunca chegar a varrer chão novo.
 índice no ponto da volta completa — mas mexe na porta de entrada de todo
 planejamento de obra, e a régua de orçamento (`MAX_COLUMNS`) precisa
 continuar distinguível do esgotamento. Decisão do autor.
+
+---
+
+## ✅ O leitor de log mentia em três itens de uma vez (corrigido 09-19)
+
+**O falso positivo:** a assinatura de refutação `"0 survived every check"`
+casava dentro de `"30 survived every check"` — a linha de **sucesso** da
+sessão. `str.count` não sabe onde começa um número, então o `0` do `30`
+servia de assinatura.
+
+**Três itens saíram REFUTADO** — P0.7, P1.0 e P1.3 dividem essa refutação —
+na sessão em que a vila planejou casa. O veredito honesto é **0 refutados**.
+
+É o pior tipo de erro de ferramenta, porque o número errado era plausível:
+eu quase fui investigar três regressões que nunca existiram. E não era só o
+30 — qualquer contagem terminada em zero (10, 20, 100) dispararia a mesma
+refutação para sempre.
+
+**O conserto:** assinatura que começa com dígito só casa em início de
+número (`(?<![0-9])`). O texto continua literal, que é o que o
+`test_verdict.py` confere contra `src/main`.
+
+**Mutação nas duas metades:** voltar ao `str.count` falha o teste do falso
+positivo; cegar o casamento falha o teste de que o zero **de verdade** ainda
+refuta. Sem a segunda metade, "nunca casar nada" passaria — e a ferramenta
+ficaria cega em vez de afinada.
 
 ---
 
