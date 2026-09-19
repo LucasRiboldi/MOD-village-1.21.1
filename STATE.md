@@ -137,6 +137,54 @@ as duas otimizações do planejador.*
 
 ---
 
+## ✅ P1.3 confirmado, e o gargalo mudou de dono — 2026-09-19, 1 hora
+
+**A correção da Regra 3 funcionou, e o número é direto:**
+
+| | Regra 3 | total de recusas |
+|---|---|---|
+| 09-18 (antes) | **69%** — 7.821 | 11.284 |
+| 09-19 (depois) | **5,5%** — 2.774 | 50.568 |
+
+A amostra caiu junto, de 12.651 blocos protegidos para **235**:
+
+```text
+Rule 3 protected these blocks — 105 smooth_sandstone; 88 sand;
+                                34 sandstone; 4 chest; 2 hay_block
+```
+
+O que sobra ali é chão residual mais **peça de verdade** — baú e fardo de
+feno —, que é exatamente o que a Regra 3 deve proteger.
+
+### O novo topo, e ele não é o mesmo defeito
+
+```text
+20073 (39,7%)  something stands inside the house's volume   <- Regra 22
+14716 (29,1%)  the ground is inside a reserved road area
+ 8589 (17,0%)  the ground is not at street level
+ 4008 ( 7,9%)  no ground in the village's vertical window
+ 2774 ( 5,5%)  Rule 3
+```
+
+**Zero lotes aprovados em 50.568 candidatas** — a vila continua sem
+construir, por outra razão.
+
+⚠️ **Não investigado, e há uma pista forte:** `348 planner runs, 0 passes
+over 0 columns, 348 answered by the index — 0 complete rounds`. A colônia
+**nunca varreu o terreno** nesta sessão: todas as 348 passagens foram
+respondidas pelo índice de ruas, que oferece só as colunas de beira de rua
+já conhecidas. As 50.568 recusas saem desse conjunto estreito, e num
+deserto plano com a vila apertada contra as casas existentes o volume da
+planta quase sempre esbarra em alguma coisa.
+
+**A linha `hiring` não saiu** — o caminho de contratação não rodou em
+nenhuma das 348 passagens, então a investigação do pedreiro continua sem
+resposta. Isso é informação: `Assigned N professions` também não apareceu,
+e as duas ausências juntas dizem que a colônia não tentou contratar
+ninguém nesta hora.
+
+---
+
 ## A casa do deserto começou e parou — 2026-09-18, 20:40
 
 **Veredito da sessão: 8 verificados, 0 refutados.** A obra andou de 323 para
