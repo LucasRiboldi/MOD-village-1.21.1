@@ -1716,6 +1716,44 @@ public final class BuildSiteScanner {
      * abertas, mas responde por <b>ponto</b>; aqui a pergunta é da caixa,
      * que é a forma do que se quer impedir.
      */
+    /**
+     * Se esta obra ocupa o mesmo espaço de algo já construído —
+     * 2026-09-19.
+     *
+     * <p>Existe para a <b>retomada</b>: o portão de caixa governa quem
+     * escolhe lote, e a obra gravada no save não passa por ele. Um lote
+     * ruim escolhido por uma versão anterior sobrevivia a todo conserto
+     * do scanner e voltava a cada carregamento.
+     *
+     * <p>Ignora a própria obra, e é obrigatório: ela está no registro de
+     * obras abertas quando esta pergunta é feita, e sem isso toda obra
+     * se acusaria de pisar em si mesma.
+     */
+    public static boolean overlapsSomethingBuilt(ConstructionProject project) {
+        Building box = Building.of(project);
+
+        if (VillageColonyMod.BUILDINGS.anythingBuiltInside(box.min(), box.max())) {
+            return true;
+        }
+
+        for (ConstructionProject other : VillageColonyMod.CONSTRUCTIONS.all()) {
+            if (other.id().equals(project.id()) || !other.state().isOpen()) {
+                continue;
+            }
+
+            Building site = Building.of(other);
+
+            if (box.min().x() <= site.max().x() && box.max().x() >= site.min().x()
+                    && box.min().y() <= site.max().y() && box.max().y() >= site.min().y()
+                    && box.min().z() <= site.max().z() && box.max().z() >= site.min().z()) {
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static boolean anyOpenSiteInside(UUID colonyId, ColonyPos min, ColonyPos max) {
         for (ConstructionProject project : VillageColonyMod.CONSTRUCTIONS.all()) {
             if (!project.state().isOpen()) {

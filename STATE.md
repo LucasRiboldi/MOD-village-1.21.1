@@ -226,6 +226,54 @@ continuar distinguível do esgotamento. Decisão do autor.
 
 ---
 
+## ✅ A obra gravada no save também passa pelo portão — 19:29→19:57
+
+### O acavalamento voltou, e eu sei por quê
+
+**A obra não foi escolhida nesta sessão** — o log prova: zero varreduras,
+zero recusas, zero `planned`. Ela foi **retomada**:
+
+```text
+resumed desert_fletcher_house_1 — 2 blocks already standing, 238 to go
+```
+
+**O portão de caixa de 15:49 governa quem ESCOLHE lote. A retomada não
+passava por ele** — então um lote ruim escolhido por uma versão anterior
+sobrevivia a todo conserto do scanner e voltava a cada carregamento do
+save.
+
+**Entregue:** a retomada confere a caixa contra o que já está de pé, e
+larga a obra **intocada** que pisa em outra. Só a intocada — casa pela
+metade é do jogador, e abandoná-la deixaria esqueleto no mundo com o lote
+ocupado, que é a mesma razão que o descarte por planta superada já
+escrevia.
+
+### E a obra parou por falta de madeira, não por defeito
+
+A linha nova disse em uma leitura:
+
+```text
+could not make minecraft:fletching_table — needs 4 minecraft:oak_planks and has 0
+```
+
+A colônia tem **zero madeira** — estoque só de pedra e areia —, o
+lenhador passou a sessão `looking for a tree` e **nenhuma árvore foi
+derrubada**. É uma vila de deserto sem floresta ao alcance.
+
+**O viveiro plantou 4 mudas de carvalho** nesta sessão. Elas precisam
+crescer; é a plantação de 09-19 funcionando, mas madeira leva tempo.
+
+### E a reserva do cru está visível no estoque
+
+`SANDSTONE=51` e `SMOOTH_SANDSTONE=51` — exatamente empatados, que é o
+ponto de equilíbrio da regra.
+
+**Verificado:** build verde, **947 unitários** (+4), **370 gametests**,
+2 de 3 rodadas (a falha é a instabilidade conhecida, não determinística).
+Mutação nas duas pontas do portão — cego e sem altura.
+
+---
+
 ## ✅ CONFIRMADO EM JOGO — 18:42→19:11
 
 **As quatro entregas funcionaram, e cada uma tem linha própria no log.**

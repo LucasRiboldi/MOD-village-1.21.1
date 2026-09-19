@@ -771,6 +771,29 @@ public final class ConstructionPlanner {
             }
         }
 
+        // <b>Obra gravada em cima de outra construção é largada</b> —
+        // 2026-09-19, visto em jogo. O portão de caixa de 15:49 governa
+        // quem ESCOLHE lote; a retomada não passava por ele, então um
+        // lote ruim escolhido por uma versão anterior sobrevivia a todo
+        // conserto do scanner e voltava a cada carregamento do save.
+        //
+        // <b>Só a intocada</b>, e a razão é a mesma que o descarte
+        // abaixo já escreve: casa pela metade é do jogador, e abandoná-la
+        // deixaria um esqueleto no mundo com o lote ocupado. Com zero
+        // blocos de pé não se perde nada.
+        if (standing == 0 && BuildSiteScanner.overlapsSomethingBuilt(project)) {
+            VillageColonyMod.LOGGER.warn(
+                    "Colony {} drops the saved {} at {} — it sits inside something that is"
+                            + " already built, and no block of it stands yet",
+                    colony.id(),
+                    project.blueprint().id(),
+                    project.origin());
+
+            VillageColonyMod.CONSTRUCTIONS.dropPending(colony.id());
+
+            return;
+        }
+
         Optional<ResourceId> target = HousePlans.houseFor(world, colony).map(Blueprint::id);
 
         // <b>Roça não é versão velha de casa</b> — 2026-09-05. O alvo
