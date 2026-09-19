@@ -115,6 +115,48 @@ public final class ChestDepositor {
     }
 
     /**
+     * Quão cheio este baú está, de 0 a 100 — 2026-09-19.
+     *
+     * <p><b>Conta vaga ocupada, e não item guardado</b>, porque é a vaga
+     * que acaba: um baú com vinte e sete pilhas de uma unidade está
+     * cheio para todo efeito, e foi assim que o baú do mineiro chegou a
+     * jogar 660 itens no chão numa sessão. Medir por item diria que ele
+     * estava quase vazio.
+     *
+     * <p>Devolve 0 quando o baú não existe ou o pedaço de mundo está
+     * descarregado: sem leitura não se declara aperto, e o caminho comum
+     * segue como sempre.
+     */
+    public static int howFull(ServerWorld world, ColonyPos chest) {
+        BlockPos position = MinecraftTypeAdapter.toBlockPos(chest);
+
+        WorldChunk chunk = world.getChunkManager()
+                .getWorldChunk(position.getX() >> 4, position.getZ() >> 4);
+
+        if (chunk == null) {
+            return 0;
+        }
+
+        if (!(chunk.getBlockEntity(position) instanceof ChestBlockEntity inventory)) {
+            return 0;
+        }
+
+        if (inventory.size() <= 0) {
+            return 0;
+        }
+
+        int used = 0;
+
+        for (int slot = 0; slot < inventory.size(); slot++) {
+            if (!inventory.getStack(slot).isEmpty()) {
+                used++;
+            }
+        }
+
+        return used * 100 / inventory.size();
+    }
+
+    /**
      * Quanto ainda cabe de um grupo de recursos, num baú só.
      *
      * <p>Difere de {@link #freeSpaceFor} por não perguntar por um item:

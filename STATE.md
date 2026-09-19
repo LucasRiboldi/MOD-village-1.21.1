@@ -226,6 +226,56 @@ continuar distinguível do esgotamento. Decisão do autor.
 
 ---
 
+## 🔴 P1.7 — O baú cheio destrói o que a obra espera (achado 09-19, 12:09→12:28)
+
+**A sessão em que a vila finalmente construiu, e parou por outro motivo.**
+107 lotes aprovados (22%), **2 obras planejadas** — e a obra travou em
+`WAITING_RESOURCES ... waiting for minecraft:sandstone`, com **318 de 323
+blocos** por pôr.
+
+**Ao mesmo tempo, 365 sandstone eram jogados no chão.**
+
+```text
+Miner chest at [-1364, 63, 1410] is full — dropped 1 of minecraft:sandstone
+```
+
+660 itens destruídos, 668 avisos de baú cheio. **Um** baú, com vinte
+livres ao lado.
+
+**A assimetria é a raiz:** o construtor **LÊ** todos os 21 baús
+(`ColonySupply.take`), o mineiro só **ESCREVE** no próprio.
+
+**E o fundidor era sintoma, não causa.** A linha
+`none of 21 colony chests had sandstone to smelt` estava **certa**: a obra
+pede `smooth_sandstone`, que é `SMELTED` a partir de `sandstone` — e o
+sandstone estava no chão. Um conserto resolve os dois.
+
+### ✅ O conserto: puxar, não transbordar (decisão do autor)
+
+> *"quando o baú da profissão passar da metade do preenchimento, as outras
+> profissões devem forçar a criação de itens que futuramente serão
+> utilizados para criar as estruturas do bioma"*
+
+**É melhor que as três opções que eu tinha levantado.** Transbordar para o
+baú do vizinho resolve o sintoma e adia a causa — o baú seguinte enche
+também. Puxar ataca a causa: a matéria vira peça, o baú esvazia porque
+quatro areias viram um arenito, e a obra encontra pronto o que ia esperar.
+
+**A lacuna que ele fecha:** a demanda hoje só nasce de **obra aberta**.
+Sem obra — ou com ela parada esperando —, ninguém produz nada, e a colônia
+só começa a fabricar depois que a obra pede, que é tarde demais.
+
+Mede **vaga ocupada, não item guardado**: um baú com 27 pilhas de uma
+unidade está cheio, e medir por item diria que estava vazio.
+
+**Verificado:** build verde, **935 unitários** (+4), **357 gametests**
+(+3). Mutação nas três: borda `>=` em vez de `>`, nunca chamar, e medir
+item em vez de vaga.
+
+⚠️ **Espera playtest.**
+
+---
+
 ## 🟠 P1.6 — O gargalo mudou de dono: Regra 22 sem amostra (09-19, 10:36→11:02)
 
 **O P1.5 está funcionando** e isso está medido: 39 passagens sobre
@@ -269,8 +319,19 @@ Conta **por posição, não por visita** — a lição de 09-18, em que o
 `ProtectionSample` relatou "1548 chest" numa vila de três camas porque a
 varredura repassa a mesma coluna a cada ciclo.
 
-⚠️ **Espera playtest.** A amostra não conserta nada; ela decide qual
-conserto fazer.
+### ✅ RESPONDIDO EM JOGO — 12:09→12:28
+
+```text
+Rule 22 turned lots down — 10 the colony had already built there,
+                           0 had something in the column
+```
+
+**E a Regra 22 deixou de ser o gargalo:** de 70% das recusas para **2,7%**
+(10 de 376). A vila aprovou **107 lotes (22%)** e planejou **2 obras**.
+Nenhuma das 10 foi bloco no caminho — era a colônia achando a própria
+obra, que é o comportamento correto.
+
+A amostra fez o trabalho dela: respondeu numa leitura e saiu da frente.
 
 ---
 

@@ -169,6 +169,45 @@ public final class ColonyGoals {
     }
 
     /**
+     * A partir de quanto cheio o baú chama as outras profissões.
+     *
+     * <p><b>Decisão do autor, 2026-09-19:</b> <i>"quando o baú da
+     * profissão passar da metade do preenchimento, as outras profissões
+     * devem forçar a criação de itens que futuramente serão utilizados
+     * para criar as estruturas do bioma"</i>.
+     */
+    public static final int CHEST_HALF_FULL = 50;
+
+    /**
+     * Se o baú desta profissão já pede ajuda das outras.
+     *
+     * <p><b>O que isto conserta, medido em 2026-09-19 12:09→12:28.</b> O
+     * baú do mineiro encheu e ele jogou <b>660 itens no chão</b> — 365
+     * deles {@code sandstone}, que era <b>exatamente</b> o que a obra
+     * esperava em {@code WAITING_RESOURCES}. Um baú cheio, vinte livres
+     * ao lado, e 318 de 323 blocos por pôr.
+     *
+     * <p><b>Por que puxar em vez de transbordar.</b> Transbordar para o
+     * baú do vizinho resolveria o sintoma e adiaria o problema: o baú
+     * seguinte enche também, e a colônia acumula matéria bruta que
+     * ninguém converteu. Puxar ataca a causa — a matéria vira
+     * <b>peça de construção</b>, o baú esvazia, e a obra encontra pronto
+     * o que ia esperar.
+     *
+     * <p>É a mesma forma do {@link #logsToConvert}, que é regra do autor
+     * de 09-05: converter o excedente em vez de guardá-lo. A diferença é
+     * o gatilho — lá é a proporção entre tora e tábua, aqui é o
+     * <b>espaço</b> acabando.
+     *
+     * @param percentFull quão cheio o baú está, de 0 a 100. A medida é da
+     *     camada fabric, que é quem sabe ler inventário — o Core não
+     *     conhece {@code ChestBlockEntity} (ADR-005)
+     */
+    public static boolean chestCallsForHelp(int percentFull) {
+        return percentFull > CHEST_HALF_FULL;
+    }
+
+    /**
      * A meta desta colônia agora.
      *
      * <p>Recebe estoque e espaço porque os dois mudam a cada ciclo: o

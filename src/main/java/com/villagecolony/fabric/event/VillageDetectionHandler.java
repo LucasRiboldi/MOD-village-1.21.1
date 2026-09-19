@@ -41,6 +41,7 @@ import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
 import com.villagecolony.fabric.work.SurfaceGatheringWork;
 import com.villagecolony.fabric.work.WaitingWork;
+import com.villagecolony.fabric.work.ChestRelief;
 import com.villagecolony.fabric.work.WorkMaterials;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.LumberjackWork;
@@ -641,7 +642,13 @@ public final class VillageDetectionHandler {
         // Por família desde 2026-08-22, e foi a vila de deserto que
         // cobrou: a casa dela é de arenito LISO, e perguntar pelo
         // arenito puro devolvia quase zero. Ver WorkMaterials.stone.
-        int stoneForWork = WorkMaterials.stone(palette, colony);
+        // <b>E o bau que enche puxa a producao para a frente</b> —
+        // decisao do autor, 2026-09-19. Sem isto a demanda so nasce de
+        // obra aberta: na sessao de 12:09 o bau do mineiro encheu, 365
+        // sandstone foram para o chao, e a obra esperava sandstone.
+        // Ver ChestRelief.
+        int stoneForWork = ChestRelief.stoneToAskFor(
+                overworld, colony, WorkMaterials.stone(palette, colony));
 
         // O que a obra pede em peça, traduzido para o que a colônia sabe
         // produzir. A casa não pede vidro, pede vidraça; não pede carvão,
