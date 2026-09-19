@@ -79,7 +79,19 @@ public final class CraftReasons {
         String why;
 
         if (anyRecipe.isEmpty()) {
-            why = "this game has no recipe for it";
+            // <b>E "sem receita" ainda era impreciso</b> — 2026-09-19, na
+            // segunda leitura da própria instrumentação. O
+            // {@code billFor} percorre <b>bancada e cortador</b>, e não a
+            // fornalha: para o arenito liso, que é assado, ele não acha
+            // nada e a linha saía dizendo que o jogo não tem receita.
+            //
+            // O jogo tem — ela é de fornalha, e quem a executa é o
+            // fundidor por outro caminho. Dizer isso é a diferença entre
+            // "a planta pede o impossível" e "a peça é de outra
+            // profissão".
+            why = CraftingLookup.smeltingInputsFor(world, item).isEmpty()
+                    ? "no bench or stonecutter recipe, and the furnace makes none either"
+                    : "it comes from the furnace, not the bench — the smelter owns it";
         } else if (bill.isPresent()) {
             why = shortOf(bill.get(), world, chests);
         } else {

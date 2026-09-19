@@ -226,6 +226,37 @@ continuar distinguível do esgotamento. Decisão do autor.
 
 ---
 
+## ✅ CONFIRMADO EM JOGO — 18:42→19:11
+
+**As quatro entregas funcionaram, e cada uma tem linha própria no log.**
+
+| entrega | prova |
+|---|---|
+| um pouco de cada | **68× `stone`** e **20× `smooth_sandstone`** na mesma sessão |
+| arenito cortado | **`made 4 minecraft:cut_sandstone`** — o bloco que travava horas |
+| reserva do cru | estoque com `SANDSTONE=28` **e** `SAND=18` **e** `CUT_SANDSTONE=2` convivendo |
+| mensagem de craft | `needs 4 minecraft:sand and has 0` — nomeia o que falta |
+| acavalamento | `49 the colony had already built there` |
+| regra dos 90% | `310 the ground is not at street level` |
+
+**E a obra saiu de `WAITING_RESOURCES` para `BUILDING`** — 282 → 240
+blocos. Três obras planejadas na sessão.
+
+### Um retoque que a própria instrumentação cobrou
+
+`smooth_sandstone — this game has no recipe for it` era **impreciso**: o
+`billFor` percorre **bancada e cortador**, não a fornalha. O jogo tem a
+receita; ela é de fornalha, e quem a executa é o fundidor por outro
+caminho.
+
+A linha passa a distinguir <i>"vem da fornalha, e o fundidor é o dono"</i>
+de <i>"nem bancada nem fornalha fazem"</i> — a diferença entre *a planta
+pede o impossível* e *a peça é de outra profissão*.
+
+**Verificado:** build verde, **943 unitários**, **370 gametests**.
+
+---
+
 ## ✅ A fornalha mantém um pouco de cada — 2026-09-19, decisão do autor
 
 > *"o fundidor deve assar um pouco de cada para ter todos tipos de
