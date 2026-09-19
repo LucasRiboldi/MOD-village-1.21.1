@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.core.coordination.WorkAssignment;
+import com.villagecolony.core.coordination.ColonyGoals;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
@@ -225,6 +226,17 @@ public final class SmelterWork {
 
         for (ColonyPos chest : searched) {
             for (Item raw : raws) {
+                // <b>Metade do cru fica para o pedreiro</b> — 2026-09-19,
+                // por simetria com a reserva de tronco de 09-05.
+                //
+                // A sessão de 17:15 parou 39 vezes esperando
+                // cut_sandstone com <b>139 arenitos LISOS e zero cru</b>:
+                // o fundidor assou o estoque inteiro, e o arenito
+                // cortado sai do cru. Ver ColonyGoals.rawToKeep.
+                if (!mayStillSmelt(world, searched, raw, made.get())) {
+                    continue;
+                }
+
                 if (ChestWithdrawer.withdraw(world, chest, raw, 1) == 0) {
                     continue;
                 }
@@ -270,6 +282,23 @@ public final class SmelterWork {
      * @param chests quantos baús da colônia foram percorridos
      * @param raws   os nomes do que ele procurava, já formatados
      */
+    /**
+     * Se ainda pode assar este cru sem furar a reserva do pedreiro.
+     *
+     * <p>A conta é da colônia inteira, e não de um baú: o cru e o
+     * processado moram espalhados, e medir um baú só faria a reserva
+     * existir ou não conforme a ordem da varredura.
+     */
+    private static boolean mayStillSmelt(
+            ServerWorld world, List<ColonyPos> chests, Item raw, Item processed) {
+
+        int rawCount = ColonyChests.countIn(world, chests, raw);
+
+        int madeCount = ColonyChests.countIn(world, chests, processed);
+
+        return ColonyGoals.rawThatMayBeSmelted(rawCount, madeCount) > 0;
+    }
+
     static String lookedButFound(int chests, String raws) {
         return chests == 0
                 ? "no colony chest to look in"

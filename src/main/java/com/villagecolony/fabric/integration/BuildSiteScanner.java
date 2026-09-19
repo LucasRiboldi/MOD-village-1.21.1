@@ -3,6 +3,8 @@ package com.villagecolony.fabric.integration;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.ColonySweepCursor;
+import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.BlockState;
@@ -1655,7 +1657,9 @@ public final class BuildSiteScanner {
                 baseY + size.y(),
                 originZ + size.z() - 1);
 
-        if (VillageColonyMod.BUILDINGS.anythingBuiltInside(floor, ceiling)) {
+        if (VillageColonyMod.BUILDINGS.anythingBuiltInside(floor, ceiling)
+                || anyOpenSiteInside(colonyId, floor, ceiling)) {
+
             LotRefusals.refused(colonyId, LotRefusals.Reason.OCCUPIED);
 
             return Optional.empty();
@@ -1695,6 +1699,56 @@ public final class BuildSiteScanner {
      * da mesma decisão do autor: recusar um lote de planície por causa
      * de um pé de margarida seria recusar a planície inteira.
      */
+    /**
+     * Se alguma obra <b>em andamento</b> ocupa esta caixa — 2026-09-19.
+     *
+     * <p><b>O buraco que isto fecha, e ele era meu.</b> O portão de caixa
+     * contra caixa de 15:49 consultava só o {@code BUILDINGS}, que é o
+     * registro das obras <b>terminadas</b>. Uma obra em andamento não
+     * está nele — ela só entra quando fecha —, então um lote novo podia
+     * nascer em cima dela.
+     *
+     * <p>E era o caso exato desta vila: a obra do {@code cut_sandstone}
+     * ficou parada em {@code WAITING_RESOURCES} por quase meia hora,
+     * ocupando o terreno e <b>invisível</b> para o portão.
+     *
+     * <p>O {@code BlockProtection.isOpenSite} já percorre as obras
+     * abertas, mas responde por <b>ponto</b>; aqui a pergunta é da caixa,
+     * que é a forma do que se quer impedir.
+     */
+    private static boolean anyOpenSiteInside(UUID colonyId, ColonyPos min, ColonyPos max) {
+        for (ConstructionProject project : VillageColonyMod.CONSTRUCTIONS.all()) {
+            if (!project.state().isOpen()) {
+                continue;
+            }
+
+            // <b>Só as obras DESTA colônia</b>, e isso a bateria cobrou:
+            // percorrer todas fazia a arena de um gametest enxergar a
+            // obra do vizinho, e o {@code ColonyDetectionGameTest}
+            // passou a falhar de forma determinística — três rodadas em
+            // três.
+            //
+            // E é o certo também em jogo: obra de outra colônia fica
+            // longe por construção — duas vilas a menos de
+            // {@code DUPLICATE_DISTANCE} viram uma só —, e a pergunta
+            // que importa é sobre o próprio canteiro.
+            if (!project.colonyId().equals(colonyId)) {
+                continue;
+            }
+
+            Building site = Building.of(project);
+
+            if (min.x() <= site.max().x() && max.x() >= site.min().x()
+                    && min.y() <= site.max().y() && max.y() >= site.min().y()
+                    && min.z() <= site.max().z() && max.z() >= site.min().z()) {
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static boolean isClearAbove(
             ServerWorld world, int x, int z, int floor, int height) {
 

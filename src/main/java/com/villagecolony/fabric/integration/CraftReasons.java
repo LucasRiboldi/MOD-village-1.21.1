@@ -62,9 +62,29 @@ public final class CraftReasons {
             ServerWorld world,
             List<ColonyPos> chests) {
 
-        String why = bill.isEmpty()
-                ? "this game has no recipe for it"
-                : shortOf(bill.get(), world, chests);
+        // <b>Vazio NÃO quer dizer "sem receita"</b> — 2026-09-19, e esta
+        // foi a primeira coisa que a própria instrumentação pegou: ela
+        // disse <i>"this game has no recipe for cut_sandstone"</i> num
+        // jogo que tem a receita. O {@code billFor} recebe o predicado
+        // do baú, então ele devolve vazio tanto quando <b>não há
+        // receita</b> quanto quando <b>o ingrediente não está no
+        // baú</b> — que são as duas causas que esta classe existe para
+        // separar.
+        //
+        // A pergunta certa é ao livro <b>sem</b> filtro: se ele responde,
+        // a receita existe e o que falta é material.
+        Optional<CraftingLookup.Bill> anyRecipe =
+                CraftingLookup.billFor(world, item, anything -> true);
+
+        String why;
+
+        if (anyRecipe.isEmpty()) {
+            why = "this game has no recipe for it";
+        } else if (bill.isPresent()) {
+            why = shortOf(bill.get(), world, chests);
+        } else {
+            why = shortOf(anyRecipe.get(), world, chests);
+        }
 
         if (why.equals(SAID.get(item))) {
             // Mesmo motivo do que já foi dito: calar é o certo, senão a

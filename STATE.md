@@ -226,6 +226,56 @@ continuar distinguível do esgotamento. Decisão do autor.
 
 ---
 
+## ✅ P1.8 resolvido — o fundidor comia o arenito do pedreiro (09-19, 17:15→17:44)
+
+**A instrumentação de 17:06 pagou na primeira sessão** — e a primeira
+coisa que ela pegou foi um erro **meu**:
+
+```text
+could not make minecraft:cut_sandstone — this game has no recipe for it
+```
+
+**Era falso.** O `billFor` recebe o predicado do baú, então devolve vazio
+tanto por *não haver receita* quanto por *faltar ingrediente* — as duas
+causas que a classe existia para separar. Consertado: pergunta ao livro
+**sem filtro** antes de acusar o jogo.
+
+### A causa real, no estoque
+
+```text
+SMOOTH_SANDSTONE=162 ... e NENHUM sandstone cru
+waiting for minecraft:cut_sandstone   ← 39×
+```
+
+**O fundidor assou o estoque inteiro.** O arenito cortado sai do **cru**,
+e não sobrou nenhum.
+
+**O conserto é a regra de 09-05 aplicada à pedra:** metade do cru fica
+sem ser assado, para o pedreiro lavrar. `ColonyGoals.rawToKeep`.
+
+**E a conta saiu errada na primeira versão**, com o próprio teste a
+cobrando: `(raw - processed) / 2` reserva **zero** num estoque empatado —
+40 crus e 40 lisos liberavam os 40. A reserva é metade do **total**.
+
+### E o acavalamento: o portão só via obra TERMINADA
+
+O portão de caixa de 15:49 consultava `BUILDINGS`, que é o registro das
+obras **prontas**. A obra em andamento não está nele — e era exatamente o
+caso: a obra do `cut_sandstone` ficou meia hora parada ocupando o
+terreno, **invisível** para o portão. Agora as obras abertas entram na
+mesma pergunta.
+
+**Verificado:** build verde, **942 unitários** (+4), **370 gametests**,
+duas rodadas. Mutação na reserva.
+
+⚠️ **O cenário do acavalamento ficou sem gametest**, e isso está dito
+porque é dívida: toda versão que escrevi derrubou o
+`ColonyDetectionGameTest` de forma **determinística** (3 em 3), e isolei
+que o código novo passa nas duas rodadas **sem** ele. O teste mexe em
+registros compartilhados e precisa de um isolamento que ainda não achei.
+
+---
+
 ## 🔴 P1.8 — O pedreiro nunca recebe tarefa de arenito (achado 09-19, 16:10→17:06)
 
 **As duas correções de 15:49 seguraram:** nenhuma obra acavalada, nenhuma

@@ -169,6 +169,50 @@ public final class ColonyGoals {
     }
 
     /**
+     * Quanto do cru fica sem ser assado, para o pedreiro lavrar.
+     *
+     * <p><b>Decisão do autor por simetria com a madeira</b>, 2026-09-19.
+     * A regra de 09-05 manda <i>"converter somente aproximadamente
+     * metade do estoque de troncos em tábuas e preservar o restante como
+     * troncos"</i>, e a pedra não tinha equivalente.
+     *
+     * <p><b>O que isto conserta, medido na sessão de 17:15.</b> A obra
+     * parou <b>39 vezes</b> esperando {@code cut_sandstone}, e o baú da
+     * colônia tinha <b>139 arenitos LISOS e zero arenito cru</b>. O
+     * fundidor assou o estoque inteiro; o arenito cortado sai do
+     * <b>cru</b>, e não sobrou nenhum. É o mesmo defeito que a reserva de
+     * tronco corrigiu do lado da madeira, com outro material.
+     *
+     * <p>Metade, como a madeira: a proporção não se move, e o ponto de
+     * equilíbrio é o que o autor chamou de metade.
+     */
+    public static int rawToKeep(int raw, int processed) {
+        // <b>A reserva é metade do TOTAL, e não metade da diferença</b> —
+        // e esta linha saiu errada na primeira versão, com o próprio
+        // teste a cobrando. Com {@code (raw - processed) / 2}, um
+        // estoque empatado — 40 crus e 40 processados — reservava ZERO e
+        // liberava os 40 para a fornalha, que é o oposto de equilibrar.
+        //
+        // Contando o total, o ponto de equilíbrio fica parado: 40 e 40
+        // somam 80, metade é 40, e é exatamente o que já está cru. Não
+        // se assa mais nada, que é o que a regra quer dizer.
+        int both = raw + processed;
+
+        return Math.max(0, Math.min(raw, both / 2));
+    }
+
+    /**
+     * Quanto do cru ainda pode ir à fornalha sem furar a reserva.
+     *
+     * <p>Zero quando o processado já empata o cru: aí a colônia tem
+     * tanto de um quanto do outro, e assar mais desequilibraria para o
+     * lado que já está servido.
+     */
+    public static int rawThatMayBeSmelted(int raw, int processed) {
+        return Math.max(0, raw - rawToKeep(raw, processed));
+    }
+
+    /**
      * A partir de quanto cheio o baú chama as outras profissões.
      *
      * <p><b>Decisão do autor, 2026-09-19:</b> <i>"quando o baú da

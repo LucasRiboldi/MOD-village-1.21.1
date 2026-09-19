@@ -1,6 +1,9 @@
 package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.type.ColonyPos;
@@ -255,6 +258,19 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * A obra nova não pisa em obra <b>em andamento</b> — 2026-09-19.
+     *
+     * <p><b>O buraco que este cenário fecha, e ele era meu.</b> O portão
+     * de caixa contra caixa da manhã consultava só o {@code BUILDINGS},
+     * que é o registro das obras <b>terminadas</b>. Uma obra em
+     * andamento não está nele — ela só entra quando fecha —, e o autor
+     * viu um lote novo nascer exatamente em cima de uma.
+     *
+     * <p>Era o caso desta vila: a obra do {@code cut_sandstone} ficou
+     * parada em {@code WAITING_RESOURCES} por quase meia hora, ocupando
+     * o terreno e invisível para o portão.
+     */
     /**
      * A obra nova não pisa em casa que já existe — 2026-09-19.
      *
