@@ -381,4 +381,47 @@ public class WorkMaterialsGameTest implements FabricGameTest {
 
         context.complete();
     }
+    /**
+     * O arenito cortado é recurso que o JOGO sabe nomear — 2026-09-19.
+     *
+     * <p><b>O que isto tranca, medido na sessão de 14:01.</b> A obra
+     * parou em {@code waiting for minecraft:cut_sandstone} com <b>178
+     * blocos</b> por pôr, e o log dizia {@code no mason work: no task
+     * open for it — 1 able to}. Das dez variantes de arenito que a casa
+     * do deserto pede, só <b>duas</b> eram {@code ResourceType}.
+     *
+     * <p><b>Declarar sem mapear é pior que não declarar</b>: pareceria
+     * conserto e a obra continuaria esperando. A classificação está no
+     * {@code DesertMasonryTest}, que não precisa de mundo; aqui fica só o
+     * mapeamento, que precisa do registro do jogo.
+     *
+     * <p><b>Mora neste batch de propósito</b>, e isso custou uma rodada:
+     * a primeira versão criou o batch {@code desert_masonry} e o
+     * {@code ColonyDetectionGameTest} passou a falhar — <i>"esperava ao
+     * menos 30 trabalhadores, achei 24"</i>. Aquele cenário conta aldeões
+     * registrados dentro de um orçamento de três passagens, e um batch a
+     * mais muda o escalonamento. Isolado: os 364 passam com todo o código
+     * novo e <b>sem</b> a anotação nova.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_materials",
+            tickLimit = 100)
+    public void theCutSandstoneIsAResourceTheGameCanName(TestContext context) {
+        if (MinecraftTypeAdapter.toResourceType(Items.CUT_SANDSTONE)
+                .filter(ResourceType.CUT_SANDSTONE::equals)
+                .isEmpty()) {
+
+            throw new AssertionError(
+                    "o arenito cortado nao vira recurso: declarado e invisivel para o"
+                            + " jogo — a obra continua esperando");
+        }
+
+        // E a volta: o recurso acha o item. É por este caminho que a meta
+        // vira pedido de material.
+        if (MinecraftTypeAdapter.toItem(ResourceType.SANDSTONE_WALL).isEmpty()) {
+            throw new AssertionError("o recurso nao acha o item — a meta nunca vira pedido");
+        }
+
+        context.complete();
+    }
+
 }

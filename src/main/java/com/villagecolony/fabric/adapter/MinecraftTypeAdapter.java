@@ -14,6 +14,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -157,7 +158,38 @@ public final class MinecraftTypeAdapter {
             return Optional.of(ResourceType.IRON_INGOT);
         }
 
-        return Optional.empty();
+        // <b>E o resto pelo nome</b> — 2026-09-19. A cadeia acima é uma
+        // linha por material, e foi ela que deixou o arenito cortado de
+        // fora: {@code CUT_SANDSTONE} podia ser declarado no
+        // {@code ResourceType} e continuar <b>invisível</b>, porque nada
+        // o ligava ao item do jogo. Declaração sem mapeamento é pior que
+        // ausência — parece conserto e não é.
+        //
+        // A convenção é a do próprio registro: {@code cut_sandstone} é
+        // {@code CUT_SANDSTONE}. Um material novo cujo nome siga a
+        // convenção passa a contar sozinho, que é o que a cadeia acima
+        // pedia a cada vez.
+        //
+        // Por último de propósito: as linhas acima são as exceções em que
+        // o nome NÃO decide — areia vermelha contando como areia, por
+        // exemplo —, e elas têm de ganhar da convenção.
+        return byName(item);
+    }
+
+    /**
+     * O recurso de mesmo nome que este item, se existir.
+     *
+     * <p>Silencioso quando não há: a esmagadora maioria dos itens do jogo
+     * não é recurso que a colônia acompanhe, e isso é o normal.
+     */
+    private static Optional<ResourceType> byName(Item item) {
+        String path = Registries.ITEM.getId(item).getPath();
+
+        try {
+            return Optional.of(ResourceType.valueOf(path.toUpperCase(Locale.ROOT)));
+        } catch (IllegalArgumentException notAResource) {
+            return Optional.empty();
+        }
     }
 
     /**

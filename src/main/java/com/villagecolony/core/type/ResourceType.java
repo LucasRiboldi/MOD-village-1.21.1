@@ -151,6 +151,56 @@ public enum ResourceType {
     STONE_BRICKS(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_STONE),
 
     /**
+     * O arenito cortado, e os três que o deserto pede com ele —
+     * 2026-09-19.
+     *
+     * <p><b>O que isto conserta, medido na sessão de 14:01.</b> A obra
+     * parou em {@code waiting for minecraft:cut_sandstone} com <b>178
+     * blocos</b> por pôr, e o log dizia
+     * {@code no mason work: no task open for it — 1 able to}. O pedreiro
+     * existia, tinha baú e estava apto; o que faltava era <b>tarefa</b>.
+     *
+     * <p><b>A causa é a frase que o {@link #STONE_BRICKS} já escreve:</b>
+     * <i>profissão sem material declarado nunca recebe pedido</i>. Das
+     * dez variantes de arenito que as casas do deserto pedem, só
+     * <b>duas</b> eram {@code ResourceType} — {@link #SANDSTONE} e
+     * {@link #SMOOTH_SANDSTONE}. As outras oito não tinham entrada, então
+     * não havia meta, não havia tarefa, e o pedreiro ficava olhando.
+     *
+     * <p>Os nove {@code smooth_sandstone_stairs} que saíram naquela
+     * sessão vieram do caminho oportunista do fabricante, e não de
+     * demanda — é por isso que a produção era fina e irregular enquanto a
+     * obra esperava.
+     *
+     * <p><b>Da bancada, e não da fornalha:</b> arenito cortado é arenito
+     * lavrado em quatro, receita do próprio jogo. Mesma família de
+     * {@link #STONE_BRICKS}, e por isso mesma produção — o pedreiro.
+     */
+    CUT_SANDSTONE(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_STONE),
+
+    /** A escada de arenito liso, que a casa de deserto usa no telhado. */
+    SMOOTH_SANDSTONE_STAIRS(
+            ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_STONE),
+
+    /** A laje de arenito liso, do mesmo telhado. */
+    SMOOTH_SANDSTONE_SLAB(
+            ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_STONE),
+
+    /** A escada de arenito cru, da moldura das portas. */
+    SANDSTONE_STAIRS(
+            ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_STONE),
+
+    /** A laje de arenito cru. */
+    SANDSTONE_SLAB(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_STONE),
+
+    /** O muro de arenito, das cercas da vila de deserto. */
+    SANDSTONE_WALL(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_STONE),
+
+    /** O arenito cinzelado, da decoração das paredes. */
+    CHISELED_SANDSTONE(
+            ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.CRAFTED_STONE),
+
+    /**
      * A viga descascada, e a razão de ela existir — 2026-09-10.
      *
      * <p><b>Ela não era recurso, e é isso que travava a casa.</b> A

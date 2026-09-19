@@ -226,6 +226,61 @@ continuar distinguível do esgotamento. Decisão do autor.
 
 ---
 
+## ✅ A CASA SUBIU — 2026-09-19, 14:01→14:22
+
+**`Builder stopped — the house is up`.** A primeira casa terminada depois
+de toda a sequência de consertos.
+
+| o que foi pedido verificar | resposta |
+|---|---|
+| arenito recolhido? | **sim** — itens no chão de 660 → 254 |
+| alguém transforma? | **sim** — 287 `smooth_sandstone`, 17 `cut_sandstone`, 15 escadas |
+| viveiro do fazendeiro | **3 árvores** plantadas em terra enraizada na borda |
+| cama de qualquer cor | **funcionou** — `made 1 minecraft:white_bed`, e `green_bed` sumiu do log |
+
+O rebento saiu **carvalho** num deserto, e está certo: `VillageBiomes`
+declara `DESERT → OAK`, que é a mesma tabela que decide a tábua da obra.
+
+## 🔴 P1.4 RESOLVIDO — o pedreiro não tinha material declarado
+
+A obra seguinte parou em `waiting for minecraft:cut_sandstone` com **178
+blocos** por pôr, e o log dizia:
+
+```text
+no mason work: no task open for it — 1 able to
+assigned 0 tasks (2 open)   ← 12 vezes
+```
+
+**A causa é a frase que o `STONE_BRICKS` já escrevia:** *profissão sem
+material declarado nunca recebe pedido*. Das **dez** variantes de arenito
+que a casa do deserto pede, só **duas** eram `ResourceType` — `SANDSTONE`
+e `SMOOTH_SANDSTONE`. As outras oito não tinham entrada: sem meta, sem
+tarefa, e o pedreiro olhando.
+
+Os 9 `smooth_sandstone_stairs` daquela sessão vieram do caminho
+oportunista do fabricante, não de demanda — por isso a produção era fina
+e irregular enquanto a obra esperava.
+
+**Entregue:** as sete variantes declaradas como `CRAFTED_STONE` (o
+pedreiro), mais um **mapeamento por nome** no adaptador — sem ele a
+declaração seria invisível para o jogo, que é pior que não declarar
+porque *parece* conserto.
+
+**Verificado:** build verde, **938 unitários** (+3), **365 gametests**
+(+1), duas rodadas. Mutação nas duas metades.
+
+**E a bateria me corrigiu de novo:** meu gametest novo criou o batch
+`desert_masonry` e o `ColonyDetectionGameTest` passou a falhar — *"esperava
+ao menos 30 trabalhadores, achei 24"*. Isolei: os 364 passam com **todo**
+o código novo e **sem** a anotação nova. Aquele cenário conta aldeões
+registrados num orçamento de três passagens, e um batch a mais muda o
+escalonamento. A afirmação foi para um batch que já existia, e a
+classificação virou teste unitário, que não precisava de mundo nenhum.
+
+⚠️ **Espera playtest.**
+
+---
+
 ## ✅ Quatro entregas do autor — 2026-09-19, 13:41
 
 ### O P1.7 funcionou, e a obra chegou perto do fim
