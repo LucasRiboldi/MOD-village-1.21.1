@@ -133,6 +133,18 @@ public final class ColonySupply {
         }
 
         if (missing(world, chests, found)) {
+            // <b>Por que a peça não saiu</b> — 2026-09-19. Três causas
+            // bem diferentes moravam neste silêncio, e elas pedem
+            // consertos opostos: <i>o jogo não tem receita</i>,
+            // <i>a receita existe e falta ingrediente</i>, e
+            // <i>o ingrediente existe e não chega na conta</i>.
+            //
+            // Do lado de fora eram o mesmo nada. A obra de 16:10 parou 22
+            // vezes esperando cut_sandstone com <b>190 arenitos no
+            // baú</b>, e não havia uma linha dizendo o que faltava — o
+            // mesmo movimento que decidiu o P1.3 e o P1.6 numa leitura.
+            CraftReasons.couldNotMake(item, found, world, chests);
+
             return false;
         }
 

@@ -516,4 +516,44 @@ public class WorkMaterialsGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * O cut_sandstone tem receita neste jogo — 2026-09-19.
+     *
+     * <p><b>O que isto tranca.</b> A obra de 16:10 parou <b>22 vezes</b>
+     * esperando {@code cut_sandstone} com <b>190 arenitos no baú</b>, e o
+     * {@code ColonySupply.craft} devolvia falso <b>em silêncio</b>. Antes
+     * de instrumentar o silêncio, vale afirmar a metade que se pode
+     * afirmar sem jogo nenhum: <b>a receita existe</b>.
+     *
+     * <p>Se ela não existisse, o conserto seria outro — a planta, e não a
+     * produção. É a distinção que o {@code CraftReasons} passa a dizer no
+     * log.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_materials",
+            tickLimit = 100)
+    public void theCutSandstoneHasARecipeInThisGame(TestContext context) {
+        if (CraftingLookup.billFor(context.getWorld(), Items.CUT_SANDSTONE, any -> true)
+                .isEmpty()) {
+
+            throw new AssertionError(
+                    "este jogo nao tem receita para cut_sandstone — a obra esperaria"
+                            + " para sempre e o conserto seria a planta, nao a producao");
+        }
+
+        // E a receita fecha com arenito, que e o que a colonia tem aos
+        // cento e noventa.
+        if (CraftingLookup.billFor(
+                        context.getWorld(),
+                        Items.CUT_SANDSTONE,
+                        item -> item == Items.SANDSTONE)
+                .isEmpty()) {
+
+            throw new AssertionError(
+                    "a receita de cut_sandstone nao fecha so com arenito — a colonia tem"
+                            + " 190 e mesmo assim nao fabrica");
+        }
+
+        context.complete();
+    }
+
 }

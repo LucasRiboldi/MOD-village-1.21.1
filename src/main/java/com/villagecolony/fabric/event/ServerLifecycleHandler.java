@@ -25,6 +25,7 @@ import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.core.worker.service.HiringLog;
 import com.villagecolony.fabric.integration.LotRefusals;
 import com.villagecolony.fabric.integration.ProtectionSample;
+import com.villagecolony.fabric.integration.CraftReasons;
 import com.villagecolony.fabric.integration.VolumeSample;
 import com.villagecolony.fabric.work.FarmerNursery;
 import com.villagecolony.fabric.integration.SiteMarker;
@@ -111,6 +112,8 @@ public final class ServerLifecycleHandler {
         ProtectionSample.clearAll();
 
         VolumeSample.clearAll();
+
+        CraftReasons.clearAll();
 
         FarmerNursery.clearAll();
         PhantomWorkerLog.clearAll();
@@ -287,6 +290,8 @@ public final class ServerLifecycleHandler {
         ProtectionSample.clearAll();
 
         VolumeSample.clearAll();
+
+        CraftReasons.clearAll();
 
         FarmerNursery.clearAll();
         PhantomWorkerLog.clearAll();

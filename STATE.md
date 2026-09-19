@@ -226,6 +226,52 @@ continuar distinguível do esgotamento. Decisão do autor.
 
 ---
 
+## 🔴 P1.8 — O pedreiro nunca recebe tarefa de arenito (achado 09-19, 16:10→17:06)
+
+**As duas correções de 15:49 seguraram:** nenhuma obra acavalada, nenhuma
+casa voando, e o cacto chegou ao baú (`CACTUS=3`).
+
+**Mas a obra passou 55 minutos parada** em `waiting for
+minecraft:cut_sandstone` — 22 vezes —, com **190 arenitos no baú**.
+
+### O que o log prova
+
+```text
+SANDSTONE=190, SMOOTH_SANDSTONE_SLAB=6, SANDSTONE_WALL=6
+no minecraft:cut_sandstone in the colony chests   ← 24×
+```
+
+Tarefas abertas na sessão inteira: **18 BUILD, 3 COLLECT_STONE, 1
+COLLECT_WOOD**. **Zero `CRAFT_STONE_MATERIAL`** — o pedreiro nunca
+recebeu tarefa, então `produceForWork` nunca rodou.
+
+**E a lousa mente por omissão:** `ColonySupply.craft` devolvia `false`
+**em silêncio**, e três causas moravam nesse silêncio — *não há receita*,
+*falta ingrediente*, *não cabe no baú* — que pedem consertos opostos.
+
+### Entregue: a lousa passa a dizer
+
+`CraftReasons` nomeia a causa, uma linha por item e por motivo. É o mesmo
+movimento que decidiu o P1.3 e o P1.6 numa leitura.
+
+**E o que já dá para afirmar sem jogo:** a receita de `cut_sandstone`
+**existe** e **fecha só com arenito** — há gametest afirmando as duas
+coisas. Então o conserto é a **produção**, não a planta.
+
+### O que NÃO é o defeito
+
+**As obras não estão sendo desistidas.** Nenhum construtor largou obra, e
+o projeto sobreviveu aos 55 minutos. O que se vê é a obra parada em
+`WAITING_RESOURCES` para sempre.
+
+Quem desistiu foi o **mineiro**: 3 largaram `COLLECT_STONE` por não
+alcançar a pedra a y=37 — outro defeito, e ele não é a causa desta
+parada, porque arenito não falta.
+
+⚠️ **Espera playtest** — a próxima sessão dirá a causa numa linha.
+
+---
+
 ## ✅ A obra acavalada e a casa voando — 2026-09-19, 15:21→15:49
 
 **O cacto funcionou:** `potted_cactus` sumiu da lista de espera.

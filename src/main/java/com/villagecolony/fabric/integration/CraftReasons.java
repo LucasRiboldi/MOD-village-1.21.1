@@ -1,0 +1,114 @@
+package com.villagecolony.fabric.integration;
+
+import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.type.ColonyPos;
+
+import net.minecraft.item.Item;
+import net.minecraft.server.world.ServerWorld;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * Por que a peça não foi fabricada — 2026-09-19.
+ *
+ * <p><b>A pergunta que a sessão de 16:10 abriu.</b> A obra parou <b>22
+ * vezes</b> esperando {@code cut_sandstone} com <b>190 arenitos</b> no
+ * baú, e o {@code ColonySupply.craft} devolvia {@code false} <b>em
+ * silêncio</b>. Três causas moravam nesse silêncio, e elas pedem
+ * consertos opostos:
+ *
+ * <pre>
+ * NO_RECIPE      o jogo não tem receita para isto. O conserto é a
+ *                planta ou a lista de materiais, nunca a produção.
+ * SHORT          a receita existe e falta ingrediente. O conserto é
+ *                mandar alguém buscar o que falta.
+ * </pre>
+ *
+ * <p>Do lado de fora as duas são "o fabricante não fez". Distinguir é a
+ * diferença entre mexer na cadeia de produção e mexer na planta — e
+ * escolher errado custa uma sessão.
+ *
+ * <p><b>É o mesmo movimento que decidiu o P1.3 e o P1.6</b>, e os dois
+ * custaram dias antes de alguém instrumentar: o {@code ProtectionSample}
+ * separou <i>"não há chão"</i> de <i>"faltou varredura"</i>, e o
+ * {@code VolumeSample} disse de que a Regra 22 era feita.
+ *
+ * <p><b>Uma linha por item, e não por tentativa.</b> O fabricante repete
+ * a pergunta a cada passagem; uma linha por vez afogaria o log e mudaria
+ * o que se está medindo.
+ */
+public final class CraftReasons {
+
+    /** Quantos itens distintos lembrar antes de esquecer tudo. */
+    private static final int MAX_ITEMS = 64;
+
+    /** O que já foi dito, para não repetir a cada passagem. */
+    private static final Map<Item, String> SAID = new HashMap<>();
+
+    private CraftReasons() {
+    }
+
+    /**
+     * Diz por que este item não saiu, uma vez por motivo.
+     *
+     * @param bill a receita que o livro devolveu, vazia quando não há
+     */
+    public static void couldNotMake(
+            Item item,
+            Optional<CraftingLookup.Bill> bill,
+            ServerWorld world,
+            List<ColonyPos> chests) {
+
+        String why = bill.isEmpty()
+                ? "this game has no recipe for it"
+                : shortOf(bill.get(), world, chests);
+
+        if (why.equals(SAID.get(item))) {
+            // Mesmo motivo do que já foi dito: calar é o certo, senão a
+            // linha vira enxurrada.
+            return;
+        }
+
+        if (SAID.size() >= MAX_ITEMS) {
+            SAID.clear();
+        }
+
+        SAID.put(item, why);
+
+        VillageColonyMod.LOGGER.info("The colony could not make {} — {}", item, why);
+    }
+
+    /** Quais ingredientes faltam, e quanto de cada um. */
+    private static String shortOf(
+            CraftingLookup.Bill bill, ServerWorld world, List<ColonyPos> chests) {
+
+        StringBuilder said = new StringBuilder();
+
+        for (Map.Entry<Item, Integer> part : bill.ingredients().entrySet()) {
+            int has = ColonyChests.countIn(world, chests, part.getKey());
+
+            if (has >= part.getValue()) {
+                continue;
+            }
+
+            if (said.length() > 0) {
+                said.append("; ");
+            }
+
+            said.append("needs ").append(part.getValue()).append(' ')
+                    .append(part.getKey()).append(" and has ").append(has);
+        }
+
+        return said.length() == 0
+                ? "the recipe closes but the tally disagrees — look at the chest reading"
+                : said.toString();
+    }
+
+    /** Esquece o que foi dito. Chamado ao parar o servidor. */
+    public static void clearAll() {
+        SAID.clear();
+    }
+}
