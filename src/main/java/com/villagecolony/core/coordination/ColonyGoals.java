@@ -5,6 +5,9 @@ import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.type.ResourceType;
 
+import com.villagecolony.core.type.Production;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -85,6 +88,28 @@ public final class ColonyGoals {
      * uma casa com sobra pequena.
      */
     public static final int STONE_FLOOR = 64;
+
+    /**
+     * Quanto de cada peça de fornalha a colônia mantém à mão.
+     *
+     * <p><b>Decisão do autor, 2026-09-19:</b> <i>"o fundidor deve assar
+     * um pouco de cada para ter todos tipos de blocos, e focar em um
+     * quando solicitado pela obra"</i>.
+     *
+     * <p><b>O que isto conserta.</b> Até aqui a meta de fornalha nascia
+     * <b>só</b> da obra aberta: sem obra pedindo, o fundidor não assava
+     * nada, e a primeira casa que pedisse arenito liso esperava a
+     * fornalha começar do zero. Com obra pedindo, ele assava
+     * <b>aquilo</b> até o estoque inteiro virar um tipo só — que é o
+     * defeito de 17:15, com 162 lisos e nenhum cru.
+     *
+     * <p><b>Dezesseis, e não sessenta e quatro.</b> É "um pouco de cada",
+     * não uma despensa: a pilha de dezesseis cobre a moldura e o
+     * acabamento de uma casa sem comprometer a reserva do cru, que é do
+     * pedreiro. Quando a obra pede mais, ela manda — {@code Math.max},
+     * como a pedra faz desde 08-27.
+     */
+    public static final int SMELTED_FLOOR = 16;
     public static final int MINERAL_FLOOR = 64;
 
     /**
@@ -166,6 +191,43 @@ public final class ColonyGoals {
      */
     public static int logsToConvert(int logs, int storedPlanks) {
         return Math.max(0, (logs - storedPlanks / PLANKS_PER_LOG) / 2);
+    }
+
+    /**
+     * Tudo o que sai de fornalha, pela produção declarada.
+     *
+     * <p>Pela {@link Production}, e não por uma lista de nomes — ADR-009.
+     * Material novo que saia de fornalha entra sozinho no "um pouco de
+     * cada", sem uma linha de código a mais.
+     */
+    private static List<ResourceType> everythingTheFurnaceMakes() {
+        List<ResourceType> made = new ArrayList<>();
+
+        for (ResourceType type : ResourceType.values()) {
+            if (type.production() != Production.SMELTED) {
+                continue;
+            }
+
+            // <b>O vidro e o ferro ficam de fora</b>, e a bateria cobrou
+            // isso: os dois já têm meta própria, e ela puxa o cru por
+            // trás — a de vidro abre meta de <b>areia</b> pelo que falta,
+            // a de ferro abre meta de minério. Pôr piso neles fazia a
+            // colônia pedir areia sem obra nenhuma querendo vidraça, e
+            // cinco testes de {@code ColonyGoalsTest} disseram isso na
+            // primeira tentativa.
+            //
+            // O pedido do autor é sobre <b>bloco de construção</b> —
+            // <i>"um pouco de cada para ter todos tipos de blocos"</i> —,
+            // e vidro e ferro não são blocos de parede: são peça de
+            // janela e de ferramenta, com cadeia própria.
+            if (type == ResourceType.GLASS || type == ResourceType.IRON_INGOT) {
+                continue;
+            }
+
+            made.add(type);
+        }
+
+        return made;
     }
 
     /**
@@ -533,8 +595,20 @@ public final class ColonyGoals {
         //
         // O cru vem de cima: a meta de pedra já conta a família inteira,
         // e é dela que o mineiro tira o que a fornalha vai assar.
+        // <b>Um pouco de cada, e a obra manda quando pede</b> — decisão
+        // do autor, 2026-09-19. O {@code Math.max} é o mesmo da pedra:
+        // obra pequena não abaixa o estoque que a colônia mantém para a
+        // casa seguinte, e obra grande passa por cima do piso.
+        for (ResourceType made : everythingTheFurnaceMakes()) {
+            goals.put(made, Math.max(SMELTED_FLOOR, work.smelted().getOrDefault(made, 0)));
+        }
+
+        // E o que a obra pede e a fornalha NÃO faz — um material cuja
+        // produção declarada mudou, ou que chegou por datapack — continua
+        // entrando pela lista da obra. O laço acima cobre o catálogo do
+        // jogo; esta linha cobre o que a obra sabe e ele não.
         work.smelted().forEach((made, amount) -> {
-            if (amount > 0) {
+            if (amount > 0 && !goals.containsKey(made)) {
                 goals.put(made, amount);
             }
         });

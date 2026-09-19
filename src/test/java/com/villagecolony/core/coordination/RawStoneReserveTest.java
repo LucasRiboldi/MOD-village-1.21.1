@@ -76,4 +76,22 @@ class RawStoneReserveTest {
 
         assertEquals(0, ColonyGoals.rawThatMayBeSmelted(0, 0));
     }
+    /**
+     * A reserva não impede o foco da obra — 2026-09-19.
+     *
+     * <p>As duas regras do autor convivem, e vale afirmar que convivem:
+     * a reserva guarda metade do cru para o pedreiro, e o
+     * {@code SMELTED_FLOOR} manda a fornalha manter um pouco de cada.
+     * Uma colônia que acabou de minerar tem cru de sobra e <b>pode</b>
+     * assar — a reserva só morde quando o processado já empata.
+     */
+    @Test
+    void theReserveStillLetsTheFurnaceWork() {
+        // Cem crus recém-minerados e nada assado: a fornalha tem trabalho.
+        assertTrue(
+                ColonyGoals.rawThatMayBeSmelted(100, 0) >= ColonyGoals.SMELTED_FLOOR,
+                "a reserva travou a fornalha num estoque cheio de cru — o piso de cada"
+                        + " tipo nunca seria alcancado");
+    }
+
 }

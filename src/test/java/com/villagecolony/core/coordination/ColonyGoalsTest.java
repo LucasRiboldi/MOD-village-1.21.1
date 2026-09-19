@@ -725,9 +725,26 @@ class ColonyGoalsTest {
         assertEquals(93, goal.get(ResourceType.SANDSTONE));
     }
 
-    /** Zero não vira meta: fornalha sem o que fazer não abre tarefa. */
+    /**
+     * Sem obra pedindo, a fornalha mantém <b>um pouco de cada</b> —
+     * 2026-09-19.
+     *
+     * <p><b>Esta afirmação era o contrário até hoje</b>, e a mudança é
+     * decisão do autor: <i>"o fundidor deve assar um pouco de cada para
+     * ter todos tipos de blocos, e focar em um quando solicitado pela
+     * obra"</i>.
+     *
+     * <p>O nome antigo era {@code nothingToSmeltOpensNoGoal} e ele
+     * protegia o desenho velho — meta de fornalha só nascia de obra
+     * aberta. O custo disso apareceu em 17:15: sem obra, o fundidor não
+     * assava nada, e a primeira casa a pedir arenito liso esperava a
+     * fornalha começar do zero.
+     *
+     * <p>O piso é pequeno de propósito — {@link ColonyGoals#SMELTED_FLOOR}
+     * —, e a obra passa por cima dele quando pede mais.
+     */
     @Test
-    void nothingToSmeltOpensNoGoal() {
+    void theFurnaceKeepsALittleOfEachWithoutAnyWork() {
         Map<ResourceType, Integer> goal = ColonyGoals.of(
                 colony(),
                 ResourceTally.empty(),
@@ -737,6 +754,33 @@ class ColonyGoalsTest {
                         0, ResourceType.COBBLESTONE, 0, 0, 0, 0, 0,
                         Map.of(ResourceType.SMOOTH_SANDSTONE, 0)));
 
-        assertFalse(goal.containsKey(ResourceType.SMOOTH_SANDSTONE));
+        // <b>Contra um número, e não contra a própria constante</b> — a
+        // mutação cobrou isto: comparar com {@code SMELTED_FLOOR} fazia a
+        // afirmação passar com o piso em ZERO, porque os dois lados se
+        // moviam juntos. Um teste assim não mede nada.
+        assertTrue(
+                goal.getOrDefault(ResourceType.SMOOTH_SANDSTONE, 0) > 0,
+                "sem obra a fornalha parou de manter estoque — a casa seguinte espera"
+                        + " ela comecar do zero");
+
+        assertEquals(
+                ColonyGoals.SMELTED_FLOOR,
+                goal.get(ResourceType.SMOOTH_SANDSTONE),
+                "o piso deixou de ser o que a constante diz");
+
+        // E o foco continua sendo da obra: quando ela pede mais, manda.
+        Map<ResourceType, Integer> asked = ColonyGoals.of(
+                colony(),
+                ResourceTally.empty(),
+                0,
+                0,
+                new WorkDemand(
+                        0, ResourceType.COBBLESTONE, 0, 0, 0, 0, 0,
+                        Map.of(ResourceType.SMOOTH_SANDSTONE, 60)));
+
+        assertEquals(
+                60,
+                asked.get(ResourceType.SMOOTH_SANDSTONE),
+                "a obra pediu 60 e o piso ganhou dela — o foco deixou de ser da obra");
     }
 }

@@ -226,6 +226,46 @@ continuar distinguível do esgotamento. Decisão do autor.
 
 ---
 
+## ✅ A fornalha mantém um pouco de cada — 2026-09-19, decisão do autor
+
+> *"o fundidor deve assar um pouco de cada para ter todos tipos de
+> blocos, e focar em um quando solicitado pela obra"*
+
+**A lacuna que isto fecha.** A meta de fornalha nascia **só** da obra
+aberta: sem obra pedindo, o fundidor não assava nada, e a primeira casa a
+pedir arenito liso esperava a fornalha começar do zero. Com obra pedindo,
+ele assava **aquilo** até o estoque virar um tipo só — o defeito de
+17:15, com 162 lisos e nenhum cru.
+
+**O conserto tem a forma que a pedra já usava desde 08-27:**
+`Math.max(piso, o que a obra pede)`. Piso de **16** — é "um pouco de
+cada", não uma despensa — e a obra passa por cima quando pede mais.
+
+**Vidro e ferro ficam de fora**, e a bateria cobrou isso: os dois já têm
+meta própria que puxa o cru por trás — a de vidro abre meta de **areia**
+pelo que falta. Pôr piso neles fazia a colônia pedir areia sem obra
+nenhuma querendo vidraça, e **cinco testes** disseram isso na primeira
+tentativa. O pedido é sobre bloco de construção; vidro e ferro são peça
+de janela e de ferramenta.
+
+**Um teste antigo foi substituído, não consertado:**
+`nothingToSmeltOpensNoGoal` protegia o desenho velho — meta de fornalha
+só de obra aberta —, que é exatamente o que esta decisão muda. Virou
+`theFurnaceKeepsALittleOfEachWithoutAnyWork`, e ele afirma **as duas
+metades**: o piso sem obra, e a obra mandando quando pede mais.
+
+**E a mutação pegou um teste meu que não media nada:** eu comparava o
+resultado com `SMELTED_FLOOR`, então com o piso em **zero** os dois lados
+se moviam juntos e a afirmação passava. Agora afirma contra um número.
+
+**Verificado:** build verde, **943 unitários**, **370 gametests**, duas
+rodadas. Mutação nas duas metades — piso desligado e piso ganhando da
+obra.
+
+⚠️ **Espera playtest.**
+
+---
+
 ## ✅ P1.8 resolvido — o fundidor comia o arenito do pedreiro (09-19, 17:15→17:44)
 
 **A instrumentação de 17:06 pagou na primeira sessão** — e a primeira
