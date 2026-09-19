@@ -163,4 +163,49 @@ class HiringLogTest {
                 "com a vaga aberta, o castigo foi contado como 'no alvo' — o"
                         + " diagnóstico apontaria para a conta da população");
     }
+
+    /**
+     * Contratada uma vez não é contratada sempre — 2026-09-19.
+     *
+     * <p><b>O defeito que este teste tranca, e ele me enganou de
+     * verdade.</b> O filtro tirava a profissão do relatório para sempre
+     * depois de um único {@code FILLED}, e o contador é acumulativo. Numa
+     * sessão de 61 passagens, o mineiro contratado na primeira sumia das
+     * outras sessenta, e a linha saía como
+     * <i>"MASON/SMELTER/CARPENTER at target"</i> sem citar {@code MINER}.
+     *
+     * <p>Eu li isso como <b>"a vaga do pedreiro não abre"</b> e quase fui
+     * mexer na conta da população. O certo era o contrário: o pedreiro
+     * <b>existia</b> — {@code MASON b06ae217 claimed the chest} —, e o que
+     * faltava era <b>tarefa</b> para ele, que é outro defeito inteiro.
+     *
+     * <p>Um relatório que some com a informação no momento em que ela fica
+     * interessante é pior que nenhum: ele não cala, <b>mente por
+     * omissão</b>.
+     */
+    @Test
+    void theVacancyFilledOnceStillShowsWhenItLaterCloses() {
+        Worker candidate = idle();
+
+        // Primeira passagem: a vaga do mineiro abre e é ocupada.
+        ProfessionAssigner.vacancyFor(candidate, List.of(candidate), 7);
+
+        assertEquals(
+                1,
+                HiringLog.countOf(COLONY, ProfessionType.MINER, HiringLog.Outcome.FILLED),
+                "a vaga não foi contada como preenchida");
+
+        // Passagens seguintes: já há mineiro, e a vaga não abre mais.
+        Worker miner = hired(ProfessionType.MINER);
+
+        Worker later = idle();
+
+        ProfessionAssigner.vacancyFor(later, List.of(miner, later), 1);
+        ProfessionAssigner.vacancyFor(later, List.of(miner, later), 1);
+
+        assertTrue(
+                HiringLog.report(COLONY).contains("MINER"),
+                "o mineiro foi contratado uma vez e sumiu do relatório para sempre —"
+                        + " o relatório mente por omissão: " + HiringLog.report(COLONY));
+    }
 }

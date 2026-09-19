@@ -115,7 +115,27 @@ public final class HiringLog {
         for (ProfessionType type : ProfessionAssigner.PRODUCER_ORDER) {
             Map<Outcome, Integer> outcomes = byProfession.get(type);
 
-            if (outcomes == null || outcomes.containsKey(Outcome.FILLED)) {
+            // <b>Preenchida ALGUMA VEZ não é preenchida agora</b> —
+            // 2026-09-19. A primeira versão saía do relatório para sempre
+            // depois de um único FILLED, e o contador é acumulativo: numa
+            // sessão de 61 passagens, o mineiro contratado na primeira
+            // sumia das outras sessenta. A linha ficou dizendo
+            // "MASON/SMELTER/CARPENTER at target" sem citar MINER e
+            // LUMBERJACK, e eu li isso como "a vaga do pedreiro não
+            // abre" — quando o certo era que ela estava preenchida.
+            //
+            // Agora compara: se houve mais no-alvo do que contratações, a
+            // profissão passou a maior parte do tempo sem vaga e isso é o
+            // que o relatório existe para mostrar.
+            if (outcomes == null) {
+                continue;
+            }
+
+            int filled = outcomes.getOrDefault(Outcome.FILLED, 0);
+
+            int denied = outcomes.values().stream().mapToInt(Integer::intValue).sum() - filled;
+
+            if (denied == 0) {
                 continue;
             }
 

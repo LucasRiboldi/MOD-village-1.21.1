@@ -137,6 +137,29 @@ as duas otimizações do planejador.*
 
 ---
 
+## 🔴 P1.4 — O pedreiro existe e não tem tarefa (achado 09-19)
+
+**A investigação do pedreiro terminou, e a resposta não era a que eu
+supunha.** A linha `hiring` saiu quando o autor andou pela vila:
+
+```text
+Colony 9c9e465f hiring — MASON at target x61; SMELTER at target x61;
+                         CARPENTER at target x61
+no mason work: no task open for it — 1 able to
+Colony 9c9e465f — MASON b06ae217 claimed the chest at -324, 66, 600
+```
+
+**O pedreiro existe, tem baú, e está apto.** `at target` queria dizer *"a
+vaga já está preenchida"*, não *"a vaga não abre"*. O que falta é
+**tarefa** — e tarefa de pedreiro nasce de obra aberta, que é o P1.3
+seguinte.
+
+**Minha hipótese de 09-18 estava errada** e ficou registrada como tal: eu
+disse "a vila não tem pedreiro". Tem. O caminho `cut_sandstone → pedreiro`
+está inteiro; quem não fecha é `obra → tarefa`.
+
+---
+
 ## ✅ P1.3 confirmado, e o gargalo mudou de dono — 2026-09-19, 1 hora
 
 **A correção da Regra 3 funcionou, e o número é direto:**
