@@ -195,6 +195,123 @@ public class BuildSiteGameTest implements FabricGameTest {
     }
 
     /**
+     * Base desnivelada não vira lote — 2026-09-19, decisão do autor.
+     *
+     * <p><b>Visto em jogo:</b> <i>"criar uma zona usando a altura de um
+     * bloco porém todo resto da base estar acima do nível do solo,
+     * construção fica voando"</i>. A
+     * {@link BuildSiteScanner#ROAD_LEVEL_TOLERANCE} é <b>por coluna</b> e
+     * nada exigia que as colunas concordassem entre si.
+     *
+     * <p>Aqui metade do lote está num nível e metade no outro: nenhum
+     * dos dois chega aos 90%, e o lote é recusado. É o caso que a régua
+     * de conjunto existe para pegar, e o irmão do
+     * {@code oneBlockOffTheRoadLevelIsStillALot} — lá o lote INTEIRO
+     * está um acima, concorda consigo mesmo, e passa.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_level")
+    public void theUnevenBaseIsNotALot(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
+
+        LotRefusals.clearAll();
+        paveGround(context, center);
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
+
+        // Metade das colunas sobe um bloco e metade fica: a base não
+        // concorda consigo mesma, e nenhum nível alcança 90%.
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (dx == 0 && dz == 0) {
+                    continue;
+                }
+
+                if ((dx + dz) % 2 == 0) {
+                    context.setBlockState(
+                            center.add(dx, 1, dz), Blocks.GRASS_BLOCK.getDefaultState());
+                }
+            }
+        }
+
+        try {
+            Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                    context.getWorld(),
+                    colony,
+                    MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                    0,
+                    SMALL_HOUSE);
+
+            context.assertFalse(
+                    site.isPresent(),
+                    "a base remendada virou lote — a casa assenta num nível só e o resto"
+                            + " dela fica voando sobre o terreno, que é o que o autor viu");
+        } finally {
+            BuildSiteScanner.clearAll();
+            LotRefusals.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * A obra nova não pisa em casa que já existe — 2026-09-19.
+     *
+     * <p><b>Visto em jogo:</b> <i>"uma nova zona foi definida e começou
+     * nova construção com um erro grave, invadindo espaço onde já existe
+     * construção (acavalando)"</i>.
+     *
+     * <p><b>Por que as perguntas antigas não pegavam.</b> A Regra 22
+     * consultava {@code isColonyBuilt(ground)} — <b>uma posição por
+     * coluna</b>, a do chão encontrado — e a conferência de volume
+     * começava <i>acima</i> dela. Um prédio cuja caixa cobrisse a coluna
+     * em outra altura escapava das duas.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_level")
+    public void theNewLotNeverLandsOnAFinishedHouse(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
+
+        LotRefusals.clearAll();
+        paveGround(context, center);
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
+
+        // Uma casa pronta cobrindo o lote inteiro, do chão para cima.
+        ColonyPos from = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(center.add(-2, 0, -2)));
+
+        VillageColonyMod.BUILDINGS.register(new Building(
+                colony,
+                colony,
+                ResourceId.vanilla("village/desert/houses/desert_small_house_1"),
+                from,
+                new ColonyPos(from.x() + 4, from.y() + 5, from.z() + 4)));
+
+        try {
+            Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                    context.getWorld(),
+                    colony,
+                    MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                    0,
+                    SMALL_HOUSE);
+
+            context.assertFalse(
+                    site.isPresent(),
+                    "o lote nasceu em cima de uma casa pronta — as duas obras se"
+                            + " acavalam, que e o erro grave que o autor viu em jogo");
+        } finally {
+            VillageColonyMod.BUILDINGS.removeOfColony(colony);
+            BuildSiteScanner.clearAll();
+            LotRefusals.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
      * <b>Um bloco de desnível da rua ainda é lote</b> — decisão do autor,
      * 2026-09-15: <i>"desnivel, permitir somente 1 bloco de desnivel da
      * estrada"</i>.

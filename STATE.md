@@ -226,6 +226,45 @@ continuar distinguível do esgotamento. Decisão do autor.
 
 ---
 
+## ✅ A obra acavalada e a casa voando — 2026-09-19, 15:21→15:49
+
+**O cacto funcionou:** `potted_cactus` sumiu da lista de espera.
+
+### Dois defeitos vistos em jogo, e eles tinham a mesma raiz
+
+**1. A obra nova nasceu em cima de uma casa pronta.** A Regra 22
+consultava `isColonyBuilt(ground)` — **uma posição por coluna**, a do
+chão encontrado — e a conferência de volume começava *acima* dela. Um
+prédio cuja caixa cobrisse a coluna em outra altura escapava das duas.
+
+O conserto pergunta **caixa contra caixa**, que é a forma do que se quer
+impedir. Uma vez por lote, no último portão.
+
+**2. A casa ficava voando.** A `ROAD_LEVEL_TOLERANCE` é **por coluna**, e
+nada exigia que as colunas concordassem entre si — o javadoc dela já
+descrevia o vão como limite conhecido.
+
+> *"aceitar uma base da construção que tenha mais de 90% dos blocos no
+> mesmo nível"*
+
+**E a segunda decisão do autor é o que faz a regra funcionar:** medir o
+nível **entre as colunas**, não contra a rua, e assentar a casa no nível
+da **base**. Medir contra a rua reprovaria o lote inteiro um acima dela —
+o caso que o autor mandou aceitar em 09-15 e que o
+`oneBlockOffTheRoadLevelIsStillALot` protege. E sem mover o piso, um lote
+todo um acima teria 100% no mesmo nível, passaria, e continuaria voando.
+
+**Verificado:** build verde, **938 unitários**, **369 gametests** (+2),
+duas rodadas. Mutação nas três pontas — incluindo a que devolve o voo.
+
+**A bateria pegou o conflito antes de mim:** a primeira versão media
+contra a rua e derrubou o teste de 09-15. Os dois estavam certos, e a
+pergunta foi para o autor em vez de eu escolher.
+
+⚠️ **Espera playtest.**
+
+---
+
 ## ✅ A economia do cacto — 2026-09-19, 14:47→14:59
 
 **O P1.4 foi confirmado em jogo:** `no mason work` caiu para **zero**, e

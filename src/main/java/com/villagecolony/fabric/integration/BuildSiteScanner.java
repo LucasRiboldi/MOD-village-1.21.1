@@ -136,6 +136,34 @@ public final class BuildSiteScanner {
     private static final int ROAD_LEVEL_TOLERANCE = 1;
 
     /**
+     * Quanto da base precisa estar no nível exato da rua, em por cento.
+     *
+     * <p><b>Decisão do autor, 2026-09-19:</b> <i>"aceitar uma base da
+     * construção que tenha mais de 90% dos blocos no mesmo nível
+     * (tentando corrigir o fato de criar uma zona usando a altura de um
+     * bloco porém todo resto da base estar acima do nível do solo,
+     * construção fica voando)"</i>.
+     *
+     * <p>A {@link #ROAD_LEVEL_TOLERANCE} é <b>por coluna</b> e nada
+     * exigia que as colunas concordassem entre si. Esta é a régua do
+     * conjunto.
+     *
+     * <p><b>Medida ENTRE AS COLUNAS, e não contra a rua</b> — segunda
+     * decisão do autor no mesmo dia, e ela é o que faz a regra
+     * funcionar. Medir contra a rua reprovaria o lote inteiro um bloco
+     * acima dela, que é o caso que o próprio autor mandou <b>aceitar</b>
+     * em 09-15 e que o {@code oneBlockOffTheRoadLevelIsStillALot}
+     * protege.
+     *
+     * <p>E a casa passa a assentar no nível da <b>base</b>, não no da
+     * rua. Sem essa metade a regra não consertaria nada: um lote todo um
+     * acima tem 100% das colunas no mesmo nível, passaria, e a casa
+     * continuaria assentando em {@code roadY + 1} — voando sobre o
+     * próprio terreno.
+     */
+    private static final int LEVEL_BASE_PERCENT = 90;
+
+    /**
      * Quanto desnível o lote pode ter, em blocos.
      *
      * <p>Dois é o que um jogador aplaina sem pensar. Três já é degrau, e
@@ -1384,6 +1412,11 @@ public final class BuildSiteScanner {
             ServerWorld world, UUID colonyId, int originX, int originZ, int aroundY,
             int roadY, ColonyPos size) {
 
+        // Quantas colunas em cada altura de chão — a conta da regra dos
+        // 90%, decisão do autor de 2026-09-19. O nível é medido ENTRE AS
+        // COLUNAS, e não contra a rua: ver o portão depois do laço.
+        Map<Integer, Integer> groundLevels = new HashMap<>();
+
         for (int dx = 0; dx < size.x(); dx++) {
             for (int dz = 0; dz < size.z(); dz++) {
                 int x = originX + dx;
@@ -1443,6 +1476,20 @@ public final class BuildSiteScanner {
 
                     return Optional.empty();
                 }
+
+                // <b>E quantas colunas estão no nível EXATO da rua</b> —
+                // decisão do autor, 2026-09-19. A tolerância acima aceita
+                // um bloco de degrau por coluna, e a casa assenta em
+                // {@code roadY + 1} venha o que vier: um lote em que
+                // <i>toda</i> coluna está um abaixo é aceito e a casa sai
+                // <b>voando</b>, com um vão de um bloco sob o piso
+                // inteiro. Era limite conhecido — o javadoc do
+                // {@link #ROAD_LEVEL_TOLERANCE} o descreve — e o autor o
+                // viu em jogo.
+                //
+                // A conta fecha depois do laço: <i>"aceitar uma base que
+                // tenha mais de 90% dos blocos no mesmo nível"</i>.
+                groundLevels.merge(ground.getY(), 1, Integer::sum);
 
                 // <b>E as três do meio ficam na ordem em que sempre
                 // estiveram</b>, de propósito. Custam a mesma coisa — uma
@@ -1548,16 +1595,85 @@ public final class BuildSiteScanner {
             }
         }
 
+        // <b>A base tem de estar quase toda no mesmo nível</b> —
+        // decisão do autor, 2026-09-19: <i>"aceitar uma base da
+        // construção que tenha mais de 90% dos blocos no mesmo
+        // nível"</i>.
+        //
+        // <b>O que isto conserta, visto em jogo.</b> A tolerância de um
+        // bloco é <b>por coluna</b>, e nada exigia que as colunas
+        // concordassem entre si: um lote em que todas estão um abaixo da
+        // rua passa inteiro, e a casa assenta em {@code roadY + 1} —
+        // <b>voando</b>, com um vão de um bloco sob o piso todo. O
+        // javadoc do ROAD_LEVEL_TOLERANCE já descrevia o vão como limite
+        // conhecido; o autor o viu e mandou fechar.
+        //
+        // Noventa por cento, e não cem: o degrau isolado é o que a
+        // tolerância existe para aceitar, e exigir o lote perfeito
+        // devolveria os 35% de recusa por desnível que a régua exata
+        // produzia.
+        int columns = size.x() * size.z();
+
+        int mostCommon = groundLevels.values().stream().mapToInt(Integer::intValue).max()
+                .orElse(0);
+
+        if (mostCommon * 100 < columns * LEVEL_BASE_PERCENT) {
+            LotRefusals.refused(colonyId, LotRefusals.Reason.OFF_ROAD_LEVEL);
+
+            return Optional.empty();
+        }
+
+        // <b>E a casa assenta no nível da BASE, e não no da rua</b> — é a
+        // outra metade da decisão, e sem ela a regra dos 90% não
+        // consertaria nada: um lote inteiro um acima da rua tem 100% das
+        // colunas no mesmo nível e passaria, e a casa continuaria
+        // assentando em {@code roadY + 1} — <b>voando</b> sobre o próprio
+        // terreno.
+        int baseY = groundLevels.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse(roadY);
+
+        // <b>E a caixa inteira não pode pisar em casa que já existe</b> —
+        // 2026-09-19, visto em jogo: uma obra nova nasceu EM CIMA de uma
+        // casa pronta, acavalando as duas.
+        //
+        // <b>Por que as perguntas de cima não pegaram.</b> A Regra 22
+        // pergunta {@code isColonyBuilt(ground)} — <b>uma posição por
+        // coluna</b>, a do chão encontrado — e a conferência de volume
+        // começa <i>acima</i> dela. Um prédio cuja caixa cubra a coluna
+        // em outra altura não é visto por nenhuma das duas: nem no ponto
+        // do chão, nem na janela que começa depois dele.
+        //
+        // Aqui a pergunta é caixa contra caixa, que é a forma do que se
+        // quer impedir. Uma vez por lote, e não por coluna — é o último
+        // portão, e a essa altura só sobrou um candidato.
+        ColonyPos floor = new ColonyPos(originX, baseY + 1, originZ);
+
+        ColonyPos ceiling = new ColonyPos(
+                originX + size.x() - 1,
+                baseY + size.y(),
+                originZ + size.z() - 1);
+
+        if (VillageColonyMod.BUILDINGS.anythingBuiltInside(floor, ceiling)) {
+            LotRefusals.refused(colonyId, LotRefusals.Reason.OCCUPIED);
+
+            return Optional.empty();
+        }
+
         // <b>A pegada inteira passou</b> — 2026-09-17. É o par que
         // faltava ao LotRefusals: ele contava só o que some, e um
         // denominador sem numerador não diz se a vila está apertada ou
         // sem chão nenhum. Ver LotRefusals.accepted.
-        LotRefusals.accepted(colonyId, size.x() * size.z());
+        LotRefusals.accepted(colonyId, columns);
 
-        // O piso da casa vai sobre o chão, e não dentro dele. Como o
-        // chão está no nível da rua, o piso fica na altura em que se
-        // anda sobre ela.
-        return Optional.of(roadY + 1);
+        // O piso da casa vai sobre o chão, e não dentro dele — e o chão
+        // é o da BASE, que é onde 90% das colunas estão. Era
+        // {@code roadY + 1} até 2026-09-19, e era isso que fazia a casa
+        // voar quando o lote inteiro estava acima da rua: o piso ficava
+        // no nível do caminho e o terreno, mais alto, passava por baixo
+        // dele.
+        return Optional.of(baseY + 1);
     }
 
     /**

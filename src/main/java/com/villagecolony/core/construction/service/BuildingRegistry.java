@@ -72,6 +72,41 @@ public final class BuildingRegistry {
         return at(pos).isPresent();
     }
 
+    /**
+     * Se alguma construção já ocupa esta caixa — 2026-09-19.
+     *
+     * <p><b>O defeito que isto fecha, visto em jogo.</b> Uma obra nova
+     * nasceu <b>em cima</b> de uma casa pronta, acavalando as duas. O
+     * scanner perguntava {@code isColonyBuilt(ground)} — <b>uma posição
+     * por coluna</b>, a do chão encontrado —, e a conferência de volume
+     * começava <i>acima</i> dela. Um prédio cuja caixa cobrisse a coluna
+     * em outra altura não era visto por nenhuma das duas.
+     *
+     * <p>Aqui a pergunta é da <b>caixa contra caixa</b>, que é a forma da
+     * coisa que se quer impedir. O {@code Building.contains} já compara
+     * as três dimensões; o que faltava era alguém perguntar pela caixa
+     * inteira em vez de por um ponto.
+     *
+     * @param min o canto mais baixo da obra pretendida
+     * @param max o canto mais alto, inclusive
+     */
+    public boolean anythingBuiltInside(ColonyPos min, ColonyPos max) {
+        if (min == null || max == null) {
+            return false;
+        }
+
+        for (Building building : buildings.values()) {
+            if (min.x() <= building.max().x() && max.x() >= building.min().x()
+                    && min.y() <= building.max().y() && max.y() >= building.min().y()
+                    && min.z() <= building.max().z() && max.z() >= building.min().z()) {
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public List<Building> ofColony(UUID colonyId) {
         List<Building> found = new ArrayList<>();
 
