@@ -226,6 +226,56 @@ continuar distinguível do esgotamento. Decisão do autor.
 
 ---
 
+## ✅ Quatro entregas do autor — 2026-09-19, 13:41
+
+### O P1.7 funcionou, e a obra chegou perto do fim
+
+| | 12:28 | 13:41 |
+|---|---|---|
+| itens no chão | 660 | **254** |
+| obra | 318 blocos faltando | **12** |
+| `pulling ... forward` | — | **20×** |
+
+**E a transformação do arenito está acontecendo:** 287 `smooth_sandstone`,
+17 `cut_sandstone`, 15 `smooth_sandstone_stairs`.
+
+### As quatro regras novas
+
+**1. Cama de qualquer cor.** A obra parou a **12 blocos do fim** esperando
+`green_bed` — 17× —, numa vila cujo colono produz lã **branca**. Entra
+pela mesma porta das peças de madeira (`ItemTags.BEDS`), então demanda e
+parede concordam por construção.
+
+**2. Madeira de qualquer espécie: já existia** desde 09-05, e a medição
+mostrou que o problema era outro — a obra esperava `jungle_door` num
+deserto com **dez toras ao todo**. Não falta substituição; **falta
+árvore**.
+
+**3. A primeira obra de toda vila é uma casa.** A cota de roça é por
+população, então uma vila que nasce com gente bastante abria a roça antes
+da primeira casa.
+
+**4. O viveiro do fazendeiro.** Terra enraizada + rebento na borda, a
+espécie saindo do bioma pela mesma tabela que decide a tábua da obra.
+Plantado quando ele varre o raio e não acha lavoura, com intervalo de
+cinco minutos.
+
+**Verificado:** build verde, **935 unitários**, **364 gametests** (+7),
+duas rodadas. Mutação nas três regras novas.
+
+**Um teste antigo caiu e estava certo:**
+`theHouseGoesUpAfterTheFarmStepsAside` montava o impasse com a colônia
+sem prédio nenhum — exatamente o caso que a regra nova manda ser casa. O
+cenário ganhou o prédio anterior; o que ele mede continua igual.
+
+**E a mutação achou um buraco meu:** a regra da casa-primeiro passou sem
+teste que a medisse — desligá-la deixava os 363 verdes. Escrevi o
+cenário irmão, e aí a mutação quebra.
+
+⚠️ **Espera playtest.**
+
+---
+
 ## 🔴 P1.7 — O baú cheio destrói o que a obra espera (achado 09-19, 12:09→12:28)
 
 **A sessão em que a vila finalmente construiu, e parou por outro motivo.**

@@ -112,7 +112,26 @@ public final class MaterialChoice {
             ItemTags.WOODEN_TRAPDOORS,
             ItemTags.WOODEN_FENCES,
             ItemTags.WOODEN_BUTTONS,
-            ItemTags.WOODEN_PRESSURE_PLATES);
+            ItemTags.WOODEN_PRESSURE_PLATES,
+
+            // <b>E a cama, de qualquer cor</b> — decisão do autor,
+            // 2026-09-19: <i>"quando qualquer construção solicitar cama,
+            // esta cama pode ser de qualquer cor, qualquer tipo de
+            // cama"</i>.
+            //
+            // <b>O que ela destrava, medido na sessão de 13:04.</b> A obra
+            // parou a <b>12 blocos do fim</b> esperando
+            // {@code green_bed} — dezessete vezes —, numa vila de deserto
+            // em que a colônia produz lã <b>branca</b>. A planta grava a
+            // cor que estiver no arquivo, e esperar por ela é esperar
+            // tinta que ninguém fabrica.
+            //
+            // A cor da cama não muda nada do que a vila precisa: ela é
+            // onde o aldeão dorme, e o jogo conta qualquer uma como cama.
+            // Entra pela mesma porta das peças de madeira porque o
+            // problema é o mesmo — a planta pede uma variante específica
+            // de uma família inteira que serve igual.
+            ItemTags.BEDS);
 
     /**
      * A mesma peça, na madeira que a colônia tiver — 2026-09-05.

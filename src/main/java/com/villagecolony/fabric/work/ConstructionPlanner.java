@@ -30,6 +30,7 @@ import net.minecraft.util.math.BlockPos;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -304,7 +305,21 @@ public final class ConstructionPlanner {
         // esta segunda pergunta a colônia repetia a mesma recusa para
         // sempre: a vila de 09-09 gastou uma hora em 108 passagens sem
         // abrir obra nenhuma. Ver FarmPlans.postponed.
-        if (FarmPlans.owedToThePopulation(colony.id())
+        // <b>E a PRIMEIRA obra de toda vila é uma casa</b> — decisão do
+        // autor, 2026-09-19: <i>"em todas vilas a primeira construção
+        // deve ser uma casa, depois variantes mais úteis para vila"</i>.
+        //
+        // Sem esta guarda a roça passava na frente: a cota é por
+        // população — um campo a cada {@code VILLAGERS_PER_FARM}
+        // aldeões —, e uma vila que nasce com gente bastante abria a
+        // roça <b>antes da primeira casa</b>. A colônia gastava a
+        // primeira obra, que é a mais cara de conseguir, no que não
+        // abriga ninguém.
+        //
+        // A conta é de obra ERGUIDA, e não de obra planejada: enquanto a
+        // primeira casa não fecha, a roça espera a vez.
+        if (hasBuiltSomething(colony.id())
+                && FarmPlans.owedToThePopulation(colony.id())
                 && !FarmPlans.postponed(colony.id(), world.getTime())) {
 
             plans = FarmPlans.plansFor(world, colony);
@@ -959,6 +974,22 @@ public final class ConstructionPlanner {
      * pedregulhos, senão ninguém abre tarefa de mineração e a obra dorme
      * esperando um material que a colônia já sabe fazer.
      */
+    /**
+     * Se esta colônia já ergueu alguma coisa — 2026-09-19.
+     *
+     * <p>A guarda da regra <i>"a primeira construção deve ser uma
+     * casa"</i>. Conta obra <b>erguida</b>, e não planejada: uma obra
+     * planejada que ainda espera material não abriga ninguém, e deixar a
+     * roça passar na frente dela devolveria o defeito com outro nome.
+     *
+     * <p>Qualquer prédio serve, e é de propósito — a regra é sobre a
+     * <b>primeira</b> obra da vila, não sobre haver sempre mais casas
+     * que roças. Depois da primeira, a cota da população volta a mandar.
+     */
+    static boolean hasBuiltSomething(UUID colonyId) {
+        return !VillageColonyMod.BUILDINGS.ofColony(colonyId).isEmpty();
+    }
+
     public static int materialNeededBy(ResourceId material, Colony colony) {
         return VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
                 .map(project -> project.remainingMaterials().getOrDefault(material, 0))

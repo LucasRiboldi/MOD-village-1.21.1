@@ -2,6 +2,7 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ColonyRoads;
@@ -327,6 +328,25 @@ public class FarmPlanGameTest implements FabricGameTest {
                     FarmPlans.owedToThePopulation(colony.id()),
                     "o cenário não pediu roça — sem isso o teste não mede o impasse");
 
+            // <b>E a vila já ergueu a primeira casa</b> — 2026-09-19. A
+            // regra nova do autor manda que a PRIMEIRA obra de toda vila
+            // seja uma casa, e sem este prédio o planejador nem chega ao
+            // caminho da roça: ele abre casa na primeira passagem, e o
+            // impasse que este teste mede não se monta.
+            //
+            // Longe do centro de propósito: o que importa é a colônia
+            // ter construído, e não onde — um prédio sobre o lote
+            // mudaria o que a varredura acha.
+            ColonyPos built = MinecraftTypeAdapter.toColonyPos(
+                    context.getAbsolutePos(center.add(-SCAN_RADIUS, 0, -SCAN_RADIUS)));
+
+            VillageColonyMod.BUILDINGS.register(new Building(
+                    colony.id(),
+                    colony.id(),
+                    ResourceId.vanilla("village/plains/houses/plains_small_house_1"),
+                    built,
+                    new ColonyPos(built.x() + 1, built.y() + 1, built.z() + 1)));
+
             // A primeira passagem topa com o lote fora do alcance e
             // recusa. Ela não abre obra, e é assim que tem de ser.
             Optional<ConstructionProject> refused =
@@ -357,6 +377,8 @@ public class FarmPlanGameTest implements FabricGameTest {
 
             VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
 
+            VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
+
             // Sem FarmPlans.clearAll() de propósito: ele limpa READ e
             // POSTPONED <b>globais</b> — o javadoc dele diz "chamado ao
             // parar o servidor" —, e esvaziar o cache de plantas lidas
@@ -364,6 +386,101 @@ public class FarmPlanGameTest implements FabricGameTest {
             // já custou rodada a este projeto. O adiamento que este
             // teste grava fica preso ao UUID sorteado aqui, que morre
             // com ele, e não alcança colônia de mais ninguém.
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * A PRIMEIRA obra de toda vila é uma casa — 2026-09-19.
+     *
+     * <p><b>Decisão do autor:</b> <i>"em todas vilas a primeira
+     * construção deve ser uma casa, depois variantes mais úteis para a
+     * vila"</i>.
+     *
+     * <p>Sem a guarda a roça passava na frente: a cota é por população —
+     * um campo a cada {@code VILLAGERS_PER_FARM} aldeões —, e uma vila
+     * que nasce com gente bastante abria a roça <b>antes da primeira
+     * casa</b>, gastando a obra mais cara de conseguir no que não abriga
+     * ninguém.
+     *
+     * <p>É o cenário irmão do {@code theHouseGoesUpAfterTheFarmStepsAside},
+     * e a diferença é uma só: <b>a colônia não construiu nada ainda</b>.
+     * Lá o prédio existe e a roça pode ser pedida; aqui não existe, e a
+     * primeira obra tem de ser casa mesmo com a cota de roça aberta.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farm_standoff")
+    public void theFirstBuildOfAVillageIsAlwaysAHouse(TestContext context) {
+        BlockPos center = new BlockPos(16, 1, 16);
+
+        for (int dx = -SCAN_RADIUS; dx <= SCAN_RADIUS; dx++) {
+            for (int dz = -SCAN_RADIUS; dz <= SCAN_RADIUS; dz++) {
+                context.setBlockState(
+                        center.add(dx, 0, dz), Blocks.GRASS_BLOCK.getDefaultState());
+            }
+        }
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+
+        UUID colonyId = UUID.randomUUID();
+        BlockPos absoluteRoad = context.getAbsolutePos(center);
+        BuildSiteScanner.restore(new ColonyRoads(
+                colonyId,
+                MinecraftTypeAdapter.toColonyPos(absoluteRoad),
+                List.of(ColonyRoads.column(absoluteRoad.getX(), absoluteRoad.getZ()))));
+
+        Colony colony = Colony.create(
+                colonyId,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)));
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        try {
+            UUID builderId = UUID.randomUUID();
+
+            VillageColonyMod.WORKERS.register(builderId, colony.id())
+                    .assign(ProfessionType.BUILDER);
+
+            owned.owning(builderId);
+
+            for (int villager = 1; villager < FarmPlans.VILLAGERS_PER_FARM; villager++) {
+                UUID id = UUID.randomUUID();
+
+                VillageColonyMod.WORKERS.register(id, colony.id());
+                owned.owning(id);
+            }
+
+            // A cota de roça ESTÁ aberta, e é isso que dá valor ao
+            // cenário: sem ela a casa sairia por falta de alternativa, e
+            // o teste ficaria verde sem medir a regra.
+            context.assertTrue(
+                    FarmPlans.owedToThePopulation(colony.id()),
+                    "o cenário não pediu roça — sem isso a casa sai por falta de"
+                            + " alternativa e a regra não é medida");
+
+            context.assertTrue(
+                    VillageColonyMod.BUILDINGS.ofColony(colony.id()).isEmpty(),
+                    "a colônia já tinha prédio — o cenário não é o da PRIMEIRA obra");
+
+            Optional<ConstructionProject> first =
+                    ConstructionPlanner.plan(context.getWorld(), colony);
+
+            context.assertTrue(
+                    first.isPresent(),
+                    "a primeira passagem não abriu obra nenhuma");
+
+            context.assertFalse(
+                    FarmPlans.isFarm(first.get().blueprint().id()),
+                    "a PRIMEIRA obra da vila foi uma roça: a colônia gastou a obra mais"
+                            + " cara de conseguir no que não abriga ninguém");
+        } finally {
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
+
+            VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
+
             owned.cleanUp();
         }
 

@@ -8,6 +8,8 @@
   "environment": "*",
   "entrypoints": {
     "fabric-gametest": [
+      "com.villagecolony.gametest.TreeNurseryGameTest",
+      "com.villagecolony.gametest.AnyBedGameTest",
       "com.villagecolony.gametest.MineSettlingGameTest",
       "com.villagecolony.gametest.ChestReliefGameTest",
       "com.villagecolony.gametest.VolumeSampleGameTest",
