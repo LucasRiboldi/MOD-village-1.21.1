@@ -41,9 +41,33 @@ public final class ProfessionAssigner {
             ProfessionType.FARMER,
             ProfessionType.BREEDER);
 
+    /**
+     * Piso absoluto da vila: uma função ativa de cada tipo.
+     *
+     * <p>{@link ProfessionType#SHEPHERD} é apenas compatibilidade com
+     * saves antigos e conta como {@link ProfessionType#BREEDER};
+     * {@link ProfessionType#BUILDER} é a oitava função ativa e não pode
+     * continuar sendo tratado como exceção quando a vila nasce.
+     */
+    public static final List<ProfessionType> FOUNDATION_ORDER = List.of(
+            ProfessionType.MINER,
+            ProfessionType.LUMBERJACK,
+            ProfessionType.MASON,
+            ProfessionType.SMELTER,
+            ProfessionType.CARPENTER,
+            ProfessionType.FARMER,
+            ProfessionType.BREEDER,
+            ProfessionType.BUILDER);
+
     private static final int ADULTS_PER_BATCH = 15;
 
     private ProfessionAssigner() {
+    }
+
+    /** Normaliza a profissão legada para a função ativa que ela representa. */
+    public static ProfessionType foundationRole(ProfessionType type) {
+        Objects.requireNonNull(type, "type");
+        return type == ProfessionType.SHEPHERD ? ProfessionType.BREEDER : type;
     }
 
     /**
@@ -168,6 +192,31 @@ public final class ProfessionAssigner {
             return Optional.empty();
         }
 
+        // A fundação vem antes do crescimento: enquanto houver adultos
+        // suficientes para a próxima função, nenhuma função ativa pode
+        // ficar vazia. A camada Fabric cria os adultos e as camas que
+        // faltarem; este trecho garante a parte determinística da regra.
+        for (int index = 0; index < FOUNDATION_ORDER.size()
+                && index < adultPopulation; index++) {
+            ProfessionType type = FOUNDATION_ORDER.get(index);
+
+            if (counts.get(type) >= 1) {
+                continue;
+            }
+
+            if (candidate != null && candidate.isShunning(type)) {
+                HiringLog.record(colonyId, type, HiringLog.Outcome.SHUNNED);
+
+                continue;
+            }
+
+            if (colonyId != null) {
+                HiringLog.record(colonyId, type, HiringLog.Outcome.FILLED);
+            }
+
+            return Optional.of(type);
+        }
+
         for (ProfessionType type : PRODUCER_ORDER) {
             if (counts.get(type) >= targetCount(type, adultPopulation)) {
                 if (colonyId != null) {
@@ -243,7 +292,7 @@ public final class ProfessionAssigner {
     public static Set<UUID> enforceVacancies(
             WorkerService workers, UUID colonyId, Predicate<UUID> equipped) {
 
-        return enforceVacancies(workers, colonyId, equipped, 0);
+        return enforceVacancies(workers, colonyId, equipped, 0, false);
     }
 
     /**
@@ -265,6 +314,26 @@ public final class ProfessionAssigner {
     public static Set<UUID> enforceVacancies(
             WorkerService workers, UUID colonyId, Predicate<UUID> equipped, int replacements) {
 
+        return enforceVacancies(workers, colonyId, equipped, replacements, false);
+    }
+
+    /**
+     * Substitui trabalhadores sem baú sem retirar o último ocupante de uma
+     * função da fundação da vila.
+     */
+    public static Set<UUID> enforceVacanciesPreservingFoundation(
+            WorkerService workers, UUID colonyId, Predicate<UUID> equipped, int replacements) {
+
+        return enforceVacancies(workers, colonyId, equipped, replacements, true);
+    }
+
+    private static Set<UUID> enforceVacancies(
+            WorkerService workers,
+            UUID colonyId,
+            Predicate<UUID> equipped,
+            int replacements,
+            boolean preserveFoundation) {
+
         Objects.requireNonNull(workers, "workers");
         Objects.requireNonNull(colonyId, "colonyId");
         Objects.requireNonNull(equipped, "equipped");
@@ -278,6 +347,7 @@ public final class ProfessionAssigner {
         }
 
         Set<UUID> demoted = new LinkedHashSet<>();
+        Map<ProfessionType, Integer> counts = countByProfession(employed);
 
         // E a troca: quem ficou com a vaga sem conseguir baú a perde
         // para quem consegue, enquanto houver quem consiga.
@@ -292,8 +362,23 @@ public final class ProfessionAssigner {
                 continue;
             }
 
+            ProfessionType role = worker.profession()
+                    .map(ProfessionAssigner::foundationRole)
+                    .orElse(null);
+
+            if (preserveFoundation
+                    && role != null
+                    && FOUNDATION_ORDER.contains(role)
+                    && counts.getOrDefault(role, 0) <= 1) {
+                continue;
+            }
+
             worker.unassign();
             demoted.add(worker.villagerId());
+
+            if (role != null) {
+                counts.merge(role, -1, Integer::sum);
+            }
 
             left--;
         }

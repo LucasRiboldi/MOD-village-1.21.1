@@ -31,6 +31,7 @@ import com.villagecolony.fabric.integration.SiteMarker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageBiomes;
 import com.villagecolony.fabric.integration.VillageScanner;
+import com.villagecolony.fabric.integration.VillageFoundation;
 import com.villagecolony.fabric.integration.VillagerScanner;
 import com.villagecolony.fabric.integration.WorkerEquipment;
 import com.villagecolony.fabric.integration.WorkerNameplate;
@@ -177,6 +178,28 @@ public final class VillageDetectionHandler {
         // ponto dela é exercitar o que a colônia DECIDE. Quem afirma a
         // regra de proximidade é o caminho de produção, em onServerTick.
         runColonyCycles(world, false);
+    }
+
+    /**
+     * Executa a garantia de fundação para uma colônia já conhecida.
+     *
+     * <p>É a mesma sequência usada por {@link #detectAround}: registra os
+     * aldeões existentes, completa a população física e repete o registro
+     * para atribuir profissões e reivindicar os baús. A entrada explícita
+     * da colônia mantém o teste de contrato isolado de outras arenas do
+     * servidor de GameTest; em produção, {@code detectAround} é quem chama
+     * esta sequência.
+     */
+    public static void runFoundationNow(ServerWorld world, Colony colony) {
+        registerVillagers(world, colony, colony.center());
+
+        VillageFoundation.Result foundation = VillageFoundation.ensure(
+                world, colony, colony.center(), VillageColonyMod.WORKERS);
+
+        if (foundation.changed()) {
+            registerVillagers(world, colony, colony.center());
+            registerVillagers(world, colony, colony.center());
+        }
     }
 
     /**
@@ -1050,7 +1073,7 @@ public final class VillageDetectionHandler {
     private static void dismissExtraWorkers(
             ServerWorld world, Colony colony, int replacements) {
 
-        Set<UUID> demoted = ProfessionAssigner.enforceVacancies(
+        Set<UUID> demoted = ProfessionAssigner.enforceVacanciesPreservingFoundation(
                 VillageColonyMod.WORKERS,
                 colony.id(),
                 villagerId -> VillageColonyMod.STORAGES.of(villagerId).isPresent(),
@@ -1226,6 +1249,19 @@ public final class VillageDetectionHandler {
             // então uma colônia que adote um aglomerado longe do próprio
             // centro procuraria aldeões no lugar errado.
             registerVillagers(world, colony, candidate.center());
+
+            // Uma vila vanilla pode nascer com menos adultos ou sem cama
+            // válida para os trabalhadores que o save já conhecia. A
+            // fundação acontece depois do primeiro registro para que as
+            // novas entidades recebam a profissão no ciclo seguinte; a
+            // terceira passagem deixa o baú ser reivindicado por ela.
+            VillageFoundation.Result foundation = VillageFoundation.ensure(
+                    world, colony, candidate.center(), VillageColonyMod.WORKERS);
+
+            if (foundation.changed()) {
+                registerVillagers(world, colony, candidate.center());
+                registerVillagers(world, colony, candidate.center());
+            }
 
             if (VillageColonyMod.COLONIES.count() > before) {
                 VillageColonyMod.LOGGER.info(

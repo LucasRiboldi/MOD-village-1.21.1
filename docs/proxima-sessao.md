@@ -17,11 +17,22 @@ lista deve começar agora. A ordem abaixo continua valendo para o resto.
 Ele não é diário — quem conta a história é o `TODO.md`. Este aqui é a lista
 de conferência de uma sessão.
 
-**JAR atual em 2026-09-20, após a correção da rotação de construções:** 0.3.0,
-SHA-256 `0FEB11BCA1C1C600776E55E15F91B858207100A3FABEAEBA8905BE6FAE43902E`
+**Atualização de 2026-09-20 — fundação absoluta da vila.** Toda vila adotada
+deve nascer com oito funções ativas: mineiro, lenhador, pedreiro, fundidor,
+carpinteiro, agricultor, criador e construtor. Cada titular deve ter uma cama
+`HOME` e um baú próprio; a criação só ocupa blocos substituíveis. O
+`VillageFoundationGameTest` passou. No jogo, entre em uma vila recém-detectada,
+conte os oito aldeões, confira as camas e os baús e observe se nenhuma
+estrutura existente foi substituída. O playtest ainda não foi observado nesta
+sessão.
+
+**JAR atual em 2026-09-20, após a fundação automática da vila:** 0.3.0,
+SHA-256 `287AB8535FFB8034927A583D7CBD24BA4917AA57ECD6FFF71A7C7C756E29D0BB`
 em `build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`. O cliente estava
 fechado durante a cópia. `./gradlew.bat clean build` passou e
-`runGametest` executou **380/380 GameTests**. A seleção agora alterna
+`./gradlew.bat clean runGametest` passou com **381/381 GameTests**. A fundação
+agora garante oito funções, cama `HOME` e baú próprio por titular. A seleção
+continua alternando
 `casa -> tipo não residencial A -> casa -> tipo não residencial B`, com o
 mesmo scanner de zonas; a sequência completa no save continua como playtest.
 

@@ -267,6 +267,7 @@ class ProfessionShunTest {
         fillEveryProfessionExcept(ProfessionType.MINER, ProfessionType.FARMER);
 
         aWorker().assign(ProfessionType.FARMER);
+        aWorker().assign(ProfessionType.BUILDER);
 
         Worker worker = aWorker();
 
@@ -300,6 +301,7 @@ class ProfessionShunTest {
         fillEveryProfessionExcept(ProfessionType.MINER, ProfessionType.FARMER);
 
         aWorker().assign(ProfessionType.FARMER);
+        aWorker().assign(ProfessionType.BUILDER);
 
         Worker worker = aWorker();
 

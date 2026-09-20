@@ -12,6 +12,12 @@
 
 ## Onde a vila está
 
+**A fundação mínima agora é automática.** Toda vila adotada garante oito
+funções ativas (`MINER`, `LUMBERJACK`, `MASON`, `SMELTER`, `CARPENTER`,
+`FARMER`, `BREEDER` e `BUILDER`), com adulto, cama `HOME` e baú próprio. A
+execução isolada de `VillageFoundationGameTest` confirmou o contrato sem
+sobrescrever blocos; falta conferir a criação no save aberto pelo autor.
+
 **A primeira casa subiu.** Sessão de 23:21:58 de 09-19:
 `Builder e1770e02 stopped — the house is up`. A obra desceu de 83 blocos
 a zero em menos de três minutos, com o construtor que conseguiu ficar.

@@ -107,7 +107,7 @@ class ProfessionAssignerTest {
 
         int assigned = ProfessionAssigner.assignMissing(workers, COLONY, everyone(), 15);
 
-        assertEquals(7, assigned);
+        assertEquals(8, assigned);
         assertTrue(ProfessionAssigner.vacancy(workers.ofColony(COLONY), 15).isEmpty());
     }
 

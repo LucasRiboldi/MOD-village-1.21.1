@@ -44,10 +44,12 @@ sem subir servidor, e é o ativo mais valioso do projeto para regressão barata.
 
 ---
 
-## 3. As sete profissões
+## 3. As oito funções da fundação
 
-Declaradas em `core/worker/model/ProfessionType`, com capacidade e ferramenta em
-`ProfessionRegistry`:
+As sete profissões produtoras e a função de construção são declaradas em
+`core/worker/model/ProfessionType`, com capacidade e ferramenta em
+`ProfessionRegistry`. A fundação mínima da vila exige um titular de cada uma;
+`SHEPHERD` legado conta como `BREEDER` (ADR-018):
 
 | profissão | executor | o que produz |
 |---|---|---|

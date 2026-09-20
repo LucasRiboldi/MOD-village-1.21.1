@@ -98,10 +98,11 @@ recontratado no ciclo seguinte. Perde-se a atribuição, não o mundo.
 pela tarefa — duplicar seiscentas linhas para mudar duas seria pior que o
 problema. A divisão pedida era de profissão, e é essa que está feita.
 
-**O construtor é a exceção declarada.** O trabalho dele não nasce de uma meta
-de recurso: nasce do `ConstructionPlanner`. Por isso ele não aparece em
-`typeFor`, e o teste que exige "toda profissão responde por algum material"
-o isenta por nome.
+**O construtor é a exceção declarada na produção, não na fundação.** O trabalho
+dele não nasce de uma meta de recurso: nasce do `ConstructionPlanner`. Por isso
+ele não aparece em `typeFor`, e o teste que exige "toda profissão responde por
+algum material" o isenta por nome. A fundação mínima da vila ainda cria um
+`BUILDER` titular, junto das sete profissões produtoras; ver ADR-018.
 
 ### O que a matriz **não** diz, e é de propósito
 

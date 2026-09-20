@@ -7,6 +7,8 @@
 Esta fila separa falhas reproduzíveis ou coberturas que podem ser tratadas
 com código e testes locais das validações que continuam dependendo de um save.
 
+- [x] 🔴 **P0.8 — fundação absoluta da vila:** toda vila detectada garante as oito funções ativas (`MINER`, `LUMBERJACK`, `MASON`, `SMELTER`, `CARPENTER`, `FARMER`, `BREEDER` e `BUILDER`), com adulto, cama `HOME` e baú próprio. `VillageFoundationGameTest` passou; a criação só usa blocos substituíveis e não sobrescreve construções.
+- [ ] Playtest P0.8: entrar em um save com vila recém-detectada e confirmar os oito aldeões, suas camas, seus baús e a ausência de sobreposição com estruturas existentes.
 - [ ] 🔴 **E42 — impasse entre profissões:** criar o GameTest da roça fora do alcance do fazendeiro, com duas passagens do planejador, e corrigir a fila se a segunda passagem não abrir o projeto de casa.
 - [ ] 🟠 **E43 — descanso ignorado:** decidir se o descanso de quatro ciclos deve impedir a reatribuição na segunda passagem de `WorkAssignment`, depois registrar a decisão em teste e corrigir o fluxo escolhido.
 - [ ] 🟠 **P1.1 — trabalhador ocioso sem `COLLECT_STONE` ou `CRAFT_WOOD`:** adicionar uma regressão ponta a ponta para criação do pedido, atribuição ao ofício correto e execução; investigar a mesma raiz do caso de peça de construção já corrigido.

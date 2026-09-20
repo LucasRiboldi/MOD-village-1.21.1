@@ -7978,3 +7978,25 @@ Foi adicionada regressão unitária para a sequência e um GameTest que parte de
 uma casa concluída e verifica que a próxima obra é não residencial. `./gradlew.bat
 test` passou e `./gradlew.bat runGametest` passou com **380/380 GameTests**.
 A confirmação da sequência completa no save continua pendente de playtest.
+
+### 2026-09-20 — fundação absoluta de toda vila
+
+O playtest pedido pelo autor apontou a regra de contrato: toda vila deve
+nascer com pelo menos um titular de cada função, cama definida e baú definido.
+O sistema agora garante oito funções ativas (`MINER`, `LUMBERJACK`, `MASON`,
+`SMELTER`, `CARPENTER`, `FARMER`, `BREEDER` e `BUILDER`) após a detecção. O
+`SHEPHERD` legado conta como `BREEDER`.
+
+`VillageFoundation` completa adultos ausentes, coloca camas e cria baús apenas
+em posições substituíveis sobre piso sólido. A passagem é idempotente,
+reivindica os baús com a mesma varredura de produção e nunca escreve sobre
+blocos ocupados. `ProfessionAssigner` preserva o titular de cada função nas
+demissões por excesso.
+
+Verificação: o teste unitário da ordem fundacional passou; o
+`VillageFoundationGameTest` passou em mundo isolado. `./gradlew.bat test` e
+`./gradlew.bat clean runGametest` passaram; a rodada final executou 381/381
+GameTests. O JAR 0.3.0 foi copiado para `downloads/` e
+`%APPDATA%/.minecraft/mods/`; o SHA-256 nas três cópias é
+`287AB8535FFB8034927A583D7CBD24BA4917AA57ECD6FFF71A7C7C756E29D0BB`.
+O playtest no save do autor continua pendente.

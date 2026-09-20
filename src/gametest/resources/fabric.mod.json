@@ -50,7 +50,8 @@
       "com.villagecolony.gametest.RoadExtensionGameTest",
       "com.villagecolony.gametest.TestBarrierGameTest",
       "com.villagecolony.gametest.MineLeaseGameTest",
-      "com.villagecolony.gametest.MinerApproachGameTest"
+      "com.villagecolony.gametest.MinerApproachGameTest",
+      "com.villagecolony.gametest.VillageFoundationGameTest"
     ]
   },
   "depends": {

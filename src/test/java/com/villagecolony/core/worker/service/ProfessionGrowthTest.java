@@ -38,7 +38,7 @@ class ProfessionGrowthTest {
         addWorkers(16);
 
         assign(15);
-        assertEquals(7, employedCount());
+        assertEquals(8, employedCount());
 
         assertEquals(1, assign(16));
         assertEquals(2, count(ProfessionType.MINER));
@@ -50,7 +50,7 @@ class ProfessionGrowthTest {
         addWorkers(31);
 
         assign(30);
-        assertEquals(14, employedCount());
+        assertEquals(15, employedCount());
         assertEquals(2, count(ProfessionType.BREEDER));
 
         assertEquals(1, assign(31));
@@ -85,7 +85,7 @@ class ProfessionGrowthTest {
         legacyShepherd.assign(ProfessionType.SHEPHERD);
         addWorkers(15);
 
-        assertEquals(6, assign(15));
+        assertEquals(7, assign(15));
         assertEquals(0, count(ProfessionType.BREEDER));
         assertEquals(1, count(ProfessionType.SHEPHERD));
     }

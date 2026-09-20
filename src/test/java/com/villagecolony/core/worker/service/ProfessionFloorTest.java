@@ -150,6 +150,25 @@ class ProfessionFloorTest {
         }
     }
 
+    /** Oito adultos cobrem todas as funções ativas, incluindo construção. */
+    @Test
+    void eightAdultsCoverEveryActiveProfession() {
+        addWorkers(ProfessionAssigner.FOUNDATION_ORDER.size());
+
+        ProfessionAssigner.assignMissing(workers, COLONY, everyone());
+
+        Set<ProfessionType> covered = EnumSet.noneOf(ProfessionType.class);
+
+        for (Worker worker : workers.ofColony(COLONY)) {
+            worker.profession().ifPresent(covered::add);
+        }
+
+        assertEquals(
+                EnumSet.copyOf(ProfessionAssigner.FOUNDATION_ORDER),
+                covered,
+                "uma vila de oito adultos precisa ter uma função ativa de cada tipo");
+    }
+
     /**
      * A troca por falta de baú pode deixar uma vaga temporariamente aberta.
      *
@@ -180,6 +199,28 @@ class ProfessionFloorTest {
                 .count();
 
         assertEquals(3, empty, "as três trocas deviam ter esvaziado três funções");
+    }
+
+    /** A dispensa da vila nunca remove o último ocupante da fundação. */
+    @Test
+    void foundationAwareDismissalPreservesEveryActiveProfession() {
+        List<UUID> everyone = addWorkers(ProfessionAssigner.FOUNDATION_ORDER.size());
+
+        ProfessionAssigner.assignMissing(workers, COLONY, new HashSet<>(everyone));
+
+        Set<UUID> demoted = ProfessionAssigner.enforceVacanciesPreservingFoundation(
+                workers, COLONY, villagerId -> false, everyone.size());
+
+        assertTrue(demoted.isEmpty(), "o piso absoluto não pode perder uma função");
+
+        for (ProfessionType type : ProfessionAssigner.FOUNDATION_ORDER) {
+            assertEquals(
+                    1,
+                    workers.ofColony(COLONY).stream()
+                            .filter(worker -> worker.profession().filter(type::equals).isPresent())
+                            .count(),
+                    "a fundação perdeu " + type);
+        }
     }
 
     /**
