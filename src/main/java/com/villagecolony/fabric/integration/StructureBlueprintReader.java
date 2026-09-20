@@ -88,6 +88,13 @@ public final class StructureBlueprintReader {
             new ResourceId("villagecolony", "houses/small_house");
 
     /**
+     * A casa grande exclusiva da colônia: cópia editada da planta Vanilla.
+     * A entrada Vanilla continua sendo lida separadamente e não é alterada.
+     */
+    public static final ResourceId BIG_HOUSE_MOD =
+            new ResourceId("villagecolony", "houses/big_house_mod");
+
+    /**
      * A chave do nome do bloco dentro de uma entrada da paleta.
      *
      * <p>Escrita aqui porque o jogo não a expõe como constante: é o

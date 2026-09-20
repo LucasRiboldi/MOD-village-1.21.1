@@ -7979,6 +7979,31 @@ uma casa concluída e verifica que a próxima obra é não residencial. `./gradl
 test` passou e `./gradlew.bat runGametest` passou com **380/380 GameTests**.
 A confirmação da sequência completa no save continua pendente de playtest.
 
+### 2026-09-20 — BigHouseMOD e contrato fisico da fundacao
+
+O pedido de revisao mudou o contrato: a big house Vanilla permanece no jogo,
+sem qualquer edicao; somente o mod recebe o blueprint `BigHouseMOD`. A planta
+foi derivada de `plains_big_house_1`, removendo moveis e decoracoes e deixando
+oito camas completas e oito baus em um corredor central livre.
+
+`BigHouseFoundation` agora coloca e registra essa casa uma vez por vila,
+procurando um piso plano e vazio e recusando estruturas Vanilla, construcoes
+ja registradas e qualquer bloco acima do piso. `VillageFoundation` atribui as
+oito funcoes fundacionais as camas da casa e o scanner reserva oito baus
+distintos; esses baus ficam fora do estoque publico. A casa e a Vanilla sao
+tratadas por IDs diferentes, portanto a estrutura original continua disponivel
+para geracao normal.
+
+Tambem foi separado o gancho de GameTest que executa somente o ciclo de
+estoque, evitando que a deteccao de uma fixture sem vila real abandone a
+colonia antes da assercao. `BigHouseModBlueprintGameTest` prova a planta e
+`VillageFoundationGameTest` prova a colocacao, as oito funcoes, camas e baus
+distintos. `./gradlew.bat runGametest` passou com 383/383 GameTests e
+`./gradlew.bat clean build` passou com os testes unitarios. O JAR remapeado foi
+sincronizado em `build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`,
+com SHA-256 `08927A5C6F04E54A94CEF33211A7880F856A2D449E2D617F2B1EDC1CA04FA911`.
+A criacao visual no save do autor continua pendente.
+
 ### 2026-09-20 — fundação absoluta de toda vila
 
 O playtest pedido pelo autor apontou a regra de contrato: toda vila deve

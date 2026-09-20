@@ -267,6 +267,10 @@ public final class ChestScanner {
                         continue;
                     }
 
+                    if (BigHouseFoundation.belongsToDifferentHouse(bed, pos)) {
+                        continue;
+                    }
+
                     if (!isInTheSameRoom(world, bed, pos)) {
                         continue;
                     }

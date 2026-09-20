@@ -32,6 +32,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageBiomes;
 import com.villagecolony.fabric.integration.VillageScanner;
 import com.villagecolony.fabric.integration.VillageFoundation;
+import com.villagecolony.fabric.integration.BigHouseFoundation;
 import com.villagecolony.fabric.integration.VillagerScanner;
 import com.villagecolony.fabric.integration.WorkerEquipment;
 import com.villagecolony.fabric.integration.WorkerNameplate;
@@ -181,6 +182,17 @@ public final class VillageDetectionHandler {
     }
 
     /**
+     * Executa somente a decisão de estoque das colônias para GameTests.
+     *
+     * <p>Não faz detecção, fundação nem atualização de lifecycle: esses
+     * passos pertencem ao ciclo completo e podem invalidar um fixture que
+     * está testando apenas o planejador de recursos.
+     */
+    public static void runColonyCycleNow(ServerWorld world) {
+        runColonyCycles(world, false);
+    }
+
+    /**
      * Executa a garantia de fundação para uma colônia já conhecida.
      *
      * <p>É a mesma sequência usada por {@link #detectAround}: registra os
@@ -191,6 +203,7 @@ public final class VillageDetectionHandler {
      * esta sequência.
      */
     public static void runFoundationNow(ServerWorld world, Colony colony) {
+        BigHouseFoundation.ensure(world, colony);
         registerVillagers(world, colony, colony.center());
 
         VillageFoundation.Result foundation = VillageFoundation.ensure(
@@ -1243,6 +1256,8 @@ public final class VillageDetectionHandler {
             logRefusedShrink(known, candidate);
 
             Colony colony = VillageColonyMod.COLONIES.adopt(candidate);
+
+            BigHouseFoundation.ensure(world, colony);
 
             // A partir das camas vistas, e não do centro — 2026-08-22.
             // Desde a Emenda 4 o centro não persegue mais a observação,

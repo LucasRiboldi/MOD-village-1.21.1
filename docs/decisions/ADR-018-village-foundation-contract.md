@@ -8,7 +8,8 @@
 Uma vila detectada podia existir com menos adultos, sem cama vinculada e sem
 bau proprio para uma ou mais funcoes. Isso deixava a economia aguardando uma
 profissao que nunca seria criada e fazia a regra de armazenamento depender de
-um acaso da geracao Vanilla.
+um acaso da geracao Vanilla. Colocar camas e baus espalhados tambem permitia
+que a fundacao ocupasse estruturas existentes.
 
 A ADR-011 tratava o construtor como capacidade temporaria e descrevia sete
 profissoes produtoras. Essa decisao continua valida para crescimento de
@@ -22,29 +23,38 @@ producao, mas nao cobre a fundacao minima exigida para toda vila.
    `BREEDER` e `BUILDER`.
 2. `SHEPHERD` de saves antigos e normalizado como `BREEDER` para esta regra;
    ele nao cria uma nona vaga.
-3. Cada trabalhador fundacional deve ter uma cama Vanilla exclusiva, gravada
-   na memoria `HOME`, e um bau proprio registrado no `StorageRegistry`.
-4. A fundacao pode criar aldeoes adultos, camas brancas e bau, mas somente em
-   blocos substituiveis com piso solido. Ela nunca sobrescreve blocos
-   existentes do jogador, da vila ou de estruturas Vanilla.
-5. A mesma garantia e idempotente e roda novamente quando a vila e detectada;
+3. Toda vila recebe uma estrutura exclusiva do mod chamada `BigHouseMOD`.
+   Ela e uma copia editada da big house Vanilla: a entrada Vanilla continua
+   existindo e nao e alterada; o blueprint do mod remove moveis e decoracoes e
+   mantem somente oito camas e oito baus, em um arranjo com passagem livre.
+4. Cada trabalhador fundacional deve ter uma cama Vanilla exclusiva dentro da
+   `BigHouseMOD`, gravada na memoria `HOME`, e um dos oito baus distintos da
+   casa registrado no `StorageRegistry`.
+5. A fundacao pode criar aldeoes adultos e colocar a `BigHouseMOD`, mas somente
+   em um lote vazio e seguro. Ela nunca sobrescreve blocos existentes do
+   jogador, da vila ou de estruturas Vanilla.
+6. A mesma garantia e idempotente e roda novamente quando a vila e detectada;
    mortes ou dados ausentes podem ser repostos sem duplicar uma funcao que ja
    tenha titular vivo.
 
 ## Consequencias
 
-- A populacao inicial minima da colônia passa a ser oito adultos funcionais.
+- A populacao inicial minima da colônia passa a ser oito adultos funcionais
+  alojados em uma estrutura do mod.
+- Os oito baus da `BigHouseMOD` sao privados dos moradores da casa e nao entram
+  no estoque publico da vila; cada um continua reservado a um trabalhador.
 - O crescimento posterior continua usando as quotas produtoras da ADR-011;
   `BUILDER` e uma funcao fundacional permanente, mas a capacidade de executar
   `BUILD` continua sendo tratada pelo fluxo de construcao.
 - A criacao evita acavalamento, mas pode adiar a fundacao se nao houver local
   seguro. A proxima deteccao tenta novamente e registra um `WARN`.
-- O GameTest `VillageFoundationGameTest` prova a regra em terreno isolado.
-  A existencia e o posicionamento no save do autor continuam exigindo
-  playtest.
+- O GameTest `BigHouseModBlueprintGameTest` prova o conteudo da planta, e
+  `VillageFoundationGameTest` prova a colocacao, as oito funcoes e os oito
+  registros distintos em terreno isolado. A existencia e o posicionamento no
+  save do autor continuam exigindo playtest.
 
 ## Verificacao
 
-`./gradlew.bat test` e `./gradlew.bat clean runGametest` passaram; a rodada
-final executou 381/381 GameTests, incluindo o teste desta ADR. O playtest no
-save do autor continua pendente.
+`./gradlew.bat runGametest` passou; a rodada final executou 383/383 GameTests,
+incluindo `BigHouseModBlueprintGameTest` e `VillageFoundationGameTest`. O
+playtest no save do autor continua pendente.

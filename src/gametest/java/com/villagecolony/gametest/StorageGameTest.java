@@ -64,8 +64,8 @@ public class StorageGameTest implements FabricGameTest {
         buildVillage(context, bed);
         context.setBlockState(chest, Blocks.CHEST.getDefaultState());
 
-        houseVillagerAt(context, bed);
-        runCycle(context, bed);
+        VillagerEntity villager = prepareStorageWorker(context, bed);
+        scanStorage(context, villager);
 
         context.assertTrue(
                 isClaimed(context, chest),
@@ -149,8 +149,8 @@ public class StorageGameTest implements FabricGameTest {
 
         fillChest(context, chest, Items.OAK_LOG.getDefaultStack().getItem(), 12);
 
-        houseVillagerAt(context, bed);
-        runCycle(context, bed);
+        VillagerEntity villager = prepareStorageWorker(context, bed);
+        scanStorage(context, villager);
 
         if (!isClaimed(context, chest)) {
             context.throwGameTestException("o baú não foi reivindicado; a contagem nem chega a valer");
@@ -247,6 +247,46 @@ public class StorageGameTest implements FabricGameTest {
         }
 
         context.throwGameTestException("nenhum aldeão para dar casa");
+    }
+
+    /** Prepara um trabalhador sem acionar a fundação automática da vila. */
+    private static VillagerEntity prepareStorageWorker(
+            TestContext context, BlockPos bed) {
+        VillageColonyMod.COLONIES.clear();
+        VillageColonyMod.WORKERS.clear();
+        VillageColonyMod.STORAGES.clear();
+
+        ServerWorld world = context.getWorld();
+        Colony colony = Colony.create(
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(bed)));
+        VillageColonyMod.COLONIES.register(colony);
+
+        VillagerEntity villager = context.spawnEntity(
+                EntityType.VILLAGER, bed.add(2, 1, 2));
+        villager.setBreedingAge(0);
+        villager.getBrain().remember(
+                MemoryModuleType.HOME,
+                GlobalPos.create(world.getRegistryKey(), context.getAbsolutePos(bed)));
+
+        return villager;
+    }
+
+    /** Faz as duas passagens do scanner: registro e reivindicação. */
+    private static void scanStorage(
+            TestContext context, VillagerEntity villager) {
+        ServerWorld world = context.getWorld();
+        Colony colony = VillageColonyMod.COLONIES.all().stream()
+                .findFirst().orElseThrow();
+
+        VillagerScanner.scan(
+                world, colony, VillageColonyMod.WORKERS,
+                VillageColonyMod.STORAGES);
+        VillageColonyMod.WORKERS.find(villager.getUuid()).orElseThrow()
+                .assign(ProfessionType.LUMBERJACK);
+        VillagerScanner.scan(
+                world, colony, VillageColonyMod.WORKERS,
+                VillageColonyMod.STORAGES);
     }
 
     private static void fillChest(

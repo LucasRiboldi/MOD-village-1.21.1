@@ -17,20 +17,22 @@ lista deve começar agora. A ordem abaixo continua valendo para o resto.
 Ele não é diário — quem conta a história é o `TODO.md`. Este aqui é a lista
 de conferência de uma sessão.
 
-**Atualização de 2026-09-20 — fundação absoluta da vila.** Toda vila adotada
+**Atualização de 2026-09-20 — BigHouseMOD e fundação absoluta da vila.** Toda vila adotada
 deve nascer com oito funções ativas: mineiro, lenhador, pedreiro, fundidor,
 carpinteiro, agricultor, criador e construtor. Cada titular deve ter uma cama
-`HOME` e um baú próprio; a criação só ocupa blocos substituíveis. O
-`VillageFoundationGameTest` passou. No jogo, entre em uma vila recém-detectada,
-conte os oito aldeões, confira as camas e os baús e observe se nenhuma
-estrutura existente foi substituída. O playtest ainda não foi observado nesta
-sessão.
+`HOME` e um baú próprio dentro da nova `BigHouseMOD`. Ela e uma copia editada
+da big house Vanilla, sem moveis ou decoracoes, com oito camas e oito baus; a
+estrutura Vanilla continua existindo sem alteracao. O blueprint e a fundacao
+passaram nos GameTests. No jogo, entre em uma vila recem-detectada, confirme a
+BigHouseMOD, conte os oito aldeoes, confira as camas e os baus e observe se
+nenhuma estrutura existente foi substituida. O playtest ainda nao foi
+observado nesta sessao.
 
-**JAR atual em 2026-09-20, após a fundação automática da vila:** 0.3.0,
-SHA-256 `287AB8535FFB8034927A583D7CBD24BA4917AA57ECD6FFF71A7C7C756E29D0BB`
-em `build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`. O cliente estava
-fechado durante a cópia. `./gradlew.bat clean build` passou e
-`./gradlew.bat clean runGametest` passou com **381/381 GameTests**. A fundação
+**JAR atual em 2026-09-20, após a BigHouseMOD:** 0.3.0,
+SHA-256 `08927A5C6F04E54A94CEF33211A7880F856A2D449E2D617F2B1EDC1CA04FA911`
+em `build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`; as três cópias
+foram comparadas após a atualização. `./gradlew.bat clean build` passou e
+`./gradlew.bat runGametest` passou com **383/383 GameTests**. A fundação
 agora garante oito funções, cama `HOME` e baú próprio por titular. A seleção
 continua alternando
 `casa -> tipo não residencial A -> casa -> tipo não residencial B`, com o

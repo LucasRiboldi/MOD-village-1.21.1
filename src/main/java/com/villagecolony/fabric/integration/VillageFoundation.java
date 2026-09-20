@@ -2,6 +2,7 @@ package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
@@ -80,15 +81,21 @@ public final class VillageFoundation {
 
         for (VillagerEntity villager : villagers) {
             byId.put(villager.getUuid(), villager);
-
-            if (!villager.isBaby()) {
-                adults++;
-            }
         }
 
         Set<ProfessionType> presentRoles = new HashSet<>();
+        Set<UUID> colonyVillagerIds = new HashSet<>();
+        Optional<Building> foundationHouse = BigHouseFoundation.find(colony.id());
 
         for (Worker worker : workers.ofColony(colony.id())) {
+            colonyVillagerIds.add(worker.villagerId());
+
+            VillagerEntity villager = byId.get(worker.villagerId());
+
+            if (villager != null && !villager.isBaby()) {
+                adults++;
+            }
+
             worker.profession()
                     .map(ProfessionAssigner::foundationRole)
                     .filter(ProfessionAssigner.FOUNDATION_ORDER::contains)
@@ -103,11 +110,17 @@ public final class VillageFoundation {
         int toSpawn = Math.max(missingRoles, populationDeficit);
 
         int bedsPlaced = ensureExistingHomes(
-                world, center, colony.id(), workers, byId);
+                world, center, colony.id(), workers, byId, colonyVillagerIds,
+                foundationHouse);
         int spawned = 0;
 
         for (int index = 0; index < toSpawn; index++) {
-            Optional<BlockPos> foot = findBedSpot(world, center);
+            Optional<BlockPos> foot = foundationHouse
+                    .flatMap(house -> findAvailableHouseBed(
+                            world, house, byId, colonyVillagerIds))
+                    .or(() -> foundationHouse.isEmpty()
+                            ? findBedSpot(world, center)
+                            : Optional.empty());
 
             if (foot.isEmpty()) {
                 VillageColonyMod.LOGGER.warn(
@@ -116,15 +129,17 @@ public final class VillageFoundation {
                 break;
             }
 
-            if (!placeBed(world, foot.get())) {
-                VillageColonyMod.LOGGER.warn(
-                        "Colony {} could not place foundation bed at {}",
-                        colony.id(), foot.get().toShortString());
-                break;
-            }
+            if (foundationHouse.isEmpty()) {
+                if (!placeBed(world, foot.get())) {
+                    VillageColonyMod.LOGGER.warn(
+                            "Colony {} could not place foundation bed at {}",
+                            colony.id(), foot.get().toShortString());
+                    break;
+                }
 
-            bedsPlaced++;
-            ChestPlacer.placeBeside(world, foot.get());
+                bedsPlaced++;
+                ChestPlacer.placeBeside(world, foot.get());
+            }
 
             VillagerEntity villager = EntityType.VILLAGER.create(world);
 
@@ -150,6 +165,7 @@ public final class VillageFoundation {
 
             spawned++;
             byId.put(villager.getUuid(), villager);
+            colonyVillagerIds.add(villager.getUuid());
         }
 
         if (spawned > 0 || bedsPlaced > 0) {
@@ -167,7 +183,9 @@ public final class VillageFoundation {
             BlockPos center,
             UUID colonyId,
             WorkerService workers,
-            Map<UUID, VillagerEntity> villagers) {
+            Map<UUID, VillagerEntity> villagers,
+            Set<UUID> colonyVillagerIds,
+            Optional<Building> foundationHouse) {
 
         Set<BlockPos> occupiedBeds = new HashSet<>();
         int placed = 0;
@@ -191,13 +209,23 @@ public final class VillageFoundation {
                     .filter(value -> value.dimension().equals(world.getRegistryKey()))
                     .filter(value -> isBed(world, value.pos()));
 
-            if (home.isPresent() && occupiedBeds.add(canonicalBed(world, home.get().pos()))) {
+            if (home.isPresent()
+                    && (foundationHouse.isEmpty()
+                    || foundationHouse.get().contains(
+                            MinecraftTypeAdapter.toColonyPos(canonicalBed(world, home.get().pos()))))
+                    && occupiedBeds.add(canonicalBed(world, home.get().pos()))) {
                 continue;
             }
 
-            Optional<BlockPos> foot = findBedSpot(world, center);
+            Optional<BlockPos> foot = foundationHouse
+                    .flatMap(house -> findAvailableHouseBed(
+                            world, house, villagers, colonyVillagerIds))
+                    .or(() -> foundationHouse.isEmpty()
+                            ? findBedSpot(world, center)
+                            : Optional.empty());
 
-            if (foot.isEmpty() || !placeBed(world, foot.get())) {
+            if (foot.isEmpty()
+                    || (foundationHouse.isEmpty() && !placeBed(world, foot.get()))) {
                 continue;
             }
 
@@ -205,11 +233,52 @@ public final class VillageFoundation {
                     MemoryModuleType.HOME,
                     GlobalPos.create(world.getRegistryKey(), foot.get()));
             occupiedBeds.add(foot.get());
-            ChestPlacer.placeBeside(world, foot.get());
+            if (foundationHouse.isEmpty()) {
+                ChestPlacer.placeBeside(world, foot.get());
+            }
             placed++;
         }
 
         return placed;
+    }
+
+    /** Encontra uma das oito camas que já vieram dentro da BigHouseMOD. */
+    private static Optional<BlockPos> findAvailableHouseBed(
+            ServerWorld world,
+            Building house,
+            Map<UUID, VillagerEntity> villagers,
+            Set<UUID> colonyVillagerIds) {
+        Set<BlockPos> occupied = new HashSet<>();
+
+        for (UUID villagerId : colonyVillagerIds) {
+            VillagerEntity villager = villagers.get(villagerId);
+
+            if (villager == null) {
+                continue;
+            }
+
+            villager.getBrain().getOptionalRegisteredMemory(MemoryModuleType.HOME)
+                    .filter(home -> home.dimension().equals(world.getRegistryKey()))
+                    .map(home -> canonicalBed(world, home.pos()))
+                    .ifPresent(occupied::add);
+        }
+
+        for (int x = house.min().x(); x <= house.max().x(); x++) {
+            for (int y = house.min().y(); y <= house.max().y(); y++) {
+                for (int z = house.min().z(); z <= house.max().z(); z++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    if (world.getBlockState(pos).getBlock() instanceof BedBlock
+                            && world.getBlockState(pos).get(Properties.BED_PART)
+                            == BedPart.FOOT) {
+                        if (!occupied.contains(pos)) {
+                            return Optional.of(pos);
+                        }
+                    }
+                }
+            }
+        }
+
+        return Optional.empty();
     }
 
     /** Procura terreno livre sem remover blocos existentes. */

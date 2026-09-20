@@ -91,7 +91,7 @@ public class ColonyCycleGameTest implements FabricGameTest {
 
             ChestDepositor.deposit(world, chestPos, Items.DIRT, room);
 
-            VillageDetectionHandler.runCycleNow(world, absoluteStand);
+            VillageDetectionHandler.runColonyCycleNow(world);
 
             context.assertTrue(
                     collectWoodTasksOf(colony) == 0,
@@ -101,7 +101,7 @@ public class ColonyCycleGameTest implements FabricGameTest {
             // O jogador esvazia o baú. Nada mais muda.
             emptyChest(world, absoluteChest);
 
-            VillageDetectionHandler.runCycleNow(world, absoluteStand);
+            VillageDetectionHandler.runColonyCycleNow(world);
 
             context.assertTrue(
                     collectWoodTasksOf(colony) == 1,

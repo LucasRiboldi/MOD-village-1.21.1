@@ -1711,23 +1711,25 @@ public class BuildSiteGameTest implements FabricGameTest {
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_rock")
     public void preparedCobblestoneCanBeLotGround(TestContext context) {
-        BlockPos center = new BlockPos(3, 1, 3);
+        ServerWorld world = context.getWorld();
+        BlockPos center = context.getAbsolutePos(new BlockPos(3, 1, 3))
+                .add(256, 0, 256);
         UUID colony = UUID.randomUUID();
 
         for (int dx = -RADIUS; dx <= RADIUS; dx++) {
             for (int dz = -RADIUS; dz <= RADIUS; dz++) {
-                context.setBlockState(
+                world.setBlockState(
                         center.add(dx, 0, dz), Blocks.COBBLESTONE.getDefaultState());
             }
         }
 
-        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
-        reserveRoad(context, colony, center);
+        world.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoadAbsolute(colony, center);
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
-                context.getWorld(),
+                world,
                 colony,
-                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                MinecraftTypeAdapter.toColonyPos(center),
                 RADIUS,
                 SMALL_HOUSE);
 
@@ -1736,6 +1738,14 @@ public class BuildSiteGameTest implements FabricGameTest {
                 "solo sólido preparado fora de construção registrada foi recusado no P0.7");
 
         context.complete();
+    }
+
+    /** Reserva a única coluna de rua do fixture deslocado. */
+    private static void reserveRoadAbsolute(UUID colony, BlockPos road) {
+        BuildSiteScanner.restore(new ColonyRoads(
+                colony,
+                MinecraftTypeAdapter.toColonyPos(road),
+                List.of(ColonyRoads.column(road.getX(), road.getZ()))));
     }
 
     private static void paveGround(TestContext context, BlockPos center) {
