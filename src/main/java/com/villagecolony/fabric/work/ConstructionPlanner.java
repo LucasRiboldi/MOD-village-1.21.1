@@ -285,64 +285,21 @@ public final class ConstructionPlanner {
             return silent(colony, IdleReason.NO_WORKER, "");
         }
 
-        // As plantas desta vila, da maior para a menor — a Regra 25 —, e
-        // todas do catálogo do jogo, que é a Regra 27. O mod não inventa
-        // casa: se a lista vier vazia, não há o que construir, e dizê-lo
-        // é melhor que levantar algo que ninguém pediu.
-        // <b>Roça quando o fazendeiro não tem campo</b> — decisão do
-        // autor, 2026-09-05: "precisam construir o espaço de plantação
-        // padrão e idêntico aos que já vêm na vila do Minecraft" e
-        // "precisam de um espaço livre dentro da vila e não colado em
-        // outra estrutura".
+        // A seleção é global, mas a descoberta do lote continua única: a
+        // família escolhida aqui passa pelo mesmo scanner e pelas mesmas
+        // recusas físicas, seja casa, roça, cercado ou templo.
         //
-        // A segunda exigência não custa nada: é exatamente o que a busca
-        // de lote abaixo já garante para a casa, e a roça passa pela
-        // mesma porta. Nenhuma regra de espaçamento foi escrita duas
-        // vezes.
-        //
-        // <b>Quantas, é a população que diz</b> — decisão do autor,
-        // 2026-09-05: "zona de plantação criada a cada 15 aldeões
-        // existentes na vila".
-        //
-        // O pedido vinha do fazendeiro — "varri o raio e não achei
-        // campo" — e um pedido assim não tem teto: a sessão das 21:17
-        // levantou duas roças em quatro minutos porque a primeira nasceu
-        // longe demais para ele ver. A cota fecha isso por construção.
-        List<Blueprint> plans = List.of();
-
-        // <b>E a roça que já não coube cede a vez</b> — 2026-09-09. Sem
-        // esta segunda pergunta a colônia repetia a mesma recusa para
-        // sempre: a vila de 09-09 gastou uma hora em 108 passagens sem
-        // abrir obra nenhuma. Ver FarmPlans.postponed.
-        // <b>E a PRIMEIRA obra de toda vila é uma casa</b> — decisão do
-        // autor, 2026-09-19: <i>"em todas vilas a primeira construção
-        // deve ser uma casa, depois variantes mais úteis para vila"</i>.
-        //
-        // Sem esta guarda a roça passava na frente: a cota é por
-        // população — um campo a cada {@code VILLAGERS_PER_FARM}
-        // aldeões —, e uma vila que nasce com gente bastante abria a
-        // roça <b>antes da primeira casa</b>. A colônia gastava a
-        // primeira obra, que é a mais cara de conseguir, no que não
-        // abriga ninguém.
-        //
-        // A conta é de obra ERGUIDA, e não de obra planejada: enquanto a
-        // primeira casa não fecha, a roça espera a vez.
-        if (hasBuiltSomething(colony.id())
-                && FarmPlans.owedToThePopulation(colony.id())
-                && !FarmPlans.postponed(colony.id(), world.getTime())) {
-
-            plans = FarmPlans.plansFor(world, colony);
-        }
-
-        if (plans.isEmpty()) {
-            plans = HousePlans.plansFor(world, colony);
-        }
+        // A ordem permanente é casa -> tipo A -> casa -> tipo B. O tipo B
+        // não repete o último tipo não residencial concluído; a decisão
+        // deriva do registro de construções, sem estado paralelo.
+        List<Blueprint> plans = HousePlans.plansForNext(world, colony);
 
         if (plans.isEmpty()) {
             return silent(
                     colony,
                     IdleReason.NOT_IN_GAME,
-                    "this game has no village house for the " + colony.id() + " style");
+                    "this game has no buildable village structure for the "
+                            + colony.id() + " style");
         }
 
         Blueprint blueprint = plans.get(0);
@@ -578,8 +535,10 @@ public final class ConstructionPlanner {
         // — com peso dobrado sobre as irmãs.
         List<Blueprint> candidates = new ArrayList<>(plans);
 
-        candidates.addAll(HousePlans.siblingsOf(
-                world, HousePlans.paletteOf(world, colony.center()).style(), site.size()));
+        if (HousePlans.isDwelling(blueprint.id())) {
+            candidates.addAll(HousePlans.siblingsOf(
+                    world, HousePlans.paletteOf(world, colony.center()).style(), site.size()));
+        }
 
         Set<ResourceId> seen = new HashSet<>();
 
@@ -803,17 +762,15 @@ public final class ConstructionPlanner {
             return;
         }
 
-        Optional<ResourceId> target = HousePlans.houseFor(world, colony).map(Blueprint::id);
+        Optional<ResourceId> target = HousePlans.plansForNext(world, colony).stream()
+                .map(Blueprint::id)
+                .findFirst();
 
-        // <b>Roça não é versão velha de casa</b> — 2026-09-05. O alvo
-        // desta pergunta é sempre uma casa, e o pedido de roça é estado
-        // de memória que nasce vazio ao ligar o servidor: sem esta
-        // ressalva, toda roça planejada e ainda intocada seria descartada
-        // no primeiro carregamento do save. São propósitos diferentes, e
-        // não duas plantas disputando o mesmo lugar.
-        if (target.isPresent()
-                && !FarmPlans.isFarm(project.blueprint().id())
-                && project.isSupersededBy(target.get())) {
+        // A obra salva só é substituída quando ainda não assentou nenhum
+        // bloco e já não pertence à vez atual da sequência. Uma construção
+        // iniciada continua sendo do jogador, mesmo que a próxima família
+        // tenha mudado desde o último carregamento.
+        if (target.isPresent() && project.isSupersededBy(target.get())) {
             // Obra de uma planta que não é mais o alvo, e sem um bloco de
             // pé. Nada se perde ao abandoná-la — e mantê-la trava a
             // colônia para sempre, porque `plan` não abre obra nova

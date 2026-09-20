@@ -202,7 +202,7 @@ public final class FarmPlans {
      * {@code SOW}: na passagem seguinte o fazendeiro semeia o que houver
      * no baú dele, e daí em diante colhe e replanta.
      */
-    private static Blueprint withoutTheCrops(Blueprint farm) {
+    static Blueprint withoutTheCrops(Blueprint farm) {
         List<BlueprintBlock> kept = new ArrayList<>();
 
         for (BlueprintBlock block : farm.blocks()) {

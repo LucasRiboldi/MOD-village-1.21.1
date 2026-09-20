@@ -17,6 +17,7 @@ import com.villagecolony.fabric.integration.VillageStructures;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.FarmPlans;
 import com.villagecolony.fabric.work.FarmerWork;
+import com.villagecolony.fabric.work.HousePlans;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.CropBlock;
@@ -220,59 +221,9 @@ public class FarmPlanGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /**
-     * <b>A roça que não cabe cede a vez, e a casa passa</b> — 2026-09-09,
-     * o E42.
-     *
-     * <p><b>O que ele mede, e por que nenhum outro teste o media.</b> O
-     * mecanismo do adiamento tem duas metades. A primeira é o relógio de
-     * {@code FarmPlans} — {@code postpone} grava, {@code postponed}
-     * responde —, e ela tem seis testes em {@code FarmPostponementTest}.
-     * A segunda é <b>o planejador usar esse relógio para abrir uma
-     * casa</b>, e ela não tinha nenhum: {@code FarmPostponementTest}
-     * nunca chama {@link ConstructionPlanner#plan}, e
-     * {@code theFarmLotStaysWithinTheFarmersReach} chama
-     * {@link ConstructionPlanner#withinTheFarmersReach} <b>direto</b> —
-     * afirma o predicado fora do fluxo que o consome, que é a mesma
-     * armadilha da lição de 2026-09-05: <i>teste que valida uma cópia da
-     * regra não valida a regra</i>.
-     *
-     * <p><b>A lacuna foi medida, e não suposta.</b> Removida da produção
-     * a consulta {@code !FarmPlans.postponed(...)} — a mutação que
-     * reproduz exatamente o defeito da sessão —, <b>681 unitários e os
-     * 274 testes de jogo de então passam</b>: medido em 2026-09-09,
-     * antes deste teste existir. A bateria inteira ficava verde com a
-     * vila parada. Com ele, a mesma mutação falha aqui, e só aqui.
-     *
-     * <p><b>O defeito que ele guarda</b>, medido na sessão de 09-09 na
-     * colônia {@code 634bf5cc}: o lote livre estava fora do alcance do
-     * fazendeiro, a recusa daquele lote <b>encerrava a passagem</b>, e o
-     * lote de amanhã é o mesmo de hoje — uma hora de jogo, <b>108
-     * passagens do planejador e nenhuma obra aberta</b>, com 78 ciclos
-     * dizendo {@code assigned 0 tasks (0 open)}. Sem obra não há pedido
-     * de tábua nem de pedra, então o construtor e o mineiro também
-     * ficavam parados. A queixa do autor foi <i>"não vi os trabalhadores
-     * trabalhando"</i>.
-     *
-     * <p><b>Como o cenário força a condição</b>, em vez de esperá-la: o
-     * alcance do fazendeiro é encurtado a <b>-1</b>, então <b>todo</b>
-     * lote que a varredura ache fica fora dele — a arena não precisa ter
-     * trinta e dois blocos. <b>Zero não serve</b>, e isto custou uma
-     * rodada: a conta é {@code Math.max(dx, dz) <= reach}, então com
-     * alcance zero o lote sobre o próprio centro tem distância zero e
-     * <b>passa</b> — o impasse não se montava e a primeira afirmação
-     * ficava verde por outro motivo.
-     *
-     * <p>A cota de roça é aberta com quinze aldeões e nenhuma roça
-     * construída, e a arena tem de caber a roça de planície, que é
-     * <b>13x9</b> — com o raio de 6 da primeira tentativa a varredura
-     * não achava lote nenhum, e o teste falhava sem que houvesse
-     * defeito. A primeira passagem tem então de recusar o lote, e a
-     * segunda — a que este teste existe para afirmar — tem de abrir
-     * <b>uma casa</b>.
-     */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farm_standoff")
-    public void theHouseGoesUpAfterTheFarmStepsAside(TestContext context) {
+    /** A obra seguinte a uma casa deve ser uma infraestrutura — 2026-09-20. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "construction_rotation")
+    public void theNextTurnAfterAHouseIsNonResidential(TestContext context) {
         BlockPos center = new BlockPos(16, 1, 16);
 
         // Chão liso com rua no meio: é o que a varredura procura.
@@ -300,15 +251,8 @@ public class FarmPlanGameTest implements FabricGameTest {
 
         ColonyFixture owned = ColonyFixture.create().owning(colony);
 
-        // Alcance -1: qualquer lote que a varredura ache está fora
-        // dele, que é a condição da sessão sem precisar da distância
-        // dela. Zero não serve — `Math.max(dx, dz) <= 0` aceita o lote
-        // sobre o próprio centro.
-        FarmerWork.shortenSearchTo(-1);
-
         try {
-            // Quinze aldeões e nenhuma roça: a cota pede a primeira. Um
-            // deles constrói, senão o planejador para antes em
+            // Um deles constrói, senão o planejador para antes em
             // NO_WORKER e o teste mediria outra coisa.
             UUID builderId = UUID.randomUUID();
 
@@ -324,19 +268,8 @@ public class FarmPlanGameTest implements FabricGameTest {
                 owned.owning(id);
             }
 
-            context.assertTrue(
-                    FarmPlans.owedToThePopulation(colony.id()),
-                    "o cenário não pediu roça — sem isso o teste não mede o impasse");
-
-            // <b>E a vila já ergueu a primeira casa</b> — 2026-09-19. A
-            // regra nova do autor manda que a PRIMEIRA obra de toda vila
-            // seja uma casa, e sem este prédio o planejador nem chega ao
-            // caminho da roça: ele abre casa na primeira passagem, e o
-            // impasse que este teste mede não se monta.
-            //
-            // Longe do centro de propósito: o que importa é a colônia
-            // ter construído, e não onde — um prédio sobre o lote
-            // mudaria o que a varredura acha.
+            // A vila já ergueu a primeira casa. Longe do centro de
+            // propósito: o prédio apenas estabelece a vez da sequência.
             ColonyPos built = MinecraftTypeAdapter.toColonyPos(
                     context.getAbsolutePos(center.add(-SCAN_RADIUS, 0, -SCAN_RADIUS)));
 
@@ -347,34 +280,17 @@ public class FarmPlanGameTest implements FabricGameTest {
                     built,
                     new ColonyPos(built.x() + 1, built.y() + 1, built.z() + 1)));
 
-            // A primeira passagem topa com o lote fora do alcance e
-            // recusa. Ela não abre obra, e é assim que tem de ser.
-            Optional<ConstructionProject> refused =
-                    ConstructionPlanner.plan(context.getWorld(), colony);
-
-            context.assertTrue(
-                    refused.isEmpty(),
-                    "a primeira passagem abriu obra — o lote devia estar fora do alcance"
-                            + " do fazendeiro, e o cenário não montou o impasse");
-
-            // E a segunda tem de abrir uma CASA. É a afirmação que
-            // faltava: sem a consulta ao adiamento, esta passagem
-            // recusa o mesmo lote de novo, para sempre.
             Optional<ConstructionProject> opened =
                     ConstructionPlanner.plan(context.getWorld(), colony);
 
             context.assertTrue(
                     opened.isPresent(),
-                    "a segunda passagem não abriu obra nenhuma — é a vila de 09-09 parada,"
-                            + " 108 passagens e nenhum trabalhador trabalhando");
+                    "a passagem seguinte à casa não abriu uma infraestrutura");
 
             context.assertFalse(
-                    FarmPlans.isFarm(opened.get().blueprint().id()),
-                    "a segunda passagem abriu outra roça, e ela não cabe:"
-                            + " o adiamento não cedeu a vez para a casa");
+                    HousePlans.isDwelling(opened.get().blueprint().id()),
+                    "a passagem seguinte abriu outra casa, quebrando a alternância");
         } finally {
-            FarmerWork.restoreSearch();
-
             VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
 
             VillageColonyMod.BUILDINGS.removeOfColony(colony.id());

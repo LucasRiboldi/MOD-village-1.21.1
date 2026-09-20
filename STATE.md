@@ -70,6 +70,13 @@ continuam passando por `MinerHaul` para o baú ou overflow. A proteção tem
 GameTest local, mas a ausência de acavalamento e a progressão no deserto ainda
 precisam ser confirmadas no save.
 
+**4. Playtest de 2026-09-20 — casas consecutivas.** Depois de
+`desert_medium_house_2`, o planejador abriu outra estrutura da família
+`desert_small_house_6`. A seleção agora deriva da última construção concluída
+e força `casa → tipo não residencial A → casa → tipo não residencial B`, sem
+repetir o tipo A. A descoberta do lote continua passando pelo mesmo
+`BuildSiteScanner` para todas as famílias; falta confirmar essa ordem no save.
+
 ---
 
 ## ✅ O rodízio de ofícios — corrigido em 09-19

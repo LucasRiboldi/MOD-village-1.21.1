@@ -17,16 +17,13 @@ lista deve começar agora. A ordem abaixo continua valendo para o resto.
 Ele não é diário — quem conta a história é o `TODO.md`. Este aqui é a lista
 de conferência de uma sessão.
 
-**JAR atual em 2026-09-20, após o playtest da frente arenosa:** 0.3.0, SHA-256
-`128B421734666C2D0E0150CEFD082B348C23361099C39ABC56B88E3A9B50EDEC` em
-`build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`. O cliente estava
-fechado durante a cópia. `./gradlew.bat build` passou com 954 testes unitários.
-`runGametest` executou 380 testes; a nova proteção de retomada passou e os logs
-confirmaram o assentamento entre quebras do mineiro. A primeira rodada expôs a
-intermitência conhecida de
-`SurfaceGatheringGameTest.smelterGathersDirtOutsideTheProtectedVillageRadius`;
-a repetição passou com **380/380 GameTests**. Acavalamento de obras e
-progressão completa no save continuam como playtest.
+**JAR atual em 2026-09-20, após a correção da rotação de construções:** 0.3.0,
+SHA-256 `0FEB11BCA1C1C600776E55E15F91B858207100A3FABEAEBA8905BE6FAE43902E`
+em `build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`. O cliente estava
+fechado durante a cópia. `./gradlew.bat clean build` passou e
+`runGametest` executou **380/380 GameTests**. A seleção agora alterna
+`casa -> tipo não residencial A -> casa -> tipo não residencial B`, com o
+mesmo scanner de zonas; a sequência completa no save continua como playtest.
 
 **JAR atual em 2026-09-20:** 0.3.0, SHA-256
 `2111E72B093FC007549946347C5948416061BC2774A10D1932F751BA46B8A7EA` em

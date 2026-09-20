@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -146,7 +147,145 @@ public final class HousePlans {
      * {@link #smallestFirst}: é decisão, e decisão se afirma sem mundo.
      */
     static boolean hasNoHouseYet(List<Building> buildings) {
-        return buildings.stream().noneMatch(Building::finished);
+        return buildings.stream()
+                .noneMatch(building -> building.finished() && isDwelling(building.blueprint()));
+    }
+
+    /**
+     * Se a próxima construção precisa ser uma casa — 2026-09-20.
+     *
+     * <p>A sequência olha apenas para obras terminadas e usa a última delas:
+     * casa abre a vez de outro tipo; qualquer tipo não residencial devolve a
+     * vez para casa. Obra abandonada não participa do rodízio.
+     */
+    static boolean nextConstructionIsHouse(List<Building> buildings) {
+        Optional<Building> last = lastFinished(buildings);
+
+        return last.isEmpty() || !isDwelling(last.get().blueprint());
+    }
+
+    /**
+     * O próximo tipo não residencial, excluindo o tipo anterior.
+     *
+     * <p>Um resultado vazio significa que a vez atual é de uma casa ou que
+     * o catálogo não oferece outro tipo. A segunda situação é preferível a
+     * repetir silenciosamente o mesmo prédio e travar a regra de variedade.
+     */
+    static Optional<String> nextNonHouseType(
+            List<Building> buildings, List<String> availableTypes) {
+        if (nextConstructionIsHouse(buildings)) {
+            return Optional.empty();
+        }
+
+        String previous = lastNonHouseType(buildings).orElse("");
+
+        return availableTypes.stream()
+                .filter(type -> !type.equals(previous))
+                .findFirst();
+    }
+
+    /**
+     * A próxima família de plantas da colônia, com a regra de alternância.
+     * O lote continua sendo escolhido pelo mesmo scanner para qualquer
+     * família retornada aqui.
+     */
+    static List<Blueprint> plansForNext(ServerWorld world, Colony colony) {
+        List<Building> buildings = VillageColonyMod.BUILDINGS.ofColony(colony.id());
+
+        if (nextConstructionIsHouse(buildings)) {
+            return plansFor(world, colony);
+        }
+
+        String previous = lastNonHouseType(buildings).orElse("");
+
+        return nonHousePlansFor(world, colony, previous);
+    }
+
+    /** O tipo semântico de uma planta, usado para o rodízio A/B. */
+    static String constructionType(ResourceId id) {
+        if (isDwelling(id)) {
+            return "house";
+        }
+
+        for (String type : NON_DWELLING_TYPES) {
+            if (id.path().contains(type)) {
+                return type;
+            }
+        }
+
+        return "other";
+    }
+
+    private static Optional<Building> lastFinished(List<Building> buildings) {
+        for (int index = buildings.size() - 1; index >= 0; index--) {
+            Building building = buildings.get(index);
+
+            if (building.finished()) {
+                return Optional.of(building);
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    private static Optional<String> lastNonHouseType(List<Building> buildings) {
+        for (int index = buildings.size() - 1; index >= 0; index--) {
+            Building building = buildings.get(index);
+
+            if (building.finished() && !isDwelling(building.blueprint())) {
+                return Optional.of(constructionType(building.blueprint()));
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /** As famílias não residenciais, na ordem do catálogo, sem a anterior. */
+    private static List<Blueprint> nonHousePlansFor(
+            ServerWorld world, Colony colony, String previousType) {
+
+        String style = paletteOf(world, colony.center()).style();
+        Map<String, List<Blueprint>> byType = new LinkedHashMap<>();
+        boolean farmPostponed = FarmPlans.postponed(colony.id(), world.getTime());
+
+        for (ResourceId id : VillageStructures.housesFor(style)) {
+            String type = constructionType(id);
+
+            if ("house".equals(type)
+                    || type.equals(previousType)
+                    || ("farm".equals(type) && farmPostponed)) {
+                continue;
+            }
+
+            Optional<Blueprint> plan = READ.computeIfAbsent(
+                    id, missing -> StructureBlueprintReader.read(world, missing));
+
+            if (plan.isEmpty()) {
+                continue;
+            }
+
+            Blueprint prepared = FarmPlans.isFarm(id)
+                    ? FarmPlans.withoutTheCrops(plan.get())
+                    : plan.get();
+
+            byType.computeIfAbsent(type, ignored -> new ArrayList<>()).add(prepared);
+        }
+
+        for (List<Blueprint> plans : byType.values()) {
+            plans.sort(Comparator.comparingInt(HousePlans::volumeOf).reversed());
+
+            Set<ResourceId> skipped = new HashSet<>();
+
+            for (Blueprint plan : plans) {
+                if (PlanRefusals.skip(world, colony.id(), colony.center(), plan.id())) {
+                    skipped.add(plan.id());
+                }
+            }
+
+            return without(List.copyOf(plans), skipped);
+        }
+
+        return List.of();
     }
 
     /**
@@ -341,12 +480,12 @@ public final class HousePlans {
      * 31→23 na savana, 30→25 na nevada, 28→21 no deserto. Nenhuma
      * moradia cai.
      */
-    private static final List<String> NOT_A_DWELLING = List.of(
+    private static final List<String> NON_DWELLING_TYPES = List.of(
             "animal_pen", "meeting_point", "temple", "stable", "accessory", "farm");
 
     /** Se esta peça é casa de morar, e não cerca, poço ou templo. */
     public static boolean isDwelling(ResourceId id) {
-        for (String other : NOT_A_DWELLING) {
+        for (String other : NON_DWELLING_TYPES) {
             if (id.path().contains(other)) {
                 return false;
             }

@@ -41,6 +41,12 @@ class HousePlansTest {
     private static final ResourceId SMALL =
             ResourceId.parse("minecraft:village/plains/houses/plains_small_house_1");
 
+    private static final ResourceId FARM =
+            ResourceId.parse("minecraft:village/plains/houses/plains_small_farm_1");
+
+    private static final ResourceId ANIMAL_PEN =
+            ResourceId.parse("minecraft:village/plains/houses/plains_animal_pen_1");
+
     /**
      * Uma planta qualquer com aquele id.
      *
@@ -242,6 +248,46 @@ class HousePlansTest {
     @Test
     void anEmptyRegistryMeansNoHouse() {
         assertTrue(HousePlans.hasNoHouseYet(List.of()), "registro vazio não é colônia com casa");
+    }
+
+    /**
+     * A fundação alterna moradia e infraestrutura — 2026-09-20.
+     *
+     * <p>A falha observada no jogo era {@code house -> house}: a escolha
+     * seguinte consultava apenas o catálogo de moradias e nunca registrava
+     * que a vez posterior à casa era de outro tipo. A regra agora é
+     * {@code house -> A -> house -> B}, com {@code B != A}.
+     */
+    @Test
+    void constructionTurnsAlternateAndTheSecondOtherTypeDiffers() {
+        Building house = building(SMALL, true);
+        Building farm = building(FARM, true);
+
+        assertTrue(
+                HousePlans.nextConstructionIsHouse(List.of()),
+                "a primeira construção precisa ser uma casa");
+
+        assertFalse(
+                HousePlans.nextConstructionIsHouse(List.of(house)),
+                "depois da primeira casa a vez não pode voltar para outra casa");
+
+        assertEquals(
+                "farm",
+                HousePlans.nextNonHouseType(List.of(house), List.of("farm", "animal_pen"))
+                        .orElseThrow(),
+                "a primeira construção não residencial deveria escolher o tipo A");
+
+        assertTrue(
+                HousePlans.nextConstructionIsHouse(List.of(house, farm)),
+                "depois do tipo A a vez deveria voltar para uma casa");
+
+        assertEquals(
+                "animal_pen",
+                HousePlans.nextNonHouseType(
+                                List.of(house, farm, building(SMALL, true)),
+                                List.of("farm", "animal_pen"))
+                        .orElseThrow(),
+                "o tipo B precisa ser diferente do tipo A anterior");
     }
 
     /**

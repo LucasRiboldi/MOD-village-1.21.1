@@ -13,6 +13,8 @@ com código e testes locais das validações que continuam dependendo de um save
 - [ ] 🟠 **Intermitência de `SurfaceGatheringGameTest`:** estabilizar a fixture do aldeão criado fora da arena e reproduzir a ausência no `ServerWorld` antes de alterar coleta ou timeout.
 - [ ] ⚙️ **E38 — resíduos no inventário pessoal:** definir o destino sustentável de varas, maçãs e mudas antes de alterar armazenamento ou descarte.
 - [ ] 🟠 **E41 — endurance:** criar uma verificação de muitos ciclos para detectar degradação, tarefas acumuladas ou custo crescente; ainda é lacuna de cobertura, não defeito reproduzido.
+- [x] 🟠 **P1.3 — casas consecutivas:** o log mostrou `house → house`. `HousePlans` agora alterna `casa → tipo não residencial A → casa → tipo não residencial B`, exclui o tipo A anterior e mantém todas as famílias sob o mesmo `BuildSiteScanner`; `HousePlansTest` e o GameTest de rotação passaram.
+- [ ] Playtest P1.3: confirmar no save a sequência casa, infraestrutura A, casa e infraestrutura B diferente de A.
 
 - [x] 🔴 **E44 residual — perna da boca acima do degrau:** o log confirmou que o recálculo de `job.approach` não limitava a perna efetivamente entregue por `WorkTargets`. `MinerWork` agora escolhe um patamar pisável dentro de `CLIMB`; `MinerApproachGameTest` cobre a queda abaixo da boca e a suíte passou com **379/379 GameTests**. Falta confirmar no mundo que o mineiro volta a entregar pedra.
 - [x] 🔴 **P1.2 — obra retomada sobre estrutura existente:** `BuildSiteScanner` agora rejeita interseção com peças de estruturas Vanilla da vila, blocos físicos ocupados e volumes já registrados, inclusive durante a retomada de projeto salvo. `BuildSiteGameTest.theResumedProjectRejectsAnOccupiedVolume` reproduz o caso físico.

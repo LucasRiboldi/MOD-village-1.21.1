@@ -7956,3 +7956,25 @@ nas três cópias é
 `128B421734666C2D0E0150CEFD082B348C23361099C39ABC56B88E3A9B50EDEC`.
 Acavalamento no save e avanço completo da frente arenosa continuam pendentes
 de confirmação visual.
+
+### 2026-09-20 — alternância de casas e construções
+
+O playtest seguinte ao fechamento de `desert_medium_house_2` mostrou o
+planejador abrindo outra casa, `desert_small_house_6`, em vez de intercalar uma
+construção de outro tipo. A causa era a seleção exclusiva de plantas de
+moradia; o catálogo Vanilla já contém casas, roças, cercados, pontos de
+encontro, templos, estábulos e acessórios na mesma pasta, mas a decisão não
+usava essas famílias.
+
+`HousePlans.plansForNext` agora deriva a vez da última construção terminada,
+ignorando projetos abandonados: a sequência é `casa → tipo A → casa → tipo B`,
+com `B` diferente do tipo não residencial anterior. A rotação de irmãs só é
+adicionada quando a vez é de uma casa, e a retomada de projeto salvo consulta a
+mesma decisão. Todas as famílias continuam passando pelo `BuildSiteScanner`,
+sem uma regra de zona duplicada. Uma fazenda temporariamente fora do alcance
+cede lugar a outro tipo não residencial durante o prazo de adiamento.
+
+Foi adicionada regressão unitária para a sequência e um GameTest que parte de
+uma casa concluída e verifica que a próxima obra é não residencial. `./gradlew.bat
+test` passou e `./gradlew.bat runGametest` passou com **380/380 GameTests**.
+A confirmação da sequência completa no save continua pendente de playtest.
