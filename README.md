@@ -125,7 +125,7 @@ você saber de relance quem é quem.
 | 🪓 | **Lenhador** | machado de ferro | derruba a árvore um bloco por vez e replanta a muda | `COLLECT_WOOD` |
 | ⛏️ | **Mineiro** | picareta de ferro | cava a mina em caracol, espirala a galeria e segue o veio | `COLLECT_STONE` |
 | 🐑 | **Pastor** | tesoura | tosquia a ovelha, que continua viva | `COLLECT_WOOL` |
-| 🌾 | **Fazendeiro** | enxada de ferro | colhe, replanta e semeia canteiro vazio | `COLLECT_FOOD` |
+| 🌾 | **Fazendeiro** | enxada de ferro | colhe, replanta, semeia canteiro vazio e **planta árvore na borda** | `COLLECT_FOOD` |
 | 🔥 | **Fundidor** | mãos livres | funde pela receita de fornalha do jogo | `SMELT_MATERIAL` |
 | 🪚 | **Carpinteiro** | mãos livres | tora → tábua, descasca viga, monta tocha e vidraça | `CRAFT_WOOD_MATERIAL` |
 | 🧱 | **Pedreiro** | mãos livres | pedra → tijolo, e a alvenaria que a obra pedir | `CRAFT_STONE_MATERIAL` |
@@ -143,10 +143,10 @@ inteiro — nenhuma escada de material está escrita no mod.
 | **Lenhador** | o dele, e transborda para os da colônia | tora, muda, vara, maçã |
 | **Mineiro** | o baú da boca da mina primeiro, o dele com a sobra | pedregulho, arenito, carvão, ferro cru, cobre |
 | **Pastor** | só o dele | lã, na cor do rebanho |
-| **Fazendeiro** | só o dele | trigo, cenoura, batata, beterraba e as sementes |
-| **Fundidor** | de volta no baú de onde a matéria crua saiu | vidro, lingote de ferro, arenito liso |
+| **Fazendeiro** | só o dele | trigo, cenoura, batata, beterraba, as sementes e o viveiro de mudas |
+| **Fundidor** | de volta no baú de onde a matéria crua saiu | vidro, lingote de ferro, arenito liso, pedra, tijolo |
 | **Carpinteiro** | o da tora primeiro, os da colônia se não couber | tábua, tora descascada, tocha, vidraça |
-| **Pedreiro** | o da pedra primeiro, os da colônia se não couber | tijolo e a alvenaria da obra |
+| **Pedreiro** | o da pedra primeiro, os da colônia se não couber | tijolo, vaso, e a alvenaria da obra — inclusive as sete variantes de arenito |
 | **Construtor** | não guarda — ele só retira | — |
 
 ### Quanto a colônia quer de cada coisa
@@ -227,13 +227,46 @@ quando você tira alguma coisa.
 piso no nível dela, e dentro uma cama, um baú e um lampião.
 
 **O lote é escolhido pelo volume, não pelo chão.** Se houver qualquer
-bloco dentro do espaço onde a casa vai, aquele lote não serve.
+bloco dentro do espaço onde a casa vai, aquele lote não serve — e isso
+vale contra a **caixa inteira** de cada construção que já existe, para
+que uma obra nova nunca nasça em cima de outra.
+
+**A base precisa ser plana de verdade.** Noventa por cento das colunas do
+lote têm de estar no mesmo nível, e a casa assenta **nesse** nível, não
+no da rua. Sem as duas metades, uma casa erguida sobre terreno alto fica
+pairando com um vão sob o piso.
+
+**O que não tem item é montado no lugar.** O vaso com cacto, a água, a
+lava e o caldeirão não existem como item no Minecraft — ninguém poderia
+trazê-los de um baú. A colônia os monta do que tem: o vaso sai de três
+tijolos, e o cacto é colhido.
 
 **Nada é recusado para sempre.** O que o mod olhou e rejeitou volta a
 ser olhado depois de um tempo.
 
 **A colônia fabrica o que a obra pede.** Se falta a porta e sobra tábua,
 o construtor faz a porta.
+
+**E guarda metade do cru.** Metade do arenito fica sem ser assado, para o
+pedreiro ter o que lavrar — senão a fornalha consome o estoque inteiro e
+o arenito cortado, que sai do cru, nunca aparece. É a mesma regra que já
+preservava metade da madeira em tronco.
+
+**A fornalha mantém um pouco de cada.** Sem obra pedindo, ela assa uma
+pilha de cada peça, para a casa seguinte não esperar a produção começar
+do zero. Quando a obra pede, ela manda.
+
+**Qualquer espécie, qualquer cor.** A porta pode ser de qualquer madeira e
+a cama de qualquer cor: a planta grava uma variante, e esperar exatamente
+por ela é esperar tinta que ninguém fabrica.
+
+**A primeira obra de toda vila é uma casa.** Roça, estábulo e oficina vêm
+depois — a obra mais cara de conseguir não se gasta no que não abriga
+ninguém.
+
+**O fazendeiro planta árvore na borda.** Quando varre o raio e não acha
+lavoura, ele põe terra enraizada e um rebento da madeira do bioma. É o
+que dá madeira a uma vila de deserto, onde não há floresta ao alcance.
 
 **O dia inteiro é dia de trabalho.** Enquanto houver sol, os
 trabalhadores estão buscando recurso ou trabalhando. A última hora de
@@ -258,6 +291,13 @@ O que já funciona
 ✅ Cada profissão com sua cor	nome sobre a cabeça, oito cores distintas
 ✅ Ferramenta de ferro para todos	e quem tiver melhor no baú troca por ela
 ✅ Metade da madeira fica em tora	o carpinteiro não moe o estoque inteiro
+✅ Metade do arenito fica cru	o fundidor deixa o que o pedreiro vai lavrar
+✅ A fornalha mantém um pouco de cada	e foca no que a obra pedir
+✅ O fazendeiro planta árvore	terra enraizada e o rebento do bioma, na borda da vila
+✅ Cacto, vaso e argila	a cadeia inteira: argila → tijolo → vaso, e o cacto colhido pelo topo
+✅ Qualquer espécie, qualquer cor	porta de qualquer madeira, cama de qualquer cor
+✅ A primeira obra é sempre uma casa	roça e oficina vêm depois
+✅ Nada nasce em cima de nada	a caixa da obra é conferida contra tudo que já está de pé
 ✅ Casas do próprio Minecraft	planície, savana, taiga, nevada e deserto
 ✅ A colônia nunca inventa material	o que falta é fabricado; o que não dá, ela espera
 ✅ Regra 3	vila gerada e construção da colônia são intocáveis
@@ -268,28 +308,30 @@ O que ainda não está fechado
 A lista viva e datada está em STATE.md, e a lista completa
 em TODO.md. O que segue é o resumo.
 
-Defeitos abertos, em ordem de dor:
-	o quê	gravidade
-E44	A escada de recusas da mina existe e tem testes; falta a validação integrada em jogo	⬜ aguarda playtest
-E43	O descanso de quatro ciclos é anulado no ciclo seguinte	🟠 aguarda decisão do autor
-E41	Nada mede degradação ao longo de muitos ciclos	🟠 maior lacuna de cobertura
-E42	Nenhum teste de impasse entre profissões	🔴 tentativa retirada pelo gauntlet
-E38	O baú do trabalhador assoreia	⚙️ metade fechada
-KF-001	A falha instável do teste foi corrigida; a vazão global só volta a ser assunto com nova evidência	✅ teste fechado
+**O estado honesto, em 2026-09-19:** a vila **produz, escolhe lote e
+constrói** — e ainda não fechou uma casa numa sessão de jogo. A cadeia foi
+percorrida degrau a degrau: índice de ruas, Regra 3, volume do lote, baú
+cheio, material do pedreiro, arenito cru esgotado, vaso sem item,
+acavalamento — e o bloqueio de agora é **madeira**.
 
-P0.7 foi entregue em 15-09:
+Uma vila de deserto não tem floresta ao alcance. Por isso o fazendeiro
+planta; e por isso a madeira é a única coisa entre o estado de hoje e a
+primeira casa fechada.
 
-    Todo piso sólido disponível pode receber lote; materiais de estrada só
-    bloqueiam dentro de ROAD_AREA, e a seleção não terraplana o mundo.
-    A regra está na ADR-017 e passou 327/327 GameTests. O mesmo JAR também
-    libera no mesmo tique a claim de um ramal quando o job do mineiro encerra;
-    `MinerWorkLifecycleTest` cobre esse contrato. O JAR 0.3.0 distribuído tem
-    SHA-256 C5D0790F996082CE3B7D2AA55CED93936DF04063568A03B0B521F50245A0BA1A.
-    Falta o playtest no mundo do autor.
+| o quê | estado |
+|---|---|
+| Madeira numa vila sem floresta | 🔴 o viveiro planta, e a muda precisa crescer |
+| `ColonyDetectionGameTest` falha 2 de 2 na base | 🔴 pré-existente, causa em aberto (sempre 24 de 30) |
+| Acavalamento em obra aberta | ⚙️ no código e em teste unitário, sem gametest |
+| Degradação ao longo de muitos ciclos | 🟠 nada mede |
+| Impasse entre profissões | 🟠 sem teste |
 
-E o que já está entregue mas ainda não foi visto em jogo — uma lista
-que cresce mais rápido do que drena. As linhas a procurar estão em
-docs/proxima-sessao.md.
+**O JAR 0.3.0 desta linha** tem SHA-256 `F7CA5BF91AF40A6D84E492F5DA9945F9122115C25773770837D3536365ED6B21`.
+
+**Como o projeto investiga:** instrumentar antes de consertar. Três
+defeitos de 09-19 foram decididos **numa única leitura** depois de
+instrumentados — e a instrumentação chegou a pegar um erro de quem a
+escreveu.
 
     Profissões que o modelo econômico prevê e ninguém escreveu — a lista
     inteira, com as razões, está em
