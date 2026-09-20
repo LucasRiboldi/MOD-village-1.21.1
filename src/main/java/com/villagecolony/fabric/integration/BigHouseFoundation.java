@@ -116,7 +116,7 @@ public final class BigHouseFoundation {
     /**
      * Se um baú da BigHouseMOD está sendo procurado por alguém de fora dela.
      *
-     * <p>Os baús da casa são infraestrutura dos oito moradores da fundação,
+     * <p>Os baús da casa são infraestrutura dos seis moradores da fundação,
      * não estoque público da vila. Um aldeão cuja cama esteja na mesma casa
      * continua podendo reivindicar o baú; os demais devem procurar o próprio
      * cômodo ou um baú público separado.

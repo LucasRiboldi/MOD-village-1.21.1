@@ -78,6 +78,21 @@ sem parede não é casa.
 
 ---
 
+### `big_house_mod.nbt`
+
+Cópia editada da big house Vanilla usada somente pela fundação do mod. A
+Vanilla continua existindo e não é modificada. Esta planta mantém seis camas e
+seis baús para os titulares fundacionais de mineiro, lenhador, pedreiro,
+fundidor, criador e construtor; agricultor e carpinteiro continuam sendo
+funções de crescimento normal, fora desses conjuntos.
+
+Os dois conjuntos inferiores que bloqueavam a porta e o acesso à escada foram
+removidos. A planta também não contém `jigsaw`, `structure_block` ou
+`structure_void`, evitando que blocos de gerador apareçam no mundo. A entrada
+e a escada ficam livres para os aldeões.
+
+---
+
 ## O catálogo de estruturas
 
 `data/villagecolony/catalog/vanilla_structures.json` lista os **1.180

@@ -6,8 +6,13 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
+import net.minecraft.structure.StructureTemplate;
+import net.minecraft.util.Identifier;
 
 import java.util.Set;
 
@@ -19,7 +24,7 @@ public class BigHouseModBlueprintGameTest implements FabricGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE,
             batchId = "bighousemod_blueprint")
-    public void theModBlueprintContainsEightBedsAndEightChests(TestContext context) {
+    public void theModBlueprintContainsSixBedsAndSixChests(TestContext context) {
         Blueprint blueprint = StructureBlueprintReader.read(
                         context.getWorld(), BIG_HOUSE_MOD)
                 .orElseThrow(() -> new AssertionError("BigHouseMOD nao foi encontrada"));
@@ -33,10 +38,49 @@ public class BigHouseModBlueprintGameTest implements FabricGameTest {
 
         context.assertTrue(blueprint.size().equals(new ColonyPos(7, 11, 11)),
                 "dimensao inesperada: " + blueprint.size());
-        context.assertTrue(beds == 8,
-                "BigHouseMOD tem " + beds + " pes de cama, esperado 8");
-        context.assertTrue(chests == 8,
-                "BigHouseMOD tem " + chests + " baus, esperado 8");
+        context.assertTrue(beds == 6,
+                "BigHouseMOD tem " + beds + " pes de cama, esperado 6");
+        context.assertTrue(chests == 6,
+                "BigHouseMOD tem " + chests + " baus, esperado 6");
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE,
+            batchId = "bighousemod_blueprint")
+    public void theRawTemplateHasNoGeneratorBlocksOrRemovedFurniture(
+            TestContext context) {
+        StructureTemplate template = context.getWorld().getStructureTemplateManager()
+                .getTemplate(Identifier.of("villagecolony", "houses/big_house_mod"))
+                .orElseThrow(() -> new AssertionError("template ausente"));
+        NbtCompound nbt = template.writeNbt(new NbtCompound());
+        NbtList palette = nbt.getList("palette", NbtElement.COMPOUND_TYPE);
+        NbtList blocks = nbt.getList("blocks", NbtElement.COMPOUND_TYPE);
+        int beds = 0;
+        int chests = 0;
+
+        for (int index = 0; index < blocks.size(); index++) {
+            NbtCompound block = blocks.getCompound(index);
+            String name = palette.getCompound(block.getInt("state")).getString("Name");
+            context.assertFalse(name.equals("minecraft:jigsaw")
+                            || name.equals("minecraft:structure_block")
+                            || name.equals("minecraft:structure_void"),
+                    "bloco de geracao permaneceu no NBT: " + name);
+            if (name.equals("minecraft:white_bed")) {
+                beds++;
+            } else if (name.equals("minecraft:chest")) {
+                chests++;
+            }
+
+            NbtList pos = block.getList("pos", NbtElement.INT_TYPE);
+            if (isRemovedFurniturePosition(pos)) {
+                throw new AssertionError("mobiliario removido permaneceu em " + pos);
+            }
+        }
+
+        context.assertTrue(beds == 12,
+                "NBT deve conter as 12 metades de 6 camas, encontrou " + beds);
+        context.assertTrue(chests == 6,
+                "NBT deve conter 6 baus, encontrou " + chests);
         context.complete();
     }
 
@@ -69,4 +113,18 @@ public class BigHouseModBlueprintGameTest implements FabricGameTest {
                 "ar nao pode virar material da casa");
         context.complete();
     }
+
+    private static boolean isRemovedFurniturePosition(NbtList pos) {
+        if (pos.size() != 3) {
+            return false;
+        }
+
+        int x = pos.getInt(0);
+        int y = pos.getInt(1);
+        int z = pos.getInt(2);
+        return y == 1 && ((x == 2 && (z == 5 || z == 6 || z == 7))
+                || (x == 3 && (z == 6 || z == 7))
+                || (x == 4 && z == 7));
+    }
+
 }

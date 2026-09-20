@@ -150,9 +150,9 @@ class ProfessionFloorTest {
         }
     }
 
-    /** Oito adultos cobrem todas as funções ativas, incluindo construção. */
+    /** Seis adultos cobrem todas as funções fundacionais, incluindo construção. */
     @Test
-    void eightAdultsCoverEveryActiveProfession() {
+    void sixAdultsCoverEveryFoundationProfession() {
         addWorkers(ProfessionAssigner.FOUNDATION_ORDER.size());
 
         ProfessionAssigner.assignMissing(workers, COLONY, everyone());
@@ -166,7 +166,7 @@ class ProfessionFloorTest {
         assertEquals(
                 EnumSet.copyOf(ProfessionAssigner.FOUNDATION_ORDER),
                 covered,
-                "uma vila de oito adultos precisa ter uma função ativa de cada tipo");
+                "uma vila de seis adultos precisa ter uma função fundacional de cada tipo");
     }
 
     /**
@@ -185,7 +185,7 @@ class ProfessionFloorTest {
      */
     @Test
     void theDismissalDoesNotKnowAboutTheFloor() {
-        List<UUID> everyone = addWorkers(ProfessionAssigner.PRODUCER_ORDER.size());
+        List<UUID> everyone = addWorkers(ProfessionAssigner.FOUNDATION_ORDER.size() + 2);
 
         ProfessionAssigner.assignMissing(workers, COLONY, new HashSet<>(everyone));
 
@@ -305,7 +305,7 @@ class ProfessionFloorTest {
     /** Sem substituto, ninguém é dispensado e o piso nem é ameaçado. */
     @Test
     void withoutSubstitutesNobodyIsDismissed() {
-        List<UUID> everyone = addWorkers(ProfessionAssigner.PRODUCER_ORDER.size());
+        List<UUID> everyone = addWorkers(ProfessionAssigner.FOUNDATION_ORDER.size() + 2);
 
         ProfessionAssigner.assignMissing(workers, COLONY, new HashSet<>(everyone));
 

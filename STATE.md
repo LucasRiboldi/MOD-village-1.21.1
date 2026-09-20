@@ -14,12 +14,13 @@
 
 **A fundação mínima agora é automática.** Toda vila adotada cria a estrutura
 exclusiva `BigHouseMOD`, uma cópia editada da big house Vanilla sem móveis ou
-decorações, com oito camas e oito baús. Os oito titulares (`MINER`,
-`LUMBERJACK`, `MASON`, `SMELTER`, `CARPENTER`, `FARMER`, `BREEDER` e
-`BUILDER`) recebem uma cama `HOME` e um baú distinto dentro dela. A Vanilla
-continua intacta. A execução isolada de `VillageFoundationGameTest` confirmou
-o contrato sem sobrescrever blocos; falta conferir a criação no save aberto
-pelo autor.
+decorações, com seis camas e seis baús. Os seis titulares (`MINER`,
+`LUMBERJACK`, `MASON`, `SMELTER`, `BREEDER` e `BUILDER`) recebem uma cama
+`HOME` e um baú distinto dentro dela. Agricultor e carpinteiro continuam
+disponíveis no crescimento normal, mas seus conjuntos foram removidos da
+BigHouseMOD. A Vanilla continua intacta. A execução isolada de
+`VillageFoundationGameTest` confirmou o contrato sem sobrescrever blocos;
+falta conferir a criação no save aberto pelo autor.
 
 **A primeira casa subiu.** Sessão de 23:21:58 de 09-19:
 `Builder e1770e02 stopped — the house is up`. A obra desceu de 83 blocos

@@ -8025,3 +8025,28 @@ GameTests. O JAR 0.3.0 foi copiado para `downloads/` e
 `%APPDATA%/.minecraft/mods/`; o SHA-256 nas três cópias é
 `287AB8535FFB8034927A583D7CBD24BA4917AA57ECD6FFF71A7C7C756E29D0BB`.
 O playtest no save do autor continua pendente.
+
+### 2026-09-20 — correção final da planta da BigHouseMOD
+
+A inspeção do autor encontrou dois conjuntos de cama, baú e aldeão ocupando a
+entrada e o acesso à escada da `BigHouseMOD`, além de blocos pretos de gerador
+na planta e um bloco do lado de fora da porta. A origem era o NBT bruto da
+estrutura: a leitura para materiais já filtrava esses estados, mas a fundação
+colocava o template diretamente no mundo.
+
+O blueprint agora remove os conjuntos de agricultor e carpinteiro, deixando
+seis conjuntos para `MINER`, `LUMBERJACK`, `MASON`, `SMELTER`, `BREEDER` e
+`BUILDER`. Agricultor e carpinteiro permanecem no catálogo de crescimento do
+mod. Também foram removidos do NBT todos os blocos `jigsaw`, `structure_block`
+e `structure_void`, e os testes passaram a inspecionar tanto o blueprint bruto
+quanto a estrutura colocada, incluindo a entrada e a escada livres.
+
+Verificação: `./gradlew.bat test` passou com 957 testes unitários,
+`./gradlew.bat clean build` passou e a segunda execução de
+`./gradlew.bat runGametest` passou com **384/384 GameTests**. A primeira rodada
+repetiu uma falha intermitente já conhecida em
+`SurfaceGatheringGameTest.smelterGathersDirtOutsideTheProtectedVillageRadius`.
+O JAR 0.3.0 foi sincronizado em `build/libs/`, `downloads/` e
+`%APPDATA%/.minecraft/mods/`; o SHA-256 nas três cópias é
+`1E4AB63F48B8591352481103B4CA0DBBB0B42AC0BEDE0330517F5FB3DD78C276`.
+A confirmação visual no save do autor ainda depende do playtest com este JAR.

@@ -45,10 +45,10 @@ class ProfessionAssignerTest {
         return ids;
     }
 
-    /** Um aldeão de cada função, na ordem da cadeia produtiva. */
+    /** A fundação vem primeiro; a primeira função de crescimento vem depois. */
     @Test
-    void theFirstWorkersCoverEveryProfession() {
-        int professions = ProfessionAssigner.PRODUCER_ORDER.size();
+    void theFirstWorkersCoverFoundationBeforeGrowth() {
+        int professions = ProfessionAssigner.FOUNDATION_ORDER.size() + 1;
 
         addWorkers(COLONY, professions);
 
@@ -61,7 +61,10 @@ class ProfessionAssignerTest {
             assigned.add(worker.profession().orElseThrow());
         }
 
-        assertEquals(EnumSet.copyOf(ProfessionAssigner.PRODUCER_ORDER), assigned);
+        Set<ProfessionType> expected = EnumSet.copyOf(ProfessionAssigner.FOUNDATION_ORDER);
+        expected.add(ProfessionType.CARPENTER);
+
+        assertEquals(expected, assigned);
     }
 
     /**
@@ -94,7 +97,7 @@ class ProfessionAssignerTest {
     }
 
     /**
-     * Cobertas as oito vagas, o nono aldeão continua o que já era.
+     * Cobertas as seis vagas fundacionais, o restante segue o crescimento normal.
      *
      * <p>Decisão do autor em 2026-08-13: a vila começa com dois
      * trabalhadores de cada tipo. Antes a vaga era ilimitada, e a vila de

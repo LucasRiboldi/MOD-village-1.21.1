@@ -26,11 +26,15 @@ class ProfessionGrowthTest {
     }
 
     @Test
-    void sevenAdultsReceiveTheSevenProducerRolesInDeclaredOrder() {
+    void sevenAdultsReceiveFoundationThenTheFirstGrowthRole() {
         addWorkers(7);
 
         assertEquals(7, assign(7));
-        assertEquals(ProfessionAssigner.PRODUCER_ORDER, assignedInOrder());
+        java.util.List<ProfessionType> assigned = assignedInOrder();
+        int foundationSize = ProfessionAssigner.FOUNDATION_ORDER.size();
+        assertEquals(ProfessionAssigner.FOUNDATION_ORDER,
+                assigned.subList(0, foundationSize));
+        assertEquals(ProfessionType.CARPENTER, assigned.get(foundationSize));
     }
 
     @Test

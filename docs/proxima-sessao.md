@@ -17,26 +17,32 @@ lista deve começar agora. A ordem abaixo continua valendo para o resto.
 Ele não é diário — quem conta a história é o `TODO.md`. Este aqui é a lista
 de conferência de uma sessão.
 
-**Atualização de 2026-09-20 — BigHouseMOD e fundação absoluta da vila.** Toda vila adotada
-deve nascer com oito funções ativas: mineiro, lenhador, pedreiro, fundidor,
-carpinteiro, agricultor, criador e construtor. Cada titular deve ter uma cama
-`HOME` e um baú próprio dentro da nova `BigHouseMOD`. Ela e uma copia editada
-da big house Vanilla, sem moveis ou decoracoes, com oito camas e oito baus; a
-estrutura Vanilla continua existindo sem alteracao. O blueprint e a fundacao
-passaram nos GameTests. No jogo, entre em uma vila recem-detectada, confirme a
-BigHouseMOD, conte os oito aldeoes, confira as camas e os baus e observe se
-nenhuma estrutura existente foi substituida. O playtest ainda nao foi
-observado nesta sessao.
+**Atualização de 2026-09-20 — correção da planta da BigHouseMOD.** Toda vila adotada
+deve nascer com seis funções fundacionais: mineiro, lenhador, pedreiro, fundidor,
+criador e construtor. Cada titular deve ter uma cama `HOME` e um baú próprio
+dentro da `BigHouseMOD`. Agricultor e carpinteiro continuam disponíveis no
+crescimento normal, mas não ocupam os dois conjuntos removidos da casa. A
+planta do mod continua sendo uma cópia editada da big house Vanilla, sem
+móveis e decorações; a estrutura Vanilla permanece sem alteração. Foram
+removidos os conjuntos que bloqueavam a porta e o acesso à escada, além dos
+blocos de gerador que apareciam como blocos pretos. No jogo, entre em uma vila
+recém-detectada, confirme a BigHouseMOD, conte os seis aldeões, confira as
+camas e os baús e observe se nenhuma estrutura existente foi substituída.
+O playtest ainda não foi observado nesta sessão.
 
-**JAR atual em 2026-09-20, após a BigHouseMOD:** 0.3.0,
-SHA-256 `08927A5C6F04E54A94CEF33211A7880F856A2D449E2D617F2B1EDC1CA04FA911`
-em `build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`; as três cópias
-foram comparadas após a atualização. `./gradlew.bat clean build` passou e
-`./gradlew.bat runGametest` passou com **383/383 GameTests**. A fundação
-agora garante oito funções, cama `HOME` e baú próprio por titular. A seleção
-continua alternando
+**JAR anterior à correção final da BigHouseMOD:** 0.3.0,
+SHA-256 `08927A5C6F04E54A94CEF33211A7880F856A2D449E2D617F2B1EDC1CA04FA911`;
+foi substituído pelo artefato com seis conjuntos abaixo. A seleção continua alternando
 `casa -> tipo não residencial A -> casa -> tipo não residencial B`, com o
 mesmo scanner de zonas; a sequência completa no save continua como playtest.
+
+**JAR atualizado após a correção final da BigHouseMOD:** 0.3.0, SHA-256
+`1E4AB63F48B8591352481103B4CA0DBBB0B42AC0BEDE0330517F5FB3DD78C276` em
+`build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`; as três cópias
+foram comparadas após a atualização. `./gradlew.bat clean build` passou e a
+segunda execução de `./gradlew.bat runGametest` passou com **384/384
+GameTests**. A primeira execução repetiu uma falha intermitente já conhecida
+do teste de coleta de terra fora do raio protegido.
 
 **JAR atual em 2026-09-20:** 0.3.0, SHA-256
 `2111E72B093FC007549946347C5948416061BC2774A10D1932F751BA46B8A7EA` em

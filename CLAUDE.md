@@ -42,7 +42,8 @@ documento errado. Vá para `STATE.md` primeiro.
 
 ### 0.2 Estado em uma linha
 
-**MVP completo e verificado em jogo, 8 profissões funcionando — o gargalo
+**MVP completo e verificado em jogo, seis funções fundacionais e sete profissões
+de crescimento — o gargalo
 não é mais código, é verificação em jogo e decisões do autor.** Detalhe
 em `STATE.md`.
 

@@ -242,7 +242,7 @@ public final class VillageFoundation {
         return placed;
     }
 
-    /** Encontra uma das oito camas que já vieram dentro da BigHouseMOD. */
+    /** Encontra uma das seis camas que já vieram dentro da BigHouseMOD. */
     private static Optional<BlockPos> findAvailableHouseBed(
             ServerWorld world,
             Building house,

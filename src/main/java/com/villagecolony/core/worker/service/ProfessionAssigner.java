@@ -42,20 +42,19 @@ public final class ProfessionAssigner {
             ProfessionType.BREEDER);
 
     /**
-     * Piso absoluto da vila: uma função ativa de cada tipo.
+     * Piso da casa fundacional: uma função ativa de cada tipo alojado nela.
      *
      * <p>{@link ProfessionType#SHEPHERD} é apenas compatibilidade com
      * saves antigos e conta como {@link ProfessionType#BREEDER};
-     * {@link ProfessionType#BUILDER} é a oitava função ativa e não pode
-     * continuar sendo tratado como exceção quando a vila nasce.
+     * {@link ProfessionType#CARPENTER} e {@link ProfessionType#FARMER} seguem
+     * disponíveis para o crescimento normal, mas não ocupam os seis
+     * conjuntos reservados na {@code BigHouseMOD}.
      */
     public static final List<ProfessionType> FOUNDATION_ORDER = List.of(
             ProfessionType.MINER,
             ProfessionType.LUMBERJACK,
             ProfessionType.MASON,
             ProfessionType.SMELTER,
-            ProfessionType.CARPENTER,
-            ProfessionType.FARMER,
             ProfessionType.BREEDER,
             ProfessionType.BUILDER);
 

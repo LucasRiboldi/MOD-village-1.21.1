@@ -79,14 +79,19 @@ public class VillageFoundationGameTest implements FabricGameTest {
 
             context.assertTrue(
                     assignedChests.size() == ProfessionAssigner.FOUNDATION_ORDER.size(),
-                    "a BigHouseMOD nao reservou oito baus distintos");
+                    "a BigHouseMOD nao reservou seis baus distintos");
 
             context.assertTrue(
-                    countBlocks(context, house, Blocks.WHITE_BED) == 16,
-                    "BigHouseMOD deveria conter 8 camas completas");
+                    countBlocks(context, house, Blocks.WHITE_BED) == 12,
+                    "BigHouseMOD deveria conter 6 camas completas");
             context.assertTrue(
-                    countBlocks(context, house, Blocks.CHEST) == 8,
-                    "BigHouseMOD deveria conter 8 baus");
+                    countBlocks(context, house, Blocks.CHEST) == 6,
+                    "BigHouseMOD deveria conter 6 baus");
+            context.assertTrue(
+                    countBlocks(context, house, Blocks.JIGSAW) == 0
+                            && countBlocks(context, house, Blocks.STRUCTURE_BLOCK) == 0
+                            && countBlocks(context, house, Blocks.STRUCTURE_VOID) == 0,
+                    "BigHouseMOD nao pode colocar blocos de geracao no mundo");
         } finally {
             List<UUID> workerIds = VillageColonyMod.WORKERS.ofColony(colony.id())
                     .stream()

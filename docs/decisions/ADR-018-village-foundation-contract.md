@@ -19,16 +19,17 @@ producao, mas nao cobre a fundacao minima exigida para toda vila.
 
 1. Toda vila adotada pelo mod recebe, na primeira deteccao, no minimo um
    adulto para cada funcao de `ProfessionAssigner.FOUNDATION_ORDER`:
-   `MINER`, `LUMBERJACK`, `MASON`, `SMELTER`, `CARPENTER`, `FARMER`,
-   `BREEDER` e `BUILDER`.
+   `MINER`, `LUMBERJACK`, `MASON`, `SMELTER`, `BREEDER` e `BUILDER`.
+   `CARPENTER` e `FARMER` continuam na ordem de crescimento, mas nao ocupam
+   conjuntos da casa fundacional.
 2. `SHEPHERD` de saves antigos e normalizado como `BREEDER` para esta regra;
    ele nao cria uma nona vaga.
 3. Toda vila recebe uma estrutura exclusiva do mod chamada `BigHouseMOD`.
    Ela e uma copia editada da big house Vanilla: a entrada Vanilla continua
    existindo e nao e alterada; o blueprint do mod remove moveis e decoracoes e
-   mantem somente oito camas e oito baus, em um arranjo com passagem livre.
+   mantem somente seis camas e seis baus, em um arranjo com passagem livre.
 4. Cada trabalhador fundacional deve ter uma cama Vanilla exclusiva dentro da
-   `BigHouseMOD`, gravada na memoria `HOME`, e um dos oito baus distintos da
+   `BigHouseMOD`, gravada na memoria `HOME`, e um dos seis baus distintos da
    casa registrado no `StorageRegistry`.
 5. A fundacao pode criar aldeoes adultos e colocar a `BigHouseMOD`, mas somente
    em um lote vazio e seguro. Ela nunca sobrescreve blocos existentes do
@@ -39,9 +40,9 @@ producao, mas nao cobre a fundacao minima exigida para toda vila.
 
 ## Consequencias
 
-- A populacao inicial minima da colônia passa a ser oito adultos funcionais
+- A populacao inicial minima da colônia passa a ser seis adultos funcionais
   alojados em uma estrutura do mod.
-- Os oito baus da `BigHouseMOD` sao privados dos moradores da casa e nao entram
+- Os seis baus da `BigHouseMOD` sao privados dos moradores da casa e nao entram
   no estoque publico da vila; cada um continua reservado a um trabalhador.
 - O crescimento posterior continua usando as quotas produtoras da ADR-011;
   `BUILDER` e uma funcao fundacional permanente, mas a capacidade de executar
@@ -49,12 +50,12 @@ producao, mas nao cobre a fundacao minima exigida para toda vila.
 - A criacao evita acavalamento, mas pode adiar a fundacao se nao houver local
   seguro. A proxima deteccao tenta novamente e registra um `WARN`.
 - O GameTest `BigHouseModBlueprintGameTest` prova o conteudo da planta, e
-  `VillageFoundationGameTest` prova a colocacao, as oito funcoes e os oito
+  `VillageFoundationGameTest` prova a colocacao, as seis funcoes e os seis
   registros distintos em terreno isolado. A existencia e o posicionamento no
   save do autor continuam exigindo playtest.
 
 ## Verificacao
 
-`./gradlew.bat runGametest` passou; a rodada final executou 383/383 GameTests,
+`./gradlew.bat runGametest` passou; a rodada final executou 384/384 GameTests,
 incluindo `BigHouseModBlueprintGameTest` e `VillageFoundationGameTest`. O
 playtest no save do autor continua pendente.
