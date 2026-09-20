@@ -9,8 +9,12 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.tag.BlockTags;
+import net.minecraft.registry.tag.StructureTags;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.structure.StructureStart;
+import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.chunk.WorldChunk;
@@ -1657,7 +1661,8 @@ public final class BuildSiteScanner {
                 baseY + size.y(),
                 originZ + size.z() - 1);
 
-        if (VillageColonyMod.BUILDINGS.anythingBuiltInside(floor, ceiling)
+        if (overlapsVillageStructure(world, floor, ceiling)
+                || VillageColonyMod.BUILDINGS.anythingBuiltInside(floor, ceiling)
                 || anyOpenSiteInside(colonyId, floor, ceiling)) {
 
             LotRefusals.refused(colonyId, LotRefusals.Reason.OCCUPIED);
@@ -1729,10 +1734,13 @@ public final class BuildSiteScanner {
      * obras abertas quando esta pergunta é feita, e sem isso toda obra
      * se acusaria de pisar em si mesma.
      */
-    public static boolean overlapsSomethingBuilt(ConstructionProject project) {
+    public static boolean overlapsSomethingBuilt(
+            ServerWorld world, ConstructionProject project) {
         Building box = Building.of(project);
 
-        if (VillageColonyMod.BUILDINGS.anythingBuiltInside(box.min(), box.max())) {
+        if (overlapsVillageStructure(world, box.min(), box.max())
+                || hasOccupiedBlock(world, box)
+                || VillageColonyMod.BUILDINGS.anythingBuiltInside(box.min(), box.max())) {
             return true;
         }
 
@@ -1748,6 +1756,75 @@ public final class BuildSiteScanner {
                     && box.min().z() <= site.max().z() && box.max().z() >= site.min().z()) {
 
                 return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * A caixa de uma obra não pode entrar na caixa de uma peça de vila.
+     *
+     * <p>{@code StructureAccessor#getStructureContaining} só responde para
+     * blocos que a peça realmente colocou. O interior vazio de uma casa
+     * continua dentro do {@code BlockBox} da peça, e é esse espaço que
+     * também precisa ser protegido.
+     */
+    private static boolean overlapsVillageStructure(
+            ServerWorld world, ColonyPos min, ColonyPos max) {
+        BlockBox candidate = new BlockBox(
+                min.x(), min.y(), min.z(), max.x(), max.y(), max.z());
+        int minChunkX = min.x() >> 4;
+        int maxChunkX = max.x() >> 4;
+        int minChunkZ = min.z() >> 4;
+        int maxChunkZ = max.z() >> 4;
+        var registry = world.getRegistryManager().get(RegistryKeys.STRUCTURE);
+
+        for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+            for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
+                WorldChunk chunk = world.getChunkManager().getWorldChunk(chunkX, chunkZ);
+
+                if (chunk == null) {
+                    continue;
+                }
+
+                for (StructureStart start : chunk.getStructureStarts().values()) {
+                    if (!start.hasChildren()
+                            || !registry.getEntry(start.getStructure())
+                                    .isIn(StructureTags.VILLAGE)) {
+                        continue;
+                    }
+
+                    if (start.getChildren().stream()
+                            .map(piece -> piece.getBoundingBox())
+                            .anyMatch(candidate::intersects)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Confere o volume físico de uma obra retomada, ignorando ar e blocos
+     * que a preparação do canteiro pode remover.
+     */
+    private static boolean hasOccupiedBlock(ServerWorld world, Building box) {
+        for (int x = box.min().x(); x <= box.max().x(); x++) {
+            for (int y = box.min().y(); y <= box.max().y(); y++) {
+                for (int z = box.min().z(); z <= box.max().z(); z++) {
+                    WorldChunk chunk = world.getChunkManager().getWorldChunk(x >> 4, z >> 4);
+
+                    if (chunk == null) {
+                        return true;
+                    }
+
+                    if (!isNothing(chunk.getBlockState(new BlockPos(x, y, z)))) {
+                        return true;
+                    }
+                }
             }
         }
 

@@ -59,6 +59,17 @@ enviada à navegação ainda podia ser a boca três blocos acima. A correção a
 limita essa perna ao próximo patamar pisável; a entrega no save ainda não foi
 confirmada.
 
+**3. Playtest de 2026-09-20 — acavalamento e frente arenosa.** O último log
+mostrou uma obra retomada ignorando blocos já existentes (`cut_sandstone`,
+`smooth_sandstone`, baú e cama) e o mineiro desistindo repetidamente da
+frente de arenito. O código agora rejeita, na escolha e na retomada, volumes
+que intersectam peças de estruturas Vanilla da vila ou blocos físicos já
+ocupados. Depois de cada bloco minerado, `MinerWork` mantém a posição como
+âncora, espera a areia/gravilha assentar e escolhe a próxima frente; os drops
+continuam passando por `MinerHaul` para o baú ou overflow. A proteção tem
+GameTest local, mas a ausência de acavalamento e a progressão no deserto ainda
+precisam ser confirmadas no save.
+
 ---
 
 ## ✅ O rodízio de ofícios — corrigido em 09-19
@@ -102,6 +113,8 @@ a ausência do mesmo UUID largando ofício atrás de ofício.
 | obra sem progresso | `work ticks` só durante expediente; lote parcial preservado |
 | varredura versus obra aberta | comparar `cycles never asked (a build was open)` com passadas |
 | aproximação do mineiro | confirmar no jogo a perna por patamares e pedra entregue no baú |
+| **retomada sem acavalamento** | nenhuma obra usa volume de estrutura Vanilla ou blocos já ocupados |
+| **mineiro no deserto** | após cada quebra, a areia assenta, a frente é reavaliada e todos os drops chegam ao baú/overflow |
 
 ⚠️ A vila do save tem uma casa fechada e o planejador sem ronda completa.
 Se nenhuma obra nova abrir, é o item 1 de «O que está aberto», e não

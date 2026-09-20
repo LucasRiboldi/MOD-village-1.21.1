@@ -369,6 +369,31 @@ public final class MinerWork {
             return startNextStone(world, workerId, job, villager);
         }
 
+        // <b>Depois de quebrar, espera a frente assentar</b> — playtest de
+        // 2026-09-20. A areia que cai ocupa o lugar do alvo no tique
+        // seguinte. Sem este estado, o mineiro soltava a posição assim que
+        // a pedra saía, escolhia de novo a mesma frente e entrava num ciclo
+        // de tentativa, queda e bloqueio. A espera também existe quando
+        // não há entidade caindo: ela dá ao jogo um tique para atualizar a
+        // coluna, que é a marcha mais lenta pedida para o deserto.
+        if (job.settling > 0) {
+            if (MineSettling.waits(world, job.target, job.settling)) {
+                job.settling++;
+
+                return false;
+            }
+
+            VillageColonyMod.LOGGER.info(
+                    "Miner {} let the mined front settle at {} after {} ticks — picking a target again",
+                    villager.getUuid().toString().substring(0, 8),
+                    job.target.toShortString(),
+                    job.settling);
+
+            release(workerId, job);
+
+            return false;
+        }
+
         BlockState state = world.getBlockState(job.target);
 
         if (state.isAir()) {
@@ -876,7 +901,14 @@ public final class MinerWork {
             return;
         }
 
-        release(villager.getUuid(), job);
+        // Não solta o alvo ainda. A posição é a âncora da busca de quedas:
+        // quando a areia de cima chegar, o próximo ciclo limpa esta marca e
+        // escolhe a nova frente já assentada.
+        job.approach = null;
+        job.progress = 0;
+        job.required = 0;
+        job.settling = 1;
+        WorkTargets.clear(villager.getUuid());
     }
 
     /**
@@ -928,6 +960,7 @@ public final class MinerWork {
         job.approach = null;
         job.progress = 0;
         job.required = 0;
+        job.settling = 0;
         job.stalled = 0;
         job.lease.reset();
 

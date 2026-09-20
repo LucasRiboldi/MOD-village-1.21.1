@@ -790,7 +790,7 @@ public final class ConstructionPlanner {
         // abaixo já escreve: casa pela metade é do jogador, e abandoná-la
         // deixaria um esqueleto no mundo com o lote ocupado. Com zero
         // blocos de pé não se perde nada.
-        if (standing == 0 && BuildSiteScanner.overlapsSomethingBuilt(project)) {
+        if (standing == 0 && BuildSiteScanner.overlapsSomethingBuilt(world, project)) {
             VillageColonyMod.LOGGER.warn(
                     "Colony {} drops the saved {} at {} — it sits inside something that is"
                             + " already built, and no block of it stands yet",

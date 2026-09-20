@@ -328,6 +328,37 @@ public class BuildSiteGameTest implements FabricGameTest {
     }
 
     /**
+     * Uma obra retomada não reaproveita um volume que já está ocupado —
+     * reprodução do projeto salvo que apareceu sobre uma construção.
+     *
+     * <p>O registro de prédios não basta aqui: o projeto pode ter sido
+     * salvo antes de terminar, e o bloco existente é a fonte da verdade
+     * para a retomada.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_resume")
+    public void theResumedProjectRejectsAnOccupiedVolume(TestContext context) {
+        BlockPos relative = new BlockPos(3, 1, 3);
+        BlockPos occupied = context.getAbsolutePos(relative);
+        context.setBlockState(relative, Blocks.CHEST.getDefaultState());
+
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(occupied);
+        ResourceId planks = MinecraftTypeAdapter.toResourceId(Blocks.OAK_PLANKS);
+        Blueprint blueprint = Blueprint.of(
+                ResourceId.vanilla("test/occupied_volume"),
+                List.of(new BlueprintBlock(new ColonyPos(0, 0, 0), planks)));
+        ConstructionProject project = ConstructionProject.plan(
+                UUID.randomUUID(), blueprint, origin);
+
+        context.assertTrue(
+                BuildSiteScanner.overlapsSomethingBuilt(context.getWorld(), project),
+                "a retomada aceitou um volume que ja contem um bloco existente"
+                        + " em " + occupied + ", origem " + origin
+                        + ", tamanho " + blueprint.size());
+
+        context.complete();
+    }
+
+    /**
      * <b>Um bloco de desnível da rua ainda é lote</b> — decisão do autor,
      * 2026-09-15: <i>"desnivel, permitir somente 1 bloco de desnivel da
      * estrada"</i>.

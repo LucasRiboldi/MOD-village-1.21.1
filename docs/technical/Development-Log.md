@@ -7921,3 +7921,38 @@ com **379/379 GameTests**. O JAR 0.3.0 foi copiado de `build/libs/` para
 `2111E72B093FC007549946347C5948416061BC2774A10D1932F751BA46B8A7EA`. A
 entrega de pedra e a segunda obra continuam como validação de playtest, não
 como problema encerrado por teste local.
+
+### 2026-09-20 — obra sobre vila e frente arenosa do mineiro
+
+O playtest revelou dois defeitos iminentes. Uma obra retomada passou a usar um
+volume que já continha `cut_sandstone`, `smooth_sandstone`, baú e cama, e o
+mineiro do deserto desistia repetidamente da frente de arenito depois que a
+areia caía diante dele. O log mostrou a construção já salva sendo planejada
+antes da colisão física ser percebida; por isso a correção não depende somente
+do registro de prédios terminados.
+
+`BuildSiteScanner` agora rejeita candidatos que intersectam as caixas das
+peças de estruturas Vanilla marcadas como vila e, na retomada de projeto
+salvo, também rejeita qualquer bloco físico ocupado no volume. O
+`ConstructionPlanner` passa o `ServerWorld` para essa verificação. O novo
+`BuildSiteGameTest.theResumedProjectRejectsAnOccupiedVolume` reproduz o caso
+de retomada com bloco existente.
+
+`MinerWork` mantém a posição minerada como âncora após cada bloco, espera a
+queda de areia ou gravilha assentar e só então limpa o alvo para escolher a
+próxima frente. A entrega integral permanece em `MinerHaul.deposit`: cada
+drop continua indo para o baú do mineiro ou para overflow no chão quando o
+armazenamento fica cheio. Os GameTests produziram repetidamente o sinal
+`let the mined front settle ... picking a target again`.
+
+Verificação: `./gradlew.bat build` passou com 954 testes unitários. A primeira
+execução de `./gradlew.bat runGametest` executou 380 GameTests e expôs apenas
+a falha intermitente já conhecida em
+`SurfaceGatheringGameTest.smelterGathersDirtOutsideTheProtectedVillageRadius`;
+a repetição passou com **380/380 GameTests**. `git diff --check` passou. O JAR
+0.3.0 foi copiado de `build/libs/` para
+`downloads/` e `%APPDATA%/.minecraft/mods/` com o cliente fechado; o SHA-256
+nas três cópias é
+`128B421734666C2D0E0150CEFD082B348C23361099C39ABC56B88E3A9B50EDEC`.
+Acavalamento no save e avanço completo da frente arenosa continuam pendentes
+de confirmação visual.
