@@ -664,7 +664,7 @@ public final class BuilderWork {
      * próprio; terra comum não entra aqui, pois pode ser fornecida pelo
      * baú como qualquer outro material de construção.
      */
-    private static boolean isShapedFromTheGround(BlockState state) {
+    public static boolean isShapedFromTheGround(BlockState state) {
         return state.isOf(Blocks.FARMLAND)
                 || state.isOf(Blocks.WATER)
                 || state.isOf(Blocks.DIRT_PATH)
