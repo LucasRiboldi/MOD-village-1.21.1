@@ -17,6 +17,7 @@ import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.FarthestVillageSector;
 import com.villagecolony.fabric.integration.GrassPatch;
 import com.villagecolony.fabric.integration.RingSweep;
+import com.villagecolony.fabric.integration.SandPatch;
 import com.villagecolony.fabric.integration.WorkerEquipment;
 import com.villagecolony.fabric.work.SurfaceGatheringWork;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -110,6 +111,76 @@ public class SurfaceGatheringGameTest implements FabricGameTest {
                 context.assertTrue(
                         task.state() == TaskState.COMPLETED,
                         "a tarefa não foi concluída após recolher o bloco: " + task.state());
+                context.complete();
+            } finally {
+                owned.cleanUp();
+            }
+        });
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "surface_sand_gathering", tickLimit = 100)
+    public void smelterGathersSandOnlyOutsideTheProtectedVillageRadius(TestContext context) {
+        var world = context.getWorld();
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+
+        BlockPos center = context.getAbsolutePos(CHEST);
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(center);
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+        VillageColonyMod.COLONIES.register(colony);
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        var sector = FarthestVillageSector.farthestLoadedSector(world, center, colony.id());
+        BlockPos near = center.offset(sector, FarthestVillageSector.PROTECTED_RADIUS - 1);
+        world.setBlockState(near.down(), Blocks.SANDSTONE.getDefaultState());
+        world.setBlockState(near, Blocks.SAND.getDefaultState());
+        world.setBlockState(near.up(), Blocks.AIR.getDefaultState());
+
+        BlockPos sand = center.offset(sector, FarthestVillageSector.PROTECTED_RADIUS + 1);
+        world.setBlockState(sand.down(), Blocks.SANDSTONE.getDefaultState());
+        world.setBlockState(sand, Blocks.SAND.getDefaultState());
+        world.setBlockState(sand.up(), Blocks.AIR.getDefaultState());
+        context.assertTrue(
+                SandPatch.in(world, sand, center.getY()).filter(sand::equals).isPresent(),
+                "o cenário precisa expor areia elegível no setor externo");
+        BlockPos stand = sand.offset(sector.rotateYClockwise(), 2);
+        world.setBlockState(stand.down(), Blocks.SANDSTONE.getDefaultState());
+        VillagerEntity villager = EntityType.VILLAGER.create(world);
+        villager.setBreedingAge(0);
+        villager.refreshPositionAndAngles(
+                stand.getX() + 0.5, stand.getY(), stand.getZ() + 0.5, 0.0f, 0.0f);
+        context.assertTrue(world.spawnEntity(villager), "não foi possível criar o fundidor no setor de coleta");
+        context.runAtTick(1, () -> {
+            try {
+                Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+                worker.assign(ProfessionType.SMELTER);
+                VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+                owned.owning(villager.getUuid());
+                WorkerEquipment.equip(world, List.of(worker));
+
+                Task task = VillageColonyMod.TASKS.create(
+                        colony.id(), TaskType.COLLECT_SURFACE_RESOURCE,
+                        TaskPriority.PRODUCTION, ResourceType.SAND, 1);
+                task.reserveFor(villager.getUuid());
+                int opened = SurfaceGatheringWork.run(world, colony);
+                context.assertTrue(opened == 1, "o coletor não abriu a tarefa de areia reservada: " + task.state());
+
+                for (int tick = 0; tick < 80 && !world.getBlockState(sand).isAir(); tick++) {
+                    SurfaceGatheringWork.tick(world);
+                }
+
+                context.assertTrue(world.getBlockState(near).isOf(Blocks.SAND),
+                        "a coleta de areia invadiu o raio protegido da vila");
+                context.assertTrue(world.getBlockState(sand).isAir(),
+                        "o fundidor não removeu a areia do setor externo escolhido");
+                context.assertTrue(
+                        villager.getEquippedStack(EquipmentSlot.MAINHAND).isOf(Items.IRON_SHOVEL),
+                        "o fundidor não estava com a pá de ferro do mod");
+                context.assertTrue(
+                        ChestInventoryReader.read(world, center).amountOf(ResourceType.SAND) == 1,
+                        "a areia não chegou ao baú pessoal do fundidor");
+                context.assertTrue(
+                        task.state() == TaskState.COMPLETED,
+                        "a tarefa de areia não foi concluída: " + task.state());
                 context.complete();
             } finally {
                 owned.cleanUp();

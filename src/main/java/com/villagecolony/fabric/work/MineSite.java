@@ -7,6 +7,9 @@ import net.minecraft.block.BlockState;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -22,9 +25,10 @@ import java.util.Optional;
  * que tirou o {@link MineRock}: aquele arquivo tinha <b>1.403 linhas</b>,
  * o pior do projeto, contra o limite de 500.
  *
- * <p><b>Refatoração pura</b>: nenhum destes quatro métodos mudou de
- * corpo, e as oito constantes vieram inteiras, com o javadoc que as
- * justifica. O que mudou foi a casa.
+ * <p>A boca só é aceita em terreno seco, com dois blocos livres para a
+ * entrada e sem água num raio horizontal de segurança. Entre as posições
+ * elegíveis, a busca prefere a mais distante do centro e usa a elevação
+ * como desempate, para afastar a mina da vila e favorecer encostas.
  *
  * <p><b>Por que a cadeia inteira veio junta.</b> Ela é fechada e tem uma
  * porta só: {@link #mouthOf} chama {@link #mouthWithin}, que chama
@@ -147,6 +151,9 @@ public final class MineSite {
     /** Mais perto que isto a escada desceria sob a própria vila. */
     private static final int NEAREST_MOUTH = 2;
 
+    /** Raio horizontal de segurança: a boca não nasce na margem da água. */
+    private static final int WATER_CLEARANCE = 4;
+
     /**
      * Quanto acima do nível da vila a boca pode nascer.
      *
@@ -198,11 +205,15 @@ public final class MineSite {
      *
      * <p>Chamada duas vezes: a primeira com a boca boa — o fim da vila,
      * no nível dela —, a segunda com a ruim, mais longe e menos exigente
-     * quanto à altura. Decisão do autor em 2026-08-26.
+     * quanto à altura. Todas as candidatas de uma passagem são comparadas
+     * antes da escolha, para que uma margem de água não vença apenas por
+     * aparecer primeiro.
      */
     private static Optional<BlockPos> mouthWithin(
             ServerWorld world, BlockPos center, Side towards,
             int[] reaches, int up, int down) {
+
+        List<BlockPos> candidates = new ArrayList<>();
 
         for (int part : reaches) {
             int away = Math.max(NEAREST_MOUTH, mineDistance * part / 100);
@@ -222,9 +233,7 @@ public final class MineSite {
                 Optional<BlockPos> found = surfaceAt(
                         world, center, side.offsetX() * away, side.offsetZ() * away, up, down);
 
-                if (found.isPresent()) {
-                    return found;
-                }
+                found.ifPresent(candidates::add);
 
                 found = surfaceAt(
                         world,
@@ -234,15 +243,53 @@ public final class MineSite {
                         up,
                         down);
 
-                if (found.isPresent()) {
-                    return found;
-                }
+                found.ifPresent(candidates::add);
 
                 side = next;
             }
         }
 
-        return Optional.empty();
+        return candidates.stream()
+                .max(Comparator.comparingLong(candidate -> score(center, candidate)))
+                .map(BlockPos::toImmutable);
+    }
+
+    /** Distância horizontal é a prioridade; no empate, terreno alto vence. */
+    private static long score(BlockPos center, BlockPos candidate) {
+        long dx = candidate.getX() - center.getX();
+        long dz = candidate.getZ() - center.getZ();
+        long distance = dx * dx + dz * dz;
+        long elevation = Math.max(0, candidate.getY() - center.getY());
+
+        return distance * 1_000L + elevation;
+    }
+
+    /**
+     * Verifica a água em volta da boca sem carregar chunks novos.
+     *
+     * <p>O leito seco de um lago parece uma superfície válida se apenas o
+     * bloco imediatamente acima for consultado. O raio fecha também a
+     * margem e deixa a escada nascer em terreno realmente acessível.
+     */
+    private static boolean isFarFromWater(ServerWorld world, BlockPos at) {
+        for (int dx = -WATER_CLEARANCE; dx <= WATER_CLEARANCE; dx++) {
+            for (int dz = -WATER_CLEARANCE; dz <= WATER_CLEARANCE; dz++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    BlockPos check = at.add(dx, dy, dz);
+
+                    if (world.getChunkManager().getWorldChunk(
+                            check.getX() >> 4, check.getZ() >> 4) == null) {
+                        return false;
+                    }
+
+                    if (!world.getFluidState(check).isEmpty()) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -322,12 +369,17 @@ public final class MineSite {
         BlockPos above = at.up();
 
         if (!world.getBlockState(above).isReplaceable()
+                || !world.getBlockState(above.up()).isReplaceable()
                 || !world.getFluidState(above).isEmpty()) {
 
             return Optional.empty();
         }
 
         if (BlockProtection.isVillageOriginal(world, at) || BlockProtection.isColonyBuilt(at)) {
+            return Optional.empty();
+        }
+
+        if (!isFarFromWater(world, at)) {
             return Optional.empty();
         }
 

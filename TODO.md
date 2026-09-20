@@ -1,12 +1,13 @@
 # TODO
 
-**Atualizado:** 2026-09-20, correção do acavalamento de obras e da frente arenosa após análise do log.
+**Atualizado:** 2026-09-20, whitelist Vanilla e proteção de terreno para coleta e minas.
 
 ## Próximas atividades corrigíveis sem acessar o jogo
 
 Esta fila separa falhas reproduzíveis ou coberturas que podem ser tratadas
 com código e testes locais das validações que continuam dependendo de um save.
 
+- [x] 🔴 **P0.9 — catálogo e terreno seguro:** as construções do mod agora usam somente a whitelist explícita de ids Vanilla reais por bioma; areia, terra e relva só são coletadas pelo fundidor quando uma obra pede o recurso e sempre no setor externo; bocas de mina rejeitam água, exigem entrada livre e preferem a posição seca mais distante/elevada. `VillageStructuresGameTest`, `SurfaceGatheringGameTest` e `MinerGameTest` passaram.
 - [x] 🔴 **P0.8 — fundação absoluta da vila:** toda vila detectada cria a `BigHouseMOD`, cópia editada da big house Vanilla sem móveis/decorações, com seis camas e seis baús distintos. Os seis titulares (`MINER`, `LUMBERJACK`, `MASON`, `SMELTER`, `BREEDER` e `BUILDER`) recebem adulto, cama `HOME` e baú dentro dela; os conjuntos de agricultor e carpinteiro ficam fora da casa e continuam disponíveis no crescimento normal. A Vanilla permanece intacta. `VillageFoundationGameTest` passou.
 - [ ] Playtest P0.8: entrar em um save com vila recém-detectada e confirmar a `BigHouseMOD`, os seis aldeões, suas camas, seus baús e a ausência de sobreposição com estruturas existentes.
 - [ ] 🔴 **E42 — impasse entre profissões:** criar o GameTest da roça fora do alcance do fazendeiro, com duas passagens do planejador, e corrigir a fila se a segunda passagem não abrir o projeto de casa.
@@ -22,6 +23,7 @@ com código e testes locais das validações que continuam dependendo de um save
 - [x] 🔴 **P1.2 — obra retomada sobre estrutura existente:** `BuildSiteScanner` agora rejeita interseção com peças de estruturas Vanilla da vila, blocos físicos ocupados e volumes já registrados, inclusive durante a retomada de projeto salvo. `BuildSiteGameTest.theResumedProjectRejectsAnOccupiedVolume` reproduz o caso físico.
 - [x] 🟠 **P1.2 — frente arenosa cíclica:** `MinerWork` mantém a posição após cada quebra, espera a queda de areia/gravilha assentar e só então reavalia a frente. A coleta integral continua em `MinerHaul.deposit`, inclusive para overflow no chão. Falta confirmar a progressão e a entrega no save.
 - [ ] Playtest P1.2: iniciar uma obra perto de construções existentes e acompanhar o mineiro no deserto até confirmar que não há acavalamento, que a frente avança após os assentamentos e que os drops chegam ao baú/overflow.
+- [ ] Playtest P0.9: criar vilas nos cinco biomas e confirmar no save que somente as estruturas listadas aparecem, que areia/relva são buscadas longe da vila quando solicitadas e que a entrada da mina permanece seca e acessível.
 
 ## Prioridade atual — obra aberta impede a próxima construção
 

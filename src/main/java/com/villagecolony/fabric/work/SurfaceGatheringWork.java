@@ -200,7 +200,11 @@ public final class SurfaceGatheringWork {
     }
 
     private static boolean findTarget(ServerWorld world, UUID workerId, Job job) {
-        boolean outsideVillage = job.task.targetResource() == ResourceType.GRASS_BLOCK
+        // Areia, terra e relva são recursos de superfície: a colônia só
+        // abre esta tarefa quando uma obra pediu o material, e a coleta
+        // nunca deve raspar o terreno já ocupado pela vila.
+        boolean outsideVillage = job.task.targetResource() == ResourceType.SAND
+                || job.task.targetResource() == ResourceType.GRASS_BLOCK
                 || job.task.targetResource() == ResourceType.DIRT;
         BlockPos searchCenter = outsideVillage
                 ? job.center.offset(job.surfaceSector, FarthestVillageSector.PROTECTED_RADIUS + 1)

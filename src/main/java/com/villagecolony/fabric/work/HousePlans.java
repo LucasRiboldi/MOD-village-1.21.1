@@ -248,7 +248,9 @@ public final class HousePlans {
         Map<String, List<Blueprint>> byType = new LinkedHashMap<>();
         boolean farmPostponed = FarmPlans.postponed(colony.id(), world.getTime());
 
-        for (ResourceId id : VillageStructures.housesFor(style)) {
+        // A lâmpada Vanilla fica na raiz de `village/<style>/`, fora de
+        // `houses/`; as demais oficinas e roças continuam na pasta de lotes.
+        for (ResourceId id : VillageStructures.buildableFor(style)) {
             String type = constructionType(id);
 
             if ("house".equals(type)
@@ -481,7 +483,7 @@ public final class HousePlans {
      * moradia cai.
      */
     private static final List<String> NON_DWELLING_TYPES = List.of(
-            "animal_pen", "meeting_point", "temple", "stable", "accessory", "farm");
+            "animal_pen", "meeting_point", "temple", "stable", "accessory", "farm", "lamp");
 
     /** Se esta peça é casa de morar, e não cerca, poço ou templo. */
     public static boolean isDwelling(ResourceId id) {

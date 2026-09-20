@@ -8050,3 +8050,34 @@ O JAR 0.3.0 foi sincronizado em `build/libs/`, `downloads/` e
 `%APPDATA%/.minecraft/mods/`; o SHA-256 nas três cópias é
 `1E4AB63F48B8591352481103B4CA0DBBB0B42AC0BEDE0330517F5FB3DD78C276`.
 A confirmação visual no save do autor ainda depende do playtest com este JAR.
+
+### 2026-09-20 — whitelist Vanilla e terreno seguro para coleta e minas
+
+O pedido do playtest acrescentou três contratos. A escolha de construções do
+mod deixou de aceitar todos os arquivos encontrados em `houses/` e passou a
+usar uma whitelist explícita para plains, desert, savanna, taiga e snowy. A
+lista foi conferida contra `vanilla_structures.json` e os nomes abreviados foram
+corrigidos para os ids reais, incluindo `*_cartographer_house_1`,
+`*_fisher_cottage_1`, `*_fletcher_house_1`, `*_armorer_house_1`,
+`*_butchers_shop_1`, `snowy_farm_1` e os postes de luz fora de `houses/`.
+`HousePlans` continua tratando postes como obras não residenciais sem
+confundi-los com moradias.
+
+Areia, terra e relva continuam pertencendo ao `SMELTER`, mas agora a tarefa é
+atendida somente quando uma obra aberta realmente pede o recurso. Para areia,
+a busca também começa no setor externo mais distante e filtra o setor antes de
+consultar o bloco, preservando o terreno da vila. Um GameTest deixa areia
+próxima e distante e prova que somente a segunda é removida.
+
+`MineSite` passou a comparar todas as candidatas da passagem antes de escolher.
+A boca exige dois blocos livres, não pode ter fluido na posição e mantém quatro
+blocos de afastamento da água; a maior distância horizontal vence e a elevação
+desempata. Um GameTest reproduz uma margem de água ao lado de um terreno alto.
+
+Verificação final desta etapa: `./gradlew.bat test compileGametestJava` passou,
+`./gradlew.bat runGametest` passou com **387/387 GameTests** e
+`./gradlew.bat build` passou. O JAR 0.3.0 foi sincronizado em `build/libs/`,
+`downloads/` e `%APPDATA%/.minecraft/mods/`; as três cópias têm SHA-256
+`C4848314C8E01CC1C04648B86472621FEAF85C4E12FF53828FBECA12EB82C210`. O
+playtest continua necessário para confirmar a seleção visual das estruturas, a
+rota real do aldeão e a entrega da frente arenosa em um save do autor.

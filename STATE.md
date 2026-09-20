@@ -12,6 +12,15 @@
 
 ## Onde a vila está
 
+**O lote P0.9 está implementado e verificado offline.** O planejador do mod
+agora consulta uma whitelist explícita de estruturas Vanilla por bioma, com os
+nomes corrigidos conforme o catálogo real de Minecraft 1.21.1. O fundidor só
+recebe tarefas de areia, terra ou relva quando uma obra precisa do material e
+procura no setor externo da vila. A boca da mina rejeita água num raio de quatro
+blocos, exige dois blocos livres para a entrada e escolhe a candidata seca mais
+distante, favorecendo terreno alto. `runGametest` passou com 387/387; falta
+confirmar o comportamento visual no save do autor.
+
 **A fundação mínima agora é automática.** Toda vila adotada cria a estrutura
 exclusiva `BigHouseMOD`, uma cópia editada da big house Vanilla sem móveis ou
 decorações, com seis camas e seis baús. Os seis titulares (`MINER`,

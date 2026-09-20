@@ -5484,6 +5484,48 @@ public class MinerGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * A boca prefere terreno seco e elevado — 2026-09-20.
+     *
+     * <p>Uma boca ao lado de água continua sendo uma boca inundável: o
+     * filtro anterior só rejeitava água no bloco imediatamente acima e
+     * aceitava a margem. Nesta arena, o primeiro candidato está na margem
+     * e o segundo está seco e mais alto; a escolha tem de atravessar a
+     * margem e preferir a direção do morro.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+            tickLimit = 20)
+    public void theMineMouthStaysAwayFromWaterAndPrefersHigherGround(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos center = context.getAbsolutePos(new BlockPos(4, 2, 4));
+
+        MineDigging.shortenMineDistanceTo(3);
+
+        try {
+            BlockPos waterside = center.offset(Direction.NORTH, 3);
+            BlockPos hill = center.offset(Direction.EAST, 3).up(2);
+
+            world.setBlockState(waterside, Blocks.STONE.getDefaultState());
+            world.setBlockState(waterside.up(), Blocks.AIR.getDefaultState());
+            world.setBlockState(waterside.east(), Blocks.WATER.getDefaultState());
+
+            world.setBlockState(hill, Blocks.STONE.getDefaultState());
+            world.setBlockState(hill.up(), Blocks.AIR.getDefaultState());
+
+            Optional<BlockPos> mouth = MineSite.mouthOf(world, center, Side.NORTH);
+
+            context.assertTrue(mouth.isPresent(), "não foi encontrada uma boca seca acessível");
+            context.assertTrue(
+                    mouth.get().getX() == hill.getX() && mouth.get().getZ() == hill.getZ(),
+                    "a boca ignorou a margem e não preferiu o terreno elevado: "
+                            + mouth.get().toShortString());
+        } finally {
+            MineDigging.restoreMineDistance();
+        }
+
+        context.complete();
+    }
+
     /** A primeira tocha de parede da arena, se a mina acendeu alguma. */
     private static Optional<BlockPos> wallTorchIn(TestContext context) {
         for (int x = 0; x <= 15; x++) {

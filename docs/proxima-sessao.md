@@ -44,7 +44,15 @@ segunda execução de `./gradlew.bat runGametest` passou com **384/384
 GameTests**. A primeira execução repetiu uma falha intermitente já conhecida
 do teste de coleta de terra fora do raio protegido.
 
-**JAR atual em 2026-09-20:** 0.3.0, SHA-256
+**JAR publicado após o lote P0.9 em 2026-09-20:** 0.3.0, SHA-256
+`C4848314C8E01CC1C04648B86472621FEAF85C4E12FF53828FBECA12EB82C210` em
+`build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`; as três cópias
+foram comparadas após a atualização. `./gradlew.bat build` e
+`./gradlew.bat runGametest` passaram, com 387/387 GameTests. Falta conferir no
+save a lista efetiva de estruturas, a rota da coleta de superfície e a entrada
+seca da mina.
+
+**JAR anterior em 2026-09-20:** 0.3.0, SHA-256
 `2111E72B093FC007549946347C5948416061BC2774A10D1932F751BA46B8A7EA` em
 `build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`. O cliente Minecraft
 estava fechado durante a cópia. `build`, 954 testes unitários e
