@@ -1,4 +1,4 @@
-# STATE — 2026-09-19
+# STATE — 2026-09-20
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -31,7 +31,7 @@ E a sessão entregou duas coisas de graça:
 
 ## 🔴 O que está aberto
 
-**1. A varredura não fecha uma ronda.** Depois da casa, nenhuma obra nova
+**1. A segunda obra ainda depende de playtest.** Depois da casa, nenhuma obra nova
 abriu em 3,5 minutos — `no building work: still sweeping — the budget ran
 out before an answer — looking for a lot`. O resumo de saída:
 
@@ -42,13 +42,19 @@ lot columns: 30 survived every check, 528 were turned down
 lot refusals: 342 the ground is not at street level   (65% das recusas)
 ```
 
-**Zero rondas completas em nove passadas**, e o índice de ruas não
-respondeu nada em nenhuma delas. É o próximo P0.
+**Zero rondas completas em nove passadas** não distingue varredura lenta
+de ciclos bloqueados por obra aberta. `SweepLog.busy` agora conta estes últimos.
+Em 09-20, o guarda passou a contar 12.000 tiques de expediente, descontando
+a noite sem zerar a espera e renovando o prazo quando há progresso.
+O abandono cancela tarefas e limpa destinos, preservando a obra e seu lote.
+Seis casos de `BuildProgressGameTest` passam; falta validar a segunda casa.
+Não há evidência nova para declarar a varredura resolvida.
 
 **2. O mineiro não entrega.** 66 pedras pedidas, **0 entregues**, 103
 quebradas. A assinatura é o E44/E45 outra vez: `2 blocks below it and
 unable to climb` e `got no closer than 11,7 blocks in 400 ticks`. O
-cursor serve pedra sem rota de subida.
+cursor serve pedra sem rota de subida. O commit local `b7ef9e2` recalcula a
+aproximação quando a altura muda; a entrega no save ainda não foi confirmada.
 
 ---
 
@@ -90,6 +96,9 @@ a ausência do mesmo UUID largando ofício atrás de ofício.
 | fornalha com um pouco de cada | dois ou mais `made … out of` por sessão |
 | reserva do cru | `SANDSTONE` e `SMOOTH_SANDSTONE` convivendo |
 | **segunda casa** | um segundo `the house is up` — o primeiro saiu 23:21:58 |
+| obra sem progresso | `work ticks` só durante expediente; lote parcial preservado |
+| varredura versus obra aberta | comparar `cycles never asked (a build was open)` com passadas |
+| aproximação do mineiro | recalcular depois da queda e confirmar pedra entregue no baú |
 
 ⚠️ A vila do save tem uma casa fechada e o planejador sem ronda completa.
 Se nenhuma obra nova abrir, é o item 1 de «O que está aberto», e não
@@ -99,15 +108,14 @@ regressão do que fechou.
 
 ## 🔴 Dívida conhecida
 
-**`ColonyDetectionGameTest` falha 2 de 2 rodadas na base limpa.** É
-**pré-existente** ao trabalho de 09-19 e foi medido com `git stash`:
-`esperava ao menos 30 trabalhadores, achei 24` — sempre **24**, nunca 25 ou
-29. Número fixo não é corrida de relógio, é **teto**; a causa ainda não foi
-achada.
+**`ColonyDetectionGameTest`: falha histórica não reproduzida em 09-20.**
+Em 09-19, duas rodadas na base limpa encontraram 24 trabalhadores em vez de
+30. A causa continua sem diagnóstico; a suíte de 09-20 passou **378/378**.
+Não atribuir essa divergência a um teto ou a uma corrida sem reprodução.
 
-**Isto custou caro:** eu atribuí essa falha a três mudanças minhas antes de
-medir a base. A lição é a regra que já valia — *isolar contra a base antes
-de acusar a própria mudança*.
+**`ChainRootsGameTest`: corrigido em 09-20.** O relatório chamava
+`createDirectories(null)` para um arquivo sem pasta. A escrita agora vai
+direto ao arquivo; a asserção de materiais voltou a executar e passou.
 
 **O cenário do acavalamento em obra aberta** está no código e coberto por
 teste unitário (`OverlapGuardTest`), mas sem gametest: toda versão que

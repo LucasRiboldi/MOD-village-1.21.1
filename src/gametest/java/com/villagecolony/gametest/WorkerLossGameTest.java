@@ -170,6 +170,9 @@ public class WorkerLossGameTest implements FabricGameTest {
                     villager.isDead(),
                     "o construtor não morreu, e o resto do teste não valeria nada");
 
+            context.assertTrue(task.state() == TaskState.AVAILABLE,
+                    "a morte deve devolver a tarefa enquanto a obra ainda está aberta");
+
             // A obra desistindo, pelo mesmo caminho que o PatienceClock usa.
             WaitingWork.giveUp(colony, project);
 
@@ -177,9 +180,9 @@ public class WorkerLossGameTest implements FabricGameTest {
             BuilderWork.tick(world);
 
             context.assertTrue(
-                    task.state() == TaskState.AVAILABLE,
+                    task.state() == TaskState.CANCELLED,
                     "a tarefa do construtor morto ficou em " + task.state()
-                            + " — depois da obra fechar ela tem de continuar na fila");
+                            + " — o abandono da obra deve tirá-la da fila");
         } finally {
             ColonyFixture.create()
                     .owning(colony)

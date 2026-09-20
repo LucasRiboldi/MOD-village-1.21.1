@@ -1,6 +1,6 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Escrito em 2026-09-02, atualizado em 2026-09-15.** Este arquivo existe
+**Escrito em 2026-09-02, atualizado em 2026-09-20.** Este arquivo existe
 porque o gargalo do projeto deixou de ser código: havia **dez consertos do
 mineiro empilhados sem uma única sessão que os veja**, e nenhuma pergunta
 importante em aberto pode ser respondida sem abrir o jogo.
@@ -16,6 +16,14 @@ lista deve começar agora. A ordem abaixo continua valendo para o resto.
 
 Ele não é diário — quem conta a história é o `TODO.md`. Este aqui é a lista
 de conferência de uma sessão.
+
+**JAR atual em 2026-09-20:** 0.3.0, SHA-256
+`F4CB1A0FC7162B806016F566C5D26D808DA2F325604A904F9922607AD906E23A` em
+`build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`. O cliente Minecraft
+estava fechado durante a cópia. `clean build`, 954 testes unitários e
+`runGametest` com 378/378 GameTests passaram. Este lote inclui a recuperação
+de obras abandonadas e os seis próximos pontos offline registrados no topo do
+`TODO.md`; a segunda obra e a entrega do mineiro ainda exigem playtest.
 
 **JAR atual em 2026-09-15:** 0.3.0, SHA-256
 `C5D0790F996082CE3B7D2AA55CED93936DF04063568A03B0B521F50245A0BA1A` em

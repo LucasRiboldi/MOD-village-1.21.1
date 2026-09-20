@@ -346,8 +346,6 @@ public class ChainRootsGameTest {
         try {
             Path out = Path.of("chain-roots.txt");
 
-            Files.createDirectories(out.getParent());
-
             Files.writeString(out, said.toString());
         } catch (IOException cannotWrite) {
             // O relatório é conveniência; perdê-lo não invalida o teste.

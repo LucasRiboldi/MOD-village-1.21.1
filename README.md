@@ -326,7 +326,7 @@ primeira casa fechada.
 | Degradação ao longo de muitos ciclos | 🟠 nada mede |
 | Impasse entre profissões | 🟠 sem teste |
 
-**O JAR 0.3.0 desta linha** tem SHA-256 `F7CA5BF91AF40A6D84E492F5DA9945F9122115C25773770837D3536365ED6B21`.
+**O JAR 0.3.0 desta linha** tem SHA-256 `F4CB1A0FC7162B806016F566C5D26D808DA2F325604A904F9922607AD906E23A`.
 
 **Como o projeto investiga:** instrumentar antes de consertar. Três
 defeitos de 09-19 foram decididos **numa única leitura** depois de

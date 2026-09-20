@@ -8,12 +8,14 @@ import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.coordination.PatienceClock;
 import com.villagecolony.core.coordination.WorkAssignment;
+import com.villagecolony.core.coordination.WorkClock;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskPriority;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ColonySupply;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
@@ -52,12 +54,35 @@ public final class WaitingWork {
      */
     private static final Map<UUID, Long> WAITING_SINCE = new HashMap<>();
 
+    /**
+     * Quantas peças cada obra em curso ainda devia, e desde quando.
+     *
+     * <p><b>O buraco que a sessão de 09-19 achou.</b> O relógio acima só
+     * conta para {@code WAITING_RESOURCES}. Uma obra em
+     * {@code BUILDING} que simplesmente <b>não anda</b> não tinha
+     * relógio nenhum, e a vaga de obra é única: a casa de
+     * {@code -847, 87, 1310} ficou <b>174 peças paradas em 41 das 60
+     * leituras</b>, meia hora segurando a fila enquanto os construtores
+     * trocavam de ofício embaixo dela.
+     *
+     * <p>A contagem que importa é a de <b>peças que faltam</b>, e não a
+     * de tempo aberta: obra grande demora por ser grande, e puni-la por
+     * isso seria trocar um defeito por outro. O que não é normal é a
+     * conta <b>não descer</b>.
+     */
+    private static final Map<UUID, Progress> BUILDING_SINCE = new HashMap<>();
+
+    /** Última leitura e tiques de expediente acumulados sem assentar peça. */
+    private record Progress(int left, long at, long timeOfDay, long stalled) {
+    }
+
     private WaitingWork() {
     }
 
     /** Esquece as esperas. Chamado ao parar o servidor. */
     public static void clearAll() {
         WAITING_SINCE.clear();
+        BUILDING_SINCE.clear();
     }
 
     /**
@@ -232,14 +257,16 @@ public final class WaitingWork {
      *
      * @return se a obra foi abandonada agora
      */
-    static boolean giveUpIfStalled(
+    public static boolean giveUpIfStalled(
             ServerWorld world, Colony colony, ConstructionProject project) {
 
         if (project.state() != ConstructionState.WAITING_RESOURCES) {
             WAITING_SINCE.remove(project.id());
 
-            return false;
+            return givesUpIfItIsNotMoving(world, colony, project);
         }
+
+        BUILDING_SINCE.remove(project.id());
 
         long since = WAITING_SINCE.computeIfAbsent(project.id(), id -> world.getTime());
 
@@ -250,6 +277,99 @@ public final class WaitingWork {
         giveUp(colony, project);
 
         return true;
+    }
+
+    /**
+     * A obra que está aberta e não anda também sai da frente —
+     * 2026-09-19.
+     *
+     * <p><b>É o mesmo argumento do relógio acima, no estado que ele não
+     * cobria.</b> Aquele tira da frente a obra parada esperando
+     * material; esta tira a que tem material, tem construtor, está em
+     * {@code BUILDING} — e mesmo assim não coloca peça. Do lado de fora
+     * as duas são a mesma coisa: a vaga única ocupada e a vila sem
+     * crescer.
+     *
+     * <p><b>A medição.</b> Sessão de 09-19, casa de
+     * {@code -847, 87, 1310}: {@code 174 blocks left} em 41 das 60
+     * leituras, meia hora. A causa foi o rodízio de ofícios — os
+     * construtores largavam o ofício antes de assentar peça —, e essa
+     * causa está consertada. Este guarda é o <b>fundo de poço</b>: seja
+     * qual for o motivo de a conta não descer, a colônia volta a
+     * planejar em vez de esperar para sempre.
+     *
+     * <p>Mede <b>peça assentada</b>, e não tempo aberta: obra grande
+     * demora por ser grande, e o relógio recomeça a cada peça. Só a
+     * ausência de progresso pela janela inteira da {@link PatienceClock}
+     * conta — dez minutos de expediente. A noite pausa a contagem sem
+     * zerá-la, como exige a Regra 18.
+     *
+     * @return se a obra foi abandonada agora
+     */
+    private static boolean givesUpIfItIsNotMoving(
+            ServerWorld world, Colony colony, ConstructionProject project) {
+
+        if (project.state() != ConstructionState.BUILDING) {
+            BUILDING_SINCE.remove(project.id());
+
+            return false;
+        }
+
+        int left = project.remainingCount();
+        long now = world.getTime();
+        long timeOfDay = world.getTimeOfDay();
+
+        Progress seen = BUILDING_SINCE.get(project.id());
+
+        if (seen == null || seen.left() != left) {
+            // Ou é a primeira leitura, ou a conta mudou: em qualquer dos
+            // dois a obra está viva, e o relógio recomeça daqui.
+            BUILDING_SINCE.put(project.id(), new Progress(left, now, timeOfDay, 0));
+
+            return false;
+        }
+
+        long stalled = seen.stalled() + workingTicksSince(seen, now, timeOfDay);
+        BUILDING_SINCE.put(project.id(), new Progress(left, now, timeOfDay, stalled));
+
+        if (!PatienceClock.ranOut(0, stalled)) {
+            return false;
+        }
+
+        VillageColonyMod.LOGGER.info(
+                "Colony {} lets go of {} at {} — it has been at {} pieces for {} work ticks"
+                        + " and placed none. The half-built house and its lot stay taken",
+                colony.id(),
+                project.blueprint().id(),
+                project.origin(),
+                left,
+                stalled);
+
+        BUILDING_SINCE.remove(project.id());
+
+        // A planta não leva a culpa: não faltou material, a obra não
+        // andou. Mesmo argumento do lote fora de alcance.
+        giveUp(colony, project, false);
+
+        return true;
+    }
+
+    /** Desconta noites completas e parciais entre duas leituras do planejador. */
+    private static long workingTicksSince(Progress seen, long now, long timeOfDay) {
+        long elapsed = Math.max(0, now - seen.at());
+
+        if (timeOfDay - seen.timeOfDay() != elapsed) {
+            // Sono, /time e ciclo solar congelado não inventam tempo de trabalho.
+            // Se a janela mudou, retomamos a medição na próxima leitura.
+            return WorkClock.isWorkTime(seen.timeOfDay()) && WorkClock.isWorkTime(timeOfDay)
+                    ? elapsed : 0;
+        }
+
+        long days = Math.floorDiv(timeOfDay, WorkClock.DAY)
+                - Math.floorDiv(seen.timeOfDay(), WorkClock.DAY);
+        long end = Math.min(Math.floorMod(timeOfDay, WorkClock.DAY), WorkClock.DUSK);
+        long start = Math.min(Math.floorMod(seen.timeOfDay(), WorkClock.DAY), WorkClock.DUSK);
+        return days * WorkClock.DUSK + end - start;
     }
 
     /**
@@ -290,6 +410,7 @@ public final class WaitingWork {
      */
     public static void giveUp(Colony colony, ConstructionProject project, boolean blamePlan) {
         WAITING_SINCE.remove(project.id());
+        BUILDING_SINCE.remove(project.id());
 
         // <b>E a colônia aprende qual planta não conseguiu levantar</b> —
         // 2026-09-12. Sem isto a escolha reoferece a mesma casa no ciclo
@@ -311,14 +432,24 @@ public final class WaitingWork {
         VillageColonyMod.BUILDINGS.register(Building.of(project));
         VillageColonyMod.CONSTRUCTIONS.forget(project.id());
 
+        // A vaga de obra é única; suas tarefas não podem sobreviver ao projeto.
+        for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
+            if (task.type() == TaskType.BUILD && task.isOpen()) {
+                task.executor().ifPresent(worker -> {
+                    BuilderWork.forget(worker);
+                    WorkTargets.clear(worker);
+                });
+                task.cancel();
+            }
+        }
+
         VillageColonyMod.LOGGER.info(
-                "Colony {} gives up on {} at {} — {} blocks never came in {} cycles."
+                "Colony {} gives up on {} at {} — {} blocks remain."
                         + " The half-built house and its lot stay taken",
                 colony.id(),
                 project.blueprint().id(),
                 project.origin(),
-                project.remainingCount(),
-                PatienceClock.CYCLES);
+                project.remainingCount());
 
         IdleLog.clear(colony.id(), SUBJECT);
     }

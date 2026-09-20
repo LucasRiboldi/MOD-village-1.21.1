@@ -82,6 +82,8 @@ public final class SweepLog {
      * @param farthestDrift a maior deriva vista, em blocos
      * @param rounds quantas voltas completaram o raio inteiro
      * @param indexed quantas respostas saíram do índice, sem varrer
+     * @param busy quantos ciclos nem chegaram a perguntar por lote porque
+     *     a colônia já tinha obra aberta. Ver {@link #busy(UUID)}
      */
     public record Tally(
             int asked,
@@ -91,9 +93,10 @@ public final class SweepLog {
             int drifts,
             int farthestDrift,
             int rounds,
-            int indexed) {
+            int indexed,
+            int busy) {
 
-        private static final Tally EMPTY = new Tally(0, 0, 0, 0, 0, 0, 0, 0);
+        private static final Tally EMPTY = new Tally(0, 0, 0, 0, 0, 0, 0, 0, 0);
 
         /**
          * O que o planejador perguntou e nunca virou trabalho.
@@ -144,21 +147,21 @@ public final class SweepLog {
     public static void asked(UUID colonyId) {
         change(colonyId, was -> new Tally(
                 was.asked() + 1, was.passes(), was.columns(), was.restarts(),
-                was.drifts(), was.farthestDrift(), was.rounds(), was.indexed()));
+                was.drifts(), was.farthestDrift(), was.rounds(), was.indexed(), was.busy()));
     }
 
     /** Uma passagem de varredura correu, olhando estas colunas. */
     public static void pass(UUID colonyId, int columns) {
         change(colonyId, was -> new Tally(
                 was.asked(), was.passes() + 1, was.columns() + columns, was.restarts(),
-                was.drifts(), was.farthestDrift(), was.rounds(), was.indexed()));
+                was.drifts(), was.farthestDrift(), was.rounds(), was.indexed(), was.busy()));
     }
 
     /** A varredura começou do anel zero. */
     public static void restarted(UUID colonyId) {
         change(colonyId, was -> new Tally(
                 was.asked(), was.passes(), was.columns(), was.restarts() + 1,
-                was.drifts(), was.farthestDrift(), was.rounds(), was.indexed()));
+                was.drifts(), was.farthestDrift(), was.rounds(), was.indexed(), was.busy()));
     }
 
     /**
@@ -178,7 +181,7 @@ public final class SweepLog {
         change(colonyId, before -> new Tally(
                 before.asked(), before.passes(), before.columns(), before.restarts(),
                 before.drifts() + 1, Math.max(before.farthestDrift(), blocks),
-                before.rounds(), before.indexed()));
+                before.rounds(), before.indexed(), before.busy()));
 
         VillageColonyMod.LOGGER.info(
                 "Colony {} — the sweep starts over: the center moved {} blocks, from {} to {}",
@@ -188,18 +191,42 @@ public final class SweepLog {
                 now);
     }
 
+    /**
+     * O ciclo nem chegou a perguntar por lote: já havia obra aberta.
+     *
+     * <p><b>O ponto cego que a sessão de 09-19 expôs.</b> A linha dizia
+     * <i>"9 planner runs … 0 complete rounds"</i> numa sessão de noventa
+     * minutos, e ela sugere varredura lenta. Não era: a colônia teve
+     * cerca de cento e oitenta ciclos e voltou em {@code ALREADY_OPEN}
+     * em quase todos, porque a vaga única de obra estava ocupada por uma
+     * casa que não andava — 174 blocos parados em 41 das 60 leituras,
+     * enquanto os construtores trocavam de ofício embaixo dela.
+     *
+     * <p>Sem este número, {@link Tally#bailed()} não vê esses ciclos:
+     * ele mede {@code asked - passes - indexed}, e quem desiste antes do
+     * {@code asked} fica fora da conta inteira. O relatório acusava a
+     * varredura de não fechar volta quando a varredura mal tinha sido
+     * chamada.
+     */
+    public static void busy(UUID colonyId) {
+        change(colonyId, was -> new Tally(
+                was.asked(), was.passes(), was.columns(), was.restarts(),
+                was.drifts(), was.farthestDrift(), was.rounds(), was.indexed(),
+                was.busy() + 1));
+    }
+
     /** Uma volta terminou o raio inteiro. */
     public static void completed(UUID colonyId) {
         change(colonyId, was -> new Tally(
                 was.asked(), was.passes(), was.columns(), was.restarts(),
-                was.drifts(), was.farthestDrift(), was.rounds() + 1, was.indexed()));
+                was.drifts(), was.farthestDrift(), was.rounds() + 1, was.indexed(), was.busy()));
     }
 
     /** O índice respondeu, e nenhuma coluna do quadrado foi olhada. */
     public static void indexed(UUID colonyId) {
         change(colonyId, was -> new Tally(
                 was.asked(), was.passes(), was.columns(), was.restarts(),
-                was.drifts(), was.farthestDrift(), was.rounds(), was.indexed() + 1));
+                was.drifts(), was.farthestDrift(), was.rounds(), was.indexed() + 1, was.busy()));
     }
 
     /** A soma desta colônia, se ela chegou a ser perguntada. */
@@ -220,7 +247,7 @@ public final class SweepLog {
             VillageColonyMod.LOGGER.info(
                     "Colony {} sweep: {} planner runs, {} passes over {} columns, {} answered"
                             + " by the index — {} restarts ({} by drift, farthest {} blocks),"
-                            + " {} complete rounds",
+                            + " {} complete rounds; {} cycles never asked (a build was open)",
                     colonyId,
                     tally.asked(),
                     tally.passes(),
@@ -229,7 +256,8 @@ public final class SweepLog {
                     tally.restarts(),
                     tally.drifts(),
                     tally.farthestDrift(),
-                    tally.rounds());
+                    tally.rounds(),
+                    tally.busy());
 
             // E o que ela recusou no caminho — 2026-09-11. As duas
             // contagens respondem à mesma pergunta e lidas juntas valem

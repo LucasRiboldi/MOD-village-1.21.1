@@ -7795,3 +7795,105 @@ o cliente fechado. SHA-256 nas três cópias:
 `C5D0790F996082CE3B7D2AA55CED93936DF04063568A03B0B521F50245A0BA1A`.
 P0.7 continua aguardando playtest, e a matriz ampla de recuperação do
 mineiro continua aberta para os demais cenários.
+
+### 2026-09-20 — Git revisado e recuperação de obra sem progresso
+
+`git fetch --all --prune` e `git pull --ff-only` confirmaram que não havia
+novidade remota. `main` permanece dois commits à frente de `origin/main`:
+espera entre ofícios (`e37708c`) e recálculo da aproximação do mineiro
+(`b7ef9e2`). As alterações locais de `SweepLog`, `ConstructionPlanner`,
+`WaitingWork` e o novo `BuildProgressGameTest` foram preservadas e revisadas.
+O build de linha de base passou antes das edições.
+
+A prioridade foi a vaga única de construção ocupada indefinidamente por
+uma obra em `BUILDING`. A implementação local acrescentava um relógio de
+12.000 tiques sem progresso, mas a noite dura 13.000 tiques: uma obra normal
+seria abandonada antes de o construtor voltar ao expediente. A regressão
+`theNightDoesNotSpendTheBuildersPatience` falhou por esse motivo antes da
+correção. Agora o guarda acumula somente expediente, sem zerar a espera
+entre dias; o progresso renova a janela. Mudanças de horário não inventam
+idade do mundo, e um dia congelado ainda permite medir trabalho parado.
+O abandono conserva a construção parcial e seu lote, sem culpar a planta
+por falta de material. O contador `busy` distingue os ciclos que nem
+solicitaram lote porque já havia uma obra aberta.
+
+O teste local também precisou de correção de compilação (`markPlaced`),
+registro no entrypoint, conclusão explícita e uso do relógio correto.
+Os quatro cenários restauram os relógios na mesma chamada síncrona. A
+suíte revelou ainda o defeito já conhecido de `ChainRootsGameTest`:
+`Path.of("chain-roots.txt").getParent()` retorna `null`. A chamada de
+criação de pasta foi removida; o relatório e a asserção voltaram a rodar.
+
+Verificação sequencial final: `./gradlew.bat runGametest` passou com
+**376/376 GameTests**; `./gradlew.bat build` passou e executou
+**954 testes unitários**, sem falhas nem testes ignorados. Logs locais:
+`build/gametest-red.log`, `build/gametest-green.log` (ainda com o erro de
+relatório), `build/gametest-final.log` e `build/build-final.log`.
+A divergência histórica de `ColonyDetectionGameTest` (24/30 trabalhadores)
+não se reproduziu nesta verificação e permanece sem causa diagnosticada.
+
+`STATE.md` e `TODO.md` foram atualizados. Não houve commit, push, cópia do
+JAR de `build/libs` para `downloads/` ou instalação no jogo nesta sessão.
+Ainda depende de playtest confirmar a segunda casa, a preservação do lote
+abandonado, a estabilidade de ofícios e a entrega de pedra pelo mineiro.
+Os contadores antigos não bastam para declarar a varredura de lotes resolvida.
+
+### 2026-09-20 — tarefas e destinos órfãos depois do abandono
+
+Pedido do autor: resolver os problemas iminentes. A linha de base
+`./gradlew.bat build` passou antes de qualquer edição. A investigação do
+ciclo de vida da construção encontrou dois defeitos reproduzíveis: o
+abandono removia o projeto, mas deixava tarefas `BUILD` abertas; e o tick
+do construtor removia um job encerrado sem limpar seu destino de caminhada.
+
+Dois casos novos em `BuildProgressGameTest` falharam antes da correção:
+`abandoningTheProjectCancelsOnlyItsBuildTasks` encontrou tarefa `RESERVED`
+após o abandono; `aCancelledBuilderJobDropsItsWalkingTargetOnTheNextTick`
+encontrou o destino ainda ativo após o tick. Evidência em
+`build/imminent-red.log`. A primeira tentativa de compilação do teste usou
+um helper inexistente de posição; o cenário foi corrigido antes dessa
+execução vermelha por comportamento.
+
+`WaitingWork.giveUp` agora encerra somente as tarefas `BUILD` abertas da
+colônia, remove jobs dos executores e limpa os destinos. Preserva tarefas
+concluídas, pedidos de recursos, tarefas de outras colônias e o lote da
+construção parcial. `BuilderWork.step` limpa o destino antes de remover
+um job cuja tarefa já terminou. Nenhum Mixin, persistência ou regra de
+seleção de lote foi alterado.
+
+A rodada seguinte deixou os dois casos verdes, mas expôs uma expectativa
+antiga em `WorkerLossGameTest`: manter a tarefa disponível mesmo após a
+obra ser abandonada. O teste agora verifica as duas etapas separadamente:
+morte devolve a tarefa enquanto o projeto existe; abandono a cancela.
+A proteção contra o crash de `release` em tarefa já disponível permanece.
+
+Verificação final sequencial: `./gradlew.bat runGametest` passou com
+**378/378 GameTests** (`build/imminent-final.log`), e `./gradlew.bat build`
+passou com **954 testes unitários**, zero falhas e zero ignorados
+(`build/imminent-build.log`). `git diff --check` sem erros de whitespace.
+
+Na rodada vermelha também falhou a fixture de coleta de terra: aldeão criado
+fora da arena não encontrado no `ServerWorld`. Não se repetiu nas duas
+rodadas seguintes; foi registrado em `TODO.md` como intermitência ainda sem
+diagnóstico, sem mudar coleta nem timeout. A falha histórica 24/30 de
+`ColonyDetectionGameTest` não apareceu nestas rodadas.
+
+O fechamento da segunda casa e a entrega do mineiro continuam dependendo
+de playtest. Sem commit, push ou substituição do JAR instalado nesta etapa.
+
+### 2026-09-20 — fila de correções offline e publicação do JAR
+
+Os seis pontos que podem ser corrigidos sem abrir o jogo foram adicionados ao
+topo do `TODO.md`: impasse entre profissões, descanso ignorado, trabalhador
+ocioso sem `COLLECT_STONE` ou `CRAFT_WOOD`, intermitência de
+`SurfaceGatheringGameTest`, resíduos no inventário pessoal e endurance. Cada
+item ficou separado entre defeito a reproduzir, decisão de regra e lacuna de
+cobertura; nenhum foi apresentado como resolvido apenas por planejamento.
+
+O artefato 0.3.0 foi reconstruído e copiado de `build/libs/` para
+`downloads/` e `%APPDATA%/.minecraft/mods/` com o cliente fechado. O SHA-256
+nas três cópias é `F4CB1A0FC7162B806016F566C5D26D808DA2F325604A904F9922607AD906E23A`.
+`./gradlew.bat clean build` passou com 954 testes unitários e
+`./gradlew.bat runGametest` passou com 378/378 GameTests. A confirmação visual
+da segunda obra e da entrega de pedra pelo mineiro continua pendente de
+playtest; esta publicação não altera essa conclusão.

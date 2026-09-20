@@ -261,6 +261,15 @@ public final class ConstructionPlanner {
             } else if (!WaitingWork.giveUpIfStalled(world, colony, open.get())) {
                 ensureTask(colony, open.get());
 
+                // <b>E este ciclo conta</b> — 2026-09-19. A vaga de obra
+                // é única, e enquanto ela estiver ocupada o planejador
+                // volta aqui sem nunca pedir lote. Sem registrar, a soma
+                // da varredura dizia "9 planner runs" numa sessão de
+                // noventa minutos e parecia varredura lenta; eram cento
+                // e oitenta ciclos presos numa casa que não andava. Ver
+                // SweepLog.busy.
+                SweepLog.busy(colony.id());
+
                 return silent(colony, IdleReason.ALREADY_OPEN, "");
             }
         }

@@ -1,6 +1,30 @@
 # TODO
 
-**Atualizado:** 2026-09-16 22:30, depois do segundo playtest — E45 reproduzido, causa corrigida, E46 descoberto.
+**Atualizado:** 2026-09-20, revisão do Git, recuperação de obra sem progresso e fila de correções offline.
+
+## Próximas atividades corrigíveis sem acessar o jogo
+
+Esta fila separa falhas reproduzíveis ou coberturas que podem ser tratadas
+com código e testes locais das validações que continuam dependendo de um save.
+
+- [ ] 🔴 **E42 — impasse entre profissões:** criar o GameTest da roça fora do alcance do fazendeiro, com duas passagens do planejador, e corrigir a fila se a segunda passagem não abrir o projeto de casa.
+- [ ] 🟠 **E43 — descanso ignorado:** decidir se o descanso de quatro ciclos deve impedir a reatribuição na segunda passagem de `WorkAssignment`, depois registrar a decisão em teste e corrigir o fluxo escolhido.
+- [ ] 🟠 **P1.1 — trabalhador ocioso sem `COLLECT_STONE` ou `CRAFT_WOOD`:** adicionar uma regressão ponta a ponta para criação do pedido, atribuição ao ofício correto e execução; investigar a mesma raiz do caso de peça de construção já corrigido.
+- [ ] 🟠 **Intermitência de `SurfaceGatheringGameTest`:** estabilizar a fixture do aldeão criado fora da arena e reproduzir a ausência no `ServerWorld` antes de alterar coleta ou timeout.
+- [ ] ⚙️ **E38 — resíduos no inventário pessoal:** definir o destino sustentável de varas, maçãs e mudas antes de alterar armazenamento ou descarte.
+- [ ] 🟠 **E41 — endurance:** criar uma verificação de muitos ciclos para detectar degradação, tarefas acumuladas ou custo crescente; ainda é lacuna de cobertura, não defeito reproduzido.
+
+## Prioridade atual — obra aberta impede a próxima construção
+
+- [x] Revisar os dois commits locais: espera entre ofícios (`e37708c`) e recálculo de aproximação do mineiro (`b7ef9e2`). `fetch` e `pull --ff-only`: nenhuma novidade remota; alterações locais preservadas.
+- [x] Completar o guarda de obra em `BUILDING` sem progresso: liberar a vaga após 12.000 tiques de expediente, preservando a construção parcial e seu lote. Descontar a noite sem zerar a espera; renovar o prazo quando uma peça é assentada.
+- [x] Corrigir e registrar `BuildProgressGameTest`: API de marcação, relógio de idade do mundo, conclusão dos testes e quatro cenários (parada, progresso, noite e mudança de horário). Regressão noturna reproduzida antes da correção.
+- [x] Corrigir a escrita do relatório de `ChainRootsGameTest`, que falhava em `createDirectories(null)`. Suíte final: **376/376 GameTests**.
+- [x] Encerrar tarefas `BUILD` no abandono da obra e limpar job/destino do construtor. Limpar o destino também quando uma tarefa encerrada é vista no tick. Dois novos GameTests reproduziram as falhas antes da correção; `WorkerLossGameTest` distingue morte (devolve tarefa) de abandono (cancela). Suíte posterior: **378/378 GameTests**.
+- [ ] Playtest: confirmar recuperação da fila, preservação do lote e segunda casa. Comparar `SweepLog.busy` com passadas; não declarar a varredura resolvida pelo contador antigo.
+- [ ] Playtest dos commits locais: estabilidade de ofício e entrega de pedra depois de recalcular a aproximação.
+- [ ] Investigar a falha histórica de `ColonyDetectionGameTest` (24/30), não reproduzida na execução de 09-20.
+- [ ] Investigar intermitência de `SurfaceGatheringGameTest.smelterGathersDirtOutsideTheProtectedVillageRadius`: na rodada vermelha de 09-20, o aldeão criado fora da arena não foi encontrado no `ServerWorld`; não repetiu nas duas rodadas seguintes. Sem alteração de coleta ou aumento de timeout.
 
 ---
 

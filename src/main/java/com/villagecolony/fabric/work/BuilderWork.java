@@ -216,6 +216,7 @@ public final class BuilderWork {
      */
     private static boolean step(ServerWorld world, UUID workerId, Job job) {
         if (!isOngoing(job.task)) {
+            WorkTargets.clear(workerId);
             return false;
         }
 
