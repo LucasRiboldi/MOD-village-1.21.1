@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-09-20, revisão do Git, recuperação de obra sem progresso e fila de correções offline.
+**Atualizado:** 2026-09-20, correção da perna real da mina após análise do log.
 
 ## Próximas atividades corrigíveis sem acessar o jogo
 
@@ -14,6 +14,8 @@ com código e testes locais das validações que continuam dependendo de um save
 - [ ] ⚙️ **E38 — resíduos no inventário pessoal:** definir o destino sustentável de varas, maçãs e mudas antes de alterar armazenamento ou descarte.
 - [ ] 🟠 **E41 — endurance:** criar uma verificação de muitos ciclos para detectar degradação, tarefas acumuladas ou custo crescente; ainda é lacuna de cobertura, não defeito reproduzido.
 
+- [x] 🔴 **E44 residual — perna da boca acima do degrau:** o log confirmou que o recálculo de `job.approach` não limitava a perna efetivamente entregue por `WorkTargets`. `MinerWork` agora escolhe um patamar pisável dentro de `CLIMB`; `MinerApproachGameTest` cobre a queda abaixo da boca e a suíte passou com **379/379 GameTests**. Falta confirmar no mundo que o mineiro volta a entregar pedra.
+
 ## Prioridade atual — obra aberta impede a próxima construção
 
 - [x] Revisar os dois commits locais: espera entre ofícios (`e37708c`) e recálculo de aproximação do mineiro (`b7ef9e2`). `fetch` e `pull --ff-only`: nenhuma novidade remota; alterações locais preservadas.
@@ -22,7 +24,7 @@ com código e testes locais das validações que continuam dependendo de um save
 - [x] Corrigir a escrita do relatório de `ChainRootsGameTest`, que falhava em `createDirectories(null)`. Suíte final: **376/376 GameTests**.
 - [x] Encerrar tarefas `BUILD` no abandono da obra e limpar job/destino do construtor. Limpar o destino também quando uma tarefa encerrada é vista no tick. Dois novos GameTests reproduziram as falhas antes da correção; `WorkerLossGameTest` distingue morte (devolve tarefa) de abandono (cancela). Suíte posterior: **378/378 GameTests**.
 - [ ] Playtest: confirmar recuperação da fila, preservação do lote e segunda casa. Comparar `SweepLog.busy` com passadas; não declarar a varredura resolvida pelo contador antigo.
-- [ ] Playtest dos commits locais: estabilidade de ofício e entrega de pedra depois de recalcular a aproximação.
+- [ ] Playtest dos commits locais: estabilidade de ofício e entrega de pedra depois de limitar também a perna real da boca ao próximo patamar.
 - [ ] Investigar a falha histórica de `ColonyDetectionGameTest` (24/30), não reproduzida na execução de 09-20.
 - [ ] Investigar intermitência de `SurfaceGatheringGameTest.smelterGathersDirtOutsideTheProtectedVillageRadius`: na rodada vermelha de 09-20, o aldeão criado fora da arena não foi encontrado no `ServerWorld`; não repetiu nas duas rodadas seguintes. Sem alteração de coleta ou aumento de timeout.
 

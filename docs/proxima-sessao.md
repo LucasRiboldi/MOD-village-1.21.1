@@ -18,12 +18,12 @@ Ele não é diário — quem conta a história é o `TODO.md`. Este aqui é a li
 de conferência de uma sessão.
 
 **JAR atual em 2026-09-20:** 0.3.0, SHA-256
-`F4CB1A0FC7162B806016F566C5D26D808DA2F325604A904F9922607AD906E23A` em
+`2111E72B093FC007549946347C5948416061BC2774A10D1932F751BA46B8A7EA` em
 `build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`. O cliente Minecraft
-estava fechado durante a cópia. `clean build`, 954 testes unitários e
-`runGametest` com 378/378 GameTests passaram. Este lote inclui a recuperação
-de obras abandonadas e os seis próximos pontos offline registrados no topo do
-`TODO.md`; a segunda obra e a entrega do mineiro ainda exigem playtest.
+estava fechado durante a cópia. `build`, 954 testes unitários e
+`runGametest` com 379/379 GameTests passaram. Este lote inclui a limitação da
+perna real do mineiro ao próximo patamar escalável; a segunda obra e a entrega
+de pedra ainda exigem playtest.
 
 **JAR atual em 2026-09-15:** 0.3.0, SHA-256
 `C5D0790F996082CE3B7D2AA55CED93936DF04063568A03B0B521F50245A0BA1A` em

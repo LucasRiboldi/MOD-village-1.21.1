@@ -50,6 +50,12 @@ public class MinerApproachGameTest implements FabricGameTest {
     /** E o buraco ao lado, dois abaixo do piso alto. */
     private static final BlockPos PIT = new BlockPos(1, 1, 3);
 
+    /** Uma boca alta devolvida pela perna quando o aldeão caiu abaixo dela. */
+    private static final BlockPos HIGH_LEG = new BlockPos(5, 4, 3);
+
+    /** O patamar baixo de onde ele precisa retomar a subida. */
+    private static final BlockPos LOW_WORKER = new BlockPos(3, 1, 3);
+
     /**
      * De baixo do buraco, a aproximação escolhida tem de ser alcançável.
      *
@@ -96,6 +102,35 @@ public class MinerApproachGameTest implements FabricGameTest {
                         + (fromPit.getY() - pit.getY()) + " acima da cabeça, e aldeão sobe "
                         + MinerWork.CLIMB + ". É o laço de 09-19 — 103 pedras quebradas,"
                         + " zero entregues");
+
+        context.complete();
+    }
+
+    /**
+     * A perna até a boca também precisa respeitar o degrau, não só o
+     * {@code approach} da pedra.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_approach")
+    public void theMouthLegStopsAtTheNextClimbableLanding(TestContext context) {
+        floor(context);
+
+        BlockPos highLeg = context.getAbsolutePos(HIGH_LEG);
+        BlockPos worker = context.getAbsolutePos(LOW_WORKER);
+
+        context.setBlockState(highLeg, Blocks.STONE.getDefaultState());
+
+        BlockPos landing = MinerWork.climbableWalkTarget(
+                context.getWorld(), worker, highLeg);
+
+        context.assertTrue(
+                landing.getY() - worker.getY() <= MinerWork.CLIMB,
+                "a perna mandou o aldeão de " + worker + " para " + landing
+                        + ", " + (landing.getY() - worker.getY())
+                        + " blocos acima; a boca precisa ser vencida por patamares");
+        context.assertTrue(
+                com.villagecolony.fabric.work.BuilderApproach.standable(
+                        context.getWorld(), landing),
+                "o patamar devolvido não é pisável: " + landing);
 
         context.complete();
     }

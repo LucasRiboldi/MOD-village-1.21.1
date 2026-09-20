@@ -7897,3 +7897,27 @@ nas três cópias é `F4CB1A0FC7162B806016F566C5D26D808DA2F325604A904F9922607AD9
 `./gradlew.bat runGametest` passou com 378/378 GameTests. A confirmação visual
 da segunda obra e da entrega de pedra pelo mineiro continua pendente de
 playtest; esta publicação não altera essa conclusão.
+
+### 2026-09-20 — E44 residual: perna real da mina respeita o degrau
+
+O log da sessão confirmou que o recálculo de `job.approach` corrigia apenas o
+destino da pedra. Depois de uma queda, `MinerReach.legTowards` ainda podia
+devolver a boca da mina três blocos acima do aldeão; era essa posição, e não a
+aproximação recalculada, que `WorkTargets` entregava à navegação. Isso explica
+as mensagens `2 blocks below it and unable to climb` e `got no closer than
+11,7 blocks in 400 ticks`.
+
+`MinerWork` agora verifica a perna real antes de publicar o destino. Quando a
+diferença de altura excede `CLIMB`, procura um patamar pisável próximo usando a
+mesma regra de `approachTo`; a próxima passagem pode avançar o degrau seguinte.
+Não houve mudança na geometria da mina, nas claims, no alcance do alvo ou em
+Mixin. O novo `MinerApproachGameTest` reproduz o aldeão abaixo da boca e prova
+que a perna publicada permanece escalável.
+
+Evidência: um teste unitário vermelho reproduziu a perna acima do limite antes
+da correção; `MinerLegTest` passou depois, e `./gradlew.bat runGametest` passou
+com **379/379 GameTests**. O JAR 0.3.0 foi copiado de `build/libs/` para
+`downloads/` e `%APPDATA%/.minecraft/mods/`; o SHA-256 nas três cópias é
+`2111E72B093FC007549946347C5948416061BC2774A10D1932F751BA46B8A7EA`. A
+entrega de pedra e a segunda obra continuam como validação de playtest, não
+como problema encerrado por teste local.

@@ -474,15 +474,17 @@ public final class MinerWork {
                         MineDigging.armToWalk(
                                 job.task.colonyId(), workerId, villager.getBlockPos());
 
+                BlockPos leg = MinerReach.legTowards(
+                        villager.getBlockPos(),
+                        job.approach,
+                        corridor,
+                        MineDigging.leadsToTheTarget(
+                                job.task.colonyId(), workerId, corridor),
+                        footingIn(world));
+
                 WorkTargets.set(
                         workerId,
-                        MinerReach.legTowards(
-                                villager.getBlockPos(),
-                                job.approach,
-                                corridor,
-                                MineDigging.leadsToTheTarget(
-                                        job.task.colonyId(), workerId, corridor),
-                                footingIn(world)),
+                        climbableWalkTarget(world, villager.getBlockPos(), leg),
                         MinerReach.ARRIVAL);
             }
 
@@ -753,6 +755,35 @@ public final class MinerWork {
         }
 
         return tooHigh != null ? tooHigh : target;
+    }
+
+    /**
+     * Evita entregar à navegação uma perna acima do degrau que o aldeão
+     * consegue subir.
+     *
+     * <p>A perna da mina normalmente é a boca ou uma posição da escada.
+     * Quando o aldeão cai fora dela, porém, {@link MinerReach#legTowards}
+     * pode devolver a boca três blocos acima. A navegação fica girando no
+     * destino alto e o relatório registra exatamente o sintoma de E44:
+     * {@code blocks below it and unable to climb}.
+     *
+     * <p>O destino intermediário é procurado só nesse caso excepcional. A
+     * busca usa a mesma regra de lugar pisável do {@link #approachTo}, e a
+     * próxima passagem pode avançar mais um degrau quando o aldeão chegar.
+     */
+    public static BlockPos climbableWalkTarget(
+            ServerWorld world, BlockPos villager, BlockPos leg) {
+
+        if (leg.getY() - villager.getY() <= CLIMB) {
+            return leg;
+        }
+
+        BlockPos landing = approachTo(world, leg, villager);
+
+        return landing.getY() - villager.getY() <= CLIMB
+                && BuilderApproach.standable(world, landing)
+                ? landing
+                : leg;
     }
 
 

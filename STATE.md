@@ -54,7 +54,10 @@ Não há evidência nova para declarar a varredura resolvida.
 quebradas. A assinatura é o E44/E45 outra vez: `2 blocks below it and
 unable to climb` e `got no closer than 11,7 blocks in 400 ticks`. O
 cursor serve pedra sem rota de subida. O commit local `b7ef9e2` recalcula a
-aproximação quando a altura muda; a entrega no save ainda não foi confirmada.
+aproximação quando a altura muda, mas o log mostrou que a perna efetivamente
+enviada à navegação ainda podia ser a boca três blocos acima. A correção atual
+limita essa perna ao próximo patamar pisável; a entrega no save ainda não foi
+confirmada.
 
 ---
 
@@ -98,7 +101,7 @@ a ausência do mesmo UUID largando ofício atrás de ofício.
 | **segunda casa** | um segundo `the house is up` — o primeiro saiu 23:21:58 |
 | obra sem progresso | `work ticks` só durante expediente; lote parcial preservado |
 | varredura versus obra aberta | comparar `cycles never asked (a build was open)` com passadas |
-| aproximação do mineiro | recalcular depois da queda e confirmar pedra entregue no baú |
+| aproximação do mineiro | confirmar no jogo a perna por patamares e pedra entregue no baú |
 
 ⚠️ A vila do save tem uma casa fechada e o planejador sem ronda completa.
 Se nenhuma obra nova abrir, é o item 1 de «O que está aberto», e não
