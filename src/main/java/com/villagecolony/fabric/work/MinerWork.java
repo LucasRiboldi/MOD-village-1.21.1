@@ -92,8 +92,11 @@ public final class MinerWork {
      * número desde 2026-08-29 — <i>"N blocks below it and unable to
      * climb"</i>, que só sai a partir de dois —, e faltava alguém
      * perguntar antes de mandar.
+     *
+     * <p>Público desde 2026-09-19: a bateria afirma a propriedade do
+     * degrau, e escrever o número lá seria deixá-lo discordar daqui.
      */
-    static final int CLIMB = 1;
+    public static final int CLIMB = 1;
 
     private static final int BREAKING_STAGES = 10;
 
@@ -406,6 +409,42 @@ public final class MinerWork {
                 giveUp(world, workerId, job, "it walked for "
                         + job.stalled + " ticks of work time without arriving");
             } else {
+                // <b>E se ele desceu, a aproximação guardada não serve
+                // mais</b> — sessão de jogo de 2026-09-19.
+                //
+                // O `approachTo` de três mãos filtra por CLIMB, mas
+                // responde para a posição em que ele estava <b>na hora
+                // de escolher o alvo</b>. Quem cai num buraco depois
+                // disso fica com um destino dois acima da cabeça, e
+                // aldeão sobe um: a navegação não cumpre, ele não sai do
+                // lugar, e o guarda de imobilidade devolve a tarefa. O
+                // ciclo reabre a mesma pedra e escolhe a mesma
+                // aproximação, porque a pergunta é feita de onde ele
+                // está — e ele está no buraco.
+                //
+                // O log de 09-19 mediu o laço fechado: 21 das 25 leituras
+                // com o mineiro em -841, 44, 1374 e toda aproximação em
+                // y=46. Dezoito das trinta e duas desistências dizem
+                // "2 blocks below it and unable to climb", e a sessão
+                // terminou com 103 pedras quebradas e ZERO entregues.
+                //
+                // Recalcular custa as seiscentas leituras que o cache
+                // evita, então só se paga quando o cache está
+                // comprovadamente furado — a condição abaixo é a mesma
+                // que o relatório usa para acusar o degrau.
+                if (job.approach.getY() - villager.getBlockPos().getY() > CLIMB) {
+                    BlockPos again =
+                            approachTo(world, job.target, villager.getBlockPos());
+
+                    // Só troca por uma que ele alcance: sem nenhuma, o
+                    // `approachTo` devolve a de antes ou a própria pedra,
+                    // e trocar seria rodar a busca a cada tique para
+                    // chegar ao mesmo lugar.
+                    if (again.getY() - villager.getBlockPos().getY() <= CLIMB) {
+                        job.approach = again;
+                    }
+                }
+
                 // O mesmo destino da primeira vez, e pelo mesmo motivo:
                 // repor a pedra aqui era repor a rocha maciça, e a
                 // navegação não tem como cumprir isso — ver approachTo.
