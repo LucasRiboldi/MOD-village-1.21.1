@@ -46,6 +46,54 @@ class HiringLogTest {
     }
 
     /**
+     * <b>A espera entre ofícios chega ao relatório</b> — 2026-09-19.
+     *
+     * <p>Sem esta linha o rodízio continuaria invisível pelo mesmo
+     * motivo que fez o {@code HiringLog} existir: do lado de fora
+     * <i>"ninguém foi contratado"</i> parece colônia lotada, e o
+     * conserto iria para a conta da população. O que o log precisa
+     * dizer é que <b>havia vaga e o candidato acabou de largar um
+     * ofício</b>.
+     */
+    @Test
+    void theCandidateBetweenTradesIsSaidSo() {
+        Worker candidate = idle();
+
+        candidate.assign(ProfessionType.MINER);
+        candidate.giveUpProfession();
+
+        ProfessionAssigner.vacancyFor(candidate, List.of(candidate), 7);
+
+        assertEquals(
+                1,
+                HiringLog.countOf(
+                        COLONY, ProfessionType.MINER, HiringLog.Outcome.BETWEEN_TRADES),
+                "a espera entre ofícios não foi registrada");
+
+        assertTrue(
+                HiringLog.report(COLONY).contains("just left a trade"),
+                "o rodízio não chegou ao relatório: " + HiringLog.report(COLONY));
+    }
+
+    /**
+     * Larga o ofício e deixa passar a espera entre ofícios — 2026-09-19.
+     *
+     * <p>Sem isto o candidato é recusado por {@code BETWEEN_TRADES}
+     * antes de a vaga ser perguntada, e os testes daqui param de medir o
+     * que afirmam: eles são sobre o <b>castigo do ofício</b>, e não
+     * sobre a espera que o precede. Ver
+     * {@code Worker.BETWEEN_TRADES_CYCLES}.
+     */
+    private static void gaveUpAndWaited(Worker worker, ProfessionType type) {
+        worker.assign(type);
+        worker.giveUpProfession();
+
+        for (int i = 0; i < Worker.BETWEEN_TRADES_CYCLES; i++) {
+            worker.aCycleWentBy();
+        }
+    }
+
+    /**
      * A vaga preenchida é dita, e ela sai do relatório.
      *
      * <p>Quem conseguiu gente não é o assunto: listá-la afogaria a
@@ -106,8 +154,7 @@ class HiringLogTest {
     void theShunnedCandidateIsToldApartFromAFullColony() {
         Worker candidate = idle();
 
-        candidate.assign(ProfessionType.MINER);
-        candidate.giveUpProfession();
+        gaveUpAndWaited(candidate, ProfessionType.MINER);
 
         ProfessionAssigner.vacancyFor(candidate, List.of(candidate), 7);
 
@@ -140,8 +187,7 @@ class HiringLogTest {
     void theSameCaseNeverYieldsBothOutcomes() {
         Worker shunned = idle();
 
-        shunned.assign(ProfessionType.MINER);
-        shunned.giveUpProfession();
+        gaveUpAndWaited(shunned, ProfessionType.MINER);
 
         ProfessionAssigner.vacancyFor(shunned, List.of(shunned), 7);
 

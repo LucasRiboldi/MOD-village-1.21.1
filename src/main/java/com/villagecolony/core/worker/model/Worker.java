@@ -54,6 +54,34 @@ public final class Worker {
      */
     public static final int SHUN_CYCLES = 8;
 
+    /**
+     * Por quantas passagens ele fica sem ofício depois de largar um —
+     * sessão de jogo de 2026-09-19.
+     *
+     * <p><b>O castigo é por ofício, e o defeito era a soma deles.</b> A
+     * linha de reserva tira do trabalhador o ofício que o travou, e a
+     * recontratação lhe dá o <b>seguinte</b> da ordem na mesma passagem.
+     * Numa colônia em que tudo trava — o deserto do log, com a mina sem
+     * pedra alcançável e o lote sem posição de pé — isso não é reserva,
+     * é rodízio: o trabalhador atravessou os <b>sete</b> ofícios em oito
+     * passagens, queimando um por ciclo, e nenhum dos castigos chegou a
+     * significar coisa alguma porque sempre sobrava um ofício virgem.
+     *
+     * <p>O log de 09-19 filmou isso em um trabalhador só: seis ofícios
+     * largados em 41 minutos, três voltas a {@code COLLECT_STONE} e três
+     * a {@code BUILD_STRUCTURE}. E o custo não é dele: as obras paravam
+     * no meio porque o construtor da vez era o mineiro de dois minutos
+     * atrás, a caminho de virar pedreiro.
+     *
+     * <p>Quatro, o mesmo do {@link #REST_CYCLES}: é a ordem de grandeza
+     * do guarda que o derrubou, e o suficiente para que os castigos por
+     * ofício andem entre uma tentativa e a seguinte em vez de correrem
+     * todos ao mesmo tempo. Curto de propósito — a colônia que tem
+     * trabalho de verdade recontrata no ciclo seguinte ao descanso, e
+     * quem para de tropeçar volta a trabalhar.
+     */
+    public static final int BETWEEN_TRADES_CYCLES = REST_CYCLES;
+
     /** Quantas vezes o castigo do ofício pode dobrar. */
     private static final int MAX_SHUN_DOUBLINGS = 3;
 
@@ -128,6 +156,12 @@ public final class Worker {
     /** Os ofícios de que ele desistiu, e quantas passagens faltam. */
     private final Map<ProfessionType, Integer> shunned =
             new EnumMap<>(ProfessionType.class);
+
+    /**
+     * Quantas passagens ele ainda espera antes de aceitar <b>qualquer</b>
+     * ofício. Ver {@link #BETWEEN_TRADES_CYCLES}.
+     */
+    private int betweenTrades;
 
     /** Quantas vezes cada ofício já o derrubou. Sobrevive ao castigo. */
     private final Map<ProfessionType, Integer> tally = new EnumMap<>(ProfessionType.class);
@@ -233,7 +267,24 @@ public final class Worker {
         shunned.put(failed, shunCyclesFor(failures));
         tallyLeft.put(failed, TALLY_CYCLES);
 
+        // E ele senta um pouco antes de aceitar o PRÓXIMO ofício, seja
+        // qual for — 2026-09-19. Sem esta linha o castigo acima é por
+        // ofício e a colônia tem sete, então largar um é receber o
+        // seguinte no mesmo ciclo; ver BETWEEN_TRADES_CYCLES.
+        betweenTrades = BETWEEN_TRADES_CYCLES;
+
         this.profession = null;
+    }
+
+    /**
+     * Se ele ainda está entre ofícios — a espera que separa a linha de
+     * reserva do rodízio.
+     *
+     * <p>Quem pergunta é a atribuição de profissão, pelo mesmo motivo
+     * que {@link #isShunning}: é ela quem contrata.
+     */
+    public boolean isBetweenTrades() {
+        return betweenTrades > 0;
     }
 
     /**
@@ -348,6 +399,11 @@ public final class Worker {
 
             return true;
         });
+
+        // E a espera entre ofícios anda com eles — 2026-09-19.
+        if (betweenTrades > 0) {
+            betweenTrades--;
+        }
 
         // E os ofícios abandonados andam no mesmo relógio — 2026-09-10.
         // Dois prazos, e é de propósito: o castigo é curto e a contagem

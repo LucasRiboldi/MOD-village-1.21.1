@@ -155,6 +155,19 @@ public final class ProfessionAssigner {
         // contratação. Ver HiringLog.
         UUID colonyId = candidate == null ? null : candidate.colonyId();
 
+        // <b>Quem acabou de largar um ofício não pega outro agora</b> —
+        // 2026-09-19. O castigo do ofício abaixo é por ofício, e a
+        // colônia tem sete: numa vila em que tudo trava, largar um é
+        // receber o seguinte da ordem na mesma passagem, e o trabalhador
+        // atravessa a lista inteira antes de o primeiro castigo vencer.
+        // Não é a linha de reserva, é rodízio — ver
+        // Worker.BETWEEN_TRADES_CYCLES e a sessão de jogo de 09-19.
+        if (candidate != null && candidate.isBetweenTrades()) {
+            HiringLog.record(colonyId, PRODUCER_ORDER.get(0), HiringLog.Outcome.BETWEEN_TRADES);
+
+            return Optional.empty();
+        }
+
         for (ProfessionType type : PRODUCER_ORDER) {
             if (counts.get(type) >= targetCount(type, adultPopulation)) {
                 if (colonyId != null) {

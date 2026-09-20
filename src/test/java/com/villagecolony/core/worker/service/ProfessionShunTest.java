@@ -255,6 +255,12 @@ class ProfessionShunTest {
      * <p>A roça fica com uma vaga aberta e a mina com duas — sem a
      * exclusão, a mina ganha por ser mais escassa, e é isso que discrimina
      * este teste.
+     *
+     * <p><b>Passada a espera entre ofícios</b> — 2026-09-19. Ele sai com
+     * ofício, mas não no mesmo ciclo: receber o seguinte da ordem na
+     * mesma passagem é o rodízio que a sessão de 09-19 mediu. O que este
+     * teste protege é que a espera <b>termina</b> em contratação, e não
+     * em aposentadoria. Ver {@code Worker.BETWEEN_TRADES_CYCLES}.
      */
     @Test
     void heIsHiredIntoSomethingElseInstead() {
@@ -268,12 +274,45 @@ class ProfessionShunTest {
 
         worker.giveUpProfession();
 
+        cyclesGoBy(worker, Worker.BETWEEN_TRADES_CYCLES);
+
         ProfessionAssigner.assignMissing(workers, COLONY, everyone(), 30);
 
         assertEquals(
                 ProfessionType.FARMER,
                 worker.profession().orElse(null),
                 "a linha de reserva não o levou para a vaga que sobrava");
+    }
+
+    /**
+     * <b>E não no mesmo ciclo</b> — sessão de jogo de 2026-09-19.
+     *
+     * <p>É a outra metade do teste acima, e a que faltava: com a vaga da
+     * roça aberta, o trabalhador que acabou de largar a mina a recebia
+     * <b>na mesma passagem</b>. Numa colônia em que tudo trava isso não é
+     * reserva, é rodízio — o log de 09-19 mostrou um trabalhador
+     * atravessando os sete ofícios, queimando um por ciclo, com as obras
+     * parando no meio porque o construtor da vez era o mineiro de dois
+     * minutos atrás.
+     */
+    @Test
+    void heIsNotHiredIntoTheNextTradeInTheSameCycle() {
+        fillEveryProfessionExcept(ProfessionType.MINER, ProfessionType.FARMER);
+
+        aWorker().assign(ProfessionType.FARMER);
+
+        Worker worker = aWorker();
+
+        worker.assign(ProfessionType.MINER);
+
+        worker.giveUpProfession();
+
+        ProfessionAssigner.assignMissing(workers, COLONY, everyone(), 30);
+
+        assertFalse(
+                worker.hasProfession(),
+                "ele largou um ofício e recebeu o seguinte na mesma passagem —"
+                        + " a linha de reserva virou rodízio");
     }
 
     /**

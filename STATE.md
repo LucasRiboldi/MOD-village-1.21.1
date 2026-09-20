@@ -12,17 +12,72 @@
 
 ## Onde a vila está
 
-**Ela produz, escolhe lote e constrói — e ainda não fechou uma casa.**
-Zero `the house is up` em todos os playtests de 09-19.
+**A primeira casa subiu.** Sessão de 23:21:58 de 09-19:
+`Builder e1770e02 stopped — the house is up`. A obra desceu de 83 blocos
+a zero em menos de três minutos, com o construtor que conseguiu ficar.
 
-A cadeia foi percorrida degrau a degrau no dia: índice de ruas → Regra 3 →
-Regra 22 → baú cheio → pedreiro sem material → arenito cru esgotado → vaso
-sem item → acavalamento → **madeira**.
+O bloqueio de madeira que este arquivo descrevia como "o de agora" está
+vencido — a cadeia inteira (índice de ruas → Regra 3 → Regra 22 → baú
+cheio → pedreiro sem material → arenito → acavalamento → madeira) foi
+percorrida e a casa fechou.
 
-**O bloqueio de agora é madeira.** A vila de deserto não tem floresta ao
-alcance: `looking for a tree`, zero árvores derrubadas, e a obra parou em
-`needs 4 minecraft:oak_planks and has 0`. O viveiro do fazendeiro plantou 4
-mudas — é a saída projetada, e ela **depende de tempo de jogo**.
+E a sessão entregou duas coisas de graça:
+
+- `TEST BARRIER covered for nothing this session — 481 pieces were laid
+  and every one came from the colony's own chests. Rule 28 can go.`
+- O rodízio de ofícios, corrigido abaixo.
+
+---
+
+## 🔴 O que está aberto
+
+**1. A varredura não fecha uma ronda.** Depois da casa, nenhuma obra nova
+abriu em 3,5 minutos — `no building work: still sweeping — the budget ran
+out before an answer — looking for a lot`. O resumo de saída:
+
+```
+sweep: 9 planner runs, 9 passes over 8674 columns, 0 answered by the index
+       — 0 complete rounds
+lot columns: 30 survived every check, 528 were turned down
+lot refusals: 342 the ground is not at street level   (65% das recusas)
+```
+
+**Zero rondas completas em nove passadas**, e o índice de ruas não
+respondeu nada em nenhuma delas. É o próximo P0.
+
+**2. O mineiro não entrega.** 66 pedras pedidas, **0 entregues**, 103
+quebradas. A assinatura é o E44/E45 outra vez: `2 blocks below it and
+unable to climb` e `got no closer than 11,7 blocks in 400 ticks`. O
+cursor serve pedra sem rota de subida.
+
+---
+
+## ✅ O rodízio de ofícios — corrigido em 09-19
+
+**O defeito.** Um trabalhador (`5afa6bca`) largou **seis ofícios** em 41
+minutos, voltando três vezes a `COLLECT_STONE` e três a
+`BUILD_STRUCTURE`. As obras paravam no meio porque o construtor da vez
+era o mineiro de dois minutos atrás.
+
+**A causa, e ela não era o castigo.** A linha de reserva funcionava
+exatamente como escrita — cada ofício largado ficava de castigo. Só que
+o castigo é **por ofício** e a colônia tem **sete**: largar um é receber
+o seguinte da ordem *na mesma passagem*. O trabalhador atravessava os
+sete em oito ciclos, queimando um por ciclo, e nenhum castigo chegava a
+significar nada porque sempre sobrava ofício virgem.
+
+**Por que a cobertura não pegou.** O `ProfessionShunTest` media o castigo
+**em repouso**: o trabalhador larga o ofício e fica parado enquanto os
+ciclos passam. O defeito mora no **movimento** — ele é recontratado no
+mesmo ciclo. Quatorze testes verdes e o jogo em rodízio.
+
+**O conserto.** `Worker.BETWEEN_TRADES_CYCLES` — quem larga um ofício
+espera quatro passagens antes de aceitar **qualquer** outro. A recusa
+tem desfecho próprio no `HiringLog` (`just left a trade`), separada de
+`SHUNNED`: somadas, escondiam justamente isto.
+
+**Sinal a procurar no próximo jogo:** `hiring — … just left a trade`, e
+a ausência do mesmo UUID largando ofício atrás de ofício.
 
 ---
 
@@ -30,14 +85,15 @@ mudas — é a saída projetada, e ela **depende de tempo de jogo**.
 
 | item | sinal a procurar |
 |---|---|
+| **rodízio de ofícios curado** | `hiring — … just left a trade`, e nenhum UUID largando ofício atrás de ofício |
 | obra retomada com acavalamento | `drops the saved … it sits inside something` |
 | fornalha com um pouco de cada | dois ou mais `made … out of` por sessão |
 | reserva do cru | `SANDSTONE` e `SMOOTH_SANDSTONE` convivendo |
-| viveiro dá madeira | qualquer `_log` no estoque |
+| **segunda casa** | um segundo `the house is up` — o primeiro saiu 23:21:58 |
 
-⚠️ A obra que está no mundo tem **2 blocos de pé**, então a guarda nova
-**não** a larga — casa pela metade é do jogador. Quebrar esses 2 blocos faz
-a colônia recomeçar limpo.
+⚠️ A vila do save tem uma casa fechada e o planejador sem ronda completa.
+Se nenhuma obra nova abrir, é o item 1 de «O que está aberto», e não
+regressão do que fechou.
 
 ---
 

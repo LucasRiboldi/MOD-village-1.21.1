@@ -57,6 +57,17 @@ public final class HiringLog {
         /** Havia vaga, e o candidato está de castigo nela. */
         SHUNNED("shunned by the candidate"),
 
+        /**
+         * Havia vaga, e o candidato acabou de largar um ofício — está
+         * entre ofícios. Ver {@code Worker.BETWEEN_TRADES_CYCLES}.
+         *
+         * <p>Separado do {@code SHUNNED} de propósito: aquele é <i>"ele
+         * não quer ESTA vaga"</i> e este é <i>"ele não quer vaga
+         * nenhuma agora"</i>. Somados, escondem justamente o rodízio que
+         * a sessão de 09-19 mediu.
+         */
+        BETWEEN_TRADES("just left a trade"),
+
         /** Nenhuma profissão tem vaga: a colônia está lotada. */
         NO_VACANCY("no vacancy anywhere");
 
