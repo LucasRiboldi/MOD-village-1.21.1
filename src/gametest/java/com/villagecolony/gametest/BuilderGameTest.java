@@ -73,7 +73,15 @@ public class BuilderGameTest implements FabricGameTest {
     private static final ResourceId HUT = ResourceId.vanilla("village/plains/houses/test_wall");
 
     private record Fixture(Colony colony, ConstructionProject project, ColonyPos chest,
-            ColonyFixture owned) {
+            Task task, ColonyFixture owned) {
+
+        private Fixture(
+                Colony colony,
+                ConstructionProject project,
+                ColonyPos chest,
+                ColonyFixture owned) {
+            this(colony, project, chest, null, owned);
+        }
     }
 
     /**
@@ -145,6 +153,7 @@ public class BuilderGameTest implements FabricGameTest {
                 colony,
                 project,
                 chest,
+                task,
                 ColonyFixture.create().owning(colony).owning(villager.getUuid()));
     }
 
@@ -1232,6 +1241,11 @@ public class BuilderGameTest implements FabricGameTest {
                 context.assertTrue(
                         fixture.project.isFinished(),
                         "a obra não terminou: faltam " + fixture.project.remainingCount());
+
+                context.assertTrue(
+                        fixture.task.state() == com.villagecolony.core.task.model.TaskState.COMPLETED,
+                        "a tarefa ficou em " + fixture.task.state()
+                                + " depois do ultimo bloco, em vez de sair da fila");
 
                 ColonyPos corner = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(SITE));
 

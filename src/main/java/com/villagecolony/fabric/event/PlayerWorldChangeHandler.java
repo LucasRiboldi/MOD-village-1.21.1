@@ -43,7 +43,7 @@ public final class PlayerWorldChangeHandler {
         UseBlockCallback.EVENT.register(PlayerWorldChangeHandler::beforeUseBlock);
         PlayerBlockBreakEvents.AFTER.register((world, player, pos, state, blockEntity) -> {
             if (world instanceof ServerWorld serverWorld) {
-                worldChanged(serverWorld, pos, serverWorld.getBlockState(pos));
+                onBlockChanged(serverWorld, pos);
             }
         });
         ServerTickEvents.END_WORLD_TICK.register(PlayerWorldChangeHandler::afterWorldTick);
@@ -99,8 +99,19 @@ public final class PlayerWorldChangeHandler {
         }
     }
 
+    /** Processa uma alteração de bloco observada no mundo, inclusive uso de tocha. */
+    public static void onBlockChanged(ServerWorld world, BlockPos changed) {
+        worldChanged(world, changed, world.getBlockState(changed));
+    }
+
     private static void worldChanged(ServerWorld world, BlockPos changed, BlockState after) {
         ColonyPos changedPos = MinecraftTypeAdapter.toColonyPos(changed);
+
+        // Cancellation is a player command. It must win over the edit marker
+        // used to suppress callbacks caused by the mod's own builders.
+        if (ConstructionCancellation.cancelAtSoulTorch(world, changed)) {
+            return;
+        }
 
         for (Colony colony : VillageColonyMod.COLONIES.all()) {
             ColonyPos center = colony.center();
@@ -119,10 +130,6 @@ public final class PlayerWorldChangeHandler {
         // segundo, com a mina sem descer uma vez. Ver ColonyEdits — a marca
         // vale uma leitura, para o jogador nunca ficar ignorado.
         if (ColonyEdits.wasOurs(changedPos)) {
-            return;
-        }
-
-        if (ConstructionCancellation.cancelAtSoulTorch(world, changed)) {
             return;
         }
 

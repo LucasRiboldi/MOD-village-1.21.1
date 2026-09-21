@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-09-21, proteção de projetos pendentes antes do primeiro ciclo.
+**Atualizado:** 2026-09-21, conclusão real do construtor e cancelamento por Tocha das Almas.
 
 ## Próximas atividades corrigíveis sem acessar o jogo
 
@@ -31,6 +31,7 @@ com código e testes locais das validações que continuam dependendo de um save
 - [x] 🔴 **P1.2 — volume vertical do lote:** a varredura agora testa todas as colunas a partir do nível-base comum da obra; degraus, blocos voando e restos de outra construção dentro da caixa real recusam o lote antes de iniciar a casa. `BuildSiteGameTest.anElevatedColumnInsideTheBaseRefusesTheLot` reproduz a falha e passa após a correção.
 - [x] 🔴 **P1.2 — folga vertical absoluta de 25 blocos:** nenhum lote, projeto pendente ou fundação da `BigHouseMOD` aceita um bloco físico na janela completa acima da pegada. `BuildSiteGameTest.aBlockTwentyFiveAboveTheLotRefusesTheLot` e `BigHouseFoundationGameTest.theFoundationRejectsABlockTwentyFiveAboveTheFloor` cobrem o limite.
 - [x] 🟠 **P1.2 — cancelamento manual por Tocha das Almas:** colocar uma Soul Torch dentro de uma obra profissional cancela a zona, o projeto, as tarefas e o registro parcial, liberando o ciclo; a `BigHouseMOD` não é cancelada. `ConstructionCancellationGameTest` cobre os dois contratos.
+- [x] 🔴 **P1.2 — obra não desaparecia ao colocar o último bloco:** a tarefa reservada agora entra em execução antes de concluir, então o último bloco marca `BUILD` como `COMPLETED` em vez de liberá-la para o próximo ciclo. O evento de mudança também prioriza a Soul Torch antes de filtrar edições do próprio mod; `BuilderGameTest` e `ConstructionCancellationGameTest` reproduzem os dois sintomas.
 - [x] 🟠 **P1.2 — `BigHouseMOD` fora do catálogo profissional:** a fundação obrigatória continua nascendo com a vila e não pode ser escolhida como casa/oficina por profissões. `HousePlansTest.theModBigHouseIsNeverAProfessionBuild` fixa a regra.
 - [x] 🟠 **P1.2 — frente arenosa cíclica:** `MinerWork` mantém a posição após cada quebra, espera a queda de areia/gravilha assentar e só então reavalia a frente. A coleta integral continua em `MinerHaul.deposit`, inclusive para overflow no chão. Falta confirmar a progressão e a entrega no save.
 - [ ] Playtest P1.2: iniciar uma obra perto de construções existentes e acompanhar o mineiro no deserto até confirmar que não há acavalamento, que a frente avança após os assentamentos e que os drops chegam ao baú/overflow.

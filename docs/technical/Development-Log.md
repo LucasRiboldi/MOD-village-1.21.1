@@ -31,6 +31,29 @@ o §18 do Project-State. O texto das entradas fica como estava.
 
 ---
 
+## Entry 2026-09-21 — a obra termina e a tocha cancela
+
+O playtest mostrou dois sintomas do mesmo ciclo de construção: depois de
+assentar o último bloco, a obra voltava para a fila; e a Tocha das Almas
+colocada dentro de uma obra nem sempre a retirava da lista. A causa do
+primeiro era objetiva: `BuilderWork` recebia o `BUILD` reservado, mas não
+fazia a transição para `EXECUTING`. `finish` então o liberava, em vez de
+concluí-lo. O construtor agora inicia a tarefa no começo do expediente e o
+último bloco passa por `COMPLETED`.
+
+O segundo caso podia ser engolido por `ColonyEdits.wasOurs`: o callback do
+mundo descartava a mudança marcada pelo mod antes de consultar o comando da
+tocha. `ConstructionCancellation` agora é consultado primeiro, mantendo a
+exceção da `BigHouseMOD`. Dois GameTests de regressão cobrem a conclusão e o
+caminho do evento com uma marca de edição pendente.
+
+Verificação: `compileGametestJava runGametest` executou 397 testes; as novas
+regressões passaram e só permaneceu o residual conhecido de
+`FarmPlanGameTest.thenextturnafterahouseisnonresidential`. O build de release
+e a cópia do JAR serão registrados no commit desta sessão.
+
+---
+
 ## Entry 001
 
 Data:

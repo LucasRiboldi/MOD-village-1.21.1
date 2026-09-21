@@ -239,6 +239,14 @@ public final class BuilderWork {
             return true;
         }
 
+        // A reserved task is only the hand-off from the planner to the
+        // villager.  The builder must enter execution before the final
+        // block can complete the task instead of releasing it back to the
+        // queue.
+        if (job.task.state() == TaskState.RESERVED) {
+            job.task.start();
+        }
+
         Optional<BlueprintBlock> next = project.nextBlock();
 
         if (next.isEmpty()) {

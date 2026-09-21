@@ -48,6 +48,15 @@ obra profissional cancela a zona, a tentativa e as tarefas associadas; a
 GameTests: 393 passaram e só o residual já conhecido de `FarmPlanGameTest`
 permaneceu.
 
+O encerramento da obra também foi corrigido. O construtor recebia a tarefa em
+`RESERVED`, mas nunca a promovia a `EXECUTING`; ao assentar o último bloco, o
+fluxo liberava a tarefa para a fila e ela parecia reiniciar. Agora o último
+bloco conclui a tarefa e a construção sai da lista. A mudança de mundo dá
+prioridade ao cancelamento por Soul Torch antes da marca de edição própria do
+mod, para que a tocha não seja ignorada por um callback anterior. As novas
+regressões passaram; o único residual da bateria completa continua sendo
+`FarmPlanGameTest.thenextturnafterahouseisnonresidential`.
+
 **A fundação mínima agora é automática.** Toda vila adotada cria a estrutura
 exclusiva `BigHouseMOD`, uma cópia editada da big house Vanilla sem móveis ou
 decorações, com seis camas e seis baús. Os seis titulares (`MINER`,
