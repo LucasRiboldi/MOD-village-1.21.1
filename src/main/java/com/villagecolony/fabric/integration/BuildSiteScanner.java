@@ -4,9 +4,12 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.ColonySweepCursor;
 import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.ConstructionProject;
+import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.work.HousePlans;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.registry.RegistryKeys;
@@ -1664,7 +1667,7 @@ public final class BuildSiteScanner {
 
         if (overlapsVillageStructure(world, floor, ceiling)
                 || VillageColonyMod.BUILDINGS.anythingBuiltInside(floor, ceiling)
-                || anyOpenSiteInside(colonyId, floor, ceiling)) {
+                || overlapsConstructionSite(world, colonyId, floor, ceiling, null)) {
 
             LotRefusals.refused(colonyId, LotRefusals.Reason.OCCUPIED);
 
@@ -1741,26 +1744,73 @@ public final class BuildSiteScanner {
 
         if (overlapsVillageStructure(world, box.min(), box.max())
                 || hasOccupiedBlock(world, box)
-                || VillageColonyMod.BUILDINGS.anythingBuiltInside(box.min(), box.max())) {
+                || VillageColonyMod.BUILDINGS.anythingBuiltInside(box.min(), box.max())
+                || overlapsConstructionSite(
+                        world, project.colonyId(), box.min(), box.max(), project.id())) {
             return true;
         }
 
-        for (ConstructionProject other : VillageColonyMod.CONSTRUCTIONS.all()) {
-            if (other.id().equals(project.id()) || !other.state().isOpen()) {
+        return false;
+    }
+
+    /**
+     * Se uma obra aberta, inclusive uma ainda pendente do save, ocupa a caixa.
+     *
+     * <p>Projetos pendentes existem antes de {@code resume}: o save guarda
+     * apenas o id e a origem até o mundo estar carregado. Eles continuam
+     * reservando a caixa nesse intervalo, ou uma nova zona pode nascer sobre
+     * uma BigHouseMOD incompleta na entrada do jogo.
+     */
+    static boolean overlapsConstructionSite(
+            ServerWorld world,
+            UUID colonyId,
+            ColonyPos min,
+            ColonyPos max,
+            UUID ignoredProjectId) {
+        for (ConstructionProject project : VillageColonyMod.CONSTRUCTIONS.all()) {
+            if (!project.colonyId().equals(colonyId)
+                    || !project.state().isOpen()
+                    || project.id().equals(ignoredProjectId)) {
                 continue;
             }
 
-            Building site = Building.of(other);
+            if (intersects(min, max, Building.of(project))) {
+                return true;
+            }
+        }
 
-            if (box.min().x() <= site.max().x() && box.max().x() >= site.min().x()
-                    && box.min().y() <= site.max().y() && box.max().y() >= site.min().y()
-                    && box.min().z() <= site.max().z() && box.max().z() >= site.min().z()) {
+        for (ConstructionService.Pending pending : VillageColonyMod.CONSTRUCTIONS.allPending()) {
+            if (!pending.colonyId().equals(colonyId) || pending.id().equals(ignoredProjectId)) {
+                continue;
+            }
 
+            Optional<Blueprint> blueprint =
+                    HousePlans.blueprintOf(world, pending.colonyId(), pending.blueprint(), pending.origin());
+
+            if (blueprint.isEmpty()) {
+                continue;
+            }
+
+            ColonyPos origin = pending.origin();
+            ColonyPos pendingMax = new ColonyPos(
+                    origin.x() + blueprint.get().size().x() - 1,
+                    origin.y() + blueprint.get().size().y() - 1,
+                    origin.z() + blueprint.get().size().z() - 1);
+            Building site = new Building(
+                    pending.id(), pending.colonyId(), pending.blueprint(), origin, pendingMax, false);
+
+            if (intersects(min, max, site)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private static boolean intersects(ColonyPos min, ColonyPos max, Building site) {
+        return min.x() <= site.max().x() && max.x() >= site.min().x()
+                && min.y() <= site.max().y() && max.y() >= site.min().y()
+                && min.z() <= site.max().z() && max.z() >= site.min().z();
     }
 
     /**
@@ -1823,39 +1873,6 @@ public final class BuildSiteScanner {
                         return true;
                     }
                 }
-            }
-        }
-
-        return false;
-    }
-
-    private static boolean anyOpenSiteInside(UUID colonyId, ColonyPos min, ColonyPos max) {
-        for (ConstructionProject project : VillageColonyMod.CONSTRUCTIONS.all()) {
-            if (!project.state().isOpen()) {
-                continue;
-            }
-
-            // <b>Só as obras DESTA colônia</b>, e isso a bateria cobrou:
-            // percorrer todas fazia a arena de um gametest enxergar a
-            // obra do vizinho, e o {@code ColonyDetectionGameTest}
-            // passou a falhar de forma determinística — três rodadas em
-            // três.
-            //
-            // E é o certo também em jogo: obra de outra colônia fica
-            // longe por construção — duas vilas a menos de
-            // {@code DUPLICATE_DISTANCE} viram uma só —, e a pergunta
-            // que importa é sobre o próprio canteiro.
-            if (!project.colonyId().equals(colonyId)) {
-                continue;
-            }
-
-            Building site = Building.of(project);
-
-            if (min.x() <= site.max().x() && max.x() >= site.min().x()
-                    && min.y() <= site.max().y() && max.y() >= site.min().y()
-                    && min.z() <= site.max().z() && max.z() >= site.min().z()) {
-
-                return true;
             }
         }
 

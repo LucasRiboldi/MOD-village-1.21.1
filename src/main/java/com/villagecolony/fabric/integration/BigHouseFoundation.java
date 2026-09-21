@@ -38,6 +38,15 @@ public final class BigHouseFoundation {
             return new Result(false, existing);
         }
 
+        // A project restored from the save has not become a ConstructionProject
+        // yet. It still owns its old box, so never place a second foundation
+        // while that pending project is waiting for the first server cycle.
+        if (VillageColonyMod.CONSTRUCTIONS.pendingOf(colony.id())
+                .map(project -> project.blueprint().equals(StructureBlueprintReader.BIG_HOUSE_MOD))
+                .orElse(false)) {
+            return new Result(false, Optional.empty());
+        }
+
         Optional<StructureTemplate> template = world.getStructureTemplateManager()
                 .getTemplate(MinecraftTypeAdapter.toIdentifier(
                         StructureBlueprintReader.BIG_HOUSE_MOD));

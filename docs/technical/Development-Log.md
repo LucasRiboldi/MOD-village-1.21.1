@@ -8129,3 +8129,26 @@ Verificação: `compileJava compileGametestJava` passou; `runGametest` executou
 389 testes e a regressão nova passou. A rodada ainda retorna duas falhas
 residuais não relacionadas: `FarmPlanGameTest.thenextturnafterahouseisnonresidential`
 e `SmelterGameTest.theoreinthemineemouthchestiscountedandsmelted`.
+
+### 2026-09-21 — projetos do save também reservam a caixa
+
+O playtest mostrou a zona reaparecendo sobre a `BigHouseMOD` logo na entrada.
+O log confirmou a sequência: o servidor carregou cinco projetos para retomar e
+depois reabriu `big_house_mod` em `ColonyPos[x=-1008, y=63, z=4429]`, com 111
+blocos já de pé e 221 restantes. Nesse intervalo, o save tinha apenas a
+identidade e a origem em `ConstructionService.pending`; a caixa ainda não
+estava em `CONSTRUCTIONS.all()` nem no registro de construções consultado pelo
+scanner.
+
+`BuildSiteScanner` agora reconstrói a caixa do blueprint pendente e a trata
+como ocupada antes de `resume()`. O próprio projeto é ignorado quando a obra
+já está sendo retomada, evitando auto-bloqueio, e `BigHouseFoundation.ensure`
+recusa colocar outra `BigHouseMOD` enquanto houver uma entrada pendente da
+mesma colônia. Os GameTests `aPendingProjectStillReservesItsSavedBox` e
+`aPendingBigHouseIsNotPlacedAgain` cobrem os dois caminhos.
+
+Verificação: `compileJava compileGametestJava` passou; `runGametest` executou
+391 testes e as duas novas regressões passaram. Permanecem três falhas
+independentes: a alternância residencial em `FarmPlanGameTest`, a fixture de
+baús em `SmelterGameTest` e a fixture de presença do aldeão em
+`SurfaceGatheringGameTest`.

@@ -21,14 +21,15 @@ blocos, exige dois blocos livres para a entrada e escolhe a candidata seca mais
 distante, favorecendo terreno alto. `runGametest` passou com 387/387; falta
 confirmar o comportamento visual no save do autor.
 
-**A seleção de lote agora protege construções existentes.** A consulta usa as
-peças das estruturas Vanilla da vila mesmo quando o início está em outra chunk,
-e a fundação da `BigHouseMOD` exige terreno natural na camada de apoio. Assim,
+**A seleção de lote agora protege construções existentes e projetos pendentes.**
+A consulta usa as peças das estruturas Vanilla da vila mesmo quando o início
+está em outra chunk, a fundação da `BigHouseMOD` exige terreno natural na
+camada de apoio e o save reserva a caixa de uma obra antes de `resume()`. Assim,
 uma zona não pode nascer dentro de uma construção registrada, atravessar uma
-estrutura Vanilla ou usar o telhado de uma construção como piso. O GameTest da
-fundação reproduz o caso que antes era aceito; na rodada de 21-09, 389 testes
-foram executados e este teste passou. Permanecem duas falhas residuais já
-conhecidas em `FarmPlanGameTest` e `SmelterGameTest`.
+estrutura Vanilla, usar o telhado como piso ou ocupar a caixa de uma obra que
+acabou de ser carregada. A rodada de 21-09 executou 391 testes; os dois novos
+testes da janela de carregamento passaram. Permanecem três falhas residuais em
+`FarmPlanGameTest`, `SmelterGameTest` e na fixture de coleta de areia.
 
 **A fundação mínima agora é automática.** Toda vila adotada cria a estrutura
 exclusiva `BigHouseMOD`, uma cópia editada da big house Vanilla sem móveis ou
@@ -56,11 +57,11 @@ manter até dez árvores da madeira do bioma, sobre terra enraizada e no anel
 mais distante acessível do centro. O GameTest prova o limite; a distância real
 e a colheita pelo lenhador continuam pendentes de playtest.
 
-A rodada final executou 388 GameTests: a regressão do viveiro passou e duas
-falhas residuais ficaram abertas, uma intermitência de alternância em
-`FarmPlanGameTest` e uma fixture do fundidor que encontra um baú extra. Não
-há evidência de que qualquer uma seja causada pelo reparo cíclico ou pelo
-viveiro.
+A rodada final executou 391 GameTests: as regressões de proteção da fundação e
+de projetos pendentes passaram. Três falhas residuais ficaram abertas: a
+alternância em `FarmPlanGameTest`, o baú extra em `SmelterGameTest` e a
+intermitência de presença do aldeão na fixture de areia. Não há evidência de
+que qualquer uma seja causada por esta proteção de lotes.
 
 O bloqueio de madeira que este arquivo descrevia como "o de agora" está
 vencido — a cadeia inteira (índice de ruas → Regra 3 → Regra 22 → baú

@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-09-21, proteção de lotes contra construções existentes.
+**Atualizado:** 2026-09-21, proteção de projetos pendentes antes do primeiro ciclo.
 
 ## Próximas atividades corrigíveis sem acessar o jogo
 
@@ -27,8 +27,10 @@ com código e testes locais das validações que continuam dependendo de um save
 - [x] 🔴 **E44 residual — perna da boca acima do degrau:** o log confirmou que o recálculo de `job.approach` não limitava a perna efetivamente entregue por `WorkTargets`. `MinerWork` agora escolhe um patamar pisável dentro de `CLIMB`; `MinerApproachGameTest` cobre a queda abaixo da boca e a suíte passou com **379/379 GameTests**. Falta confirmar no mundo que o mineiro volta a entregar pedra.
 - [x] 🔴 **P1.2 — obra retomada sobre estrutura existente:** `BuildSiteScanner` agora rejeita interseção com peças de estruturas Vanilla da vila, blocos físicos ocupados e volumes já registrados, inclusive durante a retomada de projeto salvo. `BuildSiteGameTest.theResumedProjectRejectsAnOccupiedVolume` reproduz o caso físico.
 - [x] 🔴 **P1.2 — zona sobre construção existente:** a seleção consulta peças Vanilla referenciadas pela `StructureAccessor`, inclusive quando o início está em outra chunk, e a `BigHouseMOD` rejeita telhados ou outros blocos de construção como camada de apoio. `BigHouseFoundationGameTest.theFoundationDoesNotStartOnTopOfAnExistingBuilding` reproduz a falha que aceitava o lote.
+- [x] 🔴 **P1.2 — projeto pendente reserva o lote no carregamento:** o save agora participa da consulta de sobreposição antes de `ConstructionPlanner.resume`, e `BigHouseFoundation.ensure` não duplica uma `BigHouseMOD` ainda pendente. `BigHouseFoundationGameTest.aPendingProjectStillReservesItsSavedBox` e `aPendingBigHouseIsNotPlacedAgain` cobrem a janela observada no log de 21-09.
 - [x] 🟠 **P1.2 — frente arenosa cíclica:** `MinerWork` mantém a posição após cada quebra, espera a queda de areia/gravilha assentar e só então reavalia a frente. A coleta integral continua em `MinerHaul.deposit`, inclusive para overflow no chão. Falta confirmar a progressão e a entrega no save.
 - [ ] Playtest P1.2: iniciar uma obra perto de construções existentes e acompanhar o mineiro no deserto até confirmar que não há acavalamento, que a frente avança após os assentamentos e que os drops chegam ao baú/overflow.
+- [ ] Playtest P1.2: reabrir o save com projeto pendente e confirmar que a zona antiga permanece reservada, a `BigHouseMOD` não é duplicada e nenhuma obra nova é salva sobre ela.
 - [ ] Playtest P0.9: criar vilas nos cinco biomas e confirmar no save que somente as estruturas listadas aparecem, que areia/relva são buscadas longe da vila quando solicitadas e que a entrada da mina permanece seca e acessível.
 
 ## Prioridade atual — obra aberta impede a próxima construção
