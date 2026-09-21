@@ -15,8 +15,8 @@ import java.util.Set;
 /**
  * As profissões que existem, e o que cada uma sabe fazer.
  *
- * <p>Catálogo, não registro mutável: as quatro profissões do MVP são
- * fixas e não dependem de estado de partida. Por isso é estático e não
+ * <p>Catálogo, não registro mutável: as profissões operacionais são fixas
+ * e não dependem de estado de partida. Por isso é estático e não
  * tem {@code clear} — nada aqui pertence a um mundo específico, ao
  * contrário de {@code ColonyService} e {@code WorkerService}. Ver
  * Profession-System.md §"Profissões do MVP".

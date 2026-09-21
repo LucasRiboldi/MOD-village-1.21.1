@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ProfessionGrowthTest {
@@ -35,6 +36,23 @@ class ProfessionGrowthTest {
         assertEquals(ProfessionAssigner.FOUNDATION_ORDER,
                 assigned.subList(0, foundationSize));
         assertEquals(ProfessionType.CARPENTER, assigned.get(foundationSize));
+    }
+
+    /** Agricultor e carpinteiro continuam sendo vagas reais de crescimento. */
+    @Test
+    void farmerAndCarpenterRemainAvailableOutsideTheFoundation() {
+        addWorkers(13);
+
+        assign(13);
+
+        assertTrue(ProfessionAssigner.PRODUCER_ORDER.contains(ProfessionType.CARPENTER));
+        assertTrue(ProfessionAssigner.PRODUCER_ORDER.contains(ProfessionType.FARMER));
+        assertFalse(ProfessionAssigner.FOUNDATION_ORDER.contains(ProfessionType.CARPENTER));
+        assertFalse(ProfessionAssigner.FOUNDATION_ORDER.contains(ProfessionType.FARMER));
+        assertTrue(count(ProfessionType.CARPENTER) >= 1,
+                "o carpinteiro foi removido do crescimento");
+        assertTrue(count(ProfessionType.FARMER) >= 1,
+                "o agricultor foi removido do crescimento");
     }
 
     @Test

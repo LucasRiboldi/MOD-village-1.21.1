@@ -2,6 +2,11 @@
 
 **Atualizado:** 2026-09-21, conclusão real do construtor e cancelamento por Tocha das Almas.
 
+**Auditoria técnica:** [`docs/technical/Project-Audit-2026-09-21.md`](docs/technical/Project-Audit-2026-09-21.md).
+Linha de base desta sessão: 960 unitários e 74 testes Python aprovados; 397
+GameTests executados, com 1 falha obrigatória em
+`FarmPlanGameTest.thenextturnafterahouseisnonresidential`.
+
 ## Próximas atividades corrigíveis sem acessar o jogo
 
 Esta fila separa falhas reproduzíveis ou coberturas que podem ser tratadas
@@ -13,7 +18,7 @@ com código e testes locais das validações que continuam dependendo de um save
 - [ ] Playtest P0.10/P0.11: confirmar no save que uma obra abandonada é retomada sem duplicar blocos, que uma tentativa impossível não congela a fila e que cada vila mantém dez árvores fora do centro.
 - [ ] Residual de `FarmPlanGameTest.thenextturnafterahouseisnonresidential`: a rodada completa de 21-09 ainda abriu uma casa consecutiva; reproduzir a alternância com estado de vila isolado antes de alterar `HousePlans`.
 - [x] Residual de `SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted`: não repetiu na rodada completa de 21-09; manter a fixture em observação antes de alterar a coleta do fundidor.
-- [x] 🔴 **P0.8 — fundação absoluta da vila:** toda vila detectada cria a `BigHouseMOD`, cópia editada da big house Vanilla sem móveis/decorações, com seis camas e seis baús distintos. Os seis titulares (`MINER`, `LUMBERJACK`, `MASON`, `SMELTER`, `BREEDER` e `BUILDER`) recebem adulto, cama `HOME` e baú dentro dela; os conjuntos de agricultor e carpinteiro ficam fora da casa e continuam disponíveis no crescimento normal. A Vanilla permanece intacta. `VillageFoundationGameTest` passou.
+- [x] 🔴 **P0.8 — fundação absoluta da vila:** toda vila detectada cria a `BigHouseMOD`, cópia editada da big house Vanilla sem móveis/decorações, com seis camas e seis baús distintos. Os seis titulares (`MINER`, `LUMBERJACK`, `MASON`, `SMELTER`, `BREEDER` e `BUILDER`) recebem adulto, cama `HOME` e baú dentro dela; `FARMER` e `CARPENTER` continuam profissões ativas, mas sem cama/baú fundacionais na casa, e entram normalmente no crescimento. A Vanilla permanece intacta. `VillageFoundationGameTest` passou.
 - [ ] Playtest P0.8: entrar em um save com vila recém-detectada e confirmar a `BigHouseMOD`, os seis aldeões, suas camas, seus baús e a ausência de sobreposição com estruturas existentes.
 - [ ] 🔴 **E42 — impasse entre profissões:** criar o GameTest da roça fora do alcance do fazendeiro, com duas passagens do planejador, e corrigir a fila se a segunda passagem não abrir o projeto de casa.
 - [ ] 🟠 **E43 — descanso ignorado:** decidir se o descanso de quatro ciclos deve impedir a reatribuição na segunda passagem de `WorkAssignment`, depois registrar a decisão em teste e corrigir o fluxo escolhido.

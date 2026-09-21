@@ -10,6 +10,24 @@
 
 ---
 
+## Auditoria mais recente — 2026-09-21
+
+`test` e `build` passaram; `runGametest` executou 397 testes, com 396
+aprovados e uma falha obrigatória em
+`FarmPlanGameTest.thenextturnafterahouseisnonresidential`. Os 74 testes Python
+também passaram. Este resultado substitui as contagens menores registradas em
+parágrafos históricos abaixo; a investigação e a nota do projeto estão em
+[`docs/technical/Project-Audit-2026-09-21.md`](docs/technical/Project-Audit-2026-09-21.md).
+
+O código atual da casa usa seis titulares na `BigHouseMOD` (`MINER`,
+`LUMBERJACK`, `MASON`, `SMELTER`, `BREEDER` e `BUILDER`). `FARMER` e
+`CARPENTER` continuam registrados, atribuíveis e executáveis no crescimento
+normal; a única ausência é de cama e baú fundacionais dentro da casa. A
+nomenclatura operacional tem oito funções e `SHEPHERD` é alias legado de
+`BREEDER`.
+
+---
+
 ## Onde a vila está
 
 **O lote P0.9 está implementado e verificado offline.** O planejador do mod
@@ -62,8 +80,9 @@ exclusiva `BigHouseMOD`, uma cópia editada da big house Vanilla sem móveis ou
 decorações, com seis camas e seis baús. Os seis titulares (`MINER`,
 `LUMBERJACK`, `MASON`, `SMELTER`, `BREEDER` e `BUILDER`) recebem uma cama
 `HOME` e um baú distinto dentro dela. Agricultor e carpinteiro continuam
-disponíveis no crescimento normal, mas seus conjuntos foram removidos da
-BigHouseMOD. A Vanilla continua intacta. A execução isolada de
+disponíveis no crescimento normal e não foram removidos do sistema; somente
+seus conjuntos de cama/baú não fazem parte da BigHouseMOD. A Vanilla continua
+intacta. A execução isolada de
 `VillageFoundationGameTest` confirmou o contrato sem sobrescrever blocos;
 falta conferir a criação no save aberto pelo autor.
 

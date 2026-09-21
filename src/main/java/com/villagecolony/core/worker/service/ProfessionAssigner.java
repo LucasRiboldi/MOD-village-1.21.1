@@ -47,8 +47,9 @@ public final class ProfessionAssigner {
      * <p>{@link ProfessionType#SHEPHERD} é apenas compatibilidade com
      * saves antigos e conta como {@link ProfessionType#BREEDER};
      * {@link ProfessionType#CARPENTER} e {@link ProfessionType#FARMER} seguem
-     * disponíveis para o crescimento normal, mas não ocupam os seis
-     * conjuntos reservados na {@code BigHouseMOD}.
+     * disponíveis no registro, na atribuição, nas tarefas e no crescimento
+     * normal. A única regra desta lista é que eles não são titulares nem
+     * recebem cama ou baú reservados na {@code BigHouseMOD}.
      */
     public static final List<ProfessionType> FOUNDATION_ORDER = List.of(
             ProfessionType.MINER,

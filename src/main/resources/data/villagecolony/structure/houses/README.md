@@ -1,7 +1,8 @@
-# Os schemas das construções da colônia
+# Estruturas da colônia
 
-As plantas que o construtor sabe levantar, no formato do **bloco de
-estrutura** do próprio Minecraft (`.nbt`).
+As plantas editadas pelo mod, no formato do **bloco de estrutura** do próprio
+Minecraft (`.nbt`). O catálogo profissional usa estruturas Vanilla por bioma;
+este diretório guarda apenas recursos próprios do mod.
 
 ## Onde isto fica, e por que aqui
 
@@ -40,8 +41,10 @@ porta e cama é descartada, porque quem a completa é o construtor.
 A casa pequena de vila de planície do próprio jogo
 (`plains_small_house_1`, DataVersion 3952), 7 × 7 × 7.
 
-**É a obra da colônia em vila de planície desde 2026-08-19**, por
-decisão do autor. Nos outros biomas continua a cabana do mod.
+É uma fixture editada da casa pequena de planície usada nas regressões e nas
+obras compatíveis com esse blueprint. A seleção normal usa a whitelist de
+estruturas reais por bioma em `HousePlans`; este arquivo não substitui o
+catálogo completo.
 
 A porta dela fica a um bloco da parede oeste — e o encaixe de rua do
 gerador, o *jigsaw*, está do mesmo lado. A colônia descobre isso sozinha
@@ -78,18 +81,22 @@ sem parede não é casa.
 
 ---
 
-### `big_house_mod.nbt`
+### `BigHouseMOD` (`big_house_mod.nbt`)
 
-Cópia editada da big house Vanilla usada somente pela fundação do mod. A
-Vanilla continua existindo e não é modificada. Esta planta mantém seis camas e
-seis baús para os titulares fundacionais de mineiro, lenhador, pedreiro,
-fundidor, criador e construtor; agricultor e carpinteiro continuam sendo
-funções de crescimento normal, fora desses conjuntos.
+Cópia editada da big house Vanilla usada **somente pela fundação do mod**. A
+Vanilla continua existindo e não é modificada. Esta planta mantém exatamente
+seis camas e seis baús para os titulares fundacionais `MINER`, `LUMBERJACK`,
+`MASON`, `SMELTER`, `BREEDER` e `BUILDER`. Agricultor e carpinteiro continuam
+profissões completas, com registro, atribuição e tarefas próprias; apenas não
+recebem cama ou baú fundacional dentro desta casa e entram no crescimento
+normal fora desses conjuntos.
 
 Os dois conjuntos inferiores que bloqueavam a porta e o acesso à escada foram
 removidos. A planta também não contém `jigsaw`, `structure_block` ou
 `structure_void`, evitando que blocos de gerador apareçam no mundo. A entrada
-e a escada ficam livres para os aldeões.
+e a escada ficam livres para os aldeões. A `BigHouseMOD` nasce automaticamente
+com cada vila, fica fora da lista de casas e oficinas e não pode ser cancelada
+por Tocha das Almas.
 
 ---
 

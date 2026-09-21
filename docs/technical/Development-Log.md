@@ -31,6 +31,30 @@ o §18 do Project-State. O texto das entradas fica como estava.
 
 ---
 
+## Entry 2026-09-21 — clarificação de agricultor e carpinteiro
+
+A revisão confirmou que `FARMER` e `CARPENTER` não foram removidos do mod:
+continuam no catálogo, na atribuição, na cadeia de tarefas e no crescimento da
+vila. A exclusão é somente física na `BigHouseMOD`: não há cama ou baú
+fundacional reservado para essas duas profissões. Foi adicionada uma regressão
+explícita de crescimento e a documentação passou a separar “profissão ativa”
+de “titular da casa fundacional”.
+
+## Entry 2026-09-21 — auditoria geral e documentação
+
+A varredura consolidou o contrato atual do projeto: oito funções operacionais,
+seis titulares na `BigHouseMOD`, whitelist Vanilla por bioma, proteção vertical
+de 25 blocos, reparo cíclico, viveiro de dez árvores e cancelamento profissional
+por Tocha das Almas. Os READMEs principal, de estruturas e de testes foram
+atualizados e a auditoria detalhada ficou em
+`docs/technical/Project-Audit-2026-09-21.md`.
+
+Verificação: `test` e `build` passaram; os 74 testes Python passaram;
+`runGametest` executou 397 casos, com 396 aprovados e uma falha obrigatória em
+`FarmPlanGameTest.thenextturnafterahouseisnonresidential`. O JAR existente em
+`downloads/` e o JAR de build têm o mesmo SHA-256; nenhuma lógica de produção
+ou artefato de release foi alterado nesta sessão de documentação.
+
 ## Entry 2026-09-21 — a obra termina e a tocha cancela
 
 O playtest mostrou dois sintomas do mesmo ciclo de construção: depois de
