@@ -27,9 +27,16 @@ está em outra chunk, a fundação da `BigHouseMOD` exige terreno natural na
 camada de apoio e o save reserva a caixa de uma obra antes de `resume()`. Assim,
 uma zona não pode nascer dentro de uma construção registrada, atravessar uma
 estrutura Vanilla, usar o telhado como piso ou ocupar a caixa de uma obra que
-acabou de ser carregada. A rodada de 21-09 executou 391 testes; os dois novos
-testes da janela de carregamento passaram. Permanecem três falhas residuais em
-`FarmPlanGameTest`, `SmelterGameTest` e na fixture de coleta de areia.
+acabou de ser carregada. A rodada desta correção executou 392 testes; as
+regressões da janela de carregamento e do volume vertical passaram. Permanece
+um residual em `FarmPlanGameTest`; as falhas intermitentes de `SmelterGameTest`
+e da fixture de coleta de areia não repetiram.
+
+O scanner também valida agora o volume vertical inteiro a partir do nível-base
+comum da obra. Um bloco elevado dentro da pegada não pode mais ser interpretado
+como apoio da própria coluna e esconder um degrau, bloco voando ou construção
+existente. A regressão `BuildSiteGameTest.anElevatedColumnInsideTheBaseRefusesTheLot`
+foi criada para o caso observado no save.
 
 **A fundação mínima agora é automática.** Toda vila adotada cria a estrutura
 exclusiva `BigHouseMOD`, uma cópia editada da big house Vanilla sem móveis ou
@@ -57,11 +64,12 @@ manter até dez árvores da madeira do bioma, sobre terra enraizada e no anel
 mais distante acessível do centro. O GameTest prova o limite; a distância real
 e a colheita pelo lenhador continuam pendentes de playtest.
 
-A rodada final executou 391 GameTests: as regressões de proteção da fundação e
-de projetos pendentes passaram. Três falhas residuais ficaram abertas: a
-alternância em `FarmPlanGameTest`, o baú extra em `SmelterGameTest` e a
-intermitência de presença do aldeão na fixture de areia. Não há evidência de
-que qualquer uma seja causada por esta proteção de lotes.
+A rodada final desta correção executou 392 GameTests: a regressão do volume
+vertical e as regressões de proteção da fundação e de projetos pendentes
+passaram. Ficou uma falha residual, a alternância em
+`FarmPlanGameTest.thenextturnafterahouseisnonresidential`; as antigas falhas
+intermitentes de `SmelterGameTest` e da fixture de areia não repetiram. Não há
+evidência de que o residual seja causado por esta proteção de lotes.
 
 O bloqueio de madeira que este arquivo descrevia como "o de agora" está
 vencido — a cadeia inteira (índice de ruas → Regra 3 → Regra 22 → baú

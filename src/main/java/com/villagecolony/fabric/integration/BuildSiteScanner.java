@@ -1414,9 +1414,9 @@ public final class BuildSiteScanner {
      * para quebrar bloco. Construir por cima da casa de alguém seria a
      * pior forma de desobedecê-la.
      *
-     * @return a altura do chão mais baixo do lote. A casa assenta no
-     *     mais baixo para que nenhuma parte dela nasça enterrada; o que
-     *     ficar acima é degrau que a preparação resolve
+     * @return a altura do nível-base mais comum do lote. A casa assenta
+     *     sobre esse nível para que a base aceite a tolerância de desnível
+     *     sem transformar um bloco elevado em espaço livre
      */
     private static Optional<Integer> flatGroundAt(
             ServerWorld world, UUID colonyId, int originX, int originZ, int aroundY,
@@ -1577,31 +1577,10 @@ public final class BuildSiteScanner {
                     return Optional.empty();
                 }
 
-                // E a Regra 22: a casa não sobe onde já há coisa. Não
-                // basta o chão estar bom; a coluna inteira, até o teto
-                // da planta, precisa estar livre.
-                //
-                // <b>Conta a partir do chão DESTA coluna</b> — 2026-09-15,
-                // e foi a tolerância de um bloco que expôs o defeito. A
-                // conta era sempre {@code roadY + 1}, o que estava certo
-                // enquanto toda coluna tinha o chão exatamente em
-                // {@code roadY}: aí as duas alturas eram a mesma. Com um
-                // bloco de tolerância, a coluna um acima tem o próprio
-                // chão em {@code roadY + 1} — e a pergunta lia esse chão
-                // como coisa no caminho, reprovando por OCCUPIED o lote que
-                // a régua acabara de aprovar.
-                //
-                // O teto continua sendo o da planta contado da rua, e é o
-                // certo: a casa assenta em {@code roadY + 1} e sobe
-                // {@code size.y()} dali. O que muda é só onde a conferência
-                // começa.
-                int floorOf = Math.max(roadY, ground.getY()) + 1;
-
-                if (!isClearAbove(world, x, z, floorOf, roadY + 1 + size.y() - floorOf)) {
-                    LotRefusals.refused(colonyId, LotRefusals.Reason.OCCUPIED);
-
-                    return Optional.empty();
-                }
+                // A Regra 22 é aplicada depois que o nível-base comum for
+                // conhecido. Conferir a partir do chão de cada coluna faria
+                // um degrau isolado parecer apoio e deixaria o bloco dentro
+                // da caixa real da obra.
             }
         }
 
@@ -1643,6 +1622,19 @@ public final class BuildSiteScanner {
                 .max(Map.Entry.comparingByValue())
                 .map(Map.Entry::getKey)
                 .orElse(roadY);
+
+        // A caixa real da obra começa no piso comum, não no chão de cada
+        // coluna. Assim, degraus, blocos voando e restos de outra construção
+        // dentro da pegada não podem ser confundidos com terreno de apoio.
+        for (int dx = 0; dx < size.x(); dx++) {
+            for (int dz = 0; dz < size.z(); dz++) {
+                if (!isClearAbove(world, originX + dx, originZ + dz, baseY + 1, size.y())) {
+                    LotRefusals.refused(colonyId, LotRefusals.Reason.OCCUPIED);
+
+                    return Optional.empty();
+                }
+            }
+        }
 
         // <b>E a caixa inteira não pode pisar em casa que já existe</b> —
         // 2026-09-19, visto em jogo: uma obra nova nasceu EM CIMA de uma

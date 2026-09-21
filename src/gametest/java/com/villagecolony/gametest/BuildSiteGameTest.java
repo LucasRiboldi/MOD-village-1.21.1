@@ -1251,6 +1251,55 @@ public class BuildSiteGameTest implements FabricGameTest {
     }
 
     /**
+     * Um degrau isolado dentro da caixa real da obra não pode virar apoio.
+     *
+     * <p>A medição do chão aceita até um bloco de desnível, mas a obra é
+     * assentada no nível-base comum. Portanto, um bloco mais alto dentro da
+     * pegada fica no espaço vertical da construção e precisa reprovar o lote.
+     * A regra antiga começava a busca acima do chão de cada coluna e pulava
+     * exatamente esse bloco.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_volume")
+    public void anElevatedColumnInsideTheBaseRefusesTheLot(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
+        ColonyPos plan = new ColonyPos(4, 4, 3);
+
+        paveGround(context, center);
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
+
+        // Cada orientação possível recebe um único degrau. Assim o teste não
+        // consegue escapar escolhendo outro lado da mesma rua.
+        for (BlockPos bump : new BlockPos[] {
+                center.add(1, 1, 0),
+                center.add(-1, 1, 0),
+                center.add(0, 1, 1),
+                center.add(0, 1, -1)}) {
+            context.setBlockState(bump, Blocks.GRASS_BLOCK.getDefaultState());
+        }
+
+        try {
+            Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                    context.getWorld(),
+                    colony,
+                    MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                    0,
+                    plan);
+
+            context.assertTrue(
+                    site.isEmpty(),
+                    "um degrau dentro da caixa vertical foi aceito como apoio em "
+                            + site.map(found -> found.origin().toString()).orElse(""));
+        } finally {
+            BuildSiteScanner.clearAll();
+            LotRefusals.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
      * E a flor não reprova nada — o outro lado da Regra 22.
      *
      * <p>"O worker deve ser capaz de destruir flores se for somente o

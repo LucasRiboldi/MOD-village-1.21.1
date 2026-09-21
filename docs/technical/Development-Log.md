@@ -8152,3 +8152,25 @@ Verificação: `compileJava compileGametestJava` passou; `runGametest` executou
 independentes: a alternância residencial em `FarmPlanGameTest`, a fixture de
 baús em `SmelterGameTest` e a fixture de presença do aldeão em
 `SurfaceGatheringGameTest`.
+
+### 2026-09-21 — volume vertical do lote começa no nível-base comum
+
+O playtest mostrou uma casa começando sobre uma área ocupada. A causa estava
+no `BuildSiteScanner.flatGroundAt`: cada coluna conferia espaço livre a partir
+do próprio chão encontrado. Com a tolerância de um bloco de desnível, um degrau
+isolado era tratado como apoio e ficava fora da janela verificada, embora a
+obra fosse assentada depois em um único `baseY` comum.
+
+O scanner agora calcula primeiro o nível-base dominante e só então percorre
+todas as colunas da pegada usando `baseY + 1` até a altura completa do projeto.
+Assim, nenhum bloco físico acima do piso, estrutura existente ou resto de outra
+obra pode ficar escondido pelo nível particular de uma coluna. A alteração
+também cobre os caminhos de lote usados pela extensão de estrada; a seleção da
+`BigHouseMOD` já possuía uma guarda equivalente em seu volume.
+
+`BuildSiteGameTest.anElevatedColumnInsideTheBaseRefusesTheLot` falhou antes da
+correção e passou depois dela. A suíte pós-correção executou 392 GameTests;
+apenas `FarmPlanGameTest.thenextturnafterahouseisnonresidential` permaneceu
+falhando. As falhas anteriores de `SmelterGameTest` e
+`SurfaceGatheringGameTest` não repetiram e continuam em observação, sem
+relação demonstrada com a seleção de lotes.
