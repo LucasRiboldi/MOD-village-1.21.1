@@ -16,6 +16,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.structure.StructureStart;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.chunk.WorldChunk;
 
@@ -1770,7 +1771,7 @@ public final class BuildSiteScanner {
      * continua dentro do {@code BlockBox} da peça, e é esse espaço que
      * também precisa ser protegido.
      */
-    private static boolean overlapsVillageStructure(
+    static boolean overlapsVillageStructure(
             ServerWorld world, ColonyPos min, ColonyPos max) {
         BlockBox candidate = new BlockBox(
                 min.x(), min.y(), min.z(), max.x(), max.y(), max.z());
@@ -1779,19 +1780,16 @@ public final class BuildSiteScanner {
         int minChunkZ = min.z() >> 4;
         int maxChunkZ = max.z() >> 4;
         var registry = world.getRegistryManager().get(RegistryKeys.STRUCTURE);
-
         for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
             for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++) {
-                WorldChunk chunk = world.getChunkManager().getWorldChunk(chunkX, chunkZ);
-
-                if (chunk == null) {
-                    continue;
-                }
-
-                for (StructureStart start : chunk.getStructureStarts().values()) {
-                    if (!start.hasChildren()
-                            || !registry.getEntry(start.getStructure())
-                                    .isIn(StructureTags.VILLAGE)) {
+                // A estrutura pode ter seu start em outra chunk. Consultar
+                // somente getStructureStarts() da chunk candidata perde as
+                // pecas referenciadas pela geracao da vila vizinha.
+                for (StructureStart start : world.getStructureAccessor().getStructureStarts(
+                        new ChunkPos(chunkX, chunkZ),
+                        structure -> registry.getEntry(structure)
+                                .isIn(StructureTags.VILLAGE))) {
+                    if (!start.hasChildren()) {
                         continue;
                     }
 

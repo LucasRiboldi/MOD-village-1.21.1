@@ -8109,3 +8109,23 @@ residuais fora deste lote: `FarmPlanGameTest` alternou uma casa consecutiva,
 e `SmelterGameTest` encontrou três baús onde o cenário espera dois. Ambas
 ficam abertas no `TODO.md`; nenhuma aponta para o reparo cíclico ou para o
 viveiro. O playtest no save continua pendente.
+
+### 2026-09-21 — lotes não podem ocupar construções existentes
+
+O playtest mostrou uma zona de criação sendo definida sobre uma construção já
+presente na vila. A reprodução mínima colocou a fundação da `BigHouseMOD`
+imediatamente acima de um telhado; o método de segurança ignorava toda a
+camada de apoio e aceitava o lote. O mesmo risco existia na leitura de
+estruturas Vanilla: `WorldChunk.getStructureStarts()` só via inícios locais e
+perdia peças de uma vila cujo início estava em outra chunk.
+
+`BuildSiteScanner.overlapsVillageStructure` passou a consultar as referências
+da `StructureAccessor` para todas as chunks cobertas pelo volume e a fundação
+da `BigHouseMOD` agora exige terreno natural em toda a base antes de verificar
+o espaço livre. O novo `BigHouseFoundationGameTest` falha antes da correção e
+passa depois dela.
+
+Verificação: `compileJava compileGametestJava` passou; `runGametest` executou
+389 testes e a regressão nova passou. A rodada ainda retorna duas falhas
+residuais não relacionadas: `FarmPlanGameTest.thenextturnafterahouseisnonresidential`
+e `SmelterGameTest.theoreinthemineemouthchestiscountedandsmelted`.

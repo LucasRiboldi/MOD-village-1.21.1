@@ -1,4 +1,4 @@
-# STATE — 2026-09-20
+# STATE — 2026-09-21
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -20,6 +20,15 @@ procura no setor externo da vila. A boca da mina rejeita água num raio de quatr
 blocos, exige dois blocos livres para a entrada e escolhe a candidata seca mais
 distante, favorecendo terreno alto. `runGametest` passou com 387/387; falta
 confirmar o comportamento visual no save do autor.
+
+**A seleção de lote agora protege construções existentes.** A consulta usa as
+peças das estruturas Vanilla da vila mesmo quando o início está em outra chunk,
+e a fundação da `BigHouseMOD` exige terreno natural na camada de apoio. Assim,
+uma zona não pode nascer dentro de uma construção registrada, atravessar uma
+estrutura Vanilla ou usar o telhado de uma construção como piso. O GameTest da
+fundação reproduz o caso que antes era aceito; na rodada de 21-09, 389 testes
+foram executados e este teste passou. Permanecem duas falhas residuais já
+conhecidas em `FarmPlanGameTest` e `SmelterGameTest`.
 
 **A fundação mínima agora é automática.** Toda vila adotada cria a estrutura
 exclusiva `BigHouseMOD`, uma cópia editada da big house Vanilla sem móveis ou

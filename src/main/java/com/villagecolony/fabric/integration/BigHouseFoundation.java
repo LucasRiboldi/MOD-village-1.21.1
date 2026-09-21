@@ -209,6 +209,22 @@ public final class BigHouseFoundation {
             return false;
         }
 
+        if (BuildSiteScanner.overlapsVillageStructure(world, min, max)) {
+            return false;
+        }
+
+        // MOTION_BLOCKING_NO_LEAVES devolve o primeiro espaco acima da
+        // superficie. Sem conferir o bloco de apoio, esse espaco pode ser o
+        // telhado de uma construcao existente.
+        for (int dx = 0; dx < size.getX(); dx++) {
+            for (int dz = 0; dz < size.getZ(); dz++) {
+                if (!BuildSiteScanner.isBiomeGround(
+                        world, new BlockPos(x + dx, y - 1, z + dz))) {
+                    return false;
+                }
+            }
+        }
+
         for (int dx = 0; dx < size.getX(); dx++) {
             for (int dy = 0; dy < size.getY(); dy++) {
                 for (int dz = 0; dz < size.getZ(); dz++) {
