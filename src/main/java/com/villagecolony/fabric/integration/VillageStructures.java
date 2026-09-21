@@ -245,7 +245,21 @@ public final class VillageStructures {
 
     /** Todas as peças autorizadas, inclusive lâmpadas fora de {@code houses}. */
     public static synchronized List<ResourceId> buildableFor(String style) {
-        return BUILDABLE.computeIfAbsent(style, VillageStructures::loadAllowed);
+        return BUILDABLE.computeIfAbsent(style, VillageStructures::loadAllowed).stream()
+                .filter(VillageStructures::isProfessionBuildable)
+                .toList();
+    }
+
+    /**
+     * Se a planta pode ser escolhida pelas profissoes.
+     *
+     * <p>A {@code BigHouseMOD} pertence a fundacao da vila e e colocada
+     * uma unica vez por {@link BigHouseFoundation}; ela nunca e uma obra
+     * aberta pelo catalogo de construtor. O namespace e a barreira
+     * explicita contra ela voltar a aparecer numa lista profissional.
+     */
+    public static boolean isProfessionBuildable(ResourceId id) {
+        return id != null && ResourceId.VANILLA.equals(id.namespace());
     }
 
     /**

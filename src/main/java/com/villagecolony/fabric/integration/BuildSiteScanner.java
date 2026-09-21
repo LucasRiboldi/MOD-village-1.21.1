@@ -182,6 +182,9 @@ public final class BuildSiteScanner {
      */
     public static final int MAX_SLOPE = 2;
 
+    /** Nenhum bloco existente pode ocupar esta janela acima do piso. */
+    public static final int VERTICAL_CLEARANCE = 25;
+
     /**
      * Onde cada colônia parou de procurar.
      *
@@ -1628,7 +1631,12 @@ public final class BuildSiteScanner {
         // dentro da pegada não podem ser confundidos com terreno de apoio.
         for (int dx = 0; dx < size.x(); dx++) {
             for (int dz = 0; dz < size.z(); dz++) {
-                if (!isClearAbove(world, originX + dx, originZ + dz, baseY + 1, size.y())) {
+                if (!isClearAbove(
+                        world,
+                        originX + dx,
+                        originZ + dz,
+                        baseY + 1,
+                        Math.max(size.y(), VERTICAL_CLEARANCE))) {
                     LotRefusals.refused(colonyId, LotRefusals.Reason.OCCUPIED);
 
                     return Optional.empty();
@@ -1654,7 +1662,7 @@ public final class BuildSiteScanner {
 
         ColonyPos ceiling = new ColonyPos(
                 originX + size.x() - 1,
-                baseY + size.y(),
+                baseY + Math.max(size.y(), VERTICAL_CLEARANCE),
                 originZ + size.z() - 1);
 
         if (overlapsVillageStructure(world, floor, ceiling)
@@ -1885,7 +1893,12 @@ public final class BuildSiteScanner {
         for (int y = floor; y < floor + height; y++) {
             BlockPos at = new BlockPos(x, y, z);
 
-            if (!isNothing(chunk.getBlockState(at))) {
+            BlockState state = chunk.getBlockState(at);
+
+            // O teto de barreira é inserido pelo GameTest fora da arena e
+            // não representa um bloco do mundo. Ele não deve encurtar a
+            // janela de 25 blocos que a produção precisa validar.
+            if (!isNothing(state) && !state.isOf(Blocks.BARRIER)) {
                 // <b>Qual bloco barrou</b> — P1.6, 2026-09-19. A Regra 22
                 // é 70% das recusas em duas sessões seguidas e não dizia
                 // de que era feita. Aqui, e só aqui, porque este é o

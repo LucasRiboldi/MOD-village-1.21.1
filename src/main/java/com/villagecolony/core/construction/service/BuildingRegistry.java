@@ -190,6 +190,11 @@ public final class BuildingRegistry {
         return buildings.size();
     }
 
+    /** Remove uma construção parcial cancelada pelo jogador. */
+    public boolean remove(UUID buildingId) {
+        return buildingId != null && buildings.remove(buildingId) != null;
+    }
+
     /**
      * Esquece as construções desta colônia.
      *

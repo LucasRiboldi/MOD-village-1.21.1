@@ -1299,6 +1299,45 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** Nenhuma coluna do lote pode ter bloco solido nos 25 niveis superiores. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_volume")
+    public void aBlockTwentyFiveAboveTheLotRefusesTheLot(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+        UUID colony = UUID.randomUUID();
+
+        paveGround(context, center);
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
+
+        // O obstaculo esta acima da janela da planta, mas dentro da folga
+        // obrigatoria. A camada cobre as possiveis orientacoes do lote.
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                context.setBlockState(
+                        center.add(dx, 25, dz), Blocks.STONE.getDefaultState());
+            }
+        }
+
+        try {
+            Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                    context.getWorld(),
+                    colony,
+                    MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                    0,
+                    SMALL_HOUSE);
+
+            context.assertTrue(
+                    site.isEmpty(),
+                    "um bloco 25 niveis acima foi ignorado e o lote foi aceito em "
+                            + site.map(found -> found.origin().toString()).orElse(""));
+        } finally {
+            BuildSiteScanner.clearAll();
+            LotRefusals.clearAll();
+        }
+
+        context.complete();
+    }
+
     /**
      * E a flor não reprova nada — o outro lado da Regra 22.
      *

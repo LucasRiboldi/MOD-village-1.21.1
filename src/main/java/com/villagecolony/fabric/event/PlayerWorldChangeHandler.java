@@ -9,6 +9,7 @@ import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.ConstructionCancellation;
 import com.villagecolony.fabric.work.MineRock;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
@@ -118,6 +119,10 @@ public final class PlayerWorldChangeHandler {
         // segundo, com a mina sem descer uma vez. Ver ColonyEdits — a marca
         // vale uma leitura, para o jogador nunca ficar ignorado.
         if (ColonyEdits.wasOurs(changedPos)) {
+            return;
+        }
+
+        if (ConstructionCancellation.cancelAtSoulTorch(world, changed)) {
             return;
         }
 

@@ -38,6 +38,16 @@ como apoio da própria coluna e esconder um degrau, bloco voando ou construção
 existente. A regressão `BuildSiteGameTest.anElevatedColumnInsideTheBaseRefusesTheLot`
 foi criada para o caso observado no save.
 
+A janela livre agora é absoluta: nenhum bloco físico pode existir até 25
+blocos acima de toda a pegada escolhida. A mesma regra vale para lotes
+pendentes e para a fundação da `BigHouseMOD`. A `BigHouseMOD` continua sendo
+uma fundação obrigatória da vila, mas permanece fora do catálogo de obras das
+profissões. Uma Tocha das Almas ou Tocha das Almas de parede dentro de uma
+obra profissional cancela a zona, a tentativa e as tarefas associadas; a
+`BigHouseMOD` é deliberadamente ignorada. A rodada final executou 394
+GameTests: 393 passaram e só o residual já conhecido de `FarmPlanGameTest`
+permaneceu.
+
 **A fundação mínima agora é automática.** Toda vila adotada cria a estrutura
 exclusiva `BigHouseMOD`, uma cópia editada da big house Vanilla sem móveis ou
 decorações, com seis camas e seis baús. Os seis titulares (`MINER`,

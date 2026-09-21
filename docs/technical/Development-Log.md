@@ -8174,3 +8174,32 @@ apenas `FarmPlanGameTest.thenextturnafterahouseisnonresidential` permaneceu
 falhando. As falhas anteriores de `SmelterGameTest` e
 `SurfaceGatheringGameTest` não repetiram e continuam em observação, sem
 relação demonstrada com a seleção de lotes.
+
+### 2026-09-21 — folga vertical absoluta e cancelamento por Tocha das Almas
+
+A revisão consolidou três regras que estavam separadas: a `BigHouseMOD` nasce
+automaticamente com a vila e não participa do catálogo de construções das
+profissões; uma zona profissional deve permanecer livre em toda a sua pegada
+até 25 blocos acima do nível-base; e o jogador pode cancelar uma obra
+profissional colocando uma Tocha das Almas dentro da área. A tocha cancela a
+zona, o projeto pendente ou parcial e as tarefas de construção, removendo o
+registro parcial para que o ciclo continue. A `BigHouseMOD` é ignorada pelo
+cancelamento por ser a fundação obrigatória da vila.
+
+`BuildSiteScanner` e `BigHouseFoundation` agora aplicam a mesma janela de 25
+blocos, enquanto `VillageStructures.isProfessionBuildable` mantém o blueprint
+especial fora da lista profissional. `ConstructionCancellation` cobre tochas
+normais e de parede, projetos ativos, pendentes e parciais. Os novos testes
+passaram: `aBlockTwentyFiveAboveTheLotRefusesTheLot`,
+`theFoundationRejectsABlockTwentyFiveAboveTheFloor`,
+`theModBigHouseIsNeverAProfessionBuild` e
+`ConstructionCancellationGameTest`.
+
+Verificação final: `test` passou; a execução completa chegou a 394 GameTests,
+com 393 aprovados. O único erro restante é o residual conhecido
+`FarmPlanGameTest.thenextturnafterahouseisnonresidential`; não houve falha nos
+testes novos de seleção vertical, catálogo ou cancelamento.
+
+O JAR 0.3.0 foi reconstruído e sincronizado em `build/libs/`, `downloads/` e
+`%APPDATA%/.minecraft/mods/`. As três cópias têm SHA-256
+`1F3D285805DF24DE97D7C41042CCEC7C7224F928926102CF74929B833E9FB504`.

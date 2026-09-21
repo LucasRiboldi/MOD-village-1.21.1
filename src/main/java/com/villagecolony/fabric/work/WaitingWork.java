@@ -85,6 +85,16 @@ public final class WaitingWork {
         BUILDING_SINCE.clear();
     }
 
+    /** Esquece os relogios de uma obra removida por cancelamento manual. */
+    public static void forget(UUID projectId) {
+        if (projectId == null) {
+            return;
+        }
+
+        WAITING_SINCE.remove(projectId);
+        BUILDING_SINCE.remove(projectId);
+    }
+
     /**
      * Acorda a obra que esperava material, quando o material chegou.
      *

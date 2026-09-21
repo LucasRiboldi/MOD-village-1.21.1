@@ -48,6 +48,24 @@ public class BigHouseFoundationGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** A caixa vertical inteira precisa estar livre por 25 blocos. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "big_house_foundation")
+    public void theFoundationRejectsABlockTwentyFiveAboveTheFloor(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos origin = context.getAbsolutePos(new BlockPos(3, 2, 3));
+        Vec3i size = new Vec3i(3, 4, 3);
+
+        world.setBlockState(origin.add(1, 25, 1), Blocks.STONE.getDefaultState());
+
+        Colony colony = Colony.create(
+                UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(origin));
+
+        context.assertFalse(
+                invokesSafe(world, colony, origin, size),
+                "a BigHouseMOD foi aceita com bloco na folga vertical de 25 blocos");
+        context.complete();
+    }
+
     /** Um projeto pendente do save já reserva a área antes de {@code resume}. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "big_house_foundation")
     public void aPendingProjectStillReservesItsSavedBox(TestContext context) {

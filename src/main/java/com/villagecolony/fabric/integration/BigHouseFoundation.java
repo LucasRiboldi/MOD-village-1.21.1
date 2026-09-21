@@ -209,9 +209,10 @@ public final class BigHouseFoundation {
     private static boolean safe(
             ServerWorld world, Colony colony, int x, int y, int z, Vec3i size) {
         ColonyPos min = new ColonyPos(x, y, z);
+        int clearThrough = Math.max(size.getY() - 1, BuildSiteScanner.VERTICAL_CLEARANCE);
         ColonyPos max = new ColonyPos(
                 x + size.getX() - 1,
-                y + size.getY() - 1,
+                y + clearThrough,
                 z + size.getZ() - 1);
 
         if (VillageColonyMod.BUILDINGS.anythingBuiltInside(min, max)) {
@@ -219,6 +220,10 @@ public final class BigHouseFoundation {
         }
 
         if (BuildSiteScanner.overlapsVillageStructure(world, min, max)) {
+            return false;
+        }
+
+        if (BuildSiteScanner.overlapsConstructionSite(world, colony.id(), min, max, null)) {
             return false;
         }
 
@@ -235,7 +240,7 @@ public final class BigHouseFoundation {
         }
 
         for (int dx = 0; dx < size.getX(); dx++) {
-            for (int dy = 0; dy < size.getY(); dy++) {
+            for (int dy = 0; dy <= clearThrough; dy++) {
                 for (int dz = 0; dz < size.getZ(); dz++) {
                     BlockPos pos = new BlockPos(x + dx, y + dy, z + dz);
                     if (BlockProtection.isVillageOriginal(world, pos)) {

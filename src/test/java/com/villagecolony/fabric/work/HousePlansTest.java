@@ -5,6 +5,7 @@ import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.fabric.integration.VillageStructures;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -143,6 +144,19 @@ class HousePlansTest {
                 catalog(), Set.of(ResourceId.parse("minecraft:village/desert/houses/x")));
 
         assertEquals(3, offered.size(), "uma marca de outro bioma encurtou a lista");
+    }
+
+    @Test
+    void theModBigHouseIsNeverAProfessionBuild() {
+        ResourceId bigHouseMod = ResourceId.parse(
+                "villagecolony:houses/big_house_mod");
+
+        assertFalse(
+                VillageStructures.isProfessionBuildable(bigHouseMod),
+                "a BigHouseMOD entrou no catalogo das profissoes");
+        assertTrue(
+                VillageStructures.isProfessionBuildable(SMALL),
+                "uma estrutura Vanilla valida foi retirada do catalogo profissional");
     }
     /**
      * <b>A primeira casa da colônia é a menor</b> — decisão do autor,

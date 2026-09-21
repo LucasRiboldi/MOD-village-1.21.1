@@ -5,6 +5,20 @@ porque o gargalo do projeto deixou de ser código: havia **dez consertos do
 mineiro empilhados sem uma única sessão que os veja**, e nenhuma pergunta
 importante em aberto pode ser respondida sem abrir o jogo.
 
+**Atualização de 2026-09-21 — lotes e cancelamento de obras.** A
+`BigHouseMOD` continua sendo criada automaticamente com a vila e permanece
+fora do catálogo das profissões. O scanner e a fundação recusam qualquer
+bloco até 25 blocos acima da pegada escolhida, e uma Tocha das Almas dentro de
+uma obra profissional cancela a zona, o projeto e as tarefas sem cancelar a
+`BigHouseMOD`. `./gradlew.bat test` e `./gradlew.bat build` passaram; a bateria
+completa executou 394 GameTests, com 393 aprovados e apenas o residual já
+conhecido de `FarmPlanGameTest`.
+
+**JAR desta atualização:** 0.3.0, SHA-256
+`1F3D285805DF24DE97D7C41042CCEC7C7224F928926102CF74929B833E9FB504` em
+`build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`; as três cópias
+foram comparadas após a atualização.
+
 A sessão de 09-03 aconteceu e **o mineiro trabalhou** — a primeira boa. Ela
 não zerou a pilha: fechou o que dependia de vê-lo cavar, e abriu quatro
 coisas novas, que estão no **item 3-a**.
