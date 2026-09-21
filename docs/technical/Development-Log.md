@@ -8081,3 +8081,31 @@ Verificação final desta etapa: `./gradlew.bat test compileGametestJava` passou
 `C4848314C8E01CC1C04648B86472621FEAF85C4E12FF53828FBECA12EB82C210`. O
 playtest continua necessário para confirmar a seleção visual das estruturas, a
 rota real do aldeão e a entrega da frente arenosa em um save do autor.
+### 2026-09-20 — reparo cíclico e viveiro limitado
+
+O bloqueio de novas construções passou a ter uma etapa explícita de reparo.
+Antes de escolher outra planta, `BuildingRepairPlanner` lê as construções do
+mod já registradas, carrega o mesmo blueprint, verifica no mundo quais blocos
+originais continuam de pé e abre uma tentativa apenas para os ausentes.
+`ConstructionProject.repair` preserva esse progresso e
+`BuildingRegistry.registerOrMerge` atualiza a caixa existente sem duplicar a
+proteção ou rebaixar uma construção concluída.
+
+O ciclo não trava a vila: uma tentativa abandonada é pulada uma vez, liberando
+a escolha de uma obra nova; a varredura seguinte volta a tentar o reparo. O
+construtor continua executando a tarefa, e o `MASON` segue como o ofício de
+pedreiro/ferreiro já existente no catálogo.
+
+O viveiro agora conta mudas e árvores sobre terra enraizada, para em dez e
+procura os pontos do anel externo para dentro. O agricultor continua sendo o
+executor primário; quando o lenhador não encontra árvore ao alcance, ele também
+pode disparar o plantio da mesma meta, usando a muda declarada pelo bioma.
+
+Verificação final desta etapa: `./gradlew.bat test compileGametestJava build`
+passou com 959 testes unitários. `./gradlew.bat runGametest --rerun-tasks`
+executou 388 GameTests; o novo teste do limite de dez árvores passou e a
+falha intermitente de superfície não se repetiu. Permaneceram duas falhas
+residuais fora deste lote: `FarmPlanGameTest` alternou uma casa consecutiva,
+e `SmelterGameTest` encontrou três baús onde o cenário espera dois. Ambas
+ficam abertas no `TODO.md`; nenhuma aponta para o reparo cíclico ou para o
+viveiro. O playtest no save continua pendente.

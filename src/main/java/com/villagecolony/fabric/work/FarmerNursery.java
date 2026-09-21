@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 
 import net.minecraft.block.Block;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 
@@ -41,6 +42,9 @@ public final class FarmerNursery {
      */
     public static final int BETWEEN_PLANTINGS = 6_000;
 
+    /** Meta de árvores vivas mantidas pelo viveiro de cada vila. */
+    public static final int TARGET_TREES = 10;
+
     /**
      * A que distância do centro o viveiro fica.
      *
@@ -50,8 +54,11 @@ public final class FarmerNursery {
      */
     static final int EDGE = 28;
 
-    /** Quantos pontos tentar antes de desistir nesta passagem. */
-    private static final int TRIES = 24;
+    /** Limite interno para não plantar dentro do miolo da vila. */
+    private static final int INNER_EDGE = 20;
+
+    /** Resolução do anel de candidatos, percorrido do mais distante ao centro. */
+    private static final int DIRECTIONS = 48;
 
     private static final Map<UUID, Long> LAST = new HashMap<>();
 
@@ -72,6 +79,10 @@ public final class FarmerNursery {
      */
     public static boolean plantIfItIsTime(ServerWorld world, UUID colonyId, BlockPos centre) {
         if (!isTime(colonyId, world.getTime())) {
+            return false;
+        }
+
+        if (countNurseries(world, centre) >= TARGET_TREES) {
             return false;
         }
 
@@ -108,26 +119,51 @@ public final class FarmerNursery {
     /**
      * Um ponto na borda que sirva de viveiro.
      *
-     * <p>Anda em volta do anel em passos largos, e não varre a área: o
-     * que se procura é <b>um</b> lugar, e a borda de um círculo de 28
-     * blocos tem cento e setenta e seis colunas. Varrê-las todas a cada
-     * passagem custaria mais que a decisão vale.
+     * <p>Anda pelo anel externo para dentro. Assim a árvore fica o mais
+     * longe possível do centro sem sair do alcance do lenhador; só usa uma
+     * distância menor quando a borda está ocupada ou inacessível.
      */
     private static Optional<BlockPos> spotOnTheEdge(ServerWorld world, BlockPos centre) {
-        for (int step = 0; step < TRIES; step++) {
-            double angle = 2 * Math.PI * step / TRIES;
+        for (int radius = EDGE; radius >= INNER_EDGE; radius--) {
+            for (int step = 0; step < DIRECTIONS; step++) {
+                double angle = 2 * Math.PI * step / DIRECTIONS;
 
-            int x = centre.getX() + (int) Math.round(EDGE * Math.cos(angle));
-            int z = centre.getZ() + (int) Math.round(EDGE * Math.sin(angle));
+                int x = centre.getX() + (int) Math.round(radius * Math.cos(angle));
+                int z = centre.getZ() + (int) Math.round(radius * Math.sin(angle));
 
-            Optional<BlockPos> ground = groundAt(world, x, z, centre.getY());
+                Optional<BlockPos> ground = groundAt(world, x, z, centre.getY());
 
-            if (ground.isPresent() && TreeNursery.isSpotForANursery(world, ground.get())) {
-                return ground;
+                if (ground.isPresent() && TreeNursery.isSpotForANursery(world, ground.get())) {
+                    return ground;
+                }
             }
         }
 
         return Optional.empty();
+    }
+
+    /** Conta marcadores de viveiro que ainda têm muda ou árvore em cima. */
+    private static int countNurseries(ServerWorld world, BlockPos centre) {
+        int count = 0;
+
+        for (int x = centre.getX() - EDGE; x <= centre.getX() + EDGE; x++) {
+            for (int z = centre.getZ() - EDGE; z <= centre.getZ() + EDGE; z++) {
+                for (int y = centre.getY() + 4; y >= centre.getY() - 8; y--) {
+                    BlockPos ground = new BlockPos(x, y, z);
+
+                    if (!world.getBlockState(ground).isOf(TreeNursery.BED)
+                            || (!world.getBlockState(ground.up()).isIn(BlockTags.SAPLINGS)
+                            && !world.getBlockState(ground.up()).isIn(BlockTags.LOGS))) {
+                        continue;
+                    }
+
+                    count++;
+                    break;
+                }
+            }
+        }
+
+        return count;
     }
 
     /**

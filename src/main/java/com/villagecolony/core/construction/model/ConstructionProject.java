@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -71,6 +72,36 @@ public final class ConstructionProject {
                 Objects.requireNonNull(colonyId, "colonyId"),
                 Objects.requireNonNull(blueprint, "blueprint"),
                 Objects.requireNonNull(origin, "origin"));
+    }
+
+    /**
+     * Reabre uma construção registrada, riscando o que ainda está de pé.
+     *
+     * <p>A lista de posições vem da leitura do mundo na camada Fabric;
+     * este modelo só aplica a regra de estados e mantém a planta como
+     * fonte do que falta. Assim uma tentativa de reparo não duplica
+     * material nem volta a colocar blocos que sobreviveram ao abandono.
+     */
+    public static ConstructionProject repair(
+            UUID colonyId,
+            Blueprint blueprint,
+            ColonyPos origin,
+            Set<ColonyPos> standingBlocks) {
+
+        Objects.requireNonNull(standingBlocks, "standingBlocks");
+
+        ConstructionProject project = plan(colonyId, blueprint, origin);
+        project.moveTo(ConstructionState.PREPARING);
+
+        for (BlueprintBlock block : blueprint.blocks()) {
+            if (standingBlocks.contains(project.worldPositionOf(block))) {
+                project.markPlaced(block);
+            }
+        }
+
+        project.moveTo(ConstructionState.BUILDING);
+
+        return project;
     }
 
     /**

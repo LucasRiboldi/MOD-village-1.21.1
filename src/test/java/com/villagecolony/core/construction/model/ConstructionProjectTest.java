@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
@@ -52,6 +53,25 @@ class ConstructionProjectTest {
         assertEquals(ConstructionState.PLANNED, project.state());
         assertEquals(3, project.remainingCount());
         assertFalse(project.isFinished());
+    }
+
+    @Test
+    void aRepairProjectKeepsBlocksAlreadyStanding() {
+        Blueprint blueprint = Blueprint.of(HOUSE, List.of(
+                block(0, 0, 0, COBBLE),
+                block(1, 0, 0, COBBLE),
+                block(0, 1, 0, PLANKS)));
+
+        ConstructionProject repair = ConstructionProject.repair(
+                UUID.randomUUID(),
+                blueprint,
+                ORIGIN,
+                new HashSet<>(List.of(ORIGIN)));
+
+        assertEquals(ConstructionState.BUILDING, repair.state());
+        assertEquals(2, repair.remainingCount());
+        assertFalse(repair.remaining().stream().anyMatch(
+                block -> repair.worldPositionOf(block).equals(ORIGIN)));
     }
 
     @Test

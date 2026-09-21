@@ -170,4 +170,62 @@ public class TreeNurseryGameTest {
 
         context.complete();
     }
+
+    /** A vila mantém dez viveiros, e não uma quantidade sem teto. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "tree_nursery",
+            tickLimit = 100)
+    public void theNurseryStopsAtTenTrees(TestContext context) {
+        ServerWorld world = context.getWorld();
+        UUID colony = UUID.randomUUID();
+        BlockPos centre = context.getAbsolutePos(new BlockPos(8, 1, 8));
+
+        FarmerNursery.clearAll();
+
+        for (int dx = -29; dx <= 29; dx++) {
+            for (int dz = -29; dz <= 29; dz++) {
+                int distance = dx * dx + dz * dz;
+
+                if (distance >= 20 * 20 && distance <= 29 * 29) {
+                    world.setBlockState(
+                            centre.add(dx, 0, dz), Blocks.SAND.getDefaultState());
+                }
+            }
+        }
+
+        for (int planted = 0; planted < 10; planted++) {
+            long now = world.getTime();
+            FarmerNursery.remember(
+                    colony, now - FarmerNursery.BETWEEN_PLANTINGS);
+
+            if (!FarmerNursery.plantIfItIsTime(world, colony, centre)) {
+                throw new AssertionError(
+                        "o viveiro parou antes de plantar as dez arvores: " + planted);
+            }
+        }
+
+        long now = world.getTime();
+        FarmerNursery.remember(colony, now - FarmerNursery.BETWEEN_PLANTINGS);
+
+        if (FarmerNursery.plantIfItIsTime(world, colony, centre)) {
+            throw new AssertionError("o viveiro plantou uma decima primeira arvore");
+        }
+
+        int rootedDirt = 0;
+        for (int dx = -30; dx <= 30; dx++) {
+            for (int dz = -30; dz <= 30; dz++) {
+                if (world.getBlockState(centre.add(dx, 0, dz))
+                        .isOf(Blocks.ROOTED_DIRT)) {
+                    rootedDirt++;
+                }
+            }
+        }
+
+        if (rootedDirt != 10) {
+            throw new AssertionError(
+                    "a vila deveria ter dez bases de viveiro, mas tem " + rootedDirt);
+        }
+
+        FarmerNursery.clearAll();
+        context.complete();
+    }
 }

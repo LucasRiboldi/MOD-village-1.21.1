@@ -249,11 +249,11 @@ public final class WaitingWork {
      * senão o lote voltaria a parecer livre e a colônia planejaria por
      * cima do que ela mesma levantou.
      *
-     * <p><b>O que isto custa, dito por inteiro:</b> a obra não volta. Se
-     * o pedregulho aparecer depois, ninguém retoma aquela casa — ela
-     * fica como está. A alternativa era a vila inteira parada à espera
-     * de uma entrega que pode nunca vir, e entre as duas esta é a que
-     * deixa a colônia viva.
+     * <p><b>O que isto custa, dito por inteiro:</b> a obra não volta no
+     * mesmo instante. O registro preserva o que já foi levantado e a
+     * varredura cíclica tenta completar os blocos ausentes em um ciclo
+     * posterior. Se uma tentativa não avançar, ela cede uma passagem para
+     * a vila continuar e só então pode ser tentada novamente.
      *
      * @return se a obra foi abandonada agora
      */
@@ -429,7 +429,7 @@ public final class WaitingWork {
                     colony.id(), project.blueprint().id(), project.remainingMaterials());
         }
 
-        VillageColonyMod.BUILDINGS.register(Building.of(project));
+        VillageColonyMod.BUILDINGS.registerOrMerge(Building.of(project));
         VillageColonyMod.CONSTRUCTIONS.forget(project.id());
 
         // A vaga de obra é única; suas tarefas não podem sobreviver ao projeto.

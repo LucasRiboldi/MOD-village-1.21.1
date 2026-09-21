@@ -137,6 +137,7 @@ public final class ConstructionPlanner {
     /** Esquece o motivo guardado. Chamado ao parar o servidor. */
     public static void clearAll() {
         IdleLog.clearAll();
+        BuildingRepairPlanner.clearAll();
     }
 
     /**
@@ -283,6 +284,13 @@ public final class ConstructionPlanner {
             // trabalho é de construção. Repetir "no builder" aqui só
             // alonga a linha.
             return silent(colony, IdleReason.NO_WORKER, "");
+        }
+
+        Optional<ConstructionProject> repair = BuildingRepairPlanner.open(world, colony);
+
+        if (repair.isPresent()) {
+            ensureTask(colony, repair.get());
+            return repair;
         }
 
         // A seleção é global, mas a descoberta do lote continua única: a

@@ -903,7 +903,7 @@ public final class BuilderWork {
         // registro — ver HousePlans.hasNoHouseYet e Building.finished.
         Building building = Building.of(project, true);
 
-        VillageColonyMod.BUILDINGS.register(building);
+        VillageColonyMod.BUILDINGS.registerOrMerge(building);
 
         VillageColonyMod.LOGGER.info(
                 "Colony {} finished {} at {} — {} blocks placed by {}, now colony infrastructure",

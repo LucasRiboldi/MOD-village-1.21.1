@@ -52,6 +52,14 @@ foram comparadas após a atualização. `./gradlew.bat build` e
 save a lista efetiva de estruturas, a rota da coleta de superfície e a entrada
 seca da mina.
 
+**JAR desta implementação em 2026-09-20:** 0.3.0, SHA-256
+`0E0BAA033548135DB51BD2BFA5C8059AA823F9279FD2A28D498EE10F4F84AD6B` em
+`build/libs/` e `downloads/`. A cópia em `%APPDATA%/.minecraft/mods/` ficou
+pendente porque o cliente estava aberto pelo TLauncher durante a entrega.
+`./gradlew.bat test compileGametestJava build` passou com 959 testes unitários;
+`runGametest --rerun-tasks` executou 388 testes, com a regressão das dez árvores
+verde e duas falhas residuais já registradas no `TODO.md`.
+
 **JAR anterior em 2026-09-20:** 0.3.0, SHA-256
 `2111E72B093FC007549946347C5948416061BC2774A10D1932F751BA46B8A7EA` em
 `build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`. O cliente Minecraft

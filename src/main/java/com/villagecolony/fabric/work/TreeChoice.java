@@ -145,6 +145,8 @@ public final class TreeChoice {
         if (tree.isEmpty()) {
             // Nenhuma árvore ao alcance. Não é motivo para encerrar: a
             // floresta cresce, e a muda replantada volta a ser árvore.
+            FarmerNursery.plantIfItIsTime(world, job.task.colonyId(), job.center);
+
             return LumberjackWork.Outcome.SEARCHED;
         }
 

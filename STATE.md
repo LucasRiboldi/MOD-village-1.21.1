@@ -35,6 +35,24 @@ falta conferir a criação no save aberto pelo autor.
 `Builder e1770e02 stopped — the house is up`. A obra desceu de 83 blocos
 a zero em menos de três minutos, com o construtor que conseguiu ficar.
 
+**A fila agora tem reparo cíclico.** Antes de escolher uma planta nova, o
+planejador compara cada construção do mod com o blueprint e reabre uma única
+tentativa para colocar os blocos ausentes. A construção parcial é preservada e
+fundida no mesmo registro; se a tentativa for abandonada, ela cede uma
+passagem para a fila avançar e volta à varredura seguinte. Unitários do modelo
+e do registro passaram; falta confirmar a retomada em jogo.
+
+**O viveiro tem meta finita.** Agricultor e lenhador usam a mesma função para
+manter até dez árvores da madeira do bioma, sobre terra enraizada e no anel
+mais distante acessível do centro. O GameTest prova o limite; a distância real
+e a colheita pelo lenhador continuam pendentes de playtest.
+
+A rodada final executou 388 GameTests: a regressão do viveiro passou e duas
+falhas residuais ficaram abertas, uma intermitência de alternância em
+`FarmPlanGameTest` e uma fixture do fundidor que encontra um baú extra. Não
+há evidência de que qualquer uma seja causada pelo reparo cíclico ou pelo
+viveiro.
+
 O bloqueio de madeira que este arquivo descrevia como "o de agora" está
 vencido — a cadeia inteira (índice de ruas → Regra 3 → Regra 22 → baú
 cheio → pedreiro sem material → arenito → acavalamento → madeira) foi
