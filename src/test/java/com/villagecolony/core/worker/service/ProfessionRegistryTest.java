@@ -39,6 +39,9 @@ class ProfessionRegistryTest {
         assertTrue(ProfessionRegistry.of(ProfessionType.FARMER)
                 .canPerform(Capability.MAINTAIN_FOOD));
 
+        assertTrue(ProfessionRegistry.of(ProfessionType.FARMER)
+                .canPerform(Capability.COLLECT_SOIL));
+
         assertTrue(ProfessionRegistry.of(ProfessionType.BUILDER)
                 .canPerform(Capability.BUILD_STRUCTURE));
     }

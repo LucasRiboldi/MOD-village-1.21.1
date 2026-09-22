@@ -49,10 +49,7 @@ public enum ProfessionType {
     /** Cuida das plantações. */
     FARMER,
 
-    /** Produz materiais de origem animal. */
-    BREEDER,
-
-    /** Compatibilidade com saves anteriores; novas vagas usam BREEDER. */
+    /** Cuida das ovelhas e produz lã. */
     SHEPHERD,
 
     /** Compatibilidade com saves anteriores; construção agora é uma tarefa. */

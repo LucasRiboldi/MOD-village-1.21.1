@@ -53,6 +53,10 @@ class ColonyCycleTest {
         workers.register(UUID.randomUUID(), COLONY).assign(ProfessionType.MINER);
     }
 
+    private void farmer() {
+        workers.register(UUID.randomUUID(), COLONY).assign(ProfessionType.FARMER);
+    }
+
     private static ResourceTally owning(int logs) {
         return ResourceTally.of(Map.of(ResourceType.OAK_LOG, logs));
     }
@@ -86,6 +90,22 @@ class ColonyCycleTest {
                 .filter(task -> task.priority() == TaskPriority.CONSTRUCTION_MATERIAL).count());
         assertEquals(1, created.stream()
                 .filter(task -> task.priority() == TaskPriority.PRODUCTION).count());
+    }
+
+    @Test
+    void dirtNeededByConstructionGoesToTheFarmerFirst() {
+        farmer();
+        Map<ResourceType, Integer> goal = Map.of(ResourceType.DIRT, 16);
+        Map<ResourceType, Integer> project = Map.of(ResourceType.DIRT, 8);
+
+        ColonyCycle.run(COLONY, ResourceTally.empty(), goal, tasks, workers,
+                worker -> true, com.villagecolony.core.coordination.ProductionHands.IGNORED, project);
+
+        List<Task> created = tasks.ofColony(COLONY);
+
+        assertEquals(1, created.size());
+        assertEquals(TaskType.COLLECT_SOIL, created.get(0).type());
+        assertEquals(TaskPriority.CONSTRUCTION_MATERIAL, created.get(0).priority());
     }
 
     @Test

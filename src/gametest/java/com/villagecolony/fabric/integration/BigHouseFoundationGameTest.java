@@ -98,6 +98,41 @@ public class BigHouseFoundationGameTest implements FabricGameTest {
                     BuildSiteScanner.overlapsConstructionSite(
                             context.getWorld(), colonyId, origin, max, null),
                     "o projeto pendente nao protegeu sua caixa antes de resume");
+
+        } finally {
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(colonyId);
+            BuildSiteScanner.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /** A casa fundacional pendente reserva a pegada antes da retomada. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "big_house_foundation")
+    public void aPendingBigHouseReservesItsFootprintAtAnyHeight(TestContext context) {
+        UUID colonyId = UUID.randomUUID();
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(3, 4, 3)));
+        UUID projectId = UUID.randomUUID();
+        var blueprint = HousePlans.blueprintOf(
+                context.getWorld(), colonyId, StructureBlueprintReader.BIG_HOUSE_MOD, origin)
+                .orElseThrow(() -> new AssertionError("a planta da BigHouseMOD nao foi encontrada"));
+        ColonyPos higherMin = new ColonyPos(
+                origin.x(), origin.y() + blueprint.size().y(), origin.z());
+        ColonyPos higherMax = new ColonyPos(
+                origin.x() + blueprint.size().x() - 1,
+                higherMin.y() + 3,
+                origin.z() + blueprint.size().z() - 1);
+
+        try {
+            VillageColonyMod.CONSTRUCTIONS.registerPending(new ConstructionService.Pending(
+                    projectId, colonyId, StructureBlueprintReader.BIG_HOUSE_MOD,
+                    origin, ConstructionState.BUILDING));
+
+            context.assertTrue(
+                    BuildSiteScanner.overlapsConstructionSite(
+                            context.getWorld(), colonyId, higherMin, higherMax, null),
+                    "a casa pendente nao reservou a pegada em outra altura");
         } finally {
             VillageColonyMod.CONSTRUCTIONS.removeOfColony(colonyId);
             BuildSiteScanner.clearAll();

@@ -1,6 +1,9 @@
 package com.villagecolony.gametest;
 
+import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
@@ -14,6 +17,7 @@ import com.villagecolony.fabric.work.PottedPlant;
 import com.villagecolony.fabric.integration.CraftingLookup;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.work.HousePlans;
+import com.villagecolony.fabric.work.MaterialChoice;
 import com.villagecolony.fabric.work.WorkMaterials;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -53,6 +57,55 @@ public class WorkMaterialsGameTest implements FabricGameTest {
 
     /** Uma posição qualquer da arena, para a paleta saber o bioma. */
     private static final BlockPos HERE = new BlockPos(2, 2, 2);
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_materials",
+            tickLimit = 20)
+    public void whiteTerracottaAcceptsPlainTerracotta(TestContext context) {
+        List<Item> choices = MaterialChoice.forBlock(Blocks.WHITE_TERRACOTTA);
+
+        context.assertTrue(choices.getFirst() == Items.WHITE_TERRACOTTA,
+                "a cor exata deve continuar sendo a primeira escolha");
+        context.assertTrue(choices.contains(Items.TERRACOTTA),
+                "terracota branca deve aceitar terracota neutra para nao bloquear a obra por cor");
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_materials",
+            tickLimit = 20)
+    public void whiteTerracottaRequestsClayForTheSmelter(TestContext context) {
+        ServerWorld world = context.getWorld();
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(HERE));
+        Colony colony = Colony.create(UUID.randomUUID(), origin);
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+        VillageColonyMod.COLONIES.register(colony);
+
+        Blueprint plan = Blueprint.of(
+                ResourceId.vanilla("village/plains/houses/white_terracotta_test"),
+                List.of(new BlueprintBlock(
+                        new ColonyPos(0, 0, 0), MinecraftTypeAdapter.toResourceId(Blocks.WHITE_TERRACOTTA))));
+        ConstructionProject project = ConstructionProject.plan(colony.id(), plan, origin);
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+
+        try {
+            context.assertTrue(
+                    WorkMaterials.smeltedNeeds(world, colony)
+                            .getOrDefault(ResourceType.TERRACOTTA, 0) == 1,
+                    "a obra de terracota branca deve pedir uma terracota ao fundidor");
+            context.assertTrue(
+                    WorkMaterials.surfaceGatheredNeeds(world, colony)
+                            .getOrDefault(ResourceType.CLAY, 0) == 1,
+                    "a terracota pedida pela obra deve abrir coleta de bloco de argila");
+            context.assertTrue(
+                    CraftingLookup.smeltingInputsFor(world, Items.TERRACOTTA).contains(Items.CLAY),
+                    "a cadeia deve usar a receita de fornalha do Minecraft, argila para terracota");
+        } finally {
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
 
     /**
      * A vidraça vira vidro pela receita do próprio jogo — 2026-08-20.

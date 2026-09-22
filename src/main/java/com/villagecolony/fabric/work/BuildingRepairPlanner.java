@@ -8,6 +8,7 @@ import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import net.minecraft.block.Block;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -43,6 +44,10 @@ final class BuildingRepairPlanner {
         observeClosedAttempts(colony.id());
 
         for (Building building : VillageColonyMod.BUILDINGS.ofColony(colony.id())) {
+            if (building.blueprint().equals(StructureBlueprintReader.BIG_HOUSE_MOD)) {
+                continue;
+            }
+
             Optional<Blueprint> blueprint = HousePlans.blueprintOf(
                     world, colony.id(), building.blueprint(), building.min());
 

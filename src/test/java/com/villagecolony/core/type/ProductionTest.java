@@ -56,6 +56,7 @@ class ProductionTest {
                         ResourceType.SMOOTH_SANDSTONE,
                         ResourceType.STONE,
                         ResourceType.SMOOTH_STONE,
+                        ResourceType.TERRACOTTA,
 
                         // <b>O tijolo entrou em 2026-09-19</b>, e este
                         // teste cobrou a declaração — que é o serviço
@@ -93,6 +94,7 @@ class ProductionTest {
 
         assertEquals(Production.SURFACE_GATHERED, ResourceType.SAND.production());
         assertEquals(Production.SURFACE_GATHERED, ResourceType.GRASS_BLOCK.production());
+        assertEquals(Production.SOIL_GATHERED, ResourceType.DIRT.production());
     }
 
     /**

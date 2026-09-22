@@ -17,6 +17,7 @@ import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.work.BuilderApproach;
@@ -526,6 +527,54 @@ public class BuilderGameTest implements FabricGameTest {
      */
     private static Fixture setUpDoor(TestContext context) {
         return setUpDoor(context, Items.OAK_DOOR, 2);
+    }
+
+    /**
+     * Ingrediente fora da economia local não pode deixar uma obra esperando.
+     *
+     * <p>O fermentador da primeira obra real precisava de haste de blaze. A
+     * colônia não tem rota para o Nether, então a peça final entra no baú que
+     * atende o construtor, em vez de a obra ficar em espera infinita.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder")
+    public void unobtainableConstructionPieceIsStockedForTheBuilder(TestContext context) {
+        Fixture fixture = setUp(context, 0, Blueprint.of(
+                ResourceId.vanilla("village/plains/houses/test_brewing_stand"),
+                List.of(new BlueprintBlock(
+                        new ColonyPos(0, 0, 0),
+                        MinecraftTypeAdapter.toResourceId(Blocks.BREWING_STAND)))), 1);
+
+        try {
+            context.assertTrue(
+                    BuilderWork.hasMaterialForNextBlock(context.getWorld(), fixture.project),
+                    "o fermentador sem haste de blaze ainda deixou a obra esperando");
+            context.assertTrue(
+                    ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.BREWING_STAND) == 1,
+                    "a peça sem rota local não entrou no baú do construtor");
+        } finally {
+            fixture.owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /** Madeira de planície tem rota local e não deve ser materializada. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder")
+    public void locallyCraftablePieceStillWaitsForWorkers(TestContext context) {
+        Fixture fixture = setUpDoor(context, Items.AIR, 0);
+
+        try {
+            context.assertFalse(
+                    BuilderWork.hasMaterialForNextBlock(context.getWorld(), fixture.project),
+                    "a porta localmente fabricável foi tratada como recurso externo");
+            context.assertTrue(
+                    ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.OAK_DOOR) == 0,
+                    "a porta localmente fabricável apareceu de graça no baú");
+        } finally {
+            fixture.owned.cleanUp();
+        }
+
+        context.complete();
     }
 
     /**

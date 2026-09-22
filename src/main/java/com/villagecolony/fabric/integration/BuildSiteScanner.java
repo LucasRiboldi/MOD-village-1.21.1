@@ -1667,6 +1667,7 @@ public final class BuildSiteScanner {
 
         if (overlapsVillageStructure(world, floor, ceiling)
                 || VillageColonyMod.BUILDINGS.anythingBuiltInside(floor, ceiling)
+                || overlapsFoundationFootprint(floor, ceiling)
                 || overlapsConstructionSite(world, colonyId, floor, ceiling, null)) {
 
             LotRefusals.refused(colonyId, LotRefusals.Reason.OCCUPIED);
@@ -1745,6 +1746,7 @@ public final class BuildSiteScanner {
         if (overlapsVillageStructure(world, box.min(), box.max())
                 || hasOccupiedBlock(world, box)
                 || VillageColonyMod.BUILDINGS.anythingBuiltInside(box.min(), box.max())
+                || overlapsFoundationFootprint(box.min(), box.max())
                 || overlapsConstructionSite(
                         world, project.colonyId(), box.min(), box.max(), project.id())) {
             return true;
@@ -1808,8 +1810,23 @@ public final class BuildSiteScanner {
     }
 
     private static boolean intersects(ColonyPos min, ColonyPos max, Building site) {
+        if (!intersectsFootprint(min, max, site)) {
+            return false;
+        }
+
+        return site.blueprint().equals(StructureBlueprintReader.BIG_HOUSE_MOD)
+                || min.y() <= site.max().y() && max.y() >= site.min().y();
+    }
+
+    /** A fundacao reserva todas as colunas da sua pegada, em qualquer altura. */
+    private static boolean overlapsFoundationFootprint(ColonyPos min, ColonyPos max) {
+        return VillageColonyMod.BUILDINGS.all().stream()
+                .filter(site -> site.blueprint().equals(StructureBlueprintReader.BIG_HOUSE_MOD))
+                .anyMatch(site -> intersectsFootprint(min, max, site));
+    }
+
+    private static boolean intersectsFootprint(ColonyPos min, ColonyPos max, Building site) {
         return min.x() <= site.max().x() && max.x() >= site.min().x()
-                && min.y() <= site.max().y() && max.y() >= site.min().y()
                 && min.z() <= site.max().z() && max.z() >= site.min().z();
     }
 

@@ -7,12 +7,14 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestMarker;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 
@@ -81,6 +83,31 @@ public class ChestMarkerGameTest implements FabricGameTest {
                         .isPresent(),
                 "a marca do fazendeiro não foi lida de volta");
 
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "marker_read")
+    public void oldBreederBadgeBecomesShepherdWithoutAnotherFrame(TestContext context) {
+        BlockPos chest = new BlockPos(3, 2, 3);
+        context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+        ServerWorld world = context.getWorld();
+        BlockPos absolute = context.getAbsolutePos(chest);
+
+        context.assertTrue(ChestMarker.markAt(world, absolute, ProfessionType.SHEPHERD),
+                "não criou a marca do pastor");
+        ItemFrameEntity frame = world.getEntitiesByClass(ItemFrameEntity.class,
+                new Box(absolute).expand(2.0), found -> true).get(0);
+        ItemStack oldBadge = frame.getHeldItemStack().copy();
+        oldBadge.set(DataComponentTypes.CUSTOM_NAME, Text.literal("Baú do Criador"));
+        frame.setHeldItemStack(oldBadge);
+
+        context.assertTrue(ChestMarker.markAt(world, absolute, ProfessionType.SHEPHERD),
+                "não corrigiu a marca antiga");
+        context.assertTrue("Baú do Pastor".equals(frame.getHeldItemStack().getName().getString()),
+                "o baú ainda aparece como do Criador");
+        context.assertTrue(framesAround(context, chest) == 1, "duplicou o quadro do baú");
+        context.assertFalse(ChestMarker.markAt(world, absolute, ProfessionType.SHEPHERD),
+                "reescreveu uma marca já corrigida");
         context.complete();
     }
 

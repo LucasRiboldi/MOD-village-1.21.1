@@ -20,6 +20,7 @@ import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
 import com.villagecolony.fabric.integration.ColonySupply;
+import com.villagecolony.fabric.integration.BiomeConstructionSupply;
 import net.minecraft.block.Block;
 import net.minecraft.block.enums.BedPart;
 import net.minecraft.block.enums.DoubleBlockHalf;
@@ -732,8 +733,8 @@ public final class BuilderWork {
 
         Optional<Item> plant = PottedPlant.plantOf(state.getBlock());
 
-        if (!ColonySupply.canProvide(
-                world, project.colonyId(), project.origin(), PottedPlant.pot())) {
+        if (!hasOrStocksConstructionMaterial(
+                world, project, PottedPlant.pot())) {
 
             waitForResources(project, job, workerId, block);
 
@@ -741,8 +742,7 @@ public final class BuilderWork {
         }
 
         if (plant.isPresent()
-                && !ColonySupply.canProvide(
-                        world, project.colonyId(), project.origin(), plant.get())) {
+                && !hasOrStocksConstructionMaterial(world, project, plant.get())) {
 
             waitForResources(project, job, workerId, block);
 
@@ -779,6 +779,14 @@ public final class BuilderWork {
         for (Item candidate : MaterialChoice.forBlock(wanted)) {
             if (ColonySupply.take(world, project.colonyId(), project.origin(), candidate)) {
                 return Optional.of(candidate);
+            }
+        }
+
+        if (ensureConstructionMaterial(world, project, MaterialChoice.forBlock(wanted))) {
+            for (Item candidate : MaterialChoice.forBlock(wanted)) {
+                if (ColonySupply.take(world, project.colonyId(), project.origin(), candidate)) {
+                    return Optional.of(candidate);
+                }
             }
         }
 
@@ -852,7 +860,35 @@ public final class BuilderWork {
             }
         }
 
-        return false;
+        return ensureConstructionMaterial(world, project, MaterialChoice.forBlock(material.get()));
+    }
+
+    /** Mantém no baú a peça que nenhuma rota do bioma pode produzir. */
+    private static boolean hasOrStocksConstructionMaterial(
+            ServerWorld world, ConstructionProject project, Item item) {
+
+        if (ColonySupply.canProvide(world, project.colonyId(), project.origin(), item)) {
+            return true;
+        }
+
+        return ensureConstructionMaterial(world, project, List.of(item));
+    }
+
+    /**
+     * Alternativas locais sempre ganham. Só a ausência de rota para a família
+     * inteira autoriza a peça preferida a aparecer no baú da obra.
+     */
+    private static boolean ensureConstructionMaterial(
+            ServerWorld world, ConstructionProject project, List<Item> choices) {
+
+        if (choices.stream().anyMatch(candidate ->
+                BiomeConstructionSupply.hasRouteInBiome(world, project.colonyId(), candidate))) {
+
+            return false;
+        }
+
+        return !choices.isEmpty() && BiomeConstructionSupply.stockIfUnobtainable(
+                world, project.colonyId(), project.origin(), choices.getFirst());
     }
 
     /**

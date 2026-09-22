@@ -210,12 +210,12 @@ public final class ChestMarker {
         if (existing.isPresent()) {
             ItemFrameEntity frame = existing.get();
 
-            if (frame.getHeldItemStack().isOf(badge.getItem())) {
+            if (frame.getHeldItemStack().isOf(badge.getItem())
+                    && label(profession).equals(frame.getHeldItemStack().getName().getString())) {
                 return false;
             }
 
-            // Mesmo baú, outra profissão: troca o ícone em vez de
-            // pendurar um segundo quadro.
+            // Reaproveita o quadro quando o ofício ou o nome legado mudou.
             frame.setHeldItemStack(badge);
 
             return true;
@@ -354,7 +354,6 @@ public final class ChestMarker {
         return switch (profession) {
             case LUMBERJACK -> Items.IRON_AXE;
             case MINER -> Items.IRON_PICKAXE;
-            case BREEDER -> Items.SHEARS;
             case SHEPHERD -> Items.SHEARS;
             case SMELTER -> Items.FURNACE;
             case FARMER -> Items.IRON_HOE;
@@ -369,7 +368,6 @@ public final class ChestMarker {
         return switch (profession) {
             case LUMBERJACK -> "Baú do Lenhador";
             case MINER -> "Baú do Mineiro";
-            case BREEDER -> "Baú do Criador";
             case SHEPHERD -> "Baú do Pastor";
             case SMELTER -> "Baú do Fundidor";
             case FARMER -> "Baú do Fazendeiro";

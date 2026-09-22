@@ -1,29 +1,52 @@
 # TODO
 
-**Atualizado:** 2026-09-21, conclusão real do construtor e cancelamento por Tocha das Almas.
+**Atualizado:** 2026-09-22, suprimento de construcao sem rota no bioma.
 
 **Auditoria técnica:** [`docs/technical/Project-Audit-2026-09-21.md`](docs/technical/Project-Audit-2026-09-21.md).
-Linha de base desta sessão: 960 unitários e 74 testes Python aprovados; 397
-GameTests executados, com 1 falha obrigatória em
-`FarmPlanGameTest.thenextturnafterahouseisnonresidential`.
+Nesta sessao: uma obra que pede uma peca sem rota fisica no bioma recebe a peca
+final no bau que atende o construtor. A verificacao percorre receitas Vanilla;
+alternativas e cadeias locais, como `argila -> fornalha -> terracota`, continuam
+sob responsabilidade dos oficios. A rodada atual de `runGametest` executou 410
+testes, 408 aprovados; restam duas falhas independentes: alternancia de
+`FarmPlanGameTest` e a fixture de terra de `SurfaceGatheringGameTest`. Os 76
+testes Python da auditoria passaram nesta sessao.
+
+## Fila operacional 2026-09-22
+
+O relatorio atual, incluindo responsabilidades, fluxo de obra, suprimento por
+bioma e estatistica do `latest.log`, esta em
+[`docs/technical/Operational-Status-2026-09-22.md`](docs/technical/Operational-Status-2026-09-22.md).
+Ordem canonica desta sessao: P0 fechar os GameTests residuais; P1 reproduzir as
+repeticoes medidas de mina/obra/atribuicao; P2 interpretar varredura e reduzir
+complexidade; P3 endurance. Nao tratar contagem de log como defeito confirmado
+sem contexto e regressao automatizada.
 
 ## Próximas atividades corrigíveis sem acessar o jogo
 
 Esta fila separa falhas reproduzíveis ou coberturas que podem ser tratadas
 com código e testes locais das validações que continuam dependendo de um save.
 
-- [x] 🔴 **P0.9 — catálogo e terreno seguro:** as construções do mod agora usam somente a whitelist explícita de ids Vanilla reais por bioma; areia, terra e relva só são coletadas pelo fundidor quando uma obra pede o recurso e sempre no setor externo; bocas de mina rejeitam água, exigem entrada livre e preferem a posição seca mais distante/elevada. `VillageStructuresGameTest`, `SurfaceGatheringGameTest` e `MinerGameTest` passaram.
+- [x] **Criador encerrado:** `SHEPHERD` assume vagas, fundação, tarefas, nome e baú do antigo `BREEDER`; saves antigos são migrados na leitura. Unitarios e GameTests de nome, bau, fundacao e trabalho do Pastor passaram.
+- [x] **Cadeia da terracota da obra:** a peca exata continua preferida, mas a tag Vanilla de terracotas pode substitui-la; `CLAY` alimenta a fornalha para terracota neutra. O `CARPENTER` ainda fabrica o fermentador pela receita Vanilla quando houver haste e pedregulho; sem rota local para a haste, a politica de suprimento da obra entrega o fermentador final. Os tres GameTests de substituicao, cadeia de argila e bolas de argila falharam antes da correcao e passam depois.
+- [x] **Suprimento de obra sem rota no bioma:** a construcao consulta sua familia de alternativas e a arvore de receitas Vanilla. Se nenhuma rota local existir, a peca preferida aparece no bau da obra quando demandada; se qualquer rota existir, ela permanece tarefa dos oficios. `BuilderGameTest` cobre fermentador sem haste de blaze e porta de carvalho em planicie.
+- [x] **Inventario por bioma das plantas construtiveis:** `ConstructionSupplyAuditGameTest` le todos os 143 NBTs permitidos e registra, por estilo, as estruturas, recursos por rota local, itens automaticos e blocos formados no local. O resultado versionado esta em `docs/technical/Auditoria-2026-09-22-Suprimento-Estruturas-Vanilla.md`.
+- [ ] Playtest da migração: abrir save antigo, confirmar Pastor sobre a cabeça, tesoura no baú e continuidade das tarefas; testar Tocha das Almas dentro de uma obra real e observar liberação da fila, sem esperar demolição.
+- [x] **P0.8/P1.2 — pegada da `BigHouseMOD` reservada:** a busca e a retomada recusam qualquer lote que use uma coluna horizontal da fundacao, mesmo em outra altura ou com projeto pendente. `BuildSiteGameTest.noProfessionLotCanUseTheBigHouseFootprint` falhou antes da correcao e passou depois.
+- [x] **P0.8/P1.2 — BigHouse fundacional nao vira reparo profissional:** o save real tinha projetos `big_house_mod` na mesma origem de casas concluidas. O reparador ignora essa estrutura exclusiva, e a retomada descarta o reparo antigo antes de tocar no terreno. Dois GameTests falharam antes da correcao e passaram depois; um terceiro preserva o reparo de casas profissionais.
+- [ ] Playtest da pegada e do reparo: reabrir o mesmo save e confirmar que o projeto `big_house_mod` antigo desaparece, a casa permanece intacta e o proximo lote profissional nao usa nenhuma coluna de sua pegada. Nao cancelar manualmente a fundacao.
+
+- [x] 🔴 **P0.9 — catálogo e terreno seguro:** as construções do mod agora usam somente a whitelist explícita de ids Vanilla reais por bioma; areia e relva são coletadas pelo fundidor quando uma obra pede o recurso, enquanto terra comum virou solo do fazendeiro com raio protegido ampliado; bocas de mina rejeitam água, exigem entrada livre e preferem a posição seca mais distante/elevada. `VillageStructuresGameTest`, `SurfaceGatheringGameTest` e `MinerGameTest` passaram.
 - [x] 🔴 **P0.10 — reparo cíclico de obras:** depois de concluir, abandonar ou liberar uma obra parada, o planejador varre construções registradas pelo mod, recompõe a planta a partir dos blocos que ainda existem e tenta fechar a incompleta antes de abrir outra. Uma tentativa sem avanço cede uma passagem e é repetida depois, sem travar a vila. `ConstructionProjectTest` e `BuildingRegistryTest` passaram.
-- [x] 🟠 **P0.11 — reserva de árvores da vila:** agricultor e lenhador compartilham o viveiro do bioma, plantam em terra enraizada no anel mais distante acessível e param ao atingir dez árvores marcadas. `TreeNurseryGameTest.theNurseryStopsAtTenTrees` passou.
+- [x] 🟠 **P0.11 — reserva de árvores da vila:** agricultor e lenhador compartilham o viveiro do bioma, plantam em terra enraizada no anel distante de 48 a 56 blocos do centro e param ao atingir dez árvores marcadas. `TreeNurseryGameTest.theNurseryStopsAtTenTrees` passou.
 - [ ] Playtest P0.10/P0.11: confirmar no save que uma obra abandonada é retomada sem duplicar blocos, que uma tentativa impossível não congela a fila e que cada vila mantém dez árvores fora do centro.
 - [ ] Residual de `FarmPlanGameTest.thenextturnafterahouseisnonresidential`: a rodada completa de 21-09 ainda abriu uma casa consecutiva; reproduzir a alternância com estado de vila isolado antes de alterar `HousePlans`.
 - [x] Residual de `SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted`: não repetiu na rodada completa de 21-09; manter a fixture em observação antes de alterar a coleta do fundidor.
-- [x] 🔴 **P0.8 — fundação absoluta da vila:** toda vila detectada cria a `BigHouseMOD`, cópia editada da big house Vanilla sem móveis/decorações, com seis camas e seis baús distintos. Os seis titulares (`MINER`, `LUMBERJACK`, `MASON`, `SMELTER`, `BREEDER` e `BUILDER`) recebem adulto, cama `HOME` e baú dentro dela; `FARMER` e `CARPENTER` continuam profissões ativas, mas sem cama/baú fundacionais na casa, e entram normalmente no crescimento. A Vanilla permanece intacta. `VillageFoundationGameTest` passou.
+- [x] 🔴 **P0.8 — fundação absoluta da vila:** toda vila detectada cria a `BigHouseMOD`, cópia editada da big house Vanilla sem móveis/decorações, com seis camas e seis baús distintos. Os seis titulares (`MINER`, `LUMBERJACK`, `MASON`, `SMELTER`, `SHEPHERD` e `BUILDER`) recebem adulto, cama `HOME` e baú dentro dela; `FARMER` e `CARPENTER` continuam profissões ativas, mas sem cama/baú fundacionais na casa, e entram normalmente no crescimento. A Vanilla permanece intacta. `VillageFoundationGameTest` passou.
 - [ ] Playtest P0.8: entrar em um save com vila recém-detectada e confirmar a `BigHouseMOD`, os seis aldeões, suas camas, seus baús e a ausência de sobreposição com estruturas existentes.
 - [ ] 🔴 **E42 — impasse entre profissões:** criar o GameTest da roça fora do alcance do fazendeiro, com duas passagens do planejador, e corrigir a fila se a segunda passagem não abrir o projeto de casa.
 - [ ] 🟠 **E43 — descanso ignorado:** decidir se o descanso de quatro ciclos deve impedir a reatribuição na segunda passagem de `WorkAssignment`, depois registrar a decisão em teste e corrigir o fluxo escolhido.
 - [ ] 🟠 **P1.1 — trabalhador ocioso sem `COLLECT_STONE` ou `CRAFT_WOOD`:** adicionar uma regressão ponta a ponta para criação do pedido, atribuição ao ofício correto e execução; investigar a mesma raiz do caso de peça de construção já corrigido.
-- [x] 🟠 **Intermitência de `SurfaceGatheringGameTest`:** não repetiu na rodada completa de 21-09; manter a fixture em observação antes de alterar coleta ou timeout.
+- [ ] 🟠 **Intermitencia de `SurfaceGatheringGameTest`:** reproduzida em 21-09. Na primeira de tres rodadas o fazendeiro criado fora da arena nao apareceu no `ServerWorld`; nas duas seguintes, o fundidor nao removeu a areia externa. Capturar uma reproducao deterministica e diagnosticar a fixture/execucao antes de alterar coleta ou timeout.
 - [ ] ⚙️ **E38 — resíduos no inventário pessoal:** definir o destino sustentável de varas, maçãs e mudas antes de alterar armazenamento ou descarte.
 - [ ] 🟠 **E41 — endurance:** criar uma verificação de muitos ciclos para detectar degradação, tarefas acumuladas ou custo crescente; ainda é lacuna de cobertura, não defeito reproduzido.
 - [x] 🟠 **P1.3 — casas consecutivas:** o log mostrou `house → house`. `HousePlans` agora alterna `casa → tipo não residencial A → casa → tipo não residencial B`, exclui o tipo A anterior e mantém todas as famílias sob o mesmo `BuildSiteScanner`; `HousePlansTest` e o GameTest de rotação passaram.
@@ -53,7 +76,6 @@ com código e testes locais das validações que continuam dependendo de um save
 - [ ] Playtest: confirmar recuperação da fila, preservação do lote e segunda casa. Comparar `SweepLog.busy` com passadas; não declarar a varredura resolvida pelo contador antigo.
 - [ ] Playtest dos commits locais: estabilidade de ofício e entrega de pedra depois de limitar também a perna real da boca ao próximo patamar.
 - [ ] Investigar a falha histórica de `ColonyDetectionGameTest` (24/30), não reproduzida na execução de 09-20.
-- [ ] Investigar intermitência de `SurfaceGatheringGameTest.smelterGathersDirtOutsideTheProtectedVillageRadius`: na rodada vermelha de 09-20, o aldeão criado fora da arena não foi encontrado no `ServerWorld`; não repetiu nas duas rodadas seguintes. Sem alteração de coleta ou aumento de timeout.
 
 ---
 

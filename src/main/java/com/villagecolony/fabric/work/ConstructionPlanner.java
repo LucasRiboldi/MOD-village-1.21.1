@@ -23,6 +23,7 @@ import com.villagecolony.fabric.integration.VillageRoad;
 import com.villagecolony.fabric.integration.RoadExtension;
 import com.villagecolony.fabric.integration.SweepLog;
 import com.villagecolony.fabric.integration.SitePreparation;
+import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import net.minecraft.block.Block;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -707,6 +708,18 @@ public final class ConstructionPlanner {
         }
 
         ConstructionService.Pending saved = pending.get();
+
+        if (saved.blueprint().equals(StructureBlueprintReader.BIG_HOUSE_MOD)
+                && VillageColonyMod.BUILDINGS.ofColony(colony.id()).stream()
+                        .anyMatch(building -> building.finished()
+                                && building.blueprint().equals(saved.blueprint())
+                                && building.min().equals(saved.origin()))) {
+            VillageColonyMod.LOGGER.info(
+                    "Colony {} drops saved BigHouseMOD repair at {} — foundation already stands",
+                    colony.id(), saved.origin());
+            VillageColonyMod.CONSTRUCTIONS.dropPending(colony.id());
+            return;
+        }
 
         Optional<Blueprint> blueprint = HousePlans.blueprintOf(
                 world, colony.id(), saved.blueprint(), saved.origin());

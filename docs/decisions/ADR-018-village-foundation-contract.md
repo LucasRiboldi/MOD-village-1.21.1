@@ -3,6 +3,10 @@
 **Estado:** Aceita pelo autor em 2026-09-20
 **Escopo:** deteccao de vila e registro de trabalhadores Fabric 1.21.1.
 
+> A referencia historica a `BREEDER` foi substituida por `SHEPHERD` na
+> [ADR-021](ADR-021-pastor-canonico-e-migracao-do-criador.md). Os seis
+> conjuntos fundacionais permanecem iguais.
+
 ## Contexto
 
 Uma vila detectada podia existir com menos adultos, sem cama vinculada e sem

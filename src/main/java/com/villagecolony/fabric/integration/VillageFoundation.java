@@ -97,7 +97,6 @@ public final class VillageFoundation {
             }
 
             worker.profession()
-                    .map(ProfessionAssigner::foundationRole)
                     .filter(ProfessionAssigner.FOUNDATION_ORDER::contains)
                     .ifPresent(presentRoles::add);
         }
@@ -192,7 +191,6 @@ public final class VillageFoundation {
 
         for (Worker worker : workers.ofColony(colonyId)) {
             if (worker.profession()
-                    .map(ProfessionAssigner::foundationRole)
                     .filter(ProfessionAssigner.FOUNDATION_ORDER::contains)
                     .isEmpty()) {
                 continue;

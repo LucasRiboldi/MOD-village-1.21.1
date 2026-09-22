@@ -11,6 +11,7 @@ import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.LotRefusals;
+import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.SweepLog;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Block;
@@ -52,6 +53,40 @@ public class BuildSiteGameTest implements FabricGameTest {
      * volume não é testada de verdade.
      */
     private static final ColonyPos TALL_HOUSE = new ColonyPos(2, 5, 2);
+
+    /** A fundacao reserva sua pegada mesmo quando o lote e medido em outra altura. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_foundation")
+    public void noProfessionLotCanUseTheBigHouseFootprint(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+        BlockPos absolute = context.getAbsolutePos(center);
+        UUID colony = UUID.randomUUID();
+
+        paveGround(context, center);
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, colony, center);
+
+        Building foundation = new Building(
+                UUID.randomUUID(), colony, StructureBlueprintReader.BIG_HOUSE_MOD,
+                new ColonyPos(absolute.getX() - 3, absolute.getY() - 30, absolute.getZ() - 3),
+                new ColonyPos(absolute.getX() + 3, absolute.getY() - 25, absolute.getZ() + 3));
+
+        try {
+            VillageColonyMod.BUILDINGS.register(foundation);
+
+            Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+                    context.getWorld(), colony,
+                    MinecraftTypeAdapter.toColonyPos(absolute), 0, SMALL_HOUSE);
+
+            context.assertTrue(site.isEmpty(),
+                    "uma zona profissional usou a pegada da BigHouseMOD em outra altura: "
+                            + site.map(found -> found.origin().toString()).orElse(""));
+        } finally {
+            VillageColonyMod.BUILDINGS.removeOfColony(colony);
+            BuildSiteScanner.clearAll();
+        }
+
+        context.complete();
+    }
 
     /**
      * P0.7: solo sólido disponível não é recusado por sua composição.

@@ -181,11 +181,11 @@ public class TreeNurseryGameTest {
 
         FarmerNursery.clearAll();
 
-        for (int dx = -29; dx <= 29; dx++) {
-            for (int dz = -29; dz <= 29; dz++) {
+        for (int dx = -57; dx <= 57; dx++) {
+            for (int dz = -57; dz <= 57; dz++) {
                 int distance = dx * dx + dz * dz;
 
-                if (distance >= 20 * 20 && distance <= 29 * 29) {
+                if (distance >= 48 * 48 && distance <= 57 * 57) {
                     world.setBlockState(
                             centre.add(dx, 0, dz), Blocks.SAND.getDefaultState());
                 }
@@ -211,8 +211,8 @@ public class TreeNurseryGameTest {
         }
 
         int rootedDirt = 0;
-        for (int dx = -30; dx <= 30; dx++) {
-            for (int dz = -30; dz <= 30; dz++) {
+        for (int dx = -57; dx <= 57; dx++) {
+            for (int dz = -57; dz <= 57; dz++) {
                 if (world.getBlockState(centre.add(dx, 0, dz))
                         .isOf(Blocks.ROOTED_DIRT)) {
                     rootedDirt++;

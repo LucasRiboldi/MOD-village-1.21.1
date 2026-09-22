@@ -31,6 +31,124 @@ o §18 do Project-State. O texto das entradas fica como estava.
 
 ---
 
+## Entry 2026-09-22 - relatorio operacional, memoria de travamentos e gate
+
+Esta sessao consolidou a entrega acumulada em uma fotografia operacional. O
+novo `scripts/analyze_village_log.py` le `latest.log` ou `.gz`, classifica
+assinaturas que o mod ja escreve e registra apenas contagens, horario, hash e
+nome do arquivo em `Log-Stall-History.json`. Linhas cruas, UUIDs e coordenadas
+do jogador nao sao persistidos. Tres ocorrencias da mesma assinatura na sessao
+formam candidato a loop, nunca um diagnostico automatico.
+
+O playtest analisado teve 6.337 avisos de frente de mina, 123 esperas de
+recursos, 7 aproximacoes do construtor, 11 pedidos sem profissao e 40 passadas
+de varredura com orcamento esgotado. A fila em
+`Operational-Status-2026-09-22.md` separa o P0 reproduzivel dessas prioridades
+de investigacao e descreve as oito profissoes, selecao/cancelamento de obra e
+suprimento por bioma.
+
+Verificacao: 966 testes Java e 76 testes Python passaram. A rodada completa
+teve 410 GameTests, 408 aprovados e duas falhas: a alternancia apos casa em
+`FarmPlanGameTest` e a fixture de coleta de terra, cujo fazendeiro nao foi
+registrado no `ServerWorld`. O release permanece bloqueado ate ambas terem
+reproducao isolada e regressao verde.
+
+---
+
+## Entry 2026-09-21 — reparo indevido da BigHouse fundacional
+
+O playtest repetiu o erro apos a reserva da pegada. A conclusao anterior era
+incompleta: o JAR atualizado estava carregado, mas nao houve nova busca de lote
+na sessao. O log mostra `starts repair sweep for ...big_house_mod` logo depois
+de `Placed BigHouseMOD`, e depois `resumed ...big_house_mod` no mesmo ponto.
+No save, cinco colonias tinham um projeto pendente na origem de uma BigHouse
+ja registrada como concluida. A comparacao de blocos feita pelo reparador
+tratava a fundacao colocada diretamente como uma obra profissional incompleta.
+
+`BuildingRepairPlanner` agora exclui apenas a `BIG_HOUSE_MOD`. Em
+`ConstructionPlanner.resume`, um projeto antigo dessa planta e descartado se
+ha uma fundacao concluida na mesma origem, antes de `SitePreparation.clear`.
+O save nao foi editado. Os dois GameTests especificos falharam pela causa
+correta antes da mudanca e passaram depois; o terceiro confirma que o reparo
+de uma casa profissional continua ativo. `build` passou. A rodada completa
+teve 402/404 GameTests: as falhas restantes sao a alternancia de
+`FarmPlanGameTest` e a coleta de areia de `SurfaceGatheringGameTest`. A
+confirmacao em jogo no mesmo save ainda e necessaria.
+
+---
+
+## Entry 2026-09-21 — reserva integral da pegada da BigHouseMOD
+
+O playtest encontrou a primeira zona de obra sobre a casa fundacional em uma
+vila nova. A comparacao existente era volumetrica (X/Y/Z); o contrato pedido
+pelo autor e mais forte para a `BigHouseMOD`: nenhuma coluna de sua pegada
+horizontal pode entrar em lote profissional, ainda que o nivel do terreno
+medido seja outro. A busca e a retomada agora aplicam essa reserva ao registro
+da fundacao; projetos abertos e pendentes da casa usam a mesma regra. As
+demais construcoes continuam com intersecao tridimensional.
+
+O novo GameTest da busca falhou antes da correcao com um lote dentro da pegada
+e passou depois. A rodada final executou 401 GameTests, com 399 aprovados;
+persistem as falhas de `FarmPlanGameTest.thenextturnafterahouseisnonresidential`
+e `SurfaceGatheringGameTest.smelterGathersSandOnlyOutsideTheProtectedVillageRadius`.
+A protecao precisa de novo playtest no save. Na investigacao, os hashes do JAR instalado, do
+`downloads/` e do `build/libs/` eram diferentes: o cliente nao usava o codigo
+atual do repositorio. Com o Minecraft fechado, o JAR compilado foi copiado
+para `downloads/` e `mods/`; as tres copias passaram a ter o mesmo SHA-256.
+
+---
+
+## Entry 2026-09-21 — Pastor substitui Criador
+
+Por decisao do autor, `BREEDER` foi encerrado como profissao. `SHEPHERD`
+assume sua vaga no crescimento e na fundacao, as capacidades registradas,
+a elegibilidade para ajudar em obras e o nome visivel. O trabalho de la ja
+era executado por `ShepherdWork`; a mudanca elimina a duplicidade de identidade.
+O save antigo e lido como Pastor e o rotulo antigo "Criador" e atualizado no
+mundo, inclusive no item de identificacao do bau. A ADR-021 registra a
+substituicao das referencias historicas nas ADR-011 e ADR-018.
+
+O cancelamento por Tocha das Almas foi auditado nesta sessao: o comando atua
+apenas dentro do volume de uma obra comum aberta, reserva pendente ou registro
+parcial; encerra suas tarefas e libera o registro, mas nao remove blocos ja
+colocados nem a tocha. A `BigHouseMOD` nao pode ser cancelada assim.
+
+Verificacao: os unitarios direcionados falharam pelos quatro contratos novos
+antes da implementacao e passaram depois. `build` passou com 966 unitarios.
+Os GameTests novos de rotulo antigo do aldeao e badge antigo do bau passaram,
+assim como os de fundacao, trabalho do Pastor e cancelamento. Na bateria
+completa foram 399 casos e 397 aprovados. A falha obrigatoria de
+`FarmPlanGameTest.thenextturnafterahouseisnonresidential` persistiu; a coleta
+de superficie falhou no teste de terra na primeira rodada e no de areia nas
+duas seguintes. A causa dessa instabilidade permanece aberta e nao foi
+alterada como parte da migracao de profissao.
+
+## Entry 2026-09-21 — solo do fazendeiro, mina em blocos de dois lances
+
+O relato em jogo pediu duas separações que estavam misturadas: o nome visível
+do aldeão precisa bater com a profissão funcional do mod, e terra comum não
+deveria mais ser uma frente do fundidor. `DIRT` agora declara
+`SOIL_GATHERED`, `ColonyCycle` traduz isso para `COLLECT_SOIL`, e o
+`ProfessionRegistry` dá essa capacidade ao fazendeiro. A coleta física continua
+usando a varredura de recurso natural exposto, mas com assunto, ferramenta,
+executor e raio protegido próprios para solo.
+
+O caminho de terra segue como bloco assentado por estrada/obra, não como item
+de estoque. O que mudou foi a matéria-prima: quando a construção precisa de
+terra comum, esse pedido vira prioridade de construção e vai para o fazendeiro.
+`grass_block` ficou no fundidor, porque a entrega correta ainda depende da pá
+com Toque Suave.
+
+A mina também mudou de escala: a espiral mantém quatro lances de escada, mas a
+área de galerias agora duplica a cada dois lances antes de aprofundar. O
+viveiro de árvores saiu do anel de 20–28 para 48–56 blocos do centro, longe das
+estruturas habitadas e ainda dentro do alcance do lenhador.
+
+Verificação: os unitários direcionados de mina, ciclo, profissões, produção,
+responsabilidade e atribuição passaram; `build` passou. `runGametest` executou
+397 casos, com 396 aprovados e a falha obrigatória já conhecida em
+`FarmPlanGameTest.thenextturnafterahouseisnonresidential`.
+
 ## Entry 2026-09-21 — clarificação de agricultor e carpinteiro
 
 A revisão confirmou que `FARMER` e `CARPENTER` não foram removidos do mod:
@@ -8250,3 +8368,78 @@ testes novos de seleção vertical, catálogo ou cancelamento.
 O JAR 0.3.0 foi reconstruído e sincronizado em `build/libs/`, `downloads/` e
 `%APPDATA%/.minecraft/mods/`. As três cópias têm SHA-256
 `1F3D285805DF24DE97D7C41042CCEC7C7224F928926102CF74929B833E9FB504`.
+
+### 2026-09-22 — terracota alternativa e cadeia real de argila
+
+O log do playtest mostrou duas causas diferentes de espera. A primeira obra
+colocou 65 de 301 blocos e aguardou `brewing_stand`. A tarefa generica do
+`CARPENTER` nao abriu porque a receita Vanilla ainda nao era atendida: a
+colonia nao tinha a haste de blaze exigida, nem pode criar ou procurar um
+recurso do Nether. Com uma haste de blaze e tres pedregulhos em um bau elegivel,
+o carpinteiro passa a fabricar o fermentador pela receita Vanilla.
+
+A segunda obra aguardou `white_terracotta`, cuja receita original pediria oito
+terracotas e corante branco. A politica de escolha agora mantem o item exato
+na frente, mas percorre a tag Vanilla de terracotas como substituicao material
+segura. A demanda de construcao reconhece a terracota neutra como material da
+fornalha, consulta a receita Vanilla e abre a coleta de bloco de argila pelo
+`SMELTER`, no setor externo protegido da vila. Assim a obra nao depende de
+corante branco quando houver terracota de outra cor ou argila acessivel.
+
+Uma verificacao adjacente encontrou que a pa com Toque Suave, correta para
+obter bloco de argila da terracota, impedia a antiga cadeia de bolas de argila
+para tijolos e vasos. A tarefa escolhe agora o drop Vanilla sem encanto apenas
+quando pede `CLAY_BALL`; a ordem `CLAY` continua usando a pa real e recolhe o
+bloco. Os tres GameTests novos falharam antes da implementacao e passam depois.
+`./gradlew.bat runGametest --rerun-tasks` executou 407 testes, com 406
+aprovados. A unica falha remanescente e independente desta mudanca:
+`FarmPlanGameTest.thenextturnafterahouseisnonresidential`.
+
+### 2026-09-22 — suprimento de construcao sem rota no bioma
+
+O autor definiu uma nova regra para impedir que uma obra fique parada por um
+recurso que a colonia nao consegue obter no bioma: a peca final deve aparecer
+no bau que atende o construtor. A politica nao materializa materias-primas nem
+antecipa trabalho que ainda cabe a uma profissao. Ela primeiro verifica todas
+as alternativas seguras da peca e percorre receitas Vanilla de criacao, corte
+e fundicao ate uma fonte direta reconhecida no perfil local. Enquanto uma rota
+existir, a obra continua aguardando a cadeia normal; quando nenhuma existir,
+deposita uma unidade da peca preferida por demanda no bau mais proximo da obra.
+
+O caso observado do `brewing_stand` deixa de exigir haste de blaze: como a
+colonia nao tem rota para o Nether, o fermentador e entregue diretamente. Em
+contraste, uma porta de carvalho em planicie continua aguardando madeira e o
+carpinteiro, e a terracota branca continua preferindo a rota local por argila
+ou uma alternativa Vanilla antes de usar a contingencia. A decisao esta em
+`ADR-022`.
+
+`BuilderGameTest.unobtainableConstructionPieceIsStockedForTheBuilder` falhou
+antes da implementacao e passou depois. O teste
+`locallyCraftablePieceStillWaitsForWorkers` protege a rota local contra
+regressao. A rodada completa executou 409 GameTests; persistem tres falhas
+fora desta mudanca: a alternancia de `FarmPlanGameTest`, a coleta de
+terra pelo fazendeiro e a coleta de relva pelo fundidor em
+`SurfaceGatheringGameTest`.
+
+### 2026-09-22 — inventario de estruturas e suprimento por bioma
+
+Para transformar a regra de suprimento em evidencia reproduzivel, foi criado o
+`ConstructionSupplyAuditGameTest`. Ele le os NBTs Vanilla autorizados por
+`VillageStructures`, depois classifica cada bloco com o mesmo resolvedor que o
+construtor consulta. O escopo e a lista branca do mod, nao todas as estruturas
+decorativas, de ruina ou de outras dimensoes do Minecraft.
+
+A auditoria cobriu as 143 plantas dos cinco estilos suportados: 29 no deserto,
+34 na planicie, 28 na savana, 26 na taiga e 26 na planicie nevada. Para cada
+estilo, o relatorio lista todas as estruturas, as pecas atendidas por rota
+local, as pecas que entram no fornecimento automatico e os blocos formados no
+local, como agua, lavoura e caminho de terra. Vasos contam tanto o vaso quanto
+a planta; ar, jigsaw e metades superiores que o construtor nao assenta ficam
+fora da contagem.
+
+O artefato versionado e
+`docs/technical/Auditoria-2026-09-22-Suprimento-Estruturas-Vanilla.md`. A
+rodada de `./gradlew.bat runGametest --rerun-tasks` executou 410 testes; a
+auditoria passou. O processo ainda termina com duas falhas residuais fora deste
+trabalho: `surfacegatheringgametest.farmergathersdirtoutsidethesoilprotectedradius`
+e `farmplangametest.thenextturnafterahouseisnonresidential`.

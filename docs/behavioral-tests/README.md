@@ -4,19 +4,21 @@ Esta pasta documenta a rede de segurança do Village Colony: o aldeão deve
 continuar trabalhando depois de uma alteração, e a vila deve preservar as
 regras de construção, recursos e persistência.
 
-## Baseline de 2026-09-21
+## Evidencia atual de 2026-09-22
 
 | Suíte | Comando | Resultado |
 |---|---|---|
-| Unitários Java | `./gradlew.bat test --rerun-tasks` | 960 testes, 103 suítes, 0 falhas |
-| Testes Python | `python -m unittest discover -s tests` | 74 testes, 0 falhas |
-| Fabric GameTests | `./gradlew.bat runGametest --rerun-tasks` | 397 testes, 396 aprovados, 1 falha |
+| Unitários Java | `./gradlew.bat test --rerun-tasks` | 966 testes, 103 suítes, 0 falhas |
+| Testes Python | `python -m unittest discover -s tests` | 76 testes, 0 falhas |
+| Fabric GameTests | `./gradlew.bat runGametest --rerun-tasks` | 410 testes, 408 aprovados, 2 falhas |
 
-Falha obrigatória atual:
-`FarmPlanGameTest.thenextturnafterahouseisnonresidential`.
-Ela impede chamar a bateria completa de verde e é o primeiro item para a
-próxima correção. A falha deve ser reproduzida com uma fixture de vila isolada
-antes de alterar `HousePlans` ou relaxar a asserção.
+Falhas obrigatorias atuais:
+`FarmPlanGameTest.thenextturnafterahouseisnonresidential` e
+`SurfaceGatheringGameTest.farmerGathersDirtOutsideTheSoilProtectedRadius`.
+Elas impedem chamar a bateria completa de verde. A primeira deve ser
+reproduzida com uma fixture de vila isolada antes de alterar `HousePlans`; a
+segunda precisa estabilizar o registro da entidade no `ServerWorld` antes de
+alterar coleta ou timeout.
 
 Há também uma falha histórica intermitente documentada em
 [`known-failures.md`](known-failures.md): perda de uma entidade criada fora da
@@ -43,11 +45,11 @@ O projeto separa `core/`, que contém modelo e regras sem Minecraft, de
 ## Funções verificadas
 
 As oito funções operacionais são `MINER`, `LUMBERJACK`, `MASON`, `SMELTER`,
-`CARPENTER`, `FARMER`, `BREEDER` e `BUILDER`. `SHEPHERD` permanece como alias
-legado de `BREEDER`; `MANUFACTURER` não é um nome válido no código atual.
+`CARPENTER`, `FARMER`, `SHEPHERD` e `BUILDER`. `BREEDER` é aceito somente em
+saves antigos e migrado para `SHEPHERD`; `MANUFACTURER` não é válido.
 
 Na fundação da vila, `BigHouseMOD` recebe seis titulares: mineiro, lenhador,
-pedreiro, fundidor, criador e construtor. Agricultor e carpinteiro continuam
+pedreiro, fundidor, pastor e construtor. Agricultor e carpinteiro continuam
 profissões completas, com atribuição e tarefas próprias, mas não recebem cama
 ou baú fundacional dentro da casa; entram no crescimento normal, conforme a decisão registrada em
 [`ADR-020`](../decisions/ADR-020-reparo-ciclico-e-viveiro-da-vila.md).

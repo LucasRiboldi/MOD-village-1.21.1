@@ -30,6 +30,9 @@ public enum Capability {
     /** Recolher areia e blocos naturais expostos fora da vila. */
     COLLECT_SURFACE_RESOURCE,
 
+    /** Recolher terra longe da zona habitada da vila. */
+    COLLECT_SOIL,
+
     /** Tosquiar ovelha. */
     COLLECT_WOOL,
 

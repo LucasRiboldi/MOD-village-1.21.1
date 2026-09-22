@@ -163,6 +163,24 @@ class ColonySavedDataTest {
         assertEquals(ProfessionType.LUMBERJACK, loaded.get(0).profession().orElseThrow());
     }
 
+    @Test
+    void breederFromOldSaveBecomesShepherdAndWritesShepherd() {
+        Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(0, 64, 0));
+        Worker worker = Worker.restore(
+                UUID.randomUUID(), colony.id(), ProfessionType.SHEPHERD);
+        ColonySavedData data = empty();
+        data.sync(List.of(colony), List.of(worker));
+
+        NbtCompound oldSave = data.writeNbt(new NbtCompound(), null);
+        oldSave.getList("workers", 10).getCompound(0).putString("profession", "BREEDER");
+
+        ColonySavedData loaded = ColonySavedData.TYPE.deserializer().apply(oldSave, null);
+        assertEquals(ProfessionType.SHEPHERD,
+                loaded.workers().get(0).profession().orElseThrow());
+        assertEquals("SHEPHERD", loaded.writeNbt(new NbtCompound(), null)
+                .getList("workers", 10).getCompound(0).getString("profession"));
+    }
+
     /** Registrado e ainda sem função é um estado válido, não um defeito. */
     @Test
     void workerWithoutProfessionSurvives() {

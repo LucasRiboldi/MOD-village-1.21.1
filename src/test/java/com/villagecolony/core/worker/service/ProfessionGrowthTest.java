@@ -73,7 +73,7 @@ class ProfessionGrowthTest {
 
         assign(30);
         assertEquals(15, employedCount());
-        assertEquals(2, count(ProfessionType.BREEDER));
+        assertEquals(2, count(ProfessionType.SHEPHERD));
 
         assertEquals(1, assign(31));
         assertEquals(3, count(ProfessionType.MINER));
@@ -102,13 +102,12 @@ class ProfessionGrowthTest {
     }
 
     @Test
-    void legacyShepherdCountsTowardTheBreederQuota() {
-        Worker legacyShepherd = workers.register(UUID.randomUUID(), COLONY);
-        legacyShepherd.assign(ProfessionType.SHEPHERD);
+    void existingShepherdCountsTowardTheShepherdQuota() {
+        Worker shepherd = workers.register(UUID.randomUUID(), COLONY);
+        shepherd.assign(ProfessionType.SHEPHERD);
         addWorkers(15);
 
         assertEquals(7, assign(15));
-        assertEquals(0, count(ProfessionType.BREEDER));
         assertEquals(1, count(ProfessionType.SHEPHERD));
     }
 

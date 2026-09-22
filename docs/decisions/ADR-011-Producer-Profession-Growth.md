@@ -6,6 +6,10 @@
 **Date:** 2026-09-13
 **Decision Type:** Architecture / Gameplay / Data
 
+> A referencia historica a `BREEDER` foi substituida por `SHEPHERD` na
+> [ADR-021](ADR-021-pastor-canonico-e-migracao-do-criador.md). As regras de
+> crescimento permanecem vigentes.
+
 ---
 
 ## 1. Contexto

@@ -86,7 +86,7 @@ sem parede não é casa.
 Cópia editada da big house Vanilla usada **somente pela fundação do mod**. A
 Vanilla continua existindo e não é modificada. Esta planta mantém exatamente
 seis camas e seis baús para os titulares fundacionais `MINER`, `LUMBERJACK`,
-`MASON`, `SMELTER`, `BREEDER` e `BUILDER`. Agricultor e carpinteiro continuam
+`MASON`, `SMELTER`, `SHEPHERD` e `BUILDER`. Agricultor e carpinteiro continuam
 profissões completas, com registro, atribuição e tarefas próprias; apenas não
 recebem cama ou baú fundacional dentro desta casa e entram no crescimento
 normal fora desses conjuntos.

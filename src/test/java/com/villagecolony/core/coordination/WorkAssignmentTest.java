@@ -57,6 +57,11 @@ class WorkAssignmentTest {
                 ResourceType.OAK_LOG, 64);
     }
 
+    private Task soilTask() {
+        return tasks.create(COLONY, TaskType.COLLECT_SOIL, TaskPriority.PRODUCTION,
+                ResourceType.DIRT, 16);
+    }
+
     @Test
     void aLumberjackTakesTheWoodTask() {
         Worker lumberjack = workerWith(ProfessionType.LUMBERJACK);
@@ -74,6 +79,24 @@ class WorkAssignmentTest {
     void aFarmerDoesNotTakeTheWoodTask() {
         workerWith(ProfessionType.FARMER);
         Task task = woodTask();
+
+        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(TaskState.AVAILABLE, task.state());
+    }
+
+    @Test
+    void aFarmerTakesTheSoilTask() {
+        Worker farmer = workerWith(ProfessionType.FARMER);
+        Task task = soilTask();
+
+        assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(Optional.of(farmer.villagerId()), task.executor());
+    }
+
+    @Test
+    void aSmelterDoesNotTakeTheSoilTask() {
+        workerWith(ProfessionType.SMELTER);
+        Task task = soilTask();
 
         assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
         assertEquals(TaskState.AVAILABLE, task.state());
@@ -371,15 +394,15 @@ class WorkAssignmentTest {
     }
 
     @Test
-    void legacyShepherdDoesNotBecomeAConstructionWorker() {
-        workerWith(ProfessionType.SHEPHERD);
+    void shepherdCanHelpBuildWhenIdle() {
+        Worker shepherd = workerWith(ProfessionType.SHEPHERD);
         Task build = tasks.create(COLONY, TaskType.BUILD, TaskPriority.CONSTRUCTION,
                 ResourceType.OAK_PLANKS, 1);
 
-        assertEquals(0, WorkAssignment.countCapableOf(
+        assertEquals(1, WorkAssignment.countCapableOf(
                 COLONY, Capability.BUILD_STRUCTURE, workers));
-        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
-        assertEquals(TaskState.AVAILABLE, build.state());
+        assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(Optional.of(shepherd.villagerId()), build.executor());
     }
 
     /**

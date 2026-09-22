@@ -39,14 +39,12 @@ public final class ProfessionAssigner {
             ProfessionType.SMELTER,
             ProfessionType.CARPENTER,
             ProfessionType.FARMER,
-            ProfessionType.BREEDER);
+            ProfessionType.SHEPHERD);
 
     /**
      * Piso da casa fundacional: uma função ativa de cada tipo alojado nela.
      *
-     * <p>{@link ProfessionType#SHEPHERD} é apenas compatibilidade com
-     * saves antigos e conta como {@link ProfessionType#BREEDER};
-     * {@link ProfessionType#CARPENTER} e {@link ProfessionType#FARMER} seguem
+     * <p>{@link ProfessionType#CARPENTER} e {@link ProfessionType#FARMER} seguem
      * disponíveis no registro, na atribuição, nas tarefas e no crescimento
      * normal. A única regra desta lista é que eles não são titulares nem
      * recebem cama ou baú reservados na {@code BigHouseMOD}.
@@ -56,18 +54,12 @@ public final class ProfessionAssigner {
             ProfessionType.LUMBERJACK,
             ProfessionType.MASON,
             ProfessionType.SMELTER,
-            ProfessionType.BREEDER,
+            ProfessionType.SHEPHERD,
             ProfessionType.BUILDER);
 
     private static final int ADULTS_PER_BATCH = 15;
 
     private ProfessionAssigner() {
-    }
-
-    /** Normaliza a profissão legada para a função ativa que ela representa. */
-    public static ProfessionType foundationRole(ProfessionType type) {
-        Objects.requireNonNull(type, "type");
-        return type == ProfessionType.SHEPHERD ? ProfessionType.BREEDER : type;
     }
 
     /**
@@ -77,7 +69,7 @@ public final class ProfessionAssigner {
      * produtores definida pela regra de crescimento da colônia.
      *
      * <p>Empate resolvido por {@link #PRODUCER_ORDER}, que põe o Mineiro
-     * primeiro e o Criador por último.
+     * primeiro e o Pastor por último.
      */
     public static ProfessionType mostNeeded(Collection<Worker> colonyWorkers) {
         Objects.requireNonNull(colonyWorkers, "colonyWorkers");
@@ -89,7 +81,7 @@ public final class ProfessionAssigner {
         }
 
         for (Worker worker : colonyWorkers) {
-            worker.profession().map(ProfessionAssigner::quotaType)
+            worker.profession()
                     .ifPresent(type -> counts.merge(type, 1, Integer::sum));
         }
 
@@ -362,9 +354,7 @@ public final class ProfessionAssigner {
                 continue;
             }
 
-            ProfessionType role = worker.profession()
-                    .map(ProfessionAssigner::foundationRole)
-                    .orElse(null);
+            ProfessionType role = worker.profession().orElse(null);
 
             if (preserveFoundation
                     && role != null
@@ -396,15 +386,11 @@ public final class ProfessionAssigner {
         }
 
         for (Worker worker : colonyWorkers) {
-            worker.profession().map(ProfessionAssigner::quotaType)
+            worker.profession()
                     .ifPresent(type -> counts.merge(type, 1, Integer::sum));
         }
 
         return counts;
-    }
-
-    private static ProfessionType quotaType(ProfessionType type) {
-        return type == ProfessionType.SHEPHERD ? ProfessionType.BREEDER : type;
     }
 
     /**

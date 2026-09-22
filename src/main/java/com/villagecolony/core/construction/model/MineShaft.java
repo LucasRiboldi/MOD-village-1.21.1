@@ -72,6 +72,12 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
     /** Quantos lances o caracol dá por nível — quatro é a volta inteira. */
     public static final int HELIX_FLIGHTS = 4;
 
+    /** A cada dois lances atuais, o nível ganha outra área de galeria. */
+    public static final int AREA_DOUBLING_STAIR_FLIGHTS = 2;
+
+    /** Quantas áreas de galeria cabem na volta atual da escada. */
+    public static final int AREA_MULTIPLIER = HELIX_FLIGHTS / AREA_DOUBLING_STAIR_FLIGHTS;
+
     /** Quanto o caracol desce por nível. Vinte, como os dois lances de antes. */
     public static final int DESCENT = HELIX_SIDE * HELIX_FLIGHTS;
 
@@ -421,10 +427,14 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
     public static final int RINGS = ARM / RUN;
 
     /**
-     * Quantos trechos a espiral tem: dois por anel — o que sai e o que
-     * contorna.
+     * Quantos trechos a espiral tem neste nível.
+     *
+     * <p>A base continua sendo dois por anel — o que sai e o que
+     * contorna —, mas cada par de lances da escada abre uma área de
+     * mineração. Com os quatro lances atuais, o nível minera o dobro
+     * antes de descer.
      */
-    private static final int LEGS = 2 * RINGS;
+    public static final int GALLERY_LEGS = 2 * RINGS * AREA_MULTIPLIER;
 
     /**
      * Se este índice da ordem já passou do fim do braço.
@@ -436,7 +446,7 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
      * laço.
      */
     public boolean beyondTheArm(int i) {
-        return i >= CARVED && (i - CARVED) / GALLERY_CYCLE >= LEGS;
+        return i >= CARVED && (i - CARVED) / GALLERY_CYCLE >= GALLERY_LEGS;
     }
 
     /**

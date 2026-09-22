@@ -52,10 +52,10 @@ public final class FarmerNursery {
      * centro —, e fora do miolo onde as obras nascem. Plantar além do
      * alcance dele seria plantar para ninguém colher.
      */
-    static final int EDGE = 28;
+    static final int EDGE = 56;
 
     /** Limite interno para não plantar dentro do miolo da vila. */
-    private static final int INNER_EDGE = 20;
+    private static final int INNER_EDGE = 48;
 
     /** Resolução do anel de candidatos, percorrido do mais distante ao centro. */
     private static final int DIRECTIONS = 48;

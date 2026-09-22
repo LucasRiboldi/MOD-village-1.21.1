@@ -5,7 +5,7 @@ número de execuções e evidência; nenhuma sai daqui sem correção verificada
 
 ---
 
-## KF-002 — o fundidor some entre o `spawnEntity` e o tique 1
+## KF-002 — o aldeão de coleta some entre o `spawnEntity` e o tique 1
 
 **ABERTO.** Medido em **2026-09-16**, commit `c76b96b`, mesma máquina, mesma
 sessão.
@@ -24,7 +24,8 @@ confiavelmente verde**, e "335/335 passaram" de uma rodada é um sorteio.
 
 **Os testes que caem**, todos com a **mesma** mensagem:
 
-- `SurfaceGatheringGameTest.smelterGathersDirtOutsideTheProtectedVillageRadius`
+- `SurfaceGatheringGameTest.farmerGathersDirtOutsideTheSoilProtectedRadius`
+  *(renomeado em 2026-09-21; era `smelterGathersDirtOutsideTheProtectedVillageRadius`)*
 - `SurfaceGatheringGameTest.smelterGathersGrassOutsideTheProtectedVillageRadius`
 - `LumberjackGameTest.aBlockReplacedMidHarvestIsLeftAlone` (uma vez)
 
@@ -36,7 +37,7 @@ confiavelmente verde**, e "335/335 passaram" de uma rodada é um sorteio.
 devolvido por `FarthestVillageSector.farthestLoadedSector`, e no
 `runAtTick(1)` confere `world.getEntity(uuid) == villager`. A asserção que
 falha é essa — **antes** de o comportamento sob teste rodar. Não é o
-fundidor que erra: é o cenário que perde a entidade.
+trabalhador que erra: é o cenário que perde a entidade.
 
 **É pré-existente, e isso foi medido, não suposto.** Seis execuções em
 `e209e1f` — o commit anterior, que só mexeu em documentação — deram uma

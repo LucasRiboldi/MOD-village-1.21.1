@@ -40,8 +40,8 @@ O diagnóstico completo está em
 
 ## Profissões e funções
 
-Estas são as oito funções operacionais atuais. `SHEPHERD` continua no enum
-apenas para compatibilidade com saves antigos e é normalizado para `BREEDER`.
+Estas são as oito funções operacionais atuais. `BREEDER` foi encerrado;
+saves antigos com esse código são carregados como `SHEPHERD`.
 `MANUFACTURER` não existe no código atual; documentos que usam esse nome estão
 desatualizados.
 
@@ -53,10 +53,11 @@ desatualizados.
 | `SMELTER` | Fundidor | Pá de ferro com Silk Touch | Funde materiais e coleta areia, terra ou relva sob demanda | `SmelterWork` |
 | `CARPENTER` | Carpinteiro | Nenhuma | Processa madeira, tochas, vidraças e peças derivadas | `CraftingWork` |
 | `FARMER` | Agricultor/Fazendeiro | Enxada de ferro | Mantém lavouras e planta árvores do viveiro | `FarmerWork` |
-| `BREEDER` | Criador/Pastor | Tesoura | Coleta lã e mantém a cadeia de materiais de origem animal | `ShepherdWork` |
+| `SHEPHERD` | Pastor | Tesoura | Coleta lã e mantém a cadeia de materiais de origem animal | `ShepherdWork` |
 | `BUILDER` | Construtor | Nenhuma | Reserva lotes, repara e assenta estruturas | `BuilderWork` |
 
-Compatibilidade: `SHEPHERD` é o nome legado de `BREEDER`. Agricultor e
+Compatibilidade: `BREEDER` é convertido para `SHEPHERD` ao ler saves antigos.
+Agricultor e
 carpinteiro continuam profissões completas: estão no registro, podem ser
 atribuídos, recebem tarefas e participam do crescimento normal. A exceção é
 apenas física: não têm cama ou baú fundacional dentro da `BigHouseMOD`.
@@ -69,7 +70,7 @@ apenas física: não têm cama ou baú fundacional dentro da `BigHouseMOD`.
 2. A `BigHouseMOD` é uma cópia editada da big house Vanilla e não altera a
    estrutura Vanilla original.
 3. A casa contém somente seis camas e seis baús para `MINER`, `LUMBERJACK`,
-   `MASON`, `SMELTER`, `BREEDER` e `BUILDER`.
+   `MASON`, `SMELTER`, `SHEPHERD` e `BUILDER`.
 4. Agricultor e carpinteiro continuam existindo e trabalhando normalmente, mas
    não recebem cama ou baú reservados dentro da `BigHouseMOD`; esses dois
    conjuntos foram omitidos somente para liberar a porta e o acesso à escada.
@@ -115,8 +116,10 @@ apenas física: não têm cama ou baú fundacional dentro da `BigHouseMOD`.
    reparação cíclica de uma construção incompleta antes de abrir outra.
 10. Uma tentativa sem progresso cede a vez para a fila avançar, mas permanece
     elegível para uma varredura posterior.
-11. Uma Tocha das Almas dentro de uma obra profissional cancela zona, projeto,
-    tarefas e registro parcial. A fundação `BigHouseMOD` é ignorada.
+11. Uma Tocha das Almas, inclusive a versão de parede, dentro do volume de
+    uma obra profissional aberta cancela a reserva/projeto e as tarefas `BUILD`.
+    Uma construção parcial sai do registro, mas os blocos já colocados ficam no
+    mundo; a tocha também fica. A fundação `BigHouseMOD` é ignorada.
 12. Blocos colocados pelo jogador e estruturas da vila permanecem protegidos.
 
 ## Construções e biomas

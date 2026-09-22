@@ -387,7 +387,7 @@ class MineShaftTest {
         // 2026-09-05. Ela mede um bloco por passo <b>inclusive na
         // curva</b>, e é aí que o E34 moraria: dois blocos em diagonal e
         // a navegação não passa sem que os cantos estejam abertos.
-        for (int leg = 0; leg < 2 * MineShaft.RINGS; leg++) {
+        for (int leg = 0; leg < MineShaft.GALLERY_LEGS; leg++) {
             for (int column = 0; column < MineShaft.RUN; column++) {
                 ColonyPos feet = mine.positionAt(MineShaft.CARVED
                         + leg * MineShaft.GALLERY_CYCLE + column * MineShaft.HEADROOM);
@@ -422,7 +422,7 @@ class MineShaftTest {
 
         Set<String> ways = new HashSet<>();
 
-        for (int leg = 0; leg < 2 * MineShaft.RINGS; leg++) {
+        for (int leg = 0; leg < MineShaft.GALLERY_LEGS; leg++) {
             int from = MineShaft.CARVED + leg * MineShaft.GALLERY_CYCLE;
 
             ColonyPos first = mine.positionAt(from);
@@ -435,19 +435,30 @@ class MineShaftTest {
         assertTrue(ways.size() > 1, "a galeria saiu reta: todos os trechos no mesmo rumo");
     }
 
-    /** E o canto de fora fica a um anel de distância do poço, nos dois eixos. */
+    /** E o canto de fora acompanha a área que a escada atual autoriza. */
     @Test
-    void theSpiralOpensOneRingAtATime() {
+    void everyTwoStairFlightsDoubleTheMiningArea() {
+        assertEquals(2, MineShaft.AREA_DOUBLING_STAIR_FLIGHTS);
+        assertEquals(
+                MineShaft.HELIX_FLIGHTS / MineShaft.AREA_DOUBLING_STAIR_FLIGHTS,
+                MineShaft.AREA_MULTIPLIER);
+        assertEquals(2 * MineShaft.RINGS * MineShaft.AREA_MULTIPLIER,
+                MineShaft.GALLERY_LEGS);
+    }
+
+    /** E o canto de fora fica no raio da área multiplicada. */
+    @Test
+    void theSpiralOpensOneMiningAreaAtATime() {
         MineShaft mine = shaft();
 
         int last = MineShaft.CARVED
-                + (2 * MineShaft.RINGS - 1) * MineShaft.GALLERY_CYCLE
+                + (MineShaft.GALLERY_LEGS - 1) * MineShaft.GALLERY_CYCLE
                 + (MineShaft.RUN - 1) * MineShaft.HEADROOM;
 
         ColonyPos corner = mine.positionAt(last);
 
         assertEquals(
-                MineShaft.RINGS * MineShaft.RUN,
+                MineShaft.RINGS * MineShaft.RUN * MineShaft.AREA_MULTIPLIER,
                 Math.max(
                         Math.abs(corner.x() - ENTRY.x()),
                         Math.abs(corner.z() - ENTRY.z())),
@@ -570,7 +581,7 @@ class MineShaftTest {
         // <b>Dois trechos por anel</b> desde a espiral de 2026-09-05: o
         // que sai do poço e o que contorna. Dentro do último ainda cava,
         // no seguinte não.
-        int lastCycle = 2 * MineShaft.RINGS - 1;
+        int lastCycle = MineShaft.GALLERY_LEGS - 1;
         int inside = MineShaft.CARVED + lastCycle * MineShaft.GALLERY_CYCLE;
         int outside = MineShaft.CARVED + (lastCycle + 1) * MineShaft.GALLERY_CYCLE;
 
@@ -592,7 +603,7 @@ class MineShaftTest {
     void theFarthestCutOfAnArmStaysWithinReach() {
         MineShaft shaft = MineShaft.from(ENTRY, Side.NORTH);
 
-        int last = MineShaft.CARVED + 2 * MineShaft.RINGS * MineShaft.GALLERY_CYCLE - 1;
+        int last = MineShaft.CARVED + MineShaft.GALLERY_LEGS * MineShaft.GALLERY_CYCLE - 1;
 
         ColonyPos far = shaft.positionAt(last);
 
@@ -603,7 +614,7 @@ class MineShaftTest {
         // de rastro que a escada reta somava aqui sumiram; e o braço caiu
         // a dezesseis porque a ponta da espiral é o canto do anel, e não
         // uma coluna.
-        assertTrue(flat <= 2 * MineShaft.ARM + MineShaft.POCKET_WIDE,
+        assertTrue(flat <= 2 * MineShaft.ARM * MineShaft.AREA_MULTIPLIER + MineShaft.POCKET_WIDE,
                 "a ponta da espiral ficou a " + flat + " blocos da boca, no plano");
     }
 

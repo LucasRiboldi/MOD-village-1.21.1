@@ -568,6 +568,10 @@ public final class ColonySavedData extends PersistentState {
 
         String name = entry.getString(PROFESSION);
 
+        if ("BREEDER".equals(name)) {
+            return ProfessionType.SHEPHERD;
+        }
+
         for (ProfessionType profession : ProfessionType.values()) {
             if (profession.name().equals(name)) {
                 return profession;

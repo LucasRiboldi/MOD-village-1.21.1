@@ -703,7 +703,7 @@ public final class VillageDetectionHandler {
                 WorkMaterials.coal(overworld, colony),
                 WorkMaterials.iron(overworld, colony),
                 WorkMaterials.smeltedNeeds(overworld, colony),
-                WorkMaterials.surfaceGatheredNeeds(colony));
+                WorkMaterials.surfaceGatheredNeeds(overworld, colony));
 
         // E a placa da obra fica sabendo do estoque — 2026-09-15. O ciclo
         // acabou de ler os baús; a placa desenha uma vez por segundo e
