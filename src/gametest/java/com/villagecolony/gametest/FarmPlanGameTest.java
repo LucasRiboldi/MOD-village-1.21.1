@@ -268,17 +268,54 @@ public class FarmPlanGameTest implements FabricGameTest {
                 owned.owning(id);
             }
 
-            // A vila já ergueu a primeira casa. Longe do centro de
-            // propósito: o prédio apenas estabelece a vez da sequência.
+            // A vila já ergueu a primeira casa, e ela está <b>de pé no
+            // mundo</b> — 2026-09-22.
+            //
+            // Registrar só a caixa não serve mais desde o reparo cíclico
+            // (P0.10): ConstructionPlanner.plan roda
+            // BuildingRepairPlanner.open ANTES da alternância, e o reparo
+            // compara a planta com o mundo. Uma casa que existe apenas no
+            // registro tem zero bloco de pé contra os 151 da planta, então
+            // o reparo a adotava e devolvia a própria casa — a obra que
+            // esta asserção lia como "outra casa". O cenário nunca chegava
+            // a medir o rodízio.
+            //
+            // Assentando a planta, o reparo encontra a casa inteira, passa
+            // adiante, e a vez cai onde este teste quer medi-la.
+            ResourceId houseId =
+                    ResourceId.vanilla("village/plains/houses/plains_small_house_1");
+
             ColonyPos built = MinecraftTypeAdapter.toColonyPos(
                     context.getAbsolutePos(center.add(-SCAN_RADIUS, 0, -SCAN_RADIUS)));
+
+            Blueprint house = HousePlans.blueprintOf(
+                    context.getWorld(), colony.id(), houseId, built).orElse(null);
+
+            context.assertTrue(
+                    house != null,
+                    "o catálogo não devolveu a casa que estabelece a vez da sequência");
+
+            for (BlueprintBlock block : house.blocks()) {
+                MinecraftTypeAdapter.toBlock(block.block()).ifPresent(expected ->
+                        context.getWorld().setBlockState(
+                                new BlockPos(
+                                        built.x() + block.offset().x(),
+                                        built.y() + block.offset().y(),
+                                        built.z() + block.offset().z()),
+                                expected.getDefaultState()));
+            }
+
+            ColonyPos size = house.size();
 
             VillageColonyMod.BUILDINGS.register(new Building(
                     colony.id(),
                     colony.id(),
-                    ResourceId.vanilla("village/plains/houses/plains_small_house_1"),
+                    houseId,
                     built,
-                    new ColonyPos(built.x() + 1, built.y() + 1, built.z() + 1)));
+                    new ColonyPos(
+                            built.x() + size.x() - 1,
+                            built.y() + size.y() - 1,
+                            built.z() + size.z() - 1)));
 
             Optional<ConstructionProject> opened =
                     ConstructionPlanner.plan(context.getWorld(), colony);
