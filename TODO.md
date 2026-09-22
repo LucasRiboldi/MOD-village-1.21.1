@@ -11,6 +11,14 @@ testes, 408 aprovados; restam duas falhas independentes: alternancia de
 `FarmPlanGameTest` e a fixture de terra de `SurfaceGatheringGameTest`. Os 76
 testes Python da auditoria passaram nesta sessao.
 
+## Playtest 2026-09-22, 20:07 — tres defeitos corrigidos, nenhum confirmado em jogo
+
+- [x] 🔴 **Obra terminada recomecando:** `BuilderWork.placeOne` risca sem assentar (`ladder`, `wall_torch`, por *nothing holds it*), a obra e dada por terminada com `0 blocks placed`, e o reparo reencontra a mesma lacuna a cada trinta segundos. Como a vaga de obra e unica, o laco impedia qualquer construcao nova. O planejador compara os blocos de pe da abertura com os do fechamento e nao repete tentativa que nao avancou. `FoundationRepairGameTest.aRepairThatPlacedNothingIsNotOpenedAgain`.
+- [x] 🔴 **Terracota branca sem rota real:** a familia tem rota na receita (argila → fornalha → terracota) e nao no mundo — o fundidor passou a sessao inteira sem achar argila. Passada a carencia de dez ciclos, a peca preferida e depositada no bau da obra. A constante saiu do log: cinco ciclos foi a espera mais longa atendida, vinte a que nunca foi. `BuilderGameTest.aRouteThatNeverDeliversStopsHoldingTheBuild`.
+- [x] 🔴 **Mina cavada sem fim:** bau cheio, pedregulho no chao quarenta e sete vezes, mineiro alternando entre duas posicoes. O `took 0` nao era da picareta — a hipotese da ferramenta foi testada contra o log e revertida. Bau cheio encerra a tarefa. `MinerGameTest.aFullChestStopsTheMinerInsteadOfPilingStoneOnTheFloor`, verificado por mutacao.
+- [ ] 🔴 **Playtest dos tres:** reabrir o save e confirmar que nenhuma obra terminada reabre, que a terracota aparece no bau e a obra anda, e que o mineiro para com o bau cheio. JAR instalado com SHA-256 `73deea9739...`.
+- [ ] 🟠 **A lacuna que sobra:** a casa fica sem os nove `ladder`/`wall_torch`, porque sao pecas que pedem apoio que aquela parede nao tem. Decidir se a ordem de assentamento deve garantir o apoio antes, ou se a peca sem apoio deve sair da planta.
+
 ## Fila operacional 2026-09-22
 
 O relatorio atual, incluindo responsabilidades, fluxo de obra, suprimento por

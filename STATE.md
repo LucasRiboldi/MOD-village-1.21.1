@@ -50,6 +50,43 @@ O JAR sincronizado em `build/libs/`, `downloads/` e
 `%APPDATA%/.minecraft/mods/` tem SHA-256
 `A417310243A6818D4AED39FABB0A45AD0B6880E66A8C53393C5750AB55191C39`.
 
+## Playtest de 2026-09-22, 20:07 — tres defeitos corrigidos
+
+O autor jogou e trouxe tres. Os tres foram diagnosticados no `latest.log` da
+sessao dele e corrigidos com regressao; **nenhum foi confirmado em jogo
+ainda**. O JAR das tres copias tem SHA-256 comecando em `73deea9739`.
+
+**1. Obra terminada recomecando (o grave).** O log tinha a mesma casa
+reabrindo a cada trinta segundos: `9 blocks remain` na abertura e
+`0 blocks placed` no fim, sem parar. Os nove eram `ladder` e `wall_torch`,
+riscados por *nothing holds it* — `BuilderWork.placeOne` tem quatro saidas que
+riscam a peca **sem assentar**. A lista esvazia, a obra e dada por terminada,
+a casa entra no registro com a lacuna intacta e a varredura seguinte reencontra
+os mesmos nove. Como a vaga de obra da colonia e unica, esse laco **impedia
+qualquer construcao nova de nascer**. O planejador agora guarda quantos blocos
+estavam de pe na abertura e compara ao fechar: tentativa que nao aumenta esse
+numero nao ganha outra. A casa segue com a lacuna, que e assunto separado.
+
+**2. Terracota branca sem rota real.** A obra parou dez minutos esperando
+`white_terracotta`. A regra de suprimento se calava porque a familia **tem**
+rota — argila vira terracota na fornalha —, mas o fundidor repetiu
+*"none of 14 colony chests had minecraft:clay to smelt"* a cada ciclo: naquele
+mundo nao havia argila ao alcance. A rota existia na receita e nao no mundo.
+Passada a carencia de dez ciclos, a peca preferida passa a ser depositada no
+bau da obra. A constante saiu do proprio log: a espera mais longa que **foi**
+atendida durou cinco ciclos, e a que nunca foi acumulou vinte.
+
+**3. Mina cavada sem fim.** Quarenta e sete linhas de *"Miner chest ... is
+full — dropped 1 of minecraft:cobblestone"*, com o mineiro alternando entre as
+mesmas duas posicoes da boca. O `took 0` **nao era da picareta**: o pedregulho
+caia, so nao tinha onde entrar — `stored()` conta o que chegou ao bau. A
+hipotese da ferramenta foi levantada, testada contra o log e **revertida** por
+nao se sustentar. Bau cheio agora encerra a tarefa em vez de jogar pedra no
+chao.
+
+Rodada final: **413 GameTests, 412 aprovados**; a unica falha e a
+intermitencia ja registrada de `SurfaceGatheringGameTest`.
+
 ## Auditoria mais recente — 2026-09-22
 
 O playtest de 09-22 explicou duas obras paradas. A primeira, em
