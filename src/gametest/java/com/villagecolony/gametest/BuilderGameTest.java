@@ -35,6 +35,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.brain.Schedule;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Item;
+import com.villagecolony.fabric.integration.BiomeConstructionSupply;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
@@ -1719,5 +1720,66 @@ public class BuilderGameTest implements FabricGameTest {
                 project,
                 chest,
                 ColonyFixture.create().owning(colony).owning(villager.getUuid()));
+    }
+
+    /**
+     * Rota que não entrega deixa de segurar a obra — 2026-09-22, visto em jogo.
+     *
+     * <p><b>O impasse.</b> A obra do autor parou <b>dez minutos</b> esperando
+     * {@code white_terracotta}. A regra de suprimento se calava porque a
+     * família tem rota — argila vai à fornalha e vira terracota —, e rota
+     * local é responsabilidade do ofício. Só que o fundidor repetiu, a cada
+     * ciclo do começo ao fim,
+     * <i>"none of 14 colony chests had minecraft:clay to smelt"</i>: naquele
+     * mundo não havia argila ao alcance. <b>A rota existia na receita e não
+     * no mundo</b>, e a obra esperava por ela para sempre.
+     *
+     * <p><b>A carência saiu do log</b>, e não de chute: no mesmo playtest a
+     * espera mais longa que foi atendida durou cinco ciclos, e a que nunca
+     * foi acumulou vinte. Dez ficam ao dobro de uma e à metade da outra.
+     *
+     * <p>A decisão é afirmada com o instante na mão, e não esperando dez
+     * ciclos de servidor — o relógio é argumento justamente para isto.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_overdue",
+            tickLimit = 20)
+    public void aRouteThatNeverDeliversStopsHoldingTheBuild(TestContext context) {
+        UUID colonyId = UUID.randomUUID();
+        long opened = 1000L;
+
+        try {
+            context.assertFalse(
+                    BiomeConstructionSupply.routeIsOverdue(
+                            colonyId, Items.WHITE_TERRACOTTA, opened),
+                    "a peça foi dada por atrasada sem ter esperado nada");
+
+            context.assertFalse(
+                    BiomeConstructionSupply.routeIsOverdue(
+                            colonyId,
+                            Items.WHITE_TERRACOTTA,
+                            opened + BiomeConstructionSupply.OVERDUE_TICKS - 1),
+                    "a peça foi dada por atrasada antes de a carência fechar —"
+                            + " o ofício ainda tinha a vez dele");
+
+            context.assertTrue(
+                    BiomeConstructionSupply.routeIsOverdue(
+                            colonyId,
+                            Items.WHITE_TERRACOTTA,
+                            opened + BiomeConstructionSupply.OVERDUE_TICKS),
+                    "a rota que não entregou em dez ciclos continuou segurando a obra");
+
+            BiomeConstructionSupply.routeDelivered(colonyId, Items.WHITE_TERRACOTTA);
+
+            context.assertFalse(
+                    BiomeConstructionSupply.routeIsOverdue(
+                            colonyId,
+                            Items.WHITE_TERRACOTTA,
+                            opened + BiomeConstructionSupply.OVERDUE_TICKS),
+                    "a entrega do ofício não reiniciou a carência daquela peça");
+        } finally {
+            BiomeConstructionSupply.routeDelivered(colonyId, Items.WHITE_TERRACOTTA);
+        }
+
+        context.complete();
     }
 }

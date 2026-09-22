@@ -12,8 +12,10 @@ import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.biome.Biome;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -70,6 +72,53 @@ public final class BiomeConstructionSupply {
             return false;
         }
 
+        return stock(world, colonyId, near, item);
+    }
+
+    /**
+     * Quantos tiques uma rota local tem para entregar antes de deixar de
+     * contar — 2026-09-22, medido no log do autor.
+     *
+     * <p>A conta saiu do playtest, e não de chute. A obra parou dez minutos
+     * esperando {@code white_terracotta}: a família tem rota — argila vai à
+     * fornalha e vira terracota —, então a regra de suprimento se calava e
+     * deixava a peça com os ofícios. Só que o fundidor repetiu
+     * <i>"none of 14 colony chests had minecraft:clay to smelt"</i> a cada
+     * ciclo, do começo ao fim, porque naquele mundo não havia argila ao
+     * alcance. A rota existia na <b>receita</b> e não existia no <b>mundo</b>.
+     *
+     * <p>No mesmo log, a espera mais longa que <b>foi</b> atendida durou
+     * cinco ciclos, e a que nunca foi acumulou vinte. Dez ciclos ficam ao
+     * dobro da entrega normal observada e à metade do impasse, que é a folga
+     * que separa "o ofício está demorando" de "o ofício não vem".
+     */
+    public static final long OVERDUE_TICKS = 10L * 600L;
+
+    private static final Map<String, Long> WAITING = new HashMap<>();
+
+    /**
+     * Se a rota local já teve tempo de sobra e não entregou.
+     *
+     * <p>O relógio é do mundo e a chave é a peça daquela colônia. A primeira
+     * pergunta só marca a hora; as seguintes comparam.
+     *
+     * <p><b>Recebe o instante em vez de lê-lo</b> para que a decisão possa
+     * ser afirmada sem esperar dez ciclos de servidor num teste.
+     */
+    public static boolean routeIsOverdue(UUID colonyId, Item item, long now) {
+        return now - WAITING.computeIfAbsent(key(colonyId, item), ignored -> now)
+                >= OVERDUE_TICKS;
+    }
+
+    /** A rota entregou: o relógio daquela peça recomeça. */
+    public static void routeDelivered(UUID colonyId, Item item) {
+        WAITING.remove(key(colonyId, item));
+    }
+
+    /** Põe a peça no baú que atende a obra, sem perguntar por rota. */
+    public static boolean stock(
+            ServerWorld world, UUID colonyId, ColonyPos near, Item item) {
+
         List<ColonyPos> chests = ColonyChests.nearestFirst(world, colonyId, near);
 
         if (ColonyChests.countIn(world, chests, item) > 0) {
@@ -93,6 +142,15 @@ public final class BiomeConstructionSupply {
                 "The colony stocked {} for construction because this biome has no production route",
                 item);
         return true;
+    }
+
+    private static String key(UUID colonyId, Item item) {
+        return colonyId + "/" + Registries.ITEM.getId(item);
+    }
+
+    /** Esquece as esperas. Chamado ao parar o servidor. */
+    public static void clearAll() {
+        WAITING.clear();
     }
 
     private static boolean hasRouteInBiome(

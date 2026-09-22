@@ -868,6 +868,10 @@ public final class BuilderWork {
             ServerWorld world, ConstructionProject project, Item item) {
 
         if (ColonySupply.canProvide(world, project.colonyId(), project.origin(), item)) {
+            // O ofício entregou: a carência daquela peça recomeça, senão a
+            // primeira demora marcaria o relógio para sempre.
+            BiomeConstructionSupply.routeDelivered(project.colonyId(), item);
+
             return true;
         }
 
@@ -881,14 +885,38 @@ public final class BuilderWork {
     private static boolean ensureConstructionMaterial(
             ServerWorld world, ConstructionProject project, List<Item> choices) {
 
-        if (choices.stream().anyMatch(candidate ->
-                BiomeConstructionSupply.hasRouteInBiome(world, project.colonyId(), candidate))) {
-
+        if (choices.isEmpty()) {
             return false;
         }
 
-        return !choices.isEmpty() && BiomeConstructionSupply.stockIfUnobtainable(
-                world, project.colonyId(), project.origin(), choices.getFirst());
+        Item preferred = choices.getFirst();
+
+        if (choices.stream().anyMatch(candidate ->
+                BiomeConstructionSupply.hasRouteInBiome(world, project.colonyId(), candidate))) {
+
+            // <b>Rota que não entrega não é rota</b> — 2026-09-22, visto em
+            // jogo. A obra parou dez minutos esperando white_terracotta: a
+            // família tem rota, porque argila vira terracota na fornalha, e
+            // por isso esta porta se calava. Só que o fundidor repetiu
+            // "none of 14 colony chests had minecraft:clay to smelt" a cada
+            // ciclo do começo ao fim — naquele mundo não havia argila ao
+            // alcance. A rota existia na receita e não no mundo.
+            //
+            // O ofício continua tendo a primeira vez e o tempo dela: só
+            // depois da carência de BiomeConstructionSupply.OVERDUE_TICKS,
+            // medida no mesmo log, a peça passa a ser depositada.
+            if (!BiomeConstructionSupply.routeIsOverdue(
+                    project.colonyId(), preferred, world.getTime())) {
+
+                return false;
+            }
+
+            return BiomeConstructionSupply.stock(
+                    world, project.colonyId(), project.origin(), preferred);
+        }
+
+        return BiomeConstructionSupply.stockIfUnobtainable(
+                world, project.colonyId(), project.origin(), preferred);
     }
 
     /**
