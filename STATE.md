@@ -18,13 +18,26 @@ de Criador para Pastor e o analisador versionado de travamentos em
 `scripts/analyze_village_log.py`.
 
 Verificacao desta entrega: `test --rerun-tasks` passou com 966 testes Java;
-`python -m unittest discover -s tests` passou com 76 testes; `runGametest
---rerun-tasks` executou 410 GameTests, com 408 aprovados e duas falhas. Os
-gates P0 abertos sao
-`FarmPlanGameTest.thenextturnafterahouseisnonresidential` e
-`SurfaceGatheringGameTest.farmerGathersDirtOutsideTheSoilProtectedRadius`.
-Este ultimo falhou porque o fazendeiro criado na fixture nao estava registrado
-no `ServerWorld`; ambos exigem reproducao isolada antes de mudar a producao.
+`python -m unittest discover -s tests` passou com 76 testes.
+
+**A bateria de GameTest fechou em 22-09, e o gate P0 do rodizio caiu.**
+`FarmPlanGameTest.thenextturnafterahouseisnonresidential` passou: o defeito
+era do cenario, nao de `HousePlans`. O teste registrava a casa anterior so no
+registro de construcoes, e desde o reparo ciclico (P0.10) o
+`BuildingRepairPlanner` roda antes da alternancia — ele adotava essa casa sem
+bloco nenhum de pe e a devolvia como obra nova, que a asserção lia como "abriu
+outra casa". O cenario agora assenta a planta no mundo antes de planejar; a
+regra de alternancia nao foi tocada.
+
+Tres rodadas de `runGametest --rerun-tasks` em sequencia: **409/410** antes do
+conserto (so esta falha), **408/410** depois (o teste verde, e as duas de
+`SurfaceGatheringGameTest` caindo juntas) e **410/410** na terceira, sem
+nenhuma alteracao de codigo entre a segunda e a terceira. As falhas de
+`SurfaceGatheringGameTest` ficam, portanto, como instabilidade de fixture, e
+nao como gate: elas caem e passam sozinhas. Cairem **as duas juntas** aponta
+raiz unica — os dois cenarios leem `FarthestVillageSector.farthestLoadedSector`,
+que depende de quais chunks a bateria inteira deixou carregados. Nao alterar
+coleta nem timeout antes de uma reproducao deterministica dessa fixture.
 
 O playtest analisado tem candidatos de repeticao em frente de mina (6.337),
 espera de recurso (123), caminho do construtor (7), falta de profissao (11) e
