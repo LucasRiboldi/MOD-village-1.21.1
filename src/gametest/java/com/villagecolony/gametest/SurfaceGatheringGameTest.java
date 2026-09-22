@@ -12,6 +12,7 @@ import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.DirtPatch;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.ClayPatch;
@@ -22,14 +23,17 @@ import com.villagecolony.fabric.integration.SandPatch;
 import com.villagecolony.fabric.integration.WorkerEquipment;
 import com.villagecolony.fabric.work.SurfaceGatheringWork;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Items;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 
 import java.util.List;
 import java.util.UUID;
@@ -38,6 +42,104 @@ import java.util.UUID;
 public class SurfaceGatheringGameTest implements FabricGameTest {
 
     private static final BlockPos CHEST = new BlockPos(2, 2, 2);
+
+    /**
+     * De que a recusa do cenário é feita — 2026-09-22.
+     *
+     * <p>Estas quatro provas caem sozinhas de vez em quando: em 22-09, três
+     * rodadas seguidas sem tocar em código deram nenhuma falha, depois a da
+     * relva e a da terra <b>juntas</b>, depois nenhuma outra vez. A mensagem
+     * antiga — <i>"o cenário precisa expor X elegível"</i> — diz que o
+     * {@code Patch} recusou, e não <b>qual</b> das saídas dele fechou.
+     *
+     * <p>São cinco portas, e elas pedem consertos diferentes: a coluna fora
+     * do setor é conta de geometria; o chunk nulo é carregamento; o bloco
+     * errado é a escrita que não pegou; o teto não vazio é vizinhança; e a
+     * proteção negada é estado global de outra prova da bateria. Sem separar,
+     * o próximo a investigar recomeça do zero — e o setor é sorteado do hash
+     * de um {@code UUID.randomUUID()}, então ele nem sabe para que lado o
+     * cenário apontou na rodada que caiu.
+     */
+    private static String refusal(
+            ServerWorld world, BlockPos target, BlockPos center, Direction sector) {
+
+        BlockState state = world.getBlockState(target);
+
+        return " — setor " + sector
+                + ", alvo " + target
+                + ", centro " + center
+                + ", no setor: " + FarthestVillageSector.isInSector(center, target, sector)
+                + ", chunk carregado: "
+                + (world.getChunkManager().getWorldChunk(target.getX() >> 4, target.getZ() >> 4)
+                        != null)
+                + ", bloco " + state
+                + ", acima " + world.getBlockState(target.up())
+                + ", pode quebrar: " + BlockProtection.mayBreak(world, target, state)
+                // As tres portas separadas: uma acusa folha do jogador, outra
+                // caixa registrada por outra prova da bateria, e a terceira
+                // vila que o proprio jogo gerou naquele pedaco de terreno. Sao
+                // consertos opostos, e "pode quebrar: false" sozinho nao diz
+                // qual delas fechou.
+                + " [jogador: " + BlockProtection.isPlayerPlaced(state)
+                + ", colonia: " + BlockProtection.isColonyBuilt(target)
+                + ", vila: " + BlockProtection.isVillageOriginal(world, target) + "]";
+    }
+
+    /**
+     * Por que o trabalhador do cenário não chegou ao {@code ServerWorld}.
+     *
+     * <p>Mesmo motivo do {@link #refusal}: o aldeão nasce a 65 ou 97 blocos
+     * da arena, na direção sorteada, e a prova só dizia que ele não estava
+     * registrado. Separar <b>removido</b> de <b>chunk ausente</b> decide
+     * entre uma limpeza de outra prova da bateria e o carregamento do setor.
+     *
+     * <p><b>Três hipóteses já caíram aqui — 2026-09-22.</b> Quem retomar
+     * isto não precisa repeti-las:
+     *
+     * <ol>
+     *   <li><i>o chunk está descarregado</i> — não está. A medida diz
+     *       {@code chunk carregado: true}, e {@code setBlockState} carrega o
+     *       chunk sozinho, então a suspeita já nasce refutada em qualquer
+     *       posição onde a prova escreveu bloco;
+     *   <li><i>falta ticket de tique de entidade</i> — {@code setChunkForced}
+     *       foi medido com {@code forçado: true} e não mudou nada;
+     *   <li><i>o ticket só vale no tique seguinte</i> — nascer o trabalhador
+     *       no tique 2 e medir no 5 também não mudou nada.
+     * </ol>
+     *
+     * <p>O que sobra medido é isto: {@code spawnEntity} devolve
+     * <b>verdadeiro</b>, a entidade <b>não</b> está removida e está na
+     * posição exata, e mesmo assim o mundo não a devolve nem pelo índice de
+     * uuid nem por varredura. A premissa de que o trabalhador consegue
+     * existir tão longe da arena é o que precisa ser questionado, e não o
+     * carregamento.
+     */
+    private static String stranding(
+            ServerWorld world, BlockPos stand, Direction sector, VillagerEntity villager) {
+
+        // "no mundo" pergunta por varredura, e nao pelo indice de uuid:
+        // as duas respostas juntas separam entidade ausente de entidade
+        // presente com indice furado.
+        boolean seen = false;
+
+        for (net.minecraft.entity.Entity each
+                : world.getEntitiesByType(EntityType.VILLAGER, entity -> true)) {
+
+            if (each == villager) {
+                seen = true;
+                break;
+            }
+        }
+
+        return " — setor " + sector
+                + ", pé em " + stand
+                + ", chunk carregado: "
+                + (world.getChunkManager().getWorldChunk(stand.getX() >> 4, stand.getZ() >> 4)
+                        != null)
+                + ", no mundo: " + seen
+                + ", removido: " + villager.isRemoved()
+                + ", em " + villager.getBlockPos();
+    }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "surface_resource_catalogue",
             tickLimit = 20)
@@ -61,13 +163,15 @@ public class SurfaceGatheringGameTest implements FabricGameTest {
 
         var sector = FarthestVillageSector.farthestLoadedSector(world, center, colony.id());
         BlockPos grass = center.offset(sector, FarthestVillageSector.PROTECTED_RADIUS + 1);
+        BlockPos stand = grass.offset(sector.rotateYClockwise(), 2);
+
         world.setBlockState(grass.down(), Blocks.DIRT.getDefaultState());
         world.setBlockState(grass, Blocks.GRASS_BLOCK.getDefaultState());
         world.setBlockState(grass.up(), Blocks.AIR.getDefaultState());
         context.assertTrue(
                 GrassPatch.in(world, grass, center.getY(), center, sector).filter(grass::equals).isPresent(),
-                "o cenário precisa expor grass_block elegível no setor carregado");
-        BlockPos stand = grass.offset(sector.rotateYClockwise(), 2);
+                "o cenário precisa expor grass_block elegível no setor carregado"
+                        + refusal(world, grass, center, sector));
         world.setBlockState(stand.down(), Blocks.DIRT.getDefaultState());
         VillagerEntity villager = EntityType.VILLAGER.create(world);
         villager.setBreedingAge(0);
@@ -77,7 +181,8 @@ public class SurfaceGatheringGameTest implements FabricGameTest {
         context.runAtTick(1, () -> {
             try {
                 context.assertTrue(world.getEntity(villager.getUuid()) == villager,
-                        "fundidor criado no setor não está registrado no ServerWorld");
+                        "fundidor criado no setor não está registrado no ServerWorld"
+                                + stranding(world, stand, sector, villager));
                 Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
                 worker.assign(ProfessionType.SMELTER);
                 VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
@@ -132,18 +237,20 @@ public class SurfaceGatheringGameTest implements FabricGameTest {
 
         var sector = FarthestVillageSector.farthestLoadedSector(world, center, colony.id());
         BlockPos near = center.offset(sector, FarthestVillageSector.PROTECTED_RADIUS - 1);
+        BlockPos sand = center.offset(sector, FarthestVillageSector.PROTECTED_RADIUS + 1);
+        BlockPos stand = sand.offset(sector.rotateYClockwise(), 2);
+
         world.setBlockState(near.down(), Blocks.SANDSTONE.getDefaultState());
         world.setBlockState(near, Blocks.SAND.getDefaultState());
         world.setBlockState(near.up(), Blocks.AIR.getDefaultState());
 
-        BlockPos sand = center.offset(sector, FarthestVillageSector.PROTECTED_RADIUS + 1);
         world.setBlockState(sand.down(), Blocks.SANDSTONE.getDefaultState());
         world.setBlockState(sand, Blocks.SAND.getDefaultState());
         world.setBlockState(sand.up(), Blocks.AIR.getDefaultState());
         context.assertTrue(
                 SandPatch.in(world, sand, center.getY()).filter(sand::equals).isPresent(),
-                "o cenário precisa expor areia elegível no setor externo");
-        BlockPos stand = sand.offset(sector.rotateYClockwise(), 2);
+                "o cenário precisa expor areia elegível no setor externo"
+                        + refusal(world, sand, center, sector));
         world.setBlockState(stand.down(), Blocks.SANDSTONE.getDefaultState());
         VillagerEntity villager = EntityType.VILLAGER.create(world);
         villager.setBreedingAge(0);
@@ -202,13 +309,15 @@ public class SurfaceGatheringGameTest implements FabricGameTest {
 
         var sector = FarthestVillageSector.farthestLoadedSector(world, center, colony.id());
         BlockPos clay = center.offset(sector, FarthestVillageSector.PROTECTED_RADIUS + 1);
+        BlockPos stand = clay.offset(sector.rotateYClockwise(), 2);
+
         world.setBlockState(clay.down(), Blocks.DIRT.getDefaultState());
         world.setBlockState(clay, Blocks.CLAY.getDefaultState());
         world.setBlockState(clay.up(), Blocks.AIR.getDefaultState());
         context.assertTrue(
                 ClayPatch.in(world, clay, center.getY()).filter(clay::equals).isPresent(),
-                "o cenário precisa expor argila elegível no setor externo");
-        BlockPos stand = clay.offset(sector.rotateYClockwise(), 2);
+                "o cenário precisa expor argila elegível no setor externo"
+                        + refusal(world, clay, center, sector));
         world.setBlockState(stand.down(), Blocks.DIRT.getDefaultState());
         VillagerEntity villager = EntityType.VILLAGER.create(world);
         villager.setBreedingAge(0);
@@ -261,18 +370,20 @@ public class SurfaceGatheringGameTest implements FabricGameTest {
 
         var sector = FarthestVillageSector.farthestLoadedSector(world, center, colony.id());
         BlockPos near = center.offset(sector, FarthestVillageSector.SOIL_PROTECTED_RADIUS - 1);
+        BlockPos dirt = center.offset(sector, FarthestVillageSector.SOIL_PROTECTED_RADIUS + 1);
+        BlockPos stand = dirt.offset(sector.rotateYClockwise(), 2);
+
         world.setBlockState(near.down(), Blocks.DIRT.getDefaultState());
         world.setBlockState(near, Blocks.DIRT.getDefaultState());
         world.setBlockState(near.up(), Blocks.AIR.getDefaultState());
 
-        BlockPos dirt = center.offset(sector, FarthestVillageSector.SOIL_PROTECTED_RADIUS + 1);
         world.setBlockState(dirt.down(), Blocks.DIRT.getDefaultState());
         world.setBlockState(dirt, Blocks.DIRT.getDefaultState());
         world.setBlockState(dirt.up(), Blocks.AIR.getDefaultState());
         context.assertTrue(
                 DirtPatch.in(world, dirt, center.getY(), center, sector).filter(dirt::equals).isPresent(),
-                "o cenário precisa expor terra elegível no setor carregado");
-        BlockPos stand = dirt.offset(sector.rotateYClockwise(), 2);
+                "o cenário precisa expor terra elegível no setor carregado"
+                        + refusal(world, dirt, center, sector));
         world.setBlockState(stand.down(), Blocks.DIRT.getDefaultState());
         VillagerEntity villager = EntityType.VILLAGER.create(world);
         villager.setBreedingAge(0);
@@ -282,7 +393,8 @@ public class SurfaceGatheringGameTest implements FabricGameTest {
         context.runAtTick(1, () -> {
             try {
                 context.assertTrue(world.getEntity(villager.getUuid()) == villager,
-                        "fazendeiro criado no setor não está registrado no ServerWorld");
+                        "fazendeiro criado no setor não está registrado no ServerWorld"
+                                + stranding(world, stand, sector, villager));
                 Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
                 worker.assign(ProfessionType.FARMER);
                 VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
