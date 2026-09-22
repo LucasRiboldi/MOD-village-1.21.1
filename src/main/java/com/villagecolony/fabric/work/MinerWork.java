@@ -901,6 +901,29 @@ public final class MinerWork {
             return;
         }
 
+        // <b>Baú cheio encerra a tarefa</b> — 2026-09-22, visto em jogo. O
+        // log do autor tem quarenta e sete linhas de
+        // "Miner chest ... is full — dropped 1 of minecraft:cobblestone", e o
+        // mineiro seguiu cavando as mesmas duas posições da boca da mina sem
+        // parar, jogando pedra no chão a cada passagem. Do lado de fora isso
+        // se vê como a mina sendo cavada para sempre sem render nada.
+        //
+        // A pedra saiu do mundo e não entrou em lugar nenhum: continuar é
+        // gastar a vez do mineiro e sujar o chão. Encerrar devolve a vez ao
+        // ciclo da colônia, que é quem sabe pedir baú novo — ver a Regra 30 e
+        // MinerHaul.deposit, que já registra o transbordo.
+        if (haul.stored() == 0 && !drops.isEmpty()) {
+            VillageColonyMod.LOGGER.warn(
+                    "Miner {} stops — the stone from {} had nowhere to go,"
+                            + " the chest that serves him is full",
+                    villager.getUuid().toString().substring(0, 8),
+                    job.target.toShortString());
+
+            finishTask(villager.getUuid(), job);
+
+            return;
+        }
+
         // Não solta o alvo ainda. A posição é a âncora da busca de quedas:
         // quando a areia de cima chegar, o próximo ciclo limpa esta marca e
         // escolhe a nova frente já assentada.

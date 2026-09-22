@@ -47,6 +47,8 @@ import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.SandGathering;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Block;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
@@ -240,6 +242,107 @@ public class MinerGameTest implements FabricGameTest {
 
             try {
                 context.assertTrue(stored > 0, "a pedra não chegou ao baú");
+            } finally {
+                owned.cleanUp();
+
+                MineDigging.restoreMineDistance();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * Baú cheio para o mineiro em vez de virar pedra no chão — 2026-09-22.
+     *
+     * <p><b>Visto em jogo.</b> O log do autor tem quarenta e sete linhas de
+     * <i>"Miner chest ... is full — dropped 1 of minecraft:cobblestone"</i>, e
+     * o mineiro seguiu cavando as <b>mesmas duas posições</b> da boca da mina
+     * sem parar — <i>took 0 from 168,-62,-217</i>, <i>took 0 from
+     * 168,-62,-219</i>, alternando de segundo em segundo. Do lado de fora
+     * isso se vê como a mina sendo cavada para sempre sem render nada.
+     *
+     * <p><b>O zero não era da picareta.</b> A primeira suspeita foi o drop
+     * sair com ferramenta vazia, e o log a derrubou: o pedregulho caía, só
+     * não tinha onde entrar. {@code stored()} conta o que chegou ao baú, e
+     * não o que saiu da pedra.
+     *
+     * <p>A pedra saiu do mundo e não entrou em lugar nenhum: continuar é
+     * gastar a vez do mineiro e sujar o chão. Encerrar devolve a vez ao ciclo
+     * da colônia, que é quem sabe pedir baú novo.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_full_chest",
+            tickLimit = 400)
+    public void aFullChestStopsTheMinerInsteadOfPilingStoneOnTheFloor(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        ground(context);
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        Block rock = MinecraftTypeAdapter
+                .toBlock(HousePlans.paletteOf(world, chest).stone())
+                .orElseThrow();
+
+        context.setBlockState(ROCK, rock.getDefaultState());
+
+        // Sem uma vaga sequer: é a condição do log, e não "quase cheio".
+        if (!(world.getBlockEntity(MinecraftTypeAdapter.toBlockPos(chest))
+                instanceof net.minecraft.block.entity.ChestBlockEntity inventory)) {
+
+            throw new AssertionError("o baú do cenário não existe");
+        }
+
+        for (int slot = 0; slot < inventory.size(); slot++) {
+            inventory.setStack(slot, new ItemStack(Items.SANDSTONE, 64));
+        }
+
+        inventory.markDirty();
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        owned.owning(villager.getUuid());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_STONE,
+                TaskPriority.PRODUCTION,
+                ResourceType.COBBLESTONE,
+                16);
+
+        task.reserveFor(villager.getUuid());
+
+        ColonyPos mouth = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(STAND));
+
+        VillageColonyMod.MINES.restore(
+                Mine.restore(colony.id(), MineShaft.from(mouth, Side.NORTH), 0));
+
+        MineDigging.shortenMineDistanceTo(NEARBY);
+
+        MinerWork.run(world, colony);
+
+        context.runAtTick(320, () -> {
+            try {
+                context.assertTrue(
+                        task.state() == TaskState.COMPLETED,
+                        "o mineiro continuou cavando com o baú cheio — a tarefa ficou em "
+                                + task.state() + ", e a pedra vai para o chão a cada passagem");
             } finally {
                 owned.cleanUp();
 
