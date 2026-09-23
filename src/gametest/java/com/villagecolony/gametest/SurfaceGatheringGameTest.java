@@ -41,24 +41,17 @@ import java.util.UUID;
 /** Prova a coleta de grass_block fora da vila com a ferramenta do fundidor. */
 public class SurfaceGatheringGameTest implements FabricGameTest {
 
-    private static final BlockPos CHEST = new BlockPos(2, 2, 2);
+    private static final BlockPos TARGET = new BlockPos(4, 2, 2);
+    private static final Direction FIXTURE_SECTOR = Direction.EAST;
 
     /**
      * De que a recusa do cenário é feita — 2026-09-22.
      *
-     * <p>Estas quatro provas caem sozinhas de vez em quando: em 22-09, três
-     * rodadas seguidas sem tocar em código deram nenhuma falha, depois a da
-     * relva e a da terra <b>juntas</b>, depois nenhuma outra vez. A mensagem
-     * antiga — <i>"o cenário precisa expor X elegível"</i> — diz que o
-     * {@code Patch} recusou, e não <b>qual</b> das saídas dele fechou.
-     *
-     * <p>São cinco portas, e elas pedem consertos diferentes: a coluna fora
-     * do setor é conta de geometria; o chunk nulo é carregamento; o bloco
-     * errado é a escrita que não pegou; o teto não vazio é vizinhança; e a
-     * proteção negada é estado global de outra prova da bateria. Sem separar,
-     * o próximo a investigar recomeça do zero — e o setor é sorteado do hash
-     * de um {@code UUID.randomUUID()}, então ele nem sabe para que lado o
-     * cenário apontou na rodada que caiu.
+     * <p>O alvo fica dentro da arena ativa, enquanto o centro da colônia é
+     * deslocado para oeste. Assim o alvo continua fora do raio protegido no
+     * setor leste, sem depender de o GameTest registrar entidade a 65 ou 97
+     * blocos da estrutura. A geometria do setor e o fallback determinístico
+     * são cobertos separadamente por {@code FarthestVillageSectorTest}.
      */
     private static String refusal(
             ServerWorld world, BlockPos target, BlockPos center, Direction sector) {
@@ -88,31 +81,8 @@ public class SurfaceGatheringGameTest implements FabricGameTest {
     /**
      * Por que o trabalhador do cenário não chegou ao {@code ServerWorld}.
      *
-     * <p>Mesmo motivo do {@link #refusal}: o aldeão nasce a 65 ou 97 blocos
-     * da arena, na direção sorteada, e a prova só dizia que ele não estava
-     * registrado. Separar <b>removido</b> de <b>chunk ausente</b> decide
-     * entre uma limpeza de outra prova da bateria e o carregamento do setor.
-     *
-     * <p><b>Três hipóteses já caíram aqui — 2026-09-22.</b> Quem retomar
-     * isto não precisa repeti-las:
-     *
-     * <ol>
-     *   <li><i>o chunk está descarregado</i> — não está. A medida diz
-     *       {@code chunk carregado: true}, e {@code setBlockState} carrega o
-     *       chunk sozinho, então a suspeita já nasce refutada em qualquer
-     *       posição onde a prova escreveu bloco;
-     *   <li><i>falta ticket de tique de entidade</i> — {@code setChunkForced}
-     *       foi medido com {@code forçado: true} e não mudou nada;
-     *   <li><i>o ticket só vale no tique seguinte</i> — nascer o trabalhador
-     *       no tique 2 e medir no 5 também não mudou nada.
-     * </ol>
-     *
-     * <p>O que sobra medido é isto: {@code spawnEntity} devolve
-     * <b>verdadeiro</b>, a entidade <b>não</b> está removida e está na
-     * posição exata, e mesmo assim o mundo não a devolve nem pelo índice de
-     * uuid nem por varredura. A premissa de que o trabalhador consegue
-     * existir tão longe da arena é o que precisa ser questionado, e não o
-     * carregamento.
+     * <p>A confirmação continua aqui para distinguir uma regressão de
+     * registro de entidade de uma falha da coleta propriamente dita.
      */
     private static String stranding(
             ServerWorld world, BlockPos stand, Direction sector, VillagerEntity villager) {
@@ -141,6 +111,22 @@ public class SurfaceGatheringGameTest implements FabricGameTest {
                 + ", em " + villager.getBlockPos();
     }
 
+    private static Colony surfaceColony(TestContext context, long identity, int protectedRadius) {
+        BlockPos target = context.getAbsolutePos(TARGET);
+        BlockPos center = target.offset(Direction.WEST, protectedRadius + 1);
+        UUID colonyId = new UUID(0L, identity);
+
+        context.getWorld().setBlockState(center, Blocks.CHEST.getDefaultState());
+        Colony colony = Colony.create(colonyId, MinecraftTypeAdapter.toColonyPos(center));
+        VillageColonyMod.COLONIES.register(colony);
+
+        Direction sector = FarthestVillageSector.farthestLoadedSector(
+                context.getWorld(), center, colony.id());
+        context.assertTrue(sector == FIXTURE_SECTOR,
+                "o fallback estável do cenário precisa apontar para o alvo dentro da arena: " + sector);
+        return colony;
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "surface_resource_catalogue",
             tickLimit = 20)
     public void dirtIsARecognizedSurfaceResource(TestContext context) {
@@ -153,17 +139,14 @@ public class SurfaceGatheringGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "surface_grass_gathering", tickLimit = 100)
     public void smelterGathersGrassOutsideTheProtectedVillageRadius(TestContext context) {
         var world = context.getWorld();
-        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
-
-        BlockPos center = context.getAbsolutePos(CHEST);
-        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(center);
-        Colony colony = Colony.create(UUID.randomUUID(), chest);
-        VillageColonyMod.COLONIES.register(colony);
+        Colony colony = surfaceColony(context, 1L, FarthestVillageSector.PROTECTED_RADIUS);
+        BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
+        ColonyPos chest = colony.center();
         ColonyFixture owned = ColonyFixture.create().owning(colony);
+        Direction sector = FIXTURE_SECTOR;
 
-        var sector = FarthestVillageSector.farthestLoadedSector(world, center, colony.id());
-        BlockPos grass = center.offset(sector, FarthestVillageSector.PROTECTED_RADIUS + 1);
-        BlockPos stand = grass.offset(sector.rotateYClockwise(), 2);
+        BlockPos grass = context.getAbsolutePos(TARGET);
+        BlockPos stand = grass.offset(FIXTURE_SECTOR.rotateYClockwise(), 2);
 
         world.setBlockState(grass.down(), Blocks.DIRT.getDefaultState());
         world.setBlockState(grass, Blocks.GRASS_BLOCK.getDefaultState());
@@ -227,18 +210,15 @@ public class SurfaceGatheringGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "surface_sand_gathering", tickLimit = 100)
     public void smelterGathersSandOnlyOutsideTheProtectedVillageRadius(TestContext context) {
         var world = context.getWorld();
-        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
-
-        BlockPos center = context.getAbsolutePos(CHEST);
-        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(center);
-        Colony colony = Colony.create(UUID.randomUUID(), chest);
-        VillageColonyMod.COLONIES.register(colony);
+        Colony colony = surfaceColony(context, 5L, FarthestVillageSector.PROTECTED_RADIUS);
+        BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
+        ColonyPos chest = colony.center();
         ColonyFixture owned = ColonyFixture.create().owning(colony);
+        Direction sector = FIXTURE_SECTOR;
 
-        var sector = FarthestVillageSector.farthestLoadedSector(world, center, colony.id());
-        BlockPos near = center.offset(sector, FarthestVillageSector.PROTECTED_RADIUS - 1);
-        BlockPos sand = center.offset(sector, FarthestVillageSector.PROTECTED_RADIUS + 1);
-        BlockPos stand = sand.offset(sector.rotateYClockwise(), 2);
+        BlockPos near = context.getAbsolutePos(TARGET).offset(Direction.WEST, 2);
+        BlockPos sand = context.getAbsolutePos(TARGET);
+        BlockPos stand = sand.offset(FIXTURE_SECTOR.rotateYClockwise(), 2);
 
         world.setBlockState(near.down(), Blocks.SANDSTONE.getDefaultState());
         world.setBlockState(near, Blocks.SAND.getDefaultState());
@@ -299,17 +279,14 @@ public class SurfaceGatheringGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "surface_clay_gathering", tickLimit = 100)
     public void smelterGathersClayBallsWithItsSilkTouchShovel(TestContext context) {
         var world = context.getWorld();
-        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
-
-        BlockPos center = context.getAbsolutePos(CHEST);
-        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(center);
-        Colony colony = Colony.create(UUID.randomUUID(), chest);
-        VillageColonyMod.COLONIES.register(colony);
+        Colony colony = surfaceColony(context, 9L, FarthestVillageSector.PROTECTED_RADIUS);
+        BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
+        ColonyPos chest = colony.center();
         ColonyFixture owned = ColonyFixture.create().owning(colony);
+        Direction sector = FIXTURE_SECTOR;
 
-        var sector = FarthestVillageSector.farthestLoadedSector(world, center, colony.id());
-        BlockPos clay = center.offset(sector, FarthestVillageSector.PROTECTED_RADIUS + 1);
-        BlockPos stand = clay.offset(sector.rotateYClockwise(), 2);
+        BlockPos clay = context.getAbsolutePos(TARGET);
+        BlockPos stand = clay.offset(FIXTURE_SECTOR.rotateYClockwise(), 2);
 
         world.setBlockState(clay.down(), Blocks.DIRT.getDefaultState());
         world.setBlockState(clay, Blocks.CLAY.getDefaultState());
@@ -360,18 +337,15 @@ public class SurfaceGatheringGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "surface_dirt_gathering", tickLimit = 160)
     public void farmerGathersDirtOutsideTheSoilProtectedRadius(TestContext context) {
         var world = context.getWorld();
-        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
-
-        BlockPos center = context.getAbsolutePos(CHEST);
-        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(center);
-        Colony colony = Colony.create(UUID.randomUUID(), chest);
-        VillageColonyMod.COLONIES.register(colony);
+        Colony colony = surfaceColony(context, 13L, FarthestVillageSector.SOIL_PROTECTED_RADIUS);
+        BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
+        ColonyPos chest = colony.center();
         ColonyFixture owned = ColonyFixture.create().owning(colony);
+        Direction sector = FIXTURE_SECTOR;
 
-        var sector = FarthestVillageSector.farthestLoadedSector(world, center, colony.id());
-        BlockPos near = center.offset(sector, FarthestVillageSector.SOIL_PROTECTED_RADIUS - 1);
-        BlockPos dirt = center.offset(sector, FarthestVillageSector.SOIL_PROTECTED_RADIUS + 1);
-        BlockPos stand = dirt.offset(sector.rotateYClockwise(), 2);
+        BlockPos near = context.getAbsolutePos(TARGET).offset(Direction.WEST, 2);
+        BlockPos dirt = context.getAbsolutePos(TARGET);
+        BlockPos stand = dirt.offset(FIXTURE_SECTOR.rotateYClockwise(), 2);
 
         world.setBlockState(near.down(), Blocks.DIRT.getDefaultState());
         world.setBlockState(near, Blocks.DIRT.getDefaultState());
