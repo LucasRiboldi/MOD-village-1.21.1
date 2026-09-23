@@ -22,6 +22,7 @@ import com.villagecolony.core.type.Side;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.event.VillageDetectionHandler;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.WorkerEquipment;
 import com.villagecolony.fabric.work.WorkMaterials;
@@ -245,6 +246,93 @@ public class MinerGameTest implements FabricGameTest {
             } finally {
                 owned.cleanUp();
 
+                MineDigging.restoreMineDistance();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * O ciclo entrega a pedra ao mineiro ocioso, sem tarefa posta a mao.
+     *
+     * <p>O contrato tem tres degraus que o teste anterior, de mineracao,
+     * recebia prontos: a falta de pedra abre {@code COLLECT_STONE}, a
+     * capacidade do {@link ProfessionType#MINER} reserva o pedido para ele
+     * e o trabalho entrega a pedra no bau. A outra metade deste contrato,
+     * {@code CRAFT_WOOD}, esta em
+     * {@code CraftingGameTest.theCycleOpensTheCraftingTaskByItself}.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_from_cycle",
+            tickLimit = 400)
+    public void theCycleAssignsStoneToTheMinerAndItReachesTheChest(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        ground(context);
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        world.setTimeOfDay(Schedule.WORK_TIME);
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+        Block rock = MinecraftTypeAdapter
+                .toBlock(HousePlans.paletteOf(world, chest).stone())
+                .orElseThrow();
+        context.setBlockState(ROCK, rock.getDefaultState());
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+        VillageColonyMod.COLONIES.register(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        ColonyFixture owned = ColonyFixture.create()
+                .owning(colony)
+                .owning(villager.getUuid());
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+        WorkerEquipment.equip(world, List.of(worker));
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        context.assertTrue(
+                VillageColonyMod.TASKS.ofColony(colony.id()).isEmpty(),
+                "o mineiro precisa comecar ocioso, sem pedido posto pelo cenario");
+
+        ColonyPos mouth = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(STAND));
+        VillageColonyMod.MINES.restore(
+                Mine.restore(colony.id(), MineShaft.from(mouth, Side.NORTH), 0));
+        MineDigging.shortenMineDistanceTo(NEARBY);
+
+        VillageDetectionHandler.runCycleNow(world, context.getAbsolutePos(STAND));
+
+        List<Task> stoneTasks = VillageColonyMod.TASKS.ofColony(colony.id()).stream()
+                .filter(task -> task.type() == TaskType.COLLECT_STONE)
+                .toList();
+
+        context.assertTrue(
+                !stoneTasks.isEmpty(),
+                "o ciclo nao abriu COLLECT_STONE para a falta de pedra");
+
+        boolean assignedToMiner = stoneTasks.stream()
+                .anyMatch(task -> task.executor().equals(Optional.of(villager.getUuid())));
+        context.assertTrue(
+                assignedToMiner,
+                "nenhum COLLECT_STONE foi reservado para o mineiro ocioso");
+
+        context.runAtTick(5, () -> context.assertTrue(
+                context.getBlockState(ROCK).isOf(rock),
+                "a pedra nao podia cair antes do trabalho do mineiro"));
+
+        context.runAtTick(320, () -> {
+            int stored = ChestInventoryReader
+                    .read(world, context.getAbsolutePos(CHEST))
+                    .amountOfGroup(ResourceGroup.STONE);
+
+            try {
+                context.assertTrue(
+                        stored > 0,
+                        "o pedido criado e atribuido pelo ciclo nao virou pedra no bau");
+            } finally {
+                owned.cleanUp();
                 MineDigging.restoreMineDistance();
             }
 
