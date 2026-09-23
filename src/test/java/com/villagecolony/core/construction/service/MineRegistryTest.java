@@ -502,14 +502,10 @@ class MineRegistryTest {
     }
 
     /**
-     * No fundo ela não desce: abaixo do pico não há o que procurar.
-     *
-     * <p>Os ramais reabrem no mesmo nível em vez de a mina parar — é pior
-     * recavar do que deixar a colônia sem mineiro para sempre, e o
-     * {@code findTheFrontier} passa por cima do que já é ar.
+     * No fundo ela não desce nem reabre a mesma galeria: esta mina acabou.
      */
     @Test
-    void theGalleryKeepsTurningAtTheDeepestLevel() {
+    void theLowestMineIsExhaustedInsteadOfRestartingAtTheSameMouth() {
         Mine mine = Mine.open(
                 UUID.randomUUID(),
                 MineShaft.from(
@@ -519,17 +515,15 @@ class MineRegistryTest {
                         new ColonyPos(40, MineShaft.DEEPEST + MineShaft.DESCENT, 0),
                         Side.EAST));
 
-        int before = mine.shaft().positionAt(MineShaft.CARVED).y();
-
         for (MineArm arm : mine.arms()) {
             arm.finish();
         }
 
-        assertFalse(mine.deepenIfEveryArmIsDone(), "ela desceu abaixo do pico");
+        assertEquals(
+                Mine.LevelAdvance.EXHAUSTED,
+                mine.advanceIfEveryArmIsDone(),
+                "ela não marcou o fim da mina no limite do mundo");
 
-        assertEquals(before, mine.shaft().positionAt(MineShaft.CARVED).y());
-
-        // E os ramais voltaram a aceitar picareta, no mesmo nível.
-        assertFalse(mine.everyArmIsDone(), "a mina do fundo ficou sem frente nenhuma");
+        assertTrue(mine.everyArmIsDone(), "a mina do fundo reabriu a mesma frente");
     }
 }

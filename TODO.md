@@ -212,12 +212,26 @@ na bancada; no cortador é **1→1**.
 
 ---
 
-## 🟠 P1.3 — Pedidos de design do autor sobre a mina (09-17)
+## ✅ P1.3 — Ciclo finito da mina (2026-09-23)
 
-Duas ideias que **não são defeito** e precisam de decisão antes de código:
-
-- [ ] 🟠 *"a zona de cada camada da mina deve ser mais explorada"* — hoje o nível fecha quando os quatro ramais acabam (`ARM = 16`, `RINGS`). Explorar mais significa aumentar o raio do ramal ou adensar a galeria; muda o custo por nível e o tempo até descer.
-- [ ] 🟠 *"quando o mineiro encontrar um veio de minério o foco deve ser o veio todo"* — já existe `MineArm.followVein`/`veinExhausted` e `OreVein.beside`. Verificar o que falta: seguir o veio **até acabar** antes de voltar à ordem de cavar.
+- [x] **Geometria decidida pelo autor:** cada nivel abre um caracol de 10
+  degraus, limpa 50 blocos, abre 4 ramais de 10 degraus e limpa 50 blocos em
+  cada ramal. Somente um mineiro recebe a escada e a area comuns; os quatro
+  ramais abrem depois dela. `MineShaftTest` e `MineTest` fixam os limites.
+- [x] **Veio continua prioritario:** `MineArm.followVein` e `OreVein.beside`
+  mantem a coleta do veio antes de voltar a ordem geometrica; os GameTests de
+  prioridade de minerio passaram na rodada completa.
+- [x] **Fim no limite:** o nivel mais fundo e esgotado, a nova boca e buscada
+  estritamente no lado oposto da vila e a mesma abertura nao e recriada.
+  `MineRegistryTest`, `MineSaveTest` e `MinerGameTest` cobrem o encerramento,
+  a migracao da forma 6, o portal quebrado e a direcao oposta.
+- [ ] **Playtest P1.3:** acompanhar uma mina de ponta a ponta no save: um
+  caracol unico, quatro ramais apenas depois da area comum, foco em veios,
+  portal quebrado sem reconstruir e troca de boca no lado oposto ao chegar ao
+  fundo. A sessao de 23-09 ainda usou o JAR de SHA-256
+  `446554572D466B748107D5CD65A4687BAD4BFF535F8C028F6158501BDE4AB2A0`; repetir
+  somente apos instalar o artefato atual de SHA-256
+  `F9DD1792899675ECD0E50A1EC2C1CCE09CC3DD565A72F771A45C35AE35F91F34`.
 
 ⚠️ **Expectativa honesta:** `dirt_path` não é bloco sólido cheio e continuará
 caindo em `NOT_NATURAL_GROUND` adiante. Quem passa a poder virar lote é o

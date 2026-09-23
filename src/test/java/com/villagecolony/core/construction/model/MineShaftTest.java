@@ -12,710 +12,82 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * A mina — a Regra 29, e ela é geometria.
- *
- * <p>Fora do jogo de propósito: a mina tem cento e cinquenta e duas
- * posições antes da galeria, e conferi-las cavando levaria uma sessão.
- * Aqui levam milissegundos, e o que se afirma é a forma — que é o que o
- * autor descreveu.
- */
+/** Contratos da sequência finita de uma mina. */
 class MineShaftTest {
 
     private static final ColonyPos ENTRY = new ColonyPos(100, 64, 200);
 
     private static MineShaft shaft() {
-        return MineShaft.from(ENTRY, Side.EAST);
+        return MineShaft.from(ENTRY, Side.NORTH);
     }
 
-    /**
-     * A escada desce um por passo, e nunca dois.
-     *
-     * <p>É a frase do autor: <i>"de modo que ele possa subir de volta"</i>.
-     * Um degrau de dois blocos é um poço com aparência de escada.
-     *
-     * <p>O passo do índice conta as duas pistas desde 2026-09-05 — um
-     * degrau são {@link MineShaft#STAIR_HEADROOM} camadas vezes
-     * {@link MineShaft#STAIR_LANES} colunas.
-     */
     @Test
-    void theStairDropsOneBlockPerStep() {
-        MineShaft mine = shaft();
+    void theSharedSpiralHasExactlyTenSteps() {
+        MineShaft shaft = shaft();
+        int blocksPerStep = MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
 
-        int perStep = MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
-
-        // Um lance, e não a descida inteira: o caracol vira a cada
-        // HELIX_SIDE degraus, e daí em diante o x já não cresce.
-        for (int step = 1; step <= MineShaft.HELIX_SIDE; step++) {
-            ColonyPos feet = mine.positionAt((step - 1) * perStep);
-
-            assertEquals(ENTRY.y() - step + 1, feet.y(),
-                    "o degrau " + step + " não desceu um bloco");
-
-            assertEquals(ENTRY.x() + step, feet.x(), "o degrau " + step + " não andou um bloco");
-        }
+        assertEquals(10, MineShaft.DESCENT);
+        assertEquals(10 * blocksPerStep, MineShaft.CARVED);
+        assertEquals(ENTRY.y() - MineShaft.DESCENT + 1,
+                shaft.positionAt(MineShaft.CARVED - blocksPerStep).y());
     }
 
-    /** Cada degrau abre os pés e a cabeça, e mais um para passar. */
     @Test
-    void everyStepIsTallEnoughToStandIn() {
-        MineShaft mine = shaft();
+    void theSharedSearchAreaHasFiftyDistinctBlocks() {
+        MineShaft shaft = shaft();
+        Set<ColonyPos> area = new HashSet<>();
 
-        for (int step = 1; step <= MineShaft.DESCENT; step++) {
-            ColonyPos feet = mine.positionAt((step - 1) * MineShaft.STAIR_HEADROOM);
-            ColonyPos head = mine.positionAt((step - 1) * MineShaft.STAIR_HEADROOM + 1);
-
-            assertEquals(feet.y() + 1, head.y(), "a cabeça do degrau " + step + " não abriu");
-            assertEquals(feet.x(), head.x());
-            assertEquals(feet.z(), head.z());
-        }
-    }
-
-    /**
-     * O aldeão consegue andar escada abaixo sem cavar mais nada.
-     *
-     * <p><b>Visto em jogo em 2026-08-27</b>, e a frase do autor: <i>"o
-     * mineiro precisa quebrar mais um bloco na sua frente para poder
-     * descer a escada"</i>. A escada tinha dois blocos por degrau, que é
-     * quanto o aldeão ocupa parado — e não é quanto ele precisa para
-     * <b>andar</b>.
-     *
-     * <p>Descer um degrau é primeiro andar para a frente, no mesmo nível,
-     * e só então cair. Nesse instante a cabeça dele está um bloco acima
-     * do teto do degrau seguinte, e o teto não tinha sido cavado. Ele
-     * ficava preso, batia a picareta, e a mina só descia porque o
-     * jogador abria o caminho.
-     *
-     * <p>Vale para os dois lances: o segundo parte do canto da sala e
-     * desce igual.
-     */
-    @Test
-    void theVillagerWalksDownWithoutDiggingAgain() {
-        MineShaft mine = shaft();
-
-        int perStep = MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
-        int perFlight = MineShaft.HELIX_SIDE * perStep;
-
-        for (int flight = 0; flight < MineShaft.HELIX_FLIGHTS; flight++) {
-            int base = flight * perFlight;
-
-            for (int step = 1; step < MineShaft.HELIX_SIDE; step++) {
-                Set<Integer> ahead = new HashSet<>();
-
-                for (int k = 0; k < MineShaft.STAIR_HEADROOM; k++) {
-                    ahead.add(mine.positionAt(base + step * perStep + k).y());
-                }
-
-                int feet = mine.positionAt(base + (step - 1) * perStep).y();
-
-                assertTrue(
-                        ahead.contains(feet),
-                        "lance " + flight + ", degrau " + step
-                                + ": os pés não passam para o degrau seguinte");
-
-                assertTrue(
-                        ahead.contains(feet + 1),
-                        "lance " + flight + ", degrau " + step
-                                + ": a cabeça bate no teto do degrau seguinte");
-            }
-        }
-    }
-
-    /**
-     * <b>O caracol fecha a volta debaixo da boca</b> — decisão do autor,
-     * 2026-09-05: <i>"o caminho que o mineiro cava deve ser espiral
-     * circular"</i>.
-     *
-     * <p>É a afirmação inteira da forma nova, e o que ela vale está na
-     * caminhada do mineiro: a escada reta deixava o fundo do nível vinte
-     * blocos <b>de lado</b>, e essa distância entrava toda vez que ele
-     * subia para depositar. Quatro curvas e o x e o z voltam a ser os da
-     * entrada.
-     */
-    @Test
-    void theHelixClosesTheTurnUnderTheMouth() {
-        MineShaft mine = shaft();
-
-        int perStep = MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
-        int perFlight = MineShaft.HELIX_SIDE * perStep;
-
-        // O último degrau do último lance, na primeira pista: é ele que
-        // pousa na coluna da boca — a segunda pista sai um para o lado.
-        ColonyPos last = mine.positionAt(
-                (MineShaft.HELIX_FLIGHTS - 1) * perFlight + (MineShaft.HELIX_SIDE - 1) * perStep);
-
-        assertEquals(ENTRY.x(), last.x(), "o caracol não voltou para a coluna da boca em x");
-        assertEquals(ENTRY.z(), last.z(), "o caracol não voltou para a coluna da boca em z");
-    }
-
-    /** E a volta inteira desce o que um nível desce. */
-    @Test
-    void theWholeTurnDropsOneLevel() {
-        int perStep = MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
-
-        ColonyPos last = shaft().positionAt(MineShaft.CARVED - perStep);
-
-        assertEquals(ENTRY.y() - MineShaft.DESCENT + 1, last.y());
-    }
-
-    /**
-     * Cada lance vira à direita do anterior.
-     *
-     * <p>Continuar reto daria o corredor inclinado de vinte blocos que a
-     * forma velha tinha; a curva a cada cinco degraus é o que faz dela um
-     * caracol e não uma rampa.
-     */
-    @Test
-    void everyFlightTurnsFromTheOneBefore() {
-        MineShaft mine = shaft();
-
-        int perFlight = MineShaft.HELIX_SIDE * MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
-
-        Set<String> ways = new HashSet<>();
-
-        for (int flight = 0; flight < MineShaft.HELIX_FLIGHTS; flight++) {
-            ColonyPos first = mine.positionAt(flight * perFlight);
-            ColonyPos later = mine.positionAt(flight * perFlight + perFlight - 1);
-
-            ways.add(Integer.signum(later.x() - first.x())
-                    + ":" + Integer.signum(later.z() - first.z()));
+        for (int index = MineShaft.CARVED; index < MineShaft.SHARED_BLOCKS; index++) {
+            area.add(shaft.positionAt(index));
         }
 
-        assertEquals(
-                MineShaft.HELIX_FLIGHTS,
-                ways.size(),
-                "dois lances do caracol desceram para o mesmo lado: " + ways);
+        assertEquals(50, MineShaft.SEARCH_AREA_BLOCKS);
+        assertEquals(MineShaft.SEARCH_AREA_BLOCKS, area.size());
     }
 
-    /** A pegada do caracol cabe num quadrado do lado dele. */
     @Test
-    void theHelixFitsInItsOwnSquare() {
-        MineShaft mine = shaft();
+    void allArmsShareTheSpiralAndSearchBeforeTheySplit() {
+        MineShaft first = shaft();
+        MineShaft turned = first.turned();
 
-        int wide = MineShaft.HELIX_SIDE + MineShaft.STAIR_LANES;
-
-        for (int i = 0; i < MineShaft.CARVED; i++) {
-            ColonyPos at = mine.positionAt(i);
-
-            assertTrue(
-                    Math.abs(at.x() - ENTRY.x()) <= wide && Math.abs(at.z() - ENTRY.z()) <= wide,
-                    "o caracol saiu do quadrado em " + at);
+        for (int index = 0; index < MineShaft.SHARED_BLOCKS; index++) {
+            assertEquals(first.positionAt(index), turned.positionAt(index));
         }
+
+        assertNotEquals(first.positionAt(MineShaft.SHARED_BLOCKS),
+                turned.positionAt(MineShaft.SHARED_BLOCKS));
     }
 
-    /**
-     * A galeria não acaba, e fica toda no nível da segunda sala.
-     *
-     * <p>É a frase do autor: <i>"na camada 20 ele começa a recolher na
-     * altura do aldeão mais 1 infinitamente"</i>.
-     *
-     * <p><b>Continua verdadeiro depois do braço de 2026-09-04</b>, e a
-     * distinção importa: a <b>forma</b> não tem fim — {@code positionAt}
-     * responde para qualquer índice, e tem de responder, porque o cursor
-     * do save pode estar em qualquer um. Quem tem fim é o <b>trecho que
-     * se cava antes de virar</b>, e quem o faz virar é o
-     * {@code MineDigging}, perguntando ao {@link MineShaft#beyondTheArm}.
-     */
     @Test
-    void theGalleryRunsForeverOnOneLevel() {
-        MineShaft mine = shaft();
+    void eachArmHasTenStairStepsAndFiftySearchBlocks() {
+        MineShaft shaft = shaft();
+        int blocksPerStep = MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
+        int armStairBlocks = MineShaft.ARM_STAIRS * blocksPerStep;
 
-        int level = mine.positionAt(MineShaft.CARVED).y();
-
-        for (int i = MineShaft.CARVED; i < MineShaft.CARVED + 2_000; i++) {
-            int y = mine.positionAt(i).y();
-
-            assertTrue(
-                    y >= level && y < level + MineShaft.HEADROOM,
-                    "a galeria saiu do nível dela em " + y);
-        }
+        assertEquals(10, MineShaft.ARM_STAIRS);
+        assertEquals(50, MineShaft.ARM_AREA_BLOCKS);
+        assertFalse(shaft.beyondTheArm(MineShaft.SHARED_BLOCKS + MineShaft.ARM_BLOCKS - 1));
+        assertTrue(shaft.beyondTheArm(MineShaft.SHARED_BLOCKS + MineShaft.ARM_BLOCKS));
+        assertTrue(shaft.positionAt(MineShaft.SHARED_BLOCKS + armStairBlocks).y()
+                        < shaft.positionAt(MineShaft.SHARED_BLOCKS).y(),
+                "a área do ramal precisa começar abaixo da sua escada");
     }
 
-    /** E cada passo dela avança de verdade, sem repetir posição. */
     @Test
-    void theGalleryAdvancesInsteadOfDiggingTheSameHole() {
-        MineShaft mine = shaft();
-
-        Set<ColonyPos> seen = new HashSet<>();
-
-        for (int i = MineShaft.CARVED; i < MineShaft.CARVED + 200; i++) {
-            assertTrue(seen.add(mine.positionAt(i)), "a galeria repetiu uma posição");
-        }
-    }
-
-    /**
-     * Barreira à frente: a galeria vira, e a escada fica onde estava.
-     *
-     * <p>Virar a mina inteira jogaria fora os cento e cinquenta e dois
-     * blocos já cavados e o caminho de volta do aldeão.
-     */
-    @Test
-    void aBlockedGalleryTurnsWithoutMovingTheStair() {
-        MineShaft mine = shaft();
-        MineShaft turned = mine.turned();
-
-        assertEquals(mine.positionAt(0), turned.positionAt(0), "a escada mudou de lugar");
-
-        assertNotEquals(
-                mine.positionAt(MineShaft.CARVED + 4),
-                turned.positionAt(MineShaft.CARVED + 4),
-                "a galeria não virou");
-    }
-
-    /** Nenhuma posição da parte cavada se repete. */
-    @Test
-    void theCarvedPartNeverDigsTheSameBlockTwice() {
-        MineShaft mine = shaft();
-
-        Set<ColonyPos> seen = new HashSet<>();
-
-        for (int i = 0; i < MineShaft.CARVED; i++) {
-            assertTrue(seen.add(mine.positionAt(i)), "a mina repetiu a posição de índice " + i);
-        }
-    }
-
-    /**
-     * A mina desce um nível de cada vez — 2026-09-02.
-     *
-     * <p><b>A galeria trabalhava a cem blocos do minério bom.</b> A
-     * sessão daquele dia mostrou os alvos em {@code y=44}, e o pico do
-     * diamante em 1.21 é {@code y=-59}: enquanto a mina ficar naquela
-     * altura, procurar minério melhor não tem o que achar.
-     *
-     * <p>A forma é a do MineColonies, e é decisão do autor: a
-     * profundidade <b>cresce aos poucos</b> em vez de mudar de uma vez.
-     * Lá quem manda é o nível do prédio; aqui é a galeria ter fechado o
-     * círculo — quatro curvas e ela voltou à direção em que começou,
-     * tendo dado a volta no nível.
-     *
-     * <p>O nível seguinte começa onde a galeria deste está, e por isso
-     * cada nível custa duas descidas: vinte blocos.
-     */
-    @Test
-    void theNextLevelIsOneDescentBelowThisOne() {
-        MineShaft shaft = MineShaft.from(new ColonyPos(40, 64, 0), Side.EAST);
-
+    void aDeeperCycleStartsTenBlocksBelowThePreviousOne() {
+        MineShaft shaft = shaft();
         MineShaft deeper = shaft.deepened();
 
-        assertEquals(
-                shaft.positionAt(MineShaft.CARVED).y() - MineShaft.DESCENT,
+        assertEquals(shaft.positionAt(MineShaft.CARVED).y() - MineShaft.DESCENT,
                 deeper.positionAt(MineShaft.CARVED).y());
-    }
-
-    /** E o resto da forma continua: mesma descida, mesma galeria. */
-    @Test
-    void theNextLevelKeepsTheShapeOfThisOne() {
-        MineShaft shaft = MineShaft.from(new ColonyPos(40, 64, 0), Side.EAST);
-
-        MineShaft deeper = shaft.deepened();
-
         assertEquals(shaft.descent(), deeper.descent());
-        assertEquals(shaft.gallery(), deeper.gallery());
     }
 
-    /**
-     * E ela para antes da rocha-mãe.
-     *
-     * <p>O fundo é o pico do diamante, e não o fundo do mundo: abaixo
-     * dele não há o que procurar, e a rocha-mãe começa cinco blocos
-     * depois.
-     */
     @Test
-    void aMineAtTheBottomMayNotDeepen() {
-        // Um DESCENT é o nível inteiro desde que a descida virou caracol:
-        // eram dois lances de dez, agora são quatro de cinco.
-        MineShaft deep = MineShaft.from(
-                new ColonyPos(40, MineShaft.DEEPEST + MineShaft.DESCENT, 0), Side.EAST);
-
-        assertFalse(deep.mayDeepen());
-    }
-
-    /** Perto da superfície ela pode, e é o caso comum. */
-    @Test
-    void aMineNearTheSurfaceMayDeepen() {
-        assertTrue(MineShaft.from(new ColonyPos(40, 64, 0), Side.EAST).mayDeepen());
-    }
-
-    /**
-     * A galeria deixou de ser uma linha reta — decisão do autor,
-     * 2026-09-03.
-     *
-     * <p>A frase dele: <i>"o caminho de mineração pode ser de modo mais
-     * aleatório em bolsões e não uma linha reta"</i>. Até aqui a galeria
-     * era um cano de um bloco de largura: toda posição dela caía sobre o
-     * mesmo eixo, e a mina inteira cabia numa linha.
-     */
-    @Test
-    void theGalleryOpensPocketsInsteadOfOneStraightLine() {
-        MineShaft mine = shaft();
-
-        ColonyPos first = mine.positionAt(MineShaft.CARVED);
-
-        boolean offTheAxis = false;
-
-        for (int i = MineShaft.CARVED; i < MineShaft.CARVED + 200; i++) {
-            if (mine.positionAt(i).z() != first.z()) {
-                offTheAxis = true;
-
-                break;
-            }
-        }
-
-        assertTrue(offTheAxis, "a galeria continua cabendo numa linha reta");
-    }
-
-    /**
-     * E o corredor continua reto, que é do que a navegação depende.
-     *
-     * <p><b>É o E34 pela porta de trás.</b> O {@code MinerReach.legTowards}
-     * anda pela ordem de cavar porque ela <i>é</i> um corredor contínuo a
-     * partir da boca. Serpentear a espinha poria dois blocos em diagonal,
-     * e de diagonal a navegação não passa sem que os cantos estejam
-     * abertos.
-     *
-     * <p>Então o bolsão fica <b>pendurado ao lado</b>: a espinha do
-     * corredor — as primeiras {@link MineShaft#RUN} colunas de cada ciclo
-     * — anda um bloco por coluna, sempre no mesmo eixo.
-     */
-    @Test
-    void theCorridorSpineStaysStraightUnderneathThePockets() {
-        MineShaft mine = shaft();
-
-        ColonyPos previous = null;
-
-        // <b>A espiral inteira, e não só o primeiro trecho</b> —
-        // 2026-09-05. Ela mede um bloco por passo <b>inclusive na
-        // curva</b>, e é aí que o E34 moraria: dois blocos em diagonal e
-        // a navegação não passa sem que os cantos estejam abertos.
-        for (int leg = 0; leg < MineShaft.GALLERY_LEGS; leg++) {
-            for (int column = 0; column < MineShaft.RUN; column++) {
-                ColonyPos feet = mine.positionAt(MineShaft.CARVED
-                        + leg * MineShaft.GALLERY_CYCLE + column * MineShaft.HEADROOM);
-
-                if (previous != null) {
-                    int walked = Math.abs(feet.x() - previous.x())
-                            + Math.abs(feet.y() - previous.y())
-                            + Math.abs(feet.z() - previous.z());
-
-                    assertEquals(1, walked,
-                            "a espinha do corredor pulou de " + previous + " para " + feet);
-                }
-
-                previous = feet;
-            }
-        }
-    }
-
-    /**
-     * <b>E ela espirala em vez de sair reta</b> — decisão do autor,
-     * 2026-09-05: <i>"o caminho que o mineiro cava deve ser espiral
-     * circular"</i>.
-     *
-     * <p>Dois trechos por anel: um sai do poço, o seguinte contorna. O
-     * corredor era uma reta de vinte e quatro colunas com bolsões
-     * pendurados; agora é um quadrado que se abre, e cobre <b>área</b>
-     * onde a reta cobria uma linha.
-     */
-    @Test
-    void theGallerySpiralsInsteadOfRunningStraight() {
-        MineShaft mine = shaft();
-
-        Set<String> ways = new HashSet<>();
-
-        for (int leg = 0; leg < MineShaft.GALLERY_LEGS; leg++) {
-            int from = MineShaft.CARVED + leg * MineShaft.GALLERY_CYCLE;
-
-            ColonyPos first = mine.positionAt(from);
-            ColonyPos last = mine.positionAt(from + (MineShaft.RUN - 1) * MineShaft.HEADROOM);
-
-            ways.add(Integer.signum(last.x() - first.x())
-                    + ":" + Integer.signum(last.z() - first.z()));
-        }
-
-        assertTrue(ways.size() > 1, "a galeria saiu reta: todos os trechos no mesmo rumo");
-    }
-
-    /** E o canto de fora acompanha a área que a escada atual autoriza. */
-    @Test
-    void everyTwoStairFlightsDoubleTheMiningArea() {
-        assertEquals(2, MineShaft.AREA_DOUBLING_STAIR_FLIGHTS);
-        assertEquals(
-                MineShaft.HELIX_FLIGHTS / MineShaft.AREA_DOUBLING_STAIR_FLIGHTS,
-                MineShaft.AREA_MULTIPLIER);
-        assertEquals(2 * MineShaft.RINGS * MineShaft.AREA_MULTIPLIER,
-                MineShaft.GALLERY_LEGS);
-    }
-
-    /** E o canto de fora fica no raio da área multiplicada. */
-    @Test
-    void theSpiralOpensOneMiningAreaAtATime() {
-        MineShaft mine = shaft();
-
-        int last = MineShaft.CARVED
-                + (MineShaft.GALLERY_LEGS - 1) * MineShaft.GALLERY_CYCLE
-                + (MineShaft.RUN - 1) * MineShaft.HEADROOM;
-
-        ColonyPos corner = mine.positionAt(last);
-
-        assertEquals(
-                MineShaft.RINGS * MineShaft.RUN * MineShaft.AREA_MULTIPLIER,
-                Math.max(
-                        Math.abs(corner.x() - ENTRY.x()),
-                        Math.abs(corner.z() - ENTRY.z())),
-                "o anel de fora não chegou ao raio do braço");
-    }
-
-    /**
-     * Todo bloco do bolsão encosta em algum que veio antes dele.
-     *
-     * <p>É a contiguidade que o {@code findTheFrontier} assume por
-     * escrito: <i>tudo o que vem antes da frente já está aberto, e a ordem
-     * é um caminho contínuo a partir da boca</i>. Um bolsão que se abrisse
-     * a dois blocos do corredor seria um bolsão dentro da rocha.
-     */
-    @Test
-    void everyPocketBlockTouchesSomethingAlreadyOpen() {
-        MineShaft mine = shaft();
-
-        Set<ColonyPos> open = new HashSet<>();
-
-        for (int i = 0; i < MineShaft.CARVED; i++) {
-            open.add(mine.positionAt(i));
-        }
-
-        for (int i = MineShaft.CARVED; i < MineShaft.CARVED + 200; i++) {
-            ColonyPos at = mine.positionAt(i);
-
-            assertTrue(
-                    touchesSomethingIn(at, open),
-                    "a posição " + i + " em " + at + " não encosta em nada já aberto");
-
-            open.add(at);
-        }
-    }
-
-    private static boolean touchesSomethingIn(ColonyPos at, Set<ColonyPos> open) {
-        for (int[] face : new int[][] {
-                {1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}}) {
-
-            if (open.contains(
-                    new ColonyPos(at.x() + face[0], at.y() + face[1], at.z() + face[2]))) {
-
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * A mesma mina cava os mesmos bolsões depois de reiniciar o servidor.
-     *
-     * <p><b>O "aleatório" do pedido não pode ser sorteio</b>, e é o que
-     * este teste tranca. O cursor da galeria é um <b>índice</b> gravado no
-     * save: se {@code positionAt} respondesse outra coisa no carregamento
-     * seguinte, o cursor passaria a apontar para um lugar que ninguém
-     * cavou, e a mina de ontem viraria rocha maciça com um número em cima.
-     */
-    @Test
-    void theSameMineDigsTheSamePocketsAfterAReload() {
-        MineShaft before = shaft();
-        MineShaft after = MineShaft.from(ENTRY, Side.EAST);
-
-        for (int i = MineShaft.CARVED; i < MineShaft.CARVED + 200; i++) {
-            assertEquals(before.positionAt(i), after.positionAt(i),
-                    "a posição " + i + " mudou entre duas leituras da mesma mina");
-        }
-    }
-
-    /** E minas diferentes não cavam o mesmo desenho. */
-    @Test
-    void twoMinesDoNotDigTheSamePocketPattern() {
-        MineShaft here = shaft();
-        MineShaft elsewhere = MineShaft.from(new ColonyPos(517, 64, 88), Side.EAST);
-
-        boolean differed = false;
-
-        for (int cycle = 0; cycle < 12 && !differed; cycle++) {
-            // O primeiro bloco do bolsão de cada ciclo: é nele que o lado
-            // sorteado aparece.
-            int pocket = MineShaft.CARVED
-                    + cycle * (MineShaft.RUN * MineShaft.HEADROOM
-                            + MineShaft.POCKET_LONG * MineShaft.POCKET_WIDE
-                                    * MineShaft.HEADROOM)
-                    + MineShaft.RUN * MineShaft.HEADROOM;
-
-            ColonyPos mine = here.positionAt(pocket);
-            ColonyPos other = elsewhere.positionAt(pocket);
-
-            // Só o lado interessa: as duas minas nascem em bocas
-            // diferentes, então as coordenadas absolutas diferem sempre.
-            int sideHere = mine.z() - here.positionAt(pocket - 1).z();
-            int sideThere = other.z() - elsewhere.positionAt(pocket - 1).z();
-
-            differed = sideHere != sideThere;
-        }
-
-        assertTrue(differed, "as duas minas abrem todos os bolsões para o mesmo lado");
-    }
-
-    /**
-     * A galeria tem fim, e ele é o perímetro — decisão do autor,
-     * 2026-09-04.
-     *
-     * <p>Até aqui o {@code cycle} do túnel crescia sem teto, e a sessão
-     * de 09-04 mostrou o preço: o mineiro em {@code 1456,44,87} mirando
-     * a ordem em {@code 1454,44,158} — 70,7 blocos, {@code out of reach},
-     * {@code 0/0 ticks} por vinte minutos.
-     */
-    @Test
-    void theGalleryStopsAtTheEndOfTheArm() {
-        MineShaft shaft = MineShaft.from(ENTRY, Side.NORTH);
-
-        assertFalse(shaft.beyondTheArm(MineShaft.CARVED),
-                "o primeiro bloco da galeria já estaria além do braço");
-
-        assertFalse(shaft.beyondTheArm(MineShaft.CARVED - 1),
-                "o poço e as salas não são galeria, e não têm braço");
-
-        // <b>Dois trechos por anel</b> desde a espiral de 2026-09-05: o
-        // que sai do poço e o que contorna. Dentro do último ainda cava,
-        // no seguinte não.
-        int lastCycle = MineShaft.GALLERY_LEGS - 1;
-        int inside = MineShaft.CARVED + lastCycle * MineShaft.GALLERY_CYCLE;
-        int outside = MineShaft.CARVED + (lastCycle + 1) * MineShaft.GALLERY_CYCLE;
-
-        assertFalse(shaft.beyondTheArm(inside),
-                "o último ciclo do braço foi cortado antes da hora");
-
-        assertTrue(shaft.beyondTheArm(outside),
-                "a galeria passou do braço e continuou andando");
-    }
-
-    /**
-     * E o mais distante do braço cabe na perna do mineiro.
-     *
-     * <p>É o que dá sentido ao número: um teto que ainda pusesse a frente
-     * fora de alcance não seria teto nenhum. Medido da <b>boca</b>, que é
-     * de onde o aldeão desce.
-     */
-    @Test
-    void theFarthestCutOfAnArmStaysWithinReach() {
-        MineShaft shaft = MineShaft.from(ENTRY, Side.NORTH);
-
-        int last = MineShaft.CARVED + MineShaft.GALLERY_LEGS * MineShaft.GALLERY_CYCLE - 1;
-
-        ColonyPos far = shaft.positionAt(last);
-
-        int flat = Math.abs(far.x() - ENTRY.x()) + Math.abs(far.z() - ENTRY.z());
-
-        // <b>Metade do que era, e mede a partir da boca</b> — 2026-09-05.
-        // O caracol pôs o poço debaixo da entrada, então os vinte blocos
-        // de rastro que a escada reta somava aqui sumiram; e o braço caiu
-        // a dezesseis porque a ponta da espiral é o canto do anel, e não
-        // uma coluna.
-        assertTrue(flat <= 2 * MineShaft.ARM * MineShaft.AREA_MULTIPLIER + MineShaft.POCKET_WIDE,
-                "a ponta da espiral ficou a " + flat + " blocos da boca, no plano");
-    }
-
-    /**
-     * <b>Perguntado à forma</b>, e era deduzido percorrendo-a — 2026-09-05.
-     *
-     * <p>A dedução procurava a posição {@code RUN} colunas adiante na
-     * mesma pista, e isso só existe num corredor reto: com a espiral o
-     * segundo trecho <b>vira</b>, e o laço rodava quatrocentas posições
-     * sem achar nada. O ciclo é propriedade da forma, e a forma que o
-     * publique.
-     */
-    private static boolean sameLane(ColonyPos a, ColonyPos b) {
-        return a.x() == b.x() || a.z() == b.z();
-    }
-
-    private static int stepOf(MineShaft shaft, int i) {
-        ColonyPos at = shaft.positionAt(i);
-        ColonyPos origin = shaft.positionAt(MineShaft.CARVED);
-
-        return Math.abs(at.x() - origin.x()) + Math.abs(at.z() - origin.z());
-    }
-
-    /**
-     * <b>A escada desce em duas pistas</b> — decisão do autor,
-     * 2026-09-05: <i>"a mina deve descer sempre em escadas duplas para o
-     * aldeão descer e subir sem se atrapalharem"</i>.
-     *
-     * <p>Um corredor de uma coluna é via de mão única: dois aldeões em
-     * sentidos opostos se empurram, e o de baixo perde a descida que
-     * acabou de fazer.
-     *
-     * <p>O que se afirma é a <b>largura</b>, e não a contagem de blocos:
-     * cada degrau tem de ocupar duas colunas lado a lado, no mesmo nível
-     * e no mesmo passo adiante.
-     */
-    @Test
-    void everyStepOfTheStairIsTwoLanesWide() {
-        MineShaft mine = shaft();
-
-        int perStep = MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES;
-
-        for (int step = 1; step <= MineShaft.DESCENT; step++) {
-            Set<String> columns = new HashSet<>();
-
-            for (int i = 0; i < perStep; i++) {
-                ColonyPos at = mine.positionAt((step - 1) * perStep + i);
-
-                columns.add(at.x() + ":" + at.z());
-            }
-
-            assertEquals(
-                    MineShaft.STAIR_LANES,
-                    columns.size(),
-                    "o degrau " + step + " não tem duas colunas: " + columns);
-        }
-    }
-
-    /**
-     * E as duas pistas ficam <b>lado a lado</b>, não uma atrás da outra.
-     *
-     * <p>Duas colunas em fila são um corredor de uma pista com o dobro do
-     * comprimento, e não resolvem nada: quem sobe continua de frente para
-     * quem desce. A segunda sai para o lado do rumo.
-     */
-    @Test
-    void theTwoLanesSitSideBySide() {
-        MineShaft mine = shaft();
-
-        ColonyPos first = mine.positionAt(0);
-        ColonyPos second = mine.positionAt(MineShaft.STAIR_HEADROOM);
-
-        assertEquals(first.y(), second.y(), "as duas pistas do degrau não estão no mesmo nível");
-
-        int apart = Math.abs(first.x() - second.x()) + Math.abs(first.z() - second.z());
-
-        assertEquals(1, apart, "as duas pistas não estão encostadas");
-    }
-
-    /**
-     * O túnel abre a altura que o autor pediu — 2026-09-05.
-     *
-     * <p><i>"adicionar um bloco na altura da mina cavada"</i>: eram dois,
-     * que é o que um aldeão ocupa parado, e a galeria era o único lugar
-     * da mina onde ele andava raspando o teto.
-     */
-    @Test
-    void theGalleryOpensThreeBlocksTall() {
-        MineShaft mine = shaft();
-
-        assertEquals(3, MineShaft.HEADROOM, "a altura do túnel deixou de ser a que o autor pediu");
-
-        Set<Integer> heights = new HashSet<>();
-
-        for (int i = MineShaft.CARVED; i < MineShaft.CARVED + MineShaft.HEADROOM * 4; i++) {
-            heights.add(mine.positionAt(i).y());
-        }
-
-        assertEquals(
-                MineShaft.HEADROOM,
-                heights.size(),
-                "a galeria não abre " + MineShaft.HEADROOM + " de altura");
+    void theLastSafeCycleDoesNotPlanBelowTheWorldBottom() {
+        MineShaft last = MineShaft.from(
+                new ColonyPos(0, MineShaft.DEEPEST + MineShaft.DESCENT, 0), Side.EAST);
+
+        assertFalse(last.mayDeepen());
     }
 }

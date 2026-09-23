@@ -1,4 +1,4 @@
-# STATE — 2026-09-22
+# STATE — 2026-09-23
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -10,15 +10,46 @@
 
 ---
 
-## Entrega operacional atual - 2026-09-22
+## Entrega operacional atual - 2026-09-23
 
 Esta e a fotografia que vale para a proxima sessao. O pacote contem a regra
 de suprimento sem rota local, a reserva integral da `BigHouseMOD`, a migracao
 de Criador para Pastor e o analisador versionado de travamentos em
 `scripts/analyze_village_log.py`.
 
-Verificacao desta entrega: `test --rerun-tasks` passou com 966 testes Java;
-`python -m unittest discover -s tests` passou com 76 testes.
+Verificacao desta entrega: `test` passou com 928 testes Java; a rodada
+completa atual de `runGametest --rerun-tasks` passou com 417/417 GameTests.
+
+**A mina agora tem um ciclo finito definido pelo autor.** Cada nivel abre um
+caracol compartilhado de dez degraus, limpa 50 blocos, e so entao libera os
+quatro ramais. Cada ramal abre mais dez degraus e limpa 50 blocos, mantendo a
+prioridade ja existente de seguir o veio de minerio antes da proxima posicao
+planejada. O nivel seguinte repete esse desenho dez blocos abaixo; o limite
+mineravel encerra a mina em vez de recriar a mesma abertura.
+
+**A troca de mina e estrita.** Ao chegar ao fundo, a antiga so e removida
+depois que `MineSite` encontra uma boca valida no lado oposto da vila. Sem
+essa boca, ela fica esgotada e espera, sem abrir uma mina em outra direcao.
+Uma boca ja conhecida recebe luz, mas nao volta a chamar `MineMouth.furnish`:
+arco e lanterna quebrados pelo jogador continuam como blocos normais. O save
+passou para a forma 6, reiniciando apenas cursores de minas na forma 5 para
+nao interpretar a geometria anterior como a atual.
+
+Os contratos de regressao cobrem o caracol, os 50 blocos comuns, quatro
+ramais finitos, limite do mundo, portal quebrado, lado oposto e a descida real
+do mineiro. Ainda falta o playtest em save para acompanhar uma mina completa,
+desde a primeira escada ate a abertura no lado oposto.
+
+O playtest de 23-09 ainda carregou o JAR instalado de SHA-256
+`446554572D466B748107D5CD65A4687BAD4BFF535F8C028F6158501BDE4AB2A0`, e nao o
+artefato atual de SHA-256
+`F9DD1792899675ECD0E50A1EC2C1CCE09CC3DD565A72F771A45C35AE35F91F34`. Portanto
+ele nao valida a forma 6 nem permite reabrir a navegacao da mina como defeito
+atual. O log mostra 20 desistencias de alvo, 5 veios descartados e 6 mineiros
+que deixaram `COLLECT_STONE`, concentrados na geometria anterior; a proxima
+reproducao precisa instalar o JAR atual e confirmar a rota antes de mudar a
+fonte. A prioridade de veio ja e global: carvao (inclusive deepslate) ocupa a
+prioridade 0 antes dos demais minerios.
 
 **A bateria de GameTest fechou em 22-09, e o gate P0 do rodizio caiu.**
 `FarmPlanGameTest.thenextturnafterahouseisnonresidential` passou: o defeito
@@ -62,9 +93,10 @@ orcamento de varredura (40). As contagens e a fila priorizada estao em
 `docs/technical/Operational-Status-2026-09-22.md`; elas nao substituem um
 GameTest que demonstre falta de progresso.
 
-O JAR sincronizado em `build/libs/`, `downloads/` e
-`%APPDATA%/.minecraft/mods/` tem SHA-256
-`A417310243A6818D4AED39FABB0A45AD0B6880E66A8C53393C5750AB55191C39`.
+O JAR desta entrega tem SHA-256
+`F9DD1792899675ECD0E50A1EC2C1CCE09CC3DD565A72F771A45C35AE35F91F34` em
+`build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`. As tres copias
+foram comparadas depois de fechar o cliente Minecraft.
 
 ## Playtest de 2026-09-22, 20:07 — tres defeitos corrigidos
 

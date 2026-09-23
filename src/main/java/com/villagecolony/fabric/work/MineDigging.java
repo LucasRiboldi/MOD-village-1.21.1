@@ -157,13 +157,20 @@ public final class MineDigging {
             // decide — antes ficava no ramo do {@code isDone} logo
             // abaixo, que a reserva nunca deixava alcançar quando o ramal
             // acabado continuava sendo entregue.
-            if (mine.get().deepenIfEveryOpenArmIsDone()) {
+            Mine.LevelAdvance advance = mine.get().advanceIfEveryOpenArmIsDone();
+
+            if (advance == Mine.LevelAdvance.DEEPENED) {
                 VillageColonyMod.LOGGER.info(
                         "Mine {} finished every branch and went one level deeper",
                         colonyId);
 
                 IdleLog.clear(colonyId, ARM_SUBJECT);
 
+                return Optional.empty();
+            }
+
+            if (advance == Mine.LevelAdvance.EXHAUSTED) {
+                abandonAtBottom(world, colonyId, mine.get(), center);
                 return Optional.empty();
             }
 
@@ -654,9 +661,43 @@ public final class MineDigging {
 
         VillageColonyMod.MINES.removeOfColony(colonyId);
 
-        VillageColonyMod.MINES.open(
+        Mine replacement = VillageColonyMod.MINES.open(
                 colonyId,
                 MineShaft.from(MinecraftTypeAdapter.toColonyPos(mouth.get()), descent));
+
+        furnishAndLight(world, replacement);
+    }
+
+    /**
+     * O fundo não reaproveita a mesma abertura: a mina acabada é esquecida
+     * e o próximo ciclo começa no lado oposto da vila.
+     */
+    private static void abandonAtBottom(
+            ServerWorld world, UUID colonyId, Mine mine, BlockPos center) {
+
+        Side opposite = mine.shaft().descent().opposite();
+        Optional<BlockPos> mouth = MineSite.mouthOnSide(world, center, opposite);
+
+        if (mouth.isEmpty()) {
+            VillageColonyMod.LOGGER.warn(
+                    "Mine {} reached the world bottom; waiting for an opposite mouth before replacing it",
+                    colonyId);
+            return;
+        }
+
+        VillageColonyMod.MINES.removeOfColony(colonyId);
+
+        Mine replacement = VillageColonyMod.MINES.open(
+                colonyId,
+                MineShaft.from(MinecraftTypeAdapter.toColonyPos(mouth.get()), opposite));
+
+        furnishAndLight(world, replacement);
+
+        VillageColonyMod.LOGGER.info(
+                "Mine {} reached the world bottom and moved from {} to opposite mouth {}",
+                colonyId,
+                MinecraftTypeAdapter.toBlockPos(mine.entry()).toShortString(),
+                mouth.get().toShortString());
     }
 
     public static void pickaxeTook(UUID colonyId, UUID workerId) {
@@ -792,10 +833,7 @@ public final class MineDigging {
         Optional<Mine> known = VillageColonyMod.MINES.of(colonyId);
 
         if (known.isPresent()) {
-            // A boca de uma mina que veio do save pode nunca ter sido
-            // mobiliada — a Regra 30 é de 2026-08-22 e há minas mais
-            // velhas que ela. Idempotente: com baú lá, isto não faz nada.
-            furnishAndLight(world, known.get());
+            lightMine(world, known.get());
 
             return known;
         }
@@ -828,11 +866,11 @@ public final class MineDigging {
                 MineShaft.from(MinecraftTypeAdapter.toColonyPos(mouth.get()), descent));
 
         VillageColonyMod.LOGGER.info(
-                "Miner {} opens a mine at {} - down {} then {} more",
+                "Miner {} opens a mine at {} - a {} step spiral then four {} step branches",
                 workerId,
                 mouth.get().toShortString(),
                 MineShaft.DESCENT,
-                MineShaft.DESCENT);
+                MineShaft.ARM_STAIRS);
 
         // A Regra 30: onde ele decide começar a cavar nascem a lanterna
         // e o baú da mina.
@@ -844,10 +882,9 @@ public final class MineDigging {
     /**
      * A lanterna e o baú da boca, e a luz da galeria.
      *
-     * <p>Chamada também para mina já conhecida, e de propósito: mina de
-     * save antigo não passou pela regra, e boca em chunk descarregado
-     * não pôde ser mobiliada na primeira tentativa. {@code MineMouth} não
-     * faz nada quando o baú já está lá.
+     * <p>Chamada só ao abrir ou trocar de boca. Mina já conhecida recebe
+     * apenas luz: o arco é construção inicial e, se o jogador o destruir,
+     * não pode voltar em uma passagem posterior.
      *
      * <p><b>E a luz da galeria desde 2026-08-28</b>, que é da mesma
      * natureza: de graça, idempotente, e no que já está cavado.
@@ -902,9 +939,11 @@ public final class MineDigging {
         // pendurada no IdleLog de quem carregar um save da véspera.
         IdleLog.clear(mine.colonyId(), CHEST_SUBJECT);
 
-        // E a luz do que já foi cavado — 2026-08-28. Mesma porta e mesma
-        // natureza: idempotente, de graça, e chamada a cada passagem em
-        // que a mina existe. Ver MineLighting.
+        lightMine(world, mine);
+    }
+
+    /** Ilumina apenas trechos já abertos; não reconstrói a entrada existente. */
+    private static void lightMine(ServerWorld world, Mine mine) {
         for (MineArm arm : mine.arms()) {
             MineLighting.light(world, mine, arm);
         }
@@ -918,7 +957,7 @@ public final class MineDigging {
      */
     private static Optional<BlockPos> nextCut(
             ServerWorld world, UUID workerId, Mine mine, MineArm arm) {
-        MineFrontier.findTheFrontier(world, arm);
+        MineFrontier.findTheFrontier(world, mine, arm);
 
         for (int look = 0; look < CUTS_PER_SEARCH; look++) {
             if (arm.reachedTheEndOfTheArm()) {
@@ -934,6 +973,13 @@ public final class MineDigging {
             }
 
             BlockPos at = MinecraftTypeAdapter.toBlockPos(arm.nextPosition());
+
+            if (MineMouth.isPortalBlock(
+                    MinecraftTypeAdapter.toBlockPos(mine.entry()),
+                    MinecraftTypeAdapter.toDirection(mine.shaft().descent()),
+                    at)) {
+                continue;
+            }
 
             if (!world.isInBuildLimit(at)) {
                 arm.finish();
@@ -1103,12 +1149,6 @@ public final class MineDigging {
             }
 
             return ore;
-        }
-
-        if (arm.isDone()) {
-            // Fechado o quarto ramal, o nível acaba e a mina desce. É a
-            // regra das quatro curvas de antes, contada de outro jeito.
-            mine.deepenIfEveryArmIsDone();
         }
 
         return Optional.empty();

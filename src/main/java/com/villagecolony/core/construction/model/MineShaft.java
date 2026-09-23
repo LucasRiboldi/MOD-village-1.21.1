@@ -6,149 +6,60 @@ import com.villagecolony.core.type.Side;
 import java.util.Objects;
 
 /**
- * A mina que o mineiro cava — a Regra 29, 2026-08-20.
+ * A geometria determinística de um nível da mina.
  *
- * <p>O autor a descreveu por inteiro, e ela é geometria: o mineiro anda
- * até o fim da vila e desce cavando <b>em escada</b>, para poder voltar
- * a subir. Desce dez blocos, abre uma sala de sete por quatro no décimo,
- * desce mais dez por outro lado, abre outra sala no vigésimo, e dali em
- * diante recolhe na altura do aldeão mais um, sem fim.
- *
- * <pre>
- * lance 1     dez degraus, três blocos de altura cada — dois para o
- *             aldeão caber, e o terceiro para ele passar
- * sala 1      sete por quatro no nível -10
- * lance 2     mais dez degraus, virando à direita: cavar reto para
- *             baixo daria um poço, e de poço não se sobe
- * sala 2      sete por quatro no nível -20
- * galeria     do nível -20 em diante, sem fim
- * </pre>
- *
- * <p><b>Por que a escada, e não o poço.</b> É a frase do autor: "de modo
- * que ele possa subir de volta". Um aldeão que cavasse reto para baixo
- * ficaria no fundo do buraco, e a colônia perderia um trabalhador por
- * causa do próprio trabalho.
- *
- * <p><b>Por que dois blocos de altura na galeria.</b> "na altura do
- * aldeão mais 1" — os pés e a cabeça. Um só e ele não passa; três e a
- * mina custa cinquenta por cento a mais de tempo para dar a mesma pedra.
- *
- * <p><b>E por que três na escada.</b> Porque descer é andar antes de
- * cair, e quem anda leva a cabeça junto — ver {@link #STAIR_HEADROOM} e
- * a sessão de 2026-08-27.
- *
- * <p>Mora em {@code core} e não conhece Minecraft: é geometria pura, e
- * geometria se afirma sem subir servidor. Quem decide se um bloco
- * <i>pode</i> ser cavado — pedra do jogador, bedrock, a Regra 3 — é a
- * camada de fora.
+ * <p>Cada nível abre um caracol de dez degraus, limpa uma área de
+ * cinquenta blocos e então libera quatro ramais. Cada ramal desce dez
+ * degraus e limpa mais cinquenta blocos. A ordem não usa sorteio de
+ * execução: o cursor salvo sempre volta à mesma posição.
  */
 public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
 
-    /**
-     * Quantos degraus cada lance do caracol dá antes de virar — decisão
-     * do autor, 2026-09-05: <i>"o caminho que o mineiro cava deve ser
-     * espiral circular"</i>.
-     *
-     * <p><b>A descida virou um caracol.</b> Eram dois lances retos de dez
-     * com uma sala em cada patamar; agora são quatro lances de cinco,
-     * cada um virando à direita do anterior. Quatro curvas fecham a
-     * volta, e a escada <b>volta à coluna da boca</b> vinte blocos
-     * abaixo — que é a mesma profundidade de nível de antes, no lugar de
-     * um rastro de vinte blocos de comprimento.
-     *
-     * <p><b>O que se ganha é alcance.</b> A boca ficava a vinte blocos
-     * horizontais do fundo do nível, e essa distância entrava inteira na
-     * caminhada do mineiro toda vez que ele voltava para depositar —
-     * era ela que punha a frente a setenta blocos em 2026-09-04. Um
-     * caracol de cinco por cinco não tem rastro: o fundo fica <b>debaixo
-     * da boca</b>.
-     *
-     * <p>E ele resolve de graça o que a escada reta pedia por escrito: um
-     * degrau de caracol tem parede dos dois lados o tempo todo, então
-     * nunca há o vão de onde o aldeão não alcança nada.
-     */
-    public static final int HELIX_SIDE = 5;
-
-    /** Quantos lances o caracol dá por nível — quatro é a volta inteira. */
+    /** Quatro curvas formam o caracol. Os lados alternam três e dois degraus. */
     public static final int HELIX_FLIGHTS = 4;
 
-    /** A cada dois lances atuais, o nível ganha outra área de galeria. */
-    public static final int AREA_DOUBLING_STAIR_FLIGHTS = 2;
+    /** Quantos degraus o caracol inteiro desce. */
+    public static final int DESCENT = 10;
 
-    /** Quantas áreas de galeria cabem na volta atual da escada. */
-    public static final int AREA_MULTIPLIER = HELIX_FLIGHTS / AREA_DOUBLING_STAIR_FLIGHTS;
+    /** Maior lado do caracol, exposto para os testes de largura. */
+    public static final int HELIX_SIDE = 3;
 
-    /** Quanto o caracol desce por nível. Vinte, como os dois lances de antes. */
-    public static final int DESCENT = HELIX_SIDE * HELIX_FLIGHTS;
-
-    /**
-     * Quanto a galeria e as salas abrem de altura — três desde
-     * 2026-09-05, e é decisão do autor: <i>"adicionar um bloco na altura
-     * da mina cavada"</i>.
-     *
-     * <p>Eram dois, que é exatamente o que um aldeão ocupa parado. A
-     * escada já abria três desde 08-27, pelo motivo que o
-     * {@link #STAIR_HEADROOM} conta — descer não é cair —, e o corredor
-     * plano ficou sendo o único lugar da mina onde ele anda com a cabeça
-     * raspando o teto.
-     *
-     * <p><b>Custa, e a conta é a que estava escrita ali:</b> a galeria é
-     * o trecho que não acaba, e cinquenta por cento a mais de altura é
-     * cinquenta por cento a mais de picareta por coluna. O autor pediu
-     * sabendo — a mina é lugar de aldeão trabalhar, e não um cano.
-     */
+    /** Altura livre de túneis e áreas de coleta. */
     public static final int HEADROOM = 3;
 
-    /**
-     * Quanto um degrau abre — três, e não dois. Visto em jogo em
-     * 2026-08-27.
-     *
-     * <p>Dois é quanto o aldeão ocupa <b>parado</b>. Descer um degrau
-     * não é cair: é andar para a frente no mesmo nível e só então cair,
-     * e nesse instante a cabeça dele está um bloco acima do teto do
-     * degrau seguinte.
-     *
-     * <pre>
-     * degrau s      abre y, y+1      pés em y, cabeça em y+1
-     * degrau s+1    abre y-1, y      a cabeça bate em y+1, maciço
-     * </pre>
-     *
-     * <p>Com dois, o mineiro parava no primeiro degrau e batia a
-     * picareta no ar — a mina só descia porque o jogador abria o caminho
-     * na mão. A frase dele: <i>"o mineiro precisa quebrar mais um bloco
-     * na sua frente para poder descer a escada"</i>.
-     *
-     * <p><b>Custa vinte blocos na mina inteira</b>, dez por lance. A
-     * objeção que a galeria carrega — <i>três e a mina custa cinquenta
-     * por cento a mais</i> — vale para ela, que é plana e continua com
-     * dois. Escada plana não existe.
-     */
+    /** Altura livre que cada degrau abre. */
     public static final int STAIR_HEADROOM = 3;
 
-    /**
-     * Quantas pistas a escada tem — duas, desde 2026-09-05.
-     *
-     * <p>Decisão do autor: <i>"a mina deve descer sempre em escadas
-     * duplas para o aldeão descer e subir sem se atrapalharem"</i>.
-     *
-     * <p>Um corredor de uma coluna é uma via de mão única: dois aldeões
-     * em sentidos opostos se empurram, e o de baixo perde a descida que
-     * acabou de fazer. Com duas colunas lado a lado cada um tem por onde
-     * passar, e a navegação do jogo resolve o desvio sozinha — não é
-     * preciso mão nem regra dizendo quem sobe por qual.
-     *
-     * <p>A segunda pista sai para o lado do rumo da descida, que é o
-     * mesmo lado por onde a sala se abre.
-     */
+    /** As duas pistas que permitem a passagem em sentidos opostos. */
     public static final int STAIR_LANES = 2;
 
-    /** Quantas posições um lance do caracol pede. */
-    private static final int FLIGHT_BLOCKS = HELIX_SIDE * STAIR_HEADROOM * STAIR_LANES;
+    /** Blocos planejados por degrau: duas pistas por três alturas. */
+    private static final int STAIR_STEP_BLOCKS = STAIR_HEADROOM * STAIR_LANES;
 
-    /** A partir daqui é galeria, e ela não acaba. */
-    public static final int CARVED = FLIGHT_BLOCKS * HELIX_FLIGHTS;
+    /** Blocos da escada inicial compartilhada. */
+    public static final int CARVED = DESCENT * STAIR_STEP_BLOCKS;
 
+    /** Área de exploração comum após o caracol. */
+    public static final int SEARCH_AREA_BLOCKS = 50;
 
+    /** Tudo que os quatro ramais compartilham antes de se separar. */
+    public static final int SHARED_BLOCKS = CARVED + SEARCH_AREA_BLOCKS;
+
+    /** Degraus de cada um dos quatro ramais. */
+    public static final int ARM_STAIRS = 10;
+
+    /** Blocos de área limpos por ramal. */
+    public static final int ARM_AREA_BLOCKS = 50;
+
+    /** Total de posições exclusivas de cada ramal. */
+    public static final int ARM_BLOCKS = ARM_STAIRS * STAIR_STEP_BLOCKS + ARM_AREA_BLOCKS;
+
+    private static final int SEARCH_WIDTH = 5;
+    private static final int SEARCH_LENGTH = SEARCH_AREA_BLOCKS / (SEARCH_WIDTH * 2);
+    private static final int MINEABLE_BOTTOM = -63;
+
+    /** A menor altura do piso central que ainda deixa o último ramal acima da rocha-mãe. */
+    public static final int DEEPEST = MINEABLE_BOTTOM + ARM_STAIRS - 2;
 
     public MineShaft {
         Objects.requireNonNull(entry, "entry");
@@ -156,179 +67,110 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
         Objects.requireNonNull(gallery, "gallery");
     }
 
-    /**
-     * A mina que começa aqui, descendo para este lado.
-     *
-     * <p>O segundo lance vira à direita, e a galeria segue à direita de
-     * novo. Duas curvas à direita afastam a galeria do lance de subida,
-     * que é onde o aldeão anda.
-     */
+    /** Abre a escada e posiciona o primeiro ramal à direita da entrada. */
     public static MineShaft from(ColonyPos entry, Side descent) {
         return new MineShaft(entry, descent, descent.clockwise().clockwise());
     }
 
-    /**
-     * A mesma mina, com a galeria virada.
-     *
-     * <p>É a frase do autor: <i>"sempre que encontrar uma barreira que
-     * impeça de realizar estas ações ele começa a recolher para outro
-     * lado"</i>. Lava, bedrock, uma caverna — a galeria vira e segue.
-     */
+    /** A mesma escada, com o próximo ramal em sentido horário. */
     public MineShaft turned() {
         return new MineShaft(entry, descent, gallery.clockwise());
     }
 
-    /**
-     * A mesma boca, com a hélice orientada para o próximo lado.
-     *
-     * <p>Usada quando todos os ramais chegaram a uma barreira no limite de
-     * profundidade. Girar só a galeria preserva a escada que levou à frente
-     * bloqueada; esta troca o rumo da escada sem deslocar a entrada.
-     */
+    /** Tenta a mesma boca com o caracol orientado para o próximo lado. */
     public MineShaft rerouted() {
         return from(entry, descent.clockwise());
     }
 
-    /**
-     * O nível mais fundo que a mina procura — 2026-09-02.
-     *
-     * <p>É o pico do diamante em 1.21, e não o fundo do mundo: abaixo
-     * dele a geração cai, e a rocha-mãe começa cinco blocos depois.
-     * Parar aqui é parar onde há mais o que achar.
-     */
-    public static final int DEEPEST = -59;
-
-    /**
-     * O poço do nível seguinte, que começa onde a galeria deste está.
-     *
-     * <p><b>A profundidade cresce aos poucos</b> — 2026-09-02, e a forma
-     * é a do MineColonies, onde a mina desce um nível a cada nível do
-     * prédio. Aqui quem manda é a galeria ter fechado o círculo: quatro
-     * curvas e ela voltou à direção em que começou, tendo dado a volta
-     * no nível. Ver {@code Mine.turn}.
-     *
-     * <p><b>Por que isso importa.</b> A sessão de 2026-09-02 trabalhou
-     * em {@code y=44}, e o pico do diamante é {@code y=-59}: cem blocos
-     * acima do que se estava procurando. Uma mina que não desce não tem
-     * como achar minério melhor, por mais que se conserte a busca.
-     *
-     * <p>Mesma descida e mesma galeria: o que muda é a altura de onde
-     * ela recomeça. Cada nível custa duas descidas, que são vinte
-     * blocos.
-     */
+    /** O próximo nível começa no piso central desta escada. */
     public MineShaft deepened() {
         return new MineShaft(levelFloor(), descent, gallery);
     }
 
-    /** Se ainda há nível abaixo deste, sem passar do {@link #DEEPEST}. */
+    /** Não propõe posições abaixo da faixa minerável do mundo. */
     public boolean mayDeepen() {
-        return deepened().levelFloor().y() >= DEEPEST;
+        return deepened().lowestPlannedY() >= MINEABLE_BOTTOM;
     }
 
-    /**
-     * A posição de índice {@code i} na ordem de cavar.
-     *
-     * <p>Índice acima de {@link #CARVED} é galeria, e por isso não há
-     * teto: a mina não acaba, e quem a interrompe é o expediente, a
-     * paciência do jogador ou o fim do mundo.
-     */
-    public ColonyPos positionAt(int i) {
-        if (i < CARVED) {
-            return helix(i);
+    /** A posição da ordem de escavação. */
+    public ColonyPos positionAt(int index) {
+        if (index < 0) {
+            throw new IllegalArgumentException("Index must be non-negative: " + index);
         }
 
-        return tunnel(i - CARVED);
+        if (index < CARVED) {
+            return helix(index);
+        }
+
+        if (index < SHARED_BLOCKS) {
+            return search(levelFloor(), commonDirection(), index - CARVED);
+        }
+
+        int armIndex = index - SHARED_BLOCKS;
+
+        if (armIndex < ARM_STAIRS * STAIR_STEP_BLOCKS) {
+            return stair(branchTop(), gallery, armIndex);
+        }
+
+        return search(branchFloor(), gallery, armIndex - ARM_STAIRS * STAIR_STEP_BLOCKS);
     }
 
-    /**
-     * Um degrau do caracol — 2026-09-05.
-     *
-     * <p>Quatro lances por volta, cada um virando à direita do anterior,
-     * e cada um usando o mesmo degrau de sempre: duas pistas, três de
-     * altura, um bloco adiante e um abaixo. A curva é a única coisa nova.
-     */
-    private ColonyPos helix(int i) {
-        int flight = i / FLIGHT_BLOCKS;
-
-        return stair(cornerOf(flight), facingOn(flight), i % FLIGHT_BLOCKS);
+    /** Cada ramal tem exatamente sua escada e sua área finitas. */
+    public boolean beyondTheArm(int index) {
+        return index >= SHARED_BLOCKS + ARM_BLOCKS;
     }
 
-    /**
-     * De onde parte o lance de número {@code flight}.
-     *
-     * <p><b>Fórmula, e não soma do caminho.</b> O
-     * {@code MinerReach.legTowards} percorre até duas mil posições todo
-     * tique, e uma ordem que precisasse ser acumulada custaria isso ao
-     * quadrado — é a mesma razão que já mantinha a galeria periódica.
-     *
-     * <p>E ela fecha porque o caracol é periódico em quatro: os dois
-     * primeiros lances afastam, os dois seguintes trazem de volta, e ao
-     * fim da volta o x e o z são os da boca outra vez. Só o y desce.
-     */
+    private ColonyPos helix(int index) {
+        int remaining = index;
+
+        for (int flight = 0; flight < HELIX_FLIGHTS; flight++) {
+            int blocks = flightLength(flight) * STAIR_STEP_BLOCKS;
+
+            if (remaining < blocks) {
+                return stair(cornerOf(flight), facingOn(flight), remaining);
+            }
+
+            remaining -= blocks;
+        }
+
+        throw new IllegalArgumentException("Helix index outside the shared stair: " + index);
+    }
+
+    private static int flightLength(int flight) {
+        return flight % 2 == 0 ? HELIX_SIDE : HELIX_SIDE - 1;
+    }
+
     private ColonyPos cornerOf(int flight) {
-        Side first = descent;
-        Side second = descent.clockwise();
+        int x = entry.x();
+        int y = entry.y();
+        int z = entry.z();
 
-        int dx = 0;
-        int dz = 0;
-
-        // P[0]=nada, P[1]=primeiro, P[2]=primeiro+segundo, P[3]=segundo.
-        if (flight % HELIX_FLIGHTS >= 1) {
-            dx += first.offsetX();
-            dz += first.offsetZ();
+        for (int prior = 0; prior < flight; prior++) {
+            Side towards = facingOn(prior);
+            int length = flightLength(prior);
+            x += towards.offsetX() * length;
+            z += towards.offsetZ() * length;
+            y -= length;
         }
 
-        if (flight % HELIX_FLIGHTS >= 2) {
-            dx += second.offsetX();
-            dz += second.offsetZ();
-        }
-
-        if (flight % HELIX_FLIGHTS == 3) {
-            dx -= first.offsetX();
-            dz -= first.offsetZ();
-        }
-
-        return new ColonyPos(
-                entry.x() + dx * HELIX_SIDE,
-                entry.y() - flight * HELIX_SIDE,
-                entry.z() + dz * HELIX_SIDE);
+        return new ColonyPos(x, y, z);
     }
 
-    /** Para que lado o lance de número {@code flight} desce. */
     private Side facingOn(int flight) {
         Side towards = descent;
 
-        for (int turn = 0; turn < flight % HELIX_FLIGHTS; turn++) {
+        for (int turn = 0; turn < flight; turn++) {
             towards = towards.clockwise();
         }
 
         return towards;
     }
 
-    /**
-     * Um degrau: as camadas de uma pista, um passo adiante e um abaixo
-     * do anterior — e depois as da pista ao lado.
-     *
-     * <p>As duas pistas do mesmo degrau vêm <b>juntas</b> na ordem, e não
-     * uma escada inteira depois da outra: assim o mineiro abre o degrau
-     * completo antes de descer para o seguinte, e nunca fica com meia
-     * largura aberta debaixo do pé. Ver {@link #STAIR_LANES}.
-     */
-    private static ColonyPos stair(ColonyPos top, Side towards, int i) {
-        int perStep = STAIR_HEADROOM * STAIR_LANES;
-
-        int step = i / perStep + 1;
-        int within = i % perStep;
-
+    private static ColonyPos stair(ColonyPos top, Side towards, int index) {
+        int step = index / STAIR_STEP_BLOCKS + 1;
+        int within = index % STAIR_STEP_BLOCKS;
         int lane = within / STAIR_HEADROOM;
         int layer = within % STAIR_HEADROOM;
-
-        // <b>Para a esquerda, e é o caracol que manda</b> — 2026-09-05. O
-        // lance seguinte vira à direita, então uma segunda pista à
-        // direita cairia dentro dele: a última posição de um lance e a
-        // primeira do outro seriam a mesma coluna, e o mineiro bateria a
-        // picareta em bloco já aberto duas vezes por curva. À esquerda
-        // ela sai por trás da curva, onde ninguém mais cava.
         Side sideways = towards.clockwise().opposite();
 
         return new ColonyPos(
@@ -337,241 +179,61 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
                 top.z() + towards.offsetZ() * step + sideways.offsetZ() * lane);
     }
 
-    /**
-     * O chão do nível: debaixo da boca, {@link #DESCENT} blocos abaixo.
-     *
-     * <p><b>Debaixo da boca, e é o ponto do caracol.</b> A escada reta
-     * deixava o fundo vinte blocos <b>de lado</b>, e essa distância
-     * entrava na caminhada do mineiro toda vez que ele subia para
-     * depositar. Quatro curvas fecham a volta e o x e o z voltam a ser os
-     * da entrada — a galeria do nível nasce embaixo de quem a mandou
-     * cavar.
-     */
+    /** O centro do próximo ciclo, dez blocos abaixo da entrada do ciclo atual. */
     private ColonyPos levelFloor() {
         return cornerOf(HELIX_FLIGHTS);
     }
 
-    /**
-     * Quantas colunas de corredor antes de cada bolsão — 2026-09-03.
-     *
-     * <p>Oito, que é a distância entre duas tochas: o bolsão cai onde a
-     * luz já chega.
-     */
-    public static final int RUN = 8;
-
-    /** Quanto o bolsão avança ao lado do corredor, em colunas. */
-    public static final int POCKET_LONG = 3;
-
-    /** E quanto ele entra na parede. */
-    public static final int POCKET_WIDE = 2;
-
-    private static final int RUN_BLOCKS = RUN * HEADROOM;
-
-    private static final int POCKET_BLOCKS = POCKET_LONG * POCKET_WIDE * HEADROOM;
-
-    /**
-     * O ciclo da galeria: um trecho de corredor e o bolsão dele.
-     *
-     * <p><b>Fixo, e é o que mantém a conta em O(1).</b> A posição de
-     * índice {@code i} tem de sair de uma fórmula, e não de somar o
-     * caminho desde a boca: o {@code MinerReach.legTowards} percorre até
-     * duas mil posições <b>todo tique</b>, e uma ordem que precisasse ser
-     * acumulada custaria isso ao quadrado.
-     *
-     * <p>Por isso o bolsão é periódico e o que varia é de que <b>lado</b>
-     * ele fica — ver {@link #pocketSide}. Sorteio que mudasse o tamanho
-     * mudaria o passo do ciclo, e o passo do ciclo é o que fecha a
-     * fórmula.
-     */
-    public static final int GALLERY_CYCLE = RUN_BLOCKS + POCKET_BLOCKS;
-
-    /**
-     * Quantas colunas a galeria avança antes de virar — decisão do
-     * autor, 2026-09-04.
-     *
-     * <p><b>A frase dele:</b> <i>"o mineiro deve priorizar o perímetro da
-     * vila"</i>, e a forma escolhida foi um teto de raio a partir da
-     * boca.
-     *
-     * <p><b>O que ela conserta está medido.</b> Na sessão de 2026-09-04,
-     * às 21:03, o mineiro estava em {@code 1456,44,87} e a ordem de cavar
-     * apontava para {@code 1454,44,158}: <b>70,7 blocos</b>, {@code out
-     * of reach}, {@code 0/0 ticks}. A galeria não tinha teto — o
-     * {@code cycle} do {@link #tunnel} cresce sem fim —, e nem virar
-     * resolvia: {@code Mine.turn} trocava a direção e <b>guardava o
-     * cursor</b>, então a curva punha o aldeão à mesma distância, noutro
-     * rumo.
-     *
-     * <p><b>Dezesseis desde 2026-09-05</b>, e eram vinte e quatro. O
-     * braço deixou de ser uma reta e virou uma espiral de dois anéis: a
-     * ponta mais distante já não é uma coluna a vinte e quatro blocos, é
-     * o <b>canto</b> do anel de fora, a dezesseis para um lado e
-     * dezesseis para o outro. Manter vinte e quatro poria esse canto a
-     * trinta e quatro blocos em linha reta do poço, que é a distância que
-     * a perna do mineiro não cumpre — o defeito de 09-04 pela porta nova.
-     *
-     * <p><b>E o alcance não piorou: melhorou.</b> A boca ficava vinte
-     * blocos horizontais do fundo do nível, e o caracol devolveu esses
-     * vinte — o poço fica debaixo dela. Dezesseis mais dezesseis a partir
-     * do poço são vinte e três em linha reta da boca, contra os quarenta
-     * e quatro de antes. E a espiral cobre <b>área</b> onde a reta cobria
-     * uma linha: trinta e duas colunas por braço, contra vinte e quatro.
-     *
-     * <p>Com {@link Mine#TURNS_PER_LEVEL} curvas, o nível vira um anel de
-     * quatro braços em volta do poço, e só então a mina desce. É a forma
-     * que o autor pediu: nem uma reta sem fim, nem sorteio — um perímetro.
-     */
-    public static final int ARM = 16;
-
-    /** Quantos anéis a espiral abre antes de o nível acabar. */
-    public static final int RINGS = ARM / RUN;
-
-    /**
-     * Quantos trechos a espiral tem neste nível.
-     *
-     * <p>A base continua sendo dois por anel — o que sai e o que
-     * contorna —, mas cada par de lances da escada abre uma área de
-     * mineração. Com os quatro lances atuais, o nível minera o dobro
-     * antes de descer.
-     */
-    public static final int GALLERY_LEGS = 2 * RINGS * AREA_MULTIPLIER;
-
-    /**
-     * Se este índice da ordem já passou do fim do braço.
-     *
-     * <p>Índice, e não distância medida no mundo: o corredor sai reto da
-     * sala, então contar colunas <b>é</b> medir o raio, e sem custo. O
-     * {@code MinerReach.legTowards} percorre até duas mil posições por
-     * tique, e uma pergunta que precisasse de raiz quadrada estaria nesse
-     * laço.
-     */
-    public boolean beyondTheArm(int i) {
-        return i >= CARVED && (i - CARVED) / GALLERY_CYCLE >= GALLERY_LEGS;
+    private Side commonDirection() {
+        return descent.clockwise().clockwise();
     }
 
-    /**
-     * A galeria: corredor com bolsões, e não um túnel reto sem fim —
-     * decisão do autor, 2026-09-03.
-     *
-     * <p>A frase dele: <i>"o caminho de mineração pode ser de modo mais
-     * aleatório em bolsões e não uma linha reta"</i>.
-     *
-     * <p>Parte do canto oposto da segunda sala para não recavá-la: a sala
-     * já está aberta, e a galeria é o que vem depois dela.
-     *
-     * <p><b>E ela espirala desde 2026-09-05</b> — decisão do autor:
-     * <i>"o caminho que o mineiro cava deve ser espiral circular"</i>.
-     * Dois trechos por anel — um sai do poço, o seguinte contorna —, e o
-     * braço passou de uma reta de vinte e quatro colunas para um quadrado
-     * que se abre em {@link #RINGS} anéis. Cobre <b>área</b> onde a reta
-     * cobria uma linha, e a parede exposta, que é onde o minério aparece,
-     * cresce junto.
-     *
-     * <p><b>A espinha continua andando um bloco por passo, inclusive na
-     * curva.</b> Ela é o caminho de volta do aldeão, e é dela que o
-     * {@code legTowards} depende — <i>a ordem de cavar É um corredor
-     * contínuo a partir da boca</i>. Uma curva que pulasse para a
-     * diagonal seria o E34 pela porta de trás: de diagonal a navegação
-     * não passa sem que os cantos estejam abertos. Os trechos se
-     * encontram em ângulo reto, e o teste da espinha mede isso anel a
-     * anel.
-     *
-     * <p><b>O bolsão fica pendurado ao lado dela.</b> Cada bloco dele
-     * encosta no corredor ou no bloco anterior do próprio bolsão, então a
-     * contiguidade continua valendo — o que muda é que a mina passa a ter
-     * câmaras, e não um cano de um bloco de largura.
-     *
-     * <p>Ganha-se mais que a aparência: parede exposta é onde
-     * {@code OreVein.beside} enxerga minério, e um bolsão de três por dois
-     * mostra <b>doze</b> paredes novas onde o corredor mostraria duas.
-     */
-    private ColonyPos tunnel(int i) {
-        int cycle = i / GALLERY_CYCLE;
-        int within = i % GALLERY_CYCLE;
-
-        // Dois trechos por anel: o que sai do poço e o que contorna.
-        int ring = cycle / 2;
-        boolean around = cycle % 2 == 1;
-
-        int corner = ring * RUN;
-
-        if (within < RUN_BLOCKS) {
-            int step = within / HEADROOM + 1;
-            int high = within % HEADROOM;
-
-            return around
-                    ? at(corner + RUN, corner + step, high)
-                    : at(corner + step, corner, high);
-        }
-
-        int j = within - RUN_BLOCKS;
-
-        int deep = pocketSide(cycle) * (j / (POCKET_LONG * HEADROOM) + 1);
-        int rest = j % (POCKET_LONG * HEADROOM);
-
-        // <b>No meio do trecho, e não na ponta</b> — 2026-09-05. Eram as
-        // últimas colunas, e com a espiral a ponta de um trecho é a
-        // <b>curva</b> para o seguinte: o bolsão caía em cima do corredor
-        // que vinha depois dele, dos dois lados. No meio nenhum dos dois
-        // sinais alcança curva nenhuma, e o {@link #pocketSide} continua
-        // podendo sortear o lado.
-        //
-        // E ele pende <b>perpendicular ao trecho</b>, que no que contorna
-        // é o eixo que sai — senão cairia sobre o próprio corredor.
-        int along = corner + RUN / 2 + rest / HEADROOM;
-        int high = rest % HEADROOM;
-
-        return around
-                ? at(corner + RUN + deep, along, high)
-                : at(along, corner + deep, high);
-    }
-
-    /**
-     * Uma posição da galeria: quantas colunas adiante, quanto de lado, e
-     * qual das duas alturas.
-     */
-    private ColonyPos at(int step, int lane, int high) {
+    private ColonyPos branchTop() {
         ColonyPos floor = levelFloor();
 
-        Side sideways = gallery.clockwise();
-
-        // <b>A galeria nasce no chão do caracol</b>, e não a alguns
-        // blocos dele — 2026-09-05. A sala de sete por quatro fazia a
-        // ligação na forma velha; sem ela, começar longe deixaria o
-        // corredor solto dentro da rocha, sem tocar a escada por lugar
-        // nenhum. As primeiras colunas atravessam a pegada do caracol, e
-        // as que já estiverem abertas o nextCut pula de graça.
         return new ColonyPos(
-                floor.x() + gallery.offsetX() * step + sideways.offsetX() * lane,
-                floor.y() + 1 + high,
-                floor.z() + gallery.offsetZ() * step + sideways.offsetZ() * lane);
+                floor.x() + gallery.offsetX() * SEARCH_LENGTH,
+                floor.y() + 1,
+                floor.z() + gallery.offsetZ() * SEARCH_LENGTH);
+    }
+
+    private ColonyPos branchFloor() {
+        ColonyPos top = branchTop();
+        return new ColonyPos(
+                top.x() + gallery.offsetX() * ARM_STAIRS,
+                top.y() - ARM_STAIRS,
+                top.z() + gallery.offsetZ() * ARM_STAIRS);
     }
 
     /**
-     * De que lado do corredor este bolsão se abre: {@code -1} ou
-     * {@code +1}.
-     *
-     * <p><b>O "aleatório" do pedido, e ele não pode ser sorteio.</b> A
-     * ordem de cavar é indexada por um cursor gravado no save, então
-     * {@code positionAt} tem de responder a mesma coisa hoje e depois de
-     * reiniciar o servidor. Um {@code Random} daria uma mina diferente a
-     * cada carregamento, e o cursor passaria a apontar para outro lugar.
-     *
-     * <p>Então é ruído: função pura da boca da mina, do lado da galeria e
-     * do número do ciclo. Duas colônias cavam minas diferentes, a mesma
-     * colônia cava a mesma mina sempre, e as quatro direções da galeria
-     * não repetem o desenho uma da outra.
+     * Uma sala de 5 x 5 x 2. A ordem alterna os lados a partir do centro,
+     * variando a área explorada sem perder um caminho físico de volta.
      */
-    private int pocketSide(int cycle) {
-        int noise = entry.x() * 73_856_093 ^ entry.y() * 19_349_663 ^ entry.z() * 83_492_791;
+    private ColonyPos search(ColonyPos floor, Side towards, int index) {
+        if (index < 0 || index >= SEARCH_AREA_BLOCKS) {
+            throw new IllegalArgumentException("Search index outside the area: " + index);
+        }
 
-        noise = noise * 31 + gallery.ordinal();
-        noise = noise * 31 + cycle;
+        int column = index / 2;
+        int layer = index % 2;
+        int row = column / SEARCH_WIDTH;
+        int withinRow = column % SEARCH_WIDTH;
+        int offset = switch (withinRow) {
+            case 0 -> 0;
+            case 1 -> 1;
+            case 2 -> -1;
+            case 3 -> 2;
+            default -> -2;
+        };
+        Side sideways = towards.clockwise();
 
-        noise ^= noise >>> 15;
-        noise *= 0x2c1b3c6d;
-        noise ^= noise >>> 13;
+        return new ColonyPos(
+                floor.x() + towards.offsetX() * row + sideways.offsetX() * offset,
+                floor.y() + 1 + layer,
+                floor.z() + towards.offsetZ() * row + sideways.offsetZ() * offset);
+    }
 
-        return (noise & 1) == 0 ? -1 : 1;
+    private int lowestPlannedY() {
+        return branchFloor().y() + 1;
     }
 }

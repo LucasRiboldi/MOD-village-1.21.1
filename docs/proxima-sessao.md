@@ -19,6 +19,15 @@ conhecido de `FarmPlanGameTest`.
 `build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`; as três cópias
 foram comparadas após a atualização.
 
+**JAR atual da entrega P1.3 (2026-09-23):** 0.3.0, SHA-256
+`F9DD1792899675ECD0E50A1EC2C1CCE09CC3DD565A72F771A45C35AE35F91F34` em
+`build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`; as tres copias
+foram comparadas com o cliente fechado. `./gradlew.bat --no-daemon build` e
+`./gradlew.bat runGametest --rerun-tasks` passaram, com 417/417 GameTests.
+Este e o JAR que deve ser usado para repetir o playtest P1.3: caracol unico,
+area comum antes dos quatro ramais, carvao prioritario, portal quebrado sem
+reconstrucao e boca oposta no limite mineravel.
+
 A sessão de 09-03 aconteceu e **o mineiro trabalhou** — a primeira boa. Ela
 não zerou a pilha: fechou o que dependia de vê-lo cavar, e abriu quatro
 coisas novas, que estão no **item 3-a**.

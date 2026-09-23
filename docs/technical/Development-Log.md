@@ -8503,3 +8503,63 @@ Nao houve mudanca de producao: o fluxo ja estava correto, e a lacuna era de
 regressao ponta a ponta. `./gradlew.bat runGametest --rerun-tasks` passou com
 414/414. O playtest P1.3 de casas consecutivas permanece pendente por depender
 de save real.
+
+### 2026-09-23 - P1.3, ciclo finito da mina e boca oposta
+
+O autor definiu a geometria da mina: caracol de dez degraus, area comum de 50
+blocos, quatro ramais de dez degraus e 50 blocos cada. `MineShaft` passou a
+representar essa ordem finita. Apenas um mineiro trabalha os 110 blocos
+compartilhados; depois os quatro ramais sao liberados. A busca de veio ja
+existente continua precedendo a proxima posicao da geometria.
+
+O ultimo nivel nao reinicia a mesma boca. `Mine.advanceIfEveryOpenArmIsDone`
+declara o ciclo esgotado e `MineDigging` procura uma boca valida apenas no
+lado oposto da vila. A mina anterior so sai do registro depois de a boca oposta
+existir; se nao existir, ela espera sem cair para outra direcao. O formato do
+save passou de 5 para 6, zerando cursores antigos e preservando boca e estado
+visual.
+
+O arco da entrada deixou de ser manutencao repetida: uma mina conhecida so
+recebe luz. `MineMouth.furnish` fica reservado para a abertura de uma mina
+nova, portanto o portal quebrado pelo jogador permanece quebrado.
+
+`MineShaftTest`, `MineTest`, `MineRegistryTest`, `MineSaveTest` e
+`MinerLegTest` cobrem a geometria, o limite e a migracao. Foram adicionados
+os GameTests de portal quebrado e boca oposta; o GameTest antigo de descida
+passou a derivar o quarto degrau da geometria. `./gradlew.bat test` passou com
+928 testes e `./gradlew.bat runGametest --rerun-tasks` passou com 417/417.
+Falta acompanhar, no save, uma mina inteira ate a substituicao no lado oposto.
+
+### 2026-09-23 - diagnostico do playtest do mineiro
+
+O `latest.log` do playtest de 02:16 a 02:34 registrou trabalho real na frente
+da mina, mas tambem 20 desistencias de alvo, 5 veios descartados e 6 mineiros
+que abandonaram `COLLECT_STONE`. Os alvos repetidos ficavam abaixo da boca e a
+navegacao recuava para ela sem encontrar a subida. Sao candidatos de
+regressao, nao defeito confirmado da forma 6: o cliente carregou o JAR de
+SHA-256 `446554572D466B748107D5CD65A4687BAD4BFF535F8C028F6158501BDE4AB2A0`,
+enquanto o build validado gera
+`F9DD1792899675ECD0E50A1EC2C1CCE09CC3DD565A72F771A45C35AE35F91F34`.
+
+`OreVein` ja ordena a tag `COAL_ORES` antes de ferro, cobre, ouro, esmeralda,
+redstone, lapis e diamante, e `MineDigging` consulta o veio antes do proximo
+corte geometrico. Assim, todos os mineiros que chegam a um veio compartilham
+a preferencia por carvao, incluindo as variantes deepslate. Os GameTests de
+prioridade e a rodada completa de 417/417 passaram novamente nesta sessao.
+
+A proxima acao e instalar o JAR atual, reproduzir a rota abaixo da boca e so
+entao fixar uma regressao para qualquer nova regra de navegacao. Se ela voltar,
+a melhoria indicada e barrar o alvo antes da reserva quando nao houver uma
+perna navegavel ate a parede, em vez de deixar a protecao de repeticao trocar o
+trabalhador de profissao.
+
+### 2026-09-23 - publicacao local da entrega P1.3
+
+Com o cliente fechado, o artefato de
+`build/libs/village-colony-0.3.0.jar` foi copiado para `downloads/` e para
+`%APPDATA%/.minecraft/mods/`. As tres copias confirmaram SHA-256
+`F9DD1792899675ECD0E50A1EC2C1CCE09CC3DD565A72F771A45C35AE35F91F34`.
+`./gradlew.bat --no-daemon build` passou; a execucao sem daemon foi usada
+porque o daemon anterior havia sido encerrado externamente e deixou apenas um
+lock obsoleto do Loom, que o Gradle reconstruiu. A rodada completa anterior de
+`./gradlew.bat runGametest --rerun-tasks` passou com 417/417.

@@ -80,6 +80,10 @@ class MinerLegTest {
                 Mine.restore(UUID.randomUUID(), MineShaft.from(MOUTH, Side.NORTH), cut).arm(0));
     }
 
+    private static BlockPos at(ColonyPos position) {
+        return new BlockPos(position.x(), position.y(), position.z());
+    }
+
     /** Um mundo de mentira, feito das duas respostas que a perna pede. */
     private static MinerReach.Footing world(
             Predicate<BlockPos> passable, Predicate<BlockPos> standable) {
@@ -208,9 +212,10 @@ class MinerLegTest {
      */
     @Test
     void fromInsideTheShaftTheLegKeepsGoingDown() {
-        BlockPos onTheStairs = new BlockPos(732, 58, 893);
+        BlockPos onTheStairs = at(MineShaft.from(MOUTH, Side.NORTH).positionAt(0));
 
-        BlockPos leg = MinerReach.legTowards(onTheStairs, DEEP, mine(60), ANYWHERE);
+        BlockPos leg = MinerReach.legTowards(
+                onTheStairs, DEEP, mine(MineShaft.CARVED), ANYWHERE);
 
         assertTrue(
                 leg.getY() < onTheStairs.getY(),

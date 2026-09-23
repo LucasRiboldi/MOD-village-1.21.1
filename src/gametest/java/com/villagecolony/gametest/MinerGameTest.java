@@ -2606,11 +2606,10 @@ public class MinerGameTest implements FabricGameTest {
 
         // A boca posta à mão: o lado da descida sai do id da colônia, que
         // é sorteado, e um teste não pode depender de sorte.
-        VillageColonyMod.MINES.restore(Mine.restore(
-                colony.id(),
-                MineShaft.from(MinecraftTypeAdapter.toColonyPos(
-                        context.getAbsolutePos(mouth)), Side.WEST),
-                0));
+        MineShaft shaft = MineShaft.from(MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(mouth)), Side.WEST);
+
+        VillageColonyMod.MINES.restore(Mine.restore(colony.id(), shaft, 0));
 
         MinerWork.run(world, colony);
 
@@ -2905,18 +2904,20 @@ public class MinerGameTest implements FabricGameTest {
 
         task.reserveFor(villager.getUuid());
 
-        VillageColonyMod.MINES.restore(Mine.restore(
-                colony.id(),
-                MineShaft.from(MinecraftTypeAdapter.toColonyPos(
-                        context.getAbsolutePos(mouth)), Side.WEST),
-                0));
+        MineShaft shaft = MineShaft.from(MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(mouth)), Side.WEST);
+
+        VillageColonyMod.MINES.restore(Mine.restore(colony.id(), shaft, 0));
 
         MinerWork.run(world, colony);
 
         context.runAtTick(560, () -> {
             try {
+                BlockPos fourthStep = MinecraftTypeAdapter.toBlockPos(
+                        shaft.positionAt(3 * MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES));
+
                 context.assertTrue(
-                        context.getBlockState(new BlockPos(2, 2, 4)).isAir(),
+                        context.getBlockState(fourthStep).isAir(),
                         "o degrau 4 continua fechado — ele cava da boca e não desce");
             } finally {
                 owned.cleanUp();
@@ -3032,6 +3033,35 @@ public class MinerGameTest implements FabricGameTest {
                 Math.abs(mouth.get().getX() - ideal.getX()) > 1
                         || Math.abs(mouth.get().getZ() - ideal.getZ()) > 1,
                 "a boca nasceu dentro da construção, em " + mouth.get().toShortString());
+
+        context.complete();
+    }
+
+    /** A mina substituta no fundo não pode reaparecer em outro lado da vila. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+            tickLimit = 20)
+    public void theReplacementMouthStaysOnTheRequestedOppositeSide(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        for (int x = 0; x <= 8; x++) {
+            for (int z = 0; z <= 8; z++) {
+                context.setBlockState(new BlockPos(x, 1, z), Blocks.DIRT.getDefaultState());
+            }
+        }
+
+        BlockPos center = context.getAbsolutePos(new BlockPos(4, 2, 4));
+        MineDigging.shortenMineDistanceTo(3);
+
+        try {
+            Optional<BlockPos> mouth = MineSite.mouthOnSide(world, center, Side.NORTH);
+
+            context.assertTrue(mouth.isPresent(), "não encontrou boca seca no lado oposto");
+            context.assertTrue(
+                    mouth.get().getX() == center.getX() && mouth.get().getZ() < center.getZ(),
+                    "a boca saiu do eixo norte: " + mouth.get().toShortString());
+        } finally {
+            MineDigging.restoreMineDistance();
+        }
 
         context.complete();
     }
@@ -4556,6 +4586,37 @@ public class MinerGameTest implements FabricGameTest {
                     next.get().equals(dug(context, colony, 4)),
                     "ele devia ter seguido para a posição seguinte, e foi para "
                             + next.get().toShortString());
+        } finally {
+            MineClaims.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /** A entrada é construída uma vez; quebrá-la não ativa nova construção. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+            tickLimit = 20)
+    public void aBrokenMinePortalIsNotRebuiltOnTheNextMiningPass(TestContext context) {
+        solidRock(context);
+
+        Colony colony = openedMine(context, 0);
+        Mine mine = VillageColonyMod.MINES.of(colony.id()).orElseThrow();
+        BlockPos mouth = context.getAbsolutePos(LIT_ENTRY);
+        Direction descent = Direction.EAST;
+
+        MineMouth.furnish(context.getWorld(), mouth, descent, false);
+        mine.archIsUp();
+
+        BlockPos brokenPillar = mouth.offset(descent.rotateYClockwise()).up();
+        context.getWorld().setBlockState(brokenPillar, Blocks.AIR.getDefaultState());
+
+        try {
+            targetFor(context, colony);
+
+            context.assertTrue(
+                    context.getWorld().getBlockState(brokenPillar).isAir(),
+                    "o portal voltou depois que o jogador o quebrou em "
+                            + brokenPillar.toShortString());
         } finally {
             MineClaims.clearAll();
         }

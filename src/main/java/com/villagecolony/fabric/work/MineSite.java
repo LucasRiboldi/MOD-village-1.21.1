@@ -201,6 +201,21 @@ public final class MineSite {
     }
 
     /**
+     * A boca no lado exato pedido, sem trocar de lado para contornar o terreno.
+     *
+     * <p>Usada quando uma mina chega ao fundo do mundo: aquela abertura
+     * foi abandonada e a próxima precisa nascer no lado oposto da vila,
+     * não apenas em alguma coluna que também sirva de mina.
+     */
+    public static Optional<BlockPos> mouthOnSide(
+            ServerWorld world, BlockPos center, Side side) {
+
+        return mouthOnSideWithin(world, center, side, REACHES, LOOK_UP, LOOK_DOWN)
+                .or(() -> mouthOnSideWithin(
+                        world, center, side, FARTHER, POOR_UP, POOR_DOWN));
+    }
+
+    /**
      * As oito direções, nestas distâncias, com esta janela de altura.
      *
      * <p>Chamada duas vezes: a primeira com a boca boa — o fim da vila,
@@ -247,6 +262,25 @@ public final class MineSite {
 
                 side = next;
             }
+        }
+
+        return candidates.stream()
+                .max(Comparator.comparingLong(candidate -> score(center, candidate)))
+                .map(BlockPos::toImmutable);
+    }
+
+    /** As colunas do eixo pedido, em cada distância válida desta passagem. */
+    private static Optional<BlockPos> mouthOnSideWithin(
+            ServerWorld world, BlockPos center, Side side,
+            int[] reaches, int up, int down) {
+
+        List<BlockPos> candidates = new ArrayList<>();
+
+        for (int part : reaches) {
+            int away = Math.max(NEAREST_MOUTH, mineDistance * part / 100);
+            surfaceAt(
+                    world, center, side.offsetX() * away, side.offsetZ() * away, up, down)
+                    .ifPresent(candidates::add);
         }
 
         return candidates.stream()

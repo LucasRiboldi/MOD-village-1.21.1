@@ -63,8 +63,8 @@ public final class MineMouth {
      * tentativa achou lugar para o baú e não para a lanterna — encosta,
      * água, borda de chunk. Nas duas a segunda chance não existia.
      *
-     * <p>Chamada a cada passagem em que a mina existe, e silenciosa em
-     * todas menos naquelas em que põe alguma coisa.
+     * <p>Chamada ao abrir uma boca nova, e silenciosa quando o arco já
+     * existe no terreno.
      *
      * @param descent para que lado a escada desce. A mobília fica fora
      *     dessa coluna — ver {@link #freeSpotNear}
@@ -181,6 +181,26 @@ public final class MineMouth {
      * altura de quem passa.
      */
     private static final int ARCH_HIGH = 4;
+
+    /**
+     * Se a posição pertence ao arco inicial ou à lanterna da boca.
+     * Essas peças nunca entram na ordem de escavação da própria mina.
+     */
+    public static boolean isPortalBlock(BlockPos mouth, Direction descent, BlockPos at) {
+        Direction side = descent.rotateYClockwise();
+
+        for (int up = 1; up < ARCH_HIGH; up++) {
+            if (at.equals(mouth.offset(side).up(up))
+                    || at.equals(mouth.offset(side.getOpposite()).up(up))) {
+                return true;
+            }
+        }
+
+        return at.equals(mouth.offset(side).up(ARCH_HIGH))
+                || at.equals(mouth.up(ARCH_HIGH))
+                || at.equals(mouth.offset(side.getOpposite()).up(ARCH_HIGH))
+                || at.equals(mouth.up(ARCH_HIGH + 1));
+    }
 
     /**
      * O arco de pedra da entrada — decisão do autor, 2026-09-05:
