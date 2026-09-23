@@ -29,15 +29,31 @@ bloco nenhum de pe e a devolvia como obra nova, que a asserção lia como "abriu
 outra casa". O cenario agora assenta a planta no mundo antes de planejar; a
 regra de alternancia nao foi tocada.
 
-Tres rodadas de `runGametest --rerun-tasks` em sequencia: **409/410** antes do
-conserto (so esta falha), **408/410** depois (o teste verde, e as duas de
-`SurfaceGatheringGameTest` caindo juntas) e **410/410** na terceira, sem
-nenhuma alteracao de codigo entre a segunda e a terceira. As falhas de
-`SurfaceGatheringGameTest` ficam, portanto, como instabilidade de fixture, e
-nao como gate: elas caem e passam sozinhas. Cairem **as duas juntas** aponta
-raiz unica — os dois cenarios leem `FarthestVillageSector.farthestLoadedSector`,
-que depende de quais chunks a bateria inteira deixou carregados. Nao alterar
-coleta nem timeout antes de uma reproducao deterministica dessa fixture.
+As rodadas historicas de `runGametest --rerun-tasks` revelaram tambem uma
+intermitencia independente em `SurfaceGatheringGameTest`. Ela foi fechada
+nesta sessao: a fixture deixava alvo e trabalhador a 65 ou 97 blocos da arena,
+num setor derivado de UUID aleatorio. Os quatro cenarios agora deixam as
+entidades na arena, conservam o centro da colonia alem do raio protegido e
+usam UUIDs fixos com fallback para leste. Tres rodadas completas consecutivas
+passaram com **413/413 GameTests**; a coleta de producao e seus timeouts nao
+foram alterados.
+
+**O P1.1 de atribuicao de trabalhador ocioso tambem esta coberto.** O
+`CraftingGameTest` ja cobria o caminho do carpinteiro para `CRAFT_WOOD`; o
+novo `MinerGameTest.theCycleAssignsStoneToTheMinerAndItReachesTheChest` parte
+sem tarefa, roda o ciclo real e confirma pedido de `COLLECT_STONE`,
+reserva para o mineiro e pedra entregue no bau. A bateria completa passou com
+**414/414 GameTests**. O playtest P1.3 de casas consecutivas continua aberto,
+pois exige um save real.
+
+**P2.1 reduziu a leitura repetida dos baus no ciclo.** A fotografia de
+`ChestInventoryReader` agora conta estoque e calcula a capacidade solicitada
+para `WOOD` e `PLANKS` na mesma passagem pelos slots; nao ha cache entre ciclos
+nem carregamento de chunk. `StorageGameTest.theSurveyKeepsCapacityForWoodAndPlanks`
+equivale a capacidade nova a regra de deposito para pilhas parciais, slots
+vazios e item do jogador. A rodada atual passou com **966 testes Java e
+415/415 GameTests**. A meta de 50 ms segue pendente de medicao no save que
+registrou os 112 ms, pois GameTests nao afirmam tempo de maquina.
 
 O playtest analisado tem candidatos de repeticao em frente de mina (6.337),
 espera de recurso (123), caminho do construtor (7), falta de profissao (11) e
@@ -84,8 +100,10 @@ hipotese da ferramenta foi levantada, testada contra o log e **revertida** por
 nao se sustentar. Bau cheio agora encerra a tarefa em vez de jogar pedra no
 chao.
 
-Rodada final: **413 GameTests, 412 aprovados**; a unica falha e a
-intermitencia ja registrada de `SurfaceGatheringGameTest`.
+Rodada final apos a fixture deterministica: **413/413 GameTests** em tres
+execucoes completas consecutivas. E42 e os playtests deste bloco continuam
+abertos, pois ainda nao ha GameTest ponta a ponta do impasse entre profissoes
+nem confirmacao no save real.
 
 ## Auditoria mais recente — 2026-09-22
 

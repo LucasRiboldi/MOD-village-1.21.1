@@ -31,6 +31,26 @@ o §18 do Project-State. O texto das entradas fica como estava.
 
 ---
 
+## Entry 2026-09-22 - P2.1, uma fotografia de baús por ciclo
+
+A instrumentação de 11-09 apontou `chests` como a fase mais cara (61 ms dos
+112 ms do ciclo), mas até então ela só mostrava o custo. O caminho do ciclo
+lia os mesmos inventários três vezes: estoque, espaço de madeira e espaço de
+tábuas. A alteração preserva a lista canônica de `ColonyChests`, a recusa de
+chunk descarregado e o mundo como fonte da verdade: `ChestInventoryReader`
+volta a olhar os slots a cada ciclo, agora produzindo na mesma passagem o
+estoque e a capacidade dos grupos que o chamador pediu.
+
+O GameTest novo monta pilhas parciais de madeira e tábuas, item do jogador e
+slots vazios, e compara cada capacidade da fotografia com
+`ChestDepositor.freeSpaceForGroup`. Ele não mede milissegundos de uma máquina;
+ele impede que a otimização altere o que a colônia entende por espaço. O teste
+falhou antes da API nova existir, e a rodada final passou com 966 testes Java e
+415/415 GameTests. A confirmação de menos de 50 ms permanece um playtest no
+save que produziu a amostra de 112 ms.
+
+---
+
 ## Entry 2026-09-22 - relatorio operacional, memoria de travamentos e gate
 
 Esta sessao consolidou a entrega acumulada em uma fotografia operacional. O
@@ -8443,3 +8463,43 @@ rodada de `./gradlew.bat runGametest --rerun-tasks` executou 410 testes; a
 auditoria passou. O processo ainda termina com duas falhas residuais fora deste
 trabalho: `surfacegatheringgametest.farmergathersdirtoutsidethesoilprotectedradius`
 e `farmplangametest.thenextturnafterahouseisnonresidential`.
+
+### 2026-09-22 — fixture deterministica da coleta de superficie
+
+O residual de `SurfaceGatheringGameTest` nao era uma falha da coleta. Os
+quatro cenarios criavam a colonia a 65 ou 97 blocos da arena e faziam o setor
+vir de um UUID aleatorio. Em algumas rodadas, `spawnEntity` aceitava o
+trabalhador, mas o mundo de GameTest nao o devolvia pelo indice nem pela
+varredura. A coleta nao podia comecar.
+
+A fixture agora mantem alvo e trabalhador dentro da arena e desloca apenas o
+centro e o bau da colonia para fora do raio protegido. UUIDs fixos escolhem o
+fallback leste, verificado no proprio cenario. Assim, cada teste ainda prova a
+coleta fora do raio, mas nao depende de entidade distante nem de chunks que a
+bateria deixou carregados. Nenhuma classe de producao foi alterada.
+
+Tres execucoes completas consecutivas de
+`./gradlew.bat runGametest --rerun-tasks` passaram com 413/413. O E42 continua
+aberto: a regra de adiar rocas fora do alcance existe e possui cobertura
+unitaria, mas falta o GameTest com duas passagens do planejador exigido pelo
+backlog.
+
+### 2026-09-22 - P1.1, ciclo de pedido e execucao do mineiro
+
+O backlog ainda marcava uma lacuna entre as garantias puras de responsabilidade
+e o trabalho que acontece no mundo: um trabalhador ocioso podia deixar de
+receber `COLLECT_STONE` ou `CRAFT_WOOD` sem que a bateria acompanhasse o ciclo
+inteiro. O caminho do carpinteiro ja era coberto por
+`CraftingGameTest.theCycleOpensTheCraftingTaskByItself`.
+
+Foi incluido
+`MinerGameTest.theCycleAssignsStoneToTheMinerAndItReachesTheChest`. O fixture
+comeca com um mineiro equipado, um bau e nenhuma tarefa. Ele roda
+`VillageDetectionHandler.runCycleNow`, exige `COLLECT_STONE`, verifica
+que ele foi reservado para o mineiro e, depois dos tiques reais de trabalho,
+confirma pedra no bau. A tarefa nao e criada nem reservada pelo cenario.
+
+Nao houve mudanca de producao: o fluxo ja estava correto, e a lacuna era de
+regressao ponta a ponta. `./gradlew.bat runGametest --rerun-tasks` passou com
+414/414. O playtest P1.3 de casas consecutivas permanece pendente por depender
+de save real.

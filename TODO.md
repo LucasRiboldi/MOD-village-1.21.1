@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-09-22, suprimento de construcao sem rota no bioma.
+**Atualizado:** 2026-09-22, cobertura ponta a ponta do pedido de pedra.
 
 **Auditoria técnica:** [`docs/technical/Project-Audit-2026-09-21.md`](docs/technical/Project-Audit-2026-09-21.md).
 Nesta sessao: uma obra que pede uma peca sem rota fisica no bioma recebe a peca
@@ -25,9 +25,9 @@ O relatorio atual, incluindo responsabilidades, fluxo de obra, suprimento por
 bioma e estatistica do `latest.log`, esta em
 [`docs/technical/Operational-Status-2026-09-22.md`](docs/technical/Operational-Status-2026-09-22.md).
 Ordem canonica desta sessao: P0 fechar os GameTests residuais; P1 reproduzir as
-repeticoes medidas de mina/obra/atribuicao; P2 interpretar varredura e reduzir
-complexidade; P3 endurance. Nao tratar contagem de log como defeito confirmado
-sem contexto e regressao automatizada.
+repeticoes medidas de mina/obra/atribuicao; P2 reduzir a leitura repetida de
+baus e medir o resultado em save; P3 endurance. Nao tratar contagem de log
+como defeito confirmado sem contexto e regressao automatizada.
 
 ## Próximas atividades corrigíveis sem acessar o jogo
 
@@ -38,6 +38,8 @@ com código e testes locais das validações que continuam dependendo de um save
 - [x] **Cadeia da terracota da obra:** a peca exata continua preferida, mas a tag Vanilla de terracotas pode substitui-la; `CLAY` alimenta a fornalha para terracota neutra. O `CARPENTER` ainda fabrica o fermentador pela receita Vanilla quando houver haste e pedregulho; sem rota local para a haste, a politica de suprimento da obra entrega o fermentador final. Os tres GameTests de substituicao, cadeia de argila e bolas de argila falharam antes da correcao e passam depois.
 - [x] **Suprimento de obra sem rota no bioma:** a construcao consulta sua familia de alternativas e a arvore de receitas Vanilla. Se nenhuma rota local existir, a peca preferida aparece no bau da obra quando demandada; se qualquer rota existir, ela permanece tarefa dos oficios. `BuilderGameTest` cobre fermentador sem haste de blaze e porta de carvalho em planicie.
 - [x] **Inventario por bioma das plantas construtiveis:** `ConstructionSupplyAuditGameTest` le todos os 143 NBTs permitidos e registra, por estilo, as estruturas, recursos por rota local, itens automaticos e blocos formados no local. O resultado versionado esta em `docs/technical/Auditoria-2026-09-22-Suprimento-Estruturas-Vanilla.md`.
+- [x] **P2.1 — leitura de baus do ciclo:** estoque, capacidade de `WOOD` e capacidade de `PLANKS` agora saem da mesma fotografia por ciclo; a varredura continua sem carregar chunks. `StorageGameTest.theSurveyKeepsCapacityForWoodAndPlanks` compara slots vazios, pilhas parciais e item do jogador com a regra de deposito anterior.
+- [ ] **Medir P2.1 no save:** confirmar, pela linha `Colony cycle took`, se o ciclo que mediu 112 ms fica abaixo de 50 ms. O teste automatizado prova equivalencia funcional, nao milissegundos de uma maquina real.
 - [ ] Playtest da migração: abrir save antigo, confirmar Pastor sobre a cabeça, tesoura no baú e continuidade das tarefas; testar Tocha das Almas dentro de uma obra real e observar liberação da fila, sem esperar demolição.
 - [x] **P0.8/P1.2 — pegada da `BigHouseMOD` reservada:** a busca e a retomada recusam qualquer lote que use uma coluna horizontal da fundacao, mesmo em outra altura ou com projeto pendente. `BuildSiteGameTest.noProfessionLotCanUseTheBigHouseFootprint` falhou antes da correcao e passou depois.
 - [x] **P0.8/P1.2 — BigHouse fundacional nao vira reparo profissional:** o save real tinha projetos `big_house_mod` na mesma origem de casas concluidas. O reparador ignora essa estrutura exclusiva, e a retomada descarta o reparo antigo antes de tocar no terreno. Dois GameTests falharam antes da correcao e passaram depois; um terceiro preserva o reparo de casas profissionais.
@@ -53,16 +55,8 @@ com código e testes locais das validações que continuam dependendo de um save
 - [ ] Playtest P0.8: entrar em um save com vila recém-detectada e confirmar a `BigHouseMOD`, os seis aldeões, suas camas, seus baús e a ausência de sobreposição com estruturas existentes.
 - [ ] 🔴 **E42 — impasse entre profissões:** criar o GameTest da roça fora do alcance do fazendeiro, com duas passagens do planejador, e corrigir a fila se a segunda passagem não abrir o projeto de casa.
 - [ ] 🟠 **E43 — descanso ignorado:** decidir se o descanso de quatro ciclos deve impedir a reatribuição na segunda passagem de `WorkAssignment`, depois registrar a decisão em teste e corrigir o fluxo escolhido.
-- [ ] 🟠 **P1.1 — trabalhador ocioso sem `COLLECT_STONE` ou `CRAFT_WOOD`:** adicionar uma regressão ponta a ponta para criação do pedido, atribuição ao ofício correto e execução; investigar a mesma raiz do caso de peça de construção já corrigido.
-- [ ] 🟠 **Intermitencia de `SurfaceGatheringGameTest` — instrumentada em 22-09, ainda aberta.** As quatro provas de superficie caem sozinhas, alternando qual delas falha: em 22-09 foram 3 falhas em 5 rodadas, cada uma num teste diferente. A origem e comum: o cenario e montado a 65 ou 97 blocos da arena, na direcao que `FarthestVillageSector` **sorteia do hash de um `UUID.randomUUID()`** (num mundo de teste nao ha vila em chunk carregado, entao a escolha cai no ramo do sorteio), e a propria arena nasce em coordenadas diferentes a cada execucao. O teste depende do que o gerador pos naquele pedaco de mundo.
-
-  As mensagens agora se explicam sozinhas: `refusal` separa as cinco saidas do `Patch` — setor, chunk, bloco, teto e as tres portas da protecao — e `stranding` diz se a entidade esta no mundo por varredura, e nao so pelo indice de uuid.
-
-  **Tres hipoteses medidas e refutadas — nao repetir:** (1) chunk descarregado (`chunk carregado: true`, e `setBlockState` carrega o chunk sozinho); (2) falta de ticket de tique de entidade (`setChunkForced` medido com `forcado: true`, sem efeito); (3) atraso de um tique no ticket (nascer no tique 2 e medir no 5, sem efeito). Aplainar o terreno em volta tambem foi medido e descartado: 4 falhas em 6 rodadas contra 3 em 5 do baseline.
-
-  **O que sobra medido:** `spawnEntity` devolve verdadeiro, a entidade nao esta removida e esta na posicao exata, e mesmo assim o mundo nao a devolve nem pelo indice nem por varredura. **A premissa a questionar e se o trabalhador consegue existir a 65-97 blocos da arena no GameTest**, e nao o carregamento de chunk. Uma saida possivel e reestruturar: geometria do raio vira unitario e a mecanica de coleta passa a ser provada perto da arena — decisao de projeto, ainda nao tomada.
-
-  **Segunda causa, independente:** uma rodada pegou `[jogador: false, colonia: true, vila: false]` — a protecao recusou por **obra aberta de outra prova da bateria**. `BlockProtection.isOpenSite` varre `CONSTRUCTIONS.all()` global e testa contencao de caixa, e as arenas ficam perto o bastante para uma alcancar o cenario da outra a 65 blocos.
+- [x] 🟠 **P1.1 — trabalhador ocioso sem `COLLECT_STONE` ou `CRAFT_WOOD`:** `CraftingGameTest.theCycleOpensTheCraftingTaskByItself` cobre `CRAFT_WOOD`; `MinerGameTest.theCycleAssignsStoneToTheMinerAndItReachesTheChest` parte de um mineiro ocioso e prova pedido, reserva para o oficio correto e entrega no bau, sem tarefa criada pelo cenario. A bateria passou com 414/414.
+- [x] 🟠 **Intermitencia de `SurfaceGatheringGameTest` fechada em 22-09.** A falha era da fixture: alvo e trabalhador nasciam 65 ou 97 blocos fora da arena, numa direcao derivada de `UUID.randomUUID()`, e por vezes a entidade nao era registrada pelo mundo de teste. Os quatro cenarios agora mantem alvo e trabalhador na arena; somente o centro e o bau da colonia ficam alem do raio protegido. UUIDs fixos fazem o fallback de setor apontar para leste. Tres `runGametest --rerun-tasks` consecutivos passaram com 413/413; os quatro GameTests seguem cobrindo coleta e raio protegido.
 - [ ] ⚙️ **E38 — resíduos no inventário pessoal:** definir o destino sustentável de varas, maçãs e mudas antes de alterar armazenamento ou descarte.
 - [ ] 🟠 **E41 — endurance:** criar uma verificação de muitos ciclos para detectar degradação, tarefas acumuladas ou custo crescente; ainda é lacuna de cobertura, não defeito reproduzido.
 - [x] 🟠 **P1.3 — casas consecutivas:** o log mostrou `house → house`. `HousePlans` agora alterna `casa → tipo não residencial A → casa → tipo não residencial B`, exclui o tipo A anterior e mantém todas as famílias sob o mesmo `BuildSiteScanner`; `HousePlansTest` e o GameTest de rotação passaram.

@@ -9,8 +9,10 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
+import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.ColonyChests;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -188,6 +190,49 @@ public class StorageGameTest implements FabricGameTest {
                 "o ID exato da madeira deve estar disponível");
         context.assertTrue(tally.amountOf(ResourceId.vanilla("dirt")) == 9,
                 "item fora do catálogo deve ser contado pelo ID registrado");
+        context.complete();
+    }
+
+    /**
+     * A fotografia usada pelo ciclo preserva o espaço que o depósito já
+     * reconhece para cada grupo.
+     *
+     * <p>Há madeira, tábuas, item do jogador e slots vazios de propósito:
+     * o espaço de um grupo aceita slots vazios e pilhas parciais do próprio
+     * grupo, mas nunca usa uma pilha de outra coisa.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "storage_count")
+    public void theSurveyKeepsCapacityForWoodAndPlanks(TestContext context) {
+        BlockPos chest = new BlockPos(1, 1, 1);
+        context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+
+        BlockPos absoluteChest = context.getAbsolutePos(chest);
+        if (context.getWorld().getBlockEntity(absoluteChest) instanceof ChestBlockEntity inventory) {
+            inventory.setStack(0, new ItemStack(Items.OAK_LOG, 12));
+            inventory.setStack(1, new ItemStack(Items.OAK_PLANKS, 20));
+            inventory.setStack(2, new ItemStack(Items.DIRT, 9));
+        } else {
+            context.throwGameTestException("não há baú em " + chest.toShortString());
+        }
+
+        ColonyPos position = MinecraftTypeAdapter.toColonyPos(absoluteChest);
+        ChestInventoryReader.ChestSurvey survey = ChestInventoryReader.survey(
+                context.getWorld(),
+                List.of(position),
+                ResourceGroup.WOOD,
+                ResourceGroup.PLANKS);
+
+        context.assertTrue(
+                survey.freeSpaceForGroup(ResourceGroup.WOOD)
+                        == ChestDepositor.freeSpaceForGroup(
+                                context.getWorld(), position, ResourceGroup.WOOD),
+                "a fotografia mudou o espaço disponível para madeira");
+        context.assertTrue(
+                survey.freeSpaceForGroup(ResourceGroup.PLANKS)
+                        == ChestDepositor.freeSpaceForGroup(
+                                context.getWorld(), position, ResourceGroup.PLANKS),
+                "a fotografia mudou o espaço disponível para tábuas");
+
         context.complete();
     }
 
