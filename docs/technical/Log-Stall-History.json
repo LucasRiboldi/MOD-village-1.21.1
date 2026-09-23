@@ -1,5 +1,5 @@
 {
-  "schema": 1,
+  "schema": 2,
   "sessions": [
     {
       "source_name": "latest.log",
@@ -58,7 +58,8 @@
           "occurrences": 0,
           "loop_candidate": false
         }
-      }
+      },
+      "activities": []
     },
     {
       "source_name": "latest.log",
@@ -117,7 +118,68 @@
           "occurrences": 0,
           "loop_candidate": false
         }
-      }
+      },
+      "activities": []
+    },
+    {
+      "source_name": "latest.log",
+      "sha256": "fbd7ec965e4ac0e71c4911a774ac616c3879e33dde0622615c06c808603544d0",
+      "bytes": 294088,
+      "modified_at": "2026-09-23T05:34:07.413816+00:00",
+      "started_at": "02:16:04",
+      "ended_at": "02:34:07",
+      "lines": 2028,
+      "observations": {
+        "miner_no_branch_work": {
+          "where": "MineClaims / MinerWork",
+          "meaning": "mineiro sem frente de escavacao disponivel",
+          "occurrences": 10,
+          "loop_candidate": true
+        },
+        "miner_no_standing_room": {
+          "where": "MineDigging",
+          "meaning": "mina encontrou pedra sem patamar seguro para continuar",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "construction_waiting_resources": {
+          "where": "BuilderWork / WaitingWork",
+          "meaning": "obra aguarda recurso",
+          "occurrences": 17,
+          "loop_candidate": true
+        },
+        "builder_pathing_stalled": {
+          "where": "BuilderApproach / BuilderWork",
+          "meaning": "construtor caminha sem alcancar o proximo bloco",
+          "occurrences": 1,
+          "loop_candidate": false
+        },
+        "surface_worker_unreachable": {
+          "where": "SurfaceGatheringWork",
+          "meaning": "coletor de superficie nao alcancou o alvo",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "missing_profession": {
+          "where": "ColonyCycle / ProductionHands",
+          "meaning": "pedido sem aldeao capaz na vila",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "site_sweep_budget_exhausted": {
+          "where": "RingSweep / BuildSiteScanner",
+          "meaning": "varredura de lote ou alvo terminou a passagem sem resposta",
+          "occurrences": 8,
+          "loop_candidate": true
+        },
+        "site_sweep_restarted": {
+          "where": "SweepLog / BuildSiteScanner",
+          "meaning": "cursor de varredura reiniciou antes de concluir uma volta",
+          "occurrences": 0,
+          "loop_candidate": false
+        }
+      },
+      "activities": []
     }
   ]
 }

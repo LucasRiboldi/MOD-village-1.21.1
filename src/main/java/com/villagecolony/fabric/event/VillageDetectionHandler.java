@@ -31,6 +31,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageBiomes;
 import com.villagecolony.fabric.integration.VillageScanner;
 import com.villagecolony.fabric.integration.VillageFoundation;
+import com.villagecolony.fabric.integration.VanillaBedChests;
 import com.villagecolony.fabric.integration.BigHouseFoundation;
 import com.villagecolony.fabric.integration.VillagerScanner;
 import com.villagecolony.fabric.integration.WorkerEquipment;
@@ -1257,6 +1258,14 @@ public final class VillageDetectionHandler {
 
             Colony colony = VillageColonyMod.COLONIES.adopt(candidate);
 
+            boolean created = VillageColonyMod.COLONIES.count() > before;
+            if (created && !candidate.beds().isEmpty()) {
+                // Só a primeira adoção recebe esta passagem. A lista é o
+                // cluster exato que acabou de provar a vila, nunca uma
+                // varredura posterior de trabalhador ou de fundação.
+                VanillaBedChests.ensure(world, candidate.beds());
+            }
+
             BigHouseFoundation.ensure(world, colony);
 
             // A partir das camas vistas, e não do centro — 2026-08-22.
@@ -1278,7 +1287,7 @@ public final class VillageDetectionHandler {
                 registerVillagers(world, colony, candidate.center());
             }
 
-            if (VillageColonyMod.COLONIES.count() > before) {
+            if (created) {
                 VillageColonyMod.LOGGER.info(
                         "Colony created at {} with {} beds",
                         colony.center(),

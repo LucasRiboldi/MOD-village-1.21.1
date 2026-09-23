@@ -130,6 +130,10 @@ public final class VillageChests {
                 continue;
             }
 
+            if (VanillaBedChests.isPrivateBedChest(world, pos)) {
+                continue;
+            }
+
             if (!VillageChestRule.mayTake(nameOf(chest))) {
                 // Nomeado pelo jogador: é dele, e a colônia passa longe.
                 continue;

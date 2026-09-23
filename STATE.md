@@ -17,8 +17,23 @@ de suprimento sem rota local, a reserva integral da `BigHouseMOD`, a migracao
 de Criador para Pastor e o analisador versionado de travamentos em
 `scripts/analyze_village_log.py`.
 
-Verificacao desta entrega: `test` passou com 928 testes Java; a rodada
-completa atual de `runGametest --rerun-tasks` passou com 417/417 GameTests.
+**Entrega pendente de playtest - 2026-09-23.** A `BigHouseMOD` perdeu somente
+a linha original de base e desceu um bloco: continua com seis camas, seis
+baus e porta, agora com a metade inferior da porta no nivel da rua. A regra de
+bau ao lado da cama roda uma unica vez ao adotar uma vila Vanilla nova, somente
+para cada cama fisica do agrupamento aceito que tenha quarto, parede, porta e
+posicao comprovadamente seguros. Ela nunca toca a `BigHouseMOD`, construcoes
+do mod, baus existentes nao conformes ou a frente de qualquer porta; os baus
+conformes tambem ficam fora do estoque publico.
+
+`VC_ACTIVITY` registra transicoes de espera, recuperacao e a falha/abandono
+controlado de tarefas travadas, sem UUID, coordenada ou texto livre. O
+analisador migra o historico para o esquema 2 e apresenta os totais da sessao
+por profissao, atividade, resultado e motivo. A rodada completa atual de
+`runGametest --rerun-tasks` passou com **418/418 GameTests**. Ainda falta abrir
+um save com o JAR novo para confirmar porta ao nivel da rua, a passagem unica
+de baus em uma vila Vanilla recem-adotada e a primeira sessao real de
+telemetria.
 
 **A mina agora tem um ciclo finito definido pelo autor.** Cada nivel abre um
 caracol compartilhado de dez degraus, limpa 50 blocos, e so entao libera os
@@ -94,7 +109,7 @@ orcamento de varredura (40). As contagens e a fila priorizada estao em
 GameTest que demonstre falta de progresso.
 
 O JAR desta entrega tem SHA-256
-`F9DD1792899675ECD0E50A1EC2C1CCE09CC3DD565A72F771A45C35AE35F91F34` em
+`62FCECB70ACF7864DA852F707A1ADBA2197FEC8613A952A2E691DE7BE13BF1EF` em
 `build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`. As tres copias
 foram comparadas depois de fechar o cliente Minecraft.
 

@@ -203,7 +203,10 @@ class IdleLogTest {
 
         @Override
         public void append(LogEvent event) {
-            lines.add(event.getMessage().getFormattedMessage());
+            String line = event.getMessage().getFormattedMessage();
+            if (!line.startsWith("VC_ACTIVITY ")) {
+                lines.add(line);
+            }
         }
     }
 

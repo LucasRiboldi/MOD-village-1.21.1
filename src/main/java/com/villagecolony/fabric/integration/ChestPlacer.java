@@ -1,188 +1,266 @@
 package com.villagecolony.fabric.integration;
 
-import com.villagecolony.VillageColonyMod;
-import com.villagecolony.core.colony.service.VillageDetector;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.DoorBlock;
+import net.minecraft.block.enums.BedPart;
+import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.state.property.Properties;
+import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
- * O baú que faltava ao lado da cama — Regra 8.
+ * Posiciona o baú privado de uma cama de vila vanilla já confirmada.
  *
- * <p>A regra do autor, de 2026-08-15: <b>toda vila gerada pelo Minecraft
- * ganha um baú ao lado de cada cama</b>, e cada aldeão fica vinculado a
- * uma cama e ao baú mais perto dela.
- *
- * <p>Até aqui o {@code Storage-System.md} dizia o contrário — "o sistema
- * não cria casas ou baús automaticamente" — e o resultado foi o E16: na
- * sessão de 2026-08-15 dois lenhadores e dois fabricantes passaram doze
- * minutos sem baú, pegando tarefa e devolvendo a cada ciclo, numa vila
- * onde simplesmente não havia baú livre ao alcance das camas deles.
- *
- * <p><b>De onde vem o baú.</b> Do nada, e isso é exceção declarada. A
- * regra de arquitetura do {@code Construction-System.md} — a colônia não
- * cria recurso — continua valendo para tudo o mais: o que a obra consome
- * sai de baú, e nada do que o trabalhador produz nasce do vazio. Este
- * baú não é produção da colônia; é completar o que a geração de vila do
- * Minecraft deixou incompleto. Decisão do autor na mesma data.
- *
- * <p><b>O cuidado.</b> Isto escreve no mundo do jogador, que é a coisa
- * mais perigosa que o mod faz. Por isso a escolha do lugar recusa mais
- * do que aceita: só entra em bloco substituível, só com chão firme
- * embaixo, só com espaço livre em cima — baú com bloco opaco em cima não
- * abre, nem para o aldeão nem para o jogador —, e nunca encostado onde
- * já existe outro baú, que viraria um baú duplo de dono ambíguo.
+ * <p>Escrever um baú no mundo só é permitido na adoção inicial da vila e
+ * dentro da peça vanilla que contém a cama. A rotina prefere desistir a
+ * adivinhar o cômodo, a porta ou a abertura do baú.
  */
 public final class ChestPlacer {
 
-    /**
-     * As camas sem lugar para baú, e desde quando — E24, 2026-08-25.
-     *
-     * <p>Sem isto a colônia repergunta a cada ciclo, para sempre. Na
-     * sessão de 2026-08-25 três camas coladas bastaram para
-     * {@code No room for a chest beside the bed at -7580, 64, -5129}
-     * sair a cada trinta segundos até o servidor parar — oito posições
-     * relidas por ciclo e por cama, e uma linha de log que só ensina que
-     * o mod não muda de ideia.
-     *
-     * <p><b>E a recusa envelhece</b>, que é a Regra 23: o jogador tira o
-     * bloco, abre o vão, muda a cama de lugar. Dez ciclos depois a cama
-     * volta a ser tentada.
-     */
-    private static final Map<BlockPos, Long> REFUSED = new HashMap<>();
+    /** Resultado estável de uma única tentativa de adoção. */
+    public enum Outcome {
+        PLACED,
+        ALREADY_PRESENT,
+        SKIPPED_NOT_A_COMPLETE_BED,
+        SKIPPED_NO_UNAMBIGUOUS_DOOR,
+        SKIPPED_NO_SAFE_POSITION
+    }
 
-    /** Por quantos ticks uma cama recusada fica de fora. Dez ciclos. */
-    private static final int REFUSED_MEMORY = 10 * VillageDetector.CYCLE_TICKS;
-
-    /** Teto, e não regra: vila grande tem muita cama sem vão ao lado. */
-    private static final int MAX_REFUSED = 1024;
+    /** Posição encontrada ou criada, junto do motivo quando não houve baú. */
+    public record Result(Optional<BlockPos> chest, Outcome outcome) {
+    }
 
     private ChestPlacer() {
     }
 
-    /** Esquece as recusas. Chamado ao parar o servidor. */
-    public static void clearAll() {
-        REFUSED.clear();
-    }
-
     /**
-     * Põe um baú ao lado desta cama, se houver lugar bom.
-     *
-     * <p>Percorre os quatro vizinhos horizontais no nível da cama e, se
-     * nenhum servir, os quatro um bloco abaixo — chão de vila vanilla tem
-     * degrau, e é o mesmo motivo pelo qual {@code ChestScanner} aceita um
-     * bloco de diferença entre cama e baú.
-     *
-     * @return onde o baú foi posto, ou vazio quando nenhum vizinho serve
+     * Compatibilidade para chamadores antigos: ciclos de trabalhador não
+     * têm a prova de peça vanilla nem de porta exigida para escrever.
      */
     public static Optional<BlockPos> placeBeside(ServerWorld world, BlockPos bed) {
-        if (isRefused(world, bed)) {
-            // Já se olhou, e não havia vão. Volta a valer em dez ciclos —
-            // ver REFUSED.
-            return Optional.empty();
-        }
-
-        for (int drop = 0; drop <= 1; drop++) {
-            for (Direction side : Direction.Type.HORIZONTAL) {
-                BlockPos spot = bed.offset(side).down(drop);
-
-                if (!isGoodSpot(world, spot)) {
-                    continue;
-                }
-
-                world.setBlockState(spot, Blocks.CHEST.getDefaultState());
-
-                VillageColonyMod.LOGGER.info(
-                        "Put a chest at {} for the bed at {}",
-                        spot.toShortString(),
-                        bed.toShortString());
-
-                return Optional.of(spot);
-            }
-        }
-
-        refuse(world, bed);
-
-        VillageColonyMod.LOGGER.info(
-                "No room for a chest beside the bed at {} — not asking again for {} cycles",
-                bed.toShortString(),
-                REFUSED_MEMORY / VillageDetector.CYCLE_TICKS);
-
         return Optional.empty();
     }
 
-    /** Se esta cama está de castigo, e ainda não envelheceu. */
-    private static boolean isRefused(ServerWorld world, BlockPos bed) {
-        Long since = REFUSED.get(bed);
+    /** Não há mais memória de recusas: a tentativa acontece uma vez na adoção. */
+    public static void clearAll() {
+        // Mantido para a fronteira de ciclo de vida enquanto os chamadores antigos somem.
+    }
 
-        if (since == null) {
+    /**
+     * Encontra ou cria o único baú aceitável para esta cama dentro da peça.
+     * A porta só é aceita quando possui exatamente uma célula caminhável do
+     * lado interno da caixa; peças ambíguas são ignoradas.
+     */
+    public static Result placeForOriginalVillageBed(
+            ServerWorld world, BlockPos bedPoi, BlockBox piece) {
+        Optional<Bed> bed = completeBed(world, bedPoi);
+        if (bed.isEmpty()) {
+            return new Result(Optional.empty(), Outcome.SKIPPED_NOT_A_COMPLETE_BED);
+        }
+
+        Optional<BlockPos> insideDoor = unambiguousInsideDoor(world, piece);
+        if (insideDoor.isEmpty()) {
+            return new Result(Optional.empty(), Outcome.SKIPPED_NO_UNAMBIGUOUS_DOOR);
+        }
+
+        for (BlockPos spot : candidates(bed.get())) {
+            if (isDoorApproach(world, piece, spot)) {
+                continue;
+            }
+
+            Optional<Direction> opening = directionToward(spot, insideDoor.get());
+            if (opening.isEmpty() || !hasWallBehind(world, piece, spot, opening.get())) {
+                continue;
+            }
+
+            if (isCompliantChest(world, spot, opening.get())) {
+                return new Result(Optional.of(spot), Outcome.ALREADY_PRESENT);
+            }
+
+            if (!isSafeEmptyChestSpot(world, spot)) {
+                continue;
+            }
+
+            world.setBlockState(spot, Blocks.CHEST.getDefaultState()
+                    .with(Properties.HORIZONTAL_FACING, opening.get()));
+            return new Result(Optional.of(spot), Outcome.PLACED);
+        }
+
+        return new Result(Optional.empty(), Outcome.SKIPPED_NO_SAFE_POSITION);
+    }
+
+    /** Se este baú é a posição privada e conforme de uma cama vanilla. */
+    public static boolean isCompliantVillageBedChest(
+            ServerWorld world, BlockPos chest, BlockBox piece) {
+        if (!piece.contains(chest)) {
             return false;
         }
 
-        if (world.getTime() - since < REFUSED_MEMORY) {
-            return true;
+        Optional<BlockPos> insideDoor = unambiguousInsideDoor(world, piece);
+        if (insideDoor.isEmpty()) {
+            return false;
         }
 
-        REFUSED.remove(bed);
+        for (Direction direction : Direction.Type.HORIZONTAL) {
+            Optional<Bed> bed = completeBed(world, chest.offset(direction));
+            if (bed.isEmpty()) {
+                continue;
+            }
+            if (!candidates(bed.get()).contains(chest) || isDoorApproach(world, piece, chest)) {
+                continue;
+            }
+            Optional<Direction> opening = directionToward(chest, insideDoor.get());
+            if (opening.isPresent()
+                    && hasWallBehind(world, piece, chest, opening.get())
+                    && isCompliantChest(world, chest, opening.get())) {
+                return true;
+            }
+        }
 
         return false;
     }
 
-    /** Anota que esta cama não tinha vão agora. */
-    private static void refuse(ServerWorld world, BlockPos bed) {
-        if (REFUSED.size() >= MAX_REFUSED) {
-            REFUSED.clear();
+    private static Optional<Bed> completeBed(ServerWorld world, BlockPos poi) {
+        BlockState state = world.getBlockState(poi);
+        if (!(state.getBlock() instanceof BedBlock) || !state.contains(Properties.BED_PART)
+                || !state.contains(Properties.HORIZONTAL_FACING)) {
+            return Optional.empty();
         }
 
-        REFUSED.put(bed.toImmutable(), world.getTime());
+        Direction facing = state.get(Properties.HORIZONTAL_FACING);
+        BlockPos foot = state.get(Properties.BED_PART) == BedPart.FOOT
+                ? poi : poi.offset(facing.getOpposite());
+        BlockState footState = world.getBlockState(foot);
+        BlockState headState = world.getBlockState(foot.offset(facing));
+        if (!(footState.getBlock() instanceof BedBlock)
+                || !(headState.getBlock() instanceof BedBlock)
+                || footState.get(Properties.BED_PART) != BedPart.FOOT
+                || headState.get(Properties.BED_PART) != BedPart.HEAD
+                || footState.get(Properties.HORIZONTAL_FACING) != facing
+                || headState.get(Properties.HORIZONTAL_FACING) != facing) {
+            return Optional.empty();
+        }
+        return Optional.of(new Bed(foot, facing));
     }
 
-    /**
-     * Se este lugar aceita um baú sem tirar nada de ninguém.
-     *
-     * <p>Cinco recusas, e todas existem por um motivo próprio:
-     *
-     * <ul>
-     *   <li>o lugar precisa ser substituível — ar, grama alta, flor. Um
-     *       bloco do jogador fica onde está, que é a Regra 3;
-     *   <li>não pode ser cama: os dois vizinhos de uma cama incluem a
-     *       outra metade dela, e trocar meia cama por um baú tiraria o
-     *       aldeão de casa;
-     *   <li>precisa de chão firme embaixo, senão o baú fica flutuando —
-     *       e, sobre areia ou cascalho, cai;
-     *   <li>precisa de espaço livre em cima, senão não abre;
-     *   <li>não pode encostar noutro baú, que viraria um baú duplo e
-     *       daria dois donos ao mesmo inventário.
-     * </ul>
-     */
-    private static boolean isGoodSpot(ServerWorld world, BlockPos spot) {
-        BlockState here = world.getBlockState(spot);
-
-        if (!here.isReplaceable() || here.getBlock() instanceof BedBlock) {
-            return false;
+    private static Optional<BlockPos> unambiguousInsideDoor(ServerWorld world, BlockBox piece) {
+        List<BlockPos> inside = new ArrayList<>();
+        int doors = 0;
+        for (int x = piece.getMinX(); x <= piece.getMaxX(); x++) {
+            for (int y = piece.getMinY(); y <= piece.getMaxY(); y++) {
+                for (int z = piece.getMinZ(); z <= piece.getMaxZ(); z++) {
+                    BlockPos door = new BlockPos(x, y, z);
+                    BlockState state = world.getBlockState(door);
+                    if (!(state.getBlock() instanceof DoorBlock)
+                            || !state.contains(Properties.DOUBLE_BLOCK_HALF)
+                            || state.get(Properties.DOUBLE_BLOCK_HALF) != DoubleBlockHalf.LOWER) {
+                        continue;
+                    }
+                    doors++;
+                    for (Direction direction : Direction.Type.HORIZONTAL) {
+                        BlockPos candidate = door.offset(direction);
+                        if (piece.contains(candidate)
+                                && world.getBlockState(candidate).isAir()
+                                && world.getBlockState(candidate.down())
+                                        .isSolidBlock(world, candidate.down())) {
+                            inside.add(candidate);
+                        }
+                    }
+                }
+            }
         }
+        return doors == 1 && inside.size() == 1 ? Optional.of(inside.getFirst()) : Optional.empty();
+    }
 
-        if (!world.getBlockState(spot.down()).isSolidBlock(world, spot.down())) {
-            return false;
+    private static List<BlockPos> candidates(Bed bed) {
+        List<BlockPos> found = new ArrayList<>();
+        for (BlockPos half : List.of(bed.foot(), bed.foot().offset(bed.facing()))) {
+            for (Direction direction : Direction.Type.HORIZONTAL) {
+                if (direction != bed.facing() && direction != bed.facing().getOpposite()) {
+                    found.add(half.offset(direction));
+                }
+            }
         }
+        return found;
+    }
 
-        if (world.getBlockState(spot.up()).isSolidBlock(world, spot.up())) {
-            return false;
+    private static boolean isDoorApproach(ServerWorld world, BlockBox piece, BlockPos spot) {
+        for (int x = piece.getMinX(); x <= piece.getMaxX(); x++) {
+            for (int y = piece.getMinY(); y <= piece.getMaxY(); y++) {
+                for (int z = piece.getMinZ(); z <= piece.getMaxZ(); z++) {
+                    BlockPos door = new BlockPos(x, y, z);
+                    BlockState state = world.getBlockState(door);
+                    if (!(state.getBlock() instanceof DoorBlock)
+                            || !state.contains(Properties.DOUBLE_BLOCK_HALF)
+                            || state.get(Properties.DOUBLE_BLOCK_HALF) != DoubleBlockHalf.LOWER) {
+                        continue;
+                    }
+                    for (Direction direction : Direction.Type.HORIZONTAL) {
+                        if (spot.equals(door.offset(direction))) {
+                            return true;
+                        }
+                    }
+                }
+            }
         }
+        return false;
+    }
 
-        for (Direction side : Direction.Type.HORIZONTAL) {
-            if (world.getBlockState(spot.offset(side)).isOf(Blocks.CHEST)) {
+    private static Optional<Direction> directionToward(BlockPos from, BlockPos target) {
+        if (from.getY() != target.getY()) {
+            return Optional.empty();
+        }
+        if (from.getX() == target.getX() && from.getZ() != target.getZ()) {
+            return Optional.of(target.getZ() > from.getZ() ? Direction.SOUTH : Direction.NORTH);
+        }
+        if (from.getZ() == target.getZ() && from.getX() != target.getX()) {
+            return Optional.of(target.getX() > from.getX() ? Direction.EAST : Direction.WEST);
+        }
+        return Optional.empty();
+    }
+
+    private static boolean hasWallBehind(
+            ServerWorld world, BlockBox piece, BlockPos spot, Direction opening) {
+        BlockPos wall = spot.offset(opening.getOpposite());
+        return piece.contains(wall) && world.getBlockState(wall).isSolidBlock(world, wall);
+    }
+
+    private static boolean isCompliantChest(ServerWorld world, BlockPos spot, Direction opening) {
+        BlockState state = world.getBlockState(spot);
+        return state.isOf(Blocks.CHEST)
+                && state.contains(Properties.HORIZONTAL_FACING)
+                && state.get(Properties.HORIZONTAL_FACING) == opening
+                && world.getBlockState(spot.up()).isAir()
+                && world.getBlockState(spot.down()).isSolidBlock(world, spot.down())
+                && noAdjacentChest(world, spot);
+    }
+
+    private static boolean isSafeEmptyChestSpot(ServerWorld world, BlockPos spot) {
+        BlockState state = world.getBlockState(spot);
+        return state.isReplaceable()
+                && !(state.getBlock() instanceof BedBlock)
+                && world.getBlockState(spot.down()).isSolidBlock(world, spot.down())
+                && world.getBlockState(spot.up()).isAir()
+                && noAdjacentChest(world, spot);
+    }
+
+    private static boolean noAdjacentChest(ServerWorld world, BlockPos spot) {
+        for (Direction direction : Direction.Type.HORIZONTAL) {
+            if (world.getBlockState(spot.offset(direction)).isOf(Blocks.CHEST)) {
                 return false;
             }
         }
-
         return true;
+    }
+
+    private record Bed(BlockPos foot, Direction facing) {
     }
 }

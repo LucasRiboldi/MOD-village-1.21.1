@@ -104,6 +104,8 @@ public final class IdleLog {
             return false;
         }
 
+        ActivityLog.waiting(subject, reason);
+
         VillageColonyMod.LOGGER.info(
                 "Colony {} — no {} work: {}",
                 colonyId,
@@ -169,7 +171,10 @@ public final class IdleLog {
      * tinha acabado.
      */
     public static void clear(UUID colonyId, String subject) {
-        LAST.remove(new Key(colonyId, subject));
+        IdleReason previous = LAST.remove(new Key(colonyId, subject));
+        if (previous != null) {
+            ActivityLog.recovered(subject, previous);
+        }
     }
 
     /** Esquece tudo. Chamado ao parar o servidor. */

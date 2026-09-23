@@ -1,8 +1,8 @@
 # Estatistica de travamentos e repeticoes
 
-**Gerado em:** 2026-09-23 00:02 UTC
+**Gerado em:** 2026-09-23 12:28 UTC
 **Log analisado:** `latest.log`
-**Sessoes no historico:** 2
+**Sessoes no historico:** 3
 **Limiar de candidato a loop:** 3 ocorrencias na mesma sessao
 
 Este relatorio le diagnosticos que o mod ja escreve. Ele nao e um veredito de
@@ -15,30 +15,36 @@ guarda UUIDs, coordenadas ou linhas cruas do mundo do jogador.
 
 | Assinatura | Area responsavel | Ocorrencias | Leitura |
 |---|---|---:|---|
-| `miner_no_branch_work` | MineClaims / MinerWork | 36 | candidato a loop |
+| `miner_no_branch_work` | MineClaims / MinerWork | 10 | candidato a loop |
 | `miner_no_standing_room` | MineDigging | 0 | observado |
-| `construction_waiting_resources` | BuilderWork / WaitingWork | 37 | candidato a loop |
-| `builder_pathing_stalled` | BuilderApproach / BuilderWork | 2 | observado |
+| `construction_waiting_resources` | BuilderWork / WaitingWork | 17 | candidato a loop |
+| `builder_pathing_stalled` | BuilderApproach / BuilderWork | 1 | observado |
 | `surface_worker_unreachable` | SurfaceGatheringWork | 0 | observado |
-| `missing_profession` | ColonyCycle / ProductionHands | 2 | observado |
-| `site_sweep_budget_exhausted` | RingSweep / BuildSiteScanner | 18 | candidato a loop |
+| `missing_profession` | ColonyCycle / ProductionHands | 0 | observado |
+| `site_sweep_budget_exhausted` | RingSweep / BuildSiteScanner | 8 | candidato a loop |
 | `site_sweep_restarted` | SweepLog / BuildSiteScanner | 0 | observado |
+
+## Atividades por profissao
+
+| Profissao | Atividade | Resultado | Motivo | Ocorrencias |
+|---|---|---|---|---:|
+| Nenhuma transicao VC_ACTIVITY observada | - | - | - | 0 |
 
 ## Candidatos a investigacao
 
-- `miner_no_branch_work`: 36 ocorrencias em MineClaims / MinerWork.
-- `construction_waiting_resources`: 37 ocorrencias em BuilderWork / WaitingWork.
-- `site_sweep_budget_exhausted`: 18 ocorrencias em RingSweep / BuildSiteScanner.
+- `miner_no_branch_work`: 10 ocorrencias em MineClaims / MinerWork.
+- `construction_waiting_resources`: 17 ocorrencias em BuilderWork / WaitingWork.
+- `site_sweep_budget_exhausted`: 8 ocorrencias em RingSweep / BuildSiteScanner.
 
 ## Acumulado do historico
 
 | Assinatura | Ocorrencias acumuladas |
 |---|---:|
-| `miner_no_branch_work` | 6373 |
-| `construction_waiting_resources` | 160 |
-| `builder_pathing_stalled` | 9 |
+| `miner_no_branch_work` | 6383 |
+| `construction_waiting_resources` | 177 |
+| `builder_pathing_stalled` | 10 |
 | `missing_profession` | 13 |
-| `site_sweep_budget_exhausted` | 58 |
+| `site_sweep_budget_exhausted` | 66 |
 
 ## Proximo passo tecnico
 

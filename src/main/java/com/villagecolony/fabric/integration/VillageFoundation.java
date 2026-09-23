@@ -137,7 +137,6 @@ public final class VillageFoundation {
                 }
 
                 bedsPlaced++;
-                ChestPlacer.placeBeside(world, foot.get());
             }
 
             VillagerEntity villager = EntityType.VILLAGER.create(world);
@@ -232,7 +231,6 @@ public final class VillageFoundation {
                     GlobalPos.create(world.getRegistryKey(), foot.get()));
             occupiedBeds.add(foot.get());
             if (foundationHouse.isEmpty()) {
-                ChestPlacer.placeBeside(world, foot.get());
             }
             placed++;
         }

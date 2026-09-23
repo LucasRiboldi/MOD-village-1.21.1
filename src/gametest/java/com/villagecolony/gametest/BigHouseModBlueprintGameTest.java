@@ -36,7 +36,7 @@ public class BigHouseModBlueprintGameTest implements FabricGameTest {
                 .filter(block -> block.block().equals(ResourceId.vanilla("chest")))
                 .count();
 
-        context.assertTrue(blueprint.size().equals(new ColonyPos(7, 11, 11)),
+        context.assertTrue(blueprint.size().equals(new ColonyPos(7, 10, 11)),
                 "dimensao inesperada: " + blueprint.size());
         context.assertTrue(beds == 6,
                 "BigHouseMOD tem " + beds + " pes de cama, esperado 6");
@@ -57,9 +57,12 @@ public class BigHouseModBlueprintGameTest implements FabricGameTest {
         NbtList blocks = nbt.getList("blocks", NbtElement.COMPOUND_TYPE);
         int beds = 0;
         int chests = 0;
+        int placedBlocks = 0;
+        boolean hasRoadLevelDoor = false;
 
         for (int index = 0; index < blocks.size(); index++) {
             NbtCompound block = blocks.getCompound(index);
+            placedBlocks++;
             String name = palette.getCompound(block.getInt("state")).getString("Name");
             context.assertFalse(name.equals("minecraft:jigsaw")
                             || name.equals("minecraft:structure_block")
@@ -72,6 +75,9 @@ public class BigHouseModBlueprintGameTest implements FabricGameTest {
             }
 
             NbtList pos = block.getList("pos", NbtElement.INT_TYPE);
+            if (name.equals("minecraft:oak_door") && pos.getInt(1) == 0) {
+                hasRoadLevelDoor = true;
+            }
             if (isRemovedFurniturePosition(pos)) {
                 throw new AssertionError("mobiliario removido permaneceu em " + pos);
             }
@@ -81,6 +87,10 @@ public class BigHouseModBlueprintGameTest implements FabricGameTest {
                 "NBT deve conter as 12 metades de 6 camas, encontrou " + beds);
         context.assertTrue(chests == 6,
                 "NBT deve conter 6 baus, encontrou " + chests);
+        context.assertTrue(placedBlocks == 295,
+                "a base removida deve deixar 295 blocos, encontrou " + placedBlocks);
+        context.assertTrue(hasRoadLevelDoor,
+                "a metade inferior da porta precisa ficar no nivel da rua");
         context.complete();
     }
 

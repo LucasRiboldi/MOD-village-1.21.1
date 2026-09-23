@@ -58,6 +58,17 @@ class Observation:
     loop_candidate: bool
 
 
+@dataclass(frozen=True)
+class ActivityObservation:
+    """Contagem anonimizada de uma transicao de atividade."""
+
+    profession: str
+    activity: str
+    outcome: str
+    reason: str
+    occurrences: int
+
+
 SIGNATURES = (
     Signature(
         "miner_no_branch_work",
@@ -110,6 +121,13 @@ SIGNATURES = (
 )
 
 
+ACTIVITY_PATTERN = re.compile(
+    r"\bVC_ACTIVITY\s+version=1\s+profession=(?P<profession>[A-Z_]+)"
+    r"\s+activity=(?P<activity>[A-Z_]+)\s+outcome=(?P<outcome>[A-Z_]+)"
+    r"\s+reason=(?P<reason>[A-Z_]+)\b"
+)
+
+
 def analyze_text(text: str, loop_threshold: int = DEFAULT_LOOP_THRESHOLD) -> dict[str, Observation]:
     """Conta cada assinatura por linha, sem preservar dados variaveis do jogador."""
     if loop_threshold < 2:
@@ -130,6 +148,27 @@ def analyze_text(text: str, loop_threshold: int = DEFAULT_LOOP_THRESHOLD) -> dic
             loop_candidate=counts[signature.key] >= loop_threshold,
         )
         for signature in SIGNATURES
+    }
+
+
+def analyze_activities(text: str) -> dict[tuple[str, str, str, str], ActivityObservation]:
+    """Conta transicoes VC_ACTIVITY sem carregar detalhes variaveis do log."""
+    counts: dict[tuple[str, str, str, str], int] = {}
+    for line in text.splitlines():
+        matched = ACTIVITY_PATTERN.search(line)
+        if matched is None:
+            continue
+        key = (
+            matched.group("profession"),
+            matched.group("activity"),
+            matched.group("outcome"),
+            matched.group("reason"),
+        )
+        counts[key] = counts.get(key, 0) + 1
+
+    return {
+        key: ActivityObservation(*key, occurrences)
+        for key, occurrences in sorted(counts.items())
     }
 
 
@@ -157,12 +196,40 @@ def observation_data(observations: Iterable[Observation]) -> dict[str, dict[str,
     }
 
 
+def activity_data(observations: Iterable[ActivityObservation]) -> list[dict[str, object]]:
+    """Converte transicoes para o formato versionado do historico."""
+    return [
+        {
+            "profession": item.profession,
+            "activity": item.activity,
+            "outcome": item.outcome,
+            "reason": item.reason,
+            "occurrences": item.occurrences,
+        }
+        for item in sorted(
+            observations,
+            key=lambda item: (item.profession, item.activity, item.outcome, item.reason),
+        )
+    ]
+
+
 def read_history(path: Path) -> dict[str, object]:
     if not path.is_file():
-        return {"schema": 1, "sessions": []}
+        return {"schema": 2, "sessions": []}
 
     loaded = json.loads(path.read_text(encoding="utf-8"))
-    if loaded.get("schema") != 1 or not isinstance(loaded.get("sessions"), list):
+    if not isinstance(loaded.get("sessions"), list):
+        raise ValueError(f"Unsupported stall history format: {path}")
+    if loaded.get("schema") == 1:
+        sessions = []
+        for session in loaded["sessions"]:
+            if not isinstance(session, dict):
+                raise ValueError(f"Unsupported stall history format: {path}")
+            migrated = dict(session)
+            migrated["activities"] = []
+            sessions.append(migrated)
+        return {"schema": 2, "sessions": sessions}
+    if loaded.get("schema") != 2:
         raise ValueError(f"Unsupported stall history format: {path}")
     return loaded
 
@@ -171,7 +238,8 @@ def update_history(
         history: dict[str, object],
         log_path: Path,
         text: str,
-        observations: dict[str, Observation]) -> dict[str, object]:
+        observations: dict[str, Observation],
+        activities: dict[tuple[str, str, str, str], ActivityObservation]) -> dict[str, object]:
     """Substitui a mesma sessao pelo hash, sem guardar texto ou coordenadas."""
     started_at, ended_at = timestamps(text)
     digest = hashlib.sha256(log_path.read_bytes()).hexdigest()
@@ -185,6 +253,7 @@ def update_history(
         "ended_at": ended_at,
         "lines": len(text.splitlines()),
         "observations": observation_data(observations.values()),
+        "activities": activity_data(activities.values()),
     }
     old_sessions = history["sessions"]
     assert isinstance(old_sessions, list)
@@ -234,6 +303,17 @@ def render_report(log_path: Path, history: dict[str, object], loop_threshold: in
         if totals[signature.key]
     ) or "| Nenhuma assinatura observada | 0 |"
 
+    activities = latest.get("activities", [])
+    if not isinstance(activities, list):
+        activities = []
+    activity_rows = "\n".join(
+        f"| `{item.get('profession', 'INVALID')}` | `{item.get('activity', 'INVALID')}` | "
+        f"`{item.get('outcome', 'INVALID')}` | `{item.get('reason', 'INVALID')}` | "
+        f"{item.get('occurrences', 0)} |"
+        for item in activities
+        if isinstance(item, dict)
+    ) or "| Nenhuma transicao VC_ACTIVITY observada | - | - | - | 0 |"
+
     return f"""# Estatistica de travamentos e repeticoes
 
 **Gerado em:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}
@@ -252,6 +332,12 @@ guarda UUIDs, coordenadas ou linhas cruas do mundo do jogador.
 | Assinatura | Area responsavel | Ocorrencias | Leitura |
 |---|---|---:|---|
 {chr(10).join(rows)}
+
+## Atividades por profissao
+
+| Profissao | Atividade | Resultado | Motivo | Ocorrencias |
+|---|---|---|---|---:|
+{activity_rows}
 
 ## Candidatos a investigacao
 
@@ -306,7 +392,8 @@ def main() -> int:
 
     text = read_log(log_path)
     observations = analyze_text(text, args.min_loop)
-    history = update_history(read_history(args.history), log_path, text, observations)
+    activities = analyze_activities(text)
+    history = update_history(read_history(args.history), log_path, text, observations, activities)
     args.history.parent.mkdir(parents=True, exist_ok=True)
     args.history.write_text(json.dumps(history, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
     args.report.parent.mkdir(parents=True, exist_ok=True)

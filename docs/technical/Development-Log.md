@@ -31,6 +31,34 @@ o §18 do Project-State. O texto das entradas fica como estava.
 
 ---
 
+## Entry 2026-09-23 - P1.4, telemetria e baus seguros de vila
+
+O mod passou a escrever `VC_ACTIVITY version=1` somente nas transicoes ja
+controladas de espera, recuperacao e falha/abandono. Cada linha contem a
+profissao, a familia de atividade, o resultado e o motivo estavel; nao contem
+UUID, coordenada ou texto livre. O analisador passou a contar essas linhas por
+sessao e a migrar a memoria de travamentos do esquema 1 para o esquema 2.
+
+A `BigHouseMOD` perdeu apenas sua antiga fileira-base e todos os demais blocos
+desceram um nivel. Ela preserva as seis camas, seis baus e a porta, mas a porta
+agora inicia no nivel da rua. A regra nova de bau junto a cama vale apenas no
+primeiro reconhecimento de uma vila Vanilla: ela recebe os POIs exatos do
+agrupamento aceito, exige quarto/porta/parede/suporte/tampa/orientacao
+inequivocos e desiste em silencio quando nao consegue provar a geometria. A
+BigHouse, fundacoes de fallback e construcoes posteriores do mod ficam fora da
+regra; baus privados conformes tambem nao aparecem como estoque publico.
+
+Verificacao: os quatro testes Python do analisador passaram; a rodada integral
+de `runGametest --rerun-tasks` passou com 418/418 e `build` passou com 929
+testes unitarios. O JAR 0.3.0 de SHA-256
+`62FCECB70ACF7864DA852F707A1ADBA2197FEC8613A952A2E691DE7BE13BF1EF` foi
+comparado em `build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`, com o
+cliente fechado. Ainda e necessario abrir um save com ele: os GameTests nao
+substituem a confirmacao da porta no nivel da rua, da passagem unica em uma
+vila Vanilla nova e das primeiras linhas reais de telemetria.
+
+---
+
 ## Entry 2026-09-22 - P2.1, uma fotografia de baús por ciclo
 
 A instrumentação de 11-09 apontou `chests` como a fase mais cara (61 ms dos

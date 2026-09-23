@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import sys
+import json
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -14,6 +16,34 @@ import analyze_village_log  # noqa: E402
 
 
 class AnalyzeVillageLogTest(unittest.TestCase):
+    def test_counts_anonymized_activity_transitions_per_profession(self) -> None:
+        activities = analyze_village_log.analyze_activities(
+            "\n".join(
+                [
+                    "[00:00:01] [Server thread/INFO]: VC_ACTIVITY version=1 profession=MINER activity=MINING outcome=WAITING reason=NO_TASK",
+                    "[00:00:02] [Server thread/INFO]: VC_ACTIVITY version=1 profession=MINER activity=MINING outcome=WAITING reason=NO_TASK",
+                    "[00:00:03] [Server thread/INFO]: VC_ACTIVITY version=1 profession=MINER activity=MINING outcome=RECOVERED reason=NO_TASK",
+                    "[00:00:04] [Server thread/INFO]: VC_ACTIVITY version=1 profession=BUILDER activity=BUILDING outcome=ERROR reason=WORK_STALLED",
+                    "[00:00:05] [Server thread/INFO]: VC_ACTIVITY version=1 profession=BUILDER activity=BUILDING outcome=ABANDONED reason=WORK_STALLED",
+                ]
+            )
+        )
+
+        self.assertEqual(2, activities[("MINER", "MINING", "WAITING", "NO_TASK")].occurrences)
+        self.assertEqual(1, activities[("MINER", "MINING", "RECOVERED", "NO_TASK")].occurrences)
+        self.assertEqual(1, activities[("BUILDER", "BUILDING", "ERROR", "WORK_STALLED")].occurrences)
+        self.assertEqual(1, activities[("BUILDER", "BUILDING", "ABANDONED", "WORK_STALLED")].occurrences)
+
+    def test_migrates_stall_history_without_inventing_old_activities(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "history.json"
+            path.write_text(json.dumps({"schema": 1, "sessions": [{"observations": {}}]}), encoding="utf-8")
+
+            history = analyze_village_log.read_history(path)
+
+        self.assertEqual(2, history["schema"])
+        self.assertEqual([], history["sessions"][0]["activities"])
+
     def test_counts_known_stalls_and_marks_only_repetition_as_loop(self) -> None:
         summary = analyze_village_log.analyze_text(
             "\n".join(

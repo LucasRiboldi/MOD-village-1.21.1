@@ -11,6 +11,25 @@ testes, 408 aprovados; restam duas falhas independentes: alternancia de
 `FarmPlanGameTest` e a fixture de terra de `SurfaceGatheringGameTest`. Os 76
 testes Python da auditoria passaram nesta sessao.
 
+## Entrega 2026-09-23 - telemetria, BigHouse e baus Vanilla
+
+- [x] **P1.4 - telemetria de atividade:** `VC_ACTIVITY` registra espera,
+  recuperacao, erro operacional e abandono por profissao, atividade e motivo
+  controlado. O analisador le o formato, migra o historico para esquema 2 e
+  inclui a tabela de atividades no relatorio.
+- [x] **P1.4 - BigHouse no nivel da rua:** o NBT perdeu apenas a base original
+  e desceu um nivel; as seis camas, seis baus e a porta foram preservados.
+  `BigHouseModBlueprintGameTest` cobre dimensoes, contagem de blocos e porta.
+- [x] **P1.4 - bau seguro por cama Vanilla:** no primeiro reconhecimento de
+  vila, cada cama original do agrupamento so recebe bau quando quarto, porta,
+  parede, suporte, tampa e orientacao forem inequivocos. A BigHouse e excluida;
+  nenhum ciclo de trabalhador cria ou tenta novamente o bau, e o estoque
+  publico ignora os baus privados conformes.
+- [ ] **Playtest P1.4:** com uma vila Vanilla ainda nao adotada, confirmar que
+  apenas quartos validos recebem um bau ao lado da cama, que a BigHouse nao e
+  alterada e que `VC_ACTIVITY` aparece no `latest.log` apos espera/recuperacao
+  ou abandono controlado.
+
 ## Playtest 2026-09-22, 20:07 — tres defeitos corrigidos, nenhum confirmado em jogo
 
 - [x] 🔴 **Obra terminada recomecando:** `BuilderWork.placeOne` risca sem assentar (`ladder`, `wall_torch`, por *nothing holds it*), a obra e dada por terminada com `0 blocks placed`, e o reparo reencontra a mesma lacuna a cada trinta segundos. Como a vaga de obra e unica, o laco impedia qualquer construcao nova. O planejador compara os blocos de pe da abertura com os do fechamento e nao repete tentativa que nao avancou. `FoundationRepairGameTest.aRepairThatPlacedNothingIsNotOpenedAgain`.
@@ -231,7 +250,7 @@ na bancada; no cortador é **1→1**.
   fundo. A sessao de 23-09 ainda usou o JAR de SHA-256
   `446554572D466B748107D5CD65A4687BAD4BFF535F8C028F6158501BDE4AB2A0`; repetir
   somente apos instalar o artefato atual de SHA-256
-  `F9DD1792899675ECD0E50A1EC2C1CCE09CC3DD565A72F771A45C35AE35F91F34`.
+  `62FCECB70ACF7864DA852F707A1ADBA2197FEC8613A952A2E691DE7BE13BF1EF`.
 
 ⚠️ **Expectativa honesta:** `dirt_path` não é bloco sólido cheio e continuará
 caindo em `NOT_NATURAL_GROUND` adiante. Quem passa a poder virar lote é o

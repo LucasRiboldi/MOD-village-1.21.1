@@ -44,6 +44,11 @@ public final class WorkerStrikes {
      */
     public static void gaveUp(UUID workerId, Task task) {
         VillageColonyMod.WORKERS.find(workerId).ifPresent(worker -> {
+            worker.profession().ifPresent(profession ->
+                    {
+                        ActivityLog.failed(profession, task.requiredCapability().name());
+                        ActivityLog.abandoned(profession, task.requiredCapability().name());
+                    });
             worker.rest(task.requiredCapability());
 
             if (!worker.hasProfession()) {
