@@ -15,8 +15,13 @@ plano de confiabilidade operacional).
   GameTest `bedAndRoadRefusalsAreIndependent` tinha footprint de rua menor
   que a area do cenario e foi corrigido. `runGametest --rerun-tasks`:
   **422/422 GameTests**. Commit `a953489`.
-- [ ] **Task 4 — migracoes de save idempotentes** (SaveMigration, saveVersion
-  monotonico em ColonySavedData/MineSave).
+- [x] **Task 4 — migracoes de save idempotentes:** `SaveMigration.migrate`
+  roda antes de qualquer leitor em `ColonySavedData.readNbt`, com
+  `saveVersion` monotonico. Escopo reduzido de proposito: `MineSave.SHAPE_VERSION`
+  ficou intocado (decisao com o autor — ja testado em producao, semantica de
+  descarte deliberado). `SaveMigrationTest` cobre idempotencia, normalizacao
+  de `BREEDER`, e preservacao de versao futura. `runGametest --rerun-tasks`:
+  **422/422 GameTests**. Commit `04a6f1e`.
 - [ ] **Task 5 — recuperacao pura de mina** (MineRecovery, decisoes sem
   ServerWorld/BlockPos).
 - [ ] **Task 6 — integrar recuperacao de mina sem reconstruir portal/arco.**

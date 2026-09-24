@@ -8665,3 +8665,42 @@ e nao se repetiram: `aVillageOnBedrockStillHasLots` (confirmado, via
 pre-existente) e `markingTwiceLeavesOneFrame` (isolado, sem nenhuma
 dependencia do codigo tocado aqui). Nenhuma das duas foi investigada a
 fundo nesta sessao.
+
+### 2026-09-24 - P1.4, migracao de save centralizada
+
+`ColonySavedData` nao tinha `saveVersion` nenhum; cada leitor decidia
+sozinho o que fazer com um valor legado — `readProfession` traduzia
+`BREEDER` para `SHEPHERD` dentro do proprio laço de leitura, por exemplo.
+Funcionava, mas espalhava a pergunta "que versao e este save?" pelo
+arquivo inteiro.
+
+A decisao 8A cria `SaveMigration.migrate(NbtCompound)`, chamado no inicio
+de `readNbt` antes de qualquer campo ser lido. Ele grava `saveVersion` na
+raiz do NBT e aplica transformacoes ordenadas por versao; a primeira
+(v0 -> v1) e exatamente a normalizacao `BREEDER -> SHEPHERD`, agora
+centralizada. `readProfession` perdeu o desvio especifico e manteve
+apenas a defesa generica contra enum desconhecido.
+
+**Decisao tomada com o autor: `MineSave.SHAPE_VERSION` fica de fora.**
+Aquele campo ja e testado em producao e sua regra e "versao diferente
+descarta a fronteira e recomeca do zero" — um descarte deliberado, nao
+uma traducao de forma antiga para nova. Absorver as duas estrategias na
+mesma classe exigiria reescrever `MineSave.read` sem necessidade real; a
+Task 4 do plano original nao tinha essa distincao e teria empurrado as
+duas semanticas para o mesmo lugar sem justificativa.
+
+`BigHouseModBlueprintGameTest.java`, que o plano listava para "Create",
+ja existia de uma sessao anterior — cobre a forma do blueprint da
+`BigHouseMOD`, um contrato diferente do que a migracao de save resolve.
+Nao foi duplicado. O cenario "reabrir mundo migrado nao duplica bau",
+que o plano original descrevia como GameTest, ja tem cobertura equivalente
+e mais barata: `SaveMigrationTest.migrationIsIdempotent` prova que aplicar
+a migracao duas vezes e no-op estrita em memoria, e
+`BigHouseFoundationGameTest.aPendingBigHouseIsNotPlacedAgain` ja prova que
+a BigHouse pendente nao e recriada ao recarregar.
+
+`SaveMigrationTest` cobre cinco casos: versao fresca, idempotencia,
+normalizacao do legado, "nunca cria colonia ou obra", e preservacao de
+uma versao futura. `./gradlew.bat build` e `runGametest --rerun-tasks`
+fecharam com **422/422 GameTests**, sem nenhuma falha — nem as duas
+intermitencias registradas na entrega anterior.

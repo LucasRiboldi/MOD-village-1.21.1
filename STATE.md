@@ -10,6 +10,23 @@
 
 ---
 
+## Entrega desta sessão — Task 4 do plano de confiabilidade operacional
+
+`SaveMigration.migrate(NbtCompound)` roda em `ColonySavedData.readNbt` antes
+de qualquer leitor olhar um campo, com `saveVersion` monotônico na raiz do
+NBT. A primeira transformação registrada (v0→v1) é a normalização
+`BREEDER→SHEPHERD`, movida de dentro de `readProfession` para cá.
+`MineSave.SHAPE_VERSION` foi deixado intocado de propósito — decisão
+tomada com o autor: já é testado em produção e sua semântica é descarte
+deliberado ao mudar de versão, não tradução de forma antiga para nova;
+misturar as duas estratégias exigiria reescrever `MineSave.read` sem
+necessidade real. Corresponde à Task 4 (Decision 8A) de
+`docs/superpowers/plans/2026-09-23-operational-reliability.md`; commit
+`04a6f1e`.
+
+`./gradlew.bat build` e `runGametest --rerun-tasks`: **422/422 GameTests**,
+sem nenhuma falha, nem as duas intermitências registradas na Task 3.
+
 ## Entrega desta sessão — Task 3 do plano de confiabilidade operacional
 
 `BuildSiteScanner` agora produz um `ScanReport` por fatia de varredura
