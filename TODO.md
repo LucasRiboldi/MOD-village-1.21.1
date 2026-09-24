@@ -1,5 +1,41 @@
 # TODO
 
+**Atualizado:** 2026-09-24, scanner separado em politica e custo (P1.3 do
+plano de confiabilidade operacional).
+
+## Plano de confiabilidade operacional (docs/superpowers/plans/2026-09-23-operational-reliability.md)
+
+- [x] **Task 1 — elegibilidade unificada de trabalho:** ja commitada em sessao
+  anterior (WorkAssignmentTest, 419/419 GameTests).
+- [x] **Task 2 — peca de construcao parcial:** ja commitada em sessao anterior
+  (ConstructionOutcomeTest, BuildProgressGameTest, 421/421 GameTests).
+- [x] **Task 3 — politica e custo do scanner separados:** `ScanReport` e
+  `ScanRefusalReason` (LOT/BED/ROAD/TERRAIN) por fatia de varredura;
+  `PlannerTurns` delega ao novo `ColonyScanScheduler` reutilizavel. O
+  GameTest `bedAndRoadRefusalsAreIndependent` tinha footprint de rua menor
+  que a area do cenario e foi corrigido. `runGametest --rerun-tasks`:
+  **422/422 GameTests**. Commit `a953489`.
+- [ ] **Task 4 — migracoes de save idempotentes** (SaveMigration, saveVersion
+  monotonico em ColonySavedData/MineSave).
+- [ ] **Task 5 — recuperacao pura de mina** (MineRecovery, decisoes sem
+  ServerWorld/BlockPos).
+- [ ] **Task 6 — integrar recuperacao de mina sem reconstruir portal/arco.**
+- [ ] **Task 7 — traco de atividade persistido e limitado** (ActivityTrace,
+  16.384 eventos por colonia).
+- [ ] **Task 8 — contrato do armazem fisico** (WarehouseIndex, SupplyRequest,
+  ADR-023).
+- [ ] **Task 9 — observar baus e rotear pedidos fisicamente**
+  (WarehouseObserver).
+- [ ] **Task 10 — matriz deterministica de profissoes criticas**
+  (OperationalMatrixGameTest).
+- [ ] **Task 11 — observar inventario da vila sem mutar crescimento**
+  (VillageInventory).
+- [ ] **Task 12 — endurance com seed fixa** (EnduranceReport).
+- [ ] **Task 13 — auditoria de exclusao e evidencia de release**
+  (RemovalAudit, release_manifest.py).
+- [ ] **Task 14 — verificacao completa, playtests de save e handoff de
+  release.**
+
 **Atualizado:** 2026-09-24, peca de construcao sem apoio mantida pendente.
 
 **Auditoria técnica:** [`docs/technical/Project-Audit-2026-09-21.md`](docs/technical/Project-Audit-2026-09-21.md).

@@ -10,6 +10,37 @@
 
 ---
 
+## Entrega desta sessão — Task 3 do plano de confiabilidade operacional
+
+`BuildSiteScanner` agora produz um `ScanReport` por fatia de varredura
+(colunas percorridas e recusas por `ScanRefusalReason`: `LOT`, `BED`, `ROAD`,
+`TERRAIN`). `PlannerTurns` deixou de manter cursor próprio e passou a delegar
+ao novo `ColonyScanScheduler`, que unifica o mesmo orçamento/round-robin entre
+o planejador e o scanner. Corresponde à Task 3 (Decisions 5A, 6A) de
+`docs/superpowers/plans/2026-09-23-operational-reliability.md`; commit
+`a953489`.
+
+O GameTest novo `bedAndRoadRefusalsAreIndependent` tinha um defeito de
+cenário, não de produção: o footprint de rua reservado (raio 2) era menor
+que a área preparada como candidata (raio 3), e uma das quatro direções de
+busca escapava do índice antes de acumular recusa `ROAD`. Corrigido
+ampliando o footprint para o mesmo raio da área preparada.
+
+`runGametest --rerun-tasks`: **422/422 GameTests** na rodada final. Duas
+falhas apareceram em rodadas anteriores desta sessão e não se repetiram:
+`BuildSiteGameTest.aVillageOnBedrockStillHasLots` (falha também no baseline
+sem as mudanças desta sessão — dívida pré-existente, não regressão) e
+`ChestMarkerGameTest.markingTwiceLeavesOneFrame` (isolado, sem dependência
+do código tocado aqui — leitura mais provável é intermitência de timing
+entre ciclos do batch, ainda sem diagnóstico formal).
+
+Faltam as Tasks 4–14 do mesmo plano: migração de save idempotente,
+recuperação pura de mina, traço de atividade persistido, armazém físico
+observado por chest, matriz determinística de profissões, endurance com
+seed fixa, e auditoria de release/remoção. Nenhuma foi tocada nesta sessão.
+
+---
+
 ## Entrega operacional atual - 2026-09-23
 
 Esta e a fotografia que vale para a proxima sessao. O pacote contem a regra
