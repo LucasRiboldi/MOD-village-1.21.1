@@ -8633,3 +8633,35 @@ cobrem o contrato de dados, a recuperacao no save e a reabertura controlada.
 repetida quanto a liberacao depois de criar o apoio. A rodada limpa de
 `./gradlew.bat runGametest --rerun-tasks` passou com 421/421. Falta apenas o
 playtest do autor no save com o JAR desta entrega.
+
+### 2026-09-24 - P1.3, politica e custo do scanner separados
+
+`BuildSiteScanner` respondia "nao ha lote" sem distinguir se a causa foi
+cama, rua reservada ou terreno — e `PlannerTurns` mantinha seu proprio
+cursor de rodizio, redundante com a mesma logica round-robin que o scanner
+precisava.
+
+A decisao 5A/6A cria `ScanReport` (colunas percorridas e recusas por
+`ScanRefusalReason`: `LOT`, `BED`, `ROAD`, `TERRAIN`) como saida de cada
+fatia de varredura, consultavel por `BuildSiteScanner.latestReport`.
+`ColonyScanScheduler` extrai o rodizio com orcamento que antes vivia
+hardcoded em `PlannerTurns`; agora os dois consomem o mesmo scheduler.
+`LotRefusals` ganhou a razao `BED` e `clear(colonyId)` para isolar
+telemetria por colonia nos testes.
+
+O GameTest novo `bedAndRoadRefusalsAreIndependent` falhou na primeira
+rodada — nao por defeito de producao, mas porque seu footprint de rua
+reservado (raio 2) era menor que a area que o cenario preparou como
+candidata (raio 3, `paveGround`). Uma das quatro direcoes de busca a
+partir da borda do footprint escapava para chao nao reservado antes de
+qualquer recusa `ROAD` se acumular, e o scanner aceitava esse lote em vez
+de recusar. Corrigido ampliando o footprint para o mesmo raio da area
+preparada.
+
+`./gradlew.bat runGametest --rerun-tasks` fechou com **422/422 GameTests**
+na rodada final. Duas falhas apareceram em rodadas anteriores desta sessao
+e nao se repetiram: `aVillageOnBedrockStillHasLots` (confirmado, via
+`git stash`, que falha tambem no baseline sem estas mudancas — divida
+pre-existente) e `markingTwiceLeavesOneFrame` (isolado, sem nenhuma
+dependencia do codigo tocado aqui). Nenhuma das duas foi investigada a
+fundo nesta sessao.
