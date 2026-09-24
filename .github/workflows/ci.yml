@@ -2,8 +2,11 @@ name: CI
 
 on:
   push:
+    # O trabalho do dia vive nos branches codex/*, e ate 2026-09-24 o CI so
+    # rodava na main: os commits enviados nao passavam por verificacao nenhuma.
     branches:
       - main
+      - "codex/**"
   pull_request:
   workflow_dispatch:
 
