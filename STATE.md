@@ -48,11 +48,17 @@ traço inspecionados. **Nenhum foi observado ainda nesta sessão** — só o
 autor jogando pode fechá-los, conforme o próprio plano exige ("only
 close a save playtest after observed user confirmation").
 
-O JAR de `build/libs/` desta sessão (SHA-256 `C1244064EE1DEC8A03C65844FAC37193A0ABCB64E983E2D982C154EE0B935691`)
-**diverge** do JAR em `downloads/`/mods (SHA-256
-`62FCECB70ACF7864DA852F707A1ADBA2197FEC8613A952A2E691DE7BE13BF1EF`, da
-entrega P1.4 anterior). Isso é intencional — o build novo só deve ser
-copiado depois dos cinco playtests confirmados.
+**⚠️ O JAR foi publicado sem os cinco playtests confirmados — decisão
+explícita do autor, não recomendação desta sessão.** SHA-256
+`C1244064EE1DEC8A03C65844FAC37193A0ABCB64E983E2D982C154EE0B935691`
+copiado para `build/libs/`, `downloads/` e
+`%APPDATA%/.minecraft/mods/` com o cliente fechado; as três cópias
+foram comparadas e `release_manifest.py --dry-run` confirmou (commit
+`50793d8`). O plano original manda fechar cada playtest só com
+confirmação observada do autor jogando — nenhum dos cinco foi
+observado ainda. Os cinco itens continuam abertos e devem ser
+verificados na próxima sessão de jogo; ver `docs/proxima-sessao.md`.
+
 misturar as duas estratégias exigiria reescrever `MineSave.read` sem
 necessidade real. Corresponde à Task 4 (Decision 8A) de
 `docs/superpowers/plans/2026-09-23-operational-reliability.md`; commit

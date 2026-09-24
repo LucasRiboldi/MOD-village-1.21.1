@@ -121,12 +121,17 @@ fechar antes de publicar a 0.3.0.
 - [~] **Task 14 — verificacao completa, playtests de save e handoff de
   release.** Parte automatizada (passo 1) **feita**: `gradlew test`
   992/992 zero falha, `gradlew build` sucesso, `runGametest --rerun-tasks`
-  **423/423 GAME TESTS COMPLETE** na rodada final. Parte de playtest
-  (passo 2, cinco itens) **pendente** — depende do autor jogando; ver
-  `docs/proxima-sessao.md`. Passos 3-5 (copiar JAR, manifest final,
-  commit/push da 0.3.0) **bloqueados** ate os playtests confirmarem —
-  o build atual (SHA-256 `C1244064...`) diverge de propósito do JAR em
-  `downloads/`/mods (SHA-256 `62FCECB7...`, entrega anterior).
+  **423/423 GAME TESTS COMPLETE** na rodada final. **Passo 2 (cinco
+  playtests reais) continua pendente** — nao foi observado nesta
+  sessao. **Passos 3-4 foram executados por decisao explicita do autor,
+  antes dos playtests** — SHA-256 `C1244064...` copiado para
+  `build/libs/`, `downloads/` e mods (as tres copias comparadas
+  identicas), `release_manifest.py --dry-run` confirmou. Isso diverge
+  do que o plano original pede ("only close a save playtest after
+  observed user confirmation") e do que esta mesma entrega recomendava
+  horas antes; registrado aqui para honestidade, nao como o caminho
+  normal. Os cinco itens de playtest continuam sem confirmacao e devem
+  ser verificados assim que possivel — ver `docs/proxima-sessao.md`.
 
 **Atualizado:** 2026-09-24, peca de construcao sem apoio mantida pendente.
 

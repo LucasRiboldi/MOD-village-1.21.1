@@ -13,17 +13,21 @@ na rodada final). Duas tasks (9 e 10) foram investigadas e **não**
 implementadas por decisão — o comportamento que pediam já existia sob
 outro desenho; ver `STATE.md` e `TODO.md` para a evidência de cada uma.
 
-**Nenhum código de produção anterior foi tocado sem verificação, e nada
-foi publicado ainda.** O JAR de `build/libs/village-colony-0.3.0.jar`
-desta sessão tem SHA-256 `C1244064EE1DEC8A03C65844FAC37193A0ABCB64E983E2D982C154EE0B935691`
-— **diferente** do JAR em `downloads/` e em
-`%APPDATA%/.minecraft/mods/`, que continuam com o SHA-256
-`62FCECB70ACF7864DA852F707A1ADBA2197FEC8613A952A2E691DE7BE13BF1EF` da
-entrega P1.4 anterior a esta sessão. Essa divergência é intencional: o
-plano exige playtest real antes de copiar o build novo para `downloads/`
-e para a instalação — ver Task 14 do plano.
+**⚠️ O JAR já foi publicado sem os cinco playtests confirmados — decisão
+explícita do autor, não o caminho que o plano original recomenda.** O
+SHA-256 `C1244064EE1DEC8A03C65844FAC37193A0ABCB64E983E2D982C154EE0B935691`
+está agora em `build/libs/`, `downloads/` e
+`%APPDATA%/.minecraft/mods/village-colony-0.3.0.jar` — as três cópias
+comparadas idênticas com o cliente fechado, e
+`release_manifest.py --dry-run` confirmou o manifesto. O plano original
+(Task 14 de `docs/superpowers/plans/2026-09-23-operational-reliability.md`)
+manda fechar cada playtest só com confirmação observada do autor
+jogando, e nenhum dos cinco foi observado ainda nesta sessão. Os cinco
+itens abaixo continuam em aberto e devem ser verificados na próxima
+sessão de jogo — o código já está instalado, então qualquer defeito
+real vai aparecer direto no `latest.log` dessa sessão.
 
-**Os cinco playtests que faltam antes de publicar esta entrega:**
+**Os cinco playtests que ainda faltam confirmar, com o JAR já instalado:**
 
 1. Destruir o arco/portal da mina, disparar a recuperação técnica,
    recarregar o mundo — o arco deve continuar ausente (não reconstruir).
@@ -39,11 +43,9 @@ e para a instalação — ver Task 14 do plano.
    ferramenta de leitura do save — os eventos `IDLE`/`WAITING`/
    `RECOVERED`/`ABANDONED`/`ERROR` da Task 7).
 
-Só depois da confirmação desses cinco itens (observada pelo autor, não
-inferida do automatizado) é que o JAR deve ser copiado para `downloads/`
-e para os mods, com o cliente Minecraft **fechado** durante a cópia — ver
-a "armadilha" documentada logo abaixo, que já custou uma sessão inteira
-uma vez.
+O JAR já está instalado — o próximo passo é abrir o Minecraft e observar
+os cinco itens acima. Se algum falhar, o `latest.log` dessa sessão é a
+evidência real para reabrir o item correspondente no `TODO.md`.
 
 ---
 
