@@ -51,6 +51,7 @@ import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.StrandedEscape;
 import com.villagecolony.fabric.work.VillageMeals;
+import com.villagecolony.fabric.work.ConstructionDemand;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.CraftingWork;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
@@ -662,7 +663,7 @@ public final class VillageDetectionHandler {
         // obra de uma colônia de taiga pede pinheiro, e perguntar por
         // carvalho devolveria zero: a meta perderia a demanda da obra e
         // cairia na metade do baú, que é a conta de quando não há obra.
-        int planksForWork = ConstructionPlanner.planksNeededBy(
+        int planksForWork = ConstructionDemand.planksNeededBy(
                 VillageBiomes.woodAt(overworld, colony.center())
                         .orElse(MinecraftTypeAdapter.toResourceId(Blocks.OAK_PLANKS)),
                 colony);

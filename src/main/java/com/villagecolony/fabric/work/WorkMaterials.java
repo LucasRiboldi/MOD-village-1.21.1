@@ -78,9 +78,9 @@ public final class WorkMaterials {
      * não tem janela — a cabana de deserto não tem.
      */
     public static int glass(ServerWorld world, VillagePalette palette, Colony colony) {
-        int direct = ConstructionPlanner.materialNeededBy(palette.glass(), colony);
+        int direct = ConstructionDemand.materialNeededBy(palette.glass(), colony);
 
-        int panes = ConstructionPlanner.materialNeededBy(GLASS_PANE, colony);
+        int panes = ConstructionDemand.materialNeededBy(GLASS_PANE, colony);
 
         return direct + through(world, GLASS_PANE, ResourceType.GLASS, panes);
     }
@@ -94,8 +94,8 @@ public final class WorkMaterials {
      * para uma fornada.
      */
     public static int coal(ServerWorld world, Colony colony) {
-        int torches = ConstructionPlanner.materialNeededBy(WALL_TORCH, colony)
-                + ConstructionPlanner.materialNeededBy(TORCH, colony);
+        int torches = ConstructionDemand.materialNeededBy(WALL_TORCH, colony)
+                + ConstructionDemand.materialNeededBy(TORCH, colony);
 
         return through(world, WALL_TORCH, ResourceType.COAL, torches);
     }
@@ -114,7 +114,7 @@ public final class WorkMaterials {
      * aberta, do mesmo jeito que ela já sabia do vidro e do carvão.
      */
     public static int iron(ServerWorld world, Colony colony) {
-        int lanterns = ConstructionPlanner.materialNeededBy(LANTERN, colony);
+        int lanterns = ConstructionDemand.materialNeededBy(LANTERN, colony);
 
         return through(world, LANTERN, ResourceType.IRON_INGOT, lanterns);
     }
@@ -185,7 +185,7 @@ public final class WorkMaterials {
         Map<ResourceType, Integer> wanted = new LinkedHashMap<>();
 
         for (Map.Entry<ResourceId, Integer> entry
-                : ConstructionPlanner.materialsNeededBy(colony).entrySet()) {
+                : ConstructionDemand.materialsNeededBy(colony).entrySet()) {
 
             MinecraftTypeAdapter.toBlock(entry.getKey())
                     .flatMap(WorkMaterials::firstKnownAlternative)
@@ -204,7 +204,7 @@ public final class WorkMaterials {
         }
 
         if (world != null) {
-            int slabs = ConstructionPlanner.materialNeededBy(
+            int slabs = ConstructionDemand.materialNeededBy(
                     ResourceId.vanilla("smooth_stone_slab"), colony);
             int smoothStone = through(
                     world, ResourceId.vanilla("smooth_stone_slab"), ResourceType.SMOOTH_STONE, slabs);
@@ -226,7 +226,7 @@ public final class WorkMaterials {
         Map<ResourceType, Integer> wanted = new LinkedHashMap<>();
 
         for (Map.Entry<ResourceId, Integer> entry
-                : ConstructionPlanner.materialsNeededBy(colony).entrySet()) {
+                : ConstructionDemand.materialsNeededBy(colony).entrySet()) {
 
             MinecraftTypeAdapter.toBlock(entry.getKey())
                     .flatMap(WorkMaterials::firstKnownAlternative)
@@ -321,7 +321,7 @@ public final class WorkMaterials {
     public static int stone(VillagePalette palette, Colony colony) {
         String family = palette.stone().path();
 
-        return ConstructionPlanner.materialNeededBy(
+        return ConstructionDemand.materialNeededBy(
                 material -> material.path().contains(family), colony);
     }
 
@@ -339,7 +339,7 @@ public final class WorkMaterials {
      * <b>aparecer</b>.
      */
     public static int wool(ServerWorld world, Colony colony) {
-        int beds = ConstructionPlanner.materialNeededBy(
+        int beds = ConstructionDemand.materialNeededBy(
                 material -> material.path().endsWith("_bed"), colony);
 
         return through(world, WHITE_BED, ResourceType.WHITE_WOOL, beds);

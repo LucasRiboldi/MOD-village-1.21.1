@@ -16,6 +16,7 @@ import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.VillageInventoryObserver;
 import com.villagecolony.fabric.integration.VillageStructures;
+import com.villagecolony.fabric.work.ConstructionDemand;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.FarmPlans;
 import com.villagecolony.fabric.work.FarmerWork;
@@ -160,11 +161,11 @@ public class FarmPlanGameTest implements FabricGameTest {
                 size);
 
         context.assertTrue(
-                ConstructionPlanner.withinTheFarmersReach(colony, near),
+                ConstructionDemand.withinTheFarmersReach(colony, near),
                 "o lote na borda do alcance do fazendeiro foi recusado");
 
         context.assertFalse(
-                ConstructionPlanner.withinTheFarmersReach(colony, far),
+                ConstructionDemand.withinTheFarmersReach(colony, far),
                 "um lote fora do alcance do fazendeiro passou — é a roça de 105 blocos"
                         + " que ninguém planta, de volta");
 

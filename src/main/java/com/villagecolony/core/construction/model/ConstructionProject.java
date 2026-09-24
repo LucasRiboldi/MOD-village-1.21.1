@@ -142,7 +142,7 @@ public final class ConstructionProject {
      * decisão, não esquecimento: quem sabe o que já está construído é o
      * mundo. Quem restaura risca da lista os blocos que já estão de pé,
      * comparando com o que há em cada posição — ver
-     * {@code ConstructionPlanner.resume}.
+     * {@code ConstructionResume.resume}.
      *
      * <p>Sai mais barato no save e sai mais <b>certo</b>: uma parede que
      * o jogador derrubou entre uma sessão e outra volta para a lista, e a

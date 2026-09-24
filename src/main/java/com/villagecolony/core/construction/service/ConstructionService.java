@@ -47,7 +47,7 @@ public final class ConstructionService {
      * <p>Então a obra volta em duas etapas: a identidade e o lugar saem
      * do arquivo agora, e o projeto inteiro nasce no primeiro ciclo da
      * colônia, quando há mundo a quem perguntar. Ver
-     * {@code ConstructionPlanner.resume}.
+     * {@code ConstructionResume.resume}.
      */
     private final Map<UUID, Pending> pending = new LinkedHashMap<>();
 

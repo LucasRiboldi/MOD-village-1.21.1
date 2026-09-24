@@ -39,7 +39,7 @@ import java.util.List;
  *
  * <p><b>A demanda hoje só nasce de obra aberta</b>, e é essa a lacuna.
  * {@code WorkMaterials.stone} pergunta ao
- * {@code ConstructionPlanner.materialNeededBy}, que lê a obra <b>aberta</b>
+ * {@code ConstructionDemand.materialNeededBy}, que lê a obra <b>aberta</b>
  * da colônia; sem obra — ou com ela parada esperando — a demanda é zero e
  * ninguém produz nada. A colônia só começa a fabricar depois que a obra
  * pede, que é tarde demais.

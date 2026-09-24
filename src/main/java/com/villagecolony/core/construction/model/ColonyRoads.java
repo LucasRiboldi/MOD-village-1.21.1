@@ -75,7 +75,7 @@ public record ColonyRoads(UUID colonyId, ColonyPos from, List<Long> columns) {
      *
      * <p>Em quadrado, que é a régua do resto do projeto: o
      * {@code BuildSiteScanner} varre em anéis, o
-     * {@code ConstructionPlanner.withinTheFarmersReach} mede assim, e o
+     * {@code ConstructionDemand.withinTheFarmersReach} mede assim, e o
      * {@code VillageDetector} também. Ver o C1 do E46 — o círculo era o
      * forasteiro entre três réguas.
      *

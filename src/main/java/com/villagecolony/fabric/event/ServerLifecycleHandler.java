@@ -147,7 +147,7 @@ public final class ServerLifecycleHandler {
         // As obras voltam pela metade de propósito: falta-lhes o projeto,
         // que só existe com um mundo carregado a quem perguntar. Elas
         // renascem no primeiro ciclo de cada colônia — ver
-        // ConstructionPlanner.resume.
+        // ConstructionResume.resume.
         for (ConstructionService.Pending project : data.projects()) {
             VillageColonyMod.CONSTRUCTIONS.registerPending(project);
         }
