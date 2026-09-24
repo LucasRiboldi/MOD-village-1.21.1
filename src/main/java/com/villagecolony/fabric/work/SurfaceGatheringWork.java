@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.coordination.GatheringReach;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.IdleReason;
@@ -199,6 +200,25 @@ public final class SurfaceGatheringWork {
         return false;
     }
 
+    /**
+     * O raio da busca — N11, 2026-09-24.
+     *
+     * <p>A busca em volta da vila (areia, cacto) cresce com as camas, como a
+     * do lenhador. A de terra e grama fica como está: ela já nasce fora do
+     * raio protegido da vila, num setor, e encolhê-la não a traria para
+     * mais perto — só a deixaria sem terreno.
+     */
+    private static int reach(Job job, boolean outsideVillage) {
+        if (outsideVillage) {
+            return SEARCH_RADIUS;
+        }
+
+        int beds = VillageColonyMod.COLONIES.find(job.task.colonyId())
+                .map(Colony::observedBeds).orElse(0);
+
+        return GatheringReach.radius(beds, SEARCH_RADIUS);
+    }
+
     private static boolean findTarget(ServerWorld world, UUID workerId, Job job) {
         // Areia, terra e relva são recursos de superfície: a colônia só
         // abre esta tarefa quando uma obra pediu o material, e a coleta
@@ -225,7 +245,7 @@ public final class SurfaceGatheringWork {
                 : column -> true;
 
         Optional<BlockPos> found = RingSweep.around(
-                workerId, searchCenter, SEARCH_RADIUS, worthLooking, column -> {
+                workerId, searchCenter, reach(job, outsideVillage), worthLooking, column -> {
             if (job.task.targetResource() == ResourceType.SAND) {
                 return SandPatch.in(world, column, job.center.getY())
                         .filter(pos -> BlockProtection.mayBreak(world, pos, world.getBlockState(pos)));
