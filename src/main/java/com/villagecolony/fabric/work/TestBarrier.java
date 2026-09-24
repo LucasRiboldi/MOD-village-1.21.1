@@ -213,7 +213,7 @@ public final class TestBarrier {
     /**
      * Se a barreira já desistiu desta peça, sem mexer no relógio dela.
      *
-     * <p>É a pergunta que {@code BuilderWork.hasMaterialForNextBlock}
+     * <p>É a pergunta que {@code BuilderMaterials.hasMaterialForNextBlock}
      * faz, e as duas respostas têm de casar com o que o construtor vai
      * fazer — senão a obra acorda, tenta, falha e dorme, todo ciclo,
      * que é o laço que aquele método já evitava por outro caminho.

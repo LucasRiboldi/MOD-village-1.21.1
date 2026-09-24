@@ -8,6 +8,7 @@ import com.villagecolony.fabric.integration.BiomeConstructionSupply;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.VillageStructures;
 import com.villagecolony.fabric.work.BuilderWork;
+import com.villagecolony.fabric.work.BlockShaping;
 import com.villagecolony.fabric.work.MaterialChoice;
 import com.villagecolony.fabric.work.PottedPlant;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -139,7 +140,7 @@ public class ConstructionSupplyAuditGameTest implements FabricGameTest {
             return;
         }
 
-        if (BuilderWork.isShapedFromTheGround(block.get().getDefaultState())) {
+        if (BlockShaping.isShapedFromTheGround(block.get().getDefaultState())) {
             formed.merge(id.path(), 1, Integer::sum);
             return;
         }

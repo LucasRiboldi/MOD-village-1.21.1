@@ -11,6 +11,7 @@ import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.fabric.work.BuilderWork;
+import com.villagecolony.fabric.work.BuilderMaterials;
 import java.util.UUID;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.work.PottedPlant;
@@ -559,7 +560,7 @@ public class WorkMaterialsGameTest implements FabricGameTest {
 
         ConstructionProject project = ConstructionProject.plan(colonyId, plan, origin);
 
-        if (!BuilderWork.hasMaterialForNextBlock(context.getWorld(), project)) {
+        if (!BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), project)) {
             throw new AssertionError(
                     "a obra disse que falta material para um bloco SEM ITEM — ela vai"
                             + " esperar para sempre por algo que ninguem pode trazer,"

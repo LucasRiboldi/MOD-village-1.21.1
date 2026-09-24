@@ -129,7 +129,7 @@ public class FoundationRepairGameTest implements FabricGameTest {
      * </pre>
      *
      * <p>Os nove eram {@code ladder} e {@code wall_torch}, riscados por
-     * <i>nothing holds it</i>: {@code BuilderWork.placeOne} tem quatro saídas
+     * <i>nothing holds it</i>: {@code BuilderPlacement.placeOne} tem quatro saídas
      * que riscam a peça <b>sem assentar</b>, e o próprio comentário dele diz
      * que "riscado não é assentado". A lista esvazia, a obra é dada por
      * terminada com zero blocos postos, e o reparo compara planta com mundo,

@@ -109,7 +109,7 @@ public final class WaitingWork {
      * em 149 blocos com 52 tábuas guardadas, dois fabricantes ociosos e
      * a linha {@code builders: 0 working, WAITING_RESOURCES ... — no
      * build task} repetindo até o desligamento. O comentário de
-     * {@code BuilderWork.waitForResources} já dizia que "quem destrava é
+     * {@code BuilderMaterials.waitForResources} já dizia que "quem destrava é
      * o ciclo da colônia" — era intenção que nenhum código cumpria.
      *
      * <p>Só acorda com o material do próximo bloco em mãos. Acordar sem
@@ -121,7 +121,7 @@ public final class WaitingWork {
             return;
         }
 
-        if (!BuilderWork.hasMaterialForNextBlock(world, project)) {
+        if (!BuilderMaterials.hasMaterialForNextBlock(world, project)) {
             return;
         }
 

@@ -43,7 +43,7 @@ final class BuildingRepairPlanner {
      * <p>O log do autor tinha a mesma casa reabrindo a cada trinta segundos:
      * <i>9 blocks remain</i> na abertura e <i>0 blocks placed</i> no fim,
      * sem parar. Os nove eram {@code ladder} e {@code wall_torch}, e
-     * {@code BuilderWork.placeOne} os risca por <i>nothing holds it</i> sem
+     * {@code BuilderPlacement.placeOne} os risca por <i>nothing holds it</i> sem
      * assentar nada — são peças que pedem apoio que aquela parede não tem.
      *
      * <p>A obra então é dada por terminada, a casa entra no registro com a

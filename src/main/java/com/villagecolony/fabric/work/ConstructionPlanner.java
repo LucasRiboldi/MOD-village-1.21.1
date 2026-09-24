@@ -207,7 +207,7 @@ public final class ConstructionPlanner {
                 TaskPriority.CONSTRUCTION,
                 // Nominal, e é seguro que seja: a tarefa de obra não é
                 // pedido de recurso, e quem paga cada bloco é
-                // BuilderWork.takeMaterial, lendo o projeto. O que este
+                // BuilderMaterials.takeMaterial, lendo o projeto. O que este
                 // campo carrega de útil é o número — quantos blocos
                 // faltam —, que aparece no log.
                 ResourceType.OAK_PLANKS,
@@ -232,7 +232,7 @@ public final class ConstructionPlanner {
 
         if (open.isPresent()) {
             WaitingWork.wakeIfSupplied(world, open.get());
-            BuilderWork.reconsiderDeferredPieces(world, open.get());
+            BuilderPlacement.reconsiderDeferredPieces(world, open.get());
 
             // <b>E a obra que o centro deixou para trás</b> — 2026-09-15.
             // Vem antes do relógio de paciência porque não é caso dele: ele

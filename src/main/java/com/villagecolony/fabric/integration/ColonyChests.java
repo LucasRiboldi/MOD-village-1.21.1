@@ -23,7 +23,7 @@ import java.util.UUID;
  * seguinte enquanto não juntar a quantidade de que precisa.
  *
  * <p>Nenhuma das duas metades existia. Quem percorria os baús —
- * {@code BuilderWork.takeMaterial} e {@code CraftingWork.convertOne}
+ * {@code BuilderMaterials.takeMaterial} e {@code CraftingWork.convertOne}
  * — usava a ordem em que {@code WORKERS.ofColony} devolve os
  * trabalhadores, que não é distância nenhuma: é a ordem de registro. E
  * os dois desistiam no primeiro baú que não tivesse tudo, de modo que

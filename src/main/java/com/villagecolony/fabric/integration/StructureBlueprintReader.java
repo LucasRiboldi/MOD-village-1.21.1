@@ -180,7 +180,7 @@ public final class StructureBlueprintReader {
      * baixo empilhadas, dois pés de cama lado a lado.
      *
      * <p>A saída é não guardar a segunda. Quem a põe é o jogo, quando o
-     * construtor puser a primeira — ver {@code BuilderWork.placeSecondHalf}.
+     * construtor puser a primeira — ver {@code BlockShaping.placeSecondHalf}.
      * É a ADR-001 outra vez: perguntar ao Minecraft em vez de escrever a
      * resposta aqui.
      *

@@ -22,6 +22,8 @@ import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.work.BuilderApproach;
 import com.villagecolony.fabric.work.BuilderWork;
+import com.villagecolony.fabric.work.BlockShaping;
+import com.villagecolony.fabric.work.BuilderMaterials;
 import com.villagecolony.fabric.work.MaterialChoice;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.TestBarrier;
@@ -175,7 +177,7 @@ public class BuilderGameTest implements FabricGameTest {
      * como uma porta.
      *
      * <p>Rodado contra a regra desligada em 2026-08-15: sem
-     * {@code BuilderWork.placeSecondHalf} a terceira afirmação falha, e
+     * {@code BlockShaping.placeSecondHalf} a terceira afirmação falha, e
      * sem o descarte em {@code StructureBlueprintReader.isSecondHalf} a
      * conta do baú falha.
      */
@@ -547,7 +549,7 @@ public class BuilderGameTest implements FabricGameTest {
 
         try {
             context.assertTrue(
-                    BuilderWork.hasMaterialForNextBlock(context.getWorld(), fixture.project),
+                    BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
                     "o fermentador sem haste de blaze ainda deixou a obra esperando");
             context.assertTrue(
                     ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.BREWING_STAND) == 1,
@@ -566,7 +568,7 @@ public class BuilderGameTest implements FabricGameTest {
 
         try {
             context.assertFalse(
-                    BuilderWork.hasMaterialForNextBlock(context.getWorld(), fixture.project),
+                    BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
                     "a porta localmente fabricável foi tratada como recurso externo");
             context.assertTrue(
                     ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.OAK_DOOR) == 0,
@@ -789,7 +791,7 @@ public class BuilderGameTest implements FabricGameTest {
 
         try {
             context.assertTrue(
-                    BuilderWork.hasMaterialForNextBlock(context.getWorld(), fixture.project),
+                    BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
                     "o despertador achou que faltava material para um canteiro — a roça"
                             + " dormiria para sempre esperando um item que não existe");
         } finally {
