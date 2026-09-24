@@ -21,6 +21,7 @@ import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.HiringLog;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
+import com.villagecolony.core.worker.service.VacancyEnforcer;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
@@ -499,7 +500,7 @@ public final class VillageDetectionHandler {
      * Fora dela, o trabalho acontece sem plateia e pode esperar a vez.
      *
      * <p>Horizontal, como todo raio de vila neste projeto — ver
-     * {@code ConstructionProject.isOutOfReach}. O jogador no fundo da mina
+     * {@code ConstructionReach.isOutOfReach}. O jogador no fundo da mina
      * continua sendo o jogador daquela vila.
      *
      * <p>Custa uma volta pelos jogadores online vezes as colônias ativas,
@@ -1086,7 +1087,7 @@ public final class VillageDetectionHandler {
     private static void dismissExtraWorkers(
             ServerWorld world, Colony colony, int replacements) {
 
-        Set<UUID> demoted = ProfessionAssigner.enforceVacanciesPreservingFoundation(
+        Set<UUID> demoted = VacancyEnforcer.enforceVacanciesPreservingFoundation(
                 VillageColonyMod.WORKERS,
                 colony.id(),
                 villagerId -> VillageColonyMod.STORAGES.of(villagerId).isPresent(),

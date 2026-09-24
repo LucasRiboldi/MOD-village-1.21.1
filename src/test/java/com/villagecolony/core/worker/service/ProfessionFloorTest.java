@@ -189,7 +189,7 @@ class ProfessionFloorTest {
 
         ProfessionAssigner.assignMissing(workers, COLONY, new HashSet<>(everyone));
 
-        Set<UUID> demoted = ProfessionAssigner.enforceVacancies(
+        Set<UUID> demoted = VacancyEnforcer.enforceVacancies(
                 workers, COLONY, villagerId -> false, 3);
 
         assertEquals(3, demoted.size());
@@ -208,7 +208,7 @@ class ProfessionFloorTest {
 
         ProfessionAssigner.assignMissing(workers, COLONY, new HashSet<>(everyone));
 
-        Set<UUID> demoted = ProfessionAssigner.enforceVacanciesPreservingFoundation(
+        Set<UUID> demoted = VacancyEnforcer.enforceVacanciesPreservingFoundation(
                 workers, COLONY, villagerId -> false, everyone.size());
 
         assertTrue(demoted.isEmpty(), "o piso absoluto não pode perder uma função");
@@ -243,7 +243,7 @@ class ProfessionFloorTest {
 
         Set<UUID> withChest = new HashSet<>(substitutes);
 
-        ProfessionAssigner.enforceVacancies(
+        VacancyEnforcer.enforceVacancies(
                 workers, COLONY, withChest::contains, substitutes.size());
 
         ProfessionAssigner.assignMissing(
@@ -310,7 +310,7 @@ class ProfessionFloorTest {
         ProfessionAssigner.assignMissing(workers, COLONY, new HashSet<>(everyone));
 
         assertTrue(
-                ProfessionAssigner.enforceVacancies(
+                VacancyEnforcer.enforceVacancies(
                         workers, COLONY, villagerId -> false, 0).isEmpty(),
                 "dispensou alguém sem ter quem pusesse no lugar");
 

@@ -242,7 +242,7 @@ class ProfessionAssignerTest {
             worker.assign(ProfessionType.LUMBERJACK);
         }
 
-        Set<UUID> demoted = ProfessionAssigner.enforceVacancies(
+        Set<UUID> demoted = VacancyEnforcer.enforceVacancies(
                 workers, COLONY, villagerId -> false, 1);
 
         assertEquals(1, demoted.size(), "um candidato, uma troca");
@@ -268,7 +268,7 @@ class ProfessionAssignerTest {
             worker.assign(ProfessionType.LUMBERJACK);
         }
 
-        assertTrue(ProfessionAssigner.enforceVacancies(
+        assertTrue(VacancyEnforcer.enforceVacancies(
                 workers, COLONY, villagerId -> false, 0).isEmpty());
     }
 
@@ -281,7 +281,7 @@ class ProfessionAssignerTest {
             worker.assign(ProfessionType.LUMBERJACK);
         }
 
-        assertTrue(ProfessionAssigner.enforceVacancies(
+        assertTrue(VacancyEnforcer.enforceVacancies(
                 workers, COLONY, villagerId -> true, 5).isEmpty());
     }
 
@@ -299,7 +299,7 @@ class ProfessionAssignerTest {
             worker.assign(ProfessionType.LUMBERJACK);
         }
 
-        Set<UUID> demoted = ProfessionAssigner.enforceVacancies(workers, COLONY);
+        Set<UUID> demoted = VacancyEnforcer.enforceVacancies(workers, COLONY);
 
         assertEquals(0, demoted.size());
 
@@ -324,7 +324,7 @@ class ProfessionAssignerTest {
             worker.assign(ProfessionType.LUMBERJACK);
         }
 
-        ProfessionAssigner.enforceVacancies(workers, COLONY);
+        VacancyEnforcer.enforceVacancies(workers, COLONY);
 
         int assigned = ProfessionAssigner.assignMissing(workers, COLONY, everyone());
 
@@ -350,7 +350,7 @@ class ProfessionAssignerTest {
 
         UUID withChest = all.get(3).villagerId();
 
-        ProfessionAssigner.enforceVacancies(workers, COLONY, withChest::equals, 1);
+        VacancyEnforcer.enforceVacancies(workers, COLONY, withChest::equals, 1);
 
         assertEquals(
                 ProfessionType.LUMBERJACK,
@@ -367,7 +367,7 @@ class ProfessionAssignerTest {
             worker.assign(ProfessionType.LUMBERJACK);
         }
 
-        ProfessionAssigner.enforceVacancies(workers, COLONY, villagerId -> false);
+        VacancyEnforcer.enforceVacancies(workers, COLONY, villagerId -> false);
 
         long lumberjacks = workers.ofColony(COLONY).stream()
                 .filter(w -> w.profession().filter(ProfessionType.LUMBERJACK::equals).isPresent())
@@ -382,7 +382,7 @@ class ProfessionAssignerTest {
         addWorkers(COLONY, 8);
         ProfessionAssigner.assignMissing(workers, COLONY, everyone());
 
-        assertTrue(ProfessionAssigner.enforceVacancies(workers, COLONY).isEmpty());
+        assertTrue(VacancyEnforcer.enforceVacancies(workers, COLONY).isEmpty());
     }
 
     /** Roda a cada ciclo: sem aldeão novo não pode fazer nada. */

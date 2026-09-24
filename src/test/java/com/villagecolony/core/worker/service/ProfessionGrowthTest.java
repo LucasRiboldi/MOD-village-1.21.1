@@ -97,7 +97,7 @@ class ProfessionGrowthTest {
         addWorkers(31);
         assign(31);
 
-        assertTrue(ProfessionAssigner.enforceVacancies(workers, COLONY).isEmpty());
+        assertTrue(VacancyEnforcer.enforceVacancies(workers, COLONY).isEmpty());
         assertEquals(3, count(ProfessionType.MINER));
     }
 
