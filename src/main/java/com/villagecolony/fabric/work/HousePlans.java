@@ -154,14 +154,44 @@ public final class HousePlans {
     /**
      * Se a próxima construção precisa ser uma casa — 2026-09-20.
      *
-     * <p>A sequência olha apenas para obras terminadas e usa a última delas:
-     * casa abre a vez de outro tipo; qualquer tipo não residencial devolve a
-     * vez para casa. Obra abandonada não participa do rodízio.
+     * <p>Usa a última obra <b>tentada</b>: casa abre a vez de outro tipo;
+     * qualquer tipo não residencial devolve a vez para casa.
+     *
+     * <p><b>Obra abandonada passou a contar — E48, 2026-09-24, decisão do
+     * autor.</b> Até aqui só a obra terminada entrava, e o playtest de 24-09
+     * mostrou o custo: uma casa terminada e depois o {@code plains_temple_4}
+     * abandonado treze vezes. O rodízio via só a casa, a vez continuava
+     * com "não residencial", o templo não era excluído — e foi escolhido
+     * de novo nas treze. Nenhuma casa em seis horas e meia.
+     *
+     * <p>{@link #hasNoHouseYet} continua olhando só a terminada, e de
+     * propósito: ali a pergunta é "existe casa de pé", não "de quem é a vez".
      */
     static boolean nextConstructionIsHouse(List<Building> buildings) {
-        Optional<Building> last = lastFinished(buildings);
+        Optional<Building> last = lastAttempted(buildings);
 
         return last.isEmpty() || !isDwelling(last.get().blueprint());
+    }
+
+    /**
+     * O mesmo, e casa sempre que faltar cama — E48, 2026-09-24, decisão do
+     * autor: <i>"sempre buscando a jogabilidade mais natural"</i>.
+     *
+     * <p>Uma vila de verdade não levanta templo com gente dormindo ao
+     * relento. Enquanto houver mais adultos do que camas, a vez é da casa;
+     * com cama para todos, o rodízio volta a decidir.
+     *
+     * <p><b>Zero camas é "ainda não contado", não "nenhuma cama".</b>
+     * {@code Colony.observedBeds} nasce em zero e só vale depois da primeira
+     * detecção da sessão; toda vila Vanilla tem cama e a {@code BigHouseMOD}
+     * põe seis. Ler o zero como falta forçaria casa em toda colônia recém-
+     * carregada, antes de alguém olhar.
+     *
+     * @param adults os trabalhadores adultos da colônia
+     * @param beds as camas que a detecção de vila contou; zero é desconhecido
+     */
+    static boolean nextConstructionIsHouse(List<Building> buildings, int adults, int beds) {
+        return (beds > 0 && adults > beds) || nextConstructionIsHouse(buildings);
     }
 
     /**
@@ -191,8 +221,9 @@ public final class HousePlans {
      */
     static List<Blueprint> plansForNext(ServerWorld world, Colony colony) {
         List<Building> buildings = VillageColonyMod.BUILDINGS.ofColony(colony.id());
+        int adults = VillageColonyMod.WORKERS.countOfColony(colony.id());
 
-        if (nextConstructionIsHouse(buildings)) {
+        if (nextConstructionIsHouse(buildings, adults, colony.observedBeds())) {
             return plansFor(world, colony);
         }
 
@@ -216,23 +247,24 @@ public final class HousePlans {
         return "other";
     }
 
-    private static Optional<Building> lastFinished(List<Building> buildings) {
-        for (int index = buildings.size() - 1; index >= 0; index--) {
-            Building building = buildings.get(index);
-
-            if (building.finished()) {
-                return Optional.of(building);
-            }
-        }
-
-        return Optional.empty();
+    /** A última obra tentada, terminada ou abandonada — ver E48. */
+    private static Optional<Building> lastAttempted(List<Building> buildings) {
+        return buildings.isEmpty()
+                ? Optional.empty()
+                : Optional.of(buildings.get(buildings.size() - 1));
     }
 
+    /**
+     * O último tipo não residencial tentado, terminado ou abandonado — E48.
+     *
+     * <p>É o tipo que a vez seguinte exclui. Deixar a obra abandonada de fora
+     * foi o que devolveu o mesmo templo treze vezes no playtest de 24-09.
+     */
     private static Optional<String> lastNonHouseType(List<Building> buildings) {
         for (int index = buildings.size() - 1; index >= 0; index--) {
             Building building = buildings.get(index);
 
-            if (building.finished() && !isDwelling(building.blueprint())) {
+            if (!isDwelling(building.blueprint())) {
                 return Optional.of(constructionType(building.blueprint()));
             }
         }

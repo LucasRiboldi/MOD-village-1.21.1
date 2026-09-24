@@ -48,6 +48,9 @@ class HousePlansTest {
     private static final ResourceId ANIMAL_PEN =
             ResourceId.parse("minecraft:village/plains/houses/plains_animal_pen_1");
 
+    private static final ResourceId TEMPLE =
+            ResourceId.parse("minecraft:village/plains/houses/plains_temple_4");
+
     /**
      * Uma planta qualquer com aquele id.
      *
@@ -302,6 +305,53 @@ class HousePlansTest {
                                 List.of("farm", "animal_pen"))
                         .orElseThrow(),
                 "o tipo B precisa ser diferente do tipo A anterior");
+    }
+
+    /**
+     * Obra não residencial abandonada devolve a vez à casa — E48, 2026-09-24.
+     *
+     * <p>O playtest de 24-09 abandonou o {@code plains_temple_4} treze vezes
+     * e escolheu o mesmo templo em todas: o rodízio só olhava obra
+     * terminada, e uma casa terminada antes do templo mantinha a vez com
+     * "não residencial" para sempre.
+     */
+    @Test
+    void anAbandonedOtherTypeGivesTheTurnBackToAHouse() {
+        assertTrue(
+                HousePlans.nextConstructionIsHouse(
+                        List.of(building(SMALL, true), building(TEMPLE, false))),
+                "o templo abandonado depois da casa deveria devolver a vez para uma casa");
+    }
+
+    /** E o tipo abandonado fica fora da próxima escolha não residencial. */
+    @Test
+    void anAbandonedOtherTypeIsNotOfferedAgain() {
+        List<Building> built = List.of(
+                building(SMALL, true), building(TEMPLE, false), building(SMALL, true));
+
+        assertEquals(
+                "farm",
+                HousePlans.nextNonHouseType(built, List.of("temple", "farm")).orElseThrow(),
+                "o templo abandonado voltou a ser oferecido na vez seguinte");
+    }
+
+    /**
+     * Faltando cama, a próxima obra é casa, com ou sem a vez do rodízio —
+     * E48, 2026-09-24, decisão do autor.
+     */
+    @Test
+    void missingBedsMakeTheNextBuildAHouse() {
+        List<Building> afterAHouse = List.of(building(SMALL, true));
+
+        assertTrue(
+                HousePlans.nextConstructionIsHouse(afterAHouse, 8, 6),
+                "oito adultos e seis camas: a vila precisa de casa antes de infraestrutura");
+        assertFalse(
+                HousePlans.nextConstructionIsHouse(afterAHouse, 6, 6),
+                "com cama para todos o rodízio decide, e depois da casa vem outro tipo");
+        assertFalse(
+                HousePlans.nextConstructionIsHouse(afterAHouse, 8, 0),
+                "zero camas é contagem ainda não feita, e não pode forçar casa");
     }
 
     /**

@@ -16,6 +16,7 @@
       "com.villagecolony.gametest.VolumeSampleGameTest",
       "com.villagecolony.gametest.FarmerGameTest",
       "com.villagecolony.gametest.FarmPlanGameTest",
+      "com.villagecolony.gametest.HouseRotationGameTest",
       "com.villagecolony.gametest.ColonyDetectionGameTest",
       "com.villagecolony.gametest.StorageGameTest",
       "com.villagecolony.gametest.LumberjackGameTest",
