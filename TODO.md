@@ -33,6 +33,26 @@ plano de confiabilidade operacional).
   helices esgotadas; arco so sobe uma vez; prioridade do carvao ja coberta
   por `MinerGameTest.priorityRunsFromCoalDownToTheRareOnes`. Nenhum codigo
   novo necessario; sem commit proprio.
+- [x] **Task 8 — armazem fisico por snapshot:** `WarehouseIndex` (reserva
+  por ciclo, `reserveBatch` ordenado por `SupplyPriority`, fotografia
+  incompleta bloqueia tudo). `WarehouseIndexTest` (9 casos). ADR-024 (o
+  plano pedia ADR-023, ja usado pela Task 2). Commit `a1599ac`.
+- [ ] **Task 9 — investigada e NAO implementada, por decisao.** O
+  cenario central do plano ("bau cheio pausa o produtor sem perder item")
+  ja esta coberto por dois mecanismos corretos e apropriados ao contexto:
+  `MinerWork.java` (reativo — encerra a tarefa quando `haul.stored()==0`,
+  log "the chest that serves him is full", 2026-09-22) e
+  `ColonySupply.craft` (preventivo — `firstWithRoomFor` verifica espaco
+  ANTES de fabricar, recusa sem gastar ingrediente). Reescrever
+  `ColonyChests`/`ChestInventoryReader`/`MinerHaul`/`ColonySupply` para
+  rotear por `WarehouseIndex` trocaria codigo fisico ja testado por uma
+  abstracao sem resolver defeito real observado. O terceiro ponto do
+  plano ("route sticks, apples, and saplings") e o **E38 ja catalogado**
+  (`TODO.md`, linha ~148) como decisao de projeto pendente, nao lacuna
+  tecnica — fora de escopo de uma integracao mecanica de armazem.
+  Revisitar `WarehouseIndex`/Task 9 se um playtest real mostrar duas
+  tarefas reservando o mesmo estoque escasso no mesmo ciclo, caso que os
+  dois mecanismos atuais nao cobrem.
 - [x] **Task 7 — traco circular de atividade persistido:** `ActivityTrace`
   (16.384 eventos/colonia) persistido em `ColonySavedData` via
   `ActivityTraceSave`. **Limite de escopo conhecido:** so

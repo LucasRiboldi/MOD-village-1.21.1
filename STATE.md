@@ -10,6 +10,32 @@
 
 ---
 
+## Task 8 entregue, Task 9 investigada e não implementada (por decisão)
+
+`WarehouseIndex` (Task 8, contrato puro de reserva por ciclo com
+prioridade) está commitado (`a1599ac`) e disponível, mas a Task 9
+(integração física) não foi implementada. Investigação, feita antes de
+codar: o cenário central do plano — "baú cheio pausa o produtor sem
+perder item" — já está coberto por dois mecanismos corretos, cada um
+apropriado ao seu contexto:
+
+- **`MinerWork.java`** (reativo): quando `haul.stored()==0` depois de
+  cavar, a tarefa é encerrada — "the chest that serves him is full"
+  (2026-09-22). O mineiro não controla quanto vai produzir; verificar
+  depois é a decisão certa.
+- **`ColonySupply.craft`** (preventivo): `firstWithRoomFor` verifica
+  espaço **antes** de fabricar, recusando sem gastar ingrediente.
+
+Reescrever `ColonyChests`/`ChestInventoryReader`/`MinerHaul`/`ColonySupply`
+para rotear por `WarehouseIndex` trocaria código físico já testado por
+uma abstração sem defeito real a resolver. O terceiro item do plano
+("rotear graveto, maçã e muda por pedido físico") é o **E38**, já
+catalogado como decisão de projeto pendente — não lacuna técnica.
+
+Revisitar quando (e se) um playtest real mostrar duas tarefas reservando
+o mesmo estoque escasso no mesmo ciclo, caso que os dois mecanismos
+atuais não cobrem.
+
 ## Entrega desta sessão — Task 7 do plano de confiabilidade operacional
 
 `ActivityTrace` é um buffer circular de 16.384 eventos por colônia, com

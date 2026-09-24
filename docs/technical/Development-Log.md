@@ -8810,3 +8810,52 @@ rodadas consecutivas** — a unica falha
 (`BuildSiteGameTest.aVillageOnBedrockStillHasLots`) e a intermitencia
 pre-existente ja confirmada via `git stash` na entrega da Task 3, sem
 relacao com este codigo.
+
+### 2026-09-24 - P1.8, armazem fisico por snapshot; Task 9 investigada e recusada
+
+`WarehouseIndex` e uma fotografia imutavel de estoque por `ResourceId`
+com reserva mutavel por cima: `reserve()` e greedy por ordem de chamada,
+`reserveBatch()` ordena por `SupplyPriority` antes de reservar — para que
+um pedido de prioridade baixa nunca consuma estoque escasso antes de um
+de prioridade alta, mesmo chegando primeiro na lista do ciclo. Uma
+fotografia incompleta recusa toda reserva com `SNAPSHOT_INCOMPLETE`, sem
+tratar o que faltou ler como zero nem como sobra suficiente.
+`invalidate()` esquece reserva sem alterar estoque, para que nada vaze
+entre ciclos. O ADR-023 do plano original ja existia (Task 2, peca sem
+apoio); esta entrega numera ADR-024.
+
+**A Task 9 foi investigada com o mesmo rigor das anteriores, e nao
+implementada — por decisao, apos ler o codigo real.** O plano descrevia
+como objetivo "bau cheio pausa o produtor sem perder item", roteado por
+`WarehouseObserver`/`WarehouseIndex` sobre `ColonyChests`,
+`ChestInventoryReader`, `MinerHaul` e `ColonySupply`. A leitura revelou
+que o objetivo ja esta coberto, e coberto melhor do que uma integracao
+generica conseguiria:
+
+- **`MinerWork.java`** trata baus cheios de forma reativa, e por bom
+  motivo: o mineiro nao sabe quanto vai cavar antes de cavar. Quando
+  `haul.stored() == 0` e havia drop, a tarefa encerra —
+  `"the chest that serves him is full"`, decisao de 2026-09-22 que
+  fechou quarenta e sete linhas de pedregulho jogado no chao.
+- **`ColonySupply.craft`** trata capacidade de forma preventiva, tambem
+  por bom motivo: quem fabrica controla o que vai produzir.
+  `firstWithRoomFor` verifica espaco **antes** de gastar qualquer
+  ingrediente; sem espaco, recusa e loga, sem destruir material do
+  jogador.
+
+Os dois mecanismos sao contextualmente corretos e ja testados em
+producao. Substitui-los por uma camada unica de `WarehouseIndex` sobre
+os quatro arquivos listados trocaria codigo estavel por uma abstracao
+sem nenhum defeito concreto a resolver — o risco de regressao em
+suprimento fisico, sem ganho comprovado.
+
+O terceiro ponto do plano — "rotear graveto, maca e muda por pedido
+fisico" — e o **E38**, ja catalogado no `TODO.md` desde antes desta
+sessao como decisao de projeto pendente (destino sustentavel dos
+residuos do inventario pessoal), nao uma lacuna tecnica que uma
+integracao mecanica de armazem devesse decidir de passagem.
+
+`WarehouseIndex` fica commitado e disponivel para o dia em que um
+playtest real mostrar duas tarefas reservando o mesmo estoque escasso no
+mesmo ciclo — o unico caso que os dois mecanismos atuais nao cobrem.
+`WarehouseIndexTest` cobre nove casos. `./gradlew.bat build`: sucesso.
