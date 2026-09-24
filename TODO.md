@@ -17,6 +17,28 @@ sucesso, `runGametest --rerun-tasks` 423/423 GAME TESTS COMPLETE. O JAR
 (ver `docs/proxima-sessao.md`); este playtest de 24-09 e o primeiro
 resultado real contra ele.
 
+## Pendências de correção levantadas pela avaliação — viabilidade (2026-09-24)
+
+Ordem recomendada. O esforço e o risco são estimativa; o aceite é o que a
+próxima avaliação mede.
+
+| # | Correção | Esforço / risco | Aceite |
+|---|---|---|---|
+| 1 | Limite de **tempo** para o planejador: a varredura pausa pelo cursor que já existe | baixo / baixo | `cycle_over_tick` cai; C13 ≥ 3 |
+| 2 | Cota de colônias planejando que se ajusta ao custo do ciclo anterior (hoje fixa em 8) | baixo / baixo | teste unitário da regra |
+| 3 | Registro único de estado de servidor (`resetAll`) no lugar de 78 `clearAll` à mão | médio / baixo | teste de inscrição; C05 ≥ 3 |
+| 4 | Matar sobreviventes do PIT (`MineShaft`, `ProfessionAssigner`, `ColonyCycle`) | médio / nulo | C08 ≥ 85% |
+| 5 | JaCoCo na bateria de jogo (cobertura do `fabric`) | baixo-médio / nulo | cobertura do `fabric` medida |
+| 6 | PR do branch para a `main` (85 commits) | baixo / publica | CI verde no PR — **pede aval do autor** |
+| 7 | `STATE.md` até 150 linhas | baixo / nulo | contagem |
+| 8 | 39 avisos de javadoc e 2 variáveis sem uso | baixo / nulo | C10 = 4 |
+| 9 | Ciclo de tarefa comum aos 7 ofícios | alto / médio | `JOBS` ≤ 2, `giveUp` = 1 — **ADR antes** |
+| 10 | Regras de decisão do `fabric` para o `core` | médio-alto / médio | teste unitário e PIT cobrem as regras — **ADR antes** |
+
+Não recomendados:
+- trocar o `ordinal()` usado como prioridade, que é deliberado e documentado;
+- reescrever o `toResourceType`, que é uma tabela legítima.
+
 ## Avaliação técnica 2026-09-24 — B (3,21/4) — `docs/technical/avaliacao/2026-09-24-17613fa/RELATORIO.md`
 
 As recomendações, cada uma com um aceite que a próxima avaliação mede
