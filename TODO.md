@@ -1,13 +1,21 @@
 # TODO
 
-**Atualizado:** 2026-09-24. Tasks 3-13 do plano de confiabilidade
-operacional concluidas (10 implementadas, 2 investigadas e recusadas por
-decisao, 1 ja coberta antes da sessao). Task 14 (verificacao +
-playtests): a parte automatizada fechou verde — `gradlew test` 992/992,
-`gradlew build` sucesso, `runGametest --rerun-tasks` 423/423 GAME TESTS
-COMPLETE. **A parte de playtest continua pendente** — ver
-`docs/proxima-sessao.md` para os cinco itens que so o autor jogando pode
-fechar antes de publicar a 0.3.0.
+**Atualizado:** 2026-09-24. Playtest real de ~6h30 analisado (5 colonias,
+221.814 linhas de log). **Dois erros novos, E47 e E48** — ver "Erros
+abertos" abaixo. Achado central: um construtor ficou preso fisicamente
+longe do lote por 3h30 seguidas (E47), o que impediu qualquer obra de
+terminar e por consequencia a alternancia casa/infraestrutura nunca
+escolheu casa (E48) — zero "house is up" na sessao inteira. `VC_ACTIVITY`
+(Task 7) confirmado funcionando em jogo pela primeira vez: 1.132 linhas.
+
+Sessao anterior: Tasks 3-13 do plano de confiabilidade operacional
+concluidas (10 implementadas, 2 investigadas e recusadas por decisao, 1
+ja coberta antes da sessao). Task 14 (verificacao + playtests): a parte
+automatizada fechou verde — `gradlew test` 992/992, `gradlew build`
+sucesso, `runGametest --rerun-tasks` 423/423 GAME TESTS COMPLETE. O JAR
+0.3.0 foi publicado por decisao do autor antes dos playtests confirmarem
+(ver `docs/proxima-sessao.md`); este playtest de 24-09 e o primeiro
+resultado real contra ele.
 
 ## Plano de confiabilidade operacional (docs/superpowers/plans/2026-09-23-operational-reliability.md)
 
@@ -706,6 +714,8 @@ Um por vez, teste antes de seguir.
 
 | | erro | estado |
 |---|---|---|
+| **E47** | **Trabalhador cai/fica preso longe do lote e nunca se recupera — visto em jogo 24-09, sessão de ~6h30.** `Builder 4b8df153` ficou parado em `-202, 62, -937` de **03:10 a 06:47** (97 linhas de `walking for N ticks without reaching the block`, subindo até 2400 e disparando o guarda de travamento repetidas vezes), sempre reatribuído à mesma obra em `y=72`, ~45-47 blocos de distância horizontal. `ClimbLimit`/`BuilderApproach.footOf` (correção de 09-16) só resolve diferença **vertical** de até 2 blocos quando o construtor está **na mesma coluna aproximada da obra** (em cima dela, descendo); não cobre um trabalhador preso **longe** — provavelmente dentro de depressão/ravina/caverna de superfície que a navegação Vanilla não atravessa sozinha para voltar. O guarda de 2400 ticks devolve a tarefa, mas o trabalhador continua fisicamente preso e é reatribuído à mesma armadilha. **Consequência observada:** nenhuma casa foi construída em ~6h30 de jogo (zero `house is up` no log inteiro, 5 colônias). Ver `docs/technical/Development-Log.md` para o diagnóstico completo. | 🔴 aberto — precisa de mecanismo de resgate/teleporte quando a distância excede o alcance normal de navegação, não só a diferença vertical |
+| **E48** | **Alternância casa→infraestrutura nunca escolhe casa nesta sessão.** Colônia `78fa1bb4` planejou 5 posições distintas ao longo da sessão, **todas `plains_temple_4`** (nenhuma casa). `HousePlans.nextConstructionIsHouse` só considera obra **terminada** (`Building.finished()`); como o E47 acima impede qualquer obra de terminar, a alternância nunca chega a alternar — ela está correta no código, mas nunca é exercitada porque a causa raiz (E47) trava toda conclusão de obra antes. **Provavelmente o mesmo sintoma que E42 (impasse entre profissões) apontava, com causa agora identificada.** Revalidar depois de corrigir E47; se persistir sem E47, é defeito novo e separado. | 🔴 aberto — depende de E47 |
 | **E44** | A escada de recusas já existe em `MineMarks` e é consultada pela mineração e pela fronteira da galeria; há unitários e GameTests. O playtest ainda observou o mineiro parado, então a integração completa segue **sem validação em jogo**. Não reabrir a decisão original sem reproduzir um defeito residual. | ⬜ validar em jogo |
 | **E43** | A decisao 1A foi implementada: `WorkEligibility` impede reserva de capacidade em descanso e removeu o fallback que devolvia `COLLECT_STONE` no ciclo seguinte. `WorkAssignmentTest` teve fase vermelha, e `ColonyCycleGameTest.aRestingMinerLeavesTheStoneTaskAvailable` passou na bateria 419/419. | ✅ codigo e GameTest; ⬜ validar em save |
 | **E41** | Nada mede degradação ao longo de muitos ciclos. O teste mais longo do projeto tem centenas de tiques. **Fechado em 11-09 (P1.13), esta linha estava desatualizada.** `ColonyEnduranceGameTest` mede deriva em 200 ciclos; nunca falhou em onze rodadas completas nesta sessão (24-09). | ✅ fechado |

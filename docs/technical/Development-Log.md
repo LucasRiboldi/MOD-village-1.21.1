@@ -9138,3 +9138,84 @@ inspecionados. O roteiro completo foi registrado em
 proposito do JAR em `downloads/` e na instalacao (SHA-256 comecando em
 `62FCECB7`, da entrega P1.4 anterior a esta sessao) — nao foi copiado, e
 nao deve ser ate a confirmacao do autor.
+
+**Nota posterior:** o autor pediu explicitamente para publicar o JAR
+antes dos playtests (commit `bf81013`, mesma sessao). O playtest real
+abaixo e o primeiro resultado contra essa publicacao.
+
+### 2026-09-24 - E47 e E48, playtest real de ~6h30
+
+Primeira sessao de jogo real desde a publicacao da 0.3.0 desta entrega.
+`latest.log`: 221.814 linhas, 03:02 as 09:39, cinco colonias.
+`VC_ACTIVITY` (Task 7, `ActivityTrace`) confirmado funcionando em jogo
+pela primeira vez — 1.132 linhas na sessao inteira.
+
+**Metodologia.** `scripts/analyze_village_log.py` apontou cinco
+candidatos a loop; o autor relatou dois sintomas em jogo ("aldeoes
+fazendo buracos e ficando presos", "construcoes que nao sao
+preferencialmente casas"). Em vez de assumir a causa, cada candidato foi
+seguido ate a linha de log que prova ou refuta — `grep` dirigido,
+contagem de ocorrencias, e leitura do codigo relevante so depois de a
+evidencia apontar para onde olhar.
+
+**E47 — a causa raiz real.** `Builder 4b8df153` ficou parado em
+`-202, 62, -937` das **03:10 as 06:47** — tres horas e meia seguidas,
+nunca se movendo, sempre reatribuido a mesma obra em `y=72`, entre 45 e
+47 blocos de distancia horizontal. A hipotese inicial (buraco aberto
+pela mineracao) foi testada e refutada: a boca da mina dessa colonia
+fica em `-164, -16, -966`, longe da posicao do trabalhador preso, e nao
+ha escavacao registrada perto de `-202, -937`. A posicao presa e
+provavelmente uma depressao natural do bioma (ravina, caverna de
+superficie) que a navegacao Vanilla nao atravessa sozinha para voltar.
+
+`BuilderApproach.footOf` (a versao de quatro argumentos, unica
+chamada em producao) ja usa `ClimbLimit.landingBetween` para resolver
+diferenca vertical grande **quando o construtor esta na mesma coluna
+aproximada da obra** — o caso original que a correcao de 09-16 atacou
+era o construtor em cima da propria obra, cinco blocos acima do piso do
+lote. O caso deste playtest e diferente: o trabalhador esta **longe na
+horizontal**, nao so abaixo na vertical, e `ClimbLimit.reachableFrom`
+nunca chega a ser a pergunta certa porque a distancia horizontal por si
+so ja impede a navegacao Vanilla de tracar caminho.
+
+O guarda de 2400 ticks (`PatienceClock`) disparou corretamente varias
+vezes — a linha `Builder ... stopped — the builder could not reach ...`
+apareceu duas vezes com o detalhe completo, e o padrao mais amplo
+`walking for N ticks without reaching the block` apareceu **97 vezes**,
+envolvendo **sete trabalhadores distintos**, do inicio ao fim da sessao.
+O guarda devolve a tarefa, mas nao resolve o trabalhador preso: ele
+continua na mesma posicao fisica e e reatribuido a mesma armadilha na
+proxima passagem. Nao existe hoje um mecanismo que detecte "trabalhador
+fisicamente inalcancavel por navegacao normal" e o resgate ou libere a
+tarefa definitivamente para outro trabalhador mais proximo.
+
+**Consequencia observada: zero casas construidas em seis horas e meia,
+cinco colonias.** `grep -c "house is up"` no log inteiro devolve zero.
+
+**E48 — consequencia direta de E47, nao defeito independente.** A
+colonia `78fa1bb4` planejou cinco posicoes distintas ao longo da
+sessao — `HousePlans.nextConstructionIsHouse` (linha 161) so considera
+obra `finished()`; como nenhuma obra chegou a terminar por causa do E47,
+a alternancia nunca foi de fato exercitada, mesmo estando correta no
+codigo (`lastFinished(buildings)` sempre vazio ou apontando para o
+ultimo tipo nao-residencial que tambem nunca fechou). Todas as cinco
+foram `plains_temple_4`. Revalidar depois de corrigir o E47; se a
+alternancia continuar quebrada mesmo com obras terminando, e um defeito
+novo e separado, nao a mesma causa. Pode ser a explicacao, agora com
+diagnostico, do E42 (impasse entre profissoes), que so tinha casos
+observados em jogo sem causa confirmada.
+
+**Achados menores, mesma sessao.** Sete ocorrencias de
+`hit stone with nowhere to stand — the branch ends here` alternando com
+`finished every branch and went one level deeper` no mesmo instante —
+a assinatura ja catalogada em `docs/PATTERNS.md` ("mineiro em cima da
+mina", `still 0/300` cravado). Volume pequeno frente ao E47; nao
+investigado a fundo nesta sessao.
+
+**Nada foi corrigido.** Este e um registro de diagnostico. Qualquer
+correcao do E47 precisa de uma decisao de design antes de codar — as
+opcoes plausíveis (teleporte controlado do trabalhador de volta ao
+lote, busca de patamar que funcione a qualquer distancia horizontal, ou
+abandono definitivo da tarefa com liberacao para outro trabalhador
+quando a distancia excede um teto) tem trade-offs diferentes e nenhuma
+foi escolhida ainda.

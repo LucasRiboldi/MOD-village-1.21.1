@@ -10,6 +10,40 @@
 
 ---
 
+## 🔴 Playtest real de 24-09 (~6h30) — E47 e E48, primeiro resultado contra a 0.3.0 publicada
+
+Log real de `%APPDATA%/.minecraft/logs/latest.log` (221.814 linhas, 5
+colônias, 03:02 às 09:39). `VC_ACTIVITY` (Task 7) confirmado funcionando
+em jogo pela primeira vez — 1.132 linhas.
+
+**E47 — trabalhador preso longe do lote, nunca se recupera.**
+`Builder 4b8df153` ficou parado em `-202, 62, -937` de **03:10 a
+06:47** (3h30 seguidas), sempre reatribuído à mesma obra ~45-47 blocos
+de distância horizontal. `ClimbLimit`/`BuilderApproach.footOf` (correção
+de 09-16) só cobre diferença **vertical** de até 2 blocos na mesma
+coluna aproximada da obra; não cobre um trabalhador preso **longe**,
+provavelmente dentro de depressão/ravina/caverna natural que a
+navegação Vanilla não atravessa sozinha. O guarda de 2400 ticks devolve
+a tarefa, mas o trabalhador continua preso fisicamente e é reatribuído
+à mesma armadilha. **97 ocorrências do padrão em 7 trabalhadores
+distintos ao longo da sessão inteira.**
+
+**E48 — alternância nunca escolhe casa, consequência direta de E47.**
+Colônia `78fa1bb4` planejou 5 posições, **todas `plains_temple_4`**.
+`nextConstructionIsHouse` só considera obra `finished()`; como E47
+impede qualquer obra de terminar, a alternância nunca é exercitada.
+**Zero `house is up` em toda a sessão, nas 5 colônias.** Pode ser a causa
+real por trás do E42 (impasse entre profissões), antes sem diagnóstico.
+
+Detalhe completo em `TODO.md` (🔴 Erros abertos) e
+`docs/technical/Development-Log.md`. Nada foi corrigido ainda — só
+diagnosticado; qualquer correção precisa de decisão sobre o mecanismo de
+resgate (teleporte controlado? nova busca de patamar a partir de
+qualquer distância? abandono antecipado da tarefa quando a distância
+excede um teto?) antes de codar.
+
+---
+
 ## Sessão 2026-09-24 — plano de confiabilidade operacional, Tasks 3 a 14
 
 Dez tasks implementadas com código novo, duas investigadas e recusadas
