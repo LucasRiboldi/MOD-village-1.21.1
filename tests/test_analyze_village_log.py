@@ -79,6 +79,46 @@ class AnalyzeVillageLogTest(unittest.TestCase):
         self.assertTrue(waiting.loop_candidate)
         self.assertEqual("obra aguarda recurso", waiting.meaning)
 
+    def test_progress_signals_are_counted_but_never_loop_candidates(self) -> None:
+        line = "[00:00:01] [Server thread/INFO]: Worker 1234abcd finished — the house is up"
+        summary = analyze_village_log.analyze_text("\n".join([line] * 5))
+
+        self.assertEqual(5, summary["house_finished"].occurrences)
+        self.assertFalse(summary["house_finished"].loop_candidate,
+                         "casa pronta repetida e progresso, nao travamento")
+
+    def test_counts_the_stranded_worker_and_server_health(self) -> None:
+        summary = analyze_village_log.analyze_text(
+            "\n".join(
+                [
+                    "[03:10:00] [Server thread/INFO]: Worker 9a8b is stranded at -202, 62, -937 — frozen twice on the same spot;",
+                    "[03:10:20] [Server thread/WARN]: Stranded worker 9a8b cannot dig out of -202, 62, -937 — no natural, dry way up",
+                    "[03:11:00] [Server thread/INFO]: Stranded worker 9a8b is out at -200, 66, -937 after 4 steps — back in the work queue",
+                    "[03:12:00] [Server thread/WARN]: Can't keep up! Is the server overloaded? Running 2034ms or 40 ticks behind",
+                    "[03:13:00] [Server thread/ERROR]: Something broke",
+                    "[03:14:00] [Server thread/INFO]: Miner 77aa took 0 from -10, 40, 5 — 12 this task",
+                ]
+            )
+        )
+
+        self.assertEqual(1, summary["worker_stranded"].occurrences)
+        self.assertEqual(1, summary["stranded_cannot_dig_out"].occurrences)
+        self.assertEqual(1, summary["stranded_freed"].occurrences)
+        self.assertEqual(1, summary["server_overloaded"].occurrences)
+        self.assertEqual(1, summary["log_error_line"].occurrences)
+        self.assertEqual(1, summary["miner_chest_full"].occurrences)
+
+    def test_ranks_the_pieces_the_builds_waited_for(self) -> None:
+        text = "\n".join(
+            ["... WAITING_RESOURCES ... waiting for minecraft:oak_stairs"] * 3
+            + ["... WAITING_RESOURCES ... waiting for minecraft:glass_pane"]
+        )
+
+        self.assertEqual(
+            {"minecraft:oak_stairs": 3, "minecraft:glass_pane": 1},
+            analyze_village_log.analyze_waited_items(text),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

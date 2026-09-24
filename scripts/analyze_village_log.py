@@ -28,6 +28,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
+from village_log_signatures import SIGNATURES, WAITED_ITEM, Signature  # noqa: F401
+
 
 DEFAULT_LOOP_THRESHOLD = 3
 LOG_CANDIDATES = (
@@ -35,16 +37,6 @@ LOG_CANDIDATES = (
     Path.home() / "AppData" / "Roaming" / ".minecraft" / "logs" / "latest.log",
     Path("run") / "logs" / "latest.log",
 )
-
-
-@dataclass(frozen=True)
-class Signature:
-    """Uma frase de producao e a area que deve ser investigada."""
-
-    key: str
-    where: str
-    meaning: str
-    pattern: re.Pattern[str]
 
 
 @dataclass(frozen=True)
@@ -67,58 +59,6 @@ class ActivityObservation:
     outcome: str
     reason: str
     occurrences: int
-
-
-SIGNATURES = (
-    Signature(
-        "miner_no_branch_work",
-        "MineClaims / MinerWork",
-        "mineiro sem frente de escavacao disponivel",
-        re.compile(r"\bno miner branch work\b", re.IGNORECASE),
-    ),
-    Signature(
-        "miner_no_standing_room",
-        "MineDigging",
-        "mina encontrou pedra sem patamar seguro para continuar",
-        re.compile(r"\bhit stone with nowhere to stand\b", re.IGNORECASE),
-    ),
-    Signature(
-        "construction_waiting_resources",
-        "BuilderWork / WaitingWork",
-        "obra aguarda recurso",
-        re.compile(r"\bWAITING_RESOURCES\b", re.IGNORECASE),
-    ),
-    Signature(
-        "builder_pathing_stalled",
-        "BuilderApproach / BuilderWork",
-        "construtor caminha sem alcancar o proximo bloco",
-        re.compile(r"\bwalking for \d+ ticks without reaching the block\b", re.IGNORECASE),
-    ),
-    Signature(
-        "surface_worker_unreachable",
-        "SurfaceGatheringWork",
-        "coletor de superficie nao alcancou o alvo",
-        re.compile(r"\bunable to reach\b", re.IGNORECASE),
-    ),
-    Signature(
-        "missing_profession",
-        "ColonyCycle / ProductionHands",
-        "pedido sem aldeao capaz na vila",
-        re.compile(r"\bno worker in the village can do it\b", re.IGNORECASE),
-    ),
-    Signature(
-        "site_sweep_budget_exhausted",
-        "RingSweep / BuildSiteScanner",
-        "varredura de lote ou alvo terminou a passagem sem resposta",
-        re.compile(r"\bstill sweeping\b.*\bbudget ran out before an answer\b", re.IGNORECASE),
-    ),
-    Signature(
-        "site_sweep_restarted",
-        "SweepLog / BuildSiteScanner",
-        "cursor de varredura reiniciou antes de concluir uma volta",
-        re.compile(r"\b(?:restarted its sweep|the sweep starts over)\b", re.IGNORECASE),
-    ),
-)
 
 
 ACTIVITY_PATTERN = re.compile(
@@ -145,7 +85,7 @@ def analyze_text(text: str, loop_threshold: int = DEFAULT_LOOP_THRESHOLD) -> dic
             where=signature.where,
             meaning=signature.meaning,
             occurrences=counts[signature.key],
-            loop_candidate=counts[signature.key] >= loop_threshold,
+            loop_candidate=not signature.progress and counts[signature.key] >= loop_threshold,
         )
         for signature in SIGNATURES
     }
@@ -170,6 +110,16 @@ def analyze_activities(text: str) -> dict[tuple[str, str, str, str], ActivityObs
         key: ActivityObservation(*key, occurrences)
         for key, occurrences in sorted(counts.items())
     }
+
+
+def analyze_waited_items(text: str, top: int = 15) -> dict[str, int]:
+    """As pecas que as obras mais esperaram. Id de item nao e dado do jogador."""
+    counts: dict[str, int] = {}
+    for matched in WAITED_ITEM.finditer(text):
+        counts[matched.group(1)] = counts.get(matched.group(1), 0) + 1
+
+    ranked = sorted(counts.items(), key=lambda entry: (-entry[1], entry[0]))
+    return dict(ranked[:top])
 
 
 def read_log(path: Path) -> str:
@@ -254,6 +204,7 @@ def update_history(
         "lines": len(text.splitlines()),
         "observations": observation_data(observations.values()),
         "activities": activity_data(activities.values()),
+        "waited_items": analyze_waited_items(text),
     }
     old_sessions = history["sessions"]
     assert isinstance(old_sessions, list)
@@ -277,7 +228,11 @@ def render_report(log_path: Path, history: dict[str, object], loop_threshold: in
         assert isinstance(item, dict)
         count = item["occurrences"]
         assert isinstance(count, int)
-        state = "candidato a loop" if item["loop_candidate"] else "observado"
+        state = (
+            "progresso" if signature.progress
+            else "candidato a loop" if item["loop_candidate"]
+            else "observado"
+        )
         rows.append(f"| `{signature.key}` | {item['where']} | {count} | {state} |")
         if item["loop_candidate"]:
             candidates.append((signature.key, item["where"], count))
@@ -314,6 +269,11 @@ def render_report(log_path: Path, history: dict[str, object], loop_threshold: in
         if isinstance(item, dict)
     ) or "| Nenhuma transicao VC_ACTIVITY observada | - | - | - | 0 |"
 
+    waited = latest.get("waited_items", {})
+    waited_rows = "\n".join(
+        f"| `{item}` | {count} |" for item, count in waited.items()
+    ) if isinstance(waited, dict) and waited else "| Nenhuma obra esperando peca | 0 |"
+
     return f"""# Estatistica de travamentos e repeticoes
 
 **Gerado em:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}
@@ -338,6 +298,12 @@ guarda UUIDs, coordenadas ou linhas cruas do mundo do jogador.
 | Profissao | Atividade | Resultado | Motivo | Ocorrencias |
 |---|---|---|---|---:|
 {activity_rows}
+
+## Pecas que as obras mais esperaram
+
+| Peca | Linhas `waiting for` |
+|---|---:|
+{waited_rows}
 
 ## Candidatos a investigacao
 

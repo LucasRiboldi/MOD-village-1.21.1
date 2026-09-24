@@ -237,6 +237,72 @@
           "meaning": "cursor de varredura reiniciou antes de concluir uma volta",
           "occurrences": 1,
           "loop_candidate": false
+        },
+        "worker_stranded": {
+          "where": "WorkStall / StrandedWorkers",
+          "meaning": "trabalhador congelou duas vezes no mesmo ponto (E47)",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "stranded_cannot_dig_out": {
+          "where": "StrandedEscape",
+          "meaning": "encalhado sem rumo seguro para cavar a saida",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "construction_let_go": {
+          "where": "ConstructionPlanner / WaitingWork",
+          "meaning": "colonia largou uma obra aberta",
+          "occurrences": 13,
+          "loop_candidate": true
+        },
+        "miner_chest_full": {
+          "where": "MinerHaul / ChestDepositor",
+          "meaning": "mineiro cavou e nada entrou no bau (bau cheio)",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "cycle_over_tick": {
+          "where": "VillageDetectionHandler",
+          "meaning": "ciclo da colonia levou mais que um tique do servidor",
+          "occurrences": 196,
+          "loop_candidate": true
+        },
+        "server_overloaded": {
+          "where": "Minecraft (servidor)",
+          "meaning": "servidor atrasado: Can't keep up",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "log_error_line": {
+          "where": "qualquer (nivel ERROR)",
+          "meaning": "linha de log em nivel ERROR",
+          "occurrences": 1,
+          "loop_candidate": false
+        },
+        "house_finished": {
+          "where": "BuilderWork",
+          "meaning": "casa concluida",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "stranded_freed": {
+          "where": "StrandedEscape",
+          "meaning": "encalhado saiu cavando (E47)",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "stairs_backfilled": {
+          "where": "EscapeBackfill",
+          "meaning": "escada da fuga tampada (N10)",
+          "occurrences": 0,
+          "loop_candidate": false
+        },
+        "supper_shared": {
+          "where": "VillageMeals",
+          "meaning": "comida dividida para a procriacao (N1)",
+          "occurrences": 0,
+          "loop_candidate": false
         }
       },
       "activities": [
@@ -625,7 +691,17 @@
           "reason": "NO_WORKER",
           "occurrences": 10
         }
-      ]
+      ],
+      "waited_items": {
+        "minecraft:ladder": 24,
+        "minecraft:cobblestone_stairs": 16,
+        "minecraft:cobblestone": 10,
+        "minecraft:cobblestone_slab": 10,
+        "minecraft:cobblestone_wall": 10,
+        "minecraft:torch": 5,
+        "minecraft:oak_door": 3,
+        "minecraft:wall_torch": 1
+      }
     }
   ]
 }

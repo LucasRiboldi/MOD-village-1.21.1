@@ -1,6 +1,6 @@
 # Estatistica de travamentos e repeticoes
 
-**Gerado em:** 2026-09-24 12:42 UTC
+**Gerado em:** 2026-09-24 16:51 UTC
 **Log analisado:** `latest.log`
 **Sessoes no historico:** 4
 **Limiar de candidato a loop:** 3 ocorrencias na mesma sessao
@@ -23,6 +23,17 @@ guarda UUIDs, coordenadas ou linhas cruas do mundo do jogador.
 | `missing_profession` | ColonyCycle / ProductionHands | 77 | candidato a loop |
 | `site_sweep_budget_exhausted` | RingSweep / BuildSiteScanner | 58 | candidato a loop |
 | `site_sweep_restarted` | SweepLog / BuildSiteScanner | 1 | observado |
+| `worker_stranded` | WorkStall / StrandedWorkers | 0 | observado |
+| `stranded_cannot_dig_out` | StrandedEscape | 0 | observado |
+| `construction_let_go` | ConstructionPlanner / WaitingWork | 13 | candidato a loop |
+| `miner_chest_full` | MinerHaul / ChestDepositor | 0 | observado |
+| `cycle_over_tick` | VillageDetectionHandler | 196 | candidato a loop |
+| `server_overloaded` | Minecraft (servidor) | 0 | observado |
+| `log_error_line` | qualquer (nivel ERROR) | 1 | observado |
+| `house_finished` | BuilderWork | 0 | progresso |
+| `stranded_freed` | StrandedEscape | 0 | progresso |
+| `stairs_backfilled` | EscapeBackfill | 0 | progresso |
+| `supper_shared` | VillageMeals | 0 | progresso |
 
 ## Atividades por profissao
 
@@ -84,6 +95,19 @@ guarda UUIDs, coordenadas ou linhas cruas do mundo do jogador.
 | `SHEPHERD` | `SHEPHERDING` | `WAITING` | `NO_TASK` | 12 |
 | `SHEPHERD` | `SHEPHERDING` | `WAITING` | `NO_WORKER` | 10 |
 
+## Pecas que as obras mais esperaram
+
+| Peca | Linhas `waiting for` |
+|---|---:|
+| `minecraft:ladder` | 24 |
+| `minecraft:cobblestone_stairs` | 16 |
+| `minecraft:cobblestone` | 10 |
+| `minecraft:cobblestone_slab` | 10 |
+| `minecraft:cobblestone_wall` | 10 |
+| `minecraft:torch` | 5 |
+| `minecraft:oak_door` | 3 |
+| `minecraft:wall_torch` | 1 |
+
 ## Candidatos a investigacao
 
 - `miner_no_standing_room`: 7 ocorrencias em MineDigging.
@@ -91,6 +115,8 @@ guarda UUIDs, coordenadas ou linhas cruas do mundo do jogador.
 - `builder_pathing_stalled`: 106 ocorrencias em BuilderApproach / BuilderWork.
 - `missing_profession`: 77 ocorrencias em ColonyCycle / ProductionHands.
 - `site_sweep_budget_exhausted`: 58 ocorrencias em RingSweep / BuildSiteScanner.
+- `construction_let_go`: 13 ocorrencias em ConstructionPlanner / WaitingWork.
+- `cycle_over_tick`: 196 ocorrencias em VillageDetectionHandler.
 
 ## Acumulado do historico
 
@@ -103,6 +129,9 @@ guarda UUIDs, coordenadas ou linhas cruas do mundo do jogador.
 | `missing_profession` | 90 |
 | `site_sweep_budget_exhausted` | 124 |
 | `site_sweep_restarted` | 1 |
+| `construction_let_go` | 13 |
+| `cycle_over_tick` | 196 |
+| `log_error_line` | 1 |
 
 ## Proximo passo tecnico
 
