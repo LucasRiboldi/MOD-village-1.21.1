@@ -9008,3 +9008,60 @@ contexto de falha, seed padrao fixa, e o resumo de latencia
 `runGametest --rerun-tasks` fecharam com **423 GAME TESTS COMPLETE,
 422/423** — a unica falha e a intermitencia pre-existente ja conhecida;
 `theColonyDoesNotAccumulateAcrossTwoHundredCycles` passou.
+
+### 2026-09-24 - P1.13, auditoria de exclusao de obra e manifesto de release
+
+`ConstructionService.forget(UUID)` sempre teve um contrato informal, e o
+javadoc ja dizia: "quem chama é responsável por guardar a caixa dela no
+registro de construções antes. Esquecer a obra sem isso deixaria o lote
+livre, e a colônia planejaria por cima da casa pela metade." A decisão
+10A pede tornar esse contrato verificável em compilação.
+
+`RemovalAudit`, em `core/construction/service`, define tres motivos —
+`PLAYER_CANCELLATION`, `PATIENCE_ABANDONMENT`,
+`COMPLETED_PROJECT_PURGE` — e cada um so autoriza os estados a que
+pertence: cancelamento vale para qualquer estado aberto, purga so para
+`COMPLETED`. `forget` passa a exigir a auditoria como segundo parametro
+e recusa qualquer remocao sem motivo (`RemovalAudit.absent()`) ou com o
+motivo errado para o estado real do projeto.
+
+**A leitura de `WaitingWork.java` antes de codar revelou um detalhe que
+teria virado bug se ignorado.** O plano descrevia "abandono por
+paciencia" como um unico caminho, mas o codigo real tem dois: `giveUp`
+chamado a partir de `WAITING_RESOURCES` (a colonia esperou material
+demais) e `givesUpIfItIsNotMoving`, o "fundo de poco" decidido em
+2026-09-19 — uma obra com tudo em maos, parada em `BUILDING` sem
+assentar peca havia dez minutos de expediente. Os dois terminam
+chamando o mesmo `giveUp(colony, project, blamePlan)`, que por sua vez
+chama `forget`. Restringir `PATIENCE_ABANDONMENT` so a
+`WAITING_RESOURCES` teria rejeitado o segundo fluxo — uma regressao real
+introduzida por uma auditoria que deveria so formalizar o que ja
+funcionava. `PATIENCE_ABANDONMENT` autoriza os dois estados.
+
+So dois chamadores reais de `CONSTRUCTIONS.forget` existiam em todo o
+projeto — `ConstructionCancellation.cancelProject` (Tocha das Almas) e
+`WaitingWork.giveUp` —, e os dois foram atualizados para construir o
+motivo correspondente antes de remover.
+
+`scripts/release_manifest.py`, em Python puro (so biblioteca padrao),
+automatiza a comparacao manual de tres hashes SHA-256 que o `STATE.md`
+ja registrava fazer a cada entrega: "as tres copias foram comparadas
+depois de fechar o cliente Minecraft" — build/libs, downloads, e o JAR
+instalado em `%APPDATA%\.minecraft\mods`. `--dry-run` confere os tres
+artefatos e falha com mensagem explicita e codigo nao-zero se algum
+faltar ou os hashes divergirem; em sucesso imprime o commit atual (via
+`git rev-parse HEAD`), timestamp, o hash unico e os tres caminhos. Nunca
+copia nem publica nada — so relata evidencia. Testado manualmente antes
+do commit nos quatro casos: `--help`, arquivo faltando, hashes
+divergentes, e sucesso com tres copias identicas. Resultado de testes e
+versao de save ficam como TODO explicito no proprio arquivo, fora do
+escopo desta entrega.
+
+`ConstructionServiceTest` cobre nove casos: auditoria ausente ou
+projeto desconhecido sao sempre recusados, cancelamento remove qualquer
+estado aberto, abandono por paciencia remove `WAITING_RESOURCES` e
+`BUILDING` mas nao `PLANNED`, purga so remove `COMPLETED`, id nulo e
+sempre recusado. `./gradlew.bat build` e `runGametest --rerun-tasks`
+fecharam com **423 GAME TESTS COMPLETE, 422/423** — a unica falha e a
+intermitencia pre-existente ja conhecida; nenhum teste de cancelamento
+ou abandono foi afetado.
