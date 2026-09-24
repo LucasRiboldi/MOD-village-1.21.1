@@ -17,6 +17,11 @@ final class WorkEligibility {
     /**
      * Descanso e baú próprio são requisitos de reserva, não preferências
      * da passagem que está distribuindo a fila.
+     *
+     * <p><b>E estar solto também — E47, 2026-09-24.</b> O encalhado não
+     * reserva nada, em nenhuma capacidade: mandar quem está preso num buraco
+     * construir do outro lado da vila só gera desistência, e desistência
+     * acumulada tira o ofício dele.
      */
     static boolean canReserve(
             Worker worker,
@@ -29,7 +34,8 @@ final class WorkEligibility {
         Objects.requireNonNull(task, "task");
         Objects.requireNonNull(hasStorage, "hasStorage");
 
-        return !worker.isResting(capability)
+        return !worker.isStranded()
+                && !worker.isResting(capability)
                 && (!task.type().needsOwnStorage() || hasStorage.test(worker.villagerId()));
     }
 }

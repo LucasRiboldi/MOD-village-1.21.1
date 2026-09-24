@@ -32,6 +32,8 @@ import com.villagecolony.fabric.work.FarmerNursery;
 import com.villagecolony.fabric.integration.SiteMarker;
 import com.villagecolony.fabric.integration.SweepLog;
 import com.villagecolony.fabric.work.BuilderWork;
+import com.villagecolony.fabric.work.StrandedEscape;
+import com.villagecolony.fabric.work.StrandedWorkers;
 import com.villagecolony.fabric.integration.ChestPlacer;
 import com.villagecolony.fabric.integration.RingSweep;
 import com.villagecolony.fabric.work.MineClaims;
@@ -82,6 +84,8 @@ public final class ServerLifecycleHandler {
         VillageColonyMod.BUILDINGS.clear();
         VillageColonyMod.MINES.clear();
         VillageColonyMod.ACTIVITY_TRACES.clear();
+        StrandedWorkers.clearAll();
+        StrandedEscape.clearAll();
         WorkTargets.clearAll();
         LumberjackWork.clearAll();
         MinerWork.clearAll();
@@ -273,6 +277,8 @@ public final class ServerLifecycleHandler {
         VillageColonyMod.BUILDINGS.clear();
         VillageColonyMod.MINES.clear();
         VillageColonyMod.ACTIVITY_TRACES.clear();
+        StrandedWorkers.clearAll();
+        StrandedEscape.clearAll();
         WorkTargets.clearAll();
         LumberjackWork.clearAll();
         MinerWork.clearAll();

@@ -446,4 +446,37 @@ class WorkAssignmentTest {
                 stone.state(),
                 "a vila deve esperar a capacidade de coleta de madeira voltar");
     }
+
+    /**
+     * Quem está encalhado não recebe tarefa nenhuma — E47, 2026-09-24.
+     *
+     * <p>O playtest de 24-09 escalou um pedreiro preso num buraco para
+     * construir, de novo e de novo, por três horas e meia. Cada volta era
+     * uma desistência a mais, e três desistências tiram o ofício dele.
+     */
+    @Test
+    void aStrandedWorkerTakesNoTaskAtAll() {
+        Worker miner = workerWith(ProfessionType.MINER);
+        miner.strand();
+
+        Task stone = stoneTask();
+        Task wood = woodTask();
+
+        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(TaskState.AVAILABLE, stone.state());
+        assertEquals(TaskState.AVAILABLE, wood.state(),
+                "o encalhado nao pode ser emprestado a outra capacidade");
+    }
+
+    /** Solto, ele volta à escala na passagem seguinte, sem esperar descanso. */
+    @Test
+    void aFreedWorkerIsAssignedAgain() {
+        Worker miner = workerWith(ProfessionType.MINER);
+        miner.strand();
+        miner.free();
+
+        stoneTask();
+
+        assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
+    }
 }

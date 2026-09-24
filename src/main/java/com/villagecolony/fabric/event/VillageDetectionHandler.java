@@ -48,6 +48,7 @@ import com.villagecolony.fabric.work.WorkMaterials;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.BuilderWork;
+import com.villagecolony.fabric.work.StrandedEscape;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.CraftingWork;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
@@ -321,6 +322,10 @@ public final class VillageDetectionHandler {
         LumberjackWork.tick(server.getOverworld());
         CraftingWork.tick(server.getOverworld());
         BuilderWork.tick(server.getOverworld());
+
+        // Quem ficou preso cava a própria saída — E47, 2026-09-24. Uma
+        // passagem por segundo, só para os encalhados; ver StrandedEscape.
+        StrandedEscape.tick(server.getOverworld());
 
         // O contorno do lote escolhido — 2026-09-15, pedido do autor. Sai
         // de graça em 19 de cada 20 tiques; ver SiteMarker.EVERY_TICKS.
