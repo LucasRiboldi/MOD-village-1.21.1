@@ -1,6 +1,8 @@
 plugins {
     id 'fabric-loom' version '1.17.18'
     id 'maven-publish'
+    id 'jacoco'
+    id 'info.solidsoft.pitest' version '1.19.0'
 }
 
 version = project.mod_version
@@ -51,6 +53,46 @@ test {
     testLogging {
         events 'passed', 'skipped', 'failed'
     }
+
+    finalizedBy jacocoTestReport
+}
+
+// Cobertura (2026-09-24). Não é meta — cobertura diz o que foi executado,
+// não o que foi verificado. Serve para escolher onde apontar o PIT.
+// Relatório em build/reports/jacoco/test/html/index.html.
+jacocoTestReport {
+    dependsOn test
+
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+// Teste de mutação (2026-09-24): `./gradlew pitest`. Relatório em
+// build/reports/pitest/index.html.
+//
+// Mede se o teste falha quando o código muda — o que o projeto fazia à mão,
+// uma mutação por vez, desde o "teste vazio por condição impossível". Só o
+// core: é a lógica pura, e mutar a camada fabric pediria o jogo rodando.
+// Não reprova o build: o número é para ler, e o mutante sobrevivente vira
+// tarefa de teste.
+pitest {
+    junit5PluginVersion = '1.2.2'
+    targetClasses = ['com.villagecolony.core.*']
+    targetTests = ['com.villagecolony.core.*']
+    threads = 4
+    outputFormats = ['HTML', 'XML']
+    timestampedReports = false
+}
+
+// Sem o fabric-loader-junit no classpath do PIT. O listener dele só aceita
+// um launcher por JVM ("Duplicate setLauncher call!"), e o PIT abre mais de
+// um; os testes do core não precisam do jogo carregado.
+tasks.named('pitest').configure {
+    additionalClasspath.setFrom(sourceSets.test.runtimeClasspath.filter {
+        !it.name.startsWith('fabric-loader-junit')
+    })
 }
 
 // `./gradlew runGametest` sobe um servidor sem cliente, monta as
