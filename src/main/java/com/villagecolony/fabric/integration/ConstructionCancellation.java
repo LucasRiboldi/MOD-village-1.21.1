@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.service.ConstructionService;
+import com.villagecolony.core.construction.service.RemovalAudit;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
@@ -103,7 +104,7 @@ public final class ConstructionCancellation {
     }
 
     private static void cancelProject(ConstructionProject project) {
-        VillageColonyMod.CONSTRUCTIONS.forget(project.id());
+        VillageColonyMod.CONSTRUCTIONS.forget(project.id(), RemovalAudit.playerCancellation());
         WaitingWork.forget(project.id());
         cancelTasks(project.colonyId());
         VillageColonyMod.LOGGER.info(

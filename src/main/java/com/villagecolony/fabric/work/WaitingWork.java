@@ -6,6 +6,7 @@ import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
+import com.villagecolony.core.construction.service.RemovalAudit;
 import com.villagecolony.core.coordination.PatienceClock;
 import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.coordination.WorkClock;
@@ -450,7 +451,7 @@ public final class WaitingWork {
         }
 
         VillageColonyMod.BUILDINGS.registerOrMerge(Building.of(project));
-        VillageColonyMod.CONSTRUCTIONS.forget(project.id());
+        VillageColonyMod.CONSTRUCTIONS.forget(project.id(), RemovalAudit.patienceAbandonment());
 
         // A vaga de obra é única; suas tarefas não podem sobreviver ao projeto.
         for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {
