@@ -62,7 +62,7 @@ final class PlanOrdering {
      *
      * <p>O que muda é só a <b>primeira</b>: sem nenhuma casa de pé, a
      * colônia começa pela planta que ela levanta sozinha, sem o jogador
-     * guardar nada em baú — a mesma cabana que a {@link #plansFor} já
+     * guardar nada em baú — a mesma cabana que a {@link FarmPlans#plansFor} já
      * descreve como o fim da lista. Levantada essa, a Regra 25 volta
      * inteira, e a vila cresce como o autor decidiu em 08-20.
      *
@@ -93,7 +93,7 @@ final class PlanOrdering {
     /**
      * A lista sem as plantas marcadas — e nunca vazia.
      *
-     * <p><b>Separada de {@link #plansFor} porque é a decisão, e decisão se
+     * <p><b>Separada de {@link FarmPlans#plansFor} porque é a decisão, e decisão se
      * afirma sem mundo.</b> Perguntar ao {@code PlanRefusals} varre baú;
      * escolher o que fica da lista não precisa de nada. Com as duas juntas,
      * o único teste possível seria de jogo — e a base já registrou o preço

@@ -65,7 +65,7 @@ public final class MinerLeg {
      * que passa perto da superfície e é o que confundia a conta: há
      * posição da ordem a três blocos dele, e entre os dois há chão.
      *
-     * <p>Não é {@link #REACH} nem {@link #LEG}, e as três perguntas são
+     * <p>Não é {@link BuilderApproach#REACH} nem {@link #LEG}, e as três perguntas são
      * diferentes: o braço é o que ele alcança para <b>cavar</b>, a perna
      * é o que ele cumpre <b>andando</b>, e esta é onde ele <b>está</b>.
      * Usar a perna aqui foi o defeito de 09-09; o braço também não

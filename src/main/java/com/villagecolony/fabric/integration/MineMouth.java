@@ -67,7 +67,7 @@ public final class MineMouth {
      * existe no terreno.
      *
      * @param descent para que lado a escada desce. A mobília fica fora
-     *     dessa coluna — ver {@link #freeSpotNear}
+     *     dessa coluna — ver {@code freeSpotNear}
      * @param archAlreadyRaised se o arco desta boca já subiu alguma vez.
      *     Verdadeiro impede que ele seja reerguido — o jogador que o
      *     derrubou não o quer de volta. Vem do save, não do mundo: o

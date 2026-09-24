@@ -63,7 +63,7 @@ public final class LotGround {
      * dentro da laje.
      *
      * <p>A janela também é uma decisão, e é a quarta desta fase: o lote
-     * tem de estar entre {@link #WINDOW_UP} acima e {@link #WINDOW_DOWN}
+     * tem de estar entre {@link CactusPatch#WINDOW_UP} acima e {@link CactusPatch#WINDOW_DOWN}
      * abaixo do nível do centro da colônia. Vila não constrói no alto do
      * morro que a olha de cima, e a janela é o que torna a busca barata
      * — uma coluna custa poucas leituras, e não uma varredura do céu ao

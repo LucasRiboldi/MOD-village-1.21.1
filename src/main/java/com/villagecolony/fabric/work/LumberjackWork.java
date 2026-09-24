@@ -391,7 +391,7 @@ public final class LumberjackWork {
      *
      * <p>A regra do autor, de 2026-08-15: <b>o lenhador sempre planta no
      * lugar onde cortou.</b> Até aqui o replantio morava só em
-     * {@link #startNextTree}, e acontecia quando o lenhador ia procurar a
+     * {@link TreeChoice#startNextTree}, e acontecia quando o lenhador ia procurar a
      * árvore seguinte. Quem derrubasse uma árvore e perdesse o trabalho
      * antes disso deixava o toco sem muda, para sempre — e há três formas
      * de perdê-lo no mesmo tick: a tarefa cancelada, o baú que sumiu do

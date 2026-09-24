@@ -55,7 +55,7 @@ public final class LotLevel {
     /**
      * Quanto acima do nível da colônia ainda se procura chão.
      *
-     * <p>Apertado, e igual ao {@link #MAX_SLOPE} por coerência: um lote
+     * <p>Apertado, e igual ao {@link BuildSiteScanner#MAX_SLOPE} por coerência: um lote
      * mais alto que isso é morro, não continuação da vila. Se em jogo
      * ficar apertado demais, é uma constante — e o sintoma será claro,
      * "não achou lote" com terreno visivelmente bom em volta.
@@ -137,7 +137,7 @@ public final class LotLevel {
      * A altura em que a casa assenta, se este lote servir.
      *
      * <p>Serve quando todas as colunas dele são chão natural, o desnível
-     * cabe em {@link #MAX_SLOPE}, e nada ali é peça de vila ou coisa que
+     * cabe em {@link BuildSiteScanner#MAX_SLOPE}, e nada ali é peça de vila ou coisa que
      * o jogador pôs — a Regra 3 vale para escolher lugar tanto quanto
      * para quebrar bloco. Construir por cima da casa de alguém seria a
      * pior forma de desobedecê-la.

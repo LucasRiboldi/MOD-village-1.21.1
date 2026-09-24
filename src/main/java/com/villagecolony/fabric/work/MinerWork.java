@@ -170,7 +170,7 @@ public final class MinerWork {
         /**
          * Onde ficar de pé para bater nela — calculado uma vez.
          *
-         * <p>A busca do {@link #approachTo} custa umas seiscentas
+         * <p>A busca do {@link MinerApproach#approachTo} custa umas seiscentas
          * leituras de bloco, e o destino é reposto a cada tique enquanto
          * ele caminha. Guardar é a diferença entre uma vez por pedra e
          * seiscentas leituras por tique por mineiro.

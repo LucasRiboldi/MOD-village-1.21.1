@@ -38,7 +38,7 @@ final class TreeReplanting {
      * licença para abrir buraco em construção alheia.
      *
      * <p>Folha pendurada à mão encerra do mesmo jeito. Ela é construção
-     * como qualquer outra — ver {@link #isNaturalLeaf} —, e a única
+     * como qualquer outra — ver {@link TreeShape#isNaturalLeaf} —, e a única
      * diferença é que aqui vale a folha de qualquer espécie: a copa que
      * cobre esta base pode ser da árvore vizinha.
      *

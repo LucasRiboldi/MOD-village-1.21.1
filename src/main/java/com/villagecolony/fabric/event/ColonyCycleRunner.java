@@ -194,7 +194,7 @@ final class ColonyCycleRunner {
      * 2026-09-15.
      *
      * <p>Decisão do autor: <i>"não trabalhar nas vilas que o jogador não
-     * está perto"</i>. Ver {@link #WORKING_DISTANCE}.
+     * está perto"</i>. Ver {@link VillageDetectionHandler#WORKING_DISTANCE}.
      *
      * <p><b>Para o ciclo inteiro</b>, e não só o planejamento: trabalhador,
      * leitura de baú e tarefa. A colônia longe fica inerte até alguém

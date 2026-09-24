@@ -101,7 +101,7 @@ public final class WaitingWork {
      *
      * <p>{@code WAITING_RESOURCES} era estado terminal na prática. A
      * única transição para {@code BUILDING} estava na criação do projeto,
-     * e {@link #ensureTask} não abre tarefa fora de {@code BUILDING}: a
+     * e {@link ConstructionPlanner#ensureTask} não abre tarefa fora de {@code BUILDING}: a
      * obra que uma vez ficasse sem material não voltava a ser tentada
      * nunca mais, ainda que o baú enchesse no minuto seguinte.
      *

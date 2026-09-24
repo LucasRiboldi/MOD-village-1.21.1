@@ -391,7 +391,7 @@ public final class BuildSiteScanner {
     /**
      * O índice de cada colônia, para o disco — 2026-08-27.
      *
-     * <p>Só os prontos: o {@link #BUILDING} fica de fora de propósito,
+     * <p>Só os prontos: o {@link SweepState#BUILDING} fica de fora de propósito,
      * pela mesma razão que o separa aqui dentro. Índice pela metade
      * mente sobre ter visto o raio inteiro, e gravado ele mentiria
      * também na sessão seguinte, quando ninguém mais lembra que a
@@ -410,7 +410,7 @@ public final class BuildSiteScanner {
      * o {@link #find} descartar o índice inteiro se a colônia tiver
      * andado demais desde que ele foi medido.
      *
-     * <p>Índice que não passa no {@link #fits} é ignorado em silêncio, e
+     * <p>Índice que não passa no {@link RoadIndex#fits} é ignorado em silêncio, e
      * a colônia varre o quadrado como antes desta versão.
      */
     public static void restore(ColonyRoads roads) {
@@ -434,7 +434,7 @@ public final class BuildSiteScanner {
      * raio inteiro. Ver {@link ColonySweepCursor}.
      *
      * <p><b>Cursor cuja memória não caberia num índice fica de fora.</b>
-     * Ele nunca chegaria a virar índice — o {@link #fits} recusaria no
+     * Ele nunca chegaria a virar índice — o {@link RoadIndex#fits} recusaria no
      * fim da volta — e gravá-lo custaria disco para adiar a mesma
      * recusa. Vila assim varre do centro, que é o que ela já fazia.
      */
@@ -464,7 +464,7 @@ public final class BuildSiteScanner {
      * lugar onde ela parou e o que ela achou até ali.
      *
      * <p>O que ela achou <b>não</b> vira índice — meia volta não viu o
-     * raio inteiro, e o {@link #ROADS} continua vazio até a volta
+     * raio inteiro, e o {@link SweepState#ROADS} continua vazio até a volta
      * terminar de verdade.
      */
     public static void restore(ColonySweepCursor cursor) {

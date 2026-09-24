@@ -59,7 +59,7 @@ public final class RoadIndex {
      * 2026-09-11. Até esta data ele era recusado, e a recusa tirava o
      * atalho justamente da vila que cresceu: ver o javadoc do
      * {@link #fits}. Quem paga o custo de um índice grande agora é o
-     * {@link #ROAD_CURSOR}, que pagina a volta como a varredura do
+     * {@link SweepState#ROAD_CURSOR}, que pagina a volta como a varredura do
      * quadrado.
      */
     static void indexWhatWasSeen(UUID colonyId, ColonyPos center) {
@@ -88,7 +88,7 @@ public final class RoadIndex {
      *
      * <p><b>Maior que o orçamento pode</b> — 2026-09-11, e este teto era
      * o defeito. A regra anterior recusava índice com mais de
-     * {@link #MAX_COLUMNS} colunas, dizendo que <i>"perguntar por um que
+     * {@link BuildSiteScanner#MAX_COLUMNS} colunas, dizendo que <i>"perguntar por um que
      * não cabe custa o mesmo que varrer"</i>. Não custa: o índice tem as
      * colunas <b>calçadas</b>, e o quadrado tem todas as do raio — numa
      * vila de duas mil colunas de rua a diferença é de duas passagens
@@ -103,7 +103,7 @@ public final class RoadIndex {
      * do mundo estavam sem índice</b>, e a que ciclou passou as quinze
      * passagens da sessão sem completar uma volta.
      *
-     * <p>O que substitui o teto é o {@link #ROAD_CURSOR}: perguntar ao
+     * <p>O que substitui o teto é o {@link SweepState#ROAD_CURSOR}: perguntar ao
      * índice passou a gastar orçamento e a parar na conta como a
      * varredura do quadrado. O custo por tique continua o mesmo; o que
      * muda é quantas passagens uma resposta custa.
@@ -145,7 +145,7 @@ public final class RoadIndex {
      * disciplina do cursor do quadrado, e pela mesma razão: crescer a
      * rua é o que se faz quando <i>não há</i> lote, e quem parou no meio
      * não sabe disso. Quem responde ao planejador é o
-     * {@link #stillLookingForALot}.
+     * {@link SweepState#stillLookingForALot}.
      */
     static RoadScan findAmongRoads(
             ServerWorld world, UUID colonyId, BlockPos from, ColonyRoads roads,

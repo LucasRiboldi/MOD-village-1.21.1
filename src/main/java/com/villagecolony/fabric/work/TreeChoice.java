@@ -57,7 +57,7 @@ public final class TreeChoice {
      * abria pedido novo porque, para ela, aquele pedido tinha dono.
      *
      * <p>O relógio só corre em horário de trabalho e com o aldeão
-     * carregado — ver {@link #step}. Uma noite inteira não é
+     * carregado — ver {@link BuilderWork#step}. Uma noite inteira não é
      * travamento, e chunk descarregado é a colônia dormindo.
      */
     static final int STALL_LIMIT = 4 * VillageDetector.CYCLE_TICKS;

@@ -108,13 +108,13 @@ public final class MineFrontier {
      *
      * <p>O motivo é que esta pergunta não é local. Ela alimenta o recuo
      * do cursor, e recuo e escolha do alvo <b>têm de concordar</b>: uma
-     * posição que o {@link #nextCut} vai pular não pode ser a fronteira,
+     * posição que o {@link MineCuts#nextCut} vai pular não pode ser a fronteira,
      * senão o cursor recua até ela toda passagem. Mexer num lado só troca
      * um defeito por outro maior.
      *
      * <p><b>Refeito no mesmo dia, e com as duas pontas juntas:</b> a
-     * lista passou a ser uma — {@link #isOpenSpace} —, e é dela que este
-     * método e o {@link #nextCut} tiram a resposta. A concordância deixou
+     * lista passou a ser uma — {@link MineRock#isOpenSpace} —, e é dela que este
+     * método e o {@link MineCuts#nextCut} tiram a resposta. A concordância deixou
      * de ser coincidência, e tem o par de testes que ela pedia:
      * {@code theMinerDoesNotDigThePlayersStaircase} para a escolha do
      * alvo e {@code thePlayersStepInTheDigOrderIsNotTheFrontier} para o

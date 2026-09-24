@@ -247,7 +247,7 @@ final class ColonySaveReader {
      *
      * <p><b>{@code BREEDER} não chega mais até aqui</b> — desde
      * {@link SaveMigration}, 2026-09-24, ele já virou {@code SHEPHERD}
-     * antes de {@link #readNbt} montar esta lista. O laço abaixo
+     * antes de {@link ColonySavedData#readNbt} montar esta lista. O laço abaixo
      * continua sendo a última linha de defesa contra um enum removido
      * do código ou um save editado à mão.
      */

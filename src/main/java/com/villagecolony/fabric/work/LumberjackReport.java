@@ -139,7 +139,7 @@ public final class LumberjackReport {
      *
      * <p>E diz o relógio de travamento, desde 2026-08-15. Naquela sessão
      * dois lenhadores ficaram dezesseis minutos a sete e nove blocos da
-     * árvore sem chegar, e {@link #giveUp} — que deveria ter soltado a
+     * árvore sem chegar, e {@link FarmerWork#giveUp} — que deveria ter soltado a
      * tarefa em dois minutos de horário de trabalho — não falou uma vez
      * sequer. Três explicações cabiam no que o log mostrava: o contador
      * sobe e o limite está alto demais; o contador não sobe porque

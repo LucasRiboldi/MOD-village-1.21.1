@@ -135,7 +135,7 @@ public final class SweepState {
      * <p>O índice não corre esse risco: só nasce de uma varredura que
      * visitou o raio inteiro. Coluna que deixou de ser rua é reconferida
      * quando visitada — o {@code siteBesideRoadAt} já pergunta —, e rua
-     * nova entra por {@link #remember}, chamado de onde a Regra 15 calça.
+     * nova entra por {@link RoadExtension#remember}, chamado de onde a Regra 15 calça.
      */
     static final Map<UUID, ColonyRoads> ROADS = new HashMap<>();
 
@@ -144,7 +144,7 @@ public final class SweepState {
      * 2026-09-19.
      *
      * <p><b>O laço que isto abre.</b> O chamador devolve o resultado de
-     * {@link #findAmongRoads} <b>incondicionalmente</b>: havendo índice, a
+     * {@link RoadIndex#findAmongRoads} <b>incondicionalmente</b>: havendo índice, a
      * varredura não roda. E o índice só era descartado quando o centro se
      * mudava ou quando uma coluna era consumida — <b>nunca por ter
      * falhado</b>. A colônia reperguntava à mesma lista para sempre.
@@ -202,14 +202,14 @@ public final class SweepState {
      * Onde a passagem anterior parou de perguntar ao índice — 2026-09-11.
      *
      * <p><b>O índice deixou de caber numa passagem, e por isso ele
-     * precisa de cursor.</b> Ele cabia por imposição do {@link #fits},
-     * que recusava índice maior que {@link #MAX_COLUMNS} — e o preço
+     * precisa de cursor.</b> Ele cabia por imposição do {@link RoadIndex#fits},
+     * que recusava índice maior que {@link BuildSiteScanner#MAX_COLUMNS} — e o preço
      * dessa recusa era a vila grande perder o atalho <i>justamente por
      * ter crescido</i>, voltando para as dezessete passagens do
      * quadrado. Ver o javadoc do {@code fits}.
      *
      * <p>É posição na lista, e não anel: a lista só cresce pelo fim —
-     * {@link #remember} acrescenta —, então um cursor posicional
+     * {@link RoadExtension#remember} acrescenta —, então um cursor posicional
      * continua apontando para a mesma coluna entre uma passagem e outra.
      * Quando o índice é <b>substituído</b>, o cursor sai junto.
      */
@@ -251,7 +251,7 @@ public final class SweepState {
      * <p><b>A varredura em anéis tem teto; o índice de ruas não.</b> Ela
      * para em {@code ring <= radius}, e por isso nunca devolve coluna de
      * fora. O índice é uma lista, percorrida inteira, e
-     * {@link #remember} acrescenta a ele <b>qualquer</b> rua nova — a
+     * {@link RoadExtension#remember} acrescenta a ele <b>qualquer</b> rua nova — a
      * vila calça estrada para fora do raio e o índice a absorve. Daí em
      * diante o lote sai de onde a estrada chegou, e não de onde o centro
      * alcança.
@@ -343,7 +343,7 @@ public final class SweepState {
     /**
      * Em que anel a busca desta colônia parou por falta de orçamento.
      *
-     * <p>Existe para separar duas respostas que {@link #find} devolve
+     * <p>Existe para separar duas respostas que {@link BigHouseFoundation#find} devolve
      * iguais: "varri o raio inteiro e não há lote" e "o orçamento deste
      * ciclo acabou no meio". Vazio quer dizer a primeira.
      *

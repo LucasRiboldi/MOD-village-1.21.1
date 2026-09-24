@@ -127,7 +127,7 @@ public final class TreeMarks {
      * recém-posto no mundo, e a resposta errada é cara — árvore boa
      * descartada por cinco minutos. Quem sabe de verdade se dá para
      * chegar é o guarda de travamento, depois de dois minutos de horário
-     * de trabalho tentando. Ver {@link #giveUp}.
+     * de trabalho tentando. Ver {@link FarmerWork#giveUp}.
      */
     private static final Map<BlockPos, Refusal> UNREACHABLE = new HashMap<>();
 
@@ -176,7 +176,7 @@ public final class TreeMarks {
      * por 6.000 ticks, a árvore de {@code 749, 63, 905} era de novo a
      * mais próxima nove minutos e trinta e quatro segundos depois, e
      * custou outros <b>dois minutos de expediente</b> — o
-     * {@link #stallLimit} inteiro — para o lenhador reaprender o que já
+     * {@link TreeChoice#stallLimit} inteiro — para o lenhador reaprender o que já
      * sabia. Duas árvores, quatro tentativas, perto de metade do tempo
      * dos dois lenhadores da vila.
      *
@@ -210,7 +210,7 @@ public final class TreeMarks {
      * Marca uma árvore como fora de alcance por ora.
      *
      * <p>Chamado de dois lugares, e os dois importam: da escolha, quando
-     * a navegação já diz que não dá; e de {@link #giveUp}, quando o
+     * a navegação já diz que não dá; e de {@link FarmerWork#giveUp}, quando o
      * lenhador andou dois minutos de horário de trabalho e não chegou.
      *
      * <p>O segundo é o que fecha o G2. Sem ele o guarda de travamento
@@ -220,8 +220,8 @@ public final class TreeMarks {
      * trabalhador, não de problema.
      *
      * <p>Público porque a bateria precisa chegar aqui. Chamar
-     * {@link #giveUp} num teste custaria os 2.400 ticks de
-     * {@link #STALL_LIMIT} — dois minutos de relógio contra uma bateria
+     * {@link FarmerWork#giveUp} num teste custaria os 2.400 ticks de
+     * {@link BuilderWork#STALL_LIMIT} — dois minutos de relógio contra uma bateria
      * que roda em vinte e cinco segundos, que é o E1 do grupo E.
      */
     public static void markUnreachable(ServerWorld world, BlockPos base) {

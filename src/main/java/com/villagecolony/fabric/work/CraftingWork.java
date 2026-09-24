@@ -50,7 +50,7 @@ import java.util.UUID;
  * saiu. É a primeira profissão que <b>consome</b>: até aqui a colônia só
  * somava.
  *
- * <p>O material é da colônia, não do fabricante — ver {@link #convertOne}
+ * <p>O material é da colônia, não do fabricante — ver {@link CraftingSteps#convertOne}
  * para o que a sessão de 2026-08-14 mostrou sobre isso. O que continua
  * sendo dele é o <b>lugar</b>: ele anda até o próprio baú e trabalha ali,
  * e sem baú próprio não trabalha.
@@ -379,7 +379,7 @@ public final class CraftingWork {
      * {@code endsWith("_bed")} e o descascado já é o prefixo
      * {@code stripped_}. Perguntar ao {@code ResourceType} não serviria:
      * a maior parte destas peças — escada, laje, muro — não é recurso
-     * declarado, e é por isso que o {@link #produceForWork} existe.
+     * declarado, e é por isso que o {@link CraftingSteps#produceForWork} existe.
      *
      * <p>{@code sandstone} entra por {@code stone}, e é o certo: no
      * deserto a parede é dela.

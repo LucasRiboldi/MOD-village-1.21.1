@@ -144,8 +144,8 @@ public final class HousePlans {
      * planta pequena <b>nunca dispararia</b> ali. O save do mundo do autor
      * tem <b>56 buildings</b> e <b>zero</b> {@code house is up}.
      *
-     * <p><b>Visível ao pacote para o teste</b>, como {@link #without} e
-     * {@link #smallestFirst}: é decisão, e decisão se afirma sem mundo.
+     * <p><b>Visível ao pacote para o teste</b>, como {@link PlanOrdering#without} e
+     * {@link PlanOrdering#smallestFirst}: é decisão, e decisão se afirma sem mundo.
      */
     static boolean hasNoHouseYet(List<Building> buildings) {
         return buildings.stream()
@@ -379,7 +379,7 @@ public final class HousePlans {
      * vendo duas casas 9×9. Quem <b>levanta</b> ganha tudo. Até hoje a
      * vila saía com a mesma estrutura sempre, e a causa era esta linha
      * jogando fora as sete outras {@code small_house} antes de qualquer
-     * escolha. Ver {@link #siblingsOf}, que as devolve ao planejador
+     * escolha. Ver {@link PlanPlacement#siblingsOf}, que as devolve ao planejador
      * depois de o lote estar achado — custo zero na varredura.
      */
     private static List<Blueprint> catalogPlans(ServerWorld world, String style) {

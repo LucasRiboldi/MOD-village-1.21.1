@@ -294,7 +294,7 @@ public final class ChestInventoryReader {
      * O estoque de uma colônia, dizendo também o que ficou fora do
      * alcance.
      *
-     * <p>Preferir a {@link #readColony} quando a resposta for usada para
+     * <p>Preferir a {@code readColony} quando a resposta for usada para
      * decidir alguma coisa: uma colônia que conclui "falta madeira"
      * porque metade dos baús estava descarregada mandaria um trabalhador
      * buscar o que ela já tem.

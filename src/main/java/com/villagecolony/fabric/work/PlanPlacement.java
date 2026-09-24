@@ -45,8 +45,8 @@ public final class PlanPlacement {
      * As casas desta vila com a mesma pegada de uma planta — 2026-09-18.
      *
      * <p><b>O defeito que ela fecha:</b> a vila levantava sempre a mesma
-     * estrutura. De 36 peças de planície, {@link #catalogPlans} entrega
-     * 4 ao planejador — uma por pegada, cortada em {@link #PLANS_OFFERED}
+     * estrutura. De 36 peças de planície, {@link HousePlans#catalogPlans} entrega
+     * 4 ao planejador — uma por pegada, cortada em {@link HousePlans#PLANS_OFFERED}
      * —, e ele levanta a {@code get(0)}. As oito {@code small_house} do
      * jogo colapsavam em <b>uma</b>, e a escolhida era a mesma em toda
      * passagem, toda sessão, toda vila do mesmo bioma.
@@ -59,7 +59,7 @@ public final class PlanPlacement {
      * estar achado, quando a pegada já é conhecida e medir acabou. A
      * varredura não fica um byte mais cara.
      *
-     * <p>A leitura é do cache {@link #READ}, então as irmãs de uma
+     * <p>A leitura é do cache {@link FarmPlans#READ}, então as irmãs de uma
      * pegada já oferecida saem sem tocar o disco.
      *
      * <p><b>A pegada casa nos dois eixos, e isso não é descuido.</b> Quem
@@ -98,8 +98,8 @@ public final class PlanPlacement {
      * <p>A altura tem de bater sempre — girar não muda o que é alto. O
      * que o giro troca são os dois eixos do chão.
      *
-     * <p><b>Visível ao pacote para o teste</b>, como {@link #without} e
-     * {@link #smallestFirst}: é decisão, e decisão se afirma sem mundo.
+     * <p><b>Visível ao pacote para o teste</b>, como {@link PlanOrdering#without} e
+     * {@link PlanOrdering#smallestFirst}: é decisão, e decisão se afirma sem mundo.
      */
     static boolean fitsEitherWay(ColonyPos plan, ColonyPos site) {
         if (plan.y() != site.y()) {
@@ -130,7 +130,7 @@ public final class PlanPlacement {
     /**
      * A planta deste id, venha ela do mod ou do jogo.
      *
-     * <p>Existe para {@link #resume}, que carrega obra gravada em sessão
+     * <p>Existe para {@link ConstructionResume#resume}, que carrega obra gravada em sessão
      * anterior e só tem o id em mãos — a planta precisa voltar girada
      * como a casa foi levantada, que é o que este método reconstrói.
      *

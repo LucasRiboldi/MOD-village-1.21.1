@@ -336,7 +336,7 @@ public final class BuilderWork {
      * crash de 2026-09-05, às 21:06: {@code IllegalStateException: Cannot
      * go from WAITING_RESOURCES to COMPLETED}, e o servidor caiu.
      *
-     * <p>A marca de espera é posta pelo {@link #waitForResources} e
+     * <p>A marca de espera é posta pelo {@link BuilderMaterials#waitForResources} e
      * <b>ninguém a tira ao assentar um bloco</b>: quem a tira é o
      * {@code WaitingWork.wakeIfSupplied}, que roda no ciclo da colônia.
      * Entre a espera e o ciclo seguinte o construtor pode acabar a obra

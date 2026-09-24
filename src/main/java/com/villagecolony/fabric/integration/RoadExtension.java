@@ -243,7 +243,7 @@ public final class RoadExtension {
      * 22:57 mediu: <b>quinze ciclos de {@code extended the road} contra
      * três de {@code grew the road}</b>, com o rumo trocando quase todo
      * ciclo — sul, norte, oeste, sul, leste — porque cada passagem
-     * reescolhia a ponta do zero e {@link #openSideOf} devolve o
+     * reescolhia a ponta do zero e {@link RoadPaving#openSideOf} devolve o
      * primeiro lado aberto da ordem fixa de {@code Direction}. Quarenta e
      * três blocos de calçamento em treze minutos, sem rumo.
      *

@@ -113,7 +113,7 @@ final class TreeShape {
      * <p>Serve a duas coisas ao mesmo tempo: a copa que o trabalhador
      * colhe não inclui a decoração de ninguém, e um grupo de troncos sem
      * copa viva — casa de vila, cabana, pilar — deixa de ser confundido
-     * com árvore. Ver {@link #plan}.
+     * com árvore. Ver {@link TreeHarvester#plan}.
      */
     static boolean isNaturalLeaf(ServerWorld world, BlockPos pos, TreeSpecies species) {
         BlockState state = stateAt(world, pos);

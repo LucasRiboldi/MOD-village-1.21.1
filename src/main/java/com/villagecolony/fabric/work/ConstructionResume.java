@@ -67,7 +67,7 @@ final class ConstructionResume {
      * colônia por sessão. Cento e cinquenta leituras de vetor no primeiro
      * ciclo, e nada depois.
      *
-     * <p>Roda dentro de {@link #plan}, antes de tudo: uma obra que voltou
+     * <p>Roda dentro de {@link ConstructionPlanner#plan}, antes de tudo: uma obra que voltou
      * do save é uma obra aberta, e planejar outra por cima dela abriria
      * dois canteiros na mesma vila.
      */

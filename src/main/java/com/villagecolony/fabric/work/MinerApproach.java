@@ -149,7 +149,7 @@ public final class MinerApproach {
      * <p><b>O filtro é de um lado só.</b> Descer é de graça — aldeão cai
      * sem se machucar a esta altura, e a navegação desce —; subir é que
      * tem degrau de um. Por isso a conta é {@code at.getY() - villager}
-     * contra {@link #CLIMB}, e não uma distância.
+     * contra {@link MinerWork#CLIMB}, e não uma distância.
      *
      * <p><b>E não há resposta pior que a de antes.</b> Sem nenhum lugar
      * ao alcance dele, vale o primeiro pisável que a busca achou, que é

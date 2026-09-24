@@ -102,7 +102,7 @@ final class SiteOpening {
     /**
      * O lote vira obra aberta.
      *
-     * <p>Separado de {@link #plan} em 2026-08-25, quando passou a haver
+     * <p>Separado de {@link ConstructionPlanner#plan} em 2026-08-25, quando passou a haver
      * <b>dois</b> caminhos até um lote: a varredura em anéis, e o atalho
      * de quem acabou de calçar a rua e sabe onde nasceu beira nova. O
      * trecho é o mesmo nos dois, e duas cópias dele seriam duas versões
@@ -282,7 +282,7 @@ final class SiteOpening {
      *
      * <p>Chebyshev: o lado do menor quadrado centrado em {@code centre}
      * que contém {@code origin}. É a conta dos anéis do
-     * {@code BuildSiteScanner} e a do {@link #withinTheFarmersReach}.
+     * {@code BuildSiteScanner} e a do {@link ConstructionDemand#withinTheFarmersReach}.
      */
     static int squareDistance(ColonyPos origin, ColonyPos centre) {
         return Math.max(

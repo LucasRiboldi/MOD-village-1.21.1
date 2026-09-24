@@ -40,8 +40,8 @@ public final class MineRock {
      * Se a picareta não tem o que fazer nesta posição da ordem —
      * 2026-09-05.
      *
-     * <p><b>Uma pergunta, dois donos.</b> O {@link #nextCut} pula o que
-     * já está aberto e o {@link #isStillClosed} recua o cursor até onde
+     * <p><b>Uma pergunta, dois donos.</b> O {@link MineCuts#nextCut} pula o que
+     * já está aberto e o {@link MineFrontier#isStillClosed} recua o cursor até onde
      * a rocha começa, e <b>os dois têm de concordar</b>: posição que a
      * escolha do alvo pula não pode ser a fronteira, senão o cursor
      * recua até ela toda passagem. Eles concordavam por cópia — a mesma
@@ -113,7 +113,7 @@ public final class MineRock {
     /**
      * Se este bloco pode ser cavado — a Regra 3 e o impossível.
      *
-     * <p>A mesma pergunta que {@link #nextCut} faz na sua volta, aqui
+     * <p>A mesma pergunta que {@link MineCuts#nextCut} faz na sua volta, aqui
      * porque o veio precisa saber se consegue abrir a saída antes de
      * descer. Bedrock, lava e o que é da vila respondem não.
      */

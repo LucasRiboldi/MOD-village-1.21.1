@@ -134,7 +134,7 @@ public final class VillageDetectionHandler {
     /**
      * Pares de colônias sobrepostas já avisados nesta sessão.
      *
-     * <p>Ver {@link #warnIfOverlapping}: a sobreposição não se resolve
+     * <p>Ver {@link VillageAdoption#warnIfOverlapping}: a sobreposição não se resolve
      * sozinha, e sem esta memória o aviso sairia a cada ciclo.
      */
     static final Set<String> overlapsReported = new HashSet<>();
@@ -199,7 +199,7 @@ public final class VillageDetectionHandler {
     /**
      * Executa a garantia de fundação para uma colônia já conhecida.
      *
-     * <p>É a mesma sequência usada por {@link #detectAround}: registra os
+     * <p>É a mesma sequência usada por {@link VillageAdoption#detectAround}: registra os
      * aldeões existentes, completa a população física e repete o registro
      * para atribuir profissões e reivindicar os baús. A entrada explícita
      * da colônia mantém o teste de contrato isolado de outras arenas do
