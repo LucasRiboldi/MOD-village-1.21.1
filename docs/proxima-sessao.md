@@ -1,5 +1,25 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
+**Atualização de 2026-09-24, tarde — jogar com o spark ligado.** O JAR em
+`mods` agora é o da revisão de naturalidade (`ac40519`, SHA-256
+`987E5A1BB7B591980B5994D6E3E22E6FE8A5FECA0C8FB69FFC24BD614F27EC41`), e o
+**spark** 1.10.109 está instalado ao lado dele.
+
+- **Primeiro, o perfil.** Seguir `docs/technical/Profiling-spark.md`:
+  `/spark profiler start --only-ticks-over 50`, jogar 5 a 10 minutos perto
+  da vila, `/spark profiler stop` e trazer o link. Motivo: o log de 24-09
+  teve 196 ciclos acima de um tique.
+- **Depois, o que só o jogo mostra:**
+  - um filhote nascer e ganhar ofício (N1, `shared supper with`);
+  - a placa do lote 5 blocos acima do telhado (N7);
+  - a escada da fuga tampada (N10, `finished backfilling`);
+  - a roça ou outra oficina de ofício logo depois da primeira casa (N9).
+- **No fim:** `python scripts/analyze_village_log.py` conta tudo isso no
+  `latest.log` e atualiza `docs/technical/Log-Stall-Statistics.md`.
+
+Os cinco playtests da Task 14, abaixo, continuam pendentes.
+
+
 **Atualização de 2026-09-24 — cinco playtests da entrega de confiabilidade
 operacional (Tasks 3 a 13).** Esta sessão implementou dez tasks do plano
 `docs/superpowers/plans/2026-09-23-operational-reliability.md` (scanner
