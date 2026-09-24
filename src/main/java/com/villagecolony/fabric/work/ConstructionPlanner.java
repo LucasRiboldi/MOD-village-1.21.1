@@ -1,5 +1,8 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.fabric.integration.SweepState;
+import com.villagecolony.fabric.integration.RoadIndex;
+import com.villagecolony.fabric.integration.LotClearance;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
@@ -246,7 +249,7 @@ public final class ConstructionPlanner {
             // centro, de propósito, e medir do centro largava a obra que a
             // própria estrada acabara de alcançar. Sem índice de ruas a
             // pergunta cai no centro, que é o comportamento de antes.
-            OptionalInt toTheRoad = BuildSiteScanner.roadsOf(colony.id())
+            OptionalInt toTheRoad = RoadIndex.roadsOf(colony.id())
                     .map(roads -> roads.blocksToTheNearestRoad(open.get().origin()))
                     .orElseGet(OptionalInt::empty);
 
@@ -381,8 +384,8 @@ public final class ConstructionPlanner {
             // linha perguntava só pelo cursor do quadrado, e desde que a
             // volta pelo índice de ruas também pode parar no meio, ela
             // deixaria a Regra 15 crescer a rua sem ninguém ter visto o
-            // raio inteiro. Ver BuildSiteScanner.stillLookingForALot.
-            if (BuildSiteScanner.stillLookingForALot(colony.id())) {
+            // raio inteiro. Ver SweepState.stillLookingForALot.
+            if (SweepState.stillLookingForALot(colony.id())) {
                 return silent(colony, IdleReason.SWEEP_INCOMPLETE, "looking for a lot");
             }
 
@@ -404,7 +407,7 @@ public final class ConstructionPlanner {
         // então a passagem seguinte recomeçava do centro e reencontrava o
         // mesmo lugar. Em 2026-08-20 a vila do autor ficou nesse laço.
         //
-        // A pergunta desceu para `BuildSiteScanner.isClearAbove`, que é
+        // A pergunta desceu para `LotClearance.isClearAbove`, que é
         // onde a varredura ainda pode seguir para o anel seguinte.
 
         if (farming && !ConstructionDemand.withinTheFarmersReach(colony, site.get())) {

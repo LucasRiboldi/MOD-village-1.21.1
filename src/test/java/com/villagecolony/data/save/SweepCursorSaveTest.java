@@ -1,5 +1,7 @@
 package com.villagecolony.data.save;
 
+import com.villagecolony.fabric.integration.SweepState;
+import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.ColonyState;
@@ -196,11 +198,11 @@ class SweepCursorSaveTest {
 
         BuildSiteScanner.clearAll();
 
-        assertTrue(BuildSiteScanner.sweepPausedAt(colonyId).isEmpty());
+        assertTrue(SweepState.sweepPausedAt(colonyId).isEmpty());
 
         read.forEach(BuildSiteScanner::restore);
 
-        assertEquals(40, BuildSiteScanner.sweepPausedAt(colonyId).getAsInt());
+        assertEquals(40, SweepState.sweepPausedAt(colonyId).getAsInt());
 
         BuildSiteScanner.clearAll();
     }
@@ -231,7 +233,7 @@ class SweepCursorSaveTest {
                 List.of(ColonyRoads.column(772, 898), ColonyRoads.column(773, 898))));
 
         assertTrue(
-                BuildSiteScanner.roadIndexSize(colonyId).isEmpty(),
+                RoadIndex.roadIndexSize(colonyId).isEmpty(),
                 "meia volta virou índice, e ele mente sobre ter visto o raio inteiro");
 
         // Mas a memória está lá: ela sai de novo com o cursor.

@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.event;
 
+import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.ColonyEdits;
 import com.villagecolony.core.construction.model.Mine;
@@ -119,7 +120,7 @@ public final class PlayerWorldChangeHandler {
             if (Math.abs((long) center.x() - changedPos.x()) <= VillageDetector.SEARCH_RADIUS
                     && Math.abs((long) center.z() - changedPos.z()) <= VillageDetector.SEARCH_RADIUS
                     && Math.abs((long) center.y() - changedPos.y()) <= BUILD_VERTICAL_RANGE) {
-                BuildSiteScanner.reconcileWorldChange(colony.id(), world, changed, center);
+                RoadIndex.reconcileWorldChange(colony.id(), world, changed, center);
             }
         }
 

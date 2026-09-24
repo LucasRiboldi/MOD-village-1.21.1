@@ -85,7 +85,7 @@ public final class SitePreparation {
     /**
      * Planta que sai do caminho, e não bloco que fica.
      *
-     * <p>A mesma pergunta que {@code BuildSiteScanner.isNothing} faz
+     * <p>A mesma pergunta que {@code LotGround.isNothing} faz
      * para não reprovar o lote, e é de propósito que sejam a mesma: o
      * que não reprova é exatamente o que alguém precisa tirar. Se as
      * duas divergissem, ou o lote seria recusado por uma flor, ou a flor

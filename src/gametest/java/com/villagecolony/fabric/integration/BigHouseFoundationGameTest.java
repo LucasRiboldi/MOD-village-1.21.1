@@ -96,7 +96,7 @@ public class BigHouseFoundationGameTest implements FabricGameTest {
                     ConstructionState.BUILDING));
 
             context.assertTrue(
-                    BuildSiteScanner.overlapsConstructionSite(
+                    LotClearance.overlapsConstructionSite(
                             context.getWorld(), colonyId, origin, max, null),
                     "o projeto pendente nao protegeu sua caixa antes de resume");
 
@@ -131,7 +131,7 @@ public class BigHouseFoundationGameTest implements FabricGameTest {
                     origin, ConstructionState.BUILDING));
 
             context.assertTrue(
-                    BuildSiteScanner.overlapsConstructionSite(
+                    LotClearance.overlapsConstructionSite(
                             context.getWorld(), colonyId, higherMin, higherMax, null),
                     "a casa pendente nao reservou a pegada em outra altura");
         } finally {

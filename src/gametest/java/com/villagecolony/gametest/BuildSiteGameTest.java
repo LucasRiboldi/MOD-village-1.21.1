@@ -1,5 +1,9 @@
 package com.villagecolony.gametest;
 
+import com.villagecolony.fabric.integration.SweepState;
+import com.villagecolony.fabric.integration.RoadIndex;
+import com.villagecolony.fabric.integration.LotClearance;
+import com.villagecolony.fabric.integration.LotGround;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
@@ -386,7 +390,7 @@ public class BuildSiteGameTest implements FabricGameTest {
                 UUID.randomUUID(), blueprint, origin);
 
         context.assertTrue(
-                BuildSiteScanner.overlapsSomethingBuilt(context.getWorld(), project),
+                LotClearance.overlapsSomethingBuilt(context.getWorld(), project),
                 "a retomada aceitou um volume que ja contem um bloco existente"
                         + " em " + occupied + ", origem " + origin
                         + ", tamanho " + blueprint.size());
@@ -709,7 +713,7 @@ public class BuildSiteGameTest implements FabricGameTest {
                     oneBlockLot);
 
             context.assertTrue(
-                    BuildSiteScanner.latestReport(bedColony)
+                    SweepState.latestReport(bedColony)
                             .orElseThrow()
                             .refusalCount(ScanRefusalReason.BED) > 0,
                     "uma cama entrou na mesma telemetria de terreno ou estrada");
@@ -723,7 +727,7 @@ public class BuildSiteGameTest implements FabricGameTest {
                     oneBlockLot);
 
             context.assertTrue(
-                    BuildSiteScanner.latestReport(roadColony)
+                    SweepState.latestReport(roadColony)
                             .orElseThrow()
                             .refusalCount(ScanRefusalReason.ROAD) > 0,
                     "uma estrada reservada nao foi separada da recusa por cama");
@@ -974,14 +978,14 @@ public class BuildSiteGameTest implements FabricGameTest {
         BuildSiteScanner.find(context.getWorld(), colony, from, RADIUS, SMALL_HOUSE);
 
         context.assertTrue(
-                BuildSiteScanner.sweepPausedAt(colony).isEmpty(),
+                SweepState.sweepPausedAt(colony).isEmpty(),
                 "raio de " + RADIUS + " cabe num ciclo, e a busca disse que parou no meio");
 
         // Raio de vila de verdade: dezesseis mil colunas, mil por chamada.
         BuildSiteScanner.find(context.getWorld(), colony, from, 64, SMALL_HOUSE);
 
         context.assertTrue(
-                BuildSiteScanner.sweepPausedAt(colony).isPresent(),
+                SweepState.sweepPausedAt(colony).isPresent(),
                 "raio de 64 não cabe num ciclo, e a busca disse que varreu tudo");
 
         BuildSiteScanner.clearAll();
@@ -1032,7 +1036,7 @@ public class BuildSiteGameTest implements FabricGameTest {
             BuildSiteScanner.find(context.getWorld(), colony, center, radius, tooBigToFit);
 
             passes++;
-        } while (BuildSiteScanner.sweepPausedAt(colony).isPresent() && passes <= floor);
+        } while (SweepState.sweepPausedAt(colony).isPresent() && passes <= floor);
 
         context.assertTrue(
                 passes == floor,
@@ -1080,14 +1084,14 @@ public class BuildSiteGameTest implements FabricGameTest {
 
         BuildSiteScanner.find(context.getWorld(), colony, first, 64, tooBigToFit);
 
-        int paused = BuildSiteScanner.sweepPausedAt(colony).orElse(0);
+        int paused = SweepState.sweepPausedAt(colony).orElse(0);
 
         context.assertTrue(paused > 0, "o orçamento devia ter acabado no meio do raio de 64");
 
         BuildSiteScanner.find(context.getWorld(), colony, second, 64, tooBigToFit);
 
         context.assertTrue(
-                BuildSiteScanner.sweepPausedAt(colony).orElse(0) > paused,
+                SweepState.sweepPausedAt(colony).orElse(0) > paused,
                 "a busca recomeçou do centro quando a âncora mudou, e nunca avança");
 
         BuildSiteScanner.clearAll();
@@ -1149,7 +1153,7 @@ public class BuildSiteGameTest implements FabricGameTest {
         BlockPos at = context.getAbsolutePos(center);
 
         context.assertTrue(
-                !BuildSiteScanner.isReservedAgainstLots(context.getWorld(), colony, at),
+                !RoadIndex.isReservedAgainstLots(context.getWorld(), colony, at),
                 "calçamento que a colônia não calçou não pode reservar o chão contra lote");
 
         // E o par, que é o que impede a regressão: a coluna reservada
@@ -1158,7 +1162,7 @@ public class BuildSiteGameTest implements FabricGameTest {
         reserveRoad(context, colony, center);
 
         context.assertTrue(
-                BuildSiteScanner.isReservedAgainstLots(context.getWorld(), colony, at),
+                RoadIndex.isReservedAgainstLots(context.getWorld(), colony, at),
                 "a rua que a própria colônia calçou tem de continuar reservada");
 
         BuildSiteScanner.clearAll();
@@ -1173,14 +1177,14 @@ public class BuildSiteGameTest implements FabricGameTest {
         UUID colony = UUID.randomUUID();
         ColonyPos absoluteCenter = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center));
         context.setBlockState(center, Blocks.GRAVEL.getDefaultState());
-        BuildSiteScanner.reconcileWorldChange(
+        RoadIndex.reconcileWorldChange(
                 colony, context.getWorld(), context.getAbsolutePos(center), absoluteCenter);
 
         context.assertTrue(
-                !BuildSiteScanner.isRoadArea(context.getWorld(), colony, context.getAbsolutePos(center)),
+                !RoadIndex.isRoadArea(context.getWorld(), colony, context.getAbsolutePos(center)),
                 "gravel do jogador sem reserva espacial virou rua");
         context.assertTrue(
-                BuildSiteScanner.roadIndexSize(colony).isEmpty(),
+                RoadIndex.roadIndexSize(colony).isEmpty(),
                 "material de rua sem ROAD_AREA entrou no índice");
 
         BuildSiteScanner.clearAll();
@@ -1198,17 +1202,17 @@ public class BuildSiteGameTest implements FabricGameTest {
         ColonyPos absoluteCenter = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center));
 
         context.setBlockState(center, Blocks.DIRT.getDefaultState());
-        BuildSiteScanner.reconcileWorldChange(
+        RoadIndex.reconcileWorldChange(
                 colony, context.getWorld(), context.getAbsolutePos(center), absoluteCenter);
         context.assertTrue(
-                BuildSiteScanner.roadIndexSize(colony).orElse(0) == 0,
+                RoadIndex.roadIndexSize(colony).orElse(0) == 0,
                 "a área de rua removida permaneceu no índice");
 
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
-        BuildSiteScanner.reconcileWorldChange(
+        RoadIndex.reconcileWorldChange(
                 colony, context.getWorld(), context.getAbsolutePos(center), absoluteCenter);
         context.assertTrue(
-                BuildSiteScanner.roadIndexSize(colony).orElse(0) == 0,
+                RoadIndex.roadIndexSize(colony).orElse(0) == 0,
                 "material restaurado sem reserva espacial recriou a área de rua");
         BuildSiteScanner.clearAll();
         context.complete();
@@ -1226,11 +1230,11 @@ public class BuildSiteGameTest implements FabricGameTest {
         ColonyPos impossibleHouse = new ColonyPos(40, 20, 40);
 
         BuildSiteScanner.find(context.getWorld(), colony, absoluteCenter, RADIUS, impossibleHouse);
-        int indexedBefore = BuildSiteScanner.roadIndexSize(colony).orElse(0);
+        int indexedBefore = RoadIndex.roadIndexSize(colony).orElse(0);
         context.setBlockState(center, Blocks.DIRT.getDefaultState());
-        BuildSiteScanner.reconcileWorldChange(
+        RoadIndex.reconcileWorldChange(
                 colony, context.getWorld(), context.getAbsolutePos(center), absoluteCenter);
-        int indexedAfter = BuildSiteScanner.roadIndexSize(colony).orElse(0);
+        int indexedAfter = RoadIndex.roadIndexSize(colony).orElse(0);
         BuildSiteScanner.clearAll();
 
         context.assertTrue(
@@ -1751,7 +1755,7 @@ public class BuildSiteGameTest implements FabricGameTest {
                 "o arranjo não deu lote, então este teste não chega a afirmar nada");
 
         context.assertTrue(
-                BuildSiteScanner.sweepPausedAt(colony).isEmpty(),
+                SweepState.sweepPausedAt(colony).isEmpty(),
                 "uma ROAD_AREA indexada iniciou uma varredura completa sem necessidade");
 
         context.complete();
@@ -1821,11 +1825,11 @@ public class BuildSiteGameTest implements FabricGameTest {
                 "o arranjo deu lote, e este teste precisa de uma varredura que termine o raio");
 
         context.assertTrue(
-                BuildSiteScanner.sweepPausedAt(colony).isEmpty(),
+                SweepState.sweepPausedAt(colony).isEmpty(),
                 "a varredura não terminou o raio — o cursor ficou, e o índice só nasce completo");
 
         context.assertTrue(
-                BuildSiteScanner.roadIndexSize(colony).orElse(0) == 1,
+                RoadIndex.roadIndexSize(colony).orElse(0) == 1,
                 "a varredura terminou o raio e não guardou a única coluna de rua que achou:"
                         + " a próxima passagem vai reperguntar o quadrado inteiro");
 
@@ -2056,7 +2060,7 @@ public class BuildSiteGameTest implements FabricGameTest {
             BuildSiteScanner.find(context.getWorld(), colony, from, 64, SMALL_HOUSE);
 
             context.assertTrue(
-                    BuildSiteScanner.sweepPausedAt(colony).isEmpty(),
+                    SweepState.sweepPausedAt(colony).isEmpty(),
                     "o índice grande foi recusado e a colônia voltou a varrer o quadrado");
         } finally {
             BuildSiteScanner.clearAll();
@@ -2089,7 +2093,7 @@ public class BuildSiteGameTest implements FabricGameTest {
             BuildSiteScanner.find(context.getWorld(), colony, from, 64, SMALL_HOUSE);
 
             context.assertTrue(
-                    BuildSiteScanner.stillLookingForALot(colony),
+                    SweepState.stillLookingForALot(colony),
                     "a volta pelo índice não cabe numa passagem, e a busca disse"
                             + " que terminou — a Regra 15 cresceria a rua sem ninguém"
                             + " ter visto o raio inteiro");
@@ -2098,7 +2102,7 @@ public class BuildSiteGameTest implements FabricGameTest {
             BuildSiteScanner.find(context.getWorld(), colony, from, 64, SMALL_HOUSE);
 
             context.assertTrue(
-                    !BuildSiteScanner.stillLookingForALot(colony),
+                    !SweepState.stillLookingForALot(colony),
                     "duas passagens dão conta de duas vezes o orçamento, e a busca"
                             + " continuou dizendo que não terminou");
         } finally {
@@ -2261,14 +2265,14 @@ public class BuildSiteGameTest implements FabricGameTest {
 
         BuildSiteScanner.find(context.getWorld(), colony, first, 64, tooBigToFit);
 
-        int paused = BuildSiteScanner.sweepPausedAt(colony).orElse(0);
+        int paused = SweepState.sweepPausedAt(colony).orElse(0);
 
         context.assertTrue(paused > 0, "o orçamento devia ter acabado no meio do raio de 64");
 
         BuildSiteScanner.find(context.getWorld(), colony, far, 64, tooBigToFit);
 
         context.assertTrue(
-                BuildSiteScanner.sweepPausedAt(colony).orElse(0) == paused,
+                SweepState.sweepPausedAt(colony).orElse(0) == paused,
                 "o centro andou quarenta blocos e a varredura continuou de onde estava —"
                         + " os anéis de dentro do centro novo ficaram sem ser olhados");
 
@@ -2363,7 +2367,7 @@ public class BuildSiteGameTest implements FabricGameTest {
             context.setBlockState(at, ground.getDefaultState());
 
             context.assertTrue(
-                    BuildSiteScanner.isBiomeGround(world, absolute),
+                    LotGround.isBiomeGround(world, absolute),
                     ground + " é chão de bioma e foi tratado como peça de vila —"
                             + " a colônia volta a não achar lote");
         }
@@ -2385,7 +2389,7 @@ public class BuildSiteGameTest implements FabricGameTest {
             context.setBlockState(at, piece.getDefaultState());
 
             context.assertTrue(
-                    !BuildSiteScanner.isBiomeGround(world, absolute),
+                    !LotGround.isBiomeGround(world, absolute),
                     piece + " é peça de construção e passou como chão —"
                             + " a colônia constrói em cima da vila do jogador");
         }
@@ -2440,7 +2444,7 @@ public class BuildSiteGameTest implements FabricGameTest {
                 context.getWorld(), colony, absoluteCenter, RADIUS, impossibleHouse);
 
         context.assertTrue(
-                BuildSiteScanner.roadIndexSize(colony).orElse(0) > 0,
+                RoadIndex.roadIndexSize(colony).orElse(0) > 0,
                 "a varredura não deixou índice — o cenário deste teste não se montou");
 
         // A primeira volta vazia NÃO derruba: a vila muda, e o lote de
@@ -2449,7 +2453,7 @@ public class BuildSiteGameTest implements FabricGameTest {
                 context.getWorld(), colony, absoluteCenter, RADIUS, impossibleHouse);
 
         context.assertTrue(
-                BuildSiteScanner.roadIndexSize(colony).orElse(0) > 0,
+                RoadIndex.roadIndexSize(colony).orElse(0) > 0,
                 "uma volta vazia derrubou o índice — a colônia vai varrer o raio"
                         + " inteiro a cada passagem, que é o custo que o índice evita");
 
@@ -2461,7 +2465,7 @@ public class BuildSiteGameTest implements FabricGameTest {
         }
 
         context.assertTrue(
-                BuildSiteScanner.roadIndexSize(colony).isEmpty(),
+                RoadIndex.roadIndexSize(colony).isEmpty(),
                 "o índice sobreviveu a dez voltas sem um único lote — é o beco do"
                         + " deserto, onde 32 passagens deram 32 respostas do índice"
                         + " e zero obras");

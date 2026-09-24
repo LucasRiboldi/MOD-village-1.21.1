@@ -219,11 +219,11 @@ public final class BigHouseFoundation {
             return false;
         }
 
-        if (BuildSiteScanner.overlapsVillageStructure(world, min, max)) {
+        if (LotClearance.overlapsVillageStructure(world, min, max)) {
             return false;
         }
 
-        if (BuildSiteScanner.overlapsConstructionSite(world, colony.id(), min, max, null)) {
+        if (LotClearance.overlapsConstructionSite(world, colony.id(), min, max, null)) {
             return false;
         }
 
@@ -232,7 +232,7 @@ public final class BigHouseFoundation {
         // telhado de uma construcao existente.
         for (int dx = 0; dx < size.getX(); dx++) {
             for (int dz = 0; dz < size.getZ(); dz++) {
-                if (!BuildSiteScanner.isBiomeGround(
+                if (!LotGround.isBiomeGround(
                         world, new BlockPos(x + dx, y - 1, z + dz))) {
                     return false;
                 }

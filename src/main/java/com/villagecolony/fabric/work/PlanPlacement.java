@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
@@ -158,7 +159,7 @@ public final class PlanPlacement {
      * caminho —, fica o norte, que é onde a planta antiga punha a porta.
      */
     static Side roadSideOf(ServerWorld world, UUID colonyId, ColonyPos origin, Blueprint house) {
-        return BuildSiteScanner.roadSideOf(world, colonyId, origin, house.size())
+        return RoadIndex.roadSideOf(world, colonyId, origin, house.size())
                 .map(MinecraftTypeAdapter::toSide)
                 .orElse(Side.NORTH);
     }

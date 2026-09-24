@@ -127,7 +127,7 @@ public final class LotRefusals {
     /**
      * Uma pegada inteira passou: estas colunas sobreviveram a tudo.
      *
-     * <p>Chamado de {@code BuildSiteScanner.flatGroundAt}, no único
+     * <p>Chamado de {@code LotLevel.flatGroundAt}, no único
      * ponto em que ele devolve piso — ver {@link #ACCEPTED}.
      *
      * @param columns quantas colunas a pegada tem

@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.fabric.integration.RoadsideSites;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
@@ -79,7 +80,7 @@ final class RoadGrowthPlanning {
 
         IdleLog.clear(colony.id(), ConstructionPlanner.SUBJECT);
 
-        return BuildSiteScanner.findBeside(
+        return RoadsideSites.findBeside(
                         world,
                         colony.id(),
                         colony.center(),
@@ -129,7 +130,7 @@ final class RoadGrowthPlanning {
                 // custaria dezessete ciclos por uma informação que ela
                 // tem na mão. Vazio aqui não é erro: o trecho novo pode
                 // não caber casa, e aí a varredura seguinte decide.
-                yield BuildSiteScanner.findBeside(
+                yield RoadsideSites.findBeside(
                                 world,
                                 colony.id(),
                                 colony.center(),

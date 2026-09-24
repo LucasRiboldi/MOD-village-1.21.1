@@ -60,7 +60,7 @@ final class RoadPaving {
 
             BlockState state = world.getBlockState(at);
 
-            if (BuildSiteScanner.isRoadArea(world, colonyId, at)) {
+            if (RoadIndex.isRoadArea(world, colonyId, at)) {
                 // Já é rua: a ponta encostou noutro trecho. Segue por
                 // cima dela sem gastar nada, que é o que dois calçamentos
                 // que se encontram fazem.
@@ -73,7 +73,7 @@ final class RoadPaving {
             // é feita de bloco que passaria por chão.
             if (BlockProtection.isVillageOriginal(world, at)
                     || BlockProtection.isColonyBuilt(at)
-                    || !BuildSiteScanner.isNaturalGround(state)
+                    || !LotGround.isNaturalGround(state)
                     || !world.getBlockState(at.up()).isAir()) {
 
                 return laid;
@@ -85,7 +85,7 @@ final class RoadPaving {
             // A rua cresce justamente quando não houve lote, e o lote
             // novo nasce encostado no que acabou de ser calçado: índice
             // que não soubesse disto nunca mais acharia nada.
-            BuildSiteScanner.remember(colonyId, at);
+            RoadIndex.remember(colonyId, at);
 
             previous = at;
 
@@ -152,7 +152,7 @@ final class RoadPaving {
         for (int dy = RoadExtension.MAX_STEP; dy >= -RoadExtension.MAX_STEP; dy--) {
             BlockPos at = new BlockPos(column.getX(), aroundY + dy, column.getZ());
 
-            if (BuildSiteScanner.isRoadArea(world, colonyId, at)) {
+            if (RoadIndex.isRoadArea(world, colonyId, at)) {
                 return true;
             }
         }

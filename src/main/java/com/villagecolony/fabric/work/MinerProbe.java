@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.fabric.integration.SweepState;
 import com.villagecolony.fabric.work.MinerWork.Job;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
@@ -59,7 +60,7 @@ public final class MinerProbe {
      * Quantos tiques este mineiro já andou sem chegar na pedra.
      *
      * <p>Não é estado novo — é o contador do guarda de travamento, lido
-     * de fora, como o {@code BuildSiteScanner.sweepPausedAt}. Existe
+     * de fora, como o {@code SweepState.sweepPausedAt}. Existe
      * porque a pergunta que ele responde não tem outro observável: o
      * guarda só fala quando estoura, e o defeito era ele <b>contar</b>
      * quando não devia.

@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.fabric.integration.LotClearance;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
@@ -146,7 +147,7 @@ final class ConstructionResume {
         // abaixo já escreve: casa pela metade é do jogador, e abandoná-la
         // deixaria um esqueleto no mundo com o lote ocupado. Com zero
         // blocos de pé não se perde nada.
-        if (standing == 0 && BuildSiteScanner.overlapsSomethingBuilt(world, project)) {
+        if (standing == 0 && LotClearance.overlapsSomethingBuilt(world, project)) {
             VillageColonyMod.LOGGER.warn(
                     "Colony {} drops the saved {} at {} — it sits inside something that is"
                             + " already built, and no block of it stands yet",
