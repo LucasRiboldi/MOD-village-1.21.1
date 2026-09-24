@@ -7,7 +7,7 @@ import com.villagecolony.core.construction.model.Mine;
  * 2026-09-24.
  *
  * <p><b>Extração, não reescrita.</b> A regra já existia, inteira, dentro
- * de {@code MineDigging.rerouteOrBlameTheMouth}: girar a hélice enquanto
+ * de {@code MineTrouble.rerouteOrBlameTheMouth}: girar a hélice enquanto
  * houver hélice para tentar, e só culpar a boca depois que todas
  * falharem. Esta classe separa a <b>decisão</b> (pura, sobre o estado que
  * {@link Mine} já guarda) do <b>efeito</b> (achar a boca nova no mundo,

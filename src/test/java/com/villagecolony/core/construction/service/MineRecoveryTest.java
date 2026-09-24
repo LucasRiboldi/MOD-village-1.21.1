@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * A decisão pura por trás de {@code rerouteOrBlameTheMouth} — decisão 3B,
  * 2026-09-24.
  *
- * <p><b>Não é uma reescrita do E45.</b> {@code MineDigging.rerouteOrBlameTheMouth}
+ * <p><b>Não é uma reescrita do E45.</b> {@code MineTrouble.rerouteOrBlameTheMouth}
  * já decidia isto corretamente; esta classe só separa a decisão (pura, em
  * {@code core}) do efeito (achar a boca nova, que precisa de
  * {@code ServerWorld} e mora em {@code fabric}). Ver

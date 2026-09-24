@@ -857,8 +857,8 @@ public final class MinerWork {
 
         // E a curva do ramal recomeça — 2026-09-11. Aqui, e não onde o
         // cursor escolhe a pedra: é este bloco saindo do mundo que prova
-        // que a frente rende. Ver MineDigging.pickaxeTook.
-        MineDigging.pickaxeTook(job.task.colonyId(), villager.getUuid());
+        // que a frente rende. Ver MineTrouble.pickaxeTook.
+        MineTrouble.pickaxeTook(job.task.colonyId(), villager.getUuid());
 
         // <b>E se saiu água por ali, tapa antes de sair de perto</b> —
         // decisão do autor, 2026-09-03. Aqui, e não no ciclo seguinte: o
@@ -866,9 +866,9 @@ public final class MinerWork {
         // sobra para ele descer a escada inteira. Ver MineFlooding.
         //
         // A galeria vira junto, que é a outra metade do pedido —
-        // "seguir por outro caminho". Ver MineDigging.flooded.
+        // "seguir por outro caminho". Ver MineTrouble.flooded.
         if (MineFlooding.seal(world, job.target) > 0) {
-            MineDigging.flooded(job.task.colonyId(), villager.getUuid(), job.target);
+            MineTrouble.flooded(job.task.colonyId(), villager.getUuid(), job.target);
         }
 
         // Regra 30: o minério que não é carvão vai para o baú da boca
@@ -1025,7 +1025,7 @@ public final class MinerWork {
 
         // A posição volta para o cursor da galeria — 2026-08-27. Sem
         // isto o mod marchava pela ordem de cavar com o mundo intacto.
-        MineDigging.couldNotReach(job.task.colonyId(), job.target);
+        MineTrouble.couldNotReach(job.task.colonyId(), job.target);
 
         release(workerId, job);
 

@@ -34,6 +34,7 @@ import com.villagecolony.fabric.integration.MineFlooding;
 import com.villagecolony.fabric.integration.OreVein;
 import com.villagecolony.fabric.work.MineClaims;
 import com.villagecolony.fabric.work.MineDigging;
+import com.villagecolony.fabric.work.MineTrouble;
 import com.villagecolony.fabric.work.MineMarks;
 import com.villagecolony.fabric.work.MineRock;
 import com.villagecolony.fabric.work.MineSite;
@@ -3742,7 +3743,7 @@ public class MinerGameTest implements FabricGameTest {
 
         mine.arm(0).followVein(MinecraftTypeAdapter.toColonyPos(ore));
 
-        MineDigging.couldNotReach(colony.id(), ore);
+        MineTrouble.couldNotReach(colony.id(), ore);
 
         context.assertTrue(
                 mine.arm(0).vein().isEmpty(),
@@ -3770,7 +3771,7 @@ public class MinerGameTest implements FabricGameTest {
 
         mine.arm(0).followVein(MinecraftTypeAdapter.toColonyPos(ore));
 
-        MineDigging.couldNotReach(colony.id(), context.getAbsolutePos(new BlockPos(5, 6, 5)));
+        MineTrouble.couldNotReach(colony.id(), context.getAbsolutePos(new BlockPos(5, 6, 5)));
 
         context.assertFalse(
                 mine.arm(0).vein().isEmpty(),
@@ -4307,7 +4308,7 @@ public class MinerGameTest implements FabricGameTest {
         UUID worker = UUID.randomUUID();
 
         try {
-            MineDigging.flooded(
+            MineTrouble.flooded(
                     colony.id(), worker, context.getAbsolutePos(new BlockPos(3, 4, 3)));
 
             context.assertTrue(
@@ -5472,7 +5473,7 @@ public class MinerGameTest implements FabricGameTest {
      * <p><b>O par de chamadas aqui é o que o {@code MinerWork} faz de
      * verdade</b>, e é isso que faltava na primeira versão deste teste:
      * quem desiste chama {@code MineMarks.refuse} <b>e</b>
-     * {@code MineDigging.couldNotReach}. Só com a marca, o
+     * {@code MineTrouble.couldNotReach}. Só com a marca, o
      * {@code findTheFrontier} reserva e reenvia a mesma pedra para
      * sempre, o ramal encerra na segunda volta por outro motivo, e o
      * teste passa com e sem o conserto — que foi o que aconteceu, e é
@@ -5517,7 +5518,7 @@ public class MinerGameTest implements FabricGameTest {
                 // picareta no meio, de propósito.
                 MineMarks.refuse(context.getWorld(), target.get());
 
-                MineDigging.couldNotReach(colony.id(), target.get());
+                MineTrouble.couldNotReach(colony.id(), target.get());
             }
 
             context.throwGameTestException(

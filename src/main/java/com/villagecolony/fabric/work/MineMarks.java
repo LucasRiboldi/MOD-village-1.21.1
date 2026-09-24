@@ -47,7 +47,7 @@ import java.util.Map;
  * posição que o nextCut vai pular não pode ser a fronteira, senão o
  * cursor recua até ela toda passagem"</i>. Marcar num lado só troca este
  * defeito por outro maior, e é por isso que o par
- * {@code MineDigging.nextCut} / {@code MineFrontier.isStillClosed}
+ * {@code MineCuts.nextCut} / {@code MineFrontier.isStillClosed}
  * pergunta aqui.
  *
  * <p><b>E são quatro leitores, não dois</b> — achado do
