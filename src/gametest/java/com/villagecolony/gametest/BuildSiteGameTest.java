@@ -1853,25 +1853,29 @@ public class BuildSiteGameTest implements FabricGameTest {
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_rock")
     public void aVillageOnBedrockStillHasLots(TestContext context) {
-        BlockPos center = new BlockPos(3, 1, 3);
+        // <b>Longe da arena</b> — 2026-09-24, como o teste irmão logo abaixo.
+        // Dentro da arena, obra, bloco ou aldeão de outro teste da bateria
+        // caía no raio da varredura e recusava o lote: era a intermitência
+        // conhecida deste caso (~1 falha em 8 rodadas).
+        ServerWorld world = context.getWorld();
+        BlockPos center = context.getAbsolutePos(new BlockPos(3, 1, 3)).add(-256, 0, -256);
         UUID colony = UUID.randomUUID();
 
         // Rocha em vez de grama, no lote inteiro: é a encosta em que a
         // vila do autor nasceu.
         for (int dx = -RADIUS; dx <= RADIUS; dx++) {
             for (int dz = -RADIUS; dz <= RADIUS; dz++) {
-                context.setBlockState(
-                        center.add(dx, 0, dz), Blocks.STONE.getDefaultState());
+                world.setBlockState(center.add(dx, 0, dz), Blocks.STONE.getDefaultState());
             }
         }
 
-        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
-        reserveRoad(context, colony, center);
+        world.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoadAbsolute(colony, center);
 
         Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
-                context.getWorld(),
+                world,
                 colony,
-                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                MinecraftTypeAdapter.toColonyPos(center),
                 RADIUS,
                 SMALL_HOUSE);
 

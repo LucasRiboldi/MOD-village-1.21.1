@@ -172,12 +172,17 @@ public class TreeNurseryGameTest {
     }
 
     /** A vila mantém dez viveiros, e não uma quantidade sem teto. */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "tree_nursery",
+    //
+    // <b>Lote próprio e longe da arena</b> — 2026-09-24. O anel vai de 48 a
+    // 57 blocos, e os outros testes do lote tree_nursery plantam terra
+    // enraizada e muda nas arenas vizinhas, dentro desse raio: o teto de dez
+    // contava a base de outro teste e parava em 9 (1 falha em 8 rodadas).
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "tree_nursery_cap",
             tickLimit = 100)
     public void theNurseryStopsAtTenTrees(TestContext context) {
         ServerWorld world = context.getWorld();
         UUID colony = UUID.randomUUID();
-        BlockPos centre = context.getAbsolutePos(new BlockPos(8, 1, 8));
+        BlockPos centre = context.getAbsolutePos(new BlockPos(8, 1, 8)).add(3000, 0, 3000);
 
         FarmerNursery.clearAll();
 
