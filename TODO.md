@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-09-22, cobertura ponta a ponta do pedido de pedra.
+**Atualizado:** 2026-09-24, peca de construcao sem apoio mantida pendente.
 
 **Auditoria técnica:** [`docs/technical/Project-Audit-2026-09-21.md`](docs/technical/Project-Audit-2026-09-21.md).
 Nesta sessao: uma obra que pede uma peca sem rota fisica no bioma recebe a peca
@@ -36,7 +36,15 @@ testes Python da auditoria passaram nesta sessao.
 - [x] 🔴 **Terracota branca sem rota real:** a familia tem rota na receita (argila → fornalha → terracota) e nao no mundo — o fundidor passou a sessao inteira sem achar argila. Passada a carencia de dez ciclos, a peca preferida e depositada no bau da obra. A constante saiu do log: cinco ciclos foi a espera mais longa atendida, vinte a que nunca foi. `BuilderGameTest.aRouteThatNeverDeliversStopsHoldingTheBuild`.
 - [x] 🔴 **Mina cavada sem fim:** bau cheio, pedregulho no chao quarenta e sete vezes, mineiro alternando entre duas posicoes. O `took 0` nao era da picareta — a hipotese da ferramenta foi testada contra o log e revertida. Bau cheio encerra a tarefa. `MinerGameTest.aFullChestStopsTheMinerInsteadOfPilingStoneOnTheFloor`, verificado por mutacao.
 - [ ] 🔴 **Playtest dos tres:** reabrir o save e confirmar que nenhuma obra terminada reabre, que a terracota aparece no bau e a obra anda, e que o mineiro para com o bau cheio. JAR instalado com SHA-256 `73deea9739...`.
-- [ ] 🟠 **A lacuna que sobra:** a casa fica sem os nove `ladder`/`wall_torch`, porque sao pecas que pedem apoio que aquela parede nao tem. Decidir se a ordem de assentamento deve garantir o apoio antes, ou se a peca sem apoio deve sair da planta.
+- [x] 🟠 **P1.2 - peca sem apoio permanece parcial:** `ladder`, `wall_torch`
+  e equivalentes nao saem da planta nem contam como progresso quando o apoio
+  fisico falta. O projeto persiste motivo e assinatura do entorno; o construtor
+  encerra a tarefa e o planejador so abre outra quando essa assinatura mudar.
+  `ConstructionOutcomeTest`, `ConstructionProjectTest`, `ConstructionSaveTest`
+  e `BuildProgressGameTest`.
+- [ ] 🟠 **Playtest P1.2:** em um save, deixar uma peca sem apoio falhar,
+  confirmar que a obra permanece parcial sem nova tarefa repetida, criar o
+  apoio e confirmar que uma unica tarefa volta a abrir e conclui a peca.
 
 ## Fila operacional 2026-09-22
 

@@ -183,6 +183,13 @@ public final class ConstructionPlanner {
             }
         }
 
+        if (project.nextBlock().isEmpty()) {
+            // Todas as peças restantes aguardam o apoio que o mundo ainda
+            // não oferece. A tarefa anterior já foi fechada pelo
+            // construtor; recriá-la aqui repetiria a mesma falha.
+            return;
+        }
+
         int blocks = project.remainingCount();
 
         if (blocks == 0) {
@@ -224,6 +231,7 @@ public final class ConstructionPlanner {
 
         if (open.isPresent()) {
             WaitingWork.wakeIfSupplied(world, open.get());
+            BuilderWork.reconsiderDeferredPieces(world, open.get());
 
             // <b>E a obra que o centro deixou para trás</b> — 2026-09-15.
             // Vem antes do relógio de paciência porque não é caso dele: ele
@@ -740,7 +748,12 @@ public final class ConstructionPlanner {
         }
 
         ConstructionProject project = ConstructionProject.restore(
-                saved.id(), saved.colonyId(), blueprint.get(), saved.origin(), saved.state());
+                saved.id(),
+                saved.colonyId(),
+                blueprint.get(),
+                saved.origin(),
+                saved.state(),
+                saved.deferredPieces());
 
         // O jogador pode ter plantado no canteiro entre uma sessão e
         // outra — a Regra 23: o que já foi olhado se olha de novo.

@@ -1,4 +1,4 @@
-# STATE — 2026-09-23
+# STATE — 2026-09-24
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -41,6 +41,18 @@ desistencia de `COLLECT_STONE` deixa a tarefa disponivel ate os quatro ciclos
 expirarem, sem emprestar outra profissao. A regressao unitaria teve fase
 vermelha e o `ColonyCycleGameTest` correspondente passou dentro dos 419/419.
 Falta somente o playtest de uma desistência real com o JAR desta entrega.
+
+**P1.2 fecha a lacuna de peca sem apoio.** Uma `ladder`, `wall_torch` ou
+outra peca que nao pode ser assentada permanece parcial no projeto; ela nao e
+contada como bloco posto nem removida da planta. O save guarda somente a
+posicao, bloco, motivo e assinatura do entorno que pode dar apoio. O construtor
+encerra a tarefa, o planejador nao a recria enquanto o entorno for identico e
+so tenta de novo quando ele muda. Uma obra composta apenas por pecas adiadas
+nao e abandonada pelo relogio de inatividade. `ConstructionOutcomeTest`,
+`ConstructionProjectTest`, `ConstructionSaveTest` e
+`BuildProgressGameTest` cobrem o contrato; a rodada completa passou com
+**421/421 GameTests**. Falta confirmar no save uma peca sem apoio que recebe
+apoio depois de a tarefa ter sido encerrada.
 
 **A mina agora tem um ciclo finito definido pelo autor.** Cada nivel abre um
 caracol compartilhado de dez degraus, limpa 50 blocos, e so entao libera os
@@ -129,13 +141,11 @@ ainda**. O JAR das tres copias tem SHA-256 comecando em `73deea9739`.
 **1. Obra terminada recomecando (o grave).** O log tinha a mesma casa
 reabrindo a cada trinta segundos: `9 blocks remain` na abertura e
 `0 blocks placed` no fim, sem parar. Os nove eram `ladder` e `wall_torch`,
-riscados por *nothing holds it* — `BuilderWork.placeOne` tem quatro saidas que
-riscam a peca **sem assentar**. A lista esvazia, a obra e dada por terminada,
-a casa entra no registro com a lacuna intacta e a varredura seguinte reencontra
-os mesmos nove. Como a vaga de obra da colonia e unica, esse laco **impedia
-qualquer construcao nova de nascer**. O planejador agora guarda quantos blocos
-estavam de pe na abertura e compara ao fechar: tentativa que nao aumenta esse
-numero nao ganha outra. A casa segue com a lacuna, que e assunto separado.
+recusados por *nothing holds it*. O primeiro guarda impediu reabrir uma
+tentativa que nao aumentou blocos fisicos; o P1.2 posterior substituiu a falsa
+conclusao: cada peca sem apoio continua pendente, atravessa o save e so volta
+a fila quando o apoio fisico mudar. Assim a casa nao entra como terminada com
+lacuna nem prende a vaga de obra repetindo a mesma tentativa.
 
 **2. Terracota branca sem rota real.** A obra parou dez minutos esperando
 `white_terracotta`. A regra de suprimento se calava porque a familia **tem**

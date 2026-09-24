@@ -5,7 +5,9 @@ import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.ColonySweepCursor;
 import com.villagecolony.core.construction.model.ConstructionState;
+import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.Mine;
+import com.villagecolony.core.construction.model.SkipReason;
 import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.colony.model.ColonyLifecycle;
@@ -67,6 +69,13 @@ public final class ColonySavedData extends PersistentState {
     private static final String ORIGIN_X = "originX";
     private static final String ORIGIN_Y = "originY";
     private static final String ORIGIN_Z = "originZ";
+    private static final String DEFERRED_PIECES = "deferredPieces";
+    private static final String POSITION_X = "x";
+    private static final String POSITION_Y = "y";
+    private static final String POSITION_Z = "z";
+    private static final String DEFERRED_BLOCK = "block";
+    private static final String DEFERRED_REASON = "reason";
+    private static final String SUPPORT_FINGERPRINT = "supportFingerprint";
     private static final String MIN_X = "minX";
     private static final String MIN_Y = "minY";
     private static final String MIN_Z = "minZ";
@@ -349,6 +358,22 @@ public final class ColonySavedData extends PersistentState {
             entry.putInt(ORIGIN_Z, project.origin().z());
             entry.putString(STATE, project.state().name());
 
+            NbtList deferred = new NbtList();
+
+            for (ConstructionProject.DeferredPiece piece : project.deferredPieces()) {
+                NbtCompound savedPiece = new NbtCompound();
+
+                savedPiece.putInt(POSITION_X, piece.position().x());
+                savedPiece.putInt(POSITION_Y, piece.position().y());
+                savedPiece.putInt(POSITION_Z, piece.position().z());
+                savedPiece.putString(DEFERRED_BLOCK, piece.block().toString());
+                savedPiece.putString(DEFERRED_REASON, piece.reason().name());
+                savedPiece.putString(SUPPORT_FINGERPRINT, piece.supportFingerprint());
+                deferred.add(savedPiece);
+            }
+
+            entry.put(DEFERRED_PIECES, deferred);
+
             projectList.add(entry);
         }
 
@@ -462,7 +487,8 @@ public final class ColonySavedData extends PersistentState {
                             entry.getInt(ORIGIN_X),
                             entry.getInt(ORIGIN_Y),
                             entry.getInt(ORIGIN_Z)),
-                    readConstructionState(entry)));
+                    readConstructionState(entry),
+                    readDeferredPieces(entry)));
         }
 
         NbtList buildingList = nbt.getList(BUILDINGS, NbtElement.COMPOUND_TYPE);
@@ -490,6 +516,56 @@ public final class ColonySavedData extends PersistentState {
                     new ColonyPos(entry.getInt(MAX_X), entry.getInt(MAX_Y), entry.getInt(MAX_Z)),
                     !entry.contains(FINISHED) || entry.getBoolean(FINISHED)));
         }
+    }
+
+    /**
+     * Lê a memória mínima de uma peça sem apoio.
+     *
+     * <p>É opcional para que saves anteriores continuem válidos. Entrada
+     * inválida é descartada: ela só regula uma nova tentativa, nunca diz
+     * que um bloco existe no mundo.
+     */
+    private static List<ConstructionProject.DeferredPiece> readDeferredPieces(NbtCompound project) {
+        List<ConstructionProject.DeferredPiece> pieces = new ArrayList<>();
+        NbtList saved = project.getList(DEFERRED_PIECES, NbtElement.COMPOUND_TYPE);
+
+        for (int i = 0; i < saved.size(); i++) {
+            NbtCompound entry = saved.getCompound(i);
+
+            if (!entry.contains(DEFERRED_BLOCK, NbtElement.STRING_TYPE)
+                    || !entry.contains(DEFERRED_REASON, NbtElement.STRING_TYPE)
+                    || !entry.contains(SUPPORT_FINGERPRINT, NbtElement.STRING_TYPE)) {
+                continue;
+            }
+
+            SkipReason reason = readSkipReason(entry.getString(DEFERRED_REASON));
+            String fingerprint = entry.getString(SUPPORT_FINGERPRINT);
+
+            if (reason == null || fingerprint.isBlank()) {
+                continue;
+            }
+
+            pieces.add(new ConstructionProject.DeferredPiece(
+                    new ColonyPos(
+                            entry.getInt(POSITION_X),
+                            entry.getInt(POSITION_Y),
+                            entry.getInt(POSITION_Z)),
+                    ResourceId.parse(entry.getString(DEFERRED_BLOCK)),
+                    reason,
+                    fingerprint));
+        }
+
+        return pieces;
+    }
+
+    private static SkipReason readSkipReason(String name) {
+        for (SkipReason reason : SkipReason.values()) {
+            if (reason.name().equals(name)) {
+                return reason;
+            }
+        }
+
+        return null;
     }
 
     /**

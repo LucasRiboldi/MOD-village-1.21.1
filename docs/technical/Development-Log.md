@@ -8610,3 +8610,26 @@ tambem `ColonyCycleGameTest.aRestingMinerLeavesTheStoneTaskAvailable`, que usa
 os registros globais do mod. `./gradlew.bat runGametest --rerun-tasks` passou
 com 419/419. O proximo passo e o playtest de uma desistência real do mineiro
 com o JAR desta entrega.
+
+### 2026-09-24 - P1.2, peca sem apoio fica pendente
+
+O construtor tratava a recusa de assentamento como conclusao: removia da planta
+uma `ladder`, `wall_torch` ou outra peca sem apoio, apesar de nao ter posto
+bloco no mundo. Isso fazia a tentativa parecer concluida e transferia uma
+lacuna fisica para o reparo posterior.
+
+A decisao 2B passa a representar o resultado explicitamente. `Skipped` nao
+marca a peca como posta: `ConstructionProject` guarda a peca adiada com
+posicao, bloco, motivo e assinatura dos sete estados que podem dar apoio. O
+registro e persistido, mas a fonte de verdade continua sendo o mundo; a
+assinatura so invalida o adiamento para permitir nova tentativa quando o
+entorno mudar. O construtor encerra a tarefa e o planejador nao abre outra
+enquanto todas as pecas restantes estiverem adiadas. O relogio de inatividade
+tambem ignora esse estado intencional.
+
+`ConstructionOutcomeTest`, `ConstructionProjectTest` e `ConstructionSaveTest`
+cobrem o contrato de dados, a recuperacao no save e a reabertura controlada.
+`BuildProgressGameTest` prova no servidor tanto a obra parcial sem tarefa
+repetida quanto a liberacao depois de criar o apoio. A rodada limpa de
+`./gradlew.bat runGametest --rerun-tasks` passou com 421/421. Falta apenas o
+playtest do autor no save com o JAR desta entrega.

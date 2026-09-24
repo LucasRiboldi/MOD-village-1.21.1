@@ -189,6 +189,33 @@ class ConstructionProjectTest {
         assertEquals(2, project.remainingCount());
     }
 
+    @Test
+    void anUnsupportedPieceWaitsForItsSupportWithoutDisappearingFromTheProject() {
+        BlueprintBlock first = block(0, 0, 0, COBBLE);
+        ColonyPos position = project.worldPositionOf(first);
+
+        project.defer(
+                first,
+                ConstructionOutcome.skipped(position, SkipReason.UNSUPPORTED),
+                "support-before");
+
+        assertEquals(3, project.remainingCount(), "a peça parcial não pode parecer construída");
+        assertEquals(1, project.deferredPieces().size());
+        assertEquals(
+                COBBLE,
+                project.nextBlock().orElseThrow().block(),
+                "as outras peças apoiadas precisam poder continuar");
+        assertEquals(Map.of(COBBLE, 1, PLANKS, 1), project.remainingMaterials(),
+                "a peça parcial ainda existe, mas não deve gerar demanda antes de poder voltar");
+
+        ConstructionProject.DeferredPiece deferred = project.deferredPieces().get(0);
+
+        assertFalse(project.retryIfSupportChanged(deferred, "support-before"));
+        assertTrue(project.retryIfSupportChanged(deferred, "support-after"));
+        assertEquals(COBBLE, project.nextBlock().orElseThrow().block());
+        assertTrue(project.deferredPieces().isEmpty());
+    }
+
     // --- estados ---
 
     @Test

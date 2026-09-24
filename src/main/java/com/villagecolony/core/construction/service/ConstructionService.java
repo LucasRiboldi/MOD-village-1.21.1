@@ -63,7 +63,17 @@ public final class ConstructionService {
             UUID colonyId,
             ResourceId blueprint,
             ColonyPos origin,
-            ConstructionState state) {
+            ConstructionState state,
+            List<ConstructionProject.DeferredPiece> deferredPieces) {
+
+        public Pending(
+                UUID id,
+                UUID colonyId,
+                ResourceId blueprint,
+                ColonyPos origin,
+                ConstructionState state) {
+            this(id, colonyId, blueprint, origin, state, List.of());
+        }
 
         public Pending {
             Objects.requireNonNull(id, "id");
@@ -71,6 +81,7 @@ public final class ConstructionService {
             Objects.requireNonNull(blueprint, "blueprint");
             Objects.requireNonNull(origin, "origin");
             Objects.requireNonNull(state, "state");
+            deferredPieces = List.copyOf(Objects.requireNonNull(deferredPieces, "deferredPieces"));
         }
     }
 

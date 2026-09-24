@@ -52,7 +52,35 @@ public final class ConstructionProject {
     /** As posições do projeto que ainda não foram construídas. */
     private final List<BlueprintBlock> remaining;
 
+    /**
+     * Peças que continuam na planta, mas aguardam uma mudança no apoio.
+     *
+     * <p>Não é progresso persistido: o mundo continua sendo a fonte do
+     * que está de pé. Este registro só evita reservar um construtor de
+     * novo para a mesma tentativa física que já falhou.
+     */
+    private final Map<ColonyPos, DeferredPiece> deferred = new LinkedHashMap<>();
+
     private ConstructionState state;
+
+    /** Uma peça parcial e a leitura do mundo que justificou adiá-la. */
+    public record DeferredPiece(
+            ColonyPos position,
+            ResourceId block,
+            SkipReason reason,
+            String supportFingerprint) {
+
+        public DeferredPiece {
+            Objects.requireNonNull(position, "position");
+            Objects.requireNonNull(block, "block");
+            Objects.requireNonNull(reason, "reason");
+            Objects.requireNonNull(supportFingerprint, "supportFingerprint");
+
+            if (supportFingerprint.isBlank()) {
+                throw new IllegalArgumentException("supportFingerprint must not be blank");
+            }
+        }
+    }
 
     private ConstructionProject(
             UUID id, UUID colonyId, Blueprint blueprint, ColonyPos origin) {
@@ -128,6 +156,21 @@ public final class ConstructionProject {
             ColonyPos origin,
             ConstructionState state) {
 
+        return restore(id, colonyId, blueprint, origin, state, List.of());
+    }
+
+    /**
+     * Reabre uma obra preservando somente os adiamentos ainda compatíveis
+     * com a planta salva.
+     */
+    public static ConstructionProject restore(
+            UUID id,
+            UUID colonyId,
+            Blueprint blueprint,
+            ColonyPos origin,
+            ConstructionState state,
+            List<DeferredPiece> deferredPieces) {
+
         ConstructionProject project = new ConstructionProject(
                 Objects.requireNonNull(id, "id"),
                 Objects.requireNonNull(colonyId, "colonyId"),
@@ -135,6 +178,17 @@ public final class ConstructionProject {
                 Objects.requireNonNull(origin, "origin"));
 
         project.state = Objects.requireNonNull(state, "state");
+
+        for (DeferredPiece deferred : List.copyOf(
+                Objects.requireNonNull(deferredPieces, "deferredPieces"))) {
+            boolean stillInBlueprint = project.remaining.stream().anyMatch(block ->
+                    project.worldPositionOf(block).equals(deferred.position())
+                            && block.block().equals(deferred.block()));
+
+            if (stillInBlueprint) {
+                project.deferred.put(deferred.position(), deferred);
+            }
+        }
 
         return project;
     }
@@ -308,6 +362,10 @@ public final class ConstructionProject {
         Map<ResourceId, Integer> tally = new LinkedHashMap<>();
 
         for (BlueprintBlock block : remaining) {
+            if (deferred.containsKey(worldPositionOf(block))) {
+                continue;
+            }
+
             tally.merge(block.block(), 1, Integer::sum);
         }
 
@@ -337,6 +395,56 @@ public final class ConstructionProject {
         return List.copyOf(remaining);
     }
 
+    /** As peças que esperam uma mudança física, na ordem em que foram adiadas. */
+    public List<DeferredPiece> deferredPieces() {
+        return List.copyOf(deferred.values());
+    }
+
+    /**
+     * Guarda uma peça sem apoio para que ela não seja confundida com
+     * progresso e não reserve outro construtor sem uma mudança no mundo.
+     */
+    public void defer(
+            BlueprintBlock block,
+            ConstructionOutcome.Skipped outcome,
+            String supportFingerprint) {
+
+        Objects.requireNonNull(block, "block");
+        Objects.requireNonNull(outcome, "outcome");
+
+        if (!remaining.contains(block)) {
+            throw new IllegalArgumentException("Cannot defer a block outside the remaining project");
+        }
+
+        ColonyPos position = worldPositionOf(block);
+
+        if (!position.equals(outcome.position())) {
+            throw new IllegalArgumentException("Deferred position does not match the project block");
+        }
+
+        deferred.put(position, new DeferredPiece(
+                position, block.block(), outcome.skipReason(), supportFingerprint));
+    }
+
+    /**
+     * Recoloca a peça na fila quando a leitura de apoio não é mais a que
+     * falhou. Sem mudança, a tentativa continua adiada.
+     */
+    public boolean retryIfSupportChanged(DeferredPiece piece, String supportFingerprint) {
+        Objects.requireNonNull(piece, "piece");
+        Objects.requireNonNull(supportFingerprint, "supportFingerprint");
+
+        DeferredPiece current = deferred.get(piece.position());
+
+        if (!piece.equals(current) || current.supportFingerprint().equals(supportFingerprint)) {
+            return false;
+        }
+
+        deferred.remove(piece.position());
+
+        return true;
+    }
+
     /**
      * Onde vai este bloco, no mundo.
      *
@@ -363,7 +471,13 @@ public final class ConstructionProject {
     public boolean markPlaced(BlueprintBlock block) {
         Objects.requireNonNull(block, "block");
 
-        return remaining.remove(block);
+        boolean placed = remaining.remove(block);
+
+        if (placed) {
+            deferred.remove(worldPositionOf(block));
+        }
+
+        return placed;
     }
 
     /** Se não falta mais nada a pôr. */
@@ -405,7 +519,9 @@ public final class ConstructionProject {
      * lista para a próxima passagem.
      */
     public Optional<BlueprintBlock> nextBlock() {
-        return remaining.isEmpty() ? Optional.empty() : Optional.of(remaining.get(0));
+        return remaining.stream()
+                .filter(block -> !deferred.containsKey(worldPositionOf(block)))
+                .findFirst();
     }
 
     @Override
@@ -416,6 +532,7 @@ public final class ConstructionProject {
                 + ", origin=" + origin
                 + ", state=" + state
                 + ", remaining=" + remaining.size()
+                + ", deferred=" + deferred.size()
                 + "]";
     }
 }

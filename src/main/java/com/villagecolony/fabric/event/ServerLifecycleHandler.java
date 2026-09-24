@@ -206,7 +206,8 @@ public final class ServerLifecycleHandler {
                     project.colonyId(),
                     project.blueprint().id(),
                     project.origin(),
-                    project.state()));
+                    project.state(),
+                    project.deferredPieces()));
         }
 
         return saving;

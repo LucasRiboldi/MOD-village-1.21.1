@@ -7,6 +7,8 @@ import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
+import com.villagecolony.core.construction.model.ConstructionOutcome;
+import com.villagecolony.core.construction.model.SkipReason;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
@@ -251,7 +253,11 @@ public final class BuilderWork {
         Optional<BlueprintBlock> next = project.nextBlock();
 
         if (next.isEmpty()) {
-            complete(project, job, workerId);
+            if (project.isFinished()) {
+                complete(project, job, workerId);
+            } else {
+                finish(job, workerId, "every remaining piece is waiting for physical support");
+            }
 
             return false;
         }
@@ -370,19 +376,22 @@ public final class BuilderWork {
         }
 
         if (!state.canPlaceAt(world, target)) {
-            // Tocha sem parede, porta sem chão. Riscar em vez de tentar
-            // de novo: a ordem de baixo para cima já deu a esta posição a
-            // melhor chance que ela teria, e insistir é obra que não
-            // termina nunca.
+            // Tocha sem parede, porta sem chão. Não é bloco colocado e
+            // também não é uma obra que deva acordar outro construtor a
+            // cada ciclo: fica pendente até a leitura do apoio mudar.
+            ConstructionOutcome.Skipped outcome = ConstructionOutcome.skipped(
+                    project.worldPositionOf(block), SkipReason.UNSUPPORTED);
+            project.defer(block, outcome, supportFingerprint(world, target));
+
             VillageColonyMod.LOGGER.info(
-                    "Project {} skips {} at {} — nothing holds it",
+                    "Project {} defers {} at {} — nothing holds it",
                     project.id(),
                     block.block(),
                     target.toShortString());
 
-            project.markPlaced(block);
+            finish(job, workerId, "the next piece has no physical support at " + target.toShortString());
 
-            return true;
+            return false;
         }
 
         if (PottedPlant.isPotted(state)) {
@@ -1033,6 +1042,44 @@ public final class BuilderWork {
     /** Esquece tudo. Usado ao descarregar o mundo. */
     public static void clearAll() {
         JOBS.clear();
+    }
+
+    /**
+     * Reabre peças parciais apenas quando a leitura local que as impediu
+     * de ser colocadas mudou.
+     *
+     * <p>A assinatura cobre o alvo e seus seis vizinhos. É a pequena
+     * vizinhança que {@link BlockState#canPlaceAt} consulta para apoios
+     * usuais, como chão, parede e teto, sem gravar estado do Minecraft no
+     * core.
+     */
+    public static void reconsiderDeferredPieces(ServerWorld world, ConstructionProject project) {
+        for (ConstructionProject.DeferredPiece piece : project.deferredPieces()) {
+            BlockPos target = MinecraftTypeAdapter.toBlockPos(piece.position());
+
+            if (project.retryIfSupportChanged(piece, supportFingerprint(world, target))) {
+                VillageColonyMod.LOGGER.info(
+                        "Project {} retries {} at {} after its support changed",
+                        project.id(),
+                        piece.block(),
+                        target.toShortString());
+            }
+        }
+    }
+
+    /** Uma representação estável do alvo e de cada bloco que pode apoiá-lo. */
+    private static String supportFingerprint(ServerWorld world, BlockPos target) {
+        StringBuilder fingerprint = new StringBuilder(
+                world.getBlockState(target).toString());
+
+        for (Direction direction : Direction.values()) {
+            fingerprint.append('|')
+                    .append(direction.getName())
+                    .append('=')
+                    .append(world.getBlockState(target.offset(direction)));
+        }
+
+        return fingerprint.toString();
     }
 
     private static boolean isOngoing(Task task) {
