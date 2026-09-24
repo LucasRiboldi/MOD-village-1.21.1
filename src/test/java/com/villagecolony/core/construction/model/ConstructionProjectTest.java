@@ -326,7 +326,7 @@ class ConstructionProjectTest {
 
         assertEquals(64, Math.max(Math.abs(corner.x()), Math.abs(corner.z())));
 
-        assertTrue(ConstructionProject.isOutOfReach(corner, centre, 64));
+        assertTrue(ConstructionReach.isOutOfReach(corner, centre, 64));
     }
 
     /**
@@ -337,7 +337,7 @@ class ConstructionProjectTest {
     void theEdgeOfTheSweptSquareIsWithinReachByBothRulers() {
         ColonyPos centre = new ColonyPos(0, 64, 0);
 
-        assertFalse(ConstructionProject.isOutOfReach(new ColonyPos(64, 64, 0), centre, 64));
+        assertFalse(ConstructionReach.isOutOfReach(new ColonyPos(64, 64, 0), centre, 64));
     }
 
     // --- E46 / C4: quem responde "alcançável" é a rua, não o centro ---
@@ -355,10 +355,10 @@ class ConstructionProjectTest {
         ColonyPos centre = new ColonyPos(2495, 65, -3003);
         ColonyPos work = new ColonyPos(2456, 63, -2936);
 
-        assertTrue(ConstructionProject.isOutOfReach(work, centre, 64),
+        assertTrue(ConstructionReach.isOutOfReach(work, centre, 64),
                 "o cenário precisa ser uma obra que a régua antiga largava");
 
-        assertFalse(ConstructionProject.isOutOfReach(work, centre, 64, OptionalInt.of(1)));
+        assertFalse(ConstructionReach.isOutOfReach(work, centre, 64, OptionalInt.of(1)));
     }
 
     /**
@@ -374,7 +374,7 @@ class ConstructionProjectTest {
         ColonyPos centre = new ColonyPos(637, 65, -2871);
         ColonyPos stranded = new ColonyPos(638, 65, -2793);
 
-        assertTrue(ConstructionProject.isOutOfReach(
+        assertTrue(ConstructionReach.isOutOfReach(
                 stranded, centre, 64, OptionalInt.of(40)));
     }
 
@@ -389,10 +389,10 @@ class ConstructionProjectTest {
     void withoutARoadIndexTheCentreDecidesAsBefore() {
         ColonyPos centre = new ColonyPos(0, 64, 0);
 
-        assertTrue(ConstructionProject.isOutOfReach(
+        assertTrue(ConstructionReach.isOutOfReach(
                 new ColonyPos(100, 64, 0), centre, 64, OptionalInt.empty()));
 
-        assertFalse(ConstructionProject.isOutOfReach(
+        assertFalse(ConstructionReach.isOutOfReach(
                 new ColonyPos(30, 64, 0), centre, 64, OptionalInt.empty()));
     }
 
@@ -407,10 +407,10 @@ class ConstructionProjectTest {
         ColonyPos centre = new ColonyPos(0, 64, 0);
         ColonyPos far = new ColonyPos(1000, 64, 1000);
 
-        assertFalse(ConstructionProject.isOutOfReach(
-                far, centre, 64, OptionalInt.of(ConstructionProject.BESIDE_THE_ROAD)));
+        assertFalse(ConstructionReach.isOutOfReach(
+                far, centre, 64, OptionalInt.of(ConstructionReach.BESIDE_THE_ROAD)));
 
-        assertTrue(ConstructionProject.isOutOfReach(
-                far, centre, 64, OptionalInt.of(ConstructionProject.BESIDE_THE_ROAD + 1)));
+        assertTrue(ConstructionReach.isOutOfReach(
+                far, centre, 64, OptionalInt.of(ConstructionReach.BESIDE_THE_ROAD + 1)));
     }
 }

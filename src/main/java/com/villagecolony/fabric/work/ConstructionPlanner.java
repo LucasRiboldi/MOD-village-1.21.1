@@ -6,6 +6,7 @@ import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
+import com.villagecolony.core.construction.model.ConstructionReach;
 import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.core.coordination.IdleReason;
@@ -237,7 +238,7 @@ public final class ConstructionPlanner {
             // Vem antes do relógio de paciência porque não é caso dele: ele
             // só conta para WAITING_RESOURCES, e esta obra fica em BUILDING
             // para sempre, calada, com a vaga única ocupada. Ver
-            // ConstructionProject.isOutOfReach, que traz a aritmética do log
+            // ConstructionReach.isOutOfReach, que traz a aritmética do log
             // do autor.
             //
             // <b>E quem responde "alcançável" é a rua, não o centro</b> —
@@ -249,7 +250,7 @@ public final class ConstructionPlanner {
                     .map(roads -> roads.blocksToTheNearestRoad(open.get().origin()))
                     .orElseGet(OptionalInt::empty);
 
-            if (ConstructionProject.isOutOfReach(
+            if (ConstructionReach.isOutOfReach(
                     open.get().origin(), colony.center(), searchRadius, toTheRoad)) {
 
                 VillageColonyMod.LOGGER.info(
@@ -615,7 +616,7 @@ public final class ConstructionPlanner {
         //
         // As duas contas saem juntas de propósito: é a divergência entre
         // elas que condena a obra, e vê-las lado a lado torna o defeito
-        // legível na hora. Ver ConstructionProject.isOutOfReach, que usa a
+        // legível na hora. Ver ConstructionReach.isOutOfReach, que usa a
         // euclidiana, e BuildSiteScanner, que varre em quadrado.
         VillageColonyMod.LOGGER.info(
                 "Colony {} planned {} at {} — {} blocks, {} builders,"
@@ -676,7 +677,7 @@ public final class ConstructionPlanner {
      * A distância em linha reta, que é como o guarda de alcance mede — E46.
      *
      * <p>Euclidiana, arredondada: a conta do
-     * {@code ConstructionProject.isOutOfReach}. Quando ela passa do raio e
+     * {@code ConstructionReach.isOutOfReach}. Quando ela passa do raio e
      * a {@link #squareDistance} não passa, a obra nasce condenada.
      */
     private static int straightDistance(ColonyPos origin, ColonyPos centre) {

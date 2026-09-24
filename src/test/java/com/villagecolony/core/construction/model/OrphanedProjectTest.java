@@ -42,7 +42,7 @@ class OrphanedProjectTest {
         ColonyPos centre = new ColonyPos(637, 72, -2871);
 
         assertTrue(
-                ConstructionProject.isOutOfReach(work, centre, RADIUS),
+                ConstructionReach.isOutOfReach(work, centre, RADIUS),
                 "a obra a 78 blocos do centro passou por alcançável, e é a que travou a vila");
     }
 
@@ -58,7 +58,7 @@ class OrphanedProjectTest {
         ColonyPos whenPlanned = new ColonyPos(625, 72, -2854);
 
         assertFalse(
-                ConstructionProject.isOutOfReach(work, whenPlanned, RADIUS),
+                ConstructionReach.isOutOfReach(work, whenPlanned, RADIUS),
                 "a obra estava a 62 blocos quando nasceu — recusá-la ali seria recusar"
                         + " um lote bom");
     }
@@ -70,7 +70,7 @@ class OrphanedProjectTest {
         ColonyPos centre = new ColonyPos(10, 70, 10);
 
         assertFalse(
-                ConstructionProject.isOutOfReach(deep, centre, RADIUS),
+                ConstructionReach.isOutOfReach(deep, centre, RADIUS),
                 "a mina fundo da vila passou por fora do raio — a conta pegou o eixo Y");
     }
 
@@ -81,11 +81,11 @@ class OrphanedProjectTest {
         ColonyPos centre = new ColonyPos(0, 70, 0);
 
         assertFalse(
-                ConstructionProject.isOutOfReach(edge, centre, RADIUS),
+                ConstructionReach.isOutOfReach(edge, centre, RADIUS),
                 "a obra na borda exata do raio foi abandonada");
 
         assertTrue(
-                ConstructionProject.isOutOfReach(
+                ConstructionReach.isOutOfReach(
                         new ColonyPos(RADIUS + 1, 70, 0), centre, RADIUS),
                 "um bloco além da borda continuou passando por alcançável");
     }
