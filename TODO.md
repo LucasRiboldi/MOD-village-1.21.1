@@ -64,6 +64,20 @@ plano de confiabilidade operacional).
   investigadas e fechadas (ver a tabela de historico, entradas E4/E21)
   por falta de evidencia e obsolescencia, respectivamente — nao ha mais
   causa a diagnosticar que justifique `OperationalMatrixGameTest`.
+- [x] **Task 11 — observar inventario da vila sem mutar crescimento:**
+  `VillageInventory` (raio-x imutavel: adultos, camas, profissoes, obras
+  completas/ativas, cobertura de bau, recursos observados) montado por
+  `VillageInventoryObserver.observe`, que nunca chama
+  `ConstructionPlanner.plan`. `ColonyProfession`/`ChestCoverage`
+  espelham `ProfessionType`/`ChestSurvey` em `core/colony/model` —
+  decisao tomada com o usuario, path exato do plano em vez de mover para
+  `core/coordination`. `VillageInventoryObserverTest` (unit puro) nao
+  foi criado: `observe()` depende de `ServerWorld` real, sem precedente
+  de mock no projeto. Cobertura real no GameTest novo
+  `observingInventoryDoesNotChangeHouseAlternation`
+  (`FarmPlanGameTest`). `runGametest --rerun-tasks`: **423 testes,
+  422/423** (unica falha e a intermitencia pre-existente conhecida).
+  Commit `c6b4abf`.
 - [x] **Task 7 — traco circular de atividade persistido:** `ActivityTrace`
   (16.384 eventos/colonia) persistido em `ColonySavedData` via
   `ActivityTraceSave`. **Limite de escopo conhecido:** so
@@ -81,10 +95,14 @@ plano de confiabilidade operacional).
   ADR-023).
 - [ ] **Task 9 — observar baus e rotear pedidos fisicamente**
   (WarehouseObserver).
-- [ ] **Task 10 — matriz deterministica de profissoes criticas**
-  (OperationalMatrixGameTest).
-- [ ] **Task 11 — observar inventario da vila sem mutar crescimento**
-  (VillageInventory).
+- [ ] **Task 10 — nao implementada.** Ver entrada detalhada acima: E4 e
+  E21 foram investigadas e fechadas (falta de evidencia / obsolescencia),
+  e o UUID dos tres testes que a task pedia fixar nao tem efeito sobre
+  determinismo. Sem motivo remanescente para a task.
+- [x] **Task 11 — observar inventario da vila sem mutar crescimento:**
+  `VillageInventory`/`VillageInventoryObserver`, GameTest
+  `observingInventoryDoesNotChangeHouseAlternation`. Ver entrada
+  detalhada acima. Commit `c6b4abf`.
 - [ ] **Task 12 — endurance com seed fixa** (EnduranceReport).
 - [ ] **Task 13 — auditoria de exclusao e evidencia de release**
   (RemovalAudit, release_manifest.py).

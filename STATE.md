@@ -10,6 +10,24 @@
 
 ---
 
+## Entrega desta sessão — Task 11 do plano de confiabilidade operacional
+
+`VillageInventory` (raio-x imutável: adultos, camas, profissões, obras
+completas/ativas, cobertura de baú, recursos observados) montado por
+`VillageInventoryObserver.observe`, que nunca chama
+`ConstructionPlanner.plan`. `ColonyProfession`/`ChestCoverage` espelham
+`ProfessionType`/`ChestSurvey` em `core/colony/model` — decisão tomada
+com o autor, seguindo o path exato do plano em vez de mover a classe
+para `core/coordination`. `VillageInventoryObserverTest` (unit test
+puro) não foi criado: `observe()` depende de `ServerWorld` real e o
+projeto nunca mocka `ServerWorld` em teste unitário. A cobertura real
+fica no GameTest novo `observingInventoryDoesNotChangeHouseAlternation`
+em `FarmPlanGameTest`, que prova a garantia da decisão 11A diretamente.
+Corresponde à Task 11 (Decision 11A); commit `c6b4abf`.
+
+`./gradlew.bat build` e `runGametest --rerun-tasks`: 423 testes, 422/423
+— única falha é a intermitência pré-existente já conhecida.
+
 ## E4 e E21 fechadas por investigação; Task 10 não implementada
 
 Duas suspeitas antigas (`TODO.md`, marcadas 🟡 "suspeita, não diagnóstico")

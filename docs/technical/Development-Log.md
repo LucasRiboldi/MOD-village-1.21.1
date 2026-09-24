@@ -8902,3 +8902,60 @@ justificava: nao ha mais causa de E4/E21 a diagnosticar, e fixar UUID
 nos tres arquivos nao teria efeito pratico. `OperationalMatrixGameTest`
 nao foi criado — nao haveria conteudo real para ele indexar alem do que
 os testes existentes ja cobrem.
+
+### 2026-09-24 - P1.11, observar a vila sem planejar
+
+O plano de confiabilidade operacional (Decision 11A) pedia uma forma de
+"tirar um retrato" da colonia — adultos, camas, profissoes, obras,
+estoque observado — sem que a propria pergunta afetasse o que o
+planejador faz a seguir. So havia um chamador real de
+`ConstructionPlanner.plan` em producao
+(`VillageDetectionHandler.java`), dentro do ciclo real de planejamento:
+nao havia acoplamento perigoso a desfazer, so uma classe nova a
+adicionar ao lado.
+
+`VillageInventory`, em `core/colony/model`, e o valor imutavel: id da
+colonia, adultos, camas, contagem por profissao, obras completas e
+ativas, cobertura de bau e recursos observados. Nao e serializado, nao
+sobrevive ao ciclo — quem precisa de historico usa `ActivityTrace`
+(decisao 7B); esta classe responde so "agora".
+`VillageInventoryObserver.observe`, em `fabric/integration`, monta o
+valor lendo os registros existentes (`ColonyService`, `WorkerService`,
+`BuildingRegistry`, `ColonyChests`, `ChestInventoryReader`) e nunca
+chama `ConstructionPlanner.plan`.
+
+**Decisao tomada com o autor, pelo mesmo motivo da Task 7.**
+`VillageInventory` precisa combinar dados de quatro dominios do
+`core`: `Colony` (colony), `Worker`/`ProfessionType` (worker),
+`Building` (construction) e estoque fisico (resource/storage).
+`DependencyRuleTest.coreDomainsDoNotImportEachOther` proibe
+`core/colony` de importar os outros tres diretamente; `core/coordination`
+existe exatamente para esse caso (ADR-006 SS6), mas o plano coloca a
+classe em `core/colony/model`. Decidiu-se seguir o path exato do plano,
+espelhando `ProfessionType` como `ColonyProfession` — o mesmo preco que
+`ActivityProfession` ja paga na Task 7 — em vez de mover a classe.
+`Building` nao precisou de espelho: `VillageInventory` recebe inteiros
+ja contados (`completedBuildings`/`activeBuildings`), nunca o objeto.
+`ResourceTally` (outro dominio, `core/resource`) tambem ficou de fora:
+o estoque observado e `Map<ResourceId, Integer>` cru, do mesmo jeito que
+`WarehouseIndex` ja fazia na Task 8.
+
+**`VillageInventoryObserverTest` (unit test puro) nao foi criado.**
+`observe()` depende de `ServerWorld` real para
+`ColonyChests.nearestFirst` e `ChestInventoryReader.survey`; o projeto
+nunca mocka `ServerWorld` em teste unitario — nenhum precedente foi
+encontrado em `src/test`. A cobertura real fica no GameTest novo,
+`observingInventoryDoesNotChangeHouseAlternation` em `FarmPlanGameTest`:
+reproduz o cenario de alternancia casa/infraestrutura ja coberto por
+`theNextTurnAfterAHouseIsNonResidential`, com a observacao chamada duas
+vezes ao redor de `ConstructionPlanner.plan` — antes e depois — provando
+que nem a alternancia nem a fotografia mudam por causa da observacao.
+
+`VillageInventoryTest` cobre sete casos: contagem de profissao ausente,
+recurso nunca visto, cobertura parcial separada do estoque, mapas
+imutaveis, adultos negativos recusados, cobertura de bau conhecida e
+cobertura completa nao sendo parcial. `DependencyRuleTest` continua
+verde. `./gradlew.bat build` e `runGametest --rerun-tasks` fecharam com
+**423 GAME TESTS COMPLETE, 422/423** — a unica falha
+(`aVillageOnBedrockStillHasLots`) e a intermitencia pre-existente ja
+confirmada em sessoes anteriores.
