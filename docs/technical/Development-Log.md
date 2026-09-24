@@ -8591,3 +8591,22 @@ Com o cliente fechado, o artefato de
 porque o daemon anterior havia sido encerrado externamente e deixou apenas um
 lock obsoleto do Loom, que o Gradle reconstruiu. A rodada completa anterior de
 `./gradlew.bat runGametest --rerun-tasks` passou com 417/417.
+
+### 2026-09-23 - E43, descanso como regra de elegibilidade
+
+A segunda passagem de `WorkAssignment.takeOneTask` anulava o descanso de quatro
+ciclos: sem outra tarefa da profissao, ela reservava de novo a mesma capacidade
+que `giveUp` tinha acabado de colocar em descanso. A decisao 1A substitui esse
+fallback: capacidade descansando nao e elegivel em nenhuma reserva.
+
+`WorkEligibility` concentra os requisitos de descanso e de bau proprio, e
+`WorkAssignment` o consulta antes de reservar. Assim, uma passagem futura nao
+pode reintroduzir o fallback por copiar apenas parte do filtro. Nao houve
+mudanca de persistencia, Brain, mixin ou API de Fabric.
+
+A fase vermelha alterou quatro cenarios de `WorkAssignmentTest` e falhou com a
+implementacao antiga. Depois da correcao, o teste focado passou. Foi incluido
+tambem `ColonyCycleGameTest.aRestingMinerLeavesTheStoneTaskAvailable`, que usa
+os registros globais do mod. `./gradlew.bat runGametest --rerun-tasks` passou
+com 419/419. O proximo passo e o playtest de uma desistência real do mineiro
+com o JAR desta entrega.

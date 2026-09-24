@@ -59,38 +59,10 @@ public final class WorkAssignment {
      * são o caso comum, e a atribuição de profissão é passo separado.
      * Ver TASK-014.
      *
-     * <p><b>A mão emprestada saiu daqui em 2026-09-05</b> — decisão do autor,
-     * e ela desfaz a segunda peça da ADR-010.
-     *
-     * <p><b>A frase dele:</b> <i>"o lenhador não deve assumir tarefas de
-     * mineiro; o mineiro não deve assumir tarefas de lenhador"</i>, depois
-     * de ver a sessão de 2026-09-04 22:37. O log dela mostra a troca
-     * completa, e nos dois sentidos ao mesmo tempo:
-     *
-     * <pre>
-     * lumberjacks: d8560cec (MINER lending a hand) chopping — tree at ...
-     * miners:      af897f92 (LUMBERJACK lending a hand) digging Diorito ...
-     * </pre>
-     *
-     * <p>Os dois trocaram de ofício e nenhum dos dois rendeu: o lenhador
-     * emprestado passou dezesseis minutos preso na galeria, e o mineiro
-     * emprestado derrubou árvore enquanto a mina ficava sem ninguém que
-     * soubesse tocá-la. A ADR-010 previa o risco — <i>"o especialista
-     * some da especialidade"</i> — e apostava na 1ª passagem para
-     * segurá-lo. A aposta não pagou, porque o gatilho do empréstimo é
-     * justamente o travamento, e travar é o estado normal de quem tem
-     * trabalho longe.
-     *
-     * <p><b>O que fica no lugar dela é a 3ª passagem</b>, que a própria
-     * ADR-010 chamou de "o que impede a regra de virar o problema que ela
-     * conserta": o trabalhador travado volta à capacidade dele em vez de
-     * ficar parado. O descanso continua existindo e continua sendo lido
-     * pela 1ª passagem — ele só deixou de ter para onde mandar quem
-     * descansa.
-     *
-     * <p>Não se apaga o {@link Worker#rest}: profissão com mais de uma
-     * capacidade — e o modelo permite — continua preferindo a que não
-     * acabou de falhar. Ver {@link #takeOneTask}.
+     * <p>Uma capacidade em descanso não reserva tarefa em nenhuma passagem.
+     * O descanso é aplicado por {@link WorkEligibility}; isso impede que a
+     * atribuição devolva no mesmo ciclo o trabalho que acabou de falhar.
+     * Ver a emenda de 2026-09-23 da ADR-010.
      *
      * @return quantas tarefas foram reservadas agora
      */
@@ -236,25 +208,10 @@ public final class WorkAssignment {
             taskCapabilities.add(Capability.BUILD_STRUCTURE);
         }
 
-        // 1ª passagem: o trabalho dele, tirando o que acabou de travar.
+        // A elegibilidade é validada em reserveOne para valer para toda
+        // passagem presente ou futura que tente reservar esta capacidade.
         for (Capability capability : taskCapabilities) {
-            if (!worker.isResting(capability)
-                    && reserveOne(colonyId, worker, tasks, hasStorage, capability)) {
-
-                return true;
-            }
-        }
-
-        // <b>Aqui havia a mão emprestada</b>, e ela saiu em 2026-09-05.
-        // Ver o comentário de {@link #assign}: o trabalhador não pega
-        // mais tarefa de capacidade que a profissão dele não tem, e é
-        // isso que mantém lenhador na árvore e mineiro na mina.
-
-        // 2ª passagem: a capacidade em descanso, antes de deixá-lo parado.
-        // É o que impede o descanso de virar o problema que ele conserta.
-        for (Capability capability : taskCapabilities) {
-            if (worker.isResting(capability)
-                    && reserveOne(colonyId, worker, tasks, hasStorage, capability)) {
+            if (reserveOne(colonyId, worker, tasks, hasStorage, capability)) {
 
                 return true;
             }
@@ -284,7 +241,7 @@ public final class WorkAssignment {
             return false;
         }
 
-        if (task.get().type().needsOwnStorage() && !hasStorage.test(worker.villagerId())) {
+        if (!WorkEligibility.canReserve(worker, capability, task.get(), hasStorage)) {
             return false;
         }
 

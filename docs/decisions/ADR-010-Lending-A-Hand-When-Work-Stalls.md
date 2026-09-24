@@ -311,3 +311,37 @@ caminhada, e não por falta de mão emprestada. Ver `MinerReach.legTowards` e
 `MineDigging.armToWalk`.
 
 **Verificação:** `./gradlew build` e `runGametest`.
+
+---
+
+## Emenda de 2026-09-23 — descanso vale em toda reserva
+
+**Decisão do autor:** o descanso de uma capacidade impede qualquer reserva que
+a use ate o temporizador terminar. Esta emenda substitui somente o fallback da
+emenda de 2026-09-05 que devolvia a mesma capacidade ao trabalhador na segunda
+passagem; a separacao entre profissoes continua inalterada.
+
+### Motivo
+
+O E43 confirmou que o fallback anulava o contrato de quatro ciclos: depois de
+`giveUp`, um mineiro em `rest(COLLECT_STONE)` recebia `COLLECT_STONE` no ciclo
+seguinte se nao houvesse outra capacidade aplicavel. O contador existia, mas
+nao produzia efeito observavel.
+
+### Contrato
+
+- `WorkEligibility` e a regra unica para reserva de tarefa.
+- Uma capacidade em descanso nunca e elegivel, inclusive em passagens futuras
+  de `WorkAssignment`.
+- O trabalhador pode permanecer ocioso enquanto todas as capacidades aplicaveis
+  estiverem em descanso; a proxima atribuicao so volta apos o ciclo reduzir o
+  contador em `Worker.aCycleWentBy`.
+- Nenhuma tarefa de outra profissao e emprestada como compensacao.
+
+O estado de descanso continua apenas em `Worker`, e o Core permanece sem
+dependencia de mundo, Brain, mixin ou persistencia nova.
+
+**Verificacao:** a fase vermelha de `WorkAssignmentTest` falhou nos quatro
+casos de reserva durante descanso. Depois da correcao,
+`./gradlew.bat test --tests com.villagecolony.core.coordination.WorkAssignmentTest`
+e `./gradlew.bat runGametest --rerun-tasks` passaram, este ultimo com 419/419.

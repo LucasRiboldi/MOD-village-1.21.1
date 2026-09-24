@@ -30,10 +30,17 @@ conformes tambem ficam fora do estoque publico.
 controlado de tarefas travadas, sem UUID, coordenada ou texto livre. O
 analisador migra o historico para o esquema 2 e apresenta os totais da sessao
 por profissao, atividade, resultado e motivo. A rodada completa atual de
-`runGametest --rerun-tasks` passou com **418/418 GameTests**. Ainda falta abrir
+`runGametest --rerun-tasks` passou com **419/419 GameTests**. Ainda falta abrir
 um save com o JAR novo para confirmar porta ao nivel da rua, a passagem unica
 de baus em uma vila Vanilla recem-adotada e a primeira sessao real de
 telemetria.
+
+**E43 foi fechado no codigo em 23-09.** A capacidade que entrou em descanso
+nao recebe reserva em nenhuma passagem de `WorkAssignment`; por isso uma
+desistencia de `COLLECT_STONE` deixa a tarefa disponivel ate os quatro ciclos
+expirarem, sem emprestar outra profissao. A regressao unitaria teve fase
+vermelha e o `ColonyCycleGameTest` correspondente passou dentro dos 419/419.
+Falta somente o playtest de uma desistência real com o JAR desta entrega.
 
 **A mina agora tem um ciclo finito definido pelo autor.** Cada nivel abre um
 caracol compartilhado de dez degraus, limpa 50 blocos, e so entao libera os
