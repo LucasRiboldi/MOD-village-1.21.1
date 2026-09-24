@@ -1,5 +1,7 @@
 package com.villagecolony.fabric.event;
 
+import com.villagecolony.core.coordination.PlanningBudget;
+import com.villagecolony.fabric.integration.SweepDeadline;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.ClusterRejection;
 import com.villagecolony.core.colony.model.Colony;
@@ -98,6 +100,12 @@ final class ColonyCycleRunner {
     /** O último estoque que cada colônia mandou para o log. */
     static final Map<UUID, String> lastStock = new HashMap<>();
 
+    /** O tempo de planejador deste ciclo, para ajustar a cota do próximo. */
+    private static long plannerNanos;
+
+    /** Se o planejador deste ciclo tem prazo de relógio (só em jogo). */
+    private static boolean plannerDeadline;
+
     /**
      * O ciclo de simulação da ADR-002, uma vez por colônia ativa.
      *
@@ -112,7 +120,7 @@ final class ColonyCycleRunner {
     static void runColonyCycles(ServerWorld overworld, boolean onlyNearPlayers) {
         List<Colony> active = List.copyOf(VillageColonyMod.COLONIES.all()).stream()
                 .filter(Colony::isActive)
-                .filter(colony -> !onlyNearPlayers || isNearAPlayer(overworld, colony))
+                .filter(colony -> !onlyNearPlayers || VillageFocus.isNearAPlayer(overworld, colony))
                 .toList();
 
         // <b>A vez de planejar é repartida</b> — 2026-09-15. O log do autor
@@ -126,12 +134,25 @@ final class ColonyCycleRunner {
         // rodando para todas, pelo mesmo motivo que a guarda de abandono
         // registrou em 09-02: pular o ciclo inteiro faz o trabalhador
         // andar aos soluços. Ver PlannerTurns.
-        Set<UUID> planners = PlannerTurns.chooseFrom(
-                active.stream().map(Colony::id).toList(),
-                coloniesNearPlayers(overworld, active));
+        //
+        // <b>E em jogo só a vila foco planeja</b> — 2026-09-24, decisão do
+        // autor; ver VillageFocus. O planejador tem prazo de relógio e a
+        // cota se ajusta pelo custo do ciclo; ver PlanningBudget.
+        Set<UUID> watched = VillageFocus.coloniesNearPlayers(overworld, active);
+        List<UUID> eligible = onlyNearPlayers
+                ? VillageFocus.planners(active, watched)
+                : active.stream().map(Colony::id).toList();
+        Set<UUID> planners = PlannerTurns.chooseFrom(eligible, watched);
+
+        plannerNanos = 0;
+        plannerDeadline = onlyNearPlayers;
 
         for (Colony colony : active) {
             runCycleOf(overworld, colony, planners.contains(colony.id()));
+        }
+
+        if (onlyNearPlayers) {
+            PlannerTurns.observeCost(plannerNanos / 1_000_000L);
         }
 
         // As tarefas encerradas saem do registro depois de todas as
@@ -144,85 +165,6 @@ final class ColonyCycleRunner {
         // memória, e sem alguém que o remova o registro só cresce. A casa
         // fica em BUILDINGS.
         VillageColonyMod.CONSTRUCTIONS.purgeFinished();
-    }
-
-    /**
-     * As colônias que algum jogador está vendo agora — 2026-09-15.
-     *
-     * <p>Elas furam a fila do {@link PlannerTurns}, e o motivo é o relato
-     * do autor de 09-15: <i>"entrei no jogo, não vi nenhuma casa
-     * crescendo"</i>. O log daquela sessão mostrou o sistema funcionando —
-     * a rua cresceu três vezes em vinte minutos — e a colônia observada
-     * esperando quatro ciclos por vez, enquanto 28 das 29 colônias do
-     * mundo estavam dormentes e gastavam a fila sem ter o que fazer.
-     *
-     * <p><b>A régua é a mesma da vila</b>, {@code SEARCH_RADIUS}: dentro
-     * dela o jogador tem os chunks carregados e vê o que a colônia faz.
-     * Fora dela, o trabalho acontece sem plateia e pode esperar a vez.
-     *
-     * <p>Horizontal, como todo raio de vila neste projeto — ver
-     * {@code ConstructionReach.isOutOfReach}. O jogador no fundo da mina
-     * continua sendo o jogador daquela vila.
-     *
-     * <p>Custa uma volta pelos jogadores online vezes as colônias ativas,
-     * com aritmética de inteiros e nenhuma leitura de mundo. Num servidor
-     * cheio isso cresce, e o teto da cota continua sendo o que protege o
-     * tique: ver {@code PlannerTurns.PER_CYCLE}.
-     */
-    static Set<UUID> coloniesNearPlayers(
-            ServerWorld overworld, List<Colony> active) {
-
-        if (overworld.getPlayers().isEmpty()) {
-            // Servidor sem ninguém online: não há o que priorizar, e o
-            // rodízio puro é a resposta certa.
-            return Set.of();
-        }
-
-        Set<UUID> near = new HashSet<>();
-
-        for (Colony colony : active) {
-            if (isWithin(overworld, colony, VillageDetector.SEARCH_RADIUS)) {
-                near.add(colony.id());
-            }
-        }
-
-        return near;
-    }
-
-    /**
-     * Se esta colônia tem jogador perto o bastante para trabalhar —
-     * 2026-09-15.
-     *
-     * <p>Decisão do autor: <i>"não trabalhar nas vilas que o jogador não
-     * está perto"</i>. Ver {@link VillageDetectionHandler#WORKING_DISTANCE}.
-     *
-     * <p><b>Para o ciclo inteiro</b>, e não só o planejamento: trabalhador,
-     * leitura de baú e tarefa. A colônia longe fica inerte até alguém
-     * chegar, e retoma de onde parou — os cursores de varredura, mina e
-     * índice de ruas são guardados, e nada disso depende de ciclos
-     * contínuos.
-     *
-     * <p><b>Servidor sem ninguém online não trabalha</b>, e isso é a
-     * consequência honesta da regra. Antes disto as 29 colônias do mundo do
-     * autor ciclavam para sempre; agora o mundo vazio não gasta tique com
-     * vila nenhuma.
-     */
-    static boolean isNearAPlayer(ServerWorld overworld, Colony colony) {
-        return isWithin(overworld, colony, VillageDetectionHandler.WORKING_DISTANCE);
-    }
-
-    /** Se algum jogador está dentro deste raio do centro da colônia. */
-    static boolean isWithin(ServerWorld overworld, Colony colony, int radius) {
-        for (ServerPlayerEntity player : overworld.getPlayers()) {
-            long dx = (long) player.getBlockX() - colony.center().x();
-            long dz = (long) player.getBlockZ() - colony.center().z();
-
-            if (dx * dx + dz * dz <= (long) radius * radius) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -316,7 +258,16 @@ final class ColonyCycleRunner {
         // vez dela?". São duas perguntas distintas e ambas dizem não à
         // mesma chamada. Ver PlannerTurns.
         if (mayPlan && ColonyAbandonment.plansConstruction(colony)) {
-            ConstructionPlanner.plan(overworld, colony);
+            long planning = System.nanoTime();
+
+            if (plannerDeadline) {
+                SweepDeadline.within(PlanningBudget.DEADLINE_MS,
+                        () -> ConstructionPlanner.plan(overworld, colony));
+            } else {
+                ConstructionPlanner.plan(overworld, colony);
+            }
+
+            plannerNanos += System.nanoTime() - planning;
         }
 
         // A tábua da vila, e não sempre a de carvalho — a Regra 20. A

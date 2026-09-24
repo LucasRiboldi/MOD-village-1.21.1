@@ -366,7 +366,8 @@ public final class VillageDetectionHandler {
 
         mark = CycleCost.since(CycleCost.Phase.LIFECYCLE, mark);
 
-        VillageAdoption.detectFromColonyCenters(server.getOverworld());
+        VillageAdoption.detectFromColonyCenters(
+                server.getOverworld(), colony -> VillageFocus.isAnalyzed(server.getOverworld(), colony));
 
         CycleCost.since(CycleCost.Phase.DETECT, mark);
 

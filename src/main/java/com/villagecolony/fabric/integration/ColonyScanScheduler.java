@@ -45,6 +45,17 @@ public final class ColonyScanScheduler {
 
     /** Seleciona a mesma ordem usada pelo planejador, com prioridade limitada. */
     public Set<UUID> choose(Collection<UUID> colonyIds, Collection<UUID> watched) {
+        return choose(colonyIds, watched, budget);
+    }
+
+    /**
+     * O mesmo, com um teto dado por quem chama — 2026-09-24. A cota do
+     * planejador passou a se ajustar pelo custo do ciclo anterior; ver
+     * {@code PlanningBudget.nextTurns}. Acima do teto de construção, vale
+     * o teto de construção.
+     */
+    public Set<UUID> choose(Collection<UUID> colonyIds, Collection<UUID> watched, int limit) {
+        int budget = Math.max(1, Math.min(this.budget, limit));
         Objects.requireNonNull(colonyIds, "colonyIds");
         Objects.requireNonNull(watched, "watched");
         List<UUID> active = new ArrayList<>(new LinkedHashSet<>(colonyIds));

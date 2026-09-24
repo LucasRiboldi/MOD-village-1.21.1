@@ -129,6 +129,7 @@ public final class ServerLifecycleHandler {
         ColonyStateLog.clearAll();
         ColonyAbandonment.clearAll();
         PlannerTurns.clearAll();
+        VillageFocus.clearAll();
         SiteMarker.clearAll();
         ColonyEdits.clearAll();
         VillageDetectionHandler.clearPending();
@@ -322,6 +323,7 @@ public final class ServerLifecycleHandler {
         ColonyStateLog.clearAll();
         ColonyAbandonment.clearAll();
         PlannerTurns.clearAll();
+        VillageFocus.clearAll();
         SiteMarker.clearAll();
         ColonyEdits.clearAll();
         VillageDetectionHandler.clearPending();

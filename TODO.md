@@ -24,8 +24,8 @@ próxima avaliação mede.
 
 | # | Correção | Esforço / risco | Aceite |
 |---|---|---|---|
-| 1 | Limite de **tempo** para o planejador: a varredura pausa pelo cursor que já existe | baixo / baixo | `cycle_over_tick` cai; C13 ≥ 3 |
-| 2 | Cota de colônias planejando que se ajusta ao custo do ciclo anterior (hoje fixa em 8) | baixo / baixo | teste unitário da regra |
+| 1 ✅ | Limite de **tempo** para o planejador (`SweepDeadline`, 15 ms) — **feito**, ⬜ ver `cycle_over_tick` cair em jogo | baixo / baixo | `cycle_over_tick` cai; C13 ≥ 3 |
+| 2 ✅ | Cota ajustável (`PlanningBudget`), e em jogo **só a vila foco planeja e é sondada** (`VillageFocus`, decisão do autor) — **feito** | baixo / baixo | teste unitário da regra |
 | 3 | Registro único de estado de servidor (`resetAll`) no lugar de 78 `clearAll` à mão | médio / baixo | teste de inscrição; C05 ≥ 3 |
 | 4 | Matar sobreviventes do PIT (`MineShaft`, `ProfessionAssigner`, `ColonyCycle`) | médio / nulo | C08 ≥ 85% |
 | 5 | JaCoCo na bateria de jogo (cobertura do `fabric`) | baixo-médio / nulo | cobertura do `fabric` medida |

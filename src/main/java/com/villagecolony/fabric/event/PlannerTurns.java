@@ -1,5 +1,7 @@
 package com.villagecolony.fabric.event;
 
+import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.coordination.PlanningBudget;
 import com.villagecolony.core.coordination.ScanReport;
 import com.villagecolony.fabric.integration.ColonyScanScheduler;
 
@@ -120,11 +122,38 @@ final class PlannerTurns {
      *     sem ninguém online, e aí vale o rodízio puro
      */
     static Set<UUID> chooseFrom(List<UUID> active, Set<UUID> watched) {
-        return SCHEDULER.choose(active, watched);
+        return SCHEDULER.choose(active, watched, turns);
+    }
+
+    /**
+     * A cota atual — começa no teto e se ajusta pelo custo, 2026-09-24.
+     *
+     * <p>Os oito de 09-15 viraram o teto, e não o valor: o ciclo de 24-09
+     * gastou em média 255 ms de planejador com oito colônias, dez vezes o
+     * que a calibração de 09-15 previa. Ver {@code PlanningBudget}.
+     */
+    private static int turns = PER_CYCLE;
+
+    /** O ciclo terminou: ajusta a cota do próximo pelo custo deste. */
+    static void observeCost(long plannerMs) {
+        int next = PlanningBudget.nextTurns(turns, plannerMs);
+
+        if (next != turns) {
+            VillageColonyMod.LOGGER.info(
+                    "Planner turns {} -> {} (last cycle spent {} ms planning, target {} ms)",
+                    turns, next, plannerMs, PlanningBudget.TARGET_MS);
+            turns = next;
+        }
+    }
+
+    /** A cota atual, para o log e os testes. */
+    static int turns() {
+        return turns;
     }
 
     /** Esquece a vez — para os testes, e para o mundo que foi descarregado. */
     static void clearAll() {
         SCHEDULER.clear();
+        turns = PER_CYCLE;
     }
 }

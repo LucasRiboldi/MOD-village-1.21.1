@@ -99,10 +99,19 @@ final class VillageAdoption {
      * torno de um ponto, nunca pelo mundo.
      */
     static void detectFromColonyCenters(ServerWorld overworld) {
+        detectFromColonyCenters(overworld, colony -> true);
+    }
+
+    /**
+     * O mesmo, só nas colônias que a regra deixa analisar — 2026-09-24. Em
+     * jogo, a vila foco e as que têm jogador dentro; ver VillageFocus.
+     */
+    static void detectFromColonyCenters(
+            ServerWorld overworld, java.util.function.Predicate<Colony> analyzed) {
         List<Colony> active = new ArrayList<>();
 
         for (Colony colony : VillageColonyMod.COLONIES.all()) {
-            if (colony.isActive()) {
+            if (colony.isActive() && analyzed.test(colony)) {
                 active.add(colony);
             }
         }

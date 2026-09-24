@@ -9342,3 +9342,27 @@ reutilizavel.
 - **Achado durante a avaliacao:** a refatoracao do item 9 tinha quebrado 62
   links de javadoc (`InvalidLink` de 24 para 73). Foram reapontados para a
   classe nova; o build e duas rodadas da bateria foram refeitos em seguida.
+
+### 2026-09-24 - Ciclo lento: vila foco, prazo de varredura e cota ajustavel
+
+- **Causa medida no log de 24-09.** Nos 196 ciclos acima de um tique, o
+  planejador foi 91% do tempo. A cota fixa de 8 colonias coincidia com as 8
+  carregadas, entao todas varriam lote no mesmo tique.
+- **Decisao do autor:** so a vila onde o jogador passa mais tempo evolui.
+  - `ColonyFocus` (core) mede a presenca com meia-vida de 2 h de jogo.
+  - `VillageFocus` libera o planejador e a sonda de deteccao so para a vila
+    foco; sem foco ainda, para a vila onde o jogador esta.
+  - As outras vilas perto do jogador continuam com trabalhador, bau e
+    tarefa.
+- **Opcao 1:** `SweepDeadline` da a varredura um prazo de 15 ms por chamada,
+  depois de um piso de 64 colunas, e ela guarda o mesmo cursor de sempre. So
+  o ciclo de jogo arma o prazo; os testes continuam deterministicos.
+- **Opcao 2:** `PlanningBudget.nextTurns` ajusta a cota pelo custo do ciclo
+  anterior (alvo 20 ms, teto 8), com log `Planner turns A -> B`.
+- **Verificacao:**
+  - `ColonyFocusTest` (5) e `PlanningBudgetTest` (4);
+  - `SweepDeadlineGameTest`, confirmado por mutacao: sem o prazo, os dois
+    casos pausam no anel 16;
+  - 1034 unitarios; 434/434 GameTests em duas rodadas.
+- **Nao verificado em jogo.** Sinais no log: `Focus village is now`,
+  `Planner turns`, e a queda de `Colony cycle took`.
