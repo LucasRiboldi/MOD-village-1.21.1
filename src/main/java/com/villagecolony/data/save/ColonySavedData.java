@@ -407,8 +407,13 @@ public final class ColonySavedData extends PersistentState {
         return nbt;
     }
 
-    private static ColonySavedData readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries) {
+    private static ColonySavedData readNbt(NbtCompound rawNbt, RegistryWrapper.WrapperLookup registries) {
         ColonySavedData data = new ColonySavedData();
+
+        // A migração roda antes de qualquer leitor olhar um valor —
+        // decisão 8A, 2026-09-24. Ela nunca cria colônia, obra ou bloco;
+        // só normaliza o NBT para a forma que os leitores abaixo esperam.
+        NbtCompound nbt = SaveMigration.migrate(rawNbt);
 
         NbtList list = nbt.getList(COLONIES, NbtElement.COMPOUND_TYPE);
 
@@ -636,6 +641,12 @@ public final class ColonySavedData extends PersistentState {
      * <p>Mesmo princípio de {@link #readState}: não derrubar o
      * carregamento do mundo. Aqui o custo é menor — a atribuição inicial
      * dá uma função nova ao aldeão no próximo ciclo (TASK-014).
+     *
+     * <p><b>{@code BREEDER} não chega mais até aqui</b> — desde
+     * {@link SaveMigration}, 2026-09-24, ele já virou {@code SHEPHERD}
+     * antes de {@link #readNbt} montar esta lista. O laço abaixo
+     * continua sendo a última linha de defesa contra um enum removido
+     * do código ou um save editado à mão.
      */
     private static ProfessionType readProfession(NbtCompound entry) {
         if (!entry.contains(PROFESSION, NbtElement.STRING_TYPE)) {
@@ -643,10 +654,6 @@ public final class ColonySavedData extends PersistentState {
         }
 
         String name = entry.getString(PROFESSION);
-
-        if ("BREEDER".equals(name)) {
-            return ProfessionType.SHEPHERD;
-        }
 
         for (ProfessionType profession : ProfessionType.values()) {
             if (profession.name().equals(name)) {
