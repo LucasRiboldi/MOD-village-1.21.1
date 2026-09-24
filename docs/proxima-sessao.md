@@ -1,10 +1,11 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
 **Atualização de 2026-09-24, tarde — jogar com o spark ligado.** O JAR em
-`mods` agora é o do commit `49de0ba` (SHA-256
-`E4B068DE2C9EA8D6C1F9E9DC0ADE408BF5B98CDF9E43135E093261844D37C9CC`):
-revisão de naturalidade, rodada de qualidade e as 33 classes da
-refatoração — nada disso visto em jogo ainda, e o
+`mods` agora é o do commit `a119c2a` (SHA-256
+`F4226F8AA1EED834FEC508C5389ED4E287DF2A81FC7FC51878C2B6B1B511F911`):
+revisão de naturalidade, rodada de qualidade, refatoração e a **vila foco**
+(só ela planeja; procure `Focus village is now`, `Planner turns` e a queda
+de `Colony cycle took`) — nada disso visto em jogo ainda, e o
 **spark** 1.10.109 está instalado ao lado dele.
 
 - **Primeiro, o perfil.** Seguir `docs/technical/Profiling-spark.md`:
