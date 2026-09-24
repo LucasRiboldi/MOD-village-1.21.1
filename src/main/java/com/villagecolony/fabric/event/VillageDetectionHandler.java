@@ -49,6 +49,7 @@ import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.StrandedEscape;
+import com.villagecolony.fabric.work.VillageMeals;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.CraftingWork;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
@@ -204,11 +205,11 @@ public final class VillageDetectionHandler {
      * esta sequência.
      */
     public static void runFoundationNow(ServerWorld world, Colony colony) {
-        BigHouseFoundation.ensure(world, colony);
+        BigHouseFoundation.Result house = BigHouseFoundation.ensure(world, colony);
         registerVillagers(world, colony, colony.center());
 
         VillageFoundation.Result foundation = VillageFoundation.ensure(
-                world, colony, colony.center(), VillageColonyMod.WORKERS);
+                world, colony, colony.center(), VillageColonyMod.WORKERS, house.placed());
 
         if (foundation.changed()) {
             registerVillagers(world, colony, colony.center());
@@ -326,6 +327,10 @@ public final class VillageDetectionHandler {
         // Quem ficou preso cava a própria saída — E47, 2026-09-24. Uma
         // passagem por segundo, só para os encalhados; ver StrandedEscape.
         StrandedEscape.tick(server.getOverworld());
+
+        // A comida do fim do expediente, para a vila crescer por
+        // procriação — N1, 2026-09-24; ver VillageMeals.
+        VillageMeals.tick(server.getOverworld());
 
         // O contorno do lote escolhido — 2026-09-15, pedido do autor. Sai
         // de graça em 19 de cada 20 tiques; ver SiteMarker.EVERY_TICKS.
@@ -1271,7 +1276,7 @@ public final class VillageDetectionHandler {
                 VanillaBedChests.ensure(world, candidate.beds());
             }
 
-            BigHouseFoundation.ensure(world, colony);
+            BigHouseFoundation.Result house = BigHouseFoundation.ensure(world, colony);
 
             // A partir das camas vistas, e não do centro — 2026-08-22.
             // Desde a Emenda 4 o centro não persegue mais a observação,
@@ -1279,13 +1284,15 @@ public final class VillageDetectionHandler {
             // centro procuraria aldeões no lugar errado.
             registerVillagers(world, colony, candidate.center());
 
-            // Uma vila vanilla pode nascer com menos adultos ou sem cama
-            // válida para os trabalhadores que o save já conhecia. A
-            // fundação acontece depois do primeiro registro para que as
-            // novas entidades recebam a profissão no ciclo seguinte; a
-            // terceira passagem deixa o baú ser reivindicado por ela.
-            VillageFoundation.Result foundation = VillageFoundation.ensure(
-                    world, colony, candidate.center(), VillageColonyMod.WORKERS);
+            // A fundação povoa a vila uma vez só: quando ela nasce ou
+            // quando a BigHouseMOD acaba de subir (um aldeão por cama).
+            // Em qualquer outro ciclo, quem morreu fica morto e a vila
+            // cresce por procriação — N1, 2026-09-24.
+            VillageFoundation.Result foundation = created || house.placed()
+                    ? VillageFoundation.ensure(
+                            world, colony, candidate.center(),
+                            VillageColonyMod.WORKERS, house.placed())
+                    : new VillageFoundation.Result(0, 0);
 
             if (foundation.changed()) {
                 registerVillagers(world, colony, candidate.center());

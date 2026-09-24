@@ -113,6 +113,164 @@ public class VillageFoundationGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * N1, 2026-09-24: cada cama da BigHouseMOD ganha o seu morador, mesmo
+     * numa vila que já tinha adultos, e a cama sai com o bilhete tomado.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE,
+            batchId = "aaa_village_foundation", tickLimit = 120)
+    public void everyBedOfTheHouseGetsItsOwnNewborn(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos anchor = context.getAbsolutePos(new BlockPos(1, 1, 1))
+                .add(1000000, 0, 1003000);
+        Colony colony = Colony.create(
+                UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(anchor));
+        VillageColonyMod.COLONIES.register(colony);
+        prepareFoundationTerrain(world, anchor);
+
+        for (int index = 0; index < 3; index++) {
+            VillagerEntity local = net.minecraft.entity.EntityType.VILLAGER.create(world);
+            local.refreshPositionAndAngles(anchor.add(-18 + index, 0, -18), 0.0F, 0.0F);
+            world.spawnEntity(local);
+        }
+
+        try {
+            VillageDetectionHandler.runFoundationNow(world, colony);
+
+            Building house = houseOf(colony);
+            List<BlockPos> beds = bedHeads(world, house);
+
+            context.assertTrue(beds.size() == 6,
+                    "a BigHouseMOD deveria ter 6 camas, tem " + beds.size());
+            context.assertTrue(residents(world, house).size() == beds.size(),
+                    "nasceram " + residents(world, house).size() + " moradores para "
+                            + beds.size() + " camas");
+            context.assertTrue(VillageColonyMod.WORKERS.ofColony(colony.id()).size() >= 9,
+                    "os 3 adultos da vila mais os 6 moradores deveriam somar 9");
+
+            for (BlockPos bed : beds) {
+                // Sem ponto de interesse, zero bilhete livre é o valor
+                // padrão, e o caso não mediria nada — foi assim que a
+                // primeira versão, olhando o pé da cama, passou vazia.
+                context.assertTrue(
+                        world.getPointOfInterestStorage().getType(bed).isPresent(),
+                        "a cama " + bed.toShortString() + " nao e ponto de interesse");
+                context.assertTrue(
+                        world.getPointOfInterestStorage().getFreeTickets(bed) == 0,
+                        "a cama " + bed.toShortString() + " ficou sem bilhete tomado");
+            }
+        } finally {
+            cleanUp(world, colony, anchor);
+        }
+
+        context.complete();
+    }
+
+    /** N1, 2026-09-24: quem morre não é reposto pela passagem seguinte. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE,
+            batchId = "aaa_village_foundation", tickLimit = 120)
+    public void aDeadResidentIsNotReplacedByTheNextPass(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos anchor = context.getAbsolutePos(new BlockPos(1, 1, 1))
+                .add(1000000, 0, 1006000);
+        Colony colony = Colony.create(
+                UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(anchor));
+        VillageColonyMod.COLONIES.register(colony);
+        prepareFoundationTerrain(world, anchor);
+
+        try {
+            VillageDetectionHandler.runFoundationNow(world, colony);
+
+            Building house = houseOf(colony);
+            List<VillagerEntity> before = residents(world, house);
+
+            context.assertTrue(before.size() == 6,
+                    "a fundacao deveria criar 6 moradores, criou " + before.size());
+
+            VillagerEntity victim = before.get(0);
+            BlockPos victimBed = victim.getBrain()
+                    .getOptionalRegisteredMemory(MemoryModuleType.HOME)
+                    .orElseThrow()
+                    .pos();
+
+            victim.kill();
+            VillageDetectionHandler.runFoundationNow(world, colony);
+
+            context.assertTrue(residents(world, house).size() == 5,
+                    "a segunda passagem repos o morto: " + residents(world, house).size()
+                            + " moradores vivos");
+            context.assertTrue(
+                    world.getPointOfInterestStorage().getFreeTickets(victimBed) == 1,
+                    "a cama do morto nao voltou a ficar livre para a procriacao");
+        } finally {
+            cleanUp(world, colony, anchor);
+        }
+
+        context.complete();
+    }
+
+    private static Building houseOf(Colony colony) {
+        return VillageColonyMod.BUILDINGS.ofColony(colony.id()).stream()
+                .filter(building -> building.blueprint().equals(
+                        StructureBlueprintReader.BIG_HOUSE_MOD))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("BigHouseMOD nao foi registrada"));
+    }
+
+    /** A cabeça de cada cama: é onde o Vanilla registra o ponto de interesse. */
+    private static List<BlockPos> bedHeads(ServerWorld world, Building house) {
+        List<BlockPos> feet = new java.util.ArrayList<>();
+
+        for (int x = house.min().x(); x <= house.max().x(); x++) {
+            for (int y = house.min().y(); y <= house.max().y(); y++) {
+                for (int z = house.min().z(); z <= house.max().z(); z++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    net.minecraft.block.BlockState state = world.getBlockState(pos);
+
+                    if (state.getBlock() instanceof BedBlock
+                            && state.get(net.minecraft.state.property.Properties.BED_PART)
+                            == net.minecraft.block.enums.BedPart.HEAD) {
+                        feet.add(pos);
+                    }
+                }
+            }
+        }
+
+        return feet;
+    }
+
+    /** Aldeões vivos cuja cama fica dentro da casa. */
+    private static List<VillagerEntity> residents(ServerWorld world, Building house) {
+        BlockPos min = MinecraftTypeAdapter.toBlockPos(house.min());
+        BlockPos max = MinecraftTypeAdapter.toBlockPos(house.max());
+        net.minecraft.util.math.Box area = new net.minecraft.util.math.Box(
+                min.toCenterPos(), max.toCenterPos()).expand(40.0);
+
+        return world.getEntitiesByClass(VillagerEntity.class, area, VillagerEntity::isAlive)
+                .stream()
+                .filter(villager -> villager.getBrain()
+                        .getOptionalRegisteredMemory(MemoryModuleType.HOME)
+                        .map(home -> house.contains(MinecraftTypeAdapter.toColonyPos(home.pos())))
+                        .orElse(false))
+                .toList();
+    }
+
+    private static void cleanUp(ServerWorld world, Colony colony, BlockPos anchor) {
+        List<UUID> workerIds = VillageColonyMod.WORKERS.ofColony(colony.id())
+                .stream()
+                .map(Worker::villagerId)
+                .toList();
+
+        world.getEntitiesByClass(VillagerEntity.class,
+                        net.minecraft.util.math.Box.of(anchor.toCenterPos(), 90.0, 40.0, 90.0),
+                        villager -> true)
+                .forEach(VillagerEntity::discard);
+
+        ColonyFixture fixture = ColonyFixture.create().owning(colony);
+        workerIds.forEach(fixture::owning);
+        fixture.cleanUp();
+    }
+
     private static void prepareFoundationTerrain(ServerWorld world, BlockPos anchor) {
         world.getChunk(anchor);
 

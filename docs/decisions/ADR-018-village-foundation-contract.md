@@ -63,3 +63,32 @@ producao, mas nao cobre a fundacao minima exigida para toda vila.
 `./gradlew.bat runGametest` passou; a rodada final executou 384/384 GameTests,
 incluindo `BigHouseModBlueprintGameTest` e `VillageFoundationGameTest`. O
 playtest no save do autor continua pendente.
+
+## Emenda N1 - 2026-09-24: sem reposicao de mortos
+
+Decisao do autor na revisao de naturalidade
+(`docs/technical/Revisao-Naturalidade-2026-09-24.md`). Substitui o item 6 da
+Decisao e ajusta os itens 1 e 5.
+
+1. A fundacao povoa a vila **uma vez**. Ela roda quando a colonia nasce ou
+   quando a `BigHouseMOD` acaba de ser colocada. Em nenhum outro ciclo ela cria
+   aldeao, e um titular que morre nao e reposto.
+2. Quando a `BigHouseMOD` e colocada, nasce **um adulto para cada cama** da
+   casa, mesmo que a vila Vanilla ja tivesse adultos. A cama recebe o bilhete
+   do ponto de interesse do Vanilla, e a memoria `HOME` aponta para a cabeca da
+   cama, como no Vanilla. Por isso a morte do morador devolve a cama ao jogo.
+3. Sem lote para a casa, a colonia recem-nascida ainda recebe o caminho antigo:
+   completa os adultos da fundacao com camas avulsas.
+4. Depois da fundacao, a vila cresce por **procriacao Vanilla**. Uma vez por
+   dia, ao fim do expediente, e so se houver cama sobrando, `VillageMeals` tira
+   comida dos baus da colonia (pao, cenoura, batata, beterraba) e poe no
+   inventario de cada adulto ate os 12 pontos que o Vanilla exige. O filhote
+   cresce e recebe profissao pelo fluxo normal de atribuicao.
+
+Consequencia aceita: uma colonia sem comida e com titulares mortos perde a
+funcao ate alguem nascer e crescer.
+
+Verificacao: `VillageFoundationGameTest.everyBedOfTheHouseGetsItsOwnNewborn`,
+`aDeadResidentIsNotReplacedByTheNextPass` e `VillageMealsGameTest` (dois
+casos). Que a procriacao acontece de fato em jogo continua dependendo de
+playtest.
