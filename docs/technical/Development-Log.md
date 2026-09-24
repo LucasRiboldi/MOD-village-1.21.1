@@ -8959,3 +8959,52 @@ verde. `./gradlew.bat build` e `runGametest --rerun-tasks` fecharam com
 **423 GAME TESTS COMPLETE, 422/423** — a unica falha
 (`aVillageOnBedrockStillHasLots`) e a intermitencia pre-existente ja
 confirmada em sessoes anteriores.
+
+### 2026-09-24 - P1.12, relatorio reproduzivel de endurance; TODO corrigido sobre E41
+
+A Task 12 do plano de confiabilidade operacional (Decision 9B) pedia
+adicionar endurance com seed fixa "depois da matriz" (Task 10, nao
+implementada). Antes de codar, a leitura do arquivo que o plano listava
+para "Modify" — `ColonyEnduranceGameTest.java` — revelou que o caso
+critico ja existia inteiro: `theColonyDoesNotAccumulateAcrossTwoHundredCycles`,
+commit de 2026-09-11 (P1.13), roda duzentos ciclos com bau vazio como
+fonte de trabalho infinita e mede **deriva**, nao valor absoluto, em
+quatro contagens — total de tarefas, fila de tarefas abertas, obras
+registradas, baus registrados —, descontando cinquenta ciclos de
+aquecimento. E exatamente o E41 do `TODO.md`, que descrevia essa lacuna
+como a "maior lacuna de cobertura do projeto".
+
+**O `TODO.md` estava desatualizado**, nao o codigo: duas entradas
+marcavam E41 como `🟠 aberto`, quando o teste que fecha o item ja
+tinha treze dias de existencia. Contando as onze rodadas completas de
+`runGametest --rerun-tasks` desta sessao (Tasks 3 a 12), o teste nunca
+falhou uma vez. Corrigido para `✅ fechado` nas duas entradas, com a
+evidencia.
+
+**O que a Task 12 de fato acrescentou.** `EnduranceReport` e
+`LatencySummary`, em `fabric/work`: quando a corrida de duzentos ciclos
+falhar no futuro, um relatorio reproduzivel e montado e logado **antes**
+da asserção que pode falhar interromper o teste — seed (fixa por
+padrao, `EnduranceReport.DEFAULT_SEED`, ou uma alternativa revisada via
+propriedade de sistema `villagecolony.endurance.seed`), duracao em
+ticks, numero de ciclos, contagem de tarefas, um resumo de latencia
+(minimo, media, maximo em milissegundos, medido com `System.nanoTime`
+ao redor de cada `VillageDetectionHandler.runCycleNow`), e os 64 eventos
+mais recentes do `ActivityTrace` da colonia (decisao 7B). Montar o
+relatorio antes, e nao capturar a excecao do GameTest para monta-lo
+depois, evita depender de um tipo de excecao especifico do framework —
+sem nenhum precedente de captura desse tipo em todo o projeto.
+
+Toda corrida, nao so falha, agora termina com uma linha de resumo no
+log. A rodada desta sessao confirmou a integracao de ponta a ponta:
+`endurance seed=20260924 duration=200t cycles=200 tasks=1
+latency={min 0 ms, mean 0,3 ms, max 5 ms}`.
+
+`EnduranceReportTest` cobre oito casos: seed e recorte de traco no
+relatorio de falha, recorte limitado a 64 eventos, ordem mais-novo-
+primeiro, duracao/ciclos/contagem preservados, corrida bem-sucedida sem
+contexto de falha, seed padrao fixa, e o resumo de latencia
+(min/mean/max, inclusive de amostra vazia). `./gradlew.bat build` e
+`runGametest --rerun-tasks` fecharam com **423 GAME TESTS COMPLETE,
+422/423** — a unica falha e a intermitencia pre-existente ja conhecida;
+`theColonyDoesNotAccumulateAcrossTwoHundredCycles` passou.
