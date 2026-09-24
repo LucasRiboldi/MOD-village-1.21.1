@@ -258,7 +258,7 @@ public final class ProfessionAssigner {
         return perProfession + (position >= 0 && position < extras ? 1 : 0);
     }
 
-/**
+    /**
      * Dá função aos trabalhadores sem função que podem trabalhar.
      *
      * <p>Recalcula a cada atribuição, e não uma vez para o lote: atribuir

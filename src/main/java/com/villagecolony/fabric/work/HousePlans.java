@@ -343,7 +343,7 @@ public final class HousePlans {
         return List.of();
     }
 
-/**
+    /**
      * Quantas plantas a busca de lote experimenta por coluna.
      *
      * <p>A Regra 25 manda oferecer da maior para a menor, e a Regra 27
@@ -471,7 +471,7 @@ public final class HousePlans {
         return true;
     }
 
-private static int volumeOf(Blueprint plan) {
+    private static int volumeOf(Blueprint plan) {
         return plan.size().x() * plan.size().y() * plan.size().z();
     }
 

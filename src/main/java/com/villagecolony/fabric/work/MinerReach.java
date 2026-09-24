@@ -113,7 +113,7 @@ public final class MinerReach {
         return distanceTo(x, y, z, target) <= REACH;
     }
 
-/**
+    /**
      * As posições de onde se pode bater numa pedra, da mais perto para a
      * mais longe — 2026-09-03.
      *

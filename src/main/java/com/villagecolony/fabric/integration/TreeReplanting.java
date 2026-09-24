@@ -25,7 +25,7 @@ final class TreeReplanting {
     private TreeReplanting() {
     }
 
-/**
+    /**
      * Abre a coluna acima da muda.
      *
      * <p>A copa desta árvore já saiu com a colheita. O que pode ter

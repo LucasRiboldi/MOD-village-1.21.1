@@ -148,10 +148,10 @@ public final class ColonyGoals {
      */
     public static final int FOOD_PER_BED = 8;
 
-private ColonyGoals() {
+    private ColonyGoals() {
     }
 
-/**
+    /**
      * A meta desta colônia agora.
      *
      * <p>Recebe estoque e espaço porque os dois mudam a cada ciclo: o

@@ -320,7 +320,7 @@ public final class FarmerWork {
         };
     }
 
-private static boolean isWithinReach(VillagerEntity villager, BlockPos target) {
+    private static boolean isWithinReach(VillagerEntity villager, BlockPos target) {
         return villager.getBlockPos().isWithinDistance(target, REACH);
     }
 

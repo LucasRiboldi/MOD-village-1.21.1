@@ -209,7 +209,7 @@ public final class ConstructionProject {
         return origin;
     }
 
-public ConstructionState state() {
+    public ConstructionState state() {
         return state;
     }
 

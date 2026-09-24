@@ -459,7 +459,7 @@ public final class TreeHarvester {
         return merged;
     }
 
-private static BlockPos lowest(List<BlockPos> logs) {
+    private static BlockPos lowest(List<BlockPos> logs) {
         BlockPos lowest = logs.get(0);
 
         for (BlockPos log : logs) {
