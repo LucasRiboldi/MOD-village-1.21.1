@@ -33,6 +33,17 @@ plano de confiabilidade operacional).
   helices esgotadas; arco so sobe uma vez; prioridade do carvao ja coberta
   por `MinerGameTest.priorityRunsFromCoalDownToTheRareOnes`. Nenhum codigo
   novo necessario; sem commit proprio.
+- [x] **Task 7 — traco circular de atividade persistido:** `ActivityTrace`
+  (16.384 eventos/colonia) persistido em `ColonySavedData` via
+  `ActivityTraceSave`. **Limite de escopo conhecido:** so
+  `WorkerStrikes.gaveUp` gera evento — e o unico ponto com UUID de
+  trabalhador disponivel de fato. `IdleLog` (waiting/recovered, 45
+  chamadores, por colonia+assunto sem trabalhador identificavel) fica de
+  fora; se um dia fizer sentido rastrear "colonia sem executor" no traco,
+  precisa de um desenho novo (workerId opcional, ou evento por colonia em
+  vez de por trabalhador). `runGametest --rerun-tasks`: 421/422 em duas
+  rodadas (unica falha e a intermitencia pre-existente conhecida). Commit
+  `ae1bef6`.
 - [ ] **Task 7 — traco de atividade persistido e limitado** (ActivityTrace,
   16.384 eventos por colonia).
 - [ ] **Task 8 — contrato do armazem fisico** (WarehouseIndex, SupplyRequest,

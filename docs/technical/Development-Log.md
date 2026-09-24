@@ -8749,3 +8749,64 @@ limiar atingido reroteia, todas as helices esgotadas culpam a boca,
 progresso zera a paciencia, e a decisao nunca muta a mina. `./gradlew.bat
 build` e `runGametest --rerun-tasks` fecharam com **422/422 GameTests**,
 sem nenhuma falha.
+
+### 2026-09-24 - P1.7, traco circular de atividade persistido
+
+`ActivityLog` ja registrava transicoes de trabalho como linha de log
+(`VC_ACTIVITY ...`) desde 2026-09-23, para o `scripts/analyze_village_log.py`
+consolidar offline. Mas era so isso: texto solto no `latest.log`, sem
+estado em memoria, sem persistencia no save, sem consulta programatica.
+A decisao 7B pede um traco diferente — um buffer circular de 16.384
+eventos por colonia, persistido no proprio save, consultavel por
+`newestFirst(n)`.
+
+`ActivityTraceEvent` guarda seis campos: `workerId`, `profession`,
+`activity`, `state`, `reason`, `target`, mais um contador de progresso.
+Nenhuma coordenada, nenhum nome de bloco, nenhum texto livre — a mesma
+regua de `ActivityLog`. `ActivityTrace` e o buffer em si, mutavel de
+proposito como `Colony`/`Mine`: expulsa o mais antigo quando cheio e
+conta o estouro. `ActivityTraceSave` grava e le do NBT de
+`ColonySavedData`, com cada enum declarando `UNKNOWN` para um valor de
+versao futura ou save editado a mao — a mesma regra que
+`readState`/`readProfession` ja seguiam.
+
+**Tres decisoes tomadas com o autor, todas depois de ler o codigo real
+antes de escrever qualquer teste:**
+
+**1. Incluir `workerId`, seguindo o plano a risca.** O design existente
+de `ActivityLog` evita UUID de proposito — o javadoc diz "as linhas nao
+carregam UUID... para analise offline". A Task 7 pede o oposto: um
+evento por trabalhador identificado. As duas vias agora coexistem:
+`ActivityLog` continua alimentando o script Python, `ActivityTrace`
+persiste no save para quem precisar consultar programaticamente (a Task
+12, endurance, e a candidata natural).
+
+**2. `ActivityProfession` e `ControlledReason` espelham
+`ProfessionType`/`IdleReason`, em vez de importa-los.**
+`DependencyRuleTest.coreDomainsDoNotImportEachOther` e
+`coreDomainsDoNotImportTheCoordinationLayer` proibem qualquer dominio do
+`core` — inclusive `telemetry`, novo nesta entrega — de importar
+`core/worker` ou `core/coordination`. A emenda da ADR-006 SS6 abre
+`core/coordination` para importar qualquer dominio, mas so nessa direcao;
+ninguem importa `coordination` de volta. So `fabric/`, que enxerga os
+dois lados, traduz entre os vocabularios — ver
+`WorkerStrikes.toActivityProfession`/`toActivityKind`/`toTargetKind`.
+
+**3. A integracao real ficou restrita a `WorkerStrikes.gaveUp`.** E o
+unico ponto do codigo que tem o UUID do trabalhador de fato disponivel.
+`IdleLog` (`waiting`/`recovered`, 45 chamadores, fala por
+colonia+assunto — inclusive o caso legitimo "ninguem esta fazendo isso",
+`NO_EXECUTOR`) ficou de fora: integrar `workerId` ali exigiria reescrever
+codigo estavel em producao em escala bem maior do que esta entrega
+justificava. Fica registrado como limite de escopo conhecido, nao como
+lacuna esquecida.
+
+Cobertura: `ActivityTraceTest` (seis casos do buffer circular),
+`ActivityTraceSaveTest` (seis casos do round-trip NBT, incluindo enum
+desconhecido e colonia desconhecida) e `WorkerStrikesTest` (dois casos da
+integracao real). `DependencyRuleTest` continua verde. `./gradlew.bat
+build` e `runGametest --rerun-tasks` fecharam com **421/422 em duas
+rodadas consecutivas** — a unica falha
+(`BuildSiteGameTest.aVillageOnBedrockStillHasLots`) e a intermitencia
+pre-existente ja confirmada via `git stash` na entrega da Task 3, sem
+relacao com este codigo.

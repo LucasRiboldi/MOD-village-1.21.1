@@ -10,6 +10,29 @@
 
 ---
 
+## Entrega desta sessão — Task 7 do plano de confiabilidade operacional
+
+`ActivityTrace` é um buffer circular de 16.384 eventos por colônia, com
+`ActivityTraceEvent` (workerId, profession, activity, state, reason,
+target, progress — sem coordenada, sem texto livre), persistido em
+`ColonySavedData` via `ActivityTraceSave`. Três decisões tomadas com o
+autor: (1) incluir `workerId`, seguindo o plano à risca, mesmo
+`ActivityLog` (a telemetria de log já existente) evitando UUID de
+propósito — as duas vias coexistem; (2) `ActivityProfession` e
+`ControlledReason` espelham `ProfessionType`/`IdleReason` em vez de
+importá-los, porque `DependencyRuleTest` proíbe `core/telemetry` de
+importar `core/worker` ou `core/coordination`; (3) a integração real
+ficou restrita a `WorkerStrikes.gaveUp` — o único ponto com UUID de
+trabalhador de fato disponível. `IdleLog` (45 chamadores, por
+colônia+assunto, sem trabalhador identificável) ficou fora desta entrega,
+registrado como limite conhecido. Corresponde à Task 7 (Decision 7B);
+commit `ae1bef6`.
+
+`./gradlew.bat build` e `runGametest --rerun-tasks`: 422 testes, 421/422
+em duas rodadas consecutivas — a única falha
+(`aVillageOnBedrockStillHasLots`) é a intermitência pré-existente já
+confirmada via `git stash`, sem relação com este código.
+
 ## Entrega desta sessão — Task 5 do plano de confiabilidade operacional
 
 `MineRecovery.recover(Mine)` extrai a decisão pura que já vivia dentro de
