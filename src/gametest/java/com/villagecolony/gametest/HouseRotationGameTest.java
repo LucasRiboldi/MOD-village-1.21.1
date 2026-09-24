@@ -43,6 +43,35 @@ public class HouseRotationGameTest implements FabricGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "house_rotation_beds")
     public void missingBedsOpenAHouseEvenWhenTheTurnIsAnotherType(TestContext context) {
+        ResourceId opened = openAfterAHouse(context, BEDS);
+
+        context.assertTrue(
+                HousePlans.isHouse(opened),
+                "oito adultos e seis camas, e a colônia abriu " + opened + " em vez de uma casa");
+
+        context.complete();
+    }
+
+    /**
+     * N9, 2026-09-24: com cama para todos, a vez de "outra" vai para a
+     * oficina de um ofício — e não para o templo, o poste ou o cercado que
+     * vêm antes no catálogo.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "house_rotation_trade")
+    public void theTurnAfterAHouseGoesToATradesWorkshop(TestContext context) {
+        ResourceId opened = openAfterAHouse(context, 40);
+
+        // A roça é a oficina do primeiro ofício da ordem (o fazendeiro), e
+        // nenhuma obra da colônia é roça: é ela que a vez tem de abrir.
+        context.assertTrue(
+                opened.path().contains("farm"),
+                "a vez era da oficina do fazendeiro, e a colônia abriu " + opened);
+
+        context.complete();
+    }
+
+    /** Uma casa de pé, a vez é de outro tipo; devolve o que a colônia abriu. */
+    private static ResourceId openAfterAHouse(TestContext context, int beds) {
         BlockPos center = new BlockPos(16, 1, 16);
 
         for (int dx = -SCAN_RADIUS; dx <= SCAN_RADIUS; dx++) {
@@ -63,8 +92,7 @@ public class HouseRotationGameTest implements FabricGameTest {
         ColonyPos colonyCenter = MinecraftTypeAdapter.toColonyPos(absoluteRoad);
         Colony colony = Colony.create(colonyId, colonyCenter);
 
-        // A detecção de vila contou seis camas para oito adultos.
-        colony.observe(colonyCenter, BEDS);
+        colony.observe(colonyCenter, beds);
 
         VillageColonyMod.COLONIES.register(colony);
 
@@ -123,18 +151,13 @@ public class HouseRotationGameTest implements FabricGameTest {
 
             context.assertTrue(
                     opened.isPresent(),
-                    "a colônia com gente sem cama não abriu obra nenhuma");
+                    "com " + beds + " camas a colônia não abriu obra nenhuma");
 
-            context.assertTrue(
-                    HousePlans.isDwelling(opened.get().blueprint().id()),
-                    "oito adultos e seis camas, e a colônia abriu "
-                            + opened.get().blueprint().id() + " em vez de uma casa");
+            return opened.get().blueprint().id();
         } finally {
             VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
             VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
             owned.cleanUp();
         }
-
-        context.complete();
     }
 }

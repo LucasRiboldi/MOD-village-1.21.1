@@ -552,7 +552,7 @@ public final class ConstructionPlanner {
         // — com peso dobrado sobre as irmãs.
         List<Blueprint> candidates = new ArrayList<>(plans);
 
-        if (HousePlans.isDwelling(blueprint.id())) {
+        if (HousePlans.isHouse(blueprint.id())) {
             candidates.addAll(HousePlans.siblingsOf(
                     world, HousePlans.paletteOf(world, colony.center()).style(), site.size()));
         }

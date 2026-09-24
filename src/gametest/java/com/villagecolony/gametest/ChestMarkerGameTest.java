@@ -216,6 +216,15 @@ public class ChestMarkerGameTest implements FabricGameTest {
     public void markingTwiceLeavesOneFrame(TestContext context) {
         BlockPos chest = new BlockPos(3, 2, 3);
 
+        // O baú fica fora da caixa que a arena limpa, e um quadro de outro
+        // lote que usou este mesmo lugar contaria como o segundo — foi assim
+        // que o teste falhou duas vezes em 2026-09-24, só por um lote novo
+        // ter mudado a disposição das arenas.
+        BlockPos absolute = context.getAbsolutePos(chest);
+        context.getWorld().getEntitiesByClass(
+                ItemFrameEntity.class, new Box(absolute).expand(2.0), frame -> true)
+                .forEach(ItemFrameEntity::discard);
+
         context.setBlockState(chest, Blocks.CHEST.getDefaultState());
 
         ServerWorld world = context.getWorld();

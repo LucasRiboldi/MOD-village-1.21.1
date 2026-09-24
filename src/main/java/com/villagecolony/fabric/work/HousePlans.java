@@ -8,6 +8,7 @@ import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.Side;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
@@ -170,7 +171,7 @@ public final class HousePlans {
     static boolean nextConstructionIsHouse(List<Building> buildings) {
         Optional<Building> last = lastAttempted(buildings);
 
-        return last.isEmpty() || !isDwelling(last.get().blueprint());
+        return last.isEmpty() || !isHouse(last.get().blueprint());
     }
 
     /**
@@ -229,13 +230,21 @@ public final class HousePlans {
 
         String previous = lastNonHouseType(buildings).orElse("");
 
-        return nonHousePlansFor(world, colony, previous);
+        return nonHousePlansFor(world, colony, previous, buildings);
     }
 
     /** O tipo semântico de uma planta, usado para o rodízio A/B. */
     static String constructionType(ResourceId id) {
-        if (isDwelling(id)) {
+        if (isHouse(id)) {
             return "house";
+        }
+
+        // Oficina do jogo — N9: cada uma é o seu próprio tipo, para a vez
+        // de "outra" poder escolher a oficina do ofício que falta.
+        Optional<String> shop = ConstructionOrder.shopType(id);
+
+        if (shop.isPresent()) {
+            return shop.get();
         }
 
         for (String type : NON_DWELLING_TYPES) {
@@ -264,7 +273,7 @@ public final class HousePlans {
         for (int index = buildings.size() - 1; index >= 0; index--) {
             Building building = buildings.get(index);
 
-            if (!isDwelling(building.blueprint())) {
+            if (!isHouse(building.blueprint())) {
                 return Optional.of(constructionType(building.blueprint()));
             }
         }
@@ -272,9 +281,12 @@ public final class HousePlans {
         return Optional.empty();
     }
 
-    /** As famílias não residenciais, na ordem do catálogo, sem a anterior. */
+    /**
+     * As plantas da vez de "outra": a família que {@link ConstructionOrder}
+     * escolhe — oficina do ofício que falta primeiro —, sem a anterior.
+     */
     private static List<Blueprint> nonHousePlansFor(
-            ServerWorld world, Colony colony, String previousType) {
+            ServerWorld world, Colony colony, String previousType, List<Building> buildings) {
 
         String style = paletteOf(world, colony.center()).style();
         Map<String, List<Blueprint>> byType = new LinkedHashMap<>();
@@ -305,7 +317,16 @@ public final class HousePlans {
             byType.computeIfAbsent(type, ignored -> new ArrayList<>()).add(prepared);
         }
 
-        for (List<Blueprint> plans : byType.values()) {
+        Map<String, Optional<ProfessionType>> professionOfType = new HashMap<>();
+
+        byType.forEach((type, plans) -> professionOfType.put(
+                type, ConstructionOrder.professionOf(plans.get(0).id())));
+
+        Optional<String> chosen = ConstructionOrder.nextType(
+                buildings, byType.keySet(), professionOfType, HousePlans::constructionType);
+
+        if (chosen.isPresent()) {
+            List<Blueprint> plans = byType.get(chosen.get());
             plans.sort(Comparator.comparingInt(HousePlans::volumeOf).reversed());
 
             Set<ResourceId> skipped = new HashSet<>();
@@ -456,7 +477,7 @@ public final class HousePlans {
         Set<ColonyPos> sizes = new HashSet<>();
 
         for (ResourceId id : VillageStructures.housesFor(style)) {
-            if (!isDwelling(id)) {
+            if (!isHouse(id)) {
                 continue;
             }
 
@@ -517,6 +538,17 @@ public final class HousePlans {
     private static final List<String> NON_DWELLING_TYPES = List.of(
             "animal_pen", "meeting_point", "temple", "stable", "accessory", "farm", "lamp");
 
+    /**
+     * Se a vez da casa pode oferecer esta planta — N9, 2026-09-24.
+     *
+     * <p>Moradia que não é oficina. As oficinas do jogo têm cama, e por isso
+     * {@link #isDwelling} as aceita; mas a vila do autor levanta casa na vez
+     * da casa, e a oficina na vez dela — ver {@link ConstructionOrder}.
+     */
+    public static boolean isHouse(ResourceId id) {
+        return isDwelling(id) && !ConstructionOrder.isShop(id);
+    }
+
     /** Se esta peça é casa de morar, e não cerca, poço ou templo. */
     public static boolean isDwelling(ResourceId id) {
         for (String other : NON_DWELLING_TYPES) {
@@ -564,7 +596,7 @@ public final class HousePlans {
         List<Blueprint> siblings = new ArrayList<>();
 
         for (ResourceId id : VillageStructures.housesFor(style)) {
-            if (!isDwelling(id)) {
+            if (!isHouse(id)) {
                 continue;
             }
 
