@@ -5,6 +5,7 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.coordination.ColonyGoals;
+import com.villagecolony.core.coordination.StockRules;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
@@ -232,7 +233,7 @@ public final class SmelterWork {
                 // A sessão de 17:15 parou 39 vezes esperando
                 // cut_sandstone com <b>139 arenitos LISOS e zero cru</b>:
                 // o fundidor assou o estoque inteiro, e o arenito
-                // cortado sai do cru. Ver ColonyGoals.rawToKeep.
+                // cortado sai do cru. Ver StockRules.rawToKeep.
                 if (!mayStillSmelt(world, searched, raw, made.get())) {
                     continue;
                 }
@@ -296,7 +297,7 @@ public final class SmelterWork {
 
         int madeCount = ColonyChests.countIn(world, chests, processed);
 
-        return ColonyGoals.rawThatMayBeSmelted(rawCount, madeCount) > 0;
+        return StockRules.rawThatMayBeSmelted(rawCount, madeCount) > 0;
     }
 
     static String lookedButFound(int chests, String raws) {

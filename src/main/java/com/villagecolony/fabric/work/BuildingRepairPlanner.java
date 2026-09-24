@@ -73,7 +73,7 @@ final class BuildingRepairPlanner {
                 continue;
             }
 
-            Optional<Blueprint> blueprint = HousePlans.blueprintOf(
+            Optional<Blueprint> blueprint = PlanPlacement.blueprintOf(
                     world, colony.id(), building.blueprint(), building.min());
 
             if (blueprint.isEmpty()) {
@@ -194,7 +194,7 @@ final class BuildingRepairPlanner {
                 continue;
             }
 
-            Optional<Blueprint> blueprint = HousePlans.blueprintOf(
+            Optional<Blueprint> blueprint = PlanPlacement.blueprintOf(
                     world, colony.id(), building.blueprint(), building.min());
 
             return blueprint.isPresent()

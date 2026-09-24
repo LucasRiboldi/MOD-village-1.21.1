@@ -50,7 +50,7 @@ public class FoundationRepairGameTest implements FabricGameTest {
         ColonyPos origin = MinecraftTypeAdapter.toColonyPos(
                 context.getAbsolutePos(new BlockPos(1, 4, 1)));
         Colony colony = Colony.create(UUID.randomUUID(), origin);
-        BlueprintBlock standing = HousePlans.blueprintOf(
+        BlueprintBlock standing = PlanPlacement.blueprintOf(
                 context.getWorld(), colony.id(), StructureBlueprintReader.BIG_HOUSE_MOD, origin)
                 .orElseThrow(() -> new AssertionError("planta da BigHouseMOD ausente"))
                 .blocks().stream()

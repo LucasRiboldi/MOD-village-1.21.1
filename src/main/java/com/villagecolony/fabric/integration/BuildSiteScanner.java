@@ -12,6 +12,7 @@ import com.villagecolony.core.coordination.ScanReport;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.work.HousePlans;
+import com.villagecolony.fabric.work.PlanPlacement;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -1877,7 +1878,7 @@ public final class BuildSiteScanner {
             }
 
             Optional<Blueprint> blueprint =
-                    HousePlans.blueprintOf(world, pending.colonyId(), pending.blueprint(), pending.origin());
+                    PlanPlacement.blueprintOf(world, pending.colonyId(), pending.blueprint(), pending.origin());
 
             if (blueprint.isEmpty()) {
                 continue;

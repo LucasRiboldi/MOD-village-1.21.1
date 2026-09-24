@@ -53,38 +53,38 @@ public final class ColonySavedData extends PersistentState {
     /** Nome do arquivo em {@code data/}. Mudar isto invalida saves. */
     public static final String KEY = "villagecolony_colonies";
 
-    private static final String COLONIES = "colonies";
-    private static final String ID = "id";
-    private static final String CENTER_X = "centerX";
-    private static final String CENTER_Y = "centerY";
-    private static final String CENTER_Z = "centerZ";
-    private static final String STATE = "state";
-    private static final String OBSERVED_BEDS = "observedBeds";
+    static final String COLONIES = "colonies";
+    static final String ID = "id";
+    static final String CENTER_X = "centerX";
+    static final String CENTER_Y = "centerY";
+    static final String CENTER_Z = "centerZ";
+    static final String STATE = "state";
+    static final String OBSERVED_BEDS = "observedBeds";
 
-    private static final String WORKERS = "workers";
-    private static final String VILLAGER_ID = "villagerId";
-    private static final String COLONY_ID = "colonyId";
-    private static final String PROFESSION = "profession";
+    static final String WORKERS = "workers";
+    static final String VILLAGER_ID = "villagerId";
+    static final String COLONY_ID = "colonyId";
+    static final String PROFESSION = "profession";
 
-    private static final String PROJECTS = "projects";
-    private static final String BUILDINGS = "buildings";
-    private static final String BLUEPRINT = "blueprint";
-    private static final String ORIGIN_X = "originX";
-    private static final String ORIGIN_Y = "originY";
-    private static final String ORIGIN_Z = "originZ";
-    private static final String DEFERRED_PIECES = "deferredPieces";
-    private static final String POSITION_X = "x";
-    private static final String POSITION_Y = "y";
-    private static final String POSITION_Z = "z";
-    private static final String DEFERRED_BLOCK = "block";
-    private static final String DEFERRED_REASON = "reason";
-    private static final String SUPPORT_FINGERPRINT = "supportFingerprint";
-    private static final String MIN_X = "minX";
-    private static final String MIN_Y = "minY";
-    private static final String MIN_Z = "minZ";
-    private static final String MAX_X = "maxX";
-    private static final String MAX_Y = "maxY";
-    private static final String MAX_Z = "maxZ";
+    static final String PROJECTS = "projects";
+    static final String BUILDINGS = "buildings";
+    static final String BLUEPRINT = "blueprint";
+    static final String ORIGIN_X = "originX";
+    static final String ORIGIN_Y = "originY";
+    static final String ORIGIN_Z = "originZ";
+    static final String DEFERRED_PIECES = "deferredPieces";
+    static final String POSITION_X = "x";
+    static final String POSITION_Y = "y";
+    static final String POSITION_Z = "z";
+    static final String DEFERRED_BLOCK = "block";
+    static final String DEFERRED_REASON = "reason";
+    static final String SUPPORT_FINGERPRINT = "supportFingerprint";
+    static final String MIN_X = "minX";
+    static final String MIN_Y = "minY";
+    static final String MIN_Z = "minZ";
+    static final String MAX_X = "maxX";
+    static final String MAX_Y = "maxY";
+    static final String MAX_Z = "maxZ";
 
     /**
      * Se esta construção é uma casa terminada — 2026-09-15.
@@ -100,7 +100,7 @@ public final class ColonySavedData extends PersistentState {
      * como casa naquela colônia. É um erro que se apaga sozinho na primeira
      * casa que ela terminar, e menor que o outro.
      */
-    private static final String FINISHED = "finished";
+    static final String FINISHED = "finished";
 
     /** As peças da Regra 21 que esta casa já recebeu, uma vez cada. */
 
@@ -109,9 +109,9 @@ public final class ColonySavedData extends PersistentState {
             ColonySavedData::readNbt,
             null);
 
-    private final List<Colony> colonies = new ArrayList<>();
+    final List<Colony> colonies = new ArrayList<>();
 
-    private final List<Worker> workers = new ArrayList<>();
+    final List<Worker> workers = new ArrayList<>();
 
     /**
      * As obras em andamento, e o que a colônia já levantou.
@@ -121,9 +121,9 @@ public final class ColonySavedData extends PersistentState {
      * órfã, apontando para colônia que não foi gravada, sem transação que
      * mantivesse os dois em sincronia.
      */
-    private final List<ConstructionService.Pending> projects = new ArrayList<>();
+    final List<ConstructionService.Pending> projects = new ArrayList<>();
 
-    private final List<Building> buildings = new ArrayList<>();
+    final List<Building> buildings = new ArrayList<>();
 
     /**
      * A mina de cada colônia — Regra 29.
@@ -131,7 +131,7 @@ public final class ColonySavedData extends PersistentState {
      * <p>No mesmo arquivo pelo mesmo motivo de sempre: a mina aponta
      * para a colônia por id, e mina órfã seria escada de dono nenhum.
      */
-    private final List<Mine> mines = new ArrayList<>();
+    final List<Mine> mines = new ArrayList<>();
 
     /**
      * As ruas que cada colônia já mediu — 2026-08-27.
@@ -139,7 +139,7 @@ public final class ColonySavedData extends PersistentState {
      * <p>No mesmo arquivo pelo mesmo motivo de sempre: o índice aponta
      * para a colônia por id, e índice órfão seria mapa de vila nenhuma.
      */
-    private final List<ColonyRoads> roads = new ArrayList<>();
+    final List<ColonyRoads> roads = new ArrayList<>();
 
     /**
      * A varredura que ficou no meio — 2026-08-27.
@@ -148,7 +148,7 @@ public final class ColonySavedData extends PersistentState {
      * terminada, este a que não chegou ao fim. Nunca os dois para a
      * mesma colônia.
      */
-    private final List<ColonySweepCursor> sweeps = new ArrayList<>();
+    final List<ColonySweepCursor> sweeps = new ArrayList<>();
 
     /**
      * O traço circular de atividade de cada colônia — decisão 7B,
@@ -157,7 +157,7 @@ public final class ColonySavedData extends PersistentState {
      * <p>No mesmo arquivo pelo mesmo motivo de sempre: um traço órfão
      * seria histórico de vila nenhuma.
      */
-    private final Map<UUID, ActivityTrace> activityTraces = new HashMap<>();
+    final Map<UUID, ActivityTrace> activityTraces = new HashMap<>();
 
     private ColonySavedData() {
     }
@@ -472,7 +472,7 @@ public final class ColonySavedData extends PersistentState {
                     entry.getInt(CENTER_Y),
                     entry.getInt(CENTER_Z));
 
-            Colony colony = Colony.restore(id, center, readState(entry), ColonyLifecycle.DORMANT);
+            Colony colony = Colony.restore(id, center, ColonySaveReader.readState(entry), ColonyLifecycle.DORMANT);
 
             // Save antigo não tem o campo; getInt devolve 0, que apenas
             // faz a primeira detecção da sessão valer. Autocorrige.
@@ -481,245 +481,10 @@ public final class ColonySavedData extends PersistentState {
             data.colonies.add(colony);
         }
 
-        readWorkers(nbt, data);
-        readConstruction(nbt, data);
+        ColonySaveReader.readWorkers(nbt, data);
+        ColonySaveReader.readConstruction(nbt, data);
 
         return data;
     }
 
-    /**
-     * Lê obras e construções, descartando as de colônia desconhecida.
-     *
-     * <p>Mesma regra dos trabalhadores, e pelo mesmo motivo: uma casa de
-     * colônia inexistente seria protegida para sempre por um dono que
-     * ninguém acha.
-     *
-     * <p>Save anterior a 2026-08-14 não tem as chaves, e {@code getList}
-     * devolve lista vazia. Autocorrige: perde-se a memória de casas
-     * construídas antes desta versão, que é exatamente o que a versão
-     * anterior perdia toda vez.
-     */
-    private static void readConstruction(NbtCompound nbt, ColonySavedData data) {
-        Set<UUID> knownColonies = new HashSet<>();
-
-        for (Colony colony : data.colonies) {
-            knownColonies.add(colony.id());
-        }
-
-        data.mines.addAll(MineSave.read(nbt, knownColonies));
-        data.roads.addAll(RoadIndexSave.read(nbt, knownColonies));
-        data.sweeps.addAll(SweepCursorSave.read(nbt, knownColonies));
-        data.activityTraces.putAll(ActivityTraceSave.read(nbt, knownColonies));
-
-        NbtList projectList = nbt.getList(PROJECTS, NbtElement.COMPOUND_TYPE);
-
-        for (int i = 0; i < projectList.size(); i++) {
-            NbtCompound entry = projectList.getCompound(i);
-
-            if (!entry.containsUuid(ID) || !entry.containsUuid(COLONY_ID)) {
-                continue;
-            }
-
-            UUID colonyId = entry.getUuid(COLONY_ID);
-
-            if (!knownColonies.contains(colonyId)) {
-                continue;
-            }
-
-            data.projects.add(new ConstructionService.Pending(
-                    entry.getUuid(ID),
-                    colonyId,
-                    ResourceId.parse(entry.getString(BLUEPRINT)),
-                    new ColonyPos(
-                            entry.getInt(ORIGIN_X),
-                            entry.getInt(ORIGIN_Y),
-                            entry.getInt(ORIGIN_Z)),
-                    readConstructionState(entry),
-                    readDeferredPieces(entry)));
-        }
-
-        NbtList buildingList = nbt.getList(BUILDINGS, NbtElement.COMPOUND_TYPE);
-
-        for (int i = 0; i < buildingList.size(); i++) {
-            NbtCompound entry = buildingList.getCompound(i);
-
-            if (!entry.containsUuid(ID) || !entry.containsUuid(COLONY_ID)) {
-                continue;
-            }
-
-            UUID colonyId = entry.getUuid(COLONY_ID);
-
-            if (!knownColonies.contains(colonyId)) {
-                continue;
-            }
-
-            ResourceId blueprint = ResourceId.parse(entry.getString(BLUEPRINT));
-
-            data.buildings.add(new Building(
-                    entry.getUuid(ID),
-                    colonyId,
-                    blueprint,
-                    new ColonyPos(entry.getInt(MIN_X), entry.getInt(MIN_Y), entry.getInt(MIN_Z)),
-                    new ColonyPos(entry.getInt(MAX_X), entry.getInt(MAX_Y), entry.getInt(MAX_Z)),
-                    !entry.contains(FINISHED) || entry.getBoolean(FINISHED)));
-        }
-    }
-
-    /**
-     * Lê a memória mínima de uma peça sem apoio.
-     *
-     * <p>É opcional para que saves anteriores continuem válidos. Entrada
-     * inválida é descartada: ela só regula uma nova tentativa, nunca diz
-     * que um bloco existe no mundo.
-     */
-    private static List<ConstructionProject.DeferredPiece> readDeferredPieces(NbtCompound project) {
-        List<ConstructionProject.DeferredPiece> pieces = new ArrayList<>();
-        NbtList saved = project.getList(DEFERRED_PIECES, NbtElement.COMPOUND_TYPE);
-
-        for (int i = 0; i < saved.size(); i++) {
-            NbtCompound entry = saved.getCompound(i);
-
-            if (!entry.contains(DEFERRED_BLOCK, NbtElement.STRING_TYPE)
-                    || !entry.contains(DEFERRED_REASON, NbtElement.STRING_TYPE)
-                    || !entry.contains(SUPPORT_FINGERPRINT, NbtElement.STRING_TYPE)) {
-                continue;
-            }
-
-            SkipReason reason = readSkipReason(entry.getString(DEFERRED_REASON));
-            String fingerprint = entry.getString(SUPPORT_FINGERPRINT);
-
-            if (reason == null || fingerprint.isBlank()) {
-                continue;
-            }
-
-            pieces.add(new ConstructionProject.DeferredPiece(
-                    new ColonyPos(
-                            entry.getInt(POSITION_X),
-                            entry.getInt(POSITION_Y),
-                            entry.getInt(POSITION_Z)),
-                    ResourceId.parse(entry.getString(DEFERRED_BLOCK)),
-                    reason,
-                    fingerprint));
-        }
-
-        return pieces;
-    }
-
-    private static SkipReason readSkipReason(String name) {
-        for (SkipReason reason : SkipReason.values()) {
-            if (reason.name().equals(name)) {
-                return reason;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * O estado gravado da obra.
-     *
-     * <p>Estado desconhecido — de uma versão futura, ou de save editado —
-     * vira BUILDING, que é o estado de onde a obra continua sozinha. Cair
-     * em COMPLETED apagaria do registro uma casa pela metade; cair em
-     * PLANNED a faria esperar por uma preparação que já aconteceu.
-     */
-    private static ConstructionState readConstructionState(NbtCompound entry) {
-        String name = entry.getString(STATE);
-
-        for (ConstructionState state : ConstructionState.values()) {
-            if (state.name().equals(name)) {
-                return state;
-            }
-        }
-
-        return ConstructionState.BUILDING;
-    }
-
-    /**
-     * Lê os trabalhadores, descartando os que apontam para colônia que
-     * não veio no mesmo arquivo.
-     *
-     * <p>Um órfão não deveria existir — colônias e trabalhadores são
-     * gravados juntos. Se existir, o save foi editado ou corrompido, e
-     * um trabalhador de colônia inexistente seria invisível para sempre:
-     * nenhuma colônia o listaria, e a varredura não o recriaria, porque
-     * o villagerId já teria dono. Descartar deixa a varredura reencontrá-lo
-     * e reatribuí-lo à colônia certa, ao custo da profissão que ele tinha.
-     *
-     * <p>Chamado depois das colônias, e depende disso.
-     */
-    private static void readWorkers(NbtCompound nbt, ColonySavedData data) {
-        Set<UUID> knownColonies = new HashSet<>();
-
-        for (Colony colony : data.colonies) {
-            knownColonies.add(colony.id());
-        }
-
-        NbtList list = nbt.getList(WORKERS, NbtElement.COMPOUND_TYPE);
-
-        for (int i = 0; i < list.size(); i++) {
-            NbtCompound entry = list.getCompound(i);
-
-            if (!entry.containsUuid(VILLAGER_ID) || !entry.containsUuid(COLONY_ID)) {
-                continue;
-            }
-
-            UUID colonyId = entry.getUuid(COLONY_ID);
-
-            if (!knownColonies.contains(colonyId)) {
-                continue;
-            }
-
-            data.workers.add(Worker.restore(
-                    entry.getUuid(VILLAGER_ID),
-                    colonyId,
-                    readProfession(entry)));
-        }
-    }
-
-    /**
-     * Profissão ausente ou desconhecida vira "sem função".
-     *
-     * <p>Mesmo princípio de {@link #readState}: não derrubar o
-     * carregamento do mundo. Aqui o custo é menor — a atribuição inicial
-     * dá uma função nova ao aldeão no próximo ciclo (TASK-014).
-     *
-     * <p><b>{@code BREEDER} não chega mais até aqui</b> — desde
-     * {@link SaveMigration}, 2026-09-24, ele já virou {@code SHEPHERD}
-     * antes de {@link #readNbt} montar esta lista. O laço abaixo
-     * continua sendo a última linha de defesa contra um enum removido
-     * do código ou um save editado à mão.
-     */
-    private static ProfessionType readProfession(NbtCompound entry) {
-        if (!entry.contains(PROFESSION, NbtElement.STRING_TYPE)) {
-            return null;
-        }
-
-        String name = entry.getString(PROFESSION);
-
-        for (ProfessionType profession : ProfessionType.values()) {
-            if (profession.name().equals(name)) {
-                return profession;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Um estado desconhecido no save não pode derrubar o carregamento do
-     * mundo. Cair para STABLE perde a intenção da colônia, mas ela
-     * reavalia o que fazer no próximo ciclo.
-     */
-    private static ColonyState readState(NbtCompound entry) {
-        String name = entry.getString(STATE);
-
-        for (ColonyState state : ColonyState.values()) {
-            if (state.name().equals(name)) {
-                return state;
-            }
-        }
-
-        return ColonyState.STABLE;
-    }
 }

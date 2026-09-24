@@ -67,7 +67,7 @@ public final class FarmerWork {
     private static final int SEARCH_RADIUS = 32;
 
     /** O raio em vigor. Encurtado nos testes, como o do mineiro. */
-    private static int searchRadius = SEARCH_RADIUS;
+    static int searchRadius = SEARCH_RADIUS;
 
     /**
      * Quantos tiques de expediente sem chegar antes de largar a lavoura.
@@ -80,7 +80,7 @@ public final class FarmerWork {
 
     private static final Map<UUID, Job> JOBS = new HashMap<>();
 
-    private static final String SUBJECT = "farmer";
+    static final String SUBJECT = "farmer";
 
     /**
      * O que o fazendeiro foi fazer neste alvo — 2026-09-05.
@@ -94,7 +94,7 @@ public final class FarmerWork {
      * planta do próprio jogo e num lote livre dentro da vila; o
      * fazendeiro cuida da lavoura que existe.
      */
-    private enum Chore {
+    enum Chore {
 
         /** Lavoura madura: colher e replantar do que caiu. */
         HARVEST,
@@ -103,7 +103,7 @@ public final class FarmerWork {
         SOW
     }
 
-    private static final class Job {
+    static final class Job {
 
         final Task task;
 
@@ -266,7 +266,7 @@ public final class FarmerWork {
         }
 
         if (job.target == null) {
-            findWork(world, workerId, job, storage.get());
+            FarmerChores.findWork(world, workerId, job, storage.get());
 
             return;
         }
@@ -298,8 +298,8 @@ public final class FarmerWork {
         job.stall.reset();
 
         switch (job.chore) {
-            case HARVEST -> harvest(world, villager, job, storage.get());
-            case SOW -> sow(world, villager, job, storage.get());
+            case HARVEST -> FarmerChores.harvest(world, villager, job, storage.get());
+            case SOW -> FarmerChores.sow(world, villager, job, storage.get());
         }
     }
 
@@ -320,219 +320,12 @@ public final class FarmerWork {
         };
     }
 
-    /**
-     * A lavoura madura mais perto do centro da vila.
-     *
-     * <p>Do centro para fora, e não do aldeão: a lavoura da vila é da
-     * vila, e dois fazendeiros que buscassem cada um a partir de si
-     * acabariam em cantos opostos do mesmo campo.
-     */
-    private static void findWork(
-            ServerWorld world, UUID workerId, Job job, WorkerStorage storage) {
-
-        UUID colonyId = job.task.colonyId();
-
-        // <b>Volta inteira sem nada compra silêncio</b> — P1.5, 2026-09-11.
-        // O motivo já foi dito quando a volta fechou; aqui não se fala de
-        // novo, senão o descanso vira a enxurrada que ele evita. Ver
-        // FieldRest para por que ele existe e por que é curto.
-        if (FieldRest.isResting(colonyId, world.getTime())) {
-            return;
-        }
-
-        CropPatch.Field field = CropPatch.survey(world, colonyId, job.center, searchRadius);
-
-        Optional<BlockPos> found = field.ripe();
-        Chore chore = Chore.HARVEST;
-
-        if (found.isEmpty()) {
-            // <b>Sem semente não há o que semear nem por que arar</b> —
-            // 2026-09-05, e é este gate que dá teto ao campo sem uma
-            // constante inventada. Os dois trabalhos gastam semente, e a
-            // semente só sobra quando a colheita sobra: a roça cresce no
-            // ritmo em que a lavoura paga por ela, e para de crescer
-            // quando o baú seca.
-            if (ChestWithdrawer.seedIn(world, storage.chestPosition()).isPresent()) {
-                found = field.emptyPlot();
-                chore = Chore.SOW;
-            }
-        }
-
-        if (found.isEmpty()) {
-            // <b>Pelo recordAt, e não pelo record</b> — o molde do P0.6.
-            // Este método roda por tique e os dois motivos alternam por
-            // construção: toda volta termina em NO_TARGET e a seguinte
-            // recomeça em SWEEP_INCOMPLETE. A regra de transição sozinha
-            // deixou 4.389 linhas num log de 6.117 na areia.
-            //
-            // E são dois motivos, não um: até 2026-09-11 esta linha saía
-            // sempre como NO_TARGET, cujo texto é <i>"nothing to work on
-            // in the whole radius"</i> — e o raio inteiro nunca tinha
-            // sido olhado. O enum afirmava a cobertura que a varredura
-            // truncada não entregava. Ver CropPatch#survey.
-            IdleLog.recordAt(
-                    colonyId,
-                    SUBJECT,
-                    field.incomplete() ? IdleReason.SWEEP_INCOMPLETE : IdleReason.NO_TARGET,
-                    "nothing ripe and no empty plot within "
-                            + searchRadius + " blocks of the village",
-                    world.getTime());
-
-            if (!field.incomplete()) {
-                // <b>E aí ele planta árvore na borda</b> — habilidade
-                // nova, decisão do autor de 2026-09-19. Aqui, e só aqui:
-                // é o ponto em que o fazendeiro varreu o raio inteiro e
-                // não achou nada de lavoura para fazer. Plantar é o que
-                // sobra de útil, e a vila precisa — a obra de 13:04
-                // parou esperando jungle_door num deserto cuja colônia
-                // tinha dez toras ao todo. Ver TreeNursery.
-                FarmerNursery.plantIfItIsTime(world, colonyId, job.center);
-
-                FieldRest.sweptAndFoundNothing(colonyId, world.getTime());
-            }
-
-            return;
-        }
-
-        // Achou: o campo voltou a render, e o descanso não vale mais.
-        FieldRest.thereIsWorkAgain(colonyId);
-
-        IdleLog.clear(colonyId, SUBJECT);
-
-        job.target = found.get();
-        job.chore = chore;
-        job.stalled = 0;
-
-        // <b>E o guarda de imobilidade NÃO é zerado aqui</b> — E36,
-        // 2026-09-04. A pergunta que ele faz é <i>o aldeão saiu do
-        // bloco?</i>, e ela não tem nada a ver com qual é o alvo: quem
-        // estava congelado continua congelado depois de a pedra à frente
-        // dele sumir. Zerar por alvo novo deixava <b>imune</b> quem troca
-        // de alvo com frequência, e foi o que os mineiros travados da
-        // sessão de 09-04 exibiram por vinte e cinco minutos com
-        // {@code stall 0/2400, still 0/300} e nenhum passo dado.
-        //
-        // Quem zera é o movimento — o WorkStall vê sozinho — e o ramo em
-        // que ele trabalha, que é o que o construtor e o fabricante
-        // sempre fizeram. O de 2.400 continua por alvo, porque é isso que
-        // ele mede: andei demais até ESTE alvo.
-
-        WorkTargets.set(workerId, job.target);
-    }
-
-    /**
-     * Planta a semente do baú no canteiro — 2026-09-05.
-     *
-     * <p><b>A semente sai antes de a muda entrar, e volta se não
-     * entrar.</b> É a mesma conta do fundidor: tirar do baú e não
-     * entregar nada seria a colônia destruindo material do jogador.
-     */
-    private static void sow(
-            ServerWorld world, VillagerEntity villager, Job job, WorkerStorage storage) {
-
-        Optional<Item> seed = ChestWithdrawer.seedIn(world, storage.chestPosition());
-
-        if (seed.isEmpty()
-                || !ChestWithdrawer.takeSeed(world, storage.chestPosition(), seed.get())) {
-
-            release(villager.getUuid(), job);
-
-            return;
-        }
-
-        villager.swingHand(Hand.MAIN_HAND);
-
-        if (CropPatch.sow(world, job.target, seed.get())) {
-            VillageColonyMod.LOGGER.info(
-                    "Farmer {} sowed {} at {}",
-                    villager.getUuid(),
-                    seed.get(),
-                    job.target.toShortString());
-        } else {
-            ChestDepositor.deposit(world, storage.chestPosition(), seed.get(), 1);
-        }
-
-        release(villager.getUuid(), job);
-    }
-
-    /**
-     * Colhe, replanta e guarda.
-     *
-     * <p>A ordem importa: a semente sai da própria colheita, então é
-     * preciso ter o que caiu em mãos antes de replantar. O que sobra vai
-     * para o baú.
-     */
-    private static void harvest(
-            ServerWorld world, VillagerEntity villager, Job job, WorkerStorage storage) {
-
-        BlockState state = world.getBlockState(job.target);
-
-        villager.swingHand(Hand.MAIN_HAND);
-
-        List<ItemStack> drops = new ArrayList<>(
-                Block.getDroppedStacks(state, world, job.target, null, null, ItemStack.EMPTY));
-
-        // Replantar antes de guardar — a Regra 7, onde ela nasceu. O
-        // jogo devolve a semente junto com a comida, e ela sai do que
-        // caiu em vez de sair do baú.
-        boolean replanted = CropPatch.replant(world, job.target, state, drops);
-
-        int took = store(world, storage, drops);
-
-        job.collected += took;
-
-        VillageColonyMod.LOGGER.info(
-                "Farmer {} harvested {} at {} — {} this task, {}",
-                villager.getUuid(),
-                took,
-                job.target.toShortString(),
-                job.collected,
-                replanted ? "replanted" : "nothing left to replant");
-
-        release(villager.getUuid(), job);
-    }
-
-    /**
-     * Guarda no baú do fazendeiro o que sobrou depois de replantar.
-     *
-     * <p>Devolve quantos <b>entraram</b>. O {@code ChestDepositor}
-     * devolve quantos não couberam, e ler ao contrário foi o defeito que
-     * o mineiro cometeu no primeiro teste dele — todo item guardado
-     * virava uma linha de "baú cheio" com o baú vazio ao lado.
-     */
-    private static int store(
-            ServerWorld world, WorkerStorage storage, List<ItemStack> drops) {
-
-        int stored = 0;
-
-        for (ItemStack drop : drops) {
-            if (drop.isEmpty()) {
-                continue;
-            }
-
-            int leftOver = ChestDepositor.deposit(
-                    world, storage.chestPosition(), drop.getItem(), drop.getCount());
-
-            stored += drop.getCount() - leftOver;
-
-            if (leftOver > 0) {
-                VillageColonyMod.LOGGER.warn(
-                        "Chest of farmer at {} filled up — {} of {} lost",
-                        storage.chestPosition(),
-                        leftOver,
-                        drop.getCount());
-            }
-        }
-
-        return stored;
-    }
-
-    private static boolean isWithinReach(VillagerEntity villager, BlockPos target) {
+private static boolean isWithinReach(VillagerEntity villager, BlockPos target) {
         return villager.getBlockPos().isWithinDistance(target, REACH);
     }
 
     /** Larga a lavoura de agora e volta a procurar. */
-    private static void release(UUID workerId, Job job) {
+    static void release(UUID workerId, Job job) {
         job.target = null;
         job.stalled = 0;
 

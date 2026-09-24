@@ -545,7 +545,7 @@ public final class ConstructionPlanner {
         // distintos, filtradas pelo tamanho do lote, é sortear entre uma.
         //
         // As irmãs são pedidas agora, com o lote já achado e a pegada já
-        // conhecida — ver HousePlans.siblingsOf, e por que ela não
+        // conhecida — ver PlanPlacement.siblingsOf, e por que ela não
         // encarece a varredura.
         // A deduplicação é por {@code id} e não por {@code distinct()}:
         // Blueprint é classe sem equals, então distinct compararia
@@ -554,7 +554,7 @@ public final class ConstructionPlanner {
         List<Blueprint> candidates = new ArrayList<>(plans);
 
         if (HousePlans.isHouse(blueprint.id())) {
-            candidates.addAll(HousePlans.siblingsOf(
+            candidates.addAll(PlanPlacement.siblingsOf(
                     world, HousePlans.paletteOf(world, colony.center()).style(), site.size()));
         }
 
@@ -562,12 +562,12 @@ public final class ConstructionPlanner {
 
         List<Blueprint> fitting = candidates.stream()
                 .filter(plan -> seen.add(plan.id()))
-                .map(plan -> HousePlans.turnedToTheRoad(plan, road))
+                .map(plan -> PlanPlacement.turnedToTheRoad(plan, road))
                 .filter(plan -> plan.size().equals(site.size()))
                 .toList();
 
         Blueprint facingTheRoad = fitting.isEmpty()
-                ? HousePlans.turnedToTheRoad(blueprint, road)
+                ? PlanPlacement.turnedToTheRoad(blueprint, road)
                 : fitting.get(world.getRandom().nextInt(fitting.size()));
 
         // <b>Quantas concorreram, e é o §11</b> — 2026-09-18. O playtest
@@ -730,7 +730,7 @@ public final class ConstructionPlanner {
             return;
         }
 
-        Optional<Blueprint> blueprint = HousePlans.blueprintOf(
+        Optional<Blueprint> blueprint = PlanPlacement.blueprintOf(
                 world, colony.id(), saved.blueprint(), saved.origin());
 
         if (blueprint.isEmpty()) {

@@ -5,6 +5,7 @@ import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.VillageStructures;
 import com.villagecolony.fabric.work.HousePlans;
+import com.villagecolony.fabric.work.PlanPlacement;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
@@ -119,7 +120,7 @@ public class VillageStructuresGameTest implements FabricGameTest {
      * <p>O corte é legítimo: ele serve à <b>busca de lote</b>, que o
      * comentário do {@code PLANS_OFFERED} registra em dez minutos. O que
      * mudou é que as irmãs voltam <b>depois</b> do lote achado, por
-     * {@code HousePlans.siblingsOf}.
+     * {@code PlanPlacement.siblingsOf}.
      *
      * <p><b>Por que em jogo e não no unitário.</b> Ler a pegada de uma
      * planta é ler o {@code .nbt} do jogo, e a pergunta aqui é

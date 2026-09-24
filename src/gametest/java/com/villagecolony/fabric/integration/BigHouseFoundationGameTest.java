@@ -8,6 +8,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.work.HousePlans;
+import com.villagecolony.fabric.work.PlanPlacement;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
@@ -77,7 +78,7 @@ public class BigHouseFoundationGameTest implements FabricGameTest {
         UUID projectId = UUID.randomUUID();
 
         Optional<com.villagecolony.core.construction.model.Blueprint> blueprint =
-                HousePlans.blueprintOf(context.getWorld(), colonyId, blueprintId, origin);
+                PlanPlacement.blueprintOf(context.getWorld(), colonyId, blueprintId, origin);
 
         context.assertTrue(blueprint.isPresent(), "a planta de teste nao foi encontrada");
 
@@ -114,7 +115,7 @@ public class BigHouseFoundationGameTest implements FabricGameTest {
         ColonyPos origin = MinecraftTypeAdapter.toColonyPos(
                 context.getAbsolutePos(new BlockPos(3, 4, 3)));
         UUID projectId = UUID.randomUUID();
-        var blueprint = HousePlans.blueprintOf(
+        var blueprint = PlanPlacement.blueprintOf(
                 context.getWorld(), colonyId, StructureBlueprintReader.BIG_HOUSE_MOD, origin)
                 .orElseThrow(() -> new AssertionError("a planta da BigHouseMOD nao foi encontrada"));
         ColonyPos higherMin = new ColonyPos(

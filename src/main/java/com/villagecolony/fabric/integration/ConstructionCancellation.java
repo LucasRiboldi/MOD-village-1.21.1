@@ -12,6 +12,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.HousePlans;
+import com.villagecolony.fabric.work.PlanPlacement;
 import com.villagecolony.fabric.work.WaitingWork;
 import net.minecraft.block.Blocks;
 import net.minecraft.server.world.ServerWorld;
@@ -62,7 +63,7 @@ public final class ConstructionCancellation {
             }
 
             Optional<com.villagecolony.core.construction.model.Blueprint> blueprint =
-                    HousePlans.blueprintOf(world, pending.colonyId(), pending.blueprint(), pending.origin());
+                    PlanPlacement.blueprintOf(world, pending.colonyId(), pending.blueprint(), pending.origin());
             if (blueprint.isEmpty()) {
                 continue;
             }

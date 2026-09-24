@@ -14,6 +14,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.HousePlans;
+import com.villagecolony.fabric.work.PlanPlacement;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.test.GameTest;
@@ -119,7 +120,7 @@ public class HouseRotationGameTest implements FabricGameTest {
             ColonyPos built = MinecraftTypeAdapter.toColonyPos(
                     context.getAbsolutePos(center.add(8, 0, 8)));
 
-            Blueprint house = HousePlans.blueprintOf(
+            Blueprint house = PlanPlacement.blueprintOf(
                     context.getWorld(), colony.id(), houseId, built).orElse(null);
 
             context.assertTrue(house != null, "o catálogo não devolveu a casa de referência");

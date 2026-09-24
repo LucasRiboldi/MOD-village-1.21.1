@@ -10,6 +10,7 @@ import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.coordination.ColonyGoals;
+import com.villagecolony.core.coordination.StockRules;
 import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.resource.model.ResourceTally;
@@ -799,7 +800,7 @@ public final class CraftingWork {
         ResourceTally owned =
                 ChestInventoryReader.readAll(world, workerIds, VillageColonyMod.STORAGES);
 
-        return ColonyGoals.logsToConvert(
+        return StockRules.logsToConvert(
                 owned.amountOfGroup(ResourceGroup.WOOD),
                 owned.amountOfGroup(ResourceGroup.PLANKS)) > 0;
     }

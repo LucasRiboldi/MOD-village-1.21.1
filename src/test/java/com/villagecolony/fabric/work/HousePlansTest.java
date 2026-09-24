@@ -83,7 +83,7 @@ class HousePlansTest {
     /** Sem marca nenhuma, a lista é a do catálogo, na ordem dele. */
     @Test
     void withNothingSkippedTheListIsUntouched() {
-        List<Blueprint> offered = HousePlans.without(catalog(), Set.of());
+        List<Blueprint> offered = PlanOrdering.without(catalog(), Set.of());
 
         assertEquals(3, offered.size());
         assertEquals(BIG, offered.get(0).id(), "a Regra 25 perdeu a ordem decrescente");
@@ -98,7 +98,7 @@ class HousePlansTest {
      */
     @Test
     void theSkippedPlanLeavesAndTheListStepsDown() {
-        List<Blueprint> offered = HousePlans.without(catalog(), Set.of(BIG));
+        List<Blueprint> offered = PlanOrdering.without(catalog(), Set.of(BIG));
 
         assertFalse(
                 offered.stream().anyMatch(plan -> plan.id().equals(BIG)),
@@ -122,7 +122,7 @@ class HousePlansTest {
     @Test
     void withEverythingSkippedTheSmallestStillStands() {
         List<Blueprint> offered =
-                HousePlans.without(catalog(), Set.of(BIG, MEDIUM, SMALL));
+                PlanOrdering.without(catalog(), Set.of(BIG, MEDIUM, SMALL));
 
         assertEquals(1, offered.size(), "sobrou mais de uma planta, ou nenhuma");
 
@@ -136,14 +136,14 @@ class HousePlansTest {
     @Test
     void anEmptyCatalogStaysEmpty() {
         assertTrue(
-                HousePlans.without(List.of(), Set.of(BIG)).isEmpty(),
+                PlanOrdering.without(List.of(), Set.of(BIG)).isEmpty(),
                 "inventou planta onde o catálogo não tem nenhuma");
     }
 
     /** Marca de planta que não está no catálogo não tira nada. */
     @Test
     void aMarkForSomethingElseChangesNothing() {
-        List<Blueprint> offered = HousePlans.without(
+        List<Blueprint> offered = PlanOrdering.without(
                 catalog(), Set.of(ResourceId.parse("minecraft:village/desert/houses/x")));
 
         assertEquals(3, offered.size(), "uma marca de outro bioma encurtou a lista");
@@ -183,7 +183,7 @@ class HousePlansTest {
      */
     @Test
     void theFirstHouseOfAColonyIsTheSmallest() {
-        List<Blueprint> offered = HousePlans.smallestFirst(catalog(), true);
+        List<Blueprint> offered = PlanOrdering.smallestFirst(catalog(), true);
 
         assertEquals(
                 SMALL,
@@ -205,7 +205,7 @@ class HousePlansTest {
      */
     @Test
     void afterTheFirstHouseTheBiggestPlanLeadsAgain() {
-        List<Blueprint> offered = HousePlans.smallestFirst(catalog(), false);
+        List<Blueprint> offered = PlanOrdering.smallestFirst(catalog(), false);
 
         assertEquals(
                 BIG,
@@ -218,8 +218,8 @@ class HousePlansTest {
     void asinglePlanIsTheSameEitherWay() {
         List<Blueprint> one = List.of(plan(SMALL));
 
-        assertEquals(SMALL, HousePlans.smallestFirst(one, true).get(0).id());
-        assertEquals(SMALL, HousePlans.smallestFirst(one, false).get(0).id());
+        assertEquals(SMALL, PlanOrdering.smallestFirst(one, true).get(0).id());
+        assertEquals(SMALL, PlanOrdering.smallestFirst(one, false).get(0).id());
     }
     /**
      * <b>Obra abandonada não conta como casa</b> — 2026-09-15.
@@ -422,19 +422,19 @@ class HousePlansTest {
         ColonyPos site = new ColonyPos(13, 7, 11);
 
         assertTrue(
-                HousePlans.fitsEitherWay(new ColonyPos(13, 7, 11), site),
+                PlanPlacement.fitsEitherWay(new ColonyPos(13, 7, 11), site),
                 "a pegada idêntica foi recusada");
 
         assertTrue(
-                HousePlans.fitsEitherWay(new ColonyPos(11, 7, 13), site),
+                PlanPlacement.fitsEitherWay(new ColonyPos(11, 7, 13), site),
                 "a irmã que cabe girada ficou de fora do sorteio");
 
         assertFalse(
-                HousePlans.fitsEitherWay(new ColonyPos(13, 9, 11), site),
+                PlanPlacement.fitsEitherWay(new ColonyPos(13, 9, 11), site),
                 "girar não muda altura, e a planta mais alta passou");
 
         assertFalse(
-                HousePlans.fitsEitherWay(new ColonyPos(9, 7, 11), site),
+                PlanPlacement.fitsEitherWay(new ColonyPos(9, 7, 11), site),
                 "uma pegada que não cabe de jeito nenhum passou");
     }
 

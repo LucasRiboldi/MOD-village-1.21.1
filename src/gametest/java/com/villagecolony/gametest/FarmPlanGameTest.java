@@ -20,6 +20,7 @@ import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.FarmPlans;
 import com.villagecolony.fabric.work.FarmerWork;
 import com.villagecolony.fabric.work.HousePlans;
+import com.villagecolony.fabric.work.PlanPlacement;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.CropBlock;
@@ -293,7 +294,7 @@ public class FarmPlanGameTest implements FabricGameTest {
             ColonyPos built = MinecraftTypeAdapter.toColonyPos(
                     context.getAbsolutePos(center.add(8, 0, 8)));
 
-            Blueprint house = HousePlans.blueprintOf(
+            Blueprint house = PlanPlacement.blueprintOf(
                     context.getWorld(), colony.id(), houseId, built).orElse(null);
 
             context.assertTrue(
@@ -411,7 +412,7 @@ public class FarmPlanGameTest implements FabricGameTest {
             ColonyPos built = MinecraftTypeAdapter.toColonyPos(
                     context.getAbsolutePos(center.add(8, 0, 8)));
 
-            Blueprint house = HousePlans.blueprintOf(
+            Blueprint house = PlanPlacement.blueprintOf(
                     context.getWorld(), colony.id(), houseId, built).orElse(null);
 
             context.assertTrue(
