@@ -17,6 +17,27 @@ sucesso, `runGametest --rerun-tasks` 423/423 GAME TESTS COMPLETE. O JAR
 (ver `docs/proxima-sessao.md`); este playtest de 24-09 e o primeiro
 resultado real contra ele.
 
+## Revisão de naturalidade 2026-09-24 (docs/technical/Revisao-Naturalidade-2026-09-24.md)
+
+Pedido do autor: vila que parece crescer sozinha, com pouca interferência
+no vanilla. Nada implementado ainda; o autor escolhe o que entra.
+
+- [ ] 🔴 **N1** — fundação repõe titular morto a cada detecção
+  (`VillageDetectionHandler.java:1287`); trocar por procriação vanilla.
+  Emenda a ADR-018 §6.
+- [ ] 🔴 **N2** — BigHouseMOD surge pronta e sem móveis; tornar obra do
+  construtor ou dispensar.
+- [ ] 🔴 **N3** — ADR-022 cria no baú a peça sem rota; substituir por
+  equivalente do bioma ou pular.
+- [ ] 🔴 **N4** — `ChestDepositor` põe no baú à distância; carregar no
+  inventário e caminhar (começar pelo lenhador).
+- [ ] 🟠 **N5** — tocha, arco, lanterna e rua sem custo; rua como `dirt_path`.
+- [ ] 🟠 **N6/N7** — nome flutuante e placa de lote sempre ligados; chave
+  desligada por padrão.
+- [ ] 🟠 **N8** — viveiro em `rooted_dirt`; plantar no chão do bioma.
+- [ ] 🟡 **N9** — rodízio por necessidade; **N10** — tampar a escada da
+  fuga; **N11** — alcance de coleta cresce com a vila.
+
 ## Plano de confiabilidade operacional (docs/superpowers/plans/2026-09-23-operational-reliability.md)
 
 - [x] **Task 1 — elegibilidade unificada de trabalho:** ja commitada em sessao
