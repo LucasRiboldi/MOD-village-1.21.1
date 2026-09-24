@@ -10,6 +10,27 @@
 
 ---
 
+## Entrega desta sessão — Task 12 e correção do E41 no TODO.md
+
+Descoberto ao ler o código antes de codar: `ColonyEnduranceGameTest.
+theColonyDoesNotAccumulateAcrossTwoHundredCycles` já existia (P1.13,
+2026-09-11) e já implementava o E41 por completo — 200 ciclos, detecção
+de deriva em quatro contagens, aquecimento descontado. O `TODO.md`
+estava desatualizado (E41 marcado aberto em duas entradas); corrigido
+com a evidência de onze rodadas completas desta sessão sem falha.
+
+`EnduranceReport`/`LatencySummary` são a camada real que faltava: quando
+o teste de endurance falhar, um relatório reproduzível (seed, duração,
+ciclos, contagem de tarefas, latência min/mean/max, 64 eventos do
+`ActivityTrace`) é logado antes da exceção do GameTest interromper o
+teste. Toda corrida agora loga uma linha de resumo — confirmado real:
+`"endurance seed=20260924 duration=200t cycles=200 tasks=1
+latency={min 0 ms, mean 0,3 ms, max 5 ms}"`. Corresponde à Task 12
+(Decision 9B); commit `d25faf4`.
+
+`./gradlew.bat build` e `runGametest --rerun-tasks`: 423 testes, 422/423
+— única falha é a intermitência pré-existente já conhecida.
+
 ## Entrega desta sessão — Task 11 do plano de confiabilidade operacional
 
 `VillageInventory` (raio-x imutável: adultos, camas, profissões, obras
