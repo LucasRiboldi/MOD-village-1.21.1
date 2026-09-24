@@ -10,6 +10,27 @@
 
 ---
 
+## Entrega desta sessão — Task 13 do plano de confiabilidade operacional
+
+`RemovalAudit` torna verificável em compilação o contrato que
+`ConstructionService.forget` já documentava informalmente. Três motivos
+— `PLAYER_CANCELLATION`, `PATIENCE_ABANDONMENT`, `COMPLETED_PROJECT_PURGE`
+—, cada um autorizando só os estados a que pertence.
+`PATIENCE_ABANDONMENT` autoriza `WAITING_RESOURCES` **e** `BUILDING` —
+descoberto lendo `WaitingWork.java` antes de codar: há dois fluxos reais
+de desistência por paciência (espera de material esgotada, e o "fundo de
+poço" de obra parada em `BUILDING` sem assentar peça). Restringir só a
+`WAITING_RESOURCES` teria introduzido um bug real. Só dois chamadores
+reais existiam (`ConstructionCancellation`, `WaitingWork`), ambos
+atualizados. `scripts/release_manifest.py` automatiza a comparação
+manual de três hashes SHA-256 que o `STATE.md` já documentava fazer à
+mão; `--dry-run` testado com sucesso, arquivo faltando e mismatch de
+hash. Corresponde à Task 13 (Decision 10A); commit `e16d363`.
+
+`./gradlew.bat build` e `runGametest --rerun-tasks`: 423 testes, 422/423
+— única falha é a intermitência pré-existente já conhecida; nenhum teste
+de cancelamento/abandono foi afetado.
+
 ## Entrega desta sessão — Task 12 e correção do E41 no TODO.md
 
 Descoberto ao ler o código antes de codar: `ColonyEnduranceGameTest.

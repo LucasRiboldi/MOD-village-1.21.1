@@ -103,9 +103,15 @@ plano de confiabilidade operacional).
   `VillageInventory`/`VillageInventoryObserver`, GameTest
   `observingInventoryDoesNotChangeHouseAlternation`. Ver entrada
   detalhada acima. Commit `c6b4abf`.
-- [ ] **Task 12 — endurance com seed fixa** (EnduranceReport).
-- [ ] **Task 13 — auditoria de exclusao e evidencia de release**
-  (RemovalAudit, release_manifest.py).
+- [x] **Task 12 — endurance com seed fixa:** `EnduranceReport`/
+  `LatencySummary`; E41 descoberto ja fechado (ver acima). Commit
+  `d25faf4`.
+- [x] **Task 13 — auditoria de exclusao e evidencia de release:**
+  `RemovalAudit` (3 motivos, `PATIENCE_ABANDONMENT` cobre
+  `WAITING_RESOURCES` e `BUILDING`), `scripts/release_manifest.py`
+  (compara 3 hashes SHA-256, `--dry-run`). `runGametest --rerun-tasks`:
+  **422/423** (unica falha e a intermitencia conhecida). Commit
+  `e16d363`.
 - [ ] **Task 14 — verificacao completa, playtests de save e handoff de
   release.**
 
