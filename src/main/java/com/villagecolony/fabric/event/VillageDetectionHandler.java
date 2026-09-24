@@ -92,7 +92,7 @@ import net.minecraft.world.poi.PointOfInterestTypes;
  */
 public final class VillageDetectionHandler {
 
-    private static final VillageScanner SCANNER = new VillageScanner();
+    static final VillageScanner SCANNER = new VillageScanner();
 
     /**
      * Quantos gatilhos de chunk cabem esperando.
@@ -100,10 +100,10 @@ public final class VillageDetectionHandler {
      * <p>Existe para que abrir o mundo não guarde uma varredura por
      * chunk carregado. O ciclo longo cobre o que passar do teto.
      */
-    private static final int PENDING_LIMIT = 256;
+    static final int PENDING_LIMIT = 256;
 
     /** Duração de um tick do servidor, em milissegundos. */
-    private static final int TICK_MILLIS = 50;
+    static final int TICK_MILLIS = 50;
 
     /**
      * Até onde uma colônia trabalha — decisão do autor, 2026-09-15.
@@ -121,7 +121,7 @@ public final class VillageDetectionHandler {
      * <p>Horizontal, como todo raio deste projeto: o jogador no fundo da
      * mina continua sendo o jogador daquela vila.
      */
-    private static final int WORKING_DISTANCE = 2 * VillageDetector.SEARCH_RADIUS;
+    static final int WORKING_DISTANCE = 2 * VillageDetector.SEARCH_RADIUS;
 
     /**
      * Chunks com cama esperando varredura, um por chunk.
@@ -129,7 +129,7 @@ public final class VillageDetectionHandler {
      * <p>{@code LinkedHashMap} para drenar na ordem em que chegaram: os
      * primeiros chunks a carregar são os mais perto do jogador.
      */
-    private static final Map<ChunkPos, BlockPos> pending = new LinkedHashMap<>();
+    static final Map<ChunkPos, BlockPos> pending = new LinkedHashMap<>();
 
     /**
      * Pares de colônias sobrepostas já avisados nesta sessão.
@@ -137,9 +137,9 @@ public final class VillageDetectionHandler {
      * <p>Ver {@link #warnIfOverlapping}: a sobreposição não se resolve
      * sozinha, e sem esta memória o aviso sairia a cada ciclo.
      */
-    private static final Set<String> overlapsReported = new HashSet<>();
+    static final Set<String> overlapsReported = new HashSet<>();
 
-    private static int tickCounter;
+    static int tickCounter;
 
     private VillageDetectionHandler() {
     }
@@ -167,11 +167,11 @@ public final class VillageDetectionHandler {
      * Project-State.md.
      */
     public static void runCycleNow(ServerWorld world, BlockPos trigger) {
-        detectAround(world, trigger);
+        VillageAdoption.detectAround(world, trigger);
 
-        updateLifecycles(world);
+        VillageAdoption.updateLifecycles(world);
 
-        detectFromColonyCenters(world);
+        VillageAdoption.detectFromColonyCenters(world);
 
         // <b>Sem o filtro de proximidade</b> — 2026-09-15. O gametest não
         // tem jogador no mundo, e a regra de "só trabalha perto de alguém"
@@ -182,7 +182,7 @@ public final class VillageDetectionHandler {
         // o teste poder rodar um ciclo sem esperar trinta segundos, e o
         // ponto dela é exercitar o que a colônia DECIDE. Quem afirma a
         // regra de proximidade é o caminho de produção, em onServerTick.
-        runColonyCycles(world, false);
+        ColonyCycleRunner.runColonyCycles(world, false);
     }
 
     /**
@@ -193,7 +193,7 @@ public final class VillageDetectionHandler {
      * está testando apenas o planejador de recursos.
      */
     public static void runColonyCycleNow(ServerWorld world) {
-        runColonyCycles(world, false);
+        ColonyCycleRunner.runColonyCycles(world, false);
     }
 
     /**
@@ -208,14 +208,14 @@ public final class VillageDetectionHandler {
      */
     public static void runFoundationNow(ServerWorld world, Colony colony) {
         BigHouseFoundation.Result house = BigHouseFoundation.ensure(world, colony);
-        registerVillagers(world, colony, colony.center());
+        VillagerRegistration.registerVillagers(world, colony, colony.center());
 
         VillageFoundation.Result foundation = VillageFoundation.ensure(
                 world, colony, colony.center(), VillageColonyMod.WORKERS, house.placed());
 
         if (foundation.changed()) {
-            registerVillagers(world, colony, colony.center());
-            registerVillagers(world, colony, colony.center());
+            VillagerRegistration.registerVillagers(world, colony, colony.center());
+            VillagerRegistration.registerVillagers(world, colony, colony.center());
         }
     }
 
@@ -242,7 +242,7 @@ public final class VillageDetectionHandler {
      * mapa de 2026-08-08: o servidor não voltava, e os aldeões não
      * andavam porque nenhum tick terminava.
      */
-    private static void onChunkLoad(ServerWorld world, WorldChunk chunk) {
+    static void onChunkLoad(ServerWorld world, WorldChunk chunk) {
         if (pending.size() >= PENDING_LIMIT) {
             // Fila cheia. Descartar é seguro: a varredura a partir do
             // jogador, no ciclo longo, cobre o mesmo terreno.
@@ -270,7 +270,7 @@ public final class VillageDetectionHandler {
      * sonda ancorada no centro já descobre a cada ciclo, e ela é a única
      * com autoridade para encolher a colônia.
      */
-    private static void drainOnePending(ServerWorld overworld) {
+    static void drainOnePending(ServerWorld overworld) {
         while (!pending.isEmpty()) {
             Iterator<Map.Entry<ChunkPos, BlockPos>> entries = pending.entrySet().iterator();
             BlockPos bed = entries.next().getValue();
@@ -287,7 +287,7 @@ public final class VillageDetectionHandler {
                 continue;
             }
 
-            detectAround(overworld, bed);
+            VillageAdoption.detectAround(overworld, bed);
 
             return;
         }
@@ -309,7 +309,7 @@ public final class VillageDetectionHandler {
      * varreduras vêm da mesma âncora. O centro da colônia é o único
      * ponto estável entre ciclos. Ver {@code Colony#observe}.
      */
-    private static void onServerTick(net.minecraft.server.MinecraftServer server) {
+    static void onServerTick(net.minecraft.server.MinecraftServer server) {
         drainOnePending(server.getOverworld());
 
         // A Regra 2 mora aqui: o lenhador quebra um bloco de cada vez, no
@@ -356,22 +356,22 @@ public final class VillageDetectionHandler {
 
         for (ServerWorld world : server.getWorlds()) {
             for (ServerPlayerEntity player : world.getPlayers()) {
-                detectAround(world, player.getBlockPos());
+                VillageAdoption.detectAround(world, player.getBlockPos());
             }
         }
 
         mark = CycleCost.since(CycleCost.Phase.DETECT, mark);
 
-        updateLifecycles(server.getOverworld());
+        VillageAdoption.updateLifecycles(server.getOverworld());
 
         mark = CycleCost.since(CycleCost.Phase.LIFECYCLE, mark);
 
-        detectFromColonyCenters(server.getOverworld());
+        VillageAdoption.detectFromColonyCenters(server.getOverworld());
 
         CycleCost.since(CycleCost.Phase.DETECT, mark);
 
-        // As fases de dentro se cobram sozinhas, em runCycleOf.
-        runColonyCycles(server.getOverworld(), true);
+        // As fases de dentro se cobram sozinhas, em ColonyCycleRunner.runCycleOf.
+        ColonyCycleRunner.runColonyCycles(server.getOverworld(), true);
 
         reportIfSlow(startedAt);
     }
@@ -394,7 +394,7 @@ public final class VillageDetectionHandler {
      * repartição sai da fase mais cara para a mais barata, então o
      * primeiro nome da linha é por onde começar. Ver {@link CycleCost}.
      */
-    private static void reportIfSlow(long startedAt) {
+    static void reportIfSlow(long startedAt) {
         long elapsed = System.nanoTime() - startedAt;
 
         long millis = elapsed / 1_000_000L;
@@ -423,980 +423,7 @@ public final class VillageDetectionHandler {
     public static void clearPending() {
         pending.clear();
         overlapsReported.clear();
-        lastStock.clear();
+        ColonyCycleRunner.lastStock.clear();
     }
 
-    /**
-     * O assunto do ciclo inteiro no {@link IdleLog}.
-     *
-     * <p>Os outros assuntos são profissões — "lumberjacks", "building".
-     * Este é a colônia toda, e é o único que significa <b>nada
-     * aconteceu, ponto</b>.
-     */
-    private static final String CYCLE_SUBJECT = "cycle";
-
-    /** O último estoque que cada colônia mandou para o log. */
-    private static final Map<UUID, String> lastStock = new HashMap<>();
-
-    /**
-     * O ciclo de simulação da ADR-002, uma vez por colônia ativa.
-     *
-     * <p>Roda por último de propósito: a colônia decide sobre o que a
-     * detecção acabou de ver, e não sobre a fotografia do ciclo passado.
-     *
-     * <p>Só colônia ACTIVE. Uma colônia dormente tem os chunks
-     * descarregados, e o estoque lido dela seria zero — a colônia
-     * concluiria que falta tudo e encheria a fila de pedidos que ninguém
-     * pode atender.
-     */
-    private static void runColonyCycles(ServerWorld overworld, boolean onlyNearPlayers) {
-        List<Colony> active = List.copyOf(VillageColonyMod.COLONIES.all()).stream()
-                .filter(Colony::isActive)
-                .filter(colony -> !onlyNearPlayers || isNearAPlayer(overworld, colony))
-                .toList();
-
-        // <b>A vez de planejar é repartida</b> — 2026-09-15. O log do autor
-        // mediu o ciclo em 98 ms contra os 50 do tique, com 72 ms de
-        // planejador e 29 colônias planejando todas aqui dentro. A
-        // varredura de lote já tinha teto por colônia — 1.024 colunas por
-        // passagem —, e faltava o teto global: mil colunas vezes vinte e
-        // nove cabem num tique só, e coube.
-        //
-        // Só o planejamento espera a vez. O resto do ciclo continua
-        // rodando para todas, pelo mesmo motivo que a guarda de abandono
-        // registrou em 09-02: pular o ciclo inteiro faz o trabalhador
-        // andar aos soluços. Ver PlannerTurns.
-        Set<UUID> planners = PlannerTurns.chooseFrom(
-                active.stream().map(Colony::id).toList(),
-                coloniesNearPlayers(overworld, active));
-
-        for (Colony colony : active) {
-            runCycleOf(overworld, colony, planners.contains(colony.id()));
-        }
-
-        // As tarefas encerradas saem do registro depois de todas as
-        // colônias terem decidido. `purgeClosed` existia desde a Fase 7 e
-        // nunca tinha sido chamado: tarefa é objeto em memória, e nada as
-        // removia. Era a metade do E1 que a Regra 1 não resolve sozinha.
-        VillageColonyMod.TASKS.purgeClosed();
-
-        // E as obras terminadas, pelo mesmo motivo: canteiro é objeto em
-        // memória, e sem alguém que o remova o registro só cresce. A casa
-        // fica em BUILDINGS.
-        VillageColonyMod.CONSTRUCTIONS.purgeFinished();
-    }
-
-    /**
-     * As colônias que algum jogador está vendo agora — 2026-09-15.
-     *
-     * <p>Elas furam a fila do {@link PlannerTurns}, e o motivo é o relato
-     * do autor de 09-15: <i>"entrei no jogo, não vi nenhuma casa
-     * crescendo"</i>. O log daquela sessão mostrou o sistema funcionando —
-     * a rua cresceu três vezes em vinte minutos — e a colônia observada
-     * esperando quatro ciclos por vez, enquanto 28 das 29 colônias do
-     * mundo estavam dormentes e gastavam a fila sem ter o que fazer.
-     *
-     * <p><b>A régua é a mesma da vila</b>, {@code SEARCH_RADIUS}: dentro
-     * dela o jogador tem os chunks carregados e vê o que a colônia faz.
-     * Fora dela, o trabalho acontece sem plateia e pode esperar a vez.
-     *
-     * <p>Horizontal, como todo raio de vila neste projeto — ver
-     * {@code ConstructionReach.isOutOfReach}. O jogador no fundo da mina
-     * continua sendo o jogador daquela vila.
-     *
-     * <p>Custa uma volta pelos jogadores online vezes as colônias ativas,
-     * com aritmética de inteiros e nenhuma leitura de mundo. Num servidor
-     * cheio isso cresce, e o teto da cota continua sendo o que protege o
-     * tique: ver {@code PlannerTurns.PER_CYCLE}.
-     */
-    private static Set<UUID> coloniesNearPlayers(
-            ServerWorld overworld, List<Colony> active) {
-
-        if (overworld.getPlayers().isEmpty()) {
-            // Servidor sem ninguém online: não há o que priorizar, e o
-            // rodízio puro é a resposta certa.
-            return Set.of();
-        }
-
-        Set<UUID> near = new HashSet<>();
-
-        for (Colony colony : active) {
-            if (isWithin(overworld, colony, VillageDetector.SEARCH_RADIUS)) {
-                near.add(colony.id());
-            }
-        }
-
-        return near;
-    }
-
-    /**
-     * Se esta colônia tem jogador perto o bastante para trabalhar —
-     * 2026-09-15.
-     *
-     * <p>Decisão do autor: <i>"não trabalhar nas vilas que o jogador não
-     * está perto"</i>. Ver {@link #WORKING_DISTANCE}.
-     *
-     * <p><b>Para o ciclo inteiro</b>, e não só o planejamento: trabalhador,
-     * leitura de baú e tarefa. A colônia longe fica inerte até alguém
-     * chegar, e retoma de onde parou — os cursores de varredura, mina e
-     * índice de ruas são guardados, e nada disso depende de ciclos
-     * contínuos.
-     *
-     * <p><b>Servidor sem ninguém online não trabalha</b>, e isso é a
-     * consequência honesta da regra. Antes disto as 29 colônias do mundo do
-     * autor ciclavam para sempre; agora o mundo vazio não gasta tique com
-     * vila nenhuma.
-     */
-    private static boolean isNearAPlayer(ServerWorld overworld, Colony colony) {
-        return isWithin(overworld, colony, WORKING_DISTANCE);
-    }
-
-    /** Se algum jogador está dentro deste raio do centro da colônia. */
-    private static boolean isWithin(ServerWorld overworld, Colony colony, int radius) {
-        for (ServerPlayerEntity player : overworld.getPlayers()) {
-            long dx = (long) player.getBlockX() - colony.center().x();
-            long dz = (long) player.getBlockZ() - colony.center().z();
-
-            if (dx * dx + dz * dz <= (long) radius * radius) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Um ciclo de uma colônia.
-     *
-     * <p>A contagem parcial é motivo para não decidir. Baú em chunk
-     * descarregado sai da soma sem avisar, e uma colônia que conclui
-     * "falta madeira" com metade dos baús fora de alcance mandaria um
-     * trabalhador buscar o que ela já tem. Ver
-     * {@code ChestInventoryReader.ChestSurvey} e a entrada de §15 de
-     * 2026-08-07.
-     */
-    private static void runCycleOf(ServerWorld overworld, Colony colony, boolean mayPlan) {
-        long mark = System.nanoTime();
-
-        // <b>Uma lista, e os três consumidores dela</b> — P0.3, 2026-09-11.
-        // A varredura e as duas medidas de espaço montavam cada uma a
-        // própria lista, a partir do registro de trabalhadores, e por
-        // isso nenhuma delas via o baú da boca da mina. Contar num
-        // conjunto e consumir de outro é a discordância de 2026-09-10.
-        List<ColonyPos> chests = ColonyChests.nearestFirst(
-                overworld, colony.id(), colony.center());
-
-        ChestInventoryReader.ChestSurvey survey =
-                ChestInventoryReader.survey(
-                        overworld, chests, ResourceGroup.WOOD, ResourceGroup.PLANKS);
-
-        if (survey.isPartial()) {
-            // A leitura aconteceu e custou, mesmo sem decidir nada: cobrar
-            // só o caminho feliz esconderia justamente a colônia cara que
-            // não produz — que é o caso que o P2.1 foi medir.
-            CycleCost.since(CycleCost.Phase.CHESTS, mark);
-
-            // <b>E agora ele diz.</b> Pular era certo desde 2026-08-07;
-            // pular calado custou a sessão de 2026-09-04 inteira em
-            // dúvida — não havia como saber, do log, se uma colônia
-            // parada tinha decidido não decidir. Uma colônia inteira sem
-            // fazer nada é a maior omissão que este log podia ter.
-            IdleLog.record(
-                    colony.id(),
-                    CYCLE_SUBJECT,
-                    IdleReason.COUNT_PARTIAL,
-                    survey.chestsUnreachable() + " of "
-                            + (survey.chestsRead() + survey.chestsUnreachable())
-                            + " chests are in unloaded chunks");
-
-            return;
-        }
-
-        IdleLog.clear(colony.id(), CYCLE_SUBJECT);
-
-        // O estoque a cada ciclo, e não só quando um baú novo entra —
-        // 2026-09-04. A sessão daquele dia teve o último retrato às
-        // 00:08 e mais trinta e cinco minutos de escuro, justamente
-        // enquanto a obra parava por falta de material. A varredura já
-        // está em mãos: sai de graça.
-        logResources(colony, survey);
-
-        // A Regra 1: a meta é o que está guardado mais o que ainda cabe.
-        // O espaço é medido aqui porque é aqui que os baús existem — o
-        // Core não conhece baú, só recebe o número. Ver ColonyGoals.
-        int room = survey.freeSpaceForGroup(ResourceGroup.WOOD);
-
-        // E a Regra 5, a da Fase 9: metade do que os baús comportam em
-        // tábua. Medida do mesmo jeito e pelo mesmo motivo.
-        int plankRoom = survey.freeSpaceForGroup(ResourceGroup.PLANKS);
-
-        // Até aqui é baú: uma só fotografia produz estoque e as duas
-        // medidas de espaço, sem reler os mesmos inventários no ciclo.
-        mark = CycleCost.since(CycleCost.Phase.CHESTS, mark);
-
-        // A obra é decidida antes de a colônia pensar: o que ela pede
-        // entra na conta do mesmo ciclo, e não do seguinte. Planejar
-        // depois faria a colônia passar um ciclo inteiro sem saber que
-        // tem uma casa para levantar.
-        // E a conta do trabalhador que o registro tem e o mundo não. Só
-        // mede — ver PhantomWorkerLog e a auditoria de estado órfão.
-        PhantomWorkerLog.probe(overworld, colony.id());
-
-        // Colônia sem vila não planeja obra — 2026-09-02. O planejamento
-        // carrega a varredura de lote e o crescimento de rua, e a
-        // varredura tem teto de 1.024 colunas por passagem: cada colônia
-        // abandonada com chunks carregados cobrava isso por ciclo sem ter
-        // o que construir. A regra é do Core; aqui mora a aplicação.
-        //
-        // Só o planejamento. O resto do ciclo continua rodando para ela,
-        // porque a marca de abandono oscila — é o E9 — e pular o ciclo
-        // inteiro faria o trabalhador dela andar aos soluços.
-        // <b>E a vez dela no rodízio</b> — 2026-09-15. A guarda de abandono
-        // pergunta "esta colônia tem o que construir?"; esta pergunta "é a
-        // vez dela?". São duas perguntas distintas e ambas dizem não à
-        // mesma chamada. Ver PlannerTurns.
-        if (mayPlan && ColonyAbandonment.plansConstruction(colony)) {
-            ConstructionPlanner.plan(overworld, colony);
-        }
-
-        // A tábua da vila, e não sempre a de carvalho — a Regra 20. A
-        // obra de uma colônia de taiga pede pinheiro, e perguntar por
-        // carvalho devolveria zero: a meta perderia a demanda da obra e
-        // cairia na metade do baú, que é a conta de quando não há obra.
-        int planksForWork = ConstructionDemand.planksNeededBy(
-                VillageBiomes.woodAt(overworld, colony.center())
-                        .orElse(MinecraftTypeAdapter.toResourceId(Blocks.OAK_PLANKS)),
-                colony);
-
-        // A pedra que a obra pede, e a pedra desta vila — 2026-08-20. No
-        // deserto é arenito; perguntar por pedregulho daria zero, e a
-        // vila voltaria a não construir por falta de meta.
-        VillagePalette palette = HousePlans.paletteOf(overworld, colony.center());
-
-        ResourceType stone = MinecraftTypeAdapter.toBlock(palette.stone())
-                .flatMap(block -> MinecraftTypeAdapter.toResourceType(block.asItem()))
-                .orElse(ResourceType.COBBLESTONE);
-
-        // Por família desde 2026-08-22, e foi a vila de deserto que
-        // cobrou: a casa dela é de arenito LISO, e perguntar pelo
-        // arenito puro devolvia quase zero. Ver WorkMaterials.stone.
-        // <b>E o bau que enche puxa a producao para a frente</b> —
-        // decisao do autor, 2026-09-19. Sem isto a demanda so nasce de
-        // obra aberta: na sessao de 12:09 o bau do mineiro encheu, 365
-        // sandstone foram para o chao, e a obra esperava sandstone.
-        // Ver ChestRelief.
-        int stoneForWork = ChestRelief.stoneToAskFor(
-                overworld, colony, WorkMaterials.stone(palette, colony));
-
-        // O que a obra pede em peça, traduzido para o que a colônia sabe
-        // produzir. A casa não pede vidro, pede vidraça; não pede carvão,
-        // pede tocha; não pede lã, pede cama. Perguntar pelo material
-        // devolvia zero, e com zero ninguém recebia tarefa.
-        //
-        // <b>As quatro saem do mesmo lugar desde 2026-08-21</b>: a obra
-        // aberta. A lã e o ferro vinham da passagem de mobília, que a
-        // Regra 21 sustentava, e ela morreu.
-        WorkDemand work = new WorkDemand(
-                planksForWork,
-                stone,
-                stoneForWork,
-                WorkMaterials.wool(overworld, colony),
-                WorkMaterials.glass(overworld, palette, colony),
-                WorkMaterials.coal(overworld, colony),
-                WorkMaterials.iron(overworld, colony),
-                WorkMaterials.smeltedNeeds(overworld, colony),
-                WorkMaterials.surfaceGatheredNeeds(overworld, colony));
-
-        // E a placa da obra fica sabendo do estoque — 2026-09-15. O ciclo
-        // acabou de ler os baús; a placa desenha uma vez por segundo e
-        // reler ali multiplicaria por trinta o custo da fase `chests`.
-        // Ver SiteMarker.remember.
-        SiteMarker.remember(colony.id(), survey.resources().total());
-
-        // A obra inteira: varredura de lote, crescimento de rua, paleta e
-        // a conta do que a construção pede. É a fase que o plano suspeita
-        // ser a cara, e agora ela responde por si.
-        mark = CycleCost.since(CycleCost.Phase.PLANNER, mark);
-
-        int assigned = ColonyCycle.run(
-                colony.id(),
-                survey.resources().total(),
-                ColonyGoals.of(
-                        colony, survey.resources().total(), room, plankRoom, work),
-                VillageColonyMod.TASKS,
-                VillageColonyMod.WORKERS,
-                VillageColonyMod.STORAGES::hasStorage,
-                (resource, type, hands) -> reportHands(colony.id(), resource, type, hands),
-                work.constructionMaterials());
-
-        // Sem o `if (assigned > 0)` que estava aqui. A linha calava
-        // exatamente quando havia algo a dizer: distribuição parada é
-        // `assigned == 0`, e era então que a contagem de tarefas abertas
-        // — a única prova de que a fila não está vazia — desaparecia do
-        // log. Na sessão de 2026-08-15 ela sumiu às 11:21 e não voltou
-        // mais, e foram trinta e dois minutos sem saber se a colônia
-        // tinha tarefa parada ou tarefa nenhuma.
-        //
-        // É o mesmo remédio do E10 e do E2: número nenhum não é silêncio
-        // barato, é a pergunta seguinte ficando sem resposta.
-        VillageColonyMod.LOGGER.info(
-                "Colony {} assigned {} tasks ({} open)",
-                colony.id(),
-                assigned,
-                VillageColonyMod.TASKS.availableFor(colony.id()).size());
-
-        // A linha entra na conta da distribuição, e não na das profissões:
-        // o `availableFor` que ela chama é trabalho de fila.
-        mark = CycleCost.since(CycleCost.Phase.ASSIGN, mark);
-
-        // Depois da distribuição: quem recebeu tarefa neste ciclo já
-        // começa a andar nele, em vez de esperar o próximo.
-        LumberjackWork.run(overworld, colony);
-        MinerWork.run(overworld, colony);
-        SmelterWork.run(overworld, colony);
-        SurfaceGatheringWork.run(overworld, colony);
-        ShepherdWork.run(overworld, colony);
-        FarmerWork.run(overworld, colony);
-
-        // <b>A peça que a obra espera e ninguém faz</b> — P1.1,
-        // 2026-09-17. Vem antes do fabricante, para a tarefa aberta agora
-        // já ser atendida neste ciclo — a mesma razão de todo este bloco
-        // vir depois da distribuição.
-        //
-        // <b>E aqui, e não no planejador.</b> O ConstructionPlanner só
-        // roda para as colônias da vez no rodízio — oito por ciclo desde
-        // 2026-09-15 —, e uma obra parada esperando escada não pode
-        // depender de sorteio para ser destravada. Ver
-        // WaitingWork.askTheCraftsmanFor.
-        WaitingWork.askForWhatTheWorkIsWaitingOn(overworld, colony);
-
-        CraftingWork.run(overworld, colony);
-        BuilderWork.run(overworld, colony);
-
-        CycleCost.since(CycleCost.Phase.WORKERS, mark);
-    }
-
-    /**
-     * Diz que a colônia não tem quem faça um material — 2026-09-09.
-     *
-     * <p><b>O silêncio que ela quebra.</b> {@code ColonyCycle} pula o
-     * pedido de material que ninguém sabe fazer, e pular está certo:
-     * tarefa sem executor possível fica na fila para sempre. O que estava
-     * errado é que ele pulava <b>sem uma linha</b>, e o que o autor via
-     * era {@code assigned 0 tasks (0 open)} sem causa — o mesmo sintoma
-     * da roça que travou a vila nesta mesma data, e que custou uma hora
-     * de sessão até ser diagnosticado.
-     *
-     * <p><b>Assunto por tarefa, e não por material.</b> Uma colônia sem
-     * fundidor não sabe fazer vidro <b>nem</b> lingote <b>nem</b> arenito
-     * liso: três linhas iguais diriam a mesma coisa três vezes. O
-     * {@code IdleLog} compara só o motivo, então a primeira fala e as
-     * outras calam sozinhas — e o detalhe, que fica fora da comparação
-     * de propósito, nomeia o material que chegou primeiro.
-     *
-     * <p><b>O {@code clear} é metade da correção.</b> Sem ele, uma
-     * colônia que perde o fundidor, contrata outro e o perde de novo
-     * ficaria muda na segunda vez: o motivo guardado ainda seria
-     * {@code NO_WORKER}, e o registrador trataria como repetição de um
-     * silêncio que já tinha acabado. É o caso que o javadoc de
-     * {@code IdleLog.clear} descreve.
-     */
-    private static void reportHands(
-            UUID colonyId, ResourceType resource, TaskType type, int hands) {
-
-        String subject = type.name().toLowerCase(Locale.ROOT);
-
-        if (hands == 0) {
-            IdleLog.record(
-                    colonyId,
-                    subject,
-                    IdleReason.NO_WORKER,
-                    resource + " needs " + type.required());
-
-            return;
-        }
-
-        IdleLog.clear(colonyId, subject);
-    }
-
-    /**
-     * Reavalia cada colônia ativa a partir do próprio centro.
-     *
-     * <p>É a âncora estável que permite encolher. Roda depois de
-     * {@link #updateLifecycles} para não varrer colônia dormente, cujos
-     * chunks não estão carregados — a varredura não acharia cama alguma
-     * e a colônia se veria vazia.
-     *
-     * <p>Uma consulta de POI por colônia ativa a cada ciclo. O limite de
-     * Performance-Rules.md §5 continua respeitado: a busca é por raio em
-     * torno de um ponto, nunca pelo mundo.
-     */
-    private static void detectFromColonyCenters(ServerWorld overworld) {
-        List<Colony> active = new ArrayList<>();
-
-        for (Colony colony : VillageColonyMod.COLONIES.all()) {
-            if (colony.isActive()) {
-                active.add(colony);
-            }
-        }
-
-        for (Colony colony : active) {
-            // Antes da varredura: a adoção move centros, e a pergunta do
-            // abandono é sobre o que a sonda enxergou de onde ela partiu.
-            ColonyPos probedFrom = colony.center();
-
-            VillageScanner.ScanResult result = detectAround(
-                    overworld, MinecraftTypeAdapter.toBlockPos(probedFrom), true);
-
-            judgeAbandonment(colony, probedFrom, result);
-        }
-    }
-
-    /**
-     * Marca — ou desmarca — a colônia cuja própria sonda não achou vila.
-     *
-     * <p>É o único escritor de {@link com.villagecolony.core.colony.model.ColonyState}
-     * em produção. Até 2026-08-13 não havia nenhum: o valor
-     * {@code ABANDONED} existia no enum, a ADR-003 §6 o exigia, e nada o
-     * atribuía.
-     *
-     * <p>Roda só aqui, dentro da sonda, e só para colônia ACTIVE — as
-     * duas condições que separam "a vila acabou" de "ninguém olhou". A
-     * regra em si é de {@code ColonyAbandonment}, no Core; o que mora
-     * nesta camada é o log e a aplicação.
-     *
-     * <p>Silencioso quando nada muda, que é sempre. Uma vila viva
-     * produziria uma linha a cada ciclo.
-     */
-    private static void judgeAbandonment(
-            Colony colony, ColonyPos probedFrom, VillageScanner.ScanResult result) {
-
-        ColonyAbandonment.judge(colony, probedFrom, result.candidates(), result.ignoredByBiome())
-                .ifPresent(state -> {
-                    ColonyState was = colony.state();
-
-                    colony.setState(state);
-
-                    // O motivo sai nos dois sentidos desde 2026-08-21, e
-                    // a soma da sessão sai ao parar o servidor: é o
-                    // dado que o E9 pede antes de a TASK-048 poder ser
-                    // escrita. Ver ColonyStateLog.
-                    ColonyStateLog.transition(
-                            colony.id(),
-                            was,
-                            state,
-                            "probed from " + probedFrom + ", " + describe(result));
-                });
-    }
-
-    /**
-     * O que a sonda viu, para as duas linhas de transição.
-     *
-     * <p>É o "instrumentar antes de suspeitar" do §11 aplicado a esta
-     * regra: sem o motivo, uma colônia marcada como abandonada manda
-     * alguém adivinhar entre camas demolidas, aldeões mortos e uma sonda
-     * que não achou nada porque o chunk não estava onde se pensava. As
-     * três têm correções diferentes.
-     *
-     * <p><b>Desde 2026-08-21 fala também da volta</b>, e é metade do que
-     * o E9 pede. A linha da desmarcação não dizia nada, então uma vila
-     * reconstruída e uma sonda que enxergou mal produziam a mesma frase.
-     * Quando há candidato, o que se relata é ele.
-     */
-    private static String describe(VillageScanner.ScanResult result) {
-        if (!result.candidates().isEmpty()) {
-            List<String> seen = new ArrayList<>();
-
-            for (VillageCandidate candidate : result.candidates()) {
-                seen.add(candidate.bedCount() + " beds at " + candidate.center());
-            }
-
-            return "saw " + String.join("; ", seen);
-        }
-
-        if (result.rejected().isEmpty()) {
-            return "no bed cluster within range at all";
-        }
-
-        StringBuilder text = new StringBuilder();
-
-        for (ClusterRejection rejection : result.rejected()) {
-            if (text.length() > 0) {
-                text.append("; ");
-            }
-
-            text.append(rejection.reason())
-                    .append(" at ")
-                    .append(rejection.center())
-                    .append(" — ")
-                    .append(rejection.bedCount())
-                    .append(" beds, ")
-                    .append(rejection.villagersAsText())
-                    .append(" villagers");
-        }
-
-        return text.toString();
-    }
-
-    /**
-     * Registra os aldeões da colônia como trabalhadores e dá função a
-     * quem não tem.
-     *
-     * <p>Registro e atribuição são passos separados de propósito: um
-     * trabalhador vindo do save já chega com função, e a atribuição não
-     * pode desfazê-la. Ver TASK-012b e Worker#assign.
-     *
-     * <p>A atribuição roda mesmo quando nada foi registrado agora: um
-     * save anterior à TASK-012b traz trabalhadores sem função, e eles
-     * precisam recebê-la sem depender de um aldeão novo aparecer.
-     *
-     * <p>Só produz linha de log quando algo muda. Reencontrar os mesmos
-     * aldeões a cada ciclo é o caso comum e deve ser silencioso.
-     */
-    private static void registerVillagers(ServerWorld world, Colony colony, ColonyPos around) {
-        VillagerScanner.ScanResult result = VillagerScanner.scan(
-                world, colony, around, VillageColonyMod.WORKERS, VillageColonyMod.STORAGES);
-
-        if (result.registeredWorkers() > 0) {
-            VillageColonyMod.LOGGER.info(
-                    "Registered {} villagers in colony {} ({} total)",
-                    result.registeredWorkers(),
-                    colony.id(),
-                    VillageColonyMod.WORKERS.countOfColony(colony.id()));
-        }
-
-        if (result.registeredStorages() > 0) {
-            VillageColonyMod.LOGGER.info(
-                    "Registered {} storages in colony {} ({} total)",
-                    result.registeredStorages(),
-                    colony.id(),
-                    VillageColonyMod.STORAGES.count());
-
-            logResources(
-                    colony,
-                    ChestInventoryReader.survey(
-                            world,
-                            ColonyChests.nearestFirst(world, colony.id(), colony.center())));
-        }
-
-        // Antes de atribuir: um save anterior a 2026-08-12 chega com
-        // seis lenhadores gravados, e uma regra que só valesse para
-        // aldeão novo nunca os desfaria.
-        //
-        // E é aqui que o trabalhador sem baú perde a vaga para quem
-        // consegue um — a atribuição não o alcança, porque ele já tem
-        // função.
-        // Baús distintos, e não candidatos: dois aldeões do mesmo cômodo
-        // enxergam o mesmo baú, e dispensar um trabalhador por candidato
-        // trocava a vaga por alguém que também ficaria sem. É a decisão do
-        // autor de 2026-08-15 — só se dispensa quando há baú livre de
-        // verdade para o substituto. Ver o E11 do §17.
-        // Quantas trocas cabem, e não quantos baús sobram — 2026-08-21.
-        // Uma troca sem substituto esvazia uma função e não a preenche de
-        // volta, e isso é a Regra 11 quebrando. Ver ScanResult.substitutes.
-        dismissExtraWorkers(world, colony, result.substitutes());
-
-        // A vaga vai primeiro para quem consegue baú: sem isso ela podia
-        // ir para uma cama que não alcança baú nenhum, e o trabalhador
-        // passava a sessão pegando a tarefa e devolvendo à fila.
-        int assigned = ProfessionAssigner.assignMissing(
-                VillageColonyMod.WORKERS,
-                colony.id(),
-                result.employable(),
-                result.adultPopulation(),
-                result.equippable()::contains);
-
-        if (assigned > 0) {
-            VillageColonyMod.LOGGER.info(
-                    "Assigned {} professions in colony {}", assigned, colony.id());
-        }
-
-        // <b>E por que as outras não saíram</b> — 2026-09-18. A linha
-        // acima só fala quando alguém foi contratado, e o caso que
-        // interessa é justamente o mudo: a vila do deserto parou 28 vezes
-        // esperando cut_sandstone, que é do pedreiro, sem nunca ter tido
-        // pedreiro — e nada no log dizia se a vaga não abriu, se abriu e
-        // ninguém a quis, ou se a colônia estava lotada.
-        //
-        // Sai a cada passagem que tenha algo a dizer, e o HiringLog só
-        // devolve texto para profissão NÃO preenchida: quem conseguiu
-        // gente não é o assunto.
-        String hiring = HiringLog.report(colony.id());
-
-        if (!hiring.isEmpty()) {
-            VillageColonyMod.LOGGER.info(
-                    "Colony {} hiring — {}", colony.id(), hiring);
-        }
-
-        // Depois da atribuição, e não só quando ela muda algo: um
-        // trabalhador vindo do save já chega com função e sem nome.
-        int labelled = WorkerNameplate.label(
-                world, VillageColonyMod.WORKERS.ofColony(colony.id()));
-
-        if (labelled > 0) {
-            VillageColonyMod.LOGGER.info(
-                    "Named {} workers in colony {}", labelled, colony.id());
-        }
-
-        // A ferramenta vem junto do nome, e pelo mesmo motivo: a
-        // profissão foi decidida agora, e Profession-System.md diz que o
-        // trabalhador a recebe ao assumir a função.
-        //
-        // <b>E agora muda a velocidade do trabalho</b> — 2026-09-04.
-        // Estas linhas diziam o contrário — "a Regra 2 fixou isso em
-        // ferro" — e diziam certo até o dia em que o BlockBreakTime
-        // passou a perguntar à mão do aldeão em vez de a uma constante.
-        // Esta passagem é a que põe a ferramenta naquela mão, e é
-        // também a que troca pela melhor do baú: é aqui que a colônia
-        // fica mais rápida ao longo da partida.
-        int equipped = WorkerEquipment.equip(
-                world, VillageColonyMod.WORKERS.ofColony(colony.id()));
-
-        if (equipped > 0) {
-            VillageColonyMod.LOGGER.info(
-                    "Equipped {} workers in colony {}", equipped, colony.id());
-        }
-
-        // A marca do baú acompanha a profissão, e por isso vem depois
-        // dela: um trabalhador que acabou de perder a função não pode
-        // deixar o machado pendurado no baú.
-        int marked = ChestMarker.mark(
-                world,
-                VillageColonyMod.WORKERS.ofColony(colony.id()),
-                workerId -> VillageColonyMod.STORAGES.of(workerId)
-                        .map(WorkerStorage::chestPosition));
-
-        if (marked > 0) {
-            VillageColonyMod.LOGGER.info(
-                    "Marked {} chests in colony {}", marked, colony.id());
-        }
-    }
-
-    /**
-     * Aposenta quem excede a vaga da profissão.
-     *
-     * <p>Uma vila tem um trabalhador de cada tipo. Quem perde a função
-     * larga o que segurava: a tarefa volta para a fila, o destino é
-     * cedido e a árvore em curso é devolvida — senão a tarefa ficaria
-     * reservada para quem já não sabe executá-la, e a árvore ficaria
-     * marcada para sempre.
-     *
-     * <p>O baú fica com ele. Recolhê-lo tiraria da colônia a madeira que
-     * já está lá dentro, e o aldeão pode voltar a ter função quando o
-     * titular morrer.
-     */
-    private static void dismissExtraWorkers(
-            ServerWorld world, Colony colony, int replacements) {
-
-        Set<UUID> demoted = VacancyEnforcer.enforceVacanciesPreservingFoundation(
-                VillageColonyMod.WORKERS,
-                colony.id(),
-                villagerId -> VillageColonyMod.STORAGES.of(villagerId).isPresent(),
-                replacements);
-
-        if (demoted.isEmpty()) {
-            return;
-        }
-
-        int chestless = 0;
-
-        for (UUID villagerId : demoted) {
-            if (VillageColonyMod.STORAGES.of(villagerId).isEmpty()) {
-                chestless++;
-            }
-        }
-
-        for (UUID villagerId : demoted) {
-            VillageColonyMod.TASKS.releaseAllOf(villagerId);
-            WorkTargets.clear(villagerId);
-            MinerWork.forget(villagerId);
-            SmelterWork.forget(villagerId);
-            SurfaceGatheringWork.forget(villagerId);
-            ShepherdWork.forget(villagerId);
-            FarmerWork.forget(villagerId);
-            LumberjackWork.forget(villagerId);
-            CraftingWork.forget(villagerId);
-            BuilderWork.forget(villagerId);
-
-            // A marca do baú sai: um machado pendurado no baú de quem já
-            // não é lenhador mente para quem está jogando. E o da mão
-            // sai pelo mesmo motivo.
-            VillageColonyMod.STORAGES.of(villagerId)
-                    .ifPresent(storage -> ChestMarker.unmark(world, storage.chestPosition()));
-
-            WorkerEquipment.unequip(world, villagerId);
-
-            // E o baú volta para a colônia. Segurá-lo prendia o
-            // armazenamento a quem não trabalha: a vila do autor tinha
-            // treze baús reivindicados e quatro trabalhadores, e o
-            // fazendeiro não conseguia nenhum. O conteúdo fica onde
-            // está; o que sai é a reserva.
-            VillageColonyMod.STORAGES.remove(villagerId);
-        }
-
-        VillageColonyMod.LOGGER.info(
-                "Colony {} dismissed {} workers ({} of them had no chest and lost the job"
-                        + " to someone who can get one)",
-                colony.id(),
-                demoted.size(),
-                chestless);
-    }
-
-    /**
-     * Registra no log o que a colônia tem guardado.
-     *
-     * <p>Só quando um baú novo entra no registro. O conteúdo muda a cada
-     * baú aberto pelo jogador, e logar isso a cada ciclo encheria o
-     * arquivo sem dizer nada — mas sem nenhuma linha, a contagem da
-     * TASK-017 seria invisível em jogo, e o §11 do Project-State existe
-     * justamente porque defeitos desta camada só aparecem lá.
-     *
-     * <p>Diz quantos baús foram alcançados, e não só quantos tinham algo
-     * dentro. A linha antiga contava apenas os não vazios, e assim
-     * "nenhum baú tem madeira" e "não consegui ler baú nenhum" saíam com
-     * o mesmo texto — o defeito-que-parece-número do V5.
-     */
-    private static void logResources(Colony colony, ChestInventoryReader.ChestSurvey survey) {
-        ColonyResources resources = survey.resources();
-
-        String stock = resources.isEmpty()
-                ? "nothing tracked"
-                : resources.total().counts().toString();
-
-        // Só quando muda. A linha passou a sair todo ciclo, e estoque
-        // parado repetido oitenta vezes afogaria o relatório — que é o
-        // defeito que o IdleLog existe para não cometer.
-        String coverage = survey.coverage();
-        String snapshot = stock + " | " + coverage;
-
-        if (snapshot.equals(lastStock.put(colony.id(), snapshot))) {
-            return;
-        }
-
-        // A cobertura vem pronta de ChestSurvey, e de propósito: montar a
-        // frase aqui foi o que deixou "in 1 of 8 chests read" passar por
-        // cobertura em 2026-09-11. Ver ChestSurvey#coverage.
-        VillageColonyMod.LOGGER.info(
-                "Colony {} stores {} — {}",
-                colony.id(),
-                stock,
-                coverage);
-    }
-
-    /**
-     * Acorda e adormece colônias conforme seus chunks.
-     *
-     * <p>Sem isto, uma colônia visitada uma vez permaneceria
-     * {@link ColonyLifecycle#ACTIVE} pelo resto da sessão, mesmo a
-     * milhares de blocos do jogador — e o loop de simulação, que só roda
-     * para colônias ACTIVE, gastaria tick com vila que ninguém observa.
-     *
-     * <p>{@code shouldTick} é o critério certo: pergunta se o chunk está
-     * de fato sendo tickado, que é a definição de DORMANT na ADR-002.
-     *
-     * <p>Limite do MVP: consulta apenas o Overworld. Só existem colônias
-     * lá, porque o único bioma aceito é PLAINS.
-     */
-    private static void updateLifecycles(ServerWorld overworld) {
-        for (Colony colony : VillageColonyMod.COLONIES.all()) {
-            ChunkPos chunk = new ChunkPos(MinecraftTypeAdapter.toBlockPos(colony.center()));
-
-            ColonyLifecycle current = overworld.shouldTick(chunk)
-                    ? ColonyLifecycle.ACTIVE
-                    : ColonyLifecycle.DORMANT;
-
-            if (colony.lifecycle() == current) {
-                continue;
-            }
-
-            colony.setLifecycle(current);
-
-            VillageColonyMod.LOGGER.info("Colony {} is now {}", colony.id(), current);
-        }
-    }
-
-    /**
-     * Registra o resultado de cada detecção.
-     *
-     * <p>Criação e mudança de centro são logadas; reavaliação que não
-     * muda nada é silenciosa. Sem isso o log não distingue "a detecção
-     * rodou e a vila já era conhecida" de "a detecção nunca rodou" — foi
-     * essa cegueira que escondeu o gatilho de chunk quebrado.
-     *
-     * <p>Não vira spam: o centro só se move quando o conjunto de camas ao
-     * alcance muda. Jogador parado não gera linha. Ver CODE-STANDARDS §8.
-     */
-    private static void detectAround(ServerWorld world, BlockPos trigger) {
-        detectAround(world, trigger, false);
-    }
-
-    /**
-     * @param isProbe se a varredura é a sonda ancorada no centro de uma
-     *     colônia, a única cujas leituras se confirmam entre ciclos
-     * @return tudo o que a varredura viu, aprovado e recusado. Só a sonda
-     *     usa a parte recusada, para decidir abandono
-     */
-    private static VillageScanner.ScanResult detectAround(
-            ServerWorld world, BlockPos trigger, boolean isProbe) {
-        // Uma observação por colônia, e não uma por aglomerado de camas.
-        // Entre 32 e 64 blocos existe a faixa em que um punhado de camas
-        // é outro aglomerado e a mesma colônia: os dois candidatos
-        // chegavam com a mesma âncora, e o segundo era confirmado pelo
-        // primeiro dentro do mesmo tick. Ver ColonyService#bestPerColony
-        // e §17, E2.
-        VillageScanner.ScanResult result = SCANNER.survey(world, trigger, isProbe);
-
-        for (VillageCandidate candidate
-                : VillageColonyMod.COLONIES.bestPerColony(result.candidates())) {
-            int before = VillageColonyMod.COLONIES.count();
-
-            Optional<Colony> known = VillageColonyMod.COLONIES
-                    .findNearest(candidate.center(), VillageDetector.DUPLICATE_DISTANCE);
-
-            ColonyPos previousCenter = known.map(Colony::center).orElse(null);
-
-            logRefusedShrink(known, candidate);
-
-            Colony colony = VillageColonyMod.COLONIES.adopt(candidate);
-
-            boolean created = VillageColonyMod.COLONIES.count() > before;
-            if (created && !candidate.beds().isEmpty()) {
-                // Só a primeira adoção recebe esta passagem. A lista é o
-                // cluster exato que acabou de provar a vila, nunca uma
-                // varredura posterior de trabalhador ou de fundação.
-                VanillaBedChests.ensure(world, candidate.beds());
-            }
-
-            BigHouseFoundation.Result house = BigHouseFoundation.ensure(world, colony);
-
-            // A partir das camas vistas, e não do centro — 2026-08-22.
-            // Desde a Emenda 4 o centro não persegue mais a observação,
-            // então uma colônia que adote um aglomerado longe do próprio
-            // centro procuraria aldeões no lugar errado.
-            registerVillagers(world, colony, candidate.center());
-
-            // A fundação povoa a vila uma vez só: quando ela nasce ou
-            // quando a BigHouseMOD acaba de subir (um aldeão por cama).
-            // Em qualquer outro ciclo, quem morreu fica morto e a vila
-            // cresce por procriação — N1, 2026-09-24.
-            VillageFoundation.Result foundation = created || house.placed()
-                    ? VillageFoundation.ensure(
-                            world, colony, candidate.center(),
-                            VillageColonyMod.WORKERS, house.placed())
-                    : new VillageFoundation.Result(0, 0);
-
-            if (foundation.changed()) {
-                registerVillagers(world, colony, candidate.center());
-                registerVillagers(world, colony, candidate.center());
-            }
-
-            if (created) {
-                VillageColonyMod.LOGGER.info(
-                        "Colony created at {} with {} beds",
-                        colony.center(),
-                        candidate.bedCount());
-            } else if (previousCenter != null && !colony.center().equals(previousCenter)) {
-                VillageColonyMod.LOGGER.info(
-                        "Colony {} moved from {} to {} with {} beds",
-                        colony.id(),
-                        previousCenter,
-                        colony.center(),
-                        candidate.bedCount());
-            }
-
-            warnIfOverlapping(colony);
-        }
-
-        return result;
-    }
-
-    /**
-     * Avisa quando dois centros ficam perto demais.
-     *
-     * <p>ADR-003 §5, e é a linha que a ADR pede desde 2026-08-06 sem que
-     * ninguém a escrevesse. O MVP não funde as duas colônias — fundir
-     * exige nova ADR, e a decisão de 2026-08-12 já disse qual será o
-     * critério: um bloco de uma encostando no da outra, o que depende da
-     * construção existir.
-     *
-     * <p>Até lá, o que este aviso dá é o nome do problema quando ele
-     * aparecer em jogo: duas colônias sobrepostas disputam trabalhador —
-     * a vaga de profissão vale por colônia do registro, não por vila
-     * física —, e sem esta linha o sintoma seria um aldeão que troca de
-     * vila sem motivo aparente. É o risco aberto do §11 do Project-State,
-     * que até aqui acontecia em silêncio.
-     *
-     * <p>Cada par é avisado uma vez por sessão. A sobreposição não se
-     * resolve sozinha, e a sonda passa por aqui a cada 600 ticks: sem a
-     * memória do par, seriam cem linhas iguais por hora dizendo a mesma
-     * coisa.
-     */
-    private static void warnIfOverlapping(Colony colony) {
-        for (Colony other : VillageColonyMod.COLONIES.overlapping(colony)) {
-            if (!overlapsReported.add(pairKey(colony.id(), other.id()))) {
-                continue;
-            }
-
-            VillageColonyMod.LOGGER.warn(
-                    "Overlapping colonies detected — {} at {} and {} at {} are {} blocks apart"
-                            + " (less than {}); the MVP does not merge them",
-                    colony.id(),
-                    colony.center(),
-                    other.id(),
-                    other.center(),
-                    (int) Math.sqrt(colony.center().horizontalDistanceSquared(other.center())),
-                    VillageDetector.OVERLAP_DISTANCE);
-        }
-    }
-
-    /**
-     * O par, na mesma ordem venha de que lado vier.
-     *
-     * <p>A sonda de cada uma das duas encontra a outra, e sem a ordem
-     * fixa o mesmo par seria contado duas vezes — uma por colônia.
-     */
-    private static String pairKey(UUID one, UUID other) {
-        return one.compareTo(other) <= 0 ? one + "|" + other : other + "|" + one;
-    }
-
-    /**
-     * Quando uma observação viu menos camas mas não teve autoridade para
-     * baixar a contagem.
-     *
-     * <p>Existe porque em 2026-08-07 camas foram destruídas em jogo e a
-     * colônia não encolheu, e o log não sabia dizer se a regra de
-     * completude tinha recusado a observação ou se a observação menor
-     * nunca tinha chegado. São causas diferentes com correções
-     * diferentes.
-     *
-     * <p>É o "instrumentar antes de suspeitar" do §11: a linha que expõe
-     * o caso precisa existir antes de alguém desconfiar dele.
-     *
-     * <p>Não vira spam por si: só sai quando a contagem observada está
-     * abaixo da registrada, que é justamente o caso raro.
-     *
-     * <p>Diz onde o candidato estava e de onde a varredura partiu. Sem
-     * isso a linha é um número sem lugar, e foi essa cegueira que
-     * escondeu o E2 por três dias: "viu 5 de 31" parecia sonda com
-     * defeito e era, o tempo todo, um segundo aglomerado de camas a
-     * quarenta blocos. Com o centro na linha, dois aglomerados
-     * diferentes se distinguem de imediato de uma leitura pobre do
-     * mesmo.
-     */
-    private static void logRefusedShrink(Optional<Colony> known, VillageCandidate candidate) {
-        known.ifPresent(colony -> {
-            if (candidate.bedCount() >= colony.observedBeds() || candidate.complete()) {
-                return;
-            }
-
-            VillageColonyMod.LOGGER.info(
-                    "Colony {} saw {} beds at {} from anchor {}, keeping {}"
-                            + " — view not provably complete",
-                    colony.id(),
-                    candidate.bedCount(),
-                    candidate.center(),
-                    candidate.anchor() == null ? "none" : candidate.anchor(),
-                    colony.observedBeds());
-        });
-    }
 }
