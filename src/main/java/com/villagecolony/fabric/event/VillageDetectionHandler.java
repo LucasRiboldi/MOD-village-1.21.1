@@ -424,17 +424,6 @@ public final class VillageDetectionHandler {
         lastStock.clear();
     }
 
-    /** Os aldeões desta colônia, que é o que a varredura de baús pede. */
-    private static List<UUID> workerIdsOf(Colony colony) {
-        List<UUID> workerIds = new ArrayList<>();
-
-        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
-            workerIds.add(worker.villagerId());
-        }
-
-        return workerIds;
-    }
-
     /**
      * O assunto do ciclo inteiro no {@link IdleLog}.
      *

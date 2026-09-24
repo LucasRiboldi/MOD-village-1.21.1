@@ -1905,7 +1905,7 @@ public final class BuildSiteScanner {
         }
 
         return site.blueprint().equals(StructureBlueprintReader.BIG_HOUSE_MOD)
-                || min.y() <= site.max().y() && max.y() >= site.min().y();
+                || (min.y() <= site.max().y() && max.y() >= site.min().y());
     }
 
     /** A fundacao reserva todas as colunas da sua pegada, em qualquer altura. */

@@ -3,6 +3,7 @@ plugins {
     id 'maven-publish'
     id 'jacoco'
     id 'info.solidsoft.pitest' version '1.19.0'
+    id 'net.ltgt.errorprone' version '5.1.1'
 }
 
 version = project.mod_version
@@ -42,6 +43,10 @@ dependencies {
     // registro, tag e item do jogo em milissegundos, em vez de exigir um
     // teste de jogo lento e sujeito a interferência.
     testImplementation "net.fabricmc:fabric-loader-junit:${project.loader_version}"
+
+    // Análise estática na compilação (2026-09-24). Ver o bloco errorprone
+    // abaixo: só avisa, não reprova.
+    errorprone 'com.google.errorprone:error_prone_core:2.50.0'
     testImplementation platform("org.junit:junit-bom:${project.junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -141,6 +146,19 @@ java {
 tasks.withType(JavaCompile).configureEach {
     it.options.encoding = 'UTF-8'
     it.options.release = 21
+
+    // Error Prone (2026-09-24) só no código do mod, e só como aviso: a
+    // primeira passada é para ler, e o que for defeito de verdade vira
+    // tarefa. Teste e teste de jogo ficam de fora para o aviso não se
+    // perder no meio de asserção.
+    it.options.errorprone.enabled = (it.name == 'compileJava')
+    it.options.errorprone.allErrorsAsWarnings = true
+    it.options.errorprone.disableWarningsInGeneratedCode = true
+    // Item e Block do Minecraft são instâncias únicas de registro: comparar
+    // por == é o jeito certo, e as 28 ocorrências medidas eram todas isso.
+    it.options.errorprone.disable('ReferenceEquality')
+    // O javac corta em 100 avisos; sem isto o relatório mente pela metade.
+    it.options.compilerArgs += ['-Xmaxwarns', '10000']
 }
 
 jar {
