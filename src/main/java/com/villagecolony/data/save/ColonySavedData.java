@@ -9,6 +9,7 @@ import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.model.SkipReason;
 import com.villagecolony.core.construction.service.ConstructionService;
+import com.villagecolony.core.telemetry.model.ActivityTrace;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.ColonyState;
@@ -25,8 +26,10 @@ import net.minecraft.world.PersistentState;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -147,6 +150,15 @@ public final class ColonySavedData extends PersistentState {
      */
     private final List<ColonySweepCursor> sweeps = new ArrayList<>();
 
+    /**
+     * O traço circular de atividade de cada colônia — decisão 7B,
+     * 2026-09-24.
+     *
+     * <p>No mesmo arquivo pelo mesmo motivo de sempre: um traço órfão
+     * seria histórico de vila nenhuma.
+     */
+    private final Map<UUID, ActivityTrace> activityTraces = new HashMap<>();
+
     private ColonySavedData() {
     }
 
@@ -260,6 +272,26 @@ public final class ColonySavedData extends PersistentState {
             Collection<ColonyRoads> currentRoads,
             Collection<ColonySweepCursor> currentSweeps) {
 
+        sync(currentColonies, currentWorkers, currentProjects, currentBuildings,
+                currentMines, currentRoads, currentSweeps, Map.of());
+    }
+
+    /**
+     * @param currentActivityTraces o traço circular de atividade de cada
+     *     colônia — decisão 7B, 2026-09-24. Sem UUID de coordenada, sem
+     *     texto livre: seis campos por evento, no máximo
+     *     {@link ActivityTrace#CAPACITY} por colônia
+     */
+    public void sync(
+            Collection<Colony> currentColonies,
+            Collection<Worker> currentWorkers,
+            Collection<ConstructionService.Pending> currentProjects,
+            Collection<Building> currentBuildings,
+            Collection<Mine> currentMines,
+            Collection<ColonyRoads> currentRoads,
+            Collection<ColonySweepCursor> currentSweeps,
+            Map<UUID, ActivityTrace> currentActivityTraces) {
+
         colonies.clear();
         colonies.addAll(currentColonies);
 
@@ -280,6 +312,9 @@ public final class ColonySavedData extends PersistentState {
 
         sweeps.clear();
         sweeps.addAll(currentSweeps);
+
+        activityTraces.clear();
+        activityTraces.putAll(currentActivityTraces);
 
         markDirty();
     }
@@ -307,6 +342,11 @@ public final class ColonySavedData extends PersistentState {
     /** As varreduras que o save trouxe pela metade, uma por colônia. */
     public List<ColonySweepCursor> sweeps() {
         return List.copyOf(sweeps);
+    }
+
+    /** O traço circular de atividade de cada colônia, uma por colônia. */
+    public Map<UUID, ActivityTrace> activityTraces() {
+        return Map.copyOf(activityTraces);
     }
 
     @Override
@@ -403,6 +443,7 @@ public final class ColonySavedData extends PersistentState {
         MineSave.write(nbt, mines);
         RoadIndexSave.write(nbt, roads);
         SweepCursorSave.write(nbt, sweeps);
+        ActivityTraceSave.write(nbt, activityTraces);
 
         return nbt;
     }
@@ -468,6 +509,7 @@ public final class ColonySavedData extends PersistentState {
         data.mines.addAll(MineSave.read(nbt, knownColonies));
         data.roads.addAll(RoadIndexSave.read(nbt, knownColonies));
         data.sweeps.addAll(SweepCursorSave.read(nbt, knownColonies));
+        data.activityTraces.putAll(ActivityTraceSave.read(nbt, knownColonies));
 
         NbtList projectList = nbt.getList(PROJECTS, NbtElement.COMPOUND_TYPE);
 

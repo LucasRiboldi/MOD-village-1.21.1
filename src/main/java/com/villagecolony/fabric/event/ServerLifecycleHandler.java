@@ -3,6 +3,7 @@ package com.villagecolony.fabric.event;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.ColonyAbandonment;
+import com.villagecolony.core.telemetry.model.ActivityTrace;
 import com.villagecolony.core.worker.model.Worker;
 import java.util.ArrayList;
 import java.util.List;
@@ -80,6 +81,7 @@ public final class ServerLifecycleHandler {
         VillageColonyMod.CONSTRUCTIONS.clear();
         VillageColonyMod.BUILDINGS.clear();
         VillageColonyMod.MINES.clear();
+        VillageColonyMod.ACTIVITY_TRACES.clear();
         WorkTargets.clearAll();
         LumberjackWork.clearAll();
         MinerWork.clearAll();
@@ -153,6 +155,15 @@ public final class ServerLifecycleHandler {
         // cavado, e revarria do primeiro degrau tudo o que estava aberto.
         for (Mine mine : data.mines()) {
             VillageColonyMod.MINES.restore(mine);
+        }
+
+        // E o traço de atividade de cada colônia — decisão 7B,
+        // 2026-09-24. newestFirst() devolve do mais novo para o mais
+        // velho; restore() espera essa mesma ordem para reconstruir o
+        // buffer sem embaralhar quem é mais recente.
+        for (var entry : data.activityTraces().entrySet()) {
+            VillageColonyMod.ACTIVITY_TRACES.restore(
+                    entry.getKey(), entry.getValue().newestFirst(ActivityTrace.CAPACITY));
         }
 
         // E o índice de ruas — 2026-08-27. Sem ele, a primeira busca de
@@ -231,7 +242,8 @@ public final class ServerLifecycleHandler {
                 VillageColonyMod.BUILDINGS.all(),
                 VillageColonyMod.MINES.all(),
                 roads,
-                sweeps);
+                sweeps,
+                VillageColonyMod.ACTIVITY_TRACES.all());
 
         VillageColonyMod.LOGGER.info(
                 "Saved {} colonies with {} workers, {} buildings, {} mines,"
@@ -260,6 +272,7 @@ public final class ServerLifecycleHandler {
         VillageColonyMod.CONSTRUCTIONS.clear();
         VillageColonyMod.BUILDINGS.clear();
         VillageColonyMod.MINES.clear();
+        VillageColonyMod.ACTIVITY_TRACES.clear();
         WorkTargets.clearAll();
         LumberjackWork.clearAll();
         MinerWork.clearAll();
