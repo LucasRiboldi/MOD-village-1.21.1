@@ -10,6 +10,32 @@
 
 ---
 
+## Entrega desta sessão — Task 5 do plano de confiabilidade operacional
+
+`MineRecovery.recover(Mine)` extrai a decisão pura que já vivia dentro de
+`MineDigging.rerouteOrBlameTheMouth`: girar a hélice enquanto houver hélice
+para tentar, ou culpar a boca depois que todas falharem. Vocabulário
+próprio (`Decision.NO_ACTION/REROUTE/EXHAUST_MOUTH`), não os nomes do
+plano original — decisão tomada com o autor após confirmar que
+`RELEASE_STALE_CLAIM`/`CLEAR_CURSOR`/`SELECT_NEXT_ARM` não correspondiam a
+nada no código real. `MineDigging.rerouteOrBlameTheMouth` passou a
+delegar a decisão e só executa o efeito escolhido. Corresponde à Task 5
+(Decision 3B); commit `5a12ec3`.
+
+**A Task 6 do plano ("Integrate Mine Recovery Without Re-furnishing") já
+estava implementada antes desta sessão.** Conferido lendo o código real:
+`furnishAndLight` só é chamado nos três casos legítimos (mina nova, boca
+oposta válida ao esgotar o fundo, boca nova ao esgotar as hélices) — o
+próprio javadoc do método já dizia "mina já conhecida recebe apenas luz".
+`abandonAtBottom` já recusa substituir sem boca oposta válida. O arco
+(`archRaised`) só sobe uma vez e nunca é reconstruído numa boca ativa;
+`priorityRunsFromCoalDownToTheRareOnes` em `MinerGameTest` já cobre a
+prioridade do carvão. Nenhum código novo foi necessário para a Task 6;
+nenhum commit separado foi feito para ela.
+
+`./gradlew.bat build` e `runGametest --rerun-tasks`: **422/422 GameTests**,
+sem nenhuma falha.
+
 ## Entrega desta sessão — Task 4 do plano de confiabilidade operacional
 
 `SaveMigration.migrate(NbtCompound)` roda em `ColonySavedData.readNbt` antes

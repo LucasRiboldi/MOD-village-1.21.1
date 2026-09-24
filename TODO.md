@@ -22,9 +22,17 @@ plano de confiabilidade operacional).
   descarte deliberado). `SaveMigrationTest` cobre idempotencia, normalizacao
   de `BREEDER`, e preservacao de versao futura. `runGametest --rerun-tasks`:
   **422/422 GameTests**. Commit `04a6f1e`.
-- [ ] **Task 5 — recuperacao pura de mina** (MineRecovery, decisoes sem
-  ServerWorld/BlockPos).
-- [ ] **Task 6 — integrar recuperacao de mina sem reconstruir portal/arco.**
+- [x] **Task 5 — recuperacao pura de mina:** `MineRecovery.recover(Mine)`
+  extrai a decisao (NO_ACTION/REROUTE/EXHAUST_MOUTH) que ja vivia dentro de
+  `MineDigging.rerouteOrBlameTheMouth`. Vocabulario proprio, nao os nomes
+  do plano original (decisao tomada com o autor). `runGametest --rerun-tasks`:
+  **422/422 GameTests**. Commit `5a12ec3`.
+- [x] **Task 6 — integrar recuperacao de mina sem reconstruir portal/arco:**
+  ja estava implementada antes desta sessao. Conferido lendo o codigo real:
+  `furnishAndLight` so roda em mina nova/boca oposta valida/boca nova apos
+  helices esgotadas; arco so sobe uma vez; prioridade do carvao ja coberta
+  por `MinerGameTest.priorityRunsFromCoalDownToTheRareOnes`. Nenhum codigo
+  novo necessario; sem commit proprio.
 - [ ] **Task 7 — traco de atividade persistido e limitado** (ActivityTrace,
   16.384 eventos por colonia).
 - [ ] **Task 8 — contrato do armazem fisico** (WarehouseIndex, SupplyRequest,

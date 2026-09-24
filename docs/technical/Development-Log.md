@@ -8704,3 +8704,48 @@ normalizacao do legado, "nunca cria colonia ou obra", e preservacao de
 uma versao futura. `./gradlew.bat build` e `runGametest --rerun-tasks`
 fecharam com **422/422 GameTests**, sem nenhuma falha — nem as duas
 intermitencias registradas na entrega anterior.
+
+### 2026-09-24 - P1.5, decisao pura de recuperacao de mina
+
+`MineDigging.rerouteOrBlameTheMouth` decidia inline se a mina devia girar
+a helice ou culpar a boca, misturando essa decisao com o efeito de mundo
+(achar a boca nova, gravar no registro, acender a luz). A decisao 3B pede
+separar as duas coisas.
+
+`MineRecovery.recover(Mine)`, em `core/construction/service`, extrai
+exatamente a regra que ja existia: `NO_ACTION` enquanto a paciencia nao
+estourou, `REROUTE` enquanto houver helice para tentar, `EXHAUST_MOUTH`
+quando todas falharem. Nunca toca `ServerWorld`, `BlockPos` ou
+`MineMouth` — so le `Mine.turnsWithoutAPickaxe()` e `Mine.mouthIsHopeless()`,
+que a propria `Mine` ja contava sozinha.
+
+**O vocabulario do plano original nao correspondia ao codigo real.** A
+Task 5 descrevia `RELEASE_STALE_CLAIM`/`CLEAR_CURSOR`/`SELECT_NEXT_ARM` —
+nenhum desses conceitos existe em `Mine`, `MineDigging` ou `MineClaims`.
+Decisao tomada com o autor: usar o vocabulario que ja existe
+(`reroute`, `mouthIsHopeless`, `helicesTried`) em vez de inventar termos
+novos desconectados do codigo. `MineClaims` (quem esta em qual ramal
+agora — reserva de mineiro, mutavel) ficou fora de proposito: e outro
+conceito, sem relacao com a geometria da mina.
+
+`MineDigging.rerouteOrBlameTheMouth` passou a chamar
+`MineRecovery.recover` e delega a decisao; o metodo so executa o efeito
+escolhido, com os mesmos logs e o mesmo comportamento de antes.
+
+**A Task 6 do plano ("integrar recuperacao sem reconstruir portal/arco")
+ja estava implementada antes desta sessao**, e nenhum codigo novo foi
+necessario. Conferido lendo `MineDigging.java` linha a linha:
+`furnishAndLight` so e chamado em tres lugares — mina nova
+(`openNewMine`), boca oposta valida ao esgotar o fundo (`abandonAtBottom`,
+que ja recusa substituir sem boca valida), e boca nova ao esgotar as
+quatro helices (dentro do proprio `rerouteOrBlameTheMouth`). O javadoc do
+metodo ja documentava a regra: "mina ja conhecida recebe apenas luz". O
+arco (`archRaised`) so sobe uma vez, por construcao, e a prioridade do
+carvao ja tinha cobertura em
+`MinerGameTest.priorityRunsFromCoalDownToTheRareOnes`.
+
+`MineRecoveryTest` cobre seis casos: mina fresca, abaixo do limiar,
+limiar atingido reroteia, todas as helices esgotadas culpam a boca,
+progresso zera a paciencia, e a decisao nunca muta a mina. `./gradlew.bat
+build` e `runGametest --rerun-tasks` fecharam com **422/422 GameTests**,
+sem nenhuma falha.
