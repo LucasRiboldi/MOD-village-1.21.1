@@ -1,8 +1,10 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
 **Atualização de 2026-09-24, tarde — jogar com o spark ligado.** O JAR em
-`mods` agora é o da revisão de naturalidade (`ac40519`, SHA-256
-`987E5A1BB7B591980B5994D6E3E22E6FE8A5FECA0C8FB69FFC24BD614F27EC41`), e o
+`mods` agora é o do commit `49de0ba` (SHA-256
+`E4B068DE2C9EA8D6C1F9E9DC0ADE408BF5B98CDF9E43135E093261844D37C9CC`):
+revisão de naturalidade, rodada de qualidade e as 33 classes da
+refatoração — nada disso visto em jogo ainda, e o
 **spark** 1.10.109 está instalado ao lado dele.
 
 - **Primeiro, o perfil.** Seguir `docs/technical/Profiling-spark.md`:
