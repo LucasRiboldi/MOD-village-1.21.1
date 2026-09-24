@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.model.MineArm;
 import com.villagecolony.core.construction.model.MineShaft;
+import com.villagecolony.core.construction.service.MineRecovery;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -618,7 +619,20 @@ public final class MineDigging {
     private static void rerouteOrBlameTheMouth(
             ServerWorld world, UUID colonyId, Mine mine, BlockPos center) {
 
-        if (!mine.mouthIsHopeless()) {
+        // A decisão é pura e mora em MineRecovery — decisão 3B,
+        // 2026-09-24. Este método só executa o efeito que ela escolheu:
+        // MineDigging é quem tem o ServerWorld e a MineSite, não quem
+        // decide se ainda vale girar a hélice.
+        MineRecovery.Decision decision = MineRecovery.recover(mine);
+
+        if (decision == MineRecovery.Decision.NO_ACTION) {
+            // O guarda que chama este método já testou turnedWithoutAPickaxe(),
+            // então isto nunca deveria acontecer — mas nada aqui edita o
+            // mundo, e uma decisão inesperada não pode travar a mina.
+            return;
+        }
+
+        if (decision == MineRecovery.Decision.REROUTE) {
             MineShaft before = mine.shaft();
 
             mine.reroute();
