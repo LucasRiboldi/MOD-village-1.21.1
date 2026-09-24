@@ -1,5 +1,52 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
+**Atualização de 2026-09-24 — cinco playtests da entrega de confiabilidade
+operacional (Tasks 3 a 13).** Esta sessão implementou dez tasks do plano
+`docs/superpowers/plans/2026-09-23-operational-reliability.md` (scanner
+com política/custo separados, migração de save idempotente, recuperação
+pura de mina, traço de atividade persistido, armazém físico por snapshot,
+observação de inventário sem planejar, endurance com seed fixa, auditoria
+de exclusão de obra) — tudo verificado por `./gradlew.bat test` (992/992,
+zero falha), `./gradlew.bat build` (sucesso) e
+`./gradlew.bat runGametest --rerun-tasks` (**423/423 GAME TESTS COMPLETE**
+na rodada final). Duas tasks (9 e 10) foram investigadas e **não**
+implementadas por decisão — o comportamento que pediam já existia sob
+outro desenho; ver `STATE.md` e `TODO.md` para a evidência de cada uma.
+
+**Nenhum código de produção anterior foi tocado sem verificação, e nada
+foi publicado ainda.** O JAR de `build/libs/village-colony-0.3.0.jar`
+desta sessão tem SHA-256 `C1244064EE1DEC8A03C65844FAC37193A0ABCB64E983E2D982C154EE0B935691`
+— **diferente** do JAR em `downloads/` e em
+`%APPDATA%/.minecraft/mods/`, que continuam com o SHA-256
+`62FCECB70ACF7864DA852F707A1ADBA2197FEC8613A952A2E691DE7BE13BF1EF` da
+entrega P1.4 anterior a esta sessão. Essa divergência é intencional: o
+plano exige playtest real antes de copiar o build novo para `downloads/`
+e para a instalação — ver Task 14 do plano.
+
+**Os cinco playtests que faltam antes de publicar esta entrega:**
+
+1. Destruir o arco/portal da mina, disparar a recuperação técnica,
+   recarregar o mundo — o arco deve continuar ausente (não reconstruir).
+2. Esgotar uma mina finita — só uma boca oposta válida deve abrir uma
+   mina nova; carvão deve ser preferido quando elegível.
+3. Encher os baús públicos reconhecidos — o produtor deve reportar
+   `NO_CAPACITY` sem perder item nenhum, e retomar o trabalho físico
+   quando a capacidade for liberada.
+4. Reabrir um mundo com `BigHouseMOD` já migrada, duas vezes seguidas —
+   nenhum baú ou estrutura deve duplicar.
+5. Exercitar a alternância casa/infraestrutura e inspecionar, no save,
+   os eventos do traço de atividade (`VC_ACTIVITY` no log, e — se houver
+   ferramenta de leitura do save — os eventos `IDLE`/`WAITING`/
+   `RECOVERED`/`ABANDONED`/`ERROR` da Task 7).
+
+Só depois da confirmação desses cinco itens (observada pelo autor, não
+inferida do automatizado) é que o JAR deve ser copiado para `downloads/`
+e para os mods, com o cliente Minecraft **fechado** durante a cópia — ver
+a "armadilha" documentada logo abaixo, que já custou uma sessão inteira
+uma vez.
+
+---
+
 **Escrito em 2026-09-02, atualizado em 2026-09-20.** Este arquivo existe
 porque o gargalo do projeto deixou de ser código: havia **dez consertos do
 mineiro empilhados sem uma única sessão que os veja**, e nenhuma pergunta

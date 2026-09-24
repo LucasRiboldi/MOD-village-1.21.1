@@ -10,174 +10,49 @@
 
 ---
 
-## Entrega desta sessão — Task 13 do plano de confiabilidade operacional
+## Sessão 2026-09-24 — plano de confiabilidade operacional, Tasks 3 a 14
 
-`RemovalAudit` torna verificável em compilação o contrato que
-`ConstructionService.forget` já documentava informalmente. Três motivos
-— `PLAYER_CANCELLATION`, `PATIENCE_ABANDONMENT`, `COMPLETED_PROJECT_PURGE`
-—, cada um autorizando só os estados a que pertence.
-`PATIENCE_ABANDONMENT` autoriza `WAITING_RESOURCES` **e** `BUILDING` —
-descoberto lendo `WaitingWork.java` antes de codar: há dois fluxos reais
-de desistência por paciência (espera de material esgotada, e o "fundo de
-poço" de obra parada em `BUILDING` sem assentar peça). Restringir só a
-`WAITING_RESOURCES` teria introduzido um bug real. Só dois chamadores
-reais existiam (`ConstructionCancellation`, `WaitingWork`), ambos
-atualizados. `scripts/release_manifest.py` automatiza a comparação
-manual de três hashes SHA-256 que o `STATE.md` já documentava fazer à
-mão; `--dry-run` testado com sucesso, arquivo faltando e mismatch de
-hash. Corresponde à Task 13 (Decision 10A); commit `e16d363`.
+Dez tasks implementadas com código novo, duas investigadas e recusadas
+por decisão, uma já coberta antes da sessão. Detalhe de cada uma em
+`docs/technical/Development-Log.md` (grep por `P1.<N>` ou pelo nome da
+classe); commits na branch `codex/bighousemod`, nenhum enviado ainda.
 
-`./gradlew.bat build` e `runGametest --rerun-tasks`: 423 testes, 422/423
-— única falha é a intermitência pré-existente já conhecida; nenhum teste
-de cancelamento/abandono foi afetado.
+| Task | O que entregou | Commit |
+|---|---|---|
+| 3 | `ScanReport`/`ScanRefusalReason`/`ColonyScanScheduler` — scanner separado em política e custo | `a953489` |
+| 4 | `SaveMigration` — migração de save idempotente, `saveVersion` monotônico | `04a6f1e` |
+| 5 | `MineRecovery` — decisão pura de reroteio de mina, extraída de `MineDigging` | `5a12ec3` |
+| 6 | **Já coberta antes da sessão** — `furnishAndLight` já restrito aos 3 casos legítimos | — |
+| 7 | `ActivityTrace`/`ActivityTraceSave` — traço circular de atividade persistido no save | `ae1bef6` |
+| 8 | `WarehouseIndex` — contrato puro de reserva de estoque por ciclo, com prioridade | `a1599ac` |
+| 9 | **Investigada e recusada** — objetivo já coberto por `MinerWork`+`ColonySupply.craft` | — |
+| 10 | **Investigada e recusada** — E4/E21 fechadas (sem evidência/obsoletas); UUID fixo não teria efeito | — |
+| 11 | `VillageInventory`/`VillageInventoryObserver` — raio-x da colônia sem planejar | `c6b4abf` |
+| 12 | `EnduranceReport`/`LatencySummary` — relatório reproduzível de endurance; E41 já fechado | `d25faf4` |
+| 13 | `RemovalAudit`/`release_manifest.py` — auditoria de exclusão de obra e manifesto de release | `e16d363` |
 
-## Entrega desta sessão — Task 12 e correção do E41 no TODO.md
+**Verificação automatizada final (Task 14, passo 1):** `./gradlew.bat
+test` — **992/992 unitários, zero falha**. `./gradlew.bat build` —
+sucesso. `./gradlew.bat runGametest --rerun-tasks` — **423/423 GAME
+TESTS COMPLETE**, zero falha na rodada final (nem a intermitência
+`aVillageOnBedrockStillHasLots` que apareceu em rodadas anteriores desta
+sessão).
 
-Descoberto ao ler o código antes de codar: `ColonyEnduranceGameTest.
-theColonyDoesNotAccumulateAcrossTwoHundredCycles` já existia (P1.13,
-2026-09-11) e já implementava o E41 por completo — 200 ciclos, detecção
-de deriva em quatro contagens, aquecimento descontado. O `TODO.md`
-estava desatualizado (E41 marcado aberto em duas entradas); corrigido
-com a evidência de onze rodadas completas desta sessão sem falha.
+**🔴 Pendente antes de publicar 0.3.0 — cinco playtests reais em jogo**
+(Task 14, passo 2; ver `docs/proxima-sessao.md` para o roteiro
+completo): arco/portal de mina destruído continua ausente após
+recuperação; mina esgotada só abre boca oposta válida; baú público cheio
+reporta `NO_CAPACITY` sem perder item; `BigHouseMOD` migrada não duplica
+ao reabrir duas vezes; alternância casa/infraestrutura com eventos de
+traço inspecionados. **Nenhum foi observado ainda nesta sessão** — só o
+autor jogando pode fechá-los, conforme o próprio plano exige ("only
+close a save playtest after observed user confirmation").
 
-`EnduranceReport`/`LatencySummary` são a camada real que faltava: quando
-o teste de endurance falhar, um relatório reproduzível (seed, duração,
-ciclos, contagem de tarefas, latência min/mean/max, 64 eventos do
-`ActivityTrace`) é logado antes da exceção do GameTest interromper o
-teste. Toda corrida agora loga uma linha de resumo — confirmado real:
-`"endurance seed=20260924 duration=200t cycles=200 tasks=1
-latency={min 0 ms, mean 0,3 ms, max 5 ms}"`. Corresponde à Task 12
-(Decision 9B); commit `d25faf4`.
-
-`./gradlew.bat build` e `runGametest --rerun-tasks`: 423 testes, 422/423
-— única falha é a intermitência pré-existente já conhecida.
-
-## Entrega desta sessão — Task 11 do plano de confiabilidade operacional
-
-`VillageInventory` (raio-x imutável: adultos, camas, profissões, obras
-completas/ativas, cobertura de baú, recursos observados) montado por
-`VillageInventoryObserver.observe`, que nunca chama
-`ConstructionPlanner.plan`. `ColonyProfession`/`ChestCoverage` espelham
-`ProfessionType`/`ChestSurvey` em `core/colony/model` — decisão tomada
-com o autor, seguindo o path exato do plano em vez de mover a classe
-para `core/coordination`. `VillageInventoryObserverTest` (unit test
-puro) não foi criado: `observe()` depende de `ServerWorld` real e o
-projeto nunca mocka `ServerWorld` em teste unitário. A cobertura real
-fica no GameTest novo `observingInventoryDoesNotChangeHouseAlternation`
-em `FarmPlanGameTest`, que prova a garantia da decisão 11A diretamente.
-Corresponde à Task 11 (Decision 11A); commit `c6b4abf`.
-
-`./gradlew.bat build` e `runGametest --rerun-tasks`: 423 testes, 422/423
-— única falha é a intermitência pré-existente já conhecida.
-
-## E4 e E21 fechadas por investigação; Task 10 não implementada
-
-Duas suspeitas antigas (`TODO.md`, marcadas 🟡 "suspeita, não diagnóstico")
-foram investigadas antes de decidir a Task 10, que pedia fixá-las com
-identidades determinísticas:
-
-- **E21** (`theStoneLeavesTheWorldAndReachesTheChest` disse "a pedra não
-  chegou ao baú" uma vez): rodou **10 baterias completas de
-  `runGametest --rerun-tasks` nesta sessão** (~4.220 execuções do teste),
-  zero falhas. Fechada por falta de evidência de recorrência.
-- **E4** (`path held: no` e o aldeão chegava assim mesmo): o log que
-  gerou a suspeita (commit `379f1dd`, 2026-08-08) foi removido do código;
-  o mecanismo de aproximação do lenhador que ele diagnosticava foi
-  substituído por `WorkStall`/`LumberjackReport`/`TreeChoice.stallLimit`.
-  Fechada por obsolescência — não há mais o que reproduzir.
-
-A Task 10 pedia fixar `UUID.randomUUID()` por identidade determinística
-em `ShepherdGameTest`/`SmelterGameTest`/`ConstructionResumeGameTest`.
-Investigação confirmou que, nesses arquivos, o UUID é sempre chave de mapa
-opaca — nunca hasheado para derivar geometria, diferente do caso real já
-corrigido em `SurfaceGatheringGameTest`. Fixá-los não mudaria determinismo
-nenhum, e as duas suspeitas que a task existia para resolver já foram
-fechadas. Não implementada.
-
-## Task 8 entregue, Task 9 investigada e não implementada (por decisão)
-
-`WarehouseIndex` (Task 8, contrato puro de reserva por ciclo com
-prioridade) está commitado (`a1599ac`) e disponível, mas a Task 9
-(integração física) não foi implementada. Investigação, feita antes de
-codar: o cenário central do plano — "baú cheio pausa o produtor sem
-perder item" — já está coberto por dois mecanismos corretos, cada um
-apropriado ao seu contexto:
-
-- **`MinerWork.java`** (reativo): quando `haul.stored()==0` depois de
-  cavar, a tarefa é encerrada — "the chest that serves him is full"
-  (2026-09-22). O mineiro não controla quanto vai produzir; verificar
-  depois é a decisão certa.
-- **`ColonySupply.craft`** (preventivo): `firstWithRoomFor` verifica
-  espaço **antes** de fabricar, recusando sem gastar ingrediente.
-
-Reescrever `ColonyChests`/`ChestInventoryReader`/`MinerHaul`/`ColonySupply`
-para rotear por `WarehouseIndex` trocaria código físico já testado por
-uma abstração sem defeito real a resolver. O terceiro item do plano
-("rotear graveto, maçã e muda por pedido físico") é o **E38**, já
-catalogado como decisão de projeto pendente — não lacuna técnica.
-
-Revisitar quando (e se) um playtest real mostrar duas tarefas reservando
-o mesmo estoque escasso no mesmo ciclo, caso que os dois mecanismos
-atuais não cobrem.
-
-## Entrega desta sessão — Task 7 do plano de confiabilidade operacional
-
-`ActivityTrace` é um buffer circular de 16.384 eventos por colônia, com
-`ActivityTraceEvent` (workerId, profession, activity, state, reason,
-target, progress — sem coordenada, sem texto livre), persistido em
-`ColonySavedData` via `ActivityTraceSave`. Três decisões tomadas com o
-autor: (1) incluir `workerId`, seguindo o plano à risca, mesmo
-`ActivityLog` (a telemetria de log já existente) evitando UUID de
-propósito — as duas vias coexistem; (2) `ActivityProfession` e
-`ControlledReason` espelham `ProfessionType`/`IdleReason` em vez de
-importá-los, porque `DependencyRuleTest` proíbe `core/telemetry` de
-importar `core/worker` ou `core/coordination`; (3) a integração real
-ficou restrita a `WorkerStrikes.gaveUp` — o único ponto com UUID de
-trabalhador de fato disponível. `IdleLog` (45 chamadores, por
-colônia+assunto, sem trabalhador identificável) ficou fora desta entrega,
-registrado como limite conhecido. Corresponde à Task 7 (Decision 7B);
-commit `ae1bef6`.
-
-`./gradlew.bat build` e `runGametest --rerun-tasks`: 422 testes, 421/422
-em duas rodadas consecutivas — a única falha
-(`aVillageOnBedrockStillHasLots`) é a intermitência pré-existente já
-confirmada via `git stash`, sem relação com este código.
-
-## Entrega desta sessão — Task 5 do plano de confiabilidade operacional
-
-`MineRecovery.recover(Mine)` extrai a decisão pura que já vivia dentro de
-`MineDigging.rerouteOrBlameTheMouth`: girar a hélice enquanto houver hélice
-para tentar, ou culpar a boca depois que todas falharem. Vocabulário
-próprio (`Decision.NO_ACTION/REROUTE/EXHAUST_MOUTH`), não os nomes do
-plano original — decisão tomada com o autor após confirmar que
-`RELEASE_STALE_CLAIM`/`CLEAR_CURSOR`/`SELECT_NEXT_ARM` não correspondiam a
-nada no código real. `MineDigging.rerouteOrBlameTheMouth` passou a
-delegar a decisão e só executa o efeito escolhido. Corresponde à Task 5
-(Decision 3B); commit `5a12ec3`.
-
-**A Task 6 do plano ("Integrate Mine Recovery Without Re-furnishing") já
-estava implementada antes desta sessão.** Conferido lendo o código real:
-`furnishAndLight` só é chamado nos três casos legítimos (mina nova, boca
-oposta válida ao esgotar o fundo, boca nova ao esgotar as hélices) — o
-próprio javadoc do método já dizia "mina já conhecida recebe apenas luz".
-`abandonAtBottom` já recusa substituir sem boca oposta válida. O arco
-(`archRaised`) só sobe uma vez e nunca é reconstruído numa boca ativa;
-`priorityRunsFromCoalDownToTheRareOnes` em `MinerGameTest` já cobre a
-prioridade do carvão. Nenhum código novo foi necessário para a Task 6;
-nenhum commit separado foi feito para ela.
-
-`./gradlew.bat build` e `runGametest --rerun-tasks`: **422/422 GameTests**,
-sem nenhuma falha.
-
-## Entrega desta sessão — Task 4 do plano de confiabilidade operacional
-
-`SaveMigration.migrate(NbtCompound)` roda em `ColonySavedData.readNbt` antes
-de qualquer leitor olhar um campo, com `saveVersion` monotônico na raiz do
-NBT. A primeira transformação registrada (v0→v1) é a normalização
-`BREEDER→SHEPHERD`, movida de dentro de `readProfession` para cá.
-`MineSave.SHAPE_VERSION` foi deixado intocado de propósito — decisão
-tomada com o autor: já é testado em produção e sua semântica é descarte
-deliberado ao mudar de versão, não tradução de forma antiga para nova;
+O JAR de `build/libs/` desta sessão (SHA-256 `C1244064EE1DEC8A03C65844FAC37193A0ABCB64E983E2D982C154EE0B935691`)
+**diverge** do JAR em `downloads/`/mods (SHA-256
+`62FCECB70ACF7864DA852F707A1ADBA2197FEC8613A952A2E691DE7BE13BF1EF`, da
+entrega P1.4 anterior). Isso é intencional — o build novo só deve ser
+copiado depois dos cinco playtests confirmados.
 misturar as duas estratégias exigiria reescrever `MineSave.read` sem
 necessidade real. Corresponde à Task 4 (Decision 8A) de
 `docs/superpowers/plans/2026-09-23-operational-reliability.md`; commit

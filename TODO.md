@@ -1,7 +1,13 @@
 # TODO
 
-**Atualizado:** 2026-09-24, scanner separado em politica e custo (P1.3 do
-plano de confiabilidade operacional).
+**Atualizado:** 2026-09-24. Tasks 3-13 do plano de confiabilidade
+operacional concluidas (10 implementadas, 2 investigadas e recusadas por
+decisao, 1 ja coberta antes da sessao). Task 14 (verificacao +
+playtests): a parte automatizada fechou verde — `gradlew test` 992/992,
+`gradlew build` sucesso, `runGametest --rerun-tasks` 423/423 GAME TESTS
+COMPLETE. **A parte de playtest continua pendente** — ver
+`docs/proxima-sessao.md` para os cinco itens que so o autor jogando pode
+fechar antes de publicar a 0.3.0.
 
 ## Plano de confiabilidade operacional (docs/superpowers/plans/2026-09-23-operational-reliability.md)
 
@@ -112,8 +118,15 @@ plano de confiabilidade operacional).
   (compara 3 hashes SHA-256, `--dry-run`). `runGametest --rerun-tasks`:
   **422/423** (unica falha e a intermitencia conhecida). Commit
   `e16d363`.
-- [ ] **Task 14 — verificacao completa, playtests de save e handoff de
-  release.**
+- [~] **Task 14 — verificacao completa, playtests de save e handoff de
+  release.** Parte automatizada (passo 1) **feita**: `gradlew test`
+  992/992 zero falha, `gradlew build` sucesso, `runGametest --rerun-tasks`
+  **423/423 GAME TESTS COMPLETE** na rodada final. Parte de playtest
+  (passo 2, cinco itens) **pendente** — depende do autor jogando; ver
+  `docs/proxima-sessao.md`. Passos 3-5 (copiar JAR, manifest final,
+  commit/push da 0.3.0) **bloqueados** ate os playtests confirmarem —
+  o build atual (SHA-256 `C1244064...`) diverge de propósito do JAR em
+  `downloads/`/mods (SHA-256 `62FCECB7...`, entrega anterior).
 
 **Atualizado:** 2026-09-24, peca de construcao sem apoio mantida pendente.
 

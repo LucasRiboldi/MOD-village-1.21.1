@@ -9065,3 +9065,76 @@ sempre recusado. `./gradlew.bat build` e `runGametest --rerun-tasks`
 fecharam com **423 GAME TESTS COMPLETE, 422/423** — a unica falha e a
 intermitencia pre-existente ja conhecida; nenhum teste de cancelamento
 ou abandono foi afetado.
+
+### 2026-09-24 - P1.14, verificacao automatizada fechada; cinco playtests pendentes
+
+Encerramento da sessao que implementou dez das doze tasks restantes do
+plano de confiabilidade operacional
+(`docs/superpowers/plans/2026-09-23-operational-reliability.md`), Tasks
+3 a 14. Resumo por task, cada uma com evidencia detalhada na propria
+entrada deste log:
+
+- **Task 3** — `ColonyScanScheduler`/`ScanReport` separam politica e
+  custo do scanner de lotes. Commit `a953489`.
+- **Task 4** — `SaveMigration` centraliza a migracao de save, com
+  `saveVersion` monotonico; `MineSave.SHAPE_VERSION` deixado intocado
+  por decisao (semantica de descarte, nao traducao). Commit `04a6f1e`.
+- **Task 5** — `MineRecovery` extrai a decisao pura de reroteio de mina
+  que ja vivia dentro de `MineDigging`. Commit `5a12ec3`.
+- **Task 6** — ja estava implementada antes da sessao; nenhum codigo
+  novo necessario, conferido lendo `MineDigging.furnishAndLight`.
+- **Task 7** — `ActivityTrace`/`ActivityTraceSave` persistem um traco
+  circular de atividade no save, integrado so em
+  `WorkerStrikes.gaveUp` — o unico ponto com UUID de trabalhador real
+  disponivel. Commit `ae1bef6`.
+- **Task 8** — `WarehouseIndex` define o contrato puro de reserva de
+  estoque fisico por ciclo, com prioridade. Commit `a1599ac`.
+- **Task 9** — investigada e **recusada por decisao**: o objetivo
+  ("bau cheio pausa o produtor sem perder item") ja estava coberto por
+  `MinerWork` (reativo) e `ColonySupply.craft` (preventivo), cada um
+  apropriado ao proprio contexto. Sem commit.
+- **Task 10** — investigada e **recusada por decisao**: as duas
+  suspeitas que a justificavam, E4 e E21, foram fechadas por
+  investigacao real (falta de evidencia em dez rodadas completas, e
+  obsolescencia de um mecanismo de log removido) antes de decidir a
+  task. Sem commit.
+- **Task 11** — `VillageInventory`/`VillageInventoryObserver` montam um
+  raio-x imutavel da colonia sem nunca chamar
+  `ConstructionPlanner.plan`. Commit `c6b4abf`.
+- **Task 12** — `EnduranceReport`/`LatencySummary` relatam uma corrida
+  de endurance de forma reproduzivel; o E41 que a task pretendia fechar
+  ja estava resolvido desde 2026-09-11, TODO.md corrigido. Commit
+  `d25faf4`.
+- **Task 13** — `RemovalAudit` torna verificavel em compilacao a
+  auditoria de exclusao de obra; `release_manifest.py` automatiza a
+  comparacao manual de tres hashes SHA-256. Commit `e16d363`.
+
+**Task 14, passo 1 — verificacao automatizada completa.**
+`./gradlew.bat test`: **992/992 testes unitarios, zero falha, zero
+erro.** `./gradlew.bat build`: sucesso. `./gradlew.bat runGametest
+--rerun-tasks`: **423/423 GAME TESTS COMPLETE**, zero falha na rodada
+final — nem a intermitencia `aVillageOnBedrockStillHasLots` que
+apareceu em rodadas anteriores desta mesma sessao se repetiu.
+`scripts/analyze_village_log.py` rodou contra o `latest.log` real
+disponivel (sessao de 2026-09-23, anterior a esta entrega): tres
+candidatos a loop de baixa contagem, sem evidencia de nenhum dos
+defeitos que esta sessao corrigiu — mas esse log nao cobre nenhum dos
+cinco playtests que a Task 14 exige, entao nao fecha nenhum deles.
+
+**Task 14, passo 2 — cinco playtests reais, pendentes.** O plano e
+explicito: "only close a save playtest after observed user
+confirmation". Nenhum dos cinco foi executado nesta sessao — arco/portal
+de mina destruido continuar ausente apos recuperacao tecnica; mina
+esgotada abrir so em boca oposta valida, com carvao preferido; bau
+publico cheio reportar `NO_CAPACITY` sem perder item e retomar ao
+liberar capacidade; `BigHouseMOD` migrada nao duplicar ao reabrir duas
+vezes; alternancia casa/infraestrutura com eventos de traco
+inspecionados. O roteiro completo foi registrado em
+`docs/proxima-sessao.md`.
+
+**Passos 3-5 do plano (copiar JAR, manifest final, commit/push da
+0.3.0) ficam bloqueados ate os playtests confirmarem.** O JAR de
+`build/libs/` desta sessao (SHA-256 comecando em `C1244064`) diverge de
+proposito do JAR em `downloads/` e na instalacao (SHA-256 comecando em
+`62FCECB7`, da entrega P1.4 anterior a esta sessao) — nao foi copiado, e
+nao deve ser ate a confirmacao do autor.
