@@ -22,7 +22,12 @@ resultado real contra ele.
 As recomendações, cada uma com um aceite que a próxima avaliação mede
 (metodologia em `docs/technical/avaliacao/METODOLOGIA.md`):
 
-- [ ] 🔴 **R1**: perfil do spark e atacar o custo do ciclo. **C13 de 1 para ≥3.**
+- [ ] 🔴 **R1**: atacar o custo do ciclo. **C13 de 1 para ≥3.** Medido no log de
+  24-09 (196 ciclos lentos): o **planejador é 91% do custo** (49,9 s de 54,7 s;
+  média 255 ms, máx 554 ms), a detecção 8%, e baús, ofícios e atribuição
+  somam menos de 1%. A causa: `PlannerTurns.PER_CYCLE = 8`, com 8 colônias
+  carregadas, e cada uma varre até 1.024 colunas. A cota foi calibrada em
+  09-15 com 2,5 ms por colônia; hoje custa cerca de 30 ms.
 - [ ] 🟠 **R2**: estado global num contexto por servidor. **C05 ≤ 3/kLOC**, sem
   `clearAll` à mão no ciclo de vida.
 - [ ] 🟠 **R3**: ciclo de tarefa comum aos 7 ofícios. **`JOBS` de 8 para ≤2** e
