@@ -17,6 +17,36 @@ sucesso, `runGametest --rerun-tasks` 423/423 GAME TESTS COMPLETE. O JAR
 (ver `docs/proxima-sessao.md`); este playtest de 24-09 e o primeiro
 resultado real contra ele.
 
+## Qualidade e verificação — 2026-09-24 (pesquisa de métodos, decisão do autor)
+
+- [x] **1. CI nos branches `codex/**`** (`0b1e8b6`). Antes o CI só rodava na `main`.
+- [x] **2. PIT no core** (`987edc9`): `./gradlew pitest`, 77% das mutações
+  mortas, força de teste 86%. No CI roda sem reprovar e sobe o relatório.
+  - [ ] 🟡 Matar os sobreviventes: `MineShaft` 37, `ProfessionAssigner` 13,
+    `ColonyCycle` 12, `Building` 12.
+- [x] **3. GameTests intermitentes isolados** (`668c915` e `4590e4c`):
+  lote na rocha, viveiro de dez e `ChestMarker`. Três rodadas 433/433,
+  mas ainda sem prova de cura; seguir medindo por repetição.
+- [x] **4. spark instalado** em `mods` (1.10.109, SHA-512 conferido), com
+  o procedimento em `docs/technical/Profiling-spark.md` (`e91f6be`).
+  ⬜ gravar o perfil no próximo playtest (196 ciclos acima de um tique).
+- [x] **5. Error Prone só com avisos** (`7040c23`). Código morto removido.
+  - [ ] 🟡 72 avisos restantes, quase todos de javadoc (InvalidLink 24,
+    MissingSummary 12, NotJavadoc 7); `EnumOrdinal` 7, `LongDoubleConversion` 4.
+- [x] **6. fabric-loader-junit** (`0ed2e52`). Teste unitário lê o registro;
+  as tags não, porque vêm do datapack do servidor.
+- [ ] 🟢 **7. Testes de cliente (`fabric-client-gametest`)**: guardado
+  para o futuro por decisão do autor. Serviria para ver placa, nome e
+  quadro sem playtest (screenshot + XVFB no CI).
+- [x] **8. JaCoCo** (`987edc9`): `build/reports/jacoco/test/html`.
+- [ ] 🟠 **9. Arquivos acima de 500 linhas**: refatoração em andamento, um
+  commit por arquivo.
+- [x] **10. Depuração de mixin** em todo run de desenvolvimento (`15bdcfd`).
+- [~] **11. Hooks** (`d98bcff`): os scripts estão prontos e testados.
+  ⬜ o autor liga no `.claude/settings.json` (trecho em `scripts/hooks/README.md`).
+- [x] **12. Analisador de log** com 19 assinaturas e as peças mais
+  esperadas (`99e1ac0`).
+
 ## Revisão de naturalidade 2026-09-24 (docs/technical/Revisao-Naturalidade-2026-09-24.md)
 
 Decisão do autor aplicada no mesmo dia. Todos os itens têm teste
