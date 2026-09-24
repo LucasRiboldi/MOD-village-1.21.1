@@ -10,6 +10,27 @@
 
 ---
 
+## 🟢 Revisão de naturalidade aplicada — 24-09, decisão do autor (espera jogo)
+
+Seis itens entraram em código, com commit e testes por marco. O N5 já estava
+feito desde o P0.7. Ver `docs/technical/Revisao-Naturalidade-2026-09-24.md`.
+
+- **N1** (`fc9d9b8`): fundação só na criação ou quando a BigHouseMOD sobe,
+  com 1 aldeão por cama. Morto não é reposto. `VillageMeals` dá comida ao
+  fim do expediente para a vila crescer por procriação. Emenda na ADR-018.
+- **N7** (`8e78fa7`): placa do lote em topo da planta + 5.
+- **N10** (`553faaa`): escada da fuga tampada com o que saiu dela.
+- **N11** (`74a273a`): alcance de coleta = 24 + 2 por cama, até o teto do ofício.
+- **N9** (`4590e4c`): casa → oficina do ofício sem oficina → o que falta.
+- **N3** (`bd7072e`): equivalente antes da peça pronta (119 → 102 automáticas).
+
+Verificado: `gradlew build` 1022/1022, `runGametest` 433/433 (duas rodadas
+verdes seguidas depois do N9). **Não verificado em jogo:** a procriação
+acontecer de fato, a leitura da placa alta, o tampão e a ordem de obras
+numa vila real. Sinais no log: `shared supper with`, `finished backfilling`.
+
+---
+
 ## 🔴 Playtest real de 24-09 (~6h30) — E47 e E48, primeiro resultado contra a 0.3.0 publicada
 
 Log real de `%APPDATA%/.minecraft/logs/latest.log` (221.814 linhas, 5

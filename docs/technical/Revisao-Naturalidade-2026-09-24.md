@@ -4,6 +4,23 @@
 podem ser melhoradas, para o mod parecer uma vila crescendo naturalmente,
 influenciando pouco no vanilla"*.
 
+> **Decisão do autor (24-09), e estado:**
+>
+> - **N1**: aplicado, com "um aldeão por cama da BigHouseMOD".
+> - **N2**: recusado; a casa fica.
+> - **N3**: aplicado, com equivalente antes e a peça pronta só sem rota.
+> - **N4**: fica como está por ora.
+> - **N5**: rua em caminho de terra. **Já era assim** desde o P0.7
+>   (`VillageRoad.java:22`). Esta revisão errou ao listá-lo; o resto do N5
+>   (tocha e arco grátis) não foi pedido.
+> - **N6 e N7**: ficam ligados; a placa sobe para topo + 5.
+> - **N8**: recusado.
+> - **N9**: aplicado, na ordem casa → oficina de ofício → o que sobrou.
+> - **N10**: aplicado.
+> - **N11**: aplicado.
+>
+> Commits e verificação em `STATE.md`.
+
 **Régua usada:** a pergunta é se um jogador que chega sem ler o log
 acreditaria que os próprios aldeões fizeram aquilo. Algo que surge do nada,
 move item sem ninguém carregar ou sai de graça quebra essa impressão. Uma

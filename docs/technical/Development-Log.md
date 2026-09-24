@@ -9269,3 +9269,27 @@ poco de pedra vira escada, tabua nao e cavada, agua forca outro rumo).
 Nao feito: teto de distancia para "dar uma mao". A ligacao
 `WorkStall -> StrandedWorkers` nao tem GameTest de congelamento real.
 Nada disso foi visto em jogo ainda.
+
+### 2026-09-24 - Revisao de naturalidade aplicada (N1, N3, N7, N9, N10, N11)
+
+Decisao do autor sobre `Revisao-Naturalidade-2026-09-24.md`. Um commit por
+item, cada um com teste.
+
+- **N1:** a fundacao passou a rodar so na criacao ou quando a BigHouseMOD e
+  colocada, e agora faz nascer um aldeao por cama.
+  - Dois achados no caminho: o POI da cama fica na **cabeca**, e com a
+    memoria HOME no pe a morte nunca devolvia a cama. E `canBreed()` do
+    Vanilla quer dizer "aceita mais comida"; quem diz "disposto a procriar"
+    e `isReadyToBreed()`.
+  - O primeiro teste de bilhete passou vazio, olhando o pe da cama. Agora
+    ele confere que o POI existe.
+- **N3:** familias de equivalentes; auditoria de 119 para 102.
+- **N9:** a mutacao sem a regra abriu `plains_armorer_house_1` no lugar da
+  roca.
+  - `ChestMarkerGameTest.markingTwiceLeavesOneFrame` falhou 2 de 3 vezes so
+    porque um lote novo mudou a disposicao das arenas: contava um quadro de
+    outro lote. O teste agora limpa os quadros antes de comecar.
+- **N5:** ja estava feito, e a revisao errou ao lista-lo.
+
+Estado final: `gradlew build` com 1022 unitarios, `runGametest` 433/433.
+Nada disso foi visto em jogo.

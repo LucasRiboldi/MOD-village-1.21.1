@@ -19,24 +19,26 @@ resultado real contra ele.
 
 ## Revisão de naturalidade 2026-09-24 (docs/technical/Revisao-Naturalidade-2026-09-24.md)
 
-Pedido do autor: vila que parece crescer sozinha, com pouca interferência
-no vanilla. Nada implementado ainda; o autor escolhe o que entra.
+Decisão do autor aplicada no mesmo dia. Todos os itens têm teste
+automatizado; nenhum foi visto em jogo.
 
-- [ ] 🔴 **N1** — fundação repõe titular morto a cada detecção
-  (`VillageDetectionHandler.java:1287`); trocar por procriação vanilla.
-  Emenda a ADR-018 §6.
-- [ ] 🔴 **N2** — BigHouseMOD surge pronta e sem móveis; tornar obra do
-  construtor ou dispensar.
-- [ ] 🔴 **N3** — ADR-022 cria no baú a peça sem rota; substituir por
-  equivalente do bioma ou pular.
-- [ ] 🔴 **N4** — `ChestDepositor` põe no baú à distância; carregar no
-  inventário e caminhar (começar pelo lenhador).
-- [ ] 🟠 **N5** — tocha, arco, lanterna e rua sem custo; rua como `dirt_path`.
-- [ ] 🟠 **N6/N7** — nome flutuante e placa de lote sempre ligados; chave
-  desligada por padrão.
-- [ ] 🟠 **N8** — viveiro em `rooted_dirt`; plantar no chão do bioma.
-- [ ] 🟡 **N9** — rodízio por necessidade; **N10** — tampar a escada da
-  fuga; **N11** — alcance de coleta cresce com a vila.
+- [x] 🔴 **N1**: fundação uma vez, 1 aldeão por cama da BigHouseMOD, sem
+  reposição; `VillageMeals` para a procriação (`fc9d9b8`). ⬜ ver em jogo
+  um filhote nascer e ganhar ofício.
+- [~] 🔴 **N2**: recusado pelo autor; a BigHouseMOD fica.
+- [x] 🔴 **N3**: equivalente antes da peça pronta, 119 → 102 automáticas (`bd7072e`).
+- [~] 🔴 **N4**: fica como está por ora (decisão do autor).
+- [x] 🟠 **N5**: a rua já era `dirt_path` desde o P0.7; nada a fazer.
+- [x] 🟠 **N6/N7**: ficam ligados; placa em topo + 5 (`8e78fa7`). ⬜ ver a leitura em jogo.
+- [~] 🟠 **N8**: recusado; o viveiro fica em `rooted_dirt`.
+- [x] 🟡 **N9**: casa → oficina de ofício → o que sobrou (`4590e4c`).
+- [x] 🟡 **N10**: tampão da escada da fuga (`553faaa`).
+- [x] 🟡 **N11**: alcance 24 + 2 por cama (`74a273a`).
+- [ ] 🟡 Lenhador, mineiro e construtor não têm oficina no catálogo
+  Vanilla, e o N9 os pula. Falta o autor dizer se algum deve ter.
+- [ ] 🟡 `TreeNurseryGameTest.theNurseryStopsAtTenTrees` falhou 1 vez em
+  8 rodadas (9 árvores de 10). Não mexi; talvez seja a mesma instabilidade
+  de `aVillageOnBedrockStillHasLots`.
 
 ## Plano de confiabilidade operacional (docs/superpowers/plans/2026-09-23-operational-reliability.md)
 
