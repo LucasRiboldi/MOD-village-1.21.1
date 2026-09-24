@@ -8859,3 +8859,46 @@ integracao mecanica de armazem devesse decidir de passagem.
 playtest real mostrar duas tarefas reservando o mesmo estoque escasso no
 mesmo ciclo — o unico caso que os dois mecanismos atuais nao cobrem.
 `WarehouseIndexTest` cobre nove casos. `./gradlew.bat build`: sucesso.
+
+### 2026-09-24 - E4 e E21 fechadas por investigacao; Task 10 nao implementada
+
+A Task 10 do plano de confiabilidade operacional (Decision 9A) pedia
+fixar `UUID.randomUUID()` por identidades deterministicas em
+`ShepherdGameTest`, `SmelterGameTest` e `ConstructionResumeGameTest`,
+para resolver duas suspeitas antigas marcadas no `TODO.md` como
+"suspeita, nao diagnostico": E4 e E21.
+
+**Metodologia da investigacao, antes de tocar qualquer teste.**
+
+Primeiro, conferiu-se se o UUID nesses tres arquivos tem algum efeito
+sobre determinismo. Nao tem: em todos os casos e uma chave de mapa opaca
+(`Colony.create(UUID.randomUUID(), ...)`), nunca hasheada para derivar
+setor, direcao ou geometria — diferente do caso real ja corrigido em
+`SurfaceGatheringGameTest` numa sessao anterior a esta, onde o UUID
+influenciava o fallback de setor. Fixar esses UUIDs nao mudaria
+determinismo nenhum; seria cerimonia sem efeito.
+
+**E21** — `theStoneLeavesTheWorldAndReachesTheChest` (a garantia de que
+mineracao nunca cria nem perde recurso) disse "a pedra nao chegou ao
+bau" uma vez, com suspeita de custo de leitura de estrutura no tique.
+Contando as baterias completas de `runGametest --rerun-tasks` rodadas
+nesta sessao — dez ao todo, entre as Tasks 3 a 10 — o teste nunca
+apareceu como falha em nenhuma delas: aproximadamente 4.220 execucoes
+sem reproduzir o sintoma. Fechada por falta de evidencia de recorrencia.
+
+**E4** — a suspeita ("`path held: no` e o aldeao chega assim mesmo")
+vinha de um log de diagnostico especifico do lenhador, escrito no commit
+`379f1dd` (2026-08-08, "o log conta a caminhada inteira"). `grep` no
+codigo atual nao encontra a frase em lugar nenhum; `git log -S"path
+held"` confirma que ela so existiu naquele commit e num commit anterior
+que a precedeu. O mecanismo de aproximacao que aquele log diagnosticava
+foi substituido pelo `WorkStall`/`LumberjackReport`/`TreeChoice.stallLimit`
+modernos. A suspeita ficou orfa de um sistema que nao existe mais no
+codigo — nao ha como reproduzi-la porque o que ela media foi
+reescrito. Fechada por obsolescencia.
+
+Com as duas suspeitas fechadas, a Task 10 perdeu o motivo que a
+justificava: nao ha mais causa de E4/E21 a diagnosticar, e fixar UUID
+nos tres arquivos nao teria efeito pratico. `OperationalMatrixGameTest`
+nao foi criado — nao haveria conteudo real para ele indexar alem do que
+os testes existentes ja cobrem.

@@ -10,6 +10,30 @@
 
 ---
 
+## E4 e E21 fechadas por investigação; Task 10 não implementada
+
+Duas suspeitas antigas (`TODO.md`, marcadas 🟡 "suspeita, não diagnóstico")
+foram investigadas antes de decidir a Task 10, que pedia fixá-las com
+identidades determinísticas:
+
+- **E21** (`theStoneLeavesTheWorldAndReachesTheChest` disse "a pedra não
+  chegou ao baú" uma vez): rodou **10 baterias completas de
+  `runGametest --rerun-tasks` nesta sessão** (~4.220 execuções do teste),
+  zero falhas. Fechada por falta de evidência de recorrência.
+- **E4** (`path held: no` e o aldeão chegava assim mesmo): o log que
+  gerou a suspeita (commit `379f1dd`, 2026-08-08) foi removido do código;
+  o mecanismo de aproximação do lenhador que ele diagnosticava foi
+  substituído por `WorkStall`/`LumberjackReport`/`TreeChoice.stallLimit`.
+  Fechada por obsolescência — não há mais o que reproduzir.
+
+A Task 10 pedia fixar `UUID.randomUUID()` por identidade determinística
+em `ShepherdGameTest`/`SmelterGameTest`/`ConstructionResumeGameTest`.
+Investigação confirmou que, nesses arquivos, o UUID é sempre chave de mapa
+opaca — nunca hasheado para derivar geometria, diferente do caso real já
+corrigido em `SurfaceGatheringGameTest`. Fixá-los não mudaria determinismo
+nenhum, e as duas suspeitas que a task existia para resolver já foram
+fechadas. Não implementada.
+
 ## Task 8 entregue, Task 9 investigada e não implementada (por decisão)
 
 `WarehouseIndex` (Task 8, contrato puro de reserva por ciclo com

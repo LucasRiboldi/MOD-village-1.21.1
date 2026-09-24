@@ -53,6 +53,17 @@ plano de confiabilidade operacional).
   Revisitar `WarehouseIndex`/Task 9 se um playtest real mostrar duas
   tarefas reservando o mesmo estoque escasso no mesmo ciclo, caso que os
   dois mecanismos atuais nao cobrem.
+- [ ] **Task 10 — investigada e NAO implementada, por decisao.** O plano
+  pedia fixar `UUID.randomUUID()` por identidade fixa em
+  `ShepherdGameTest`/`SmelterGameTest`/`ConstructionResumeGameTest` para
+  resolver E4/E21. Conferido no codigo: nesses tres arquivos o UUID e
+  sempre chave de mapa opaca (`Colony.create(UUID.randomUUID(), ...)`),
+  nunca hasheado para derivar geometria/direcao — diferente do caso real
+  ja corrigido em `SurfaceGatheringGameTest` (sessao anterior a esta).
+  Fixar esses UUIDs nao mudaria determinismo nenhum. E4 e E21 foram
+  investigadas e fechadas (ver a tabela de historico, entradas E4/E21)
+  por falta de evidencia e obsolescencia, respectivamente — nao ha mais
+  causa a diagnosticar que justifique `OperationalMatrixGameTest`.
 - [x] **Task 7 — traco circular de atividade persistido:** `ActivityTrace`
   (16.384 eventos/colonia) persistido em `ColonySavedData` via
   `ActivityTraceSave`. **Limite de escopo conhecido:** so
@@ -659,8 +670,8 @@ Um por vez, teste antes de seguir.
 | **E42** | Nenhum teste de impasse entre profissões. Os dois casos reais — a roça que travava toda a construção, e o fabricante que nunca descascava — foram achados **em jogo**, não pela bateria. **A tentativa de 09-09 à noite foi retirada pelo gauntlet-verifier** — os três casos escritos eram a invariante de vários trabalhadores, com outro nome. **O trabalho de verdade é outro gametest:** lote de roça fora do alcance do fazendeiro, planta de casa disponível, duas passagens do planejador, e a segunda tem de abrir projeto de CASA | 🔴 aberto |
 | **E38** | O baú pessoal pode assorear com vara, maçã e muda sem consumidor; a colheita não transborda para outra profissão e itens sem espaço viram drops no mundo. Definir tratamento sustentável dos resíduos sem misturar depósitos | ⚙️ aberto |
 | **KF-001** | Instabilidade de `aFrozenMinerGivesUpLongBeforeTheStallGuard`. **Fechado em 09-09:** a afirmação lia o estado da tarefa depois que o ciclo podia reservá-la novamente; o teste passou a registrar o instante da devolução e força a fase do ciclo. O orçamento global de uma busca/tique continua sendo um risco separado de vazão, não a causa provada da falha. | ✅ teste corrigido; medir vazão se houver evidência |
-| **E21** | `theStoneLeavesTheWorldAndReachesTheChest` disse "a pedra não chegou ao baú" uma vez. Suspeita: custo de ler estrutura no tique. **Suspeita, não diagnóstico** | 🟡 aberto |
-| **E4** | `path held: no` e o aldeão chega assim mesmo. Provável, nunca verificado | 🟡 aberto |
+| **E21** | `theStoneLeavesTheWorldAndReachesTheChest` disse "a pedra não chegou ao baú" uma vez. Suspeita: custo de ler estrutura no tique. **Fechada em 24-09 por falta de evidência:** dez rodadas completas de `runGametest --rerun-tasks` (~4.220 execuções do teste) nesta sessão, zero falhas. Sem recorrência para investigar. | ✅ fechada, sem evidência |
+| **E4** | `path held: no` e o aldeão chega assim mesmo. Provável, nunca verificado. **Fechada em 24-09 por obsolescência:** o log que gerou a suspeita (commit `379f1dd`, 2026-08-08) foi removido; o mecanismo de aproximação do lenhador que ele diagnosticava foi substituído por `WorkStall`/`LumberjackReport`/`TreeChoice.stallLimit`. A suspeita ficou órfã de um sistema que não existe mais no código atual. | ✅ fechada, obsoleta |
 | **E3** | Sobra de colheita é perda de item. **Metade fechada em 09-04** — o lenhador deixou de destruir; **o mineiro continua sem teto de inventário** | ⚙️ metade fechada |
 | **E9** | Colônia `ABANDONED` desmarcada no ciclo seguinte. **Mitigado em 09-13** — precisa de duas leituras positivas seguidas | ⚙️ mitigado |
 
