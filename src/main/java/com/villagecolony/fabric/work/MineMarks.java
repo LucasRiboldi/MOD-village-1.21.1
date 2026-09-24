@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.service.VillageDetector;
 import net.minecraft.server.world.ServerWorld;
@@ -84,6 +85,10 @@ import java.util.Map;
  * {@code theSkippedStoneStaysBehindOnceTheGalleryMovedPast}.
  */
 public final class MineMarks {
+
+    static {
+        ServerMemory.register(MineMarks.class, MineMarks::clearAll);
+    }
 
     private MineMarks() {
     }

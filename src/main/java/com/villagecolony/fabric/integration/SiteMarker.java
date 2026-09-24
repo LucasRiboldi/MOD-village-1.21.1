@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
@@ -45,6 +46,10 @@ import java.util.UUID;
  * sem abrir o log.
  */
 public final class SiteMarker {
+
+    static {
+        ServerMemory.register(SiteMarker.class, SiteMarker::clearAll);
+    }
 
     /**
      * De quantos em quantos tiques o contorno pisca.

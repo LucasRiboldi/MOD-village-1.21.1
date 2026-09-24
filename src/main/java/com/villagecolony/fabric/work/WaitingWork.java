@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Building;
@@ -40,6 +41,10 @@ import java.util.UUID;
  * planejamento, porque são a mesma decisão vista de dois lados.
  */
 public final class WaitingWork {
+
+    static {
+        ServerMemory.register(WaitingWork.class, WaitingWork::clearAll);
+    }
 
     /** O assunto destas linhas no registro de ociosidade. */
     private static final String SUBJECT = "building";

@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.type.ResourceId;
 
 import java.io.InputStream;
@@ -54,6 +55,10 @@ import java.util.Set;
  * que restava dela.
  */
 public final class VillageStructures {
+
+    static {
+        ServerMemory.register(VillageStructures.class, VillageStructures::clearAll);
+    }
 
     /** Onde o índice da pasta mora dentro do jar. */
     private static final String CATALOG =

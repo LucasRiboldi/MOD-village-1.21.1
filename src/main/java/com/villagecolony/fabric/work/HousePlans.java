@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
@@ -43,6 +44,10 @@ import java.util.UUID;
  * para a rua.
  */
 public final class HousePlans {
+
+    static {
+        ServerMemory.register(HousePlans.class, HousePlans::clearAll);
+    }
 
     private HousePlans() {
     }

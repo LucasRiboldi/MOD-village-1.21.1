@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 
@@ -32,6 +33,10 @@ import java.util.UUID;
  * borda inteira virar viveiro.
  */
 public final class FarmerNursery {
+
+    static {
+        ServerMemory.register(FarmerNursery.class, FarmerNursery::clearAll);
+    }
 
     /**
      * Quantos tiques entre um plantio e o seguinte.

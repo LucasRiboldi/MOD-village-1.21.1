@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.type.ServerMemory;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Heightmap;
@@ -24,6 +25,10 @@ import java.util.Optional;
  * trava a thread.
  */
 public final class TreeScanner {
+
+    static {
+        ServerMemory.register(TreeScanner.class, TreeScanner::clearAll);
+    }
 
     /**
      * Quantas colunas se olha por busca, no máximo.

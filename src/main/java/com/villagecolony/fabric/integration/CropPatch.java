@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.type.ServerMemory;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -33,6 +34,10 @@ import java.util.UUID;
  * terra arada vazia e uma refeição só.
  */
 public final class CropPatch {
+
+    static {
+        ServerMemory.register(CropPatch.class, CropPatch::clearAll);
+    }
 
     /** Quanto acima e abaixo do centro se procura. */
     private static final int LEVELS = 6;

@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.type.ServerMemory;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -24,6 +25,10 @@ import java.util.Optional;
  * adivinhar o cômodo, a porta ou a abertura do baú.
  */
 public final class ChestPlacer {
+
+    static {
+        ServerMemory.register(ChestPlacer.class, ChestPlacer::clearAll);
+    }
 
     /** Resultado estável de uma única tentativa de adoção. */
     public enum Outcome {

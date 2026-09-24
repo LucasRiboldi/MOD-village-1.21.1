@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.coordination.GatheringReach;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
@@ -44,6 +45,10 @@ import java.util.UUID;
 
 /** Coleta materiais naturais expostos fora da zona habitada. */
 public final class SurfaceGatheringWork {
+
+    static {
+        ServerMemory.register(SurfaceGatheringWork.class, SurfaceGatheringWork::clearAll);
+    }
 
     private static final int BREAKING_STAGES = 10;
     private static final int SWING_INTERVAL = 5;

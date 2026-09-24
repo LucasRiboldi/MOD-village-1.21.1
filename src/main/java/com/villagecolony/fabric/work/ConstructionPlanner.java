@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.integration.SweepState;
 import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.fabric.integration.LotClearance;
@@ -74,6 +75,10 @@ import java.util.function.Predicate;
  * retomada do save, que é a mesma decisão vista de trás para frente.
  */
 public final class ConstructionPlanner {
+
+    static {
+        ServerMemory.register(ConstructionPlanner.class, ConstructionPlanner::clearAll);
+    }
 
     /**
      * Como esta fase aparece na linha de {@link IdleLog}.

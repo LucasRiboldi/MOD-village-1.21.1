@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.ColonyEdits;
@@ -64,6 +65,10 @@ import java.util.UUID;
  * busca recomeça depois de cada um.
  */
 public final class MinerWork {
+
+    static {
+        ServerMemory.register(MinerWork.class, MinerWork::clearAll);
+    }
 
     /**
      * Alcance de braço, medido no espaço. O mesmo número do lenhador.

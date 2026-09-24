@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.type.ColonyPos;
@@ -31,6 +32,10 @@ import java.util.UUID;
  * ingrediente que nenhum trabalhador pode obter.
  */
 public final class BiomeConstructionSupply {
+
+    static {
+        ServerMemory.register(BiomeConstructionSupply.class, BiomeConstructionSupply::clearAll);
+    }
 
     private static final int RECIPE_DEPTH = 5;
 

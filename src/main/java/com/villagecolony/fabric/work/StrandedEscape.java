@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.storage.model.WorkerStorage;
@@ -58,6 +59,10 @@ import java.util.UUID;
  * couber cai no chão como item, como faz o mineiro.
  */
 public final class StrandedEscape {
+
+    static {
+        ServerMemory.register(StrandedEscape.class, StrandedEscape::clearAll);
+    }
 
     /** Quantos degraus uma fuga cava antes de desistir. */
     static final int MAX_STEPS = 32;

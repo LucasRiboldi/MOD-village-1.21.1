@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.fabric.integration.TreeHarvester;
@@ -33,6 +34,10 @@ import java.util.Map;
  * mundo do jogador, e o mod não tem como fazer nenhuma.
  */
 public final class TreeMarks {
+
+    static {
+        ServerMemory.register(TreeMarks.class, TreeMarks::clearAll);
+    }
 
     private TreeMarks() {
     }

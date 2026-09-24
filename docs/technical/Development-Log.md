@@ -9366,3 +9366,26 @@ reutilizavel.
   - 1034 unitarios; 434/434 GameTests em duas rodadas.
 - **Nao verificado em jogo.** Sinais no log: `Focus village is now`,
   `Planner turns`, e a queda de `Colony cycle took`.
+
+### 2026-09-24 - Branch na main, STATE.md enxuto, item 3 (ServerMemory)
+
+- **R4:** PR #2 com o CI verde; merge `692d8b9`, e o branch avancou para a
+  `main`.
+- **R5:** o `STATE.md` foi de 659 para 95 linhas. O texto antigo foi
+  arquivado sem edicao no `Historico-2026-09.md`.
+- **Item 3:** `core.type.ServerMemory`. As 51 classes com memoria de
+  servidor (50 `clearAll` mais o `clearPending`) se inscrevem no proprio
+  bloco estatico, e o ciclo de vida chama `resetAll()` no lugar das duas
+  listas a mao (33 imports a menos).
+  - Achados:
+    - o `BiomeConstructionSupply.clearAll()` nunca era chamado;
+    - a lista de fechar nao limpava `PlanRefusals` nem
+      `PlayerWorldChangeHandler`;
+    - o `VillageStructures`, com `synchronized`, escapou do script e foi
+      pego pelo teste.
+  - O `ServerMemory` ficou em `core.type` porque a `DependencyRuleTest`
+    proibe dominio do core importar `core.coordination`.
+  - `ServerMemoryRegistrationTest` percorre as classes compiladas e foi
+    confirmado por mutacao.
+  - Resultados: 1036 unitarios; 434/434 GameTests em duas rodadas.
+  - Nao muda a metrica C05, que conta campos, e nao limpeza.

@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
@@ -53,6 +54,10 @@ import java.util.UUID;
  * pequena que nasce alimenta mais que uma grande que nunca cabe.
  */
 public final class FarmPlans {
+
+    static {
+        ServerMemory.register(FarmPlans.class, FarmPlans::clearAll);
+    }
 
     /** As plantas lidas, por id. Ler um template não é barato. */
     private static final Map<ResourceId, Optional<Blueprint>> READ = new HashMap<>();

@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.type.ServerMemory;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.HashMap;
@@ -33,6 +34,10 @@ import java.util.function.Function;
  * </ul>
  */
 public final class RingSweep {
+
+    static {
+        ServerMemory.register(RingSweep.class, RingSweep::clearAll);
+    }
 
     /** Quantas colunas uma passagem pode olhar. */
     public static final int MAX_COLUMNS = 1024;

@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.IdleReason;
@@ -55,6 +56,10 @@ import java.util.UUID;
  * vidro. Este componente permanece responsável apenas pela fundição.
  */
 public final class SmelterWork {
+
+    static {
+        ServerMemory.register(SmelterWork.class, SmelterWork::clearAll);
+    }
 
     /** Quantos tiques uma peça leva para fundir. */
     private static final int TICKS_PER_PIECE = 20;

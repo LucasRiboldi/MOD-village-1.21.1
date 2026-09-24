@@ -1,55 +1,23 @@
 package com.villagecolony.fabric.event;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.colony.model.Colony;
-import com.villagecolony.core.colony.service.ColonyAbandonment;
 import com.villagecolony.core.telemetry.model.ActivityTrace;
 import com.villagecolony.core.worker.model.Worker;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.villagecolony.core.construction.model.Building;
-import com.villagecolony.core.construction.model.ColonyEdits;
 import com.villagecolony.core.construction.model.ColonyRoads;
 import com.villagecolony.core.construction.model.ColonySweepCursor;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.data.save.ColonySavedData;
-import com.villagecolony.fabric.brain.WorkTargets;
-import com.villagecolony.fabric.integration.ChestMarker;
-import com.villagecolony.fabric.integration.TreeScanner;
-import com.villagecolony.fabric.integration.RoadExtension;
-import com.villagecolony.fabric.integration.VillageRoad;
-import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
-import com.villagecolony.core.worker.service.HiringLog;
-import com.villagecolony.fabric.integration.LotRefusals;
-import com.villagecolony.fabric.integration.ProtectionSample;
-import com.villagecolony.fabric.integration.CraftReasons;
-import com.villagecolony.fabric.integration.VolumeSample;
-import com.villagecolony.fabric.work.FarmerNursery;
-import com.villagecolony.fabric.integration.SiteMarker;
 import com.villagecolony.fabric.integration.SweepLog;
-import com.villagecolony.fabric.work.BuilderWork;
-import com.villagecolony.fabric.work.StrandedEscape;
-import com.villagecolony.fabric.work.VillageMeals;
-import com.villagecolony.fabric.work.StrandedWorkers;
-import com.villagecolony.fabric.integration.ChestPlacer;
-import com.villagecolony.fabric.integration.RingSweep;
-import com.villagecolony.fabric.work.MineClaims;
-import com.villagecolony.fabric.work.MinerWork;
-import com.villagecolony.fabric.work.FarmPlans;
-import com.villagecolony.fabric.work.FarmerWork;
-import com.villagecolony.fabric.work.ShepherdWork;
-import com.villagecolony.fabric.work.SmelterWork;
-import com.villagecolony.fabric.work.SurfaceGatheringWork;
 import com.villagecolony.fabric.work.TestBarrier;
-import com.villagecolony.fabric.work.HousePlans;
-import com.villagecolony.fabric.work.PlanRefusals;
-import com.villagecolony.fabric.work.WaitingWork;
-import com.villagecolony.fabric.work.ConstructionPlanner;
-import com.villagecolony.fabric.work.CraftingWork;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.server.MinecraftServer;
 
@@ -85,55 +53,11 @@ public final class ServerLifecycleHandler {
         VillageColonyMod.BUILDINGS.clear();
         VillageColonyMod.MINES.clear();
         VillageColonyMod.ACTIVITY_TRACES.clear();
-        StrandedWorkers.clearAll();
-        StrandedEscape.clearAll();
-        VillageMeals.clearAll();
-        WorkTargets.clearAll();
-        LumberjackWork.clearAll();
-        MinerWork.clearAll();
-        MineClaims.clearAll();
-        SmelterWork.clearAll();
-        SurfaceGatheringWork.clearAll();
-        ShepherdWork.clearAll();
-        FarmerWork.clearAll();
-        FarmPlans.clearAll();
-        RingSweep.clearAll();
-        ChestPlacer.clearAll();
-        CraftingWork.clearAll();
-        BuilderWork.clearAll();
-        ConstructionPlanner.clearAll();
-        HousePlans.clearAll();
-        PlanRefusals.clearAll();
-        WaitingWork.clearAll();
-        ChestMarker.clearAll();
-        TreeScanner.clearAll();
-        VillageRoad.clearAll();
-        RoadExtension.clearAll();
-        BuildSiteScanner.clearAll(); // Inclui os relatórios de varredura por colônia.
-        SweepLog.clearAll();
-        // E a contagem de recusa de lote junto — 2026-09-17. Ela
-        // ficava de fora enquanto os quatro vizinhos eram limpos, e a
-        // assimetria piorou quando o contador de colunas aceitas entrou
-        // nela. Ver LotRefusals.
-        LotRefusals.clearAll();
-        HiringLog.clearAll();
-        ProtectionSample.clearAll();
-
-        VolumeSample.clearAll();
-
-        CraftReasons.clearAll();
-
-        FarmerNursery.clearAll();
-        PhantomWorkerLog.clearAll();
-        TestBarrier.clearAll();
-        ColonyStateLog.clearAll();
-        ColonyAbandonment.clearAll();
-        PlannerTurns.clearAll();
-        VillageFocus.clearAll();
-        SiteMarker.clearAll();
-        ColonyEdits.clearAll();
-        VillageDetectionHandler.clearPending();
-        PlayerWorldChangeHandler.clearAll();
+        // Toda memoria de servidor se inscreve sozinha — item 3 da avaliacao,
+        // 2026-09-24. Eram duas listas escritas a mao, e ja tinham divergido;
+        // ver ServerMemory.
+        int forgotten = ServerMemory.resetAll();
+        VillageColonyMod.LOGGER.debug("Server memory reset: {} classes", forgotten);
 
         ColonySavedData data = ColonySavedData.get(server);
 
@@ -280,52 +204,10 @@ public final class ServerLifecycleHandler {
         VillageColonyMod.BUILDINGS.clear();
         VillageColonyMod.MINES.clear();
         VillageColonyMod.ACTIVITY_TRACES.clear();
-        StrandedWorkers.clearAll();
-        StrandedEscape.clearAll();
-        VillageMeals.clearAll();
-        WorkTargets.clearAll();
-        LumberjackWork.clearAll();
-        MinerWork.clearAll();
-        MineClaims.clearAll();
-        SmelterWork.clearAll();
-        SurfaceGatheringWork.clearAll();
-        ShepherdWork.clearAll();
-        FarmerWork.clearAll();
-        FarmPlans.clearAll();
-        RingSweep.clearAll();
-        ChestPlacer.clearAll();
-        CraftingWork.clearAll();
-        BuilderWork.clearAll();
-        ConstructionPlanner.clearAll();
-        HousePlans.clearAll();
-        WaitingWork.clearAll();
-        ChestMarker.clearAll();
-        TreeScanner.clearAll();
-        VillageRoad.clearAll();
-        RoadExtension.clearAll();
-        BuildSiteScanner.clearAll(); // Inclui os relatórios de varredura por colônia.
-        SweepLog.clearAll();
-        // E a contagem de recusa de lote junto — 2026-09-17. Ela
-        // ficava de fora enquanto os quatro vizinhos eram limpos, e a
-        // assimetria piorou quando o contador de colunas aceitas entrou
-        // nela. Ver LotRefusals.
-        LotRefusals.clearAll();
-        HiringLog.clearAll();
-        ProtectionSample.clearAll();
-
-        VolumeSample.clearAll();
-
-        CraftReasons.clearAll();
-
-        FarmerNursery.clearAll();
-        PhantomWorkerLog.clearAll();
-        TestBarrier.clearAll();
-        ColonyStateLog.clearAll();
-        ColonyAbandonment.clearAll();
-        PlannerTurns.clearAll();
-        VillageFocus.clearAll();
-        SiteMarker.clearAll();
-        ColonyEdits.clearAll();
-        VillageDetectionHandler.clearPending();
+        // Toda memoria de servidor se inscreve sozinha — item 3 da avaliacao,
+        // 2026-09-24. Eram duas listas escritas a mao, e ja tinham divergido;
+        // ver ServerMemory.
+        int forgotten = ServerMemory.resetAll();
+        VillageColonyMod.LOGGER.debug("Server memory reset: {} classes", forgotten);
     }
 }

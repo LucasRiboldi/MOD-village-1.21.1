@@ -1,5 +1,6 @@
 package com.villagecolony.core.worker.service;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.worker.model.ProfessionType;
 
 import java.util.EnumMap;
@@ -44,6 +45,10 @@ import java.util.UUID;
  * precisa conhecer.
  */
 public final class HiringLog {
+
+    static {
+        ServerMemory.register(HiringLog.class, HiringLog::clearAll);
+    }
 
     /** O que aconteceu com uma profissão nesta passagem de contratação. */
     public enum Outcome {

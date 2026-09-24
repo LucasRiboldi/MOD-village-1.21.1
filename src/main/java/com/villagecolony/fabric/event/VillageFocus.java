@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.event;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
@@ -37,6 +38,10 @@ import java.util.UUID;
  * tem jogador e continua planejando todas as colônias.
  */
 final class VillageFocus {
+
+    static {
+        ServerMemory.register(VillageFocus.class, VillageFocus::clearAll);
+    }
 
     private static final ColonyFocus FOCUS = new ColonyFocus();
 

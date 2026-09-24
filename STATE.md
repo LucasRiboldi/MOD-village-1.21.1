@@ -50,8 +50,9 @@ correção levantadas pela avaliação" e "Avaliação técnica". Em aberto:
 
 - **R1, desempenho.** Correção feita (vila foco, prazo de 15 ms, cota
   ajustável); falta medir em jogo. É o único critério da avaliação com nota 1.
-- **Item 3, estado global.** 49 classes com `clearAll` e 78 limpezas à mão
-  no ciclo de vida. Em andamento em 24-09.
+- **Estado global (R2).** A limpeza já é garantida pelo `ServerMemory`
+  (item 3, feito em 24-09), mas os 89 campos estáticos mutáveis continuam
+  — consolidá-los num contexto por servidor é o que falta para o C05.
 - **Item 4, mutações sobreviventes no PIT.** `MineShaft` 37,
   `ProfessionAssigner` 13, `ColonyCycle` 12.
 - **Itens 9 e 10 (ciclo de tarefa comum aos ofícios; regras de decisão

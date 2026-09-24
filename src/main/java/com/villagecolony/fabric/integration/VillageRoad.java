@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.type.ResourceId;
 import net.minecraft.block.Block;
@@ -18,6 +19,10 @@ import java.util.Set;
  * esteja na area espacial reservada pela colonia.
  */
 public final class VillageRoad {
+
+    static {
+        ServerMemory.register(VillageRoad.class, VillageRoad::clearAll);
+    }
 
     private static final ResourceId DEFAULT_PAVING = VillagePalette.DIRT_PATH;
 

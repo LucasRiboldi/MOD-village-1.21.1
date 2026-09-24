@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
@@ -30,6 +31,10 @@ import java.util.UUID;
  * depois que a vaga teve oportunidade de seguir, ela volta à varredura.
  */
 final class BuildingRepairPlanner {
+
+    static {
+        ServerMemory.register(BuildingRepairPlanner.class, BuildingRepairPlanner::clearAll);
+    }
 
     private record Attempt(UUID projectId, UUID buildingId, int standing) {
     }
