@@ -275,7 +275,7 @@ public final class TreeChoice {
      * Quase mandou procurar o defeito no guarda em vez de no castigo,
      * na sessão de 09-05.
      *
-     * <p>É o molde que o mineiro já usa: {@code MinerWork.giveUp} recebe
+     * <p>É o molde que o mineiro já usa: {@code MinerHands.giveUp} recebe
      * o motivo pronto de quem o chamou, com o número que aquele guarda
      * de fato contou.
      *

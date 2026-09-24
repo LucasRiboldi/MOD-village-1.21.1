@@ -62,7 +62,7 @@ public final class ConstructionDemand {
      * repetir.
      *
      * <p><b>Pública para o teste chamá-la</b>, e não por precisar de
-     * fora. É o precedente do {@code MinerWork.footingIn}, e pelo mesmo
+     * fora. É o precedente do {@code MinerApproach.footingIn}, e pelo mesmo
      * motivo: um teste que reimplementasse esta conta afirmaria a cópia
      * dele, e não a regra — foi assim que a correção do E32 passou sem
      * ninguém ver, em 2026-09-05.

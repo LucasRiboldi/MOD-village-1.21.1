@@ -118,7 +118,7 @@ public final class MinerReach {
      * mais longe — 2026-09-03.
      *
      * <p><b>É a ordem que torna a busca barata.</b> O
-     * {@code MinerWork.approachTo} varria o cubo de raio quatro inteiro
+     * {@code MinerApproach.approachTo} varria o cubo de raio quatro inteiro
      * para ficar com o vizinho mais perto: setecentas e vinte e oito
      * posições, umas seiscentas leituras de bloco, <b>sempre</b> — mesmo
      * quando o lugar bom era o bloco colado ao lado.

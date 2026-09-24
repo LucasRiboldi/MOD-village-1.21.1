@@ -46,6 +46,9 @@ import com.villagecolony.fabric.work.BuilderApproach;
 import com.villagecolony.fabric.work.MinerReport;
 import com.villagecolony.fabric.work.MinerLeg;
 import com.villagecolony.fabric.work.MinerReach;
+import com.villagecolony.fabric.work.MinerApproach;
+import com.villagecolony.fabric.work.MinerProbe;
+import com.villagecolony.fabric.work.MinerHands;
 import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.SandGathering;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -1080,11 +1083,11 @@ public class MinerGameTest implements FabricGameTest {
                                 + closest[0] + " blocos dela, desceu até y=" + lowest[0]
                                 + " (a pedra está em y=" + stone.getY()
                                 + ", o poleiro em y=" + context.getAbsolutePos(PERCH).getY()
-                                + "); alvo=" + MinerWork.targetOf(villager.getUuid())
-                                + " travamento=" + MinerWork.stallOf(villager.getUuid())
-                                + " imobilidade=" + MinerWork.stillnessOf(villager.getUuid())
-                                + " deriva=" + MinerWork.adriftOf(villager.getUuid())
-                                + " trabalhos abertos=" + MinerWork.activeJobs());
+                                + "); alvo=" + MinerProbe.targetOf(villager.getUuid())
+                                + " travamento=" + MinerProbe.stallOf(villager.getUuid())
+                                + " imobilidade=" + MinerProbe.stillnessOf(villager.getUuid())
+                                + " deriva=" + MinerProbe.adriftOf(villager.getUuid())
+                                + " trabalhos abertos=" + MinerProbe.activeJobs());
 
                 context.assertTrue(
                         whenBroken[0] <= ARM_REACH,
@@ -1185,7 +1188,7 @@ public class MinerGameTest implements FabricGameTest {
         MinerWork.run(world, colony);
 
         context.runAtTick(60, () -> {
-            int stalled = MinerWork.stallOf(child.getUuid());
+            int stalled = MinerProbe.stallOf(child.getUuid());
 
             try {
                 context.assertTrue(
@@ -2076,7 +2079,7 @@ public class MinerGameTest implements FabricGameTest {
 
         BlockPos target = context.getAbsolutePos(new BlockPos(5, 3, 3));
 
-        BlockPos stand = MinerWork.approachTo(world, target);
+        BlockPos stand = MinerApproach.approachTo(world, target);
 
         context.assertFalse(
                 stand.equals(target),
@@ -2157,7 +2160,7 @@ public class MinerGameTest implements FabricGameTest {
 
         BlockPos target = context.getAbsolutePos(new BlockPos(5, 2, 3));
 
-        BlockPos stand = MinerWork.approachTo(world, target);
+        BlockPos stand = MinerApproach.approachTo(world, target);
 
         context.assertTrue(
                 stand.equals(context.getAbsolutePos(new BlockPos(4, 2, 3))),
@@ -2212,7 +2215,7 @@ public class MinerGameTest implements FabricGameTest {
 
         BlockPos miner = context.getAbsolutePos(new BlockPos(4, 2, 3));
 
-        BlockPos stand = MinerWork.approachTo(world, target, miner);
+        BlockPos stand = MinerApproach.approachTo(world, target, miner);
 
         context.assertTrue(
                 stand.getY() - miner.getY() <= 1,
@@ -2255,10 +2258,10 @@ public class MinerGameTest implements FabricGameTest {
         BlockPos above = context.getAbsolutePos(new BlockPos(4, 4, 3));
 
         context.assertTrue(
-                MinerWork.approachTo(world, target, above)
+                MinerApproach.approachTo(world, target, above)
                         .equals(context.getAbsolutePos(new BlockPos(5, 4, 3))),
                 "quem vem de cima deixou de ficar em cima da pedra: "
-                        + MinerWork.approachTo(world, target, above).toShortString());
+                        + MinerApproach.approachTo(world, target, above).toShortString());
 
         context.complete();
     }
@@ -2446,7 +2449,7 @@ public class MinerGameTest implements FabricGameTest {
         // O degrau seguinte: um à frente e um abaixo. Diagonal.
         BlockPos target = context.getAbsolutePos(new BlockPos(3, 2, 3));
 
-        BlockPos stand = MinerWork.approachTo(world, target);
+        BlockPos stand = MinerApproach.approachTo(world, target);
 
         context.assertFalse(
                 stand.equals(target),
@@ -2487,7 +2490,7 @@ public class MinerGameTest implements FabricGameTest {
         BlockPos target = context.getAbsolutePos(new BlockPos(3, 4, 3));
 
         context.assertTrue(
-                MinerWork.approachTo(world, target).equals(target),
+                MinerApproach.approachTo(world, target).equals(target),
                 "inventou um lugar de ficar de pé dentro da rocha");
 
         context.complete();
@@ -2528,7 +2531,7 @@ public class MinerGameTest implements FabricGameTest {
 
         BlockPos target = context.getAbsolutePos(new BlockPos(3, 4, 3));
 
-        BlockPos stand = MinerWork.approachTo(world, target);
+        BlockPos stand = MinerApproach.approachTo(world, target);
 
         context.assertFalse(
                 stand.equals(context.getAbsolutePos(new BlockPos(2, 4, 3))),
@@ -2757,7 +2760,7 @@ public class MinerGameTest implements FabricGameTest {
      * valida uma cópia da regra não valida a regra.
      */
     private static MinerLeg.Footing realFooting(ServerWorld world) {
-        return MinerWork.footingIn(world);
+        return MinerApproach.footingIn(world);
     }
 
     /**
@@ -3154,7 +3157,7 @@ public class MinerGameTest implements FabricGameTest {
      * <b>E a pedra de superfície também tem prazo</b> — E44, o segundo
      * achado do {@code gauntlet-verifier} em 2026-09-10.
      *
-     * <p>O {@code MinerWork.giveUp} marca <b>toda</b> pedra largada, e a
+     * <p>O {@code MinerHands.giveUp} marca <b>toda</b> pedra largada, e a
      * primeira versão do conserto só tinha ensinado o lado da escada a
      * perguntar pela marca. Numa colônia sem boca de mina viável — o caso
      * que o teste acima monta — o E44 continuava inteiro: mesma pedra
@@ -3628,7 +3631,7 @@ public class MinerGameTest implements FabricGameTest {
 
         try {
             context.assertTrue(
-                    MinerWork.approachTo(world, walled).equals(walled),
+                    MinerApproach.approachTo(world, walled).equals(walled),
                     "o cenário não reproduz o defeito: " + walled.toShortString()
                             + " tem onde pisar ao lado");
 
@@ -3637,7 +3640,7 @@ public class MinerGameTest implements FabricGameTest {
 
             context.assertTrue(
                     found.isEmpty()
-                            || !MinerWork.approachTo(world, found.get()).equals(found.get()),
+                            || !MinerApproach.approachTo(world, found.get()).equals(found.get()),
                     "a busca mandou o mineiro para " + found.orElseThrow().toShortString()
                             + ", que não tem um bloco em volta onde ele caiba");
 
@@ -3698,7 +3701,7 @@ public class MinerGameTest implements FabricGameTest {
 
         try {
             context.assertTrue(
-                    MinerWork.approachTo(world, ore).equals(ore),
+                    MinerApproach.approachTo(world, ore).equals(ore),
                     "o cenário não reproduz o defeito: " + ore.toShortString()
                             + " tem onde pisar ao lado");
 
@@ -4094,14 +4097,14 @@ public class MinerGameTest implements FabricGameTest {
             MinerWork.tick(world);
         }
 
-        int before = MinerWork.stillnessOf(villager.getUuid());
+        int before = MinerProbe.stillnessOf(villager.getUuid());
 
         // O jogador cavou a pedra. Nada mais mudou — e ele não andou.
         context.setBlockState(DEEP_MOUTH.east(), Blocks.AIR.getDefaultState());
 
         MinerWork.tick(world);
 
-        int after = MinerWork.stillnessOf(villager.getUuid());
+        int after = MinerProbe.stillnessOf(villager.getUuid());
 
         context.runAtTick(5, () -> {
             try {
@@ -4197,7 +4200,7 @@ public class MinerGameTest implements FabricGameTest {
         MinerWork.run(world, colony);
 
         context.runAtTick(60, () -> {
-            int still = MinerWork.stillnessOf(child.getUuid());
+            int still = MinerProbe.stillnessOf(child.getUuid());
 
             try {
                 context.assertTrue(
@@ -5036,7 +5039,7 @@ public class MinerGameTest implements FabricGameTest {
 
         ServerWorld world = context.getWorld();
 
-        MinerLeg.Footing corridor = MinerWork.footingIn(world);
+        MinerLeg.Footing corridor = MinerApproach.footingIn(world);
 
         context.assertTrue(
                 corridor.passable(context.getAbsolutePos(step)),

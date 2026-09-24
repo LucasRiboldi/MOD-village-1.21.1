@@ -20,6 +20,7 @@ import com.villagecolony.fabric.work.MineDigging;
 import com.villagecolony.fabric.work.MineLease;
 import com.villagecolony.fabric.work.MineMarks;
 import com.villagecolony.fabric.work.MinerReport;
+import com.villagecolony.fabric.work.MinerProbe;
 import com.villagecolony.fabric.work.MinerWork;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
@@ -226,7 +227,7 @@ public class MineLeaseGameTest implements FabricGameTest {
                     villager.getPitch());
 
             if (stone[0] == null) {
-                MinerWork.targetOf(minerId).ifPresent(at -> stone[0] = at);
+                MinerProbe.targetOf(minerId).ifPresent(at -> stone[0] = at);
             }
 
             if (releasedAt[0] >= 0) {
@@ -235,9 +236,9 @@ public class MineLeaseGameTest implements FabricGameTest {
 
             if (task.state() != TaskState.RESERVED && task.state() != TaskState.EXECUTING) {
                 releasedAt[0] = passes[0];
-                stillnessAtRelease[0] = MinerWork.stillnessOf(minerId);
-                stallAtRelease[0] = MinerWork.stallOf(minerId);
-                adriftAtRelease[0] = MinerWork.adriftOf(minerId);
+                stillnessAtRelease[0] = MinerProbe.stillnessOf(minerId);
+                stallAtRelease[0] = MinerProbe.stallOf(minerId);
+                adriftAtRelease[0] = MinerProbe.adriftOf(minerId);
             }
         });
 

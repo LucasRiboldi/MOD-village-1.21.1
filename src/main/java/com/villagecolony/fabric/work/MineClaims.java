@@ -230,7 +230,7 @@ public final class MineClaims {
      * o gasta — inclusive quem vai ser recusado no portão da escada sem
      * varrer nada. O dono ficava sem passagem, e é a passagem dele que
      * solta a mina quando ele não acha pedra. Ver
-     * {@code MinerWork.startNextStone}.
+     * {@code MinerSteps.startNextStone}.
      */
     static boolean heldByOther(UUID colonyId, UUID workerId, int usable) {
         UUID[] taken = DIGGERS.get(colonyId);

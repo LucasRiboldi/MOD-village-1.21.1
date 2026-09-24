@@ -52,7 +52,7 @@ import java.util.Map;
  *
  * <p><b>E são quatro leitores, não dois</b> — achado do
  * {@code gauntlet-verifier} em 2026-09-10, e ele estava certo: o
- * {@code MinerWork.giveUp} marca <b>toda</b> pedra largada, e a primeira
+ * {@code MinerHands.giveUp} marca <b>toda</b> pedra largada, e a primeira
  * versão desta classe só tinha ensinado o lado da escada a perguntar. Uma
  * colônia sem boca de mina viável cai no {@code exposedStone}, e uma
  * pedra exposta do outro lado da água reproduzia o E44 inteiro — mesmo

@@ -234,6 +234,6 @@ final class MineVein {
      * completa só é paga quando a resposta é <b>sim</b>.
      */
     static boolean nowhereToStand(ServerWorld world, BlockPos at) {
-        return MinerWork.approachTo(world, at).equals(at);
+        return MinerApproach.approachTo(world, at).equals(at);
     }
 }

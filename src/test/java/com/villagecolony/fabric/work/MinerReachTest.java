@@ -208,7 +208,7 @@ class MinerReachTest {
      * A ordem de aproximação é a varredura antiga, sem a varredura —
      * 2026-09-03.
      *
-     * <p>O {@code MinerWork.approachTo} varria o cubo inteiro para ficar
+     * <p>O {@code MinerApproach.approachTo} varria o cubo inteiro para ficar
      * com o vizinho mais perto, e passou a devolver o primeiro que
      * servir de uma lista pronta. A troca só é segura se a lista
      * <b>for</b> a ordem em que o laço antigo teria aceitado cada
