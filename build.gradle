@@ -32,8 +32,14 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    // Unit tests cobrem apenas o Core, que não depende de Minecraft.
-    // Ver Testing-Strategy.md §3.
+    // Unit tests cobrem o Core, que não depende de Minecraft. Ver
+    // Testing-Strategy.md §3.
+    //
+    // O fabric-loader-junit (2026-09-24) põe o teste dentro do carregador do
+    // Fabric: com Bootstrap.bootStrap(), o teste unitário passa a poder ler
+    // registro, tag e item do jogo em milissegundos, em vez de exigir um
+    // teste de jogo lento e sujeito a interferência.
+    testImplementation "net.fabricmc:fabric-loader-junit:${project.loader_version}"
     testImplementation platform("org.junit:junit-bom:${project.junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
