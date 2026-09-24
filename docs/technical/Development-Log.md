@@ -9219,3 +9219,53 @@ lote, busca de patamar que funcione a qualquer distancia horizontal, ou
 abandono definitivo da tarefa com liberacao para outro trabalhador
 quando a distancia excede um teto) tem trade-offs diferentes e nenhuma
 foi escolhida ainda.
+
+### 2026-09-24 - E47 e E48 corrigidos em codigo (decisao do autor)
+
+**E48 tinha causa propria — corrige o diagnostico anterior desta mesma
+data.** O `plains_temple_4` foi abandonado 13 vezes pelo caminho
+`lets go of` (`WaitingWork.givesUpIfItIsNotMoving`, `blamePlan=false`).
+`HousePlans.lastFinished` e `lastNonHouseType` so olhavam obra
+terminada: com uma casa terminada antes, a vez ficava com "nao
+residencial" e o templo nunca era excluido. Correcao (`03ea6fb`): o
+rodizio usa a ultima obra tentada, terminada ou abandonada; e, decisao do
+autor, com mais adultos do que camas a proxima obra e casa. Zero camas e
+"ainda nao contado" (`Colony.observedBeds` nasce em zero), nao falta.
+`HouseRotationGameTest`, provado por mutacao: com a regra das camas
+desligada a colonia abriu `plains_temple_4`, como no jogo.
+
+**E47 — o aldeao preso.** Conferido antes de codar que o preso de 3h30
+era um pedreiro ja preso quando recebeu a obra, e que varios
+trabalhadores cairam nas mesmas coordenadas. Nenhum codigo do mod cava
+nesses pontos: a mina da colonia ficou na coluna do caracol
+(`x=-163..-167`), `SitePreparation` so tira planta, o lenhador so tronco
+e folha, o fazendeiro so colheita, e nao houve coleta de superficie na
+sessao. As armadilhas parecem terreno natural. Correcao (`e02fbf8`), na
+opcao que o autor escolheu entre tres (liberar + cavar para sair, a
+mais visivel):
+
+- `WorkStall`, que as sete profissoes compartilham, avisa
+  `StrandedWorkers` no instante em que estoura; dois congelamentos a ate
+  2 blocos marcam o encalhado.
+- `Worker.strand/free/isStranded` e `WorkEligibility` tiram o encalhado
+  de qualquer reserva. Nao e descanso: nao vence sozinho nem conta
+  strike — o preso de 09-24 estava perdendo o oficio por estar num
+  buraco.
+- `StrandedEscape` cava uma escada de um bloco rumo ao centro da vila,
+  um degrau por segundo, no expediente, e o aldeao sobe pelo Brain
+  (`WorkTargets`). So terreno natural, via `BlockProtection`; recusa o
+  rumo que abriria agua ou lava, ou que deixaria areia/cascalho sobre a
+  cabeca. Entulho vai para o bau dele. Teto de 32 degraus. Solto quando
+  ao menos 3 de 8 colunas a 3 blocos nao sobem mais de um bloco acima
+  dele.
+
+Testes: `WorkAssignmentTest` (vermelho confirmado antes de ligar a
+elegibilidade), `StrandedWorkersTest` (5), `StrandedEscapeGameTest` (3:
+poco de pedra vira escada, tabua nao e cavada, agua forca outro rumo).
+`gradlew build`: 1002 unitarios, zero falha. `runGametest
+--rerun-tasks`: 427, 426 aprovados; a falha e a intermitencia conhecida
+`aVillageOnBedrockStillHasLots`.
+
+Nao feito: teto de distancia para "dar uma mao". A ligacao
+`WorkStall -> StrandedWorkers` nao tem GameTest de congelamento real.
+Nada disso foi visto em jogo ainda.
