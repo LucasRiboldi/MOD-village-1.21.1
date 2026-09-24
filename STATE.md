@@ -10,6 +10,25 @@
 
 ---
 
+## 🟢 Rodada de qualidade — 24-09, tarde (itens 1 a 12 da pesquisa de métodos)
+
+- CI nos branches `codex/**`; PIT no core (77% de mutações mortas);
+  JaCoCo; Error Prone só com avisos; fabric-loader-junit; depuração de
+  mixin nos runs; três GameTests intermitentes isolados.
+- Analisador de log com 19 assinaturas: no log de 24-09, 196 ciclos
+  passaram de um tique.
+- spark instalado em `mods`, com procedimento em
+  `docs/technical/Profiling-spark.md`.
+- Hooks prontos em `scripts/hooks/`; **o autor liga** no `.claude/settings.json`.
+- **Nenhum arquivo de produção acima de 500 linhas**: 17 divididos, 33
+  classes novas, movimento puro.
+
+Estado final: `gradlew build` 1025/1025, `runGametest` 433/433 (duas
+rodadas verdes no último recorte). Detalhe em `TODO.md`, seção "Qualidade
+e verificação".
+
+---
+
 ## 🟢 Revisão de naturalidade aplicada — 24-09, decisão do autor (espera jogo)
 
 Seis itens entraram em código, com commit e testes por marco. O N5 já estava

@@ -39,8 +39,11 @@ resultado real contra ele.
   para o futuro por decisão do autor. Serviria para ver placa, nome e
   quadro sem playtest (screenshot + XVFB no CI).
 - [x] **8. JaCoCo** (`987edc9`): `build/reports/jacoco/test/html`.
-- [ ] 🟠 **9. Arquivos acima de 500 linhas**: refatoração em andamento, um
-  commit por arquivo.
+- [x] **9. Arquivos de produção abaixo de 500 linhas**: os 17 foram
+  divididos por movimento puro, com 33 classes novas (`42cf8a6` a
+  `4596c8d`). Cada lote passou por build e bateria completa, e as strings
+  de log continuam idênticas. Os arquivos de **teste** acima de 500 linhas
+  (`MinerGameTest` 5802, `BuildSiteGameTest` 2471…) ficaram de fora.
 - [x] **10. Depuração de mixin** em todo run de desenvolvimento (`15bdcfd`).
 - [~] **11. Hooks** (`d98bcff`): os scripts estão prontos e testados.
   ⬜ o autor liga no `.claude/settings.json` (trecho em `scripts/hooks/README.md`).

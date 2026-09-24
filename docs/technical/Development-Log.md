@@ -9293,3 +9293,33 @@ item, cada um com teste.
 
 Estado final: `gradlew build` com 1022 unitarios, `runGametest` 433/433.
 Nada disso foi visto em jogo.
+
+### 2026-09-24 - Rodada de qualidade (pesquisa de metodos, itens 1 a 12)
+
+Pedido do autor depois da pesquisa sobre como varrer e achar erros num mod
+Fabric. Um commit por item.
+
+- **CI:** passa a rodar em `codex/**`.
+- **PIT:** o fabric-loader-junit derrubava o processo do PIT com
+  "Duplicate setLauncher call!", e saiu do classpath dele.
+- **fabric-loader-junit:** o registro esta carregado, as tags nao (elas vem
+  do datapack do servidor).
+- **Error Prone:**
+  - os 28 `ReferenceEquality` eram todos Item/Block, instancias unicas de
+    registro;
+  - achou codigo morto do bau da boca da mina, que sobrou de `c0ccbe3`.
+- **GameTests intermitentes:** lote na rocha, viveiro e ChestMarker tinham a
+  mesma raiz, cena fora da caixa que a arena limpa.
+- **Analisador de log:** 196 `cycle_over_tick` no playtest de 24-09. O
+  spark foi instalado para medir onde esse tempo vai.
+- **Hooks:** a escrita no `.claude/settings.json` foi recusada pela protecao
+  contra automodificacao; o autor liga.
+- **Refatoracao de 17 arquivos (item 9):** so movimento.
+  - Tres defeitos do meu script de movimento foram achados e corrigidos no
+    caminho:
+    - a juncao de brancos comia a indentacao;
+    - a juncao global deslocava a numeracao;
+    - nomes comuns (`mine`, `step`, `finish`) eram qualificados em variavel
+      local e comentario.
+  - A garantia final foi comparar todas as strings literais do codigo de
+    producao antes e depois: identicas.
