@@ -62,22 +62,23 @@ public class StructureCoverageGameTest implements FabricGameTest {
      * ciclo conta, e aqui a pergunta é outra — <i>existe trabalhador cuja
      * linha de produção alcança este bloco?</i>. O lenhador derruba
      * qualquer tronco, o mineiro quebra qualquer pedra, o fundidor junta
-     * areia e cascalho.
+     * areia e cascalho, e o fazendeiro busca solo longe do centro.
      */
     private static final Map<String, String> GATHERED = Map.ofEntries(
             Map.entry("_log", "lenhador"),
             Map.entry("_wood", "lenhador"),
             Map.entry("_leaves", "lenhador"),
             Map.entry("_sapling", "lenhador"),
-            Map.entry("dirt", "fundidor (superfície)"),
+            Map.entry("dirt", "fazendeiro (solo)"),
             // <b>O caminho de terra é o calçamento da colônia</b>, e ele
             // empatava: "dirt" e "path" têm quatro caracteres cada, e
             // {@code dirt_path} casa com as duas. A regra da mais longa
             // não desempata e a ordem do mapa decidia — o teste
             // noRealBlockLandsOnATie o achou em 09-18, e este é o dono
-            // certo: VillageRoad.DEFAULT_PAVING o assenta, e ele sai da
-            // terra que a superfície junta.
-            Map.entry("dirt_path", "fundidor (superfície)"),
+            // certo: VillageRoad.DEFAULT_PAVING o assenta, e a terra por
+            // trás do caminho agora é solo que o fazendeiro busca longe
+            // da área habitada.
+            Map.entry("dirt_path", "fazendeiro (solo)"),
             Map.entry("grass_block", "fundidor (superfície)"),
             Map.entry("sand", "fundidor (superfície)"),
             Map.entry("gravel", "fundidor (superfície)"),

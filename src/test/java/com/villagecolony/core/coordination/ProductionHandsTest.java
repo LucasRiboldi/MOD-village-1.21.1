@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * log dizia isso.
  *
  * <p><b>O que este arquivo afirma é o canal</b>, não a linha de log: quem
- * escreve a linha é {@code VillageDetectionHandler.reportHands}, na
+ * escreve a linha é {@code ColonyCycleRunner.reportHands}, na
  * camada Fabric, porque o {@code IdleLog} vive lá e a ADR-006 §6 proíbe
  * {@code core} de importar {@code fabric}. Aqui se afirma que a
  * coordenação <b>entrega o número</b> — e o entrega nos dois casos, que é

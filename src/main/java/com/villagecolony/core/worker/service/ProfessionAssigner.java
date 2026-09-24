@@ -39,35 +39,27 @@ public final class ProfessionAssigner {
             ProfessionType.SMELTER,
             ProfessionType.CARPENTER,
             ProfessionType.FARMER,
-            ProfessionType.BREEDER);
+            ProfessionType.SHEPHERD);
 
     /**
-     * Piso absoluto da vila: uma função ativa de cada tipo.
+     * Piso da casa fundacional: uma função ativa de cada tipo alojado nela.
      *
-     * <p>{@link ProfessionType#SHEPHERD} é apenas compatibilidade com
-     * saves antigos e conta como {@link ProfessionType#BREEDER};
-     * {@link ProfessionType#BUILDER} é a oitava função ativa e não pode
-     * continuar sendo tratado como exceção quando a vila nasce.
+     * <p>{@link ProfessionType#CARPENTER} e {@link ProfessionType#FARMER} seguem
+     * disponíveis no registro, na atribuição, nas tarefas e no crescimento
+     * normal. A única regra desta lista é que eles não são titulares nem
+     * recebem cama ou baú reservados na {@code BigHouseMOD}.
      */
     public static final List<ProfessionType> FOUNDATION_ORDER = List.of(
             ProfessionType.MINER,
             ProfessionType.LUMBERJACK,
             ProfessionType.MASON,
             ProfessionType.SMELTER,
-            ProfessionType.CARPENTER,
-            ProfessionType.FARMER,
-            ProfessionType.BREEDER,
+            ProfessionType.SHEPHERD,
             ProfessionType.BUILDER);
 
     private static final int ADULTS_PER_BATCH = 15;
 
     private ProfessionAssigner() {
-    }
-
-    /** Normaliza a profissão legada para a função ativa que ela representa. */
-    public static ProfessionType foundationRole(ProfessionType type) {
-        Objects.requireNonNull(type, "type");
-        return type == ProfessionType.SHEPHERD ? ProfessionType.BREEDER : type;
     }
 
     /**
@@ -77,7 +69,7 @@ public final class ProfessionAssigner {
      * produtores definida pela regra de crescimento da colônia.
      *
      * <p>Empate resolvido por {@link #PRODUCER_ORDER}, que põe o Mineiro
-     * primeiro e o Criador por último.
+     * primeiro e o Pastor por último.
      */
     public static ProfessionType mostNeeded(Collection<Worker> colonyWorkers) {
         Objects.requireNonNull(colonyWorkers, "colonyWorkers");
@@ -89,7 +81,7 @@ public final class ProfessionAssigner {
         }
 
         for (Worker worker : colonyWorkers) {
-            worker.profession().map(ProfessionAssigner::quotaType)
+            worker.profession()
                     .ifPresent(type -> counts.merge(type, 1, Integer::sum));
         }
 
@@ -163,7 +155,7 @@ public final class ProfessionAssigner {
             throw new IllegalArgumentException("adultPopulation must not be negative");
         }
 
-        Map<ProfessionType, Integer> counts = countByProfession(colonyWorkers);
+        Map<ProfessionType, Integer> counts = VacancyEnforcer.countByProfession(colonyWorkers);
 
         // <b>Por que cada vaga não saiu</b> — 2026-09-18. As duas recusas
         // abaixo eram silenciosas, e do lado de fora "a conta não abre a
@@ -264,147 +256,6 @@ public final class ProfessionAssigner {
         int position = PRODUCER_ORDER.indexOf(type);
 
         return perProfession + (position >= 0 && position < extras ? 1 : 0);
-    }
-
-    /**
-     * Substitui trabalhadores sem baú quando há candidatos equipáveis.
-     *
-     * <p>Profissões existentes nunca são removidas apenas porque a
-     * população caiu. A substituição aqui só trata a falta de baú, e só
-     * quando existe candidato que possa receber a vaga.
-     *
-     * @return os aldeões que perderam a função, para quem chama soltar o
-     *     que eles seguravam
-     */
-    public static Set<UUID> enforceVacancies(WorkerService workers, UUID colonyId) {
-        return enforceVacancies(workers, colonyId, villagerId -> true);
-    }
-
-    /**
-     * @param equipped diz se um trabalhador tem o que precisa para
-     *     trabalhar — hoje, um baú. A primeira versão desta regra ficava
-     *     com o primeiro da lista, e o servidor de 2026-08-12 mostrou o
-     *     custo disso: dos treze trabalhadores com baú da vila, a vaga de
-     *     lenhador ficou com o único sem, e a tarefa voltava para a fila
-     *     a cada ciclo, para sempre. Entre dois candidatos iguais, quem
-     *     pode trabalhar tem preferência
-     */
-    public static Set<UUID> enforceVacancies(
-            WorkerService workers, UUID colonyId, Predicate<UUID> equipped) {
-
-        return enforceVacancies(workers, colonyId, equipped, 0, false);
-    }
-
-    /**
-     * @param replacements quantos aldeões sem função conseguiriam baú
-     *     agora. É o teto de trocas: um trabalhador sem baú perde a
-     *     função para quem consegue um, e só quando esse alguém existe.
-     *
-     *     <p>Decisão do autor em 2026-08-13, depois de a vila
-     *     {@code c18264c9} passar duas sessões com dois lenhadores sem
-     *     baú devolvendo a tarefa à fila a cada trinta segundos. A
-     *     preferência de atribuição não os alcançava: ela escolhe quem
-     *     <b>recebe</b> a função, e eles já a tinham do save.
-     *
-     *     <p>Sem candidato, ninguém é dispensado: vaga vazia não é
-     *     melhor que trabalhador sem baú, e o jogador pode construir o
-     *     baú depois. É a mesma regra da atribuição, vista do outro
-     *     lado.
-     */
-    public static Set<UUID> enforceVacancies(
-            WorkerService workers, UUID colonyId, Predicate<UUID> equipped, int replacements) {
-
-        return enforceVacancies(workers, colonyId, equipped, replacements, false);
-    }
-
-    /**
-     * Substitui trabalhadores sem baú sem retirar o último ocupante de uma
-     * função da fundação da vila.
-     */
-    public static Set<UUID> enforceVacanciesPreservingFoundation(
-            WorkerService workers, UUID colonyId, Predicate<UUID> equipped, int replacements) {
-
-        return enforceVacancies(workers, colonyId, equipped, replacements, true);
-    }
-
-    private static Set<UUID> enforceVacancies(
-            WorkerService workers,
-            UUID colonyId,
-            Predicate<UUID> equipped,
-            int replacements,
-            boolean preserveFoundation) {
-
-        Objects.requireNonNull(workers, "workers");
-        Objects.requireNonNull(colonyId, "colonyId");
-        Objects.requireNonNull(equipped, "equipped");
-
-        List<Worker> employed = new ArrayList<>();
-
-        for (Worker worker : workers.ofColony(colonyId)) {
-            if (worker.hasProfession()) {
-                employed.add(worker);
-            }
-        }
-
-        Set<UUID> demoted = new LinkedHashSet<>();
-        Map<ProfessionType, Integer> counts = countByProfession(employed);
-
-        // E a troca: quem ficou com a vaga sem conseguir baú a perde
-        // para quem consegue, enquanto houver quem consiga.
-        int left = replacements;
-
-        for (Worker worker : employed) {
-            if (left <= 0) {
-                break;
-            }
-
-            if (demoted.contains(worker.villagerId()) || equipped.test(worker.villagerId())) {
-                continue;
-            }
-
-            ProfessionType role = worker.profession()
-                    .map(ProfessionAssigner::foundationRole)
-                    .orElse(null);
-
-            if (preserveFoundation
-                    && role != null
-                    && FOUNDATION_ORDER.contains(role)
-                    && counts.getOrDefault(role, 0) <= 1) {
-                continue;
-            }
-
-            worker.unassign();
-            demoted.add(worker.villagerId());
-
-            if (role != null) {
-                counts.merge(role, -1, Integer::sum);
-            }
-
-            left--;
-        }
-
-        return demoted;
-    }
-
-    private static Map<ProfessionType, Integer> countByProfession(
-            Collection<Worker> colonyWorkers) {
-
-        Map<ProfessionType, Integer> counts = new EnumMap<>(ProfessionType.class);
-
-        for (ProfessionType type : ProfessionType.values()) {
-            counts.put(type, 0);
-        }
-
-        for (Worker worker : colonyWorkers) {
-            worker.profession().map(ProfessionAssigner::quotaType)
-                    .ifPresent(type -> counts.merge(type, 1, Integer::sum));
-        }
-
-        return counts;
-    }
-
-    private static ProfessionType quotaType(ProfessionType type) {
-        return type == ProfessionType.SHEPHERD ? ProfessionType.BREEDER : type;
     }
 
     /**

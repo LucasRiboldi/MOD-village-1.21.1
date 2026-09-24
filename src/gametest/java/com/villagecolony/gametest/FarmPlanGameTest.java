@@ -2,6 +2,7 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.VillageInventory;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
@@ -13,11 +14,14 @@ import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.VillageInventoryObserver;
 import com.villagecolony.fabric.integration.VillageStructures;
+import com.villagecolony.fabric.work.ConstructionDemand;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.FarmPlans;
 import com.villagecolony.fabric.work.FarmerWork;
 import com.villagecolony.fabric.work.HousePlans;
+import com.villagecolony.fabric.work.PlanPlacement;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.CropBlock;
@@ -157,11 +161,11 @@ public class FarmPlanGameTest implements FabricGameTest {
                 size);
 
         context.assertTrue(
-                ConstructionPlanner.withinTheFarmersReach(colony, near),
+                ConstructionDemand.withinTheFarmersReach(colony, near),
                 "o lote na borda do alcance do fazendeiro foi recusado");
 
         context.assertFalse(
-                ConstructionPlanner.withinTheFarmersReach(colony, far),
+                ConstructionDemand.withinTheFarmersReach(colony, far),
                 "um lote fora do alcance do fazendeiro passou — é a roça de 105 blocos"
                         + " que ninguém planta, de volta");
 
@@ -268,17 +272,57 @@ public class FarmPlanGameTest implements FabricGameTest {
                 owned.owning(id);
             }
 
-            // A vila já ergueu a primeira casa. Longe do centro de
-            // propósito: o prédio apenas estabelece a vez da sequência.
+            // A vila já ergueu a primeira casa, e ela está <b>de pé no
+            // mundo</b> — 2026-09-22.
+            //
+            // Registrar só a caixa não serve mais desde o reparo cíclico
+            // (P0.10): ConstructionPlanner.plan roda
+            // BuildingRepairPlanner.open ANTES da alternância, e o reparo
+            // compara a planta com o mundo. Uma casa que existe apenas no
+            // registro tem zero bloco de pé contra os 151 da planta, então
+            // o reparo a adotava e devolvia a própria casa — a obra que
+            // esta asserção lia como "outra casa". O cenário nunca chegava
+            // a medir o rodízio.
+            //
+            // Assentando a planta, o reparo encontra a casa inteira, passa
+            // adiante, e a vez cai onde este teste quer medi-la.
+            ResourceId houseId =
+                    ResourceId.vanilla("village/plains/houses/plains_small_house_1");
+
+            // O reparador só considera blocos em chunks carregados. A borda
+            // do raio de busca fica além da área carregada pelo GameTest,
+            // portanto a casa de referência precisa permanecer no cenário.
             ColonyPos built = MinecraftTypeAdapter.toColonyPos(
-                    context.getAbsolutePos(center.add(-SCAN_RADIUS, 0, -SCAN_RADIUS)));
+                    context.getAbsolutePos(center.add(8, 0, 8)));
+
+            Blueprint house = PlanPlacement.blueprintOf(
+                    context.getWorld(), colony.id(), houseId, built).orElse(null);
+
+            context.assertTrue(
+                    house != null,
+                    "o catálogo não devolveu a casa que estabelece a vez da sequência");
+
+            for (BlueprintBlock block : house.blocks()) {
+                MinecraftTypeAdapter.toBlock(block.block()).ifPresent(expected ->
+                        context.getWorld().setBlockState(
+                                new BlockPos(
+                                        built.x() + block.offset().x(),
+                                        built.y() + block.offset().y(),
+                                        built.z() + block.offset().z()),
+                                expected.getDefaultState()));
+            }
+
+            ColonyPos size = house.size();
 
             VillageColonyMod.BUILDINGS.register(new Building(
                     colony.id(),
                     colony.id(),
-                    ResourceId.vanilla("village/plains/houses/plains_small_house_1"),
+                    houseId,
                     built,
-                    new ColonyPos(built.x() + 1, built.y() + 1, built.z() + 1)));
+                    new ColonyPos(
+                            built.x() + size.x() - 1,
+                            built.y() + size.y() - 1,
+                            built.z() + size.z() - 1)));
 
             Optional<ConstructionProject> opened =
                     ConstructionPlanner.plan(context.getWorld(), colony);
@@ -302,6 +346,137 @@ public class FarmPlanGameTest implements FabricGameTest {
             // já custou rodada a este projeto. O adiamento que este
             // teste grava fica preso ao UUID sorteado aqui, que morre
             // com ele, e não alcança colônia de mais ninguém.
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * Observar o inventário não pode mudar a alternância de casas —
+     * decisão 11A, 2026-09-24.
+     *
+     * <p><b>É a garantia que dá nome à decisão.</b> O mesmo cenário de
+     * {@link #theNextTurnAfterAHouseIsNonResidential} — casa de pé,
+     * segunda passagem abre infraestrutura —, mas com
+     * {@link VillageInventoryObserver#observe} chamado duas vezes ao
+     * redor de {@code ConstructionPlanner.plan}: antes e depois. Se
+     * observar mudasse alguma coisa, a segunda observação divergiria da
+     * primeira, ou a alternância pararia de valer.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "construction_rotation")
+    public void observingInventoryDoesNotChangeHouseAlternation(TestContext context) {
+        BlockPos center = new BlockPos(16, 1, 16);
+
+        for (int dx = -SCAN_RADIUS; dx <= SCAN_RADIUS; dx++) {
+            for (int dz = -SCAN_RADIUS; dz <= SCAN_RADIUS; dz++) {
+                context.setBlockState(
+                        center.add(dx, 0, dz), Blocks.GRASS_BLOCK.getDefaultState());
+            }
+        }
+
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+
+        UUID colonyId = UUID.randomUUID();
+        BlockPos absoluteRoad = context.getAbsolutePos(center);
+        BuildSiteScanner.restore(new ColonyRoads(
+                colonyId,
+                MinecraftTypeAdapter.toColonyPos(absoluteRoad),
+                List.of(ColonyRoads.column(absoluteRoad.getX(), absoluteRoad.getZ()))));
+
+        Colony colony = Colony.create(
+                colonyId,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)));
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        try {
+            UUID builderId = UUID.randomUUID();
+
+            VillageColonyMod.WORKERS.register(builderId, colony.id())
+                    .assign(ProfessionType.BUILDER);
+
+            owned.owning(builderId);
+
+            for (int villager = 1; villager < FarmPlans.VILLAGERS_PER_FARM; villager++) {
+                UUID id = UUID.randomUUID();
+
+                VillageColonyMod.WORKERS.register(id, colony.id());
+                owned.owning(id);
+            }
+
+            ResourceId houseId =
+                    ResourceId.vanilla("village/plains/houses/plains_small_house_1");
+
+            ColonyPos built = MinecraftTypeAdapter.toColonyPos(
+                    context.getAbsolutePos(center.add(8, 0, 8)));
+
+            Blueprint house = PlanPlacement.blueprintOf(
+                    context.getWorld(), colony.id(), houseId, built).orElse(null);
+
+            context.assertTrue(
+                    house != null,
+                    "o catálogo não devolveu a casa que estabelece a vez da sequência");
+
+            for (BlueprintBlock block : house.blocks()) {
+                MinecraftTypeAdapter.toBlock(block.block()).ifPresent(expected ->
+                        context.getWorld().setBlockState(
+                                new BlockPos(
+                                        built.x() + block.offset().x(),
+                                        built.y() + block.offset().y(),
+                                        built.z() + block.offset().z()),
+                                expected.getDefaultState()));
+            }
+
+            ColonyPos size = house.size();
+
+            VillageColonyMod.BUILDINGS.register(new Building(
+                    colony.id(),
+                    colony.id(),
+                    houseId,
+                    built,
+                    new ColonyPos(
+                            built.x() + size.x() - 1,
+                            built.y() + size.y() - 1,
+                            built.z() + size.z() - 1)));
+
+            VillageInventory before = VillageInventoryObserver
+                    .observe(context.getWorld(), colony.id())
+                    .orElseThrow(() -> new AssertionError("a colônia observada não existe"));
+
+            Optional<ConstructionProject> opened =
+                    ConstructionPlanner.plan(context.getWorld(), colony);
+
+            VillageInventory after = VillageInventoryObserver
+                    .observe(context.getWorld(), colony.id())
+                    .orElseThrow(() -> new AssertionError("a colônia observada não existe"));
+
+            context.assertTrue(
+                    opened.isPresent(),
+                    "a passagem seguinte à casa não abriu uma infraestrutura,"
+                            + " mesmo com a observação no meio");
+
+            context.assertFalse(
+                    HousePlans.isDwelling(opened.get().blueprint().id()),
+                    "observar o inventário quebrou a alternância — abriu outra casa");
+
+            // As duas fotografias concordam em tudo que a observação
+            // sozinha não poderia ter mudado: quem trabalha e quantas
+            // camas a colônia tem não se alteram por um planejador rodar
+            // uma vez no meio.
+            context.assertTrue(
+                    before.adults() == after.adults(),
+                    "observar mudou a contagem de adultos");
+            context.assertTrue(
+                    before.beds() == after.beds(),
+                    "observar mudou a contagem de camas");
+        } finally {
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
+
+            VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
+
             owned.cleanUp();
         }
 

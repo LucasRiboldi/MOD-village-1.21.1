@@ -240,7 +240,9 @@ public final class Mine {
      * isso, e foi ele quem pegou o defeito.
      */
     public int branchesOpenNow() {
-        return arms.get(0).cut() >= MineShaft.CARVED ? ARMS : 1;
+        return !arms.get(0).isDone() && arms.get(0).cut() >= MineShaft.SHARED_BLOCKS
+                ? ARMS
+                : 1;
     }
 
     /** Se os quatro ramais deste nível acabaram. */
@@ -251,7 +253,7 @@ public final class Mine {
     /**
      * Se todos os ramais entregáveis neste momento terminaram.
      *
-     * <p>Antes de {@link MineShaft#CARVED}, só o ramal zero é entregável:
+     * <p>Antes de {@link MineShaft#SHARED_BLOCKS}, só o ramal zero é entregável:
      * os outros três ainda são a mesma escada. Se o zero fecha nesse
      * trecho, esperar pelos outros prende a mina entre "não posso
      * entregar" e "não posso descer".
@@ -286,26 +288,13 @@ public final class Mine {
      *
      * @return se desceu agora
      */
-    public boolean deepenIfEveryArmIsDone() {
+    public LevelAdvance advanceIfEveryArmIsDone() {
         if (!everyArmIsDone()) {
-            return false;
+            return LevelAdvance.WAITING;
         }
 
         if (!shaft.mayDeepen()) {
-            // Chegou ao fundo. Os ramais reabrem no mesmo nível, mas não
-            // na mesma hélice: virar só a galeria serviria de novo a escada
-            // bloqueada por água, lava, bedrock ou falta de espaço.
-            shaft = shaft.rerouted();
-
-            MineShaft heading = shaft;
-
-            for (MineArm arm : arms) {
-                arm.restartAt(heading);
-
-                heading = heading.turned();
-            }
-
-            return false;
+            return LevelAdvance.EXHAUSTED;
         }
 
         shaft = shaft.deepened();
@@ -318,7 +307,7 @@ public final class Mine {
             heading = heading.turned();
         }
 
-        return true;
+        return LevelAdvance.DEEPENED;
     }
 
     /**
@@ -329,9 +318,9 @@ public final class Mine {
      * o ramal zero está aberto, ele acabou, e os outros ainda não podem
      * receber mineiro.
      */
-    public boolean deepenIfEveryOpenArmIsDone() {
+    public LevelAdvance advanceIfEveryOpenArmIsDone() {
         if (!everyOpenArmIsDone()) {
-            return false;
+            return LevelAdvance.WAITING;
         }
 
         if (!everyArmIsDone()) {
@@ -340,7 +329,24 @@ public final class Mine {
             }
         }
 
-        return deepenIfEveryArmIsDone();
+        return advanceIfEveryArmIsDone();
+    }
+
+    /** Compatibilidade para as chamadas que só precisam saber se a mina desceu. */
+    public boolean deepenIfEveryArmIsDone() {
+        return advanceIfEveryArmIsDone() == LevelAdvance.DEEPENED;
+    }
+
+    /** Compatibilidade para as chamadas que só precisam saber se a mina desceu. */
+    public boolean deepenIfEveryOpenArmIsDone() {
+        return advanceIfEveryOpenArmIsDone() == LevelAdvance.DEEPENED;
+    }
+
+    /** Resultado explícito do fim de um nível. */
+    public enum LevelAdvance {
+        WAITING,
+        DEEPENED,
+        EXHAUSTED
     }
 
     /**

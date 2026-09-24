@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.fabric.integration.LotGround;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -121,7 +122,7 @@ public final class TreeNursery {
             return false;
         }
 
-        return com.villagecolony.fabric.integration.BuildSiteScanner.isBiomeGround(world, ground)
+        return com.villagecolony.fabric.integration.LotGround.isBiomeGround(world, ground)
                 && !com.villagecolony.fabric.integration.BlockProtection
                         .isVillageOriginal(world, ground);
     }

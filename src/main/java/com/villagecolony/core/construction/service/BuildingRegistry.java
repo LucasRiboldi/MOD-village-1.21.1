@@ -46,6 +46,38 @@ public final class BuildingRegistry {
         buildings.put(building.id(), building);
     }
 
+    /**
+     * Registra ou atualiza a mesma caixa de obra sem criar uma duplicata.
+     *
+     * <p>Uma reparação nasce como projeto novo, mas continua sendo a
+     * construção que já ocupava o lote. A identidade existente é
+     * preservada para não multiplicar proteção e vizinhança; uma obra
+     * pronta também nunca é rebaixada para abandonada.
+     */
+    public void registerOrMerge(Building candidate) {
+        Objects.requireNonNull(candidate, "candidate");
+
+        for (Building existing : buildings.values()) {
+            if (!existing.colonyId().equals(candidate.colonyId())
+                    || !existing.blueprint().equals(candidate.blueprint())
+                    || !existing.min().equals(candidate.min())
+                    || !existing.max().equals(candidate.max())) {
+                continue;
+            }
+
+            buildings.put(existing.id(), new Building(
+                    existing.id(),
+                    existing.colonyId(),
+                    existing.blueprint(),
+                    existing.min(),
+                    existing.max(),
+                    existing.finished() || candidate.finished()));
+            return;
+        }
+
+        register(candidate);
+    }
+
     /** A construção que ocupa esta posição, se alguma. */
     public Optional<Building> at(ColonyPos pos) {
         if (pos == null) {
@@ -156,6 +188,11 @@ public final class BuildingRegistry {
 
     public int count() {
         return buildings.size();
+    }
+
+    /** Remove uma construção parcial cancelada pelo jogador. */
+    public boolean remove(UUID buildingId) {
+        return buildingId != null && buildings.remove(buildingId) != null;
     }
 
     /**

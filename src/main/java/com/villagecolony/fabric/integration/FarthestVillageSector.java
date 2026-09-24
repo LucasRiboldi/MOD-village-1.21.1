@@ -18,6 +18,9 @@ import java.util.UUID;
 public final class FarthestVillageSector {
 
     public static final int PROTECTED_RADIUS = 64;
+
+    public static final int SOIL_PROTECTED_RADIUS = 96;
+
     private static final List<Direction> CARDINALS =
             List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST);
 
@@ -71,6 +74,11 @@ public final class FarthestVillageSector {
     }
 
     public static boolean isInSector(BlockPos center, BlockPos candidate, Direction direction) {
+        return isInSector(center, candidate, direction, PROTECTED_RADIUS);
+    }
+
+    public static boolean isInSector(
+            BlockPos center, BlockPos candidate, Direction direction, int protectedRadius) {
         int dx = candidate.getX() - center.getX();
         int dz = candidate.getZ() - center.getZ();
         int forward = dx * direction.getOffsetX() + dz * direction.getOffsetZ();
@@ -79,7 +87,7 @@ public final class FarthestVillageSector {
 
         return forward > 0
                 && Math.abs(lateral) <= forward
-                && distanceSquared > (long) PROTECTED_RADIUS * PROTECTED_RADIUS;
+                && distanceSquared > (long) protectedRadius * protectedRadius;
     }
 
     private static long clearance(int centerX, int centerZ, Direction direction, List<Footprint> structures) {

@@ -17,10 +17,13 @@ import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.work.BuilderApproach;
 import com.villagecolony.fabric.work.BuilderWork;
+import com.villagecolony.fabric.work.BlockShaping;
+import com.villagecolony.fabric.work.BuilderMaterials;
 import com.villagecolony.fabric.work.MaterialChoice;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.TestBarrier;
@@ -34,6 +37,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.brain.Schedule;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Item;
+import com.villagecolony.fabric.integration.BiomeConstructionSupply;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
@@ -73,7 +77,15 @@ public class BuilderGameTest implements FabricGameTest {
     private static final ResourceId HUT = ResourceId.vanilla("village/plains/houses/test_wall");
 
     private record Fixture(Colony colony, ConstructionProject project, ColonyPos chest,
-            ColonyFixture owned) {
+            Task task, ColonyFixture owned) {
+
+        private Fixture(
+                Colony colony,
+                ConstructionProject project,
+                ColonyPos chest,
+                ColonyFixture owned) {
+            this(colony, project, chest, null, owned);
+        }
     }
 
     /**
@@ -145,6 +157,7 @@ public class BuilderGameTest implements FabricGameTest {
                 colony,
                 project,
                 chest,
+                task,
                 ColonyFixture.create().owning(colony).owning(villager.getUuid()));
     }
 
@@ -164,7 +177,7 @@ public class BuilderGameTest implements FabricGameTest {
      * como uma porta.
      *
      * <p>Rodado contra a regra desligada em 2026-08-15: sem
-     * {@code BuilderWork.placeSecondHalf} a terceira afirmação falha, e
+     * {@code BlockShaping.placeSecondHalf} a terceira afirmação falha, e
      * sem o descarte em {@code StructureBlueprintReader.isSecondHalf} a
      * conta do baú falha.
      */
@@ -520,6 +533,54 @@ public class BuilderGameTest implements FabricGameTest {
     }
 
     /**
+     * Ingrediente fora da economia local não pode deixar uma obra esperando.
+     *
+     * <p>O fermentador da primeira obra real precisava de haste de blaze. A
+     * colônia não tem rota para o Nether, então a peça final entra no baú que
+     * atende o construtor, em vez de a obra ficar em espera infinita.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder")
+    public void unobtainableConstructionPieceIsStockedForTheBuilder(TestContext context) {
+        Fixture fixture = setUp(context, 0, Blueprint.of(
+                ResourceId.vanilla("village/plains/houses/test_brewing_stand"),
+                List.of(new BlueprintBlock(
+                        new ColonyPos(0, 0, 0),
+                        MinecraftTypeAdapter.toResourceId(Blocks.BREWING_STAND)))), 1);
+
+        try {
+            context.assertTrue(
+                    BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
+                    "o fermentador sem haste de blaze ainda deixou a obra esperando");
+            context.assertTrue(
+                    ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.BREWING_STAND) == 1,
+                    "a peça sem rota local não entrou no baú do construtor");
+        } finally {
+            fixture.owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /** Madeira de planície tem rota local e não deve ser materializada. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder")
+    public void locallyCraftablePieceStillWaitsForWorkers(TestContext context) {
+        Fixture fixture = setUpDoor(context, Items.AIR, 0);
+
+        try {
+            context.assertFalse(
+                    BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
+                    "a porta localmente fabricável foi tratada como recurso externo");
+            context.assertTrue(
+                    ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.OAK_DOOR) == 0,
+                    "a porta localmente fabricável apareceu de graça no baú");
+        } finally {
+            fixture.owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /**
      * O mesmo cenário da porta, com o que o baú recebe por fora.
      *
      * <p>Existe por causa da Regra 10: o baú com tábua em vez de porta
@@ -730,7 +791,7 @@ public class BuilderGameTest implements FabricGameTest {
 
         try {
             context.assertTrue(
-                    BuilderWork.hasMaterialForNextBlock(context.getWorld(), fixture.project),
+                    BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
                     "o despertador achou que faltava material para um canteiro — a roça"
                             + " dormiria para sempre esperando um item que não existe");
         } finally {
@@ -1233,6 +1294,11 @@ public class BuilderGameTest implements FabricGameTest {
                         fixture.project.isFinished(),
                         "a obra não terminou: faltam " + fixture.project.remainingCount());
 
+                context.assertTrue(
+                        fixture.task.state() == com.villagecolony.core.task.model.TaskState.COMPLETED,
+                        "a tarefa ficou em " + fixture.task.state()
+                                + " depois do ultimo bloco, em vez de sair da fila");
+
                 ColonyPos corner = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(SITE));
 
                 context.assertTrue(
@@ -1656,5 +1722,66 @@ public class BuilderGameTest implements FabricGameTest {
                 project,
                 chest,
                 ColonyFixture.create().owning(colony).owning(villager.getUuid()));
+    }
+
+    /**
+     * Rota que não entrega deixa de segurar a obra — 2026-09-22, visto em jogo.
+     *
+     * <p><b>O impasse.</b> A obra do autor parou <b>dez minutos</b> esperando
+     * {@code white_terracotta}. A regra de suprimento se calava porque a
+     * família tem rota — argila vai à fornalha e vira terracota —, e rota
+     * local é responsabilidade do ofício. Só que o fundidor repetiu, a cada
+     * ciclo do começo ao fim,
+     * <i>"none of 14 colony chests had minecraft:clay to smelt"</i>: naquele
+     * mundo não havia argila ao alcance. <b>A rota existia na receita e não
+     * no mundo</b>, e a obra esperava por ela para sempre.
+     *
+     * <p><b>A carência saiu do log</b>, e não de chute: no mesmo playtest a
+     * espera mais longa que foi atendida durou cinco ciclos, e a que nunca
+     * foi acumulou vinte. Dez ficam ao dobro de uma e à metade da outra.
+     *
+     * <p>A decisão é afirmada com o instante na mão, e não esperando dez
+     * ciclos de servidor — o relógio é argumento justamente para isto.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_overdue",
+            tickLimit = 20)
+    public void aRouteThatNeverDeliversStopsHoldingTheBuild(TestContext context) {
+        UUID colonyId = UUID.randomUUID();
+        long opened = 1000L;
+
+        try {
+            context.assertFalse(
+                    BiomeConstructionSupply.routeIsOverdue(
+                            colonyId, Items.WHITE_TERRACOTTA, opened),
+                    "a peça foi dada por atrasada sem ter esperado nada");
+
+            context.assertFalse(
+                    BiomeConstructionSupply.routeIsOverdue(
+                            colonyId,
+                            Items.WHITE_TERRACOTTA,
+                            opened + BiomeConstructionSupply.OVERDUE_TICKS - 1),
+                    "a peça foi dada por atrasada antes de a carência fechar —"
+                            + " o ofício ainda tinha a vez dele");
+
+            context.assertTrue(
+                    BiomeConstructionSupply.routeIsOverdue(
+                            colonyId,
+                            Items.WHITE_TERRACOTTA,
+                            opened + BiomeConstructionSupply.OVERDUE_TICKS),
+                    "a rota que não entregou em dez ciclos continuou segurando a obra");
+
+            BiomeConstructionSupply.routeDelivered(colonyId, Items.WHITE_TERRACOTTA);
+
+            context.assertFalse(
+                    BiomeConstructionSupply.routeIsOverdue(
+                            colonyId,
+                            Items.WHITE_TERRACOTTA,
+                            opened + BiomeConstructionSupply.OVERDUE_TICKS),
+                    "a entrega do ofício não reiniciou a carência daquela peça");
+        } finally {
+            BiomeConstructionSupply.routeDelivered(colonyId, Items.WHITE_TERRACOTTA);
+        }
+
+        context.complete();
     }
 }

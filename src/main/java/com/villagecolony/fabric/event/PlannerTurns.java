@@ -1,6 +1,10 @@
 package com.villagecolony.fabric.event;
 
-import java.util.LinkedHashSet;
+import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.coordination.PlanningBudget;
+import com.villagecolony.core.coordination.ScanReport;
+import com.villagecolony.fabric.integration.ColonyScanScheduler;
+
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -57,16 +61,9 @@ final class PlannerTurns {
      */
     static final int PER_CYCLE = 8;
 
-    /**
-     * Onde a vez parou na volta passada.
-     *
-     * <p>Guarda a <b>colônia</b>, e não o índice: índice numa lista que
-     * encolheu aponta para outra colônia, ou para fora. Colônia nasce,
-     * adormece e é abandonada o tempo todo — o E9 é a marca de abandono
-     * oscilando —, e o rodízio tem de sobreviver a isso sem pular ninguém
-     * em silêncio.
-     */
-    private static UUID resumeAfter;
+    /** A fila usa o mesmo rodízio limitado que atende as fatias do scanner. */
+    private static final ColonyScanScheduler SCHEDULER =
+            ColonyScanScheduler.withBudget(PER_CYCLE, ScanReport::empty);
 
     private PlannerTurns() {
     }
@@ -125,77 +122,38 @@ final class PlannerTurns {
      *     sem ninguém online, e aí vale o rodízio puro
      */
     static Set<UUID> chooseFrom(List<UUID> active, Set<UUID> watched) {
-        if (active.isEmpty()) {
-            resumeAfter = null;
-
-            return Set.of();
-        }
-
-        if (active.size() <= PER_CYCLE) {
-            // Não há fila: todas passam, e o cursor não faz sentido. Zerá-lo
-            // é o que faz o mundo que encolheu voltar a começar do princípio
-            // em vez de guardar uma colônia que já não existe.
-            resumeAfter = null;
-
-            return Set.copyOf(active);
-        }
-
-        Set<UUID> chosen = new LinkedHashSet<>(PER_CYCLE);
-
-        // As observadas primeiro, e só as que estão mesmo no mundo: um
-        // jogador pode estar perto de colônia que já saiu do registro.
-        for (UUID near : active) {
-            if (chosen.size() >= PER_CYCLE) {
-                break;
-            }
-
-            if (watched.contains(near)) {
-                chosen.add(near);
-            }
-        }
-
-        int from = startingAt(active);
-
-        // E o rodízio preenche o que sobrou da cota. O cursor anda só pelas
-        // que entraram por aqui: a colônia observada passa todo ciclo, e
-        // contá-la moveria a fila sem que ninguém tivesse esperado.
-        UUID last = null;
-
-        for (int step = 0; step < active.size() && chosen.size() < PER_CYCLE; step++) {
-            UUID next = active.get((from + step) % active.size());
-
-            if (chosen.add(next)) {
-                last = next;
-            }
-        }
-
-        if (last != null) {
-            resumeAfter = last;
-        }
-
-        return chosen;
+        return SCHEDULER.choose(active, watched, turns);
     }
 
     /**
-     * Por onde a volta desta vez começa.
+     * A cota atual — começa no teto e se ajusta pelo custo, 2026-09-24.
      *
-     * <p>A colônia guardada já planejou, então a vez é da seguinte. Some
-     * do mundo — abandonada, descarregada, o save recarregado — e a volta
-     * recomeça do princípio: é a resposta certa quando não há mais como
-     * saber onde a fila estava.
+     * <p>Os oito de 09-15 viraram o teto, e não o valor: o ciclo de 24-09
+     * gastou em média 255 ms de planejador com oito colônias, dez vezes o
+     * que a calibração de 09-15 previa. Ver {@code PlanningBudget}.
      */
-    private static int startingAt(List<UUID> active) {
-        if (resumeAfter == null) {
-            return 0;
+    private static int turns = PER_CYCLE;
+
+    /** O ciclo terminou: ajusta a cota do próximo pelo custo deste. */
+    static void observeCost(long plannerMs) {
+        int next = PlanningBudget.nextTurns(turns, plannerMs);
+
+        if (next != turns) {
+            VillageColonyMod.LOGGER.info(
+                    "Planner turns {} -> {} (last cycle spent {} ms planning, target {} ms)",
+                    turns, next, plannerMs, PlanningBudget.TARGET_MS);
+            turns = next;
         }
+    }
 
-        int last = active.indexOf(resumeAfter);
-
-        return last < 0 ? 0 : (last + 1) % active.size();
+    /** A cota atual, para o log e os testes. */
+    static int turns() {
+        return turns;
     }
 
     /** Esquece a vez — para os testes, e para o mundo que foi descarregado. */
     static void clearAll() {
-        resumeAfter = null;
+        SCHEDULER.clear();
+        turns = PER_CYCLE;
     }
 }

@@ -5,6 +5,7 @@ import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.fabric.integration.VillageStructures;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -47,6 +48,9 @@ class HousePlansTest {
     private static final ResourceId ANIMAL_PEN =
             ResourceId.parse("minecraft:village/plains/houses/plains_animal_pen_1");
 
+    private static final ResourceId TEMPLE =
+            ResourceId.parse("minecraft:village/plains/houses/plains_temple_4");
+
     /**
      * Uma planta qualquer com aquele id.
      *
@@ -79,7 +83,7 @@ class HousePlansTest {
     /** Sem marca nenhuma, a lista é a do catálogo, na ordem dele. */
     @Test
     void withNothingSkippedTheListIsUntouched() {
-        List<Blueprint> offered = HousePlans.without(catalog(), Set.of());
+        List<Blueprint> offered = PlanOrdering.without(catalog(), Set.of());
 
         assertEquals(3, offered.size());
         assertEquals(BIG, offered.get(0).id(), "a Regra 25 perdeu a ordem decrescente");
@@ -94,7 +98,7 @@ class HousePlansTest {
      */
     @Test
     void theSkippedPlanLeavesAndTheListStepsDown() {
-        List<Blueprint> offered = HousePlans.without(catalog(), Set.of(BIG));
+        List<Blueprint> offered = PlanOrdering.without(catalog(), Set.of(BIG));
 
         assertFalse(
                 offered.stream().anyMatch(plan -> plan.id().equals(BIG)),
@@ -118,7 +122,7 @@ class HousePlansTest {
     @Test
     void withEverythingSkippedTheSmallestStillStands() {
         List<Blueprint> offered =
-                HousePlans.without(catalog(), Set.of(BIG, MEDIUM, SMALL));
+                PlanOrdering.without(catalog(), Set.of(BIG, MEDIUM, SMALL));
 
         assertEquals(1, offered.size(), "sobrou mais de uma planta, ou nenhuma");
 
@@ -132,17 +136,30 @@ class HousePlansTest {
     @Test
     void anEmptyCatalogStaysEmpty() {
         assertTrue(
-                HousePlans.without(List.of(), Set.of(BIG)).isEmpty(),
+                PlanOrdering.without(List.of(), Set.of(BIG)).isEmpty(),
                 "inventou planta onde o catálogo não tem nenhuma");
     }
 
     /** Marca de planta que não está no catálogo não tira nada. */
     @Test
     void aMarkForSomethingElseChangesNothing() {
-        List<Blueprint> offered = HousePlans.without(
+        List<Blueprint> offered = PlanOrdering.without(
                 catalog(), Set.of(ResourceId.parse("minecraft:village/desert/houses/x")));
 
         assertEquals(3, offered.size(), "uma marca de outro bioma encurtou a lista");
+    }
+
+    @Test
+    void theModBigHouseIsNeverAProfessionBuild() {
+        ResourceId bigHouseMod = ResourceId.parse(
+                "villagecolony:houses/big_house_mod");
+
+        assertFalse(
+                VillageStructures.isProfessionBuildable(bigHouseMod),
+                "a BigHouseMOD entrou no catalogo das profissoes");
+        assertTrue(
+                VillageStructures.isProfessionBuildable(SMALL),
+                "uma estrutura Vanilla valida foi retirada do catalogo profissional");
     }
     /**
      * <b>A primeira casa da colônia é a menor</b> — decisão do autor,
@@ -166,7 +183,7 @@ class HousePlansTest {
      */
     @Test
     void theFirstHouseOfAColonyIsTheSmallest() {
-        List<Blueprint> offered = HousePlans.smallestFirst(catalog(), true);
+        List<Blueprint> offered = PlanOrdering.smallestFirst(catalog(), true);
 
         assertEquals(
                 SMALL,
@@ -188,7 +205,7 @@ class HousePlansTest {
      */
     @Test
     void afterTheFirstHouseTheBiggestPlanLeadsAgain() {
-        List<Blueprint> offered = HousePlans.smallestFirst(catalog(), false);
+        List<Blueprint> offered = PlanOrdering.smallestFirst(catalog(), false);
 
         assertEquals(
                 BIG,
@@ -201,8 +218,8 @@ class HousePlansTest {
     void asinglePlanIsTheSameEitherWay() {
         List<Blueprint> one = List.of(plan(SMALL));
 
-        assertEquals(SMALL, HousePlans.smallestFirst(one, true).get(0).id());
-        assertEquals(SMALL, HousePlans.smallestFirst(one, false).get(0).id());
+        assertEquals(SMALL, PlanOrdering.smallestFirst(one, true).get(0).id());
+        assertEquals(SMALL, PlanOrdering.smallestFirst(one, false).get(0).id());
     }
     /**
      * <b>Obra abandonada não conta como casa</b> — 2026-09-15.
@@ -291,6 +308,53 @@ class HousePlansTest {
     }
 
     /**
+     * Obra não residencial abandonada devolve a vez à casa — E48, 2026-09-24.
+     *
+     * <p>O playtest de 24-09 abandonou o {@code plains_temple_4} treze vezes
+     * e escolheu o mesmo templo em todas: o rodízio só olhava obra
+     * terminada, e uma casa terminada antes do templo mantinha a vez com
+     * "não residencial" para sempre.
+     */
+    @Test
+    void anAbandonedOtherTypeGivesTheTurnBackToAHouse() {
+        assertTrue(
+                HousePlans.nextConstructionIsHouse(
+                        List.of(building(SMALL, true), building(TEMPLE, false))),
+                "o templo abandonado depois da casa deveria devolver a vez para uma casa");
+    }
+
+    /** E o tipo abandonado fica fora da próxima escolha não residencial. */
+    @Test
+    void anAbandonedOtherTypeIsNotOfferedAgain() {
+        List<Building> built = List.of(
+                building(SMALL, true), building(TEMPLE, false), building(SMALL, true));
+
+        assertEquals(
+                "farm",
+                HousePlans.nextNonHouseType(built, List.of("temple", "farm")).orElseThrow(),
+                "o templo abandonado voltou a ser oferecido na vez seguinte");
+    }
+
+    /**
+     * Faltando cama, a próxima obra é casa, com ou sem a vez do rodízio —
+     * E48, 2026-09-24, decisão do autor.
+     */
+    @Test
+    void missingBedsMakeTheNextBuildAHouse() {
+        List<Building> afterAHouse = List.of(building(SMALL, true));
+
+        assertTrue(
+                HousePlans.nextConstructionIsHouse(afterAHouse, 8, 6),
+                "oito adultos e seis camas: a vila precisa de casa antes de infraestrutura");
+        assertFalse(
+                HousePlans.nextConstructionIsHouse(afterAHouse, 6, 6),
+                "com cama para todos o rodízio decide, e depois da casa vem outro tipo");
+        assertFalse(
+                HousePlans.nextConstructionIsHouse(afterAHouse, 8, 0),
+                "zero camas é contagem ainda não feita, e não pode forçar casa");
+    }
+
+    /**
      * A moradia passa, e a peça que não é casa não — 2026-09-18.
      *
      * <p>O autor pediu variedade de <b>casas</b>, e a pasta
@@ -358,19 +422,19 @@ class HousePlansTest {
         ColonyPos site = new ColonyPos(13, 7, 11);
 
         assertTrue(
-                HousePlans.fitsEitherWay(new ColonyPos(13, 7, 11), site),
+                PlanPlacement.fitsEitherWay(new ColonyPos(13, 7, 11), site),
                 "a pegada idêntica foi recusada");
 
         assertTrue(
-                HousePlans.fitsEitherWay(new ColonyPos(11, 7, 13), site),
+                PlanPlacement.fitsEitherWay(new ColonyPos(11, 7, 13), site),
                 "a irmã que cabe girada ficou de fora do sorteio");
 
         assertFalse(
-                HousePlans.fitsEitherWay(new ColonyPos(13, 9, 11), site),
+                PlanPlacement.fitsEitherWay(new ColonyPos(13, 9, 11), site),
                 "girar não muda altura, e a planta mais alta passou");
 
         assertFalse(
-                HousePlans.fitsEitherWay(new ColonyPos(9, 7, 11), site),
+                PlanPlacement.fitsEitherWay(new ColonyPos(9, 7, 11), site),
                 "uma pegada que não cabe de jeito nenhum passou");
     }
 

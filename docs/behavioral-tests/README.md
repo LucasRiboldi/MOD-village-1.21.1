@@ -1,199 +1,86 @@
-# Testes comportamentais — auditoria e rede de segurança
+# Testes comportamentais
 
-Este diretório existe para uma pergunta só: **o aldeão continua trabalhando
-depois da próxima alteração?**
+Esta pasta documenta a rede de segurança do Village Colony: o aldeão deve
+continuar trabalhando depois de uma alteração, e a vila deve preservar as
+regras de construção, recursos e persistência.
 
-Auditoria de 2026-09-09, commit `3e367d5`. O que está aqui foi **medido**, não
-presumido; onde não houve medição, está escrito que não houve.
+## Evidencia atual de 2026-09-22
 
----
-
-## 1. Baseline executada
-
-| suíte | comando | resultado |
+| Suíte | Comando | Resultado |
 |---|---|---|
-| unidade | `./gradlew test --rerun-tasks` | **669 testes, 59 classes, 0 falhas** |
-| gametest | `./gradlew runGametest --rerun-tasks` | **269 testes, 30 classes registradas** |
+| Unitários Java | `./gradlew.bat test --rerun-tasks` | 966 testes, 103 suítes, 0 falhas |
+| Testes Python | `python -m unittest discover -s tests` | 76 testes, 0 falhas |
+| Fabric GameTests | `./gradlew.bat runGametest --rerun-tasks` | 410 testes, 408 aprovados, 2 falhas |
 
-**A bateria de gametest não é confiavelmente verde.** Em 30 execuções na mesma
-máquina, **3 falharam** — sempre o mesmo teste, e todas as três nas 12 primeiras.
-As 18 seguintes passaram, e a falha não foi reproduzida sob demanda. Ver
-[known-failures.md](known-failures.md), KF-001.
+Falhas obrigatorias atuais:
+`FarmPlanGameTest.thenextturnafterahouseisnonresidential` e
+`SurfaceGatheringGameTest.farmerGathersDirtOutsideTheSoilProtectedRadius`.
+Elas impedem chamar a bateria completa de verde. A primeira deve ser
+reproduzida com uma fixture de vila isolada antes de alterar `HousePlans`; a
+segunda precisa estabilizar o registro da entidade no `ServerWorld` antes de
+alterar coleta ou timeout.
 
-Isto é o achado mais importante da auditoria. Uma rede de segurança que passa
-75% das vezes não distingue "eu quebrei algo" de "a bateria oscilou", e é
-exatamente essa distinção que o resto do sistema depende para existir.
+Há também uma falha histórica intermitente documentada em
+[`known-failures.md`](known-failures.md): perda de uma entidade criada fora da
+arena entre `spawnEntity` e o primeiro tick. Ela não deve ser confundida com a
+falha atual de alternância.
 
-Ambiente: Minecraft 1.21.1, Fabric Loader 0.19.5, Java 21 (JDK 21.0.12),
-mod 0.3.0.
+## Arquitetura coberta
 
----
+O projeto separa `core/`, que contém modelo e regras sem Minecraft, de
+`fabric/`, que integra Brain, mundo, baús, blocos, eventos e GameTests.
+`DependencyRuleTest` protege essa fronteira. Os testes atuais cobrem:
 
-## 2. Arquitetura encontrada
+- adoção, abandono, sobreposição e persistência de colônias;
+- atribuição, crescimento e compatibilidade das profissões;
+- demanda, estoque, receitas e materiais de blueprint;
+- seleção de lote, volume vertical, janela livre de 25 blocos e projetos
+  pendentes;
+- `BigHouseMOD`, camas, baús, fundação e exclusão do catálogo profissional;
+- obras concluídas, abandonadas, reparo cíclico e cancelamento por Tocha das
+  Almas;
+- mina, aproximação por degraus, areia que cai, água, coleta e iluminação;
+- lenhador, viveiro de dez árvores, fazendeiro, fundidor, pedreiro e carpinteiro.
 
-165 arquivos em `src/main`, divididos em duas camadas com uma regra de dependência
-verificada por teste (`architecture/DependencyRuleTest`):
+## Funções verificadas
 
-```
-core/     modelo e regras, sem Minecraft — testável fora do jogo
-fabric/   integração: Brain, mundo, baús, blocos, eventos
-```
+As oito funções operacionais são `MINER`, `LUMBERJACK`, `MASON`, `SMELTER`,
+`CARPENTER`, `FARMER`, `SHEPHERD` e `BUILDER`. `BREEDER` é aceito somente em
+saves antigos e migrado para `SHEPHERD`; `MANUFACTURER` não é válido.
 
-`core` não conhece `net.minecraft`. É por isso que 669 testes de unidade rodam
-sem subir servidor, e é o ativo mais valioso do projeto para regressão barata.
+Na fundação da vila, `BigHouseMOD` recebe seis titulares: mineiro, lenhador,
+pedreiro, fundidor, pastor e construtor. Agricultor e carpinteiro continuam
+profissões completas, com atribuição e tarefas próprias, mas não recebem cama
+ou baú fundacional dentro da casa; entram no crescimento normal, conforme a decisão registrada em
+[`ADR-020`](../decisions/ADR-020-reparo-ciclico-e-viveiro-da-vila.md).
 
----
+## Lacunas que continuam abertas
 
-## 3. As oito funções da fundação
+1. Corrigir a alternância `casa -> não residencial -> casa -> outro tipo` no
+   `FarmPlanGameTest` sem permitir duas casas consecutivas.
+2. Repetir a bateria em CI/Linux para investigar a instabilidade de spawn do
+   fundidor antes de considerar a rede verde.
+3. Criar testes de endurance para muitos ciclos e muitos aldeões.
+4. Criar regressões de deadlock entre fazendeiro, produtor de materiais e
+   construtor.
+5. Confirmar em save real a fundação, a retomada de obras, a frente arenosa do
+   mineiro, o viveiro e a sequência de construções.
 
-As sete profissões produtoras e a função de construção são declaradas em
-`core/worker/model/ProfessionType`, com capacidade e ferramenta em
-`ProfessionRegistry`. A fundação mínima da vila exige um titular de cada uma;
-`SHEPHERD` legado conta como `BREEDER` (ADR-018):
+## Regras para novas regressões
 
-| profissão | executor | o que produz |
-|---|---|---|
-| `LUMBERJACK` | `fabric/work/LumberjackWork` | tora |
-| `MINER` | `MinerWork` | pedra, areia, minério, carvão |
-| `FARMER` | `FarmerWork` | colheita e plantio |
-| `SHEPHERD` | `ShepherdWork` | lã |
-| `SMELTER` | `SmelterWork` | vidro, lingote |
-| `MANUFACTURER` | `ManufacturerWork` | tábua, porta, tocha, vidraça, descascado |
-| `BUILDER` | `BuilderWork` | assenta a obra |
+- Reproduzir a falha antes da correção e manter a reprodução como teste.
+- Isolar estado estático, relógio do mundo e entidades entre cenários.
+- Registrar motivo de espera, alvo, setor, inventário e número de ticks quando
+  um aldeão não progride.
+- Não aumentar `tickLimit` ou orçamento apenas para silenciar uma falha.
+- Rodar `test`, `build`, `runGametest` e os testes Python proporcionais ao
+  escopo da mudança.
+- Se a alteração tocar `fabric/`, incluir GameTest e declarar o que ainda exige
+  playtest no mundo.
 
----
+## Relatórios
 
-## 4. O ciclo autônomo real
-
-O modelo do mandato foi comparado com o código. O que existe:
-
-```
-VillageDetectionHandler (evento de tick do servidor)
-  └─ por colônia, a cada CYCLE_TICKS = 600
-       ColonyGoals.of(...)          o que a colônia quer ter
-       ResourceDemand.deficit(...)  o que falta
-       ColonyCycle.run
-         ├─ cancelSatisfied         tira da fila o pedido sem motivo
-         ├─ requestMissing          abre tarefa por mão capaz
-         └─ WorkAssignment.assign   reserva tarefa para trabalhador
-       ConstructionPlanner.plan     abre obra, se houver lote e construtor
-       <Profissao>Work.run          despacha o trabalho do ciclo
-```
-
-E por **tique**, não por ciclo:
-
-```
-<Profissao>Work.tick(world)
-  └─ por trabalho aberto
-       sem alvo   → busca (orçamento global, ver §6)
-       com alvo   → anda / executa / deposita
-       guardas    → WorkStall (imobilidade) e stall (travamento)
-```
-
-**Diferença relevante para o mandato:** não há máquina de estados explícita com
-os nomes `IDLE/SEARCHING/...`. O estado vive em campos do `Job` de cada
-profissão (`target`, `progress`, `stalled`, `stall`) e no `TaskState` do
-`core`. Criar uma segunda máquina de estados só para os testes é o que a
-seção 4 do mandato proíbe — a observabilidade já existe pelo relatório por
-profissão (`MinerReport`, `LumberjackReport`, ...).
-
----
-
-## 5. Recuperação de falhas — o que já existe
-
-O projeto já tem os mecanismos que o mandato pede, e eles são a razão de vários
-defeitos terem sido diagnosticáveis:
-
-| mecanismo | onde | o que impede |
-|---|---|---|
-| guarda de travamento | `stalled >= STALL_LIMIT` (2400) | andar para sempre sem chegar |
-| guarda de imobilidade | `WorkStall` (300) | ficar parado com tarefa na mão |
-| memória de recusa | `TreeMarks`, `MineDigging` | reencontrar o mesmo alvo ruim |
-| escada de prazos | `TreeMarks.memoryFor` | a segunda recusa custar como a primeira |
-| paciência da obra | `PatienceClock` (20 ciclos) | obra parada segurar a vila |
-| `IdleLog` | por assunto e motivo | log repetir o mesmo silêncio |
-
-**O ponto cego medido em jogo (2026-09-09):** os dois guardas não pegam quem
-**gira no próprio eixo**. `still 0/300` com `stall` subindo até 2400 — ele se
-mexe, então a imobilidade não conta; ele não chega, então só o travamento o
-solta, dois minutos depois. Corrigido na origem (`MinerReach.IN_THE_PASSAGE`),
-mas a **assinatura** vale como padrão de diagnóstico.
-
----
-
-## 6. Riscos de regressão identificados
-
-Ordenados por quanto custam quando quebram.
-
-1. **Orçamento global de busca.** `SEARCHES_PER_TICK = 1` no mineiro e no
-   lenhador é compartilhado pelos jobs atendidos por cada chamada de tick,
-   portanto limita a vazão quando há muitos alvos novos. É um risco de
-   fairness em jogo; **não foi a causa do KF-001**. A bateria roda batches
-   sequenciais, e o KF-001 foi corrigido no teste após provar a re-reserva da
-   tarefa pelo ciclo da colônia.
-
-2. **Ordem de mapa como contrato.** `Map.copyOf` devolve mapa sem ordem e
-   embaralhado por execução. Já causou um defeito real (a prioridade do
-   fabricante virou sorteio). Onde a ordem importa, `Collections.unmodifiableMap`.
-
-3. **Estado estático entre testes.** `TreeMarks`, `MineClaims`, `TestBarrier`,
-   `FarmPlans` e os registros do mod são estáticos e vivem enquanto o servidor
-   vive. Gametest que não limpa contamina o seguinte.
-
-4. **Relógio do mundo compartilhado.** 26 chamadas a `setTimeOfDay` na bateria;
-   `WorkHoursGameTest` usa horários diferentes dos demais. Os guardas só contam
-   em expediente.
-
-5. **Registro silencioso de gametest.** Classe fora de
-   `src/gametest/resources/fabric.mod.json` some da bateria, e ela continua
-   dizendo "todos passaram".
-
-6. **Uma passagem, um recurso.** Vários executores param no primeiro item que
-   conseguem produzir/coletar, então a ordem da lista é a prioridade real.
-
----
-
-## 7. Lacunas de cobertura
-
-Medido, não estimado.
-
-- **Persistência (§22): ~~não coberta~~ — a auditoria errou, e o erro está
-  corrigido em 2026-09-09.** Existem **43 testes** de persistência
-  (`ColonySavedDataTest`, `ConstructionSaveTest`, `MineSaveTest`,
-  `RoadIndexSaveTest`, `SweepCursorSaveTest`) mais 4 gametests de retomada de
-  obra. Eles cobrem `SAVE → LOAD → RESTORE`, inclusive corrupção e saves
-  antigos.
-
-  A lacuna real era mais estreita e mais perigosa: nenhum deles perguntava
-  `→ CONTINUE → VERIFY`. Toda colônia volta **dormente**, o ciclo pula quem não
-  está ACTIVE, e ninguém provava que um aldeão **restaurado** volta a receber
-  trabalho depois do despertar. Fechado por `SessionResumeTest` (5 casos).
-
-  **Continua fora:** que a tarefa *em curso* sobreviva ao restart — ela não é
-  salva por decisão de projeto, e é o ciclo que a recria.
-- **Ciclo longo (§23): não coberto.** O teste mais longo é de centenas de
-  tiques. Nenhum mede degradação ao longo de muitos ciclos.
-- **Deadlock entre profissões (§19): não coberto** por teste. Dois casos reais
-  foram achados **em jogo**, não pela bateria: a roça sem lote parando toda
-  construção, e o fabricante que nunca descascava.
-- **Multi-agente (§18): parcial.** Há testes com dois trabalhadores
-  (`lumber_two_workers`, disputa de ramal na mina), mas nenhum com dezenas.
-
-O KF-001 não bloqueia a cobertura destas lacunas: a instabilidade vinha da
-asserção após a re-reserva, e foi corrigida no próprio teste. Continue a rodar
-a bateria completa e acrescente cenários que provem os fluxos de produção.
-
----
-
-## 8. Próximo passo recomendado
-
-Nesta ordem, e o motivo é a dependência entre eles:
-
-1. **Teste de ciclo longo**, uma profissão de cada vez. Continua aberto, e é
-   agora a maior lacuna.
-2. **Deadlock entre profissões**, que rendeu dois defeitos reais achados em jogo
-   e nenhum achado pela bateria.
-3. **Vazão do orçamento global de busca**, apenas se medição mostrar que o
-   limite de um alvo novo por tique deixa colônias concorrentes sem progresso.
-4. ~~Teste de persistência~~ — **feito** em 09-09, `SessionResumeTest`.
-5. Só então escalar para muitos aldeões.
+- [`known-failures.md`](known-failures.md): falhas medidas e ainda abertas.
+- [`../../TODO.md`](../../TODO.md): backlog canônico.
+- [`../technical/Project-Audit-2026-09-21.md`](../technical/Project-Audit-2026-09-21.md):
+  auditoria técnica completa e nota do projeto.

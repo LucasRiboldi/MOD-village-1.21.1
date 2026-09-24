@@ -22,6 +22,7 @@ import com.villagecolony.core.type.Side;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.event.VillageDetectionHandler;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.WorkerEquipment;
 import com.villagecolony.fabric.work.WorkMaterials;
@@ -33,6 +34,7 @@ import com.villagecolony.fabric.integration.MineFlooding;
 import com.villagecolony.fabric.integration.OreVein;
 import com.villagecolony.fabric.work.MineClaims;
 import com.villagecolony.fabric.work.MineDigging;
+import com.villagecolony.fabric.work.MineTrouble;
 import com.villagecolony.fabric.work.MineMarks;
 import com.villagecolony.fabric.work.MineRock;
 import com.villagecolony.fabric.work.MineSite;
@@ -42,11 +44,17 @@ import com.villagecolony.fabric.integration.RingSweep;
 import com.villagecolony.fabric.integration.StonePatch;
 import com.villagecolony.fabric.work.BuilderApproach;
 import com.villagecolony.fabric.work.MinerReport;
+import com.villagecolony.fabric.work.MinerLeg;
 import com.villagecolony.fabric.work.MinerReach;
+import com.villagecolony.fabric.work.MinerApproach;
+import com.villagecolony.fabric.work.MinerProbe;
+import com.villagecolony.fabric.work.MinerHands;
 import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.SandGathering;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Block;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
@@ -240,6 +248,194 @@ public class MinerGameTest implements FabricGameTest {
 
             try {
                 context.assertTrue(stored > 0, "a pedra não chegou ao baú");
+            } finally {
+                owned.cleanUp();
+
+                MineDigging.restoreMineDistance();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * O ciclo entrega a pedra ao mineiro ocioso, sem tarefa posta a mao.
+     *
+     * <p>O contrato tem tres degraus que o teste anterior, de mineracao,
+     * recebia prontos: a falta de pedra abre {@code COLLECT_STONE}, a
+     * capacidade do {@link ProfessionType#MINER} reserva o pedido para ele
+     * e o trabalho entrega a pedra no bau. A outra metade deste contrato,
+     * {@code CRAFT_WOOD}, esta em
+     * {@code CraftingGameTest.theCycleOpensTheCraftingTaskByItself}.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_from_cycle",
+            tickLimit = 400)
+    public void theCycleAssignsStoneToTheMinerAndItReachesTheChest(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        ground(context);
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        world.setTimeOfDay(Schedule.WORK_TIME);
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+        Block rock = MinecraftTypeAdapter
+                .toBlock(HousePlans.paletteOf(world, chest).stone())
+                .orElseThrow();
+        context.setBlockState(ROCK, rock.getDefaultState());
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+        VillageColonyMod.COLONIES.register(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        ColonyFixture owned = ColonyFixture.create()
+                .owning(colony)
+                .owning(villager.getUuid());
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+        WorkerEquipment.equip(world, List.of(worker));
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        context.assertTrue(
+                VillageColonyMod.TASKS.ofColony(colony.id()).isEmpty(),
+                "o mineiro precisa comecar ocioso, sem pedido posto pelo cenario");
+
+        ColonyPos mouth = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(STAND));
+        VillageColonyMod.MINES.restore(
+                Mine.restore(colony.id(), MineShaft.from(mouth, Side.NORTH), 0));
+        MineDigging.shortenMineDistanceTo(NEARBY);
+
+        VillageDetectionHandler.runCycleNow(world, context.getAbsolutePos(STAND));
+
+        List<Task> stoneTasks = VillageColonyMod.TASKS.ofColony(colony.id()).stream()
+                .filter(task -> task.type() == TaskType.COLLECT_STONE)
+                .toList();
+
+        context.assertTrue(
+                !stoneTasks.isEmpty(),
+                "o ciclo nao abriu COLLECT_STONE para a falta de pedra");
+
+        boolean assignedToMiner = stoneTasks.stream()
+                .anyMatch(task -> task.executor().equals(Optional.of(villager.getUuid())));
+        context.assertTrue(
+                assignedToMiner,
+                "nenhum COLLECT_STONE foi reservado para o mineiro ocioso");
+
+        context.runAtTick(5, () -> context.assertTrue(
+                context.getBlockState(ROCK).isOf(rock),
+                "a pedra nao podia cair antes do trabalho do mineiro"));
+
+        context.runAtTick(320, () -> {
+            int stored = ChestInventoryReader
+                    .read(world, context.getAbsolutePos(CHEST))
+                    .amountOfGroup(ResourceGroup.STONE);
+
+            try {
+                context.assertTrue(
+                        stored > 0,
+                        "o pedido criado e atribuido pelo ciclo nao virou pedra no bau");
+            } finally {
+                owned.cleanUp();
+                MineDigging.restoreMineDistance();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
+     * Baú cheio para o mineiro em vez de virar pedra no chão — 2026-09-22.
+     *
+     * <p><b>Visto em jogo.</b> O log do autor tem quarenta e sete linhas de
+     * <i>"Miner chest ... is full — dropped 1 of minecraft:cobblestone"</i>, e
+     * o mineiro seguiu cavando as <b>mesmas duas posições</b> da boca da mina
+     * sem parar — <i>took 0 from 168,-62,-217</i>, <i>took 0 from
+     * 168,-62,-219</i>, alternando de segundo em segundo. Do lado de fora
+     * isso se vê como a mina sendo cavada para sempre sem render nada.
+     *
+     * <p><b>O zero não era da picareta.</b> A primeira suspeita foi o drop
+     * sair com ferramenta vazia, e o log a derrubou: o pedregulho caía, só
+     * não tinha onde entrar. {@code stored()} conta o que chegou ao baú, e
+     * não o que saiu da pedra.
+     *
+     * <p>A pedra saiu do mundo e não entrou em lugar nenhum: continuar é
+     * gastar a vez do mineiro e sujar o chão. Encerrar devolve a vez ao ciclo
+     * da colônia, que é quem sabe pedir baú novo.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_full_chest",
+            tickLimit = 400)
+    public void aFullChestStopsTheMinerInsteadOfPilingStoneOnTheFloor(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        ground(context);
+
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        Block rock = MinecraftTypeAdapter
+                .toBlock(HousePlans.paletteOf(world, chest).stone())
+                .orElseThrow();
+
+        context.setBlockState(ROCK, rock.getDefaultState());
+
+        // Sem uma vaga sequer: é a condição do log, e não "quase cheio".
+        if (!(world.getBlockEntity(MinecraftTypeAdapter.toBlockPos(chest))
+                instanceof net.minecraft.block.entity.ChestBlockEntity inventory)) {
+
+            throw new AssertionError("o baú do cenário não existe");
+        }
+
+        for (int slot = 0; slot < inventory.size(); slot++) {
+            inventory.setStack(slot, new ItemStack(Items.SANDSTONE, 64));
+        }
+
+        inventory.markDirty();
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+
+        WorkerEquipment.equip(context.getWorld(), List.of(worker));
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        owned.owning(villager.getUuid());
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_STONE,
+                TaskPriority.PRODUCTION,
+                ResourceType.COBBLESTONE,
+                16);
+
+        task.reserveFor(villager.getUuid());
+
+        ColonyPos mouth = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(STAND));
+
+        VillageColonyMod.MINES.restore(
+                Mine.restore(colony.id(), MineShaft.from(mouth, Side.NORTH), 0));
+
+        MineDigging.shortenMineDistanceTo(NEARBY);
+
+        MinerWork.run(world, colony);
+
+        context.runAtTick(320, () -> {
+            try {
+                context.assertTrue(
+                        task.state() == TaskState.COMPLETED,
+                        "o mineiro continuou cavando com o baú cheio — a tarefa ficou em "
+                                + task.state() + ", e a pedra vai para o chão a cada passagem");
             } finally {
                 owned.cleanUp();
 
@@ -887,11 +1083,11 @@ public class MinerGameTest implements FabricGameTest {
                                 + closest[0] + " blocos dela, desceu até y=" + lowest[0]
                                 + " (a pedra está em y=" + stone.getY()
                                 + ", o poleiro em y=" + context.getAbsolutePos(PERCH).getY()
-                                + "); alvo=" + MinerWork.targetOf(villager.getUuid())
-                                + " travamento=" + MinerWork.stallOf(villager.getUuid())
-                                + " imobilidade=" + MinerWork.stillnessOf(villager.getUuid())
-                                + " deriva=" + MinerWork.adriftOf(villager.getUuid())
-                                + " trabalhos abertos=" + MinerWork.activeJobs());
+                                + "); alvo=" + MinerProbe.targetOf(villager.getUuid())
+                                + " travamento=" + MinerProbe.stallOf(villager.getUuid())
+                                + " imobilidade=" + MinerProbe.stillnessOf(villager.getUuid())
+                                + " deriva=" + MinerProbe.adriftOf(villager.getUuid())
+                                + " trabalhos abertos=" + MinerProbe.activeJobs());
 
                 context.assertTrue(
                         whenBroken[0] <= ARM_REACH,
@@ -992,7 +1188,7 @@ public class MinerGameTest implements FabricGameTest {
         MinerWork.run(world, colony);
 
         context.runAtTick(60, () -> {
-            int stalled = MinerWork.stallOf(child.getUuid());
+            int stalled = MinerProbe.stallOf(child.getUuid());
 
             try {
                 context.assertTrue(
@@ -1883,7 +2079,7 @@ public class MinerGameTest implements FabricGameTest {
 
         BlockPos target = context.getAbsolutePos(new BlockPos(5, 3, 3));
 
-        BlockPos stand = MinerWork.approachTo(world, target);
+        BlockPos stand = MinerApproach.approachTo(world, target);
 
         context.assertFalse(
                 stand.equals(target),
@@ -1964,7 +2160,7 @@ public class MinerGameTest implements FabricGameTest {
 
         BlockPos target = context.getAbsolutePos(new BlockPos(5, 2, 3));
 
-        BlockPos stand = MinerWork.approachTo(world, target);
+        BlockPos stand = MinerApproach.approachTo(world, target);
 
         context.assertTrue(
                 stand.equals(context.getAbsolutePos(new BlockPos(4, 2, 3))),
@@ -2019,7 +2215,7 @@ public class MinerGameTest implements FabricGameTest {
 
         BlockPos miner = context.getAbsolutePos(new BlockPos(4, 2, 3));
 
-        BlockPos stand = MinerWork.approachTo(world, target, miner);
+        BlockPos stand = MinerApproach.approachTo(world, target, miner);
 
         context.assertTrue(
                 stand.getY() - miner.getY() <= 1,
@@ -2062,10 +2258,10 @@ public class MinerGameTest implements FabricGameTest {
         BlockPos above = context.getAbsolutePos(new BlockPos(4, 4, 3));
 
         context.assertTrue(
-                MinerWork.approachTo(world, target, above)
+                MinerApproach.approachTo(world, target, above)
                         .equals(context.getAbsolutePos(new BlockPos(5, 4, 3))),
                 "quem vem de cima deixou de ficar em cima da pedra: "
-                        + MinerWork.approachTo(world, target, above).toShortString());
+                        + MinerApproach.approachTo(world, target, above).toShortString());
 
         context.complete();
     }
@@ -2253,7 +2449,7 @@ public class MinerGameTest implements FabricGameTest {
         // O degrau seguinte: um à frente e um abaixo. Diagonal.
         BlockPos target = context.getAbsolutePos(new BlockPos(3, 2, 3));
 
-        BlockPos stand = MinerWork.approachTo(world, target);
+        BlockPos stand = MinerApproach.approachTo(world, target);
 
         context.assertFalse(
                 stand.equals(target),
@@ -2294,7 +2490,7 @@ public class MinerGameTest implements FabricGameTest {
         BlockPos target = context.getAbsolutePos(new BlockPos(3, 4, 3));
 
         context.assertTrue(
-                MinerWork.approachTo(world, target).equals(target),
+                MinerApproach.approachTo(world, target).equals(target),
                 "inventou um lugar de ficar de pé dentro da rocha");
 
         context.complete();
@@ -2335,7 +2531,7 @@ public class MinerGameTest implements FabricGameTest {
 
         BlockPos target = context.getAbsolutePos(new BlockPos(3, 4, 3));
 
-        BlockPos stand = MinerWork.approachTo(world, target);
+        BlockPos stand = MinerApproach.approachTo(world, target);
 
         context.assertFalse(
                 stand.equals(context.getAbsolutePos(new BlockPos(2, 4, 3))),
@@ -2415,11 +2611,10 @@ public class MinerGameTest implements FabricGameTest {
 
         // A boca posta à mão: o lado da descida sai do id da colônia, que
         // é sorteado, e um teste não pode depender de sorte.
-        VillageColonyMod.MINES.restore(Mine.restore(
-                colony.id(),
-                MineShaft.from(MinecraftTypeAdapter.toColonyPos(
-                        context.getAbsolutePos(mouth)), Side.WEST),
-                0));
+        MineShaft shaft = MineShaft.from(MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(mouth)), Side.WEST);
+
+        VillageColonyMod.MINES.restore(Mine.restore(colony.id(), shaft, 0));
 
         MinerWork.run(world, colony);
 
@@ -2564,8 +2759,8 @@ public class MinerGameTest implements FabricGameTest {
      * e o teste do E32 continuou medindo o predicado antigo. Teste que
      * valida uma cópia da regra não valida a regra.
      */
-    private static MinerReach.Footing realFooting(ServerWorld world) {
-        return MinerWork.footingIn(world);
+    private static MinerLeg.Footing realFooting(ServerWorld world) {
+        return MinerApproach.footingIn(world);
     }
 
     /**
@@ -2638,7 +2833,7 @@ public class MinerGameTest implements FabricGameTest {
         // dentro dos oito blocos o destino vale por si e a perna nem corre.
         BlockPos far = context.getAbsolutePos(new BlockPos(0, 0, 0));
 
-        BlockPos leg = MinerReach.legTowards(
+        BlockPos leg = MinerLeg.legTowards(
                 standing, far, Optional.of(mine.arm(0)), realFooting(world));
 
         context.assertTrue(
@@ -2714,18 +2909,20 @@ public class MinerGameTest implements FabricGameTest {
 
         task.reserveFor(villager.getUuid());
 
-        VillageColonyMod.MINES.restore(Mine.restore(
-                colony.id(),
-                MineShaft.from(MinecraftTypeAdapter.toColonyPos(
-                        context.getAbsolutePos(mouth)), Side.WEST),
-                0));
+        MineShaft shaft = MineShaft.from(MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(mouth)), Side.WEST);
+
+        VillageColonyMod.MINES.restore(Mine.restore(colony.id(), shaft, 0));
 
         MinerWork.run(world, colony);
 
         context.runAtTick(560, () -> {
             try {
+                BlockPos fourthStep = MinecraftTypeAdapter.toBlockPos(
+                        shaft.positionAt(3 * MineShaft.STAIR_HEADROOM * MineShaft.STAIR_LANES));
+
                 context.assertTrue(
-                        context.getBlockState(new BlockPos(2, 2, 4)).isAir(),
+                        context.getBlockState(fourthStep).isAir(),
                         "o degrau 4 continua fechado — ele cava da boca e não desce");
             } finally {
                 owned.cleanUp();
@@ -2845,6 +3042,35 @@ public class MinerGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** A mina substituta no fundo não pode reaparecer em outro lado da vila. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+            tickLimit = 20)
+    public void theReplacementMouthStaysOnTheRequestedOppositeSide(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        for (int x = 0; x <= 8; x++) {
+            for (int z = 0; z <= 8; z++) {
+                context.setBlockState(new BlockPos(x, 1, z), Blocks.DIRT.getDefaultState());
+            }
+        }
+
+        BlockPos center = context.getAbsolutePos(new BlockPos(4, 2, 4));
+        MineDigging.shortenMineDistanceTo(3);
+
+        try {
+            Optional<BlockPos> mouth = MineSite.mouthOnSide(world, center, Side.NORTH);
+
+            context.assertTrue(mouth.isPresent(), "não encontrou boca seca no lado oposto");
+            context.assertTrue(
+                    mouth.get().getX() == center.getX() && mouth.get().getZ() < center.getZ(),
+                    "a boca saiu do eixo norte: " + mouth.get().toShortString());
+        } finally {
+            MineDigging.restoreMineDistance();
+        }
+
+        context.complete();
+    }
+
     /**
      * Sem boca de mina, a pedra vem da superfície — 2026-08-25.
      *
@@ -2931,7 +3157,7 @@ public class MinerGameTest implements FabricGameTest {
      * <b>E a pedra de superfície também tem prazo</b> — E44, o segundo
      * achado do {@code gauntlet-verifier} em 2026-09-10.
      *
-     * <p>O {@code MinerWork.giveUp} marca <b>toda</b> pedra largada, e a
+     * <p>O {@code MinerHands.giveUp} marca <b>toda</b> pedra largada, e a
      * primeira versão do conserto só tinha ensinado o lado da escada a
      * perguntar pela marca. Numa colônia sem boca de mina viável — o caso
      * que o teste acima monta — o E44 continuava inteiro: mesma pedra
@@ -3405,7 +3631,7 @@ public class MinerGameTest implements FabricGameTest {
 
         try {
             context.assertTrue(
-                    MinerWork.approachTo(world, walled).equals(walled),
+                    MinerApproach.approachTo(world, walled).equals(walled),
                     "o cenário não reproduz o defeito: " + walled.toShortString()
                             + " tem onde pisar ao lado");
 
@@ -3414,7 +3640,7 @@ public class MinerGameTest implements FabricGameTest {
 
             context.assertTrue(
                     found.isEmpty()
-                            || !MinerWork.approachTo(world, found.get()).equals(found.get()),
+                            || !MinerApproach.approachTo(world, found.get()).equals(found.get()),
                     "a busca mandou o mineiro para " + found.orElseThrow().toShortString()
                             + ", que não tem um bloco em volta onde ele caiba");
 
@@ -3475,7 +3701,7 @@ public class MinerGameTest implements FabricGameTest {
 
         try {
             context.assertTrue(
-                    MinerWork.approachTo(world, ore).equals(ore),
+                    MinerApproach.approachTo(world, ore).equals(ore),
                     "o cenário não reproduz o defeito: " + ore.toShortString()
                             + " tem onde pisar ao lado");
 
@@ -3520,7 +3746,7 @@ public class MinerGameTest implements FabricGameTest {
 
         mine.arm(0).followVein(MinecraftTypeAdapter.toColonyPos(ore));
 
-        MineDigging.couldNotReach(colony.id(), ore);
+        MineTrouble.couldNotReach(colony.id(), ore);
 
         context.assertTrue(
                 mine.arm(0).vein().isEmpty(),
@@ -3548,7 +3774,7 @@ public class MinerGameTest implements FabricGameTest {
 
         mine.arm(0).followVein(MinecraftTypeAdapter.toColonyPos(ore));
 
-        MineDigging.couldNotReach(colony.id(), context.getAbsolutePos(new BlockPos(5, 6, 5)));
+        MineTrouble.couldNotReach(colony.id(), context.getAbsolutePos(new BlockPos(5, 6, 5)));
 
         context.assertFalse(
                 mine.arm(0).vein().isEmpty(),
@@ -3871,14 +4097,14 @@ public class MinerGameTest implements FabricGameTest {
             MinerWork.tick(world);
         }
 
-        int before = MinerWork.stillnessOf(villager.getUuid());
+        int before = MinerProbe.stillnessOf(villager.getUuid());
 
         // O jogador cavou a pedra. Nada mais mudou — e ele não andou.
         context.setBlockState(DEEP_MOUTH.east(), Blocks.AIR.getDefaultState());
 
         MinerWork.tick(world);
 
-        int after = MinerWork.stillnessOf(villager.getUuid());
+        int after = MinerProbe.stillnessOf(villager.getUuid());
 
         context.runAtTick(5, () -> {
             try {
@@ -3974,7 +4200,7 @@ public class MinerGameTest implements FabricGameTest {
         MinerWork.run(world, colony);
 
         context.runAtTick(60, () -> {
-            int still = MinerWork.stillnessOf(child.getUuid());
+            int still = MinerProbe.stillnessOf(child.getUuid());
 
             try {
                 context.assertTrue(
@@ -4085,7 +4311,7 @@ public class MinerGameTest implements FabricGameTest {
         UUID worker = UUID.randomUUID();
 
         try {
-            MineDigging.flooded(
+            MineTrouble.flooded(
                     colony.id(), worker, context.getAbsolutePos(new BlockPos(3, 4, 3)));
 
             context.assertTrue(
@@ -4372,6 +4598,37 @@ public class MinerGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** A entrada é construída uma vez; quebrá-la não ativa nova construção. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+            tickLimit = 20)
+    public void aBrokenMinePortalIsNotRebuiltOnTheNextMiningPass(TestContext context) {
+        solidRock(context);
+
+        Colony colony = openedMine(context, 0);
+        Mine mine = VillageColonyMod.MINES.of(colony.id()).orElseThrow();
+        BlockPos mouth = context.getAbsolutePos(LIT_ENTRY);
+        Direction descent = Direction.EAST;
+
+        MineMouth.furnish(context.getWorld(), mouth, descent, false);
+        mine.archIsUp();
+
+        BlockPos brokenPillar = mouth.offset(descent.rotateYClockwise()).up();
+        context.getWorld().setBlockState(brokenPillar, Blocks.AIR.getDefaultState());
+
+        try {
+            targetFor(context, colony);
+
+            context.assertTrue(
+                    context.getWorld().getBlockState(brokenPillar).isAir(),
+                    "o portal voltou depois que o jogador o quebrou em "
+                            + brokenPillar.toShortString());
+        } finally {
+            MineClaims.clearAll();
+        }
+
+        context.complete();
+    }
+
     /**
      * Tocha na ordem de cavar não é o fim da galeria — 2026-08-28.
      *
@@ -4417,7 +4674,7 @@ public class MinerGameTest implements FabricGameTest {
      *
      * <p>Enquanto os dois coincidem ninguém percebe. Eles deixam de
      * coincidir exatamente no caso que interessa: quando o
-     * {@code MinerReach.legTowards} manda o mineiro à <b>boca da mina</b>
+     * {@code MinerLeg.legTowards} manda o mineiro à <b>boca da mina</b>
      * porque a pedra está longe demais para a navegação. Aí a linha
      * continua dizendo a pedra, e a sessão de 2026-08-28 saiu com o
      * segundo mineiro parado na superfície, <i>"walking to 758, 44,
@@ -4782,7 +5039,7 @@ public class MinerGameTest implements FabricGameTest {
 
         ServerWorld world = context.getWorld();
 
-        MinerReach.Footing corridor = MinerWork.footingIn(world);
+        MinerLeg.Footing corridor = MinerApproach.footingIn(world);
 
         context.assertTrue(
                 corridor.passable(context.getAbsolutePos(step)),
@@ -5219,7 +5476,7 @@ public class MinerGameTest implements FabricGameTest {
      * <p><b>O par de chamadas aqui é o que o {@code MinerWork} faz de
      * verdade</b>, e é isso que faltava na primeira versão deste teste:
      * quem desiste chama {@code MineMarks.refuse} <b>e</b>
-     * {@code MineDigging.couldNotReach}. Só com a marca, o
+     * {@code MineTrouble.couldNotReach}. Só com a marca, o
      * {@code findTheFrontier} reserva e reenvia a mesma pedra para
      * sempre, o ramal encerra na segunda volta por outro motivo, e o
      * teste passa com e sem o conserto — que foi o que aconteceu, e é
@@ -5264,7 +5521,7 @@ public class MinerGameTest implements FabricGameTest {
                 // picareta no meio, de propósito.
                 MineMarks.refuse(context.getWorld(), target.get());
 
-                MineDigging.couldNotReach(colony.id(), target.get());
+                MineTrouble.couldNotReach(colony.id(), target.get());
             }
 
             context.throwGameTestException(
@@ -5479,6 +5736,48 @@ public class MinerGameTest implements FabricGameTest {
             context.assertTrue(
                     archBlockAt(context, mouth.up(up)).isAir(),
                     "o arco tapou a passagem que ele decora, em " + up + " acima da boca");
+        }
+
+        context.complete();
+    }
+
+    /**
+     * A boca prefere terreno seco e elevado — 2026-09-20.
+     *
+     * <p>Uma boca ao lado de água continua sendo uma boca inundável: o
+     * filtro anterior só rejeitava água no bloco imediatamente acima e
+     * aceitava a margem. Nesta arena, o primeiro candidato está na margem
+     * e o segundo está seco e mais alto; a escolha tem de atravessar a
+     * margem e preferir a direção do morro.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+            tickLimit = 20)
+    public void theMineMouthStaysAwayFromWaterAndPrefersHigherGround(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos center = context.getAbsolutePos(new BlockPos(4, 2, 4));
+
+        MineDigging.shortenMineDistanceTo(3);
+
+        try {
+            BlockPos waterside = center.offset(Direction.NORTH, 3);
+            BlockPos hill = center.offset(Direction.EAST, 3).up(2);
+
+            world.setBlockState(waterside, Blocks.STONE.getDefaultState());
+            world.setBlockState(waterside.up(), Blocks.AIR.getDefaultState());
+            world.setBlockState(waterside.east(), Blocks.WATER.getDefaultState());
+
+            world.setBlockState(hill, Blocks.STONE.getDefaultState());
+            world.setBlockState(hill.up(), Blocks.AIR.getDefaultState());
+
+            Optional<BlockPos> mouth = MineSite.mouthOf(world, center, Side.NORTH);
+
+            context.assertTrue(mouth.isPresent(), "não foi encontrada uma boca seca acessível");
+            context.assertTrue(
+                    mouth.get().getX() == hill.getX() && mouth.get().getZ() == hill.getZ(),
+                    "a boca ignorou a margem e não preferiu o terreno elevado: "
+                            + mouth.get().toShortString());
+        } finally {
+            MineDigging.restoreMineDistance();
         }
 
         context.complete();

@@ -6,6 +6,7 @@ import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.CraftingLookup;
 import com.villagecolony.fabric.work.BuilderWork;
+import com.villagecolony.fabric.work.BlockShaping;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -225,7 +226,7 @@ public class ChainRootsGameTest {
                 MinecraftTypeAdapter.toBlock(material);
 
         if (asBlock.isPresent()
-                && BuilderWork.isShapedFromTheGround(asBlock.get().getDefaultState())) {
+                && BlockShaping.isShapedFromTheGround(asBlock.get().getDefaultState())) {
 
             return;
         }

@@ -1,5 +1,7 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.coordination.GatheringReach;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.storage.model.WorkerStorage;
@@ -55,7 +57,7 @@ public final class TreeChoice {
      * abria pedido novo porque, para ela, aquele pedido tinha dono.
      *
      * <p>O relógio só corre em horário de trabalho e com o aldeão
-     * carregado — ver {@link #step}. Uma noite inteira não é
+     * carregado — ver {@link BuilderWork#step}. Uma noite inteira não é
      * travamento, e chunk descarregado é a colônia dormindo.
      */
     static final int STALL_LIMIT = 4 * VillageDetector.CYCLE_TICKS;
@@ -137,7 +139,11 @@ public final class TreeChoice {
         Optional<BlockPos> tree = TreeScanner.findNearestLog(
                 world,
                 job.center,
-                LumberjackWork.SEARCH_RADIUS,
+                // Cresce com a vila — N11; ver GatheringReach.
+                GatheringReach.radius(
+                        VillageColonyMod.COLONIES.find(job.task.colonyId())
+                                .map(Colony::observedBeds).orElse(0),
+                        LumberjackWork.SEARCH_RADIUS),
                 log -> !TreeClaims.isTaken(log)
                         && !TreeMarks.isRejected(world, log)
                         && !TreeMarks.isOutOfReach(world, log));
@@ -145,6 +151,8 @@ public final class TreeChoice {
         if (tree.isEmpty()) {
             // Nenhuma árvore ao alcance. Não é motivo para encerrar: a
             // floresta cresce, e a muda replantada volta a ser árvore.
+            FarmerNursery.plantIfItIsTime(world, job.task.colonyId(), job.center);
+
             return LumberjackWork.Outcome.SEARCHED;
         }
 
@@ -267,7 +275,7 @@ public final class TreeChoice {
      * Quase mandou procurar o defeito no guarda em vez de no castigo,
      * na sessão de 09-05.
      *
-     * <p>É o molde que o mineiro já usa: {@code MinerWork.giveUp} recebe
+     * <p>É o molde que o mineiro já usa: {@code MinerHands.giveUp} recebe
      * o motivo pronto de quem o chamou, com o número que aquele guarda
      * de fato contou.
      *

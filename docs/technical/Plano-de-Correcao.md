@@ -255,9 +255,18 @@ are inflated)`.
 
 **Nove casos em `CycleCostTest`**, e mutação conferida.
 
-⬜ **Otimizar continua em aberto, e de propósito** — a régua do item é
-passar de 100 ms ou o TPS cair, e quem responde isso é a sessão de jogo
-com a linha nova na mão.
+✅ **A primeira otimização foi entregue em 2026-09-22.** A fase mais cara
+lia cada baú três vezes no mesmo ciclo: uma para estoque, outra para o espaço
+de madeira e outra para o de tábuas. `ChestInventoryReader` agora produz as
+três respostas em uma passagem, só para os grupos pedidos pelo ciclo; não há
+cache entre ciclos nem carregamento de chunk. O GameTest
+`StorageGameTest.theSurveyKeepsCapacityForWoodAndPlanks` fixa equivalência com
+`ChestDepositor.freeSpaceForGroup` para slots vazios, pilhas parciais e item
+do jogador. A rodada final passou com 966 testes Java e 415/415 GameTests.
+
+⬜ **A régua de 50 ms continua aberta para o save real.** A redução remove
+duas leituras completas por baú, mas só a sessão que registrou os 112 ms pode
+confirmar o tempo final e o TPS; não se infere milissegundos do GameTest.
 
 ---
 

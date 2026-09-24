@@ -1,6 +1,9 @@
 plugins {
     id 'fabric-loom' version '1.17.18'
     id 'maven-publish'
+    id 'jacoco'
+    id 'info.solidsoft.pitest' version '1.19.0'
+    id 'net.ltgt.errorprone' version '5.1.1'
 }
 
 version = project.mod_version
@@ -32,8 +35,18 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    // Unit tests cobrem apenas o Core, que não depende de Minecraft.
-    // Ver Testing-Strategy.md §3.
+    // Unit tests cobrem o Core, que não depende de Minecraft. Ver
+    // Testing-Strategy.md §3.
+    //
+    // O fabric-loader-junit (2026-09-24) põe o teste dentro do carregador do
+    // Fabric: com Bootstrap.bootStrap(), o teste unitário passa a poder ler
+    // registro, tag e item do jogo em milissegundos, em vez de exigir um
+    // teste de jogo lento e sujeito a interferência.
+    testImplementation "net.fabricmc:fabric-loader-junit:${project.loader_version}"
+
+    // Análise estática na compilação (2026-09-24). Ver o bloco errorprone
+    // abaixo: só avisa, não reprova.
+    errorprone 'com.google.errorprone:error_prone_core:2.50.0'
     testImplementation platform("org.junit:junit-bom:${project.junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -45,6 +58,46 @@ test {
     testLogging {
         events 'passed', 'skipped', 'failed'
     }
+
+    finalizedBy jacocoTestReport
+}
+
+// Cobertura (2026-09-24). Não é meta — cobertura diz o que foi executado,
+// não o que foi verificado. Serve para escolher onde apontar o PIT.
+// Relatório em build/reports/jacoco/test/html/index.html.
+jacocoTestReport {
+    dependsOn test
+
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+// Teste de mutação (2026-09-24): `./gradlew pitest`. Relatório em
+// build/reports/pitest/index.html.
+//
+// Mede se o teste falha quando o código muda — o que o projeto fazia à mão,
+// uma mutação por vez, desde o "teste vazio por condição impossível". Só o
+// core: é a lógica pura, e mutar a camada fabric pediria o jogo rodando.
+// Não reprova o build: o número é para ler, e o mutante sobrevivente vira
+// tarefa de teste.
+pitest {
+    junit5PluginVersion = '1.2.2'
+    targetClasses = ['com.villagecolony.core.*']
+    targetTests = ['com.villagecolony.core.*']
+    threads = 4
+    outputFormats = ['HTML', 'XML']
+    timestampedReports = false
+}
+
+// Sem o fabric-loader-junit no classpath do PIT. O listener dele só aceita
+// um launcher por JVM ("Duplicate setLauncher call!"), e o PIT abre mais de
+// um; os testes do core não precisam do jogo carregado.
+tasks.named('pitest').configure {
+    additionalClasspath.setFrom(sourceSets.test.runtimeClasspath.filter {
+        !it.name.startsWith('fabric-loader-junit')
+    })
 }
 
 // `./gradlew runGametest` sobe um servidor sem cliente, monta as
@@ -54,6 +107,24 @@ test {
 // os quatro defeitos de 2026-08-07 apareceram — todos depois de uma
 // sessão de jogo do autor. Ver §11.
 loom {
+    // Depuração de mixin em todo run de desenvolvimento (2026-09-24).
+    //
+    // - export: a classe final, com a injeção aplicada, sai em
+    //   <runDir>/.mixin.out/class — é onde se confere o que o mixin fez.
+    // - verify: a Mixin revalida o bytecode que gerou; erro de injeção
+    //   aparece na carga, e não como comportamento estranho em jogo.
+    // - checks.interfaces: audita se a classe alvo implementa o que a
+    //   interface do mixin promete (.mixin.out/audit).
+    // - dumpTargetOnFailure: se aplicar falhar, grava a classe alvo.
+    //
+    // Nada disto vai para o jar: são argumentos da JVM de desenvolvimento.
+    runConfigs.configureEach {
+        vmArg '-Dmixin.debug.export=true'
+        vmArg '-Dmixin.debug.verify=true'
+        vmArg '-Dmixin.checks.interfaces=true'
+        vmArg '-Dmixin.dumpTargetOnFailure=true'
+    }
+
     runs {
         gametest {
             server()
@@ -93,6 +164,19 @@ java {
 tasks.withType(JavaCompile).configureEach {
     it.options.encoding = 'UTF-8'
     it.options.release = 21
+
+    // Error Prone (2026-09-24) só no código do mod, e só como aviso: a
+    // primeira passada é para ler, e o que for defeito de verdade vira
+    // tarefa. Teste e teste de jogo ficam de fora para o aviso não se
+    // perder no meio de asserção.
+    it.options.errorprone.enabled = (it.name == 'compileJava')
+    it.options.errorprone.allErrorsAsWarnings = true
+    it.options.errorprone.disableWarningsInGeneratedCode = true
+    // Item e Block do Minecraft são instâncias únicas de registro: comparar
+    // por == é o jeito certo, e as 28 ocorrências medidas eram todas isso.
+    it.options.errorprone.disable('ReferenceEquality')
+    // O javac corta em 100 avisos; sem isto o relatório mente pela metade.
+    it.options.compilerArgs += ['-Xmaxwarns', '10000']
 }
 
 jar {

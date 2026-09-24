@@ -47,6 +47,9 @@ public final class LotRefusals {
         /** Não há chão na janela vertical da vila — morro alto ou buraco fundo. */
         NO_GROUND("no ground in the village's vertical window"),
 
+        /** Uma cama ocupa o piso candidato e nunca é tratada como terreno. */
+        BED("a bed occupies the candidate floor"),
+
         /** Há chão, e ele não é natural — calçamento, madeira, obra. */
         NOT_NATURAL_GROUND("the ground there is not natural soil"),
 
@@ -124,7 +127,7 @@ public final class LotRefusals {
     /**
      * Uma pegada inteira passou: estas colunas sobreviveram a tudo.
      *
-     * <p>Chamado de {@code BuildSiteScanner.flatGroundAt}, no único
+     * <p>Chamado de {@code LotLevel.flatGroundAt}, no único
      * ponto em que ele devolve piso — ver {@link #ACCEPTED}.
      *
      * @param columns quantas colunas a pegada tem
@@ -218,6 +221,12 @@ public final class LotRefusals {
     /** Quantas colunas sobreviveram a tudo nesta colônia. Para a bateria. */
     public static int acceptedIn(UUID colonyId) {
         return ACCEPTED.getOrDefault(colonyId, 0);
+    }
+
+    /** Esquece somente a telemetria de uma colônia, para testes isolados. */
+    public static void clear(UUID colonyId) {
+        COUNTED.remove(colonyId);
+        ACCEPTED.remove(colonyId);
     }
 
     /** Esquece tudo. Os testes e o fim do servidor. */

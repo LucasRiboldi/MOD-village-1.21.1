@@ -6,15 +6,15 @@ primeiro. Criado em 2026-09-02, na primeira sessão que usou a skill
 
 ## Objetivo atual
 
-**2026-09-17 — base de opções de melhoria das profissões.** Aplicar a
-hierarquia Vanilla → Fabric API → mod sobre os pontos que travam a execução,
-para o autor decidir com evidência. Status: **concluída**, em
-[`opcoes-de-melhoria-das-profissoes.md`](opcoes-de-melhoria-das-profissoes.md).
+**2026-09-23 — matriz externa de alternativas para a auditoria viva.** Foram
+comparados código, documentação e issues públicos de MineColonies, Millenaire,
+MineFortress e Structurize com os contratos do mod. Status: **concluída como
+insumo de decisão**, em
+[`2026-09-23-alternativas-correcao-auditoria.md`](2026-09-23-alternativas-correcao-auditoria.md).
 
-⚠️ **O pedido citava pesquisar MineColonies, Ancient Warfare e Millénaire, e
-isso NÃO foi feito** — nenhum está no disco e a busca web não estava
-disponível. Descrever o que fazem seria inventar. Se os `.jar` forem
-apontados, a comparação vira matriz por `references/mod-analysis.md`.
+A matriz traz duas alternativas por grupo, riscos, provas necessárias e a
+separação entre teste atual, modelo de decisão e playtest pendente. Ela não
+autoriza alteração de comportamento sem a escolha do autor.
 
 ### Objetivo anterior (concluído)
 

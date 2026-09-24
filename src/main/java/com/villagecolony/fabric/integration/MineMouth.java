@@ -63,11 +63,11 @@ public final class MineMouth {
      * tentativa achou lugar para o baú e não para a lanterna — encosta,
      * água, borda de chunk. Nas duas a segunda chance não existia.
      *
-     * <p>Chamada a cada passagem em que a mina existe, e silenciosa em
-     * todas menos naquelas em que põe alguma coisa.
+     * <p>Chamada ao abrir uma boca nova, e silenciosa quando o arco já
+     * existe no terreno.
      *
      * @param descent para que lado a escada desce. A mobília fica fora
-     *     dessa coluna — ver {@link #freeSpotNear}
+     *     dessa coluna — ver {@code freeSpotNear}
      * @param archAlreadyRaised se o arco desta boca já subiu alguma vez.
      *     Verdadeiro impede que ele seja reerguido — o jogador que o
      *     derrubou não o quer de volta. Vem do save, não do mundo: o
@@ -89,7 +89,7 @@ public final class MineMouth {
         // primeira versão levantava os pilares no chão e comia o lugar do
         // baú. O conserto de então foi começar os pilares um bloco acima
         // — o que deixou o baú livre para cair <b>debaixo</b> de um
-        // deles. Ver besideTheArch.
+        // deles. (O baú da boca saiu depois, em c0ccbe3.)
         //
         // <b>E uma vez só</b> — 2026-09-11, tarde. Quem já ergueu o arco
         // não o confere de novo: a pedra que o jogador derrubou deixa ar,
@@ -181,6 +181,26 @@ public final class MineMouth {
      * altura de quem passa.
      */
     private static final int ARCH_HIGH = 4;
+
+    /**
+     * Se a posição pertence ao arco inicial ou à lanterna da boca.
+     * Essas peças nunca entram na ordem de escavação da própria mina.
+     */
+    public static boolean isPortalBlock(BlockPos mouth, Direction descent, BlockPos at) {
+        Direction side = descent.rotateYClockwise();
+
+        for (int up = 1; up < ARCH_HIGH; up++) {
+            if (at.equals(mouth.offset(side).up(up))
+                    || at.equals(mouth.offset(side.getOpposite()).up(up))) {
+                return true;
+            }
+        }
+
+        return at.equals(mouth.offset(side).up(ARCH_HIGH))
+                || at.equals(mouth.up(ARCH_HIGH))
+                || at.equals(mouth.offset(side.getOpposite()).up(ARCH_HIGH))
+                || at.equals(mouth.up(ARCH_HIGH + 1));
+    }
 
     /**
      * O arco de pedra da entrada — decisão do autor, 2026-09-05:
@@ -306,28 +326,6 @@ public final class MineMouth {
         return !world.getBlockState(at).isReplaceable();
     }
 
-    /** O baú da boca, recém-posto e marcado como do mineiro. */
-    private static Optional<BlockPos> placeChest(
-            ServerWorld world, BlockPos mouth, Direction descent) {
-
-        Optional<BlockPos> spot = besideTheArch(world, mouth, descent);
-
-        if (spot.isEmpty()) {
-            return Optional.empty();
-        }
-
-        world.setBlockState(spot.get(), Blocks.CHEST.getDefaultState(), Block.NOTIFY_ALL);
-
-        ChestMarker.markAt(world, spot.get(), ProfessionType.MINER);
-
-        VillageColonyMod.LOGGER.info(
-                "Mine mouth at {} got its miner chest at {}",
-                mouth.toShortString(),
-                spot.get().toShortString());
-
-        return spot;
-    }
-
     /**
      * O baú da boca desta mina, se ele existe.
      *
@@ -357,64 +355,6 @@ public final class MineMouth {
         }
 
         return Optional.empty();
-    }
-
-    /**
-     * Onde o baú cabe ao lado do arco — decisão do autor, 2026-09-11:
-     * <i>"ao seu lado o baú que nasce com o arco"</i>.
-     *
-     * <p><b>Fora da pegada do arco, e isso é a correção de um defeito de
-     * jogo.</b> A busca antiga olhava os quatro vizinhos da boca, e dois
-     * deles são exatamente onde os pilares sobem. O baú que caísse ali
-     * ficava com pedregulho em cima — e <b>baú com bloco sólido em cima
-     * não abre</b>, é regra do próprio Minecraft. O jogador via o baú do
-     * mineiro na entrada e não conseguia olhar dentro dele.
-     *
-     * <p>O conserto do arco de 2026-09-05 começou os pilares um bloco
-     * acima do chão justamente para não <b>substituir</b> a mobília, e
-     * resolveu metade: o baú deixou de ser apagado e passou a ser
-     * tapado. Esta busca fecha a outra metade, saindo dois blocos para o
-     * lado — encostado no arco, e não debaixo dele.
-     *
-     * <p>Os dois pés, na ordem, e a coluna da descida nunca: a escada
-     * desce por ali e o baú taparia a entrada.
-     */
-    private static Optional<BlockPos> besideTheArch(
-            ServerWorld world, BlockPos mouth, Direction descent) {
-
-        Direction side = descent.rotateYClockwise();
-
-        for (Direction leg : List.of(side, side.getOpposite())) {
-            for (int drop = 0; drop <= DROP; drop++) {
-                BlockPos at = mouth.offset(leg, 2).down(drop);
-
-                if (isGoodSpot(world, at) && opensFrom(world, at)) {
-                    return Optional.of(at);
-                }
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    /**
-     * Se um baú posto aqui poderia ser aberto.
-     *
-     * <p>A regra é do jogo, e não do mod: {@code ChestBlock} recusa abrir
-     * com bloco sólido inteiro em cima. Perguntar antes é mais barato que
-     * descobrir em sessão — foi assim que o baú debaixo do pilar passou
-     * despercebido de 2026-09-05 a 09-11.
-     */
-    private static boolean opensFrom(ServerWorld world, BlockPos at) {
-        BlockPos above = at.up();
-
-        return !world.getBlockState(above).isSolidBlock(world, above);
-    }
-
-    /** Ar sobre chão sólido: onde uma peça da boca pode ficar. */
-    private static boolean isGoodSpot(ServerWorld world, BlockPos at) {
-        return world.getBlockState(at).isReplaceable()
-                && world.getBlockState(at.down()).isSolidBlock(world, at.down());
     }
 
     private static Object chunkAt(ServerWorld world, BlockPos at) {

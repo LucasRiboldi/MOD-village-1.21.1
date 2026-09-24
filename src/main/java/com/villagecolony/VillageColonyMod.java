@@ -7,6 +7,7 @@ import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.core.construction.service.MineRegistry;
 import com.villagecolony.core.task.service.TaskService;
 import com.villagecolony.core.worker.service.WorkerService;
+import com.villagecolony.fabric.work.ActivityTraceRegistry;
 import com.villagecolony.fabric.event.ServerLifecycleHandler;
 import com.villagecolony.fabric.event.PlayerWorldChangeHandler;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
@@ -135,6 +136,15 @@ public class VillageColonyMod implements ModInitializer {
      * revarria do primeiro degrau tudo o que já estava aberto.
      */
     public static final MineRegistry MINES = new MineRegistry();
+
+    /**
+     * O traço de atividade de cada colônia — decisão 7B, 2026-09-24.
+     *
+     * <p>Sem UUID de coordenada, sem texto livre: seis campos por
+     * evento, no máximo 16.384 por colônia. Persistido junto do resto em
+     * {@link com.villagecolony.data.save.ColonySavedData}.
+     */
+    public static final ActivityTraceRegistry ACTIVITY_TRACES = new ActivityTraceRegistry();
 
     @Override
     public void onInitialize() {

@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -51,7 +52,35 @@ public final class ConstructionProject {
     /** As posições do projeto que ainda não foram construídas. */
     private final List<BlueprintBlock> remaining;
 
+    /**
+     * Peças que continuam na planta, mas aguardam uma mudança no apoio.
+     *
+     * <p>Não é progresso persistido: o mundo continua sendo a fonte do
+     * que está de pé. Este registro só evita reservar um construtor de
+     * novo para a mesma tentativa física que já falhou.
+     */
+    private final Map<ColonyPos, DeferredPiece> deferred = new LinkedHashMap<>();
+
     private ConstructionState state;
+
+    /** Uma peça parcial e a leitura do mundo que justificou adiá-la. */
+    public record DeferredPiece(
+            ColonyPos position,
+            ResourceId block,
+            SkipReason reason,
+            String supportFingerprint) {
+
+        public DeferredPiece {
+            Objects.requireNonNull(position, "position");
+            Objects.requireNonNull(block, "block");
+            Objects.requireNonNull(reason, "reason");
+            Objects.requireNonNull(supportFingerprint, "supportFingerprint");
+
+            if (supportFingerprint.isBlank()) {
+                throw new IllegalArgumentException("supportFingerprint must not be blank");
+            }
+        }
+    }
 
     private ConstructionProject(
             UUID id, UUID colonyId, Blueprint blueprint, ColonyPos origin) {
@@ -74,6 +103,36 @@ public final class ConstructionProject {
     }
 
     /**
+     * Reabre uma construção registrada, riscando o que ainda está de pé.
+     *
+     * <p>A lista de posições vem da leitura do mundo na camada Fabric;
+     * este modelo só aplica a regra de estados e mantém a planta como
+     * fonte do que falta. Assim uma tentativa de reparo não duplica
+     * material nem volta a colocar blocos que sobreviveram ao abandono.
+     */
+    public static ConstructionProject repair(
+            UUID colonyId,
+            Blueprint blueprint,
+            ColonyPos origin,
+            Set<ColonyPos> standingBlocks) {
+
+        Objects.requireNonNull(standingBlocks, "standingBlocks");
+
+        ConstructionProject project = plan(colonyId, blueprint, origin);
+        project.moveTo(ConstructionState.PREPARING);
+
+        for (BlueprintBlock block : blueprint.blocks()) {
+            if (standingBlocks.contains(project.worldPositionOf(block))) {
+                project.markPlaced(block);
+            }
+        }
+
+        project.moveTo(ConstructionState.BUILDING);
+
+        return project;
+    }
+
+    /**
      * Uma obra que volta do save.
      *
      * <p>Diferente de {@link #plan}, preserva a identidade e o estado
@@ -83,7 +142,7 @@ public final class ConstructionProject {
      * decisão, não esquecimento: quem sabe o que já está construído é o
      * mundo. Quem restaura risca da lista os blocos que já estão de pé,
      * comparando com o que há em cada posição — ver
-     * {@code ConstructionPlanner.resume}.
+     * {@code ConstructionResume.resume}.
      *
      * <p>Sai mais barato no save e sai mais <b>certo</b>: uma parede que
      * o jogador derrubou entre uma sessão e outra volta para a lista, e a
@@ -97,6 +156,21 @@ public final class ConstructionProject {
             ColonyPos origin,
             ConstructionState state) {
 
+        return restore(id, colonyId, blueprint, origin, state, List.of());
+    }
+
+    /**
+     * Reabre uma obra preservando somente os adiamentos ainda compatíveis
+     * com a planta salva.
+     */
+    public static ConstructionProject restore(
+            UUID id,
+            UUID colonyId,
+            Blueprint blueprint,
+            ColonyPos origin,
+            ConstructionState state,
+            List<DeferredPiece> deferredPieces) {
+
         ConstructionProject project = new ConstructionProject(
                 Objects.requireNonNull(id, "id"),
                 Objects.requireNonNull(colonyId, "colonyId"),
@@ -104,6 +178,17 @@ public final class ConstructionProject {
                 Objects.requireNonNull(origin, "origin"));
 
         project.state = Objects.requireNonNull(state, "state");
+
+        for (DeferredPiece deferred : List.copyOf(
+                Objects.requireNonNull(deferredPieces, "deferredPieces"))) {
+            boolean stillInBlueprint = project.remaining.stream().anyMatch(block ->
+                    project.worldPositionOf(block).equals(deferred.position())
+                            && block.block().equals(deferred.block()));
+
+            if (stillInBlueprint) {
+                project.deferred.put(deferred.position(), deferred);
+            }
+        }
 
         return project;
     }
@@ -122,116 +207,6 @@ public final class ConstructionProject {
 
     public ColonyPos origin() {
         return origin;
-    }
-
-    /**
-     * Se esta obra ficou fora do alcance do centro da vila.
-     *
-     * <p><b>Decisão de 2026-09-15</b>, e o log do autor traz a aritmética
-     * inteira. Às 21:02 ele relatou não ver construção nascendo; a sessão
-     * tinha uma obra aberta às 20:54:35 — {@code plains_butcher_shop_2} em
-     * {@code 638,65,-2793} — parada em <i>"382 blocks left"</i> por sete
-     * minutos e meio, sem um bloco assentado, segurando a vaga única:
-     * <i>"no building work: one is already open"</i>.
-     *
-     * <p><b>O centro da vila não é estável.</b> A mesma sessão registrou
-     * oito centros diferentes, de {@code 616,-2863} a {@code 640,-2891} —
-     * ele é recalculado das camas vistas, e camas entram e saem de chunk
-     * carregado. A obra nasceu quando o centro era {@code 625,-2854}, a
-     * 62,4 blocos: dentro do raio. O centro que prevaleceu,
-     * {@code 637,-2871}, a deixa a <b>78</b> — fora dele, e portanto fora
-     * do alcance de qualquer trabalhador.
-     *
-     * <p><b>Por que ninguém reclamava.</b> O relógio de paciência só conta
-     * para obra em {@code WAITING_RESOURCES}, e esta estava em
-     * {@code BUILDING}; o passo do construtor sai em silêncio quando o
-     * aldeão não está em chunk carregado. Obra viva, inalcançável, calada
-     * e ocupando a única vaga, as quatro coisas ao mesmo tempo.
-     *
-     * <p><b>Horizontal, como o raio da vila.</b> A altura fica de fora de
-     * propósito: a mina desce dezenas de blocos abaixo do centro e não
-     * está fora da vila por isso.
-     *
-     * <p>Aqui, e não no {@code fabric}, porque é aritmética de dois pontos
-     * e não precisa de mundo — o que a torna afirmável sem servidor. Quem
-     * decide o que fazer com a resposta é {@code ConstructionPlanner}.
-     *
-     * @param origin onde a obra está
-     * @param centre o centro da vila agora
-     * @param radius o raio da vila, inclusivo na borda
-     */
-    public static boolean isOutOfReach(ColonyPos origin, ColonyPos centre, int radius) {
-        long dx = (long) origin.x() - centre.x();
-        long dz = (long) origin.z() - centre.z();
-
-        return dx * dx + dz * dz > (long) radius * radius;
-    }
-
-    /**
-     * Quantos blocos da rua uma obra pode estar e ainda ser da vila.
-     *
-     * <p>A casa nasce <b>encostada</b> na rua — é a decisão 1 do
-     * {@code BuildSiteScanner}, e o lote começa no bloco seguinte ao
-     * calçamento. A folga aqui é para a obra grande, cujo canto de origem
-     * fica a uma casa de distância da rua que a serve: a maior planta em
-     * uso é 13×11, e o canto mais longe dela está a treze blocos.
-     *
-     * <p>Dezesseis é esse número com margem, e ele é deliberadamente
-     * apertado: o que se quer excluir é a obra <b>solta no campo</b>, e
-     * não a obra na ponta da estrada.
-     */
-    public static final int BESIDE_THE_ROAD = 16;
-
-    /**
-     * O mesmo, sabendo a que distância da rua a obra está — E46,
-     * 2026-09-16.
-     *
-     * <p><b>O defeito que isto conserta.</b> Medir do centro larga obra
-     * legítima, e não por acidente: a rua cresce <b>pela ponta mais
-     * distante</b> do centro — {@code RoadExtension.consider} ordena as
-     * candidatas da mais longe para a mais perto, e a frase no código é
-     * <i>"a rua cresce pela ponta, e não pelo meio"</i>. Uma vila que se
-     * estende ao longo da estrada passa a receber lote de fora do raio, e
-     * o guarda antigo matava essa obra no ciclo seguinte. No playtest de
-     * 2026-09-16 21:41 foram duas bibliotecas, planejadas e abandonadas em
-     * trinta segundos, com 628 blocos restantes de 628.
-     *
-     * <p><b>O raio de 64 é da detecção de vila, não um limite de
-     * crescimento.</b> Quem responde "esta obra é alcançável" é a rede de
-     * ruas: obra encostada na rua está ligada à vila por onde o
-     * trabalhador anda, esteja o centro onde estiver.
-     *
-     * <p><b>E o defeito de 2026-09-15 continua pego</b>, que é o ponto de
-     * não afrouxar isto à toa. A obra daquele log — {@code 638,65,-2793},
-     * 382 blocos parados por sete minutos e meio segurando a vaga única —
-     * ficou longe do centro <b>e</b> longe de qualquer rua; ela continua
-     * sendo largada. O que deixa de ser largada é a obra que a estrada
-     * alcança.
-     *
-     * <p><b>Sem índice, o centro volta a valer.</b> Colônia que ainda não
-     * varreu o raio, ou que perdeu o índice por deriva, não sabe onde
-     * estão as ruas — e não saber não é o mesmo que não haver. Nesse caso
-     * a pergunta cai na sobrecarga de dois pontos, que é o comportamento
-     * de antes deste conserto.
-     *
-     * @param origin onde a obra está
-     * @param centre o centro da vila agora
-     * @param radius o raio da vila, inclusivo na borda
-     * @param blocksToTheNearestRoad a distância em quadrado até a rua mais
-     *     próxima, ou vazio quando a colônia não tem índice de ruas. Ver
-     *     {@code ColonyRoads.blocksToTheNearestRoad}
-     */
-    public static boolean isOutOfReach(
-            ColonyPos origin, ColonyPos centre, int radius,
-            OptionalInt blocksToTheNearestRoad) {
-
-        Objects.requireNonNull(blocksToTheNearestRoad, "blocksToTheNearestRoad");
-
-        if (blocksToTheNearestRoad.isEmpty()) {
-            return isOutOfReach(origin, centre, radius);
-        }
-
-        return blocksToTheNearestRoad.getAsInt() > BESIDE_THE_ROAD;
     }
 
     public ConstructionState state() {
@@ -277,6 +252,10 @@ public final class ConstructionProject {
         Map<ResourceId, Integer> tally = new LinkedHashMap<>();
 
         for (BlueprintBlock block : remaining) {
+            if (deferred.containsKey(worldPositionOf(block))) {
+                continue;
+            }
+
             tally.merge(block.block(), 1, Integer::sum);
         }
 
@@ -306,6 +285,56 @@ public final class ConstructionProject {
         return List.copyOf(remaining);
     }
 
+    /** As peças que esperam uma mudança física, na ordem em que foram adiadas. */
+    public List<DeferredPiece> deferredPieces() {
+        return List.copyOf(deferred.values());
+    }
+
+    /**
+     * Guarda uma peça sem apoio para que ela não seja confundida com
+     * progresso e não reserve outro construtor sem uma mudança no mundo.
+     */
+    public void defer(
+            BlueprintBlock block,
+            ConstructionOutcome.Skipped outcome,
+            String supportFingerprint) {
+
+        Objects.requireNonNull(block, "block");
+        Objects.requireNonNull(outcome, "outcome");
+
+        if (!remaining.contains(block)) {
+            throw new IllegalArgumentException("Cannot defer a block outside the remaining project");
+        }
+
+        ColonyPos position = worldPositionOf(block);
+
+        if (!position.equals(outcome.position())) {
+            throw new IllegalArgumentException("Deferred position does not match the project block");
+        }
+
+        deferred.put(position, new DeferredPiece(
+                position, block.block(), outcome.skipReason(), supportFingerprint));
+    }
+
+    /**
+     * Recoloca a peça na fila quando a leitura de apoio não é mais a que
+     * falhou. Sem mudança, a tentativa continua adiada.
+     */
+    public boolean retryIfSupportChanged(DeferredPiece piece, String supportFingerprint) {
+        Objects.requireNonNull(piece, "piece");
+        Objects.requireNonNull(supportFingerprint, "supportFingerprint");
+
+        DeferredPiece current = deferred.get(piece.position());
+
+        if (!piece.equals(current) || current.supportFingerprint().equals(supportFingerprint)) {
+            return false;
+        }
+
+        deferred.remove(piece.position());
+
+        return true;
+    }
+
     /**
      * Onde vai este bloco, no mundo.
      *
@@ -332,7 +361,13 @@ public final class ConstructionProject {
     public boolean markPlaced(BlueprintBlock block) {
         Objects.requireNonNull(block, "block");
 
-        return remaining.remove(block);
+        boolean placed = remaining.remove(block);
+
+        if (placed) {
+            deferred.remove(worldPositionOf(block));
+        }
+
+        return placed;
     }
 
     /** Se não falta mais nada a pôr. */
@@ -374,7 +409,9 @@ public final class ConstructionProject {
      * lista para a próxima passagem.
      */
     public Optional<BlueprintBlock> nextBlock() {
-        return remaining.isEmpty() ? Optional.empty() : Optional.of(remaining.get(0));
+        return remaining.stream()
+                .filter(block -> !deferred.containsKey(worldPositionOf(block)))
+                .findFirst();
     }
 
     @Override
@@ -385,6 +422,7 @@ public final class ConstructionProject {
                 + ", origin=" + origin
                 + ", state=" + state
                 + ", remaining=" + remaining.size()
+                + ", deferred=" + deferred.size()
                 + "]";
     }
 }

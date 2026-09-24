@@ -4,7 +4,9 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.ColonyState;
 import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
+import com.villagecolony.core.construction.model.SkipReason;
 import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
@@ -143,6 +145,32 @@ class ConstructionSaveTest {
 
         assertEquals(1, restored.size());
         assertEquals(project, restored.get(0));
+    }
+
+    @Test
+    void aDeferredUnsupportedPieceSurvivesTheRoundTrip() {
+        UUID colonyId = UUID.randomUUID();
+        ConstructionProject.DeferredPiece deferred = new ConstructionProject.DeferredPiece(
+                new ColonyPos(-4, 63, 200),
+                ResourceId.vanilla("wall_torch"),
+                SkipReason.UNSUPPORTED,
+                "target=minecraft:air;down=minecraft:air");
+        ConstructionService.Pending project = new ConstructionService.Pending(
+                UUID.randomUUID(),
+                colonyId,
+                HOUSE,
+                new ColonyPos(-5, 63, 200),
+                ConstructionState.BUILDING,
+                List.of(deferred));
+        ColonySavedData data = empty();
+
+        data.sync(
+                List.of(colonyAt(colonyId, new ColonyPos(0, 64, 0))),
+                List.of(),
+                List.of(project),
+                List.of());
+
+        assertEquals(project, roundTrip(data).projects().get(0));
     }
 
     /**

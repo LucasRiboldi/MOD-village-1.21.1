@@ -53,11 +53,22 @@ Colony 020ad427 — no collect_stone work: no worker in the village
 | **Lenhador** | machado de ferro | `COLLECT_WOOD` | `HARVESTED` | os 8 troncos |
 | **Mineiro** | picareta de ferro | `COLLECT_STONE` | `MINED` | pedregulho, arenito, carvão, ferro cru |
 | **Pastor** | tesoura | `COLLECT_WOOL` | `SHEARED` | lã branca |
-| **Fazendeiro** | enxada de ferro | `MAINTAIN_FOOD` | `FARMED` | trigo, cenoura, batata, beterraba |
+| **Fazendeiro** | enxada de ferro | `MAINTAIN_FOOD`, `COLLECT_SOIL` | `FARMED`, `SOIL_GATHERED` | trigo, cenoura, batata, beterraba, terra |
 | **Carpinteiro** | nenhuma | `CRAFT_WOOD` | `CRAFTED_WOOD` | as 8 tábuas |
 | **Pedreiro** | nenhuma | `CRAFT_STONE` | `CRAFTED_STONE` | tijolo de pedra |
 | **Fundidor** | pá de ferro com Toque Suave I | `SMELT_ITEMS`, `COLLECT_SURFACE_RESOURCE` | `SMELTED`, `SURFACE_GATHERED` | areia para vidro, `grass_block` pedido por obra, lingote de ferro, arenito liso, **pedra** |
 | **Construtor** | nenhuma | `BUILD_STRUCTURE` | — *(consome, não produz)* | — |
+
+**Solo separado da superfície — 2026-09-21.** `DIRT` deixou de ser
+`SURFACE_GATHERED` e passou a ser `SOIL_GATHERED`: quando uma obra precisa de
+terra, o ciclo abre `COLLECT_SOIL`, e quem atende é o fazendeiro com enxada de
+ferro. A coleta usa o mesmo executor físico de recursos naturais expostos, mas
+com raio protegido maior para não raspar o miolo habitado da vila.
+
+`grass_block` continua com o fundidor porque depende da pá com Toque Suave; a
+enxada do fazendeiro não entrega o bloco de grama. `dirt_path` também não virou
+item de estoque: o caminho de terra é assentado por estrada/obra, e a terra que
+sustenta essa cadeia é que entra pela coleta de solo do fazendeiro.
 
 ### A divisão do Fabricante — 2026-09-10
 

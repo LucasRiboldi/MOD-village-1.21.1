@@ -347,7 +347,7 @@ public final class MinerReport {
         // approachTo, e é ele que diz "não há lugar nenhum". A frase
         // antiga misturava as duas e imprimia a segunda como se fosse a
         // primeira — ver sentTo.
-        BlockPos spot = MinerWork.approachTo(world, target);
+        BlockPos spot = MinerApproach.approachTo(world, target);
 
         String stand = spot.equals(target)
                 ? "the stone itself (no free neighbour to stand on)"

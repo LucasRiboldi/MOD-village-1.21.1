@@ -3,6 +3,7 @@ package com.villagecolony.fabric.event;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.ColonyAbandonment;
+import com.villagecolony.core.telemetry.model.ActivityTrace;
 import com.villagecolony.core.worker.model.Worker;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,9 @@ import com.villagecolony.fabric.work.FarmerNursery;
 import com.villagecolony.fabric.integration.SiteMarker;
 import com.villagecolony.fabric.integration.SweepLog;
 import com.villagecolony.fabric.work.BuilderWork;
+import com.villagecolony.fabric.work.StrandedEscape;
+import com.villagecolony.fabric.work.VillageMeals;
+import com.villagecolony.fabric.work.StrandedWorkers;
 import com.villagecolony.fabric.integration.ChestPlacer;
 import com.villagecolony.fabric.integration.RingSweep;
 import com.villagecolony.fabric.work.MineClaims;
@@ -80,6 +84,10 @@ public final class ServerLifecycleHandler {
         VillageColonyMod.CONSTRUCTIONS.clear();
         VillageColonyMod.BUILDINGS.clear();
         VillageColonyMod.MINES.clear();
+        VillageColonyMod.ACTIVITY_TRACES.clear();
+        StrandedWorkers.clearAll();
+        StrandedEscape.clearAll();
+        VillageMeals.clearAll();
         WorkTargets.clearAll();
         LumberjackWork.clearAll();
         MinerWork.clearAll();
@@ -101,7 +109,7 @@ public final class ServerLifecycleHandler {
         TreeScanner.clearAll();
         VillageRoad.clearAll();
         RoadExtension.clearAll();
-        BuildSiteScanner.clearAll();
+        BuildSiteScanner.clearAll(); // Inclui os relatórios de varredura por colônia.
         SweepLog.clearAll();
         // E a contagem de recusa de lote junto — 2026-09-17. Ela
         // ficava de fora enquanto os quatro vizinhos eram limpos, e a
@@ -121,6 +129,7 @@ public final class ServerLifecycleHandler {
         ColonyStateLog.clearAll();
         ColonyAbandonment.clearAll();
         PlannerTurns.clearAll();
+        VillageFocus.clearAll();
         SiteMarker.clearAll();
         ColonyEdits.clearAll();
         VillageDetectionHandler.clearPending();
@@ -139,7 +148,7 @@ public final class ServerLifecycleHandler {
         // As obras voltam pela metade de propósito: falta-lhes o projeto,
         // que só existe com um mundo carregado a quem perguntar. Elas
         // renascem no primeiro ciclo de cada colônia — ver
-        // ConstructionPlanner.resume.
+        // ConstructionResume.resume.
         for (ConstructionService.Pending project : data.projects()) {
             VillageColonyMod.CONSTRUCTIONS.registerPending(project);
         }
@@ -153,6 +162,15 @@ public final class ServerLifecycleHandler {
         // cavado, e revarria do primeiro degrau tudo o que estava aberto.
         for (Mine mine : data.mines()) {
             VillageColonyMod.MINES.restore(mine);
+        }
+
+        // E o traço de atividade de cada colônia — decisão 7B,
+        // 2026-09-24. newestFirst() devolve do mais novo para o mais
+        // velho; restore() espera essa mesma ordem para reconstruir o
+        // buffer sem embaralhar quem é mais recente.
+        for (var entry : data.activityTraces().entrySet()) {
+            VillageColonyMod.ACTIVITY_TRACES.restore(
+                    entry.getKey(), entry.getValue().newestFirst(ActivityTrace.CAPACITY));
         }
 
         // E o índice de ruas — 2026-08-27. Sem ele, a primeira busca de
@@ -206,7 +224,8 @@ public final class ServerLifecycleHandler {
                     project.colonyId(),
                     project.blueprint().id(),
                     project.origin(),
-                    project.state()));
+                    project.state(),
+                    project.deferredPieces()));
         }
 
         return saving;
@@ -230,7 +249,8 @@ public final class ServerLifecycleHandler {
                 VillageColonyMod.BUILDINGS.all(),
                 VillageColonyMod.MINES.all(),
                 roads,
-                sweeps);
+                sweeps,
+                VillageColonyMod.ACTIVITY_TRACES.all());
 
         VillageColonyMod.LOGGER.info(
                 "Saved {} colonies with {} workers, {} buildings, {} mines,"
@@ -259,6 +279,10 @@ public final class ServerLifecycleHandler {
         VillageColonyMod.CONSTRUCTIONS.clear();
         VillageColonyMod.BUILDINGS.clear();
         VillageColonyMod.MINES.clear();
+        VillageColonyMod.ACTIVITY_TRACES.clear();
+        StrandedWorkers.clearAll();
+        StrandedEscape.clearAll();
+        VillageMeals.clearAll();
         WorkTargets.clearAll();
         LumberjackWork.clearAll();
         MinerWork.clearAll();
@@ -279,7 +303,7 @@ public final class ServerLifecycleHandler {
         TreeScanner.clearAll();
         VillageRoad.clearAll();
         RoadExtension.clearAll();
-        BuildSiteScanner.clearAll();
+        BuildSiteScanner.clearAll(); // Inclui os relatórios de varredura por colônia.
         SweepLog.clearAll();
         // E a contagem de recusa de lote junto — 2026-09-17. Ela
         // ficava de fora enquanto os quatro vizinhos eram limpos, e a
@@ -299,6 +323,7 @@ public final class ServerLifecycleHandler {
         ColonyStateLog.clearAll();
         ColonyAbandonment.clearAll();
         PlannerTurns.clearAll();
+        VillageFocus.clearAll();
         SiteMarker.clearAll();
         ColonyEdits.clearAll();
         VillageDetectionHandler.clearPending();

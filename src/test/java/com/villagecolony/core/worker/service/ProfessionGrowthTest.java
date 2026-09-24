@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ProfessionGrowthTest {
@@ -26,11 +27,32 @@ class ProfessionGrowthTest {
     }
 
     @Test
-    void sevenAdultsReceiveTheSevenProducerRolesInDeclaredOrder() {
+    void sevenAdultsReceiveFoundationThenTheFirstGrowthRole() {
         addWorkers(7);
 
         assertEquals(7, assign(7));
-        assertEquals(ProfessionAssigner.PRODUCER_ORDER, assignedInOrder());
+        java.util.List<ProfessionType> assigned = assignedInOrder();
+        int foundationSize = ProfessionAssigner.FOUNDATION_ORDER.size();
+        assertEquals(ProfessionAssigner.FOUNDATION_ORDER,
+                assigned.subList(0, foundationSize));
+        assertEquals(ProfessionType.CARPENTER, assigned.get(foundationSize));
+    }
+
+    /** Agricultor e carpinteiro continuam sendo vagas reais de crescimento. */
+    @Test
+    void farmerAndCarpenterRemainAvailableOutsideTheFoundation() {
+        addWorkers(13);
+
+        assign(13);
+
+        assertTrue(ProfessionAssigner.PRODUCER_ORDER.contains(ProfessionType.CARPENTER));
+        assertTrue(ProfessionAssigner.PRODUCER_ORDER.contains(ProfessionType.FARMER));
+        assertFalse(ProfessionAssigner.FOUNDATION_ORDER.contains(ProfessionType.CARPENTER));
+        assertFalse(ProfessionAssigner.FOUNDATION_ORDER.contains(ProfessionType.FARMER));
+        assertTrue(count(ProfessionType.CARPENTER) >= 1,
+                "o carpinteiro foi removido do crescimento");
+        assertTrue(count(ProfessionType.FARMER) >= 1,
+                "o agricultor foi removido do crescimento");
     }
 
     @Test
@@ -51,7 +73,7 @@ class ProfessionGrowthTest {
 
         assign(30);
         assertEquals(15, employedCount());
-        assertEquals(2, count(ProfessionType.BREEDER));
+        assertEquals(2, count(ProfessionType.SHEPHERD));
 
         assertEquals(1, assign(31));
         assertEquals(3, count(ProfessionType.MINER));
@@ -75,18 +97,17 @@ class ProfessionGrowthTest {
         addWorkers(31);
         assign(31);
 
-        assertTrue(ProfessionAssigner.enforceVacancies(workers, COLONY).isEmpty());
+        assertTrue(VacancyEnforcer.enforceVacancies(workers, COLONY).isEmpty());
         assertEquals(3, count(ProfessionType.MINER));
     }
 
     @Test
-    void legacyShepherdCountsTowardTheBreederQuota() {
-        Worker legacyShepherd = workers.register(UUID.randomUUID(), COLONY);
-        legacyShepherd.assign(ProfessionType.SHEPHERD);
+    void existingShepherdCountsTowardTheShepherdQuota() {
+        Worker shepherd = workers.register(UUID.randomUUID(), COLONY);
+        shepherd.assign(ProfessionType.SHEPHERD);
         addWorkers(15);
 
         assertEquals(7, assign(15));
-        assertEquals(0, count(ProfessionType.BREEDER));
         assertEquals(1, count(ProfessionType.SHEPHERD));
     }
 

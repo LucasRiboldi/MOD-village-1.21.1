@@ -258,7 +258,7 @@ class MineSaveTest {
     }
 
     @Test
-    void aMineFromShapeFourRestartsItsCursorAndKeepsItsMouthAndArch() {
+    void aMineFromShapeFiveRestartsItsCursorAndKeepsItsMouthAndArch() {
         UUID colonyId = UUID.randomUUID();
 
         Mine mine = Mine.restore(colonyId, MineShaft.from(MOUTH, Side.EAST), 437);
@@ -268,13 +268,13 @@ class MineSaveTest {
                 .writeNbt(new NbtCompound(), null);
         nbt.getList("mines", NbtElement.COMPOUND_TYPE)
                 .getCompound(0)
-                .putInt("shape", 4);
+                .putInt("shape", 5);
 
         Mine back = ColonySavedData.TYPE.deserializer().apply(nbt, null).mines().get(0);
 
         assertEquals(MOUTH, back.entry(), "a migração moveu a boca da mina");
         assertEquals(Side.EAST, back.shaft().descent(), "a orientação salva foi descartada");
-        assertEquals(0, back.arm(0).cut(), "o cursor v4 foi usado numa ordem geométrica nova");
+        assertEquals(0, back.arm(0).cut(), "o cursor v5 foi usado numa ordem geométrica nova");
         assertTrue(back.archRaised(), "a migração esqueceu o arco já construído");
     }
 

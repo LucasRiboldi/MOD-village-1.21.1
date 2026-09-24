@@ -1,5 +1,6 @@
 package com.villagecolony.gametest;
 
+import com.villagecolony.fabric.integration.RoadsideSites;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.ColonyRoads;
@@ -390,13 +391,13 @@ public class RoadExtensionGameTest implements FabricGameTest {
                 context.getAbsolutePos(ROAD_END.add(2, 0, 0)));
 
         context.assertTrue(
-                BuildSiteScanner.findBeside(
+                RoadsideSites.findBeside(
                         context.getWorld(), colony, center,
                         List.of(SMALL_HOUSE), List.of(tight)).isEmpty(),
                 "achou lote encostado na coluna que não tem chão ao lado");
 
         context.assertTrue(
-                BuildSiteScanner.findBeside(
+                RoadsideSites.findBeside(
                         context.getWorld(), colony, center,
                         List.of(SMALL_HOUSE), List.of(tight, roomy)).isPresent(),
                 "a colônia acabou de calçar este trecho e não achou o lote que ele abriu");

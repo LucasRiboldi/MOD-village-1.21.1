@@ -47,7 +47,7 @@ public final class ConstructionService {
      * <p>Então a obra volta em duas etapas: a identidade e o lugar saem
      * do arquivo agora, e o projeto inteiro nasce no primeiro ciclo da
      * colônia, quando há mundo a quem perguntar. Ver
-     * {@code ConstructionPlanner.resume}.
+     * {@code ConstructionResume.resume}.
      */
     private final Map<UUID, Pending> pending = new LinkedHashMap<>();
 
@@ -63,7 +63,17 @@ public final class ConstructionService {
             UUID colonyId,
             ResourceId blueprint,
             ColonyPos origin,
-            ConstructionState state) {
+            ConstructionState state,
+            List<ConstructionProject.DeferredPiece> deferredPieces) {
+
+        public Pending(
+                UUID id,
+                UUID colonyId,
+                ResourceId blueprint,
+                ColonyPos origin,
+                ConstructionState state) {
+            this(id, colonyId, blueprint, origin, state, List.of());
+        }
 
         public Pending {
             Objects.requireNonNull(id, "id");
@@ -71,6 +81,7 @@ public final class ConstructionService {
             Objects.requireNonNull(blueprint, "blueprint");
             Objects.requireNonNull(origin, "origin");
             Objects.requireNonNull(state, "state");
+            deferredPieces = List.copyOf(Objects.requireNonNull(deferredPieces, "deferredPieces"));
         }
     }
 
@@ -170,7 +181,8 @@ public final class ConstructionService {
     }
 
     /**
-     * Tira esta obra do registro, terminada ou não.
+     * Tira esta obra do registro, terminada ou não — auditada, decisão
+     * 10A, 2026-09-24.
      *
      * <p>Existe para a obra que esperou demais por material e saiu da
      * frente — ver {@code PatienceClock}. {@link #purgeFinished} não
@@ -181,10 +193,22 @@ public final class ConstructionService {
      * de construções antes. Esquecer a obra sem isso deixaria o lote
      * livre, e a colônia planejaria por cima da casa pela metade.
      *
-     * @return se havia o que esquecer
+     * <p><b>{@code audit} torna esse contrato verificável.</b> Cada
+     * {@link RemovalAudit.Reason} só autoriza o estado a que ele
+     * pertence — ver {@link RemovalAudit#allows}. Um id que não existe
+     * mais no registro, ou uma auditoria {@link RemovalAudit#absent},
+     * nunca remove nada.
+     *
+     * @return se a obra saiu do registro
      */
-    public boolean forget(UUID projectId) {
-        return projectId != null && projects.remove(projectId) != null;
+    public boolean forget(UUID projectId, RemovalAudit audit) {
+        Objects.requireNonNull(audit, "audit");
+
+        if (projectId == null || !audit.allows(find(projectId))) {
+            return false;
+        }
+
+        return projects.remove(projectId) != null;
     }
 
     /**

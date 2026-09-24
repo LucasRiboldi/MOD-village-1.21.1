@@ -45,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <p><b>Por que ela é perigosa.</b> Toda colônia volta do save
  * {@link ColonyLifecycle#DORMANT} — é a ADR-002, e
  * {@code everyColonyComesBackDormant} trava isso de propósito. Quem
- * decide se há trabalho é {@code VillageDetectionHandler.runColonyCycles},
+ * decide se há trabalho é {@code ColonyCycleRunner.runColonyCycles},
  * e ele <b>pula colônia que não está ACTIVE</b>. Entre "o save voltou
  * inteiro" e "a vila trabalha" existe um despertar, e o elo entre os
  * dois não tinha teste nenhum.

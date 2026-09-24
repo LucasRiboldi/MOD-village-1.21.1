@@ -2,6 +2,14 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.task.model.Task;
+import com.villagecolony.core.telemetry.model.ActivityKind;
+import com.villagecolony.core.telemetry.model.ActivityProfession;
+import com.villagecolony.core.telemetry.model.ActivityState;
+import com.villagecolony.core.telemetry.model.ActivityTraceEvent;
+import com.villagecolony.core.telemetry.model.ControlledReason;
+import com.villagecolony.core.telemetry.model.TargetKind;
+import com.villagecolony.core.type.Capability;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 
 import java.util.UUID;
@@ -44,6 +52,27 @@ public final class WorkerStrikes {
      */
     public static void gaveUp(UUID workerId, Task task) {
         VillageColonyMod.WORKERS.find(workerId).ifPresent(worker -> {
+            worker.profession().ifPresent(profession ->
+                    {
+                        ActivityLog.failed(profession, task.requiredCapability().name());
+                        ActivityLog.abandoned(profession, task.requiredCapability().name());
+
+                        // O traço persistido, decisão 7B — 2026-09-24.
+                        // Só aqui, onde o UUID do trabalhador é real: ver
+                        // ActivityTraceRegistry para o porquê de IdleLog
+                        // (que fala por colônia, sem trabalhador
+                        // identificável) ficar fora desta entrega.
+                        VillageColonyMod.ACTIVITY_TRACES.append(
+                                worker.colonyId(),
+                                new ActivityTraceEvent(
+                                        workerId,
+                                        toActivityProfession(profession),
+                                        toActivityKind(task.requiredCapability()),
+                                        ActivityState.ABANDONED,
+                                        ControlledReason.WORK_STALLED,
+                                        toTargetKind(task.requiredCapability()),
+                                        0));
+                    });
             worker.rest(task.requiredCapability());
 
             if (!worker.hasProfession()) {
@@ -54,5 +83,48 @@ public final class WorkerStrikes {
                         task.requiredCapability());
             }
         });
+    }
+
+    /**
+     * A tradução entre o vocabulário do worker e o do traço —
+     * {@code core.telemetry} não pode importar {@code core.worker} nem
+     * {@code core.type} guarda esses valores; ver o javadoc de
+     * {@link ActivityProfession}. Só {@code fabric}, que enxerga os dois
+     * lados, faz essa ponte.
+     */
+    private static ActivityProfession toActivityProfession(ProfessionType profession) {
+        return switch (profession) {
+            case MINER -> ActivityProfession.MINER;
+            case LUMBERJACK -> ActivityProfession.LUMBERJACK;
+            case MASON -> ActivityProfession.MASON;
+            case SMELTER -> ActivityProfession.SMELTER;
+            case CARPENTER -> ActivityProfession.CARPENTER;
+            case FARMER -> ActivityProfession.FARMER;
+            case SHEPHERD -> ActivityProfession.SHEPHERD;
+            case BUILDER -> ActivityProfession.BUILDER;
+        };
+    }
+
+    private static ActivityKind toActivityKind(Capability capability) {
+        return switch (capability) {
+            case COLLECT_STONE -> ActivityKind.MINING;
+            case COLLECT_WOOD, CRAFT_WOOD -> ActivityKind.HARVESTING;
+            case COLLECT_SURFACE_RESOURCE, COLLECT_SOIL -> ActivityKind.MINING;
+            case COLLECT_WOOL, MAINTAIN_FOOD -> ActivityKind.SHEPHERDING;
+            case SMELT_ITEMS -> ActivityKind.SMELTING;
+            case CRAFT_STONE -> ActivityKind.CRAFTING;
+            case BUILD_STRUCTURE -> ActivityKind.BUILDING;
+        };
+    }
+
+    private static TargetKind toTargetKind(Capability capability) {
+        return switch (capability) {
+            case COLLECT_STONE, CRAFT_STONE -> TargetKind.STONE;
+            case COLLECT_WOOD, CRAFT_WOOD -> TargetKind.WOOD;
+            case COLLECT_SURFACE_RESOURCE, COLLECT_SOIL -> TargetKind.ORE;
+            case COLLECT_WOOL, MAINTAIN_FOOD -> TargetKind.ANIMAL;
+            case SMELT_ITEMS -> TargetKind.ORE;
+            case BUILD_STRUCTURE -> TargetKind.CONSTRUCTION;
+        };
     }
 }

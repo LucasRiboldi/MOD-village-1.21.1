@@ -7,6 +7,8 @@ import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
+import com.villagecolony.core.construction.model.ConstructionOutcome;
+import com.villagecolony.core.construction.model.SkipReason;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
@@ -20,6 +22,7 @@ import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
 import com.villagecolony.fabric.integration.ColonySupply;
+import com.villagecolony.fabric.integration.BiomeConstructionSupply;
 import net.minecraft.block.Block;
 import net.minecraft.block.enums.BedPart;
 import net.minecraft.block.enums.DoubleBlockHalf;
@@ -75,7 +78,7 @@ import java.util.UUID;
 public final class BuilderWork {
 
     /** Um bloco por segundo. Ver a Regra 2, que fez o mesmo com a derrubada. */
-    private static final int TICKS_PER_BLOCK = 20;
+    static final int TICKS_PER_BLOCK = 20;
 
     /**
      * Quantos ticks andando sem chegar ao bloco antes de desistir.
@@ -89,20 +92,20 @@ public final class BuilderWork {
      * sempre com dono. Mesma regra e mesmo motivo de
      * {@code LumberjackWork.STALL_LIMIT}.
      */
-    private static final int STALL_LIMIT = 4 * VillageDetector.CYCLE_TICKS;
+    static final int STALL_LIMIT = 4 * VillageDetector.CYCLE_TICKS;
 
     /** Trabalho aberto, por construtor. */
-    private static final Map<UUID, Job> JOBS = new HashMap<>();
+    static final Map<UUID, Job> JOBS = new HashMap<>();
 
     static final class Job {
 
-        private final Task task;
+        final Task task;
 
         final UUID projectId;
 
         int progress;
 
-        private int placed;
+        int placed;
 
         /**
          * Ticks de horário de trabalho andando sem chegar ao bloco da
@@ -214,7 +217,7 @@ public final class BuilderWork {
     /**
      * @return false quando este trabalho acabou e pode sair do registro
      */
-    private static boolean step(ServerWorld world, UUID workerId, Job job) {
+    static boolean step(ServerWorld world, UUID workerId, Job job) {
         if (!isOngoing(job.task)) {
             WorkTargets.clear(workerId);
             return false;
@@ -239,10 +242,22 @@ public final class BuilderWork {
             return true;
         }
 
+        // A reserved task is only the hand-off from the planner to the
+        // villager.  The builder must enter execution before the final
+        // block can complete the task instead of releasing it back to the
+        // queue.
+        if (job.task.state() == TaskState.RESERVED) {
+            job.task.start();
+        }
+
         Optional<BlueprintBlock> next = project.nextBlock();
 
         if (next.isEmpty()) {
-            complete(project, job, workerId);
+            if (project.isFinished()) {
+                complete(project, job, workerId);
+            } else {
+                finish(job, workerId, "every remaining piece is waiting for physical support");
+            }
 
             return false;
         }
@@ -311,566 +326,7 @@ public final class BuilderWork {
 
         job.progress = 0;
 
-        return placeOne(world, project, job, workerId, next.get(), target);
-    }
-
-    /**
-     * Põe um bloco, se houver material e lugar.
-     *
-     * @return false quando a obra não pode continuar agora
-     */
-    private static boolean placeOne(
-            ServerWorld world,
-            ConstructionProject project,
-            Job job,
-            UUID workerId,
-            BlueprintBlock block,
-            BlockPos target) {
-
-        Optional<Block> material = MinecraftTypeAdapter.toBlock(block.block());
-
-        if (material.isEmpty()) {
-            // O jogo não conhece este bloco — datapack que saiu, versão
-            // que mudou. Riscar é melhor que travar a obra para sempre.
-            VillageColonyMod.LOGGER.warn(
-                    "Project {} asks for {}, which this game does not have — skipped",
-                    project.id(),
-                    block.block());
-
-            project.markPlaced(block);
-
-            return true;
-        }
-
-        BlockState state = bedFacing(
-                world, target, facing(project, block, material.get().getDefaultState()));
-
-        if (!world.getBlockState(target).isReplaceable()) {
-            // Já tem coisa ali, e não é grama alta: pode ser peça de
-            // vila, pode ser construção do jogador. A Regra 3 manda não
-            // mexer, e a obra segue sem este bloco.
-            VillageColonyMod.LOGGER.info(
-                    "Project {} skips {} — {} is in the way",
-                    project.id(),
-                    target,
-                    world.getBlockState(target).getBlock());
-
-            project.markPlaced(block);
-
-            return true;
-        }
-
-        if (!state.canPlaceAt(world, target)) {
-            // Tocha sem parede, porta sem chão. Riscar em vez de tentar
-            // de novo: a ordem de baixo para cima já deu a esta posição a
-            // melhor chance que ela teria, e insistir é obra que não
-            // termina nunca.
-            VillageColonyMod.LOGGER.info(
-                    "Project {} skips {} at {} — nothing holds it",
-                    project.id(),
-                    block.block(),
-                    target.toShortString());
-
-            project.markPlaced(block);
-
-            return true;
-        }
-
-        if (PottedPlant.isPotted(state)) {
-            // <b>O vaso com planta é montado, e pago</b> — 2026-09-19. O
-            // bloco não tem item e ninguém o traria; o que a colônia tem
-            // é o vaso e a planta, e é deles que ele sai. Montar de graça
-            // seria a colônia CRIANDO recurso, que a primeira regra de
-            // arquitetura do Construction-System proíbe.
-            //
-            // Espera pelos dois como esperaria por qualquer material: a
-            // Regra 27 continua valendo, só que sobre os ingredientes em
-            // vez de sobre um item que não existe.
-            if (!assemblePotted(world, project, job, workerId, block, target, state)) {
-                return false;
-            }
-
-            return true;
-        }
-
-        if (isShapedFromTheGround(state)) {
-            // A colônia molda no local apenas blocos sem item de inventário
-            // utilizável (canteiro, água, caminho e cultivos). Terra comum
-            // tem item e deve sair fisicamente do estoque.
-            //
-            // Quem abre um canteiro move o chão que já está ali. A regra
-            // vale para qualquer obra porque depende do bloco, não da planta.
-            world.setBlockState(target, state, Block.NOTIFY_ALL);
-
-            project.markPlaced(block);
-
-            return true;
-        }
-
-        Optional<Item> taken = takeMaterial(world, project, material.get());
-
-        if (taken.isEmpty()) {
-            Optional<String> chain = TestBarrier.chainFor(block.block());
-
-            // <b>A barreira espera antes de riscar</b> — 2026-09-09. A
-            // carência está em TestBarrier, e o que ela corrige é um
-            // grito falso: 24 stripped_oak_log riscados na sessão de
-            // 09-06 com cinquenta toras no baú, porque o construtor
-            // riscava no mesmo tique em que via a falta e o fabricante
-            // nunca teve o ciclo de descascar.
-            //
-            // Só o construtor começa a contar, e é por isso que a
-            // chamada mora aqui: quem tentou tirar do baú foi ele.
-            if (chain.isPresent()
-                    && TestBarrier.graceExpired(
-                            world.getTime(), project.id(), block.block())) {
-
-                // <b>Barreira de teste</b> — a Regra 28, provisória por
-                // declaração do autor: o bloco é riscado, e a casa fica
-                // sem ele.
-                //
-                // Ela grita desde 2026-08-21, e o porquê está em
-                // TestBarrier: a cadeia de cada uma das sete peças
-                // fechou, e peça riscada deixou de ser o esperado para
-                // virar notícia.
-                TestBarrier.skip(project.id(), block.block(), chain.get());
-
-                project.markPlaced(block);
-
-                return true;
-            }
-
-            // Fora dessas quatro, <b>o construtor aguarda o bloco
-            // específico de que precisa</b> — a Regra 27, aberta para
-            // pedra em 2026-08-26 e inteira no resto.
-            //
-            // E a peça da barreira dentro da carência passa por aqui
-            // também, de propósito: enquanto a barreira ainda espera,
-            // ela é peça como qualquer outra e a Regra 27 vale inteira
-            // para ela.
-            //
-            // O que impede a colônia de morrer esperando é o
-            // PatienceClock: a obra sai da frente depois de vinte ciclos,
-            // então a espera é do construtor e não da vila.
-            waitForResources(project, job, workerId, block);
-
-            return false;
-        }
-
-        // O que se assenta é o que saiu do baú, e não o que a planta
-        // pediu: a colônia não inventa matéria. O substituto veste o
-        // estado da planta no que os dois tiverem em comum — senão uma
-        // viga deitada trocada de espécie sairia em pé.
-        BlockState placed = MaterialChoice.isExact(material.get(), taken.get())
-                ? state
-                : MaterialChoice.dressedLike(state, taken.get());
-
-        world.setBlockState(target, placed, Block.NOTIFY_ALL);
-
-        placeSecondHalf(world, target, placed);
-
-        project.markPlaced(block);
-
-        job.placed++;
-
-        // A única passagem em que uma peça de verdade encosta no mundo,
-        // e é por isso que a conta da barreira sai daqui: as outras
-        // quatro saídas de placeOne riscam o bloco, e riscado não é
-        // assentado. Sem este número o relatório da sessão absolvia a
-        // Regra 28 sem ter tido o que medir — o E31.
-        TestBarrier.laidOne();
-
-        return true;
-    }
-
-    /**
-     * Vira o bloco de parede para fora da casa — a Regra 17.
-     *
-     * <p>Até 2026-08-19 a porta saía no estado padrão da planta, que
-     * olha sempre para o mesmo lado: a casa podia ter a porta na parede
-     * da rua e a folha abrindo para o lado errado. Agora a orientação
-     * sai da <b>geometria</b>, e não de um campo gravado.
-     *
-     * <p>A conta: o bloco está numa das quatro paredes; a parede diz
-     * para onde é fora; e a face do bloco olha para <b>dentro</b>, que é
-     * como o jogo grava a porta que um jogador põe da rua — ele está do
-     * lado de fora, olhando para a casa, e a porta guarda a direção do
-     * olhar dele.
-     *
-     * <p>Só blocos de parede. Bloco do miolo — a cama, o baú da Regra 21
-     * — não tem "fora" e fica com o estado padrão até ter regra própria.
-     *
-     * <p>Deduzir em vez de gravar tem uma vantagem que vale dizer: a
-     * obra que volta do save não precisa que o save saiba disso. A
-     * planta remontada já traz a porta na parede certa, e a face sai
-     * dela.
-     */
-    private static BlockState facing(
-            ConstructionProject project, BlueprintBlock block, BlockState state) {
-
-        if (!state.contains(Properties.HORIZONTAL_FACING)) {
-            return state;
-        }
-
-        if (state.contains(Properties.BED_PART)) {
-            // O javadoc acima sempre disse que a cama fica de fora, e ela
-            // não ficava: basta a planta pôr a cama encostada na parede
-            // para esta regra virá-la para o meio da casa. Quem decide a
-            // cama é o bedFacing, que pergunta onde a cabeceira cabe.
-            return state;
-        }
-
-        ColonyPos size = project.blueprint().size();
-        ColonyPos at = block.offset();
-
-        Direction outward = null;
-
-        if (at.x() == 0) {
-            outward = Direction.WEST;
-        } else if (at.x() == size.x() - 1) {
-            outward = Direction.EAST;
-        } else if (at.z() == 0) {
-            outward = Direction.NORTH;
-        } else if (at.z() == size.z() - 1) {
-            outward = Direction.SOUTH;
-        }
-
-        if (outward == null) {
-            return state;
-        }
-
-        return state.with(Properties.HORIZONTAL_FACING, outward.getOpposite());
-    }
-
-    /**
-     * Para que lado a cama cabe — 2026-08-29.
-     *
-     * <p><b>Visto em jogo</b>, e o log diz na letra o que aconteceu:
-     *
-     * <pre>
-     * Could not finish the two-part block at 769, 64, 935
-     *     — Block{minecraft:cobblestone} is in the way
-     * </pre>
-     *
-     * <p>A planta guarda o nome do bloco e não o estado (ADR-005), então
-     * a cama saía no <b>padrão</b>, que olha para o norte. Na casa de
-     * planície o norte da cama é a parede: a cabeceira não coube, e
-     * sobrou meia cama — <i>"aparece somente a metade da cama e na
-     * direção errada"</i>.
-     *
-     * <p>A saída é perguntar ao mundo em vez de ao arquivo, e é a Regra
-     * 32 que a torna possível: com a mobília entrando depois da casa
-     * pronta, a parede já está lá para ser vista.
-     *
-     * <p><b>Encostada na parede quando dá</b>, que é onde uma cama fica
-     * numa casa: entre os lados livres, ganha aquele cujo bloco seguinte
-     * é sólido. Sem nenhum assim, qualquer lado livre serve; sem nenhum
-     * livre, fica o que estava — e aí o {@code placeSecondHalf} diz no
-     * log que a cabeceira não coube, como já dizia.
-     *
-     * <p><b>A orientação fiel ao arquivo continua sendo a ADR-008</b>,
-     * decidida e por escrever, e vale para o tronco e o degrau também.
-     * Isto aqui é mais simples e mais urgente: cama que cabe.
-     */
-    private static BlockState bedFacing(ServerWorld world, BlockPos foot, BlockState state) {
-        if (!state.contains(Properties.BED_PART) || !state.contains(Properties.HORIZONTAL_FACING)) {
-            return state;
-        }
-
-        Direction anywhere = null;
-
-        for (Direction side : Direction.Type.HORIZONTAL) {
-            if (!world.getBlockState(foot.offset(side)).isReplaceable()) {
-                continue;
-            }
-
-            if (!world.getBlockState(foot.offset(side, 2)).isReplaceable()) {
-                return state.with(Properties.HORIZONTAL_FACING, side);
-            }
-
-            if (anywhere == null) {
-                anywhere = side;
-            }
-        }
-
-        return anywhere == null ? state : state.with(Properties.HORIZONTAL_FACING, anywhere);
-    }
-
-    /**
-     * Completa um bloco que ocupa dois lugares.
-     *
-     * <p>É o E8 do §17, e a outra ponta de
-     * {@code StructureBlueprintReader.isSecondHalf}: o projeto guarda uma
-     * porta só, e é aqui que ela vira duas metades <b>ligadas</b> em vez
-     * de dois blocos independentes no estado padrão.
-     *
-     * <p>Escrever a segunda metade em vez de deixar o jogo fazê-lo é
-     * deliberado. {@code Block.onPlaced} faria isso, e faria também tudo
-     * o mais que a colocação por jogador dispara — som, evento, lógica de
-     * item. O construtor não é um jogador com uma porta na mão; ele está
-     * montando uma casa a partir de um arquivo, e o que ele precisa é da
-     * propriedade que liga as duas metades.
-     *
-     * <p>Só escreve onde há lugar. A metade de cima cai sobre o que o
-     * projeto já pôs no andar de cima em nenhum caso — a leitura descarta
-     * aquela posição —, mas o mundo é do jogador e pode ter qualquer
-     * coisa ali. A Regra 3 vale aqui como vale no resto da obra: nada
-     * substitui o que não é substituível.
-     *
-     * <p>Bloco de uma parte só passa direto: {@code contains} responde
-     * não, e nada acontece.
-     */
-    public static void placeSecondHalf(ServerWorld world, BlockPos pos, BlockState state) {
-        if (state.contains(Properties.DOUBLE_BLOCK_HALF)) {
-            put(world, pos.up(), state.with(Properties.DOUBLE_BLOCK_HALF, DoubleBlockHalf.UPPER));
-
-            return;
-        }
-
-        if (state.contains(Properties.BED_PART) && state.contains(Properties.HORIZONTAL_FACING)) {
-            // A cabeceira vai para onde o estado padrão aponta, e não
-            // para onde o arquivo dizia: a orientação é a metade do E8
-            // que continua aberta (TASK-046). Uma cama virada para o
-            // norte numa casa que a queria virada para o leste continua
-            // sendo uma cama — dois pés lado a lado não eram.
-            put(
-                    world,
-                    pos.offset(state.get(Properties.HORIZONTAL_FACING)),
-                    state.with(Properties.BED_PART, BedPart.HEAD));
-        }
-    }
-
-    /** Escreve, se o lugar aceitar. */
-    private static void put(ServerWorld world, BlockPos pos, BlockState state) {
-        if (!world.getBlockState(pos).isReplaceable()) {
-            VillageColonyMod.LOGGER.info(
-                    "Could not finish the two-part block at {} — {} is in the way",
-                    pos.toShortString(),
-                    world.getBlockState(pos).getBlock());
-
-            return;
-        }
-
-        world.setBlockState(pos, state, Block.NOTIFY_ALL);
-    }
-
-    /**
-     * Se este bloco a colônia molda do chão em vez de tirar do baú.
-     *
-     * <p>São blocos que se formam no local ou não têm item próprio para
-     * o estoque. Terra, grama, terra grossa e barro têm itens e continuam
-     * sendo materiais físicos de construção.
-     *
-     * <p>O {@code dirt_path} permanece nesta lista porque não tem item
-     * próprio; terra comum não entra aqui, pois pode ser fornecida pelo
-     * baú como qualquer outro material de construção.
-     */
-    public static boolean isShapedFromTheGround(BlockState state) {
-        return state.isOf(Blocks.FARMLAND)
-                || state.isOf(Blocks.WATER)
-                || state.isOf(Blocks.DIRT_PATH)
-                || state.getBlock() instanceof CropBlock
-                || hasNoItemOfItsOwn(state);
-    }
-
-    /**
-     * Bloco que <b>não tem item</b> — e por isso ninguém pode trazê-lo.
-     *
-     * <p><b>O que isto conserta, medido na sessão de 14:47.</b> A obra
-     * parou em {@code waiting for minecraft:potted_cactus} com 148 blocos
-     * por pôr, e ia esperar <b>para sempre</b>: no Minecraft o vaso com
-     * cacto só existe como <i>bloco</i> — o jogador põe o vaso e planta o
-     * cacto nele —, e {@code Items.POTTED_CACTUS} não existe. A colônia
-     * esperava um item que <b>não pode existir</b>.
-     *
-     * <p>E não era só ele. As casas do catálogo pedem oito blocos assim:
-     * os cinco vasos com planta, {@code water}, {@code lava} e
-     * {@code water_cauldron}.
-     *
-     * <p><b>Pergunta ao jogo em vez de crescer a lista acima</b> —
-     * ADR-009. A lista era quatro nomes escritos à mão, e cada bloco novo
-     * sem item pedia mais um; {@code asItem()} devolve <b>ar</b>
-     * exatamente quando não há item, e essa é a pergunta que importa.
-     * Quem sabe é o jogo.
-     *
-     * <p>O bloco entra montado, como já entram o canteiro e o caminho de
-     * terra: é a mesma decisão de 2026-08-27, aplicada à sua própria
-     * definição.
-     */
-    private static boolean hasNoItemOfItsOwn(BlockState state) {
-        return state.getBlock().asItem() == Items.AIR;
-    }
-
-    /**
-     * Monta o vaso com planta do vaso e da planta que a colônia tem.
-     *
-     * <p>Os dois saem do baú <b>antes</b> de o bloco entrar no mundo, que
-     * é a mesma ordem de todo material: sem ingrediente não há bloco.
-     *
-     * <p><b>O vaso primeiro, e a planta só se o vaso saiu.</b> Tirar a
-     * planta e falhar no vaso gastaria a planta sem pôr nada — o defeito
-     * que o lenhador teve em 09-04 com outro nome.
-     *
-     * @return {@code false} quando falta ingrediente e a obra espera
-     */
-    private static boolean assemblePotted(
-            ServerWorld world,
-            ConstructionProject project,
-            Job job,
-            UUID workerId,
-            BlueprintBlock block,
-            BlockPos target,
-            BlockState state) {
-
-        Optional<Item> plant = PottedPlant.plantOf(state.getBlock());
-
-        if (!ColonySupply.canProvide(
-                world, project.colonyId(), project.origin(), PottedPlant.pot())) {
-
-            waitForResources(project, job, workerId, block);
-
-            return false;
-        }
-
-        if (plant.isPresent()
-                && !ColonySupply.canProvide(
-                        world, project.colonyId(), project.origin(), plant.get())) {
-
-            waitForResources(project, job, workerId, block);
-
-            return false;
-        }
-
-        // Os dois estão lá: agora sim se gasta, e na ordem em que se
-        // conferiu.
-        ColonySupply.take(world, project.colonyId(), project.origin(), PottedPlant.pot());
-
-        plant.ifPresent(item ->
-                ColonySupply.take(world, project.colonyId(), project.origin(), item));
-
-        world.setBlockState(target, state, Block.NOTIFY_ALL);
-
-        project.markPlaced(block);
-
-        job.placed++;
-
-        return true;
-    }
-
-    /**
-     * Tira do baú o primeiro material que servir, e diz qual foi.
-     *
-     * <p>Do preferido ao último — {@link MaterialChoice}. Fora da pedra a
-     * lista tem um item só, que é a Regra 27 valendo inteira.
-     *
-     * @return o item que saiu do baú, ou vazio quando nenhum servia
-     */
-    private static Optional<Item> takeMaterial(
-            ServerWorld world, ConstructionProject project, Block wanted) {
-
-        for (Item candidate : MaterialChoice.forBlock(wanted)) {
-            if (ColonySupply.take(world, project.colonyId(), project.origin(), candidate)) {
-                return Optional.of(candidate);
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    /**
-     * O material do próximo bloco já está em algum baú da colônia?
-     *
-     * <p>Pergunta sem tirar nada, e existe para {@code ConstructionPlanner}
-     * poder tirar a obra de {@code WAITING_RESOURCES}. A varredura é a
-     * mesma de {@link #takeMaterial} — todos os baús de todos os
-     * trabalhadores da colônia — porque as duas precisam concordar: uma
-     * que dissesse "tem" e outra que não achasse poria a obra a acordar e
-     * voltar a dormir todo ciclo.
-     */
-    public static boolean hasMaterialForNextBlock(
-            ServerWorld world, ConstructionProject project) {
-
-        Optional<BlueprintBlock> next = project.nextBlock();
-
-        if (next.isEmpty()) {
-            // Nada a pôr: a obra acabou e quem a fecha é o construtor.
-            return true;
-        }
-
-        Optional<Block> material = MinecraftTypeAdapter.toBlock(next.get().block());
-
-        if (material.isEmpty()) {
-            // Bloco que este jogo não conhece. placeOne o risca e segue,
-            // então acordar a obra é o certo — ela não vai travar nele.
-            return true;
-        }
-
-        if (isShapedFromTheGround(material.get().getDefaultState())) {
-            // Estes blocos são formados no local ou não têm item próprio;
-            // por isso não podem deixar a obra esperando por estoque.
-            return true;
-        }
-
-        if (TestBarrier.willStrike(world.getTime(), project.id(), next.get().block())) {
-            // Peça que a barreira risca nunca segura a obra: quando o
-            // construtor chegar nela vai passar por cima, então dizer
-            // "tem" aqui é dizer a verdade sobre o que vai acontecer.
-            //
-            // <b>Era {@code furniture()} até 2026-08-21</b>, e virou isto
-            // no dia em que cama e lampião saíram da barreira. As duas
-            // perguntas coincidiam enquanto a Regra 21 vivia; deixar a
-            // antiga poria a obra a acordar dizendo que tem a cama,
-            // tentar, falhar e dormir de novo — todo ciclo, para sempre.
-            //
-            // <b>E era {@code chainFor} até 2026-09-09</b>, que respondia
-            // "tem" desde a primeira falta. Com a carência isso passou a
-            // ser mentira durante cinco ciclos: a obra acordaria, o
-            // construtor esperaria, e ela dormiria de novo — o mesmo laço
-            // do parágrafo acima, pela porta nova. Agora a pergunta é
-            // sobre a peça <b>de que a barreira já desistiu</b>; a que
-            // ela ainda espera cai no teste de material logo abaixo e
-            // segura a obra, que é o que faz a colônia ir produzi-la.
-            return true;
-        }
-
-        // A mesma lista de takeMaterial, e por obrigação: uma pergunta
-        // que dissesse "tem" e uma retirada que não achasse poriam a obra
-        // a acordar e voltar a dormir todo ciclo.
-        for (Item candidate : MaterialChoice.forBlock(material.get())) {
-            if (ColonySupply.canProvide(
-                    world, project.colonyId(), project.origin(), candidate)) {
-
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Falta material: a obra espera, e a tarefa volta para a fila.
-     *
-     * <p>WAITING_RESOURCES é estado previsto (Construction-System.md), e
-     * não defeito. Quem destrava é o ciclo da colônia, que vê a falta e
-     * pede o que falta — e o jogador, que estoca o que a colônia não
-     * produz.
-     *
-     * <p>Até 2026-08-15 essa frase descrevia uma intenção que nenhum
-     * código cumpria: a única transição para {@code BUILDING} estava na
-     * criação do projeto, e {@code ensureTask} não abre tarefa fora de
-     * {@code BUILDING}. Na prática isto era estado terminal — a obra da
-     * sessão das 19:44 estava parada em 149 blocos com 52 tábuas no baú.
-     * Quem destrava de verdade é {@code ConstructionPlanner.plan}, com
-     * {@link #hasMaterialForNextBlock}.
-     */
-    private static void waitForResources(
-            ConstructionProject project, Job job, UUID workerId, BlueprintBlock block) {
-
-        if (project.state() == ConstructionState.BUILDING) {
-            project.moveTo(ConstructionState.WAITING_RESOURCES);
-        }
-
-        finish(job, workerId, "no " + block.block() + " in the colony chests");
+        return BuilderPlacement.placeOne(world, project, job, workerId, next.get(), target);
     }
 
     /**
@@ -880,7 +336,7 @@ public final class BuilderWork {
      * crash de 2026-09-05, às 21:06: {@code IllegalStateException: Cannot
      * go from WAITING_RESOURCES to COMPLETED}, e o servidor caiu.
      *
-     * <p>A marca de espera é posta pelo {@link #waitForResources} e
+     * <p>A marca de espera é posta pelo {@link BuilderMaterials#waitForResources} e
      * <b>ninguém a tira ao assentar um bloco</b>: quem a tira é o
      * {@code WaitingWork.wakeIfSupplied}, que roda no ciclo da colônia.
      * Entre a espera e o ciclo seguinte o construtor pode acabar a obra
@@ -892,7 +348,7 @@ public final class BuilderWork {
      * estados: {@code WAITING_RESOURCES → COMPLETED} continua proibido, e
      * continua certo que esteja.
      */
-    private static void complete(ConstructionProject project, Job job, UUID workerId) {
+    static void complete(ConstructionProject project, Job job, UUID workerId) {
         if (project.state() == ConstructionState.WAITING_RESOURCES) {
             project.moveTo(ConstructionState.BUILDING);
         }
@@ -903,7 +359,7 @@ public final class BuilderWork {
         // registro — ver HousePlans.hasNoHouseYet e Building.finished.
         Building building = Building.of(project, true);
 
-        VillageColonyMod.BUILDINGS.register(building);
+        VillageColonyMod.BUILDINGS.registerOrMerge(building);
 
         VillageColonyMod.LOGGER.info(
                 "Colony {} finished {} at {} — {} blocks placed by {}, now colony infrastructure",
@@ -930,7 +386,7 @@ public final class BuilderWork {
      * morto volta para a fila como AVAILABLE, que não está encerrada e
      * também não está na mão de ninguém.
      */
-    private static void finish(Job job, UUID workerId, String why) {
+    static void finish(Job job, UUID workerId, String why) {
         if (job.task.state() == TaskState.EXECUTING) {
             job.task.complete();
         } else if (job.task.isHeld()) {
@@ -963,7 +419,7 @@ public final class BuilderWork {
         JOBS.clear();
     }
 
-    private static boolean isOngoing(Task task) {
+    static boolean isOngoing(Task task) {
         return task.state() != TaskState.COMPLETED && task.state() != TaskState.CANCELLED;
     }
 

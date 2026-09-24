@@ -42,9 +42,11 @@ documento errado. Vá para `STATE.md` primeiro.
 
 ### 0.2 Estado em uma linha
 
-**MVP completo e verificado em jogo, 8 profissões funcionando — o gargalo
-não é mais código, é verificação em jogo e decisões do autor.** Detalhe
-em `STATE.md`.
+**O núcleo do MVP está implementado, com oito funções operacionais, seis
+titulares na `BigHouseMOD` e sete profissões produtoras. A rodada de 2026-09-21
+ainda tem uma falha obrigatória de GameTest e playtests pendentes.** O estado
+vivo e a auditoria estão em `STATE.md` e
+`docs/technical/Project-Audit-2026-09-21.md`.
 
 ### 0.3 Não comece criando classes
 

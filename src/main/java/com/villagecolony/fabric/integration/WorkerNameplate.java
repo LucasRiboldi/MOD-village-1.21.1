@@ -151,6 +151,10 @@ public final class WorkerNameplate {
             return true;
         }
 
+        if ("Criador".equals(written)) {
+            return true;
+        }
+
         for (ProfessionType profession : ProfessionType.values()) {
             if (labelFor(profession).getString().equals(written)) {
                 return true;
@@ -180,7 +184,6 @@ public final class WorkerNameplate {
         return switch (profession) {
             case LUMBERJACK -> "Lenhador";
             case MINER -> "Mineiro";
-            case BREEDER -> "Criador";
             case SHEPHERD -> "Pastor";
             case SMELTER -> "Fundidor";
             case CARPENTER -> "Carpinteiro";
@@ -212,7 +215,6 @@ public final class WorkerNameplate {
         return switch (profession) {
             case LUMBERJACK -> Formatting.DARK_GREEN;
             case MINER -> Formatting.GRAY;
-            case BREEDER -> Formatting.WHITE;
             case SHEPHERD -> Formatting.WHITE;
             case SMELTER -> Formatting.RED;
             case CARPENTER -> Formatting.GOLD;

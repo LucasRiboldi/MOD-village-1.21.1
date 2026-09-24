@@ -72,7 +72,7 @@ public final class MaterialChoice {
             // Bloco que a colônia não conta — escada, porta, vidraça. Não
             // há substituição declarada para o que não é recurso, e é
             // pela família de madeira que ela chega aqui.
-            return sameShapeInAnotherWood(exact, order);
+            return samePieceInAnotherVariant(exact, order);
         }
 
         for (ResourceType candidate : ResourceSubstitution.byPreference(resource.get())) {
@@ -92,6 +92,9 @@ public final class MaterialChoice {
             });
         }
 
+        // E os equivalentes por nome — N3, 2026-09-24; ver EquivalentPieces.
+        EquivalentPieces.addFamily(exact, order);
+
         return List.copyOf(order);
     }
 
@@ -105,7 +108,7 @@ public final class MaterialChoice {
      * errar, uma tabela que o Vanilla já mantém — o mesmo argumento do
      * {@code ToolUpgrade}.
      */
-    private static final List<TagKey<Item>> WOODEN_SHAPES = List.of(
+    private static final List<TagKey<Item>> INTERCHANGEABLE_PIECES = List.of(
             ItemTags.WOODEN_STAIRS,
             ItemTags.WOODEN_SLABS,
             ItemTags.WOODEN_DOORS,
@@ -113,6 +116,21 @@ public final class MaterialChoice {
             ItemTags.WOODEN_FENCES,
             ItemTags.WOODEN_BUTTONS,
             ItemTags.WOODEN_PRESSURE_PLATES,
+
+            // <b>E as famílias que o jogo marca em tag</b> — N3, 2026-09-24,
+            // decisão do autor: <i>"trocar por equivalente"</i>. A lã e o
+            // tapete de cor, o estandarte, a muda de outra espécie, a flor, o
+            // portão de outra madeira e o botão de pedra saíam do nada no
+            // baú, e a colônia tinha o branco, o carvalho e a papoula. O
+            // botão de pedra cai em BUTTONS depois de WOODEN_BUTTONS: o de
+            // madeira continua trocando só por madeira.
+            ItemTags.FENCE_GATES,
+            ItemTags.BUTTONS,
+            ItemTags.WOOL,
+            ItemTags.WOOL_CARPETS,
+            ItemTags.BANNERS,
+            ItemTags.SAPLINGS,
+            ItemTags.SMALL_FLOWERS,
 
             // <b>E a cama, de qualquer cor</b> — decisão do autor,
             // 2026-09-19: <i>"quando qualquer construção solicitar cama,
@@ -131,7 +149,12 @@ public final class MaterialChoice {
             // Entra pela mesma porta das peças de madeira porque o
             // problema é o mesmo — a planta pede uma variante específica
             // de uma família inteira que serve igual.
-            ItemTags.BEDS);
+            ItemTags.BEDS,
+
+            // A obra nao pode depender de um corante que este bioma nao
+            // oferece. Terracota neutra ou de outra cor continua sendo a
+            // mesma familia construtiva; a cor pedida permanece preferida.
+            ItemTags.TERRACOTTA);
 
     /**
      * A mesma peça, na madeira que a colônia tiver — 2026-09-05.
@@ -169,17 +192,17 @@ public final class MaterialChoice {
      * da planta — sem isso a calota sairia com os degraus virados para
      * qualquer lado.
      *
-     * <p>Só madeira. Pedra tem substituição declarada e passa pelo
-     * caminho de cima; vidraça e tocha não têm família nenhuma, e
-     * inventar uma para elas seria alargar a Regra 27 sem defeito medido
-     * que peça isso.
+     * <p>Madeira, camas e terracota colorida usam famílias declaradas pelo
+     * próprio jogo. Pedra tem substituição declarada e passa pelo caminho
+     * de cima; vidraça e tocha não têm família nenhuma, e inventar uma
+     * para elas seria alargar a Regra 27 sem defeito medido que peça isso.
      */
-    private static List<Item> sameShapeInAnotherWood(Item exact, List<Item> order) {
+    private static List<Item> samePieceInAnotherVariant(Item exact, List<Item> order) {
         if (isStrippedLog(exact)) {
             return strippedLogInAnotherWood(order);
         }
 
-        for (TagKey<Item> shape : WOODEN_SHAPES) {
+        for (TagKey<Item> shape : INTERCHANGEABLE_PIECES) {
             if (!Registries.ITEM.getEntry(exact).isIn(shape)) {
                 continue;
             }
@@ -194,6 +217,9 @@ public final class MaterialChoice {
             // seguir procurando seria varrer seis tags para nada.
             break;
         }
+
+        // A família sem tag: pedra, vidro, terracota vitrificada — N3.
+        EquivalentPieces.addFamily(exact, order);
 
         return List.copyOf(order);
     }

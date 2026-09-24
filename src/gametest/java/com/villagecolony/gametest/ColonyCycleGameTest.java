@@ -2,11 +2,13 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskPriority;
 import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
+import com.villagecolony.core.type.Capability;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.ProfessionType;
@@ -43,6 +45,49 @@ import java.util.UUID;
  * calar a colônia, e o baú vazio precisa fazê-la pedir.
  */
 public class ColonyCycleGameTest implements FabricGameTest {
+
+    /**
+     * E43: o registro usado pelo ciclo real também respeita o descanso.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "cycle_rest")
+    public void aRestingMinerLeavesTheStoneTaskAvailable(TestContext context) {
+        BlockPos stand = new BlockPos(1, 2, 1);
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, stand);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(
+                UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(stand)));
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create()
+                .owning(colony)
+                .owning(villager.getUuid());
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.MINER);
+        worker.rest(Capability.COLLECT_STONE);
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.COLLECT_STONE,
+                TaskPriority.PRODUCTION,
+                ResourceType.COBBLESTONE,
+                64);
+
+        try {
+            int assigned = WorkAssignment.assign(
+                    colony.id(), VillageColonyMod.WORKERS, VillageColonyMod.TASKS);
+
+            context.assertTrue(assigned == 0,
+                    "o descanso reservou " + assigned + " tarefa de coleta de pedra");
+            context.assertTrue(task.state() == TaskState.AVAILABLE,
+                    "a tarefa de pedra foi reservada durante o descanso: " + task.state());
+        } finally {
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "cycle_deficit")
     public void aFullChestAsksForNothingAndAnEmptyOneAsksForWood(TestContext context) {
@@ -91,7 +136,7 @@ public class ColonyCycleGameTest implements FabricGameTest {
 
             ChestDepositor.deposit(world, chestPos, Items.DIRT, room);
 
-            VillageDetectionHandler.runCycleNow(world, absoluteStand);
+            VillageDetectionHandler.runColonyCycleNow(world);
 
             context.assertTrue(
                     collectWoodTasksOf(colony) == 0,
@@ -101,7 +146,7 @@ public class ColonyCycleGameTest implements FabricGameTest {
             // O jogador esvazia o baú. Nada mais muda.
             emptyChest(world, absoluteChest);
 
-            VillageDetectionHandler.runCycleNow(world, absoluteStand);
+            VillageDetectionHandler.runColonyCycleNow(world);
 
             context.assertTrue(
                     collectWoodTasksOf(colony) == 1,

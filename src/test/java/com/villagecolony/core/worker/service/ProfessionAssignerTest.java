@@ -45,10 +45,10 @@ class ProfessionAssignerTest {
         return ids;
     }
 
-    /** Um aldeão de cada função, na ordem da cadeia produtiva. */
+    /** A fundação vem primeiro; a primeira função de crescimento vem depois. */
     @Test
-    void theFirstWorkersCoverEveryProfession() {
-        int professions = ProfessionAssigner.PRODUCER_ORDER.size();
+    void theFirstWorkersCoverFoundationBeforeGrowth() {
+        int professions = ProfessionAssigner.FOUNDATION_ORDER.size() + 1;
 
         addWorkers(COLONY, professions);
 
@@ -61,7 +61,10 @@ class ProfessionAssignerTest {
             assigned.add(worker.profession().orElseThrow());
         }
 
-        assertEquals(EnumSet.copyOf(ProfessionAssigner.PRODUCER_ORDER), assigned);
+        Set<ProfessionType> expected = EnumSet.copyOf(ProfessionAssigner.FOUNDATION_ORDER);
+        expected.add(ProfessionType.CARPENTER);
+
+        assertEquals(expected, assigned);
     }
 
     /**
@@ -94,7 +97,7 @@ class ProfessionAssignerTest {
     }
 
     /**
-     * Cobertas as oito vagas, o nono aldeão continua o que já era.
+     * Cobertas as seis vagas fundacionais, o restante segue o crescimento normal.
      *
      * <p>Decisão do autor em 2026-08-13: a vila começa com dois
      * trabalhadores de cada tipo. Antes a vaga era ilimitada, e a vila de
@@ -239,7 +242,7 @@ class ProfessionAssignerTest {
             worker.assign(ProfessionType.LUMBERJACK);
         }
 
-        Set<UUID> demoted = ProfessionAssigner.enforceVacancies(
+        Set<UUID> demoted = VacancyEnforcer.enforceVacancies(
                 workers, COLONY, villagerId -> false, 1);
 
         assertEquals(1, demoted.size(), "um candidato, uma troca");
@@ -265,7 +268,7 @@ class ProfessionAssignerTest {
             worker.assign(ProfessionType.LUMBERJACK);
         }
 
-        assertTrue(ProfessionAssigner.enforceVacancies(
+        assertTrue(VacancyEnforcer.enforceVacancies(
                 workers, COLONY, villagerId -> false, 0).isEmpty());
     }
 
@@ -278,7 +281,7 @@ class ProfessionAssignerTest {
             worker.assign(ProfessionType.LUMBERJACK);
         }
 
-        assertTrue(ProfessionAssigner.enforceVacancies(
+        assertTrue(VacancyEnforcer.enforceVacancies(
                 workers, COLONY, villagerId -> true, 5).isEmpty());
     }
 
@@ -296,7 +299,7 @@ class ProfessionAssignerTest {
             worker.assign(ProfessionType.LUMBERJACK);
         }
 
-        Set<UUID> demoted = ProfessionAssigner.enforceVacancies(workers, COLONY);
+        Set<UUID> demoted = VacancyEnforcer.enforceVacancies(workers, COLONY);
 
         assertEquals(0, demoted.size());
 
@@ -321,7 +324,7 @@ class ProfessionAssignerTest {
             worker.assign(ProfessionType.LUMBERJACK);
         }
 
-        ProfessionAssigner.enforceVacancies(workers, COLONY);
+        VacancyEnforcer.enforceVacancies(workers, COLONY);
 
         int assigned = ProfessionAssigner.assignMissing(workers, COLONY, everyone());
 
@@ -347,7 +350,7 @@ class ProfessionAssignerTest {
 
         UUID withChest = all.get(3).villagerId();
 
-        ProfessionAssigner.enforceVacancies(workers, COLONY, withChest::equals, 1);
+        VacancyEnforcer.enforceVacancies(workers, COLONY, withChest::equals, 1);
 
         assertEquals(
                 ProfessionType.LUMBERJACK,
@@ -364,7 +367,7 @@ class ProfessionAssignerTest {
             worker.assign(ProfessionType.LUMBERJACK);
         }
 
-        ProfessionAssigner.enforceVacancies(workers, COLONY, villagerId -> false);
+        VacancyEnforcer.enforceVacancies(workers, COLONY, villagerId -> false);
 
         long lumberjacks = workers.ofColony(COLONY).stream()
                 .filter(w -> w.profession().filter(ProfessionType.LUMBERJACK::equals).isPresent())
@@ -379,7 +382,7 @@ class ProfessionAssignerTest {
         addWorkers(COLONY, 8);
         ProfessionAssigner.assignMissing(workers, COLONY, everyone());
 
-        assertTrue(ProfessionAssigner.enforceVacancies(workers, COLONY).isEmpty());
+        assertTrue(VacancyEnforcer.enforceVacancies(workers, COLONY).isEmpty());
     }
 
     /** Roda a cada ciclo: sem aldeão novo não pode fazer nada. */

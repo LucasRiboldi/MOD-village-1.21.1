@@ -122,8 +122,8 @@ class WorkerTest {
 
     @Test
     void everyProfessionOfTheProductionChainExists() {
-        // Sete profissões produtoras e dois identificadores legados.
-        assertEquals(9, ProfessionType.values().length);
+        // Sete profissões produtoras e a função fundacional de construção.
+        assertEquals(8, ProfessionType.values().length);
 
         // A ordem é a da cadeia produtiva, e ela importa: o distribuidor
         // preenche nessa sequência, então quem colhe vem antes de quem
@@ -138,9 +138,8 @@ class WorkerTest {
         // transformam, e a regra da ordem é que quem transforma vem
         // depois de quem colhe e antes de quem constrói.
         assertEquals(ProfessionType.FARMER, ProfessionType.values()[5]);
-        assertEquals(ProfessionType.BREEDER, ProfessionType.values()[6]);
-        assertEquals(ProfessionType.SHEPHERD, ProfessionType.values()[7]);
-        assertEquals(ProfessionType.BUILDER, ProfessionType.values()[8]);
+        assertEquals(ProfessionType.SHEPHERD, ProfessionType.values()[6]);
+        assertEquals(ProfessionType.BUILDER, ProfessionType.values()[7]);
     }
 
     /**

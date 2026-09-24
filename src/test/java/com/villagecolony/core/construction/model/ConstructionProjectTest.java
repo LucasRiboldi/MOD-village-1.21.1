@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
@@ -52,6 +53,25 @@ class ConstructionProjectTest {
         assertEquals(ConstructionState.PLANNED, project.state());
         assertEquals(3, project.remainingCount());
         assertFalse(project.isFinished());
+    }
+
+    @Test
+    void aRepairProjectKeepsBlocksAlreadyStanding() {
+        Blueprint blueprint = Blueprint.of(HOUSE, List.of(
+                block(0, 0, 0, COBBLE),
+                block(1, 0, 0, COBBLE),
+                block(0, 1, 0, PLANKS)));
+
+        ConstructionProject repair = ConstructionProject.repair(
+                UUID.randomUUID(),
+                blueprint,
+                ORIGIN,
+                new HashSet<>(List.of(ORIGIN)));
+
+        assertEquals(ConstructionState.BUILDING, repair.state());
+        assertEquals(2, repair.remainingCount());
+        assertFalse(repair.remaining().stream().anyMatch(
+                block -> repair.worldPositionOf(block).equals(ORIGIN)));
     }
 
     @Test
@@ -169,6 +189,33 @@ class ConstructionProjectTest {
         assertEquals(2, project.remainingCount());
     }
 
+    @Test
+    void anUnsupportedPieceWaitsForItsSupportWithoutDisappearingFromTheProject() {
+        BlueprintBlock first = block(0, 0, 0, COBBLE);
+        ColonyPos position = project.worldPositionOf(first);
+
+        project.defer(
+                first,
+                ConstructionOutcome.skipped(position, SkipReason.UNSUPPORTED),
+                "support-before");
+
+        assertEquals(3, project.remainingCount(), "a peça parcial não pode parecer construída");
+        assertEquals(1, project.deferredPieces().size());
+        assertEquals(
+                COBBLE,
+                project.nextBlock().orElseThrow().block(),
+                "as outras peças apoiadas precisam poder continuar");
+        assertEquals(Map.of(COBBLE, 1, PLANKS, 1), project.remainingMaterials(),
+                "a peça parcial ainda existe, mas não deve gerar demanda antes de poder voltar");
+
+        ConstructionProject.DeferredPiece deferred = project.deferredPieces().get(0);
+
+        assertFalse(project.retryIfSupportChanged(deferred, "support-before"));
+        assertTrue(project.retryIfSupportChanged(deferred, "support-after"));
+        assertEquals(COBBLE, project.nextBlock().orElseThrow().block());
+        assertTrue(project.deferredPieces().isEmpty());
+    }
+
     // --- estados ---
 
     @Test
@@ -279,7 +326,7 @@ class ConstructionProjectTest {
 
         assertEquals(64, Math.max(Math.abs(corner.x()), Math.abs(corner.z())));
 
-        assertTrue(ConstructionProject.isOutOfReach(corner, centre, 64));
+        assertTrue(ConstructionReach.isOutOfReach(corner, centre, 64));
     }
 
     /**
@@ -290,7 +337,7 @@ class ConstructionProjectTest {
     void theEdgeOfTheSweptSquareIsWithinReachByBothRulers() {
         ColonyPos centre = new ColonyPos(0, 64, 0);
 
-        assertFalse(ConstructionProject.isOutOfReach(new ColonyPos(64, 64, 0), centre, 64));
+        assertFalse(ConstructionReach.isOutOfReach(new ColonyPos(64, 64, 0), centre, 64));
     }
 
     // --- E46 / C4: quem responde "alcançável" é a rua, não o centro ---
@@ -308,10 +355,10 @@ class ConstructionProjectTest {
         ColonyPos centre = new ColonyPos(2495, 65, -3003);
         ColonyPos work = new ColonyPos(2456, 63, -2936);
 
-        assertTrue(ConstructionProject.isOutOfReach(work, centre, 64),
+        assertTrue(ConstructionReach.isOutOfReach(work, centre, 64),
                 "o cenário precisa ser uma obra que a régua antiga largava");
 
-        assertFalse(ConstructionProject.isOutOfReach(work, centre, 64, OptionalInt.of(1)));
+        assertFalse(ConstructionReach.isOutOfReach(work, centre, 64, OptionalInt.of(1)));
     }
 
     /**
@@ -327,7 +374,7 @@ class ConstructionProjectTest {
         ColonyPos centre = new ColonyPos(637, 65, -2871);
         ColonyPos stranded = new ColonyPos(638, 65, -2793);
 
-        assertTrue(ConstructionProject.isOutOfReach(
+        assertTrue(ConstructionReach.isOutOfReach(
                 stranded, centre, 64, OptionalInt.of(40)));
     }
 
@@ -342,10 +389,10 @@ class ConstructionProjectTest {
     void withoutARoadIndexTheCentreDecidesAsBefore() {
         ColonyPos centre = new ColonyPos(0, 64, 0);
 
-        assertTrue(ConstructionProject.isOutOfReach(
+        assertTrue(ConstructionReach.isOutOfReach(
                 new ColonyPos(100, 64, 0), centre, 64, OptionalInt.empty()));
 
-        assertFalse(ConstructionProject.isOutOfReach(
+        assertFalse(ConstructionReach.isOutOfReach(
                 new ColonyPos(30, 64, 0), centre, 64, OptionalInt.empty()));
     }
 
@@ -360,10 +407,10 @@ class ConstructionProjectTest {
         ColonyPos centre = new ColonyPos(0, 64, 0);
         ColonyPos far = new ColonyPos(1000, 64, 1000);
 
-        assertFalse(ConstructionProject.isOutOfReach(
-                far, centre, 64, OptionalInt.of(ConstructionProject.BESIDE_THE_ROAD)));
+        assertFalse(ConstructionReach.isOutOfReach(
+                far, centre, 64, OptionalInt.of(ConstructionReach.BESIDE_THE_ROAD)));
 
-        assertTrue(ConstructionProject.isOutOfReach(
-                far, centre, 64, OptionalInt.of(ConstructionProject.BESIDE_THE_ROAD + 1)));
+        assertTrue(ConstructionReach.isOutOfReach(
+                far, centre, 64, OptionalInt.of(ConstructionReach.BESIDE_THE_ROAD + 1)));
     }
 }

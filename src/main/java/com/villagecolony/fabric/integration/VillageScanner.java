@@ -104,7 +104,14 @@ public final class VillageScanner {
                 continue;
             }
 
-            if (!VillageBiomes.hasVillages(world, candidate.get().center())) {
+            VillageCandidate observed = new VillageCandidate(
+                    candidate.get().center(),
+                    candidate.get().bedCount(),
+                    candidate.get().complete(),
+                    candidate.get().anchor(),
+                    cluster);
+
+            if (!VillageBiomes.hasVillages(world, observed.center())) {
                 // Bioma em que o jogo não gera vila é limite do mod, não
                 // recusa: a vila está lá, viva, e o mod é que não a
                 // atende (ADR-003 §5). A diferença importa porque recusa
@@ -117,7 +124,7 @@ public final class VillageScanner {
                 continue;
             }
 
-            candidates.add(isProbe ? candidate.get() : withoutAnchor(candidate.get()));
+            candidates.add(isProbe ? observed : withoutAnchor(observed));
         }
 
         return new ScanResult(List.copyOf(candidates), List.copyOf(rejections), ignoredByBiome);
@@ -151,7 +158,7 @@ public final class VillageScanner {
      */
     private static VillageCandidate withoutAnchor(VillageCandidate candidate) {
         return new VillageCandidate(
-                candidate.center(), candidate.bedCount(), candidate.complete());
+                candidate.center(), candidate.bedCount(), candidate.complete(), null, candidate.beds());
     }
 
     /**

@@ -4,10 +4,13 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.construction.model.ConstructionOutcome;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
+import com.villagecolony.core.construction.model.SkipReason;
 import com.villagecolony.core.coordination.PatienceClock;
 import com.villagecolony.core.coordination.WorkClock;
+import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskPriority;
 import com.villagecolony.core.task.model.TaskState;
@@ -15,11 +18,21 @@ import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.work.BuilderWork;
+import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.WaitingWork;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
+import net.minecraft.block.Blocks;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.ai.brain.Schedule;
+import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.item.Items;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
@@ -53,6 +66,130 @@ public class BuildProgressGameTest implements FabricGameTest {
 
     /** A obra fica no ar, como nos outros testes de obra desta bateria. */
     private static final BlockPos ORIGIN = new BlockPos(1, 4, 1);
+
+    private static final BlockPos UNSUPPORTED_CHEST = new BlockPos(2, 4, 2);
+
+    private static final BlockPos UNSUPPORTED_STAND = new BlockPos(1, 4, 2);
+
+    /**
+     * Peça sem apoio não pode sair da planta nem acordar outro construtor
+     * sem mudança no mundo.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress",
+            tickLimit = 100)
+    public void anUnsupportedPieceStaysPartialWithoutReopeningTheBuildTask(TestContext context) {
+        ServerWorld world = context.getWorld();
+        context.setBlockState(UNSUPPORTED_CHEST, Blocks.CHEST.getDefaultState());
+        context.setBlockState(UNSUPPORTED_STAND.down(), Blocks.STONE.getDefaultState());
+        world.setTimeOfDay(Schedule.WORK_TIME);
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(UNSUPPORTED_CHEST));
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ORIGIN));
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, UNSUPPORTED_STAND);
+        villager.setBreedingAge(0);
+
+        VillageColonyMod.COLONIES.register(colony);
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.BUILDER);
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+        ChestDepositor.deposit(world, chest, Items.TORCH, 1);
+
+        ConstructionProject project = ConstructionProject.plan(
+                colony.id(),
+                Blueprint.of(
+                        ResourceId.vanilla("village/plains/houses/unsupported_torch"),
+                        List.of(new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("torch")))),
+                origin);
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(), TaskType.BUILD, TaskPriority.CONSTRUCTION, ResourceType.OAK_PLANKS, 1);
+        task.reserveFor(villager.getUuid());
+        BuilderWork.run(world, colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony).owning(villager.getUuid());
+
+        context.runAtTick(50, () -> {
+            try {
+                context.assertTrue(world.getBlockState(context.getAbsolutePos(ORIGIN)).isAir(),
+                        "a tocha foi colocada sem um bloco de apoio");
+                context.assertTrue(project.remainingCount() == 1,
+                        "a peça sem apoio foi riscada como se tivesse sido construída");
+                context.assertTrue(project.deferredPieces().size() == 1,
+                        "a obra parcial não guardou a razão para não repetir a mesma tentativa");
+                context.assertTrue(task.state() == TaskState.COMPLETED,
+                        "o construtor continuou segurando uma tarefa sem nenhuma peça colocável");
+
+                ConstructionPlanner.plan(world, colony);
+
+                context.assertFalse(VillageColonyMod.TASKS.ofColony(colony.id()).stream()
+                                .anyMatch(candidate -> candidate.type() == TaskType.BUILD
+                                        && candidate.isOpen()),
+                        "o planejador reabriu a mesma tarefa sem uma mudança no apoio");
+
+                context.setBlockState(ORIGIN.down(), Blocks.STONE.getDefaultState());
+                ConstructionPlanner.plan(world, colony);
+
+                context.assertTrue(VillageColonyMod.TASKS.ofColony(colony.id()).stream()
+                                .anyMatch(candidate -> candidate.type() == TaskType.BUILD
+                                        && candidate.isOpen()),
+                        "a mudança no apoio nao devolveu a peca pendente ao construtor");
+            } finally {
+                owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /** Uma espera por apoio fisico nao e ausencia de progresso da obra. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress")
+    public void aDeferredPieceIsNotAbandonedByTheProgressClock(TestContext context) {
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ORIGIN));
+        Colony colony = Colony.create(UUID.randomUUID(), origin);
+        BlueprintBlock torch = new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("torch"));
+        ConstructionProject project = ConstructionProject.plan(
+                colony.id(),
+                Blueprint.of(ResourceId.vanilla("village/plains/houses/deferred_torch"), List.of(torch)),
+                origin);
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillageColonyMod.COLONIES.register(colony);
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+        project.defer(
+                torch,
+                ConstructionOutcome.skipped(origin, SkipReason.UNSUPPORTED),
+                "unchanged-support");
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+
+        ServerWorldProperties clock = (ServerWorldProperties) context.getWorld().getLevelProperties();
+        long time = clock.getTime();
+        long day = clock.getTimeOfDay();
+        try {
+            clock.setTimeOfDay(1_000);
+            context.assertFalse(
+                    WaitingWork.giveUpIfStalled(context.getWorld(), colony, project),
+                    "a primeira leitura abandonou a peca adiada");
+
+            clock.setTime(time + PatienceClock.TICKS + 1);
+
+            context.assertFalse(
+                    WaitingWork.giveUpIfStalled(context.getWorld(), colony, project),
+                    "o relogio abandonou uma peca que esperava uma mudanca no apoio");
+            context.assertTrue(VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isPresent(),
+                    "a obra parcial saiu do registro antes de o apoio fisico mudar");
+        } finally {
+            clock.setTime(time);
+            clock.setTimeOfDay(day);
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
 
     /**
      * A obra que não coloca peça nenhuma sai da frente.

@@ -1,9 +1,106 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
+**Atualização de 2026-09-24, tarde — jogar com o spark ligado.** O JAR em
+`mods` agora é o do commit `a119c2a` (SHA-256
+`F4226F8AA1EED834FEC508C5389ED4E287DF2A81FC7FC51878C2B6B1B511F911`):
+revisão de naturalidade, rodada de qualidade, refatoração e a **vila foco**
+(só ela planeja; procure `Focus village is now`, `Planner turns` e a queda
+de `Colony cycle took`) — nada disso visto em jogo ainda, e o
+**spark** 1.10.109 está instalado ao lado dele.
+
+- **Primeiro, o perfil.** Seguir `docs/technical/Profiling-spark.md`:
+  `/spark profiler start --only-ticks-over 50`, jogar 5 a 10 minutos perto
+  da vila, `/spark profiler stop` e trazer o link. Motivo: o log de 24-09
+  teve 196 ciclos acima de um tique.
+- **Depois, o que só o jogo mostra:**
+  - um filhote nascer e ganhar ofício (N1, `shared supper with`);
+  - a placa do lote 5 blocos acima do telhado (N7);
+  - a escada da fuga tampada (N10, `finished backfilling`);
+  - a roça ou outra oficina de ofício logo depois da primeira casa (N9).
+- **No fim:** `python scripts/analyze_village_log.py` conta tudo isso no
+  `latest.log` e atualiza `docs/technical/Log-Stall-Statistics.md`.
+
+Os cinco playtests da Task 14, abaixo, continuam pendentes.
+
+
+**Atualização de 2026-09-24 — cinco playtests da entrega de confiabilidade
+operacional (Tasks 3 a 13).** Esta sessão implementou dez tasks do plano
+`docs/superpowers/plans/2026-09-23-operational-reliability.md` (scanner
+com política/custo separados, migração de save idempotente, recuperação
+pura de mina, traço de atividade persistido, armazém físico por snapshot,
+observação de inventário sem planejar, endurance com seed fixa, auditoria
+de exclusão de obra) — tudo verificado por `./gradlew.bat test` (992/992,
+zero falha), `./gradlew.bat build` (sucesso) e
+`./gradlew.bat runGametest --rerun-tasks` (**423/423 GAME TESTS COMPLETE**
+na rodada final). Duas tasks (9 e 10) foram investigadas e **não**
+implementadas por decisão — o comportamento que pediam já existia sob
+outro desenho; ver `STATE.md` e `TODO.md` para a evidência de cada uma.
+
+**⚠️ O JAR já foi publicado sem os cinco playtests confirmados — decisão
+explícita do autor, não o caminho que o plano original recomenda.** O
+SHA-256 `C1244064EE1DEC8A03C65844FAC37193A0ABCB64E983E2D982C154EE0B935691`
+está agora em `build/libs/`, `downloads/` e
+`%APPDATA%/.minecraft/mods/village-colony-0.3.0.jar` — as três cópias
+comparadas idênticas com o cliente fechado, e
+`release_manifest.py --dry-run` confirmou o manifesto. O plano original
+(Task 14 de `docs/superpowers/plans/2026-09-23-operational-reliability.md`)
+manda fechar cada playtest só com confirmação observada do autor
+jogando, e nenhum dos cinco foi observado ainda nesta sessão. Os cinco
+itens abaixo continuam em aberto e devem ser verificados na próxima
+sessão de jogo — o código já está instalado, então qualquer defeito
+real vai aparecer direto no `latest.log` dessa sessão.
+
+**Os cinco playtests que ainda faltam confirmar, com o JAR já instalado:**
+
+1. Destruir o arco/portal da mina, disparar a recuperação técnica,
+   recarregar o mundo — o arco deve continuar ausente (não reconstruir).
+2. Esgotar uma mina finita — só uma boca oposta válida deve abrir uma
+   mina nova; carvão deve ser preferido quando elegível.
+3. Encher os baús públicos reconhecidos — o produtor deve reportar
+   `NO_CAPACITY` sem perder item nenhum, e retomar o trabalho físico
+   quando a capacidade for liberada.
+4. Reabrir um mundo com `BigHouseMOD` já migrada, duas vezes seguidas —
+   nenhum baú ou estrutura deve duplicar.
+5. Exercitar a alternância casa/infraestrutura e inspecionar, no save,
+   os eventos do traço de atividade (`VC_ACTIVITY` no log, e — se houver
+   ferramenta de leitura do save — os eventos `IDLE`/`WAITING`/
+   `RECOVERED`/`ABANDONED`/`ERROR` da Task 7).
+
+O JAR já está instalado — o próximo passo é abrir o Minecraft e observar
+os cinco itens acima. Se algum falhar, o `latest.log` dessa sessão é a
+evidência real para reabrir o item correspondente no `TODO.md`.
+
+---
+
 **Escrito em 2026-09-02, atualizado em 2026-09-20.** Este arquivo existe
 porque o gargalo do projeto deixou de ser código: havia **dez consertos do
 mineiro empilhados sem uma única sessão que os veja**, e nenhuma pergunta
 importante em aberto pode ser respondida sem abrir o jogo.
+
+**Atualização de 2026-09-21 — lotes e cancelamento de obras.** A
+`BigHouseMOD` continua sendo criada automaticamente com a vila e permanece
+fora do catálogo das profissões. O scanner e a fundação recusam qualquer
+bloco até 25 blocos acima da pegada escolhida, e uma Tocha das Almas dentro de
+uma obra profissional cancela a zona, o projeto e as tarefas sem cancelar a
+`BigHouseMOD`. `./gradlew.bat test` e `./gradlew.bat build` passaram; a bateria
+completa executou 394 GameTests, com 393 aprovados e apenas o residual já
+conhecido de `FarmPlanGameTest`.
+
+**JAR desta atualização:** 0.3.0, SHA-256
+`1F3D285805DF24DE97D7C41042CCEC7C7224F928926102CF74929B833E9FB504` em
+`build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`; as três cópias
+foram comparadas após a atualização.
+
+**JAR atual da entrega P1.4 (2026-09-23):** 0.3.0, SHA-256
+`62FCECB70ACF7864DA852F707A1ADBA2197FEC8613A952A2E691DE7BE13BF1EF` em
+`build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`; as tres copias
+foram comparadas com o cliente fechado. `./gradlew.bat --no-daemon build` e
+`./gradlew.bat runGametest --rerun-tasks` passaram, com 929 testes unitarios e
+418/418 GameTests. Este e o JAR para repetir o playtest P1.3 e confirmar P1.4:
+caracol unico, area comum antes dos quatro ramais, carvao prioritario, portal
+quebrado sem reconstrucao, boca oposta no limite mineravel, porta da
+`BigHouseMOD` no nivel da rua, baus somente em quartos Vanilla validos de uma
+vila nova e linhas `VC_ACTIVITY` no `latest.log`.
 
 A sessão de 09-03 aconteceu e **o mineiro trabalhou** — a primeira boa. Ela
 não zerou a pilha: fechou o que dependia de vê-lo cavar, e abriu quatro
@@ -17,26 +114,50 @@ lista deve começar agora. A ordem abaixo continua valendo para o resto.
 Ele não é diário — quem conta a história é o `TODO.md`. Este aqui é a lista
 de conferência de uma sessão.
 
-**Atualização de 2026-09-20 — fundação absoluta da vila.** Toda vila adotada
-deve nascer com oito funções ativas: mineiro, lenhador, pedreiro, fundidor,
-carpinteiro, agricultor, criador e construtor. Cada titular deve ter uma cama
-`HOME` e um baú próprio; a criação só ocupa blocos substituíveis. O
-`VillageFoundationGameTest` passou. No jogo, entre em uma vila recém-detectada,
-conte os oito aldeões, confira as camas e os baús e observe se nenhuma
-estrutura existente foi substituída. O playtest ainda não foi observado nesta
-sessão.
+**Atualização de 2026-09-20 — correção da planta da BigHouseMOD.** Toda vila adotada
+deve nascer com seis funções fundacionais: mineiro, lenhador, pedreiro, fundidor,
+criador e construtor. Cada titular deve ter uma cama `HOME` e um baú próprio
+dentro da `BigHouseMOD`. Agricultor e carpinteiro continuam disponíveis no
+crescimento normal, mas não ocupam os dois conjuntos removidos da casa. A
+planta do mod continua sendo uma cópia editada da big house Vanilla, sem
+móveis e decorações; a estrutura Vanilla permanece sem alteração. Foram
+removidos os conjuntos que bloqueavam a porta e o acesso à escada, além dos
+blocos de gerador que apareciam como blocos pretos. No jogo, entre em uma vila
+recém-detectada, confirme a BigHouseMOD, conte os seis aldeões, confira as
+camas e os baús e observe se nenhuma estrutura existente foi substituída.
+O playtest ainda não foi observado nesta sessão.
 
-**JAR atual em 2026-09-20, após a fundação automática da vila:** 0.3.0,
-SHA-256 `287AB8535FFB8034927A583D7CBD24BA4917AA57ECD6FFF71A7C7C756E29D0BB`
-em `build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`. O cliente estava
-fechado durante a cópia. `./gradlew.bat clean build` passou e
-`./gradlew.bat clean runGametest` passou com **381/381 GameTests**. A fundação
-agora garante oito funções, cama `HOME` e baú próprio por titular. A seleção
-continua alternando
+**JAR anterior à correção final da BigHouseMOD:** 0.3.0,
+SHA-256 `08927A5C6F04E54A94CEF33211A7880F856A2D449E2D617F2B1EDC1CA04FA911`;
+foi substituído pelo artefato com seis conjuntos abaixo. A seleção continua alternando
 `casa -> tipo não residencial A -> casa -> tipo não residencial B`, com o
 mesmo scanner de zonas; a sequência completa no save continua como playtest.
 
-**JAR atual em 2026-09-20:** 0.3.0, SHA-256
+**JAR atualizado após a correção final da BigHouseMOD:** 0.3.0, SHA-256
+`1E4AB63F48B8591352481103B4CA0DBBB0B42AC0BEDE0330517F5FB3DD78C276` em
+`build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`; as três cópias
+foram comparadas após a atualização. `./gradlew.bat clean build` passou e a
+segunda execução de `./gradlew.bat runGametest` passou com **384/384
+GameTests**. A primeira execução repetiu uma falha intermitente já conhecida
+do teste de coleta de terra fora do raio protegido.
+
+**JAR publicado após o lote P0.9 em 2026-09-20:** 0.3.0, SHA-256
+`C4848314C8E01CC1C04648B86472621FEAF85C4E12FF53828FBECA12EB82C210` em
+`build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`; as três cópias
+foram comparadas após a atualização. `./gradlew.bat build` e
+`./gradlew.bat runGametest` passaram, com 387/387 GameTests. Falta conferir no
+save a lista efetiva de estruturas, a rota da coleta de superfície e a entrada
+seca da mina.
+
+**JAR desta implementação em 2026-09-20:** 0.3.0, SHA-256
+`0E0BAA033548135DB51BD2BFA5C8059AA823F9279FD2A28D498EE10F4F84AD6B` em
+`build/libs/` e `downloads/`. A cópia em `%APPDATA%/.minecraft/mods/` ficou
+pendente porque o cliente estava aberto pelo TLauncher durante a entrega.
+`./gradlew.bat test compileGametestJava build` passou com 959 testes unitários;
+`runGametest --rerun-tasks` executou 388 testes, com a regressão das dez árvores
+verde e duas falhas residuais já registradas no `TODO.md`.
+
+**JAR anterior em 2026-09-20:** 0.3.0, SHA-256
 `2111E72B093FC007549946347C5948416061BC2774A10D1932F751BA46B8A7EA` em
 `build/libs/`, `downloads/` e `%APPDATA%/.minecraft/mods/`. O cliente Minecraft
 estava fechado durante a cópia. `build`, 954 testes unitários e

@@ -5,6 +5,7 @@ import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.model.MineArm;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.MineMouth;
 
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -72,9 +73,10 @@ public final class MineFrontier {
      * passagem, com o corredor à frente aberto. Ver
      * {@link Mine#frontierWhereRockBegins}.
      */
-    static void findTheFrontier(ServerWorld world, MineArm arm) {
+    static void findTheFrontier(ServerWorld world, Mine mine, MineArm arm) {
         OptionalInt frontier =
-                arm.frontierWhereRockBegins(i -> isStillClosed(world, arm.shaft().positionAt(i)));
+                arm.frontierWhereRockBegins(
+                        i -> isStillClosed(world, mine, arm.shaft().positionAt(i)));
 
         if (frontier.isEmpty()) {
             return;
@@ -106,19 +108,19 @@ public final class MineFrontier {
      *
      * <p>O motivo é que esta pergunta não é local. Ela alimenta o recuo
      * do cursor, e recuo e escolha do alvo <b>têm de concordar</b>: uma
-     * posição que o {@link #nextCut} vai pular não pode ser a fronteira,
+     * posição que o {@link MineCuts#nextCut} vai pular não pode ser a fronteira,
      * senão o cursor recua até ela toda passagem. Mexer num lado só troca
      * um defeito por outro maior.
      *
      * <p><b>Refeito no mesmo dia, e com as duas pontas juntas:</b> a
-     * lista passou a ser uma — {@link #isOpenSpace} —, e é dela que este
-     * método e o {@link #nextCut} tiram a resposta. A concordância deixou
+     * lista passou a ser uma — {@link MineRock#isOpenSpace} —, e é dela que este
+     * método e o {@link MineCuts#nextCut} tiram a resposta. A concordância deixou
      * de ser coincidência, e tem o par de testes que ela pedia:
      * {@code theMinerDoesNotDigThePlayersStaircase} para a escolha do
      * alvo e {@code thePlayersStepInTheDigOrderIsNotTheFrontier} para o
      * recuo. Um sem o outro passa com a mina quebrada.
      */
-    private static boolean isStillClosed(ServerWorld world, ColonyPos position) {
+    private static boolean isStillClosed(ServerWorld world, Mine mine, ColonyPos position) {
         BlockPos at = MinecraftTypeAdapter.toBlockPos(position);
 
         if (!world.isInBuildLimit(at)) {
@@ -135,6 +137,13 @@ public final class MineFrontier {
         // passagem seguinte, e o laço voltaria pela porta do recuo. É o
         // par de sempre, e ele tem o par de testes que pede.
         if (MineMarks.isOutOfReach(world, at)) {
+            return false;
+        }
+
+        if (MineMouth.isPortalBlock(
+                MinecraftTypeAdapter.toBlockPos(mine.entry()),
+                MinecraftTypeAdapter.toDirection(mine.shaft().descent()),
+                at)) {
             return false;
         }
 

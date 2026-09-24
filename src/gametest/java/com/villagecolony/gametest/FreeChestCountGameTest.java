@@ -123,7 +123,7 @@ public class FreeChestCountGameTest implements FabricGameTest {
      * mesmo baú. Este prova que a <b>varredura</b> conta isso como um, e
      * é o número que ela entrega — {@code freeChests} — que decide
      * quantas dispensas cabem em
-     * {@code VillageDetectionHandler.dismissExtraWorkers}.
+     * {@code VillagerRegistration.dismissExtraWorkers}.
      *
      * <p>Os dois números aparecem juntos de propósito: {@code equippable}
      * continua sendo dois, porque são dois candidatos de verdade. O que

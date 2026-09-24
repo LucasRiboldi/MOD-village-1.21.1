@@ -65,7 +65,7 @@ public final class RoadExtension {
      * <p>Um. Rua que sobe mais que isso por passo não é rua, é escada — e
      * o aldeão que a percorre fica preso no degrau.
      */
-    private static final int MAX_STEP = 1;
+    static final int MAX_STEP = 1;
 
     /**
      * Quantas pontas candidatas se guarda por colônia.
@@ -119,7 +119,7 @@ public final class RoadExtension {
     private static final int MAX_REFUSED = 1024;
 
     /** Uma ponta de rua, e para que lado ela continuaria. */
-    private record End(BlockPos at, Direction towards, double fromCenter) {
+    record End(BlockPos at, Direction towards, double fromCenter) {
     }
 
     /**
@@ -203,7 +203,7 @@ public final class RoadExtension {
             return;
         }
 
-        Optional<Direction> towards = openSideOf(world, colonyId, road);
+        Optional<Direction> towards = RoadPaving.openSideOf(world, colonyId, road);
 
         if (towards.isEmpty()) {
             return;
@@ -243,7 +243,7 @@ public final class RoadExtension {
      * 22:57 mediu: <b>quinze ciclos de {@code extended the road} contra
      * três de {@code grew the road}</b>, com o rumo trocando quase todo
      * ciclo — sul, norte, oeste, sul, leste — porque cada passagem
-     * reescolhia a ponta do zero e {@link #openSideOf} devolve o
+     * reescolhia a ponta do zero e {@link RoadPaving#openSideOf} devolve o
      * primeiro lado aberto da ordem fixa de {@code Direction}. Quarenta e
      * três blocos de calçamento em treze minutos, sem rumo.
      *
@@ -349,7 +349,7 @@ public final class RoadExtension {
             return Outcome.NO_END;
         }
 
-        List<ColonyPos> laidAt = pave(world, colonyId, growth.end(), block.get());
+        List<ColonyPos> laidAt = RoadPaving.pave(world, colonyId, growth.end(), block.get());
 
         if (laidAt.isEmpty()) {
             // A ponta parou de render. Ela sai de castigo em dez ciclos,
@@ -437,7 +437,7 @@ public final class RoadExtension {
         // calçamento vence. Tentar todas custa poucas leituras de bloco e
         // é o que impede a vila de parar por causa de uma ponta ruim.
         for (End end : ends) {
-            List<ColonyPos> laidAt = pave(world, colonyId, end, block.get());
+            List<ColonyPos> laidAt = RoadPaving.pave(world, colonyId, end, block.get());
 
             int laid = laidAt.size();
 
@@ -474,131 +474,4 @@ public final class RoadExtension {
         return Outcome.BLOCKED;
     }
 
-    /**
-     * Assenta o trecho, bloco a bloco, e para no primeiro que recusar.
-     *
-     * <p>Para de verdade, e não pula: rua com buraco no meio é rua que o
-     * aldeão não atravessa, e a beira depois do buraco não serve de lote.
-     *
-     * @return as colunas que entraram, na ordem
-     */
-    private static List<ColonyPos> pave(
-            ServerWorld world, UUID colonyId, End end, Block paving) {
-
-        BlockPos previous = end.at();
-
-        List<ColonyPos> laid = new ArrayList<>();
-
-        for (int step = 0; step < STRETCH; step++) {
-            BlockPos ahead = previous.offset(end.towards());
-
-            Optional<BlockPos> ground = groundNear(world, ahead, previous.getY());
-
-            if (ground.isEmpty()) {
-                return laid;
-            }
-
-            BlockPos at = ground.get();
-
-            BlockState state = world.getBlockState(at);
-
-            if (BuildSiteScanner.isRoadArea(world, colonyId, at)) {
-                // Já é rua: a ponta encostou noutro trecho. Segue por
-                // cima dela sem gastar nada, que é o que dois calçamentos
-                // que se encontram fazem.
-                previous = at;
-
-                continue;
-            }
-
-            // A Regra 3 nas duas pontas, e aqui ela morde: a vila gerada
-            // é feita de bloco que passaria por chão.
-            if (BlockProtection.isVillageOriginal(world, at)
-                    || BlockProtection.isColonyBuilt(at)
-                    || !BuildSiteScanner.isNaturalGround(state)
-                    || !world.getBlockState(at.up()).isAir()) {
-
-                return laid;
-            }
-
-            world.setBlockState(at, paving.getDefaultState());
-
-            // O índice de ruas precisa saber da beira nova — 2026-08-27.
-            // A rua cresce justamente quando não houve lote, e o lote
-            // novo nasce encostado no que acabou de ser calçado: índice
-            // que não soubesse disto nunca mais acharia nada.
-            BuildSiteScanner.remember(colonyId, at);
-
-            previous = at;
-
-            laid.add(MinecraftTypeAdapter.toColonyPos(at));
-        }
-
-        return laid;
-    }
-
-    /**
-     * O chão desta coluna, se ele estiver ao alcance de um degrau.
-     *
-     * <p>Um bloco acima ou um abaixo do anterior. Mais que isso e a rua
-     * vira escada — e a regra do autor manda parar onde o desnível passa
-     * do limite, não escalar.
-     */
-    private static Optional<BlockPos> groundNear(ServerWorld world, BlockPos column, int fromY) {
-        for (int dy = MAX_STEP; dy >= -MAX_STEP; dy--) {
-            BlockPos at = new BlockPos(column.getX(), fromY + dy, column.getZ());
-
-            if (!world.isInBuildLimit(at)) {
-                continue;
-            }
-
-            if (world.getBlockState(at).isAir()) {
-                continue;
-            }
-
-            return Optional.of(at);
-        }
-
-        return Optional.empty();
-    }
-
-    /**
-     * Para que lado esta rua acaba, se acabar.
-     *
-     * <p>Duas perguntas, e as duas precisam: <b>atrás</b> tem rua — senão
-     * é um bloco solto, e prolongar calçamento perdido no mato não faz
-     * vila —, e <b>à frente</b> não tem. Aí este é o fim daquele trecho.
-     *
-     * <p>Olha um acima e um abaixo junto com o nível: a rua de vila sobe e
-     * desce, e exigir o mesmo y faria toda ladeira parecer uma ponta.
-     */
-    private static Optional<Direction> openSideOf(
-            ServerWorld world, UUID colonyId, BlockPos road) {
-        for (Direction side : Direction.Type.HORIZONTAL) {
-            if (!isRoadNear(world, colonyId, road.offset(side.getOpposite()), road.getY())) {
-                continue;
-            }
-
-            if (isRoadNear(world, colonyId, road.offset(side), road.getY())) {
-                continue;
-            }
-
-            return Optional.of(side);
-        }
-
-        return Optional.empty();
-    }
-
-    private static boolean isRoadNear(
-            ServerWorld world, UUID colonyId, BlockPos column, int aroundY) {
-        for (int dy = MAX_STEP; dy >= -MAX_STEP; dy--) {
-            BlockPos at = new BlockPos(column.getX(), aroundY + dy, column.getZ());
-
-            if (BuildSiteScanner.isRoadArea(world, colonyId, at)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 }

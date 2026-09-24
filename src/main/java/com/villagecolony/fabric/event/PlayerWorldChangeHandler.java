@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.event;
 
+import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.ColonyEdits;
 import com.villagecolony.core.construction.model.Mine;
@@ -9,6 +10,7 @@ import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.ConstructionCancellation;
 import com.villagecolony.fabric.work.MineRock;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
@@ -42,7 +44,7 @@ public final class PlayerWorldChangeHandler {
         UseBlockCallback.EVENT.register(PlayerWorldChangeHandler::beforeUseBlock);
         PlayerBlockBreakEvents.AFTER.register((world, player, pos, state, blockEntity) -> {
             if (world instanceof ServerWorld serverWorld) {
-                worldChanged(serverWorld, pos, serverWorld.getBlockState(pos));
+                onBlockChanged(serverWorld, pos);
             }
         });
         ServerTickEvents.END_WORLD_TICK.register(PlayerWorldChangeHandler::afterWorldTick);
@@ -98,8 +100,19 @@ public final class PlayerWorldChangeHandler {
         }
     }
 
+    /** Processa uma alteração de bloco observada no mundo, inclusive uso de tocha. */
+    public static void onBlockChanged(ServerWorld world, BlockPos changed) {
+        worldChanged(world, changed, world.getBlockState(changed));
+    }
+
     private static void worldChanged(ServerWorld world, BlockPos changed, BlockState after) {
         ColonyPos changedPos = MinecraftTypeAdapter.toColonyPos(changed);
+
+        // Cancellation is a player command. It must win over the edit marker
+        // used to suppress callbacks caused by the mod's own builders.
+        if (ConstructionCancellation.cancelAtSoulTorch(world, changed)) {
+            return;
+        }
 
         for (Colony colony : VillageColonyMod.COLONIES.all()) {
             ColonyPos center = colony.center();
@@ -107,7 +120,7 @@ public final class PlayerWorldChangeHandler {
             if (Math.abs((long) center.x() - changedPos.x()) <= VillageDetector.SEARCH_RADIUS
                     && Math.abs((long) center.z() - changedPos.z()) <= VillageDetector.SEARCH_RADIUS
                     && Math.abs((long) center.y() - changedPos.y()) <= BUILD_VERTICAL_RANGE) {
-                BuildSiteScanner.reconcileWorldChange(colony.id(), world, changed, center);
+                RoadIndex.reconcileWorldChange(colony.id(), world, changed, center);
             }
         }
 

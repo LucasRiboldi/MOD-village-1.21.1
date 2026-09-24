@@ -1,5 +1,6 @@
 package com.villagecolony.data.save;
 
+import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.ColonyState;
@@ -218,12 +219,12 @@ class RoadIndexSaveTest {
 
         BuildSiteScanner.clearAll();
 
-        assertTrue(BuildSiteScanner.roadIndexSize(colonyId).isEmpty());
+        assertTrue(RoadIndex.roadIndexSize(colonyId).isEmpty());
 
         read.forEach(BuildSiteScanner::restore);
 
-        assertFalse(BuildSiteScanner.roadIndexSize(colonyId).isEmpty());
-        assertEquals(2, BuildSiteScanner.roadIndexSize(colonyId).getAsInt());
+        assertFalse(RoadIndex.roadIndexSize(colonyId).isEmpty());
+        assertEquals(2, RoadIndex.roadIndexSize(colonyId).getAsInt());
         assertEquals(
                 List.of(ColonyRoads.column(120, -340), ColonyRoads.column(-7, 12)),
                 BuildSiteScanner.saved().get(0).columns());

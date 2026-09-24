@@ -7,6 +7,7 @@ import net.minecraft.block.enums.BedPart;
 import net.minecraft.state.property.Properties;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
+import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
@@ -51,17 +52,71 @@ public class ChestPlacerGameTest implements FabricGameTest {
         return ChestPlacer.placeBeside(context.getWorld(), context.getAbsolutePos(BED));
     }
 
-    /** O caso simples: cama num quarto vazio ganha baú ao lado. */
+    private static BlockBox room(TestContext context) {
+        BlockPos origin = context.getAbsolutePos(BED);
+        BlockBox box = new BlockBox(
+                origin.getX() - 2, origin.getY() - 1, origin.getZ() - 2,
+                origin.getX() + 2, origin.getY() + 2, origin.getZ() + 2);
+        for (int x = box.getMinX(); x <= box.getMaxX(); x++) {
+            for (int z = box.getMinZ(); z <= box.getMaxZ(); z++) {
+                context.getWorld().setBlockState(new BlockPos(x, origin.getY() - 1, z),
+                        Blocks.STONE.getDefaultState());
+            }
+        }
+        for (int y = origin.getY(); y <= origin.getY() + 2; y++) {
+            for (int x = box.getMinX(); x <= box.getMaxX(); x++) {
+                context.getWorld().setBlockState(new BlockPos(x, y, box.getMinZ()), Blocks.STONE.getDefaultState());
+                context.getWorld().setBlockState(new BlockPos(x, y, box.getMaxZ()), Blocks.STONE.getDefaultState());
+            }
+            for (int z = box.getMinZ(); z <= box.getMaxZ(); z++) {
+                context.getWorld().setBlockState(new BlockPos(box.getMinX(), y, z), Blocks.STONE.getDefaultState());
+                context.getWorld().setBlockState(new BlockPos(box.getMaxX(), y, z), Blocks.STONE.getDefaultState());
+            }
+        }
+        BlockPos door = origin.west(2);
+        context.getWorld().setBlockState(door, Blocks.OAK_DOOR.getDefaultState()
+                .with(Properties.DOUBLE_BLOCK_HALF, net.minecraft.block.enums.DoubleBlockHalf.LOWER));
+        context.getWorld().setBlockState(door.up(), Blocks.OAK_DOOR.getDefaultState()
+                .with(Properties.DOUBLE_BLOCK_HALF, net.minecraft.block.enums.DoubleBlockHalf.UPPER));
+        return box;
+    }
+
+    private static ChestPlacer.Result placeInRoom(TestContext context) {
+        return ChestPlacer.placeForOriginalVillageBed(
+                context.getWorld(), context.getAbsolutePos(BED), room(context));
+    }
+
+    /**
+     * Uma cama solta nao prova que existe uma casa vanilla, muito menos
+     * qual lado da porta e o interior. Nessa duvida o mundo do jogador
+     * fica intacto.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "placer_structure")
+    public void aBedWithoutAnOriginalVillageRoomDoesNotCreateAChest(TestContext context) {
+        layBed(context);
+
+        context.assertTrue(
+                place(context).isEmpty(),
+                "uma cama sem estrutura/porta ganhou um bau por tentativa generica");
+
+        context.complete();
+    }
+
+    /** O caso positivo: a peça tem uma porta inequívoca e parede traseira. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "placer_puts")
     public void aBedWithRoomBesideItGetsAChest(TestContext context) {
         layBed(context);
 
-        Optional<BlockPos> spot = place(context);
+        ChestPlacer.Result result = placeInRoom(context);
 
-        context.assertTrue(spot.isPresent(), "havia lugar de sobra e nenhum baú foi posto");
+        context.assertTrue(result.chest().isPresent(), "havia quarto valido e nenhum baú foi posto");
         context.assertTrue(
-                context.getWorld().getBlockState(spot.get()).isOf(Blocks.CHEST),
+                context.getWorld().getBlockState(result.chest().get()).isOf(Blocks.CHEST),
                 "a posição voltou mas não há baú nela");
+        context.assertTrue(
+                context.getWorld().getBlockState(result.chest().get())
+                        .get(Properties.HORIZONTAL_FACING) == Direction.WEST,
+                "a abertura do bau nao ficou voltada para a celula interna da porta");
 
         context.complete();
     }

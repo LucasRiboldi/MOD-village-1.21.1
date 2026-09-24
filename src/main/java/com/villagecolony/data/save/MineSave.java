@@ -54,9 +54,8 @@ final class MineSave {
     /**
      * Se o arco da boca já subiu — 2026-09-11.
      *
-     * <p>Save sem a chave lê {@code false} em {@code getBoolean}, e é a
-     * resposta certa: mina anterior ao arco ganha o dele na primeira
-     * passagem. Ver {@code Mine.archRaised}.
+     * <p>Save sem a chave lê {@code false}: ele preserva uma entrada sem
+     * arco em vez de reconstruir uma peça que o mundo não guarda.
      *
      * <p><b>Fora do {@code SHAPE_VERSION} de propósito.</b> A versão de
      * forma existe para fronteira escrita noutra geometria, e o arco não
@@ -93,8 +92,12 @@ final class MineSave {
      * <p><b>Cinco desde 2026-09-13</b>, quando a rota no limite passou a
      * mudar tambem o rumo da helice. A entrada e o rumo atual sao mantidos;
      * só o cursor reinicia para que a ordem nova seja comparada ao mundo.
+     *
+     * <p><b>Seis desde 2026-09-22</b>, com caracol de dez degraus,
+     * varredura de cinquenta blocos e quatro ramais finitos. A fronteira
+     * anterior não corresponde mais à mesma posição física.
      */
-    private static final int SHAPE_VERSION = 5;
+    private static final int SHAPE_VERSION = 6;
 
     private MineSave() {
     }
@@ -202,8 +205,8 @@ final class MineSave {
                     new MineShaft(entrance, descent.get(), gallery.get()),
                     cuts);
 
-            // Sem chave, getBoolean devolve falso e a mina ganha o arco na
-            // primeira passagem — o conserto das minas anteriores a ele.
+            // Sem chave, getBoolean devolve falso e a abertura permanece
+            // sem arco; não se infere uma construção que o mundo não prova.
             if (entry.getBoolean(ARCH)) {
                 mine.archIsUp();
             }

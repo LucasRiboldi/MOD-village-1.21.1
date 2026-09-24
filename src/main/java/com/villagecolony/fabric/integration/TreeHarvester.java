@@ -86,7 +86,7 @@ public final class TreeHarvester {
      * o tamanho da colheita. Custa uma travessia maior, e ela acontece na
      * escolha da árvore, que é limitada a uma por tick no servidor inteiro.
      */
-    private static final int CANOPY_SEARCH_LOGS = 256;
+    static final int CANOPY_SEARCH_LOGS = 256;
 
     /**
      * Teto de folhas por árvore.
@@ -95,7 +95,7 @@ public final class TreeHarvester {
      * carvalho-escuro passa de duzentas. O teto corta a copa gigante em
      * duas colheitas em vez de fazer um ciclo pagar por ela inteira.
      */
-    private static final int MAX_LEAVES = 160;
+    static final int MAX_LEAVES = 160;
 
     /**
      * A que distância de um tronco a folha ainda é copa desta árvore.
@@ -105,7 +105,7 @@ public final class TreeHarvester {
      * Seis blocos cobrem a copa de qualquer árvore do Overworld sem
      * atravessar para a de trás.
      */
-    private static final int LEAF_REACH = 6;
+    static final int LEAF_REACH = 6;
 
     /**
      * Até quantos troncos um grupo sem copa viva ainda é toco de floresta.
@@ -142,7 +142,7 @@ public final class TreeHarvester {
      * <p>Grupo acima disto continua intocado mesmo sem copa — é a Regra 3,
      * e {@code aTallBareTrunkIsStillNotATree} a guarda.
      */
-    private static final int BARE_TRUNK_LIMIT = 8;
+    static final int BARE_TRUNK_LIMIT = 8;
 
     /**
      * Quanto acima da muda o caminho precisa estar livre.
@@ -151,7 +151,7 @@ public final class TreeHarvester {
      * com espaço para virar árvore em vez de ficar plantada para sempre
      * debaixo da copa da árvore anterior.
      */
-    private static final int SAPLING_CLEARANCE = 8;
+    static final int SAPLING_CLEARANCE = 8;
 
     private TreeHarvester() {
     }
@@ -214,7 +214,7 @@ public final class TreeHarvester {
      * num carvalho é parede, não é a árvore.
      */
     public static Plan plan(ServerWorld world, BlockPos anyLog) {
-        TreeSpecies species = TreeSpecies.ofLog(stateAt(world, anyLog)).orElse(null);
+        TreeSpecies species = TreeSpecies.ofLog(TreeShape.stateAt(world, anyLog)).orElse(null);
 
         if (species == null) {
             return Plan.nothing();
@@ -222,20 +222,20 @@ public final class TreeHarvester {
 
         // O tronco inteiro, e não o pedaço que cabe na colheita: é a
         // partir dele que se pergunta pela copa. Ver CANOPY_SEARCH_LOGS.
-        List<BlockPos> trunk = connectedLogs(world, species, anyLog, CANOPY_SEARCH_LOGS);
+        List<BlockPos> trunk = TreeShape.connectedLogs(world, species, anyLog, CANOPY_SEARCH_LOGS);
 
         if (trunk.isEmpty()) {
             return Plan.nothing();
         }
 
-        if (trunk.stream().anyMatch(pos -> !mayHarvest(world, pos))) {
+        if (trunk.stream().anyMatch(pos -> !TreeShape.mayHarvest(world, pos))) {
             return Plan.nothing();
         }
 
         // A copa é achada antes de o tronco cair. Depois seria tarde: a
         // folha é alcançada a partir dos troncos, e sem eles não haveria
         // de onde partir.
-        List<BlockPos> canopy = connectedLeaves(world, species, trunk);
+        List<BlockPos> canopy = TreeShape.connectedLeaves(world, species, trunk);
 
         // Sem copa viva não é árvore — <b>a menos que seja toco</b>. Ver
         // #isNaturalLeaf e BARE_TRUNK_LIMIT.
@@ -255,7 +255,7 @@ public final class TreeHarvester {
             return Plan.nothing();
         }
 
-        if (canopy.stream().anyMatch(pos -> !mayHarvest(world, pos))) {
+        if (canopy.stream().anyMatch(pos -> !TreeShape.mayHarvest(world, pos))) {
             return Plan.nothing();
         }
 
@@ -319,11 +319,11 @@ public final class TreeHarvester {
 
         // Folha do jogador não entra nem por engano: entre planejar e
         // chegar aqui ele pode ter posto uma no lugar da que caiu.
-        if (!isBlock(world, pos, species.log()) && !isNaturalLeaf(world, pos, species)) {
+        if (!TreeShape.isBlock(world, pos, species.log()) && !TreeShape.isNaturalLeaf(world, pos, species)) {
             return List.of();
         }
 
-        if (!mayHarvest(world, pos)) {
+        if (!TreeShape.mayHarvest(world, pos)) {
             return List.of();
         }
 
@@ -355,9 +355,9 @@ public final class TreeHarvester {
         // a árvore cortada pela metade: ela não replantava, e a linha dizia
         // que a derrubada continuava na próxima. Com o teto fora, toda
         // colheita desce a árvore inteira, e a muda entra sempre.
-        clearAbove(world, plan.base());
+        TreeReplanting.clearAbove(world, plan.base());
 
-        replant(world, plan.species(), plan.base());
+        TreeReplanting.replant(world, plan.species(), plan.base());
     }
 
     /**
@@ -399,8 +399,8 @@ public final class TreeHarvester {
      * {@code LumberjackWork}.
      */
     public static List<BlockPos> trunkOf(ServerWorld world, BlockPos anyLog) {
-        return TreeSpecies.ofLog(stateAt(world, anyLog))
-                .map(species -> connectedLogs(world, species, anyLog, CANOPY_SEARCH_LOGS))
+        return TreeSpecies.ofLog(TreeShape.stateAt(world, anyLog))
+                .map(species -> TreeShape.connectedLogs(world, species, anyLog, CANOPY_SEARCH_LOGS))
                 .orElse(List.of());
     }
 
@@ -417,7 +417,7 @@ public final class TreeHarvester {
      */
     private static void breakAll(ServerWorld world, List<BlockPos> blocks, List<ItemStack> drops) {
         for (BlockPos pos : blocks) {
-            BlockState state = stateAt(world, pos);
+            BlockState state = TreeShape.stateAt(world, pos);
 
             if (state == null) {
                 continue;
@@ -459,236 +459,6 @@ public final class TreeHarvester {
         return merged;
     }
 
-    /** Os troncos da mesma espécie ligados a este, até o teto. */
-    private static List<BlockPos> connectedLogs(
-            ServerWorld world, TreeSpecies species, BlockPos start, int limit) {
-
-        List<BlockPos> found = new ArrayList<>();
-
-        if (!isBlock(world, start, species.log())) {
-            return found;
-        }
-
-        Set<BlockPos> seen = new HashSet<>();
-        Deque<BlockPos> queue = new ArrayDeque<>();
-
-        queue.add(start);
-        seen.add(start);
-
-        while (!queue.isEmpty() && found.size() < limit) {
-            BlockPos current = queue.removeFirst();
-
-            found.add(current);
-
-            for (BlockPos neighbour : around(current)) {
-                if (seen.add(neighbour) && isBlock(world, neighbour, species.log())) {
-                    queue.add(neighbour);
-                }
-            }
-        }
-
-        return found;
-    }
-
-    /**
-     * A copa desta árvore.
-     *
-     * <p>Parte dos troncos, e não de um raio: folha que não se alcança a
-     * partir do tronco que caiu não é copa dele. E para em
-     * {@link #LEAF_REACH} de qualquer tronco, senão copas encostadas
-     * ligariam uma árvore à vizinha e derrubar uma levaria a floresta.
-     *
-     * <p>Só folha que nasceu ali. Ver {@link #isNaturalLeaf}.
-     */
-    private static List<BlockPos> connectedLeaves(
-            ServerWorld world, TreeSpecies species, List<BlockPos> logs) {
-
-        List<BlockPos> found = new ArrayList<>();
-        Set<BlockPos> seen = new HashSet<>(logs);
-        Deque<BlockPos> queue = new ArrayDeque<>(logs);
-
-        while (!queue.isEmpty() && found.size() < MAX_LEAVES) {
-            BlockPos current = queue.removeFirst();
-
-            for (BlockPos neighbour : around(current)) {
-                if (!seen.add(neighbour)) {
-                    continue;
-                }
-
-                if (!isNaturalLeaf(world, neighbour, species)) {
-                    continue;
-                }
-
-                if (!isWithinReachOfATrunk(neighbour, logs)) {
-                    continue;
-                }
-
-                found.add(neighbour);
-                queue.add(neighbour);
-            }
-        }
-
-        return found;
-    }
-
-    /**
-     * Folha que nasceu ali, e não folha que o jogador pendurou.
-     *
-     * <p>O Vanilla já responde a essa pergunta: folha colocada à mão vem
-     * com {@code persistent = true} e nunca apodrece; folha de árvore
-     * crescida vem com {@code false} e vive presa ao tronco. É a única
-     * marca no mundo que separa uma coisa da outra, e o mod não tem
-     * nenhuma melhor.
-     *
-     * <p>Serve a duas coisas ao mesmo tempo: a copa que o trabalhador
-     * colhe não inclui a decoração de ninguém, e um grupo de troncos sem
-     * copa viva — casa de vila, cabana, pilar — deixa de ser confundido
-     * com árvore. Ver {@link #plan}.
-     */
-    private static boolean isNaturalLeaf(ServerWorld world, BlockPos pos, TreeSpecies species) {
-        BlockState state = stateAt(world, pos);
-
-        if (state == null) {
-            // Chunk descarregado. {@code stateAt} devolve nulo de
-            // propósito — pedir o chunk aqui forçaria carregamento dentro
-            // do tique —, e esta era a única porta que não conferia.
-            //
-            // Derrubou o servidor de teste em 2026-08-20, quando a copa
-            // passou a ser procurada em até 256 troncos: a busca alcança
-            // muito mais longe que antes, e longe o bastante para sair do
-            // que está carregado. Folha que não se pode ver não é folha
-            // viva, e a árvore simplesmente não é escolhida.
-            return false;
-        }
-
-        if (!state.isOf(species.leaves())) {
-            return false;
-        }
-
-        return state.contains(LeavesBlock.PERSISTENT) && !state.get(LeavesBlock.PERSISTENT);
-    }
-
-    private static boolean isWithinReachOfATrunk(BlockPos leaf, List<BlockPos> logs) {
-        for (BlockPos log : logs) {
-            if (leaf.isWithinDistance(log, LEAF_REACH)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /** Os vinte e seis vizinhos, inclusive as diagonais. */
-    private static List<BlockPos> around(BlockPos pos) {
-        List<BlockPos> neighbours = new ArrayList<>(26);
-
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dy = -1; dy <= 1; dy++) {
-                for (int dz = -1; dz <= 1; dz++) {
-                    if (dx != 0 || dy != 0 || dz != 0) {
-                        neighbours.add(pos.add(dx, dy, dz));
-                    }
-                }
-            }
-        }
-
-        return neighbours;
-    }
-
-    /**
-     * Abre a coluna acima da muda.
-     *
-     * <p>A copa desta árvore já saiu com a colheita. O que pode ter
-     * sobrado ali é folha de outra árvore — a vizinha cuja copa passa por
-     * cima desta base — e é ela que impediria a muda de crescer.
-     *
-     * <p>Para no primeiro bloco que não seja folha nem ar. Um telhado,
-     * uma ponte ou uma varanda do jogador acima da árvore encerra a
-     * limpeza ali: a muda não vai crescer, e isso é problema dela, não
-     * licença para abrir buraco em construção alheia.
-     *
-     * <p>Folha pendurada à mão encerra do mesmo jeito. Ela é construção
-     * como qualquer outra — ver {@link #isNaturalLeaf} —, e a única
-     * diferença é que aqui vale a folha de qualquer espécie: a copa que
-     * cobre esta base pode ser da árvore vizinha.
-     *
-     * <p>É o único lugar da colheita que quebra bloco que não é desta
-     * árvore, e por isso o único que pergunta a
-     * {@link BlockProtection}: a copa que passa por cima da muda pode ser
-     * de uma árvore que o jogo gerou junto com a vila. A árvore desta
-     * colheita não passa por lá, pela exceção do autor.
-     */
-    private static void clearAbove(ServerWorld world, BlockPos base) {
-        for (int height = 1; height <= SAPLING_CLEARANCE; height++) {
-            BlockPos above = base.up(height);
-            BlockState state = stateAt(world, above);
-
-            if (state == null) {
-                return;
-            }
-
-            if (state.isAir()) {
-                continue;
-            }
-
-            if (!isAnyNaturalLeaf(state)) {
-                return;
-            }
-
-            if (!BlockProtection.mayBreak(world, above, state)) {
-                return;
-            }
-
-            world.removeBlock(above, false);
-        }
-    }
-
-    /** Folha de qualquer espécie, desde que tenha nascido ali. */
-    private static boolean isAnyNaturalLeaf(BlockState state) {
-        if (!state.contains(LeavesBlock.PERSISTENT) || state.get(LeavesBlock.PERSISTENT)) {
-            return false;
-        }
-
-        for (TreeSpecies species : TreeSpecies.values()) {
-            if (state.isOf(species.leaves())) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * O estado de um bloco, ou {@code null} se o chunk não está
-     * carregado.
-     *
-     * <p>Nunca {@code world.getBlockState} direto. Ele carrega o chunk
-     * que faltar, e do tick do servidor isso significa gerar terreno
-     * dentro do laço — foi assim que a thread travou em 2026-08-07, e a
-     * Fase 8 repetiu o erro em 2026-08-08. Ver §11.
-     */
-    private static BlockState stateAt(ServerWorld world, BlockPos pos) {
-        WorldChunk chunk = loadedChunkAt(world, pos);
-
-        return chunk == null ? null : chunk.getBlockState(pos);
-    }
-
-    private static WorldChunk loadedChunkAt(ServerWorld world, BlockPos pos) {
-        return world.getChunkManager().getWorldChunk(pos.getX() >> 4, pos.getZ() >> 4);
-    }
-
-    private static boolean isBlock(ServerWorld world, BlockPos pos, Block block) {
-        BlockState state = stateAt(world, pos);
-
-        return state != null && state.isOf(block);
-    }
-
-    private static boolean mayHarvest(ServerWorld world, BlockPos pos) {
-        BlockState state = stateAt(world, pos);
-
-        return state != null && BlockProtection.mayBreak(world, pos, state);
-    }
-
     private static BlockPos lowest(List<BlockPos> logs) {
         BlockPos lowest = logs.get(0);
 
@@ -701,50 +471,4 @@ public final class TreeHarvester {
         return lowest;
     }
 
-    /**
-     * Muda da própria espécie no lugar da base, se o chão aceitar.
-     *
-     * <p>{@code canPlaceAt} é quem responde — a mesma pergunta que o
-     * jogo faz quando o jogador tenta plantar. Repetir a regra aqui
-     * seria inventar uma segunda verdade sobre o que é chão bom, e ela
-     * envelheceria no primeiro bioma novo.
-     */
-    private static void replant(ServerWorld world, TreeSpecies species, BlockPos base) {
-        BlockState here = stateAt(world, base);
-
-        if (here == null) {
-            VillageColonyMod.LOGGER.info(
-                    "No {} sapling at {} — the chunk went out from under it",
-                    species,
-                    base.toShortString());
-
-            return;
-        }
-
-        if (!here.isAir()) {
-            VillageColonyMod.LOGGER.info(
-                    "No {} sapling at {} — {} is in the way",
-                    species,
-                    base.toShortString(),
-                    here.getBlock());
-
-            return;
-        }
-
-        BlockState sapling = species.sapling().getDefaultState();
-
-        if (!sapling.canPlaceAt(world, base)) {
-            VillageColonyMod.LOGGER.info(
-                    "No {} sapling at {} — the ground will not take one",
-                    species,
-                    base.toShortString());
-
-            return;
-        }
-
-        world.setBlockState(base, sapling);
-
-        VillageColonyMod.LOGGER.info(
-                "Planted a {} sapling at {}", species, base.toShortString());
-    }
 }

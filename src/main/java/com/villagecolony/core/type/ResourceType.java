@@ -60,8 +60,8 @@ public enum ResourceType {
     /** O que o fundidor recebe para dar vidro. */
     SAND(ResourceCategory.NATURAL, ResourceGroup.SAND, Production.SURFACE_GATHERED),
 
-    /** Terra recolhida fora da zona protegida para materiais de construção. */
-    DIRT(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SURFACE_GATHERED),
+    /** Terra recolhida longe da zona habitada pelo fazendeiro. */
+    DIRT(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SOIL_GATHERED),
 
     /** Terra com grama retirada fora da zona protegida da vila. */
     GRASS_BLOCK(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SURFACE_GATHERED),
@@ -201,6 +201,12 @@ public enum ResourceType {
      * esta linha a cadeia começaria no meio.
      */
     CLAY_BALL(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SURFACE_GATHERED),
+
+    /** O bloco de argila que o fundidor assa em terracota. */
+    CLAY(ResourceCategory.NATURAL, ResourceGroup.NONE, Production.SURFACE_GATHERED),
+
+    /** Terracota neutra, feita pelo fundidor a partir de bloco de argila. */
+    TERRACOTTA(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.SMELTED),
 
     /** O tijolo, que sai da fornalha como o arenito liso. */
     BRICK(ResourceCategory.PROCESSED, ResourceGroup.NONE, Production.SMELTED),

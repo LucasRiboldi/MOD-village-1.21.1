@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.model.MineArm;
 import com.villagecolony.core.construction.model.MineShaft;
+import com.villagecolony.core.construction.service.MineRecovery;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -44,10 +45,10 @@ import java.util.UUID;
 public final class MineDigging {
 
     /** Quantas posições da mina uma passagem examina antes de desistir. */
-    private static final int CUTS_PER_SEARCH = 64;
+    static final int CUTS_PER_SEARCH = 64;
 
     /** Recusas seguidas antes de a galeria virar. */
-    private static final int BLOCKED_BEFORE_TURNING = 8;
+    static final int BLOCKED_BEFORE_TURNING = 8;
 
 
 
@@ -58,19 +59,19 @@ public final class MineDigging {
 
 
     /** O assunto do registrador para a boca que não se acha — 2026-08-22. */
-    private static final String MOUTH_SUBJECT = "miner mine mouth";
+    static final String MOUTH_SUBJECT = "miner mine mouth";
 
     /** O assunto do baú da boca, que não se acha onde pôr — 2026-09-02. */
-    private static final String CHEST_SUBJECT = "miner mouth chest";
+    static final String CHEST_SUBJECT = "miner mouth chest";
 
     /** O do ramal que acabou, e da mina que não tem para onde descer. */
-    private static final String ARM_SUBJECT = "miner branch";
+    static final String ARM_SUBJECT = "miner branch";
 
     /** E o da busca que olhou as 64 posições e não achou pedra. */
-    private static final String CUT_SUBJECT = "miner cut";
+    static final String CUT_SUBJECT = "miner cut";
 
     /** E o da pedra de superfície, que é a alternativa a ela — 2026-08-25. */
-    private static final String SURFACE_SUBJECT = "miner surface stone";
+    static final String SURFACE_SUBJECT = "miner surface stone";
 
     /**
      * A que distância se raspa pedra exposta quando não há mina.
@@ -79,11 +80,11 @@ public final class MineDigging {
      * percorre e volta dentro do expediente. Mais que isso e ele passa o
      * dia andando.
      */
-    private static final int SURFACE_RADIUS = 48;
+    static final int SURFACE_RADIUS = 48;
 
 
     /** O raio de superfície em vigor. É {@link #SURFACE_RADIUS}, menos nos testes. */
-    private static int surfaceRadius = SURFACE_RADIUS;
+    static int surfaceRadius = SURFACE_RADIUS;
 
     private MineDigging() {
     }
@@ -138,8 +139,8 @@ public final class MineDigging {
         if (mine.isEmpty()) {
             // A boca não pôde nascer. Em vez de a colônia ficar sem a
             // única fonte de pedra que tem, ela raspa o que estiver
-            // exposto em volta — ver exposedStone.
-            return exposedStone(world, workerId, colonyId, center);
+            // exposto em volta — ver MineVein.exposedStone.
+            return MineVein.exposedStone(world, workerId, colonyId, center);
         }
 
         IdleLog.clear(colonyId, SURFACE_SUBJECT);
@@ -157,13 +158,20 @@ public final class MineDigging {
             // decide — antes ficava no ramo do {@code isDone} logo
             // abaixo, que a reserva nunca deixava alcançar quando o ramal
             // acabado continuava sendo entregue.
-            if (mine.get().deepenIfEveryOpenArmIsDone()) {
+            Mine.LevelAdvance advance = mine.get().advanceIfEveryOpenArmIsDone();
+
+            if (advance == Mine.LevelAdvance.DEEPENED) {
                 VillageColonyMod.LOGGER.info(
                         "Mine {} finished every branch and went one level deeper",
                         colonyId);
 
                 IdleLog.clear(colonyId, ARM_SUBJECT);
 
+                return Optional.empty();
+            }
+
+            if (advance == Mine.LevelAdvance.EXHAUSTED) {
+                MineTrouble.abandonAtBottom(world, colonyId, mine.get(), center);
                 return Optional.empty();
             }
 
@@ -176,7 +184,7 @@ public final class MineDigging {
             if (MineClaims.diggersIn(colonyId) == 0
                     && mine.get().turnedWithoutAPickaxe()) {
 
-                rerouteOrBlameTheMouth(world, colonyId, mine.get(), center);
+                MineTrouble.rerouteOrBlameTheMouth(world, colonyId, mine.get(), center);
 
                 return Optional.empty();
             }
@@ -212,8 +220,8 @@ public final class MineDigging {
 
         IdleLog.clear(colonyId, ARM_SUBJECT);
 
-        Optional<BlockPos> found = followingTheVein(world, arm)
-                .or(() -> nextCut(world, workerId, mine.get(), arm));
+        Optional<BlockPos> found = MineVein.followingTheVein(world, arm)
+                .or(() -> MineCuts.nextCut(world, workerId, mine.get(), arm));
 
         if (found.isEmpty()) {
             // <b>Escada que ninguém está usando volta a ser de quem
@@ -249,426 +257,6 @@ public final class MineDigging {
         return found;
     }
 
-    /**
-     * A pedra de superfície, quando a mina não tem onde nascer.
-     *
-     * <p><b>É alternativa, e não substituto.</b> A escada continua sendo
-     * o caminho: é ela que traz carvão e ferro, e ela rende mais. Isto só
-     * roda quando as vinte e quatro colunas da boca falharam — e o que
-     * ele evita é o que a sessão de 2026-08-25 mostrou: uma vila cercada
-     * de água ficou sem pedra nenhuma, a obra morreu de fome esperando
-     * pedregulho, e a colônia parou de crescer por causa do terreno em
-     * volta.
-     *
-     * <p>Mesma espiral da areia, mesmo teto por passagem, e a distinção
-     * que o log precisa: "não terminei de olhar" não é "não há".
-     */
-    private static Optional<BlockPos> exposedStone(
-            ServerWorld world, UUID workerId, UUID colonyId, BlockPos center) {
-
-        Optional<BlockPos> found = RingSweep.around(
-                workerId,
-                center,
-                surfaceRadius,
-                // <b>E a marca vale aqui também</b> — E44, 2026-09-10, e
-                // este era o buraco que o verificador achou: o giveUp
-                // marca TODA pedra largada, inclusive a de superfície,
-                // mas só o lado da escada perguntava pela marca. Uma
-                // pedra exposta do outro lado da água reproduzia o E44
-                // inteiro numa colônia sem boca de mina — mesmo alvo,
-                // mesma desistência, todo ciclo.
-                column -> StonePatch.in(world, column, center.getY())
-                        .filter(stone -> !MineMarks.isUnreachableAround(world, stone)));
-
-        if (found.isEmpty()) {
-            // Pelo recordAt, como a areia — 2026-09-11. Este é o irmão
-            // da busca de areia e tem o mesmo desenho: roda por tique, e
-            // a varredura em anéis alterna pausada e completa a cada
-            // volta. Ele não apareceu na enxurrada das 02:03 porque
-            // aquela colônia tinha boca de mina — o que é sorte, e não
-            // defesa.
-            IdleLog.recordAt(
-                    colonyId,
-                    SURFACE_SUBJECT,
-                    RingSweep.pausedAt(workerId).isPresent()
-                            ? IdleReason.SWEEP_INCOMPLETE
-                            : IdleReason.NO_TARGET,
-                    "no mine mouth, and no exposed stone within "
-                            + surfaceRadius + " blocks either",
-                    world.getTime());
-
-            return Optional.empty();
-        }
-
-        IdleLog.clear(colonyId, SURFACE_SUBJECT);
-
-        return found;
-    }
-
-    /**
-     * O minério colado no que acabou de sair, se a veia continuar.
-     *
-     * <p><b>A veia manda no túnel.</b> Minério não vem sozinho, e voltar
-     * para a escada com metade da veia aberta faria o aldeão andar até lá
-     * outra vez na passagem seguinte. Enquanto houver minério ao lado do
-     * último, é ele o alvo.
-     *
-     * <p>Quando acabar, a memória da veia sai e o túnel volta a mandar —
-     * senão o mineiro reperguntaria por ela a cada passagem, para sempre.
-     */
-    private static Optional<BlockPos> followingTheVein(ServerWorld world, MineArm arm) {
-        Optional<BlockPos> from = arm.vein().map(MinecraftTypeAdapter::toBlockPos);
-
-        if (from.isEmpty()) {
-            return Optional.empty();
-        }
-
-        Optional<BlockPos> more = OreVein.beside(world, from.get());
-
-        if (more.isEmpty()) {
-            arm.veinExhausted();
-
-            return Optional.empty();
-        }
-
-        // A mesma guarda do nextCut, e aqui ela é a que fecha o laço —
-        // 2026-09-03. Este método roda ANTES do túnel a cada passagem, e
-        // a veia mora no Mine, que é da colônia: um minério sem lugar de
-        // onde bater era servido de novo, e de novo, e ao mineiro
-        // seguinte também. O couldNotReach não alcançava o caso — ele só
-        // recua o cursor do túnel, e diz por escrito que é "silencioso
-        // quando a pedra não era do túnel — veio, areia".
-        //
-        // O resultado em jogo era a colônia inteira parada num bolsão de
-        // carvão dentro da rocha: dezessete minutos, zero pedra.
-        //
-        // Desistir da veia é a saída barata, e é a que o stepBackUp já
-        // escolhe logo abaixo — <i>a colônia prefere perder o minério a
-        // perder o mineiro</i>. O túnel volta a mandar, e ele reabre o
-        // caminho até este mesmo minério pelo lado de onde se alcança.
-        //
-        // <b>E a pedra de castigo entra por esta mesma porta</b> — E44,
-        // 2026-09-10. O couldNotReach larga a veia quando a pedra
-        // recusada É a veia; o que ele não alcança é o minério VIZINHO
-        // que já recusou noutra passagem, e é ele que este método serve.
-        // Sem esta linha o laço voltaria pelo lado do minério, que é
-        // justamente por onde ele voltou em 2026-09-03.
-        if (nowhereToStand(world, more.get())
-                || MineMarks.isUnreachableAround(world, more.get())) {
-            arm.veinExhausted();
-
-            return Optional.empty();
-        }
-
-        if (more.get().getY() < from.get().getY()) {
-            Optional<BlockPos> step = stepBackUp(world, from.get());
-
-            if (step.isEmpty()) {
-                // Sem degrau possível não se desce. A colônia prefere
-                // perder o minério a perder o mineiro — a escada volta a
-                // mandar, e ela é subível por construção.
-                arm.veinExhausted();
-
-                return Optional.empty();
-            }
-
-            if (!step.get().equals(from.get())) {
-                // E o degrau é alvo como qualquer outro: se não há de
-                // onde bater nele, ele trava a veia do mesmo jeito que o
-                // minério travaria — 2026-09-03.
-                if (nowhereToStand(world, step.get())) {
-                    arm.veinExhausted();
-
-                    return Optional.empty();
-                }
-
-                // O degrau primeiro, e o veio NÃO avança: a passagem
-                // seguinte acha o mesmo minério com a saída pronta.
-                return step;
-            }
-        }
-
-        arm.followVein(MinecraftTypeAdapter.toColonyPos(more.get()));
-
-        return more;
-    }
-
-    /**
-     * O bloco que falta abrir para se voltar de um degrau abaixo —
-     * decisão do autor, 2026-08-27.
-     *
-     * <p><b>Por que o veio precisa disto e a escada não.</b> A escada da
-     * Regra 29 abre três blocos por degrau desde 08-27, e sobe-se por
-     * ela na mesma geometria em que se desce. O veio não tem geometria:
-     * {@link OreVein#beside} olha as seis faces, e a de baixo é a
-     * primeira da lista. Minério empilhado abre um poço de um bloco de
-     * largura, e de poço não se sobe — o aldeão não pula dois.
-     *
-     * <p><b>Qual bloco falta é sempre o mesmo:</b> o teto do nível de
-     * onde ele veio. Subir um degrau pede dois blocos de ar no nível de
-     * destino, e o de baixo já é o minério recém-tirado; o de cima é
-     * este. Com ele aberto, a subida se faz um degrau de cada vez até a
-     * boca do poço.
-     *
-     * @param from o minério de onde o veio parte — o nível ao qual o
-     *     mineiro precisa conseguir voltar
-     * @return o bloco a abrir; o próprio {@code from} quando já dá para
-     *     subir; vazio quando não há degrau possível e portanto não se
-     *     deve descer
-     */
-    private static Optional<BlockPos> stepBackUp(ServerWorld world, BlockPos from) {
-        BlockPos ceiling = from.up();
-
-        if (world.getBlockState(ceiling).isAir()) {
-            return Optional.of(from);
-        }
-
-        // Rocha, e não só "cavável": uma laje que o jogador pôs de teto
-        // passa no canDig e não é degrau nenhum — 2026-09-05.
-        return MineRock.isDiggableRock(world, ceiling)
-                ? Optional.of(ceiling)
-                : Optional.empty();
-    }
-
-    /**
-     * Se não há de onde bater nesta pedra — 2026-09-03.
-     *
-     * <p><b>Uma pergunta só, num lugar só.</b> O
-     * {@link MinerWork#approachTo} devolve <i>a própria pedra</i> quando
-     * não acha vizinho onde um aldeão caiba de pé, e essa igualdade é a
-     * resposta — escrita à mão em três lugares, ela seria a próxima a
-     * discordar de si mesma, que é a falha que o {@code standable} já
-     * teve em 2026-08-28.
-     *
-     * <p>Toda posição que vira alvo do mineiro passa por aqui: a do
-     * túnel, a do minério colado nela, o minério da veia e o degrau de
-     * volta. Alvo que não passa é alvo que custa dois minutos de
-     * expediente e devolve a tarefa.
-     *
-     * <p>Barato desde que as posições de aproximação vêm ordenadas por
-     * distância — ver {@link MinerReach#APPROACH_OFFSETS}. A varredura
-     * completa só é paga quando a resposta é <b>sim</b>.
-     */
-    private static boolean nowhereToStand(ServerWorld world, BlockPos at) {
-        return MinerWork.approachTo(world, at).equals(at);
-    }
-
-
-    /**
-     * O mineiro desistiu desta pedra — 2026-08-27.
-     *
-     * <p>Devolve a posição ao cursor da galeria, quando ela é de lá.
-     * Sem isto o cursor passava por cima dela: o mod marchava pela ordem
-     * de cavar enquanto o mundo continuava rocha maciça, e três sessões
-     * seguidas terminaram com zero blocos e a galeria intacta.
-     *
-     * <p>Silencioso quando a pedra não era do túnel — veio, areia, ou a
-     * posição que o outro mineiro já ultrapassou. Ver
-     * {@link Mine#holdPositionAt}.
-     */
-    public static void couldNotReach(UUID colonyId, BlockPos stone) {
-        VillageColonyMod.MINES.of(colonyId).ifPresent(mine -> {
-            ColonyPos at = MinecraftTypeAdapter.toColonyPos(stone);
-
-            // <b>Perguntado aos quatro ramais</b> — 2026-09-04, e sem
-            // saber qual foi. O holdPositionAt já se defende: ele só
-            // recua o cursor que acabou de entregar <b>esta</b> posição,
-            // e os outros três respondem não. Era essa mesma guarda que
-            // impedia dois mineiros na mesma escada de recuarem o cursor
-            // duas vezes por um bloco.
-            boolean kept = false;
-            boolean dropped = false;
-
-            for (MineArm arm : mine.arms()) {
-                kept |= arm.holdPositionAt(at);
-
-                if (arm.vein().filter(at::equals).isPresent()) {
-                    arm.veinExhausted();
-
-                    dropped = true;
-                }
-            }
-
-            if (kept) {
-                VillageColonyMod.LOGGER.info(
-                        "The gallery keeps its place at {} — it was not dug",
-                        stone.toShortString());
-            }
-
-            // <b>E a veia se larga</b> — 2026-09-03. O javadoc acima diz
-            // que este método é silencioso quando a pedra é do veio, e
-            // era: o cursor do túnel recuava e a veia ficava.
-            //
-            // Só que a veia mora no Mine, que é da colônia, e o
-            // followingTheVein roda ANTES do túnel a cada passagem. Um
-            // minério que o mineiro não alcançou era servido de volta na
-            // passagem seguinte, ao mesmo mineiro e ao que herdasse a
-            // escada pelo MineClaims.stepAside — um laço fechado, sem
-            // saída, para a colônia inteira.
-            //
-            // A guarda do followingTheVein evita quase todos os casos na
-            // entrada; esta é a que fecha o resto, porque nem toda
-            // desistência é por falta de lugar: chunk descarregado,
-            // caminho que a navegação não traçou, o jogador tapando o
-            // buraco. Desistir da veia devolve o mineiro ao túnel, que é
-            // contínuo por construção.
-            if (dropped) {
-                VillageColonyMod.LOGGER.info(
-                        "The vein at {} is dropped — the miner could not reach it",
-                        stone.toShortString());
-            }
-        });
-    }
-
-    /**
-     * A picareta abriu um veio de água, e a galeria vira — 2026-09-03.
-     *
-     * <p><b>Decisão do autor:</b> <i>"colocar um bloco no lugar para
-     * encerrar o fluxo da água e seguir por outro caminho"</i>. O bloco é
-     * do {@link MineFlooding}; a outra metade — <i>seguir por outro
-     * caminho</i> — é esta.
-     *
-     * <p>Vai pela mesma porta do bedrock e da pedra sem onde pisar, que é
-     * a frase do autor de 2026-08-21: <i>sempre que encontrar uma barreira
-     * que impeça de realizar estas ações ele começa a recolher para outro
-     * lado</i>. Um lençol de água é exatamente isso — a diferença é que
-     * esta barreira <b>persegue</b> quem a ignora, porque escorre.
-     *
-     * <p><b>Vira na hora, e não depois de oito recusas.</b> O
-     * {@code blockedAgain} existe para não virar a galeria por causa de um
-     * bloco duro solto no meio do caminho; água não é solta. Insistir na
-     * mesma direção é cavar de volta para dentro do lençol, e o preço de
-     * errar é a mina inundada.
-     */
-    public static void flooded(UUID colonyId, UUID workerId, BlockPos at) {
-        VillageColonyMod.MINES.of(colonyId).ifPresent(mine -> {
-            // <b>O ramal de quem cavou</b> — 2026-09-04. A água é do
-            // lugar em que a picareta bateu, e só aquele rumo entra nela;
-            // encerrar os quatro tiraria três mineiros de frentes que
-            // estão secas.
-            OptionalInt claimed =
-                    MineClaims.claimArm(colonyId, workerId, mine.branchesOpenNow());
-
-            if (claimed.isEmpty()) {
-                return;
-            }
-
-            mine.arm(claimed.getAsInt()).finish();
-
-            MineClaims.releaseArm(colonyId, workerId);
-
-            mine.deepenIfEveryArmIsDone();
-
-            VillageColonyMod.LOGGER.info(
-                    "The branch turns away from the water at {}", at.toShortString());
-        });
-    }
-
-    /**
-     * A picareta tirou um bloco: a curva deste ramal recomeça —
-     * 2026-09-11.
-     *
-     * <p><b>Irmã do {@link #flooded}, e pelo mesmo motivo</b>: quem sabe
-     * que o bloco saiu do mundo é o {@code MinerWork}, e quem guarda a
-     * contagem é o braço. O que muda em relação ao que havia antes é
-     * <i>quando</i> a conta volta a zero — era ao servir a pedra, e
-     * passa a ser ao quebrá-la.
-     *
-     * <p>A distinção é o conserto inteiro. Servir é uma aposta: o
-     * cursor escolhe a posição e só depois se descobre se o mineiro
-     * chega nela. Zerar na aposta apagava justamente a prova que a curva
-     * existe para juntar — a de que esta frente não está rendendo —, e
-     * bastava uma pedra nova sem marca por passagem para a contagem
-     * nunca passar de zero. Quebrar não é aposta: é o ramal rendendo, e
-     * aí a curva deve mesmo recomeçar.
-     *
-     * <p>Sem reserva de ramal, como o {@link #armOf}: quem acabou de
-     * cavar já tem o seu, e pedir outro tiraria a última frente livre de
-     * quem ia cavar nela.
-     */
-    /**
-     * A mina girou em falso: troca a hélice, ou a boca — E45, 2026-09-16.
-     *
-     * <p><b>A decisão do autor, 2026-09-16:</b> girar primeiro, mudar a
-     * boca só quando as quatro hélices falharem. Girar é barato e reusa
-     * {@code MineShaft.rerouted()}, que já existe para o fundo da mina;
-     * trocar a boca abandona o poço iniciado, e isso se paga só depois de
-     * o rumo estar descartado.
-     *
-     * <p><b>O laço que isto fecha.</b> Com a boca emparedada, o ramal
-     * fechava em oito recusas, era solto, e a passagem seguinte o servia
-     * no mesmo cursor: 17.518 vezes em trinta e um minutos, dez por
-     * segundo, sem uma pedra sair do mundo. Nenhum guarda pegava porque
-     * todos eram zerados pelo próprio caminho de falha — ver
-     * {@code Mine.turnsWithoutAPickaxe}.
-     *
-     * <p><b>E sem boca nova a mina fica onde está.</b> Esquecer a mina
-     * sem ter onde recriá-la deixaria a colônia sem mina nenhuma e sem
-     * nada dizendo por quê; o mineiro cai no {@code exposedStone}, que é
-     * a rede de segurança que já existe, e a passagem seguinte tenta de
-     * novo.
-     */
-    private static void rerouteOrBlameTheMouth(
-            ServerWorld world, UUID colonyId, Mine mine, BlockPos center) {
-
-        if (!mine.mouthIsHopeless()) {
-            MineShaft before = mine.shaft();
-
-            mine.reroute();
-
-            VillageColonyMod.LOGGER.info(
-                    "Mine {} turned in place {} times without a pickaxe — turning the helix"
-                            + " from {} to {} (helix {} of {})",
-                    colonyId,
-                    Mine.TURNS_BEFORE_REROUTING,
-                    before.descent(),
-                    mine.shaft().descent(),
-                    mine.helicesTried(),
-                    Mine.HELICES_BEFORE_BLAMING_THE_MOUTH);
-
-            return;
-        }
-
-        Side descent = sideOf(colonyId);
-
-        Optional<BlockPos> mouth = MineSite.mouthOf(world, center, descent);
-
-        if (mouth.isEmpty()) {
-            VillageColonyMod.LOGGER.warn(
-                    "Mine {} tried all {} helices and found no better mouth within {} blocks"
-                            + " of {} — the miner falls back to exposed stone",
-                    colonyId,
-                    Mine.HELICES_BEFORE_BLAMING_THE_MOUTH,
-                    MineSite.distance(),
-                    center.toShortString());
-
-            return;
-        }
-
-        VillageColonyMod.LOGGER.info(
-                "Mine {} tried all {} helices without a pickaxe — the mouth is the problem,"
-                        + " and the mine starts over at {}",
-                colonyId,
-                Mine.HELICES_BEFORE_BLAMING_THE_MOUTH,
-                mouth.get().toShortString());
-
-        VillageColonyMod.MINES.removeOfColony(colonyId);
-
-        VillageColonyMod.MINES.open(
-                colonyId,
-                MineShaft.from(MinecraftTypeAdapter.toColonyPos(mouth.get()), descent));
-    }
-
-    public static void pickaxeTook(UUID colonyId, UUID workerId) {
-        armOf(colonyId, workerId).ifPresent(MineArm::digging);
-
-        // <b>E a mina inteira sai da desconfiança</b> — E45, 2026-09-16.
-        // O contador do braço é apagado por finish() e por restartAt, que
-        // é justamente o caminho do laço; o da mina só sai daqui, porque
-        // só aqui houve prova de que o desenho se cava. Ver
-        // Mine.turnsWithoutAPickaxe.
-        VillageColonyMod.MINES.of(colonyId).ifPresent(Mine::pickaxeTook);
-    }
 
     /**
      * O ramal em que este mineiro está cavando — 2026-09-04.
@@ -740,12 +328,12 @@ public final class MineDigging {
         // O caso comum, e é o primeiro de propósito: ele está cavando no
         // ramal que reservou. Perguntar aos outros três seria pagar a
         // varredura para chegar na mesma resposta.
-        if (held.isPresent() && MinerReach.isOnCorridorOf(villager, held.get())) {
+        if (held.isPresent() && MinerLeg.isOnCorridorOf(villager, held.get())) {
             return held;
         }
 
         for (MineArm arm : mine.get().arms()) {
-            if (MinerReach.isOnCorridorOf(villager, arm)) {
+            if (MinerLeg.isOnCorridorOf(villager, arm)) {
                 return Optional.of(arm);
             }
         }
@@ -786,21 +374,18 @@ public final class MineDigging {
      * continua a mesma escada, e a que o save trouxe já vem com a
      * fronteira de ontem.
      */
-    private static Optional<Mine> mineOf(
+    static Optional<Mine> mineOf(
             ServerWorld world, UUID workerId, UUID colonyId, BlockPos center) {
 
         Optional<Mine> known = VillageColonyMod.MINES.of(colonyId);
 
         if (known.isPresent()) {
-            // A boca de uma mina que veio do save pode nunca ter sido
-            // mobiliada — a Regra 30 é de 2026-08-22 e há minas mais
-            // velhas que ela. Idempotente: com baú lá, isto não faz nada.
-            furnishAndLight(world, known.get());
+            MineFurnishing.lightMine(world, known.get());
 
             return known;
         }
 
-        Side descent = sideOf(colonyId);
+        Side descent = MineCuts.sideOf(colonyId);
 
         Optional<BlockPos> mouth = MineSite.mouthOf(world, center, descent);
 
@@ -828,302 +413,17 @@ public final class MineDigging {
                 MineShaft.from(MinecraftTypeAdapter.toColonyPos(mouth.get()), descent));
 
         VillageColonyMod.LOGGER.info(
-                "Miner {} opens a mine at {} - down {} then {} more",
+                "Miner {} opens a mine at {} - a {} step spiral then four {} step branches",
                 workerId,
                 mouth.get().toShortString(),
                 MineShaft.DESCENT,
-                MineShaft.DESCENT);
+                MineShaft.ARM_STAIRS);
 
         // A Regra 30: onde ele decide começar a cavar nascem a lanterna
         // e o baú da mina.
-        furnishAndLight(world, opened);
+        MineFurnishing.furnishAndLight(world, opened);
 
         return Optional.of(opened);
     }
 
-    /**
-     * A lanterna e o baú da boca, e a luz da galeria.
-     *
-     * <p>Chamada também para mina já conhecida, e de propósito: mina de
-     * save antigo não passou pela regra, e boca em chunk descarregado
-     * não pôde ser mobiliada na primeira tentativa. {@code MineMouth} não
-     * faz nada quando o baú já está lá.
-     *
-     * <p><b>E a luz da galeria desde 2026-08-28</b>, que é da mesma
-     * natureza: de graça, idempotente, e no que já está cavado.
-     */
-    private static void furnishAndLight(ServerWorld world, Mine mine) {
-        BlockPos mouth = MinecraftTypeAdapter.toBlockPos(mine.shaft().entry());
-
-        MineMouth.Furnished furnished = MineMouth.furnish(
-                world,
-                mouth,
-                MinecraftTypeAdapter.toDirection(mine.shaft().descent()),
-                mine.archRaised());
-
-        // <b>Marca o arco na passagem em que ele sobe</b> — 2026-09-11, e
-        // <b>pelo arco, não pelo baú</b> desde 2026-09-12. A primeira
-        // versão exigia {@code chest.isPresent()} aqui, e o
-        // gauntlet-verifier provou o buraco: boca sem nenhum vizinho
-        // livre nunca ganha baú, logo nunca marcava o arco, logo o arco
-        // derrubado voltava para sempre — o defeito sobrevivendo num canto
-        // dele. Os dois sinais são independentes, e o {@code Furnished}
-        // existe para os manter assim.
-        //
-        // A linha sai <b>uma vez</b>, e não por ciclo, porque é aqui que o
-        // falso vira verdadeiro. O autor pediu por ela depois de quebrar
-        // um arco em jogo e o arco voltar: sem esta linha, um arco que
-        // reaparecesse por outro motivo não deixaria pista nenhuma.
-        //
-        // <b>E ela não diz que o mod ergueu</b> — 2026-09-12. Dizia "got
-        // its stone arch", e passou a mentir quando o critério virou
-        // "posição firme, de quem quer que seja": boca cavada em rocha
-        // intacta fecha o assunto sem o mod pôr uma pedra, e o log
-        // reivindicava a obra. Num projeto em que log torto já custou
-        // sessões de diagnóstico, "resolvido" é o que aconteceu.
-        if (furnished.archRaisedNow()) {
-            mine.archIsUp();
-
-            VillageColonyMod.LOGGER.info(
-                    "Mine mouth at {} has its stone arch settled — it will not be raised"
-                            + " again, so breaking it is final",
-                    mouth.toShortString());
-        }
-
-        // <b>E a boca não devolve mais baú</b> — decisão do autor,
-        // 2026-09-15: <i>"retire o baú da boca da mina, use só o baú de
-        // cada mineiro"</i>.
-        //
-        // Aqui havia a queixa de 2026-09-02 — "the mine mouth has no chest
-        // and none could be placed" —, e o autor a viu de novo no log de
-        // 09-15, a cada passagem. Ela foi embora com a causa: sem baú de
-        // boca não há posição a procurar, e a falta deixou de ser falta.
-        // O assunto é limpo uma vez para que a queixa antiga não fique
-        // pendurada no IdleLog de quem carregar um save da véspera.
-        IdleLog.clear(mine.colonyId(), CHEST_SUBJECT);
-
-        // E a luz do que já foi cavado — 2026-08-28. Mesma porta e mesma
-        // natureza: idempotente, de graça, e chamada a cada passagem em
-        // que a mina existe. Ver MineLighting.
-        for (MineArm arm : mine.arms()) {
-            MineLighting.light(world, mine, arm);
-        }
-    }
-
-    /**
-     * A primeira posição desta passagem que valha a picareta.
-     *
-     * <p>As já abertas são puladas de graça, e as impossíveis contam para
-     * a curva da galeria.
-     */
-    private static Optional<BlockPos> nextCut(
-            ServerWorld world, UUID workerId, Mine mine, MineArm arm) {
-        MineFrontier.findTheFrontier(world, arm);
-
-        for (int look = 0; look < CUTS_PER_SEARCH; look++) {
-            if (arm.reachedTheEndOfTheArm()) {
-                // <b>O teto de raio do autor</b> — 2026-09-04: "o mineiro
-                // deve priorizar o perímetro da vila". Ver MineShaft.ARM.
-                //
-                // O ramal acaba aqui, e não vira: virar era o jeito de um
-                // cursor só visitar os quatro rumos em sequência. Agora
-                // cada rumo é de um mineiro, e quem troca é ele.
-                arm.finish();
-
-                break;
-            }
-
-            BlockPos at = MinecraftTypeAdapter.toBlockPos(arm.nextPosition());
-
-            if (!world.isInBuildLimit(at)) {
-                arm.finish();
-
-                break;
-            }
-
-            BlockState state = world.getBlockState(at);
-
-            if (MineRock.isOpenSpace(world, at, state)) {
-                // Já aberto, ou água e lava. Nenhum dos dois se cava.
-                //
-                // <b>E a tocha da própria mina</b> — 2026-08-28. Uma
-                // posição com luz é espaço aberto, não rocha: sem isto
-                // o mineiro cavaria a luz que acabou de pôr, que é o
-                // defeito do lampião no primeiro degrau de 08-27 de
-                // volta pela porta da frente.
-                //
-                // <b>E o degrau que o jogador construiu</b> — 2026-09-05.
-                // A lista mora no isOpenSpace, que é a mesma que o
-                // isStillClosed usa: recuo do cursor e escolha do alvo
-                // não podem discordar.
-                continue;
-            }
-
-            if (state.getHardness(world, at) < 0
-                    || BlockProtection.isVillageOriginal(world, at)
-                    || BlockProtection.isColonyBuilt(at)) {
-
-                // Bedrock, casa da vila, casa da colônia. A Regra 3 e o
-                // impossível, pela mesma porta.
-                if (arm.blockedAgain(BLOCKED_BEFORE_TURNING)) {
-                    VillageColonyMod.LOGGER.info(
-                            "Miner {} hit something it cannot dig - the branch ends here",
-                            workerId);
-
-                    break;
-                }
-
-                continue;
-            }
-
-            if (nowhereToStand(world, at)) {
-                // <b>Emparedada: não há vizinho onde um aldeão caiba</b> —
-                // 2026-09-02. O approachTo devolve a própria pedra quando
-                // não acha lugar de ficar de pé, e o javadoc dele
-                // delegava o caso ao guarda de travamento. A sessão das
-                // 21:44 mostrou o preço: seis vezes a mesma frase — "the
-                // place to stand is the stone itself (no free neighbour
-                // to stand on)" —, dois minutos de expediente cada, e
-                // zero pedra em dezessete minutos.
-                //
-                // Impossível de trabalhar é impossível, e vai pela mesma
-                // porta do bedrock: conta para a curva, e a galeria
-                // contorna o vão em vez de mirar para dentro dele.
-                if (arm.blockedAgain(BLOCKED_BEFORE_TURNING)) {
-                    VillageColonyMod.LOGGER.info(
-                            "Miner {} hit stone with nowhere to stand - the branch ends here",
-                            workerId);
-
-                    break;
-                }
-
-                continue;
-            }
-
-            if (MineMarks.isOutOfReach(world, at)) {
-                // <b>Já cobrou o preço e não foi alcançada</b> — E44,
-                // 2026-09-10. Um mineiro andou os 2.400 tiques de
-                // expediente até aqui e não chegou; enquanto o prazo
-                // corre, a picareta vai adiante em vez de o ramal inteiro
-                // parar nesta pedra e os dois mineiros se revezarem nela.
-                //
-                // <b>Conta para a curva</b>, e é a defesa que a lição de
-                // 2026-08-27 exige: se a galeria toda for inalcançável,
-                // pular uma a uma marcharia pela ordem de cavar com o
-                // mundo intacto, que é exatamente o defeito que o
-                // couldNotReach existe para impedir. Contando, o ramal
-                // acaba depois de BLOCKED_BEFORE_TURNING recusas e a mina
-                // desce um nível — que é resposta, e não marcha.
-                if (arm.blockedAgain(BLOCKED_BEFORE_TURNING)) {
-                    VillageColonyMod.LOGGER.info(
-                            "Miner {} keeps finding stone it cannot reach"
-                                    + " - the branch ends here",
-                            workerId);
-
-                    break;
-                }
-
-                continue;
-            }
-
-            // <b>E aqui NÃO se zera a curva</b> — 2026-09-11. Esta linha
-            // era {@code arm.digging()}, e ela zerava a contagem de
-            // recusas ao <i>servir</i> a pedra, não ao quebrá-la. É a
-            // razão de a curva nunca virar: o cursor pulava as marcadas
-            // contando 1, 2, 3, achava a primeira sem marca, zerava, e o
-            // mineiro ia falhar nela. Na passagem seguinte a conta
-            // recomeçava do zero, e assim para sempre — a sessão de
-            // 2026-09-11 às 00:04 mostrou nove desistências em oito
-            // minutos sem um único "went one level deeper", e a colônia
-            // respondendo "no miner branch work" cinco vezes.
-            //
-            // Quem zera agora é a picareta, de dentro do MinerWork,
-            // quando o bloco de verdade sai do mundo. Ver pickaxeTook.
-
-            // O minério da parede vem antes da parede — 2026-08-21. Um
-            // túnel de dois blocos de altura mostra o que está colado
-            // nele, e passar direto era o mineiro trazendo pedregulho de
-            // uma galeria cheia de carvão.
-            Optional<BlockPos> ore = OreVein.isOre(state)
-                    ? Optional.of(at)
-                    : OreVein.beside(world, at);
-
-            // <b>E o minério da parede também precisa ter onde se ficar de
-            // pé</b> — 2026-09-03. A guarda de emparedada acima conferia a
-            // posição do túnel e devolvia <b>outro bloco</b>: o minério
-            // colado nela, que nunca passou por conferência nenhuma. A
-            // colônia mira o carvão dentro da rocha, o approachTo devolve
-            // "o próprio minério", o mineiro anda para dentro da parede, e
-            // dois minutos depois o guarda de travamento devolve a tarefa.
-            //
-            // É exatamente o defeito que 09-02 fechou, vazando pela porta
-            // do minério — e pela pior delas, porque é o minério que
-            // justifica a galeria existir.
-            //
-            // Sem lugar de onde bater, a parede vale mais que o minério
-            // atrás dela: devolve-se a posição do túnel, que já passou pela
-            // guarda. O veio NÃO é lembrado — lembrar um minério
-            // inalcançável é o que faz o followingTheVein reservi-lo para
-            // sempre. Aberto o túnel, a passagem seguinte o reencontra, e
-            // aí com lugar de onde bater.
-            // <b>E a marca do minério da parede vale aqui</b> — 2026-09-15.
-            // O autor viu em jogo: <i>"os mineiros estavam parados no fundo
-            // da mina em local que não chegaram escavando"</i>, e o log
-            // mostrou a mesma pedra servida três vezes em dois minutos —
-            // 665,32,-2866, com 6.000 tiques de castigo já escritos na
-            // primeira desistência, e o mineiro demitido do ofício na
-            // terceira.
-            //
-            // O furo era de porta, não de marca: a guarda do E44 acima
-            // pergunta pelo `at`, que é a posição do TÚNEL. O minério
-            // colado nela sai por esta linha, e só passava pelo
-            // nowhereToStand — de modo que o giveUp escrevia a marca e
-            // ninguém a lia. Enquanto o prazo corre, a picareta vai
-            // adiante, como já vai para a posição do túnel.
-            //
-            // Devolve o `at` em vez de pular a passagem inteira: a parede
-            // ainda vale a picareta, e abri-la é justamente o que dá ao
-            // minério um lado de onde se alcance — a mesma saída que o
-            // ramo do `nowhereToStand` escolhe, e pelo mesmo motivo.
-            if (ore.isEmpty()
-                    || (!ore.get().equals(at)
-                            && (nowhereToStand(world, ore.get())
-                                    || MineMarks.isOutOfReach(world, ore.get())))) {
-
-                return Optional.of(at);
-            }
-
-            arm.followVein(MinecraftTypeAdapter.toColonyPos(ore.get()));
-
-            if (!ore.get().equals(at)) {
-                // A posição do túnel não foi cavada, e não pode ser
-                // perdida: sem isto o cursor passaria por cima dela e o
-                // túnel ficaria com um bloco no meio para sempre.
-                arm.holdPosition();
-            }
-
-            return ore;
-        }
-
-        if (arm.isDone()) {
-            // Fechado o quarto ramal, o nível acaba e a mina desce. É a
-            // regra das quatro curvas de antes, contada de outro jeito.
-            mine.deepenIfEveryArmIsDone();
-        }
-
-        return Optional.empty();
-    }
-
-
-    /**
-     * Para que lado esta colônia abre a mina.
-     *
-     * <p>Sai do identificador da colônia, e é de propósito: duas colônias
-     * vizinhas cavam para lados diferentes. Desde que a mina é gravada
-     * isto virou redundância — e continua valendo a pena: save perdido, a
-     * mina nova abre para o mesmo lado da antiga.
-     */
-    private static Side sideOf(UUID colonyId) {
-        return Side.values()[Math.floorMod(colonyId.hashCode(), Side.values().length)];
-    }
 }

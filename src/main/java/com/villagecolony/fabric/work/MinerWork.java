@@ -98,12 +98,12 @@ public final class MinerWork {
      */
     public static final int CLIMB = 1;
 
-    private static final int BREAKING_STAGES = 10;
+    static final int BREAKING_STAGES = 10;
 
-    private static final int SWING_INTERVAL = 5;
+    static final int SWING_INTERVAL = 5;
 
     /** Uma busca por tique no servidor inteiro, como a de árvore. */
-    private static final int SEARCHES_PER_TICK = 1;
+    static final int SEARCHES_PER_TICK = 1;
 
     /**
      * Quantos tiques de expediente sem avanço antes de largar a pedra.
@@ -142,7 +142,7 @@ public final class MinerWork {
     static final Map<UUID, Job> JOBS = new LinkedHashMap<>();
 
     /** Último mineiro que realmente recebeu o orçamento de busca. */
-    private static UUID lastSearchWorker;
+    static UUID lastSearchWorker;
 
     static final String SUBJECT = "miner";
 
@@ -153,7 +153,7 @@ public final class MinerWork {
      * um mineiro sem tarefa e um mineiro que não acha areia são dois
      * silêncios diferentes, e um calaria o outro se dividissem a chave.
      */
-    private static final String SAND_SUBJECT = "miner sand";
+    static final String SAND_SUBJECT = "miner sand";
 
     /** A pedra em curso, e o quanto dela já saiu. */
     static final class Job {
@@ -170,7 +170,7 @@ public final class MinerWork {
         /**
          * Onde ficar de pé para bater nela — calculado uma vez.
          *
-         * <p>A busca do {@link #approachTo} custa umas seiscentas
+         * <p>A busca do {@link MinerApproach#approachTo} custa umas seiscentas
          * leituras de bloco, e o destino é reposto a cada tique enquanto
          * ele caminha. Guardar é a diferença entre uma vez por pedra e
          * seiscentas leituras por tique por mineiro.
@@ -265,7 +265,7 @@ public final class MinerWork {
     }
 
     /** Por que não houve trabalho de mineração, uma vez por motivo. */
-    private static void reportIdle(Colony colony) {
+    static void reportIdle(Colony colony) {
         int able = WorkAssignment.countCapableOf(
                 colony.id(), TaskType.COLLECT_STONE.required(), VillageColonyMod.WORKERS);
 
@@ -308,7 +308,7 @@ public final class MinerWork {
             if (job.target == null) {
                 searchCandidates.add(workerId);
             } else {
-                step(world, workerId, job, false);
+                MinerSteps.step(world, workerId, job, false);
             }
         }
 
@@ -322,7 +322,7 @@ public final class MinerWork {
             UUID workerId = searchCandidates.get((start + offset) % searchCandidates.size());
             Job job = JOBS.get(workerId);
 
-            if (job != null && step(world, workerId, job, SEARCHES_PER_TICK > 0)) {
+            if (job != null && MinerSteps.step(world, workerId, job, SEARCHES_PER_TICK > 0)) {
                 lastSearchWorker = workerId;
 
                 return;
@@ -341,692 +341,6 @@ public final class MinerWork {
         return previousIndex < 0 ? 0 : (previousIndex + 1) % candidates.size();
     }
 
-    /**
-     * Um passo.
-     *
-     * @return se esta passagem gastou uma busca do orçamento do tique
-     */
-    private static boolean step(
-            ServerWorld world, UUID workerId, Job job, boolean maySearch) {
-
-        Entity entity = world.getEntity(workerId);
-
-        if (!(entity instanceof VillagerEntity villager)) {
-            return false;
-        }
-
-        Optional<WorkerStorage> storage = VillageColonyMod.STORAGES.of(workerId);
-
-        if (storage.isEmpty()) {
-            return false;
-        }
-
-        if (job.target == null) {
-            if (!maySearch) {
-                return false;
-            }
-
-            return startNextStone(world, workerId, job, villager);
-        }
-
-        // <b>Depois de quebrar, espera a frente assentar</b> — playtest de
-        // 2026-09-20. A areia que cai ocupa o lugar do alvo no tique
-        // seguinte. Sem este estado, o mineiro soltava a posição assim que
-        // a pedra saía, escolhia de novo a mesma frente e entrava num ciclo
-        // de tentativa, queda e bloqueio. A espera também existe quando
-        // não há entidade caindo: ela dá ao jogo um tique para atualizar a
-        // coluna, que é a marcha mais lenta pedida para o deserto.
-        if (job.settling > 0) {
-            if (MineSettling.waits(world, job.target, job.settling)) {
-                job.settling++;
-
-                return false;
-            }
-
-            VillageColonyMod.LOGGER.info(
-                    "Miner {} let the mined front settle at {} after {} ticks — picking a target again",
-                    villager.getUuid().toString().substring(0, 8),
-                    job.target.toShortString(),
-                    job.settling);
-
-            release(workerId, job);
-
-            return false;
-        }
-
-        BlockState state = world.getBlockState(job.target);
-
-        if (state.isAir()) {
-            // Alguém tirou a pedra entre planejar e chegar. Procura outra.
-            release(workerId, job);
-
-            return false;
-        }
-
-        if (!isWithinReach(villager, job.target)) {
-            // Só conta tique de expediente — 2026-08-27, e é o molde do
-            // lenhador, que esta classe segue de propósito. O guarda pune
-            // quem anda sem chegar; fora da hora o aldeão está PROIBIDO
-            // de andar, porque a GoToWorkTargetTask nem começa. A sessão
-            // de 08-26 queimou metade do orçamento com ele dormindo: o
-            // contador foi de 886 a 2086 com o relatório dizendo
-            // "off hours".
-            if (WorkHours.isWorkTime(world, villager)) {
-                job.stalled++;
-            }
-
-            // E se ele saiu do lugar — 2026-09-03. Ver WorkStall, que faz
-            // a pergunta do expediente por conta própria.
-            if (job.stall.stuck(world, villager)) {
-                giveUp(world, workerId, job, "it has not moved a block in "
-                        + job.stall.ticks() + " ticks of work time");
-            } else if (job.lease.outOfTime(world, villager, job.target)) {
-                // <b>E se ele anda sem chegar mais perto</b> — E44,
-                // 2026-09-10. Este é o caso que os outros dois não
-                // pegam: quem contorna sem fim sai do bloco (escapa do
-                // guarda de imobilidade) e ainda tem 2.400 tiques de
-                // orçamento pela frente. Ver MineLease.
-                giveUp(world, workerId, job, "it got no closer than "
-                        + String.format("%.1f", job.lease.closest())
-                        + " blocks in " + job.lease.ticks()
-                        + " ticks of work time");
-            } else if (job.stalled >= STALL_LIMIT) {
-                giveUp(world, workerId, job, "it walked for "
-                        + job.stalled + " ticks of work time without arriving");
-            } else {
-                // <b>E se ele desceu, a aproximação guardada não serve
-                // mais</b> — sessão de jogo de 2026-09-19.
-                //
-                // O `approachTo` de três mãos filtra por CLIMB, mas
-                // responde para a posição em que ele estava <b>na hora
-                // de escolher o alvo</b>. Quem cai num buraco depois
-                // disso fica com um destino dois acima da cabeça, e
-                // aldeão sobe um: a navegação não cumpre, ele não sai do
-                // lugar, e o guarda de imobilidade devolve a tarefa. O
-                // ciclo reabre a mesma pedra e escolhe a mesma
-                // aproximação, porque a pergunta é feita de onde ele
-                // está — e ele está no buraco.
-                //
-                // O log de 09-19 mediu o laço fechado: 21 das 25 leituras
-                // com o mineiro em -841, 44, 1374 e toda aproximação em
-                // y=46. Dezoito das trinta e duas desistências dizem
-                // "2 blocks below it and unable to climb", e a sessão
-                // terminou com 103 pedras quebradas e ZERO entregues.
-                //
-                // Recalcular custa as seiscentas leituras que o cache
-                // evita, então só se paga quando o cache está
-                // comprovadamente furado — a condição abaixo é a mesma
-                // que o relatório usa para acusar o degrau.
-                if (job.approach.getY() - villager.getBlockPos().getY() > CLIMB) {
-                    BlockPos again =
-                            approachTo(world, job.target, villager.getBlockPos());
-
-                    // Só troca por uma que ele alcance: sem nenhuma, o
-                    // `approachTo` devolve a de antes ou a própria pedra,
-                    // e trocar seria rodar a busca a cada tique para
-                    // chegar ao mesmo lugar.
-                    if (again.getY() - villager.getBlockPos().getY() <= CLIMB) {
-                        job.approach = again;
-                    }
-                }
-
-                // O mesmo destino da primeira vez, e pelo mesmo motivo:
-                // repor a pedra aqui era repor a rocha maciça, e a
-                // navegação não tem como cumprir isso — ver approachTo.
-                //
-                // Guardado, e não recalculado: a busca custa umas
-                // seiscentas leituras de bloco, e isto roda todo tique
-                // enquanto ele caminha.
-                //
-                // E por pernas — 2026-08-28. Ver MinerReach.legTowards:
-                // a navegação não traça um caminho de vinte blocos por
-                // dentro da rocha, e ele ficava parado na superfície
-                // acima da galeria.
-                // E32 — 2026-09-02. A perna entregava um bloco cru da ordem
-                // de cavar, sem perguntar se dava para ficar de pé nele. Ordem
-                // não é lista de lugares onde se fica de pé: duas de cada três
-                // posições da escada são a cabeça, e as que o cursor entregou
-                // podem não ter sido cavadas. Alvo sólido não faz a navegação
-                // desistir — o MobNavigation SOBE o alvo até sair da rocha, e
-                // dentro de uma mina isso é a superfície. Ver
-                // docs/research/E32-miner-walk-target.md.
-                // <b>O corredor é o de onde ele está</b> — 2026-09-05, e
-                // era o do ramal que ele reservou. Ver
-                // MineDigging.armToWalk: os dois deixaram de ser o mesmo
-                // quando a mina ganhou quatro rumos, e a tarefa de areia
-                // nunca reservou rumo nenhum.
-                Optional<MineArm> corridor =
-                        MineDigging.armToWalk(
-                                job.task.colonyId(), workerId, villager.getBlockPos());
-
-                BlockPos leg = MinerReach.legTowards(
-                        villager.getBlockPos(),
-                        job.approach,
-                        corridor,
-                        MineDigging.leadsToTheTarget(
-                                job.task.colonyId(), workerId, corridor),
-                        footingIn(world));
-
-                WorkTargets.set(
-                        workerId,
-                        climbableWalkTarget(world, villager.getBlockPos(), leg),
-                        MinerReach.ARRIVAL);
-            }
-
-            return false;
-        }
-
-        // <b>Ele chegou e vai bater na pedra</b> — E36, 2026-09-04. É
-        // aqui que o guarda de imobilidade recomeça, e não ao pegar alvo:
-        // trabalhar é a prova de que ele não está congelado. Mesmo lugar
-        // em que o BuilderWork e o CraftingWork sempre zeraram.
-        job.stall.reset();
-
-        // <b>Ele espera a areia assentar antes de bater</b> — pedido do
-        // autor, 2026-09-19. Cavar no meio da queda é cavar no escuro: o
-        // alvo desce um bloco, o buraco se reenche, e a picareta bate no
-        // ar. Ver MineSettling.
-        //
-        // O guarda de imobilidade já foi zerado acima, e é de propósito:
-        // esperar a duna assentar é trabalho, não congelamento — o mesmo
-        // argumento do lenhador parado cortando árvore.
-        if (MineSettling.waits(world, job.target, job.settling)) {
-            job.settling++;
-
-            return false;
-        }
-
-        if (job.settling > 0) {
-            // <b>Assentou: o alvo é recalculado antes da próxima batida</b>
-            // — decisão do autor entre as duas opções. O que caiu ocupou o
-            // lugar, então a pedra de antes pode estar soterrada; insistir
-            // nela seria bater onde não há mais nada. Soltar o alvo faz a
-            // passagem seguinte escolher de novo, e o que desceu é minério
-            // que chegou sozinho até a mão dele.
-            VillageColonyMod.LOGGER.info(
-                    "Miner {} waited {} ticks for the sand to settle at {} — picking a target again",
-                    villager.getUuid().toString().substring(0, 8),
-                    job.settling,
-                    job.target.toShortString());
-
-            job.settling = 0;
-
-            job.target = null;
-
-            job.approach = null;
-
-            job.progress = 0;
-
-            job.required = 0;
-
-            return false;
-        }
-
-        mine(world, villager, job, storage.get());
-
-        return false;
-    }
-
-    /**
-     * Acha o próximo bloco, reserva-o e manda o aldeão andar até lá.
-     *
-     * <p><b>Dois caminhos, e quem decide é o recurso da tarefa.</b> Pedra
-     * está em toda parte abaixo do chão e se busca descendo a escada da
-     * Regra 29; areia mora na praia e na duna, e a vinte blocos não há
-     * nenhuma fora do deserto. A mesma profissão, duas geografias.
-     *
-     * <p>A geometria de cada um saiu daqui em 2026-08-21 — ver
-     * {@link MineDigging} e {@link SandGathering}. O que ficou é o que os
-     * dois compartilham, que é o trabalho em si: a picareta, o baú, o
-     * guarda de travamento e a tarefa.
-     *
-     * @return se esta passagem gastou uma busca do orçamento do tique
-     */
-    private static boolean startNextStone(
-            ServerWorld world, UUID workerId, Job job, VillagerEntity villager) {
-
-        UUID colonyId = job.task.colonyId();
-
-        boolean sand = job.task.targetResource().group() == ResourceGroup.SAND;
-
-        int branches = VillageColonyMod.MINES.of(colonyId)
-                .map(Mine::branchesOpenNow)
-                .orElse(Mine.ARMS);
-
-        if (!sand && MineClaims.heldByOther(colonyId, workerId, branches)) {
-            // <b>Recusa não é busca</b> — 2026-09-04. Quem é barrado no
-            // portão da escada não varre coluna nenhuma, e cobrar do
-            // orçamento o que não gastou foi o impasse daquele dia: o
-            // barrado vinha antes no mapa, levava a única busca do tique,
-            // e o dono ficava sem a passagem em que soltaria a mina por
-            // não achar pedra — a saída de 2026-09-02, que nunca chegava
-            // a rodar. Vinte e cinco minutos assim, uma pedra na colônia,
-            // e os dois guardas de travamento em zero porque ninguém
-            // andava para lugar nenhum.
-            //
-            // A areia não passa por aqui: ela não usa a escada, e o
-            // dono dela é o cursor de cada mineiro.
-            return false;
-        }
-
-        Optional<BlockPos> found = sand
-                ? SandGathering.nextTarget(world, workerId, colonyId, job.center)
-                : MineDigging.nextTarget(world, workerId, colonyId, job.center);
-
-        if (found.isEmpty()) {
-            return true;
-        }
-
-        job.target = found.get();
-        job.approach = approachTo(world, job.target, villager.getBlockPos());
-        job.progress = 0;
-        job.required = 0;
-        job.stalled = 0;
-
-        // <b>E o prazo de aproximação recomeça</b> — E44, 2026-09-10, e
-        // aqui alvo novo É motivo, ao contrário do guarda de
-        // imobilidade logo abaixo. A régua do MineLease é a distância
-        // ATÉ ESTA PEDRA; herdá-la da anterior faria ele desistir de uma
-        // pedra mais distante sem ter dado um passo por ela.
-        job.lease.reset();
-
-        // <b>E o guarda de imobilidade NÃO é zerado aqui</b> — E36,
-        // 2026-09-04. A pergunta que ele faz é <i>o aldeão saiu do
-        // bloco?</i>, e ela não tem nada a ver com qual é o alvo: quem
-        // estava congelado continua congelado depois de a pedra à frente
-        // dele sumir. Zerar por alvo novo deixava <b>imune</b> quem troca
-        // de alvo com frequência, e foi o que os mineiros travados da
-        // sessão de 09-04 exibiram por vinte e cinco minutos com
-        // {@code stall 0/2400, still 0/300} e nenhum passo dado.
-        //
-        // Quem zera é o movimento — o WorkStall vê sozinho — e o ramo em
-        // que ele trabalha, que é o que o construtor e o fabricante
-        // sempre fizeram. O de 2.400 continua por alvo, porque é isso que
-        // ele mede: andei demais até ESTE alvo.
-
-        WorkTargets.set(workerId, job.approach, MinerReach.ARRIVAL);
-
-        return true;
-    }
-
-    /**
-     * Onde ficar de pé para bater nesta pedra — 2026-08-27.
-     *
-     * <p><b>Mandar o aldeão até a pedra era mandá-lo para dentro da
-     * rocha.</b> Bloco sólido nunca é alcançável: a navegação devolve
-     * caminho parcial, e ele estaciona onde parou.
-     *
-     * <p><b>Olhar só os vizinhos era pouco, e a Regra 29 é a prova.</b>
-     * Um degrau da escada anda um para a frente e um para baixo:
-     *
-     * <pre>
-     * degrau 1   (1, 64, 0)   onde ele está de pé
-     * degrau 2   (2, 63, 0)   o alvo — DIAGONAL, não encosta em face nenhuma
-     * </pre>
-     *
-     * <p>As seis faces não alcançam a diagonal, e o método caía no "fica
-     * a própria pedra" já no segundo degrau. <b>E o aldeão alcançava o
-     * tempo todo</b>: de pé no degrau 1 ele está a 1,1 bloco do centro do
-     * degrau 2, e o braço dele é quatro. O lugar existia; a busca é que
-     * não sabia procurá-lo.
-     *
-     * <p>Explica por que algumas sessões cavaram e outras não: a galeria
-     * é reta, e blocos consecutivos dela <b>encostam</b>. Os onze blocos
-     * da sessão das 22:23 foram todos de galeria; a escada e a frente do
-     * túnel nunca saíram.
-     *
-     * <p><b>A busca é por distância, e não por ordem de face.</b> O
-     * lugar mais perto do alvo é o que dá menos chance de o caminho ser
-     * interrompido no meio. O cubo de raio quatro são umas seiscentas
-     * leituras — caro para um tique, barato uma vez por pedra, e é uma
-     * vez por pedra que ela roda: quem chama guarda o resultado.
-     *
-     * <p>Sem lugar nenhum ao alcance fica a própria pedra, que é o que
-     * se fazia antes — pior destino, mas nunca pior que nenhum. Quem
-     * trata esse caso é o guarda de travamento e o recuo da galeria.
-     *
-     * <p><b>"Cabe um aldeão" é uma pergunta só</b>, e quem responde é o
-     * {@link BuilderApproach#standable}. Esta classe tinha a sua, mais
-     * frouxa — pedia <i>qualquer coisa que não fosse ar</i> embaixo, e
-     * água serve —, e a sessão da meia-noite as pegou discordando na
-     * mesma linha de log: <i>"it was walking to 732,46,878, which is not
-     * standable"</i>. Escolhedor e relator não podem responder diferente
-     * à mesma pergunta; é a falha que a distância já tinha tido.
-     *
-     * <p><b>E a varredura inteira deixou de ser paga toda vez</b> —
-     * 2026-09-03. O parágrafo acima se defendia dizendo que as
-     * seiscentas leituras rodavam <i>uma vez por pedra</i>. Isso deixou
-     * de ser verdade em 2026-09-02, quando a guarda de emparedada passou
-     * a chamar este método de dentro do laço do {@code nextCut} — até
-     * sessenta e quatro posições por passagem, e uma passagem por tique.
-     * Seiscentas leituras viraram até trinta e oito mil por tique, e
-     * este ciclo ainda estende a guarda ao minério.
-     *
-     * <p>As posições agora vêm prontas e <b>ordenadas por distância</b>
-     * do {@link MinerReach#APPROACH_OFFSETS}, e a resposta é a primeira
-     * que servir. Num corredor o vizinho colado responde na primeira ou
-     * segunda leitura; a varredura completa só é paga quando a resposta
-     * é <i>não há lugar nenhum</i>, que é o caso em que ela vale.
-     *
-     * <p>O bloco devolvido é <b>o mesmo de antes</b>: mesma conta de
-     * distância, mesmo filtro do braço, e a ordenação é estável — entre
-     * empatadas continua vencendo a primeira na ordem do laço antigo.
-     */
-    public static BlockPos approachTo(ServerWorld world, BlockPos target) {
-        for (Vec3i offset : MinerReach.APPROACH_OFFSETS) {
-            BlockPos at = target.add(offset);
-
-            if (BuilderApproach.standable(world, at)) {
-                return at;
-            }
-        }
-
-        return target;
-    }
-
-    /**
-     * O mesmo, sabendo de onde ele vem — E40, 2026-09-09.
-     *
-     * <p><b>O primeiro deslocamento da lista é em cima da própria
-     * pedra</b>, a meio bloco, e ele ganha de todos os outros por
-     * distância. Com o teto acima dela aberto — que numa mina acontece o
-     * tempo todo — a resposta sai dali. Só que em cima da pedra é
-     * <b>dois</b> acima de quem está de pé no chão ao lado dela, e aldeão
-     * sobe um:
-     *
-     * <pre>
-     * gave up the stone at 2427,48,-1437 — 2 blocks below it and unable to climb
-     * </pre>
-     *
-     * <p>Três vezes em dois minutos na sessão de 09-09, sempre a mesma
-     * pedra: a navegação não cumpre o destino, o guarda de imobilidade
-     * devolve a tarefa, e o cursor da galeria segura a posição — como
-     * deve, porque pular a pedra por uma desistência já custou três
-     * sessões com a galeria intacta. O laço fecha aí, e quem o abre é
-     * esta escolha.
-     *
-     * <p><b>O filtro é de um lado só.</b> Descer é de graça — aldeão cai
-     * sem se machucar a esta altura, e a navegação desce —; subir é que
-     * tem degrau de um. Por isso a conta é {@code at.getY() - villager}
-     * contra {@link #CLIMB}, e não uma distância.
-     *
-     * <p><b>E não há resposta pior que a de antes.</b> Sem nenhum lugar
-     * ao alcance dele, vale o primeiro pisável que a busca achou, que é
-     * exatamente o que a sobrecarga de duas mãos devolve. O mineiro que
-     * pergunta de longe — do alto da boca, com a galeria vinte blocos
-     * abaixo — não muda de resposta: lá embaixo nada está acima dele.
-     */
-    public static BlockPos approachTo(
-            ServerWorld world, BlockPos target, BlockPos villager) {
-
-        BlockPos tooHigh = null;
-
-        for (Vec3i offset : MinerReach.APPROACH_OFFSETS) {
-            BlockPos at = target.add(offset);
-
-            if (!BuilderApproach.standable(world, at)) {
-                continue;
-            }
-
-            if (at.getY() - villager.getY() <= CLIMB) {
-                return at;
-            }
-
-            // Guardado, e a busca segue: é a resposta de antes, para o
-            // caso de não existir nenhuma que ele alcance.
-            if (tooHigh == null) {
-                tooHigh = at;
-            }
-        }
-
-        return tooHigh != null ? tooHigh : target;
-    }
-
-    /**
-     * Evita entregar à navegação uma perna acima do degrau que o aldeão
-     * consegue subir.
-     *
-     * <p>A perna da mina normalmente é a boca ou uma posição da escada.
-     * Quando o aldeão cai fora dela, porém, {@link MinerReach#legTowards}
-     * pode devolver a boca três blocos acima. A navegação fica girando no
-     * destino alto e o relatório registra exatamente o sintoma de E44:
-     * {@code blocks below it and unable to climb}.
-     *
-     * <p>O destino intermediário é procurado só nesse caso excepcional. A
-     * busca usa a mesma regra de lugar pisável do {@link #approachTo}, e a
-     * próxima passagem pode avançar mais um degrau quando o aldeão chegar.
-     */
-    public static BlockPos climbableWalkTarget(
-            ServerWorld world, BlockPos villager, BlockPos leg) {
-
-        if (leg.getY() - villager.getY() <= CLIMB) {
-            return leg;
-        }
-
-        BlockPos landing = approachTo(world, leg, villager);
-
-        return landing.getY() - villager.getY() <= CLIMB
-                && BuilderApproach.standable(world, landing)
-                ? landing
-                : leg;
-    }
-
-
-    /** Quebra a pedra em curso, no tempo que ela pede. */
-    private static void mine(
-            ServerWorld world, VillagerEntity villager, Job job, WorkerStorage storage) {
-
-        BlockState state = world.getBlockState(job.target);
-
-        if (job.required == 0) {
-            job.required = BlockBreakTime.ticksFor(world, job.target, state, villager);
-        }
-
-        job.progress++;
-
-        if (job.progress % SWING_INTERVAL == 1) {
-            villager.swingHand(Hand.MAIN_HAND);
-        }
-
-        if (job.progress < job.required) {
-            world.setBlockBreakingInfo(
-                    villager.getId(), job.target, job.progress * BREAKING_STAGES / job.required);
-
-            return;
-        }
-
-        world.setBlockBreakingInfo(villager.getId(), job.target, -1);
-
-        List<ItemStack> drops = new ArrayList<>(
-                Block.getDroppedStacks(state, world, job.target, null, null, ItemStack.EMPTY));
-
-        // <b>A colônia avisa que foi ela</b> — 2026-09-16. Sem isto o
-        // PlayerWorldChangeHandler via a própria picareta como edição do
-        // jogador e reabria o ramal com a contagem de recusas zerada: o log
-        // de 02:58 teve 19.193 linhas de "hit stone with nowhere to stand",
-        // dez por segundo, e a mina nunca desceu. Ver ColonyEdits.
-        ColonyEdits.remember(MinecraftTypeAdapter.toColonyPos(job.target));
-
-        world.removeBlock(job.target, false);
-
-        // A picareta pegou: a posição deixa de ser suspeita — E44. A
-        // marca é por posição e o servidor vive dias; sem isto uma
-        // recusa velha continuaria contando contra a pedra que veio
-        // depois no mesmo lugar, quando a mina descer um nível.
-        MineMarks.dug(job.target);
-
-        // E a curva do ramal recomeça — 2026-09-11. Aqui, e não onde o
-        // cursor escolhe a pedra: é este bloco saindo do mundo que prova
-        // que a frente rende. Ver MineDigging.pickaxeTook.
-        MineDigging.pickaxeTook(job.task.colonyId(), villager.getUuid());
-
-        // <b>E se saiu água por ali, tapa antes de sair de perto</b> —
-        // decisão do autor, 2026-09-03. Aqui, e não no ciclo seguinte: o
-        // líquido corre por tique, e um ciclo de colônia é tempo de
-        // sobra para ele descer a escada inteira. Ver MineFlooding.
-        //
-        // A galeria vira junto, que é a outra metade do pedido —
-        // "seguir por outro caminho". Ver MineDigging.flooded.
-        if (MineFlooding.seal(world, job.target) > 0) {
-            MineDigging.flooded(job.task.colonyId(), villager.getUuid(), job.target);
-        }
-
-        // Regra 30: o minério que não é carvão vai para o baú da boca
-        // da mina, e só transborda para o do mineiro quando aquele
-        // lotar. Decidido aqui, com o bloco em mãos: no baú só
-        // chegam itens, e minério cru não diz de que pedra veio.
-        MinerHaul.Haul haul = MinerHaul.deposit(
-                world,
-                storage,
-                drops,
-                MinerHaul.treasureChestFor(world, job, state),
-                job.target,
-                MinecraftTypeAdapter.toItem(job.wanted).orElse(null));
-
-        job.collected += haul.stored();
-        job.toward += haul.wanted();
-
-        // A linha que faltava. Trabalho mudo não se diagnostica — é o
-        // §11, e foi ele que custou quatro sessões à Fase 10.
-        VillageColonyMod.LOGGER.info(
-                "Miner {} took {} from {} — {} this task",
-                villager.getUuid(),
-                haul.stored(),
-                job.target.toShortString(),
-                job.collected);
-
-        if (job.toward >= job.task.amount()) {
-            finishTask(villager.getUuid(), job);
-
-            return;
-        }
-
-        // Não solta o alvo ainda. A posição é a âncora da busca de quedas:
-        // quando a areia de cima chegar, o próximo ciclo limpa esta marca e
-        // escolhe a nova frente já assentada.
-        job.approach = null;
-        job.progress = 0;
-        job.required = 0;
-        job.settling = 1;
-        WorkTargets.clear(villager.getUuid());
-    }
-
-    /**
-     * Encerra a tarefa quando o pedido foi atendido — 2026-09-09.
-     *
-     * <p><b>Ela não terminava.</b> Nada em produção comparava o que o
-     * mineiro trouxe com o que a tarefa pediu: {@code task.amount()} era
-     * lido por um lugar só no mod inteiro, o {@code MinerReport}, para
-     * escrever a linha do log. O número era um enfeite, e a sessão de
-     * 2026-09-06 mostrou o enfeite crescendo — <b>496 amostras com a meta
-     * ultrapassada</b>, 442 delas no mesmo mineiro em
-     * <i>"105 of 32 so far"</i>, cavando pedra que a colônia já tinha.
-     *
-     * <p>O ciclo da colônia sabia parar e não alcançava: {@code
-     * ColonyCycle.cancelSatisfied} tira da fila o pedido que perdeu o
-     * motivo, mas só o que <b>ainda não começou</b> — "quem já começou
-     * termina", e quem já começou não tinha como terminar.
-     *
-     * <p>Aqui, e não a cada tique: a pergunta é feita com a pedra já
-     * depositada, que é a fronteira em que o lenhador e o fabricante
-     * também param — a pedra da vez não é interrompida, e é o que aquela
-     * decisão do ciclo protege.
-     *
-     * <p>Chega com a tarefa em RESERVED no caso comum, e a transição é a
-     * mesma que {@code TreeFelling.finishTask} faz pelo mesmo motivo:
-     * {@code Task.complete} exige EXECUTING, e completar direto lançava
-     * dentro do tick do servidor.
-     */
-    private static void finishTask(UUID workerId, Job job) {
-        if (job.task.state() == TaskState.RESERVED) {
-            job.task.start();
-        }
-
-        job.task.complete();
-
-        VillageColonyMod.LOGGER.info(
-                "Miner {} filled the order — {} {} of the {} asked, and stopped",
-                workerId,
-                job.toward,
-                job.wanted.name().toLowerCase(java.util.Locale.ROOT),
-                job.task.amount());
-
-        release(workerId, job);
-    }
-
-    /** Larga a pedra de agora e volta a procurar. */
-    private static void release(UUID workerId, Job job) {
-        job.target = null;
-        job.approach = null;
-        job.progress = 0;
-        job.required = 0;
-        job.settling = 0;
-        job.stalled = 0;
-        job.lease.reset();
-
-        // O guarda de imobilidade sobrevive a largar a pedra — E36. Ver
-        // startNextStone: largar não é andar, e este caminho é o mais
-        // percorrido de todos, porque toda pedra cavada passa por ele.
-        // Quem zera de verdade é o ramo de trabalho, logo antes do mine.
-
-        WorkTargets.clear(workerId);
-    }
-
-    /**
-     * Devolve a tarefa quando o mineiro não chega à pedra.
-     *
-     * <p>O cursor da busca é esquecido junto: sem isso a passagem
-     * seguinte reencontraria exatamente a mesma pedra inalcançável, que é
-     * a roda que a Regra 9 fechou do lado do lenhador.
-     */
-    private static void giveUp(ServerWorld world, UUID workerId, Job job, String why) {
-        VillageColonyMod.LOGGER.info(
-                "Miner {} gave up the stone at {} — {}. Task back to the queue. {}",
-                workerId,
-                job.target.toShortString(),
-                why,
-                world.getEntity(workerId) instanceof VillagerEntity villager
-                        ? MinerReport.whyNotReached(world, villager, job.target)
-                        : "the miner left the world");
-
-        job.task.release();
-
-        // <b>E a pedra ganha prazo</b> — E44, 2026-09-10. Segurar a
-        // posição (logo abaixo) continua certo; segurar SEM PRAZO é o
-        // laço que a sessão das 08:33 mediu: o mineiro gasta 2.400
-        // tiques andando até ela, desiste, o outro assume o ramal e
-        // recebe A MESMA pedra. Marcar vem antes de segurar de
-        // propósito — quem lê a marca é a passagem seguinte, e ela
-        // precisa achá-la já posta. Ver MineMarks.
-        MineMarks.refuse(world, job.target);
-
-        // A posição volta para o cursor da galeria — 2026-08-27. Sem
-        // isto o mod marchava pela ordem de cavar com o mundo intacto.
-        MineDigging.couldNotReach(job.task.colonyId(), job.target);
-
-        release(workerId, job);
-
-        // E a vez na mina, se havia uma — 2026-08-29. Um mineiro preso
-        // num poço devolvia a tarefa e a pegava de volta para sempre,
-        // enquanto o outro esperava do lado de fora. Ver MineClaims.
-        MineClaims.stepAside(job.task.colonyId(), workerId);
-
-        // E a pedra descansa para ele — ADR-010. A vez na mina resolve
-        // dois mineiros disputando uma escada; não resolve a colônia
-        // inteira sem pedra alcançável, que é quando ele precisa ir
-        // ajudar noutra coisa em vez de repetir a mesma parede.
-        //
-        // <b>E passa pela porta única desde 2026-09-10</b>: a contagem de
-        // desistências que tira o trabalhador do ofício mora no rest, e
-        // chamá-lo por fora do WorkerStrikes deixaria o mineiro sem a
-        // linha do relatório que as outras seis têm.
-        WorkerStrikes.gaveUp(workerId, job.task);
-
-        // O cursor da varredura de areia sai junto: sem isso a passagem
-        // seguinte reencontraria exatamente a mesma areia inalcançável,
-        // que é a roda que a Regra 9 fechou do lado do lenhador.
-        SandGathering.forget(workerId);
-    }
 
     static boolean isWithinReach(VillagerEntity villager, BlockPos target) {
         return MinerReach.isWithinReach(
@@ -1045,7 +359,7 @@ public final class MinerWork {
      * <p>Vazia para o mineiro de superfície e para o de areia: nenhum
      * dos dois tem descida a fazer, e mandá-los à boca seria um desvio.
      */
-    private static Optional<BlockPos> mouthOf(Job job) {
+    static Optional<BlockPos> mouthOf(Job job) {
         return mineOf(job).map(mine -> MinecraftTypeAdapter.toBlockPos(mine.shaft().entry()));
     }
 
@@ -1056,7 +370,7 @@ public final class MinerWork {
      * dado pela <b>ordem de cavar</b> desde 2026-08-29: e ela que sabe
      * onde o corredor passa. Ver {@link MinerReach#legTowards}.
      */
-    private static Optional<Mine> mineOf(Job job) {
+    static Optional<Mine> mineOf(Job job) {
         return VillageColonyMod.MINES.of(job.task.colonyId());
     }
 
@@ -1079,11 +393,11 @@ public final class MinerWork {
         return job == null ? Optional.empty() : mouthOf(job);
     }
 
-    private static boolean isOngoing(Task task) {
+    static boolean isOngoing(Task task) {
         return task.state() == TaskState.RESERVED || task.state() == TaskState.EXECUTING;
     }
 
-    private static void dropClosedJobs() {
+    static void dropClosedJobs() {
         JOBS.entrySet().removeIf(entry -> {
             if (isOngoing(entry.getValue().task)) {
                 return false;
@@ -1129,130 +443,4 @@ public final class MinerWork {
         MineMarks.clearAll();
     }
 
-    /** Quantos mineiros estão com trabalho aberto agora. */
-    public static int activeJobs() {
-        return JOBS.size();
-    }
-
-    /**
-     * Quantos tiques este mineiro já andou sem chegar na pedra.
-     *
-     * <p>Não é estado novo — é o contador do guarda de travamento, lido
-     * de fora, como o {@code BuildSiteScanner.sweepPausedAt}. Existe
-     * porque a pergunta que ele responde não tem outro observável: o
-     * guarda só fala quando estoura, e o defeito era ele <b>contar</b>
-     * quando não devia.
-     */
-    public static int stallOf(UUID workerId) {
-        Job job = JOBS.get(workerId);
-
-        return job == null ? 0 : job.stalled;
-    }
-
-    /**
-     * Há quantos tiques de expediente este mineiro não sai do bloco.
-     *
-     * <p>Pelo mesmo motivo do {@link #stallOf}: o guarda só fala quando
-     * estoura, e a pergunta que ele responde — <i>ele está andando?</i> —
-     * não tem outro observável de fora.
-     */
-    public static int stillnessOf(UUID workerId) {
-        Job job = JOBS.get(workerId);
-
-        return job == null ? 0 : job.stall.ticks();
-    }
-
-    /**
-     * Há quantos tiques de expediente este mineiro não encurta a distância.
-     *
-     * <p>E qual pedra ele mira — {@link #targetOf}. As duas juntas são o
-     * que a bateria do E44 precisa saber: a de cima prova que o prazo
-     * venceu, e a de baixo diz de qual posição estamos falando quando se
-     * pergunta se o segundo mineiro recebeu a mesma.
-     */
-    public static int adriftOf(UUID workerId) {
-        Job job = JOBS.get(workerId);
-
-        return job == null ? 0 : job.lease.ticks();
-    }
-
-    /**
-     * A pedra que este mineiro mira agora, se ele mira alguma.
-     *
-     * <p>Pelo mesmo motivo do {@link #stallOf}: de fora não há outro
-     * observável: o alvo nasce e morre dentro do {@code Job}, e a única
-     * pista era o texto do relatório — que é para ler, e não para
-     * afirmar contra.
-     */
-    public static Optional<BlockPos> targetOf(UUID workerId) {
-        Job job = JOBS.get(workerId);
-
-        return Optional.ofNullable(job == null ? null : job.target);
-    }
-
-    /** Quanta pedra este mineiro já trouxe nesta tarefa. */
-    public static int collectedBy(UUID workerId) {
-        Job job = JOBS.get(workerId);
-
-        return job == null ? 0 : job.collected;
-    }
-
-    /**
-     * As duas perguntas da perna, respondidas pelo mundo de verdade.
-     *
-     * <p>Aqui, e não dentro do {@code MinerReach}, porque aquela classe é
-     * geometria e não carrega fora do jogo — é o que permite afirmá-la sem
-     * subir servidor. Quem tem o mundo é esta.
-     *
-     * <p>As duas saem do {@code BuilderApproach}, que é onde mora a conta
-     * de "cabe um aldeão aqui" desde 2026-08-28. Uma conta só, e é a do
-     * construtor.
-     *
-     * O que o mundo responde ao passo do mineiro.
-     *
-     * <p><b>Pública porque a bateria precisa da mesma.</b> O
-     * {@code MinerGameTest} tinha uma cópia destas duas linhas, e em
-     * 2026-09-05 a cópia ficou para trás: a correção da escada do jogador
-     * entrou aqui e o teste do E32 continuou medindo o predicado antigo.
-     * Teste que valida uma cópia da regra não valida a regra.
-     */
-    public static MinerReach.Footing footingIn(ServerWorld world) {
-        return new MinerReach.Footing() {
-
-            /**
-             * <b>Ou o lugar é vazio, ou dá para ficar de pé em cima
-             * dele</b> — 2026-09-05, e é a escada que o jogador constrói.
-             *
-             * <p>Era só "a caixa de colisão é vazia", e degrau tem
-             * colisão. O autor trocou a descida da mina por uma escada de
-             * tijolos de pedra e a colônia inteira parou na porta: o
-             * corredor quebrava no primeiro degrau, o passo não achava
-             * saída, e o desvio devolvia a boca — o bloco debaixo do pé
-             * dele.
-             *
-             * <pre>
-             * he is at 1436, 64, 81, walking to the mine mouth at 1436, 63, 81
-             * </pre>
-             *
-             * <p>Treze desistências sem um passo dado.
-             *
-             * <p><b>A segunda metade é o que não deixa isto virar buraco
-             * na rocha.</b> Pedra maciça no meio de uma coluna também tem
-             * colisão, e ela continua sendo parede: em cima dela há mais
-             * pedra, então não se fica de pé ali. O que passa são as
-             * coisas que se sobe — degrau, laje —, porque acima delas
-             * cabe um aldeão.
-             */
-            @Override
-            public boolean passable(BlockPos at) {
-                return BuilderApproach.passable(world, at)
-                        || BuilderApproach.standable(world, at.up());
-            }
-
-            @Override
-            public boolean standable(BlockPos at) {
-                return BuilderApproach.standable(world, at);
-            }
-        };
-    }
 }

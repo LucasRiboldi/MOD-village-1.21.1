@@ -3,6 +3,7 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.ColonyGoals;
+import com.villagecolony.core.coordination.StockRules;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ColonyChests;
@@ -38,12 +39,12 @@ import java.util.List;
  *
  * <p><b>A demanda hoje só nasce de obra aberta</b>, e é essa a lacuna.
  * {@code WorkMaterials.stone} pergunta ao
- * {@code ConstructionPlanner.materialNeededBy}, que lê a obra <b>aberta</b>
+ * {@code ConstructionDemand.materialNeededBy}, que lê a obra <b>aberta</b>
  * da colônia; sem obra — ou com ela parada esperando — a demanda é zero e
  * ninguém produz nada. A colônia só começa a fabricar depois que a obra
  * pede, que é tarde demais.
  *
- * <p>É a mesma forma do {@code ColonyGoals.logsToConvert}, regra do autor
+ * <p>É a mesma forma do {@code StockRules.logsToConvert}, regra do autor
  * de 09-05: converter o excedente em vez de guardá-lo. A diferença é o
  * gatilho — lá é a proporção entre tora e tábua, aqui é o <b>espaço</b>
  * acabando.
@@ -75,7 +76,7 @@ public final class ChestRelief {
                 ColonyChests.nearestFirst(world, colony.id(), colony.center());
 
         for (ColonyPos chest : chests) {
-            if (ColonyGoals.chestCallsForHelp(ChestDepositor.howFull(world, chest))) {
+            if (StockRules.chestCallsForHelp(ChestDepositor.howFull(world, chest))) {
                 return true;
             }
         }

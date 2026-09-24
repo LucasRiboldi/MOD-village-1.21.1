@@ -5,11 +5,14 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
+import com.villagecolony.core.telemetry.model.ActivityTrace;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
+import com.villagecolony.fabric.work.EnduranceReport;
+import com.villagecolony.fabric.work.LatencySummary;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
@@ -176,6 +179,12 @@ public class ColonyEnduranceGameTest implements FabricGameTest {
         int[] open = new int[CYCLES];
         int[] projects = new int[CYCLES];
         int[] storages = new int[CYCLES];
+        long[] cycleNanos = new long[CYCLES];
+
+        // A seed é registrada, e não usada para nada além do relatório —
+        // decisão 9B: este caso não é aleatório, o número só marca a
+        // corrida para quem precisar reproduzi-la.
+        long seed = EnduranceReport.seedForThisRun();
 
         // Um ciclo por tique, e não os duzentos de uma vez: cada ciclo
         // carrega a varredura de lote, a leitura de baú e o despacho das
@@ -185,6 +194,8 @@ public class ColonyEnduranceGameTest implements FabricGameTest {
             int at = cycle;
 
             context.runAtTick(cycle, () -> {
+                long startedAt = System.nanoTime();
+
                 VillageDetectionHandler.runCycleNow(world, anchor);
 
                 // <b>O trabalhador entrega, e é o teste quem faz isso.</b>
@@ -195,6 +206,8 @@ public class ColonyEnduranceGameTest implements FabricGameTest {
                 // media um ciclo em que nada nascia nem morria, que é o
                 // contrário de medir acúmulo.
                 finishWhatWasHandedOut(colony.id());
+
+                cycleNanos[at] = System.nanoTime() - startedAt;
 
                 tasks[at] = VillageColonyMod.TASKS.ofColony(colony.id()).size();
                 open[at] = VillageColonyMod.TASKS.availableFor(colony.id()).size();
@@ -218,13 +231,48 @@ public class ColonyEnduranceGameTest implements FabricGameTest {
                         "a colônia não abriu tarefa em duzentos ciclos — o caso não chegou"
                                 + " a medir degradação, e sim ociosidade");
 
-                assertDidNotAccumulate(context, tasks, open, projects, storages);
+                // O relatório é montado ANTES da asserção que pode falhar
+                // — decisão 9B: se `assertDidNotAccumulate` lançar, a
+                // linha de reprodução já está no log, e não depende de
+                // capturar a exceção do GameTest.
+                LatencySummary latency = LatencySummary.of(millisOf(cycleNanos));
+                ActivityTrace trace = VillageColonyMod.ACTIVITY_TRACES
+                        .of(colony.id())
+                        .orElseGet(ActivityTrace::new);
+
+                EnduranceReport report = EnduranceReport.succeeded(
+                        seed, CYCLES, CYCLES, tasks[CYCLES - 1], latency);
+
+                VillageColonyMod.LOGGER.info(report.summary());
+
+                try {
+                    assertDidNotAccumulate(context, tasks, open, projects, storages);
+                } catch (RuntimeException failure) {
+                    EnduranceReport failureReport = EnduranceReport.failed(
+                            seed, CYCLES, CYCLES, tasks[CYCLES - 1], latency, trace);
+
+                    VillageColonyMod.LOGGER.error(
+                            "endurance failed — reproduce with -D{}={}: {}",
+                            EnduranceReport.SEED_PROPERTY, seed, failureReport.summary());
+
+                    throw failure;
+                }
             } finally {
                 owned.cleanUp();
             }
 
             context.complete();
         });
+    }
+
+    private static long[] millisOf(long[] nanos) {
+        long[] millis = new long[nanos.length];
+
+        for (int i = 0; i < nanos.length; i++) {
+            millis[i] = nanos[i] / 1_000_000L;
+        }
+
+        return millis;
     }
 
     /** As quatro contagens, cada uma com o defeito que ela nomeia. */

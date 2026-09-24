@@ -91,6 +91,13 @@ public final class WorkStall {
             still = 0;
         }
 
+        if (still == LIMIT) {
+            // O instante em que o guarda estoura, uma vez por trabalho: é o
+            // sinal que as sete profissões já compartilham. Dois no mesmo
+            // lugar marcam o encalhado — E47, 2026-09-24.
+            StrandedWorkers.frozeAt(villager.getUuid(), now);
+        }
+
         return still >= LIMIT;
     }
 

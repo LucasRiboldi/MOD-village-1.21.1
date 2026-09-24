@@ -22,7 +22,7 @@ class ChestCallsForHelpTest {
     /** Baú vazio não chama ninguém. */
     @Test
     void theEmptyChestAsksForNothing() {
-        assertFalse(ColonyGoals.chestCallsForHelp(0));
+        assertFalse(StockRules.chestCallsForHelp(0));
     }
 
     /**
@@ -34,7 +34,7 @@ class ChestCallsForHelpTest {
     @Test
     void theHalfFullChestHasNotPassedTheHalf() {
         assertFalse(
-                ColonyGoals.chestCallsForHelp(ColonyGoals.CHEST_HALF_FULL),
+                StockRules.chestCallsForHelp(StockRules.CHEST_HALF_FULL),
                 "na metade exata o bau ja pediu ajuda — a regra diz PASSAR da metade");
     }
 
@@ -42,13 +42,13 @@ class ChestCallsForHelpTest {
     @Test
     void theChestJustPastHalfCallsForHelp() {
         assertTrue(
-                ColonyGoals.chestCallsForHelp(ColonyGoals.CHEST_HALF_FULL + 1),
+                StockRules.chestCallsForHelp(StockRules.CHEST_HALF_FULL + 1),
                 "passou da metade e nao pediu ajuda — o bau enche antes de alguem reagir");
     }
 
     /** Baú cheio chama, obviamente — é o caso que destruiu 660 itens. */
     @Test
     void theFullChestCallsForHelp() {
-        assertTrue(ColonyGoals.chestCallsForHelp(100));
+        assertTrue(StockRules.chestCallsForHelp(100));
     }
 }

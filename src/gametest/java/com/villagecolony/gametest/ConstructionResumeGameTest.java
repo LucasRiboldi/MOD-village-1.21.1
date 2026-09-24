@@ -14,6 +14,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.HousePlans;
+import com.villagecolony.fabric.work.PlanPlacement;
 import com.villagecolony.fabric.work.WaitingWork;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Block;
@@ -77,7 +78,7 @@ public class ConstructionResumeGameTest implements FabricGameTest {
         // acidente apareceu — é o que o javadoc de blueprintOf já
         // avisava que aconteceria.
         UUID colonyId = UUID.randomUUID();
-        Blueprint house = HousePlans.blueprintOf(
+        Blueprint house = PlanPlacement.blueprintOf(
                         context.getWorld(), colonyId, StructureBlueprintReader.PLAINS_SMALL_HOUSE, origin)
                 .orElseThrow(() -> new AssertionError("o jogo não devolveu a casa"));
 

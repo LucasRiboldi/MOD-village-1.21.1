@@ -3,6 +3,7 @@ package com.villagecolony.fabric.integration;
 import com.villagecolony.core.resource.model.ColonyResources;
 import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.storage.service.StorageRegistry;
@@ -10,15 +11,18 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -64,7 +68,7 @@ public final class ChestInventoryReader {
             return ResourceTally.empty();
         }
 
-        return readIn(chunk, position);
+        return inspectIn(chunk, position, Set.of()).resources();
     }
 
     /**
@@ -79,19 +83,30 @@ public final class ChestInventoryReader {
                 .getWorldChunk(position.getX() >> 4, position.getZ() >> 4);
     }
 
-    /** A leitura em si, com o chunk já em mãos. */
-    private static ResourceTally readIn(WorldChunk chunk, BlockPos position) {
+    /**
+     * A leitura em si, com o chunk já em mãos.
+     *
+     * <p>Quando o ciclo pede capacidade, a contagem e o espaço livre saem
+     * da mesma passagem pelos slots. Isso não é cache entre ciclos: a cada
+     * fotografia o inventário do mundo continua sendo lido de novo.
+     */
+    private static ChestContents inspectIn(
+            WorldChunk chunk, BlockPos position, Set<ResourceGroup> capacityGroups) {
         if (!(chunk.getBlockEntity(position) instanceof ChestBlockEntity chest)) {
-            return ResourceTally.empty();
+            return ChestContents.empty(capacityGroups);
         }
 
         Map<ResourceType, Integer> counts = new EnumMap<>(ResourceType.class);
         Map<ResourceId, Integer> idCounts = new LinkedHashMap<>();
+        Map<ResourceGroup, Integer> freeSpace = emptyCapacityFor(capacityGroups);
 
         for (int slot = 0; slot < chest.size(); slot++) {
             ItemStack stack = chest.getStack(slot);
 
             if (stack.isEmpty()) {
+                for (Map.Entry<ResourceGroup, Integer> entry : freeSpace.entrySet()) {
+                    entry.setValue(entry.getValue() + emptySlotCapacity());
+                }
                 continue;
             }
 
@@ -99,11 +114,43 @@ public final class ChestInventoryReader {
                     MinecraftTypeAdapter.toResourceId(stack.getItem()),
                     stack.getCount(),
                     Integer::sum);
-            MinecraftTypeAdapter.toResourceType(stack.getItem()).ifPresent(
-                    type -> counts.merge(type, stack.getCount(), Integer::sum));
+            MinecraftTypeAdapter.toResourceType(stack.getItem()).ifPresent(type -> {
+                counts.merge(type, stack.getCount(), Integer::sum);
+                if (freeSpace.containsKey(type.group())) {
+                    freeSpace.merge(
+                            type.group(),
+                            stack.getMaxCount() - stack.getCount(),
+                            Integer::sum);
+                }
+            });
         }
 
-        return ResourceTally.of(counts, idCounts);
+        return new ChestContents(ResourceTally.of(counts, idCounts), freeSpace);
+    }
+
+    private static Map<ResourceGroup, Integer> emptyCapacityFor(
+            Set<ResourceGroup> capacityGroups) {
+
+        Map<ResourceGroup, Integer> freeSpace = new EnumMap<>(ResourceGroup.class);
+
+        for (ResourceGroup group : capacityGroups) {
+            freeSpace.put(group, 0);
+        }
+
+        return freeSpace;
+    }
+
+    /** A capacidade de um slot vazio para os recursos físicos da colônia. */
+    private static int emptySlotCapacity() {
+        return Items.OAK_LOG.getDefaultStack().getMaxCount();
+    }
+
+    private record ChestContents(
+            ResourceTally resources, Map<ResourceGroup, Integer> freeSpaceByGroup) {
+
+        private static ChestContents empty(Set<ResourceGroup> capacityGroups) {
+            return new ChestContents(ResourceTally.empty(), emptyCapacityFor(capacityGroups));
+        }
     }
 
     /** O que há no baú de um trabalhador, se ele tiver um. */
@@ -155,11 +202,35 @@ public final class ChestInventoryReader {
      * camada o defeito aparece como número plausível, não como ausência.
      *
      * @param resources   o que foi lido, sem os baús vazios
+     * @param freeSpaceByGroup espaço dos grupos pedidos para esta fotografia
      * @param chestsRead  baús alcançados, incluindo os que estavam vazios
      * @param chestsUnreachable baús registrados cujo chunk não está carregado
      */
     public record ChestSurvey(
-            ColonyResources resources, int chestsRead, int chestsUnreachable) {
+            ColonyResources resources,
+            Map<ResourceGroup, Integer> freeSpaceByGroup,
+            int chestsRead,
+            int chestsUnreachable) {
+
+        public ChestSurvey {
+            freeSpaceByGroup = Map.copyOf(freeSpaceByGroup);
+        }
+
+        /** Construtor mantido para fotografias que só precisam do estoque. */
+        public ChestSurvey(ColonyResources resources, int chestsRead, int chestsUnreachable) {
+            this(resources, Map.of(), chestsRead, chestsUnreachable);
+        }
+
+        /**
+         * Espaço do grupo pedido para esta fotografia.
+         *
+         * <p>Grupo que não foi solicitado na varredura não tem espaço
+         * calculado e devolve zero; quem decide uma meta deve pedi-lo em
+         * {@link ChestInventoryReader#survey(ServerWorld, List, ResourceGroup...)}.
+         */
+        public int freeSpaceForGroup(ResourceGroup group) {
+            return freeSpaceByGroup.getOrDefault(group, 0);
+        }
 
         /** Se a contagem está incompleta, e por isso não vale confiar nela. */
         public boolean isPartial() {
@@ -223,7 +294,7 @@ public final class ChestInventoryReader {
      * O estoque de uma colônia, dizendo também o que ficou fora do
      * alcance.
      *
-     * <p>Preferir a {@link #readColony} quando a resposta for usada para
+     * <p>Preferir a {@code readColony} quando a resposta for usada para
      * decidir alguma coisa: uma colônia que conclui "falta madeira"
      * porque metade dos baús estava descarregada mandaria um trabalhador
      * buscar o que ela já tem.
@@ -238,7 +309,27 @@ public final class ChestInventoryReader {
      * @param chests os baús da colônia, de {@code ColonyChests}
      */
     public static ChestSurvey survey(ServerWorld world, List<ColonyPos> chests) {
+        return survey(world, chests, new ResourceGroup[0]);
+    }
+
+    /**
+     * Fotografia de estoque e espaço livre para os grupos que vão decidir
+     * neste ciclo.
+     *
+     * <p>Os grupos são explícitos para não transformar uma otimização de
+     * duas metas em nova varredura para toda categoria conhecida.
+     */
+    public static ChestSurvey survey(
+            ServerWorld world, List<ColonyPos> chests, ResourceGroup... capacityGroups) {
+
+        Set<ResourceGroup> requestedGroups = EnumSet.noneOf(ResourceGroup.class);
+
+        for (ResourceGroup group : capacityGroups) {
+            requestedGroups.add(group);
+        }
+
         Map<ColonyPos, ResourceTally> byChest = new LinkedHashMap<>();
+        Map<ResourceGroup, Integer> freeSpace = emptyCapacityFor(requestedGroups);
         int unreachable = 0;
 
         for (ColonyPos position : chests) {
@@ -250,9 +341,15 @@ public final class ChestInventoryReader {
                 continue;
             }
 
-            byChest.put(position, readIn(chunk, blockPos));
+            ChestContents contents = inspectIn(chunk, blockPos, requestedGroups);
+            byChest.put(position, contents.resources());
+
+            for (Map.Entry<ResourceGroup, Integer> entry : contents.freeSpaceByGroup().entrySet()) {
+                freeSpace.merge(entry.getKey(), entry.getValue(), Integer::sum);
+            }
         }
 
-        return new ChestSurvey(ColonyResources.of(byChest), byChest.size(), unreachable);
+        return new ChestSurvey(
+                ColonyResources.of(byChest), freeSpace, byChest.size(), unreachable);
     }
 }

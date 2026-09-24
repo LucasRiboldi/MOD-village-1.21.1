@@ -21,9 +21,9 @@ class RawStoneReserveTest {
     /** Sem nada processado, metade do cru pode ir à fornalha. */
     @Test
     void halfOfTheRawMayBeSmelted() {
-        assertEquals(50, ColonyGoals.rawToKeep(100, 0), "a reserva nao e metade");
+        assertEquals(50, StockRules.rawToKeep(100, 0), "a reserva nao e metade");
 
-        assertEquals(50, ColonyGoals.rawThatMayBeSmelted(100, 0));
+        assertEquals(50, StockRules.rawThatMayBeSmelted(100, 0));
     }
 
     /**
@@ -36,7 +36,7 @@ class RawStoneReserveTest {
     void theExhaustedRawIsNeverSmeltedAgain() {
         assertEquals(
                 0,
-                ColonyGoals.rawThatMayBeSmelted(0, 139),
+                StockRules.rawThatMayBeSmelted(0, 139),
                 "o fundidor assaria o que nao existe, e o pedreiro fica sem materia");
     }
 
@@ -48,10 +48,10 @@ class RawStoneReserveTest {
      */
     @Test
     void theBalancedStockStopsTheFurnace() {
-        assertEquals(0, ColonyGoals.rawThatMayBeSmelted(40, 40));
+        assertEquals(0, StockRules.rawThatMayBeSmelted(40, 40));
 
         assertTrue(
-                ColonyGoals.rawThatMayBeSmelted(40, 10) > 0,
+                StockRules.rawThatMayBeSmelted(40, 10) > 0,
                 "com muito cru e pouco processado a fornalha tem de seguir");
     }
 
@@ -67,14 +67,14 @@ class RawStoneReserveTest {
      */
     @Test
     void theLastRawOnesAreKeptWhole() {
-        assertEquals(5, ColonyGoals.rawToKeep(5, 500), "os ultimos crus foram para a fornalha");
+        assertEquals(5, StockRules.rawToKeep(5, 500), "os ultimos crus foram para a fornalha");
 
         assertEquals(
                 0,
-                ColonyGoals.rawThatMayBeSmelted(5, 500),
+                StockRules.rawThatMayBeSmelted(5, 500),
                 "o fundidor levaria o ultimo arenito cru da colonia");
 
-        assertEquals(0, ColonyGoals.rawThatMayBeSmelted(0, 0));
+        assertEquals(0, StockRules.rawThatMayBeSmelted(0, 0));
     }
     /**
      * A reserva não impede o foco da obra — 2026-09-19.
@@ -89,7 +89,7 @@ class RawStoneReserveTest {
     void theReserveStillLetsTheFurnaceWork() {
         // Cem crus recém-minerados e nada assado: a fornalha tem trabalho.
         assertTrue(
-                ColonyGoals.rawThatMayBeSmelted(100, 0) >= ColonyGoals.SMELTED_FLOOR,
+                StockRules.rawThatMayBeSmelted(100, 0) >= ColonyGoals.SMELTED_FLOOR,
                 "a reserva travou a fornalha num estoque cheio de cru — o piso de cada"
                         + " tipo nunca seria alcancado");
     }

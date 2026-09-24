@@ -57,6 +57,11 @@ class WorkAssignmentTest {
                 ResourceType.OAK_LOG, 64);
     }
 
+    private Task soilTask() {
+        return tasks.create(COLONY, TaskType.COLLECT_SOIL, TaskPriority.PRODUCTION,
+                ResourceType.DIRT, 16);
+    }
+
     @Test
     void aLumberjackTakesTheWoodTask() {
         Worker lumberjack = workerWith(ProfessionType.LUMBERJACK);
@@ -74,6 +79,24 @@ class WorkAssignmentTest {
     void aFarmerDoesNotTakeTheWoodTask() {
         workerWith(ProfessionType.FARMER);
         Task task = woodTask();
+
+        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(TaskState.AVAILABLE, task.state());
+    }
+
+    @Test
+    void aFarmerTakesTheSoilTask() {
+        Worker farmer = workerWith(ProfessionType.FARMER);
+        Task task = soilTask();
+
+        assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(Optional.of(farmer.villagerId()), task.executor());
+    }
+
+    @Test
+    void aSmelterDoesNotTakeTheSoilTask() {
+        workerWith(ProfessionType.SMELTER);
+        Task task = soilTask();
 
         assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
         assertEquals(TaskState.AVAILABLE, task.state());
@@ -293,61 +316,72 @@ class WorkAssignmentTest {
      * sentidos ao mesmo tempo — {@code (MINER lending a hand)} na árvore
      * e {@code (LUMBERJACK lending a hand)} na galeria.
      *
-     * <p>O que ele faz agora é voltar para a pedra dele pela 2ª passagem,
-     * que é a antiga terceira. A madeira fica para quem sabe cortá-la.
+     * <p>Enquanto a coleta de pedra descansa, ele não recebe outra tarefa.
+     * A madeira fica para quem sabe cortá-la, e a pedra espera o descanso
+     * acabar.
      */
     @Test
-    void aStalledMinerDoesNotTakeTheWoodTask() {
+    void aStalledMinerDoesNotTakeAnyTaskWhileStoneIsResting() {
         Worker miner = workerWith(ProfessionType.MINER);
         miner.rest(Capability.COLLECT_STONE);
 
         Task stone = stoneTask();
         Task wood = woodTask();
 
-        assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
-        assertEquals(Optional.of(miner.villagerId()), stone.executor());
+        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(TaskState.AVAILABLE, stone.state());
         assertEquals(
                 TaskState.AVAILABLE,
                 wood.state(),
-                "o mineiro pegou a madeira, e a separação de funções é do autor");
+                "o mineiro descansando nao pode assumir outra capacidade");
     }
 
     /** E o inverso, que é a outra metade da mesma frase. */
     @Test
-    void aStalledLumberjackDoesNotTakeTheStoneTask() {
+    void aStalledLumberjackDoesNotTakeAnyTaskWhileWoodIsResting() {
         Worker lumberjack = workerWith(ProfessionType.LUMBERJACK);
         lumberjack.rest(Capability.COLLECT_WOOD);
 
         Task stone = stoneTask();
         Task wood = woodTask();
 
-        assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
-        assertEquals(Optional.of(lumberjack.villagerId()), wood.executor());
+        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(TaskState.AVAILABLE, wood.state());
         assertEquals(
                 TaskState.AVAILABLE,
                 stone.state(),
-                "o lenhador foi para a mina, que é o defeito visto em jogo");
+                "o lenhador descansando nao pode assumir outra capacidade");
     }
 
     /**
-     * Nunca fica parado para honrar um descanso.
+     * O descanso impede a reatribuicao da mesma capacidade.
      *
-     * <p>A 2ª passagem, e ela é o que impede o descanso de virar o
-     * problema que conserta: sem mais nada da profissão dele ao alcance,
-     * a pedra volta a valer mesmo descansando.
-     *
-     * <p>Sobreviveu inteira à saída da mão emprestada — era a 3ª
-     * passagem, e é a mesma prova.
+     * <p>Esta e a regressao do erro E43: a segunda passagem nao pode
+     * devolver imediatamente a mesma tarefa que o trabalhador abandonou.
      */
     @Test
-    void theRestNeverLeavesTheWorkerIdle() {
+    void aRestingCapabilityIsNeverReserved() {
         Worker miner = workerWith(ProfessionType.MINER);
         miner.rest(Capability.COLLECT_STONE);
 
         Task stone = stoneTask();
 
+        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(TaskState.AVAILABLE, stone.state());
+        assertTrue(stone.executor().isEmpty());
+    }
+
+    /** O descanso e por capacidade; outra capacidade ainda pode trabalhar. */
+    @Test
+    void aRestingMinerCanStillTakeAConstructionTask() {
+        Worker miner = workerWith(ProfessionType.MINER);
+        miner.rest(Capability.COLLECT_STONE);
+
+        Task build = tasks.create(
+                COLONY, TaskType.BUILD, TaskPriority.CONSTRUCTION, ResourceType.OAK_PLANKS, 1);
+
         assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
-        assertEquals(Optional.of(miner.villagerId()), stone.executor());
+        assertEquals(Optional.of(miner.villagerId()), build.executor());
     }
 
     /**
@@ -371,27 +405,28 @@ class WorkAssignmentTest {
     }
 
     @Test
-    void legacyShepherdDoesNotBecomeAConstructionWorker() {
-        workerWith(ProfessionType.SHEPHERD);
+    void shepherdCanHelpBuildWhenIdle() {
+        Worker shepherd = workerWith(ProfessionType.SHEPHERD);
         Task build = tasks.create(COLONY, TaskType.BUILD, TaskPriority.CONSTRUCTION,
                 ResourceType.OAK_PLANKS, 1);
 
-        assertEquals(0, WorkAssignment.countCapableOf(
+        assertEquals(1, WorkAssignment.countCapableOf(
                 COLONY, Capability.BUILD_STRUCTURE, workers));
-        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
-        assertEquals(TaskState.AVAILABLE, build.state());
+        assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(Optional.of(shepherd.villagerId()), build.executor());
     }
 
     /**
-     * Dois lenhadores travados continuam os dois na madeira.
+     * Dois lenhadores travados permanecem sem reserva enquanto a madeira
+     * esta em descanso.
      *
      * <p>É a sessão de 2026-09-02 22:59 relida com a regra de hoje. Lá
      * os dois foram para a mina e a vila passou dez minutos com zero
-     * pedra e <b>zero árvore</b>. Aqui os dois voltam para a árvore, e a
-     * pedra espera o mineiro — que é quem sabe descer a escada.
+     * pedra e <b>zero árvore</b>. Agora a fila espera a capacidade voltar
+     * a ficar elegivel.
      */
     @Test
-    void bothStalledLumberjacksStayOnWood() {
+    void bothStalledLumberjacksLeaveWoodAvailable() {
         Worker first = workerWith(ProfessionType.LUMBERJACK);
         Worker second = workerWith(ProfessionType.LUMBERJACK);
 
@@ -402,13 +437,46 @@ class WorkAssignmentTest {
         Task firstWood = woodTask();
         Task secondWood = woodTask();
 
-        assertEquals(2, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
 
-        assertTrue(firstWood.executor().isPresent());
-        assertTrue(secondWood.executor().isPresent());
+        assertEquals(TaskState.AVAILABLE, firstWood.state());
+        assertEquals(TaskState.AVAILABLE, secondWood.state());
         assertEquals(
                 TaskState.AVAILABLE,
                 stone.state(),
-                "a vila ficou sem quem corte lenha, que é o defeito de 09-02 ao contrario");
+                "a vila deve esperar a capacidade de coleta de madeira voltar");
+    }
+
+    /**
+     * Quem está encalhado não recebe tarefa nenhuma — E47, 2026-09-24.
+     *
+     * <p>O playtest de 24-09 escalou um pedreiro preso num buraco para
+     * construir, de novo e de novo, por três horas e meia. Cada volta era
+     * uma desistência a mais, e três desistências tiram o ofício dele.
+     */
+    @Test
+    void aStrandedWorkerTakesNoTaskAtAll() {
+        Worker miner = workerWith(ProfessionType.MINER);
+        miner.strand();
+
+        Task stone = stoneTask();
+        Task wood = woodTask();
+
+        assertEquals(0, WorkAssignment.assign(COLONY, workers, tasks));
+        assertEquals(TaskState.AVAILABLE, stone.state());
+        assertEquals(TaskState.AVAILABLE, wood.state(),
+                "o encalhado nao pode ser emprestado a outra capacidade");
+    }
+
+    /** Solto, ele volta à escala na passagem seguinte, sem esperar descanso. */
+    @Test
+    void aFreedWorkerIsAssignedAgain() {
+        Worker miner = workerWith(ProfessionType.MINER);
+        miner.strand();
+        miner.free();
+
+        stoneTask();
+
+        assertEquals(1, WorkAssignment.assign(COLONY, workers, tasks));
     }
 }

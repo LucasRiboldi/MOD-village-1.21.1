@@ -44,6 +44,9 @@ public enum Production {
     /** Da coleta seletiva de materiais expostos na superfície. */
     SURFACE_GATHERED,
 
+    /** Da terra recolhida longe da vila pelo fazendeiro. */
+    SOIL_GATHERED,
+
     /** Da tesoura do pastor. */
     SHEARED,
 

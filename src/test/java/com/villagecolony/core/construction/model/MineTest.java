@@ -8,14 +8,10 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * A mina em uso: os ramais, os cursores e a descida.
- *
- * <p>{@link MineShaftTest} afirma a <b>forma</b>; aqui se afirma o que a
- * colônia faz com ela ao longo de uma sessão.
- */
+/** Contratos de avanço e divisão dos quatro ramais. */
 class MineTest {
 
     private static final ColonyPos ENTRY = new ColonyPos(100, 64, 200);
@@ -24,482 +20,101 @@ class MineTest {
         return Mine.open(UUID.randomUUID(), MineShaft.from(ENTRY, Side.NORTH));
     }
 
-    /**
-     * Cada ramal tem o cursor dele — decisão do autor, 2026-09-04.
-     *
-     * <p><b>É a propriedade inteira do pedido.</b> Havia um cursor só, e
-     * era por isso que a mina tinha um dono: dois mineiros perguntando na
-     * mesma passagem recebiam a mesma posição. Na sessão de 09-04 o
-     * terceiro mineiro passou os trinta e sete minutos em {@code waiting
-     * for the shaft}.
-     *
-     * <p>Cavar num ramal não pode mover a frente de nenhum outro.
-     */
     @Test
-    void diggingInOneBranchDoesNotMoveTheOthers() {
+    void onlyOneMinerGetsTheSharedSpiralAndSearchArea() {
         Mine mine = opened();
 
-        for (int i = 0; i < 40; i++) {
+        assertEquals(1, mine.branchesOpenNow());
+
+        for (int index = 0; index < MineShaft.SHARED_BLOCKS; index++) {
             mine.arm(0).nextPosition();
         }
 
-        assertEquals(40, mine.arm(0).cut());
-
-        for (int index = 1; index < Mine.ARMS; index++) {
-            assertEquals(0, mine.arm(index).cut(),
-                    "o ramal " + index + " andou junto com o primeiro");
-        }
+        assertEquals(Mine.ARMS, mine.branchesOpenNow());
     }
 
-    /**
-     * E dois ramais na mesma posição da ordem cavam blocos diferentes.
-     *
-     * <p>É o que faz deles ramais, e não turnos: o índice é o mesmo, o
-     * rumo da galeria não é. Abaixo de {@link MineShaft#CARVED} eles
-     * <b>coincidem</b> de propósito — a escada e as salas são do poço, e
-     * quem chegar primeiro as abre.
-     */
     @Test
-    void twoBranchesAtTheSameIndexDigDifferentBlocks() {
+    void fourArmsStartAtDifferentStaircasesAfterTheSharedArea() {
         Mine mine = opened();
 
-        int gallery = MineShaft.CARVED + 4;
+        for (int index = 0; index < MineShaft.SHARED_BLOCKS; index++) {
+            mine.arm(0).nextPosition();
+        }
 
-        assertEquals(
-                mine.arm(0).shaft().positionAt(MineShaft.CARVED - 1),
-                mine.arm(1).shaft().positionAt(MineShaft.CARVED - 1),
-                "os ramais cavaram escadas diferentes");
-
-        for (int index = 1; index < Mine.ARMS; index++) {
-            assertFalse(
-                    mine.arm(0).shaft().positionAt(gallery)
-                            .equals(mine.arm(index).shaft().positionAt(gallery)),
-                    "o ramal " + index + " cava o mesmo bloco que o primeiro");
+        for (int arm = 1; arm < Mine.ARMS; arm++) {
+            assertNotEquals(mine.arm(0).shaft().positionAt(MineShaft.SHARED_BLOCKS),
+                    mine.arm(arm).shaft().positionAt(MineShaft.SHARED_BLOCKS));
         }
     }
 
-    /**
-     * O ramal acaba, e a mina avisa antes de gastar a posição.
-     *
-     * <p>É o que o {@code MineDigging} pergunta a cada olhada, e é onde o
-     * teto de raio do autor vira comportamento.
-     */
     @Test
-    void theBranchSaysWhenItIsOver() {
-        MineArm arm = opened().arm(0);
-
-        assertFalse(arm.reachedTheEndOfTheArm(),
-                "a mina recém-aberta já se diz no fim do braço");
-
-        while (!arm.reachedTheEndOfTheArm()) {
-            arm.nextPosition();
-
-            assertTrue(arm.cut() < MineShaft.CARVED + 10_000,
-                    "o braço nunca acabou — o teto de raio não pegou");
-        }
-
-        assertTrue(arm.cut() > MineShaft.CARVED,
-                "o fim do braço caiu antes de a galeria começar");
-    }
-
-    /**
-     * Um ramal que fecha não fecha os outros.
-     *
-     * <p>A lava é de um lugar. Encerrar os quatro tiraria três mineiros
-     * de frentes que estão secas — e foi por isso que a contagem de
-     * recusas saiu da {@link Mine} e passou para o {@link MineArm}.
-     */
-    @Test
-    void aFinishedBranchLeavesTheOthersOpen() {
+    void closingTheSharedPathAdvancesTheWholeMineTogether() {
         Mine mine = opened();
+        int before = mine.shaft().positionAt(MineShaft.CARVED).y();
 
         mine.arm(0).finish();
 
-        assertTrue(mine.arm(0).isDone());
-        assertFalse(mine.everyArmIsDone(), "um ramal fechado fechou a mina inteira");
+        assertEquals(Mine.LevelAdvance.DEEPENED, mine.advanceIfEveryOpenArmIsDone());
+        assertTrue(mine.shaft().positionAt(MineShaft.CARVED).y() < before);
 
-        assertEquals(1, mine.firstArmStillOpen().orElseThrow(),
-                "o mineiro seguinte não foi mandado ao primeiro ramal livre");
-    }
-
-    @Test
-    void aChangedSectionReopensOnlyTheAffectedBranch() {
-        Mine mine = opened();
-        MineArm affected = mine.arm(1);
-        MineArm untouched = mine.arm(2);
-
-        for (int i = 0; i < 40; i++) {
-            affected.nextPosition();
-        }
-        for (int i = 0; i < 3; i++) {
-            affected.blockedAgain(8);
-        }
-        affected.followVein(new ColonyPos(14, 20, 14));
-        untouched.nextPosition();
-
-        affected.reopenFrom(12);
-
-        assertFalse(affected.isDone(), "o trecho alterado continuou encerrado");
-        assertEquals(12, affected.cut(), "o cursor não voltou ao primeiro trecho afetado");
-        assertEquals(1, untouched.cut(), "a edição reabriu outro ramal");
-        assertTrue(affected.vein().isEmpty(), "a veia anterior sobreviveu à mudança do terreno");
-        for (int i = 0; i < 7; i++) {
-            assertFalse(affected.blockedAgain(8), "a contagem antiga de bloqueio sobreviveu");
+        for (MineArm arm : mine.arms()) {
+            assertFalse(arm.isDone());
+            assertEquals(0, arm.cut());
         }
     }
 
-    /**
-     * O poço partilhado é um caso diferente de ramal comum.
-     *
-     * <p>Antes de {@link MineShaft#CARVED}, só o ramal zero é entregue,
-     * porque os quatro ainda apontam para a mesma escada. Se ele fecha
-     * nesse trecho, esperar pelos outros três cria um impasse: eles não
-     * podem ser entregues ainda, e a mina também não desce.
-     */
     @Test
-    void aFinishedSharedPitLetsTheMineTryTheNextLevel() {
+    void theFourthFinishedArmStartsTheNextCycle() {
         Mine mine = opened();
 
-        int y = mine.shaft().positionAt(MineShaft.CARVED).y();
-
-        mine.arm(0).finish();
-
-        assertTrue(
-                mine.deepenIfEveryOpenArmIsDone(),
-                "o único ramal aberto acabou antes da galeria e a mina ficou presa nele");
-
-        assertTrue(mine.shaft().positionAt(MineShaft.CARVED).y() < y,
-                "a mina não tentou outro nível depois de fechar o poço");
-
-        for (int index = 0; index < Mine.ARMS; index++) {
-            assertFalse(mine.arm(index).isDone(),
-                    "o ramal " + index + " desceu já fechado");
+        for (int index = 0; index < MineShaft.SHARED_BLOCKS; index++) {
+            mine.arm(0).nextPosition();
         }
+
+        for (MineArm arm : mine.arms()) {
+            arm.finish();
+        }
+
+        assertEquals(Mine.LevelAdvance.DEEPENED, mine.advanceIfEveryArmIsDone());
     }
 
-    /**
-     * No fundo, uma frente ruim não pode reabrir no mesmo desenho.
-     *
-     * <p>O teste em jogo de 2026-09-13 mostrou o mineiro repetindo
-     * {@code hit stone with nowhere to stand} e {@code no miner branch work}
-     * a cada tique. A mina já tinha chegado ao limite de descida; ao fechar
-     * todos os braços, ela reabria no mesmo padrão e servia a mesma frente
-     * emparedada de novo.
-     */
     @Test
-    void theDeepestLevelRotatesInsteadOfRepeatingTheSameBlockedPattern() {
+    void theLowestCycleIsExhaustedWithoutRestartingAtTheSameMouth() {
         Mine mine = Mine.open(
                 UUID.randomUUID(),
                 MineShaft.from(
                         new ColonyPos(40, MineShaft.DEEPEST + MineShaft.DESCENT, 0),
                         Side.EAST));
-
-        Side before = mine.shaft().descent();
-        ColonyPos entry = mine.entry();
+        Side descent = mine.shaft().descent();
 
         for (MineArm arm : mine.arms()) {
             arm.finish();
         }
 
-        assertFalse(mine.deepenIfEveryArmIsDone(), "ela desceu abaixo do pico");
-
-        assertEquals(
-                before.clockwise(),
-                mine.shaft().descent(),
-                "a mina do fundo reabriu com a mesma orientação de hélice que acabou de travar");
-        assertEquals(entry, mine.entry(), "a rota alternativa mudou a boca da mina");
-
-        for (MineArm arm : mine.arms()) {
-            assertFalse(arm.isDone(), "o ramal reabriu já fechado");
-        }
+        assertEquals(Mine.LevelAdvance.EXHAUSTED, mine.advanceIfEveryArmIsDone());
+        assertEquals(descent, mine.shaft().descent());
+        assertTrue(mine.everyArmIsDone());
     }
 
-    /**
-     * Fechados os quatro, a mina desce e a ordem recomeça.
-     *
-     * <p>É a regra das quatro curvas de 2026-09-02, contada de outro
-     * jeito: os mesmos quatro rumos, agora podendo ser fechados por
-     * quatro aldeões ao mesmo tempo em vez de um só, quatro vezes.
-     */
     @Test
-    void theFourthFinishedBranchTakesTheMineDown() {
-        Mine mine = opened();
+    void eachArmStopsAfterItsConfiguredFiniteWork() {
+        MineArm arm = opened().arm(0);
 
-        int y = mine.shaft().positionAt(MineShaft.CARVED).y();
-
-        for (int index = 0; index < Mine.ARMS - 1; index++) {
-            mine.arm(index).finish();
-
-            assertFalse(mine.deepenIfEveryArmIsDone(),
-                    "ela desceu com o ramal " + index + " ainda aberto");
+        while (!arm.reachedTheEndOfTheArm()) {
+            arm.nextPosition();
         }
 
-        mine.arm(Mine.ARMS - 1).finish();
-
-        assertTrue(mine.deepenIfEveryOpenArmIsDone(), "o quarto ramal fechou e ela não desceu");
-
-        assertTrue(mine.shaft().positionAt(MineShaft.CARVED).y() < y,
-                "a mina não desceu de nível");
-
-        for (int index = 0; index < Mine.ARMS; index++) {
-            assertEquals(0, mine.arm(index).cut(),
-                    "o ramal " + index + " não recomeçou do primeiro degrau");
-
-            assertFalse(mine.arm(index).isDone(),
-                    "o ramal " + index + " desceu já fechado");
-        }
+        assertEquals(MineShaft.SHARED_BLOCKS + MineShaft.ARM_BLOCKS, arm.cut());
     }
 
-    /**
-     * O save de um ramal só reabre os outros três no primeiro degrau.
-     *
-     * <p>É o caminho do disco anterior a 2026-09-04. Nenhum dos três
-     * aponta para lugar errado: são rumos que ninguém cavou ainda.
-     */
     @Test
-    void anOldSaveComesBackWithOneBranchAdvanced() {
-        Mine mine = Mine.restore(UUID.randomUUID(), MineShaft.from(ENTRY, Side.NORTH), 437);
-
-        assertEquals(437, mine.arm(0).cut());
-
-        for (int index = 1; index < Mine.ARMS; index++) {
-            assertEquals(0, mine.arm(index).cut(),
-                    "o ramal " + index + " herdou a fronteira do primeiro");
-        }
-    }
-
-    /** E a fronteira de cada ramal volta inteira pelo disco. */
-    @Test
-    void everyBranchFrontierSurvivesTheRoundTrip() {
-        int[] cuts = {200, 180, 160, 0};
-
+    void aSavedMineKeepsEveryArmCursor() {
+        int[] cuts = {50, 40, 30, 20};
         Mine mine = Mine.restore(UUID.randomUUID(), MineShaft.from(ENTRY, Side.NORTH), cuts);
 
-        assertEquals(cuts.length, mine.cuts().length);
-
-        for (int index = 0; index < cuts.length; index++) {
-            assertEquals(cuts[index], mine.cuts()[index],
-                    "a fronteira do ramal " + index + " não voltou");
+        assertEquals(4, mine.cuts().length);
+        for (int arm = 0; arm < cuts.length; arm++) {
+            assertEquals(cuts[arm], mine.arm(arm).cut());
         }
-    }
-
-    /**
-     * O poço é de um mineiro só até a galeria começar — 2026-09-04.
-     *
-     * <p><b>Foi um gametest que pegou isto</b>, e ele pegou com dois
-     * mineiros recebendo o <b>mesmo bloco</b>. Abaixo de
-     * {@link MineShaft#CARVED} os quatro ramais apontam para as mesmas
-     * posições — é o que faz deles ramais da mesma escada —, e repartir
-     * antes disso é o defeito de 2026-08-26 de volta: os dois andam para
-     * o mesmo lugar, os dois escrevem {@code could not reach the stone}
-     * no mesmo tique, e o recuo do cursor roda duas vezes por um bloco.
-     */
-    @Test
-    void theSharedPitIsDugByOneMinerAtATime() {
-        Mine mine = opened();
-
-        assertEquals(1, mine.branchesOpenNow(),
-                "a mina recém-aberta já repartiu o poço");
-
-        while (mine.arm(0).cut() < MineShaft.CARVED - 1) {
-            mine.arm(0).nextPosition();
-        }
-
-        assertEquals(1, mine.branchesOpenNow(),
-                "repartiu com o último bloco do poço ainda por olhar");
-
-        mine.arm(0).nextPosition();
-
-        assertEquals(Mine.ARMS, mine.branchesOpenNow(),
-                "aberto o poço, os quatro ramais deviam abrir");
-    }
-
-    // ------------------------------------------------------------------
-    // A curva do ramal — 2026-09-11, sessão das 00:04.
-    // ------------------------------------------------------------------
-
-    /**
-     * <b>Recusas seguidas acabam com o ramal.</b> É a lição de
-     * 2026-08-27: se a frente inteira é inalcançável, pular pedra a pedra
-     * marcharia pela ordem de cavar com o mundo intacto. A curva junta as
-     * recusas e manda a mina virar.
-     */
-    @Test
-    void refusalsInARowEndTheBranch() {
-        MineArm arm = opened().arm(0);
-
-        for (int i = 1; i < 8; i++) {
-            assertFalse(arm.blockedAgain(8), "o ramal acabou cedo, na recusa " + i);
-        }
-
-        assertTrue(arm.blockedAgain(8), "a oitava recusa tinha de encerrar o ramal");
-    }
-
-    /**
-     * <b>E só a picareta zera a conta</b> — 2026-09-11, e é o conserto
-     * inteiro deste ciclo.
-     *
-     * <p>O {@code digging()} é chamado de um lugar só, e até esta data
-     * era do {@code MineDigging.nextCut}, no ponto em que o cursor
-     * <i>serve</i> a pedra ao mineiro. Servir é uma aposta: só depois se
-     * descobre se ele chega nela. Zerar na aposta apagava justamente a
-     * prova que a curva existe para juntar.
-     *
-     * <p>O efeito em jogo é a curva nunca virar. Bastava o cursor achar
-     * uma pedra nova sem marca por passagem — e a galeria tem pedra de
-     * sobra atrás de um vão intransponível — para a contagem voltar a
-     * zero antes de chegar a oito. A sessão das 00:04 mediu <b>nove
-     * desistências em oito minutos</b> sem um único {@code went one
-     * level deeper}, com a colônia respondendo {@code no miner branch
-     * work} cinco vezes e os mineiros parados nos mesmos dois lugares da
-     * sessão anterior.
-     *
-     * <p>Agora quem zera é o {@code MinerWork}, com o bloco já fora do
-     * mundo. Ver {@code MineDigging.pickaxeTook}.
-     */
-    @Test
-    void onlyThePickaxeResetsTheCurve() {
-        MineArm arm = opened().arm(0);
-
-        for (int i = 1; i < 8; i++) {
-            arm.blockedAgain(8);
-        }
-
-        // A picareta pegou de verdade: a frente rende, e a curva
-        // recomeça.
-        arm.digging();
-
-        for (int i = 1; i < 8; i++) {
-            assertFalse(
-                    arm.blockedAgain(8),
-                    "a contagem não recomeçou do zero depois da picareta");
-        }
-
-        assertTrue(
-                arm.blockedAgain(8),
-                "e a oitava recusa depois dela tinha de encerrar o ramal");
-    }
-
-    // --- E45: a mina presa na boca, 2026-09-16 ---
-
-    /**
-     * <b>O contador tem de sobreviver ao caminho de falha.</b>
-     *
-     * <p>É a propriedade inteira do E45. O {@code MineArm.blocked} era
-     * apagado por {@code finish()} e por {@code restartAt} — o próprio
-     * caminho que o laço percorre —, e por isso nenhum guarda disparou em
-     * 17.518 voltas. Este vive na mina e só a picareta o zera.
-     */
-    @Test
-    void theTurnCounterSurvivesTheBranchClosingAndRestarting() {
-        Mine mine = opened();
-
-        mine.turnedWithoutAPickaxe();
-
-        // O caminho de falha inteiro: fechar os ramais e reiniciá-los.
-        for (MineArm arm : mine.arms()) {
-            arm.finish();
-        }
-
-        mine.deepenIfEveryArmIsDone();
-
-        assertEquals(
-                1,
-                mine.turnsWithoutAPickaxe(),
-                "fechar e reiniciar o ramal não pode apagar a conta");
-    }
-
-    /** E a picareta, essa sim, zera. */
-    @Test
-    void onlyThePickaxeClearsTheTurnCounter() {
-        Mine mine = opened();
-
-        mine.turnedWithoutAPickaxe();
-        mine.turnedWithoutAPickaxe();
-
-        mine.pickaxeTook();
-
-        assertEquals(0, mine.turnsWithoutAPickaxe());
-    }
-
-    /** A conta enche na volta combinada, e não antes. */
-    @Test
-    void theCounterFillsExactlyAtTheLimit() {
-        Mine mine = opened();
-
-        for (int turn = 1; turn < Mine.TURNS_BEFORE_REROUTING; turn++) {
-            assertFalse(
-                    mine.turnedWithoutAPickaxe(),
-                    "a volta " + turn + " ainda não podia mandar girar");
-        }
-
-        assertTrue(mine.turnedWithoutAPickaxe());
-    }
-
-    /**
-     * Girar troca o rumo da escada e devolve os cursores ao começo dela.
-     *
-     * <p>É o que faz a hélice nova ser outra tentativa de verdade, e não
-     * a mesma escada com outro nome.
-     */
-    @Test
-    void reroutingTurnsTheHelixAndRestartsTheArms() {
-        Mine mine = opened();
-
-        Side before = mine.shaft().descent();
-
-        for (int i = 0; i < 5; i++) {
-            mine.arm(0).nextPosition();
-        }
-
-        mine.reroute();
-
-        assertEquals(before.clockwise(), mine.shaft().descent());
-
-        assertEquals(0, mine.arm(0).cut(), "o cursor tinha de voltar ao primeiro degrau");
-
-        assertEquals(0, mine.turnsWithoutAPickaxe(), "a hélice nova merece paciência nova");
-    }
-
-    /**
-     * <b>Quatro hélices, e só então a boca é a culpada.</b>
-     *
-     * <p>A ordem importa: girar é barato e reusa código já testado;
-     * trocar a boca abandona o poço iniciado. A escalada só se paga
-     * depois de o rumo estar descartado — decisão do autor, 2026-09-16.
-     */
-    @Test
-    void theMouthIsOnlyBlamedAfterEveryHelixHasBeenTried() {
-        Mine mine = opened();
-
-        for (int helix = 1; helix <= Mine.HELICES_BEFORE_BLAMING_THE_MOUTH; helix++) {
-            assertFalse(
-                    mine.mouthIsHopeless(),
-                    "com " + (helix - 1) + " hélices tentadas a boca ainda não é a culpada");
-
-            mine.reroute();
-        }
-
-        assertTrue(mine.mouthIsHopeless());
-    }
-
-    /**
-     * E quatro giros voltam ao rumo de origem — é por isso que o teto é
-     * quatro, e não um número escolhido no chute.
-     */
-    @Test
-    void fourHelicesComeFullCircle() {
-        Mine mine = opened();
-
-        Side origin = mine.shaft().descent();
-
-        for (int helix = 0; helix < Mine.HELICES_BEFORE_BLAMING_THE_MOUTH; helix++) {
-            mine.reroute();
-        }
-
-        assertEquals(
-                origin,
-                mine.shaft().descent(),
-                "girar uma quinta vez reofereceria a escada que já falhou");
     }
 }

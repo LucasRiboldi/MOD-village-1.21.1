@@ -9,8 +9,10 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
+import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.ColonyChests;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -64,8 +66,8 @@ public class StorageGameTest implements FabricGameTest {
         buildVillage(context, bed);
         context.setBlockState(chest, Blocks.CHEST.getDefaultState());
 
-        houseVillagerAt(context, bed);
-        runCycle(context, bed);
+        VillagerEntity villager = prepareStorageWorker(context, bed);
+        scanStorage(context, villager);
 
         context.assertTrue(
                 isClaimed(context, chest),
@@ -149,8 +151,8 @@ public class StorageGameTest implements FabricGameTest {
 
         fillChest(context, chest, Items.OAK_LOG.getDefaultStack().getItem(), 12);
 
-        houseVillagerAt(context, bed);
-        runCycle(context, bed);
+        VillagerEntity villager = prepareStorageWorker(context, bed);
+        scanStorage(context, villager);
 
         if (!isClaimed(context, chest)) {
             context.throwGameTestException("o baú não foi reivindicado; a contagem nem chega a valer");
@@ -188,6 +190,49 @@ public class StorageGameTest implements FabricGameTest {
                 "o ID exato da madeira deve estar disponível");
         context.assertTrue(tally.amountOf(ResourceId.vanilla("dirt")) == 9,
                 "item fora do catálogo deve ser contado pelo ID registrado");
+        context.complete();
+    }
+
+    /**
+     * A fotografia usada pelo ciclo preserva o espaço que o depósito já
+     * reconhece para cada grupo.
+     *
+     * <p>Há madeira, tábuas, item do jogador e slots vazios de propósito:
+     * o espaço de um grupo aceita slots vazios e pilhas parciais do próprio
+     * grupo, mas nunca usa uma pilha de outra coisa.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "storage_count")
+    public void theSurveyKeepsCapacityForWoodAndPlanks(TestContext context) {
+        BlockPos chest = new BlockPos(1, 1, 1);
+        context.setBlockState(chest, Blocks.CHEST.getDefaultState());
+
+        BlockPos absoluteChest = context.getAbsolutePos(chest);
+        if (context.getWorld().getBlockEntity(absoluteChest) instanceof ChestBlockEntity inventory) {
+            inventory.setStack(0, new ItemStack(Items.OAK_LOG, 12));
+            inventory.setStack(1, new ItemStack(Items.OAK_PLANKS, 20));
+            inventory.setStack(2, new ItemStack(Items.DIRT, 9));
+        } else {
+            context.throwGameTestException("não há baú em " + chest.toShortString());
+        }
+
+        ColonyPos position = MinecraftTypeAdapter.toColonyPos(absoluteChest);
+        ChestInventoryReader.ChestSurvey survey = ChestInventoryReader.survey(
+                context.getWorld(),
+                List.of(position),
+                ResourceGroup.WOOD,
+                ResourceGroup.PLANKS);
+
+        context.assertTrue(
+                survey.freeSpaceForGroup(ResourceGroup.WOOD)
+                        == ChestDepositor.freeSpaceForGroup(
+                                context.getWorld(), position, ResourceGroup.WOOD),
+                "a fotografia mudou o espaço disponível para madeira");
+        context.assertTrue(
+                survey.freeSpaceForGroup(ResourceGroup.PLANKS)
+                        == ChestDepositor.freeSpaceForGroup(
+                                context.getWorld(), position, ResourceGroup.PLANKS),
+                "a fotografia mudou o espaço disponível para tábuas");
+
         context.complete();
     }
 
@@ -247,6 +292,46 @@ public class StorageGameTest implements FabricGameTest {
         }
 
         context.throwGameTestException("nenhum aldeão para dar casa");
+    }
+
+    /** Prepara um trabalhador sem acionar a fundação automática da vila. */
+    private static VillagerEntity prepareStorageWorker(
+            TestContext context, BlockPos bed) {
+        VillageColonyMod.COLONIES.clear();
+        VillageColonyMod.WORKERS.clear();
+        VillageColonyMod.STORAGES.clear();
+
+        ServerWorld world = context.getWorld();
+        Colony colony = Colony.create(
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(bed)));
+        VillageColonyMod.COLONIES.register(colony);
+
+        VillagerEntity villager = context.spawnEntity(
+                EntityType.VILLAGER, bed.add(2, 1, 2));
+        villager.setBreedingAge(0);
+        villager.getBrain().remember(
+                MemoryModuleType.HOME,
+                GlobalPos.create(world.getRegistryKey(), context.getAbsolutePos(bed)));
+
+        return villager;
+    }
+
+    /** Faz as duas passagens do scanner: registro e reivindicação. */
+    private static void scanStorage(
+            TestContext context, VillagerEntity villager) {
+        ServerWorld world = context.getWorld();
+        Colony colony = VillageColonyMod.COLONIES.all().stream()
+                .findFirst().orElseThrow();
+
+        VillagerScanner.scan(
+                world, colony, VillageColonyMod.WORKERS,
+                VillageColonyMod.STORAGES);
+        VillageColonyMod.WORKERS.find(villager.getUuid()).orElseThrow()
+                .assign(ProfessionType.LUMBERJACK);
+        VillagerScanner.scan(
+                world, colony, VillageColonyMod.WORKERS,
+                VillageColonyMod.STORAGES);
     }
 
     private static void fillChest(

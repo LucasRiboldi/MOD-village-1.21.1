@@ -766,6 +766,23 @@ public class WorkerEquipmentGameTest implements FabricGameTest {
         context.complete();
     }
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "worker_colour",
+            tickLimit = 20)
+    public void oldBreederNameplateBecomesShepherd(TestContext context) {
+        VillagerEntity villager = spawn(context, new BlockPos(1, 1, 1));
+        villager.setCustomName(Text.literal("Criador"));
+        Worker worker = Worker.restore(
+                villager.getUuid(), UUID.randomUUID(), ProfessionType.SHEPHERD);
+
+        WorkerNameplate.label(context.getWorld(), List.of(worker));
+
+        context.assertTrue(villager.getCustomName() != null
+                        && "Pastor".equals(villager.getCustomName().getString()),
+                "o nome antigo não foi atualizado para Pastor");
+        villager.discard();
+        context.complete();
+    }
+
     /**
      * <b>Os dois jeitos de pôr trabalhador na arena não são o mesmo</b>
      * — P1.12, 2026-09-11.

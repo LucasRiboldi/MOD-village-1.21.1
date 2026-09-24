@@ -170,4 +170,67 @@ public class TreeNurseryGameTest {
 
         context.complete();
     }
+
+    /** A vila mantém dez viveiros, e não uma quantidade sem teto. */
+    //
+    // <b>Lote próprio e longe da arena</b> — 2026-09-24. O anel vai de 48 a
+    // 57 blocos, e os outros testes do lote tree_nursery plantam terra
+    // enraizada e muda nas arenas vizinhas, dentro desse raio: o teto de dez
+    // contava a base de outro teste e parava em 9 (1 falha em 8 rodadas).
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "tree_nursery_cap",
+            tickLimit = 100)
+    public void theNurseryStopsAtTenTrees(TestContext context) {
+        ServerWorld world = context.getWorld();
+        UUID colony = UUID.randomUUID();
+        BlockPos centre = context.getAbsolutePos(new BlockPos(8, 1, 8)).add(3000, 0, 3000);
+
+        FarmerNursery.clearAll();
+
+        for (int dx = -57; dx <= 57; dx++) {
+            for (int dz = -57; dz <= 57; dz++) {
+                int distance = dx * dx + dz * dz;
+
+                if (distance >= 48 * 48 && distance <= 57 * 57) {
+                    world.setBlockState(
+                            centre.add(dx, 0, dz), Blocks.SAND.getDefaultState());
+                }
+            }
+        }
+
+        for (int planted = 0; planted < 10; planted++) {
+            long now = world.getTime();
+            FarmerNursery.remember(
+                    colony, now - FarmerNursery.BETWEEN_PLANTINGS);
+
+            if (!FarmerNursery.plantIfItIsTime(world, colony, centre)) {
+                throw new AssertionError(
+                        "o viveiro parou antes de plantar as dez arvores: " + planted);
+            }
+        }
+
+        long now = world.getTime();
+        FarmerNursery.remember(colony, now - FarmerNursery.BETWEEN_PLANTINGS);
+
+        if (FarmerNursery.plantIfItIsTime(world, colony, centre)) {
+            throw new AssertionError("o viveiro plantou uma decima primeira arvore");
+        }
+
+        int rootedDirt = 0;
+        for (int dx = -57; dx <= 57; dx++) {
+            for (int dz = -57; dz <= 57; dz++) {
+                if (world.getBlockState(centre.add(dx, 0, dz))
+                        .isOf(Blocks.ROOTED_DIRT)) {
+                    rootedDirt++;
+                }
+            }
+        }
+
+        if (rootedDirt != 10) {
+            throw new AssertionError(
+                    "a vila deveria ter dez bases de viveiro, mas tem " + rootedDirt);
+        }
+
+        FarmerNursery.clearAll();
+        context.complete();
+    }
 }

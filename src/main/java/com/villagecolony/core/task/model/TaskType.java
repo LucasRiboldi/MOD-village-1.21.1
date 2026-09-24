@@ -24,6 +24,9 @@ public enum TaskType {
     /** Recolher recursos expostos da superfície, como areia e grama. */
     COLLECT_SURFACE_RESOURCE(Capability.COLLECT_SURFACE_RESOURCE, true, true),
 
+    /** Recolher terra longe da zona habitada da vila. */
+    COLLECT_SOIL(Capability.COLLECT_SOIL, true, true),
+
     /** Tosquiar ovelha e trazer a lã. */
     COLLECT_WOOL(Capability.COLLECT_WOOL, true, true),
 

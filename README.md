@@ -1,404 +1,199 @@
-<div align="center">
-
-<img src="src/main/resources/assets/villagecolony/icon.png" width="180" alt="Village Colony">
-
 # Village Colony
 
-### Suas vilas param de esperar por você.
-
-*Um mod Fabric que transforma vilas do Minecraft Vanilla em colônias que
-trabalham, produzem e crescem sozinhas.*
+Mod Fabric para Minecraft 1.21.1 que transforma vilas Vanilla em colônias
+autônomas. Os aldeões recebem profissões, usam baús reais, produzem recursos,
+plantam, mineram e constroem estruturas do próprio jogo sem exigir menu ou
+mod no cliente.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21.1-brightgreen)
 ![Fabric](https://img.shields.io/badge/Loader-Fabric-blue)
-![Ambiente](https://img.shields.io/badge/Lado-Servidor%20%7C%20Singleplayer-lightgrey)
 ![Versão](https://img.shields.io/badge/Vers%C3%A3o-0.3.0%20alpha-orange)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-informational)
 [![CI](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml/badge.svg)](https://github.com/LucasRiboldi/MOD-village-1.21.1/actions/workflows/ci.yml)
 
-### [⬇️ Baixar village-colony-0.3.0.jar](downloads/village-colony-0.3.0.jar?raw=1)
+Download: [village-colony-0.3.0.jar](downloads/village-colony-0.3.0.jar?raw=1)
 
-</div>
+SHA-256 do JAR publicado nesta árvore:
+`983638B6FE18D5814B4BC5A5192FBA23A0214FE31B59B6BA642B4A9B773DF81B`.
 
----
+## O que o mod faz
 
-## O que ele faz
+- Adota vilas Vanilla e mantém o estado no mundo, nos aldeões, baús e blocos.
+- Atribui profissões e garante camas e baús distintos para a fundação.
+- Usa receitas e blocos Vanilla em vez de inventário ou economia virtual.
+- Busca madeira, pedra, lã, comida, areia, terra, relva e minérios quando há
+  demanda real.
+- Planta e mantém até dez árvores da madeira do bioma, fora do centro da vila,
+  usando muda e terra enraizada.
+- Cria uma `BigHouseMOD` automaticamente para a fundação de cada vila.
+- Escolhe estruturas Vanilla permitidas pelo bioma e constrói uma por vez.
+- Revarre construções incompletas ciclicamente antes de abrir uma obra nova.
+- Cancela uma obra profissional quando o jogador coloca uma Tocha das Almas
+  dentro dela, liberando a fila; a `BigHouseMOD` é protegida dessa regra.
+- Evita sobreposição com estruturas existentes, projetos pendentes e blocos
+  físicos dentro da área vertical protegida.
 
-Você acha uma vila de planície. Você vai embora.
+O mod é alpha. A rede de testes é ampla, mas a rodada atual ainda tem uma
+falha obrigatória de GameTest e alguns fluxos dependem de playtest em um save.
+O diagnóstico completo está em
+[`docs/technical/Project-Audit-2026-09-21.md`](docs/technical/Project-Audit-2026-09-21.md).
 
-Quando volta, alguém andou cortando madeira. As toras estão num baú
-marcado com um machado. Outro alguém as transformou em tábuas. E onde
-havia grama na beira da rua, há uma casa que não estava lá antes.
+## Profissões e funções
 
-Ninguém mandou. **Você não abriu um único menu.**
+Estas são as oito funções operacionais atuais. `BREEDER` foi encerrado;
+saves antigos com esse código são carregados como `SHEPHERD`.
+`MANUFACTURER` não existe no código atual; documentos que usam esse nome estão
+desatualizados.
 
----
-
-## O que os seus aldeões fazem
-
-🪓 **O lenhador** anda até a árvore, derruba um bloco por vez — no tempo
-de um jogador com machado de ferro —, não carrega nada para casa porque
-a madeira vai direto para o baú dele, e replanta a muda antes de sair.
-
-⛏️ **O mineiro abre uma mina de verdade.** Ele anda até o fim da vila e
-desce cavando **em escada dupla** — duas colunas lado a lado, para quem
-sobe não esbarrar em quem desce —, de picareta de ferro, como todo
-trabalhador começa. A boca ganha um **arco de pedra com lanterna
-pendurada**, que é o que a faz ser vista de longe.
-
-A descida é um **caracol**: quatro lances de cinco degraus, cada um
-virando à direita do anterior, e a volta fecha **debaixo da própria
-boca** vinte blocos abaixo. É o que faz a mina não ter rastro — o fundo
-do nível fica sob a entrada.
-
-Lá embaixo a galeria **espirala**: dois anéis que se abrem em volta do
-poço, com um **bolsão** pendurado no meio de cada — mais parede exposta
-é mais minério à vista. Barreira à frente — bedrock, a casa de alguém,
-pedra sem onde pisar — e ela vira. Fechada a volta do nível, a mina
-**desce mais um**. Túnel e bolsões abrem **três blocos de altura**.
-
-**E o que você constrói dentro da mina fica de pé.** Escada, laje,
-tocha, trilho, porta: a picareta dele reconhece que aquilo não é rocha e
-passa ao lado.
-
-**Saiu água?** Ele tapa a nascente com pedregulho na hora e desvia a
-galeria.
-
-E ele **vê o minério** — todo tipo, pela etiqueta do próprio jogo —, e
-vai **no mais raro primeiro**: entre carvão no chão e diamante na
-parede, ele escolhe o diamante. A veia é seguida até acabar.
-
-Ele nunca cava vila gerada nem casa da colônia. A galeria vai sendo
-**acesa** com tocha enquanto ele avança.
-
-🐑 **O pastor** tosquia a ovelha e traz a lã. A ovelha continua viva e a
-lã volta a crescer.
-
-🔥 **O fundidor** transforma areia em vidro, ferro cru em lingote e
-arenito em arenito liso, pela receita de fornalha do próprio jogo.
-
-🪚 **O carpinteiro** tira tronco do baú, faz tábua pela receita do
-próprio jogo, e devolve. **Converte cerca de metade da madeira e deixa o
-resto em tora**. Também **descasca tronco**, monta **tocha** e monta
-**vidraça**.
-
-🧱 **O pedreiro** faz o mesmo do lado da pedra: lavra o que a obra pede
-em alvenaria — tijolo, escada, laje, arenito cortado. A cadeia dele tem
-três donos e é toda vanilla: o **mineiro** traz pedregulho, o
-**fundidor** o assa em pedra, e o pedreiro a lavra.
-
-🏠 **O construtor** levanta a casa um bloco por segundo, na beira de uma
-rua que já existe, com a **porta virada para a rua** e o piso no nível
-dela. **A colônia nunca inventa material**: o que falta, ele fabrica do
-que houver nos baús; o que não dá para fabricar, ele espera.
-
-**As casas são as do próprio Minecraft, e só elas.** O mod não inventa
-casa: cada vila levanta o que a pasta de estruturas do jogo tem para o
-bioma dela — planície, savana, taiga, nevada e deserto.
-
-**E não repete a mesma casa.** O catálogo do jogo tem dezenas de peças por
-bioma — 36 na planície — e muitas dividem a mesma pegada: oito casas
-pequenas diferentes ocupam o mesmo retângulo. Achado o lote, a colônia
-sorteia entre **todas** as que cabem ali, e não só a primeira delas.
-
-**Ela levanta moradia.** A pasta de estruturas guarda junto tudo que um
-lote da vila pode receber — cerca de bicho, ponto de encontro, templo,
-estábulo. A colônia constrói casa; a roça é decidida à parte, pela
-população.
-
-🌾 **O fazendeiro** colhe a lavoura madura, **replanta com a semente da
-própria colheita**, **semeia o canteiro vazio** com o que houver no baú
-dele, e guarda a comida. Quem diz se está madura é o **bloco**, e não
-uma lista escrita no mod.
-
-Cada um ganha um nome sobre a cabeça e um quadro pregado no baú, para
-você saber de relance quem é quem.
-
----
-
-## As oito profissões, em tabela
-
-### Quem é quem
-
-| | profissão | ferramenta inicial | o que ela faz | tarefa |
+| Código | Nome | Ferramenta inicial | Responsabilidade | Executor |
 |---|---|---|---|---|
-| 🪓 | **Lenhador** | machado de ferro | derruba a árvore um bloco por vez e replanta a muda | `COLLECT_WOOD` |
-| ⛏️ | **Mineiro** | picareta de ferro | cava a mina em caracol, espirala a galeria e segue o veio | `COLLECT_STONE` |
-| 🐑 | **Pastor** | tesoura | tosquia a ovelha, que continua viva | `COLLECT_WOOL` |
-| 🌾 | **Fazendeiro** | enxada de ferro | colhe, replanta, semeia canteiro vazio e **planta árvore na borda** | `COLLECT_FOOD` |
-| 🔥 | **Fundidor** | mãos livres | funde pela receita de fornalha do jogo | `SMELT_MATERIAL` |
-| 🪚 | **Carpinteiro** | mãos livres | tora → tábua, descasca viga, monta tocha e vidraça | `CRAFT_WOOD_MATERIAL` |
-| 🧱 | **Pedreiro** | mãos livres | pedra → tijolo, e a alvenaria que a obra pedir | `CRAFT_STONE_MATERIAL` |
-| 🏠 | **Construtor** | mãos livres | levanta a casa e a roça | `BUILD` |
-
-A ferramenta é a de **ferro**, e é onde ele começa: havendo uma melhor
-dentro do baú dele, o trabalhador troca. Quem julga "melhor" é o jogo,
-medindo a velocidade contra o bloco que aquela profissão quebra o dia
-inteiro — nenhuma escada de material está escrita no mod.
-
-### O que cada um guarda, e onde
-
-| profissão | onde guarda | o que entra no baú |
-|---|---|---|
-| **Lenhador** | o dele, e transborda para os da colônia | tora, muda, vara, maçã |
-| **Mineiro** | o baú da boca da mina primeiro, o dele com a sobra | pedregulho, arenito, carvão, ferro cru, cobre |
-| **Pastor** | só o dele | lã, na cor do rebanho |
-| **Fazendeiro** | só o dele | trigo, cenoura, batata, beterraba, as sementes e o viveiro de mudas |
-| **Fundidor** | de volta no baú de onde a matéria crua saiu | vidro, lingote de ferro, arenito liso, pedra, tijolo |
-| **Carpinteiro** | o da tora primeiro, os da colônia se não couber | tábua, tora descascada, tocha, vidraça |
-| **Pedreiro** | o da pedra primeiro, os da colônia se não couber | tijolo, vaso, e a alvenaria da obra — inclusive as sete variantes de arenito |
-| **Construtor** | não guarda — ele só retira | — |
-
-### Quanto a colônia quer de cada coisa
-
-| o quê | quanto | de onde sai a conta |
-|---|---|---|
-| **comida** | 8 por cama, nunca menos que 64 | a vila come todo dia |
-| **roça** | 1 a cada **15 aldeões** | uma zona de plantio por quinze moradores |
-| **pedra** | 64, ou o que a obra pedir se for mais | piso de estoque para a casa seguinte |
-| **madeira** | metade em tábua, metade em tora | a casa pede viga descascada, e viga não sai de tábua |
-| **lã** | o que as camas da obra pedirem | sem cama não nasce aldeão |
-| **ferramenta** | a melhor que houver no baú do trabalhador | trocada pela velocidade que o jogo mede |
-
-### A cadeia de produção, ponta a ponta
-
-**Toda peça que uma casa de vila pede tem dono** — e não só a peça da
-planta: a cadeia inteira até a folha. A estante pede tábua **e livro**; o
-livro pede papel **e couro**; o papel pede cana. Se um degrau não tiver
-quem o faça, a obra espera para sempre, e foi assim que uma biblioteca
-passou oito minutos parada esperando uma escada de pedregulho com 69
-pedregulhos no baú.
-
-Levantamento sobre as **189 peças distintas** das cinco vilas, seguindo
-cada receita até o fim:
-
-| quem | peças | o que cai aqui |
-|---|---|---|
-| 🪚 **carpinteiro** | 104 | tudo de madeira e o acabamento: tábua, porta, cerca, escada, cama, **livro, papel**, vidraça, tocha |
-| 🧱 **pedreiro** | 28 | alvenaria: pedra, tijolo, laje, muro, terracota, e as escadas de pedra |
-| 🔥 **fundidor** | 12 | o que sai da fornalha: vidro, lingote, pedra lisa, arenito liso |
-| ⛏️ **superfície** | 8 | areia, cascalho, argila, terra, neve, **sílex**, bloco de grama |
-| 🪓 **lenhador** | 10 | tronco, tronco descascado, muda |
-| 🌾 **fazendeiro** | 8 | cana, bambu, cacto, terra arada, trigo, **flor de jarro e flor-de-tocha** |
-| 🐑 **pastor** | 3 | **fio, saco de tinta, pele de coelho** — a matéria do couro |
-| ⛏️ **mineiro** | 1 | pedregulho, de onde desce quase toda a alvenaria |
-| 🌍 **o mundo** | 15 | água, lava, flor silvestre, capim — o que já está lá |
-
-**Nenhuma peça fica órfã.** Isso é verificado a cada bateria de testes por
-`StructureCoverageGameTest`, que relê as plantas do jogo, desce cada
-receita e **falha** se aparecer peça sem dono. A tabela acima sai do
-relatório dele, em `build/gametest/structure-coverage.txt` — para regerá-la,
-rode `gradlew runGametest`.
-
-**Onde o pastor entrou.** Ele não tinha nenhuma peça da cadeia até
-2026-09-18: fio, saco de tinta e pele de coelho eram órfãos, e a pele é
-matéria do couro que o livro pede. Foram para ele por serem de bicho, que é
-o mundo dele, e porque era quem tinha menos — a mesma razão levou a flor de
-jarro ao fazendeiro e o sílex à superfície.
-
-**O bloco no arquivo não é o item no baú.** A tocha pregada é `wall_torch` e
-o item é `torch`; o vaso com flor é `potted_dandelion` e o item é
-`flower_pot`; o caldeirão com água é `water_cauldron` e o item custa sete
-lingotes. Quem responde qual item vale é o próprio jogo, e não uma lista de
-nomes no mod — sem isso o levantamento acusava peça fabricável como se
-ninguém a fizesse, e uma lista de órfãos com falso positivo é pior que
-nenhuma: ela ensina a ignorar a lista.
-
----
-
-## As regras do jogo dele
-
-**Vanilla primeiro.** Os aldeões são aldeões comuns. Os baús são baús
-comuns. As receitas são as do jogo, perguntadas em tempo de execução —
-não copiadas para dentro do mod. **As casas são as do jogo.**
-
-**Nada é inventado.** Sem inventário virtual, sem contador abstrato de
-recurso, sem economia paralela. Se a colônia tem 40 tábuas, há 40 tábuas
-num baú que você pode abrir. Tire-as, e a colônia percebe.
-
-**A sua construção está segura.** A única coisa que um trabalhador
-quebra é árvore, e ele precisa provar que a árvore é árvore: tronco sem
-folha viva acima conta como construção, não como floresta.
-
-**Ele para sozinho.** A colheita acaba quando os baús enchem e recomeça
-quando você tira alguma coisa.
-
-**A casa nasce mobiliada, no estilo da vila.** Porta virada para a rua,
-piso no nível dela, e dentro uma cama, um baú e um lampião.
-
-**O lote é escolhido pelo volume, não pelo chão.** Se houver qualquer
-bloco dentro do espaço onde a casa vai, aquele lote não serve — e isso
-vale contra a **caixa inteira** de cada construção que já existe, para
-que uma obra nova nunca nasça em cima de outra.
-
-**A base precisa ser plana de verdade.** Noventa por cento das colunas do
-lote têm de estar no mesmo nível, e a casa assenta **nesse** nível, não
-no da rua. Sem as duas metades, uma casa erguida sobre terreno alto fica
-pairando com um vão sob o piso.
-
-**O que não tem item é montado no lugar.** O vaso com cacto, a água, a
-lava e o caldeirão não existem como item no Minecraft — ninguém poderia
-trazê-los de um baú. A colônia os monta do que tem: o vaso sai de três
-tijolos, e o cacto é colhido.
-
-**Nada é recusado para sempre.** O que o mod olhou e rejeitou volta a
-ser olhado depois de um tempo.
-
-**A colônia fabrica o que a obra pede.** Se falta a porta e sobra tábua,
-o construtor faz a porta.
-
-**E guarda metade do cru.** Metade do arenito fica sem ser assado, para o
-pedreiro ter o que lavrar — senão a fornalha consome o estoque inteiro e
-o arenito cortado, que sai do cru, nunca aparece. É a mesma regra que já
-preservava metade da madeira em tronco.
-
-**A fornalha mantém um pouco de cada.** Sem obra pedindo, ela assa uma
-pilha de cada peça, para a casa seguinte não esperar a produção começar
-do zero. Quando a obra pede, ela manda.
-
-**Qualquer espécie, qualquer cor.** A porta pode ser de qualquer madeira e
-a cama de qualquer cor: a planta grava uma variante, e esperar exatamente
-por ela é esperar tinta que ninguém fabrica.
-
-**A primeira obra de toda vila é uma casa.** Roça, estábulo e oficina vêm
-depois — a obra mais cara de conseguir não se gasta no que não abriga
-ninguém.
-
-**O fazendeiro planta árvore na borda.** Quando varre o raio e não acha
-lavoura, ele põe terra enraizada e um rebento da madeira do bioma. É o
-que dá madeira a uma vila de deserto, onde não há floresta ao alcance.
-
-**O dia inteiro é dia de trabalho.** Enquanto houver sol, os
-trabalhadores estão buscando recurso ou trabalhando. A última hora de
-luz é deles para voltar para casa, e a noite é para dormir.
-
----
-
-## O ciclo
-
-```text
-   vila achada  →  aldeões contratados  →  madeira cortada  →  tábua feita  →  casa erguida
-        ↑                                                                          │
-        └──────────────────────  a casa nova tem camas  ←──────────────────────────┘
-
-O que já funciona
-
-✅ Oito profissões	lenhador, mineiro, pastor, fundidor, carpinteiro, pedreiro, construtor e fazendeiro
-✅ A cadeia da madeira, ponta a ponta	cortar → fabricar tábua → levantar casa
-✅ A mina	descida em caracol, galeria em espiral, bolsões, veio de minério, água tapada, arco de pedra com lanterna
-✅ A roça	a colônia levanta a mesma roça que vem na vila, e o fazendeiro semeia o canteiro
-✅ O que você constrói fica de pé	escada, laje e tocha que você puser dentro da mina não viram picareta
-✅ Cada profissão com sua cor	nome sobre a cabeça, oito cores distintas
-✅ Ferramenta de ferro para todos	e quem tiver melhor no baú troca por ela
-✅ Metade da madeira fica em tora	o carpinteiro não moe o estoque inteiro
-✅ Metade do arenito fica cru	o fundidor deixa o que o pedreiro vai lavrar
-✅ A fornalha mantém um pouco de cada	e foca no que a obra pedir
-✅ O fazendeiro planta árvore	terra enraizada e o rebento do bioma, na borda da vila
-✅ Cacto, vaso e argila	a cadeia inteira: argila → tijolo → vaso, e o cacto colhido pelo topo
-✅ Qualquer espécie, qualquer cor	porta de qualquer madeira, cama de qualquer cor
-✅ A primeira obra é sempre uma casa	roça e oficina vêm depois
-✅ Nada nasce em cima de nada	a caixa da obra é conferida contra tudo que já está de pé
-✅ Casas do próprio Minecraft	planície, savana, taiga, nevada e deserto
-✅ A colônia nunca inventa material	o que falta é fabricado; o que não dá, ela espera
-✅ Regra 3	vila gerada e construção da colônia são intocáveis
-✅ Sem menu nenhum	nada de GUI, nada de item de configuração
-✅ Servidor dedicado	quem entra não precisa do mod no cliente
-O que ainda não está fechado
+| `MINER` | Mineiro | Picareta de ferro | Abre e amplia a mina, coleta pedra, areia e minério | `MinerWork` |
+| `LUMBERJACK` | Lenhador | Machado de ferro | Derruba árvores, coleta madeira e participa do viveiro | `LumberjackWork` |
+| `MASON` | Pedreiro, equivalente ao ferreiro do catálogo | Nenhuma | Produz alvenaria e peças de pedra exigidas pelas obras | `CraftingWork` |
+| `SMELTER` | Fundidor | Pá de ferro com Silk Touch | Funde materiais e coleta areia, terra ou relva sob demanda | `SmelterWork` |
+| `CARPENTER` | Carpinteiro | Nenhuma | Processa madeira, tochas, vidraças e peças derivadas | `CraftingWork` |
+| `FARMER` | Agricultor/Fazendeiro | Enxada de ferro | Mantém lavouras e planta árvores do viveiro | `FarmerWork` |
+| `SHEPHERD` | Pastor | Tesoura | Coleta lã e mantém a cadeia de materiais de origem animal | `ShepherdWork` |
+| `BUILDER` | Construtor | Nenhuma | Reserva lotes, repara e assenta estruturas | `BuilderWork` |
+
+Compatibilidade: `BREEDER` é convertido para `SHEPHERD` ao ler saves antigos.
+Agricultor e
+carpinteiro continuam profissões completas: estão no registro, podem ser
+atribuídos, recebem tarefas e participam do crescimento normal. A exceção é
+apenas física: não têm cama ou baú fundacional dentro da `BigHouseMOD`.
+
+## Regras do mod
+
+### Fundação e aldeões
+
+1. Toda vila adotada cria uma `BigHouseMOD` uma única vez.
+2. A `BigHouseMOD` é uma cópia editada da big house Vanilla e não altera a
+   estrutura Vanilla original.
+3. A casa contém somente seis camas e seis baús para `MINER`, `LUMBERJACK`,
+   `MASON`, `SMELTER`, `SHEPHERD` e `BUILDER`.
+4. Agricultor e carpinteiro continuam existindo e trabalhando normalmente, mas
+   não recebem cama ou baú reservados dentro da `BigHouseMOD`; esses dois
+   conjuntos foram omitidos somente para liberar a porta e o acesso à escada.
+5. Cada titular recebe cama `HOME` e um baú próprio dentro da casa.
+6. A `BigHouseMOD` não entra no catálogo de casas ou oficinas profissionais.
+
+### Profissões, recursos e rotina
+
+1. O mundo é a fonte da verdade; os baús são inventários reais.
+2. A colônia só cria demanda por material quando há trabalho que o utiliza.
+3. As receitas são consultadas do jogo e não duplicadas em uma tabela paralela.
+4. A melhor ferramenta disponível pode substituir a ferramenta inicial.
+5. O mineiro não cava estruturas Vanilla, construções da colônia ou blocos
+   protegidos e, no deserto, reavalia a frente após areia ou cascalho cair.
+6. O mineiro coleta todos os blocos quebrados, inclusive o excedente levado ao
+   baú ou deixado como overflow no chão.
+7. A entrada de mina rejeita água próxima e procura uma posição seca, distante,
+   acessível e preferencialmente voltada para terreno alto.
+8. O agricultor e o lenhador compartilham o viveiro: até dez árvores da madeira
+   do bioma, com muda sobre terra enraizada no anel mais distante acessível.
+9. O viveiro não cresce indefinidamente e árvores naturais não contam como
+   árvores marcadas da vila.
+10. O trabalho ocorre durante o expediente; noite e retorno ao alojamento são
+    respeitados.
+
+### Construção e seleção de lotes
+
+1. Somente estruturas Vanilla explicitamente permitidas por bioma podem ser
+   escolhidas pelas profissões.
+2. A `BigHouseMOD` nasce pela fundação e nunca é escolhida como obra comum.
+3. A sequência de crescimento intercala casa e obra não residencial; o próximo
+   tipo não residencial deve ser diferente do anterior.
+4. O primeiro projeto profissional é uma casa.
+5. O lote precisa ser acessível, apoiado em terreno natural válido e livre de
+   estruturas, blocos existentes e projetos pendentes.
+6. A verificação cobre a pegada inteira, todas as colunas acima do nível-base e
+   uma janela absoluta de 25 blocos acima de toda a área.
+7. Uma construção nunca pode nascer sobre uma casa, rua protegida, fundação,
+   bloco elevado ou outra obra registrada.
+8. O construtor conclui o último bloco como `COMPLETED`; a obra não volta para
+   a fila ao terminar.
+9. Depois de concluir, abandonar ou liberar uma obra, o planejador tenta uma
+   reparação cíclica de uma construção incompleta antes de abrir outra.
+10. Uma tentativa sem progresso cede a vez para a fila avançar, mas permanece
+    elegível para uma varredura posterior.
+11. Uma Tocha das Almas, inclusive a versão de parede, dentro do volume de
+    uma obra profissional aberta cancela a reserva/projeto e as tarefas `BUILD`.
+    Uma construção parcial sai do registro, mas os blocos já colocados ficam no
+    mundo; a tocha também fica. A fundação `BigHouseMOD` é ignorada.
+12. Blocos colocados pelo jogador e estruturas da vila permanecem protegidos.
+
+## Construções e biomas
+
+O catálogo profissional está em
+`src/main/java/com/villagecolony/fabric/work/HousePlans.java` e é validado
+contra os nomes reais do Minecraft 1.21.1. As famílias permitidas são:
+
+- Planície: casas, oficinas, fazendas, currais, estábulos e lampião.
+- Deserto: casas, oficinas, fazendas, currais e lampião.
+- Savana: casas, oficinas, fazendas, currais e lampião.
+- Taiga: casas, oficinas, fazendas, curral e lampião.
+- Tundra nevada: casas, oficinas, fazendas, currais e lampião.
+
+O detalhe dos IDs e a regra da estrutura própria estão em
+[`src/main/resources/data/villagecolony/structure/houses/README.md`](src/main/resources/data/villagecolony/structure/houses/README.md).
+
+## Instalação
+
+Requisitos: Minecraft Java 1.21.1, Fabric Loader compatível, Fabric API e
+Java 21. Coloque o JAR e a Fabric API na pasta `mods`. O servidor precisa do
+mod; clientes que entram em um servidor dedicado não precisam instalá-lo.
+Use um mundo de teste: o mod corta árvores, minera e coloca blocos no mundo.
+
+## Desenvolvimento e verificação
+
+```powershell
+./gradlew.bat test
+./gradlew.bat build
+./gradlew.bat runGametest
+python -m unittest discover -s tests
+```
 
-A lista viva e datada está em STATE.md, e a lista completa
-em TODO.md. O que segue é o resumo.
+Verificação de 2026-09-21:
 
-**O estado honesto, em 2026-09-19:** a vila **produz, escolhe lote e
-constrói** — e ainda não fechou uma casa numa sessão de jogo. A cadeia foi
-percorrida degrau a degrau: índice de ruas, Regra 3, volume do lote, baú
-cheio, material do pedreiro, arenito cru esgotado, vaso sem item,
-acavalamento — e o bloqueio de agora é **madeira**.
+- 960 testes unitários em 103 suítes: aprovados.
+- 74 testes Python: aprovados.
+- 397 GameTests: 396 passaram e 1 falhou.
+- Falha atual: `FarmPlanGameTest.thenextturnafterahouseisnonresidential`.
 
-Uma vila de deserto não tem floresta ao alcance. Por isso o fazendeiro
-planta; e por isso a madeira é a única coisa entre o estado de hoje e a
-primeira casa fechada.
+## Estado e nota da auditoria
 
-| o quê | estado |
-|---|---|
-| Madeira numa vila sem floresta | 🔴 o viveiro planta, e a muda precisa crescer |
-| `ColonyDetectionGameTest` falha 2 de 2 na base | 🔴 pré-existente, causa em aberto (sempre 24 de 30) |
-| Acavalamento em obra aberta | ⚙️ no código e em teste unitário, sem gametest |
-| Degradação ao longo de muitos ciclos | 🟠 nada mede |
-| Impasse entre profissões | 🟠 sem teste |
+Nota técnica global desta varredura: **7,0/10**.
 
-**O JAR 0.3.0 desta linha** tem SHA-256 `F4CB1A0FC7162B806016F566C5D26D808DA2F325604A904F9922607AD906E23A`.
+Arquitetura e isolamento: **8,0/10**. A separação `core`/`fabric` é protegida
+por teste e o grafo atualizado não encontrou ciclos de importação.
 
-**Como o projeto investiga:** instrumentar antes de consertar. Três
-defeitos de 09-19 foram decididos **numa única leitura** depois de
-instrumentados — e a instrumentação chegou a pegar um erro de quem a
-escreveu.
+Funcionalidade: **7,0/10**. O ciclo de vila, fundação, mineração, viveiro,
+seleção segura de lotes e reparo existem, mas a alternância de obras ainda tem
+uma regressão reproduzível.
 
-    Profissões que o modelo econômico prevê e ninguém escreveu — a lista
-    inteira, com as razões, está em
-    Village-Economy.md:
-    Profissão	Por quê	Prioridade
-    Pecuarista	Couro, carne, ovo, leite — nenhuma entra na vila hoje	★★★★
-    Transportador	Hoje cada um guarda no próprio baú	★★★★
-    Armazenista	Estoque central e tarefa criada por escassez	★★★★
-    Guarda	A defesa, que o modelo prevê	★★★
-    Explorador	Define a área de expansão	★★
+Testes: **7,0/10**. Há 960 unitários e 397 GameTests, porém a bateria não está
+verde e existe uma instabilidade histórica de spawn do fundidor.
 
-Instalação
+Manutenção e documentação: **6,0/10**. Os documentos principais foram
+alinhados nesta auditoria, mas há arquivos Java grandes, documentos históricos
+com nomenclatura antiga e uma política de versões que merece decisão.
 
-Requisitos
+Release: **7,0/10**. CI, build e artefato estão presentes; o CI não deve ser
+considerado liberável enquanto o GameTest obrigatório falhar.
 
-Minecraft	1.21.1 (Java Edition)
-Loader	Fabric
-Dependência	Fabric API
+Consulte a lista priorizada de erros, melhorias, inconsistências e conflitos em
+[`docs/technical/Project-Audit-2026-09-21.md`](docs/technical/Project-Audit-2026-09-21.md)
+e a fila viva em [`TODO.md`](TODO.md).
 
-Passos
+## Documentos de entrada
 
-    Instale o Fabric Loader para 1.21.1.
+- [`CLAUDE.md`](CLAUDE.md): regras para trabalhar no repositório.
+- [`STATE.md`](STATE.md): estado vivo e pendências de playtest.
+- [`TODO.md`](TODO.md): backlog canônico.
+- [`docs/decisions/`](docs/decisions/): decisões arquiteturais.
+- [`docs/behavioral-tests/`](docs/behavioral-tests/): estratégia e falhas de
+  GameTest.
+- [`docs/technical/Project-Audit-2026-09-21.md`](docs/technical/Project-Audit-2026-09-21.md):
+  auditoria desta varredura.
 
-    Ponha a Fabric API na pasta mods.
-
-    Baixe o village-colony-0.3.0.jar, confira o SHA-256 publicado no
-    STATE.md e ponha-o ao lado dela.
-
-    Abra o jogo, carregue um mundo, e ache uma vila.
-
-Funciona em singleplayer e em servidor dedicado. Quem entra num servidor
-que tem o mod não precisa instalá-lo no cliente.
-
-    Atualizando de uma versão anterior: apague o jar antigo da pasta
-    mods. O Fabric recusa carregar dois jars do mesmo mod.
-
-Onde olhar
-
-A colônia conta o que está fazendo no log do servidor. Os trabalhadores
-trabalham o dia claro inteiro e param na última hora de luz para voltar
-para casa — se você chegar de noite, use /time set noon e eles começam.
-Antes de instalar
-
-Isto é um alpha, e o número da versão diz a verdade. O mod carrega em
-cliente e em servidor dedicado. A cadeia da madeira, a mina e a roça já
-foram vistas funcionando numa vila de verdade. As profissões mais novas
-ainda estão sendo acertadas.
-
-Use num mundo de teste antes de usar no seu mundo de sempre. Ele mexe no
-mundo: derruba árvore, cava pedra e levanta casa.
-Desenvolvimento
-
-Se você chegou aqui para contribuir ou entender como o mod é feito:
-
-    CLAUDE.md — o ponto de entrada para quem vai trabalhar no código
-
-    STATE.md — o estado vivo, o que está aberto agora
-
-    TODO.md — a lista de pendências
-
-    TODO-archive.md — o histórico
-
-    PROJECT_CONSTITUTION.md — os princípios
-
-    docs/decisions/ — as ADRs de arquitetura
-
-<div align="center">
-
-Licença MIT · Feito para Minecraft 1.21.1 com Fabric
-</div>
+Licença MIT. Feito para Minecraft 1.21.1 com Fabric.

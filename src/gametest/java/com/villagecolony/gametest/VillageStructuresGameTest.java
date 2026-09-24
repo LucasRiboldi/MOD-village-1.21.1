@@ -5,6 +5,7 @@ import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.VillageStructures;
 import com.villagecolony.fabric.work.HousePlans;
+import com.villagecolony.fabric.work.PlanPlacement;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
@@ -12,6 +13,7 @@ import net.minecraft.test.TestContext;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A Regra 27 — o construtor só levanta o que está no catálogo do jogo.
@@ -118,7 +120,7 @@ public class VillageStructuresGameTest implements FabricGameTest {
      * <p>O corte é legítimo: ele serve à <b>busca de lote</b>, que o
      * comentário do {@code PLANS_OFFERED} registra em dez minutos. O que
      * mudou é que as irmãs voltam <b>depois</b> do lote achado, por
-     * {@code HousePlans.siblingsOf}.
+     * {@code PlanPlacement.siblingsOf}.
      *
      * <p><b>Por que em jogo e não no unitário.</b> Ler a pegada de uma
      * planta é ler o {@code .nbt} do jogo, e a pergunta aqui é
@@ -236,6 +238,180 @@ public class VillageStructuresGameTest implements FabricGameTest {
                         !house.path().contains("zombie"),
                         "a colônia ia levantar uma ruína: " + house);
             }
+        }
+
+        context.complete();
+    }
+
+    /**
+     * O catálogo do mod é uma lista fechada de peças Vanilla — 2026-09-20.
+     *
+     * <p>Os nomes vieram da lista pedida em jogo, mas foram corrigidos para
+     * os ids reais do Minecraft: por exemplo,
+     * {@code desert_cartographer_house_1},
+     * {@code savanna_small_farm} e os postes de luz fora de {@code houses}.
+     * Qualquer peça fora desta relação é uma escolha que o autor não
+     * autorizou.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_catalog")
+    public void onlyTheCorrectedVanillaWhitelistIsBuildable(TestContext context) {
+        Map<String, Set<String>> expected = Map.of(
+                "plains", Set.of(
+                        "village/plains/houses/plains_small_house_1",
+                        "village/plains/houses/plains_small_house_2",
+                        "village/plains/houses/plains_small_house_3",
+                        "village/plains/houses/plains_small_house_4",
+                        "village/plains/houses/plains_small_house_5",
+                        "village/plains/houses/plains_small_house_6",
+                        "village/plains/houses/plains_small_house_7",
+                        "village/plains/houses/plains_small_house_8",
+                        "village/plains/houses/plains_medium_house_1",
+                        "village/plains/houses/plains_medium_house_2",
+                        "village/plains/houses/plains_big_house_1",
+                        "village/plains/houses/plains_armorer_house_1",
+                        "village/plains/houses/plains_butcher_shop_1",
+                        "village/plains/houses/plains_butcher_shop_2",
+                        "village/plains/houses/plains_cartographer_1",
+                        "village/plains/houses/plains_fisher_cottage_1",
+                        "village/plains/houses/plains_fletcher_house_1",
+                        "village/plains/houses/plains_library_1",
+                        "village/plains/houses/plains_library_2",
+                        "village/plains/houses/plains_masons_house_1",
+                        "village/plains/houses/plains_shepherds_house_1",
+                        "village/plains/houses/plains_tannery_1",
+                        "village/plains/houses/plains_temple_3",
+                        "village/plains/houses/plains_temple_4",
+                        "village/plains/houses/plains_tool_smith_1",
+                        "village/plains/houses/plains_weaponsmith_1",
+                        "village/plains/houses/plains_small_farm_1",
+                        "village/plains/houses/plains_large_farm_1",
+                        "village/plains/houses/plains_animal_pen_1",
+                        "village/plains/houses/plains_animal_pen_2",
+                        "village/plains/houses/plains_animal_pen_3",
+                        "village/plains/houses/plains_stable_1",
+                        "village/plains/houses/plains_stable_2",
+                        "village/plains/plains_lamp_1"),
+                "desert", Set.of(
+                        "village/desert/houses/desert_small_house_1",
+                        "village/desert/houses/desert_small_house_2",
+                        "village/desert/houses/desert_small_house_3",
+                        "village/desert/houses/desert_small_house_4",
+                        "village/desert/houses/desert_small_house_5",
+                        "village/desert/houses/desert_small_house_6",
+                        "village/desert/houses/desert_small_house_7",
+                        "village/desert/houses/desert_small_house_8",
+                        "village/desert/houses/desert_medium_house_1",
+                        "village/desert/houses/desert_medium_house_2",
+                        "village/desert/houses/desert_armorer_1",
+                        "village/desert/houses/desert_butcher_shop_1",
+                        "village/desert/houses/desert_cartographer_house_1",
+                        "village/desert/houses/desert_fisher_1",
+                        "village/desert/houses/desert_fletcher_house_1",
+                        "village/desert/houses/desert_library_1",
+                        "village/desert/houses/desert_mason_1",
+                        "village/desert/houses/desert_shepherd_house_1",
+                        "village/desert/houses/desert_tannery_1",
+                        "village/desert/houses/desert_temple_1",
+                        "village/desert/houses/desert_temple_2",
+                        "village/desert/houses/desert_tool_smith_1",
+                        "village/desert/houses/desert_weaponsmith_1",
+                        "village/desert/houses/desert_farm_1",
+                        "village/desert/houses/desert_farm_2",
+                        "village/desert/houses/desert_large_farm_1",
+                        "village/desert/houses/desert_animal_pen_1",
+                        "village/desert/houses/desert_animal_pen_2",
+                        "village/desert/desert_lamp_1"),
+                "savanna", Set.of(
+                        "village/savanna/houses/savanna_small_house_1",
+                        "village/savanna/houses/savanna_small_house_2",
+                        "village/savanna/houses/savanna_small_house_3",
+                        "village/savanna/houses/savanna_small_house_4",
+                        "village/savanna/houses/savanna_small_house_5",
+                        "village/savanna/houses/savanna_small_house_6",
+                        "village/savanna/houses/savanna_small_house_7",
+                        "village/savanna/houses/savanna_small_house_8",
+                        "village/savanna/houses/savanna_medium_house_1",
+                        "village/savanna/houses/savanna_medium_house_2",
+                        "village/savanna/houses/savanna_armorer_1",
+                        "village/savanna/houses/savanna_butchers_shop_1",
+                        "village/savanna/houses/savanna_cartographer_1",
+                        "village/savanna/houses/savanna_fisher_cottage_1",
+                        "village/savanna/houses/savanna_fletcher_house_1",
+                        "village/savanna/houses/savanna_library_1",
+                        "village/savanna/houses/savanna_mason_1",
+                        "village/savanna/houses/savanna_shepherd_1",
+                        "village/savanna/houses/savanna_tannery_1",
+                        "village/savanna/houses/savanna_temple_1",
+                        "village/savanna/houses/savanna_temple_2",
+                        "village/savanna/houses/savanna_tool_smith_1",
+                        "village/savanna/houses/savanna_weaponsmith_1",
+                        "village/savanna/houses/savanna_small_farm",
+                        "village/savanna/houses/savanna_large_farm_1",
+                        "village/savanna/houses/savanna_animal_pen_1",
+                        "village/savanna/houses/savanna_animal_pen_2",
+                        "village/savanna/savanna_lamp_post_01"),
+                "taiga", Set.of(
+                        "village/taiga/houses/taiga_small_house_1",
+                        "village/taiga/houses/taiga_small_house_2",
+                        "village/taiga/houses/taiga_small_house_3",
+                        "village/taiga/houses/taiga_small_house_4",
+                        "village/taiga/houses/taiga_small_house_5",
+                        "village/taiga/houses/taiga_medium_house_1",
+                        "village/taiga/houses/taiga_medium_house_2",
+                        "village/taiga/houses/taiga_medium_house_3",
+                        "village/taiga/houses/taiga_medium_house_4",
+                        "village/taiga/houses/taiga_armorer_house_1",
+                        "village/taiga/houses/taiga_armorer_2",
+                        "village/taiga/houses/taiga_butcher_shop_1",
+                        "village/taiga/houses/taiga_cartographer_house_1",
+                        "village/taiga/houses/taiga_fisher_cottage_1",
+                        "village/taiga/houses/taiga_fletcher_house_1",
+                        "village/taiga/houses/taiga_library_1",
+                        "village/taiga/houses/taiga_masons_house_1",
+                        "village/taiga/houses/taiga_shepherds_house_1",
+                        "village/taiga/houses/taiga_tannery_1",
+                        "village/taiga/houses/taiga_temple_1",
+                        "village/taiga/houses/taiga_tool_smith_1",
+                        "village/taiga/houses/taiga_weaponsmith_1",
+                        "village/taiga/houses/taiga_small_farm_1",
+                        "village/taiga/houses/taiga_large_farm_1",
+                        "village/taiga/houses/taiga_animal_pen_1",
+                        "village/taiga/taiga_lamp_post_1"),
+                "snowy", Set.of(
+                        "village/snowy/houses/snowy_small_house_1",
+                        "village/snowy/houses/snowy_small_house_2",
+                        "village/snowy/houses/snowy_small_house_3",
+                        "village/snowy/houses/snowy_small_house_4",
+                        "village/snowy/houses/snowy_small_house_5",
+                        "village/snowy/houses/snowy_small_house_6",
+                        "village/snowy/houses/snowy_small_house_7",
+                        "village/snowy/houses/snowy_small_house_8",
+                        "village/snowy/houses/snowy_medium_house_1",
+                        "village/snowy/houses/snowy_medium_house_2",
+                        "village/snowy/houses/snowy_armorer_house_1",
+                        "village/snowy/houses/snowy_butchers_shop_1",
+                        "village/snowy/houses/snowy_cartographer_house_1",
+                        "village/snowy/houses/snowy_fisher_cottage",
+                        "village/snowy/houses/snowy_fletcher_house_1",
+                        "village/snowy/houses/snowy_library_1",
+                        "village/snowy/houses/snowy_masons_house_1",
+                        "village/snowy/houses/snowy_shepherds_house_1",
+                        "village/snowy/houses/snowy_tannery_1",
+                        "village/snowy/houses/snowy_temple_1",
+                        "village/snowy/houses/snowy_tool_smith_1",
+                        "village/snowy/houses/snowy_weapon_smith_1",
+                        "village/snowy/houses/snowy_farm_1",
+                        "village/snowy/houses/snowy_animal_pen_1",
+                        "village/snowy/houses/snowy_animal_pen_2",
+                        "village/snowy/snowy_lamp_post_01"));
+
+        for (String style : STYLES) {
+            Set<String> actual = VillageStructures.buildableFor(style).stream()
+                    .map(ResourceId::path)
+                    .collect(java.util.stream.Collectors.toSet());
+            context.assertTrue(
+                    actual.equals(expected.get(style)),
+                    "lista Vanilla incorreta para " + style + ": " + actual);
         }
 
         context.complete();

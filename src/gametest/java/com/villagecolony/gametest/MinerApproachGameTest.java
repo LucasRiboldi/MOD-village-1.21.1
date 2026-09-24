@@ -1,5 +1,6 @@
 package com.villagecolony.gametest;
 
+import com.villagecolony.fabric.work.MinerApproach;
 import com.villagecolony.fabric.work.MinerWork;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
@@ -82,8 +83,8 @@ public class MinerApproachGameTest implements FabricGameTest {
         BlockPos ledge = context.getAbsolutePos(LEDGE);
         BlockPos pit = context.getAbsolutePos(PIT);
 
-        BlockPos fromLedge = MinerWork.approachTo(world, stone, ledge);
-        BlockPos fromPit = MinerWork.approachTo(world, stone, pit);
+        BlockPos fromLedge = MinerApproach.approachTo(world, stone, ledge);
+        BlockPos fromPit = MinerApproach.approachTo(world, stone, pit);
 
         // <b>A propriedade, e não uma coordenada.</b> Fixar a posição
         // exata amarraria o teste à ordem do APPROACH_OFFSETS, que é
@@ -119,7 +120,7 @@ public class MinerApproachGameTest implements FabricGameTest {
 
         context.setBlockState(highLeg, Blocks.STONE.getDefaultState());
 
-        BlockPos landing = MinerWork.climbableWalkTarget(
+        BlockPos landing = MinerApproach.climbableWalkTarget(
                 context.getWorld(), worker, highLeg);
 
         context.assertTrue(

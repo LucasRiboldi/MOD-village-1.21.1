@@ -123,6 +123,17 @@ public final class VillageChests {
                 continue;
             }
 
+            // Os seis baús da BigHouseMOD pertencem aos moradores dela.
+            // Sem este filtro, a casa nova vira estoque público antes que
+            // a fundação termine de registrar os seis trabalhadores.
+            if (BigHouseFoundation.containsHouseBlock(pos)) {
+                continue;
+            }
+
+            if (VanillaBedChests.isPrivateBedChest(world, pos)) {
+                continue;
+            }
+
             if (!VillageChestRule.mayTake(nameOf(chest))) {
                 // Nomeado pelo jogador: é dele, e a colônia passa longe.
                 continue;

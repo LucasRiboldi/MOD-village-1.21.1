@@ -1,27 +1,352 @@
 # TODO
 
-**Atualizado:** 2026-09-20, correção do acavalamento de obras e da frente arenosa após análise do log.
+**Atualizado:** 2026-09-24. Playtest real de ~6h30 analisado (5 colonias,
+221.814 linhas de log). **Dois erros novos, E47 e E48** — ver "Erros
+abertos" abaixo. Achado central: um construtor ficou preso fisicamente
+longe do lote por 3h30 seguidas (E47), o que impediu qualquer obra de
+terminar e por consequencia a alternancia casa/infraestrutura nunca
+escolheu casa (E48) — zero "house is up" na sessao inteira. `VC_ACTIVITY`
+(Task 7) confirmado funcionando em jogo pela primeira vez: 1.132 linhas.
+
+Sessao anterior: Tasks 3-13 do plano de confiabilidade operacional
+concluidas (10 implementadas, 2 investigadas e recusadas por decisao, 1
+ja coberta antes da sessao). Task 14 (verificacao + playtests): a parte
+automatizada fechou verde — `gradlew test` 992/992, `gradlew build`
+sucesso, `runGametest --rerun-tasks` 423/423 GAME TESTS COMPLETE. O JAR
+0.3.0 foi publicado por decisao do autor antes dos playtests confirmarem
+(ver `docs/proxima-sessao.md`); este playtest de 24-09 e o primeiro
+resultado real contra ele.
+
+## Pendências de correção levantadas pela avaliação — viabilidade (2026-09-24)
+
+Ordem recomendada. O esforço e o risco são estimativa; o aceite é o que a
+próxima avaliação mede.
+
+| # | Correção | Esforço / risco | Aceite |
+|---|---|---|---|
+| 1 ✅ | Limite de **tempo** para o planejador (`SweepDeadline`, 15 ms) — **feito**, ⬜ ver `cycle_over_tick` cair em jogo | baixo / baixo | `cycle_over_tick` cai; C13 ≥ 3 |
+| 2 ✅ | Cota ajustável (`PlanningBudget`), e em jogo **só a vila foco planeja e é sondada** (`VillageFocus`, decisão do autor) — **feito** | baixo / baixo | teste unitário da regra |
+| 3 | Registro único de estado de servidor (`resetAll`) no lugar de 78 `clearAll` à mão | médio / baixo | teste de inscrição; C05 ≥ 3 |
+| 4 | Matar sobreviventes do PIT (`MineShaft`, `ProfessionAssigner`, `ColonyCycle`) | médio / nulo | C08 ≥ 85% |
+| 5 | JaCoCo na bateria de jogo (cobertura do `fabric`) | baixo-médio / nulo | cobertura do `fabric` medida |
+| 6 | PR do branch para a `main` (85 commits) | baixo / publica | CI verde no PR — **pede aval do autor** |
+| 7 | `STATE.md` até 150 linhas | baixo / nulo | contagem |
+| 8 | 39 avisos de javadoc e 2 variáveis sem uso | baixo / nulo | C10 = 4 |
+| 9 | Ciclo de tarefa comum aos 7 ofícios | alto / médio | `JOBS` ≤ 2, `giveUp` = 1 — **ADR antes** |
+| 10 | Regras de decisão do `fabric` para o `core` | médio-alto / médio | teste unitário e PIT cobrem as regras — **ADR antes** |
+
+Não recomendados:
+- trocar o `ordinal()` usado como prioridade, que é deliberado e documentado;
+- reescrever o `toResourceType`, que é uma tabela legítima.
+
+## Avaliação técnica 2026-09-24 — B (3,21/4) — `docs/technical/avaliacao/2026-09-24-17613fa/RELATORIO.md`
+
+As recomendações, cada uma com um aceite que a próxima avaliação mede
+(metodologia em `docs/technical/avaliacao/METODOLOGIA.md`):
+
+- [ ] 🔴 **R1**: atacar o custo do ciclo. **C13 de 1 para ≥3.** Medido no log de
+  24-09 (196 ciclos lentos): o **planejador é 91% do custo** (49,9 s de 54,7 s;
+  média 255 ms, máx 554 ms), a detecção 8%, e baús, ofícios e atribuição
+  somam menos de 1%. A causa: `PlannerTurns.PER_CYCLE = 8`, com 8 colônias
+  carregadas, e cada uma varre até 1.024 colunas. A cota foi calibrada em
+  09-15 com 2,5 ms por colônia; hoje custa cerca de 30 ms.
+- [ ] 🟠 **R2**: estado global num contexto por servidor. **C05 ≤ 3/kLOC**, sem
+  `clearAll` à mão no ciclo de vida.
+- [ ] 🟠 **R3**: ciclo de tarefa comum aos 7 ofícios. **`JOBS` de 8 para ≤2** e
+  **`giveUp` de 6 para 1**.
+- [ ] 🟠 **R4**: levar o branch para a `main` por PR. Distância ≤ 10 commits.
+- [ ] 🟡 **R5**: `STATE.md` ≤ 150 linhas.
+- [ ] 🟡 **R6**: sobreviventes do PIT (`MineShaft`, `ProfessionAssigner`,
+  `ColonyCycle`). **C08 ≥ 85%.**
+- [ ] 🟡 **R7**: tabelas de `if` viram `Map`/`switch`. CC máx ≤ 20.
+- [ ] 🟡 **R8**: JaCoCo no `runGametest` para medir o `fabric`.
+- [ ] 🟢 **R9**: convenção de mensagem de commit (sem prefixo < 10%).
+- [ ] 🟢 **R10**: história datada sai dos comentários ao tocar o arquivo
+  (C11 ≤ 0,6).
+
+## Qualidade e verificação — 2026-09-24 (pesquisa de métodos, decisão do autor)
+
+- [x] **1. CI nos branches `codex/**`** (`0b1e8b6`). Antes o CI só rodava na `main`.
+- [x] **2. PIT no core** (`987edc9`): `./gradlew pitest`, 77% das mutações
+  mortas, força de teste 86%. No CI roda sem reprovar e sobe o relatório.
+  - [ ] 🟡 Matar os sobreviventes: `MineShaft` 37, `ProfessionAssigner` 13,
+    `ColonyCycle` 12, `Building` 12.
+- [x] **3. GameTests intermitentes isolados** (`668c915` e `4590e4c`):
+  lote na rocha, viveiro de dez e `ChestMarker`. Três rodadas 433/433,
+  mas ainda sem prova de cura; seguir medindo por repetição.
+- [x] **4. spark instalado** em `mods` (1.10.109, SHA-512 conferido), com
+  o procedimento em `docs/technical/Profiling-spark.md` (`e91f6be`).
+  ⬜ gravar o perfil no próximo playtest (196 ciclos acima de um tique).
+- [x] **5. Error Prone só com avisos** (`7040c23`). Código morto removido.
+  - [ ] 🟡 72 avisos restantes, quase todos de javadoc (InvalidLink 24,
+    MissingSummary 12, NotJavadoc 7); `EnumOrdinal` 7, `LongDoubleConversion` 4.
+- [x] **6. fabric-loader-junit** (`0ed2e52`). Teste unitário lê o registro;
+  as tags não, porque vêm do datapack do servidor.
+- [ ] 🟢 **7. Testes de cliente (`fabric-client-gametest`)**: guardado
+  para o futuro por decisão do autor. Serviria para ver placa, nome e
+  quadro sem playtest (screenshot + XVFB no CI).
+- [x] **8. JaCoCo** (`987edc9`): `build/reports/jacoco/test/html`.
+- [x] **9. Arquivos de produção abaixo de 500 linhas**: os 17 foram
+  divididos por movimento puro, com 33 classes novas (`42cf8a6` a
+  `4596c8d`). Cada lote passou por build e bateria completa, e as strings
+  de log continuam idênticas. Os arquivos de **teste** acima de 500 linhas
+  (`MinerGameTest` 5802, `BuildSiteGameTest` 2471…) ficaram de fora.
+- [x] **10. Depuração de mixin** em todo run de desenvolvimento (`15bdcfd`).
+- [~] **11. Hooks** (`d98bcff`): os scripts estão prontos e testados.
+  ⬜ o autor liga no `.claude/settings.json` (trecho em `scripts/hooks/README.md`).
+- [x] **12. Analisador de log** com 19 assinaturas e as peças mais
+  esperadas (`99e1ac0`).
+
+## Revisão de naturalidade 2026-09-24 (docs/technical/Revisao-Naturalidade-2026-09-24.md)
+
+Decisão do autor aplicada no mesmo dia. Todos os itens têm teste
+automatizado; nenhum foi visto em jogo.
+
+- [x] 🔴 **N1**: fundação uma vez, 1 aldeão por cama da BigHouseMOD, sem
+  reposição; `VillageMeals` para a procriação (`fc9d9b8`). ⬜ ver em jogo
+  um filhote nascer e ganhar ofício.
+- [~] 🔴 **N2**: recusado pelo autor; a BigHouseMOD fica.
+- [x] 🔴 **N3**: equivalente antes da peça pronta, 119 → 102 automáticas (`bd7072e`).
+- [~] 🔴 **N4**: fica como está por ora (decisão do autor).
+- [x] 🟠 **N5**: a rua já era `dirt_path` desde o P0.7; nada a fazer.
+- [x] 🟠 **N6/N7**: ficam ligados; placa em topo + 5 (`8e78fa7`). ⬜ ver a leitura em jogo.
+- [~] 🟠 **N8**: recusado; o viveiro fica em `rooted_dirt`.
+- [x] 🟡 **N9**: casa → oficina de ofício → o que sobrou (`4590e4c`).
+- [x] 🟡 **N10**: tampão da escada da fuga (`553faaa`).
+- [x] 🟡 **N11**: alcance 24 + 2 por cama (`74a273a`).
+- [ ] 🟡 Lenhador, mineiro e construtor não têm oficina no catálogo
+  Vanilla, e o N9 os pula. Falta o autor dizer se algum deve ter.
+- [ ] 🟡 `TreeNurseryGameTest.theNurseryStopsAtTenTrees` falhou 1 vez em
+  8 rodadas (9 árvores de 10). Não mexi; talvez seja a mesma instabilidade
+  de `aVillageOnBedrockStillHasLots`.
+
+## Plano de confiabilidade operacional (docs/superpowers/plans/2026-09-23-operational-reliability.md)
+
+- [x] **Task 1 — elegibilidade unificada de trabalho:** ja commitada em sessao
+  anterior (WorkAssignmentTest, 419/419 GameTests).
+- [x] **Task 2 — peca de construcao parcial:** ja commitada em sessao anterior
+  (ConstructionOutcomeTest, BuildProgressGameTest, 421/421 GameTests).
+- [x] **Task 3 — politica e custo do scanner separados:** `ScanReport` e
+  `ScanRefusalReason` (LOT/BED/ROAD/TERRAIN) por fatia de varredura;
+  `PlannerTurns` delega ao novo `ColonyScanScheduler` reutilizavel. O
+  GameTest `bedAndRoadRefusalsAreIndependent` tinha footprint de rua menor
+  que a area do cenario e foi corrigido. `runGametest --rerun-tasks`:
+  **422/422 GameTests**. Commit `a953489`.
+- [x] **Task 4 — migracoes de save idempotentes:** `SaveMigration.migrate`
+  roda antes de qualquer leitor em `ColonySavedData.readNbt`, com
+  `saveVersion` monotonico. Escopo reduzido de proposito: `MineSave.SHAPE_VERSION`
+  ficou intocado (decisao com o autor — ja testado em producao, semantica de
+  descarte deliberado). `SaveMigrationTest` cobre idempotencia, normalizacao
+  de `BREEDER`, e preservacao de versao futura. `runGametest --rerun-tasks`:
+  **422/422 GameTests**. Commit `04a6f1e`.
+- [x] **Task 5 — recuperacao pura de mina:** `MineRecovery.recover(Mine)`
+  extrai a decisao (NO_ACTION/REROUTE/EXHAUST_MOUTH) que ja vivia dentro de
+  `MineDigging.rerouteOrBlameTheMouth`. Vocabulario proprio, nao os nomes
+  do plano original (decisao tomada com o autor). `runGametest --rerun-tasks`:
+  **422/422 GameTests**. Commit `5a12ec3`.
+- [x] **Task 6 — integrar recuperacao de mina sem reconstruir portal/arco:**
+  ja estava implementada antes desta sessao. Conferido lendo o codigo real:
+  `furnishAndLight` so roda em mina nova/boca oposta valida/boca nova apos
+  helices esgotadas; arco so sobe uma vez; prioridade do carvao ja coberta
+  por `MinerGameTest.priorityRunsFromCoalDownToTheRareOnes`. Nenhum codigo
+  novo necessario; sem commit proprio.
+- [x] **Task 8 — armazem fisico por snapshot:** `WarehouseIndex` (reserva
+  por ciclo, `reserveBatch` ordenado por `SupplyPriority`, fotografia
+  incompleta bloqueia tudo). `WarehouseIndexTest` (9 casos). ADR-024 (o
+  plano pedia ADR-023, ja usado pela Task 2). Commit `a1599ac`.
+- [ ] **Task 9 — investigada e NAO implementada, por decisao.** O
+  cenario central do plano ("bau cheio pausa o produtor sem perder item")
+  ja esta coberto por dois mecanismos corretos e apropriados ao contexto:
+  `MinerWork.java` (reativo — encerra a tarefa quando `haul.stored()==0`,
+  log "the chest that serves him is full", 2026-09-22) e
+  `ColonySupply.craft` (preventivo — `firstWithRoomFor` verifica espaco
+  ANTES de fabricar, recusa sem gastar ingrediente). Reescrever
+  `ColonyChests`/`ChestInventoryReader`/`MinerHaul`/`ColonySupply` para
+  rotear por `WarehouseIndex` trocaria codigo fisico ja testado por uma
+  abstracao sem resolver defeito real observado. O terceiro ponto do
+  plano ("route sticks, apples, and saplings") e o **E38 ja catalogado**
+  (`TODO.md`, linha ~148) como decisao de projeto pendente, nao lacuna
+  tecnica — fora de escopo de uma integracao mecanica de armazem.
+  Revisitar `WarehouseIndex`/Task 9 se um playtest real mostrar duas
+  tarefas reservando o mesmo estoque escasso no mesmo ciclo, caso que os
+  dois mecanismos atuais nao cobrem.
+- [ ] **Task 10 — investigada e NAO implementada, por decisao.** O plano
+  pedia fixar `UUID.randomUUID()` por identidade fixa em
+  `ShepherdGameTest`/`SmelterGameTest`/`ConstructionResumeGameTest` para
+  resolver E4/E21. Conferido no codigo: nesses tres arquivos o UUID e
+  sempre chave de mapa opaca (`Colony.create(UUID.randomUUID(), ...)`),
+  nunca hasheado para derivar geometria/direcao — diferente do caso real
+  ja corrigido em `SurfaceGatheringGameTest` (sessao anterior a esta).
+  Fixar esses UUIDs nao mudaria determinismo nenhum. E4 e E21 foram
+  investigadas e fechadas (ver a tabela de historico, entradas E4/E21)
+  por falta de evidencia e obsolescencia, respectivamente — nao ha mais
+  causa a diagnosticar que justifique `OperationalMatrixGameTest`.
+- [x] **Task 11 — observar inventario da vila sem mutar crescimento:**
+  `VillageInventory` (raio-x imutavel: adultos, camas, profissoes, obras
+  completas/ativas, cobertura de bau, recursos observados) montado por
+  `VillageInventoryObserver.observe`, que nunca chama
+  `ConstructionPlanner.plan`. `ColonyProfession`/`ChestCoverage`
+  espelham `ProfessionType`/`ChestSurvey` em `core/colony/model` —
+  decisao tomada com o usuario, path exato do plano em vez de mover para
+  `core/coordination`. `VillageInventoryObserverTest` (unit puro) nao
+  foi criado: `observe()` depende de `ServerWorld` real, sem precedente
+  de mock no projeto. Cobertura real no GameTest novo
+  `observingInventoryDoesNotChangeHouseAlternation`
+  (`FarmPlanGameTest`). `runGametest --rerun-tasks`: **423 testes,
+  422/423** (unica falha e a intermitencia pre-existente conhecida).
+  Commit `c6b4abf`.
+- [x] **Task 7 — traco circular de atividade persistido:** `ActivityTrace`
+  (16.384 eventos/colonia) persistido em `ColonySavedData` via
+  `ActivityTraceSave`. **Limite de escopo conhecido:** so
+  `WorkerStrikes.gaveUp` gera evento — e o unico ponto com UUID de
+  trabalhador disponivel de fato. `IdleLog` (waiting/recovered, 45
+  chamadores, por colonia+assunto sem trabalhador identificavel) fica de
+  fora; se um dia fizer sentido rastrear "colonia sem executor" no traco,
+  precisa de um desenho novo (workerId opcional, ou evento por colonia em
+  vez de por trabalhador). `runGametest --rerun-tasks`: 421/422 em duas
+  rodadas (unica falha e a intermitencia pre-existente conhecida). Commit
+  `ae1bef6`.
+- [ ] **Task 7 — traco de atividade persistido e limitado** (ActivityTrace,
+  16.384 eventos por colonia).
+- [ ] **Task 8 — contrato do armazem fisico** (WarehouseIndex, SupplyRequest,
+  ADR-023).
+- [ ] **Task 9 — observar baus e rotear pedidos fisicamente**
+  (WarehouseObserver).
+- [ ] **Task 10 — nao implementada.** Ver entrada detalhada acima: E4 e
+  E21 foram investigadas e fechadas (falta de evidencia / obsolescencia),
+  e o UUID dos tres testes que a task pedia fixar nao tem efeito sobre
+  determinismo. Sem motivo remanescente para a task.
+- [x] **Task 11 — observar inventario da vila sem mutar crescimento:**
+  `VillageInventory`/`VillageInventoryObserver`, GameTest
+  `observingInventoryDoesNotChangeHouseAlternation`. Ver entrada
+  detalhada acima. Commit `c6b4abf`.
+- [x] **Task 12 — endurance com seed fixa:** `EnduranceReport`/
+  `LatencySummary`; E41 descoberto ja fechado (ver acima). Commit
+  `d25faf4`.
+- [x] **Task 13 — auditoria de exclusao e evidencia de release:**
+  `RemovalAudit` (3 motivos, `PATIENCE_ABANDONMENT` cobre
+  `WAITING_RESOURCES` e `BUILDING`), `scripts/release_manifest.py`
+  (compara 3 hashes SHA-256, `--dry-run`). `runGametest --rerun-tasks`:
+  **422/423** (unica falha e a intermitencia conhecida). Commit
+  `e16d363`.
+- [~] **Task 14 — verificacao completa, playtests de save e handoff de
+  release.** Parte automatizada (passo 1) **feita**: `gradlew test`
+  992/992 zero falha, `gradlew build` sucesso, `runGametest --rerun-tasks`
+  **423/423 GAME TESTS COMPLETE** na rodada final. **Passo 2 (cinco
+  playtests reais) continua pendente** — nao foi observado nesta
+  sessao. **Passos 3-4 foram executados por decisao explicita do autor,
+  antes dos playtests** — SHA-256 `C1244064...` copiado para
+  `build/libs/`, `downloads/` e mods (as tres copias comparadas
+  identicas), `release_manifest.py --dry-run` confirmou. Isso diverge
+  do que o plano original pede ("only close a save playtest after
+  observed user confirmation") e do que esta mesma entrega recomendava
+  horas antes; registrado aqui para honestidade, nao como o caminho
+  normal. Os cinco itens de playtest continuam sem confirmacao e devem
+  ser verificados assim que possivel — ver `docs/proxima-sessao.md`.
+
+**Atualizado:** 2026-09-24, peca de construcao sem apoio mantida pendente.
+
+**Auditoria técnica:** [`docs/technical/Project-Audit-2026-09-21.md`](docs/technical/Project-Audit-2026-09-21.md).
+Nesta sessao: uma obra que pede uma peca sem rota fisica no bioma recebe a peca
+final no bau que atende o construtor. A verificacao percorre receitas Vanilla;
+alternativas e cadeias locais, como `argila -> fornalha -> terracota`, continuam
+sob responsabilidade dos oficios. A rodada atual de `runGametest` executou 410
+testes, 408 aprovados; restam duas falhas independentes: alternancia de
+`FarmPlanGameTest` e a fixture de terra de `SurfaceGatheringGameTest`. Os 76
+testes Python da auditoria passaram nesta sessao.
+
+## Entrega 2026-09-23 - telemetria, BigHouse e baus Vanilla
+
+- [x] **P1.4 - telemetria de atividade:** `VC_ACTIVITY` registra espera,
+  recuperacao, erro operacional e abandono por profissao, atividade e motivo
+  controlado. O analisador le o formato, migra o historico para esquema 2 e
+  inclui a tabela de atividades no relatorio.
+- [x] **P1.4 - BigHouse no nivel da rua:** o NBT perdeu apenas a base original
+  e desceu um nivel; as seis camas, seis baus e a porta foram preservados.
+  `BigHouseModBlueprintGameTest` cobre dimensoes, contagem de blocos e porta.
+- [x] **P1.4 - bau seguro por cama Vanilla:** no primeiro reconhecimento de
+  vila, cada cama original do agrupamento so recebe bau quando quarto, porta,
+  parede, suporte, tampa e orientacao forem inequivocos. A BigHouse e excluida;
+  nenhum ciclo de trabalhador cria ou tenta novamente o bau, e o estoque
+  publico ignora os baus privados conformes.
+- [ ] **Playtest P1.4:** com uma vila Vanilla ainda nao adotada, confirmar que
+  apenas quartos validos recebem um bau ao lado da cama, que a BigHouse nao e
+  alterada e que `VC_ACTIVITY` aparece no `latest.log` apos espera/recuperacao
+  ou abandono controlado.
+
+## Playtest 2026-09-22, 20:07 — tres defeitos corrigidos, nenhum confirmado em jogo
+
+- [x] 🔴 **Obra terminada recomecando:** `BuilderWork.placeOne` risca sem assentar (`ladder`, `wall_torch`, por *nothing holds it*), a obra e dada por terminada com `0 blocks placed`, e o reparo reencontra a mesma lacuna a cada trinta segundos. Como a vaga de obra e unica, o laco impedia qualquer construcao nova. O planejador compara os blocos de pe da abertura com os do fechamento e nao repete tentativa que nao avancou. `FoundationRepairGameTest.aRepairThatPlacedNothingIsNotOpenedAgain`.
+- [x] 🔴 **Terracota branca sem rota real:** a familia tem rota na receita (argila → fornalha → terracota) e nao no mundo — o fundidor passou a sessao inteira sem achar argila. Passada a carencia de dez ciclos, a peca preferida e depositada no bau da obra. A constante saiu do log: cinco ciclos foi a espera mais longa atendida, vinte a que nunca foi. `BuilderGameTest.aRouteThatNeverDeliversStopsHoldingTheBuild`.
+- [x] 🔴 **Mina cavada sem fim:** bau cheio, pedregulho no chao quarenta e sete vezes, mineiro alternando entre duas posicoes. O `took 0` nao era da picareta — a hipotese da ferramenta foi testada contra o log e revertida. Bau cheio encerra a tarefa. `MinerGameTest.aFullChestStopsTheMinerInsteadOfPilingStoneOnTheFloor`, verificado por mutacao.
+- [ ] 🔴 **Playtest dos tres:** reabrir o save e confirmar que nenhuma obra terminada reabre, que a terracota aparece no bau e a obra anda, e que o mineiro para com o bau cheio. JAR instalado com SHA-256 `73deea9739...`.
+- [x] 🟠 **P1.2 - peca sem apoio permanece parcial:** `ladder`, `wall_torch`
+  e equivalentes nao saem da planta nem contam como progresso quando o apoio
+  fisico falta. O projeto persiste motivo e assinatura do entorno; o construtor
+  encerra a tarefa e o planejador so abre outra quando essa assinatura mudar.
+  `ConstructionOutcomeTest`, `ConstructionProjectTest`, `ConstructionSaveTest`
+  e `BuildProgressGameTest`.
+- [ ] 🟠 **Playtest P1.2:** em um save, deixar uma peca sem apoio falhar,
+  confirmar que a obra permanece parcial sem nova tarefa repetida, criar o
+  apoio e confirmar que uma unica tarefa volta a abrir e conclui a peca.
+
+## Fila operacional 2026-09-22
+
+O relatorio atual, incluindo responsabilidades, fluxo de obra, suprimento por
+bioma e estatistica do `latest.log`, esta em
+[`docs/technical/Operational-Status-2026-09-22.md`](docs/technical/Operational-Status-2026-09-22.md).
+Ordem canonica desta sessao: P0 fechar os GameTests residuais; P1 reproduzir as
+repeticoes medidas de mina/obra/atribuicao; P2 reduzir a leitura repetida de
+baus e medir o resultado em save; P3 endurance. Nao tratar contagem de log
+como defeito confirmado sem contexto e regressao automatizada.
 
 ## Próximas atividades corrigíveis sem acessar o jogo
 
 Esta fila separa falhas reproduzíveis ou coberturas que podem ser tratadas
 com código e testes locais das validações que continuam dependendo de um save.
 
-- [x] 🔴 **P0.8 — fundação absoluta da vila:** toda vila detectada garante as oito funções ativas (`MINER`, `LUMBERJACK`, `MASON`, `SMELTER`, `CARPENTER`, `FARMER`, `BREEDER` e `BUILDER`), com adulto, cama `HOME` e baú próprio. `VillageFoundationGameTest` passou; a criação só usa blocos substituíveis e não sobrescreve construções.
-- [ ] Playtest P0.8: entrar em um save com vila recém-detectada e confirmar os oito aldeões, suas camas, seus baús e a ausência de sobreposição com estruturas existentes.
+- [x] **Criador encerrado:** `SHEPHERD` assume vagas, fundação, tarefas, nome e baú do antigo `BREEDER`; saves antigos são migrados na leitura. Unitarios e GameTests de nome, bau, fundacao e trabalho do Pastor passaram.
+- [x] **Cadeia da terracota da obra:** a peca exata continua preferida, mas a tag Vanilla de terracotas pode substitui-la; `CLAY` alimenta a fornalha para terracota neutra. O `CARPENTER` ainda fabrica o fermentador pela receita Vanilla quando houver haste e pedregulho; sem rota local para a haste, a politica de suprimento da obra entrega o fermentador final. Os tres GameTests de substituicao, cadeia de argila e bolas de argila falharam antes da correcao e passam depois.
+- [x] **Suprimento de obra sem rota no bioma:** a construcao consulta sua familia de alternativas e a arvore de receitas Vanilla. Se nenhuma rota local existir, a peca preferida aparece no bau da obra quando demandada; se qualquer rota existir, ela permanece tarefa dos oficios. `BuilderGameTest` cobre fermentador sem haste de blaze e porta de carvalho em planicie.
+- [x] **Inventario por bioma das plantas construtiveis:** `ConstructionSupplyAuditGameTest` le todos os 143 NBTs permitidos e registra, por estilo, as estruturas, recursos por rota local, itens automaticos e blocos formados no local. O resultado versionado esta em `docs/technical/Auditoria-2026-09-22-Suprimento-Estruturas-Vanilla.md`.
+- [x] **P2.1 — leitura de baus do ciclo:** estoque, capacidade de `WOOD` e capacidade de `PLANKS` agora saem da mesma fotografia por ciclo; a varredura continua sem carregar chunks. `StorageGameTest.theSurveyKeepsCapacityForWoodAndPlanks` compara slots vazios, pilhas parciais e item do jogador com a regra de deposito anterior.
+- [ ] **Medir P2.1 no save:** confirmar, pela linha `Colony cycle took`, se o ciclo que mediu 112 ms fica abaixo de 50 ms. O teste automatizado prova equivalencia funcional, nao milissegundos de uma maquina real.
+- [ ] Playtest da migração: abrir save antigo, confirmar Pastor sobre a cabeça, tesoura no baú e continuidade das tarefas; testar Tocha das Almas dentro de uma obra real e observar liberação da fila, sem esperar demolição.
+- [x] **P0.8/P1.2 — pegada da `BigHouseMOD` reservada:** a busca e a retomada recusam qualquer lote que use uma coluna horizontal da fundacao, mesmo em outra altura ou com projeto pendente. `BuildSiteGameTest.noProfessionLotCanUseTheBigHouseFootprint` falhou antes da correcao e passou depois.
+- [x] **P0.8/P1.2 — BigHouse fundacional nao vira reparo profissional:** o save real tinha projetos `big_house_mod` na mesma origem de casas concluidas. O reparador ignora essa estrutura exclusiva, e a retomada descarta o reparo antigo antes de tocar no terreno. Dois GameTests falharam antes da correcao e passaram depois; um terceiro preserva o reparo de casas profissionais.
+- [ ] Playtest da pegada e do reparo: reabrir o mesmo save e confirmar que o projeto `big_house_mod` antigo desaparece, a casa permanece intacta e o proximo lote profissional nao usa nenhuma coluna de sua pegada. Nao cancelar manualmente a fundacao.
+
+- [x] 🔴 **P0.9 — catálogo e terreno seguro:** as construções do mod agora usam somente a whitelist explícita de ids Vanilla reais por bioma; areia e relva são coletadas pelo fundidor quando uma obra pede o recurso, enquanto terra comum virou solo do fazendeiro com raio protegido ampliado; bocas de mina rejeitam água, exigem entrada livre e preferem a posição seca mais distante/elevada. `VillageStructuresGameTest`, `SurfaceGatheringGameTest` e `MinerGameTest` passaram.
+- [x] 🔴 **P0.10 — reparo cíclico de obras:** depois de concluir, abandonar ou liberar uma obra parada, o planejador varre construções registradas pelo mod, recompõe a planta a partir dos blocos que ainda existem e tenta fechar a incompleta antes de abrir outra. Uma tentativa sem avanço cede uma passagem e é repetida depois, sem travar a vila. `ConstructionProjectTest` e `BuildingRegistryTest` passaram.
+- [x] 🟠 **P0.11 — reserva de árvores da vila:** agricultor e lenhador compartilham o viveiro do bioma, plantam em terra enraizada no anel distante de 48 a 56 blocos do centro e param ao atingir dez árvores marcadas. `TreeNurseryGameTest.theNurseryStopsAtTenTrees` passou.
+- [ ] Playtest P0.10/P0.11: confirmar no save que uma obra abandonada é retomada sem duplicar blocos, que uma tentativa impossível não congela a fila e que cada vila mantém dez árvores fora do centro.
+- [x] **Residual de `FarmPlanGameTest.thenextturnafterahouseisnonresidential` fechado em 22-09:** o defeito era do cenário, não de `HousePlans`. O teste registrava a casa anterior só no registro de construções; desde o reparo cíclico (P0.10), `ConstructionPlanner.plan` roda `BuildingRepairPlanner.open` antes da alternância, e o reparo adotava essa casa sem blocos (0 de pé contra 151 da planta) e a devolvia como obra nova. O cenário agora assenta a planta no mundo antes de planejar. Três rodadas de `runGametest`: 409/410 antes, teste verde nas duas seguintes, a última 410/410 completa. A regra de alternância não foi tocada.
+- [x] Residual de `SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted`: não repetiu na rodada completa de 21-09; manter a fixture em observação antes de alterar a coleta do fundidor.
+- [x] 🔴 **P0.8 — fundação absoluta da vila:** toda vila detectada cria a `BigHouseMOD`, cópia editada da big house Vanilla sem móveis/decorações, com seis camas e seis baús distintos. Os seis titulares (`MINER`, `LUMBERJACK`, `MASON`, `SMELTER`, `SHEPHERD` e `BUILDER`) recebem adulto, cama `HOME` e baú dentro dela; `FARMER` e `CARPENTER` continuam profissões ativas, mas sem cama/baú fundacionais na casa, e entram normalmente no crescimento. A Vanilla permanece intacta. `VillageFoundationGameTest` passou.
+- [ ] Playtest P0.8: entrar em um save com vila recém-detectada e confirmar a `BigHouseMOD`, os seis aldeões, suas camas, seus baús e a ausência de sobreposição com estruturas existentes.
 - [ ] 🔴 **E42 — impasse entre profissões:** criar o GameTest da roça fora do alcance do fazendeiro, com duas passagens do planejador, e corrigir a fila se a segunda passagem não abrir o projeto de casa.
-- [ ] 🟠 **E43 — descanso ignorado:** decidir se o descanso de quatro ciclos deve impedir a reatribuição na segunda passagem de `WorkAssignment`, depois registrar a decisão em teste e corrigir o fluxo escolhido.
-- [ ] 🟠 **P1.1 — trabalhador ocioso sem `COLLECT_STONE` ou `CRAFT_WOOD`:** adicionar uma regressão ponta a ponta para criação do pedido, atribuição ao ofício correto e execução; investigar a mesma raiz do caso de peça de construção já corrigido.
-- [ ] 🟠 **Intermitência de `SurfaceGatheringGameTest`:** estabilizar a fixture do aldeão criado fora da arena e reproduzir a ausência no `ServerWorld` antes de alterar coleta ou timeout.
+- [x] 🟠 **E43 — descanso respeitado:** a decisao 1A torna uma capacidade em descanso inelegivel para toda reserva de `WorkAssignment`; `WorkAssignmentTest` falhou antes da retirada do fallback e `ColonyCycleGameTest.aRestingMinerLeavesTheStoneTaskAvailable` protege o registro usado em jogo. A rodada completa passou com 419/419.
+- [ ] Playtest E43: com o JAR desta entrega, provocar uma desistência do mineiro e confirmar que `COLLECT_STONE` fica disponivel pelos quatro ciclos de descanso antes de nova reserva.
+- [x] 🟠 **P1.1 — trabalhador ocioso sem `COLLECT_STONE` ou `CRAFT_WOOD`:** `CraftingGameTest.theCycleOpensTheCraftingTaskByItself` cobre `CRAFT_WOOD`; `MinerGameTest.theCycleAssignsStoneToTheMinerAndItReachesTheChest` parte de um mineiro ocioso e prova pedido, reserva para o oficio correto e entrega no bau, sem tarefa criada pelo cenario. A bateria passou com 414/414.
+- [x] 🟠 **Intermitencia de `SurfaceGatheringGameTest` fechada em 22-09.** A falha era da fixture: alvo e trabalhador nasciam 65 ou 97 blocos fora da arena, numa direcao derivada de `UUID.randomUUID()`, e por vezes a entidade nao era registrada pelo mundo de teste. Os quatro cenarios agora mantem alvo e trabalhador na arena; somente o centro e o bau da colonia ficam alem do raio protegido. UUIDs fixos fazem o fallback de setor apontar para leste. Tres `runGametest --rerun-tasks` consecutivos passaram com 413/413; os quatro GameTests seguem cobrindo coleta e raio protegido.
 - [ ] ⚙️ **E38 — resíduos no inventário pessoal:** definir o destino sustentável de varas, maçãs e mudas antes de alterar armazenamento ou descarte.
-- [ ] 🟠 **E41 — endurance:** criar uma verificação de muitos ciclos para detectar degradação, tarefas acumuladas ou custo crescente; ainda é lacuna de cobertura, não defeito reproduzido.
+- [x] 🟠 **E41 — endurance: fechada em 11-09, esta entrada estava desatualizada.** `ColonyEnduranceGameTest.theColonyDoesNotAccumulateAcrossTwoHundredCycles` (P1.13) roda 200 ciclos com baú vazio como fonte de trabalho infinita, mede deriva (não valor absoluto) em quatro contagens — total de tarefas, fila aberta, obras registradas, baús registrados —, descontando 50 ciclos de aquecimento. Nunca falhou em nenhuma das onze rodadas completas de `runGametest --rerun-tasks` desta sessão (24-09).
 - [x] 🟠 **P1.3 — casas consecutivas:** o log mostrou `house → house`. `HousePlans` agora alterna `casa → tipo não residencial A → casa → tipo não residencial B`, exclui o tipo A anterior e mantém todas as famílias sob o mesmo `BuildSiteScanner`; `HousePlansTest` e o GameTest de rotação passaram.
 - [ ] Playtest P1.3: confirmar no save a sequência casa, infraestrutura A, casa e infraestrutura B diferente de A.
 
 - [x] 🔴 **E44 residual — perna da boca acima do degrau:** o log confirmou que o recálculo de `job.approach` não limitava a perna efetivamente entregue por `WorkTargets`. `MinerWork` agora escolhe um patamar pisável dentro de `CLIMB`; `MinerApproachGameTest` cobre a queda abaixo da boca e a suíte passou com **379/379 GameTests**. Falta confirmar no mundo que o mineiro volta a entregar pedra.
 - [x] 🔴 **P1.2 — obra retomada sobre estrutura existente:** `BuildSiteScanner` agora rejeita interseção com peças de estruturas Vanilla da vila, blocos físicos ocupados e volumes já registrados, inclusive durante a retomada de projeto salvo. `BuildSiteGameTest.theResumedProjectRejectsAnOccupiedVolume` reproduz o caso físico.
+- [x] 🔴 **P1.2 — zona sobre construção existente:** a seleção consulta peças Vanilla referenciadas pela `StructureAccessor`, inclusive quando o início está em outra chunk, e a `BigHouseMOD` rejeita telhados ou outros blocos de construção como camada de apoio. `BigHouseFoundationGameTest.theFoundationDoesNotStartOnTopOfAnExistingBuilding` reproduz a falha que aceitava o lote.
+- [x] 🔴 **P1.2 — projeto pendente reserva o lote no carregamento:** o save agora participa da consulta de sobreposição antes de `ConstructionPlanner.resume`, e `BigHouseFoundation.ensure` não duplica uma `BigHouseMOD` ainda pendente. `BigHouseFoundationGameTest.aPendingProjectStillReservesItsSavedBox` e `aPendingBigHouseIsNotPlacedAgain` cobrem a janela observada no log de 21-09.
+- [x] 🔴 **P1.2 — volume vertical do lote:** a varredura agora testa todas as colunas a partir do nível-base comum da obra; degraus, blocos voando e restos de outra construção dentro da caixa real recusam o lote antes de iniciar a casa. `BuildSiteGameTest.anElevatedColumnInsideTheBaseRefusesTheLot` reproduz a falha e passa após a correção.
+- [x] 🔴 **P1.2 — folga vertical absoluta de 25 blocos:** nenhum lote, projeto pendente ou fundação da `BigHouseMOD` aceita um bloco físico na janela completa acima da pegada. `BuildSiteGameTest.aBlockTwentyFiveAboveTheLotRefusesTheLot` e `BigHouseFoundationGameTest.theFoundationRejectsABlockTwentyFiveAboveTheFloor` cobrem o limite.
+- [x] 🟠 **P1.2 — cancelamento manual por Tocha das Almas:** colocar uma Soul Torch dentro de uma obra profissional cancela a zona, o projeto, as tarefas e o registro parcial, liberando o ciclo; a `BigHouseMOD` não é cancelada. `ConstructionCancellationGameTest` cobre os dois contratos.
+- [x] 🔴 **P1.2 — obra não desaparecia ao colocar o último bloco:** a tarefa reservada agora entra em execução antes de concluir, então o último bloco marca `BUILD` como `COMPLETED` em vez de liberá-la para o próximo ciclo. O evento de mudança também prioriza a Soul Torch antes de filtrar edições do próprio mod; `BuilderGameTest` e `ConstructionCancellationGameTest` reproduzem os dois sintomas.
+- [x] 🟠 **P1.2 — `BigHouseMOD` fora do catálogo profissional:** a fundação obrigatória continua nascendo com a vila e não pode ser escolhida como casa/oficina por profissões. `HousePlansTest.theModBigHouseIsNeverAProfessionBuild` fixa a regra.
 - [x] 🟠 **P1.2 — frente arenosa cíclica:** `MinerWork` mantém a posição após cada quebra, espera a queda de areia/gravilha assentar e só então reavalia a frente. A coleta integral continua em `MinerHaul.deposit`, inclusive para overflow no chão. Falta confirmar a progressão e a entrega no save.
 - [ ] Playtest P1.2: iniciar uma obra perto de construções existentes e acompanhar o mineiro no deserto até confirmar que não há acavalamento, que a frente avança após os assentamentos e que os drops chegam ao baú/overflow.
+- [ ] Playtest P1.2: reabrir o save com projeto pendente e confirmar que a zona antiga permanece reservada, a `BigHouseMOD` não é duplicada e nenhuma obra nova é salva sobre ela.
+- [ ] Playtest P0.9: criar vilas nos cinco biomas e confirmar no save que somente as estruturas listadas aparecem, que areia/relva são buscadas longe da vila quando solicitadas e que a entrada da mina permanece seca e acessível.
 
 ## Prioridade atual — obra aberta impede a próxima construção
 
@@ -33,7 +358,6 @@ com código e testes locais das validações que continuam dependendo de um save
 - [ ] Playtest: confirmar recuperação da fila, preservação do lote e segunda casa. Comparar `SweepLog.busy` com passadas; não declarar a varredura resolvida pelo contador antigo.
 - [ ] Playtest dos commits locais: estabilidade de ofício e entrega de pedra depois de limitar também a perna real da boca ao próximo patamar.
 - [ ] Investigar a falha histórica de `ColonyDetectionGameTest` (24/30), não reproduzida na execução de 09-20.
-- [ ] Investigar intermitência de `SurfaceGatheringGameTest.smelterGathersDirtOutsideTheProtectedVillageRadius`: na rodada vermelha de 09-20, o aldeão criado fora da arena não foi encontrado no `ServerWorld`; não repetiu nas duas rodadas seguintes. Sem alteração de coleta ou aumento de timeout.
 
 ---
 
@@ -160,12 +484,26 @@ na bancada; no cortador é **1→1**.
 
 ---
 
-## 🟠 P1.3 — Pedidos de design do autor sobre a mina (09-17)
+## ✅ P1.3 — Ciclo finito da mina (2026-09-23)
 
-Duas ideias que **não são defeito** e precisam de decisão antes de código:
-
-- [ ] 🟠 *"a zona de cada camada da mina deve ser mais explorada"* — hoje o nível fecha quando os quatro ramais acabam (`ARM = 16`, `RINGS`). Explorar mais significa aumentar o raio do ramal ou adensar a galeria; muda o custo por nível e o tempo até descer.
-- [ ] 🟠 *"quando o mineiro encontrar um veio de minério o foco deve ser o veio todo"* — já existe `MineArm.followVein`/`veinExhausted` e `OreVein.beside`. Verificar o que falta: seguir o veio **até acabar** antes de voltar à ordem de cavar.
+- [x] **Geometria decidida pelo autor:** cada nivel abre um caracol de 10
+  degraus, limpa 50 blocos, abre 4 ramais de 10 degraus e limpa 50 blocos em
+  cada ramal. Somente um mineiro recebe a escada e a area comuns; os quatro
+  ramais abrem depois dela. `MineShaftTest` e `MineTest` fixam os limites.
+- [x] **Veio continua prioritario:** `MineArm.followVein` e `OreVein.beside`
+  mantem a coleta do veio antes de voltar a ordem geometrica; os GameTests de
+  prioridade de minerio passaram na rodada completa.
+- [x] **Fim no limite:** o nivel mais fundo e esgotado, a nova boca e buscada
+  estritamente no lado oposto da vila e a mesma abertura nao e recriada.
+  `MineRegistryTest`, `MineSaveTest` e `MinerGameTest` cobrem o encerramento,
+  a migracao da forma 6, o portal quebrado e a direcao oposta.
+- [ ] **Playtest P1.3:** acompanhar uma mina de ponta a ponta no save: um
+  caracol unico, quatro ramais apenas depois da area comum, foco em veios,
+  portal quebrado sem reconstruir e troca de boca no lado oposto ao chegar ao
+  fundo. A sessao de 23-09 ainda usou o JAR de SHA-256
+  `446554572D466B748107D5CD65A4687BAD4BFF535F8C028F6158501BDE4AB2A0`; repetir
+  somente apos instalar o artefato atual de SHA-256
+  `62FCECB70ACF7864DA852F707A1ADBA2197FEC8613A952A2E691DE7BE13BF1EF`.
 
 ⚠️ **Expectativa honesta:** `dirt_path` não é bloco sólido cheio e continuará
 caindo em `NOT_NATURAL_GROUND` adiante. Quem passa a poder virar lote é o
@@ -479,14 +817,16 @@ Um por vez, teste antes de seguir.
 
 | | erro | estado |
 |---|---|---|
+| **E47** | **Trabalhador cai/fica preso longe do lote e nunca se recupera — visto em jogo 24-09, sessão de ~6h30.** `Builder 4b8df153` ficou parado em `-202, 62, -937` de **03:10 a 06:47** (97 linhas de `walking for N ticks without reaching the block`, subindo até 2400 e disparando o guarda de travamento repetidas vezes), sempre reatribuído à mesma obra em `y=72`, ~45-47 blocos de distância horizontal. `ClimbLimit`/`BuilderApproach.footOf` (correção de 09-16) só resolve diferença **vertical** de até 2 blocos quando o construtor está **na mesma coluna aproximada da obra** (em cima dela, descendo); não cobre um trabalhador preso **longe** — provavelmente dentro de depressão/ravina/caverna de superfície que a navegação Vanilla não atravessa sozinha para voltar. O guarda de 2400 ticks devolve a tarefa, mas o trabalhador continua fisicamente preso e é reatribuído à mesma armadilha. **Consequência observada:** nenhuma casa foi construída em ~6h30 de jogo (zero `house is up` no log inteiro, 5 colônias). Ver `docs/technical/Development-Log.md` para o diagnóstico completo. **Corrigido em código 24-09 (`e02fbf8`), decisão do autor:** dois congelamentos do `WorkStall` no mesmo ponto marcam o encalhado (`StrandedWorkers`); ele sai da escala em qualquer capacidade (`Worker.strand`, `WorkEligibility`) e cava uma escada de um bloco rumo ao centro da vila (`StrandedEscape`) — só terreno natural, via `BlockProtection`, sem abrir água nem deixar areia sobre a cabeça, entulho para o baú dele. `StrandedEscapeGameTest` 3/3. **Pendente:** teto de distância para "dar uma mão" (só chamar quem está perto da obra); origem das armadilhas não confirmada — nenhum código do mod cavou naqueles pontos, parecem terreno natural. | ✅ código e GameTest; ⬜ validar em jogo (procurar `is stranded at` / `dug a step` / `is out at`) |
+| **E48** | **Alternância casa→infraestrutura nunca escolhe casa nesta sessão.** Colônia `78fa1bb4` planejou 5 posições distintas ao longo da sessão, **todas `plains_temple_4`** (nenhuma casa). `HousePlans.nextConstructionIsHouse` só considera obra **terminada** (`Building.finished()`); como o E47 acima impede qualquer obra de terminar, a alternância nunca chega a alternar — ela está correta no código, mas nunca é exercitada porque a causa raiz (E47) trava toda conclusão de obra antes. **Correção do diagnóstico, mesma data: o E48 tinha causa própria, não dependia só do E47.** O templo foi abandonado 13 vezes pelo caminho `lets go of` (`blamePlan=false`), e `lastFinished`/`lastNonHouseType` ignoravam obra abandonada — a vez nunca voltava à casa e o templo nunca era excluído. **Corrigido em código 24-09 (`03ea6fb`), decisão do autor:** obra abandonada conta no rodízio, e com mais adultos do que camas a próxima obra é casa (zero camas = ainda não contado). `HouseRotationGameTest`: com a regra desligada por mutação, abriu `plains_temple_4` — o mesmo do jogo. | ✅ código e GameTest; ⬜ validar em jogo (procurar `house is up`) |
 | **E44** | A escada de recusas já existe em `MineMarks` e é consultada pela mineração e pela fronteira da galeria; há unitários e GameTests. O playtest ainda observou o mineiro parado, então a integração completa segue **sem validação em jogo**. Não reabrir a decisão original sem reproduzir um defeito residual. | ⬜ validar em jogo |
-| **E43** | O descanso de quatro ciclos é anulado no ciclo seguinte. O `giveUp` do mineiro marca `worker.rest(COLLECT_STONE)`, e a 2ª passagem do `takeOneTask` devolve a mesma tarefa ao mesmo trabalhador sempre que a colônia não tem outro trabalho da profissão dele. **Decisão de projeto, e é do autor** | 🟠 aberto |
-| **E41** | Nada mede degradação ao longo de muitos ciclos. O teste mais longo do projeto tem centenas de tiques. **Maior lacuna de cobertura depois do E37-b.** | 🟠 aberto |
+| **E43** | A decisao 1A foi implementada: `WorkEligibility` impede reserva de capacidade em descanso e removeu o fallback que devolvia `COLLECT_STONE` no ciclo seguinte. `WorkAssignmentTest` teve fase vermelha, e `ColonyCycleGameTest.aRestingMinerLeavesTheStoneTaskAvailable` passou na bateria 419/419. | ✅ codigo e GameTest; ⬜ validar em save |
+| **E41** | Nada mede degradação ao longo de muitos ciclos. O teste mais longo do projeto tem centenas de tiques. **Fechado em 11-09 (P1.13), esta linha estava desatualizada.** `ColonyEnduranceGameTest` mede deriva em 200 ciclos; nunca falhou em onze rodadas completas nesta sessão (24-09). | ✅ fechado |
 | **E42** | Nenhum teste de impasse entre profissões. Os dois casos reais — a roça que travava toda a construção, e o fabricante que nunca descascava — foram achados **em jogo**, não pela bateria. **A tentativa de 09-09 à noite foi retirada pelo gauntlet-verifier** — os três casos escritos eram a invariante de vários trabalhadores, com outro nome. **O trabalho de verdade é outro gametest:** lote de roça fora do alcance do fazendeiro, planta de casa disponível, duas passagens do planejador, e a segunda tem de abrir projeto de CASA | 🔴 aberto |
 | **E38** | O baú pessoal pode assorear com vara, maçã e muda sem consumidor; a colheita não transborda para outra profissão e itens sem espaço viram drops no mundo. Definir tratamento sustentável dos resíduos sem misturar depósitos | ⚙️ aberto |
 | **KF-001** | Instabilidade de `aFrozenMinerGivesUpLongBeforeTheStallGuard`. **Fechado em 09-09:** a afirmação lia o estado da tarefa depois que o ciclo podia reservá-la novamente; o teste passou a registrar o instante da devolução e força a fase do ciclo. O orçamento global de uma busca/tique continua sendo um risco separado de vazão, não a causa provada da falha. | ✅ teste corrigido; medir vazão se houver evidência |
-| **E21** | `theStoneLeavesTheWorldAndReachesTheChest` disse "a pedra não chegou ao baú" uma vez. Suspeita: custo de ler estrutura no tique. **Suspeita, não diagnóstico** | 🟡 aberto |
-| **E4** | `path held: no` e o aldeão chega assim mesmo. Provável, nunca verificado | 🟡 aberto |
+| **E21** | `theStoneLeavesTheWorldAndReachesTheChest` disse "a pedra não chegou ao baú" uma vez. Suspeita: custo de ler estrutura no tique. **Fechada em 24-09 por falta de evidência:** dez rodadas completas de `runGametest --rerun-tasks` (~4.220 execuções do teste) nesta sessão, zero falhas. Sem recorrência para investigar. | ✅ fechada, sem evidência |
+| **E4** | `path held: no` e o aldeão chega assim mesmo. Provável, nunca verificado. **Fechada em 24-09 por obsolescência:** o log que gerou a suspeita (commit `379f1dd`, 2026-08-08) foi removido; o mecanismo de aproximação do lenhador que ele diagnosticava foi substituído por `WorkStall`/`LumberjackReport`/`TreeChoice.stallLimit`. A suspeita ficou órfã de um sistema que não existe mais no código atual. | ✅ fechada, obsoleta |
 | **E3** | Sobra de colheita é perda de item. **Metade fechada em 09-04** — o lenhador deixou de destruir; **o mineiro continua sem teto de inventário** | ⚙️ metade fechada |
 | **E9** | Colônia `ABANDONED` desmarcada no ciclo seguinte. **Mitigado em 09-13** — precisa de duas leituras positivas seguidas | ⚙️ mitigado |
 

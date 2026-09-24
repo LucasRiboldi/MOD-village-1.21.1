@@ -34,9 +34,9 @@ class DrawnFromTest {
      */
     @Test
     void aRealDrawSaysHowManyCompeted() {
-        assertEquals("8 of that footprint", ConstructionPlanner.drawnFrom(8));
+        assertEquals("8 of that footprint", SiteOpening.drawnFrom(8));
 
-        assertEquals("2 of that footprint", ConstructionPlanner.drawnFrom(2));
+        assertEquals("2 of that footprint", SiteOpening.drawnFrom(2));
     }
 
     /**
@@ -48,7 +48,7 @@ class DrawnFromTest {
      */
     @Test
     void aSingleCandidateIsStillReportedAsOne() {
-        assertEquals("1 of that footprint", ConstructionPlanner.drawnFrom(1));
+        assertEquals("1 of that footprint", SiteOpening.drawnFrom(1));
     }
 
     /**
@@ -61,7 +61,7 @@ class DrawnFromTest {
      */
     @Test
     void anEmptyListIsTheFallbackAndNotADrawOfZero() {
-        String said = ConstructionPlanner.drawnFrom(0);
+        String said = SiteOpening.drawnFrom(0);
 
         assertTrue(said.contains("none fitting"), "o caminho de reserva não se identificou: " + said);
 

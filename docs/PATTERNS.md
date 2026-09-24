@@ -33,6 +33,25 @@ novas; confirmar no jogo se o portal aparece e a escavação começa.
 
 ---
 
+### Vários trabalhadores diferentes presos na mesma coordenada
+
+**Causa:** armadilha fixa no terreno — poço, ravina ou caverna aberta de
+onde a navegação Vanilla não sai. No playtest de 2026-09-24, três
+construtores em `-211, 66, -954` e quatro em `-196, 66, -949`, e um
+pedreiro por 3h30 em `-202, 62, -937`. O guarda devolvia a tarefa, mas
+nada tirava o aldeão de lá, e ele era escalado de novo (E47).
+
+**Como achar:** `grep -oE "the worker is at [-0-9]+, [-0-9]+, [-0-9]+"`
+contado com `sort | uniq -c`; coordenada repetida por trabalhadores
+distintos é o terreno, não o aldeão.
+
+**Onde olhar:** `StrandedWorkers` (dois congelamentos no mesmo ponto) e
+`StrandedEscape` (a escada de saída). Sinais: `is stranded at`,
+`dug a step`, `is out at`, `cannot dig out`. Antes de culpar o mod,
+confira se alguma profissão cavou ali — no caso de 09-24 nenhuma cavou.
+
+---
+
 ### `stall N/2400` subindo, `still 0/300` cravado
 
 **Causa:** o aldeão **gira no próprio eixo**. Ele se move, então o guarda

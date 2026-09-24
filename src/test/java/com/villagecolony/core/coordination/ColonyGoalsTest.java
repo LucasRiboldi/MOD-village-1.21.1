@@ -132,10 +132,10 @@ class ColonyGoalsTest {
     /** A conta da reserva, sozinha e sem colônia em volta. */
     @Test
     void theReserveIsHalfTheLogsMeasuredAgainstThePlanksAlreadyMade() {
-        assertEquals(10, ColonyGoals.logsToConvert(20, 0));
-        assertEquals(0, ColonyGoals.logsToConvert(10, 40));
-        assertEquals(0, ColonyGoals.logsToConvert(135, 1257));
-        assertEquals(0, ColonyGoals.logsToConvert(0, 0));
+        assertEquals(10, StockRules.logsToConvert(20, 0));
+        assertEquals(0, StockRules.logsToConvert(10, 40));
+        assertEquals(0, StockRules.logsToConvert(135, 1257));
+        assertEquals(0, StockRules.logsToConvert(0, 0));
     }
 
     /** A meta é o que se tem mais o que ainda cabe. */

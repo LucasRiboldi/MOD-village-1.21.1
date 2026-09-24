@@ -200,14 +200,16 @@ public final class SiteMarker {
      * jogador, e disso o projeto já tem cicatriz.
      */
     /**
-     * A que altura do chão do lote a placa flutua — 2026-09-18.
+     * Quantos blocos acima do topo da planta a placa flutua — 2026-09-24.
      *
-     * <p>Dois e meio: acima da cabeça do jogador, abaixo de todo telhado
-     * do catálogo. Medido: as casas de deserto vão de 5 a 18 de altura, e
-     * a placa ficava no <b>topo</b> da planta — invisível de perto, que
-     * foi como o autor a perdeu.
+     * <p><b>Decisão do autor (N7):</b> <i>"o da do lote precisa ficar 5
+     * blocos acima da altura da construção para facilitar a leitura"</i>.
+     * A versão de 09-18 a punha a 2,5 do chão: legível de perto, mas
+     * dentro da parede que subia, e escondida atrás dela de longe. Acima
+     * do telhado ela se lê de qualquer ponto da vila, e a obra não a cobre
+     * em nenhuma altura.
      */
-    private static final double LABEL_HEIGHT = 2.5;
+    static final int LABEL_ABOVE_TOP = 5;
 
     private static void label(
             ServerWorld world, ConstructionProject project, ColonyPos origin, ColonyPos size) {
@@ -220,24 +222,10 @@ public final class SiteMarker {
                 project.remainingCount(),
                 SiteMarker::nameOf);
 
-        // O centro do lote, e à <b>altura dos olhos</b> — 2026-09-18.
-        //
-        // <b>O defeito que isto conserta.</b> O autor construiu no deserto
-        // e não viu placa nenhuma. Ela estava lá: ficava em
-        // {@code origin.y + size.y}, o <b>topo</b> da planta, e as casas
-        // do deserto medem de 5 a 18 de altura — a
-        // {@code desert_medium_house_2} daquela obra tem 8, e a
-        // {@code desert_small_house_6} tem <b>dezoito</b>. A placa nascia
-        // acima do telhado, fora do campo de visão de quem está ao lado
-        // da obra.
-        //
-        // Dois e meio é acima da cabeça do jogador e abaixo de qualquer
-        // telhado do catálogo, então ela fica legível de perto sem entrar
-        // na parede que está subindo — que era o motivo de ela ter ido
-        // para o topo. O nome flutuante atravessa bloco, então não
-        // precisa estar no ar livre para ser lido.
+        // O centro do lote, cinco blocos acima do topo da planta — N7,
+        // 2026-09-24; ver LABEL_ABOVE_TOP.
         double x = origin.x() + size.x() / 2.0;
-        double y = origin.y() + LABEL_HEIGHT;
+        double y = labelY(origin, size);
         double z = origin.z() + size.z() / 2.0;
 
         ArmorStandEntity sign = findSign(world, project, x, y, z);
@@ -292,17 +280,39 @@ public final class SiteMarker {
     private static ArmorStandEntity findSign(
             ServerWorld world, ConstructionProject project, double x, double y, double z) {
 
-        Box around = new Box(x - 1.5, y - 1.5, z - 1.5, x + 1.5, y + 1.5, z + 1.5);
+        // A placa já conhecida é levada para a altura certa, em vez de
+        // procurada pela caixa: uma placa da regra antiga, a 2,5 do chão,
+        // ficaria fora da caixa e viraria órfã ao lado da nova.
+        UUID known = SIGNS.get(project.id());
+
+        if (known != null && world.getEntity(known) instanceof ArmorStandEntity sign
+                && isSign(sign)) {
+            if (sign.getX() != x || sign.getY() != y || sign.getZ() != z) {
+                sign.refreshPositionAfterTeleport(x, y, z);
+            }
+
+            return sign;
+        }
+
+        // A placa de uma sessão anterior: a coluna inteira do lote, e não
+        // só a caixa em volta do ponto, pela mesma razão.
+        Box column = new Box(x - 1.5, y - LABEL_ABOVE_TOP - 64, z - 1.5, x + 1.5, y + 1.5, z + 1.5);
 
         for (ArmorStandEntity found
-                : world.getEntitiesByClass(ArmorStandEntity.class, around, SiteMarker::isSign)) {
+                : world.getEntitiesByClass(ArmorStandEntity.class, column, SiteMarker::isSign)) {
 
             SIGNS.put(project.id(), found.getUuid());
+            found.refreshPositionAfterTeleport(x, y, z);
 
             return found;
         }
 
         return raiseSign(world, x, y, z);
+    }
+
+    /** A altura da placa: o topo da planta mais {@link #LABEL_ABOVE_TOP}. */
+    static double labelY(ColonyPos origin, ColonyPos size) {
+        return origin.y() + size.y() + LABEL_ABOVE_TOP;
     }
 
     /** Um suporte novo, invisível e sem colisão, só para carregar o nome. */

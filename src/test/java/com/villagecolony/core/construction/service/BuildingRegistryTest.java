@@ -60,6 +60,21 @@ class BuildingRegistryTest {
     }
 
     @Test
+    void aRepairMergesIntoTheExistingBuildingInsteadOfDuplicatingIt() {
+        UUID colony = UUID.randomUUID();
+        ConstructionProject project = houseAt(colony, new ColonyPos(10, 64, 10));
+        Building unfinished = Building.of(project);
+        Building finished = Building.of(project, true);
+
+        registry.register(unfinished);
+        registry.registerOrMerge(finished);
+
+        assertEquals(1, registry.count());
+        assertTrue(registry.ofColony(colony).get(0).finished());
+        assertEquals(unfinished.id(), registry.ofColony(colony).get(0).id());
+    }
+
+    @Test
     void whatIsOutsideTheBoxIsNotColonyInfrastructure() {
         registry.register(Building.of(houseAt(UUID.randomUUID(), new ColonyPos(10, 64, 10))));
 

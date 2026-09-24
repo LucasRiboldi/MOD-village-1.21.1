@@ -126,6 +126,9 @@ public final class Worker {
      */
     private final Map<Capability, Integer> resting = new EnumMap<>(Capability.class);
 
+    /** Preso onde a navegação não o tira — ver {@link #strand}. */
+    private boolean stranded;
+
     /**
      * Quantas desistências seguidas bastam para ele trocar de ofício.
      *
@@ -371,6 +374,35 @@ public final class Worker {
     /** Se esta capacidade ainda está de molho para ele. */
     public boolean isResting(Capability capability) {
         return resting.containsKey(Objects.requireNonNull(capability, "capability"));
+    }
+
+    /**
+     * Ele está preso onde a navegação não o tira — E47, 2026-09-24.
+     *
+     * <p><b>Não é descanso, e por isso não passa pelo {@link #rest}.</b>
+     * Descanso vence sozinho em quatro passagens e conta desistência; o
+     * encalhado continua encalhado até sair do buraco, e desistir por estar
+     * preso não é teimosia no ofício. O playtest de 24-09 mostrou o custo de
+     * misturar: um pedreiro preso por três horas e meia, escalado para
+     * construir a cada volta, somando desistências que tiram o ofício dele.
+     *
+     * <p>Quem marca é a camada Fabric, que vê o aldeão parado no mesmo lugar;
+     * quem solta é ela também, quando ele sai. Não vai para o save: depois de
+     * recarregar, se ele ainda estiver preso, dois congelamentos o marcam de
+     * novo.
+     */
+    public void strand() {
+        stranded = true;
+    }
+
+    /** Ele saiu do buraco: volta à escala na distribuição seguinte. */
+    public void free() {
+        stranded = false;
+    }
+
+    /** Se ele está encalhado. Ver {@link #strand}. */
+    public boolean isStranded() {
+        return stranded;
     }
 
     /**

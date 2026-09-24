@@ -16,6 +16,10 @@
       "com.villagecolony.gametest.VolumeSampleGameTest",
       "com.villagecolony.gametest.FarmerGameTest",
       "com.villagecolony.gametest.FarmPlanGameTest",
+      "com.villagecolony.gametest.HouseRotationGameTest",
+      "com.villagecolony.gametest.StrandedEscapeGameTest",
+      "com.villagecolony.gametest.VillageMealsGameTest",
+      "com.villagecolony.gametest.SweepDeadlineGameTest",
       "com.villagecolony.gametest.ColonyDetectionGameTest",
       "com.villagecolony.gametest.StorageGameTest",
       "com.villagecolony.gametest.LumberjackGameTest",
@@ -33,6 +37,7 @@
       "com.villagecolony.gametest.BlueprintReaderGameTest",
       "com.villagecolony.gametest.BuildSiteGameTest",
       "com.villagecolony.gametest.BuilderGameTest",
+      "com.villagecolony.gametest.ConstructionSupplyAuditGameTest",
       "com.villagecolony.gametest.ConstructionResumeGameTest",
       "com.villagecolony.gametest.BuildProgressGameTest",
       "com.villagecolony.gametest.FreeChestCountGameTest",
@@ -51,7 +56,11 @@
       "com.villagecolony.gametest.TestBarrierGameTest",
       "com.villagecolony.gametest.MineLeaseGameTest",
       "com.villagecolony.gametest.MinerApproachGameTest",
-      "com.villagecolony.gametest.VillageFoundationGameTest"
+      "com.villagecolony.gametest.VillageFoundationGameTest",
+      "com.villagecolony.gametest.BigHouseModBlueprintGameTest",
+      "com.villagecolony.fabric.integration.BigHouseFoundationGameTest",
+      "com.villagecolony.fabric.work.FoundationRepairGameTest",
+      "com.villagecolony.fabric.integration.ConstructionCancellationGameTest"
     ]
   },
   "depends": {

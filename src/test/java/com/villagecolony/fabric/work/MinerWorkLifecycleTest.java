@@ -41,7 +41,7 @@ class MinerWorkLifecycleTest {
         task.complete();
         MinerWork.tick(null);
 
-        assertEquals(0, MinerWork.activeJobs(), "o job fechado continuou ativo");
+        assertEquals(0, MinerProbe.activeJobs(), "o job fechado continuou ativo");
         assertTrue(
                 MineClaims.diggerIn(colony).isEmpty(),
                 "a claim do job fechado continuou bloqueando a mina");

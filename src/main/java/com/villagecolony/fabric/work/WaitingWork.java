@@ -6,6 +6,7 @@ import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
+import com.villagecolony.core.construction.service.RemovalAudit;
 import com.villagecolony.core.coordination.PatienceClock;
 import com.villagecolony.core.coordination.WorkAssignment;
 import com.villagecolony.core.coordination.WorkClock;
@@ -85,12 +86,22 @@ public final class WaitingWork {
         BUILDING_SINCE.clear();
     }
 
+    /** Esquece os relogios de uma obra removida por cancelamento manual. */
+    public static void forget(UUID projectId) {
+        if (projectId == null) {
+            return;
+        }
+
+        WAITING_SINCE.remove(projectId);
+        BUILDING_SINCE.remove(projectId);
+    }
+
     /**
      * Acorda a obra que esperava material, quando o material chegou.
      *
      * <p>{@code WAITING_RESOURCES} era estado terminal na prática. A
      * única transição para {@code BUILDING} estava na criação do projeto,
-     * e {@link #ensureTask} não abre tarefa fora de {@code BUILDING}: a
+     * e {@link ConstructionPlanner#ensureTask} não abre tarefa fora de {@code BUILDING}: a
      * obra que uma vez ficasse sem material não voltava a ser tentada
      * nunca mais, ainda que o baú enchesse no minuto seguinte.
      *
@@ -98,7 +109,7 @@ public final class WaitingWork {
      * em 149 blocos com 52 tábuas guardadas, dois fabricantes ociosos e
      * a linha {@code builders: 0 working, WAITING_RESOURCES ... — no
      * build task} repetindo até o desligamento. O comentário de
-     * {@code BuilderWork.waitForResources} já dizia que "quem destrava é
+     * {@code BuilderMaterials.waitForResources} já dizia que "quem destrava é
      * o ciclo da colônia" — era intenção que nenhum código cumpria.
      *
      * <p>Só acorda com o material do próximo bloco em mãos. Acordar sem
@@ -110,7 +121,7 @@ public final class WaitingWork {
             return;
         }
 
-        if (!BuilderWork.hasMaterialForNextBlock(world, project)) {
+        if (!BuilderMaterials.hasMaterialForNextBlock(world, project)) {
             return;
         }
 
@@ -249,16 +260,26 @@ public final class WaitingWork {
      * senão o lote voltaria a parecer livre e a colônia planejaria por
      * cima do que ela mesma levantou.
      *
-     * <p><b>O que isto custa, dito por inteiro:</b> a obra não volta. Se
-     * o pedregulho aparecer depois, ninguém retoma aquela casa — ela
-     * fica como está. A alternativa era a vila inteira parada à espera
-     * de uma entrega que pode nunca vir, e entre as duas esta é a que
-     * deixa a colônia viva.
+     * <p><b>O que isto custa, dito por inteiro:</b> a obra não volta no
+     * mesmo instante. O registro preserva o que já foi levantado e a
+     * varredura cíclica tenta completar os blocos ausentes em um ciclo
+     * posterior. Se uma tentativa não avançar, ela cede uma passagem para
+     * a vila continuar e só então pode ser tentada novamente.
      *
      * @return se a obra foi abandonada agora
      */
     public static boolean giveUpIfStalled(
             ServerWorld world, Colony colony, ConstructionProject project) {
+
+        if (!project.isFinished() && project.nextBlock().isEmpty()) {
+            // Nenhuma peca esta colocavel: as restantes foram adiadas por
+            // apoio fisico. Nao e falta de progresso; o planejador as
+            // reconsidera apenas quando a assinatura do entorno muda.
+            WAITING_SINCE.remove(project.id());
+            BUILDING_SINCE.remove(project.id());
+
+            return false;
+        }
 
         if (project.state() != ConstructionState.WAITING_RESOURCES) {
             WAITING_SINCE.remove(project.id());
@@ -429,8 +450,8 @@ public final class WaitingWork {
                     colony.id(), project.blueprint().id(), project.remainingMaterials());
         }
 
-        VillageColonyMod.BUILDINGS.register(Building.of(project));
-        VillageColonyMod.CONSTRUCTIONS.forget(project.id());
+        VillageColonyMod.BUILDINGS.registerOrMerge(Building.of(project));
+        VillageColonyMod.CONSTRUCTIONS.forget(project.id(), RemovalAudit.patienceAbandonment());
 
         // A vaga de obra é única; suas tarefas não podem sobreviver ao projeto.
         for (Task task : VillageColonyMod.TASKS.ofColony(colony.id())) {

@@ -1,5 +1,8 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.coordination.GatheringReach;
 import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.fabric.integration.RingSweep;
 import com.villagecolony.fabric.integration.SandPatch;
@@ -58,6 +61,16 @@ public final class SandGathering {
         sandRadius = blocks;
     }
 
+    /**
+     * O raio desta vila: cresce com as camas até {@link #sandRadius} — N11.
+     * O raio encurtado dos testes continua sendo o teto.
+     */
+    private static int reach(UUID colonyId) {
+        int beds = VillageColonyMod.COLONIES.find(colonyId).map(Colony::observedBeds).orElse(0);
+
+        return GatheringReach.radius(beds, sandRadius);
+    }
+
     /** Devolve o raio ao valor de jogo. */
     public static void restoreSandRadius() {
         sandRadius = SAND_RADIUS;
@@ -78,9 +91,9 @@ public final class SandGathering {
         Optional<BlockPos> found = RingSweep.around(
                 workerId,
                 center,
-                sandRadius,
+                reach(colonyId),
                 // A areia entra pela mesma porta — E44, 2026-09-10. O
-                // MinerWork.giveUp marca o alvo seja ele pedra ou areia,
+                // MinerHands.giveUp marca o alvo seja ele pedra ou areia,
                 // e uma duna inalcançável tem exatamente a mesma forma de
                 // laço. Ver MineMarks.
                 column -> SandPatch.in(world, column, center.getY())
@@ -103,7 +116,7 @@ public final class SandGathering {
                     RingSweep.pausedAt(workerId).isPresent()
                             ? IdleReason.SWEEP_INCOMPLETE
                             : IdleReason.NO_TARGET,
-                    "sand within " + sandRadius + " blocks",
+                    "sand within " + reach(colonyId) + " blocks",
                     world.getTime());
 
             return Optional.empty();
