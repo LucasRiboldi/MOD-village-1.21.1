@@ -97,3 +97,6 @@ graphify-out/
 # O jar publicado para download, apontado pelo README. É o único
 # artefato de build versionado de propósito.
 !downloads/*.jar
+
+# Saída da depuração de mixin (loom runConfigs, 2026-09-24)
+.mixin.out/

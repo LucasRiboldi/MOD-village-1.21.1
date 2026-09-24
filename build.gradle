@@ -107,6 +107,24 @@ tasks.named('pitest').configure {
 // os quatro defeitos de 2026-08-07 apareceram — todos depois de uma
 // sessão de jogo do autor. Ver §11.
 loom {
+    // Depuração de mixin em todo run de desenvolvimento (2026-09-24).
+    //
+    // - export: a classe final, com a injeção aplicada, sai em
+    //   <runDir>/.mixin.out/class — é onde se confere o que o mixin fez.
+    // - verify: a Mixin revalida o bytecode que gerou; erro de injeção
+    //   aparece na carga, e não como comportamento estranho em jogo.
+    // - checks.interfaces: audita se a classe alvo implementa o que a
+    //   interface do mixin promete (.mixin.out/audit).
+    // - dumpTargetOnFailure: se aplicar falhar, grava a classe alvo.
+    //
+    // Nada disto vai para o jar: são argumentos da JVM de desenvolvimento.
+    runConfigs.configureEach {
+        vmArg '-Dmixin.debug.export=true'
+        vmArg '-Dmixin.debug.verify=true'
+        vmArg '-Dmixin.checks.interfaces=true'
+        vmArg '-Dmixin.dumpTargetOnFailure=true'
+    }
+
     runs {
         gametest {
             server()
