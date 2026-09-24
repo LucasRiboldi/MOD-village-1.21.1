@@ -19,8 +19,8 @@ refatoração e a **vila foco**. Nada disso foi visto em jogo ainda. A
 
 ## Versão publicada
 
-- O JAR em `mods` e em `downloads/` é o do commit `a119c2a`, publicado em
-  `a647d03`, com SHA-256 `F4226F8A…F911`.
+- O JAR em `mods` e em `downloads/` é o do commit `78e7efc` (vila foco e
+  `ServerMemory`), com SHA-256 `FC4273A2…7F48`.
 - Build, bateria de jogo (434/434 em duas rodadas) e PIT verdes, no local e
   no CI.
 - O branch `codex/bighousemod` foi levado para a `main` pelo PR #2.

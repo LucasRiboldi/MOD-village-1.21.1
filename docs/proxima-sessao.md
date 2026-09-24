@@ -1,8 +1,8 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
 **Atualização de 2026-09-24, tarde — jogar com o spark ligado.** O JAR em
-`mods` agora é o do commit `a119c2a` (SHA-256
-`F4226F8AA1EED834FEC508C5389ED4E287DF2A81FC7FC51878C2B6B1B511F911`):
+`mods` agora é o do commit `78e7efc` (SHA-256
+`FC4273A291CF275B6985931B1711A8A2E261533E16DF49A1B48464A994E07F48`):
 revisão de naturalidade, rodada de qualidade, refatoração e a **vila foco**
 (só ela planeja; procure `Focus village is now`, `Planner turns` e a queda
 de `Colony cycle took`) — nada disso visto em jogo ainda, e o
