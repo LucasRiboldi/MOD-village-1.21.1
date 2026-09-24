@@ -92,6 +92,9 @@ public final class MaterialChoice {
             });
         }
 
+        // E os equivalentes por nome — N3, 2026-09-24; ver EquivalentPieces.
+        EquivalentPieces.addFamily(exact, order);
+
         return List.copyOf(order);
     }
 
@@ -113,6 +116,21 @@ public final class MaterialChoice {
             ItemTags.WOODEN_FENCES,
             ItemTags.WOODEN_BUTTONS,
             ItemTags.WOODEN_PRESSURE_PLATES,
+
+            // <b>E as famílias que o jogo marca em tag</b> — N3, 2026-09-24,
+            // decisão do autor: <i>"trocar por equivalente"</i>. A lã e o
+            // tapete de cor, o estandarte, a muda de outra espécie, a flor, o
+            // portão de outra madeira e o botão de pedra saíam do nada no
+            // baú, e a colônia tinha o branco, o carvalho e a papoula. O
+            // botão de pedra cai em BUTTONS depois de WOODEN_BUTTONS: o de
+            // madeira continua trocando só por madeira.
+            ItemTags.FENCE_GATES,
+            ItemTags.BUTTONS,
+            ItemTags.WOOL,
+            ItemTags.WOOL_CARPETS,
+            ItemTags.BANNERS,
+            ItemTags.SAPLINGS,
+            ItemTags.SMALL_FLOWERS,
 
             // <b>E a cama, de qualquer cor</b> — decisão do autor,
             // 2026-09-19: <i>"quando qualquer construção solicitar cama,
@@ -199,6 +217,9 @@ public final class MaterialChoice {
             // seguir procurando seria varrer seis tags para nada.
             break;
         }
+
+        // A família sem tag: pedra, vidro, terracota vitrificada — N3.
+        EquivalentPieces.addFamily(exact, order);
 
         return List.copyOf(order);
     }

@@ -48,3 +48,34 @@ gerais da colonia.
 `BuilderGameTest.unobtainableConstructionPieceIsStockedForTheBuilder` prova o
 fermentador sem haste de blaze. `locallyCraftablePieceStillWaitsForWorkers`
 prova que uma porta de carvalho em planicie nao e materializada.
+
+## Emenda N3 - 2026-09-24: equivalente antes da peca pronta
+
+Decisao do autor na revisao de naturalidade
+(`docs/technical/Revisao-Naturalidade-2026-09-24.md`): *"trocar por
+equivalente; nao existindo no bioma, dai fazer o item nascer no bau pronto"*.
+
+A regra desta ADR ja consultava a familia inteira antes de criar a peca, mas
+a familia so existia para madeira, cama e terracota. Agora ela tambem inclui:
+
+- as familias marcadas em tag do jogo: `fence_gates`, `buttons` (o botao de
+  madeira continua trocando so por madeira), `wool`, `wool_carpets`,
+  `banners`, `saplings` e `small_flowers` (`MaterialChoice`);
+- as familias que o jogo so agrupa pelo nome (`EquivalentPieces`):
+  - escada, laje e muro de pedra, comecando pelo pedregulho e incluindo
+    arenito;
+  - pedra musgosa, que cai para a pedra comum;
+  - granito, diorito e andesito;
+  - vidraca e vidro, com as cores e o incolor por ultimo;
+  - terracota vitrificada, que cai para a terracota;
+  - madeira descascada de qualquer especie;
+  - grama e samambaia, baixas e altas.
+
+O preferido continua primeiro. A peca so nasce pronta quando nenhum membro da
+familia tem rota no bioma.
+
+Medido pela `ConstructionSupplyAuditGameTest`: as entradas de fornecimento
+automatico por estilo cairam de **119 para 102**. As 102 restantes sao
+estacoes de trabalho, pecas de madeira no deserto, gelo e neve, plantas e
+chao, e nenhum parente delas tem rota no bioma. Verificacao unitaria:
+`EquivalentPiecesTest` (7 casos).
