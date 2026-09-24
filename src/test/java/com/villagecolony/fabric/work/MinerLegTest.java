@@ -85,10 +85,10 @@ class MinerLegTest {
     }
 
     /** Um mundo de mentira, feito das duas respostas que a perna pede. */
-    private static MinerReach.Footing world(
+    private static MinerLeg.Footing world(
             Predicate<BlockPos> passable, Predicate<BlockPos> standable) {
 
-        return new MinerReach.Footing() {
+        return new MinerLeg.Footing() {
 
             @Override
             public boolean passable(BlockPos at) {
@@ -110,7 +110,7 @@ class MinerLegTest {
      * aponta —, sem misturar as perguntas novas, que são <i>se dá para
      * passar</i> e <i>se dá para ficar de pé lá</i>.
      */
-    private static final MinerReach.Footing ANYWHERE = world(at -> true, at -> true);
+    private static final MinerLeg.Footing ANYWHERE = world(at -> true, at -> true);
 
     /**
      * O mundo de uma escada de verdade: só o piso de cada degrau é pisável.
@@ -135,7 +135,7 @@ class MinerLegTest {
     void fromTheSurfaceHeAimsForTheMouth() {
         assertEquals(
                 MOUTH_BLOCK,
-                MinerReach.legTowards(new BlockPos(734, 66, 878), DEEP, mine(30), ANYWHERE));
+                MinerLeg.legTowards(new BlockPos(734, 66, 878), DEEP, mine(30), ANYWHERE));
     }
 
     /**
@@ -174,7 +174,7 @@ class MinerLegTest {
 
         assertEquals(
                 MOUTH_BLOCK,
-                MinerReach.legTowards(aboveTheStaircase, DEEP, mine(30), ANYWHERE),
+                MinerLeg.legTowards(aboveTheStaircase, DEEP, mine(30), ANYWHERE),
                 "o passo saiu por dentro da rocha, e a navegação não tem caminho até ele");
     }
 
@@ -189,7 +189,7 @@ class MinerLegTest {
      */
     @Test
     void atTheMouthTheLegIsAStepDownTheShaft() {
-        BlockPos leg = MinerReach.legTowards(new BlockPos(731, 63, 898), DEEP, mine(30), ANYWHERE);
+        BlockPos leg = MinerLeg.legTowards(new BlockPos(731, 63, 898), DEEP, mine(30), ANYWHERE);
 
         assertNotEquals(
                 DEEP, leg,
@@ -200,7 +200,7 @@ class MinerLegTest {
                 "o passo não desce: " + leg.toShortString());
 
         assertTrue(
-                Math.sqrt(new BlockPos(731, 63, 898).getSquaredDistance(leg)) <= MinerReach.LEG,
+                Math.sqrt(new BlockPos(731, 63, 898).getSquaredDistance(leg)) <= MinerLeg.LEG,
                 "o passo saiu fora do alcance de uma perna: " + leg.toShortString());
     }
 
@@ -214,7 +214,7 @@ class MinerLegTest {
     void fromInsideTheShaftTheLegKeepsGoingDown() {
         BlockPos onTheStairs = at(MineShaft.from(MOUTH, Side.NORTH).positionAt(0));
 
-        BlockPos leg = MinerReach.legTowards(
+        BlockPos leg = MinerLeg.legTowards(
                 onTheStairs, DEEP, mine(MineShaft.CARVED), ANYWHERE);
 
         assertTrue(
@@ -231,7 +231,7 @@ class MinerLegTest {
     void insideTheGalleryHeKeepsAimingForTheStone() {
         assertEquals(
                 DEEP,
-                MinerReach.legTowards(new BlockPos(730, 45, 878), DEEP, mine(200), ANYWHERE));
+                MinerLeg.legTowards(new BlockPos(730, 45, 878), DEEP, mine(200), ANYWHERE));
     }
 
     /**
@@ -244,7 +244,7 @@ class MinerLegTest {
     void withoutAMineTheStoneIsTheOnlyLeg() {
         assertEquals(
                 DEEP,
-                MinerReach.legTowards(new BlockPos(734, 66, 878), DEEP, Optional.empty(), ANYWHERE));
+                MinerLeg.legTowards(new BlockPos(734, 66, 878), DEEP, Optional.empty(), ANYWHERE));
     }
 
     /**
@@ -257,7 +257,7 @@ class MinerLegTest {
     void anUntouchedMineStillSendsHimToTheMouth() {
         assertEquals(
                 MOUTH_BLOCK,
-                MinerReach.legTowards(new BlockPos(734, 66, 878), DEEP, mine(0), ANYWHERE));
+                MinerLeg.legTowards(new BlockPos(734, 66, 878), DEEP, mine(0), ANYWHERE));
     }
 
     /**
@@ -281,7 +281,7 @@ class MinerLegTest {
         Predicate<BlockPos> dug = dugStaircase();
 
         // Escada inteira aberta: tudo se atravessa, e só o piso se pisa.
-        BlockPos leg = MinerReach.legTowards(
+        BlockPos leg = MinerLeg.legTowards(
                 new BlockPos(731, 63, 898), DEEP, mine(30), world(at -> true, dug));
 
         assertTrue(
@@ -308,7 +308,7 @@ class MinerLegTest {
         Predicate<BlockPos> openDownToStepSix = at -> at.getY() >= 58;
         Predicate<BlockPos> dugDownToStepSix = at -> floors.test(at) && openDownToStepSix.test(at);
 
-        BlockPos leg = MinerReach.legTowards(
+        BlockPos leg = MinerLeg.legTowards(
                 new BlockPos(732, 59, 893), DEEP, mine(30),
                 world(openDownToStepSix, dugDownToStepSix));
 
@@ -352,7 +352,7 @@ class MinerLegTest {
         Predicate<BlockPos> floors = dugStaircase();
         Predicate<BlockPos> passable = at -> open.contains(at.getZ());
 
-        BlockPos leg = MinerReach.legTowards(
+        BlockPos leg = MinerLeg.legTowards(
                 new BlockPos(731, 63, 898), DEEP, mine(30),
                 world(passable, at -> passable.test(at) && floors.test(at)));
 
@@ -406,7 +406,7 @@ class MinerLegTest {
 
             assertNotEquals(
                     where,
-                    MinerReach.legTowards(where, DEEP, mine, ANYWHERE),
+                    MinerLeg.legTowards(where, DEEP, mine, ANYWHERE),
                     "a perna mandou o mineiro para onde ele já está, no passo " + i);
         }
     }
@@ -432,7 +432,7 @@ class MinerLegTest {
         BlockPos villager = new BlockPos(732, 56, 890);
         BlockPos behind = new BlockPos(732, 63, 897);
 
-        BlockPos leg = MinerReach.legTowards(
+        BlockPos leg = MinerLeg.legTowards(
                 villager, behind, mine(30), world(at -> true, dugStaircase()));
 
         assertTrue(
@@ -462,7 +462,7 @@ class MinerLegTest {
         BlockPos villager = new BlockPos(732, 56, 890);
         BlockPos surface = new BlockPos(760, 64, 930);
 
-        BlockPos leg = MinerReach.legTowards(
+        BlockPos leg = MinerLeg.legTowards(
                 villager, surface, mine(30), world(at -> true, dugStaircase()));
 
         assertTrue(
@@ -490,7 +490,7 @@ class MinerLegTest {
 
         assertEquals(
                 surface,
-                MinerReach.legTowards(
+                MinerLeg.legTowards(
                         villager, surface, mine(30), world(at -> true, dugStaircase())),
                 "o mineiro foi desviado para a boca sem ter de entrar na mina");
     }
@@ -529,12 +529,12 @@ class MinerLegTest {
         // é a saída — que é justamente onde as duas leituras divergiam
         // no log: ora "walking to the mine mouth at 1436, 63, 81", ora o
         // alvo cru, em tiques seguidos.
-        MinerReach.Footing nowhereToStand = world(at -> true, at -> false);
+        MinerLeg.Footing nowhereToStand = world(at -> true, at -> false);
 
-        BlockPos lower = MinerReach.legTowards(
+        BlockPos lower = MinerLeg.legTowards(
                 new BlockPos(735, 44, 878), stone, arm, nowhereToStand);
 
-        BlockPos higher = MinerReach.legTowards(
+        BlockPos higher = MinerLeg.legTowards(
                 new BlockPos(735, 45, 878), stone, arm, nowhereToStand);
 
         assertEquals(
@@ -570,7 +570,7 @@ class MinerLegTest {
         BlockPos offTheOrder = new BlockPos(700, 44, 830);
         BlockPos sand = new BlockPos(760, 64, 930);
 
-        BlockPos leg = MinerReach.legTowards(
+        BlockPos leg = MinerLeg.legTowards(
                 offTheOrder, sand, mine(200), world(at -> true, dugStaircase()));
 
         assertEquals(
@@ -594,7 +594,7 @@ class MinerLegTest {
         BlockPos inTheGallery = new BlockPos(732, 56, 890);
         BlockPos anotherBranch = new BlockPos(600, 44, 878);
 
-        BlockPos leg = MinerReach.legTowards(
+        BlockPos leg = MinerLeg.legTowards(
                 inTheGallery,
                 anotherBranch,
                 mine(200),

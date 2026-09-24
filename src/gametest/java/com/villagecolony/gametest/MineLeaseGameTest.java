@@ -131,7 +131,7 @@ public class MineLeaseGameTest implements FabricGameTest {
      * costuma virar aldeão <b>parado</b>, e aldeão parado é o outro
      * guarda — o teste passaria medindo o guarda errado. O passo forçado
      * é a definição do caso, e não um atalho: em jogo, quem o dá é a
-     * perna do {@code MinerReach.legTowards} sendo reposta a cada tique.
+     * perna do {@code MinerLeg.legTowards} sendo reposta a cada tique.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_lease",
             tickLimit = LEASE + 4 * SLACK)

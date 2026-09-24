@@ -43,6 +43,7 @@ import com.villagecolony.fabric.integration.RingSweep;
 import com.villagecolony.fabric.integration.StonePatch;
 import com.villagecolony.fabric.work.BuilderApproach;
 import com.villagecolony.fabric.work.MinerReport;
+import com.villagecolony.fabric.work.MinerLeg;
 import com.villagecolony.fabric.work.MinerReach;
 import com.villagecolony.fabric.work.MinerWork;
 import com.villagecolony.fabric.work.SandGathering;
@@ -2754,7 +2755,7 @@ public class MinerGameTest implements FabricGameTest {
      * e o teste do E32 continuou medindo o predicado antigo. Teste que
      * valida uma cópia da regra não valida a regra.
      */
-    private static MinerReach.Footing realFooting(ServerWorld world) {
+    private static MinerLeg.Footing realFooting(ServerWorld world) {
         return MinerWork.footingIn(world);
     }
 
@@ -2828,7 +2829,7 @@ public class MinerGameTest implements FabricGameTest {
         // dentro dos oito blocos o destino vale por si e a perna nem corre.
         BlockPos far = context.getAbsolutePos(new BlockPos(0, 0, 0));
 
-        BlockPos leg = MinerReach.legTowards(
+        BlockPos leg = MinerLeg.legTowards(
                 standing, far, Optional.of(mine.arm(0)), realFooting(world));
 
         context.assertTrue(
@@ -4669,7 +4670,7 @@ public class MinerGameTest implements FabricGameTest {
      *
      * <p>Enquanto os dois coincidem ninguém percebe. Eles deixam de
      * coincidir exatamente no caso que interessa: quando o
-     * {@code MinerReach.legTowards} manda o mineiro à <b>boca da mina</b>
+     * {@code MinerLeg.legTowards} manda o mineiro à <b>boca da mina</b>
      * porque a pedra está longe demais para a navegação. Aí a linha
      * continua dizendo a pedra, e a sessão de 2026-08-28 saiu com o
      * segundo mineiro parado na superfície, <i>"walking to 758, 44,
@@ -5034,7 +5035,7 @@ public class MinerGameTest implements FabricGameTest {
 
         ServerWorld world = context.getWorld();
 
-        MinerReach.Footing corridor = MinerWork.footingIn(world);
+        MinerLeg.Footing corridor = MinerWork.footingIn(world);
 
         context.assertTrue(
                 corridor.passable(context.getAbsolutePos(step)),

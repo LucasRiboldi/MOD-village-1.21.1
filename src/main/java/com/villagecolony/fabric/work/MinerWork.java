@@ -478,7 +478,7 @@ public final class MinerWork {
                 // seiscentas leituras de bloco, e isto roda todo tique
                 // enquanto ele caminha.
                 //
-                // E por pernas — 2026-08-28. Ver MinerReach.legTowards:
+                // E por pernas — 2026-08-28. Ver MinerLeg.legTowards:
                 // a navegação não traça um caminho de vinte blocos por
                 // dentro da rocha, e ele ficava parado na superfície
                 // acima da galeria.
@@ -499,7 +499,7 @@ public final class MinerWork {
                         MineDigging.armToWalk(
                                 job.task.colonyId(), workerId, villager.getBlockPos());
 
-                BlockPos leg = MinerReach.legTowards(
+                BlockPos leg = MinerLeg.legTowards(
                         villager.getBlockPos(),
                         job.approach,
                         corridor,
@@ -1239,8 +1239,8 @@ public final class MinerWork {
      * entrou aqui e o teste do E32 continuou medindo o predicado antigo.
      * Teste que valida uma cópia da regra não valida a regra.
      */
-    public static MinerReach.Footing footingIn(ServerWorld world) {
-        return new MinerReach.Footing() {
+    public static MinerLeg.Footing footingIn(ServerWorld world) {
+        return new MinerLeg.Footing() {
 
             /**
              * <b>Ou o lugar é vazio, ou dá para ficar de pé em cima

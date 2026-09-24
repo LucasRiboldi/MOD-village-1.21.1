@@ -795,12 +795,12 @@ public final class MineDigging {
         // O caso comum, e é o primeiro de propósito: ele está cavando no
         // ramal que reservou. Perguntar aos outros três seria pagar a
         // varredura para chegar na mesma resposta.
-        if (held.isPresent() && MinerReach.isOnCorridorOf(villager, held.get())) {
+        if (held.isPresent() && MinerLeg.isOnCorridorOf(villager, held.get())) {
             return held;
         }
 
         for (MineArm arm : mine.get().arms()) {
-            if (MinerReach.isOnCorridorOf(villager, arm)) {
+            if (MinerLeg.isOnCorridorOf(villager, arm)) {
                 return Optional.of(arm);
             }
         }
