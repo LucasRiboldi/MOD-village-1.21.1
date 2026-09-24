@@ -6,6 +6,7 @@ import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.ColonyRoads;
+import com.villagecolony.core.coordination.ScanRefusalReason;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -675,6 +676,62 @@ public class BuildSiteGameTest implements FabricGameTest {
 
             BuildSiteScanner.clearAll();
             LotRefusals.clearAll();
+        }
+
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_policy")
+    public void bedAndRoadRefusalsAreIndependent(TestContext context) {
+        BlockPos center = new BlockPos(3, 1, 3);
+        ColonyPos oneBlockLot = new ColonyPos(1, 3, 1);
+        UUID bedColony = UUID.randomUUID();
+        UUID roadColony = UUID.randomUUID();
+
+        paveGround(context, center);
+        context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
+        reserveRoad(context, bedColony, center);
+
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                if (dx != 0 || dz != 0) {
+                    context.setBlockState(center.add(dx, 0, dz), Blocks.RED_BED.getDefaultState());
+                }
+            }
+        }
+
+        try {
+            BuildSiteScanner.find(
+                    context.getWorld(),
+                    bedColony,
+                    MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                    0,
+                    oneBlockLot);
+
+            context.assertTrue(
+                    BuildSiteScanner.latestReport(bedColony)
+                            .orElseThrow()
+                            .refusalCount(ScanRefusalReason.BED) > 0,
+                    "uma cama entrou na mesma telemetria de terreno ou estrada");
+
+            reserveRoadFootprint(context, roadColony, center, Blocks.DIRT_PATH, RADIUS);
+            BuildSiteScanner.find(
+                    context.getWorld(),
+                    roadColony,
+                    MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                    0,
+                    oneBlockLot);
+
+            context.assertTrue(
+                    BuildSiteScanner.latestReport(roadColony)
+                            .orElseThrow()
+                            .refusalCount(ScanRefusalReason.ROAD) > 0,
+                    "uma estrada reservada nao foi separada da recusa por cama");
+        } finally {
+            BuildSiteScanner.clear(bedColony);
+            BuildSiteScanner.clear(roadColony);
+            LotRefusals.clear(bedColony);
+            LotRefusals.clear(roadColony);
         }
 
         context.complete();
@@ -1895,10 +1952,29 @@ public class BuildSiteGameTest implements FabricGameTest {
 
     private static void reserveRoadFootprint(
             TestContext context, UUID colony, BlockPos center, net.minecraft.block.Block paving) {
+        reserveRoadFootprint(context, colony, center, paving, 2);
+    }
+
+    /**
+     * Pavimenta e reserva um quadrado {@code (2*reach+1)} ao redor do
+     * centro.
+     *
+     * <p>O alcance precisa cobrir toda a área que o cenário já preparou
+     * como candidata — {@code paveGround}, por exemplo — ou uma direção
+     * de {@link BuildSiteScanner#find} escapa do índice de rua para o
+     * chão não reservado logo além da borda pavimentada e devolve um
+     * lote aceito antes de qualquer recusa por {@code ROAD} se
+     * acumular. Foi o defeito de
+     * {@code bedAndRoadRefusalsAreIndependent}: o footprint de raio 2
+     * deixava um anel de grama solta entre ele e o raio 3 do cenário.
+     */
+    private static void reserveRoadFootprint(
+            TestContext context, UUID colony, BlockPos center, net.minecraft.block.Block paving,
+            int reach) {
         List<BlockPos> road = new ArrayList<>();
 
-        for (int dx = -2; dx <= 2; dx++) {
-            for (int dz = -2; dz <= 2; dz++) {
+        for (int dx = -reach; dx <= reach; dx++) {
+            for (int dz = -reach; dz <= reach; dz++) {
                 BlockPos at = center.add(dx, 0, dz);
                 context.setBlockState(at, paving.getDefaultState());
                 road.add(at);

@@ -101,7 +101,7 @@ public final class ServerLifecycleHandler {
         TreeScanner.clearAll();
         VillageRoad.clearAll();
         RoadExtension.clearAll();
-        BuildSiteScanner.clearAll();
+        BuildSiteScanner.clearAll(); // Inclui os relatórios de varredura por colônia.
         SweepLog.clearAll();
         // E a contagem de recusa de lote junto — 2026-09-17. Ela
         // ficava de fora enquanto os quatro vizinhos eram limpos, e a
@@ -280,7 +280,7 @@ public final class ServerLifecycleHandler {
         TreeScanner.clearAll();
         VillageRoad.clearAll();
         RoadExtension.clearAll();
-        BuildSiteScanner.clearAll();
+        BuildSiteScanner.clearAll(); // Inclui os relatórios de varredura por colônia.
         SweepLog.clearAll();
         // E a contagem de recusa de lote junto — 2026-09-17. Ela
         // ficava de fora enquanto os quatro vizinhos eram limpos, e a

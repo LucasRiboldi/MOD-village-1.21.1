@@ -7,9 +7,12 @@ import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.service.ConstructionService;
+import com.villagecolony.core.coordination.ScanRefusalReason;
+import com.villagecolony.core.coordination.ScanReport;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.work.HousePlans;
+import net.minecraft.block.BedBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.registry.RegistryKeys;
@@ -25,6 +28,7 @@ import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -248,6 +252,9 @@ public final class BuildSiteScanner {
     private record Sweep(int ring, int column, ColonyPos from) {
     }
 
+    private record RoadScan(Optional<Site> site, int columns) {
+    }
+
     /**
      * As colunas de rua que a última varredura <b>completa</b> achou.
      *
@@ -347,6 +354,11 @@ public final class BuildSiteScanner {
      */
     private static final Map<UUID, Integer> ROAD_CURSOR = new HashMap<>();
 
+    /** O diagnóstico imutável da última fatia de cada colônia. */
+    private static final Map<UUID, ScanReport> REPORTS = new HashMap<>();
+
+    private static final int MAX_REPORTS = 256;
+
     private BuildSiteScanner() {
     }
 
@@ -415,6 +427,9 @@ public final class BuildSiteScanner {
         BlockPos from = MinecraftTypeAdapter.toBlockPos(center);
 
         int columns = 0;
+        Map<ScanRefusalReason, Integer> before = refusalSnapshot(colonyId);
+
+        try {
 
         ColonyRoads roads = ROADS.get(colonyId);
 
@@ -457,8 +472,9 @@ public final class BuildSiteScanner {
         if (roads != null) {
             SweepLog.indexed(colonyId);
 
-            Optional<Site> fromIndex =
-                    findAmongRoads(world, colonyId, from, roads, radius, plans);
+            RoadScan indexed = findAmongRoads(world, colonyId, from, roads, radius, plans);
+            columns = indexed.columns();
+            Optional<Site> fromIndex = indexed.site();
 
             // <b>Índice esgotado sai agora</b> — P1.5, 2026-09-19. A marca
             // foi posta lá dentro e é consumida aqui, fora da chamada que
@@ -615,6 +631,9 @@ public final class BuildSiteScanner {
         indexWhatWasSeen(colonyId, center);
 
         return Optional.empty();
+        } finally {
+            recordReport(colonyId, columns, before);
+        }
     }
 
     /**
@@ -797,7 +816,7 @@ public final class BuildSiteScanner {
      * não sabe disso. Quem responde ao planejador é o
      * {@link #stillLookingForALot}.
      */
-    private static Optional<Site> findAmongRoads(
+    private static RoadScan findAmongRoads(
             ServerWorld world, UUID colonyId, BlockPos from, ColonyRoads roads,
             int radius, List<ColonyPos> plans) {
 
@@ -828,7 +847,7 @@ public final class BuildSiteScanner {
                 // inteiro e a volta parou no meio.
                 SweepLog.pass(colonyId, looked - 1);
 
-                return Optional.empty();
+                return new RoadScan(Optional.empty(), looked - 1);
             }
 
             long column = columns.get(at);
@@ -851,7 +870,7 @@ public final class BuildSiteScanner {
 
                 warnIfBeyondTheRadius(colonyId, site.get(), from, radius);
 
-                return site;
+                return new RoadScan(site, looked);
             }
         }
 
@@ -866,7 +885,7 @@ public final class BuildSiteScanner {
         // decide descartar é o chamador; ver {@link #EXHAUSTED}.
         EXHAUSTED.merge(colonyId, 1, Integer::sum);
 
-        return Optional.empty();
+        return new RoadScan(Optional.empty(), looked);
     }
 
     /**
@@ -1047,6 +1066,64 @@ public final class BuildSiteScanner {
         ROAD_CURSOR.clear();
         BUILDING.clear();
         EXHAUSTED.clear();
+        REPORTS.clear();
+    }
+
+    /** Esquece o estado transitório de uma colônia, para testes isolados. */
+    public static void clear(UUID colonyId) {
+        SWEEPS.remove(colonyId);
+        ROADS.remove(colonyId);
+        ROAD_CURSOR.remove(colonyId);
+        BUILDING.remove(colonyId);
+        EXHAUSTED.remove(colonyId);
+        REPORTS.remove(colonyId);
+    }
+
+    /** Último diagnóstico da fatia da colônia, sem alterar sua telemetria acumulada. */
+    public static Optional<ScanReport> latestReport(UUID colonyId) {
+        return Optional.ofNullable(REPORTS.get(colonyId));
+    }
+
+    private static Map<ScanRefusalReason, Integer> refusalSnapshot(UUID colonyId) {
+        Map<ScanRefusalReason, Integer> snapshot = new EnumMap<>(ScanRefusalReason.class);
+
+        for (LotRefusals.Reason reason : LotRefusals.Reason.values()) {
+            ScanRefusalReason category = refusalCategory(reason);
+            snapshot.merge(category, LotRefusals.countOf(colonyId, reason), Integer::sum);
+        }
+        return snapshot;
+    }
+
+    private static void recordReport(
+            UUID colonyId, int columns, Map<ScanRefusalReason, Integer> before) {
+        Map<ScanRefusalReason, Integer> after = refusalSnapshot(colonyId);
+        Map<ScanRefusalReason, Integer> delta = new EnumMap<>(ScanRefusalReason.class);
+
+        for (ScanRefusalReason reason : ScanRefusalReason.values()) {
+            int count = after.getOrDefault(reason, 0) - before.getOrDefault(reason, 0);
+            if (count > 0) {
+                delta.put(reason, count);
+            }
+        }
+        if (REPORTS.size() >= MAX_REPORTS && !REPORTS.containsKey(colonyId)) {
+            REPORTS.clear();
+        }
+        REPORTS.put(
+                colonyId,
+                new ScanReport(
+                        colonyId,
+                        Math.min(columns, MAX_COLUMNS),
+                        delta,
+                        !stillLookingForALot(colonyId)));
+    }
+
+    private static ScanRefusalReason refusalCategory(LotRefusals.Reason reason) {
+        return switch (reason) {
+            case BED -> ScanRefusalReason.BED;
+            case ROAD -> ScanRefusalReason.ROAD;
+            case PROTECTED, OCCUPIED -> ScanRefusalReason.LOT;
+            case NO_GROUND, NOT_NATURAL_GROUND, OFF_ROAD_LEVEL -> ScanRefusalReason.TERRAIN;
+        };
     }
 
     /** Reconcilia uma coluna depois de uma alteração efetiva do jogador. */
@@ -1486,6 +1563,19 @@ public final class BuildSiteScanner {
                     // A contagem que decide a terraplanagem — 2026-09-11.
                     // Ver docs/research/terraplanagem-da-vila.md.
                     LotRefusals.refused(colonyId, LotRefusals.Reason.OFF_ROAD_LEVEL);
+
+                    return Optional.empty();
+                }
+
+                // Uma leitura de bloco, logo depois da comparação gratuita
+                // acima — P1.3, 2026-09-23. Fica antes da Regra 3 e da
+                // reserva de rua porque uma cama é sempre peça de vila e a
+                // categoria mais específica; conferir aqui, e não junto com
+                // {@code NOT_NATURAL_GROUND}, é o que mantém
+                // {@code bedAndRoadRefusalsAreIndependent} separando as
+                // duas telemetrias em vez de uma engolir a outra.
+                if (world.getBlockState(ground).getBlock() instanceof BedBlock) {
+                    LotRefusals.refused(colonyId, LotRefusals.Reason.BED);
 
                     return Optional.empty();
                 }

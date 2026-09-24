@@ -285,8 +285,11 @@ public class FarmPlanGameTest implements FabricGameTest {
             ResourceId houseId =
                     ResourceId.vanilla("village/plains/houses/plains_small_house_1");
 
+            // O reparador só considera blocos em chunks carregados. A borda
+            // do raio de busca fica além da área carregada pelo GameTest,
+            // portanto a casa de referência precisa permanecer no cenário.
             ColonyPos built = MinecraftTypeAdapter.toColonyPos(
-                    context.getAbsolutePos(center.add(-SCAN_RADIUS, 0, -SCAN_RADIUS)));
+                    context.getAbsolutePos(center.add(8, 0, 8)));
 
             Blueprint house = HousePlans.blueprintOf(
                     context.getWorld(), colony.id(), houseId, built).orElse(null);

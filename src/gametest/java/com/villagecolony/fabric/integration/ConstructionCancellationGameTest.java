@@ -48,6 +48,7 @@ public class ConstructionCancellationGameTest implements FabricGameTest {
                     ResourceType.OAK_PLANKS,
                     1);
             BlockPos marker = context.getAbsolutePos(new BlockPos(2, 2, 2));
+            context.getWorld().setBlockState(marker.down(), Blocks.STONE.getDefaultState());
             context.getWorld().setBlockState(marker, Blocks.SOUL_TORCH.getDefaultState());
 
             context.assertTrue(
@@ -95,6 +96,7 @@ public class ConstructionCancellationGameTest implements FabricGameTest {
         try {
             VillageColonyMod.CONSTRUCTIONS.register(project);
             BlockPos marker = context.getAbsolutePos(new BlockPos(2, 2, 2));
+            context.getWorld().setBlockState(marker.down(), Blocks.STONE.getDefaultState());
             context.getWorld().setBlockState(marker, Blocks.SOUL_TORCH.getDefaultState());
 
             context.assertFalse(
@@ -132,6 +134,7 @@ public class ConstructionCancellationGameTest implements FabricGameTest {
                     ResourceType.OAK_PLANKS,
                     1);
             BlockPos marker = context.getAbsolutePos(new BlockPos(2, 2, 2));
+            context.getWorld().setBlockState(marker.down(), Blocks.STONE.getDefaultState());
             context.getWorld().setBlockState(marker, Blocks.SOUL_TORCH.getDefaultState());
             ColonyEdits.remember(MinecraftTypeAdapter.toColonyPos(marker));
 
