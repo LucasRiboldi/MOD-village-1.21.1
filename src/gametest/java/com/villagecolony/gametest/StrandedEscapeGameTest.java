@@ -1,15 +1,24 @@
 package com.villagecolony.gametest;
 
+import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.integration.ChestWithdrawer;
+import com.villagecolony.fabric.work.EscapeBackfill;
 import com.villagecolony.fabric.work.StrandedEscape;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * O encalhado cava a própria saída — E47, 2026-09-24.
@@ -85,6 +94,98 @@ public class StrandedEscapeGameTest implements FabricGameTest {
                 "um poço de quatro blocos pediu " + steps + " degraus");
         context.assertTrue(world.getBlockState(sideWall).isOf(Blocks.STONE),
                 "a fuga quebrou a parede do lado oposto, fora da escada");
+
+        context.complete();
+    }
+
+    /**
+     * N10, 2026-09-24: depois que ele sai, a escada volta a ser terreno,
+     * com o pedregulho que saiu dela, e nada é assentado onde há alguém.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "stranded_escape")
+    public void theEscapeStairsAreBackfilledWithWhatCameOutOfThem(TestContext context) {
+        ground(context, Blocks.STONE);
+
+        BlockPos chestAt = new BlockPos(0, GROUND_TOP + 1, 0);
+        context.setBlockState(chestAt, Blocks.CHEST.getDefaultState());
+
+        ServerWorld world = context.getWorld();
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chestAt));
+        UUID digger = UUID.randomUUID();
+        BlockPos feet = context.getAbsolutePos(SHAFT_BOTTOM);
+        // Só o que era pedra antes do degrau: o vão que já era ar não se tampa.
+        java.util.Set<BlockPos> dug = new java.util.LinkedHashSet<>();
+
+        try {
+            for (int steps = 0; !StrandedEscape.isOut(world, feet) && steps < 8; steps++) {
+                java.util.Map<BlockPos, Boolean> wasStone = new java.util.HashMap<>();
+
+                for (net.minecraft.util.math.Direction way
+                        : net.minecraft.util.math.Direction.Type.HORIZONTAL) {
+                    for (BlockPos at : List.of(feet.up(2), feet.offset(way).up(),
+                            feet.offset(way).up(2))) {
+                        wasStone.put(at, world.getBlockState(at).isOf(Blocks.STONE));
+                    }
+                }
+
+                BlockPos from = feet;
+                Optional<BlockPos> next = StrandedEscape.digOneStep(
+                        world, feet, home(context), digger, chest);
+
+                context.assertTrue(next.isPresent(), "a fuga nao achou degrau");
+
+                for (BlockPos at : List.of(from.up(2), next.get(), next.get().up())) {
+                    if (wasStone.getOrDefault(at, false)) {
+                        dug.add(at);
+                    }
+                }
+
+                feet = next.get();
+            }
+
+            int cobble = ChestWithdrawer.countIn(world, chest, Items.COBBLESTONE);
+            context.assertTrue(cobble > 0, "o que saiu da escada nao foi para o bau");
+
+            // Alguém parado no último degrau: aquele vão não pode ser tampado.
+            VillagerEntity standing = EntityType.VILLAGER.create(world);
+            standing.refreshPositionAndAngles(feet, 0.0F, 0.0F);
+            world.spawnEntity(standing);
+
+            EscapeBackfill.begin(digger, chest);
+
+            for (int pass = 0; pass < dug.size() + 2; pass++) {
+                EscapeBackfill.tick(world);
+            }
+
+            int filled = 0;
+            int free = 0;
+
+            for (BlockPos hole : dug) {
+                boolean occupied = hole.equals(feet) || hole.equals(feet.up());
+
+                if (occupied) {
+                    context.assertTrue(world.getBlockState(hole).isAir(),
+                            "o tampao enterrou o aldeao em " + hole.toShortString());
+                } else {
+                    free++;
+
+                    if (world.getBlockState(hole).isOf(Blocks.COBBLESTONE)) {
+                        filled++;
+                    }
+                }
+            }
+
+            context.assertTrue(free > 0, "a fuga nao cavou nada — o caso nao mediria nada");
+            context.assertTrue(filled == free,
+                    "so " + filled + " de " + free + " vaos livres foram tampados");
+            context.assertTrue(
+                    ChestWithdrawer.countIn(world, chest, Items.COBBLESTONE) == cobble - filled,
+                    "o tampao nao gastou do bau o pedregulho que assentou");
+
+            standing.discard();
+        } finally {
+            EscapeBackfill.clearAll();
+        }
 
         context.complete();
     }

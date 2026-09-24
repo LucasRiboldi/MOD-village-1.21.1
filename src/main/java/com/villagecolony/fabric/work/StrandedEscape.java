@@ -92,6 +92,9 @@ public final class StrandedEscape {
         for (UUID workerId : StrandedWorkers.all()) {
             pass(world, workerId);
         }
+
+        // Quem já saiu tampa a escada, um bloco por passagem — N10.
+        EscapeBackfill.tick(world);
     }
 
     private static void pass(ServerWorld world, UUID workerId) {
@@ -100,6 +103,7 @@ public final class StrandedEscape {
         if (worker.isEmpty()) {
             StrandedWorkers.forget(workerId);
             forget(workerId);
+            EscapeBackfill.forget(workerId);
 
             return;
         }
@@ -119,6 +123,8 @@ public final class StrandedEscape {
 
             StrandedWorkers.release(workerId);
             forget(workerId);
+            EscapeBackfill.begin(workerId,
+                    VillageColonyMod.STORAGES.of(workerId).map(WorkerStorage::chestPosition).orElse(null));
 
             return;
         }
@@ -149,7 +155,8 @@ public final class StrandedEscape {
         }
 
         if (!step.get().toBreak().isEmpty()) {
-            dig(world, step.get(), storage.map(WorkerStorage::chestPosition).orElse(null), feet);
+            dig(world, step.get(), storage.map(WorkerStorage::chestPosition).orElse(null), feet,
+                    workerId);
             villager.swingHand(Hand.MAIN_HAND);
             StrandedWorkers.dugAStep(workerId);
             STILL.remove(workerId);
@@ -178,7 +185,21 @@ public final class StrandedEscape {
 
         Optional<Step> step = planStep(world, feet, home);
 
-        step.ifPresent(found -> dig(world, found, null, feet));
+        step.ifPresent(found -> dig(world, found, null, feet, null));
+
+        return step.map(Step::standAt);
+    }
+
+    /**
+     * O mesmo degrau, com o que sai indo para {@code chest} e o vão
+     * guardado para o tampão de {@code digger} — ver {@link EscapeBackfill}.
+     */
+    public static Optional<BlockPos> digOneStep(
+            ServerWorld world, BlockPos feet, BlockPos home, UUID digger, ColonyPos chest) {
+
+        Optional<Step> step = planStep(world, feet, home);
+
+        step.ifPresent(found -> dig(world, found, chest, feet, digger));
 
         return step.map(Step::standAt);
     }
@@ -329,7 +350,7 @@ public final class StrandedEscape {
     /** Quebra os vãos do degrau e guarda o que saiu. */
     private static void dig(
             ServerWorld world, Step step,
-            ColonyPos chest, BlockPos dropAt) {
+            ColonyPos chest, BlockPos dropAt, UUID digger) {
 
         // Uma picareta de ferro na tabela de loot: pedra dá pedregulho, e
         // minério dá o que daria nas mãos do mineiro. Sem ferramenta a pedra
@@ -341,6 +362,10 @@ public final class StrandedEscape {
             List<ItemStack> drops = Block.getDroppedStacks(state, world, at, null, null, tool);
 
             world.breakBlock(at, false);
+
+            if (digger != null) {
+                EscapeBackfill.dug(digger, at, drops);
+            }
 
             for (ItemStack drop : drops) {
                 int left = chest == null
@@ -396,5 +421,6 @@ public final class StrandedEscape {
         LAST_FEET.clear();
         STILL.clear();
         HOPELESS.clear();
+        EscapeBackfill.clearAll();
     }
 }
