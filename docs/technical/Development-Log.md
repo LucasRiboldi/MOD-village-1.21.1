@@ -9323,3 +9323,22 @@ Fabric. Um commit por item.
       local e comentario.
   - A garantia final foi comparar todas as strings literais do codigo de
     producao antes e depois: identicas.
+
+### 2026-09-24 - Avaliacao tecnica com metodologia registrada (linha de base)
+
+Pedido do autor: avaliacao completa com criterios objetivos e metodologia
+reutilizavel.
+
+- **Metodologia:** `docs/technical/avaliacao/METODOLOGIA.md`, com 10
+  dimensoes, 14 criterios de nota 0-4, conceito A-E e parte qualitativa
+  Q1-Q10 com evidencia.
+- **Coletor:** `scripts/assess/`, que mede, aplica a regua versionada
+  (`rubric.py`, v1) e compara duas avaliacoes com `--compare`.
+- **Primeira avaliacao** (`17613fa`): **B, 3,21**.
+  - Fortes: camadas (0 violacoes), core+data 91,7% coberto, 7/7 praticas
+    automatizadas.
+  - Fracos: desempenho em jogo (29 ciclos acima de um tique por hora) e
+    estado estatico mutavel (89 campos, 49 `clearAll`).
+- **Achado durante a avaliacao:** a refatoracao do item 9 tinha quebrado 62
+  links de javadoc (`InvalidLink` de 24 para 73). Foram reapontados para a
+  classe nova; o build e duas rodadas da bateria foram refeitos em seguida.

@@ -1,0 +1,330 @@
+{
+  "schema": 1,
+  "generated_at": "2026-09-24T19:41:16+00:00",
+  "commit": "17613fa",
+  "branch": "codex/bighousemod",
+  "source": {
+    "files": 283,
+    "lines": 51875,
+    "code_lines": 22463,
+    "comment_lines": 21958,
+    "comment_ratio": 0.98,
+    "files_over_500": [],
+    "max_file_lines": 497,
+    "methods": 1507,
+    "method_lines_p50": 6.0,
+    "method_lines_p90": 24.0,
+    "method_lines_max": 98,
+    "methods_over_50_lines": 26,
+    "cc_mean": 2.91,
+    "cc_p90": 6.400000000000091,
+    "cc_max": 26,
+    "methods_cc_over_10": 41,
+    "methods_cc_over_20": 2,
+    "pct_cc_over_10": 2.7,
+    "mutable_statics": 89,
+    "mutable_statics_per_kloc": 3.96,
+    "layers": {
+      "core": {
+        "files": 110,
+        "code_lines": 4608
+      },
+      "data": {
+        "files": 9,
+        "code_lines": 840
+      },
+      "fabric": {
+        "files": 163,
+        "code_lines": 16979
+      },
+      "root": {
+        "files": 1,
+        "code_lines": 36
+      }
+    },
+    "core_layer_violations": [],
+    "most_complex": [
+      {
+        "cc": 26,
+        "lines": 71,
+        "file": "src/main/java/com/villagecolony/fabric/adapter/MinecraftTypeAdapter.java",
+        "method": "toResourceType"
+      },
+      {
+        "cc": 23,
+        "lines": 98,
+        "file": "src/main/java/com/villagecolony/fabric/integration/BuildSiteScanner.java",
+        "method": "find"
+      },
+      {
+        "cc": 20,
+        "lines": 69,
+        "file": "src/main/java/com/villagecolony/fabric/work/MineCuts.java",
+        "method": "nextCut"
+      },
+      {
+        "cc": 20,
+        "lines": 41,
+        "file": "src/main/java/com/villagecolony/fabric/work/EquivalentPieces.java",
+        "method": "familyOf"
+      },
+      {
+        "cc": 19,
+        "lines": 82,
+        "file": "src/main/java/com/villagecolony/fabric/integration/LotLevel.java",
+        "method": "flatGroundAt"
+      },
+      {
+        "cc": 18,
+        "lines": 48,
+        "file": "src/main/java/com/villagecolony/core/worker/service/ProfessionAssigner.java",
+        "method": "vacancyFor"
+      },
+      {
+        "cc": 17,
+        "lines": 95,
+        "file": "src/main/java/com/villagecolony/fabric/work/MinerSteps.java",
+        "method": "step"
+      },
+      {
+        "cc": 17,
+        "lines": 57,
+        "file": "src/main/java/com/villagecolony/fabric/integration/ConstructionCancellation.java",
+        "method": "cancelAtSoulTorch"
+      },
+      {
+        "cc": 17,
+        "lines": 20,
+        "file": "src/main/java/com/villagecolony/fabric/work/ShepherdWork.java",
+        "method": "woolOf"
+      },
+      {
+        "cc": 16,
+        "lines": 90,
+        "file": "src/main/java/com/villagecolony/fabric/integration/VillageFoundation.java",
+        "method": "ensure"
+      }
+    ],
+    "test_files": 175,
+    "test_code_lines": 26708,
+    "test_to_main_ratio": 1.19
+  },
+  "unit_tests": {
+    "tests": 1025,
+    "failures": 0,
+    "seconds": 9.4
+  },
+  "gametests": [
+    {
+      "total": 433,
+      "failed": 0,
+      "seconds": 54.46,
+      "failing_tests": []
+    },
+    {
+      "total": 433,
+      "failed": 0,
+      "seconds": 53.92,
+      "failing_tests": []
+    }
+  ],
+  "coverage": {
+    "instruction": 34.4,
+    "branch": 24.5,
+    "line": 31.1,
+    "complexity": 28.8,
+    "method": 41.5,
+    "class": 53.7,
+    "line_by_layer": {
+      "core": 90.9,
+      "data": 96.3,
+      "fabric": 11.6,
+      "root": 56.2
+    },
+    "line_core_data": 91.7
+  },
+  "mutation": {
+    "mutations": 1291,
+    "killed": 1000,
+    "survived": 158,
+    "no_coverage": 133,
+    "score": 77.5,
+    "strength": 86.4
+  },
+  "static_analysis": {
+    "warnings": 57,
+    "by_kind": {
+      "MissingSummary": 14,
+      "InvalidLink": 9,
+      "NotJavadoc": 7,
+      "EnumOrdinal": 7,
+      "ImmutableEnumChecker": 5,
+      "LongDoubleConversion": 4,
+      "MissingOverride": 2,
+      "UnusedVariable": 2,
+      "IntLongMath": 2,
+      "UnnecessaryLambda": 1,
+      "BoxingComparator": 1,
+      "InvalidParam": 1,
+      "UnusedMethod": 1,
+      "UnrecognisedJavadocTag": 1
+    }
+  },
+  "records": {
+    "adrs": 24,
+    "docs_md": 96,
+    "todo_open": 52,
+    "todo_open_critical": 4,
+    "todo_done": 94,
+    "has_readme": true,
+    "ci_workflow": true
+  },
+  "process": {
+    "practices": {
+      "ci": true,
+      "unit_tests_in_ci": true,
+      "gametests_in_ci": true,
+      "static_analysis": true,
+      "mutation_testing": true,
+      "coverage": true,
+      "commit_hooks": true
+    },
+    "commits_total": 608,
+    "commits_30_days": 391,
+    "last_300_by_prefix": {
+      "outro": 69,
+      "docs": 51,
+      "fix": 44,
+      "P1": 38,
+      "P0": 24,
+      "feat": 23,
+      "refactor": 14,
+      "test": 10,
+      "chore": 5,
+      "build": 4,
+      "scripts": 2,
+      "P2": 2
+    }
+  },
+  "game_performance": {
+    "session_hours": 6.72,
+    "observations": {
+      "miner_no_branch_work": 0,
+      "miner_no_standing_room": 7,
+      "construction_waiting_resources": 79,
+      "builder_pathing_stalled": 106,
+      "surface_worker_unreachable": 0,
+      "missing_profession": 77,
+      "site_sweep_budget_exhausted": 58,
+      "site_sweep_restarted": 1,
+      "worker_stranded": 0,
+      "stranded_cannot_dig_out": 0,
+      "construction_let_go": 13,
+      "miner_chest_full": 0,
+      "cycle_over_tick": 196,
+      "server_overloaded": 0,
+      "log_error_line": 1,
+      "house_finished": 0,
+      "stranded_freed": 0,
+      "stairs_backfilled": 0,
+      "supper_shared": 0
+    },
+    "lines": 221814
+  },
+  "exit_codes": {
+    "build": 0,
+    "pitest": 0
+  },
+  "scores": {
+    "C01": {
+      "name": "Arquivos > 500 linhas (produção)",
+      "dimension": "Organização",
+      "score": 4,
+      "value": "0.0% (0)"
+    },
+    "C02": {
+      "name": "Tamanho de método (p90, linhas de código)",
+      "dimension": "Organização",
+      "score": 3,
+      "value": "p90 24, máx 98"
+    },
+    "C03": {
+      "name": "Complexidade ciclomática (% métodos > 10)",
+      "dimension": "Complexidade",
+      "score": 4,
+      "value": "2.7%, máx 26"
+    },
+    "C04": {
+      "name": "Regra de camadas (core sem Minecraft)",
+      "dimension": "Arquitetura",
+      "score": 4,
+      "value": "0 violações"
+    },
+    "C05": {
+      "name": "Estado estático mutável (por kLOC)",
+      "dimension": "Arquitetura",
+      "score": 2,
+      "value": "89 campos (3.96/kLOC)"
+    },
+    "C06": {
+      "name": "Volume de teste (código de teste / produção)",
+      "dimension": "Testes",
+      "score": 4,
+      "value": "1.19x"
+    },
+    "C07": {
+      "name": "Cobertura de linha do core+data (JaCoCo)",
+      "dimension": "Testes",
+      "score": 4,
+      "value": "91.7% core+data (fabric por unitário: 11.6%)"
+    },
+    "C08": {
+      "name": "Mutação (PIT, core)",
+      "dimension": "Testes",
+      "score": 3,
+      "value": "77.5% mortas, força 86.4%"
+    },
+    "C09": {
+      "name": "Estabilidade da bateria de jogo",
+      "dimension": "Testes",
+      "score": 4,
+      "value": "2 rodada(s), 0 falha"
+    },
+    "C10": {
+      "name": "Análise estática (Error Prone / kLOC)",
+      "dimension": "Qualidade",
+      "score": 3,
+      "value": "57 avisos (2.5/kLOC)"
+    },
+    "C11": {
+      "name": "Densidade de comentário (comentário / código)",
+      "dimension": "Legibilidade",
+      "score": 3,
+      "value": "0.98"
+    },
+    "C12": {
+      "name": "Práticas de engenharia automatizadas",
+      "dimension": "Processo",
+      "score": 4,
+      "value": "7 de 7 práticas"
+    },
+    "C13": {
+      "name": "Desempenho em jogo (ciclo > 1 tique / h)",
+      "dimension": "Desempenho",
+      "score": 1,
+      "value": "29.2 ciclos > 1 tique por hora"
+    },
+    "C14": {
+      "name": "Dívida crítica aberta (🔴 no TODO)",
+      "dimension": "Registros",
+      "score": 2,
+      "value": "4 itens 🔴 de 52 abertos"
+    },
+    "_overall": {
+      "mean": 3.21,
+      "grade": "B",
+      "criteria_scored": 14,
+      "rubric_version": 1
+    }
+  }
+}

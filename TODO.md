@@ -17,6 +17,26 @@ sucesso, `runGametest --rerun-tasks` 423/423 GAME TESTS COMPLETE. O JAR
 (ver `docs/proxima-sessao.md`); este playtest de 24-09 e o primeiro
 resultado real contra ele.
 
+## Avaliação técnica 2026-09-24 — B (3,21/4) — `docs/technical/avaliacao/2026-09-24-17613fa/RELATORIO.md`
+
+As recomendações, cada uma com um aceite que a próxima avaliação mede
+(metodologia em `docs/technical/avaliacao/METODOLOGIA.md`):
+
+- [ ] 🔴 **R1**: perfil do spark e atacar o custo do ciclo. **C13 de 1 para ≥3.**
+- [ ] 🟠 **R2**: estado global num contexto por servidor. **C05 ≤ 3/kLOC**, sem
+  `clearAll` à mão no ciclo de vida.
+- [ ] 🟠 **R3**: ciclo de tarefa comum aos 7 ofícios. **`JOBS` de 8 para ≤2** e
+  **`giveUp` de 6 para 1**.
+- [ ] 🟠 **R4**: levar o branch para a `main` por PR. Distância ≤ 10 commits.
+- [ ] 🟡 **R5**: `STATE.md` ≤ 150 linhas.
+- [ ] 🟡 **R6**: sobreviventes do PIT (`MineShaft`, `ProfessionAssigner`,
+  `ColonyCycle`). **C08 ≥ 85%.**
+- [ ] 🟡 **R7**: tabelas de `if` viram `Map`/`switch`. CC máx ≤ 20.
+- [ ] 🟡 **R8**: JaCoCo no `runGametest` para medir o `fabric`.
+- [ ] 🟢 **R9**: convenção de mensagem de commit (sem prefixo < 10%).
+- [ ] 🟢 **R10**: história datada sai dos comentários ao tocar o arquivo
+  (C11 ≤ 0,6).
+
 ## Qualidade e verificação — 2026-09-24 (pesquisa de métodos, decisão do autor)
 
 - [x] **1. CI nos branches `codex/**`** (`0b1e8b6`). Antes o CI só rodava na `main`.
