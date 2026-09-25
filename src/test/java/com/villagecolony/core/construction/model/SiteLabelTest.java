@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -163,5 +164,59 @@ class SiteLabelTest {
     @Test
     void theOverloadWithoutNamingStillUsesTheId() {
         assertTrue(SiteLabel.of(remaining(64), Map.of(), 382).contains("grass_block"));
+    }
+
+    // --- o bloco que falta de verdade, 2026-09-25 (visto em jogo) ---
+    //
+    // A placa mostrava o PRIMEIRO material restante da planta. No templo de
+    // 25-09 a obra parou por falta de tocha (sem carvão), com 34 pedregulhos
+    // no baú — e a placa podia anunciar o pedregulho como o que faltava.
+
+    private static final ResourceId COBBLE = ResourceId.vanilla("cobblestone");
+
+    private static final ResourceId TORCH = ResourceId.vanilla("torch");
+
+    private static Map<ResourceId, Integer> templeRemaining() {
+        Map<ResourceId, Integer> tally = new LinkedHashMap<>();
+        tally.put(COBBLE, 9);
+        tally.put(TORCH, 4);
+        return tally;
+    }
+
+    /**
+     * O construtor parou na tocha: é ela que a placa diz, em português.
+     *
+     * <p>O pedregulho também está curto aqui, e vem antes na planta — sem
+     * a regra do próximo bloco, a placa diria "Pedregulho", e o teste pega.
+     */
+    @Test
+    void theLabelNamesTheBlockTheBuilderIsStuckOn() {
+        String line = SiteLabel.of(templeRemaining(), Map.of(COBBLE, 5), 13,
+                id -> id.equals(TORCH) ? "Tocha" : "Pedregulho", Optional.of(TORCH));
+
+        assertEquals("Obra · falta Tocha: 0/4 · 13 blocos", line);
+    }
+
+    /** Sem saber o próximo bloco, o que a vila tem de sobra não é "falta". */
+    @Test
+    void aMaterialTheColonyHasIsNeverSaidToBeMissing() {
+        String line = SiteLabel.of(templeRemaining(), Map.of(COBBLE, 34), 13,
+                id -> id.equals(TORCH) ? "Tocha" : "Pedregulho", Optional.empty());
+
+        assertEquals("Obra · falta Tocha: 0/4 · 13 blocos", line);
+    }
+
+    /**
+     * Nada em falta: a obra está andando, e a placa só conta os blocos.
+     *
+     * <p>O baú tem <b>exatamente</b> o que a obra pede — ter o bastante não é
+     * faltar.
+     */
+    @Test
+    void withEverythingInTheChestsTheLabelOnlyCountsTheBlocks() {
+        String line = SiteLabel.of(templeRemaining(), Map.of(COBBLE, 9, TORCH, 4), 13,
+                id -> "x", Optional.of(COBBLE));
+
+        assertEquals("Obra: 13 blocos", line);
     }
 }

@@ -4,6 +4,7 @@ import com.villagecolony.core.type.ResourceId;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -103,19 +104,52 @@ public final class SiteLabel {
             int blocksLeft,
             Function<ResourceId, String> naming) {
 
+        return of(missing, stock, blocksLeft, naming, Optional.empty());
+    }
+
+    /**
+     * O mesmo, dizendo o bloco em que o construtor parou — 2026-09-25.
+     *
+     * <p><b>Visto em jogo.</b> A placa mostrava o <i>primeiro</i> material
+     * restante da planta, estivesse ele em falta ou não. No templo de 25-09
+     * a obra parou por falta de tocha — a vila não tinha carvão — com 34
+     * pedregulhos no baú, e a placa podia anunciar o pedregulho. Quem trava
+     * a obra é o <b>próximo bloco</b> da ordem: o construtor para nele
+     * quando o material não está nos baús, e é ele que o log chama de
+     * {@code waiting for}.
+     *
+     * <p>A ordem da escolha: o material do próximo bloco, se os baús não
+     * têm o que a obra pede dele; senão, o primeiro material que de fato
+     * está em falta; e, sem nada em falta, só a contagem de blocos — a obra
+     * está andando.
+     *
+     * @param next o material do próximo bloco que o construtor vai pôr
+     */
+    public static String of(
+            Map<ResourceId, Integer> missing,
+            Map<ResourceId, Integer> stock,
+            int blocksLeft,
+            Function<ResourceId, String> naming,
+            Optional<ResourceId> next) {
+
         Objects.requireNonNull(missing, "missing");
         Objects.requireNonNull(stock, "stock");
         Objects.requireNonNull(naming, "naming");
+        Objects.requireNonNull(next, "next");
 
-        if (missing.isEmpty()) {
+        Optional<ResourceId> lacking = next
+                .filter(material -> isShort(material, missing, stock))
+                .or(() -> missing.keySet().stream()
+                        .filter(material -> isShort(material, missing, stock))
+                        .findFirst());
+
+        if (lacking.isEmpty()) {
             // Nada a esperar: a obra está andando, e o número que importa
             // é só quanto falta dela.
             return MARK + ": " + blocksLeft + " blocos";
         }
 
-        Map.Entry<ResourceId, Integer> first = missing.entrySet().iterator().next();
-
-        ResourceId material = first.getKey();
+        ResourceId material = lacking.get();
 
         // Zero aparece, e não some — ver o teste. Material ausente do
         // estoque é exatamente o caso que trava a obra, e uma placa que o
@@ -130,7 +164,16 @@ public final class SiteLabel {
             name = material.path();
         }
 
-        return MARK + " · falta " + name + ": " + have + "/" + first.getValue()
+        return MARK + " · falta " + name + ": " + have + "/" + missing.get(material)
                 + " · " + blocksLeft + " blocos";
+    }
+
+    /** Se os baús têm menos deste material do que a obra ainda pede dele. */
+    private static boolean isShort(
+            ResourceId material, Map<ResourceId, Integer> missing, Map<ResourceId, Integer> stock) {
+
+        Integer needed = missing.get(material);
+
+        return needed != null && stock.getOrDefault(material, 0) < needed;
     }
 }

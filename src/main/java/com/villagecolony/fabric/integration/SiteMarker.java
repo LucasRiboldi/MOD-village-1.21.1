@@ -225,7 +225,10 @@ public final class SiteMarker {
                 project.remainingMaterials(),
                 stock == null ? Map.of() : stock.idCounts(),
                 project.remainingCount(),
-                SiteMarker::nameOf);
+                SiteMarker::nameOf,
+                // O bloco em que o construtor para quando falta material —
+                // 2026-09-25; ver SiteLabel.of.
+                project.nextBlock().map(block -> block.block()));
 
         // O centro do lote, cinco blocos acima do topo da planta — N7,
         // 2026-09-24; ver LABEL_ABOVE_TOP.
