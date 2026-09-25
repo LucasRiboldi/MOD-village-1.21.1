@@ -5,10 +5,13 @@ import com.villagecolony.core.worker.model.Worker;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -253,5 +256,68 @@ class HiringLogTest {
                 HiringLog.report(COLONY).contains("MINER"),
                 "o mineiro foi contratado uma vez e sumiu do relatório para sempre —"
                         + " o relatório mente por omissão: " + HiringLog.report(COLONY));
+    }
+
+    // --- o laço dos produtores, 2026-09-25 (sobreviventes do PIT) ---
+    //
+    // Os testes acima caem todos no laço da fundação, que vem antes: com a
+    // fundação vazia, o castigo e a vaga são decididos lá. O laço dos
+    // produtores só roda com os seis titulares no lugar, e nada o media.
+
+    /** Os seis titulares da casa fundacional, todos no posto. */
+    private static List<Worker> foundationFilled() {
+        return ProfessionAssigner.FOUNDATION_ORDER.stream().map(HiringLogTest::hired).toList();
+    }
+
+    /**
+     * Fundação completa, sete adultos: um por produtor. Carpinteiro e
+     * fazendeiro são os que faltam; o candidato largou a carpintaria.
+     */
+    @Test
+    void pastTheFoundationTheShunIsSaidAndTheNextTradeIsFilled() {
+        Worker candidate = idle();
+
+        gaveUpAndWaited(candidate, ProfessionType.CARPENTER);
+
+        List<Worker> colony = new ArrayList<>(foundationFilled());
+        colony.add(candidate);
+
+        assertEquals(
+                Optional.of(ProfessionType.FARMER),
+                ProfessionAssigner.vacancyFor(candidate, colony, 7));
+
+        assertEquals(1, HiringLog.countOf(
+                COLONY, ProfessionType.CARPENTER, HiringLog.Outcome.SHUNNED));
+        assertEquals(1, HiringLog.countOf(
+                COLONY, ProfessionType.FARMER, HiringLog.Outcome.FILLED));
+    }
+
+    /** Todos no alvo: o "sem vaga" é dito, e não calado. */
+    @Test
+    void aFullColonySaysThereIsNoVacancy() {
+        List<Worker> colony = new ArrayList<>(foundationFilled());
+        colony.add(hired(ProfessionType.CARPENTER));
+        colony.add(hired(ProfessionType.FARMER));
+
+        Worker candidate = idle();
+        colony.add(candidate);
+
+        assertEquals(Optional.empty(),
+                ProfessionAssigner.vacancyFor(candidate, colony, 8));
+
+        assertEquals(1, HiringLog.countOf(
+                COLONY, ProfessionType.MINER, HiringLog.Outcome.NO_VACANCY));
+    }
+
+    /** Colônia sem adulto não é erro: não há vaga, e pronto. */
+    @Test
+    void noAdultsMeansNoVacancyAndNoError() {
+        Worker candidate = idle();
+
+        assertEquals(Optional.empty(),
+                ProfessionAssigner.vacancyFor(candidate, List.of(candidate), 0));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> ProfessionAssigner.vacancyFor(candidate, List.of(candidate), -1));
     }
 }

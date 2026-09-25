@@ -27,7 +27,7 @@ próxima avaliação mede.
 | 1 ✅ | Limite de **tempo** para o planejador (`SweepDeadline`, 15 ms) — **feito**, ⬜ ver `cycle_over_tick` cair em jogo | baixo / baixo | `cycle_over_tick` cai; C13 ≥ 3 |
 | 2 ✅ | Cota ajustável (`PlanningBudget`), e em jogo **só a vila foco planeja e é sondada** (`VillageFocus`, decisão do autor) — **feito** | baixo / baixo | teste unitário da regra |
 | 3 ✅ | Registro único (`ServerMemory.resetAll`) no lugar de 78 `clearAll` à mão — **feito**. Achou `BiomeConstructionSupply` sem limpeza nenhuma e as duas listas divergentes. **C05 não muda:** os campos continuam; o que acabou foi o esquecimento | médio / baixo | teste de inscrição ✅; C05 ≥ 3 pede consolidar os campos (R2) |
-| 4 | Matar sobreviventes do PIT (`MineShaft`, `Building`, `ColonyCycle` feitos 25-09; `ProfessionAssigner`, `Worker`) | médio / nulo | C08 ≥ 85% (82% em 25-09) |
+| 4 ✅ | Matar sobreviventes do PIT nas três classes nomeadas (`MineShaft`, `ProfessionAssigner`, `ColonyCycle`) — **feito** em 25-09, junto com `Building` e `Worker`; só equivalentes restam | médio / nulo | C08 ≥ 85%: **83%**, o aceite ainda não fecha (ver R6) |
 | 5 | JaCoCo na bateria de jogo (cobertura do `fabric`) | baixo-médio / nulo | cobertura do `fabric` medida |
 | 6 | PR do branch para a `main` (85 commits) | baixo / publica | CI verde no PR — **pede aval do autor** |
 | 7 | `STATE.md` até 150 linhas | baixo / nulo | contagem |
@@ -56,8 +56,9 @@ As recomendações, cada uma com um aceite que a próxima avaliação mede
   **`giveUp` de 6 para 1**.
 - [x] 🟠 **R4**: branch levado para a `main` pelo PR #2 (merge `692d8b9`, CI verde).
 - [x] 🟡 **R5**: `STATE.md` ≤ 150 linhas (95; o texto antigo foi arquivado no `Historico`).
-- [ ] 🟡 **R6**: sobreviventes do PIT (`MineShaft` e `ColonyCycle` feitos em
-  25-09; falta `ProfessionAssigner`). **C08 ≥ 85%** (82% em 25-09).
+- [ ] 🟡 **R6**: sobreviventes do PIT (`MineShaft`, `ProfessionAssigner` e
+  `ColonyCycle` feitos em 25-09). **C08 ≥ 85%** (83% em 25-09): faltam uns
+  25 mutantes mortos; próximos `Mine`, `ColonyGoals`, `BuildingRegistry`.
 - [ ] 🟡 **R7**: tabelas de `if` viram `Map`/`switch`. CC máx ≤ 20.
 - [ ] 🟡 **R8**: JaCoCo no `runGametest` para medir o `fabric`.
 - [ ] 🟢 **R9**: convenção de mensagem de commit (sem prefixo < 10%).
@@ -84,8 +85,19 @@ As recomendações, cada uma com um aceite que a próxima avaliação mede
     era **teste vazio** — a tarefa já ia para o lenhador no 1º ciclo, então
     "nada disponível" valia sem cancelamento nenhum. E a reclassificação do
     pedido aberto quando a obra passa a precisar dele não tinha teste.
-  - [ ] 🟡 Matar os sobreviventes (99 em 25-09, 82% mortas): `Worker` 10,
-    `ProfessionAssigner` 9, `Mine` 9, `ColonyGoals` 9, `BuildingRegistry` 7.
+  - [x] `Worker`: 10 → 4 (25-09). As janelas de memória (desistência, 12
+    passagens; ofício largado, 128) não tinham teste de quando esquecem. Os 4
+    restantes são equivalentes: `shunCyclesFor(0)` com `< 0` dá `8 << 31` = 0;
+    os dois `removeIf` que devolvem `false` deixam entrada vencida que o
+    próximo `rest`/`giveUpProfession` reescreve; `betweenTrades` negativo
+    continua lido como `> 0`.
+  - [x] `ProfessionAssigner`: 9 → 3 (25-09). Nada chegava ao laço dos
+    produtores (os testes paravam no da fundação). Os 3 restantes são
+    equivalentes: `adults <= 15` dá 7 vagas nos dois ramos; os dois
+    `villagerId -> true` viram `false` e a 2ª passada do `assignMissing` aceita
+    todos do mesmo jeito.
+  - [ ] 🟡 Matar os sobreviventes (87 em 25-09, 83% mortas): `Mine` 9,
+    `ColonyGoals` 9, `BuildingRegistry` 7.
   - [x] O passo do PIT no CI reprova quando o PIT nem começa (25-09): saiu o
     `continue-on-error`; número baixo continua sem reprovar, porque não há
     `mutationThreshold`.
