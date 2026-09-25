@@ -73,13 +73,14 @@ correção levantadas pela avaliação" e "Avaliação técnica". Em aberto:
   `VacancyEnforcer`, `HiringLog`. Nenhuma classe passa de 4.
 - **Itens 9 e 10 (ciclo de tarefa comum aos ofícios; regras de decisão
   para o `core`).** Pedem ADR antes do código.
-- **ADR-025 aceita (mineiro autônomo), fase 1 no código, não vista em
+- **ADR-025 aceita (mineiro autônomo), fases 1 e 2 no código, não vistas em
   jogo:** marca de recusa salva, piso sob a passagem, mineiro fora da água,
-  linha `brain:` no travamento. A geometria de 553, 39, 158 reconstruída do
+  pedra com líquido atrás nunca vira alvo, linha `brain:` no travamento, e o
+  desvio que cava e põe bloco (mineiro travado e encalhado sem escada). A geometria de 553, 39, 158 reconstruída do
   save é andável (GameTest forense) — a causa do travamento ali está no
   cérebro ou na tarefa, e a linha `brain:` da próxima sessão decide. Depois:
-  fase 2 (planejador local com ações). Ver
-  `docs/research/2026-09-25-mineiro-autonomo.md` §8-§10.
+  fase 3 (veios por valor). Ver
+  `docs/research/2026-09-25-mineiro-autonomo.md` §8-§11.
 - **Mineiro que não entrega (E44/E45)** e **segunda obra que não abre.**
   Estado de 09-20, sem playtest novo desde as correções; o detalhe está no
   `Historico`, seção "Arquivado do STATE.md".

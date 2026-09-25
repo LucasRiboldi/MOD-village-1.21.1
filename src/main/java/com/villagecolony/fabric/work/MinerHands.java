@@ -57,6 +57,22 @@ public final class MinerHands {
 
         BlockState state = world.getBlockState(job.target);
 
+        // <b>A água anda</b> — 2026-09-25. Toda porta de escolha já recusa a
+        // pedra que segura líquido; esta é a trava para o que chegou depois
+        // da escolha. A marca afasta a pedra das próximas passagens pelo
+        // mesmo caminho da pedra inalcançável.
+        if (job.progress == 0 && MineFlooding.holdsBackFluid(world, job.target)) {
+            VillageColonyMod.LOGGER.info(
+                    "Miner {} leaves {} alone - it holds back water or lava",
+                    villager.getUuid().toString().substring(0, 8),
+                    job.target.toShortString());
+
+            MineMarks.refuse(world, job.target);
+            release(villager.getUuid(), job);
+
+            return;
+        }
+
         if (job.required == 0) {
             job.required = BlockBreakTime.ticksFor(world, job.target, state, villager);
         }
@@ -224,6 +240,7 @@ public final class MinerHands {
     /** Larga a pedra de agora e volta a procurar. */
     static void release(UUID workerId, Job job) {
         job.target = null;
+        job.detour = null;
         job.approach = null;
         job.progress = 0;
         job.required = 0;

@@ -9515,3 +9515,23 @@ reutilizavel.
   cautela o aldeao atravessa o fosso nadando (o controle prova que o teste
   mede alguma coisa).
 - Resultados: build limpo, 1093 unitarios; GameTest 448/448.
+
+### 2026-09-25 (tarde, 3a) - Pedra com liquido atras, e a fase 2 da ADR-025
+
+- **Pedido do autor:** o mineiro nao quebra bloco com liquido atras.
+  `MineFlooding.holdsBackFluid` (seis faces) entra em todas as portas de alvo:
+  cursor da galeria (conta para a curva, como bedrock), minerio da parede, veio,
+  degrau de volta, pedra de superficie, areia; e no `MinerHands` antes da
+  primeira batida, com marca, porque a agua anda. Vermelho visto em duas
+  etapas: esboco, depois predicado ligado e cursor nao.
+- **Fase 2:** `core/movement` (Cell, Terrain, DetourMoves, DetourPlanner) e,
+  no fabric, WorldTerrain, DetourWalker, MinerDetours, StrandedDetours
+  (separado do StrandedEscape, que passaria de 500 linhas).
+  - O planejador achou dois caminhos que os cenarios nao previam: ponte um
+    nivel acima do rio, e descer no poco para andar no chao do mundo abaixo da
+    arena. Ambos corretos; cenarios refeitos.
+  - `aFrozenMinerGivesUpLongBeforeTheStallGuard` mudou de contrato: o guarda
+    age cedo, e agir e devolver a tarefa OU abrir a parede. Passou pelo desvio.
+  - PIT: 1265/1430 (88%), forca 96%; 5 sobreviventes no pacote novo, todos
+    equivalentes.
+- Resultados: build limpo, 1112 unitarios; GameTest 455/455.

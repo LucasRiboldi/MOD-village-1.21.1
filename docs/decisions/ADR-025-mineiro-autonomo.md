@@ -101,3 +101,9 @@ por `BlockProtection`.
   não consome pedregulho (como a vedação do `MineFlooding`); o consumo entra
   com a fase 2. Pendente da fase 1: recusar quebrar bloco que segura fluido
   protegido. Ver `docs/research/2026-09-25-mineiro-autonomo.md` §9.
+- **2026-09-25 — fase 1 fechada e fase 2 no código**, não vistas em jogo. O
+  autor ampliou o pendente: o mineiro não quebra bloco com **qualquer** líquido
+  atrás (`MineFlooding.holdsBackFluid`). Fase 2: `core/movement`
+  (`DetourPlanner`, A* com raio 16 e 2.500 nós) e `DetourWalker`, usados pelos
+  guardas de travamento do mineiro e pelo encalhado sem escada natural. O
+  consumo de pedregulho entrou aqui, como previsto. Ver §9-§10 da pesquisa.

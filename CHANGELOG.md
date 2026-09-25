@@ -9,9 +9,23 @@ entrega, e o que separa uma publicação da outra é o commit e o SHA-256 do JAR
 2026-09-24 está em [`docs/technical/Development-Log.md`](docs/technical/Development-Log.md)
 e [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md).
 
-## [Não publicado] — ADR-025, fase 1 (mineiro autônomo)
+## [Não publicado] — ADR-025, fases 1 e 2 (mineiro autônomo)
 
 ### Adicionado
+
+- **O mineiro que não chega cava o próprio caminho** (fase 2). Quando fica
+  parado, não se aproxima ou anda demais sem chegar, ele planeja um desvio de
+  até 16 blocos: abre rocha, põe pedregulho onde falta chão (tirado do baú
+  dele) e anda um bloco de cada vez até ter a pedra ao alcance. Só sem desvio
+  ele larga a pedra como antes. Log: `takes a detour`, `is through its detour`,
+  `its detour failed — …`.
+- **O encalhado sem escada natural também desvia.** Onde o E47 desistia com
+  "no natural, dry way up", ele procura o nível do terreno cavando e pondo
+  bloco; se o raio não basta, anda o trecho que mais se aproxima e tenta de
+  novo.
+- O desvio nunca cava rocha encostada em líquido nem com areia em cima, nunca
+  pisa em líquido, e pergunta de novo antes de cada passo — água que chega
+  depois do plano o faz parar.
 
 - **A passagem da mina sai com chão.** Quando a picareta abre uma célula da
   escada ou da sala sobre um vão de caverna que a mina não planejou, o vão
@@ -27,6 +41,10 @@ e [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md).
 
 ### Corrigido
 
+- **O mineiro não quebra mais bloco com líquido atrás** (pedido do autor).
+  Nenhuma pedra, minério, areia ou degrau encostado em água ou lava vira alvo;
+  a galeria contorna. Antes ele quebrava e vedava depois, e a vedação não
+  alcançava a água da vila. Areia de praia colada na água deixa de ser colhida.
 - **A pedra recusada volta a ser recusada depois de carregar o mundo.** A
   marca que afasta a pedra inalcançável (E44) é salva
   (`villagecolony_marks.dat`); antes sumia a cada sessão, e o mineiro voltava
@@ -37,7 +55,6 @@ e [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md).
 - O motivo do travamento em 553, 39, 158: a geometria reconstruída do save é
   andável e a navegação Vanilla chega lá (GameTest forense). Espera a linha
   `brain:` de uma sessão de jogo.
-- Bloco que segura fluido protegido (água da vila) ainda é quebrado.
 
 ## [0.3.0] — publicação de 2026-09-25, manhã (sessão das 09:13)
 

@@ -13,13 +13,11 @@ import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.block.FallingBlock;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
@@ -90,6 +88,10 @@ public final class StrandedEscape {
 
     /** Uma passagem por segundo, para todos os encalhados. */
     public static void tick(ServerWorld world) {
+        // O desvio anda todo tique: cavar e pisar não esperam a passagem de
+        // um segundo. Ver walkDetours.
+        StrandedDetours.walk(world);
+
         if (world.getTime() % PASS_EVERY != 0) {
             return;
         }
@@ -134,7 +136,8 @@ public final class StrandedEscape {
             return;
         }
 
-        if (HOPELESS.contains(workerId) || !WorkHours.isWorkTime(world, villager)) {
+        if (HOPELESS.contains(workerId) || StrandedDetours.isWalking(workerId)
+                || !WorkHours.isWorkTime(world, villager)) {
             return;
         }
 
@@ -148,6 +151,10 @@ public final class StrandedEscape {
         Optional<WorkerStorage> storage = VillageColonyMod.STORAGES.of(workerId);
 
         Optional<Step> step = planStep(world, feet, home);
+
+        if (step.isEmpty() && StrandedDetours.begin(world, workerId, feet, home)) {
+            return;
+        }
 
         if (step.isEmpty() || StrandedWorkers.stepsDug(workerId) >= MAX_STEPS
                 || stillFor(workerId, feet) >= STILL_PASSES) {
@@ -306,26 +313,7 @@ public final class StrandedEscape {
             return false;
         }
 
-        return isNaturalGround(state) && BlockProtection.mayBreak(world, at, state);
-    }
-
-    private static boolean isNaturalGround(BlockState state) {
-        return state.isIn(BlockTags.BASE_STONE_OVERWORLD)
-                || state.isIn(BlockTags.DIRT)
-                || state.isIn(BlockTags.SAND)
-                || state.isIn(BlockTags.TERRACOTTA)
-                || state.isIn(BlockTags.COAL_ORES)
-                || state.isIn(BlockTags.IRON_ORES)
-                || state.isIn(BlockTags.COPPER_ORES)
-                || state.isIn(BlockTags.GOLD_ORES)
-                || state.isIn(BlockTags.REDSTONE_ORES)
-                || state.isIn(BlockTags.LAPIS_ORES)
-                || state.isIn(BlockTags.DIAMOND_ORES)
-                || state.isIn(BlockTags.EMERALD_ORES)
-                || state.isOf(Blocks.GRAVEL)
-                || state.isOf(Blocks.CLAY)
-                || state.isOf(Blocks.SANDSTONE)
-                || state.isOf(Blocks.RED_SANDSTONE);
+        return WorldTerrain.isNaturalGround(state) && BlockProtection.mayBreak(world, at, state);
     }
 
     /**
@@ -418,6 +406,7 @@ public final class StrandedEscape {
         LAST_FEET.remove(workerId);
         STILL.remove(workerId);
         HOPELESS.remove(workerId);
+        StrandedDetours.forget(workerId);
         WorkTargets.clear(workerId);
     }
 
@@ -426,6 +415,7 @@ public final class StrandedEscape {
         LAST_FEET.clear();
         STILL.clear();
         HOPELESS.clear();
+        StrandedDetours.clearAll();
         EscapeBackfill.clearAll();
     }
 }

@@ -216,6 +216,12 @@ public final class MinerWork {
         /** Se ele está encurtando a distância até a pedra — E44. Ver MineLease. */
         final MineLease lease = new MineLease();
 
+        /** O desvio em curso, cavando e pondo bloco — ADR-025. Ver MinerDetours. */
+        DetourWalker detour;
+
+        /** Quantos desvios esta pedra já pediu. Zera com a pedra. */
+        int detours;
+
         Job(Task task, BlockPos center) {
             this.task = task;
             this.center = center;

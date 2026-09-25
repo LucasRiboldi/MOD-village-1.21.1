@@ -213,7 +213,7 @@ modifica o mundo quando andar não resolve.
 | Piso sob a passagem | feito | `MineFloor.patch`, chamado no `MinerHands` depois da vedação | 4 GameTests: vão vira pedregulho; degrau planejado, célula fora da passagem e chão firme ficam como estão |
 | Penalidade de água -1 | feito | `MinerCaution.keepOutOfWater`, a cada passo do mineiro | GameTest com controle: sem a cautela o aldeão atravessa o fosso nadando; com ela, dá a volta seca |
 | Fluido tapado antes de quebrar | já existia, equivalente | `MineFlooding.seal` roda no mesmo tique da quebra; o fluido só corre no tique agendado seguinte | GameTest antigo `thePickThatOpensWaterSealsItAtOnce` |
-| Recusar quebrar bloco que segura fluido sem tampa possível | **pendente** | caso: nascente protegida (água da vila) que o `seal` não pode tapar | — |
+| Não quebrar bloco com líquido atrás | feito (25-09, pedido do autor: vale para **todo** líquido, não só o protegido) | `MineFlooding.holdsBackFluid`, consultado no cursor da galeria, no minério da parede, no veio, na pedra de superfície, na areia e no `MinerHands` antes da primeira batida | 3 GameTests com controle (`MineFluidGameTest`); vermelho visto com o predicado ligado e o cursor ainda não |
 | Diagnóstico do cérebro no travamento | feito | `MinerReport.brainOf` | só em jogo |
 
 Desvios do plano, registrados:
@@ -225,7 +225,71 @@ Desvios do plano, registrados:
   sala que ela abre (seis no caracol, quatro no ramal). É a geometria salva, não
   defeito; `MineShaft.plannedCells()` devolve 210 células para 220 índices.
 
-## 10. Próximo passo
+Consequência a lembrar: areia de praia encostada na água deixa de ser colhida;
+sobra a areia de dentro.
 
-Sessão de jogo para ler as linhas `brain:` do mineiro e ver `The mine floored`;
-depois, a fase 2 (planejador local com ações) com o diagnóstico em mãos.
+## 10. Fase 2 — o que entrou (2026-09-25)
+
+**Onde mora.** `core/movement` (lógica pura, com testes de unidade e PIT):
+`Cell` (o que uma posição é para quem anda/cava/põe), `Terrain`, `DetourMoves`
+(os três passos e o que cada um exige) e `DetourPlanner` (A*). No `fabric`:
+`WorldTerrain` (o mundo em células, com a Regra 3), `DetourWalker` (executa
+passo a passo), `MinerDetours` (liga no mineiro) e `StrandedDetours` (liga no
+encalhado).
+
+**Movimentos.** Andar, subir e descer um bloco, cada um com as células do corpo
+a abrir e o chão a pôr — os `Traverse`/`Ascend`/`Descend` do Baritone, sem
+pulo, sem queda livre e sem cavar para baixo. Custos em meios-passos: andar 2,
+subir 4, descer 3, cavar +6 por bloco, pôr +10 por bloco (o jogador contorna
+antes de cavar, e cava antes de gastar material). Raio 16 por eixo, teto de
+2.500 nós.
+
+**Regras de segurança, no núcleo.** Nunca cava rocha encostada em líquido (o
+mesmo pedido do item acima), nunca cava rocha com areia ou cascalho em cima,
+nunca pisa nem entra em líquido, nunca põe bloco em vão que não seja
+substituível e livre de construção.
+
+**Quando roda.**
+- Mineiro: os três guardas de travamento (parado, sem se aproximar, andando
+  demais) pedem primeiro um desvio até algum lugar de onde a picareta alcança a
+  pedra; só sem desvio vale o `giveUp` de antes. Dois desvios por pedra.
+- Encalhado: quando a escada natural do E47 não existe ("no natural, dry way
+  up"), o desvio procura o nível do terreno; sem chegar dentro do raio, anda o
+  trecho que mais se aproxima e tenta de novo (até 3).
+
+**Execução.** Cada passo é perguntado de novo ao `DetourMoves` contra o mundo
+de agora: se a água chegou depois do plano, o desvio para em vez de cavar.
+Cavar leva o tempo da ferramenta; o que sai vai para o baú do trabalhador; o
+pedregulho da ponte sai do mesmo baú, e sem ele o desvio para com o motivo
+escrito. Andar continua sendo a navegação Vanilla, um bloco de cada vez.
+
+**Provas.**
+- 19 testes de unidade (`DetourPlannerTest`): campo aberto, rocha maciça, vão
+  que vira ponte, rocha colada na água, rio com ponte erguida um nível acima,
+  rio sob teto baixo (sem travessia), célula a preservar, contornar mais barato
+  que cavar, raio, orçamento exato, subir, descer, areia em cima.
+- 4 GameTests (`DetourWalkerGameTest`): emparedado cava até ter a pedra ao
+  alcance e não quebra a pedra; ponte com pedregulho tirado do baú (2 postos,
+  2 a menos no baú); sem pedregulho não há ponte; água que chega depois do plano
+  para o desvio.
+- PIT no pacote: restam 5 mutantes, todos equivalentes (sinal em direções
+  simétricas; empate de custo; `dy > 0` depois de `dy == 0` já tratado).
+- O `aFrozenMinerGivesUpLongBeforeTheStallGuard` mudou de contrato: o guarda
+  continua agindo muito antes dos 2.400 tiques, e "agir" passa a ser a tarefa
+  devolvida **ou** a parede aberta. Na bateria ele passou pelo desvio
+  (`takes a detour of 2 steps … it has not moved a block in 300 ticks`).
+
+**Duas surpresas nos testes, as duas do planejador achando caminho que o
+cenário não previa.** Rio sem volta: ele ergue uma ponte um nível acima da
+água, em vez de desistir. Corredor com poço raso: ele desce no poço e anda pelo
+chão do mundo, abaixo da arena. As duas são corretas; os cenários foram
+refeitos.
+
+**O que não foi visto:** nada disso rodou em jogo. O aldeão anda por teleporte
+nos GameTests do executor (a arena não garante o cérebro andando).
+
+## 11. Próximo passo
+
+Sessão de jogo: `takes a detour`, `is through its detour`, `its detour failed`,
+`The mine floored`, `leaves … alone - it holds back water or lava` e a linha
+`brain:` dos travamentos. Depois, a fase 3 (registro de veios por valor).

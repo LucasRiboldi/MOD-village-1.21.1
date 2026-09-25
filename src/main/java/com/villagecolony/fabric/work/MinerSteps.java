@@ -114,6 +114,13 @@ final class MinerSteps {
             return false;
         }
 
+        // <b>O desvio anda antes de tudo</b> — ADR-025, fase 2. Enquanto ele
+        // cava e põe bloco, os guardas de travamento esperam: o desvio tem
+        // prazo próprio por passo. Ver MinerDetours.
+        if (MinerDetours.tick(world, villager, job, storage.get())) {
+            return false;
+        }
+
         if (!MinerWork.isWithinReach(villager, job.target)) {
             // Só conta tique de expediente — 2026-08-27, e é o molde do
             // lenhador, que esta classe segue de propósito. O guarda pune
@@ -129,7 +136,7 @@ final class MinerSteps {
             // E se ele saiu do lugar — 2026-09-03. Ver WorkStall, que faz
             // a pergunta do expediente por conta própria.
             if (job.stall.stuck(world, villager)) {
-                MinerHands.giveUp(world, workerId, job, "it has not moved a block in "
+                stuck(world, villager, job, "it has not moved a block in "
                         + job.stall.ticks() + " ticks of work time");
             } else if (job.lease.outOfTime(world, villager, job.target)) {
                 // <b>E se ele anda sem chegar mais perto</b> — E44,
@@ -137,12 +144,12 @@ final class MinerSteps {
                 // pegam: quem contorna sem fim sai do bloco (escapa do
                 // guarda de imobilidade) e ainda tem 2.400 tiques de
                 // orçamento pela frente. Ver MineLease.
-                MinerHands.giveUp(world, workerId, job, "it got no closer than "
+                stuck(world, villager, job, "it got no closer than "
                         + String.format("%.1f", job.lease.closest())
                         + " blocks in " + job.lease.ticks()
                         + " ticks of work time");
             } else if (job.stalled >= MinerWork.STALL_LIMIT) {
-                MinerHands.giveUp(world, workerId, job, "it walked for "
+                stuck(world, villager, job, "it walked for "
                         + job.stalled + " ticks of work time without arriving");
             } else {
                 // <b>E se ele desceu, a aproximação guardada não serve
@@ -279,6 +286,16 @@ final class MinerSteps {
     }
 
     /**
+     * Um guarda de travamento disparou: primeiro o desvio, depois a desistência
+     * — ADR-025, fase 2. Ver MinerDetours.
+     */
+    private static void stuck(ServerWorld world, VillagerEntity villager, Job job, String why) {
+        if (!MinerDetours.tryDetour(world, villager, job, why)) {
+            MinerHands.giveUp(world, villager.getUuid(), job, why);
+        }
+    }
+
+    /**
      * Acha o próximo bloco, reserva-o e manda o aldeão andar até lá.
      *
      * <p><b>Dois caminhos, e quem decide é o recurso da tarefa.</b> Pedra
@@ -333,6 +350,8 @@ final class MinerSteps {
         job.progress = 0;
         job.required = 0;
         job.stalled = 0;
+        job.detours = 0;
+        job.detour = null;
 
         // <b>E o prazo de aproximação recomeça</b> — E44, 2026-09-10, e
         // aqui alvo novo É motivo, ao contrário do guarda de

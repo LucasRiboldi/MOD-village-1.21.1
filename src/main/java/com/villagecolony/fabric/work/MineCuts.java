@@ -106,6 +106,23 @@ public final class MineCuts {
                 continue;
             }
 
+            if (MineFlooding.holdsBackFluid(world, at)) {
+                // <b>Pedra que segura líquido fica</b> — pedido do autor,
+                // 2026-09-25: "não deixar o mineiro quebrar o bloco que tem
+                // líquido atrás". Conta para a curva como o bedrock: a
+                // galeria contorna a nascente em vez de abri-la.
+                if (arm.blockedAgain(MineDigging.BLOCKED_BEFORE_TURNING)) {
+                    VillageColonyMod.LOGGER.info(
+                            "Miner {} keeps finding stone that holds back water or lava"
+                                    + " - the branch ends here",
+                            workerId);
+
+                    break;
+                }
+
+                continue;
+            }
+
             if (MineVein.nowhereToStand(world, at)) {
                 // <b>Emparedada: não há vizinho onde um aldeão caiba</b> —
                 // 2026-09-02. O approachTo devolve a própria pedra quando
@@ -218,6 +235,7 @@ public final class MineCuts {
             if (ore.isEmpty()
                     || (!ore.get().equals(at)
                             && (MineVein.nowhereToStand(world, ore.get())
+                                    || MineFlooding.holdsBackFluid(world, ore.get())
                                     || MineMarks.isOutOfReach(world, ore.get())))) {
 
                 return Optional.of(at);
