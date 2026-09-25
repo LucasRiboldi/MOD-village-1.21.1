@@ -1,8 +1,11 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Atualização de 2026-09-24, tarde — jogar com o spark ligado.** O JAR em
-`mods` agora é o do commit `78e7efc` (SHA-256
-`FC4273A291CF275B6985931B1711A8A2E261533E16DF49A1B48464A994E07F48`):
+**Atualização de 2026-09-25 — jogar com o spark ligado.** O JAR em
+`mods` agora é o do commit `b957f5e` (SHA-256
+`2CFD08DB70BB2BEF141383EAE4D5C9F160C05E50EC4F65BDCD19077BBD065DBA`),
+que soma o **cache da varredura de baús livres** ao de 09-24: o perfil de
+09-24 (`wIEM9zz90l`) deu TPS 20 e o `ColonyChests.nearestFirst` como o
+maior custo do mod — o próximo perfil diz se ele caiu. Vêm de antes:
 revisão de naturalidade, rodada de qualidade, refatoração e a **vila foco**
 (só ela planeja; procure `Focus village is now`, `Planner turns` e a queda
 de `Colony cycle took`) — nada disso visto em jogo ainda, e o

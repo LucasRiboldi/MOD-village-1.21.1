@@ -19,10 +19,12 @@ refatoração e a **vila foco**. Nada disso foi visto em jogo ainda. A
 
 ## Versão publicada
 
-- O JAR em `mods` e em `downloads/` é o do commit `78e7efc` (vila foco e
-  `ServerMemory`), com SHA-256 `FC4273A2…7F48`.
-- Build, bateria de jogo (434/434 em duas rodadas) e PIT verdes, no local e
-  no CI.
+- O JAR em `mods` e em `downloads/` é o do commit `b957f5e` (cache da
+  varredura de baús livres, sobre a vila foco e o `ServerMemory`), com
+  SHA-256 `2CFD08DB…5DBA`.
+- Build limpo e 1036 unitários verdes; GameTest 435/435 numa rodada, com a
+  mutação do cache confirmada. PIT e CI não foram rodados de novo para
+  este commit — os últimos verdes são do `78e7efc`.
 - O branch `codex/bighousemod` foi levado para a `main` pelo PR #2.
 
 ## O que o próximo jogo precisa mostrar
