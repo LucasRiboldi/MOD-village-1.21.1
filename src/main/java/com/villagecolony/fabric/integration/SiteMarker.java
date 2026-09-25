@@ -228,7 +228,8 @@ public final class SiteMarker {
                 SiteMarker::nameOf,
                 // O bloco em que o construtor para quando falta material —
                 // 2026-09-25; ver SiteLabel.of.
-                project.nextBlock().map(block -> block.block()));
+                project.nextBlock().map(block -> block.block()),
+                project.deferredPieces().size());
 
         // O centro do lote, cinco blocos acima do topo da planta — N7,
         // 2026-09-24; ver LABEL_ABOVE_TOP.

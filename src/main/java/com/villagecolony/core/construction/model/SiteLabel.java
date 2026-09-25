@@ -132,6 +132,27 @@ public final class SiteLabel {
             Function<ResourceId, String> naming,
             Optional<ResourceId> next) {
 
+        return of(missing, stock, blocksLeft, naming, next, 0);
+    }
+
+    /**
+     * O mesmo, contando as peças que esperam apoio — 2026-09-25.
+     *
+     * <p>Visto em jogo: com as nove peças do templo adiadas, a placa dizia só
+     * "Obra: 9 blocos", e parecia que a obra tinha voltado atrás. A peça
+     * adiada não pede material, então não entra na conta da falta; sem esta
+     * linha ela sumia da placa junto com o motivo.
+     *
+     * @param waitingForSupport quantas peças restantes esperam apoio físico
+     */
+    public static String of(
+            Map<ResourceId, Integer> missing,
+            Map<ResourceId, Integer> stock,
+            int blocksLeft,
+            Function<ResourceId, String> naming,
+            Optional<ResourceId> next,
+            int waitingForSupport) {
+
         Objects.requireNonNull(missing, "missing");
         Objects.requireNonNull(stock, "stock");
         Objects.requireNonNull(naming, "naming");
@@ -143,10 +164,12 @@ public final class SiteLabel {
                         .filter(material -> isShort(material, missing, stock))
                         .findFirst());
 
+        String waiting = waitingForSupport > 0 ? " · " + waitingForSupport + " sem apoio" : "";
+
         if (lacking.isEmpty()) {
             // Nada a esperar: a obra está andando, e o número que importa
             // é só quanto falta dela.
-            return MARK + ": " + blocksLeft + " blocos";
+            return MARK + ": " + blocksLeft + " blocos" + waiting;
         }
 
         ResourceId material = lacking.get();
@@ -165,7 +188,7 @@ public final class SiteLabel {
         }
 
         return MARK + " · falta " + name + ": " + have + "/" + missing.get(material)
-                + " · " + blocksLeft + " blocos";
+                + " · " + blocksLeft + " blocos" + waiting;
     }
 
     /** Se os baús têm menos deste material do que a obra ainda pede dele. */

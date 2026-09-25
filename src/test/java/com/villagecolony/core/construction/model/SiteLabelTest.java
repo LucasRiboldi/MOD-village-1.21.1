@@ -219,4 +219,16 @@ class SiteLabelTest {
 
         assertEquals("Obra: 13 blocos", line);
     }
+
+    /**
+     * Peças esperando apoio aparecem na placa — 2026-09-25, visto em jogo:
+     * sem isto ela dizia só "Obra: 9 blocos" e parecia que a obra regrediu.
+     */
+    @Test
+    void piecesWaitingForSupportAreCounted() {
+        assertEquals("Obra: 9 blocos · 9 sem apoio",
+                SiteLabel.of(Map.of(), Map.of(), 9, id -> "x", Optional.empty(), 9));
+        assertEquals("Obra: 9 blocos",
+                SiteLabel.of(Map.of(), Map.of(), 9, id -> "x", Optional.empty(), 0));
+    }
 }
