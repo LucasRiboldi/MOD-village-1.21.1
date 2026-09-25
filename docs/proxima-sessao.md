@@ -1,11 +1,14 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
 **Atualização de 2026-09-25 — jogar com o spark ligado.** O JAR em
-`mods` foi republicado em 2026-09-25 à tarde (SHA-256
-`32DDCA13BB2CCAE0849C39DF3086B3EB7BD78FF83647D59D4E402885BB7EFDD2`).
-**Olhar primeiro a placa da obra:** ela deve dizer o bloco em que o
-construtor parou, com o nome em português (no templo de 25-09, a tocha). E
-fechar o mundo não pode mais dar `Exception stopping the server`. Ele soma o **cache da varredura de baús livres** ao de 09-24: o perfil de
+`mods` foi republicado em 2026-09-25 (SHA-256
+`35BFA5CC7B99C8DDBBCB47CD169668F6327590B4411622C0FD332477F7E1707E`).
+**Olhar primeiro o templo em 539, 70, 201:** no primeiro ciclo o log deve dizer
+`retries minecraft:ladder ... it fits against the wall now` (e o mesmo para
+`wall_torch`), as escadas e tochas devem aparecer nas paredes, e a obra deve
+fechar (`the house is up` ou `finished`). A placa diz o bloco que falta, em
+português, e conta as peças `sem apoio`. Fechar o mundo não pode dar
+`Exception stopping the server`. Ele soma o **cache da varredura de baús livres** ao de 09-24: o perfil de
 09-24 (`wIEM9zz90l`) deu TPS 20 e o `ColonyChests.nearestFirst` como o
 maior custo do mod — o próximo perfil diz se ele caiu. Vêm de antes:
 revisão de naturalidade, rodada de qualidade, refatoração e a **vila foco**

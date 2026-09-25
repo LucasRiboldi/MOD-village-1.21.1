@@ -9443,3 +9443,28 @@ reutilizavel.
 - **E47:** mineiro preso a y=48, `cannot dig out`, e fora a y=70 27 s depois
   sem cavar nenhum degrau. Vila foco: escolhida, um so `Colony cycle took`.
 - Resultados: 1080 unitarios; GameTest 435/435 numa rodada; PIT 1164/1324.
+
+### 2026-09-25 (manha) - A obra que nunca fechava: peca de parede virada para o ar
+
+- **Relato do autor:** a placa comecou certa, a obra "devia ter acabado", mas
+  "resetou" e a placa passou a "Obra: 9 blocos".
+- **Linha do tempo (log 08:31-08:53, e igual na sessao 01:19):** retomada com
+  "278 de pe, 23 a fazer" (a sessao anterior tinha terminado com 9); tres
+  `stone_stairs` "in the way"; espera de tocha; tres tochas riscadas pela
+  barreira de teste; "every remaining piece is waiting for physical support"
+  com 9 restantes, e assim ate o fim.
+- **As nove, lidas do save** (`villagecolony_colonies.dat`, leitor NBT no
+  scratchpad): 4 `ladder` e 5 `wall_torch`, adiadas numa sessao antiga, todas
+  com pedregulho a oeste/norte/leste e ar ao sul.
+- **Causa:** a planta nao guarda a direcao; `BlockShaping.facing` so vira a
+  borda da caixa; no miolo a peca fica `facing=north` e procura apoio ao sul.
+  `canPlaceAt` recusa, a peca e adiada, e a vizinhanca nunca muda.
+- **Correcao:** `leanOnAWall` (a primeira direcao, em ordem fixa, que se
+  sustenta, so quando a deduzida nao se sustenta) usado pelo construtor e
+  pela reconsideracao das adiadas; `ConstructionProject.retry` para a peca
+  que ja cabe. Placa conta as pecas "sem apoio".
+- **O "reset" de 9 para 23:** a retomada rele o mundo, e o que foi riscado
+  (tocha sem carvao, substituto "no caminho") nao esta nele. Registrado no
+  TODO; nao impede fechar.
+- Resultados: 1082 unitarios; GameTest 438/438 numa rodada (os 3 do
+  `WallPieceGameTest` falharam antes da correcao); PIT 1170/1330.

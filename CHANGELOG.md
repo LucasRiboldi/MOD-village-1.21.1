@@ -9,6 +9,32 @@ entrega, e o que separa uma publicação da outra é o commit e o SHA-256 do JAR
 2026-09-24 está em [`docs/technical/Development-Log.md`](docs/technical/Development-Log.md)
 e [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md).
 
+## [0.3.0] — publicação de 2026-09-25, manhã (sessão das 08:31)
+
+### Corrigido
+
+- **A obra que nunca fechava.** O templo da vila ficou aberto por três
+  sessões com nove peças "sem apoio" — quatro escadas de mão e cinco tochas
+  de parede, todas com pedregulho encostado. A planta não guarda a direção
+  do bloco, e as peças do miolo da casa ficavam viradas para o norte,
+  procurando apoio num lado onde só havia ar. Agora a peça de parede que não
+  se sustenta na direção deduzida se apoia na parede que existe.
+- **Peça adiada por uma versão anterior volta à fila** quando já cabe, sem
+  esperar a vizinhança mudar. É o que destrava o save em que a obra já está
+  presa.
+- **A placa conta as peças esperando apoio** ("Obra: 9 blocos · 9 sem
+  apoio"), em vez de parecer que a obra voltou atrás.
+
+### Ainda assim
+
+- A direção de verdade (a tocha do lado que o arquivo da estrutura manda)
+  continua perdida na leitura da planta: a peça agora se apoia numa parede
+  que existe, que pode não ser a do desenho original.
+- Peças riscadas (tocha sem carvão pela barreira de teste, bloco no caminho)
+  voltam como pendentes a cada carregamento do mundo, porque a retomada relê
+  o mundo. Com as peças de parede destravadas a obra fecha; o riscado vira
+  lacuna, como antes.
+
 ## [0.3.0] — publicação de 2026-09-25, tarde
 
 Correções do que a sessão de jogo de 25-09 (01:19–01:45) mostrou.

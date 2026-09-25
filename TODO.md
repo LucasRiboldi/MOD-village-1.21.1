@@ -39,6 +39,27 @@ Não recomendados:
 - trocar o `ordinal()` usado como prioridade, que é deliberado e documentado;
 - reescrever o `toResourceType`, que é uma tabela legítima.
 
+## Obra que não fecha — 2026-09-25 (sessão das 08:31)
+
+- [x] Peça de parede do miolo (escada de mão, tocha de parede) ficava virada
+  para o norte e era adiada para sempre: agora se apoia na parede que existe
+  (`BlockShaping.leanOnAWall`), e a adiada por versão anterior volta à fila
+  quando já cabe (`ConstructionProject.retry`). `WallPieceGameTest` falhava
+  antes da correção com o sintoma do jogo.
+- [ ] 🟠 **Guardar a direção na planta.** O `StructureBlueprintReader` lê o
+  `Properties` da paleta e descarta o `facing`; a peça agora cabe, mas numa
+  parede qualquer, não na do desenho. Pede o `facing` no `BlueprintBlock`,
+  girado junto com a casa — mexe no `core`, no giro e nos construtores.
+- [ ] 🟡 A retomada relê o mundo e devolve como pendente toda peça riscada
+  (tocha pela barreira de teste, substituto como "no caminho": as três
+  `stone_stairs` do telhado a cada carga). A obra fecha, mas a contagem
+  "N to go" sobe a cada sessão e parece regressão.
+- [ ] 🟡 A retomada recalcula o giro pela rua a cada carga
+  (`PlanPlacement.blueprintOf`, `NORTH` sem rua); o giro original não fica no
+  save. Não foi a causa desta vez, mas é o mesmo tipo de risco.
+- [ ] 🟢 `ConstructionProject.restore` com peças adiadas não tem teste de
+  unidade (7 mutantes sem cobertura; só os GameTests passam por ali).
+
 ## Avaliação técnica 2026-09-24 — B (3,21/4) — `docs/technical/avaliacao/2026-09-24-17613fa/RELATORIO.md`
 
 As recomendações, cada uma com um aceite que a próxima avaliação mede
