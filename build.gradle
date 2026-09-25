@@ -80,8 +80,10 @@ jacocoTestReport {
 // Mede se o teste falha quando o código muda — o que o projeto fazia à mão,
 // uma mutação por vez, desde o "teste vazio por condição impossível". Só o
 // core: é a lógica pura, e mutar a camada fabric pediria o jogo rodando.
-// Não reprova o build: o número é para ler, e o mutante sobrevivente vira
-// tarefa de teste.
+// Número baixo não reprova o build: o número é para ler, e o mutante
+// sobrevivente vira tarefa de teste. Sem mutationThreshold de propósito —
+// o CI roda este passo sem continue-on-error desde 2026-09-25, e um
+// threshold aqui passaria a reprovar o CI por pontuação.
 pitest {
     junit5PluginVersion = '1.2.2'
     targetClasses = ['com.villagecolony.core.*']

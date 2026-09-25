@@ -56,10 +56,13 @@ jobs:
       - name: Run Fabric gametests
         run: ./gradlew runGametest --rerun-tasks
 
-      # Teste de mutacao do core (PIT). Nao reprova o CI: o numero e para
-      # ler, e o mutante sobrevivente vira tarefa de teste.
+      # Teste de mutacao do core (PIT). Numero baixo NAO reprova: o
+      # build.gradle nao define mutationThreshold, e o mutante sobrevivente
+      # vira tarefa de teste. O que reprova e o PIT que nem comeca (teste
+      # vermelho sem mutacao, nenhuma mutacao gerada). Ate 2026-09-25 este
+      # passo tinha continue-on-error, e o PIT ficou parado do 78e7efc ao
+      # 7619b1d com o CI verde.
       - name: Run mutation tests (PIT, core)
-        continue-on-error: true
         run: ./gradlew pitest
 
       - name: Upload coverage and mutation reports

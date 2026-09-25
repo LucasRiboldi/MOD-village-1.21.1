@@ -75,8 +75,9 @@ As recomendações, cada uma com um aceite que a próxima avaliação mede
     local com 1312 mutações, 78% mortas, força 86%.
   - [ ] 🟡 Matar os sobreviventes (160 em 25-09): `MineShaft` 37,
     `Building` 12, `ColonyCycle` 12, `Worker` 10, `ProfessionAssigner` 9, `Mine` 9.
-  - [ ] 🟡 O passo do PIT no CI não pode falhar calado: `continue-on-error`
-    serve para o número baixo, não para o PIT que nem começa.
+  - [x] O passo do PIT no CI reprova quando o PIT nem começa (25-09): saiu o
+    `continue-on-error`; número baixo continua sem reprovar, porque não há
+    `mutationThreshold`.
 - [x] **3. GameTests intermitentes isolados** (`668c915` e `4590e4c`):
   lote na rocha, viveiro de dez e `ChestMarker`. Três rodadas 433/433,
   mas ainda sem prova de cura; seguir medindo por repetição.
