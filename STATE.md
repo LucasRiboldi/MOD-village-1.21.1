@@ -19,11 +19,15 @@ refatoração e a **vila foco**. Nada disso foi visto em jogo ainda. A
 
 ## Versão publicada
 
-- O JAR em `mods` e em `downloads/` foi republicado em 25-09 com SHA-256
-  `700F86F6…EFBF4`. O código de produção é o do `ac7064f` (cache de baús
-  livres, `ServerMemory`, vila foco); depois dele só mudaram testes e docs.
-- Build limpo e 1076 unitários verdes; 86 testes Python; GameTest 435/435
-  numa rodada; PIT 87,7%; `./gradlew javadoc` passa. Ver `CHANGELOG.md`.
+- O JAR em `mods` e em `downloads/` foi republicado em 25-09 à tarde com
+  SHA-256 `32DDCA13…EFDD2`: corrige o `resetAll` que quebrava ao fechar o
+  mundo e a placa da obra que não dizia o bloco que falta. Ver `CHANGELOG.md`.
+- Build limpo e 1080 unitários verdes; GameTest 435/435 numa rodada; PIT
+  1164/1324 (87,9%); nenhum sobrevivente no código novo.
+- **Sessão de jogo de 25-09 (01:19–01:45):** TPS 20 o tempo todo; o mod caiu
+  de 4,1% para 0,3% da thread do servidor; vila foco escolhida e só um
+  `Colony cycle took` (na entrada, 165 ms; eram 196 no log de 24-09). O
+  construtor parou no templo por falta de tocha — a vila não tinha carvão.
 - O PIT esteve parado do `78e7efc` ao `7619b1d`, calado pelo
   `continue-on-error` do CI — corrigido em 25-09, e o CI agora reprova
   quando o PIT nem começa.

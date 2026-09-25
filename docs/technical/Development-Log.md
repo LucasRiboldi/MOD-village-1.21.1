@@ -9418,3 +9418,28 @@ reutilizavel.
   classes, e um deles escondia outro link quebrado.
 - **PR #3** aberto para a `main`.
 - Resultados: 1076 unitarios; 86 testes Python; GameTest 435/435 numa rodada.
+
+### 2026-09-25 (tarde) - Sessao de jogo: resetAll quebrado e a placa da obra
+
+- **Sessao 01:19-01:45**, perfil do spark `1HTwcUdP2F`: TPS 20 nas 22
+  janelas, MSPT mediano 14-16 ms. O mod caiu de 4,1% para 0,3% da thread do
+  servidor; `nearestFirst` de 332 para 16 ms. Nao e A/B limpo: o construtor
+  ficou boa parte parado esperando tocha, e sem bloco assentado nao ha
+  chamada.
+  - Correcao da leitura do spark: o filtro "ticks acima de 50 ms" conta o
+    intervalo inteiro do tick, com a espera; janelas com MSPT max de 46 ms
+    gravaram 57 ticks. O perfil nao e so dos ticks lentos.
+- **`ServerMemory.resetAll` quebrava ao fechar o mundo**
+  (`ConcurrentModificationException`): um `clearAll` carregava outra classe,
+  que se inscrevia no meio da volta. Defeito meu, do `78e7efc`. A mesma
+  chamada roda ao abrir o mundo. Teste que reproduz: a primeira e a segunda
+  versao passavam sem a correcao (chave ja inscrita; inscricao pela ultima
+  da lista, quando o iterador ja nao confere o mapa). So a terceira falhou.
+- **Placa da obra:** mostrava o primeiro material restante da planta, sem
+  olhar o estoque. Agora mostra o bloco em que o construtor parou (o
+  `nextBlock`), se falta; senao o primeiro em falta; senao so a contagem. O
+  nome continua vindo do `Block.getName()` (cliente em `pt_pt`). Confirmado
+  por mutacao, e a fronteira "exatamente o que pede nao e falta" pelo PIT.
+- **E47:** mineiro preso a y=48, `cannot dig out`, e fora a y=70 27 s depois
+  sem cavar nenhum degrau. Vila foco: escolhida, um so `Colony cycle took`.
+- Resultados: 1080 unitarios; GameTest 435/435 numa rodada; PIT 1164/1324.
