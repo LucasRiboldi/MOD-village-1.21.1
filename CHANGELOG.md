@@ -9,6 +9,36 @@ entrega, e o que separa uma publicação da outra é o commit e o SHA-256 do JAR
 2026-09-24 está em [`docs/technical/Development-Log.md`](docs/technical/Development-Log.md)
 e [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md).
 
+## [Não publicado] — ADR-025, fase 1 (mineiro autônomo)
+
+### Adicionado
+
+- **A passagem da mina sai com chão.** Quando a picareta abre uma célula da
+  escada ou da sala sobre um vão de caverna que a mina não planejou, o vão
+  recebe pedregulho na hora (`The mine floored …` no log). O degrau seguinte e
+  a camada de baixo da sala não são tapados; fora da passagem — o veio que o
+  mineiro segue — também não.
+- **O mineiro não entra na água.** Ele passa a dar a volta seca em vez de
+  atravessar nadando (penalidade de água -1 só para ele; lava já era proibida
+  no Vanilla).
+- A linha de travamento do mineiro traz o estado do cérebro e da navegação
+  (`brain: activity …, our walk task …, walk target …, navigation …`), para a
+  próxima sessão dizer por que ele para na pedra 553, 39, 158.
+
+### Corrigido
+
+- **A pedra recusada volta a ser recusada depois de carregar o mundo.** A
+  marca que afasta a pedra inalcançável (E44) é salva
+  (`villagecolony_marks.dat`); antes sumia a cada sessão, e o mineiro voltava
+  à mesma pedra.
+
+### Ainda não resolvido
+
+- O motivo do travamento em 553, 39, 158: a geometria reconstruída do save é
+  andável e a navegação Vanilla chega lá (GameTest forense). Espera a linha
+  `brain:` de uma sessão de jogo.
+- Bloco que segura fluido protegido (água da vila) ainda é quebrado.
+
 ## [0.3.0] — publicação de 2026-09-25, manhã (sessão das 09:13)
 
 ### Corrigido

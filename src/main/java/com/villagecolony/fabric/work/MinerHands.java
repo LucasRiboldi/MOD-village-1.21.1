@@ -21,6 +21,7 @@ import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.BlockBreakTime;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.MineFlooding;
+import com.villagecolony.fabric.integration.MineFloor;
 import com.villagecolony.fabric.integration.OreVein;
 import com.villagecolony.fabric.integration.MineMouth;
 import net.minecraft.block.Block;
@@ -108,6 +109,11 @@ public final class MinerHands {
         if (MineFlooding.seal(world, job.target) > 0) {
             MineTrouble.flooded(job.task.colonyId(), villager.getUuid(), job.target);
         }
+
+        // E a passagem sai com chão — ADR-025, fase 1. Caverna sob o degrau
+        // é queda que a navegação Vanilla não sabe tapar. Ver MineFloor.
+        MineFloor.patch(world, job.target,
+                MinerWork.mineOf(job).map(Mine::plannedCells).orElse(java.util.Set.of()));
 
         // Regra 30: o minério que não é carvão vai para o baú da boca
         // da mina, e só transborda para o do mineiro quando aquele

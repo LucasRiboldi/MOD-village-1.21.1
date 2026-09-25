@@ -184,4 +184,14 @@ class MineTest {
         assertEquals(Mine.LevelAdvance.WAITING, mine.advanceIfEveryOpenArmIsDone());
         assertEquals(before, mine.shaft());
     }
+
+    /** As células planejadas da mina somam os quatro ramais. */
+    @Test
+    void thePlannedCellsCoverEveryArm() {
+        java.util.Set<ColonyPos> cells = opened().plannedCells();
+
+        assertTrue(cells.contains(new ColonyPos(100, 55, 206)), "o ramal do sul");
+        assertTrue(cells.contains(new ColonyPos(94, 55, 200)), "o ramal do oeste");
+        assertTrue(cells.contains(new ColonyPos(100, 64, 199)), "o caracol comum");
+    }
 }

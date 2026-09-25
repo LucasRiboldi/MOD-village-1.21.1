@@ -15,6 +15,10 @@ import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.data.save.ColonySavedData;
+import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.data.save.WorkMarksSavedData;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.work.MineMarks;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.SweepLog;
 import com.villagecolony.fabric.work.TestBarrier;
@@ -58,6 +62,16 @@ public final class ServerLifecycleHandler {
         // ver ServerMemory.
         int forgotten = ServerMemory.resetAll();
         VillageColonyMod.LOGGER.debug("Server memory reset: {} classes", forgotten);
+
+        // As pedras que o mineiro já recusou voltam do save — ADR-025,
+        // 2026-09-25. Sem isto ele voltava à mesma pedra inalcançável em
+        // toda sessão. Depois da limpeza acima, que as apagaria.
+        MineMarks.restore(WorkMarksSavedData.get(server).mineRefusals().stream()
+                .map(refusal -> new MineMarks.Mark(
+                        MinecraftTypeAdapter.toBlockPos(new ColonyPos(refusal.x(), refusal.y(), refusal.z())),
+                        refusal.since(),
+                        refusal.count()))
+                .toList());
 
         ColonySavedData data = ColonySavedData.get(server);
 
@@ -175,6 +189,13 @@ public final class ServerLifecycleHandler {
                 roads,
                 sweeps,
                 VillageColonyMod.ACTIVITY_TRACES.all());
+
+        // E as marcas de trabalho, num arquivo à parte — ver WorkMarksSavedData.
+        WorkMarksSavedData.get(server).sync(MineMarks.marks().stream()
+                .map(mark -> new WorkMarksSavedData.MineRefusal(
+                        mark.stone().getX(), mark.stone().getY(), mark.stone().getZ(),
+                        mark.since(), mark.count()))
+                .toList());
 
         VillageColonyMod.LOGGER.info(
                 "Saved {} colonies with {} workers, {} buildings, {} mines,"

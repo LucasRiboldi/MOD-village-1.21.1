@@ -200,6 +200,17 @@ public final class Mine {
         return Collections.unmodifiableList(arms);
     }
 
+    /** As células planejadas do nível atual, somando os quatro ramais — ADR-025. */
+    public java.util.Set<ColonyPos> plannedCells() {
+        java.util.Set<ColonyPos> cells = new java.util.HashSet<>();
+
+        for (MineArm arm : arms) {
+            cells.addAll(arm.shaft().plannedCells());
+        }
+
+        return cells;
+    }
+
     /** O ramal de índice {@code i}. */
     public MineArm arm(int index) {
         return arms.get(index);

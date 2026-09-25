@@ -70,6 +70,8 @@ final class MinerSteps {
             return false;
         }
 
+        MinerCaution.keepOutOfWater(villager);
+
         if (job.target == null) {
             if (!maySearch) {
                 return false;

@@ -158,7 +158,7 @@ modifica o mundo quando andar não resolve.
   ferramentas (degrau, ponte, tampa, pilar); "sem caminho natural e seco" deixa
   de ser o fim.
 
-## 6. Plano em fases (proposta — ver ADR-025)
+## 6. Plano em fases (ADR-025, aceita)
 
 | Fase | O quê | Risco | Prova |
 |---|---|---|---|
@@ -184,17 +184,48 @@ modifica o mundo quando andar não resolve.
 
 ## 8. O que ainda precisa de validação
 
-- `[VALIDAÇÃO NECESSÁRIA]` Ler a geometria real em 553, 39, 158 no save (região
-  `r.1.0.mca`) para confirmar **qual** das falhas da §4 trava ali: vão, degrau
-  alto, fluido ou pedra de fora da escada. Decide se a fase 1 sozinha resolve
-  esse caso.
+- `[FATO]` **Geometria de 553, 39, 158 lida do save e reconstruída** em
+  `MineStallForensicGameTest` (x 545..556, y 37..47, z 153..162; 119 células
+  abertas). A navegação Vanilla **acha caminho e chega** ao lugar de pisar
+  (552, 40, 158) a partir de onde o mineiro parou (549, 41, 158). Nenhuma das
+  falhas geométricas da §4 explica aquele travamento: não há vão, degrau alto
+  nem fluido no recorte.
+- `[FATO]` Mesmo recorte: 51 blocos de `dirt_path` no subsolo da mina (y 30-46,
+  inclusive uma sala 5x5 em y=34). Origem não provada; os dois únicos
+  escritores são `RoadPaving` (que exige chão natural) e o nivelamento do
+  construtor.
+- `[HIPÓTESE]` O travamento está no cérebro, não no mapa: tarefa de andar que
+  não roda, alvo trocado ou caminho descartado. Para decidir, a linha
+  `stuck`/`gives up` do mineiro passou a trazer `brain: activity …, our walk
+  task running|not running, walk target …, navigation …`
+  (`MinerReport.brainOf`). **A próxima sessão de jogo decide.**
 - `[VALIDAÇÃO NECESSÁRIA]` `getSafeFallDistance` do aldeão sem alvo, por
   `javap` do corpo de `Entity.getSafeFallDistance(float)`.
 - `[HIPÓTESE]` A navegação Vanilla basta para 90%+ dos passos se a fase 1
   garantir piso, altura livre e degrau de 1. Impacto se errada: a fase 2 vira
   obrigatória, não reserva.
 
-## 9. Próximo passo
+## 9. Fase 1 — o que entrou (2026-09-25)
 
-Aprovação do autor na ADR-025 (fases e ordem). Depois, handoff para
-`fabric-development` começando pela validação de §8 e pela fase 1.
+| Item do plano | Estado | Onde | Prova |
+|---|---|---|---|
+| `MineMarks` persistido | feito | `WorkMarksSavedData` (chave `villagecolony_marks`), ligado no `ServerLifecycleHandler` | unitários de ida e volta do NBT e de `marks()`/`restore()`; **não visto em jogo** |
+| Piso sob a passagem | feito | `MineFloor.patch`, chamado no `MinerHands` depois da vedação | 4 GameTests: vão vira pedregulho; degrau planejado, célula fora da passagem e chão firme ficam como estão |
+| Penalidade de água -1 | feito | `MinerCaution.keepOutOfWater`, a cada passo do mineiro | GameTest com controle: sem a cautela o aldeão atravessa o fosso nadando; com ela, dá a volta seca |
+| Fluido tapado antes de quebrar | já existia, equivalente | `MineFlooding.seal` roda no mesmo tique da quebra; o fluido só corre no tique agendado seguinte | GameTest antigo `thePickThatOpensWaterSealsItAtOnce` |
+| Recusar quebrar bloco que segura fluido sem tampa possível | **pendente** | caso: nascente protegida (água da vila) que o `seal` não pode tapar | — |
+| Diagnóstico do cérebro no travamento | feito | `MinerReport.brainOf` | só em jogo |
+
+Desvios do plano, registrados:
+
+- O piso **não consome** pedregulho do baú, como a vedação do
+  `MineFlooding` também não. A conta do material entra com a fase 2, que põe
+  bloco com frequência; na fase 1 são vãos raros.
+- A geometria repete dez células: o último degrau de cada escada cai dentro da
+  sala que ela abre (seis no caracol, quatro no ramal). É a geometria salva, não
+  defeito; `MineShaft.plannedCells()` devolve 210 células para 220 índices.
+
+## 10. Próximo passo
+
+Sessão de jogo para ler as linhas `brain:` do mineiro e ver `The mine floored`;
+depois, a fase 2 (planejador local com ações) com o diagnóstico em mãos.

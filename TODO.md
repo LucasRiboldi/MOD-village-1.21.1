@@ -47,10 +47,16 @@ Não recomendados:
 - [x] Mineiro cava enquanto houver espaço nos baús dos mineiros
   (`ColonyChests.minersRoom` + `ColonyGoals.of(..., stoneRoom, ...)`),
   decisão do autor.
-- [ ] 🔴 **Mineiro autônomo — ADR-025 (proposta, aguarda o autor):** fase 1 mina
-  que se mantém andável e `MineMarks` no save; fase 2 planejador local com
-  quebrar/pôr bloco quando a navegação falha; fase 3 registro de veios por
-  valor. Pesquisa em `docs/research/2026-09-25-mineiro-autonomo.md`.
+- [ ] 🔴 **Mineiro autônomo — ADR-025 (aceita, prioridade do autor):**
+  - [x] fase 1 no código (25-09): `MineMarks` no save, piso sob a passagem
+    (`MineFloor`), mineiro fora da água (`MinerCaution`), linha `brain:` no
+    travamento. ⬜ ver em jogo: `The mine floored`, a pedra recusada
+    continuar recusada depois de carregar, e o que a linha `brain:` diz.
+  - [ ] fase 1, resto: recusar quebrar bloco que segura fluido protegido.
+  - [ ] fase 2: planejador local com quebrar/pôr bloco quando a navegação
+    falha, também no `StrandedEscape`.
+  - [ ] fase 3: registro de veios por valor.
+  Pesquisa em `docs/research/2026-09-25-mineiro-autonomo.md` (§9 = o que entrou).
 - [ ] 🔴 **E44/E45 com evidência nova:** o mineiro volta a cada sessão à
   mesma pedra inalcançável (553, 39, 158), desiste, fica preso a y=41 e o
   `StrandedEscape` desiste ("no natural, dry way up"); ele fica fora da escala

@@ -1,6 +1,6 @@
 # ADR-025 — Mineiro autônomo: mina andável, movimento com ações e registro de veios
 
-**Status:** proposta (aguarda o autor)
+**Status:** aceita (autor, 2026-09-25: "Projeto bom, aplique ele como prioridade")
 **Data:** 2026-09-25
 **Minecraft:** 1.21.1 · **Mappings:** Yarn 1.21.1+build.3 · **Fabric API:** 0.116.15+1.21.1
 
@@ -68,7 +68,7 @@ Este projeto prioriza, nesta ordem: **não travar a colônia** > naturalidade
 
 ## Decisão
 
-`[DECISÃO]` (proposta) Opção C: primeiro a mina que se mantém andável e a marca
+`[DECISÃO]` Opção C: primeiro a mina que se mantém andável e a marca
 de fracasso persistida; depois o planejador local com ações, usado só quando a
 navegação Vanilla falha; por fim o registro de veios com prioridade por valor.
 
@@ -93,3 +93,11 @@ novo no save (marcas e veios).
 
 **Neutras, mas a lembrar:** toda colocação consome pedregulho da colônia e passa
 por `BlockProtection`.
+
+## Andamento
+
+- **2026-09-25 — fase 1 no código**, não vista em jogo: `WorkMarksSavedData`,
+  `MineFloor`, `MinerCaution`, `MinerReport.brainOf`. Desvio: o piso da fase 1
+  não consome pedregulho (como a vedação do `MineFlooding`); o consumo entra
+  com a fase 2. Pendente da fase 1: recusar quebrar bloco que segura fluido
+  protegido. Ver `docs/research/2026-09-25-mineiro-autonomo.md` §9.

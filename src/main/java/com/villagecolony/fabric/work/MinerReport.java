@@ -362,7 +362,52 @@ public final class MinerReport {
                 + " blocks away; it was walking to " + sentTo(villager.getUuid(), target)
                 + "; the place to stand is " + stand
                 + "; the stone at " + target.toShortString() + " is "
-                + world.getBlockState(target).getBlock().getName().getString();
+                + world.getBlockState(target).getBlock().getName().getString()
+                + "; " + brainOf(villager);
+    }
+
+    /**
+     * O que o cérebro e a navegação do aldeão estavam fazendo — 2026-09-25,
+     * ADR-025.
+     *
+     * <p>O experimento forense de 25-09 reconstruiu do save a mina onde o
+     * mineiro travou em todas as sessões: a navegação Vanilla <b>acha</b>
+     * caminho até o lugar de pisar, o chunk estava sendo processado (quatro
+     * chunks do jogador, simulação de 24) e o raio de chegada é zero — e ele
+     * não andou 300 tiques. O que sobra está dentro do cérebro: qual
+     * atividade venceu, se a nossa task de andar rodava, se o destino estava
+     * na memória e se a navegação tinha caminho. Instrumentar antes de
+     * suspeitar (§11).
+     */
+    static String brainOf(VillagerEntity villager) {
+        var brain = villager.getBrain();
+
+        String activity = brain.getFirstPossibleNonCoreActivity()
+                .map(a -> a.getId())
+                .orElse("none");
+
+        boolean walking = brain.getRunningTasks().stream()
+                .anyMatch(task -> task instanceof com.villagecolony.fabric.brain.GoToWorkTargetTask);
+
+        String walkTarget = brain.getOptionalRegisteredMemory(
+                        net.minecraft.entity.ai.brain.MemoryModuleType.WALK_TARGET)
+                .map(walk -> walk.getLookTarget().getBlockPos().toShortString()
+                        + " within " + walk.getCompletionRange())
+                .orElse("none");
+
+        var path = villager.getNavigation().getCurrentPath();
+
+        String navigation = villager.getNavigation().isIdle()
+                ? "idle"
+                : path == null
+                        ? "no path"
+                        : "path of " + path.getLength() + " nodes to " + path.getTarget().toShortString()
+                                + (path.reachesTarget() ? "" : " (does not reach)");
+
+        return "brain: activity " + activity
+                + ", our walk task " + (walking ? "running" : "not running")
+                + ", walk target " + walkTarget
+                + ", navigation " + navigation;
     }
 
     private static String hoursOf(ServerWorld world, UUID workerId) {

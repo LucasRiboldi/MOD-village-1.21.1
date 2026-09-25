@@ -188,4 +188,25 @@ class MineShaftTest {
 
         assertFalse(last.mayDeepen());
     }
+
+    // --- as células que a mina planeja abrir, 2026-09-25 (ADR-025) ---
+
+    /**
+     * O conjunto de células planejadas tem o caracol, a sala e o ramal — e
+     * não tem o piso embaixo deles, que é onde um vão vira queda.
+     */
+    @Test
+    void thePlannedCellsAreTheShaftAndNotTheFloorUnderIt() {
+        java.util.Set<ColonyPos> cells = shaft().plannedCells();
+
+        assertTrue(cells.contains(new ColonyPos(100, 64, 199)), "o primeiro degrau");
+        assertTrue(cells.contains(new ColonyPos(100, 55, 200)), "a sala comum");
+        assertTrue(cells.contains(new ColonyPos(102, 47, 219)), "a sala do ramal");
+        assertFalse(cells.contains(new ColonyPos(100, 63, 199)), "a rocha sob o primeiro degrau");
+        assertFalse(cells.contains(new ColonyPos(100, 54, 200)), "o piso da sala");
+        // O último degrau de cada escada cai dentro da sala que ela abre: seis
+        // índices do caracol e quatro do ramal repetem células já contadas.
+        assertEquals(MineShaft.SHARED_BLOCKS + MineShaft.ARM_BLOCKS - 10, cells.size(),
+                "o conjunto não tem repetição e não perde célula");
+    }
 }

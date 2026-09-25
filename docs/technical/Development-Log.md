@@ -9493,3 +9493,25 @@ reutilizavel.
   Feito como a Regra 1 da madeira: meta de pedra = guardado + espaco nos
   baus dos mineiros. O E44/E45 continua aberto.
 - Resultados: 1088 unitarios; GameTest 441/441 numa rodada; PIT 1176/1336.
+
+### 2026-09-25 (tarde, 2a) - ADR-025 aceita: fase 1 do mineiro autonomo
+
+- **Forense de 553,39,158:** o recorte x545..556 y37..47 z153..162 lido do
+  save e reconstruido num GameTest (`MineStallForensicGameTest`). A navegacao
+  Vanilla acha caminho e chega ao lugar de pisar. A geometria nao explica o
+  travamento; a linha de travamento ganhou `brain:` (atividade, tarefa de
+  andar, alvo, caminho) para a proxima sessao decidir.
+  - Hipoteses derrubadas no caminho: `dirt_path` no degrau (a celula era ar
+    as 09:15), estrada pavimentando a mina (`RoadPaving` exige chao natural),
+    chunk sem tique (simulacao 24, jogador a 4 chunks).
+- **`MineMarks` no save** (`WorkMarksSavedData`, arquivo proprio porque o
+  `ColonySavedData` esta no teto de 500 linhas). O
+  `ConversionBoundaryTest` pegou um `new BlockPos` fora do adaptador.
+- **`MineFloor`:** vao sem colisao sob celula planejada, e que a mina nao
+  planeja abrir, vira pedregulho. 4 GameTests, vermelho visto com o esboco.
+  - O teste de `plannedCells` supunha 220 celulas; sao 210 - o ultimo degrau
+    de cada escada cai dentro da sala. Geometria salva, nao defeito.
+- **`MinerCaution`:** agua -1 para o mineiro. GameTest com controle: sem a
+  cautela o aldeao atravessa o fosso nadando (o controle prova que o teste
+  mede alguma coisa).
+- Resultados: build limpo, 1093 unitarios; GameTest 448/448.
