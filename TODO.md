@@ -111,8 +111,13 @@ As recomendações, cada uma com um aceite que a próxima avaliação mede
   - [x] `ColonyRoads`: 4 → 1 (25-09). O teste recentrava na origem, onde
     `x - centro` e `x + centro` coincidem. O que sobra é equivalente: `<` virando
     `<=` num mínimo só troca o valor por um igual.
-  - [ ] 🟢 56 sobreviventes em 25-09 (87,12% mortas); os maiores têm 4
-    (`Worker`, que são equivalentes, `VacancyEnforcer`, `HiringLog`).
+  - [x] `VacancyEnforcer`: 4 → 2 e `HiringLog`: 4 → 0 (25-09). Faltava o
+    posto fundacional com dois ocupantes (sai só um), o teto de 64 colônias do
+    registro e o separador do relatório. Os 2 restantes são equivalentes: as
+    sobrecargas sem `replacements` passam 0, e o laço sai antes de dispensar —
+    em produção ninguém as chama; só os testes, para afirmar exatamente isso.
+  - [ ] 🟢 50 sobreviventes em 25-09 (87,73% mortas); nenhuma classe passa de
+    4, e as de 4 (`Worker`) são equivalentes.
   - [x] O passo do PIT no CI reprova quando o PIT nem começa (25-09): saiu o
     `continue-on-error`; número baixo continua sem reprovar, porque não há
     `mutationThreshold`.

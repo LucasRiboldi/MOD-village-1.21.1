@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -319,5 +320,43 @@ class HiringLogTest {
 
         assertThrows(IllegalArgumentException.class,
                 () -> ProfessionAssigner.vacancyFor(candidate, List.of(candidate), -1));
+    }
+
+    // --- o teto e o formato do relatório, 2026-09-25 (sobreviventes do PIT) ---
+
+    /**
+     * O registro guarda até 64 colônias; a 65ª esvazia tudo e começa de
+     * novo. É o teto que impede o mapa de crescer sem limite num servidor
+     * que carrega e descarrega vilas a noite toda.
+     */
+    @Test
+    void theSixtyFifthColonyStartsTheLogOver() {
+        UUID first = UUID.randomUUID();
+        HiringLog.record(first, ProfessionType.MINER, HiringLog.Outcome.AT_TARGET);
+
+        for (int i = 1; i < 64; i++) {
+            HiringLog.record(UUID.randomUUID(), ProfessionType.MINER, HiringLog.Outcome.AT_TARGET);
+        }
+
+        assertEquals(1, HiringLog.countOf(first, ProfessionType.MINER, HiringLog.Outcome.AT_TARGET),
+                "com 64 colônias ninguém devia ter sido esquecido");
+
+        UUID sixtyFifth = UUID.randomUUID();
+        HiringLog.record(sixtyFifth, ProfessionType.MINER, HiringLog.Outcome.AT_TARGET);
+
+        assertEquals(0, HiringLog.countOf(first, ProfessionType.MINER, HiringLog.Outcome.AT_TARGET));
+        assertEquals(1, HiringLog.countOf(sixtyFifth, ProfessionType.MINER, HiringLog.Outcome.AT_TARGET));
+    }
+
+    /** Dois desfechos saem separados por "; ", e nenhum começa com o separador. */
+    @Test
+    void theReportSeparatesItsItemsAndNeverStartsWithTheSeparator() {
+        HiringLog.record(COLONY, ProfessionType.MINER, HiringLog.Outcome.AT_TARGET);
+        HiringLog.record(COLONY, ProfessionType.MINER, HiringLog.Outcome.SHUNNED);
+
+        String report = HiringLog.report(COLONY);
+
+        assertFalse(report.startsWith(";"), "o relatório abriu com o separador: " + report);
+        assertEquals(2, report.split("; ").length, "esperava dois itens: " + report);
     }
 }
