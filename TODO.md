@@ -100,7 +100,14 @@ As recomendações, cada uma com um aceite que a próxima avaliação mede
     picareta, `reroute` reabrindo os braços na hélice nova, mina nova sem
     descer. No `ColonyGoals`: apetite de tábua sem obra, limiar da lã e do
     ferro, e as duas listas da obra (fornalha fora do catálogo, superfície).
-  - [ ] 🟢 69 sobreviventes em 25-09 (85,14% mortas). Maior: `BuildingRegistry` 7.
+  - [x] `BuildingRegistry`: 7 → 1 (25-09), e os 13 sem cobertura cobertos
+    (`all`, `remove`, `removeOfColony`, `clear`, registro novo do
+    `registerOrMerge`). O canto da caixa é inclusivo nos três eixos; a obra
+    pronta nunca é rebaixada no merge. O que sobra é equivalente:
+    `ofColony(null)` devolvendo `emptyList` em vez de `ArrayList` vazia.
+  - [ ] 🟢 63 sobreviventes em 25-09 (86,59% mortas); nenhuma classe passa de
+    4 (`Worker`, `ConstructionProject`, `VacancyEnforcer`, `ColonyRoads`,
+    `HiringLog`).
   - [x] O passo do PIT no CI reprova quando o PIT nem começa (25-09): saiu o
     `continue-on-error`; número baixo continua sem reprovar, porque não há
     `mutationThreshold`.
