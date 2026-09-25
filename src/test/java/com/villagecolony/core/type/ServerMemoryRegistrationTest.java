@@ -71,17 +71,6 @@ class ServerMemoryRegistrationTest {
         assertEquals(List.of(), missing, "classes com clearAll() que não se inscrevem no ServerMemory");
     }
 
-    @Test
-    void resetAllRunsEveryRegisteredReset() {
-        int[] calls = {0};
-        ServerMemory.register(ServerMemoryRegistrationTest.class, () -> calls[0]++);
-
-        int total = ServerMemory.resetAll();
-
-        assertEquals(1, calls[0]);
-        assertTrue(total >= 1);
-    }
-
     private static boolean declaresClearAll(Class<?> type) {
         try {
             Method method = type.getDeclaredMethod("clearAll");

@@ -69,8 +69,14 @@ As recomendações, cada uma com um aceite que a próxima avaliação mede
 - [x] **1. CI nos branches `codex/**`** (`0b1e8b6`). Antes o CI só rodava na `main`.
 - [x] **2. PIT no core** (`987edc9`): `./gradlew pitest`, 77% das mutações
   mortas, força de teste 86%. No CI roda sem reprovar e sobe o relatório.
-  - [ ] 🟡 Matar os sobreviventes: `MineShaft` 37, `ProfessionAssigner` 13,
-    `ColonyCycle` 12, `Building` 12.
+  - [x] Parado do `78e7efc` ao `7619b1d` sem ninguém ver: o
+    `ServerMemoryRegistrationTest` sobe o jogo, o PIT roda sem ele, e o
+    `continue-on-error` do CI calava a falha. Corrigido em 25-09; rodada
+    local com 1312 mutações, 78% mortas, força 86%.
+  - [ ] 🟡 Matar os sobreviventes (160 em 25-09): `MineShaft` 37,
+    `Building` 12, `ColonyCycle` 12, `Worker` 10, `ProfessionAssigner` 9, `Mine` 9.
+  - [ ] 🟡 O passo do PIT no CI não pode falhar calado: `continue-on-error`
+    serve para o número baixo, não para o PIT que nem começa.
 - [x] **3. GameTests intermitentes isolados** (`668c915` e `4590e4c`):
   lote na rocha, viveiro de dez e `ChestMarker`. Três rodadas 433/433,
   mas ainda sem prova de cura; seguir medindo por repetição.

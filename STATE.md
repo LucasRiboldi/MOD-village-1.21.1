@@ -23,8 +23,12 @@ refatoração e a **vila foco**. Nada disso foi visto em jogo ainda. A
   varredura de baús livres, sobre a vila foco e o `ServerMemory`), com
   SHA-256 `2CFD08DB…5DBA`.
 - Build limpo e 1036 unitários verdes; GameTest 435/435 numa rodada, com a
-  mutação do cache confirmada. PIT e CI não foram rodados de novo para
-  este commit — os últimos verdes são do `78e7efc`.
+  mutação do cache confirmada; CI verde.
+- **O PIT estava parado desde o `78e7efc`**, e o `continue-on-error` do CI
+  o calava: o `ServerMemoryRegistrationTest` sobe o jogo e o PIT roda sem
+  ele. Corrigido em 25-09 (o teste sai da rodada do PIT; o teste puro do
+  `ServerMemory` virou `ServerMemoryTest`). Rodada local: 1312 mutações,
+  78% mortas, força 86%. O "PIT verde" registrado para o `78e7efc` era falso.
 - O branch `codex/bighousemod` foi levado para a `main` pelo PR #2.
 
 ## O que o próximo jogo precisa mostrar
@@ -55,8 +59,9 @@ correção levantadas pela avaliação" e "Avaliação técnica". Em aberto:
 - **Estado global (R2).** A limpeza já é garantida pelo `ServerMemory`
   (item 3, feito em 24-09), mas os 89 campos estáticos mutáveis continuam
   — consolidá-los num contexto por servidor é o que falta para o C05.
-- **Item 4, mutações sobreviventes no PIT.** `MineShaft` 37,
-  `ProfessionAssigner` 13, `ColonyCycle` 12.
+- **Item 4, mutações sobreviventes no PIT** (160, rodada de 25-09).
+  `MineShaft` 37, `Building` 12, `ColonyCycle` 12, `Worker` 10,
+  `ProfessionAssigner` 9, `Mine` 9.
 - **Itens 9 e 10 (ciclo de tarefa comum aos ofícios; regras de decisão
   para o `core`).** Pedem ADR antes do código.
 - **Mineiro que não entrega (E44/E45)** e **segunda obra que não abre.**

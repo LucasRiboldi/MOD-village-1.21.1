@@ -86,6 +86,12 @@ pitest {
     junit5PluginVersion = '1.2.2'
     targetClasses = ['com.villagecolony.core.*']
     targetTests = ['com.villagecolony.core.*']
+    // Sobe o Minecraft para percorrer as classes da camada fabric, e o PIT
+    // roda sem o jogo (ver abaixo). Dentro dele o teste falha sem mutação e
+    // o PIT para antes de começar — foi o que aconteceu, calado pelo
+    // continue-on-error do CI, do 78e7efc ao 7619b1d. Não mata mutante do
+    // core: o que ele guarda roda no `gradle test`.
+    excludedTestClasses = ['com.villagecolony.core.type.ServerMemoryRegistrationTest']
     threads = 4
     outputFormats = ['HTML', 'XML']
     timestampedReports = false
