@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.item.Item;
@@ -90,6 +91,33 @@ public final class ColonyChests {
                 .thenComparingInt(ColonyPos::z));
 
         return chests;
+    }
+
+    /**
+     * Quanta pedra ainda cabe nos baús dos mineiros desta colônia — 2026-09-25.
+     *
+     * <p>É onde o mineiro descarrega (o baú da boca da mina fica com o
+     * minério primeiro, e o que sobra vai para o dele). Baú em chunk
+     * descarregado conta zero: sem ler, não se promete espaço.
+     */
+    public static int minersRoom(ServerWorld world, UUID colonyId) {
+        List<ColonyPos> chests = new ArrayList<>();
+
+        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colonyId)) {
+            if (worker.profession().filter(ProfessionType.MINER::equals).isEmpty()) {
+                continue;
+            }
+
+            VillageColonyMod.STORAGES.of(worker.villagerId())
+                    .ifPresent(storage -> chests.add(storage.chestPosition()));
+        }
+
+        if (chests.isEmpty()) {
+            return 0;
+        }
+
+        return ChestInventoryReader.survey(world, chests, ResourceGroup.STONE)
+                .freeSpaceForGroup(ResourceGroup.STONE);
     }
 
     /** Quanto deste item a colônia tem, somando todos os baús. */

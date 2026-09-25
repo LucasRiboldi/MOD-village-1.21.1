@@ -853,4 +853,28 @@ class ColonyGoalsTest {
         assertFalse(goalFor(work(0, 0, Map.of(), Map.of(ResourceType.SAND, 0)))
                 .containsKey(ResourceType.SAND), "pedido zero não vira meta");
     }
+
+    // --- a Regra 1 da pedra, 2026-09-25 (decisão do autor) ---
+    //
+    // "Galerias novas sem parar": sem obra pedindo, o mineiro continua
+    // cavando enquanto os baús dele tiverem espaço — a mesma forma da
+    // madeira, em que a meta é o guardado mais o que ainda cabe.
+
+    /** Com espaço no baú do mineiro, a meta de pedra é o guardado mais o espaço. */
+    @Test
+    void roomInTheMinersChestsKeepsTheMinerDigging() {
+        Map<ResourceType, Integer> goal = ColonyGoals.of(
+                colony(), owned(ResourceType.COBBLESTONE, 100), 0, 0, 500, WorkDemand.none());
+
+        assertEquals(600, goal.get(ResourceType.COBBLESTONE));
+    }
+
+    /** Sem espaço, a meta de pedra é a de antes: o piso, ou o que a obra pede. */
+    @Test
+    void withNoRoomTheStoneGoalIsTheFloor() {
+        Map<ResourceType, Integer> goal = ColonyGoals.of(
+                colony(), owned(ResourceType.COBBLESTONE, 100), 0, 0, 0, WorkDemand.none());
+
+        assertEquals(ColonyGoals.STONE_FLOOR, goal.get(ResourceType.COBBLESTONE));
+    }
 }

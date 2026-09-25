@@ -31,6 +31,7 @@
       "com.villagecolony.gametest.ColonyEnduranceGameTest",
       "com.villagecolony.gametest.BlockProtectionGameTest",
       "com.villagecolony.gametest.VillageChestsGameTest",
+      "com.villagecolony.gametest.MinersRoomGameTest",
       "com.villagecolony.gametest.ChestWithdrawerGameTest",
       "com.villagecolony.gametest.CraftingLookupGameTest",
       "com.villagecolony.gametest.CraftingGameTest",

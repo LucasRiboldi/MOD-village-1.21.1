@@ -310,6 +310,35 @@ public final class ColonyGoals {
             int plankRoom,
             WorkDemand work) {
 
+        return of(colony, owned, woodRoom, plankRoom, 0, work);
+    }
+
+    /**
+     * O mesmo, com o espaço nos baús dos mineiros — 2026-09-25, decisão do
+     * autor: <i>"galerias novas sem parar"</i>.
+     *
+     * <p>A Regra 1 da madeira, agora para a pedra: sem obra pedindo, o
+     * mineiro continua cavando enquanto os baús dele tiverem onde guardar. A
+     * mina já cresce sozinha (ramais, níveis, a outra boca no fundo) e cada
+     * corte segue o minério que encontra; o que faltava era a tarefa, que
+     * sumia assim que o piso de pedra era atendido. O playtest de 25-09 teve
+     * vinte minutos de "no miner work: no task open for it".
+     *
+     * <p>O espaço é o do baú do mineiro, e não o da vila: é nele que a pedra
+     * entra, e o espaço vazio de qualquer baú conta para todo grupo — medir
+     * a vila inteira encheria de pedregulho os baús da madeira da obra.
+     *
+     * @param stoneRoom quanta pedra ainda cabe nos baús dos mineiros; zero
+     *     deixa a meta de pedra exatamente como era
+     */
+    public static Map<ResourceType, Integer> of(
+            Colony colony,
+            ResourceTally owned,
+            int woodRoom,
+            int plankRoom,
+            int stoneRoom,
+            WorkDemand work) {
+
         Objects.requireNonNull(colony, "colony");
         Objects.requireNonNull(owned, "owned");
         Objects.requireNonNull(work, "work");
@@ -326,6 +355,10 @@ public final class ColonyGoals {
 
         if (plankRoom < 0) {
             throw new IllegalArgumentException("Negative plank room: " + plankRoom);
+        }
+
+        if (stoneRoom < 0) {
+            throw new IllegalArgumentException("Negative stone room: " + stoneRoom);
         }
 
         // OAK_LOG responde pelo grupo inteiro: ResourceDemand compara a
@@ -399,7 +432,9 @@ public final class ColonyGoals {
         // A pedra tem piso desde 2026-08-27 — ver STONE_FLOOR. A obra
         // manda quando pede mais; obra pequena não abaixa o estoque que
         // a colônia mantém para a casa seguinte.
-        goals.put(stone, Math.max(stoneForWork, STONE_FLOOR));
+        goals.put(stone, Math.max(
+                Math.max(stoneForWork, STONE_FLOOR),
+                stoneRoom > 0 ? owned.amountOfGroup(stone.group()) + stoneRoom : 0));
 
         // A despensa — 2026-08-27, e por cama desde 2026-09-05. Qualquer
         // lavoura conta, pelo grupo. O piso continua valendo para a

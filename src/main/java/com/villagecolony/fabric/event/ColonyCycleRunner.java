@@ -232,6 +232,11 @@ final class ColonyCycleRunner {
         // tábua. Medida do mesmo jeito e pelo mesmo motivo.
         int plankRoom = survey.freeSpaceForGroup(ResourceGroup.PLANKS);
 
+        // E a pedra, só no baú de quem a cava — 2026-09-25, decisão do autor
+        // ("galerias novas sem parar"). Ver ColonyGoals.of: medir a vila
+        // inteira contaria todo slot vazio de todo baú como lugar de pedra.
+        int stoneRoom = ColonyChests.minersRoom(overworld, colony.id());
+
         // Até aqui é baú: uma só fotografia produz estoque e as duas
         // medidas de espaço, sem reler os mesmos inventários no ciclo.
         mark = CycleCost.since(CycleCost.Phase.CHESTS, mark);
@@ -333,7 +338,7 @@ final class ColonyCycleRunner {
                 colony.id(),
                 survey.resources().total(),
                 ColonyGoals.of(
-                        colony, survey.resources().total(), room, plankRoom, work),
+                        colony, survey.resources().total(), room, plankRoom, stoneRoom, work),
                 VillageColonyMod.TASKS,
                 VillageColonyMod.WORKERS,
                 VillageColonyMod.STORAGES::hasStorage,
