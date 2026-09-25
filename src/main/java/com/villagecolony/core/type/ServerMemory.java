@@ -1,7 +1,9 @@
 package com.villagecolony.core.type;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,14 +50,32 @@ public final class ServerMemory {
     /**
      * Esquece tudo o que está inscrito, na ordem de inscrição.
      *
+     * <p><b>Uma limpeza pode inscrever outra</b> — 2026-09-25, visto em jogo.
+     * Um {@code clearAll} que toca uma classe ainda não carregada dispara o
+     * bloco estático dela, e ela se inscreve aqui no meio da volta. Percorrer
+     * o mapa direto dava {@code ConcurrentModificationException} ao fechar o
+     * mundo, e o resto da memória ficava sem limpar. Por isso a volta é sobre
+     * uma cópia, repetida até ninguém novo aparecer; cada limpeza roda uma
+     * vez.
+     *
      * @return quantas classes foram limpas
      */
     public static synchronized int resetAll() {
-        for (Runnable reset : RESETTERS.values()) {
-            reset.run();
+        Set<String> done = new HashSet<>();
+        boolean someoneNew = true;
+
+        while (someoneNew) {
+            someoneNew = false;
+
+            for (Map.Entry<String, Runnable> entry : List.copyOf(RESETTERS.entrySet())) {
+                if (done.add(entry.getKey())) {
+                    entry.getValue().run();
+                    someoneNew = true;
+                }
+            }
         }
 
-        return RESETTERS.size();
+        return done.size();
     }
 
     /** Os nomes das classes inscritas — para o teste de inscrição e o log. */
