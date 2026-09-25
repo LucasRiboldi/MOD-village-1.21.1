@@ -450,4 +450,26 @@ class ConstructionProjectTest {
         assertTrue(project.markPlaced(first));
         assertTrue(project.deferredPieces().isEmpty(), "a peça assentada continuou adiada");
     }
+
+    /**
+     * A peça que já cabe volta à fila sem a vizinhança mudar — 2026-09-25.
+     * Peça que não está adiada, ou adiada com outra leitura, não mexe em nada.
+     */
+    @Test
+    void aDeferredPieceCanBeRetriedWithoutItsSupportChanging() {
+        BlueprintBlock first = block(0, 0, 0, COBBLE);
+
+        project.defer(first, ConstructionOutcome.skipped(
+                project.worldPositionOf(first), SkipReason.UNSUPPORTED), "support");
+
+        ConstructionProject.DeferredPiece piece = project.deferredPieces().get(0);
+        ConstructionProject.DeferredPiece stale = new ConstructionProject.DeferredPiece(
+                piece.position(), piece.block(), piece.reason(), "other-support");
+
+        assertFalse(project.retry(stale), "uma leitura que não é a gravada liberou a peça");
+        assertTrue(project.retry(piece));
+        assertTrue(project.deferredPieces().isEmpty());
+        assertEquals(first, project.nextBlock().orElseThrow());
+        assertFalse(project.retry(piece), "a mesma peça saiu da espera duas vezes");
+    }
 }

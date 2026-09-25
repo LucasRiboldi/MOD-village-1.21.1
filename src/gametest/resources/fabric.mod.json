@@ -61,6 +61,7 @@
       "com.villagecolony.gametest.BigHouseModBlueprintGameTest",
       "com.villagecolony.fabric.integration.BigHouseFoundationGameTest",
       "com.villagecolony.fabric.work.FoundationRepairGameTest",
+      "com.villagecolony.fabric.work.WallPieceGameTest",
       "com.villagecolony.fabric.integration.ConstructionCancellationGameTest"
     ]
   },

@@ -56,6 +56,47 @@ public final class BlockShaping {
     }
 
     /**
+     * A peça de parede se apoia na parede que existe — 2026-09-25, visto em
+     * jogo.
+     *
+     * <p><b>O defeito.</b> A planta não guarda a direção do bloco, e
+     * {@link #facing} só vira as peças da borda da caixa. No miolo da casa a
+     * escada de mão e a tocha de parede ficavam no estado padrão, viradas
+     * para o norte e procurando apoio ao sul. No templo de planície de 25-09
+     * havia pedregulho a oeste, ao norte ou a leste de cada uma, e ar ao sul:
+     * o jogo recusava as nove, elas eram adiadas, e a obra nunca fechava.
+     *
+     * <p><b>A regra.</b> Se a direção deduzida já se sustenta, ela fica — a
+     * borda da caixa e qualquer peça que já dava certo não mudam. Senão, a
+     * primeira das quatro direções, numa ordem fixa, em que o jogo aceita a
+     * peça. Sem nenhuma, devolve a de antes, e a peça é adiada como era.
+     *
+     * <p>A direção de verdade está no arquivo da estrutura e o leitor a
+     * descarta; guardá-la na planta é o conserto da aparência, e fica
+     * registrado no TODO. Este aqui é o que garante que a obra fecha.
+     */
+    static BlockState leanOnAWall(ServerWorld world, BlockPos target, BlockState state) {
+        if (!state.contains(Properties.HORIZONTAL_FACING) || state.canPlaceAt(world, target)) {
+            return state;
+        }
+
+        for (Direction facing : WALL_ORDER) {
+            BlockState turned = state.with(Properties.HORIZONTAL_FACING, facing);
+
+            if (turned.canPlaceAt(world, target)) {
+                return turned;
+            }
+        }
+
+        return state;
+    }
+
+    /** Ordem fixa: a mesma parede dá a mesma direção em toda sessão. */
+    private static final Direction[] WALL_ORDER = {
+        Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST
+    };
+
+    /**
      * Vira o bloco de parede para fora da casa — a Regra 17.
      *
      * <p>Até 2026-08-19 a porta saía no estado padrão da planta, que

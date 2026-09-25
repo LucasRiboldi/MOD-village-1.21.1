@@ -336,6 +336,32 @@ public final class ConstructionProject {
     }
 
     /**
+     * Recoloca a peça na fila porque ela já pode ser assentada — 2026-09-25.
+     *
+     * <p>A outra porta, {@link #retryIfSupportChanged}, só abre quando a
+     * vizinhança muda. Não basta quando o que mudou foi a <b>regra</b> de
+     * assentar: as nove peças do templo de 25-09 foram adiadas por uma versão
+     * que não sabia apoiar a peça de parede na parede que existe, e a
+     * vizinhança delas nunca ia mudar. Quem decide que a peça cabe agora é a
+     * camada que conhece o mundo.
+     *
+     * @return se a peça estava adiada e saiu da espera
+     */
+    public boolean retry(DeferredPiece piece) {
+        Objects.requireNonNull(piece, "piece");
+
+        DeferredPiece current = deferred.get(piece.position());
+
+        if (!piece.equals(current)) {
+            return false;
+        }
+
+        deferred.remove(piece.position());
+
+        return true;
+    }
+
+    /**
      * Onde vai este bloco, no mundo.
      *
      * <p>A soma que transforma projeto em obra. Mora aqui e em nenhum
