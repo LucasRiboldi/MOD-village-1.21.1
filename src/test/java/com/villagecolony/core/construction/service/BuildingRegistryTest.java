@@ -316,4 +316,28 @@ class BuildingRegistryTest {
 
         assertEquals(0, registry.count());
     }
+
+    /**
+     * A obra retomada e terminada vira a última tentada — 2026-09-25.
+     *
+     * <p>O rodízio lê a última obra pela ordem do registro. A fusão mantinha
+     * a caixa na posição antiga, e o templo abandonado que a colônia acabou de
+     * terminar ficava "lá atrás", como se a última tentada fosse outra.
+     */
+    @Test
+    void aMergedBuildingBecomesTheLastAttempted() {
+        UUID colony = UUID.randomUUID();
+        Building temple = houseBox(colony, false);
+        Building other = new Building(UUID.randomUUID(), colony, HOUSE,
+                new ColonyPos(30, 60, 20), new ColonyPos(32, 62, 22));
+
+        registry.register(temple);
+        registry.register(other);
+        registry.registerOrMerge(houseBox(colony, true));
+
+        List<Building> order = registry.ofColony(colony);
+
+        assertEquals(temple.id(), order.get(order.size() - 1).id(), "a fusão ficou na posição antiga");
+        assertTrue(order.get(order.size() - 1).finished());
+    }
 }

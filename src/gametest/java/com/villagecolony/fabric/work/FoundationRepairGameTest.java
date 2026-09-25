@@ -8,6 +8,7 @@ import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
 import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -79,6 +80,100 @@ public class FoundationRepairGameTest implements FabricGameTest {
                     "o reparo antigo da BigHouseMOD voltou sobre a casa existente");
             context.assertTrue(context.getWorld().getBlockState(standingAt).isOf(expected),
                     "a retomada alterou a casa fundacional");
+        } finally {
+            context.getWorld().setBlockState(standingAt, before);
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
+            VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
+        }
+
+        context.complete();
+    }
+
+    /**
+     * O templo que a colônia acabou de largar não volta pelo reparo —
+     * 2026-09-25, decisão do autor depois do playtest.
+     *
+     * <p>O reparo roda antes do rodízio e reabria a obra abandonada no mesmo
+     * segundo: "gives up on plains_temple_4" e "starts repair sweep for
+     * plains_temple_4" na mesma origem. Com o templo como última obra
+     * tentada, a vez é da casa, e ele espera.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "foundation_repair")
+    public void anAbandonedTempleWaitsForItsTurn(TestContext context) {
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(1, 4, 1)));
+        Colony colony = Colony.create(UUID.randomUUID(), origin);
+        ResourceId temple = ResourceId.vanilla("village/plains/houses/plains_temple_4");
+        ColonyPos size = StructureBlueprintReader.read(context.getWorld(), temple)
+                .orElseThrow(() -> new AssertionError("planta do templo ausente"))
+                .size();
+
+        try {
+            VillageColonyMod.BUILDINGS.register(new Building(
+                    UUID.randomUUID(), colony.id(), temple, origin, new ColonyPos(
+                            origin.x() + size.x() - 1,
+                            origin.y() + size.y() - 1,
+                            origin.z() + size.z() - 1), false));
+
+            context.assertTrue(BuildingRepairPlanner.open(context.getWorld(), colony).isEmpty(),
+                    "o templo abandonado voltou pelo reparo na vez da casa");
+        } finally {
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
+            VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
+        }
+
+        context.complete();
+    }
+
+    /**
+     * A obra abandonada que o save trouxe aberta também espera a vez dela —
+     * 2026-09-25. O save do autor carregava o templo de z=211, reaberto pelo
+     * reparo antigo antes da regra: sem isto a sessão seguinte seguiria
+     * levantando o mesmo templo na vez da casa.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "foundation_repair")
+    public void aSavedAbandonedTempleWaitsForItsTurnOnLoad(TestContext context) {
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(1, 4, 1)));
+        Colony colony = Colony.create(UUID.randomUUID(), origin);
+        ResourceId temple = ResourceId.vanilla("village/plains/houses/plains_temple_4");
+        ColonyPos size = StructureBlueprintReader.read(context.getWorld(), temple)
+                .orElseThrow(() -> new AssertionError("planta do templo ausente"))
+                .size();
+
+        // Um bloco do templo de pé, como no save do autor (cerca de cem):
+        // obra salva com zero blocos sobre caixa construída é descartada por
+        // outra regra, e o teste passaria sem medir esta.
+        BlueprintBlock standing = PlanPlacement.blueprintOf(
+                context.getWorld(), colony.id(), temple, origin)
+                .orElseThrow(() -> new AssertionError("planta do templo ausente"))
+                .blocks().stream()
+                .filter(block -> MinecraftTypeAdapter.toBlock(block.block()).isPresent())
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("planta sem blocos do Minecraft"));
+        BlockPos standingAt = new BlockPos(
+                origin.x() + standing.offset().x(),
+                origin.y() + standing.offset().y(),
+                origin.z() + standing.offset().z());
+        BlockState before = context.getWorld().getBlockState(standingAt);
+
+        try {
+            context.getWorld().setBlockState(standingAt,
+                    MinecraftTypeAdapter.toBlock(standing.block()).orElseThrow().getDefaultState());
+            VillageColonyMod.BUILDINGS.register(new Building(
+                    UUID.randomUUID(), colony.id(), temple, origin, new ColonyPos(
+                            origin.x() + size.x() - 1,
+                            origin.y() + size.y() - 1,
+                            origin.z() + size.z() - 1), false));
+            VillageColonyMod.CONSTRUCTIONS.registerPending(new ConstructionService.Pending(
+                    UUID.randomUUID(), colony.id(), temple, origin, ConstructionState.BUILDING));
+
+            ConstructionResume.resume(context.getWorld(), colony);
+
+            context.assertTrue(VillageColonyMod.CONSTRUCTIONS.pendingOf(colony.id()).isEmpty(),
+                    "a obra salva do templo continuou pendente");
+            context.assertTrue(VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isEmpty(),
+                    "o templo abandonado voltou pela retomada na vez da casa");
         } finally {
             context.getWorld().setBlockState(standingAt, before);
             VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());

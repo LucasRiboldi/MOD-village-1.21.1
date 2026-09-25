@@ -16,6 +16,7 @@ import net.minecraft.util.math.BlockPos;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -72,9 +73,23 @@ final class BuildingRepairPlanner {
 
         Set<UUID> exhausted = EXHAUSTED.getOrDefault(colony.id(), Set.of());
 
-        for (Building building : VillageColonyMod.BUILDINGS.ofColony(colony.id())) {
+        List<Building> buildings = VillageColonyMod.BUILDINGS.ofColony(colony.id());
+        int adults = VillageColonyMod.WORKERS.countOfColony(colony.id());
+
+        for (Building building : buildings) {
             if (building.blueprint().equals(StructureBlueprintReader.BIG_HOUSE_MOD)
                     || exhausted.contains(building.id())) {
+                continue;
+            }
+
+            // <b>A obra abandonada só volta na vez do tipo dela</b> —
+            // 2026-09-25, decisão do autor. O reparo roda antes do rodízio,
+            // e reabria a obra largada no mesmo segundo em que a colônia
+            // desistia dela: a vila ficava presa a templos. A construção
+            // terminada que perdeu blocos continua sendo reparada sempre.
+            if (!building.finished()
+                    && !HousePlans.isTurnOf(
+                            buildings, adults, colony.observedBeds(), building.blueprint())) {
                 continue;
             }
 
