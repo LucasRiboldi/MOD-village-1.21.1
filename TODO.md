@@ -27,7 +27,7 @@ próxima avaliação mede.
 | 1 ✅ | Limite de **tempo** para o planejador (`SweepDeadline`, 15 ms) — **feito**, ⬜ ver `cycle_over_tick` cair em jogo | baixo / baixo | `cycle_over_tick` cai; C13 ≥ 3 |
 | 2 ✅ | Cota ajustável (`PlanningBudget`), e em jogo **só a vila foco planeja e é sondada** (`VillageFocus`, decisão do autor) — **feito** | baixo / baixo | teste unitário da regra |
 | 3 ✅ | Registro único (`ServerMemory.resetAll`) no lugar de 78 `clearAll` à mão — **feito**. Achou `BiomeConstructionSupply` sem limpeza nenhuma e as duas listas divergentes. **C05 não muda:** os campos continuam; o que acabou foi o esquecimento | médio / baixo | teste de inscrição ✅; C05 ≥ 3 pede consolidar os campos (R2) |
-| 4 ✅ | Matar sobreviventes do PIT nas três classes nomeadas (`MineShaft`, `ProfessionAssigner`, `ColonyCycle`) — **feito** em 25-09, junto com `Building` e `Worker`; só equivalentes restam | médio / nulo | C08 ≥ 85%: **83%**, o aceite ainda não fecha (ver R6) |
+| 4 ✅ | Matar sobreviventes do PIT nas três classes nomeadas (`MineShaft`, `ProfessionAssigner`, `ColonyCycle`) — **feito** em 25-09, junto com `Building` e `Worker`; só equivalentes restam | médio / nulo | C08 ≥ 85%: **85,14%** em 25-09, com `Mine` e `ColonyGoals` ✅ |
 | 5 | JaCoCo na bateria de jogo (cobertura do `fabric`) | baixo-médio / nulo | cobertura do `fabric` medida |
 | 6 | PR do branch para a `main` (85 commits) | baixo / publica | CI verde no PR — **pede aval do autor** |
 | 7 | `STATE.md` até 150 linhas | baixo / nulo | contagem |
@@ -56,9 +56,8 @@ As recomendações, cada uma com um aceite que a próxima avaliação mede
   **`giveUp` de 6 para 1**.
 - [x] 🟠 **R4**: branch levado para a `main` pelo PR #2 (merge `692d8b9`, CI verde).
 - [x] 🟡 **R5**: `STATE.md` ≤ 150 linhas (95; o texto antigo foi arquivado no `Historico`).
-- [ ] 🟡 **R6**: sobreviventes do PIT (`MineShaft`, `ProfessionAssigner` e
-  `ColonyCycle` feitos em 25-09). **C08 ≥ 85%** (83% em 25-09): faltam uns
-  25 mutantes mortos; próximos `Mine`, `ColonyGoals`, `BuildingRegistry`.
+- [x] 🟡 **R6**: sobreviventes do PIT. **C08 ≥ 85% alcançado em 25-09**:
+  1117/1312 = 85,14% (força 94%). Sete classes zeradas ou só com equivalentes.
 - [ ] 🟡 **R7**: tabelas de `if` viram `Map`/`switch`. CC máx ≤ 20.
 - [ ] 🟡 **R8**: JaCoCo no `runGametest` para medir o `fabric`.
 - [ ] 🟢 **R9**: convenção de mensagem de commit (sem prefixo < 10%).
@@ -96,8 +95,12 @@ As recomendações, cada uma com um aceite que a próxima avaliação mede
     equivalentes: `adults <= 15` dá 7 vagas nos dois ramos; os dois
     `villagerId -> true` viram `false` e a 2ª passada do `assignMissing` aceita
     todos do mesmo jeito.
-  - [ ] 🟡 Matar os sobreviventes (87 em 25-09, 83% mortas): `Mine` 9,
-    `ColonyGoals` 9, `BuildingRegistry` 7.
+  - [x] `Mine` e `ColonyGoals`: 9 → 0 cada (25-09). No `Mine`, faltava valor
+    exato: `restore` com cut 0, `cuts()` de volta ao disco, a 3ª volta sem
+    picareta, `reroute` reabrindo os braços na hélice nova, mina nova sem
+    descer. No `ColonyGoals`: apetite de tábua sem obra, limiar da lã e do
+    ferro, e as duas listas da obra (fornalha fora do catálogo, superfície).
+  - [ ] 🟢 69 sobreviventes em 25-09 (85,14% mortas). Maior: `BuildingRegistry` 7.
   - [x] O passo do PIT no CI reprova quando o PIT nem começa (25-09): saiu o
     `continue-on-error`; número baixo continua sem reprovar, porque não há
     `mutationThreshold`.

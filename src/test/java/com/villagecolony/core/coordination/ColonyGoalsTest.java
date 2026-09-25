@@ -783,4 +783,74 @@ class ColonyGoalsTest {
                 asked.get(ResourceType.SMOOTH_SANDSTONE),
                 "a obra pediu 60 e o piso ganhou dela — o foco deixou de ser da obra");
     }
+
+    // --- valores exatos da meta, 2026-09-25 (sobreviventes do PIT) ---
+
+    private static WorkDemand work(int wool, int iron,
+            Map<ResourceType, Integer> smelted, Map<ResourceType, Integer> gathered) {
+        return new WorkDemand(0, ResourceType.COBBLESTONE, 0, wool, 0, 0, iron, smelted, gathered);
+    }
+
+    private static Map<ResourceType, Integer> goalFor(WorkDemand work) {
+        return ColonyGoals.of(colony(), owned(ResourceType.OAK_LOG, 100), 0, 0, work);
+    }
+
+    /**
+     * Sem obra, a tábua pedida é a metade do que cabe mais o que já há:
+     * nenhuma tábua e espaço para 40 pedem 20, com tora de sobra.
+     */
+    @Test
+    void withoutWorkThePlankGoalIsHalfOfTheRoom() {
+        Map<ResourceType, Integer> goal = ColonyGoals.of(
+                colony(), owned(ResourceType.OAK_LOG, 100), 0, 40, WorkDemand.none());
+
+        assertEquals(20, goal.get(ResourceType.OAK_PLANKS));
+    }
+
+    /** Lã só vira meta quando alguma casa está sem cama. */
+    @Test
+    void woolIsAGoalOnlyWhenABedIsMissing() {
+        assertFalse(goalFor(work(0, 0, Map.of(), Map.of())).containsKey(ResourceType.WHITE_WOOL));
+        assertEquals(3, goalFor(work(3, 0, Map.of(), Map.of())).get(ResourceType.WHITE_WOOL));
+    }
+
+    /** Sem lampião na obra, o lingote não é meta — só o minério de piso. */
+    @Test
+    void ironIngotsAreAGoalOnlyWhenTheWorkAsksForThem() {
+        Map<ResourceType, Integer> goal = goalFor(work(0, 0, Map.of(), Map.of()));
+
+        assertFalse(goal.containsKey(ResourceType.IRON_INGOT));
+        assertEquals(ColonyGoals.MINERAL_FLOOR, goal.get(ResourceType.RAW_IRON));
+    }
+
+    /**
+     * O que a obra pede de fornalha fora do catálogo entra pela lista da
+     * obra — o vidro fica de fora do catálogo de propósito. Pedido zero
+     * não vira meta.
+     */
+    @Test
+    void aSmeltedMaterialOutsideTheCatalogueComesFromTheWork() {
+        assertEquals(5, goalFor(work(0, 0, Map.of(ResourceType.GLASS, 5), Map.of()))
+                .get(ResourceType.GLASS));
+        assertFalse(goalFor(work(0, 0, Map.of(ResourceType.GLASS, 0), Map.of()))
+                .containsKey(ResourceType.GLASS));
+    }
+
+    /** Obra pequena não abaixa o piso do que o catálogo da fornalha já pede. */
+    @Test
+    void aSmallAskDoesNotLowerTheFurnaceFloor() {
+        Map<ResourceType, Integer> goal =
+                goalFor(work(0, 0, Map.of(ResourceType.SMOOTH_SANDSTONE, 3), Map.of()));
+
+        assertEquals(ColonyGoals.SMELTED_FLOOR, goal.get(ResourceType.SMOOTH_SANDSTONE));
+    }
+
+    /** O que se colhe no chão entra na meta pelo que a obra pede. */
+    @Test
+    void surfaceGatheredMaterialComesFromTheWork() {
+        assertEquals(7, goalFor(work(0, 0, Map.of(), Map.of(ResourceType.SAND, 7)))
+                .get(ResourceType.SAND));
+        assertFalse(goalFor(work(0, 0, Map.of(), Map.of(ResourceType.SAND, 0)))
+                .containsKey(ResourceType.SAND), "pedido zero não vira meta");
+    }
 }
