@@ -9389,3 +9389,32 @@ reutilizavel.
     confirmado por mutacao.
   - Resultados: 1036 unitarios; 434/434 GameTests em duas rodadas.
   - Nao muda a metrica C05, que conta campos, e nao limpeza.
+
+### 2026-09-25 - Perfil do spark, cache de baus, PIT de volta e 87,7% de mutacao
+
+- **Perfil do spark (`wIEM9zz90l`):** ~16 min, TPS 20 em todas as janelas,
+  MSPT mediano 13-15 ms. Gravou so os ticks acima de 50 ms (331); um pico de
+  911 ms as 22h34 foi carregamento de chunk e colisao de entidade, vanilla.
+  O mod: 4,1% dos ticks lentos, com `ColonyChests.nearestFirst` no topo.
+  - A primeira leitura estava errada: `times` e tempo inclusivo, e somar os
+    filhos por cima contou tudo varias vezes. Corrigido antes de agir.
+- **Cache de baus livres (`b957f5e`):** 20 tiques por (mundo, centro);
+  invalidado por `ServerBlockEntityEvents` quando um bau entra ou sai; nome,
+  BigHouse e chunk reconferidos na leitura. GameTest novo, confirmado por
+  mutacao (desligar a invalidacao derruba so ele).
+- **PIT parado desde o `78e7efc`:** o `ServerMemoryRegistrationTest` sobe o
+  jogo e o PIT roda sem ele; o `continue-on-error` do CI calava. O teste
+  saiu da rodada do PIT, o puro virou `ServerMemoryTest`, e o CI agora
+  reprova quando o PIT nem comeca. O "PIT verde" registrado para o
+  `78e7efc` era falso.
+- **Sobreviventes do PIT:** de 1017 (78%) para 1151 de 1312 mortas (87,7%),
+  forca 95%. Doze classes zeradas ou so com equivalentes.
+  - Tres testes vazios achados pela mutacao: o cancelamento no
+    `ColonyCycle` (a tarefa ja ia para o lenhador), o adiamento no
+    `ConstructionProject` (comparava so o material de dois pedregulhos) e o
+    recentrar do `ColonyRoads` (centro na origem, onde `x - c` = `x + c`).
+- **Javadoc:** 32 avisos do Error Prone zerados; `./gradlew javadoc` volta a
+  passar. Sete comentarios tinham ficado longe do metodo pela divisao de
+  classes, e um deles escondia outro link quebrado.
+- **PR #3** aberto para a `main`.
+- Resultados: 1076 unitarios; 86 testes Python; GameTest 435/435 numa rodada.

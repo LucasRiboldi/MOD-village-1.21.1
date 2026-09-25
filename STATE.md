@@ -19,17 +19,15 @@ refatoração e a **vila foco**. Nada disso foi visto em jogo ainda. A
 
 ## Versão publicada
 
-- O JAR em `mods` e em `downloads/` é o do commit `b957f5e` (cache da
-  varredura de baús livres, sobre a vila foco e o `ServerMemory`), com
-  SHA-256 `2CFD08DB…5DBA`.
-- Build limpo e 1036 unitários verdes; GameTest 435/435 numa rodada, com a
-  mutação do cache confirmada; CI verde.
-- **O PIT estava parado desde o `78e7efc`**, e o `continue-on-error` do CI
-  o calava: o `ServerMemoryRegistrationTest` sobe o jogo e o PIT roda sem
-  ele. Corrigido em 25-09 (o teste sai da rodada do PIT; o teste puro do
-  `ServerMemory` virou `ServerMemoryTest`). Rodada local: 1312 mutações,
-  78% mortas, força 86%. O "PIT verde" registrado para o `78e7efc` era falso.
-- O branch `codex/bighousemod` foi levado para a `main` pelo PR #2.
+- O JAR em `mods` e em `downloads/` foi republicado em 25-09 com SHA-256
+  `700F86F6…EFBF4`. O código de produção é o do `ac7064f` (cache de baús
+  livres, `ServerMemory`, vila foco); depois dele só mudaram testes e docs.
+- Build limpo e 1076 unitários verdes; 86 testes Python; GameTest 435/435
+  numa rodada; PIT 87,7%; `./gradlew javadoc` passa. Ver `CHANGELOG.md`.
+- O PIT esteve parado do `78e7efc` ao `7619b1d`, calado pelo
+  `continue-on-error` do CI — corrigido em 25-09, e o CI agora reprova
+  quando o PIT nem começa.
+- PR #2 levou o branch para a `main`; o **PR #3** (desde então) está aberto.
 
 ## O que o próximo jogo precisa mostrar
 
@@ -59,11 +57,11 @@ correção levantadas pela avaliação" e "Avaliação técnica". Em aberto:
 - **Estado global (R2).** A limpeza já é garantida pelo `ServerMemory`
   (item 3, feito em 24-09), mas os 89 campos estáticos mutáveis continuam
   — consolidá-los num contexto por servidor é o que falta para o C05.
-- **PIT: C08 alcançado em 25-09** — 1143/1312 mortas (87,12%), força 95%,
-  56 sobreviventes. Zerados ou só com equivalentes: `MineShaft`,
+- **PIT: C08 alcançado em 25-09** — 1151/1312 mortas (87,73%), força 95%,
+  50 sobreviventes. Zerados ou só com equivalentes: `MineShaft`,
   `Building`, `ColonyCycle`, `Worker`, `ProfessionAssigner`, `Mine`,
-  `ColonyGoals`, `BuildingRegistry`, `ConstructionProject`, `ColonyRoads`.
-  Nenhuma classe passa de 4 agora.
+  `ColonyGoals`, `BuildingRegistry`, `ConstructionProject`, `ColonyRoads`,
+  `VacancyEnforcer`, `HiringLog`. Nenhuma classe passa de 4.
 - **Itens 9 e 10 (ciclo de tarefa comum aos ofícios; regras de decisão
   para o `core`).** Pedem ADR antes do código.
 - **Mineiro que não entrega (E44/E45)** e **segunda obra que não abre.**
