@@ -27,7 +27,7 @@ próxima avaliação mede.
 | 1 ✅ | Limite de **tempo** para o planejador (`SweepDeadline`, 15 ms) — **feito**, ⬜ ver `cycle_over_tick` cair em jogo | baixo / baixo | `cycle_over_tick` cai; C13 ≥ 3 |
 | 2 ✅ | Cota ajustável (`PlanningBudget`), e em jogo **só a vila foco planeja e é sondada** (`VillageFocus`, decisão do autor) — **feito** | baixo / baixo | teste unitário da regra |
 | 3 ✅ | Registro único (`ServerMemory.resetAll`) no lugar de 78 `clearAll` à mão — **feito**. Achou `BiomeConstructionSupply` sem limpeza nenhuma e as duas listas divergentes. **C05 não muda:** os campos continuam; o que acabou foi o esquecimento | médio / baixo | teste de inscrição ✅; C05 ≥ 3 pede consolidar os campos (R2) |
-| 4 | Matar sobreviventes do PIT (`MineShaft`, `ProfessionAssigner`, `ColonyCycle`) | médio / nulo | C08 ≥ 85% |
+| 4 | Matar sobreviventes do PIT (`MineShaft` feito 25-09; `ProfessionAssigner`, `ColonyCycle`) | médio / nulo | C08 ≥ 85% (80% em 25-09) |
 | 5 | JaCoCo na bateria de jogo (cobertura do `fabric`) | baixo-médio / nulo | cobertura do `fabric` medida |
 | 6 | PR do branch para a `main` (85 commits) | baixo / publica | CI verde no PR — **pede aval do autor** |
 | 7 | `STATE.md` até 150 linhas | baixo / nulo | contagem |
@@ -56,8 +56,8 @@ As recomendações, cada uma com um aceite que a próxima avaliação mede
   **`giveUp` de 6 para 1**.
 - [x] 🟠 **R4**: branch levado para a `main` pelo PR #2 (merge `692d8b9`, CI verde).
 - [x] 🟡 **R5**: `STATE.md` ≤ 150 linhas (95; o texto antigo foi arquivado no `Historico`).
-- [ ] 🟡 **R6**: sobreviventes do PIT (`MineShaft`, `ProfessionAssigner`,
-  `ColonyCycle`). **C08 ≥ 85%.**
+- [ ] 🟡 **R6**: sobreviventes do PIT (`MineShaft` feito em 25-09;
+  `ProfessionAssigner`, `ColonyCycle`). **C08 ≥ 85%** (80% em 25-09).
 - [ ] 🟡 **R7**: tabelas de `if` viram `Map`/`switch`. CC máx ≤ 20.
 - [ ] 🟡 **R8**: JaCoCo no `runGametest` para medir o `fabric`.
 - [ ] 🟢 **R9**: convenção de mensagem de commit (sem prefixo < 10%).
@@ -73,8 +73,13 @@ As recomendações, cada uma com um aceite que a próxima avaliação mede
     `ServerMemoryRegistrationTest` sobe o jogo, o PIT roda sem ele, e o
     `continue-on-error` do CI calava a falha. Corrigido em 25-09; rodada
     local com 1312 mutações, 78% mortas, força 86%.
-  - [ ] 🟡 Matar os sobreviventes (160 em 25-09): `MineShaft` 37,
-    `Building` 12, `ColonyCycle` 12, `Worker` 10, `ProfessionAssigner` 9, `Mine` 9.
+  - [x] `MineShaft`: 37 → 1 (25-09). Os testes contavam posições e não diziam
+    onde caem; agora fixam coordenadas tiradas à mão da geometria, que são
+    contrato com o cursor salvo. O que sobra (linha 126, `flight <=
+    HELIX_FLIGHTS`) é equivalente: `helix` só recebe índice do caracol e
+    sempre retorna antes da quinta volta.
+  - [ ] 🟡 Matar os sobreviventes (124 em 25-09, 80% mortas): `Building` 12,
+    `ColonyCycle` 12, `Worker` 10, `ProfessionAssigner` 9, `Mine` 9, `ColonyGoals` 9.
   - [x] O passo do PIT no CI reprova quando o PIT nem começa (25-09): saiu o
     `continue-on-error`; número baixo continua sem reprovar, porque não há
     `mutationThreshold`.
