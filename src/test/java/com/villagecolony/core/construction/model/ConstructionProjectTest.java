@@ -413,4 +413,41 @@ class ConstructionProjectTest {
         assertTrue(ConstructionReach.isOutOfReach(
                 far, centre, 64, OptionalInt.of(ConstructionReach.BESIDE_THE_ROAD + 1)));
     }
+
+    // --- posição e adiamento, 2026-09-25 (sobreviventes do PIT) ---
+
+    /** Cada eixo soma o seu deslocamento à origem. */
+    @Test
+    void aBlockLandsAtTheOriginPlusItsOffsetOnEveryAxis() {
+        assertEquals(new ColonyPos(102, 65, 203), project.worldPositionOf(block(2, 1, 3, COBBLE)));
+    }
+
+    /**
+     * O adiado fica para trás e o próximo da fila é o <b>seguinte</b>.
+     *
+     * <p>O teste de cima compara só o material, e os dois primeiros blocos
+     * são pedregulho: ele passava com o adiamento ignorado. Aqui o bloco
+     * inteiro, com a posição.
+     */
+    @Test
+    void theNextBlockSkipsTheDeferredOne() {
+        BlueprintBlock first = block(0, 0, 0, COBBLE);
+
+        project.defer(first, ConstructionOutcome.skipped(
+                project.worldPositionOf(first), SkipReason.UNSUPPORTED), "support");
+
+        assertEquals(block(1, 0, 0, COBBLE), project.nextBlock().orElseThrow());
+    }
+
+    /** Assentar a peça adiada a tira também da lista de adiadas. */
+    @Test
+    void placingADeferredPieceForgetsTheDeferral() {
+        BlueprintBlock first = block(0, 0, 0, COBBLE);
+
+        project.defer(first, ConstructionOutcome.skipped(
+                project.worldPositionOf(first), SkipReason.UNSUPPORTED), "support");
+
+        assertTrue(project.markPlaced(first));
+        assertTrue(project.deferredPieces().isEmpty(), "a peça assentada continuou adiada");
+    }
 }

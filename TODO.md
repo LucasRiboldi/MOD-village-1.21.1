@@ -105,9 +105,14 @@ As recomendações, cada uma com um aceite que a próxima avaliação mede
     `registerOrMerge`). O canto da caixa é inclusivo nos três eixos; a obra
     pronta nunca é rebaixada no merge. O que sobra é equivalente:
     `ofColony(null)` devolvendo `emptyList` em vez de `ArrayList` vazia.
-  - [ ] 🟢 63 sobreviventes em 25-09 (86,59% mortas); nenhuma classe passa de
-    4 (`Worker`, `ConstructionProject`, `VacancyEnforcer`, `ColonyRoads`,
-    `HiringLog`).
+  - [x] `ConstructionProject`: 4 → 0 (25-09). Posição por eixo, e o teste de
+    adiamento comparava só o material de dois blocos de pedregulho — passava
+    com o adiamento ignorado.
+  - [x] `ColonyRoads`: 4 → 1 (25-09). O teste recentrava na origem, onde
+    `x - centro` e `x + centro` coincidem. O que sobra é equivalente: `<` virando
+    `<=` num mínimo só troca o valor por um igual.
+  - [ ] 🟢 56 sobreviventes em 25-09 (87,12% mortas); os maiores têm 4
+    (`Worker`, que são equivalentes, `VacancyEnforcer`, `HiringLog`).
   - [x] O passo do PIT no CI reprova quando o PIT nem começa (25-09): saiu o
     `continue-on-error`; número baixo continua sem reprovar, porque não há
     `mutationThreshold`.
