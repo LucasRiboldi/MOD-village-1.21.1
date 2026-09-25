@@ -188,7 +188,7 @@ public final class MinerApproach {
      * consegue subir.
      *
      * <p>A perna da mina normalmente é a boca ou uma posição da escada.
-     * Quando o aldeão cai fora dela, porém, {@link MinerReach#legTowards}
+     * Quando o aldeão cai fora dela, porém, {@link MinerLeg#legTowards}
      * pode devolver a boca três blocos acima. A navegação fica girando no
      * destino alto e o relatório registra exatamente o sintoma de E44:
      * {@code blocks below it and unable to climb}.
@@ -234,7 +234,7 @@ public final class MinerApproach {
     public static MinerLeg.Footing footingIn(ServerWorld world) {
         return new MinerLeg.Footing() {
 
-            /**
+            /*
              * <b>Ou o lugar é vazio, ou dá para ficar de pé em cima
              * dele</b> — 2026-09-05, e é a escada que o jogador constrói.
              *

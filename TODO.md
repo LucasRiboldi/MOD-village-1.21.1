@@ -31,7 +31,7 @@ próxima avaliação mede.
 | 5 | JaCoCo na bateria de jogo (cobertura do `fabric`) | baixo-médio / nulo | cobertura do `fabric` medida |
 | 6 | PR do branch para a `main` (85 commits) | baixo / publica | CI verde no PR — **pede aval do autor** |
 | 7 | `STATE.md` até 150 linhas | baixo / nulo | contagem |
-| 8 | 39 avisos de javadoc e 2 variáveis sem uso | baixo / nulo | C10 = 4 |
+| 8 | Avisos de javadoc — **feito** em 25-09: eram 32 medidos (não 39), agora 0; o total do Error Prone foi de 57 a 25. Faltam as 2 variáveis sem uso | baixo / nulo | C10 = 4 |
 | 9 | Ciclo de tarefa comum aos 7 ofícios | alto / médio | `JOBS` ≤ 2, `giveUp` = 1 — **ADR antes** |
 | 10 | Regras de decisão do `fabric` para o `core` | médio-alto / médio | teste unitário e PIT cobrem as regras — **ADR antes** |
 
@@ -108,8 +108,16 @@ As recomendações, cada uma com um aceite que a próxima avaliação mede
   o procedimento em `docs/technical/Profiling-spark.md` (`e91f6be`).
   ⬜ gravar o perfil no próximo playtest (196 ciclos acima de um tique).
 - [x] **5. Error Prone só com avisos** (`7040c23`). Código morto removido.
-  - [ ] 🟡 72 avisos restantes, quase todos de javadoc (InvalidLink 24,
-    MissingSummary 12, NotJavadoc 7); `EnumOrdinal` 7, `LongDoubleConversion` 4.
+  - [x] Avisos de javadoc do Error Prone zerados em 25-09 (32 → 0; 57 → 25 no
+    total). Sete `NotJavadoc` eram comentário separado do método pela divisão
+    de classes, e um deles escondia outro link quebrado.
+  - [ ] 🟡 25 avisos de código: `EnumOrdinal` 7 (deliberado, ver "Não
+    recomendados"), `ImmutableEnumChecker` 5, `LongDoubleConversion` 4,
+    `UnusedVariable` 2, `MissingOverride` 2, `IntLongMath` 2, e 1 de
+    `UnusedMethod`, `UnnecessaryLambda` e `BoxingComparator`.
+  - [ ] 🟢 `./gradlew javadoc` volta a passar desde 25-09 (tinha 6 erros de
+    link), mas o doclint ainda dá 100+ avisos, quase todos `no @param` em
+    record. Não entram no C10, que mede o Error Prone.
 - [x] **6. fabric-loader-junit** (`0ed2e52`). Teste unitário lê o registro;
   as tags não, porque vêm do datapack do servidor.
 - [ ] 🟢 **7. Testes de cliente (`fabric-client-gametest`)**: guardado

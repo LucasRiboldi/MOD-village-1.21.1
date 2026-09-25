@@ -30,6 +30,8 @@ public final class GatheringReach {
     }
 
     /**
+     * Até onde o ofício coleta numa vila com tantas camas, sem passar do teto dele.
+     *
      * @param beds as camas que a detecção observou nesta vila
      * @param ceiling o alcance máximo do ofício
      */

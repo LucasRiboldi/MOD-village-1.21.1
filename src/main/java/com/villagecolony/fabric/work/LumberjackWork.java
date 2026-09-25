@@ -159,7 +159,7 @@ public final class LumberjackWork {
          * <p>Zerado quando um bloco cai e quando uma árvore nova começa —
          * os dois únicos sinais de que o trabalho anda. Andar não conta:
          * é exatamente o aldeão que anda para sempre sem chegar que este
-         * contador existe para pegar. Ver {@link #TreeChoice.STALL_LIMIT}.
+         * contador existe para pegar. Ver {@link TreeChoice#STALL_LIMIT}.
          */
         int stalled;
 

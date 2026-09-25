@@ -287,7 +287,7 @@ public final class MinerReport {
      *
      * <p>Enquanto os dois coincidem ninguém percebe. Eles deixam de
      * coincidir exatamente no caso que interessa: quando o
-     * {@link MinerReach#legTowards} manda o mineiro à <b>boca da mina</b>
+     * {@link MinerLeg#legTowards} manda o mineiro à <b>boca da mina</b>
      * porque a pedra está longe demais para a navegação traçar um
      * caminho. A sessão de 2026-08-28 saiu com o segundo mineiro parado
      * na superfície, <i>"walking to 758, 44, 878"</i>, sem que desse

@@ -220,6 +220,8 @@ public final class BuilderWork {
     }
 
     /**
+     * Um passo do construtor neste tique.
+     *
      * @return false quando este trabalho acabou e pode sair do registro
      */
     static boolean step(ServerWorld world, UUID workerId, Job job) {

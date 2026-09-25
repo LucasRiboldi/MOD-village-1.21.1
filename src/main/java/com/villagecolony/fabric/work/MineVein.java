@@ -218,7 +218,7 @@ final class MineVein {
      * Se não há de onde bater nesta pedra — 2026-09-03.
      *
      * <p><b>Uma pergunta só, num lugar só.</b> O
-     * {@link MinerWork#approachTo} devolve <i>a própria pedra</i> quando
+     * {@link MinerApproach#approachTo} devolve <i>a própria pedra</i> quando
      * não acha vizinho onde um aldeão caiba de pé, e essa igualdade é a
      * resposta — escrita à mão em três lugares, ela seria a próxima a
      * discordar de si mesma, que é a falha que o {@code standable} já

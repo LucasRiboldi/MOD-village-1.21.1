@@ -262,6 +262,8 @@ final class VillageAdoption {
     }
 
     /**
+     * A detecção em volta do gatilho, dizendo se ela é a sonda do centro.
+     *
      * @param isProbe se a varredura é a sonda ancorada no centro de uma
      *     colônia, a única cujas leituras se confirmam entre ciclos
      * @return tudo o que a varredura viu, aprovado e recusado. Só a sonda

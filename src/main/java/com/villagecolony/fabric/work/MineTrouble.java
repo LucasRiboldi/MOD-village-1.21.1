@@ -43,7 +43,7 @@ public final class MineTrouble {
      *
      * <p>Silencioso quando a pedra não era do túnel — veio, areia, ou a
      * posição que o outro mineiro já ultrapassou. Ver
-     * {@link Mine#holdPositionAt}.
+     * {@link MineArm#holdPositionAt}.
      */
     public static void couldNotReach(UUID colonyId, BlockPos stone) {
         VillageColonyMod.MINES.of(colonyId).ifPresent(mine -> {
@@ -143,28 +143,6 @@ public final class MineTrouble {
         });
     }
 
-    /**
-     * A picareta tirou um bloco: a curva deste ramal recomeça —
-     * 2026-09-11.
-     *
-     * <p><b>Irmã do {@link #flooded}, e pelo mesmo motivo</b>: quem sabe
-     * que o bloco saiu do mundo é o {@code MinerWork}, e quem guarda a
-     * contagem é o braço. O que muda em relação ao que havia antes é
-     * <i>quando</i> a conta volta a zero — era ao servir a pedra, e
-     * passa a ser ao quebrá-la.
-     *
-     * <p>A distinção é o conserto inteiro. Servir é uma aposta: o
-     * cursor escolhe a posição e só depois se descobre se o mineiro
-     * chega nela. Zerar na aposta apagava justamente a prova que a curva
-     * existe para juntar — a de que esta frente não está rendendo —, e
-     * bastava uma pedra nova sem marca por passagem para a contagem
-     * nunca passar de zero. Quebrar não é aposta: é o ramal rendendo, e
-     * aí a curva deve mesmo recomeçar.
-     *
-     * <p>Sem reserva de ramal, como o {@link #armOf}: quem acabou de
-     * cavar já tem o seu, e pedir outro tiraria a última frente livre de
-     * quem ia cavar nela.
-     */
     /**
      * A mina girou em falso: troca a hélice, ou a boca — E45, 2026-09-16.
      *
@@ -285,6 +263,28 @@ public final class MineTrouble {
                 mouth.get().toShortString());
     }
 
+    /**
+     * A picareta tirou um bloco: a curva deste ramal recomeça —
+     * 2026-09-11.
+     *
+     * <p><b>Irmã do {@link #flooded}, e pelo mesmo motivo</b>: quem sabe
+     * que o bloco saiu do mundo é o {@code MinerWork}, e quem guarda a
+     * contagem é o braço. O que muda em relação ao que havia antes é
+     * <i>quando</i> a conta volta a zero — era ao servir a pedra, e
+     * passa a ser ao quebrá-la.
+     *
+     * <p>A distinção é o conserto inteiro. Servir é uma aposta: o
+     * cursor escolhe a posição e só depois se descobre se o mineiro
+     * chega nela. Zerar na aposta apagava justamente a prova que a curva
+     * existe para juntar — a de que esta frente não está rendendo —, e
+     * bastava uma pedra nova sem marca por passagem para a contagem
+     * nunca passar de zero. Quebrar não é aposta: é o ramal rendendo, e
+     * aí a curva deve mesmo recomeçar.
+     *
+     * <p>Sem reserva de ramal, como o {@link MineDigging#armOf}: quem acabou de
+     * cavar já tem o seu, e pedir outro tiraria a última frente livre de
+     * quem ia cavar nela.
+     */
     public static void pickaxeTook(UUID colonyId, UUID workerId) {
         MineDigging.armOf(colonyId, workerId).ifPresent(MineArm::digging);
 

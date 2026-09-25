@@ -292,6 +292,8 @@ public final class ProfessionAssigner {
     }
 
     /**
+     * Dá função a quem não tem, com a vaga indo primeiro a quem conseguiria um baú.
+     *
      * @param equipped diz se este aldeão conseguiria um baú. A vaga vai
      *     primeiro para quem consegue: um trabalhador sem baú pega a
      *     tarefa e a devolve à fila a cada ciclo, para sempre, e do lado

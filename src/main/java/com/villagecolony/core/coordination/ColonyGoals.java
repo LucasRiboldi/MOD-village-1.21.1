@@ -173,6 +173,8 @@ public final class ColonyGoals {
     }
 
     /**
+     * A mesma meta, com a tábua limitada pelo espaço nos baús.
+     *
      * @param plankRoom quantas tábuas ainda cabem nos baús da colônia.
      *     Entra na Regra 5 — ver §18 —, que responde "quanto fabricar":
      *     a meta é a da obra e, enquanto não houver obra, metade do que
@@ -191,6 +193,8 @@ public final class ColonyGoals {
     }
 
     /**
+     * A mesma meta, com a tábua que a obra em curso ainda pede.
+     *
      * @param planksForWork quantas tábuas a obra em curso ainda pede.
      *     Zero quando não há obra.
      *

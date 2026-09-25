@@ -85,14 +85,6 @@ public final class ConstructionDemand {
     }
 
     /**
-     * Quanto deste material a obra aberta ainda pede.
-     *
-     * <p>Era só para tábua até 2026-08-20, e virou geral quando o
-     * mineiro entrou: a meta da colônia precisa saber que a casa quer 43
-     * pedregulhos, senão ninguém abre tarefa de mineração e a obra dorme
-     * esperando um material que a colônia já sabe fazer.
-     */
-    /**
      * Se esta colônia já ergueu alguma coisa — 2026-09-19.
      *
      * <p>A guarda da regra <i>"a primeira construção deve ser uma
@@ -108,6 +100,14 @@ public final class ConstructionDemand {
         return !VillageColonyMod.BUILDINGS.ofColony(colonyId).isEmpty();
     }
 
+    /**
+     * Quanto deste material a obra aberta ainda pede.
+     *
+     * <p>Era só para tábua até 2026-08-20, e virou geral quando o
+     * mineiro entrou: a meta da colônia precisa saber que a casa quer 43
+     * pedregulhos, senão ninguém abre tarefa de mineração e a obra dorme
+     * esperando um material que a colônia já sabe fazer.
+     */
     public static int materialNeededBy(ResourceId material, Colony colony) {
         return VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
                 .map(project -> project.remainingMaterials().getOrDefault(material, 0))

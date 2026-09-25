@@ -373,7 +373,7 @@ public final class MinerWork {
      *
      * <p>A mina inteira e nao so a boca, porque o passo de caminhada e
      * dado pela <b>ordem de cavar</b> desde 2026-08-29: e ela que sabe
-     * onde o corredor passa. Ver {@link MinerReach#legTowards}.
+     * onde o corredor passa. Ver {@link MinerLeg#legTowards}.
      */
     static Optional<Mine> mineOf(Job job) {
         return VillageColonyMod.MINES.of(job.task.colonyId());

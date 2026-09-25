@@ -43,6 +43,8 @@ public final class VacancyEnforcer {
     }
 
     /**
+     * O mesmo, dizendo quem tem baú.
+     *
      * @param equipped diz se um trabalhador tem o que precisa para
      *     trabalhar — hoje, um baú. A primeira versão desta regra ficava
      *     com o primeiro da lista, e o servidor de 2026-08-12 mostrou o
@@ -58,6 +60,8 @@ public final class VacancyEnforcer {
     }
 
     /**
+     * O mesmo, com o teto de trocas pelos candidatos que conseguiriam baú.
+     *
      * @param replacements quantos aldeões sem função conseguiriam baú
      *     agora. É o teto de trocas: um trabalhador sem baú perde a
      *     função para quem consegue um, e só quando esse alguém existe.

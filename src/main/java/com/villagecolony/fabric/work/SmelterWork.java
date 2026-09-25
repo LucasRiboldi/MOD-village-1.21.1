@@ -265,6 +265,23 @@ public final class SmelterWork {
     }
 
     /**
+     * Se ainda pode assar este cru sem furar a reserva do pedreiro.
+     *
+     * <p>A conta é da colônia inteira, e não de um baú: o cru e o
+     * processado moram espalhados, e medir um baú só faria a reserva
+     * existir ou não conforme a ordem da varredura.
+     */
+    private static boolean mayStillSmelt(
+            ServerWorld world, List<ColonyPos> chests, Item raw, Item processed) {
+
+        int rawCount = ColonyChests.countIn(world, chests, raw);
+
+        int madeCount = ColonyChests.countIn(world, chests, processed);
+
+        return StockRules.rawThatMayBeSmelted(rawCount, madeCount) > 0;
+    }
+
+    /**
      * O motivo de o fundidor não ter achado o que fundir — P0.3.
      *
      * <p><b>A frase era só</b> {@code "nothing in the colony chests to
@@ -288,23 +305,6 @@ public final class SmelterWork {
      * @param chests quantos baús da colônia foram percorridos
      * @param raws   os nomes do que ele procurava, já formatados
      */
-    /**
-     * Se ainda pode assar este cru sem furar a reserva do pedreiro.
-     *
-     * <p>A conta é da colônia inteira, e não de um baú: o cru e o
-     * processado moram espalhados, e medir um baú só faria a reserva
-     * existir ou não conforme a ordem da varredura.
-     */
-    private static boolean mayStillSmelt(
-            ServerWorld world, List<ColonyPos> chests, Item raw, Item processed) {
-
-        int rawCount = ColonyChests.countIn(world, chests, raw);
-
-        int madeCount = ColonyChests.countIn(world, chests, processed);
-
-        return StockRules.rawThatMayBeSmelted(rawCount, madeCount) > 0;
-    }
-
     static String lookedButFound(int chests, String raws) {
         return chests == 0
                 ? "no colony chest to look in"
