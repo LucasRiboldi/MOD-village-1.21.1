@@ -9535,3 +9535,16 @@ reutilizavel.
   - PIT: 1265/1430 (88%), forca 96%; 5 sobreviventes no pacote novo, todos
     equivalentes.
 - Resultados: build limpo, 1112 unitarios; GameTest 455/455.
+
+### 2026-09-25 (tarde, 4a) - Varredura de decisoes e publicacao do JAR
+
+- **Decisoes em aberto:** varredura buscando a menor mudanca que deixa o jogo
+  fluido (`docs/research/2026-09-25-decisoes-simples.md`). Achou duas esperas
+  sem prazo: obra com so pecas adiadas nunca fecha (`WaitingWork`, linha 279)
+  e encalhado sem saida fica fora da escala para sempre. Nenhuma implementada;
+  aguardam o autor.
+- **JAR publicado:** commit `a222342`, SHA-256 `8862EC4F...07C0`, em
+  `downloads/` e em `.minecraft/mods`; `release_manifest.py` conferiu os tres.
+  O jogo estava fechado (so processos do Gradle abertos).
+- Resultados: build limpo, 1112 unitarios; GameTest 455/455 (rodada da fase 2,
+  codigo igual); PIT 1265/1430.

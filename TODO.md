@@ -59,6 +59,14 @@ Não recomendados:
     `is through its detour`, `its detour failed`.
   - [ ] fase 3: registro de veios por valor.
   Pesquisa em `docs/research/2026-09-25-mineiro-autonomo.md` (§9 = o que entrou).
+- [ ] 🔴 **T1 — obra com todas as peças restantes adiadas nunca fecha** (achado
+  na varredura de 25-09): `WaitingWork.giveUpIfStalled` zera os relógios e
+  devolve `false` para sempre. Proposta: entregar a obra como está. **Aguarda
+  o autor.** Ver `docs/research/2026-09-25-decisoes-simples.md` §1.
+- [ ] 🟠 **T2 — encalhado sem saída fica fora da escala para sempre.** Proposta:
+  último recurso com prazo (voltar ao baú). **Aguarda o autor.**
+- [ ] 🟠 **Decisões em aberto com resposta simples proposta** (25-09): ver
+  `docs/research/2026-09-25-decisoes-simples.md` §2-§3.
 - [ ] 🔴 **E44/E45 com evidência nova:** o mineiro volta a cada sessão à
   mesma pedra inalcançável (553, 39, 158), desiste, fica preso a y=41 e o
   `StrandedEscape` desiste ("no natural, dry way up"); ele fica fora da escala

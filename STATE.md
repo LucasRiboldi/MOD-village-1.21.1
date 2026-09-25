@@ -1,4 +1,4 @@
-# STATE — 2026-09-24
+# STATE — 2026-09-25
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -19,12 +19,16 @@ refatoração e a **vila foco**. Nada disso foi visto em jogo ainda. A
 
 ## Versão publicada
 
-- O JAR em `mods` e em `downloads/` foi republicado em 25-09 com SHA-256
-  `6923E840…AC8C`: obra abandonada só volta na vez do tipo (a vila presa a
-  templos), mineiro cavando sem parar enquanto houver espaço, e antes disso a
-  obra que nunca fechava, o `resetAll` e a placa. Ver `CHANGELOG.md`.
-- Build limpo e 1088 unitários verdes; GameTest 441/441 numa rodada; PIT
-  1176/1336 (88%); nenhum sobrevivente no código novo.
+- O JAR em `mods` e em `downloads/` foi republicado em 25-09 à tarde, do
+  commit `a222342`, SHA-256 `8862EC4F…07C0`: **ADR-025 fases 1 e 2** — marca
+  de recusa salva, piso sob a passagem, mineiro fora da água, pedra com
+  líquido atrás nunca vira alvo, desvio que cava e põe bloco (mineiro travado
+  e encalhado sem escada), linha `brain:` no travamento. Ver `CHANGELOG.md`.
+- Build limpo e 1112 unitários verdes; GameTest 455/455 numa rodada; PIT
+  1265/1430 (88%), força 96%; no pacote novo só 5 sobreviventes, todos
+  equivalentes.
+- A publicação anterior (`6923E840…AC8C`, manhã de 25-09) trouxe a obra
+  abandonada na vez do tipo e o mineiro cavando sem parar.
 - **Sessão de 25-09, 09:13:** o templo de 539,70,201 **fechou** às 09:34 (as
   nove peças voltaram às 09:22); em seguida o reparo reabriu o templo
   abandonado de z=211 — corrigido acima. O mineiro ficou preso a y=41 na
@@ -81,6 +85,11 @@ correção levantadas pela avaliação" e "Avaliação técnica". Em aberto:
   cérebro ou na tarefa, e a linha `brain:` da próxima sessão decide. Depois:
   fase 3 (veios por valor). Ver
   `docs/research/2026-09-25-mineiro-autonomo.md` §8-§11.
+- **Decisões em aberto têm resposta simples proposta**, e duas travas foram
+  achadas na varredura: obra com todas as peças restantes adiadas nunca fecha
+  (`WaitingWork.giveUpIfStalled`) e encalhado sem saída fica fora da escala
+  para sempre. Aguardam o autor. Ver
+  `docs/research/2026-09-25-decisoes-simples.md`.
 - **Mineiro que não entrega (E44/E45)** e **segunda obra que não abre.**
   Estado de 09-20, sem playtest novo desde as correções; o detalhe está no
   `Historico`, seção "Arquivado do STATE.md".

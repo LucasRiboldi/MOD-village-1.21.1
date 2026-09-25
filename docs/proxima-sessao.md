@@ -1,14 +1,25 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Atualização de 2026-09-25 — jogar com o spark ligado.** O JAR em
-`mods` foi republicado em 2026-09-25 (SHA-256
-`6923E840781C5B4C95C58E0D1BFD6A2B5B6EA47289818B6D7E7FBEABE01DAC8C`).
-**Olhar primeiro a escolha da obra:** ao carregar, o templo de z=211 deve
+**Atualização de 2026-09-25, tarde — o mineiro autônomo.** O JAR em
+`mods` foi republicado (commit `a222342`, SHA-256
+`8862EC4FF9CC42688D34ED0D5FC3BAF0016CB3D30104861BED216614147707C0`).
+**O que procurar do mineiro (ADR-025 fases 1 e 2):**
+
+- `takes a detour of N steps` → `is through its detour` (o travado cavou o
+  próprio caminho) ou `its detour failed — …` (o motivo, e a tarefa volta);
+- `Stranded worker … taking a detour` (o encalhado sem escada natural);
+- `The mine floored` (vão de caverna sob a passagem virou chão);
+- `leaves … alone - it holds back water or lava` e `keeps finding stone that
+  holds back water or lava` (a pedra com líquido atrás ficou);
+- em qualquer `gave up the stone`, a parte `brain: …` — é ela que diz por que
+  ele travava em 553, 39, 158;
+- fechar e reabrir o mundo: a pedra recusada deve continuar recusada.
+
+**Antes dele, a escolha da obra** (publicação da manhã de 25-09):
+Ao carregar, o templo de z=211 deve
 sair com `keeps the abandoned ... waiting — it is not its turn`, e a próxima
 obra deve ser **casa** (`planned ...house...`), depois outra obra, alternando.
-**Depois o mineiro:** a linha `miners:` deve voltar a cada ciclo com pedra
-pedida mesmo sem obra; se ele empacar de novo em 553, 39, 158, é o E44/E45
-(ainda aberto). Ele soma o **cache da varredura de baús livres** ao de 09-24: o perfil de
+A linha `miners:` deve voltar a cada ciclo com pedra pedida mesmo sem obra. Ele soma o **cache da varredura de baús livres** ao de 09-24: o perfil de
 09-24 (`wIEM9zz90l`) deu TPS 20 e o `ColonyChests.nearestFirst` como o
 maior custo do mod — o próximo perfil diz se ele caiu. Vêm de antes:
 revisão de naturalidade, rodada de qualidade, refatoração e a **vila foco**

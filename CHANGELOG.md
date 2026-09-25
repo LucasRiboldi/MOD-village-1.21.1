@@ -9,7 +9,10 @@ entrega, e o que separa uma publicação da outra é o commit e o SHA-256 do JAR
 2026-09-24 está em [`docs/technical/Development-Log.md`](docs/technical/Development-Log.md)
 e [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md).
 
-## [Não publicado] — ADR-025, fases 1 e 2 (mineiro autônomo)
+## [0.3.0] — publicação de 2026-09-25, tarde (ADR-025, fases 1 e 2)
+
+JAR do commit `a222342`, SHA-256 `8862EC4F…07C0`, em `downloads/` e em
+`.minecraft/mods` (os três hashes conferidos pelo `release_manifest.py`).
 
 ### Adicionado
 
