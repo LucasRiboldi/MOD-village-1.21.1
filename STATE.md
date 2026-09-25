@@ -59,10 +59,10 @@ correção levantadas pela avaliação" e "Avaliação técnica". Em aberto:
 - **Estado global (R2).** A limpeza já é garantida pelo `ServerMemory`
   (item 3, feito em 24-09), mas os 89 campos estáticos mutáveis continuam
   — consolidá-los num contexto por servidor é o que falta para o C05.
-- **Item 4, mutações sobreviventes no PIT** (124; 80% mortas, força 89%).
-  `MineShaft` feito em 25-09 (37 → 1, que é equivalente). Faltam `Building`
-  12, `ColonyCycle` 12, `Worker` 10, `ProfessionAssigner` 9, `Mine` 9,
-  `ColonyGoals` 9.
+- **Item 4, mutações sobreviventes no PIT** (99; 82% mortas, força 92%).
+  Feitos em 25-09: `MineShaft` (37 → 1 equivalente), `Building` e
+  `ColonyCycle` (12 → 0 cada). Faltam `Worker` 10, `ProfessionAssigner` 9,
+  `Mine` 9, `ColonyGoals` 9, `BuildingRegistry` 7.
 - **Itens 9 e 10 (ciclo de tarefa comum aos ofícios; regras de decisão
   para o `core`).** Pedem ADR antes do código.
 - **Mineiro que não entrega (E44/E45)** e **segunda obra que não abre.**

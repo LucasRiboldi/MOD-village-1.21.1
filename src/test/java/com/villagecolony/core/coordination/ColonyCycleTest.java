@@ -246,10 +246,89 @@ class ColonyCycleTest {
     void theTaskIsCancelledWhenTheDeficitIsGone() {
         lumberjack();
 
-        ColonyCycle.run(COLONY, owning(10), GOAL, tasks, workers);
-        ColonyCycle.run(COLONY, owning(64), GOAL, tasks, workers);
+        // Sem baú, ninguém recebe a tarefa, e ela fica disponível — a única
+        // que o cancelamento alcança. Até 2026-09-25 este teste deixava o
+        // lenhador recebê-la no primeiro ciclo: "nada disponível" passava
+        // mesmo com o cancelamento apagado, e o PIT mostrou.
+        ColonyCycle.run(COLONY, owning(10), GOAL, tasks, workers, worker -> false);
 
-        assertTrue(tasks.availableFor(COLONY).isEmpty());
+        Task task = tasks.ofColony(COLONY).get(0);
+
+        assertEquals(TaskState.AVAILABLE, task.state(), "sem isto o teste não mede nada");
+
+        ColonyCycle.run(COLONY, owning(64), GOAL, tasks, workers, worker -> false);
+
+        assertEquals(TaskState.CANCELLED, task.state());
+    }
+
+    /**
+     * Um ciclo em que ninguém recebe tarefa (sem baú), para os pedidos
+     * ficarem na fila: {@code Task.reprioritize} só mexe em quem ainda
+     * espera trabalhador, e é esse o caso que a reclassificação atende.
+     */
+    private void cycle(int logs, int logsTheProjectNeeds) {
+        ColonyCycle.run(COLONY, owning(logs), GOAL, tasks, workers, worker -> false,
+                com.villagecolony.core.coordination.ProductionHands.IGNORED,
+                logsTheProjectNeeds == 0
+                        ? Map.of()
+                        : Map.of(ResourceType.OAK_LOG, logsTheProjectNeeds));
+    }
+
+    /**
+     * O pedido que já estava aberto muda de prioridade com a obra.
+     *
+     * <p>Sem isto, a madeira pedida para estoque continuaria atrás de tudo
+     * quando a casa passasse a precisar dela, e o pedido não é recriado:
+     * a fila já tem um por lenhador.
+     */
+    @Test
+    void anOpenRequestFollowsTheProjectUpAndDown() {
+        lumberjack();
+
+        cycle(10, 0);
+
+        Task task = tasks.ofColony(COLONY).get(0);
+
+        assertEquals(TaskPriority.PRODUCTION, task.priority());
+
+        cycle(10, 20);
+
+        assertEquals(1, tasks.ofColony(COLONY).size(), "promove o pedido, não abre outro");
+        assertEquals(TaskPriority.CONSTRUCTION_MATERIAL, task.priority());
+
+        cycle(10, 0);
+
+        assertEquals(TaskPriority.PRODUCTION, task.priority(), "a obra largou a madeira");
+    }
+
+    /**
+     * Só sobem as mãos que a obra precisa, contadas para cima.
+     *
+     * <p>Dois lenhadores, falta de 54: cada pedido é de 27. A obra que
+     * precisa de 27 além do estoque ocupa uma mão; a que precisa de 28 já
+     * não cabe numa, e ocupa as duas.
+     */
+    @Test
+    void onlyTheHandsTheProjectNeedsArePromoted() {
+        lumberjack();
+        lumberjack();
+
+        cycle(10, 0);
+
+        assertEquals(2, tasks.ofColony(COLONY).size());
+
+        cycle(10, 37);
+
+        assertEquals(1, countOf(TaskPriority.CONSTRUCTION_MATERIAL), "27 cabem numa mão");
+        assertEquals(1, countOf(TaskPriority.PRODUCTION));
+
+        cycle(10, 38);
+
+        assertEquals(2, countOf(TaskPriority.CONSTRUCTION_MATERIAL), "28 não cabem numa mão");
+    }
+
+    private long countOf(TaskPriority priority) {
+        return tasks.ofColony(COLONY).stream().filter(task -> task.priority() == priority).count();
     }
 
     /** Tarefa já em execução não é cancelada no meio. */
