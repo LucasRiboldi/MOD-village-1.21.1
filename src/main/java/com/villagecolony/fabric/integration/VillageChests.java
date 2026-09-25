@@ -3,14 +3,19 @@ package com.villagecolony.fabric.integration;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.storage.model.VillageChestRule;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerBlockEntityEvents;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,7 +46,69 @@ import java.util.Optional;
  */
 public final class VillageChests {
 
+    static {
+        ServerMemory.register(VillageChests.class, VillageChests::clearAll);
+    }
+
+    /**
+     * Por quantos tiques uma varredura vale — 2026-09-24.
+     *
+     * <p><b>Por que existe.</b> O perfil do spark de 2026-09-24 pôs o
+     * {@code ColonyChests.nearestFirst} como o maior custo do mod: cada
+     * chamada relia os nove por nove chunks em volta do centro e, para
+     * cada baú, os blocos em volta da porta ({@code isIndoors},
+     * {@code isPrivateBedChest}). E é chamado a cada bloco que o
+     * construtor assenta.
+     *
+     * <p><b>Por que um segundo.</b> Não é número de playtest: é o teto do
+     * que pode ficar velho. Baú posto ou quebrado invalida na hora (ver
+     * {@link #register}); nome, BigHouse e chunk descarregado são
+     * reconferidos a cada leitura. O que só este prazo cobre é o baú que
+     * <i>vira</i> de dentro de casa — a obra terminou em volta dele — ou
+     * deixa de ser baú de cama. Um segundo de atraso nisso não muda
+     * decisão nenhuma, que o ciclo da colônia é de trinta.
+     */
+    static final int CACHE_TICKS = 20;
+
+    /** Onde uma varredura foi feita: mundo e centro da colônia. */
+    private record Scan(RegistryKey<World> world, ColonyPos centre) {
+    }
+
+    /** Os baús de dentro de casa que a varredura achou, e quando. */
+    private record Cached(long at, long generation, List<BlockPos> chests) {
+    }
+
+    private static final Map<Scan, Cached> cache = new HashMap<>();
+
+    /** Sobe a cada baú que entra ou sai do mundo; varredura anterior vira lixo. */
+    private static long generation;
+
     private VillageChests() {
+    }
+
+    /**
+     * Esquece a varredura quando um baú entra ou sai de qualquer mundo.
+     *
+     * <p>O Fabric dispara os dois eventos em {@code WorldChunk.setBlockEntity}
+     * e {@code removeBlockEntity}: baú posto, baú quebrado e chunk que
+     * carrega com baú dentro. Sem isto o baú que o jogador acabou de pôr
+     * ficaria invisível até o prazo vencer, e o gametest que monta a arena
+     * e já pergunta leria a arena de antes.
+     */
+    public static void register() {
+        ServerBlockEntityEvents.BLOCK_ENTITY_LOAD.register(VillageChests::onChestChange);
+        ServerBlockEntityEvents.BLOCK_ENTITY_UNLOAD.register(VillageChests::onChestChange);
+    }
+
+    private static void onChestChange(BlockEntity blockEntity, ServerWorld world) {
+        if (blockEntity instanceof ChestBlockEntity) {
+            generation++;
+        }
+    }
+
+    public static void clearAll() {
+        cache.clear();
+        generation = 0;
     }
 
     /**
@@ -50,12 +117,77 @@ public final class VillageChests {
      * <p>Livre quer dizer: não é de trabalhador nenhum (esses o
      * {@code ColonyChests} já conhece) e não foi nomeado pelo jogador.
      *
+     * <p>A varredura cara sai de {@link #CACHE_TICKS}; o que é barato e
+     * pode mudar a qualquer momento é conferido de novo aqui, baú por baú.
+     *
      * @param known os que a colônia já conhece, para não repetir
      */
     public static List<ColonyPos> around(
             ServerWorld world, ColonyPos centre, List<ColonyPos> known) {
 
         List<ColonyPos> found = new ArrayList<>();
+
+        for (BlockPos pos : indoorChests(world, centre)) {
+            WorldChunk chunk = world.getChunkManager()
+                    .getWorldChunk(pos.getX() >> 4, pos.getZ() >> 4);
+
+            if (chunk == null) {
+                // Descarregou depois da varredura — §11, nunca carregar.
+                continue;
+            }
+
+            if (!(chunk.getBlockEntities().get(pos) instanceof ChestBlockEntity chest)) {
+                continue;
+            }
+
+            ColonyPos at = MinecraftTypeAdapter.toColonyPos(pos);
+
+            if (known.contains(at) || found.contains(at)) {
+                continue;
+            }
+
+            // Os seis baús da BigHouseMOD pertencem aos moradores dela.
+            // Sem este filtro, a casa nova vira estoque público antes que
+            // a fundação termine de registrar os seis trabalhadores.
+            if (BigHouseFoundation.containsHouseBlock(pos)) {
+                continue;
+            }
+
+            if (!VillageChestRule.mayTake(nameOf(chest))) {
+                // Nomeado pelo jogador: é dele, e a colônia passa longe.
+                continue;
+            }
+
+            found.add(at);
+        }
+
+        return found;
+    }
+
+    /** A varredura cara, vinda do cache enquanto ele vale. */
+    private static List<BlockPos> indoorChests(ServerWorld world, ColonyPos centre) {
+        long now = world.getTime();
+        Scan key = new Scan(world.getRegistryKey(), centre);
+        Cached hit = cache.get(key);
+
+        if (hit != null && hit.generation() == generation && now - hit.at() < CACHE_TICKS) {
+            return hit.chests();
+        }
+
+        // O centro oscila entre oito posições, e cada uma vira chave nova.
+        // Varrer o vencido aqui mantém o mapa do tamanho do último segundo.
+        cache.values().removeIf(old -> old.generation() != generation
+                || now - old.at() >= CACHE_TICKS);
+
+        List<BlockPos> chests = scan(world, centre);
+
+        cache.put(key, new Cached(now, generation, List.copyOf(chests)));
+
+        return chests;
+    }
+
+    private static List<BlockPos> scan(ServerWorld world, ColonyPos centre) {
+        List<BlockPos> found = new ArrayList<>();
 
         int radius = VillageDetector.SEARCH_RADIUS;
 
@@ -75,24 +207,26 @@ public final class VillageChests {
                     continue;
                 }
 
-                collectFrom(world, chunk, centre, radius, known, found);
+                collectFrom(world, chunk, centre, radius, found);
             }
         }
 
         return found;
     }
 
-    /** Os baús livres deste chunk que caem dentro do raio. */
+    /**
+     * Os baús deste chunk que caem no raio, estão dentro de casa e não são
+     * baú de cama — as perguntas caras, que leem blocos em volta.
+     */
     private static void collectFrom(
             ServerWorld world,
             WorldChunk chunk,
             ColonyPos centre,
             int radius,
-            List<ColonyPos> known,
-            List<ColonyPos> found) {
+            List<BlockPos> found) {
 
         for (Map.Entry<BlockPos, BlockEntity> entry : chunk.getBlockEntities().entrySet()) {
-            if (!(entry.getValue() instanceof ChestBlockEntity chest)) {
+            if (!(entry.getValue() instanceof ChestBlockEntity)) {
                 continue;
             }
 
@@ -117,29 +251,12 @@ public final class VillageChests {
                 continue;
             }
 
-            ColonyPos at = MinecraftTypeAdapter.toColonyPos(pos);
-
-            if (known.contains(at) || found.contains(at)) {
-                continue;
-            }
-
-            // Os seis baús da BigHouseMOD pertencem aos moradores dela.
-            // Sem este filtro, a casa nova vira estoque público antes que
-            // a fundação termine de registrar os seis trabalhadores.
-            if (BigHouseFoundation.containsHouseBlock(pos)) {
-                continue;
-            }
-
             if (VanillaBedChests.isPrivateBedChest(world, pos)) {
                 continue;
             }
 
-            if (!VillageChestRule.mayTake(nameOf(chest))) {
-                // Nomeado pelo jogador: é dele, e a colônia passa longe.
-                continue;
-            }
-
-            found.add(at);
+            // Cópia imutável: a chave do mapa do chunk pode ser mutável.
+            found.add(pos.toImmutable());
         }
     }
 
