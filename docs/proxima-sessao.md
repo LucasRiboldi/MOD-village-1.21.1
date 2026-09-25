@@ -2,13 +2,13 @@
 
 **Atualização de 2026-09-25 — jogar com o spark ligado.** O JAR em
 `mods` foi republicado em 2026-09-25 (SHA-256
-`35BFA5CC7B99C8DDBBCB47CD169668F6327590B4411622C0FD332477F7E1707E`).
-**Olhar primeiro o templo em 539, 70, 201:** no primeiro ciclo o log deve dizer
-`retries minecraft:ladder ... it fits against the wall now` (e o mesmo para
-`wall_torch`), as escadas e tochas devem aparecer nas paredes, e a obra deve
-fechar (`the house is up` ou `finished`). A placa diz o bloco que falta, em
-português, e conta as peças `sem apoio`. Fechar o mundo não pode dar
-`Exception stopping the server`. Ele soma o **cache da varredura de baús livres** ao de 09-24: o perfil de
+`6923E840781C5B4C95C58E0D1BFD6A2B5B6EA47289818B6D7E7FBEABE01DAC8C`).
+**Olhar primeiro a escolha da obra:** ao carregar, o templo de z=211 deve
+sair com `keeps the abandoned ... waiting — it is not its turn`, e a próxima
+obra deve ser **casa** (`planned ...house...`), depois outra obra, alternando.
+**Depois o mineiro:** a linha `miners:` deve voltar a cada ciclo com pedra
+pedida mesmo sem obra; se ele empacar de novo em 553, 39, 158, é o E44/E45
+(ainda aberto). Ele soma o **cache da varredura de baús livres** ao de 09-24: o perfil de
 09-24 (`wIEM9zz90l`) deu TPS 20 e o `ColonyChests.nearestFirst` como o
 maior custo do mod — o próximo perfil diz se ele caiu. Vêm de antes:
 revisão de naturalidade, rodada de qualidade, refatoração e a **vila foco**

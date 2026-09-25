@@ -39,6 +39,23 @@ Não recomendados:
 - trocar o `ordinal()` usado como prioridade, que é deliberado e documentado;
 - reescrever o `toResourceType`, que é uma tabela legítima.
 
+## Rodízio e mineiro — 2026-09-25 (sessão das 09:13)
+
+- [x] Obra abandonada só volta na vez do tipo (`HousePlans.isTurnOf`, no
+  reparo e na retomada), decisão do autor. A fusão move a obra terminada
+  para o fim do registro, que é a ordem que o rodízio lê.
+- [x] Mineiro cava enquanto houver espaço nos baús dos mineiros
+  (`ColonyChests.minersRoom` + `ColonyGoals.of(..., stoneRoom, ...)`),
+  decisão do autor.
+- [ ] 🔴 **E44/E45 com evidência nova:** o mineiro volta a cada sessão à
+  mesma pedra inalcançável (553, 39, 158), desiste, fica preso a y=41 e o
+  `StrandedEscape` desiste ("no natural, dry way up"); ele fica fora da escala
+  até alguém o soltar. A `MineMarks.refuse` não vai para o save. Próximo
+  passo: ler a geometria da mina nesse ponto (região do save) antes de mexer.
+- [ ] 🟡 Medir em jogo se a escolha de obra ainda cai sempre em
+  `plains_temple_4` com o reparo corrigido ("drawn from none fitting, the
+  offered plan" em todas as linhas antigas).
+
 ## Obra que não fecha — 2026-09-25 (sessão das 08:31)
 
 - [x] Peça de parede do miolo (escada de mão, tocha de parede) ficava virada

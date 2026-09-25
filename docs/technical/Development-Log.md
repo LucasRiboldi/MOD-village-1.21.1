@@ -9468,3 +9468,28 @@ reutilizavel.
   TODO; nao impede fechar.
 - Resultados: 1082 unitarios; GameTest 438/438 numa rodada (os 3 do
   `WallPieceGameTest` falharam antes da correcao); PIT 1170/1330.
+
+### 2026-09-25 (manha, 2a) - Vila presa a templos, e o mineiro parado
+
+- **Sessao 09:13-09:38**, spark `oDFuhQMLRI`: TPS 20, MSPT mediano 13-18 ms,
+  mod 0,2% da thread do servidor.
+- **O templo fechou** as 09:34 (as nove pecas voltaram as 09:22). No segundo
+  seguinte o reparo abriu "repair sweep" de outro `plains_temple_4`, em z=211,
+  com 301 blocos: a caixa abandonada que o save guardava.
+- **Causa:** `BuildingRepairPlanner.open` roda antes do rodizio e percorre
+  toda `Building`, inclusive as abandonadas. O log de 24-09 tem "gives up on
+  plains_temple_4" e "starts repair sweep" na mesma origem e no mesmo segundo.
+  Todas as linhas `planned` antigas eram `plains_temple_4`, "drawn from none
+  fitting, the offered plan".
+- **Decisao do autor:** obra abandonada volta so na vez do tipo. Feito com
+  `HousePlans.isTurnOf` no reparo e na retomada; a fusao move a obra para o
+  fim do registro.
+  - Dois testes passaram antes da correcao por outra regra: a retomada
+    descarta obra salva com zero blocos sobre caixa construida. Com um bloco
+    de pe, o teste falhou pelo motivo certo.
+- **Mineiro:** 20 min de "no miner work: no task open"; o unico mineiro com
+  mina empacou em 553,39,158 (a mesma pedra de todas as sessoes), ficou preso
+  a y=41 e o `StrandedEscape` desistiu. Decisao do autor: galerias sem parar.
+  Feito como a Regra 1 da madeira: meta de pedra = guardado + espaco nos
+  baus dos mineiros. O E44/E45 continua aberto.
+- Resultados: 1088 unitarios; GameTest 441/441 numa rodada; PIT 1176/1336.

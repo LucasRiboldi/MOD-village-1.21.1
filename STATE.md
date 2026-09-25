@@ -20,11 +20,15 @@ refatoração e a **vila foco**. Nada disso foi visto em jogo ainda. A
 ## Versão publicada
 
 - O JAR em `mods` e em `downloads/` foi republicado em 25-09 com SHA-256
-  `35BFA5CC…707E`: a **obra que nunca fechava** (peça de parede do miolo
-  virada para o lado sem parede, adiada para sempre), o `resetAll` ao fechar
-  o mundo e a placa da obra. Ver `CHANGELOG.md`.
-- Build limpo e 1082 unitários verdes; GameTest 438/438 numa rodada; PIT
-  1170/1330 (88%); nenhum sobrevivente no código novo.
+  `6923E840…AC8C`: obra abandonada só volta na vez do tipo (a vila presa a
+  templos), mineiro cavando sem parar enquanto houver espaço, e antes disso a
+  obra que nunca fechava, o `resetAll` e a placa. Ver `CHANGELOG.md`.
+- Build limpo e 1088 unitários verdes; GameTest 441/441 numa rodada; PIT
+  1176/1336 (88%); nenhum sobrevivente no código novo.
+- **Sessão de 25-09, 09:13:** o templo de 539,70,201 **fechou** às 09:34 (as
+  nove peças voltaram às 09:22); em seguida o reparo reabriu o templo
+  abandonado de z=211 — corrigido acima. O mineiro ficou preso a y=41 na
+  mesma pedra inalcançável e fora da escala o resto da sessão (E44/E45).
 - **Sessão de jogo de 25-09 (01:19–01:45):** TPS 20 o tempo todo; o mod caiu
   de 4,1% para 0,3% da thread do servidor; vila foco escolhida e só um
   `Colony cycle took` (na entrada, 165 ms; eram 196 no log de 24-09). O

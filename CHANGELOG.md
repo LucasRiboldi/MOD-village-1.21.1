@@ -9,6 +9,35 @@ entrega, e o que separa uma publicação da outra é o commit e o SHA-256 do JAR
 2026-09-24 está em [`docs/technical/Development-Log.md`](docs/technical/Development-Log.md)
 e [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md).
 
+## [0.3.0] — publicação de 2026-09-25, manhã (sessão das 09:13)
+
+### Corrigido
+
+- **A vila presa a templos.** O reparo rodava antes do rodízio casa ↔ outra
+  obra e reabria a obra abandonada no mesmo segundo em que a colônia
+  desistia dela; ao terminar o templo, a vila reabriu na hora um templo
+  abandonado vizinho de 301 blocos. Agora a obra abandonada só volta **na
+  vez do tipo dela** (decisão do autor) — nunca logo depois de largada —, e
+  a construção terminada que perdeu blocos continua sendo reparada sempre.
+  A obra abandonada que o save trouxe aberta também espera a vez.
+- A obra retomada e terminada passa a contar como a última tentada no
+  rodízio.
+
+### Adicionado
+
+- **O mineiro cava sem parar enquanto os baús dele tiverem espaço**
+  (decisão do autor: "galerias novas sem parar"). A meta de pedra passa a
+  ser o guardado mais o espaço livre nos baús dos mineiros, como a da
+  madeira; a mina continua crescendo sozinha e cada corte segue o minério
+  que encontra.
+
+### Ainda não resolvido
+
+- O mineiro empaca sempre na mesma pedra inalcançável (553, 39, 158 no save
+  do autor), fica preso e sai da escala até alguém o soltar. A marca que
+  afasta a pedra recusada vive só na memória e some ao carregar o mundo
+  (E44/E45).
+
 ## [0.3.0] — publicação de 2026-09-25, manhã (sessão das 08:31)
 
 ### Corrigido
