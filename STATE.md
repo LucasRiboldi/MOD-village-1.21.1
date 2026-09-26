@@ -19,6 +19,13 @@ refatoração e a **vila foco**. Nada disso foi visto em jogo ainda. A
 
 ## Versão publicada
 
+- **JAR atualizado em 26-09, SHA-256 `478303C8…24F1`:** bosque
+  fundacional para o lenhador. Vila nova recebe duas árvores maduras e
+  distintas do bioma a 48–56 blocos; cada dez adultos vivos tentam uma árvore
+  adicional sem avançar a dezena quando não há posição segura carregada.
+  `ColonySavedDataTest` (18), `build` e `runGametest --rerun-tasks`
+  (477/477) passaram; falta o playtest no save.
+
 - **JAR republicado em 26-09, SHA-256 `C9568D4B…1601E`:** alternativa A
   entrega a obra totalmente adiada depois da paciência sem liberar o lote e a
   ADR-008 conserva e gira o `facing` horizontal da estrutura. Para peça de
@@ -68,6 +75,7 @@ Em ordem:
 | 5 | N1: filhote nasce e ganha ofício | `shared supper with`; nenhum adulto aparecendo do nada depois da fundação |
 | 6 | N7, N9, N10 | placa 5 blocos acima do telhado; roça ou oficina depois da 1ª casa; `finished backfilling` |
 | 7 | Os 5 playtests da Task 14 | arco da mina, mina finita, baú cheio, BigHouse migrada, traço de atividade |
+| 8 | Bosque fundacional | ao criar uma vila, duas árvores maduras distintas a 48–56 blocos; a cada 10 adultos, só uma árvore adicional por ciclo |
 
 Depois de jogar, rodar `python scripts/analyze_village_log.py`, que conta
 todas essas assinaturas.
@@ -117,6 +125,13 @@ correção levantadas pela avaliação" e "Avaliação técnica". Em aberto:
   de manufatura, pastor/fazendeiro contínuos, fundidor sem busca inútil, guarda
   de alcance com a rua do lote. Pendentes: lote que não cresce (§7.1), obra
   largada sem blocos prender o lote (decisão), aldeão ocioso preso.
+- **Bosque fundacional (código local, ainda sem playtest):** a criação de uma
+  colônia tenta duas espécies maduras adequadas ao bioma no anel de 48–56
+  blocos. A cada dez moradores adultos vivos, o ciclo tenta uma árvore a mais
+  e só grava a dezena após a geração física. Não carrega chunks nem substitui
+  copa ocupada, estrutura ou baú. `ColonySavedDataTest` (18) e
+  `runGametest --rerun-tasks` (**477/477**, 1m05s) passaram; falta confirmar
+  no save a aparência do bosque e o lenhador encontrando seus troncos.
 - **Decisões em aberto têm resposta simples proposta**, e duas travas foram
   achadas na varredura: obra com todas as peças restantes adiadas nunca fecha
   (`WaitingWork.giveUpIfStalled`) e encalhado sem saída fica fora da escala

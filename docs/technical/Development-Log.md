@@ -9675,3 +9675,32 @@ Resultados: `./gradlew.bat test --rerun-tasks` passou; `./gradlew.bat
 runGametest --rerun-tasks` passou com **474/474** em 59,98 s. O fluxo ainda
 precisa de playtest no save real, em especial a terceira falta de uma peca sem
 rota e o fallback com o bau do construtor cheio.
+
+### 2026-09-26 (noite) - Bosque fundacional para o lenhador
+
+O autor aprovou a alternativa de árvores maduras: cada colônia recém-criada
+tenta formar uma reserva de duas espécies distintas no anel de 48 a 56 blocos
+do centro. `VillageBiomes` escolhe o par previsível por bioma (carvalho/bétula
+na planície, pinheiro/bétula na taiga, acácia/carvalho na savana e
+carvalho/acácia no deserto), mantendo a espécie principal compatível com os
+recursos da vila.
+
+`VillageForest` só consulta chunks já carregados. Para cada candidato, exige
+solo natural, bloco de plantio livre, uma caixa de copa vazia e ausência de
+bloco de entidade ou proteção de vila. A geração usa o `SaplingGenerator`
+Vanilla com estado de restauração de ar; falha de geração não deixa muda nem
+avança estado persistido. A posição candidata é determinística pela colônia,
+mas as duas árvores iniciais mantêm distância mínima entre si.
+
+O marco salvo `forestPopulationMilestone` é uma dezena não regressiva. O ciclo
+ativo conta apenas adultos vivos e tenta uma árvore por vez ao alcançar a
+próxima dezena; se o anel estiver ocupado ou descarregado, o marco permanece
+igual para nova tentativa posterior. A criação chama o bosque somente quando a
+colônia é nova, portanto releitura do save não duplica a reserva.
+
+Verificação: `ColonySavedDataTest` passou com 18 cenários, incluindo save sem
+a nova chave e validação de dezena. `./gradlew.bat runGametest --rerun-tasks`
+passou com **477/477** em 1m05s, incluindo duas espécies, anel ocupado
+inalterado e a mesma dezena não duplicando árvore. Falta o playtest do autor:
+criar vila nova, confirmar as duas árvores e observar o lenhador coletando;
+depois chegar a 10 adultos e confirmar uma única árvore adicional.

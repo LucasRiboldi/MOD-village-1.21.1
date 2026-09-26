@@ -37,6 +37,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageBiomes;
 import com.villagecolony.fabric.integration.VillageScanner;
 import com.villagecolony.fabric.integration.VillageFoundation;
+import com.villagecolony.fabric.integration.VillageForest;
 import com.villagecolony.fabric.integration.VanillaBedChests;
 import com.villagecolony.fabric.integration.BigHouseFoundation;
 import com.villagecolony.fabric.integration.VillagerScanner;
@@ -182,6 +183,20 @@ final class ColonyCycleRunner {
      */
     static void runCycleOf(ServerWorld overworld, Colony colony, boolean mayPlan) {
         long mark = System.nanoTime();
+
+        VillageForest.PopulationPlanting forest = VillageForest.plantForPopulation(
+                overworld, colony, VillagerScanner.livingAdultPopulation(overworld, colony));
+        if (forest == VillageForest.PopulationPlanting.PLANTED) {
+            VillageColonyMod.LOGGER.info(
+                    "Colony {} planted its forest tree for population {}",
+                    colony.id(),
+                    colony.forestPopulationMilestone());
+        } else if (forest == VillageForest.PopulationPlanting.WAITING_FOR_SPACE) {
+            VillageColonyMod.LOGGER.debug(
+                    "Colony {} forest is waiting for a safe loaded site at population {}",
+                    colony.id(),
+                    colony.forestPopulationMilestone() + 10);
+        }
 
         // <b>Uma lista, e os três consumidores dela</b> — P0.3, 2026-09-11.
         // A varredura e as duas medidas de espaço montavam cada uma a

@@ -32,6 +32,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageBiomes;
 import com.villagecolony.fabric.integration.VillageScanner;
 import com.villagecolony.fabric.integration.VillageFoundation;
+import com.villagecolony.fabric.integration.VillageForest;
 import com.villagecolony.fabric.integration.VanillaBedChests;
 import com.villagecolony.fabric.integration.BigHouseFoundation;
 import com.villagecolony.fabric.integration.VillagerScanner;
@@ -324,10 +325,12 @@ final class VillageAdoption {
             }
 
             if (created) {
+                int trees = VillageForest.seedInitial(world, colony);
                 VillageColonyMod.LOGGER.info(
-                        "Colony created at {} with {} beds",
+                        "Colony created at {} with {} beds and {} forest trees",
                         colony.center(),
-                        candidate.bedCount());
+                        candidate.bedCount(),
+                        trees);
             } else if (previousCenter != null && !colony.center().equals(previousCenter)) {
                 VillageColonyMod.LOGGER.info(
                         "Colony {} moved from {} to {} with {} beds",

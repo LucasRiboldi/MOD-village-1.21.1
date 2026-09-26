@@ -64,6 +64,22 @@ public final class VillagerScanner {
         return scan(world, colony, colony.center(), workers, storages);
     }
 
+    /** Quantos moradores adultos vivos há no alcance operacional da colônia. */
+    public static int livingAdultPopulation(ServerWorld world, Colony colony) {
+        BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
+        Box area = Box.of(
+                center.toCenterPos(),
+                VillageDetector.SEARCH_RADIUS * 2.0,
+                VillageDetector.SEARCH_RADIUS * 2.0,
+                VillageDetector.SEARCH_RADIUS * 2.0);
+
+        return world.getEntitiesByClass(
+                        VillagerEntity.class,
+                        area,
+                        villager -> villager.isAlive() && !villager.isBaby())
+                .size();
+    }
+
     /**
      * O mesmo, a partir de onde as camas foram vistas — 2026-08-22.
      *

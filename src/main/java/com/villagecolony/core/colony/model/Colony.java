@@ -54,6 +54,13 @@ public final class Colony {
     private int observedBeds;
 
     /**
+     * Maior dezena de aldeões para a qual a colônia já plantou uma árvore
+     * adulta adicional. O marco é histórico: população pode cair, mas a
+     * mesma dezena não pode nascer de novo ao recuperar os moradores.
+     */
+    private int forestPopulationMilestone;
+
+    /**
      * A âncora da última varredura ancorada, e o que ela viu.
      *
      * <p>A sonda é a varredura que parte do centro da própria colônia,
@@ -133,6 +140,28 @@ public final class Colony {
 
     public int observedBeds() {
         return observedBeds;
+    }
+
+    /** Maior dezena populacional já atendida pelo bosque da colônia. */
+    public int forestPopulationMilestone() {
+        return forestPopulationMilestone;
+    }
+
+    /**
+     * Registra uma dezena concluída pelo bosque.
+     *
+     * <p>O valor é monotônico porque a árvore já foi colocada no mundo; voltar
+     * o contador faria uma oscilação de população duplicar aquela árvore.
+     */
+    public void markForestPopulationMilestone(int milestone) {
+        if (milestone < 0 || milestone % 10 != 0) {
+            throw new IllegalArgumentException("forest milestone must be a non-negative multiple of ten");
+        }
+        if (milestone < forestPopulationMilestone) {
+            throw new IllegalArgumentException("forest milestone cannot move backwards");
+        }
+
+        forestPopulationMilestone = milestone;
     }
 
     public ColonyPos probeAnchor() {

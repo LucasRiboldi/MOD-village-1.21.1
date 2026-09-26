@@ -60,6 +60,7 @@ public final class ColonySavedData extends PersistentState {
     static final String CENTER_Z = "centerZ";
     static final String STATE = "state";
     static final String OBSERVED_BEDS = "observedBeds";
+    static final String FOREST_POPULATION_MILESTONE = "forestPopulationMilestone";
 
     static final String WORKERS = "workers";
     static final String VILLAGER_ID = "villagerId";
@@ -372,6 +373,7 @@ public final class ColonySavedData extends PersistentState {
             entry.putInt(CENTER_Z, colony.center().z());
             entry.putString(STATE, colony.state().name());
             entry.putInt(OBSERVED_BEDS, colony.observedBeds());
+            entry.putInt(FOREST_POPULATION_MILESTONE, colony.forestPopulationMilestone());
 
             list.add(entry);
         }
@@ -487,6 +489,7 @@ public final class ColonySavedData extends PersistentState {
             // Save antigo não tem o campo; getInt devolve 0, que apenas
             // faz a primeira detecção da sessão valer. Autocorrige.
             colony.observe(center, entry.getInt(OBSERVED_BEDS));
+            colony.markForestPopulationMilestone(entry.getInt(FOREST_POPULATION_MILESTONE));
 
             data.colonies.add(colony);
         }

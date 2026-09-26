@@ -10,6 +10,7 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeKeys;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -33,11 +34,10 @@ import java.util.Optional;
  * é uma estrutura do jogo com estilo definido por bioma — a mesma
  * escolha que o gerador faz.
  *
- * <p><b>O deserto é honesto sobre si.</b> Ele está na tabela porque o
- * jogo gera vila lá, e a colônia nasce, contrata e conta recurso. O que
- * ela não faz é construir: não há árvore no deserto, e o lenhador não
- * tem o que cortar. A casa sai em carvalho no dia em que o jogador
- * guardar madeira num baú.
+ * <p><b>O deserto recebe uma reserva deliberada.</b> Ele está na tabela
+ * porque o jogo gera vila lá, e a colônia nasce, contrata e conta recurso.
+ * O bosque fundacional fornece carvalho e acácia afastados da vila para o
+ * lenhador; a paleta das construções continua sendo de arenito.
  */
 public final class VillageBiomes {
 
@@ -53,6 +53,9 @@ public final class VillageBiomes {
      * <p>Ordem de leitura, não de precedência: a consulta é por chave.
      */
     private static final Map<RegistryKey<Biome>, ResourceId> WOOD = wood();
+
+    /** Espécies maduras que a reserva do lenhador pode plantar neste bioma. */
+    private static final Map<RegistryKey<Biome>, List<TreeSpecies>> FOREST = forest();
 
     private VillageBiomes() {
     }
@@ -77,12 +80,36 @@ public final class VillageBiomes {
         table.put(BiomeKeys.SAVANNA, ACACIA);
         table.put(BiomeKeys.SAVANNA_PLATEAU, ACACIA);
 
-        // Deserto: sem árvore. A madeira aqui é a de reserva, para
-        // quando o jogador guardar tronco no baú; a parede da casa é
-        // arenito, e quem decide isso é a paleta.
+        // Deserto: madeira de reserva e do bosque fundacional; a parede
+        // da casa é arenito, e quem decide isso é a paleta.
         table.put(BiomeKeys.DESERT, OAK);
 
         return Map.copyOf(table);
+    }
+
+    private static Map<RegistryKey<Biome>, List<TreeSpecies>> forest() {
+        Map<RegistryKey<Biome>, List<TreeSpecies>> table = new LinkedHashMap<>();
+
+        putForest(table, List.of(TreeSpecies.OAK, TreeSpecies.BIRCH),
+                BiomeKeys.PLAINS, BiomeKeys.SUNFLOWER_PLAINS, BiomeKeys.MEADOW);
+        putForest(table, List.of(TreeSpecies.SPRUCE, TreeSpecies.BIRCH),
+                BiomeKeys.TAIGA, BiomeKeys.SNOWY_TAIGA, BiomeKeys.OLD_GROWTH_PINE_TAIGA,
+                BiomeKeys.OLD_GROWTH_SPRUCE_TAIGA, BiomeKeys.SNOWY_PLAINS);
+        putForest(table, List.of(TreeSpecies.ACACIA, TreeSpecies.OAK),
+                BiomeKeys.SAVANNA, BiomeKeys.SAVANNA_PLATEAU);
+        putForest(table, List.of(TreeSpecies.OAK, TreeSpecies.ACACIA), BiomeKeys.DESERT);
+
+        return Map.copyOf(table);
+    }
+
+    @SafeVarargs
+    private static void putForest(
+            Map<RegistryKey<Biome>, List<TreeSpecies>> table,
+            List<TreeSpecies> species,
+            RegistryKey<Biome>... biomes) {
+        for (RegistryKey<Biome> biome : biomes) {
+            table.put(biome, species);
+        }
     }
 
     /**
@@ -156,6 +183,18 @@ public final class VillageBiomes {
         return world.getBiome(MinecraftTypeAdapter.toBlockPos(where))
                 .getKey()
                 .flatMap(VillageBiomes::woodFor);
+    }
+
+    /** Duas espécies compatíveis e distintas para a reserva do lenhador. */
+    public static Optional<List<TreeSpecies>> forestSpeciesFor(RegistryKey<Biome> biome) {
+        return Optional.ofNullable(FOREST.get(biome));
+    }
+
+    /** O mesmo, lendo o bioma no centro da colônia. */
+    public static Optional<List<TreeSpecies>> forestSpeciesAt(ServerWorld world, ColonyPos where) {
+        return world.getBiome(MinecraftTypeAdapter.toBlockPos(where))
+                .getKey()
+                .flatMap(VillageBiomes::forestSpeciesFor);
     }
 
     /** Se o mod atende vila neste ponto. */

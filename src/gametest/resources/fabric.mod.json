@@ -9,6 +9,7 @@
   "entrypoints": {
     "fabric-gametest": [
       "com.villagecolony.gametest.TreeNurseryGameTest",
+      "com.villagecolony.gametest.VillageForestGameTest",
       "com.villagecolony.gametest.AnyBedGameTest",
       "com.villagecolony.gametest.ChainRootsGameTest",
       "com.villagecolony.gametest.MineSettlingGameTest",
