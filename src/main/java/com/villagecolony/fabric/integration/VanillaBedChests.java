@@ -53,7 +53,8 @@ public final class VanillaBedChests {
         return false;
     }
 
-    private static Optional<BlockBox> originalVillagePiece(ServerWorld world, BlockPos pos) {
+    /** A peça vanilla que contém a posição, quando ela pertence a uma vila gerada. */
+    static Optional<BlockBox> originalVillagePiece(ServerWorld world, BlockPos pos) {
         StructureStart village = world.getStructureAccessor()
                 .getStructureContaining(pos, StructureTags.VILLAGE);
         if (village == null || village == StructureStart.DEFAULT || !village.hasChildren()) {

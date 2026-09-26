@@ -60,3 +60,14 @@ decisão 2 aceita.
 
 Casas e obras já registradas não mudam: a peça enterrada só conta como
 assentada onde o chão de fato ocupa a posição, e nelas a posição é ar.
+
+## Emenda — 2026-09-26: apoio físico em toda a pegada
+
+Depois do playtest de 26-09 mostrar uma obra nascida sem chão, o autor
+substituiu a tolerância anterior de um bloco pela regra estrita: cada coluna da
+pegada deve ter `groundY == roadY`. `LotLevel` recusa o lote inteiro como
+`OFF_ROAD_LEVEL` antes de abrir o canteiro.
+
+Isto não autoriza terraplanagem nem escreve blocos de terra. A consequência é
+uma obra nova esperar um lote realmente apoiado; uma casa ou obra já colocada
+não é deslocada, desmontada nem transformada em reparo automático.

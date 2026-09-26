@@ -5,15 +5,12 @@ import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.storage.service.StorageRegistry;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.property.Properties;
+import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.Heightmap;
 
 import java.util.Optional;
 
@@ -28,14 +25,12 @@ import java.util.Optional;
  * sem. A distribuição de tarefas exige baú, então as tarefas de madeira e
  * pedra ficaram abertas a sessão inteira sem ninguém que pudesse pegá-las.
  *
- * <p><b>Onde o baú nasce.</b> Ao lado da cama dele, pela regra (b) do autor —
- * encostado numa parede, nunca diante da porta. Sem cama, ou sem lugar ao lado
- * dela, perto do centro da vila, no chão livre mais próximo.
+ * <p><b>Onde o baú nasce.</b> Ao lado da cama dele, dentro da estrutura que a
+ * contém, encostado numa parede e nunca diante da porta. Sem cama, quarto ou
+ * posição segura, não nasce baú: o trabalhador espera até haver uma estrutura
+ * válida, sem ocupar o centro da vila ou a entrada de uma casa.
  */
 public final class ChestSpawner {
-
-    /** Até onde, a partir do centro, se procura chão para o baú de quem não tem cama. */
-    static final int CENTRE_RADIUS = 12;
 
     private ChestSpawner() {
     }
@@ -43,12 +38,11 @@ public final class ChestSpawner {
     /**
      * Garante um baú para este trabalhador: põe no mundo e registra.
      *
-     * @return o baú, ou vazio quando nem ao lado da cama nem perto do centro
-     *     havia lugar — raro, e dito no log
+     * @return o baú, ou vazio quando a cama não pertence a uma estrutura ou
+     *     não há posição segura ao lado dela
      */
     public static Optional<WorkerStorage> ensureChest(
-            ServerWorld world, VillagerEntity villager, StorageRegistry storages,
-            BlockPos villageCentre, String profession) {
+            ServerWorld world, VillagerEntity villager, StorageRegistry storages, String profession) {
 
         if (storages.hasStorage(villager.getUuid())) {
             return storages.of(villager.getUuid());
@@ -59,17 +53,11 @@ public final class ChestSpawner {
                 .filter(home -> home.dimension().equals(world.getRegistryKey()))
                 .map(home -> home.pos());
 
-        String where = "beside its bed";
-        Optional<BlockPos> chest = bed.flatMap(at -> ChestPlacer.placeBesideBed(world, at).chest());
-
-        if (chest.isEmpty()) {
-            where = "near the village centre";
-            chest = placeNear(world, villageCentre);
-        }
+        Optional<BlockPos> chest = bed.flatMap(at -> placeBesideBedInStructure(world, at));
 
         if (chest.isEmpty()) {
             VillageColonyMod.LOGGER.warn(
-                    "{} {} has no chest and none could be placed — it gets no tasks until one exists",
+                    "{} {} has no chest inside a valid bed structure — it gets no tasks until one exists",
                     profession, villager.getUuid().toString().substring(0, 8));
 
             return Optional.empty();
@@ -82,67 +70,24 @@ public final class ChestSpawner {
         VillageColonyMod.LOGGER.info(
                 "{} {} got a chest of its own at {}, {}",
                 profession, villager.getUuid().toString().substring(0, 8),
-                chest.get().toShortString(), where);
+                chest.get().toShortString(), "beside its bed inside its structure");
 
         return Optional.of(storage);
     }
 
-    /**
-     * Um baú no chão livre mais perto do centro — o recurso de quem não tem
-     * cama. Chão firme, espaço em cima para abrir, fora da rua de terra batida e
-     * sem baú encostado (dois virariam baú duplo).
-     */
-    public static Optional<BlockPos> placeNear(ServerWorld world, BlockPos centre) {
-        for (int ring = 2; ring <= CENTRE_RADIUS; ring++) {
-            for (int dx = -ring; dx <= ring; dx++) {
-                for (int dz = -ring; dz <= ring; dz++) {
-                    if (Math.max(Math.abs(dx), Math.abs(dz)) != ring) {
-                        continue;
-                    }
-
-                    int x = centre.getX() + dx;
-                    int z = centre.getZ() + dz;
-
-                    if (!world.getChunkManager().isChunkLoaded(x >> 4, z >> 4)) {
-                        continue;
-                    }
-
-                    BlockPos spot = world.getTopPosition(
-                            Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, new BlockPos(x, 0, z));
-
-                    if (Math.abs(spot.getY() - centre.getY()) > 4 || !isGoodSpot(world, spot)) {
-                        continue;
-                    }
-
-                    world.setBlockState(spot, Blocks.CHEST.getDefaultState()
-                            .with(Properties.HORIZONTAL_FACING, Direction.NORTH));
-
-                    return Optional.of(spot);
-                }
-            }
+    private static Optional<BlockPos> placeBesideBedInStructure(ServerWorld world, BlockPos bed) {
+        Optional<BlockBox> vanillaPiece = VanillaBedChests.originalVillagePiece(world, bed);
+        if (vanillaPiece.isPresent()) {
+            return ChestPlacer.placeBesideBedInStructure(world, bed, vanillaPiece.get()::contains).chest();
         }
 
-        return Optional.empty();
-    }
-
-    private static boolean isGoodSpot(ServerWorld world, BlockPos spot) {
-        BlockState floor = world.getBlockState(spot.down());
-
-        if (!world.getBlockState(spot).isReplaceable()
-                || !floor.isSolidBlock(world, spot.down())
-                || floor.isOf(Blocks.DIRT_PATH)
-                || !world.getBlockState(spot.up()).isAir()
-                || BlockProtection.isColonyBuilt(spot.down())) {
-            return false;
-        }
-
-        for (Direction side : Direction.Type.HORIZONTAL) {
-            if (world.getBlockState(spot.offset(side)).isOf(Blocks.CHEST)) {
-                return false;
-            }
-        }
-
-        return true;
+        return VillageColonyMod.BUILDINGS.all().stream()
+                .filter(building -> building.finished()
+                        && building.contains(MinecraftTypeAdapter.toColonyPos(bed)))
+                .findFirst()
+                .flatMap(building -> ChestPlacer.placeBesideBedInStructure(
+                        world, bed,
+                        spot -> building.contains(MinecraftTypeAdapter.toColonyPos(spot))).chest());
     }
 
     /** O baú registrado ainda é um baú? Quebrado pelo jogador, deixa de valer. */

@@ -9704,3 +9704,29 @@ passou com **477/477** em 1m05s, incluindo duas espécies, anel ocupado
 inalterado e a mesma dezena não duplicando árvore. Falta o playtest do autor:
 criar vila nova, confirmar as duas árvores e observar o lenhador coletando;
 depois chegar a 10 adultos e confirmar uma única árvore adicional.
+
+### 2026-09-26 (fim de tarde) - Lote apoiado e baú dentro da casa
+
+O playtest e o perfil Spark mostraram TPS normal, mas três regressões visuais:
+uma obra podia abrir com a pegada um bloco fora da rua, uma cama externa podia
+receber baú e um trabalhador sem cama recebia baú no centro da vila. O perfil
+atribuiu 1,25% da thread do servidor ao mod, principalmente ao lenhador; não
+houve travamento de servidor durante a amostra.
+
+`LotLevel` passou a aceitar somente `groundY == roadY`. A colônia não aterra o
+lote: se uma coluna não sustenta o piso, a obra é recusada antes de registrar
+o canteiro. A emenda da ADR-017 preserva construções já existentes no mundo.
+
+`ChestSpawner` deixou de procurar chão perto do centro. Agora ele exige que a
+cama esteja em uma peça vanilla da vila ou em construção finalizada registrada
+pela colônia, e `ChestPlacer` só considera posições dentro dessa mesma caixa.
+As verificações de parede, tampa livre, baú único e frente de porta continuam
+ativas. Baús que já existem não são removidos para não destruir inventários.
+
+Os testes novos primeiro falharam contra a regra antiga: três falhas em
+`oneBlockOffTheRoadLevelDoesNotBecomeAnUnsupportedLot`,
+`aWorkerWithAnOutdoorBedDoesNotGetAChest` e
+`aWorkerWithoutABedDoesNotGetACentreChest`. Após a correção,
+`./gradlew.bat runGametest --rerun-tasks` passou com **477/477**. O JAR
+`46CF0C7A…6444` foi comparado idêntico em `build/libs/`, `downloads/` e
+`%APPDATA%/.minecraft/mods/`; falta o playtest no mesmo save.

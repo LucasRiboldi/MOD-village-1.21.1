@@ -1,8 +1,16 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Atualização de 2026-09-26 — JAR `C9568D4B…1601E`.** Confira o hash antes
-de relatar. Traz as correções de 26-09 abaixo, inclusive a estabilização de
-obras adiadas e a regra de suprimento.
+**Atualização de 2026-09-26 — JAR `46CF0C7A…6444`.** Este é o JAR instalado
+em `downloads/` e `%APPDATA%/.minecraft/mods/`; as três cópias conferem com
+`build/libs/`. `clean build` e `runGametest --rerun-tasks` passaram, com
+477/477 GameTests.
+
+**Obras e baús:** uma obra nova só abre quando toda a pegada está na altura
+exata da rua, portanto não pode ficar suspensa nem com vão sob o piso. Um baú
+novo de profissão só surge junto a uma cama dentro de estrutura vanilla ou
+construção concluída da colônia; não nasce no centro nem à frente de porta.
+As construções e baús já existentes permanecem intactos. No mesmo save,
+observe uma obra em terreno irregular e o primeiro baú criado após a atualização.
 
 **Atualização de 2026-09-25, tarde — o mineiro autônomo.** O JAR em
 `mods` foi republicado (commit `a222342`, SHA-256

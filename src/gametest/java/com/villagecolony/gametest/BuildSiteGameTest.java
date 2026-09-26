@@ -398,34 +398,9 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /**
-     * <b>Um bloco de desnível da rua ainda é lote</b> — decisão do autor,
-     * 2026-09-15: <i>"desnivel, permitir somente 1 bloco de desnivel da
-     * estrada"</i>.
-     *
-     * <p><b>A medição que autorizou isto.</b> A pesquisa de 09-11
-     * ({@code docs/research/terraplanagem-da-vila.md} §8) registrou a regra
-     * do autor: <i>"Medir primeiro. Se a recusa por desnível dominar, a
-     * inferência vira fato"</i>. Duas sessões responderam, e o número é
-     * estável: <b>35,0%</b> e <b>33,6%</b> das recusas de lote eram
-     * {@code OFF_ROAD_LEVEL} — a segunda maior causa, atrás só da área de
-     * estrada.
-     *
-     * <p>A régua era <b>exata</b>: uma coluna um bloco fora reprovava o
-     * lote inteiro, e num terreno de planície ondulada isso reprova quase
-     * tudo. Um bloco de tolerância é o degrau que um jogador sobe sem
-     * pensar, e é o que a Regra 19 queria impedir quando falava de
-     * <i>"varanda sem escada"</i> — ela mirava o lote dois acima, não o
-     * ondulado.
-     *
-     * <p><b>O que NÃO entra nesta decisão:</b> mover terra. A preparação
-     * do canteiro tira planta e não aterra — ver {@code SitePreparation} —,
-     * então a coluna um abaixo fica com um vão sob o piso. O autor foi
-     * avisado disso e escolheu assim mesmo, para a vila voltar a crescer;
-     * aterrar é a frente de terraplanagem, que continua aberta.
-     */
+    /** Um desnível de um bloco é recusado: sem aterro, ele deixaria a casa sem apoio. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_slope_one")
-    public void oneBlockOffTheRoadLevelIsStillALot(TestContext context) {
+    public void oneBlockOffTheRoadLevelDoesNotBecomeAnUnsupportedLot(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         UUID colony = UUID.randomUUID();
 
@@ -435,8 +410,8 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
         reserveRoad(context, colony, center);
 
-        // O lote em volta sobe um bloco: é o ondulado que a régua exata
-        // reprovava, e que agora tem de passar.
+        // Toda a pegada fica um bloco acima da rua. Sem terraplanagem, a
+        // planta assentaria acima do chão e deixaria um vão sob a casa.
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
                 if (dx == 0 && dz == 0) {
@@ -455,17 +430,11 @@ public class BuildSiteGameTest implements FabricGameTest {
                     0,
                     SMALL_HOUSE);
 
-            context.assertTrue(
-                    site.isPresent(),
-                    "um bloco de desnível continuou reprovando o lote — é a segunda maior"
-                            + " causa de recusa no log do autor, com 35% e 34% em duas"
-                            + " sessões. off_road=" + LotRefusals.countOf(
-                                    colony, LotRefusals.Reason.OFF_ROAD_LEVEL)
-                            + " no_ground=" + LotRefusals.countOf(
-                                    colony, LotRefusals.Reason.NO_GROUND)
-                            + " occupied=" + LotRefusals.countOf(
-                                    colony, LotRefusals.Reason.OCCUPIED)
-                            + " road=" + LotRefusals.countOf(colony, LotRefusals.Reason.ROAD));
+            context.assertTrue(site.isEmpty(),
+                    "um lote sem apoio sob toda a casa foi aceito: "
+                            + site.map(found -> found.origin().toString()).orElse(""));
+            context.assertTrue(LotRefusals.countOf(colony, LotRefusals.Reason.OFF_ROAD_LEVEL) > 0,
+                    "a recusa do lote sem apoio não foi registrada como desnível da rua");
         } finally {
             BuildSiteScanner.clearAll();
             LotRefusals.clearAll();

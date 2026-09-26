@@ -199,7 +199,6 @@ public final class VillagerScanner {
                     chestsToSpawn--;
                     claimed = ChestSpawner.ensureChest(
                             world, villager, storages,
-                            MinecraftTypeAdapter.toBlockPos(colony.center()),
                             professionOf(workers, villager.getUuid()).map(Object::toString).orElse("worker"));
                 }
 

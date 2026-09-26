@@ -79,31 +79,12 @@ public final class LotLevel {
     /**
      * Quanto uma coluna do lote pode fugir do nível da rua.
      *
-     * <p><b>Decisão do autor, 2026-09-15:</b> <i>"permitir somente 1 bloco
-     * de desnivel da estrada"</i>.
-     *
-     * <p><b>A medição que autorizou a mudança.</b> A pesquisa de 09-11
-     * ({@code docs/research/terraplanagem-da-vila.md} §8) registrou a regra
-     * que o próprio autor impôs: <i>"Medir primeiro. Se a recusa por
-     * desnível dominar, a inferência vira fato e a frente abre"</i>. Duas
-     * sessões responderam, e o número é estável: <b>35,0%</b> e
-     * <b>33,6%</b> das recusas de lote eram {@code OFF_ROAD_LEVEL},
-     * a segunda maior causa atrás só da área de estrada.
-     *
-     * <p>A régua era <b>exata</b> — {@code ground.getY() != roadY} —, e num
-     * terreno de planície ondulada isso reprova quase tudo. A Regra 19
-     * mirava o lote <i>"dois blocos acima do caminho"</i>, a varanda sem
-     * escada; um bloco é o degrau que um jogador sobe sem pensar, e o
-     * Vanilla o trata assim em toda parte.
-     *
-     * <p><b>O que isto NÃO faz: mover terra.</b> A preparação do canteiro
-     * tira planta e não aterra — ver {@code SitePreparation} —, então a
-     * coluna um abaixo da rua fica com um vão de um bloco sob o piso, que
-     * assenta em {@code roadY + 1}. O autor foi avisado e escolheu assim
-     * para a vila voltar a crescer. Aterrar continua sendo a frente de
-     * terraplanagem que a pesquisa desenhou (§6), e ela segue aberta.
+     * <p><b>Decisão do autor, 2026-09-26:</b> nenhuma coluna pode divergir da
+     * rua. A preparação não move terra; portanto, aceitar um degrau deixaria
+     * uma parte do piso sem apoio físico. A obra é recusada, em vez de nascer
+     * flutuando.
      */
-    static final int ROAD_LEVEL_TOLERANCE = 1;
+    static final int ROAD_LEVEL_TOLERANCE = 0;
 
     /**
      * Quanto da base precisa estar no nível exato da rua, em por cento.
@@ -118,18 +99,9 @@ public final class LotLevel {
      * exigia que as colunas concordassem entre si. Esta é a régua do
      * conjunto.
      *
-     * <p><b>Medida ENTRE AS COLUNAS, e não contra a rua</b> — segunda
-     * decisão do autor no mesmo dia, e ela é o que faz a regra
-     * funcionar. Medir contra a rua reprovaria o lote inteiro um bloco
-     * acima dela, que é o caso que o próprio autor mandou <b>aceitar</b>
-     * em 09-15 e que o {@code oneBlockOffTheRoadLevelIsStillALot}
-     * protege.
-     *
-     * <p>E a casa passa a assentar no nível da <b>base</b>, não no da
-     * rua. Sem essa metade a regra não consertaria nada: um lote todo um
-     * acima tem 100% das colunas no mesmo nível, passaria, e a casa
-     * continuaria assentando em {@code roadY + 1} — voando sobre o
-     * próprio terreno.
+     * <p>Com a régua estrita da rua, a base será integralmente nivelada. A
+     * contagem é mantida para continuar determinando a altura única do piso
+     * e registrar uma recusa defensiva caso a regra volte a ter tolerância.
      */
     static final int LEVEL_BASE_PERCENT = 90;
 
@@ -228,18 +200,8 @@ public final class LotLevel {
                     return Optional.empty();
                 }
 
-                // <b>E quantas colunas estão no nível EXATO da rua</b> —
-                // decisão do autor, 2026-09-19. A tolerância acima aceita
-                // um bloco de degrau por coluna, e a casa assenta em
-                // {@code roadY + 1} venha o que vier: um lote em que
-                // <i>toda</i> coluna está um abaixo é aceito e a casa sai
-                // <b>voando</b>, com um vão de um bloco sob o piso
-                // inteiro. Era limite conhecido — o javadoc do
-                // {@link #ROAD_LEVEL_TOLERANCE} o descreve — e o autor o
-                // viu em jogo.
-                //
-                // A conta fecha depois do laço: <i>"aceitar uma base que
-                // tenha mais de 90% dos blocos no mesmo nível"</i>.
+                // Guarda as alturas para determinar a altura única do piso
+                // depois da validação de toda a pegada.
                 groundLevels.merge(ground.getY(), 1, Integer::sum);
 
                 // <b>E as três do meio ficam na ordem em que sempre
@@ -325,23 +287,9 @@ public final class LotLevel {
             }
         }
 
-        // <b>A base tem de estar quase toda no mesmo nível</b> —
-        // decisão do autor, 2026-09-19: <i>"aceitar uma base da
-        // construção que tenha mais de 90% dos blocos no mesmo
-        // nível"</i>.
-        //
-        // <b>O que isto conserta, visto em jogo.</b> A tolerância de um
-        // bloco é <b>por coluna</b>, e nada exigia que as colunas
-        // concordassem entre si: um lote em que todas estão um abaixo da
-        // rua passa inteiro, e a casa assenta em {@code roadY + 1} —
-        // <b>voando</b>, com um vão de um bloco sob o piso todo. O
-        // javadoc do ROAD_LEVEL_TOLERANCE já descrevia o vão como limite
-        // conhecido; o autor o viu e mandou fechar.
-        //
-        // Noventa por cento, e não cem: o degrau isolado é o que a
-        // tolerância existe para aceitar, e exigir o lote perfeito
-        // devolveria os 35% de recusa por desnível que a régua exata
-        // produzia.
+        // A base precisa compartilhar uma altura. A guarda estrita acima já
+        // torna isso 100% no fluxo normal; esta verificação conserva a
+        // proteção se a política de nível vier a mudar novamente.
         int columns = size.x() * size.z();
 
         int mostCommon = groundLevels.values().stream().mapToInt(Integer::intValue).max()
@@ -353,12 +301,8 @@ public final class LotLevel {
             return Optional.empty();
         }
 
-        // <b>E a casa assenta no nível da BASE, e não no da rua</b> — é a
-        // outra metade da decisão, e sem ela a regra dos 90% não
-        // consertaria nada: um lote inteiro um acima da rua tem 100% das
-        // colunas no mesmo nível e passaria, e a casa continuaria
-        // assentando em {@code roadY + 1} — <b>voando</b> sobre o próprio
-        // terreno.
+        // A casa assenta no nível da base validada, isto é, imediatamente
+        // acima do chão que sustenta toda a pegada.
         int baseY = groundLevels.entrySet().stream()
                 .max(Map.Entry.comparingByValue())
                 .map(Map.Entry::getKey)
@@ -419,12 +363,8 @@ public final class LotLevel {
         // sem chão nenhum. Ver LotRefusals.accepted.
         LotRefusals.accepted(colonyId, columns);
 
-        // O piso da casa vai sobre o chão, e não dentro dele — e o chão
-        // é o da BASE, que é onde 90% das colunas estão. Era
-        // {@code roadY + 1} até 2026-09-19, e era isso que fazia a casa
-        // voar quando o lote inteiro estava acima da rua: o piso ficava
-        // no nível do caminho e o terreno, mais alto, passava por baixo
-        // dele.
+        // O piso fica imediatamente acima do chão que passou em todas as
+        // colunas da pegada.
         return Optional.of(baseY + 1);
     }
 }

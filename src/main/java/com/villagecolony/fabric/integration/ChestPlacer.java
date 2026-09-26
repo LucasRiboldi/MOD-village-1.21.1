@@ -80,13 +80,13 @@ public final class ChestPlacer {
     }
 
     /**
-     * A mesma regra (b) para a cama de qualquer trabalhador — 2026-09-26,
-     * decisão do autor: "todos aldeões de profissão devem ter um baú nascido
-     * destinado a cada um deles". Sem a peça de vila para conter o baú: a
-     * cama pode estar numa casa da colônia ou na BigHouseMOD.
+     * A mesma regra (b) para a cama de um trabalhador, limitada à estrutura
+     * que contém a cama. A fronteira evita baús no centro da vila, em áreas
+     * abertas ou diante de portas.
      */
-    public static Result placeBesideBed(ServerWorld world, BlockPos bedPoi) {
-        return placeBeside(world, bedPoi, spot -> true);
+    public static Result placeBesideBedInStructure(
+            ServerWorld world, BlockPos bedPoi, java.util.function.Predicate<BlockPos> inside) {
+        return placeBeside(world, bedPoi, inside);
     }
 
     private static Result placeBeside(

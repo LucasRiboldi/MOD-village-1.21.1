@@ -12,10 +12,10 @@
 
 ## Em uma linha
 
-O código está à frente do jogo. Desde o último playtest (24-09, madrugada)
-entraram E47/E48, a revisão de naturalidade, a rodada de qualidade, a
-refatoração e a **vila foco**. Nada disso foi visto em jogo ainda. A
-**próxima sessão de jogo** é o que destrava o resto.
+O playtest de 26-09 encontrou uma obra sem apoio, formatação visual incorreta
+e baús no centro da vila. A correção foi publicada no JAR `46CF0C7A…6444`,
+com 477/477 GameTests; a próxima sessão deve confirmá-la no mesmo save criando
+uma obra em terreno irregular e observando baús novos.
 
 ## Versão publicada
 
@@ -25,6 +25,13 @@ refatoração e a **vila foco**. Nada disso foi visto em jogo ainda. A
   adicional sem avançar a dezena quando não há posição segura carregada.
   `ColonySavedDataTest` (18), `build` e `runGametest --rerun-tasks`
   (477/477) passaram; falta o playtest no save.
+
+- **JAR republicado em 26-09, SHA-256 `46CF0C7A…6444`:** obra só abre quando
+  cada coluna da pegada está no nível da rua; não há aterro automático. O baú
+  de profissão só nasce ao lado da cama, dentro de uma peça de vila vanilla ou
+  construção finalizada registrada pela colônia, e a regra existente continua
+  proibindo a frente da porta. `clean build` e `runGametest --rerun-tasks`:
+  477/477. Falta validar no save.
 
 - **JAR republicado em 26-09, SHA-256 `C9568D4B…1601E`:** alternativa A
   entrega a obra totalmente adiada depois da paciência sem liberar o lote e a

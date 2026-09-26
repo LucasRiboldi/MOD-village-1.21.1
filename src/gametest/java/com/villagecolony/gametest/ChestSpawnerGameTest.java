@@ -1,7 +1,10 @@
 package com.villagecolony.gametest;
 
+import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.storage.service.StorageRegistry;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestSpawner;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -18,6 +21,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.GlobalPos;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Todo trabalhador de profissão tem baú — decisão do autor, 2026-09-26. Na
@@ -34,28 +38,24 @@ public class ChestSpawnerGameTest implements FabricGameTest {
         }
     }
 
-    /** Sem cama, o baú nasce no chão livre perto do centro e fica registrado para ele. */
+    /** Sem cama dentro de uma estrutura, o trabalhador não recebe um baú no centro da vila. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "chest_spawner", tickLimit = 20)
-    public void aWorkerWithoutABedGetsAChestNearTheCentre(TestContext context) {
+    public void aWorkerWithoutABedDoesNotGetACentreChest(TestContext context) {
         floor(context);
 
         VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(1, 2, 1));
         StorageRegistry storages = new StorageRegistry();
-        BlockPos centre = context.getAbsolutePos(new BlockPos(4, 2, 4));
 
         Optional<WorkerStorage> chest = ChestSpawner.ensureChest(
-                context.getWorld(), villager, storages, centre, "LUMBERJACK");
+                context.getWorld(), villager, storages, "LUMBERJACK");
 
-        context.assertTrue(chest.isPresent(), "o lenhador sem cama ficou sem baú");
-        BlockPos at = MinecraftTypeAdapter.toBlockPos(chest.get().chestPosition());
-        context.assertTrue(context.getWorld().getBlockState(at).isOf(Blocks.CHEST), "não há baú no mundo");
-        context.assertTrue(storages.hasStorage(villager.getUuid()), "o baú não foi registrado para ele");
+        context.assertTrue(chest.isEmpty(), "um baú nasceu no centro sem cama em estrutura");
+        context.assertFalse(storages.hasStorage(villager.getUuid()), "o baú sem estrutura foi registrado");
 
-        // Pedir de novo não faz outro baú.
+        // Pedir de novo também não cria um baú solto.
         Optional<WorkerStorage> again = ChestSpawner.ensureChest(
-                context.getWorld(), villager, storages, centre, "LUMBERJACK");
-        context.assertTrue(again.isPresent() && again.get().chestPosition().equals(chest.get().chestPosition()),
-                "um segundo baú nasceu para o mesmo trabalhador");
+                context.getWorld(), villager, storages, "LUMBERJACK");
+        context.assertTrue(again.isEmpty(), "uma segunda tentativa criou um baú no centro");
         context.complete();
     }
 
@@ -75,46 +75,49 @@ public class ChestSpawnerGameTest implements FabricGameTest {
         villager.getBrain().remember(MemoryModuleType.HOME,
                 GlobalPos.create(context.getWorld().getRegistryKey(), context.getAbsolutePos(bed)));
 
-        Optional<WorkerStorage> chest = ChestSpawner.ensureChest(
-                context.getWorld(), villager, new StorageRegistry(),
-                context.getAbsolutePos(new BlockPos(7, 2, 7)), "MINER");
+        UUID colony = UUID.randomUUID();
+        BlockPos houseMin = context.getAbsolutePos(new BlockPos(2, 1, 3));
+        BlockPos houseMax = context.getAbsolutePos(new BlockPos(5, 4, 5));
+        VillageColonyMod.BUILDINGS.register(new Building(
+                UUID.randomUUID(), colony, ResourceId.vanilla("test/worker_house"),
+                MinecraftTypeAdapter.toColonyPos(houseMin), MinecraftTypeAdapter.toColonyPos(houseMax)));
+        try {
+            Optional<WorkerStorage> chest = ChestSpawner.ensureChest(
+                    context.getWorld(), villager, new StorageRegistry(), "MINER");
 
-        context.assertTrue(chest.isPresent()
-                        && MinecraftTypeAdapter.toBlockPos(chest.get().chestPosition())
-                                .equals(context.getAbsolutePos(bed.east())),
-                "o baú do mineiro devia nascer ao lado da cama, encostado na parede: "
-                        + chest.map(WorkerStorage::chestPosition));
+            context.assertTrue(chest.isPresent()
+                            && MinecraftTypeAdapter.toBlockPos(chest.get().chestPosition())
+                                    .equals(context.getAbsolutePos(bed.east())),
+                    "o baú do mineiro devia nascer dentro da casa, ao lado da cama e encostado na parede: "
+                            + chest.map(WorkerStorage::chestPosition));
+        } finally {
+            VillageColonyMod.BUILDINGS.removeOfColony(colony);
+        }
         context.complete();
     }
 
-    /** Rua de terra batida e baú encostado não servem: um vira obstáculo, o outro baú duplo. */
+    /** Cama ao ar livre não autoriza um baú: ele pertence ao quarto, não ao centro da vila. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "chest_spawner_spots", tickLimit = 20)
-    public void theCentreChestAvoidsTheRoadAndOtherChests(TestContext context) {
-        for (int x = 0; x <= 8; x++) {
-            for (int z = 0; z <= 8; z++) {
-                context.setBlockState(new BlockPos(x, 1, z), Blocks.DIRT_PATH.getDefaultState());
-            }
-        }
+    public void aWorkerWithAnOutdoorBedDoesNotGetAChest(TestContext context) {
+        floor(context);
 
-        context.setBlockState(new BlockPos(6, 1, 4), Blocks.STONE.getDefaultState());
-        context.setBlockState(new BlockPos(7, 1, 4), Blocks.STONE.getDefaultState());
-        context.setBlockState(new BlockPos(7, 2, 4), Blocks.CHEST.getDefaultState());
+        BlockPos bed = new BlockPos(3, 2, 4);
+        context.setBlockState(bed, Blocks.RED_BED.getDefaultState()
+                .with(Properties.BED_PART, BedPart.FOOT).with(Properties.HORIZONTAL_FACING, Direction.NORTH));
+        context.setBlockState(bed.north(), Blocks.RED_BED.getDefaultState()
+                .with(Properties.BED_PART, BedPart.HEAD).with(Properties.HORIZONTAL_FACING, Direction.NORTH));
+        context.setBlockState(bed.east(2), Blocks.STONE.getDefaultState());
 
-        Optional<BlockPos> placed = ChestSpawner.placeNear(
-                context.getWorld(), context.getAbsolutePos(new BlockPos(4, 2, 4)));
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(1, 2, 1));
+        villager.getBrain().remember(MemoryModuleType.HOME,
+                GlobalPos.create(context.getWorld().getRegistryKey(), context.getAbsolutePos(bed)));
 
-        // O raio (12) passa da arena: onde quer que nasça, não pode ser rua nem
-        // colado noutro baú.
-        placed.ifPresent(at -> {
-            context.assertFalse(context.getWorld().getBlockState(at.down()).isOf(Blocks.DIRT_PATH),
-                    "o baú nasceu sobre a rua em " + at.toShortString());
-            for (Direction side : Direction.Type.HORIZONTAL) {
-                context.assertFalse(context.getWorld().getBlockState(at.offset(side)).isOf(Blocks.CHEST),
-                        "o baú nasceu colado noutro baú em " + at.toShortString());
-            }
-        });
-        context.assertFalse(placed.isPresent() && placed.get().equals(context.getAbsolutePos(new BlockPos(6, 2, 4))),
-                "o baú nasceu colado no baú que já estava lá");
+        StorageRegistry storages = new StorageRegistry();
+        Optional<WorkerStorage> chest = ChestSpawner.ensureChest(
+                context.getWorld(), villager, storages, "SHEPHERD");
+
+        context.assertTrue(chest.isEmpty(), "a cama fora de uma estrutura recebeu um baú");
+        context.assertFalse(storages.hasStorage(villager.getUuid()), "o baú externo foi registrado");
         context.complete();
     }
 }

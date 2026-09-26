@@ -67,7 +67,8 @@ Não recomendados:
   (`BiomeConstructionSupplyClockTest`, `WorkMarksSavedDataTest`); desvio com o
   próprio corpo e com queda (`DetourWalkerGameTest`, 2 novos).
 - [x] 🔴 **Sessão longa de 26-09 — corrigido com teste, ⬜ ver em jogo:** baú
-  para todo aldeão de profissão (`ChestSpawnerGameTest`), vínculo salvo
+  para todo aldeão de profissão (`ChestSpawnerGameTest`), somente ao lado da
+  cama dentro de estrutura reconhecida e nunca no centro, vínculo salvo
   (`WorkMarksSavedDataTest`), peça pronta só de manufatura
   (`NaturalSupplyGameTest`), pastor e fazendeiro contínuos (`StandingWorkTest`),
   fundidor sem busca inútil (`FurnaceReachGameTest`), obra só com chão cede
@@ -80,9 +81,11 @@ Não recomendados:
   Hoje três GameTests garantem que não (contra sobreposição).
 - [ ] 🟠 Pedreiro e carpinteiro contínuos; aldeão ocioso preso abaixo do chão.
 - [x] 🔴 **Casa na altura da rua, sem terra na base** (26-09, pedido do
-  autor) — `StreetLevelGameTest` (4), `BlueprintStreetLayerTest` (6). ⬜ ver em
-  jogo: casa nova com a porta um acima da rua e sem plataforma de terra; casa
-  antiga não se mexe nem vira reparo.
+  autor) — `StreetLevelGameTest` (4), `BlueprintStreetLayerTest` (6) e
+  `oneBlockOffTheRoadLevelDoesNotBecomeAnUnsupportedLot`. Todo o lote agora
+  precisa estar no nível exato da rua; não há obra com vão sob o piso. ⬜ ver
+  em jogo: casa nova com a porta um acima da rua e sem plataforma de terra;
+  casa antiga não se mexe nem vira reparo.
 - [ ] 🟡 **Templo 4 e outras plantas com a porta na camada 0** ficam como
   estavam (sem camada da rua dentro da planta); conferir em jogo se o piso
   delas também deveria descer.
