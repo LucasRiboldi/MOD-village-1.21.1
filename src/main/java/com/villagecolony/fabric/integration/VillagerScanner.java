@@ -109,6 +109,11 @@ public final class VillagerScanner {
         // ChestScanner.freeChestFor.
         Set<ColonyPos> freeChests = new HashSet<>();
 
+        // Quantos baús podem nascer nesta passagem — 2026-09-26. Uma vila
+        // inteira sem baú (o save antigo) ganha os dela em poucos ciclos, sem
+        // espalhar dez baús no mesmo tique.
+        int chestsToSpawn = SPAWNS_PER_SCAN;
+
         // Perguntar quem consegue baú custa uma varredura por candidato,
         // e só serve quando a resposta muda alguma coisa: quando há vaga
         // aberta, ou quando alguém está ocupando uma sem baú — e nesse
@@ -160,9 +165,27 @@ public final class VillagerScanner {
             // depois, seja porque o chunk dele não estava carregado no
             // ciclo anterior, seja porque ele acabou de receber função.
             if (isEmployed(workers, villager.getUuid())) {
+                // O baú que o jogador quebrou deixa de valer, e um novo nasce
+                // abaixo — 2026-09-26.
+                storages.of(villager.getUuid())
+                        .filter(storage -> !ChestSpawner.stillStands(world, storage.chestPosition()))
+                        .ifPresent(storage -> storages.remove(villager.getUuid()));
+
                 Optional<WorkerStorage> claimed = ChestScanner.scan(
                         world, villager, storages,
                         professionOf(workers, villager.getUuid()));
+
+                // <b>E quem não achou baú ganha um</b> — decisão do autor,
+                // 2026-09-26. Ver ChestSpawner: na sessão longa daquele dia o
+                // lenhador e o mineiro ficaram 4h45 sem baú, e sem baú não há
+                // tarefa.
+                if (claimed.isEmpty() && !storages.hasStorage(villager.getUuid()) && chestsToSpawn > 0) {
+                    chestsToSpawn--;
+                    claimed = ChestSpawner.ensureChest(
+                            world, villager, storages,
+                            MinecraftTypeAdapter.toBlockPos(colony.center()),
+                            professionOf(workers, villager.getUuid()).map(Object::toString).orElse("worker"));
+                }
 
                 if (claimed.isPresent()) {
                     storagesFound++;
@@ -180,6 +203,9 @@ public final class VillagerScanner {
                 Set.copyOf(equippable),
                 Set.copyOf(freeChests));
     }
+
+    /** Baús nascidos por passagem de varredura — ver ChestSpawner. */
+    static final int SPAWNS_PER_SCAN = 2;
 
     /**
      * Diz qual profissão ficou com qual baú.

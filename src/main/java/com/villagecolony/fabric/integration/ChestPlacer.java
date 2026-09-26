@@ -76,13 +76,28 @@ public final class ChestPlacer {
      */
     public static Result placeForOriginalVillageBed(
             ServerWorld world, BlockPos bedPoi, BlockBox piece) {
+        return placeBeside(world, bedPoi, piece::contains);
+    }
+
+    /**
+     * A mesma regra (b) para a cama de qualquer trabalhador — 2026-09-26,
+     * decisão do autor: "todos aldeões de profissão devem ter um baú nascido
+     * destinado a cada um deles". Sem a peça de vila para conter o baú: a
+     * cama pode estar numa casa da colônia ou na BigHouseMOD.
+     */
+    public static Result placeBesideBed(ServerWorld world, BlockPos bedPoi) {
+        return placeBeside(world, bedPoi, spot -> true);
+    }
+
+    private static Result placeBeside(
+            ServerWorld world, BlockPos bedPoi, java.util.function.Predicate<BlockPos> inside) {
         Optional<Bed> bed = completeBed(world, bedPoi);
         if (bed.isEmpty()) {
             return new Result(Optional.empty(), Outcome.SKIPPED_NOT_A_COMPLETE_BED);
         }
 
         for (BlockPos spot : candidates(bed.get())) {
-            if (!piece.contains(spot) || isDoorApproach(world, spot)) {
+            if (!inside.test(spot) || isDoorApproach(world, spot)) {
                 continue;
             }
 

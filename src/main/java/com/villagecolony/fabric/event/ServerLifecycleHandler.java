@@ -16,6 +16,7 @@ import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.service.ConstructionService;
 import com.villagecolony.data.save.ColonySavedData;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.data.save.WorkMarksSavedData;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.work.MineMarks;
@@ -86,6 +87,15 @@ public final class ServerLifecycleHandler {
 
         for (Worker worker : data.workers()) {
             VillageColonyMod.WORKERS.restore(worker);
+        }
+
+        // O baú de cada trabalhador volta com ele — decisão do autor,
+        // 2026-09-26. Ver WorkMarksSavedData.WorkerChest.
+        for (WorkMarksSavedData.WorkerChest chest : WorkMarksSavedData.get(server).workerChests()) {
+            if (VillageColonyMod.WORKERS.isRegistered(chest.worker())) {
+                VillageColonyMod.STORAGES.register(WorkerStorage.of(
+                        chest.worker(), new ColonyPos(chest.x(), chest.y(), chest.z())));
+            }
         }
 
         // As obras voltam pela metade de propósito: falta-lhes o projeto,
@@ -202,6 +212,11 @@ public final class ServerLifecycleHandler {
                         mark.since(), mark.count()))
                 .toList());
         WorkMarksSavedData.get(server).syncSupplyWaits(BiomeConstructionSupply.waits());
+        WorkMarksSavedData.get(server).syncWorkerChests(VillageColonyMod.STORAGES.all().stream()
+                .map(storage -> new WorkMarksSavedData.WorkerChest(
+                        storage.workerId(),
+                        storage.chestPosition().x(), storage.chestPosition().y(), storage.chestPosition().z()))
+                .toList());
 
         VillageColonyMod.LOGGER.info(
                 "Saved {} colonies with {} workers, {} buildings, {} mines,"

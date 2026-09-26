@@ -139,9 +139,69 @@ public final class BiomeConstructionSupply {
         WAITING.remove(key(colonyId, item));
     }
 
-    /** Põe a peça no baú que atende a obra, sem perguntar por rota. */
+    /**
+     * Se o item é da natureza — decisão do autor, 2026-09-26: <i>"peças
+     * fabricadas do nada pela regra de peça sem rota devem ser somente para
+     * blocos de manufatura (blocos que não são localizados na natureza do jogo
+     * naturalmente)"</i>.
+     *
+     * <p>Na sessão longa daquele dia a regra fabricou 254 peças, entre elas 22
+     * toras, 22 grama e 15 terra: o que o lenhador e o fazendeiro deviam trazer
+     * nasceu no baú, e a falta das profissões ficou escondida. Natureza é o
+     * recurso que o mod declara como coletado ({@code ResourceCategory.NATURAL}
+     * — tora, pedra, terra, areia, lã tosquiada, trigo) e o bloco que o mundo
+     * gera sozinho: terreno, pedra de base, tronco, folha, muda e flor.
+     */
+    public static boolean isNatural(Item item) {
+        Optional<com.villagecolony.core.type.ResourceType> resource = MinecraftTypeAdapter.toResourceType(item);
+
+        if (resource.isPresent()
+                && resource.get().category() == com.villagecolony.core.type.ResourceCategory.NATURAL) {
+            return true;
+        }
+
+        net.minecraft.block.BlockState state = net.minecraft.block.Block.getBlockFromItem(item).getDefaultState();
+
+        // Terreno e pedra de base são da natureza mesmo quando o mod os tem
+        // como produto — a pedra lisa de fornalha é o bloco que o mundo gera.
+        if (state.isIn(net.minecraft.registry.tag.BlockTags.DIRT)
+                || state.isIn(net.minecraft.registry.tag.BlockTags.SAND)
+                || state.isIn(net.minecraft.registry.tag.BlockTags.BASE_STONE_OVERWORLD)
+                || state.isOf(net.minecraft.block.Blocks.GRAVEL)
+                || state.isOf(net.minecraft.block.Blocks.CLAY)) {
+            return true;
+        }
+
+        // O resto das tags só vale para o que o mod não conta: o tronco
+        // descascado está na tag de troncos do jogo e é manufatura.
+        if (resource.isPresent()) {
+            return false;
+        }
+
+        return state.isIn(net.minecraft.registry.tag.BlockTags.LOGS)
+                || state.isIn(net.minecraft.registry.tag.BlockTags.LEAVES)
+                || state.isIn(net.minecraft.registry.tag.BlockTags.SAPLINGS)
+                || state.isIn(net.minecraft.registry.tag.BlockTags.FLOWERS);
+    }
+
+    private static final java.util.Set<Item> REFUSED_NATURAL = new java.util.HashSet<>();
+
+    /** Põe a peça no baú que atende a obra, sem perguntar por rota — só peça de manufatura. */
     public static boolean stock(
             ServerWorld world, UUID colonyId, ColonyPos near, Item item) {
+
+        if (isNatural(item)) {
+            // A obra espera: quem traz é a profissão, com prioridade para
+            // o que a obra pede. Uma linha por item, não por ciclo.
+            if (REFUSED_NATURAL.add(item)) {
+                VillageColonyMod.LOGGER.info(
+                        "The colony will not conjure {} for construction — it is found in nature,"
+                                + " and a profession brings it",
+                        item);
+            }
+
+            return false;
+        }
 
         List<ColonyPos> chests = ColonyChests.nearestFirst(world, colonyId, near);
 
@@ -175,6 +235,7 @@ public final class BiomeConstructionSupply {
     /** Esquece as esperas. Chamado ao parar o servidor. */
     public static void clearAll() {
         WAITING.clear();
+        REFUSED_NATURAL.clear();
     }
 
     private static boolean hasRouteInBiome(

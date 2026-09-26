@@ -37,6 +37,19 @@ public final class WorkMarksSavedData extends PersistentState {
 
     static final String SUPPLY_WAITS = "supplyWaits";
 
+    static final String STORAGES = "workerChests";
+
+    /**
+     * O baú de cada trabalhador — decisão do autor, 2026-09-26. Era refeito a
+     * cada carregamento a partir da cama do momento, e aldeão troca de cama:
+     * na sessão longa daquele dia o lenhador, o mineiro e o pedreiro voltaram
+     * sem baú e passaram 4h45 sem tarefa.
+     */
+    public record WorkerChest(java.util.UUID worker, int x, int y, int z) {
+    }
+
+    private final List<WorkerChest> workerChests = new ArrayList<>();
+
     public static final PersistentState.Type<WorkMarksSavedData> TYPE = new PersistentState.Type<>(
             WorkMarksSavedData::new,
             WorkMarksSavedData::readNbt,
@@ -85,6 +98,18 @@ public final class WorkMarksSavedData extends PersistentState {
         return Map.copyOf(supplyWaits);
     }
 
+    /** Copia o baú de cada trabalhador para cá e marca para gravação. */
+    public void syncWorkerChests(Collection<WorkerChest> current) {
+        workerChests.clear();
+        workerChests.addAll(current);
+
+        markDirty();
+    }
+
+    public List<WorkerChest> workerChests() {
+        return List.copyOf(workerChests);
+    }
+
     @Override
     public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries) {
         NbtList list = new NbtList();
@@ -104,6 +129,19 @@ public final class WorkMarksSavedData extends PersistentState {
         NbtCompound waits = new NbtCompound();
         supplyWaits.forEach(waits::putLong);
         nbt.put(SUPPLY_WAITS, waits);
+
+        NbtList chests = new NbtList();
+
+        for (WorkerChest chest : workerChests) {
+            NbtCompound entry = new NbtCompound();
+            entry.putUuid("worker", chest.worker());
+            entry.putInt("x", chest.x());
+            entry.putInt("y", chest.y());
+            entry.putInt("z", chest.z());
+            chests.add(entry);
+        }
+
+        nbt.put(STORAGES, chests);
 
         return nbt;
     }
@@ -128,6 +166,17 @@ public final class WorkMarksSavedData extends PersistentState {
                     entry.getInt("z"),
                     entry.getLong("since"),
                     entry.getInt("count")));
+        }
+
+        NbtList chests = nbt.getList(STORAGES, NbtElement.COMPOUND_TYPE);
+
+        for (int i = 0; i < chests.size(); i++) {
+            NbtCompound entry = chests.getCompound(i);
+
+            if (entry.containsUuid("worker")) {
+                data.workerChests.add(new WorkerChest(
+                        entry.getUuid("worker"), entry.getInt("x"), entry.getInt("y"), entry.getInt("z")));
+            }
         }
 
         NbtCompound waits = nbt.getCompound(SUPPLY_WAITS);

@@ -43,4 +43,17 @@ class WorkMarksSavedDataTest {
 
         assertEquals(data.supplyWaits(), read.supplyWaits());
     }
+
+    /** O baú de cada trabalhador volta igual — 2026-09-26. */
+    @Test
+    void workerChestsRoundTrip() {
+        WorkMarksSavedData data = new WorkMarksSavedData();
+        data.syncWorkerChests(List.of(
+                new WorkMarksSavedData.WorkerChest(java.util.UUID.fromString("7f0c3a52-0000-0000-0000-000000000001"), -432, 70, 3578),
+                new WorkMarksSavedData.WorkerChest(java.util.UUID.fromString("7f0c3a52-0000-0000-0000-000000000002"), -449, 70, 3586)));
+
+        WorkMarksSavedData read = WorkMarksSavedData.readNbt(data.writeNbt(new NbtCompound(), null), null);
+
+        assertEquals(data.workerChests(), read.workerChests());
+    }
 }
