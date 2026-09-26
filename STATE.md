@@ -1,4 +1,4 @@
-# STATE — 2026-09-25
+# STATE — 2026-09-26
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -18,6 +18,15 @@ refatoração e a **vila foco**. Nada disso foi visto em jogo ainda. A
 **próxima sessão de jogo** é o que destrava o resto.
 
 ## Versão publicada
+
+- **JAR republicado em 26-09, SHA-256 `C9568D4B…1601E`:** alternativa A
+  entrega a obra totalmente adiada depois da paciência sem liberar o lote e a
+  ADR-008 conserva e gira o `facing` horizontal da estrutura. Para peça de
+  manufatura que nenhuma profissão consegue recolher ou fabricar, a terceira
+  tentativa entrega o item no baú do construtor ou, se ausente/cheio, em outro
+  baú livre da colônia. Recursos naturais continuam responsabilidade dos
+  ofícios. `test --rerun-tasks` e `runGametest --rerun-tasks`: 474/474;
+  ainda falta validar os fluxos no save.
 
 - **JAR republicado em 26-09 (manhã), commit `70af4c8`, SHA-256 `9EB559D1…9423`:**
   tudo de 26-09 (lenhador, viveiro, baú da cama, tapete, relógio, desvio, casa

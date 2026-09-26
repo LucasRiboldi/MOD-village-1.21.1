@@ -35,7 +35,7 @@ public final class WorkMarksSavedData extends PersistentState {
 
     static final String MINE_REFUSALS = "mineRefusals";
 
-    static final String SUPPLY_WAITS = "supplyWaits";
+    static final String SUPPLY_ATTEMPTS = "supplyAttempts";
 
     static final String STORAGES = "workerChests";
 
@@ -62,11 +62,9 @@ public final class WorkMarksSavedData extends PersistentState {
     private final List<MineRefusal> mineRefusals = new ArrayList<>();
 
     /**
-     * Desde quando cada peça de obra espera a rota do bioma entregar — chave
-     * "colônia/item", valor em tiques do mundo. Ver
-     * {@code BiomeConstructionSupply.waits}; 2026-09-26.
+     * Tentativas de uma peça sem rota profissional, por chave "colônia/item".
      */
-    private final Map<String, Long> supplyWaits = new HashMap<>();
+    private final Map<String, Integer> supplyAttempts = new HashMap<>();
 
     public static WorkMarksSavedData get(MinecraftServer server) {
         return server.getOverworld()
@@ -86,16 +84,16 @@ public final class WorkMarksSavedData extends PersistentState {
         return List.copyOf(mineRefusals);
     }
 
-    /** Copia as esperas de rota em memória para cá e marca para gravação. */
-    public void syncSupplyWaits(Map<String, Long> current) {
-        supplyWaits.clear();
-        supplyWaits.putAll(current);
+    /** Copia as tentativas de suprimento em memória para cá e marca para gravação. */
+    public void syncSupplyAttempts(Map<String, Integer> current) {
+        supplyAttempts.clear();
+        supplyAttempts.putAll(current);
 
         markDirty();
     }
 
-    public Map<String, Long> supplyWaits() {
-        return Map.copyOf(supplyWaits);
+    public Map<String, Integer> supplyAttempts() {
+        return Map.copyOf(supplyAttempts);
     }
 
     /** Copia o baú de cada trabalhador para cá e marca para gravação. */
@@ -126,9 +124,9 @@ public final class WorkMarksSavedData extends PersistentState {
 
         nbt.put(MINE_REFUSALS, list);
 
-        NbtCompound waits = new NbtCompound();
-        supplyWaits.forEach(waits::putLong);
-        nbt.put(SUPPLY_WAITS, waits);
+        NbtCompound attempts = new NbtCompound();
+        supplyAttempts.forEach(attempts::putInt);
+        nbt.put(SUPPLY_ATTEMPTS, attempts);
 
         NbtList chests = new NbtList();
 
@@ -179,10 +177,10 @@ public final class WorkMarksSavedData extends PersistentState {
             }
         }
 
-        NbtCompound waits = nbt.getCompound(SUPPLY_WAITS);
+        NbtCompound attempts = nbt.getCompound(SUPPLY_ATTEMPTS);
 
-        for (String key : waits.getKeys()) {
-            data.supplyWaits.put(key, waits.getLong(key));
+        for (String key : attempts.getKeys()) {
+            data.supplyAttempts.put(key, attempts.getInt(key));
         }
 
         return data;

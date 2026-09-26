@@ -75,9 +75,8 @@ public final class ServerLifecycleHandler {
                         refusal.count()))
                 .toList());
 
-        // E o relógio das peças de obra que esperam a rota do bioma — decisão
-        // do autor, 2026-09-26. Ver BiomeConstructionSupply.waits.
-        BiomeConstructionSupply.restore(WorkMarksSavedData.get(server).supplyWaits());
+        BiomeConstructionSupply.restoreFailedProfessionAttempts(
+                WorkMarksSavedData.get(server).supplyAttempts());
 
         ColonySavedData data = ColonySavedData.get(server);
 
@@ -211,7 +210,8 @@ public final class ServerLifecycleHandler {
                         mark.stone().getX(), mark.stone().getY(), mark.stone().getZ(),
                         mark.since(), mark.count()))
                 .toList());
-        WorkMarksSavedData.get(server).syncSupplyWaits(BiomeConstructionSupply.waits());
+        WorkMarksSavedData.get(server).syncSupplyAttempts(
+                BiomeConstructionSupply.failedProfessionAttempts());
         WorkMarksSavedData.get(server).syncWorkerChests(VillageColonyMod.STORAGES.all().stream()
                 .map(storage -> new WorkMarksSavedData.WorkerChest(
                         storage.workerId(),

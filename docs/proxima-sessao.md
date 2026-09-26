@@ -1,7 +1,8 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Atualização de 2026-09-26 — JAR `9EB559D1…9423` (commit `70af4c8`).** Confira
-o hash antes de relatar. Traz as correções de 26-09 abaixo.
+**Atualização de 2026-09-26 — JAR `C9568D4B…1601E`.** Confira o hash antes
+de relatar. Traz as correções de 26-09 abaixo, inclusive a estabilização de
+obras adiadas e a regra de suprimento.
 
 **Atualização de 2026-09-25, tarde — o mineiro autônomo.** O JAR em
 `mods` foi republicado (commit `a222342`, SHA-256
@@ -18,11 +19,17 @@ o hash antes de relatar. Traz as correções de 26-09 abaixo.
   ele travava em 553, 39, 158;
 - fechar e reabrir o mundo: a pedra recusada deve continuar recusada.
 
-**Da sessão de 26-09 (quando o JAR for republicado):** numa vila sem árvore,
+**Da sessão de 26-09:** numa vila sem árvore,
 o lenhador fica em `looking for a tree` sem `wood task returned` e sem largar
 o ofício; `the farmer planted` sai em grupos de 4; vila vanilla nova recebe
 `VC_VILLAGE_BED_CHEST outcome=CREATED` nas camas com parede ao lado; a obra
 com tapete colorido não mostra mais `needs … black_carpet`.
+
+**Obra sem rota de suprimento:** para uma peça manufaturada que nenhuma
+profissão consegue recolher ou fabricar, aguarde três tentativas. Na terceira,
+ela deve surgir primeiro no baú do construtor; se ele estiver ausente ou cheio,
+deve ir para outro baú livre da colônia. Itens naturais continuam a depender
+dos ofícios, sem geração automática.
 
 **Casa na altura da rua (26-09):** a próxima casa aberta tem o chão rente à
 rua e a porta um bloco acima do caminho, sem plataforma de terra embaixo. A

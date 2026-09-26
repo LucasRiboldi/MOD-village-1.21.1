@@ -31,17 +31,17 @@ class WorkMarksSavedDataTest {
         assertTrue(WorkMarksSavedData.readNbt(new NbtCompound(), null).mineRefusals().isEmpty());
     }
 
-    /** O relógio das peças que esperam a rota do bioma volta igual — 2026-09-26. */
+    /** As tentativas de peças sem profissão voltam iguais. */
     @Test
-    void supplyWaitsRoundTrip() {
+    void supplyAttemptsRoundTrip() {
         WorkMarksSavedData data = new WorkMarksSavedData();
-        data.syncSupplyWaits(java.util.Map.of(
-                "7f0c3a52-0000-0000-0000-000000000001/green_carpet", 123_456L,
-                "7f0c3a52-0000-0000-0000-000000000001/white_terracotta", 99L));
+        data.syncSupplyAttempts(java.util.Map.of(
+                "7f0c3a52-0000-0000-0000-000000000001/brewing_stand", 2,
+                "7f0c3a52-0000-0000-0000-000000000001/white_terracotta", 1));
 
         WorkMarksSavedData read = WorkMarksSavedData.readNbt(data.writeNbt(new NbtCompound(), null), null);
 
-        assertEquals(data.supplyWaits(), read.supplyWaits());
+        assertEquals(data.supplyAttempts(), read.supplyAttempts());
     }
 
     /** O baú de cada trabalhador volta igual — 2026-09-26. */

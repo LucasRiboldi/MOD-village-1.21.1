@@ -14,12 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * O relógio de "rota atrasada" sobrevive a fechar o mundo — decisão do autor,
- * 2026-09-26.
- *
- * <p>Na sessão de 26-09 a obra esperou o tapete verde por 4min30s e o autor
- * saiu 30 s antes de os 10 ciclos da ADR-022 fecharem. O relógio vivia só em
- * memória: ao reabrir, a espera recomeçava do zero.
+ * As tentativas de suprir uma peça sem profissão sobrevivem a fechar o mundo.
  */
 class BiomeConstructionSupplyClockTest {
 
@@ -35,19 +30,23 @@ class BiomeConstructionSupplyClockTest {
     }
 
     @Test
-    void aWaitStartedBeforeSavingIsStillRunningAfterLoading() {
+    void theThirdFailedProfessionAttemptSurvivesSaving() {
         UUID colony = UUID.randomUUID();
-        long started = 1_000L;
 
-        assertFalse(BiomeConstructionSupply.routeIsOverdue(colony, Items.GREEN_CARPET, started));
+        assertFalse(BiomeConstructionSupply.failedProfessionAttempt(colony, Items.BREWING_STAND));
+        assertFalse(BiomeConstructionSupply.failedProfessionAttempt(colony, Items.BREWING_STAND));
 
-        Map<String, Long> saved = BiomeConstructionSupply.waits();
+        Map<String, Integer> saved = BiomeConstructionSupply.failedProfessionAttempts();
 
         BiomeConstructionSupply.clearAll();
-        BiomeConstructionSupply.restore(saved);
+        BiomeConstructionSupply.restoreFailedProfessionAttempts(saved);
 
-        assertTrue(BiomeConstructionSupply.routeIsOverdue(
-                        colony, Items.GREEN_CARPET, started + BiomeConstructionSupply.OVERDUE_TICKS),
-                "o relógio recomeçou ao carregar: a espera de antes de fechar o mundo se perdeu");
+        assertTrue(BiomeConstructionSupply.failedProfessionAttempt(colony, Items.BREWING_STAND),
+                "a terceira tentativa recomeçou ao carregar o mundo");
+
+        BiomeConstructionSupply.routeDelivered(colony, Items.BREWING_STAND);
+
+        assertFalse(BiomeConstructionSupply.failedProfessionAttempt(colony, Items.BREWING_STAND),
+                "a entrega não reiniciou a contagem de tentativas");
     }
 }

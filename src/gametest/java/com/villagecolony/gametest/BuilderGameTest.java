@@ -14,6 +14,7 @@ import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.type.Side;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -536,8 +537,8 @@ public class BuilderGameTest implements FabricGameTest {
      * Ingrediente fora da economia local não pode deixar uma obra esperando.
      *
      * <p>O fermentador da primeira obra real precisava de haste de blaze. A
-     * colônia não tem rota para o Nether, então a peça final entra no baú que
-     * atende o construtor, em vez de a obra ficar em espera infinita.
+     * colônia não tem rota para o Nether. Nas duas primeiras faltas, a obra
+     * ainda espera; na terceira, a peça entra no baú do construtor.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder")
     public void unobtainableConstructionPieceIsStockedForTheBuilder(TestContext context) {
@@ -548,12 +549,46 @@ public class BuilderGameTest implements FabricGameTest {
                         MinecraftTypeAdapter.toResourceId(Blocks.BREWING_STAND)))), 1);
 
         try {
+            context.assertFalse(
+                    BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
+                    "a primeira falta já materializou o fermentador");
+            context.assertFalse(
+                    BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
+                    "a segunda falta já materializou o fermentador");
             context.assertTrue(
                     BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
-                    "o fermentador sem haste de blaze ainda deixou a obra esperando");
+                    "a terceira falta sem rota não liberou o fermentador");
             context.assertTrue(
                     ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.BREWING_STAND) == 1,
                     "a peça sem rota local não entrou no baú do construtor");
+        } finally {
+            fixture.owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /** Baú do construtor cheio não impede o depósito em outro baú livre. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder")
+    public void fullBuilderChestFallsBackToAnotherColonyChest(TestContext context) {
+        Fixture fixture = setUpDoorInTwoChests(context);
+        ColonyPos otherChest = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(2, 2, 4)));
+
+        try {
+            ChestDepositor.deposit(context.getWorld(), fixture.chest, Items.DIRT, 2_000);
+
+            context.assertTrue(
+                    BiomeConstructionSupply.stockForConstruction(
+                            context.getWorld(), fixture.colony.id(), fixture.project.origin(),
+                            Items.ENCHANTING_TABLE),
+                    "a peça não encontrou o outro baú livre da colônia");
+            context.assertTrue(
+                    ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.ENCHANTING_TABLE) == 0,
+                    "a peça entrou no baú cheio do construtor");
+            context.assertTrue(
+                    ColonyChests.countIn(context.getWorld(), List.of(otherChest), Items.ENCHANTING_TABLE) == 1,
+                    "a peça não entrou no outro baú livre");
         } finally {
             fixture.owned.cleanUp();
         }
@@ -1450,16 +1485,10 @@ public class BuilderGameTest implements FabricGameTest {
      * — a casa fica torta, e é o tipo de defeito que só se vê olhando,
      * nunca no log.
      *
-     * <p><b>Isto ainda não acontece em jogo, e vale dizer por quê:</b> o
-     * {@code BlueprintBlock} não carrega propriedade nenhuma, e o
-     * construtor assenta tudo no estado padrão mais o giro da porta. O
-     * eixo do tronco já se perde hoje, com substituição ou sem — é a
-     * ADR-008, decidida e por escrever.
-     *
-     * <p>Então este teste afirma a <b>garantia</b>, e não o sintoma: no
-     * dia em que a ADR-008 fizer a planta carregar orientação, a
-     * substituição não vai desfazê-la. Sem ele, essa quebra só apareceria
-     * meses depois, numa casa torta que ninguém liga à troca de espécie.
+     * <p>A ADR-008 conserva hoje o {@code facing} horizontal. O eixo do
+     * tronco continua deliberadamente fora desse subconjunto, mas esta
+     * garantia segue necessária: quando um estado chega à substituição, a
+     * troca de espécie não pode desfazê-lo.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_stone",
             tickLimit = 20)
@@ -1501,16 +1530,13 @@ public class BuilderGameTest implements FabricGameTest {
      *     — Block{minecraft:cobblestone} is in the way
      * </pre>
      *
-     * <p>A planta guarda o nome do bloco e não o estado (ADR-005), então
-     * a cama saía no <b>padrão</b>, que olha para o norte. Na casa de
-     * planície o norte da cama é a parede: a cabeceira não coube, e
-     * sobrou meia cama.
+     * <p>Antes da ADR-008 a planta guardava o nome, mas não o lado, e a cama
+     * podia apontar para a parede. Agora a direção do arquivo prevalece quando
+     * cabe e a geometria continua sendo a saída segura quando não cabe.
      *
-     * <p>A saída é perguntar ao mundo em vez de ao arquivo — e é ela que
-     * a Regra 32 torna possível, porque com a casa de pé a parede já
-     * está lá para ser vista. <b>A orientação fiel ao arquivo continua
-     * sendo a ADR-008</b>, e vale para o tronco e o degrau também; o que
-     * este teste trava é mais simples e mais urgente: cama que cabe.
+     * <p>A Regra 32 permite consultar a geometria com a casa já de pé. Este
+     * teste protege as duas garantias: respeitar a direção leste da planta e
+     * ainda colocar a cama inteira.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_bed",
             tickLimit = 300)
@@ -1521,7 +1547,7 @@ public class BuilderGameTest implements FabricGameTest {
         // conserto nenhum, porque a regra da porta apontava a cama para
         // longe do muro por acaso. Com dois cantos de pedregulho a caixa
         // fica 3x3x3, a cama cai no centro dela, e volta a valer o que a
-        // casa de verdade faz — o estado padrão, que olha para o norte.
+        // casa de verdade faz — uma cama orientada no miolo da planta.
         Fixture fixture = setUp(context, 0, bedInTheMiddle(), 1);
 
         BlockPos bed = SITE.add(1, 1, 1);
@@ -1547,6 +1573,11 @@ public class BuilderGameTest implements FabricGameTest {
                         "o que entrou no lugar do pé foi a cabeceira");
 
                 BlockPos head = bed.offset(foot.get(Properties.HORIZONTAL_FACING));
+
+                context.assertTrue(
+                        foot.get(Properties.HORIZONTAL_FACING) == Direction.EAST,
+                        "a cama perdeu a orientacao leste da planta: "
+                                + foot.get(Properties.HORIZONTAL_FACING));
 
                 context.assertFalse(
                         head.equals(bed.north()),
@@ -1577,8 +1608,9 @@ public class BuilderGameTest implements FabricGameTest {
                 List.of(
                         new BlueprintBlock(
                                 new ColonyPos(0, 0, 0), ResourceId.vanilla("cobblestone")),
-                        BlueprintBlock.furniture(
-                                new ColonyPos(1, 1, 1), ResourceId.vanilla("white_bed")),
+                        new BlueprintBlock(
+                                new ColonyPos(1, 1, 1), ResourceId.vanilla("white_bed"), true,
+                                Optional.of(Side.EAST)),
                         new BlueprintBlock(
                                 new ColonyPos(2, 2, 2), ResourceId.vanilla("cobblestone"))));
     }
@@ -1724,62 +1756,32 @@ public class BuilderGameTest implements FabricGameTest {
                 ColonyFixture.create().owning(colony).owning(villager.getUuid()));
     }
 
-    /**
-     * Rota que não entrega deixa de segurar a obra — 2026-09-22, visto em jogo.
-     *
-     * <p><b>O impasse.</b> A obra do autor parou <b>dez minutos</b> esperando
-     * {@code white_terracotta}. A regra de suprimento se calava porque a
-     * família tem rota — argila vai à fornalha e vira terracota —, e rota
-     * local é responsabilidade do ofício. Só que o fundidor repetiu, a cada
-     * ciclo do começo ao fim,
-     * <i>"none of 14 colony chests had minecraft:clay to smelt"</i>: naquele
-     * mundo não havia argila ao alcance. <b>A rota existia na receita e não
-     * no mundo</b>, e a obra esperava por ela para sempre.
-     *
-     * <p><b>A carência saiu do log</b>, e não de chute: no mesmo playtest a
-     * espera mais longa que foi atendida durou cinco ciclos, e a que nunca
-     * foi acumulou vinte. Dez ficam ao dobro de uma e à metade da outra.
-     *
-     * <p>A decisão é afirmada com o instante na mão, e não esperando dez
-     * ciclos de servidor — o relógio é argumento justamente para isto.
-     */
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_overdue",
+    /** A terceira falta sem profissão libera a peça, sem depender de tempo. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_missing_piece",
             tickLimit = 20)
-    public void aRouteThatNeverDeliversStopsHoldingTheBuild(TestContext context) {
+    public void theThirdMissingPieceAttemptIsSupplied(TestContext context) {
         UUID colonyId = UUID.randomUUID();
-        long opened = 1000L;
 
         try {
             context.assertFalse(
-                    BiomeConstructionSupply.routeIsOverdue(
-                            colonyId, Items.WHITE_TERRACOTTA, opened),
-                    "a peça foi dada por atrasada sem ter esperado nada");
+                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
+                    "a primeira falta já liberou a peça");
 
             context.assertFalse(
-                    BiomeConstructionSupply.routeIsOverdue(
-                            colonyId,
-                            Items.WHITE_TERRACOTTA,
-                            opened + BiomeConstructionSupply.OVERDUE_TICKS - 1),
-                    "a peça foi dada por atrasada antes de a carência fechar —"
-                            + " o ofício ainda tinha a vez dele");
+                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
+                    "a segunda falta já liberou a peça");
 
             context.assertTrue(
-                    BiomeConstructionSupply.routeIsOverdue(
-                            colonyId,
-                            Items.WHITE_TERRACOTTA,
-                            opened + BiomeConstructionSupply.OVERDUE_TICKS),
-                    "a rota que não entregou em dez ciclos continuou segurando a obra");
+                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
+                    "a terceira falta não liberou a peça");
 
-            BiomeConstructionSupply.routeDelivered(colonyId, Items.WHITE_TERRACOTTA);
+            BiomeConstructionSupply.routeDelivered(colonyId, Items.BREWING_STAND);
 
             context.assertFalse(
-                    BiomeConstructionSupply.routeIsOverdue(
-                            colonyId,
-                            Items.WHITE_TERRACOTTA,
-                            opened + BiomeConstructionSupply.OVERDUE_TICKS),
-                    "a entrega do ofício não reiniciou a carência daquela peça");
+                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
+                    "a entrega não reiniciou as tentativas daquela peça");
         } finally {
-            BiomeConstructionSupply.routeDelivered(colonyId, Items.WHITE_TERRACOTTA);
+            BiomeConstructionSupply.routeDelivered(colonyId, Items.BREWING_STAND);
         }
 
         context.complete();

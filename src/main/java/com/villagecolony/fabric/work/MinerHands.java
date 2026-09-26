@@ -131,15 +131,11 @@ public final class MinerHands {
         MineFloor.patch(world, job.target,
                 MinerWork.mineOf(job).map(Mine::plannedCells).orElse(java.util.Set.of()));
 
-        // Regra 30: o minério que não é carvão vai para o baú da boca
-        // da mina, e só transborda para o do mineiro quando aquele
-        // lotar. Decidido aqui, com o bloco em mãos: no baú só
-        // chegam itens, e minério cru não diz de que pedra veio.
+        // Todo recolhimento vai direto para o baú do próprio profissional.
         MinerHaul.Haul haul = MinerHaul.deposit(
                 world,
                 storage,
                 drops,
-                MinerHaul.treasureChestFor(world, job, state),
                 job.target,
                 MinecraftTypeAdapter.toItem(job.wanted).orElse(null));
 

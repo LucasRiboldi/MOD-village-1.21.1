@@ -96,9 +96,8 @@ public final class ColonyChests {
     /**
      * Quanta pedra ainda cabe nos baús dos mineiros desta colônia — 2026-09-25.
      *
-     * <p>É onde o mineiro descarrega (o baú da boca da mina fica com o
-     * minério primeiro, e o que sobra vai para o dele). Baú em chunk
-     * descarregado conta zero: sem ler, não se promete espaço.
+     * <p>É onde o mineiro descarrega diretamente. Baú em chunk descarregado
+     * conta zero: sem ler, não se promete espaço.
      */
     public static int minersRoom(ServerWorld world, UUID colonyId) {
         return roomOf(world, colonyId, ProfessionType.MINER, ResourceGroup.STONE);
@@ -298,9 +297,9 @@ public final class ColonyChests {
      * desenho.
      *
      * <p><b>A Regra 30 foi revogada em 2026-09-15</b>, e esta leitura
-     * <b>fica</b>. O autor mandou parar de <i>depositar</i> na boca — ver
-     * {@code MinerHaul.treasureChestFor} —, e nada foi removido do mundo:
-     * o baú que a colônia já pôs ali continua de pé, com todo o minério
+     * <b>fica</b>. O autor mandou parar de <i>depositar</i> na boca, e nada
+     * foi removido do mundo: o baú que a colônia já pôs ali continua de pé,
+     * com todo o minério
      * que a Regra 30 mandou para lá enquanto vigorou. Parar de lê-lo
      * apagaria esse estoque da contabilidade e devolveria exatamente o
      * defeito que esta função nasceu para corrigir — o fundidor dizendo

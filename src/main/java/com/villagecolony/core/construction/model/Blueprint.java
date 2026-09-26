@@ -274,10 +274,23 @@ public final class Blueprint {
             }
 
             turned.add(new BlueprintBlock(
-                    new ColonyPos(x, at.y(), z), block.block(), block.furniture()));
+                    new ColonyPos(x, at.y(), z),
+                    block.block(),
+                    block.furniture(),
+                    block.facing().map(side -> turned(side, turns))));
         }
 
         return new Blueprint(id, List.copyOf(turned), sizeOf(turned), streetLayer);
+    }
+
+    private static Side turned(Side side, int turns) {
+        Side result = side;
+
+        for (int turn = 0; turn < turns; turn++) {
+            result = result.clockwise();
+        }
+
+        return result;
     }
 
     /**

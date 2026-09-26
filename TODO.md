@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-09-24. Playtest real de ~6h30 analisado (5 colonias,
+**Atualizado:** 2026-09-26. Playtest real de ~6h30 analisado (5 colonias,
 221.814 linhas de log). **Dois erros novos, E47 e E48** — ver "Erros
 abertos" abaixo. Achado central: um construtor ficou preso fisicamente
 longe do lote por 3h30 seguidas (E47), o que impediu qualquer obra de
@@ -86,10 +86,11 @@ Não recomendados:
 - [ ] 🟡 **Templo 4 e outras plantas com a porta na camada 0** ficam como
   estavam (sem camada da rua dentro da planta); conferir em jogo se o piso
   delas também deveria descer.
-- [ ] 🔴 **T1 — obra com todas as peças restantes adiadas nunca fecha** (achado
-  na varredura de 25-09): `WaitingWork.giveUpIfStalled` zera os relógios e
-  devolve `false` para sempre. Proposta: entregar a obra como está. **Aguarda
-  o autor.** Ver `docs/research/2026-09-25-decisoes-simples.md` §1.
+- [x] 🔴 **T1 — obra com todas as peças restantes adiadas nunca fecha:**
+  alternativa A aceita e implementada em 26-09. Depois da janela de
+  `PatienceClock`, a obra parcial é entregue, sai da fila ativa e conserva o
+  lote contra sobreposição. `BuildProgressGameTest` reproduziu o loop antes da
+  correção; rodada integral: 473/473 GameTests. ⬜ ver no save.
 - [ ] 🟠 **T2 — encalhado sem saída fica fora da escala para sempre.** Proposta:
   último recurso com prazo (voltar ao baú). **Aguarda o autor.**
 - [ ] 🟠 **Decisões em aberto com resposta simples proposta** (25-09): ver
@@ -110,10 +111,10 @@ Não recomendados:
   (`BlockShaping.leanOnAWall`), e a adiada por versão anterior volta à fila
   quando já cabe (`ConstructionProject.retry`). `WallPieceGameTest` falhava
   antes da correção com o sintoma do jogo.
-- [ ] 🟠 **Guardar a direção na planta.** O `StructureBlueprintReader` lê o
-  `Properties` da paleta e descarta o `facing`; a peça agora cabe, mas numa
-  parede qualquer, não na do desenho. Pede o `facing` no `BlueprintBlock`,
-  girado junto com a casa — mexe no `core`, no giro e nos construtores.
+- [x] 🟠 **Guardar a direção horizontal na planta — ADR-008:** implementado em
+  26-09. `StructureBlueprintReader` conserva `facing`, `Blueprint.rotated`
+  gira o lado com a casa e o construtor aplica a direção antes do fallback de
+  geometria. Testes cobrem rotação, jigsaw e cama. ⬜ conferir aparência no save.
 - [ ] 🟡 A retomada relê o mundo e devolve como pendente toda peça riscada
   (tocha pela barreira de teste, substituto como "no caminho": as três
   `stone_stairs` do telhado a cada carga). A obra fecha, mas a contagem
@@ -449,8 +450,8 @@ Esta fila separa falhas reproduzíveis ou coberturas que podem ser tratadas
 com código e testes locais das validações que continuam dependendo de um save.
 
 - [x] **Criador encerrado:** `SHEPHERD` assume vagas, fundação, tarefas, nome e baú do antigo `BREEDER`; saves antigos são migrados na leitura. Unitarios e GameTests de nome, bau, fundacao e trabalho do Pastor passaram.
-- [x] **Cadeia da terracota da obra:** a peca exata continua preferida, mas a tag Vanilla de terracotas pode substitui-la; `CLAY` alimenta a fornalha para terracota neutra. O `CARPENTER` ainda fabrica o fermentador pela receita Vanilla quando houver haste e pedregulho; sem rota local para a haste, a politica de suprimento da obra entrega o fermentador final. Os tres GameTests de substituicao, cadeia de argila e bolas de argila falharam antes da correcao e passam depois.
-- [x] **Suprimento de obra sem rota no bioma:** a construcao consulta sua familia de alternativas e a arvore de receitas Vanilla. Se nenhuma rota local existir, a peca preferida aparece no bau da obra quando demandada; se qualquer rota existir, ela permanece tarefa dos oficios. `BuilderGameTest` cobre fermentador sem haste de blaze e porta de carvalho em planicie.
+- [x] **Cadeia da terracota da obra:** a peca exata continua preferida, mas a tag Vanilla de terracotas pode substitui-la; `CLAY` alimenta a fornalha para terracota neutra. O `CARPENTER` ainda fabrica o fermentador pela receita Vanilla quando houver haste e pedregulho. So na ausencia de toda rota profissional a politica de suprimento pode entregar a peca final.
+- [x] **Suprimento de obra sem rota profissional:** a construcao consulta sua familia de alternativas e a arvore de receitas Vanilla. Se nenhuma profissao puder recolher ou fabricar nenhuma alternativa, a terceira tentativa libera a peca preferida de manufatura; se houver rota, ela permanece tarefa dos oficios. O contador sobrevive ao save. O baú do construtor e prioritario e, se ausente ou cheio, outro bau livre da colonia recebe a peca. `BuilderGameTest` cobre tres tentativas, fermentador sem haste de blaze, porta de carvalho e fallback de bau cheio.
 - [x] **Inventario por bioma das plantas construtiveis:** `ConstructionSupplyAuditGameTest` le todos os 143 NBTs permitidos e registra, por estilo, as estruturas, recursos por rota local, itens automaticos e blocos formados no local. O resultado versionado esta em `docs/technical/Auditoria-2026-09-22-Suprimento-Estruturas-Vanilla.md`.
 - [x] **P2.1 — leitura de baus do ciclo:** estoque, capacidade de `WOOD` e capacidade de `PLANKS` agora saem da mesma fotografia por ciclo; a varredura continua sem carregar chunks. `StorageGameTest.theSurveyKeepsCapacityForWoodAndPlanks` compara slots vazios, pilhas parciais e item do jogador com a regra de deposito anterior.
 - [ ] **Medir P2.1 no save:** confirmar, pela linha `Colony cycle took`, se o ciclo que mediu 112 ms fica abaixo de 50 ms. O teste automatizado prova equivalencia funcional, nao milissegundos de uma maquina real.
@@ -1043,7 +1044,8 @@ Comida · água · o fazendeiro (tem enxada e baú desde a Fase 4 e nunca teve c
 ### Fora dos níveis — dívida que não bloqueia
 
 - **13 arquivos de código acima de 500 linhas**, e 11 de teste. `VillageDetectionHandler` é o pior com **1.107**, e o corte dele é o próximo.
-- **ADR-008** (orientação) e **ADR-007** (fusão), decididas e por escrever.
+- **ADR-007** (fusão), decidida e por escrever. A parte horizontal da
+  **ADR-008** entrou em 26-09; eixo, metade e forma continuam fora do escopo.
 - **Regra 16** — distância mínima e máxima entre construções.
 - **O ícone** — 1,95 MB num jar de 2,29 MB.
 - **Cenário de teste por bioma.** A planície escondeu **duas vezes** que o deserto estava quebrado.
@@ -1068,7 +1070,7 @@ Comida · água · o fazendeiro (tem enxada e baú desde a Fase 4 e nunca teve c
 | 1 | **E43 — o descanso de 4 ciclos deve valer sempre?** | Anulado pela 2ª passagem do `takeOneTask`. Decisão de projeto |
 | 2 | **TASK-048 — o que uma colônia ABANDONED deixa de fazer?** | Hoje nada. Ela é marcada e continua sendo simulada |
 | 3 | **TASK-044 — a fusão de vilas** | ADR-007 escrita em 08-21, não implementada |
-| 4 | **TASK-046 — a orientação dos blocos** | ADR-008 escrita em 08-21, forma (a). Metade do E8 fechou em 08-15; a orientação fica |
+| 4 | **TASK-046 — propriedades além de `facing`** | O lado horizontal da ADR-008 entrou em 26-09; eixo, metade e forma ainda pedem decisão e testes próprios |
 | 6 | **E38 — o baú do trabalhador assoreia** | Dar consumidor ou descarte a vara, maçã e muda. **Decisão de projeto** |
 | 7 | **E45 — como a mina troca de rota no fundo?** | Geometria, boca estável, migração do save e novo GameTest; não há ADR atual |
 

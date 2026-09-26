@@ -165,7 +165,8 @@ public final class SmelterWork {
      * trabalhadores, como o fabricante fazia antes de
      * {@link ColonyChests} existir; era dívida conhecida, e ela cobrou
      * mais caro do que a ordem: o registro de trabalhadores não contém o
-     * baú da boca da mina, e é lá que a Regra 30 põe o minério.
+     * baú histórico da boca da mina, que ainda pode guardar minério de saves
+     * anteriores.
      *
      * @return se ainda há o que fundir
      */
@@ -200,10 +201,10 @@ public final class SmelterWork {
         }
 
         // <b>Pelo ColonyChests, e não pelo registro de trabalhadores</b> —
-        // P0.3, 2026-09-11. Percorrer os trabalhadores era o que deixava
-        // o baú da boca da mina de fora, e é lá que a Regra 30 põe o
-        // minério: o fundidor dizia "nothing in the colony chests to
-        // smelt" 34 vezes na sessão de 09-04 ao lado do ferro dele.
+        // P0.3, 2026-09-11. Percorrer os trabalhadores deixava o baú
+        // histórico da boca da mina de fora: o fundidor dizia "nothing in
+        // the colony chests to smelt" ao lado de minério deixado ali antes
+        // da regra de depósito direto no baú profissional.
         //
         // Do baú do próprio fundidor para fora, que é a Regra 10: a
         // fornalha fica onde ele está, e andar menos com o cru é o certo.

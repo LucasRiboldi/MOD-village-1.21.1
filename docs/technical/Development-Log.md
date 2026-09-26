@@ -31,6 +31,34 @@ o §18 do Project-State. O texto das entradas fica como estava.
 
 ---
 
+## Entry 2026-09-26 - alternativa A, obra adiada e orientacao horizontal
+
+O autor escolheu a alternativa A da auditoria de travamentos criticos. A
+revisao confirmou que recusa persistida da mina, desvios, orcamento do
+planejador e limpeza central ja existiam. A entrega atacou as duas lacunas
+demonstradas restantes sem ampliar a politica de terreno.
+
+O `BuildProgressGameTest` reproduziu primeiro o loop de uma obra cuja fila
+restante estava toda adiada: `WaitingWork` apagava os relogios e devolvia
+`false` para sempre. Depois da correcao, a janela de `PatienceClock` encerra a
+tarefa e o projeto ativos, registra a construcao parcial e conserva o lote
+contra sobreposicao.
+
+A parte horizontal da ADR-008 entrou no modelo neutro: `BlueprintBlock`
+carrega `Optional<Side>`, o leitor conserva `facing` da paleta e do
+`final_state` de jigsaw, e a rotacao gira o lado junto da planta. O Fabric
+aplica essa direcao antes das regras de geometria; cama bloqueada ainda usa o
+fallback seguro. Testes cobrem rotacao, leitura e colocacao.
+
+Verificacao: a fase vermelha de T1 falhou somente no GameTest alterado; a fase
+vermelha da orientacao falhou na compilacao do teste pela ausencia do novo
+contrato. Depois da implementacao, o teste unitario focado passou e
+`runGametest --rerun-tasks` fechou 473/473 e `gradlew build` também passou. O
+playtest no save fica registrado separadamente; a politica de lote a 1-2
+blocos da rua nao foi alterada sem ADR.
+
+---
+
 ## Entry 2026-09-23 - P1.4, telemetria e baus seguros de vila
 
 O mod passou a escrever `VC_ACTIVITY version=1` somente nas transicoes ja
@@ -9620,3 +9648,30 @@ reutilizavel.
   - Liberar o lote da obra largada sem blocos quebrou 3 GameTests que garantem
     o contrario (contra sobreposicao): revertido, fica para decisao do autor.
 - Resultados: build limpo, 1137 unitarios; GameTest 473/473.
+
+### 2026-09-26 (noite) - Suprimento por tentativa e destino do construtor
+
+O autor mudou a regra da obra: uma peca so pode aparecer quando nenhuma
+profissao do mod consegue recolhe-la ou fabrica-la. A verificacao continua
+percorrendo receitas Vanilla e fundicao, mas agora pergunta pela capacidade
+das profissoes, nao pela disponibilidade do bioma. Nas duas primeiras faltas a
+obra espera; a terceira libera a peca de manufatura. Recursos naturais seguem
+fora desse fallback e continuam exigindo o oficio responsavel.
+
+`BiomeConstructionSupply` guarda a contagem por colonia e item em
+`WorkMarksSavedData`, por isso reiniciar o servidor nao apaga uma tentativa
+ja observada. Uma entrega real limpa a contagem. O deposito procura primeiro o
+bau do `BUILDER`; se ele nao existir ou estiver cheio, percorre os demais baus
+livres registrados na colonia. O teste de mundo cobre tanto o terceiro pedido
+do fermentador sem haste de blaze como o fallback para outro bau quando o do
+construtor esta cheio.
+
+O caminho morto que ainda mencionava o bau da boca da mina foi removido de
+`MinerHaul`: o mineiro deposita diretamente no proprio bau, como as demais
+profissoes. O excedente continua no mundo, sem invadir inventario de outro
+trabalhador.
+
+Resultados: `./gradlew.bat test --rerun-tasks` passou; `./gradlew.bat
+runGametest --rerun-tasks` passou com **474/474** em 59,98 s. O fluxo ainda
+precisa de playtest no save real, em especial a terceira falta de uma peca sem
+rota e o fallback com o bau do construtor cheio.
