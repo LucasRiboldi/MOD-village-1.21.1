@@ -145,7 +145,7 @@ public class BuildProgressGameTest implements FabricGameTest {
         });
     }
 
-    /** Uma espera por apoio fisico nao e ausencia de progresso da obra. */
+    /** Uma obra sem nenhuma peca colocavel cede a fila depois da paciencia. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress")
     public void aDeferredPieceIsNotAbandonedByTheProgressClock(TestContext context) {
         ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ORIGIN));
@@ -177,11 +177,13 @@ public class BuildProgressGameTest implements FabricGameTest {
 
             clock.setTime(time + PatienceClock.TICKS + 1);
 
-            context.assertFalse(
+            context.assertTrue(
                     WaitingWork.giveUpIfStalled(context.getWorld(), colony, project),
-                    "o relogio abandonou uma peca que esperava uma mudanca no apoio");
-            context.assertTrue(VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isPresent(),
-                    "a obra parcial saiu do registro antes de o apoio fisico mudar");
+                    "a obra totalmente adiada segurou a fila depois da janela de paciencia");
+            context.assertTrue(VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isEmpty(),
+                    "a obra totalmente adiada continuou ativa depois de ceder a fila");
+            context.assertTrue(VillageColonyMod.BUILDINGS.isColonyInfrastructure(origin),
+                    "a obra parcial sumiu em vez de preservar o lote contra sobreposicao");
         } finally {
             clock.setTime(time);
             clock.setTimeOfDay(day);

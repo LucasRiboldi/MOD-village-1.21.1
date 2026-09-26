@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 
@@ -32,6 +33,10 @@ import java.util.UUID;
  * borda inteira virar viveiro.
  */
 public final class FarmerNursery {
+
+    static {
+        ServerMemory.register(FarmerNursery.class, FarmerNursery::clearAll);
+    }
 
     /**
      * Quantos tiques entre um plantio e o seguinte.
@@ -78,12 +83,12 @@ public final class FarmerNursery {
      * @return {@code true} se uma árvore nasceu agora
      */
     public static boolean plantIfItIsTime(ServerWorld world, UUID colonyId, BlockPos centre) {
-        if (!isTime(colonyId, world.getTime())) {
-            return false;
-        }
+        return plant(world, colonyId, centre, 1) > 0;
+    }
 
-        if (countNurseries(world, centre) >= TARGET_TREES) {
-            return false;
+    private static int plant(ServerWorld world, UUID colonyId, BlockPos centre, int wanted) {
+        if (!isTime(colonyId, world.getTime())) {
+            return 0;
         }
 
         Optional<Block> sapling =
@@ -92,28 +97,63 @@ public final class FarmerNursery {
         if (sapling.isEmpty()) {
             // Bioma sem madeira declarada: não é vila que o mod atende, e
             // inventar uma espécie aqui seria escolher por conta própria.
-            return false;
+            return 0;
         }
 
-        Optional<BlockPos> spot = spotOnTheEdge(world, centre);
+        int room = Math.min(wanted, TARGET_TREES - countNurseries(world, centre));
 
-        if (spot.isEmpty()) {
-            return false;
+        if (room <= 0) {
+            // <b>Cheio também marca a hora</b> — spark de 2026-09-26. Com os
+            // dez viveiros de pé, cada chamada recontava ~166 mil blocos e
+            // não guardava nada; lenhador e fazendeiro sem trabalho chamam
+            // o tempo todo, e a conta virou o terceiro maior custo do mod.
+            // Cheio agora espera o mesmo intervalo de quem plantou.
+            LAST.put(colonyId, world.getTime());
+
+            return 0;
         }
 
-        if (!TreeNursery.plant(world, spot.get(), sapling.get())) {
-            return false;
+        int planted = 0;
+
+        while (planted < room) {
+            Optional<BlockPos> spot = spotOnTheEdge(world, centre);
+
+            if (spot.isEmpty() || !TreeNursery.plant(world, spot.get(), sapling.get())) {
+                break;
+            }
+
+            planted++;
+
+            VillageColonyMod.LOGGER.info(
+                    "Colony {} — the farmer planted {} on rooted dirt at {}, at the village edge",
+                    colonyId.toString().substring(0, 8),
+                    TreeNursery.idOf(sapling.get()),
+                    spot.get().toShortString());
         }
 
-        LAST.put(colonyId, world.getTime());
+        if (planted > 0) {
+            LAST.put(colonyId, world.getTime());
+        }
 
-        VillageColonyMod.LOGGER.info(
-                "Colony {} — the farmer planted {} on rooted dirt at {}, at the village edge",
-                colonyId.toString().substring(0, 8),
-                TreeNursery.idOf(sapling.get()),
-                spot.get().toShortString());
+        return planted;
+    }
 
-        return true;
+    /**
+     * Quantas mudas o lenhador sem árvore pede de uma vez — sessão de
+     * 2026-09-26. A vila de planície sem árvore natural esperou uma muda a cada
+     * cinco minutos, e o lenhador cortou 15 toras em 33 minutos. Com quatro, o
+     * teto de dez fecha em três plantios.
+     */
+    public static final int BATCH = 4;
+
+    /**
+     * O plantio do lenhador que não achou árvore: até {@link #BATCH} mudas,
+     * no mesmo ritmo e no mesmo teto do fazendeiro.
+     *
+     * @return quantas mudas nasceram agora
+     */
+    public static int plantBatchIfItIsTime(ServerWorld world, UUID colonyId, BlockPos centre) {
+        return plant(world, colonyId, centre, BATCH);
     }
 
     /**

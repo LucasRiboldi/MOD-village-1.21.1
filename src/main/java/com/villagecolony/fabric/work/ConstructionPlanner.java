@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.integration.SweepState;
 import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.fabric.integration.LotClearance;
@@ -74,6 +75,10 @@ import java.util.function.Predicate;
  * retomada do save, que é a mesma decisão vista de trás para frente.
  */
 public final class ConstructionPlanner {
+
+    static {
+        ServerMemory.register(ConstructionPlanner.class, ConstructionPlanner::clearAll);
+    }
 
     /**
      * Como esta fase aparece na linha de {@link IdleLog}.
@@ -253,7 +258,18 @@ public final class ConstructionPlanner {
                     .map(roads -> roads.blocksToTheNearestRoad(open.get().origin()))
                     .orElseGet(OptionalInt::empty);
 
-            if (ConstructionReach.isOutOfReach(
+            // <b>Sem índice, a rua que o lote encosta responde</b> — sessão
+            // longa de 2026-09-26: a casa média, posta ao lado de uma rua, foi
+            // largada um minuto depois porque o índice ainda não existia e a
+            // conta caiu no centro (72 > 64). Ver VillageRoad.besidePaving.
+            boolean besideARoad = toTheRoad.isEmpty() && VillageRoad.besidePaving(
+                    world,
+                    MinecraftTypeAdapter.toBlockPos(open.get().origin()),
+                    open.get().blueprint().size().x(),
+                    open.get().blueprint().size().y(),
+                    open.get().blueprint().size().z());
+
+            if (!besideARoad && ConstructionReach.isOutOfReach(
                     open.get().origin(), colony.center(), searchRadius, toTheRoad)) {
 
                 VillageColonyMod.LOGGER.info(

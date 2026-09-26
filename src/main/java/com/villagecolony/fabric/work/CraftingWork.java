@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import net.minecraft.item.Item;
 import net.minecraft.block.Block;
@@ -69,6 +70,10 @@ import java.util.UUID;
  * sai do mundo antes de ter para onde ir.
  */
 public final class CraftingWork {
+
+    static {
+        ServerMemory.register(CraftingWork.class, CraftingWork::clearAll);
+    }
 
     /**
      * Quantos ticks uma peça leva.

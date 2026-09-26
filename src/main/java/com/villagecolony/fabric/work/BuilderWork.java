@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
@@ -76,6 +77,10 @@ import java.util.UUID;
  * obra.
  */
 public final class BuilderWork {
+
+    static {
+        ServerMemory.register(BuilderWork.class, BuilderWork::clearAll);
+    }
 
     /** Um bloco por segundo. Ver a Regra 2, que fez o mesmo com a derrubada. */
     static final int TICKS_PER_BLOCK = 20;
@@ -215,6 +220,8 @@ public final class BuilderWork {
     }
 
     /**
+     * Um passo do construtor neste tique.
+     *
      * @return false quando este trabalho acabou e pode sair do registro
      */
     static boolean step(ServerWorld world, UUID workerId, Job job) {

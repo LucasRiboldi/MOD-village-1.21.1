@@ -143,7 +143,7 @@ public final class TreeChoice {
                 GatheringReach.radius(
                         VillageColonyMod.COLONIES.find(job.task.colonyId())
                                 .map(Colony::observedBeds).orElse(0),
-                        LumberjackWork.SEARCH_RADIUS),
+                        LumberjackWork.searchRadius),
                 log -> !TreeClaims.isTaken(log)
                         && !TreeMarks.isRejected(world, log)
                         && !TreeMarks.isOutOfReach(world, log));
@@ -151,7 +151,9 @@ public final class TreeChoice {
         if (tree.isEmpty()) {
             // Nenhuma árvore ao alcance. Não é motivo para encerrar: a
             // floresta cresce, e a muda replantada volta a ser árvore.
-            FarmerNursery.plantIfItIsTime(world, job.task.colonyId(), job.center);
+            // Em lote — 2026-09-26: uma muda a cada cinco minutos deu 15
+            // toras em 33 minutos numa vila sem árvore natural.
+            FarmerNursery.plantBatchIfItIsTime(world, job.task.colonyId(), job.center);
 
             return LumberjackWork.Outcome.SEARCHED;
         }

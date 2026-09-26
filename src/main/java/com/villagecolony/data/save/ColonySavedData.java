@@ -204,6 +204,8 @@ public final class ColonySavedData extends PersistentState {
     }
 
     /**
+     * O mesmo, gravando também as obras em andamento e as construções.
+     *
      * @param currentProjects as obras em andamento, já reduzidas ao que
      *     se grava: identidade, estrutura, lugar e estado. O progresso
      *     não vai para o disco — quem sabe o que está de pé é o mundo.
@@ -222,6 +224,8 @@ public final class ColonySavedData extends PersistentState {
     }
 
     /**
+     * O mesmo, gravando também a mina de cada colônia.
+     *
      * @param currentMines a mina de cada colônia — a boca, o lado da
      *     descida, o lado da galeria e a fronteira já cavada. É a única
      *     parte do trabalho do mineiro que o mundo <b>não</b> guarda: os
@@ -240,6 +244,8 @@ public final class ColonySavedData extends PersistentState {
     }
 
     /**
+     * O mesmo, gravando também o índice de ruas.
+     *
      * @param currentRoads o índice de ruas de cada colônia. É a resposta
      *     cara de uma pergunta barata de reconferir: montá-lo custa
      *     varrer 16.641 colunas em dezessete ciclos, e cada coluna dele
@@ -258,6 +264,8 @@ public final class ColonySavedData extends PersistentState {
     }
 
     /**
+     * O mesmo, gravando também a varredura que parou no meio.
+     *
      * @param currentSweeps a varredura de cada colônia que parou no meio
      *     do raio, com o que ela já achou. Medido em 2026-08-27: uma
      *     sessão de catorze passagens das dezessete necessárias gravava
@@ -277,6 +285,8 @@ public final class ColonySavedData extends PersistentState {
     }
 
     /**
+     * O mesmo, gravando também o traço de atividade.
+     *
      * @param currentActivityTraces o traço circular de atividade de cada
      *     colônia — decisão 7B, 2026-09-24. Sem UUID de coordenada, sem
      *     texto livre: seis campos por evento, no máximo

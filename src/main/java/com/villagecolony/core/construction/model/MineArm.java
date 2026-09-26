@@ -25,7 +25,7 @@ import java.util.function.IntPredicate;
  *
  * <p><b>A geometria já estava pronta.</b> O nível da mina virou, em
  * 2026-09-04 de manhã, um anel de quatro braços em volta do poço: a
- * galeria anda {@link MineShaft#ARM} colunas, vira, e na quarta curva a
+ * galeria anda {@code MineShaft.ARM} colunas, vira, e na quarta curva a
  * mina desce. Aqueles quatro braços eram percorridos <b>em sequência</b>
  * por um mineiro só. São os mesmos quatro, agora <b>ao mesmo tempo</b>,
  * um por mineiro.
@@ -81,8 +81,8 @@ public final class MineArm {
     /**
      * Se este braço acabou.
      *
-     * <p>Duas portas para cá: chegar ao fim das {@link MineShaft#ARM}
-     * colunas, ou esbarrar tantas vezes que não valha insistir. Nas duas
+     * <p>Duas portas para cá: chegar ao fim das {@link MineShaft#ARM_BLOCKS}
+     * posições, ou esbarrar tantas vezes que não valha insistir. Nas duas
      * o braço para de aceitar picareta, e o mineiro procura outro livre.
      *
      * <p>Quando os quatro acabam, a {@link Mine} desce — que é a mesma
@@ -124,7 +124,7 @@ public final class MineArm {
      * Se a galeria deste braço chegou ao fim dele.
      *
      * <p>O teto de raio do autor, perguntado antes de a posição ser
-     * gasta. Ver {@link MineShaft#ARM}.
+     * gasta. Ver {@link MineShaft#ARM_BLOCKS}.
      */
     public boolean reachedTheEndOfTheArm() {
         return shaft.beyondTheArm(cut);

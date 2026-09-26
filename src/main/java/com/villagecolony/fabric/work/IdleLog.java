@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.coordination.IdleReason;
 
@@ -33,6 +34,10 @@ import java.util.UUID;
  * nova deve dizer onde cada colônia está.
  */
 public final class IdleLog {
+
+    static {
+        ServerMemory.register(IdleLog.class, IdleLog::clearAll);
+    }
 
     /** O último motivo registrado, por colônia e assunto. */
     private static final Map<Key, IdleReason> LAST = new HashMap<>();

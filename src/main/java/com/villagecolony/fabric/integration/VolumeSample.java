@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 
 import net.minecraft.block.Block;
@@ -52,6 +53,10 @@ import java.util.Set;
  * medindo — a mesma escolha do {@code ProtectionSample}.
  */
 public final class VolumeSample {
+
+    static {
+        ServerMemory.register(VolumeSample.class, VolumeSample::clearAll);
+    }
 
     /** Por que o volume foi recusado. */
     public enum Why {

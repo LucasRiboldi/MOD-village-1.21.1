@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-09-24. Playtest real de ~6h30 analisado (5 colonias,
+**Atualizado:** 2026-09-26. Playtest real de ~6h30 analisado (5 colonias,
 221.814 linhas de log). **Dois erros novos, E47 e E48** — ver "Erros
 abertos" abaixo. Achado central: um construtor ficou preso fisicamente
 longe do lote por 3h30 seguidas (E47), o que impediu qualquer obra de
@@ -26,18 +26,104 @@ próxima avaliação mede.
 |---|---|---|---|
 | 1 ✅ | Limite de **tempo** para o planejador (`SweepDeadline`, 15 ms) — **feito**, ⬜ ver `cycle_over_tick` cair em jogo | baixo / baixo | `cycle_over_tick` cai; C13 ≥ 3 |
 | 2 ✅ | Cota ajustável (`PlanningBudget`), e em jogo **só a vila foco planeja e é sondada** (`VillageFocus`, decisão do autor) — **feito** | baixo / baixo | teste unitário da regra |
-| 3 | Registro único de estado de servidor (`resetAll`) no lugar de 78 `clearAll` à mão | médio / baixo | teste de inscrição; C05 ≥ 3 |
-| 4 | Matar sobreviventes do PIT (`MineShaft`, `ProfessionAssigner`, `ColonyCycle`) | médio / nulo | C08 ≥ 85% |
+| 3 ✅ | Registro único (`ServerMemory.resetAll`) no lugar de 78 `clearAll` à mão — **feito**. Achou `BiomeConstructionSupply` sem limpeza nenhuma e as duas listas divergentes. **C05 não muda:** os campos continuam; o que acabou foi o esquecimento | médio / baixo | teste de inscrição ✅; C05 ≥ 3 pede consolidar os campos (R2) |
+| 4 ✅ | Matar sobreviventes do PIT nas três classes nomeadas (`MineShaft`, `ProfessionAssigner`, `ColonyCycle`) — **feito** em 25-09, junto com `Building` e `Worker`; só equivalentes restam | médio / nulo | C08 ≥ 85%: **85,14%** em 25-09, com `Mine` e `ColonyGoals` ✅ |
 | 5 | JaCoCo na bateria de jogo (cobertura do `fabric`) | baixo-médio / nulo | cobertura do `fabric` medida |
 | 6 | PR do branch para a `main` (85 commits) | baixo / publica | CI verde no PR — **pede aval do autor** |
 | 7 | `STATE.md` até 150 linhas | baixo / nulo | contagem |
-| 8 | 39 avisos de javadoc e 2 variáveis sem uso | baixo / nulo | C10 = 4 |
+| 8 | Avisos de javadoc — **feito** em 25-09: eram 32 medidos (não 39), agora 0; o total do Error Prone foi de 57 a 25. Faltam as 2 variáveis sem uso | baixo / nulo | C10 = 4 |
 | 9 | Ciclo de tarefa comum aos 7 ofícios | alto / médio | `JOBS` ≤ 2, `giveUp` = 1 — **ADR antes** |
 | 10 | Regras de decisão do `fabric` para o `core` | médio-alto / médio | teste unitário e PIT cobrem as regras — **ADR antes** |
 
 Não recomendados:
 - trocar o `ordinal()` usado como prioridade, que é deliberado e documentado;
 - reescrever o `toResourceType`, que é uma tabela legítima.
+
+## Rodízio e mineiro — 2026-09-25 (sessão das 09:13)
+
+- [x] Obra abandonada só volta na vez do tipo (`HousePlans.isTurnOf`, no
+  reparo e na retomada), decisão do autor. A fusão move a obra terminada
+  para o fim do registro, que é a ordem que o rodízio lê.
+- [x] Mineiro cava enquanto houver espaço nos baús dos mineiros
+  (`ColonyChests.minersRoom` + `ColonyGoals.of(..., stoneRoom, ...)`),
+  decisão do autor.
+- [ ] 🔴 **Mineiro autônomo — ADR-025 (aceita, prioridade do autor):**
+  - [x] fase 1 no código (25-09): `MineMarks` no save, piso sob a passagem
+    (`MineFloor`), mineiro fora da água (`MinerCaution`), linha `brain:` no
+    travamento. ⬜ ver em jogo: `The mine floored`, a pedra recusada
+    continuar recusada depois de carregar, e o que a linha `brain:` diz.
+  - [x] fase 1, resto (25-09): nenhuma pedra com líquido atrás vira alvo
+    (`MineFlooding.holdsBackFluid`). ⬜ ver em jogo: `holds back water or lava`.
+  - [x] fase 2 no código (25-09): `core/movement` + `DetourWalker`, no mineiro
+    travado e no encalhado sem escada. ⬜ ver em jogo: `takes a detour`,
+    `is through its detour`, `its detour failed`.
+  - [ ] fase 3: registro de veios por valor.
+  Pesquisa em `docs/research/2026-09-25-mineiro-autonomo.md` (§9 = o que entrou).
+- [x] 🔴 **Sessão de 26-09 — corrigidos com teste, ⬜ ver em jogo:** lenhador
+  não perde a tarefa procurando árvore (`LumberjackSearchGameTest`); lote de 4
+  mudas (`aLumberjackWithoutTreesGetsABatchOfSaplings`); baú da cama pela regra
+  (b) (`ChestPlacerGameTest`, 3 novos); receita de tingir ignorada
+  (`RecolorRecipesTest`, `CarpetFamilyGameTest`); relógio da ADR-022 salvo
+  (`BiomeConstructionSupplyClockTest`, `WorkMarksSavedDataTest`); desvio com o
+  próprio corpo e com queda (`DetourWalkerGameTest`, 2 novos).
+- [x] 🔴 **Sessão longa de 26-09 — corrigido com teste, ⬜ ver em jogo:** baú
+  para todo aldeão de profissão (`ChestSpawnerGameTest`), vínculo salvo
+  (`WorkMarksSavedDataTest`), peça pronta só de manufatura
+  (`NaturalSupplyGameTest`), pastor e fazendeiro contínuos (`StandingWorkTest`),
+  fundidor sem busca inútil (`FurnaceReachGameTest`), obra só com chão cede
+  lugar (`ConstructionProjectBuiltTest`), guarda de alcance com a rua do lote
+  (**sem teste dedicado**). Sinais: `got a chest of its own`, `will not conjure`.
+- [ ] 🔴 **Lote que não cresce** (68,5% das recusas por rua reservada, pontas de
+  rua que não calçam): medir as pontas, aceitar lote a 1–2 blocos da rua, contar
+  recusa por lote. Ver `docs/research/2026-09-26-sessao-longa.md` §7.1.
+- [ ] 🟠 **Decisão do autor:** obra largada sem nenhum bloco deve liberar o lote?
+  Hoje três GameTests garantem que não (contra sobreposição).
+- [ ] 🟠 Pedreiro e carpinteiro contínuos; aldeão ocioso preso abaixo do chão.
+- [x] 🔴 **Casa na altura da rua, sem terra na base** (26-09, pedido do
+  autor) — `StreetLevelGameTest` (4), `BlueprintStreetLayerTest` (6). ⬜ ver em
+  jogo: casa nova com a porta um acima da rua e sem plataforma de terra; casa
+  antiga não se mexe nem vira reparo.
+- [ ] 🟡 **Templo 4 e outras plantas com a porta na camada 0** ficam como
+  estavam (sem camada da rua dentro da planta); conferir em jogo se o piso
+  delas também deveria descer.
+- [x] 🔴 **T1 — obra com todas as peças restantes adiadas nunca fecha:**
+  alternativa A aceita e implementada em 26-09. Depois da janela de
+  `PatienceClock`, a obra parcial é entregue, sai da fila ativa e conserva o
+  lote contra sobreposição. `BuildProgressGameTest` reproduziu o loop antes da
+  correção; rodada integral: 473/473 GameTests. ⬜ ver no save.
+- [ ] 🟠 **T2 — encalhado sem saída fica fora da escala para sempre.** Proposta:
+  último recurso com prazo (voltar ao baú). **Aguarda o autor.**
+- [ ] 🟠 **Decisões em aberto com resposta simples proposta** (25-09): ver
+  `docs/research/2026-09-25-decisoes-simples.md` §2-§3.
+- [ ] 🔴 **E44/E45 com evidência nova:** o mineiro volta a cada sessão à
+  mesma pedra inalcançável (553, 39, 158), desiste, fica preso a y=41 e o
+  `StrandedEscape` desiste ("no natural, dry way up"); ele fica fora da escala
+  até alguém o soltar. A `MineMarks.refuse` não vai para o save. Próximo
+  passo: ler a geometria da mina nesse ponto (região do save) antes de mexer.
+- [ ] 🟡 Medir em jogo se a escolha de obra ainda cai sempre em
+  `plains_temple_4` com o reparo corrigido ("drawn from none fitting, the
+  offered plan" em todas as linhas antigas).
+
+## Obra que não fecha — 2026-09-25 (sessão das 08:31)
+
+- [x] Peça de parede do miolo (escada de mão, tocha de parede) ficava virada
+  para o norte e era adiada para sempre: agora se apoia na parede que existe
+  (`BlockShaping.leanOnAWall`), e a adiada por versão anterior volta à fila
+  quando já cabe (`ConstructionProject.retry`). `WallPieceGameTest` falhava
+  antes da correção com o sintoma do jogo.
+- [x] 🟠 **Guardar a direção horizontal na planta — ADR-008:** implementado em
+  26-09. `StructureBlueprintReader` conserva `facing`, `Blueprint.rotated`
+  gira o lado com a casa e o construtor aplica a direção antes do fallback de
+  geometria. Testes cobrem rotação, jigsaw e cama. ⬜ conferir aparência no save.
+- [ ] 🟡 A retomada relê o mundo e devolve como pendente toda peça riscada
+  (tocha pela barreira de teste, substituto como "no caminho": as três
+  `stone_stairs` do telhado a cada carga). A obra fecha, mas a contagem
+  "N to go" sobe a cada sessão e parece regressão.
+- [ ] 🟡 A retomada recalcula o giro pela rua a cada carga
+  (`PlanPlacement.blueprintOf`, `NORTH` sem rua); o giro original não fica no
+  save. Não foi a causa desta vez, mas é o mesmo tipo de risco.
+- [ ] 🟢 `ConstructionProject.restore` com peças adiadas não tem teste de
+  unidade (7 mutantes sem cobertura; só os GameTests passam por ali).
 
 ## Avaliação técnica 2026-09-24 — B (3,21/4) — `docs/technical/avaliacao/2026-09-24-17613fa/RELATORIO.md`
 
@@ -54,10 +140,10 @@ As recomendações, cada uma com um aceite que a próxima avaliação mede
   `clearAll` à mão no ciclo de vida.
 - [ ] 🟠 **R3**: ciclo de tarefa comum aos 7 ofícios. **`JOBS` de 8 para ≤2** e
   **`giveUp` de 6 para 1**.
-- [ ] 🟠 **R4**: levar o branch para a `main` por PR. Distância ≤ 10 commits.
-- [ ] 🟡 **R5**: `STATE.md` ≤ 150 linhas.
-- [ ] 🟡 **R6**: sobreviventes do PIT (`MineShaft`, `ProfessionAssigner`,
-  `ColonyCycle`). **C08 ≥ 85%.**
+- [x] 🟠 **R4**: branch levado para a `main` pelo PR #2 (merge `692d8b9`, CI verde).
+- [x] 🟡 **R5**: `STATE.md` ≤ 150 linhas (95; o texto antigo foi arquivado no `Historico`).
+- [x] 🟡 **R6**: sobreviventes do PIT. **C08 ≥ 85% alcançado em 25-09**:
+  1117/1312 = 85,14% (força 94%). Sete classes zeradas ou só com equivalentes.
 - [ ] 🟡 **R7**: tabelas de `if` viram `Map`/`switch`. CC máx ≤ 20.
 - [ ] 🟡 **R8**: JaCoCo no `runGametest` para medir o `fabric`.
 - [ ] 🟢 **R9**: convenção de mensagem de commit (sem prefixo < 10%).
@@ -69,8 +155,58 @@ As recomendações, cada uma com um aceite que a próxima avaliação mede
 - [x] **1. CI nos branches `codex/**`** (`0b1e8b6`). Antes o CI só rodava na `main`.
 - [x] **2. PIT no core** (`987edc9`): `./gradlew pitest`, 77% das mutações
   mortas, força de teste 86%. No CI roda sem reprovar e sobe o relatório.
-  - [ ] 🟡 Matar os sobreviventes: `MineShaft` 37, `ProfessionAssigner` 13,
-    `ColonyCycle` 12, `Building` 12.
+  - [x] Parado do `78e7efc` ao `7619b1d` sem ninguém ver: o
+    `ServerMemoryRegistrationTest` sobe o jogo, o PIT roda sem ele, e o
+    `continue-on-error` do CI calava a falha. Corrigido em 25-09; rodada
+    local com 1312 mutações, 78% mortas, força 86%.
+  - [x] `MineShaft`: 37 → 1 (25-09). Os testes contavam posições e não diziam
+    onde caem; agora fixam coordenadas tiradas à mão da geometria, que são
+    contrato com o cursor salvo. O que sobra (linha 126, `flight <=
+    HELIX_FLIGHTS`) é equivalente: `helix` só recebe índice do caracol e
+    sempre retorna antes da quinta volta.
+  - [x] `Building`: 12 → 0 (25-09). Faltava a caixa exata de `of` por eixo e a
+    fronteira do `touches` (encostar pela face funde, um bloco de vão não).
+  - [x] `ColonyCycle`: 12 → 0 (25-09). O `theTaskIsCancelledWhenTheDeficitIsGone`
+    era **teste vazio** — a tarefa já ia para o lenhador no 1º ciclo, então
+    "nada disponível" valia sem cancelamento nenhum. E a reclassificação do
+    pedido aberto quando a obra passa a precisar dele não tinha teste.
+  - [x] `Worker`: 10 → 4 (25-09). As janelas de memória (desistência, 12
+    passagens; ofício largado, 128) não tinham teste de quando esquecem. Os 4
+    restantes são equivalentes: `shunCyclesFor(0)` com `< 0` dá `8 << 31` = 0;
+    os dois `removeIf` que devolvem `false` deixam entrada vencida que o
+    próximo `rest`/`giveUpProfession` reescreve; `betweenTrades` negativo
+    continua lido como `> 0`.
+  - [x] `ProfessionAssigner`: 9 → 3 (25-09). Nada chegava ao laço dos
+    produtores (os testes paravam no da fundação). Os 3 restantes são
+    equivalentes: `adults <= 15` dá 7 vagas nos dois ramos; os dois
+    `villagerId -> true` viram `false` e a 2ª passada do `assignMissing` aceita
+    todos do mesmo jeito.
+  - [x] `Mine` e `ColonyGoals`: 9 → 0 cada (25-09). No `Mine`, faltava valor
+    exato: `restore` com cut 0, `cuts()` de volta ao disco, a 3ª volta sem
+    picareta, `reroute` reabrindo os braços na hélice nova, mina nova sem
+    descer. No `ColonyGoals`: apetite de tábua sem obra, limiar da lã e do
+    ferro, e as duas listas da obra (fornalha fora do catálogo, superfície).
+  - [x] `BuildingRegistry`: 7 → 1 (25-09), e os 13 sem cobertura cobertos
+    (`all`, `remove`, `removeOfColony`, `clear`, registro novo do
+    `registerOrMerge`). O canto da caixa é inclusivo nos três eixos; a obra
+    pronta nunca é rebaixada no merge. O que sobra é equivalente:
+    `ofColony(null)` devolvendo `emptyList` em vez de `ArrayList` vazia.
+  - [x] `ConstructionProject`: 4 → 0 (25-09). Posição por eixo, e o teste de
+    adiamento comparava só o material de dois blocos de pedregulho — passava
+    com o adiamento ignorado.
+  - [x] `ColonyRoads`: 4 → 1 (25-09). O teste recentrava na origem, onde
+    `x - centro` e `x + centro` coincidem. O que sobra é equivalente: `<` virando
+    `<=` num mínimo só troca o valor por um igual.
+  - [x] `VacancyEnforcer`: 4 → 2 e `HiringLog`: 4 → 0 (25-09). Faltava o
+    posto fundacional com dois ocupantes (sai só um), o teto de 64 colônias do
+    registro e o separador do relatório. Os 2 restantes são equivalentes: as
+    sobrecargas sem `replacements` passam 0, e o laço sai antes de dispensar —
+    em produção ninguém as chama; só os testes, para afirmar exatamente isso.
+  - [ ] 🟢 50 sobreviventes em 25-09 (87,73% mortas); nenhuma classe passa de
+    4, e as de 4 (`Worker`) são equivalentes.
+  - [x] O passo do PIT no CI reprova quando o PIT nem começa (25-09): saiu o
+    `continue-on-error`; número baixo continua sem reprovar, porque não há
+    `mutationThreshold`.
 - [x] **3. GameTests intermitentes isolados** (`668c915` e `4590e4c`):
   lote na rocha, viveiro de dez e `ChestMarker`. Três rodadas 433/433,
   mas ainda sem prova de cura; seguir medindo por repetição.
@@ -78,8 +214,16 @@ As recomendações, cada uma com um aceite que a próxima avaliação mede
   o procedimento em `docs/technical/Profiling-spark.md` (`e91f6be`).
   ⬜ gravar o perfil no próximo playtest (196 ciclos acima de um tique).
 - [x] **5. Error Prone só com avisos** (`7040c23`). Código morto removido.
-  - [ ] 🟡 72 avisos restantes, quase todos de javadoc (InvalidLink 24,
-    MissingSummary 12, NotJavadoc 7); `EnumOrdinal` 7, `LongDoubleConversion` 4.
+  - [x] Avisos de javadoc do Error Prone zerados em 25-09 (32 → 0; 57 → 25 no
+    total). Sete `NotJavadoc` eram comentário separado do método pela divisão
+    de classes, e um deles escondia outro link quebrado.
+  - [ ] 🟡 25 avisos de código: `EnumOrdinal` 7 (deliberado, ver "Não
+    recomendados"), `ImmutableEnumChecker` 5, `LongDoubleConversion` 4,
+    `UnusedVariable` 2, `MissingOverride` 2, `IntLongMath` 2, e 1 de
+    `UnusedMethod`, `UnnecessaryLambda` e `BoxingComparator`.
+  - [ ] 🟢 `./gradlew javadoc` volta a passar desde 25-09 (tinha 6 erros de
+    link), mas o doclint ainda dá 100+ avisos, quase todos `no @param` em
+    record. Não entram no C10, que mede o Error Prone.
 - [x] **6. fabric-loader-junit** (`0ed2e52`). Teste unitário lê o registro;
   as tags não, porque vêm do datapack do servidor.
 - [ ] 🟢 **7. Testes de cliente (`fabric-client-gametest`)**: guardado
@@ -306,8 +450,8 @@ Esta fila separa falhas reproduzíveis ou coberturas que podem ser tratadas
 com código e testes locais das validações que continuam dependendo de um save.
 
 - [x] **Criador encerrado:** `SHEPHERD` assume vagas, fundação, tarefas, nome e baú do antigo `BREEDER`; saves antigos são migrados na leitura. Unitarios e GameTests de nome, bau, fundacao e trabalho do Pastor passaram.
-- [x] **Cadeia da terracota da obra:** a peca exata continua preferida, mas a tag Vanilla de terracotas pode substitui-la; `CLAY` alimenta a fornalha para terracota neutra. O `CARPENTER` ainda fabrica o fermentador pela receita Vanilla quando houver haste e pedregulho; sem rota local para a haste, a politica de suprimento da obra entrega o fermentador final. Os tres GameTests de substituicao, cadeia de argila e bolas de argila falharam antes da correcao e passam depois.
-- [x] **Suprimento de obra sem rota no bioma:** a construcao consulta sua familia de alternativas e a arvore de receitas Vanilla. Se nenhuma rota local existir, a peca preferida aparece no bau da obra quando demandada; se qualquer rota existir, ela permanece tarefa dos oficios. `BuilderGameTest` cobre fermentador sem haste de blaze e porta de carvalho em planicie.
+- [x] **Cadeia da terracota da obra:** a peca exata continua preferida, mas a tag Vanilla de terracotas pode substitui-la; `CLAY` alimenta a fornalha para terracota neutra. O `CARPENTER` ainda fabrica o fermentador pela receita Vanilla quando houver haste e pedregulho. So na ausencia de toda rota profissional a politica de suprimento pode entregar a peca final.
+- [x] **Suprimento de obra sem rota profissional:** a construcao consulta sua familia de alternativas e a arvore de receitas Vanilla. Se nenhuma profissao puder recolher ou fabricar nenhuma alternativa, a terceira tentativa libera a peca preferida de manufatura; se houver rota, ela permanece tarefa dos oficios. O contador sobrevive ao save. O baú do construtor e prioritario e, se ausente ou cheio, outro bau livre da colonia recebe a peca. `BuilderGameTest` cobre tres tentativas, fermentador sem haste de blaze, porta de carvalho e fallback de bau cheio.
 - [x] **Inventario por bioma das plantas construtiveis:** `ConstructionSupplyAuditGameTest` le todos os 143 NBTs permitidos e registra, por estilo, as estruturas, recursos por rota local, itens automaticos e blocos formados no local. O resultado versionado esta em `docs/technical/Auditoria-2026-09-22-Suprimento-Estruturas-Vanilla.md`.
 - [x] **P2.1 — leitura de baus do ciclo:** estoque, capacidade de `WOOD` e capacidade de `PLANKS` agora saem da mesma fotografia por ciclo; a varredura continua sem carregar chunks. `StorageGameTest.theSurveyKeepsCapacityForWoodAndPlanks` compara slots vazios, pilhas parciais e item do jogador com a regra de deposito anterior.
 - [ ] **Medir P2.1 no save:** confirmar, pela linha `Colony cycle took`, se o ciclo que mediu 112 ms fica abaixo de 50 ms. O teste automatizado prova equivalencia funcional, nao milissegundos de uma maquina real.
@@ -900,7 +1044,8 @@ Comida · água · o fazendeiro (tem enxada e baú desde a Fase 4 e nunca teve c
 ### Fora dos níveis — dívida que não bloqueia
 
 - **13 arquivos de código acima de 500 linhas**, e 11 de teste. `VillageDetectionHandler` é o pior com **1.107**, e o corte dele é o próximo.
-- **ADR-008** (orientação) e **ADR-007** (fusão), decididas e por escrever.
+- **ADR-007** (fusão), decidida e por escrever. A parte horizontal da
+  **ADR-008** entrou em 26-09; eixo, metade e forma continuam fora do escopo.
 - **Regra 16** — distância mínima e máxima entre construções.
 - **O ícone** — 1,95 MB num jar de 2,29 MB.
 - **Cenário de teste por bioma.** A planície escondeu **duas vezes** que o deserto estava quebrado.
@@ -925,7 +1070,7 @@ Comida · água · o fazendeiro (tem enxada e baú desde a Fase 4 e nunca teve c
 | 1 | **E43 — o descanso de 4 ciclos deve valer sempre?** | Anulado pela 2ª passagem do `takeOneTask`. Decisão de projeto |
 | 2 | **TASK-048 — o que uma colônia ABANDONED deixa de fazer?** | Hoje nada. Ela é marcada e continua sendo simulada |
 | 3 | **TASK-044 — a fusão de vilas** | ADR-007 escrita em 08-21, não implementada |
-| 4 | **TASK-046 — a orientação dos blocos** | ADR-008 escrita em 08-21, forma (a). Metade do E8 fechou em 08-15; a orientação fica |
+| 4 | **TASK-046 — propriedades além de `facing`** | O lado horizontal da ADR-008 entrou em 26-09; eixo, metade e forma ainda pedem decisão e testes próprios |
 | 6 | **E38 — o baú do trabalhador assoreia** | Dar consumidor ou descarte a vara, maçã e muda. **Decisão de projeto** |
 | 7 | **E45 — como a mina troca de rota no fundo?** | Geometria, boca estável, migração do save e novo GameTest; não há ADR atual |
 

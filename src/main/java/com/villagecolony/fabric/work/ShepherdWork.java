@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.IdleReason;
@@ -48,6 +49,10 @@ import java.util.UUID;
  * para sempre.
  */
 public final class ShepherdWork {
+
+    static {
+        ServerMemory.register(ShepherdWork.class, ShepherdWork::clearAll);
+    }
 
     /** Alcance de braço, medido no plano. O mesmo do lenhador. */
     private static final int REACH = 3;

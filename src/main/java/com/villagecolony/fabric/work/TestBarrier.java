@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.type.ResourceId;
@@ -45,6 +46,10 @@ import java.util.UUID;
  * volta a valer sem exceção.
  */
 public final class TestBarrier {
+
+    static {
+        ServerMemory.register(TestBarrier.class, TestBarrier::clearAll);
+    }
 
     /**
      * As cinco peças, e a cadeia que deveria ter posto cada uma no baú.

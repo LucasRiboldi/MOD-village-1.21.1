@@ -471,4 +471,41 @@ class HousePlansTest {
                     other + " não é moradia e passou pelo filtro");
         }
     }
+
+    // --- obra abandonada só volta na vez do tipo dela, 2026-09-25 ---
+    //
+    // Decisão do autor depois do playtest de 25-09: o reparo reabria o templo
+    // abandonado no mesmo segundo em que a colônia desistia dele, antes da
+    // regra do rodízio, e a vila ficava presa a templos.
+
+    /** Logo depois de desistir do templo, a vez é da casa. */
+    @Test
+    void rightAfterGivingUpATempleItIsNotItsTurn() {
+        List<Building> built = List.of(building(SMALL, true), building(TEMPLE, false));
+
+        assertFalse(HousePlans.isTurnOf(built, 0, 0, TEMPLE), "o templo largado voltou na hora");
+        assertTrue(HousePlans.isTurnOf(built, 0, 0, SMALL), "a vez da casa não aceitou casa");
+    }
+
+    /**
+     * Depois de uma casa, a vez é de outra obra — mas não do mesmo tipo da
+     * última obra não residencial tentada.
+     */
+    @Test
+    void onTheOtherTurnTheLastNonHouseTypeWaits() {
+        List<Building> built = List.of(building(TEMPLE, false), building(SMALL, true));
+
+        assertFalse(HousePlans.isTurnOf(built, 0, 0, TEMPLE), "templo seguido de templo");
+        assertFalse(HousePlans.isTurnOf(built, 0, 0, SMALL), "casa na vez de outra obra");
+        assertTrue(HousePlans.isTurnOf(built, 0, 0, FARM), "a roça não teve a vez dela");
+    }
+
+    /** Gente sem cama: a vez é da casa, seja qual for a última tentada. */
+    @Test
+    void missingBedsGiveTheTurnToTheHouse() {
+        List<Building> built = List.of(building(FARM, true), building(SMALL, true));
+
+        assertTrue(HousePlans.isTurnOf(built, 5, 3, SMALL));
+        assertFalse(HousePlans.isTurnOf(built, 5, 3, TEMPLE));
+    }
 }

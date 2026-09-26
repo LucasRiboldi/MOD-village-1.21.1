@@ -249,11 +249,10 @@ public class SmelterGameTest implements FabricGameTest {
      * enquanto o construtor esperava pelo arenito"</i>. Meia correção
      * aqui seria pior que nenhuma.
      *
-     * <p>Este teste fixa as duas metades, agora do lado certo. Que é
-     * mesmo ali que o minério cai, pelo caminho que o
-     * {@code MinerHaul.treasureChestFor} percorre — registro da mina,
-     * entrada do poço, baú encostado. E que a colônia <b>o enxerga</b>,
-     * conta o ferro e funde.
+     * <p>Este teste protege a leitura de estoque histórico: um baú que a
+     * regra antiga deixou na boca da mina ainda entra na contabilidade, para
+     * que a colônia <b>o enxergue</b>, conte o ferro e funda. Depósitos novos
+     * vão diretamente ao baú do mineiro.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "smelter_mine_mouth",
             tickLimit = 200)
@@ -324,9 +323,8 @@ public class SmelterGameTest implements FabricGameTest {
 
         context.runAtTick(150, () -> {
             try {
-                // Primeira metade: é este o baú que o mineiro alimenta.
-                // O caminho é o do MinerHaul.treasureChestFor — mina da
-                // colônia, entrada do poço, baú encostado.
+                // Primeira metade: o baú histórico ainda é achado pela
+                // geometria da mina, mesmo sem receber depósitos novos.
                 BlockPos reached = VillageColonyMod.MINES.of(colony.id())
                         .map(mine -> MinecraftTypeAdapter.toBlockPos(mine.shaft().entry()))
                         .flatMap(entry -> MineMouth.chestAt(world, entry))
@@ -334,7 +332,7 @@ public class SmelterGameTest implements FabricGameTest {
 
                 context.assertTrue(
                         context.getAbsolutePos(mouthChest).equals(reached),
-                        "a Regra 30 não chega a este baú — o cenário não prova nada");
+                        "a leitura histórica não chegou ao baú do cenário");
 
                 // Segunda metade: a colônia o enxerga, pela mesma lista
                 // que o ciclo usa. Montar uma lista à parte aqui faria o

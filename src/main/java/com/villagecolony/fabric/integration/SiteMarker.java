@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
@@ -45,6 +46,10 @@ import java.util.UUID;
  * sem abrir o log.
  */
 public final class SiteMarker {
+
+    static {
+        ServerMemory.register(SiteMarker.class, SiteMarker::clearAll);
+    }
 
     /**
      * De quantos em quantos tiques o contorno pisca.
@@ -178,6 +183,18 @@ public final class SiteMarker {
     }
 
     /**
+     * Quantos blocos acima do topo da planta a placa flutua — 2026-09-24.
+     *
+     * <p><b>Decisão do autor (N7):</b> <i>"o da do lote precisa ficar 5
+     * blocos acima da altura da construção para facilitar a leitura"</i>.
+     * A versão de 09-18 a punha a 2,5 do chão: legível de perto, mas
+     * dentro da parede que subia, e escondida atrás dela de longe. Acima
+     * do telhado ela se lê de qualquer ponto da vila, e a obra não a cobre
+     * em nenhuma altura.
+     */
+    static final int LABEL_ABOVE_TOP = 5;
+
+    /**
      * A placa que flutua sobre o lote — 2026-09-16.
      *
      * <p><b>Correção de rumo.</b> A primeira versão, de 09-15, pôs a linha
@@ -199,18 +216,6 @@ public final class SiteMarker {
      * que sobrevivesse ao fim da obra seria entidade órfã no mundo do
      * jogador, e disso o projeto já tem cicatriz.
      */
-    /**
-     * Quantos blocos acima do topo da planta a placa flutua — 2026-09-24.
-     *
-     * <p><b>Decisão do autor (N7):</b> <i>"o da do lote precisa ficar 5
-     * blocos acima da altura da construção para facilitar a leitura"</i>.
-     * A versão de 09-18 a punha a 2,5 do chão: legível de perto, mas
-     * dentro da parede que subia, e escondida atrás dela de longe. Acima
-     * do telhado ela se lê de qualquer ponto da vila, e a obra não a cobre
-     * em nenhuma altura.
-     */
-    static final int LABEL_ABOVE_TOP = 5;
-
     private static void label(
             ServerWorld world, ConstructionProject project, ColonyPos origin, ColonyPos size) {
 
@@ -220,7 +225,11 @@ public final class SiteMarker {
                 project.remainingMaterials(),
                 stock == null ? Map.of() : stock.idCounts(),
                 project.remainingCount(),
-                SiteMarker::nameOf);
+                SiteMarker::nameOf,
+                // O bloco em que o construtor para quando falta material —
+                // 2026-09-25; ver SiteLabel.of.
+                project.nextBlock().map(block -> block.block()),
+                project.deferredPieces().size());
 
         // O centro do lote, cinco blocos acima do topo da planta — N7,
         // 2026-09-24; ver LABEL_ABOVE_TOP.

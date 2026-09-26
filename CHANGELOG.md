@@ -1,0 +1,246 @@
+# Changelog
+
+Mudanças que chegam ao JAR ou à forma de verificar o mod. O formato segue o
+[Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
+
+A versão continua **0.3.0 alpha**: o mesmo número é republicado a cada
+entrega, e o que separa uma publicação da outra é o commit e o SHA-256 do JAR
+(ver `STATE.md` e `scripts/release_manifest.py`). O histórico anterior a
+2026-09-24 está em [`docs/technical/Development-Log.md`](docs/technical/Development-Log.md)
+e [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md).
+
+## [Não publicado] — depois da sessão longa de 2026-09-26
+
+### Corrigido
+
+- **Todo aldeão de profissão tem baú** (decisão do autor). Na sessão longa, o
+  lenhador, o mineiro e o pedreiro passaram 4h45 sem baú e, sem baú, sem
+  tarefa. Quem não acha baú ganha um ao lado da cama (regra b) ou, sem cama,
+  perto do centro; o vínculo é salvo com o mundo.
+- **A peça pronta só nasce para bloco de manufatura** (decisão do autor): tora,
+  terra, grama, pedra, areia, lã tosquiada, flor e muda vêm da profissão.
+- O guarda de alcance não larga mais a obra encostada numa rua só porque o
+  índice de ruas ainda não existe.
+- A obra que só tem o chão enterrado volta a poder ceder lugar (defeito
+  introduzido pela camada da rua).
+
+### Mudado
+
+- **Pastor e fazendeiro trabalham sem depender da obra**, enquanto couber no
+  baú deles; a obra continua tendo prioridade.
+- O fundidor deixa de perseguir produto de fornalha sem matéria-prima no bioma
+  (582 buscas inúteis por arenito numa vila de planície).
+
+## [0.3.0] — publicação de 2026-09-26 (sessões de jogo de 26-09)
+
+JAR do commit `70af4c8`, SHA-256 `9EB559D1…9423`, em `downloads/` e em
+`.minecraft/mods` (três hashes conferidos).
+
+### Corrigido
+
+- **A casa nasce com o chão e a porta na altura da rua, sem camada de terra
+  na base** (pedido do autor). As casas de vila do jogo gravam uma fundação
+  abaixo do piso — na `plains_small_house_5`, uma camada inteira de terra — e
+  o mod punha a planta um bloco acima do chão: a casa saía sobre um monte de
+  terra, com a porta três blocos acima da rua. Agora a camada em que se pisa
+  ao entrar (uma abaixo da porta) vai no chão; o que fica abaixo dela e a
+  terra/grama na altura da rua não são construídos, e o piso dessa camada toma
+  o lugar da grama. Casas e obras que o mundo já tem não mudam.
+- **O viveiro cheio não reconta o terreno a cada chamada.** Com os 10 viveiros
+  de pé, cada pedido relia ~166 mil blocos (3º maior custo do mod no spark de
+  26-09); agora espera os 5 minutos como quem plantou.
+
+- **O lenhador não é mais expulso enquanto procura árvore.** Na vila sem
+  árvore natural, o guarda de imobilidade devolvia a tarefa a cada 300 tiques
+  ("while looking for a tree") até ele largar o ofício. Agora os guardas só
+  contam com uma árvore escolhida.
+- **O tapete verde (e toda peça colorida) não é mais pedido pela receita de
+  tingir peça pronta** ("corante + tapete de outra cor", que puxava uma
+  corrente de tingimentos que nunca fechava). Tingir lã e misturar corante
+  continuam valendo: são produção.
+- **A espera por peça sem rota não recomeça ao reabrir o mundo.** O relógio de
+  10 ciclos da ADR-022 é salvo com o mundo; na sessão de 26-09 o tapete ia
+  chegar 30 s depois de o jogo fechar.
+- **O desvio do mineiro:** o próprio corpo parado na beira do bloco não impede
+  mais o degrau ("something stood in"); ele volta ao meio do bloco. Quem sai
+  do caminho (caiu, foi empurrado) tem o desvio replanejado de onde está, até
+  3 vezes, em vez de esperar 100 tiques pelo passo que ficou para trás.
+
+### Mudado
+
+- **Baú das camas da vila vanilla (decisão do autor, regra b):** ao lado da
+  cama, encostado numa parede, nunca na frente da porta. A porta deixou de
+  decidir se há baú — a regra de 23-09 recusava 3 de 3 camas quando a caixa da
+  casa incluía o degrau de fora.
+- **O lenhador sem árvore pede um lote de 4 mudas** ao viveiro (no mesmo ritmo
+  de 5 min e no mesmo teto de 10), em vez de 1 muda por vez.
+
+## [0.3.0] — publicação de 2026-09-25, tarde (ADR-025, fases 1 e 2)
+
+JAR do commit `a222342`, SHA-256 `8862EC4F…07C0`, em `downloads/` e em
+`.minecraft/mods` (os três hashes conferidos pelo `release_manifest.py`).
+
+### Adicionado
+
+- **O mineiro que não chega cava o próprio caminho** (fase 2). Quando fica
+  parado, não se aproxima ou anda demais sem chegar, ele planeja um desvio de
+  até 16 blocos: abre rocha, põe pedregulho onde falta chão (tirado do baú
+  dele) e anda um bloco de cada vez até ter a pedra ao alcance. Só sem desvio
+  ele larga a pedra como antes. Log: `takes a detour`, `is through its detour`,
+  `its detour failed — …`.
+- **O encalhado sem escada natural também desvia.** Onde o E47 desistia com
+  "no natural, dry way up", ele procura o nível do terreno cavando e pondo
+  bloco; se o raio não basta, anda o trecho que mais se aproxima e tenta de
+  novo.
+- O desvio nunca cava rocha encostada em líquido nem com areia em cima, nunca
+  pisa em líquido, e pergunta de novo antes de cada passo — água que chega
+  depois do plano o faz parar.
+
+- **A passagem da mina sai com chão.** Quando a picareta abre uma célula da
+  escada ou da sala sobre um vão de caverna que a mina não planejou, o vão
+  recebe pedregulho na hora (`The mine floored …` no log). O degrau seguinte e
+  a camada de baixo da sala não são tapados; fora da passagem — o veio que o
+  mineiro segue — também não.
+- **O mineiro não entra na água.** Ele passa a dar a volta seca em vez de
+  atravessar nadando (penalidade de água -1 só para ele; lava já era proibida
+  no Vanilla).
+- A linha de travamento do mineiro traz o estado do cérebro e da navegação
+  (`brain: activity …, our walk task …, walk target …, navigation …`), para a
+  próxima sessão dizer por que ele para na pedra 553, 39, 158.
+
+### Corrigido
+
+- **O mineiro não quebra mais bloco com líquido atrás** (pedido do autor).
+  Nenhuma pedra, minério, areia ou degrau encostado em água ou lava vira alvo;
+  a galeria contorna. Antes ele quebrava e vedava depois, e a vedação não
+  alcançava a água da vila. Areia de praia colada na água deixa de ser colhida.
+- **A pedra recusada volta a ser recusada depois de carregar o mundo.** A
+  marca que afasta a pedra inalcançável (E44) é salva
+  (`villagecolony_marks.dat`); antes sumia a cada sessão, e o mineiro voltava
+  à mesma pedra.
+
+### Ainda não resolvido
+
+- O motivo do travamento em 553, 39, 158: a geometria reconstruída do save é
+  andável e a navegação Vanilla chega lá (GameTest forense). Espera a linha
+  `brain:` de uma sessão de jogo.
+
+## [0.3.0] — publicação de 2026-09-25, manhã (sessão das 09:13)
+
+### Corrigido
+
+- **A vila presa a templos.** O reparo rodava antes do rodízio casa ↔ outra
+  obra e reabria a obra abandonada no mesmo segundo em que a colônia
+  desistia dela; ao terminar o templo, a vila reabriu na hora um templo
+  abandonado vizinho de 301 blocos. Agora a obra abandonada só volta **na
+  vez do tipo dela** (decisão do autor) — nunca logo depois de largada —, e
+  a construção terminada que perdeu blocos continua sendo reparada sempre.
+  A obra abandonada que o save trouxe aberta também espera a vez.
+- A obra retomada e terminada passa a contar como a última tentada no
+  rodízio.
+
+### Adicionado
+
+- **O mineiro cava sem parar enquanto os baús dele tiverem espaço**
+  (decisão do autor: "galerias novas sem parar"). A meta de pedra passa a
+  ser o guardado mais o espaço livre nos baús dos mineiros, como a da
+  madeira; a mina continua crescendo sozinha e cada corte segue o minério
+  que encontra.
+
+### Ainda não resolvido
+
+- O mineiro empaca sempre na mesma pedra inalcançável (553, 39, 158 no save
+  do autor), fica preso e sai da escala até alguém o soltar. A marca que
+  afasta a pedra recusada vive só na memória e some ao carregar o mundo
+  (E44/E45).
+
+## [0.3.0] — publicação de 2026-09-25, manhã (sessão das 08:31)
+
+### Corrigido
+
+- **A obra que nunca fechava.** O templo da vila ficou aberto por três
+  sessões com nove peças "sem apoio" — quatro escadas de mão e cinco tochas
+  de parede, todas com pedregulho encostado. A planta não guarda a direção
+  do bloco, e as peças do miolo da casa ficavam viradas para o norte,
+  procurando apoio num lado onde só havia ar. Agora a peça de parede que não
+  se sustenta na direção deduzida se apoia na parede que existe.
+- **Peça adiada por uma versão anterior volta à fila** quando já cabe, sem
+  esperar a vizinhança mudar. É o que destrava o save em que a obra já está
+  presa.
+- **A placa conta as peças esperando apoio** ("Obra: 9 blocos · 9 sem
+  apoio"), em vez de parecer que a obra voltou atrás.
+
+### Ainda assim
+
+- A direção de verdade (a tocha do lado que o arquivo da estrutura manda)
+  continua perdida na leitura da planta: a peça agora se apoia numa parede
+  que existe, que pode não ser a do desenho original.
+- Peças riscadas (tocha sem carvão pela barreira de teste, bloco no caminho)
+  voltam como pendentes a cada carregamento do mundo, porque a retomada relê
+  o mundo. Com as peças de parede destravadas a obra fecha; o riscado vira
+  lacuna, como antes.
+
+## [0.3.0] — publicação de 2026-09-25, tarde
+
+Correções do que a sessão de jogo de 25-09 (01:19–01:45) mostrou.
+
+### Corrigido
+
+- **Fechar o mundo derrubava a limpeza da memória do servidor**
+  (`ConcurrentModificationException` em `ServerMemory.resetAll`): uma limpeza
+  carregava outra classe, que se inscrevia no meio da volta, e o resto ficava
+  sem limpar. A mesma chamada roda ao abrir o mundo. Agora a volta é sobre uma
+  cópia, repetida até ninguém novo aparecer.
+- **A placa da obra diz o bloco que realmente falta**, com o nome em
+  português que o jogo dá: o do próximo bloco em que o construtor parou, se
+  os baús não o têm; senão, o primeiro material em falta; e, sem nada em
+  falta, só a contagem de blocos. Antes ela mostrava o primeiro material da
+  planta, e no templo de 25-09 podia anunciar o pedregulho (34 no baú)
+  enquanto a obra esperava tocha.
+
+### Medido em jogo
+
+- Perfil do spark da sessão: TPS 20 em todos os 22 minutos, MSPT mediano de
+  14 a 16 ms. O mod caiu de 4,1% para 0,3% da thread do servidor, e o
+  `nearestFirst` de 332 ms para 16 ms — com a ressalva de que o construtor
+  passou boa parte da sessão parado esperando tocha.
+
+## [0.3.0] — publicação de 2026-09-25, madrugada
+
+### Adicionado
+
+- Cache de um segundo na varredura dos baús livres da vila
+  (`VillageChests`). O perfil do spark de 2026-09-24 apontou
+  `ColonyChests.nearestFirst` como o maior custo do mod nos ticks lentos. Baú
+  posto ou quebrado invalida o cache na hora; nome, BigHouse e chunk
+  carregado são conferidos a cada leitura.
+- `ServerMemory`: cada classe com estado de servidor se inscreve sozinha, e o
+  ciclo de vida esquece tudo por `resetAll()`. Achou uma limpeza que nunca era
+  chamada (`BiomeConstructionSupply`) e duas listas de limpeza divergentes.
+- `CHANGELOG.md`.
+
+### Corrigido
+
+- O PIT não rodava desde o `78e7efc`: um teste do `core` que sobe o jogo
+  derrubava a rodada inteira, e o CI escondia a falha. O teste saiu da
+  rodada do PIT, e o CI agora reprova quando o PIT nem começa.
+- `./gradlew javadoc` voltou a passar (tinha 6 links quebrados). Os 32 avisos
+  de javadoc do Error Prone foram zerados; vários eram comentários separados
+  do método pela divisão de classes.
+
+### Testes
+
+- Mutação (PIT, `core`): de 78% para **87,7%** das mutações mortas (1151 de
+  1312), força de teste 95%. `MineShaft`, `Building`, `ColonyCycle`,
+  `Worker`, `ProfessionAssigner`, `Mine`, `ColonyGoals`, `BuildingRegistry`,
+  `ConstructionProject`, `ColonyRoads`, `VacancyEnforcer` e `HiringLog` ficaram
+  sem sobrevivente, ou só com equivalentes.
+- Três testes que passavam sem medir nada foram refeitos: o cancelamento de
+  pedido no `ColonyCycle`, o adiamento de peça no `ConstructionProject` e o
+  recentrar das ruas no `ColonyRoads`.
+- GameTest novo para o cache de baús, confirmado por mutação.
+
+### Não verificado
+
+- Nada desta publicação foi visto em jogo. O próximo perfil do spark diz se o
+  cache baixou o custo da varredura.

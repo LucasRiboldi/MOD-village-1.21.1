@@ -5,6 +5,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionReach;
@@ -93,6 +94,35 @@ final class ConstructionResume {
             return;
         }
 
+        // <b>A obra abandonada que voltou aberta espera a vez dela</b> —
+        // 2026-09-25, decisão do autor. O reparo antigo reabria a obra largada
+        // antes do rodízio, e o save guardou uma delas aberta: o templo de
+        // z=211 da vila do autor. Retomá-la aqui levantaria o mesmo templo na
+        // vez da casa. A caixa abandonada continua no registro, com o lote
+        // reservado, e o reparo a devolve quando for a vez do tipo — ver
+        // HousePlans.isTurnOf.
+        List<Building> buildings = VillageColonyMod.BUILDINGS.ofColony(colony.id());
+
+        boolean abandoned = buildings.stream().anyMatch(building -> !building.finished()
+                && building.blueprint().equals(saved.blueprint())
+                && building.min().equals(saved.origin()));
+
+        if (abandoned && !HousePlans.isTurnOf(
+                buildings,
+                VillageColonyMod.WORKERS.countOfColony(colony.id()),
+                colony.observedBeds(),
+                saved.blueprint())) {
+
+            VillageColonyMod.LOGGER.info(
+                    "Colony {} keeps the abandoned {} at {} waiting — it is not its turn,"
+                            + " and the lot stays taken",
+                    colony.id(), saved.blueprint(), saved.origin());
+
+            VillageColonyMod.CONSTRUCTIONS.dropPending(colony.id());
+
+            return;
+        }
+
         Optional<Blueprint> blueprint = PlanPlacement.blueprintOf(
                 world, colony.id(), saved.blueprint(), saved.origin());
 
@@ -130,7 +160,8 @@ final class ConstructionResume {
 
             Optional<Block> expected = MinecraftTypeAdapter.toBlock(block.block());
 
-            if (expected.isPresent() && world.getBlockState(where).isOf(expected.get())) {
+            if ((expected.isPresent() && world.getBlockState(where).isOf(expected.get()))
+                    || BuriedPieces.heldByTheGround(world, project.blueprint(), block, where)) {
                 project.markPlaced(block);
 
                 standing++;

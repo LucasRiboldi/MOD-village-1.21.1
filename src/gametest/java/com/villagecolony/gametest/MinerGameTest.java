@@ -3819,6 +3819,7 @@ public class MinerGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_stillness",
             tickLimit = 400)
     public void aFrozenMinerGivesUpLongBeforeTheStallGuard(TestContext context) {
+        // (O nome ficou: o que ele mede é o guarda de imobilidade agir cedo.)
         // O relógio é do mundo inteiro e a bateria o faz andar: sem
         // fixá-lo, onde este teste cai no dia depende de quantos
         // tiques a bateria gastou antes dele. Ver 2026-09-04.
@@ -3923,8 +3924,19 @@ public class MinerGameTest implements FabricGameTest {
 
         int[] releasedAt = { -1 };
 
+        // <b>Ou ele cava a saída</b> — ADR-025, fase 2, 2026-09-25. Desde o
+        // desvio, o primeiro disparo do guarda não devolve mais a tarefa: o
+        // mineiro emparedado abre o caminho até a pedra. O que o teste
+        // protege continua o mesmo — o guarda fala muito antes dos 2.400 —,
+        // e "falou" passa a ser a tarefa devolvida OU a parede aberta.
+        int[] openedAt = { -1 };
+
         context.runAtEveryTick(() -> {
             passes[0]++;
+
+            if (openedAt[0] < 0 && enclosureOpened(context)) {
+                openedAt[0] = passes[0];
+            }
 
             if (releasedAt[0] >= 0) {
                 return;
@@ -3962,7 +3974,10 @@ public class MinerGameTest implements FabricGameTest {
             //
             // Fala só quando algo está errado, para não somar ruído às
             // 269 passagens de uma bateria verde.
-            if (releasedAt[0] < 0 || !WorkHours.isWorkTime(world, villager)) {
+            int actedAt = releasedAt[0] < 0 ? openedAt[0]
+                    : openedAt[0] < 0 ? releasedAt[0] : Math.min(releasedAt[0], openedAt[0]);
+
+            if (actedAt < 0 || !WorkHours.isWorkTime(world, villager)) {
                 VillageColonyMod.LOGGER.warn(
                         "KF-001 — a tarefa do mineiro emparedado nunca voltou para a fila."
                                 + " task={}, expediente={}, relatório={}",
@@ -3983,17 +3998,17 @@ public class MinerGameTest implements FabricGameTest {
                                 + " travamento, senão ele não adianta nada");
 
                 context.assertTrue(
-                        releasedAt[0] >= 0,
-                        "o mineiro passou " + (MinerWork.STILL_LIMIT + 20) + " passagens parado"
-                                + " e a tarefa nunca voltou para a fila —"
+                        actedAt >= 0,
+                        "o mineiro passou " + (MinerWork.STILL_LIMIT + 20) + " passagens parado,"
+                                + " não cavou a saída e a tarefa nunca voltou para a fila —"
                                 + " ela só voltaria no tique " + MinerWork.STALL_LIMIT
                                 + ", que é o preço que toda sessão pagou. O relatório diz o"
                                 + " que o contador marcava: "
                                 + MinerReport.report(world, colony).orElse("(sem relatório)"));
 
                 context.assertTrue(
-                        releasedAt[0] < MinerWork.STALL_LIMIT,
-                        "a tarefa voltou no tique " + releasedAt[0] + ", e o guarda de"
+                        actedAt < MinerWork.STALL_LIMIT,
+                        "o guarda agiu no tique " + actedAt + ", e o guarda de"
                                 + " travamento só falaria no " + MinerWork.STALL_LIMIT
                                 + " — quem a devolveu não foi o detector de imobilidade");
             } finally {
@@ -5781,6 +5796,24 @@ public class MinerGameTest implements FabricGameTest {
         }
 
         context.complete();
+    }
+
+    /** Se algum bloco da caixa de pedra em volta do PERCH foi aberto — ADR-025. */
+    private static boolean enclosureOpened(TestContext context) {
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 2; dy++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    BlockPos at = PERCH.add(dx, dy, dz);
+
+                    if (!at.equals(PERCH) && !at.equals(PERCH.up())
+                            && !context.getWorld().getBlockState(context.getAbsolutePos(at)).isOf(Blocks.STONE)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     /** A primeira tocha de parede da arena, se a mina acendeu alguma. */

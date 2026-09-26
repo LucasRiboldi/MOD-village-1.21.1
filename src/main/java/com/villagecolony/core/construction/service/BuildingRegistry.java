@@ -65,6 +65,11 @@ public final class BuildingRegistry {
                 continue;
             }
 
+            // Sai e entra de novo, e é de propósito — 2026-09-25: a obra que
+            // acabou de ser terminada é a última tentada, e o rodízio lê a
+            // última pela ordem deste mapa. Ficar na posição antiga fazia o
+            // templo retomado parecer tentado lá atrás.
+            buildings.remove(existing.id());
             buildings.put(existing.id(), new Building(
                     existing.id(),
                     existing.colonyId(),

@@ -44,6 +44,8 @@ public final class VillageScanner {
     }
 
     /**
+     * A mesma busca, dizendo se ela é a sonda do centro.
+     *
      * @param isProbe se esta varredura é a sonda ancorada no centro de
      *     uma colônia. Só ela marca a âncora dos candidatos, porque só
      *     ela parte do mesmo ponto a cada ciclo e produz leituras

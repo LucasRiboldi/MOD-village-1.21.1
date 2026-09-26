@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Building;
@@ -40,6 +41,10 @@ import java.util.UUID;
  * planejamento, porque são a mesma decisão vista de dois lados.
  */
 public final class WaitingWork {
+
+    static {
+        ServerMemory.register(WaitingWork.class, WaitingWork::clearAll);
+    }
 
     /** O assunto destas linhas no registro de ociosidade. */
     private static final String SUBJECT = "building";
@@ -271,16 +276,6 @@ public final class WaitingWork {
     public static boolean giveUpIfStalled(
             ServerWorld world, Colony colony, ConstructionProject project) {
 
-        if (!project.isFinished() && project.nextBlock().isEmpty()) {
-            // Nenhuma peca esta colocavel: as restantes foram adiadas por
-            // apoio fisico. Nao e falta de progresso; o planejador as
-            // reconsidera apenas quando a assinatura do entorno muda.
-            WAITING_SINCE.remove(project.id());
-            BUILDING_SINCE.remove(project.id());
-
-            return false;
-        }
-
         if (project.state() != ConstructionState.WAITING_RESOURCES) {
             WAITING_SINCE.remove(project.id());
 
@@ -451,6 +446,7 @@ public final class WaitingWork {
         }
 
         VillageColonyMod.BUILDINGS.registerOrMerge(Building.of(project));
+
         VillageColonyMod.CONSTRUCTIONS.forget(project.id(), RemovalAudit.patienceAbandonment());
 
         // A vaga de obra é única; suas tarefas não podem sobreviver ao projeto.

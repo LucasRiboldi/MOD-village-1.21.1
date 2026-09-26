@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
@@ -43,6 +44,10 @@ import java.util.UUID;
  * para a rua.
  */
 public final class HousePlans {
+
+    static {
+        ServerMemory.register(HousePlans.class, HousePlans::clearAll);
+    }
 
     private HousePlans() {
     }
@@ -213,6 +218,34 @@ public final class HousePlans {
         return availableTypes.stream()
                 .filter(type -> !type.equals(previous))
                 .findFirst();
+    }
+
+    /**
+     * Se é a vez do tipo desta planta no rodízio — 2026-09-25, decisão do
+     * autor.
+     *
+     * <p><b>Para a obra abandonada.</b> O {@code BuildingRepairPlanner} roda
+     * antes do rodízio e reabria a obra largada no mesmo segundo em que a
+     * colônia desistia dela: o playtest de 24-09 tem "gives up on
+     * plains_temple_4" e "starts repair sweep for plains_temple_4" na mesma
+     * origem e no mesmo segundo, e o de 25-09 reabriu um templo abandonado
+     * de 301 blocos assim que o outro terminou. A vila ficava presa a
+     * templos, e a vez da casa nunca chegava.
+     *
+     * <p>A regra é a do próprio rodízio: casa na vez da casa; outra obra na
+     * vez de outra, e nunca do mesmo tipo da última não residencial tentada.
+     * Como a obra abandonada conta como tentada (E48), a que acabou de ser
+     * largada nunca é a vez dela.
+     */
+    static boolean isTurnOf(List<Building> buildings, int adults, int beds, ResourceId blueprint) {
+        boolean houseTurn = nextConstructionIsHouse(buildings, adults, beds);
+
+        if (isHouse(blueprint)) {
+            return houseTurn;
+        }
+
+        return !houseTurn
+                && !constructionType(blueprint).equals(lastNonHouseType(buildings).orElse(""));
     }
 
     /**

@@ -204,4 +204,140 @@ class BuildingRegistryTest {
         assertEquals(0, projects.purgeFinished());
         assertEquals(1, projects.count());
     }
+
+    // --- fronteiras e o resto da API, 2026-09-25 (sobreviventes do PIT) ---
+
+    /** A casa de (10, 60, 20) a (12, 62, 22). */
+    private static Building houseBox(UUID colony, boolean finished) {
+        return new Building(UUID.randomUUID(), colony, HOUSE,
+                new ColonyPos(10, 60, 20), new ColonyPos(12, 62, 22), finished);
+    }
+
+    /**
+     * Um bloco de obra pretendida no eixo dado, colado na casa ou com vão.
+     *
+     * @param gap 0 divide o plano da face da casa (é dentro), 1 fica fora
+     */
+    private static ColonyPos probe(char axis, boolean after, int gap) {
+        int x = axis == 'x' ? (after ? 12 + gap : 10 - gap) : 11;
+        int y = axis == 'y' ? (after ? 62 + gap : 60 - gap) : 61;
+        int z = axis == 'z' ? (after ? 22 + gap : 20 - gap) : 21;
+
+        return new ColonyPos(x, y, z);
+    }
+
+    /**
+     * A caixa pretendida que divide só o plano da borda com a casa já a
+     * ocupa: o canto é inclusivo, nos três eixos e dos dois lados. Um
+     * bloco além, não.
+     */
+    @Test
+    void aBoxSharingOnlyTheEdgePlaneIsOccupied() {
+        registry.register(houseBox(UUID.randomUUID(), true));
+
+        for (char axis : new char[] {'x', 'y', 'z'}) {
+            for (boolean after : new boolean[] {true, false}) {
+                ColonyPos edge = probe(axis, after, 0);
+                ColonyPos beyond = probe(axis, after, 1);
+
+                assertTrue(registry.anythingBuiltInside(edge, edge),
+                        "a borda da casa no eixo " + axis + " não contou");
+                assertFalse(registry.anythingBuiltInside(beyond, beyond),
+                        "um bloco além da casa no eixo " + axis + " contou");
+            }
+        }
+    }
+
+    @Test
+    void noBoxMeansNothingInside() {
+        registry.register(houseBox(UUID.randomUUID(), true));
+
+        assertFalse(registry.anythingBuiltInside(null, new ColonyPos(11, 61, 21)));
+        assertFalse(registry.anythingBuiltInside(new ColonyPos(11, 61, 21), null));
+    }
+
+    /** A obra pronta nunca é rebaixada para abandonada; a abandonada segue abandonada. */
+    @Test
+    void mergingKeepsTheBestStateAndTheExistingIdentity() {
+        UUID colony = UUID.randomUUID();
+        Building finished = houseBox(colony, true);
+        Building abandoned = houseBox(colony, false);
+
+        registry.register(finished);
+        registry.registerOrMerge(houseBox(colony, false));
+
+        assertEquals(1, registry.count());
+        assertTrue(registry.all().iterator().next().finished(), "a pronta virou abandonada");
+        assertEquals(finished.id(), registry.all().iterator().next().id());
+
+        registry.clear();
+        registry.register(abandoned);
+        registry.registerOrMerge(houseBox(colony, false));
+
+        assertFalse(registry.all().iterator().next().finished(), "duas abandonadas viraram pronta");
+    }
+
+    @Test
+    void aDifferentBoxIsRegisteredAsANewBuilding() {
+        UUID colony = UUID.randomUUID();
+
+        registry.register(houseBox(colony, true));
+        registry.registerOrMerge(new Building(UUID.randomUUID(), colony, HOUSE,
+                new ColonyPos(30, 60, 20), new ColonyPos(32, 62, 22)));
+
+        assertEquals(2, registry.count());
+        assertEquals(2, registry.all().size());
+    }
+
+    @Test
+    void removingForgetsOnlyWhatWasAsked() {
+        UUID mine = UUID.randomUUID();
+        UUID other = UUID.randomUUID();
+        Building one = houseBox(mine, true);
+
+        registry.register(one);
+        registry.register(new Building(UUID.randomUUID(), mine, HOUSE,
+                new ColonyPos(30, 60, 20), new ColonyPos(31, 61, 21)));
+        registry.register(new Building(UUID.randomUUID(), other, HOUSE,
+                new ColonyPos(50, 60, 20), new ColonyPos(51, 61, 21)));
+
+        assertTrue(registry.ofColony(null).isEmpty());
+        assertFalse(registry.remove(null));
+        assertFalse(registry.remove(UUID.randomUUID()));
+        assertTrue(registry.remove(one.id()));
+        assertEquals(2, registry.count());
+
+        assertEquals(0, registry.removeOfColony(null));
+        assertEquals(1, registry.removeOfColony(mine));
+        assertEquals(1, registry.count());
+        assertEquals(1, registry.ofColony(other).size(), "a colônia vizinha perdeu a casa");
+
+        registry.clear();
+
+        assertEquals(0, registry.count());
+    }
+
+    /**
+     * A obra retomada e terminada vira a última tentada — 2026-09-25.
+     *
+     * <p>O rodízio lê a última obra pela ordem do registro. A fusão mantinha
+     * a caixa na posição antiga, e o templo abandonado que a colônia acabou de
+     * terminar ficava "lá atrás", como se a última tentada fosse outra.
+     */
+    @Test
+    void aMergedBuildingBecomesTheLastAttempted() {
+        UUID colony = UUID.randomUUID();
+        Building temple = houseBox(colony, false);
+        Building other = new Building(UUID.randomUUID(), colony, HOUSE,
+                new ColonyPos(30, 60, 20), new ColonyPos(32, 62, 22));
+
+        registry.register(temple);
+        registry.register(other);
+        registry.registerOrMerge(houseBox(colony, true));
+
+        List<Building> order = registry.ofColony(colony);
+
+        assertEquals(temple.id(), order.get(order.size() - 1).id(), "a fusão ficou na posição antiga");
+        assertTrue(order.get(order.size() - 1).finished());
+    }
 }

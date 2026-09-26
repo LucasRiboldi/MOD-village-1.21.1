@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.type.ColonyPos;
@@ -49,6 +50,10 @@ import java.util.UUID;
  * nada em volta.
  */
 public final class RoadExtension {
+
+    static {
+        ServerMemory.register(RoadExtension.class, RoadExtension::clearAll);
+    }
 
     /**
      * Quantos blocos por vez.

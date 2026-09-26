@@ -5,6 +5,7 @@ import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BuildOrder;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.core.type.Side;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.work.DesertSand;
 import com.villagecolony.core.type.ColonyPos;
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
  * Lê uma estrutura do próprio jogo e devolve um projeto — TASK-031.
@@ -135,6 +137,9 @@ public final class StructureBlueprintReader {
 
     /** Onde começa o estado dentro de um {@code final_state}. */
     private static final char STATE_OPENS = '[';
+
+    private record PromisedBlock(ResourceId name, Optional<Side> facing) {
+    }
 
     private StructureBlueprintReader() {
     }
@@ -254,7 +259,84 @@ public final class StructureBlueprintReader {
         // precisa, quem espera o bloco e quem o assenta leem todos a
         // MESMA planta. Trocar mais adiante faria a colônia estocar areia
         // e o construtor assentar arenito, que é o defeito de 08-22.
-        return Optional.of(Blueprint.of(structure, DesertSand.baked(structure, blocks)));
+        Blueprint blueprint = Blueprint.of(structure, DesertSand.baked(structure, blocks));
+
+        // <b>E a altura da rua</b> — sessão de jogo de 2026-09-26. Ver
+        // Blueprint.withStreetLayer e streetLayerOf.
+        OptionalInt street = streetLayerOf(template.get(), blocks);
+
+        return Optional.of(street.isPresent() ? blueprint.withStreetLayer(street.getAsInt()) : blueprint);
+    }
+
+    /**
+     * A camada que fica na altura da rua — 2026-09-26.
+     *
+     * <p><b>A porta manda.</b> O pedido do autor é "o chão e a porta na altura
+     * da rua": a camada da rua é aquela em que se pisa ao entrar, uma abaixo da
+     * porta mais baixa. A primeira versão lia o encaixe (jigsaw) voltado para a
+     * rua, e a bateria mostrou que ele não é régua: na
+     * {@code plains_shepherds_house_1} e na {@code plains_big_house_1} ele está
+     * no andar da porta, e no {@code plains_temple_4} a porta está na camada 0
+     * — o piso do templo fica abaixo da planta, e o templo continua como
+     * sempre foi.
+     *
+     * <p>Planta sem porta — roça, curral, praça — usa o encaixe de rua
+     * ({@code west_up}; os de decoração apontam para cima, {@code up_north}).
+     *
+     * @return vazio quando não há camada da rua dentro da planta: sem porta nem
+     *     encaixe (a BigHouseMOD, as plantas de teste), ou porta na camada 0
+     */
+    static OptionalInt streetLayerOf(StructureTemplate template, List<BlueprintBlock> blocks) {
+        OptionalInt door = blocks.stream()
+                .filter(block -> block.block().path().endsWith("_door"))
+                .mapToInt(block -> block.offset().y())
+                .min();
+
+        if (door.isPresent()) {
+            return door.getAsInt() >= 1 ? OptionalInt.of(door.getAsInt() - 1) : OptionalInt.empty();
+        }
+
+        return streetConnectorLayerOf(template);
+    }
+
+    /** A camada do encaixe voltado para a rua, para a planta sem porta. */
+    private static OptionalInt streetConnectorLayerOf(StructureTemplate template) {
+        NbtCompound nbt = template.writeNbt(new NbtCompound());
+
+        NbtList palette = nbt.getList(StructureTemplate.PALETTE_KEY, NbtElement.COMPOUND_TYPE);
+        NbtList entries = nbt.getList(StructureTemplate.BLOCKS_KEY, NbtElement.COMPOUND_TYPE);
+
+        OptionalInt lowest = OptionalInt.empty();
+
+        for (int i = 0; i < entries.size(); i++) {
+            NbtCompound entry = entries.getCompound(i);
+            int index = entry.getInt(StructureTemplate.BLOCKS_STATE_KEY);
+
+            if (index < 0 || index >= palette.size()) {
+                continue;
+            }
+
+            NbtCompound state = palette.getCompound(index);
+
+            if (!isJigsaw(ResourceId.parse(state.getString(BLOCK_NAME_KEY)))
+                    || !facesSideways(state.getCompound(PROPERTIES_KEY).getString("orientation"))) {
+                continue;
+            }
+
+            int layer = offsetOf(entry).y();
+
+            if (lowest.isEmpty() || layer < lowest.getAsInt()) {
+                lowest = OptionalInt.of(layer);
+            }
+        }
+
+        return lowest;
+    }
+
+    /** {@code west_up} sim, {@code up_north} não: a frente do encaixe aponta para o lado. */
+    private static boolean facesSideways(String orientation) {
+        return orientation.startsWith("north_") || orientation.startsWith("south_")
+                || orientation.startsWith("east_") || orientation.startsWith("west_");
     }
 
     /**
@@ -286,6 +368,7 @@ public final class StructureBlueprintReader {
         NbtList entries = nbt.getList(StructureTemplate.BLOCKS_KEY, NbtElement.COMPOUND_TYPE);
 
         List<ResourceId> names = new ArrayList<>(palette.size());
+        List<Optional<Side>> facings = new ArrayList<>(palette.size());
 
         // Paralelo à paleta: quais entradas são a metade de cima de um
         // bloco de duas partes, e por isso não entram no projeto.
@@ -295,6 +378,7 @@ public final class StructureBlueprintReader {
             NbtCompound entry = palette.getCompound(i);
 
             names.add(ResourceId.parse(entry.getString(BLOCK_NAME_KEY)));
+            facings.add(facingOf(entry));
             secondHalf[i] = isSecondHalf(entry);
         }
 
@@ -313,6 +397,7 @@ public final class StructureBlueprintReader {
             }
 
             ResourceId name = names.get(index);
+            Optional<Side> facing = facings.get(index);
 
             if (isJigsaw(name)) {
                 // <b>Encaixe não é andaime</b> — 2026-08-29. Ele carrega
@@ -320,13 +405,14 @@ public final class StructureBlueprintReader {
                 // abria buraco: o piso da casa de planície tem nove
                 // tábuas, e a do meio é um encaixe. O autor viu em jogo,
                 // e a frase dele foi "falta um bloco central no chão".
-                Optional<ResourceId> promised = finalStateOf(entry);
+                Optional<PromisedBlock> promised = finalStateOf(entry);
 
                 if (promised.isEmpty()) {
                     continue;
                 }
 
-                name = promised.get();
+                name = promised.get().name();
+                facing = promised.get().facing();
             } else if (isScaffolding(name)) {
                 continue;
             }
@@ -335,9 +421,8 @@ public final class StructureBlueprintReader {
                 continue;
             }
 
-            blocks.add(isFurniture(name)
-                    ? BlueprintBlock.furniture(offsetOf(entry), name)
-                    : new BlueprintBlock(offsetOf(entry), name));
+            blocks.add(new BlueprintBlock(
+                    offsetOf(entry), name, isFurniture(name), facing));
         }
 
         // <b>A mobília por último — a Regra 32, 2026-08-29.</b> Regra do
@@ -412,15 +497,14 @@ public final class StructureBlueprintReader {
      *
      * <p>O {@code final_state} vem como texto de estado completo —
      * {@code minecraft:oak_stairs[facing=east,half=bottom,...]} —, e o
-     * que entra no projeto é só o nome: o estado é o que a ADR-005
-     * descarta, e a ADR-008 é quem vai devolvê-lo, para este bloco e
-     * para todos os outros ao mesmo tempo.
+     * o projeto conserva o nome e o {@code facing} horizontal aprovado pela
+     * ADR-008. As demais propriedades continuam fora do Core pela ADR-005.
      *
      * @return vazio quando o encaixe não promete nada, ou promete ar —
      *     os dois casos são "aqui não vai bloco", que é o que o leitor
      *     já fazia com o encaixe inteiro
      */
-    private static Optional<ResourceId> finalStateOf(NbtCompound entry) {
+    private static Optional<PromisedBlock> finalStateOf(NbtCompound entry) {
         String promised = entry.getCompound(ENTRY_NBT_KEY).getString(FINAL_STATE_KEY);
 
         if (promised.isEmpty()) {
@@ -432,6 +516,53 @@ public final class StructureBlueprintReader {
         ResourceId name =
                 ResourceId.parse(state < 0 ? promised : promised.substring(0, state));
 
-        return isScaffolding(name) || isJigsaw(name) ? Optional.empty() : Optional.of(name);
+        return isScaffolding(name) || isJigsaw(name)
+                ? Optional.empty()
+                : Optional.of(new PromisedBlock(name, facingOf(promised)));
+    }
+
+    /** A propriedade horizontal aprovada pela ADR-008, quando presente. */
+    private static Optional<Side> facingOf(NbtCompound paletteEntry) {
+        return sideOf(paletteEntry.getCompound(PROPERTIES_KEY)
+                .getString(Properties.HORIZONTAL_FACING.getName()));
+    }
+
+    /** Le a mesma propriedade do estado textual carregado por um jigsaw. */
+    private static Optional<Side> facingOf(String state) {
+        int opens = state.indexOf(STATE_OPENS);
+        int closes = state.indexOf(']', opens + 1);
+
+        if (opens < 0 || closes < 0) {
+            return Optional.empty();
+        }
+
+        String properties = state.substring(opens + 1, closes);
+        int start = 0;
+
+        while (start < properties.length()) {
+            int comma = properties.indexOf(',', start);
+            int end = comma < 0 ? properties.length() : comma;
+            int equals = properties.indexOf('=', start);
+
+            if (equals > start && equals < end
+                    && properties.substring(start, equals)
+                            .equals(Properties.HORIZONTAL_FACING.getName())) {
+                return sideOf(properties.substring(equals + 1, end));
+            }
+
+            start = end + 1;
+        }
+
+        return Optional.empty();
+    }
+
+    private static Optional<Side> sideOf(String name) {
+        return switch (name) {
+            case "north" -> Optional.of(Side.NORTH);
+            case "south" -> Optional.of(Side.SOUTH);
+            case "east" -> Optional.of(Side.EAST);
+            case "west" -> Optional.of(Side.WEST);
+            default -> Optional.empty();
+        };
     }
 }

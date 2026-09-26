@@ -3,6 +3,9 @@ package com.villagecolony.fabric.event;
 import com.villagecolony.core.coordination.PlanningBudget;
 import com.villagecolony.fabric.integration.SweepDeadline;
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.fabric.integration.FurnaceReach;
+import com.villagecolony.core.coordination.StandingWork;
 import com.villagecolony.core.colony.model.ClusterRejection;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.IdleReason;
@@ -232,6 +235,11 @@ final class ColonyCycleRunner {
         // tábua. Medida do mesmo jeito e pelo mesmo motivo.
         int plankRoom = survey.freeSpaceForGroup(ResourceGroup.PLANKS);
 
+        // E a pedra, só no baú de quem a cava — 2026-09-25, decisão do autor
+        // ("galerias novas sem parar"). Ver ColonyGoals.of: medir a vila
+        // inteira contaria todo slot vazio de todo baú como lugar de pedra.
+        int stoneRoom = ColonyChests.minersRoom(overworld, colony.id());
+
         // Até aqui é baú: uma só fotografia produz estoque e as duas
         // medidas de espaço, sem reler os mesmos inventários no ciclo.
         mark = CycleCost.since(CycleCost.Phase.CHESTS, mark);
@@ -332,8 +340,18 @@ final class ColonyCycleRunner {
         int assigned = ColonyCycle.run(
                 colony.id(),
                 survey.resources().total(),
-                ColonyGoals.of(
-                        colony, survey.resources().total(), room, plankRoom, work),
+                // O trabalho contínuo por cima das metas — decisão do autor,
+                // 2026-09-26. Ver StandingWork e FurnaceReach.
+                FurnaceReach.withoutUnreachable(overworld, colony.id(), StandingWork.widen(
+                        ColonyGoals.of(
+                                colony, survey.resources().total(), room, plankRoom, stoneRoom, work),
+                        survey.resources().total(),
+                        new StandingWork.Rooms(
+                                ColonyChests.roomOf(overworld, colony.id(),
+                                        ProfessionType.SHEPHERD, ResourceGroup.WOOL),
+                                ColonyChests.roomOf(overworld, colony.id(),
+                                        ProfessionType.FARMER, ResourceGroup.CROPS))),
+                        work),
                 VillageColonyMod.TASKS,
                 VillageColonyMod.WORKERS,
                 VillageColonyMod.STORAGES::hasStorage,

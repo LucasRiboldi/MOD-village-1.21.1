@@ -82,10 +82,10 @@ public final class BuilderPlacement {
             return true;
         }
 
-        BlockState state = BlockShaping.bedFacing(
-                world, target, BlockShaping.facing(project, block, material.get().getDefaultState()));
+        BlockState state = shaped(world, project, block, material.get(), target);
 
-        if (!world.getBlockState(target).isReplaceable()) {
+        if (!world.getBlockState(target).isReplaceable()
+                && !BuriedPieces.mayReplaceGround(world, project.blueprint(), block, target)) {
             // Já tem coisa ali, e não é grama alta: pode ser peça de
             // vila, pode ser construção do jogador. A Regra 3 manda não
             // mexer, e a obra segue sem este bloco.
@@ -245,8 +245,60 @@ public final class BuilderPlacement {
                         project.id(),
                         piece.block(),
                         target.toShortString());
+
+                continue;
+            }
+
+            // <b>E quando ela já cabe</b> — 2026-09-25, visto em jogo. As nove
+            // peças do templo foram adiadas por uma versão que não apoiava a
+            // peça de parede na parede que existe; a vizinhança delas nunca ia
+            // mudar, e a obra ficou aberta por três sessões. A pergunta é a
+            // mesma que o construtor faz ao assentar — ver shaped.
+            if (fitsNow(world, project, piece, target) && project.retry(piece)) {
+                VillageColonyMod.LOGGER.info(
+                        "Project {} retries {} at {} — it fits against the wall now",
+                        project.id(),
+                        piece.block(),
+                        target.toShortString());
             }
         }
+    }
+
+    /**
+     * O estado que o construtor assenta neste lugar: a direção da planta, a
+     * cama pela cabeceira, e a peça de parede apoiada na parede que existe.
+     */
+    static BlockState shaped(
+            ServerWorld world,
+            ConstructionProject project,
+            BlueprintBlock block,
+            Block material,
+            BlockPos target) {
+
+        BlockState state = BlockShaping.bedFacing(
+                world, target, BlockShaping.facing(project, block, material.getDefaultState()));
+
+        return BlockShaping.leanOnAWall(world, target, state);
+    }
+
+    /** Se a peça adiada já se sustenta no lugar dela. */
+    private static boolean fitsNow(
+            ServerWorld world,
+            ConstructionProject project,
+            ConstructionProject.DeferredPiece piece,
+            BlockPos target) {
+
+        Optional<BlueprintBlock> block = project.remaining().stream()
+                .filter(candidate -> candidate.block().equals(piece.block())
+                        && project.worldPositionOf(candidate).equals(piece.position()))
+                .findFirst();
+
+        Optional<Block> material = MinecraftTypeAdapter.toBlock(piece.block());
+
+        return block.isPresent()
+                && material.isPresent()
+                && world.getBlockState(target).isReplaceable()
+                && shaped(world, project, block.get(), material.get(), target).canPlaceAt(world, target);
     }
 
     /** Uma representação estável do alvo e de cada bloco que pode apoiá-lo. */

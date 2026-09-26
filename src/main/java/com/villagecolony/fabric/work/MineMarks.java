@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.service.VillageDetector;
 import net.minecraft.server.world.ServerWorld;
@@ -84,6 +85,10 @@ import java.util.Map;
  * {@code theSkippedStoneStaysBehindOnceTheGalleryMovedPast}.
  */
 public final class MineMarks {
+
+    static {
+        ServerMemory.register(MineMarks.class, MineMarks::clearAll);
+    }
 
     private MineMarks() {
     }
@@ -393,6 +398,39 @@ public final class MineMarks {
      */
     public static void clearAll() {
         REFUSED.clear();
+    }
+
+    /** Uma marca, para ir ao save: onde, desde qual tique do mundo, quantas vezes. */
+    public record Mark(BlockPos stone, long since, int count) {
+    }
+
+    /**
+     * As marcas de agora, para o save — 2026-09-25, ADR-025.
+     *
+     * <p>O mineiro voltava à mesma pedra inalcançável em todas as sessões
+     * porque este mapa vivia só em memória. O prazo é em tiques do mundo, que
+     * o jogo salva, então a marca devolvida por {@link #restore} continua
+     * valendo pelo mesmo tempo que valeria sem o carregamento no meio.
+     */
+    public static java.util.List<Mark> marks() {
+        java.util.List<Mark> marks = new java.util.ArrayList<>(REFUSED.size());
+
+        for (Map.Entry<BlockPos, Refusal> entry : REFUSED.entrySet()) {
+            marks.add(new Mark(entry.getKey(), entry.getValue().since(), entry.getValue().count()));
+        }
+
+        return marks;
+    }
+
+    /** Devolve as marcas que o save trouxe, respeitando o teto do mapa. */
+    public static void restore(java.util.Collection<Mark> marks) {
+        for (Mark mark : marks) {
+            if (REFUSED.size() >= MAX_REFUSED) {
+                return;
+            }
+
+            REFUSED.put(mark.stone().toImmutable(), new Refusal(mark.since(), mark.count()));
+        }
     }
 
     /** Quantas posições estão no registro agora. Para a bateria. */

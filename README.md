@@ -33,10 +33,12 @@ SHA-256 do JAR publicado nesta árvore:
 - Evita sobreposição com estruturas existentes, projetos pendentes e blocos
   físicos dentro da área vertical protegida.
 
-O mod é alpha. A rede de testes é ampla, mas a rodada atual ainda tem uma
-falha obrigatória de GameTest e alguns fluxos dependem de playtest em um save.
-O diagnóstico completo está em
-[`docs/technical/Project-Audit-2026-09-21.md`](docs/technical/Project-Audit-2026-09-21.md).
+O mod é alpha. A bateria automática está verde (unitários, GameTests e
+mutação), mas vários fluxos só se confirmam em playtest num save, e as
+entregas desde 2026-09-24 ainda não foram vistas em jogo. O que mudou em cada
+publicação está no [`CHANGELOG.md`](CHANGELOG.md); a avaliação técnica mais
+recente, em
+[`docs/technical/avaliacao/`](docs/technical/avaliacao/).
 
 ## Profissões e funções
 
@@ -150,19 +152,29 @@ Use um mundo de teste: o mod corta árvores, minera e coloca blocos no mundo.
 ./gradlew.bat test
 ./gradlew.bat build
 ./gradlew.bat runGametest
+./gradlew.bat pitest
+./gradlew.bat javadoc
 python -m unittest discover -s tests
 ```
 
-Verificação de 2026-09-21:
+O build exige Java 21 (`JAVA_HOME` apontando para um JDK 21).
 
-- 960 testes unitários em 103 suítes: aprovados.
-- 74 testes Python: aprovados.
-- 397 GameTests: 396 passaram e 1 falhou.
-- Falha atual: `FarmPlanGameTest.thenextturnafterahouseisnonresidential`.
+Verificação de 2026-09-25:
+
+- 1076 testes unitários: aprovados.
+- 86 testes Python: aprovados.
+- 435 GameTests: todos aprovados, numa rodada.
+- Mutação (PIT, pacote `core`): 1151 de 1312 mutações mortas (87,7%), força
+  de teste 95%. O relatório fica em `build/reports/pitest/index.html`.
+- `./gradlew javadoc`: passa.
 
 ## Estado e nota da auditoria
 
-Nota técnica global desta varredura: **7,0/10**.
+A nota abaixo é da auditoria de 2026-09-21 e ficou como registro. A GameTest
+que falhava então foi corrigida, e a avaliação posterior está em
+[`docs/technical/avaliacao/`](docs/technical/avaliacao/).
+
+Nota técnica global daquela varredura: **7,0/10**.
 
 Arquitetura e isolamento: **8,0/10**. A separação `core`/`fabric` é protegida
 por teste e o grafo atualizado não encontrou ciclos de importação.
@@ -190,6 +202,7 @@ e a fila viva em [`TODO.md`](TODO.md).
 - [`CLAUDE.md`](CLAUDE.md): regras para trabalhar no repositório.
 - [`STATE.md`](STATE.md): estado vivo e pendências de playtest.
 - [`TODO.md`](TODO.md): backlog canônico.
+- [`CHANGELOG.md`](CHANGELOG.md): o que mudou em cada publicação.
 - [`docs/decisions/`](docs/decisions/): decisões arquiteturais.
 - [`docs/behavioral-tests/`](docs/behavioral-tests/): estratégia e falhas de
   GameTest.

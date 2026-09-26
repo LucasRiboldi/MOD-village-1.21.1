@@ -1,8 +1,48 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Atualização de 2026-09-24, tarde — jogar com o spark ligado.** O JAR em
-`mods` agora é o do commit `a119c2a` (SHA-256
-`F4226F8AA1EED834FEC508C5389ED4E287DF2A81FC7FC51878C2B6B1B511F911`):
+**Atualização de 2026-09-26 — JAR `C9568D4B…1601E`.** Confira o hash antes
+de relatar. Traz as correções de 26-09 abaixo, inclusive a estabilização de
+obras adiadas e a regra de suprimento.
+
+**Atualização de 2026-09-25, tarde — o mineiro autônomo.** O JAR em
+`mods` foi republicado (commit `a222342`, SHA-256
+`8862EC4FF9CC42688D34ED0D5FC3BAF0016CB3D30104861BED216614147707C0`).
+**O que procurar do mineiro (ADR-025 fases 1 e 2):**
+
+- `takes a detour of N steps` → `is through its detour` (o travado cavou o
+  próprio caminho) ou `its detour failed — …` (o motivo, e a tarefa volta);
+- `Stranded worker … taking a detour` (o encalhado sem escada natural);
+- `The mine floored` (vão de caverna sob a passagem virou chão);
+- `leaves … alone - it holds back water or lava` e `keeps finding stone that
+  holds back water or lava` (a pedra com líquido atrás ficou);
+- em qualquer `gave up the stone`, a parte `brain: …` — é ela que diz por que
+  ele travava em 553, 39, 158;
+- fechar e reabrir o mundo: a pedra recusada deve continuar recusada.
+
+**Da sessão de 26-09:** numa vila sem árvore,
+o lenhador fica em `looking for a tree` sem `wood task returned` e sem largar
+o ofício; `the farmer planted` sai em grupos de 4; vila vanilla nova recebe
+`VC_VILLAGE_BED_CHEST outcome=CREATED` nas camas com parede ao lado; a obra
+com tapete colorido não mostra mais `needs … black_carpet`.
+
+**Obra sem rota de suprimento:** para uma peça manufaturada que nenhuma
+profissão consegue recolher ou fabricar, aguarde três tentativas. Na terceira,
+ela deve surgir primeiro no baú do construtor; se ele estiver ausente ou cheio,
+deve ir para outro baú livre da colônia. Itens naturais continuam a depender
+dos ofícios, sem geração automática.
+
+**Casa na altura da rua (26-09):** a próxima casa aberta tem o chão rente à
+rua e a porta um bloco acima do caminho, sem plataforma de terra embaixo. A
+casa 5 de (-462, 66, 3490), feita antes, fica como está e não deve abrir
+reparo.
+
+**Antes dele, a escolha da obra** (publicação da manhã de 25-09):
+Ao carregar, o templo de z=211 deve
+sair com `keeps the abandoned ... waiting — it is not its turn`, e a próxima
+obra deve ser **casa** (`planned ...house...`), depois outra obra, alternando.
+A linha `miners:` deve voltar a cada ciclo com pedra pedida mesmo sem obra. Ele soma o **cache da varredura de baús livres** ao de 09-24: o perfil de
+09-24 (`wIEM9zz90l`) deu TPS 20 e o `ColonyChests.nearestFirst` como o
+maior custo do mod — o próximo perfil diz se ele caiu. Vêm de antes:
 revisão de naturalidade, rodada de qualidade, refatoração e a **vila foco**
 (só ela planeja; procure `Focus village is now`, `Planner turns` e a queda
 de `Colony cycle took`) — nada disso visto em jogo ainda, e o

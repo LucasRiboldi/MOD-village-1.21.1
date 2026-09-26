@@ -167,4 +167,27 @@ class ColonyRoadsTest {
 
         assertTrue(roads.rebasedTo(new ColonyPos(500, 64, 500), 64).isEmpty());
     }
+
+    // --- recentrar fora da origem, 2026-09-25 (sobreviventes do PIT) ---
+    //
+    // Com o centro em (0, 64, 0), "x - centro" e "x + centro" dão o mesmo,
+    // e a conta errada passava. Aqui o centro sai da origem.
+
+    /**
+     * Recentrar guarda a rua que está dentro do novo raio, medida a partir
+     * do novo centro em cada eixo — inclusive a que fica bem na borda.
+     */
+    @Test
+    void rebasingKeepsTheRoadsWithinTheNewSquare() {
+        ColonyPos centre = new ColonyPos(100, 64, 100);
+        long eastEdge = ColonyRoads.column(110, 100);
+        long southEdge = ColonyRoads.column(100, 110);
+        long outside = ColonyRoads.column(111, 100);
+
+        ColonyRoads rebased = roadsAt(eastEdge, southEdge, outside)
+                .rebasedTo(centre, 10).orElseThrow();
+
+        assertEquals(List.of(eastEdge, southEdge), rebased.columns());
+        assertEquals(centre, rebased.from());
+    }
 }

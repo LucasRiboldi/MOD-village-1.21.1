@@ -62,7 +62,8 @@ final class MineVein {
                 // inteiro numa colônia sem boca de mina — mesmo alvo,
                 // mesma desistência, todo ciclo.
                 column -> StonePatch.in(world, column, center.getY())
-                        .filter(stone -> !MineMarks.isUnreachableAround(world, stone)));
+                        .filter(stone -> !MineMarks.isUnreachableAround(world, stone))
+                        .filter(stone -> !MineFlooding.holdsBackFluid(world, stone)));
 
         if (found.isEmpty()) {
             // Pelo recordAt, como a areia — 2026-09-11. Este é o irmão
@@ -138,6 +139,7 @@ final class MineVein {
         // Sem esta linha o laço voltaria pelo lado do minério, que é
         // justamente por onde ele voltou em 2026-09-03.
         if (nowhereToStand(world, more.get())
+                || MineFlooding.holdsBackFluid(world, more.get())
                 || MineMarks.isUnreachableAround(world, more.get())) {
             arm.veinExhausted();
 
@@ -160,7 +162,8 @@ final class MineVein {
                 // E o degrau é alvo como qualquer outro: se não há de
                 // onde bater nele, ele trava a veia do mesmo jeito que o
                 // minério travaria — 2026-09-03.
-                if (nowhereToStand(world, step.get())) {
+                if (nowhereToStand(world, step.get())
+                        || MineFlooding.holdsBackFluid(world, step.get())) {
                     arm.veinExhausted();
 
                     return Optional.empty();
@@ -218,7 +221,7 @@ final class MineVein {
      * Se não há de onde bater nesta pedra — 2026-09-03.
      *
      * <p><b>Uma pergunta só, num lugar só.</b> O
-     * {@link MinerWork#approachTo} devolve <i>a própria pedra</i> quando
+     * {@link MinerApproach#approachTo} devolve <i>a própria pedra</i> quando
      * não acha vizinho onde um aldeão caiba de pé, e essa igualdade é a
      * resposta — escrita à mão em três lugares, ela seria a próxima a
      * discordar de si mesma, que é a falha que o {@code standable} já

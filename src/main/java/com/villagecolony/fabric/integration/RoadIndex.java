@@ -286,8 +286,8 @@ public final class RoadIndex {
      * volta — o jogador arrancou o caminho, e aí a casa fica com a porta
      * onde ela já estava.
      *
-     * @param floor a altura do piso da casa. A rua fica um abaixo dele,
-     *     porque é sobre ela que se anda
+     * @param origin o canto do lote; {@code origin.y()} é a altura do piso
+     *     da casa. A rua fica um abaixo dele, porque é sobre ela que se anda
      */
     public static Optional<Direction> roadSideOf(
             ServerWorld world, UUID colonyId, ColonyPos origin, ColonyPos size) {

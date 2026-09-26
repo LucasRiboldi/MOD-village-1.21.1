@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.WorkClock;
@@ -41,6 +42,10 @@ import java.util.UUID;
  * aconteceria, e a comida sairia do baú para nada.
  */
 public final class VillageMeals {
+
+    static {
+        ServerMemory.register(VillageMeals.class, VillageMeals::clearAll);
+    }
 
     /** Os pontos que o Vanilla exige para o aldeão querer procriar. */
     static final int BREEDING_FOOD = 12;

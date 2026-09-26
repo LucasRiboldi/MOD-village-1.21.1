@@ -46,10 +46,9 @@ import java.util.UUID;
  * E3 como <i>metade fechada</i>: <i>"o mineiro continua sem teto de
  * inventário"</i>.
  *
- * <p>Era literal. O {@code MinerHaul} depositava no baú da boca da mina
- * e depois no baú do mineiro, e o que sobrasse virava uma linha de WARN
- * contando a perda. Colônia com seis baús vazios a vinte blocos não
- * mudava nada: a pergunta nunca chegava a eles.
+ * <p>O mineiro agora deposita diretamente no próprio baú. Quando ele está
+ * cheio, o que não couber vira uma linha de WARN e fica no mundo; a regra não
+ * contamina o baú de outro trabalhador.
  *
  * <p>Este teste é a prova da segunda metade, e é de integração de
  * propósito — o defeito só existe com baú cheio de verdade, bloco saindo

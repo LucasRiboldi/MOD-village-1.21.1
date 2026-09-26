@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
@@ -43,6 +44,10 @@ import java.util.Set;
  * erro — é o mod não abrindo espaço na construção de quem joga.
  */
 public final class ChestMarker {
+
+    static {
+        ServerMemory.register(ChestMarker.class, ChestMarker::clearAll);
+    }
 
     /**
      * O que a marca escreve no nome da entidade, para se reconhecer

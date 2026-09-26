@@ -12,6 +12,7 @@ import com.villagecolony.fabric.event.ServerLifecycleHandler;
 import com.villagecolony.fabric.event.PlayerWorldChangeHandler;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
 import com.villagecolony.fabric.event.VillagerLifecycleHandler;
+import com.villagecolony.fabric.integration.VillageChests;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -152,6 +153,7 @@ public class VillageColonyMod implements ModInitializer {
         PlayerWorldChangeHandler.register();
         VillageDetectionHandler.register();
         VillagerLifecycleHandler.register();
+        VillageChests.register();
 
         LOGGER.info("[Village Colony] Mod initialized");
     }

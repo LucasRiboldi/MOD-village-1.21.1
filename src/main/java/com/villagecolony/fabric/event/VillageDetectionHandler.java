@@ -11,6 +11,7 @@ import com.villagecolony.core.colony.service.ColonyAbandonment;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.coordination.ColonyCycle;
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.coordination.ColonyGoals;
 import com.villagecolony.core.coordination.WorkDemand;
 import com.villagecolony.core.resource.model.ColonyResources;
@@ -91,6 +92,10 @@ import net.minecraft.world.poi.PointOfInterestTypes;
  * o raio limitado do scanner.
  */
 public final class VillageDetectionHandler {
+
+    static {
+        ServerMemory.register(VillageDetectionHandler.class, VillageDetectionHandler::clearPending);
+    }
 
     static final VillageScanner SCANNER = new VillageScanner();
 

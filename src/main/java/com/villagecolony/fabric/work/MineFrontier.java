@@ -71,7 +71,7 @@ public final class MineFrontier {
      * primeiro bloco fechado da ordem inteira é um resto solto dentro do
      * túnel — e o cursor recuava 83 passos até ele, passagem após
      * passagem, com o corredor à frente aberto. Ver
-     * {@link Mine#frontierWhereRockBegins}.
+     * {@link MineArm#frontierWhereRockBegins}.
      */
     static void findTheFrontier(ServerWorld world, Mine mine, MineArm arm) {
         OptionalInt frontier =

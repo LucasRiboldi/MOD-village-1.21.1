@@ -53,42 +53,6 @@ public final class LotClearance {
     }
 
     /**
-     * A coluna está livre da altura do piso até o teto da planta?
-     *
-     * <p>A Regra 22, de 2026-08-19. Até aqui o lote era julgado pelo
-     * <b>chão</b>: a coluna respondia onde a casa assenta, e um único
-     * bloco acima da janela reprovava. Isso deixava passar o que
-     * estivesse dentro da caixa da casa e acima daquela janela — árvore
-     * caída, cerca, poste, a quina de outra construção. A casa nascia
-     * com aquilo dentro dela, e o construtor pulava os blocos ocupados
-     * com {@code is in the way}.
-     *
-     * <p>Agora a pergunta é sobre o volume: cada coluna do lote, do piso
-     * ao último nível da planta.
-     *
-     * <p><b>Planta não ocupa.</b> Grama alta, flor, samambaia e camada
-     * de neve não reprovam o lote — quem constrói tira. É o outro lado
-     * da mesma decisão do autor: recusar um lote de planície por causa
-     * de um pé de margarida seria recusar a planície inteira.
-     */
-    /**
-     * Se alguma obra <b>em andamento</b> ocupa esta caixa — 2026-09-19.
-     *
-     * <p><b>O buraco que isto fecha, e ele era meu.</b> O portão de caixa
-     * contra caixa de 15:49 consultava só o {@code BUILDINGS}, que é o
-     * registro das obras <b>terminadas</b>. Uma obra em andamento não
-     * está nele — ela só entra quando fecha —, então um lote novo podia
-     * nascer em cima dela.
-     *
-     * <p>E era o caso exato desta vila: a obra do {@code cut_sandstone}
-     * ficou parada em {@code WAITING_RESOURCES} por quase meia hora,
-     * ocupando o terreno e <b>invisível</b> para o portão.
-     *
-     * <p>O {@code BlockProtection.isOpenSite} já percorre as obras
-     * abertas, mas responde por <b>ponto</b>; aqui a pergunta é da caixa,
-     * que é a forma do que se quer impedir.
-     */
-    /**
      * Se esta obra ocupa o mesmo espaço de algo já construído —
      * 2026-09-19.
      *
@@ -119,6 +83,20 @@ public final class LotClearance {
 
     /**
      * Se uma obra aberta, inclusive uma ainda pendente do save, ocupa a caixa.
+     *
+     * <p><b>O buraco que isto fecha, e ele era meu</b> — 2026-09-19. O
+     * portão de caixa contra caixa de 15:49 consultava só o
+     * {@code BUILDINGS}, que é o registro das obras <b>terminadas</b>. Uma
+     * obra em andamento não está nele — ela só entra quando fecha —, então
+     * um lote novo podia nascer em cima dela.
+     *
+     * <p>E era o caso exato desta vila: a obra do {@code cut_sandstone}
+     * ficou parada em {@code WAITING_RESOURCES} por quase meia hora,
+     * ocupando o terreno e <b>invisível</b> para o portão.
+     *
+     * <p>O {@code BlockProtection.isOpenSite} já percorre as obras
+     * abertas, mas responde por <b>ponto</b>; aqui a pergunta é da caixa,
+     * que é a forma do que se quer impedir.
      *
      * <p>Projetos pendentes existem antes de {@code resume}: o save guarda
      * apenas o id e a origem até o mundo estar carregado. Eles continuam
@@ -258,6 +236,25 @@ public final class LotClearance {
         return false;
     }
 
+    /**
+     * A coluna está livre da altura do piso até o teto da planta?
+     *
+     * <p>A Regra 22, de 2026-08-19. Até aqui o lote era julgado pelo
+     * <b>chão</b>: a coluna respondia onde a casa assenta, e um único
+     * bloco acima da janela reprovava. Isso deixava passar o que
+     * estivesse dentro da caixa da casa e acima daquela janela — árvore
+     * caída, cerca, poste, a quina de outra construção. A casa nascia
+     * com aquilo dentro dela, e o construtor pulava os blocos ocupados
+     * com {@code is in the way}.
+     *
+     * <p>Agora a pergunta é sobre o volume: cada coluna do lote, do piso
+     * ao último nível da planta.
+     *
+     * <p><b>Planta não ocupa.</b> Grama alta, flor, samambaia e camada
+     * de neve não reprovam o lote — quem constrói tira. É o outro lado
+     * da mesma decisão do autor: recusar um lote de planície por causa
+     * de um pé de margarida seria recusar a planície inteira.
+     */
     static boolean isClearAbove(
             ServerWorld world, int x, int z, int floor, int height) {
 

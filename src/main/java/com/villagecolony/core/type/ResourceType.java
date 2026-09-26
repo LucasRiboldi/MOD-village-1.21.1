@@ -16,7 +16,7 @@ import java.util.Objects;
  * <p>O modelo de Resource-System.md §"Modelo de Recurso" também prevê
  * {@code quantity} e {@code locations}. Eles não estão aqui de
  * propósito: isto é o tipo do recurso, que é fixo, e não o estoque, que
- * muda. A quantidade vive em {@link ResourceTally}.
+ * muda. A quantidade vive em {@code ResourceTally}.
  */
 public enum ResourceType {
 

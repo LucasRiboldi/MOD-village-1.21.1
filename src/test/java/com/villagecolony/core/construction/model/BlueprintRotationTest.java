@@ -2,10 +2,12 @@ package com.villagecolony.core.construction.model;
 
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.core.type.Side;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -111,6 +113,17 @@ class BlueprintRotationTest {
         assertTrue(
                 plan.rotated(1).blocks().stream().anyMatch(BlueprintBlock::furniture),
                 "a mobília deixou de ser mobília depois de girar");
+    }
+
+    @Test
+    @DisplayName("a orientacao gira junto com a planta")
+    void theFacingTurnsWithTheBlueprint() {
+        Blueprint plan = Blueprint.of(ID, List.of(new BlueprintBlock(
+                new ColonyPos(0, 0, 0), PLANKS, false, Optional.of(Side.NORTH))));
+
+        assertEquals(Optional.of(Side.EAST), plan.rotated(1).blocks().getFirst().facing());
+        assertEquals(Optional.of(Side.SOUTH), plan.rotated(2).blocks().getFirst().facing());
+        assertEquals(Optional.of(Side.WEST), plan.rotated(3).blocks().getFirst().facing());
     }
 
     /** Três por três, com a porta no meio da parede do norte. */

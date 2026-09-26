@@ -21,6 +21,7 @@ import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.BlockBreakTime;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.MineFlooding;
+import com.villagecolony.fabric.integration.MineFloor;
 import com.villagecolony.fabric.integration.OreVein;
 import com.villagecolony.fabric.integration.MineMouth;
 import net.minecraft.block.Block;
@@ -55,6 +56,22 @@ public final class MinerHands {
             ServerWorld world, VillagerEntity villager, Job job, WorkerStorage storage) {
 
         BlockState state = world.getBlockState(job.target);
+
+        // <b>A água anda</b> — 2026-09-25. Toda porta de escolha já recusa a
+        // pedra que segura líquido; esta é a trava para o que chegou depois
+        // da escolha. A marca afasta a pedra das próximas passagens pelo
+        // mesmo caminho da pedra inalcançável.
+        if (job.progress == 0 && MineFlooding.holdsBackFluid(world, job.target)) {
+            VillageColonyMod.LOGGER.info(
+                    "Miner {} leaves {} alone - it holds back water or lava",
+                    villager.getUuid().toString().substring(0, 8),
+                    job.target.toShortString());
+
+            MineMarks.refuse(world, job.target);
+            release(villager.getUuid(), job);
+
+            return;
+        }
 
         if (job.required == 0) {
             job.required = BlockBreakTime.ticksFor(world, job.target, state, villager);
@@ -109,15 +126,16 @@ public final class MinerHands {
             MineTrouble.flooded(job.task.colonyId(), villager.getUuid(), job.target);
         }
 
-        // Regra 30: o minério que não é carvão vai para o baú da boca
-        // da mina, e só transborda para o do mineiro quando aquele
-        // lotar. Decidido aqui, com o bloco em mãos: no baú só
-        // chegam itens, e minério cru não diz de que pedra veio.
+        // E a passagem sai com chão — ADR-025, fase 1. Caverna sob o degrau
+        // é queda que a navegação Vanilla não sabe tapar. Ver MineFloor.
+        MineFloor.patch(world, job.target,
+                MinerWork.mineOf(job).map(Mine::plannedCells).orElse(java.util.Set.of()));
+
+        // Todo recolhimento vai direto para o baú do próprio profissional.
         MinerHaul.Haul haul = MinerHaul.deposit(
                 world,
                 storage,
                 drops,
-                MinerHaul.treasureChestFor(world, job, state),
                 job.target,
                 MinecraftTypeAdapter.toItem(job.wanted).orElse(null));
 
@@ -218,6 +236,7 @@ public final class MinerHands {
     /** Larga a pedra de agora e volta a procurar. */
     static void release(UUID workerId, Job job) {
         job.target = null;
+        job.detour = null;
         job.approach = null;
         job.progress = 0;
         job.required = 0;

@@ -31,6 +31,34 @@ o §18 do Project-State. O texto das entradas fica como estava.
 
 ---
 
+## Entry 2026-09-26 - alternativa A, obra adiada e orientacao horizontal
+
+O autor escolheu a alternativa A da auditoria de travamentos criticos. A
+revisao confirmou que recusa persistida da mina, desvios, orcamento do
+planejador e limpeza central ja existiam. A entrega atacou as duas lacunas
+demonstradas restantes sem ampliar a politica de terreno.
+
+O `BuildProgressGameTest` reproduziu primeiro o loop de uma obra cuja fila
+restante estava toda adiada: `WaitingWork` apagava os relogios e devolvia
+`false` para sempre. Depois da correcao, a janela de `PatienceClock` encerra a
+tarefa e o projeto ativos, registra a construcao parcial e conserva o lote
+contra sobreposicao.
+
+A parte horizontal da ADR-008 entrou no modelo neutro: `BlueprintBlock`
+carrega `Optional<Side>`, o leitor conserva `facing` da paleta e do
+`final_state` de jigsaw, e a rotacao gira o lado junto da planta. O Fabric
+aplica essa direcao antes das regras de geometria; cama bloqueada ainda usa o
+fallback seguro. Testes cobrem rotacao, leitura e colocacao.
+
+Verificacao: a fase vermelha de T1 falhou somente no GameTest alterado; a fase
+vermelha da orientacao falhou na compilacao do teste pela ausencia do novo
+contrato. Depois da implementacao, o teste unitario focado passou e
+`runGametest --rerun-tasks` fechou 473/473 e `gradlew build` também passou. O
+playtest no save fica registrado separadamente; a politica de lote a 1-2
+blocos da rua nao foi alterada sem ADR.
+
+---
+
 ## Entry 2026-09-23 - P1.4, telemetria e baus seguros de vila
 
 O mod passou a escrever `VC_ACTIVITY version=1` somente nas transicoes ja
@@ -9366,3 +9394,284 @@ reutilizavel.
   - 1034 unitarios; 434/434 GameTests em duas rodadas.
 - **Nao verificado em jogo.** Sinais no log: `Focus village is now`,
   `Planner turns`, e a queda de `Colony cycle took`.
+
+### 2026-09-24 - Branch na main, STATE.md enxuto, item 3 (ServerMemory)
+
+- **R4:** PR #2 com o CI verde; merge `692d8b9`, e o branch avancou para a
+  `main`.
+- **R5:** o `STATE.md` foi de 659 para 95 linhas. O texto antigo foi
+  arquivado sem edicao no `Historico-2026-09.md`.
+- **Item 3:** `core.type.ServerMemory`. As 51 classes com memoria de
+  servidor (50 `clearAll` mais o `clearPending`) se inscrevem no proprio
+  bloco estatico, e o ciclo de vida chama `resetAll()` no lugar das duas
+  listas a mao (33 imports a menos).
+  - Achados:
+    - o `BiomeConstructionSupply.clearAll()` nunca era chamado;
+    - a lista de fechar nao limpava `PlanRefusals` nem
+      `PlayerWorldChangeHandler`;
+    - o `VillageStructures`, com `synchronized`, escapou do script e foi
+      pego pelo teste.
+  - O `ServerMemory` ficou em `core.type` porque a `DependencyRuleTest`
+    proibe dominio do core importar `core.coordination`.
+  - `ServerMemoryRegistrationTest` percorre as classes compiladas e foi
+    confirmado por mutacao.
+  - Resultados: 1036 unitarios; 434/434 GameTests em duas rodadas.
+  - Nao muda a metrica C05, que conta campos, e nao limpeza.
+
+### 2026-09-25 - Perfil do spark, cache de baus, PIT de volta e 87,7% de mutacao
+
+- **Perfil do spark (`wIEM9zz90l`):** ~16 min, TPS 20 em todas as janelas,
+  MSPT mediano 13-15 ms. Gravou so os ticks acima de 50 ms (331); um pico de
+  911 ms as 22h34 foi carregamento de chunk e colisao de entidade, vanilla.
+  O mod: 4,1% dos ticks lentos, com `ColonyChests.nearestFirst` no topo.
+  - A primeira leitura estava errada: `times` e tempo inclusivo, e somar os
+    filhos por cima contou tudo varias vezes. Corrigido antes de agir.
+- **Cache de baus livres (`b957f5e`):** 20 tiques por (mundo, centro);
+  invalidado por `ServerBlockEntityEvents` quando um bau entra ou sai; nome,
+  BigHouse e chunk reconferidos na leitura. GameTest novo, confirmado por
+  mutacao (desligar a invalidacao derruba so ele).
+- **PIT parado desde o `78e7efc`:** o `ServerMemoryRegistrationTest` sobe o
+  jogo e o PIT roda sem ele; o `continue-on-error` do CI calava. O teste
+  saiu da rodada do PIT, o puro virou `ServerMemoryTest`, e o CI agora
+  reprova quando o PIT nem comeca. O "PIT verde" registrado para o
+  `78e7efc` era falso.
+- **Sobreviventes do PIT:** de 1017 (78%) para 1151 de 1312 mortas (87,7%),
+  forca 95%. Doze classes zeradas ou so com equivalentes.
+  - Tres testes vazios achados pela mutacao: o cancelamento no
+    `ColonyCycle` (a tarefa ja ia para o lenhador), o adiamento no
+    `ConstructionProject` (comparava so o material de dois pedregulhos) e o
+    recentrar do `ColonyRoads` (centro na origem, onde `x - c` = `x + c`).
+- **Javadoc:** 32 avisos do Error Prone zerados; `./gradlew javadoc` volta a
+  passar. Sete comentarios tinham ficado longe do metodo pela divisao de
+  classes, e um deles escondia outro link quebrado.
+- **PR #3** aberto para a `main`.
+- Resultados: 1076 unitarios; 86 testes Python; GameTest 435/435 numa rodada.
+
+### 2026-09-25 (tarde) - Sessao de jogo: resetAll quebrado e a placa da obra
+
+- **Sessao 01:19-01:45**, perfil do spark `1HTwcUdP2F`: TPS 20 nas 22
+  janelas, MSPT mediano 14-16 ms. O mod caiu de 4,1% para 0,3% da thread do
+  servidor; `nearestFirst` de 332 para 16 ms. Nao e A/B limpo: o construtor
+  ficou boa parte parado esperando tocha, e sem bloco assentado nao ha
+  chamada.
+  - Correcao da leitura do spark: o filtro "ticks acima de 50 ms" conta o
+    intervalo inteiro do tick, com a espera; janelas com MSPT max de 46 ms
+    gravaram 57 ticks. O perfil nao e so dos ticks lentos.
+- **`ServerMemory.resetAll` quebrava ao fechar o mundo**
+  (`ConcurrentModificationException`): um `clearAll` carregava outra classe,
+  que se inscrevia no meio da volta. Defeito meu, do `78e7efc`. A mesma
+  chamada roda ao abrir o mundo. Teste que reproduz: a primeira e a segunda
+  versao passavam sem a correcao (chave ja inscrita; inscricao pela ultima
+  da lista, quando o iterador ja nao confere o mapa). So a terceira falhou.
+- **Placa da obra:** mostrava o primeiro material restante da planta, sem
+  olhar o estoque. Agora mostra o bloco em que o construtor parou (o
+  `nextBlock`), se falta; senao o primeiro em falta; senao so a contagem. O
+  nome continua vindo do `Block.getName()` (cliente em `pt_pt`). Confirmado
+  por mutacao, e a fronteira "exatamente o que pede nao e falta" pelo PIT.
+- **E47:** mineiro preso a y=48, `cannot dig out`, e fora a y=70 27 s depois
+  sem cavar nenhum degrau. Vila foco: escolhida, um so `Colony cycle took`.
+- Resultados: 1080 unitarios; GameTest 435/435 numa rodada; PIT 1164/1324.
+
+### 2026-09-25 (manha) - A obra que nunca fechava: peca de parede virada para o ar
+
+- **Relato do autor:** a placa comecou certa, a obra "devia ter acabado", mas
+  "resetou" e a placa passou a "Obra: 9 blocos".
+- **Linha do tempo (log 08:31-08:53, e igual na sessao 01:19):** retomada com
+  "278 de pe, 23 a fazer" (a sessao anterior tinha terminado com 9); tres
+  `stone_stairs` "in the way"; espera de tocha; tres tochas riscadas pela
+  barreira de teste; "every remaining piece is waiting for physical support"
+  com 9 restantes, e assim ate o fim.
+- **As nove, lidas do save** (`villagecolony_colonies.dat`, leitor NBT no
+  scratchpad): 4 `ladder` e 5 `wall_torch`, adiadas numa sessao antiga, todas
+  com pedregulho a oeste/norte/leste e ar ao sul.
+- **Causa:** a planta nao guarda a direcao; `BlockShaping.facing` so vira a
+  borda da caixa; no miolo a peca fica `facing=north` e procura apoio ao sul.
+  `canPlaceAt` recusa, a peca e adiada, e a vizinhanca nunca muda.
+- **Correcao:** `leanOnAWall` (a primeira direcao, em ordem fixa, que se
+  sustenta, so quando a deduzida nao se sustenta) usado pelo construtor e
+  pela reconsideracao das adiadas; `ConstructionProject.retry` para a peca
+  que ja cabe. Placa conta as pecas "sem apoio".
+- **O "reset" de 9 para 23:** a retomada rele o mundo, e o que foi riscado
+  (tocha sem carvao, substituto "no caminho") nao esta nele. Registrado no
+  TODO; nao impede fechar.
+- Resultados: 1082 unitarios; GameTest 438/438 numa rodada (os 3 do
+  `WallPieceGameTest` falharam antes da correcao); PIT 1170/1330.
+
+### 2026-09-25 (manha, 2a) - Vila presa a templos, e o mineiro parado
+
+- **Sessao 09:13-09:38**, spark `oDFuhQMLRI`: TPS 20, MSPT mediano 13-18 ms,
+  mod 0,2% da thread do servidor.
+- **O templo fechou** as 09:34 (as nove pecas voltaram as 09:22). No segundo
+  seguinte o reparo abriu "repair sweep" de outro `plains_temple_4`, em z=211,
+  com 301 blocos: a caixa abandonada que o save guardava.
+- **Causa:** `BuildingRepairPlanner.open` roda antes do rodizio e percorre
+  toda `Building`, inclusive as abandonadas. O log de 24-09 tem "gives up on
+  plains_temple_4" e "starts repair sweep" na mesma origem e no mesmo segundo.
+  Todas as linhas `planned` antigas eram `plains_temple_4`, "drawn from none
+  fitting, the offered plan".
+- **Decisao do autor:** obra abandonada volta so na vez do tipo. Feito com
+  `HousePlans.isTurnOf` no reparo e na retomada; a fusao move a obra para o
+  fim do registro.
+  - Dois testes passaram antes da correcao por outra regra: a retomada
+    descarta obra salva com zero blocos sobre caixa construida. Com um bloco
+    de pe, o teste falhou pelo motivo certo.
+- **Mineiro:** 20 min de "no miner work: no task open"; o unico mineiro com
+  mina empacou em 553,39,158 (a mesma pedra de todas as sessoes), ficou preso
+  a y=41 e o `StrandedEscape` desistiu. Decisao do autor: galerias sem parar.
+  Feito como a Regra 1 da madeira: meta de pedra = guardado + espaco nos
+  baus dos mineiros. O E44/E45 continua aberto.
+- Resultados: 1088 unitarios; GameTest 441/441 numa rodada; PIT 1176/1336.
+
+### 2026-09-25 (tarde, 2a) - ADR-025 aceita: fase 1 do mineiro autonomo
+
+- **Forense de 553,39,158:** o recorte x545..556 y37..47 z153..162 lido do
+  save e reconstruido num GameTest (`MineStallForensicGameTest`). A navegacao
+  Vanilla acha caminho e chega ao lugar de pisar. A geometria nao explica o
+  travamento; a linha de travamento ganhou `brain:` (atividade, tarefa de
+  andar, alvo, caminho) para a proxima sessao decidir.
+  - Hipoteses derrubadas no caminho: `dirt_path` no degrau (a celula era ar
+    as 09:15), estrada pavimentando a mina (`RoadPaving` exige chao natural),
+    chunk sem tique (simulacao 24, jogador a 4 chunks).
+- **`MineMarks` no save** (`WorkMarksSavedData`, arquivo proprio porque o
+  `ColonySavedData` esta no teto de 500 linhas). O
+  `ConversionBoundaryTest` pegou um `new BlockPos` fora do adaptador.
+- **`MineFloor`:** vao sem colisao sob celula planejada, e que a mina nao
+  planeja abrir, vira pedregulho. 4 GameTests, vermelho visto com o esboco.
+  - O teste de `plannedCells` supunha 220 celulas; sao 210 - o ultimo degrau
+    de cada escada cai dentro da sala. Geometria salva, nao defeito.
+- **`MinerCaution`:** agua -1 para o mineiro. GameTest com controle: sem a
+  cautela o aldeao atravessa o fosso nadando (o controle prova que o teste
+  mede alguma coisa).
+- Resultados: build limpo, 1093 unitarios; GameTest 448/448.
+
+### 2026-09-25 (tarde, 3a) - Pedra com liquido atras, e a fase 2 da ADR-025
+
+- **Pedido do autor:** o mineiro nao quebra bloco com liquido atras.
+  `MineFlooding.holdsBackFluid` (seis faces) entra em todas as portas de alvo:
+  cursor da galeria (conta para a curva, como bedrock), minerio da parede, veio,
+  degrau de volta, pedra de superficie, areia; e no `MinerHands` antes da
+  primeira batida, com marca, porque a agua anda. Vermelho visto em duas
+  etapas: esboco, depois predicado ligado e cursor nao.
+- **Fase 2:** `core/movement` (Cell, Terrain, DetourMoves, DetourPlanner) e,
+  no fabric, WorldTerrain, DetourWalker, MinerDetours, StrandedDetours
+  (separado do StrandedEscape, que passaria de 500 linhas).
+  - O planejador achou dois caminhos que os cenarios nao previam: ponte um
+    nivel acima do rio, e descer no poco para andar no chao do mundo abaixo da
+    arena. Ambos corretos; cenarios refeitos.
+  - `aFrozenMinerGivesUpLongBeforeTheStallGuard` mudou de contrato: o guarda
+    age cedo, e agir e devolver a tarefa OU abrir a parede. Passou pelo desvio.
+  - PIT: 1265/1430 (88%), forca 96%; 5 sobreviventes no pacote novo, todos
+    equivalentes.
+- Resultados: build limpo, 1112 unitarios; GameTest 455/455.
+
+### 2026-09-25 (tarde, 4a) - Varredura de decisoes e publicacao do JAR
+
+- **Decisoes em aberto:** varredura buscando a menor mudanca que deixa o jogo
+  fluido (`docs/research/2026-09-25-decisoes-simples.md`). Achou duas esperas
+  sem prazo: obra com so pecas adiadas nunca fecha (`WaitingWork`, linha 279)
+  e encalhado sem saida fica fora da escala para sempre. Nenhuma implementada;
+  aguardam o autor.
+- **JAR publicado:** commit `a222342`, SHA-256 `8862EC4F...07C0`, em
+  `downloads/` e em `.minecraft/mods`; `release_manifest.py` conferiu os tres.
+  O jogo estava fechado (so processos do Gradle abertos).
+- Resultados: build limpo, 1112 unitarios; GameTest 455/455 (rodada da fase 2,
+  codigo igual); PIT 1265/1430.
+
+### 2026-09-26 - Sessao de jogo: lenhador, viveiro, bau da cama, tapete e desvio
+
+- **Sessao 00:02-00:40**, JAR `8862EC4F...07C0` (md5 conferido), spark
+  `i3Xj2w4xyN`: TPS 20, MSPT mediano 11-12 ms, mod ~0,5% da thread. O autor
+  ficou na colonia `ede8c122` (-437, 64, 3529), vila de planicie nova.
+- **Lenhador:** sem arvore natural no raio; o guarda de imobilidade devolvia a
+  tarefa "while looking for a tree" ate ele largar o oficio. Os guardas passam
+  a contar so com arvore escolhida. Vermelho conferido com mutacao fiel (a
+  mesma frase do log de jogo).
+  - O teste achou arvores de outros testes (raio 64): lote proprio e gancho
+    `LumberjackWork.shortenSearchRadiusTo`, no molde do `MineDigging`.
+- **Viveiro:** existia e funcionou, uma muda a cada ~6 min. Lote de 4 quando
+  o lenhador nao acha arvore.
+- **Bau da cama:** a regra estrita de 23-09 recusou 3 de 3 camas
+  (`SKIPPED_NO_UNAMBIGUOUS_DOOR`). Regra (b) do autor: ao lado da cama,
+  encostado numa parede, nunca diante da porta.
+- **Tapete verde:** o livro de receitas devolvia a de tingir tapete pronto.
+  `RecolorRecipes` (core) a ignora; a primeira versao pegou tambem a mistura
+  de corante (roxo sem produtor na bateria) e foi corrigida.
+  - Engano meu, corrigido pelo teste: disse que a familia do tapete ja valia;
+    o unitario falhou porque tag nao existe sem mundo. Movido para GameTest,
+    onde passa.
+- **Desvio do mineiro:** "something stood in" era o proprio corpo na beira do
+  bloco; e a queda esperava 100 tiques. Recentro e replanejamento (ate 3).
+  - O cenario do empurrao pedia destino em x = 8, borda solida da estrutura
+    do GameTest; encolhido.
+- Resultados: build limpo, 1122 unitarios; GameTest 464/464; PIT 1277/1442
+  (89%), `RecolorRecipes` sem sobreviventes.
+
+### 2026-09-26 (manha) - Casa na altura da rua, sem terra na base
+
+- **Sessao 01:52-02:55**, ainda com o JAR anterior (md5 `5b98...`): as
+  correcoes da madrugada nao estavam no jogo. Spark `mmw9xhgKqL`: TPS 20, mod
+  ~0,3%; a janela de 8,2 TPS gravou 383 tiques com maximo de 29,9 ms (pausa).
+- **Casa sobre monte de terra:** lida do save, a `plains_small_house_5` em
+  (-462, 66, 3490) tem piso em 67, porta em 68, tres camadas de terra por
+  baixo, e a rua em 63-65.
+  - Causa: a camada 0 do NBT e fundacao enterrada (so terra) e o mod a punha
+    um acima do chao. Lido o NBT das 36 casas de planicie: em umas a camada 0
+    e o piso, em outras e terra.
+  - Primeira regua (encaixe de rua do jigsaw) refutada pela propria bateria:
+    shepherds, big_house_1 e temple_4 tem o encaixe no andar da porta. A
+    regua certa e a porta: rua = porta mais baixa - 1.
+  - Pular a terra e baixar a origem sem mudar a planta: as 17 construcoes e 3
+    obras do save continuam coerentes (a peca enterrada so conta onde o chao
+    ocupa a posicao). `BuriedPieces` e consultado na abertura, retomada,
+    reparo e colocacao.
+- **Viveiro cheio** passou a guardar a hora: recontava 166 mil blocos por
+  chamada.
+- Resultados: build limpo, 1129 unitarios; GameTest 468/468; PIT 1295/1460
+  (89%), nenhum sobrevivente nos metodos novos do Blueprint.
+
+### 2026-09-26 (tarde) - Sessao longa: bau para todo trabalhador, pecas naturais, profissoes continuas
+
+- **Auditoria da sessao 03:22-08:14** (`docs/research/2026-09-26-sessao-longa.md`):
+  uma casa em 2 h, 2h51 sem obra, lenhador 0 min e mineiro 4h48 sem tarefa, 254
+  pecas fabricadas do nada, 714.589 colunas de lote recusadas.
+  - Causa principal: `Registered 5 storages` ao carregar; lenhador, mineiro e
+    pedreiro sem bau, e a distribuicao exige bau. O relatorio dizia "no task
+    open". A hipotese de bau cheio foi refutada no save (bau do lenhador vazio).
+  - A mina cavada do save tem saida de todos os pontos pela regra do aldeao
+    (inclusive com o espaco de pulo); o preso nao foi reproduzido.
+- **Feito:** `ChestSpawner` + `workerChests` no save; `BiomeConstructionSupply
+  .isNatural`; `StandingWork` (pastor, fazendeiro); `FurnaceReach`;
+  `VillageRoad.besidePaving` no guarda de alcance;
+  `ConstructionProject.hasBuiltAnything` no `isSupersededBy`.
+  - `stone` e produto de fornalha no mod; a primeira versao o deixava nascer
+    pronto — a bateria pegou, e terreno/pedra de base passaram a ser natureza.
+  - Liberar o lote da obra largada sem blocos quebrou 3 GameTests que garantem
+    o contrario (contra sobreposicao): revertido, fica para decisao do autor.
+- Resultados: build limpo, 1137 unitarios; GameTest 473/473.
+
+### 2026-09-26 (noite) - Suprimento por tentativa e destino do construtor
+
+O autor mudou a regra da obra: uma peca so pode aparecer quando nenhuma
+profissao do mod consegue recolhe-la ou fabrica-la. A verificacao continua
+percorrendo receitas Vanilla e fundicao, mas agora pergunta pela capacidade
+das profissoes, nao pela disponibilidade do bioma. Nas duas primeiras faltas a
+obra espera; a terceira libera a peca de manufatura. Recursos naturais seguem
+fora desse fallback e continuam exigindo o oficio responsavel.
+
+`BiomeConstructionSupply` guarda a contagem por colonia e item em
+`WorkMarksSavedData`, por isso reiniciar o servidor nao apaga uma tentativa
+ja observada. Uma entrega real limpa a contagem. O deposito procura primeiro o
+bau do `BUILDER`; se ele nao existir ou estiver cheio, percorre os demais baus
+livres registrados na colonia. O teste de mundo cobre tanto o terceiro pedido
+do fermentador sem haste de blaze como o fallback para outro bau quando o do
+construtor esta cheio.
+
+O caminho morto que ainda mencionava o bau da boca da mina foi removido de
+`MinerHaul`: o mineiro deposita diretamente no proprio bau, como as demais
+profissoes. O excedente continua no mundo, sem invadir inventario de outro
+trabalhador.
+
+Resultados: `./gradlew.bat test --rerun-tasks` passou; `./gradlew.bat
+runGametest --rerun-tasks` passou com **474/474** em 59,98 s. O fluxo ainda
+precisa de playtest no save real, em especial a terceira falta de uma peca sem
+rota e o fallback com o bau do construtor cheio.

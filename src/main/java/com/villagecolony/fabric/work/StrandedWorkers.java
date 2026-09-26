@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import net.minecraft.util.math.BlockPos;
 
@@ -27,6 +28,10 @@ import java.util.UUID;
  * preso depois de recarregar é marcado de novo em dois congelamentos.
  */
 public final class StrandedWorkers {
+
+    static {
+        ServerMemory.register(StrandedWorkers.class, StrandedWorkers::clearAll);
+    }
 
     /** Até quantos blocos de distância dois congelamentos são "o mesmo lugar". */
     private static final int SAME_SPOT = 2;

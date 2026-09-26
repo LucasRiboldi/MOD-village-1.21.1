@@ -202,10 +202,17 @@ final class SiteOpening {
         //
         String drawnFrom = drawnFrom(fitting.size());
 
+        // <b>A camada da rua vai no chão</b> — sessão de jogo de 2026-09-26.
+        // O lote diz onde fica o piso; a planta do jogo diz em que camada a
+        // rua está, e é ela que desce ao chão. Ver Blueprint.originFor.
         ConstructionProject project = ConstructionProject.plan(
-                colony.id(), facingTheRoad, site.origin());
+                colony.id(), facingTheRoad, facingTheRoad.originFor(site.origin()));
 
         VillageColonyMod.CONSTRUCTIONS.register(project);
+
+        // E o que é chão não vira obra: fundação enterrada e a terra do
+        // quintal já estão lá. Ver BuriedPieces.
+        BuriedPieces.markHeldByTheGround(world, project);
 
         // PREPARING deixou de passar em branco em 2026-08-19. O lote é
         // escolhido sem bloco sólido dentro (Regra 22), mas grama alta e

@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.IdleReason;
@@ -55,6 +56,10 @@ import java.util.UUID;
  * vidro. Este componente permanece responsável apenas pela fundição.
  */
 public final class SmelterWork {
+
+    static {
+        ServerMemory.register(SmelterWork.class, SmelterWork::clearAll);
+    }
 
     /** Quantos tiques uma peça leva para fundir. */
     private static final int TICKS_PER_PIECE = 20;
@@ -160,7 +165,8 @@ public final class SmelterWork {
      * trabalhadores, como o fabricante fazia antes de
      * {@link ColonyChests} existir; era dívida conhecida, e ela cobrou
      * mais caro do que a ordem: o registro de trabalhadores não contém o
-     * baú da boca da mina, e é lá que a Regra 30 põe o minério.
+     * baú histórico da boca da mina, que ainda pode guardar minério de saves
+     * anteriores.
      *
      * @return se ainda há o que fundir
      */
@@ -195,10 +201,10 @@ public final class SmelterWork {
         }
 
         // <b>Pelo ColonyChests, e não pelo registro de trabalhadores</b> —
-        // P0.3, 2026-09-11. Percorrer os trabalhadores era o que deixava
-        // o baú da boca da mina de fora, e é lá que a Regra 30 põe o
-        // minério: o fundidor dizia "nothing in the colony chests to
-        // smelt" 34 vezes na sessão de 09-04 ao lado do ferro dele.
+        // P0.3, 2026-09-11. Percorrer os trabalhadores deixava o baú
+        // histórico da boca da mina de fora: o fundidor dizia "nothing in
+        // the colony chests to smelt" ao lado de minério deixado ali antes
+        // da regra de depósito direto no baú profissional.
         //
         // Do baú do próprio fundidor para fora, que é a Regra 10: a
         // fornalha fica onde ele está, e andar menos com o cru é o certo.
@@ -260,6 +266,23 @@ public final class SmelterWork {
     }
 
     /**
+     * Se ainda pode assar este cru sem furar a reserva do pedreiro.
+     *
+     * <p>A conta é da colônia inteira, e não de um baú: o cru e o
+     * processado moram espalhados, e medir um baú só faria a reserva
+     * existir ou não conforme a ordem da varredura.
+     */
+    private static boolean mayStillSmelt(
+            ServerWorld world, List<ColonyPos> chests, Item raw, Item processed) {
+
+        int rawCount = ColonyChests.countIn(world, chests, raw);
+
+        int madeCount = ColonyChests.countIn(world, chests, processed);
+
+        return StockRules.rawThatMayBeSmelted(rawCount, madeCount) > 0;
+    }
+
+    /**
      * O motivo de o fundidor não ter achado o que fundir — P0.3.
      *
      * <p><b>A frase era só</b> {@code "nothing in the colony chests to
@@ -283,23 +306,6 @@ public final class SmelterWork {
      * @param chests quantos baús da colônia foram percorridos
      * @param raws   os nomes do que ele procurava, já formatados
      */
-    /**
-     * Se ainda pode assar este cru sem furar a reserva do pedreiro.
-     *
-     * <p>A conta é da colônia inteira, e não de um baú: o cru e o
-     * processado moram espalhados, e medir um baú só faria a reserva
-     * existir ou não conforme a ordem da varredura.
-     */
-    private static boolean mayStillSmelt(
-            ServerWorld world, List<ColonyPos> chests, Item raw, Item processed) {
-
-        int rawCount = ColonyChests.countIn(world, chests, raw);
-
-        int madeCount = ColonyChests.countIn(world, chests, processed);
-
-        return StockRules.rawThatMayBeSmelted(rawCount, madeCount) > 0;
-    }
-
     static String lookedButFound(int chests, String raws) {
         return chests == 0
                 ? "no colony chest to look in"

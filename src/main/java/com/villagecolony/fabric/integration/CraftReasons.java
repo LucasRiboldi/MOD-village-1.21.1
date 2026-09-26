@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.type.ColonyPos;
 
@@ -41,6 +42,10 @@ import java.util.Optional;
  * o que se está medindo.
  */
 public final class CraftReasons {
+
+    static {
+        ServerMemory.register(CraftReasons.class, CraftReasons::clearAll);
+    }
 
     /** Quantos itens distintos lembrar antes de esquecer tudo. */
     private static final int MAX_ITEMS = 64;

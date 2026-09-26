@@ -115,6 +115,24 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
         return search(branchFloor(), gallery, armIndex - ARM_STAIRS * STAIR_STEP_BLOCKS);
     }
 
+    /**
+     * Todas as células que este nível e este ramal planejam abrir — 2026-09-25,
+     * ADR-025.
+     *
+     * <p>É o que separa o vão de caverna da célula que a própria mina ainda
+     * vai cavar: o bloco sob a sala comum é piso, e o sob a camada de cima da
+     * sala é a camada de baixo. Quem remenda o piso pergunta aqui.
+     */
+    public java.util.Set<ColonyPos> plannedCells() {
+        java.util.Set<ColonyPos> cells = new java.util.HashSet<>();
+
+        for (int index = 0; index < SHARED_BLOCKS + ARM_BLOCKS; index++) {
+            cells.add(positionAt(index));
+        }
+
+        return cells;
+    }
+
     /** Cada ramal tem exatamente sua escada e sua área finitas. */
     public boolean beyondTheArm(int index) {
         return index >= SHARED_BLOCKS + ARM_BLOCKS;

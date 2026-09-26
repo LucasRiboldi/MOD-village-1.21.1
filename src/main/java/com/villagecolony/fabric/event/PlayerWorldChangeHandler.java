@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.event;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.ColonyEdits;
@@ -30,6 +31,10 @@ import java.util.Map;
 
 /** Reavalia dados derivados quando o jogador realmente altera blocos. */
 public final class PlayerWorldChangeHandler {
+
+    static {
+        ServerMemory.register(PlayerWorldChangeHandler.class, PlayerWorldChangeHandler::clearAll);
+    }
 
     private static final int OBSERVED_POSITIONS_LIMIT = 8192;
     private static final int MINE_NEIGHBOR_DISTANCE = 1;

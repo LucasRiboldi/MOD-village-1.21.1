@@ -155,13 +155,12 @@ public final class BuilderMaterials {
         return ensureConstructionMaterial(world, project, MaterialChoice.forBlock(material.get()));
     }
 
-    /** Mantém no baú a peça que nenhuma rota do bioma pode produzir. */
+    /** Mantém no baú a peça que nenhuma profissão consegue produzir. */
     static boolean hasOrStocksConstructionMaterial(
             ServerWorld world, ConstructionProject project, Item item) {
 
         if (ColonySupply.canProvide(world, project.colonyId(), project.origin(), item)) {
-            // O ofício entregou: a carência daquela peça recomeça, senão a
-            // primeira demora marcaria o relógio para sempre.
+            // O ofício entregou: uma falta futura volta à primeira tentativa.
             BiomeConstructionSupply.routeDelivered(project.colonyId(), item);
 
             return true;
@@ -171,8 +170,8 @@ public final class BuilderMaterials {
     }
 
     /**
-     * Alternativas locais sempre ganham. Só a ausência de rota para a família
-     * inteira autoriza a peça preferida a aparecer no baú da obra.
+     * Alternativas locais sempre ganham. Só três faltas de uma família sem
+     * profissão capaz autorizam a peça preferida a aparecer no baú da obra.
      */
     static boolean ensureConstructionMaterial(
             ServerWorld world, ConstructionProject project, List<Item> choices) {
@@ -184,30 +183,15 @@ public final class BuilderMaterials {
         Item preferred = choices.getFirst();
 
         if (choices.stream().anyMatch(candidate ->
-                BiomeConstructionSupply.hasRouteInBiome(world, project.colonyId(), candidate))) {
-
-            // <b>Rota que não entrega não é rota</b> — 2026-09-22, visto em
-            // jogo. A obra parou dez minutos esperando white_terracotta: a
-            // família tem rota, porque argila vira terracota na fornalha, e
-            // por isso esta porta se calava. Só que o fundidor repetiu
-            // "none of 14 colony chests had minecraft:clay to smelt" a cada
-            // ciclo do começo ao fim — naquele mundo não havia argila ao
-            // alcance. A rota existia na receita e não no mundo.
-            //
-            // O ofício continua tendo a primeira vez e o tempo dela: só
-            // depois da carência de BiomeConstructionSupply.OVERDUE_TICKS,
-            // medida no mesmo log, a peça passa a ser depositada.
-            if (!BiomeConstructionSupply.routeIsOverdue(
-                    project.colonyId(), preferred, world.getTime())) {
-
-                return false;
-            }
-
-            return BiomeConstructionSupply.stock(
-                    world, project.colonyId(), project.origin(), preferred);
+                BiomeConstructionSupply.hasProfessionRoute(world, candidate))) {
+            return false;
         }
 
-        return BiomeConstructionSupply.stockIfUnobtainable(
+        if (!BiomeConstructionSupply.failedProfessionAttempt(project.colonyId(), preferred)) {
+            return false;
+        }
+
+        return BiomeConstructionSupply.stockForConstruction(
                 world, project.colonyId(), project.origin(), preferred);
     }
 

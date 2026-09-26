@@ -1,8 +1,8 @@
 # Estatistica de travamentos e repeticoes
 
-**Gerado em:** 2026-09-24 16:51 UTC
+**Gerado em:** 2026-09-26 03:41 UTC
 **Log analisado:** `latest.log`
-**Sessoes no historico:** 4
+**Sessoes no historico:** 6
 **Limiar de candidato a loop:** 3 ocorrencias na mesma sessao
 
 Este relatorio le diagnosticos que o mod ja escreve. Ele nao e um veredito de
@@ -16,107 +16,66 @@ guarda UUIDs, coordenadas ou linhas cruas do mundo do jogador.
 | Assinatura | Area responsavel | Ocorrencias | Leitura |
 |---|---|---:|---|
 | `miner_no_branch_work` | MineClaims / MinerWork | 0 | observado |
-| `miner_no_standing_room` | MineDigging | 7 | candidato a loop |
-| `construction_waiting_resources` | BuilderWork / WaitingWork | 79 | candidato a loop |
-| `builder_pathing_stalled` | BuilderApproach / BuilderWork | 106 | candidato a loop |
+| `miner_no_standing_room` | MineDigging | 0 | observado |
+| `construction_waiting_resources` | BuilderWork / WaitingWork | 47 | candidato a loop |
+| `builder_pathing_stalled` | BuilderApproach / BuilderWork | 2 | observado |
 | `surface_worker_unreachable` | SurfaceGatheringWork | 0 | observado |
-| `missing_profession` | ColonyCycle / ProductionHands | 77 | candidato a loop |
-| `site_sweep_budget_exhausted` | RingSweep / BuildSiteScanner | 58 | candidato a loop |
-| `site_sweep_restarted` | SweepLog / BuildSiteScanner | 1 | observado |
-| `worker_stranded` | WorkStall / StrandedWorkers | 0 | observado |
+| `missing_profession` | ColonyCycle / ProductionHands | 0 | observado |
+| `site_sweep_budget_exhausted` | RingSweep / BuildSiteScanner | 20 | candidato a loop |
+| `site_sweep_restarted` | SweepLog / BuildSiteScanner | 0 | observado |
+| `worker_stranded` | WorkStall / StrandedWorkers | 2 | observado |
 | `stranded_cannot_dig_out` | StrandedEscape | 0 | observado |
-| `construction_let_go` | ConstructionPlanner / WaitingWork | 13 | candidato a loop |
+| `construction_let_go` | ConstructionPlanner / WaitingWork | 0 | observado |
 | `miner_chest_full` | MinerHaul / ChestDepositor | 0 | observado |
-| `cycle_over_tick` | VillageDetectionHandler | 196 | candidato a loop |
+| `cycle_over_tick` | VillageDetectionHandler | 1 | observado |
 | `server_overloaded` | Minecraft (servidor) | 0 | observado |
-| `log_error_line` | qualquer (nivel ERROR) | 1 | observado |
+| `log_error_line` | qualquer (nivel ERROR) | 2 | observado |
 | `house_finished` | BuilderWork | 0 | progresso |
-| `stranded_freed` | StrandedEscape | 0 | progresso |
-| `stairs_backfilled` | EscapeBackfill | 0 | progresso |
+| `stranded_freed` | StrandedEscape | 2 | progresso |
+| `stairs_backfilled` | EscapeBackfill | 2 | progresso |
 | `supper_shared` | VillageMeals | 0 | progresso |
 
 ## Atividades por profissao
 
 | Profissao | Atividade | Resultado | Motivo | Ocorrencias |
 |---|---|---|---|---:|
-| `BUILDER` | `BUILDING` | `RECOVERED` | `ALREADY_OPEN` | 13 |
-| `BUILDER` | `BUILDING` | `RECOVERED` | `NO_TARGET` | 6 |
-| `BUILDER` | `BUILDING` | `RECOVERED` | `SWEEP_INCOMPLETE` | 4 |
-| `BUILDER` | `BUILDING` | `WAITING` | `ALREADY_OPEN` | 14 |
-| `BUILDER` | `BUILDING` | `WAITING` | `NO_TARGET` | 22 |
-| `BUILDER` | `BUILDING` | `WAITING` | `SWEEP_INCOMPLETE` | 27 |
-| `BUILDER` | `BUILD_STRUCTURE` | `ABANDONED` | `WORK_STALLED` | 36 |
-| `BUILDER` | `BUILD_STRUCTURE` | `ERROR` | `WORK_STALLED` | 36 |
-| `CARPENTER` | `BUILD_STRUCTURE` | `ABANDONED` | `WORK_STALLED` | 12 |
-| `CARPENTER` | `BUILD_STRUCTURE` | `ERROR` | `WORK_STALLED` | 12 |
-| `CARPENTER` | `CRAFTING` | `RECOVERED` | `NO_TASK` | 9 |
-| `CARPENTER` | `CRAFTING` | `RECOVERED` | `NO_WORKER` | 7 |
-| `CARPENTER` | `CRAFTING` | `WAITING` | `NO_TASK` | 14 |
-| `CARPENTER` | `CRAFTING` | `WAITING` | `NO_WORKER` | 9 |
-| `CARPENTER` | `CRAFT_WOOD` | `ABANDONED` | `WORK_STALLED` | 16 |
-| `CARPENTER` | `CRAFT_WOOD` | `ERROR` | `WORK_STALLED` | 16 |
-| `COLONY` | `COORDINATION` | `RECOVERED` | `NO_WORKER` | 7 |
-| `COLONY` | `COORDINATION` | `WAITING` | `NO_WORKER` | 8 |
-| `FARMER` | `BUILD_STRUCTURE` | `ABANDONED` | `WORK_STALLED` | 3 |
-| `FARMER` | `BUILD_STRUCTURE` | `ERROR` | `WORK_STALLED` | 3 |
-| `FARMER` | `FARMING` | `RECOVERED` | `NO_TARGET` | 21 |
-| `FARMER` | `FARMING` | `RECOVERED` | `NO_TASK` | 5 |
-| `FARMER` | `FARMING` | `RECOVERED` | `NO_WORKER` | 2 |
-| `FARMER` | `FARMING` | `RECOVERED` | `SWEEP_INCOMPLETE` | 24 |
-| `FARMER` | `FARMING` | `WAITING` | `NO_TASK` | 6 |
-| `FARMER` | `FARMING` | `WAITING` | `NO_WORKER` | 4 |
-| `FARMER` | `FARMING` | `WAITING` | `SWEEP_INCOMPLETE` | 31 |
-| `FARMER` | `MAINTAIN_FOOD` | `ABANDONED` | `WORK_STALLED` | 7 |
-| `FARMER` | `MAINTAIN_FOOD` | `ERROR` | `WORK_STALLED` | 7 |
-| `LUMBERJACK` | `BUILD_STRUCTURE` | `ABANDONED` | `WORK_STALLED` | 30 |
-| `LUMBERJACK` | `BUILD_STRUCTURE` | `ERROR` | `WORK_STALLED` | 30 |
-| `LUMBERJACK` | `COLLECT_WOOD` | `ABANDONED` | `WORK_STALLED` | 53 |
-| `LUMBERJACK` | `COLLECT_WOOD` | `ERROR` | `WORK_STALLED` | 53 |
-| `LUMBERJACK` | `HARVESTING` | `RECOVERED` | `NO_TASK` | 34 |
-| `LUMBERJACK` | `HARVESTING` | `RECOVERED` | `NO_WORKER` | 9 |
-| `LUMBERJACK` | `HARVESTING` | `WAITING` | `NO_TASK` | 37 |
-| `LUMBERJACK` | `HARVESTING` | `WAITING` | `NO_WORKER` | 11 |
-| `MASON` | `BUILD_STRUCTURE` | `ABANDONED` | `WORK_STALLED` | 66 |
-| `MASON` | `BUILD_STRUCTURE` | `ERROR` | `WORK_STALLED` | 66 |
-| `MASON` | `CRAFTING` | `WAITING` | `NO_TASK` | 12 |
-| `MASON` | `CRAFTING` | `WAITING` | `NO_WORKER` | 10 |
-| `MINER` | `BUILD_STRUCTURE` | `ABANDONED` | `WORK_STALLED` | 16 |
-| `MINER` | `BUILD_STRUCTURE` | `ERROR` | `WORK_STALLED` | 16 |
-| `MINER` | `COLLECT_STONE` | `ABANDONED` | `WORK_STALLED` | 45 |
-| `MINER` | `COLLECT_STONE` | `ERROR` | `WORK_STALLED` | 45 |
-| `MINER` | `MINING` | `RECOVERED` | `NO_TARGET` | 2 |
-| `MINER` | `MINING` | `RECOVERED` | `NO_TASK` | 33 |
-| `MINER` | `MINING` | `RECOVERED` | `NO_WORKER` | 19 |
-| `MINER` | `MINING` | `WAITING` | `NO_TARGET` | 3 |
-| `MINER` | `MINING` | `WAITING` | `NO_TASK` | 36 |
-| `MINER` | `MINING` | `WAITING` | `NO_WORKER` | 25 |
-| `SHEPHERD` | `BUILD_STRUCTURE` | `ABANDONED` | `WORK_STALLED` | 39 |
-| `SHEPHERD` | `BUILD_STRUCTURE` | `ERROR` | `WORK_STALLED` | 39 |
-| `SHEPHERD` | `SHEPHERDING` | `WAITING` | `NO_TASK` | 12 |
-| `SHEPHERD` | `SHEPHERDING` | `WAITING` | `NO_WORKER` | 10 |
+| `BUILDER` | `BUILDING` | `RECOVERED` | `SWEEP_INCOMPLETE` | 1 |
+| `BUILDER` | `BUILDING` | `WAITING` | `ALREADY_OPEN` | 1 |
+| `BUILDER` | `BUILDING` | `WAITING` | `SWEEP_INCOMPLETE` | 2 |
+| `CARPENTER` | `CRAFTING` | `RECOVERED` | `NO_TASK` | 3 |
+| `CARPENTER` | `CRAFTING` | `WAITING` | `NO_TASK` | 5 |
+| `FARMER` | `FARMING` | `RECOVERED` | `NO_TARGET` | 17 |
+| `FARMER` | `FARMING` | `WAITING` | `SWEEP_INCOMPLETE` | 18 |
+| `LUMBERJACK` | `COLLECT_WOOD` | `ABANDONED` | `WORK_STALLED` | 5 |
+| `LUMBERJACK` | `COLLECT_WOOD` | `ERROR` | `WORK_STALLED` | 5 |
+| `LUMBERJACK` | `HARVESTING` | `RECOVERED` | `NO_TASK` | 5 |
+| `LUMBERJACK` | `HARVESTING` | `WAITING` | `NO_TASK` | 6 |
+| `MASON` | `CRAFTING` | `RECOVERED` | `NO_TASK` | 1 |
+| `MASON` | `CRAFTING` | `WAITING` | `NO_TASK` | 3 |
+| `MINER` | `COLLECT_STONE` | `ABANDONED` | `WORK_STALLED` | 3 |
+| `MINER` | `COLLECT_STONE` | `ERROR` | `WORK_STALLED` | 3 |
+| `MINER` | `MINING` | `RECOVERED` | `NO_TARGET` | 14 |
+| `MINER` | `MINING` | `RECOVERED` | `NO_TASK` | 3 |
+| `MINER` | `MINING` | `WAITING` | `NO_TARGET` | 14 |
+| `MINER` | `MINING` | `WAITING` | `NO_TASK` | 6 |
+| `SHEPHERD` | `SHEPHERDING` | `RECOVERED` | `NO_TASK` | 1 |
+| `SHEPHERD` | `SHEPHERDING` | `WAITING` | `NO_TASK` | 2 |
+| `SMELTER` | `SMELTING` | `WAITING` | `NO_TASK` | 1 |
 
 ## Pecas que as obras mais esperaram
 
 | Peca | Linhas `waiting for` |
 |---|---:|
-| `minecraft:ladder` | 24 |
-| `minecraft:cobblestone_stairs` | 16 |
-| `minecraft:cobblestone` | 10 |
-| `minecraft:cobblestone_slab` | 10 |
-| `minecraft:cobblestone_wall` | 10 |
-| `minecraft:torch` | 5 |
-| `minecraft:oak_door` | 3 |
-| `minecraft:wall_torch` | 1 |
+| `minecraft:dirt` | 14 |
+| `minecraft:oak_planks` | 10 |
+| `minecraft:green_carpet` | 9 |
+| `minecraft:cobblestone_stairs` | 7 |
+| `minecraft:oak_log` | 7 |
 
 ## Candidatos a investigacao
 
-- `miner_no_standing_room`: 7 ocorrencias em MineDigging.
-- `construction_waiting_resources`: 79 ocorrencias em BuilderWork / WaitingWork.
-- `builder_pathing_stalled`: 106 ocorrencias em BuilderApproach / BuilderWork.
-- `missing_profession`: 77 ocorrencias em ColonyCycle / ProductionHands.
-- `site_sweep_budget_exhausted`: 58 ocorrencias em RingSweep / BuildSiteScanner.
-- `construction_let_go`: 13 ocorrencias em ConstructionPlanner / WaitingWork.
-- `cycle_over_tick`: 196 ocorrencias em VillageDetectionHandler.
+- `construction_waiting_resources`: 47 ocorrencias em BuilderWork / WaitingWork.
+- `site_sweep_budget_exhausted`: 20 ocorrencias em RingSweep / BuildSiteScanner.
 
 ## Acumulado do historico
 
@@ -124,14 +83,18 @@ guarda UUIDs, coordenadas ou linhas cruas do mundo do jogador.
 |---|---:|
 | `miner_no_branch_work` | 6383 |
 | `miner_no_standing_room` | 7 |
-| `construction_waiting_resources` | 256 |
-| `builder_pathing_stalled` | 116 |
+| `construction_waiting_resources` | 308 |
+| `builder_pathing_stalled` | 118 |
 | `missing_profession` | 90 |
-| `site_sweep_budget_exhausted` | 124 |
+| `site_sweep_budget_exhausted` | 155 |
 | `site_sweep_restarted` | 1 |
+| `worker_stranded` | 3 |
+| `stranded_cannot_dig_out` | 1 |
 | `construction_let_go` | 13 |
-| `cycle_over_tick` | 196 |
-| `log_error_line` | 1 |
+| `cycle_over_tick` | 198 |
+| `log_error_line` | 6 |
+| `stranded_freed` | 3 |
+| `stairs_backfilled` | 2 |
 
 ## Proximo passo tecnico
 

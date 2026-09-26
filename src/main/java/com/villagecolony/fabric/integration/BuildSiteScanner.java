@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.integration.SweepState.RoadScan;
 import com.villagecolony.fabric.integration.SweepState.Sweep;
 import com.villagecolony.VillageColonyMod;
@@ -89,6 +90,10 @@ import java.util.UUID;
  * erro que este projeto já cometeu duas vezes (§11).
  */
 public final class BuildSiteScanner {
+
+    static {
+        ServerMemory.register(BuildSiteScanner.class, BuildSiteScanner::clearAll);
+    }
 
     /**
      * Quantas colunas uma chamada pode olhar. Ver {@code TreeScanner}.

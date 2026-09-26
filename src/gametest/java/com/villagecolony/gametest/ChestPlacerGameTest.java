@@ -298,4 +298,88 @@ public class ChestPlacerGameTest implements FabricGameTest {
 
         context.complete();
     }
+
+    // --- regra (b), decisão do autor em 2026-09-26: "ao lado da cama e
+    // encostado em uma parede, nunca na frente da porta" ---
+
+    /**
+     * A caixa da casa vanilla inclui o degrau de fora, então a porta tem dois
+     * lados "dentro". A regra de 23-09 desistia disso (3 de 3 camas na vila de
+     * 26-09); a de agora não pergunta pela porta para decidir, só para evitar.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "placer_rule_b")
+    public void aDoorWithTwoOpenSidesNoLongerBlocksTheChest(TestContext context) {
+        layBed(context);
+
+        BlockBox room = room(context);
+        BlockPos step = context.getAbsolutePos(BED).west(3);
+        context.getWorld().setBlockState(step.down(), Blocks.STONE.getDefaultState());
+        context.getWorld().setBlockState(step, Blocks.AIR.getDefaultState());
+        BlockBox withStep = new BlockBox(room.getMinX() - 1, room.getMinY(), room.getMinZ(),
+                room.getMaxX(), room.getMaxY(), room.getMaxZ());
+
+        ChestPlacer.Result result = ChestPlacer.placeForOriginalVillageBed(
+                context.getWorld(), context.getAbsolutePos(BED), withStep);
+
+        context.assertTrue(result.chest().isPresent(),
+                "a porta com degrau fora ainda impediu o baú: " + result.outcome());
+        context.complete();
+    }
+
+    /** A célula logo diante da porta é caminho, e o baú nunca vai para lá. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "placer_rule_b")
+    public void theChestIsNeverInFrontOfTheDoor(TestContext context) {
+        layBed(context);
+
+        BlockBox room = room(context);
+        BlockPos bed = context.getAbsolutePos(BED);
+
+        // Só sobra o lado oeste do pé da cama, que é a frente da porta (x-2).
+        for (BlockPos taken : new BlockPos[] {bed.east(), bed.north().east(), bed.north().west()}) {
+            context.getWorld().setBlockState(taken, Blocks.STONE.getDefaultState());
+        }
+
+        ChestPlacer.Result result = ChestPlacer.placeForOriginalVillageBed(context.getWorld(), bed, room);
+
+        context.assertTrue(result.chest().isEmpty(),
+                "o baú foi posto diante da porta: " + result.chest().map(BlockPos::toShortString));
+        context.assertFalse(context.getWorld().getBlockState(bed.west()).isOf(Blocks.CHEST),
+                "há um baú bloqueando a entrada");
+        context.complete();
+    }
+
+    /** Sem parede ao lado, não há baú: ele fica encostado, nunca solto no meio do quarto. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "placer_rule_b")
+    public void theChestLeansOnAWall(TestContext context) {
+        layBed(context);
+
+        BlockPos bed = context.getAbsolutePos(BED);
+
+        // Quarto grande, sem parede a menos de dois blocos da cama, com uma porta longe.
+        BlockBox wide = new BlockBox(bed.getX() - 5, bed.getY() - 1, bed.getZ() - 5,
+                bed.getX() + 5, bed.getY() + 2, bed.getZ() + 5);
+        for (int x = wide.getMinX(); x <= wide.getMaxX(); x++) {
+            for (int z = wide.getMinZ(); z <= wide.getMaxZ(); z++) {
+                context.getWorld().setBlockState(new BlockPos(x, bed.getY() - 1, z), Blocks.STONE.getDefaultState());
+            }
+        }
+
+        ChestPlacer.Result loose = ChestPlacer.placeForOriginalVillageBed(context.getWorld(), bed, wide);
+
+        context.assertTrue(loose.chest().isEmpty(),
+                "pôs baú solto no meio do quarto: " + loose.chest().map(BlockPos::toShortString));
+
+        // Com uma parede colada ao leste do pé da cama, o baú encosta nela.
+        context.getWorld().setBlockState(bed.east(2), Blocks.STONE.getDefaultState());
+
+        ChestPlacer.Result leaning = ChestPlacer.placeForOriginalVillageBed(context.getWorld(), bed, wide);
+
+        context.assertTrue(leaning.chest().isPresent() && leaning.chest().get().equals(bed.east()),
+                "com parede ao lado, o baú devia ir para " + bed.east().toShortString()
+                        + ": " + leaning.chest().map(BlockPos::toShortString));
+        context.assertTrue(context.getWorld().getBlockState(bed.east())
+                        .get(Properties.HORIZONTAL_FACING) == Direction.WEST,
+                "o baú encostado devia abrir para longe da parede");
+        context.complete();
+    }
 }

@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.IdleReason;
@@ -59,6 +60,10 @@ import java.util.UUID;
  * se procura.
  */
 public final class FarmerWork {
+
+    static {
+        ServerMemory.register(FarmerWork.class, FarmerWork::clearAll);
+    }
 
     /** Alcance de braço. O mesmo do pastor e do lenhador. */
     private static final int REACH = 3;

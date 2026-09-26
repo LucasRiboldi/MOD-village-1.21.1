@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
@@ -52,6 +53,10 @@ import java.util.UUID;
  * que o mundo muda sem avisar.
  */
 public final class PlanRefusals {
+
+    static {
+        ServerMemory.register(PlanRefusals.class, PlanRefusals::clearAll);
+    }
 
     /**
      * O que faltou à planta que cada colônia largou.
