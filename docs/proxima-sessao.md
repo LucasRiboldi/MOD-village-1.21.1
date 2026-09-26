@@ -1,5 +1,8 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
+**Atualização de 2026-09-26 — JAR `9EB559D1…9423` (commit `70af4c8`).** Confira
+o hash antes de relatar. Traz as correções de 26-09 abaixo.
+
 **Atualização de 2026-09-25, tarde — o mineiro autônomo.** O JAR em
 `mods` foi republicado (commit `a222342`, SHA-256
 `8862EC4FF9CC42688D34ED0D5FC3BAF0016CB3D30104861BED216614147707C0`).

@@ -9,7 +9,10 @@ entrega, e o que separa uma publicação da outra é o commit e o SHA-256 do JAR
 2026-09-24 está em [`docs/technical/Development-Log.md`](docs/technical/Development-Log.md)
 e [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md).
 
-## [Não publicado] — sessão de jogo de 2026-09-26
+## [0.3.0] — publicação de 2026-09-26 (sessões de jogo de 26-09)
+
+JAR do commit `70af4c8`, SHA-256 `9EB559D1…9423`, em `downloads/` e em
+`.minecraft/mods` (três hashes conferidos).
 
 ### Corrigido
 

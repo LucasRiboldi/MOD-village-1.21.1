@@ -19,6 +19,9 @@ refatoração e a **vila foco**. Nada disso foi visto em jogo ainda. A
 
 ## Versão publicada
 
+- **JAR republicado em 26-09 (manhã), commit `70af4c8`, SHA-256 `9EB559D1…9423`:**
+  tudo de 26-09 (lenhador, viveiro, baú da cama, tapete, relógio, desvio, casa
+  na altura da rua). Não visto em jogo.
 - O JAR em `mods` e em `downloads/` foi republicado em 25-09 à tarde, do
   commit `a222342`, SHA-256 `8862EC4F…07C0`: **ADR-025 fases 1 e 2** — marca
   de recusa salva, piso sob a passagem, mineiro fora da água, pedra com
