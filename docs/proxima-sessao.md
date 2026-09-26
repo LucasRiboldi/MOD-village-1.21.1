@@ -21,6 +21,11 @@ o ofício; `the farmer planted` sai em grupos de 4; vila vanilla nova recebe
 `VC_VILLAGE_BED_CHEST outcome=CREATED` nas camas com parede ao lado; a obra
 com tapete colorido não mostra mais `needs … black_carpet`.
 
+**Casa na altura da rua (26-09):** a próxima casa aberta tem o chão rente à
+rua e a porta um bloco acima do caminho, sem plataforma de terra embaixo. A
+casa 5 de (-462, 66, 3490), feita antes, fica como está e não deve abrir
+reparo.
+
 **Antes dele, a escolha da obra** (publicação da manhã de 25-09):
 Ao carregar, o templo de z=211 deve
 sair com `keeps the abandoned ... waiting — it is not its turn`, e a próxima

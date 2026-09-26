@@ -66,6 +66,13 @@ Não recomendados:
   (`RecolorRecipesTest`, `CarpetFamilyGameTest`); relógio da ADR-022 salvo
   (`BiomeConstructionSupplyClockTest`, `WorkMarksSavedDataTest`); desvio com o
   próprio corpo e com queda (`DetourWalkerGameTest`, 2 novos).
+- [x] 🔴 **Casa na altura da rua, sem terra na base** (26-09, pedido do
+  autor) — `StreetLevelGameTest` (4), `BlueprintStreetLayerTest` (6). ⬜ ver em
+  jogo: casa nova com a porta um acima da rua e sem plataforma de terra; casa
+  antiga não se mexe nem vira reparo.
+- [ ] 🟡 **Templo 4 e outras plantas com a porta na camada 0** ficam como
+  estavam (sem camada da rua dentro da planta); conferir em jogo se o piso
+  delas também deveria descer.
 - [ ] 🔴 **T1 — obra com todas as peças restantes adiadas nunca fecha** (achado
   na varredura de 25-09): `WaitingWork.giveUpIfStalled` zera os relógios e
   devolve `false` para sempre. Proposta: entregar a obra como está. **Aguarda

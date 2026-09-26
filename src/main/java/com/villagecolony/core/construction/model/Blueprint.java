@@ -42,10 +42,29 @@ public final class Blueprint {
 
     private final ColonyPos size;
 
-    private Blueprint(ResourceId id, List<BlueprintBlock> blocks, ColonyPos size) {
+    /**
+     * A camada que fica na altura da rua, ou {@link #NO_STREET_LAYER} — sessão
+     * de jogo de 2026-09-26. Ver {@link #withStreetLayer}.
+     */
+    private final int streetLayer;
+
+    /** Planta sem encaixe de rua: a do próprio mod, a de teste. */
+    public static final int NO_STREET_LAYER = -1;
+
+    /**
+     * O que, na altura da rua, já é o chão — terra, grama, areia, neve. A
+     * planta do jogo grava o quintal com o terreno em volta; construí-lo seria
+     * erguer uma camada de terra por cima da terra.
+     */
+    private static final java.util.Set<String> GROUND = java.util.Set.of(
+            "dirt", "grass_block", "coarse_dirt", "podzol", "mycelium", "rooted_dirt",
+            "sand", "red_sand", "snow", "snow_block", "mud");
+
+    private Blueprint(ResourceId id, List<BlueprintBlock> blocks, ColonyPos size, int streetLayer) {
         this.id = id;
         this.blocks = blocks;
         this.size = size;
+        this.streetLayer = streetLayer;
     }
 
     /**
@@ -69,7 +88,74 @@ public final class Blueprint {
             throw new IllegalArgumentException("Blueprint has no blocks: " + id);
         }
 
-        return new Blueprint(id, List.copyOf(blocks), sizeOf(blocks));
+        return new Blueprint(id, List.copyOf(blocks), sizeOf(blocks), NO_STREET_LAYER);
+    }
+
+    /**
+     * A mesma planta, sabendo em que camada fica a rua — sessão de jogo de
+     * 2026-09-26, pedido do autor: <i>"não deve ser construído as camadas de
+     * terra na base das construções; o chão da construção e a porta devem
+     * estar na altura da rua"</i>.
+     *
+     * <p><b>O que o jogo grava.</b> Toda casa de vila tem um encaixe (jigsaw)
+     * voltado para a rua, e ele está na altura do caminho; a porta fica um
+     * acima dele. Na {@code plains_small_house_1} o encaixe está na camada 0 e
+     * ela é o piso; na {@code plains_small_house_5} está na camada 1, e a
+     * camada 0 é só terra — fundação que o gerador enterra.
+     *
+     * <p><b>O defeito.</b> O mod punha a camada 0 um bloco acima do chão. A
+     * casa 5 saiu sobre um monte de terra, com o piso dois acima do terreno e
+     * a porta três acima da rua; as de piso na camada 0, um acima.
+     *
+     * @param layer a camada do encaixe de rua, contada da base da planta
+     */
+    public Blueprint withStreetLayer(int layer) {
+        if (layer < 0) {
+            throw new IllegalArgumentException("street layer must not be negative: " + layer);
+        }
+
+        return new Blueprint(id, blocks, size, layer);
+    }
+
+    /** Se esta planta sabe onde fica a rua. */
+    public boolean hasStreetLayer() {
+        return streetLayer != NO_STREET_LAYER;
+    }
+
+    /** A camada da rua, ou {@link #NO_STREET_LAYER}. */
+    public int streetLayer() {
+        return streetLayer;
+    }
+
+    /**
+     * Se esta peça é chão, e não obra: abaixo da rua é fundação enterrada, e
+     * na altura da rua terra e grama são o próprio terreno.
+     */
+    public boolean isBuried(BlueprintBlock block) {
+        if (!hasStreetLayer()) {
+            return false;
+        }
+
+        int layer = block.offset().y();
+
+        return layer < streetLayer
+                || (layer == streetLayer && GROUND.contains(block.block().path()));
+    }
+
+    /**
+     * Onde a planta começa, dado onde o lote põe o piso.
+     *
+     * <p>O lote responde "o piso vai um acima do chão"
+     * ({@code LotLevel.flatGroundAt}). Com camada da rua, é ela que vai no
+     * chão: a origem desce a altura da camada mais um. Sem ela, fica como
+     * sempre foi — a BigHouseMOD e as plantas de teste não mudam.
+     */
+    public ColonyPos originFor(ColonyPos floor) {
+        if (!hasStreetLayer()) {
+            return floor;
+        }
+
+        return new ColonyPos(floor.x(), floor.y() - 1 - streetLayer, floor.z());
     }
 
     public ResourceId id() {
@@ -191,7 +277,7 @@ public final class Blueprint {
                     new ColonyPos(x, at.y(), z), block.block(), block.furniture()));
         }
 
-        return new Blueprint(id, List.copyOf(turned), sizeOf(turned));
+        return new Blueprint(id, List.copyOf(turned), sizeOf(turned), streetLayer);
     }
 
     /**

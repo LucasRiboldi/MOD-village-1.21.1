@@ -215,6 +215,11 @@ public class TreeNurseryGameTest {
             throw new AssertionError("o viveiro plantou uma decima primeira arvore");
         }
 
+        // Cheio, ele espera o intervalo antes de recontar — spark de 2026-09-26.
+        if (FarmerNursery.isTime(colony, world.getTime())) {
+            throw new AssertionError("o viveiro cheio vai recontar os blocos na proxima chamada");
+        }
+
         int rootedDirt = 0;
         for (int dx = -57; dx <= 57; dx++) {
             for (int dz = -57; dz <= 57; dz++) {

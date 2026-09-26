@@ -84,7 +84,8 @@ public final class BuilderPlacement {
 
         BlockState state = shaped(world, project, block, material.get(), target);
 
-        if (!world.getBlockState(target).isReplaceable()) {
+        if (!world.getBlockState(target).isReplaceable()
+                && !BuriedPieces.mayReplaceGround(world, project.blueprint(), block, target)) {
             // Já tem coisa ali, e não é grama alta: pode ser peça de
             // vila, pode ser construção do jogador. A Regra 3 manda não
             // mexer, e a obra segue sem este bloco.

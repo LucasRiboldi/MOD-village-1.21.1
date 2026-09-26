@@ -93,6 +93,11 @@ correção levantadas pela avaliação" e "Avaliação técnica". Em aberto:
   de tingir, relógio de espera salvo, e dois defeitos do desvio (o próprio
   corpo no degrau; queda sem replanejar). Build 1122 unitários; GameTest
   464/464; PIT 1277/1442.
+- **Sessão de jogo de 26-09 (01:52–02:55), ainda com o JAR `5b98…`/`8862EC4F`**
+  (as correções da madrugada não estavam nele): a `plains_small_house_5` fechou
+  sobre um monte de terra, piso em 67 e porta em 68 com a rua em 63–65. Causa
+  e correção: camada da rua (`Blueprint.streetLayer`, `BuriedPieces`). Spark
+  `mmw9xhgKqL`: TPS 20, mod ~0,3%; a janela de TPS 8,2 é pausa do jogo.
 - **Decisões em aberto têm resposta simples proposta**, e duas travas foram
   achadas na varredura: obra com todas as peças restantes adiadas nunca fecha
   (`WaitingWork.giveUpIfStalled`) e encalhado sem saída fica fora da escala

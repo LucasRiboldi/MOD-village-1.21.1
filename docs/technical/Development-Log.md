@@ -9577,3 +9577,26 @@ reutilizavel.
     do GameTest; encolhido.
 - Resultados: build limpo, 1122 unitarios; GameTest 464/464; PIT 1277/1442
   (89%), `RecolorRecipes` sem sobreviventes.
+
+### 2026-09-26 (manha) - Casa na altura da rua, sem terra na base
+
+- **Sessao 01:52-02:55**, ainda com o JAR anterior (md5 `5b98...`): as
+  correcoes da madrugada nao estavam no jogo. Spark `mmw9xhgKqL`: TPS 20, mod
+  ~0,3%; a janela de 8,2 TPS gravou 383 tiques com maximo de 29,9 ms (pausa).
+- **Casa sobre monte de terra:** lida do save, a `plains_small_house_5` em
+  (-462, 66, 3490) tem piso em 67, porta em 68, tres camadas de terra por
+  baixo, e a rua em 63-65.
+  - Causa: a camada 0 do NBT e fundacao enterrada (so terra) e o mod a punha
+    um acima do chao. Lido o NBT das 36 casas de planicie: em umas a camada 0
+    e o piso, em outras e terra.
+  - Primeira regua (encaixe de rua do jigsaw) refutada pela propria bateria:
+    shepherds, big_house_1 e temple_4 tem o encaixe no andar da porta. A
+    regua certa e a porta: rua = porta mais baixa - 1.
+  - Pular a terra e baixar a origem sem mudar a planta: as 17 construcoes e 3
+    obras do save continuam coerentes (a peca enterrada so conta onde o chao
+    ocupa a posicao). `BuriedPieces` e consultado na abertura, retomada,
+    reparo e colocacao.
+- **Viveiro cheio** passou a guardar a hora: recontava 166 mil blocos por
+  chamada.
+- Resultados: build limpo, 1129 unitarios; GameTest 468/468; PIT 1295/1460
+  (89%), nenhum sobrevivente nos metodos novos do Blueprint.

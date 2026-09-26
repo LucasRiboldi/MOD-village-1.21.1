@@ -101,6 +101,18 @@ public final class FarmerNursery {
         }
 
         int room = Math.min(wanted, TARGET_TREES - countNurseries(world, centre));
+
+        if (room <= 0) {
+            // <b>Cheio também marca a hora</b> — spark de 2026-09-26. Com os
+            // dez viveiros de pé, cada chamada recontava ~166 mil blocos e
+            // não guardava nada; lenhador e fazendeiro sem trabalho chamam
+            // o tempo todo, e a conta virou o terceiro maior custo do mod.
+            // Cheio agora espera o mesmo intervalo de quem plantou.
+            LAST.put(colonyId, world.getTime());
+
+            return 0;
+        }
+
         int planted = 0;
 
         while (planted < room) {

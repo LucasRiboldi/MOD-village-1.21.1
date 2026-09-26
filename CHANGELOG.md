@@ -13,6 +13,18 @@ e [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md).
 
 ### Corrigido
 
+- **A casa nasce com o chão e a porta na altura da rua, sem camada de terra
+  na base** (pedido do autor). As casas de vila do jogo gravam uma fundação
+  abaixo do piso — na `plains_small_house_5`, uma camada inteira de terra — e
+  o mod punha a planta um bloco acima do chão: a casa saía sobre um monte de
+  terra, com a porta três blocos acima da rua. Agora a camada em que se pisa
+  ao entrar (uma abaixo da porta) vai no chão; o que fica abaixo dela e a
+  terra/grama na altura da rua não são construídos, e o piso dessa camada toma
+  o lugar da grama. Casas e obras que o mundo já tem não mudam.
+- **O viveiro cheio não reconta o terreno a cada chamada.** Com os 10 viveiros
+  de pé, cada pedido relia ~166 mil blocos (3º maior custo do mod no spark de
+  26-09); agora espera os 5 minutos como quem plantou.
+
 - **O lenhador não é mais expulso enquanto procura árvore.** Na vila sem
   árvore natural, o guarda de imobilidade devolvia a tarefa a cada 300 tiques
   ("while looking for a tree") até ele largar o ofício. Agora os guardas só

@@ -160,7 +160,8 @@ final class ConstructionResume {
 
             Optional<Block> expected = MinecraftTypeAdapter.toBlock(block.block());
 
-            if (expected.isPresent() && world.getBlockState(where).isOf(expected.get())) {
+            if ((expected.isPresent() && world.getBlockState(where).isOf(expected.get()))
+                    || BuriedPieces.heldByTheGround(world, project.blueprint(), block, where)) {
                 project.markPlaced(block);
 
                 standing++;

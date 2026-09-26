@@ -42,3 +42,21 @@ estrada.
 
 `runGametest --rerun-tasks` executou 327 GameTests sem falhas em 2026-09-15.
 O JAR distribuido nao foi atualizado nesta entrega.
+
+## Emenda — 2026-09-26: a camada da rua da planta
+
+Pedido do autor depois da sessão de 26-09: *"não deve ser construído as
+camadas de terra na base das construções; o chão da construção e a porta
+devem estar na altura da rua, na altura da zona escolhida"*.
+
+O lote continua respondendo "o piso vai um acima do chão" (`LotLevel`). A
+planta passa a dizer em que camada fica a rua (`Blueprint.streetLayer`: uma
+abaixo da porta mais baixa; sem porta, o encaixe de rua do jogo), e é essa
+camada que desce ao chão (`Blueprint.originFor`). O que fica abaixo dela e a
+terra/grama nela são chão (`Blueprint.isBuried`) e não se constroem; o piso
+dessa camada toma o lugar do terreno natural (`BuriedPieces.mayReplaceGround`).
+Isto não terraplana: coluna um abaixo do nível-base continua com o vão que a
+decisão 2 aceita.
+
+Casas e obras já registradas não mudam: a peça enterrada só conta como
+assentada onde o chão de fato ocupa a posição, e nelas a posição é ar.
