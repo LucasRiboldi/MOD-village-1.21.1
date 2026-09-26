@@ -59,7 +59,10 @@ public class DetourWalkerGameTest implements FabricGameTest {
 
         Optional<BlockPos> walkTo = WorkTargets.of(villager.getUuid());
 
-        if (walkTo.isPresent() && !walkTo.get().equals(villager.getBlockPos())) {
+        // Um passo por vez, como o desvio anda: só o vizinho. Longe do destino
+        // (caiu, foi empurrado), o teleporte esconderia justamente a falha.
+        if (walkTo.isPresent() && !walkTo.get().equals(villager.getBlockPos())
+                && walkTo.get().isWithinDistance(villager.getBlockPos(), 1.8)) {
             villager.refreshPositionAndAngles(
                     walkTo.get().getX() + 0.5, walkTo.get().getY(), walkTo.get().getZ() + 0.5, 0, 0);
         }
@@ -175,6 +178,84 @@ public class DetourWalkerGameTest implements FabricGameTest {
         runToTheEnd(context, villager, walker, null, status -> {
             context.assertTrue(status == DetourWalker.Status.FAILED, "seguiu cavando junto da água");
             context.expectBlock(Blocks.STONE, new BlockPos(3, 3, 2));
+        });
+    }
+
+    /**
+     * Ele mesmo na beira do bloco onde vai o degrau — sessão de 2026-09-26:
+     * "something stood in -412, 39, 3570 for 100 ticks" com o mineiro em
+     * -411, 39, 3570. O corpo dele (0,6 de largura) invadia a célula do degrau
+     * e o bloco nunca podia ser posto.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "detour_walker", tickLimit = 300)
+    public void itsOwnBodyDoesNotBlockTheStepItPlaces(TestContext context) {
+        for (int x = 0; x <= 4; x++) {
+            for (int y = 2; y <= 7; y++) {
+                for (int z = 1; z <= 3; z++) {
+                    context.setBlockState(new BlockPos(x, y, z), Blocks.BEDROCK.getDefaultState());
+                }
+            }
+        }
+
+        // Ele em (1,3,2); o degrau vai em (2,3,2) e ele sobe para (2,4,2).
+        for (BlockPos open : new BlockPos[] {new BlockPos(1, 3, 2), new BlockPos(1, 4, 2), new BlockPos(1, 5, 2),
+                new BlockPos(2, 3, 2), new BlockPos(2, 4, 2), new BlockPos(2, 5, 2)}) {
+            context.setBlockState(open, Blocks.AIR.getDefaultState());
+        }
+
+        BlockPos chestAt = new BlockPos(1, 2, 5);
+        context.setBlockState(chestAt, Blocks.CHEST.getDefaultState());
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chestAt));
+        ((ChestBlockEntity) context.getWorld().getBlockEntity(context.getAbsolutePos(chestAt)))
+                .setStack(0, new ItemStack(Items.COBBLESTONE, 3));
+
+        VillagerEntity villager = minerAt(context, new BlockPos(1, 3, 2));
+        BlockPos feet = context.getAbsolutePos(new BlockPos(1, 3, 2));
+        villager.refreshPositionAndAngles(feet.getX() + 0.95, feet.getY(), feet.getZ() + 0.5, 0, 0);
+
+        BlockPos up = context.getAbsolutePos(new BlockPos(2, 4, 2));
+
+        DetourWalker walker = DetourWalker.plan(context.getWorld(), villager.getUuid(),
+                feet, up, up::equals, Set.of(), false).orElseThrow();
+
+        runToTheEnd(context, villager, walker, chest, status -> {
+            context.assertTrue(status == DetourWalker.Status.DONE, "o desvio parou: " + walker.why());
+            context.assertTrue(walker.placed() == 1, "pôs " + walker.placed() + " blocos, era 1");
+        });
+    }
+
+    /**
+     * Ele sai do caminho — caiu, foi empurrado — e o desvio replaneja de onde
+     * ele está, em vez de esperar 100 tiques pelo passo que ficou para trás.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "detour_walker", tickLimit = 300)
+    public void aMinerKnockedOffThePathIsReplannedFromWhereHeIs(TestContext context) {
+        for (int x = 0; x <= 7; x++) {
+            for (int z = 0; z <= 7; z++) {
+                context.setBlockState(new BlockPos(x, 1, z), Blocks.BEDROCK.getDefaultState());
+            }
+        }
+
+        VillagerEntity villager = minerAt(context, new BlockPos(1, 2, 1));
+        BlockPos end = context.getAbsolutePos(new BlockPos(6, 2, 1));
+
+        Optional<DetourWalker> planned = DetourWalker.plan(context.getWorld(), villager.getUuid(),
+                villager.getBlockPos(), end, end::equals, Set.of(), false);
+
+        // A estrutura do GameTest tem 8 blocos: a borda (x = 8) é sólida.
+        context.assertTrue(planned.isPresent(), "o cenário não tem caminho");
+
+        DetourWalker walker = planned.get();
+
+        // Antes do primeiro passo, ele vai parar quatro blocos ao lado do caminho.
+        BlockPos pushed = context.getAbsolutePos(new BlockPos(1, 2, 5));
+        villager.refreshPositionAndAngles(pushed.getX() + 0.5, pushed.getY(), pushed.getZ() + 0.5, 0, 0);
+
+        runToTheEnd(context, villager, walker, null, status -> {
+            context.assertTrue(status == DetourWalker.Status.DONE,
+                    "o desvio não replanejou de onde ele estava: " + walker.why());
+            context.assertTrue(villager.getBlockPos().equals(end),
+                    "terminou em " + villager.getBlockPos().toShortString());
         });
     }
 

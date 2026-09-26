@@ -21,6 +21,7 @@ import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 
 import java.util.List;
 import java.util.Optional;
@@ -61,11 +62,26 @@ public final class DetourWalker {
 
     private final UUID workerId;
 
-    private final List<ColonyPos> steps;
+    /**
+     * Quantas vezes o desvio replaneja quando o aldeão sai do caminho — caiu
+     * num vão, foi empurrado. Na sessão de 2026-09-26 o mineiro caiu oito
+     * blocos e o desvio esperou 100 tiques pelo passo que ficou lá em cima.
+     */
+    static final int MAX_REPLANS = 3;
+
+    private List<ColonyPos> steps;
 
     private final Set<ColonyPos> keep;
 
-    private final boolean reachesGoal;
+    private final ColonyPos toward;
+
+    private final Predicate<ColonyPos> goal;
+
+    private final boolean partial;
+
+    private boolean reachesGoal;
+
+    private int replans;
 
     private ColonyPos from;
 
@@ -85,12 +101,17 @@ public final class DetourWalker {
 
     private String why = "";
 
-    private DetourWalker(UUID workerId, ColonyPos from, DetourPlanner.Detour detour, Set<ColonyPos> keep) {
+    private DetourWalker(
+            UUID workerId, ColonyPos from, DetourPlanner.Detour detour, Set<ColonyPos> keep,
+            ColonyPos toward, Predicate<ColonyPos> goal, boolean partial) {
         this.workerId = workerId;
         this.from = from;
         this.steps = detour.steps();
         this.keep = keep;
         this.reachesGoal = detour.reachesGoal();
+        this.toward = toward;
+        this.goal = goal;
+        this.partial = partial;
     }
 
     /**
@@ -105,16 +126,12 @@ public final class DetourWalker {
 
         ColonyPos start = MinecraftTypeAdapter.toColonyPos(feet);
         Set<ColonyPos> kept = keep.stream().map(MinecraftTypeAdapter::toColonyPos).collect(Collectors.toSet());
+        ColonyPos aim = MinecraftTypeAdapter.toColonyPos(toward);
+        Predicate<ColonyPos> reached = at -> goal.test(MinecraftTypeAdapter.toBlockPos(at));
 
-        return DetourPlanner.plan(
-                        new WorldTerrain(world),
-                        start,
-                        MinecraftTypeAdapter.toColonyPos(toward),
-                        at -> goal.test(MinecraftTypeAdapter.toBlockPos(at)),
-                        kept,
-                        partial)
+        return DetourPlanner.plan(new WorldTerrain(world), start, aim, reached, kept, partial)
                 .filter(detour -> !detour.steps().isEmpty())
-                .map(detour -> new DetourWalker(workerId, start, detour, kept));
+                .map(detour -> new DetourWalker(workerId, start, detour, kept, aim, reached, partial));
     }
 
     /** Um tique do desvio. */
@@ -124,13 +141,22 @@ public final class DetourWalker {
         }
 
         ColonyPos step = steps.get(index);
+        ColonyPos here = MinecraftTypeAdapter.toColonyPos(villager.getBlockPos());
 
-        if (MinecraftTypeAdapter.toColonyPos(villager.getBlockPos()).equals(step)) {
+        if (here.equals(step)) {
             from = step;
             index++;
             ticksOnStep = 0;
 
             return index >= steps.size() ? Status.DONE : Status.WALKING;
+        }
+
+        // <b>Ele saiu do caminho</b> — 2026-09-26. A um bloco do passo ou de
+        // onde partiu é o próprio passo acontecendo (pulo, degrau); mais longe
+        // que isso ele caiu ou foi empurrado, e o passo que ficou para trás
+        // não se alcança mais. Replaneja de onde ele está.
+        if (breaking == null && isAway(here, from) && isAway(here, step)) {
+            return replanFrom(world, here);
         }
 
         Optional<DetourMoves.Actions> actions =
@@ -155,6 +181,40 @@ public final class DetourWalker {
         }
 
         WorkTargets.set(workerId, MinecraftTypeAdapter.toBlockPos(step), 0);
+
+        return Status.WALKING;
+    }
+
+    private static boolean isAway(ColonyPos here, ColonyPos there) {
+        return Math.max(Math.abs(here.x() - there.x()),
+                Math.max(Math.abs(here.y() - there.y()), Math.abs(here.z() - there.z()))) >= 2;
+    }
+
+    private Status replanFrom(ServerWorld world, ColonyPos here) {
+        if (replans >= MAX_REPLANS) {
+            return fail("it left the path " + MAX_REPLANS + " times — last at "
+                    + here.x() + ", " + here.y() + ", " + here.z());
+        }
+
+        replans++;
+
+        Optional<DetourPlanner.Detour> again =
+                DetourPlanner.plan(new WorldTerrain(world), here, toward, goal, keep, partial);
+
+        if (again.isEmpty()) {
+            return fail("it left the path at " + here.x() + ", " + here.y() + ", " + here.z()
+                    + " and no detour goes on from there");
+        }
+
+        if (again.get().steps().isEmpty()) {
+            return Status.DONE;
+        }
+
+        steps = again.get().steps();
+        reachesGoal = again.get().reachesGoal();
+        index = 0;
+        from = here;
+        ticksOnStep = 0;
 
         return Status.WALKING;
     }
@@ -216,6 +276,19 @@ public final class DetourWalker {
 
     private Status place(ServerWorld world, VillagerEntity villager, BlockPos at, ColonyPos chest) {
         BlockState block = Blocks.COBBLESTONE.getDefaultState();
+
+        if (!world.canPlace(block, at, ShapeContext.absent())
+                && villager.getBoundingBox().intersects(new Box(at))) {
+            // <b>É ele mesmo</b> — 2026-09-26: "something stood in -412, 39,
+            // 3570" com o mineiro em -411: parado na beira do bloco, o corpo
+            // dele (0,6 de largura) invadia a célula do degrau. Volta ao meio
+            // do bloco de onde parte, e o bloco é posto no tique seguinte.
+            villager.requestTeleport(from.x() + 0.5, villager.getY(), from.z() + 0.5);
+
+            return ++ticksOnStep > STEP_TICKS
+                    ? fail("it could not step clear of " + at.toShortString())
+                    : Status.WALKING;
+        }
 
         if (!world.canPlace(block, at, ShapeContext.absent())) {
             // Alguém de pé no vão. Espera, no mesmo prazo de quem espera andar.

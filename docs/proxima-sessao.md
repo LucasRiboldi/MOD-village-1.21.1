@@ -15,6 +15,12 @@
   ele travava em 553, 39, 158;
 - fechar e reabrir o mundo: a pedra recusada deve continuar recusada.
 
+**Da sessão de 26-09 (quando o JAR for republicado):** numa vila sem árvore,
+o lenhador fica em `looking for a tree` sem `wood task returned` e sem largar
+o ofício; `the farmer planted` sai em grupos de 4; vila vanilla nova recebe
+`VC_VILLAGE_BED_CHEST outcome=CREATED` nas camas com parede ao lado; a obra
+com tapete colorido não mostra mais `needs … black_carpet`.
+
 **Antes dele, a escolha da obra** (publicação da manhã de 25-09):
 Ao carregar, o templo de z=211 deve
 sair com `keeps the abandoned ... waiting — it is not its turn`, e a próxima

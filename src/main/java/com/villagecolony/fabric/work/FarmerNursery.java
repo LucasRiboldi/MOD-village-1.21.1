@@ -83,12 +83,12 @@ public final class FarmerNursery {
      * @return {@code true} se uma árvore nasceu agora
      */
     public static boolean plantIfItIsTime(ServerWorld world, UUID colonyId, BlockPos centre) {
-        if (!isTime(colonyId, world.getTime())) {
-            return false;
-        }
+        return plant(world, colonyId, centre, 1) > 0;
+    }
 
-        if (countNurseries(world, centre) >= TARGET_TREES) {
-            return false;
+    private static int plant(ServerWorld world, UUID colonyId, BlockPos centre, int wanted) {
+        if (!isTime(colonyId, world.getTime())) {
+            return 0;
         }
 
         Optional<Block> sapling =
@@ -97,28 +97,51 @@ public final class FarmerNursery {
         if (sapling.isEmpty()) {
             // Bioma sem madeira declarada: não é vila que o mod atende, e
             // inventar uma espécie aqui seria escolher por conta própria.
-            return false;
+            return 0;
         }
 
-        Optional<BlockPos> spot = spotOnTheEdge(world, centre);
+        int room = Math.min(wanted, TARGET_TREES - countNurseries(world, centre));
+        int planted = 0;
 
-        if (spot.isEmpty()) {
-            return false;
+        while (planted < room) {
+            Optional<BlockPos> spot = spotOnTheEdge(world, centre);
+
+            if (spot.isEmpty() || !TreeNursery.plant(world, spot.get(), sapling.get())) {
+                break;
+            }
+
+            planted++;
+
+            VillageColonyMod.LOGGER.info(
+                    "Colony {} — the farmer planted {} on rooted dirt at {}, at the village edge",
+                    colonyId.toString().substring(0, 8),
+                    TreeNursery.idOf(sapling.get()),
+                    spot.get().toShortString());
         }
 
-        if (!TreeNursery.plant(world, spot.get(), sapling.get())) {
-            return false;
+        if (planted > 0) {
+            LAST.put(colonyId, world.getTime());
         }
 
-        LAST.put(colonyId, world.getTime());
+        return planted;
+    }
 
-        VillageColonyMod.LOGGER.info(
-                "Colony {} — the farmer planted {} on rooted dirt at {}, at the village edge",
-                colonyId.toString().substring(0, 8),
-                TreeNursery.idOf(sapling.get()),
-                spot.get().toShortString());
+    /**
+     * Quantas mudas o lenhador sem árvore pede de uma vez — sessão de
+     * 2026-09-26. A vila de planície sem árvore natural esperou uma muda a cada
+     * cinco minutos, e o lenhador cortou 15 toras em 33 minutos. Com quatro, o
+     * teto de dez fecha em três plantios.
+     */
+    public static final int BATCH = 4;
 
-        return true;
+    /**
+     * O plantio do lenhador que não achou árvore: até {@link #BATCH} mudas,
+     * no mesmo ritmo e no mesmo teto do fazendeiro.
+     *
+     * @return quantas mudas nasceram agora
+     */
+    public static int plantBatchIfItIsTime(ServerWorld world, UUID colonyId, BlockPos centre) {
+        return plant(world, colonyId, centre, BATCH);
     }
 
     /**

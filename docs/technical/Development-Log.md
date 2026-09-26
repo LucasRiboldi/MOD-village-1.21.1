@@ -9548,3 +9548,32 @@ reutilizavel.
   O jogo estava fechado (so processos do Gradle abertos).
 - Resultados: build limpo, 1112 unitarios; GameTest 455/455 (rodada da fase 2,
   codigo igual); PIT 1265/1430.
+
+### 2026-09-26 - Sessao de jogo: lenhador, viveiro, bau da cama, tapete e desvio
+
+- **Sessao 00:02-00:40**, JAR `8862EC4F...07C0` (md5 conferido), spark
+  `i3Xj2w4xyN`: TPS 20, MSPT mediano 11-12 ms, mod ~0,5% da thread. O autor
+  ficou na colonia `ede8c122` (-437, 64, 3529), vila de planicie nova.
+- **Lenhador:** sem arvore natural no raio; o guarda de imobilidade devolvia a
+  tarefa "while looking for a tree" ate ele largar o oficio. Os guardas passam
+  a contar so com arvore escolhida. Vermelho conferido com mutacao fiel (a
+  mesma frase do log de jogo).
+  - O teste achou arvores de outros testes (raio 64): lote proprio e gancho
+    `LumberjackWork.shortenSearchRadiusTo`, no molde do `MineDigging`.
+- **Viveiro:** existia e funcionou, uma muda a cada ~6 min. Lote de 4 quando
+  o lenhador nao acha arvore.
+- **Bau da cama:** a regra estrita de 23-09 recusou 3 de 3 camas
+  (`SKIPPED_NO_UNAMBIGUOUS_DOOR`). Regra (b) do autor: ao lado da cama,
+  encostado numa parede, nunca diante da porta.
+- **Tapete verde:** o livro de receitas devolvia a de tingir tapete pronto.
+  `RecolorRecipes` (core) a ignora; a primeira versao pegou tambem a mistura
+  de corante (roxo sem produtor na bateria) e foi corrigida.
+  - Engano meu, corrigido pelo teste: disse que a familia do tapete ja valia;
+    o unitario falhou porque tag nao existe sem mundo. Movido para GameTest,
+    onde passa.
+- **Desvio do mineiro:** "something stood in" era o proprio corpo na beira do
+  bloco; e a queda esperava 100 tiques. Recentro e replanejamento (ate 3).
+  - O cenario do empurrao pedia destino em x = 8, borda solida da estrutura
+    do GameTest; encolhido.
+- Resultados: build limpo, 1122 unitarios; GameTest 464/464; PIT 1277/1442
+  (89%), `RecolorRecipes` sem sobreviventes.

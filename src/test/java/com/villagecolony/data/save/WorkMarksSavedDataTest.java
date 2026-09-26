@@ -30,4 +30,17 @@ class WorkMarksSavedDataTest {
     void anEmptySaveReadsAsNoMarks() {
         assertTrue(WorkMarksSavedData.readNbt(new NbtCompound(), null).mineRefusals().isEmpty());
     }
+
+    /** O relógio das peças que esperam a rota do bioma volta igual — 2026-09-26. */
+    @Test
+    void supplyWaitsRoundTrip() {
+        WorkMarksSavedData data = new WorkMarksSavedData();
+        data.syncSupplyWaits(java.util.Map.of(
+                "7f0c3a52-0000-0000-0000-000000000001/green_carpet", 123_456L,
+                "7f0c3a52-0000-0000-0000-000000000001/white_terracotta", 99L));
+
+        WorkMarksSavedData read = WorkMarksSavedData.readNbt(data.writeNbt(new NbtCompound(), null), null);
+
+        assertEquals(data.supplyWaits(), read.supplyWaits());
+    }
 }

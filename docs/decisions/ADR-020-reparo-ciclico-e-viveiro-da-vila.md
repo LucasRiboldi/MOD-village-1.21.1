@@ -51,3 +51,12 @@ sem plantar indefinidamente uma muda a cada passagem de trabalho.
 `BuildingRegistryTest` prova a fusão sem duplicação, e
 `TreeNurseryGameTest` prova o limite de dez árvores. A validação final também
 exige `runGametest` e playtest no mundo.
+
+## Emenda — 2026-09-26: lote do lenhador sem árvore
+
+Sessão de jogo de 26-09: numa vila de planície sem árvore natural, o viveiro
+plantou uma muda a cada ~6 min e o lenhador cortou 15 toras em 33 min. Quando
+o lenhador procura e não acha árvore, o viveiro planta até 4 mudas de uma vez
+(`FarmerNursery.BATCH`), no mesmo ritmo de 5 min e no mesmo teto de 10. O
+plantio do fazendeiro continua de uma em uma. Prova:
+`TreeNurseryGameTest.aLumberjackWithoutTreesGetsABatchOfSaplings`.

@@ -59,6 +59,13 @@ Não recomendados:
     `is through its detour`, `its detour failed`.
   - [ ] fase 3: registro de veios por valor.
   Pesquisa em `docs/research/2026-09-25-mineiro-autonomo.md` (§9 = o que entrou).
+- [x] 🔴 **Sessão de 26-09 — corrigidos com teste, ⬜ ver em jogo:** lenhador
+  não perde a tarefa procurando árvore (`LumberjackSearchGameTest`); lote de 4
+  mudas (`aLumberjackWithoutTreesGetsABatchOfSaplings`); baú da cama pela regra
+  (b) (`ChestPlacerGameTest`, 3 novos); receita de tingir ignorada
+  (`RecolorRecipesTest`, `CarpetFamilyGameTest`); relógio da ADR-022 salvo
+  (`BiomeConstructionSupplyClockTest`, `WorkMarksSavedDataTest`); desvio com o
+  próprio corpo e com queda (`DetourWalkerGameTest`, 2 novos).
 - [ ] 🔴 **T1 — obra com todas as peças restantes adiadas nunca fecha** (achado
   na varredura de 25-09): `WaitingWork.giveUpIfStalled` zera os relógios e
   devolve `false` para sempre. Proposta: entregar a obra como está. **Aguarda

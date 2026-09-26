@@ -115,6 +115,25 @@ public final class BiomeConstructionSupply {
                 >= OVERDUE_TICKS;
     }
 
+    /**
+     * As esperas em curso, para o save — decisão do autor, 2026-09-26.
+     *
+     * <p>Na sessão daquele dia a obra esperou o tapete verde por quatro
+     * minutos e meio e o autor saiu trinta segundos antes de os dez ciclos
+     * fecharem. O relógio só vivia em memória: ao reabrir, a espera começava
+     * do zero, e quem joga em sessões curtas nunca a via terminar. O início é
+     * contado em tiques do mundo, que o jogo salva, então guardar o número
+     * basta.
+     */
+    public static Map<String, Long> waits() {
+        return Map.copyOf(WAITING);
+    }
+
+    /** Devolve ao relógio as esperas lidas do save. */
+    public static void restore(Map<String, Long> saved) {
+        WAITING.putAll(saved);
+    }
+
     /** A rota entregou: o relógio daquela peça recomeça. */
     public static void routeDelivered(UUID colonyId, Item item) {
         WAITING.remove(key(colonyId, item));

@@ -19,6 +19,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.data.save.WorkMarksSavedData;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.work.MineMarks;
+import com.villagecolony.fabric.integration.BiomeConstructionSupply;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.SweepLog;
 import com.villagecolony.fabric.work.TestBarrier;
@@ -72,6 +73,10 @@ public final class ServerLifecycleHandler {
                         refusal.since(),
                         refusal.count()))
                 .toList());
+
+        // E o relógio das peças de obra que esperam a rota do bioma — decisão
+        // do autor, 2026-09-26. Ver BiomeConstructionSupply.waits.
+        BiomeConstructionSupply.restore(WorkMarksSavedData.get(server).supplyWaits());
 
         ColonySavedData data = ColonySavedData.get(server);
 
@@ -196,6 +201,7 @@ public final class ServerLifecycleHandler {
                         mark.stone().getX(), mark.stone().getY(), mark.stone().getZ(),
                         mark.since(), mark.count()))
                 .toList());
+        WorkMarksSavedData.get(server).syncSupplyWaits(BiomeConstructionSupply.waits());
 
         VillageColonyMod.LOGGER.info(
                 "Saved {} colonies with {} workers, {} buildings, {} mines,"

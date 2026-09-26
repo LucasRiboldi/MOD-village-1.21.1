@@ -9,7 +9,9 @@ import net.minecraft.world.PersistentState;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * As marcas de trabalho que precisam sobreviver ao carregar o mundo —
@@ -33,6 +35,8 @@ public final class WorkMarksSavedData extends PersistentState {
 
     static final String MINE_REFUSALS = "mineRefusals";
 
+    static final String SUPPLY_WAITS = "supplyWaits";
+
     public static final PersistentState.Type<WorkMarksSavedData> TYPE = new PersistentState.Type<>(
             WorkMarksSavedData::new,
             WorkMarksSavedData::readNbt,
@@ -43,6 +47,13 @@ public final class WorkMarksSavedData extends PersistentState {
     }
 
     private final List<MineRefusal> mineRefusals = new ArrayList<>();
+
+    /**
+     * Desde quando cada peça de obra espera a rota do bioma entregar — chave
+     * "colônia/item", valor em tiques do mundo. Ver
+     * {@code BiomeConstructionSupply.waits}; 2026-09-26.
+     */
+    private final Map<String, Long> supplyWaits = new HashMap<>();
 
     public static WorkMarksSavedData get(MinecraftServer server) {
         return server.getOverworld()
@@ -62,6 +73,18 @@ public final class WorkMarksSavedData extends PersistentState {
         return List.copyOf(mineRefusals);
     }
 
+    /** Copia as esperas de rota em memória para cá e marca para gravação. */
+    public void syncSupplyWaits(Map<String, Long> current) {
+        supplyWaits.clear();
+        supplyWaits.putAll(current);
+
+        markDirty();
+    }
+
+    public Map<String, Long> supplyWaits() {
+        return Map.copyOf(supplyWaits);
+    }
+
     @Override
     public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries) {
         NbtList list = new NbtList();
@@ -77,6 +100,10 @@ public final class WorkMarksSavedData extends PersistentState {
         }
 
         nbt.put(MINE_REFUSALS, list);
+
+        NbtCompound waits = new NbtCompound();
+        supplyWaits.forEach(waits::putLong);
+        nbt.put(SUPPLY_WAITS, waits);
 
         return nbt;
     }
@@ -101,6 +128,12 @@ public final class WorkMarksSavedData extends PersistentState {
                     entry.getInt("z"),
                     entry.getLong("since"),
                     entry.getInt("count")));
+        }
+
+        NbtCompound waits = nbt.getCompound(SUPPLY_WAITS);
+
+        for (String key : waits.getKeys()) {
+            data.supplyWaits.put(key, waits.getLong(key));
         }
 
         return data;

@@ -85,6 +85,14 @@ correção levantadas pela avaliação" e "Avaliação técnica". Em aberto:
   cérebro ou na tarefa, e a linha `brain:` da próxima sessão decide. Depois:
   fase 3 (veios por valor). Ver
   `docs/research/2026-09-25-mineiro-autonomo.md` §8-§11.
+- **Sessão de jogo de 26-09 (00:02–00:40), JAR `8862EC4F…07C0`:** TPS 20,
+  mod ~0,5% da thread. Mineiro novo funcionou (10 desvios, 8 concluídos; 5
+  encalhados saíram; 15 vãos com piso). Achados corrigidos no mesmo dia, com
+  teste e não vistos em jogo: lenhador expulso procurando árvore, viveiro
+  lento (lote de 4), baú da cama (regra b do autor), tapete verde pela receita
+  de tingir, relógio de espera salvo, e dois defeitos do desvio (o próprio
+  corpo no degrau; queda sem replanejar). Build 1122 unitários; GameTest
+  464/464; PIT 1277/1442.
 - **Decisões em aberto têm resposta simples proposta**, e duas travas foram
   achadas na varredura: obra com todas as peças restantes adiadas nunca fecha
   (`WaitingWork.giveUpIfStalled`) e encalhado sem saída fica fora da escala

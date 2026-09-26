@@ -1,5 +1,7 @@
 package com.villagecolony.fabric.integration;
 
+import net.minecraft.registry.Registries;
+import com.villagecolony.core.resource.service.RecolorRecipes;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.recipe.CraftingRecipe;
@@ -181,6 +183,12 @@ public final class CraftingLookup {
                 continue;
             }
 
+            // Retoque de cor fica de fora — decisão do autor, 2026-09-26. Ver
+            // RecolorRecipes: o tapete verde ia por "corante + tapete preto".
+            if (isRecolor(entry.value(), target)) {
+                continue;
+            }
+
             Optional<Map<Item, Integer>> needed = resolve(entry.value(), available);
 
             if (needed.isPresent() && !needed.get().isEmpty()) {
@@ -197,6 +205,23 @@ public final class CraftingLookup {
         }
 
         return cutFor(world, target, available);
+    }
+
+    /** Traduz a receita para nomes e pergunta ao {@link RecolorRecipes}. */
+    private static boolean isRecolor(CraftingRecipe recipe, Item target) {
+        List<List<String>> slots = new java.util.ArrayList<>();
+
+        for (Ingredient slot : recipe.getIngredients()) {
+            List<String> names = new java.util.ArrayList<>();
+
+            for (ItemStack option : slot.getMatchingStacks()) {
+                names.add(Registries.ITEM.getId(option.getItem()).getPath());
+            }
+
+            slots.add(names);
+        }
+
+        return RecolorRecipes.isRecolor(Registries.ITEM.getId(target).getPath(), slots);
     }
 
     /**

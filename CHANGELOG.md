@@ -9,6 +9,35 @@ entrega, e o que separa uma publicação da outra é o commit e o SHA-256 do JAR
 2026-09-24 está em [`docs/technical/Development-Log.md`](docs/technical/Development-Log.md)
 e [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md).
 
+## [Não publicado] — sessão de jogo de 2026-09-26
+
+### Corrigido
+
+- **O lenhador não é mais expulso enquanto procura árvore.** Na vila sem
+  árvore natural, o guarda de imobilidade devolvia a tarefa a cada 300 tiques
+  ("while looking for a tree") até ele largar o ofício. Agora os guardas só
+  contam com uma árvore escolhida.
+- **O tapete verde (e toda peça colorida) não é mais pedido pela receita de
+  tingir peça pronta** ("corante + tapete de outra cor", que puxava uma
+  corrente de tingimentos que nunca fechava). Tingir lã e misturar corante
+  continuam valendo: são produção.
+- **A espera por peça sem rota não recomeça ao reabrir o mundo.** O relógio de
+  10 ciclos da ADR-022 é salvo com o mundo; na sessão de 26-09 o tapete ia
+  chegar 30 s depois de o jogo fechar.
+- **O desvio do mineiro:** o próprio corpo parado na beira do bloco não impede
+  mais o degrau ("something stood in"); ele volta ao meio do bloco. Quem sai
+  do caminho (caiu, foi empurrado) tem o desvio replanejado de onde está, até
+  3 vezes, em vez de esperar 100 tiques pelo passo que ficou para trás.
+
+### Mudado
+
+- **Baú das camas da vila vanilla (decisão do autor, regra b):** ao lado da
+  cama, encostado numa parede, nunca na frente da porta. A porta deixou de
+  decidir se há baú — a regra de 23-09 recusava 3 de 3 camas quando a caixa da
+  casa incluía o degrau de fora.
+- **O lenhador sem árvore pede um lote de 4 mudas** ao viveiro (no mesmo ritmo
+  de 5 min e no mesmo teto de 10), em vez de 1 muda por vez.
+
 ## [0.3.0] — publicação de 2026-09-25, tarde (ADR-025, fases 1 e 2)
 
 JAR do commit `a222342`, SHA-256 `8862EC4F…07C0`, em `downloads/` e em

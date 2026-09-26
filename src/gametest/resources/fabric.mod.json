@@ -37,6 +37,8 @@
       "com.villagecolony.gametest.MinerCautionGameTest",
       "com.villagecolony.gametest.MineFluidGameTest",
       "com.villagecolony.gametest.DetourWalkerGameTest",
+      "com.villagecolony.gametest.LumberjackSearchGameTest",
+      "com.villagecolony.gametest.CarpetFamilyGameTest",
       "com.villagecolony.gametest.ChestWithdrawerGameTest",
       "com.villagecolony.gametest.CraftingLookupGameTest",
       "com.villagecolony.gametest.CraftingGameTest",
