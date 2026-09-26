@@ -9600,3 +9600,23 @@ reutilizavel.
   chamada.
 - Resultados: build limpo, 1129 unitarios; GameTest 468/468; PIT 1295/1460
   (89%), nenhum sobrevivente nos metodos novos do Blueprint.
+
+### 2026-09-26 (tarde) - Sessao longa: bau para todo trabalhador, pecas naturais, profissoes continuas
+
+- **Auditoria da sessao 03:22-08:14** (`docs/research/2026-09-26-sessao-longa.md`):
+  uma casa em 2 h, 2h51 sem obra, lenhador 0 min e mineiro 4h48 sem tarefa, 254
+  pecas fabricadas do nada, 714.589 colunas de lote recusadas.
+  - Causa principal: `Registered 5 storages` ao carregar; lenhador, mineiro e
+    pedreiro sem bau, e a distribuicao exige bau. O relatorio dizia "no task
+    open". A hipotese de bau cheio foi refutada no save (bau do lenhador vazio).
+  - A mina cavada do save tem saida de todos os pontos pela regra do aldeao
+    (inclusive com o espaco de pulo); o preso nao foi reproduzido.
+- **Feito:** `ChestSpawner` + `workerChests` no save; `BiomeConstructionSupply
+  .isNatural`; `StandingWork` (pastor, fazendeiro); `FurnaceReach`;
+  `VillageRoad.besidePaving` no guarda de alcance;
+  `ConstructionProject.hasBuiltAnything` no `isSupersededBy`.
+  - `stone` e produto de fornalha no mod; a primeira versao o deixava nascer
+    pronto — a bateria pegou, e terreno/pedra de base passaram a ser natureza.
+  - Liberar o lote da obra largada sem blocos quebrou 3 GameTests que garantem
+    o contrario (contra sobreposicao): revertido, fica para decisao do autor.
+- Resultados: build limpo, 1137 unitarios; GameTest 473/473.

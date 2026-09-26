@@ -456,6 +456,7 @@ public final class WaitingWork {
         }
 
         VillageColonyMod.BUILDINGS.registerOrMerge(Building.of(project));
+
         VillageColonyMod.CONSTRUCTIONS.forget(project.id(), RemovalAudit.patienceAbandonment());
 
         // A vaga de obra é única; suas tarefas não podem sobreviver ao projeto.

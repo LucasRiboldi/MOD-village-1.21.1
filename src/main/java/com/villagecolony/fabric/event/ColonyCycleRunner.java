@@ -3,6 +3,9 @@ package com.villagecolony.fabric.event;
 import com.villagecolony.core.coordination.PlanningBudget;
 import com.villagecolony.fabric.integration.SweepDeadline;
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.fabric.integration.FurnaceReach;
+import com.villagecolony.core.coordination.StandingWork;
 import com.villagecolony.core.colony.model.ClusterRejection;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.IdleReason;
@@ -337,8 +340,18 @@ final class ColonyCycleRunner {
         int assigned = ColonyCycle.run(
                 colony.id(),
                 survey.resources().total(),
-                ColonyGoals.of(
-                        colony, survey.resources().total(), room, plankRoom, stoneRoom, work),
+                // O trabalho contínuo por cima das metas — decisão do autor,
+                // 2026-09-26. Ver StandingWork e FurnaceReach.
+                FurnaceReach.withoutUnreachable(overworld, colony.id(), StandingWork.widen(
+                        ColonyGoals.of(
+                                colony, survey.resources().total(), room, plankRoom, stoneRoom, work),
+                        survey.resources().total(),
+                        new StandingWork.Rooms(
+                                ColonyChests.roomOf(overworld, colony.id(),
+                                        ProfessionType.SHEPHERD, ResourceGroup.WOOL),
+                                ColonyChests.roomOf(overworld, colony.id(),
+                                        ProfessionType.FARMER, ResourceGroup.CROPS))),
+                        work),
                 VillageColonyMod.TASKS,
                 VillageColonyMod.WORKERS,
                 VillageColonyMod.STORAGES::hasStorage,

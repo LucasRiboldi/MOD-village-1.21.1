@@ -101,6 +101,13 @@ correção levantadas pela avaliação" e "Avaliação técnica". Em aberto:
   sobre um monte de terra, piso em 67 e porta em 68 com a rua em 63–65. Causa
   e correção: camada da rua (`Blueprint.streetLayer`, `BuriedPieces`). Spark
   `mmw9xhgKqL`: TPS 20, mod ~0,3%; a janela de TPS 8,2 é pausa do jogo.
+- **Sessão longa de 26-09 (03:22–08:14)**, auditada em
+  `docs/research/2026-09-26-sessao-longa.md`: uma casa em 2 h e 2h51 sem obra.
+  Causa principal: lenhador, mineiro e pedreiro sem baú. Corrigido no código
+  (não visto em jogo): baú para todo aldeão de profissão e salvo, peça pronta só
+  de manufatura, pastor/fazendeiro contínuos, fundidor sem busca inútil, guarda
+  de alcance com a rua do lote. Pendentes: lote que não cresce (§7.1), obra
+  largada sem blocos prender o lote (decisão), aldeão ocioso preso.
 - **Decisões em aberto têm resposta simples proposta**, e duas travas foram
   achadas na varredura: obra com todas as peças restantes adiadas nunca fecha
   (`WaitingWork.giveUpIfStalled`) e encalhado sem saída fica fora da escala

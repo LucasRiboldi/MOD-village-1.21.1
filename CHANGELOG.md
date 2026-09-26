@@ -9,6 +9,28 @@ entrega, e o que separa uma publicação da outra é o commit e o SHA-256 do JAR
 2026-09-24 está em [`docs/technical/Development-Log.md`](docs/technical/Development-Log.md)
 e [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md).
 
+## [Não publicado] — depois da sessão longa de 2026-09-26
+
+### Corrigido
+
+- **Todo aldeão de profissão tem baú** (decisão do autor). Na sessão longa, o
+  lenhador, o mineiro e o pedreiro passaram 4h45 sem baú e, sem baú, sem
+  tarefa. Quem não acha baú ganha um ao lado da cama (regra b) ou, sem cama,
+  perto do centro; o vínculo é salvo com o mundo.
+- **A peça pronta só nasce para bloco de manufatura** (decisão do autor): tora,
+  terra, grama, pedra, areia, lã tosquiada, flor e muda vêm da profissão.
+- O guarda de alcance não larga mais a obra encostada numa rua só porque o
+  índice de ruas ainda não existe.
+- A obra que só tem o chão enterrado volta a poder ceder lugar (defeito
+  introduzido pela camada da rua).
+
+### Mudado
+
+- **Pastor e fazendeiro trabalham sem depender da obra**, enquanto couber no
+  baú deles; a obra continua tendo prioridade.
+- O fundidor deixa de perseguir produto de fornalha sem matéria-prima no bioma
+  (582 buscas inúteis por arenito numa vila de planície).
+
 ## [0.3.0] — publicação de 2026-09-26 (sessões de jogo de 26-09)
 
 JAR do commit `70af4c8`, SHA-256 `9EB559D1…9423`, em `downloads/` e em

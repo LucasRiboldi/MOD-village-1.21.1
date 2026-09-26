@@ -101,10 +101,21 @@ public final class ColonyChests {
      * descarregado conta zero: sem ler, não se promete espaço.
      */
     public static int minersRoom(ServerWorld world, UUID colonyId) {
+        return roomOf(world, colonyId, ProfessionType.MINER, ResourceGroup.STONE);
+    }
+
+    /**
+     * Quanto deste grupo ainda cabe nos baús de uma profissão — 2026-09-26.
+     * Ver {@code StandingWork}: o pastor e o fazendeiro trabalham enquanto o
+     * baú deles tiver espaço, como o mineiro e o lenhador.
+     */
+    public static int roomOf(
+            ServerWorld world, UUID colonyId, ProfessionType profession, ResourceGroup group) {
+
         List<ColonyPos> chests = new ArrayList<>();
 
         for (Worker worker : VillageColonyMod.WORKERS.ofColony(colonyId)) {
-            if (worker.profession().filter(ProfessionType.MINER::equals).isEmpty()) {
+            if (worker.profession().filter(profession::equals).isEmpty()) {
                 continue;
             }
 
@@ -116,8 +127,7 @@ public final class ColonyChests {
             return 0;
         }
 
-        return ChestInventoryReader.survey(world, chests, ResourceGroup.STONE)
-                .freeSpaceForGroup(ResourceGroup.STONE);
+        return ChestInventoryReader.survey(world, chests, group).freeSpaceForGroup(group);
     }
 
     /** Quanto deste item a colônia tem, somando todos os baús. */

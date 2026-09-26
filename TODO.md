@@ -66,6 +66,19 @@ Não recomendados:
   (`RecolorRecipesTest`, `CarpetFamilyGameTest`); relógio da ADR-022 salvo
   (`BiomeConstructionSupplyClockTest`, `WorkMarksSavedDataTest`); desvio com o
   próprio corpo e com queda (`DetourWalkerGameTest`, 2 novos).
+- [x] 🔴 **Sessão longa de 26-09 — corrigido com teste, ⬜ ver em jogo:** baú
+  para todo aldeão de profissão (`ChestSpawnerGameTest`), vínculo salvo
+  (`WorkMarksSavedDataTest`), peça pronta só de manufatura
+  (`NaturalSupplyGameTest`), pastor e fazendeiro contínuos (`StandingWorkTest`),
+  fundidor sem busca inútil (`FurnaceReachGameTest`), obra só com chão cede
+  lugar (`ConstructionProjectBuiltTest`), guarda de alcance com a rua do lote
+  (**sem teste dedicado**). Sinais: `got a chest of its own`, `will not conjure`.
+- [ ] 🔴 **Lote que não cresce** (68,5% das recusas por rua reservada, pontas de
+  rua que não calçam): medir as pontas, aceitar lote a 1–2 blocos da rua, contar
+  recusa por lote. Ver `docs/research/2026-09-26-sessao-longa.md` §7.1.
+- [ ] 🟠 **Decisão do autor:** obra largada sem nenhum bloco deve liberar o lote?
+  Hoje três GameTests garantem que não (contra sobreposição).
+- [ ] 🟠 Pedreiro e carpinteiro contínuos; aldeão ocioso preso abaixo do chão.
 - [x] 🔴 **Casa na altura da rua, sem terra na base** (26-09, pedido do
   autor) — `StreetLevelGameTest` (4), `BlueprintStreetLayerTest` (6). ⬜ ver em
   jogo: casa nova com a porta um acima da rua e sem plataforma de terra; casa

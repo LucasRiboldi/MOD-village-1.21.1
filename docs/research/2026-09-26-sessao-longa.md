@@ -112,3 +112,45 @@ save final não reproduz o degrau de dois blocos.
 - A casa na altura da rua: nenhuma casa nova foi construída (só a média,
   largada com 0 blocos).
 - Lenhador sem árvore, lote de mudas: o lenhador nunca trabalhou.
+
+## 7. Pedido do autor depois desta auditoria (26-09)
+
+*"Todas profissões têm que trabalhar independente do pedido da obra, eles só dão
+prioridade ao bloco solicitado pela obra. Peças fabricadas do nada pela regra de
+peça sem rota devem ser somente para blocos de manufatura. Corrigir lenhador,
+mineiro; rever como corrigir as colunas de lote recusadas; todos aldeões de
+profissão devem ter um baú nascido destinado a cada um deles; revisar o projeto
+para que as profissões sejam mais ativas."*
+
+| # | Item | Estado | Onde / prova |
+|---|---|---|---|
+| 1 | Baú para todo aldeão de profissão | **feito** | `ChestSpawner` (ao lado da cama pela regra b; sem cama, perto do centro; 2 por varredura; baú quebrado é refeito); `ChestSpawnerGameTest` (3) |
+| 2 | Vínculo aldeão→baú salvo com o mundo | **feito** | `WorkMarksSavedData.workerChests`; `WorkMarksSavedDataTest` |
+| 3 | Peça pronta só para manufatura | **feito** | `BiomeConstructionSupply.isNatural` recusa recurso NATURAL, terreno, pedra de base, tronco, folha, muda e flor; `NaturalSupplyGameTest` |
+| 4 | Lenhador e mineiro | **feito** pela causa: tinham tarefa aberta e nenhum baú (itens 1–2) |
+| 5 | Profissões trabalhando sem depender da obra | **feito** para pastor (lã enquanto couber no baú dele) e fazendeiro (colheita além do piso da despensa); lenhador e mineiro já seguiam a regra | `StandingWork` (core), `StandingWorkTest` (4); prioridade da obra mantida (`CONSTRUCTION_MATERIAL`) |
+| 6 | Fundidor sem trabalho inútil | **feito**: produto de fornalha sem matéria-prima no bioma sai das metas, salvo pedido da obra | `FurnaceReach`, `FurnaceReachGameTest` |
+| 7 | Guarda de alcance largando obra ao lado da rua | **feito**: sem índice de ruas, a rua calçada colada no lote responde | `VillageRoad.besidePaving` — **sem teste dedicado ainda** |
+| 8 | Obra com só chão enterrado não cedia lugar | **feito** (defeito introduzido pela camada da rua) | `ConstructionProject.hasBuiltAnything`, `ConstructionProjectBuiltTest` (3) |
+| 9 | Obra largada sem nenhum bloco liberar o lote | **não feito — decisão do autor**: três GameTests antigos garantem que obra largada mantém o lote contra sobreposição (`thebuildthatplacesnothingletsgooftheslot`) | — |
+| 10 | Colunas de lote recusadas (68,5% por rua reservada) | **analisado, não corrigido** | ver abaixo |
+| 11 | Pedreiro e carpinteiro contínuos | **não feito**: dependem de insumo (pedra, tora) e hoje trabalham para a obra e para a meta de tábua | — |
+| 12 | Aldeão ocioso preso abaixo do chão | **não feito** | resgatar como encalhado |
+
+### 7.1 As colunas de lote recusadas — o que a análise mostra
+
+`[FATO]` A reserva de rua (`RoadIndex.isReservedAgainstLots`) só recusa a coluna
+que é calçamento **e** pertence à rede de ruas da colônia. Os 489.812 são pegadas
+de casa candidatas atravessando ruas de verdade.
+
+`[INFERÊNCIA]` O número alto é sintoma, não causa: a vila parou de crescer rua
+(78× "nenhuma ponta de rua pavimentável", 16× índice descartado), e o lote só
+nasce encostado em rua. Sem rua nova, as pegadas possíveis se esgotam e toda
+volta da varredura reprova as mesmas colunas.
+
+Próximos passos propostos, em ordem:
+1. Medir por que as pontas de rua recusam calçamento (o log só diz "up to 12 were
+   tried").
+2. Aceitar lote a um ou dois blocos da rua, e não só encostado.
+3. Contar recusa por lote, e não por coluna repetida a cada volta, para o número
+   dizer quantos lugares de fato foram negados.

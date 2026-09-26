@@ -424,7 +424,22 @@ public final class ConstructionProject {
     public boolean isSupersededBy(ResourceId target) {
         Objects.requireNonNull(target, "target");
 
-        return remaining.size() == blueprint.blockCount() && !blueprint.id().equals(target);
+        return !hasBuiltAnything() && !blueprint.id().equals(target);
+    }
+
+    /**
+     * Se alguma peça que não é chão já foi assentada — 2026-09-26.
+     *
+     * <p>Desde a camada da rua ({@link Blueprint#isBuried}), a terra da
+     * fundação é dada por assentada ao abrir a obra. Contar o que falta contra
+     * o total da planta dizia "já construiu" para uma obra que só tinha chão:
+     * ela deixava de ceder lugar e, largada, prendia o lote.
+     */
+    public boolean hasBuiltAnything() {
+        long pieces = blueprint.blocks().stream().filter(block -> !blueprint.isBuried(block)).count();
+        long left = remaining.stream().filter(block -> !blueprint.isBuried(block)).count();
+
+        return left < pieces;
     }
 
     /**

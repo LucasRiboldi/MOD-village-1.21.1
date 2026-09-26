@@ -42,6 +42,7 @@
       "com.villagecolony.gametest.StreetLevelGameTest",
       "com.villagecolony.gametest.ChestSpawnerGameTest",
       "com.villagecolony.gametest.NaturalSupplyGameTest",
+      "com.villagecolony.gametest.FurnaceReachGameTest",
       "com.villagecolony.gametest.ChestWithdrawerGameTest",
       "com.villagecolony.gametest.CraftingLookupGameTest",
       "com.villagecolony.gametest.CraftingGameTest",
