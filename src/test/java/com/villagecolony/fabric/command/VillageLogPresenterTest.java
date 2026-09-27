@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.command;
 
+import com.villagecolony.core.construction.model.ConstructionPriority;
 import com.villagecolony.core.telemetry.model.ActivityKind;
 import com.villagecolony.core.telemetry.model.ActivityProfession;
 import com.villagecolony.core.telemetry.model.ActivityState;
@@ -47,6 +48,22 @@ class VillageLogPresenterTest {
         assertEquals(
                 List.of("[TRAVADO] Lenhador: a atividade parou por falta de progresso."),
                 VillageLogPresenter.entries(trace, 8));
+    }
+
+    @Test
+    void explainsTheHousingDeficitBeforeTheActivityEntries() {
+        assertEquals(
+                "Próxima obra: moradia; faltam 2 camas para os moradores.",
+                VillageLogPresenter.constructionPriority(
+                        ConstructionPriority.HOUSING_DEFICIT, 8, 6));
+    }
+
+    @Test
+    void explainsWhenTheRotationCanOpenInfrastructure() {
+        assertEquals(
+                "Próxima obra: infraestrutura; as camas já atendem os moradores.",
+                VillageLogPresenter.constructionPriority(
+                        ConstructionPriority.ROTATION_NON_RESIDENTIAL, 6, 6));
     }
 
     private static ActivityTraceEvent event(

@@ -5,6 +5,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.construction.model.ConstructionPriority;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
@@ -174,9 +175,7 @@ public final class HousePlans {
      * propósito: ali a pergunta é "existe casa de pé", não "de quem é a vez".
      */
     static boolean nextConstructionIsHouse(List<Building> buildings) {
-        Optional<Building> last = lastAttempted(buildings);
-
-        return last.isEmpty() || !isHouse(last.get().blueprint());
+        return nextConstructionPriority(buildings, 0, 0).requiresHouse();
     }
 
     /**
@@ -191,7 +190,33 @@ public final class HousePlans {
      * @param beds as camas que a detecção de vila contou
      */
     static boolean nextConstructionIsHouse(List<Building> buildings, int adults, int beds) {
-        return adults > beds || nextConstructionIsHouse(buildings);
+        return nextConstructionPriority(buildings, adults, beds).requiresHouse();
+    }
+
+    /**
+     * Motivo atual da família de plantas da próxima obra.
+     *
+     * <p>Esta adaptação conserva no Fabric a pergunta sobre a planta ser uma
+     * casa. A precedência entre déficit, primeira obra e rodízio fica no Core,
+     * onde também é exercitada sem mundo.
+     */
+    static ConstructionPriority nextConstructionPriority(
+            List<Building> buildings, int adults, int beds) {
+        Optional<Building> last = lastAttempted(buildings);
+
+        return ConstructionPriority.decide(
+                last.isPresent(),
+                last.map(building -> isHouse(building.blueprint())).orElse(false),
+                adults,
+                beds);
+    }
+
+    /** Prioridade calculada da colônia ativa, usada pelo diagnóstico no jogo. */
+    public static ConstructionPriority priorityFor(Colony colony) {
+        return nextConstructionPriority(
+                VillageColonyMod.BUILDINGS.ofColony(colony.id()),
+                VillageColonyMod.WORKERS.countOfColony(colony.id()),
+                colony.observedBeds());
     }
 
     /**
@@ -251,7 +276,7 @@ public final class HousePlans {
         List<Building> buildings = VillageColonyMod.BUILDINGS.ofColony(colony.id());
         int adults = VillageColonyMod.WORKERS.countOfColony(colony.id());
 
-        if (nextConstructionIsHouse(buildings, adults, colony.observedBeds())) {
+        if (nextConstructionPriority(buildings, adults, colony.observedBeds()).requiresHouse()) {
             return plansFor(world, colony);
         }
 

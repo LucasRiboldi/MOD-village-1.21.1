@@ -7,6 +7,7 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.telemetry.model.ActivityTrace;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.fabric.work.HousePlans;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
@@ -77,6 +78,11 @@ public final class VillageLogCommand {
         source.sendFeedback(
                 () -> Text.literal("Colônia ativa perto de você | " + workers + " profissionais registrados")
                         .formatted(Formatting.GRAY),
+                false);
+        String constructionPriority = VillageLogPresenter.constructionPriority(
+                HousePlans.priorityFor(nearby), workers, nearby.observedBeds());
+        source.sendFeedback(
+                () -> Text.literal(constructionPriority).formatted(Formatting.YELLOW),
                 false);
         source.sendFeedback(
                 () -> Text.literal("Atividades mais recentes:").formatted(Formatting.WHITE),

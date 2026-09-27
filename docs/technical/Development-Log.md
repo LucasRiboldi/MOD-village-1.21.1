@@ -31,6 +31,32 @@ o §18 do Project-State. O texto das entradas fica como estava.
 
 ---
 
+## Entry 2026-09-27 - prioridade explícita de construção e correção das fixtures FarmPlan
+
+Os dois bloqueios restantes da bateria não eram uma alternância residencial
+quebrada. Ambos registravam vinte adultos para liberar a roça, mas não
+registravam nenhuma cama observada. Pela emenda da ADR-016, a consequência
+correta era `HOUSING_DEFICIT` e uma nova casa; a asserção antiga exigia uma
+infraestrutura e, portanto, contrariava a regra de população.
+
+A precedência foi extraída para `ConstructionPriority` no Core, sem APIs
+Minecraft e sem estado persistido: déficit de camas, primeira casa, vez de
+infraestrutura e retorno para casa. `HousePlans` traduz somente a pergunta
+sobre a planta ser moradia. O `/vc log` calcula essa prioridade ao ser aberto e
+mostra em frase curta, inclusive quantas camas faltam, antes da atividade dos
+profissionais. Oficina e roça continuam escolhidas pelo catálogo existente,
+sem transformar o motivo geral em uma falsa escolha de blueprint.
+
+TDD: o teste do novo contrato falhou primeiro pela ausência de
+`ConstructionPriority`; o teste do apresentador falhou pela ausência da nova
+frase. Os testes unitários focados passaram depois da implementação. As duas
+fixtures agora fazem uma observação completa de vinte camas antes de afirmar o
+rodízio. `./gradlew.bat runGametest --rerun-tasks --no-daemon` terminou com
+**485/485 GameTests**, sem falhas. Continua pendente o playtest no save para
+confirmar a mensagem do comando e a obra real com déficit.
+
+---
+
 ## Entry 2026-09-27 - retorno do mineiro depois de queda de dois blocos
 
 A varredura da fase 2 da ADR-025 separou a regra ja implementada da cobertura

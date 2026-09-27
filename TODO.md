@@ -1,9 +1,9 @@
 # TODO
 
 **Atualizado:** 2026-09-27. A evolucao agora inclui Construtor e o deficit de
-camas prioriza moradia; o mineiro agora tem regressao de retorno apos queda de
-dois blocos. A bateria de 485 testes conserva duas falhas antigas de
-`FarmPlanGameTest`, ainda requerendo validacao no save real.
+camas prioriza moradia; a prioridade e explicita no Core e aparece no `/vc
+log`. O mineiro agora tem regressao de retorno apos queda de dois blocos. A
+bateria de 485 GameTests esta verde; ainda requer validacao no save real.
 
 ## Retorno do mineiro apos queda de dois blocos - 2026-09-27
 
@@ -24,11 +24,16 @@ dois blocos. A bateria de 485 testes conserva duas falhas antigas de
 - [x] P0 - Se adultos superam camas contadas, inclusive quando a contagem e
   zero, a proxima construcao e uma moradia; o catalogo so oferece plantas de
   moradia que contem cama.
+- [x] P1 - `ConstructionPriority` deixa explicita a precedencia entre deficit
+  de camas, primeira casa e rodizio; `/vc log` mostra a proxima familia de
+  obra em frase curta, sem criar estado salvo.
 - [ ] P0 - Playtest no save do autor: com mais adultos que camas, observar a
-  proxima obra abrir uma moradia com cama e o novo Construtor receber trabalho.
-- [ ] P1 - Os dois GameTests antigos de `FarmPlanGameTest` continuam falhando:
+  proxima obra abrir uma moradia com cama, o novo Construtor receber trabalho
+  e o `/vc log` explicar a prioridade.
+- [x] P1 - As fixtures de
   `observingInventoryDoesNotChangeHouseAlternation` e
-  `theNextTurnAfterAHouseIsNonResidential`.
+  `theNextTurnAfterAHouseIsNonResidential` passaram a observar vinte camas
+  para os vinte adultos que criam. A rodada Fabric passou em 485/485.
 
 ## Correcao das duas ultimas obras - 2026-09-27
 

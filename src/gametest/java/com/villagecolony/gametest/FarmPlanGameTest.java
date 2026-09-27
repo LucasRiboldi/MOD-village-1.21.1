@@ -272,6 +272,11 @@ public class FarmPlanGameTest implements FabricGameTest {
                 owned.owning(id);
             }
 
+            // O cenário mede o rodízio, não uma vila sem capacidade de
+            // moradia. A observação completa devolve a condição equivalente
+            // a vinte camas que o detector já confirmou no mundo.
+            colony.observe(colony.center(), FarmPlans.VILLAGERS_PER_FARM, true);
+
             // A vila já ergueu a primeira casa, e ela está <b>de pé no
             // mundo</b> — 2026-09-22.
             //
@@ -406,6 +411,11 @@ public class FarmPlanGameTest implements FabricGameTest {
                 VillageColonyMod.WORKERS.register(id, colony.id());
                 owned.owning(id);
             }
+
+            // Sem esta observação, vinte adultos e zero camas devem abrir
+            // uma casa. Este teste precisa da condição oposta para exercitar
+            // somente a invariância da observação de inventário.
+            colony.observe(colony.center(), FarmPlans.VILLAGERS_PER_FARM, true);
 
             ResourceId houseId =
                     ResourceId.vanilla("village/plains/houses/plains_small_house_1");

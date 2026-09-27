@@ -16,9 +16,11 @@ A evolucao por populacao agora inclui o Construtor na mesma lista de vagas
 permanentes: o segundo aparece no adulto 23 e o terceiro no 38, sem mistura-lo
 ao calculo de necessidade de recursos. Qualquer deficit observado de camas,
 inclusive zero camas, obriga a proxima obra a ser uma moradia cuja planta tem
-cama. Os unitarios da regra passaram; a bateria de 485 GameTests manteve
-somente os dois bloqueios ja conhecidos de `FarmPlanGameTest`. Falta validar
-no save real uma vila com mais adultos que camas.
+cama. A prioridade agora e explicita no Core e o `/vc log` a explica antes das
+atividades. Os dois bloqueios de `FarmPlanGameTest` eram fixtures com vinte
+adultos e zero camas observadas; a fixture corrigida e a rodada Fabric passaram
+em 485/485. Falta validar no save real uma vila com mais adultos que camas e a
+mensagem do diagnostico.
 
 A varredura de 27-09 confirmou o retorno do mineiro depois de cair dois
 blocos: ao sair de uma rota, o desvio replaneja do fundo do poco e usa dois

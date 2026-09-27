@@ -1,11 +1,16 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Atualização de 2026-09-26 — JAR `1AB38518…A6FF49`.** Este é o JAR instalado
+**Atualização de 2026-09-27 — JAR `55C3B206…9485`.** Este é o JAR instalado
 em `downloads/` e `%APPDATA%/.minecraft/mods/`; as três cópias conferem com
-`build/libs/`. `build`, `test --rerun-tasks` e `runGametest --rerun-tasks`
-passaram, com 1.145 testes unitários e 481/481 GameTests. Ele contém o descarte
-da obra de reparo salva para uma construção já concluída. Ao abrir o mesmo save,
-a pendência da fazenda deve desaparecer antes de qualquer novo planejamento.
+`build/libs/`. `build` e `runGametest --rerun-tasks` passaram, com **485/485
+GameTests**. Ele torna explícita a prioridade da próxima obra: déficit de camas,
+primeira moradia, infraestrutura pelo rodízio ou retorno à moradia. O `/vc log`
+mostra essa explicação antes das atividades dos profissionais.
+
+Ao abrir uma vila com mais adultos que camas, confirme a frase indicando quantas
+camas faltam e a abertura de uma moradia. Com camas suficientes logo depois de
+uma casa, confirme a mensagem de infraestrutura e a obra não residencial. O
+comando e a obra real ainda dependem desse playtest no save do autor.
 
 **Obras e baús:** uma obra nova só abre quando toda a pegada está na altura
 exata da rua, portanto não pode ficar suspensa nem com vão sob o piso. Um baú

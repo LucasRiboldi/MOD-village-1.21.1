@@ -3,6 +3,7 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.construction.model.ConstructionPriority;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.integration.VillageStructures;
@@ -352,6 +353,14 @@ class HousePlansTest {
         assertTrue(
                 HousePlans.nextConstructionIsHouse(afterAHouse, 8, 0),
                 "zero camas para oito adultos precisa forçar uma casa antes de infraestrutura");
+        assertEquals(
+                ConstructionPriority.HOUSING_DEFICIT,
+                HousePlans.nextConstructionPriority(afterAHouse, 8, 6),
+                "o déficit de camas não ficou explícito para quem explica o planejamento");
+        assertEquals(
+                ConstructionPriority.ROTATION_NON_RESIDENTIAL,
+                HousePlans.nextConstructionPriority(afterAHouse, 6, 6),
+                "com camas suficientes a prioridade deveria voltar ao rodízio");
     }
 
     @Test

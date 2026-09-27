@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.command;
 
+import com.villagecolony.core.construction.model.ConstructionPriority;
 import com.villagecolony.core.telemetry.model.ActivityProfession;
 import com.villagecolony.core.telemetry.model.ActivityState;
 import com.villagecolony.core.telemetry.model.ActivityTrace;
@@ -43,6 +44,18 @@ final class VillageLogPresenter {
         }
 
         return List.copyOf(entries);
+    }
+
+    /** Explica a prioridade atual da próxima obra sem expor a regra técnica. */
+    static String constructionPriority(ConstructionPriority priority, int adults, int beds) {
+        return switch (priority) {
+            case HOUSING_DEFICIT -> "Próxima obra: moradia; faltam "
+                    + (adults - beds) + " camas para os moradores.";
+            case FIRST_HOUSE -> "Próxima obra: a primeira moradia da vila.";
+            case ROTATION_NON_RESIDENTIAL ->
+                    "Próxima obra: infraestrutura; as camas já atendem os moradores.";
+            case ROTATION_HOUSE -> "Próxima obra: moradia; o rodízio voltou para casas.";
+        };
     }
 
     private static String describe(ActivityTraceEvent event) {
