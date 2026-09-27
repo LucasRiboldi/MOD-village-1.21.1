@@ -65,6 +65,12 @@ public final class MineCuts {
                 continue;
             }
 
+            if (WaterMineAccess.protects(world, mine, at)) {
+                // A escada selada é passagem, não frente de escavação. A
+                // mesma exclusão também entra no recuo e no veio.
+                continue;
+            }
+
             if (!world.isInBuildLimit(at)) {
                 arm.finish();
 

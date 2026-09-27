@@ -96,8 +96,12 @@ final class MineSave {
      * <p><b>Seis desde 2026-09-22</b>, com caracol de dez degraus,
      * varredura de cinquenta blocos e quatro ramais finitos. A fronteira
      * anterior não corresponde mais à mesma posição física.
+     *
+     * <p><b>Sete desde 2026-09-27</b>, quando cada degrau passou a ter
+     * três pistas de três alturas. A terceira pista desloca os índices de
+     * toda escada compartilhada e de cada ramal.
      */
-    private static final int SHAPE_VERSION = 6;
+    private static final int SHAPE_VERSION = 7;
 
     private MineSave() {
     }

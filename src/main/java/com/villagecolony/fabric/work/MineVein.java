@@ -101,7 +101,7 @@ final class MineVein {
      * <p>Quando acabar, a memória da veia sai e o túnel volta a mandar —
      * senão o mineiro reperguntaria por ela a cada passagem, para sempre.
      */
-    static Optional<BlockPos> followingTheVein(ServerWorld world, MineArm arm) {
+    static Optional<BlockPos> followingTheVein(ServerWorld world, Mine mine, MineArm arm) {
         Optional<BlockPos> from = arm.vein().map(MinecraftTypeAdapter::toBlockPos);
 
         if (from.isEmpty()) {
@@ -138,7 +138,8 @@ final class MineVein {
         // que já recusou noutra passagem, e é ele que este método serve.
         // Sem esta linha o laço voltaria pelo lado do minério, que é
         // justamente por onde ele voltou em 2026-09-03.
-        if (nowhereToStand(world, more.get())
+        if (WaterMineAccess.protects(world, mine, more.get())
+                || nowhereToStand(world, more.get())
                 || MineFlooding.holdsBackFluid(world, more.get())
                 || MineMarks.isUnreachableAround(world, more.get())) {
             arm.veinExhausted();
@@ -147,7 +148,7 @@ final class MineVein {
         }
 
         if (more.get().getY() < from.get().getY()) {
-            Optional<BlockPos> step = stepBackUp(world, from.get());
+            Optional<BlockPos> step = stepBackUp(world, mine, from.get());
 
             if (step.isEmpty()) {
                 // Sem degrau possível não se desce. A colônia prefere
@@ -203,7 +204,7 @@ final class MineVein {
      *     subir; vazio quando não há degrau possível e portanto não se
      *     deve descer
      */
-    static Optional<BlockPos> stepBackUp(ServerWorld world, BlockPos from) {
+    static Optional<BlockPos> stepBackUp(ServerWorld world, Mine mine, BlockPos from) {
         BlockPos ceiling = from.up();
 
         if (world.getBlockState(ceiling).isAir()) {
@@ -212,7 +213,7 @@ final class MineVein {
 
         // Rocha, e não só "cavável": uma laje que o jogador pôs de teto
         // passa no canDig e não é degrau nenhum — 2026-09-05.
-        return MineRock.isDiggableRock(world, ceiling)
+        return MineRock.isDiggableRock(world, mine, ceiling)
                 ? Optional.of(ceiling)
                 : Optional.empty();
     }

@@ -5785,10 +5785,11 @@ public class MinerGameTest implements FabricGameTest {
             world.setBlockState(hill.up(), Blocks.AIR.getDefaultState());
 
             // A encosta alta continua elegivel, mas agora tambem sustenta os
-            // tres primeiros degraus das duas faixas da espiral.
+            // tres primeiros degraus das três faixas da espiral.
             for (int step = 1; step <= 3; step++) {
                 world.setBlockState(hill.add(0, 0, -step), Blocks.STONE.getDefaultState());
                 world.setBlockState(hill.add(-1, 0, -step), Blocks.STONE.getDefaultState());
+                world.setBlockState(hill.add(-2, 0, -step), Blocks.STONE.getDefaultState());
             }
 
             Optional<BlockPos> mouth = MineSite.mouthOf(world, center, Side.NORTH);

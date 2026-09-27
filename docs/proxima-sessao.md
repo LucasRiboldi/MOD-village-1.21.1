@@ -1,11 +1,17 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Atualização de 2026-09-27 — JAR `55C3B206…9485`.** Este é o JAR instalado
+**Atualização de 2026-09-27 — JAR `795EBCD6…D053`.** Este é o JAR instalado
 em `downloads/` e `%APPDATA%/.minecraft/mods/`; as três cópias conferem com
-`build/libs/`. `build` e `runGametest --rerun-tasks` passaram, com **485/485
-GameTests**. Ele torna explícita a prioridade da próxima obra: déficit de camas,
-primeira moradia, infraestrutura pelo rodízio ou retorno à moradia. O `/vc log`
-mostra essa explicação antes das atividades dos profissionais.
+`build/libs/`. `test`, `build` e `runGametest --rerun-tasks` passaram, com
+**488/488 GameTests**. A mina normal mantém o poço de três blocos de largura e
+altura. Quando uma mina de vila fundada sobre água esgotar os níveis mineráveis,
+ela reabre por uma escadaria segura de três blocos, selada por vidro, até uma
+camada natural de rocha; os mineiros não podem minerar a escada nem a proteção.
+
+No playtest, esgote uma mina de vila sobre água e confirme no `/vc log` a
+mensagem sobre o acesso aquático selado. A rota deve permanecer seca, os degraus
+e o vidro devem ficar intactos e a mina deve abrir apenas após o esgotamento.
+Em vila seca, confirme que a reabertura continua usando a saída normal oposta.
 
 Ao abrir uma vila com mais adultos que camas, confirme a frase indicando quantas
 camas faltam e a abertura de uma moradia. Com camas suficientes logo depois de

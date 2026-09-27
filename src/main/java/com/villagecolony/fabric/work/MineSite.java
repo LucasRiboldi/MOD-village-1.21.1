@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.type.Side;
+import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.fabric.integration.BlockProtection;
 
 import net.minecraft.block.BlockState;
@@ -429,19 +430,19 @@ public final class MineSite {
      * Os tres primeiros degraus da espiral precisam partir de solo continuo.
      *
      * <p>A antiga verificacao aceitava uma unica coluna alta. Como a escada
-     * tem duas faixas e abre tres degraus logo adiante, ela removia blocos no
+     * tem três faixas e abre tres degraus logo adiante, ela removia blocos no
      * ar ao redor desse pilar e deixava uma entrada quebrada. Esta leitura nao
      * carrega chunks e tambem protege estruturas ja existentes nessa faixa.
      */
     private static boolean hasStableEntrance(ServerWorld world, BlockPos mouth, Side descent) {
-        Side secondLane = descent.clockwise().opposite();
+        Side sideways = descent.clockwise().opposite();
 
         for (int step = 1; step <= 3; step++) {
-            for (int lane = 0; lane < 2; lane++) {
+            for (int lane = 0; lane < MineShaft.STAIR_LANES; lane++) {
                 BlockPos ground = mouth.add(
-                        descent.offsetX() * step + secondLane.offsetX() * lane,
+                        descent.offsetX() * step + sideways.offsetX() * lane,
                         0,
-                        descent.offsetZ() * step + secondLane.offsetZ() * lane);
+                        descent.offsetZ() * step + sideways.offsetZ() * lane);
 
                 if (!world.getBlockState(ground).isSolidBlock(world, ground)
                         || BlockProtection.isVillageOriginal(world, ground)

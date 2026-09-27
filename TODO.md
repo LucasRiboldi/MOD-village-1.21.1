@@ -2,14 +2,32 @@
 
 **Atualizado:** 2026-09-27. A evolucao agora inclui Construtor e o deficit de
 camas prioriza moradia; a prioridade e explicita no Core e aparece no `/vc
-log`. A boca da mina exige os primeiros degraus em solo firme e cada lote e
-validado na orientacao final da planta. A bateria de 486 GameTests esta verde;
-ainda requer validacao no save real.
+log`. A boca da mina exige os primeiros degraus em solo firme; ao esgotar a
+mina, vila fundada em agua tenta acesso selado para uma saida natural 8x8 antes
+da reabertura seca oposta. Cada lote e validado na orientacao final da planta.
+A bateria de 488 GameTests esta verde; ainda requer validacao no save real.
+
+## Acesso submerso e mina 3x3 - 2026-09-27
+
+- [x] P0 - Toda escada normal da mina agora ocupa tres lances por tres blocos
+  uteis de altura. A forma do save passou de 6 para 7 e zera apenas cursores
+  geometricos da forma anterior, preservando boca, profundidade, galeria e
+  arco.
+- [x] P0 - Ao esgotar todos os niveis da mina, vila fundada em agua tenta uma
+  descida de vidro, com tres lances de escada, somente em chunks carregados e
+  somente quando a saida oferece 64 blocos naturais mineraveis. A rota recusa
+  estruturas, blocos da colonia e protecoes persistentes antes de escrever; se
+  ela recusar, a reabertura seca oposta continua inalterada.
+- [x] P0 - Fronteira, cortes e busca de veio recusam degraus e vidro da rota
+  submersa; o mineiro usa a escada sem poder escava-la.
+- [ ] P0 - Playtest no save do autor: confirmar uma mina seca 3x3 e, em vila
+  fundada em agua com pedra abaixo, a escada selada sem agua, a descida do
+  mineiro e a preservacao integral de degraus e vidro.
 
 ## Boca da mina e lote orientado - 2026-09-27
 
 - [x] P0 - A boca da mina rejeita pilar, barranco interrompido, agua, estrutura
-  Vanilla e bloco da colonia nos tres primeiros degraus das duas faixas da
+  Vanilla e bloco da colonia nos tres primeiros degraus das tres faixas da
   escada. `MinerGameTest.theMineMouthRejectsAnUnsupportedRaisedPillar` cobre
   o pilar alto que antes vencia a escolha e abria o caminho no ar.
 - [x] P0 - O scanner recebe a medida da planta ja voltada para cada lado da

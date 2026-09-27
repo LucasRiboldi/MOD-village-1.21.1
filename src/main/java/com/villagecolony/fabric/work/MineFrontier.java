@@ -147,6 +147,6 @@ public final class MineFrontier {
             return false;
         }
 
-        return MineRock.isDiggableRock(world, at);
+        return MineRock.isDiggableRock(world, mine, at);
     }
 }

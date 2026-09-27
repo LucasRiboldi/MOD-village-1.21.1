@@ -31,6 +31,29 @@ o §18 do Project-State. O texto das entradas fica como estava.
 
 ---
 
+## Entry 2026-09-27 - acesso selado sob agua e eixo de mina 3x3
+
+As minas secas passaram a usar tres lances por tres blocos uteis de altura. A
+mudanca invalida somente os indices de corte calculados pela largura antiga:
+`MineSave.SHAPE_VERSION` subiu de 6 para 7, preservando boca, profundidade,
+galeria e arco das minas ja abertas.
+
+Para a excecao de vila fundada em agua, `MineSite` continua tendo prioridade.
+Somente quando nenhuma boca seca cabe, `WaterMineAccess` aceita uma rota ja
+carregada, predominantemente aquatica e com saida natural 8x8 mineravel. Ela
+assenta tres lances de degrau com casco de vidro e nenhuma escrita ocorre antes
+de a rota inteira estar aprovada. Estrutura Vanilla, bloco da colonia e
+protecao persistente recusam a tentativa.
+
+`MineFrontier`, `MineCuts` e `MineVein` reconhecem a rota e nao devolvem seus
+degraus ou vidro como alvo. Os testes unitarios cobriram a nova largura, a
+migracao e a geometria; o GameTest novo iniciou a rota cheia de agua e exigiu
+o interior seco. `./gradlew.bat runGametest --rerun-tasks` fechou em **486/486
+GameTests**. O proximo passo e o playtest em uma vila realmente fundada em
+agua, verificando a navegacao do mineiro e a preservacao do casco.
+
+---
+
 ## Entry 2026-09-27 - prioridade explícita de construção e correção das fixtures FarmPlan
 
 Os dois bloqueios restantes da bateria não eram uma alternância residencial
@@ -9902,6 +9925,23 @@ O JAR validado foi sincronizado de `build/libs/` para `downloads/` e
 `%APPDATA%/.minecraft/mods/` com o cliente fechado. O manifesto de release
 confirmou as três cópias no SHA-256
 `1AB3851866229F78B5B88F259354A422C2B74DA5D013033BA5382359F3A6FF49`.
+
+### 2026-09-27 - Reabertura de mina aquatica apos esgotamento
+
+O acesso de vidro deixou de competir com a mina normal. Quando a mina chega ao
+fundo depois de esgotar todos os niveis, `MineTrouble` identifica a vila
+fundada em agua e tenta abrir a escada selada antes da boca seca no lado
+oposto. Qualquer recusa por protecao, rocha invalida ou chunk nao carregado
+mantem o fallback seco existente.
+
+A borda da saida 8x8 tambem pode conter a parede de vidro terminal: ela aceita
+somente rocha naturalmente mineravel naquela camada e continua recusando
+qualquer outro bloco solido. A rota concluida permanece protegida contra a
+escavacao do mineiro. `WaterMineAccessGameTest` agora e registrado no
+manifesto Fabric e reproduz o esgotamento, a transferencia para a entrada
+submersa e a preservacao da mina anterior. A rodada
+`./gradlew.bat runGametest --rerun-tasks --console=plain` terminou em
+**488/488**. Ainda falta observar o caso em um save real com vila sobre agua.
 
 ### 2026-09-27 - Duas obras pendentes: suprimento local e aproximacao do construtor
 

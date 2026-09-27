@@ -28,8 +28,8 @@ sites.
 
 ## Trigger
 
-`WaterMineAccess` is evaluated only after `MineSite.mouthOf` cannot find a
-normal dry mouth. It succeeds only when all of the following are true:
+`WaterMineAccess` is evaluated only after an existing mine exhausts every
+level. It succeeds only when all of the following are true:
 
 1. a fixed sample around the colony foundation proves that the village is
    water-founded, rather than merely near a pond;
@@ -39,9 +39,8 @@ normal dry mouth. It succeeds only when all of the following are true:
 4. the lower exit reaches a natural, mineable `8 x 8` stone area (64 blocks)
    without crossing protected blocks.
 
-If any condition fails, no block is changed. The existing exposed-stone
-fallback remains available and the idle log reports the specific water-mine
-refusal.
+If any condition fails, no block is changed. The existing dry re-opening on
+the opposite side remains available.
 
 ## Geometry
 
@@ -90,7 +89,8 @@ Every block of the completed access corridor is mining infrastructure.
 
 1. Introduce a focused `WaterMineAccess` integration component for loaded-world
    qualification, geometry and placement.
-2. Route `MineDigging.mineOf` from failed normal mouth search to this component.
+2. Route the exhausted-mine recovery in `MineTrouble` to this component before
+   its normal opposite-mouth recovery.
 3. Open the existing `Mine` at the lower exit and keep `MineFurnishing` for
    the normal mine entry there.
 4. Add the water-access exclusion to the common mining eligibility boundary,

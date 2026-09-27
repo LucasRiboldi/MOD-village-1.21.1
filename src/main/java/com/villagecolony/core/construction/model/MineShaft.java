@@ -30,11 +30,11 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
     /** Altura livre que cada degrau abre. */
     public static final int STAIR_HEADROOM = 3;
 
-    /** As duas pistas que permitem a passagem em sentidos opostos. */
-    public static final int STAIR_LANES = 2;
+    /** As três pistas que deixam toda escada com passagem de três blocos. */
+    public static final int STAIR_LANES = 3;
 
-    /** Blocos planejados por degrau: duas pistas por três alturas. */
-    private static final int STAIR_STEP_BLOCKS = STAIR_HEADROOM * STAIR_LANES;
+    /** Blocos planejados por degrau: três pistas por três alturas. */
+    public static final int STAIR_STEP_BLOCKS = STAIR_HEADROOM * STAIR_LANES;
 
     /** Blocos da escada inicial compartilhada. */
     public static final int CARVED = DESCENT * STAIR_STEP_BLOCKS;

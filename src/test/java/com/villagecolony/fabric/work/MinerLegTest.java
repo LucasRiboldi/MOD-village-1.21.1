@@ -309,7 +309,8 @@ class MinerLegTest {
         Predicate<BlockPos> dugDownToStepSix = at -> floors.test(at) && openDownToStepSix.test(at);
 
         BlockPos leg = MinerLeg.legTowards(
-                new BlockPos(732, 59, 893), DEEP, mine(30),
+                new BlockPos(732, 59, 893), DEEP,
+                mine(MineShaft.DESCENT * MineShaft.STAIR_STEP_BLOCKS),
                 world(openDownToStepSix, dugDownToStepSix));
 
         assertTrue(

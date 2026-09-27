@@ -220,7 +220,7 @@ public final class MineDigging {
 
         IdleLog.clear(colonyId, ARM_SUBJECT);
 
-        Optional<BlockPos> found = MineVein.followingTheVein(world, arm)
+        Optional<BlockPos> found = MineVein.followingTheVein(world, mine.get(), arm)
                 .or(() -> MineCuts.nextCut(world, workerId, mine.get(), arm));
 
         if (found.isEmpty()) {
@@ -388,6 +388,19 @@ public final class MineDigging {
         Side descent = MineCuts.sideOf(colonyId);
 
         Optional<BlockPos> mouth = MineSite.mouthOf(world, center, descent);
+        Optional<WaterMineAccess.Route> waterAccess = Optional.empty();
+
+        if (mouth.isEmpty()) {
+            waterAccess = WaterMineAccess.find(world, center, descent);
+
+            if (waterAccess.isPresent() && waterAccess.get().place(world)) {
+                mouth = Optional.of(waterAccess.get().entry());
+                VillageColonyMod.LOGGER.info(
+                        "Miner {} opens a sealed water mine access at {}",
+                        workerId,
+                        mouth.get().toShortString());
+            }
+        }
 
         if (mouth.isEmpty()) {
             // A linha que faltava, e a falta dela custou três sessões.
@@ -419,9 +432,14 @@ public final class MineDigging {
                 MineShaft.DESCENT,
                 MineShaft.ARM_STAIRS);
 
-        // A Regra 30: onde ele decide começar a cavar nascem a lanterna
-        // e o baú da mina.
-        MineFurnishing.furnishAndLight(world, opened);
+        if (waterAccess.isPresent()) {
+            // A saída inferior está dentro da rota selada. O arco normal
+            // ocuparia o corredor de três pistas, então esta mina só recebe
+            // a iluminação das galerias já abertas.
+            MineFurnishing.lightMine(world, opened);
+        } else {
+            MineFurnishing.furnishAndLight(world, opened);
+        }
 
         return Optional.of(opened);
     }

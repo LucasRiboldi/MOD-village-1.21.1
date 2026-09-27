@@ -4,7 +4,7 @@
 
 **Goal:** Give water-founded colonies one glass-sealed, unmineable `3 x 3` access stair to a real underground mine, and widen every normal mine stair to the same internal dimensions.
 
-**Architecture:** The ordinary `MineSite` search remains authoritative and runs first. When it has no dry mouth, a new Fabric integration component qualifies only a loaded, water-founded route and opens the existing `Mine` at the lower exit; the world itself contains the completed access. `MineShaft` changes to three lanes, and `MineSave` invalidates old cut cursors because their coordinate order changes.
+**Architecture:** The ordinary dry mine remains authoritative. When that mine exhausts every level, a Fabric integration component first qualifies a loaded, water-founded route; on refusal, the existing opposite dry-mouth recovery remains. The world itself contains the completed access. `MineShaft` changes to three lanes, and `MineSave` invalidates old cut cursors because their coordinate order changes.
 
 **Tech Stack:** Java 21, Fabric 1.21.1, JUnit 5, Fabric GameTest, Minecraft server-world block APIs.
 
@@ -16,7 +16,8 @@
 - `core/` does not import Minecraft, Fabric or data packages.
 - Never force-load a chunk; every examined or modified candidate chunk must already be loaded.
 - Never modify village-original blocks, colony-built blocks, open projects or player-protected leaves.
-- Normal dry mine selection always precedes water access selection.
+- Normal dry mine selection is unchanged; water access is considered only when
+  that mine later exhausts every level.
 - Water access is exclusive to water-founded villages with a validated 64-block natural stone exit.
 - Both normal and water-access stair corridors are three blocks wide and three blocks high.
 - Mine cursors from an older geometry are reset, not translated; the arch state remains preserved.
@@ -130,33 +131,39 @@ git add src/main/java/com/villagecolony/fabric/work/WaterMineAccess.java src/tes
 git commit -m "P0.8: qualify sealed water mine access (WaterMineAccessTest)"
 ```
 
-### Task 3: Integrate the route only after normal mouth failure
+### Task 3: Integrate the route when the normal mine exhausts
 
 **Files:**
-- Modify: `src/main/java/com/villagecolony/fabric/work/MineDigging.java`
+- Modify: `src/main/java/com/villagecolony/fabric/work/MineTrouble.java`
 - Create: `src/gametest/java/com/villagecolony/gametest/WaterMineAccessGameTest.java`
 
 **Interfaces:**
 - Consumes: `WaterMineAccess.find(...)` and `Route.place(...)` from Task 2.
-- Produces: a normal `Mine` opened at `Route.entry()` only when `MineSite.mouthOf(...)` is empty.
+- Produces: a replacement `Mine` opened at `Route.entry()` only when the
+  prior mine has exhausted every level and the water route is valid.
 
 - [ ] **Step 1: Write failing GameTests for selection and world safety**
 
 Add three fixtures:
 
-1. water around a colony center with an `8 x 8` natural stone platform at the lower exit; assert a Mine opens at the lower entry, stairs exist in all three lanes, shell cells are glass and every interior cell has empty fluid;
-2. the same water fixture with only 63 natural stone cells; assert no Mine opens and a snapshot of every candidate block is unchanged;
-3. a dry fixture with a valid ordinary mouth; assert `MineDigging.mineOf` opens the ordinary mouth and no glass appears.
+1. water around a colony center with an `8 x 8` natural stone platform at the lower exit; exhaust a Mine and assert its replacement opens at the lower entry, stairs exist in all three lanes, shell cells are glass and every interior cell has empty fluid;
+2. the same water fixture with only 63 natural stone cells; assert the existing opposite dry-mouth recovery is used and every water-route candidate block is unchanged;
+3. a dry fixture; exhaust a Mine and assert the ordinary opposite-mouth recovery remains in effect and no glass appears.
 
 - [ ] **Step 2: Run the specific GameTest class and verify red**
 
 Run: `./gradlew.bat runGametest --rerun-tasks`
 
-Expected: FAIL because failed normal mouth search currently falls directly to exposed stone.
+Expected: FAIL because exhausted mines currently recover only through the dry mouth.
 
-- [ ] **Step 3: Route MineDigging through the qualified access**
+- [ ] **Step 3: Route exhausted-mine recovery through the qualified access**
 
-Keep `MineSite.mouthOf` unchanged and evaluate it first. When it returns empty, call `WaterMineAccess.find`. Call `Route.place` before `MINES.open`; on success use `Route.entry()` for `MineShaft.from`, log `opens a sealed water mine access`, and call existing `MineFurnishing`. On refusal, retain the existing `IdleLog` and exposed-stone behavior, but use a distinct detail such as `water route has no loaded 64-block stone exit`.
+Keep `MineSite` unchanged. In `MineTrouble.abandonAtBottom`, call
+`WaterMineAccess.find` before the existing opposite-mouth search. Call
+`Route.place` before `MINES.open`; on success use `Route.entry()` for
+`MineShaft.from`, log `opens a sealed water mine access`, and light the new
+mine without raising a dry-mouth arch. On refusal, retain the existing
+opposite-mouth behavior.
 
 - [ ] **Step 4: Verify GameTests and full unit suite**
 
@@ -171,7 +178,7 @@ Expected: PASS.
 - [ ] **Step 5: Commit the integrated fallback**
 
 ```powershell
-git add src/main/java/com/villagecolony/fabric/work/MineDigging.java src/gametest/java/com/villagecolony/gametest/WaterMineAccessGameTest.java
+git add src/main/java/com/villagecolony/fabric/work/MineTrouble.java src/gametest/java/com/villagecolony/gametest/WaterMineAccessGameTest.java
 git commit -m "P0.8: open water mines only through sealed access (WaterMineAccessGameTest)"
 ```
 

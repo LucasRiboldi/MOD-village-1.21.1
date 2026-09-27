@@ -232,13 +232,35 @@ public final class MineTrouble {
     }
 
     /**
-     * O fundo não reaproveita a mesma abertura: a mina acabada é esquecida
-     * e o próximo ciclo começa no lado oposto da vila.
+     * O fundo não reaproveita a mesma abertura: em vila fundada na água,
+     * tenta antes a descida selada; nos demais casos o ciclo começa no lado
+     * oposto da vila.
      */
-    static void abandonAtBottom(
+    public static void abandonAtBottom(
             ServerWorld world, UUID colonyId, Mine mine, BlockPos center) {
 
         Side opposite = mine.shaft().descent().opposite();
+
+        Optional<WaterMineAccess.Route> waterAccess = WaterMineAccess.find(world, center, opposite);
+        if (waterAccess.isPresent() && waterAccess.get().place(world)) {
+            VillageColonyMod.MINES.removeOfColony(colonyId);
+
+            Mine replacement = VillageColonyMod.MINES.open(
+                    colonyId,
+                    MineShaft.from(
+                            MinecraftTypeAdapter.toColonyPos(waterAccess.get().entry()), opposite));
+
+            // A concha já é a entrada: não erguer arco ou mobília dentro dela.
+            MineFurnishing.lightMine(world, replacement);
+
+            VillageColonyMod.LOGGER.info(
+                    "Mine {} reached the world bottom and opened sealed water access from {} to {}",
+                    colonyId,
+                    MinecraftTypeAdapter.toBlockPos(mine.entry()).toShortString(),
+                    waterAccess.get().entry().toShortString());
+            return;
+        }
+
         Optional<BlockPos> mouth = MineSite.mouthOnSide(world, center, opposite);
 
         if (mouth.isEmpty()) {

@@ -12,13 +12,18 @@
 
 ## Em uma linha
 
-A boca da mina agora so abre quando os tres primeiros degraus das duas faixas
-da escada podem sair por solo firme, portanto uma coluna alta isolada nao vira
-uma entrada suspensa. O planejador tambem envia ao scanner a pegada que cada
-planta tera depois de virar para a rua: lote com lavoura ou estrutura passa a
-ser recusado antes de registrar a obra. `runGametest --rerun-tasks` passou em
-486/486. Falta confirmar em um save real uma mina nova e uma obra retangular
-ao lado de uma lavoura original.
+A boca seca da mina agora so abre quando os tres primeiros degraus das tres
+faixas da escada podem sair por solo firme, portanto uma coluna alta isolada
+nao vira uma entrada suspensa. Quando uma mina esgota todos os niveis, uma
+vila fundada em agua tenta antes uma escada selada de tres lances ate uma
+saida natural 8x8; se ela nao for segura ou carregada, a reabertura seca do
+lado oposto continua sendo usada. Os mineiros nao podem quebrar seus degraus
+nem o casco de vidro. O planejador
+tambem envia ao scanner a pegada que cada planta tera depois de virar para a
+rua: lote com lavoura ou estrutura passa a ser recusado antes de registrar a
+obra. `runGametest --rerun-tasks` passou em 488/488. Falta confirmar em um
+save real uma mina seca 3x3, uma mina aquatica e uma obra retangular ao lado
+de uma lavoura original.
 
 A evolucao por populacao agora inclui o Construtor na mesma lista de vagas
 permanentes: o segundo aparece no adulto 23 e o terceiro no 38, sem mistura-lo
