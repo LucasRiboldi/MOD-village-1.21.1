@@ -5784,12 +5784,61 @@ public class MinerGameTest implements FabricGameTest {
             world.setBlockState(hill, Blocks.STONE.getDefaultState());
             world.setBlockState(hill.up(), Blocks.AIR.getDefaultState());
 
+            // A encosta alta continua elegivel, mas agora tambem sustenta os
+            // tres primeiros degraus das duas faixas da espiral.
+            for (int step = 1; step <= 3; step++) {
+                world.setBlockState(hill.add(0, 0, -step), Blocks.STONE.getDefaultState());
+                world.setBlockState(hill.add(-1, 0, -step), Blocks.STONE.getDefaultState());
+            }
+
             Optional<BlockPos> mouth = MineSite.mouthOf(world, center, Side.NORTH);
 
             context.assertTrue(mouth.isPresent(), "não foi encontrada uma boca seca acessível");
             context.assertTrue(
                     mouth.get().getX() == hill.getX() && mouth.get().getZ() == hill.getZ(),
                     "a boca ignorou a margem e não preferiu o terreno elevado: "
+                            + mouth.get().toShortString());
+        } finally {
+            MineDigging.restoreMineDistance();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * A escada precisa de um patamar de terra, e nao pode sair de um pilar solto.
+     *
+     * <p>O pilar a leste esta mais alto e, sem conferir os primeiros degraus,
+     * vence a plataforma sul no desempate por elevacao. A abertura resultante
+     * cava o ar ao redor da vila em vez de entrar no solo.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+            tickLimit = 20)
+    public void theMineMouthRejectsAnUnsupportedRaisedPillar(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos center = context.getAbsolutePos(new BlockPos(4, 2, 4));
+
+        MineDigging.shortenMineDistanceTo(3);
+
+        try {
+            BlockPos unsupportedPillar = center.offset(Direction.EAST, 3).up(2);
+            BlockPos supportedGround = center.offset(Direction.SOUTH, 3).down();
+
+            world.setBlockState(unsupportedPillar, Blocks.STONE.getDefaultState());
+
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int forward = 0; forward <= 3; forward++) {
+                    world.setBlockState(
+                            supportedGround.add(dx, 0, -forward), Blocks.STONE.getDefaultState());
+                }
+            }
+
+            Optional<BlockPos> mouth = MineSite.mouthOf(world, center, Side.NORTH);
+
+            context.assertTrue(mouth.isPresent(), "nenhum terreno estavel foi aceito para a mina");
+            context.assertTrue(
+                    !mouth.get().equals(unsupportedPillar),
+                    "a boca aceitou o pilar sem patamar em vez de outro solo estavel: "
                             + mouth.get().toShortString());
         } finally {
             MineDigging.restoreMineDistance();

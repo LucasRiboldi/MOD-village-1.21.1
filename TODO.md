@@ -2,8 +2,33 @@
 
 **Atualizado:** 2026-09-27. A evolucao agora inclui Construtor e o deficit de
 camas prioriza moradia; a prioridade e explicita no Core e aparece no `/vc
-log`. O mineiro agora tem regressao de retorno apos queda de dois blocos. A
-bateria de 485 GameTests esta verde; ainda requer validacao no save real.
+log`. A boca da mina exige os primeiros degraus em solo firme e cada lote e
+validado na orientacao final da planta. A bateria de 486 GameTests esta verde;
+ainda requer validacao no save real.
+
+## Boca da mina e lote orientado - 2026-09-27
+
+- [x] P0 - A boca da mina rejeita pilar, barranco interrompido, agua, estrutura
+  Vanilla e bloco da colonia nos tres primeiros degraus das duas faixas da
+  escada. `MinerGameTest.theMineMouthRejectsAnUnsupportedRaisedPillar` cobre
+  o pilar alto que antes vencia a escolha e abria o caminho no ar.
+- [x] P0 - O scanner recebe a medida da planta ja voltada para cada lado da
+  rua; `SiteOpening` nao tem mais reserva que escape do lote validado. A
+  rodada Fabric cobre a primeira casa e a rotacao de casa que haviam exposto
+  a incompatibilidade de dimensoes.
+- [ ] P0 - Playtest no save do autor: gerar uma mina em relevo irregular e
+  abrir uma obra retangular perto de lavoura original, confirmando que a
+  mina entra no solo e que a lavoura nao recebe blocos da obra.
+
+## Atividade observada no log - 2026-09-27
+
+- [ ] P1 - O log do save mostra mineiros extraindo e pastores tosquiando, mas
+  o `/vc log` ainda exibe falhas antigas junto do estado atual. Separar o
+  ultimo sucesso e o ultimo bloqueio por profissional para nao parecer que
+  toda a colonia esta parada.
+- [ ] P0 - Investigar e corrigir o construtor que ignora `grass_block` no
+  volume da obra e o lenhador que permanece em busca sem arvore alcancavel.
+  Ambos foram vistos no log do save e ainda nao foram reproduzidos em teste.
 
 ## Retorno do mineiro apos queda de dois blocos - 2026-09-27
 

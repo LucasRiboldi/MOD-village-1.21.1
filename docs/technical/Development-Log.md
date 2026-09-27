@@ -9932,6 +9932,28 @@ Depois de registrar o novo GameTest no entrypoint Fabric, a rodada
 Falta validar no save do autor: a obra aberta deve receber uma rota praticavel;
 a obra ja abandonada so deve retomar pela regra de reabertura de abandonadas.
 
+### 2026-09-27 - Boca de mina estavel e lote na orientacao real da obra
+
+O relato do save mostrou uma abertura de mina com caminho quebrado. A selecao
+da boca conferia apenas a coluna inicial, embora `MineShaft` abra os tres
+primeiros degraus em duas faixas logo adiante. `MineSite` agora exige solo
+solido, sem estrutura Vanilla nem bloco da colonia, em cada uma dessas seis
+colunas. `MinerGameTest.theMineMouthRejectsAnUnsupportedRaisedPillar` falhou
+contra a regra antiga e confirma que um pilar alto isolado nao vence um solo
+estavel.
+
+O mesmo playtest mostrou obra sobre lavoura original. A causa era geometrica:
+o scanner validava o retangulo antes da planta virar a porta para a rua, e o
+giro podia trocar largura por profundidade depois da aprovacao. O scanner agora
+recebe uma `Footprint` com tamanho e lado da porta para cada planta ja girada.
+`SiteOpening` abre somente uma planta que caiba nessa pegada, sem reserva fora
+do lote validado. Os GameTests de primeira casa e de rotacao de moradia voltam
+a passar sem reintroduzir a invasao de lavoura.
+
+Resultado: `./gradlew.bat test --tests com.villagecolony.fabric.work.DrawnFromTest`
+passou e `./gradlew.bat runGametest --rerun-tasks` terminou em **486/486**.
+Falta o playtest do autor em relevo irregular e junto a uma lavoura de vila.
+
 ### 2026-09-27 - Construtor no crescimento e cama obrigatoria na proxima casa
 
 O crescimento tinha duas listas com propositos distintos: os sete produtores

@@ -149,7 +149,7 @@ public final class RoadIndex {
      */
     static RoadScan findAmongRoads(
             ServerWorld world, UUID colonyId, BlockPos from, ColonyRoads roads,
-            int radius, List<ColonyPos> plans) {
+            int radius, List<BuildSiteScanner.Footprint> footprints) {
 
         List<Long> columns = roads.columns();
 
@@ -185,7 +185,7 @@ public final class RoadIndex {
 
             Optional<Site> site = RoadsideSites.siteBesideRoadAt(
                     world, colonyId, from,
-                    ColonyRoads.xOf(column), ColonyRoads.zOf(column), from.getY(), plans);
+                    ColonyRoads.xOf(column), ColonyRoads.zOf(column), from.getY(), footprints);
 
             if (site.isPresent()) {
                 // Uma adiante, pelo mesmo motivo do cursor do quadrado:

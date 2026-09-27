@@ -72,11 +72,20 @@ public final class RoadsideSites {
             ServerWorld world, UUID colonyId, ColonyPos center,
             List<ColonyPos> plans, List<ColonyPos> road) {
 
+        return findBesideForFootprints(
+                world, colonyId, center, BuildSiteScanner.footprintsForAnyRoadSide(plans), road);
+    }
+
+    /** Encontra um lote usando a dimensão válida para o lado da rua. */
+    public static Optional<Site> findBesideForFootprints(
+            ServerWorld world, UUID colonyId, ColonyPos center,
+            List<BuildSiteScanner.Footprint> footprints, List<ColonyPos> road) {
+
         BlockPos from = MinecraftTypeAdapter.toBlockPos(center);
 
         for (ColonyPos column : road) {
             Optional<Site> site = siteBesideRoadAt(
-                    world, colonyId, from, column.x(), column.z(), from.getY(), plans);
+                    world, colonyId, from, column.x(), column.z(), from.getY(), footprints);
 
             if (site.isPresent()) {
                 // Achou: a varredura em curso perde o sentido, e o cursor
@@ -100,7 +109,7 @@ public final class RoadsideSites {
      */
     static Optional<Site> siteBesideRoadAt(
             ServerWorld world, UUID colonyId, BlockPos center,
-            int x, int z, int aroundY, List<ColonyPos> plans) {
+            int x, int z, int aroundY, List<BuildSiteScanner.Footprint> footprints) {
 
         Optional<BlockPos> ground = LotGround.groundInColumn(world, x, z, aroundY);
 
@@ -126,8 +135,9 @@ public final class RoadsideSites {
         // A altura da rua, que a Regra 19 usa como régua do lote.
         int roadY = ground.get().getY();
 
-        for (ColonyPos size : plans) {
-            Optional<Site> site = siteFor(world, colonyId, x, z, aroundY, roadY, size);
+        for (BuildSiteScanner.Footprint footprint : footprints) {
+            Optional<Site> site = siteFor(
+                    world, colonyId, x, z, aroundY, roadY, footprint.size(), footprint.doorSide());
 
             if (site.isPresent()) {
                 return site;
@@ -140,9 +150,13 @@ public final class RoadsideSites {
     /** O lote desta planta ao lado desta rua, se houver. */
     static Optional<Site> siteFor(
             ServerWorld world, UUID colonyId, int x, int z, int aroundY, int roadY,
-            ColonyPos size) {
+            ColonyPos size, Direction doorSide) {
 
         for (Direction side : Direction.Type.HORIZONTAL) {
+            if (side.getOpposite() != doorSide) {
+                continue;
+            }
+
             // O lote começa no bloco seguinte à estrada — encostado nela,
             // que é a decisão 1.
             int lotX = x + side.getOffsetX();

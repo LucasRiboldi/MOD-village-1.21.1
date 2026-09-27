@@ -383,9 +383,9 @@ public final class ConstructionPlanner {
         // planta ausente saem antes daqui e não são dívida da varredura.
         SweepLog.asked(colony.id());
 
-        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
+        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.findForFootprints(
                 world, colony.id(), colony.center(), searchRadius,
-                SiteOpening.sizesOf(plans));
+                SiteOpening.footprintsFor(plans));
 
         if (site.isEmpty()) {
             // Duas respostas, e a diferença importa: uma diz que não há

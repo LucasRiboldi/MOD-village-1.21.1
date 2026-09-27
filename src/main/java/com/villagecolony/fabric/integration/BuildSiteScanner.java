@@ -139,6 +139,22 @@ public final class BuildSiteScanner {
     }
 
     /**
+     * A pegada que pode ocupar um lote apenas quando a rua estiver deste lado.
+     *
+     * <p>A orientação da porta faz parte da medida: uma planta retangular pode
+     * trocar largura e profundidade ao virar para a rua. Separar os dois deixa
+     * o scanner aprovar uma área diferente da que a obra vai ocupar.
+     */
+    public record Footprint(ColonyPos size, Direction doorSide) {
+
+        public Footprint {
+            if (!doorSide.getAxis().isHorizontal()) {
+                throw new IllegalArgumentException("a lot footprint needs a horizontal door side");
+            }
+        }
+    }
+
+    /**
      * Um lote para uma casa deste tamanho, encostado em estrada.
      *
      * @param size quanto a casa ocupa, do {@code Blueprint}
@@ -180,6 +196,18 @@ public final class BuildSiteScanner {
     public static Optional<Site> find(
             ServerWorld world, UUID colonyId, ColonyPos center, int radius,
             List<ColonyPos> plans) {
+
+        return findForFootprints(world, colonyId, center, radius, footprintsForAnyRoadSide(plans));
+    }
+
+    /**
+     * Procura um lote usando a pegada que a planta realmente terá ao olhar a
+     * rua. Usado pelo planejador de construções; a sobrecarga por tamanho fica
+     * para GameTests e chamadores sem uma planta orientada.
+     */
+    public static Optional<Site> findForFootprints(
+            ServerWorld world, UUID colonyId, ColonyPos center, int radius,
+            List<Footprint> footprints) {
 
         BlockPos from = MinecraftTypeAdapter.toBlockPos(center);
 
@@ -229,7 +257,8 @@ public final class BuildSiteScanner {
         if (roads != null) {
             SweepLog.indexed(colonyId);
 
-            RoadScan indexed = RoadIndex.findAmongRoads(world, colonyId, from, roads, radius, plans);
+            RoadScan indexed = RoadIndex.findAmongRoads(
+                    world, colonyId, from, roads, radius, footprints);
             columns = indexed.columns();
             Optional<Site> fromIndex = indexed.site();
 
@@ -338,7 +367,7 @@ public final class BuildSiteScanner {
 
                     Optional<Site> site = RoadsideSites.siteBesideRoadAt(
                             world, colonyId, from,
-                            from.getX() + dx, from.getZ() + dz, from.getY(), plans);
+                            from.getX() + dx, from.getZ() + dz, from.getY(), footprints);
 
                     if (site.isPresent()) {
                         // O cursor FICA, e é a decisão 8 aplicada como
@@ -393,6 +422,18 @@ public final class BuildSiteScanner {
         } finally {
             SweepState.recordReport(colonyId, columns, before);
         }
+    }
+
+    static List<Footprint> footprintsForAnyRoadSide(List<ColonyPos> plans) {
+        List<Footprint> footprints = new ArrayList<>();
+
+        for (ColonyPos plan : plans) {
+            for (Direction side : Direction.Type.HORIZONTAL) {
+                footprints.add(new Footprint(plan, side));
+            }
+        }
+
+        return List.copyOf(footprints);
     }
 
     /**

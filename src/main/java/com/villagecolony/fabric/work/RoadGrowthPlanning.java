@@ -80,11 +80,11 @@ final class RoadGrowthPlanning {
 
         IdleLog.clear(colony.id(), ConstructionPlanner.SUBJECT);
 
-        return RoadsideSites.findBeside(
+        return RoadsideSites.findBesideForFootprints(
                         world,
                         colony.id(),
                         colony.center(),
-                        SiteOpening.sizesOf(plans),
+                        SiteOpening.footprintsFor(plans),
                         RoadExtension.justPaved(colony.id()))
                 .flatMap(beside -> SiteOpening.open(world, colony, beside, plans, blueprint, builders));
     }
@@ -130,11 +130,11 @@ final class RoadGrowthPlanning {
                 // custaria dezessete ciclos por uma informação que ela
                 // tem na mão. Vazio aqui não é erro: o trecho novo pode
                 // não caber casa, e aí a varredura seguinte decide.
-                yield RoadsideSites.findBeside(
+                yield RoadsideSites.findBesideForFootprints(
                                 world,
                                 colony.id(),
                                 colony.center(),
-                                SiteOpening.sizesOf(plans),
+                                SiteOpening.footprintsFor(plans),
                                 RoadExtension.justPaved(colony.id()))
                         .flatMap(beside ->
                                 SiteOpening.open(world, colony, beside, plans, blueprint, builders));
