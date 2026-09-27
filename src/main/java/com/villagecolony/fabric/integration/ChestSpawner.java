@@ -78,7 +78,7 @@ public final class ChestSpawner {
     private static Optional<BlockPos> placeBesideBedInStructure(ServerWorld world, BlockPos bed) {
         Optional<BlockBox> vanillaPiece = VanillaBedChests.originalVillagePiece(world, bed);
         if (vanillaPiece.isPresent()) {
-            return ChestPlacer.placeBesideBedInStructure(world, bed, vanillaPiece.get()::contains).chest();
+            return ChestPlacer.placeBesideBedInStructure(world, bed, vanillaPiece.get()).chest();
         }
 
         return VillageColonyMod.BUILDINGS.all().stream()
@@ -86,8 +86,9 @@ public final class ChestSpawner {
                         && building.contains(MinecraftTypeAdapter.toColonyPos(bed)))
                 .findFirst()
                 .flatMap(building -> ChestPlacer.placeBesideBedInStructure(
-                        world, bed,
-                        spot -> building.contains(MinecraftTypeAdapter.toColonyPos(spot))).chest());
+                        world, bed, new BlockBox(
+                                building.min().x(), building.min().y(), building.min().z(),
+                                building.max().x(), building.max().y(), building.max().z())).chest());
     }
 
     /** O baú registrado ainda é um baú? Quebrado pelo jogador, deixa de valer. */

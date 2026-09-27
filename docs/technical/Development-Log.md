@@ -9730,3 +9730,43 @@ Os testes novos primeiro falharam contra a regra antiga: três falhas em
 `./gradlew.bat runGametest --rerun-tasks` passou com **477/477**. O JAR
 `46CF0C7A…6444` foi comparado idêntico em `build/libs/`, `downloads/` e
 `%APPDATA%/.minecraft/mods/`; falta o playtest no mesmo save.
+
+### 2026-09-26 (noite) - Camas e baús somente em cômodos fechados
+
+O playtest posterior mostrou que a proteção anterior ainda aceitava dois
+casos graves: a fundação criava camas ao ar livre antes de a BigHouseMOD ser
+colocada, e a caixa geométrica de uma construção podia fazer uma cama externa
+parecer interna para o baú de profissão.
+
+`VillageFoundation` agora não escreve camas nem cria moradores enquanto a
+BigHouseMOD ainda não existe. `ChestSpawner` passa a peça real da estrutura ao
+`ChestPlacer`; a colocação exige cama dentro da peça, teto sólido acima dela e
+um cômodo horizontalmente fechado. A busca interrompe quando alcança a borda
+da peça, e as aproximações de porta permanecem proibidas.
+
+Os novos cenários `aVillageWithoutItsBigHouseDoesNotReceiveOutdoorBeds` e
+`anOutdoorBedInsideABuildingBoxDoesNotGetAChest` falharam primeiro contra o
+comportamento antigo. Após a correção, `./gradlew.bat runGametest --rerun-tasks`
+passou com **479/479**. A regra impede novas colocações; camas e baús já
+existentes não são removidos para não apagar inventários do mundo do autor.
+Falta publicar o JAR e confirmar no mesmo save.
+
+### 2026-09-26 (noite) - BigHouseMOD obrigatória no nascimento da vila
+
+O autor definiu a BigHouseMOD como parte imutável do nascimento: uma vila nova
+precisa surgir com a casa, suas seis camas, seis baús e aldeões, ou não existe
+ainda para o mod. `VillageAdoption` antes registrava a colônia e só então
+tentava a casa; uma recusa de lote deixava uma colônia lógica parcial.
+
+Agora a casa é tentada antes de camas Vanilla, trabalhadores, baús e bosque.
+Se não houver lote seguro, a entrada recém-criada é removida no mesmo ciclo e
+a próxima detecção tenta a adoção completa de novo. Colônias pré-existentes
+continuam elegíveis para reparar a casa, sem apagar dados do save.
+
+`aVillageWithoutASafeBigHouseLotIsNotAdopted` cria camas e adultos suficientes
+para detectar uma vila, mas usa espigões que impedem qualquer pegada plana da
+BigHouseMOD. Ele falhou primeiro porque a colônia permanecia registrada sem
+casa. Após a inversão, `./gradlew.bat runGametest --rerun-tasks` passou com
+**480/480**. O JAR `C1D41213030CEE645BC326338B98A2DC4F9498E214C91B38A1D1046F9C732B7A`
+foi comparado idêntico em `build/libs/`, `downloads/` e
+`%APPDATA%/.minecraft/mods/`; falta conferir no save real a criação de uma vila nova.

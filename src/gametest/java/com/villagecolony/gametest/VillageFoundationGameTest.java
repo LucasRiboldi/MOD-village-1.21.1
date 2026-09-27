@@ -9,6 +9,7 @@ import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
+import com.villagecolony.fabric.integration.VillageFoundation;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.BedBlock;
@@ -28,6 +29,32 @@ import java.util.UUID;
 
 /** Prova a fundação física e profissional de uma vila recém-detectada. */
 public class VillageFoundationGameTest implements FabricGameTest {
+
+    /** Sem uma casa pronta a fundação aguarda: nunca semeia camas ou moradores ao relento. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE,
+            batchId = "aaa_village_foundation", tickLimit = 120)
+    public void aVillageWithoutItsBigHouseDoesNotReceiveOutdoorBeds(TestContext context) {
+        BlockPos anchor = context.getAbsolutePos(new BlockPos(1, 1, 1))
+                .add(1000000, 0, 1009000);
+        Colony colony = Colony.create(
+                UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(anchor));
+        VillageColonyMod.COLONIES.register(colony);
+        prepareFoundationTerrain(context.getWorld(), anchor);
+
+        try {
+            VillageFoundation.Result result = VillageFoundation.ensure(
+                    context.getWorld(), colony, colony.center(), VillageColonyMod.WORKERS, false);
+
+            context.assertFalse(result.changed(),
+                    "sem BigHouseMOD a fundação criou cama ou morador: " + result);
+            context.assertTrue(countBlocks(context.getWorld(), anchor, 20, Blocks.WHITE_BED) == 0,
+                    "sem BigHouseMOD nasceram camas ao ar livre");
+        } finally {
+            cleanUp(context.getWorld(), colony, anchor);
+        }
+
+        context.complete();
+    }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE,
             batchId = "aaa_village_foundation", tickLimit = 120)
@@ -324,6 +351,20 @@ public class VillageFoundationGameTest implements FabricGameTest {
             }
         }
 
+        return count;
+    }
+
+    private static int countBlocks(ServerWorld world, BlockPos center, int radius, net.minecraft.block.Block target) {
+        int count = 0;
+        for (int x = center.getX() - radius; x <= center.getX() + radius; x++) {
+            for (int y = center.getY(); y <= center.getY() + 4; y++) {
+                for (int z = center.getZ() - radius; z <= center.getZ() + radius; z++) {
+                    if (world.getBlockState(new BlockPos(x, y, z)).isOf(target)) {
+                        count++;
+                    }
+                }
+            }
+        }
         return count;
     }
 

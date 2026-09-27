@@ -74,6 +74,15 @@ Não recomendados:
   fundidor sem busca inútil (`FurnaceReachGameTest`), obra só com chão cede
   lugar (`ConstructionProjectBuiltTest`), guarda de alcance com a rua do lote
   (**sem teste dedicado**). Sinais: `got a chest of its own`, `will not conjure`.
+- [x] 🔴 **Fundação atômica; camas e baús nunca ao ar livre** (26-09,
+  JAR `C1D41213…32B7A` publicado): vila nova só é adotada depois que a
+  BigHouseMOD foi colocada em lote seguro; então recebe suas camas, baús e
+  moradores. Sem lote, não sobra colônia nem trabalhador parcial e a próxima
+  detecção recomeça a adoção. A fundação também não cria moradores/camas sem
+  casa; baú só nasce ao lado de cama em cômodo fechado e coberto, mantendo a
+  passagem da porta livre. `ColonyDetectionGameTest`, `VillageFoundationGameTest`
+  e `ChestSpawnerGameTest` falharam contra a regra antiga; rodada completa:
+  480/480. ⬜ conferir no mesmo save.
 - [ ] 🔴 **Lote que não cresce** (68,5% das recusas por rua reservada, pontas de
   rua que não calçam): medir as pontas, aceitar lote a 1–2 blocos da rua, contar
   recusa por lote. Ver `docs/research/2026-09-26-sessao-longa.md` §7.1.

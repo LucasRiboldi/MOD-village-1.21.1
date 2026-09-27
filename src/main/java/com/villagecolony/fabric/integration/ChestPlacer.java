@@ -13,8 +13,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
 import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Queue;
+import java.util.Set;
 
 /**
  * Posiciona o baú privado de uma cama de vila vanilla já confirmada.
@@ -76,7 +80,7 @@ public final class ChestPlacer {
      */
     public static Result placeForOriginalVillageBed(
             ServerWorld world, BlockPos bedPoi, BlockBox piece) {
-        return placeBeside(world, bedPoi, piece::contains);
+        return placeBeside(world, bedPoi, piece);
     }
 
     /**
@@ -85,19 +89,22 @@ public final class ChestPlacer {
      * abertas ou diante de portas.
      */
     public static Result placeBesideBedInStructure(
-            ServerWorld world, BlockPos bedPoi, java.util.function.Predicate<BlockPos> inside) {
-        return placeBeside(world, bedPoi, inside);
+            ServerWorld world, BlockPos bedPoi, BlockBox structure) {
+        return placeBeside(world, bedPoi, structure);
     }
 
     private static Result placeBeside(
-            ServerWorld world, BlockPos bedPoi, java.util.function.Predicate<BlockPos> inside) {
+            ServerWorld world, BlockPos bedPoi, BlockBox structure) {
         Optional<Bed> bed = completeBed(world, bedPoi);
         if (bed.isEmpty()) {
             return new Result(Optional.empty(), Outcome.SKIPPED_NOT_A_COMPLETE_BED);
         }
+        if (!isEnclosedRoom(world, bed.get(), structure)) {
+            return new Result(Optional.empty(), Outcome.SKIPPED_NO_SAFE_POSITION);
+        }
 
         for (BlockPos spot : candidates(bed.get())) {
-            if (!inside.test(spot) || isDoorApproach(world, spot)) {
+            if (!structure.contains(spot) || isDoorApproach(world, spot)) {
                 continue;
             }
 
@@ -138,7 +145,9 @@ public final class ChestPlacer {
 
         for (Direction direction : Direction.Type.HORIZONTAL) {
             Optional<Bed> bed = completeBed(world, chest.offset(direction));
-            if (bed.isPresent() && candidates(bed.get()).contains(chest)) {
+            if (bed.isPresent()
+                    && isEnclosedRoom(world, bed.get(), piece)
+                    && candidates(bed.get()).contains(chest)) {
                 return true;
             }
         }
@@ -203,6 +212,66 @@ public final class ChestPlacer {
             }
         }
         return found;
+    }
+
+    /**
+     * A caixa da peça também cobre escadas, varandas e degraus externos. Só
+     * aceita a cama quando o espaço caminhável ao redor dela não alcança a
+     * borda dessa caixa; uma porta é parede para esta prova, aberta ou fechada.
+     */
+    private static boolean isEnclosedRoom(ServerWorld world, Bed bed, BlockBox structure) {
+        if (!structure.contains(bed.foot())
+                || !structure.contains(bed.foot().offset(bed.facing()))
+                || !hasSolidRoof(world, bed, structure)) {
+            return false;
+        }
+
+        Queue<BlockPos> pending = new ArrayDeque<>();
+        Set<BlockPos> seen = new HashSet<>();
+        pending.add(bed.foot());
+
+        while (!pending.isEmpty()) {
+            BlockPos current = pending.remove();
+            if (!seen.add(current)) {
+                continue;
+            }
+            if (!structure.contains(current) || !isRoomSpace(world, current)) {
+                continue;
+            }
+            if (isBoundary(structure, current)) {
+                return false;
+            }
+
+            for (Direction direction : Direction.Type.HORIZONTAL) {
+                pending.add(current.offset(direction));
+            }
+        }
+
+        return true;
+    }
+
+    private static boolean isRoomSpace(ServerWorld world, BlockPos pos) {
+        BlockState state = world.getBlockState(pos);
+        return state.getBlock() instanceof BedBlock
+                || (!(state.getBlock() instanceof DoorBlock)
+                && state.getCollisionShape(world, pos).isEmpty());
+    }
+
+    private static boolean hasSolidRoof(ServerWorld world, Bed bed, BlockBox structure) {
+        for (int y = bed.foot().getY() + 1; y <= structure.getMaxY(); y++) {
+            BlockState state = world.getBlockState(new BlockPos(bed.foot().getX(), y, bed.foot().getZ()));
+            if (!(state.getBlock() instanceof DoorBlock) && !state.getCollisionShape(world,
+                    new BlockPos(bed.foot().getX(), y, bed.foot().getZ())).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isBoundary(BlockBox structure, BlockPos pos) {
+        return pos.getX() == structure.getMinX() || pos.getX() == structure.getMaxX()
+                || pos.getY() == structure.getMinY() || pos.getY() == structure.getMaxY()
+                || pos.getZ() == structure.getMinZ() || pos.getZ() == structure.getMaxZ();
     }
 
     /**

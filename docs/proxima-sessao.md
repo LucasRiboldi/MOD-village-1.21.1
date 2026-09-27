@@ -1,16 +1,18 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Atualização de 2026-09-26 — JAR `46CF0C7A…6444`.** Este é o JAR instalado
+**Atualização de 2026-09-26 — JAR `C1D41213…32B7A`.** Este é o JAR instalado
 em `downloads/` e `%APPDATA%/.minecraft/mods/`; as três cópias conferem com
-`build/libs/`. `clean build` e `runGametest --rerun-tasks` passaram, com
-477/477 GameTests.
+`build/libs/`. `build`, `test --rerun-tasks` e `runGametest --rerun-tasks`
+passaram, com 1.141 testes unitários e 480/480 GameTests.
 
 **Obras e baús:** uma obra nova só abre quando toda a pegada está na altura
 exata da rua, portanto não pode ficar suspensa nem com vão sob o piso. Um baú
 novo de profissão só surge junto a uma cama dentro de estrutura vanilla ou
 construção concluída da colônia; não nasce no centro nem à frente de porta.
-As construções e baús já existentes permanecem intactos. No mesmo save,
-observe uma obra em terreno irregular e o primeiro baú criado após a atualização.
+Uma vila nova só é adotada depois que sua BigHouseMOD cabe no lote: então recebe
+as seis camas, os seis baús e os moradores; sem lote, a detecção tenta novamente
+mais tarde. As construções e baús já existentes permanecem intactos. No mesmo
+save, observe uma obra em terreno irregular e a primeira vila criada após a atualização.
 
 **Atualização de 2026-09-25, tarde — o mineiro autônomo.** O JAR em
 `mods` foi republicado (commit `a222342`, SHA-256

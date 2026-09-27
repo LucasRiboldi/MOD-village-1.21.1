@@ -59,10 +59,33 @@ public class ChestSpawnerGameTest implements FabricGameTest {
         context.complete();
     }
 
+    private static void closedHouse(TestContext context) {
+        for (int y = 2; y <= 4; y++) {
+            for (int x = 1; x <= 6; x++) {
+                context.setBlockState(new BlockPos(x, y, 2), Blocks.STONE.getDefaultState());
+                context.setBlockState(new BlockPos(x, y, 6), Blocks.STONE.getDefaultState());
+            }
+            for (int z = 2; z <= 6; z++) {
+                context.setBlockState(new BlockPos(1, y, z), Blocks.STONE.getDefaultState());
+                context.setBlockState(new BlockPos(6, y, z), Blocks.STONE.getDefaultState());
+            }
+        }
+        for (int x = 1; x <= 6; x++) {
+            for (int z = 2; z <= 6; z++) {
+                context.setBlockState(new BlockPos(x, 4, z), Blocks.STONE.getDefaultState());
+            }
+        }
+        context.setBlockState(new BlockPos(1, 2, 4), Blocks.OAK_DOOR.getDefaultState()
+                .with(Properties.DOUBLE_BLOCK_HALF, net.minecraft.block.enums.DoubleBlockHalf.LOWER));
+        context.setBlockState(new BlockPos(1, 3, 4), Blocks.OAK_DOOR.getDefaultState()
+                .with(Properties.DOUBLE_BLOCK_HALF, net.minecraft.block.enums.DoubleBlockHalf.UPPER));
+    }
+
     /** Com cama, o baú vai ao lado dela e encostado numa parede — a regra (b). */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "chest_spawner", tickLimit = 20)
     public void aWorkerWithABedGetsItsChestBesideTheBed(TestContext context) {
         floor(context);
+        closedHouse(context);
 
         BlockPos bed = new BlockPos(3, 2, 4);
         context.setBlockState(bed, Blocks.RED_BED.getDefaultState()
@@ -76,8 +99,8 @@ public class ChestSpawnerGameTest implements FabricGameTest {
                 GlobalPos.create(context.getWorld().getRegistryKey(), context.getAbsolutePos(bed)));
 
         UUID colony = UUID.randomUUID();
-        BlockPos houseMin = context.getAbsolutePos(new BlockPos(2, 1, 3));
-        BlockPos houseMax = context.getAbsolutePos(new BlockPos(5, 4, 5));
+        BlockPos houseMin = context.getAbsolutePos(new BlockPos(1, 1, 2));
+        BlockPos houseMax = context.getAbsolutePos(new BlockPos(6, 4, 6));
         VillageColonyMod.BUILDINGS.register(new Building(
                 UUID.randomUUID(), colony, ResourceId.vanilla("test/worker_house"),
                 MinecraftTypeAdapter.toColonyPos(houseMin), MinecraftTypeAdapter.toColonyPos(houseMax)));
@@ -118,6 +141,40 @@ public class ChestSpawnerGameTest implements FabricGameTest {
 
         context.assertTrue(chest.isEmpty(), "a cama fora de uma estrutura recebeu um baú");
         context.assertFalse(storages.hasStorage(villager.getUuid()), "o baú externo foi registrado");
+        context.complete();
+    }
+
+    /** A caixa de uma obra pode incluir quintal; cama exposta nela continua sem baú. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "chest_spawner_spots", tickLimit = 20)
+    public void anOutdoorBedInsideABuildingBoxDoesNotGetAChest(TestContext context) {
+        floor(context);
+
+        BlockPos bed = new BlockPos(3, 2, 4);
+        context.setBlockState(bed, Blocks.RED_BED.getDefaultState()
+                .with(Properties.BED_PART, BedPart.FOOT).with(Properties.HORIZONTAL_FACING, Direction.NORTH));
+        context.setBlockState(bed.north(), Blocks.RED_BED.getDefaultState()
+                .with(Properties.BED_PART, BedPart.HEAD).with(Properties.HORIZONTAL_FACING, Direction.NORTH));
+        context.setBlockState(bed.east(2), Blocks.STONE.getDefaultState());
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(1, 2, 1));
+        villager.getBrain().remember(MemoryModuleType.HOME,
+                GlobalPos.create(context.getWorld().getRegistryKey(), context.getAbsolutePos(bed)));
+
+        UUID colony = UUID.randomUUID();
+        BlockPos houseMin = context.getAbsolutePos(new BlockPos(1, 1, 1));
+        BlockPos houseMax = context.getAbsolutePos(new BlockPos(7, 4, 7));
+        VillageColonyMod.BUILDINGS.register(new Building(
+                UUID.randomUUID(), colony, ResourceId.vanilla("test/open_yard"),
+                MinecraftTypeAdapter.toColonyPos(houseMin), MinecraftTypeAdapter.toColonyPos(houseMax)));
+        try {
+            Optional<WorkerStorage> chest = ChestSpawner.ensureChest(
+                    context.getWorld(), villager, new StorageRegistry(), "SHEPHERD");
+
+            context.assertTrue(chest.isEmpty(),
+                    "uma cama exposta dentro da caixa ampla da obra recebeu baú: " + chest);
+        } finally {
+            VillageColonyMod.BUILDINGS.removeOfColony(colony);
+        }
         context.complete();
     }
 }

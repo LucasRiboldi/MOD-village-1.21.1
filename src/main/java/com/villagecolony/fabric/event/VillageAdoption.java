@@ -294,14 +294,27 @@ final class VillageAdoption {
             Colony colony = VillageColonyMod.COLONIES.adopt(candidate);
 
             boolean created = VillageColonyMod.COLONIES.count() > before;
+            BigHouseFoundation.Result house = BigHouseFoundation.ensure(world, colony);
+
+            // O contrato da fundação é atômico para uma vila inédita: uma
+            // colônia só passa a existir quando a BigHouseMOD física cabe em
+            // um lote seguro. Não deixar o registro sobreviver evita uma vila
+            // lógica sem camas, baús e moradores da casa. Colônias de saves
+            // antigos permanecem para que possam reparar a fundação depois.
+            if (created && !house.placed()) {
+                VillageColonyMod.COLONIES.remove(colony.id());
+                VillageColonyMod.LOGGER.info(
+                        "Deferred colony adoption at {} until BigHouseMOD has a safe lot",
+                        candidate.center());
+                continue;
+            }
+
             if (created && !candidate.beds().isEmpty()) {
                 // Só a primeira adoção recebe esta passagem. A lista é o
                 // cluster exato que acabou de provar a vila, nunca uma
                 // varredura posterior de trabalhador ou de fundação.
                 VanillaBedChests.ensure(world, candidate.beds());
             }
-
-            BigHouseFoundation.Result house = BigHouseFoundation.ensure(world, colony);
 
             // A partir das camas vistas, e não do centro — 2026-08-22.
             // Desde a Emenda 4 o centro não persegue mais a observação,

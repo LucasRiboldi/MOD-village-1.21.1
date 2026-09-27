@@ -12,10 +12,27 @@
 
 ## Em uma linha
 
-O playtest de 26-09 encontrou uma obra sem apoio, formatação visual incorreta
-e baús no centro da vila. A correção foi publicada no JAR `46CF0C7A…6444`,
-com 477/477 GameTests; a próxima sessão deve confirmá-la no mesmo save criando
-uma obra em terreno irregular e observando baús novos.
+O playtest de 26-09 confirmou camas e baús ao ar livre. A correção publicada só
+adota uma vila nova depois de colocar a BigHouseMOD, funda moradores somente
+nela e só aceita baú em cômodo fechado e coberto; 480/480 GameTests passaram.
+O JAR foi instalado nas três cópias; falta validar no mesmo save que novas vilas não deixam cama
+ou baú fora de estruturas.
+
+## Correção publicada, pendente de playtest
+
+- **Fundação atômica, camas e baús somente dentro de estrutura (26-09):** uma
+  vila inédita não entra no registro até a `BigHouseMOD` caber em lote seguro;
+  nessa mesma criação ela recebe as seis camas, seis baús e moradores. Sem
+  lote, a próxima detecção tenta a adoção inteira novamente. `VillageFoundation`
+  não cria camas nem moradores sem casa, e `ChestPlacer` exige cama, teto e
+  cômodo horizontalmente fechado dentro da peça de vila ou construção
+  registrada; as aproximações da porta continuam bloqueadas. O novo
+  `aVillageWithoutASafeBigHouseLotIsNotAdopted` falhou contra a regra antiga,
+  junto dos dois cenários de cama/baú externo. A rodada completa
+  `runGametest --rerun-tasks` passou com 480/480. O JAR
+  `C1D41213…32B7A` foi comparado em `build/libs/`, `downloads/` e
+  `%APPDATA%/.minecraft/mods/`. Itens já existentes no mundo não são removidos
+  para não destruir inventários; falta confirmar em jogo.
 
 ## Versão publicada
 

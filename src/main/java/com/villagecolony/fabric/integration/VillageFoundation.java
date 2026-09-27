@@ -4,15 +4,12 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.type.ColonyPos;
-import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
 import com.villagecolony.core.worker.service.WorkerService;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.BedBlock;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.block.enums.BedPart;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
@@ -21,9 +18,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.GlobalPos;
-import net.minecraft.world.Heightmap;
 import net.minecraft.world.poi.PointOfInterestStorage;
 import net.minecraft.world.poi.PointOfInterestTypes;
 
@@ -40,15 +35,12 @@ import java.util.UUID;
  *
  * <p>A profissão de colônia é uma decisão do mod, mas não pode existir
  * sem um aldeão real para ocupá-la. Quando a BigHouseMOD é colocada, nasce
- * um adulto para cada cama dela. Sem a casa, a vila recém-adotada é
- * completada até o piso da {@link ProfessionAssigner#FOUNDATION_ORDER}
- * com camas avulsas. Só escreve em ar/blocos substituíveis; blocos do
- * jogador continuam sendo a fonte da verdade. Morte não é reposta (N1).
+ * um adulto para cada cama dela. Sem a casa, a fundação fica pendente:
+ * nunca cria camas ou moradores ao ar livre. Só escreve em ar/blocos
+ * substituíveis; blocos do jogador continuam sendo a fonte da verdade.
+ * Morte não é reposta (N1).
  */
 public final class VillageFoundation {
-
-    /** Raio de procura de uma posição segura ao redor do centro observado. */
-    private static final int SEARCH_RADIUS = 16;
 
     private VillageFoundation() {
     }
@@ -71,9 +63,8 @@ public final class VillageFoundation {
      *   <li>quando a BigHouseMOD acaba de ser colocada
      *       ({@code houseJustPlaced}): nasce um aldeão adulto para
      *       <b>cada cama</b> da casa, com a cama como {@code HOME};</li>
-     *   <li>quando a colônia acaba de nascer sem lote para a casa: o
-     *       caminho antigo, completar os adultos da fundação com camas
-     *       avulsas.</li>
+ *   <li>sem BigHouseMOD, não escreve nada: a próxima tentativa espera até
+ *       que exista uma estrutura fechada para receber os moradores.</li>
      * </ul>
      *
      * <p>Quem chama decide o momento; fora deles a chamada não deve
@@ -93,69 +84,35 @@ public final class VillageFoundation {
                 VillagerEntity.class, area, VillagerEntity::isAlive);
 
         Map<UUID, VillagerEntity> byId = new HashMap<>();
-        int adults = 0;
-
         for (VillagerEntity villager : villagers) {
             byId.put(villager.getUuid(), villager);
         }
 
-        Set<ProfessionType> presentRoles = new HashSet<>();
         Set<UUID> colonyVillagerIds = new HashSet<>();
         Optional<Building> foundationHouse = BigHouseFoundation.find(colony.id());
 
-        for (Worker worker : workers.ofColony(colony.id())) {
-            colonyVillagerIds.add(worker.villagerId());
-
-            VillagerEntity villager = byId.get(worker.villagerId());
-
-            if (villager != null && !villager.isBaby()) {
-                adults++;
-            }
-
-            worker.profession()
-                    .filter(ProfessionAssigner.FOUNDATION_ORDER::contains)
-                    .ifPresent(presentRoles::add);
+        if (foundationHouse.isEmpty()) {
+            return new Result(0, 0);
         }
 
-        int missingRoles = (int) ProfessionAssigner.FOUNDATION_ORDER.stream()
-                .filter(role -> !presentRoles.contains(role))
-                .count();
-        int populationDeficit = Math.max(
-                0, ProfessionAssigner.FOUNDATION_ORDER.size() - adults);
-        // Com a casa, a conta é a das camas: cada uma ganha o seu morador,
-        // mesmo que a vila Vanilla já tivesse adultos. Sem a casa, é o piso
-        // antigo das funções fundamentais.
-        int toSpawn = foundationHouse.isPresent()
-                ? (houseJustPlaced ? bedsIn(world, foundationHouse.get()) : 0)
-                : Math.max(missingRoles, populationDeficit);
+        for (Worker worker : workers.ofColony(colony.id())) {
+            colonyVillagerIds.add(worker.villagerId());
+        }
+
+        int toSpawn = houseJustPlaced ? bedsIn(world, foundationHouse.get()) : 0;
 
         int bedsPlaced = 0;
         int spawned = 0;
 
         for (int index = 0; index < toSpawn; index++) {
-            Optional<BlockPos> foot = foundationHouse
-                    .flatMap(house -> findAvailableHouseBed(
-                            world, house, byId, colonyVillagerIds))
-                    .or(() -> foundationHouse.isEmpty()
-                            ? findBedSpot(world, center)
-                            : Optional.empty());
+            Optional<BlockPos> foot = findAvailableHouseBed(
+                    world, foundationHouse.get(), byId, colonyVillagerIds);
 
             if (foot.isEmpty()) {
                 VillageColonyMod.LOGGER.warn(
                         "Colony {} has no safe place for foundation bed {}/{}",
                         colony.id(), index + 1, toSpawn);
                 break;
-            }
-
-            if (foundationHouse.isEmpty()) {
-                if (!placeBed(world, foot.get())) {
-                    VillageColonyMod.LOGGER.warn(
-                            "Colony {} could not place foundation bed at {}",
-                            colony.id(), foot.get().toShortString());
-                    break;
-                }
-
-                bedsPlaced++;
             }
 
             VillagerEntity villager = EntityType.VILLAGER.create(world);
@@ -185,8 +142,8 @@ public final class VillageFoundation {
         // Depois dos nascimentos, e não antes: as camas da casa são dos
         // moradores novos. Um titular Vanilla só entra nela se sobrar cama.
         bedsPlaced += ensureExistingHomes(
-                world, center, colony.id(), workers, byId, colonyVillagerIds,
-                foundationHouse);
+                world, colony.id(), workers, byId, colonyVillagerIds,
+                foundationHouse.get());
 
         if (spawned > 0 || bedsPlaced > 0) {
             VillageColonyMod.LOGGER.info(
@@ -200,12 +157,11 @@ public final class VillageFoundation {
     /** Dá cama exclusiva aos trabalhadores fundamentais já existentes. */
     private static int ensureExistingHomes(
             ServerWorld world,
-            BlockPos center,
             UUID colonyId,
             WorkerService workers,
             Map<UUID, VillagerEntity> villagers,
             Set<UUID> colonyVillagerIds,
-            Optional<Building> foundationHouse) {
+            Building foundationHouse) {
 
         Set<BlockPos> occupiedBeds = new HashSet<>();
         int placed = 0;
@@ -229,22 +185,16 @@ public final class VillageFoundation {
                     .filter(value -> isBed(world, value.pos()));
 
             if (home.isPresent()
-                    && (foundationHouse.isEmpty()
-                    || foundationHouse.get().contains(
-                            MinecraftTypeAdapter.toColonyPos(canonicalBed(world, home.get().pos()))))
+                    && foundationHouse.contains(
+                            MinecraftTypeAdapter.toColonyPos(canonicalBed(world, home.get().pos())))
                     && occupiedBeds.add(canonicalBed(world, home.get().pos()))) {
                 continue;
             }
 
-            Optional<BlockPos> foot = foundationHouse
-                    .flatMap(house -> findAvailableHouseBed(
-                            world, house, villagers, colonyVillagerIds))
-                    .or(() -> foundationHouse.isEmpty()
-                            ? findBedSpot(world, center)
-                            : Optional.empty());
+            Optional<BlockPos> foot = findAvailableHouseBed(
+                    world, foundationHouse, villagers, colonyVillagerIds);
 
-            if (foot.isEmpty()
-                    || (foundationHouse.isEmpty() && !placeBed(world, foot.get()))) {
+            if (foot.isEmpty()) {
                 continue;
             }
 
@@ -362,80 +312,6 @@ public final class VillageFoundation {
         }
 
         return Optional.empty();
-    }
-
-    /** Procura terreno livre sem remover blocos existentes. */
-    private static Optional<BlockPos> findBedSpot(ServerWorld world, BlockPos center) {
-        for (int dx = -SEARCH_RADIUS; dx <= SEARCH_RADIUS; dx++) {
-            for (int dz = -SEARCH_RADIUS; dz <= SEARCH_RADIUS; dz++) {
-                BlockPos column = center.add(dx, 0, dz);
-                BlockPos foot = world.getTopPosition(
-                        Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, column);
-
-                if (canPlaceBed(world, foot)) {
-                    return Optional.of(foot.toImmutable());
-                }
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    private static boolean canPlaceBed(ServerWorld world, BlockPos foot) {
-        if (!world.getBlockState(foot).isReplaceable()
-                || !world.getBlockState(foot.up()).isReplaceable()
-                || !world.getBlockState(foot.up(2)).isReplaceable()
-                || !world.getBlockState(foot.down()).isSolidBlock(world, foot.down())) {
-            return false;
-        }
-
-        for (Direction facing : Direction.Type.HORIZONTAL) {
-            BlockPos head = foot.offset(facing);
-
-            if (!world.getBlockState(head).isReplaceable()
-                    || !world.getBlockState(head.up()).isReplaceable()
-                    || !world.getBlockState(head.up(2)).isReplaceable()
-                    || !world.getBlockState(head.down()).isSolidBlock(world, head.down())) {
-                continue;
-            }
-
-            return true;
-        }
-
-        return false;
-    }
-
-    /** Coloca as duas metades da cama, somente depois de validar ambas. */
-    private static boolean placeBed(ServerWorld world, BlockPos foot) {
-        for (Direction facing : Direction.Type.HORIZONTAL) {
-            BlockPos head = foot.offset(facing);
-
-            if (!canPlaceBedFacing(world, foot, head)) {
-                continue;
-            }
-
-            BlockState base = Blocks.WHITE_BED.getDefaultState()
-                    .with(Properties.BED_PART, BedPart.FOOT)
-                    .with(Properties.HORIZONTAL_FACING, facing);
-            BlockState top = base.with(Properties.BED_PART, BedPart.HEAD);
-
-            world.setBlockState(head, top, Block.NOTIFY_ALL);
-            world.setBlockState(foot, base, Block.NOTIFY_ALL);
-
-            return isBed(world, foot);
-        }
-
-        return false;
-    }
-
-    private static boolean canPlaceBedFacing(
-            ServerWorld world, BlockPos foot, BlockPos head) {
-        return world.getBlockState(foot).isReplaceable()
-                && world.getBlockState(head).isReplaceable()
-                && world.getBlockState(foot.up()).isReplaceable()
-                && world.getBlockState(head.up()).isReplaceable()
-                && world.getBlockState(foot.down()).isSolidBlock(world, foot.down())
-                && world.getBlockState(head.down()).isSolidBlock(world, head.down());
     }
 
     private static boolean isBed(ServerWorld world, BlockPos pos) {

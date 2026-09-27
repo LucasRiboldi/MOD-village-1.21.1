@@ -73,6 +73,11 @@ public class ChestPlacerGameTest implements FabricGameTest {
                 context.getWorld().setBlockState(new BlockPos(box.getMaxX(), y, z), Blocks.STONE.getDefaultState());
             }
         }
+        for (int x = box.getMinX(); x <= box.getMaxX(); x++) {
+            for (int z = box.getMinZ(); z <= box.getMaxZ(); z++) {
+                context.getWorld().setBlockState(new BlockPos(x, box.getMaxY(), z), Blocks.STONE.getDefaultState());
+            }
+        }
         BlockPos door = origin.west(2);
         context.getWorld().setBlockState(door, Blocks.OAK_DOOR.getDefaultState()
                 .with(Properties.DOUBLE_BLOCK_HALF, net.minecraft.block.enums.DoubleBlockHalf.LOWER));
@@ -363,6 +368,26 @@ public class ChestPlacerGameTest implements FabricGameTest {
                 context.getWorld().setBlockState(new BlockPos(x, bed.getY() - 1, z), Blocks.STONE.getDefaultState());
             }
         }
+        for (int y = wide.getMinY() + 1; y <= wide.getMaxY(); y++) {
+            for (int x = wide.getMinX(); x <= wide.getMaxX(); x++) {
+                context.getWorld().setBlockState(new BlockPos(x, y, wide.getMinZ()), Blocks.STONE.getDefaultState());
+                context.getWorld().setBlockState(new BlockPos(x, y, wide.getMaxZ()), Blocks.STONE.getDefaultState());
+            }
+            for (int z = wide.getMinZ(); z <= wide.getMaxZ(); z++) {
+                context.getWorld().setBlockState(new BlockPos(wide.getMinX(), y, z), Blocks.STONE.getDefaultState());
+                context.getWorld().setBlockState(new BlockPos(wide.getMaxX(), y, z), Blocks.STONE.getDefaultState());
+            }
+        }
+        for (int x = wide.getMinX(); x <= wide.getMaxX(); x++) {
+            for (int z = wide.getMinZ(); z <= wide.getMaxZ(); z++) {
+                context.getWorld().setBlockState(new BlockPos(x, wide.getMaxY(), z), Blocks.STONE.getDefaultState());
+            }
+        }
+        BlockPos door = bed.west(5);
+        context.getWorld().setBlockState(door, Blocks.OAK_DOOR.getDefaultState()
+                .with(Properties.DOUBLE_BLOCK_HALF, net.minecraft.block.enums.DoubleBlockHalf.LOWER));
+        context.getWorld().setBlockState(door.up(), Blocks.OAK_DOOR.getDefaultState()
+                .with(Properties.DOUBLE_BLOCK_HALF, net.minecraft.block.enums.DoubleBlockHalf.UPPER));
 
         ChestPlacer.Result loose = ChestPlacer.placeForOriginalVillageBed(context.getWorld(), bed, wide);
 

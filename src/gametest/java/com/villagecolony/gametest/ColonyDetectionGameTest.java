@@ -73,6 +73,43 @@ public class ColonyDetectionGameTest implements FabricGameTest {
     }
 
     /**
+     * Uma vila nova não entra no registro até sua casa fundacional caber no mundo.
+     *
+     * <p>Os espigões tornam impossível uma caixa plana de 7 por 11 em todo o
+     * raio que {@code BigHouseFoundation} considera. O cenário ainda tem camas
+     * e adultos suficientes para a detecção; a única recusa é o lote da casa.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE,
+            batchId = "colony_detection", tickLimit = 120)
+    public void aVillageWithoutASafeBigHouseLotIsNotAdopted(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos anchor = context.getAbsolutePos(new BlockPos(1, 2, 1))
+                .add(1_000_000, 0, 1_100_000);
+
+        prepareImpossibleBigHouseLot(world, anchor);
+        placeBeds(world, anchor, BEDS);
+        spawnVillagers(world, anchor, VillageDetector.MIN_VILLAGERS);
+
+        try {
+            for (int attempt = 0; attempt < 3; attempt++) {
+                VillageDetectionHandler.runCycleNow(world, anchor);
+            }
+
+            context.assertFalse(VillageColonyMod.COLONIES.findNearest(
+                            MinecraftTypeAdapter.toColonyPos(anchor),
+                            VillageDetector.DUPLICATE_DISTANCE).isPresent(),
+                    "a vila sem lote seguro ficou registrada sem BigHouseMOD");
+        } finally {
+            VillageColonyMod.COLONIES.findNearest(
+                            MinecraftTypeAdapter.toColonyPos(anchor),
+                            VillageDetector.DUPLICATE_DISTANCE)
+                    .ifPresent(ColonyDetectionGameTest::forgetColony);
+        }
+
+        context.complete();
+    }
+
+    /**
      * O que o mundo do teste tinha no momento da falha.
      *
      * <p>Existe pelo mesmo motivo das linhas de log do §11: uma
@@ -267,6 +304,56 @@ public class ColonyDetectionGameTest implements FabricGameTest {
             context.setBlockState(head.offset(Direction.SOUTH), Blocks.WHITE_BED.getDefaultState()
                     .with(BedBlock.PART, BedPart.FOOT)
                     .with(BedBlock.FACING, Direction.NORTH));
+        }
+    }
+
+    private static void placeBeds(ServerWorld world, BlockPos anchor, int count) {
+        for (int i = 0; i < count; i++) {
+            BlockPos head = bedHead(anchor, i);
+
+            world.setBlockState(head, Blocks.WHITE_BED.getDefaultState()
+                    .with(BedBlock.PART, BedPart.HEAD)
+                    .with(BedBlock.FACING, Direction.NORTH));
+            world.setBlockState(head.offset(Direction.SOUTH), Blocks.WHITE_BED.getDefaultState()
+                    .with(BedBlock.PART, BedPart.FOOT)
+                    .with(BedBlock.FACING, Direction.NORTH));
+        }
+    }
+
+    private static void spawnVillagers(ServerWorld world, BlockPos anchor, int count) {
+        for (int i = 0; i < count; i++) {
+            VillagerEntity villager = EntityType.VILLAGER.create(world);
+            if (villager == null) {
+                throw new AssertionError("nao foi possivel criar aldeao para a vila de teste");
+            }
+
+            villager.refreshPositionAndAngles(
+                    anchor.getX() + (i % 4) + 0.5,
+                    anchor.getY(),
+                    anchor.getZ() + 4 + (i / 4) + 0.5,
+                    0.0F,
+                    0.0F);
+            villager.setBreedingAge(0);
+            world.spawnEntity(villager);
+        }
+    }
+
+    private static void prepareImpossibleBigHouseLot(ServerWorld world, BlockPos anchor) {
+        world.getChunk(anchor);
+
+        // O raio de busca é 32, a casa mede 7 por 11 e seus espigões são
+        // espaçados exatamente por essas dimensões. Assim toda caixa possível
+        // contém ao menos uma coluna mais alta e nunca é um lote plano.
+        for (int dx = -39; dx <= 38; dx++) {
+            for (int dz = -39; dz <= 38; dz++) {
+                world.setBlockState(anchor.add(dx, -1, dz), Blocks.GRASS_BLOCK.getDefaultState());
+            }
+        }
+
+        for (int dx = -39; dx <= 38; dx += 7) {
+            for (int dz = -39; dz <= 38; dz += 11) {
+                world.setBlockState(anchor.add(dx, 0, dz), Blocks.STONE.getDefaultState());
+            }
         }
     }
 
