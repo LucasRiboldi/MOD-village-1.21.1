@@ -134,14 +134,13 @@ final class ColonyCycleRunner {
         // passagem —, e faltava o teto global: mil colunas vezes vinte e
         // nove cabem num tique só, e coube.
         //
-        // Só o planejamento espera a vez. O resto do ciclo continua
-        // rodando para todas, pelo mesmo motivo que a guarda de abandono
-        // registrou em 09-02: pular o ciclo inteiro faz o trabalhador
-        // andar aos soluços. Ver PlannerTurns.
+        // Só o planejamento espera a vez. Entre as colônias onde há jogador,
+        // o restante do ciclo continua para não interromper uma tarefa já
+        // aberta. Colônias sem jogador nem entram nesta lista.
         //
-        // <b>E em jogo só a vila foco planeja</b> — 2026-09-24, decisão do
-        // autor; ver VillageFocus. O planejador tem prazo de relógio e a
-        // cota se ajusta pelo custo do ciclo; ver PlanningBudget.
+        // Em jogo, só as vilas com jogador presente podem planejar. O
+        // planejador tem prazo de relógio e a cota se ajusta pelo custo do
+        // ciclo; ver PlanningBudget.
         Set<UUID> watched = VillageFocus.coloniesNearPlayers(overworld, active);
         List<UUID> eligible = onlyNearPlayers
                 ? VillageFocus.planners(active, watched)

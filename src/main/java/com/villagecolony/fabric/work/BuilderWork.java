@@ -20,6 +20,7 @@ import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.event.VillageFocus;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
 import com.villagecolony.fabric.integration.ColonySupply;
@@ -212,6 +213,10 @@ public final class BuilderWork {
                 entries.hasNext(); ) {
 
             Map.Entry<UUID, Job> entry = entries.next();
+
+            if (!VillageFocus.isActiveNearAPlayer(world, entry.getValue().task.colonyId())) {
+                continue;
+            }
 
             if (!step(world, entry.getKey(), entry.getValue())) {
                 entries.remove();

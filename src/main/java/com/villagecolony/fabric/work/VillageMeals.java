@@ -7,6 +7,7 @@ import com.villagecolony.core.coordination.WorkClock;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.event.VillageFocus;
 import com.villagecolony.fabric.integration.ColonyChests;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.VillagerEntity;
@@ -81,6 +82,10 @@ public final class VillageMeals {
         long day = Math.floorDiv(time, (long) WorkClock.DAY);
 
         for (Colony colony : List.copyOf(VillageColonyMod.COLONIES.all())) {
+            if (!VillageFocus.isActiveNearAPlayer(world, colony.id())) {
+                continue;
+            }
+
             if (SERVED_ON.getOrDefault(colony.id(), Long.MIN_VALUE) == day) {
                 continue;
             }

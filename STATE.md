@@ -18,6 +18,20 @@ nela e só aceita baú em cômodo fechado e coberto; 480/480 GameTests passaram.
 O JAR foi instalado nas três cópias; falta validar no mesmo save que novas vilas não deixam cama
 ou baú fora de estruturas.
 
+A correção em validação restringe a simulação à vila onde há jogador agora:
+sem jogador, nenhum trabalho por tique roda; longe do jogador, detecção,
+planejamento, profissões, refeições, fuga e placas ficam pausados.
+O bloqueio da bateria foi isolado e corrigido: o retorno sem jogadores também
+impedia os tiques de profissões da arena GameTest. Uma ponte exclusiva da
+fonte `gametest` executa esses tiques sem alterar a pausa de produção. A
+rodada Fabric de 26-09 passou em 480/480; `./gradlew.bat build` também passou.
+
+O menu de diagnóstico `/vc log` foi adicionado nesta sessão: no chat, perto da
+vila, ele traduz o último estado de cada profissional em ativo, aguardando ou
+travado. A implementação passou nos testes unitários próprios e na bateria
+Fabric; ainda falta validar ambos no save real. A auditoria completa está em
+[`docs/technical/Auditoria-Simulacao-2026-09-26.md`](docs/technical/Auditoria-Simulacao-2026-09-26.md).
+
 ## Correção publicada, pendente de playtest
 
 - **Fundação atômica, camas e baús somente dentro de estrutura (26-09):** uma
@@ -93,7 +107,7 @@ Em ordem:
 | # | Item | Sinal no log |
 |---|---|---|
 | 1 | Perfil de desempenho (spark) | link do `/spark profiler stop`; ver `docs/technical/Profiling-spark.md` |
-| 2 | Vila foco e ciclo mais leve | `Focus village is now`, `Planner turns`, **menos** `Colony cycle took` |
+| 2 | Colônia presente e ciclo mais leve | `Planner turns`, **menos** `Colony cycle took`; nenhuma atividade de vila distante |
 | 3 | E47: o encalhado sai cavando | `is stranded at`, `dug a step`, `is out at`; nunca `cannot dig out` em massa |
 | 4 | E48: casa quando falta cama, rodízio sem repetir | um segundo `the house is up` |
 | 5 | N1: filhote nasce e ganha ofício | `shared supper with`; nenhum adulto aparecendo do nada depois da fundação |
@@ -109,8 +123,9 @@ todas essas assinaturas.
 A lista completa e priorizada está no `TODO.md`, nas seções "Pendências de
 correção levantadas pela avaliação" e "Avaliação técnica". Em aberto:
 
-- **R1, desempenho.** Correção feita (vila foco, prazo de 15 ms, cota
-  ajustável); falta medir em jogo. É o único critério da avaliação com nota 1.
+- **R1, desempenho.** Em validação: só a vila com jogador atual roda; prazo de
+  15 ms e cota ajustável permanecem. Falta medir em jogo. É o único critério
+  da avaliação com nota 1.
 - **Estado global (R2).** A limpeza já é garantida pelo `ServerMemory`
   (item 3, feito em 24-09), mas os 89 campos estáticos mutáveis continuam
   — consolidá-los num contexto por servidor é o que falta para o C05.
@@ -169,8 +184,9 @@ correção levantadas pela avaliação" e "Avaliação técnica". Em aberto:
 
 - **Hooks do Claude Code:** os scripts estão em `scripts/hooks/`; quem liga
   no `.claude/settings.json` é o autor (a escrita pelo agente foi recusada).
-- **Presença da vila foco** não vai para o save. Ao reabrir o mundo, o foco
-  se refaz em poucos ciclos.
+- **Ativação por presença atual:** não há foco persistido. A produção, a
+  sondagem e o planejamento só avançam para colônias com jogador dentro do
+  raio de detecção; ao sair, o trabalho daquela colônia pausa.
 - **Bateria de jogo:** 3 testes intermitentes foram isolados em 24-09. A
   taxa histórica era de ~1 falha a cada 8 rodadas, e só a repetição prova
   que acabou. `runGametest` não filtra teste.

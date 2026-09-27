@@ -7,6 +7,9 @@
   "license": "MIT",
   "environment": "*",
   "entrypoints": {
+    "main": [
+      "com.villagecolony.gametest.GameTestWorkerTickBridge"
+    ],
     "fabric-gametest": [
       "com.villagecolony.gametest.TreeNurseryGameTest",
       "com.villagecolony.gametest.VillageForestGameTest",

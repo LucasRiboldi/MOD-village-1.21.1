@@ -31,6 +31,23 @@ o §18 do Project-State. O texto das entradas fica como estava.
 
 ---
 
+## Entry 2026-09-26 - auditoria de simulação e menu de atividade
+
+A linha de base compilou, os unitários da sessão passaram em 1.145/1.145 e a
+rodada integrada revelou 59 falhas obrigatórias em 480 GameTests. A falha não
+foi reduzida a uma causa sem reprodução: construção, mineração, fabricação e
+lenhador concentram a maior parte e bloqueiam release da regra de colônia ativa.
+O diagnóstico, os riscos estruturais e a ordem de correção ficaram registrados
+em `Auditoria-Simulacao-2026-09-26.md`.
+
+Foi criado o menu de chat `/vc log`, sem uma dependência de cliente Fabric. Ele
+consulta somente a vila próxima do jogador e converte `ActivityTrace` em frases
+curtas: ativo, aguardando, atenção ou travado. O apresentador reduz eventos
+repetidos ao estado mais recente de cada profissional; os três cenários de
+mensagem vazia, espera e travamento foram testados em `VillageLogPresenterTest`.
+
+---
+
 ## Entry 2026-09-26 - alternativa A, obra adiada e orientacao horizontal
 
 O autor escolheu a alternativa A da auditoria de travamentos criticos. A
@@ -9770,3 +9787,43 @@ casa. Após a inversão, `./gradlew.bat runGametest --rerun-tasks` passou com
 **480/480**. O JAR `C1D41213030CEE645BC326338B98A2DC4F9498E214C91B38A1D1046F9C732B7A`
 foi comparado idêntico em `build/libs/`, `downloads/` e
 `%APPDATA%/.minecraft/mods/`; falta conferir no save real a criação de uma vila nova.
+
+### 2026-09-26 - Colônia ativa somente com jogador presente
+
+O autor redefiniu a atividade da colônia: o mundo não deve processar vilas
+distantes. `VillageFocus` deixou de memorizar uma vila foco e usa apenas a
+presença atual, no raio padrão da vila. O ciclo longo, a detecção por cama e
+por centro, os trabalhos contínuos, refeições, fuga e placas agora pausam fora
+desse raio; sem jogadores online, o manipulador nem invoca os trabalhos por
+tique. Os GameTests que chamam trabalhos diretamente preservam sua fixture sem
+jogador, pois esse caminho não é usado pelo manipulador de produção.
+
+`VillageFocusTest.everyVillageWithAPlayerPresentMayPlanNow` falhou primeiro
+contra a memória de foco, que deixava uma das duas vilas presentes sem planejar.
+Após a troca, passou. A rodada completa de unitários terminou em **1142/1142**.
+
+`./gradlew.bat runGametest --rerun-tasks` executou **480** GameTests, mas
+falhou em **59** cenários. Os primeiros abrangem coleta/fabricação, término de
+tarefa de árvore, construção, cultivo, fuga e mineração; a correção não deve
+ser publicada como verde até a origem dessa instabilidade ser isolada. Ainda
+falta o playtest com uma vila distante carregada por chunk forçado ou pelo
+spawn: afastar-se deve pausar a vila e aproximar-se deve retomá-la.
+
+### 2026-09-26 (noite) - Ponte de tique exclusiva da bateria GameTest
+
+As 59 falhas não eram defeitos independentes de coleta, construção ou
+mineração. O novo retorno de `VillageDetectionHandler.onServerTick` quando não
+há jogador preserva a regra de produção, mas a arena Fabric não cria jogador e
+também precisa dos tiques de trabalho para seus cenários de ponta a ponta.
+
+O manipulador agora concentra a sequência produtiva em `tickActiveServer` e a
+fonte `gametest` registra `GameTestWorkerTickBridge`, que chama essa sequência
+somente durante a bateria. O JAR de produção não recebe essa entrada. A última
+falha residual, de recompor a escada do trabalhador encalhado, era uma fixture
+sem trabalhador registrado; ela agora reproduz a pré-condição de produção.
+
+Depois da ponte, a bateria caiu de 59 para uma falha; após corrigir a fixture,
+`./gradlew.bat runGametest --rerun-tasks` passou em **480/480** e
+`./gradlew.bat build` passou. Continua pendente o playtest no mesmo save:
+aproximar-se de uma vila deve retomá-la, e afastar-se deve pausar trabalhos,
+placas, fuga e ciclos sem afetar outra vila próxima de outro jogador.

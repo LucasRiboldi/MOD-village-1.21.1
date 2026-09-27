@@ -104,8 +104,8 @@ final class VillageAdoption {
     }
 
     /**
-     * O mesmo, só nas colônias que a regra deixa analisar — 2026-09-24. Em
-     * jogo, a vila foco e as que têm jogador dentro; ver VillageFocus.
+     * O mesmo, só nas colônias que a regra deixa analisar. Em jogo, são
+     * exclusivamente as vilas no raio atual de um jogador; ver VillageFocus.
      */
     static void detectFromColonyCenters(
             ServerWorld overworld, java.util.function.Predicate<Colony> analyzed) {

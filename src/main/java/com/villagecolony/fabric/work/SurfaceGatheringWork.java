@@ -14,6 +14,7 @@ import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.event.VillageFocus;
 import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.BlockBreakTime;
 import com.villagecolony.fabric.integration.ChestDepositor;
@@ -124,15 +125,21 @@ public final class SurfaceGatheringWork {
         List<UUID> searching = new ArrayList<>();
         for (var iterator = JOBS.entrySet().iterator(); iterator.hasNext();) {
             Map.Entry<UUID, Job> entry = iterator.next();
-            if (!isOngoing(entry.getValue().task)) {
+            Job job = entry.getValue();
+
+            if (!VillageFocus.isActiveNearAPlayer(world, job.task.colonyId())) {
+                continue;
+            }
+
+            if (!isOngoing(job.task)) {
                 WorkTargets.clear(entry.getKey());
                 RingSweep.forget(entry.getKey());
                 iterator.remove();
-            } else if (entry.getValue().target == null) {
+            } else if (job.target == null) {
                 searching.add(entry.getKey());
             } else {
-                step(world, entry.getKey(), entry.getValue(), false);
-                if (!isOngoing(entry.getValue().task)) {
+                step(world, entry.getKey(), job, false);
+                if (!isOngoing(job.task)) {
                     WorkTargets.clear(entry.getKey());
                     RingSweep.forget(entry.getKey());
                     iterator.remove();

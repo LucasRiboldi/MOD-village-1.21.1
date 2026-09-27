@@ -8,6 +8,7 @@ import com.villagecolony.core.construction.service.MineRegistry;
 import com.villagecolony.core.task.service.TaskService;
 import com.villagecolony.core.worker.service.WorkerService;
 import com.villagecolony.fabric.work.ActivityTraceRegistry;
+import com.villagecolony.fabric.command.VillageLogCommand;
 import com.villagecolony.fabric.event.ServerLifecycleHandler;
 import com.villagecolony.fabric.event.PlayerWorldChangeHandler;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
@@ -154,6 +155,7 @@ public class VillageColonyMod implements ModInitializer {
         VillageDetectionHandler.register();
         VillagerLifecycleHandler.register();
         VillageChests.register();
+        VillageLogCommand.register();
 
         LOGGER.info("[Village Colony] Mod initialized");
     }

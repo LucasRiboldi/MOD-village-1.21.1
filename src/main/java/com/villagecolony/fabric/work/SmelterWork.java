@@ -18,6 +18,7 @@ import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
 import com.villagecolony.fabric.integration.CraftingLookup;
+import com.villagecolony.fabric.event.VillageFocus;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Item;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -142,6 +143,10 @@ public final class SmelterWork {
 
         JOBS.entrySet().removeIf(entry -> {
             Job job = entry.getValue();
+
+            if (!VillageFocus.isActiveNearAPlayer(world, job.task.colonyId())) {
+                return false;
+            }
 
             if (!isOngoing(job.task)) {
                 return true;

@@ -1,9 +1,9 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Atualização de 2026-09-26 — JAR `C1D41213…32B7A`.** Este é o JAR instalado
+**Atualização de 2026-09-26 — JAR `DF1B6B2E…A70021`.** Este é o JAR instalado
 em `downloads/` e `%APPDATA%/.minecraft/mods/`; as três cópias conferem com
 `build/libs/`. `build`, `test --rerun-tasks` e `runGametest --rerun-tasks`
-passaram, com 1.141 testes unitários e 480/480 GameTests.
+passaram, com 1.145 testes unitários e 480/480 GameTests.
 
 **Obras e baús:** uma obra nova só abre quando toda a pegada está na altura
 exata da rua, portanto não pode ficar suspensa nem com vão sob o piso. Um baú
@@ -53,14 +53,15 @@ obra deve ser **casa** (`planned ...house...`), depois outra obra, alternando.
 A linha `miners:` deve voltar a cada ciclo com pedra pedida mesmo sem obra. Ele soma o **cache da varredura de baús livres** ao de 09-24: o perfil de
 09-24 (`wIEM9zz90l`) deu TPS 20 e o `ColonyChests.nearestFirst` como o
 maior custo do mod — o próximo perfil diz se ele caiu. Vêm de antes:
-revisão de naturalidade, rodada de qualidade, refatoração e a **vila foco**
-(só ela planeja; procure `Focus village is now`, `Planner turns` e a queda
-de `Colony cycle took`) — nada disso visto em jogo ainda, e o
+revisão de naturalidade, rodada de qualidade, refatoração e a **ativação por
+presença** (só vilas no raio do jogador planejam e trabalham; procure
+`Planner turns`, `Colony cycle took` e a pausa ao se afastar) — nada disso
+visto em jogo ainda, e o
 **spark** 1.10.109 está instalado ao lado dele.
 
 - **Primeiro, o perfil.** Seguir `docs/technical/Profiling-spark.md`:
   `/spark profiler start --only-ticks-over 50`, jogar 5 a 10 minutos perto
-  da vila, `/spark profiler stop` e trazer o link. Motivo: o log de 24-09
+  da vila, afastar-se dela e voltar, `/spark profiler stop` e trazer o link. Motivo: o log de 24-09
   teve 196 ciclos acima de um tique.
 - **Depois, o que só o jogo mostra:**
   - um filhote nascer e ganhar ofício (N1, `shared supper with`);

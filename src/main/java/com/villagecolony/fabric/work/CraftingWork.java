@@ -5,6 +5,7 @@ import com.villagecolony.VillageColonyMod;
 import net.minecraft.item.Item;
 import net.minecraft.block.Block;
 import com.villagecolony.fabric.integration.ColonySupply;
+import com.villagecolony.fabric.event.VillageFocus;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.construction.model.ConstructionProject;
@@ -242,6 +243,10 @@ public final class CraftingWork {
                 entries.hasNext(); ) {
 
             Map.Entry<UUID, Job> entry = entries.next();
+
+            if (!VillageFocus.isActiveNearAPlayer(world, entry.getValue().task.colonyId())) {
+                continue;
+            }
 
             if (!step(world, entry.getKey(), entry.getValue())) {
                 entries.remove();

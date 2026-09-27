@@ -10,6 +10,7 @@ import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.event.VillageFocus;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.particle.ParticleTypes;
@@ -135,6 +136,10 @@ public final class SiteMarker {
 
         for (ConstructionProject project : VillageColonyMod.CONSTRUCTIONS.all()) {
             if (!project.state().isOpen()) {
+                continue;
+            }
+
+            if (!VillageFocus.isActiveNearAPlayer(world, project.colonyId())) {
                 continue;
             }
 

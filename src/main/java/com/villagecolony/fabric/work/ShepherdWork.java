@@ -13,6 +13,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.event.VillageFocus;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
@@ -182,7 +183,13 @@ public final class ShepherdWork {
         }
 
         for (Map.Entry<UUID, Job> entry : Map.copyOf(JOBS).entrySet()) {
-            if (!isOngoing(entry.getValue().task)) {
+            Job job = entry.getValue();
+
+            if (!VillageFocus.isActiveNearAPlayer(world, job.task.colonyId())) {
+                continue;
+            }
+
+            if (!isOngoing(job.task)) {
                 JOBS.remove(entry.getKey());
 
                 // O destino morre com a tarefa — ver WorkTargets.clear.
@@ -191,7 +198,7 @@ public final class ShepherdWork {
                 continue;
             }
 
-            step(world, entry.getKey(), entry.getValue());
+            step(world, entry.getKey(), job);
         }
     }
 

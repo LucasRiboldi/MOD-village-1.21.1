@@ -18,6 +18,7 @@ import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.event.VillageFocus;
 import com.villagecolony.fabric.integration.BlockBreakTime;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.MineFlooding;
@@ -302,6 +303,10 @@ public final class MinerWork {
             Map.Entry<UUID, Job> entry = entries.next();
             UUID workerId = entry.getKey();
             Job job = entry.getValue();
+
+            if (!VillageFocus.isActiveNearAPlayer(world, job.task.colonyId())) {
+                continue;
+            }
 
             if (!isOngoing(job.task)) {
                 entries.remove();

@@ -17,6 +17,21 @@ sucesso, `runGametest --rerun-tasks` 423/423 GAME TESTS COMPLETE. O JAR
 (ver `docs/proxima-sessao.md`); este playtest de 24-09 e o primeiro
 resultado real contra ele.
 
+## Auditoria de simulação e menu de diagnóstico - 2026-09-26
+
+- [x] 🔴 **P0 - Separar e corrigir as 59 falhas de 480 GameTests:** o retorno
+  sem jogador parava também os tiques de trabalho que os GameTests precisam.
+  `GameTestWorkerTickBridge` chama o caminho extraído do manipulador apenas no
+  source set de teste; produção permanece pausada sem jogador. A fixture de
+  fuga passou a registrar seu trabalhador, como ocorre em jogo. Rodada final:
+  `runGametest --rerun-tasks` 480/480.
+- [ ] 🟠 **P1 - GameTest de jogador presente e distante:** validar a regra de
+  pausa sem usar a exceção de chamadas diretas que os testes atuais usam.
+- [x] `/vc log`: menu de chat simples da vila próxima, baseado no
+  `ActivityTrace`; `VillageLogPresenterTest` cobre vazio, espera e travamento.
+- [ ] 🟡 Corrigir os 25 avisos Error Prone atuais e mapear as APIs Gradle
+  depreciadas antes da atualização de ferramenta.
+
 ## Pendências de correção levantadas pela avaliação — viabilidade (2026-09-24)
 
 Ordem recomendada. O esforço e o risco são estimativa; o aceite é o que a
@@ -25,7 +40,7 @@ próxima avaliação mede.
 | # | Correção | Esforço / risco | Aceite |
 |---|---|---|---|
 | 1 ✅ | Limite de **tempo** para o planejador (`SweepDeadline`, 15 ms) — **feito**, ⬜ ver `cycle_over_tick` cair em jogo | baixo / baixo | `cycle_over_tick` cai; C13 ≥ 3 |
-| 2 ✅ | Cota ajustável (`PlanningBudget`), e em jogo **só a vila foco planeja e é sondada** (`VillageFocus`, decisão do autor) — **feito** | baixo / baixo | teste unitário da regra |
+| 2 ✅ | Cota ajustável (`PlanningBudget`), e em jogo **só vilas com jogador presente planejam, são sondadas e trabalham** (`VillageFocus`) — **feito** | baixo / baixo | teste unitário da regra |
 | 3 ✅ | Registro único (`ServerMemory.resetAll`) no lugar de 78 `clearAll` à mão — **feito**. Achou `BiomeConstructionSupply` sem limpeza nenhuma e as duas listas divergentes. **C05 não muda:** os campos continuam; o que acabou foi o esquecimento | médio / baixo | teste de inscrição ✅; C05 ≥ 3 pede consolidar os campos (R2) |
 | 4 ✅ | Matar sobreviventes do PIT nas três classes nomeadas (`MineShaft`, `ProfessionAssigner`, `ColonyCycle`) — **feito** em 25-09, junto com `Building` e `Worker`; só equivalentes restam | médio / nulo | C08 ≥ 85%: **85,14%** em 25-09, com `Mine` e `ColonyGoals` ✅ |
 | 5 | JaCoCo na bateria de jogo (cobertura do `fabric`) | baixo-médio / nulo | cobertura do `fabric` medida |

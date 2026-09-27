@@ -9,6 +9,7 @@ import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.event.VillageFocus;
 import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import net.minecraft.block.Block;
@@ -112,6 +113,10 @@ public final class StrandedEscape {
             forget(workerId);
             EscapeBackfill.forget(workerId);
 
+            return;
+        }
+
+        if (!VillageFocus.isActiveNearAPlayer(world, worker.get().colonyId())) {
             return;
         }
 

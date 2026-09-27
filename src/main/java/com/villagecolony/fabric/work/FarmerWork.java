@@ -12,6 +12,7 @@ import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.event.VillageFocus;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
 import com.villagecolony.fabric.integration.CropPatch;
@@ -243,8 +244,13 @@ public final class FarmerWork {
                 entries.hasNext(); ) {
 
             Map.Entry<UUID, Job> entry = entries.next();
+            Job job = entry.getValue();
 
-            if (!isOngoing(entry.getValue().task)) {
+            if (!VillageFocus.isActiveNearAPlayer(world, job.task.colonyId())) {
+                continue;
+            }
+
+            if (!isOngoing(job.task)) {
                 entries.remove();
 
                 // O destino morre com a tarefa — ver WorkTargets.clear.
@@ -253,7 +259,7 @@ public final class FarmerWork {
                 continue;
             }
 
-            step(world, entry.getKey(), entry.getValue());
+            step(world, entry.getKey(), job);
         }
     }
 

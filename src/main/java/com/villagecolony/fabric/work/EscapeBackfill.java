@@ -4,6 +4,7 @@ import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
+import com.villagecolony.fabric.event.VillageFocus;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.LivingEntity;
@@ -100,6 +101,13 @@ public final class EscapeBackfill {
 
         while (jobs.hasNext()) {
             Job job = jobs.next();
+
+            if (!VillageColonyMod.WORKERS.find(job.workerId())
+                    .map(worker -> VillageFocus.isActiveNearAPlayer(world, worker.colonyId()))
+                    .orElse(false)) {
+                continue;
+            }
+
             Hole hole = job.holes().pollFirst();
 
             if (hole != null) {

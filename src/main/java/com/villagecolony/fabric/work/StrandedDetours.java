@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.brain.WorkHours;
+import com.villagecolony.fabric.event.VillageFocus;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -85,6 +86,12 @@ final class StrandedDetours {
         for (Iterator<Map.Entry<UUID, DetourWalker>> it = DETOURS.entrySet().iterator(); it.hasNext(); ) {
             Map.Entry<UUID, DetourWalker> entry = it.next();
             UUID workerId = entry.getKey();
+
+            if (!VillageColonyMod.WORKERS.find(workerId)
+                    .map(worker -> VillageFocus.isActiveNearAPlayer(world, worker.colonyId()))
+                    .orElse(false)) {
+                continue;
+            }
 
             if (!(world.getEntity(workerId) instanceof VillagerEntity villager) || !villager.isAlive()) {
                 continue;

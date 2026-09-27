@@ -1,5 +1,6 @@
 package com.villagecolony.gametest;
 
+import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
@@ -112,6 +113,9 @@ public class StrandedEscapeGameTest implements FabricGameTest {
         ServerWorld world = context.getWorld();
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chestAt));
         UUID digger = UUID.randomUUID();
+        // Em jogo, quem abriu a escada sempre é um trabalhador registrado.
+        // O tampão consulta esse registro para respeitar a vila ativa.
+        VillageColonyMod.WORKERS.register(digger, UUID.randomUUID());
         BlockPos feet = context.getAbsolutePos(SHAFT_BOTTOM);
         // Só o que era pedra antes do degrau: o vão que já era ar não se tampa.
         java.util.Set<BlockPos> dug = new java.util.LinkedHashSet<>();
@@ -184,6 +188,7 @@ public class StrandedEscapeGameTest implements FabricGameTest {
 
             standing.discard();
         } finally {
+            VillageColonyMod.WORKERS.remove(digger);
             EscapeBackfill.clearAll();
         }
 
