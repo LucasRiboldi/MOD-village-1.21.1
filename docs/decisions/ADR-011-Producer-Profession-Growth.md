@@ -74,3 +74,16 @@ mesmo trabalho em colônias existentes.
   testes.
 - As cadeias materiais do Criador e dos demais produtores são desenvolvidas
   separadamente, sem introduzir recursos sem origem física no mundo.
+
+## Emenda - 2026-09-27: Construtor na progressão populacional
+
+O autor determinou que `BUILDER` também receba vagas permanentes de acordo com
+a evolução da quantidade de aldeões. A função continua fora da ordem de
+necessidade material: ela não é produtora e, portanto, não altera a decisão de
+qual recurso a colônia precisa obter.
+
+A ordem de crescimento passa a ser `MINER`, `LUMBERJACK`, `MASON`, `SMELTER`,
+`CARPENTER`, `FARMER`, `SHEPHERD`, `BUILDER`. A fundação mantém um construtor;
+nos lotes posteriores, o segundo construtor abre com o 23º adulto e o terceiro
+com o 38º. Esta emenda substitui a frase da seção 2.3 que impedia novas vagas
+de `BUILDER`.

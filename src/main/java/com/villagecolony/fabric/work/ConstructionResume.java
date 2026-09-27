@@ -82,14 +82,17 @@ final class ConstructionResume {
 
         ConstructionService.Pending saved = pending.get();
 
-        if (saved.blueprint().equals(StructureBlueprintReader.BIG_HOUSE_MOD)
-                && VillageColonyMod.BUILDINGS.ofColony(colony.id()).stream()
-                        .anyMatch(building -> building.finished()
-                                && building.blueprint().equals(saved.blueprint())
-                                && building.min().equals(saved.origin()))) {
+        List<Building> buildings = VillageColonyMod.BUILDINGS.ofColony(colony.id());
+
+        // Construção concluída não volta pelo save. Versões anteriores só
+        // limpavam a BigHouseMOD, deixando uma fazenda ou casa já concluída
+        // retomar como "reparo" no carregamento seguinte.
+        if (buildings.stream().anyMatch(building -> building.finished()
+                && building.blueprint().equals(saved.blueprint())
+                && building.min().equals(saved.origin()))) {
             VillageColonyMod.LOGGER.info(
-                    "Colony {} drops saved BigHouseMOD repair at {} — foundation already stands",
-                    colony.id(), saved.origin());
+                    "Colony {} drops saved {} repair at {} — construction is already finished",
+                    colony.id(), saved.blueprint(), saved.origin());
             VillageColonyMod.CONSTRUCTIONS.dropPending(colony.id());
             return;
         }
@@ -101,8 +104,6 @@ final class ConstructionResume {
         // vez da casa. A caixa abandonada continua no registro, com o lote
         // reservado, e o reparo a devolve quando for a vez do tipo — ver
         // HousePlans.isTurnOf.
-        List<Building> buildings = VillageColonyMod.BUILDINGS.ofColony(colony.id());
-
         boolean abandoned = buildings.stream().anyMatch(building -> !building.finished()
                 && building.blueprint().equals(saved.blueprint())
                 && building.min().equals(saved.origin()));

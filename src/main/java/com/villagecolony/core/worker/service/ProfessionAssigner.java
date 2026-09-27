@@ -42,6 +42,23 @@ public final class ProfessionAssigner {
             ProfessionType.SHEPHERD);
 
     /**
+     * Ordem de vagas permanentes conforme a população adulta.
+     *
+     * <p>O construtor não entra na escolha de necessidade de recursos, pois
+     * não produz uma cadeia material. Ele entra aqui para receber as mesmas
+     * vagas de crescimento que os produtores, sempre depois do Pastor.
+     */
+    public static final List<ProfessionType> GROWTH_ORDER = List.of(
+            ProfessionType.MINER,
+            ProfessionType.LUMBERJACK,
+            ProfessionType.MASON,
+            ProfessionType.SMELTER,
+            ProfessionType.CARPENTER,
+            ProfessionType.FARMER,
+            ProfessionType.SHEPHERD,
+            ProfessionType.BUILDER);
+
+    /**
      * Piso da casa fundacional: uma função ativa de cada tipo alojado nela.
      *
      * <p>{@link ProfessionType#CARPENTER} e {@link ProfessionType#FARMER} seguem
@@ -103,9 +120,9 @@ public final class ProfessionAssigner {
      * preenchidas.
      *
      * <p>Os slots crescem em lotes ligados à população adulta: uma vaga
-     * inicial de cada produtor e, a cada novo slot, a próxima profissão
-     * na ordem declarada. O empate é resolvido por
-     * {@link #PRODUCER_ORDER}.
+     * inicial de cada função de crescimento e, a cada novo slot, a próxima
+     * profissão na ordem declarada. O empate é resolvido por
+     * {@link #GROWTH_ORDER}.
      */
     public static Optional<ProfessionType> vacancy(Collection<Worker> colonyWorkers) {
         return vacancy(colonyWorkers, colonyWorkers.size());
@@ -209,7 +226,7 @@ public final class ProfessionAssigner {
             return Optional.of(type);
         }
 
-        for (ProfessionType type : PRODUCER_ORDER) {
+        for (ProfessionType type : GROWTH_ORDER) {
             if (counts.get(type) >= targetCount(type, adultPopulation)) {
                 if (colonyId != null) {
                     HiringLog.record(colonyId, type, HiringLog.Outcome.AT_TARGET);
@@ -245,15 +262,15 @@ public final class ProfessionAssigner {
         int slots;
 
         if (adults < ADULTS_PER_BATCH) {
-            slots = Math.min(adults, PRODUCER_ORDER.size());
+            slots = Math.min(adults, GROWTH_ORDER.size());
         } else {
-            slots = (adults / ADULTS_PER_BATCH) * PRODUCER_ORDER.size()
-                    + Math.min(adults % ADULTS_PER_BATCH, PRODUCER_ORDER.size());
+            slots = (adults / ADULTS_PER_BATCH) * GROWTH_ORDER.size()
+                    + Math.min(adults % ADULTS_PER_BATCH, GROWTH_ORDER.size());
         }
 
-        int perProfession = slots / PRODUCER_ORDER.size();
-        int extras = slots % PRODUCER_ORDER.size();
-        int position = PRODUCER_ORDER.indexOf(type);
+        int perProfession = slots / GROWTH_ORDER.size();
+        int extras = slots % GROWTH_ORDER.size();
+        int position = GROWTH_ORDER.indexOf(type);
 
         return perProfession + (position >= 0 && position < extras ? 1 : 0);
     }

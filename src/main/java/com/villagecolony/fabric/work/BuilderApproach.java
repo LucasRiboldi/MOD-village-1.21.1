@@ -2,8 +2,6 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.construction.model.ClimbLimit;
 import com.villagecolony.core.construction.model.ConstructionProject;
-import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import net.minecraft.block.BlockState;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -113,7 +111,9 @@ public final class BuilderApproach {
     static BlockPos footOf(
             ServerWorld world, ConstructionProject project, BlockPos target, BlockPos worker) {
 
-        BlockPos ground = footOf(world, project, target);
+        BlockPos floor = new BlockPos(target.getX(), project.origin().y(), target.getZ());
+        BlockPos ground = standingSpotWithinReach(world, floor, worker)
+                .orElseGet(() -> standingSpotNear(world, floor).orElse(floor));
 
         if (ClimbLimit.reachableFrom(worker.getY(), ground.getY())) {
             return ground;
@@ -128,6 +128,47 @@ public final class BuilderApproach {
                 ground.getZ());
 
         return standingSpotNear(world, landing).orElse(landing);
+    }
+
+    /**
+     * O ponto de trabalho mais próximo do construtor dentro do alcance
+     * horizontal do bloco.
+     *
+     * <p>Uma coluna válida não garante que seja o lado por onde o aldeão
+     * consegue chegar. Procurar apenas a coluna do bloco fez a casa do
+     * pastor de {@code 1450, 68, -954} receber repetidamente um caminho
+     * que não saía do lugar. O construtor alcança cinco blocos no plano,
+     * então o lado livre do lote é um destino igualmente válido e evita
+     * exigir da navegação Vanilla uma rota até o meio da estrutura.
+     */
+    private static Optional<BlockPos> standingSpotWithinReach(
+            ServerWorld world, BlockPos floor, BlockPos worker) {
+
+        BlockPos closest = null;
+        double closestDistance = Double.MAX_VALUE;
+
+        for (int dx = -REACH; dx <= REACH; dx++) {
+            for (int dz = -REACH; dz <= REACH; dz++) {
+                if (dx * dx + dz * dz > REACH * REACH) {
+                    continue;
+                }
+
+                Optional<BlockPos> candidate = standingSpotNear(world, floor.add(dx, 0, dz));
+
+                if (candidate.isEmpty()) {
+                    continue;
+                }
+
+                double distance = candidate.get().getSquaredDistance(worker);
+
+                if (distance < closestDistance) {
+                    closest = candidate.get();
+                    closestDistance = distance;
+                }
+            }
+        }
+
+        return Optional.ofNullable(closest);
     }
 
     /**

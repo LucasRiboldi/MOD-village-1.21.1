@@ -31,6 +31,27 @@ o §18 do Project-State. O texto das entradas fica como estava.
 
 ---
 
+## Entry 2026-09-27 - retorno do mineiro depois de queda de dois blocos
+
+A varredura da fase 2 da ADR-025 separou a regra ja implementada da cobertura
+que faltava: `DetourWalker` detecta quando o aldeao cai ou e deslocado para
+fora do passo, replaneja da posicao atual e cada subida pode colocar um piso
+de pedregulho retirado do bau profissional. Faltava provar o caso completo de
+um poco seco com dois blocos de desnível.
+
+O novo `aMinerWhoFallsTwoBlocksBuildsStepsBackToTheSurface` inicia a rota na
+superficie, move o mineiro para o fundo, exige os dois degraus nos locais
+corretos, confere dois itens consumidos do bau e termina somente quando ele
+volta ao nivel original. A primeira forma da fixture deixou uma rota baixa
+mais barata, corrigida sem alterar producao; a fixture fechada passou. A
+rodada completa executou 485 GameTests: o caso novo passou e restaram somente
+`FarmPlanGameTest.observingInventoryDoesNotChangeHouseAlternation` e
+`FarmPlanGameTest.theNextTurnAfterAHouseIsNonResidential`.
+
+O retorno em um poco real continua pendente de playtest no save do autor.
+
+---
+
 ## Entry 2026-09-26 - auditoria de simulação e menu de atividade
 
 A linha de base compilou, os unitários da sessão passaram em 1.145/1.145 e a
@@ -9827,3 +9848,85 @@ Depois da ponte, a bateria caiu de 59 para uma falha; após corrigir a fixture,
 `./gradlew.bat build` passou. Continua pendente o playtest no mesmo save:
 aproximar-se de uma vila deve retomá-la, e afastar-se deve pausar trabalhos,
 placas, fuga e ciclos sem afetar outra vila próxima de outro jogador.
+
+### 2026-09-26 (noite) - Construção concluída não retoma como reparo
+
+O perfil Spark do playtest permaneceu saudável: TPS de um minuto em 20,03 e
+percentil 95 de MSPT em 28,7. A origem `1496,69,-947` da
+`plains_large_farm_1` não era o piso visível: a estrada estava em `y=75` e a
+planta tem seis camadas internas abaixo da camada da rua. O defeito real veio
+depois: a obra terminou às 22:37:21 e, trinta segundos depois, a varredura de
+reparo abriu a mesma fazenda com 169 blocos restantes. Ela alcançou uma peça
+sem apoio físico e voltou a ser salva como pendência, aparentando ao jogador
+que blocos eram quebrados sem uma construção nova subir.
+
+O autor já havia definido que somente obra abandonada pode reabrir.
+`BuildingRepairPlanner` passou a ignorar qualquer `Building.finished()`. Para
+o save existente, `ConstructionResume` generalizou o descarte que antes valia
+só para a BigHouseMOD: uma pendência com mesma planta e origem de construção
+concluída é removida antes de restaurar blocos. As provas
+`aCompletedProfessionHouseNeverStartsRepair` e
+`aSavedRepairOfCompletedProfessionHouseIsDropped` asseguram respectivamente a
+varredura e o carregamento; a tentativa abandonada sem progresso continua
+protegida. `./gradlew.bat test --rerun-tasks` fechou em **1145/1145** e
+`./gradlew.bat runGametest --rerun-tasks` em **481/481**. Falta testar o save
+do autor após instalar o próximo JAR.
+
+O JAR validado foi sincronizado de `build/libs/` para `downloads/` e
+`%APPDATA%/.minecraft/mods/` com o cliente fechado. O manifesto de release
+confirmou as três cópias no SHA-256
+`1AB3851866229F78B5B88F259354A422C2B74DA5D013033BA5382359F3A6FF49`.
+
+### 2026-09-27 - Duas obras pendentes: suprimento local e aproximacao do construtor
+
+O playtest deixou duas obras abertas. A `plains_small_house_5` aguardou
+`minecraft:oak_log` por nove minutos e foi abandonada apesar de os lenhadores
+da propria colonia continuarem a coletar madeira. A regra do projeto permite
+o abastecimento excepcional somente quando nenhuma profissao pode produzir,
+recolher ou fabricar o recurso; portanto o limite de paciencia nao podia
+abandonar uma obra com rota local valida.
+
+`WaitingWork` consulta a rota do proximo bloco em
+`BiomeConstructionSupply`: se houver profissao local capaz de entrega-lo, a
+obra continua aguardando a coleta fisica. Materiais sem rota mantem o fluxo de
+tentativas e abandono ja existente. O teste
+`BuildProgressGameTest.aLocalProfessionRouteKeepsTheWaitingProjectOpen`
+falhou primeiro contra o abandono por `oak_log` e passou depois da correcao.
+
+A `plains_shepherds_house_1` abriu com lote valido, mas o construtor ficou 300
+tiques sem mover um bloco, a 55 blocos do alvo. Ele recebia apenas a coluna do
+bloco-alvo como destino. `BuilderApproach` agora varre pontos de apoio livres
+dentro do alcance de cinco blocos, priorizando o mais proximo do trabalhador;
+nao ha teleporte, escavacao ou criacao de terreno. O teste
+`BuilderApproachGameTest.theBuilderUsesTheReachableSideOfTheLot` tambem falhou
+antes e passou depois da mudanca.
+
+Depois de registrar o novo GameTest no entrypoint Fabric, a rodada
+`./gradlew.bat runGametest --rerun-tasks --no-daemon` terminou em **483/483**.
+Falta validar no save do autor: a obra aberta deve receber uma rota praticavel;
+a obra ja abandonada so deve retomar pela regra de reabertura de abandonadas.
+
+### 2026-09-27 - Construtor no crescimento e cama obrigatoria na proxima casa
+
+O crescimento tinha duas listas com propositos distintos: os sete produtores
+guiavam a necessidade de recursos e a distribuicao de vagas. O Construtor ja
+existia na fundacao e podia receber tarefa de construir, mas ficava fora das
+vagas seguintes. `ProfessionAssigner` agora conserva a lista de produtores para
+recursos e usa uma ordem de crescimento com oito funcoes, acrescentando o
+Construtor depois do Pastor. Assim, a segunda vaga de Construtor aparece no
+adulto 23 e a terceira no 38.
+
+O planejamento tratava `beds == 0` como observacao ausente. Pela regra nova,
+qualquer `adults > beds`, inclusive zero camas, tem prioridade sobre o rodizio:
+a proxima obra e moradia. `HousePlans.catalogPlans` tambem filtra a planta que
+nao contenha bloco `*_bed`, e o GameTest percorre o catalogo real dos cinco
+estilos para garantir o contrato.
+
+Antes da implementacao, tres testes falharam pela regra anterior: o segundo
+Construtor nao era aberto no adulto 23, a distribuicao no adulto 30 mantinha
+somente um Construtor e zero camas nao priorizava moradia. Os unitarios
+direcionados passaram depois da correcao. A rodada completa executou 484
+GameTests e preservou somente os dois bloqueios anteriores de
+`FarmPlanGameTest`: `observingInventoryDoesNotChangeHouseAlternation` e
+`theNextTurnAfterAHouseIsNonResidential`. A regra nova nao apareceu como
+falha; ainda falta o playtest do save do autor.

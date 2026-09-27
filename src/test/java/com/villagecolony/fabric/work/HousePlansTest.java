@@ -349,9 +349,21 @@ class HousePlansTest {
         assertFalse(
                 HousePlans.nextConstructionIsHouse(afterAHouse, 6, 6),
                 "com cama para todos o rodízio decide, e depois da casa vem outro tipo");
-        assertFalse(
+        assertTrue(
                 HousePlans.nextConstructionIsHouse(afterAHouse, 8, 0),
-                "zero camas é contagem ainda não feita, e não pode forçar casa");
+                "zero camas para oito adultos precisa forçar uma casa antes de infraestrutura");
+    }
+
+    @Test
+    void onlyAPlanWithABedMeetsTheHousingContract() {
+        Blueprint withBed = Blueprint.of(
+                SMALL,
+                List.of(
+                        new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("oak_planks")),
+                        new BlueprintBlock(new ColonyPos(1, 0, 0), ResourceId.vanilla("red_bed"), true)));
+
+        assertTrue(HousePlans.hasBed(withBed));
+        assertFalse(HousePlans.hasBed(plan(SMALL)));
     }
 
     /**

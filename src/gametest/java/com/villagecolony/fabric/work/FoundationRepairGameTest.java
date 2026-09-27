@@ -184,7 +184,7 @@ public class FoundationRepairGameTest implements FabricGameTest {
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "foundation_repair")
-    public void anIncompleteProfessionHouseStillStartsRepair(TestContext context) {
+    public void aCompletedProfessionHouseNeverStartsRepair(TestContext context) {
         ColonyPos origin = MinecraftTypeAdapter.toColonyPos(
                 context.getAbsolutePos(new BlockPos(1, 4, 1)));
         Colony colony = Colony.create(UUID.randomUUID(), origin);
@@ -201,8 +201,50 @@ public class FoundationRepairGameTest implements FabricGameTest {
                             origin.y() + size.y() - 1,
                             origin.z() + size.z() - 1), true));
 
-            context.assertTrue(BuildingRepairPlanner.open(context.getWorld(), colony).isPresent(),
-                    "o reparo de uma casa profissional incompleta foi bloqueado");
+            context.assertTrue(BuildingRepairPlanner.open(context.getWorld(), colony).isEmpty(),
+                    "uma casa profissional concluida voltou a abrir obra de reparo");
+        } finally {
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
+            VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
+        }
+
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "foundation_repair")
+    public void aSavedRepairOfCompletedProfessionHouseIsDropped(TestContext context) {
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(1, 4, 1)));
+        Colony colony = Colony.create(UUID.randomUUID(), origin);
+        ResourceId previousNonHouse = ResourceId.vanilla(
+                "village/plains/houses/plains_large_farm_1");
+        ResourceId blueprint = StructureBlueprintReader.SMALL_HOUSE;
+        ColonyPos size = StructureBlueprintReader.read(
+                context.getWorld(), blueprint)
+                .orElseThrow(() -> new AssertionError("planta da casa profissional ausente"))
+                .size();
+
+        try {
+            VillageColonyMod.BUILDINGS.register(new Building(
+                    UUID.randomUUID(), colony.id(), blueprint,
+                    origin, new ColonyPos(
+                            origin.x() + size.x() - 1,
+                            origin.y() + size.y() - 1,
+                            origin.z() + size.z() - 1), true));
+            VillageColonyMod.BUILDINGS.register(new Building(
+                    UUID.randomUUID(), colony.id(), previousNonHouse,
+                    new ColonyPos(origin.x() + 32, origin.y(), origin.z()),
+                    new ColonyPos(origin.x() + 35, origin.y() + 4, origin.z() + 35), true));
+            VillageColonyMod.CONSTRUCTIONS.registerPending(new ConstructionService.Pending(
+                    UUID.randomUUID(), colony.id(), blueprint,
+                    origin, ConstructionState.BUILDING));
+
+            ConstructionResume.resume(context.getWorld(), colony);
+
+            context.assertTrue(VillageColonyMod.CONSTRUCTIONS.pendingOf(colony.id()).isEmpty(),
+                    "o reparo salvo de uma casa concluida continuou pendente");
+            context.assertTrue(VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isEmpty(),
+                    "o reparo salvo de uma casa concluida voltou como obra aberta");
         } finally {
             VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony.id());
             VillageColonyMod.BUILDINGS.removeOfColony(colony.id());
@@ -232,9 +274,9 @@ public class FoundationRepairGameTest implements FabricGameTest {
      * vaga única de obra da colônia. Era por isso que nenhuma construção nova
      * nascia.
      *
-     * <p><b>O que esta prova fixa</b> não é "nunca reparar": o reparo existe
-     * e o {@link #anIncompleteProfessionHouseStillStartsRepair} continua
-     * exigindo que ele abra. O que ela proíbe é <b>insistir numa lacuna que
+     * <p><b>O que esta prova fixa</b> não é "nunca retomar": a obra
+     * abandonada ainda pode voltar, mas uma casa concluída não. O que ela
+     * proíbe é <b>insistir numa lacuna que
      * não se fecha</b> — uma tentativa que termina sem aumentar o número de
      * blocos de pé não ganha outra.
      */
@@ -243,18 +285,25 @@ public class FoundationRepairGameTest implements FabricGameTest {
         ColonyPos origin = MinecraftTypeAdapter.toColonyPos(
                 context.getAbsolutePos(new BlockPos(1, 4, 1)));
         Colony colony = Colony.create(UUID.randomUUID(), origin);
+        ResourceId blueprint = StructureBlueprintReader.SMALL_HOUSE;
+        ResourceId previousNonHouse = ResourceId.vanilla(
+                "village/plains/houses/plains_large_farm_1");
         ColonyPos size = StructureBlueprintReader.read(
-                context.getWorld(), StructureBlueprintReader.SMALL_HOUSE)
+                context.getWorld(), blueprint)
                 .orElseThrow(() -> new AssertionError("planta da casa profissional ausente"))
                 .size();
 
         try {
             VillageColonyMod.BUILDINGS.register(new Building(
-                    UUID.randomUUID(), colony.id(), StructureBlueprintReader.SMALL_HOUSE,
+                    UUID.randomUUID(), colony.id(), blueprint,
                     origin, new ColonyPos(
                             origin.x() + size.x() - 1,
                             origin.y() + size.y() - 1,
-                            origin.z() + size.z() - 1), true));
+                            origin.z() + size.z() - 1), false));
+            VillageColonyMod.BUILDINGS.register(new Building(
+                    UUID.randomUUID(), colony.id(), previousNonHouse,
+                    new ColonyPos(origin.x() + 32, origin.y(), origin.z()),
+                    new ColonyPos(origin.x() + 35, origin.y() + 4, origin.z() + 35), true));
 
             Optional<ConstructionProject> first =
                     BuildingRepairPlanner.open(context.getWorld(), colony);

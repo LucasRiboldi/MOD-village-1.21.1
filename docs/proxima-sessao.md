@@ -1,9 +1,11 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Atualização de 2026-09-26 — JAR `DF1B6B2E…A70021`.** Este é o JAR instalado
+**Atualização de 2026-09-26 — JAR `1AB38518…A6FF49`.** Este é o JAR instalado
 em `downloads/` e `%APPDATA%/.minecraft/mods/`; as três cópias conferem com
 `build/libs/`. `build`, `test --rerun-tasks` e `runGametest --rerun-tasks`
-passaram, com 1.145 testes unitários e 480/480 GameTests.
+passaram, com 1.145 testes unitários e 481/481 GameTests. Ele contém o descarte
+da obra de reparo salva para uma construção já concluída. Ao abrir o mesmo save,
+a pendência da fazenda deve desaparecer antes de qualquer novo planejamento.
 
 **Obras e baús:** uma obra nova só abre quando toda a pegada está na altura
 exata da rua, portanto não pode ficar suspensa nem com vão sob o piso. Um baú

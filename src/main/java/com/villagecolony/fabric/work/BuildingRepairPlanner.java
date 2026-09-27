@@ -23,13 +23,15 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Varre construções do mod que ficaram incompletas e abre uma tentativa
- * limitada de reparo antes de aceitar uma obra nova.
+ * Varre obras abandonadas do mod e abre uma tentativa limitada de retomada
+ * antes de aceitar uma obra nova.
  *
  * <p>A construção registrada é a lista de candidatos; a planta e o mundo
- * decidem os blocos. Uma tentativa abandonada é pulada uma vez, para que
- * material ou acesso impossível não congele a vila. No ciclo seguinte,
- * depois que a vaga teve oportunidade de seguir, ela volta à varredura.
+ * decidem os blocos. Construção concluída é definitiva: mesmo que o mundo
+ * difira da planta depois, ela não vira obra outra vez. Uma tentativa
+ * abandonada é pulada uma vez, para que material ou acesso impossível não
+ * congele a vila. No ciclo seguinte, depois que a vaga teve oportunidade de
+ * seguir, ela volta à varredura.
  */
 final class BuildingRepairPlanner {
 
@@ -60,7 +62,7 @@ final class BuildingRepairPlanner {
      * <p>Uma tentativa que termina sem aumentar o número de blocos de pé não
      * ganha outra. Isto não desliga o reparo — lacuna que o construtor
      * consegue fechar continua sendo fechada, e quem prova isso é
-     * {@code FoundationRepairGameTest.anIncompleteProfessionHouseStillStartsRepair}.
+     * {@code FoundationRepairGameTest.aRepairThatPlacedNothingIsNotOpenedAgain}.
      * O que acaba é a insistência no que não se fecha.
      */
     private static final Map<UUID, Set<UUID>> EXHAUSTED = new HashMap<>();
@@ -82,14 +84,13 @@ final class BuildingRepairPlanner {
                 continue;
             }
 
-            // <b>A obra abandonada só volta na vez do tipo dela</b> —
-            // 2026-09-25, decisão do autor. O reparo roda antes do rodízio,
-            // e reabria a obra largada no mesmo segundo em que a colônia
-            // desistia dela: a vila ficava presa a templos. A construção
-            // terminada que perdeu blocos continua sendo reparada sempre.
-            if (!building.finished()
-                    && !HousePlans.isTurnOf(
-                            buildings, adults, colony.observedBeds(), building.blueprint())) {
+            // <b>Construção concluída nunca reabre</b> — decisão do autor,
+            // 2026-09-26. O reparo de uma lacuna visual reabria a mesma
+            // fazenda logo após ela terminar e fazia o construtor desmontar
+            // o que parecia uma obra nova. Só obra abandonada pode voltar,
+            // e apenas na vez do tipo dela.
+            if (building.finished() || !HousePlans.isTurnOf(
+                    buildings, adults, colony.observedBeds(), building.blueprint())) {
                 continue;
             }
 

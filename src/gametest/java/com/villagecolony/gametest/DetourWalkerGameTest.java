@@ -260,6 +260,68 @@ public class DetourWalkerGameTest implements FabricGameTest {
     }
 
     /**
+     * A rota já estava na superfície quando ele cai dois blocos em um poço.
+     * O replanejamento não espera o passo antigo: põe dois degraus com o
+     * pedregulho do baú e devolve o mineiro à rota de cima.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "detour_walker", tickLimit = 400)
+    public void aMinerWhoFallsTwoBlocksBuildsStepsBackToTheSurface(TestContext context) {
+        for (int x = 0; x <= 6; x++) {
+            for (int y = 2; y <= 7; y++) {
+                for (int z = 1; z <= 3; z++) {
+                    context.setBlockState(new BlockPos(x, y, z), Blocks.BEDROCK.getDefaultState());
+                }
+            }
+        }
+
+        // Corredor de superfície em y = 5 e poço fechado dois blocos abaixo.
+        for (int x = 1; x <= 5; x++) {
+            context.setBlockState(new BlockPos(x, 5, 2), Blocks.AIR.getDefaultState());
+            context.setBlockState(new BlockPos(x, 6, 2), Blocks.AIR.getDefaultState());
+        }
+
+        for (BlockPos open : new BlockPos[] {
+                new BlockPos(1, 3, 2), new BlockPos(1, 4, 2),
+                new BlockPos(2, 3, 2), new BlockPos(2, 4, 2), new BlockPos(2, 5, 2),
+                new BlockPos(3, 4, 2), new BlockPos(3, 5, 2), new BlockPos(3, 6, 2)}) {
+            context.setBlockState(open, Blocks.AIR.getDefaultState());
+        }
+
+        // Impede o atalho baixo: atravessa-se uma tocha, mas ela não vira piso.
+        context.setBlockState(new BlockPos(3, 3, 2), Blocks.TORCH.getDefaultState());
+
+        BlockPos chestAt = new BlockPos(1, 2, 5);
+        context.setBlockState(chestAt, Blocks.CHEST.getDefaultState());
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(chestAt));
+        ((ChestBlockEntity) context.getWorld().getBlockEntity(context.getAbsolutePos(chestAt)))
+                .setStack(0, new ItemStack(Items.COBBLESTONE, 3));
+
+        VillagerEntity villager = minerAt(context, new BlockPos(1, 5, 2));
+        BlockPos surfaceEnd = context.getAbsolutePos(new BlockPos(5, 5, 2));
+        DetourWalker walker = DetourWalker.plan(context.getWorld(), villager.getUuid(),
+                villager.getBlockPos(), surfaceEnd, surfaceEnd::equals, Set.of(), false).orElseThrow();
+
+        BlockPos fallen = context.getAbsolutePos(new BlockPos(1, 3, 2));
+        villager.refreshPositionAndAngles(fallen.getX() + 0.5, fallen.getY(), fallen.getZ() + 0.5, 0, 0);
+
+        runToTheEnd(context, villager, walker, chest, status -> {
+            context.assertTrue(status == DetourWalker.Status.DONE,
+                    "o mineiro não voltou do poço: " + walker.why());
+            context.assertTrue(walker.placed() == 2,
+                    "pôs " + walker.placed() + " blocos, a subida de dois exige 2");
+            context.expectBlock(Blocks.COBBLESTONE, new BlockPos(2, 3, 2));
+            context.expectBlock(Blocks.COBBLESTONE, new BlockPos(3, 4, 2));
+            context.assertTrue(villager.getBlockPos().equals(surfaceEnd),
+                    "terminou fora da superfície: " + villager.getBlockPos().toShortString());
+
+            ChestBlockEntity box = (ChestBlockEntity) context.getWorld()
+                    .getBlockEntity(MinecraftTypeAdapter.toBlockPos(chest));
+            context.assertTrue(box.getStack(0).getCount() == 1,
+                    "o baú deveria ter fornecido dois pedregulhos: sobrou " + box.getStack(0).getCount());
+        });
+    }
+
+    /**
      * Corredor em x 1..7 a y = 3, tudo em bedrock: chão, paredes e teto. Em x 4
      * e 5 o chão some num poço de dois blocos — fundo demais para descer e
      * subir de novo, e a bedrock não deixa cavar em volta. O baú fica fora.

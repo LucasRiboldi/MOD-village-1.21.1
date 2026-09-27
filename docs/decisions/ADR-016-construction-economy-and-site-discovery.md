@@ -64,3 +64,10 @@ limitado existente.
   iniciadas. Dados Vanilla não serão duplicados em save.
 - Nenhum lote pode forçar chunk loading, escavar solo protegido ou modificar o
   terreno; a politica de elegibilidade e estrada permanece a da ADR-017.
+
+## Emenda - 2026-09-27: déficit de camas tem prioridade absoluta
+
+Com ao menos um adulto registrado, toda diferença positiva entre adultos e
+camas observadas, inclusive `0` camas, obriga a próxima construção a ser uma
+moradia cuja planta contenha cama. O rodízio de infraestrutura só volta quando
+a capacidade observada atende todos os adultos.

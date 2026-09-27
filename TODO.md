@@ -1,6 +1,48 @@
 # TODO
 
-**Atualizado:** 2026-09-26. Playtest real de ~6h30 analisado (5 colonias,
+**Atualizado:** 2026-09-27. A evolucao agora inclui Construtor e o deficit de
+camas prioriza moradia; o mineiro agora tem regressao de retorno apos queda de
+dois blocos. A bateria de 485 testes conserva duas falhas antigas de
+`FarmPlanGameTest`, ainda requerendo validacao no save real.
+
+## Retorno do mineiro apos queda de dois blocos - 2026-09-27
+
+- [x] P0 - `DetourWalker` replaneja a partir do fundo quando o mineiro sai da
+  rota por dois blocos de altura e cria dois degraus de pedregulho retirado do
+  seu proprio bau. `DetourWalkerGameTest.aMinerWhoFallsTwoBlocksBuildsStepsBackToTheSurface`
+  cobre o pouco fechado, os dois blocos assentados, o consumo do bau e a volta
+  ao nivel da rota.
+- [ ] P0 - Playtest no save do autor: deixar o mineiro cair dois blocos em um
+  poco seco, com ao menos dois pedregulhos no seu bau, e observar a volta para
+  a rota sem abandonar a tarefa.
+
+## Evolucao de aldeoes e deficit de camas - 2026-09-27
+
+- [x] P0 - O Construtor entrou na ordem permanente de crescimento da
+  populacao, depois do Pastor. Ele recebe a segunda vaga no adulto 23 e a
+  terceira no 38, mas continua fora da escolha de necessidade de recursos.
+- [x] P0 - Se adultos superam camas contadas, inclusive quando a contagem e
+  zero, a proxima construcao e uma moradia; o catalogo so oferece plantas de
+  moradia que contem cama.
+- [ ] P0 - Playtest no save do autor: com mais adultos que camas, observar a
+  proxima obra abrir uma moradia com cama e o novo Construtor receber trabalho.
+- [ ] P1 - Os dois GameTests antigos de `FarmPlanGameTest` continuam falhando:
+  `observingInventoryDoesNotChangeHouseAlternation` e
+  `theNextTurnAfterAHouseIsNonResidential`.
+
+## Correcao das duas ultimas obras - 2026-09-27
+
+- [x] P0 - Uma obra em `WAITING_RESOURCES` nao e mais abandonada pelo prazo
+  enquanto o proximo bloco tiver rota profissional no bioma. O caso de
+  `oak_log` mantem a coleta pelos lenhadores; item sem rota continua usando a
+  regra de tentativas e abandono existente.
+- [x] P0 - O construtor escolhe um ponto livre dentro do alcance do bloco, em
+  vez de insistir na coluna fixa do bloco-alvo. O ponto e priorizado pela
+  distancia ao trabalhador, sem teleporte ou criacao de terreno.
+- [ ] P0 - Playtest no save do autor: a casa do pastor deve iniciar a obra e a
+  casa pequena abandonada so pode reabrir pela regra normal de obra abandonada.
+
+Playtest real de ~6h30 analisado (5 colonias,
 221.814 linhas de log). **Dois erros novos, E47 e E48** — ver "Erros
 abertos" abaixo. Achado central: um construtor ficou preso fisicamente
 longe do lote por 3h30 seguidas (E47), o que impediu qualquer obra de
@@ -110,6 +152,14 @@ Não recomendados:
   precisa estar no nível exato da rua; não há obra com vão sob o piso. ⬜ ver
   em jogo: casa nova com a porta um acima da rua e sem plataforma de terra;
   casa antiga não se mexe nem vira reparo.
+- [x] 🔴 **Obra concluída nunca reabre como reparo** (26-09, playtest): a
+  fazenda `plains_large_farm_1` terminou e, 30 segundos depois, uma varredura
+  abriu 169 blocos de "reparo" na mesma origem. `BuildingRepairPlanner` agora
+  só considera `Building.finished == false`; `ConstructionResume` descarta a
+  pendência legada de qualquer construção concluída, não apenas da
+  BigHouseMOD. `FoundationRepairGameTest` cobre os dois caminhos; `test`
+  1145/1145 e GameTests 481/481. ⬜ conferir no mesmo save que a fazenda não
+  retoma nem quebra blocos após recarregar.
 - [ ] 🟡 **Templo 4 e outras plantas com a porta na camada 0** ficam como
   estavam (sem camada da rua dentro da planta); conferir em jogo se o piso
   delas também deveria descer.
@@ -990,7 +1040,7 @@ Um por vez, teste antes de seguir.
 | | erro | estado |
 |---|---|---|
 | **E47** | **Trabalhador cai/fica preso longe do lote e nunca se recupera — visto em jogo 24-09, sessão de ~6h30.** `Builder 4b8df153` ficou parado em `-202, 62, -937` de **03:10 a 06:47** (97 linhas de `walking for N ticks without reaching the block`, subindo até 2400 e disparando o guarda de travamento repetidas vezes), sempre reatribuído à mesma obra em `y=72`, ~45-47 blocos de distância horizontal. `ClimbLimit`/`BuilderApproach.footOf` (correção de 09-16) só resolve diferença **vertical** de até 2 blocos quando o construtor está **na mesma coluna aproximada da obra** (em cima dela, descendo); não cobre um trabalhador preso **longe** — provavelmente dentro de depressão/ravina/caverna de superfície que a navegação Vanilla não atravessa sozinha para voltar. O guarda de 2400 ticks devolve a tarefa, mas o trabalhador continua fisicamente preso e é reatribuído à mesma armadilha. **Consequência observada:** nenhuma casa foi construída em ~6h30 de jogo (zero `house is up` no log inteiro, 5 colônias). Ver `docs/technical/Development-Log.md` para o diagnóstico completo. **Corrigido em código 24-09 (`e02fbf8`), decisão do autor:** dois congelamentos do `WorkStall` no mesmo ponto marcam o encalhado (`StrandedWorkers`); ele sai da escala em qualquer capacidade (`Worker.strand`, `WorkEligibility`) e cava uma escada de um bloco rumo ao centro da vila (`StrandedEscape`) — só terreno natural, via `BlockProtection`, sem abrir água nem deixar areia sobre a cabeça, entulho para o baú dele. `StrandedEscapeGameTest` 3/3. **Pendente:** teto de distância para "dar uma mão" (só chamar quem está perto da obra); origem das armadilhas não confirmada — nenhum código do mod cavou naqueles pontos, parecem terreno natural. | ✅ código e GameTest; ⬜ validar em jogo (procurar `is stranded at` / `dug a step` / `is out at`) |
-| **E48** | **Alternância casa→infraestrutura nunca escolhe casa nesta sessão.** Colônia `78fa1bb4` planejou 5 posições distintas ao longo da sessão, **todas `plains_temple_4`** (nenhuma casa). `HousePlans.nextConstructionIsHouse` só considera obra **terminada** (`Building.finished()`); como o E47 acima impede qualquer obra de terminar, a alternância nunca chega a alternar — ela está correta no código, mas nunca é exercitada porque a causa raiz (E47) trava toda conclusão de obra antes. **Correção do diagnóstico, mesma data: o E48 tinha causa própria, não dependia só do E47.** O templo foi abandonado 13 vezes pelo caminho `lets go of` (`blamePlan=false`), e `lastFinished`/`lastNonHouseType` ignoravam obra abandonada — a vez nunca voltava à casa e o templo nunca era excluído. **Corrigido em código 24-09 (`03ea6fb`), decisão do autor:** obra abandonada conta no rodízio, e com mais adultos do que camas a próxima obra é casa (zero camas = ainda não contado). `HouseRotationGameTest`: com a regra desligada por mutação, abriu `plains_temple_4` — o mesmo do jogo. | ✅ código e GameTest; ⬜ validar em jogo (procurar `house is up`) |
+| **E48** | **Alternância casa→infraestrutura nunca escolhe casa nesta sessão.** Colônia `78fa1bb4` planejou 5 posições distintas ao longo da sessão, **todas `plains_temple_4`** (nenhuma casa). `HousePlans.nextConstructionIsHouse` só considera obra **terminada** (`Building.finished()`); como o E47 acima impede qualquer obra de terminar, a alternância nunca chega a alternar — ela está correta no código, mas nunca é exercitada porque a causa raiz (E47) trava toda conclusão de obra antes. **Correção do diagnóstico, mesma data: o E48 tinha causa própria, não dependia só do E47.** O templo foi abandonado 13 vezes pelo caminho `lets go of` (`blamePlan=false`), e `lastFinished`/`lastNonHouseType` ignoravam obra abandonada — a vez nunca voltava à casa e o templo nunca era excluído. **Corrigido em código 24-09 (`03ea6fb`), decisão do autor:** obra abandonada conta no rodízio, e com mais adultos do que camas a próxima obra é casa. A política posterior de 27-09 passa a tratar zero camas como déficit real e exige cama na planta oferecida. `HouseRotationGameTest`: com a regra desligada por mutação, abriu `plains_temple_4` — o mesmo do jogo. | ✅ código e GameTest; ⬜ validar em jogo (procurar `house is up`) |
 | **E44** | A escada de recusas já existe em `MineMarks` e é consultada pela mineração e pela fronteira da galeria; há unitários e GameTests. O playtest ainda observou o mineiro parado, então a integração completa segue **sem validação em jogo**. Não reabrir a decisão original sem reproduzir um defeito residual. | ⬜ validar em jogo |
 | **E43** | A decisao 1A foi implementada: `WorkEligibility` impede reserva de capacidade em descanso e removeu o fallback que devolvia `COLLECT_STONE` no ciclo seguinte. `WorkAssignmentTest` teve fase vermelha, e `ColonyCycleGameTest.aRestingMinerLeavesTheStoneTaskAvailable` passou na bateria 419/419. | ✅ codigo e GameTest; ⬜ validar em save |
 | **E41** | Nada mede degradação ao longo de muitos ciclos. O teste mais longo do projeto tem centenas de tiques. **Fechado em 11-09 (P1.13), esta linha estava desatualizada.** `ColonyEnduranceGameTest` mede deriva em 200 ciclos; nunca falhou em onze rodadas completas nesta sessão (24-09). | ✅ fechado |

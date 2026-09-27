@@ -56,7 +56,7 @@ class ProfessionGrowthTest {
     }
 
     @Test
-    void populationFifteenKeepsOneOfEachAndSixteenAddsTheSecondMiner() {
+    void populationFifteenKeepsTheFoundationAndSixteenAddsTheSecondMiner() {
         addWorkers(16);
 
         assign(15);
@@ -68,12 +68,25 @@ class ProfessionGrowthTest {
     }
 
     @Test
+    void adultTwentyThreeAddsTheSecondBuilder() {
+        addWorkers(23);
+
+        assign(22);
+        assertEquals(15, employedCount());
+        assertEquals(1, count(ProfessionType.BUILDER));
+
+        assertEquals(1, assign(23));
+        assertEquals(2, count(ProfessionType.BUILDER));
+    }
+
+    @Test
     void populationThirtyHasTwoOfEachAndAdultThirtyOneAddsThirdMiner() {
         addWorkers(31);
 
         assign(30);
-        assertEquals(15, employedCount());
+        assertEquals(16, employedCount());
         assertEquals(2, count(ProfessionType.SHEPHERD));
+        assertEquals(2, count(ProfessionType.BUILDER));
 
         assertEquals(1, assign(31));
         assertEquals(3, count(ProfessionType.MINER));

@@ -187,17 +187,11 @@ public final class HousePlans {
      * relento. Enquanto houver mais adultos do que camas, a vez é da casa;
      * com cama para todos, o rodízio volta a decidir.
      *
-     * <p><b>Zero camas é "ainda não contado", não "nenhuma cama".</b>
-     * {@code Colony.observedBeds} nasce em zero e só vale depois da primeira
-     * detecção da sessão; toda vila Vanilla tem cama e a {@code BigHouseMOD}
-     * põe seis. Ler o zero como falta forçaria casa em toda colônia recém-
-     * carregada, antes de alguém olhar.
-     *
      * @param adults os trabalhadores adultos da colônia
-     * @param beds as camas que a detecção de vila contou; zero é desconhecido
+     * @param beds as camas que a detecção de vila contou
      */
     static boolean nextConstructionIsHouse(List<Building> buildings, int adults, int beds) {
-        return (beds > 0 && adults > beds) || nextConstructionIsHouse(buildings);
+        return adults > beds || nextConstructionIsHouse(buildings);
     }
 
     /**
@@ -432,6 +426,10 @@ public final class HousePlans {
                 continue;
             }
 
+            if (!hasBed(house.get())) {
+                continue;
+            }
+
             plans.add(house.get());
         }
 
@@ -491,6 +489,11 @@ public final class HousePlans {
      */
     public static boolean isHouse(ResourceId id) {
         return isDwelling(id) && !ConstructionOrder.isShop(id);
+    }
+
+    /** Uma moradia elegível para expansão precisa oferecer ao menos uma cama. */
+    public static boolean hasBed(Blueprint plan) {
+        return plan.blocks().stream().anyMatch(block -> block.block().path().endsWith("_bed"));
     }
 
     /** Se esta peça é casa de morar, e não cerca, poço ou templo. */

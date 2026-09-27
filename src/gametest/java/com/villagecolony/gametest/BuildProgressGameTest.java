@@ -23,6 +23,7 @@ import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestDepositor;
+import com.villagecolony.fabric.integration.BiomeConstructionSupply;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.WaitingWork;
@@ -184,6 +185,50 @@ public class BuildProgressGameTest implements FabricGameTest {
                     "a obra totalmente adiada continuou ativa depois de ceder a fila");
             context.assertTrue(VillageColonyMod.BUILDINGS.isColonyInfrastructure(origin),
                     "a obra parcial sumiu em vez de preservar o lote contra sobreposicao");
+        } finally {
+            clock.setTime(time);
+            clock.setTimeOfDay(day);
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
+    /** Uma falta que o ofício local consegue atender não vira abandono por tempo. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_progress")
+    public void aLocalProfessionRouteKeepsTheWaitingProjectOpen(TestContext context) {
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ORIGIN));
+        Colony colony = Colony.create(UUID.randomUUID(), origin);
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+        ConstructionProject project = ConstructionProject.plan(
+                colony.id(),
+                Blueprint.of(
+                        ResourceId.vanilla("village/plains/houses/waiting_for_oak"),
+                        List.of(new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("oak_log")))),
+                origin);
+        ServerWorldProperties clock = (ServerWorldProperties) context.getWorld().getLevelProperties();
+        long time = clock.getTime();
+        long day = clock.getTimeOfDay();
+
+        VillageColonyMod.COLONIES.register(colony);
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+        project.moveTo(ConstructionState.WAITING_RESOURCES);
+
+        try {
+            context.assertTrue(BiomeConstructionSupply.hasRouteInBiome(
+                            context.getWorld(), colony.id(), Items.OAK_LOG),
+                    "a arena do teste não ofereceu a rota de lenhador esperada");
+            clock.setTimeOfDay(1_000);
+            context.assertFalse(WaitingWork.giveUpIfStalled(context.getWorld(), colony, project),
+                    "a primeira leitura abandonou a obra que espera o lenhador");
+
+            clock.setTime(time + PatienceClock.TICKS + 1);
+            context.assertFalse(WaitingWork.giveUpIfStalled(context.getWorld(), colony, project),
+                    "a obra com rota local de coleta foi abandonada em vez de continuar esperando");
+            context.assertTrue(VillageColonyMod.CONSTRUCTIONS.openOf(colony.id()).isPresent(),
+                    "a obra que dependia do lenhador desapareceu da fila");
         } finally {
             clock.setTime(time);
             clock.setTimeOfDay(day);

@@ -18,6 +18,7 @@ import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.integration.BiomeConstructionSupply;
 import com.villagecolony.fabric.integration.ColonySupply;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
@@ -290,9 +291,33 @@ public final class WaitingWork {
             return false;
         }
 
+        if (awaitsLocalProfessionDelivery(world, project)) {
+            return false;
+        }
+
         giveUp(colony, project);
 
         return true;
+    }
+
+    /**
+     * A espera só pode abandonar uma peça que a vila não tem como entregar.
+     *
+     * <p>A terceira tentativa já abastece a peça sem rota profissional; por
+     * isso o relógio não deve encerrar uma obra que espera, por exemplo, o
+     * tronco que o lenhador daquela vila ainda pode recolher. A pergunta é
+     * pelo próximo bloco, que é a falta que realmente levou a obra ao estado
+     * de espera, e pelo bioma da própria colônia.
+     */
+    private static boolean awaitsLocalProfessionDelivery(
+            ServerWorld world, ConstructionProject project) {
+
+        return project.nextBlock()
+                .flatMap(next -> MinecraftTypeAdapter.toBlock(next.block()))
+                .map(Block::asItem)
+                .map(item -> BiomeConstructionSupply.hasRouteInBiome(
+                        world, project.colonyId(), item))
+                .orElse(false);
     }
 
     /**

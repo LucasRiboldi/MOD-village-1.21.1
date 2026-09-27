@@ -1,4 +1,4 @@
-# STATE — 2026-09-26
+# STATE — 2026-09-27
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -11,6 +11,29 @@
 ---
 
 ## Em uma linha
+
+A evolucao por populacao agora inclui o Construtor na mesma lista de vagas
+permanentes: o segundo aparece no adulto 23 e o terceiro no 38, sem mistura-lo
+ao calculo de necessidade de recursos. Qualquer deficit observado de camas,
+inclusive zero camas, obriga a proxima obra a ser uma moradia cuja planta tem
+cama. Os unitarios da regra passaram; a bateria de 485 GameTests manteve
+somente os dois bloqueios ja conhecidos de `FarmPlanGameTest`. Falta validar
+no save real uma vila com mais adultos que camas.
+
+A varredura de 27-09 confirmou o retorno do mineiro depois de cair dois
+blocos: ao sair de uma rota, o desvio replaneja do fundo do poco e usa dois
+pedregulhos do seu bau para formar os degraus de volta a superficie. O novo
+`DetourWalkerGameTest` passou na bateria Fabric. Falta observar esse retorno
+em um poco real no save do autor, com pedregulho no bau do mineiro.
+
+O playtest de 27-09 isolou as duas obras pendentes: uma casa pequena foi
+abandonada enquanto aguardava `oak_log` que os lenhadores locais ainda podiam
+obter, e a casa do pastor recebeu um ponto de trabalho fixo que nao produziu
+nenhum passo de rota. `WaitingWork` agora conserva a obra enquanto o proximo
+bloco tiver rota profissional no bioma; `BuilderApproach` escolhe o ponto
+livre mais proximo dentro do alcance de construcao. A rodada Fabric passou em
+483/483. Falta confirmar o comportamento no save real, inclusive a retomada
+de uma obra que ja tenha sido marcada como abandonada.
 
 O playtest de 26-09 confirmou camas e baús ao ar livre. A correção publicada só
 adota uma vila nova depois de colocar a BigHouseMOD, funda moradores somente
@@ -31,6 +54,13 @@ vila, ele traduz o último estado de cada profissional em ativo, aguardando ou
 travado. A implementação passou nos testes unitários próprios e na bateria
 Fabric; ainda falta validar ambos no save real. A auditoria completa está em
 [`docs/technical/Auditoria-Simulacao-2026-09-26.md`](docs/technical/Auditoria-Simulacao-2026-09-26.md).
+
+O playtest de 26-09 também confirmou que uma fazenda já finalizada era reaberta
+como reparo e parecia uma construção invisível. Construções concluídas agora
+não reabrem pela varredura nem por uma pendência legada do save; somente obras
+abandonadas podem retomar na vez do seu tipo. `test` passou em 1145/1145 e
+`runGametest --rerun-tasks` em 481/481. Falta validar no mesmo save que a
+pendência antiga é descartada e a fazenda não volta a ter blocos quebrados.
 
 ## Correção publicada, pendente de playtest
 

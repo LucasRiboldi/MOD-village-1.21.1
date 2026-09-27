@@ -54,6 +54,7 @@
       "com.villagecolony.gametest.BlueprintReaderGameTest",
       "com.villagecolony.gametest.BuildSiteGameTest",
       "com.villagecolony.gametest.BuilderGameTest",
+      "com.villagecolony.fabric.work.BuilderApproachGameTest",
       "com.villagecolony.gametest.ConstructionSupplyAuditGameTest",
       "com.villagecolony.gametest.ConstructionResumeGameTest",
       "com.villagecolony.gametest.BuildProgressGameTest",
