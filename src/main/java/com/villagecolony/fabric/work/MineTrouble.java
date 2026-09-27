@@ -236,7 +236,7 @@ public final class MineTrouble {
      * tenta antes a descida selada; nos demais casos o ciclo começa no lado
      * oposto da vila.
      */
-    public static void abandonAtBottom(
+    public static boolean abandonAtBottom(
             ServerWorld world, UUID colonyId, Mine mine, BlockPos center) {
 
         Side opposite = mine.shaft().descent().opposite();
@@ -258,16 +258,13 @@ public final class MineTrouble {
                     colonyId,
                     MinecraftTypeAdapter.toBlockPos(mine.entry()).toShortString(),
                     waterAccess.get().entry().toShortString());
-            return;
+            return true;
         }
 
         Optional<BlockPos> mouth = MineSite.mouthOnSide(world, center, opposite);
 
         if (mouth.isEmpty()) {
-            VillageColonyMod.LOGGER.warn(
-                    "Mine {} reached the world bottom; waiting for an opposite mouth before replacing it",
-                    colonyId);
-            return;
+            return false;
         }
 
         VillageColonyMod.MINES.removeOfColony(colonyId);
@@ -283,6 +280,7 @@ public final class MineTrouble {
                 colonyId,
                 MinecraftTypeAdapter.toBlockPos(mine.entry()).toShortString(),
                 mouth.get().toShortString());
+        return true;
     }
 
     /**

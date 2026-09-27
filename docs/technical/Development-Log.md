@@ -31,6 +31,32 @@ o §18 do Project-State. O texto das entradas fica como estava.
 
 ---
 
+## Entry 2026-09-27 - auditoria do ciclo de recuperacao da mina
+
+O log do save registrou 23.524 tentativas de recuperar a mesma mina esgotada
+em cerca de vinte minutos. A boca oposta nao era valida, mas cada mineiro em
+cada tique voltava a executar a busca e a escrever o aviso. A recuperacao agora
+tenta de imediato e, quando o mundo ainda recusa a boca, guarda somente na
+memoria da sessao o proximo instante permitido: 600 tiques depois. Reiniciar o
+servidor ou alterar o terreno continua permitindo uma tentativa imediata; o
+save nao ganha estado derivado.
+
+`MineTrouble.abandonAtBottom` passou a devolver se a substituicao aconteceu,
+para que `MineDigging` registre a espera apenas no caso negativo. Mina seca,
+escada 3x3, casco de vidro, protecao de blocos e a regra de acesso submerso nao
+mudaram. O teste novo falhou antes pela ausencia de `MineBottomRetry` e passou
+depois; `./gradlew.bat test --no-daemon` fechou sem falhas e
+`./gradlew.bat runGametest --rerun-tasks --no-daemon` terminou em **488/488
+GameTests**.
+
+O mesmo log mostrou dois bloqueios que nao devem ser corrigidos relaxando
+regras: todos os lotes foram recusados pela geometria das ruas, e um fundidor
+nao tem cama dentro de estrutura valida para receber baú. O primeiro precisa de
+decisao sobre distancia segura da rua; o segundo precisa de migracao de moradia
+que mantenha baús fora de portas e do centro da vila.
+
+---
+
 ## Entry 2026-09-27 - acesso selado sob agua e eixo de mina 3x3
 
 As minas secas passaram a usar tres lances por tres blocos uteis de altura. A

@@ -171,7 +171,23 @@ public final class MineDigging {
             }
 
             if (advance == Mine.LevelAdvance.EXHAUSTED) {
-                MineTrouble.abandonAtBottom(world, colonyId, mine.get(), center);
+                if (!MineBottomRetry.isDue(colonyId, world.getTime())) {
+                    return Optional.empty();
+                }
+
+                if (MineTrouble.abandonAtBottom(world, colonyId, mine.get(), center)) {
+                    MineBottomRetry.clear(colonyId);
+                    IdleLog.clear(colonyId, ARM_SUBJECT);
+                } else {
+                    MineBottomRetry.defer(colonyId, world.getTime());
+                    IdleLog.recordAt(
+                            colonyId,
+                            ARM_SUBJECT,
+                            IdleReason.NO_TARGET,
+                            "mine reached the world bottom; the opposite mouth is not available yet",
+                            world.getTime());
+                }
+
                 return Optional.empty();
             }
 

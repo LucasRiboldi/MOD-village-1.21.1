@@ -25,6 +25,14 @@ obra. `runGametest --rerun-tasks` passou em 488/488. Falta confirmar em um
 save real uma mina seca 3x3, uma mina aquatica e uma obra retangular ao lado
 de uma lavoura original.
 
+A auditoria do log do save de 27-09 encontrou uma mina esgotada cuja boca
+oposta nao podia ser aberta. A recuperacao nao repete mais a busca e o aviso a
+cada tique: ela tenta imediatamente e, se o mundo ainda recusar a boca, espera
+600 tiques antes da proxima tentativa. Minas secas, escadas 3x3, protecoes e o
+acesso submerso permanecem inalterados. `MineBottomRetryTest` e
+`runGametest --rerun-tasks` passaram em 488/488; falta conferir no save que a
+mina aguardando uma boca oposta emite apenas um estado de espera por ciclo.
+
 A evolucao por populacao agora inclui o Construtor na mesma lista de vagas
 permanentes: o segundo aparece no adulto 23 e o terceiro no 38, sem mistura-lo
 ao calculo de necessidade de recursos. Qualquer deficit observado de camas,

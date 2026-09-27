@@ -9,6 +9,22 @@ A bateria de 488 GameTests esta verde; ainda requer validacao no save real.
 
 ## Acesso submerso e mina 3x3 - 2026-09-27
 
+## Auditoria do log do save - 2026-09-27
+
+- [x] P0 - Mina esgotada sem boca oposta nao pesquisa nem registra o mesmo
+  aviso a cada tique. A tentativa volta depois de 600 tiques, sem salvar um
+  relogio derivado e sem alterar a mina normal ou o acesso submerso.
+  `MineBottomRetryTest` e `runGametest --rerun-tasks` 488/488 cobrem a
+  regressao.
+- [ ] P0 - O planejador recusou todos os lotes da vila porque a planta so pode
+  encostar na rua e as extensoes existentes nao oferecem ponta utilizavel.
+  A regra atual protege rua, lavoura e estruturas. Decidir se o lote pode
+  ficar a um ou dois blocos da rua antes de flexibilizar o scanner.
+- [ ] P1 - Um fundidor sem cama em estrutura valida nao recebe bau, por
+  seguranca: criar um baú fora da estrutura ou diante da porta continua
+  proibido. Definir uma migracao de moradia segura para saves antigos antes de
+  realocar ou substituir esse trabalhador.
+
 - [x] P0 - Toda escada normal da mina agora ocupa tres lances por tres blocos
   uteis de altura. A forma do save passou de 6 para 7 e zera apenas cursores
   geometricos da forma anterior, preservando boca, profundidade, galeria e
