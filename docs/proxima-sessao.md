@@ -1,11 +1,11 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Atualizacao de 2026-09-28 - JAR `536B871E...EA2D32`.** Este e o JAR instalado
+**Atualizacao de 2026-09-28 - JAR `CCA7DA30...F4F7F40`.** Este e o JAR instalado
 em `downloads/` e `%APPDATA%/.minecraft/mods/`; as tres copias conferem com
 `build/libs/` pelo SHA-256
-`536B871E0CE0618E13433F99F2FCB43466E2FAA81B59AB9F157DCB6ED3EA2D32`.
+`CCA7DA3067AC4A36BC1414140B6199E29CFCF2A28C1E9C879E55D8EFAF4F7F40`.
 `test --rerun-tasks`, `build` e `runGametest --rerun-tasks` passaram, com
-**1.163/1.163 testes unitarios e 493/493 GameTests**. A mina normal mantém o poço de três blocos de largura e altura.
+**1.163/1.163 testes unitarios e 498/498 GameTests**. A mina normal mantém o poço de três blocos de largura e altura.
 Quando uma mina de vila fundada sobre água esgotar os níveis mineráveis, ela
 reabre por uma escadaria segura de três blocos, selada por vidro, até uma camada
 natural de rocha; os mineiros não podem minerar a escada nem a proteção.

@@ -27,7 +27,7 @@ import java.util.function.Function;
  *       colunas;
  *   <li><b>Teto por passagem.</b> Uma varredura de raio 64 são dezesseis
  *       mil colunas, e fazê-las num tique é travar o servidor;
- *   <li><b>Cursor por dono, e não por posição.</b> Foi o defeito de
+ *   <li><b>Cursor por dono e pergunta, e não por posição.</b> Foi o defeito de
  *       2026-08-20: o centro da colônia troca de âncora a cada trinta
  *       segundos, e um cursor guardado pela posição recomeçava do zero
  *       toda vez. A busca nunca passava das mil primeiras colunas.
@@ -43,7 +43,7 @@ public final class RingSweep {
     public static final int MAX_COLUMNS = 1024;
 
     /**
-     * Onde cada dono parou. A chave é ele, nunca o lugar.
+     * Onde cada dono e pergunta pararam. A chave nunca é o lugar.
      *
      * <p><b>E é a coluna, não só o anel — 2026-08-25.</b> Guardava só o
      * anel, e a passagem seguinte recomeçava do primeiro bloco dele:
@@ -52,7 +52,25 @@ public final class RingSweep {
      * o mesmo defeito que o {@code BuildSiteScanner} tinha, corrigido no
      * mesmo dia e pelo mesmo motivo.
      */
-    private static final Map<UUID, Sweep> NEXT_RING = new HashMap<>();
+    private static final Map<SweepKey, Sweep> NEXT_RING = new HashMap<>();
+
+    /**
+     * A pergunta que possui o cursor.
+     *
+     * <p>Uma colônia pode procurar a lavoura e, no mesmo ciclo, uma
+     * superfície para coleta. Compartilhar o cursor pelo UUID fazia a
+     * segunda pergunta apagar a retomada da primeira. Lote já tem o
+     * próprio cursor em {@link BuildSiteScanner}; estas identidades são
+     * as duas voltas que usam esta porta genérica.
+     */
+    public enum Scan {
+        GENERAL,
+        FARMING,
+        SURFACE
+    }
+
+    private record SweepKey(UUID owner, Scan scan) {
+    }
 
     /**
      * Onde uma varredura parou: o anel, e a coluna na casca dele.
@@ -87,7 +105,7 @@ public final class RingSweep {
     public static <T> Optional<T> around(
             UUID owner, BlockPos center, int radius, Function<BlockPos, Optional<T>> test) {
 
-        return around(owner, center, radius, column -> true, test);
+        return around(owner, Scan.GENERAL, center, radius, column -> true, test);
     }
 
     /**
@@ -122,9 +140,22 @@ public final class RingSweep {
             java.util.function.Predicate<BlockPos> worth,
             Function<BlockPos, Optional<T>> test) {
 
+        return around(owner, Scan.GENERAL, center, radius, worth, test);
+    }
+
+    /** A varredura de um subsistema, isolada das outras do mesmo dono. */
+    public static <T> Optional<T> around(
+            UUID owner,
+            Scan scan,
+            BlockPos center,
+            int radius,
+            java.util.function.Predicate<BlockPos> worth,
+            Function<BlockPos, Optional<T>> test) {
+
         int columns = 0;
 
-        Sweep paused = NEXT_RING.get(owner);
+        SweepKey key = new SweepKey(owner, scan);
+        Sweep paused = NEXT_RING.get(key);
 
         int startRing = paused == null || paused.ring() > radius ? 0 : paused.ring();
 
@@ -161,7 +192,7 @@ public final class RingSweep {
                     }
 
                     if (++columns > MAX_COLUMNS) {
-                        NEXT_RING.put(owner, new Sweep(ring, column));
+                        NEXT_RING.put(key, new Sweep(ring, column));
 
                         return Optional.empty();
                     }
@@ -169,7 +200,7 @@ public final class RingSweep {
                     Optional<T> found = test.apply(center.add(dx, 0, dz));
 
                     if (found.isPresent()) {
-                        NEXT_RING.remove(owner);
+                        NEXT_RING.remove(key);
 
                         return found;
                     }
@@ -180,18 +211,28 @@ public final class RingSweep {
         // Varreu o raio inteiro sem achar. O cursor sai, e a próxima
         // passagem recomeça do centro: o mundo muda, e o que não havia
         // ontem pode haver amanhã. É a Regra 23.
-        NEXT_RING.remove(owner);
+        NEXT_RING.remove(key);
 
         return Optional.empty();
     }
 
     /** Em que anel a busca deste dono parou por falta de orçamento. */
     public static Optional<Integer> pausedAt(UUID owner) {
-        return Optional.ofNullable(NEXT_RING.get(owner)).map(Sweep::ring);
+        return pausedAt(owner, Scan.GENERAL);
+    }
+
+    /** Em que anel a busca deste subsistema parou por falta de orçamento. */
+    public static Optional<Integer> pausedAt(UUID owner, Scan scan) {
+        return Optional.ofNullable(NEXT_RING.get(new SweepKey(owner, scan))).map(Sweep::ring);
     }
 
     /** Esquece o cursor de um dono só. */
     public static void forget(UUID owner) {
-        NEXT_RING.remove(owner);
+        forget(owner, Scan.GENERAL);
+    }
+
+    /** Esquece o cursor de um subsistema de um dono só. */
+    public static void forget(UUID owner, Scan scan) {
+        NEXT_RING.remove(new SweepKey(owner, scan));
     }
 }

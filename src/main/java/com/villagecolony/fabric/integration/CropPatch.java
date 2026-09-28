@@ -134,7 +134,8 @@ public final class CropPatch {
         BlockPos remembered = rememberedEmptyPlot(world, colonyId, center, radius);
         BlockPos[] plot = {remembered};
 
-        Optional<BlockPos> ripe = RingSweep.around(colonyId, center, radius, at -> {
+        Optional<BlockPos> ripe = RingSweep.around(colonyId, RingSweep.Scan.FARMING, center, radius,
+                column -> true, at -> {
             WorldChunk chunk = loadedChunk(world, at);
 
             if (chunk == null) {
@@ -157,7 +158,7 @@ public final class CropPatch {
             return Optional.empty();
         });
 
-        boolean incomplete = RingSweep.pausedAt(colonyId).isPresent();
+        boolean incomplete = RingSweep.pausedAt(colonyId, RingSweep.Scan.FARMING).isPresent();
 
         if (ripe.isPresent() || !incomplete || plot[0] == null) {
             EMPTY_PLOTS.remove(colonyId);

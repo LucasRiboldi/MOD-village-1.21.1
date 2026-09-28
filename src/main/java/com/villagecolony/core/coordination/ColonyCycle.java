@@ -8,11 +8,13 @@ import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.task.service.TaskService;
 import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.WorkerService;
 
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 /**
@@ -116,6 +118,23 @@ public final class ColonyCycle {
             ProductionHands hands,
             Map<ResourceType, Integer> constructionMaterials) {
 
+        return run(
+                colonyId, owned, goal, tasks, workers, hasStorage, hands, constructionMaterials,
+                (worker, task) -> true);
+    }
+
+    /** O mesmo ciclo, com uma pré-condição física fornecida pela camada chamadora. */
+    public static int run(
+            UUID colonyId,
+            ResourceTally owned,
+            Map<ResourceType, Integer> goal,
+            TaskService tasks,
+            WorkerService workers,
+            Predicate<UUID> hasStorage,
+            ProductionHands hands,
+            Map<ResourceType, Integer> constructionMaterials,
+            BiPredicate<Worker, Task> canReserveTask) {
+
         Objects.requireNonNull(hands, "hands");
         Objects.requireNonNull(constructionMaterials, "constructionMaterials");
         Objects.requireNonNull(colonyId, "colonyId");
@@ -124,13 +143,14 @@ public final class ColonyCycle {
         Objects.requireNonNull(tasks, "tasks");
         Objects.requireNonNull(workers, "workers");
         Objects.requireNonNull(hasStorage, "hasStorage");
+        Objects.requireNonNull(canReserveTask, "canReserveTask");
 
         Map<ResourceType, Integer> missing = ResourceDemand.deficit(goal, owned);
 
         cancelSatisfied(colonyId, missing, tasks);
         requestMissing(colonyId, owned, missing, constructionMaterials, tasks, workers, hands);
 
-        return WorkAssignment.assign(colonyId, workers, tasks, hasStorage);
+        return WorkAssignment.assign(colonyId, workers, tasks, hasStorage, canReserveTask);
     }
 
     /**

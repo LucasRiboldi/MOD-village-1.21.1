@@ -67,4 +67,38 @@ public final class BuilderApproachGameTest implements FabricGameTest {
                 "a grade de BlockPos mandou caminhar mesmo dentro do alcance fisico do bloco");
         context.complete();
     }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_approach")
+    public void aBuildIsNotReservedWithoutAnyStandingSpotInReach(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos target = context.getAbsolutePos(new BlockPos(8, 10, 8));
+        ConstructionProject project = ConstructionProject.plan(
+                UUID.randomUUID(),
+                Blueprint.of(
+                        ResourceId.vanilla("village/plains/houses/reservation_spot"),
+                        List.of(new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("oak_planks")))),
+                MinecraftTypeAdapter.toColonyPos(target));
+
+        // A arena vazia ainda tem piso abaixo da estrutura. Preenche toda a
+        // faixa que a busca pode consultar para a primeira asserção ser física.
+        for (int x = 3; x <= 13; x++) {
+            for (int z = 3; z <= 13; z++) {
+                for (int y = 4; y <= 16; y++) {
+                    context.setBlockState(new BlockPos(x, y, z), Blocks.STONE.getDefaultState());
+                }
+            }
+        }
+
+        context.assertTrue(
+                !BuilderApproach.hasStandingSpotWithinReach(world, project, target),
+                "a obra sem chão de trabalho passou pela pré-verificação");
+
+        context.setBlockState(new BlockPos(9, 10, 8), Blocks.AIR.getDefaultState());
+        context.setBlockState(new BlockPos(9, 11, 8), Blocks.AIR.getDefaultState());
+
+        context.assertTrue(
+                BuilderApproach.hasStandingSpotWithinReach(world, project, target),
+                "um ponto físico ao lado do bloco não foi aceito para a reserva");
+        context.complete();
+    }
 }

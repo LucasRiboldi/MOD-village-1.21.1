@@ -105,6 +105,36 @@ class ChestSurveyCoverageTest {
                 partial.coverage());
     }
 
+    /** Baú ainda não visitado é parcial, mas não pode ser chamado de chunk descarregado. */
+    @Test
+    void aTimeSlicedSurveyNamesItsPendingChestsSeparately() {
+        ChestInventoryReader.ChestSurvey partial = new ChestInventoryReader.ChestSurvey(
+                ColonyResources.empty(), Map.of(), 8, 0, 3);
+
+        assertTrue(partial.isPartial());
+        assertTrue(partial.isPending());
+        assertEquals(11, partial.chestsKnown());
+        assertEquals(
+                "8 of 11 chests read (3 pending this round), 0 with items",
+                partial.coverage());
+    }
+
+    /**
+     * Fatiar a leitura não esconde um baú que o mundo recusou carregar.
+     *
+     * <p>A rodada pode continuar nas próximas fatias, mas o ciclo não pode
+     * escolher produção ou consumo enquanto o estoque inacessível existir.
+     */
+    @Test
+    void anUnreachableChestBlocksStockDecisionsEvenWithPendingChests() {
+        ChestInventoryReader.ChestSurvey partial = new ChestInventoryReader.ChestSurvey(
+                ColonyResources.empty(), Map.of(), 8, 1, 3);
+
+        assertTrue(partial.isPending());
+        assertTrue(partial.isPartial());
+        assertTrue(partial.blocksStockDecisions());
+    }
+
     /**
      * Os dois números são perguntas diferentes, e a frase os separa.
      *

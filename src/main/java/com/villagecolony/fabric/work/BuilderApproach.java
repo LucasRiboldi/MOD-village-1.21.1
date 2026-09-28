@@ -173,6 +173,31 @@ public final class BuilderApproach {
     }
 
     /**
+     * Há um ponto físico de trabalho para este bloco antes de reservar a obra.
+     *
+     * <p>É uma pré-verificação barata: exige apoio, duas alturas livres e
+     * ausência de fluido no raio de alcance. A navegação Vanilla ainda decide
+     * a rota do aldeão; esta leitura apenas impede que uma reserva comece sem
+     * destino possível.
+     */
+    public static boolean hasStandingSpotWithinReach(
+            ServerWorld world, ConstructionProject project, BlockPos target) {
+
+        BlockPos floor = new BlockPos(target.getX(), project.origin().y(), target.getZ());
+
+        for (int dx = -REACH; dx <= REACH; dx++) {
+            for (int dz = -REACH; dz <= REACH; dz++) {
+                if (dx * dx + dz * dz <= REACH * REACH
+                        && standingSpotNear(world, floor.add(dx, 0, dz)).isPresent()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Um lugar onde um aldeão cabe de pé, perto desta coluna.
      *
      * <p><b>Nasceu da sessão de 2026-08-22.</b> A vila de deserto

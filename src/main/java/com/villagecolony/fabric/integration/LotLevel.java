@@ -32,14 +32,12 @@ import net.minecraft.world.chunk.WorldChunk;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -79,31 +77,26 @@ public final class LotLevel {
     /**
      * Quanto uma coluna do lote pode fugir do nível da rua.
      *
-     * <p><b>Decisão do autor, 2026-09-26:</b> nenhuma coluna pode divergir da
-     * rua. A preparação não move terra; portanto, aceitar um degrau deixaria
-     * uma parte do piso sem apoio físico. A obra é recusada, em vez de nascer
-     * flutuando.
+     * <p>A preparação só aceita a lacuna segura de uma camada abaixo da rua;
+     * qualquer outro desnível é recusado para que a obra não crie plataforma
+     * nem saia da cota da via.
      */
     static final int ROAD_LEVEL_TOLERANCE = 0;
 
     /**
      * Quanto da base precisa estar no nível exato da rua, em por cento.
      *
-     * <p><b>Decisão do autor, 2026-09-19:</b> <i>"aceitar uma base da
-     * construção que tenha mais de 90% dos blocos no mesmo nível
-     * (tentando corrigir o fato de criar uma zona usando a altura de um
-     * bloco porém todo resto da base estar acima do nível do solo,
-     * construção fica voando)"</i>.
+     * <p><b>Decisão do autor, 2026-09-28:</b> pelo menos metade das colunas
+     * precisa ter apoio físico exatamente na altura da rua. A outra metade
+     * pode ser uma depressão segura de uma camada, preenchida na reserva com
+     * o solo padrão do bioma.
      *
      * <p>A {@link #ROAD_LEVEL_TOLERANCE} é <b>por coluna</b> e nada
      * exigia que as colunas concordassem entre si. Esta é a régua do
      * conjunto.
      *
-     * <p>Com a régua estrita da rua, a base será integralmente nivelada. A
-     * contagem é mantida para continuar determinando a altura única do piso
-     * e registrar uma recusa defensiva caso a regra volte a ter tolerância.
      */
-    static final int LEVEL_BASE_PERCENT = 90;
+    static final int LEVEL_BASE_PERCENT = 50;
 
     /**
      * A altura em que a casa assenta, se este lote servir.
@@ -122,10 +115,9 @@ public final class LotLevel {
             ServerWorld world, UUID colonyId, int originX, int originZ, int aroundY,
             int roadY, ColonyPos size) {
 
-        // Quantas colunas em cada altura de chão — a conta da regra dos
-        // 90%, decisão do autor de 2026-09-19. O nível é medido ENTRE AS
-        // COLUNAS, e não contra a rua: ver o portão depois do laço.
-        Map<Integer, Integer> groundLevels = new HashMap<>();
+        // Conta somente o apoio que já existe na cota da rua. As lacunas
+        // seguras de uma camada são preparadas somente após a pré-reserva.
+        int supportedColumns = 0;
 
         for (int dx = 0; dx < size.x(); dx++) {
             for (int dz = 0; dz < size.z(); dz++) {
@@ -179,9 +171,13 @@ public final class LotLevel {
                 // Primeira da fila por ser a única que não lê o mundo: o
                 // chão já está na mão, e a pergunta é a comparação de dois
                 // inteiros.
-                if (Math.abs(ground.getY() - roadY) > ROAD_LEVEL_TOLERANCE) {
-                    // A contagem que decide a terraplanagem — 2026-09-11.
-                    // Ver docs/research/terraplanagem-da-vila.md.
+                int levelOffset = ground.getY() - roadY;
+                if (levelOffset == 0) {
+                    supportedColumns++;
+                } else if (levelOffset == -1
+                        && FoundationPreparation.isFillableBaseGap(world, new BlockPos(x, roadY, z))) {
+                    // A reserva materializa esta lacuna física antes da obra começar.
+                } else {
                     LotRefusals.refused(colonyId, LotRefusals.Reason.OFF_ROAD_LEVEL);
 
                     return Optional.empty();
@@ -202,8 +198,6 @@ public final class LotLevel {
 
                 // Guarda as alturas para determinar a altura única do piso
                 // depois da validação de toda a pegada.
-                groundLevels.merge(ground.getY(), 1, Integer::sum);
-
                 // <b>E as três do meio ficam na ordem em que sempre
                 // estiveram</b>, de propósito. Custam a mesma coisa — uma
                 // consulta em memória, uma leitura de bloco, uma leitura
@@ -287,26 +281,19 @@ public final class LotLevel {
             }
         }
 
-        // A base precisa compartilhar uma altura. A guarda estrita acima já
-        // torna isso 100% no fluxo normal; esta verificação conserva a
-        // proteção se a política de nível vier a mudar novamente.
+        // Pelo menos metade já precisa sustentar fisicamente a base na cota
+        // da rua antes de qualquer bloco ser escrito no mundo.
         int columns = size.x() * size.z();
 
-        int mostCommon = groundLevels.values().stream().mapToInt(Integer::intValue).max()
-                .orElse(0);
-
-        if (mostCommon * 100 < columns * LEVEL_BASE_PERCENT) {
+        if (supportedColumns * 100 < columns * LEVEL_BASE_PERCENT) {
             LotRefusals.refused(colonyId, LotRefusals.Reason.OFF_ROAD_LEVEL);
 
             return Optional.empty();
         }
 
-        // A casa assenta no nível da base validada, isto é, imediatamente
-        // acima do chão que sustenta toda a pegada.
-        int baseY = groundLevels.entrySet().stream()
-                .max(Map.Entry.comparingByValue())
-                .map(Map.Entry::getKey)
-                .orElse(roadY);
+        // A casa assenta sempre na cota da rua; FoundationPreparation só
+        // preenche lacunas de uma camada nesta mesma altura.
+        int baseY = roadY;
 
         // A caixa real da obra começa no piso comum, não no chão de cada
         // coluna. Assim, degraus, blocos voando e restos de outra construção

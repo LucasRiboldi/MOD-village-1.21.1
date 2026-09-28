@@ -14,7 +14,7 @@ mod no cliente.
 Download: [village-colony-0.3.0.jar](downloads/village-colony-0.3.0.jar?raw=1)
 
 SHA-256 do JAR publicado nesta árvore:
-`FBD16DF55BE8B462091C5B106995E9D8E514BC98249863CC4A92DAAA9447BE61`.
+`CCA7DA3067AC4A36BC1414140B6199E29CFCF2A28C1E9C879E55D8EFAF4F7F40`.
 
 ## O que o mod faz
 

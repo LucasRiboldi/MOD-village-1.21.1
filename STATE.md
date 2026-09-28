@@ -19,16 +19,25 @@ ainda exige, alem da metade de reserva ja existente. A busca de recursos
 continua aprendendo alcancabilidade pela tentativa real e marca falhas
 temporarias; dois congelamentos no mesmo ponto acionam a saida fisica comum.
 O `/vc log` explica tanto essa recuperacao quanto o retorno do trabalhador a
-escala. `ColonyGoalsTest`, `VillageLogPresenterTest` e a bateria Fabric
-passaram em 493/493. Falta observar no save uma obra com escadas ou troncos
-brutos e um trabalhador saindo de um ponto preso.
+escala. A fundacao aceita metade da base ja apoiada na cota da rua e completa
+somente lacunas seguras de uma camada com o solo do bioma. `ColonyGoalsTest`,
+`VillageLogPresenterTest` e a bateria Fabric passaram em 498/498. O JAR
+instalado e publicado tem SHA-256 `CCA7DA3067AC4A36BC1414140B6199E29CFCF2A28C1E9C879E55D8EFAF4F7F40`. Falta
+observar no save uma obra com escadas ou troncos brutos e um trabalhador saindo
+de um ponto preso.
 
 A auditoria de entrega de 2026-09-28 confirmou 1.163/1.163 testes unitarios,
-86/86 testes Python e 493/493 GameTests. No save real, o maior gargalo nao e
-uma profissao isolada: ciclos de 6-7 colonias gastaram 76-122 ms no
-levantamento de baus, dentro de ciclos de 91-259 ms. Varredura de lotes,
-aproximacao do construtor e coleta de superficie seguem como candidatos
-separados em `docs/technical/Auditoria-Entrega-2026-09-28.md`.
+86/86 testes Python e, depois das correcoes, 495/495 GameTests. No save real,
+o maior gargalo nao era uma profissao isolada: ciclos de 6-7 colonias gastaram
+76-122 ms no levantamento de baus, dentro de ciclos de 91-259 ms. O
+levantamento agora le no maximo oito baus por rodada, priorizando baus
+compartilhados e sem inventario virtual; enquanto a fotografia esta pendente,
+o ciclo decide apenas com o que ja leu, e bau inalcançavel continua bloqueando.
+Cultivo e coleta de superficie tambem passaram a ter cursores independentes.
+Obra so e reservada quando o proximo bloco tem ponto de apoio fisico no alcance
+e a base tem ao menos metade do apoio na altura da rua. Falta confirmar tudo no
+save e ainda reproduzir/corrigir a coleta de superficie inacessivel, em
+`docs/technical/Auditoria-Entrega-2026-09-28.md`.
 
 A boca seca da mina agora so abre quando os tres primeiros degraus das tres
 faixas da escada podem sair por solo firme, portanto uma coluna alta isolada

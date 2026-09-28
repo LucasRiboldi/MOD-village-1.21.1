@@ -8,7 +8,7 @@ pendente. Ela nao considera uma assinatura de log como defeito por si so.
 | Verificacao | Resultado | Evidencia |
 |---|---:|---|
 | Unitarios Java | 1.163/1.163 | 139 suites, 0 falhas, 0 erros, 0 ignorados |
-| GameTests Fabric | 493/493 | `build/gametest/logs/latest.log`, 1,092 min |
+| GameTests Fabric | 498/498 | `build/gametest/logs/latest.log`, 58,38 s |
 | Suite Python | 86/86 | `python -m unittest discover -s tests -v` |
 | Log do save | 2.118 linhas | `scripts/analyze_village_log.py` |
 | Analise estrutural | atualizada | Graphify: 8.148 nos, 28.731 relacoes, 9 hiperarestas |
@@ -62,6 +62,13 @@ enquanto isso, quem exige certeza recebe `PARTIAL` e espera. E mais simples de
 introduzir, mas aumenta a latencia de reagir a recurso novo. Exige GameTest de
 obra que recebe material no ultimo bau do cursor.
 
+**Escolha aplicada - B.** `ColonyChestSurvey` le no maximo oito baus por
+colonia e marca a rodada como `pending` ate a ultima fatia. Enquanto somente
+ha pendencia, `ColonyCycleRunner` decide estritamente pelo estoque observado;
+se qualquer bau conhecido estiver inalcançavel, bloqueia a decisao. O conteudo
+nao e cacheado entre rodadas e continua vindo de baus fisicos. `StorageGameTest
+.aSlicedSurveyPublishesTheLastChestOnlyAfterItsRoundCloses` cobre o nono bau.
+
 ## Riscos reproduziveis no log
 
 | Prioridade | Assinatura | Ocorrencias atuais | Leitura |
@@ -83,6 +90,11 @@ coleta de superficie em cursores independentes, com filtros aritmeticos antes
 de qualquer leitura de bloco. Reduz trabalho irrelevante, mas pede mais
 invariantes de limpeza de cursor.
 
+**Escolha aplicada - B.** `RingSweep` agora separa cursores geral, de cultivo
+e de superficie para o mesmo dono. O scanner de lote ja tinha cursor proprio;
+os filtros de coluna continuam antes das leituras de mundo. `RingSweepResumeTest
+.separateScanKindsKeepIndependentCursorsForTheSameOwner` prova o isolamento.
+
 ### P1 - Caminhos sem progresso
 
 **Alternativa A - validar ponto de apoio antes da reserva.** O planejador
@@ -98,11 +110,19 @@ As duas alternativas devem nascer de GameTests que reproduzam um lote valido
 sem ponto de pe e uma coleta de superficie inacessivel. Nao se deve aumentar
 timeout para esconder a repeticao.
 
+**Escolha aplicada - A, para obra.** Antes de reservar `BUILD`, a integracao
+confirma que o proximo bloco da obra possui ponto de apoio fisico no alcance;
+o Core recebe apenas esse predicado e continua sem depender de Minecraft.
+`WorkAssignmentTest.aPhysicalPreconditionKeepsAnOtherwiseEligibleBuildAvailable`
+e `BuilderApproachGameTest.aBuildIsNotReservedWithoutAnyStandingSpotInReach`
+cobrem a regra. `surface_worker_unreachable` permanece aberto: nao foi mudado
+sem a reproducao equivalente.
+
 ## Inconsistencias documentais encontradas
 
 1. `CLAUDE.md` ainda declarava falha obrigatoria de GameTest em 2026-09-21;
-   foi atualizado para o resultado atual de 493/493.
-2. O topo de `TODO.md` dizia 491 GameTests; foi atualizado para 493 e recebeu
+   foi atualizado e a rodada atual passou em 498/498.
+2. O topo de `TODO.md` dizia 491 GameTests; foi atualizado e recebeu
    a fila desta auditoria.
 3. `STATE.md` declara limite de 150 linhas, mas contem 273. Esta pendencia P2
    ficou aberta para migrar historico sem apagar playtests pendentes.

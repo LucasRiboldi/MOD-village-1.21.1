@@ -22,6 +22,7 @@ import com.villagecolony.core.resource.model.ColonyResources;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.task.model.TaskType;
+import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.HiringLog;
@@ -30,6 +31,8 @@ import com.villagecolony.core.worker.service.VacancyEnforcer;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
+import com.villagecolony.fabric.integration.ColonyChestSurvey;
+import com.villagecolony.fabric.integration.FoundationPreparation;
 import com.villagecolony.fabric.integration.ChestMarker;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.SiteMarker;
@@ -55,6 +58,7 @@ import com.villagecolony.fabric.work.WorkMaterials;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.BuilderWork;
+import com.villagecolony.fabric.work.BuilderApproach;
 import com.villagecolony.fabric.work.StrandedEscape;
 import com.villagecolony.fabric.work.VillageMeals;
 import com.villagecolony.fabric.work.ConstructionDemand;
@@ -77,9 +81,10 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.Set;
+import java.util.stream.Collectors;
 import net.minecraft.world.poi.PointOfInterestTypes;
 
 /**
@@ -205,11 +210,13 @@ final class ColonyCycleRunner {
         List<ColonyPos> chests = ColonyChests.nearestFirst(
                 overworld, colony.id(), colony.center());
 
-        ChestInventoryReader.ChestSurvey survey =
-                ChestInventoryReader.survey(
-                        overworld, chests, ResourceGroup.WOOD, ResourceGroup.PLANKS);
+        Set<ColonyPos> professionChests = VillageColonyMod.STORAGES.all().stream()
+                .map(WorkerStorage::chestPosition)
+                .collect(Collectors.toSet());
+        ChestInventoryReader.ChestSurvey survey = ColonyChestSurvey.advance(
+                overworld, colony.id(), chests, professionChests, ResourceGroup.WOOD, ResourceGroup.PLANKS);
 
-        if (survey.isPartial()) {
+        if (survey.blocksStockDecisions()) {
             // A leitura aconteceu e custou, mesmo sem decidir nada: cobrar
             // só o caminho feliz esconderia justamente a colônia cara que
             // não produz — que é o caso que o P2.1 foi medir.
@@ -224,11 +231,13 @@ final class ColonyCycleRunner {
                     colony.id(),
                     CYCLE_SUBJECT,
                     IdleReason.COUNT_PARTIAL,
-                    survey.chestsUnreachable() + " of "
-                            + (survey.chestsRead() + survey.chestsUnreachable())
-                            + " chests are in unloaded chunks");
+                    survey.coverage());
 
             return;
+        }
+
+        if (survey.isPending()) {
+            VillageColonyMod.LOGGER.debug("Colony {} continues with observed chest stock: {}", colony.id(), survey.coverage());
         }
 
         IdleLog.clear(colony.id(), CYCLE_SUBJECT);
@@ -370,7 +379,8 @@ final class ColonyCycleRunner {
                 VillageColonyMod.WORKERS,
                 VillageColonyMod.STORAGES::hasStorage,
                 (resource, type, hands) -> reportHands(colony.id(), resource, type, hands),
-                work.constructionMaterials());
+                work.constructionMaterials(),
+                (worker, task) -> canReserveTask(overworld, colony.id(), task));
 
         // Sem o `if (assigned > 0)` que estava aqui. A linha calava
         // exatamente quando havia algo a dizer: distribuição parada é
@@ -394,12 +404,7 @@ final class ColonyCycleRunner {
 
         // Depois da distribuição: quem recebeu tarefa neste ciclo já
         // começa a andar nele, em vez de esperar o próximo.
-        LumberjackWork.run(overworld, colony);
-        MinerWork.run(overworld, colony);
-        SmelterWork.run(overworld, colony);
-        SurfaceGatheringWork.run(overworld, colony);
-        ShepherdWork.run(overworld, colony);
-        FarmerWork.run(overworld, colony);
+        runOngoingWork(overworld, colony);
 
         // <b>A peça que a obra espera e ninguém faz</b> — P1.1,
         // 2026-09-17. Vem antes do fabricante, para a tarefa aberta agora
@@ -414,9 +419,35 @@ final class ColonyCycleRunner {
         WaitingWork.askForWhatTheWorkIsWaitingOn(overworld, colony);
 
         CraftingWork.run(overworld, colony);
-        BuilderWork.run(overworld, colony);
 
         CycleCost.since(CycleCost.Phase.WORKERS, mark);
+    }
+
+    /** Trabalhos já reservados continuam mesmo enquanto uma fotografia termina de ser lida. */
+    private static void runOngoingWork(ServerWorld world, Colony colony) {
+        LumberjackWork.run(world, colony);
+        MinerWork.run(world, colony);
+        SmelterWork.run(world, colony);
+        SurfaceGatheringWork.run(world, colony);
+        ShepherdWork.run(world, colony);
+        FarmerWork.run(world, colony);
+        BuilderWork.run(world, colony);
+    }
+
+    /** Recusa obra aberta cujo próximo bloco ainda não possui ponto físico de trabalho. */
+    private static boolean canReserveTask(ServerWorld world, UUID colonyId, Task task) {
+        if (task.type() != TaskType.BUILD) {
+            return true;
+        }
+
+        return VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
+                .flatMap(project -> project.nextBlock().map(next ->
+                        BuilderApproach.hasStandingSpotWithinReach(
+                                world,
+                                project,
+                                MinecraftTypeAdapter.toBlockPos(project.worldPositionOf(next)))
+                                && FoundationPreparation.prepareIfQualified(world, project)))
+                .orElse(false);
     }
 
     /**

@@ -4,8 +4,11 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeKeys;
 
@@ -183,6 +186,17 @@ public final class VillageBiomes {
         return world.getBiome(MinecraftTypeAdapter.toBlockPos(where))
                 .getKey()
                 .flatMap(VillageBiomes::woodFor);
+    }
+
+    /** Solo de acabamento para recompor uma depressão de uma camada no lote. */
+    public static Block foundationGroundAt(ServerWorld world, BlockPos where) {
+        return world.getBiome(where).getKey().map(VillageBiomes::foundationGroundFor).orElse(Blocks.GRASS_BLOCK);
+    }
+
+    private static Block foundationGroundFor(RegistryKey<Biome> biome) {
+        if (BiomeKeys.DESERT.equals(biome)) return Blocks.SAND;
+        if (BiomeKeys.SNOWY_PLAINS.equals(biome) || BiomeKeys.SNOWY_TAIGA.equals(biome)) return Blocks.SNOW_BLOCK;
+        return Blocks.GRASS_BLOCK;
     }
 
     /** Duas espécies compatíveis e distintas para a reserva do lenhador. */

@@ -14,11 +14,13 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
+import com.villagecolony.fabric.integration.ColonyChestSurvey;
 import com.villagecolony.fabric.integration.ColonyChests;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 
 import java.util.UUID;
 import java.util.List;
+import java.util.Set;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.ChestBlockEntity;
@@ -233,6 +235,76 @@ public class StorageGameTest implements FabricGameTest {
                                 context.getWorld(), position, ResourceGroup.PLANKS),
                 "a fotografia mudou o espaço disponível para tábuas");
 
+        context.complete();
+    }
+
+    /** A última fatia vê o item no último baú, sem publicar uma soma parcial antes. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "storage_count")
+    public void aSlicedSurveyPublishesTheLastChestOnlyAfterItsRoundCloses(TestContext context) {
+        ServerWorld world = context.getWorld();
+        UUID colonyId = UUID.randomUUID();
+        List<ColonyPos> chests = new java.util.ArrayList<>();
+
+        for (int index = 0; index <= ColonyChestSurvey.CHESTS_PER_CYCLE; index++) {
+            BlockPos relative = new BlockPos(1 + index, 1, 1);
+            context.setBlockState(relative, Blocks.CHEST.getDefaultState());
+            chests.add(MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(relative)));
+        }
+
+        BlockPos last = context.getAbsolutePos(new BlockPos(
+                1 + ColonyChestSurvey.CHESTS_PER_CYCLE, 1, 1));
+        if (world.getBlockEntity(last) instanceof ChestBlockEntity inventory) {
+            inventory.setStack(0, new ItemStack(Items.OAK_LOG, 12));
+        } else {
+            context.throwGameTestException("não há o último baú da fotografia");
+        }
+
+        try {
+            ChestInventoryReader.ChestSurvey first = ColonyChestSurvey.advance(world, colonyId, chests);
+            context.assertTrue(first.isPending(), "a primeira fatia foi publicada como completa");
+            context.assertTrue(
+                    first.resources().total().amountOf(ResourceId.vanilla("oak_log")) == 0,
+                    "o item do último baú apareceu antes da rodada fechar");
+
+            ChestInventoryReader.ChestSurvey completed = ColonyChestSurvey.advance(world, colonyId, chests);
+            context.assertTrue(!completed.isPartial(), "a última fatia não fechou a fotografia");
+            context.assertTrue(
+                    completed.resources().total().amountOf(ResourceId.vanilla("oak_log")) == 12,
+                    "a fotografia final não incluiu o item do último baú");
+        } finally {
+            ColonyChestSurvey.forget(colonyId);
+        }
+
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "storage_count")
+    public void pendingSurveyReadsSharedChestBeforeProfessionStorage(TestContext context) {
+        ServerWorld world = context.getWorld();
+        UUID colonyId = UUID.randomUUID();
+        List<ColonyPos> professionChests = new java.util.ArrayList<>();
+        for (int index = 0; index < ColonyChestSurvey.CHESTS_PER_CYCLE; index++) {
+            BlockPos relative = new BlockPos(1 + index, 1, 1);
+            context.setBlockState(relative, Blocks.CHEST);
+            professionChests.add(MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(relative)));
+        }
+        BlockPos shared = new BlockPos(10, 1, 1);
+        context.setBlockState(shared, Blocks.CHEST);
+        if (world.getBlockEntity(context.getAbsolutePos(shared)) instanceof ChestBlockEntity inventory) {
+            inventory.setStack(0, new ItemStack(Items.OAK_LOG, 12));
+        } else context.throwGameTestException("não há o baú compartilhado");
+
+        try {
+            List<ColonyPos> allChests = new java.util.ArrayList<>(professionChests);
+            allChests.add(MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(shared)));
+            ChestInventoryReader.ChestSurvey survey = ColonyChestSurvey.advance(
+                    world, colonyId, allChests, Set.copyOf(professionChests), ResourceGroup.WOOD);
+            context.assertTrue(survey.isPending(), "nove baús devem manter a rodada pendente");
+            context.assertTrue(survey.resources().total().amountOf(ResourceId.vanilla("oak_log")) == 12,
+                    "a fatia pendente deve observar o baú compartilhado antes dos baús de profissão");
+        } finally {
+            ColonyChestSurvey.forget(colonyId);
+        }
         context.complete();
     }
 

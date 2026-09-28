@@ -10181,3 +10181,61 @@ nos, 28.731 relacoes e 9 hiperarestas. O acoplamento observado entre
 `BuildSiteScanner` e `BuilderWork` confirma que uma alteracao de orcamento ou
 cache precisa ser isolada por fase e por colonia. A lista priorizada, os dados
 e as duas alternativas de cada correcao estao na auditoria tecnica.
+
+### 2026-09-28 - Estoque fatiado, cursores especializados e pre-reserva de obra
+
+Foram aplicadas as escolhas B, B e A da auditoria. `ColonyChestSurvey` limita
+a leitura a oito baus por colonia em cada rodada e anuncia a fotografia como
+pendente ate a ultima leitura; durante essa janela, o ciclo nao cria reserva,
+pedido, planejamento ou fabricacao novos, mas deixa trabalhos ja abertos
+progredirem. Nenhum recurso foi virtualizado: toda rodada e derivada de baus
+fisicos e o cursor vive somente em memoria.
+
+`RingSweep` ganhou cursores independentes de cultivo e superficie, sem mover o
+cursor geral ou o cursor proprio do scanner de lotes. Para a obra, o ciclo so
+reserva `BUILD` quando `BuilderApproach` encontra ponto de apoio fisico no
+alcance do proximo bloco; o Core recebe essa condicao por predicado e nao
+importa Minecraft. A coleta de superficie inacessivel permaneceu pendente por
+nao ter reproducao deterministica ainda.
+
+Os testes direcionados passaram e `runGametest --rerun-tasks --no-daemon`
+terminou em 495/495. A primeira repeticao mostrou flutuacao no teste historico
+da torre do construtor; a repeticao limpa passou integralmente. Ainda falta
+playtest no save para medir o novo custo de `chests`, observar a latencia de
+uma rodada incompleta e confirmar obra em relevo real.
+
+### 2026-09-28 - Base parcial na rua e decisao durante levantamento pendente
+
+O pedido seguinte substituiu duas regras recentes. Obra nao exige mais apoio
+em 100% da pegada: `LotLevel` exige ao menos 50% das colunas ja na altura da
+rua e aceita somente depressoes seguras de uma camada. Depois de confirmar o
+ponto fisico de trabalho, `FoundationPreparation` completa essas lacunas com
+areia no deserto, neve em bioma nevado ou grama nos demais. A origem e o piso
+nao mudam; rua e obra continuam na mesma cota. Degrau maior, agua e vazio sem
+solo firme continuam recusados. `RoadPaving` permanece o unico responsavel por
+expandir a rua e mantem degrau maximo de um bloco.
+
+O levantamento de baus ainda tem teto de oito por ciclo, mas bau pendente nao
+interrompe mais a decisao do ciclo: ela usa estritamente o que ja foi lido.
+Baus compartilhados sao lidos antes dos baus vinculados a profissoes; conteudo
+nao lido nao e estimado e bau inalcançavel continua bloqueando. A rodada limpa
+de `./gradlew.bat runGametest --rerun-tasks --no-daemon` passou em **498/498**.
+Falta playtest no save com terreno meio apoiado, expansao de rua e uma colonia
+com mais de oito baus, incluindo um compartilhado.
+
+### 2026-09-28 - Varredura final e publicacao do JAR
+
+A varredura de entrega encontrou um caso misto no levantamento fatiado: se um
+bau estivesse inalcançavel e outros ainda pendentes, o ciclo poderia usar a
+fotografia parcial. `ChestSurvey.blocksStockDecisions` agora expressa a regra
+correta e `ColonyCycleRunner` a usa antes de metas, reservas e fabricacao;
+pendencia sem indisponibilidade continua usando apenas o estoque observado.
+`ChestSurveyCoverageTest.anUnreachableChestBlocksStockDecisionsEvenWithPendingChests`
+cobre a combinacao.
+
+`./gradlew.bat build --no-daemon` e
+`./gradlew.bat runGametest --rerun-tasks --no-daemon` passaram; o servidor de
+testes registrou **498/498 em 58,38 s**. O JAR `0.3.0` foi copiado para
+`downloads/` e `%APPDATA%/.minecraft/mods/`; as tres copias, incluindo
+`build/libs/`, conferiram SHA-256
+`CCA7DA3067AC4A36BC1414140B6199E29CFCF2A28C1E9C879E55D8EFAF4F7F40`.

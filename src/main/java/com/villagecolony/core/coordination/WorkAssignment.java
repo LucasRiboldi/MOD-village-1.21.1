@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 /**
@@ -45,7 +46,15 @@ public final class WorkAssignment {
      */
     private static final Predicate<java.util.UUID> ANY_WORKER_HAS_STORAGE = worker -> true;
 
+    /** Preserva a distribuição quando a camada chamadora não tem pré-condição física. */
+    private static final BiPredicate<Worker, Task> ANY_TASK_IS_RESERVABLE =
+            WorkAssignment::anyTaskIsReservable;
+
     private WorkAssignment() {
+    }
+
+    private static boolean anyTaskIsReservable(Worker worker, Task task) {
+        return true;
     }
 
     /**
@@ -89,10 +98,33 @@ public final class WorkAssignment {
             TaskService tasks,
             Predicate<java.util.UUID> hasStorage) {
 
+        return assign(colonyId, workers, tasks, hasStorage, ANY_TASK_IS_RESERVABLE);
+    }
+
+    /**
+     * O mesmo, confirmando a pré-condição física específica da tarefa.
+     *
+     * <p>O Core continua sem conhecer mundo, chunks ou navegação. A camada
+     * que conhece o mundo pode recusar uma reserva que já nasce sem ponto
+     * físico de trabalho; por exemplo, uma obra cujo próximo bloco não tem
+     * onde o construtor possa ficar de pé. A tarefa permanece disponível e
+     * pode ser tentada depois que o mundo mudar.
+     *
+     * @param canReserveTask confirma se este trabalhador pode receber esta
+     *     tarefa neste momento, além da elegibilidade comum
+     */
+    public static int assign(
+            java.util.UUID colonyId,
+            WorkerService workers,
+            TaskService tasks,
+            Predicate<java.util.UUID> hasStorage,
+            BiPredicate<Worker, Task> canReserveTask) {
+
         Objects.requireNonNull(colonyId, "colonyId");
         Objects.requireNonNull(workers, "workers");
         Objects.requireNonNull(tasks, "tasks");
         Objects.requireNonNull(hasStorage, "hasStorage");
+        Objects.requireNonNull(canReserveTask, "canReserveTask");
 
         int assigned = 0;
 
@@ -103,7 +135,7 @@ public final class WorkAssignment {
             // porque não é dele que a colônia precisa decidir agora.
             worker.aCycleWentBy();
 
-            if (takeOneTask(colonyId, worker, tasks, hasStorage)) {
+            if (takeOneTask(colonyId, worker, tasks, hasStorage, canReserveTask)) {
                 assigned++;
             }
         }
@@ -190,7 +222,8 @@ public final class WorkAssignment {
             java.util.UUID colonyId,
             Worker worker,
             TaskService tasks,
-            Predicate<java.util.UUID> hasStorage) {
+            Predicate<java.util.UUID> hasStorage,
+            BiPredicate<Worker, Task> canReserveTask) {
 
         Optional<ProfessionType> profession = worker.profession();
 
@@ -211,7 +244,7 @@ public final class WorkAssignment {
         // A elegibilidade é validada em reserveOne para valer para toda
         // passagem presente ou futura que tente reservar esta capacidade.
         for (Capability capability : taskCapabilities) {
-            if (reserveOne(colonyId, worker, tasks, hasStorage, capability)) {
+            if (reserveOne(colonyId, worker, tasks, hasStorage, canReserveTask, capability)) {
 
                 return true;
             }
@@ -233,6 +266,7 @@ public final class WorkAssignment {
             Worker worker,
             TaskService tasks,
             Predicate<java.util.UUID> hasStorage,
+            BiPredicate<Worker, Task> canReserveTask,
             Capability capability) {
 
         Optional<Task> task = tasks.nextFor(colonyId, capability);
@@ -242,6 +276,10 @@ public final class WorkAssignment {
         }
 
         if (!WorkEligibility.canReserve(worker, capability, task.get(), hasStorage)) {
+            return false;
+        }
+
+        if (!canReserveTask.test(worker, task.get())) {
             return false;
         }
 

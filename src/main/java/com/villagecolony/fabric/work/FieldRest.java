@@ -95,7 +95,7 @@ final class FieldRest {
     static void forget(UUID colonyId) {
         QUIET_UNTIL.remove(colonyId);
 
-        RingSweep.forget(colonyId);
+        RingSweep.forget(colonyId, RingSweep.Scan.FARMING);
     }
 
     /** Esquece tudo. Chamado ao descarregar o mundo. */

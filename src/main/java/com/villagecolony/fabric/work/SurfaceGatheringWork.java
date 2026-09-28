@@ -99,7 +99,7 @@ public final class SurfaceGatheringWork {
                     return current;
                 }
 
-                RingSweep.forget(worker);
+                RingSweep.forget(worker, RingSweep.Scan.SURFACE);
                 Direction sector = FarthestVillageSector.farthestLoadedSector(world, center, colony.id());
                 return new Job(task, center, sector);
             });
@@ -133,7 +133,7 @@ public final class SurfaceGatheringWork {
 
             if (!isOngoing(job.task)) {
                 WorkTargets.clear(entry.getKey());
-                RingSweep.forget(entry.getKey());
+                RingSweep.forget(entry.getKey(), RingSweep.Scan.SURFACE);
                 iterator.remove();
             } else if (job.target == null) {
                 searching.add(entry.getKey());
@@ -141,7 +141,7 @@ public final class SurfaceGatheringWork {
                 step(world, entry.getKey(), job, false);
                 if (!isOngoing(job.task)) {
                     WorkTargets.clear(entry.getKey());
-                    RingSweep.forget(entry.getKey());
+                    RingSweep.forget(entry.getKey(), RingSweep.Scan.SURFACE);
                     iterator.remove();
                 }
             }
@@ -257,7 +257,7 @@ public final class SurfaceGatheringWork {
                 : column -> true;
 
         Optional<BlockPos> found = RingSweep.around(
-                workerId, searchCenter, reach(job, outsideVillage), worthLooking, column -> {
+                workerId, RingSweep.Scan.SURFACE, searchCenter, reach(job, outsideVillage), worthLooking, column -> {
             if (job.task.targetResource() == ResourceType.SAND) {
                 return SandPatch.in(world, column, job.center.getY())
                         .filter(pos -> BlockProtection.mayBreak(world, pos, world.getBlockState(pos)));
@@ -286,7 +286,7 @@ public final class SurfaceGatheringWork {
         if (found.isEmpty()) {
             IdleLog.recordAt(
                     job.task.colonyId(), subject(job),
-                    RingSweep.pausedAt(workerId).isPresent()
+                    RingSweep.pausedAt(workerId, RingSweep.Scan.SURFACE).isPresent()
                             ? IdleReason.SWEEP_INCOMPLETE : IdleReason.NO_TARGET,
                     job.task.targetResource().name().toLowerCase(java.util.Locale.ROOT), world.getTime());
             return true;
@@ -384,7 +384,7 @@ public final class SurfaceGatheringWork {
             job.task.release();
         }
         WorkTargets.clear(workerId);
-        RingSweep.forget(workerId);
+        RingSweep.forget(workerId, RingSweep.Scan.SURFACE);
         job.target = null;
     }
 
@@ -423,14 +423,14 @@ public final class SurfaceGatheringWork {
         Job job = JOBS.remove(workerId);
         if (job != null) {
             WorkTargets.clear(workerId);
-            RingSweep.forget(workerId);
+            RingSweep.forget(workerId, RingSweep.Scan.SURFACE);
         }
     }
 
     public static void clearAll() {
         for (UUID workerId : JOBS.keySet()) {
             WorkTargets.clear(workerId);
-            RingSweep.forget(workerId);
+            RingSweep.forget(workerId, RingSweep.Scan.SURFACE);
         }
         JOBS.clear();
         lastSearchWorker = null;

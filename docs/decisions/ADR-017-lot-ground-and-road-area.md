@@ -71,3 +71,28 @@ pegada deve ter `groundY == roadY`. `LotLevel` recusa o lote inteiro como
 Isto não autoriza terraplanagem nem escreve blocos de terra. A consequência é
 uma obra nova esperar um lote realmente apoiado; uma casa ou obra já colocada
 não é deslocada, desmontada nem transformada em reparo automático.
+
+## Emenda — 2026-09-28: preparacao parcial na cota da rua
+
+O autor substituiu a exigencia de apoio em toda a pegada por uma preparacao
+fisica limitada. `LotLevel` aceita o lote quando pelo menos 50% das colunas ja
+tem `groundY == roadY`. As demais colunas so podem estar exatamente uma camada
+abaixo, com ar substituivel na cota da rua, sem fluido e com solo firme logo
+abaixo. Qualquer degrau maior, agua, vazio sem apoio ou terreno acima da rua
+continua `OFF_ROAD_LEVEL`.
+
+Depois de `BuilderApproach` confirmar um ponto real onde o construtor possa
+ficar dentro do alcance, `FoundationPreparation` preenche somente essas
+lacunas permitidas em `roadY`, usando o solo padrao do bioma: areia no deserto,
+neve nos biomas nevados e grama nos demais. A fundacao nao sobe nem desce a
+obra, nao cria plataforma suspensa e nao altera obra ja registrada.
+
+`RoadPaving` continua responsavel pela expansao fisica das ruas e conserva sua
+inclinacao maxima de um bloco. Portanto, um relevo que peca rampa nao e
+regularizado pela fundacao: os aldeoes primeiro estendem a rua e so entao o
+scanner pode abrir a obra na nova cota.
+
+`FoundationPreparationGameTest.halfSupportedStreetBaseIsFilledWithBiomeGround`
+e `lessThanHalfOfTheStreetBaseIsRejected` cobrem o limiar e a escrita fisica.
+`runGametest --rerun-tasks --no-daemon` passou em 498/498; falta a confirmacao
+visual no save do autor.
