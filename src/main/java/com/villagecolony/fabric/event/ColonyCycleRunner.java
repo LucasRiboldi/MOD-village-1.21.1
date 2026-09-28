@@ -32,6 +32,7 @@ import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.ColonyChestSurvey;
+import com.villagecolony.fabric.integration.WarehouseHealthLog;
 import com.villagecolony.fabric.integration.FoundationPreparation;
 import com.villagecolony.fabric.integration.ChestMarker;
 import com.villagecolony.fabric.integration.ColonyChests;
@@ -178,12 +179,9 @@ final class ColonyCycleRunner {
     /**
      * Um ciclo de uma colônia.
      *
-     * <p>A contagem parcial é motivo para não decidir. Baú em chunk
-     * descarregado sai da soma sem avisar, e uma colônia que conclui
-     * "falta madeira" com metade dos baús fora de alcance mandaria um
-     * trabalhador buscar o que ela já tem. Ver
-     * {@code ChestInventoryReader.ChestSurvey} e a entrada de §15 de
-     * 2026-08-07.
+     * <p>Baú em chunk descarregado não entra na soma e não é carregado à
+     * força. O ciclo continua com o limite inferior que observou; toda retirada
+     * continua física e tenta os baús carregados em ordem de distância.
      */
     static void runCycleOf(ServerWorld overworld, Colony colony, boolean mayPlan) {
         long mark = System.nanoTime();
@@ -216,25 +214,7 @@ final class ColonyCycleRunner {
         ChestInventoryReader.ChestSurvey survey = ColonyChestSurvey.advance(
                 overworld, colony.id(), chests, professionChests, ResourceGroup.WOOD, ResourceGroup.PLANKS);
 
-        if (survey.blocksStockDecisions()) {
-            // A leitura aconteceu e custou, mesmo sem decidir nada: cobrar
-            // só o caminho feliz esconderia justamente a colônia cara que
-            // não produz — que é o caso que o P2.1 foi medir.
-            CycleCost.since(CycleCost.Phase.CHESTS, mark);
-
-            // <b>E agora ele diz.</b> Pular era certo desde 2026-08-07;
-            // pular calado custou a sessão de 2026-09-04 inteira em
-            // dúvida — não havia como saber, do log, se uma colônia
-            // parada tinha decidido não decidir. Uma colônia inteira sem
-            // fazer nada é a maior omissão que este log podia ter.
-            IdleLog.record(
-                    colony.id(),
-                    CYCLE_SUBJECT,
-                    IdleReason.COUNT_PARTIAL,
-                    survey.coverage());
-
-            return;
-        }
+        WarehouseHealthLog.observe(colony.id(), survey);
 
         if (survey.isPending()) {
             VillageColonyMod.LOGGER.debug("Colony {} continues with observed chest stock: {}", colony.id(), survey.coverage());

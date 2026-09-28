@@ -49,8 +49,12 @@ Enquanto houver baus pendentes, o ciclo pode decidir reserva, pedido,
 planejamento e fabricacao com somente as quantidades que ja foram lidas. Bau
 ainda nao lido nao vira saldo zero, sobra presumida nem dado persistido; a
 rodada e descartada ao fechar, quando a lista de baus muda e no ciclo de vida
-do servidor. Leitura parcial causada por bau inalcançavel continua bloqueando a
-decisao, pois nao e uma continuacao normal de rodada e exige diagnostico fisico.
+do servidor. Leitura parcial causada por bau inalcançavel deixa o armazem em
+modo degradado: a integracao registra a transicao e continua somente com o
+limite inferior fisico que observou. Ela nao carrega chunk, nao estima o
+conteudo ausente e nao o transforma em saldo ou reserva. A retirada no ponto
+de uso continua tentando os baus carregados e confirma o item antes de
+consumi-lo; uma falha local pausa somente o trabalho que realmente depende dele.
 
 **Sem estoque virtual.** Todo recurso que o índice conhece veio de leitura
 física de baú reconhecido. A única exceção documentada é a **ADR-022**: uma
@@ -65,9 +69,9 @@ depósito acontece.
 - Duas tarefas do mesmo ciclo não podem prometer o mesmo estoque escasso
   duas vezes.
 - Prioridade é decisão explícita e testável, não ordem de chegada acidental.
-- Bau ainda pendente nunca e tratado como "zero" nem como "sobra o bastante";
-  a decisao usa apenas o que foi observado. Bau inalcançavel continua bloqueado
-  e informa o motivo.
+- Bau ainda pendente ou inalcançavel nunca e tratado como "zero" nem como
+  "sobra o bastante"; a decisao usa apenas o que foi observado. O segundo
+  informa a degradacao sem bloquear a colonia inteira.
 - O contrato não sabe onde um baú fica nem que item Minecraft representa um
   `ResourceId`; isso é responsabilidade de
   `fabric.integration.WarehouseObserver` (Task 9), que nunca entra em
@@ -86,3 +90,6 @@ prova que o conteudo do nono bau nao aparece na fotografia antes do fechamento
 da rodada.
 `StorageGameTest.pendingSurveyReadsSharedChestBeforeProfessionStorage` prova
 que um bau compartilhado e consultado antes dos baus vinculados a profissao.
+`ChestSurveyCoverageTest.anUnreachableChestDoesNotBlockObservedStockDecisions`
+prova que indisponibilidade continua explicitamente degradada, mas nao volta a
+ser veto global; `WarehouseHealthLogTest` cobre a transicao do aviso.

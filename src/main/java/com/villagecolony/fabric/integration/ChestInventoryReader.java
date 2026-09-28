@@ -259,13 +259,13 @@ public final class ChestInventoryReader {
         }
 
         /**
-         * Se algum baú conhecido ficou fora de alcance e impede a decisão.
+         * Se algum baú conhecido ficou fora de alcance nesta fotografia.
          *
-         * <p>Diferente de {@link #isPending()}, isso não é custo fatiado:
-         * a colônia não sabe se o chunk indisponível contém recursos que
-         * mudariam a decisão atual.
+         * <p>O conteúdo ausente não vira zero, saldo virtual ou reserva. O
+         * ciclo pode continuar com o limite inferior observado, e as retiradas
+         * físicas continuam confirmando o item no baú antes de usá-lo.
          */
-        public boolean blocksStockDecisions() {
+        public boolean isDegraded() {
             return chestsUnreachable > 0;
         }
 

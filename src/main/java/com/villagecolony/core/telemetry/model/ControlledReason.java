@@ -25,7 +25,6 @@ public enum ControlledReason {
     SWEEP_INCOMPLETE,
     NOT_IN_GAME,
     MISSING_MATERIAL,
-    COUNT_PARTIAL,
 
     /** O guarda de travamento fechou a tarefa por falta de progresso. */
     WORK_STALLED,

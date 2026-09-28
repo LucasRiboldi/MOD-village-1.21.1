@@ -1,11 +1,11 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Atualizacao de 2026-09-28 - JAR `CCA7DA30...F4F7F40`.** Este e o JAR instalado
+**Atualizacao de 2026-09-28 - JAR `B1C516AD...A38C2F5`.** Este e o JAR instalado
 em `downloads/` e `%APPDATA%/.minecraft/mods/`; as tres copias conferem com
 `build/libs/` pelo SHA-256
-`CCA7DA3067AC4A36BC1414140B6199E29CFCF2A28C1E9C879E55D8EFAF4F7F40`.
+`B1C516AD68A99987088D97A82B976C01F10E321A66858D05C49590BC3A38C2F5`.
 `test --rerun-tasks`, `build` e `runGametest --rerun-tasks` passaram, com
-**1.163/1.163 testes unitarios e 498/498 GameTests**. A mina normal mantém o poço de três blocos de largura e altura.
+**1.168/1.168 testes unitarios e 498/498 GameTests**. A mina normal mantém o poço de três blocos de largura e altura.
 Quando uma mina de vila fundada sobre água esgotar os níveis mineráveis, ela
 reabre por uma escadaria segura de três blocos, selada por vidro, até uma camada
 natural de rocha; os mineiros não podem minerar a escada nem a proteção.
@@ -19,6 +19,13 @@ o perfil Spark descrito em `docs/technical/Profiling-spark.md`; a proxima
 correcao compara indice incremental de estoque com levantamento fatiado. Ver
 `docs/technical/Auditoria-Entrega-2026-09-28.md` para os criterios e os
 playtests ainda obrigatorios.
+
+**Bau em chunk descarregado:** deixe um bau registrado fora da distancia de
+carregamento e mantenha outro bau compartilhado carregado com material. O log
+deve dizer uma vez `warehouse is degraded` e os trabalhos que usam o segundo
+bau devem continuar. Ao voltar a carregar o primeiro chunk, deve aparecer uma
+vez `warehouse recovered`. Nenhum item pode surgir, sumir ou depender de
+forcar o carregamento do chunk.
 
 No playtest, confira também que o mineiro segue a perna intermediária até uma
 pedra distante, que uma rua sem ponta abre um ramal físico antes de procurar

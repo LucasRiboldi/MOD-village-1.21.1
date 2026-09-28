@@ -10239,3 +10239,30 @@ testes registrou **498/498 em 58,38 s**. O JAR `0.3.0` foi copiado para
 `downloads/` e `%APPDATA%/.minecraft/mods/`; as tres copias, incluindo
 `build/libs/`, conferiram SHA-256
 `CCA7DA3067AC4A36BC1414140B6199E29CFCF2A28C1E9C879E55D8EFAF4F7F40`.
+
+### 2026-09-28 - Armazem degradado sem paralisar a colonia
+
+O bloqueio global por um bau registrado em chunk descarregado foi removido de
+`ColonyCycleRunner`. `ChestInventoryReader` continua retornando somente a
+fotografia fisica dos baus carregados; o conteudo ausente nao vira zero, saldo
+virtual, reserva ou motivo para carregar o chunk. `ColonySupply` e
+`BiomeConstructionSupply` ja confirmavam retirada/deposito fisico e procuram
+outro bau carregado, portanto os trabalhos independentes seguem e o trabalho
+que realmente nao encontra item pausa localmente.
+
+`WarehouseHealthLog` registra uma vez a entrada no estado degradado e uma vez
+a recuperacao, em memoria do servidor. Isso evita tanto o silencio quanto uma
+linha por ciclo. O teste de contrato falhou antes da correcao porque
+`blocksStockDecisions()` devolvia verdadeiro; depois da mudanca,
+`ChestSurveyCoverageTest.anUnreachableChestDoesNotBlockObservedStockDecisions`
+e `WarehouseHealthLogTest.anUnreachableChestEntersAndLeavesDegradedMode`
+passaram. `StorageGameTest.aChestInAnUnloadedChunkMakesTheCountPartialAndDegraded`
+mantem a prova Fabric de que o chunk nao carregado continua reconhecivel.
+
+A rodada final de `./gradlew.bat test --rerun-tasks --no-daemon` passou em
+**1.168/1.168**, `./gradlew.bat build --no-daemon` concluiu e
+`./gradlew.bat runGametest --rerun-tasks --no-daemon` passou em **498/498**
+em 59,33 s. O JAR `0.3.0` foi copiado para `downloads/` e
+`%APPDATA%/.minecraft/mods/`; as tres copias, incluindo `build/libs/`,
+conferiram SHA-256
+`B1C516AD68A99987088D97A82B976C01F10E321A66858D05C49590BC3A38C2F5`.

@@ -65,7 +65,8 @@ obra que recebe material no ultimo bau do cursor.
 **Escolha aplicada - B.** `ColonyChestSurvey` le no maximo oito baus por
 colonia e marca a rodada como `pending` ate a ultima fatia. Enquanto somente
 ha pendencia, `ColonyCycleRunner` decide estritamente pelo estoque observado;
-se qualquer bau conhecido estiver inalcançavel, bloqueia a decisao. O conteudo
+se qualquer bau conhecido estiver inalcançavel, a leitura fica degradada e o
+ciclo continua somente com o estoque fisico observado. O conteudo
 nao e cacheado entre rodadas e continua vindo de baus fisicos. `StorageGameTest
 .aSlicedSurveyPublishesTheLastChestOnlyAfterItsRoundCloses` cobre o nono bau.
 

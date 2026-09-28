@@ -528,15 +528,12 @@ public class StorageGameTest implements FabricGameTest {
     }
 
     /**
-     * Baú em chunk descarregado torna a contagem parcial.
+     * Baú em chunk descarregado torna a contagem parcial e degradada.
      *
-     * <p>É a precondição de um congelamento inteiro, e não tinha teste
-     * nenhum. O {@code runCycleOf} pula o ciclo da colônia quando a
-     * varredura vem parcial — decisão certa desde 2026-08-07, porque
-     * decidir sobre meio estoque manda buscar o que já se tem —, e até
-     * 2026-09-04 ele pulava <b>calado</b>: uma colônia com um único baú
-     * fora de alcance não fazia nada, ciclo após ciclo, sem uma linha no
-     * log.
+     * <p>O ciclo não pode tratar o baú como vazio, carregar o chunk à força
+     * nem inventar o conteúdo ausente. Ele continua somente com o estoque
+     * físico observado; a retirada confirma o item no ponto de uso e pode
+     * seguir para outro baú carregado.
      *
      * <p>O que se fixa aqui é o gatilho: um baú registrado longe conta
      * como inalcançável, e não como vazio. A diferença entre os dois é a
@@ -544,7 +541,7 @@ public class StorageGameTest implements FabricGameTest {
      * olhar" — o defeito-que-parece-número que o V5 do §7 nomeou.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "storage_partial_count")
-    public void aChestInAnUnloadedChunkMakesTheCountPartial(TestContext context) {
+    public void aChestInAnUnloadedChunkMakesTheCountPartialAndDegraded(TestContext context) {
         ServerWorld world = context.getWorld();
 
         BlockPos here = new BlockPos(2, 2, 2);
@@ -588,8 +585,11 @@ public class StorageGameTest implements FabricGameTest {
 
             context.assertTrue(
                     survey.isPartial(),
-                    "o baú fora de alcance passou por lido, e a colônia decidiria sobre"
-                            + " meio estoque");
+                    "o baú fora de alcance passou por lido");
+
+            context.assertTrue(
+                    survey.isDegraded(),
+                    "o baú fora de alcance não deixou a fotografia degradada");
 
             context.assertTrue(
                     survey.chestsUnreachable() == 1,

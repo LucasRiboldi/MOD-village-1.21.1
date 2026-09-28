@@ -8,17 +8,21 @@ camas prioriza moradia; a prioridade e explicita no Core e aparece no `/vc
 log`. A boca da mina exige os primeiros degraus em solo firme; ao esgotar a
 mina, vila fundada em agua tenta acesso selado para uma saida natural 8x8 antes
 da reabertura seca oposta. Cada lote e validado na orientacao final da planta.
-A bateria de 498 GameTests esta verde; ainda requer validacao no save real.
+A bateria de 1.168 testes unitarios e 498 GameTests esta verde; ainda requer
+validacao no save real.
 
 ## Auditoria de estabilidade e entrega - 2026-09-28
 
 - [x] P0 - O levantamento de baus e fatiado em rodadas de no maximo oito por
   colonia. Enquanto fica pendente, o ciclo decide somente com baus ja lidos;
   baus compartilhados entram antes dos vinculados a profissao e nenhum saldo
-  desconhecido e inventado. Bau inalcançavel continua bloqueando. `StorageGameTest
-  .aSlicedSurveyPublishesTheLastChestOnlyAfterItsRoundCloses` e
-  `.pendingSurveyReadsSharedChestBeforeProfessionStorage` cobrem a rodada e a
-  prioridade.
+  desconhecido e inventado. Bau inalcançavel deixa um aviso de armazem
+  degradado, mas nao bloqueia trabalhos que conseguem confirmar material nos
+  outros baus carregados. `StorageGameTest
+  .aSlicedSurveyPublishesTheLastChestOnlyAfterItsRoundCloses`,
+  `.pendingSurveyReadsSharedChestBeforeProfessionStorage` e
+  `ChestSurveyCoverageTest.anUnreachableChestDoesNotBlockObservedStockDecisions`
+  cobrem a rodada, a prioridade e a degradacao.
 - [x] P1 - Cultivo e coleta de superficie usam cursores `RingSweep`
   independentes por tipo de busca; o scanner de lote mantem seu cursor proprio.
   `RingSweepResumeTest.separateScanKindsKeepIndependentCursorsForTheSameOwner`
