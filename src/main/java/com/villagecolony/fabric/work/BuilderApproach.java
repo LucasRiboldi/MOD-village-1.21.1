@@ -5,6 +5,7 @@ import com.villagecolony.core.construction.model.ConstructionProject;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.Optional;
 
@@ -52,9 +53,9 @@ public final class BuilderApproach {
      * não empilha bloco para subir, porque nada disso está na planta e a
      * Regra 3 manda escrever só o que ela diz.
      */
-    static boolean isWithinReach(BlockPos worker, BlockPos target) {
-        int dx = worker.getX() - target.getX();
-        int dz = worker.getZ() - target.getZ();
+    static boolean isWithinReach(Vec3d worker, BlockPos target) {
+        double dx = worker.x - (target.getX() + 0.5);
+        double dz = worker.z - (target.getZ() + 0.5);
 
         return dx * dx + dz * dz <= REACH * REACH;
     }

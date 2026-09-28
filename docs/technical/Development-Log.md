@@ -31,6 +31,26 @@ o §18 do Project-State. O texto das entradas fica como estava.
 
 ---
 
+## Entry 2026-09-27 - alcance fisico do construtor
+
+O log do save mostrou o construtor repetindo `WORK_STALLED` no mesmo bloco da
+obra: o aldeao estava fisicamente dentro de cinco blocos, mas
+`villager.getBlockPos()` descartava a parte fracionaria da sua posicao. Na
+fronteira observada, a grade transformava a distancia real alcancavel em 5,1
+blocos e o mandava de volta a um destino de caminhada que ja nao era preciso.
+
+`BuilderApproach` passou a comparar a posicao continua do aldeao com o centro
+do bloco da planta, preservando a Regra 14 de alcance horizontal. A escolha de
+um ponto de apoio e a recuperacao de rota continuam inalteradas para alvos que
+realmente estejam fora do alcance. O novo
+`BuilderApproachGameTest.theBuilderDoesNotWalkWhenItsExactPositionIsAlreadyInReach`
+falhou na implementacao anterior e passou depois da correcao.
+
+`./gradlew.bat test` passou e `./gradlew.bat runGametest --rerun-tasks`
+terminou em **492/492**. O log tambem tinha troncos recusados sem copa; isso
+e o filtro esperado e nao demonstrou ainda uma arvore valida sem rota. Falta
+o playtest do autor na obra original para confirmar o fim do ciclo.
+
 ## Entry 2026-09-27 - rotas, rua ramificada, moradia segura e log atual
 
 O log do save deixou quatro problemas relacionados, mas com responsaveis

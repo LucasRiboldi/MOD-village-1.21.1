@@ -276,7 +276,7 @@ public final class BuilderWork {
 
         BlockPos target = MinecraftTypeAdapter.toBlockPos(project.worldPositionOf(next.get()));
 
-        if (!BuilderApproach.isWithinReach(villager.getBlockPos(), target)) {
+        if (!BuilderApproach.isWithinReach(villager.getPos(), target)) {
             // <b>De onde ele está, e não do piso</b> — 2026-09-16. Ver
             // BuilderApproach.footOf: mandar ao piso quem já subiu na obra
             // é mandá-lo para uma queda que a navegação não percorre.

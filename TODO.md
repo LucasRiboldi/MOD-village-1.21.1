@@ -81,9 +81,15 @@ A bateria de 491 GameTests esta verde; ainda requer validacao no save real.
   `BuilderGameTest.theBuilderReachesTheTopOfTheWorkFromTheGround`: houve um
   timeout isolado entre duas rodadas completas verdes, sem reproducao na
   repeticao final de 491/491. Nao relaxar o limite sem isolar a causa.
-- [ ] P0 - Investigar e corrigir o construtor que ignora `grass_block` no
-  volume da obra e o lenhador que permanece em busca sem arvore alcancavel.
-  Ambos foram vistos no log do save e ainda nao foram reproduzidos em teste.
+- [x] P0 - O construtor mede o alcance pela posicao fisica ate o centro da
+  peca, sem arredondar o aldeao para `BlockPos`; assim nao caminha de novo
+  quando ja alcanca a peca. O `BuilderApproachGameTest` falhou antes da
+  correcao e `runGametest --rerun-tasks` passou em 492/492.
+- [ ] P0 - Playtest no save do autor: confirmar que a obra em relevo nao
+  repete `WORK_STALLED` no mesmo alvo ja alcancavel.
+- [ ] P1 - Investigar o lenhador que permanece procurando arvore alcancavel.
+  O log atual so comprova a recusa esperada de troncos sem copa; falta
+  reproduzir um alvo de arvore valido e sem rota antes de mudar a politica.
 
 ## Retorno do mineiro apos queda de dois blocos - 2026-09-27
 

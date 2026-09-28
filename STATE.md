@@ -23,7 +23,11 @@ tambem envia ao scanner a pegada que cada planta tera depois de virar para a
 rua: lote com lavoura ou estrutura passa a ser recusado antes de registrar a
 obra. `runGametest --rerun-tasks` passou em 488/488. Falta confirmar em um
 save real uma mina seca 3x3, uma mina aquatica e uma obra retangular ao lado
-de uma lavoura original.
+de uma lavoura original. No construtor, o alcance agora usa a posicao fisica
+do aldeao ate o centro do bloco, em vez da grade `BlockPos`: isso encerra a
+falsa caminhada observada a 5,1 blocos no log. `BuilderApproachGameTest`
+falhou antes da correcao e `runGametest --rerun-tasks` terminou em 492/492;
+a obra do save ainda precisa confirmar o fim do ciclo de `WORK_STALLED`.
 
 A auditoria do log do save de 27-09 encontrou uma mina esgotada cuja boca
 oposta nao podia ser aberta. A recuperacao nao repete mais a busca e o aviso a

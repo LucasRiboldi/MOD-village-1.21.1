@@ -1,8 +1,8 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Atualização de 2026-09-27 — JAR `FBD16DF5…7BE61`.** Este é o JAR instalado
+**Atualização de 2026-09-28 — JAR `CDDCEEFE…69C35B`.** Este é o JAR instalado
 em `downloads/` e `%APPDATA%/.minecraft/mods/`; as três cópias conferem com
-`build/libs/`. `test`, `build` e `runGametest` passaram, com **491/491
+`build/libs/`. `test`, `build` e `runGametest` passaram, com **492/492
 GameTests**. A mina normal mantém o poço de três blocos de largura e altura.
 Quando uma mina de vila fundada sobre água esgotar os níveis mineráveis, ela
 reabre por uma escadaria segura de três blocos, selada por vidro, até uma camada
@@ -20,7 +20,9 @@ log` deve mostrar o estado atual separado do último bloqueio histórico.
 Ao abrir uma vila com mais adultos que camas, confirme a frase indicando quantas
 camas faltam e a abertura de uma moradia. Com camas suficientes logo depois de
 uma casa, confirme a mensagem de infraestrutura e a obra não residencial. O
-comando e a obra real ainda dependem desse playtest no save do autor.
+comando e a obra real ainda dependem desse playtest no save do autor. Na obra
+que travava, confirme que o construtor ja dentro de cinco blocos do centro da
+peca a coloca sem voltar a caminhar nem repetir `WORK_STALLED`.
 
 **Obras e baús:** uma obra nova só abre quando toda a pegada está na altura
 exata da rua, portanto não pode ficar suspensa nem com vão sob o piso. Um baú
