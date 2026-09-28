@@ -31,6 +31,67 @@ o §18 do Project-State. O texto das entradas fica como estava.
 
 ---
 
+## Entry 2026-09-27 - rotas, rua ramificada, moradia segura e log atual
+
+O log do save deixou quatro problemas relacionados, mas com responsaveis
+distintos. `MinerDetours` planejava sempre ate a pedra final, embora o
+planejador local alcance apenas 16 blocos e `WorkTargets` ja mantivesse a perna
+intermediaria. O desvio agora mira essa perna e so aplica a regra de alcance da
+pedra no ultimo trecho; `MinerDetoursTest` falhou primeiro contra a escolha
+antiga do alvo.
+
+O scanner de lotes manteve a regra estrita: a planta ainda precisa encostar na
+rua. Quando nao existe ponta, `RoadExtension` agora pode prolongar um ramo
+perpendicular a um trecho realmente reto, depois de tentar as pontas normais.
+O ramo fica registrado entre ciclos para produzir progresso fisico em vez de
+repetir a mesma busca ampla. O GameTest
+`aClosedRoadCanBranchTowardsNewGround` reproduziu o anel de rua sem ponta.
+
+`ChestSpawner` passou a procurar cama livre somente em construcao concluida da
+mesma colonia quando o HOME legado nao oferece posicao segura. Primeiro cria o
+bau dentro da caixa da casa; somente depois troca memoria HOME e bilhete POI.
+Sem cama livre, `WorkerHousingNeeds` cria um deficit derivado para priorizar
+moradia, e o mesmo aviso nao se repete a cada varredura. O GameTest
+`aWorkerWithALegacyOutdoorHomeMovesToAFreeFinishedHouseBed` e o unitario de
+prioridade cobrem os dois caminhos.
+
+Por fim, `VillageLogPresenter` consolida um estado atual por profissao e exibe
+o ultimo abandono ou erro com o rotulo `ULTIMO BLOQUEIO` apenas quando ele nao
+e o estado corrente. A rodada final `./gradlew.bat runGametest` terminou em
+**491/491 GameTests obrigatorios**. Entre duas rodadas verdes, uma execucao
+teve timeout isolado em
+`BuilderGameTest.theBuilderReachesTheTopOfTheWorkFromTheGround`; a repeticao
+completa nao reproduziu a falha, que ficou registrada como estabilidade de
+fixture a acompanhar, sem aumento artificial do limite. Ainda falta validar
+no save do autor a rota longa da mina, o ramo de rua, a migracao do fundidor e
+a leitura do comando.
+
+---
+
+## Entry 2026-09-27 - perfil Spark do viveiro sem ponto livre
+
+O perfil [Spark KbkZcE27Uu](https://spark.lucko.me/KbkZcE27Uu) do save real
+permaneceu em 20 TPS, com MSPT p95 de 12,8 ms e pico de 51,2 ms. Portanto nao
+houve travamento continuo do servidor, mas o custo do trabalho ocioso ficou
+claro: `TreeChoice` ocupava 10,62% e `FarmerNursery` 9,45% do perfil. Quando o
+lenhador nao encontrava arvore e a borda nao tinha ponto plantavel, a tentativa
+retornava sem marcar o horario. No proximo tique ela repetia `countNurseries`,
+uma varredura de aproximadamente 166 mil blocos.
+
+`FarmerNursery` agora registra a hora tambem depois de uma tentativa que nao
+encontrou ponto. O intervalo permanece 6.000 tiques, igual ao viveiro cheio e
+ao lote plantado, sem mudar o lote de quatro mudas nem o teto de dez arvores.
+O GameTest `anOccupiedNurseryEdgeWaitsBeforeScanningAgain` falhou primeiro
+porque a regra antiga deixava o relogio aberto, e a rodada completa
+`runGametest --rerun-tasks --no-daemon` terminou em **489/489 GameTests**.
+
+O mesmo log deixou duas pendencias separadas: dois alvos de pedra foram
+abandonados por rota fora de alcance, e um fundidor continua sem bau dentro de
+estrutura valida com cama. Sao falhas de fluxo a reproduzir no save ou em
+fixture, nao justificativa para liberar bau externo ou em frente a portas.
+
+---
+
 ## Entry 2026-09-27 - auditoria do ciclo de recuperacao da mina
 
 O log do save registrou 23.524 tentativas de recuperar a mesma mina esgotada

@@ -9,10 +9,9 @@ import com.villagecolony.core.telemetry.model.ControlledReason;
 import com.villagecolony.core.telemetry.model.TargetKind;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.Map;
 
 /** Converte o traço técnico da simulação em mensagens curtas para o jogador. */
 final class VillageLogPresenter {
@@ -26,16 +25,36 @@ final class VillageLogPresenter {
         }
 
         List<String> entries = new ArrayList<>();
-        Set<UUID> reportedWorkers = new HashSet<>();
+        Map<ActivityProfession, ActivityTraceEvent> current = new LinkedHashMap<>();
+        Map<ActivityProfession, ActivityTraceEvent> blockers = new LinkedHashMap<>();
 
         for (ActivityTraceEvent event : trace.newestFirst(ActivityTrace.CAPACITY)) {
-            if (!reportedWorkers.add(event.workerId())) {
+            current.putIfAbsent(event.profession(), event);
+
+            if (event.state() == ActivityState.ABANDONED
+                    || event.state() == ActivityState.ERROR) {
+                blockers.putIfAbsent(event.profession(), event);
+            }
+        }
+
+        for (ActivityTraceEvent event : current.values()) {
+            entries.add(describe(event));
+            if (entries.size() == limit) {
+                return List.copyOf(entries);
+            }
+        }
+
+        for (Map.Entry<ActivityProfession, ActivityTraceEvent> entry : blockers.entrySet()) {
+            ActivityTraceEvent latest = current.get(entry.getKey());
+
+            if (entry.getValue().equals(latest)) {
                 continue;
             }
 
-            entries.add(describe(event));
+            entries.add("[ÚLTIMO BLOQUEIO] " + profession(entry.getKey()) + ": "
+                    + problemReason(entry.getValue().reason()) + ".");
             if (entries.size() == limit) {
-                break;
+                return List.copyOf(entries);
             }
         }
 

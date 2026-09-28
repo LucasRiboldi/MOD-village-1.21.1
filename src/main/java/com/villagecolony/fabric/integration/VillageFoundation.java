@@ -216,7 +216,7 @@ public final class VillageFoundation {
      * volta a ficar livre quando o morador morre — e aí a vila pode crescer
      * de novo (N1).
      */
-    private static void giveHome(ServerWorld world, VillagerEntity villager, BlockPos foot) {
+    static void giveHome(ServerWorld world, VillagerEntity villager, BlockPos foot) {
         PointOfInterestStorage pois = world.getPointOfInterestStorage();
 
         // O ponto de interesse da cama é a <b>cabeça</b>, e não o pé: é lá

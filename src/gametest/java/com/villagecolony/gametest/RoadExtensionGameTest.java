@@ -237,6 +237,47 @@ public class RoadExtensionGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** Sem ponta aproveitavel, um trecho reto pode abrir um ramal fisico. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_extension")
+    public void aClosedRoadCanBranchTowardsNewGround(TestContext context) {
+        UUID colony = UUID.randomUUID();
+        BlockPos center = new BlockPos(6, 1, 6);
+        List<BlockPos> ring = new java.util.ArrayList<>();
+
+        for (int x = 4; x <= 8; x++) {
+            ring.add(new BlockPos(x, 1, 4));
+            ring.add(new BlockPos(x, 1, 8));
+        }
+        for (int z = 5; z <= 7; z++) {
+            ring.add(new BlockPos(4, 1, z));
+            ring.add(new BlockPos(8, 1, z));
+        }
+        for (BlockPos road : ring) {
+            context.setBlockState(road, Blocks.DIRT_PATH.getDefaultState());
+        }
+        for (int z = 1; z <= 3; z++) {
+            context.setBlockState(new BlockPos(6, 1, z), Blocks.DIRT.getDefaultState());
+        }
+        reserveRoad(context, colony, ring);
+
+        context.assertTrue(
+                BuildSiteScanner.find(
+                        context.getWorld(), colony,
+                        MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                        4, SMALL_HOUSE).isEmpty(),
+                "o anel estreito nao podia oferecer um lote de dois por dois");
+
+        RoadExtension.Outcome outcome = RoadExtension.extend(
+                context.getWorld(), colony, ResourceId.vanilla("dirt_path"));
+
+        context.assertTrue(outcome == RoadExtension.Outcome.EXTENDED,
+                "a estrada fechada nao abriu um ramal: " + outcome);
+        context.assertTrue(
+                context.getBlockState(new BlockPos(6, 1, 3)).isOf(Blocks.DIRT_PATH),
+                "o ramal nao alcancou o solo novo ao norte");
+        context.complete();
+    }
+
     /**
      * O planejador manda calçar quando não tem onde construir.
      *

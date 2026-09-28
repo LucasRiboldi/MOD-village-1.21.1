@@ -33,6 +33,29 @@ acesso submerso permanecem inalterados. `MineBottomRetryTest` e
 `runGametest --rerun-tasks` passaram em 488/488; falta conferir no save que a
 mina aguardando uma boca oposta emite apenas um estado de espera por ciclo.
 
+O perfil Spark do save de 27-09 manteve 20 TPS, com MSPT p95 de 12,8 ms e pico
+de 51,2 ms, mas apontou o lenhador sem arvore como custo evitavel: quando a
+borda do viveiro nao tinha ponto plantavel, cada tique repetia a contagem de
+aproximadamente 166 mil blocos. A tentativa sem ponto livre agora entra no
+mesmo intervalo de 6.000 tiques de um viveiro cheio ou de um plantio bem
+sucedido. O teste novo falhou contra a regra antiga e a bateria Fabric passou
+em 489/489. O log ainda exige playtest para dois alvos de mina que o mineiro
+abandonou por estarem fora de alcance e para um fundidor sem bau seguro dentro
+de estrutura com cama; nenhum dos dois sera corrigido criando bau ao ar livre.
+
+Os bloqueios observados ganharam correcoes sem relaxar as regras fisicas. O
+desvio do mineiro agora mira a perna intermediaria da rota, e nao a pedra
+distante; uma rua fechada pode abrir um ramo perpendicular antes de procurar o
+lote, mantendo a exigencia de contato com a rua. Trabalhador legado sem casa
+segura migra para uma cama livre de construcao concluida da propria colonia,
+com bau criado antes da troca do HOME; sem cama, cria prioridade de moradia e
+o aviso nao repete a cada varredura. O `/vc log` separa o estado atual do
+ultimo bloqueio historico por profissao. A bateria Fabric final passou em
+491/491. Uma rodada intermediaria teve timeout isolado no GameTest existente
+do construtor alcancar o topo; a repeticao completa nao reproduziu a falha.
+Falta confirmar os quatro fluxos no save do autor e acompanhar a estabilidade
+dessa fixture.
+
 A evolucao por populacao agora inclui o Construtor na mesma lista de vagas
 permanentes: o segundo aparece no adulto 23 e o terceiro no 38, sem mistura-lo
 ao calculo de necessidade de recursos. Qualquer deficit observado de camas,

@@ -285,4 +285,43 @@ public class TreeNurseryGameTest {
 
         context.complete();
     }
+
+    /** Uma borda ocupada tambem espera antes de procurar outro lugar. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "tree_nursery_backoff",
+            tickLimit = 100)
+    public void anOccupiedNurseryEdgeWaitsBeforeScanningAgain(TestContext context) {
+        ServerWorld world = context.getWorld();
+        UUID colony = UUID.randomUUID();
+        BlockPos centre = context.getAbsolutePos(new BlockPos(8, 1, 8)).add(3000, 0, -3000);
+
+        FarmerNursery.clearAll();
+
+        for (int radius = 48; radius <= 56; radius++) {
+            for (int step = 0; step < 48; step++) {
+                double angle = 2 * Math.PI * step / 48;
+                BlockPos column = centre.add(
+                        (int) Math.round(radius * Math.cos(angle)),
+                        0,
+                        (int) Math.round(radius * Math.sin(angle)));
+
+                // Bloqueia toda a janela de busca do viveiro nesta coluna;
+                // assim nenhum nivel da coluna pode se passar por solo livre.
+                for (int y = -8; y <= 5; y++) {
+                    world.setBlockState(column.add(0, y, 0), Blocks.STONE.getDefaultState());
+                }
+            }
+        }
+
+        if (FarmerNursery.plantBatchIfItIsTime(world, colony, centre) != 0) {
+            throw new AssertionError("plantou mesmo com toda a borda ocupada");
+        }
+
+        if (FarmerNursery.isTime(colony, world.getTime())) {
+            throw new AssertionError(
+                    "borda ocupada vai recontar o viveiro no proximo tick em vez de esperar");
+        }
+
+        FarmerNursery.clearAll();
+        context.complete();
+    }
 }

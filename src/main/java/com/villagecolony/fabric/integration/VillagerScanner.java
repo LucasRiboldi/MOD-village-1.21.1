@@ -198,7 +198,7 @@ public final class VillagerScanner {
                 if (claimed.isEmpty() && !storages.hasStorage(villager.getUuid()) && chestsToSpawn > 0) {
                     chestsToSpawn--;
                     claimed = ChestSpawner.ensureChest(
-                            world, villager, storages,
+                            world, villager, storages, colony.id(),
                             professionOf(workers, villager.getUuid()).map(Object::toString).orElse("worker"));
                 }
 

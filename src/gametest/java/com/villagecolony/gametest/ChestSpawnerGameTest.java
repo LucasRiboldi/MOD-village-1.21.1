@@ -47,14 +47,14 @@ public class ChestSpawnerGameTest implements FabricGameTest {
         StorageRegistry storages = new StorageRegistry();
 
         Optional<WorkerStorage> chest = ChestSpawner.ensureChest(
-                context.getWorld(), villager, storages, "LUMBERJACK");
+                context.getWorld(), villager, storages, UUID.randomUUID(), "LUMBERJACK");
 
         context.assertTrue(chest.isEmpty(), "um baú nasceu no centro sem cama em estrutura");
         context.assertFalse(storages.hasStorage(villager.getUuid()), "o baú sem estrutura foi registrado");
 
         // Pedir de novo também não cria um baú solto.
         Optional<WorkerStorage> again = ChestSpawner.ensureChest(
-                context.getWorld(), villager, storages, "LUMBERJACK");
+                context.getWorld(), villager, storages, UUID.randomUUID(), "LUMBERJACK");
         context.assertTrue(again.isEmpty(), "uma segunda tentativa criou um baú no centro");
         context.complete();
     }
@@ -106,13 +106,59 @@ public class ChestSpawnerGameTest implements FabricGameTest {
                 MinecraftTypeAdapter.toColonyPos(houseMin), MinecraftTypeAdapter.toColonyPos(houseMax)));
         try {
             Optional<WorkerStorage> chest = ChestSpawner.ensureChest(
-                    context.getWorld(), villager, new StorageRegistry(), "MINER");
+                    context.getWorld(), villager, new StorageRegistry(), colony, "MINER");
 
             context.assertTrue(chest.isPresent()
                             && MinecraftTypeAdapter.toBlockPos(chest.get().chestPosition())
                                     .equals(context.getAbsolutePos(bed.east())),
                     "o baú do mineiro devia nascer dentro da casa, ao lado da cama e encostado na parede: "
                             + chest.map(WorkerStorage::chestPosition));
+        } finally {
+            VillageColonyMod.BUILDINGS.removeOfColony(colony);
+        }
+        context.complete();
+    }
+
+    /** Um save legado troca a cama externa por uma cama livre da casa pronta. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "chest_spawner", tickLimit = 20)
+    public void aWorkerWithALegacyOutdoorHomeMovesToAFreeFinishedHouseBed(TestContext context) {
+        floor(context);
+        closedHouse(context);
+
+        BlockPos safeBed = new BlockPos(3, 2, 4);
+        context.setBlockState(safeBed, Blocks.RED_BED.getDefaultState()
+                .with(Properties.BED_PART, BedPart.FOOT).with(Properties.HORIZONTAL_FACING, Direction.NORTH));
+        context.setBlockState(safeBed.north(), Blocks.RED_BED.getDefaultState()
+                .with(Properties.BED_PART, BedPart.HEAD).with(Properties.HORIZONTAL_FACING, Direction.NORTH));
+        context.setBlockState(safeBed.east(2), Blocks.STONE.getDefaultState());
+
+        BlockPos legacyBed = new BlockPos(8, 2, 8);
+        context.setBlockState(legacyBed, Blocks.BLUE_BED.getDefaultState()
+                .with(Properties.BED_PART, BedPart.FOOT).with(Properties.HORIZONTAL_FACING, Direction.NORTH));
+        context.setBlockState(legacyBed.north(), Blocks.BLUE_BED.getDefaultState()
+                .with(Properties.BED_PART, BedPart.HEAD).with(Properties.HORIZONTAL_FACING, Direction.NORTH));
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, new BlockPos(8, 2, 7));
+        villager.getBrain().remember(MemoryModuleType.HOME,
+                GlobalPos.create(context.getWorld().getRegistryKey(), context.getAbsolutePos(legacyBed)));
+
+        UUID colony = UUID.randomUUID();
+        VillageColonyMod.BUILDINGS.register(new Building(
+                UUID.randomUUID(), colony, ResourceId.vanilla("test/worker_house"),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(1, 1, 2))),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(6, 4, 6)))));
+        try {
+            Optional<WorkerStorage> chest = ChestSpawner.ensureChest(
+                    context.getWorld(), villager, new StorageRegistry(), colony, "SMELTER");
+            BlockPos expectedHome = context.getAbsolutePos(safeBed.north());
+
+            context.assertTrue(chest.isPresent(), "o fundidor legado continuou sem bau");
+            context.assertTrue(villager.getBrain()
+                            .getOptionalRegisteredMemory(MemoryModuleType.HOME)
+                            .map(GlobalPos::pos)
+                            .filter(expectedHome::equals)
+                            .isPresent(),
+                    "a moradia nao migrou para a cama segura da casa pronta");
         } finally {
             VillageColonyMod.BUILDINGS.removeOfColony(colony);
         }
@@ -137,7 +183,7 @@ public class ChestSpawnerGameTest implements FabricGameTest {
 
         StorageRegistry storages = new StorageRegistry();
         Optional<WorkerStorage> chest = ChestSpawner.ensureChest(
-                context.getWorld(), villager, storages, "SHEPHERD");
+                context.getWorld(), villager, storages, UUID.randomUUID(), "SHEPHERD");
 
         context.assertTrue(chest.isEmpty(), "a cama fora de uma estrutura recebeu um baú");
         context.assertFalse(storages.hasStorage(villager.getUuid()), "o baú externo foi registrado");
@@ -168,7 +214,7 @@ public class ChestSpawnerGameTest implements FabricGameTest {
                 MinecraftTypeAdapter.toColonyPos(houseMin), MinecraftTypeAdapter.toColonyPos(houseMax)));
         try {
             Optional<WorkerStorage> chest = ChestSpawner.ensureChest(
-                    context.getWorld(), villager, new StorageRegistry(), "SHEPHERD");
+                    context.getWorld(), villager, new StorageRegistry(), colony, "SHEPHERD");
 
             context.assertTrue(chest.isEmpty(),
                     "uma cama exposta dentro da caixa ampla da obra recebeu baú: " + chest);

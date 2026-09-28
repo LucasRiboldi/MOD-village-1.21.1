@@ -3,6 +3,7 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.fabric.brain.WorkHours;
+import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.work.MinerWork.Job;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -10,6 +11,7 @@ import net.minecraft.util.math.BlockPos;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * O mineiro que não chega cava o próprio caminho — ADR-025, fase 2.
@@ -45,14 +47,14 @@ final class MinerDetours {
         job.detours++;
 
         BlockPos stone = job.target;
+        BlockPos aim = aimFor(villager.getUuid(), stone);
 
         Optional<DetourWalker> walker = DetourWalker.plan(
                 world,
                 villager.getUuid(),
                 villager.getBlockPos(),
-                stone,
-                feet -> !feet.equals(stone)
-                        && MinerReach.isWithinReach(feet.getX() + 0.5, feet.getY(), feet.getZ() + 0.5, stone),
+                aim,
+                feet -> reached(feet, aim, stone),
                 Set.of(stone),
                 false);
 
@@ -60,7 +62,7 @@ final class MinerDetours {
             VillageColonyMod.LOGGER.info(
                     "Miner {} found no detour to {} within {} blocks — {}",
                     villager.getUuid().toString().substring(0, 8),
-                    stone.toShortString(),
+                    aim.toShortString(),
                     com.villagecolony.core.movement.DetourPlanner.RADIUS,
                     why);
 
@@ -76,10 +78,27 @@ final class MinerDetours {
                 "Miner {} takes a detour of {} steps to {} — {}",
                 villager.getUuid().toString().substring(0, 8),
                 walker.get().steps(),
-                stone.toShortString(),
+                aim.toShortString(),
                 why);
 
         return true;
+    }
+
+    /** O desvio e local: primeiro alcanca a perna atual, depois a pedra. */
+    static BlockPos aimFor(UUID workerId, BlockPos stone) {
+        return WorkTargets.of(workerId)
+                .filter(target -> !target.equals(stone))
+                .orElse(stone);
+    }
+
+    private static boolean reached(BlockPos feet, BlockPos aim, BlockPos stone) {
+        if (!aim.equals(stone)) {
+            return feet.equals(aim);
+        }
+
+        return !feet.equals(stone)
+                && MinerReach.isWithinReach(
+                        feet.getX() + 0.5, feet.getY(), feet.getZ() + 0.5, stone);
     }
 
     /**

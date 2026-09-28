@@ -2,6 +2,7 @@ package com.villagecolony.fabric.event;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.integration.ChestSpawner;
 import com.villagecolony.fabric.integration.ChestMarker;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.LumberjackWork;
@@ -11,6 +12,7 @@ import com.villagecolony.fabric.work.ShepherdWork;
 import com.villagecolony.fabric.work.SmelterWork;
 import com.villagecolony.fabric.work.SurfaceGatheringWork;
 import com.villagecolony.fabric.work.CraftingWork;
+import com.villagecolony.fabric.work.WorkerHousingNeeds;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.entity.LivingEntity;
@@ -99,6 +101,10 @@ public final class VillagerLifecycleHandler {
      * um baú perdido para a colônia.
      */
     private static void forget(UUID villagerId, String reason) {
+        VillageColonyMod.WORKERS.find(villagerId).ifPresent(worker ->
+                WorkerHousingNeeds.resolve(worker.colonyId(), villagerId));
+        ChestSpawner.forget(villagerId);
+
         // As tarefas primeiro: soltá-las depois de esquecer o
         // trabalhador daria no mesmo hoje, mas deixaria a ordem
         // dependendo de o registro de tarefas não consultar o de

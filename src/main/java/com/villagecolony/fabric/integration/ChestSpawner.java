@@ -4,15 +4,24 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.storage.service.StorageRegistry;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.work.WorkerHousingNeeds;
+import net.minecraft.block.BedBlock;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.enums.BedPart;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * Todo trabalhador de profissão tem um baú — decisão do autor, 2026-09-26:
@@ -32,6 +41,12 @@ import java.util.Optional;
  */
 public final class ChestSpawner {
 
+    static {
+        ServerMemory.register(ChestSpawner.class, ChestSpawner::clearAll);
+    }
+
+    private static final Set<UUID> WARNED = new HashSet<>();
+
     private ChestSpawner() {
     }
 
@@ -42,9 +57,14 @@ public final class ChestSpawner {
      *     não há posição segura ao lado dela
      */
     public static Optional<WorkerStorage> ensureChest(
-            ServerWorld world, VillagerEntity villager, StorageRegistry storages, String profession) {
+            ServerWorld world,
+            VillagerEntity villager,
+            StorageRegistry storages,
+            UUID colonyId,
+            String profession) {
 
         if (storages.hasStorage(villager.getUuid())) {
+            housingResolved(colonyId, villager.getUuid());
             return storages.of(villager.getUuid());
         }
 
@@ -53,12 +73,19 @@ public final class ChestSpawner {
                 .filter(home -> home.dimension().equals(world.getRegistryKey()))
                 .map(home -> home.pos());
 
-        Optional<BlockPos> chest = bed.flatMap(at -> placeBesideBedInStructure(world, at));
+        Optional<BlockPos> chest = bed.flatMap(at -> placeBesideBedInStructure(world, at, colonyId));
 
         if (chest.isEmpty()) {
-            VillageColonyMod.LOGGER.warn(
-                    "{} {} has no chest inside a valid bed structure — it gets no tasks until one exists",
-                    profession, villager.getUuid().toString().substring(0, 8));
+            chest = migrateToFinishedHouse(world, villager, colonyId);
+        }
+
+        if (chest.isEmpty()) {
+            WorkerHousingNeeds.mark(colonyId, villager.getUuid());
+            if (WARNED.add(villager.getUuid())) {
+                VillageColonyMod.LOGGER.warn(
+                        "{} {} has no safe home and chest — housing is now a colony priority",
+                        profession, villager.getUuid().toString().substring(0, 8));
+            }
 
             return Optional.empty();
         }
@@ -66,6 +93,7 @@ public final class ChestSpawner {
         WorkerStorage storage = WorkerStorage.of(
                 villager.getUuid(), MinecraftTypeAdapter.toColonyPos(chest.get()));
         storages.register(storage);
+        housingResolved(colonyId, villager.getUuid());
 
         VillageColonyMod.LOGGER.info(
                 "{} {} got a chest of its own at {}, {}",
@@ -75,13 +103,14 @@ public final class ChestSpawner {
         return Optional.of(storage);
     }
 
-    private static Optional<BlockPos> placeBesideBedInStructure(ServerWorld world, BlockPos bed) {
+    private static Optional<BlockPos> placeBesideBedInStructure(
+            ServerWorld world, BlockPos bed, UUID colonyId) {
         Optional<BlockBox> vanillaPiece = VanillaBedChests.originalVillagePiece(world, bed);
         if (vanillaPiece.isPresent()) {
             return ChestPlacer.placeBesideBedInStructure(world, bed, vanillaPiece.get()).chest();
         }
 
-        return VillageColonyMod.BUILDINGS.all().stream()
+        return VillageColonyMod.BUILDINGS.ofColony(colonyId).stream()
                 .filter(building -> building.finished()
                         && building.contains(MinecraftTypeAdapter.toColonyPos(bed)))
                 .findFirst()
@@ -89,6 +118,59 @@ public final class ChestSpawner {
                         world, bed, new BlockBox(
                                 building.min().x(), building.min().y(), building.min().z(),
                                 building.max().x(), building.max().y(), building.max().z())).chest());
+    }
+
+    private static Optional<BlockPos> migrateToFinishedHouse(
+            ServerWorld world, VillagerEntity villager, UUID colonyId) {
+        return VillageColonyMod.BUILDINGS.ofColony(colonyId).stream()
+                .filter(building -> building.finished())
+                .flatMap(building -> BlockPos.stream(
+                                building.min().x(), building.min().y(), building.min().z(),
+                                building.max().x(), building.max().y(), building.max().z())
+                        .map(BlockPos::toImmutable)
+                        .filter(foot -> isFreeBed(world, foot))
+                        .map(foot -> new BedInStructure(foot, new BlockBox(
+                                building.min().x(), building.min().y(), building.min().z(),
+                                building.max().x(), building.max().y(), building.max().z()))))
+                .map(candidate -> migrateBeside(world, villager, candidate))
+                .flatMap(Optional::stream)
+                .findFirst();
+    }
+
+    private static boolean isFreeBed(ServerWorld world, BlockPos foot) {
+        BlockState state = world.getBlockState(foot);
+        if (!(state.getBlock() instanceof BedBlock)
+                || state.get(Properties.BED_PART) != BedPart.FOOT) {
+            return false;
+        }
+
+        BlockPos head = foot.offset(state.get(Properties.HORIZONTAL_FACING));
+        return world.getPointOfInterestStorage().getFreeTickets(head) > 0;
+    }
+
+    private static Optional<BlockPos> migrateBeside(
+            ServerWorld world, VillagerEntity villager, BedInStructure candidate) {
+        Optional<BlockPos> chest = ChestPlacer.placeBesideBedInStructure(
+                world, candidate.foot(), candidate.structure()).chest();
+        chest.ifPresent(ignored -> VillageFoundation.giveHome(world, villager, candidate.foot()));
+        return chest;
+    }
+
+    private static void housingResolved(UUID colonyId, UUID workerId) {
+        WorkerHousingNeeds.resolve(colonyId, workerId);
+        WARNED.remove(workerId);
+    }
+
+    public static void clearAll() {
+        WARNED.clear();
+    }
+
+    /** Esquece somente o controle derivado de aviso deste trabalhador. */
+    public static void forget(UUID workerId) {
+        WARNED.remove(workerId);
+    }
+
+    private record BedInStructure(BlockPos foot, BlockBox structure) {
     }
 
     /** O baú registrado ainda é um baú? Quebrado pelo jogador, deixa de valer. */

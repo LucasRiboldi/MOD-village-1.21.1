@@ -1,20 +1,21 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Atualização de 2026-09-27 — JAR `020335CF…847B`.** Este é o JAR instalado
+**Atualização de 2026-09-27 — JAR `FBD16DF5…7BE61`.** Este é o JAR instalado
 em `downloads/` e `%APPDATA%/.minecraft/mods/`; as três cópias conferem com
-`build/libs/`. `test`, `build` e `runGametest --rerun-tasks` passaram, com
-**488/488 GameTests**. A mina normal mantém o poço de três blocos de largura e
-altura. Quando uma mina de vila fundada sobre água esgotar os níveis mineráveis,
-ela reabre por uma escadaria segura de três blocos, selada por vidro, até uma
-camada natural de rocha; os mineiros não podem minerar a escada nem a proteção.
+`build/libs/`. `test`, `build` e `runGametest` passaram, com **491/491
+GameTests**. A mina normal mantém o poço de três blocos de largura e altura.
+Quando uma mina de vila fundada sobre água esgotar os níveis mineráveis, ela
+reabre por uma escadaria segura de três blocos, selada por vidro, até uma camada
+natural de rocha; os mineiros não podem minerar a escada nem a proteção.
 Quando uma mina normal esgotada ainda não puder abrir uma saída oposta, a
 colônia aguarda 600 ticks antes de tentar novamente. Isso substitui a repetição
 do aviso e da tentativa a cada tick, sem alterar a mina normal ou a rota aquática.
 
-No playtest, esgote uma mina de vila sobre água e confirme no `/vc log` a
-mensagem sobre o acesso aquático selado. A rota deve permanecer seca, os degraus
-e o vidro devem ficar intactos e a mina deve abrir apenas após o esgotamento.
-Em vila seca, confirme que a reabertura continua usando a saída normal oposta.
+No playtest, confira também que o mineiro segue a perna intermediária até uma
+pedra distante, que uma rua sem ponta abre um ramal físico antes de procurar
+lote e que um fundidor com HOME legado migra para cama livre de casa concluída,
+com baú dentro dela. Sem cama livre, a próxima obra deve ser moradia. O `/vc
+log` deve mostrar o estado atual separado do último bloqueio histórico.
 
 Ao abrir uma vila com mais adultos que camas, confirme a frase indicando quantas
 camas faltam e a abertura de uma moradia. Com camas suficientes logo depois de

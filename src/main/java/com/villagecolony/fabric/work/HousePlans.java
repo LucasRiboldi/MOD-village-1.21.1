@@ -213,10 +213,19 @@ public final class HousePlans {
 
     /** Prioridade calculada da colônia ativa, usada pelo diagnóstico no jogo. */
     public static ConstructionPriority priorityFor(Colony colony) {
+        int adults = VillageColonyMod.WORKERS.countOfColony(colony.id());
         return nextConstructionPriority(
                 VillageColonyMod.BUILDINGS.ofColony(colony.id()),
-                VillageColonyMod.WORKERS.countOfColony(colony.id()),
-                colony.observedBeds());
+                adults,
+                effectiveBedsForPriority(colony.id(), adults, colony.observedBeds()));
+    }
+
+    static int effectiveBedsForPriority(UUID colonyId, int adults, int observedBeds) {
+        if (!WorkerHousingNeeds.needsHouse(colonyId) || adults == 0) {
+            return observedBeds;
+        }
+
+        return Math.min(observedBeds, adults - 1);
     }
 
     /**
@@ -276,7 +285,9 @@ public final class HousePlans {
         List<Building> buildings = VillageColonyMod.BUILDINGS.ofColony(colony.id());
         int adults = VillageColonyMod.WORKERS.countOfColony(colony.id());
 
-        if (nextConstructionPriority(buildings, adults, colony.observedBeds()).requiresHouse()) {
+        int beds = effectiveBedsForPriority(colony.id(), adults, colony.observedBeds());
+
+        if (nextConstructionPriority(buildings, adults, beds).requiresHouse()) {
             return plansFor(world, colony);
         }
 

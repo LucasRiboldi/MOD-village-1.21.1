@@ -131,9 +131,10 @@ public final class FarmerNursery {
                     spot.get().toShortString());
         }
 
-        if (planted > 0) {
-            LAST.put(colonyId, world.getTime());
-        }
+        // Sem ponto livre, o lenhador sem arvore voltaria aqui a cada tick e
+        // repetiria a contagem cara do viveiro. A tentativa vale pelo mesmo
+        // intervalo de quem plantou ou encontrou a borda ja cheia.
+        LAST.put(colonyId, world.getTime());
 
         return planted;
     }

@@ -97,6 +97,9 @@ public final class RoadExtension {
      */
     private static final Map<UUID, List<End>> ENDS = new HashMap<>();
 
+    /** Ramais laterais, tentados apenas depois das pontas verdadeiras. */
+    private static final Map<UUID, List<End>> BRANCHES = new HashMap<>();
+
     /**
      * As pontas que não se deixaram calçar, e desde quando.
      *
@@ -210,11 +213,23 @@ public final class RoadExtension {
 
         Optional<Direction> towards = RoadPaving.openSideOf(world, colonyId, road);
 
-        if (towards.isEmpty()) {
+        if (towards.isPresent()) {
+            addCandidate(ENDS, colonyId, road, towards.get(), center);
             return;
         }
 
-        List<End> found = ENDS.computeIfAbsent(colonyId, id -> new ArrayList<>());
+        for (Direction branch : RoadPaving.openBranchSidesOf(world, colonyId, road)) {
+            addCandidate(BRANCHES, colonyId, road, branch, center);
+        }
+    }
+
+    private static void addCandidate(
+            Map<UUID, List<End>> candidates,
+            UUID colonyId,
+            BlockPos road,
+            Direction towards,
+            BlockPos center) {
+        List<End> found = candidates.computeIfAbsent(colonyId, id -> new ArrayList<>());
 
         double distance = center.getSquaredDistance(road);
 
@@ -223,7 +238,7 @@ public final class RoadExtension {
             return;
         }
 
-        found.add(new End(road, towards.get(), distance));
+        found.add(new End(road, towards, distance));
 
         // Da mais distante para a mais perto, que é a frase da regra: a
         // rua cresce pela ponta, e não pelo meio.
@@ -260,6 +275,7 @@ public final class RoadExtension {
      */
     public static void forgetEnds(UUID colonyId) {
         ENDS.remove(colonyId);
+        BRANCHES.remove(colonyId);
     }
 
     /**
@@ -271,6 +287,7 @@ public final class RoadExtension {
      */
     public static void lotFound(UUID colonyId) {
         ENDS.remove(colonyId);
+        BRANCHES.remove(colonyId);
         GROWING.remove(colonyId);
     }
 
@@ -303,6 +320,8 @@ public final class RoadExtension {
     /** Esvazia os registros. Chamado ao parar o servidor. */
     public static void clearAll() {
         ENDS.clear();
+
+        BRANCHES.clear();
 
         REFUSED.clear();
 
@@ -426,9 +445,18 @@ public final class RoadExtension {
      *     {@link VillageRoad}
      */
     public static Outcome extend(ServerWorld world, UUID colonyId, ResourceId paving) {
-        List<End> ends = ENDS.remove(colonyId);
+        List<End> ends = new ArrayList<>();
+        List<End> trueEnds = ENDS.remove(colonyId);
+        List<End> branches = BRANCHES.remove(colonyId);
 
-        if (ends == null || ends.isEmpty()) {
+        if (trueEnds != null) {
+            ends.addAll(trueEnds);
+        }
+        if (branches != null) {
+            ends.addAll(branches);
+        }
+
+        if (ends.isEmpty()) {
             return Outcome.NO_END;
         }
 

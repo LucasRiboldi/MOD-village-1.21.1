@@ -8,6 +8,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.integration.VillageStructures;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 
 import java.util.List;
 import java.util.UUID;
@@ -33,6 +34,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * continue} dele, 701 unitários e 275 testes de jogo continuavam verdes.
  */
 class HousePlansTest {
+
+    @AfterEach
+    void clearHousingNeeds() {
+        WorkerHousingNeeds.clearAll();
+    }
 
     private static final ResourceId BIG =
             ResourceId.parse("minecraft:village/plains/houses/plains_butcher_shop_2");
@@ -79,6 +85,14 @@ class HousePlansTest {
     /** A ordem da Regra 25: da maior para a menor. */
     private static List<Blueprint> catalog() {
         return List.of(plan(BIG), plan(MEDIUM), plan(SMALL));
+    }
+
+    @Test
+    void aWorkerWithoutASafeHomeCreatesAHousingDeficitEvenWhenBedsWereObserved() {
+        UUID colony = UUID.randomUUID();
+        WorkerHousingNeeds.mark(colony, UUID.randomUUID());
+
+        assertEquals(5, HousePlans.effectiveBedsForPriority(colony, 6, 6));
     }
 
     /** Sem marca nenhuma, a lista é a do catálogo, na ordem dele. */

@@ -51,6 +51,21 @@ class VillageLogPresenterTest {
     }
 
     @Test
+    void separatesTheCurrentProfessionStateFromItsLastHistoricalBlocker() {
+        ActivityTrace trace = new ActivityTrace();
+        trace.append(event(UUID.randomUUID(), ActivityProfession.MINER,
+                ActivityState.ABANDONED, ControlledReason.WORK_STALLED, TargetKind.STONE));
+        trace.append(event(UUID.randomUUID(), ActivityProfession.MINER,
+                ActivityState.IDLE, ControlledReason.NONE, TargetKind.STONE));
+
+        assertEquals(
+                List.of(
+                        "[ATIVO] Mineiro: trabalhando em minerar pedra.",
+                        "[ÚLTIMO BLOQUEIO] Mineiro: a atividade parou por falta de progresso."),
+                VillageLogPresenter.entries(trace, 8));
+    }
+
+    @Test
     void explainsTheHousingDeficitBeforeTheActivityEntries() {
         assertEquals(
                 "Próxima obra: moradia; faltam 2 camas para os moradores.",

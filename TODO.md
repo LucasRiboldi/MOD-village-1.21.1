@@ -5,25 +5,41 @@ camas prioriza moradia; a prioridade e explicita no Core e aparece no `/vc
 log`. A boca da mina exige os primeiros degraus em solo firme; ao esgotar a
 mina, vila fundada em agua tenta acesso selado para uma saida natural 8x8 antes
 da reabertura seca oposta. Cada lote e validado na orientacao final da planta.
-A bateria de 488 GameTests esta verde; ainda requer validacao no save real.
+A bateria de 491 GameTests esta verde; ainda requer validacao no save real.
 
 ## Acesso submerso e mina 3x3 - 2026-09-27
 
 ## Auditoria do log do save - 2026-09-27
+
+- [x] P1 - O viveiro sem ponto livre nao reconta a borda a cada tique quando o
+  lenhador nao encontra arvore. A tentativa vazia agora entra no intervalo de
+  6.000 tiques, igual ao viveiro cheio e ao plantio concluido.
+  `TreeNurseryGameTest.anOccupiedNurseryEdgeWaitsBeforeScanningAgain` falhou
+  antes e `runGametest --rerun-tasks` passou em 489/489.
+- [x] P1 - O desvio do mineiro usa a perna intermediaria mantida por
+  `WorkTargets`, em vez de tentar planejar localmente ate a pedra distante.
+  `MinerDetoursTest` reproduziu o alvo a 95 blocos sem liberar a quebra de
+  degraus ou protecoes.
+- [ ] P1 - Playtest no save do autor: confirmar que os dois alvos de pedra
+  antes abandonados avancam perna por perna ate a galeria.
 
 - [x] P0 - Mina esgotada sem boca oposta nao pesquisa nem registra o mesmo
   aviso a cada tique. A tentativa volta depois de 600 tiques, sem salvar um
   relogio derivado e sem alterar a mina normal ou o acesso submerso.
   `MineBottomRetryTest` e `runGametest --rerun-tasks` 488/488 cobrem a
   regressao.
-- [ ] P0 - O planejador recusou todos os lotes da vila porque a planta so pode
-  encostar na rua e as extensoes existentes nao oferecem ponta utilizavel.
-  A regra atual protege rua, lavoura e estruturas. Decidir se o lote pode
-  ficar a um ou dois blocos da rua antes de flexibilizar o scanner.
-- [ ] P1 - Um fundidor sem cama em estrutura valida nao recebe bau, por
-  seguranca: criar um baú fora da estrutura ou diante da porta continua
-  proibido. Definir uma migracao de moradia segura para saves antigos antes de
-  realocar ou substituir esse trabalhador.
+- [x] P0 - Rua sem ponta pode abrir um ramo perpendicular a um trecho reto e
+  levar fisicamente a via ate um lote novo. Pontas verdadeiras continuam com
+  prioridade e a regra estrita de contato com a rua nao foi flexibilizada.
+  `aClosedRoadCanBranchTowardsNewGround` cobre o anel fechado.
+- [ ] P0 - Playtest no save do autor: confirmar que a vila sem ponta abre um
+  ramo e encontra lote sem invadir rua, lavoura ou estrutura.
+- [x] P1 - Trabalhador legado sem casa segura procura cama livre em construcao
+  concluida da propria colonia; o bau seguro nasce antes da troca de HOME e do
+  bilhete POI. Sem cama livre, ele cria deficit habitacional e o aviso aparece
+  uma vez por bloqueio, sem permitir bau externo ou diante da porta.
+- [ ] P1 - Playtest no save do autor: confirmar a migracao do fundidor, o bau
+  dentro da casa e, sem cama livre, a prioridade da proxima moradia.
 
 - [x] P0 - Toda escada normal da mina agora ocupa tres lances por tres blocos
   uteis de altura. A forma do save passou de 6 para 7 e zera apenas cursores
@@ -56,10 +72,15 @@ A bateria de 488 GameTests esta verde; ainda requer validacao no save real.
 
 ## Atividade observada no log - 2026-09-27
 
-- [ ] P1 - O log do save mostra mineiros extraindo e pastores tosquiando, mas
-  o `/vc log` ainda exibe falhas antigas junto do estado atual. Separar o
-  ultimo sucesso e o ultimo bloqueio por profissional para nao parecer que
-  toda a colonia esta parada.
+- [x] P1 - O `/vc log` mostra primeiro um unico estado atual por profissao e
+  rotula separadamente o ultimo bloqueio historico quando ele difere do estado
+  corrente. `VillageLogPresenterTest` cobre a separacao.
+- [ ] P1 - Playtest no save do autor: conferir a leitura curta do `/vc log`
+  depois de uma profissao sair de um bloqueio e voltar ao trabalho.
+- [ ] P2 - Acompanhar a estabilidade de
+  `BuilderGameTest.theBuilderReachesTheTopOfTheWorkFromTheGround`: houve um
+  timeout isolado entre duas rodadas completas verdes, sem reproducao na
+  repeticao final de 491/491. Nao relaxar o limite sem isolar a causa.
 - [ ] P0 - Investigar e corrigir o construtor que ignora `grass_block` no
   volume da obra e o lenhador que permanece em busca sem arvore alcancavel.
   Ambos foram vistos no log do save e ainda nao foram reproduzidos em teste.

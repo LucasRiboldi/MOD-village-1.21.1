@@ -147,6 +147,30 @@ final class RoadPaving {
         return Optional.empty();
     }
 
+    /**
+     * Laterais livres de um trecho reto, usadas somente quando as pontas nao
+     * conseguem levar a rua a solo novo.
+     */
+    static List<Direction> openBranchSidesOf(
+            ServerWorld world, UUID colonyId, BlockPos road) {
+        boolean northSouth = isRoadNear(world, colonyId, road.north(), road.getY())
+                && isRoadNear(world, colonyId, road.south(), road.getY());
+        boolean eastWest = isRoadNear(world, colonyId, road.east(), road.getY())
+                && isRoadNear(world, colonyId, road.west(), road.getY());
+
+        if (northSouth == eastWest) {
+            return List.of();
+        }
+
+        List<Direction> sides = northSouth
+                ? List.of(Direction.EAST, Direction.WEST)
+                : List.of(Direction.NORTH, Direction.SOUTH);
+
+        return sides.stream()
+                .filter(side -> !isRoadNear(world, colonyId, road.offset(side), road.getY()))
+                .toList();
+    }
+
     static boolean isRoadNear(
             ServerWorld world, UUID colonyId, BlockPos column, int aroundY) {
         for (int dy = RoadExtension.MAX_STEP; dy >= -RoadExtension.MAX_STEP; dy--) {
