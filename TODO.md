@@ -1,11 +1,42 @@
 # TODO
 
-**Atualizado:** 2026-09-27. A evolucao agora inclui Construtor e o deficit de
+**Atualizado:** 2026-09-28. A obra antecipa a proxima peca artesanal sem
+consumir os troncos brutos que ela mesma ainda exige; o `/vc log` explica a
+saida de trabalhador preso e seu retorno a escala. A evolucao agora inclui
+Construtor e o deficit de
 camas prioriza moradia; a prioridade e explicita no Core e aparece no `/vc
 log`. A boca da mina exige os primeiros degraus em solo firme; ao esgotar a
 mina, vila fundada em agua tenta acesso selado para uma saida natural 8x8 antes
 da reabertura seca oposta. Cada lote e validado na orientacao final da planta.
-A bateria de 491 GameTests esta verde; ainda requer validacao no save real.
+A bateria de 493 GameTests esta verde; ainda requer validacao no save real.
+
+## Auditoria de estabilidade e entrega - 2026-09-28
+
+- [ ] P0 - Reduzir o levantamento de baus do ciclo: no save com 6-7 colonias,
+  a fase `chests` levou 76-122 ms em ciclos de 91-259 ms, mais que planejamento
+  e deteccao. A correcao precisa preservar a regra de que o mundo e a fonte da
+  verdade e provar que o estoque nao fica obsoleto quando jogador ou aldeao
+  alteram um bau. Alternativas registradas na auditoria: indice incremental
+  invalidado por alteracao, ou levantamento fatiado com fotografia marcada como
+  parcial. Criar teste de equivalencia antes de alterar `ChestInventoryReader`
+  ou `WarehouseIndex`.
+- [ ] P1 - Reproduzir o esgotamento recorrente da varredura de lotes: houve 19
+  ocorrencias de `site_sweep_budget_exhausted` e 17 de `cycle_over_tick` no
+  ultimo save. Comparar cota adaptativa por colonia contra especializacao da
+  busca por tipo de trabalho; manter cursor, chunks carregados e o limite de
+  leitura de mundo.
+- [ ] P1 - Reproduzir caminhos sem progresso antes de mudar navegacao: o log
+  teve 5 `builder_pathing_stalled` e 7 `surface_worker_unreachable`. Cobrir em
+  GameTest um alvo valido sem ponto de apoio e uma coleta inacessivel; decidir
+  entre selecionar ponto de apoio antes da reserva ou devolver a tarefa cedo
+  para uma alternativa alcancavel.
+- [ ] P2 - Resolver os 25 avisos Error Prone da compilacao, priorizando
+  `Enum.ordinal()` em regras de prioridade/substituicao e a aritmetica que
+  converte `long` para `double`. Sao divida tecnica observada, nao falha de
+  comportamento reproduzida nesta rodada.
+- [ ] P2 - Enxugar o estado vivo: `STATE.md` tem 273 linhas apesar do proprio
+  limite de 150; mover texto historico para o historico mensal sem perder os
+  playtests ainda pendentes.
 
 ## Acesso submerso e mina 3x3 - 2026-09-27
 
@@ -71,6 +102,21 @@ A bateria de 491 GameTests esta verde; ainda requer validacao no save real.
   mina entra no solo e que a lavoura nao recebe blocos da obra.
 
 ## Atividade observada no log - 2026-09-27
+
+- [x] P0 - A obra em `BUILDING` abre antes da espera uma unica tarefa para a
+  proxima peca artesanal; recursos declarados continuam no `ColonyCycle`.
+  A conversao de madeira conserva os troncos brutos ainda pedidos pela obra.
+  `CraftingGameTest.theWorkAsksForItsUncataloguedPieceBeforeWaiting` e
+  `ColonyGoalsTest.keepsTheRawLogsThatTheOpenConstructionStillNeeds` cobrem
+  os dois contratos; a bateria Fabric passou em 493/493.
+- [x] P1 - A marcacao comum de trabalhador encalhado registra espera e retorno
+  no `ActivityTrace`, e o `/vc log` traduz a saida fisica e a volta a escala.
+  `VillageLogPresenterTest.explainsThePhysicalRecoveryAndItsReturnToTheWorkQueue`
+  cobre a leitura do jogador.
+- [ ] P1 - Playtest no save do autor: iniciar uma obra com escadas ou troncos
+  brutos, confirmar que a peca e pedida antes de `WAITING_RESOURCES` e que os
+  troncos reservados nao viram tabuas; provocar um encalhe e conferir as duas
+  linhas de recuperacao no `/vc log`.
 
 - [x] P1 - O `/vc log` mostra primeiro um unico estado atual por profissao e
   rotula separadamente o ultimo bloqueio historico quando ele difere do estado

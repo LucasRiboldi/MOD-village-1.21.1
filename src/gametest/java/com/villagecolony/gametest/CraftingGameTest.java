@@ -1003,6 +1003,61 @@ public class CraftingGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * A mesma peça precisa entrar na fila antes de o construtor bater nela.
+     * A cadeia declarada já antecipa recursos; esta fecha a lacuna das peças
+     * que só existem na planta, como escadas, portas e alçapões.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "craft_waiting",
+            tickLimit = 100)
+    public void theWorkAsksForItsUncataloguedPieceBeforeWaiting(TestContext context) {
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+        context.getWorld().setTimeOfDay(Schedule.WORK_TIME);
+
+        ServerWorld world = context.getWorld();
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+        ChestDepositor.deposit(world, chest, Items.COBBLESTONE, 32);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create()
+                .owning(colony)
+                .owning(villager.getUuid());
+
+        try {
+            Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+            worker.assign(ProfessionType.MASON);
+            VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+            Blueprint plan = Blueprint.of(
+                    ResourceId.vanilla("village/plains/houses/test_early_stairs"),
+                    List.of(new BlueprintBlock(
+                            new ColonyPos(0, 0, 0),
+                            MinecraftTypeAdapter.toResourceId(Blocks.COBBLESTONE_STAIRS))));
+            ConstructionProject project = ConstructionProject.plan(colony.id(), plan, chest);
+            VillageColonyMod.CONSTRUCTIONS.register(project);
+            project.moveTo(ConstructionState.PREPARING);
+            project.moveTo(ConstructionState.BUILDING);
+
+            VillageDetectionHandler.runCycleNow(world, context.getAbsolutePos(STAND));
+
+            context.assertTrue(
+                    project.state() == ConstructionState.BUILDING,
+                    "o caso precisa permanecer construindo, sem esperar material");
+            context.assertTrue(
+                    countOf(colony, TaskType.CRAFT_STONE_MATERIAL) == 1,
+                    "a escada ainda nao foi pedida durante a construcao");
+        } finally {
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
     private static int countOf(Colony colony, TaskType type) {
         int found = 0;
 

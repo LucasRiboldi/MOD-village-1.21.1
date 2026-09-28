@@ -10033,6 +10033,35 @@ O JAR validado foi sincronizado de `build/libs/` para `downloads/` e
 confirmou as três cópias no SHA-256
 `1AB3851866229F78B5B88F259354A422C2B74DA5D013033BA5382359F3A6FF49`.
 
+### 2026-09-28 - Logistica antecipada e recuperacao legivel
+
+Uma obra aberta aguardava a falta da proxima peca de planta para so entao
+pedir escadas, lajes ou outros blocos artesanais. `WaitingWork` passa a abrir
+uma unica tarefa para essa proxima peca enquanto o projeto esta em `BUILDING`.
+Recursos ja catalogados continuam pertencendo ao `ColonyCycle`, portanto a
+mudanca nao duplica as coletas nem abre uma fila para cada material futuro.
+
+A conversao generica de troncos em tabuas agora desconta tambem os troncos
+brutos ainda exigidos pelo projeto aberto. Assim, a reserva fisica da obra
+vence a conversao opcional: tronco para estrutura nao desaparece em um item
+intermediario que a vila nao precisa naquele momento.
+
+Alvos de coleta mantem a politica de alcancabilidade por tentativa real,
+cooldown do alvo que falhou e nova escolha posterior; nao foi inserido um
+preflight que recusaria recursos navegaveis. Na recuperacao compartilhada,
+o segundo congelamento no mesmo ponto registra `WAITING/WORK_STALLED` no
+trace e a saida bem-sucedida registra `RECOVERED`. O `/vc log` traduz os dois
+estados como abertura de saida segura e retorno a escala.
+
+Os testes `ColonyGoalsTest.keepsTheRawLogsThatTheOpenConstructionStillNeeds`
+e `VillageLogPresenterTest.explainsThePhysicalRecoveryAndItsReturnToTheWorkQueue`
+falharam antes das implementacoes correspondentes e passaram depois. O
+`CraftingGameTest.theWorkAsksForItsUncataloguedPieceBeforeWaiting` cobre a
+abertura antecipada dentro do ciclo Fabric. `./gradlew.bat test` direcionado
+passou e `./gradlew.bat runGametest` terminou em **493/493**. Ainda falta o
+playtest do save para a cadeia real de escadas/troncos e a leitura do comando
+durante uma recuperacao fisica.
+
 ### 2026-09-27 - Reabertura de mina aquatica apos esgotamento
 
 O acesso de vidro deixou de competir com a mina normal. Quando a mina chega ao
@@ -10125,3 +10154,30 @@ GameTests e preservou somente os dois bloqueios anteriores de
 `FarmPlanGameTest`: `observingInventoryDoesNotChangeHouseAlternation` e
 `theNextTurnAfterAHouseIsNonResidential`. A regra nova nao apareceu como
 falha; ainda falta o playtest do save do autor.
+
+### 2026-09-28 - Auditoria de estabilidade, log e entrega
+
+Foi executada uma bateria renovada antes da entrega: `test --rerun-tasks`
+terminou em 1.163/1.163, a suite Python em 86/86 e
+`runGametest --rerun-tasks` em 493/493, sem falhas, erros ou testes ignorados.
+O compilador ainda emitiu 25 avisos Error Prone; eles foram registrados como
+divida tecnica e nao como defeitos funcionais, pois a rodada nao reproduziu
+falha associada.
+
+O analisador leu 2.118 linhas do `latest.log` do save e atualizou o historico
+anonimizado. Os candidatos a repeticao foram `site_sweep_budget_exhausted`
+(19), `cycle_over_tick` (17), `surface_worker_unreachable` (7) e
+`builder_pathing_stalled` (5). O contexto do proprio log mostrou o gargalo
+dominante: com 6-7 colonias, a leitura de baus levou 76-122 ms dentro de
+ciclos de 91-259 ms, enquanto planejamento e deteccao ficaram menores na maior
+parte das amostras. A proxima mudanca deve ter teste de equivalencia de
+estoque e comparar indice incremental contra levantamento fatiado; nao deve
+relaxar o limite de ciclo nem inventar estoque fora do mundo.
+
+A varredura estrutural registrou 523 fontes Java e 92.702 linhas (311 fontes
+de producao, 139 unitarias e 73 GameTests). O grafo atualizado contem 8.148
+nos, 28.731 relacoes e 9 hiperarestas. O acoplamento observado entre
+`VillageDetectionHandler`, `ColonyCycleRunner`, `ConstructionPlanner`,
+`BuildSiteScanner` e `BuilderWork` confirma que uma alteracao de orcamento ou
+cache precisa ser isolada por fase e por colonia. A lista priorizada, os dados
+e as duas alternativas de cada correcao estao na auditoria tecnica.

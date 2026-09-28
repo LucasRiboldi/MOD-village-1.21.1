@@ -4,6 +4,7 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.resource.service.ResourceDemand;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
 import org.junit.jupiter.api.Test;
 
@@ -136,6 +137,25 @@ class ColonyGoalsTest {
         assertEquals(0, StockRules.logsToConvert(10, 40));
         assertEquals(0, StockRules.logsToConvert(135, 1257));
         assertEquals(0, StockRules.logsToConvert(0, 0));
+    }
+
+    @Test
+    void keepsTheRawLogsThatTheOpenConstructionStillNeeds() {
+        assertEquals(
+                0,
+                StockRules.logsThatMayBeConverted(
+                        3,
+                        0,
+                        Map.of(ResourceId.vanilla("stripped_oak_log"), 3)),
+                "as tres toras da obra nao podem virar tabuas genericas");
+
+        assertEquals(
+                1,
+                StockRules.logsThatMayBeConverted(
+                        4,
+                        0,
+                        Map.of(ResourceId.vanilla("stripped_oak_log"), 3)),
+                "a sobra pode virar tabua sem consumir a reserva da obra");
     }
 
     /** A meta é o que se tem mais o que ainda cabe. */

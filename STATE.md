@@ -1,4 +1,4 @@
-# STATE — 2026-09-27
+# STATE — 2026-09-28
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -11,6 +11,24 @@
 ---
 
 ## Em uma linha
+
+Uma obra em `BUILDING` agora pede ao artesao a proxima peca que ainda nao
+pertence ao catalogo de recursos antes de o construtor ficar sem ela. A
+conversao generica de madeira preserva os troncos brutos que a obra aberta
+ainda exige, alem da metade de reserva ja existente. A busca de recursos
+continua aprendendo alcancabilidade pela tentativa real e marca falhas
+temporarias; dois congelamentos no mesmo ponto acionam a saida fisica comum.
+O `/vc log` explica tanto essa recuperacao quanto o retorno do trabalhador a
+escala. `ColonyGoalsTest`, `VillageLogPresenterTest` e a bateria Fabric
+passaram em 493/493. Falta observar no save uma obra com escadas ou troncos
+brutos e um trabalhador saindo de um ponto preso.
+
+A auditoria de entrega de 2026-09-28 confirmou 1.163/1.163 testes unitarios,
+86/86 testes Python e 493/493 GameTests. No save real, o maior gargalo nao e
+uma profissao isolada: ciclos de 6-7 colonias gastaram 76-122 ms no
+levantamento de baus, dentro de ciclos de 91-259 ms. Varredura de lotes,
+aproximacao do construtor e coleta de superficie seguem como candidatos
+separados em `docs/technical/Auditoria-Entrega-2026-09-28.md`.
 
 A boca seca da mina agora so abre quando os tres primeiros degraus das tres
 faixas da escada podem sair por solo firme, portanto uma coluna alta isolada

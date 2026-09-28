@@ -1,15 +1,24 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Atualização de 2026-09-28 — JAR `CDDCEEFE…69C35B`.** Este é o JAR instalado
-em `downloads/` e `%APPDATA%/.minecraft/mods/`; as três cópias conferem com
-`build/libs/`. `test`, `build` e `runGametest` passaram, com **492/492
-GameTests**. A mina normal mantém o poço de três blocos de largura e altura.
+**Atualizacao de 2026-09-28 - JAR `536B871E...EA2D32`.** Este e o JAR instalado
+em `downloads/` e `%APPDATA%/.minecraft/mods/`; as tres copias conferem com
+`build/libs/` pelo SHA-256
+`536B871E0CE0618E13433F99F2FCB43466E2FAA81B59AB9F157DCB6ED3EA2D32`.
+`test --rerun-tasks`, `build` e `runGametest --rerun-tasks` passaram, com
+**1.163/1.163 testes unitarios e 493/493 GameTests**. A mina normal mantém o poço de três blocos de largura e altura.
 Quando uma mina de vila fundada sobre água esgotar os níveis mineráveis, ela
 reabre por uma escadaria segura de três blocos, selada por vidro, até uma camada
 natural de rocha; os mineiros não podem minerar a escada nem a proteção.
 Quando uma mina normal esgotada ainda não puder abrir uma saída oposta, a
 colônia aguarda 600 ticks antes de tentar novamente. Isso substitui a repetição
 do aviso e da tentativa a cada tick, sem alterar a mina normal ou a rota aquática.
+
+**Gargalo visto no save:** com 6-7 colonias, o levantamento de baus consumiu
+76-122 ms em ciclos de 91-259 ms. Antes de alterar qualquer profissao, repetir
+o perfil Spark descrito em `docs/technical/Profiling-spark.md`; a proxima
+correcao compara indice incremental de estoque com levantamento fatiado. Ver
+`docs/technical/Auditoria-Entrega-2026-09-28.md` para os criterios e os
+playtests ainda obrigatorios.
 
 No playtest, confira também que o mineiro segue a perna intermediária até uma
 pedra distante, que uma rua sem ponta abre um ramal físico antes de procurar

@@ -92,7 +92,7 @@ public final class WorkerStrikes {
      * {@link ActivityProfession}. Só {@code fabric}, que enxerga os dois
      * lados, faz essa ponte.
      */
-    private static ActivityProfession toActivityProfession(ProfessionType profession) {
+    static ActivityProfession toActivityProfession(ProfessionType profession) {
         return switch (profession) {
             case MINER -> ActivityProfession.MINER;
             case LUMBERJACK -> ActivityProfession.LUMBERJACK;

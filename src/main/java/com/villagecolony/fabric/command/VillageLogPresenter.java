@@ -82,8 +82,10 @@ final class VillageLogPresenter {
 
         return switch (event.state()) {
             case IDLE -> "[ATIVO] " + profession + ": trabalhando em " + targetAction(event.target()) + ".";
-            case WAITING -> "[AGUARDANDO] " + profession + ": " + waitingReason(event.reason(), event.target()) + ".";
-            case RECOVERED -> "[ATIVO] " + profession + ": voltou a trabalhar em " + targetAction(event.target()) + ".";
+            case WAITING -> "[AGUARDANDO] " + profession + ": "
+                    + waitingReason(event.reason(), event.target()) + ".";
+            case RECOVERED -> "[ATIVO] " + profession + ": "
+                    + recoveredReason(event.target()) + ".";
             case ABANDONED, ERROR -> "[TRAVADO] " + profession + ": " + problemReason(event.reason()) + ".";
             case UNKNOWN -> "[ATENÇÃO] " + profession + ": o estado da atividade não foi reconhecido.";
         };
@@ -104,6 +106,10 @@ final class VillageLogPresenter {
     }
 
     private static String waitingReason(ControlledReason reason, TargetKind target) {
+        if (reason == ControlledReason.WORK_STALLED && target == TargetKind.NONE) {
+            return "preso no terreno; abrindo uma saida segura";
+        }
+
         return switch (reason) {
             case NO_TARGET -> "procurando " + targetName(target) + " para " + targetVerb(target);
             case MISSING_MATERIAL -> "esperando material para continuar";
@@ -117,11 +123,20 @@ final class VillageLogPresenter {
 
     private static String problemReason(ControlledReason reason) {
         return switch (reason) {
-            case WORK_STALLED -> "a atividade parou por falta de progresso";
+            case WORK_STALLED -> "a atividade parou por falta de progresso; a tarefa volta para a fila"
+                    + " e ele descansa antes de tentar de novo";
             case STORAGE_FULL -> "não há espaço livre nos baús";
             case MISSING_MATERIAL -> "faltou material para concluir a atividade";
             default -> "a atividade precisou ser interrompida";
         };
+    }
+
+    private static String recoveredReason(TargetKind target) {
+        if (target == TargetKind.NONE) {
+            return "saiu do ponto preso e voltou a escala";
+        }
+
+        return "voltou a trabalhar em " + targetAction(target);
     }
 
     private static String targetAction(TargetKind target) {

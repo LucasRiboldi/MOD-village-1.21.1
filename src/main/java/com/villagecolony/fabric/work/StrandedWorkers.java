@@ -2,6 +2,11 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.telemetry.model.ActivityKind;
+import com.villagecolony.core.telemetry.model.ActivityState;
+import com.villagecolony.core.telemetry.model.ActivityTraceEvent;
+import com.villagecolony.core.telemetry.model.ControlledReason;
+import com.villagecolony.core.telemetry.model.TargetKind;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.HashMap;
@@ -69,6 +74,17 @@ public final class StrandedWorkers {
             STRANDED.put(workerId, 0);
             LAST_FREEZE.remove(workerId);
 
+            worker.profession().ifPresent(profession -> VillageColonyMod.ACTIVITY_TRACES.append(
+                    worker.colonyId(),
+                    new ActivityTraceEvent(
+                            workerId,
+                            WorkerStrikes.toActivityProfession(profession),
+                            ActivityKind.UNKNOWN,
+                            ActivityState.WAITING,
+                            ControlledReason.WORK_STALLED,
+                            TargetKind.NONE,
+                            0)));
+
             VillageColonyMod.LOGGER.info(
                     "Worker {} is stranded at {} — frozen twice on the same spot;"
                             + " it leaves the work queue and digs its way out",
@@ -107,7 +123,19 @@ public final class StrandedWorkers {
         STRANDED.remove(workerId);
         LAST_FREEZE.remove(workerId);
 
-        VillageColonyMod.WORKERS.find(workerId).ifPresent(worker -> worker.free());
+        VillageColonyMod.WORKERS.find(workerId).ifPresent(worker -> {
+            worker.free();
+            worker.profession().ifPresent(profession -> VillageColonyMod.ACTIVITY_TRACES.append(
+                    worker.colonyId(),
+                    new ActivityTraceEvent(
+                            workerId,
+                            WorkerStrikes.toActivityProfession(profession),
+                            ActivityKind.UNKNOWN,
+                            ActivityState.RECOVERED,
+                            ControlledReason.NONE,
+                            TargetKind.NONE,
+                            0)));
+        });
     }
 
     /** Esquece um trabalhador que saiu do registro. */

@@ -46,7 +46,26 @@ class VillageLogPresenterTest {
                 ActivityState.ABANDONED, ControlledReason.WORK_STALLED, TargetKind.WOOD));
 
         assertEquals(
-                List.of("[TRAVADO] Lenhador: a atividade parou por falta de progresso."),
+                List.of("[TRAVADO] Lenhador: a atividade parou por falta de progresso; a tarefa volta para a fila e ele descansa antes de tentar de novo."),
+                VillageLogPresenter.entries(trace, 8));
+    }
+
+    @Test
+    void explainsThePhysicalRecoveryAndItsReturnToTheWorkQueue() {
+        ActivityTrace trace = new ActivityTrace();
+        UUID worker = UUID.randomUUID();
+        trace.append(event(worker, ActivityProfession.BUILDER,
+                ActivityState.WAITING, ControlledReason.WORK_STALLED, TargetKind.NONE));
+
+        assertEquals(
+                List.of("[AGUARDANDO] Construtor: preso no terreno; abrindo uma saida segura."),
+                VillageLogPresenter.entries(trace, 8));
+
+        trace.append(event(worker, ActivityProfession.BUILDER,
+                ActivityState.RECOVERED, ControlledReason.NONE, TargetKind.NONE));
+
+        assertEquals(
+                List.of("[ATIVO] Construtor: saiu do ponto preso e voltou a escala."),
                 VillageLogPresenter.entries(trace, 8));
     }
 
@@ -61,7 +80,7 @@ class VillageLogPresenterTest {
         assertEquals(
                 List.of(
                         "[ATIVO] Mineiro: trabalhando em minerar pedra.",
-                        "[ÚLTIMO BLOQUEIO] Mineiro: a atividade parou por falta de progresso."),
+                        "[ÚLTIMO BLOQUEIO] Mineiro: a atividade parou por falta de progresso; a tarefa volta para a fila e ele descansa antes de tentar de novo."),
                 VillageLogPresenter.entries(trace, 8));
     }
 

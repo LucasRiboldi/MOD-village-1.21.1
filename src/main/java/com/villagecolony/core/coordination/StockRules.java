@@ -3,6 +3,7 @@ package com.villagecolony.core.coordination;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.type.ResourceGroup;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.type.Production;
 import java.util.ArrayList;
@@ -65,6 +66,40 @@ public final class StockRules {
      */
     public static int logsToConvert(int logs, int storedPlanks) {
         return Math.max(0, (logs - storedPlanks / PLANKS_PER_LOG) / 2);
+    }
+
+    /**
+     * Quantas toras podem virar tábua sem gastar a metade reservada nem as
+     * toras brutas que a obra aberta ainda vai assentar ou descascar.
+     *
+     * <p>A reserva da obra é deliberadamente coletiva entre espécies: a
+     * construção usa {@code MaterialChoice} para aceitar a madeira que o
+     * construtor também consegue assentar. O fabricante só recebe a sobra
+     * depois das duas proteções, nunca uma tora que a planta ainda pede em
+     * forma bruta.
+     */
+    public static int logsThatMayBeConverted(
+            int logs, int storedPlanks, Map<ResourceId, Integer> constructionMaterials) {
+
+        Objects.requireNonNull(constructionMaterials, "constructionMaterials");
+
+        int reservedForConstruction = constructionMaterials.entrySet().stream()
+                .filter(entry -> isRawWood(entry.getKey()))
+                .mapToInt(Map.Entry::getValue)
+                .sum();
+
+        return Math.min(
+                logsToConvert(logs, storedPlanks),
+                Math.max(0, logs - reservedForConstruction));
+    }
+
+    private static boolean isRawWood(ResourceId material) {
+        String path = material.path();
+
+        return path.endsWith("_log")
+                || path.endsWith("_wood")
+                || path.endsWith("_stem")
+                || path.endsWith("_hyphae");
     }
 
     /**

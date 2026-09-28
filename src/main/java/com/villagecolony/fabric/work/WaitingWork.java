@@ -180,28 +180,36 @@ public final class WaitingWork {
     public static void askForWhatTheWorkIsWaitingOn(ServerWorld world, Colony colony) {
         VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
                 .filter(project -> project.state() == ConstructionState.WAITING_RESOURCES)
-                .ifPresent(project -> askTheCraftsmanFor(world, project));
+                .ifPresent(project -> project.nextBlock()
+                        .ifPresent(block -> askTheCraftsmanFor(world, project, block.block())));
     }
 
-    private static void askTheCraftsmanFor(ServerWorld world, ConstructionProject project) {
-        Optional<BlueprintBlock> next = project.nextBlock();
-
-        if (next.isEmpty()) {
+    /**
+     * Abre antecipadamente uma tarefa para a primeira peça de planta que a
+     * cadeia de recursos não declara. A peça continua sendo feita apenas
+     * quando os ingredientes já existem fisicamente nos baús.
+     */
+    public static void askBeforeTheWorkWaits(ServerWorld world, ConstructionProject project) {
+        if (project.state() != ConstructionState.BUILDING) {
             return;
         }
 
-        ResourceId wanted = next.get().block();
+        project.nextBlock().ifPresent(block -> askTheCraftsmanFor(world, project, block.block()));
+    }
+
+    private static boolean askTheCraftsmanFor(
+            ServerWorld world, ConstructionProject project, ResourceId wanted) {
 
         Optional<Item> piece = MinecraftTypeAdapter.toBlock(wanted).map(Block::asItem);
 
         if (piece.isEmpty()) {
-            return;
+            return false;
         }
 
         // Já é recurso declarado: o ColonyCycle cuida dele, e abrir aqui
         // seria um segundo pedido pela mesma coisa.
         if (MinecraftTypeAdapter.toResourceType(piece.get()).isPresent()) {
-            return;
+            return false;
         }
 
         TaskType type = CraftingWork.isMasonry(wanted)
@@ -210,7 +218,7 @@ public final class WaitingWork {
 
         for (Task task : VillageColonyMod.TASKS.ofColony(project.colonyId())) {
             if (task.type() == type && task.isOpen()) {
-                return;
+                return false;
             }
         }
 
@@ -220,7 +228,7 @@ public final class WaitingWork {
             // Ninguém sabe lavrar isto. Abrir a tarefa a deixaria na fila
             // para sempre, sem executor possível — mesma razão do
             // ColonyCycle.requestMissing.
-            return;
+            return false;
         }
 
         if (!ColonySupply.canProvide(
@@ -228,7 +236,7 @@ public final class WaitingWork {
 
             // A colônia não tem como fazer: falta ingrediente, e quem o
             // traz é o pedido de recurso, não o fabricante.
-            return;
+            return false;
         }
 
         VillageColonyMod.TASKS.create(
@@ -242,11 +250,12 @@ public final class WaitingWork {
                 1);
 
         VillageColonyMod.LOGGER.info(
-                "Colony {} asks the {} for {} — the work is waiting on a piece"
-                        + " nobody was making",
+                "Colony {} asks the {} for construction piece {}",
                 project.colonyId(),
                 type == TaskType.CRAFT_STONE_MATERIAL ? "mason" : "carpenter",
                 wanted);
+
+        return true;
     }
 
     /**
