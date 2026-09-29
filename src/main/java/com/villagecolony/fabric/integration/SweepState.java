@@ -288,7 +288,7 @@ public final class SweepState {
                 colonyId,
                 site.origin(),
                 square,
-                Math.round(Math.sqrt((long) dx * dx + (long) dz * dz)),
+                Math.round(Math.sqrt((double) ((long) dx * dx + (long) dz * dz))),
                 MinecraftTypeAdapter.toColonyPos(centre),
                 radius);
     }

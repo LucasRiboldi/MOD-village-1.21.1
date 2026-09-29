@@ -102,6 +102,7 @@ public record VillagePalette(String style, ResourceId stone, ResourceId glass) {
      * outra. O estilo mora aqui porque já é ele quem responde "que tipo
      * de vila é esta".
      */
+    @Override
     public String style() {
         return style;
     }

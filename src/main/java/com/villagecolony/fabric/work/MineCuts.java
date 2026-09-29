@@ -272,6 +272,13 @@ public final class MineCuts {
      * mina nova abre para o mesmo lado da antiga.
      */
     static Side sideOf(UUID colonyId) {
-        return Side.values()[Math.floorMod(colonyId.hashCode(), Side.values().length)];
+        // Tabela escrita à mão, e não Side.values(): reordenar o enum não
+        // pode mudar o lado da mina de uma colônia que já existe.
+        return switch (Math.floorMod(colonyId.hashCode(), 4)) {
+            case 0 -> Side.NORTH;
+            case 1 -> Side.SOUTH;
+            case 2 -> Side.EAST;
+            default -> Side.WEST;
+        };
     }
 }

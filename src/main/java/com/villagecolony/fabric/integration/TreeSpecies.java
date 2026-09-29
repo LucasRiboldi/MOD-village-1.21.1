@@ -29,7 +29,14 @@ import java.util.Optional;
  * própria base, e derrubá-lo inteiro impede que se reponha. Os dois
  * pedem um campo a mais aqui, e ele será acrescentado quando houver
  * colônia num bioma que os tenha.
+ *
+ * <p>Os campos {@link Block} são instâncias únicas do registro Vanilla,
+ * fixadas no bootstrap e nunca trocadas: o enum é imutável na prática,
+ * só não há como anotar uma classe do Minecraft com {@code @Immutable}.
+ * Guardar o identificador e consultar o registro a cada uso não compraria
+ * nada.
  */
+@SuppressWarnings("ImmutableEnumChecker")
 public enum TreeSpecies {
 
     OAK(Blocks.OAK_LOG, Blocks.OAK_LEAVES, Blocks.OAK_SAPLING, ResourceType.OAK_LOG,

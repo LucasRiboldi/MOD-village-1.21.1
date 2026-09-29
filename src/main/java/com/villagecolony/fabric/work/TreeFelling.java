@@ -96,7 +96,7 @@ public final class TreeFelling {
 
         job.collected += countLogs(drops, job.plan);
 
-        deposit(world, job, storage, pos, drops);
+        deposit(world, storage, pos, drops);
 
         job.index++;
         job.progress = 0;
@@ -184,7 +184,7 @@ public final class TreeFelling {
      * no mundo em vez de ser transferido para outro ofício.
      */
     private static void deposit(
-            ServerWorld world, LumberjackWork.Job job, WorkerStorage storage,
+            ServerWorld world, WorkerStorage storage,
             BlockPos position, List<ItemStack> drops) {
 
         for (ItemStack stack : drops) {

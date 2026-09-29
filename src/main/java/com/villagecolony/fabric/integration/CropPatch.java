@@ -261,6 +261,7 @@ public final class CropPatch {
          * for verdade, nada de vazio prova que o campo está vazio: prova
          * só que esta passagem não chegou ao fim.
          */
+        @Override
         public boolean incomplete() {
             return incomplete;
         }

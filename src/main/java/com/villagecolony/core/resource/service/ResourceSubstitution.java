@@ -223,8 +223,8 @@ public final class ResourceSubstitution {
         List<ResourceType> order = new ArrayList<>(acceptedFor(required));
 
         order.sort(Comparator
-                .comparingInt((ResourceType type) -> levelOf(required, type).ordinal())
-                .thenComparing(Enum::ordinal));
+                .comparing((ResourceType type) -> levelOf(required, type), Substitution.BEST_FIRST)
+                .thenComparing(Comparator.naturalOrder()));
 
         return Collections.unmodifiableList(order);
     }

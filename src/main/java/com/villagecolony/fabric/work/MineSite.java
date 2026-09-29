@@ -292,8 +292,8 @@ public final class MineSite {
 
     /** Distância horizontal é a prioridade; no empate, terreno alto vence. */
     private static long score(BlockPos center, BlockPos candidate) {
-        long dx = candidate.getX() - center.getX();
-        long dz = candidate.getZ() - center.getZ();
+        long dx = (long) candidate.getX() - center.getX();
+        long dz = (long) candidate.getZ() - center.getZ();
         long distance = dx * dx + dz * dz;
         long elevation = Math.max(0, candidate.getY() - center.getY());
 

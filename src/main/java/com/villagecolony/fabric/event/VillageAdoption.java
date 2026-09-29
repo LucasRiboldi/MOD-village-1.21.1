@@ -393,7 +393,7 @@ final class VillageAdoption {
                     colony.center(),
                     other.id(),
                     other.center(),
-                    (int) Math.sqrt(colony.center().horizontalDistanceSquared(other.center())),
+                    (int) Math.sqrt((double) colony.center().horizontalDistanceSquared(other.center())),
                     VillageDetector.OVERLAP_DISTANCE);
         }
     }

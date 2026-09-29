@@ -348,6 +348,6 @@ final class SiteOpening {
         long dx = (long) origin.x() - centre.x();
         long dz = (long) origin.z() - centre.z();
 
-        return (int) Math.round(Math.sqrt(dx * dx + dz * dz));
+        return (int) Math.round(Math.sqrt((double) (dx * dx + dz * dz)));
     }
 }

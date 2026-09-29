@@ -44,13 +44,18 @@ public final class WorkAssignment {
      * TaskType#needsOwnStorage()} existir: sem informação de baú, todo
      * trabalhador é elegível. É o que a sobrecarga de três argumentos usa.
      */
-    private static final Predicate<java.util.UUID> ANY_WORKER_HAS_STORAGE = worker -> true;
+    private static final Predicate<java.util.UUID> ANY_WORKER_HAS_STORAGE =
+            WorkAssignment::anyWorkerHasStorage;
 
     /** Preserva a distribuição quando a camada chamadora não tem pré-condição física. */
     private static final BiPredicate<Worker, Task> ANY_TASK_IS_RESERVABLE =
             WorkAssignment::anyTaskIsReservable;
 
     private WorkAssignment() {
+    }
+
+    private static boolean anyWorkerHasStorage(java.util.UUID worker) {
+        return true;
     }
 
     private static boolean anyTaskIsReservable(Worker worker, Task task) {

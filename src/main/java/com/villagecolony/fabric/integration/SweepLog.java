@@ -181,7 +181,7 @@ public final class SweepLog {
         long dx = (long) was.x() - now.x();
         long dz = (long) was.z() - now.z();
 
-        int blocks = (int) Math.round(Math.sqrt(dx * dx + dz * dz));
+        int blocks = (int) Math.round(Math.sqrt((double) (dx * dx + dz * dz)));
 
         change(colonyId, before -> new Tally(
                 before.asked(), before.passes(), before.columns(), before.restarts(),

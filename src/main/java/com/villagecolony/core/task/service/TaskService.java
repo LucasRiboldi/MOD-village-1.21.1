@@ -10,6 +10,7 @@ import com.villagecolony.core.type.ResourceType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,7 +95,7 @@ public final class TaskService {
             }
         }
 
-        available.sort((a, b) -> a.priority().compareTo(b.priority()));
+        available.sort(Comparator.comparing(Task::priority, TaskPriority.MOST_URGENT_FIRST));
 
         return List.copyOf(available);
     }
