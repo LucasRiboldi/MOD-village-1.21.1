@@ -15,15 +15,13 @@ public final class FoundationPreparation {
     private static final int MIN_SUPPORTED_PERCENT = 50;
 
     /**
-     * Quantas camadas abaixo da rua uma coluna da base pode ter e ainda ser
-     * aterrada — pedido do autor, 2026-09-30.
+     * Quantas camadas abaixo da base uma coluna pode ter e ainda ser aterrada.
      *
-     * <p>Era uma. Na sessão das 02:45, 37% das recusas de lote foram "fora da
-     * altura da rua", e o autor pediu que a obra fosse construída por cima
-     * da metade que falta. Três é escolha provisória: acomoda a encosta
-     * suave de vila sem transformar ravina em plataforma. Medir no jogo.
+     * <p>Uma, a régua de 28-09. Foi a três por algumas horas em 2026-09-30 e
+     * voltou por decisão do autor: a base fica na altura da rua ou um acima,
+     * nunca abaixo (LotLevel).
      */
-    static final int MAX_FILL_DEPTH = 3;
+    static final int MAX_FILL_DEPTH = 1;
 
     private FoundationPreparation() {
     }

@@ -233,6 +233,10 @@ final class SiteOpening {
 
         VillageColonyMod.CONSTRUCTIONS.register(project);
 
+        // Lote um acima da rua: a porta não pode ficar dois degraus acima de
+        // quem chega — decisão do autor, 2026-09-30. Ver DoorStep.
+        com.villagecolony.fabric.integration.DoorStep.placeIfNeeded(world, site);
+
         // E o que é chão não vira obra: fundação enterrada e a terra do
         // quintal já estão lá. Ver BuriedPieces.
         BuriedPieces.markHeldByTheGround(world, project);

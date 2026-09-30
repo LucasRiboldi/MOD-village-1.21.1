@@ -247,14 +247,14 @@ public class BuildSiteGameTest implements FabricGameTest {
      * {@link BuildSiteScanner#ROAD_LEVEL_TOLERANCE} é <b>por coluna</b> e
      * nada exigia que as colunas concordassem entre si.
      *
-     * <p>Aqui metade do lote está num nível e metade no outro: nenhum
-     * dos dois chega aos 90%, e o lote é recusado. É o caso que a régua
-     * de conjunto existe para pegar, e o irmão do
-     * {@code oneBlockOffTheRoadLevelIsStillALot} — lá o lote INTEIRO
-     * está um acima, concorda consigo mesmo, e passa.
+     * <p>Aqui metade do lote está um acima da rua e metade na rua. Desde
+     * 2026-09-30 (decisão do autor) a casa assenta na metade alta, um acima,
+     * e a metade baixa é uma lacuna de uma camada que a preparação aterra:
+     * nada fica voando. O que não pode é assentar na rua e deixar a metade
+     * alta dentro da casa, nem na metade alta sem aterrar a baixa.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_level")
-    public void theUnevenBaseIsNotALot(TestContext context) {
+    public void theUnevenBaseSitsOnItsHigherHalf(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         UUID colony = UUID.randomUUID();
 
@@ -287,10 +287,12 @@ public class BuildSiteGameTest implements FabricGameTest {
                     0,
                     SMALL_HOUSE);
 
-            context.assertFalse(
-                    site.isPresent(),
-                    "a base remendada virou lote — a casa assenta num nível só e o resto"
-                            + " dela fica voando sobre o terreno, que é o que o autor viu");
+            int road = context.getAbsolutePos(center).getY();
+
+            context.assertTrue(
+                    site.isEmpty() || site.get().origin().y() == road + 2,
+                    "a base remendada virou lote no nível da rua, com a metade alta dentro"
+                            + " da casa: " + site.map(found -> found.origin().toString()).orElse(""));
         } finally {
             BuildSiteScanner.clearAll();
             LotRefusals.clearAll();
@@ -399,9 +401,14 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.complete();
     }
 
-    /** Um desnível de um bloco é recusado: sem aterro, ele deixaria a casa sem apoio. */
+    /**
+     * A pegada inteira um bloco acima da rua é lote, e a casa assenta um
+     * acima — decisão do autor, 2026-09-30. Até então era recusa: a base
+     * era forçada na altura da rua e deixaria um vão sob a casa. Com a base
+     * no próprio chão elevado, não há vão; a porta fica um degrau acima.
+     */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_slope_one")
-    public void oneBlockOffTheRoadLevelDoesNotBecomeAnUnsupportedLot(TestContext context) {
+    public void oneBlockAboveTheRoadIsALotOneHigher(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         UUID colony = UUID.randomUUID();
 
@@ -431,11 +438,11 @@ public class BuildSiteGameTest implements FabricGameTest {
                     0,
                     SMALL_HOUSE);
 
-            context.assertTrue(site.isEmpty(),
-                    "um lote sem apoio sob toda a casa foi aceito: "
-                            + site.map(found -> found.origin().toString()).orElse(""));
-            context.assertTrue(LotRefusals.countOf(colony, LotRefusals.Reason.OFF_ROAD_LEVEL) > 0,
-                    "a recusa do lote sem apoio não foi registrada como desnível da rua");
+            int road = context.getAbsolutePos(center).getY();
+
+            context.assertTrue(site.isPresent() && site.get().origin().y() == road + 2,
+                    "o lote um acima da rua devia assentar um acima: "
+                            + site.map(found -> found.origin().toString()).orElse("recusado"));
         } finally {
             BuildSiteScanner.clearAll();
             LotRefusals.clearAll();
@@ -642,9 +649,8 @@ public class BuildSiteGameTest implements FabricGameTest {
                     SMALL_HOUSE);
 
             // A pergunta é se a casa atravessa a estrada, e não se há lote:
-            // desde o aterro de três camadas (2026-09-30), a borda do cenário
-            // pode dar um lote legítimo metade na grama, metade sobre o chão
-            // do mundo plano três abaixo. O que não pode é cobrir a rua.
+            // a borda do cenário pode dar um lote legítimo fora dela. O que
+            // não pode é cobrir a rua.
             BlockPos first = context.getAbsolutePos(center.add(-2, 0, -2));
             BlockPos last = context.getAbsolutePos(center.add(2, 0, 2));
 

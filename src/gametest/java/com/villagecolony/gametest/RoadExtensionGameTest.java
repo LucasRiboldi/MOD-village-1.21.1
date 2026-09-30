@@ -489,12 +489,12 @@ public class RoadExtensionGameTest implements FabricGameTest {
      * O chão em volta do cenário não serve de lote nem de aterro — 2026-09-30.
      *
      * <p>Os cenários desta classe precisam de "não há lote" para a rua
-     * crescer. Até 30-09 isso vinha de graça: o chão do mundo plano fica
-     * três blocos abaixo da rua da arena, e só se aterrava uma camada. Com o
-     * aterro de até três camadas pedido pelo autor, esse chão (dois abaixo)
-     * virou lote. Vidro logo abaixo da rua declara o terreno inaproveitável
-     * de propósito: não é vazio para o aterro atravessar nem chão sólido para
-     * apoiá-lo. Pedra não serviria — é sólida, e o aterro a aceita.
+     * crescer, e isso vinha da profundidade da arena: o chão do mundo plano
+     * fica dois abaixo da rua. Em 30-09 o aterro foi a três camadas por
+     * algumas horas e esse chão virou lote; a regra voltou a uma camada, mas
+     * a selagem fica, para o cenário não depender da arena. Vidro não é vazio
+     * para o aterro atravessar nem chão sólido para apoiá-lo; pedra não
+     * serviria — é sólida, e o aterro a aceita.
      */
     private static void sealTheGround(TestContext context) {
         for (int x = -2; x <= 12; x++) {

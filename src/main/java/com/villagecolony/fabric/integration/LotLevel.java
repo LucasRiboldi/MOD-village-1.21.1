@@ -77,10 +77,9 @@ public final class LotLevel {
     /**
      * Quanto uma coluna do lote pode fugir do nível da rua.
      *
-     * <p>A preparação aceita lacunas seguras de até
-     * {@code FoundationPreparation.MAX_FILL_DEPTH} camadas abaixo da rua
-     * (uma até 2026-09-30); chão acima da rua continua recusado para que a
-     * obra não escave nem saia da cota da via.
+     * <p>Desde 2026-09-30 (decisão do autor) a base fica na altura da rua ou
+     * um bloco acima; cada coluna pode estar uma camada abaixo da base, numa
+     * lacuna segura que a preparação aterra. Mais que isso é recusado.
      */
     static final int ROAD_LEVEL_TOLERANCE = 0;
 
@@ -116,9 +115,10 @@ public final class LotLevel {
             ServerWorld world, UUID colonyId, int originX, int originZ, int aroundY,
             int roadY, ColonyPos size) {
 
-        // Conta somente o apoio que já existe na cota da rua. As lacunas
-        // seguras de uma camada são preparadas somente após a pré-reserva.
-        int supportedColumns = 0;
+        // A altura de cada coluna em relação à rua: -1, 0 ou +1. A base é
+        // escolhida depois de a pegada inteira passar pelas perguntas.
+        int[] offsets = new int[size.x() * size.z()];
+        int column = 0;
 
         for (int dx = 0; dx < size.x(); dx++) {
             for (int dz = 0; dz < size.z(); dz++) {
@@ -172,22 +172,19 @@ public final class LotLevel {
                 // Primeira da fila por ser a única que não lê o mundo: o
                 // chão já está na mão, e a pergunta é a comparação de dois
                 // inteiros.
+                //
+                // <b>Decisão do autor, 2026-09-30:</b> a base fica na altura
+                // da rua ou um bloco acima dela, nunca abaixo. Cada coluna
+                // pode estar uma abaixo da base escolhida (a lacuna de uma
+                // camada de 28-09, aterrada), então o chão lido aqui vai de
+                // -1 a +1 em relação à rua.
                 int levelOffset = ground.getY() - roadY;
-                if (levelOffset == 0) {
-                    supportedColumns++;
-                } else if (levelOffset < 0
-                        && -levelOffset <= FoundationPreparation.MAX_FILL_DEPTH
-                        && FoundationPreparation.fillableDepth(world, new BlockPos(x, roadY, z))
-                                .orElse(0) == -levelOffset) {
-                    // A reserva materializa esta lacuna física antes da obra
-                    // começar. Até três camadas desde 2026-09-30, a pedido do
-                    // autor: a obra é construída por cima da metade da base
-                    // que fica abaixo da rua. Ver FoundationPreparation.
-                } else {
+                if (levelOffset < -1 || levelOffset > 1) {
                     LotRefusals.refused(colonyId, LotRefusals.Reason.OFF_ROAD_LEVEL);
 
                     return Optional.empty();
                 }
+                offsets[column++] = levelOffset;
 
                 // Uma leitura de bloco, logo depois da comparação gratuita
                 // acima — P1.3, 2026-09-23. Fica antes da Regra 3 e da
@@ -287,19 +284,25 @@ public final class LotLevel {
             }
         }
 
-        // Pelo menos metade já precisa sustentar fisicamente a base na cota
-        // da rua antes de qualquer bloco ser escrito no mundo.
         int columns = size.x() * size.z();
 
-        if (supportedColumns * 100 < columns * LEVEL_BASE_PERCENT) {
+        // A base na altura da rua, e só se ela não servir, um acima —
+        // decisão do autor, 2026-09-30. Um acima, a porta fica um degrau
+        // acima da rua, que o aldeão sobe; se a frente dela ficar dois abaixo
+        // do piso, a abertura da obra põe o degrau (DoorStep).
+        OptionalInt base = baseFor(world, originX, originZ, size, roadY, offsets, 0);
+
+        if (base.isEmpty()) {
+            base = baseFor(world, originX, originZ, size, roadY, offsets, 1);
+        }
+
+        if (base.isEmpty()) {
             LotRefusals.refused(colonyId, LotRefusals.Reason.OFF_ROAD_LEVEL);
 
             return Optional.empty();
         }
 
-        // A casa assenta sempre na cota da rua; FoundationPreparation só
-        // preenche lacunas de uma camada nesta mesma altura.
-        int baseY = roadY;
+        int baseY = base.getAsInt();
 
         // A caixa real da obra começa no piso comum, não no chão de cada
         // coluna. Assim, degraus, blocos voando e restos de outra construção
@@ -359,5 +362,36 @@ public final class LotLevel {
         // O piso fica imediatamente acima do chão que passou em todas as
         // colunas da pegada.
         return Optional.of(baseY + 1);
+    }
+
+    /**
+     * A base {@code roadY + lift}, se ela servir: pelo menos metade das
+     * colunas já apoia nela, e cada outra está uma camada abaixo, numa lacuna
+     * que a preparação aterra — a régua de 28-09 medida a partir da base.
+     */
+    private static OptionalInt baseFor(
+            ServerWorld world, int originX, int originZ, ColonyPos size, int roadY,
+            int[] offsets, int lift) {
+
+        int supported = 0;
+        int baseY = roadY + lift;
+
+        for (int dx = 0; dx < size.x(); dx++) {
+            for (int dz = 0; dz < size.z(); dz++) {
+                int below = offsets[dx * size.z() + dz] - lift;
+
+                if (below == 0) {
+                    supported++;
+                } else if (below != -1
+                        || !FoundationPreparation.isFillableBaseGap(
+                                world, new BlockPos(originX + dx, baseY, originZ + dz))) {
+                    return OptionalInt.empty();
+                }
+            }
+        }
+
+        return supported * 100 < offsets.length * LEVEL_BASE_PERCENT
+                ? OptionalInt.empty()
+                : OptionalInt.of(baseY);
     }
 }
