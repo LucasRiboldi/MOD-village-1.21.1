@@ -884,6 +884,57 @@ public class BuilderGameTest implements FabricGameTest {
         });
     }
 
+    /**
+     * <b>O canteiro é aberto na grama que já está ali</b> — E50, 2026-09-30.
+     *
+     * <p>No playtest de 30-09 o reparo da {@code plains_small_farm_1} riscou
+     * as 62 posições de canteiro com "grass_block is in the way", e os 28
+     * trigos de cima ficaram sem apoio: a obra ficou dez minutos adiando um
+     * trigo a cada ciclo, com a vaga de obra presa.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_ground",
+            tickLimit = 500)
+    public void farmlandIsTilledFromTheGrassUnderIt(TestContext context) {
+        Fixture fixture = setUp(context, 0, crop(), 2);
+        context.setBlockState(SITE, Blocks.GRASS_BLOCK.getDefaultState());
+
+        context.runAtTick(300, () -> {
+            try {
+                context.assertTrue(
+                        stateAt(context, SITE).isOf(Blocks.FARMLAND),
+                        "a grama não virou canteiro: ficou " + stateAt(context, SITE).getBlock());
+
+                context.assertTrue(
+                        stateAt(context, SITE.up()).isOf(Blocks.WHEAT),
+                        "o trigo ficou sem apoio: " + stateAt(context, SITE.up()).getBlock());
+            } finally {
+                fixture.owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /** E o canteiro não passa por cima do que alguém assentou (Regra 3). */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_ground",
+            tickLimit = 400)
+    public void farmlandDoesNotReplaceAPlacedBlock(TestContext context) {
+        Fixture fixture = setUp(context, 0, ground(), 2);
+        context.setBlockState(SITE, Blocks.OAK_PLANKS.getDefaultState());
+
+        context.runAtTick(200, () -> {
+            try {
+                context.assertTrue(
+                        stateAt(context, SITE).isOf(Blocks.OAK_PLANKS),
+                        "o canteiro tomou o lugar da tábua: ficou " + stateAt(context, SITE).getBlock());
+            } finally {
+                fixture.owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
     /** Um canteiro, que é o bloco que nenhum baú pode entregar. */
     private static Blueprint ground() {
         return Blueprint.of(HUT, List.of(

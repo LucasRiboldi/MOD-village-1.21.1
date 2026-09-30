@@ -295,6 +295,38 @@ public final class BlockShaping {
     }
 
     /**
+     * Se o canteiro da planta pode ser aberto no chão que já está ali — E50,
+     * 2026-09-30.
+     *
+     * <p>{@link #isShapedFromTheGround} diz que quem abre um canteiro move o
+     * chão do lugar, mas o construtor pulava antes: grama não é substituível,
+     * e o reparo da {@code plains_small_farm_1} do playtest de 30-09 riscou
+     * as 62 posições de canteiro com "grass_block is in the way". O trigo de
+     * cima ficou sem apoio e a obra, parada adiando um trigo por ciclo.
+     *
+     * <p>É o que a enxada faz: grama, terra e caminho viram canteiro, e nada
+     * além disso — tábua e pedra do jogador continuam no caminho (Regra 3).
+     *
+     * <p><b>Sem {@code BlockProtection.mayBreak}, e de propósito.</b> Ela
+     * protege a caixa da obra aberta e a estrutura original da vila, e as duas
+     * são o próprio lugar do canteiro: no reparo da roça da vila, a posição é
+     * da vila e da obra ao mesmo tempo. Arar não tira bloco de ninguém — o
+     * chão fica, só muda de estado, na posição que a planta manda.
+     */
+    public static boolean tillsTheGround(ServerWorld world, BlockState planned, BlockPos where) {
+        if (!planned.isOf(Blocks.FARMLAND)) {
+            return false;
+        }
+
+        BlockState ground = world.getBlockState(where);
+
+        return (ground.isOf(Blocks.GRASS_BLOCK)
+                        || ground.isOf(Blocks.DIRT)
+                        || ground.isOf(Blocks.DIRT_PATH))
+                && world.getBlockEntity(where) == null;
+    }
+
+    /**
      * Bloco que a obra nunca assenta — decisão do autor, 2026-09-30:
      * <i>"lava não pode surgir automático"</i>.
      *
