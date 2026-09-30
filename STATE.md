@@ -20,16 +20,17 @@ está aberto é playtest.**
 
 ## 30-09 — playtest das 01:38–01:59 e JAR
 
-- **JAR em jogo:** `D0512A8E…35CDB` (CI do PR #6, run `36667129980`), conferido
-  em `%APPDATA%/.minecraft/mods` em 30-09. Traz o PR #4 (`SiteSignJanitor`
-  tira placa órfã) e o PR #6 (obra aberta segue enquanto o chunk simula;
-  planejar e detectar só com jogador a até 64 blocos, ADR-002). O
-  `downloads/` do repositório ainda tem o JAR antigo.
+- **JAR em `mods` desde 30-09, 02:15:** `AABEE8B3…4D6A6B`, build local de
+  `15882dd` (a correção abaixo), SHA conferido na cópia. O do playtest das
+  01:38 era `D0512A8E…35CDB` (CI do PR #6): PR #4 (`SiteSignJanitor` tira
+  placa órfã) e PR #6 (obra aberta segue enquanto o chunk simula; planejar e
+  detectar só com jogador a até 64 blocos, ADR-002). O `downloads/` do
+  repositório ainda tem o JAR antigo.
 - **A obra abriu e não pôs bloco.** A casa do pastor de `e79a3177`
   (`1756, 71, -5325`) ficou em 221 blocos: o destino do construtor estava na
   borda do alcance (5) com folga de chegada 2, e ele parava fora do alcance
-  (3 vezes, 2 construtores; o save mostra lote plano e livre). **Corrigido
-  localmente, JAR ainda não instalado:** folga 0, ponto de pé a até 4 blocos
+  (3 vezes, 2 construtores; o save mostra lote plano e livre). **Corrigido e
+  instalado, não visto em jogo:** folga 0, ponto de pé a até 4 blocos
   (também na reserva), destino real no log.
   `BuilderApproachGameTest.arrivingAtTheApproachLeavesTheBuilderInReach`
   falhou antes; 499/499 depois.
