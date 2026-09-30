@@ -84,7 +84,13 @@ public final class BiomeConstructionSupply {
         return stock(world, colonyId, near, item);
     }
 
-    private static final int ATTEMPTS_BEFORE_STOCKING = 3;
+    /**
+     * Quantas faltas de uma peça sem rota no bioma antes de ela aparecer no
+     * baú — F5, 2026-09-30. Eram três: o tear, cuja linha não tem fonte na
+     * colônia, esperou 7 min 45 s no playtest daquele dia só para cumprir a
+     * contagem. Sem rota, esperar não traz a peça.
+     */
+    private static final int ATTEMPTS_BEFORE_STOCKING = 1;
 
     private static final Map<String, Integer> FAILED_PROFESSION_ATTEMPTS = new HashMap<>();
 
@@ -109,11 +115,6 @@ public final class BiomeConstructionSupply {
     /** A rota entregou: a contagem daquela peça recomeça. */
     public static void routeDelivered(UUID colonyId, Item item) {
         FAILED_PROFESSION_ATTEMPTS.remove(key(colonyId, item));
-    }
-
-    /** Há alguma profissão capaz de alcançar este item pela cadeia de produção do mod? */
-    public static boolean hasProfessionRoute(ServerWorld world, Item item) {
-        return hasProfessionRoute(world, item, new HashSet<>(), RECIPE_DEPTH);
     }
 
     /**
@@ -232,7 +233,7 @@ public final class BiomeConstructionSupply {
         }
 
         VillageColonyMod.LOGGER.info(
-                "The colony stocked {} for construction after three failed profession attempts",
+                "The colony stocked {} for construction — no profession can make it in this biome",
                 item);
         return true;
     }
@@ -245,37 +246,6 @@ public final class BiomeConstructionSupply {
     public static void clearAll() {
         FAILED_PROFESSION_ATTEMPTS.clear();
         REFUSED_NATURAL.clear();
-    }
-
-    private static boolean hasProfessionRoute(
-            ServerWorld world, Item item, Set<Item> visiting, int depth) {
-
-        if (depth < 0 || !visiting.add(item)) {
-            return false;
-        }
-
-        try {
-            if (MinecraftTypeAdapter.toResourceType(item).isPresent()) {
-                return true;
-            }
-
-            if (depth == 0) {
-                return false;
-            }
-
-            if (CraftingLookup.billFor(
-                    world,
-                    item,
-                    ingredient -> hasProfessionRoute(world, ingredient, visiting, depth - 1))
-                    .isPresent()) {
-                return true;
-            }
-
-            return CraftingLookup.smeltingInputsFor(world, item).stream()
-                    .anyMatch(input -> hasProfessionRoute(world, input, visiting, depth - 1));
-        } finally {
-            visiting.remove(item);
-        }
     }
 
     private static boolean hasRouteInBiome(

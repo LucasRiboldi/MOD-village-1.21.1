@@ -170,8 +170,9 @@ public final class BuilderMaterials {
     }
 
     /**
-     * Alternativas locais sempre ganham. Só três faltas de uma família sem
-     * profissão capaz autorizam a peça preferida a aparecer no baú da obra.
+     * Alternativas locais sempre ganham. Sem rota no bioma, a primeira falta
+     * já autoriza a peça preferida a aparecer no baú da obra — F5 e F6,
+     * 2026-09-30; eram três faltas e a rota da receita.
      */
     static boolean ensureConstructionMaterial(
             ServerWorld world, ConstructionProject project, List<Item> choices) {
@@ -182,8 +183,13 @@ public final class BuilderMaterials {
 
         Item preferred = choices.getFirst();
 
+        // <b>Rota no mundo, e não na receita</b> — F6, 2026-09-30. A
+        // pergunta não olhava o bioma: vidraça dava "tem rota" porque areia
+        // é um recurso, e na planície a areia não tem coleta. A peça nunca
+        // era entregue e ninguém ia buscar areia — 4 min 17 s de obra parada
+        // no playtest daquele dia.
         if (choices.stream().anyMatch(candidate ->
-                BiomeConstructionSupply.hasProfessionRoute(world, candidate))) {
+                BiomeConstructionSupply.hasRouteInBiome(world, project.colonyId(), candidate))) {
             return false;
         }
 

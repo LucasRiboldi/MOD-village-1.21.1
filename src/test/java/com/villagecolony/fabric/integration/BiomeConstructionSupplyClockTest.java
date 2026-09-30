@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -30,23 +31,24 @@ class BiomeConstructionSupplyClockTest {
     }
 
     @Test
-    void theThirdFailedProfessionAttemptSurvivesSaving() {
+    void theFailedAttemptCountSurvivesSavingAndTheDeliveryClearsIt() {
         UUID colony = UUID.randomUUID();
 
-        assertFalse(BiomeConstructionSupply.failedProfessionAttempt(colony, Items.BREWING_STAND));
-        assertFalse(BiomeConstructionSupply.failedProfessionAttempt(colony, Items.BREWING_STAND));
+        // Desde 2026-09-30 (F5) a primeira falta sem rota já libera a peça.
+        assertTrue(BiomeConstructionSupply.failedProfessionAttempt(colony, Items.BREWING_STAND),
+                "a primeira falta sem rota não liberou a peça");
 
         Map<String, Integer> saved = BiomeConstructionSupply.failedProfessionAttempts();
 
         BiomeConstructionSupply.clearAll();
         BiomeConstructionSupply.restoreFailedProfessionAttempts(saved);
 
-        assertTrue(BiomeConstructionSupply.failedProfessionAttempt(colony, Items.BREWING_STAND),
-                "a terceira tentativa recomeçou ao carregar o mundo");
+        assertEquals(saved, BiomeConstructionSupply.failedProfessionAttempts(),
+                "a contagem de faltas se perdeu ao carregar o mundo");
 
         BiomeConstructionSupply.routeDelivered(colony, Items.BREWING_STAND);
 
-        assertFalse(BiomeConstructionSupply.failedProfessionAttempt(colony, Items.BREWING_STAND),
-                "a entrega não reiniciou a contagem de tentativas");
+        assertTrue(BiomeConstructionSupply.failedProfessionAttempts().isEmpty(),
+                "a entrega não apagou a contagem de faltas");
     }
 }

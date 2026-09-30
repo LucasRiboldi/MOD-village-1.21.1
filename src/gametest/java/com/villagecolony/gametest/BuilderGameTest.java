@@ -537,8 +537,8 @@ public class BuilderGameTest implements FabricGameTest {
      * Ingrediente fora da economia local não pode deixar uma obra esperando.
      *
      * <p>O fermentador da primeira obra real precisava de haste de blaze. A
-     * colônia não tem rota para o Nether. Nas duas primeiras faltas, a obra
-     * ainda espera; na terceira, a peça entra no baú do construtor.
+     * colônia não tem rota para o Nether. Desde 2026-09-30 (F5) a primeira
+     * falta basta: sem rota, esperar não traz a peça.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder")
     public void unobtainableConstructionPieceIsStockedForTheBuilder(TestContext context) {
@@ -549,15 +549,9 @@ public class BuilderGameTest implements FabricGameTest {
                         MinecraftTypeAdapter.toResourceId(Blocks.BREWING_STAND)))), 1);
 
         try {
-            context.assertFalse(
-                    BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
-                    "a primeira falta já materializou o fermentador");
-            context.assertFalse(
-                    BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
-                    "a segunda falta já materializou o fermentador");
             context.assertTrue(
                     BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
-                    "a terceira falta sem rota não liberou o fermentador");
+                    "a primeira falta sem rota não liberou o fermentador");
             context.assertTrue(
                     ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.BREWING_STAND) == 1,
                     "a peça sem rota local não entrou no baú do construtor");
@@ -1756,30 +1750,19 @@ public class BuilderGameTest implements FabricGameTest {
                 ColonyFixture.create().owning(colony).owning(villager.getUuid()));
     }
 
-    /** A terceira falta sem profissão libera a peça, sem depender de tempo. */
+    /**
+     * A primeira falta sem rota libera a peça, sem depender de tempo — F5,
+     * 2026-09-30. Eram três faltas; o tear esperou 7 min 45 s por elas.
+     */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_missing_piece",
             tickLimit = 20)
-    public void theThirdMissingPieceAttemptIsSupplied(TestContext context) {
+    public void theFirstMissingPieceAttemptIsSupplied(TestContext context) {
         UUID colonyId = UUID.randomUUID();
 
         try {
-            context.assertFalse(
-                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
-                    "a primeira falta já liberou a peça");
-
-            context.assertFalse(
-                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
-                    "a segunda falta já liberou a peça");
-
             context.assertTrue(
                     BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
-                    "a terceira falta não liberou a peça");
-
-            BiomeConstructionSupply.routeDelivered(colonyId, Items.BREWING_STAND);
-
-            context.assertFalse(
-                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
-                    "a entrega não reiniciou as tentativas daquela peça");
+                    "a primeira falta sem rota não liberou a peça");
         } finally {
             BiomeConstructionSupply.routeDelivered(colonyId, Items.BREWING_STAND);
         }
