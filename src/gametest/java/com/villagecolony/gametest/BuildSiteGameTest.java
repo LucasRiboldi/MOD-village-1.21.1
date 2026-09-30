@@ -18,6 +18,7 @@ import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.LotRefusals;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.SweepLog;
+import com.villagecolony.fabric.integration.SweepDeadline;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
@@ -1013,6 +1014,45 @@ public class BuildSiteGameTest implements FabricGameTest {
                         + columns + " colunas a " + BuildSiteScanner.MAX_COLUMNS
                         + " por passagem cabem em " + floor
                         + " — está re-perguntando por coluna já respondida");
+
+        BuildSiteScanner.clearAll();
+
+        context.complete();
+    }
+
+    /**
+     * Com prazo de relógio, quem para a passagem é o relógio — 2026-09-30.
+     *
+     * <p>O playtest de 30-09 levou treze minutos até a primeira obra. Cada
+     * volta do raio 64 custou 16 a 18 passagens de 1.024 colunas, uma por
+     * ciclo de trinta segundos, enquanto o planejador gastava 1 a 2 ms dos
+     * 15 que o prazo permite. O teto de colunas é anterior ao prazo e
+     * ficou como o limite de fato.
+     *
+     * <p>Sob um prazo folgado, a volta inteira cabe numa chamada. Sem prazo
+     * — o teste acima —, o teto continua valendo.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_budget")
+    public void underADeadlineTheClockAndNotTheColumnCapEndsThePass(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        ColonyPos center = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(3, 1, 3)));
+
+        // A mesma casa impossível: nenhum lote encerra a volta antes.
+        ColonyPos tooBigToFit = new ColonyPos(40, 20, 40);
+
+        int radius = 64;
+
+        SweepDeadline.within(60_000L, () -> BuildSiteScanner.find(
+                context.getWorld(), colony, center, radius, tooBigToFit));
+
+        context.assertTrue(
+                SweepState.sweepPausedAt(colony).isEmpty(),
+                "com prazo de sobra a varredura do raio " + radius + " parou em "
+                        + SweepState.sweepPausedAt(colony)
+                        + " — o teto de " + BuildSiteScanner.MAX_COLUMNS
+                        + " colunas ainda manda na passagem");
 
         BuildSiteScanner.clearAll();
 

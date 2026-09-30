@@ -354,8 +354,10 @@ public final class BuildSiteScanner {
                     }
 
                     // Pelo teto de colunas ou pelo prazo de relógio — 2026-09-24;
-                    // ver SweepDeadline. Os dois guardam o mesmo cursor.
-                    if (++columns > MAX_COLUMNS || SweepDeadline.expired(columns)) {
+                    // ver SweepDeadline. Os dois guardam o mesmo cursor. Com
+                    // prazo armado só o relógio para a passagem — 2026-09-30.
+                    if (++columns > SweepDeadline.columnCap(MAX_COLUMNS)
+                            || SweepDeadline.expired(columns)) {
                         SweepState.SWEEPS.put(colonyId, new Sweep(ring, column, center));
 
                         // Menos um: esta coluna foi contada e não chegou
