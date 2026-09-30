@@ -226,6 +226,52 @@ public class RoadExtensionGameTest implements FabricGameTest {
     }
 
     /**
+     * Planta à frente da ponta não é chão: a rua passa por baixo dela e a
+     * tira — pedido do autor, 2026-09-30 ("estradas nascem para fora da
+     * vila").
+     *
+     * <p>No playtest das 02:45 as pontas recusaram por {@code short_grass} e
+     * {@code dandelion}: a procura de chão parava na planta e a tratava como
+     * o chão. Grama curta sobre terra é o terreno mais comum fora da vila.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_extension")
+    public void aPlantAheadIsClearedAndTheRoadIsLaidUnderIt(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        strip(context);
+        reserveInitialRoad(context, colony);
+
+        for (int step = 1; step <= 3; step++) {
+            context.setBlockState(ROAD_END.add(step, 1, 0), Blocks.SHORT_GRASS.getDefaultState());
+        }
+
+        BuildSiteScanner.find(
+                context.getWorld(),
+                colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        RoadExtension.Outcome outcome = RoadExtension.extend(
+                context.getWorld(), colony, ResourceId.vanilla("dirt_path"));
+
+        context.assertTrue(
+                outcome == RoadExtension.Outcome.EXTENDED,
+                "a grama curta parou a rua: " + outcome + " — " + PavingRefusals.lastOf(colony));
+
+        for (int step = 1; step <= 3; step++) {
+            context.assertTrue(
+                    context.getBlockState(ROAD_END.add(step, 0, 0)).isOf(Blocks.DIRT_PATH),
+                    "a terra sob a planta " + step + " não virou rua");
+            context.assertTrue(
+                    context.getBlockState(ROAD_END.add(step, 1, 0)).isAir(),
+                    "a planta " + step + " ficou em cima da rua");
+        }
+
+        context.complete();
+    }
+
+    /**
      * A recusa diz o que a ponta encontrou — 2026-09-30.
      *
      * <p>O playtest de 30-09 teve <i>"found no road end it may pave — tried

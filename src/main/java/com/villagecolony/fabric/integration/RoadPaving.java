@@ -109,6 +109,11 @@ final class RoadPaving {
                 return laid;
             }
 
+            // A planta em cima sai junto: rua não tem grama por cima.
+            if (!world.getBlockState(at.up()).isAir()) {
+                world.setBlockState(at.up(), net.minecraft.block.Blocks.AIR.getDefaultState());
+            }
+
             world.setBlockState(at, paving.getDefaultState());
 
             // O índice de ruas precisa saber da beira nova — 2026-08-27.
@@ -132,7 +137,13 @@ final class RoadPaving {
      * primeira que disser não é a que o registro conta.
      */
     private static Optional<String> refusalAt(ServerWorld world, BlockPos at, BlockState state) {
-        if (BlockProtection.isVillageOriginal(world, at)) {
+        // <b>O chão do bioma não é peça de vila</b> — pedido do autor,
+        // 2026-09-30: estradas nascem para fora da vila. A caixa da peça de
+        // rua inclui a grama em volta do caminho, e no playtest das 02:45 era
+        // ela que parava 8 a 12 das 24 pontas. É a mesma exceção que o lote
+        // tem desde 2026-09-18 (LotLevel): cerca, escada e o resto da peça
+        // continuam protegidos pela Regra 3.
+        if (BlockProtection.isVillageOriginal(world, at) && !LotGround.isBiomeGround(world, at)) {
             return Optional.of("village-original block (" + nameOf(state) + ")");
         }
 
@@ -146,7 +157,8 @@ final class RoadPaving {
 
         BlockState above = world.getBlockState(at.up());
 
-        if (!above.isAir()) {
+        // Planta e flor saem ao calçar; o que não sai é bloco, nem água.
+        if (!isClearable(above)) {
             return Optional.of("something above (" + nameOf(above) + ")");
         }
 
@@ -172,7 +184,10 @@ final class RoadPaving {
                 continue;
             }
 
-            if (world.getBlockState(at).isAir()) {
+            // Planta não é chão — 2026-09-30. A procura parava na grama curta
+            // e a tratava como o chão; água continua parando, porque não se
+            // calça rua sob ela.
+            if (isClearable(world.getBlockState(at))) {
                 continue;
             }
 
@@ -180,6 +195,11 @@ final class RoadPaving {
         }
 
         return Optional.empty();
+    }
+
+    /** Ar, planta ou flor sem fluido: o que a rua atravessa e tira. */
+    private static boolean isClearable(BlockState state) {
+        return LotGround.isNothing(state) && state.getFluidState().isEmpty();
     }
 
     /**
