@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.construction.model.ClimbLimit;
 import com.villagecolony.core.construction.model.ConstructionProject;
+import com.villagecolony.fabric.brain.WorkTargets;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -40,6 +41,28 @@ public final class BuilderApproach {
      * que pediu esta busca.
      */
     private static final int FOOT_SEARCH = 6;
+
+    /**
+     * A folga com que o destino do construtor conta como alcançado: nenhuma.
+     *
+     * <p><b>O destino já é o lugar exato de ficar de pé</b>, como no desvio
+     * do mineiro. Com a folga padrão de dois, o Vanilla dava o construtor
+     * por chegado até dois blocos (Manhattan) antes de um destino escolhido
+     * na borda do alcance, e ele parava fora dele: nem andava, nem punha
+     * bloco. Foi a casa do pastor de {@code 1756, 71, -5325} no playtest de
+     * 2026-09-30, com dois construtores parados em grama plana.
+     */
+    static final int ARRIVAL = 0;
+
+    /**
+     * Até onde, no plano, procurar o lugar de pé em volta do bloco.
+     *
+     * <p>Um a menos que {@link #REACH}: o alcance é medido do corpo do
+     * aldeão, que pode estar em qualquer canto do bloco em que pisa. Um
+     * lugar a quatro blocos deixa até 4,71 de corpo a centro, dentro dos
+     * cinco; um lugar a cinco deixava até 5,71.
+     */
+    private static final int STANDING_RADIUS = REACH - 1;
 
     private BuilderApproach() {
     }
@@ -141,6 +164,10 @@ public final class BuilderApproach {
      * que não saía do lugar. O construtor alcança cinco blocos no plano,
      * então o lado livre do lote é um destino igualmente válido e evita
      * exigir da navegação Vanilla uma rota até o meio da estrutura.
+     *
+     * <p>A busca vai até {@link #STANDING_RADIUS}, e não até o alcance
+     * inteiro — 2026-09-30. O mais próximo do construtor cai sempre na
+     * borda da busca, e na borda do alcance o corpo dele ficava fora.
      */
     private static Optional<BlockPos> standingSpotWithinReach(
             ServerWorld world, BlockPos floor, BlockPos worker) {
@@ -148,9 +175,9 @@ public final class BuilderApproach {
         BlockPos closest = null;
         double closestDistance = Double.MAX_VALUE;
 
-        for (int dx = -REACH; dx <= REACH; dx++) {
-            for (int dz = -REACH; dz <= REACH; dz++) {
-                if (dx * dx + dz * dz > REACH * REACH) {
+        for (int dx = -STANDING_RADIUS; dx <= STANDING_RADIUS; dx++) {
+            for (int dz = -STANDING_RADIUS; dz <= STANDING_RADIUS; dz++) {
+                if (dx * dx + dz * dz > STANDING_RADIUS * STANDING_RADIUS) {
                     continue;
                 }
 
@@ -185,9 +212,9 @@ public final class BuilderApproach {
 
         BlockPos floor = new BlockPos(target.getX(), project.origin().y(), target.getZ());
 
-        for (int dx = -REACH; dx <= REACH; dx++) {
-            for (int dz = -REACH; dz <= REACH; dz++) {
-                if (dx * dx + dz * dz <= REACH * REACH
+        for (int dx = -STANDING_RADIUS; dx <= STANDING_RADIUS; dx++) {
+            for (int dz = -STANDING_RADIUS; dz <= STANDING_RADIUS; dz++) {
+                if (dx * dx + dz * dz <= STANDING_RADIUS * STANDING_RADIUS
                         && standingSpotNear(world, floor.add(dx, 0, dz)).isPresent()) {
                     return true;
                 }
@@ -339,9 +366,13 @@ public final class BuilderApproach {
 
         BlockPos ground = new BlockPos(target.getX(), project.origin().y(), target.getZ());
 
-        Optional<BlockPos> spot = standingSpotNear(world, ground);
-
-        String where = spot.map(BlockPos::toShortString).orElse("nowhere to stand");
+        // O destino real, e não a coluna do bloco — 2026-09-30. A linha
+        // imprimia o lugar de pé ao lado do alvo enquanto o construtor
+        // caminhava para outro, na borda do alcance, e escondia a causa.
+        String where = WorkTargets.of(villager.getUuid())
+                .or(() -> standingSpotNear(world, ground))
+                .map(BlockPos::toShortString)
+                .orElse("nowhere to stand");
 
         return "the worker is at " + villager.getBlockPos().toShortString()
                 + ", " + (int) Math.sqrt(villager.getBlockPos().getSquaredDistance(target))

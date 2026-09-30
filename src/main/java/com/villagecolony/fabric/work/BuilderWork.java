@@ -282,7 +282,8 @@ public final class BuilderWork {
             // é mandá-lo para uma queda que a navegação não percorre.
             WorkTargets.set(
                     workerId,
-                    BuilderApproach.footOf(world, project, target, villager.getBlockPos()));
+                    BuilderApproach.footOf(world, project, target, villager.getBlockPos()),
+                    BuilderApproach.ARRIVAL);
 
             if (job.stall.stuck(world, villager)) {
                 // Parado no mesmo bloco há quinze segundos de expediente —

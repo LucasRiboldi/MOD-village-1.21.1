@@ -68,6 +68,72 @@ public final class BuilderApproachGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * Chegar ao destino precisa deixar o construtor dentro do alcance.
+     *
+     * <p>Playtest de 2026-09-30: a casa do pastor de {@code 1756, 71, -5325}
+     * abriu e nenhum bloco foi posto. Dois construtores pararam em grama
+     * plana a 5-6 blocos do alvo. O destino era o ponto de pé mais próximo
+     * deles na borda do alcance, e a folga de chegada os dava por chegados
+     * até dois blocos (Manhattan) antes dele, fora do alcance. Sem andar e
+     * sem construir, o guarda devolvia a tarefa em 300 tiques.
+     *
+     * <p>A geometria é a do save: alvo no piso, construtor seis blocos a
+     * oeste e um ao sul. Todo bloco que o Vanilla aceita como chegada, em
+     * qualquer canto onde o corpo esteja, tem que alcançar o alvo.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_approach")
+    public void arrivingAtTheApproachLeavesTheBuilderInReach(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos target = context.getAbsolutePos(TARGET);
+        BlockPos worker = target.add(-6, 1, 1);
+        ConstructionProject project = ConstructionProject.plan(
+                UUID.randomUUID(),
+                Blueprint.of(
+                        ResourceId.vanilla("village/plains/houses/approach_arrival"),
+                        List.of(new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("oak_planks")))),
+                MinecraftTypeAdapter.toColonyPos(target));
+
+        for (int dx = -9; dx <= 9; dx++) {
+            for (int dz = -9; dz <= 9; dz++) {
+                BlockPos floor = target.add(dx, 0, dz);
+
+                world.setBlockState(floor, Blocks.GRASS_BLOCK.getDefaultState());
+                world.setBlockState(floor.up(), Blocks.AIR.getDefaultState());
+                world.setBlockState(floor.up(2), Blocks.AIR.getDefaultState());
+            }
+        }
+
+        BlockPos approach = BuilderApproach.footOf(world, project, target, worker);
+        int arrival = BuilderApproach.ARRIVAL;
+
+        for (int dx = -arrival; dx <= arrival; dx++) {
+            for (int dz = -arrival; dz <= arrival; dz++) {
+                if (Math.abs(dx) + Math.abs(dz) > arrival) {
+                    continue;
+                }
+
+                BlockPos arrived = approach.add(dx, 0, dz);
+
+                for (double cx : new double[] {0.0, 0.999}) {
+                    for (double cz : new double[] {0.0, 0.999}) {
+                        Vec3d body = new Vec3d(
+                                arrived.getX() + cx, arrived.getY(), arrived.getZ() + cz);
+
+                        context.assertTrue(
+                                BuilderApproach.isWithinReach(body, target),
+                                "o construtor chega em " + arrived.toShortString()
+                                        + " (destino " + approach.toShortString()
+                                        + ", folga " + arrival + ") e fica fora do alcance de "
+                                        + target.toShortString());
+                    }
+                }
+            }
+        }
+
+        context.complete();
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_approach")
     public void aBuildIsNotReservedWithoutAnyStandingSpotInReach(TestContext context) {
         ServerWorld world = context.getWorld();
