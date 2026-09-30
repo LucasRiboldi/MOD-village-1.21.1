@@ -476,8 +476,29 @@ public final class ColonyGoals {
         // do autor, 2026-09-19. O {@code Math.max} é o mesmo da pedra:
         // obra pequena não abaixa o estoque que a colônia mantém para a
         // casa seguinte, e obra grande passa por cima do piso.
+        //
+        // <b>Só com cadeia</b> — 2026-09-30. O piso entra quando o cru tem
+        // meta própria nesta colônia ou já está no baú; senão a fornalha
+        // ficava com uma tarefa sem matéria-prima possível (terracota sem
+        // argila, arenito liso na planície), que era a raiz do F2. O que a
+        // obra pede entra sempre, com ou sem cadeia.
+        work.surfaceGathered().forEach((gathered, amount) -> {
+            if (amount > 0) {
+                goals.put(gathered, amount);
+            }
+        });
+
         for (ResourceType made : StockRules.everythingTheFurnaceMakes()) {
-            goals.put(made, Math.max(SMELTED_FLOOR, work.smelted().getOrDefault(made, 0)));
+            int asked = work.smelted().getOrDefault(made, 0);
+            boolean chained = StockRules.rawOf(made)
+                    .map(raw -> goals.containsKey(raw) || owned.amountOf(raw) > 0)
+                    .orElse(true);
+
+            if (chained) {
+                goals.put(made, Math.max(SMELTED_FLOOR, asked));
+            } else if (asked > 0) {
+                goals.put(made, asked);
+            }
         }
 
         // E o que a obra pede e a fornalha NÃO faz — um material cuja
@@ -487,12 +508,6 @@ public final class ColonyGoals {
         work.smelted().forEach((made, amount) -> {
             if (amount > 0 && !goals.containsKey(made)) {
                 goals.put(made, amount);
-            }
-        });
-
-        work.surfaceGathered().forEach((gathered, amount) -> {
-            if (amount > 0) {
-                goals.put(gathered, amount);
             }
         });
 

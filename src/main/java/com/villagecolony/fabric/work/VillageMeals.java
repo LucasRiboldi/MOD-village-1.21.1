@@ -113,6 +113,9 @@ public final class VillageMeals {
         List<ColonyPos> chests = ColonyChests.nearestFirst(world, colony.id(), colony.center());
         int fed = 0;
 
+        // Todo adulto da colônia, com ofício ou sem: o VillagerScanner
+        // registra cada aldeão da vila em WORKERS, e é de lá que a lista
+        // sai. Conferido em 2026-09-30, quando se suspeitou do contrário.
         for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
             Entity entity = world.getEntity(worker.villagerId());
 

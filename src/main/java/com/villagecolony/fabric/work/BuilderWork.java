@@ -62,8 +62,10 @@ import java.util.UUID;
  *   <li>nada é posto sobre bloco que não seja substituível: grama alta
  *       e flor saem, parede de ninguém sai;
  *   <li>o material sai do baú <b>antes</b> de o bloco entrar no mundo.
- *       Se não há material, não há bloco — a colônia não cria recurso
- *       (Construction-System.md §"Regras de Arquitetura").
+ *       Se não há material, não há bloco. As exceções são as da
+ *       ADR-028: bloco sem item montado no local, peça sem rota e
+ *       ingrediente de drop que aparecem no baú — a regra "a colônia não
+ *       cria recurso" foi retirada pelo autor em 2026-09-30.
  * </ol>
  *
  * <p><b>O ritmo.</b> Um bloco por segundo, como a Regra 2 fez com a

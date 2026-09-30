@@ -12,6 +12,8 @@
     ],
     "fabric-gametest": [
       "com.villagecolony.gametest.TreeNurseryGameTest",
+      "com.villagecolony.gametest.ProfessionReviewGameTest",
+      "com.villagecolony.fabric.work.MinerHaulCapGameTest",
       "com.villagecolony.gametest.VillageForestGameTest",
       "com.villagecolony.gametest.AnyBedGameTest",
       "com.villagecolony.gametest.ChainRootsGameTest",

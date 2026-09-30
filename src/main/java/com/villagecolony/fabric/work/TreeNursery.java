@@ -18,7 +18,8 @@ import net.minecraft.util.math.BlockPos;
 import java.util.Optional;
 
 /**
- * O viveiro do fazendeiro, na borda da vila — 2026-09-19.
+ * O viveiro da vila, na borda — 2026-09-19. Plantado pelo lenhador desde
+ * 2026-09-30 (era do fazendeiro; decisão do autor).
  *
  * <p><b>Decisão do autor:</b> <i>"adicionar ao fazendeiro uma habilidade
  * nova: no limite da vila, o fazendeiro deve adicionar um bloco de terra

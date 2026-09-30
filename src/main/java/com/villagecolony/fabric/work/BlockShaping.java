@@ -283,11 +283,27 @@ public final class BlockShaping {
      * baú como qualquer outro material de construção.
      */
     public static boolean isShapedFromTheGround(BlockState state) {
+        if (isNeverPlaced(state)) {
+            return false;
+        }
+
         return state.isOf(Blocks.FARMLAND)
                 || state.isOf(Blocks.WATER)
                 || state.isOf(Blocks.DIRT_PATH)
                 || state.getBlock() instanceof CropBlock
                 || hasNoItemOfItsOwn(state);
+    }
+
+    /**
+     * Bloco que a obra nunca assenta — decisão do autor, 2026-09-30:
+     * <i>"lava não pode surgir automático"</i>.
+     *
+     * <p>A lava não tem item e entraria pelo mesmo caminho da água, montada
+     * no local. Numa casa de madeira isso é incêndio. O construtor pula a
+     * posição e a obra segue sem ela; o lugar fica vazio.
+     */
+    public static boolean isNeverPlaced(BlockState state) {
+        return state.isOf(Blocks.LAVA);
     }
 
     /**

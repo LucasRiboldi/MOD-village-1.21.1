@@ -106,15 +106,9 @@ final class FarmerChores {
                     world.getTime());
 
             if (!field.incomplete()) {
-                // <b>E aí ele planta árvore na borda</b> — habilidade
-                // nova, decisão do autor de 2026-09-19. Aqui, e só aqui:
-                // é o ponto em que o fazendeiro varreu o raio inteiro e
-                // não achou nada de lavoura para fazer. Plantar é o que
-                // sobra de útil, e a vila precisa — a obra de 13:04
-                // parou esperando jungle_door num deserto cuja colônia
-                // tinha dez toras ao todo. Ver TreeNursery.
-                FarmerNursery.plantIfItIsTime(world, colonyId, job.center);
-
+                // O viveiro de árvores era plantado aqui até 2026-09-30;
+                // o autor o passou ao lenhador, que é quem cuida da
+                // floresta. Ver LumberjackNursery.
                 FieldRest.sweptAndFoundNothing(colonyId, world.getTime());
             }
 
@@ -207,6 +201,9 @@ final class FarmerChores {
         int took = store(world, storage, drops);
 
         job.collected += took;
+
+        // O trigo que passa da reserva vira pão — 2026-09-30.
+        FarmerBakery.bakeSurplus(world, storage.chestPosition());
 
         VillageColonyMod.LOGGER.info(
                 "Farmer {} harvested {} at {} — {} this task, {}",

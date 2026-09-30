@@ -27,7 +27,8 @@ import java.util.UUID;
 
 /**
  * O ingrediente sem rota aparece no baú do artesão depois de três tentativas
- * de recolher — decisão do autor, 2026-09-30.
+ * de recolher — decisão do autor, 2026-09-30. Ingrediente de drop (linha,
+ * corante) não espera: tem rota sempre (DropIngredients).
  *
  * <p>No playtest das 02:45 a casa do pastor esperou 7 min 45 s pelo tear (a
  * linha não tem fonte na colônia) e 4 min 17 s pela vidraça. A peça pronta
@@ -35,22 +36,32 @@ import java.util.UUID;
  */
 public final class BuilderMaterialsGameTest implements FabricGameTest {
 
+    /**
+     * <b>A linha deixou de esperar três tentativas</b> — 2026-09-30. Ela é
+     * ingrediente de drop ({@code DropIngredients}): tem rota sempre, e
+     * aparece no baú quando o carpinteiro fabrica o tear. O caminho das três
+     * tentativas, que é o da peça sem rota, não conjura nada para o tear.
+     */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
-    public void theStringsForALoomAppearInTheCarpenterChestOnTheThirdAttempt(TestContext context) {
+    public void theStringOfALoomHasARouteAndIsNotStockedByTheAttempts(TestContext context) {
         Setup setup = setUp(context, context.getAbsolutePos(new BlockPos(2, 2, 2)), Items.LOOM);
 
         try {
+            context.assertTrue(BiomeConstructionSupply.hasRouteInBiome(
+                            context.getWorld(), setup.project().colonyId(), Items.STRING),
+                    "a linha devia ter rota: ela aparece sozinha");
+
             for (int attempt = 1; attempt <= 3; attempt++) {
                 BuilderMaterials.hasOrStocksConstructionMaterial(
                         context.getWorld(), setup.project(), Items.LOOM);
-
-                context.assertTrue(count(context, setup.carpenterChest(), Items.STRING) == (attempt < 3 ? 0 : 2),
-                        "depois da tentativa " + attempt + " o baú do carpinteiro tinha "
-                                + count(context, setup.carpenterChest(), Items.STRING) + " linhas");
             }
+
+            context.assertTrue(count(context, setup.carpenterChest(), Items.STRING) == 0,
+                    "a linha foi conjurada pelo caminho das tres tentativas");
+
             context.assertTrue(count(context, setup.builderChest(), Items.LOOM) == 0
                             && count(context, setup.carpenterChest(), Items.LOOM) == 0,
-                    "o tear apareceu pronto, em vez das linhas para o carpinteiro");
+                    "o tear apareceu pronto; quem o faz e o carpinteiro");
         } finally {
             setup.cleanUp();
         }

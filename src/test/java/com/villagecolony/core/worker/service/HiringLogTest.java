@@ -271,24 +271,26 @@ class HiringLogTest {
     }
 
     /**
-     * Fundação completa, sete adultos: um por produtor. Carpinteiro e
-     * fazendeiro são os que faltam; o candidato largou a carpintaria.
+     * Fundação completa (sete, com o carpinteiro desde 2026-09-30) e
+     * dezesseis adultos: abrem o segundo mineiro e o fazendeiro. O
+     * candidato largou a mineração, então o castigo é dito e o fazendeiro,
+     * que vem depois na ordem, é preenchido.
      */
     @Test
     void pastTheFoundationTheShunIsSaidAndTheNextTradeIsFilled() {
         Worker candidate = idle();
 
-        gaveUpAndWaited(candidate, ProfessionType.CARPENTER);
+        gaveUpAndWaited(candidate, ProfessionType.MINER);
 
         List<Worker> colony = new ArrayList<>(foundationFilled());
         colony.add(candidate);
 
         assertEquals(
                 Optional.of(ProfessionType.FARMER),
-                ProfessionAssigner.vacancyFor(candidate, colony, 7));
+                ProfessionAssigner.vacancyFor(candidate, colony, 16));
 
         assertEquals(1, HiringLog.countOf(
-                COLONY, ProfessionType.CARPENTER, HiringLog.Outcome.SHUNNED));
+                COLONY, ProfessionType.MINER, HiringLog.Outcome.SHUNNED));
         assertEquals(1, HiringLog.countOf(
                 COLONY, ProfessionType.FARMER, HiringLog.Outcome.FILLED));
     }
@@ -297,7 +299,6 @@ class HiringLogTest {
     @Test
     void aFullColonySaysThereIsNoVacancy() {
         List<Worker> colony = new ArrayList<>(foundationFilled());
-        colony.add(hired(ProfessionType.CARPENTER));
         colony.add(hired(ProfessionType.FARMER));
 
         Worker candidate = idle();

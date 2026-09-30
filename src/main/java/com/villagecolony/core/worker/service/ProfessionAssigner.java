@@ -61,14 +61,20 @@ public final class ProfessionAssigner {
     /**
      * Piso da casa fundacional: uma função ativa de cada tipo alojado nela.
      *
-     * <p>{@link ProfessionType#CARPENTER} e {@link ProfessionType#FARMER} seguem
-     * disponíveis no registro, na atribuição, nas tarefas e no crescimento
-     * normal. A única regra desta lista é que eles não são titulares nem
-     * recebem cama ou baú reservados na {@code BigHouseMOD}.
+     * <p><b>O carpinteiro é titular desde 2026-09-30</b>, decisão do autor:
+     * sem ele não há tábua nem peça de obra, e a primeira casa dependia de
+     * uma contratação que a fundação não garantia. Ele vem logo depois do
+     * lenhador, que lhe traz o tronco; a cama e o baú dele ficam à direita
+     * da porta da {@code BigHouseMOD}.
+     *
+     * <p>{@link ProfessionType#FARMER} segue disponível no registro, na
+     * atribuição, nas tarefas e no crescimento normal, sem cama nem baú
+     * reservados na casa fundacional.
      */
     public static final List<ProfessionType> FOUNDATION_ORDER = List.of(
             ProfessionType.MINER,
             ProfessionType.LUMBERJACK,
+            ProfessionType.CARPENTER,
             ProfessionType.MASON,
             ProfessionType.SMELTER,
             ProfessionType.SHEPHERD,
@@ -226,6 +232,20 @@ public final class ProfessionAssigner {
             return Optional.of(type);
         }
 
+        // <b>A demanda antes da lista</b> — decisão do autor, 2026-09-30.
+        // Havendo vaga em aberto na colônia, ela vai primeiro à profissão
+        // de que a obra depende agora (ProfessionDemand, a maior falta
+        // primeiro), até uma cabeça acima da cota dela; só depois a
+        // ordem fixa decide.
+        Optional<ProfessionType> demanded =
+                demandedVacancy(candidate, counts, adultPopulation);
+
+        if (demanded.isPresent()) {
+            HiringLog.record(colonyId, demanded.get(), HiringLog.Outcome.FILLED);
+
+            return demanded;
+        }
+
         for (ProfessionType type : GROWTH_ORDER) {
             if (counts.get(type) >= targetCount(type, adultPopulation)) {
                 if (colonyId != null) {
@@ -253,6 +273,45 @@ public final class ProfessionAssigner {
             // profissão acima já disse quais e por quê; esta linha existe
             // para o caso de a ordem ficar vazia, que seria outro defeito.
             HiringLog.record(colonyId, PRODUCER_ORDER.get(0), HiringLog.Outcome.NO_VACANCY);
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * A vaga que a demanda da obra reclama, se houver vaga na colônia.
+     *
+     * <p>Só com candidato: a pergunta sem dono é a contagem da colônia e
+     * não sabe de qual colônia é a demanda.
+     */
+    private static Optional<ProfessionType> demandedVacancy(
+            Worker candidate, Map<ProfessionType, Integer> counts, int adultPopulation) {
+
+        if (candidate == null) {
+            return Optional.empty();
+        }
+
+        boolean anySlotOpen = false;
+
+        for (ProfessionType type : GROWTH_ORDER) {
+            if (counts.get(type) < targetCount(type, adultPopulation)) {
+                anySlotOpen = true;
+                break;
+            }
+        }
+
+        if (!anySlotOpen) {
+            return Optional.empty();
+        }
+
+        for (ProfessionType type : ProfessionDemand.of(candidate.colonyId())) {
+            if (!counts.containsKey(type) || candidate.isShunning(type)) {
+                continue;
+            }
+
+            if (counts.get(type) <= targetCount(type, adultPopulation)) {
+                return Optional.of(type);
+            }
         }
 
         return Optional.empty();

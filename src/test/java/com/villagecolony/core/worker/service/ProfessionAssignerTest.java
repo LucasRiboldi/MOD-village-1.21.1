@@ -62,7 +62,9 @@ class ProfessionAssignerTest {
         }
 
         Set<ProfessionType> expected = EnumSet.copyOf(ProfessionAssigner.FOUNDATION_ORDER);
-        expected.add(ProfessionType.CARPENTER);
+        // Depois da fundação (que tem o carpinteiro desde 2026-09-30), a
+        // primeira vaga de crescimento ainda vazia é o fazendeiro.
+        expected.add(ProfessionType.FARMER);
 
         assertEquals(expected, assigned);
     }

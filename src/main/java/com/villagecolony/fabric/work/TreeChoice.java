@@ -153,7 +153,7 @@ public final class TreeChoice {
             // floresta cresce, e a muda replantada volta a ser árvore.
             // Em lote — 2026-09-26: uma muda a cada cinco minutos deu 15
             // toras em 33 minutos numa vila sem árvore natural.
-            FarmerNursery.plantBatchIfItIsTime(world, job.task.colonyId(), job.center);
+            LumberjackNursery.plantBatchIfItIsTime(world, job.task.colonyId(), job.center);
 
             return LumberjackWork.Outcome.SEARCHED;
         }

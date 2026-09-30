@@ -15,7 +15,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Quando e onde o fazendeiro planta a árvore — 2026-09-19.
+ * Quando e onde o lenhador planta a árvore do viveiro — 2026-09-19;
+ * do fazendeiro para o lenhador em 2026-09-30, decisão do autor.
  *
  * <p>A habilidade é do autor e está descrita em {@link TreeNursery}; o
  * que mora aqui é o <b>ritmo</b> e o <b>lugar</b>, que são as duas
@@ -30,15 +31,16 @@ import java.util.UUID;
  * nasceu a 50. Quem impede o rebento no espaço de uma obra é
  * {@code TreeNursery.isSpotForANursery}.
  *
- * <p><b>Uma por vez, com intervalo.</b> O fazendeiro chega aqui toda vez
- * que varre o raio e não acha lavoura, o que numa vila sem roça é
- * <b>sempre</b>. Sem freio ele plantaria uma árvore por passagem até a
- * borda inteira virar viveiro.
+ * <p><b>Dois momentos, com intervalo.</b> O lenhador planta um lote
+ * quando não acha árvore ao alcance ({@link #plantBatchIfItIsTime}) e uma
+ * muda depois de cada árvore que derruba inteira ({@link #plantIfItIsTime}).
+ * Sem freio ele plantaria a cada passagem até a borda inteira virar
+ * viveiro.
  */
-public final class FarmerNursery {
+public final class LumberjackNursery {
 
     static {
-        ServerMemory.register(FarmerNursery.class, FarmerNursery::clearAll);
+        ServerMemory.register(LumberjackNursery.class, LumberjackNursery::clearAll);
     }
 
     /**
@@ -70,7 +72,7 @@ public final class FarmerNursery {
 
     private static final Map<UUID, Long> LAST = new HashMap<>();
 
-    private FarmerNursery() {
+    private LumberjackNursery() {
     }
 
     /** Se já passou tempo bastante desde o último plantio desta colônia. */
@@ -108,7 +110,7 @@ public final class FarmerNursery {
         if (room <= 0) {
             // <b>Cheio também marca a hora</b> — spark de 2026-09-26. Com os
             // dez viveiros de pé, cada chamada recontava ~166 mil blocos e
-            // não guardava nada; lenhador e fazendeiro sem trabalho chamam
+            // não guardava nada; o lenhador sem árvore chama
             // o tempo todo, e a conta virou o terceiro maior custo do mod.
             // Cheio agora espera o mesmo intervalo de quem plantou.
             LAST.put(colonyId, world.getTime());
@@ -128,7 +130,7 @@ public final class FarmerNursery {
             planted++;
 
             VillageColonyMod.LOGGER.info(
-                    "Colony {} — the farmer planted {} on rooted dirt at {}, at the village edge",
+                    "Colony {} — the lumberjack planted {} on rooted dirt at {}, at the village edge",
                     colonyId.toString().substring(0, 8),
                     TreeNursery.idOf(sapling.get()),
                     spot.get().toShortString());
@@ -152,7 +154,7 @@ public final class FarmerNursery {
 
     /**
      * O plantio do lenhador que não achou árvore: até {@link #BATCH} mudas,
-     * no mesmo ritmo e no mesmo teto do fazendeiro.
+     * no mesmo ritmo e no mesmo teto do plantio avulso.
      *
      * @return quantas mudas nasceram agora
      */

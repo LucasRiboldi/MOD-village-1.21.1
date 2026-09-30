@@ -458,6 +458,11 @@ public final class LumberjackWork {
     private static void closePlan(ServerWorld world, Job job) {
         if (job.plan != null && job.index >= job.plan.logs()) {
             TreeHarvester.finish(world, job.plan);
+
+            // O viveiro da borda é dele desde 2026-09-30 — decisão do
+            // autor, que o tirou do fazendeiro. Depois de cada árvore
+            // inteira, uma muda nova na borda, no ritmo do viveiro.
+            LumberjackNursery.plantIfItIsTime(world, job.task.colonyId(), job.center);
         }
 
         TreeClaims.unclaim(job.plan);

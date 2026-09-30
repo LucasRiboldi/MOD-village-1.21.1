@@ -89,7 +89,10 @@ public final class BlockBreakTime {
     public static int ticksFor(
             ServerWorld world, BlockPos pos, BlockState state, LivingEntity worker) {
 
-        return ticksFor(world, pos, state, worker.getEquippedStack(EquipmentSlot.MAINHAND));
+        // A ferramenta de ferro certa para ESTE bloco, e não só a da
+        // profissão — 2026-09-30, ver ActionTool.
+        return ticksFor(world, pos, state,
+                ActionTool.forBlock(state, worker.getEquippedStack(EquipmentSlot.MAINHAND)));
     }
 
     /**

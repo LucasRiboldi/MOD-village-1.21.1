@@ -778,15 +778,22 @@ class ColonyGoalsTest {
         // mutação cobrou isto: comparar com {@code SMELTED_FLOOR} fazia a
         // afirmação passar com o piso em ZERO, porque os dois lados se
         // moviam juntos. Um teste assim não mede nada.
+        //
+        // <b>Pedra lisa, e não arenito liso</b> — 2026-09-30: o piso só
+        // vale com cadeia, e esta vila é de pedregulho (pedregulho →
+        // pedra → pedra lisa). O arenito liso não tem cru aqui.
         assertTrue(
-                goal.getOrDefault(ResourceType.SMOOTH_SANDSTONE, 0) > 0,
+                goal.getOrDefault(ResourceType.SMOOTH_STONE, 0) > 0,
                 "sem obra a fornalha parou de manter estoque — a casa seguinte espera"
                         + " ela comecar do zero");
 
         assertEquals(
                 ColonyGoals.SMELTED_FLOOR,
-                goal.get(ResourceType.SMOOTH_SANDSTONE),
+                goal.get(ResourceType.SMOOTH_STONE),
                 "o piso deixou de ser o que a constante diz");
+
+        assertFalse(goal.containsKey(ResourceType.SMOOTH_SANDSTONE),
+                "piso de arenito liso numa vila sem arenito: tarefa sem cru possivel");
 
         // E o foco continua sendo da obra: quando ela pede mais, manda.
         Map<ResourceType, Integer> asked = ColonyGoals.of(
@@ -860,9 +867,31 @@ class ColonyGoalsTest {
     @Test
     void aSmallAskDoesNotLowerTheFurnaceFloor() {
         Map<ResourceType, Integer> goal =
-                goalFor(work(0, 0, Map.of(ResourceType.SMOOTH_SANDSTONE, 3), Map.of()));
+                goalFor(work(0, 0, Map.of(ResourceType.SMOOTH_STONE, 3), Map.of()));
 
-        assertEquals(ColonyGoals.SMELTED_FLOOR, goal.get(ResourceType.SMOOTH_SANDSTONE));
+        assertEquals(ColonyGoals.SMELTED_FLOOR, goal.get(ResourceType.SMOOTH_STONE));
+    }
+
+    /**
+     * Piso de fundido só com cadeia — 2026-09-30. Terracota sem argila
+     * não tem piso; com argila no baú, tem. A obra pede sempre.
+     */
+    @Test
+    void theFurnaceFloorNeedsARawMaterialChain() {
+        Map<ResourceType, Integer> noClay = goalFor(work(0, 0, Map.of(), Map.of()));
+
+        assertFalse(noClay.containsKey(ResourceType.TERRACOTTA));
+        assertFalse(noClay.containsKey(ResourceType.BRICK));
+
+        Map<ResourceType, Integer> withClay = ColonyGoals.of(
+                colony(), owned(ResourceType.CLAY, 10), 0, 0, work(0, 0, Map.of(), Map.of()));
+
+        assertEquals(ColonyGoals.SMELTED_FLOOR, withClay.get(ResourceType.TERRACOTTA));
+
+        Map<ResourceType, Integer> asked =
+                goalFor(work(0, 0, Map.of(ResourceType.TERRACOTTA, 5), Map.of()));
+
+        assertEquals(5, asked.get(ResourceType.TERRACOTTA));
     }
 
     /** O que se colhe no chão entra na meta pelo que a obra pede. */

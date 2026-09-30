@@ -33,7 +33,9 @@ import java.util.function.BooleanSupplier;
  * receita termina no Nether ou em flora que não existe no mundo. A colônia
  * continua produzindo tudo que alguma profissão consegue obter ou fabricar;
  * quando não há essa rota, a terceira tentativa coloca a peça de manufatura
- * no baú do construtor. Se ele estiver ausente ou cheio, usa outro baú livre
+ * no baú do construtor. Ingrediente de drop (corante, linha, pó de osso,
+ * drop de bicho) conta como rota: ele aparece no baú sem espera
+ * ({@link DropIngredients}, 2026-09-30). Se ele estiver ausente ou cheio, usa outro baú livre
  * da colônia. Assim uma casa não fica em espera infinita por um ingrediente
  * que nenhum trabalhador pode obter.
  */
@@ -327,6 +329,12 @@ public final class BiomeConstructionSupply {
 
         if (depth < 0 || !visiting.add(item)) {
             return false;
+        }
+
+        // Corante, linha, pó de osso e drop de bicho sempre têm rota: eles
+        // aparecem no baú — 2026-09-30, ver DropIngredients.
+        if (DropIngredients.isAutomatic(item)) {
+            return true;
         }
 
         try {

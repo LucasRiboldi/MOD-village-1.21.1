@@ -27,27 +27,30 @@ class ProfessionGrowthTest {
     }
 
     @Test
-    void sevenAdultsReceiveFoundationThenTheFirstGrowthRole() {
-        addWorkers(7);
+    void eightAdultsReceiveFoundationThenTheFirstGrowthRole() {
+        addWorkers(8);
 
-        assertEquals(7, assign(7));
+        assertEquals(8, assign(8));
         java.util.List<ProfessionType> assigned = assignedInOrder();
         int foundationSize = ProfessionAssigner.FOUNDATION_ORDER.size();
         assertEquals(ProfessionAssigner.FOUNDATION_ORDER,
                 assigned.subList(0, foundationSize));
-        assertEquals(ProfessionType.CARPENTER, assigned.get(foundationSize));
+        assertEquals(ProfessionType.FARMER, assigned.get(foundationSize));
     }
 
-    /** Agricultor e carpinteiro continuam sendo vagas reais de crescimento. */
+    /**
+     * O carpinteiro é titular da fundação desde 2026-09-30; o agricultor
+     * continua vaga real de crescimento.
+     */
     @Test
-    void farmerAndCarpenterRemainAvailableOutsideTheFoundation() {
+    void theCarpenterIsFoundationAndTheFarmerRemainsGrowth() {
         addWorkers(13);
 
         assign(13);
 
         assertTrue(ProfessionAssigner.PRODUCER_ORDER.contains(ProfessionType.CARPENTER));
         assertTrue(ProfessionAssigner.PRODUCER_ORDER.contains(ProfessionType.FARMER));
-        assertFalse(ProfessionAssigner.FOUNDATION_ORDER.contains(ProfessionType.CARPENTER));
+        assertTrue(ProfessionAssigner.FOUNDATION_ORDER.contains(ProfessionType.CARPENTER));
         assertFalse(ProfessionAssigner.FOUNDATION_ORDER.contains(ProfessionType.FARMER));
         assertTrue(count(ProfessionType.CARPENTER) >= 1,
                 "o carpinteiro foi removido do crescimento");

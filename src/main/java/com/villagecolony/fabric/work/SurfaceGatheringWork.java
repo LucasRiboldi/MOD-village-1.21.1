@@ -16,6 +16,7 @@ import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.event.VillageFocus;
 import com.villagecolony.fabric.integration.BlockProtection;
+import com.villagecolony.fabric.integration.ActionTool;
 import com.villagecolony.fabric.integration.BlockBreakTime;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.DirtPatch;
@@ -321,9 +322,11 @@ public final class SurfaceGatheringWork {
         // A pá do fundidor tem Toque Suave para recolher o bloco que a
         // fornalha transforma em terracota. Tijolos, porém, exigem as bolas
         // Vanilla, então esta ordem calcula a quebra com uma pá sem encanto.
+        // A ferramenta de ferro certa para o bloco (ActionTool): a terra do
+        // fazendeiro sai de pá, e não de enxada — 2026-09-30.
         ItemStack tool = job.task.targetResource() == ResourceType.CLAY_BALL
                 ? new ItemStack(Items.IRON_SHOVEL)
-                : villager.getMainHandStack();
+                : ActionTool.forBlock(state, villager.getMainHandStack());
         List<ItemStack> drops = Block.getDroppedStacks(
                 state, world, job.target, world.getBlockEntity(job.target), villager, tool);
         int amount = drops.stream()

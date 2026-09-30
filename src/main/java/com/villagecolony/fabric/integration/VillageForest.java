@@ -31,8 +31,8 @@ public final class VillageForest {
 
     /**
      * Quanto esperar para buscar lugar de novo, depois de uma busca sem lugar
-     * — F13, 2026-09-30. O mesmo intervalo do viveiro do fazendeiro
-     * ({@code FarmerNursery.BETWEEN_PLANTINGS}), e pelo mesmo motivo: a busca
+     * — F13, 2026-09-30. O mesmo intervalo do viveiro do lenhador
+     * ({@code LumberjackNursery.BETWEEN_PLANTINGS}), e pelo mesmo motivo: a busca
      * era refeita a cada ciclo, dentro da fase que o log chamava de "chests".
      */
     private static final int RETRY_TICKS = 6_000;

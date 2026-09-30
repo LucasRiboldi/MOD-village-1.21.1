@@ -8,9 +8,17 @@ import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.task.service.TaskService;
 import com.villagecolony.core.type.ResourceType;
+import com.villagecolony.core.worker.model.Profession;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
+import com.villagecolony.core.worker.service.ProfessionDemand;
+import com.villagecolony.core.worker.service.ProfessionRegistry;
 import com.villagecolony.core.worker.service.WorkerService;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -221,11 +229,23 @@ public final class ColonyCycle {
             WorkerService workers,
             ProductionHands report) {
 
+        // A falta da obra, por profissão — 2026-09-30. É o que a
+        // contratação olha antes da lista fixa: ver ProfessionDemand.
+        Map<ProfessionType, Integer> demand = new EnumMap<>(ProfessionType.class);
+
         for (Map.Entry<ResourceType, Integer> entry : missing.entrySet()) {
             ResourceType resource = entry.getKey();
             TaskType type = typeFor(resource);
 
             int hands = WorkAssignment.countCapableOf(colonyId, type.required(), workers);
+            int deficit = Math.max(0,
+                    constructionMaterials.getOrDefault(resource, 0) - owned.amountOf(resource));
+
+            if (deficit > 0) {
+                for (Profession profession : ProfessionRegistry.withCapability(type.required())) {
+                    demand.merge(profession.type(), deficit, Integer::sum);
+                }
+            }
 
             // Antes de decidir, e nos dois casos: quem escuta precisa do
             // número para saber quando calar e quando voltar a falar —
@@ -256,6 +276,10 @@ public final class ColonyCycle {
                 tasks.create(colonyId, type, priority, resource, share);
             }
         }
+
+        List<ProfessionType> urgentFirst = new ArrayList<>(demand.keySet());
+        urgentFirst.sort(Comparator.comparing(demand::get, Comparator.reverseOrder()));
+        ProfessionDemand.set(colonyId, urgentFirst);
     }
 
     private static void prioritizeOpenRequests(

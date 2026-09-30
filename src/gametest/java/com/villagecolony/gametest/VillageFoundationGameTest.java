@@ -106,14 +106,14 @@ public class VillageFoundationGameTest implements FabricGameTest {
 
             context.assertTrue(
                     assignedChests.size() == ProfessionAssigner.FOUNDATION_ORDER.size(),
-                    "a BigHouseMOD nao reservou seis baus distintos");
+                    "a BigHouseMOD nao reservou sete baus distintos");
 
             context.assertTrue(
-                    countBlocks(context, house, Blocks.WHITE_BED) == 12,
-                    "BigHouseMOD deveria conter 6 camas completas");
+                    countBlocks(context, house, Blocks.WHITE_BED) == 14,
+                    "BigHouseMOD deveria conter 7 camas completas");
             context.assertTrue(
-                    countBlocks(context, house, Blocks.CHEST) == 6,
-                    "BigHouseMOD deveria conter 6 baus");
+                    countBlocks(context, house, Blocks.CHEST) == 7,
+                    "BigHouseMOD deveria conter 7 baus");
             context.assertTrue(
                     countBlocks(context, house, Blocks.JIGSAW) == 0
                             && countBlocks(context, house, Blocks.STRUCTURE_BLOCK) == 0
@@ -167,13 +167,13 @@ public class VillageFoundationGameTest implements FabricGameTest {
             Building house = houseOf(colony);
             List<BlockPos> beds = bedHeads(world, house);
 
-            context.assertTrue(beds.size() == 6,
-                    "a BigHouseMOD deveria ter 6 camas, tem " + beds.size());
+            context.assertTrue(beds.size() == 7,
+                    "a BigHouseMOD deveria ter 7 camas, tem " + beds.size());
             context.assertTrue(residents(world, house).size() == beds.size(),
                     "nasceram " + residents(world, house).size() + " moradores para "
                             + beds.size() + " camas");
-            context.assertTrue(VillageColonyMod.WORKERS.ofColony(colony.id()).size() >= 9,
-                    "os 3 adultos da vila mais os 6 moradores deveriam somar 9");
+            context.assertTrue(VillageColonyMod.WORKERS.ofColony(colony.id()).size() >= 10,
+                    "os 3 adultos da vila mais os 7 moradores deveriam somar 10");
 
             for (BlockPos bed : beds) {
                 // Sem ponto de interesse, zero bilhete livre é o valor
@@ -211,8 +211,8 @@ public class VillageFoundationGameTest implements FabricGameTest {
             Building house = houseOf(colony);
             List<VillagerEntity> before = residents(world, house);
 
-            context.assertTrue(before.size() == 6,
-                    "a fundacao deveria criar 6 moradores, criou " + before.size());
+            context.assertTrue(before.size() == 7,
+                    "a fundacao deveria criar 7 moradores, criou " + before.size());
 
             VillagerEntity victim = before.get(0);
             BlockPos victimBed = victim.getBrain()
@@ -223,7 +223,7 @@ public class VillageFoundationGameTest implements FabricGameTest {
             victim.kill();
             VillageDetectionHandler.runFoundationNow(world, colony);
 
-            context.assertTrue(residents(world, house).size() == 5,
+            context.assertTrue(residents(world, house).size() == 6,
                     "a segunda passagem repos o morto: " + residents(world, house).size()
                             + " moradores vivos");
             context.assertTrue(

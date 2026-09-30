@@ -8,6 +8,7 @@ import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.type.Production;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -137,6 +138,29 @@ public final class StockRules {
         }
 
         return made;
+    }
+
+    /**
+     * O cru de cada material de fornalha que tem piso — 2026-09-30.
+     *
+     * <p>É a receita do jogo escrita do lado do core, que não enxerga o
+     * livro de receitas; {@code SmelterWork} continua perguntando ao jogo
+     * na hora de fundir. Serve só a uma pergunta: <b>o piso tem cadeia?</b>
+     * Pôr piso de terracota numa vila sem argila abria uma tarefa de fundir
+     * que ninguém podia atender — a raiz do F2.
+     */
+    private static final Map<ResourceType, ResourceType> RAW_OF = Map.of(
+            ResourceType.GLASS, ResourceType.SAND,
+            ResourceType.IRON_INGOT, ResourceType.RAW_IRON,
+            ResourceType.STONE, ResourceType.COBBLESTONE,
+            ResourceType.SMOOTH_STONE, ResourceType.STONE,
+            ResourceType.SMOOTH_SANDSTONE, ResourceType.SANDSTONE,
+            ResourceType.TERRACOTTA, ResourceType.CLAY,
+            ResourceType.BRICK, ResourceType.CLAY_BALL);
+
+    /** O cru deste material de fornalha, se conhecido. */
+    static Optional<ResourceType> rawOf(ResourceType smelted) {
+        return Optional.ofNullable(RAW_OF.get(smelted));
     }
 
     /**

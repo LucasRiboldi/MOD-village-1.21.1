@@ -154,6 +154,9 @@ public final class VillagerScanner {
                 registered++;
             }
 
+            // Ofício da colônia exclui o do Vanilla — ADR-029, 2026-09-30.
+            VanillaProfessionGuard.strip(villager);
+
             if (canWork(villager)) {
                 employable.add(villager.getUuid());
 

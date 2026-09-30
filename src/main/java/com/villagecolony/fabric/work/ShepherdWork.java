@@ -45,6 +45,10 @@ import java.util.UUID;
  * mesma ideia da Regra 7 — o lenhador replanta o que corta —, e aqui ela
  * sai de graça, porque quem replanta é o próprio jogo.
  *
+ * <p><b>E ele cuida do rebanho</b> desde 2026-09-30: com trigo da colônia,
+ * põe um par para procriar até a vila ter um rebanho — ver
+ * {@link ShepherdFlock}.
+ *
  * <p>Só ovelha adulta e não tosquiada. Cordeiro não dá lã no Vanilla, e
  * insistir com uma ovelha pelada seria o aldeão parado em frente a ela
  * para sempre.
@@ -158,6 +162,9 @@ public final class ShepherdWork {
         } else {
             IdleLog.clear(colony.id(), SUBJECT);
         }
+
+        // Cuidar do rebanho, com ou sem tosquia pedida — 2026-09-30.
+        ShepherdFlock.tend(world, colony);
 
         return open;
     }

@@ -82,6 +82,19 @@ public final class BuilderPlacement {
             return true;
         }
 
+        if (BlockShaping.isNeverPlaced(material.get().getDefaultState())) {
+            // A lava da planta não surge sozinha — 2026-09-30. A posição
+            // fica vazia e a obra segue.
+            VillageColonyMod.LOGGER.info(
+                    "Project {} leaves {} empty — lava is never placed by the colony",
+                    project.id(),
+                    target.toShortString());
+
+            project.markPlaced(block);
+
+            return true;
+        }
+
         BlockState state = shaped(world, project, block, material.get(), target);
 
         if (!world.getBlockState(target).isReplaceable()
@@ -122,9 +135,8 @@ public final class BuilderPlacement {
         if (PottedPlant.isPotted(state)) {
             // <b>O vaso com planta é montado, e pago</b> — 2026-09-19. O
             // bloco não tem item e ninguém o traria; o que a colônia tem
-            // é o vaso e a planta, e é deles que ele sai. Montar de graça
-            // seria a colônia CRIANDO recurso, que a primeira regra de
-            // arquitetura do Construction-System proíbe.
+            // é o vaso e a planta, e é deles que ele sai: a cadeia existe
+            // dentro da colônia, então ela é usada (ADR-028).
             //
             // Espera pelos dois como esperaria por qualquer material: a
             // Regra 27 continua valendo, só que sobre os ingredientes em

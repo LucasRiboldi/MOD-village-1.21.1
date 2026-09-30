@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.fabric.integration.ChestDepositor;
+import com.villagecolony.fabric.integration.ChestWithdrawer;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -23,6 +24,9 @@ import java.util.List;
  * mineiro cava vai diretamente para o seu próprio baú.
  */
 final class MinerHaul {
+
+    /** Quantos de cada tipo, fora o pedido, o baú do mineiro guarda. */
+    static final int TYPE_CAP = 256;
 
     private MinerHaul() {
     }
@@ -66,6 +70,26 @@ final class MinerHaul {
         for (ItemStack drop : drops) {
             boolean isAsked = wanted != null && drop.isOf(wanted);
             int before = stored;
+
+            if (!isAsked) {
+                // <b>Teto de 256 por tipo</b> — decisão do autor,
+                // 2026-09-30. Granito, diorito, andesito, cascalho e o
+                // resto que a galeria solta enchiam o baú sem receita que
+                // os consumisse. Passado o teto, o mineiro deixa de
+                // recolher aquele tipo: o bloco sai da galeria e o drop
+                // não é guardado. O que a tarefa pediu não tem teto.
+                int room = Math.max(0, TYPE_CAP
+                        - ChestWithdrawer.countIn(world, chest, drop.getItem()));
+
+                if (room < drop.getCount()) {
+                    if (room == 0) {
+                        continue;
+                    }
+
+                    drop = new ItemStack(drop.getItem(), room);
+                }
+            }
+
             // Devolve quantos **não** couberam, e não quantos entraram.
             // Ler ao contrário foi o defeito que este mineiro cometeu no
             // primeiro teste dele: todo pedregulho guardado virava uma

@@ -115,7 +115,8 @@ public final class BuilderMaterials {
             return true;
         }
 
-        if (BlockShaping.isShapedFromTheGround(material.get().getDefaultState())) {
+        if (BlockShaping.isShapedFromTheGround(material.get().getDefaultState())
+                || BlockShaping.isNeverPlaced(material.get().getDefaultState())) {
             // Estes blocos são formados no local ou não têm item próprio;
             // por isso não podem deixar a obra esperando por estoque.
             return true;

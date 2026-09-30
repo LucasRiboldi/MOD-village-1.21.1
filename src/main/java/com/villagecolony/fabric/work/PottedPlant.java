@@ -33,11 +33,11 @@ import java.util.Optional;
  *                planta saem do baú, e não do nada.
  * </pre>
  *
- * <p><b>Por que a segunda metade importa.</b> Montar sem custo seria a
- * colônia <b>criando recurso</b>, que o Construction-System proíbe na
- * primeira regra de arquitetura. O vaso é três tijolos, o tijolo é argila
- * assada, e o cacto é colhido — a cadeia inteira é do jogo, e cada degrau
- * tem dono entre as profissões.
+ * <p><b>Por que a segunda metade continua.</b> A regra "a colônia não cria
+ * recurso" foi retirada em 2026-09-30 (ADR-028), mas o vaso tem cadeia
+ * inteira dentro da colônia: três tijolos, o tijolo é argila assada, e o
+ * cacto é colhido — cada degrau tem dono entre as profissões. Quando a
+ * cadeia existe, a colônia a usa.
  *
  * <p>A que planta vai em cada vaso sai do <b>nome do bloco</b>, pela
  * convenção do próprio registro: {@code potted_cactus} é vaso mais

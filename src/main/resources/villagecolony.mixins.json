@@ -4,6 +4,7 @@
   "package": "com.villagecolony.fabric.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "VillagerDataMixin",
     "VillagerEntityMixin"
   ],
   "injectors": {

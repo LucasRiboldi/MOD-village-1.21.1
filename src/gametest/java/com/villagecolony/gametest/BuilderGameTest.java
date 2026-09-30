@@ -19,6 +19,7 @@ import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.ColonyChests;
+import com.villagecolony.fabric.integration.ColonySupply;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.work.BuilderApproach;
@@ -543,7 +544,7 @@ public class BuilderGameTest implements FabricGameTest {
      * o fermentador pronto. O pedregulho tem rota e não aparece.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder")
-    public void unobtainableIngredientIsStockedForTheCraftsman(TestContext context) {
+    public void aBrewingStandIsMadeWithAnAutomaticBlazeRod(TestContext context) {
         Fixture fixture = setUp(context, 0, Blueprint.of(
                 ResourceId.vanilla("village/plains/houses/test_brewing_stand"),
                 List.of(new BlueprintBlock(
@@ -551,22 +552,29 @@ public class BuilderGameTest implements FabricGameTest {
                         MinecraftTypeAdapter.toResourceId(Blocks.BREWING_STAND)))), 1);
 
         try {
+            // A haste de blaze é drop de inimigo e aparece sozinha desde
+            // 2026-09-30 (DropIngredients): o fermentador tem rota, e sai
+            // da bancada quando o pedregulho está no baú.
             for (int attempt = 1; attempt <= 3; attempt++) {
-                context.assertFalse(
-                        BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
-                        "a falta " + attempt + " materializou o fermentador pronto");
+                BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project);
                 context.assertTrue(
-                        ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.BLAZE_ROD)
-                                == (attempt < 3 ? 0 : 1),
-                        "depois da falta " + attempt + " a haste de blaze devia estar "
-                                + (attempt < 3 ? "ausente" : "no baú"));
+                        ColonyChests.countIn(context.getWorld(),
+                                List.of(fixture.chest), Items.BREWING_STAND) == 0,
+                        "a falta " + attempt + " materializou o fermentador pronto");
             }
-            context.assertTrue(
-                    ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.BREWING_STAND) == 0,
-                    "o fermentador apareceu pronto no baú");
             context.assertTrue(
                     ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.COBBLESTONE) == 0,
                     "o pedregulho, que a colônia obtém, apareceu do nada");
+
+            ChestDepositor.deposit(context.getWorld(), fixture.chest, Items.COBBLESTONE, 3);
+
+            context.assertTrue(
+                    ColonySupply.stock(context.getWorld(), fixture.colony.id(),
+                            fixture.project.origin(), Items.BREWING_STAND),
+                    "com o pedregulho no baú o fermentador devia sair, com a haste aparecendo");
+            context.assertTrue(
+                    ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.BREWING_STAND) == 1,
+                    "o fermentador não entrou no baú");
         } finally {
             fixture.owned.cleanUp();
             BiomeConstructionSupply.routeDelivered(fixture.colony.id(), Items.BREWING_STAND);
