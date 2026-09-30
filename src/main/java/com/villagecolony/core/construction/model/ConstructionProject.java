@@ -37,7 +37,7 @@ public final class ConstructionProject {
 
     private final UUID id;
 
-    private final UUID colonyId;
+    private UUID colonyId;
 
     private final Blueprint blueprint;
 
@@ -195,6 +195,16 @@ public final class ConstructionProject {
 
     public UUID id() {
         return id;
+    }
+
+    /**
+     * Passa para a colônia que absorveu a sua — ADR-007 §3.
+     *
+     * <p>Só a fusão chama isto. Os registros guardam o objeto pelo próprio
+     * id, e não pelo da colônia, então trocar o dono não desloca nada.
+     */
+    public void joinColony(UUID colonyId) {
+        this.colonyId = Objects.requireNonNull(colonyId, "colonyId");
     }
 
     public UUID colonyId() {

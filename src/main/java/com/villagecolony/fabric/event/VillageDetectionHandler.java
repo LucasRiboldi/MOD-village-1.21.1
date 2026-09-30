@@ -387,6 +387,12 @@ public final class VillageDetectionHandler {
         VillageAdoption.detectFromColonyCenters(
                 server.getOverworld(), colony -> VillageFocus.isAnalyzed(server.getOverworld(), colony));
 
+        // Colônias que se tocam ou ocupam o mesmo espaço viram uma antes de
+        // decidir o ciclo — ADR-007, 2026-09-30. Só neste caminho de jogo:
+        // as arenas da bateria ficam lado a lado, e fundiriam colônias de
+        // testes diferentes. O GameTest da fusão chama o gatilho direto.
+        ColonyMergeTrigger.mergeTouchingColonies(server.getOverworld());
+
         CycleCost.since(CycleCost.Phase.DETECT, mark);
 
         // As fases de dentro se cobram sozinhas, em ColonyCycleRunner.runCycleOf.

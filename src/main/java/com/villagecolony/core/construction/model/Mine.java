@@ -60,7 +60,7 @@ public final class Mine {
      */
     public static final int ARMS = 4;
 
-    private final UUID colonyId;
+    private UUID colonyId;
 
     /**
      * O poço: boca, descida, e o rumo do primeiro ramal.
@@ -172,6 +172,11 @@ public final class Mine {
         }
 
         return new Mine(colonyId, shaft, cuts);
+    }
+
+    /** Passa para a colônia que absorveu a sua — ADR-007 §3. Só o MineRegistry chama. */
+    public void joinColony(UUID colonyId) {
+        this.colonyId = Objects.requireNonNull(colonyId, "colonyId");
     }
 
     public UUID colonyId() {

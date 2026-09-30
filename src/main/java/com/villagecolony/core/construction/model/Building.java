@@ -61,6 +61,11 @@ public record Building(
         }
     }
 
+    /** A mesma construção, agora da colônia que absorveu a sua — ADR-007 §3. */
+    public Building joinColony(UUID newColonyId) {
+        return new Building(id, newColonyId, blueprint, min, max, finished);
+    }
+
     /**
      * A caixa de uma obra <b>abandonada</b> — ela ocupa o lote e não é casa.
      *

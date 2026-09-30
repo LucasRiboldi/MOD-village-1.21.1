@@ -101,7 +101,7 @@ public final class Worker {
 
     private final UUID villagerId;
 
-    private final UUID colonyId;
+    private UUID colonyId;
 
     /**
      * Profissão de colônia, ou {@code null} enquanto não houver.
@@ -207,6 +207,16 @@ public final class Worker {
     /** Id do {@code VillagerEntity} Vanilla. É a identidade do trabalhador. */
     public UUID villagerId() {
         return villagerId;
+    }
+
+    /**
+     * Passa para a colônia que absorveu a sua — ADR-007 §3.
+     *
+     * <p>Só a fusão chama isto. Os registros guardam o objeto pelo próprio
+     * id, e não pelo da colônia, então trocar o dono não desloca nada.
+     */
+    public void joinColony(UUID colonyId) {
+        this.colonyId = java.util.Objects.requireNonNull(colonyId, "colonyId");
     }
 
     public UUID colonyId() {

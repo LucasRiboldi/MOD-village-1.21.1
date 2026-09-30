@@ -83,7 +83,8 @@
       "com.villagecolony.fabric.work.WallPieceGameTest",
       "com.villagecolony.fabric.integration.ConstructionCancellationGameTest",
       "com.villagecolony.fabric.integration.TreeReplantingGameTest",
-      "com.villagecolony.fabric.integration.RoadsideSitesGameTest"
+      "com.villagecolony.fabric.integration.RoadsideSitesGameTest",
+      "com.villagecolony.fabric.event.ColonyMergeTriggerGameTest"
     ]
   },
   "depends": {

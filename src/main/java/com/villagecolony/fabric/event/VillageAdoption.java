@@ -388,7 +388,7 @@ final class VillageAdoption {
 
             VillageColonyMod.LOGGER.warn(
                     "Overlapping colonies detected — {} at {} and {} at {} are {} blocks apart"
-                            + " (less than {}); the MVP does not merge them",
+                            + " (less than {}); they merge on the next colony cycle (ADR-007)",
                     colony.id(),
                     colony.center(),
                     other.id(),
