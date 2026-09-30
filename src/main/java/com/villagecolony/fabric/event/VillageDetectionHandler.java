@@ -311,6 +311,11 @@ public final class VillageDetectionHandler {
         }
 
         tickActiveServer(server);
+
+        // Quem ficou livre não espera o ciclo de 30 s — F10, 2026-09-30.
+        if (server.getTicks() % IdleHands.EVERY_TICKS == 0) {
+            IdleHands.assignNow(overworld);
+        }
     }
 
     /**

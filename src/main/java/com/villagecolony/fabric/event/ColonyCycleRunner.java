@@ -406,7 +406,7 @@ final class ColonyCycleRunner {
     }
 
     /** Trabalhos já reservados continuam mesmo enquanto uma fotografia termina de ser lida. */
-    private static void runOngoingWork(ServerWorld world, Colony colony) {
+    static void runOngoingWork(ServerWorld world, Colony colony) {
         LumberjackWork.run(world, colony);
         MinerWork.run(world, colony);
         SmelterWork.run(world, colony);
@@ -417,7 +417,7 @@ final class ColonyCycleRunner {
     }
 
     /** Recusa obra aberta cujo próximo bloco ainda não possui ponto físico de trabalho. */
-    private static boolean canReserveTask(ServerWorld world, UUID colonyId, Task task) {
+    static boolean canReserveTask(ServerWorld world, UUID colonyId, Task task) {
         if (task.type() != TaskType.BUILD) {
             return true;
         }

@@ -149,6 +149,36 @@ public final class WorkAssignment {
     }
 
     /**
+     * A mesma distribuição, entre um ciclo e outro — F10, 2026-09-30.
+     *
+     * <p>A tarefa só era entregue no ciclo de 30 s, e quem terminava no meio
+     * ficava parado até lá. Esta passagem entrega tarefa ao ocioso sem
+     * avançar o relógio dos descansos: ele é a passagem do ciclo, e contá-lo
+     * aqui encurtaria descanso e castigo na proporção das chamadas.
+     */
+    public static int assignWithoutAClock(
+            java.util.UUID colonyId,
+            WorkerService workers,
+            TaskService tasks,
+            Predicate<java.util.UUID> hasStorage,
+            BiPredicate<Worker, Task> canReserveTask) {
+
+        Objects.requireNonNull(colonyId, "colonyId");
+        Objects.requireNonNull(hasStorage, "hasStorage");
+        Objects.requireNonNull(canReserveTask, "canReserveTask");
+
+        int assigned = 0;
+
+        for (Worker worker : idleWorkers(colonyId, workers, tasks)) {
+            if (takeOneTask(colonyId, worker, tasks, hasStorage, canReserveTask)) {
+                assigned++;
+            }
+        }
+
+        return assigned;
+    }
+
+    /**
      * Os trabalhadores da colônia que não estão executando nada.
      *
      * <p>Ocioso é quem não tem tarefa aberta, e não quem está parado: um
