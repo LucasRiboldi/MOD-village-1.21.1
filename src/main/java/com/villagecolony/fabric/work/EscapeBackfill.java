@@ -103,7 +103,7 @@ public final class EscapeBackfill {
             Job job = jobs.next();
 
             if (!VillageColonyMod.WORKERS.find(job.workerId())
-                    .map(worker -> VillageFocus.isActiveNearAPlayer(world, worker.colonyId()))
+                    .map(worker -> VillageFocus.isWorking(world, worker.colonyId()))
                     .orElse(false)) {
                 continue;
             }

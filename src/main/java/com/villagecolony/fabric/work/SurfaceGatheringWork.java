@@ -127,7 +127,7 @@ public final class SurfaceGatheringWork {
             Map.Entry<UUID, Job> entry = iterator.next();
             Job job = entry.getValue();
 
-            if (!VillageFocus.isActiveNearAPlayer(world, job.task.colonyId())) {
+            if (!VillageFocus.isWorking(world, job.task.colonyId())) {
                 continue;
             }
 

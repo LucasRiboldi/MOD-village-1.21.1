@@ -116,7 +116,7 @@ public final class StrandedEscape {
             return;
         }
 
-        if (!VillageFocus.isActiveNearAPlayer(world, worker.get().colonyId())) {
+        if (!VillageFocus.isWorking(world, worker.get().colonyId())) {
             return;
         }
 

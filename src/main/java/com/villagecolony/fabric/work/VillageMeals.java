@@ -82,7 +82,7 @@ public final class VillageMeals {
         long day = Math.floorDiv(time, (long) WorkClock.DAY);
 
         for (Colony colony : List.copyOf(VillageColonyMod.COLONIES.all())) {
-            if (!VillageFocus.isActiveNearAPlayer(world, colony.id())) {
+            if (!VillageFocus.isWorking(world, colony.id())) {
                 continue;
             }
 

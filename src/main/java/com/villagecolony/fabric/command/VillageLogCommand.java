@@ -60,7 +60,7 @@ public final class VillageLogCommand {
         if (colony.isEmpty() || !colony.get().isActive()) {
             source.sendFeedback(
                     () -> Text.literal("Village Colony: nenhuma vila ativa está perto de você. "
-                                    + "As vilas distantes ficam pausadas para não pesar o mundo.")
+                                    + "Uma vila só trabalha enquanto o jogo simula a região dela.")
                             .formatted(Formatting.YELLOW),
                     false);
             return 1;

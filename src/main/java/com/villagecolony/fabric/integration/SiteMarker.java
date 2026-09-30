@@ -141,7 +141,7 @@ public final class SiteMarker {
                 continue;
             }
 
-            if (!VillageFocus.isActiveNearAPlayer(world, project.colonyId())) {
+            if (!VillageFocus.isWorking(world, project.colonyId())) {
                 continue;
             }
 
