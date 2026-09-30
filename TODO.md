@@ -21,9 +21,22 @@ validacao no save real.
   falhou antes; `runGametest --rerun-tasks` 499/499 depois.
 - [ ] P0 - Playtest: com o JAR novo, a casa do pastor de `1756, 71, -5325`
   (colônia `e79a3177`) sai de 221 blocos.
-- [ ] P1 - Treze minutos até a primeira obra: varredura esgotada e pontas de
-  rua recusadas nas três colônias perto do jogador (§7.1). Recusas salvas:
-  `3c358029` 12.728 (5.709 rua reservada, 4.658 fora da altura da rua).
+- [x] P1 - Treze minutos até a primeira obra, parte do tempo: cada volta do
+  raio 64 custava 16–18 passagens de 1.024 colunas, uma por ciclo de 30 s,
+  com o planejador gastando 1–2 ms dos 15 do prazo. Com prazo armado, só o
+  relógio para a passagem (`SweepDeadline.columnCap`); sem prazo, o teto de
+  sempre. `BuildSiteGameTest
+  .underADeadlineTheClockAndNotTheColumnCapEndsThePass` falhou antes (parou
+  no anel 16); 501/501 depois.
+- [x] P1 - A ponta de rua recusada diz o motivo: `PavingRefusals` conta
+  degrau, bloco da vila, bloco da colônia, chão não natural e coisa em cima,
+  e a linha `found no road end it may pave` passa a trazê-los.
+  `RoadExtensionGameTest.aRefusedEndSaysWhatStoppedIt` falhou antes.
+- [ ] P1 - Playtest: medir `Colony cycle took` e `Planner turns` com a busca
+  usando o prazo inteiro (risco R1: até 15 ms por colônia que planeja).
+- [ ] P1 - Com o motivo no log, decidir a causa de 2 das 3 colônias sem lote
+  e sem rua (§7.1). Recusas de lote salvas: `3c358029` 12.728 (5.709 rua
+  reservada, 4.658 fora da altura da rua).
 
 ## Divergências entre documentos e código - 2026-09-30
 
@@ -55,7 +68,7 @@ verificado.
   `wc -l`), contra a afirmação de 24-09 e da auditoria de 28-09 de que não
   havia nenhum: `StructureBlueprintReader` 568, `HousePlans` 563,
   `BuildSiteScanner` 544, `LumberjackWork` 518, `ColonyGoals` 514,
-  `RoadExtension` 510, `WaitingWork` 507, `ColonySavedData` 503.
+  `RoadExtension` 516 (510 antes do `PavingRefusals`), `WaitingWork` 507, `ColonySavedData` 503.
 - [x] **Error Prone zerado:** o commit `60c2b3d` zerou os 25 avisos. O log do
   CI do PR #4 não tem nenhuma linha `warning: [`. Os itens abaixo que
   ainda os listavam foram fechados.

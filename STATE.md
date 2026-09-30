@@ -14,28 +14,26 @@
 
 ## Em uma linha
 
-O código de todas as correções até 30-09 está no branch `codex/bighousemod`:
-1.182/1.182 unitários e 499/499 GameTests locais em 30-09. **Quase tudo o que
-está aberto é playtest.**
+Correções até 30-09 no branch `claude/sync-local-github-80cc8a` (PR #8 para
+`codex/bighousemod`): 1.182/1.182 unitários e 501/501 GameTests locais.
+**Quase tudo o que está aberto é playtest.**
 
 ## 30-09 — playtest das 01:38–01:59 e JAR
 
-- **JAR em `mods` desde 30-09, 02:15:** `AABEE8B3…4D6A6B`, build local de
-  `15882dd` (a correção abaixo), SHA conferido na cópia. O do playtest das
-  01:38 era `D0512A8E…35CDB` (CI do PR #6): PR #4 (`SiteSignJanitor` tira
-  placa órfã) e PR #6 (obra aberta segue enquanto o chunk simula; planejar e
-  detectar só com jogador a até 64 blocos, ADR-002). O `downloads/` do
-  repositório ainda tem o JAR antigo.
-- **A obra abriu e não pôs bloco.** A casa do pastor de `e79a3177`
-  (`1756, 71, -5325`) ficou em 221 blocos: o destino do construtor estava na
-  borda do alcance (5) com folga de chegada 2, e ele parava fora do alcance
-  (3 vezes, 2 construtores; o save mostra lote plano e livre). **Corrigido e
-  instalado, não visto em jogo:** folga 0, ponto de pé a até 4 blocos
-  (também na reserva), destino real no log.
-  `BuilderApproachGameTest.arrivingAtTheApproachLeavesTheBuilderInReach`
-  falhou antes; 499/499 depois.
-- **A primeira obra levou 13 minutos:** varredura esgotada e pontas de rua
-  recusadas nas três colônias perto do jogador (§7.1, abaixo).
+- **JAR em `mods` desde 02:15:** `AABEE8B3…4D6A6B` (build de `15882dd`, SHA
+  conferido); o do playtest era `D0512A8E…35CDB` (CI do PR #6: placa órfã e
+  obra que segue com o chunk simulando, ADR-002). `downloads/` tem o antigo.
+- **A obra abriu e não pôs bloco.** Casa do pastor de `e79a3177`
+  (`1756, 71, -5325`), 221 blocos: destino do construtor na borda do alcance
+  (5) com folga de chegada 2, e ele parava fora dele (o save mostra lote
+  livre). **Corrigido e instalado:** folga 0, ponto de pé a até 4 blocos,
+  destino real no log (`arrivingAtTheApproachLeavesTheBuilderInReach`).
+- **A primeira obra levou 13 minutos:** cada volta do raio 64 custava 16–18
+  passagens de 1.024 colunas (~8 min) com o planejador em 1–2 ms dos 15; e
+  em 2 das 3 colônias não havia lote e nenhuma ponta de rua aceitou
+  calçamento, sem motivo no log. **Corrigido, não instalado:** com prazo, só
+  o relógio para a passagem; a recusa de ponta conta o motivo
+  (`PavingRefusals`). 501/501.
 - **Git:** `codex/bighousemod` está 68 commits à frente da `main`; o PR #3
   segue aberto, com descrição de 11 commits. Mesclar pede aval do autor.
 
@@ -46,6 +44,7 @@ Cada item tem teste que falhou antes da correção. Nenhum foi visto em jogo.
 | Data | Correção | O que confirmar no save |
 |---|---|---|
 | 30-09 | Construtor chega dentro do alcance (folga 0, ponto a 4) | `blocks left` caindo; nenhum `has not moved a block` a 5–6 blocos do alvo |
+| 30-09 | Busca de lote limitada pelo prazo; motivo da ponta recusada | `sweep:` com 1–2 passagens por volta; `no road end … — N motivo`; `Planner turns` e `Colony cycle took` |
 | 30-09 | Placa órfã (PR #4) | nenhuma placa sobre lote sem obra; obra aberta com placa |
 | 30-09 | Obra anda longe do jogador (PR #6) | `blocks left` caindo entre 64 blocos e a distância de simulação; vila pausa depois dela; `Colony cycle took` com várias vilas |
 | 28-09 | Obra pede a próxima peça artesanal; troncos brutos reservados | obra com escadas ou `oak_log` sem ficar sem peça |
@@ -109,8 +108,8 @@ A lista completa e priorizada está no `TODO.md`.
   `docs/research/2026-09-25-decisoes-simples.md`): E43, TASK-048, TASK-044
   (fusão; a ADR-007 está aceita e não implementada), TASK-046, E38, E45.
 - **Sessão longa de 26-09** (`docs/research/2026-09-26-sessao-longa.md`):
-  lote que não cresce (§7.1), obra largada sem blocos prendendo o lote
-  (decisão) e aldeão ocioso preso seguem abertos.
+  lote que não cresce (§7.1; o motivo da rua sai no próximo log), obra
+  largada sem blocos prendendo o lote (decisão) e aldeão ocioso preso.
 - **Mineiro que não entrega (E44/E45)** e **segunda obra que não abre:**
   sem playtest novo desde as correções; detalhe no `Historico`.
 
