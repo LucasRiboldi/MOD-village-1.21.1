@@ -14,10 +14,9 @@
 
 ## Em uma linha
 
-Correções até 30-09 no branch `claude/sync-local-github-80cc8a` (PR #8 para
-`codex/bighousemod`): unitários verdes e 521/521 GameTests locais. O
-levantamento de fluidez e a revarredura F1–F14 estão em
-`docs/technical/Fluidez-Profissoes-2026-09-30.md` §8.
+Branch `claude/sync-local-github-80cc8a` (PR #8): revisão das profissões de
+30-09 (`ef84143`, ADR-028/029, `docs/technical/Revisao-Profissoes-2026-09-30.md`)
+com 1.196 unitários e 528/528 GameTests locais; fluidez F1–F14 na §8 da Fluidez.
 
 ## 30-09 — duas sessões de jogo
 
@@ -44,6 +43,7 @@ Cada item tem teste que falhou antes da correção. Nenhum foi visto em jogo.
 
 | Data | Correção | O que confirmar no save |
 |---|---|---|
+| 30-09 | Revisão das profissões: lava nunca, carpinteiro titular, viveiro do lenhador, pão, rebanho, drops automáticos, teto 256, ofício Vanilla bloqueado | `baked`, `fed two sheep`, `leaves the vanilla trade`, `lava is never placed`, `drop ingredients appear`; BigHouseMOD nova com 7 camas |
 | 30-09 | Rebento não nasce no espaço de obra (viveiro e replantio) | nenhum `planted … sapling` dentro de lote com obra aberta |
 | 30-09 | Busca de lote limitada pelo prazo; motivo da ponta recusada | `sweep:` com 1–2 passagens por volta; `no road end … — N motivo`; `Planner turns` e `Colony cycle took` |
 | 30-09 | Placa órfã (PR #4) | nenhuma placa sobre lote sem obra; obra aberta com placa |

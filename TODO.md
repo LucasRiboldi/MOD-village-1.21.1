@@ -9,8 +9,30 @@ camas prioriza moradia; a prioridade e explicita no Core e aparece no `/vc
 log`. A boca da mina exige os primeiros degraus em solo firme; ao esgotar a
 mina, vila fundada em agua tenta acesso selado para uma saida natural 8x8 antes
 da reabertura seca oposta. Cada lote e validado na orientacao final da planta.
-A bateria de 1.182 testes unitarios (30-09) e 498 GameTests esta verde; ainda requer
-validacao no save real.
+A bateria de 1.196 testes unitarios e 528 GameTests (30-09, depois da revisao
+das profissoes) esta verde; ainda requer validacao no save real.
+
+## Revisão das profissões - 2026-09-30 (`docs/technical/Revisao-Profissoes-2026-09-30.md`)
+
+Decisões do autor sobre a varredura das profissões. Código em `ef84143`;
+1.196 unitários e 528 GameTests verdes. **Nada visto em jogo.**
+
+- [x] 🔴 Regra "a colônia não cria recurso" retirada; lava nunca assentada (ADR-028).
+- [x] 🔴 Carpinteiro titular da BigHouseMOD, cama e baú à direita da porta.
+- [x] 🟠 Viveiro passa ao lenhador; ferramenta de ferro certa por bloco.
+- [x] 🟠 Contratação pela demanda da obra antes da lista fixa.
+- [x] 🟠 Pão do fazendeiro; piso de fundido só com cadeia; drops automáticos;
+  teto de 256 no baú do mineiro; pastor procria o rebanho; ofício Vanilla
+  bloqueado (ADR-029).
+- [ ] 🔴 Playtest: `baked N bread`, `fed two sheep to breed`, `leaves the
+  vanilla trade`, `leaves ... empty — lava`, `received ... drop ingredients`,
+  casa nova com 7 camas (a BigHouseMOD já erguida no save continua com 6).
+- [ ] 🟠 Medir no Spark o custo de `ChestWithdrawer.countIn` por drop do
+  mineiro (teto de 256) e da varredura de ofício Vanilla por ciclo.
+- [ ] 🟡 O Vanilla volta a reivindicar a estação a cada ciclo e a varredura
+  solta; se custar, filtrar o sensor de POI (ADR-029, consequências).
+- [ ] 🟡 Combustível da fornalha e custo do viveiro continuam fora da
+  economia (ADR-028); decidir se devem custar.
 
 ## Fluidez das profissões - 2026-09-30 (`docs/technical/Fluidez-Profissoes-2026-09-30.md`)
 

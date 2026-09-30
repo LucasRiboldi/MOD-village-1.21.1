@@ -28,8 +28,8 @@ limitado existente.
    conhecida. Materiais de construção sem produtor dedicado usam as funções de
    cobertura aprovadas na ADR-015 (fundidor e criador), sem remover suas
    tarefas originais. Um pedido genérico só é aberto quando a execução sabe
-   obter ou fabricar o ID; não criar recursos sem origem física nem tarefas
-   impossíveis. A contagem de material e a aceitação pelo construtor devem usar
+   obter ou fabricar o ID; não criar tarefas impossíveis. (A cláusula "não
+   criar recursos sem origem física" foi retirada em 2026-09-30 — ADR-028.) A contagem de material e a aceitação pelo construtor devem usar
    exatamente a mesma regra de substituição.
 3. Ordenar as próximas construções pela necessidade observável da vila: casas
    quando a capacidade de camas não atende os aldeões adultos, estruturas

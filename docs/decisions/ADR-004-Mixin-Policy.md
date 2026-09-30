@@ -134,6 +134,33 @@ Vanilla First aplica-se também ao Fabric API.
 
 ---
 
+## Mixin 3 — VillagerDataMixin (mesma classe alvo) — ADR-029, 2026-09-30
+
+Alvo:
+
+```text
+net.minecraft.entity.passive.VillagerEntity
+```
+
+Método:
+
+```text
+setVillagerData
+```
+
+Tipo:
+
+```text
+@ModifyVariable(at = @At("HEAD"), argsOnly = true)
+```
+
+Objetivo:
+
+Trabalhador da colônia com profissão não recebe ofício Vanilla. Delega a
+`VanillaProfessionGuard.filter`; nada é cancelado.
+
+---
+
 # 4. Regras de Mixin
 
 ---

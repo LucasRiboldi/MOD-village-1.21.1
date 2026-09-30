@@ -179,7 +179,7 @@ bateria completa (517/517 GameTests, unitários verdes, build sem avisos).
 | F5 | ✅ atendido, regra revista | depois de **3 tentativas** de recolher, o **ingrediente sem rota** aparece no baú do artesão (as linhas do tear no baú do carpinteiro), e ele fabrica a peça; item natural nunca aparece; só peça sem receita aparece pronta. Entre `e58208c` e `1920948` a peça pronta aparecia na primeira falta | `1920948` |
 | F6 | ✅ atendido | a rota olha o bioma e a areia vale em qualquer bioma quando há areia de beira d'água ao alcance (`SandNearWater`); sem praia, o vidro aparece para o carpinteiro depois de 3 tentativas | `e58208c`, `1920948` |
 | F7 | ❌ não atendido | busca do fazendeiro que não fecha (26 `SWEEP_INCOMPLETE`) | — |
-| F8 | ❌ não atendido | tingimento tenta as 16 cores de vidraça | — |
+| F8 | 🟡 parcial | o corante passou a aparecer automático (ADR-028, `DropIngredients`), então a cor pedida fecha; as tentativas das 16 cores não foram medidas de novo | `ef84143` |
 | F9 | ❌ não atendido | carpinteiro para pela reserva de metade da madeira em tora | — |
 | F10 | ✅ atendido | quem fica livre recebe tarefa em até 1 s, sem gastar o relógio dos descansos | `cd22243` |
 | F11 | ❌ não atendido | 101 linhas `Not a tree` sobre tronco de casa da vila | — |

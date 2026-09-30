@@ -33,14 +33,12 @@ public final class ProfessionRegistry {
 
     static {
         define(ProfessionType.LUMBERJACK, ToolType.IRON_AXE, Capability.COLLECT_WOOD);
-        // <b>Madeira, e não diamante</b> — decisão do autor, 2026-09-04:
-        // "todos trabalhadores começam com a ferramenta nível 1 de
-        // madeira". Desfaz a de 08-27, que dava diamante ao mineiro
-        // porque "vinte blocos de descida com picareta de madeira é uma
-        // sessão inteira" — e continua sendo, com a diferença de que
-        // agora existe saída: o ToolUpgrade troca pela melhor do baú
-        // dele, e a colônia mesma põe picaretas lá. A descida lenta
-        // deixou de ser um teto e virou o primeiro degrau.
+        // <b>Ferro é o primeiro degrau</b> — commit 55cf8a3. A regra de
+        // 2026-09-04 ("começam com madeira") foi trocada pelo ferro, que
+        // é também a conta da Regra 2; o ToolUpgrade continua trocando
+        // pela melhor do baú. E desde 2026-09-30 a ferramenta que conta
+        // na quebra é a de ferro certa para cada bloco (ActionTool), e
+        // não só a da profissão.
         define(ProfessionType.MINER, ToolType.IRON_PICKAXE, Capability.COLLECT_STONE);
         define(ProfessionType.SHEPHERD, ToolType.SHEARS, Capability.COLLECT_WOOL);
         define(ProfessionType.SMELTER, ToolType.SILK_TOUCH_IRON_SHOVEL,

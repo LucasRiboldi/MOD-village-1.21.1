@@ -29,6 +29,10 @@ import java.util.Optional;
  * repetir, com risco de errar, uma tabela que o Vanilla já mantém — e
  * envelheceria no primeiro material novo, de outra versão ou de mod.
  *
+ * <p><b>O ponto de partida hoje é ferro</b> (commit 55cf8a3), e não madeira
+ * como a citação acima dizia em 09-04; a troca pela melhor do baú continua.
+ * A ferramenta que conta em cada quebra é escolhida por {@link ActionTool}.
+ *
  * <p><b>A família da ferramenta sai de graça disso.</b> Não é preciso
  * perguntar "isto é picareta?": basta medir contra a pedra. Machado em
  * pedra vale 1,0, como a mão vazia; picareta de madeira vale 2,0. Uma
