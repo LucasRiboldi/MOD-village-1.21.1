@@ -12,6 +12,19 @@ da reabertura seca oposta. Cada lote e validado na orientacao final da planta.
 A bateria de 1.182 testes unitarios (30-09) e 498 GameTests esta verde; ainda requer
 validacao no save real.
 
+## Playtest 2026-09-30 (01:38–01:59) - obra aberta sem nenhum bloco
+
+- [x] P0 - O construtor parava fora do alcance: destino na borda do REACH 5
+  com folga de chegada 2. Folga 0 e ponto de pé a até 4 blocos, também na
+  pré-verificação da reserva; `whyNotReached` imprime o destino real.
+  `BuilderApproachGameTest.arrivingAtTheApproachLeavesTheBuilderInReach`
+  falhou antes; `runGametest --rerun-tasks` 499/499 depois.
+- [ ] P0 - Playtest: com o JAR novo, a casa do pastor de `1756, 71, -5325`
+  (colônia `e79a3177`) sai de 221 blocos.
+- [ ] P1 - Treze minutos até a primeira obra: varredura esgotada e pontas de
+  rua recusadas nas três colônias perto do jogador (§7.1). Recusas salvas:
+  `3c358029` 12.728 (5.709 rua reservada, 4.658 fora da altura da rua).
+
 ## Divergências entre documentos e código - 2026-09-30
 
 Conferência feita contra `4613a5a` (merge do PR #4). Cada item diz como foi

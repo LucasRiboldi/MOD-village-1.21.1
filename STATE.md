@@ -14,28 +14,29 @@
 
 ## Em uma linha
 
-O código de todas as correções até 30-09 está no branch `codex/bighousemod`,
-com build e **498/498 GameTests** no CI do PR #6 e **1.182/1.182 testes
-unitários** rodados localmente em 30-09. **Quase tudo o que está
-aberto é playtest:** nada do que foi corrigido desde 26-09 foi visto no save.
+O código de todas as correções até 30-09 está no branch `codex/bighousemod`:
+1.182/1.182 unitários e 499/499 GameTests locais em 30-09. **Quase tudo o que
+está aberto é playtest.**
 
-## 30-09 — placa órfã e obra que continua longe
+## 30-09 — playtest das 01:38–01:59 e JAR
 
-- **PR #4** (`c2f3b74`): `SiteSignJanitor` remove a placa de obra que ficava
-  flutuando depois de a obra fechar ou do servidor reiniciar.
-- **PR #6** (`4d302af`): a obra aberta continua enquanto o chunk da vila
-  simula; planejar obra nova e detectar vila continuam só com jogador a até
-  64 blocos (decisão do autor, ADR-002).
-- **JAR com os dois:** artefato do CI do PR #6 (run `36667129980`), SHA-256
-  `D0512A8E…35CDB`, informado pelo autor. **O `downloads/` do repositório
-  ainda tem o JAR antigo** e a instalação em `mods` não foi conferida por
-  `release_manifest.py`.
-
-## Git
-
-- `codex/bighousemod` está 68 commits à frente da `main`. O **PR #3**
-  (`codex/bighousemod` → `main`) segue aberto; a descrição fala de 11
-  commits. Mesclar pede aval do autor.
+- **JAR em jogo:** `D0512A8E…35CDB` (CI do PR #6, run `36667129980`), conferido
+  em `%APPDATA%/.minecraft/mods` em 30-09. Traz o PR #4 (`SiteSignJanitor`
+  tira placa órfã) e o PR #6 (obra aberta segue enquanto o chunk simula;
+  planejar e detectar só com jogador a até 64 blocos, ADR-002). O
+  `downloads/` do repositório ainda tem o JAR antigo.
+- **A obra abriu e não pôs bloco.** A casa do pastor de `e79a3177`
+  (`1756, 71, -5325`) ficou em 221 blocos: o destino do construtor estava na
+  borda do alcance (5) com folga de chegada 2, e ele parava fora do alcance
+  (3 vezes, 2 construtores; o save mostra lote plano e livre). **Corrigido
+  localmente, JAR ainda não instalado:** folga 0, ponto de pé a até 4 blocos
+  (também na reserva), destino real no log.
+  `BuilderApproachGameTest.arrivingAtTheApproachLeavesTheBuilderInReach`
+  falhou antes; 499/499 depois.
+- **A primeira obra levou 13 minutos:** varredura esgotada e pontas de rua
+  recusadas nas três colônias perto do jogador (§7.1, abaixo).
+- **Git:** `codex/bighousemod` está 68 commits à frente da `main`; o PR #3
+  segue aberto, com descrição de 11 commits. Mesclar pede aval do autor.
 
 ## Corrigido e testado, pendente de playtest
 
@@ -43,6 +44,7 @@ Cada item tem teste que falhou antes da correção. Nenhum foi visto em jogo.
 
 | Data | Correção | O que confirmar no save |
 |---|---|---|
+| 30-09 | Construtor chega dentro do alcance (folga 0, ponto a 4) | `blocks left` caindo; nenhum `has not moved a block` a 5–6 blocos do alvo |
 | 30-09 | Placa órfã (PR #4) | nenhuma placa sobre lote sem obra; obra aberta com placa |
 | 30-09 | Obra anda longe do jogador (PR #6) | `blocks left` caindo entre 64 blocos e a distância de simulação; vila pausa depois dela; `Colony cycle took` com várias vilas |
 | 28-09 | Obra pede a próxima peça artesanal; troncos brutos reservados | obra com escadas ou `oak_log` sem ficar sem peça |
