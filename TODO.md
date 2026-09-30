@@ -1,6 +1,7 @@
 # TODO
 
-**Atualizado:** 2026-09-28. A obra antecipa a proxima peca artesanal sem
+**Atualizado:** 2026-09-30 (divergências entre documentos e código, seção
+abaixo). Estado de 2026-09-28: a obra antecipa a proxima peca artesanal sem
 consumir os troncos brutos que ela mesma ainda exige; o `/vc log` explica a
 saida de trabalhador preso e seu retorno a escala. A evolucao agora inclui
 Construtor e o deficit de
@@ -10,6 +11,39 @@ mina, vila fundada em agua tenta acesso selado para uma saida natural 8x8 antes
 da reabertura seca oposta. Cada lote e validado na orientacao final da planta.
 A bateria de 1.168 testes unitarios e 498 GameTests esta verde; ainda requer
 validacao no save real.
+
+## Divergências entre documentos e código - 2026-09-30
+
+Conferência feita contra `4613a5a` (merge do PR #4). Cada item diz como foi
+verificado.
+
+- [x] **Placa de obra órfã** (PR #4, `c2f3b74`): placa de obra fechada ou
+  esquecida pelo reinício ficava flutuando para sempre. `SiteSignJanitor`
+  remove ao carregar. CI: build e 498/498 GameTests.
+- [ ] P1 - Playtest: a placa órfã some ao carregar o chunk e as obras abertas
+  voltam a ter placa. **O JAR em `downloads/` ainda não inclui o PR #4.**
+- [ ] P2 - Placa **congelada**: obra aberta de vila inativa ou sem jogador a
+  64 blocos não é desenhada (`VillageFocus.isActiveNearAPlayer`) e fica com o
+  texto parado. Não é órfã; o PR #4 não a remove.
+- [ ] 🟠 **Decisão do autor:** o trabalho só roda com jogador a até 64 blocos
+  (P0.15, `VillageFocus`), o que contraria a premissa do `CLAUDE.md` ("o
+  jogador acha a vila e vai embora") e faz a obra parar quando ele sai.
+  Verificado no código: `BuilderWork.tick` e os outros ofícios pulam a vez.
+- [ ] P2 - **Oito arquivos de produção acima de 500 linhas** (contagem
+  `wc -l`), contra a afirmação de 24-09 e da auditoria de 28-09 de que não
+  havia nenhum: `StructureBlueprintReader` 568, `HousePlans` 563,
+  `BuildSiteScanner` 544, `LumberjackWork` 518, `ColonyGoals` 514,
+  `RoadExtension` 510, `WaitingWork` 507, `ColonySavedData` 503.
+- [x] **Error Prone zerado:** o commit `60c2b3d` zerou os 25 avisos. O log do
+  CI do PR #4 não tem nenhuma linha `warning: [`. Os itens abaixo que
+  ainda os listavam foram fechados.
+- [ ] P2 - **PR #3** (`codex/bighousemod` → `main`) segue aberto e agora tem
+  62 commits; a descrição dele fala de 11. A `main` está 62 commits atrás.
+- [ ] P2 - **ADR-007 (fusão de vilas)** consta como `Accepted`, mas não há
+  código de fusão em `src/main` (busca por `merge`). Arquivar ou mudar o status.
+- [ ] P2 - `CLAUDE.md` §0.2 diz 493 GameTests; a bateria atual tem 498.
+- [ ] P2 - O perfil spark `hUQeDXo9U6` (30-09) não foi analisado: o ambiente
+  remoto bloqueia `lucko.me`. Ler localmente ou salvar o perfil no repositório.
 
 ## Auditoria de estabilidade e entrega - 2026-09-28
 
@@ -38,11 +72,12 @@ validacao no save real.
   ocorrencias. A escolha de ponto de apoio foi aplicada somente a `BUILD`; a
   coleta ainda precisa de GameTest com alvo inacessivel antes de mudar sua
   navegacao ou devolucao de tarefa.
-- [ ] P2 - Resolver os 25 avisos Error Prone da compilacao, priorizando
+- [x] P2 - Resolver os 25 avisos Error Prone da compilacao (`60c2b3d`; zero
+  avisos no CI de 30-09), priorizando
   `Enum.ordinal()` em regras de prioridade/substituicao e a aritmetica que
   converte `long` para `double`. Sao divida tecnica observada, nao falha de
   comportamento reproduzida nesta rodada.
-- [ ] P2 - Enxugar o estado vivo: `STATE.md` tem 273 linhas apesar do proprio
+- [ ] P2 - Enxugar o estado vivo: `STATE.md` tem 273 linhas (338 em 30-09) apesar do proprio
   limite de 150; mover texto historico para o historico mensal sem perder os
   playtests ainda pendentes.
 
@@ -216,8 +251,9 @@ resultado real contra ele.
   pausa sem usar a exceção de chamadas diretas que os testes atuais usam.
 - [x] `/vc log`: menu de chat simples da vila próxima, baseado no
   `ActivityTrace`; `VillageLogPresenterTest` cobre vazio, espera e travamento.
-- [ ] 🟡 Corrigir os 25 avisos Error Prone atuais e mapear as APIs Gradle
-  depreciadas antes da atualização de ferramenta.
+- [x] 🟡 Corrigir os 25 avisos Error Prone atuais (`60c2b3d`; zero no CI de
+  30-09).
+- [ ] 🟡 Mapear as APIs Gradle depreciadas antes da atualização de ferramenta.
 
 ## Pendências de correção levantadas pela avaliação — viabilidade (2026-09-24)
 
@@ -439,7 +475,8 @@ As recomendações, cada uma com um aceite que a próxima avaliação mede
   - [x] Avisos de javadoc do Error Prone zerados em 25-09 (32 → 0; 57 → 25 no
     total). Sete `NotJavadoc` eram comentário separado do método pela divisão
     de classes, e um deles escondia outro link quebrado.
-  - [ ] 🟡 25 avisos de código: `EnumOrdinal` 7 (deliberado, ver "Não
+  - [x] 🟡 25 avisos de código, zerados em `60c2b3d` (conferido no CI de
+    30-09): `EnumOrdinal` 7 (deliberado, ver "Não
     recomendados"), `ImmutableEnumChecker` 5, `LongDoubleConversion` 4,
     `UnusedVariable` 2, `MissingOverride` 2, `IntLongMath` 2, e 1 de
     `UnusedMethod`, `UnnecessaryLambda` e `BoxingComparator`.
@@ -789,8 +826,8 @@ Inventário em
 
 - [ ] 🔴 Destino de `Class-Architecture.md`, `Fabric-Implementation-Plan.md`, `Data-Model.md` — descrevem `ColonyManager`, `TaskManager`, `BuildingStatus` e outras classes que **nunca existiram**. Recomendado: `docs/historical/`.
 - [ ] 🟠 Destino de `MVP.md`, `MVP-Tasks.md`, `START_PROJECT.md`, `Development-Roadmap.md` — planos concluídos ou superados
-- [ ] 🟠 **`STATE.md` tem 1.193 linhas** contra o teto de 150 que ele mesmo declara. Precisa de poda.
-- [ ] 🟠 `ConstructionService.forget` sem chamador em `src/main` — confirmar se é gancho ou resto
+- [ ] 🟠 **`STATE.md` tem 1.193 linhas** contra o teto de 150 que ele mesmo declara. Precisa de poda. *(30-09: 338 linhas; ver a auditoria de 28-09.)*
+- [x] 🟠 `ConstructionService.forget` sem chamador em `src/main` — confirmar se é gancho ou resto *(30-09: chamado por `ConstructionCancellation`)*
 - [ ] 🟠 **Pastor tem 2 gametests; mineiro tem 79.** As profissões calmas são as menos protegidas, não as mais sólidas.
 - [ ] 🟠 Playtest que exercite **fundidor** e **pastor**
 
@@ -833,7 +870,7 @@ mais que os **16.641** de uma volta inteira — e ainda marcou
 - [x] ✅ **Conserto aplicado: o cursor cai, o índice fica.** `ColonyRoads.rebasedTo` reancora o índice de ruas no centro novo e descarta só as colunas fora do raio. O cursor é anel **relativo** e vira lixo; o índice guarda **coluna absoluta**, e rua não deixa de ser rua. Custava **16 de 32** consultas. **Verificado:** 905 unitários (+3), 340 GameTests em **5/5**.
 - [ ] 🟠 **C3 do E46 fica aberto por outro motivo:** o `colony.center()` fica a 77 blocos do aglomerado de camas que a detecção **vê e recusa adotar** (`view not provably complete`, 50×). Isso é diferente da deriva — é o centro que **não** se move quando deveria.
 - [ ] 🟠 **S6 → S4** — duas réguas de chão: a **estrada** usa `isNaturalGround` (5 blocos) e o **lote** usa `isLotGround` (qualquer sólido). A estrada é mais exigente que a casa. Medir antes de unificar.
-- [ ] 🟡 `BuildSiteScanner` tem **1.509 linhas** contra o teto de 500 do `CLAUDE.md`, com 36 métodos e 5 mapas de estado
+- [ ] 🟡 `BuildSiteScanner` tem **1.509 linhas** *(30-09: 544, ainda acima)* contra o teto de 500 do `CLAUDE.md`, com 36 métodos e 5 mapas de estado
 
 ⚠️ **Correção de afirmação minha:** na sessão anterior escrevi que *"a vila
 não consegue estender estrada"*. **Errado** — `extended/grew the road` = 10

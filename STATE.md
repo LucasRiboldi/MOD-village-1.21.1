@@ -1,4 +1,4 @@
-# STATE — 2026-09-28
+# STATE — 2026-09-30
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -9,6 +9,14 @@
 > em 09-19; 659 em 09-24): o texto antigo foi arquivado lá, sem edição.
 
 ---
+
+## 30-09 — placa órfã e divergências
+
+O PR #4 (`c2f3b74`, mesclado em `4613a5a`) remove a placa de obra que ficava
+flutuando depois de a obra fechar ou do servidor reiniciar (`SiteSignJanitor`).
+CI: build, 498/498 GameTests e zero aviso Error Prone. **O JAR não foi
+republicado** e falta ver em jogo. As divergências entre documentos e código
+achadas nesta conferência estão no topo do `TODO.md`.
 
 ## Em uma linha
 
@@ -207,7 +215,8 @@ pendência antiga é descartada e a fazenda não volta a ter blocos quebrados.
 - O PIT esteve parado do `78e7efc` ao `7619b1d`, calado pelo
   `continue-on-error` do CI — corrigido em 25-09, e o CI agora reprova
   quando o PIT nem começa.
-- PR #2 levou o branch para a `main`; o **PR #3** (desde então) está aberto.
+- PR #2 levou o branch para a `main`; o **PR #3** (desde então) está aberto,
+  agora com 62 commits (a descrição fala de 11); a `main` está 62 atrás.
 
 ## O que o próximo jogo precisa mostrar
 
@@ -216,7 +225,7 @@ Em ordem:
 
 | # | Item | Sinal no log |
 |---|---|---|
-| 1 | Perfil de desempenho (spark) | link do `/spark profiler stop`; ver `docs/technical/Profiling-spark.md` |
+| 1 | Perfil de desempenho (spark) | link do `/spark profiler stop`; ver `docs/technical/Profiling-spark.md`. O de 30-09 (`hUQeDXo9U6`) não foi lido: o ambiente remoto bloqueia `lucko.me` |
 | 2 | Colônia presente e ciclo mais leve | `Planner turns`, **menos** `Colony cycle took`; nenhuma atividade de vila distante |
 | 3 | E47: o encalhado sai cavando | `is stranded at`, `dug a step`, `is out at`; nunca `cannot dig out` em massa |
 | 4 | E48: casa quando falta cama, rodízio sem repetir | um segundo `the house is up` |
@@ -224,6 +233,7 @@ Em ordem:
 | 6 | N7, N9, N10 | placa 5 blocos acima do telhado; roça ou oficina depois da 1ª casa; `finished backfilling` |
 | 7 | Os 5 playtests da Task 14 | arco da mina, mina finita, baú cheio, BigHouse migrada, traço de atividade |
 | 8 | Bosque fundacional | ao criar uma vila, duas árvores maduras distintas a 48–56 blocos; a cada 10 adultos, só uma árvore adicional por ciclo |
+| 9 | Placa órfã (PR #4) | com o JAR novo, nenhuma placa sobre lote sem obra; obra aberta com placa |
 
 Depois de jogar, rodar `python scripts/analyze_village_log.py`, que conta
 todas essas assinaturas.
@@ -294,6 +304,8 @@ correção levantadas pela avaliação" e "Avaliação técnica". Em aberto:
 
 - **Hooks do Claude Code:** os scripts estão em `scripts/hooks/`; quem liga
   no `.claude/settings.json` é o autor (a escrita pelo agente foi recusada).
+- **Oito arquivos de produção acima de 500 linhas** (30-09, `wc -l`); ver
+  o topo do `TODO.md`.
 - **Ativação por presença atual:** não há foco persistido. A produção, a
   sondagem e o planejamento só avançam para colônias com jogador dentro do
   raio de detecção; ao sair, o trabalho daquela colônia pausa.
