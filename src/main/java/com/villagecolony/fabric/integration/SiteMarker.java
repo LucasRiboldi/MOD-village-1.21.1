@@ -98,7 +98,7 @@ public final class SiteMarker {
     private static final String SIGN_TAG = "villagecolony_site_sign";
 
     /** A placa de cada obra, para achá-la de volta e removê-la no fim. */
-    private static final Map<UUID, UUID> SIGNS = new HashMap<>();
+    static final Map<UUID, UUID> SIGNS = new HashMap<>();
 
     private SiteMarker() {
     }
@@ -127,6 +127,8 @@ public final class SiteMarker {
 
         // As placas de obra fechada saem primeiro, e saem mesmo sem
         // ninguém por perto: entidade órfã no save não espera plateia.
+        // Antes do desenho, para ele não adotar uma placa órfã.
+        SiteSignJanitor.judgeLoaded(world);
         clearStale(world);
 
         if (world.getPlayers().isEmpty()) {
@@ -309,11 +311,14 @@ public final class SiteMarker {
         }
 
         // A placa de uma sessão anterior: a coluna inteira do lote, e não
-        // só a caixa em volta do ponto, pela mesma razão.
+        // só a caixa em volta do ponto, pela mesma razão. Só a desta obra:
+        // placa sem dono é órfã, e o SiteSignJanitor a remove.
         Box column = new Box(x - 1.5, y - LABEL_ABOVE_TOP - 64, z - 1.5, x + 1.5, y + 1.5, z + 1.5);
 
-        for (ArmorStandEntity found
-                : world.getEntitiesByClass(ArmorStandEntity.class, column, SiteMarker::isSign)) {
+        for (ArmorStandEntity found : world.getEntitiesByClass(
+                ArmorStandEntity.class, column,
+                candidate -> isSign(candidate)
+                        && SiteSignJanitor.projectOf(candidate).filter(project.id()::equals).isPresent())) {
 
             SIGNS.put(project.id(), found.getUuid());
             found.refreshPositionAfterTeleport(x, y, z);
@@ -321,7 +326,7 @@ public final class SiteMarker {
             return found;
         }
 
-        return raiseSign(world, x, y, z);
+        return raiseSign(world, project, x, y, z);
     }
 
     /** A altura da placa: o topo da planta mais {@link #LABEL_ABOVE_TOP}. */
@@ -331,7 +336,7 @@ public final class SiteMarker {
 
     /** Um suporte novo, invisível e sem colisão, só para carregar o nome. */
     private static ArmorStandEntity raiseSign(
-            ServerWorld world, double x, double y, double z) {
+            ServerWorld world, ConstructionProject project, double x, double y, double z) {
 
         ArmorStandEntity sign = EntityType.ARMOR_STAND.create(world);
 
@@ -350,6 +355,11 @@ public final class SiteMarker {
         sign.setSilent(true);
         sign.setCustomNameVisible(true);
         sign.addCommandTag(SIGN_TAG);
+        sign.addCommandTag(SiteSignJanitor.PROJECT_TAG_PREFIX + project.id());
+
+        // Conhecida antes de entrar no mundo: o SiteSignJanitor a vê como a
+        // placa da obra, e não como repetida.
+        SIGNS.put(project.id(), sign.getUuid());
 
         world.spawnEntity(sign);
 
@@ -357,7 +367,7 @@ public final class SiteMarker {
     }
 
     /** Se este suporte é uma placa nossa, e não decoração do jogador. */
-    private static boolean isSign(ArmorStandEntity candidate) {
+    static boolean isSign(ArmorStandEntity candidate) {
         return candidate.getCommandTags().contains(SIGN_TAG);
     }
 
@@ -367,6 +377,10 @@ public final class SiteMarker {
      * <p>É a metade que impede o lixo no save. Sem ela, cada casa terminada
      * deixaria um suporte de armadura invisível de pé para sempre, com o
      * último recado congelado.
+     *
+     * <p>A placa descarregada é esquecida aqui sem ser removida; a
+     * etiqueta da obra a condena quando o chunk voltar — ver
+     * {@link SiteSignJanitor}.
      */
     private static void clearStale(ServerWorld world) {
         SIGNS.entrySet().removeIf(entry -> {
