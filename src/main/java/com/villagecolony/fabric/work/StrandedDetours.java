@@ -88,7 +88,7 @@ final class StrandedDetours {
             UUID workerId = entry.getKey();
 
             if (!VillageColonyMod.WORKERS.find(workerId)
-                    .map(worker -> VillageFocus.isActiveNearAPlayer(world, worker.colonyId()))
+                    .map(worker -> VillageFocus.isWorking(world, worker.colonyId()))
                     .orElse(false)) {
                 continue;
             }

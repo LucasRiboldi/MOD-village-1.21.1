@@ -129,9 +129,9 @@ nela e só aceita baú em cômodo fechado e coberto; 480/480 GameTests passaram.
 O JAR foi instalado nas três cópias; falta validar no mesmo save que novas vilas não deixam cama
 ou baú fora de estruturas.
 
-A correção em validação restringe a simulação à vila onde há jogador agora:
-sem jogador, nenhum trabalho por tique roda; longe do jogador, detecção,
-planejamento, profissões, refeições, fuga e placas ficam pausados.
+A correção de 26-09 restringia a simulação à vila onde há jogador agora; em
+30-09 a execução voltou ao critério da ADR-002 (ver "Dívida conhecida").
+Sem jogador no servidor, nenhum trabalho por tique roda.
 O bloqueio da bateria foi isolado e corrigido: o retorno sem jogadores também
 impedia os tiques de profissões da arena GameTest. Uma ponte exclusiva da
 fonte `gametest` executa esses tiques sem alterar a pausa de produção. A
@@ -306,9 +306,11 @@ correção levantadas pela avaliação" e "Avaliação técnica". Em aberto:
   no `.claude/settings.json` é o autor (a escrita pelo agente foi recusada).
 - **Oito arquivos de produção acima de 500 linhas** (30-09, `wc -l`); ver
   o topo do `TODO.md`.
-- **Ativação por presença atual:** não há foco persistido. A produção, a
-  sondagem e o planejamento só avançam para colônias com jogador dentro do
-  raio de detecção; ao sair, o trabalho daquela colônia pausa.
+- **Ativação (decisão do autor, 30-09):** a execução — construtor, ofícios,
+  refeição, fuga, placa, ciclo de tarefas — roda em toda colônia `ACTIVE`
+  (chunk do centro simulando, ADR-002). Sondagem, detecção e planejamento de
+  obra nova só com jogador a até 64 blocos. Falta ver em jogo e medir o
+  custo com várias vilas carregadas.
 - **Bateria de jogo:** 3 testes intermitentes foram isolados em 24-09. A
   taxa histórica era de ~1 falha a cada 8 rodadas, e só a repetição prova
   que acabou. `runGametest` não filtra teste.

@@ -246,7 +246,7 @@ public final class FarmerWork {
             Map.Entry<UUID, Job> entry = entries.next();
             Job job = entry.getValue();
 
-            if (!VillageFocus.isActiveNearAPlayer(world, job.task.colonyId())) {
+            if (!VillageFocus.isWorking(world, job.task.colonyId())) {
                 continue;
             }
 

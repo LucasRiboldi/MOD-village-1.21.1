@@ -13,12 +13,20 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * A colônia só existe para a simulação quando um jogador está nela agora.
+ * Onde a simulação gasta o processamento: planejar e descobrir perto do
+ * jogador, executar onde o chunk simula.
  *
- * <p>Planejamento, detecção e trabalho usam a mesma régua horizontal da vila,
- * {@link VillageDetector#SEARCH_RADIUS}. Não há foco memorizado: ao sair, a
- * colônia pausa; ao chegar, retoma de onde parou. Assim um mundo com muitas
- * vilas não consome processamento em regiões sem jogador.
+ * <p><b>Planejamento e detecção</b> usam a régua horizontal da vila,
+ * {@link VillageDetector#SEARCH_RADIUS}: escolher lote e abrir obra nova é o
+ * custo que o log de 24-09 mediu (91% dos ciclos lentos), e só a vila com
+ * jogador presente o paga. Não há foco memorizado.
+ *
+ * <p><b>Execução</b> — construtor, ofícios, refeição, fuga, placa — segue o
+ * critério da ADR-002: a colônia trabalha enquanto é {@code ACTIVE}, isto é,
+ * enquanto o chunk do centro simula. Decisão do autor em 2026-09-30, para a
+ * obra aberta continuar com o jogador longe da vila; até ali, a execução
+ * também pausava a mais de 64 blocos (26-09). Chunk descarregado continua
+ * dormente: forçar o carregamento foi rejeitado pela ADR-002.
  *
  * <p>Os GameTests chamam alguns trabalhadores diretamente, sem criar jogador.
  * O manipulador de produção não os chama quando o servidor está vazio.
@@ -66,21 +74,23 @@ public final class VillageFocus {
     }
 
     /**
-     * Se um trabalhador pode avançar no tique atual.
+     * Se um trabalhador desta colônia pode avançar no tique atual.
+     *
+     * <p>Basta a colônia estar {@code ACTIVE} — chunk do centro simulando,
+     * ADR-002. A distância do jogador não entra: ver o javadoc da classe.
      *
      * <p>O servidor de produção não chama trabalhadores sem jogadores. O
      * retorno verdadeiro nesse caso preserva GameTests que exercitam os
      * trabalhadores diretamente, sem um jogador de teste.
      */
-    public static boolean isActiveNearAPlayer(ServerWorld overworld, UUID colonyId) {
+    public static boolean isWorking(ServerWorld overworld, UUID colonyId) {
         if (overworld == null || overworld.getPlayers().isEmpty()) {
             return true;
         }
 
         return VillageColonyMod.COLONIES.find(colonyId)
                 .filter(Colony::isActive)
-                .map(colony -> isNearAPlayer(overworld, colony))
-                .orElse(false);
+                .isPresent();
     }
 
     /** Se há jogador dentro do raio de vila de uma posição ainda não adotada. */

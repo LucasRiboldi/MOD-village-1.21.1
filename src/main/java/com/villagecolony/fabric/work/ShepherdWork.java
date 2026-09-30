@@ -185,7 +185,7 @@ public final class ShepherdWork {
         for (Map.Entry<UUID, Job> entry : Map.copyOf(JOBS).entrySet()) {
             Job job = entry.getValue();
 
-            if (!VillageFocus.isActiveNearAPlayer(world, job.task.colonyId())) {
+            if (!VillageFocus.isWorking(world, job.task.colonyId())) {
                 continue;
             }
 

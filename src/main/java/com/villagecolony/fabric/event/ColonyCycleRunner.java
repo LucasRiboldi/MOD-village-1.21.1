@@ -130,7 +130,6 @@ final class ColonyCycleRunner {
     static void runColonyCycles(ServerWorld overworld, boolean onlyNearPlayers) {
         List<Colony> active = List.copyOf(VillageColonyMod.COLONIES.all()).stream()
                 .filter(Colony::isActive)
-                .filter(colony -> !onlyNearPlayers || VillageFocus.isNearAPlayer(overworld, colony))
                 .toList();
 
         // <b>A vez de planejar é repartida</b> — 2026-09-15. O log do autor
@@ -140,9 +139,10 @@ final class ColonyCycleRunner {
         // passagem —, e faltava o teto global: mil colunas vezes vinte e
         // nove cabem num tique só, e coube.
         //
-        // Só o planejamento espera a vez. Entre as colônias onde há jogador,
-        // o restante do ciclo continua para não interromper uma tarefa já
-        // aberta. Colônias sem jogador nem entram nesta lista.
+        // Só o planejamento espera a vez. O restante do ciclo roda em toda
+        // colônia ACTIVE — chunk simulando, ADR-002 —, para a obra já aberta
+        // continuar com o jogador longe; decisão do autor, 2026-09-30, que
+        // desfaz a pausa por distância de 26-09 só para a execução.
         //
         // Em jogo, só as vilas com jogador presente podem planejar. O
         // planejador tem prazo de relógio e a cota se ajusta pelo custo do

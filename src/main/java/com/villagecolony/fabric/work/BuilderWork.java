@@ -214,7 +214,7 @@ public final class BuilderWork {
 
             Map.Entry<UUID, Job> entry = entries.next();
 
-            if (!VillageFocus.isActiveNearAPlayer(world, entry.getValue().task.colonyId())) {
+            if (!VillageFocus.isWorking(world, entry.getValue().task.colonyId())) {
                 continue;
             }
 

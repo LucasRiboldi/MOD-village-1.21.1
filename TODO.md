@@ -22,13 +22,20 @@ verificado.
   remove ao carregar. CI: build e 498/498 GameTests.
 - [ ] P1 - Playtest: a placa órfã some ao carregar o chunk e as obras abertas
   voltam a ter placa. **O JAR em `downloads/` ainda não inclui o PR #4.**
-- [ ] P2 - Placa **congelada**: obra aberta de vila inativa ou sem jogador a
-  64 blocos não é desenhada (`VillageFocus.isActiveNearAPlayer`) e fica com o
-  texto parado. Não é órfã; o PR #4 não a remove.
-- [ ] 🟠 **Decisão do autor:** o trabalho só roda com jogador a até 64 blocos
-  (P0.15, `VillageFocus`), o que contraria a premissa do `CLAUDE.md` ("o
-  jogador acha a vila e vai embora") e faz a obra parar quando ele sai.
-  Verificado no código: `BuilderWork.tick` e os outros ofícios pulam a vez.
+- [x] P2 - Placa **congelada** a mais de 64 blocos: com a regra nova abaixo,
+  a placa de colônia `ACTIVE` volta a ser atualizada quando o jogador chega
+  perto do lote. Colônia `DORMANT` não é desenhada, mas também não é vista.
+- [x] 🟠 **Decisão do autor (30-09): a execução segue enquanto o chunk
+  simula.** `VillageFocus.isWorking` (antes `isActiveNearAPlayer`) só exige a
+  colônia `ACTIVE`, critério da ADR-002; `runColonyCycles` roda o ciclo em
+  toda colônia `ACTIVE`. **Planejar obra nova e detectar vila continuam só com
+  jogador a até 64 blocos.** Chunk descarregado segue dormente (ADR-002).
+- [ ] P1 - Playtest da regra nova: afastar-se entre 64 blocos e o limite da
+  distância de simulação e ver a obra aberta andar (`blocks left` caindo sem
+  jogador perto); passar do limite e ver a vila pausar. Medir `Colony cycle
+  took` com várias vilas carregadas (risco R1: mais ciclos por tique).
+- [ ] P2 - Sem GameTest com jogador real para as duas regras (planejar perto,
+  executar onde simula); a arena não cria jogador.
 - [ ] P2 - **Oito arquivos de produção acima de 500 linhas** (contagem
   `wc -l`), contra a afirmação de 24-09 e da auditoria de 28-09 de que não
   havia nenhum: `StructureBlueprintReader` 568, `HousePlans` 563,
