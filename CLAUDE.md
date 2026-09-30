@@ -43,11 +43,11 @@ documento errado. Vá para `STATE.md` primeiro.
 ### 0.2 Estado em uma linha
 
 **O núcleo do MVP está implementado, com oito funções operacionais, seis
-titulares na `BigHouseMOD` e sete profissões produtoras. Em 2026-09-28, 1.163
-testes unitários, 86 testes Python e 493 GameTests passaram; os playtests do
-save e a correção dos gargalos de ciclo ainda estão pendentes.** O estado vivo
-e a auditoria estão em `STATE.md` e
-`docs/technical/Auditoria-Entrega-2026-09-28.md`.
+titulares na `BigHouseMOD` e sete profissões produtoras. Em 2026-09-30, 1.182
+testes unitários passaram (`test --rerun-tasks`, 144 suítes) e 498 GameTests
+passaram no CI do PR #6; os playtests do save e a medição dos gargalos de
+ciclo ainda estão pendentes.** O estado vivo e a auditoria estão em
+`STATE.md` e `docs/technical/Auditoria-Entrega-2026-09-28.md`.
 
 ### 0.3 Não comece criando classes
 

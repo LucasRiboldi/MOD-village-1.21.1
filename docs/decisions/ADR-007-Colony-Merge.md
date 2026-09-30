@@ -4,12 +4,19 @@
 
 # Village Colony — Fusão de colônias
 
-**Status:** Accepted
+**Status:** Accepted — **não implementada** (conferido em 2026-09-30)
 **Date:** 2026-08-21
 **Accepted:** 2026-08-21
 **Decision Type:** Architecture / Data
 **Implements:** TASK-044, B3 do Backlog
 **Amends:** ADR-003 §5
+
+> **Estado da implementação (2026-09-30):** a decisão continua valendo, mas
+> nenhum código de fusão existe em `src/main`. Só a pergunta de contato
+> está pronta — `Building.touches(Building)`, com folga de um bloco, e
+> `BuildingRegistry.foreignNeighboursOf`, que a faz entre colônias. Nada
+> chama essa segunda, e não há transferência de trabalhadores, obras ou baús entre
+> colônias. A TASK-044 segue na lista de decisões do `TODO.md`.
 
 ---
 

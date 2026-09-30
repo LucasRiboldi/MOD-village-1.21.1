@@ -9,7 +9,7 @@ camas prioriza moradia; a prioridade e explicita no Core e aparece no `/vc
 log`. A boca da mina exige os primeiros degraus em solo firme; ao esgotar a
 mina, vila fundada em agua tenta acesso selado para uma saida natural 8x8 antes
 da reabertura seca oposta. Cada lote e validado na orientacao final da planta.
-A bateria de 1.168 testes unitarios e 498 GameTests esta verde; ainda requer
+A bateria de 1.182 testes unitarios (30-09) e 498 GameTests esta verde; ainda requer
 validacao no save real.
 
 ## Divergências entre documentos e código - 2026-09-30
@@ -47,10 +47,14 @@ verificado.
   CI do PR #4 não tem nenhuma linha `warning: [`. Os itens abaixo que
   ainda os listavam foram fechados.
 - [ ] P2 - **PR #3** (`codex/bighousemod` → `main`) segue aberto e agora tem
-  62 commits; a descrição dele fala de 11. A `main` está 62 commits atrás.
-- [ ] P2 - **ADR-007 (fusão de vilas)** consta como `Accepted`, mas não há
-  código de fusão em `src/main` (busca por `merge`). Arquivar ou mudar o status.
-- [ ] P2 - `CLAUDE.md` §0.2 diz 493 GameTests; a bateria atual tem 498.
+  68 commits (conferido em 30-09 por `git rev-list`); a descrição dele fala
+  de 11. A `main` está 68 commits atrás. Atualizar a descrição e mesclar
+  pedem aval do autor.
+- [x] P2 - **ADR-007 (fusão de vilas)**: a decisão continua valendo, então o
+  status virou `Accepted — não implementada`, com nota do que existe
+  (`Building.touches`, `BuildingRegistry.foreignNeighboursOf`, sem chamador).
+- [x] P2 - `CLAUDE.md` §0.2 dizia 493 GameTests; atualizado para 498
+  (contagem de `@GameTest` em `src/` e CI do PR #6).
 - [ ] P2 - O perfil spark `hUQeDXo9U6` (30-09) não foi analisado: o ambiente
   remoto bloqueia `lucko.me`. Ler localmente ou salvar o perfil no repositório.
 
@@ -86,9 +90,10 @@ verificado.
   `Enum.ordinal()` em regras de prioridade/substituicao e a aritmetica que
   converte `long` para `double`. Sao divida tecnica observada, nao falha de
   comportamento reproduzida nesta rodada.
-- [ ] P2 - Enxugar o estado vivo: `STATE.md` tem 273 linhas (338 em 30-09) apesar do proprio
-  limite de 150; mover texto historico para o historico mensal sem perder os
-  playtests ainda pendentes.
+- [x] P2 - Enxugar o estado vivo: o `STATE.md` tinha 348 linhas em 30-09;
+  o texto integral foi arquivado sem edição em `Historico-2026-09.md`
+  ("Arquivado do STATE.md em 2026-09-30") e o novo tem 146 linhas, com os
+  playtests pendentes numa tabela.
 
 ## Acesso submerso e mina 3x3 - 2026-09-27
 
@@ -277,7 +282,7 @@ próxima avaliação mede.
 | 4 ✅ | Matar sobreviventes do PIT nas três classes nomeadas (`MineShaft`, `ProfessionAssigner`, `ColonyCycle`) — **feito** em 25-09, junto com `Building` e `Worker`; só equivalentes restam | médio / nulo | C08 ≥ 85%: **85,14%** em 25-09, com `Mine` e `ColonyGoals` ✅ |
 | 5 | JaCoCo na bateria de jogo (cobertura do `fabric`) | baixo-médio / nulo | cobertura do `fabric` medida |
 | 6 | PR do branch para a `main` (85 commits) | baixo / publica | CI verde no PR — **pede aval do autor** |
-| 7 | `STATE.md` até 150 linhas | baixo / nulo | contagem |
+| 7 ✅ | `STATE.md` até 150 linhas — **feito** em 30-09 (146) | baixo / nulo | contagem |
 | 8 | Avisos de javadoc — **feito** em 25-09: eram 32 medidos (não 39), agora 0; o total do Error Prone foi de 57 a 25. Faltam as 2 variáveis sem uso | baixo / nulo | C10 = 4 |
 | 9 | Ciclo de tarefa comum aos 7 ofícios | alto / médio | `JOBS` ≤ 2, `giveUp` = 1 — **ADR antes** |
 | 10 | Regras de decisão do `fabric` para o `core` | médio-alto / médio | teste unitário e PIT cobrem as regras — **ADR antes** |
