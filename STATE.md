@@ -30,13 +30,13 @@ levantamento de fluidez e a revarredura F1–F14 estão em
   planejador ficou mais caro (F1, regressão da busca pelo prazo); nenhuma obra
   nova depois (pontas de rua recusadas por grama da vila original e por
   `dirt_path` de outra colônia); o fazendeiro plantou muda dentro da obra
-  aberta — **corrigido em `1eb6352`, não instalado**.
-- **Depois do jogo (não instalado, nada visto em jogo):** F1, F2, F3, F4, F5,
+  aberta — corrigido em `1eb6352`.
+- **Depois do jogo — JAR `3FB95073…11E3` (`482c06b`) em `mods` e `downloads/`,
+  conferido por `release_manifest.py`; nada visto em jogo:** F1, F2, F3, F4, F5,
   F6, F10 e F12 (fusão, ADR-007) atendidos; F13 parcial; F7, F8, F9, F11 e
   F14 abertos. Lote na rua ou um acima, com degrau; areia perto da água; linha
   do tear no baú do carpinteiro após 3 tentativas. `22b40bf`..`1920948`.
-- **Git:** `codex/bighousemod` está 68 commits à frente da `main`; o PR #3
-  segue aberto, com descrição de 11 commits. Mesclar pede aval do autor.
+- **Git:** PR #8 → `codex/bighousemod`; PR #3 → `main` aberto. Mesclar pede aval.
 
 ## Corrigido e testado, pendente de playtest
 

@@ -48,7 +48,8 @@ documento; ordem recomendada na §7 dele.
 - [x] 🟠 Lote: base na altura da rua ou um acima, com degrau na porta se o
   desnível for 2 (`a2b1d1c`); lote desliza ao longo da rua que dobra
   (`560d546`). Decisões do autor.
-- [ ] P0 - Playtest da rodada: JAR com `22b40bf`..`1920948` ainda não instalado.
+- [ ] P0 - Playtest da rodada: JAR `3FB95073…11E3` (`482c06b`) instalado em
+  `mods` e `downloads/` em 30-09; falta jogar.
 - [ ] 🟢 F11 - 101 linhas `Not a tree` em tronco de casa da vila.
 - [x] 🟢 Noite sem trabalho: decisão do autor (30-09) — continua sem trabalho,
   reação como no Vanilla.
