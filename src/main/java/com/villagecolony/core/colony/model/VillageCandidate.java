@@ -1,5 +1,7 @@
 package com.villagecolony.core.colony.model;
 
+import org.jspecify.annotations.Nullable;
+
 import com.villagecolony.core.type.ColonyPos;
 
 import java.util.List;
@@ -25,7 +27,7 @@ import java.util.Objects;
  *     quando o candidato foi criado fora do adaptador Minecraft
  */
 public record VillageCandidate(
-        ColonyPos center, int bedCount, boolean complete, ColonyPos anchor,
+        ColonyPos center, int bedCount, boolean complete, @Nullable ColonyPos anchor,
         List<ColonyPos> beds) {
 
     public VillageCandidate {
@@ -44,7 +46,7 @@ public record VillageCandidate(
     }
 
     /** Observação sem as posições físicas das camas. */
-    public VillageCandidate(ColonyPos center, int bedCount, boolean complete, ColonyPos anchor) {
+    public VillageCandidate(ColonyPos center, int bedCount, boolean complete, @Nullable ColonyPos anchor) {
         this(center, bedCount, complete, anchor, List.of());
     }
 

@@ -1,5 +1,7 @@
 package com.villagecolony.core.construction.model;
 
+import org.jspecify.annotations.Nullable;
+
 import com.villagecolony.core.type.ColonyPos;
 
 import java.util.Objects;
@@ -76,7 +78,7 @@ public final class MineArm {
      * duas veias em dois ramais são duas veias, e lembrá-las num campo só
      * faria um mineiro herdar o carvão do outro, a vinte blocos dele.
      */
-    private ColonyPos vein;
+    private @Nullable ColonyPos vein;
 
     /**
      * Se este braço acabou.

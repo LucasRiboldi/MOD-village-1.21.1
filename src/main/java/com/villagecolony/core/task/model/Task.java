@@ -1,5 +1,7 @@
 package com.villagecolony.core.task.model;
 
+import org.jspecify.annotations.Nullable;
+
 import com.villagecolony.core.type.Capability;
 import com.villagecolony.core.type.ResourceType;
 
@@ -40,7 +42,7 @@ public final class Task {
 
     private TaskState state;
 
-    private UUID executorId;
+    private @Nullable UUID executorId;
 
     private Task(
             UUID id,
@@ -50,7 +52,7 @@ public final class Task {
             ResourceType targetResource,
             int amount,
             TaskState state,
-            UUID executorId) {
+            @Nullable UUID executorId) {
 
         this.id = id;
         this.colonyId = colonyId;

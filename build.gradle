@@ -4,6 +4,7 @@ plugins {
     id 'jacoco'
     id 'info.solidsoft.pitest' version '1.19.0'
     id 'net.ltgt.errorprone' version '5.1.1'
+    id 'pmd'
 }
 
 version = project.mod_version
@@ -47,6 +48,16 @@ dependencies {
     // Análise estática na compilação (2026-09-24). Ver o bloco errorprone
     // abaixo: só avisa, não reprova.
     errorprone 'com.google.errorprone:error_prone_core:2.50.0'
+    // Nulidade verificada na compilação (2026-09-30): NullAway sobre o Error
+    // Prone, guiado pelas anotações JSpecify. Só em pacote @NullMarked.
+    errorprone "com.uber.nullaway:nullaway:${project.nullaway_version}"
+    compileOnly "org.jspecify:jspecify:${project.jspecify_version}"
+    testCompileOnly "org.jspecify:jspecify:${project.jspecify_version}"
+
+    // Regras de arquitetura como teste (2026-09-30) e teste de propriedade
+    // com estado. Ver docs/research/2026-09-30-avaliacao-profissional-de-codigo.md.
+    testImplementation "com.tngtech.archunit:archunit-junit5:${project.archunit_version}"
+    testImplementation "net.jqwik:jqwik:${project.jqwik_version}"
     testImplementation platform("org.junit:junit-bom:${project.junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -61,6 +72,44 @@ test {
 
     finalizedBy jacocoTestReport
 }
+
+// Teste de propriedade (jqwik, 2026-09-30) numa tarefa própria, e sem o
+// fabric-loader-junit: o listener dele carrega as classes de teste pelo Knot,
+// e o motor do jqwik não reconhece @Property vinda de outro carregador — a
+// suíte rodava verde sem executar nenhuma propriedade. É o mesmo corte que o
+// PIT faz abaixo. Roda no `check`, e portanto no `build` e no CI.
+def propertyTest = tasks.register('propertyTest', Test) {
+    description = 'Roda as propriedades jqwik do core, fora do carregador do Fabric.'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath.filter {
+        !it.name.startsWith('fabric-loader-junit')
+    }
+    useJUnitPlatform {
+        includeEngines 'jqwik'
+    }
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+    }
+}
+
+tasks.named('check') {
+    dependsOn propertyTest
+}
+
+// Complexidade cognitiva (PMD, 2026-09-30), só como relatório: aponta onde
+// quebrar os métodos difíceis de ler, sem reprovar. Relatório em
+// build/reports/pmd/main.html. Só o código do mod.
+pmd {
+    toolVersion = project.pmd_version
+    ignoreFailures = true
+    consoleOutput = false
+    ruleSets = []
+    ruleSetFiles = files('config/pmd/complexity.xml')
+}
+
+tasks.named('pmdTest') { enabled = false }
+tasks.matching { it.name == 'pmdGametest' }.configureEach { enabled = false }
 
 // Cobertura (2026-09-24). Não é meta — cobertura diz o que foi executado,
 // não o que foi verificado. Serve para escolher onde apontar o PIT.
@@ -80,10 +129,13 @@ jacocoTestReport {
 // Mede se o teste falha quando o código muda — o que o projeto fazia à mão,
 // uma mutação por vez, desde o "teste vazio por condição impossível". Só o
 // core: é a lógica pura, e mutar a camada fabric pediria o jogo rodando.
-// Número baixo não reprova o build: o número é para ler, e o mutante
-// sobrevivente vira tarefa de teste. Sem mutationThreshold de propósito —
-// o CI roda este passo sem continue-on-error desde 2026-09-25, e um
-// threshold aqui passaria a reprovar o CI por pontuação.
+// O mutante sobrevivente vira tarefa de teste.
+//
+// <b>Limite de 85% desde 2026-09-30</b> (estava em 88%): o número deixou de
+// ser só para ler e passou a barrar a regressão. Abaixo dele o CI reprova —
+// a decisão de 09-25 de não ter limite foi revista com o placar medido.
+// `enableDefaultIncrementalAnalysis` guarda o histórico em build/ e, na
+// máquina local, só remuta o que mudou; o CI roda do zero.
 pitest {
     junit5PluginVersion = '1.2.2'
     targetClasses = ['com.villagecolony.core.*']
@@ -97,6 +149,8 @@ pitest {
     threads = 4
     outputFormats = ['HTML', 'XML']
     timestampedReports = false
+    mutationThreshold = 85
+    enableDefaultIncrementalAnalysis = true
 }
 
 // Sem o fabric-loader-junit no classpath do PIT. O listener dele só aceita
@@ -173,13 +227,24 @@ tasks.withType(JavaCompile).configureEach {
     it.options.encoding = 'UTF-8'
     it.options.release = 21
 
-    // Error Prone (2026-09-24) só no código do mod, e só como aviso: a
-    // primeira passada é para ler, e o que for defeito de verdade vira
-    // tarefa. Teste e teste de jogo ficam de fora para o aviso não se
-    // perder no meio de asserção.
+    // Error Prone (2026-09-24) só no código do mod. Teste e teste de jogo
+    // ficam de fora para o aviso não se perder no meio de asserção.
+    //
+    // <b>Reprova desde 2026-09-30.</b> A primeira passada era só aviso, para
+    // ler; com os avisos zerados, travar custa nada e impede que o primeiro
+    // volte calado — o que o PIT fez com o CI verde de 78e7efc a 7619b1d.
     it.options.errorprone.enabled = (it.name == 'compileJava')
-    it.options.errorprone.allErrorsAsWarnings = true
+    it.options.errorprone.allErrorsAsWarnings = false
     it.options.errorprone.disableWarningsInGeneratedCode = true
+    // NullAway (2026-09-30): só nos pacotes @NullMarked (package-info).
+    // Começa pelo core; a camada fabric entra pacote a pacote. Modo padrão, e
+    // não o JSpecifyMode: este pede JDK 22+ ou a flag
+    // -XDaddTypeAnnotationsToSymbol, que o JDK 21 da Oracle não aceita.
+    it.options.errorprone.option('NullAway:OnlyNullMarked', 'true')
+    it.options.errorprone.error('NullAway')
+    if (it.name == 'compileJava') {
+        it.options.compilerArgs += ['-Werror']
+    }
     // Item e Block do Minecraft são instâncias únicas de registro: comparar
     // por == é o jeito certo, e as 28 ocorrências medidas eram todas isso.
     it.options.errorprone.disable('ReferenceEquality')

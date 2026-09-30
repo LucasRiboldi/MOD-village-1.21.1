@@ -86,7 +86,7 @@ public final class DetourPlanner {
         while (!open.isEmpty() && nodes < MAX_NODES) {
             Node node = open.poll();
 
-            if (node.cost > cost.get(node.pos)) {
+            if (node.cost > cost.getOrDefault(node.pos, Integer.MAX_VALUE)) {
                 continue;
             }
 
@@ -128,7 +128,7 @@ public final class DetourPlanner {
 
         if (partial && !best.equals(start)) {
             return java.util.Optional.of(
-                    new Detour(pathTo(best, cameFrom), false, cost.get(best), nodes));
+                    new Detour(pathTo(best, cameFrom), false, cost.getOrDefault(best, 0), nodes));
         }
 
         return java.util.Optional.empty();

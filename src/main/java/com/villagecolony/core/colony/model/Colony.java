@@ -1,5 +1,7 @@
 package com.villagecolony.core.colony.model;
 
+import org.jspecify.annotations.Nullable;
+
 import com.villagecolony.core.type.ColonyPos;
 
 import java.util.Objects;
@@ -79,7 +81,7 @@ public final class Colony {
      * apagava a leitura da própria antes que a repetição a confirmasse.
      * Ver {@link #observe(ColonyPos, int, boolean, ColonyPos)}.
      */
-    private ColonyPos probeAnchor;
+    private @Nullable ColonyPos probeAnchor;
 
     private int probeBeds;
 
@@ -164,7 +166,7 @@ public final class Colony {
         forestPopulationMilestone = milestone;
     }
 
-    public ColonyPos probeAnchor() {
+    public @Nullable ColonyPos probeAnchor() {
         return probeAnchor;
     }
 
@@ -233,7 +235,7 @@ public final class Colony {
      * @return true se o centro foi movido — o que só uma leitura da
      *     sonda desta colônia consegue
      */
-    public boolean observe(ColonyPos center, int beds, boolean complete, ColonyPos from) {
+    public boolean observe(ColonyPos center, int beds, boolean complete, @Nullable ColonyPos from) {
         Objects.requireNonNull(center, "center");
 
         // A sonda desta colônia parte do centro dela. Âncora que não é o
@@ -248,6 +250,7 @@ public final class Colony {
         // contra si mesma, e uma visão parcial isolada encolheria a
         // colônia.
         boolean confirmedByProbe = ownProbe
+                && from != null
                 && from.equals(probeAnchor)
                 && beds <= probeBeds
                 && probeBeds < observedBeds;

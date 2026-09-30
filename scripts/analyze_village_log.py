@@ -326,6 +326,41 @@ guarda UUIDs, coordenadas ou linhas cruas do mundo do jogador.
 """
 
 
+SLOW_CYCLE = re.compile(r"Colony cycle took (\d+) ms")
+
+
+@dataclass(frozen=True)
+class CycleBudget:
+    """Ciclos da colonia que passaram de um tique (so eles sao registrados)."""
+
+    slow_cycles: int
+    worst_ms: int
+    median_ms: int
+
+
+def cycle_budget(text: str) -> CycleBudget:
+    """Mede o orcamento de tique pelas linhas `Colony cycle took N ms`.
+
+    O mod so escreve a linha quando o ciclo passa de 50 ms, entao a contagem
+    e a de ciclos lentos, e a mediana e a dos lentos - funcao de aptidao de
+    2026-09-30, ver docs/research/2026-09-30-avaliacao-profissional-de-codigo.md.
+    """
+    values = sorted(int(match.group(1)) for match in SLOW_CYCLE.finditer(text))
+    if not values:
+        return CycleBudget(0, 0, 0)
+    return CycleBudget(len(values), values[-1], values[len(values) // 2])
+
+
+def over_budget(budget: CycleBudget, max_slow: int | None, max_ms: int | None) -> list[str]:
+    """O que passou dos limites pedidos; vazio quando nada passou."""
+    reasons = []
+    if max_slow is not None and budget.slow_cycles > max_slow:
+        reasons.append(f"{budget.slow_cycles} ciclos lentos (limite {max_slow})")
+    if max_ms is not None and budget.worst_ms > max_ms:
+        reasons.append(f"pior ciclo {budget.worst_ms} ms (limite {max_ms})")
+    return reasons
+
+
 def default_log() -> Path | None:
     return next((candidate for candidate in LOG_CANDIDATES if candidate.is_file()), None)
 
@@ -346,6 +381,16 @@ def parse_args() -> argparse.Namespace:
         help="relatorio Markdown gerado",
     )
     parser.add_argument("--min-loop", type=int, default=DEFAULT_LOOP_THRESHOLD)
+    parser.add_argument(
+        "--max-slow-cycles",
+        type=int,
+        help="reprova (saida 3) se mais ciclos que isto passarem de um tique",
+    )
+    parser.add_argument(
+        "--max-cycle-ms",
+        type=int,
+        help="reprova (saida 3) se o pior ciclo passar disto",
+    )
     return parser.parse_args()
 
 
@@ -370,6 +415,16 @@ def main() -> int:
     print(f"Candidatos a loop: {len(loops)}")
     for item in loops:
         print(f"  {item.key}: {item.occurrences} ({item.where})")
+
+    budget = cycle_budget(text)
+    print(
+        f"Ciclos acima de um tique: {budget.slow_cycles}"
+        f" (pior {budget.worst_ms} ms, mediana dos lentos {budget.median_ms} ms)"
+    )
+    reasons = over_budget(budget, args.max_slow_cycles, args.max_cycle_ms)
+    if reasons:
+        print("Orcamento de tique estourado: " + "; ".join(reasons))
+        return 3
     return 0
 
 

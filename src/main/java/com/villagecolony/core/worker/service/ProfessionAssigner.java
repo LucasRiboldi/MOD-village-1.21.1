@@ -1,5 +1,7 @@
 package com.villagecolony.core.worker.service;
 
+import org.jspecify.annotations.Nullable;
+
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 
@@ -111,7 +113,7 @@ public final class ProfessionAssigner {
         ProfessionType scarcest = PRODUCER_ORDER.get(0);
 
         for (ProfessionType type : PRODUCER_ORDER) {
-            if (counts.get(type) < counts.get(scarcest)) {
+            if (counts.getOrDefault(type, 0) < counts.getOrDefault(scarcest, 0)) {
                 scarcest = type;
             }
         }
@@ -163,14 +165,14 @@ public final class ProfessionAssigner {
      *     pergunta sem dono — que é a da contagem da colônia
      */
     public static Optional<ProfessionType> vacancyFor(
-            Worker candidate, Collection<Worker> colonyWorkers) {
+            @Nullable Worker candidate, Collection<Worker> colonyWorkers) {
 
         return vacancyFor(candidate, colonyWorkers, colonyWorkers.size());
     }
 
     /** Vaga que este candidato pode ocupar na população adulta observada. */
     public static Optional<ProfessionType> vacancyFor(
-            Worker candidate, Collection<Worker> colonyWorkers, int adultPopulation) {
+            @Nullable Worker candidate, Collection<Worker> colonyWorkers, int adultPopulation) {
 
         Objects.requireNonNull(colonyWorkers, "colonyWorkers");
 
@@ -192,7 +194,7 @@ public final class ProfessionAssigner {
         // da colônia, e ela roda a cada passagem por motivo próprio —
         // registrá-la encheria o relatório de ruído que não é decisão de
         // contratação. Ver HiringLog.
-        UUID colonyId = candidate == null ? null : candidate.colonyId();
+        @Nullable UUID colonyId = candidate == null ? null : candidate.colonyId();
 
         // <b>Quem acabou de largar um ofício não pega outro agora</b> —
         // 2026-09-19. O castigo do ofício abaixo é por ofício, e a
@@ -215,7 +217,7 @@ public final class ProfessionAssigner {
                 && index < adultPopulation; index++) {
             ProfessionType type = FOUNDATION_ORDER.get(index);
 
-            if (counts.get(type) >= 1) {
+            if (counts.getOrDefault(type, 0) >= 1) {
                 continue;
             }
 
@@ -247,7 +249,7 @@ public final class ProfessionAssigner {
         }
 
         for (ProfessionType type : GROWTH_ORDER) {
-            if (counts.get(type) >= targetCount(type, adultPopulation)) {
+            if (counts.getOrDefault(type, 0) >= targetCount(type, adultPopulation)) {
                 if (colonyId != null) {
                     HiringLog.record(colonyId, type, HiringLog.Outcome.AT_TARGET);
                 }
@@ -285,7 +287,7 @@ public final class ProfessionAssigner {
      * não sabe de qual colônia é a demanda.
      */
     private static Optional<ProfessionType> demandedVacancy(
-            Worker candidate, Map<ProfessionType, Integer> counts, int adultPopulation) {
+            @Nullable Worker candidate, Map<ProfessionType, Integer> counts, int adultPopulation) {
 
         if (candidate == null) {
             return Optional.empty();
@@ -294,7 +296,7 @@ public final class ProfessionAssigner {
         boolean anySlotOpen = false;
 
         for (ProfessionType type : GROWTH_ORDER) {
-            if (counts.get(type) < targetCount(type, adultPopulation)) {
+            if (counts.getOrDefault(type, 0) < targetCount(type, adultPopulation)) {
                 anySlotOpen = true;
                 break;
             }
@@ -309,7 +311,7 @@ public final class ProfessionAssigner {
                 continue;
             }
 
-            if (counts.get(type) <= targetCount(type, adultPopulation)) {
+            if (counts.getOrDefault(type, 0) <= targetCount(type, adultPopulation)) {
                 return Optional.of(type);
             }
         }
@@ -317,7 +319,7 @@ public final class ProfessionAssigner {
         return Optional.empty();
     }
 
-    private static int targetCount(ProfessionType type, int adults) {
+    static int targetCount(ProfessionType type, int adults) {
         int slots;
 
         if (adults < ADULTS_PER_BATCH) {

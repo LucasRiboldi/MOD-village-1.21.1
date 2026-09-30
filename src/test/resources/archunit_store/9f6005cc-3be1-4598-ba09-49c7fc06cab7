@@ -1,0 +1,10 @@
+com.villagecolony.core.resource.model.ColonyResources keeps a static mutable collection and does not register ServerMemory
+com.villagecolony.core.resource.model.ResourceTally keeps a static mutable collection and does not register ServerMemory
+com.villagecolony.core.type.ServerMemory keeps a static mutable collection and does not register ServerMemory
+com.villagecolony.core.worker.service.ProfessionRegistry keeps a static mutable collection and does not register ServerMemory
+com.villagecolony.fabric.event.ColonyCycleRunner keeps a static mutable collection and does not register ServerMemory
+com.villagecolony.fabric.event.CycleCost keeps a static mutable collection and does not register ServerMemory
+com.villagecolony.fabric.integration.SiteSignJanitor keeps a static mutable collection and does not register ServerMemory
+com.villagecolony.fabric.integration.SweepState keeps a static mutable collection and does not register ServerMemory
+com.villagecolony.fabric.integration.ToolUpgrade keeps a static mutable collection and does not register ServerMemory
+com.villagecolony.fabric.work.ConstructionOrder keeps a static mutable collection and does not register ServerMemory

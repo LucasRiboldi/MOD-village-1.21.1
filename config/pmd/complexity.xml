@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<ruleset name="Village Colony - complexidade"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+    <description>
+        Complexidade cognitiva (SonarSource / G. Ann Campbell), so relatorio.
+        Ver docs/research/2026-09-30-avaliacao-profissional-de-codigo.md.
+    </description>
+    <rule ref="category/java/design.xml/CognitiveComplexity">
+        <properties>
+            <property name="reportLevel" value="15"/>
+        </properties>
+    </rule>
+</ruleset>

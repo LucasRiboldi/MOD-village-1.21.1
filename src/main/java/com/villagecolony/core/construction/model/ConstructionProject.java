@@ -336,7 +336,9 @@ public final class ConstructionProject {
 
         DeferredPiece current = deferred.get(piece.position());
 
-        if (!piece.equals(current) || current.supportFingerprint().equals(supportFingerprint)) {
+        if (current == null
+                || !piece.equals(current)
+                || current.supportFingerprint().equals(supportFingerprint)) {
             return false;
         }
 

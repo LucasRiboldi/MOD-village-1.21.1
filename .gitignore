@@ -100,3 +100,6 @@ graphify-out/
 
 # Saída da depuração de mixin (loom runConfigs, 2026-09-24)
 .mixin.out/
+
+# Cache local do jqwik (2026-09-30)
+.jqwik-database
