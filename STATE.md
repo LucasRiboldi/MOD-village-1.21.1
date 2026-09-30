@@ -20,8 +20,8 @@ Correções até 30-09 no branch `claude/sync-local-github-80cc8a` (PR #8 para
 
 ## 30-09 — playtest das 01:38–01:59 e JAR
 
-- **JAR em `mods` desde 02:15:** `AABEE8B3…4D6A6B` (build de `15882dd`, SHA
-  conferido); o do playtest era `D0512A8E…35CDB` (CI do PR #6: placa órfã e
+- **JAR em `mods` desde 02:38:** `8BA7B5B8…390C83` (build de `678af5d`, com
+  as três correções abaixo, SHA conferido); o do playtest era `D0512A8E…35CDB` (CI do PR #6: placa órfã e
   obra que segue com o chunk simulando, ADR-002). `downloads/` tem o antigo.
 - **A obra abriu e não pôs bloco.** Casa do pastor de `e79a3177`
   (`1756, 71, -5325`), 221 blocos: destino do construtor na borda do alcance
@@ -31,7 +31,7 @@ Correções até 30-09 no branch `claude/sync-local-github-80cc8a` (PR #8 para
 - **A primeira obra levou 13 minutos:** cada volta do raio 64 custava 16–18
   passagens de 1.024 colunas (~8 min) com o planejador em 1–2 ms dos 15; e
   em 2 das 3 colônias não havia lote e nenhuma ponta de rua aceitou
-  calçamento, sem motivo no log. **Corrigido, não instalado:** com prazo, só
+  calçamento, sem motivo no log. **Corrigido e instalado:** com prazo, só
   o relógio para a passagem; a recusa de ponta conta o motivo
   (`PavingRefusals`). 501/501.
 - **Git:** `codex/bighousemod` está 68 commits à frente da `main`; o PR #3
