@@ -21,7 +21,9 @@ verificado.
   esquecida pelo reinício ficava flutuando para sempre. `SiteSignJanitor`
   remove ao carregar. CI: build e 498/498 GameTests.
 - [ ] P1 - Playtest: a placa órfã some ao carregar o chunk e as obras abertas
-  voltam a ter placa. **O JAR em `downloads/` ainda não inclui o PR #4.**
+  voltam a ter placa. JAR com PR #4 e PR #6: artefato do CI do PR #6,
+  SHA-256 `D0512A8E…35CDB` (ver `STATE.md`). **O `downloads/` do repositório
+  ainda tem o JAR antigo.**
 - [x] P2 - Placa **congelada** a mais de 64 blocos: com a regra nova abaixo,
   a placa de colônia `ACTIVE` volta a ser atualizada quando o jogador chega
   perto do lote. Colônia `DORMANT` não é desenhada, mas também não é vista.

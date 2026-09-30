@@ -10,13 +10,21 @@
 
 ---
 
-## 30-09 — placa órfã e divergências
+## 30-09 — placa órfã, obra que continua longe e divergências
 
 O PR #4 (`c2f3b74`, mesclado em `4613a5a`) remove a placa de obra que ficava
 flutuando depois de a obra fechar ou do servidor reiniciar (`SiteSignJanitor`).
-CI: build, 498/498 GameTests e zero aviso Error Prone. **O JAR não foi
-republicado** e falta ver em jogo. As divergências entre documentos e código
-achadas nesta conferência estão no topo do `TODO.md`.
+O PR #6 (`4d302af`, mesclado em `3829175`) faz a obra aberta continuar
+enquanto o chunk da vila simula; planejar continua só perto do jogador.
+CI dos dois: build e 498/498 GameTests. As divergências entre documentos e
+código achadas nesta conferência estão no topo do `TODO.md`.
+
+**JAR com as duas correções:** artefato do CI do PR #6 (run `36667129980`,
+commit `4d302af`, mesma árvore de `3829175`), baixado pelo autor. SHA-256
+`D0512A8E1B6D418C4510B8EDAF4F2978C8F4D9113B8440751842F6C24C735CDB`, informado pelo autor. **O
+`downloads/` do repositório não foi atualizado** (o binário não passou por
+este ambiente) e a instalação em `mods` não foi conferida por
+`release_manifest.py`. Falta ver em jogo.
 
 ## Em uma linha
 
