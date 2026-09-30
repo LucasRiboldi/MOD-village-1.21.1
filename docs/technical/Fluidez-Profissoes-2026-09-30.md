@@ -176,8 +176,8 @@ bateria completa (517/517 GameTests, unitários verdes, build sem avisos).
 | F2 | ✅ atendido | fundidor: 5 paradas pelo mesmo pedido e ele funde uma peça que a obra aberta (ou as plantas da vila) vai usar, depois tenta o pedido de novo | `6852179` |
 | F3 | ✅ atendido | a ponta de rua segue por `dirt_path` que já existe, de qualquer colônia | `182a1f5` |
 | F4 | ✅ atendido | chão do bioma dentro de peça da vila pode ser calçado; planta à frente da ponta sai. **Sem GameTest da parte da vila original** (a bateria não gera vila) | `a71b4da` |
-| F5 | ✅ atendido | peça sem rota no bioma chega na primeira falta (eram três) | `e58208c` |
-| F6 | 🟡 parcial | a rota passou a olhar o bioma, então a vidraça na planície é entregue na primeira falta. **A colônia ainda não produz vidro na planície**: areia só é coletável em deserto (`isSurfaceResource`), e a demanda vidraça → vidro → areia não abre coleta | `e58208c` |
+| F5 | ✅ atendido, regra revista | depois de **3 tentativas** de recolher, o **ingrediente sem rota** aparece no baú do artesão (as linhas do tear no baú do carpinteiro), e ele fabrica a peça; item natural nunca aparece; só peça sem receita aparece pronta. Entre `e58208c` e `1920948` a peça pronta aparecia na primeira falta | `1920948` |
+| F6 | ✅ atendido | a rota olha o bioma e a areia vale em qualquer bioma quando há areia de beira d'água ao alcance (`SandNearWater`); sem praia, o vidro aparece para o carpinteiro depois de 3 tentativas | `e58208c`, `1920948` |
 | F7 | ❌ não atendido | busca do fazendeiro que não fecha (26 `SWEEP_INCOMPLETE`) | — |
 | F8 | ❌ não atendido | tingimento tenta as 16 cores de vidraça | — |
 | F9 | ❌ não atendido | carpinteiro para pela reserva de metade da madeira em tora | — |
@@ -192,7 +192,7 @@ bateria completa (517/517 GameTests, unitários verdes, build sem avisos).
 | Pedido | Situação | Commit |
 |---|---|---|
 | Rebento não nasce no espaço de obra | ✅ viveiro do fazendeiro e replantio do lenhador | `1eb6352` |
-| Lote com metade da base abaixo da rua | ✅ aterro de até 3 camadas (era 1); 3 é provisório, a medir | `560d546` |
+| Lote fora da altura da rua | ✅ revisto pelo autor: base na altura da rua ou **um acima**, nunca abaixo; lacuna de 1 camada aterrada (28-09); degrau na frente da porta se o desnível for 2. O aterro de 3 camadas de `560d546` foi desfeito | `a2b1d1c` |
 | Lote que não cabe por causa da rua | ✅ desliza ao longo da rua; recuar 1–2 blocos foi tentado e retirado (quebrava a Regra 17) | `560d546` |
 | Rua cresce para fora da vila | ✅ ver F3 e F4 | `182a1f5`, `a71b4da` |
 | Noite | ✅ decisão: sem trabalho à noite, reação como no Vanilla; nada mudou | — |

@@ -29,11 +29,11 @@ documento; ordem recomendada na §7 dele.
 - [x] 🟠 F4 - Ponta de rua da vila original bate em grama protegida pela
   Regra 3. Decisão do autor: chão do bioma pode ser calçado (`a71b4da`); sem
   GameTest da vila original.
-- [x] 🟠 F5 - Peça sem cadeia no mundo (tear) só chegava após 3 tentativas:
-  agora na primeira (`e58208c`).
-- [ ] 🟠 F6 - **Parcial** (`e58208c`): rota olha o bioma e a vidraça na planície
-  chega na primeira falta. Falta: areia só é coletável em deserto, e a demanda
-  vidraça → vidro → areia não abre coleta.
+- [x] 🟠 F5 - Peça sem cadeia no mundo (tear): regra revista pelo autor — após
+  3 tentativas, o ingrediente sem rota (linha) aparece no baú do artesão
+  (`1920948`). Item natural nunca aparece.
+- [x] 🟠 F6 - Areia em qualquer bioma perto da água (`SandNearWater`, `1920948`);
+  sem praia, o vidro aparece para o carpinteiro após 3 tentativas.
 - [x] 🟠 F10 - Tarefa só era distribuída no ciclo de 30 s: `IdleHands` entrega
   em até 1 s sem gastar o relógio dos descansos (`cd22243`).
 - [x] 🟠 F12 - Três colônias sobrepostas na mesma vila: fusão implementada
@@ -45,9 +45,10 @@ documento; ordem recomendada na §7 dele.
 - [ ] 🟡 F8 - Tingimento tenta as 16 cores de vidraça.
 - [ ] 🟡 F9 - Carpinteiro para em lotes de 2–9 peças pela reserva de tora.
 - [ ] 🟡 F14 - `WORK_STALLED` em pastor (2), lenhador (1) e mineiro (1).
-- [x] 🟠 Lote: metade da base até 3 abaixo da rua é aterrada; lote desliza ao
-  longo da rua que dobra (`560d546`). Pedido do autor.
-- [ ] P0 - Playtest da rodada: JAR com `22b40bf`..`cd22243` ainda não instalado.
+- [x] 🟠 Lote: base na altura da rua ou um acima, com degrau na porta se o
+  desnível for 2 (`a2b1d1c`); lote desliza ao longo da rua que dobra
+  (`560d546`). Decisões do autor.
+- [ ] P0 - Playtest da rodada: JAR com `22b40bf`..`1920948` ainda não instalado.
 - [ ] 🟢 F11 - 101 linhas `Not a tree` em tronco de casa da vila.
 - [x] 🟢 Noite sem trabalho: decisão do autor (30-09) — continua sem trabalho,
   reação como no Vanilla.

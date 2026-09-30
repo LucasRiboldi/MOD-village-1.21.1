@@ -15,7 +15,7 @@
 ## Em uma linha
 
 Correções até 30-09 no branch `claude/sync-local-github-80cc8a` (PR #8 para
-`codex/bighousemod`): unitários verdes e 517/517 GameTests locais. O
+`codex/bighousemod`): unitários verdes e 521/521 GameTests locais. O
 levantamento de fluidez e a revarredura F1–F14 estão em
 `docs/technical/Fluidez-Profissoes-2026-09-30.md` §8.
 
@@ -32,9 +32,9 @@ levantamento de fluidez e a revarredura F1–F14 estão em
   `dirt_path` de outra colônia); o fazendeiro plantou muda dentro da obra
   aberta — **corrigido em `1eb6352`, não instalado**.
 - **Depois do jogo (não instalado, nada visto em jogo):** F1, F2, F3, F4, F5,
-  F10 e F12 (fusão de colônias, ADR-007) atendidos; F6 e F13 parciais; F7, F8,
-  F9, F11 e F14 abertos. Lote com base até 3 abaixo da rua e deslizando na
-  curva. Commits `22b40bf`..`cd22243`.
+  F6, F10 e F12 (fusão, ADR-007) atendidos; F13 parcial; F7, F8, F9, F11 e
+  F14 abertos. Lote na rua ou um acima, com degrau; areia perto da água; linha
+  do tear no baú do carpinteiro após 3 tentativas. `22b40bf`..`1920948`.
 - **Git:** `codex/bighousemod` está 68 commits à frente da `main`; o PR #3
   segue aberto, com descrição de 11 commits. Mesclar pede aval do autor.
 
