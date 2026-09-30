@@ -1,6 +1,12 @@
 package com.villagecolony.gametest;
 
+import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.construction.model.ConstructionProject;
+import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.work.FarmerNursery;
 import com.villagecolony.fabric.work.TreeNursery;
 
@@ -11,6 +17,7 @@ import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -85,6 +92,56 @@ public class TreeNurseryGameTest {
             throw new AssertionError(
                     "a recusa trocou o chao mesmo assim: "
                             + world.getBlockState(ground).getBlock());
+        }
+
+        context.complete();
+    }
+
+    /**
+     * O espaço escolhido para uma obra não recebe viveiro — regra do autor,
+     * 2026-09-30.
+     *
+     * <p>No playtest de 30-09 o fazendeiro plantou carvalho sobre terra
+     * enraizada em {@code 1762, 71, -5321} três vezes, duas delas com a casa
+     * do pastor aberta ali: a borda do viveiro (48–56 do centro) cai dentro
+     * do raio de busca de lote (64). O viveiro não perguntava pela obra.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "tree_nursery",
+            tickLimit = 100)
+    public void aSpotInsideAnOpenBuildIsNeverANursery(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        BlockPos ground = context.getAbsolutePos(new BlockPos(3, 1, 3));
+
+        world.setBlockState(ground, Blocks.SAND.getDefaultState());
+        world.setBlockState(ground.up(), Blocks.AIR.getDefaultState());
+
+        UUID colony = UUID.randomUUID();
+        ConstructionProject project = ConstructionProject.plan(
+                colony,
+                Blueprint.of(
+                        ResourceId.vanilla("village/plains/houses/nursery_lot"),
+                        List.of(
+                                new BlueprintBlock(new ColonyPos(-1, 0, -1), ResourceId.vanilla("oak_planks")),
+                                new BlueprintBlock(new ColonyPos(1, 2, 1), ResourceId.vanilla("oak_planks")))),
+                MinecraftTypeAdapter.toColonyPos(ground));
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+
+        try {
+            if (TreeNursery.isSpotForANursery(world, ground)) {
+                throw new AssertionError("o chao de uma obra aberta foi aceito como viveiro");
+            }
+
+            if (TreeNursery.plant(world, ground, Blocks.OAK_SAPLING)) {
+                throw new AssertionError("o fazendeiro plantou dentro de uma obra aberta");
+            }
+
+            if (!world.getBlockState(ground).isOf(Blocks.SAND)) {
+                throw new AssertionError(
+                        "a recusa trocou o chao da obra: " + world.getBlockState(ground).getBlock());
+            }
+        } finally {
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony);
         }
 
         context.complete();

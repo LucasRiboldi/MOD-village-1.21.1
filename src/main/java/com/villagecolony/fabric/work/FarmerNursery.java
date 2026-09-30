@@ -25,7 +25,10 @@ import java.util.UUID;
  * <p><b>Na borda, e não no meio.</b> O pedido é <i>"no limite da vila"</i>,
  * e há razão prática: árvore no miolo tomaria lote de casa, e o
  * {@code BuildSiteScanner} passaria a recusar por volume ocupado — que foi
- * 70% das recusas no P1.6. A borda é onde não há obra disputando.
+ * 70% das recusas no P1.6. A borda <b>não</b> está livre de obra: a busca de
+ * lote vai até 64 do centro, e a casa do pastor do playtest de 2026-09-30
+ * nasceu a 50. Quem impede o rebento no espaço de uma obra é
+ * {@code TreeNursery.isSpotForANursery}.
  *
  * <p><b>Uma por vez, com intervalo.</b> O fazendeiro chega aqui toda vez
  * que varre o raio e não acha lavoura, o que numa vila sem roça é

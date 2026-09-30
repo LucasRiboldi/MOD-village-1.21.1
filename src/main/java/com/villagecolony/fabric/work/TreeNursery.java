@@ -122,9 +122,19 @@ public final class TreeNursery {
             return false;
         }
 
+        // <b>E a obra da colônia, que a tabela acima já prometia</b> —
+        // regra do autor, 2026-09-30: no espaço escolhido para uma obra não
+        // nasce rebento de outra regra. O playtest daquele dia viu o
+        // fazendeiro plantar três vezes em 1762, 71, -5321, duas delas com a
+        // casa do pastor aberta ali; a borda do viveiro (48–56) cai dentro do
+        // raio de busca de lote (64). isColonyBuilt cobre a obra aberta e a
+        // casa pronta.
         return com.villagecolony.fabric.integration.LotGround.isBiomeGround(world, ground)
                 && !com.villagecolony.fabric.integration.BlockProtection
-                        .isVillageOriginal(world, ground);
+                        .isVillageOriginal(world, ground)
+                && !com.villagecolony.fabric.integration.BlockProtection.isColonyBuilt(ground)
+                && !com.villagecolony.fabric.integration.BlockProtection
+                        .isColonyBuilt(ground.up());
     }
 
     /**
