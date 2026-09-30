@@ -7,6 +7,7 @@ import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -43,6 +44,17 @@ final class RoadPaving {
     static List<ColonyPos> pave(
             ServerWorld world, UUID colonyId, RoadExtension.End end, Block paving) {
 
+        return pave(world, colonyId, end, paving, new PavingRefusals());
+    }
+
+    /**
+     * O mesmo, anotando em {@code refusals} o que parou o trecho — 2026-09-30.
+     * Ver {@link PavingRefusals}.
+     */
+    static List<ColonyPos> pave(
+            ServerWorld world, UUID colonyId, RoadExtension.End end, Block paving,
+            PavingRefusals refusals) {
+
         BlockPos previous = end.at();
 
         List<ColonyPos> laid = new ArrayList<>();
@@ -53,6 +65,8 @@ final class RoadPaving {
             Optional<BlockPos> ground = groundNear(world, ahead, previous.getY());
 
             if (ground.isEmpty()) {
+                refusals.record("no ground within a step");
+
                 return laid;
             }
 
@@ -71,10 +85,10 @@ final class RoadPaving {
 
             // A Regra 3 nas duas pontas, e aqui ela morde: a vila gerada
             // é feita de bloco que passaria por chão.
-            if (BlockProtection.isVillageOriginal(world, at)
-                    || BlockProtection.isColonyBuilt(at)
-                    || !LotGround.isNaturalGround(state)
-                    || !world.getBlockState(at.up()).isAir()) {
+            Optional<String> refusal = refusalAt(world, at, state);
+
+            if (refusal.isPresent()) {
+                refusals.record(refusal.get());
 
                 return laid;
             }
@@ -93,6 +107,38 @@ final class RoadPaving {
         }
 
         return laid;
+    }
+
+    /**
+     * Por que esta coluna não recebe calçamento, se não receber.
+     *
+     * <p>As quatro perguntas de antes, na mesma ordem, agora com nome: a
+     * primeira que disser não é a que o registro conta.
+     */
+    private static Optional<String> refusalAt(ServerWorld world, BlockPos at, BlockState state) {
+        if (BlockProtection.isVillageOriginal(world, at)) {
+            return Optional.of("village-original block (" + nameOf(state) + ")");
+        }
+
+        if (BlockProtection.isColonyBuilt(at)) {
+            return Optional.of("colony-built block (" + nameOf(state) + ")");
+        }
+
+        if (!LotGround.isNaturalGround(state)) {
+            return Optional.of("not natural ground (" + nameOf(state) + ")");
+        }
+
+        BlockState above = world.getBlockState(at.up());
+
+        if (!above.isAir()) {
+            return Optional.of("something above (" + nameOf(above) + ")");
+        }
+
+        return Optional.empty();
+    }
+
+    private static String nameOf(BlockState state) {
+        return Registries.BLOCK.getId(state.getBlock()).getPath();
     }
 
     /**

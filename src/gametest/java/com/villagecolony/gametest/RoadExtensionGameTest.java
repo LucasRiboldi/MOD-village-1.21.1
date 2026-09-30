@@ -11,6 +11,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.integration.RoadExtension;
+import com.villagecolony.fabric.integration.PavingRefusals;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
@@ -173,6 +174,41 @@ public class RoadExtensionGameTest implements FabricGameTest {
         context.assertTrue(
                 context.getBlockState(ROAD_END.add(1, 0, 0)).isOf(Blocks.STONE),
                 "a pedra virou rua");
+
+        context.complete();
+    }
+
+    /**
+     * A recusa diz o que a ponta encontrou — 2026-09-30.
+     *
+     * <p>O playtest de 30-09 teve <i>"found no road end it may pave — tried
+     * 22 of them"</i> sem nenhum motivo, e a causa da vila sem lote ficou
+     * sem diagnóstico. A pedra à frente da ponta é chão que não é natural,
+     * e é isso que o registro precisa dizer.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_extension")
+    public void aRefusedEndSaysWhatStoppedIt(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        strip(context);
+        reserveInitialRoad(context, colony);
+
+        context.setBlockState(ROAD_END.add(1, 0, 0), Blocks.STONE.getDefaultState());
+
+        BuildSiteScanner.find(
+                context.getWorld(),
+                colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        RoadExtension.extend(context.getWorld(), colony, ResourceId.vanilla("dirt_path"));
+
+        java.util.Map<String, Integer> reasons = PavingRefusals.lastOf(colony);
+
+        context.assertTrue(
+                reasons.getOrDefault("not natural ground (stone)", 0) >= 1,
+                "a ponta recusada contra pedra não registrou o motivo: " + reasons);
 
         context.complete();
     }

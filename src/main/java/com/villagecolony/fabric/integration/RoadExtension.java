@@ -469,8 +469,10 @@ public final class RoadExtension {
         // Da mais distante para a mais perto, e a primeira que aceitar
         // calçamento vence. Tentar todas custa poucas leituras de bloco e
         // é o que impede a vila de parar por causa de uma ponta ruim.
+        PavingRefusals refusals = new PavingRefusals();
+
         for (End end : ends) {
-            List<ColonyPos> laidAt = RoadPaving.pave(world, colonyId, end, block.get());
+            List<ColonyPos> laidAt = RoadPaving.pave(world, colonyId, end, block.get(), refusals);
 
             int laid = laidAt.size();
 
@@ -497,12 +499,16 @@ public final class RoadExtension {
         // Todas recusaram. O fracasso tem voz e diz quantas foram — sem
         // isto, "a rua não cresceu" e "a rua nem foi tentada" são a mesma
         // linha, que é o que custou as sessões da mina.
+        // E diz o que cada uma encontrou — 2026-09-30. Ver PavingRefusals.
+        refusals.publish(colonyId);
+
         VillageColonyMod.LOGGER.info(
                 "Colony {} found no road end it may pave — tried {} of them, and they sit out"
-                        + " {} cycles before being tried again",
+                        + " {} cycles before being tried again — {}",
                 colonyId,
                 ends.size(),
-                REFUSED_MEMORY / VillageDetector.CYCLE_TICKS);
+                REFUSED_MEMORY / VillageDetector.CYCLE_TICKS,
+                refusals.isEmpty() ? "no reason recorded" : refusals.summary());
 
         return Outcome.BLOCKED;
     }
