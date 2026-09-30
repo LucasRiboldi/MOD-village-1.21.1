@@ -83,6 +83,22 @@ final class RoadPaving {
                 continue;
             }
 
+            // <b>Caminho que esta colônia não calçou também é rua</b> — F3,
+            // 2026-09-30. No playtest daquele dia, 9 a 11 das 24 pontas
+            // recusadas bateram em dirt_path de outra colônia da mesma vila:
+            // a ponta o via como chão proibido e a rua não crescia. Seguir
+            // por cima não troca bloco nenhum; a coluna entra no índice e a
+            // rua, com os arredores, passa a ser da vila que cresce.
+            if (VillageRoad.isPaving(world, state)) {
+                RoadIndex.remember(colonyId, at);
+
+                previous = at;
+
+                laid.add(MinecraftTypeAdapter.toColonyPos(at));
+
+                continue;
+            }
+
             // A Regra 3 nas duas pontas, e aqui ela morde: a vila gerada
             // é feita de bloco que passaria por chão.
             Optional<String> refusal = refusalAt(world, at, state);

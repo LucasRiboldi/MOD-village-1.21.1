@@ -179,6 +179,48 @@ public class RoadExtensionGameTest implements FabricGameTest {
     }
 
     /**
+     * A ponta segue por rua que já existe, mesmo de outra colônia — F3,
+     * 2026-09-30.
+     *
+     * <p>No playtest das 02:45, 9 a 11 das 24 pontas recusadas bateram em
+     * {@code dirt_path} que o índice desta colônia não conhecia: rua de outra
+     * colônia da mesma vila, ou caminho solto. A ponta tratava o caminho como
+     * chão proibido e a rua não crescia. Caminho já é rua: seguir por cima
+     * dele não troca bloco nenhum.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_extension")
+    public void theRoadRunsOnOverAPathItDidNotLay(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        strip(context);
+        reserveInitialRoad(context, colony);
+
+        // Um caminho que o índice não conhece, logo à frente da ponta.
+        context.setBlockState(ROAD_END.add(1, 0, 0), Blocks.DIRT_PATH.getDefaultState());
+
+        BuildSiteScanner.find(
+                context.getWorld(),
+                colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        RoadExtension.Outcome outcome = RoadExtension.extend(
+                context.getWorld(), colony, ResourceId.vanilla("dirt_path"));
+
+        context.assertTrue(
+                outcome == RoadExtension.Outcome.EXTENDED,
+                "a ponta parou no caminho que não calçou: " + outcome + " — "
+                        + PavingRefusals.lastOf(colony));
+
+        context.assertTrue(
+                context.getBlockState(ROAD_END.add(2, 0, 0)).isOf(Blocks.DIRT_PATH),
+                "a terra depois do caminho não foi calçada");
+
+        context.complete();
+    }
+
+    /**
      * A recusa diz o que a ponta encontrou — 2026-09-30.
      *
      * <p>O playtest de 30-09 teve <i>"found no road end it may pave — tried
