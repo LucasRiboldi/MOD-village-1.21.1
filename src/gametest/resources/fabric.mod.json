@@ -87,7 +87,8 @@
       "com.villagecolony.fabric.event.ColonyMergeTriggerGameTest",
       "com.villagecolony.fabric.work.BuilderMaterialsGameTest",
       "com.villagecolony.fabric.integration.ColonyChestSurveyGameTest",
-      "com.villagecolony.fabric.event.IdleHandsGameTest"
+      "com.villagecolony.fabric.event.IdleHandsGameTest",
+      "com.villagecolony.fabric.integration.SandNearWaterGameTest"
     ]
   },
   "depends": {

@@ -13,6 +13,7 @@ import net.minecraft.item.Item;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.biome.Biome;
 
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BooleanSupplier;
 
 /**
  * A fronteira entre a economia local e a peça que a construção recebe.
@@ -49,9 +51,18 @@ public final class BiomeConstructionSupply {
     /** A peça tem alguma rota de produção que esta vila pode executar? */
     public static boolean hasRouteInBiome(ServerWorld world, UUID colonyId, Item item) {
         return VillageColonyMod.COLONIES.find(colonyId)
-                .flatMap(colony -> world.getBiome(MinecraftTypeAdapter.toBlockPos(colony.center()))
-                        .getKey()
-                        .map(biome -> hasRouteInBiome(world, biome, item)))
+                .flatMap(colony -> {
+                    BlockPos center = MinecraftTypeAdapter.toBlockPos(colony.center());
+                    // Areia de beira d'água ao alcance — decisão do autor,
+                    // 2026-09-30. Só é perguntada se a receita chegar à areia.
+                    BooleanSupplier sandNearWater = () -> SandNearWater.around(
+                            world, colonyId, center,
+                            com.villagecolony.core.coordination.GatheringReach.radius(
+                                    colony.observedBeds(), SandNearWater.RADIUS));
+
+                    return world.getBiome(center).getKey().map(biome -> hasRouteInBiome(
+                            world, biome, item, new HashSet<>(), RECIPE_DEPTH, sandNearWater));
+                })
                 .orElse(false);
     }
 
@@ -66,7 +77,7 @@ public final class BiomeConstructionSupply {
     public static boolean hasRouteInBiome(
             ServerWorld world, RegistryKey<Biome> biome, Item item) {
 
-        return hasRouteInBiome(world, biome, item, new HashSet<>(), RECIPE_DEPTH);
+        return hasRouteInBiome(world, biome, item, new HashSet<>(), RECIPE_DEPTH, () -> false);
     }
 
     /**
@@ -85,12 +96,12 @@ public final class BiomeConstructionSupply {
     }
 
     /**
-     * Quantas faltas de uma peça sem rota no bioma antes de ela aparecer no
-     * baú — F5, 2026-09-30. Eram três: o tear, cuja linha não tem fonte na
-     * colônia, esperou 7 min 45 s no playtest daquele dia só para cumprir a
-     * contagem. Sem rota, esperar não traz a peça.
+     * Quantas tentativas de recolher antes de o ingrediente sem rota aparecer
+     * no baú da profissão — decisão do autor, 2026-09-30. Foi a uma por
+     * algumas horas do mesmo dia; voltou a três, e o que aparece passou a
+     * ser o ingrediente (a linha do tear), e não a peça pronta.
      */
-    private static final int ATTEMPTS_BEFORE_STOCKING = 1;
+    private static final int ATTEMPTS_BEFORE_STOCKING = 3;
 
     private static final Map<String, Integer> FAILED_PROFESSION_ATTEMPTS = new HashMap<>();
 
@@ -178,10 +189,71 @@ public final class BiomeConstructionSupply {
     public static boolean stockForConstruction(
             ServerWorld world, UUID colonyId, ColonyPos near, Item item) {
 
+        return stock(world, chestsOf(world, colonyId, near, ProfessionType.BUILDER), item);
+    }
+
+    /**
+     * O ingrediente sem rota aparece no baú de quem fabrica a peça — decisão
+     * do autor, 2026-09-30.
+     *
+     * <p>O tear pede linha, e nenhuma profissão da colônia a obtém. Em vez de
+     * a peça pronta aparecer, aparecem as linhas, no baú do artesão, e ele
+     * fabrica o tear pelo caminho de sempre. Vale para todo item que não é
+     * natural do bioma nem bloco das estruturas; natural continua sendo
+     * trazido pela profissão, e nunca aparece.
+     *
+     * @param count quanto a receita pede desse ingrediente
+     * @return se o baú já tem, ou passou a ter, a quantidade pedida
+     */
+    public static boolean stockForCraftsman(
+            ServerWorld world, UUID colonyId, ColonyPos near, Item item, int count,
+            ProfessionType craftsman) {
+
+        if (isNatural(item)) {
+            if (REFUSED_NATURAL.add(item)) {
+                VillageColonyMod.LOGGER.info(
+                        "The colony will not conjure {} for a craft — it is found in nature,"
+                                + " and a profession brings it",
+                        item);
+            }
+
+            return false;
+        }
+
+        List<ColonyPos> chests = chestsOf(world, colonyId, near, craftsman);
+        int have = ColonyChests.countIn(world, chests, item);
+
+        if (have >= count) {
+            return true;
+        }
+
+        Optional<ColonyPos> chest = ColonyChests.firstWithRoomFor(world, chests, item, count - have);
+
+        if (chest.isEmpty()
+                || ChestDepositor.deposit(world, chest.get(), item, count - have) != 0) {
+            VillageColonyMod.LOGGER.info(
+                    "The colony could stock {} for the {} but every colony chest is full",
+                    item, craftsman);
+
+            return false;
+        }
+
+        VillageColonyMod.LOGGER.info(
+                "The colony stocked {} x{} for the {} after three failed attempts to gather it"
+                        + " — no profession can obtain it in this biome",
+                item, count - have, craftsman);
+
+        return true;
+    }
+
+    /** Os baús da profissão primeiro, depois os outros baús da colônia. */
+    private static List<ColonyPos> chestsOf(
+            ServerWorld world, UUID colonyId, ColonyPos near, ProfessionType profession) {
+
         List<ColonyPos> chests = new ArrayList<>();
 
         for (var worker : VillageColonyMod.WORKERS.ofColony(colonyId)) {
-            if (worker.profession().filter(ProfessionType.BUILDER::equals).isEmpty()) {
+            if (worker.profession().filter(profession::equals).isEmpty()) {
                 continue;
             }
 
@@ -197,7 +269,7 @@ public final class BiomeConstructionSupply {
             }
         }
 
-        return stock(world, chests, item);
+        return chests;
     }
 
     private static boolean stock(ServerWorld world, List<ColonyPos> chests, Item item) {
@@ -233,7 +305,8 @@ public final class BiomeConstructionSupply {
         }
 
         VillageColonyMod.LOGGER.info(
-                "The colony stocked {} for construction — no profession can make it in this biome",
+                "The colony stocked {} for construction after three failed attempts"
+                        + " — it has no recipe and no profession can obtain it in this biome",
                 item);
         return true;
     }
@@ -249,7 +322,8 @@ public final class BiomeConstructionSupply {
     }
 
     private static boolean hasRouteInBiome(
-            ServerWorld world, RegistryKey<Biome> biome, Item item, Set<Item> visiting, int depth) {
+            ServerWorld world, RegistryKey<Biome> biome, Item item, Set<Item> visiting, int depth,
+            BooleanSupplier sandNearWater) {
 
         if (depth < 0 || !visiting.add(item)) {
             return false;
@@ -258,7 +332,7 @@ public final class BiomeConstructionSupply {
         try {
             Optional<ResourceType> resource = MinecraftTypeAdapter.toResourceType(item);
 
-            if (resource.isPresent() && isDirectBiomeResource(biome, resource.get())) {
+            if (resource.isPresent() && isDirectBiomeResource(biome, resource.get(), sandNearWater)) {
                 return true;
             }
 
@@ -269,25 +343,29 @@ public final class BiomeConstructionSupply {
             if (CraftingLookup.billFor(
                     world,
                     item,
-                    ingredient -> hasRouteInBiome(world, biome, ingredient, visiting, depth - 1))
+                    ingredient -> hasRouteInBiome(
+                            world, biome, ingredient, visiting, depth - 1, sandNearWater))
                     .isPresent()) {
 
                 return true;
             }
 
             return CraftingLookup.smeltingInputsFor(world, item).stream()
-                    .anyMatch(input -> hasRouteInBiome(world, biome, input, visiting, depth - 1));
+                    .anyMatch(input -> hasRouteInBiome(
+                            world, biome, input, visiting, depth - 1, sandNearWater));
         } finally {
             visiting.remove(item);
         }
     }
 
-    private static boolean isDirectBiomeResource(RegistryKey<Biome> biome, ResourceType resource) {
+    private static boolean isDirectBiomeResource(
+            RegistryKey<Biome> biome, ResourceType resource, BooleanSupplier sandNearWater) {
 
         return switch (resource.production()) {
             case HARVESTED -> isVillageWood(biome, resource);
             case MINED -> isMineResource(biome, resource);
-            case SURFACE_GATHERED -> isSurfaceResource(biome, resource);
+            case SURFACE_GATHERED -> isSurfaceResource(biome, resource)
+                    || (resource == ResourceType.SAND && sandNearWater.getAsBoolean());
             case SOIL_GATHERED -> !isDesert(biome);
             case SHEARED -> !isDesert(biome);
             case FARMED -> true;

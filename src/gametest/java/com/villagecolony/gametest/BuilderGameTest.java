@@ -537,11 +537,13 @@ public class BuilderGameTest implements FabricGameTest {
      * Ingrediente fora da economia local não pode deixar uma obra esperando.
      *
      * <p>O fermentador da primeira obra real precisava de haste de blaze. A
-     * colônia não tem rota para o Nether. Desde 2026-09-30 (F5) a primeira
-     * falta basta: sem rota, esperar não traz a peça.
+     * colônia não tem rota para o Nether. Nas duas primeiras faltas, a obra
+     * ainda espera; na terceira, desde 2026-09-30 (decisão do autor), aparece
+     * o <b>ingrediente</b> sem rota — a haste — no baú de quem fabrica, e não
+     * o fermentador pronto. O pedregulho tem rota e não aparece.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder")
-    public void unobtainableConstructionPieceIsStockedForTheBuilder(TestContext context) {
+    public void unobtainableIngredientIsStockedForTheCraftsman(TestContext context) {
         Fixture fixture = setUp(context, 0, Blueprint.of(
                 ResourceId.vanilla("village/plains/houses/test_brewing_stand"),
                 List.of(new BlueprintBlock(
@@ -549,14 +551,25 @@ public class BuilderGameTest implements FabricGameTest {
                         MinecraftTypeAdapter.toResourceId(Blocks.BREWING_STAND)))), 1);
 
         try {
+            for (int attempt = 1; attempt <= 3; attempt++) {
+                context.assertFalse(
+                        BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
+                        "a falta " + attempt + " materializou o fermentador pronto");
+                context.assertTrue(
+                        ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.BLAZE_ROD)
+                                == (attempt < 3 ? 0 : 1),
+                        "depois da falta " + attempt + " a haste de blaze devia estar "
+                                + (attempt < 3 ? "ausente" : "no baú"));
+            }
             context.assertTrue(
-                    BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
-                    "a primeira falta sem rota não liberou o fermentador");
+                    ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.BREWING_STAND) == 0,
+                    "o fermentador apareceu pronto no baú");
             context.assertTrue(
-                    ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.BREWING_STAND) == 1,
-                    "a peça sem rota local não entrou no baú do construtor");
+                    ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.COBBLESTONE) == 0,
+                    "o pedregulho, que a colônia obtém, apareceu do nada");
         } finally {
             fixture.owned.cleanUp();
+            BiomeConstructionSupply.routeDelivered(fixture.colony.id(), Items.BREWING_STAND);
         }
 
         context.complete();
@@ -1750,19 +1763,30 @@ public class BuilderGameTest implements FabricGameTest {
                 ColonyFixture.create().owning(colony).owning(villager.getUuid()));
     }
 
-    /**
-     * A primeira falta sem rota libera a peça, sem depender de tempo — F5,
-     * 2026-09-30. Eram três faltas; o tear esperou 7 min 45 s por elas.
-     */
+    /** A terceira falta sem profissão libera a peça, sem depender de tempo. */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_missing_piece",
             tickLimit = 20)
-    public void theFirstMissingPieceAttemptIsSupplied(TestContext context) {
+    public void theThirdMissingPieceAttemptIsSupplied(TestContext context) {
         UUID colonyId = UUID.randomUUID();
 
         try {
+            context.assertFalse(
+                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
+                    "a primeira falta já liberou a peça");
+
+            context.assertFalse(
+                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
+                    "a segunda falta já liberou a peça");
+
             context.assertTrue(
                     BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
-                    "a primeira falta sem rota não liberou a peça");
+                    "a terceira falta não liberou a peça");
+
+            BiomeConstructionSupply.routeDelivered(colonyId, Items.BREWING_STAND);
+
+            context.assertFalse(
+                    BiomeConstructionSupply.failedProfessionAttempt(colonyId, Items.BREWING_STAND),
+                    "a entrega não reiniciou as tentativas daquela peça");
         } finally {
             BiomeConstructionSupply.routeDelivered(colonyId, Items.BREWING_STAND);
         }

@@ -33,6 +33,8 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.CropBlock;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Item;
+import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.fabric.integration.CraftingLookup;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -170,9 +172,10 @@ public final class BuilderMaterials {
     }
 
     /**
-     * Alternativas locais sempre ganham. Sem rota no bioma, a primeira falta
-     * já autoriza a peça preferida a aparecer no baú da obra — F5 e F6,
-     * 2026-09-30; eram três faltas e a rota da receita.
+     * Alternativas locais sempre ganham. Sem rota no bioma, três tentativas
+     * de recolher autorizam o ingrediente sem rota a aparecer no baú do
+     * artesão, que fabrica a peça — decisão do autor, 2026-09-30. Só a peça
+     * sem receita nenhuma aparece ela mesma, pela regra de 26-09.
      */
     static boolean ensureConstructionMaterial(
             ServerWorld world, ConstructionProject project, List<Item> choices) {
@@ -197,8 +200,30 @@ public final class BuilderMaterials {
             return false;
         }
 
-        return BiomeConstructionSupply.stockForConstruction(
-                world, project.colonyId(), project.origin(), preferred);
+        Optional<CraftingLookup.Bill> bill = CraftingLookup.billFor(world, preferred, any -> true);
+
+        if (bill.isEmpty()) {
+            return BiomeConstructionSupply.stockForConstruction(
+                    world, project.colonyId(), project.origin(), preferred);
+        }
+
+        // O tear pede linha: as linhas aparecem no baú do carpinteiro, e ele
+        // faz o tear. A peça ainda não está no baú, então a obra espera.
+        ProfessionType craftsman = CraftingWork.isMasonry(MinecraftTypeAdapter.toResourceId(preferred))
+                ? ProfessionType.MASON
+                : ProfessionType.CARPENTER;
+
+        for (Map.Entry<Item, Integer> ingredient : bill.get().ingredients().entrySet()) {
+            if (!BiomeConstructionSupply.hasRouteInBiome(
+                    world, project.colonyId(), ingredient.getKey())) {
+
+                BiomeConstructionSupply.stockForCraftsman(
+                        world, project.colonyId(), project.origin(),
+                        ingredient.getKey(), ingredient.getValue(), craftsman);
+            }
+        }
+
+        return false;
     }
 
     /**
