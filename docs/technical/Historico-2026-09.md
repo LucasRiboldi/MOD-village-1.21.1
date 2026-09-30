@@ -3272,3 +3272,21 @@ a varredura parcial e reinicia apenas o cursor de consulta de ruas. `build` e
 revisão: continuidade do mineiro; depois diversidade de estruturas entre
 construtores, estratégias distintas para avaliar lotes e revalidação após
 falhas repetidas.
+
+## Arquivado do STATE.md em 2026-09-30, noite
+
+- **01:38–01:59 (JAR `D0512A8E…`):** a casa do pastor de `e79a3177`
+  (`1756, 71, -5325`) abriu e não pôs bloco — construtor parado na borda do
+  alcance; e a primeira obra levou 13 min (busca de 16–18 passagens).
+- **02:45–03:13 (JAR `8BA7B5B8…`):** a casa do pastor **fechou às 03:07:44**
+  (correção do construtor confirmada em jogo); a busca fez 6 voltas em 21
+  passagens. Mas: ~12 dos 19 min da obra foram espera por tear e vidraça; o
+  planejador ficou mais caro (F1, regressão da busca pelo prazo); nenhuma obra
+  nova depois (pontas de rua recusadas por grama da vila original e por
+  `dirt_path` de outra colônia); o fazendeiro plantou muda dentro da obra
+  aberta — corrigido em `1eb6352`.
+- **Depois do jogo — JAR `3FB95073…11E3` (`482c06b`) em `mods` e `downloads/`,
+  conferido por `release_manifest.py`; nada visto em jogo:** F1, F2, F3, F4, F5,
+  F6, F10 e F12 (fusão, ADR-007) atendidos; F13 parcial; F7, F8, F9, F11 e
+  F14 abertos. Lote na rua ou um acima, com degrau; areia perto da água; linha
+  do tear no baú do carpinteiro após 3 tentativas. `22b40bf`..`1920948`.

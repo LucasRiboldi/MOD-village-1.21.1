@@ -18,24 +18,23 @@ Branch `claude/sync-local-github-80cc8a` (PR #8): revisão das profissões de
 30-09 (`ef84143`, ADR-028/029, `docs/technical/Revisao-Profissoes-2026-09-30.md`)
 com 1.196 unitários e 528/528 GameTests locais; fluidez F1–F14 na §8 da Fluidez.
 
-## 30-09 — duas sessões de jogo
+## 30-09, 18:09–18:28 — playtest do JAR `8f500a2` + Spark `YUm45D9Sw4`
 
-- **01:38–01:59 (JAR `D0512A8E…`):** a casa do pastor de `e79a3177`
-  (`1756, 71, -5325`) abriu e não pôs bloco — construtor parado na borda do
-  alcance; e a primeira obra levou 13 min (busca de 16–18 passagens).
-- **02:45–03:13 (JAR `8BA7B5B8…`):** a casa do pastor **fechou às 03:07:44**
-  (correção do construtor confirmada em jogo); a busca fez 6 voltas em 21
-  passagens. Mas: ~12 dos 19 min da obra foram espera por tear e vidraça; o
-  planejador ficou mais caro (F1, regressão da busca pelo prazo); nenhuma obra
-  nova depois (pontas de rua recusadas por grama da vila original e por
-  `dirt_path` de outra colônia); o fazendeiro plantou muda dentro da obra
-  aberta — corrigido em `1eb6352`.
-- **Depois do jogo — JAR `3FB95073…11E3` (`482c06b`) em `mods` e `downloads/`,
-  conferido por `release_manifest.py`; nada visto em jogo:** F1, F2, F3, F4, F5,
-  F6, F10 e F12 (fusão, ADR-007) atendidos; F13 parcial; F7, F8, F9, F11 e
-  F14 abertos. Lote na rua ou um acima, com degrau; areia perto da água; linha
-  do tear no baú do carpinteiro após 3 tentativas. `22b40bf`..`1920948`.
-- **Git:** PR #8 → `codex/bighousemod`; PR #3 → `main` aberto. Mesclar pede aval.
+- **Spark (9 min):** TPS 20, MSPT mediano 11,5–14,8 ms, máx 55–74 ms; o mod
+  é ~3,3% do servidor (fundidor 1,6%, lenhador 1,5%); o planejador some.
+- **Visto:** casa de 311 blocos em ~6 min (E48); E47 soltou 3 encalhados,
+  mas 2 mineiros de mina deram `cannot dig out`; 5 saíram do ofício Vanilla;
+  13 mudas. **Não apareceu:** pão, ovelhas procriando, drop, `shared supper`.
+- **E49 (`5e9a6e7`):** 6 fundidores soltaram a tarefa de vidro 6.324 vezes.
+  **E50 (`00b27f3`):** reparo de roça riscou 62 canteiros por grama; a obra
+  do save só volta à fila ao recarregar o mundo.
+- Build 1.210 unitários, `runGametest` 531/531, 3 mutações mortas. **Não
+  visto em jogo; JAR não republicado.** Aberto: lenhador (177 "Not a
+  tree", 624 buscas), mineiro (14 `WORK_STALLED`).
+
+## Git
+
+- PR #8 → `codex/bighousemod`; PR #3 → `main` aberto. Mesclar pede aval.
 
 ## Corrigido e testado, pendente de playtest
 
