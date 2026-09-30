@@ -2,12 +2,16 @@ package com.villagecolony.fabric.integration;
 
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ServerMemory;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.SaplingGenerator;
@@ -20,6 +24,26 @@ import net.minecraft.world.chunk.WorldChunk;
  * ou substituir blocos protegidos.
  */
 public final class VillageForest {
+
+    static {
+        ServerMemory.register(VillageForest.class, VillageForest::clearAll);
+    }
+
+    /**
+     * Quanto esperar para buscar lugar de novo, depois de uma busca sem lugar
+     * — F13, 2026-09-30. O mesmo intervalo do viveiro do fazendeiro
+     * ({@code FarmerNursery.BETWEEN_PLANTINGS}), e pelo mesmo motivo: a busca
+     * era refeita a cada ciclo, dentro da fase que o log chamava de "chests".
+     */
+    private static final int RETRY_TICKS = 6_000;
+
+    /** Quando cada colônia pode buscar lugar para a árvore da dezena de novo. */
+    private static final Map<UUID, Long> NEXT_TRY = new HashMap<>();
+
+    /** Esquece as esperas. Chamado ao parar o servidor. */
+    public static void clearAll() {
+        NEXT_TRY.clear();
+    }
     private static final int INNER_RADIUS = 48;
     private static final int OUTER_RADIUS = 56;
     private static final int CANOPY_RADIUS = 5;
@@ -34,7 +58,9 @@ public final class VillageForest {
     public enum PopulationPlanting {
         NOT_DUE,
         PLANTED,
-        WAITING_FOR_SPACE
+        WAITING_FOR_SPACE,
+        /** Sem lugar na última busca, e ainda dentro do intervalo de espera. */
+        RESTING
     }
 
     /** Planta duas árvores maduras distintas para uma vila recém-criada. */
@@ -69,17 +95,25 @@ public final class VillageForest {
             return PopulationPlanting.NOT_DUE;
         }
 
+        Long nextTry = NEXT_TRY.get(colony.id());
+        if (nextTry != null && world.getTime() < nextTry) {
+            return PopulationPlanting.RESTING;
+        }
+
         Optional<List<TreeSpecies>> available = VillageBiomes.forestSpeciesAt(world, colony.center());
         if (available.isEmpty()) {
+            NEXT_TRY.put(colony.id(), world.getTime() + RETRY_TICKS);
             return PopulationPlanting.WAITING_FOR_SPACE;
         }
 
         List<TreeSpecies> species = available.get();
         TreeSpecies selected = species.get((nextMilestone / 10 - 1) % species.size());
         if (plantOne(world, colony, selected, List.of()).isEmpty()) {
+            NEXT_TRY.put(colony.id(), world.getTime() + RETRY_TICKS);
             return PopulationPlanting.WAITING_FOR_SPACE;
         }
 
+        NEXT_TRY.remove(colony.id());
         colony.markForestPopulationMilestone(nextMilestone);
         return PopulationPlanting.PLANTED;
     }

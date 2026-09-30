@@ -30,6 +30,21 @@ public final class ColonyChestSurvey {
     /** Limite por colônia e por ciclo; evita uma vila grande dominar o tick. */
     public static final int CHESTS_PER_CYCLE = 8;
 
+    /**
+     * Por quanto tempo a última fotografia completa vale — F13 e pedido do
+     * autor, 2026-09-30: ler os baús no máximo uma vez por minuto e guardar a
+     * lista em memória. Enquanto ela valer e a lista de baús não mudar, o
+     * ciclo decide com ela sem reler nenhum baú.
+     */
+    public static final int SURVEY_INTERVAL_TICKS = 1_200;
+
+    private static final Map<UUID, Completed> COMPLETED = new HashMap<>();
+
+    private record Completed(
+            List<ColonyPos> chests, List<ResourceGroup> groups,
+            ChestInventoryReader.ChestSurvey survey, long at) {
+    }
+
     private static final Map<UUID, Round> ROUNDS = new HashMap<>();
 
     static {
@@ -62,6 +77,15 @@ public final class ColonyChestSurvey {
                         professionChests.contains(first), professionChests.contains(second)))
                 .toList();
         List<ResourceGroup> groups = List.copyOf(Arrays.asList(capacityGroups));
+
+        Completed done = COMPLETED.get(colonyId);
+
+        if (done != null
+                && world.getTime() - done.at() < SURVEY_INTERVAL_TICKS
+                && done.chests().equals(knownChests)
+                && done.groups().equals(groups)) {
+            return done.survey();
+        }
         Round round = ROUNDS.get(colonyId);
 
         if (round == null || !round.matches(knownChests, groups)) {
@@ -82,6 +106,7 @@ public final class ColonyChestSurvey {
 
         if (pending == 0) {
             ROUNDS.remove(colonyId);
+            COMPLETED.put(colonyId, new Completed(knownChests, groups, result, world.getTime()));
         }
 
         return result;
@@ -90,11 +115,13 @@ public final class ColonyChestSurvey {
     /** Esquece uma rodada interrompida pela remoção ou troca de estado da colônia. */
     public static void forget(UUID colonyId) {
         ROUNDS.remove(colonyId);
+        COMPLETED.remove(colonyId);
     }
 
     /** Esquece as rodadas transitórias ao parar o servidor. */
     public static void clearAll() {
         ROUNDS.clear();
+        COMPLETED.clear();
     }
 
     private static final class Round {

@@ -200,6 +200,8 @@ final class ColonyCycleRunner {
                     colony.forestPopulationMilestone() + 10);
         }
 
+        mark = CycleCost.since(CycleCost.Phase.POPULATION, mark);
+
         // <b>Uma lista, e os três consumidores dela</b> — P0.3, 2026-09-11.
         // A varredura e as duas medidas de espaço montavam cada uma a
         // própria lista, a partir do registro de trabalhadores, e por

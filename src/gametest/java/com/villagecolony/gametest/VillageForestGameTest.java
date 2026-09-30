@@ -87,6 +87,35 @@ public class VillageForestGameTest {
         context.complete();
     }
 
+    /**
+     * Sem lugar para a árvore da dezena, a busca espera antes de repetir —
+     * F13, 2026-09-30.
+     *
+     * <p>No playtest das 02:45 a fase que o log chama de "chests" custou 85
+     * ms de mediana por ciclo, e ela inclui este plantio: com dez adultos e
+     * o anel ocupado, cada ciclo refazia a busca de 64 ângulos com copa de
+     * 5×5×16. O viveiro do fazendeiro já espera 6.000 tiques no mesmo caso.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_forest")
+    public void anOccupiedRingIsNotSearchedAgainRightAway(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos center = context.getAbsolutePos(new BlockPos(3_000, 1, 3_000));
+        Colony colony = Colony.create(
+                UUID.randomUUID(), new ColonyPos(center.getX(), center.getY(), center.getZ()));
+        prepareNaturalRing(world, center);
+        occupyRing(world, center);
+
+        context.assertTrue(
+                VillageForest.plantForPopulation(world, colony, 10)
+                        == VillageForest.PopulationPlanting.WAITING_FOR_SPACE,
+                "o anel ocupado deveria deixar a árvore da dezena esperando lugar");
+        context.assertTrue(
+                VillageForest.plantForPopulation(world, colony, 10)
+                        == VillageForest.PopulationPlanting.RESTING,
+                "a busca sem lugar foi refeita logo no ciclo seguinte");
+        context.complete();
+    }
+
     private static void prepareNaturalRing(ServerWorld world, BlockPos center) {
         for (int x = -56; x <= 56; x++) {
             for (int z = -56; z <= 56; z++) {
