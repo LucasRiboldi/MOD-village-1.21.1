@@ -20,26 +20,37 @@ documento; ordem recomendada na §7 dele.
 - [x] 🔴 Regra do autor: no espaço de uma obra não nasce rebento. Viveiro do
   fazendeiro e replantio do lenhador consultam `BlockProtection.isColonyBuilt`
   (`1eb6352`); dois GameTests falharam antes; 503/503. Não visto em jogo.
-- [ ] 🔴 F1 - **Regressão de `291187e`:** planejador de 1–2 ms para 28 ms de
-  mediana e 178 de máximo; o prazo de 15 ms só cobre a varredura.
-- [ ] 🔴 F2 - Fundidor em laço sem matéria-prima: 193 paradas, 112 num minuto.
-- [ ] 🟠 F3 - Ponta de rua não segue por `dirt_path` de outra colônia.
-- [ ] 🟠 F4 - Ponta de rua da vila original bate em grama protegida pela
-  Regra 3 — **decisão do autor**.
-- [ ] 🟠 F5 - Peça sem cadeia no mundo (tear) só chega após 3 tentativas:
-  7 min 45 s de obra parada.
-- [ ] 🟠 F6 - Demanda de vidro não abre coleta de areia: 4 min 17 s parada.
-- [ ] 🟠 F10 - Tarefa só é distribuída no ciclo de 30 s — maior ganho de
-  fluidez; pede ADR curta.
-- [ ] 🟠 F12 - Três colônias sobrepostas na mesma vila (ADR-007) — **decisão**.
-- [ ] 🟠 F13 - Levantamento de baús: mediana 85 ms por ciclo.
+- [x] 🔴 F1 - **Regressão de `291187e`:** planejador de 1–2 ms para 28 ms de
+  mediana e 178 de máximo; a volta pelo índice não obedecia ao prazo. Corrigido
+  em `22b40bf`; custo em jogo a medir.
+- [x] 🔴 F2 - Fundidor em laço sem matéria-prima: 193 paradas, 112 num minuto.
+  Após 5 paradas ele funde para a obra e volta ao pedido (`6852179`).
+- [x] 🟠 F3 - Ponta de rua não segue por `dirt_path` de outra colônia (`182a1f5`).
+- [x] 🟠 F4 - Ponta de rua da vila original bate em grama protegida pela
+  Regra 3. Decisão do autor: chão do bioma pode ser calçado (`a71b4da`); sem
+  GameTest da vila original.
+- [x] 🟠 F5 - Peça sem cadeia no mundo (tear) só chegava após 3 tentativas:
+  agora na primeira (`e58208c`).
+- [ ] 🟠 F6 - **Parcial** (`e58208c`): rota olha o bioma e a vidraça na planície
+  chega na primeira falta. Falta: areia só é coletável em deserto, e a demanda
+  vidraça → vidro → areia não abre coleta.
+- [x] 🟠 F10 - Tarefa só era distribuída no ciclo de 30 s: `IdleHands` entrega
+  em até 1 s sem gastar o relógio dos descansos (`cd22243`).
+- [x] 🟠 F12 - Três colônias sobrepostas na mesma vila: fusão implementada
+  (ADR-007 com emenda §6, `daa5d31`); sem GameTest do critério da vila gerada.
+- [ ] 🟠 F13 - **Parcial** (`e00ee15`): baús no máximo 1×/min, bosque espera
+  6.000 tiques, fase `population` no log. Falta: `minersRoom`/`roomOf` releem
+  baús a cada ciclo; medir em jogo.
 - [ ] 🟡 F7 - Busca do fazendeiro não fecha: 26 `SWEEP_INCOMPLETE`.
 - [ ] 🟡 F8 - Tingimento tenta as 16 cores de vidraça.
 - [ ] 🟡 F9 - Carpinteiro para em lotes de 2–9 peças pela reserva de tora.
 - [ ] 🟡 F14 - `WORK_STALLED` em pastor (2), lenhador (1) e mineiro (1).
+- [x] 🟠 Lote: metade da base até 3 abaixo da rua é aterrada; lote desliza ao
+  longo da rua que dobra (`560d546`). Pedido do autor.
+- [ ] P0 - Playtest da rodada: JAR com `22b40bf`..`cd22243` ainda não instalado.
 - [ ] 🟢 F11 - 101 linhas `Not a tree` em tronco de casa da vila.
-- [ ] 🟢 Noite sem trabalho (46% do dia trabalhado) — **decisão**: ofícios de
-  oficina à noite.
+- [x] 🟢 Noite sem trabalho: decisão do autor (30-09) — continua sem trabalho,
+  reação como no Vanilla.
 
 ## Playtest 2026-09-30 (01:38–01:59) - obra aberta sem nenhum bloco
 

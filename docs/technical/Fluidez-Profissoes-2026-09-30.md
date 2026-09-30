@@ -163,3 +163,46 @@ de `Colony cycle took`. Onde algo é hipótese, está escrito "hipótese".
 3. F10 (tarefa ao ficar livre) — o maior ganho de fluidez; pede ADR curta.
 4. F5/F6/F8 (obra sem espera de peça).
 5. Decisões do autor: F4, F12, noite.
+
+## 8. Revarredura de F1 a F14 — 2026-09-30, depois das correções
+
+Todas as correções abaixo têm GameTest ou teste unitário e passaram na
+bateria completa (517/517 GameTests, unitários verdes, build sem avisos).
+**Nenhuma foi vista em jogo**; o JAR com elas não foi instalado.
+
+| # | Situação | O que foi feito | Commit |
+|---|---|---|---|
+| F1 | ✅ atendido | a volta pelo índice de ruas obedece ao prazo de 15 ms, como a varredura | `22b40bf` |
+| F2 | ✅ atendido | fundidor: 5 paradas pelo mesmo pedido e ele funde uma peça que a obra aberta (ou as plantas da vila) vai usar, depois tenta o pedido de novo | `6852179` |
+| F3 | ✅ atendido | a ponta de rua segue por `dirt_path` que já existe, de qualquer colônia | `182a1f5` |
+| F4 | ✅ atendido | chão do bioma dentro de peça da vila pode ser calçado; planta à frente da ponta sai. **Sem GameTest da parte da vila original** (a bateria não gera vila) | `a71b4da` |
+| F5 | ✅ atendido | peça sem rota no bioma chega na primeira falta (eram três) | `e58208c` |
+| F6 | 🟡 parcial | a rota passou a olhar o bioma, então a vidraça na planície é entregue na primeira falta. **A colônia ainda não produz vidro na planície**: areia só é coletável em deserto (`isSurfaceResource`), e a demanda vidraça → vidro → areia não abre coleta | `e58208c` |
+| F7 | ❌ não atendido | busca do fazendeiro que não fecha (26 `SWEEP_INCOMPLETE`) | — |
+| F8 | ❌ não atendido | tingimento tenta as 16 cores de vidraça | — |
+| F9 | ❌ não atendido | carpinteiro para pela reserva de metade da madeira em tora | — |
+| F10 | ✅ atendido | quem fica livre recebe tarefa em até 1 s, sem gastar o relógio dos descansos | `cd22243` |
+| F11 | ❌ não atendido | 101 linhas `Not a tree` sobre tronco de casa da vila | — |
+| F12 | ✅ atendido | colônias que se tocam ou ocupam o mesmo espaço viram uma (ADR-007 implementada e emendada). **Sem GameTest do critério da vila gerada** | `daa5d31` |
+| F13 | 🟡 parcial | baús lidos no máximo uma vez por minuto; bosque sem lugar espera 6.000 tiques; fase `population` separada no log. `minersRoom` e `roomOf` ainda leem baús a cada ciclo; custo não medido | `e00ee15` |
+| F14 | ❌ não atendido | `WORK_STALLED` de pastor, lenhador e mineiro | — |
+
+### Pedidos da mesma rodada que não eram itens F
+
+| Pedido | Situação | Commit |
+|---|---|---|
+| Rebento não nasce no espaço de obra | ✅ viveiro do fazendeiro e replantio do lenhador | `1eb6352` |
+| Lote com metade da base abaixo da rua | ✅ aterro de até 3 camadas (era 1); 3 é provisório, a medir | `560d546` |
+| Lote que não cabe por causa da rua | ✅ desliza ao longo da rua; recuar 1–2 blocos foi tentado e retirado (quebrava a Regra 17) | `560d546` |
+| Rua cresce para fora da vila | ✅ ver F3 e F4 | `182a1f5`, `a71b4da` |
+| Noite | ✅ decisão: sem trabalho à noite, reação como no Vanilla; nada mudou | — |
+
+### Tear e vidraça: alguma profissão consegue sozinha?
+
+| Peça | Receita | Quem faz cada etapa | Sozinha? |
+|---|---|---|---|
+| Tear (`loom`) | 2 linhas + 2 tábuas, bancada | tábuas: lenhador → carpinteiro. **Linha: ninguém** — não há recurso nem receita que a colônia alcance (vem de aranha ou teia) | **Não.** Agora chega pela entrega de peça sem rota, na primeira falta |
+| Vidraça (`glass_pane`) | 6 vidros, bancada | vidro: fundidor, a partir de areia; areia: coleta de superfície com a pá do fundidor, **só em deserto** | **Na planície, não**: entrega na primeira falta. **No deserto, sim**, pela cadeia areia → vidro → vidraça |
+
+O pedido da peça de obra vai ao artesão (`asks the carpenter for
+construction piece`); a receita vem do livro do próprio jogo.
