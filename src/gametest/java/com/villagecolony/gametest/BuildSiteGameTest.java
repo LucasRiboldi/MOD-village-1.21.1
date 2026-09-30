@@ -2049,6 +2049,43 @@ public class BuildSiteGameTest implements FabricGameTest {
     }
 
     /**
+     * <b>A volta pelo índice também obedece ao prazo</b> — F1, 2026-09-30.
+     *
+     * <p>Na sessão das 02:45 o planejador subiu para 28 ms de mediana e 178
+     * de máximo, com a maioria das respostas vindo do índice. A varredura do
+     * quadrado consultava o relógio; a volta pelo índice só parava nas 1.024
+     * colunas, e cada coluna dela testa as pegadas das plantas. Com o prazo
+     * vencido, ela tem que parar logo depois do piso de colunas.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site",
+            tickLimit = 20)
+    public void theRoadIndexStopsWhenTheDeadlineIsOver(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        ColonyPos from = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(1, 1, 1)));
+
+        try {
+            BuildSiteScanner.restore(
+                    bigIndex(colony, from, BuildSiteScanner.MAX_COLUMNS * 2));
+
+            SweepDeadline.within(0L, () -> BuildSiteScanner.find(
+                    context.getWorld(), colony, from, 64, SMALL_HOUSE));
+
+            int stoppedAt = SweepState.roadCursorAt(colony).orElse(Integer.MAX_VALUE);
+
+            context.assertTrue(
+                    stoppedAt <= SweepDeadline.MIN_COLUMNS + 1,
+                    "com o prazo vencido a volta pelo índice olhou " + stoppedAt
+                            + " colunas — o relógio não para esta passagem");
+        } finally {
+            BuildSiteScanner.clearAll();
+        }
+
+        context.complete();
+    }
+
+    /**
      * <b>Índice maior que uma passagem é aceito.</b> Era recusado, e a
      * recusa é que tirava o atalho da vila grande.
      */

@@ -364,4 +364,16 @@ public final class SweepState {
 
         return paused == null ? OptionalInt.empty() : OptionalInt.of(paused.ring());
     }
+
+    /**
+     * Onde a volta pelo índice de ruas parou, se parou no meio — 2026-09-30.
+     *
+     * <p>O cursor que já existia, lido de fora, como {@link #sweepPausedAt}.
+     * É a posição na lista de colunas do índice.
+     */
+    public static OptionalInt roadCursorAt(UUID colonyId) {
+        Integer at = ROAD_CURSOR.get(colonyId);
+
+        return at == null ? OptionalInt.empty() : OptionalInt.of(at);
+    }
 }

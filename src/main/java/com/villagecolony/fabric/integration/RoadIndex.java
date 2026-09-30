@@ -171,7 +171,12 @@ public final class RoadIndex {
         int looked = 0;
 
         for (int at = start; at < columns.size(); at++) {
-            if (++looked > BuildSiteScanner.MAX_COLUMNS) {
+            // O mesmo prazo da varredura do quadrado — F1, 2026-09-30. Esta
+            // volta só parava nas 1.024 colunas, cada uma testando as pegadas
+            // das plantas, e com a maioria das respostas vindo daqui o
+            // planejador chegou a 178 ms num ciclo.
+            if (++looked > SweepDeadline.columnCap(BuildSiteScanner.MAX_COLUMNS)
+                    || SweepDeadline.expired(looked)) {
                 SweepState.ROAD_CURSOR.put(colonyId, at);
 
                 // Aqui houve passagem de verdade: o orçamento foi gasto
