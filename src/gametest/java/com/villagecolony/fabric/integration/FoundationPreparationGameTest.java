@@ -53,6 +53,53 @@ public final class FoundationPreparationGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /**
+     * Metade da base na rua e a outra metade dois blocos abaixo: a obra é
+     * construída por cima — pedido do autor, 2026-09-30.
+     *
+     * <p>Na sessão das 02:45, 37% das recusas de lote foram "fora da altura
+     * da rua", e a preparação só aceitava lacuna de uma camada.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "foundation_preparation")
+    public void aDeeperGapUnderHalfTheBaseIsFilledToStreetLevel(TestContext context) {
+        BlockPos origin = new BlockPos(5, 3, 5);
+        context.setBlockState(origin, Blocks.GRASS_BLOCK);
+        context.setBlockState(origin.east(), Blocks.GRASS_BLOCK);
+        for (BlockPos low : List.of(origin.south(), origin.south().east())) {
+            context.setBlockState(low, Blocks.AIR);
+            context.setBlockState(low.down(), Blocks.AIR);
+            context.setBlockState(low.down(2), Blocks.DIRT);
+        }
+
+        context.assertTrue(FoundationPreparation.prepareIfQualified(context.getWorld(), project(context, origin)),
+                "metade da base na rua com a outra metade dois abaixo deve ser preparada");
+        for (BlockPos low : List.of(origin.south(), origin.south().east())) {
+            context.assertTrue(!context.getWorld().getBlockState(context.getAbsolutePos(low)).isAir()
+                            && !context.getWorld().getBlockState(context.getAbsolutePos(low.down())).isAir(),
+                    "as duas camadas da lacuna em " + low.toShortString() + " devem receber solo");
+        }
+        context.complete();
+    }
+
+    /** O mesmo lote passa pela escolha de lugar: a régua não reprova a coluna funda. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "foundation_preparation")
+    public void aLotWithHalfItsBaseTwoBelowTheStreetIsAccepted(TestContext context) {
+        BlockPos origin = new BlockPos(5, 3, 5);
+        context.setBlockState(origin, Blocks.GRASS_BLOCK);
+        context.setBlockState(origin.east(), Blocks.GRASS_BLOCK);
+        for (BlockPos low : List.of(origin.south(), origin.south().east())) {
+            context.setBlockState(low, Blocks.AIR);
+            context.setBlockState(low.down(), Blocks.AIR);
+            context.setBlockState(low.down(2), Blocks.GRASS_BLOCK);
+        }
+        BlockPos at = context.getAbsolutePos(origin);
+
+        context.assertTrue(LotLevel.flatGroundAt(context.getWorld(), UUID.randomUUID(),
+                        at.getX(), at.getZ(), at.getY(), at.getY(), new ColonyPos(2, 2, 2)).isPresent(),
+                "o lote com metade da base dois blocos abaixo da rua foi recusado");
+        context.complete();
+    }
+
     private static ConstructionProject project(TestContext context, BlockPos relativeOrigin) {
         Blueprint blueprint = Blueprint.of(ResourceId.vanilla("foundation_preparation"), List.of(
                 new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("cobblestone")),

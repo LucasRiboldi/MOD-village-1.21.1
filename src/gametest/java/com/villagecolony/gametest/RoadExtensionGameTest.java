@@ -70,14 +70,19 @@ public class RoadExtensionGameTest implements FabricGameTest {
 
         // A varredura é quem anota a ponta, e é ela que precisa falhar:
         // é o "não há mais lote" dela que autoriza a rua a crescer.
+        java.util.Optional<BuildSiteScanner.Site> unexpected = BuildSiteScanner.find(
+                context.getWorld(),
+                colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
+                RADIUS,
+                SMALL_HOUSE);
+
         context.assertTrue(
-                BuildSiteScanner.find(
-                        context.getWorld(),
-                        colony,
-                        MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
-                        RADIUS,
-                        SMALL_HOUSE).isEmpty(),
-                "a faixa de um bloco não podia ter cabido uma casa de dois");
+                unexpected.isEmpty(),
+                "a faixa de um bloco não podia ter cabido uma casa de dois: "
+                        + unexpected.map(site -> context.getRelativePos(
+                                MinecraftTypeAdapter.toBlockPos(site.origin())).toShortString()
+                                + " porta " + site.doorSide()).orElse(""));
 
         RoadExtension.Outcome outcome = RoadExtension.extend(
                 context.getWorld(), colony, ResourceId.vanilla("dirt_path"));
@@ -322,6 +327,8 @@ public class RoadExtensionGameTest implements FabricGameTest {
         BlockPos center = new BlockPos(6, 1, 6);
         List<BlockPos> ring = new java.util.ArrayList<>();
 
+        sealTheGround(context);
+
         for (int x = 4; x <= 8; x++) {
             ring.add(new BlockPos(x, 1, 4));
             ring.add(new BlockPos(x, 1, 8));
@@ -419,6 +426,8 @@ public class RoadExtensionGameTest implements FabricGameTest {
      * raio inteiro sem achar nada — que é a condição da regra.
      */
     private static void strip(TestContext context) {
+        sealTheGround(context);
+
         for (int step = 0; step <= 2; step++) {
             context.setBlockState(
                     ROAD_START.add(step, 0, 0), Blocks.DIRT_PATH.getDefaultState());
@@ -427,6 +436,25 @@ public class RoadExtensionGameTest implements FabricGameTest {
         for (int step = 1; step <= 3; step++) {
             context.setBlockState(
                     ROAD_END.add(step, 0, 0), Blocks.DIRT.getDefaultState());
+        }
+    }
+
+    /**
+     * O chão em volta do cenário não serve de lote nem de aterro — 2026-09-30.
+     *
+     * <p>Os cenários desta classe precisam de "não há lote" para a rua
+     * crescer. Até 30-09 isso vinha de graça: o chão do mundo plano fica
+     * três blocos abaixo da rua da arena, e só se aterrava uma camada. Com o
+     * aterro de até três camadas pedido pelo autor, esse chão (dois abaixo)
+     * virou lote. Vidro logo abaixo da rua declara o terreno inaproveitável
+     * de propósito: não é vazio para o aterro atravessar nem chão sólido para
+     * apoiá-lo. Pedra não serviria — é sólida, e o aterro a aceita.
+     */
+    private static void sealTheGround(TestContext context) {
+        for (int x = -2; x <= 12; x++) {
+            for (int z = -2; z <= 12; z++) {
+                context.setBlockState(new BlockPos(x, 0, z), Blocks.GLASS.getDefaultState());
+            }
         }
     }
 

@@ -641,9 +641,21 @@ public class BuildSiteGameTest implements FabricGameTest {
                     0,
                     SMALL_HOUSE);
 
+            // A pergunta é se a casa atravessa a estrada, e não se há lote:
+            // desde o aterro de três camadas (2026-09-30), a borda do cenário
+            // pode dar um lote legítimo metade na grama, metade sobre o chão
+            // do mundo plano três abaixo. O que não pode é cobrir a rua.
+            BlockPos first = context.getAbsolutePos(center.add(-2, 0, -2));
+            BlockPos last = context.getAbsolutePos(center.add(2, 0, 2));
+
             context.assertTrue(
-                    site.isEmpty(),
-                    paving + " reservado como ROAD_AREA deixou uma casa atravessar a estrada");
+                    site.isEmpty()
+                            || site.get().origin().x() + SMALL_HOUSE.x() - 1 < first.getX()
+                            || site.get().origin().x() > last.getX()
+                            || site.get().origin().z() + SMALL_HOUSE.z() - 1 < first.getZ()
+                            || site.get().origin().z() > last.getZ(),
+                    paving + " reservado como ROAD_AREA deixou uma casa atravessar a estrada: "
+                            + site.map(BuildSiteScanner.Site::origin).map(Object::toString).orElse(""));
             context.assertTrue(
                     LotRefusals.countOf(colony, LotRefusals.Reason.ROAD) > 0,
                     paving + " reservado como ROAD_AREA nao registrou a recusa da estrada");

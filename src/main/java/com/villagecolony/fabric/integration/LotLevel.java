@@ -77,9 +77,10 @@ public final class LotLevel {
     /**
      * Quanto uma coluna do lote pode fugir do nível da rua.
      *
-     * <p>A preparação só aceita a lacuna segura de uma camada abaixo da rua;
-     * qualquer outro desnível é recusado para que a obra não crie plataforma
-     * nem saia da cota da via.
+     * <p>A preparação aceita lacunas seguras de até
+     * {@code FoundationPreparation.MAX_FILL_DEPTH} camadas abaixo da rua
+     * (uma até 2026-09-30); chão acima da rua continua recusado para que a
+     * obra não escave nem saia da cota da via.
      */
     static final int ROAD_LEVEL_TOLERANCE = 0;
 
@@ -174,9 +175,14 @@ public final class LotLevel {
                 int levelOffset = ground.getY() - roadY;
                 if (levelOffset == 0) {
                     supportedColumns++;
-                } else if (levelOffset == -1
-                        && FoundationPreparation.isFillableBaseGap(world, new BlockPos(x, roadY, z))) {
-                    // A reserva materializa esta lacuna física antes da obra começar.
+                } else if (levelOffset < 0
+                        && -levelOffset <= FoundationPreparation.MAX_FILL_DEPTH
+                        && FoundationPreparation.fillableDepth(world, new BlockPos(x, roadY, z))
+                                .orElse(0) == -levelOffset) {
+                    // A reserva materializa esta lacuna física antes da obra
+                    // começar. Até três camadas desde 2026-09-30, a pedido do
+                    // autor: a obra é construída por cima da metade da base
+                    // que fica abaixo da rua. Ver FoundationPreparation.
                 } else {
                     LotRefusals.refused(colonyId, LotRefusals.Reason.OFF_ROAD_LEVEL);
 
