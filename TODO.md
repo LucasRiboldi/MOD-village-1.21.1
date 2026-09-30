@@ -12,6 +12,35 @@ da reabertura seca oposta. Cada lote e validado na orientacao final da planta.
 A bateria de 1.182 testes unitarios (30-09) e 498 GameTests esta verde; ainda requer
 validacao no save real.
 
+## Fluidez das profissões - 2026-09-30 (`docs/technical/Fluidez-Profissoes-2026-09-30.md`)
+
+Levantamento da sessão das 02:45–03:13. Evidência e solução de cada item no
+documento; ordem recomendada na §7 dele.
+
+- [x] 🔴 Regra do autor: no espaço de uma obra não nasce rebento. Viveiro do
+  fazendeiro e replantio do lenhador consultam `BlockProtection.isColonyBuilt`
+  (`1eb6352`); dois GameTests falharam antes; 503/503. Não visto em jogo.
+- [ ] 🔴 F1 - **Regressão de `291187e`:** planejador de 1–2 ms para 28 ms de
+  mediana e 178 de máximo; o prazo de 15 ms só cobre a varredura.
+- [ ] 🔴 F2 - Fundidor em laço sem matéria-prima: 193 paradas, 112 num minuto.
+- [ ] 🟠 F3 - Ponta de rua não segue por `dirt_path` de outra colônia.
+- [ ] 🟠 F4 - Ponta de rua da vila original bate em grama protegida pela
+  Regra 3 — **decisão do autor**.
+- [ ] 🟠 F5 - Peça sem cadeia no mundo (tear) só chega após 3 tentativas:
+  7 min 45 s de obra parada.
+- [ ] 🟠 F6 - Demanda de vidro não abre coleta de areia: 4 min 17 s parada.
+- [ ] 🟠 F10 - Tarefa só é distribuída no ciclo de 30 s — maior ganho de
+  fluidez; pede ADR curta.
+- [ ] 🟠 F12 - Três colônias sobrepostas na mesma vila (ADR-007) — **decisão**.
+- [ ] 🟠 F13 - Levantamento de baús: mediana 85 ms por ciclo.
+- [ ] 🟡 F7 - Busca do fazendeiro não fecha: 26 `SWEEP_INCOMPLETE`.
+- [ ] 🟡 F8 - Tingimento tenta as 16 cores de vidraça.
+- [ ] 🟡 F9 - Carpinteiro para em lotes de 2–9 peças pela reserva de tora.
+- [ ] 🟡 F14 - `WORK_STALLED` em pastor (2), lenhador (1) e mineiro (1).
+- [ ] 🟢 F11 - 101 linhas `Not a tree` em tronco de casa da vila.
+- [ ] 🟢 Noite sem trabalho (46% do dia trabalhado) — **decisão**: ofícios de
+  oficina à noite.
+
 ## Playtest 2026-09-30 (01:38–01:59) - obra aberta sem nenhum bloco
 
 - [x] P0 - O construtor parava fora do alcance: destino na borda do REACH 5
@@ -19,8 +48,9 @@ validacao no save real.
   pré-verificação da reserva; `whyNotReached` imprime o destino real.
   `BuilderApproachGameTest.arrivingAtTheApproachLeavesTheBuilderInReach`
   falhou antes; `runGametest --rerun-tasks` 499/499 depois.
-- [ ] P0 - Playtest: com o JAR novo, a casa do pastor de `1756, 71, -5325`
-  (colônia `e79a3177`) sai de 221 blocos.
+- [x] P0 - Playtest: com o JAR novo, a casa do pastor de `1756, 71, -5325`
+  (colônia `e79a3177`) saiu de 221 blocos e fechou às 03:07:44 da sessão de
+  02:45 (150 blocos postos). **Confirmado em jogo.**
 - [x] P1 - Treze minutos até a primeira obra, parte do tempo: cada volta do
   raio 64 custava 16–18 passagens de 1.024 colunas, uma por ciclo de 30 s,
   com o planejador gastando 1–2 ms dos 15 do prazo. Com prazo armado, só o

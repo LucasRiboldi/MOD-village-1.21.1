@@ -15,25 +15,21 @@
 ## Em uma linha
 
 Correções até 30-09 no branch `claude/sync-local-github-80cc8a` (PR #8 para
-`codex/bighousemod`): 1.182/1.182 unitários e 501/501 GameTests locais.
-**Quase tudo o que está aberto é playtest.**
+`codex/bighousemod`): 1.182/1.182 unitários e 503/503 GameTests locais. O
+levantamento de fluidez está em `docs/technical/Fluidez-Profissoes-2026-09-30.md`.
 
-## 30-09 — playtest das 01:38–01:59 e JAR
+## 30-09 — duas sessões de jogo
 
-- **JAR em `mods` desde 02:38:** `8BA7B5B8…390C83` (build de `678af5d`, com
-  as três correções abaixo, SHA conferido); o do playtest era `D0512A8E…35CDB` (CI do PR #6: placa órfã e
-  obra que segue com o chunk simulando, ADR-002). `downloads/` tem o antigo.
-- **A obra abriu e não pôs bloco.** Casa do pastor de `e79a3177`
-  (`1756, 71, -5325`), 221 blocos: destino do construtor na borda do alcance
-  (5) com folga de chegada 2, e ele parava fora dele (o save mostra lote
-  livre). **Corrigido e instalado:** folga 0, ponto de pé a até 4 blocos,
-  destino real no log (`arrivingAtTheApproachLeavesTheBuilderInReach`).
-- **A primeira obra levou 13 minutos:** cada volta do raio 64 custava 16–18
-  passagens de 1.024 colunas (~8 min) com o planejador em 1–2 ms dos 15; e
-  em 2 das 3 colônias não havia lote e nenhuma ponta de rua aceitou
-  calçamento, sem motivo no log. **Corrigido e instalado:** com prazo, só
-  o relógio para a passagem; a recusa de ponta conta o motivo
-  (`PavingRefusals`). 501/501.
+- **01:38–01:59 (JAR `D0512A8E…`):** a casa do pastor de `e79a3177`
+  (`1756, 71, -5325`) abriu e não pôs bloco — construtor parado na borda do
+  alcance; e a primeira obra levou 13 min (busca de 16–18 passagens).
+- **02:45–03:13 (JAR `8BA7B5B8…`):** a casa do pastor **fechou às 03:07:44**
+  (correção do construtor confirmada em jogo); a busca fez 6 voltas em 21
+  passagens. Mas: ~12 dos 19 min da obra foram espera por tear e vidraça; o
+  planejador ficou mais caro (F1, regressão da busca pelo prazo); nenhuma obra
+  nova depois (pontas de rua recusadas por grama da vila original e por
+  `dirt_path` de outra colônia); o fazendeiro plantou muda dentro da obra
+  aberta — **corrigido em `1eb6352`, não instalado**.
 - **Git:** `codex/bighousemod` está 68 commits à frente da `main`; o PR #3
   segue aberto, com descrição de 11 commits. Mesclar pede aval do autor.
 
@@ -43,7 +39,7 @@ Cada item tem teste que falhou antes da correção. Nenhum foi visto em jogo.
 
 | Data | Correção | O que confirmar no save |
 |---|---|---|
-| 30-09 | Construtor chega dentro do alcance (folga 0, ponto a 4) | `blocks left` caindo; nenhum `has not moved a block` a 5–6 blocos do alvo |
+| 30-09 | Rebento não nasce no espaço de obra (viveiro e replantio) | nenhum `planted … sapling` dentro de lote com obra aberta |
 | 30-09 | Busca de lote limitada pelo prazo; motivo da ponta recusada | `sweep:` com 1–2 passagens por volta; `no road end … — N motivo`; `Planner turns` e `Colony cycle took` |
 | 30-09 | Placa órfã (PR #4) | nenhuma placa sobre lote sem obra; obra aberta com placa |
 | 30-09 | Obra anda longe do jogador (PR #6) | `blocks left` caindo entre 64 blocos e a distância de simulação; vila pausa depois dela; `Colony cycle took` com várias vilas |
