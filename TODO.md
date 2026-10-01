@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-09-30 (divergências entre documentos e código, seção
+**Atualizado:** 2026-10-01 (sessão de 01-10 no topo; antes, divergências entre documentos e código, seção
 abaixo). Estado de 2026-09-28: a obra antecipa a proxima peca artesanal sem
 consumir os troncos brutos que ela mesma ainda exige; o `/vc log` explica a
 saida de trabalhador preso e seu retorno a escala. A evolucao agora inclui
@@ -11,6 +11,23 @@ mina, vila fundada em agua tenta acesso selado para uma saida natural 8x8 antes
 da reabertura seca oposta. Cada lote e validado na orientacao final da planta.
 A bateria de 1.196 testes unitarios e 528 GameTests (30-09, depois da revisao
 das profissoes) esta verde; ainda requer validacao no save real.
+
+## Sessão de 2026-10-01 — pendências (`docs/research/2026-10-01-solucoes-das-pendencias.md`)
+
+Entregue e enviado (`d892934`, `088846e`, `f69e27c`, `6db813a`, JAR `0c624be`):
+curral (E52 `PenEscape`), escalada (E47 `ClimbOut`), Regra 45 (baús da vila),
+ADR-003 Emenda 7 (busca de lote sem teto). **Nada visto em jogo.** Opções e
+recomendação de cada item no estudo.
+
+- [ ] 🔴 Playtest com as linhas do estudo §A (curral, escalada, baús, crescimento, revisão 30-09).
+- [ ] 🔴 Script de conferência do log (`scripts/playtest_check.py`, estudo §A-B).
+- [ ] 🟠 Limpar o save ou usar mundo novo (estudo §6).
+- [ ] 🟠 Vila grande cresce devagar: cadência da varredura (estudo §7-A).
+- [ ] 🟠 Instrumentar a entrada no curral antes de prevenir (estudo §8-A).
+- [ ] 🟠 Escalada: bloco criado sem material; quebrar só bloco da colônia; avisar o jogador (estudo §9).
+- [ ] 🟠 Spark: lenhador (73% do mod), varredura de baús da caixa, F13 (estudo §10).
+- [ ] 🟡 Decisões do autor: combustível/viveiro, Regra 45 fora de casa, teletransporte de último recurso.
+- [ ] 🟡 PR desta branch depois do playtest (estudo §12).
 
 ## Revisão das profissões - 2026-09-30 (`docs/technical/Revisao-Profissoes-2026-09-30.md`)
 
