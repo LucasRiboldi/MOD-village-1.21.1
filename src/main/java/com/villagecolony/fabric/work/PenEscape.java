@@ -215,6 +215,11 @@ public final class PenEscape {
         ESCAPES.put(id, escape);
         WalkOverride.hold(id);
 
+        // Preso é preso: larga o trabalho e sai da escala até sair — quem o
+        // devolve é a passagem do encalhado, que o vê fora do curral. Sem
+        // isto o ofício seguia mandando nele, e recebia tarefa nova no meio.
+        StrandedWorkers.strandNow(id, feet, "fenced in");
+
         long gates = exits.stream().filter(FencedIn.Exit::gate).count();
 
         VillageColonyMod.LOGGER.info(
@@ -426,6 +431,11 @@ public final class PenEscape {
 
     private static String shortId(UUID id) {
         return id.toString().substring(0, 8);
+    }
+
+    /** Esquece a saída de um aldeão, fechando o portão que ela abriu. */
+    static void forget(UUID villagerId) {
+        finish(villagerId, ESCAPES.get(villagerId), null);
     }
 
     /** Esquece tudo. Chamado ao abrir e ao parar o servidor. */

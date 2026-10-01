@@ -28,10 +28,10 @@ com 1.196 unitários e 528/528 GameTests locais; fluidez F1–F14 na §8 da Flui
   janela de altura; caixa que cresce (construção/lote +12, rua inclui o bloco);
   identidade e fusão pela caixa; só trabalha a vila com jogador dentro, até 5
   min depois. Não visto em jogo. Aberto: limpar o save.
-- **E52 (01-10):** trabalhadores presos em curral (pulam do feno). O 1º conserto
-  (`48d77ac`) soltou o aldeão dentro 1 s após abrir o portão (09:19). Agora
-  `PenEscape`: mede a cada 2 s quem está a ≤6 de cerca, anda pelo próprio
-  caminho, abre o portão (fecha atrás) ou pula a cerca. Não visto em jogo.
+- **E52 (01-10):** curral — `PenEscape` mede a cada 2 s quem está a ≤6 de cerca,
+  abre o portão (fecha atrás) ou pula a cerca, por rota própria. **E47 revisto:**
+  o mineiro 199ad062 parou a y=56 após 32 degraus; agora o encalhado larga o
+  ofício e `ClimbOut` sobe por escada, pilar ou túnel, sem desistir. Não visto em jogo.
 
 ## Git
 

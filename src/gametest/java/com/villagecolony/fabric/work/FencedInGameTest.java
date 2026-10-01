@@ -35,8 +35,12 @@ public final class FencedInGameTest implements FabricGameTest {
     /** Plataforma de pedra com o ar limpo em cima; devolve o centro, onde se pisa. */
     private static BlockPos platform(TestContext context, int offset) {
         ServerWorld world = context.getWorld();
+        // 4.096 entre um cenário e outro, nos dois eixos: com 64, dois testes
+        // cujas arenas distam um múltiplo de 64 montavam um em cima do outro,
+        // e o ar que um limpa apagava o portão do outro — "Block{air}" no
+        // theGateClosesAgainAfterward, 2 vezes em 6 rodadas de 01-10.
         BlockPos center = context.getAbsolutePos(new BlockPos(1, 2, 1))
-                .add(1_400_000 + offset * 64, 0, 1_500_000);
+                .add(1_400_000 + offset * 4_096, 0, 1_500_000 + offset * 4_096);
 
         for (int dx = -PLATFORM; dx <= PLATFORM; dx++) {
             for (int dz = -PLATFORM; dz <= PLATFORM; dz++) {
@@ -220,10 +224,14 @@ public final class FencedInGameTest implements FabricGameTest {
             context.assertTrue(StrandedWorkers.isStranded(id) && PenEscape.isEscaping(id),
                     "com o portão aberto, ainda dentro, ele foi solto — o defeito das 09:16");
         } finally {
+            // Só o que é deste aldeão: os testes de um lote correm juntos, e
+            // limpar tudo (StrandedEscape/PenEscape/FencedIn.clearAll) apagava
+            // o portão a fechar do theGateClosesAgainAfterward no meio dele.
             StrandedWorkers.forget(id);
-            StrandedEscape.clearAll();
-            PenEscape.clearAll();
-            FencedIn.clearAll();
+            PenEscape.forget(id);
+            ClimbOut.forget(id);
+            EscapeBackfill.forget(id);
+            FencedIn.closeWhenClear(gate);
             VillageColonyMod.WORKERS.remove(id);
             VillageColonyMod.COLONIES.remove(colony.id());
             villager.discard();
