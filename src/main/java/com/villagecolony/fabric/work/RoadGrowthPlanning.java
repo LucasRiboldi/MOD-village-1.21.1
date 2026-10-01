@@ -151,7 +151,7 @@ final class RoadGrowthPlanning {
                     colony,
                     IdleReason.NO_TARGET,
                     "no free lot beside a road in the whole "
-                            + ConstructionPlanner.searchRadius + "-block radius of "
+                            + ConstructionPlanner.searchRadius(colony) + "-block radius of "
                             + colony.center() + " that fits " + blueprint.size()
                             + ", and no road end to extend either");
         };

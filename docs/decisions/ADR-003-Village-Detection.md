@@ -740,3 +740,28 @@ até 64 blocos dele.
 **O que se aceita.** A obra aberta para quando o jogador sai da vila por mais
 de 5 minutos. Colônia ainda não medida usa a régua antiga (64 do centro) até
 a primeira medida, que precisa do chunk do centro carregado.
+
+---
+
+## Emenda 7 — a busca de lote cresce com a vila, sem teto (2026-10-01)
+
+Decisão do autor: *"a vila deve crescer infinitamente para qualquer lado
+possível"*.
+
+**O que travava.** A busca de lote, o índice de ruas e a ponta de rua saíam
+todos de um raio fixo de 64 do centro (`ConstructionPlanner.searchRadius`).
+Com o centro no meio da caixa (Emenda 6), a vila crescia até uns 64 para cada
+lado e parava — um teto que ninguém tinha decidido.
+
+**Decisão.** Com a vila medida, o raio é **metade da diagonal da caixa +
+`GROWTH_MARGIN` (12)**, nunca menos que 64, sem teto. Cobre os cantos e passa
+da borda; lote aberto ali empurra a caixa, e o raio cresce junto. Vila não
+medida continua com 64.
+
+**O preço, aceito pelo autor** contra duas alternativas (crescer só pelas
+ruas, com a varredura fixa em 64; ou varrer só uma faixa da borda): a
+varredura em anéis olha ~1.024 colunas por ciclo de 30 s, e a área cresce com
+o quadrado do raio. Uma volta inteira passa de ~8,5 min (64) a ~26 min numa
+caixa de 144 e ~1 h 40 numa de 300; a rua só cresce depois de uma volta sem
+lote. Vila grande cresce mais devagar. E só cresce onde o mundo está
+carregado — o Minecraft não simula chunk descarregado.

@@ -283,7 +283,7 @@ final class SiteOpening {
                 colony.center(),
                 squareDistance(project.origin(), colony.center()),
                 straightDistance(project.origin(), colony.center()),
-                ConstructionPlanner.searchRadius);
+                ConstructionPlanner.searchRadius(colony));
 
         return Optional.of(project);
     }
