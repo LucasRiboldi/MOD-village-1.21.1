@@ -20,9 +20,7 @@ com 1.196 unitários e 528/528 GameTests locais; fluidez F1–F14 na §8 da Flui
 
 ## 30-09, noite — playtests 18h e 21h (Spark `YUm45D9Sw4`, `qI5h6MXtDA`)
 
-- **E49 (`5e9a6e7`) visto em jogo:** paradas do fundidor de 6.324 (18 min)
-  para 214 (22 min); fundidor de 1,6% para 0,1% do servidor. Mod = 1,9%.
-- **E50 (`00b27f3`):** roça de reparo arando a grama; não exercitado às 21h.
+- **E49** visto em jogo (paradas do fundidor de 6.324 para 214); **E50** não exercitado.
 - **E51 (`2895d71`):** a ponta da vila nascia colônia nova com BigHouseMOD e
   7 adultos — `44cd9e5a` tem 7 BigHouseMOD. Análise e o que falta em
   `docs/technical/Identidade-da-Vila-2026-09-30.md`. Não visto em jogo.
