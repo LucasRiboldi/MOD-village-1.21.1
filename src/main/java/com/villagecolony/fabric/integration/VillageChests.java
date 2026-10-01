@@ -1,6 +1,10 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.colony.service.VillageDetector;
+import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.storage.model.VillageChestRule;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
@@ -13,12 +17,15 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.WorldChunk;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Os baús que estão na vila e não são de ninguém — 2026-09-16.
@@ -43,6 +50,24 @@ import java.util.Optional;
  * travar o servidor, que é erro que este projeto já cometeu duas vezes.
  *
  * <p>Chunk descarregado é pulado, nunca carregado à força — §11.
+ *
+ * <p><b>A vila é a caixa, e todo baú dentro dela conta</b> — 2026-10-01,
+ * pedido do autor: <i>"aumentar a zona de varredura dos baús para analisar
+ * todos baús dentro da vila, evitar baús fora de alcance"</i>. Com a vila
+ * medida (ADR-003 Emenda 6), a varredura cobre a caixa inteira — e não um
+ * raio de 64 em volta de um centro que oscila — e só ela: baú fora da caixa
+ * está fora de alcance. Dentro da caixa vale o baú de dentro ou de fora de
+ * casa: a regra "só dentro de casa" de 09-16 existia porque o raio solto
+ * alcançava a vila vizinha e as arenas do teste, e a caixa já separa as duas.
+ * Na altura, a mesma janela das camas da vila — o baú de masmorra embaixo
+ * dela não é da vila. Vila ainda não medida continua no raio, só dentro de
+ * casa.
+ *
+ * <p><b>Baú de trabalhador não é livre, de nenhuma colônia.</b> A lista
+ * {@code known} só trazia os desta colônia, e o baú do trabalhador da
+ * colônia vizinha entrava aqui como estoque público — nos testes de
+ * carpinteiro e pedreiro, a 13 blocos um do outro, cada colônia lia e
+ * gastava o baú da outra.
  */
 public final class VillageChests {
 
@@ -70,8 +95,8 @@ public final class VillageChests {
      */
     static final int CACHE_TICKS = 20;
 
-    /** Onde uma varredura foi feita: mundo e centro da colônia. */
-    private record Scan(RegistryKey<World> world, ColonyPos centre) {
+    /** Onde uma varredura foi feita: mundo, centro da colônia e a caixa, se medida. */
+    private record Scan(RegistryKey<World> world, ColonyPos centre, @Nullable VillageBounds box) {
     }
 
     /** Os baús de dentro de casa que a varredura achou, e quando. */
@@ -112,10 +137,11 @@ public final class VillageChests {
     }
 
     /**
-     * Os baús livres da vila, a partir do centro dela.
+     * Os baús livres da vila: dentro da caixa dela, ou no raio em volta do
+     * centro enquanto ela não foi medida.
      *
-     * <p>Livre quer dizer: não é de trabalhador nenhum (esses o
-     * {@code ColonyChests} já conhece) e não foi nomeado pelo jogador.
+     * <p>Livre quer dizer: não é de trabalhador nenhum, desta colônia ou de
+     * outra, e não foi nomeado pelo jogador.
      *
      * <p>A varredura cara sai de {@link #CACHE_TICKS}; o que é barato e
      * pode mudar a qualquer momento é conferido de novo aqui, baú por baú.
@@ -123,11 +149,16 @@ public final class VillageChests {
      * @param known os que a colônia já conhece, para não repetir
      */
     public static List<ColonyPos> around(
-            ServerWorld world, ColonyPos centre, List<ColonyPos> known) {
+            ServerWorld world, Colony colony, List<ColonyPos> known) {
 
         List<ColonyPos> found = new ArrayList<>();
+        Set<ColonyPos> claimed = new HashSet<>();
 
-        for (BlockPos pos : indoorChests(world, centre)) {
+        for (WorkerStorage storage : VillageColonyMod.STORAGES.all()) {
+            claimed.add(storage.chestPosition());
+        }
+
+        for (BlockPos pos : villageChests(world, colony.center(), colony.bounds().orElse(null))) {
             WorldChunk chunk = world.getChunkManager()
                     .getWorldChunk(pos.getX() >> 4, pos.getZ() >> 4);
 
@@ -142,7 +173,7 @@ public final class VillageChests {
 
             ColonyPos at = MinecraftTypeAdapter.toColonyPos(pos);
 
-            if (known.contains(at) || found.contains(at)) {
+            if (known.contains(at) || found.contains(at) || claimed.contains(at)) {
                 continue;
             }
 
@@ -165,9 +196,9 @@ public final class VillageChests {
     }
 
     /** A varredura cara, vinda do cache enquanto ele vale. */
-    private static List<BlockPos> indoorChests(ServerWorld world, ColonyPos centre) {
+    private static List<BlockPos> villageChests(ServerWorld world, ColonyPos centre, @Nullable VillageBounds box) {
         long now = world.getTime();
-        Scan key = new Scan(world.getRegistryKey(), centre);
+        Scan key = new Scan(world.getRegistryKey(), centre, box);
         Cached hit = cache.get(key);
 
         if (hit != null && hit.generation() == generation && now - hit.at() < CACHE_TICKS) {
@@ -179,7 +210,7 @@ public final class VillageChests {
         cache.values().removeIf(old -> old.generation() != generation
                 || now - old.at() >= CACHE_TICKS);
 
-        List<BlockPos> chests = scan(world, centre);
+        List<BlockPos> chests = box == null ? scan(world, centre) : scan(world, box);
 
         cache.put(key, new Cached(now, generation, List.copyOf(chests)));
 
@@ -212,6 +243,50 @@ public final class VillageChests {
         }
 
         return found;
+    }
+
+    /**
+     * A vila medida: os chunks que a caixa cobre, e nela os baús na janela de
+     * altura das camas — dentro ou fora de casa, que a caixa já é a vila.
+     */
+    private static List<BlockPos> scan(ServerWorld world, VillageBounds box) {
+        List<BlockPos> found = new ArrayList<>();
+
+        for (int chunkX = box.minX() >> 4; chunkX <= box.maxX() >> 4; chunkX++) {
+            for (int chunkZ = box.minZ() >> 4; chunkZ <= box.maxZ() >> 4; chunkZ++) {
+                WorldChunk chunk = world.getChunkManager().getWorldChunk(chunkX, chunkZ);
+
+                if (chunk == null) {
+                    continue;
+                }
+
+                for (Map.Entry<BlockPos, BlockEntity> entry : chunk.getBlockEntities().entrySet()) {
+                    BlockPos pos = entry.getKey();
+
+                    if (entry.getValue() instanceof ChestBlockEntity && isInside(box, pos)
+                            && !VanillaBedChests.isPrivateBedChest(world, pos)) {
+                        found.add(pos.toImmutable());
+                    }
+                }
+            }
+        }
+
+        return found;
+    }
+
+    /**
+     * Se este baú está na vila medida: na coluna da caixa e na janela de
+     * altura das camas dela. Fora disso ele está fora de alcance.
+     */
+    public static boolean isInside(VillageBounds box, BlockPos pos) {
+        return box.containsColumn(pos.getX(), pos.getZ())
+                && pos.getY() >= box.bedFloor() && pos.getY() <= box.bedCeiling();
+    }
+
+    /** O mesmo, para a posição que a colônia guarda. */
+    public static boolean isInside(VillageBounds box, ColonyPos pos) {
+        return box.containsColumn(pos.x(), pos.z())
+                && pos.y() >= box.bedFloor() && pos.y() <= box.bedCeiling();
     }
 
     /**

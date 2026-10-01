@@ -64,6 +64,7 @@ regra que foi emendada. O corpo de cada regra vive em
 | 42 | Mineiro para de guardar um tipo aos 256 no baú (fora o pedido) | 09-30 | ✅ feita | `MinerHaul.TYPE_CAP` |
 | 43 | O pastor faz o rebanho procriar | 09-30 | ✅ feita | `ShepherdFlock` |
 | 44 | Ofício do mod exclui ofício Vanilla | 09-30 | ✅ feita | `VanillaProfessionGuard`, `VillagerDataMixin` (ADR-029) |
+| 45 | Os baús da colônia são todos os da vila, e só eles: com a vila medida, todo baú livre dentro da caixa (na janela de altura das camas) conta, de dentro ou de fora de casa; fora da caixa está fora de alcance, mesmo o de trabalhador; baú de trabalhador de qualquer colônia nunca é livre | 10-01 | ✅ feita | `ColonyChests.nearestFirst`, `VillageChests` (`VillageChestReachGameTest`) |
 
 ---
 

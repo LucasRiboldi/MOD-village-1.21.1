@@ -59,7 +59,7 @@ public class VillageChestsGameTest implements FabricGameTest {
             ColonyPos firstAt = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(first));
             ColonyPos secondAt = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(second));
 
-            List<ColonyPos> before = VillageChests.around(world, colony.center(), List.of());
+            List<ColonyPos> before = VillageChests.around(world, colony, List.of());
 
             context.assertTrue(
                     before.contains(firstAt),
@@ -67,7 +67,7 @@ public class VillageChestsGameTest implements FabricGameTest {
 
             context.setBlockState(second, Blocks.CHEST.getDefaultState());
 
-            List<ColonyPos> placed = VillageChests.around(world, colony.center(), List.of());
+            List<ColonyPos> placed = VillageChests.around(world, colony, List.of());
 
             context.assertTrue(
                     placed.contains(secondAt),
@@ -76,7 +76,7 @@ public class VillageChestsGameTest implements FabricGameTest {
 
             context.setBlockState(first, Blocks.AIR.getDefaultState());
 
-            List<ColonyPos> broken = VillageChests.around(world, colony.center(), List.of());
+            List<ColonyPos> broken = VillageChests.around(world, colony, List.of());
 
             context.assertTrue(
                     !broken.contains(firstAt),
