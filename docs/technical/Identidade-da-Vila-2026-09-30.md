@@ -104,7 +104,55 @@ Se a regra desejada for "as profissões só trabalham na vila onde o jogador
 está", a mudança é em `VillageFocus.isWorking`, e ela desfaz aquela decisão.
 **Fica para o autor decidir.**
 
-## 7. Pendências
+## 7. Medidas do save (`scripts/world_survey.py`)
+
+Lido do save fechado às 21:23: estruturas geradas (`region/`), camas e sinos
+registrados (`poi/`) e o registro do mod. Numeração de norte para sul.
+
+**As vilas geradas.** São 35 no mundo explorado. A caixa 3D (todas as peças
+somadas) vai de 86 a 161 blocos em X, de 96 a 158 em Z e de 8 a 55 em Y. Uma
+vila Vanilla de planície ocupa, portanto, ~110–160 blocos de lado.
+
+**A vila do autor (#4).** A caixa vai de `1627, 63, -5376` a `1764, 85, -5220`:
+**138 × 23 × 157 blocos**, 14 casas, 66 camas e 1 sino. Das 66 camas, **39
+são das BigHouseMOD** (6 ou 7 por casa); a vila gerada tinha 27. As camas se espalham por 99 × 15 × **128** blocos. O centro da
+colônia (`1745, 71, -5265`) fica a 60 blocos do centro da caixa, perto da
+borda sul. Uma das BigHouseMOD (`1777, 74, -5263`) caiu 10 blocos fora da
+caixa da vila.
+
+**Vizinhas.** De centro a centro, a vizinha mais próxima fica entre **238 e
+636 blocos** (mediana 408). O vão entre as caixas de duas vilas vai de **37
+blocos** (#23 e #26, o único par abaixo de 64) a 501. Nenhum par fica a até 32.
+A vizinha da vila #4 é a #3, a 318 blocos de centro a centro (vão de 175).
+
+**Colônias.** A #20 tem **duas colônias** (`900b4a06` e `5fc0e0b9`, centros a
+78 blocos), nunca fundidas: os chunks não estavam carregados para a pergunta
+"mesma vila gerada". As outras quatro colônias estão uma em cada vila (#16,
+#22, #25).
+
+**Cuidado com as camas.** Das 35 vilas, 14 aparecem com 0 camas. O jogo só
+registra a cama como POI quando o chunk é carregado; vila nunca visitada não
+existe para o mod, que procura camas e não estruturas.
+
+## 8. As réguas do mod, em 3D
+
+| Pergunta | Régua | Altura conta? |
+|---|---|---|
+| Que camas a varredura enxerga | esfera de 64 blocos em volta do gatilho (`getInCircle` do POI) | sim |
+| Duas camas no mesmo aglomerado | 32 blocos | não, só X e Z |
+| Aglomerado novo ou colônia conhecida | centro a até 64 | não |
+| Mesma vila gerada | o jogo responde pela estrutura | — |
+| Cama perto de construção (E51) | vão de até 32 até a caixa | não |
+| Aldeões que validam o aglomerado | caixa das camas + 32 em todo lado | sim |
+| Fusão: centros sobrepostos | 32 | não |
+| Fusão: construções encostam | caixas com 1 bloco de folga | sim |
+| Fusão: construções próximas (E51) | vão de até 32 | não |
+| Planejar e detectar perto do jogador | 64 do centro da colônia | não |
+
+O centro da colônia é a média das camas do aglomerado, ou o sino quando há
+um a até 32 blocos de uma cama dele. Ele não é o centro da vila gerada.
+
+## 9. Pendências
 
 - 🔴 Playtest: nenhuma linha `Placed BigHouseMOD` na vila conhecida; a linha
   `is part of colony` aparece no lugar.
