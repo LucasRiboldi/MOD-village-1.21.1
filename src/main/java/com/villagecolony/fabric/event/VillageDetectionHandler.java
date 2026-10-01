@@ -8,6 +8,7 @@ import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.ColonyState;
 import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.colony.service.ColonyAbandonment;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.coordination.ColonyCycle;
@@ -275,7 +276,11 @@ public final class VillageDetectionHandler {
                     .findNearest(
                             MinecraftTypeAdapter.toColonyPos(bed),
                             VillageDetector.DUPLICATE_DISTANCE)
-                    .isPresent();
+                    .isPresent()
+                    || VillageColonyMod.COLONIES.all().stream().anyMatch(colony -> colony.bounds()
+                            .map(bounds -> bounds.containsColumn(
+                                    bed.getX(), bed.getZ(), VillageBounds.IDENTITY_MARGIN))
+                            .orElse(false));
 
             if (known) {
                 continue;
@@ -308,6 +313,12 @@ public final class VillageDetectionHandler {
 
         if (overworld.getPlayers().isEmpty()) {
             return;
+        }
+
+        // Quem está dentro de qual vila — ADR-003 Emenda 6. Antes do tique,
+        // para a vila em que o jogador acabou de entrar já trabalhar nele.
+        if (server.getTicks() % VillageFocus.EVERY_TICKS == 0) {
+            VillageFocus.attend(overworld);
         }
 
         tickActiveServer(server);

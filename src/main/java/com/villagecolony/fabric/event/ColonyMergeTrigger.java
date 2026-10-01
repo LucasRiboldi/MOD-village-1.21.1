@@ -37,7 +37,9 @@ import java.util.UUID;
  *       a detecção só avisava;</li>
  *   <li>os chunks dos dois centros pertencem à mesma vila gerada pelo jogo;</li>
  *   <li>uma construção de uma fica a poucos blocos de uma da outra —
- *       {@link ColonyIdentity#NEIGHBOUR_GAP}, pedido do autor em 30-09.</li>
+ *       {@link ColonyIdentity#NEIGHBOUR_GAP}, pedido do autor em 30-09;</li>
+ *   <li>as caixas das duas vilas se tocam, com 16 blocos de folga — ADR-003
+ *       Emenda 6.</li>
  * </ul>
  *
  * <p>O que muda de dono é regra do Core — {@link ColonyMerge}.
@@ -102,6 +104,7 @@ final class ColonyMergeTrigger {
     static boolean shouldMerge(ServerWorld world, Colony a, Colony b) {
         return VillageColonyMod.COLONIES.overlapping(a).contains(b)
                 || buildingsTouch(a.id(), b.id())
+                || ColonyIdentity.boundsTouch(a, b)
                 || ColonyIdentity.buildingsNear(a.id(), b.id(), VillageColonyMod.BUILDINGS)
                 || shareAGeneratedVillage(world, a, b);
     }

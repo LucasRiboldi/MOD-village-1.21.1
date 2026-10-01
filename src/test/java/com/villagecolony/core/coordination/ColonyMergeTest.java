@@ -89,6 +89,19 @@ class ColonyMergeTest {
     }
 
     @Test
+    void theSurvivorKeepsTheBoundsOfBoth() {
+        Colony big = colonyWithBeds(0, 10);
+        Colony small = colonyWithBeds(40, 3);
+        big.measure(new com.villagecolony.core.colony.model.VillageBounds(-50, 60, -50, 50, 70, 50));
+        small.measure(new com.villagecolony.core.colony.model.VillageBounds(40, 60, -20, 120, 75, 20));
+
+        merge(small, big);
+
+        assertEquals(new com.villagecolony.core.colony.model.VillageBounds(-50, 60, -50, 120, 75, 50),
+                big.bounds().orElseThrow(), "a vila fundida tem que medir as duas");
+    }
+
+    @Test
     void aTieIsBrokenByTheSmallerIdNotByTheOrder() {
         Colony a = colonyWithBeds(0, 5);
         Colony b = colonyWithBeds(40, 5);

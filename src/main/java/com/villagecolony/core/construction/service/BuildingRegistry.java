@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * O que a colônia construiu — TASK-036 e TASK-037.
@@ -40,10 +41,19 @@ public final class BuildingRegistry {
     /** Ordem de inserção, para log e iteração reproduzíveis. */
     private final Map<UUID, Building> buildings = new LinkedHashMap<>();
 
+    /** Quem quer saber de cada construção registrada — a vila que cresce, ADR-003 Emenda 6. */
+    private Consumer<Building> registered = building -> { };
+
     public void register(Building building) {
         Objects.requireNonNull(building, "building");
 
         buildings.put(building.id(), building);
+        registered.accept(building);
+    }
+
+    /** Avisa {@code listener} de cada construção registrada daqui em diante. */
+    public void whenRegistered(Consumer<Building> listener) {
+        registered = Objects.requireNonNull(listener, "listener");
     }
 
     /**

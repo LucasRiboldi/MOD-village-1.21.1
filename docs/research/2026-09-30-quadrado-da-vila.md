@@ -12,7 +12,12 @@ Proposta do autor depois das medidas de `scripts/world_survey.py`
    o centro se reposiciona no meio da nova medida e a vila fica registrada
    maior.
 
-**Estado:** proposta, sem código. Cada item termina com a decisão que falta.
+**Estado:** marcos 1 a 5 implementados no mesmo dia, com as decisões do autor
+(ADR-003 Emenda 6). As diferenças para esta proposta: o foco não usa margem
+em volta do jogador — só a caixa, mais 5 minutos depois que ele sai, e vila
+fora disso não roda nada; construção ou lote empurra a borda a 12 blocos
+além da peça, e rua inclui só o bloco. Os marcos 6 e 7 (raios do centro →
+distância até a caixa) ficaram de fora, exceto o guarda da obra.
 
 ## 1. Busca de camas em coluna, com janela de altura
 

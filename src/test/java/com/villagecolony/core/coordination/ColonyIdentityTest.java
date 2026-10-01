@@ -1,6 +1,7 @@
 package com.villagecolony.core.coordination;
 
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.colony.service.ColonyService;
 import com.villagecolony.core.construction.model.Building;
@@ -82,6 +83,42 @@ class ColonyIdentityTest {
 
         assertEquals(colony, owner.orElseThrow().colony());
         assertEquals(ColonyIdentity.Reason.SAME_GENERATED_VILLAGE, owner.get().reason());
+    }
+
+    @Test
+    void aClusterInsideTheVillageBoundsIsTheSameVillage() {
+        Colony colony = colonies.createColony(new ColonyPos(0, 64, 0));
+        colony.measure(new VillageBounds(-70, 60, -70, 120, 80, 70));
+
+        Optional<ColonyIdentity.Owner> owner = ownerOf(clusterAt(130, 0));
+
+        assertEquals(colony, owner.orElseThrow().colony(),
+                "camas a 10 blocos da borda da vila viraram vila nova");
+        assertEquals(ColonyIdentity.Reason.INSIDE_ITS_BOUNDS, owner.get().reason());
+    }
+
+    @Test
+    void aClusterBeyondTheMarginOfTheBoundsIsANewVillage() {
+        Colony colony = colonies.createColony(new ColonyPos(0, 64, 0));
+        colony.measure(new VillageBounds(-70, 60, -70, 120, 80, 70));
+
+        assertTrue(ownerOf(clusterAt(137, 0)).isEmpty(), "a 17 blocos da borda já é outra vila");
+    }
+
+    @Test
+    void twoVillagesWhoseBoundsTouchAreTheSame() {
+        Colony a = colonies.createColony(new ColonyPos(0, 64, 0));
+        Colony b = colonies.createColony(new ColonyPos(300, 64, 0));
+        a.measure(new VillageBounds(-70, 60, -70, 70, 80, 70));
+        b.measure(new VillageBounds(86, 60, -70, 230, 80, 70));
+
+        assertTrue(ColonyIdentity.boundsTouch(a, b));
+
+        b.measure(new VillageBounds(87, 60, -70, 230, 80, 70));
+        Colony c = colonies.createColony(new ColonyPos(600, 64, 0));
+        c.measure(new VillageBounds(87, 60, -70, 230, 80, 70));
+
+        assertTrue(!ColonyIdentity.boundsTouch(a, c), "17 blocos de vão: vilas diferentes");
     }
 
     @Test

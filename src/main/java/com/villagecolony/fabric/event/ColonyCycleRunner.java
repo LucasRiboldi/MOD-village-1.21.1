@@ -139,15 +139,13 @@ final class ColonyCycleRunner {
         // passagem —, e faltava o teto global: mil colunas vezes vinte e
         // nove cabem num tique só, e coube.
         //
-        // Só o planejamento espera a vez. O restante do ciclo roda em toda
-        // colônia ACTIVE — chunk simulando, ADR-002 —, para a obra já aberta
-        // continuar com o jogador longe; decisão do autor, 2026-09-30, que
-        // desfaz a pausa por distância de 26-09 só para a execução.
-        //
-        // Em jogo, só as vilas com jogador presente podem planejar. O
+        // Em jogo, o ciclo inteiro só roda na vila com jogador dentro da
+        // caixa, ou que o teve há até 5 minutos — ADR-003 Emenda 6, decisão
+        // do autor na noite de 30-09, que desfaz a da manhã (a obra aberta
+        // continuava com o jogador longe). O
         // planejador tem prazo de relógio e a cota se ajusta pelo custo do
         // ciclo; ver PlanningBudget.
-        Set<UUID> watched = VillageFocus.coloniesNearPlayers(overworld, active);
+        Set<UUID> watched = VillageFocus.attended(overworld, active);
         List<UUID> eligible = onlyNearPlayers
                 ? VillageFocus.planners(active, watched)
                 : active.stream().map(Colony::id).toList();
@@ -157,6 +155,12 @@ final class ColonyCycleRunner {
         plannerDeadline = onlyNearPlayers;
 
         for (Colony colony : active) {
+            // Vila sem jogador dentro há mais de 5 minutos não roda o ciclo:
+            // não gasta processamento — decisão do autor, 2026-09-30.
+            if (onlyNearPlayers && !watched.contains(colony.id())) {
+                continue;
+            }
+
             runCycleOf(overworld, colony, planners.contains(colony.id()));
         }
 

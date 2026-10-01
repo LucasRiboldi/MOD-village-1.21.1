@@ -26,7 +26,10 @@ com 1.196 unitários e 528/528 GameTests locais; fluidez F1–F14 na §8 da Flui
 - **E51 (`2895d71`):** a ponta da vila nascia colônia nova com BigHouseMOD e
   7 adultos — `44cd9e5a` tem 7 BigHouseMOD. Análise e o que falta em
   `docs/technical/Identidade-da-Vila-2026-09-30.md`. Não visto em jogo.
-- Decisões abertas: limpar o save; profissões só na vila do jogador.
+- **Caixa da vila (ADR-003 Emenda 6), 01-10:** busca de camas em coluna com
+  janela de altura; caixa que cresce (construção/lote +12, rua inclui o bloco);
+  identidade e fusão pela caixa; só trabalha a vila com jogador dentro, até 5
+  min depois. Não visto em jogo. Aberto: limpar o save.
 - Build 1.218 unitários, `runGametest` 532/532. Aberto: lenhador (73% do mod).
 
 ## Git

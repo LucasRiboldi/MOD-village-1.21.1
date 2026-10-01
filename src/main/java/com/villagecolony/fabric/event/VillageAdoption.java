@@ -119,6 +119,10 @@ final class VillageAdoption {
         }
 
         for (Colony colony : active) {
+            // A colônia sem caixa — save antigo — é medida antes da sonda, e
+            // a sonda já procura camas na janela de altura dela.
+            VillageMeasure.measure(overworld, colony, List.of());
+
             // Antes da varredura: a adoção move centros, e a pergunta do
             // abandono é sobre o que a sonda enxergou de onde ela partiu.
             ColonyPos probedFrom = colony.center();
@@ -375,6 +379,9 @@ final class VillageAdoption {
                 VillagerRegistration.registerVillagers(world, colony, candidate.center());
                 VillagerRegistration.registerVillagers(world, colony, candidate.center());
             }
+
+            // A caixa da vila: medida uma vez, depois só cresce.
+            VillageMeasure.measure(world, colony, candidate.beds());
 
             if (created) {
                 int trees = VillageForest.seedInitial(world, colony);

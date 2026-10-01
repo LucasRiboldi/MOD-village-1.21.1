@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 import com.villagecolony.core.type.ColonyPos;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -84,6 +85,15 @@ public final class Colony {
     private @Nullable ColonyPos probeAnchor;
 
     private int probeBeds;
+
+    /**
+     * A caixa da vila — ADR-003 Emenda 6, 2026-09-30. Vazia até a primeira
+     * medida, que lê a vila gerada pelo jogo com o chunk do centro carregado.
+     */
+    private @Nullable VillageBounds bounds;
+
+    /** O último tique com jogador dentro da caixa; {@code -1} nunca. Não vai para o save. */
+    private long attendedAt = -1;
 
     private Colony(UUID id, ColonyPos center, ColonyState state, ColonyLifecycle lifecycle) {
         this.id = id;
@@ -187,6 +197,71 @@ public final class Colony {
         return observe(center, beds, complete, null);
     }
 
+
+    /** Quanto a vila continua trabalhando depois que o jogador sai: 5 minutos. */
+    public static final long ATTENTION_TICKS = 6_000;
+
+    /** A caixa da vila, quando já foi medida. */
+    public Optional<VillageBounds> bounds() {
+        return Optional.ofNullable(bounds);
+    }
+
+    /**
+     * A medida da vila: a primeira define a caixa, as seguintes só a
+     * aumentam. O centro vai para o meio dela, na altura de antes.
+     *
+     * @return se a caixa mudou
+     */
+    public boolean measure(VillageBounds measured) {
+        Objects.requireNonNull(measured, "measured");
+
+        VillageBounds next = bounds == null ? measured : bounds.union(measured);
+
+        if (next.equals(bounds)) {
+            return false;
+        }
+
+        bounds = next;
+        center = new ColonyPos(next.centerX(), center.y(), next.centerZ());
+
+        return true;
+    }
+
+    /**
+     * A vila cresce para conter a peça — construção, lote ou rua. Vila ainda
+     * não medida não cresce: a primeira medida já soma o que ela construiu.
+     *
+     * @return se a caixa mudou
+     */
+    public boolean grow(VillageBounds piece) {
+        Objects.requireNonNull(piece, "piece");
+
+        return bounds != null && measure(piece);
+    }
+
+    /** Um jogador está dentro da vila neste tique. */
+    public void attend(long now) {
+        attendedAt = now;
+    }
+
+    /**
+     * Se a vila trabalha neste tique: jogador dentro dela agora ou há no
+     * máximo {@link #ATTENTION_TICKS} — decisão do autor, 2026-09-30.
+     */
+    public boolean isAttended(long now) {
+        return attendedAt >= 0 && now >= attendedAt && now - attendedAt <= ATTENTION_TICKS;
+    }
+
+    /**
+     * Se a vila parou de trabalhar dentro destes {@code step} tiques — para o
+     * log dizer uma vez quando ela descansa.
+     */
+    public boolean stoppedWithin(long now, long step) {
+        long since = now - attendedAt;
+
+        return attendedAt >= 0 && since > ATTENTION_TICKS && since <= ATTENTION_TICKS + step;
+    }
+
     /**
      * Move o centro apenas se esta observação for ao menos tão completa
      * quanto a que definiu o centro atual.
@@ -283,7 +358,9 @@ public final class Colony {
         // A sonda parte do centro da colônia e a ele volta. É a única
         // varredura cuja posição não é acidente de onde alguém estava.
         // Ver ADR-003, Emenda 4.
-        if (!ownProbe) {
+        // Vila medida: o centro é o meio da caixa, e só anda quando ela
+        // cresce — a média das camas fazia o centro oscilar (obra órfã).
+        if (!ownProbe || bounds != null) {
             return false;
         }
 

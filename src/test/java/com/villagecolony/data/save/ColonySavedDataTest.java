@@ -1,6 +1,7 @@
 package com.villagecolony.data.save;
 
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.ColonyState;
 import com.villagecolony.core.type.ColonyPos;
@@ -69,6 +70,31 @@ class ColonySavedDataTest {
         Colony restored = roundTrip(data).colonies().get(0);
 
         assertEquals(20, restored.forestPopulationMilestone());
+    }
+
+    @Test
+    void theVillageBoundsSurviveRoundTrip() {
+        Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(120, 68, -340));
+        VillageBounds bounds = new VillageBounds(1627, 63, -5376, 1764, 85, -5220);
+        colony.measure(bounds);
+
+        ColonySavedData data = empty();
+        data.sync(List.of(colony), List.of());
+
+        Colony restored = roundTrip(data).colonies().get(0);
+
+        assertEquals(bounds, restored.bounds().orElseThrow());
+        assertEquals(colony.center(), restored.center());
+    }
+
+    @Test
+    void anOldSaveComesBackWithoutBounds() {
+        Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(120, 68, -340));
+
+        ColonySavedData data = empty();
+        data.sync(List.of(colony), List.of());
+
+        assertTrue(roundTrip(data).colonies().get(0).bounds().isEmpty());
     }
 
     @Test

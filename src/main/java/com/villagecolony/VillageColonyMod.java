@@ -1,6 +1,10 @@
 package com.villagecolony;
 
+import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.colony.service.ColonyService;
+import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.coordination.VillageGrowth;
 import com.villagecolony.core.storage.service.StorageRegistry;
 import com.villagecolony.core.construction.service.BuildingRegistry;
 import com.villagecolony.core.construction.service.ConstructionService;
@@ -18,6 +22,9 @@ import com.villagecolony.fabric.integration.VillageChests;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Ponto de entrada do mod.
@@ -148,6 +155,25 @@ public class VillageColonyMod implements ModInitializer {
      * {@link com.villagecolony.data.save.ColonySavedData}.
      */
     public static final ActivityTraceRegistry ACTIVITY_TRACES = new ActivityTraceRegistry();
+
+    // A vila cresce com o que a colônia constrói ou abre — ADR-003 Emenda 6,
+    // decisão do autor de 2026-09-30. A rua avisa por RoadPaving.
+    static {
+        BUILDINGS.whenRegistered(building -> reportGrowth(
+                building.colonyId(), VillageGrowth.byPiece(COLONIES, building), "a building"));
+        CONSTRUCTIONS.whenOpened(project -> reportGrowth(
+                project.colonyId(), VillageGrowth.byPiece(COLONIES, Building.of(project)), "a lot"));
+    }
+
+    /** Registra no log quando a vila cresceu. */
+    public static void reportGrowth(UUID colonyId, Optional<VillageBounds> grown, String by) {
+        grown.ifPresent(bounds -> LOGGER.info(
+                "Colony {} grew to {} by {} — center now {}",
+                colonyId,
+                bounds,
+                by,
+                COLONIES.find(colonyId).map(Colony::center).orElse(null)));
+    }
 
     @Override
     public void onInitialize() {

@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.coordination.VillageGrowth;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
@@ -106,7 +107,7 @@ final class RoadPaving {
             if (refusal.isPresent()) {
                 refusals.record(refusal.get());
 
-                return laid;
+                return grown(colonyId, laid);
             }
 
             // A planta em cima sai junto: rua não tem grama por cima.
@@ -126,6 +127,17 @@ final class RoadPaving {
 
             laid.add(MinecraftTypeAdapter.toColonyPos(at));
         }
+
+        return grown(colonyId, laid);
+    }
+
+    /**
+     * A rua assentada faz a vila crescer até ela — ADR-003 Emenda 6: um bloco
+     * de rua fora da caixa passa a fazer parte da vila.
+     */
+    private static List<ColonyPos> grown(UUID colonyId, List<ColonyPos> laid) {
+        VillageColonyMod.reportGrowth(
+                colonyId, VillageGrowth.byRoad(VillageColonyMod.COLONIES, colonyId, laid), "a road");
 
         return laid;
     }

@@ -1,6 +1,7 @@
 package com.villagecolony.core.coordination;
 
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.colony.service.ColonyService;
 import com.villagecolony.core.colony.service.VillageDetector;
@@ -42,6 +43,7 @@ public final class ColonyIdentity {
     /** Por que o aglomerado é desta colônia. */
     public enum Reason {
         NEAR_ITS_CENTER,
+        INSIDE_ITS_BOUNDS,
         SAME_GENERATED_VILLAGE,
         NEAR_ITS_BUILDINGS
     }
@@ -82,14 +84,25 @@ public final class ColonyIdentity {
             return Optional.of(new Owner(nearest.get(), Reason.NEAR_ITS_CENTER));
         }
 
+        List<ColonyPos> points = new ArrayList<>(candidate.beds());
+        points.add(candidate.center());
+
+        // <b>A caixa da vila responde primeiro</b> — ADR-003 Emenda 6. As duas
+        // perguntas seguintes ficam para a colônia ainda não medida.
+        for (Colony colony : colonies.all()) {
+            Optional<VillageBounds> bounds = colony.bounds();
+
+            if (bounds.isPresent() && points.stream().anyMatch(point -> bounds.get()
+                    .containsColumn(point.x(), point.z(), VillageBounds.IDENTITY_MARGIN))) {
+                return Optional.of(new Owner(colony, Reason.INSIDE_ITS_BOUNDS));
+            }
+        }
+
         for (Colony colony : colonies.all()) {
             if (sameGeneratedVillage.test(colony)) {
                 return Optional.of(new Owner(colony, Reason.SAME_GENERATED_VILLAGE));
             }
         }
-
-        List<ColonyPos> points = new ArrayList<>(candidate.beds());
-        points.add(candidate.center());
 
         for (Building building : buildings.all()) {
             Optional<Colony> colony = colonies.find(building.colonyId());
@@ -106,6 +119,18 @@ public final class ColonyIdentity {
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * Se as caixas das duas vilas ficam a até {@link VillageBounds#IDENTITY_MARGIN}
+     * uma da outra — a fusão da ADR-003 Emenda 6. Falsa se alguma não foi medida.
+     */
+    public static boolean boundsTouch(Colony a, Colony b) {
+        Objects.requireNonNull(a, "a");
+        Objects.requireNonNull(b, "b");
+
+        return a.bounds().isPresent() && b.bounds().isPresent()
+                && a.bounds().get().touches(b.bounds().get(), VillageBounds.IDENTITY_MARGIN);
     }
 
     /**

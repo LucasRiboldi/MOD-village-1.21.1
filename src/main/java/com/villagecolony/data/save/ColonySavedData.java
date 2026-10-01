@@ -49,7 +49,6 @@ import java.util.UUID;
  * deixando trabalhador órfão apontando para colônia inexistente.
  */
 public final class ColonySavedData extends PersistentState {
-
     /** Nome do arquivo em {@code data/}. Mudar isto invalida saves. */
     public static final String KEY = "villagecolony_colonies";
 
@@ -374,6 +373,7 @@ public final class ColonySavedData extends PersistentState {
             entry.putString(STATE, colony.state().name());
             entry.putInt(OBSERVED_BEDS, colony.observedBeds());
             entry.putInt(FOREST_POPULATION_MILESTONE, colony.forestPopulationMilestone());
+            VillageBoundsSave.write(entry, colony);
 
             list.add(entry);
         }
@@ -490,6 +490,7 @@ public final class ColonySavedData extends PersistentState {
             // faz a primeira detecção da sessão valer. Autocorrige.
             colony.observe(center, entry.getInt(OBSERVED_BEDS));
             colony.markForestPopulationMilestone(entry.getInt(FOREST_POPULATION_MILESTONE));
+            VillageBoundsSave.read(entry, colony);
 
             data.colonies.add(colony);
         }
@@ -499,5 +500,4 @@ public final class ColonySavedData extends PersistentState {
 
         return data;
     }
-
 }

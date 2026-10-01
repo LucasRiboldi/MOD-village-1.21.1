@@ -92,6 +92,9 @@ public final class ColonyMerge {
             survivor.setLifecycle(ColonyLifecycle.ACTIVE);
         }
 
+        // A vila fundida mede as duas — ADR-003 Emenda 6.
+        absorbed.bounds().ifPresent(survivor::measure);
+
         List<Worker> theirWorkers = workers.ofColony(from);
         theirWorkers.forEach(worker -> worker.joinColony(to));
 

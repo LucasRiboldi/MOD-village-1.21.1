@@ -6,6 +6,7 @@ import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.fabric.integration.LotClearance;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
@@ -270,7 +271,17 @@ public final class ConstructionPlanner {
                     open.get().blueprint().size().y(),
                     open.get().blueprint().size().z());
 
-            if (!besideARoad && ConstructionReach.isOutOfReach(
+            // <b>Dentro da vila, a obra está ao alcance</b> — ADR-003 Emenda 6,
+            // 2026-09-30. A caixa cresce com a rua e com o lote, e o centro
+            // passou a ser o meio dela: medir do centro largaria a obra que a
+            // vila acabou de alcançar.
+            boolean insideTheVillage = colony.bounds()
+                    .map(bounds -> bounds.containsColumn(
+                            open.get().origin().x(), open.get().origin().z(),
+                            VillageBounds.IDENTITY_MARGIN))
+                    .orElse(false);
+
+            if (!insideTheVillage && !besideARoad && ConstructionReach.isOutOfReach(
                     open.get().origin(), colony.center(), searchRadius, toTheRoad)) {
 
                 VillageColonyMod.LOGGER.info(

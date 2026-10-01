@@ -693,3 +693,50 @@ move o centro nem a contagem de camas (Emenda 4) e não dispara fundação.
 **O que se perde, e é aceito.** O parágrafo acima ("vila que se afastou mais
 que `DUPLICATE_DISTANCE` vira colônia nova") deixa de valer quando a vila
 gerada ou uma construção ainda ligam as duas pontas.
+
+---
+
+## Emenda 6 — a vila é uma caixa que cresce, e só trabalha com jogador dentro (2026-09-30)
+
+Decisão do autor depois das medidas do save
+(`docs/technical/Identidade-da-Vila-2026-09-30.md` §7) e da proposta
+`docs/research/2026-09-30-quadrado-da-vila.md`.
+
+**1. A caixa** (`VillageBounds`, gravada no save). Nasce da vila gerada pelo
+jogo que alcança o centro; sem vila gerada, 144 × 144 em volta do centro.
+Soma as construções que a colônia já tem. **Nunca encolhe.** Cresce
+(`VillageGrowth`) com:
+
+- construção registrada ou obra aberta (o lote): a borda fica **12 blocos
+  além** da peça — vila de 100 × 100 com construção no bloco 95 vai a
+  100 × 108;
+- rua assentada: a caixa passa a **conter o bloco** — rua 1 fora de uma vila
+  de 100 × 100 a leva a 100 × 101.
+
+Mina, escada de fuga, bosque e cama solta não fazem crescer.
+
+**2. O centro** é o meio da caixa, e só anda quando ela cresce. A sonda não o
+move mais (a média das camas o fazia oscilar — a obra órfã de 09-15). Obra
+dentro da caixa (+16) nunca é largada por distância.
+
+**3. As camas** são buscadas numa **coluna** de raio 64, não numa esfera, e
+só na janela de altura: da vila medida, de 8 abaixo do chão a 24 acima do
+topo dela; na descoberta, a faixa da vila gerada ou de 16 abaixo a 24 acima
+da superfície. A contagem de aldeões é recortada pela mesma janela.
+
+**4. Identidade e fusão.** Aglomerado com uma cama (ou o centro) a até 16
+blocos da caixa de uma colônia é dela (`INSIDE_ITS_BOUNDS`); duas caixas a até
+16 blocos se fundem, e a sobrevivente fica com a união das duas. As regras do
+E51 continuam para a colônia ainda não medida.
+
+**5. Foco.** A referência é a caixa, não o jogador nem o centro: a colônia
+trabalha enquanto há jogador **dentro dela** e por **5 minutos** depois que
+ele sai. Fora disso não roda nada — ciclo, planejamento, detecção, ofícios,
+refeição, fuga, placa — e a vila não gasta processamento. Desfaz a decisão
+da manhã de 30-09 (execução em toda colônia `ACTIVE`). A descoberta de vila
+nova continua perto do jogador: a cama de chunk carregado só dispara busca a
+até 64 blocos dele.
+
+**O que se aceita.** A obra aberta para quando o jogador sai da vila por mais
+de 5 minutos. Colônia ainda não medida usa a régua antiga (64 do centro) até
+a primeira medida, que precisa do chunk do centro carregado.
