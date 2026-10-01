@@ -6,9 +6,12 @@ import net.minecraft.block.FenceGateBlock;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
+import net.minecraft.world.event.GameEvent;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -20,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * Preso num cercado na superfície — E52, playtest de 2026-10-01.
@@ -40,7 +44,14 @@ import java.util.Set;
  *
  * <p><b>A saída.</b> O aldeão abre o portão do cercado, como abre uma porta,
  * e o portão fecha de novo depois — o curral continua segurando os animais.
- * Nenhum bloco é quebrado (Regra 3).
+ * Sem portão, ou com o portão fora de alcance, ele pula a cerca. Nenhum bloco
+ * é quebrado (Regra 3). Quem conduz a saída é o {@link PenEscape}.
+ *
+ * <p><b>A armadilha que soltou o primeiro conserto</b> — 2026-10-01, 09:19.
+ * Com o portão aberto, esta busca passa por ele e responde "não cercado".
+ * Perguntar de novo, de dentro, depois de abrir, soltava o aldeão no curral
+ * um segundo depois, e o portão fechava com ele lá. Fora é sair do
+ * {@link Result#reach} medido com o portão fechado, e não esta resposta.
  */
 final class FencedIn {
 
@@ -120,28 +131,136 @@ final class FencedIn {
     }
 
     /**
-     * Abre o portão para ele sair e devolve onde ele fica do lado de fora.
-     * O portão fecha sozinho depois de {@link #OPEN_TICKS}.
+     * Uma saída do cercado: de onde ele parte, por cima ou através de quê, e
+     * onde ele pisa do lado de fora.
+     *
+     * @param gate se é um portão, que se abre; senão é cerca ou muro, que se pula
+     * @param inside o chão de dentro, encostado no {@code barrier}
+     * @param barrier o portão ou a cerca
+     * @param outside onde ele fica de pé do lado de fora
      */
-    static Optional<BlockPos> openTheGate(ServerWorld world, BlockPos gate, Set<BlockPos> reach) {
-        BlockState state = world.getBlockState(gate);
+    record Exit(boolean gate, BlockPos inside, BlockPos barrier, BlockPos outside) {
+    }
 
-        if (!isClosedGate(state)) {
-            return Optional.empty();
-        }
+    /** Quantas cercas a pular entram na lista, das mais perto às mais longe. */
+    private static final int MAX_VAULTS = 6;
 
-        world.setBlockState(gate, state.with(FenceGateBlock.OPEN, true));
-        OPENED.put(gate.toImmutable(), world.getTime() + OPEN_TICKS);
+    /**
+     * As saídas deste cercado, os portões primeiro e as cercas depois, cada
+     * grupo do mais perto de {@code from} ao mais longe.
+     *
+     * <p>Vazia quando o que o prende não é cerca nem portão — buraco, parede
+     * de pedra: aí é a fuga do E47 que cava.
+     *
+     * <p><b>Só conta saída que leva para mais longe.</b> Quem está do lado de
+     * fora, numa faixa entre a cerca e um barranco, também "não chega a 12
+     * blocos" — e a saída mais perto seria pular para dentro do curral. Onde
+     * ele pisa precisa ser solto, ou ao menos mais largo que onde ele está.
+     */
+    static List<Exit> exits(ServerWorld world, Result pen, BlockPos from) {
+        Map<BlockPos, Boolean> wider = new HashMap<>();
+        Predicate<BlockPos> leadsOut = landing -> wider.computeIfAbsent(landing,
+                at -> isWider(world, at, pen));
+        List<Exit> gates = new ArrayList<>();
 
-        for (Direction way : Direction.Type.HORIZONTAL) {
-            BlockPos outside = gate.offset(way);
+        for (BlockPos gate : pen.gates()) {
+            for (Direction way : Direction.Type.HORIZONTAL) {
+                BlockPos inside = gate.offset(way.getOpposite());
 
-            if (!reach.contains(outside) && isStandable(world, outside)) {
-                return Optional.of(outside.toImmutable());
+                if (pen.reach().contains(inside)) {
+                    landing(world, gate.offset(way), pen.reach())
+                            .filter(leadsOut)
+                            .ifPresent(outside -> gates.add(new Exit(true, inside, gate, outside)));
+                }
             }
         }
 
-        return Optional.of(gate.toImmutable());
+        List<Exit> vaults = new ArrayList<>();
+
+        for (BlockPos inside : pen.reach()) {
+            for (Direction way : Direction.Type.HORIZONTAL) {
+                BlockPos barrier = inside.offset(way);
+
+                if (isVaultable(world, inside, barrier)) {
+                    landing(world, barrier.offset(way), pen.reach())
+                            .filter(leadsOut)
+                            .ifPresent(outside -> vaults.add(new Exit(false, inside, barrier, outside)));
+                }
+            }
+        }
+
+        Comparator<Exit> nearest = Comparator.comparingDouble(exit -> exit.inside().getSquaredDistance(from));
+
+        gates.sort(nearest);
+        vaults.sort(nearest);
+
+        List<Exit> all = new ArrayList<>(gates);
+        all.addAll(vaults.subList(0, Math.min(MAX_VAULTS, vaults.size())));
+
+        return List.copyOf(all);
+    }
+
+    /**
+     * O caminho de {@code from} até {@code to} pelo chão que ele alcança, um
+     * bloco por passo, sem {@code from} e terminando em {@code to}.
+     *
+     * <p>É a mesma busca que provou que ele está preso, e por isso não
+     * depende da navegação Vanilla: no teste de 2026-10-01 ela dava "não
+     * alcança" para um bloco a dois passos, dentro do curral, e o aldeão
+     * ficava parado os 400 tiques da saída.
+     *
+     * @return vazio se {@code to} não está ao alcance pelo chão
+     */
+    static Optional<List<BlockPos>> route(ServerWorld world, BlockPos from, BlockPos to, Set<BlockPos> reach) {
+        Map<BlockPos, BlockPos> cameFrom = new HashMap<>();
+        Deque<BlockPos> open = new ArrayDeque<>();
+
+        cameFrom.put(from, from);
+        open.add(from);
+
+        while (!open.isEmpty()) {
+            BlockPos at = open.poll();
+
+            if (at.equals(to)) {
+                List<BlockPos> path = new ArrayList<>();
+
+                for (BlockPos step = to; !step.equals(from); step = cameFrom.get(step)) {
+                    path.add(0, step);
+                }
+
+                return Optional.of(List.copyOf(path));
+            }
+
+            for (Direction way : Direction.Type.HORIZONTAL) {
+                stepTo(world, at, at.offset(way))
+                        .filter(next -> reach.contains(next) || next.equals(to))
+                        .filter(next -> cameFrom.putIfAbsent(next, at) == null)
+                        .ifPresent(open::add);
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /** Abre o portão, com o som de quem abre. O portão fecha sozinho depois de {@link #OPEN_TICKS}. */
+    static boolean open(ServerWorld world, BlockPos gate) {
+        BlockState state = world.getBlockState(gate);
+
+        if (!isClosedGate(state)) {
+            return state.getBlock() instanceof FenceGateBlock;
+        }
+
+        world.setBlockState(gate, state.with(FenceGateBlock.OPEN, true));
+        world.playSound(null, gate, SoundEvents.BLOCK_FENCE_GATE_OPEN, SoundCategory.BLOCKS, 1.0F, 1.0F);
+        world.emitGameEvent(null, GameEvent.BLOCK_OPEN, gate);
+        OPENED.put(gate.toImmutable(), world.getTime() + OPEN_TICKS);
+
+        return true;
+    }
+
+    /** Ele passou: o portão fecha assim que ninguém estiver nele. */
+    static void closeWhenClear(BlockPos gate) {
+        OPENED.computeIfPresent(gate, (at, when) -> 0L);
     }
 
     /** Fecha os portões abertos na fuga, quando ninguém está passando por eles. */
@@ -170,6 +289,9 @@ final class FencedIn {
 
             if (state.getBlock() instanceof FenceGateBlock && state.get(FenceGateBlock.OPEN)) {
                 world.setBlockState(gate, state.with(FenceGateBlock.OPEN, false));
+                world.playSound(null, gate, SoundEvents.BLOCK_FENCE_GATE_CLOSE, SoundCategory.BLOCKS,
+                        1.0F, 1.0F);
+                world.emitGameEvent(null, GameEvent.BLOCK_CLOSE, gate);
             }
 
             return true;
@@ -206,6 +328,50 @@ final class FencedIn {
             }
 
             if (!isPassable(world, down)) {
+                return Optional.empty();
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    // Cerca ou muro na altura dos pés, com o ar livre por cima dela e por
+    // cima dele até onde o pulo leva a cabeça.
+    private static boolean isVaultable(ServerWorld world, BlockPos inside, BlockPos barrier) {
+        BlockState state = world.getBlockState(barrier);
+
+        if (!state.isIn(BlockTags.FENCES) && !state.isIn(BlockTags.WALLS)) {
+            return false;
+        }
+
+        for (int up = 1; up <= 3; up++) {
+            if (!isPassable(world, barrier.up(up)) || !isPassable(world, inside.up(up))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // Do lado de lá ele fica solto, ou ao menos com mais chão que de cá. O
+    // portão é medido fechado, como estava quando ele foi visto preso.
+    private static boolean isWider(ServerWorld world, BlockPos landing, Result pen) {
+        Result there = check(world, landing);
+
+        return !there.enclosed() || there.reach().size() > pen.reach().size();
+    }
+
+    // Onde ele pisa do lado de fora: no mesmo nível, um degrau acima ou até
+    // dois abaixo — e fora do que ele alcança de dentro.
+    private static Optional<BlockPos> landing(ServerWorld world, BlockPos ahead, Set<BlockPos> reach) {
+        for (int dy = 1; dy >= -2; dy--) {
+            BlockPos feet = ahead.up(dy);
+
+            if (isStandable(world, feet)) {
+                return reach.contains(feet) ? Optional.empty() : Optional.of(feet.toImmutable());
+            }
+
+            if (dy < 1 && !isPassable(world, feet)) {
                 return Optional.empty();
             }
         }

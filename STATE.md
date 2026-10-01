@@ -28,10 +28,10 @@ com 1.196 unitários e 528/528 GameTests locais; fluidez F1–F14 na §8 da Flui
   janela de altura; caixa que cresce (construção/lote +12, rua inclui o bloco);
   identidade e fusão pela caixa; só trabalha a vila com jogador dentro, até 5
   min depois. Não visto em jogo. Aberto: limpar o save.
-- **E52 (01-10, 04:54–08:46):** 8 trabalhadores (3 lenhadores) presos num
-  curral de vila — pulam do feno para dentro; a fuga os soltava "after 0
-  steps". Sem madeira por 4 h, a casa parou esperando `oak_fence`. Agora o
-  encalhado no curral abre o portão (que fecha depois). Não visto em jogo.
+- **E52 (01-10):** trabalhadores presos em curral (pulam do feno). O 1º conserto
+  (`48d77ac`) soltou o aldeão dentro 1 s após abrir o portão (09:19). Agora
+  `PenEscape`: mede a cada 2 s quem está a ≤6 de cerca, anda pelo próprio
+  caminho, abre o portão (fecha atrás) ou pula a cerca. Não visto em jogo.
 
 ## Git
 

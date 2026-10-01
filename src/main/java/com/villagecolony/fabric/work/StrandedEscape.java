@@ -89,6 +89,10 @@ public final class StrandedEscape {
 
     /** Uma passagem por segundo, para todos os encalhados. */
     public static void tick(ServerWorld world) {
+        // Quem está num curral sai pelo portão ou pula a cerca, sem esperar
+        // ser marcado encalhado — E52, 2026-10-01. Ver PenEscape.
+        PenEscape.tick(world);
+
         // O desvio anda todo tique: cavar e pisar não esperam a passagem de
         // um segundo. Ver walkDetours.
         StrandedDetours.walk(world);
@@ -132,7 +136,9 @@ public final class StrandedEscape {
         // <b>No nível do chão não é o mesmo que solto</b> — E52, 2026-10-01.
         // Dentro de um curral ele está no nível do terreno em volta, e a fuga
         // o devolvia à escala "after 0 steps", de volta à cerca, por horas.
-        if (isOut(world, feet) && leaveThePen(world, workerId, feet)) {
+        // Enquanto ele sai do curral, a fuga espera; quando sair, esta mesma
+        // passagem o vê fora e o devolve à escala.
+        if (PenEscape.check(world, villager)) {
             return;
         }
 
@@ -264,39 +270,6 @@ public final class StrandedEscape {
         }
 
         return level >= OUT_MIN_LEVEL;
-    }
-
-    /**
-     * Se ele está cercado na superfície, abre o portão e o manda para fora.
-     *
-     * @return se ele está cercado — aí a fuga não o solta nesta passagem
-     */
-    private static boolean leaveThePen(ServerWorld world, UUID workerId, BlockPos feet) {
-        FencedIn.Result pen = FencedIn.check(world, feet);
-
-        if (!pen.enclosed()) {
-            return false;
-        }
-
-        for (BlockPos gate : pen.gates()) {
-            Optional<BlockPos> outside = FencedIn.openTheGate(world, gate, pen.reach());
-
-            if (outside.isPresent()) {
-                VillageColonyMod.LOGGER.info(
-                        "Stranded worker {} is fenced in at {} — opened the gate at {} to walk out",
-                        workerId.toString().substring(0, 8),
-                        feet.toShortString(),
-                        gate.toShortString());
-
-                WorkTargets.set(workerId, outside.get(), 0);
-
-                return true;
-            }
-        }
-
-        giveUp(workerId, feet, "it is fenced in on the surface and the pen has no gate");
-
-        return true;
     }
 
     /** O degrau: onde ele fica de pé, e os blocos que saem para isso. */

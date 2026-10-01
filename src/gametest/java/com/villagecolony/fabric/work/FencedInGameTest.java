@@ -15,6 +15,7 @@ import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -83,7 +84,7 @@ public final class FencedInGameTest implements FabricGameTest {
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "fenced_in")
-    public void aPenWithAGateIsLeftThroughTheGate(TestContext context) {
+    public void aPenWithAGateIsLeftThroughTheGateFirst(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos center = platform(context, 1);
         BlockPos gate = pen(world, center, true);
@@ -93,24 +94,60 @@ public final class FencedInGameTest implements FabricGameTest {
         context.assertTrue(inside.enclosed() && inside.gates().contains(gate),
                 "dentro do curral: cercado=" + inside.enclosed() + ", portões=" + inside.gates());
 
-        context.assertTrue(FencedIn.openTheGate(world, gate, inside.reach()).isPresent()
-                        && isOpen(world, gate),
-                "o portão não abriu");
-        context.assertFalse(FencedIn.check(world, center).enclosed(),
-                "com o portão aberto ele continua cercado");
+        List<FencedIn.Exit> exits = FencedIn.exits(world, inside, center);
+
+        context.assertTrue(!exits.isEmpty() && exits.get(0).gate() && exits.get(0).barrier().equals(gate),
+                "a primeira saída não é o portão: " + exits);
+        context.assertFalse(inside.reach().contains(exits.get(0).outside()),
+                "o lado de fora do portão está dentro do curral: " + exits.get(0));
+        context.assertTrue(FencedIn.open(world, gate) && isOpen(world, gate), "o portão não abriu");
         context.complete();
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "fenced_in")
-    public void aPenWithoutAGateHasNoWayOut(TestContext context) {
+    public void aPenWithoutAGateIsLeftOverTheFence(TestContext context) {
         ServerWorld world = context.getWorld();
         BlockPos center = platform(context, 2);
         pen(world, center, false);
 
         FencedIn.Result inside = FencedIn.check(world, center);
+        List<FencedIn.Exit> exits = FencedIn.exits(world, inside, center);
 
         context.assertTrue(inside.enclosed() && inside.gates().isEmpty(),
                 "curral sem portão: cercado=" + inside.enclosed() + ", portões=" + inside.gates());
+        context.assertTrue(!exits.isEmpty() && exits.stream().noneMatch(FencedIn.Exit::gate),
+                "curral sem portão sem cerca para pular: " + exits);
+        context.complete();
+    }
+
+    /**
+     * Do lado de fora, numa faixa entre a cerca e um fosso, ele também não
+     * chega a 12 blocos — e a única "saída" seria pular para dentro do curral.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "fenced_in")
+    public void aStripOutsideThePenNeverJumpsIntoIt(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos center = platform(context, 5);
+        pen(world, center, true);
+
+        // Um fosso fundo em volta de uma faixa de dois blocos fora da cerca.
+        for (int dx = -PLATFORM; dx <= PLATFORM; dx++) {
+            for (int dz = -PLATFORM; dz <= PLATFORM; dz++) {
+                if (Math.max(Math.abs(dx), Math.abs(dz)) > 5) {
+                    for (int dy = -1; dy >= -6; dy--) {
+                        world.setBlockState(center.add(dx, dy, dz), Blocks.AIR.getDefaultState());
+                    }
+                }
+            }
+        }
+
+        BlockPos strip = center.add(4, 0, 0);
+        FencedIn.Result there = FencedIn.check(world, strip);
+
+        context.assertTrue(there.enclosed(), "o cenário não prende a faixa: o teste não mediria nada");
+        context.assertTrue(FencedIn.exits(world, there, strip).isEmpty(),
+                "da faixa de fora ele pularia para dentro do curral: "
+                        + FencedIn.exits(world, there, strip));
         context.complete();
     }
 
@@ -121,7 +158,7 @@ public final class FencedInGameTest implements FabricGameTest {
         BlockPos center = platform(context, 3);
         BlockPos gate = pen(world, center, true);
 
-        FencedIn.openTheGate(world, gate, FencedIn.check(world, center).reach());
+        FencedIn.open(world, gate);
 
         // Longe da arena ninguém segura o chunk: sem isto ele descarrega antes
         // dos 600 tiques, e o teste mediria o descarregamento.
@@ -138,8 +175,10 @@ public final class FencedInGameTest implements FabricGameTest {
     }
 
     /**
-     * O caminho inteiro: o encalhado dentro do curral não é solto "after 0
-     * steps" — o portão abre e ele recebe o lado de fora como destino.
+     * O caminho inteiro do encalhado: ele não é solto "after 0 steps" — nem na
+     * primeira passagem, nem na seguinte, já com o portão aberto. A segunda é a
+     * da sessão das 09:16: a busca de dentro passava pelo portão aberto e o
+     * soltava no curral.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "fenced_in")
     public void aStrandedWorkerInAPenOpensTheGateInsteadOfBeingReleased(TestContext context) {
@@ -169,13 +208,22 @@ public final class FencedInGameTest implements FabricGameTest {
 
             StrandedEscape.pass(world, id);
 
-            context.assertTrue(isOpen(world, gate),
-                    "o encalhado no curral não abriu o portão");
+            context.assertTrue(PenEscape.isEscaping(id),
+                    "o encalhado no curral não começou a sair dele");
             context.assertTrue(StrandedWorkers.isStranded(id),
                     "o encalhado no curral foi solto sem sair — o defeito do E52");
+
+            // O portão aberto, como fica quando ele chega nele.
+            FencedIn.open(world, gate);
+            StrandedEscape.pass(world, id);
+
+            context.assertTrue(StrandedWorkers.isStranded(id) && PenEscape.isEscaping(id),
+                    "com o portão aberto, ainda dentro, ele foi solto — o defeito das 09:16");
         } finally {
             StrandedWorkers.forget(id);
             StrandedEscape.clearAll();
+            PenEscape.clearAll();
+            FencedIn.clearAll();
             VillageColonyMod.WORKERS.remove(id);
             VillageColonyMod.COLONIES.remove(colony.id());
             villager.discard();

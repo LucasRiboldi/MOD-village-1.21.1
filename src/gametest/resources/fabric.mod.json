@@ -29,6 +29,7 @@
       "com.villagecolony.gametest.ColonyDetectionGameTest",
       "com.villagecolony.gametest.BedWindowGameTest",
       "com.villagecolony.fabric.work.FencedInGameTest",
+      "com.villagecolony.fabric.work.PenEscapeGameTest",
       "com.villagecolony.gametest.StorageGameTest",
       "com.villagecolony.gametest.LumberjackGameTest",
       "com.villagecolony.gametest.ChestMarkerGameTest",
