@@ -18,19 +18,16 @@ Branch `claude/sync-local-github-80cc8a` (PR #8): revisão das profissões de
 30-09 (`ef84143`, ADR-028/029, `docs/technical/Revisao-Profissoes-2026-09-30.md`)
 com 1.196 unitários e 528/528 GameTests locais; fluidez F1–F14 na §8 da Fluidez.
 
-## 30-09, 18:09–18:28 — playtest do JAR `8f500a2` + Spark `YUm45D9Sw4`
+## 30-09, noite — playtests 18h e 21h (Spark `YUm45D9Sw4`, `qI5h6MXtDA`)
 
-- **Spark (9 min):** TPS 20, MSPT mediano 11,5–14,8 ms, máx 55–74 ms; o mod
-  é ~3,3% do servidor (fundidor 1,6%, lenhador 1,5%); o planejador some.
-- **Visto:** casa de 311 blocos em ~6 min (E48); E47 soltou 3 encalhados,
-  mas 2 mineiros de mina deram `cannot dig out`; 5 saíram do ofício Vanilla;
-  13 mudas. **Não apareceu:** pão, ovelhas procriando, drop, `shared supper`.
-- **E49 (`5e9a6e7`):** 6 fundidores soltaram a tarefa de vidro 6.324 vezes.
-  **E50 (`00b27f3`):** reparo de roça riscou 62 canteiros por grama; a obra
-  do save só volta à fila ao recarregar o mundo.
-- Build 1.210 unitários, `runGametest` 531/531, 3 mutações mortas. **Não
-  visto em jogo; JAR não republicado.** Aberto: lenhador (177 "Not a
-  tree", 624 buscas), mineiro (14 `WORK_STALLED`).
+- **E49 (`5e9a6e7`) visto em jogo:** paradas do fundidor de 6.324 (18 min)
+  para 214 (22 min); fundidor de 1,6% para 0,1% do servidor. Mod = 1,9%.
+- **E50 (`00b27f3`):** roça de reparo arando a grama; não exercitado às 21h.
+- **E51 (`2895d71`):** a ponta da vila nascia colônia nova com BigHouseMOD e
+  7 adultos — `44cd9e5a` tem 7 BigHouseMOD. Análise e o que falta em
+  `docs/technical/Identidade-da-Vila-2026-09-30.md`. Não visto em jogo.
+- Decisões abertas: limpar o save; profissões só na vila do jogador.
+- Build 1.218 unitários, `runGametest` 532/532. Aberto: lenhador (73% do mod).
 
 ## Git
 
