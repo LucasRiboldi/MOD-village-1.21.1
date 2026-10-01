@@ -3,6 +3,7 @@ package com.villagecolony.fabric.event;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.ClusterRejection;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.coordination.ColonyIdentity;
 import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.ColonyState;
@@ -282,6 +283,44 @@ final class VillageAdoption {
 
         for (VillageCandidate candidate
                 : VillageColonyMod.COLONIES.bestPerColony(result.candidates())) {
+            // <b>Aglomerado de vila conhecida não é vila nova</b> — E51,
+            // 2026-09-30. A identidade comparava só centros, a até 64 blocos,
+            // e a ponta de uma vila grande nascia colônia nova com BigHouseMOD
+            // e 7 adultos, absorvida só no fim do ciclo. Agora a mesma vila
+            // gerada, ou uma cama a poucos blocos de uma construção da
+            // colônia, também dizem "é dela". Fora do raio do centro, o
+            // aglomerado só empresta os aldeões: não move o centro nem a
+            // contagem de camas, que são a leitura da sonda (Emenda 4).
+            // A colônia que o aglomerado seria, fora do registro: só para
+            // perguntar à fusão se as duas ocupam a mesma vila gerada.
+            Colony wouldBe = Colony.create(UUID.randomUUID(), candidate.center());
+
+            Optional<ColonyIdentity.Owner> owner = ColonyIdentity.ownerOf(
+                    candidate,
+                    VillageColonyMod.COLONIES,
+                    VillageColonyMod.BUILDINGS,
+                    colony -> ColonyMergeTrigger.shareAGeneratedVillage(world, wouldBe, colony));
+
+            if (owner.isPresent()
+                    && owner.get().reason() != ColonyIdentity.Reason.NEAR_ITS_CENTER) {
+                Colony colony = owner.get().colony();
+
+                VillagerRegistration.registerVillagers(world, colony, candidate.center());
+
+                if (VillageDetectionHandler.overlapsReported.add(
+                        "part|" + colony.id() + "|" + owner.get().reason())) {
+                    VillageColonyMod.LOGGER.info(
+                            "Bed cluster at {} ({} beds) is part of colony {} — {};"
+                                    + " no new colony and no BigHouseMOD",
+                            candidate.center(),
+                            candidate.bedCount(),
+                            colony.id(),
+                            owner.get().reason());
+                }
+
+                continue;
+            }
+
             int before = VillageColonyMod.COLONIES.count();
 
             Optional<Colony> known = VillageColonyMod.COLONIES

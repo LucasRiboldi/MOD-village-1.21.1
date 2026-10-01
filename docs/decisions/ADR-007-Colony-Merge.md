@@ -161,3 +161,20 @@ na vaga única.
 **Onde roda.** Só no ciclo de jogo: as arenas da bateria de GameTest ficam
 lado a lado e fundiriam colônias de testes diferentes.
 
+
+---
+
+# 7. Emenda de 2026-09-30, noite — sobrevivente e "a poucos blocos" (E51)
+
+**Sobrevivente.** O §2.1 dava a vitória a quem tinha mais camas observadas.
+Camas são a leitura do instante: no playtest, a colônia recém-nascida viu 26
+camas da vila e absorveu a antiga, com 41 trabalhadores, 9 construções e a
+mina. Agora vence a de **mais trabalhadores**; empate segue o §2.1 (camas,
+depois id). O argumento do §2.1 — reescrever menos vínculos — é o mesmo, e
+quem conta os vínculos são os trabalhadores.
+
+**Gatilho.** Além de encostar (§4), centros a até `OVERLAP_DISTANCE` e mesma
+vila gerada, funde também quando uma construção de uma fica a até
+`ColonyIdentity.NEIGHBOUR_GAP` (32) de uma da outra — pedido do autor: "se
+estiverem a poucos blocos uma da outra também". A mesma régua decide, na
+ADR-003 Emenda 5, que um aglomerado novo não é colônia nova.

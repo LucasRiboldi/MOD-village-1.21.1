@@ -36,8 +36,30 @@ public final class ColonyMerge {
     }
 
     /**
-     * Quem sobrevive: a de mais camas observadas; no empate, a de id menor,
-     * para que a escolha não dependa da ordem do mapa — ADR-007 §2.1.
+     * Quem sobrevive: a de mais trabalhadores, que é a vila estabelecida;
+     * depois a regra das camas — emenda de 2026-09-30 à ADR-007 §2.1.
+     *
+     * <p>Só as camas observadas decidiam, e as camas são uma leitura do
+     * instante: no playtest de 30-09 a colônia recém-nascida viu 26 camas da
+     * vila e absorveu a antiga, com 41 trabalhadores, 9 construções e a mina.
+     */
+    public static Colony survivorOf(Colony a, Colony b, WorkerService workers) {
+        Objects.requireNonNull(workers, "workers");
+
+        int ofA = workers.ofColony(a.id()).size();
+        int ofB = workers.ofColony(b.id()).size();
+
+        if (ofA != ofB) {
+            return ofA > ofB ? a : b;
+        }
+
+        return survivorOf(a, b);
+    }
+
+    /**
+     * Entre colônias do mesmo tamanho: a de mais camas observadas; no empate,
+     * a de id menor, para que a escolha não dependa da ordem do mapa —
+     * ADR-007 §2.1.
      */
     public static Colony survivorOf(Colony a, Colony b) {
         Objects.requireNonNull(a, "a");
@@ -61,7 +83,7 @@ public final class ColonyMerge {
             ColonyService colonies, WorkerService workers, TaskService tasks,
             ConstructionService constructions, BuildingRegistry buildings, MineRegistry mines) {
 
-        Colony survivor = survivorOf(a, b);
+        Colony survivor = survivorOf(a, b, workers);
         Colony absorbed = survivor == a ? b : a;
         UUID to = survivor.id();
         UUID from = absorbed.id();

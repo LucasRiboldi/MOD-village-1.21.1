@@ -2,6 +2,7 @@ package com.villagecolony.fabric.event;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.coordination.ColonyIdentity;
 import com.villagecolony.core.coordination.ColonyMerge;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -34,7 +35,9 @@ import java.util.UUID;
  *       original da ADR-007 §4;</li>
  *   <li>os centros estão a até {@code OVERLAP_DISTANCE} — a sobreposição que
  *       a detecção só avisava;</li>
- *   <li>os chunks dos dois centros pertencem à mesma vila gerada pelo jogo.</li>
+ *   <li>os chunks dos dois centros pertencem à mesma vila gerada pelo jogo;</li>
+ *   <li>uma construção de uma fica a poucos blocos de uma da outra —
+ *       {@link ColonyIdentity#NEIGHBOUR_GAP}, pedido do autor em 30-09.</li>
  * </ul>
  *
  * <p>O que muda de dono é regra do Core — {@link ColonyMerge}.
@@ -99,6 +102,7 @@ final class ColonyMergeTrigger {
     static boolean shouldMerge(ServerWorld world, Colony a, Colony b) {
         return VillageColonyMod.COLONIES.overlapping(a).contains(b)
                 || buildingsTouch(a.id(), b.id())
+                || ColonyIdentity.buildingsNear(a.id(), b.id(), VillageColonyMod.BUILDINGS)
                 || shareAGeneratedVillage(world, a, b);
     }
 

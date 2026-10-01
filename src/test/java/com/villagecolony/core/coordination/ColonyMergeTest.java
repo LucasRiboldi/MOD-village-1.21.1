@@ -73,6 +73,22 @@ class ColonyMergeTest {
     }
 
     @Test
+    void theEstablishedColonySurvivesEvenWhenTheNewcomerSawMoreBeds() {
+        Colony established = colonyWithBeds(0, 23);
+        Colony newcomer = colonyWithBeds(40, 26);
+        for (int i = 0; i < 41; i++) {
+            workers.register(UUID.randomUUID(), established.id());
+        }
+        for (int i = 0; i < 7; i++) {
+            workers.register(UUID.randomUUID(), newcomer.id());
+        }
+
+        assertSame(established, ColonyMerge.survivorOf(newcomer, established, workers));
+        assertEquals(established.id(), merge(newcomer, established).survivor(),
+                "a colônia recém-nascida absorveu a vila com 41 trabalhadores");
+    }
+
+    @Test
     void aTieIsBrokenByTheSmallerIdNotByTheOrder() {
         Colony a = colonyWithBeds(0, 5);
         Colony b = colonyWithBeds(40, 5);

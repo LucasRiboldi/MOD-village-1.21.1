@@ -667,3 +667,29 @@ novo, e a antiga fica sem camas até ser recusada.
 
 **O que se ganha.** As três portas fecham de uma vez, e nenhuma
 observação feita de onde o jogador estava reposiciona a obra.
+
+---
+
+## Emenda 5 — a identidade olha a vila, não só o centro (E51, 2026-09-30)
+
+**O que o jogo mostrou.** O passo 6 só perguntava "há centro a até 64
+blocos?". A vila do autor passa de 128 blocos de ponta a ponta, e os
+aglomerados da ponta viraram colônias novas em duas sessões seguidas — cada
+uma com BigHouseMOD e 7 adultos criados, absorvida só pela fusão do fim do
+ciclo. A colônia recém-nascida chegou a absorver a antiga. Isso contrariava o
+§5 desta ADR ("vila partida em dois aglomerados: manter uma única colônia").
+
+**Decisão.** Um aglomerado pertence a uma colônia existente quando qualquer
+uma destas responder sim, nesta ordem (`ColonyIdentity`):
+
+1. o centro está a até `DUPLICATE_DISTANCE` do centro dela (a regra de antes);
+2. o aglomerado e o centro dela estão na mesma vila gerada pelo jogo;
+3. uma cama do aglomerado fica a até `CLUSTER_DISTANCE` (32) de uma
+   construção dela — a régua que já junta duas camas no mesmo aglomerado.
+
+Pelos casos 2 e 3, o aglomerado só registra os aldeões na colônia dona: não
+move o centro nem a contagem de camas (Emenda 4) e não dispara fundação.
+
+**O que se perde, e é aceito.** O parágrafo acima ("vila que se afastou mais
+que `DUPLICATE_DISTANCE` vira colônia nova") deixa de valer quando a vila
+gerada ou uma construção ainda ligam as duas pontas.

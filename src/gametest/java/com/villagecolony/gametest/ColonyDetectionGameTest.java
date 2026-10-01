@@ -3,6 +3,8 @@ package com.villagecolony.gametest;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
+import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -24,6 +26,7 @@ import net.minecraft.world.poi.PointOfInterestTypes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Os primeiros testes que não precisam de um humano.
@@ -104,6 +107,49 @@ public class ColonyDetectionGameTest implements FabricGameTest {
                             MinecraftTypeAdapter.toColonyPos(anchor),
                             VillageDetector.DUPLICATE_DISTANCE)
                     .ifPresent(ColonyDetectionGameTest::forgetColony);
+        }
+
+        context.complete();
+    }
+
+    /**
+     * <b>A ponta de uma vila conhecida não nasce colônia nova</b> — E51,
+     * 2026-09-30.
+     *
+     * <p>No playtest, aglomerados a 65+ blocos do centro da vila do autor
+     * viraram colônias novas, cada uma com BigHouseMOD e 7 adultos. Aqui o
+     * centro da colônia fica a 100 blocos, mas uma casa dela fica a poucos
+     * blocos das camas: é a mesma vila.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_detection")
+    public void aClusterBesideAColonyBuildingIsNotANewColony(TestContext context) {
+        BlockPos anchor = new BlockPos(1, 1, 1);
+        BlockPos at = context.getAbsolutePos(anchor);
+        Colony known = Colony.create(UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(at.add(100, 0, 0)));
+        Building house = new Building(UUID.randomUUID(), known.id(), ResourceId.vanilla("house"),
+                MinecraftTypeAdapter.toColonyPos(at.add(-12, 0, 0)),
+                MinecraftTypeAdapter.toColonyPos(at.add(-8, 4, 4)));
+
+        VillageColonyMod.COLONIES.register(known);
+        VillageColonyMod.BUILDINGS.register(house);
+        placeBeds(context, anchor, BEDS);
+        spawnVillagers(context, anchor, VillageDetector.MIN_VILLAGERS);
+
+        runCycle(context, anchor);
+
+        try {
+            context.assertTrue(colonyOf(context, anchor).isEmpty(),
+                    "as camas ao lado de uma casa da colônia viraram colônia nova");
+            context.assertTrue(
+                    VillageColonyMod.WORKERS.ofColony(known.id()).size()
+                            >= VillageDetector.MIN_VILLAGERS,
+                    "os aldeões do aglomerado não entraram na colônia que já existia: "
+                            + VillageColonyMod.WORKERS.ofColony(known.id()).size());
+        } finally {
+            forget(context, anchor);
+            VillageColonyMod.BUILDINGS.remove(house.id());
+            forgetColony(known);
         }
 
         context.complete();
