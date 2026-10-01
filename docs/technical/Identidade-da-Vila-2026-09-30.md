@@ -136,18 +136,19 @@ existe para o mod, que procura camas e não estruturas.
 
 ## 8. As réguas do mod, em 3D
 
-| Pergunta | Régua | Altura conta? |
-|---|---|---|
-| Que camas a varredura enxerga | esfera de 64 blocos em volta do gatilho (`getInCircle` do POI) | sim |
-| Duas camas no mesmo aglomerado | 32 blocos | não, só X e Z |
-| Aglomerado novo ou colônia conhecida | centro a até 64 | não |
-| Mesma vila gerada | o jogo responde pela estrutura | — |
-| Cama perto de construção (E51) | vão de até 32 até a caixa | não |
-| Aldeões que validam o aglomerado | caixa das camas + 32 em todo lado | sim |
-| Fusão: centros sobrepostos | 32 | não |
-| Fusão: construções encostam | caixas com 1 bloco de folga | sim |
-| Fusão: construções próximas (E51) | vão de até 32 | não |
-| Planejar e detectar perto do jogador | 64 do centro da colônia | não |
+Hoje, e o que a proposta do autor muda (`docs/research/2026-09-30-quadrado-da-vila.md`;
+ainda sem código):
+
+| Pergunta | Régua hoje | Altura conta? | Proposto |
+|---|---|---|---|
+| Que camas a varredura enxerga | esfera de 64 em volta do gatilho | sim, como esfera | coluna em X/Z com janela de altura na faixa da vila; nada no subsolo nem no céu |
+| Duas camas no mesmo aglomerado | 32 | não | igual |
+| Aglomerado novo ou colônia conhecida | centro a até 64 (+ as regras do E51) | não | dentro da caixa da vila + 16 |
+| Aldeões que validam o aglomerado | caixa das camas + 32 | sim | igual, recortada pela janela de altura |
+| Fusão | centros a 32, construções encostando ou a 32, mesma vila gerada | em parte | caixas das duas vilas se tocando (+ 16) |
+| Planejar e detectar perto do jogador | 64 do centro da colônia | não | jogador dentro da caixa da vila + 32 |
+| Centro da vila | média das camas, ou o sino; anda a cada leitura | média Y das camas | meio da caixa, no nível da rua; só anda quando a caixa cresce |
+| Tamanho da vila | não existe | — | caixa: a da vila gerada, ou 144 × 144; cresce com construção, lote e rua |
 
 O centro da colônia é a média das camas do aglomerado, ou o sino quando há
 um a até 32 blocos de uma cama dele. Ele não é o centro da vila gerada.
