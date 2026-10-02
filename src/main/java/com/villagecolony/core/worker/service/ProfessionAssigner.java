@@ -1,6 +1,7 @@
 package com.villagecolony.core.worker.service;
 
 import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.core.worker.model.ProfessionPolicySet;
 import com.villagecolony.core.worker.model.Worker;
 
 import java.util.ArrayList;
@@ -114,7 +115,13 @@ public final class ProfessionAssigner {
     /** Vaga conforme a população adulta observada no scanner Fabric. */
     public static Optional<ProfessionType> vacancy(
             Collection<Worker> colonyWorkers, int adultPopulation) {
-        return vacancyFor(null, colonyWorkers, adultPopulation);
+        return vacancy(colonyWorkers, adultPopulation, ProfessionPolicySet.defaults());
+    }
+
+    /** Vaga conforme a política persistida do mundo. */
+    public static Optional<ProfessionType> vacancy(
+            Collection<Worker> colonyWorkers, int adultPopulation, ProfessionPolicySet policies) {
+        return vacancyFor(null, colonyWorkers, adultPopulation, policies);
     }
 
     /**
@@ -149,7 +156,16 @@ public final class ProfessionAssigner {
     public static Optional<ProfessionType> vacancyFor(
             Worker candidate, Collection<Worker> colonyWorkers, int adultPopulation) {
 
+        return vacancyFor(candidate, colonyWorkers, adultPopulation, ProfessionPolicySet.defaults());
+    }
+
+    /** Vaga que este candidato pode ocupar, respeitando a política do mundo. */
+    public static Optional<ProfessionType> vacancyFor(
+            Worker candidate, Collection<Worker> colonyWorkers, int adultPopulation,
+            ProfessionPolicySet policies) {
+
         Objects.requireNonNull(colonyWorkers, "colonyWorkers");
+        Objects.requireNonNull(policies, "policies");
 
         if (adultPopulation < 0) {
             throw new IllegalArgumentException("adultPopulation must not be negative");
@@ -188,11 +204,13 @@ public final class ProfessionAssigner {
         // suficientes para a próxima função, nenhuma função ativa pode
         // ficar vazia. A camada Fabric cria os adultos e as camas que
         // faltarem; este trecho garante a parte determinística da regra.
-        for (int index = 0; index < FOUNDATION_ORDER.size()
+        List<ProfessionType> foundationOrder = policies.orderFor(FOUNDATION_ORDER).stream()
+                .filter(type -> policies.policyOf(type).enabled()).toList();
+        for (int index = 0; index < foundationOrder.size()
                 && index < adultPopulation; index++) {
-            ProfessionType type = FOUNDATION_ORDER.get(index);
+            ProfessionType type = foundationOrder.get(index);
 
-            if (counts.get(type) >= 1) {
+            if (atMaximum(type, counts, policies) || counts.get(type) >= 1) {
                 continue;
             }
 
@@ -209,8 +227,10 @@ public final class ProfessionAssigner {
             return Optional.of(type);
         }
 
-        for (ProfessionType type : PRODUCER_ORDER) {
-            if (counts.get(type) >= targetCount(type, adultPopulation)) {
+        List<ProfessionType> producerOrder = policies.orderFor(PRODUCER_ORDER);
+        for (ProfessionType type : producerOrder) {
+            if (!policies.policyOf(type).enabled() || atMaximum(type, counts, policies)
+                    || counts.get(type) >= targetCount(type, adultPopulation, producerOrder, policies)) {
                 if (colonyId != null) {
                     HiringLog.record(colonyId, type, HiringLog.Outcome.AT_TARGET);
                 }
@@ -241,21 +261,39 @@ public final class ProfessionAssigner {
         return Optional.empty();
     }
 
-    private static int targetCount(ProfessionType type, int adults) {
-        int slots;
+    private static boolean atMaximum(ProfessionType type, Map<ProfessionType, Integer> counts,
+            ProfessionPolicySet policies) {
+        int maximum = policies.policyOf(type).maximumWorkers();
+        return maximum != 0 && counts.getOrDefault(type, 0) >= maximum;
+    }
 
-        if (adults < ADULTS_PER_BATCH) {
-            slots = Math.min(adults, PRODUCER_ORDER.size());
-        } else {
-            slots = (adults / ADULTS_PER_BATCH) * PRODUCER_ORDER.size()
-                    + Math.min(adults % ADULTS_PER_BATCH, PRODUCER_ORDER.size());
+    private static int targetCount(ProfessionType type, int adults, List<ProfessionType> order,
+            ProfessionPolicySet policies) {
+        if (order.isEmpty()) {
+            return 0;
         }
-
-        int perProfession = slots / PRODUCER_ORDER.size();
-        int extras = slots % PRODUCER_ORDER.size();
-        int position = PRODUCER_ORDER.indexOf(type);
-
-        return perProfession + (position >= 0 && position < extras ? 1 : 0);
+        int slots = adults < ADULTS_PER_BATCH ? Math.min(adults, PRODUCER_ORDER.size())
+                : (adults / ADULTS_PER_BATCH) * PRODUCER_ORDER.size()
+                + Math.min(adults % ADULTS_PER_BATCH, PRODUCER_ORDER.size());
+        Map<ProfessionType, Integer> targets = new EnumMap<>(ProfessionType.class);
+        for (ProfessionType role : order) {
+            targets.put(role, 0);
+        }
+        int cursor = 0;
+        for (int assigned = 0; assigned < slots; assigned++) {
+            int checked = 0;
+            while (checked < order.size() && atMaximum(order.get(cursor), targets, policies)) {
+                cursor = (cursor + 1) % order.size();
+                checked++;
+            }
+            if (checked == order.size()) {
+                break;
+            }
+            ProfessionType selected = order.get(cursor);
+            targets.merge(selected, 1, Integer::sum);
+            cursor = (cursor + 1) % order.size();
+        }
+        return targets.getOrDefault(type, 0);
     }
 
     /**
@@ -318,25 +356,35 @@ public final class ProfessionAssigner {
             WorkerService workers, UUID colonyId, Set<UUID> employable,
             int adultPopulation, Predicate<UUID> equipped) {
 
+        return assignMissing(workers, colonyId, employable, adultPopulation, equipped,
+                ProfessionPolicySet.defaults());
+    }
+
+    /** Atribui apenas vagas permitidas pela política persistida do mundo. */
+    public static int assignMissing(
+            WorkerService workers, UUID colonyId, Set<UUID> employable,
+            int adultPopulation, Predicate<UUID> equipped, ProfessionPolicySet policies) {
+
         Objects.requireNonNull(workers, "workers");
         Objects.requireNonNull(colonyId, "colonyId");
         Objects.requireNonNull(employable, "employable");
         Objects.requireNonNull(equipped, "equipped");
+        Objects.requireNonNull(policies, "policies");
 
         if (adultPopulation < 0) {
             throw new IllegalArgumentException("adultPopulation must not be negative");
         }
 
-        int assigned = assignPass(workers, colonyId, employable, adultPopulation, equipped);
+        int assigned = assignPass(workers, colonyId, employable, adultPopulation, equipped, policies);
 
         return assigned + assignPass(
-                workers, colonyId, employable, adultPopulation, villagerId -> true);
+                workers, colonyId, employable, adultPopulation, villagerId -> true, policies);
     }
 
     /** Uma passada de atribuição sobre quem o filtro aceitar. */
     private static int assignPass(
             WorkerService workers, UUID colonyId, Set<UUID> employable, int adultPopulation,
-            Predicate<UUID> accepts) {
+            Predicate<UUID> accepts, ProfessionPolicySet policies) {
 
         int assigned = 0;
 
@@ -352,7 +400,7 @@ public final class ProfessionAssigner {
             // volta na passagem seguinte, e é justamente ele o mais
             // escasso depois de abrir a própria vaga.
             Optional<ProfessionType> vacancy = vacancyFor(
-                    worker, workers.ofColony(colonyId), adultPopulation);
+                    worker, workers.ofColony(colonyId), adultPopulation, policies);
 
             if (vacancy.isEmpty()) {
                 // <b>Vazio por dois motivos, e eles não se tratam
@@ -369,7 +417,7 @@ public final class ProfessionAssigner {
                 // comportamento que a linha de reserva quer: um
                 // trabalhador de molho não pode congelar a contratação da
                 // colônia.
-                if (vacancy(workers.ofColony(colonyId), adultPopulation).isEmpty()) {
+                if (vacancy(workers.ofColony(colonyId), adultPopulation, policies).isEmpty()) {
                     break;
                 }
 

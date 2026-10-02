@@ -1,6 +1,6 @@
 # ADR-026 — Políticas de profissão por mundo
 
-**Status:** aceita  
+**Status:** aceita
 **Data:** 2026-10-02
 
 ## Contexto

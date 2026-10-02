@@ -21,6 +21,7 @@ import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.HiringLog;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
+import com.villagecolony.data.save.ProfessionPolicySavedData;
 import com.villagecolony.core.worker.service.VacancyEnforcer;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.core.storage.model.WorkerStorage;
@@ -152,7 +153,8 @@ final class VillagerRegistration {
                 colony.id(),
                 result.employable(),
                 result.adultPopulation(),
-                result.equippable()::contains);
+                result.equippable()::contains,
+                ProfessionPolicySavedData.get(world.getServer()).policies());
 
         if (assigned > 0) {
             VillageColonyMod.LOGGER.info(
