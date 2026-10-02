@@ -226,7 +226,7 @@ public final class StructureBlueprintReader {
      *     disso seria pior que não construir
      */
     public static Optional<Blueprint> read(ServerWorld world, ResourceId structure) {
-        Identifier id = MinecraftTypeAdapter.toIdentifier(structure);
+        Identifier id = MinecraftTypeAdapter.toIdentifier(ColonyModels.sourceFor(structure)); // ver ColonyModels
 
         Optional<StructureTemplate> template =
                 world.getStructureTemplateManager().getTemplate(id);

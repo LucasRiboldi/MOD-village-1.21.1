@@ -8,6 +8,7 @@ import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.fabric.integration.ColonyModels;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.VillageStructures;
@@ -251,6 +252,7 @@ public final class FarmPlans {
 
     /** Se esta planta é uma roça, e não uma casa. */
     public static boolean isFarm(ResourceId id) {
-        return id.path().contains("farm");
+        // A casa do fazendeiro da colônia (trade_farmer) é casa, não roça.
+        return id.path().contains("farm") && !ColonyModels.isColonyModel(id);
     }
 }
