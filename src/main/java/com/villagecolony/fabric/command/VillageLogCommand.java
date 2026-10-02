@@ -80,7 +80,7 @@ public final class VillageLogCommand {
                         .formatted(Formatting.GRAY),
                 false);
         String constructionPriority = VillageLogPresenter.constructionPriority(
-                HousePlans.priorityFor(nearby), workers, nearby.observedBeds());
+                com.villagecolony.fabric.work.ConstructionTurn.priorityFor(source.getWorld(), nearby), workers, nearby.observedBeds());
         source.sendFeedback(
                 () -> Text.literal(constructionPriority).formatted(Formatting.YELLOW),
                 false);

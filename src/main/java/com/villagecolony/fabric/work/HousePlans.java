@@ -211,15 +211,6 @@ public final class HousePlans {
                 beds);
     }
 
-    /** Prioridade calculada da colônia ativa, usada pelo diagnóstico no jogo. */
-    public static ConstructionPriority priorityFor(Colony colony) {
-        int adults = VillageColonyMod.WORKERS.countOfColony(colony.id());
-        return nextConstructionPriority(
-                VillageColonyMod.BUILDINGS.ofColony(colony.id()),
-                adults,
-                effectiveBedsForPriority(colony.id(), adults, colony.observedBeds()));
-    }
-
     static int effectiveBedsForPriority(UUID colonyId, int adults, int observedBeds) {
         if (!WorkerHousingNeeds.needsHouse(colonyId) || adults == 0) {
             return observedBeds;
@@ -286,12 +277,21 @@ public final class HousePlans {
         int adults = VillageColonyMod.WORKERS.countOfColony(colony.id());
 
         int beds = effectiveBedsForPriority(colony.id(), adults, colony.observedBeds());
+        String previous = lastNonHouseType(buildings).orElse("");
+
+        // A casa do ofício que falta, sem falta de cama — Regra 49. Sem planta
+        // de oficina possível agora, o rodízio de sempre segue.
+        if (ConstructionTurn.of(buildings, adults, beds, ConstructionTurn.workshopMissing(world, colony, buildings))
+                == ConstructionPriority.WORKSHOP) {
+            List<Blueprint> workshops = nonHousePlansFor(world, colony, previous, buildings);
+            if (!workshops.isEmpty()) {
+                return workshops;
+            }
+        }
 
         if (nextConstructionPriority(buildings, adults, beds).requiresHouse()) {
             return plansFor(world, colony);
         }
-
-        String previous = lastNonHouseType(buildings).orElse("");
 
         return nonHousePlansFor(world, colony, previous, buildings);
     }

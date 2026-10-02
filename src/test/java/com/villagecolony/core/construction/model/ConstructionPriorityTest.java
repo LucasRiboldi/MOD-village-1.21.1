@@ -40,4 +40,26 @@ class ConstructionPriorityTest {
         assertEquals(ConstructionPriority.ROTATION_HOUSE, priority);
         assertTrue(priority.requiresHouse());
     }
+
+    /** Regra 49 (10-02): sem falta de cama, a casa do ofício que falta vem antes de tudo. */
+    @Test
+    void aMissingWorkshopComesBeforeTheRotationAndTheFirstHouse() {
+        assertEquals(ConstructionPriority.WORKSHOP, ConstructionPriority.decide(true, false, 6, 6, true));
+        assertEquals(ConstructionPriority.WORKSHOP, ConstructionPriority.decide(false, false, 0, 0, true));
+        assertFalse(ConstructionPriority.WORKSHOP.requiresHouse());
+    }
+
+    /** Regra 49: faltando cama, a casa vence a oficina. */
+    @Test
+    void aBedShortageStillComesFirst() {
+        assertEquals(ConstructionPriority.HOUSING_DEFICIT, ConstructionPriority.decide(true, false, 8, 6, true));
+    }
+
+    /** Regra 49: com todas as oficinas de pé, o rodízio de sempre volta. */
+    @Test
+    void withEveryWorkshopStandingTheRotationIsBack() {
+        assertEquals(ConstructionPriority.ROTATION_HOUSE, ConstructionPriority.decide(true, false, 6, 6, false));
+        assertEquals(ConstructionPriority.ROTATION_NON_RESIDENTIAL,
+                ConstructionPriority.decide(true, true, 6, 6, false));
+    }
 }

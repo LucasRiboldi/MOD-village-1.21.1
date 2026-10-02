@@ -49,7 +49,9 @@ final class ConstructionOrder {
         order.put(ProfessionType.FARMER, List.of("farm"));
         order.put(ProfessionType.SHEPHERD, List.of("shepherd", "animal_pen"));
         order.put(ProfessionType.MASON, List.of("mason"));
-        order.put(ProfessionType.SMELTER, List.of("armorer", "tool_smith", "weaponsmith", "weapon_smith"));
+        order.put(ProfessionType.SMELTER, List.of("armorer", "weaponsmith", "weapon_smith"));
+        // O ferramenteiro é do mineiro — Regra 49, 2026-10-02: a picareta é dele.
+        order.put(ProfessionType.MINER, List.of("tool_smith"));
         order.put(ProfessionType.CARPENTER, List.of("fletcher"));
         WORKSHOPS = Collections.unmodifiableMap(order);
     }

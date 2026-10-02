@@ -70,6 +70,7 @@ final class VillageLogPresenter {
         return switch (priority) {
             case HOUSING_DEFICIT -> "Próxima obra: moradia; faltam "
                     + (adults - beds) + " camas para os moradores.";
+            case WORKSHOP -> "Próxima obra: a casa de um ofício que ainda não tem a sua.";
             case FIRST_HOUSE -> "Próxima obra: a primeira moradia da vila.";
             case ROTATION_NON_RESIDENTIAL ->
                     "Próxima obra: infraestrutura; as camas já atendem os moradores.";
