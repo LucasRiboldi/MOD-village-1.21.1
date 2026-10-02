@@ -67,4 +67,12 @@ class MineDescentTest {
 
         assertFalse(MineDescent.blocksAt(10, DEEP), "desistir de pedra ao lado não é descida travada");
     }
+
+    /** A-4: a descida é dada como travada uma vez só — é quando a mina nova nasce. */
+    @Test
+    void theDescentIsDeclaredBlockedOnceSoTheMineMovesOnce() {
+        assertFalse(MineDescent.stoppedAt(0, STUCK, DEEP), "a primeira parada não trava");
+        assertTrue(MineDescent.stoppedAt(10, STUCK, DEEP), "a segunda trava: a mina muda");
+        assertFalse(MineDescent.stoppedAt(20, STUCK, DEEP), "a terceira não muda a mina de novo");
+    }
 }

@@ -286,7 +286,9 @@ public final class MinerHands {
         // MineDescent: a pedra muda, o ponto onde a descida trava não.
         if (world.getEntity(workerId) instanceof VillagerEntity stuck
                 && !StrandedEscape.isOut(world, stuck.getBlockPos())) {
-            MineDescent.stoppedAt(world.getTime(), stuck.getBlockPos(), job.target);
+            if (MineDescent.stoppedAt(world.getTime(), stuck.getBlockPos(), job.target)) {
+                MineEdge.relocate(job.task.colonyId(), stuck.getBlockPos()); // A-4: mina nova na borda
+            }
         }
 
         // A posição volta para o cursor da galeria — 2026-08-27. Sem

@@ -328,6 +328,11 @@ public final class MineSite {
         return true;
     }
 
+    /** A boca neste ponto da borda, pelas regras de sempre — A-4 (ver MineEdge). */
+    static Optional<BlockPos> edgeMouth(ServerWorld world, BlockPos center, int dx, int dz, Side side) {
+        return surfaceAt(world, center, dx, dz, LOOK_UP, LOOK_DOWN, side);
+    }
+
     /**
      * O chão desta coluna, se ela servir de boca.
      *

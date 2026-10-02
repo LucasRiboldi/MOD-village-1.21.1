@@ -55,10 +55,12 @@ final class MineDescent {
     /**
      * O mineiro parado em {@code miner}, debaixo da terra, desistiu de
      * {@code stone}.
+     *
+     * @return se a descida acabou de ser dada como travada neste ponto
      */
-    static void stoppedAt(long now, BlockPos miner, BlockPos stone) {
+    static boolean stoppedAt(long now, BlockPos miner, BlockPos stone) {
         if (stone.getY() >= miner.getY() - BELOW) {
-            return;
+            return false;
         }
 
         int count = 1;
@@ -85,6 +87,9 @@ final class MineDescent {
                             + " is skipped for {} ticks",
                     miner.toShortString(), count, RADIUS, memoryFor(count));
         }
+
+        // Travou agora (e não de novo): quem chama abre a mina nova — A-4.
+        return count == TIMES_TO_BLOCK;
     }
 
     /** Se esta pedra fica abaixo de uma descida travada e ainda de castigo. */

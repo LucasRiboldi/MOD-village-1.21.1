@@ -180,12 +180,12 @@ public final class WaitingWork {
     public static void askForWhatTheWorkIsWaitingOn(ServerWorld world, Colony colony) {
         VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
                 .filter(project -> project.state() == ConstructionState.WAITING_RESOURCES)
-                .ifPresent(project -> project.nextBlock()
-                        .ifPresent(block -> askTheCraftsmanFor(world, project, block.block())));
+                .ifPresent(project -> project.remainingMaterials().keySet()  // a lista inteira (A-3, 10-02)
+                        .forEach(wanted -> askTheCraftsmanFor(world, project, wanted)));
     }
 
     /**
-     * Abre antecipadamente uma tarefa para a primeira peça de planta que a
+     * Abre antecipadamente, pela lista inteira da obra (A-3), a tarefa da peça que a
      * cadeia de recursos não declara. A peça continua sendo feita apenas
      * quando os ingredientes já existem fisicamente nos baús.
      */
@@ -194,7 +194,7 @@ public final class WaitingWork {
             return;
         }
 
-        project.nextBlock().ifPresent(block -> askTheCraftsmanFor(world, project, block.block()));
+        project.remainingMaterials().keySet().forEach(wanted -> askTheCraftsmanFor(world, project, wanted)); // A-3
     }
 
     private static boolean askTheCraftsmanFor(

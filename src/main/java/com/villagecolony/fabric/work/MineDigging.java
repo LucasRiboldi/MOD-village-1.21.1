@@ -403,7 +403,16 @@ public final class MineDigging {
 
         Side descent = MineCuts.sideOf(colonyId);
 
-        Optional<BlockPos> mouth = MineSite.mouthOf(world, center, descent);
+        // A descida da mina anterior travou: a nova nasce na borda, longe da água (A-4).
+        Optional<MineEdge.Choice> edge = MineEdge.relocation(world, colonyId, center);
+
+        if (edge.isPresent()) {
+            descent = edge.get().side();
+        }
+
+        Optional<BlockPos> mouth = edge.isPresent()
+                ? Optional.of(edge.get().mouth())
+                : MineSite.mouthOf(world, center, descent);
         Optional<WaterMineAccess.Route> waterAccess = Optional.empty();
 
         if (mouth.isEmpty()) {
