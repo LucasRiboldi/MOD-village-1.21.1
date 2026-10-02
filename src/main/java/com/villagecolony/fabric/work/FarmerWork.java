@@ -8,7 +8,9 @@ import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.data.save.ProfessionPolicySavedData;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.fabric.integration.ChestDepositor;
@@ -156,6 +158,12 @@ public final class FarmerWork {
     /** Devolve a busca ao raio de verdade. */
     public static void restoreSearch() {
         searchRadius = SEARCH_RADIUS;
+    }
+
+    static int searchRadius(ServerWorld world) {
+        int configured = ProfessionPolicySavedData.get(world.getServer()).policies()
+                .policyOf(ProfessionType.FARMER).searchRadius();
+        return configured < 0 ? searchRadius : configured;
     }
 
     /**

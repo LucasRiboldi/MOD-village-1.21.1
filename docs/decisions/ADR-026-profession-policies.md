@@ -35,9 +35,9 @@ fundacional e Construtor continua fora do crescimento automático.
 
 ## Consequências
 
-- Uma profissão desabilitada não recebe novas atribuições ou novas tarefas;
-  trabalhador já atribuído mantém a profissão até uma futura política de
-  realocação, que não entra nesta versão.
+- Uma profissão desabilitada não recebe novas atribuições. Trabalhador já
+  atribuído mantém profissão e trabalho até uma futura política de realocação,
+  que não entra nesta versão.
 - O teto limita novas atribuições; não remove nem desaloja trabalhadores já
   existentes.
 - Reordenar muda apenas o desempate de vagas futuras; não reassina aldeões já

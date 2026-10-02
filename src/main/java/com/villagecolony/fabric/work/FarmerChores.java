@@ -67,7 +67,8 @@ final class FarmerChores {
             return;
         }
 
-        CropPatch.Field field = CropPatch.survey(world, colonyId, job.center, FarmerWork.searchRadius);
+        int searchRadius = FarmerWork.searchRadius(world);
+        CropPatch.Field field = CropPatch.survey(world, colonyId, job.center, searchRadius);
 
         Optional<BlockPos> found = field.ripe();
         Chore chore = Chore.HARVEST;
@@ -102,7 +103,7 @@ final class FarmerChores {
                     FarmerWork.SUBJECT,
                     field.incomplete() ? IdleReason.SWEEP_INCOMPLETE : IdleReason.NO_TARGET,
                     "nothing ripe and no empty plot within "
-                            + FarmerWork.searchRadius + " blocks of the village",
+                            + searchRadius + " blocks of the village",
                     world.getTime());
 
             if (!field.incomplete()) {

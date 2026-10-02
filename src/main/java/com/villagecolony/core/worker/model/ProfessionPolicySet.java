@@ -18,7 +18,11 @@ public final class ProfessionPolicySet {
         Objects.requireNonNull(hiringOrder, "hiringOrder");
         EnumMap<ProfessionType, ProfessionPolicy> copy = new EnumMap<>(ProfessionType.class);
         for (ProfessionType type : ProfessionType.values()) {
-            copy.put(type, Objects.requireNonNull(policies.get(type), "missing policy: " + type));
+            ProfessionPolicy policy = Objects.requireNonNull(policies.get(type), "missing policy: " + type);
+            if (!supportsSearchRadius(type) && policy.hasConfiguredRadius()) {
+                throw new IllegalArgumentException("search radius does not apply to " + type);
+            }
+            copy.put(type, policy);
         }
         if (hiringOrder.size() != ProfessionType.values().length
                 || hiringOrder.stream().distinct().count() != ProfessionType.values().length
@@ -50,6 +54,14 @@ public final class ProfessionPolicySet {
 
     public List<ProfessionType> hiringOrder() {
         return hiringOrder;
+    }
+
+    /** Só estes trabalhos procuram alvos no mundo por um raio configurável. */
+    public static boolean supportsSearchRadius(ProfessionType type) {
+        return switch (Objects.requireNonNull(type, "type")) {
+            case LUMBERJACK, FARMER, SHEPHERD -> true;
+            default -> false;
+        };
     }
 
     /** Preserva a ordem global, removendo papéis que não participam desta fase. */

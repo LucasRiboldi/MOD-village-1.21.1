@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ProfessionPolicySetTest {
 
@@ -66,5 +67,45 @@ class ProfessionPolicySetTest {
                 .filter(worker -> worker.profession().filter(ProfessionType.LUMBERJACK::equals).isPresent())
                 .count();
         assertEquals(2, lumberjacks);
+    }
+
+    @Test
+    void disabledProducerReleasesItsGrowthSlotsToTheNextEnabledProfession() {
+        ProfessionPolicySet defaults = ProfessionPolicySet.defaults();
+        EnumMap<ProfessionType, ProfessionPolicy> policies = new EnumMap<>(defaults.policies());
+        policies.put(ProfessionType.MINER, new ProfessionPolicy(false, 0, -1));
+        ProfessionPolicySet configured = new ProfessionPolicySet(policies, defaults.hiringOrder());
+        WorkerService workers = new WorkerService();
+        UUID colony = UUID.randomUUID();
+        HashSet<UUID> ids = new HashSet<>();
+        for (int index = 0; index < 16; index++) {
+            ids.add(workers.register(UUID.randomUUID(), colony).villagerId());
+        }
+
+        ProfessionAssigner.assignMissing(workers, colony, ids, 16, ignored -> true, configured);
+
+        long lumberjacks = workers.ofColony(colony).stream()
+                .filter(worker -> worker.profession().filter(ProfessionType.LUMBERJACK::equals).isPresent())
+                .count();
+        assertEquals(2, lumberjacks);
+    }
+
+    @Test
+    void policyRejectsWorkerLimitsOutsideTheSafeRange() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new ProfessionPolicy(true, -1, ProfessionPolicy.AUTOMATIC_RADIUS));
+        assertThrows(IllegalArgumentException.class,
+                () -> new ProfessionPolicy(true, ProfessionPolicy.MAXIMUM_WORKERS_LIMIT + 1,
+                        ProfessionPolicy.AUTOMATIC_RADIUS));
+    }
+
+    @Test
+    void policySetRejectsSearchRadiusForAProfessionWithoutWorldSearch() {
+        ProfessionPolicySet defaults = ProfessionPolicySet.defaults();
+        EnumMap<ProfessionType, ProfessionPolicy> policies = new EnumMap<>(defaults.policies());
+        policies.put(ProfessionType.MINER, new ProfessionPolicy(true, 0, 32));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new ProfessionPolicySet(policies, defaults.hiringOrder()));
     }
 }

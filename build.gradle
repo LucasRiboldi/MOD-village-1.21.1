@@ -15,6 +15,10 @@ base {
 
 repositories {
     // Fabric e Mojang já são adicionados pelo Loom.
+    maven {
+        name = 'TerraformersMC'
+        url = 'https://maven.terraformersmc.com/'
+    }
 }
 
 // Testes de jogo (item A do §8 de Project-State.md).
@@ -34,6 +38,11 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    // API opcional do Mod Menu: fica disponível no ambiente de
+    // desenvolvimento, mas não vira dependência obrigatória do mod.
+    modCompileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+    modLocalRuntime "com.terraformersmc:modmenu:${project.modmenu_version}"
 
     // Unit tests cobrem o Core, que não depende de Minecraft. Ver
     // Testing-Strategy.md §3.

@@ -227,9 +227,13 @@ public final class ProfessionAssigner {
             return Optional.of(type);
         }
 
-        List<ProfessionType> producerOrder = policies.orderFor(PRODUCER_ORDER);
+        // Profissões desativadas não participam da distribuição dos próximos
+        // trabalhadores. Assim, a respectiva vaga é redistribuída para a
+        // próxima profissão habilitada, em vez de se perder silenciosamente.
+        List<ProfessionType> producerOrder = policies.orderFor(PRODUCER_ORDER).stream()
+                .filter(type -> policies.policyOf(type).enabled()).toList();
         for (ProfessionType type : producerOrder) {
-            if (!policies.policyOf(type).enabled() || atMaximum(type, counts, policies)
+            if (atMaximum(type, counts, policies)
                     || counts.get(type) >= targetCount(type, adultPopulation, producerOrder, policies)) {
                 if (colonyId != null) {
                     HiringLog.record(colonyId, type, HiringLog.Outcome.AT_TARGET);

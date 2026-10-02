@@ -6,14 +6,23 @@ public record ProfessionPolicy(boolean enabled, int maximumWorkers, int searchRa
     /** Sem teto extra: preserva o cálculo histórico por população. */
     public static final int UNLIMITED = 0;
 
+    /** Teto defensivo para evitar configuração acidentalmente inviável. */
+    public static final int MAXIMUM_WORKERS_LIMIT = 512;
+
+    public static final int MINIMUM_SEARCH_RADIUS = 16;
+
+    public static final int MAXIMUM_SEARCH_RADIUS = 128;
+
     /** Raio decidido pelo comportamento original da profissão. */
     public static final int AUTOMATIC_RADIUS = -1;
 
     public ProfessionPolicy {
-        if (maximumWorkers < UNLIMITED) {
-            throw new IllegalArgumentException("maximumWorkers must not be negative");
+        if (maximumWorkers < UNLIMITED || maximumWorkers > MAXIMUM_WORKERS_LIMIT) {
+            throw new IllegalArgumentException("maximumWorkers must be between zero and "
+                    + MAXIMUM_WORKERS_LIMIT);
         }
-        if (searchRadius != AUTOMATIC_RADIUS && (searchRadius < 16 || searchRadius > 128)) {
+        if (searchRadius != AUTOMATIC_RADIUS && (searchRadius < MINIMUM_SEARCH_RADIUS
+                || searchRadius > MAXIMUM_SEARCH_RADIUS)) {
             throw new IllegalArgumentException("searchRadius must be automatic or between 16 and 128");
         }
     }

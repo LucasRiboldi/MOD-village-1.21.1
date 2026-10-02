@@ -1,0 +1,21 @@
+{
+  "text.villagecolony.professions": "Profissões",
+  "text.villagecolony.professions.loading": "Carregando políticas do servidor...",
+  "text.villagecolony.professions.enabled": "Profissão: ativa",
+  "text.villagecolony.professions.disabled": "Profissão: desativada",
+  "text.villagecolony.professions.maximum": "Máximo de trabalhadores: %s",
+  "text.villagecolony.professions.maximum.unlimited": "Máximo de trabalhadores: sem limite",
+  "text.villagecolony.professions.radius": "Raio de busca: %s blocos",
+  "text.villagecolony.professions.radius.automatic": "Raio de busca: padrão do mod",
+  "text.villagecolony.professions.priority": "Prioridade de contratação: %s de 8",
+  "text.villagecolony.professions.move_up": "Mover acima",
+  "text.villagecolony.professions.move_down": "Mover abaixo",
+  "text.villagecolony.profession.miner": "Mineiro",
+  "text.villagecolony.profession.lumberjack": "Lenhador",
+  "text.villagecolony.profession.mason": "Pedreiro",
+  "text.villagecolony.profession.smelter": "Fundidor",
+  "text.villagecolony.profession.carpenter": "Carpinteiro",
+  "text.villagecolony.profession.farmer": "Fazendeiro",
+  "text.villagecolony.profession.shepherd": "Pastor",
+  "text.villagecolony.profession.builder": "Construtor"
+}
