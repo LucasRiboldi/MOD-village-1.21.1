@@ -9366,3 +9366,15 @@ reutilizavel.
   - 1034 unitarios; 434/434 GameTests em duas rodadas.
 - **Nao verificado em jogo.** Sinais no log: `Focus village is now`,
   `Planner turns`, e a queda de `Colony cycle took`.
+
+### 2026-10-02 - Politicas de profissao e configuracao pelo Mod Menu
+
+- A politica e unica por mundo, persistida no `PersistentState` do Overworld
+  e sincronizada pelo servidor quando o jogador entra ou abre a tela.
+- A ordem e uma lista completa das oito profissoes. As ordens historicas de
+  fundacao e crescimento sao projecoes dessa lista; os valores padrao mantem
+  o comportamento anterior sem limite adicional nem raio sobrescrito.
+- O Mod Menu e opcional. A tela cliente apenas edita o espelho da politica;
+  atualizacoes exigem permissao de operador nivel 2 no servidor.
+- O raio configuravel existe somente para lenhador, fazendeiro e pastor e
+  altera suas buscas reais. `padrao do mod` preserva 64, 32 e 32 blocos.
