@@ -23,6 +23,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Item;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.registry.Registries;
+import net.minecraft.util.Hand;
+import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 
 import java.util.HashMap;
@@ -470,6 +472,7 @@ public final class SmelterWork {
         VillageColonyMod.LOGGER.info(
                 "Smelter {} made {} out of {} — {} this task", workerId, made.getItem(), raw.getItem(), job.smelted);
         WorkerStrikes.worked(workerId, job.task);
+        if (world.getEntity(workerId) instanceof VillagerEntity smelter) { smelter.swingHand(Hand.MAIN_HAND); }
 
         return true;
     }

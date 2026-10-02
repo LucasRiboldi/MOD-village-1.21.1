@@ -89,6 +89,9 @@ public final class StrandedEscape {
         // O rastro de quem anda solto: o caminho de volta, se ele encalhar.
         MineReturn.record(world);
 
+        // E o tempo de cada um — Regra 50. Ver WorkTime.
+        WorkTime.sample(world);
+
         for (UUID workerId : StrandedWorkers.all()) {
             pass(world, workerId);
         }

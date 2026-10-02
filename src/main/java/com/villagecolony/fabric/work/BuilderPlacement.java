@@ -34,6 +34,7 @@ import net.minecraft.block.CropBlock;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
+import net.minecraft.util.Hand;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -228,6 +229,11 @@ public final class BuilderPlacement {
         project.markPlaced(block);
 
         job.placed++;
+
+        // O gesto de assentar — e o sinal de "trabalhando" do WorkTime (Regra 50).
+        if (world.getEntity(workerId) instanceof VillagerEntity builder) {
+            builder.swingHand(Hand.MAIN_HAND);
+        }
 
         // A única passagem em que uma peça de verdade encosta no mundo,
         // e é por isso que a conta da barreira sai daqui: as outras

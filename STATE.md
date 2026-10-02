@@ -87,8 +87,8 @@ Em ordem:
 | 8 | Bosque fundacional | duas árvores maduras distintas a 48–56 blocos |
 | 9 | Placa órfã e obra longe (PR #4 e #6) | ver a tabela acima |
 
-Depois de jogar, rodar `python scripts/analyze_village_log.py`, que conta
-todas essas assinaturas.
+Depois de jogar: `python scripts/analyze_village_log.py` (assinaturas) e
+`python scripts/time_ledger.py` (tempo por profissão — Regra 50, critério de toda verificação).
 
 ## 🔴 Aberto
 

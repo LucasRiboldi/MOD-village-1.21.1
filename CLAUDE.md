@@ -59,3 +59,18 @@ código antes de responder:
 2. Qual sistema é responsável?
 3. Quais arquivos serão alterados?
 4. Existe decisão arquitetural envolvida?
+```
+
+### 0.4 Toda verificação mede o tempo dos aldeões (Regra 50)
+
+Pedido do autor, 2026-10-02. Depois de qualquer playtest, rode
+`python scripts/time_ledger.py` (lê as linhas `VC_TIME` do `WorkTime`). Por
+profissão, ele dá a proporção de trabalho, caminhada, espera, bloqueio, ócio
+e encalhe no expediente.
+
+- **Mais de 40% sem trabalhar** (espera + bloqueio + ócio + encalhe): o fluxo
+  da profissão pede melhoria.
+- **Mais de 10% bloqueado + encalhado:** há travamento a corrigir.
+
+Uma correção de fluxo só está provada quando a proporção cai no playtest
+seguinte. O GameTest prova o mecanismo; o `time_ledger` prova o efeito.
