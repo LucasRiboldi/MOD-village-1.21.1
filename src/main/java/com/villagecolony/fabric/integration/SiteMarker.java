@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Optional;
 
 /**
  * O contorno do lote, desenhado no mundo — 2026-09-15.
@@ -104,6 +105,17 @@ public final class SiteMarker {
      */
     public static void remember(UUID colonyId, ResourceTally stock) {
         STOCK.put(colonyId, stock);
+    }
+
+    /**
+     * Devolve a última leitura de estoque da colônia, se ela existir.
+     *
+     * <p>O overlay cliente usa exatamente a mesma fotografia que a placa
+     * Vanilla do lote. Assim os dois diagnósticos não discordam e a
+     * sincronização não reabre baús fora do ciclo de inventário.
+     */
+    public static Optional<ResourceTally> rememberedStock(UUID colonyId) {
+        return Optional.ofNullable(STOCK.get(colonyId));
     }
 
     /**

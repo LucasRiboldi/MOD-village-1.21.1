@@ -1,5 +1,16 @@
 # TODO
 
+## Overlays cliente — validação pendente (2026-10-02)
+
+- [ ] Entrar com cliente Fabric modificado e confirmar os rótulos de
+  profissão sobre aldeões registrados, a no máximo 32 blocos.
+- [ ] Abrir uma obra e conferir progresso, estado e primeiro material faltante
+  a no máximo 64 blocos; comparar com a placa Vanilla de `SiteMarker`.
+- [ ] Entrar com cliente Vanilla no mesmo servidor e confirmar que as placas
+  antigas continuam visíveis e que o servidor não tenta enviar o payload.
+- [ ] Executar a bateria completa (`gradlew build` e `runGametest`) antes de
+  abrir PR. O `compileJava` da implementação ficou verde.
+
 **Atualizado:** 2026-09-24. Playtest real de ~6h30 analisado (5 colonias,
 221.814 linhas de log). **Dois erros novos, E47 e E48** — ver "Erros
 abertos" abaixo. Achado central: um construtor ficou preso fisicamente

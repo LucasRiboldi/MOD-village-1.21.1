@@ -6,5 +6,10 @@
   "overlay.profession.smelter": "Smelter",
   "overlay.profession.carpenter": "Carpenter",
   "overlay.profession.mason": "Mason",
-  "overlay.profession.builder": "Builder"
+  "overlay.profession.builder": "Builder",
+  "overlay.construction.missing": "Missing: %s",
+  "overlay.construction.state.planned": "Planned",
+  "overlay.construction.state.preparing": "Preparing",
+  "overlay.construction.state.waiting_resources": "Waiting for materials",
+  "overlay.construction.state.building": "Building"
 }

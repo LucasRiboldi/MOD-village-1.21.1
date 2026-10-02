@@ -12,5 +12,6 @@ public final class VillageColonyClient implements ClientModInitializer {
         ClientPlayNetworking.registerGlobalReceiver(OverlaySnapshotPayload.ID,
                 (payload, context) -> ClientOverlayState.replace(payload));
         ProfessionOverlayRenderer.register();
+        ConstructionOverlayRenderer.register();
     }
 }

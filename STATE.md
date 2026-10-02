@@ -10,6 +10,23 @@
 
 ---
 
+## 🟡 Overlays cliente — 2026-10-02 (aguarda playtest visual)
+
+- `feature/profession-overlays` recebeu snapshots S2C opcionais: somente
+  clientes com o mod declaram o payload; clientes Vanilla continuam usando
+  `WorkerNameplate` e `SiteMarker`.
+- Profissões são desenhadas sobre aldeões conhecidos pelo cliente. Obras
+  abertas mostram planta, progresso e o primeiro material realmente faltante,
+  usando a mesma fotografia de estoque já lida por `SiteMarker`.
+- Os sprites pixel-art foram adicionados em
+  `assets/villagecolony/textures/gui/overlays/`; a composição gráfica final
+  ainda depende de playtest do renderer no jogo.
+- Verificado nesta máquina: `gradlew --no-daemon --no-parallel compileJava`.
+  Pendente: `gradlew build`, GameTests e uma sessão cliente-servidor para
+  validar legibilidade, alcance e compatibilidade Vanilla.
+
+---
+
 ## 🟢 Rodada de qualidade — 24-09, tarde (itens 1 a 12 da pesquisa de métodos)
 
 - CI nos branches `codex/**`; PIT no core (77% de mutações mortas);

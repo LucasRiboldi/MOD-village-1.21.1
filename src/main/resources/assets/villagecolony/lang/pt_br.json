@@ -6,5 +6,10 @@
   "overlay.profession.smelter": "Fundidor",
   "overlay.profession.carpenter": "Carpinteiro",
   "overlay.profession.mason": "Pedreiro",
-  "overlay.profession.builder": "Construtor"
+  "overlay.profession.builder": "Construtor",
+  "overlay.construction.missing": "Falta: %s",
+  "overlay.construction.state.planned": "Planejada",
+  "overlay.construction.state.preparing": "Preparando",
+  "overlay.construction.state.waiting_resources": "Aguardando materiais",
+  "overlay.construction.state.building": "Em construção"
 }
