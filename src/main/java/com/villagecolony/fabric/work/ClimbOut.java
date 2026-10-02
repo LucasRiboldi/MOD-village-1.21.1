@@ -75,6 +75,14 @@ final class ClimbOut {
     /** Quantos blocos o túnel anda para o lado antes de tentar subir de novo. */
     static final int TUNNEL_LENGTH = 3;
 
+    /**
+     * Quanto o túnel tem antes de dar lugar a outro jeito: até três passagens
+     * por bloco (cavar os pés, cavar a cabeça, entrar). Com o prazo da escada
+     * (6), o túnel era cortado no segundo bloco e nunca saía de baixo da vila
+     * — sessão de 01-10, 23:36, 1.246 trocas de jeito em 41 minutos.
+     */
+    static final int TUNNEL_PASSES = TUNNEL_LENGTH * 3 + 2;
+
     /** Quantos blocos ele carrega para pôr debaixo dos pés. */
     private static final int POCKET_MAX = 16;
 
@@ -182,7 +190,7 @@ final class ClimbOut {
 
             VillageColonyMod.LOGGER.info("Stranded worker {} climbed to {} by {} — {} level(s) up",
                     shortId(workerId), feet.toShortString(), climb.mode, climb.bestY - climb.startY);
-        } else if (++climb.noGain >= NO_GAIN_PASSES) {
+        } else if (++climb.noGain >= (climb.mode == Mode.TUNNEL ? TUNNEL_PASSES : NO_GAIN_PASSES)) {
             switchMode(workerId, climb, feet, next(climb.mode), "no height gained in " + climb.noGain + " s");
         }
 

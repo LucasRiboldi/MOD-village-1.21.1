@@ -283,7 +283,7 @@ public final class StrandedEscape {
             return false;
         }
 
-        return WorldTerrain.isNaturalGround(state) && BlockProtection.mayBreak(world, at, state);
+        return WorldTerrain.isNaturalGround(state) && BlockProtection.mayDigOut(world, at, state);
     }
 
     /**

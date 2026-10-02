@@ -20,7 +20,6 @@ com 1.196 unitários e 528/528 GameTests locais; fluidez F1–F14 na §8 da Flui
 
 ## 30-09, noite — playtests 18h e 21h (Spark `YUm45D9Sw4`, `qI5h6MXtDA`)
 
-- **E49** visto em jogo (fundidor 6.324 → 214 paradas); E50 não exercitado.
 - **E51 (`2895d71`):** a ponta da vila nascia colônia nova com BigHouseMOD e
   7 adultos — `44cd9e5a` tem 7 BigHouseMOD. Análise e o que falta em
   `docs/technical/Identidade-da-Vila-2026-09-30.md`. Não visto em jogo.
@@ -32,6 +31,7 @@ com 1.196 unitários e 528/528 GameTests locais; fluidez F1–F14 na §8 da Flui
   o mineiro 199ad062 parou a y=56 após 32 degraus; agora o encalhado larga o
   ofício e `ClimbOut` sobe por escada, pilar ou túnel, sem desistir. Não visto em jogo.
 - **01-10:** Regra 45 (baús = os da caixa da vila); ADR-003 Emenda 7 (lote: ½ diagonal + 12, sem teto).
+- **Playtest 01-10 23:12–00:17 (Spark `jPsGP2hsPo`):** TPS 20, mod 1,7%. Curral ok (26 saídas, 12–67 tiques); `862b0a6b` falhou 7 min (log agora diz por quê). Pilar subiu 81 níveis e parou 41 min sob a grama da vila: a fuga ganhou a exceção do chão do bioma (`mayDigOut`).
 
 ## Git
 

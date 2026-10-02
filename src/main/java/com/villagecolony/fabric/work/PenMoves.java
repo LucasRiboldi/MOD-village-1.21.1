@@ -60,6 +60,12 @@ final class PenMoves {
         /** Se este pulo já passou da altura da cerca: dali em diante ele vai para a frente. */
         private boolean cleared;
 
+        /** Até onde ele chegou no caminho, para o log dizer por que a saída falhou. */
+        String progress() {
+            return route == null ? "no route" : "step " + step + " of " + route.size() + " toward "
+                    + (routeTo == null ? "?" : routeTo.toShortString());
+        }
+
         /** Esquece o caminho: o próximo passo o refaz de onde ele está. */
         void reroute() {
             route = null;

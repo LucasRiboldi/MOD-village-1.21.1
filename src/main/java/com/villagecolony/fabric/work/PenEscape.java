@@ -389,9 +389,18 @@ public final class PenEscape {
             return;
         }
 
+        // Onde ele estava de verdade quando desistiu desta saída — 2026-10-02.
+        // O 862b0a6b falhou todas as saídas por 7 minutos na sessão de 01-10
+        // sem que o log dissesse por quê; a posição fracionária, o chão e o
+        // passo do caminho separam "não anda", "anda e não chega" e "não pula".
         VillageColonyMod.LOGGER.info(
-                "Worker {} could not use {} — trying {}",
-                shortId(id), describe(failed), describe(escape.exit()));
+                "Worker {} could not use {} in {} phase (at {}, {}, {}{}, {}) — trying {}",
+                shortId(id), describe(failed), escape.phase,
+                String.format(java.util.Locale.ROOT, "%.2f", villager.getX()),
+                String.format(java.util.Locale.ROOT, "%.2f", villager.getY()),
+                String.format(java.util.Locale.ROOT, "%.2f", villager.getZ()),
+                villager.isOnGround() ? "" : ", in the air",
+                escape.motion.progress(), describe(escape.exit()));
 
         escape.phase = Phase.APPROACH;
         escape.since = world.getTime();
