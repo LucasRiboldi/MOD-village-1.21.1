@@ -222,6 +222,7 @@ public final class MinerHands {
         }
 
         job.task.complete();
+        WorkerStrikes.worked(workerId, job.task);
 
         VillageColonyMod.LOGGER.info(
                 "Miner {} filled the order — {} {} of the {} asked, and stopped",

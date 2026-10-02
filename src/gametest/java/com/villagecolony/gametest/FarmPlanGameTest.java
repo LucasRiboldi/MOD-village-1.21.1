@@ -125,6 +125,34 @@ public class FarmPlanGameTest implements FabricGameTest {
     }
 
     /**
+     * A roça fica acima da rua — pedido do autor, 2026-10-02: ela precisa da
+     * altura para receber a água. A planta do jogo tem camada da rua; a da
+     * colônia não, e a lavoura assenta um acima do chão.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farm_plan")
+    public void theFarmSitsAboveTheStreet(TestContext context) {
+        Blueprint raw = plainsFarm(context).orElse(null);
+
+        context.assertTrue(raw != null && raw.hasStreetLayer(),
+                "a roça do jogo veio sem camada da rua, e aí este teste não mede nada");
+
+        Colony colony = Colony.create(
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(
+                        context.getAbsolutePos(new BlockPos(1, 2, 1))));
+
+        ColonyPos floor = new ColonyPos(10, 70, 10);
+
+        for (Blueprint plan : FarmPlans.plansFor(context.getWorld(), colony)) {
+            context.assertFalse(plan.hasStreetLayer(), plan.id() + " ficou na altura da rua");
+            context.assertTrue(plan.originFor(floor).equals(floor),
+                    plan.id() + ": a lavoura devia assentar um acima do chão, no piso do lote");
+        }
+
+        context.complete();
+    }
+
+    /**
      * <b>A roça nasce dentro da vila, e não na ponta da estrada</b> —
      * 2026-09-05, visto em jogo.
      *

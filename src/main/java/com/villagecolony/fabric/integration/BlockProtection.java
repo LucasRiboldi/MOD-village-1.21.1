@@ -83,6 +83,21 @@ public final class BlockProtection {
     }
 
     /**
+     * Se a base de uma obra pode ocupar o lugar deste bloco de terreno —
+     * 2026-10-02.
+     *
+     * <p>{@link #mayBreak} sem a pergunta da obra aberta: a posição está
+     * dentro da obra que a está construindo, e a obra não se protege de si
+     * mesma. Casa pronta, bloco do jogador e peça da vila continuam de fora;
+     * o chão do bioma dentro de peça da vila entra, como na rua e no lote.
+     */
+    public static boolean mayBuildOver(ServerWorld world, BlockPos pos, BlockState state) {
+        return !isPlayerPlaced(state)
+                && !VillageColonyMod.BUILDINGS.isColonyInfrastructure(MinecraftTypeAdapter.toColonyPos(pos))
+                && (!isVillageOriginal(world, pos) || LotGround.isBiomeGround(world, pos));
+    }
+
+    /**
      * Se este bloco é de uma casa que a própria colônia levantou.
      *
      * <p>A terceira metade da regra, e a que o autor não precisou

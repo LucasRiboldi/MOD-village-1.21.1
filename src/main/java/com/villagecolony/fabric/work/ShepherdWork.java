@@ -348,6 +348,7 @@ public final class ShepherdWork {
                 dropped - leftOver,
                 wool,
                 job.collected);
+        WorkerStrikes.worked(villager.getUuid(), job.task);
 
         release(villager.getUuid(), job);
     }

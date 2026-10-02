@@ -404,6 +404,7 @@ public final class BuilderWork {
     static void finish(Job job, UUID workerId, String why) {
         if (job.task.state() == TaskState.EXECUTING) {
             job.task.complete();
+            WorkerStrikes.worked(workerId, job.task);
         } else if (job.task.isHeld()) {
             job.task.release();
         }

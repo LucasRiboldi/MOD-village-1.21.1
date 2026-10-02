@@ -468,11 +468,8 @@ public final class SmelterWork {
         job.smelted += made.getCount() - leftOver;
 
         VillageColonyMod.LOGGER.info(
-                "Smelter {} made {} out of {} — {} this task",
-                workerId,
-                made.getItem(),
-                raw.getItem(),
-                job.smelted);
+                "Smelter {} made {} out of {} — {} this task", workerId, made.getItem(), raw.getItem(), job.smelted);
+        WorkerStrikes.worked(workerId, job.task);
 
         return true;
     }

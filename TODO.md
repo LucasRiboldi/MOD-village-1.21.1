@@ -12,6 +12,19 @@ da reabertura seca oposta. Cada lote e validado na orientacao final da planta.
 A bateria de 1.196 testes unitarios e 528 GameTests (30-09, depois da revisao
 das profissoes) esta verde; ainda requer validacao no save real.
 
+## Playtest de 2026-10-02 — travamentos e tentativas (`docs/research/2026-10-02-travamentos-e-tentativas.md`)
+
+Corrigido nesta sessão, com teste: piso e base da obra (`mayBuildOver`, base
+abaixo da rua construída), mineiro sob pedregulho (entulho no subsolo),
+`/vc log` com "travado" antigo (`WorkerStrikes.worked`), golem no curral,
+escada de madeira na porta elevada, roça acima da rua. **Nada visto em jogo.**
+
+- [ ] 🔴 Playtest: obra nova sem `is in the way` de grama no piso; roça um acima do chão; golem `is out of the pen`.
+- [ ] 🟠 Fundidor: espera crescente depois de varrer o raio sem areia (38 varreduras em 20 min, 0,58% do servidor) — análise §3.1.
+- [ ] 🟠 Casas já prontas sem piso (`58405bf6`): reparo não reabre peça riscada como "in the way" — decidir se refaz.
+- [ ] 🟡 Lenhador: descartar tora de casa da vila antes de medir a copa (124 recusas, 0,69%) — análise §3.2.
+- [ ] 🟡 Varredura do fazendeiro sem terminar no prazo (8 vezes) — análise §3.3.
+
 ## Sessão de 2026-10-01 — pendências (`docs/research/2026-10-01-solucoes-das-pendencias.md`)
 
 Entregue e enviado (`d892934`, `088846e`, `f69e27c`, `6db813a`, JAR `0c624be`):

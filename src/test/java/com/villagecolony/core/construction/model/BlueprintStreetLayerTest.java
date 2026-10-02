@@ -67,6 +67,25 @@ class BlueprintStreetLayerTest {
     }
 
     /**
+     * A base da planta é construída — pedido do autor, 2026-10-02: o que não é
+     * solo abaixo da rua (pedregulho, tábua) não é mais dado como chão.
+     */
+    @Test
+    void theBaseBelowTheStreetIsBuiltUnlessItIsSoil() {
+        Blueprint plan = Blueprint.of(ResourceId.vanilla("x"), List.of(
+                new BlueprintBlock(new ColonyPos(0, 0, 0), COBBLE),
+                new BlueprintBlock(new ColonyPos(1, 0, 0), DIRT),
+                new BlueprintBlock(new ColonyPos(0, 1, 0), PLANKS),
+                new BlueprintBlock(new ColonyPos(0, 2, 0), DOOR))).withStreetLayer(1);
+
+        assertFalse(plan.isBuried(plan.blocks().get(0)), "o pedregulho da base é construído");
+        assertTrue(plan.isBuried(plan.blocks().get(1)), "a terra da base é o terreno");
+        assertTrue(plan.isBase(plan.blocks().get(0)), "abaixo da rua é base");
+        assertTrue(plan.isBase(plan.blocks().get(2)), "a camada da rua é base");
+        assertFalse(plan.isBase(plan.blocks().get(3)), "a porta não é base");
+    }
+
+    /**
      * O lote diz "o piso vai em y = 70" (um acima do chão, que está em 69). A
      * camada da rua tem de cair no chão — 69 —, e para isso a origem desce a
      * altura da camada mais um.

@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -86,5 +87,31 @@ class ActivityTraceTest {
         IntStream.range(0, 16_384).forEach(index -> trace.append(event(index)));
 
         assertEquals(0, trace.overflowCount());
+    }
+
+    private static ActivityTraceEvent of(ActivityProfession profession, ActivityState state) {
+        return new ActivityTraceEvent(UUID.randomUUID(), profession, ActivityKind.MINING, state,
+                ControlledReason.WORK_STALLED, TargetKind.CROP, 0);
+    }
+
+    /**
+     * "[TRAVADO]" é a última linha da profissão, não uma linha qualquer — o
+     * /vc log de 2026-10-02 mostrava o fazendeiro travado colhendo.
+     */
+    @Test
+    void endsStoppedReadsOnlyTheNewestLineOfThatProfession() {
+        ActivityTrace trace = new ActivityTrace();
+
+        assertFalse(trace.endsStopped(ActivityProfession.FARMER), "sem linha nenhuma não há interrupção");
+
+        trace.append(of(ActivityProfession.FARMER, ActivityState.ABANDONED));
+        trace.append(of(ActivityProfession.MINER, ActivityState.RECOVERED));
+
+        assertTrue(trace.endsStopped(ActivityProfession.FARMER), "a desistência é a última do fazendeiro");
+        assertFalse(trace.endsStopped(ActivityProfession.MINER));
+
+        trace.append(of(ActivityProfession.FARMER, ActivityState.RECOVERED));
+
+        assertFalse(trace.endsStopped(ActivityProfession.FARMER), "a volta ao trabalho encerra a interrupção");
     }
 }

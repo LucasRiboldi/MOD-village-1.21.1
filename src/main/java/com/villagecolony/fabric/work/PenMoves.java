@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.work;
 
 import net.minecraft.entity.ai.brain.MemoryModuleType;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -19,6 +20,10 @@ import java.util.Set;
  * alcança" e o aldeão ficava parado os 400 tiques da saída — às vezes sim, às
  * vezes não. O caminho aqui é o da própria busca do {@link FencedIn}, e o
  * aldeão anda pelo controle de movimento, bloco a bloco, como um jogador.
+ *
+ * <p>Vale para o golem da vila também — 2026-10-02. Ele não tem cérebro de
+ * aldeão: a navegação dele é parada, e o resto é o mesmo controle de
+ * movimento.
  */
 final class PenMoves {
 
@@ -60,6 +65,13 @@ final class PenMoves {
         /** Se este pulo já passou da altura da cerca: dali em diante ele vai para a frente. */
         private boolean cleared;
 
+        /**
+         * Quanto o alvo de cada passo sai do meio do bloco. Zero para o
+         * aldeão; meio bloco para o golem, que passa entre as duas folhas de
+         * uma porteira dupla.
+         */
+        private Vec3d shift = Vec3d.ZERO;
+
         /** Até onde ele chegou no caminho, para o log dizer por que a saída falhou. */
         String progress() {
             return route == null ? "no route" : "step " + step + " of " + route.size() + " toward "
@@ -69,6 +81,12 @@ final class PenMoves {
         /** Esquece o caminho: o próximo passo o refaz de onde ele está. */
         void reroute() {
             route = null;
+            shift = Vec3d.ZERO;
+        }
+
+        /** Desloca o alvo de cada passo, sem mudar o caminho. */
+        void shift(Vec3d by) {
+            shift = by;
         }
 
         /** Segue este caminho, já sabido, até {@code to}. */
@@ -88,7 +106,7 @@ final class PenMoves {
      * navegação Vanilla fica parada enquanto isso: ela e este caminho
      * disputariam o mesmo controle de movimento.
      */
-    static Walk walk(ServerWorld world, VillagerEntity villager, Motion motion, BlockPos target,
+    static Walk walk(ServerWorld world, MobEntity villager, Motion motion, BlockPos target,
             Set<BlockPos> floor, long now) {
 
         boolean stale = motion.route != null && now - motion.stepSince > REROUTE_AFTER;
@@ -103,7 +121,7 @@ final class PenMoves {
             motion.follow(route.get(), target, now);
         }
 
-        while (motion.step < motion.route.size() && isAt(villager, motion.route.get(motion.step))) {
+        while (motion.step < motion.route.size() && isAt(villager, motion, motion.route.get(motion.step))) {
             motion.step++;
             motion.stepSince = now;
         }
@@ -114,16 +132,16 @@ final class PenMoves {
             return Walk.ARRIVED;
         }
 
-        BlockPos next = motion.route.get(motion.step);
+        Vec3d next = Vec3d.ofBottomCenter(motion.route.get(motion.step)).add(motion.shift);
 
-        villager.getMoveControl().moveTo(next.getX() + 0.5, next.getY(), next.getZ() + 0.5, WALK_SPEED);
-        villager.getLookControl().lookAt(next.getX() + 0.5, next.getY() + 1.5, next.getZ() + 0.5);
+        villager.getMoveControl().moveTo(next.x, next.y, next.z, WALK_SPEED);
+        villager.getLookControl().lookAt(next.x, next.y + 1.5, next.z);
 
         return Walk.WALKING;
     }
 
     /** O pulo: só para cima agora; para a frente, quando passar da cerca. */
-    static void jump(VillagerEntity villager, Motion motion, long now) {
+    static void jump(MobEntity villager, Motion motion, long now) {
         stopWalking(villager);
         villager.setVelocity(0.0, JUMP_UP, 0.0);
         villager.velocityModified = true;
@@ -138,7 +156,7 @@ final class PenMoves {
      *
      * @return se ele já pousou — do lado de fora, ou de volta do lado de dentro
      */
-    static boolean fly(VillagerEntity villager, Motion motion, FencedIn.Exit exit, long now) {
+    static boolean fly(MobEntity villager, Motion motion, FencedIn.Exit exit, long now) {
         if (villager.isOnGround() && now - motion.jumpedAt > 4) {
             motion.reroute();
 
@@ -181,13 +199,16 @@ final class PenMoves {
         return Math.sqrt(dx * dx + dz * dz);
     }
 
-    private static boolean isAt(VillagerEntity villager, BlockPos step) {
-        return horizontalDistance(villager.getPos(), Vec3d.ofBottomCenter(step)) <= AT_STEP
+    private static boolean isAt(MobEntity villager, Motion motion, BlockPos step) {
+        return horizontalDistance(villager.getPos(), Vec3d.ofBottomCenter(step).add(motion.shift)) <= AT_STEP
                 && Math.abs(villager.getY() - step.getY()) < 0.6;
     }
 
-    private static void stopWalking(VillagerEntity villager) {
-        villager.getBrain().forget(MemoryModuleType.WALK_TARGET);
-        villager.getNavigation().stop();
+    static void stopWalking(MobEntity mob) {
+        if (mob instanceof VillagerEntity villager) {
+            villager.getBrain().forget(MemoryModuleType.WALK_TARGET);
+        }
+
+        mob.getNavigation().stop();
     }
 }

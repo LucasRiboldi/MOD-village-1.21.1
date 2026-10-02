@@ -283,7 +283,29 @@ public final class StrandedEscape {
             return false;
         }
 
-        return WorldTerrain.isNaturalGround(state) && BlockProtection.mayDigOut(world, at, state);
+        return (WorldTerrain.isNaturalGround(state) || isRubbleUnderground(world, at, state))
+                && BlockProtection.mayDigOut(world, at, state);
+    }
+
+    /** Quantos blocos abaixo da superfície o pedregulho conta como entulho da mina. */
+    static final int RUBBLE_DEPTH = 4;
+
+    /**
+     * Pedregulho no subsolo — playtest de 2026-10-02.
+     *
+     * <p>O mineiro 199ad062 subiu 29 níveis e parou 15 minutos em y=39,
+     * "boxed in", debaixo de um pedregulho que a própria colônia pôs na mina
+     * (o aterro e o pilar são de pedregulho). Pedregulho não é terreno natural,
+     * e a fuga não o quebrava. Debaixo da terra ele é entulho; perto da
+     * superfície pode ser parede de alguém, e fica.
+     */
+    static boolean isRubbleUnderground(ServerWorld world, BlockPos at, BlockState state) {
+        boolean rubble = state.isOf(net.minecraft.block.Blocks.COBBLESTONE)
+                || state.isOf(net.minecraft.block.Blocks.COBBLED_DEEPSLATE)
+                || state.isOf(net.minecraft.block.Blocks.MOSSY_COBBLESTONE);
+
+        return rubble
+                && world.getTopY(Heightmap.Type.WORLD_SURFACE, at.getX(), at.getZ()) - at.getY() > RUBBLE_DEPTH;
     }
 
     /**

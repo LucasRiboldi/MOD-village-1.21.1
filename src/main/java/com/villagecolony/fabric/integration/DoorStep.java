@@ -2,6 +2,8 @@ package com.villagecolony.fabric.integration;
 
 import com.villagecolony.VillageColonyMod;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.StairsBlock;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -15,6 +17,12 @@ import net.minecraft.util.math.Direction;
  * abaixo do piso, a abertura da obra assenta solo do bioma até a diferença
  * voltar a um. Na frente de rua comum a diferença já é um, e nada é posto
  * sobre a rua.
+ *
+ * <p><b>O degrau de cima é escada de madeira</b> — pedido do autor,
+ * 2026-10-02: <i>"se a entrada da estrutura tiver 2 blocos em relação à rua,
+ * adicionar automaticamente uma escada de madeira"</i>. O último bloco de cada
+ * coluna é {@code oak_stairs}, subindo para a casa; o que vai por baixo dele,
+ * quando a diferença passa de dois, continua solo do bioma.
  */
 public final class DoorStep {
 
@@ -45,20 +53,23 @@ public final class DoorStep {
                     ? door.getOffsetZ() < 0 ? site.origin().z() - 1 : site.origin().z() + site.size().z()
                     : site.origin().z() + step;
 
-            placed += raise(world, x, z, floor);
+            placed += raise(world, x, z, floor, door.getOpposite());
         }
 
         if (placed > 0) {
             VillageColonyMod.LOGGER.info(
-                    "Laid {} step blocks in front of the door of the lot at {} — it sits above the street",
+                    "Laid {} step blocks (oak stairs on top) in front of the door of the lot at {} — it sits above the street",
                     placed, site.origin());
         }
 
         return placed;
     }
 
-    /** Assenta solo até que quem pise nesta coluna fique um abaixo do piso. */
-    private static int raise(ServerWorld world, int x, int z, int floor) {
+    /**
+     * Assenta solo até que quem pise nesta coluna fique um abaixo do piso; o
+     * bloco de cima é a escada, subindo em {@code up}.
+     */
+    private static int raise(ServerWorld world, int x, int z, int floor, Direction up) {
         int ground = Integer.MIN_VALUE;
 
         for (int y = floor - 1; y >= floor - LOOK_DOWN; y--) {
@@ -86,7 +97,11 @@ public final class DoorStep {
                 break;
             }
 
-            world.setBlockState(at, VillageBiomes.foundationGroundAt(world, at).getDefaultState());
+            boolean last = floor - (top + 2) < 2;
+
+            world.setBlockState(at, last
+                    ? Blocks.OAK_STAIRS.getDefaultState().with(StairsBlock.FACING, up)
+                    : VillageBiomes.foundationGroundAt(world, at).getDefaultState());
             top++;
             placed++;
         }

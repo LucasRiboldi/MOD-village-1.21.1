@@ -26,12 +26,12 @@ com 1.196 unitários e 528/528 GameTests locais; fluidez F1–F14 na §8 da Flui
 - **Caixa da vila (ADR-003 Emenda 6), 01-10:** busca de camas em coluna com
   janela de altura; caixa que cresce (construção/lote +12, rua inclui o bloco);
   identidade e fusão pela caixa; só trabalha com jogador dentro (+5 min). Aberto: limpar o save.
-- **E52 (01-10):** curral — `PenEscape` mede a cada 2 s quem está a ≤6 de cerca,
-  abre o portão (fecha atrás) ou pula a cerca, por rota própria. **E47 revisto:**
-  o mineiro 199ad062 parou a y=56 após 32 degraus; agora o encalhado larga o
-  ofício e `ClimbOut` sobe por escada, pilar ou túnel, sem desistir. Não visto em jogo.
-- **01-10:** Regra 45 (baús = os da caixa da vila); ADR-003 Emenda 7 (lote: ½ diagonal + 12, sem teto).
-- **Playtest 01-10 23:12–00:17 (Spark `jPsGP2hsPo`):** TPS 20, mod 1,7%. Curral ok (26 saídas, 12–67 tiques); `862b0a6b` falhou 7 min (log agora diz por quê). Pilar subiu 81 níveis e parou 41 min sob a grama da vila: a fuga ganhou a exceção do chão do bioma (`mayDigOut`).
+- **E52 (01-10):** `PenEscape` abre o portão (fecha atrás) ou pula a cerca, por rota
+  própria. **E47 revisto:** o encalhado larga o ofício e `ClimbOut` sobe por escada,
+  pilar ou túnel, sem desistir. Os dois vistos em jogo em 01-10.
+- **01-10:** Regra 45 (baús da caixa); Emenda 7 (lote: ½ diagonal + 12, sem teto).
+- **Playtest 01-10 23:12–00:17 (Spark `jPsGP2hsPo`):** TPS 20, mod 1,7%. Curral ok; pilar parou sob a grama da vila → `mayDigOut`.
+- **Playtest 02-10 00:43–01:04 (Spark `LhqqBh973A`):** TPS 20, mod 1,7%; 2 casas prontas. Piso da obra nunca assentado (proteção da própria obra) → `mayBuildOver`; mineiro preso sob pedregulho → entulho; `/vc log` "travado" antigo → `WorkerStrikes.worked`. Pedidos: golem no curral, base construída, escada de madeira, roça acima da rua. Análise: `docs/research/2026-10-02-travamentos-e-tentativas.md`.
 
 ## Git
 

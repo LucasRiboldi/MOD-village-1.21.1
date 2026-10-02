@@ -439,6 +439,7 @@ public final class CraftingWork {
         }
 
         job.task.complete();
+        WorkerStrikes.worked(workerId, job.task);
 
         WorkTargets.clear(workerId);
 

@@ -141,6 +141,43 @@ public final class FoundationPreparationGameTest implements FabricGameTest {
                 "a frente da porta ficou dois abaixo do piso, sem degrau");
         context.assertTrue(context.getWorld().getBlockState(context.getAbsolutePos(front.up(2))).isAir(),
                 "o degrau subiu até a altura do piso e fechou a porta");
+
+        // Pedido do autor, 2026-10-02: o degrau é escada de madeira, subindo para a casa.
+        net.minecraft.block.BlockState step = context.getWorld().getBlockState(context.getAbsolutePos(front.up()));
+
+        context.assertTrue(step.isOf(Blocks.OAK_STAIRS), "o degrau devia ser escada de madeira, é " + step);
+        context.assertTrue(step.get(net.minecraft.block.StairsBlock.FACING) == net.minecraft.util.math.Direction.SOUTH,
+                "a escada devia subir para a casa (sul), sobe para " + step.get(net.minecraft.block.StairsBlock.FACING));
+        context.complete();
+    }
+
+    /** Três abaixo do piso: terra embaixo, escada em cima. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "foundation_preparation")
+    public void aDeeperFrontGetsGroundUnderTheWoodenStair(TestContext context) {
+        BlockPos floor = new BlockPos(5, 5, 5);
+        BlockPos front = floor.north().down(4);
+        context.setBlockState(front, Blocks.GRASS_BLOCK);
+        context.setBlockState(front.east(), Blocks.GRASS_BLOCK);
+
+        for (int up = 1; up <= 3; up++) {
+            context.setBlockState(front.up(up), Blocks.AIR);
+            context.setBlockState(front.east().up(up), Blocks.AIR);
+        }
+
+        BuildSiteScanner.Site site = new BuildSiteScanner.Site(
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(floor)),
+                net.minecraft.util.math.Direction.NORTH, new ColonyPos(2, 3, 2));
+
+        DoorStep.placeIfNeeded(context.getWorld(), site);
+
+        net.minecraft.block.BlockState below = context.getWorld().getBlockState(context.getAbsolutePos(front.up()));
+        net.minecraft.block.BlockState top = context.getWorld().getBlockState(context.getAbsolutePos(front.up(2)));
+
+        context.assertTrue(!below.isAir() && !below.isOf(Blocks.OAK_STAIRS),
+                "embaixo da escada devia ir solo, foi " + below);
+        context.assertTrue(top.isOf(Blocks.OAK_STAIRS), "o degrau de cima devia ser escada de madeira, é " + top);
+        context.assertTrue(context.getWorld().getBlockState(context.getAbsolutePos(front.up(3))).isAir(),
+                "o degrau subiu até a altura do piso");
         context.complete();
     }
 

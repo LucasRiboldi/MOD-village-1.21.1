@@ -207,4 +207,41 @@ public final class ClimbOutGameTest implements FabricGameTest {
 
         awaitOut(context, strandedAtTheBottom(context, colony), colony[0], ClimbOut.Mode.PILLAR);
     }
+
+    /**
+     * Pedregulho no subsolo é entulho — playtest de 2026-10-02: o mineiro
+     * 199ad062 ficou 15 minutos "boxed in" em y=39 debaixo do pedregulho que a
+     * colônia pôs na mina. Fundo, ele cava; perto da superfície, não; tijolo,
+     * nunca.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "climb_out_rubble", tickLimit = 20)
+    public void cobblestoneDeepUnderTheGroundIsRubbleTheEscapeMayDig(TestContext context) {
+        BlockPos deep = new BlockPos(2, 1, 2);
+        BlockPos shallow = new BlockPos(6, 1, 6);
+        BlockPos bricks = new BlockPos(4, 1, 2);
+
+        for (int y = 1; y <= 10; y++) {
+            context.setBlockState(deep.withY(y), Blocks.STONE.getDefaultState());
+            context.setBlockState(bricks.withY(y), Blocks.STONE.getDefaultState());
+            context.setBlockState(shallow.withY(y), Blocks.AIR.getDefaultState());
+        }
+
+        context.setBlockState(deep, Blocks.COBBLESTONE.getDefaultState());
+        context.setBlockState(bricks, Blocks.STONE_BRICKS.getDefaultState());
+        context.setBlockState(shallow, Blocks.COBBLESTONE.getDefaultState());
+
+        BlockPos deepAt = context.getAbsolutePos(deep);
+        BlockPos shallowAt = context.getAbsolutePos(shallow);
+        BlockPos bricksAt = context.getAbsolutePos(bricks);
+
+        context.assertTrue(StrandedEscape.mayDig(context.getWorld(), deepAt, context.getWorld().getBlockState(deepAt)),
+                "o pedregulho nove blocos abaixo da superfície devia ser cavado pela fuga");
+        context.assertFalse(StrandedEscape.mayDig(context.getWorld(), shallowAt,
+                        context.getWorld().getBlockState(shallowAt)),
+                "o pedregulho na superfície pode ser parede de alguém e devia ficar");
+        context.assertFalse(StrandedEscape.mayDig(context.getWorld(), bricksAt,
+                        context.getWorld().getBlockState(bricksAt)),
+                "tijolo não é entulho");
+        context.complete();
+    }
 }

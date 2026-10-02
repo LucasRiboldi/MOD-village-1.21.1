@@ -216,14 +216,12 @@ public final class FarmPlans {
             }
         }
 
-        if (kept.size() == farm.blocks().size()) {
-            return farm;
-        }
-
-        // A camada da rua vem junto: refiltrar a lista não muda onde a rua fica.
-        Blueprint filtered = Blueprint.of(farm.id(), kept);
-
-        return farm.hasStreetLayer() ? filtered.withStreetLayer(farm.streetLayer()) : filtered;
+        // <b>A roça fica acima da rua</b> — pedido do autor, 2026-10-02: <i>"a
+        // base da plantação exclusivamente não pode ficar na altura da rua,
+        // porque precisa da altura para receber a água"</i>. Sem a camada da
+        // rua, a planta volta à origem de sempre: a camada da lavoura e do
+        // canal assenta um acima do chão. As casas continuam na rua.
+        return Blueprint.of(farm.id(), kept);
     }
 
     /**

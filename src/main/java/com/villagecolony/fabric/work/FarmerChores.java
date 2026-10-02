@@ -169,6 +169,7 @@ final class FarmerChores {
                     villager.getUuid(),
                     seed.get(),
                     job.target.toShortString());
+            WorkerStrikes.worked(villager.getUuid(), job.task);
         } else {
             ChestDepositor.deposit(world, storage.chestPosition(), seed.get(), 1);
         }
@@ -212,6 +213,7 @@ final class FarmerChores {
                 job.target.toShortString(),
                 job.collected,
                 replanted ? "replanted" : "nothing left to replant");
+        WorkerStrikes.worked(villager.getUuid(), job.task);
 
         FarmerWork.release(villager.getUuid(), job);
     }

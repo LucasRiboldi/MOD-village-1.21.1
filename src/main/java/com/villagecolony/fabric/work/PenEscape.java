@@ -4,10 +4,9 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.brain.WalkOverride;
-import net.minecraft.block.BlockState;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.VillagerEntity;
-import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -16,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -45,6 +45,9 @@ import java.util.UUID;
  * vez, no começo — nunca perguntar de novo de dentro. Cada saída tem
  * {@link #ATTEMPT_TICKS} tiques; esgotadas todas, a medição recomeça do zero,
  * e ele nunca é dado como perdido.
+ *
+ * <p><b>E o golem da vila</b> — 2026-10-02. Ver {@link PenGolems}: ele pula a
+ * cerca do mesmo jeito, e só usa porteira dupla, porque não cabe na simples.
  */
 public final class PenEscape {
 
@@ -57,16 +60,6 @@ public final class PenEscape {
 
     /** Em quantas levas os trabalhadores se dividem: cada um é medido a cada 40 tiques. */
     private static final int SCAN_GROUPS = 2;
-
-    /**
-     * A que distância de uma cerca, portão ou muro vale a pena medir.
-     *
-     * <p>Seis, e não dois: com dois, quem fica parado no meio de um curral de
-     * 7 × 7 — três blocos de cada cerca — nunca era medido. Seis cobre o
-     * meio de um curral de 13 × 13; num maior, quem quer sair anda até a
-     * cerca e é visto lá.
-     */
-    private static final int NEAR_FENCE = 6;
 
     /** Quanto tempo cada saída tem antes de ele tentar a seguinte. */
     static final int ATTEMPT_TICKS = 400;
@@ -95,6 +88,9 @@ public final class PenEscape {
         int jumps;
 
         boolean opened;
+
+        /** A outra folha da porteira dupla, aberta junto, para o corpo largo do golem. */
+        BlockPos twin;
 
         Escape(Set<BlockPos> reach, List<FencedIn.Exit> exits, long now) {
             this.reach = reach;
@@ -145,13 +141,15 @@ public final class PenEscape {
                 check(world, villager);
             }
         }
+
+        PenGolems.scan(world, group, SCAN_GROUPS);
     }
 
     // O mesmo que VillageFocus.isWorking: sem jogador (GameTest), sempre; com
     // jogador, a vila ativa e atendida. Repetido aqui de propósito — chamar o
     // pacote event daqui faria crescer o ciclo work ↔ event que o ArchUnit
     // mantém congelado.
-    private static boolean isWorking(ServerWorld world, UUID colonyId) {
+    static boolean isWorking(ServerWorld world, UUID colonyId) {
         return world.getPlayers().isEmpty() || VillageColonyMod.COLONIES.find(colonyId)
                 .filter(colony -> colony.isActive() && colony.isAttended(world.getTime()))
                 .isPresent();
@@ -180,7 +178,7 @@ public final class PenEscape {
      *
      * @return se ele está saindo de um cercado — começou agora ou já estava
      */
-    static boolean check(ServerWorld world, VillagerEntity villager) {
+    static boolean check(ServerWorld world, MobEntity villager) {
         UUID id = villager.getUuid();
 
         if (ESCAPES.containsKey(id)) {
@@ -195,12 +193,19 @@ public final class PenEscape {
             return false;
         }
 
-        if (feet.equals(SEEN_FREE.get(id)) || !isNearAFence(world, feet)) {
+        if (feet.equals(SEEN_FREE.get(id)) || !FencedIn.isNearAFence(world, feet)) {
             return false;
         }
 
         FencedIn.Result pen = FencedIn.check(world, feet);
         List<FencedIn.Exit> exits = pen.enclosed() ? FencedIn.exits(world, pen, feet) : List.of();
+
+        if (PenGolems.isWide(villager)) {
+            // Porteira simples não passa o golem: só a dupla, e a cerca.
+            exits = exits.stream()
+                    .filter(exit -> !exit.gate() || PenGolems.twinOf(world, exit).isPresent())
+                    .toList();
+        }
 
         if (exits.isEmpty()) {
             // Solto, ou preso por outra coisa que não cerca — buraco é do E47.
@@ -213,19 +218,22 @@ public final class PenEscape {
 
         Escape escape = new Escape(pen.reach(), exits, world.getTime());
         ESCAPES.put(id, escape);
-        WalkOverride.hold(id);
 
-        // Preso é preso: larga o trabalho e sai da escala até sair — quem o
-        // devolve é a passagem do encalhado, que o vê fora do curral. Sem
-        // isto o ofício seguia mandando nele, e recebia tarefa nova no meio.
-        StrandedWorkers.strandNow(id, feet, "fenced in");
+        if (villager instanceof VillagerEntity) {
+            WalkOverride.hold(id);
+
+            // Preso é preso: larga o trabalho e sai da escala até sair — quem o
+            // devolve é a passagem do encalhado, que o vê fora do curral. Sem
+            // isto o ofício seguia mandando nele, e recebia tarefa nova no meio.
+            StrandedWorkers.strandNow(id, feet, "fenced in");
+        }
 
         long gates = exits.stream().filter(FencedIn.Exit::gate).count();
 
         VillageColonyMod.LOGGER.info(
-                "Worker {} is fenced in at {} ({} gate(s), {} fence spot(s) to jump; {} time this"
+                "{} {} is fenced in at {} ({} gate(s), {} fence spot(s) to jump; {} time this"
                         + " session) — heading for {}",
-                shortId(id), feet.toShortString(), gates, exits.size() - gates,
+                who(villager), shortId(id), feet.toShortString(), gates, exits.size() - gates,
                 TIMES.merge(id, 1, Integer::sum), describe(escape.exit()));
 
         return true;
@@ -234,7 +242,7 @@ public final class PenEscape {
     private static void drive(ServerWorld world, UUID id) {
         Escape escape = ESCAPES.get(id);
 
-        if (!(world.getEntity(id) instanceof VillagerEntity villager) || !villager.isAlive()) {
+        if (!(world.getEntity(id) instanceof MobEntity villager) || !villager.isAlive()) {
             // Chunk descarregado ou aldeão morto: a medição recomeça quando ele voltar.
             finish(id, escape, null);
 
@@ -251,8 +259,8 @@ public final class PenEscape {
 
         if (isOut(world, villager, escape, exit)) {
             VillageColonyMod.LOGGER.info(
-                    "Worker {} is out of the pen at {} — {} after {} ticks",
-                    shortId(id), feet.toShortString(),
+                    "{} {} is out of the pen at {} — {} after {} ticks",
+                    who(villager), shortId(id), feet.toShortString(),
                     exit.gate() ? "through the gate at " + exit.barrier().toShortString()
                             : "jumped the fence at " + exit.barrier().toShortString(),
                     now - escape.began);
@@ -279,6 +287,11 @@ public final class PenEscape {
             case THROUGH -> {
                 // Alguém fechou o portão no meio da passagem: abre de novo.
                 FencedIn.open(world, exit.barrier());
+
+                if (escape.twin != null) {
+                    FencedIn.open(world, escape.twin);
+                }
+
                 PenMoves.walk(world, villager, escape.motion, exit.outside(), floor(escape), now);
             }
             case APPROACH -> {
@@ -292,7 +305,7 @@ public final class PenEscape {
     // Anda até a saída e, chegando, abre o portão ou pula. Devolve false
     // quando esta saída não serve mais — o portão sumiu, ou não há caminho.
     private static boolean approach(
-            ServerWorld world, VillagerEntity villager, Escape escape, FencedIn.Exit exit, long now) {
+            ServerWorld world, MobEntity villager, Escape escape, FencedIn.Exit exit, long now) {
 
         PenMoves.Walk walk = PenMoves.walk(world, villager, escape.motion, exit.inside(), floor(escape), now);
 
@@ -310,14 +323,19 @@ public final class PenEscape {
                 return true;
             }
 
-            if (!FencedIn.open(world, exit.barrier())) {
+            Optional<BlockPos> twin = PenGolems.isWide(villager) ? PenGolems.twinOf(world, exit) : Optional.empty();
+
+            if (!FencedIn.open(world, exit.barrier()) || (twin.isPresent() && !FencedIn.open(world, twin.get()))) {
                 return false;
             }
 
             escape.opened = true;
+            escape.twin = twin.orElse(null);
             escape.phase = Phase.THROUGH;
-            // Pelo vão do portão até o lado de fora, em linha reta.
+            // Pelo vão do portão até o lado de fora, em linha reta — o golem,
+            // pela junta das duas folhas.
             escape.motion.follow(List.of(exit.barrier(), exit.outside()), exit.outside(), now);
+            twin.ifPresent(other -> escape.motion.shift(PenGolems.towards(exit.barrier(), other)));
 
             return true;
         }
@@ -354,35 +372,30 @@ public final class PenEscape {
     // aldeão encostado neles pelo lado de dentro tem o centro já no bloco da
     // cerca. Com o portão que não abria, ele foi dado como fora assim, ainda
     // no curral — o mesmo defeito das 09:19 por outra porta.
-    private static boolean isOut(ServerWorld world, VillagerEntity villager, Escape escape, FencedIn.Exit exit) {
+    private static boolean isOut(ServerWorld world, MobEntity villager, Escape escape, FencedIn.Exit exit) {
         BlockPos feet = villager.getBlockPos();
 
         if (!villager.isOnGround() || escape.reach.contains(feet) || feet.equals(exit.barrier())) {
             return false;
         }
 
-        return !isBarrier(world.getBlockState(feet)) && !isBarrier(world.getBlockState(feet.down()));
+        return !FencedIn.isBarrier(world.getBlockState(feet)) && !FencedIn.isBarrier(world.getBlockState(feet.down()));
     }
 
-    private static boolean isBarrier(BlockState state) {
-        return state.isIn(BlockTags.FENCES) || state.isIn(BlockTags.WALLS) || state.isIn(BlockTags.FENCE_GATES);
-    }
-
-    private static void nextExit(ServerWorld world, UUID id, Escape escape, VillagerEntity villager) {
+    private static void nextExit(ServerWorld world, UUID id, Escape escape, MobEntity villager) {
         FencedIn.Exit failed = escape.exit();
 
         if (escape.opened) {
-            FencedIn.closeWhenClear(failed.barrier());
-            escape.opened = false;
+            closeGates(escape, failed);
         }
 
         escape.index++;
 
         if (escape.index >= escape.exits.size()) {
             VillageColonyMod.LOGGER.warn(
-                    "Worker {} is still fenced in at {} after trying {} way(s) out — measuring the pen"
+                    "{} {} is still fenced in at {} after trying {} way(s) out — measuring the pen"
                             + " again",
-                    shortId(id), villager.getBlockPos().toShortString(), escape.exits.size());
+                    who(villager), shortId(id), villager.getBlockPos().toShortString(), escape.exits.size());
 
             finish(id, escape, villager);
 
@@ -394,8 +407,8 @@ public final class PenEscape {
         // sem que o log dissesse por quê; a posição fracionária, o chão e o
         // passo do caminho separam "não anda", "anda e não chega" e "não pula".
         VillageColonyMod.LOGGER.info(
-                "Worker {} could not use {} in {} phase (at {}, {}, {}{}, {}) — trying {}",
-                shortId(id), describe(failed), escape.phase,
+                "{} {} could not use {} in {} phase (at {}, {}, {}{}, {}) — trying {}",
+                who(villager), shortId(id), describe(failed), escape.phase,
                 String.format(java.util.Locale.ROOT, "%.2f", villager.getX()),
                 String.format(java.util.Locale.ROOT, "%.2f", villager.getY()),
                 String.format(java.util.Locale.ROOT, "%.2f", villager.getZ()),
@@ -408,30 +421,33 @@ public final class PenEscape {
         escape.jumps = 0;
     }
 
-    private static void finish(UUID id, Escape escape, VillagerEntity villager) {
+    private static void finish(UUID id, Escape escape, MobEntity villager) {
         ESCAPES.remove(id);
         SEEN_FREE.remove(id);
         WalkOverride.release(id);
 
         if (escape != null && escape.opened) {
-            FencedIn.closeWhenClear(escape.exit().barrier());
+            closeGates(escape, escape.exit());
         }
 
-        if (villager != null) {
-            villager.getBrain().forget(MemoryModuleType.WALK_TARGET);
+        if (villager instanceof VillagerEntity worker) {
+            worker.getBrain().forget(MemoryModuleType.WALK_TARGET);
         }
     }
 
-    private static boolean isNearAFence(ServerWorld world, BlockPos feet) {
-        for (BlockPos at : BlockPos.iterate(
-                feet.add(-NEAR_FENCE, -1, -NEAR_FENCE), feet.add(NEAR_FENCE, 1, NEAR_FENCE))) {
+    private static void closeGates(Escape escape, FencedIn.Exit exit) {
+        FencedIn.closeWhenClear(exit.barrier());
 
-            if (isBarrier(world.getBlockState(at))) {
-                return true;
-            }
+        if (escape.twin != null) {
+            FencedIn.closeWhenClear(escape.twin);
         }
 
-        return false;
+        escape.opened = false;
+        escape.twin = null;
+    }
+
+    private static String who(MobEntity mob) {
+        return mob instanceof VillagerEntity ? "Worker" : "Golem";
     }
 
     private static String describe(FencedIn.Exit exit) {

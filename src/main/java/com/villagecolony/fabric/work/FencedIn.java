@@ -412,4 +412,30 @@ final class FencedIn {
 
         return dx * dx + dz * dz;
     }
+
+    /**
+     * A que distância de uma cerca, portão ou muro vale a pena medir.
+     *
+     * <p>Seis, e não dois: com dois, quem fica parado no meio de um curral de
+     * 7 × 7 — três blocos de cada cerca — nunca era medido. Seis cobre o
+     * meio de um curral de 13 × 13; num maior, quem quer sair anda até a
+     * cerca e é visto lá.
+     */
+    static final int NEAR_FENCE = 6;
+
+    static boolean isBarrier(BlockState state) {
+        return state.isIn(BlockTags.FENCES) || state.isIn(BlockTags.WALLS) || state.isIn(BlockTags.FENCE_GATES);
+    }
+
+    static boolean isNearAFence(ServerWorld world, BlockPos feet) {
+        for (BlockPos at : BlockPos.iterate(
+                feet.add(-NEAR_FENCE, -1, -NEAR_FENCE), feet.add(NEAR_FENCE, 1, NEAR_FENCE))) {
+
+            if (isBarrier(world.getBlockState(at))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

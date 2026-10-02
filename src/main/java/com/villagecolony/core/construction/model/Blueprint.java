@@ -128,18 +128,25 @@ public final class Blueprint {
     }
 
     /**
-     * Se esta peça é chão, e não obra: abaixo da rua é fundação enterrada, e
-     * na altura da rua terra e grama são o próprio terreno.
+     * Se esta peça é chão, e não obra: terra, grama, areia — da rua para
+     * baixo, o terreno já é ela.
+     *
+     * <p><b>A base é construída</b> — pedido do autor, 2026-10-02: <i>"desfazer
+     * o pedido e criar as obras com as bases originais"</i>, na forma
+     * "só construir a base": o piso continua na altura da rua, e a base da
+     * planta (pedregulho, tábua, tora abaixo da rua) é construída enterrada,
+     * no lugar do terreno. Até então toda peça abaixo da rua contava como
+     * chão; agora só o solo conta.
      */
     public boolean isBuried(BlueprintBlock block) {
-        if (!hasStreetLayer()) {
-            return false;
-        }
+        return hasStreetLayer()
+                && block.offset().y() <= streetLayer
+                && GROUND.contains(block.block().path());
+    }
 
-        int layer = block.offset().y();
-
-        return layer < streetLayer
-                || (layer == streetLayer && GROUND.contains(block.block().path()));
+    /** Se esta peça é da base: da camada da rua para baixo. */
+    public boolean isBase(BlueprintBlock block) {
+        return hasStreetLayer() && block.offset().y() <= streetLayer;
     }
 
     /**

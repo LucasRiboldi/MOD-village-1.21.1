@@ -367,6 +367,7 @@ public final class SurfaceGatheringWork {
                 job.task.start();
             }
             job.task.complete();
+            WorkerStrikes.worked(workerId, job.task);
             finish(job, workerId, "natural resource order filled");
             return;
         }

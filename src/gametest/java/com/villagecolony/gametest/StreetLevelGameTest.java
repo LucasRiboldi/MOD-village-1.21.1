@@ -167,4 +167,51 @@ public class StreetLevelGameTest implements FabricGameTest {
                 "só a camada da rua troca terreno; a de cima não");
         context.complete();
     }
+
+    /**
+     * A obra aberta não se protege de si mesma — playtest de 2026-10-02.
+     *
+     * <p>O teste acima não registrava a obra, e passava. No jogo a obra está
+     * aberta, a posição fica dentro dela, e a proteção da obra aberta dizia
+     * "não": o piso da casa 58405bf6 foi pulado 90 vezes e ela ficou com grama
+     * por chão. Aqui a obra está registrada, e a base abaixo da rua (pedido do
+     * autor do mesmo dia) também toma o lugar da pedra.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "street_level", tickLimit = 20)
+    public void theBaseReplacesTheGroundInsideItsOwnOpenSite(TestContext context) {
+        Blueprint plan = Blueprint.of(ResourceId.vanilla("test_open_site_base"), List.of(
+                new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("cobblestone")),
+                new BlueprintBlock(new ColonyPos(0, 1, 0), ResourceId.vanilla("oak_planks")),
+                new BlueprintBlock(new ColonyPos(0, 2, 0), ResourceId.vanilla("oak_planks"))))
+                .withStreetLayer(1);
+
+        BlockPos stone = context.getAbsolutePos(new BlockPos(1, 1, 1));
+        BlockPos grass = stone.up();
+        BlockPos dirt = grass.up();
+
+        context.getWorld().setBlockState(stone, Blocks.STONE.getDefaultState());
+        context.getWorld().setBlockState(grass, Blocks.GRASS_BLOCK.getDefaultState());
+        context.getWorld().setBlockState(dirt, Blocks.DIRT.getDefaultState());
+
+        UUID colonyId = UUID.randomUUID();
+        ConstructionProject project = ConstructionProject.plan(
+                colonyId, plan, MinecraftTypeAdapter.toColonyPos(stone));
+
+        com.villagecolony.VillageColonyMod.CONSTRUCTIONS.register(project);
+
+        try {
+            context.assertTrue(com.villagecolony.fabric.integration.BlockProtection.isColonyBuilt(grass),
+                    "a obra registrada devia cobrir a posição — sem isso o teste não mede nada");
+            context.assertTrue(BuriedPieces.mayReplaceGround(context.getWorld(), plan, plan.blocks().get(1), grass),
+                    "o piso da rua não tomou o lugar da grama dentro da própria obra");
+            context.assertTrue(BuriedPieces.mayReplaceGround(context.getWorld(), plan, plan.blocks().get(0), stone),
+                    "a base abaixo da rua não tomou o lugar da pedra");
+            context.assertFalse(BuriedPieces.mayReplaceGround(context.getWorld(), plan, plan.blocks().get(2), dirt),
+                    "acima da rua não se troca terreno");
+        } finally {
+            com.villagecolony.VillageColonyMod.CONSTRUCTIONS.removeOfColony(colonyId);
+        }
+
+        context.complete();
+    }
 }

@@ -149,6 +149,7 @@ public final class TreeFelling {
         }
 
         job.task.complete();
+        WorkerStrikes.worked(workerId, job.task);
 
         // Tarefa cumprida, aldeão liberado. É a cessão imediata da
         // ADR-004 §5: sem destino, a task do Brain para e ele volta à

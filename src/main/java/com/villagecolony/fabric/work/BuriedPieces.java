@@ -60,20 +60,24 @@ public final class BuriedPieces {
     }
 
     /**
-     * Se o piso da camada da rua pode tomar o lugar do terreno.
+     * Se a peça da base pode tomar o lugar do terreno.
      *
      * <p>O construtor pula a posição que não é substituível ("is in the way"),
-     * e é o certo para casa de vila e bloco do jogador. Na camada da rua, a
-     * peça que não é chão — pedregulho, tábua, degrau, caminho — vai
-     * <b>no</b> terreno: é o piso na altura da rua. Só terreno natural que a
-     * proteção deixa quebrar, e sem bloco com inventário.
+     * e é o certo para casa de vila e bloco do jogador. Na base — a camada da
+     * rua e as de baixo —, a peça que não é chão — pedregulho, tábua, degrau,
+     * caminho — vai <b>no</b> terreno. Só terreno natural que a proteção deixa
+     * quebrar, e sem bloco com inventário.
+     *
+     * <p><b>A proteção não conta a própria obra</b> — playtest de 2026-10-02.
+     * Perguntar {@link BlockProtection#mayBreak} aqui dizia sempre "não": a
+     * posição está dentro da obra aberta, e obra aberta é protegida. O piso
+     * da casa 58405bf6 foi pulado 90 vezes ("grass_block is in the way") e a
+     * casa ficou com a grama por chão. O teste antigo não registrava a obra.
      */
     public static boolean mayReplaceGround(
             ServerWorld world, Blueprint blueprint, BlueprintBlock block, BlockPos where) {
 
-        if (!blueprint.hasStreetLayer()
-                || block.offset().y() != blueprint.streetLayer()
-                || blueprint.isBuried(block)) {
+        if (!blueprint.isBase(block) || blueprint.isBuried(block)) {
             return false;
         }
 
@@ -81,6 +85,6 @@ public final class BuriedPieces {
 
         return world.getBlockEntity(where) == null
                 && WorldTerrain.isNaturalGround(state)
-                && BlockProtection.mayBreak(world, where, state);
+                && BlockProtection.mayBuildOver(world, where, state);
     }
 }
