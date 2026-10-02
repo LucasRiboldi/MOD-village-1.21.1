@@ -3,6 +3,7 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.core.construction.model.ColonyEdits;
 import com.villagecolony.core.movement.DetourMoves;
 import com.villagecolony.core.movement.DetourPlanner;
+import com.villagecolony.core.movement.Terrain;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkTargets;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -58,6 +60,9 @@ public final class DetourWalker {
     /** Quanto se espera o aldeão chegar ao vizinho já aberto e com chão. */
     static final int STEP_TICKS = 100;
 
+    /** O passo de quem anda pelo controle de movimento, como o das tasks Vanilla. */
+    private static final double STEER_SPEED = 0.6;
+
     private static final ItemStack LOOT_TOOL = new ItemStack(Items.IRON_PICKAXE);
 
     private final UUID workerId;
@@ -78,6 +83,15 @@ public final class DetourWalker {
     private final Predicate<ColonyPos> goal;
 
     private final boolean partial;
+
+    /** Como o mundo é lido: o de sempre, ou com a casca da vila selada (retorno do encalhado). */
+    private final Function<ServerWorld, Terrain> terrain;
+
+    /**
+     * Se anda pelo controle de movimento em vez do destino de trabalho: o
+     * encalhado não tem a tarefa de andar rodando — 2026-10-02.
+     */
+    private final boolean steer;
 
     private boolean reachesGoal;
 
@@ -103,7 +117,10 @@ public final class DetourWalker {
 
     private DetourWalker(
             UUID workerId, ColonyPos from, DetourPlanner.Detour detour, Set<ColonyPos> keep,
-            ColonyPos toward, Predicate<ColonyPos> goal, boolean partial) {
+            ColonyPos toward, Predicate<ColonyPos> goal, boolean partial,
+            Function<ServerWorld, Terrain> terrain, boolean steer) {
+        this.terrain = terrain;
+        this.steer = steer;
         this.workerId = workerId;
         this.from = from;
         this.steps = detour.steps();
@@ -124,14 +141,27 @@ public final class DetourWalker {
             ServerWorld world, UUID workerId, BlockPos feet, BlockPos toward,
             Predicate<BlockPos> goal, Set<BlockPos> keep, boolean partial) {
 
+        return plan(world, workerId, feet, toward, goal, keep, partial, WorldTerrain::new, false);
+    }
+
+    /**
+     * O mesmo, lendo o mundo por {@code terrain} e, com {@code steer}, andando
+     * pelo controle de movimento — o retorno do encalhado ({@link MineReturn}).
+     */
+    static Optional<DetourWalker> plan(
+            ServerWorld world, UUID workerId, BlockPos feet, BlockPos toward,
+            Predicate<BlockPos> goal, Set<BlockPos> keep, boolean partial,
+            Function<ServerWorld, Terrain> terrain, boolean steer) {
+
         ColonyPos start = MinecraftTypeAdapter.toColonyPos(feet);
         Set<ColonyPos> kept = keep.stream().map(MinecraftTypeAdapter::toColonyPos).collect(Collectors.toSet());
         ColonyPos aim = MinecraftTypeAdapter.toColonyPos(toward);
         Predicate<ColonyPos> reached = at -> goal.test(MinecraftTypeAdapter.toBlockPos(at));
 
-        return DetourPlanner.plan(new WorldTerrain(world), start, aim, reached, kept, partial)
+        return DetourPlanner.plan(terrain.apply(world), start, aim, reached, kept, partial)
                 .filter(detour -> !detour.steps().isEmpty())
-                .map(detour -> new DetourWalker(workerId, start, detour, kept, aim, reached, partial));
+                .map(detour -> new DetourWalker(
+                        workerId, start, detour, kept, aim, reached, partial, terrain, steer));
     }
 
     /** Um tique do desvio. */
@@ -160,7 +190,7 @@ public final class DetourWalker {
         }
 
         Optional<DetourMoves.Actions> actions =
-                DetourMoves.actions(new WorldTerrain(world), from, step, keep);
+                DetourMoves.actions(terrain.apply(world), from, step, keep);
 
         if (actions.isEmpty()) {
             return fail("the step to " + step.x() + ", " + step.y() + ", " + step.z()
@@ -180,7 +210,12 @@ public final class DetourWalker {
                     + " in " + STEP_TICKS + " ticks");
         }
 
-        WorkTargets.set(workerId, MinecraftTypeAdapter.toBlockPos(step), 0);
+        if (steer) {
+            villager.getNavigation().stop();
+            villager.getMoveControl().moveTo(step.x() + 0.5, step.y(), step.z() + 0.5, STEER_SPEED);
+        } else {
+            WorkTargets.set(workerId, MinecraftTypeAdapter.toBlockPos(step), 0);
+        }
 
         return Status.WALKING;
     }
@@ -199,7 +234,7 @@ public final class DetourWalker {
         replans++;
 
         Optional<DetourPlanner.Detour> again =
-                DetourPlanner.plan(new WorldTerrain(world), here, toward, goal, keep, partial);
+                DetourPlanner.plan(terrain.apply(world), here, toward, goal, keep, partial);
 
         if (again.isEmpty()) {
             return fail("it left the path at " + here.x() + ", " + here.y() + ", " + here.z()

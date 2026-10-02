@@ -86,6 +86,9 @@ public final class StrandedEscape {
             return;
         }
 
+        // O rastro de quem anda solto: o caminho de volta, se ele encalhar.
+        MineReturn.record(world);
+
         for (UUID workerId : StrandedWorkers.all()) {
             pass(world, workerId);
         }
@@ -104,6 +107,7 @@ public final class StrandedEscape {
             StrandedWorkers.forget(workerId);
             forget(workerId);
             EscapeBackfill.forget(workerId);
+            MineReturn.forget(workerId);
 
             return;
         }
@@ -136,6 +140,7 @@ public final class StrandedEscape {
 
             StrandedWorkers.release(workerId);
             ClimbOut.finish(world, villager, workerId);
+            MineReturn.finish(workerId);
             forget(workerId);
             EscapeBackfill.begin(workerId,
                     VillageColonyMod.STORAGES.of(workerId).map(WorkerStorage::chestPosition).orElse(null));
@@ -150,8 +155,10 @@ public final class StrandedEscape {
         }
 
         // A qualquer hora: sair do buraco não é trabalho, e preso ele não
-        // chega à cama. Ver ClimbOut — escada, pilar ou túnel, sem desistir.
-        ClimbOut.pass(world, villager, workerId, MinecraftTypeAdapter.toBlockPos(colony.get().center()),
+        // chega à cama. Ver ClimbOut — primeiro o caminho por onde desceu
+        // (MineReturn); sem ele, escada, pilar ou túnel, mirando a borda da
+        // vila e não o centro dela, sem desistir.
+        ClimbOut.pass(world, villager, workerId, MineReturn.homeFor(colony.get(), feet),
                 VillageColonyMod.STORAGES.of(workerId).map(WorkerStorage::chestPosition).orElse(null));
     }
 
@@ -283,8 +290,10 @@ public final class StrandedEscape {
             return false;
         }
 
+        // A casca da vila não se fura subindo — pedido do autor, 2026-10-02.
         return (WorldTerrain.isNaturalGround(state) || isRubbleUnderground(world, at, state))
-                && BlockProtection.mayDigOut(world, at, state);
+                && BlockProtection.mayDigOut(world, at, state)
+                && !MineReturn.isVillageShell(world, at);
     }
 
     /** Quantos blocos abaixo da superfície o pedregulho conta como entulho da mina. */

@@ -114,7 +114,7 @@ Cycle detected: Slice adapter -> \
     - Method <com.villagecolony.fabric.work.VillageMeals.serve(net.minecraft.server.world.ServerWorld, com.villagecolony.core.colony.model.Colony)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlockPos(com.villagecolony.core.type.ColonyPos)> in (VillageMeals.java:104)\
     - Method <com.villagecolony.fabric.work.MineVein.followingTheVein(net.minecraft.server.world.ServerWorld, com.villagecolony.core.construction.model.Mine, com.villagecolony.core.construction.model.MineArm)> references method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlockPos(com.villagecolony.core.type.ColonyPos)> in (MineVein.java:105)\
     - Method <com.villagecolony.fabric.work.BuilderMaterials.hasMaterialForNextBlock(net.minecraft.server.world.ServerWorld, com.villagecolony.core.construction.model.ConstructionProject)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlock(com.villagecolony.core.type.ResourceId)> in (BuilderMaterials.java:110)\
-    (71 further dependencies have been omitted...)
+    (72 further dependencies have been omitted...)
 Cycle detected: Slice adapter -> \
                 Slice integration -> \
                 Slice work -> \
@@ -157,7 +157,7 @@ Cycle detected: Slice adapter -> \
     - Method <com.villagecolony.fabric.work.VillageMeals.serve(net.minecraft.server.world.ServerWorld, com.villagecolony.core.colony.model.Colony)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlockPos(com.villagecolony.core.type.ColonyPos)> in (VillageMeals.java:104)\
     - Method <com.villagecolony.fabric.work.MineVein.followingTheVein(net.minecraft.server.world.ServerWorld, com.villagecolony.core.construction.model.Mine, com.villagecolony.core.construction.model.MineArm)> references method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlockPos(com.villagecolony.core.type.ColonyPos)> in (MineVein.java:105)\
     - Method <com.villagecolony.fabric.work.BuilderMaterials.hasMaterialForNextBlock(net.minecraft.server.world.ServerWorld, com.villagecolony.core.construction.model.ConstructionProject)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlock(com.villagecolony.core.type.ResourceId)> in (BuilderMaterials.java:110)\
-    (71 further dependencies have been omitted...)
+    (72 further dependencies have been omitted...)
 Cycle detected: Slice adapter -> \
                 Slice integration -> \
                 Slice work -> \
@@ -183,7 +183,7 @@ Cycle detected: Slice adapter -> \
   3. Dependencies of Slice work\
     - Method <com.villagecolony.fabric.work.VillageMeals.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (VillageMeals.java:85)\
     - Method <com.villagecolony.fabric.work.EscapeBackfill.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (EscapeBackfill.java:106)\
-    - Method <com.villagecolony.fabric.work.StrandedEscape.pass(net.minecraft.server.world.ServerWorld, java.util.UUID)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (StrandedEscape.java:111)\
+    - Method <com.villagecolony.fabric.work.StrandedEscape.pass(net.minecraft.server.world.ServerWorld, java.util.UUID)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (StrandedEscape.java:115)\
     - Method <com.villagecolony.fabric.work.SurfaceGatheringWork.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (SurfaceGatheringWork.java:131)\
     - Method <com.villagecolony.fabric.work.SmelterWork.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (SmelterWork.java:149)\
     - Method <com.villagecolony.fabric.work.ShepherdWork.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (ShepherdWork.java:195)\
@@ -268,7 +268,7 @@ Cycle detected: Slice event -> \
   3. Dependencies of Slice work\
     - Method <com.villagecolony.fabric.work.VillageMeals.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (VillageMeals.java:85)\
     - Method <com.villagecolony.fabric.work.EscapeBackfill.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (EscapeBackfill.java:106)\
-    - Method <com.villagecolony.fabric.work.StrandedEscape.pass(net.minecraft.server.world.ServerWorld, java.util.UUID)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (StrandedEscape.java:111)\
+    - Method <com.villagecolony.fabric.work.StrandedEscape.pass(net.minecraft.server.world.ServerWorld, java.util.UUID)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (StrandedEscape.java:115)\
     - Method <com.villagecolony.fabric.work.SurfaceGatheringWork.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (SurfaceGatheringWork.java:131)\
     - Method <com.villagecolony.fabric.work.SmelterWork.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (SmelterWork.java:149)\
     - Method <com.villagecolony.fabric.work.ShepherdWork.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (ShepherdWork.java:195)\
@@ -305,7 +305,7 @@ Cycle detected: Slice event -> \
   2. Dependencies of Slice work\
     - Method <com.villagecolony.fabric.work.VillageMeals.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (VillageMeals.java:85)\
     - Method <com.villagecolony.fabric.work.EscapeBackfill.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (EscapeBackfill.java:106)\
-    - Method <com.villagecolony.fabric.work.StrandedEscape.pass(net.minecraft.server.world.ServerWorld, java.util.UUID)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (StrandedEscape.java:111)\
+    - Method <com.villagecolony.fabric.work.StrandedEscape.pass(net.minecraft.server.world.ServerWorld, java.util.UUID)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (StrandedEscape.java:115)\
     - Method <com.villagecolony.fabric.work.SurfaceGatheringWork.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (SurfaceGatheringWork.java:131)\
     - Method <com.villagecolony.fabric.work.SmelterWork.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (SmelterWork.java:149)\
     - Method <com.villagecolony.fabric.work.ShepherdWork.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (ShepherdWork.java:195)\

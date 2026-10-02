@@ -32,6 +32,7 @@
       "com.villagecolony.fabric.work.PenEscapeGameTest",
       "com.villagecolony.fabric.work.PenGolemGameTest",
       "com.villagecolony.fabric.work.ClimbOutGameTest",
+      "com.villagecolony.fabric.work.MineReturnGameTest",
       "com.villagecolony.gametest.StorageGameTest",
       "com.villagecolony.gametest.LumberjackGameTest",
       "com.villagecolony.gametest.ChestMarkerGameTest",

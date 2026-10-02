@@ -31,7 +31,7 @@ com 1.196 unitários e 528/528 GameTests locais; fluidez F1–F14 na §8 da Flui
   pilar ou túnel, sem desistir. Os dois vistos em jogo em 01-10.
 - **01-10:** Regra 45 (baús da caixa); Emenda 7 (lote: ½ diagonal + 12, sem teto).
 - **Playtest 01-10 23:12–00:17 (Spark `jPsGP2hsPo`):** TPS 20, mod 1,7%. Curral ok; pilar parou sob a grama da vila → `mayDigOut`.
-- **Playtest 02-10 00:43–01:04 (Spark `LhqqBh973A`):** TPS 20, mod 1,7%; 2 casas prontas. Piso da obra nunca assentado (proteção da própria obra) → `mayBuildOver`; mineiro preso sob pedregulho → entulho; `/vc log` "travado" antigo → `WorkerStrikes.worked`. Pedidos: golem no curral, base construída, escada de madeira, roça acima da rua. Análise: `docs/research/2026-10-02-travamentos-e-tentativas.md`.
+- **Playtest 02-10 00:43–01:04 (Spark `LhqqBh973A`):** TPS 20, mod 1,7%; 2 casas prontas. Piso da obra nunca assentado (proteção da própria obra) → `mayBuildOver`; mineiro preso sob pedregulho → entulho; `/vc log` "travado" antigo → `WorkerStrikes.worked`. Pedidos: golem no curral, base construída, escada de madeira, roça acima da rua. Análise: `docs/research/2026-10-02-travamentos-e-tentativas.md`. **01:36 (Spark `f0wlFJg1kL`):** golens pularam a cerca; 3 mineiros encalhados 7x em y=10 saíam furando a vila → `MineReturn` (volta pelo rastro, casca de 4 blocos).
 
 ## Git
 

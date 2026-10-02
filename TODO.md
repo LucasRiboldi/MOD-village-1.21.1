@@ -24,6 +24,10 @@ escada de madeira na porta elevada, roça acima da rua. **Nada visto em jogo.**
 - [ ] 🟠 Casas já prontas sem piso (`58405bf6`): reparo não reabre peça riscada como "in the way" — decidir se refaz.
 - [ ] 🟡 Lenhador: descartar tora de casa da vila antes de medir a copa (124 recusas, 0,69%) — análise §3.2.
 - [ ] 🟡 Varredura do fazendeiro sem terminar no prazo (8 vezes) — análise §3.3.
+- [ ] 🔴 Playtest do retorno pela mina: `goes back the way it came`, `is back on its trail`, `is out at` na boca da mina; nenhum buraco novo no chão da vila.
+- [ ] 🟠 Mineiro volta sempre à pedra inalcançável (7 encalhes em `-241, 10, 379`, caverna com lava) — F-1 de `2026-10-02-melhorias-profissoes-vida-natural.md`.
+- [ ] 🟡 Rastro da mina no save (F-3): hoje o retorno só vale depois de ele descer na sessão.
+- [ ] 🟡 Decisões do autor do estudo de profissões: Regra 28 (casa do ofício), Regra 18 (pausa/chuva), felicidade (R-3), fornalha real (V-2).
 
 ## Sessão de 2026-10-01 — pendências (`docs/research/2026-10-01-solucoes-das-pendencias.md`)
 

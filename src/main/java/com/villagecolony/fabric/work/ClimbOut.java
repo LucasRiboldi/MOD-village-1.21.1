@@ -163,7 +163,9 @@ final class ClimbOut {
             villager.getBrain().forget(MemoryModuleType.WALK_TARGET);
             villager.getNavigation().stop();
 
-            if (climb.jumpFrom != null) {
+            if (MineReturn.isDriving(entry.getKey())) {
+                MineReturn.drive(world, villager, entry.getKey(), climb.chest);
+            } else if (climb.jumpFrom != null) {
                 airborne(world, villager, entry.getKey(), climb, now);
             } else if (climb.moveTo != null) {
                 step(villager, climb, now);
@@ -180,6 +182,11 @@ final class ClimbOut {
         climb.chest = chest;
 
         if (climb.jumpFrom != null || climb.moveTo != null || !villager.isOnGround()) {
+            return;
+        }
+
+        // Primeiro por onde ele desceu — pedido do autor, 2026-10-02.
+        if (MineReturn.pass(world, villager, workerId)) {
             return;
         }
 
@@ -247,6 +254,7 @@ final class ClimbOut {
 
     static void forget(UUID workerId) {
         CLIMBS.remove(workerId);
+        MineReturn.forget(workerId);
     }
 
     static void clearAll() {
