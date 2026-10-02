@@ -102,6 +102,9 @@ public final class BuilderWork {
      */
     static final int STALL_LIMIT = 4 * VillageDetector.CYCLE_TICKS;
 
+    /** Tiques andando sem alcançar a peça antes de deixá-la de lado — A-6. */
+    static final int SET_ASIDE_AFTER = 200;
+
     /** Trabalho aberto, por construtor. */
     static final Map<UUID, Job> JOBS = new HashMap<>();
 
@@ -312,7 +315,21 @@ public final class BuilderWork {
                 return false;
             }
 
-            if (++job.stalled > STALL_LIMIT) {
+            // A peça que não se alcança fica de lado, e a obra segue pela
+            // próxima — A-6, 2026-10-02. Antes ele insistia até o STALL_LIMIT
+            // (dois minutos) e largava a obra inteira.
+            if (++job.stalled % SET_ASIDE_AFTER == 0 && project.remaining().size() > 1) {
+                project.defer(next.get(), ConstructionOutcome.skipped(project.worldPositionOf(next.get()),
+                        SkipReason.UNREACHABLE), BuilderPlacement.supportFingerprint(world, target));
+                VillageColonyMod.LOGGER.info("Project {} sets {} at {} aside — the builder walked {} ticks"
+                        + " without reaching it; it goes on with the next piece",
+                        project.id(), next.get().block(), target.toShortString(), job.stalled);
+                job.stalled = 0;
+
+                return true;
+            }
+
+            if (job.stalled > STALL_LIMIT) {
                 // Andou dois minutos de horário de trabalho e não chegou
                 // ao bloco. A obra continua de pé e volta para a fila; o
                 // que não continua é este construtor sendo dono dela.

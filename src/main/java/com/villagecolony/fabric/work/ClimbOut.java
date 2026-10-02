@@ -6,6 +6,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.ai.brain.MemoryModuleType;
@@ -399,8 +400,11 @@ final class ClimbOut {
             climb.pocket--;
             placed = true;
         } else {
-            placed = climb.chest != null
-                    && EscapeBackfill.placeFromChest(world, workerId, climb.chest, at, Items.COBBLESTONE);
+            // Do baú quando há; sem ele, criada — A-5, 2026-10-02: ele sempre pode
+            // criar pedra para se locomover.
+            placed = (climb.chest != null
+                    && EscapeBackfill.placeFromChest(world, workerId, climb.chest, at, Items.COBBLESTONE))
+                    || world.setBlockState(at, Blocks.COBBLESTONE.getDefaultState());
         }
 
         if (placed) {

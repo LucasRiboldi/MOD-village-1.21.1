@@ -332,8 +332,10 @@ public final class DetourWalker {
                     : Status.WALKING;
         }
 
-        if (chest == null || ChestWithdrawer.withdraw(world, chest, Items.COBBLESTONE, 1) < 1) {
-            return fail("no cobblestone in its chest to place at " + at.toShortString());
+        // Do baú quando há; sem ele, a pedra é criada — A-5, decisão do autor de
+        // 2026-10-02: "ele sempre pode criar pedra para ajudar a se locomover".
+        if (chest != null) {
+            ChestWithdrawer.withdraw(world, chest, Items.COBBLESTONE, 1);
         }
 
         ColonyEdits.remember(MinecraftTypeAdapter.toColonyPos(at));

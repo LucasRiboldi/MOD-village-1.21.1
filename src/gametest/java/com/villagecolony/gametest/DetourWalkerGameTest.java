@@ -139,9 +139,13 @@ public class DetourWalkerGameTest implements FabricGameTest {
         });
     }
 
-    /** Sem pedregulho no baú não há ponte, e o desvio diz por quê. */
+    /**
+     * Sem pedregulho no baú a pedra é criada, e a ponte sai — A-5, decisão do
+     * autor de 2026-10-02: "ele sempre pode criar pedra para ajudar a se
+     * locomover". Até então o desvio parava com "no cobblestone in its chest".
+     */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "detour_walker", tickLimit = 400)
-    public void withoutCobblestoneTheBridgeIsNotBuilt(TestContext context) {
+    public void withoutCobblestoneTheStoneIsCreatedAndTheBridgeIsBuilt(TestContext context) {
         ColonyPos chest = corridorWithAGap(context);
 
         VillagerEntity villager = minerAt(context, new BlockPos(1, 3, 2));
@@ -151,10 +155,9 @@ public class DetourWalkerGameTest implements FabricGameTest {
                 villager.getBlockPos(), end, end::equals, Set.of(), false).orElseThrow();
 
         runToTheEnd(context, villager, walker, chest, status -> {
-            context.assertTrue(status == DetourWalker.Status.FAILED, "atravessou sem material; caminho "
+            context.assertTrue(status == DetourWalker.Status.DONE, "não atravessou: " + walker.why() + "; caminho "
                     + walker.path() + "; terminou em " + villager.getBlockPos().toShortString());
-            context.assertTrue(walker.why().contains("no cobblestone"), "motivo: " + walker.why());
-            context.expectBlock(Blocks.AIR, new BlockPos(4, 2, 2));
+            context.expectBlock(Blocks.COBBLESTONE, new BlockPos(4, 2, 2));
         });
     }
 

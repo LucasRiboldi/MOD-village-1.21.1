@@ -52,6 +52,16 @@ public final class CropPatch {
      */
     private static final Map<UUID, BlockPos> EMPTY_PLOTS = new HashMap<>();
 
+    /**
+     * A terra arada que a varredura já achou, por colônia — A-8, 2026-10-02.
+     * O fazendeiro olha estas células antes de varrer o raio: a roça não muda
+     * de lugar, e na sessão de 02-10 a varredura não terminou no prazo 23 vezes.
+     */
+    private static final Map<UUID, java.util.LinkedHashSet<BlockPos>> KNOWN = new HashMap<>();
+
+    /** Quantas células de roça cada colônia lembra. */
+    private static final int MAX_KNOWN = 4_096;
+
     private CropPatch() {
     }
 
@@ -132,6 +142,14 @@ public final class CropPatch {
         // para o caso de não haver nenhuma. Uma casa, e não duas
         // varreduras — é a razão de este método existir.
         BlockPos remembered = rememberedEmptyPlot(world, colonyId, center, radius);
+
+        // A roça conhecida primeiro — A-8. Achou maduro nela: sem varrer o raio.
+        Optional<Field> known = fromKnownFarmland(world, colonyId, remembered);
+
+        if (known.isPresent()) {
+            return known.get();
+        }
+
         BlockPos[] plot = {remembered};
 
         Optional<BlockPos> ripe = RingSweep.around(colonyId, RingSweep.Scan.FARMING, center, radius,
@@ -147,7 +165,12 @@ public final class CropPatch {
                 BlockState state = chunk.getBlockState(column);
 
                 if (isRipe(state)) {
+                    learn(colonyId, column.down());
                     return Optional.of(column);
+                }
+
+                if (isFarmland(state)) {
+                    learn(colonyId, column);
                 }
 
                 if (plot[0] == null && isEmptyPlot(chunk, column)) {
@@ -167,6 +190,52 @@ public final class CropPatch {
         }
 
         return new Field(ripe.orElse(null), plot[0], incomplete);
+    }
+
+    /**
+     * O trabalho que a roça conhecida já tem: o primeiro maduro dela, e um
+     * canteiro vazio. Célula que deixou de ser terra arada sai da lista.
+     */
+    private static Optional<Field> fromKnownFarmland(ServerWorld world, UUID colonyId, BlockPos remembered) {
+        java.util.LinkedHashSet<BlockPos> cells = KNOWN.get(colonyId);
+
+        if (cells == null || cells.isEmpty()) {
+            return Optional.empty();
+        }
+
+        BlockPos plot = remembered;
+
+        for (java.util.Iterator<BlockPos> it = cells.iterator(); it.hasNext(); ) {
+            BlockPos cell = it.next();
+            WorldChunk chunk = loadedChunk(world, cell);
+
+            if (chunk == null) {
+                continue;
+            }
+
+            if (!isFarmland(chunk.getBlockState(cell))) {
+                it.remove();
+                continue;
+            }
+
+            if (isRipe(chunk.getBlockState(cell.up()))) {
+                return Optional.of(new Field(cell.up().toImmutable(), plot, false));
+            }
+
+            if (plot == null && chunk.getBlockState(cell.up()).isAir()) {
+                plot = cell;
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    private static void learn(UUID colonyId, BlockPos farmland) {
+        java.util.LinkedHashSet<BlockPos> cells = KNOWN.computeIfAbsent(colonyId, id -> new java.util.LinkedHashSet<>());
+
+        if (cells.size() < MAX_KNOWN) {
+            cells.add(farmland.toImmutable());
+        }
     }
 
     /**
@@ -219,11 +288,13 @@ public final class CropPatch {
     /** Esquece a memória de uma colônia. Chamado por testes e limpeza. */
     public static void forget(UUID colonyId) {
         EMPTY_PLOTS.remove(colonyId);
+        KNOWN.remove(colonyId);
     }
 
     /** Esquece todos os canteiros lembrados. Chamado ao descarregar. */
     public static void clearAll() {
         EMPTY_PLOTS.clear();
+        KNOWN.clear();
     }
 
     /**

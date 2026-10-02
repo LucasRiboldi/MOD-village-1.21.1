@@ -159,6 +159,9 @@ public class MineLeaseGameTest implements FabricGameTest {
 
         MineLease.shortenTo(LEASE);
 
+        // Só o prazo: sem desvio (A-5, 10-02 — o desvio cria a pedra e andaria).
+        com.villagecolony.fabric.work.MinerDetours.allowDetoursPerTarget(0);
+
         ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
 
         Colony colony = Colony.create(UUID.randomUUID(), chest);
@@ -342,6 +345,8 @@ public class MineLeaseGameTest implements FabricGameTest {
                 }
 
                 MineLease.restoreLimit();
+
+                com.villagecolony.fabric.work.MinerDetours.restoreDetours();
 
                 MineDigging.restoreMineDistance();
 

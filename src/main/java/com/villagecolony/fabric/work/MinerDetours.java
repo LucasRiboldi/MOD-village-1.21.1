@@ -27,9 +27,25 @@ import java.util.UUID;
  * durante o primeiro; um terceiro seria insistir na pedra que o mundo recusa,
  * e para isso já existe a marca do E44.
  */
-final class MinerDetours {
+public final class MinerDetours {
 
     static final int PER_TARGET = 2;
+
+    /**
+     * Os desvios por pedra em vigor — o teste do prazo (E44) os zera para medir
+     * só o prazo: desde 2026-10-02 (A-5) o mineiro cria a pedra que falta, e o
+     * desvio que antes falhava por falta de pedregulho agora anda.
+     */
+    private static int perTarget = PER_TARGET;
+
+    /** Para a bateria: quantos desvios por pedra. */
+    public static void allowDetoursPerTarget(int detours) {
+        perTarget = detours;
+    }
+
+    public static void restoreDetours() {
+        perTarget = PER_TARGET;
+    }
 
     private MinerDetours() {
     }
@@ -40,7 +56,7 @@ final class MinerDetours {
      * @return se o desvio começou — então quem chamou não desiste
      */
     static boolean tryDetour(ServerWorld world, VillagerEntity villager, Job job, String why) {
-        if (job.target == null || job.detours >= PER_TARGET) {
+        if (job.target == null || job.detours >= perTarget) {
             return false;
         }
 

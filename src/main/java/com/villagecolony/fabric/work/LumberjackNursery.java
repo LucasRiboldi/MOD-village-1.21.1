@@ -96,6 +96,8 @@ public final class LumberjackNursery {
             return 0;
         }
 
+        double towards = towardsTheLumberjack(colonyId, centre);
+
         Optional<Block> sapling =
                 TreeNursery.saplingFor(world, MinecraftTypeAdapter.toColonyPos(centre));
 
@@ -121,7 +123,7 @@ public final class LumberjackNursery {
         int planted = 0;
 
         while (planted < room) {
-            Optional<BlockPos> spot = spotOnTheEdge(world, centre);
+            Optional<BlockPos> spot = spotOnTheEdge(world, centre, towards);
 
             if (spot.isEmpty() || !TreeNursery.plant(world, spot.get(), sapling.get())) {
                 break;
@@ -169,10 +171,14 @@ public final class LumberjackNursery {
      * longe possível do centro sem sair do alcance do lenhador; só usa uma
      * distância menor quando a borda está ocupada ou inacessível.
      */
-    private static Optional<BlockPos> spotOnTheEdge(ServerWorld world, BlockPos centre) {
+    private static Optional<BlockPos> spotOnTheEdge(ServerWorld world, BlockPos centre, double towards) {
         for (int radius = EDGE; radius >= INNER_EDGE; radius--) {
-            for (int step = 0; step < DIRECTIONS; step++) {
-                double angle = 2 * Math.PI * step / DIRECTIONS;
+            for (int turn = 0; turn < DIRECTIONS; turn++) {
+                // Do lado da borda mais perto do baú do lenhador para fora — A-7,
+                // 2026-10-02: o viveiro continua na borda, mas no ponto dela de
+                // onde o lenhador anda menos.
+                int step = (turn % 2 == 0 ? turn / 2 : DIRECTIONS - (turn + 1) / 2);
+                double angle = towards + 2 * Math.PI * step / DIRECTIONS;
 
                 int x = centre.getX() + (int) Math.round(radius * Math.cos(angle));
                 int z = centre.getZ() + (int) Math.round(radius * Math.sin(angle));
@@ -186,6 +192,26 @@ public final class LumberjackNursery {
         }
 
         return Optional.empty();
+    }
+
+    /** O ângulo, a partir do centro, do baú do lenhador da colônia; zero sem lenhador com baú. */
+    private static double towardsTheLumberjack(UUID colonyId, BlockPos centre) {
+        for (var worker : VillageColonyMod.WORKERS.ofColony(colonyId)) {
+            if (worker.profession().filter(com.villagecolony.core.worker.model.ProfessionType.LUMBERJACK::equals)
+                    .isEmpty()) {
+                continue;
+            }
+
+            var chest = VillageColonyMod.STORAGES.of(worker.villagerId());
+
+            if (chest.isPresent()) {
+                BlockPos at = MinecraftTypeAdapter.toBlockPos(chest.get().chestPosition());
+
+                return Math.atan2(at.getZ() - centre.getZ(), at.getX() - centre.getX());
+            }
+        }
+
+        return 0.0;
     }
 
     /** Conta marcadores de viveiro que ainda têm muda ou árvore em cima. */
