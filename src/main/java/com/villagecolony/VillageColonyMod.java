@@ -12,6 +12,9 @@ import com.villagecolony.fabric.event.ServerLifecycleHandler;
 import com.villagecolony.fabric.event.PlayerWorldChangeHandler;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
 import com.villagecolony.fabric.event.VillagerLifecycleHandler;
+import com.villagecolony.fabric.overlay.OverlaySync;
+import com.villagecolony.fabric.overlay.OverlaySnapshotPayload;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,6 +151,8 @@ public class VillageColonyMod implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        PayloadTypeRegistry.playS2C().register(OverlaySnapshotPayload.ID, OverlaySnapshotPayload.CODEC);
+        OverlaySync.register();
         ServerLifecycleHandler.register();
         PlayerWorldChangeHandler.register();
         VillageDetectionHandler.register();
