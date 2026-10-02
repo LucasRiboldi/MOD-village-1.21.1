@@ -100,6 +100,13 @@ public final class ConstructionDemand {
         return !VillageColonyMod.BUILDINGS.ofColony(colonyId).isEmpty();
     }
 
+    /** As toras que a obra aberta ainda pede brutas — A-1, 2026-10-02. */
+    public static int rawWoodNeededBy(Colony colony) {
+        return VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
+                .map(project -> com.villagecolony.core.coordination.StockRules.rawWoodIn(project.remainingMaterials()))
+                .orElse(0);
+    }
+
     /**
      * Quanto deste material a obra aberta ainda pede.
      *

@@ -422,7 +422,7 @@ public final class ColonyGoals {
                 ? storedPlanks
                 : Math.min(
                         appetite,
-                        storedPlanks + StockRules.logsToConvert(logs, storedPlanks) * StockRules.PLANKS_PER_LOG);
+                        storedPlanks + StockRules.logsThatMayBeConverted(logs, storedPlanks, work.rawLogs(), planksForWork) * StockRules.PLANKS_PER_LOG);
 
         Map<ResourceType, Integer> goals = new LinkedHashMap<>();
 

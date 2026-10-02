@@ -84,14 +84,51 @@ public final class StockRules {
 
         Objects.requireNonNull(constructionMaterials, "constructionMaterials");
 
-        int reservedForConstruction = constructionMaterials.entrySet().stream()
+        return logsThatMayBeConverted(
+                logs, storedPlanks, rawWoodIn(constructionMaterials), planksIn(constructionMaterials));
+    }
+
+    /**
+     * O mesmo, em números — e a conta que a meta e o fabricante fazem juntos
+     * (A-1, decisão do autor de 2026-10-02).
+     *
+     * <p><i>"Permitindo que as obras utilizem todos os recursos de todos os
+     * baús; a reserva de metade do conteúdo é para utilização de outras
+     * profissões em criações de outros blocos."</i> A obra pode converter toda
+     * a tora de que precisa para as tábuas dela, sem a reserva da metade; fora
+     * dela, a metade continua guardada para os outros ofícios. Só a tora que a
+     * própria obra pede bruta não vira tábua.
+     *
+     * <p><b>A meta e o fabricante usam esta mesma conta.</b> Até 02-10 a meta
+     * contava só a metade, e o fabricante a metade menos a tora bruta da obra:
+     * a meta pedia tábua, o fabricante recusava, e 14 de 22 tarefas fecharam com
+     * 0 peça — abrindo e fechando a cada ciclo.
+     *
+     * @param rawLogsForWork as toras que a obra aberta pede brutas
+     * @param planksForWork as tábuas que a obra aberta ainda pede
+     */
+    public static int logsThatMayBeConverted(int logs, int storedPlanks, int rawLogsForWork, int planksForWork) {
+        int free = Math.max(0, logs - rawLogsForWork);
+        int missingPlanks = Math.max(0, planksForWork - storedPlanks);
+        int forWork = (missingPlanks + PLANKS_PER_LOG - 1) / PLANKS_PER_LOG;
+
+        return Math.min(free, Math.max(logsToConvert(logs, storedPlanks), forWork));
+    }
+
+    /** As toras que estes materiais pedem brutas (tronco, madeira, caule, hifa). */
+    public static int rawWoodIn(Map<ResourceId, Integer> materials) {
+        return materials.entrySet().stream()
                 .filter(entry -> isRawWood(entry.getKey()))
                 .mapToInt(Map.Entry::getValue)
                 .sum();
+    }
 
-        return Math.min(
-                logsToConvert(logs, storedPlanks),
-                Math.max(0, logs - reservedForConstruction));
+    /** As tábuas que estes materiais pedem, de qualquer espécie. */
+    public static int planksIn(Map<ResourceId, Integer> materials) {
+        return materials.entrySet().stream()
+                .filter(entry -> entry.getKey().path().endsWith("_planks"))
+                .mapToInt(Map.Entry::getValue)
+                .sum();
     }
 
     private static boolean isRawWood(ResourceId material) {

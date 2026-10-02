@@ -55,7 +55,7 @@ Cycle detected: Slice adapter -> \
     - Method <com.villagecolony.fabric.event.ColonyCycleRunner.runCycleOf(net.minecraft.server.world.ServerWorld, com.villagecolony.core.colony.model.Colony, boolean)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toResourceId(net.minecraft.block.Block)> in (ColonyCycleRunner.java:297)\
     - Method <com.villagecolony.fabric.event.ColonyCycleRunner.runCycleOf(net.minecraft.server.world.ServerWorld, com.villagecolony.core.colony.model.Colony, boolean)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlock(com.villagecolony.core.type.ResourceId)> in (ColonyCycleRunner.java:305)\
     - Method <com.villagecolony.fabric.event.ColonyCycleRunner.runCycleOf(net.minecraft.server.world.ServerWorld, com.villagecolony.core.colony.model.Colony, boolean)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toResourceType(net.minecraft.item.Item)> in (ColonyCycleRunner.java:306)\
-    - Method <com.villagecolony.fabric.event.ColonyCycleRunner.canReserveTask(net.minecraft.server.world.ServerWorld, java.util.UUID, com.villagecolony.core.task.model.Task)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlockPos(com.villagecolony.core.type.ColonyPos)> in (ColonyCycleRunner.java:440)
+    - Method <com.villagecolony.fabric.event.ColonyCycleRunner.canReserveTask(net.minecraft.server.world.ServerWorld, java.util.UUID, com.villagecolony.core.task.model.Task)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlockPos(com.villagecolony.core.type.ColonyPos)> in (ColonyCycleRunner.java:442)
 Cycle detected: Slice adapter -> \
                 Slice integration -> \
                 Slice event -> \
@@ -92,7 +92,7 @@ Cycle detected: Slice adapter -> \
     - Method <com.villagecolony.fabric.event.ServerLifecycleHandler.onServerStopping(net.minecraft.server.MinecraftServer)> calls method <com.villagecolony.fabric.work.MineMarks$Mark.stone()> in (ServerLifecycleHandler.java:218)\
     - Method <com.villagecolony.fabric.event.ServerLifecycleHandler.onServerStopping(net.minecraft.server.MinecraftServer)> calls method <com.villagecolony.fabric.work.MineMarks$Mark.count()> in (ServerLifecycleHandler.java:219)\
     - Method <com.villagecolony.fabric.event.ServerLifecycleHandler.onServerStopping(net.minecraft.server.MinecraftServer)> calls method <com.villagecolony.fabric.work.MineMarks$Mark.since()> in (ServerLifecycleHandler.java:219)\
-    (47 further dependencies have been omitted...)\
+    (48 further dependencies have been omitted...)\
   4. Dependencies of Slice work\
     - Method <com.villagecolony.fabric.work.WorldTerrain.at(com.villagecolony.core.type.ColonyPos)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlockPos(com.villagecolony.core.type.ColonyPos)> in (WorldTerrain.java:45)\
     - Method <com.villagecolony.fabric.work.MineFurnishing.furnishAndLight(net.minecraft.server.world.ServerWorld, com.villagecolony.core.construction.model.Mine)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlockPos(com.villagecolony.core.type.ColonyPos)> in (MineFurnishing.java:47)\
@@ -202,7 +202,7 @@ Cycle detected: Slice adapter -> \
     - Method <com.villagecolony.fabric.event.ColonyCycleRunner.runCycleOf(net.minecraft.server.world.ServerWorld, com.villagecolony.core.colony.model.Colony, boolean)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toResourceId(net.minecraft.block.Block)> in (ColonyCycleRunner.java:297)\
     - Method <com.villagecolony.fabric.event.ColonyCycleRunner.runCycleOf(net.minecraft.server.world.ServerWorld, com.villagecolony.core.colony.model.Colony, boolean)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlock(com.villagecolony.core.type.ResourceId)> in (ColonyCycleRunner.java:305)\
     - Method <com.villagecolony.fabric.event.ColonyCycleRunner.runCycleOf(net.minecraft.server.world.ServerWorld, com.villagecolony.core.colony.model.Colony, boolean)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toResourceType(net.minecraft.item.Item)> in (ColonyCycleRunner.java:306)\
-    - Method <com.villagecolony.fabric.event.ColonyCycleRunner.canReserveTask(net.minecraft.server.world.ServerWorld, java.util.UUID, com.villagecolony.core.task.model.Task)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlockPos(com.villagecolony.core.type.ColonyPos)> in (ColonyCycleRunner.java:440)
+    - Method <com.villagecolony.fabric.event.ColonyCycleRunner.canReserveTask(net.minecraft.server.world.ServerWorld, java.util.UUID, com.villagecolony.core.task.model.Task)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlockPos(com.villagecolony.core.type.ColonyPos)> in (ColonyCycleRunner.java:442)
 Cycle detected: Slice event -> \
                 Slice integration -> \
                 Slice event\
@@ -301,7 +301,7 @@ Cycle detected: Slice event -> \
     - Method <com.villagecolony.fabric.event.ServerLifecycleHandler.onServerStopping(net.minecraft.server.MinecraftServer)> calls method <com.villagecolony.fabric.work.MineMarks$Mark.stone()> in (ServerLifecycleHandler.java:218)\
     - Method <com.villagecolony.fabric.event.ServerLifecycleHandler.onServerStopping(net.minecraft.server.MinecraftServer)> calls method <com.villagecolony.fabric.work.MineMarks$Mark.count()> in (ServerLifecycleHandler.java:219)\
     - Method <com.villagecolony.fabric.event.ServerLifecycleHandler.onServerStopping(net.minecraft.server.MinecraftServer)> calls method <com.villagecolony.fabric.work.MineMarks$Mark.since()> in (ServerLifecycleHandler.java:219)\
-    (47 further dependencies have been omitted...)\
+    (48 further dependencies have been omitted...)\
   2. Dependencies of Slice work\
     - Method <com.villagecolony.fabric.work.VillageMeals.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (VillageMeals.java:85)\
     - Method <com.villagecolony.fabric.work.EscapeBackfill.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (EscapeBackfill.java:106)\
@@ -339,7 +339,7 @@ Cycle detected: Slice event -> \
     - Method <com.villagecolony.fabric.event.ServerLifecycleHandler.onServerStopping(net.minecraft.server.MinecraftServer)> calls method <com.villagecolony.fabric.work.MineMarks$Mark.stone()> in (ServerLifecycleHandler.java:218)\
     - Method <com.villagecolony.fabric.event.ServerLifecycleHandler.onServerStopping(net.minecraft.server.MinecraftServer)> calls method <com.villagecolony.fabric.work.MineMarks$Mark.count()> in (ServerLifecycleHandler.java:219)\
     - Method <com.villagecolony.fabric.event.ServerLifecycleHandler.onServerStopping(net.minecraft.server.MinecraftServer)> calls method <com.villagecolony.fabric.work.MineMarks$Mark.since()> in (ServerLifecycleHandler.java:219)\
-    (47 further dependencies have been omitted...)\
+    (48 further dependencies have been omitted...)\
   2. Dependencies of Slice work\
     - Field <com.villagecolony.fabric.work.LumberjackWork$Job.plan> has type <com.villagecolony.fabric.integration.TreeHarvester$Plan> in (LumberjackWork.java:0)\
     - Method <com.villagecolony.fabric.work.ConstructionDemand.withinTheFarmersReach(com.villagecolony.core.colony.model.Colony, com.villagecolony.fabric.integration.BuildSiteScanner$Site)> has parameter of type <com.villagecolony.fabric.integration.BuildSiteScanner$Site> in (ConstructionDemand.java:0)\
