@@ -26,7 +26,10 @@ escada de madeira na porta elevada, roça acima da rua. **Nada visto em jogo.**
 - [ ] 🟡 Varredura do fazendeiro sem terminar no prazo (8 vezes) — análise §3.3.
 - [ ] 🔴 Playtest do retorno pela mina: `goes back the way it came`, `is back on its trail`, `is out at` na boca da mina; nenhum buraco novo no chão da vila.
 - [x] 🟠 F-1 e F-2 aplicados (02-10): descida travada (`MineDescent`), varredura vazia (`EmptySweeps`), tora de casa no teto, pedido encadeado (`TaskChain`). Falta ver em jogo: `The way down stops at`, `has no sand anywhere`, `chained the next`.
-- [ ] 🟡 Rastro da mina no save (F-3): hoje o retorno só vale depois de ele descer na sessão.
+- [x] 🟡 Rastro da mina no save (F-3) — feito em 02-10 (`WorkMarksSavedData.mineTrails`).
+- [x] 🟠 Regras 2-e1/37-e1 (ferramenta melhor do baú, com Eficiência e encantamento), 49 (ordem das obras: cama → casa do ofício → demais) e 50 (tempo dos aldeões, `VC_TIME` + `scripts/time_ledger.py`) — 02-10.
+- [ ] 🟠 Regra 48: recolher do chão só o item que falta à obra aberta — decidida, não implementada.
+- [ ] 🟡 Bateria: dois intermitentes vistos em 02-10, uma vez cada em 8 rodadas — `SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted` (a mina sumiu no tique 150) e `BuilderGameTest.theBuilderMakesTheDoorTheWorkIsWaitingFor` (1 porta no baú em vez de 2). Suspeita: interferência entre cenários no mundo único.
 - [ ] 🟡 Decisões do autor do estudo de profissões: Regra 28 (casa do ofício), Regra 18 (pausa/chuva), felicidade (R-3), fornalha real (V-2).
 
 ## Sessão de 2026-10-01 — pendências (`docs/research/2026-10-01-solucoes-das-pendencias.md`)

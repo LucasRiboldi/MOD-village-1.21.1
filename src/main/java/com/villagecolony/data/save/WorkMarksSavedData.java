@@ -39,6 +39,23 @@ public final class WorkMarksSavedData extends PersistentState {
 
     static final String STORAGES = "workerChests";
 
+    /** O rastro de volta de cada trabalhador debaixo da terra — F-3, 2026-10-02. */
+    static final String MINE_TRAILS = "mineTrails";
+
+    /**
+     * O caminho da boca da mina até onde ele estava, em posições compactadas
+     * ({@code BlockPos.asLong}) — F-3. Sem ele, o retorno pela mina só valia
+     * depois de o mineiro descer de novo na sessão.
+     */
+    public record WorkerTrail(java.util.UUID worker, List<Long> cells) {
+
+        public WorkerTrail {
+            cells = List.copyOf(cells);
+        }
+    }
+
+    private final List<WorkerTrail> mineTrails = new ArrayList<>();
+
     /**
      * O baú de cada trabalhador — decisão do autor, 2026-09-26. Era refeito a
      * cada carregamento a partir da cama do momento, e aldeão troca de cama:
@@ -108,6 +125,17 @@ public final class WorkMarksSavedData extends PersistentState {
         return List.copyOf(workerChests);
     }
 
+    public void syncMineTrails(Collection<WorkerTrail> current) {
+        mineTrails.clear();
+        mineTrails.addAll(current);
+
+        markDirty();
+    }
+
+    public List<WorkerTrail> mineTrails() {
+        return List.copyOf(mineTrails);
+    }
+
     @Override
     public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries) {
         NbtList list = new NbtList();
@@ -140,6 +168,17 @@ public final class WorkMarksSavedData extends PersistentState {
         }
 
         nbt.put(STORAGES, chests);
+
+        NbtList trails = new NbtList();
+
+        for (WorkerTrail trail : mineTrails) {
+            NbtCompound entry = new NbtCompound();
+            entry.putUuid("worker", trail.worker());
+            entry.putLongArray("cells", trail.cells().stream().mapToLong(Long::longValue).toArray());
+            trails.add(entry);
+        }
+
+        nbt.put(MINE_TRAILS, trails);
 
         return nbt;
     }
@@ -174,6 +213,17 @@ public final class WorkMarksSavedData extends PersistentState {
             if (entry.containsUuid("worker")) {
                 data.workerChests.add(new WorkerChest(
                         entry.getUuid("worker"), entry.getInt("x"), entry.getInt("y"), entry.getInt("z")));
+            }
+        }
+
+        NbtList trails = nbt.getList(MINE_TRAILS, NbtElement.COMPOUND_TYPE);
+
+        for (int i = 0; i < trails.size(); i++) {
+            NbtCompound entry = trails.getCompound(i);
+
+            if (entry.containsUuid("worker") && entry.getLongArray("cells").length > 0) {
+                data.mineTrails.add(new WorkerTrail(entry.getUuid("worker"),
+                        java.util.Arrays.stream(entry.getLongArray("cells")).boxed().toList()));
             }
         }
 

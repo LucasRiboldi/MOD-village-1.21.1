@@ -20,6 +20,7 @@ import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.data.save.WorkMarksSavedData;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.work.MineMarks;
+import com.villagecolony.fabric.work.MineReturn;
 import com.villagecolony.fabric.integration.BiomeConstructionSupply;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.SweepLog;
@@ -77,6 +78,13 @@ public final class ServerLifecycleHandler {
 
         BiomeConstructionSupply.restoreFailedProfessionAttempts(
                 WorkMarksSavedData.get(server).supplyAttempts());
+
+        // O caminho de volta de quem estava debaixo da terra — F-3, 2026-10-02.
+        MineReturn.restore(WorkMarksSavedData.get(server).mineTrails().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        WorkMarksSavedData.WorkerTrail::worker,
+                        trail -> trail.cells().stream().mapToLong(Long::longValue).toArray(),
+                        (a, b) -> b)));
 
         ColonySavedData data = ColonySavedData.get(server);
 
@@ -212,6 +220,10 @@ public final class ServerLifecycleHandler {
                 .toList());
         WorkMarksSavedData.get(server).syncSupplyAttempts(
                 BiomeConstructionSupply.failedProfessionAttempts());
+        WorkMarksSavedData.get(server).syncMineTrails(MineReturn.snapshot().entrySet().stream()
+                .map(trail -> new WorkMarksSavedData.WorkerTrail(trail.getKey(),
+                        java.util.Arrays.stream(trail.getValue()).boxed().toList()))
+                .toList());
         WorkMarksSavedData.get(server).syncWorkerChests(VillageColonyMod.STORAGES.all().stream()
                 .map(storage -> new WorkMarksSavedData.WorkerChest(
                         storage.workerId(),

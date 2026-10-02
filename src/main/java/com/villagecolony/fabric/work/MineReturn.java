@@ -55,7 +55,7 @@ import java.util.UUID;
  * mirando a borda da caixa em vez do centro da vila, e o retorno é tentado de
  * novo a cada {@link #RETRY_PASSES} passagens.
  */
-final class MineReturn {
+public final class MineReturn {
 
     static {
         ServerMemory.register(MineReturn.class, MineReturn::clearAll);
@@ -374,6 +374,37 @@ final class MineReturn {
         return nearest == north
                 ? new BlockPos(feet.getX(), feet.getY(), box.minZ() - OUTSIDE_MARGIN)
                 : new BlockPos(feet.getX(), feet.getY(), box.maxZ() + OUTSIDE_MARGIN);
+    }
+
+    /**
+     * Os rastros de agora, em posições compactadas, para o save — F-3,
+     * 2026-10-02. Só o rastro; o retorno em curso recomeça do rastro ao carregar.
+     */
+    public static Map<UUID, long[]> snapshot() {
+        Map<UUID, long[]> out = new HashMap<>();
+
+        TRAILS.forEach((id, trail) -> {
+            if (trail.cells.size() >= 2) {
+                out.put(id, trail.cells.stream().mapToLong(BlockPos::asLong).toArray());
+            }
+        });
+
+        return out;
+    }
+
+    /** Os rastros que voltam do save, na ordem em que foram pisados. */
+    public static void restore(Map<UUID, long[]> saved) {
+        saved.forEach((id, cells) -> {
+            Trail trail = new Trail();
+
+            for (long cell : cells) {
+                trail.add(BlockPos.fromLong(cell));
+            }
+
+            if (trail.cells.size() >= 2) {
+                TRAILS.put(id, trail);
+            }
+        });
     }
 
     /** Ele saiu: o retorno acaba, e o rastro recomeça da superfície. */

@@ -56,4 +56,20 @@ class WorkMarksSavedDataTest {
 
         assertEquals(data.workerChests(), read.workerChests());
     }
+
+    /** O rastro da mina vai ao disco e volta na mesma ordem — F-3, 2026-10-02. */
+    @Test
+    void mineTrailsRoundTrip() {
+        java.util.UUID miner = java.util.UUID.fromString("199ad062-96a9-466e-b1c7-ed3c0baa4270");
+        List<Long> cells = List.of(11L, 22L, 33L);
+        WorkMarksSavedData data = new WorkMarksSavedData();
+
+        data.syncMineTrails(List.of(new WorkMarksSavedData.WorkerTrail(miner, cells)));
+
+        WorkMarksSavedData read = WorkMarksSavedData.readNbt(data.writeNbt(new NbtCompound(), null), null);
+
+        assertEquals(1, read.mineTrails().size());
+        assertEquals(miner, read.mineTrails().get(0).worker());
+        assertEquals(cells, read.mineTrails().get(0).cells(), "a ordem do rastro mudou");
+    }
 }
