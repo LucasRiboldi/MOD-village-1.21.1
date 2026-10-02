@@ -29,6 +29,10 @@ escada de madeira na porta elevada, roça acima da rua. **Nada visto em jogo.**
 - [x] 🟡 Rastro da mina no save (F-3) — feito em 02-10 (`WorkMarksSavedData.mineTrails`).
 - [x] 🟠 Regras 2-e1/37-e1 (ferramenta melhor do baú, com Eficiência e encantamento), 49 (ordem das obras: cama → casa do ofício → demais) e 50 (tempo dos aldeões, `VC_TIME` + `scripts/time_ledger.py`) — 02-10.
 - [ ] 🟠 Regra 48: recolher do chão só o item que falta à obra aberta — decidida, não implementada.
+- [ ] 🔴 A-1: meta e executor da tábua concordarem — 14 de 22 tarefas do carpinteiro fecharam com 0 peça (`2026-10-02-reanalise-profissoes.md`).
+- [ ] 🟠 B-1: ajudante no tempo ocioso (recolhe o que a obra espera, Regra 48; leva material à obra).
+- [ ] 🟠 A-2: índice de árvores — lenhador 66% procurando, busca de 2,4 min.
+- [ ] 🟠 B-4: fundidor sem cru funde carvão vegetal e pedra lisa. A-4: nova boca de mina quando a descida trava. A-3: material da obra pedido inteiro.
 - [ ] 🟡 Bateria: dois intermitentes vistos em 02-10, uma vez cada em 8 rodadas — `SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted` (a mina sumiu no tique 150) e `BuilderGameTest.theBuilderMakesTheDoorTheWorkIsWaitingFor` (1 porta no baú em vez de 2). Suspeita: interferência entre cenários no mundo único.
 - [ ] 🟡 Decisões do autor do estudo de profissões: Regra 28 (casa do ofício), Regra 18 (pausa/chuva), felicidade (R-3), fornalha real (V-2).
 
