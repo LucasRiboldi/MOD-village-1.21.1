@@ -21,9 +21,10 @@
 - Os sprites pixel-art foram adicionados em
   `assets/villagecolony/textures/gui/overlays/`; a composição gráfica final
   ainda depende de playtest do renderer no jogo.
-- Verificado nesta máquina: `gradlew --no-daemon --no-parallel compileJava`.
-  Pendente: `gradlew build`, GameTests e uma sessão cliente-servidor para
-  validar legibilidade, alcance e compatibilidade Vanilla.
+- Verificado nesta máquina: `gradlew --no-daemon --no-parallel build` com
+  sucesso e `runGametest`: **434/434** obrigatórios verdes.
+- Pendente: uma sessão cliente-servidor para validar legibilidade, alcance,
+  transparência dos sprites e compatibilidade Vanilla.
 
 ---
 

@@ -8,8 +8,8 @@
   a no máximo 64 blocos; comparar com a placa Vanilla de `SiteMarker`.
 - [ ] Entrar com cliente Vanilla no mesmo servidor e confirmar que as placas
   antigas continuam visíveis e que o servidor não tenta enviar o payload.
-- [ ] Executar a bateria completa (`gradlew build` e `runGametest`) antes de
-  abrir PR. O `compileJava` da implementação ficou verde.
+- [x] Bateria automatizada: `gradlew build` passou e `runGametest` concluiu
+  434/434 testes obrigatórios verdes.
 
 **Atualizado:** 2026-09-24. Playtest real de ~6h30 analisado (5 colonias,
 221.814 linhas de log). **Dois erros novos, E47 e E48** — ver "Erros

@@ -15,7 +15,8 @@ O cliente desenha profissão sobre o aldeão e, no canteiro, planta, progresso e
 o primeiro material em falta. Esse último dado reaproveita o estoque que o
 ciclo já observou para `SiteMarker`; não lê baús por frame nem cria nova fonte
 de verdade. A compilação automatizada não prova a composição gráfica: ficam
-pendentes GameTests e playtest cliente-servidor, inclusive com cliente Vanilla.
+Os GameTests concluíram com 434/434 obrigatórios verdes; continua pendente o
+playtest cliente-servidor, inclusive com cliente Vanilla.
 
 Arquivo cronológico do desenvolvimento. Uma entrada por sessão, na ordem
 em que aconteceram, da primeira à última.
