@@ -364,11 +364,26 @@ public final class TreeMarks {
     }
 
     static void reject(ServerWorld world, List<BlockPos> trunk) {
-        rejectAt(world.getTime(), trunk);
+        rejectAt(world.getTime(), trunk, false);
+    }
+
+    /**
+     * Tora de construção — casa da vila ou da colônia — recusada: vai direto ao
+     * castigo mais longo — F-1, 2026-10-02. Na sessão das 00:43 o lenhador
+     * reexaminou as mesmas 41 toras de casa em três rodadas (5, 10, 20 min):
+     * 124 recusas e 0,7% do servidor para descobrir de novo que casa não é
+     * árvore.
+     */
+    static void rejectBuilt(ServerWorld world, List<BlockPos> trunk) {
+        rejectAt(world.getTime(), trunk, true);
+    }
+
+    static void rejectAt(long now, List<BlockPos> trunk) {
+        rejectAt(now, trunk, false);
     }
 
     /** A recusa medida pelo relógio de quem chama — ver {@link #forgetStaleMarksAt}. */
-    static void rejectAt(long now, List<BlockPos> trunk) {
+    static void rejectAt(long now, List<BlockPos> trunk, boolean built) {
         forgetStaleMarksAt(now);
 
         if (REJECTED.size() + trunk.size() > MAX_REJECTED) {
@@ -397,7 +412,7 @@ public final class TreeMarks {
             }
         }
 
-        Refusal refusal = new Refusal(now, before + 1);
+        Refusal refusal = new Refusal(now, built ? Math.max(before + 1, MAX_DOUBLINGS + 1) : before + 1);
 
         for (BlockPos log : trunk) {
             REJECTED.put(log.toImmutable(), refusal);

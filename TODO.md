@@ -20,12 +20,12 @@ abaixo da rua construída), mineiro sob pedregulho (entulho no subsolo),
 escada de madeira na porta elevada, roça acima da rua. **Nada visto em jogo.**
 
 - [ ] 🔴 Playtest: obra nova sem `is in the way` de grama no piso; roça um acima do chão; golem `is out of the pen`.
-- [ ] 🟠 Fundidor: espera crescente depois de varrer o raio sem areia (38 varreduras em 20 min, 0,58% do servidor) — análise §3.1.
+- [x] 🟠 Fundidor: espera crescente depois de varrer o raio sem areia — feito no F-1 (`EmptySweeps`).
 - [ ] 🟠 Casas já prontas sem piso (`58405bf6`): reparo não reabre peça riscada como "in the way" — decidir se refaz.
-- [ ] 🟡 Lenhador: descartar tora de casa da vila antes de medir a copa (124 recusas, 0,69%) — análise §3.2.
+- [x] 🟡 Lenhador: tora de casa vai direto ao castigo mais longo — feito no F-1 (`TreeMarks.rejectBuilt`).
 - [ ] 🟡 Varredura do fazendeiro sem terminar no prazo (8 vezes) — análise §3.3.
 - [ ] 🔴 Playtest do retorno pela mina: `goes back the way it came`, `is back on its trail`, `is out at` na boca da mina; nenhum buraco novo no chão da vila.
-- [ ] 🟠 Mineiro volta sempre à pedra inalcançável (7 encalhes em `-241, 10, 379`, caverna com lava) — F-1 de `2026-10-02-melhorias-profissoes-vida-natural.md`.
+- [x] 🟠 F-1 e F-2 aplicados (02-10): descida travada (`MineDescent`), varredura vazia (`EmptySweeps`), tora de casa no teto, pedido encadeado (`TaskChain`). Falta ver em jogo: `The way down stops at`, `has no sand anywhere`, `chained the next`.
 - [ ] 🟡 Rastro da mina no save (F-3): hoje o retorno só vale depois de ele descer na sessão.
 - [ ] 🟡 Decisões do autor do estudo de profissões: Regra 28 (casa do ofício), Regra 18 (pausa/chuva), felicidade (R-3), fornalha real (V-2).
 

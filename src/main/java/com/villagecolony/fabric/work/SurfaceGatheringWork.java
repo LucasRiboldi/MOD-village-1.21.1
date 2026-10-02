@@ -285,14 +285,22 @@ public final class SurfaceGatheringWork {
         });
 
         if (found.isEmpty()) {
+            boolean paused = RingSweep.pausedAt(workerId, RingSweep.Scan.SURFACE).isPresent();
+
             IdleLog.recordAt(
                     job.task.colonyId(), subject(job),
-                    RingSweep.pausedAt(workerId, RingSweep.Scan.SURFACE).isPresent()
-                            ? IdleReason.SWEEP_INCOMPLETE : IdleReason.NO_TARGET,
+                    paused ? IdleReason.SWEEP_INCOMPLETE : IdleReason.NO_TARGET,
                     job.task.targetResource().name().toLowerCase(java.util.Locale.ROOT), world.getTime());
+
+            if (!paused) {
+                // O raio inteiro, e nada: solta a tarefa e espera — F-1. Ver EmptySweeps.
+                EmptySweeps.foundNothing(job.task.colonyId(), job.task.targetResource(), world.getTime());
+                finish(job, workerId, "nothing in the whole radius");
+            }
             return true;
         }
 
+        EmptySweeps.found(job.task.colonyId(), job.task.targetResource());
         IdleLog.clear(job.task.colonyId(), subject(job));
         job.target = found.get();
         job.progress = 0;
@@ -368,6 +376,7 @@ public final class SurfaceGatheringWork {
             }
             job.task.complete();
             WorkerStrikes.worked(workerId, job.task);
+            TaskChain.next(job.task);
             finish(job, workerId, "natural resource order filled");
             return;
         }

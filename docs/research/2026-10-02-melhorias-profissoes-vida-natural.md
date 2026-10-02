@@ -112,8 +112,8 @@ Legenda da última coluna:
 
 | Ordem | Item | Por quê |
 |---|---|---|
-| 1 | **F-1** espera do alvo inalcançável | três defeitos medidos de uma vez; ~1,2% do servidor |
-| 2 | **F-2** encadear a tarefa | o maior "parado" que sobra (Fluidez F1) |
+| 1 ✅ 02-10 | **F-1** espera do alvo inalcançável | três defeitos medidos de uma vez; ~1,2% do servidor |
+| 2 ✅ 02-10 | **F-2** encadear a tarefa | o maior "parado" que sobra (Fluidez F1) |
 | 3 | **R-1** encontro no sino ao entardecer | vida da vila quase de graça (`VillageMeals` já existe) |
 | 4 | **V-1** bancada e cortador visíveis | o ofício passa a ser visto |
 | 5 | **R-2** pastor recolhe o rebanho | dá função ao curral, que hoje só prende |

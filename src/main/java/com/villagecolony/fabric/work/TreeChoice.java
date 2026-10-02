@@ -9,6 +9,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.TreeHarvester;
 import com.villagecolony.fabric.integration.TreeScanner;
@@ -198,7 +199,13 @@ public final class TreeChoice {
             // Não é árvore: a regra da copa recusou. Recusar em silêncio
             // e sair daqui faria a busca reencontrar este mesmo tronco no
             // ciclo seguinte, e no seguinte — ver REJECTED.
-            TreeMarks.reject(world, trunkGroup);
+            BlockPos foot = trunkGroup.isEmpty() ? tree.get() : trunkGroup.get(0);
+
+            if (BlockProtection.isColonyBuilt(foot) || BlockProtection.isVillageOriginal(world, foot)) {
+                TreeMarks.rejectBuilt(world, trunkGroup);
+            } else {
+                TreeMarks.reject(world, trunkGroup);
+            }
 
             return LumberjackWork.Outcome.SEARCHED;
         }

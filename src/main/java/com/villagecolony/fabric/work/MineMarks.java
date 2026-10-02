@@ -234,7 +234,8 @@ public final class MineMarks {
 
     /** Se esta pedra ainda está de castigo. */
     public static boolean isOutOfReach(ServerWorld world, BlockPos stone) {
-        return isOutOfReachAt(world.getTime(), stone);
+        // E a pedra abaixo de uma descida que trava — F-1, 2026-10-02.
+        return isOutOfReachAt(world.getTime(), stone) || MineDescent.blocksAt(world.getTime(), stone);
     }
 
     /**
@@ -266,7 +267,7 @@ public final class MineMarks {
     public static boolean isUnreachableAround(ServerWorld world, BlockPos stone) {
         long now = world.getTime();
 
-        return isOutOfReachAt(now, stone) || isInADeadEndAt(now, stone);
+        return isOutOfReachAt(now, stone) || isInADeadEndAt(now, stone) || MineDescent.blocksAt(now, stone);
     }
 
     /**

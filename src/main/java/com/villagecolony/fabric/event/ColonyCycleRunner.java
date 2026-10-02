@@ -60,6 +60,7 @@ import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.BuilderWork;
 import com.villagecolony.fabric.work.BuilderApproach;
+import com.villagecolony.fabric.work.EmptySweeps;
 import com.villagecolony.fabric.work.StrandedEscape;
 import com.villagecolony.fabric.work.VillageMeals;
 import com.villagecolony.fabric.work.ConstructionDemand;
@@ -422,6 +423,11 @@ final class ColonyCycleRunner {
 
     /** Recusa obra aberta cujo próximo bloco ainda não possui ponto físico de trabalho. */
     static boolean canReserveTask(ServerWorld world, UUID colonyId, Task task) {
+        if (task.type() == TaskType.COLLECT_SURFACE_RESOURCE || task.type() == TaskType.COLLECT_SOIL) {
+            // O raio já foi varrido inteiro sem achar — F-1, 2026-10-02.
+            return !EmptySweeps.isWaiting(colonyId, task.targetResource(), world.getTime());
+        }
+
         if (task.type() != TaskType.BUILD) {
             return true;
         }

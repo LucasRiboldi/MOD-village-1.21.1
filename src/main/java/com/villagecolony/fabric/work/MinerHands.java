@@ -223,6 +223,7 @@ public final class MinerHands {
 
         job.task.complete();
         WorkerStrikes.worked(workerId, job.task);
+        TaskChain.next(job.task);
 
         VillageColonyMod.LOGGER.info(
                 "Miner {} filled the order — {} {} of the {} asked, and stopped",
@@ -280,6 +281,13 @@ public final class MinerHands {
         // propósito — quem lê a marca é a passagem seguinte, e ela
         // precisa achá-la já posta. Ver MineMarks.
         MineMarks.refuse(world, job.target);
+
+        // E o ponto onde ele parou, se é uma descida — F-1, 2026-10-02. Ver
+        // MineDescent: a pedra muda, o ponto onde a descida trava não.
+        if (world.getEntity(workerId) instanceof VillagerEntity stuck
+                && !StrandedEscape.isOut(world, stuck.getBlockPos())) {
+            MineDescent.stoppedAt(world.getTime(), stuck.getBlockPos(), job.target);
+        }
 
         // A posição volta para o cursor da galeria — 2026-08-27. Sem
         // isto o mod marchava pela ordem de cavar com o mundo intacto.

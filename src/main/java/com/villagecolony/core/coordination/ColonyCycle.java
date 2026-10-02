@@ -155,6 +155,9 @@ public final class ColonyCycle {
 
         Map<ResourceType, Integer> missing = ResourceDemand.deficit(goal, owned);
 
+        // Para quem concluir um pedido antes do próximo ciclo — F-2.
+        LastShortage.measured(colonyId, missing.keySet());
+
         cancelSatisfied(colonyId, missing, tasks);
         requestMissing(colonyId, owned, missing, constructionMaterials, tasks, workers, hands);
 
