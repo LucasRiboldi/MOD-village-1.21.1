@@ -1,6 +1,8 @@
 package com.villagecolony.fabric.integration;
 
 import net.minecraft.block.BlockState;
+import net.minecraft.component.type.ItemEnchantmentsComponent;
+import net.minecraft.enchantment.Enchantments;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -55,8 +57,38 @@ public final class ActionTool {
      */
     private static float score(ItemStack tool, BlockState state) {
         boolean harvests = !state.isToolRequired() || tool.isSuitableFor(state);
-        float speed = tool.getMiningSpeedMultiplier(state);
+        float speed = speedOf(tool, state);
 
         return harvests ? 1_000.0f + speed : speed;
+    }
+
+    /**
+     * Quão depressa esta ferramenta quebra este bloco, com a Eficiência —
+     * Regra 2-e1, 2026-10-02: <i>"o aldeão minera na velocidade da
+     * ferramenta que ele possui"</i>. A conta é a do jogador no Vanilla: a
+     * Eficiência soma nível² + 1, e só quando a ferramenta serve ao bloco.
+     */
+    public static float speedOf(ItemStack tool, BlockState state) {
+        float speed = tool.getMiningSpeedMultiplier(state);
+        int efficiency = levelOf(tool, Enchantments.EFFICIENCY);
+
+        return speed > 1.0f && efficiency > 0 ? speed + efficiency * efficiency + 1 : speed;
+    }
+
+    /** Quantos encantamentos a ferramenta tem — o desempate da Regra 2-e1. */
+    public static int enchantmentsOf(ItemStack tool) {
+        return tool.getEnchantments().getSize();
+    }
+
+    private static int levelOf(ItemStack tool, net.minecraft.registry.RegistryKey<net.minecraft.enchantment.Enchantment> key) {
+        ItemEnchantmentsComponent enchantments = tool.getEnchantments();
+
+        for (var entry : enchantments.getEnchantmentEntries()) {
+            if (entry.getKey().matchesKey(key)) {
+                return entry.getIntValue();
+            }
+        }
+
+        return 0;
     }
 }

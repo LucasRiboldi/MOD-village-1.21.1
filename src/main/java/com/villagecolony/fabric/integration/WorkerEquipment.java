@@ -287,11 +287,14 @@ public final class WorkerEquipment {
             return false;
         }
 
-        if (ChestWithdrawer.takeOne(world, from, take.getItem()) < 1) {
+        // A pilha exata, e não "uma do tipo" — 2026-10-02: com a encantada e a
+        // lisa no mesmo baú, tirar a lisa e pôr a encantada duplicava a encantada.
+        if (ChestWithdrawer.takeExact(world, from, take) < 1) {
             return false;
         }
 
-        if (givesBack) {
+        if (givesBack && !ChestDepositor.depositExact(world, ownChest, held)) {
+            // Sem vaga inteira: volta pelo tipo, como antes (o encantamento se perde).
             ChestDepositor.deposit(world, ownChest, held.getItem(), held.getCount());
         }
 

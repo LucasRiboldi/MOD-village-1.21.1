@@ -127,7 +127,7 @@ public final class BlockBreakTime {
             return 1;
         }
 
-        float speed = held.getMiningSpeedMultiplier(state);
+        float speed = ActionTool.speedOf(held, state);
         float divisor = harvests(held, state) ? HARVESTABLE : UNHARVESTABLE;
 
         float perTick = speed / hardness / divisor;
