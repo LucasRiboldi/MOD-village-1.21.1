@@ -145,6 +145,40 @@ public record VillageBounds(int minX, int minY, int minZ, int maxX, int maxY, in
         return new VillageBounds(x0, minY, z0, x1, maxY, z1);
     }
 
+    /**
+     * As colunas da borda da vila perto de um ponto — a marcação da área para
+     * o jogador, 2026-10-03. Uma a cada {@code step} blocos, só até
+     * {@code radius} do ponto: a borda inteira de uma vila de 143 × 117 tem
+     * 516 colunas, e mandar todas a cada segundo seria rede jogada fora.
+     *
+     * @return as colunas, com {@code y} = 0
+     */
+    public java.util.List<ColonyPos> borderNear(int x, int z, int radius, int step) {
+        java.util.List<ColonyPos> found = new java.util.ArrayList<>();
+        long reach = (long) radius * radius;
+
+        for (int bx = minX; bx <= maxX; bx += step) {
+            addIfNear(found, bx, minZ, x, z, reach);
+            addIfNear(found, bx, maxZ, x, z, reach);
+        }
+
+        for (int bz = minZ + step; bz < maxZ; bz += step) {
+            addIfNear(found, minX, bz, x, z, reach);
+            addIfNear(found, maxX, bz, x, z, reach);
+        }
+
+        return found;
+    }
+
+    private static void addIfNear(java.util.List<ColonyPos> found, int bx, int bz, int x, int z, long reach) {
+        long dx = (long) bx - x;
+        long dz = (long) bz - z;
+
+        if (dx * dx + dz * dz <= reach) {
+            found.add(new ColonyPos(bx, 0, bz));
+        }
+    }
+
     public int sizeX() {
         return maxX - minX + 1;
     }

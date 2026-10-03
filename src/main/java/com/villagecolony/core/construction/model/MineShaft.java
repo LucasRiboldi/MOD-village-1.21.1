@@ -39,8 +39,12 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
     /** Blocos da escada inicial compartilhada. */
     public static final int CARVED = DESCENT * STAIR_STEP_BLOCKS;
 
-    /** Área de exploração comum após o caracol. */
-    public static final int SEARCH_AREA_BLOCKS = 50;
+    /**
+     * Área de exploração comum após o caracol: cinco fileiras de 3 × 3 —
+     * pedido do autor, 2026-10-03, "todo espaço de mina minerada tem 3x3"
+     * (eram cinco de largura por dois de altura, 50 blocos).
+     */
+    public static final int SEARCH_AREA_BLOCKS = 45;
 
     /** Tudo que os quatro ramais compartilham antes de se separar. */
     public static final int SHARED_BLOCKS = CARVED + SEARCH_AREA_BLOCKS;
@@ -48,14 +52,14 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
     /** Degraus de cada um dos quatro ramais. */
     public static final int ARM_STAIRS = 10;
 
-    /** Blocos de área limpos por ramal. */
-    public static final int ARM_AREA_BLOCKS = 50;
+    /** Blocos de área limpos por ramal: a mesma sala de 3 × 3. */
+    public static final int ARM_AREA_BLOCKS = SEARCH_AREA_BLOCKS;
 
     /** Total de posições exclusivas de cada ramal. */
     public static final int ARM_BLOCKS = ARM_STAIRS * STAIR_STEP_BLOCKS + ARM_AREA_BLOCKS;
 
-    private static final int SEARCH_WIDTH = 5;
-    private static final int SEARCH_LENGTH = SEARCH_AREA_BLOCKS / (SEARCH_WIDTH * 2);
+    private static final int SEARCH_WIDTH = 3;
+    private static final int SEARCH_LENGTH = SEARCH_AREA_BLOCKS / (SEARCH_WIDTH * HEADROOM);
     private static final int MINEABLE_BOTTOM = -63;
 
     /** A menor altura do piso central que ainda deixa o último ramal acima da rocha-mãe. */
@@ -232,16 +236,14 @@ public record MineShaft(ColonyPos entry, Side descent, Side gallery) {
             throw new IllegalArgumentException("Search index outside the area: " + index);
         }
 
-        int column = index / 2;
-        int layer = index % 2;
+        int column = index / HEADROOM;
+        int layer = index % HEADROOM;
         int row = column / SEARCH_WIDTH;
         int withinRow = column % SEARCH_WIDTH;
         int offset = switch (withinRow) {
             case 0 -> 0;
             case 1 -> 1;
-            case 2 -> -1;
-            case 3 -> 2;
-            default -> -2;
+            default -> -1;
         };
         Side sideways = towards.clockwise();
 

@@ -109,6 +109,12 @@ public class MinerGameTest implements FabricGameTest {
      */
     private static final int ARCH_TOP = 4;
 
+    /** Os dois lampiões do arco acesos — um em cima de cada lado (03-10). */
+    private static boolean lampsLit(ServerWorld world, BlockPos mouth, Direction descent) {
+        return MineMouth.lampSpots(mouth, descent).stream()
+                .allMatch(lamp -> world.getBlockState(lamp).isOf(Blocks.LANTERN));
+    }
+
     /**
      * A fronteira gravada: já além de {@link MineShaft#CARVED}, que é
      * onde acabam os dois lances e as duas salas e começa a galeria.
@@ -1339,8 +1345,8 @@ public class MinerGameTest implements FabricGameTest {
         // Em cima da verga, e é a única — 2026-09-11. Eram duas: uma
         // pendurada no vão do arco e outra no chão ao lado do buraco.
         context.assertTrue(
-                world.getBlockState(mouth.up(ARCH_TOP + 1)).isOf(Blocks.LANTERN),
-                "a boca da mina ficou sem a lanterna em cima do arco");
+                lampsLit(world, mouth, Direction.SOUTH),
+                "a boca da mina ficou sem os lampiões em cima do arco");
 
         context.complete();
     }
@@ -1385,7 +1391,7 @@ public class MinerGameTest implements FabricGameTest {
         MineMouth.furnish(world, mouth, Direction.SOUTH, false);
 
         context.assertTrue(
-                world.getBlockState(mouth.up(ARCH_TOP + 1)).isOf(Blocks.LANTERN),
+                lampsLit(world, mouth, Direction.SOUTH),
                 "a boca que já tinha baú ficou sem lanterna para sempre");
 
         // <b>E o baú encostado na boca continua sendo o dela</b>: é o
@@ -1763,7 +1769,7 @@ public class MinerGameTest implements FabricGameTest {
         // theMineMouthGetsALanternAndNoChest —, então a peça que este caso
         // ainda precisa ver posta no lugar certo é ela.
         context.assertTrue(
-                world.getBlockState(mouth.up(ARCH_TOP + 1)).isOf(Blocks.LANTERN),
+                lampsLit(world, mouth, Direction.WEST),
                 "a boca ficou sem lanterna");
 
         context.complete();
@@ -5728,29 +5734,27 @@ public class MinerGameTest implements FabricGameTest {
 
         MineMouth.furnish(world, context.getAbsolutePos(mouth), Direction.NORTH, false);
 
-        Direction side = Direction.NORTH.rotateYClockwise();
+        // O arco de 03-10: 5 de largura, 4 de altura, vão de 3 × 3 e um lampião
+        // em cima de cada lado. As posições vêm do próprio MineMouth, e o
+        // teste afirma o que está no mundo.
+        BlockPos absolute = context.getAbsolutePos(mouth);
 
-        context.assertTrue(
-                archBlockAt(context, mouth.offset(side).up()).isOf(Blocks.COBBLESTONE)
-                        && archBlockAt(context, mouth.offset(side.getOpposite()).up())
-                                .isOf(Blocks.COBBLESTONE),
-                "a boca da mina ficou sem os pilares do arco");
+        for (BlockPos stone : MineMouth.archStones(absolute, Direction.NORTH)) {
+            context.assertTrue(world.getBlockState(stone).isOf(Blocks.COBBLESTONE),
+                    "o arco ficou sem a pedra em " + stone.toShortString());
+        }
 
-        context.assertTrue(
-                archBlockAt(context, mouth.up(ARCH_TOP)).isOf(Blocks.COBBLESTONE),
-                "o arco ficou sem a verga por cima da boca");
+        context.assertTrue(lampsLit(world, absolute, Direction.NORTH), "o arco ficou sem os dois lampiões");
 
-        context.assertTrue(
-                archBlockAt(context, mouth.up(ARCH_TOP + 1)).isOf(Blocks.LANTERN),
-                "o arco ficou sem a lanterna em cima da verga");
+        // O vão inteiro: as três pistas da escada, da boca até três acima.
+        Direction lanes = Direction.NORTH.rotateYCounterclockwise();
 
-        // O vão inteiro: a boca e os três acima dela. É a altura que o
-        // autor pediu, e afirmá-la bloco a bloco é o que impede o arco de
-        // encolher sem ninguém notar.
-        for (int up = 0; up < ARCH_TOP; up++) {
-            context.assertTrue(
-                    archBlockAt(context, mouth.up(up)).isAir(),
-                    "o arco tapou a passagem que ele decora, em " + up + " acima da boca");
+        for (int lane = 0; lane < MineMouth.PASSAGE; lane++) {
+            for (int up = 0; up < ARCH_TOP; up++) {
+                context.assertTrue(
+                        archBlockAt(context, mouth.offset(lanes, lane).up(up)).isAir(),
+                        "o arco tapou a passagem de 3 × 3, pista " + lane + ", " + up + " acima da boca");
+            }
         }
 
         context.complete();

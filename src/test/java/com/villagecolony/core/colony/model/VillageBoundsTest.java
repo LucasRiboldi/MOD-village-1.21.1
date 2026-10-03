@@ -142,4 +142,18 @@ class VillageBoundsTest {
     void anInvertedBoxIsRefused() {
         assertThrows(IllegalArgumentException.class, () -> new VillageBounds(10, 0, 0, 9, 0, 0));
     }
+
+    /** A marcação da área mostra só a borda perto do jogador — 2026-10-03. */
+    @Test
+    void onlyTheBorderNearThePlayerIsMarked() {
+        VillageBounds village = new VillageBounds(0, 60, 0, 100, 70, 100);
+
+        java.util.List<ColonyPos> near = village.borderNear(0, 50, 10, 2);
+
+        assertTrue(!near.isEmpty(), "o jogador encostado no oeste devia ver a borda oeste");
+        assertTrue(near.stream().allMatch(column -> column.x() == 0 && Math.abs(column.z() - 50) <= 10),
+                "só a borda oeste, até 10 blocos: " + near);
+        assertTrue(village.borderNear(50, 50, 10, 2).isEmpty(), "no meio da vila não há borda perto");
+        assertEquals(400, village.borderNear(50, 50, 200, 1).size(), "a borda inteira de 101 x 101: 4 x 101 - 4");
+    }
 }

@@ -30,6 +30,7 @@ import com.villagecolony.fabric.integration.ChestInventoryReader;
 import com.villagecolony.fabric.integration.ChestMarker;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.SiteMarker;
+import com.villagecolony.fabric.integration.VillageMarker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageBiomes;
 import com.villagecolony.fabric.integration.VillageScanner;
@@ -371,6 +372,7 @@ public final class VillageDetectionHandler {
         // O contorno do lote escolhido — 2026-09-15, pedido do autor. Sai
         // de graça em 19 de cada 20 tiques; ver SiteMarker.EVERY_TICKS.
         SiteMarker.tick(overworld);
+        VillageMarker.tick(overworld);
 
         tickCounter++;
 
