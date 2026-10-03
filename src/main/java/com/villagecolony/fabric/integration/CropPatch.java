@@ -152,8 +152,8 @@ public final class CropPatch {
 
         BlockPos[] plot = {remembered};
 
-        Optional<BlockPos> ripe = RingSweep.around(colonyId, RingSweep.Scan.FARMING, center, radius,
-                column -> true, at -> {
+        // Água e lava lidas uma vez ficam de fora — 2026-10-03, FluidColumns.
+        java.util.function.Function<BlockPos, Optional<BlockPos>> look = at -> {
             WorldChunk chunk = loadedChunk(world, at);
 
             if (chunk == null) {
@@ -179,7 +179,10 @@ public final class CropPatch {
             }
 
             return Optional.empty();
-        });
+        };
+
+        Optional<BlockPos> ripe = RingSweep.around(colonyId, RingSweep.Scan.FARMING, center, radius,
+                FluidColumns.skipping(colonyId, column -> true), FluidColumns.marking(world, colonyId, look));
 
         boolean incomplete = RingSweep.pausedAt(colonyId, RingSweep.Scan.FARMING).isPresent();
 

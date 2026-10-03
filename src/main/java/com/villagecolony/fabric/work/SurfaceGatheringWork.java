@@ -22,6 +22,7 @@ import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.DirtPatch;
 import com.villagecolony.fabric.integration.FarthestVillageSector;
 import com.villagecolony.fabric.integration.GrassPatch;
+import com.villagecolony.fabric.integration.FluidColumns;
 import com.villagecolony.fabric.integration.RingSweep;
 import com.villagecolony.fabric.integration.CactusPatch;
 import com.villagecolony.fabric.integration.ClayPatch;
@@ -257,8 +258,11 @@ public final class SurfaceGatheringWork {
                         job.center, column, job.surfaceSector, protectedRadius)
                 : column -> true;
 
-        Optional<BlockPos> found = RingSweep.around(
-                workerId, RingSweep.Scan.SURFACE, searchCenter, reach(job, outsideVillage), worthLooking, column -> {
+        // Água e lava lidas uma vez ficam de fora das próximas voltas —
+        // 2026-10-03, FluidColumns. A argila não: ela mora no fundo do lago.
+        boolean clay = job.task.targetResource() == ResourceType.CLAY_BALL
+                || job.task.targetResource() == ResourceType.CLAY;
+        java.util.function.Function<BlockPos, Optional<BlockPos>> look = column -> {
             if (job.task.targetResource() == ResourceType.SAND) {
                 return SandPatch.in(world, column, job.center.getY())
                         .filter(pos -> BlockProtection.mayBreak(world, pos, world.getBlockState(pos)));
@@ -282,7 +286,12 @@ public final class SurfaceGatheringWork {
                 return ClayPatch.in(world, column, job.center.getY());
             }
             return Optional.empty();
-        });
+        };
+
+        Optional<BlockPos> found = RingSweep.around(
+                workerId, RingSweep.Scan.SURFACE, searchCenter, reach(job, outsideVillage),
+                clay ? worthLooking : FluidColumns.skipping(job.task.colonyId(), worthLooking),
+                clay ? look : FluidColumns.marking(world, job.task.colonyId(), look));
 
         if (found.isEmpty()) {
             boolean paused = RingSweep.pausedAt(workerId, RingSweep.Scan.SURFACE).isPresent();
