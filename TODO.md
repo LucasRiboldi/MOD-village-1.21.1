@@ -60,7 +60,7 @@ ADR-003 Emenda 7 (busca de lote sem teto). **Nada visto em jogo.** Opções e
 recomendação de cada item no estudo.
 
 - [ ] 🔴 Playtest com as linhas do estudo §A (curral, escalada, baús, crescimento, revisão 30-09).
-- [ ] 🔴 Script de conferência do log (`scripts/playtest_check.py`, estudo §A-B).
+- [x] 🔴 Script de conferência do log (estudo §A-B) — feito em 02-10 no `scripts/verdict.py`, que já existia: 12 itens novos (30-09 a 02-10), lê os `.log.gz` do dia e o teste das frases roda no CI (`tests/test_verdict_session.py`). Uso: `python scripts/verdict.py`.
 - [ ] 🟠 Limpar o save ou usar mundo novo (estudo §6).
 - [ ] 🟠 Vila grande cresce devagar: cadência da varredura (estudo §7-A).
 - [ ] 🟠 Instrumentar a entrada no curral antes de prevenir (estudo §8-A).

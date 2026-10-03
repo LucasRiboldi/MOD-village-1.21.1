@@ -111,4 +111,18 @@ class ProfessionPolicySetTest {
         assertThrows(IllegalArgumentException.class,
                 () -> new ProfessionPolicySet(policies, defaults.hiringOrder()));
     }
+
+    @Test
+    void summaryNamesOnlyWhatDiffersFromTheDefault() {
+        EnumMap<ProfessionType, ProfessionPolicy> map = new EnumMap<>(ProfessionType.class);
+        for (ProfessionType type : ProfessionType.values()) {
+            map.put(type, ProfessionPolicy.defaults());
+        }
+        map.put(ProfessionType.MASON, new ProfessionPolicy(false, 0, ProfessionPolicy.AUTOMATIC_RADIUS));
+        map.put(ProfessionType.LUMBERJACK, new ProfessionPolicy(true, 2, 48));
+        ProfessionPolicySet policies = new ProfessionPolicySet(map, ProfessionPolicySet.defaults().hiringOrder());
+
+        assertEquals("MINER, LUMBERJACK max 2 radius 48, MASON off, SMELTER, CARPENTER, FARMER,"
+                + " SHEPHERD, BUILDER", policies.summary());
+    }
 }

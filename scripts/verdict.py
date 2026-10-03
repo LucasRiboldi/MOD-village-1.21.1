@@ -24,10 +24,12 @@ Uso:
 
 from __future__ import annotations
 
+import gzip
 import os
 import re
 import sys
 from dataclasses import dataclass, field
+from datetime import date
 from pathlib import Path
 
 
@@ -158,6 +160,80 @@ ITEMS: list[Item] = [
         proves=("drawn from",),
         note="a linha do sorteio diz de quantas plantas a casa saiu",
     ),
+    # --- Pendentes de 30-09 a 02-10 (estudo de 01-10 §A e TODO de 02-10) ---
+    Item(
+        "30-09 pao",
+        "O fazendeiro assa pao com o trigo do bau",
+        proves=("bread from",),
+        note="'Farmer at ... baked N bread from M wheat'",
+    ),
+    Item(
+        "30-09 rebanho",
+        "O pastor procria o rebanho",
+        proves=("fed two sheep to breed",),
+    ),
+    Item(
+        "30-09 oficio Vanilla",
+        "O aldeao da colonia larga o oficio Vanilla (ADR-029)",
+        proves=("leaves the vanilla trade",),
+    ),
+    Item(
+        "30-09 lava",
+        "A colonia nunca assenta lava",
+        proves=("lava is never placed",),
+        note="obra com lava na planta deixa o bloco vazio",
+    ),
+    Item(
+        "30-09 drops",
+        "Ingrediente de drop chega sozinho ao bau",
+        proves=("drop ingredients appear on their own",),
+    ),
+    Item(
+        "E52 curral",
+        "Aldeao preso no curral sai pelo portao ou pulando",
+        proves=("is out of the pen",),
+        note="cada 'is fenced in at' deve ter um 'is out of the pen' depois",
+    ),
+    Item(
+        "E47 escalada",
+        "O encalhado sobe por escada, pilar ou tunel",
+        proves=("climbed to",),
+        refutes=("is boxed in at",),
+        note="'boxed in' e cercado de bloco que ele nao pode quebrar",
+        outweighs=True,
+    ),
+    Item(
+        "E47 retorno",
+        "O encalhado volta pelo rastro da mina, sem furar a vila",
+        proves=("goes back the way it came", "is back on its trail"),
+        note="depois deve sair 'is out at ... back in the work queue'",
+    ),
+    Item(
+        "Regra 45",
+        "Bau fora da caixa da vila nao e usado",
+        proves=("is outside the village of colony",),
+        note="so aparece se houver bau fora da caixa; ausencia nao refuta",
+    ),
+    Item(
+        "Emenda 6",
+        "A vila e uma caixa que cresce e so trabalha com jogador dentro",
+        proves=("grew to", "is attended"),
+    ),
+    Item(
+        "Regra 48",
+        "O ocioso recolhe do chao so o que a obra espera",
+        proves=("for the build — into the colony chest",),
+        refutes=("had room for",),
+        note="'No colony chest had room for' e o item que ficou no chao",
+        outweighs=True,
+    ),
+    Item(
+        "ADR-030",
+        "Mudanca de regra de profissao pelo Mod Menu",
+        proves=("Profession policy changed by",),
+        refutes=("Ignored profession policy update",),
+        note="mudar uma regra no Mod Menu como operador",
+    ),
 ]
 
 
@@ -223,6 +299,32 @@ def judge(item: Item, text: str) -> Result:
     return Result(item, "NAO EXERCITADO")
 
 
+def same_day_archives(log: Path) -> list[Path]:
+    """Os .log.gz do dia de hoje na pasta do latest.log, do mais antigo ao mais novo.
+
+    O Minecraft gira o log a cada reinicio: a sessao da tarde vira
+    `2026-10-02-1.log.gz` quando o jogo abre de novo a noite. Sem isto o
+    veredito so via a ultima abertura, e um item exercitado de tarde saia
+    NAO EXERCITADO -- estudo de 01-10, §A-B.
+    """
+    today = date.fromtimestamp(log.stat().st_mtime).isoformat()
+
+    return sorted(log.parent.glob(f"{today}-*.log.gz"), key=lambda p: (len(p.name), p.name))
+
+
+def read_session(log: Path, archives: list[Path]) -> str:
+    """O texto de todos os arquivos, em ordem, como uma sessao so."""
+    parts = []
+
+    for archive in archives:
+        with gzip.open(archive, "rt", encoding="utf-8", errors="replace") as handle:
+            parts.append(handle.read())
+
+    parts.append(log.read_text(encoding="utf-8", errors="replace"))
+
+    return "\n".join(parts)
+
+
 def find_log(argv: list[str]) -> Path | None:
     if len(argv) > 1:
         given = Path(argv[1])
@@ -254,11 +356,17 @@ def main() -> int:
 
         return 2
 
-    text = log.read_text(encoding="utf-8", errors="replace")
+    # Com o caminho dado, so ele; achado sozinho, o dia inteiro.
+    archives = [] if len(sys.argv) > 1 else same_day_archives(log)
+
+    text = read_session(log, archives)
 
     results = [judge(item, text) for item in ITEMS]
 
     print(f"Log:    {log}")
+
+    for archive in archives:
+        print(f"        + {archive.name}")
     print(f"Sessao: {session_window(text)}  ({len(text.splitlines())} linhas)")
     print()
 
