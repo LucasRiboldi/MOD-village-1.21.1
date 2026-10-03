@@ -210,6 +210,33 @@ loom {
     }
 }
 
+// Cobertura da bateria de jogo (2026-10-02). O jacocoTestReport só vê os
+// unitários, que mal tocam a camada fabric — e é nela que mora quase todo
+// defeito visto em jogo. O agente vai na JVM do servidor de teste, só para as
+// classes do mod; o Knot define as classes sem CodeSource, e sem
+// includeNoLocationClasses o relatório sairia vazio.
+// Relatório em build/reports/jacoco/gametest/html/index.html.
+tasks.named('runGametest') {
+    jacoco.applyTo(it)
+    jacoco {
+        includes = ['com.villagecolony.*']
+        includeNoLocationClasses = true
+    }
+    finalizedBy 'jacocoGametestReport'
+}
+
+tasks.register('jacocoGametestReport', JacocoReport) {
+    executionData layout.buildDirectory.file('jacoco/runGametest.exec')
+    sourceSets sourceSets.main
+
+    reports {
+        xml.required = true
+        html.required = true
+        xml.outputLocation = layout.buildDirectory.file('reports/jacoco/gametest/jacocoGametestReport.xml')
+        html.outputLocation = layout.buildDirectory.dir('reports/jacoco/gametest/html')
+    }
+}
+
 processResources {
     inputs.property 'version', project.version
     inputs.property 'fabric_api_version', project.fabric_version

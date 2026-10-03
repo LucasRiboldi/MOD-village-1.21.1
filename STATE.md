@@ -124,8 +124,9 @@ A lista completa e priorizada está no `TODO.md`.
   O timeout isolado do construtor alcançando o topo (27-09) não se repetiu.
 - **`ColonyDetectionGameTest`:** a falha de 09-19 (24 trabalhadores em vez
   de 30) nunca foi reproduzida.
-- **Cobertura da camada `fabric`** não é medida: o JaCoCo não instrumenta a
-  bateria de jogo.
+- **Cobertura da bateria de jogo** medida desde 02-10 (`runGametest` →
+  `build/reports/jacoco/gametest`): `fabric/work` 83%, `integration` 84%;
+  furos em `command` (3%), `network` (20%) e cliente (0%, sem cliente no teste).
 - **Sem GameTest com jogador real** para planejar perto e executar onde
   simula; a arena não cria jogador.
 

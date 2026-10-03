@@ -181,6 +181,10 @@ python -m unittest discover -s tests
 
 O build exige Java 21 (`JAVA_HOME` apontando para um JDK 21).
 
+Cobertura: `test` gera `build/reports/jacoco/test/html` (unitários) e
+`runGametest` gera `build/reports/jacoco/gametest/html` (bateria de jogo, que
+é quem exercita a camada `fabric`).
+
 Verificação de 2026-10-02 (consolidação):
 
 - 1293 testes unitários: aprovados (`test --rerun-tasks`).
