@@ -12,6 +12,20 @@ da reabertura seca oposta. Cada lote e validado na orientacao final da planta.
 A bateria de 1.196 testes unitarios e 528 GameTests (30-09, depois da revisao
 das profissoes) esta verde; ainda requer validacao no save real.
 
+## Playtest de 2026-10-03, manhã (Spark `uBD27Q4L35`) — feito sem jogo
+
+- [x] 🔴 Ícones trocados: os arquivos de textura tinham os nomes errados; renomeados pelo conteúdo.
+- [x] 🟠 Placa com fundo em pixel art (nove partes, estica com o texto), ícone à esquerda, texto à direita.
+- [x] 🔴 Área da vila marcada com partículas verdes (`VillageMarker`).
+- [x] 🔴 Base das obras: só a grama fica como chão; plantação constrói a base inteira.
+- [x] 🔴 Gargalos da obra: tentativas em paralelo para todas as peças que faltam; obra só com peça sem apoio sai em 1 min.
+- [x] 🟠 Mina: arco 5 × 4 com dois lampiões, vão 3 × 3; salas 3 × 3.
+- [x] 🟠 Água e lava lidas uma vez são puladas nas buscas (`FluidColumns`) — **sem teste**.
+- [ ] 🔴 Playtest de tudo acima.
+- [ ] 🟠 Decisão: varredura das bordas para o centro — `docs/research/2026-10-03-varredura-das-bordas.md`.
+- [ ] 🟠 Obra com um construtor só por vez (`1 working`): estudar dois construtores na mesma obra.
+- [ ] 🟡 Testes pendentes: `FluidColumns`, atalho "bloco já no lugar", `VillageMarker` em jogo.
+
 ## Medida da vila — ADR-003 Emenda 8 (2026-10-03)
 
 - [x] 🔴 Partida pelas peças da vila gerada; 15 em volta das obras; só o lado que passa avança; lados ímpares.

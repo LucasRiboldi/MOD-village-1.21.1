@@ -17,6 +17,13 @@
 - Mod Menu opcional (ADR-030), overlays no cliente, Regra 48 (`GroundPickup`),
   B-4 parcial e B-5. Playtest pendente: lista no topo do `TODO.md`.
 
+## 🟡 03-10, fim da tarde — playtest da manhã (aguarda playtest)
+
+- Ícones com nomes trocados (era o arquivo), placa com fundo, área da vila em
+  partículas, base só de grama, gargalos da obra, mina 3 × 3, água e lava
+  marcadas (sem teste). Análise da varredura das bordas em
+  `docs/research/2026-10-03-varredura-das-bordas.md`, aguarda decisão.
+
 ## 🟡 03-10 — medida da vila, Emenda 8 (aguarda playtest)
 
 - Peças da vila gerada (142 × 116 → 143 × 117), 15 em volta das obras, só o

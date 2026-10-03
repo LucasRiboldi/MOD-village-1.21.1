@@ -9,6 +9,31 @@ entrega, e o que separa uma publicação da outra é o commit e o SHA-256 do JAR
 2026-09-24 está em [`docs/technical/Development-Log.md`](docs/technical/Development-Log.md)
 e [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md).
 
+## [0.3.0] — publicação de 2026-10-03, fim da tarde (playtest da manhã)
+
+**Ainda não visto em jogo; a última parte não foi testada** (pedido do autor). JAR SHA-256 `D4FFE0FC…7C99`.
+
+### Corrigido
+
+- Ícones de profissão e de obra trocados: os arquivos de textura estavam com
+  os nomes errados.
+- Obra parada por peça sem rota uma de cada vez: as tentativas contam para
+  todas as peças que faltam no mesmo ciclo.
+- Obra com só peças sem apoio sobrando esperava 10 min; agora 1 min.
+
+### Adicionado
+
+- Placa com fundo em pixel art, ícone à esquerda e texto à direita.
+- Área da vila marcada com partículas verdes perto do jogador.
+- Água e lava lidas uma vez ficam de fora das buscas seguintes (sem teste).
+
+### Alterado
+
+- Base das obras: só a grama fica como chão; a plantação constrói a base
+  inteira; bloco que já está no lugar conta como assentado.
+- Mina: arco de 5 × 4 com um lampião de cada lado e vão de 3 × 3; salas de
+  busca de 3 × 3.
+
 ## [0.3.0] — publicação de 2026-10-03, tarde (medida da vila)
 
 **Ainda não visto em jogo.** JAR SHA-256 `00658B2C…92E4`.
