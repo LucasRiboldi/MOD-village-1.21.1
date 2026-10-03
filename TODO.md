@@ -49,7 +49,7 @@ escada de madeira na porta elevada, roça acima da rua. **Nada visto em jogo.**
 - [x] 🟠 A-3 (material da obra pedido inteiro) e A-4 (mina nova na borda, longe da água) — feitos em `d15d95d`. Não vistos em jogo.
 - [x] 🟠 B-4: fundidor sem cru — carvão vegetal (a obra que pede carvão aceita o vegetal, que sai da tora) e, em 02-10, o degrau de fornalha: a obra que pede pedra lisa põe a pedra na lista, e a pedra sai do pedregulho (`SmelterFallbackGameTest`, confirmado por mutação). Não visto em jogo.
 - [x] 🟡 B-5: esperas de mais de 2 min no `/vc log`, com motivo e tempo (`VillageLogPresenter.longWaits`).
-- [ ] 🟡 Bateria: dois intermitentes vistos em 02-10, uma vez cada em 8 rodadas — `SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted` (a mina sumiu no tique 150) e `BuilderGameTest.theBuilderMakesTheDoorTheWorkIsWaitingFor` (1 porta no baú em vez de 2). Suspeita: interferência entre cenários no mundo único. **02-10, noite:** o do fundidor caiu 2 vezes em 6 rodadas ("a leitura histórica não chegou ao baú do cenário") — mais que 1 em 8; investigar. **Pista:** as três quedas de 02-10 à noite foram em rodadas sem `--rerun-tasks`; todas as rodadas com `--rerun-tasks` passaram.
+- [ ] 🟡 Bateria: dois intermitentes vistos em 02-10, uma vez cada em 8 rodadas — `SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted` (a mina sumiu no tique 150) e `BuilderGameTest.theBuilderMakesTheDoorTheWorkIsWaitingFor` (1 porta no baú em vez de 2). Suspeita: interferência entre cenários no mundo único. **02-10, noite:** o do fundidor caiu 2 vezes em 6 rodadas ("a leitura histórica não chegou ao baú do cenário") — mais que 1 em 8; investigar. **Pista:** as três quedas de 02-10 à noite foram em rodadas sem `--rerun-tasks`; todas as rodadas com `--rerun-tasks` passaram. Em 03-10, 00:45, o `GroundPickupGameTest` caiu uma vez numa rodada de mutação que não passa pelo código dele (1 em ~14 rodadas).
 - [ ] 🟡 Decisões do autor do estudo de profissões: Regra 28 (casa do ofício), Regra 18 (pausa/chuva), felicidade (R-3), fornalha real (V-2).
 
 ## Sessão de 2026-10-01 — pendências (`docs/research/2026-10-01-solucoes-das-pendencias.md`)
@@ -413,8 +413,11 @@ resultado real contra ele.
   source set de teste; produção permanece pausada sem jogador. A fixture de
   fuga passou a registrar seu trabalhador, como ocorre em jogo. Rodada final:
   `runGametest --rerun-tasks` 480/480.
-- [ ] 🟠 **P1 - GameTest de jogador presente e distante:** validar a regra de
+- [x] 🟠 **P1 - GameTest de jogador presente e distante:** validar a regra de
   pausa sem usar a exceção de chamadas diretas que os testes atuais usam.
+  **02-10:** o `FakePlayer` do Fabric entra no mundo; `VillageFocusPlayerGameTest`
+  e `SweepCadenceGameTest.theSecondTickPassRunsOnlyWithAPlayerInside`, os dois
+  confirmados por mutação.
 - [x] `/vc log`: menu de chat simples da vila próxima, baseado no
   `ActivityTrace`; `VillageLogPresenterTest` cobre vazio, espera e travamento.
 - [x] 🟡 Corrigir os 25 avisos Error Prone atuais (`60c2b3d`; zero no CI de
