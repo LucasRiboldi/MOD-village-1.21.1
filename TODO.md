@@ -63,7 +63,7 @@ recomendação de cada item no estudo.
 - [x] 🔴 Script de conferência do log (estudo §A-B) — feito em 02-10 no `scripts/verdict.py`, que já existia: 12 itens novos (30-09 a 02-10), lê os `.log.gz` do dia e o teste das frases roda no CI (`tests/test_verdict_session.py`). Uso: `python scripts/verdict.py`.
 - [ ] 🟠 Limpar o save ou usar mundo novo (estudo §6).
 - [ ] 🟠 Vila grande cresce devagar: cadência da varredura (estudo §7-A).
-- [ ] 🟠 Instrumentar a entrada no curral antes de prevenir (estudo §8-A).
+- [x] 🟠 Instrumentar a entrada no curral antes de prevenir (estudo §8-A) — feito em 02-10: `PenEntryLog` escreve `entered a pen at … — path to …, work target …, walk target …, task …; last seen free at …`, e o `verdict.py` conta. Com o próximo playtest decide-se entre B (memória de curral) e C/D.
 - [ ] 🟠 Escalada: bloco criado sem material; quebrar só bloco da colônia; avisar o jogador (estudo §9).
 - [ ] 🟠 Spark: lenhador (73% do mod), varredura de baús da caixa, F13 (estudo §10).
 - [ ] 🟡 Decisões do autor: combustível/viveiro, Regra 45 fora de casa, teletransporte de último recurso.
@@ -119,7 +119,10 @@ documento; ordem recomendada na §7 dele.
   (ADR-007 com emenda §6, `daa5d31`); sem GameTest do critério da vila gerada.
 - [ ] 🟠 F13 - **Parcial** (`e00ee15`): baús no máximo 1×/min, bosque espera
   6.000 tiques, fase `population` no log. Falta: `minersRoom`/`roomOf` releem
-  baús a cada ciclo; medir em jogo.
+  baús a cada ciclo; **medir antes de mexer** (revisto em 02-10): são três
+  leituras por ciclo de 30 s, só dos baús de mineiro, pastor e fazendeiro, e
+  guardá-las por 60 s deixaria o ofício trabalhar com o baú já cheio — o
+  defeito de `bau-cheio-destroi`. Só com o Spark mostrando custo.
 - [ ] 🟡 F7 - Busca do fazendeiro não fecha: 26 `SWEEP_INCOMPLETE`.
 - [ ] 🟡 F8 - Tingimento tenta as 16 cores de vidraça.
 - [ ] 🟡 F9 - Carpinteiro para em lotes de 2–9 peças pela reserva de tora.
