@@ -1,0 +1,21 @@
+{
+  "text.villagecolony.professions": "Professions",
+  "text.villagecolony.professions.loading": "Loading server policies...",
+  "text.villagecolony.professions.enabled": "Profession: enabled",
+  "text.villagecolony.professions.disabled": "Profession: disabled",
+  "text.villagecolony.professions.maximum": "Maximum workers: %s",
+  "text.villagecolony.professions.maximum.unlimited": "Maximum workers: unlimited",
+  "text.villagecolony.professions.radius": "Search radius: %s blocks",
+  "text.villagecolony.professions.radius.automatic": "Search radius: mod default",
+  "text.villagecolony.professions.priority": "Hiring priority: %s of 8",
+  "text.villagecolony.professions.move_up": "Move up",
+  "text.villagecolony.professions.move_down": "Move down",
+  "text.villagecolony.profession.miner": "Miner",
+  "text.villagecolony.profession.lumberjack": "Lumberjack",
+  "text.villagecolony.profession.mason": "Mason",
+  "text.villagecolony.profession.smelter": "Smelter",
+  "text.villagecolony.profession.carpenter": "Carpenter",
+  "text.villagecolony.profession.farmer": "Farmer",
+  "text.villagecolony.profession.shepherd": "Shepherd",
+  "text.villagecolony.profession.builder": "Builder"
+}

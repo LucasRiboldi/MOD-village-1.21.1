@@ -9,6 +9,8 @@ import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
+import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.data.save.ProfessionPolicySavedData;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
@@ -118,6 +120,12 @@ public final class ShepherdWork {
     /** Devolve o raio ao valor de jogo. */
     public static void restoreSearch() {
         searchRadius = SEARCH_RADIUS;
+    }
+
+    private static int searchRadius(ServerWorld world) {
+        int configured = ProfessionPolicySavedData.get(world.getServer()).policies()
+                .policyOf(ProfessionType.SHEPHERD).searchRadius();
+        return configured < 0 ? searchRadius : configured;
     }
 
     /**
@@ -267,7 +275,7 @@ public final class ShepherdWork {
 
     /** A ovelha mais próxima que ainda tem lã. */
     private static void findSheep(ServerWorld world, UUID workerId, Job job) {
-        Box around = new Box(job.center).expand(searchRadius);
+        Box around = new Box(job.center).expand(searchRadius(world));
 
         List<SheepEntity> flock = world.getEntitiesByClass(
                 SheepEntity.class, around, ShepherdWork::isWoolly);

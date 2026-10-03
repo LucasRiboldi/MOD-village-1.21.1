@@ -2,7 +2,9 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.GatheringReach;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.data.save.ProfessionPolicySavedData;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
@@ -97,6 +99,12 @@ public final class TreeChoice {
     private TreeChoice() {
     }
 
+    private static int searchRadius(ServerWorld world) {
+        int configured = ProfessionPolicySavedData.get(world.getServer()).policies()
+                .policyOf(ProfessionType.LUMBERJACK).searchRadius();
+        return configured < 0 ? LumberjackWork.searchRadius : configured;
+    }
+
     /**
      * Escolhe a próxima árvore, ou encerra a tarefa.
      *
@@ -144,7 +152,7 @@ public final class TreeChoice {
                 GatheringReach.radius(
                         VillageColonyMod.COLONIES.find(job.task.colonyId())
                                 .map(Colony::observedBeds).orElse(0),
-                        LumberjackWork.searchRadius),
+                        searchRadius(world)),
                 log -> !TreeClaims.isTaken(log)
                         && !TreeMarks.isRejected(world, log)
                         && !TreeMarks.isOutOfReach(world, log));

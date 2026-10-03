@@ -18,6 +18,12 @@
   "entrypoints": {
     "main": [
       "com.villagecolony.VillageColonyMod"
+    ],
+    "client": [
+      "com.villagecolony.client.VillageColonyClient"
+    ],
+    "modmenu": [
+      "com.villagecolony.client.modmenu.VillageColonyModMenu"
     ]
   },
   "mixins": [

@@ -9,6 +9,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
+import com.villagecolony.data.save.ProfessionPolicySavedData;
 import com.villagecolony.core.worker.service.WorkerService;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.entity.passive.VillagerEntity;
@@ -144,7 +145,8 @@ public final class VillagerScanner {
         }
 
         boolean hiring = ProfessionAssigner.vacancy(
-                        workers.ofColony(colony.id()), adultPopulation).isPresent()
+                        workers.ofColony(colony.id()), adultPopulation,
+                        ProfessionPolicySavedData.get(world.getServer()).policies()).isPresent()
                 || hasEmployedWithoutStorage(workers, colony.id(), storages);
 
         for (VillagerEntity villager : villagers) {

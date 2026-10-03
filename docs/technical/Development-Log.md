@@ -10266,3 +10266,21 @@ em 59,33 s. O JAR `0.3.0` foi copiado para `downloads/` e
 `%APPDATA%/.minecraft/mods/`; as tres copias, incluindo `build/libs/`,
 conferiram SHA-256
 `B1C516AD68A99987088D97A82B976C01F10E321A66858D05C49590BC3A38C2F5`.
+
+### 2026-10-02 - Politicas de profissao e configuracao pelo Mod Menu
+
+- A politica e unica por mundo, persistida no `PersistentState` do Overworld
+  e sincronizada pelo servidor quando o jogador entra ou abre a tela.
+- A ordem e uma lista completa das oito profissoes. As ordens historicas de
+  fundacao e crescimento sao projecoes dessa lista; os valores padrao mantem
+  o comportamento anterior sem limite adicional nem raio sobrescrito.
+- O Mod Menu e opcional. A tela cliente apenas edita o espelho da politica;
+  atualizacoes exigem permissao de operador nivel 2 no servidor.
+- O raio configuravel existe somente para lenhador, fazendeiro e pastor e
+  altera suas buscas reais. `padrao do mod` preserva 64, 32 e 32 blocos.
+- **Integracao com a linha principal (02-10):** a fundacao nao e projecao da
+  ordem da politica — o carpinteiro logo depois do lenhador e decisao do
+  autor de 30-09; a politica so tira dela a profissao desativada. O
+  crescimento segue a ordem da politica sobre `GROWTH_ORDER` (com o
+  construtor), e a demanda da obra continua antes da lista, respeitando
+  profissao desativada e limite maximo.

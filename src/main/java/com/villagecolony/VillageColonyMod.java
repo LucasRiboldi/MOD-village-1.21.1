@@ -19,6 +19,7 @@ import com.villagecolony.fabric.event.VillageDetectionHandler;
 import com.villagecolony.fabric.event.VillagerLifecycleHandler;
 import com.villagecolony.fabric.integration.SiteSignJanitor;
 import com.villagecolony.fabric.integration.VillageChests;
+import com.villagecolony.fabric.network.ProfessionPolicyNetworking;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -184,6 +185,7 @@ public class VillageColonyMod implements ModInitializer {
         VillageChests.register();
         SiteSignJanitor.register();
         VillageLogCommand.register();
+        ProfessionPolicyNetworking.register();
 
         LOGGER.info("[Village Colony] Mod initialized");
     }
