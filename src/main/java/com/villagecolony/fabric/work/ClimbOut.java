@@ -127,6 +127,11 @@ final class ClimbOut {
 
         long warnedAt = Long.MIN_VALUE / 2;
 
+        long toldPlayersAt = Long.MIN_VALUE / 2;
+
+        /** Fechado por blocos protegidos: pode atravessar peça da colônia (§9b-A). */
+        boolean breakPieces;
+
         ColonyPos chest;
 
         /** Quantos níveis cada jeito subiu, na ordem de {@link Mode}. */
@@ -323,10 +328,30 @@ final class ClimbOut {
             BlockPos feet, BlockPos home, long now) {
 
         if (climb.tunnelWay == null) {
-            climb.tunnelWay = ClimbTerrain.tunnelWay(world, feet, home).orElse(null);
+            climb.tunnelWay = ClimbTerrain.tunnelWay(world, feet, home, climb.breakPieces).orElse(null);
             climb.tunnelLeft = TUNNEL_LENGTH;
 
+            if (climb.tunnelWay == null && !climb.breakPieces) {
+                // Fechado — §9b-A, estudo de 01-10: a peça da própria colônia
+                // pode sair, e o reparo a reconstrói. Vila original e bloco do
+                // jogador continuam intocáveis (Regra 3).
+                climb.tunnelWay = ClimbTerrain.tunnelWay(world, feet, home, true).orElse(null);
+
+                if (climb.tunnelWay != null) {
+                    climb.breakPieces = true;
+                    VillageColonyMod.LOGGER.info(
+                            "Stranded worker {} is boxed in at {} — it cuts through the colony's own"
+                                    + " building toward {}; the repair rebuilds it",
+                            shortId(workerId), feet.toShortString(), climb.tunnelWay.asString());
+                }
+            }
+
             if (climb.tunnelWay == null) {
+                if (now - climb.toldPlayersAt >= StrandedNotice.EVERY) {
+                    climb.toldPlayersAt = now;
+                    StrandedNotice.tell(world, shortId(workerId), feet);
+                }
+
                 if (now - climb.warnedAt >= WARN_EVERY) {
                     climb.warnedAt = now;
                     VillageColonyMod.LOGGER.warn(
@@ -346,7 +371,7 @@ final class ClimbOut {
 
         for (BlockPos cell : List.of(ahead, ahead.up())) {
             if (!ClimbTerrain.isOpen(world, cell)) {
-                if (ClimbTerrain.mayBreak(world, cell)) {
+                if (ClimbTerrain.mayBreak(world, cell, climb.breakPieces)) {
                     breakOne(world, villager, climb, workerId, cell);
                 } else {
                     climb.tunnelWay = null;

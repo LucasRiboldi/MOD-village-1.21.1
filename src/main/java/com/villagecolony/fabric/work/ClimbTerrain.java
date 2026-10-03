@@ -33,6 +33,14 @@ final class ClimbTerrain {
     // Para o lado, do rumo mais direto para a vila ao menos direto: os dois
     // vãos abertos ou que ele pode abrir, e chão debaixo.
     static Optional<Direction> tunnelWay(ServerWorld world, BlockPos feet, BlockPos home) {
+        return tunnelWay(world, feet, home, false);
+    }
+
+    /**
+     * O túnel, podendo atravessar peça da planta da colônia — §9b-A, só para
+     * quem já se viu fechado. Ver {@link ColonyPieces}.
+     */
+    static Optional<Direction> tunnelWay(ServerWorld world, BlockPos feet, BlockPos home, boolean pieces) {
         List<Direction> ways = new ArrayList<>(Direction.Type.HORIZONTAL.stream().toList());
         int dx = home.getX() - feet.getX();
         int dz = home.getZ() - feet.getZ();
@@ -42,8 +50,8 @@ final class ClimbTerrain {
         for (Direction way : ways) {
             BlockPos ahead = feet.offset(way);
             BlockPos floor = ahead.down();
-            boolean cells = (isOpen(world, ahead) || mayBreak(world, ahead))
-                    && (isOpen(world, ahead.up()) || mayBreak(world, ahead.up()));
+            boolean cells = (isOpen(world, ahead) || mayBreak(world, ahead, pieces))
+                    && (isOpen(world, ahead.up()) || mayBreak(world, ahead.up(), pieces));
 
             if (cells && !world.getBlockState(floor).getCollisionShape(world, floor).isEmpty()) {
                 return Optional.of(way);
@@ -77,9 +85,20 @@ final class ClimbTerrain {
     // Terreno natural que a proteção deixa quebrar, sem lava encostada e sem
     // areia ou cascalho em cima, que cairia na cabeça dele.
     static boolean mayBreak(ServerWorld world, BlockPos at) {
-        BlockState state = world.getBlockState(at);
+        return mayBreak(world, at, false);
+    }
 
-        if (!StrandedEscape.mayDig(world, at, state)
+    /**
+     * Com {@code pieces}, a peça da planta da colônia também pode sair — o
+     * reparo a reconstrói. Bloco com inventário ou fluido continua de fora,
+     * como na regra comum.
+     */
+    static boolean mayBreak(ServerWorld world, BlockPos at, boolean pieces) {
+        BlockState state = world.getBlockState(at);
+        boolean piece = pieces && state.getFluidState().isEmpty() && world.getBlockEntity(at) == null
+                && ColonyPieces.isPlannedPiece(world, at);
+
+        if (!(piece || StrandedEscape.mayDig(world, at, state))
                 || world.getBlockState(at.up()).getBlock() instanceof FallingBlock) {
             return false;
         }

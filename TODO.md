@@ -44,12 +44,12 @@ escada de madeira na porta elevada, roça acima da rua. **Nada visto em jogo.**
 - [x] 🟠 Regras 2-e1/37-e1 (ferramenta melhor do baú, com Eficiência e encantamento), 49 (ordem das obras: cama → casa do ofício → demais) e 50 (tempo dos aldeões, `VC_TIME` + `scripts/time_ledger.py`) — 02-10.
 - [x] 🟠 Regra 48: recolher do chão só o item que falta à obra aberta — feito em 02-10 (`GroundPickup`, `GroundPickupGameTest` confirmado por mutação). Não visto em jogo.
 - [x] 🔴 A-1: meta e executor da tábua concordarem — feito em `7112702` (a obra usa toda a madeira). Falta ver em jogo que o carpinteiro não fecha mais tarefa com 0 peça.
-- [~] 🟠 B-1: ajudante no tempo ocioso — **feita a metade do chão** (recolhe o que a obra espera e guarda no baú mais perto dela). Falta: levar material do baú para perto do construtor.
+- [~] 🟠 B-1: ajudante no tempo ocioso — **feita a metade do chão** (recolhe o que a obra espera e guarda no baú mais perto dela). A outra metade, levar material do baú para perto do construtor, **aguarda decisão do autor** (revisto em 02-10): o construtor tira o material de qualquer baú da colônia sem andar (`ColonySupply.take`), então carregar para perto dele não adianta um bloco da obra — seria só visual. Faz sentido se o construtor passar a ir ao baú.
 - [x] 🟠 A-2: índice de árvores — feito em `8bcb941` (com A-5..A-8). Falta medir em jogo o tempo procurando (era 66%).
 - [x] 🟠 A-3 (material da obra pedido inteiro) e A-4 (mina nova na borda, longe da água) — feitos em `d15d95d`. Não vistos em jogo.
 - [x] 🟠 B-4: fundidor sem cru — carvão vegetal (a obra que pede carvão aceita o vegetal, que sai da tora) e, em 02-10, o degrau de fornalha: a obra que pede pedra lisa põe a pedra na lista, e a pedra sai do pedregulho (`SmelterFallbackGameTest`, confirmado por mutação). Não visto em jogo.
 - [x] 🟡 B-5: esperas de mais de 2 min no `/vc log`, com motivo e tempo (`VillageLogPresenter.longWaits`).
-- [ ] 🟡 Bateria: dois intermitentes vistos em 02-10, uma vez cada em 8 rodadas — `SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted` (a mina sumiu no tique 150) e `BuilderGameTest.theBuilderMakesTheDoorTheWorkIsWaitingFor` (1 porta no baú em vez de 2). Suspeita: interferência entre cenários no mundo único.
+- [ ] 🟡 Bateria: dois intermitentes vistos em 02-10, uma vez cada em 8 rodadas — `SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted` (a mina sumiu no tique 150) e `BuilderGameTest.theBuilderMakesTheDoorTheWorkIsWaitingFor` (1 porta no baú em vez de 2). Suspeita: interferência entre cenários no mundo único. **02-10, noite:** o do fundidor caiu 2 vezes em 6 rodadas ("a leitura histórica não chegou ao baú do cenário") — mais que 1 em 8; investigar.
 - [ ] 🟡 Decisões do autor do estudo de profissões: Regra 28 (casa do ofício), Regra 18 (pausa/chuva), felicidade (R-3), fornalha real (V-2).
 
 ## Sessão de 2026-10-01 — pendências (`docs/research/2026-10-01-solucoes-das-pendencias.md`)
@@ -64,7 +64,7 @@ recomendação de cada item no estudo.
 - [ ] 🟠 Limpar o save ou usar mundo novo (estudo §6).
 - [ ] 🟠 Vila grande cresce devagar: cadência da varredura (estudo §7-A).
 - [x] 🟠 Instrumentar a entrada no curral antes de prevenir (estudo §8-A) — feito em 02-10: `PenEntryLog` escreve `entered a pen at … — path to …, work target …, walk target …, task …; last seen free at …`, e o `verdict.py` conta. Com o próximo playtest decide-se entre B (memória de curral) e C/D.
-- [ ] 🟠 Escalada: bloco criado sem material; quebrar só bloco da colônia; avisar o jogador (estudo §9).
+- [x] 🟠 Escalada (estudo §9): bloco criado sem material já era o A-5 (`ClimbOut.place` cria pedregulho); em 02-10, fechado por blocos protegidos ele atravessa **só a peça da planta da colônia** (`ColonyPieces`, o reparo reconstrói; bloco do jogador e vila original intocáveis) e, sem saída nem assim, avisa os jogadores no chat a cada 5 min (`StrandedNotice`). `ClimbOutPiecesGameTest` confirmado por mutação. Teletransporte segue vetado. Não visto em jogo.
 - [ ] 🟠 Spark: lenhador (73% do mod), varredura de baús da caixa, F13 (estudo §10).
 - [ ] 🟡 Decisões do autor: combustível/viveiro, Regra 45 fora de casa, teletransporte de último recurso.
 - [ ] 🟡 PR desta branch depois do playtest (estudo §12).

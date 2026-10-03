@@ -205,8 +205,9 @@ ITEMS: list[Item] = [
         "E47 escalada",
         "O encalhado sobe por escada, pilar ou tunel",
         proves=("climbed to",),
-        refutes=("is boxed in at",),
-        note="'boxed in' e cercado de bloco que ele nao pode quebrar",
+        refutes=("player(s)",),
+        note="'cuts through the colony's own building' e o §9b-A agindo;"
+             " 'told N player(s)' e o preso sem saida nem pela peca da colonia",
         outweighs=True,
     ),
     Item(
