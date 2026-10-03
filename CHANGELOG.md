@@ -9,6 +9,34 @@ entrega, e o que separa uma publicação da outra é o commit e o SHA-256 do JAR
 2026-09-24 está em [`docs/technical/Development-Log.md`](docs/technical/Development-Log.md)
 e [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md).
 
+## [0.3.0] — publicação de 2026-10-03 (corrigíveis sem jogo)
+
+JAR do commit dos corrigíveis, SHA-256 `923D9769…40C0`, em `downloads/` e em
+`.minecraft/mods` (três cópias conferidas). **Nada desta lista foi visto em
+jogo.**
+
+### Adicionado
+
+- **Busca de lote mais rápida na vila com jogador dentro** (estudo de 01-10,
+  §7-A): uma passagem extra por segundo continua a varredura em curso, com o
+  mesmo prazo de 15 ms do ciclo.
+- **Encalhado fechado por blocos protegidos** atravessa só a peça da planta
+  da própria colônia (o reparo a reconstrói) e, sem saída nem assim, avisa os
+  jogadores no chat a cada 5 minutos. Teletransporte continua vetado.
+- **Fundidor sem cru** desce um degrau da fornalha: a obra que pede pedra lisa
+  põe a pedra na lista, e a pedra sai do pedregulho.
+- **Linhas novas no log:** para onde o aldeão ia quando entrou no curral
+  (`entered a pen`) e quem mudou as regras de profissão
+  (`Profession policy changed by`).
+- `scripts/verdict.py` com os itens de 30-09 a 02-10, lendo também os
+  `.log.gz` do dia.
+
+### Mudado
+
+- Nenhum arquivo de produção passa de 500 linhas (oito divididos, texto
+  movido sem mudança).
+- Cobertura JaCoCo da bateria de jogo em `build/reports/jacoco/gametest`.
+
 ## [0.3.0] — publicação de 2026-10-02 (consolidação)
 
 JAR do commit da consolidação de 02-10, SHA-256 `AB762691…9FFA`, em

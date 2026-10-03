@@ -14,7 +14,7 @@ mod no cliente.
 Download: [village-colony-0.3.0.jar](downloads/village-colony-0.3.0.jar?raw=1)
 
 SHA-256 do JAR publicado nesta árvore:
-`AB7626919BF87DA9B7916504617706E1E0EC52341E86F6F84C85E4EEB9F99FFA`.
+`923D9769872295F99F5B160ACAFF39695174C9D418CCFAD32C73E8BEDC2940C0`.
 
 ## O que o mod faz
 
@@ -185,11 +185,11 @@ Cobertura: `test` gera `build/reports/jacoco/test/html` (unitários) e
 `runGametest` gera `build/reports/jacoco/gametest/html` (bateria de jogo, que
 é quem exercita a camada `fabric`).
 
-Verificação de 2026-10-02 (consolidação):
+Verificação de 2026-10-03 (corrigíveis sem jogo):
 
-- 1293 testes unitários: aprovados (`test --rerun-tasks`).
-- 88 testes Python: aprovados.
-- 564 GameTests: todos aprovados, em duas rodadas seguidas.
+- 1295 testes unitários: aprovados (`test --rerun-tasks`).
+- 91 testes Python: aprovados.
+- 575 GameTests: todos aprovados, em duas rodadas seguidas com `--rerun-tasks`.
 - `./gradlew build`: passa.
 
 A mutação (PIT, pacote `core`) e o `javadoc` não foram rodados nesta

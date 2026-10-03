@@ -10313,3 +10313,34 @@ conferiram SHA-256
   com SHA-256 `AB7626919BF87DA9B7916504617706E1E0EC52341E86F6F84C85E4EEB9F99FFA`
   em `build/libs/`, `downloads/` e `.minecraft/mods`.
 - **Nao verificado em jogo.** PIT e javadoc nao rodados.
+
+### 2026-10-03 - Corrigiveis sem acesso ao jogo
+
+Branch `claude/corrigiveis-sem-jogo`, a partir da `main` de 02-10. Doze frentes
+da revisao dos pontos criticos, importantes, pela metade e dividas:
+
+- Documentos: os sete planos iniciais em `docs/historical/`; oito itens do
+  TODO que o codigo ja tinha resolvido marcados com a referencia.
+- `verdict.py`: itens de 30-09 a 02-10, `.log.gz` do dia, teste das frases no
+  CI; o servidor escreve a mudanca de regra de profissao.
+- B-4: degrau de fornalha (pedra lisa -> pedra -> pedregulho).
+- §8-A: `PenEntryLog`. O GameTest do golem pegou a leitura de memoria nao
+  registrada, que derrubaria o servidor.
+- §9b: `ColonyPieces` e `StrandedNotice`.
+- §7-A: `LotSeeking` separado do planejador e `SweepCadence`.
+- Pastor: os tres "nao" do rebanho.
+- Oito arquivos acima de 500 linhas divididos; o recongelamento do ArchUnit
+  engoliu uma regra alem dos ciclos (RoadRefusals sem ServerMemory) e foi
+  corrigido no codigo.
+- JaCoCo na bateria de jogo: `fabric/work` 83%, `integration` 84%.
+- GameTest com `FakePlayer`.
+
+Cada comportamento novo tem GameTest confirmado por mutacao. Ficaram de fora,
+com o motivo no TODO: B-1 (levar material ao construtor nao adianta a obra
+enquanto o construtor tira de qualquer bau sem andar - decisao do autor) e o
+resto do F13 (medir antes de cachear o espaco do bau do oficio).
+
+Verificado: `test --rerun-tasks` 1295/1295; 91 testes Python;
+`runGametest --rerun-tasks` 575/575 em duas rodadas; `build`. JAR com
+SHA-256 `923D9769872295F99F5B160ACAFF39695174C9D418CCFAD32C73E8BEDC2940C0` em
+`build/libs/`, `downloads/` e `.minecraft/mods`. **Nao verificado em jogo.**

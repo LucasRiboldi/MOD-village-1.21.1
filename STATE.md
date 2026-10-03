@@ -19,8 +19,8 @@
 
 ## Em uma linha
 
-Tudo na `main` em 02-10: 1.293 unitários, 88 Python, 564/564 GameTests (duas
-rodadas); JAR `AB762691…9FFA`. Nada visto em jogo — próximo: playtest.
+03-10: corrigíveis sem jogo em `claude/corrigiveis-sem-jogo` — 1.295 unitários,
+575/575 GameTests (duas rodadas); JAR `923D9769…40C0`. Nada visto em jogo.
 
 ## 30-09, noite — playtests 18h e 21h (Spark `YUm45D9Sw4`, `qI5h6MXtDA`)
 
