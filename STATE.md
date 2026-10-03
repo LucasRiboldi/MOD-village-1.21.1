@@ -12,17 +12,15 @@
 
 ---
 
-## 🟡 02-10 — políticas de profissão e overlays juntados (aguarda playtest)
+## 🟡 02-10 — consolidação na `main` (aguarda playtest)
 
-- Mod Menu opcional (ADR-030): profissão ativa, limite e raio por mundo.
-- Overlays S2C só para cliente com o mod (profissão, progresso e material da
-  obra); Vanilla segue com as placas. Playtest pendente: lista no `TODO.md`.
+- Mod Menu opcional (ADR-030), overlays no cliente, Regra 48 (`GroundPickup`),
+  B-4 parcial e B-5. Playtest pendente: lista no topo do `TODO.md`.
 
 ## Em uma linha
 
-Branch `claude/sync-local-github-80cc8a` (PR #8): revisão das profissões de
-30-09 (`ef84143`, ADR-028/029, `docs/technical/Revisao-Profissoes-2026-09-30.md`)
-com 1.196 unitários e 528/528 GameTests locais; fluidez F1–F14 na §8 da Fluidez.
+Tudo na `main` em 02-10: 1.293 unitários, 88 Python, 564/564 GameTests (duas
+rodadas); JAR `AB762691…9FFA`. Nada visto em jogo — próximo: playtest.
 
 ## 30-09, noite — playtests 18h e 21h (Spark `YUm45D9Sw4`, `qI5h6MXtDA`)
 
@@ -41,7 +39,8 @@ com 1.196 unitários e 528/528 GameTests locais; fluidez F1–F14 na §8 da Flui
 
 ## Git
 
-- PR #8 → `codex/bighousemod`; PR #3 → `main` aberto. Mesclar pede aval.
+- 02-10: PRs #8 e #3 mesclados com aval do autor; `main` e `codex/bighousemod`
+  no mesmo commit. Funcionalidade nova: branch a partir da `main`.
 
 ## Corrigido e testado, pendente de playtest
 

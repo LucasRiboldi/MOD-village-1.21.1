@@ -14,7 +14,7 @@ mod no cliente.
 Download: [village-colony-0.3.0.jar](downloads/village-colony-0.3.0.jar?raw=1)
 
 SHA-256 do JAR publicado nesta árvore:
-`CCA7DA3067AC4A36BC1414140B6199E29CFCF2A28C1E9C879E55D8EFAF4F7F40`.
+`AB7626919BF87DA9B7916504617706E1E0EC52341E86F6F84C85E4EEB9F99FFA`.
 
 ## O que o mod faz
 
@@ -32,6 +32,14 @@ SHA-256 do JAR publicado nesta árvore:
   dentro dela, liberando a fila; a `BigHouseMOD` é protegida dessa regra.
 - Evita sobreposição com estruturas existentes, projetos pendentes e blocos
   físicos dentro da área vertical protegida.
+- Põe o aldeão ocioso para recolher do chão só o item que falta à obra aberta
+  (Regra 48) e mostra no `/vc log` quem espera o quê há mais de dois minutos.
+- Regras de profissão por mundo, editáveis pelo [Mod Menu](https://modrinth.com/mod/modmenu)
+  (opcional): ativar ou desativar a profissão, limite de trabalhadores, raio de
+  busca do lenhador, fazendeiro e pastor, e ordem de contratação (ADR-030).
+- Com o mod no cliente, mostra a profissão sobre o aldeão e o progresso da
+  obra, com o primeiro material que falta; o cliente Vanilla continua vendo as
+  placas.
 
 O mod é alpha. A bateria automática está verde (unitários, GameTests e
 mutação), mas vários fluxos só se confirmam em playtest num save, e as
@@ -154,7 +162,10 @@ O detalhe dos IDs e a regra da estrutura própria estão em
 
 Requisitos: Minecraft Java 1.21.1, Fabric Loader compatível, Fabric API e
 Java 21. Coloque o JAR e a Fabric API na pasta `mods`. O servidor precisa do
-mod; clientes que entram em um servidor dedicado não precisam instalá-lo.
+mod; clientes que entram em um servidor dedicado não precisam instalá-lo. No
+cliente, o mod liga as sobreposições de profissão e de obra, e o Mod Menu
+(opcional) abre a tela de regras de profissão — mudar regras exige operador
+nível 2.
 Use um mundo de teste: o mod corta árvores, minera e coloca blocos no mundo.
 
 ## Desenvolvimento e verificação
@@ -170,14 +181,16 @@ python -m unittest discover -s tests
 
 O build exige Java 21 (`JAVA_HOME` apontando para um JDK 21).
 
-Verificação de 2026-09-25:
+Verificação de 2026-10-02 (consolidação):
 
-- 1076 testes unitários: aprovados.
-- 86 testes Python: aprovados.
-- 435 GameTests: todos aprovados, numa rodada.
-- Mutação (PIT, pacote `core`): 1151 de 1312 mutações mortas (87,7%), força
-  de teste 95%. O relatório fica em `build/reports/pitest/index.html`.
-- `./gradlew javadoc`: passa.
+- 1293 testes unitários: aprovados (`test --rerun-tasks`).
+- 88 testes Python: aprovados.
+- 564 GameTests: todos aprovados, em duas rodadas seguidas.
+- `./gradlew build`: passa.
+
+A mutação (PIT, pacote `core`) e o `javadoc` não foram rodados nesta
+verificação; a última medida é a de 2026-09-25: 1151 de 1312 mutações mortas
+(87,7%), força de teste 95%.
 
 ## Estado e nota da auditoria
 

@@ -9,7 +9,47 @@ entrega, e o que separa uma publicação da outra é o commit e o SHA-256 do JAR
 2026-09-24 está em [`docs/technical/Development-Log.md`](docs/technical/Development-Log.md)
 e [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md).
 
-## [Não publicado] — depois da sessão longa de 2026-09-26
+## [0.3.0] — publicação de 2026-10-02 (consolidação)
+
+JAR do commit da consolidação de 02-10, SHA-256 `AB762691…9FFA`, em
+`downloads/` e em `.minecraft/mods` (três hashes conferidos). Junta tudo o que
+saiu de 26-09 a 02-10; o detalhe de cada item está no
+[`Development-Log.md`](docs/technical/Development-Log.md) e no `TODO.md`.
+**Nada desta lista foi visto em jogo depois da consolidação.**
+
+### Adicionado
+
+- **Regras de profissão por mundo** pelo Mod Menu (opcional): ativar,
+  limitar, raio de busca e ordem de contratação (ADR-030). A fundação mantém o
+  carpinteiro logo depois do lenhador.
+- **Sobreposições no cliente:** profissão sobre o aldeão e progresso da obra
+  com o primeiro material que falta.
+- **Ajudante no tempo ocioso (Regra 48, metade de B-1):** recolhe do chão só
+  o item que falta à obra aberta.
+- **`/vc log` com as esperas longas (B-5)** e o tempo dos aldeões por
+  profissão (Regra 50, linha `VC_TIME`).
+- Vila como caixa que cresce e só trabalha com jogador dentro (ADR-003
+  Emendas 6 e 7); colônias que se tocam viram uma (ADR-007); rua que cresce
+  para fora; pasta de modelos da colônia (Regra 27-e3); ordem das obras
+  (Regra 49); índice de árvores (A-2).
+
+### Corrigido
+
+- Aldeão preso no curral (E52), encalhado que não desistia e o retorno pela
+  mina (E47), ponta de vila virando colônia nova (E51), tarefa solta voltando
+  ao mesmo aldeão (E49), canteiro na grama (E50).
+- Obra: carpinteiro fechando tarefa com 0 peça (A-1), piso e base da obra,
+  material pedido inteiro (A-3), construtor parando fora do alcance, placa
+  órfã, obra que continua longe do jogador.
+- Fundidor aceita carvão vegetal onde a obra pede carvão (metade de B-4).
+
+### Mudado
+
+- Ferramenta: velocidade da que ele tem e a melhor do baú (Regras 2-e1,
+  37-e1); mina nova na borda, longe da água (A-4); baús da colônia são todos
+  os da vila (Regra 45).
+
+## [0.3.0] — entregas de 2026-09-26 a 09-30 (publicadas nos JARs seguintes)
 
 ### Corrigido
 

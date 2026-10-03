@@ -10296,3 +10296,20 @@ conferiram SHA-256
   crescimento segue a ordem da politica sobre `GROWTH_ORDER` (com o
   construtor), e a demanda da obra continua antes da lista, respeitando
   profissao desativada e limite maximo.
+
+### 2026-10-02 - Consolidacao: tudo na main
+
+- Linha principal (`d15d95d`, com os 4 commits que estavam so locais),
+  `feature/mod-menu-settings` e `feature/profession-overlays` juntadas em
+  `6498143` e `fbe901b`.
+- O trabalho nao commitado do worktree `inspiring-torvalds` entrou depois de
+  avaliado: B-1 parcial (`GroundPickup`, Regra 48), B-4 parcial (carvao
+  vegetal) e B-5 (`/vc log` com as esperas longas). `GroundPickupGameTest`
+  confirmado por mutacao: sem `GroundPickup.pass`, so ele reprova.
+- `archunit_store` recongelado depois de provar que o conjunto de ciclos e o
+  mesmo.
+- Verificado: `test --rerun-tasks` 1293/1293; 88 testes Python;
+  `runGametest --rerun-tasks` 564/564 em duas rodadas; `build`. JAR `0.3.0`
+  com SHA-256 `AB7626919BF87DA9B7916504617706E1E0EC52341E86F6F84C85E4EEB9F99FFA`
+  em `build/libs/`, `downloads/` e `.minecraft/mods`.
+- **Nao verificado em jogo.** PIT e javadoc nao rodados.
