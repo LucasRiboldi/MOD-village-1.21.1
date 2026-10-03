@@ -43,7 +43,9 @@ public final class ProfessionOverlayRenderer {
             String profession = ClientOverlayState.professionOf(villager.getUuid());
             Text label = Text.translatable("overlay.profession."
                     + profession.toLowerCase(Locale.ROOT));
-            float width = text.getWidth(label);
+            boolean showText = OverlayPreferences.professionTextVisible();
+            PixelPanelLayout panel = PixelPanelLayout.singleLine(
+                    PixelPanelLayout.professionTexture(profession), text.getWidth(label), showText);
             Vec3d position = villager.getLerpedPos(client.getRenderTickCounter().getTickDelta(true))
                     .add(0.0, villager.getHeight() + 0.55, 0.0)
                     .subtract(camera);
@@ -51,9 +53,7 @@ public final class ProfessionOverlayRenderer {
             context.matrixStack().translate(position.x, position.y, position.z);
             context.matrixStack().multiply(context.camera().getRotation());
             context.matrixStack().scale(-SCALE, -SCALE, SCALE);
-            text.draw(label, -width / 2.0F, 0.0F, 0xFFFFFFFF, true,
-                    context.matrixStack().peek().getPositionMatrix(), context.consumers(),
-                    TextRenderer.TextLayerType.SEE_THROUGH, 0, 0xF000F0);
+            WorldPixelPanelRenderer.draw(context, text, panel, label, 0xFFFFFFFF, null, 0);
             context.matrixStack().pop();
         }
     }

@@ -72,6 +72,8 @@ public final class ColonyChestSurvey {
             Set<ColonyPos> professionChests,
             ResourceGroup... capacityGroups) {
 
+        ProfessionChestOverflow.relieve(world, chests, professionChests);
+
         List<ColonyPos> knownChests = chests.stream()
                 .sorted((first, second) -> Boolean.compare(
                         professionChests.contains(first), professionChests.contains(second)))

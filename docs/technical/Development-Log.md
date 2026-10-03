@@ -6,6 +6,48 @@
 
 # Village Colony — Development Log
 
+## 2026-10-03 — painéis, perímetro, boca 5x4 e varredura da vila
+
+Os overlays cliente receberam uma borda de pixel art fina com centro
+transparente, escalonada em nove partes para preservar os detalhes. A moldura
+fica na altura do nome e o ícone é centralizado acima; a obra usa uma só
+moldura responsiva para título e materiais faltantes. A escolha do ícone passou
+a usar a chave canônica da profissão ou o estado real da obra, evitando o
+desencontro que vinha de associações visuais implícitas. O Mod Menu ganhou a
+alternância de texto da profissão para a sessão; quando desligada, fica somente
+o ícone.
+
+O `SiteMarker` passou a marcar a caixa atual da vila com fogo azul, separado
+do contorno da obra. A boca da mina agora respeita arco 5x4, lampiões nos dois
+extremos superiores e vão central 3x3; os cenários legados foram corrigidos
+para verificarem os dois lampiões. A rota de suprimento do construtor foi
+revisada: `BuilderMaterials` já retira fisicamente de qualquer baú válido da
+vila por `ColonySupply`; o Spark anterior atribuía a espera a falta de estoque.
+
+O preparo da obra ganhou uma regra estreita: somente `grass_block` sob uma
+posição de base de planta não agrícola vira terra. O GameTest da casa falhou
+antes da correção; um segundo cenário preserva a relva da plantação. A
+elegibilidade de lote e o preenchimento de lacunas continuam inalterados.
+
+`VillageSpiralSweep` passou a dirigir somente a coleta de superfície. Ele
+percorre a borda da caixa para dentro, continua por anéis externos e mantém a
+próxima coluna por trabalhador. `VillageFluidIndex` mede água/lava em parcelas
+de 1.024 colunas carregadas, existe só em memória e é invalidado no crescimento
+real da caixa. ADR-031 registra os contratos e limites.
+
+`ProfessionChestOverflow` reserva capacidade quando um baú profissional fica
+sem slots: o conteúdo dos dez slots finais é transferido para baús comunitários
+da mesma vila, primeiro completando pilhas compatíveis e depois ocupando vagas.
+Outra profissão nunca serve de destino, uma origem de outra vila não entra no
+ciclo e nenhum item é removido quando falta espaço. ADR-032 registra a política.
+
+`PixelPanelLayoutTest` foi escrito antes do painel; os testes da espiral e do
+índice também falharam por ausência antes da implementação. Para os baús, a
+primeira execução concluiu 571 testes com exatamente os dois cenários de
+transferência vermelhos; depois da implementação, a integração final concluiu
+572/572 GameTests obrigatórios. Isso não substitui o playtest visual, de
+desempenho e de inventário no save.
+
 ## 2026-10-02 — Overlays cliente: profissão e canteiro
 
 Foi criado um caminho visual opcional para clientes Fabric, sem substituir a
@@ -10313,3 +10355,19 @@ conferiram SHA-256
   com SHA-256 `AB7626919BF87DA9B7916504617706E1E0EC52341E86F6F84C85E4EEB9F99FFA`
   em `build/libs/`, `downloads/` e `.minecraft/mods`.
 - **Nao verificado em jogo.** PIT e javadoc nao rodados.
+
+### 2026-10-03 - Publicacao dos paineis, perimetro, mina, varredura e baus
+
+A entrega conjunta foi verificada com `./gradlew.bat test --no-daemon`
+(**1.304/1.304**), `./gradlew.bat runGametest --rerun-tasks --no-daemon`
+(**572/572**) e `./gradlew.bat build --no-daemon`. O lote Fabric
+`profession_chest_overflow` passou nos quatro cenarios: transferencia dos dez
+slots finais, exclusao de outro bau profissional, ausencia de destino e
+isolamento entre vilas.
+
+O JAR `0.3.0` foi copiado de `build/libs/` para `downloads/` e
+`%APPDATA%/.minecraft/mods/` com o cliente fechado. As tres copias medem
+3.143.740 bytes e conferem SHA-256
+`861C190BDAA745F24FF1DB51D3931D580FECE6FE75B6C9D833886B19DC24D9EE`;
+`scripts/release_manifest.py --dry-run` confirmou a igualdade. O playtest no
+save continua obrigatorio para os aspectos visuais, desempenho e fluxo real.

@@ -36,33 +36,33 @@ public final class ConstructionOverlayRenderer {
             if (position.squaredDistanceTo(camera) > MAX_DISTANCE_SQUARED) {
                 continue;
             }
-            drawLine(context, text, camera, position,
-                    Text.literal(construction.blueprint() + " " + construction.placed()
-                            + "/" + construction.total()), 0xFF55FFFF, 0.0F);
+            Text title = Text.literal(construction.blueprint() + " " + construction.placed()
+                    + "/" + construction.total());
             String missing = construction.missingMaterial();
+            Text status;
+            int statusColor;
             if (!missing.isBlank()) {
-                drawLine(context, text, camera, position,
-                        Text.translatable("overlay.construction.missing", missing), 0xFFFFAA00, 0.38F);
+                status = Text.translatable("overlay.construction.missing", missing);
+                statusColor = 0xFFFFAA00;
             } else {
-                drawLine(context, text, camera, position,
-                        Text.translatable("overlay.construction.state."
-                                + construction.state().toLowerCase(java.util.Locale.ROOT)),
-                        0xFF55FF55, 0.38F);
+                status = Text.translatable("overlay.construction.state."
+                        + construction.state().toLowerCase(java.util.Locale.ROOT));
+                statusColor = 0xFF55FF55;
             }
+            drawPanel(context, text, camera, position, construction.state(), title, status, statusColor);
         }
     }
 
-    private static void drawLine(WorldRenderContext context, TextRenderer text, Vec3d camera,
-            Vec3d position, Text line, int color, float yOffset) {
+    private static void drawPanel(WorldRenderContext context, TextRenderer text, Vec3d camera,
+            Vec3d position, String state, Text title, Text status, int statusColor) {
         Vec3d relative = position.subtract(camera);
-        float width = text.getWidth(line);
+        PixelPanelLayout panel = PixelPanelLayout.twoLines(PixelPanelLayout.constructionTexture(state),
+                text.getWidth(title), text.getWidth(status));
         context.matrixStack().push();
         context.matrixStack().translate(relative.x, relative.y, relative.z);
         context.matrixStack().multiply(context.camera().getRotation());
         context.matrixStack().scale(-SCALE, -SCALE, SCALE);
-        text.draw(line, -width / 2.0F, yOffset / SCALE, color, true,
-                context.matrixStack().peek().getPositionMatrix(), context.consumers(),
-                TextRenderer.TextLayerType.SEE_THROUGH, 0, 0xF000F0);
+        WorldPixelPanelRenderer.draw(context, text, panel, title, 0xFF55FFFF, status, statusColor);
         context.matrixStack().pop();
     }
 }

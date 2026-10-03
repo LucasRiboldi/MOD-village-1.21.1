@@ -18,6 +18,7 @@ import com.villagecolony.fabric.event.PlayerWorldChangeHandler;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
 import com.villagecolony.fabric.event.VillagerLifecycleHandler;
 import com.villagecolony.fabric.integration.SiteSignJanitor;
+import com.villagecolony.fabric.work.VillageFluidIndex;
 import com.villagecolony.fabric.integration.VillageChests;
 import com.villagecolony.fabric.network.ProfessionPolicyNetworking;
 import com.villagecolony.fabric.overlay.OverlaySync;
@@ -171,12 +172,15 @@ public class VillageColonyMod implements ModInitializer {
 
     /** Registra no log quando a vila cresceu. */
     public static void reportGrowth(UUID colonyId, Optional<VillageBounds> grown, String by) {
-        grown.ifPresent(bounds -> LOGGER.info(
-                "Colony {} grew to {} by {} — center now {}",
-                colonyId,
-                bounds,
-                by,
-                COLONIES.find(colonyId).map(Colony::center).orElse(null)));
+        grown.ifPresent(bounds -> {
+            VillageFluidIndex.invalidate(colonyId);
+            LOGGER.info(
+                    "Colony {} grew to {} by {} — center now {}; fluid index invalidated",
+                    colonyId,
+                    bounds,
+                    by,
+                    COLONIES.find(colonyId).map(Colony::center).orElse(null));
+        });
     }
 
     @Override

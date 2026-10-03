@@ -6,6 +6,7 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.construction.model.BlueprintKind;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.integration.ColonyModels;
@@ -252,7 +253,6 @@ public final class FarmPlans {
 
     /** Se esta planta é uma roça, e não uma casa. */
     public static boolean isFarm(ResourceId id) {
-        // A casa do fazendeiro da colônia (trade_farmer) é casa, não roça.
-        return id.path().contains("farm") && !ColonyModels.isColonyModel(id);
+        return BlueprintKind.isFarm(id);
     }
 }

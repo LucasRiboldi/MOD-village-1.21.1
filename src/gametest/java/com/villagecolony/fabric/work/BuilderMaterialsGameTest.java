@@ -15,7 +15,9 @@ import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.SandNearWater;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.test.GameTest;
@@ -35,6 +37,30 @@ import java.util.UUID;
  * não aparece: aparece o que falta para o artesão fazê-la.
  */
 public final class BuilderMaterialsGameTest implements FabricGameTest {
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_materials")
+    public void theBuilderTakesTheNeededBlockFromAnotherVillageChest(TestContext context) {
+        Setup setup = setUp(context, context.getAbsolutePos(new BlockPos(2, 2, 2)), Items.OAK_PLANKS);
+
+        try {
+            Inventory carpenterChest = (Inventory) context.getWorld().getBlockEntity(
+                    MinecraftTypeAdapter.toBlockPos(setup.carpenterChest()));
+            carpenterChest.setStack(0, new ItemStack(Items.OAK_PLANKS, 2));
+
+            context.assertTrue(BuilderMaterials.takeMaterial(
+                            context.getWorld(), setup.project(), Blocks.OAK_PLANKS)
+                            .filter(Items.OAK_PLANKS::equals).isPresent(),
+                    "o construtor não retirou a tábua do baú remoto da vila");
+            context.assertTrue(count(context, setup.carpenterChest(), Items.OAK_PLANKS) == 1,
+                    "a retirada não consumiu exatamente uma tábua do baú remoto");
+            context.assertTrue(count(context, setup.builderChest(), Items.OAK_PLANKS) == 0,
+                    "a tábua apareceu no baú do construtor em vez de ser entregue fisicamente");
+        } finally {
+            setup.cleanUp();
+        }
+
+        context.complete();
+    }
 
     /**
      * <b>A linha deixou de esperar três tentativas</b> — 2026-09-30. Ela é

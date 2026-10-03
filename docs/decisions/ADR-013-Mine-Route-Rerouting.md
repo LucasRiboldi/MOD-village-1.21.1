@@ -54,3 +54,14 @@ para 6. `MinerGameTest` verifica que um portal quebrado nao volta e que a boca
 de reposicao fica no lado oposto; a descida real usa o quarto degrau derivado
 da geometria. Em 2026-09-23, `test` passou com 928 testes e
 `runGametest --rerun-tasks` com 417/417. O playtest visual permanece pendente.
+
+## Emenda — 2026-10-03: portal 5x4 e vão 3x3
+
+A moldura da boca passa a medir cinco blocos de largura por quatro de altura,
+com um lampião no topo de cada pilar lateral. O vão útil central permanece
+livre em três blocos de largura por três de altura. A escada e as galerias já
+usavam três blocos de largura na geometria da forma 6; por isso esta emenda não
+altera cursores persistidos nem incrementa `MineSave.SHAPE_VERSION`.
+
+`MinerGameTest` verifica os dois lampiões, a moldura 5x4 e o vão central 3x3.
+Como antes, quebrar a moldura depois da abertura não autoriza reconstrução.

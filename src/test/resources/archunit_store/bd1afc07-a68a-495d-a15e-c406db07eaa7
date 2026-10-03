@@ -44,7 +44,7 @@ Cycle detected: Slice adapter -> \
     - Method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toResourceType(net.minecraft.item.Item)> calls method <com.villagecolony.fabric.integration.TreeSpecies.strippedLog()> in (MinecraftTypeAdapter.java:67)\
     - Method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toResourceType(net.minecraft.item.Item)> calls method <com.villagecolony.fabric.integration.TreeSpecies.strippedResource()> in (MinecraftTypeAdapter.java:68)\
   2. Dependencies of Slice integration\
-    - Method <com.villagecolony.fabric.integration.SiteMarker.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (SiteMarker.java:156)\
+    - Method <com.villagecolony.fabric.integration.SiteMarker.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (SiteMarker.java:162)\
   3. Dependencies of Slice event\
     - Method <com.villagecolony.fabric.event.ServerLifecycleHandler.onServerStarted(net.minecraft.server.MinecraftServer)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlockPos(com.villagecolony.core.type.ColonyPos)> in (ServerLifecycleHandler.java:74)\
     - Method <com.villagecolony.fabric.event.PlayerWorldChangeHandler.worldChanged(net.minecraft.server.world.ServerWorld, net.minecraft.util.math.BlockPos, net.minecraft.block.BlockState)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toColonyPos(net.minecraft.util.math.BlockPos)> in (PlayerWorldChangeHandler.java:114)\
@@ -70,7 +70,7 @@ Cycle detected: Slice adapter -> \
     - Method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toResourceType(net.minecraft.item.Item)> calls method <com.villagecolony.fabric.integration.TreeSpecies.strippedLog()> in (MinecraftTypeAdapter.java:67)\
     - Method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toResourceType(net.minecraft.item.Item)> calls method <com.villagecolony.fabric.integration.TreeSpecies.strippedResource()> in (MinecraftTypeAdapter.java:68)\
   2. Dependencies of Slice integration\
-    - Method <com.villagecolony.fabric.integration.SiteMarker.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (SiteMarker.java:156)\
+    - Method <com.villagecolony.fabric.integration.SiteMarker.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (SiteMarker.java:162)\
   3. Dependencies of Slice event\
     - Method <com.villagecolony.fabric.event.ServerLifecycleHandler.onServerStarted(net.minecraft.server.MinecraftServer)> calls method <com.villagecolony.fabric.work.ActivityTraceRegistry.clear()> in (ServerLifecycleHandler.java:62)\
     - Method <com.villagecolony.fabric.event.ServerLifecycleHandler.onServerStarted(net.minecraft.server.MinecraftServer)> calls method <com.villagecolony.fabric.work.MineMarks.restore(java.util.Collection)> in (ServerLifecycleHandler.java:72)\
@@ -114,7 +114,7 @@ Cycle detected: Slice adapter -> \
     - Method <com.villagecolony.fabric.work.VillageMeals.serve(net.minecraft.server.world.ServerWorld, com.villagecolony.core.colony.model.Colony)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlockPos(com.villagecolony.core.type.ColonyPos)> in (VillageMeals.java:104)\
     - Method <com.villagecolony.fabric.work.MineVein.followingTheVein(net.minecraft.server.world.ServerWorld, com.villagecolony.core.construction.model.Mine, com.villagecolony.core.construction.model.MineArm)> references method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlockPos(com.villagecolony.core.type.ColonyPos)> in (MineVein.java:105)\
     - Method <com.villagecolony.fabric.work.BuilderMaterials.hasMaterialForNextBlock(net.minecraft.server.world.ServerWorld, com.villagecolony.core.construction.model.ConstructionProject)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlock(com.villagecolony.core.type.ResourceId)> in (BuilderMaterials.java:110)\
-    (76 further dependencies have been omitted...)
+    (77 further dependencies have been omitted...)
 Cycle detected: Slice adapter -> \
                 Slice integration -> \
                 Slice work -> \
@@ -157,7 +157,7 @@ Cycle detected: Slice adapter -> \
     - Method <com.villagecolony.fabric.work.VillageMeals.serve(net.minecraft.server.world.ServerWorld, com.villagecolony.core.colony.model.Colony)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlockPos(com.villagecolony.core.type.ColonyPos)> in (VillageMeals.java:104)\
     - Method <com.villagecolony.fabric.work.MineVein.followingTheVein(net.minecraft.server.world.ServerWorld, com.villagecolony.core.construction.model.Mine, com.villagecolony.core.construction.model.MineArm)> references method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlockPos(com.villagecolony.core.type.ColonyPos)> in (MineVein.java:105)\
     - Method <com.villagecolony.fabric.work.BuilderMaterials.hasMaterialForNextBlock(net.minecraft.server.world.ServerWorld, com.villagecolony.core.construction.model.ConstructionProject)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlock(com.villagecolony.core.type.ResourceId)> in (BuilderMaterials.java:110)\
-    (76 further dependencies have been omitted...)
+    (77 further dependencies have been omitted...)
 Cycle detected: Slice adapter -> \
                 Slice integration -> \
                 Slice work -> \
@@ -229,7 +229,7 @@ Cycle detected: Slice event -> \
     - Method <com.villagecolony.fabric.event.VillagerRegistration.registerVillagers(net.minecraft.server.world.ServerWorld, com.villagecolony.core.colony.model.Colony, com.villagecolony.core.type.ColonyPos)> calls method <com.villagecolony.fabric.integration.ColonyChests.nearestFirst(net.minecraft.server.world.ServerWorld, java.util.UUID, com.villagecolony.core.type.ColonyPos)> in (VillagerRegistration.java:128)\
     (64 further dependencies have been omitted...)\
   2. Dependencies of Slice integration\
-    - Method <com.villagecolony.fabric.integration.SiteMarker.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (SiteMarker.java:156)
+    - Method <com.villagecolony.fabric.integration.SiteMarker.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (SiteMarker.java:162)
 Cycle detected: Slice event -> \
                 Slice integration -> \
                 Slice work -> \
@@ -361,9 +361,9 @@ Cycle detected: Slice event -> \
     - Method <com.villagecolony.fabric.work.MinerHands.mine(net.minecraft.server.world.ServerWorld, net.minecraft.entity.passive.VillagerEntity, com.villagecolony.fabric.work.MinerWork$Job, com.villagecolony.core.storage.model.WorkerStorage)> calls method <com.villagecolony.fabric.integration.MineFlooding.holdsBackFluid(net.minecraft.server.world.ServerWorld, net.minecraft.util.math.BlockPos)> in (MinerHands.java:64)\
     - Method <com.villagecolony.fabric.work.MineVein.exposedStone(net.minecraft.server.world.ServerWorld, java.util.UUID, java.util.UUID, net.minecraft.util.math.BlockPos)> calls method <com.villagecolony.fabric.integration.MineFlooding.holdsBackFluid(net.minecraft.server.world.ServerWorld, net.minecraft.util.math.BlockPos)> in (MineVein.java:66)\
     - Method <com.villagecolony.fabric.work.MineRock.isOpenSpace(net.minecraft.server.world.ServerWorld, net.minecraft.util.math.BlockPos, net.minecraft.block.BlockState)> calls method <com.villagecolony.fabric.integration.MineLighting.isLight(net.minecraft.server.world.ServerWorld, net.minecraft.util.math.BlockPos, net.minecraft.block.BlockState)> in (MineRock.java:67)\
-    (243 further dependencies have been omitted...)\
+    (226 further dependencies have been omitted...)\
   3. Dependencies of Slice integration\
-    - Method <com.villagecolony.fabric.integration.SiteMarker.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (SiteMarker.java:156)
+    - Method <com.villagecolony.fabric.integration.SiteMarker.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (SiteMarker.java:162)
 Cycle detected: Slice integration -> \
                 Slice work -> \
                 Slice integration\
@@ -397,4 +397,4 @@ Cycle detected: Slice integration -> \
     - Method <com.villagecolony.fabric.work.MinerHands.mine(net.minecraft.server.world.ServerWorld, net.minecraft.entity.passive.VillagerEntity, com.villagecolony.fabric.work.MinerWork$Job, com.villagecolony.core.storage.model.WorkerStorage)> calls method <com.villagecolony.fabric.integration.MineFlooding.holdsBackFluid(net.minecraft.server.world.ServerWorld, net.minecraft.util.math.BlockPos)> in (MinerHands.java:64)\
     - Method <com.villagecolony.fabric.work.MineVein.exposedStone(net.minecraft.server.world.ServerWorld, java.util.UUID, java.util.UUID, net.minecraft.util.math.BlockPos)> calls method <com.villagecolony.fabric.integration.MineFlooding.holdsBackFluid(net.minecraft.server.world.ServerWorld, net.minecraft.util.math.BlockPos)> in (MineVein.java:66)\
     - Method <com.villagecolony.fabric.work.MineRock.isOpenSpace(net.minecraft.server.world.ServerWorld, net.minecraft.util.math.BlockPos, net.minecraft.block.BlockState)> calls method <com.villagecolony.fabric.integration.MineLighting.isLight(net.minecraft.server.world.ServerWorld, net.minecraft.util.math.BlockPos, net.minecraft.block.BlockState)> in (MineRock.java:67)\
-    (243 further dependencies have been omitted...)
+    (226 further dependencies have been omitted...)

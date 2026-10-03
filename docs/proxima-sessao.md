@@ -1,5 +1,15 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
+**Atualização de 2026-10-03 — JAR `861C190B...D9EE`.** O JAR com os painéis
+transparentes, perímetro da vila, boca e passagem da mina ampliadas, varredura
+em espiral e reserva dos dez slots finais dos baús profissionais está instalado
+em `downloads/` e `%APPDATA%/.minecraft/mods/`. As três cópias conferem com
+`build/libs/` pelo SHA-256
+`861C190BDAA745F24FF1DB51D3931D580FECE6FE75B6C9D833886B19DC24D9EE`.
+Foram verificados **1.304/1.304 testes unitários**, **572/572 GameTests** e o
+`build`; falta confirmar no save a escala dos painéis, o custo do perímetro e
+da varredura em vila grande, a passagem 3x3 e o transbordo entre baús reais.
+
 **Atualizacao de 2026-09-28 - JAR `B1C516AD...A38C2F5`.** Este e o JAR instalado
 em `downloads/` e `%APPDATA%/.minecraft/mods/`; as tres copias conferem com
 `build/libs/` pelo SHA-256

@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-10-02 (integração de 02-10 e sessão de 02-10 no topo; antes, divergências entre documentos e código, seção
+**Atualizado:** 2026-10-03 (painéis pixelados, marcador, mina, base e varredura no topo; antes, integração de 02-10 e sessão de 02-10, seção
 abaixo). Estado de 2026-09-28: a obra antecipa a proxima peca artesanal sem
 consumir os troncos brutos que ela mesma ainda exige; o `/vc log` explica a
 saida de trabalhador preso e seu retorno a escala. A evolucao agora inclui
@@ -11,6 +11,28 @@ mina, vila fundada em agua tenta acesso selado para uma saida natural 8x8 antes
 da reabertura seca oposta. Cada lote e validado na orientacao final da planta.
 A bateria de 1.196 testes unitarios e 528 GameTests (30-09, depois da revisao
 das profissoes) esta verde; ainda requer validacao no save real.
+
+## Sessão de 2026-10-03 — painéis, perímetro e mina
+
+- [ ] 🔴 Playtest cliente: cada aldeão mostra o par correto ícone/profissão;
+  alternar o texto no Mod Menu preserva o ícone; a moldura tem centro
+  transparente, o símbolo fica centralizado acima e a placa da obra mantém
+  nome e itens faltantes dentro de uma moldura responsiva.
+- [ ] 🔴 Playtest do perímetro: os fogos azuis mostram a caixa da vila sem
+  confundir com o contorno da obra, inclusive no limite de uma vila grande.
+- [ ] 🟠 Playtest da mina: arco 5x4, dois lampiões e passagem/escada 3x3 sem
+  bloquear a ida ou volta do mineiro.
+- [x] 🔴 ADR e implementação: separar a varredura de recursos da agricultura,
+  iniciar na borda, convergir em espiral, expandir para fora sem revisita e
+  invalidar/recriar um índice de superfície de água/lava ao crescer a vila.
+- [x] 🔴 ADR e implementação: definir e testar a remoção de base apenas de
+  `grass_block` em obra não agrícola, sem alterar fundação de plantação.
+- [ ] 🟠 Playtest da coleta: encontrar recurso além da caixa sem reler água ou
+  lava medida; observar custo da reconstrução quando a vila crescer.
+- [x] 🟠 Baú profissional cheio: mover fisicamente os dez slots finais para
+  baús não profissionais da mesma vila, preservando pilhas e sem descarte.
+- [ ] 🟠 Playtest dos baús: encher um baú profissional e confirmar os dez slots
+  livres, inclusive quando há mais de um baú comunitário e quando todos lotam.
 
 ## Integração de 2026-10-02 — políticas de profissão e overlays
 

@@ -27,3 +27,20 @@ cliente persistido.
 
 Compilação, testes unitários do codec/cache, GameTest do fluxo servidor e
 playtest cliente para distância, billboard e leitura dos sprites.
+
+## Emenda — 2026-10-03: associação explícita e painel responsivo
+
+Cada profissão passa a ter associação explícita entre o identificador estável
+do payload e sua textura. Estados da obra usam uma tabela separada; um valor
+desconhecido recebe o ícone neutro e nunca herda o ícone de outra profissão.
+O painel usa uma textura de borda pixelada fina, com centro transparente,
+renderizada em nove partes para crescer sem distorcer os cantos. No aldeão, a
+moldura fica na altura do nome, contém apenas o texto e recebe o ícone
+centralizado acima. Na obra, uma única moldura responsiva fica atrás do nome e
+dos itens faltantes, com o ícone de estado também centralizado acima. O texto
+da profissão pode ser ocultado no Mod Menu sem alterar o payload nem esconder
+o ícone; a preferência é local à sessão do cliente.
+
+`PixelPanelLayoutTest` percorre todas as profissões e verifica o caminho exato
+de cada textura, o fallback neutro, o posicionamento acima da moldura e o
+dimensionamento responsivo de uma ou duas linhas.

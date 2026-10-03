@@ -1,4 +1,4 @@
-# STATE — 2026-10-02
+# STATE — 2026-10-03
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -12,6 +12,33 @@
 
 ---
 
+## 🟡 03-10 — painéis, perímetro, mina e varredura (aguarda playtest)
+
+- Painéis nativos de pixel art sobre trabalhadores e canteiros: moldura fina
+  com centro transparente, texto dentro dela e ícone centralizado acima. A
+  obra usa uma moldura única e responsiva para nome e itens faltantes. O Mod
+  Menu alterna o texto da profissão durante a sessão, preservando o ícone. A
+  associação usa a profissão e o estado reais do payload, não a posição na
+  lista.
+- `SiteMarker` agora desenha, com partículas de fogo azul, também o perímetro
+  inteiro da caixa atual da vila. A boca da mina virou arco 5x4, dois lampiões
+  e passagem central 3x3; a escada e o túnel já eram 3 blocos de largura.
+- O caminho de retirada de material do construtor já usa `ColonySupply`, que
+  percorre os baús válidos da vila e retira o item físico. A causa observada
+  para espera excessiva era falta de estoque, não uma segunda rota ausente.
+- O preparo converte somente `grass_block` sob a base planejada de obra não
+  agrícola em terra; plantações e os demais pisos ficam intactos.
+- A coleta de superfície agora começa na borda da caixa, converge até o centro
+  e segue por anéis externos sem reler colunas. Um índice transitório e
+  incremental ignora colunas de água/lava já medidas e é invalidado quando a
+  caixa cresce (ADR-031).
+- Baú profissional cheio libera seus dez slots finais para baús comunitários
+  da mesma vila. Pilhas e componentes são preservados; sem espaço de destino,
+  nada sai da origem (ADR-032).
+- Automação: `runGametest --rerun-tasks --no-daemon` confirmou 572/572. Falta
+  o playtest visual e de desempenho no save, inclusive marcador em vila grande
+  e coleta atravessando a borda, além do fluxo real dos baús.
+
 ## 🟡 02-10 — consolidação na `main` (aguarda playtest)
 
 - Mod Menu opcional (ADR-030), overlays no cliente, Regra 48 (`GroundPickup`),
@@ -19,8 +46,9 @@
 
 ## Em uma linha
 
-Tudo na `main` em 02-10: 1.293 unitários, 88 Python, 564/564 GameTests (duas
-rodadas); JAR `AB762691…9FFA`. Nada visto em jogo — próximo: playtest.
+Entrega de 03-10 na branch de desenvolvimento: 1.304 unitários e 572/572
+GameTests; JAR `861C190B…D9EE` instalado. Nada visto em jogo — próximo:
+playtest dos painéis, perímetro, mina, varredura e baús profissionais.
 
 ## 30-09, noite — playtests 18h e 21h (Spark `YUm45D9Sw4`, `qI5h6MXtDA`)
 
