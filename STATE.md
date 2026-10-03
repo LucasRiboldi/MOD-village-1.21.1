@@ -17,6 +17,12 @@
 - Mod Menu opcional (ADR-030), overlays no cliente, Regra 48 (`GroundPickup`),
   B-4 parcial e B-5. Playtest pendente: lista no topo do `TODO.md`.
 
+## 🟡 03-10 — medida da vila, Emenda 8 (aguarda playtest)
+
+- Peças da vila gerada (142 × 116 → 143 × 117), 15 em volta das obras, só o
+  lado que passa avança, centro num bloco; rua com 10 caminhos fora. Saves
+  antigos são medidos de novo.
+
 ## 🟡 03-10, manhã — revisão das profissões (aguarda playtest)
 
 - Regra nova do autor: material não achado em **3 buscas** aparece no baú de

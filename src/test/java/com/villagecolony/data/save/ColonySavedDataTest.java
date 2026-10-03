@@ -83,7 +83,7 @@ class ColonySavedDataTest {
 
         Colony restored = roundTrip(data).colonies().get(0);
 
-        assertEquals(bounds, restored.bounds().orElseThrow());
+        assertEquals(colony.bounds().orElseThrow(), restored.bounds().orElseThrow());
         assertEquals(colony.center(), restored.center());
     }
 
@@ -95,6 +95,23 @@ class ColonySavedDataTest {
         data.sync(List.of(colony), List.of());
 
         assertTrue(roundTrip(data).colonies().get(0).bounds().isEmpty());
+    }
+
+    /** A caixa medida pela regra antiga (sem a marca do modelo) é medida de novo — 2026-10-03. */
+    @Test
+    void boundsOfTheOldModelAreMeasuredAgain() {
+        Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(120, 68, -340));
+        colony.measure(new VillageBounds(1627, 63, -5376, 1764, 85, -5220));
+
+        ColonySavedData data = empty();
+        data.sync(List.of(colony), List.of());
+
+        NbtCompound oldSave = data.writeNbt(new NbtCompound(), null);
+        oldSave.getList("colonies", 10).getCompound(0).remove("boundsModel");
+
+        Colony restored = ColonySavedData.TYPE.deserializer().apply(oldSave, null).colonies().get(0);
+
+        assertTrue(restored.bounds().isEmpty(), "caixa da regra antiga devia voltar vazia, para ser medida de novo");
     }
 
     @Test

@@ -38,15 +38,18 @@ class VillageGrowthTest {
     void aBuildingByTheBorderGrowsTheVillage() {
         assertTrue(VillageGrowth.byPiece(colonies, house(90, 95)).isPresent());
 
-        assertEquals(108, colony.bounds().orElseThrow().sizeZ());
+        // A vila medida tem 0..100 (lado ímpar); a casa até 95 mais os 15 leva o sul a 110.
+        assertEquals(111, colony.bounds().orElseThrow().sizeZ());
     }
 
     @Test
-    void aRoadOutsideGrowsTheVillageToTheBlock() {
+    void aRoadChainOutsideGrowsTheVillageToItsFarthestBlock() {
         VillageGrowth.byRoad(colonies, colony.id(),
-                List.of(new ColonyPos(50, 64, 99), new ColonyPos(50, 64, 100)));
+                List.of(new ColonyPos(50, 64, 101), new ColonyPos(50, 64, 105), new ColonyPos(50, 64, 103)));
 
-        assertEquals(101, colony.bounds().orElseThrow().sizeZ());
+        // Até o bloco 105 (0..105 = 106, par): mais uma linha ao sul, 107.
+        assertEquals(106, colony.bounds().orElseThrow().maxZ());
+        assertEquals(107, colony.bounds().orElseThrow().sizeZ());
     }
 
     @Test
@@ -64,7 +67,7 @@ class VillageGrowthTest {
 
         registry.register(house(90, 95));
 
-        assertEquals(108, colony.bounds().orElseThrow().sizeZ(),
+        assertEquals(111, colony.bounds().orElseThrow().sizeZ(),
                 "a construção registrada não fez a vila crescer");
     }
 }

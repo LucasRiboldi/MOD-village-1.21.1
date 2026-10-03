@@ -765,3 +765,26 @@ o quadrado do raio. Uma volta inteira passa de ~8,5 min (64) a ~26 min numa
 caixa de 144 e ~1 h 40 numa de 300; a rua só cresce depois de uma volta sem
 lote. Vila grande cresce mais devagar. E só cresce onde o mundo está
 carregado — o Minecraft não simula chunk descarregado.
+
+## Emenda 8 — a medida da vila: peças, 15 em volta, só o lado que passa, centro num bloco (2026-10-03)
+
+**Decisão do autor**, revendo a Emenda 6:
+
+1. **Partida:** o retângulo das **peças** da vila gerada (casas, ruas, poço) —
+   não a caixa da estrutura, que o jogo aumenta 12 blocos em cada lado. Na
+   vila do autor: 142 × 116 (era 166 × 140).
+2. **Retângulo, não quadrado.** Cada construção ou lote tem **15 blocos** em
+   volta que são vila (`GROWTH_MARGIN`). Se essa zona passa de uma borda, **só
+   aquele lado** avança, pelo tanto que passou. Uma obra em cima e outra do
+   lado empurram os dois lados, cada um pelo seu tanto.
+3. **Centro num bloco só.** Os lados são sempre ímpares; lado que fica par
+   ganha mais uma linha do lado que cresceu (na medida inicial, leste e sul).
+   O centro é o meio da diagonal. A vila do autor nasce com 143 × 117 e centro
+   em (−241, 419).
+4. **Rua:** só uma corrente de **10 ou mais** blocos de caminho conectados
+   fora da vila, **encostada num caminho de dentro**, faz o lado avançar — até
+   o bloco mais distante dela. Vale caminho da colônia e do jogador; a busca
+   anda pela borda a cada ciclo e depois de cada calçamento (`RoadSpill`).
+5. **Saves antigos** são medidos de novo (`boundsModel` = 2 no save).
+
+A vila continua sem encolher.

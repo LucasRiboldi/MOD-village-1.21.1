@@ -9,6 +9,20 @@ entrega, e o que separa uma publicação da outra é o commit e o SHA-256 do JAR
 2026-09-24 está em [`docs/technical/Development-Log.md`](docs/technical/Development-Log.md)
 e [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md).
 
+## [0.3.0] — publicação de 2026-10-03, tarde (medida da vila)
+
+**Ainda não visto em jogo.** JAR SHA-256 `00658B2C…92E4`.
+
+### Alterado
+
+- **Medida da vila (ADR-003 Emenda 8):** parte das peças da vila gerada, sem
+  a folga de 12 do jogo; 15 blocos em volta de cada obra; só o lado que a obra
+  passa avança; lados ímpares, para o centro ser um bloco só.
+- **Rua faz a vila crescer só com 10 caminhos conectados fora dela**,
+  encostados num caminho de dentro — de quem quer que seja, colônia ou
+  jogador. Antes, cada bloco que a colônia assentava empurrava a borda.
+- Saves antigos têm a vila medida de novo na primeira visita.
+
 ## [0.3.0] — publicação de 2026-10-03, manhã (revisão das profissões)
 
 **Ainda não visto em jogo.** JAR SHA-256 `368A4C4F…FD65`. Relatório em

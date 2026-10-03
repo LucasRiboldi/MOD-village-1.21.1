@@ -22,12 +22,44 @@ class VillageBoundsTest {
     private static final VillageBounds HUNDRED = new VillageBounds(0, 60, 0, 99, 70, 99);
 
     @Test
-    void aConstructionNearTheBorderPushesItTwelveBlocksOut() {
-        VillageBounds grown = HUNDRED.union(VillageBounds.aroundPiece(
+    void aConstructionNearTheBorderPushesOnlyThatSideFifteenBlocksOut() {
+        VillageBounds village = HUNDRED.centered();
+        VillageBounds grown = village.grownBy(VillageBounds.aroundPiece(
                 new ColonyPos(50, 64, 90), new ColonyPos(54, 68, 95)));
 
-        assertEquals(100, grown.sizeX());
-        assertEquals(108, grown.sizeZ(), "construção no bloco 95: a vila vai a 100 x 108");
+        assertEquals(village.sizeX(), grown.sizeX(), "o lado que a obra não passa não muda");
+        assertEquals(0, grown.minZ(), "o norte não muda");
+        assertEquals(110, grown.maxZ(), "construção até o bloco 95: os 15 em volta levam o sul a 110");
+    }
+
+    /** Autor, 2026-10-03: a vila nasce com as peças da vila gerada e o centro num bloco só. */
+    @Test
+    void theGeneratedVillageGetsAnExactCenterBlock() {
+        // A vila do autor: peças em X −312..−171 (142) e Z 361..476 (116).
+        VillageBounds village = new VillageBounds(-312, 61, 361, -171, 78, 476).centered();
+
+        assertEquals(143, village.sizeX());
+        assertEquals(117, village.sizeZ());
+        assertEquals(-241, village.centerX(), "o centro é o bloco do meio, com 71 blocos de cada lado");
+        assertEquals(-241 - (-312), -170 - (-241), "o mesmo número de blocos dos dois lados do centro em X");
+        assertEquals(419 - 361, 477 - 419, "e em Z");
+    }
+
+    /** Uma obra em cima e outra do lado: cada lado avança pelo seu tanto. */
+    @Test
+    void twoBuildsPushTheirOwnSidesByTheirOwnAmounts() {
+        VillageBounds village = HUNDRED.centered();
+
+        VillageBounds grown = village
+                .grownBy(VillageBounds.aroundPiece(new ColonyPos(40, 64, 8), new ColonyPos(45, 68, 12)))
+                .grownBy(VillageBounds.aroundPiece(new ColonyPos(90, 64, 40), new ColonyPos(94, 68, 50)));
+
+        assertEquals(-8, grown.minZ(), "a obra de cima passou 7 do norte; o lado par ganha mais uma linha ao norte");
+        assertEquals(110, grown.maxX(), "a obra do lado passou 9 do leste; o lado par ganha mais uma linha a leste");
+        assertEquals(0, grown.minX(), "o oeste não muda");
+        assertEquals(100, grown.maxZ(), "o sul não muda");
+        assertEquals(1, grown.sizeX() % 2, "lado ímpar");
+        assertEquals(1, grown.sizeZ() % 2, "lado ímpar");
     }
 
     @Test

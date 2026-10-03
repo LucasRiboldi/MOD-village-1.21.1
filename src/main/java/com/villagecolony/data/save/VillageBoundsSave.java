@@ -20,6 +20,15 @@ final class VillageBoundsSave {
     static final String MAX_Y = "boundsMaxY";
     static final String MAX_Z = "boundsMaxZ";
 
+    /**
+     * A regra com que a caixa foi medida. A 2, de 2026-10-03, parte das peças
+     * da vila gerada (sem a folga de 12 da estrutura), 15 em volta das obras e
+     * lados ímpares. Caixa sem esta marca é da regra antiga e é medida de novo.
+     */
+    static final String MODEL = "boundsModel";
+
+    static final int CURRENT_MODEL = 2;
+
     private VillageBoundsSave() {
     }
 
@@ -31,11 +40,14 @@ final class VillageBoundsSave {
             entry.putInt(MAX_X, bounds.maxX());
             entry.putInt(MAX_Y, bounds.maxY());
             entry.putInt(MAX_Z, bounds.maxZ());
+            entry.putInt(MODEL, CURRENT_MODEL);
         });
     }
 
     static void read(NbtCompound entry, Colony colony) {
-        if (!entry.contains(MIN_X) || !entry.contains(MAX_Z)) {
+        if (!entry.contains(MIN_X) || !entry.contains(MAX_Z) || entry.getInt(MODEL) != CURRENT_MODEL) {
+            // Regra antiga ou save sem caixa: a colônia é medida de novo na
+            // primeira sonda com o chunk do centro carregado (VillageMeasure).
             return;
         }
 

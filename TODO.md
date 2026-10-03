@@ -12,6 +12,13 @@ da reabertura seca oposta. Cada lote e validado na orientacao final da planta.
 A bateria de 1.196 testes unitarios e 528 GameTests (30-09, depois da revisao
 das profissoes) esta verde; ainda requer validacao no save real.
 
+## Medida da vila — ADR-003 Emenda 8 (2026-10-03)
+
+- [x] 🔴 Partida pelas peças da vila gerada; 15 em volta das obras; só o lado que passa avança; lados ímpares.
+- [x] 🔴 Rua: corrente de 10 caminhos fora, encostada num de dentro, empurra o lado (`RoadSpill`).
+- [ ] 🔴 Playtest: `measured at` com 143 × 117 na vila do autor; `grew to … by a road of N path blocks`.
+- [ ] 🟡 A medida pelas peças (`GeneratedVillages`) não tem GameTest: precisa de vila gerada na arena.
+
 ## Revisão de 2026-10-03 — paradas por profissão (`docs/research/2026-10-03-paradas-por-profissao.md`)
 
 - [x] 🔴 Material que a busca não acha 3 vezes aparece no baú de quem o usa (`LocateFallback`), natureza inclusive — pedido do autor.

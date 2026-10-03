@@ -50,12 +50,18 @@ public final class GeneratedVillages {
                 continue;
             }
 
-            BlockBox box = start.getBoundingBox();
-            VillageBounds bounds = new VillageBounds(
-                    box.getMinX(), box.getMinY(), box.getMinZ(),
-                    box.getMaxX(), box.getMaxY(), box.getMaxZ());
+            // As peças, e não a caixa da estrutura — 2026-10-03, autor: "o
+            // tamanho original do Vanilla". A caixa da estrutura soma 12 blocos
+            // de folga em cada lado (a vila do autor: 166 × 140 contra 142 ×
+            // 116 das peças).
+            for (var piece : start.getChildren()) {
+                BlockBox box = piece.getBoundingBox();
+                VillageBounds bounds = new VillageBounds(
+                        box.getMinX(), box.getMinY(), box.getMinZ(),
+                        box.getMaxX(), box.getMaxY(), box.getMaxZ());
 
-            found = found == null ? bounds : found.union(bounds);
+                found = found == null ? bounds : found.union(bounds);
+            }
         }
 
         return Optional.ofNullable(found);

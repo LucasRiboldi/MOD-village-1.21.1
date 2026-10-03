@@ -24,6 +24,7 @@ import com.villagecolony.fabric.integration.ColonyChestSurvey;
 import com.villagecolony.fabric.integration.WarehouseHealthLog;
 import com.villagecolony.fabric.integration.FoundationPreparation;
 import com.villagecolony.fabric.integration.ColonyChests;
+import com.villagecolony.fabric.integration.RoadPaving;
 import com.villagecolony.fabric.integration.SiteMarker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageBiomes;
@@ -171,6 +172,9 @@ final class ColonyCycleRunner {
                     colony.id(),
                     colony.forestPopulationMilestone() + 10);
         }
+
+        // A rua do jogador também faz a vila crescer — 2026-10-03, RoadSpill.
+        RoadPaving.growByRoads(overworld, colony.id());
 
         mark = CycleCost.since(CycleCost.Phase.POPULATION, mark);
 
