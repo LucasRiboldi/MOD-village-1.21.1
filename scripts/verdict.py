@@ -195,6 +195,13 @@ ITEMS: list[Item] = [
         note="cada 'is fenced in at' deve ter um 'is out of the pen' depois",
     ),
     Item(
+        "§8-A curral",
+        "Para onde o aldeao ia quando entrou no curral",
+        proves=("entered a pen at",),
+        note="'work target'/'task' preenchidos pedem a memoria de curral (opcao B);"
+             " so 'walk target' Vanilla pede a opcao C ou aceitar",
+    ),
+    Item(
         "E47 escalada",
         "O encalhado sobe por escada, pilar ou tunel",
         proves=("climbed to",),
