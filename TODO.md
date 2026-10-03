@@ -993,7 +993,7 @@ Inventário em
 - [x] 🟠 Destino de `MVP.md`, `MVP-Tasks.md`, `START_PROJECT.md`, `Development-Roadmap.md` — planos concluídos ou superados — movidos para `docs/historical/` em 02-10.
 - [x] 🟠 **`STATE.md` tem 1.193 linhas** contra o teto de 150 que ele mesmo declara. Precisa de poda. *(30-09: 338 linhas; ver a auditoria de 28-09.)* **02-10: 149 linhas.**
 - [x] 🟠 `ConstructionService.forget` sem chamador em `src/main` — confirmar se é gancho ou resto *(30-09: chamado por `ConstructionCancellation`)*
-- [ ] 🟠 **Pastor tem 2 gametests; mineiro tem 79.** As profissões calmas são as menos protegidas, não as mais sólidas.
+- [x] 🟠 **Pastor tem 2 gametests; mineiro tem 79.** As profissões calmas são as menos protegidas, não as mais sólidas. **02-10:** `ShepherdFlockGameTest` cobre os três "não" do rebanho (cheio, trigo insuficiente devolvido ao baú, sem pastor), confirmado por mutação; o caminho feliz já estava em `ProfessionReviewGameTest`.
 - [ ] 🟠 Playtest que exercite **fundidor** e **pastor**
 
 ---
