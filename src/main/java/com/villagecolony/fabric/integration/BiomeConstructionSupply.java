@@ -32,8 +32,8 @@ import java.util.function.BooleanSupplier;
  * <p>A estrutura Vanilla pode pedir qualquer item, inclusive uma peça cuja
  * receita termina no Nether ou em flora que não existe no mundo. A colônia
  * continua produzindo tudo que alguma profissão consegue obter ou fabricar;
- * quando não há essa rota, a terceira tentativa coloca a peça de manufatura
- * no baú do construtor. Ingrediente de drop (corante, linha, pó de osso,
+ * quando não há essa rota, a terceira tentativa coloca a peça no baú do
+ * construtor — de manufatura ou da natureza, desde 2026-10-03. Ingrediente de drop (corante, linha, pó de osso,
  * drop de bicho) conta como rota: ele aparece no baú sem espera
  * ({@link DropIngredients}, 2026-09-30). Se ele estiver ausente ou cheio, usa outro baú livre
  * da colônia. Assim uma casa não fica em espera infinita por um ingrediente
@@ -175,8 +175,6 @@ public final class BiomeConstructionSupply {
                 || state.isIn(net.minecraft.registry.tag.BlockTags.FLOWERS);
     }
 
-    private static final java.util.Set<Item> REFUSED_NATURAL = new java.util.HashSet<>();
-
     /** Põe a peça no baú que atende a obra, sem perguntar por rota — só peça de manufatura. */
     public static boolean stock(
             ServerWorld world, UUID colonyId, ColonyPos near, Item item) {
@@ -211,16 +209,34 @@ public final class BiomeConstructionSupply {
             ServerWorld world, UUID colonyId, ColonyPos near, Item item, int count,
             ProfessionType craftsman) {
 
-        if (isNatural(item)) {
-            if (REFUSED_NATURAL.add(item)) {
-                VillageColonyMod.LOGGER.info(
-                        "The colony will not conjure {} for a craft — it is found in nature,"
-                                + " and a profession brings it",
-                        item);
-            }
+        return stockFor(world, colonyId, near, item, count, craftsman,
+                "after three failed attempts to gather it — no profession can obtain it in this biome");
+    }
 
-            return false;
-        }
+    /**
+     * O material que a busca não achou três vezes aparece no baú de quem o
+     * usa — pedido do autor, 2026-10-03.
+     *
+     * <p><i>"Se não há material necessário depois de 3 tentativas de
+     * localizá-lo, o material necessário deve aparecer no baú da profissão
+     * que precisou dele; se for localizado no bioma alcançável da vila, o
+     * aldeão vai buscá-lo."</i> Vale também para o material da natureza, e é
+     * o que revê a decisão de 26-09: ela recusava natureza porque a regra
+     * fabricava tora e terra que a profissão <b>achava</b>. Aqui só chega o
+     * que a busca no mundo, de verdade, não achou três vezes seguidas.
+     *
+     * @return se o baú já tem, ou passou a ter, a quantidade pedida
+     */
+    public static boolean stockAfterEmptySearches(
+            ServerWorld world, UUID colonyId, ColonyPos near, Item item, int count, ProfessionType user) {
+
+        return stockFor(world, colonyId, near, item, count, user,
+                "after three searches of the village's reach found none");
+    }
+
+    private static boolean stockFor(
+            ServerWorld world, UUID colonyId, ColonyPos near, Item item, int count, ProfessionType craftsman,
+            String why) {
 
         List<ColonyPos> chests = chestsOf(world, colonyId, near, craftsman);
         int have = ColonyChests.countIn(world, chests, item);
@@ -240,10 +256,7 @@ public final class BiomeConstructionSupply {
             return false;
         }
 
-        VillageColonyMod.LOGGER.info(
-                "The colony stocked {} x{} for the {} after three failed attempts to gather it"
-                        + " — no profession can obtain it in this biome",
-                item, count - have, craftsman);
+        VillageColonyMod.LOGGER.info("The colony stocked {} x{} for the {} {}", item, count - have, craftsman, why);
 
         return true;
     }
@@ -275,20 +288,8 @@ public final class BiomeConstructionSupply {
     }
 
     private static boolean stock(ServerWorld world, List<ColonyPos> chests, Item item) {
-
-        if (isNatural(item)) {
-            // A obra espera: quem traz é a profissão, com prioridade para
-            // o que a obra pede. Uma linha por item, não por ciclo.
-            if (REFUSED_NATURAL.add(item)) {
-                VillageColonyMod.LOGGER.info(
-                        "The colony will not conjure {} for construction — it is found in nature,"
-                                + " and a profession brings it",
-                        item);
-            }
-
-            return false;
-        }
-
+        // Natureza também, desde 2026-10-03: quem chega aqui não tem rota no
+        // bioma e falhou três vezes — ver stockAfterEmptySearches.
         if (ColonyChests.countIn(world, chests, item) > 0) {
             return true;
         }
@@ -320,7 +321,6 @@ public final class BiomeConstructionSupply {
     /** Esquece as tentativas. Chamado ao parar o servidor. */
     public static void clearAll() {
         FAILED_PROFESSION_ATTEMPTS.clear();
-        REFUSED_NATURAL.clear();
     }
 
     private static boolean hasRouteInBiome(

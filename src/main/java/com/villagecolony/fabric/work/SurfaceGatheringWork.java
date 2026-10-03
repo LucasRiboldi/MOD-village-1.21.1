@@ -294,8 +294,19 @@ public final class SurfaceGatheringWork {
 
             if (!paused) {
                 // O raio inteiro, e nada: solta a tarefa e espera — F-1. Ver EmptySweeps.
-                EmptySweeps.foundNothing(job.task.colonyId(), job.task.targetResource(), world.getTime());
-                finish(job, workerId, "nothing in the whole radius");
+                // Na terceira vez o material aparece no baú de quem o usa — 2026-10-03.
+                int empty = EmptySweeps.foundNothing(job.task.colonyId(), job.task.targetResource(), world.getTime());
+
+                boolean stocked = LocateFallback.afterEmptySearch(world, job.task, empty);
+
+                finish(job, workerId, stocked
+                        ? "nothing in the whole radius — " + LocateFallback.ATTEMPTS + " searches came up empty,"
+                                + " so it was stocked instead"
+                        : "nothing in the whole radius");
+
+                if (stocked) {
+                    job.task.cancel();
+                }
             }
             return true;
         }

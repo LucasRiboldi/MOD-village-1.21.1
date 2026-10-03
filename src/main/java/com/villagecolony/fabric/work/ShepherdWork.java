@@ -91,6 +91,9 @@ public final class ShepherdWork {
 
         private int stalled;
 
+        /** Desde quando ele procura e não acha ovelha com lã; negativo enquanto acha. */
+        private long emptySince = -1;
+
         /**
          * Se ele saiu do lugar, e há quanto tempo não sai — 2026-09-03.
          *
@@ -281,8 +284,12 @@ public final class ShepherdWork {
                 SheepEntity.class, around, ShepherdWork::isWoolly);
 
         if (flock.isEmpty()) {
+            noWoollySheep(world, workerId, job);
+
             return;
         }
+
+        job.emptySince = -1;
 
         SheepEntity nearest = flock.get(0);
 
@@ -408,6 +415,19 @@ public final class ShepherdWork {
         // findSheep. Quem zera é o ramo de trabalho, antes do shear.
 
         WorkTargets.clear(workerId);
+    }
+
+    /** Um ciclo sem ovelha com lã é uma busca vazia — ver {@link EmptyFlock}. */
+    private static void noWoollySheep(ServerWorld world, UUID workerId, Job job) {
+        long now = world.getTime();
+
+        if (job.emptySince < 0) {
+            job.emptySince = now;
+        } else if (now - job.emptySince >= EmptyFlock.SEARCH) {
+            job.emptySince = -1;
+            EmptyFlock.endSearch(world, job.task, workerId, searchRadius(world));
+            release(workerId, job);
+        }
     }
 
     private static void giveUp(UUID workerId, Job job) {

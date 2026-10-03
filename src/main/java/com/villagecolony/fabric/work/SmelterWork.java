@@ -478,7 +478,7 @@ public final class SmelterWork {
     }
 
     private static void finish(Job job, UUID workerId, String why) {
-        VillageColonyMod.LOGGER.info("Smelter {} stopped — {}", workerId, why);
+        StopLog.stopped("Smelter", workerId, why);
 
         job.task.release();
     }

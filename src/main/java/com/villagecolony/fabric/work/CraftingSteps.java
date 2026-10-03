@@ -34,7 +34,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -383,14 +382,16 @@ final class CraftingSteps {
      * e o pior caso é a colônia guardar tora a mais.
      */
     static boolean halfTheWoodMayStillBeConverted(ServerWorld world, UUID colonyId) {
-        List<UUID> workerIds = new ArrayList<>();
-
-        for (Worker worker : VillageColonyMod.WORKERS.ofColony(colonyId)) {
-            workerIds.add(worker.villagerId());
-        }
-
-        ResourceTally owned =
-                ChestInventoryReader.readAll(world, workerIds, VillageColonyMod.STORAGES);
+        // <b>Os mesmos baús da meta</b> — playtest de 2026-10-03. A meta lê
+        // todos os baús da vila (VillageInventoryObserver, Regra 45) e este
+        // portão lia só os de trabalhador: tora num baú sem dono abria tarefa
+        // de tábua que o carpinteiro fechava com 0 peça — 12 vezes em meia
+        // hora, e 603 linhas de "stays in logs" desde 30-09. A tora também
+        // sai de qualquer baú da vila (convertOne), então é esta a conta.
+        ResourceTally owned = VillageColonyMod.COLONIES.find(colonyId)
+                .map(colony -> ChestInventoryReader.survey(
+                        world, ColonyChests.nearestFirst(world, colonyId, colony.center())).resources().total())
+                .orElseGet(ResourceTally::empty);
 
         Map<ResourceId, Integer> stillNeeded = VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
                 .map(ConstructionProject::remainingMaterials)

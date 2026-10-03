@@ -3,12 +3,7 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.service.VillageDetector;
-import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.type.ResourceId;
-import com.villagecolony.core.type.ResourceType;
-import com.villagecolony.fabric.integration.ColonyChests;
-import net.minecraft.item.Items;
-import net.minecraft.server.world.ServerWorld;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -240,23 +235,6 @@ public final class TestBarrier {
         Long since = FIRST_MISSED.get(key(projectId, block));
 
         return since != null && now - since >= GRACE_TICKS;
-    }
-
-    /**
-     * A vidraça que nenhuma carência traz — playtest de 2026-10-03.
-     *
-     * <p>A vila das planícies varreu o raio inteiro às 01:05:54 e disse
-     * {@code has no sand anywhere in the radius}; o construtor parou por
-     * {@code glass_pane} três vezes e a barreira só riscou às 01:12:02,
-     * quando a carência venceu. Ela existe para dar ciclo à cadeia que
-     * <b>pode</b> entregar; com a areia ausente do mundo e nenhum vidro no
-     * baú, a cadeia não tem o que entregar, e esperar é só a obra parada.
-     */
-    static boolean nothingToWaitFor(ServerWorld world, ConstructionProject project, ResourceId block) {
-        return block.path().endsWith("_pane")
-                && EmptySweeps.isWaiting(project.colonyId(), ResourceType.SAND, world.getTime())
-                && ColonyChests.countIn(world,
-                        ColonyChests.nearestFirst(world, project.colonyId(), project.origin()), Items.GLASS) == 0;
     }
 
     private static String key(UUID projectId, ResourceId block) {

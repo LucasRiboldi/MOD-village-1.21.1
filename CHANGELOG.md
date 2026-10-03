@@ -9,6 +9,34 @@ entrega, e o que separa uma publicação da outra é o commit e o SHA-256 do JAR
 2026-09-24 está em [`docs/technical/Development-Log.md`](docs/technical/Development-Log.md)
 e [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md).
 
+## [0.3.0] — publicação de 2026-10-03, manhã (revisão das profissões)
+
+**Ainda não visto em jogo.** JAR SHA-256 `368A4C4F…FD65`. Relatório em
+`docs/research/2026-10-03-paradas-por-profissao.md`.
+
+### Adicionado
+
+- **Arte em pixel nos overlays:** ícone de profissão sobre o aldeão e de
+  estado sobre a obra, desenhados no `WorldRenderEvents.LAST` com buffer
+  próprio (o cliente com shaders do Iris não mostrava nada).
+- **Material que não se acha aparece:** três buscas vazias do alcance da vila
+  põem o material no baú de quem o usa (fundidor para areia, argila e cacto;
+  construtor para o resto). Vale para material da natureza — revê a decisão
+  de 26-09. O castigo entre buscas caiu de 5/10/20 min para 1/2/4 min.
+
+### Corrigido
+
+- Pastor sem ovelha com lã no raio segurava a tarefa calado; agora solta e,
+  na 3ª busca, a lã aparece.
+- Carpinteiro fechava tarefa de tábua com 0 peça: lia só os baús de
+  trabalhador, e a meta todos os da vila.
+- Fundidor repetia `stopped — none of … had sand` a cada segundo.
+
+### Retirado
+
+- O atalho que riscava a vidraça na primeira busca vazia de areia (da
+  publicação das 02h): com a areia aparecendo, a casa não perde a janela.
+
 ## [0.3.0] — publicação de 2026-10-03, 02h (playtest da madrugada)
 
 Correções do playtest de 01:02–01:32 (Spark `r6nErbWNSL`: TPS 20, mod em

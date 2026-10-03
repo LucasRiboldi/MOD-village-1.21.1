@@ -17,6 +17,15 @@
 - Mod Menu opcional (ADR-030), overlays no cliente, Regra 48 (`GroundPickup`),
   B-4 parcial e B-5. Playtest pendente: lista no topo do `TODO.md`.
 
+## 🟡 03-10, manhã — revisão das profissões (aguarda playtest)
+
+- Regra nova do autor: material não achado em **3 buscas** aparece no baú de
+  quem o usa (natureza inclusive); achado no alcance, o aldeão vai buscar.
+- Pastor sem ovelha solta a tarefa; carpinteiro lê os mesmos baús da meta;
+  arte em pixel desenhada no `LAST`; fundidor sem spam.
+- Duas decisões abertas: ociosos sem ofício (ADR-011) e pedreiro ocioso.
+  Relatório: `docs/research/2026-10-03-paradas-por-profissao.md`.
+
 ## 🟡 03-10, 01:02–01:32 — playtest (Spark `r6nErbWNSL`)
 
 - **Desempenho ok:** TPS 20, MSPT mediano 8–12 ms, o mod é 1,9% do tick do
@@ -28,8 +37,8 @@
   `sets … aside` de 200 (dezenas). **Corrigido sem jogo:** `UnreachableSpots`
   lê o `CANT_REACH_WALK_TARGET_SINCE` do Vanilla e troca de lado em 1 s.
 - **Vidraça sem areia:** a vila disse `has no sand anywhere in the radius` às
-  01:05:54 e a barreira só riscou a vidraça às 01:12:02. **Corrigido:** com o
-  castigo de areia ativo e nenhum vidro no baú, a barreira risca na hora.
+  01:05:54 e a barreira só riscou a vidraça às 01:12:02. Resolvido pela regra
+  das 3 buscas (a areia aparece), não mais riscando a vidraça.
 - Sinais para o próximo jogo: `gives up standing at`, `no place to stand
   within reach can be walked to`; menos `has not moved a block` de construtor.
 

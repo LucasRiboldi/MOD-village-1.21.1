@@ -12,13 +12,28 @@ da reabertura seca oposta. Cada lote e validado na orientacao final da planta.
 A bateria de 1.196 testes unitarios e 528 GameTests (30-09, depois da revisao
 das profissoes) esta verde; ainda requer validacao no save real.
 
+## Revisão de 2026-10-03 — paradas por profissão (`docs/research/2026-10-03-paradas-por-profissao.md`)
+
+- [x] 🔴 Material que a busca não acha 3 vezes aparece no baú de quem o usa (`LocateFallback`), natureza inclusive — pedido do autor.
+- [x] 🔴 Pastor segurava a tarefa de lã sem ovelha no raio, calado (`EmptyFlock`).
+- [x] 🔴 Carpinteiro fechava tarefa com 0 peça: portão lia só baús de trabalhador (A-1 de volta).
+- [x] 🟠 Arte em pixel dos overlays nunca era desenhada — ícones de profissão e de obra, no `LAST`.
+- [x] 🟡 Fundidor repetia a mesma parada a cada segundo (`StopLog`).
+- [ ] 🔴 **Decisão:** aldeões sem ofício ficam 100% parados — a cota da ADR-011 dá 8 vagas a cada 15 adultos. Opções: vagas para todos, ou ociosos como ajudantes.
+- [ ] 🔴 Playtest: ver os ícones (com e sem shaders), `the colony stocked … after three searches`, `Shepherd … found no sheep`, nenhum `0 pieces made`.
+- [ ] 🟠 Obra para inteira por uma peça sem material (33×): adiar só a peça e seguir com as outras.
+- [ ] 🟠 Minerador: 52 saíram do ofício por desistências que são encalhe da mina, não culpa deles.
+- [ ] 🟠 **Decisão:** pedreiro 67% ocioso — pré-fabricar pedra da próxima casa ou ajudar na obra.
+- [ ] 🟡 Fazendeiro: varredura da roça não fecha no prazo (134×).
+- [ ] 🟡 O castigo de reserva da lã (`canReserveTask` com `COLLECT_WOOL`) não tem teste próprio.
+
 ## Playtest de 2026-10-03, madrugada (Spark `r6nErbWNSL`)
 
 - [x] 🔴 Construtor parado fora da casa fechada (6× `has not moved a block`, dezenas de `sets … aside`) — `UnreachableSpots`.
 - [x] 🟠 Vidraça esperando 6 min por areia que o raio não tem — `TestBarrier.nothingToWaitFor`.
-- [ ] 🔴 Playtest: `gives up standing at` aparece e o construtor de fora some do `has not moved a block`; vidraça riscada logo após `has no sand anywhere`.
-- [ ] 🟡 Fundidor sem areia escreve `stopped — none of 12 colony chests had minecraft:sand` uma vez por segundo (64 linhas em 30 min): reduzir a uma por ciclo.
-- [ ] 🟡 O teste da vidraça não cobre o caso "vidro no baú" (a mutação desse ramo não foi medida).
+- [ ] 🔴 Playtest: `gives up standing at` aparece e o construtor de fora some do `has not moved a block`.
+- [x] 🟡 Fundidor repetindo a parada — feito (`StopLog`).
+- [x] ~~Vidraça riscada na hora sem areia~~ — retirado: a regra das 3 buscas faz a areia aparecer.
 
 ## Integração de 2026-10-02 — políticas de profissão e overlays
 

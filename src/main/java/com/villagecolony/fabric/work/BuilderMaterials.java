@@ -122,8 +122,7 @@ public final class BuilderMaterials {
             return true;
         }
 
-        if (TestBarrier.willStrike(world.getTime(), project.id(), next.get().block())
-                || TestBarrier.nothingToWaitFor(world, project, next.get().block())) {
+        if (TestBarrier.willStrike(world.getTime(), project.id(), next.get().block())) {
             // Peça que a barreira risca nunca segura a obra: quando o
             // construtor chegar nela vai passar por cima, então dizer
             // "tem" aqui é dizer a verdade sobre o que vai acontecer.

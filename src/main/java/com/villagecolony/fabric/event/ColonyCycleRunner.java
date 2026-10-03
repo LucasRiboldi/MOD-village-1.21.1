@@ -392,8 +392,10 @@ final class ColonyCycleRunner {
 
     /** Recusa obra aberta cujo próximo bloco ainda não possui ponto físico de trabalho. */
     static boolean canReserveTask(ServerWorld world, UUID colonyId, Task task) {
-        if (task.type() == TaskType.COLLECT_SURFACE_RESOURCE || task.type() == TaskType.COLLECT_SOIL) {
-            // O raio já foi varrido inteiro sem achar — F-1, 2026-10-02.
+        if (task.type() == TaskType.COLLECT_SURFACE_RESOURCE || task.type() == TaskType.COLLECT_SOIL
+                || task.type() == TaskType.COLLECT_WOOL) {
+            // O raio já foi varrido inteiro sem achar — F-1, 2026-10-02; a
+            // lã sem ovelha no raio entrou em 2026-10-03.
             return !EmptySweeps.isWaiting(colonyId, task.targetResource(), world.getTime());
         }
 

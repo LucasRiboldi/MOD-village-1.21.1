@@ -5,7 +5,6 @@ import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
-import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkTargets;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -169,34 +168,5 @@ public final class BuilderRefusedSpotGameTest implements FabricGameTest {
     private static void forget(VillagerEntity villager) {
         WorkTargets.clear(villager.getUuid());
         villager.discard();
-    }
-
-    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder_refused_spot")
-    public void aPaneWithNoSandInTheWorldIsNotWaitedFor(TestContext context) {
-        ServerWorld world = context.getWorld();
-        UUID colony = UUID.randomUUID();
-        ConstructionProject project = ConstructionProject.plan(
-                colony,
-                Blueprint.of(
-                        ResourceId.vanilla("village/plains/houses/no_sand"),
-                        List.of(new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("glass_pane")))),
-                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(4, 2, 4))));
-        ResourceId pane = ResourceId.vanilla("glass_pane");
-
-        try {
-            context.assertFalse(TestBarrier.nothingToWaitFor(world, project, pane),
-                    "sem a varredura vazia a vidraça ainda tem a carência");
-
-            EmptySweeps.foundNothing(colony, ResourceType.SAND, world.getTime());
-
-            context.assertTrue(TestBarrier.nothingToWaitFor(world, project, pane),
-                    "o raio não tem areia e o baú não tem vidro: esperar não traz a vidraça");
-            context.assertFalse(TestBarrier.nothingToWaitFor(world, project, ResourceId.vanilla("oak_door")),
-                    "a falta de areia não diz nada da porta");
-        } finally {
-            EmptySweeps.found(colony, ResourceType.SAND);
-        }
-
-        context.complete();
     }
 }
