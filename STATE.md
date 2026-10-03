@@ -127,8 +127,8 @@ A lista completa e priorizada está no `TODO.md`.
 - **Cobertura da bateria de jogo** medida desde 02-10 (`runGametest` →
   `build/reports/jacoco/gametest`): `fabric/work` 83%, `integration` 84%;
   furos em `command` (3%), `network` (20%) e cliente (0%, sem cliente no teste).
-- **Sem GameTest com jogador real** para planejar perto e executar onde
-  simula; a arena não cria jogador.
+- **GameTest com jogador** desde 02-10 (`FakePlayer` no mundo): o foco e a
+  passagem extra da busca de lote já são testados com jogador dentro e longe.
 
 ## Como avaliar e investigar
 
