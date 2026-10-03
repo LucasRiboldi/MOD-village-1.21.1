@@ -74,6 +74,7 @@
       "com.villagecolony.gametest.BuildSiteGameTest",
       "com.villagecolony.gametest.BuilderGameTest",
       "com.villagecolony.fabric.work.BuilderApproachGameTest",
+      "com.villagecolony.fabric.work.BuilderRefusedSpotGameTest",
       "com.villagecolony.gametest.ConstructionSupplyAuditGameTest",
       "com.villagecolony.gametest.ConstructionResumeGameTest",
       "com.villagecolony.gametest.BuildProgressGameTest",

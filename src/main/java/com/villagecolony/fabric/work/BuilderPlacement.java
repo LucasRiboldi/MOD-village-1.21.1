@@ -179,8 +179,8 @@ public final class BuilderPlacement {
             // Só o construtor começa a contar, e é por isso que a
             // chamada mora aqui: quem tentou tirar do baú foi ele.
             if (chain.isPresent()
-                    && TestBarrier.graceExpired(
-                            world.getTime(), project.id(), block.block())) {
+                    && (TestBarrier.graceExpired(world.getTime(), project.id(), block.block())
+                            || TestBarrier.nothingToWaitFor(world, project, block.block()))) {
 
                 // <b>Barreira de teste</b> — a Regra 28, provisória por
                 // declaração do autor: o bloco é riscado, e a casa fica

@@ -1,4 +1,4 @@
-# STATE — 2026-10-02
+# STATE — 2026-10-03
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -17,10 +17,28 @@
 - Mod Menu opcional (ADR-030), overlays no cliente, Regra 48 (`GroundPickup`),
   B-4 parcial e B-5. Playtest pendente: lista no topo do `TODO.md`.
 
+## 🟡 03-10, 01:02–01:32 — playtest (Spark `r6nErbWNSL`)
+
+- **Desempenho ok:** TPS 20, MSPT mediano 8–12 ms, o mod é 1,9% do tick do
+  servidor. As duas janelas de TPS 13–14 são a recarga de pacote de textura e
+  a pausa (01:07–01:09), não o mod. Nenhuma exceção do mod no log.
+- **Travamento era de fluxo, na obra:** a casa do pastor (`-292, 65, 386`)
+  levou 26 min para 172 blocos. O construtor escolhia o lugar de pé dentro da
+  casa fechada e ficava parado fora até o guarda de 300 tiques (6×) ou o
+  `sets … aside` de 200 (dezenas). **Corrigido sem jogo:** `UnreachableSpots`
+  lê o `CANT_REACH_WALK_TARGET_SINCE` do Vanilla e troca de lado em 1 s.
+- **Vidraça sem areia:** a vila disse `has no sand anywhere in the radius` às
+  01:05:54 e a barreira só riscou a vidraça às 01:12:02. **Corrigido:** com o
+  castigo de areia ativo e nenhum vidro no baú, a barreira risca na hora.
+- Sinais para o próximo jogo: `gives up standing at`, `no place to stand
+  within reach can be walked to`; menos `has not moved a block` de construtor.
+
 ## Em uma linha
 
-03-10: corrigíveis sem jogo em `claude/corrigiveis-sem-jogo` — 1.295 unitários,
-575/575 GameTests (duas rodadas); JAR `923D9769…40C0`. Nada visto em jogo.
+03-10: corrigíveis sem jogo em `claude/corrigiveis-sem-jogo`, depois o
+playtest da madrugada e as duas correções dele — 1.295 unitários, 579/579
+GameTests, três mutações mortas. As correções do playtest ainda não foram
+vistas em jogo.
 
 ## 30-09, noite — playtests 18h e 21h (Spark `YUm45D9Sw4`, `qI5h6MXtDA`)
 

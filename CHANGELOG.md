@@ -9,6 +9,21 @@ entrega, e o que separa uma publicação da outra é o commit e o SHA-256 do JAR
 2026-09-24 está em [`docs/technical/Development-Log.md`](docs/technical/Development-Log.md)
 e [`docs/technical/Historico-2026-09.md`](docs/technical/Historico-2026-09.md).
 
+## [0.3.0] — publicação de 2026-10-03, 02h (playtest da madrugada)
+
+Correções do playtest de 01:02–01:32 (Spark `r6nErbWNSL`: TPS 20, mod em
+1,9% do tick). **Ainda não vistas em jogo.** JAR SHA-256 `D2374106…0615`.
+
+### Corrigido
+
+- **Construtor parado fora da casa fechada:** o lugar de pé que a navegação
+  Vanilla marca como inalcançável (`CANT_REACH_WALK_TARGET_SINCE`) é riscado
+  em 1 s e ele vai a outro lado; sem nenhum lado alcançável, a peça vai para
+  o fim da fila na hora. Antes: 300 tiques parado ou 200 por peça.
+- **Vidraça esperando areia que o mundo não tem:** com a varredura de areia
+  vazia e nenhum vidro no baú, a barreira da Regra 28 risca a vidraça sem a
+  carência de 2,5 min.
+
 ## [0.3.0] — publicação de 2026-10-03 (corrigíveis sem jogo)
 
 JAR do commit dos corrigíveis, SHA-256 `923D9769…40C0`, em `downloads/` e em

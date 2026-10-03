@@ -12,6 +12,14 @@ da reabertura seca oposta. Cada lote e validado na orientacao final da planta.
 A bateria de 1.196 testes unitarios e 528 GameTests (30-09, depois da revisao
 das profissoes) esta verde; ainda requer validacao no save real.
 
+## Playtest de 2026-10-03, madrugada (Spark `r6nErbWNSL`)
+
+- [x] 🔴 Construtor parado fora da casa fechada (6× `has not moved a block`, dezenas de `sets … aside`) — `UnreachableSpots`.
+- [x] 🟠 Vidraça esperando 6 min por areia que o raio não tem — `TestBarrier.nothingToWaitFor`.
+- [ ] 🔴 Playtest: `gives up standing at` aparece e o construtor de fora some do `has not moved a block`; vidraça riscada logo após `has no sand anywhere`.
+- [ ] 🟡 Fundidor sem areia escreve `stopped — none of 12 colony chests had minecraft:sand` uma vez por segundo (64 linhas em 30 min): reduzir a uma por ciclo.
+- [ ] 🟡 O teste da vidraça não cobre o caso "vidro no baú" (a mutação desse ramo não foi medida).
+
 ## Integração de 2026-10-02 — políticas de profissão e overlays
 
 `feature/mod-menu-settings` e `feature/profession-overlays` (feitas sobre a
