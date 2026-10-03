@@ -67,8 +67,6 @@ Antes de implementar qualquer sistema, consultar:
 ```
 PROJECT_CONSTITUTION.md
 
-MVP.md
-
 Architecture-Foundation.md
 
 Simulation-Loop.md
@@ -82,17 +80,11 @@ Construction-System.md
 Storage-System.md
 
 Save-Data-System.md
-
-Fabric-Implementation-Plan.md
-
-Data-Model.md
-
-Class-Architecture.md
-
-Development-Roadmap.md
 ```
 
-Esses documentos possuem prioridade sobre decisões improvisadas.
+Esses documentos possuem prioridade sobre decisões improvisadas. Os planos
+iniciais (`MVP.md`, `Data-Model.md`, `Class-Architecture.md` e outros) foram
+arquivados em `docs/historical/` em 2026-10-02 e não descrevem o código atual.
 
 ---
 

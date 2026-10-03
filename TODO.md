@@ -483,12 +483,12 @@ Não recomendados:
   passagem da porta livre. `ColonyDetectionGameTest`, `VillageFoundationGameTest`
   e `ChestSpawnerGameTest` falharam contra a regra antiga; rodada completa:
   480/480. ⬜ conferir no mesmo save.
-- [ ] 🔴 **Lote que não cresce** (68,5% das recusas por rua reservada, pontas de
+- [~] 🔴 **Lote que não cresce** *(02-10: atacado pela Emenda 7, a rua que cresce `a71b4dab` e o lote que desliza `560d5468`; falta medir no log)* (68,5% das recusas por rua reservada, pontas de
   rua que não calçam): medir as pontas, aceitar lote a 1–2 blocos da rua, contar
   recusa por lote. Ver `docs/research/2026-09-26-sessao-longa.md` §7.1.
 - [ ] 🟠 **Decisão do autor:** obra largada sem nenhum bloco deve liberar o lote?
   Hoje três GameTests garantem que não (contra sobreposição).
-- [ ] 🟠 Pedreiro e carpinteiro contínuos; aldeão ocioso preso abaixo do chão.
+- [x] 🟠 Pedreiro e carpinteiro contínuos; aldeão ocioso preso abaixo do chão — feito em `61de6dd4` (profissões contínuas) e no E47 (`ClimbOut`, `MineReturn`).
 - [x] 🔴 **Casa na altura da rua, sem terra na base** (26-09, pedido do
   autor) — `StreetLevelGameTest` (4), `BlueprintStreetLayerTest` (6) e
   `oneBlockOffTheRoadLevelDoesNotBecomeAnUnsupportedLot`. Todo o lote agora
@@ -515,7 +515,7 @@ Não recomendados:
   último recurso com prazo (voltar ao baú). **Aguarda o autor.**
 - [ ] 🟠 **Decisões em aberto com resposta simples proposta** (25-09): ver
   `docs/research/2026-09-25-decisoes-simples.md` §2-§3.
-- [ ] 🔴 **E44/E45 com evidência nova:** o mineiro volta a cada sessão à
+- [~] 🔴 **E44/E45 com evidência nova** *(02-10: a recusa já vai para o save em `WorkMarksSavedData.mineRefusals`, e o encalhado não desiste mais — `ClimbOut`; falta ver em jogo)*: o mineiro volta a cada sessão à
   mesma pedra inalcançável (553, 39, 158), desiste, fica preso a y=41 e o
   `StrandedEscape` desiste ("no natural, dry way up"); ele fica fora da escala
   até alguém o soltar. A `MineMarks.refuse` não vai para o save. Próximo
@@ -550,7 +550,7 @@ Não recomendados:
 As recomendações, cada uma com um aceite que a próxima avaliação mede
 (metodologia em `docs/technical/avaliacao/METODOLOGIA.md`):
 
-- [ ] 🔴 **R1**: atacar o custo do ciclo. **C13 de 1 para ≥3.** Medido no log de
+- [~] 🔴 **R1** *(implementado em `a119c2ab`: só a vila foco planeja, prazo de 15 ms e cota ajustável; falta medir em jogo)*: atacar o custo do ciclo. **C13 de 1 para ≥3.** Medido no log de
   24-09 (196 ciclos lentos): o **planejador é 91% do custo** (49,9 s de 54,7 s;
   média 255 ms, máx 554 ms), a detecção 8%, e baús, ofícios e atribuição
   somam menos de 1%. A causa: `PlannerTurns.PER_CYCLE = 8`, com 8 colônias
@@ -670,12 +670,12 @@ automatizado; nenhum foi visto em jogo.
 - [x] 🔴 **N1**: fundação uma vez, 1 aldeão por cama da BigHouseMOD, sem
   reposição; `VillageMeals` para a procriação (`fc9d9b8`). ⬜ ver em jogo
   um filhote nascer e ganhar ofício.
-- [~] 🔴 **N2**: recusado pelo autor; a BigHouseMOD fica.
+- [x] 🔴 **N2**: recusado pelo autor; a BigHouseMOD fica.
 - [x] 🔴 **N3**: equivalente antes da peça pronta, 119 → 102 automáticas (`bd7072e`).
-- [~] 🔴 **N4**: fica como está por ora (decisão do autor).
+- [x] 🔴 **N4**: fica como está por ora (decisão do autor).
 - [x] 🟠 **N5**: a rua já era `dirt_path` desde o P0.7; nada a fazer.
 - [x] 🟠 **N6/N7**: ficam ligados; placa em topo + 5 (`8e78fa7`). ⬜ ver a leitura em jogo.
-- [~] 🟠 **N8**: recusado; o viveiro fica em `rooted_dirt`.
+- [x] 🟠 **N8**: recusado; o viveiro fica em `rooted_dirt`.
 - [x] 🟡 **N9**: casa → oficina de ofício → o que sobrou (`4590e4c`).
 - [x] 🟡 **N10**: tampão da escada da fuga (`553faaa`).
 - [x] 🟡 **N11**: alcance 24 + 2 por cama (`74a273a`).
@@ -890,7 +890,7 @@ com código e testes locais das validações que continuam dependendo de um save
 - [x] Residual de `SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted`: não repetiu na rodada completa de 21-09; manter a fixture em observação antes de alterar a coleta do fundidor.
 - [x] 🔴 **P0.8 — fundação absoluta da vila:** toda vila detectada cria a `BigHouseMOD`, cópia editada da big house Vanilla sem móveis/decorações, com seis camas e seis baús distintos. Os seis titulares (`MINER`, `LUMBERJACK`, `MASON`, `SMELTER`, `SHEPHERD` e `BUILDER`) recebem adulto, cama `HOME` e baú dentro dela; `FARMER` e `CARPENTER` continuam profissões ativas, mas sem cama/baú fundacionais na casa, e entram normalmente no crescimento. A Vanilla permanece intacta. `VillageFoundationGameTest` passou.
 - [ ] Playtest P0.8: entrar em um save com vila recém-detectada e confirmar a `BigHouseMOD`, os seis aldeões, suas camas, seus baús e a ausência de sobreposição com estruturas existentes.
-- [ ] 🔴 **E42 — impasse entre profissões:** criar o GameTest da roça fora do alcance do fazendeiro, com duas passagens do planejador, e corrigir a fila se a segunda passagem não abrir o projeto de casa.
+- [x] 🔴 **E42 — impasse entre profissões:** feito em `5e1d2990` — o impasse estava em `ConstructionPlanner.plan` (a recusa do lote fora do alcance encerrava a passagem); GameTest confirmado por mutação.
 - [x] 🟠 **E43 — descanso respeitado:** a decisao 1A torna uma capacidade em descanso inelegivel para toda reserva de `WorkAssignment`; `WorkAssignmentTest` falhou antes da retirada do fallback e `ColonyCycleGameTest.aRestingMinerLeavesTheStoneTaskAvailable` protege o registro usado em jogo. A rodada completa passou com 419/419.
 - [ ] Playtest E43: com o JAR desta entrega, provocar uma desistência do mineiro e confirmar que `COLLECT_STONE` fica disponivel pelos quatro ciclos de descanso antes de nova reserva.
 - [x] 🟠 **P1.1 — trabalhador ocioso sem `COLLECT_STONE` ou `CRAFT_WOOD`:** `CraftingGameTest.theCycleOpensTheCraftingTaskByItself` cobre `CRAFT_WOOD`; `MinerGameTest.theCycleAssignsStoneToTheMinerAndItReachesTheChest` parte de um mineiro ocioso e prova pedido, reserva para o oficio correto e entrega no bau, sem tarefa criada pelo cenario. A bateria passou com 414/414.
@@ -986,9 +986,9 @@ Inventário em
 
 **Decisões do autor, pendentes** (o pedido foi sinalizar para decidir depois):
 
-- [ ] 🔴 Destino de `Class-Architecture.md`, `Fabric-Implementation-Plan.md`, `Data-Model.md` — descrevem `ColonyManager`, `TaskManager`, `BuildingStatus` e outras classes que **nunca existiram**. Recomendado: `docs/historical/`.
-- [ ] 🟠 Destino de `MVP.md`, `MVP-Tasks.md`, `START_PROJECT.md`, `Development-Roadmap.md` — planos concluídos ou superados
-- [ ] 🟠 **`STATE.md` tem 1.193 linhas** contra o teto de 150 que ele mesmo declara. Precisa de poda. *(30-09: 338 linhas; ver a auditoria de 28-09.)*
+- [x] 🔴 Destino de `Class-Architecture.md`, `Fabric-Implementation-Plan.md`, `Data-Model.md` — descrevem `ColonyManager`, `TaskManager`, `BuildingStatus` e outras classes que **nunca existiram**. Recomendado: `docs/historical/`. **Feito em 02-10.**
+- [x] 🟠 Destino de `MVP.md`, `MVP-Tasks.md`, `START_PROJECT.md`, `Development-Roadmap.md` — planos concluídos ou superados — movidos para `docs/historical/` em 02-10.
+- [x] 🟠 **`STATE.md` tem 1.193 linhas** contra o teto de 150 que ele mesmo declara. Precisa de poda. *(30-09: 338 linhas; ver a auditoria de 28-09.)* **02-10: 149 linhas.**
 - [x] 🟠 `ConstructionService.forget` sem chamador em `src/main` — confirmar se é gancho ou resto *(30-09: chamado por `ConstructionCancellation`)*
 - [ ] 🟠 **Pastor tem 2 gametests; mineiro tem 79.** As profissões calmas são as menos protegidas, não as mais sólidas.
 - [ ] 🟠 Playtest que exercite **fundidor** e **pastor**
@@ -1076,7 +1076,7 @@ caindo em `NOT_NATURAL_GROUND` adiante. Quem passa a poder virar lote é o
 calçamento de **gravel e terracotta** — quanto disso existe na vila do
 playtest, ninguém mediu ainda. **O efeito pode ser bem menor que os 54,8%.**
 
-- [ ] 🟠 **A vila também não estende estrada** — `none of the road ends this colony can see may be paved`, 23 tentativas na sessão de 42 min. Sem lote a regra manda crescer a rua, e a rua não cresce: é um círculo fechado, e vale investigação própria.
+- [x] 🟠 **A vila também não estende estrada** — `none of the road ends this colony can see may be paved`, 23 tentativas na sessão de 42 min. Sem lote a regra manda crescer a rua, e a rua não cresce: é um círculo fechado, e vale investigação própria. **Resolvido:** a rua cresce para fora da vila (`a71b4dab`), a ponta segue caminho existente (`182a1f5e`) e a ponta recusada diz o motivo (`914b6572`).
 
 ---
 
@@ -1159,7 +1159,7 @@ maior que cabe), e não por necessidade da vila.
 ## 🟠 Achados de fundo do playtest de 21:41
 
 - [ ] 🟠 **36 colônias ativas**, `Colony cycle took` até **486 ms** — 40 ciclos acima de um tique do servidor. O custo do ciclo cresce com o número de colônias, e o playtest carrega muito mais que os cenários de teste.
-- [ ] 🟠 **Só uma colônia planeja** (`9da5460c`); as outras 35 dão `assigned 0 tasks (0 open)`. Conferir se é esperado — é o padrão de `roca-sem-lote-trava-a-vila`.
+- [x] 🟠 **Só uma colônia planeja** (`9da5460c`); as outras 35 dão `assigned 0 tasks (0 open)`. Conferir se é esperado — é o padrão de `roca-sem-lote-trava-a-vila`. **Hoje é regra:** só a vila foco planeja (`a119c2ab`).
 
 ---
 
