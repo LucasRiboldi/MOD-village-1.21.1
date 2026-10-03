@@ -254,7 +254,7 @@ public final class ConstructionPlanner {
 
         if (open.isPresent()) {
             WaitingWork.wakeIfSupplied(world, open.get());
-            WaitingWork.askBeforeTheWorkWaits(world, open.get());
+            CraftsmanRequest.askBeforeTheWorkWaits(world, open.get());
             BuilderPlacement.reconsiderDeferredPieces(world, open.get());
 
             // <b>E a obra que o centro deixou para trás</b> — 2026-09-15.

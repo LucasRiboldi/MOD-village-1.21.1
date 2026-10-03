@@ -11,7 +11,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.SweepPersistence;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.PlanPlacement;
@@ -85,7 +85,7 @@ public class HouseRotationGameTest implements FabricGameTest {
 
         UUID colonyId = UUID.randomUUID();
         BlockPos absoluteRoad = context.getAbsolutePos(center);
-        BuildSiteScanner.restore(new ColonyRoads(
+        SweepPersistence.restore(new ColonyRoads(
                 colonyId,
                 MinecraftTypeAdapter.toColonyPos(absoluteRoad),
                 List.of(ColonyRoads.column(absoluteRoad.getX(), absoluteRoad.getZ()))));

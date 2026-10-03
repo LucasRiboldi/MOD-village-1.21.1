@@ -189,11 +189,12 @@ verificado.
   took` com várias vilas carregadas (risco R1: mais ciclos por tique).
 - [ ] P2 - Sem GameTest com jogador real para as duas regras (planejar perto,
   executar onde simula); a arena não cria jogador.
-- [ ] P2 - **Oito arquivos de produção acima de 500 linhas** (contagem
+- [x] P2 - **Oito arquivos de produção acima de 500 linhas** (contagem
   `wc -l`), contra a afirmação de 24-09 e da auditoria de 28-09 de que não
   havia nenhum: `StructureBlueprintReader` 568, `HousePlans` 563,
   `BuildSiteScanner` 544, `LumberjackWork` 518, `ColonyGoals` 514,
   `RoadExtension` 516 (510 antes do `PavingRefusals`), `WaitingWork` 507, `ColonySavedData` 503.
+  **Feito em 02-10:** `ColonyGoals` (→ `FurnaceGoals`), `ColonySavedData` (→ `ColonySaveReader.readColonies`), `BuildSiteScanner` (→ `SweepPersistence`), `RoadExtension` (→ `RoadRefusals`), `StructureBlueprintReader` (→ `StreetLayer`), `HousePlans` (→ `HouseCatalog`), `LumberjackWork` (→ `TreeChoice.closePlan`), `WaitingWork` (→ `CraftsmanRequest`); texto movido sem mudança, lista congelada vazia.
 - [x] **Error Prone zerado:** o commit `60c2b3d` zerou os 25 avisos. O log do
   CI do PR #4 não tem nenhuma linha `warning: [`. Os itens abaixo que
   ainda os listavam foram fechados.

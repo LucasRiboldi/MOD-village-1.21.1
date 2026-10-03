@@ -14,6 +14,7 @@ import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.SweepPersistence;
 import com.villagecolony.fabric.integration.VillageInventoryObserver;
 import com.villagecolony.fabric.integration.VillageStructures;
 import com.villagecolony.fabric.work.ConstructionDemand;
@@ -270,7 +271,7 @@ public class FarmPlanGameTest implements FabricGameTest {
 
         UUID colonyId = UUID.randomUUID();
         BlockPos absoluteRoad = context.getAbsolutePos(center);
-        BuildSiteScanner.restore(new ColonyRoads(
+        SweepPersistence.restore(new ColonyRoads(
                 colonyId,
                 MinecraftTypeAdapter.toColonyPos(absoluteRoad),
                 List.of(ColonyRoads.column(absoluteRoad.getX(), absoluteRoad.getZ()))));
@@ -412,7 +413,7 @@ public class FarmPlanGameTest implements FabricGameTest {
 
         UUID colonyId = UUID.randomUUID();
         BlockPos absoluteRoad = context.getAbsolutePos(center);
-        BuildSiteScanner.restore(new ColonyRoads(
+        SweepPersistence.restore(new ColonyRoads(
                 colonyId,
                 MinecraftTypeAdapter.toColonyPos(absoluteRoad),
                 List.of(ColonyRoads.column(absoluteRoad.getX(), absoluteRoad.getZ()))));
@@ -554,7 +555,7 @@ public class FarmPlanGameTest implements FabricGameTest {
 
         UUID colonyId = UUID.randomUUID();
         BlockPos absoluteRoad = context.getAbsolutePos(center);
-        BuildSiteScanner.restore(new ColonyRoads(
+        SweepPersistence.restore(new ColonyRoads(
                 colonyId,
                 MinecraftTypeAdapter.toColonyPos(absoluteRoad),
                 List.of(ColonyRoads.column(absoluteRoad.getX(), absoluteRoad.getZ()))));

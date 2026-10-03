@@ -57,7 +57,7 @@ public final class RoadsideSitesGameTest implements FabricGameTest {
         ColonyPos center = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(road.get(0)));
 
         try {
-            BuildSiteScanner.restore(new ColonyRoads(colony, center, columns));
+            SweepPersistence.restore(new ColonyRoads(colony, center, columns));
 
             BlockPos column = context.getAbsolutePos(new BlockPos(4, y, 4));
 

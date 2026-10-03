@@ -15,6 +15,7 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.SweepPersistence;
 import com.villagecolony.fabric.integration.LotRefusals;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.SweepLog;
@@ -1957,7 +1958,7 @@ public class BuildSiteGameTest implements FabricGameTest {
 
     /** Reserva a única coluna de rua do fixture deslocado. */
     private static void reserveRoadAbsolute(UUID colony, BlockPos road) {
-        BuildSiteScanner.restore(new ColonyRoads(
+        SweepPersistence.restore(new ColonyRoads(
                 colony,
                 MinecraftTypeAdapter.toColonyPos(road),
                 List.of(ColonyRoads.column(road.getX(), road.getZ()))));
@@ -2026,7 +2027,7 @@ public class BuildSiteGameTest implements FabricGameTest {
                 .toList();
 
         ColonyPos center = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(road.get(0)));
-        BuildSiteScanner.restore(new ColonyRoads(colony, center, columns));
+        SweepPersistence.restore(new ColonyRoads(colony, center, columns));
     }
 
     // ------------------------------------------------------------------
@@ -2084,7 +2085,7 @@ public class BuildSiteGameTest implements FabricGameTest {
                 context.getAbsolutePos(new BlockPos(1, 1, 1)));
 
         try {
-            BuildSiteScanner.restore(
+            SweepPersistence.restore(
                     bigIndex(colony, from, BuildSiteScanner.MAX_COLUMNS * 2));
 
             SweepDeadline.within(0L, () -> BuildSiteScanner.find(
@@ -2116,7 +2117,7 @@ public class BuildSiteGameTest implements FabricGameTest {
                 context.getAbsolutePos(new BlockPos(1, 1, 1)));
 
         try {
-            BuildSiteScanner.restore(
+            SweepPersistence.restore(
                     bigIndex(colony, from, BuildSiteScanner.MAX_COLUMNS * 2));
 
             // Se o índice tivesse sido recusado, a colônia cairia na
@@ -2151,7 +2152,7 @@ public class BuildSiteGameTest implements FabricGameTest {
                 context.getAbsolutePos(new BlockPos(1, 1, 1)));
 
         try {
-            BuildSiteScanner.restore(
+            SweepPersistence.restore(
                     bigIndex(colony, from, BuildSiteScanner.MAX_COLUMNS * 2));
 
             BuildSiteScanner.find(context.getWorld(), colony, from, 64, SMALL_HOUSE);
@@ -2208,7 +2209,7 @@ public class BuildSiteGameTest implements FabricGameTest {
 
             // Índice pequeno: cabe inteiro numa chamada, que é a vila
             // saudável.
-            BuildSiteScanner.restore(bigIndex(colony, from, 5));
+            SweepPersistence.restore(bigIndex(colony, from, 5));
 
             BuildSiteScanner.find(context.getWorld(), colony, from, 64, SMALL_HOUSE);
 

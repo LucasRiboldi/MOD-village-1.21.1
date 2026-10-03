@@ -7,7 +7,6 @@ import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -100,32 +99,6 @@ public final class RoadExtension {
     /** Ramais laterais, tentados apenas depois das pontas verdadeiras. */
     private static final Map<UUID, List<End>> BRANCHES = new HashMap<>();
 
-    /**
-     * As pontas que não se deixaram calçar, e desde quando.
-     *
-     * <p><b>A recusa envelhece</b> — é a Regra 23, e o mesmo molde de
-     * {@code TreeMarks}. Sem envelhecer, uma ponta impossível sairia da
-     * lista para sempre e a vila perderia candidatos a cada terreno
-     * ruim; sem recusa nenhuma, as doze mesmas pontas seriam tentadas
-     * toda varredura e a décima terceira nunca teria vez.
-     *
-     * <p>O jogador aplaina o barranco, tira a árvore, quebra a cerca — e
-     * dez ciclos depois a ponta volta a valer.
-     */
-    private static final Map<BlockPos, Long> REFUSED = new HashMap<>();
-
-    /** Por quantos ticks uma ponta recusada fica de fora. Dez ciclos. */
-    private static final int REFUSED_MEMORY = 10 * VillageDetector.CYCLE_TICKS;
-
-    /**
-     * Quantas recusas se guarda antes de esquecer tudo.
-     *
-     * <p>Teto, e não regra: uma vila cercada de construção encheria o
-     * mapa sem limite. Esquecer tudo custa uma tentativa perdida por
-     * ponta, e é melhor que crescer para sempre.
-     */
-    private static final int MAX_REFUSED = 1024;
-
     /** Uma ponta de rua, e para que lado ela continuaria. */
     record End(BlockPos at, Direction towards, double fromCenter) {
     }
@@ -205,9 +178,9 @@ public final class RoadExtension {
      * guardar uma só era a vila parando na primeira ponta ruim.
      */
     static void consider(ServerWorld world, UUID colonyId, BlockPos road, BlockPos center) {
-        if (isRefused(world, road)) {
+        if (RoadRefusals.isRefused(world, road)) {
             // Já se tentou calçar esta, e não deu. Ela volta a valer
-            // sozinha em dez ciclos — ver REFUSED.
+            // sozinha em dez ciclos — ver RoadRefusals.
             return;
         }
 
@@ -291,39 +264,11 @@ public final class RoadExtension {
         GROWING.remove(colonyId);
     }
 
-    /** Se esta ponta está de castigo, e ainda não envelheceu. */
-    private static boolean isRefused(ServerWorld world, BlockPos road) {
-        Long since = REFUSED.get(road);
-
-        if (since == null) {
-            return false;
-        }
-
-        if (world.getTime() - since < REFUSED_MEMORY) {
-            return true;
-        }
-
-        REFUSED.remove(road);
-
-        return false;
-    }
-
-    /** Anota que esta ponta não se deixou calçar agora. */
-    private static void refuse(ServerWorld world, BlockPos road) {
-        if (REFUSED.size() >= MAX_REFUSED) {
-            REFUSED.clear();
-        }
-
-        REFUSED.put(road, world.getTime());
-    }
-
     /** Esvazia os registros. Chamado ao parar o servidor. */
     public static void clearAll() {
         ENDS.clear();
 
         BRANCHES.clear();
-
-        REFUSED.clear();
 
         JUST_PAVED.clear();
 
@@ -378,7 +323,7 @@ public final class RoadExtension {
         if (laidAt.isEmpty()) {
             // A ponta parou de render. Ela sai de castigo em dez ciclos,
             // e a varredura volta a mandar.
-            refuse(world, growth.end().at());
+            RoadRefusals.refuse(world, growth.end().at());
 
             GROWING.remove(colonyId);
 
@@ -477,7 +422,7 @@ public final class RoadExtension {
             int laid = laidAt.size();
 
             if (laid == 0) {
-                refuse(world, end.at());
+                RoadRefusals.refuse(world, end.at());
 
                 continue;
             }
@@ -507,7 +452,7 @@ public final class RoadExtension {
                         + " {} cycles before being tried again — {}",
                 colonyId,
                 ends.size(),
-                REFUSED_MEMORY / VillageDetector.CYCLE_TICKS,
+                RoadRefusals.MEMORY / VillageDetector.CYCLE_TICKS,
                 refusals.isEmpty() ? "no reason recorded" : refusals.summary());
 
         return Outcome.BLOCKED;

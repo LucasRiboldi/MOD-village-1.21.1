@@ -1,10 +1,4 @@
 # Arquivos acima do teto de 500 linhas em 2026-09-30 (CLAUDE.md, Rules).
 # Congelados: nao podem crescer; ao ficar <= 500, sai da lista.
-com/villagecolony/core/coordination/ColonyGoals.java 529
-com/villagecolony/data/save/ColonySavedData.java 503
-com/villagecolony/fabric/integration/BuildSiteScanner.java 546
-com/villagecolony/fabric/integration/RoadExtension.java 516
-com/villagecolony/fabric/integration/StructureBlueprintReader.java 568
-com/villagecolony/fabric/work/HousePlans.java 563
-com/villagecolony/fabric/work/LumberjackWork.java 523
-com/villagecolony/fabric/work/WaitingWork.java 507
+# 2026-10-02: os oito foram divididos; a lista esta vazia e nenhum arquivo
+# novo pode passar do teto.

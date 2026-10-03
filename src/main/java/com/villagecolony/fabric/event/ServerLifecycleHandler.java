@@ -22,7 +22,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.work.MineMarks;
 import com.villagecolony.fabric.work.MineReturn;
 import com.villagecolony.fabric.integration.BiomeConstructionSupply;
-import com.villagecolony.fabric.integration.BuildSiteScanner;
+import com.villagecolony.fabric.integration.SweepPersistence;
 import com.villagecolony.fabric.integration.SweepLog;
 import com.villagecolony.fabric.work.TestBarrier;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -138,14 +138,14 @@ public final class ServerLifecycleHandler {
         // de responder qualquer coisa, e as sessões curtas acabavam
         // dentro dessa espera.
         for (ColonyRoads roads : data.roads()) {
-            BuildSiteScanner.restore(roads);
+            SweepPersistence.restore(roads);
         }
 
         // E a varredura que ficou no meio — 2026-08-27. Medido: catorze
         // passagens das dezessete necessárias iam para o lixo, porque o
         // índice só nasce de uma volta completa.
         for (ColonySweepCursor cursor : data.sweeps()) {
-            BuildSiteScanner.restore(cursor);
+            SweepPersistence.restore(cursor);
         }
 
         VillageColonyMod.LOGGER.info(
@@ -199,8 +199,8 @@ public final class ServerLifecycleHandler {
      * para ele.
      */
     private static void onServerStopping(MinecraftServer server) {
-        List<ColonyRoads> roads = BuildSiteScanner.saved();
-        List<ColonySweepCursor> sweeps = BuildSiteScanner.pausedSweeps();
+        List<ColonyRoads> roads = SweepPersistence.saved();
+        List<ColonySweepCursor> sweeps = SweepPersistence.pausedSweeps();
 
         ColonySavedData.get(server).sync(
                 VillageColonyMod.COLONIES.all(),

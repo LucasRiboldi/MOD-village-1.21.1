@@ -45,8 +45,8 @@ public final class PlanPlacement {
      * As casas desta vila com a mesma pegada de uma planta — 2026-09-18.
      *
      * <p><b>O defeito que ela fecha:</b> a vila levantava sempre a mesma
-     * estrutura. De 36 peças de planície, {@link HousePlans#catalogPlans} entrega
-     * 4 ao planejador — uma por pegada, cortada em {@link HousePlans#PLANS_OFFERED}
+     * estrutura. De 36 peças de planície, {@link HouseCatalog#catalogPlans} entrega
+     * 4 ao planejador — uma por pegada, cortada em {@link HouseCatalog#PLANS_OFFERED}
      * —, e ele levanta a {@code get(0)}. As oito {@code small_house} do
      * jogo colapsavam em <b>uma</b>, e a escolhida era a mesma em toda
      * passagem, toda sessão, toda vila do mesmo bioma.

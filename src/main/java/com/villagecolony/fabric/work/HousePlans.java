@@ -9,10 +9,7 @@ import com.villagecolony.core.construction.model.ConstructionPriority;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
-import com.villagecolony.core.type.Side;
 import com.villagecolony.core.worker.model.ProfessionType;
-import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.VillageStructures;
 import com.villagecolony.fabric.integration.VillageBiomes;
@@ -107,7 +104,7 @@ public final class HousePlans {
      * planície, e a Regra 20 manda a cabana ser da madeira do bioma.
      */
     static List<Blueprint> plansFor(ServerWorld world, Colony colony) {
-        List<Blueprint> plans = catalogPlans(world, paletteOf(world, colony.center()).style());
+        List<Blueprint> plans = HouseCatalog.catalogPlans(world, paletteOf(world, colony.center()).style());
 
         // <b>Fora as que esta colônia já tentou e não conseguiu</b> —
         // 2026-09-12. A ordem da Regra 25 fica intacta; o que muda é que a
@@ -406,87 +403,8 @@ public final class HousePlans {
         return List.of();
     }
 
-    /**
-     * Quantas plantas a busca de lote experimenta por coluna.
-     *
-     * <p>A Regra 25 manda oferecer da maior para a menor, e a Regra 27
-     * deu trinta e seis casas por bioma. Trinta e seis tamanhos por
-     * coluna de estrada seria uma varredura trinta e seis vezes mais
-     * cara, e a de hoje já leva dez minutos.
-     *
-     * <p>Quatro é o corte, e é generoso: os tamanhos são poucos e
-     * repetidos — a maioria das casas de um bioma divide a mesma pegada.
-     * O que se perde é a casa de tamanho raro num lote apertado, e o que
-     * se ganha é a colônia continuar planejando dentro de um tique.
-     */
-    private static final int PLANS_OFFERED = 4;
-
     /** As plantas lidas, por id. Ler um template não é barato. */
     static final Map<ResourceId, Optional<Blueprint>> READ = new HashMap<>();
-
-    /**
-     * O que esta vila pode levantar, da maior planta para a menor.
-     *
-     * <p><b>Só o que está no catálogo</b> — a Regra 27, e ela é imutável.
-     * Até 2026-08-20 a colônia levantava uma cabana escrita em código,
-     * criada pela Regra 13 porque a casa do jogo era impossível com o que
-     * ela produzia. A resposta passou a ser outra: a casa do jogo pede
-     * pedra, então a colônia aprendeu a minerar.
-     *
-     * <p>Tamanhos repetidos entram uma vez só. Oferecer duas casas da
-     * mesma pegada faria a busca medir o mesmo lote duas vezes para dar a
-     * mesma resposta.
-     *
-     * <p><b>Mas a irmã descartada não some</b> — 2026-09-18. O corte
-     * acima é da <b>busca</b>, e só dela: quem mede lote não ganha nada
-     * vendo duas casas 9×9. Quem <b>levanta</b> ganha tudo. Até hoje a
-     * vila saía com a mesma estrutura sempre, e a causa era esta linha
-     * jogando fora as sete outras {@code small_house} antes de qualquer
-     * escolha. Ver {@link PlanPlacement#siblingsOf}, que as devolve ao planejador
-     * depois de o lote estar achado — custo zero na varredura.
-     */
-    private static List<Blueprint> catalogPlans(ServerWorld world, String style) {
-        List<Blueprint> plans = new ArrayList<>();
-
-        Set<ColonyPos> sizes = new HashSet<>();
-
-        for (ResourceId id : VillageStructures.housesFor(style)) {
-            if (!isHouse(id)) {
-                continue;
-            }
-
-            Optional<Blueprint> house = READ.computeIfAbsent(
-                    id, missing -> StructureBlueprintReader.read(world, missing));
-
-            if (house.isEmpty()) {
-                continue;
-            }
-
-            if (!hasBed(house.get())) {
-                continue;
-            }
-
-            plans.add(house.get());
-        }
-
-        plans.sort(Comparator.comparingInt(HousePlans::volumeOf).reversed());
-
-        List<Blueprint> offered = new ArrayList<>();
-
-        for (Blueprint plan : plans) {
-            if (!sizes.add(plan.size())) {
-                continue;
-            }
-
-            offered.add(plan);
-
-            if (offered.size() == PLANS_OFFERED) {
-                break;
-            }
-        }
-
-        return List.copyOf(offered);
-    }
 
     /**
      * As peças da pasta {@code houses} que não são moradia — decisão do
@@ -543,7 +461,7 @@ public final class HousePlans {
         return true;
     }
 
-    private static int volumeOf(Blueprint plan) {
+    static int volumeOf(Blueprint plan) {
         return plan.size().x() * plan.size().y() * plan.size().z();
     }
 

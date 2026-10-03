@@ -115,8 +115,8 @@ A lista completa e priorizada está no `TODO.md`.
 
 ## Dívida conhecida
 
-- **Oito arquivos de produção acima de 500 linhas** (30-09, `wc -l`); ver
-  o topo do `TODO.md`.
+- **Nenhum arquivo de produção acima de 500 linhas** desde 02-10 (os oito
+  foram divididos); a lista congelada do `FileSizeRuleTest` está vazia.
 - **Hooks do Claude Code:** os scripts estão em `scripts/hooks/`; quem liga
   no `.claude/settings.json` é o autor.
 - **Bateria de jogo:** 3 testes intermitentes isolados em 24-09; a taxa
