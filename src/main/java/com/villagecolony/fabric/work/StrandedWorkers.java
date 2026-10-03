@@ -1,11 +1,19 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.telemetry.model.ActivityKind;
+import com.villagecolony.core.telemetry.model.ActivityState;
+import com.villagecolony.core.telemetry.model.ActivityTraceEvent;
+import com.villagecolony.core.telemetry.model.ControlledReason;
+import com.villagecolony.core.telemetry.model.TargetKind;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -28,6 +36,10 @@ import java.util.UUID;
  */
 public final class StrandedWorkers {
 
+    static {
+        ServerMemory.register(StrandedWorkers.class, StrandedWorkers::clearAll);
+    }
+
     /** Até quantos blocos de distância dois congelamentos são "o mesmo lugar". */
     private static final int SAME_SPOT = 2;
 
@@ -36,6 +48,9 @@ public final class StrandedWorkers {
 
     /** Os encalhados, e quantos degraus cada um já cavou nesta fuga. */
     private static final Map<UUID, Integer> STRANDED = new HashMap<>();
+
+    /** Marcados cujo trabalho ainda não foi largado — ver {@link #dropMarkedJobs}. */
+    private static final Set<UUID> DROP_JOBS = new HashSet<>();
 
     private StrandedWorkers() {
     }
@@ -59,19 +74,69 @@ public final class StrandedWorkers {
             return false;
         }
 
+        return strand(workerId, where, "frozen twice on the same spot");
+    }
+
+    /**
+     * Marca encalhado agora, sem esperar dois congelamentos — o curral, que o
+     * {@link PenEscape} mede direto. Quem já está marcado fica como está.
+     *
+     * @return se esta foi a vez que o marcou
+     */
+    static boolean strandNow(UUID workerId, BlockPos where, String why) {
+        return !STRANDED.containsKey(workerId) && strand(workerId, where, why);
+    }
+
+    private static boolean strand(UUID workerId, BlockPos where, String why) {
         return VillageColonyMod.WORKERS.find(workerId).map(worker -> {
             worker.strand();
             STRANDED.put(workerId, 0);
             LAST_FREEZE.remove(workerId);
 
+            // O trabalho em curso para: a fuga é o único condutor dele
+            // enquanto estiver preso. Ver WorkerJobs. No próximo tique, e não
+            // aqui: quem chama é o WorkStall, de dentro do laço do ofício, e
+            // tirar o trabalho do mapa que ele percorre o quebraria.
+            DROP_JOBS.add(workerId);
+
+            worker.profession().ifPresent(profession -> VillageColonyMod.ACTIVITY_TRACES.append(
+                    worker.colonyId(),
+                    new ActivityTraceEvent(
+                            workerId,
+                            WorkerStrikes.toActivityProfession(profession),
+                            ActivityKind.UNKNOWN,
+                            ActivityState.WAITING,
+                            ControlledReason.WORK_STALLED,
+                            TargetKind.NONE,
+                            0)));
+
             VillageColonyMod.LOGGER.info(
-                    "Worker {} is stranded at {} — frozen twice on the same spot;"
-                            + " it leaves the work queue and digs its way out",
+                    "Worker {} is stranded at {} — {}; it drops its work, leaves the work queue"
+                            + " and climbs its way out",
                     workerId.toString().substring(0, 8),
-                    where.toShortString());
+                    where.toShortString(),
+                    why);
 
             return true;
         }).orElse(false);
+    }
+
+    /** Larga o trabalho de quem foi marcado desde o último tique. Chamado pela fuga, fora dos laços dos ofícios. */
+    static void dropMarkedJobs() {
+        if (DROP_JOBS.isEmpty()) {
+            return;
+        }
+
+        for (UUID workerId : List.copyOf(DROP_JOBS)) {
+            int released = WorkerJobs.dropAll(workerId);
+
+            if (released > 0) {
+                VillageColonyMod.LOGGER.info("Stranded worker {} dropped its work — {} task(s) requeued",
+                        workerId.toString().substring(0, 8), released);
+            }
+        }
+
+        DROP_JOBS.clear();
     }
 
     /** Se este trabalhador está marcado como encalhado. */
@@ -101,19 +166,34 @@ public final class StrandedWorkers {
     static void release(UUID workerId) {
         STRANDED.remove(workerId);
         LAST_FREEZE.remove(workerId);
+        DROP_JOBS.remove(workerId);
 
-        VillageColonyMod.WORKERS.find(workerId).ifPresent(worker -> worker.free());
+        VillageColonyMod.WORKERS.find(workerId).ifPresent(worker -> {
+            worker.free();
+            worker.profession().ifPresent(profession -> VillageColonyMod.ACTIVITY_TRACES.append(
+                    worker.colonyId(),
+                    new ActivityTraceEvent(
+                            workerId,
+                            WorkerStrikes.toActivityProfession(profession),
+                            ActivityKind.UNKNOWN,
+                            ActivityState.RECOVERED,
+                            ControlledReason.NONE,
+                            TargetKind.NONE,
+                            0)));
+        });
     }
 
     /** Esquece um trabalhador que saiu do registro. */
     static void forget(UUID workerId) {
         STRANDED.remove(workerId);
+        DROP_JOBS.remove(workerId);
         LAST_FREEZE.remove(workerId);
     }
 
     /** Esquece tudo. Chamado ao abrir e ao parar o servidor. */
     public static void clearAll() {
         STRANDED.clear();
+        DROP_JOBS.clear();
         LAST_FREEZE.clear();
     }
 

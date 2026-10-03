@@ -6,6 +6,29 @@ primeiro. Criado em 2026-09-02, na primeira sessão que usou a skill
 
 ## Objetivo atual
 
+**2026-09-26 — travamentos críticos e alternativas externas.** Auditoria
+FORENSIC dos loops de lote/rua, obra com peças adiadas, recuperação de
+trabalhador, orientação de blueprint e custo por tick. Baritone, MineColonies,
+Structurize e Lithium foram comparados por mecanismo, versão e licença.
+Status: **alternativa A escolhida e primeira etapa implementada**, em
+[`2026-09-26-travamentos-criticos-alternativas-github.md`](2026-09-26-travamentos-criticos-alternativas-github.md).
+T1 e o `facing` horizontal da ADR-008 passaram em 473/473 GameTests. Pendente:
+playtest no save e decisão arquitetural sobre lote junto da rua, lote vazio e
+migração gradual do estado por servidor.
+
+### Objetivo anterior (concluído como proposta)
+
+**2026-09-25 — mineiro autônomo.** Por que o mineiro empaca e como deve se
+mover sozinho: entrar e sair da mina, pôr e tirar bloco para passar, evitar
+queda, água e lava, colher os veios mais valiosos da área acessível. Comparados
+Baritone, mineflayer-pathfinder, MineColonies e Workers; conferidos por `javap`
+os limites da navegação Vanilla. Status: **concluída como proposta**, em
+[`2026-09-25-mineiro-autonomo.md`](2026-09-25-mineiro-autonomo.md), com a
+decisão em `docs/decisions/ADR-025-mineiro-autonomo.md` **aguardando o autor**.
+Pendente antes do código: ler a geometria real da mina em 553, 39, 158.
+
+### Objetivo anterior (concluído)
+
 **2026-09-23 — matriz externa de alternativas para a auditoria viva.** Foram
 comparados código, documentação e issues públicos de MineColonies, Millenaire,
 MineFortress e Structurize com os contratos do mod. Status: **concluída como

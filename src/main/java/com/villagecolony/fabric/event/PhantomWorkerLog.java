@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.event;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 
 import java.util.LinkedHashMap;
@@ -38,6 +39,10 @@ import java.util.UUID;
  * afogaria o log.
  */
 public final class PhantomWorkerLog {
+
+    static {
+        ServerMemory.register(PhantomWorkerLog.class, PhantomWorkerLog::clearAll);
+    }
 
     /**
      * Quantas passagens seguidas sem achar o aldeão antes de noticiar.

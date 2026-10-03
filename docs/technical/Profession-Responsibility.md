@@ -50,14 +50,22 @@ Colony 020ad427 — no collect_stone work: no worker in the village
 
 | profissão | ferramenta | capacidade | produção que a convoca | materiais |
 |---|---|---|---|---|
-| **Lenhador** | machado de ferro | `COLLECT_WOOD` | `HARVESTED` | os 8 troncos |
-| **Mineiro** | picareta de ferro | `COLLECT_STONE` | `MINED` | pedregulho, arenito, carvão, ferro cru |
-| **Pastor** | tesoura | `COLLECT_WOOL` | `SHEARED` | lã branca |
-| **Fazendeiro** | enxada de ferro | `MAINTAIN_FOOD`, `COLLECT_SOIL` | `FARMED`, `SOIL_GATHERED` | trigo, cenoura, batata, beterraba, terra |
-| **Carpinteiro** | nenhuma | `CRAFT_WOOD` | `CRAFTED_WOOD` | as 8 tábuas |
-| **Pedreiro** | nenhuma | `CRAFT_STONE` | `CRAFTED_STONE` | tijolo de pedra |
-| **Fundidor** | pá de ferro com Toque Suave I | `SMELT_ITEMS`, `COLLECT_SURFACE_RESOURCE` | `SMELTED`, `SURFACE_GATHERED` | areia para vidro, `grass_block` pedido por obra, lingote de ferro, arenito liso, **pedra** |
+| **Lenhador** | machado de ferro | `COLLECT_WOOD` | `HARVESTED` | os 8 troncos; mantém o viveiro da borda (desde 09-30) |
+| **Mineiro** | picareta de ferro | `COLLECT_STONE` | `MINED` | pedregulho, arenito, carvão, ferro cru; guarda até 256 de cada tipo não pedido |
+| **Pastor** | tesoura | `COLLECT_WOOL` | `SHEARED` | lã branca; faz o rebanho procriar com trigo (desde 09-30) |
+| **Fazendeiro** | enxada de ferro | `MAINTAIN_FOOD`, `COLLECT_SOIL` | `FARMED`, `SOIL_GATHERED` | trigo, cenoura, batata, beterraba, terra; faz pão do trigo acima de 32 (desde 09-30) |
+| **Carpinteiro** | nenhuma | `CRAFT_WOOD` | `CRAFTED_WOOD` | as 8 tábuas, os troncos descascados e **toda peça de obra que não é alvenaria** (vidraça, tear, cama, lampião, tocha) |
+| **Pedreiro** | nenhuma | `CRAFT_STONE` | `CRAFTED_STONE` | tijolo de pedra, peças de arenito, laje de pedra lisa, vaso |
+| **Fundidor** | pá de ferro com Toque Suave I | `SMELT_ITEMS`, `COLLECT_SURFACE_RESOURCE` | `SMELTED`, `SURFACE_GATHERED` | areia, `grass_block`, cacto e argila pedidos por obra; vidro, lingote, arenito liso, pedra, pedra lisa, terracota, tijolo |
 | **Construtor** | nenhuma | `BUILD_STRUCTURE` | — *(consome, não produz)* | — |
+
+**Ferramenta de 2026-09-30:** a coluna acima é a ferramenta que o aldeão
+recebe; a que conta em cada quebra é a de ferro certa para o bloco
+(`ActionTool`). O fazendeiro cava terra de pá, não de enxada.
+
+**Ingredientes de drop (ADR-028):** corante, linha, pó de osso e drops de
+inimigo e animal não têm profissão. Eles aparecem no baú quando a receita do
+artesão os pede (`DropIngredients`).
 
 **Solo separado da superfície — 2026-09-21.** `DIRT` deixou de ser
 `SURFACE_GATHERED` e passou a ser `SOIL_GATHERED`: quando uma obra precisa de
@@ -113,7 +121,8 @@ problema. A divisão pedida era de profissão, e é essa que está feita.
 dele não nasce de uma meta de recurso: nasce do `ConstructionPlanner`. Por isso
 ele não aparece em `typeFor`, e o teste que exige "toda profissão responde por
 algum material" o isenta por nome. A fundação mínima da vila ainda cria um
-`BUILDER` titular, junto das sete profissões produtoras; ver ADR-018.
+`BUILDER` titular, junto de seis produtoras (o carpinteiro entrou em
+2026-09-30; o fazendeiro fica fora); ver ADR-018.
 
 ### O que a matriz **não** diz, e é de propósito
 
@@ -257,5 +266,5 @@ Ordenada por quanto dói, no formato do `TODO.md`.
 | ✅ | ~~**O filtro de família não tem gametest.**~~ | **Fechado em 2026-09-10**, batch `craft_family` em `CraftingGameTest`. A obra pede só tijolo de pedra e o baú tem a pedra: `theCarpenterLeavesTheMasonryAlone` exige que o carpinteiro não produza nada, `theMasonMakesWhatTheCarpenterSkipped` exige que o pedreiro produza. **O par é necessário** — sem o segundo, um filtro que recusasse tudo passaria. Fase vermelha em duas mutações: sem o `continue` cai o do carpinteiro; invertido, caem os dois e o do descascado |
 | ✅ | ~~**Areia e `grass_block` sem origem de coleta própria**~~ | **Fechado em 2026-09-13 (ADR-014).** Areia para vidro e `grass_block` de obras abertas são coletados na superfície pelo fundidor; a grama fica além de 64 blocos e usa o setor mais afastado das estruturas de vila observáveis. Busca de trabalho continua em 48 blocos; validação visual pendente |
 | 🟡 | **A colônia não assenta o bloco de profissão nas casas que constrói** | A casa do catálogo já traz o bloco quando a planta o tem; casa levantada pela colônia herda o que a planta disser. Não há código que escolha *qual* ofício aquela casa hospeda. É aqui que a tabela vanilla da proposta serve |
-| 🟡 | **Nada lê a profissão que o jogo já atribuiu ao aldeão** | O mod atribui a sua própria por escassez (`ProfessionAssigner`). Um aldeão que já era ferreiro do vanilla vira lenhador sem cerimônia. Pode ser o certo — são sistemas paralelos —, mas nunca foi decidido por escrito |
+| ✅ | ~~**Nada lê a profissão que o jogo já atribuiu ao aldeão**~~ | **Decidido em 2026-09-30 (ADR-029):** quem tem ofício do mod perde o Vanilla e não recebe outro. A contratação passou a olhar primeiro a demanda da obra (`ProfessionDemand`) |
 | 🟢 | **Materiais que as vilas usam e a colônia não sabe produzir** | Terracota, podzol, neve, gelo, feno, cascalho. Hoje a Regra 28 risca o que falta; quando ela cair, cada um vira uma cadeia ou uma espera. Levantar a lista **lendo as estruturas do jogo**, não à mão |

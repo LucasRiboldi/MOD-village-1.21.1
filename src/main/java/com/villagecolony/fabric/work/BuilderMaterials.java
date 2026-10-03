@@ -33,6 +33,8 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.CropBlock;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Item;
+import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.fabric.integration.CraftingLookup;
 import net.minecraft.item.Items;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -113,7 +115,8 @@ public final class BuilderMaterials {
             return true;
         }
 
-        if (BlockShaping.isShapedFromTheGround(material.get().getDefaultState())) {
+        if (BlockShaping.isShapedFromTheGround(material.get().getDefaultState())
+                || BlockShaping.isNeverPlaced(material.get().getDefaultState())) {
             // Estes blocos são formados no local ou não têm item próprio;
             // por isso não podem deixar a obra esperando por estoque.
             return true;
@@ -155,13 +158,12 @@ public final class BuilderMaterials {
         return ensureConstructionMaterial(world, project, MaterialChoice.forBlock(material.get()));
     }
 
-    /** Mantém no baú a peça que nenhuma rota do bioma pode produzir. */
+    /** Mantém no baú a peça que nenhuma profissão consegue produzir. */
     static boolean hasOrStocksConstructionMaterial(
             ServerWorld world, ConstructionProject project, Item item) {
 
         if (ColonySupply.canProvide(world, project.colonyId(), project.origin(), item)) {
-            // O ofício entregou: a carência daquela peça recomeça, senão a
-            // primeira demora marcaria o relógio para sempre.
+            // O ofício entregou: uma falta futura volta à primeira tentativa.
             BiomeConstructionSupply.routeDelivered(project.colonyId(), item);
 
             return true;
@@ -171,8 +173,10 @@ public final class BuilderMaterials {
     }
 
     /**
-     * Alternativas locais sempre ganham. Só a ausência de rota para a família
-     * inteira autoriza a peça preferida a aparecer no baú da obra.
+     * Alternativas locais sempre ganham. Sem rota no bioma, três tentativas
+     * de recolher autorizam o ingrediente sem rota a aparecer no baú do
+     * artesão, que fabrica a peça — decisão do autor, 2026-09-30. Só a peça
+     * sem receita nenhuma aparece ela mesma, pela regra de 26-09.
      */
     static boolean ensureConstructionMaterial(
             ServerWorld world, ConstructionProject project, List<Item> choices) {
@@ -183,32 +187,44 @@ public final class BuilderMaterials {
 
         Item preferred = choices.getFirst();
 
+        // <b>Rota no mundo, e não na receita</b> — F6, 2026-09-30. A
+        // pergunta não olhava o bioma: vidraça dava "tem rota" porque areia
+        // é um recurso, e na planície a areia não tem coleta. A peça nunca
+        // era entregue e ninguém ia buscar areia — 4 min 17 s de obra parada
+        // no playtest daquele dia.
         if (choices.stream().anyMatch(candidate ->
                 BiomeConstructionSupply.hasRouteInBiome(world, project.colonyId(), candidate))) {
+            return false;
+        }
 
-            // <b>Rota que não entrega não é rota</b> — 2026-09-22, visto em
-            // jogo. A obra parou dez minutos esperando white_terracotta: a
-            // família tem rota, porque argila vira terracota na fornalha, e
-            // por isso esta porta se calava. Só que o fundidor repetiu
-            // "none of 14 colony chests had minecraft:clay to smelt" a cada
-            // ciclo do começo ao fim — naquele mundo não havia argila ao
-            // alcance. A rota existia na receita e não no mundo.
-            //
-            // O ofício continua tendo a primeira vez e o tempo dela: só
-            // depois da carência de BiomeConstructionSupply.OVERDUE_TICKS,
-            // medida no mesmo log, a peça passa a ser depositada.
-            if (!BiomeConstructionSupply.routeIsOverdue(
-                    project.colonyId(), preferred, world.getTime())) {
+        if (!BiomeConstructionSupply.failedProfessionAttempt(project.colonyId(), preferred)) {
+            return false;
+        }
 
-                return false;
-            }
+        Optional<CraftingLookup.Bill> bill = CraftingLookup.billFor(world, preferred, any -> true);
 
-            return BiomeConstructionSupply.stock(
+        if (bill.isEmpty()) {
+            return BiomeConstructionSupply.stockForConstruction(
                     world, project.colonyId(), project.origin(), preferred);
         }
 
-        return BiomeConstructionSupply.stockIfUnobtainable(
-                world, project.colonyId(), project.origin(), preferred);
+        // O tear pede linha: as linhas aparecem no baú do carpinteiro, e ele
+        // faz o tear. A peça ainda não está no baú, então a obra espera.
+        ProfessionType craftsman = CraftingWork.isMasonry(MinecraftTypeAdapter.toResourceId(preferred))
+                ? ProfessionType.MASON
+                : ProfessionType.CARPENTER;
+
+        for (Map.Entry<Item, Integer> ingredient : bill.get().ingredients().entrySet()) {
+            if (!BiomeConstructionSupply.hasRouteInBiome(
+                    world, project.colonyId(), ingredient.getKey())) {
+
+                BiomeConstructionSupply.stockForCraftsman(
+                        world, project.colonyId(), project.origin(),
+                        ingredient.getKey(), ingredient.getValue(), craftsman);
+            }
+        }
+
+        return false;
     }
 
     /**

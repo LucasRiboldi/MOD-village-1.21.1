@@ -79,3 +79,18 @@ automatico por estilo cairam de **119 para 102**. As 102 restantes sao
 estacoes de trabalho, pecas de madeira no deserto, gelo e neve, plantas e
 chao, e nenhum parente delas tem rota no bioma. Verificacao unitaria:
 `EquivalentPiecesTest` (7 casos).
+
+## Emenda — 2026-09-26: relógio salvo e receita de tingir ignorada
+
+Decisão do autor depois da sessão de 26-09, em que a obra esperou o tapete
+verde e o jogo fechou 30 s antes de os 10 ciclos vencerem:
+
+- **O relógio de rota atrasada é salvo com o mundo** (`WorkMarksSavedData`,
+  lista `supplyWaits`). O início é contado em tiques do mundo, que o jogo
+  salva, então a espera continua de onde parou.
+- **Receita de tingir peça pronta é ignorada** (`RecolorRecipes`, no `core`):
+  o livro devolvia "corante verde + tapete de outra cor" antes da receita de
+  lã. Tingir lã e misturar corante continuam, porque são produção.
+- A regra "a peça decorativa aceita a primeira da família que estiver no
+  baú" já valia (`MaterialChoice`, tag `wool_carpets`); ficou presa por
+  `CarpetFamilyGameTest`.

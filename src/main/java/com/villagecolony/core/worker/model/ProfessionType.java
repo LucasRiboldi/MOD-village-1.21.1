@@ -15,7 +15,7 @@ public enum ProfessionType {
     /** Extrai recursos minerais e materiais do terreno. */
     MINER,
 
-    /** Derruba árvores e replanta. Produz madeira. */
+    /** Derruba árvores, replanta e mantém o viveiro da borda. Produz madeira. */
     LUMBERJACK,
 
     /** Transforma materiais minerais em blocos de construção. */
@@ -46,12 +46,16 @@ public enum ProfessionType {
      */
     CARPENTER,
 
-    /** Cuida das plantações. */
+    /** Cuida das plantações, cava terra para obra e faz o pão. */
     FARMER,
 
-    /** Cuida das ovelhas e produz lã. */
+    /** Tosquia as ovelhas e faz o rebanho procriar. */
     SHEPHERD,
 
-    /** Compatibilidade com saves anteriores; construção agora é uma tarefa. */
+    /**
+     * O construtor: consome material e levanta as obras do
+     * {@code ConstructionPlanner}. Não responde por material nenhum, mas é
+     * titular da casa fundacional (ADR-018).
+     */
     BUILDER
 }

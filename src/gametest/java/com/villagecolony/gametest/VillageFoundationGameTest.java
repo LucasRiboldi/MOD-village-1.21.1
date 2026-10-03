@@ -9,6 +9,7 @@ import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
+import com.villagecolony.fabric.integration.VillageFoundation;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.BedBlock;
@@ -28,6 +29,32 @@ import java.util.UUID;
 
 /** Prova a fundação física e profissional de uma vila recém-detectada. */
 public class VillageFoundationGameTest implements FabricGameTest {
+
+    /** Sem uma casa pronta a fundação aguarda: nunca semeia camas ou moradores ao relento. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE,
+            batchId = "aaa_village_foundation", tickLimit = 120)
+    public void aVillageWithoutItsBigHouseDoesNotReceiveOutdoorBeds(TestContext context) {
+        BlockPos anchor = context.getAbsolutePos(new BlockPos(1, 1, 1))
+                .add(1000000, 0, 1009000);
+        Colony colony = Colony.create(
+                UUID.randomUUID(), MinecraftTypeAdapter.toColonyPos(anchor));
+        VillageColonyMod.COLONIES.register(colony);
+        prepareFoundationTerrain(context.getWorld(), anchor);
+
+        try {
+            VillageFoundation.Result result = VillageFoundation.ensure(
+                    context.getWorld(), colony, colony.center(), VillageColonyMod.WORKERS, false);
+
+            context.assertFalse(result.changed(),
+                    "sem BigHouseMOD a fundação criou cama ou morador: " + result);
+            context.assertTrue(countBlocks(context.getWorld(), anchor, 20, Blocks.WHITE_BED) == 0,
+                    "sem BigHouseMOD nasceram camas ao ar livre");
+        } finally {
+            cleanUp(context.getWorld(), colony, anchor);
+        }
+
+        context.complete();
+    }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE,
             batchId = "aaa_village_foundation", tickLimit = 120)
@@ -79,14 +106,14 @@ public class VillageFoundationGameTest implements FabricGameTest {
 
             context.assertTrue(
                     assignedChests.size() == ProfessionAssigner.FOUNDATION_ORDER.size(),
-                    "a BigHouseMOD nao reservou seis baus distintos");
+                    "a BigHouseMOD nao reservou sete baus distintos");
 
             context.assertTrue(
-                    countBlocks(context, house, Blocks.WHITE_BED) == 12,
-                    "BigHouseMOD deveria conter 6 camas completas");
+                    countBlocks(context, house, Blocks.WHITE_BED) == 14,
+                    "BigHouseMOD deveria conter 7 camas completas");
             context.assertTrue(
-                    countBlocks(context, house, Blocks.CHEST) == 6,
-                    "BigHouseMOD deveria conter 6 baus");
+                    countBlocks(context, house, Blocks.CHEST) == 7,
+                    "BigHouseMOD deveria conter 7 baus");
             context.assertTrue(
                     countBlocks(context, house, Blocks.JIGSAW) == 0
                             && countBlocks(context, house, Blocks.STRUCTURE_BLOCK) == 0
@@ -140,13 +167,13 @@ public class VillageFoundationGameTest implements FabricGameTest {
             Building house = houseOf(colony);
             List<BlockPos> beds = bedHeads(world, house);
 
-            context.assertTrue(beds.size() == 6,
-                    "a BigHouseMOD deveria ter 6 camas, tem " + beds.size());
+            context.assertTrue(beds.size() == 7,
+                    "a BigHouseMOD deveria ter 7 camas, tem " + beds.size());
             context.assertTrue(residents(world, house).size() == beds.size(),
                     "nasceram " + residents(world, house).size() + " moradores para "
                             + beds.size() + " camas");
-            context.assertTrue(VillageColonyMod.WORKERS.ofColony(colony.id()).size() >= 9,
-                    "os 3 adultos da vila mais os 6 moradores deveriam somar 9");
+            context.assertTrue(VillageColonyMod.WORKERS.ofColony(colony.id()).size() >= 10,
+                    "os 3 adultos da vila mais os 7 moradores deveriam somar 10");
 
             for (BlockPos bed : beds) {
                 // Sem ponto de interesse, zero bilhete livre é o valor
@@ -184,8 +211,8 @@ public class VillageFoundationGameTest implements FabricGameTest {
             Building house = houseOf(colony);
             List<VillagerEntity> before = residents(world, house);
 
-            context.assertTrue(before.size() == 6,
-                    "a fundacao deveria criar 6 moradores, criou " + before.size());
+            context.assertTrue(before.size() == 7,
+                    "a fundacao deveria criar 7 moradores, criou " + before.size());
 
             VillagerEntity victim = before.get(0);
             BlockPos victimBed = victim.getBrain()
@@ -196,7 +223,7 @@ public class VillageFoundationGameTest implements FabricGameTest {
             victim.kill();
             VillageDetectionHandler.runFoundationNow(world, colony);
 
-            context.assertTrue(residents(world, house).size() == 5,
+            context.assertTrue(residents(world, house).size() == 6,
                     "a segunda passagem repos o morto: " + residents(world, house).size()
                             + " moradores vivos");
             context.assertTrue(
@@ -324,6 +351,20 @@ public class VillageFoundationGameTest implements FabricGameTest {
             }
         }
 
+        return count;
+    }
+
+    private static int countBlocks(ServerWorld world, BlockPos center, int radius, net.minecraft.block.Block target) {
+        int count = 0;
+        for (int x = center.getX() - radius; x <= center.getX() + radius; x++) {
+            for (int y = center.getY(); y <= center.getY() + 4; y++) {
+                for (int z = center.getZ() - radius; z <= center.getZ() + radius; z++) {
+                    if (world.getBlockState(new BlockPos(x, y, z)).isOf(target)) {
+                        count++;
+                    }
+                }
+            }
+        }
         return count;
     }
 

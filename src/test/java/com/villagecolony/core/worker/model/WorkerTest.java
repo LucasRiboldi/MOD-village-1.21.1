@@ -222,4 +222,85 @@ class WorkerTest {
 
         assertTrue(worker.isResting(Capability.COLLECT_STONE));
     }
+
+    // --- as janelas de memória, 2026-09-25 (sobreviventes do PIT) ---
+
+    private static void cycles(Worker worker, int count) {
+        for (int i = 0; i < count; i++) {
+            worker.aCycleWentBy();
+        }
+    }
+
+    /** Nenhuma desistência, nenhum castigo — e castigo nunca é negativo. */
+    @Test
+    void noFailureMeansNoShun() {
+        assertEquals(0, Worker.shunCyclesFor(0));
+        assertEquals(0, Worker.shunCyclesFor(-1));
+        assertEquals(Worker.SHUN_CYCLES, Worker.shunCyclesFor(1));
+    }
+
+    /**
+     * A desistência some da conta depois de doze passagens, nem antes nem
+     * depois: é o que separa "teima nesta parede" de "três azares numa hora".
+     */
+    @Test
+    void aStrikeIsForgottenExactlyWhenItsWindowEnds() {
+        Worker worker = Worker.register(VILLAGER, COLONY);
+
+        worker.rest(Capability.COLLECT_STONE);
+
+        cycles(worker, 11);
+
+        assertEquals(1, worker.strikesOn(Capability.COLLECT_STONE), "ainda dentro da janela");
+
+        cycles(worker, 1);
+
+        assertEquals(0, worker.strikesOn(Capability.COLLECT_STONE), "a janela fechou");
+    }
+
+    /**
+     * Largar o mesmo ofício de novo dentro de 128 passagens dobra o castigo;
+     * depois disso, a contagem recomeça e o castigo volta ao de base.
+     *
+     * <p>O castigo é observado pela duração: o de base (8) já venceu na 8ª
+     * passagem, o dobrado (16) ainda não.
+     */
+    @Test
+    void theTallyOfAbandonedTradesRemembersFor128Cycles() {
+        Worker within = Worker.register(VILLAGER, COLONY);
+        within.assign(ProfessionType.MINER);
+        within.giveUpProfession();
+        cycles(within, 127);
+        within.assign(ProfessionType.MINER);
+        within.giveUpProfession();
+        cycles(within, Worker.SHUN_CYCLES);
+
+        assertTrue(within.isShunning(ProfessionType.MINER),
+                "a segunda desistência na janela devia dobrar o castigo");
+
+        Worker after = Worker.register(UUID.randomUUID(), COLONY);
+        after.assign(ProfessionType.MINER);
+        after.giveUpProfession();
+        cycles(after, 128);
+        after.assign(ProfessionType.MINER);
+        after.giveUpProfession();
+        cycles(after, Worker.SHUN_CYCLES);
+
+        assertFalse(after.isShunning(ProfessionType.MINER),
+                "passada a janela, a contagem recomeça e o castigo é o de base");
+    }
+
+    /**
+     * O trabalhador é chave de mapa no registro; hash constante continuaria
+     * "correto" e poria todos no mesmo balde.
+     */
+    @Test
+    void theHashFollowsTheVillager() {
+        UUID one = new UUID(0L, 1L);
+        UUID two = new UUID(0L, 2L);
+
+        assertEquals(one.hashCode(), Worker.register(one, COLONY).hashCode());
+        assertNotEquals(Worker.register(one, COLONY).hashCode(),
+                Worker.register(two, COLONY).hashCode());
+    }
 }

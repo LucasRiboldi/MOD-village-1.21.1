@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.IdleReason;
@@ -8,10 +9,13 @@ import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
+import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.data.save.ProfessionPolicySavedData;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.event.VillageFocus;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
@@ -43,11 +47,19 @@ import java.util.UUID;
  * mesma ideia da Regra 7 — o lenhador replanta o que corta —, e aqui ela
  * sai de graça, porque quem replanta é o próprio jogo.
  *
+ * <p><b>E ele cuida do rebanho</b> desde 2026-09-30: com trigo da colônia,
+ * põe um par para procriar até a vila ter um rebanho — ver
+ * {@link ShepherdFlock}.
+ *
  * <p>Só ovelha adulta e não tosquiada. Cordeiro não dá lã no Vanilla, e
  * insistir com uma ovelha pelada seria o aldeão parado em frente a ela
  * para sempre.
  */
 public final class ShepherdWork {
+
+    static {
+        ServerMemory.register(ShepherdWork.class, ShepherdWork::clearAll);
+    }
 
     /** Alcance de braço, medido no plano. O mesmo do lenhador. */
     private static final int REACH = 3;
@@ -110,6 +122,12 @@ public final class ShepherdWork {
         searchRadius = SEARCH_RADIUS;
     }
 
+    private static int searchRadius(ServerWorld world) {
+        int configured = ProfessionPolicySavedData.get(world.getServer()).policies()
+                .policyOf(ProfessionType.SHEPHERD).searchRadius();
+        return configured < 0 ? searchRadius : configured;
+    }
+
     /**
      * Despacho, uma vez por ciclo da colônia.
      *
@@ -153,6 +171,9 @@ public final class ShepherdWork {
             IdleLog.clear(colony.id(), SUBJECT);
         }
 
+        // Cuidar do rebanho, com ou sem tosquia pedida — 2026-09-30.
+        ShepherdFlock.tend(world, colony);
+
         return open;
     }
 
@@ -177,7 +198,13 @@ public final class ShepherdWork {
         }
 
         for (Map.Entry<UUID, Job> entry : Map.copyOf(JOBS).entrySet()) {
-            if (!isOngoing(entry.getValue().task)) {
+            Job job = entry.getValue();
+
+            if (!VillageFocus.isWorking(world, job.task.colonyId())) {
+                continue;
+            }
+
+            if (!isOngoing(job.task)) {
                 JOBS.remove(entry.getKey());
 
                 // O destino morre com a tarefa — ver WorkTargets.clear.
@@ -186,7 +213,7 @@ public final class ShepherdWork {
                 continue;
             }
 
-            step(world, entry.getKey(), entry.getValue());
+            step(world, entry.getKey(), job);
         }
     }
 
@@ -248,7 +275,7 @@ public final class ShepherdWork {
 
     /** A ovelha mais próxima que ainda tem lã. */
     private static void findSheep(ServerWorld world, UUID workerId, Job job) {
-        Box around = new Box(job.center).expand(searchRadius);
+        Box around = new Box(job.center).expand(searchRadius(world));
 
         List<SheepEntity> flock = world.getEntitiesByClass(
                 SheepEntity.class, around, ShepherdWork::isWoolly);
@@ -329,6 +356,7 @@ public final class ShepherdWork {
                 dropped - leftOver,
                 wool,
                 job.collected);
+        WorkerStrikes.worked(villager.getUuid(), job.task);
 
         release(villager.getUuid(), job);
     }

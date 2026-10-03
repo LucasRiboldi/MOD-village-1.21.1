@@ -24,7 +24,7 @@ public class BigHouseModBlueprintGameTest implements FabricGameTest {
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE,
             batchId = "bighousemod_blueprint")
-    public void theModBlueprintContainsSixBedsAndSixChests(TestContext context) {
+    public void theModBlueprintContainsSevenBedsAndSevenChests(TestContext context) {
         Blueprint blueprint = StructureBlueprintReader.read(
                         context.getWorld(), BIG_HOUSE_MOD)
                 .orElseThrow(() -> new AssertionError("BigHouseMOD nao foi encontrada"));
@@ -38,10 +38,10 @@ public class BigHouseModBlueprintGameTest implements FabricGameTest {
 
         context.assertTrue(blueprint.size().equals(new ColonyPos(7, 10, 11)),
                 "dimensao inesperada: " + blueprint.size());
-        context.assertTrue(beds == 6,
-                "BigHouseMOD tem " + beds + " pes de cama, esperado 6");
-        context.assertTrue(chests == 6,
-                "BigHouseMOD tem " + chests + " baus, esperado 6");
+        context.assertTrue(beds == 7,
+                "BigHouseMOD tem " + beds + " pes de cama, esperado 7");
+        context.assertTrue(chests == 7,
+                "BigHouseMOD tem " + chests + " baus, esperado 7");
         context.complete();
     }
 
@@ -83,12 +83,12 @@ public class BigHouseModBlueprintGameTest implements FabricGameTest {
             }
         }
 
-        context.assertTrue(beds == 12,
-                "NBT deve conter as 12 metades de 6 camas, encontrou " + beds);
-        context.assertTrue(chests == 6,
-                "NBT deve conter 6 baus, encontrou " + chests);
-        context.assertTrue(placedBlocks == 295,
-                "a base removida deve deixar 295 blocos, encontrou " + placedBlocks);
+        context.assertTrue(beds == 14,
+                "NBT deve conter as 14 metades de 7 camas, encontrou " + beds);
+        context.assertTrue(chests == 7,
+                "NBT deve conter 7 baus, encontrou " + chests);
+        context.assertTrue(placedBlocks == 298,
+                "a base removida deve deixar 298 blocos, encontrou " + placedBlocks);
         context.assertTrue(hasRoadLevelDoor,
                 "a metade inferior da porta precisa ficar no nivel da rua");
         context.complete();

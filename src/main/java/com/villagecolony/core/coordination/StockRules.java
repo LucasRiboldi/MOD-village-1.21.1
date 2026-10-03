@@ -3,10 +3,12 @@ package com.villagecolony.core.coordination;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.type.ResourceGroup;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.type.Production;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -68,6 +70,77 @@ public final class StockRules {
     }
 
     /**
+     * Quantas toras podem virar tábua sem gastar a metade reservada nem as
+     * toras brutas que a obra aberta ainda vai assentar ou descascar.
+     *
+     * <p>A reserva da obra é deliberadamente coletiva entre espécies: a
+     * construção usa {@code MaterialChoice} para aceitar a madeira que o
+     * construtor também consegue assentar. O fabricante só recebe a sobra
+     * depois das duas proteções, nunca uma tora que a planta ainda pede em
+     * forma bruta.
+     */
+    public static int logsThatMayBeConverted(
+            int logs, int storedPlanks, Map<ResourceId, Integer> constructionMaterials) {
+
+        Objects.requireNonNull(constructionMaterials, "constructionMaterials");
+
+        return logsThatMayBeConverted(
+                logs, storedPlanks, rawWoodIn(constructionMaterials), planksIn(constructionMaterials));
+    }
+
+    /**
+     * O mesmo, em números — e a conta que a meta e o fabricante fazem juntos
+     * (A-1, decisão do autor de 2026-10-02).
+     *
+     * <p><i>"Permitindo que as obras utilizem todos os recursos de todos os
+     * baús; a reserva de metade do conteúdo é para utilização de outras
+     * profissões em criações de outros blocos."</i> A obra pode converter toda
+     * a tora de que precisa para as tábuas dela, sem a reserva da metade; fora
+     * dela, a metade continua guardada para os outros ofícios. Só a tora que a
+     * própria obra pede bruta não vira tábua.
+     *
+     * <p><b>A meta e o fabricante usam esta mesma conta.</b> Até 02-10 a meta
+     * contava só a metade, e o fabricante a metade menos a tora bruta da obra:
+     * a meta pedia tábua, o fabricante recusava, e 14 de 22 tarefas fecharam com
+     * 0 peça — abrindo e fechando a cada ciclo.
+     *
+     * @param rawLogsForWork as toras que a obra aberta pede brutas
+     * @param planksForWork as tábuas que a obra aberta ainda pede
+     */
+    public static int logsThatMayBeConverted(int logs, int storedPlanks, int rawLogsForWork, int planksForWork) {
+        int free = Math.max(0, logs - rawLogsForWork);
+        int missingPlanks = Math.max(0, planksForWork - storedPlanks);
+        int forWork = (missingPlanks + PLANKS_PER_LOG - 1) / PLANKS_PER_LOG;
+
+        return Math.min(free, Math.max(logsToConvert(logs, storedPlanks), forWork));
+    }
+
+    /** As toras que estes materiais pedem brutas (tronco, madeira, caule, hifa). */
+    public static int rawWoodIn(Map<ResourceId, Integer> materials) {
+        return materials.entrySet().stream()
+                .filter(entry -> isRawWood(entry.getKey()))
+                .mapToInt(Map.Entry::getValue)
+                .sum();
+    }
+
+    /** As tábuas que estes materiais pedem, de qualquer espécie. */
+    public static int planksIn(Map<ResourceId, Integer> materials) {
+        return materials.entrySet().stream()
+                .filter(entry -> entry.getKey().path().endsWith("_planks"))
+                .mapToInt(Map.Entry::getValue)
+                .sum();
+    }
+
+    private static boolean isRawWood(ResourceId material) {
+        String path = material.path();
+
+        return path.endsWith("_log")
+                || path.endsWith("_wood")
+                || path.endsWith("_stem")
+                || path.endsWith("_hyphae");
+    }
+
+    /**
      * Tudo o que sai de fornalha, pela produção declarada.
      *
      * <p>Pela {@link Production}, e não por uma lista de nomes — ADR-009.
@@ -102,6 +175,29 @@ public final class StockRules {
         }
 
         return made;
+    }
+
+    /**
+     * O cru de cada material de fornalha que tem piso — 2026-09-30.
+     *
+     * <p>É a receita do jogo escrita do lado do core, que não enxerga o
+     * livro de receitas; {@code SmelterWork} continua perguntando ao jogo
+     * na hora de fundir. Serve só a uma pergunta: <b>o piso tem cadeia?</b>
+     * Pôr piso de terracota numa vila sem argila abria uma tarefa de fundir
+     * que ninguém podia atender — a raiz do F2.
+     */
+    private static final Map<ResourceType, ResourceType> RAW_OF = Map.of(
+            ResourceType.GLASS, ResourceType.SAND,
+            ResourceType.IRON_INGOT, ResourceType.RAW_IRON,
+            ResourceType.STONE, ResourceType.COBBLESTONE,
+            ResourceType.SMOOTH_STONE, ResourceType.STONE,
+            ResourceType.SMOOTH_SANDSTONE, ResourceType.SANDSTONE,
+            ResourceType.TERRACOTTA, ResourceType.CLAY,
+            ResourceType.BRICK, ResourceType.CLAY_BALL);
+
+    /** O cru deste material de fornalha, se conhecido. */
+    static Optional<ResourceType> rawOf(ResourceType smelted) {
+        return Optional.ofNullable(RAW_OF.get(smelted));
     }
 
     /**

@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.MineLighting;
+import com.villagecolony.core.construction.model.Mine;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.registry.tag.BlockTags;
@@ -108,6 +109,11 @@ public final class MineRock {
     /** Rocha que a picareta abre: nem espaço aberto, nem o que a Regra 3 protege. */
     public static boolean isDiggableRock(ServerWorld world, BlockPos at) {
         return canDig(world, at) && !isOpenSpace(world, at, world.getBlockState(at));
+    }
+
+    /** Rocha cavável por esta mina, sem a infraestrutura aquática dela. */
+    public static boolean isDiggableRock(ServerWorld world, Mine mine, BlockPos at) {
+        return !WaterMineAccess.protects(world, mine, at) && isDiggableRock(world, at);
     }
 
     /**

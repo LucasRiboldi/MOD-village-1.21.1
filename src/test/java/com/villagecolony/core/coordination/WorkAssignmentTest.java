@@ -74,6 +74,19 @@ class WorkAssignmentTest {
         assertEquals(Optional.of(lumberjack.villagerId()), task.executor());
     }
 
+    @Test
+    void aPhysicalPreconditionKeepsAnOtherwiseEligibleBuildAvailable() {
+        workerWith(ProfessionType.BUILDER);
+        Task task = tasks.create(COLONY, TaskType.BUILD, TaskPriority.CONSTRUCTION,
+                ResourceType.OAK_PLANKS, 1);
+
+        int assigned = WorkAssignment.assign(
+                COLONY, workers, tasks, worker -> true, (worker, candidate) -> false);
+
+        assertEquals(0, assigned);
+        assertEquals(TaskState.AVAILABLE, task.state());
+    }
+
     /** A capacidade é o critério, não o nome da profissão. */
     @Test
     void aFarmerDoesNotTakeTheWoodTask() {

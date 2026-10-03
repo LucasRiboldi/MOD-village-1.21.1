@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
@@ -11,6 +12,7 @@ import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.event.VillageFocus;
 import com.villagecolony.fabric.integration.BlockBreakTime;
 import com.villagecolony.fabric.integration.TreeHarvester;
 import com.villagecolony.fabric.integration.TreeScanner;
@@ -74,8 +76,34 @@ import java.util.UUID;
  */
 public final class LumberjackWork {
 
+    static {
+        ServerMemory.register(LumberjackWork.class, LumberjackWork::clearAll);
+    }
+
     /** Até onde o lenhador procura árvore, a partir do centro. */
     public static final int SEARCH_RADIUS = 64;
+
+    /**
+     * O raio em vigor. É {@link #SEARCH_RADIUS}, menos nos testes — o mesmo
+     * trato do {@code MineDigging.shortenMineDistanceTo}: a bateria acumula
+     * árvores no mundo, e um cenário "sem árvore ao alcance" precisa de um
+     * alcance em que ele seja verdade. Só a bateria mexe, sempre devolvendo.
+     */
+    static int searchRadius = SEARCH_RADIUS;
+
+    /** Encurta a busca. Só os testes precisam disso. */
+    public static void shortenSearchRadiusTo(int blocks) {
+        if (blocks <= 0) {
+            throw new IllegalArgumentException("search radius must be positive: " + blocks);
+        }
+
+        searchRadius = blocks;
+    }
+
+    /** Devolve a busca ao raio de jogo. */
+    public static void restoreSearchRadius() {
+        searchRadius = SEARCH_RADIUS;
+    }
 
     /**
      * De que distância ele consegue derrubar.
@@ -154,7 +182,7 @@ public final class LumberjackWork {
          * <p>Zerado quando um bloco cai e quando uma árvore nova começa —
          * os dois únicos sinais de que o trabalho anda. Andar não conta:
          * é exatamente o aldeão que anda para sempre sem chegar que este
-         * contador existe para pegar. Ver {@link #TreeChoice.STALL_LIMIT}.
+         * contador existe para pegar. Ver {@link TreeChoice#STALL_LIMIT}.
          */
         int stalled;
 
@@ -243,6 +271,10 @@ public final class LumberjackWork {
             UUID workerId = entry.getKey();
             Job job = entry.getValue();
 
+            if (!VillageFocus.isWorking(world, job.task.colonyId())) {
+                continue;
+            }
+
             if (!isOngoing(job.task)) {
                 closePlan(world, job);
                 entries.remove();
@@ -319,6 +351,19 @@ public final class LumberjackWork {
             return Outcome.WORKED;
         }
 
+        // <b>Procurar árvore não é estar travado</b> — sessão de jogo de
+        // 2026-09-26. Na vila de planície sem árvore natural, o guarda de
+        // imobilidade devolvia a tarefa a cada 300 tiques "while looking for
+        // a tree", até o lenhador largar o ofício. Quem espera a muda crescer
+        // fica parado de propósito. Os guardas medem a caminhada até uma
+        // árvore escolhida; sem árvore, não há caminhada a medir.
+        if (job.isBetweenTrees()) {
+            job.stall.reset();
+            job.stalled = 0;
+
+            return TreeChoice.startNextTree(world, villager, job, storage.get(), maySearch);
+        }
+
         // Parado no mesmo bloco há quinze segundos de expediente —
         // 2026-09-03. O guarda de baixo cobra dois minutos para notar o
         // mesmo. Ver WorkStall.
@@ -330,10 +375,6 @@ public final class LumberjackWork {
         if (WorkHours.isWorkTime(world, villager) && ++job.stalled > TreeChoice.stallLimit) {
             return TreeChoice.giveUp(world, job, workerId,
                     TreeChoice.reasonFor(false, job.stall.ticks(), job.stalled));
-        }
-
-        if (job.isBetweenTrees()) {
-            return TreeChoice.startNextTree(world, villager, job, storage.get(), maySearch);
         }
 
         if (!villager.getBlockPos().isWithinDistance(job.plan.base(), REACH)) {
@@ -417,6 +458,11 @@ public final class LumberjackWork {
     private static void closePlan(ServerWorld world, Job job) {
         if (job.plan != null && job.index >= job.plan.logs()) {
             TreeHarvester.finish(world, job.plan);
+
+            // O viveiro da borda é dele desde 2026-09-30 — decisão do
+            // autor, que o tirou do fazendeiro. Depois de cada árvore
+            // inteira, uma muda nova na borda, no ritmo do viveiro.
+            LumberjackNursery.plantIfItIsTime(world, job.task.colonyId(), job.center);
         }
 
         TreeClaims.unclaim(job.plan);

@@ -16,6 +16,30 @@ import analyze_village_log  # noqa: E402
 
 
 class AnalyzeVillageLogTest(unittest.TestCase):
+    def test_measures_the_tick_budget_from_slow_cycle_lines(self) -> None:
+        text = "\n".join(
+            [
+                "[00:00:01] [Server thread/WARN]: Colony cycle took 80 ms — longer than a server tick",
+                "[00:00:02] [Server thread/WARN]: Colony cycle took 120 ms — longer than a server tick",
+                "[00:00:03] [Server thread/WARN]: Colony cycle took 60 ms — longer than a server tick",
+                "[00:00:04] [Server thread/INFO]: nothing to see",
+            ]
+        )
+
+        budget = analyze_village_log.cycle_budget(text)
+
+        self.assertEqual(3, budget.slow_cycles)
+        self.assertEqual(120, budget.worst_ms)
+        self.assertEqual(80, budget.median_ms)
+        self.assertEqual([], analyze_village_log.over_budget(budget, 3, 120))
+        self.assertEqual(2, len(analyze_village_log.over_budget(budget, 2, 100)))
+
+    def test_a_log_without_slow_cycles_is_within_budget(self) -> None:
+        budget = analyze_village_log.cycle_budget("[00:00:01] [Server thread/INFO]: quiet")
+
+        self.assertEqual(analyze_village_log.CycleBudget(0, 0, 0), budget)
+        self.assertEqual([], analyze_village_log.over_budget(budget, 0, 50))
+
     def test_counts_anonymized_activity_transitions_per_profession(self) -> None:
         activities = analyze_village_log.analyze_activities(
             "\n".join(

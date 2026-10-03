@@ -146,6 +146,11 @@ public class ColonyCycleGameTest implements FabricGameTest {
             // O jogador esvazia o baú. Nada mais muda.
             emptyChest(world, absoluteChest);
 
+            // Desde 2026-09-30 (F13) a colônia reusa por um minuto a última
+            // fotografia completa dos baús, a pedido do autor: mudança feita
+            // de fora é vista quando ela vence. Aqui o minuto passa.
+            com.villagecolony.fabric.integration.ColonyChestSurvey.forget(colony.id());
+
             VillageDetectionHandler.runColonyCycleNow(world);
 
             context.assertTrue(

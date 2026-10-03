@@ -3,10 +3,12 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.construction.model.ConstructionPriority;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.integration.VillageStructures;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 
 import java.util.List;
 import java.util.UUID;
@@ -32,6 +34,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * continue} dele, 701 unitários e 275 testes de jogo continuavam verdes.
  */
 class HousePlansTest {
+
+    @AfterEach
+    void clearHousingNeeds() {
+        WorkerHousingNeeds.clearAll();
+    }
 
     private static final ResourceId BIG =
             ResourceId.parse("minecraft:village/plains/houses/plains_butcher_shop_2");
@@ -78,6 +85,14 @@ class HousePlansTest {
     /** A ordem da Regra 25: da maior para a menor. */
     private static List<Blueprint> catalog() {
         return List.of(plan(BIG), plan(MEDIUM), plan(SMALL));
+    }
+
+    @Test
+    void aWorkerWithoutASafeHomeCreatesAHousingDeficitEvenWhenBedsWereObserved() {
+        UUID colony = UUID.randomUUID();
+        WorkerHousingNeeds.mark(colony, UUID.randomUUID());
+
+        assertEquals(5, HousePlans.effectiveBedsForPriority(colony, 6, 6));
     }
 
     /** Sem marca nenhuma, a lista é a do catálogo, na ordem dele. */
@@ -349,9 +364,29 @@ class HousePlansTest {
         assertFalse(
                 HousePlans.nextConstructionIsHouse(afterAHouse, 6, 6),
                 "com cama para todos o rodízio decide, e depois da casa vem outro tipo");
-        assertFalse(
+        assertTrue(
                 HousePlans.nextConstructionIsHouse(afterAHouse, 8, 0),
-                "zero camas é contagem ainda não feita, e não pode forçar casa");
+                "zero camas para oito adultos precisa forçar uma casa antes de infraestrutura");
+        assertEquals(
+                ConstructionPriority.HOUSING_DEFICIT,
+                HousePlans.nextConstructionPriority(afterAHouse, 8, 6),
+                "o déficit de camas não ficou explícito para quem explica o planejamento");
+        assertEquals(
+                ConstructionPriority.ROTATION_NON_RESIDENTIAL,
+                HousePlans.nextConstructionPriority(afterAHouse, 6, 6),
+                "com camas suficientes a prioridade deveria voltar ao rodízio");
+    }
+
+    @Test
+    void onlyAPlanWithABedMeetsTheHousingContract() {
+        Blueprint withBed = Blueprint.of(
+                SMALL,
+                List.of(
+                        new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("oak_planks")),
+                        new BlueprintBlock(new ColonyPos(1, 0, 0), ResourceId.vanilla("red_bed"), true)));
+
+        assertTrue(HousePlans.hasBed(withBed));
+        assertFalse(HousePlans.hasBed(plan(SMALL)));
     }
 
     /**
@@ -470,5 +505,42 @@ class HousePlansTest {
                     HousePlans.isDwelling(ResourceId.parse(other)),
                     other + " não é moradia e passou pelo filtro");
         }
+    }
+
+    // --- obra abandonada só volta na vez do tipo dela, 2026-09-25 ---
+    //
+    // Decisão do autor depois do playtest de 25-09: o reparo reabria o templo
+    // abandonado no mesmo segundo em que a colônia desistia dele, antes da
+    // regra do rodízio, e a vila ficava presa a templos.
+
+    /** Logo depois de desistir do templo, a vez é da casa. */
+    @Test
+    void rightAfterGivingUpATempleItIsNotItsTurn() {
+        List<Building> built = List.of(building(SMALL, true), building(TEMPLE, false));
+
+        assertFalse(HousePlans.isTurnOf(built, 0, 0, TEMPLE), "o templo largado voltou na hora");
+        assertTrue(HousePlans.isTurnOf(built, 0, 0, SMALL), "a vez da casa não aceitou casa");
+    }
+
+    /**
+     * Depois de uma casa, a vez é de outra obra — mas não do mesmo tipo da
+     * última obra não residencial tentada.
+     */
+    @Test
+    void onTheOtherTurnTheLastNonHouseTypeWaits() {
+        List<Building> built = List.of(building(TEMPLE, false), building(SMALL, true));
+
+        assertFalse(HousePlans.isTurnOf(built, 0, 0, TEMPLE), "templo seguido de templo");
+        assertFalse(HousePlans.isTurnOf(built, 0, 0, SMALL), "casa na vez de outra obra");
+        assertTrue(HousePlans.isTurnOf(built, 0, 0, FARM), "a roça não teve a vez dela");
+    }
+
+    /** Gente sem cama: a vez é da casa, seja qual for a última tentada. */
+    @Test
+    void missingBedsGiveTheTurnToTheHouse() {
+        List<Building> built = List.of(building(FARM, true), building(SMALL, true));
+
+        assertTrue(HousePlans.isTurnOf(built, 5, 3, SMALL));
+        assertFalse(HousePlans.isTurnOf(built, 5, 3, TEMPLE));
     }
 }

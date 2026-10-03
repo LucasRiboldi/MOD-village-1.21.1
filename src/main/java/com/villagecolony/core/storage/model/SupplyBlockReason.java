@@ -8,8 +8,7 @@ public enum SupplyBlockReason {
     /**
      * A fotografia não cobriu todo o baú reconhecido — algum estava em
      * chunk descarregado. Recusar aqui, em vez de tratar o que faltou
-     * como "zero", é o mesmo princípio de {@code IdleReason.COUNT_PARTIAL}:
-     * uma contagem incompleta não decide nada.
+     * como "zero", preserva o limite inferior físico da fotografia.
      */
     SNAPSHOT_INCOMPLETE,
 

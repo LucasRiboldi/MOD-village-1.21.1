@@ -1,10 +1,12 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.integration.SweepState;
 import com.villagecolony.fabric.integration.RoadIndex;
 import com.villagecolony.fabric.integration.LotClearance;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
@@ -28,6 +30,7 @@ import com.villagecolony.fabric.integration.RoadExtension;
 import com.villagecolony.fabric.integration.SweepLog;
 import com.villagecolony.fabric.integration.SitePreparation;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
+import org.jspecify.annotations.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -75,6 +78,10 @@ import java.util.function.Predicate;
  */
 public final class ConstructionPlanner {
 
+    static {
+        ServerMemory.register(ConstructionPlanner.class, ConstructionPlanner::clearAll);
+    }
+
     /**
      * Como esta fase aparece na linha de {@link IdleLog}.
      *
@@ -93,8 +100,23 @@ public final class ConstructionPlanner {
     static final String SUBJECT = "building";
 
     /**
-     * Até onde a colônia procura lote. É o raio da vila, menos nos testes.
+     * Até onde a colônia procura lote: cresce com a vila, sem teto — 2026-10-01,
+     * pedido do autor: <i>"a vila deve crescer infinitamente para qualquer lado
+     * possível"</i>.
      *
+     * <p>Era 64 do centro, fixo. Com o centro no meio da caixa (Emenda 6), a
+     * vila crescia até uns 64 para cada lado e parava: lote, índice de ruas e
+     * ponta de rua saem todos deste raio. Agora, com a vila medida, é metade da
+     * diagonal da caixa mais {@link VillageBounds#GROWTH_MARGIN}: cobre a caixa
+     * inteira, cantos inclusive, e passa da borda. Lote aberto ali empurra a
+     * borda, a caixa cresce, e o raio cresce junto. Nunca menor que 64.
+     *
+     * <p><b>O preço, aceito pelo autor:</b> a varredura em anéis olha ~1.024
+     * colunas por ciclo de 30 s, e a área cresce com o quadrado do raio — uma
+     * volta inteira passa de ~8,5 min (raio 64) a ~26 min numa caixa de 144 e
+     * ~1 h 40 numa de 300. Vila grande cresce mais devagar.
+     *
+     * <p>Encurtado pelos testes:
      * <p>A bateria roda arenas lado a lado no mesmo mundo, e uma
      * varredura de 64 blocos sai da arena e acha a rua do teste vizinho.
      * E há um motivo prático junto: 64 são dezessete passagens de mil
@@ -102,7 +124,24 @@ public final class ConstructionPlanner {
      * um teste que quisesse ver a rua crescer teria de rodar as
      * dezessete.
      */
-    static int searchRadius = VillageDetector.SEARCH_RADIUS;
+    private static @Nullable Integer shortened;
+
+    /** O raio de busca de lote desta colônia, a partir do centro dela. */
+    static int searchRadius(Colony colony) {
+        if (shortened != null) {
+            return shortened;
+        }
+
+        return colony.bounds().map(ConstructionPlanner::reachOf).orElse(VillageDetector.SEARCH_RADIUS);
+    }
+
+    /** Metade da diagonal da caixa, mais a margem de crescimento; nunca menos que 64. */
+    static int reachOf(VillageBounds box) {
+        double halfDiagonal = Math.hypot(box.sizeX() / 2.0, box.sizeZ() / 2.0);
+
+        return Math.max(VillageDetector.SEARCH_RADIUS,
+                (int) Math.ceil(halfDiagonal) + VillageBounds.GROWTH_MARGIN);
+    }
 
     /** Encurta a busca de lote. Só os testes precisam disso. */
     public static void shortenSearchTo(int blocks) {
@@ -110,12 +149,12 @@ public final class ConstructionPlanner {
             throw new IllegalArgumentException("Radius must be positive: " + blocks);
         }
 
-        searchRadius = blocks;
+        shortened = blocks;
     }
 
     /** Devolve o raio ao valor de jogo. */
     public static void restoreSearch() {
-        searchRadius = VillageDetector.SEARCH_RADIUS;
+        shortened = null;
     }
 
     private ConstructionPlanner() {
@@ -235,6 +274,7 @@ public final class ConstructionPlanner {
 
         if (open.isPresent()) {
             WaitingWork.wakeIfSupplied(world, open.get());
+            WaitingWork.askBeforeTheWorkWaits(world, open.get());
             BuilderPlacement.reconsiderDeferredPieces(world, open.get());
 
             // <b>E a obra que o centro deixou para trás</b> — 2026-09-15.
@@ -253,8 +293,29 @@ public final class ConstructionPlanner {
                     .map(roads -> roads.blocksToTheNearestRoad(open.get().origin()))
                     .orElseGet(OptionalInt::empty);
 
-            if (ConstructionReach.isOutOfReach(
-                    open.get().origin(), colony.center(), searchRadius, toTheRoad)) {
+            // <b>Sem índice, a rua que o lote encosta responde</b> — sessão
+            // longa de 2026-09-26: a casa média, posta ao lado de uma rua, foi
+            // largada um minuto depois porque o índice ainda não existia e a
+            // conta caiu no centro (72 > 64). Ver VillageRoad.besidePaving.
+            boolean besideARoad = toTheRoad.isEmpty() && VillageRoad.besidePaving(
+                    world,
+                    MinecraftTypeAdapter.toBlockPos(open.get().origin()),
+                    open.get().blueprint().size().x(),
+                    open.get().blueprint().size().y(),
+                    open.get().blueprint().size().z());
+
+            // <b>Dentro da vila, a obra está ao alcance</b> — ADR-003 Emenda 6,
+            // 2026-09-30. A caixa cresce com a rua e com o lote, e o centro
+            // passou a ser o meio dela: medir do centro largaria a obra que a
+            // vila acabou de alcançar.
+            boolean insideTheVillage = colony.bounds()
+                    .map(bounds -> bounds.containsColumn(
+                            open.get().origin().x(), open.get().origin().z(),
+                            VillageBounds.IDENTITY_MARGIN))
+                    .orElse(false);
+
+            if (!insideTheVillage && !besideARoad && ConstructionReach.isOutOfReach(
+                    open.get().origin(), colony.center(), searchRadius(colony), toTheRoad)) {
 
                 VillageColonyMod.LOGGER.info(
                         "Colony {} lets go of {} at {} — the village centre is at {},"
@@ -264,7 +325,7 @@ public final class ConstructionPlanner {
                         open.get().blueprint().id(),
                         open.get().origin(),
                         colony.center(),
-                        searchRadius,
+                        searchRadius(colony),
                         toTheRoad.isPresent()
                                 ? toTheRoad.getAsInt() + " blocks away"
                                 : "not indexed yet");
@@ -367,9 +428,9 @@ public final class ConstructionPlanner {
         // planta ausente saem antes daqui e não são dívida da varredura.
         SweepLog.asked(colony.id());
 
-        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.find(
-                world, colony.id(), colony.center(), searchRadius,
-                SiteOpening.sizesOf(plans));
+        Optional<BuildSiteScanner.Site> site = BuildSiteScanner.findForFootprints(
+                world, colony.id(), colony.center(), searchRadius(colony),
+                SiteOpening.footprintsFor(plans));
 
         if (site.isEmpty()) {
             // Duas respostas, e a diferença importa: uma diz que não há

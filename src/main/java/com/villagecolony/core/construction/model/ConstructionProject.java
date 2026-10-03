@@ -37,7 +37,7 @@ public final class ConstructionProject {
 
     private final UUID id;
 
-    private final UUID colonyId;
+    private UUID colonyId;
 
     private final Blueprint blueprint;
 
@@ -197,6 +197,16 @@ public final class ConstructionProject {
         return id;
     }
 
+    /**
+     * Passa para a colônia que absorveu a sua — ADR-007 §3.
+     *
+     * <p>Só a fusão chama isto. Os registros guardam o objeto pelo próprio
+     * id, e não pelo da colônia, então trocar o dono não desloca nada.
+     */
+    public void joinColony(UUID colonyId) {
+        this.colonyId = Objects.requireNonNull(colonyId, "colonyId");
+    }
+
     public UUID colonyId() {
         return colonyId;
     }
@@ -326,7 +336,35 @@ public final class ConstructionProject {
 
         DeferredPiece current = deferred.get(piece.position());
 
-        if (!piece.equals(current) || current.supportFingerprint().equals(supportFingerprint)) {
+        if (current == null
+                || !piece.equals(current)
+                || current.supportFingerprint().equals(supportFingerprint)) {
+            return false;
+        }
+
+        deferred.remove(piece.position());
+
+        return true;
+    }
+
+    /**
+     * Recoloca a peça na fila porque ela já pode ser assentada — 2026-09-25.
+     *
+     * <p>A outra porta, {@link #retryIfSupportChanged}, só abre quando a
+     * vizinhança muda. Não basta quando o que mudou foi a <b>regra</b> de
+     * assentar: as nove peças do templo de 25-09 foram adiadas por uma versão
+     * que não sabia apoiar a peça de parede na parede que existe, e a
+     * vizinhança delas nunca ia mudar. Quem decide que a peça cabe agora é a
+     * camada que conhece o mundo.
+     *
+     * @return se a peça estava adiada e saiu da espera
+     */
+    public boolean retry(DeferredPiece piece) {
+        Objects.requireNonNull(piece, "piece");
+
+        DeferredPiece current = deferred.get(piece.position());
+
+        if (!piece.equals(current)) {
             return false;
         }
 
@@ -398,7 +436,22 @@ public final class ConstructionProject {
     public boolean isSupersededBy(ResourceId target) {
         Objects.requireNonNull(target, "target");
 
-        return remaining.size() == blueprint.blockCount() && !blueprint.id().equals(target);
+        return !hasBuiltAnything() && !blueprint.id().equals(target);
+    }
+
+    /**
+     * Se alguma peça que não é chão já foi assentada — 2026-09-26.
+     *
+     * <p>Desde a camada da rua ({@link Blueprint#isBuried}), a terra da
+     * fundação é dada por assentada ao abrir a obra. Contar o que falta contra
+     * o total da planta dizia "já construiu" para uma obra que só tinha chão:
+     * ela deixava de ceder lugar e, largada, prendia o lote.
+     */
+    public boolean hasBuiltAnything() {
+        long pieces = blueprint.blocks().stream().filter(block -> !blueprint.isBuried(block)).count();
+        long left = remaining.stream().filter(block -> !blueprint.isBuried(block)).count();
+
+        return left < pieces;
     }
 
     /**

@@ -1,11 +1,13 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.WorkClock;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.event.VillageFocus;
 import com.villagecolony.fabric.integration.ColonyChests;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.VillagerEntity;
@@ -42,6 +44,10 @@ import java.util.UUID;
  */
 public final class VillageMeals {
 
+    static {
+        ServerMemory.register(VillageMeals.class, VillageMeals::clearAll);
+    }
+
     /** Os pontos que o Vanilla exige para o aldeão querer procriar. */
     static final int BREEDING_FOOD = 12;
 
@@ -76,6 +82,10 @@ public final class VillageMeals {
         long day = Math.floorDiv(time, (long) WorkClock.DAY);
 
         for (Colony colony : List.copyOf(VillageColonyMod.COLONIES.all())) {
+            if (!VillageFocus.isWorking(world, colony.id())) {
+                continue;
+            }
+
             if (SERVED_ON.getOrDefault(colony.id(), Long.MIN_VALUE) == day) {
                 continue;
             }
@@ -103,6 +113,9 @@ public final class VillageMeals {
         List<ColonyPos> chests = ColonyChests.nearestFirst(world, colony.id(), colony.center());
         int fed = 0;
 
+        // Todo adulto da colônia, com ofício ou sem: o VillagerScanner
+        // registra cada aldeão da vila em WORKERS, e é de lá que a lista
+        // sai. Conferido em 2026-09-30, quando se suspeitou do contrário.
         for (Worker worker : VillageColonyMod.WORKERS.ofColony(colony.id())) {
             Entity entity = world.getEntity(worker.villagerId());
 

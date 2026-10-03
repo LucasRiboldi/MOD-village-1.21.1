@@ -1,6 +1,9 @@
 package com.villagecolony.core.worker.service;
 
+import org.jspecify.annotations.Nullable;
+
 import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.core.worker.model.ProfessionPolicySet;
 import com.villagecolony.core.worker.model.Worker;
 
 import java.util.ArrayList;
@@ -42,22 +45,45 @@ public final class ProfessionAssigner {
             ProfessionType.SHEPHERD);
 
     /**
+     * Ordem de vagas permanentes conforme a população adulta.
+     *
+     * <p>O construtor não entra na escolha de necessidade de recursos, pois
+     * não produz uma cadeia material. Ele entra aqui para receber as mesmas
+     * vagas de crescimento que os produtores, sempre depois do Pastor.
+     */
+    public static final List<ProfessionType> GROWTH_ORDER = List.of(
+            ProfessionType.MINER,
+            ProfessionType.LUMBERJACK,
+            ProfessionType.MASON,
+            ProfessionType.SMELTER,
+            ProfessionType.CARPENTER,
+            ProfessionType.FARMER,
+            ProfessionType.SHEPHERD,
+            ProfessionType.BUILDER);
+
+    /**
      * Piso da casa fundacional: uma função ativa de cada tipo alojado nela.
      *
-     * <p>{@link ProfessionType#CARPENTER} e {@link ProfessionType#FARMER} seguem
-     * disponíveis no registro, na atribuição, nas tarefas e no crescimento
-     * normal. A única regra desta lista é que eles não são titulares nem
-     * recebem cama ou baú reservados na {@code BigHouseMOD}.
+     * <p><b>O carpinteiro é titular desde 2026-09-30</b>, decisão do autor:
+     * sem ele não há tábua nem peça de obra, e a primeira casa dependia de
+     * uma contratação que a fundação não garantia. Ele vem logo depois do
+     * lenhador, que lhe traz o tronco; a cama e o baú dele ficam à direita
+     * da porta da {@code BigHouseMOD}.
+     *
+     * <p>{@link ProfessionType#FARMER} segue disponível no registro, na
+     * atribuição, nas tarefas e no crescimento normal, sem cama nem baú
+     * reservados na casa fundacional.
      */
     public static final List<ProfessionType> FOUNDATION_ORDER = List.of(
             ProfessionType.MINER,
             ProfessionType.LUMBERJACK,
+            ProfessionType.CARPENTER,
             ProfessionType.MASON,
             ProfessionType.SMELTER,
             ProfessionType.SHEPHERD,
             ProfessionType.BUILDER);
 
-    private static final int ADULTS_PER_BATCH = 15;
+    static final int ADULTS_PER_BATCH = 15;
 
     private ProfessionAssigner() {
     }
@@ -88,7 +114,7 @@ public final class ProfessionAssigner {
         ProfessionType scarcest = PRODUCER_ORDER.get(0);
 
         for (ProfessionType type : PRODUCER_ORDER) {
-            if (counts.get(type) < counts.get(scarcest)) {
+            if (counts.getOrDefault(type, 0) < counts.getOrDefault(scarcest, 0)) {
                 scarcest = type;
             }
         }
@@ -103,9 +129,9 @@ public final class ProfessionAssigner {
      * preenchidas.
      *
      * <p>Os slots crescem em lotes ligados à população adulta: uma vaga
-     * inicial de cada produtor e, a cada novo slot, a próxima profissão
-     * na ordem declarada. O empate é resolvido por
-     * {@link #PRODUCER_ORDER}.
+     * inicial de cada função de crescimento e, a cada novo slot, a próxima
+     * profissão na ordem declarada. O empate é resolvido por
+     * {@link #GROWTH_ORDER}.
      */
     public static Optional<ProfessionType> vacancy(Collection<Worker> colonyWorkers) {
         return vacancy(colonyWorkers, colonyWorkers.size());
@@ -114,7 +140,13 @@ public final class ProfessionAssigner {
     /** Vaga conforme a população adulta observada no scanner Fabric. */
     public static Optional<ProfessionType> vacancy(
             Collection<Worker> colonyWorkers, int adultPopulation) {
-        return vacancyFor(null, colonyWorkers, adultPopulation);
+        return vacancy(colonyWorkers, adultPopulation, ProfessionPolicySet.defaults());
+    }
+
+    /** Vaga conforme a política persistida do mundo. */
+    public static Optional<ProfessionType> vacancy(
+            Collection<Worker> colonyWorkers, int adultPopulation, ProfessionPolicySet policies) {
+        return vacancyFor(null, colonyWorkers, adultPopulation, policies);
     }
 
     /**
@@ -140,16 +172,25 @@ public final class ProfessionAssigner {
      *     pergunta sem dono — que é a da contagem da colônia
      */
     public static Optional<ProfessionType> vacancyFor(
-            Worker candidate, Collection<Worker> colonyWorkers) {
+            @Nullable Worker candidate, Collection<Worker> colonyWorkers) {
 
         return vacancyFor(candidate, colonyWorkers, colonyWorkers.size());
     }
 
     /** Vaga que este candidato pode ocupar na população adulta observada. */
     public static Optional<ProfessionType> vacancyFor(
-            Worker candidate, Collection<Worker> colonyWorkers, int adultPopulation) {
+            @Nullable Worker candidate, Collection<Worker> colonyWorkers, int adultPopulation) {
+
+        return vacancyFor(candidate, colonyWorkers, adultPopulation, ProfessionPolicySet.defaults());
+    }
+
+    /** Vaga que este candidato pode ocupar, respeitando a política do mundo. */
+    public static Optional<ProfessionType> vacancyFor(
+            @Nullable Worker candidate, Collection<Worker> colonyWorkers, int adultPopulation,
+            ProfessionPolicySet policies) {
 
         Objects.requireNonNull(colonyWorkers, "colonyWorkers");
+        Objects.requireNonNull(policies, "policies");
 
         if (adultPopulation < 0) {
             throw new IllegalArgumentException("adultPopulation must not be negative");
@@ -169,7 +210,7 @@ public final class ProfessionAssigner {
         // da colônia, e ela roda a cada passagem por motivo próprio —
         // registrá-la encheria o relatório de ruído que não é decisão de
         // contratação. Ver HiringLog.
-        UUID colonyId = candidate == null ? null : candidate.colonyId();
+        @Nullable UUID colonyId = candidate == null ? null : candidate.colonyId();
 
         // <b>Quem acabou de largar um ofício não pega outro agora</b> —
         // 2026-09-19. O castigo do ofício abaixo é por ofício, e a
@@ -188,11 +229,18 @@ public final class ProfessionAssigner {
         // suficientes para a próxima função, nenhuma função ativa pode
         // ficar vazia. A camada Fabric cria os adultos e as camas que
         // faltarem; este trecho garante a parte determinística da regra.
-        for (int index = 0; index < FOUNDATION_ORDER.size()
+        //
+        // A ordem da fundação não segue a ordem de contratação da política:
+        // o carpinteiro logo depois do lenhador é decisão do autor
+        // (2026-09-30), e a política só tira dela a profissão desativada.
+        List<ProfessionType> foundationOrder = FOUNDATION_ORDER.stream()
+                .filter(type -> policies.policyOf(type).enabled()).toList();
+        for (int index = 0; index < foundationOrder.size()
                 && index < adultPopulation; index++) {
-            ProfessionType type = FOUNDATION_ORDER.get(index);
+            ProfessionType type = foundationOrder.get(index);
 
-            if (counts.get(type) >= 1) {
+            if (HiringQuota.atMaximum(type, counts, policies)
+                    || counts.getOrDefault(type, 0) >= 1) {
                 continue;
             }
 
@@ -209,8 +257,31 @@ public final class ProfessionAssigner {
             return Optional.of(type);
         }
 
-        for (ProfessionType type : PRODUCER_ORDER) {
-            if (counts.get(type) >= targetCount(type, adultPopulation)) {
+        // Profissões desativadas não participam da distribuição dos próximos
+        // trabalhadores. Assim, a respectiva vaga é redistribuída para a
+        // próxima profissão habilitada, em vez de se perder silenciosamente.
+        List<ProfessionType> growthOrder = policies.orderFor(GROWTH_ORDER).stream()
+                .filter(type -> policies.policyOf(type).enabled()).toList();
+
+        // <b>A demanda antes da lista</b> — decisão do autor, 2026-09-30.
+        // Havendo vaga em aberto na colônia, ela vai primeiro à profissão
+        // de que a obra depende agora (ProfessionDemand, a maior falta
+        // primeiro), até uma cabeça acima da cota dela; só depois a
+        // ordem fixa decide.
+        Optional<ProfessionType> demanded =
+                HiringQuota.demandedVacancy(
+                        candidate, counts, adultPopulation, growthOrder, policies);
+
+        if (demanded.isPresent()) {
+            HiringLog.record(colonyId, demanded.get(), HiringLog.Outcome.FILLED);
+
+            return demanded;
+        }
+
+        for (ProfessionType type : growthOrder) {
+            if (HiringQuota.atMaximum(type, counts, policies)
+                    || counts.getOrDefault(type, 0)
+                            >= HiringQuota.targetCount(type, adultPopulation, growthOrder, policies)) {
                 if (colonyId != null) {
                     HiringLog.record(colonyId, type, HiringLog.Outcome.AT_TARGET);
                 }
@@ -241,21 +312,10 @@ public final class ProfessionAssigner {
         return Optional.empty();
     }
 
-    private static int targetCount(ProfessionType type, int adults) {
-        int slots;
-
-        if (adults < ADULTS_PER_BATCH) {
-            slots = Math.min(adults, PRODUCER_ORDER.size());
-        } else {
-            slots = (adults / ADULTS_PER_BATCH) * PRODUCER_ORDER.size()
-                    + Math.min(adults % ADULTS_PER_BATCH, PRODUCER_ORDER.size());
-        }
-
-        int perProfession = slots / PRODUCER_ORDER.size();
-        int extras = slots % PRODUCER_ORDER.size();
-        int position = PRODUCER_ORDER.indexOf(type);
-
-        return perProfession + (position >= 0 && position < extras ? 1 : 0);
+    /** Cota desta profissão com a política padrão do mundo. */
+    static int targetCount(ProfessionType type, int adults) {
+        return HiringQuota.targetCount(
+                type, adults, GROWTH_ORDER, ProfessionPolicySet.defaults());
     }
 
     /**
@@ -292,6 +352,8 @@ public final class ProfessionAssigner {
     }
 
     /**
+     * Dá função a quem não tem, com a vaga indo primeiro a quem conseguiria um baú.
+     *
      * @param equipped diz se este aldeão conseguiria um baú. A vaga vai
      *     primeiro para quem consegue: um trabalhador sem baú pega a
      *     tarefa e a devolve à fila a cada ciclo, para sempre, e do lado
@@ -318,25 +380,35 @@ public final class ProfessionAssigner {
             WorkerService workers, UUID colonyId, Set<UUID> employable,
             int adultPopulation, Predicate<UUID> equipped) {
 
+        return assignMissing(workers, colonyId, employable, adultPopulation, equipped,
+                ProfessionPolicySet.defaults());
+    }
+
+    /** Atribui apenas vagas permitidas pela política persistida do mundo. */
+    public static int assignMissing(
+            WorkerService workers, UUID colonyId, Set<UUID> employable,
+            int adultPopulation, Predicate<UUID> equipped, ProfessionPolicySet policies) {
+
         Objects.requireNonNull(workers, "workers");
         Objects.requireNonNull(colonyId, "colonyId");
         Objects.requireNonNull(employable, "employable");
         Objects.requireNonNull(equipped, "equipped");
+        Objects.requireNonNull(policies, "policies");
 
         if (adultPopulation < 0) {
             throw new IllegalArgumentException("adultPopulation must not be negative");
         }
 
-        int assigned = assignPass(workers, colonyId, employable, adultPopulation, equipped);
+        int assigned = assignPass(workers, colonyId, employable, adultPopulation, equipped, policies);
 
         return assigned + assignPass(
-                workers, colonyId, employable, adultPopulation, villagerId -> true);
+                workers, colonyId, employable, adultPopulation, villagerId -> true, policies);
     }
 
     /** Uma passada de atribuição sobre quem o filtro aceitar. */
     private static int assignPass(
             WorkerService workers, UUID colonyId, Set<UUID> employable, int adultPopulation,
-            Predicate<UUID> accepts) {
+            Predicate<UUID> accepts, ProfessionPolicySet policies) {
 
         int assigned = 0;
 
@@ -352,7 +424,7 @@ public final class ProfessionAssigner {
             // volta na passagem seguinte, e é justamente ele o mais
             // escasso depois de abrir a própria vaga.
             Optional<ProfessionType> vacancy = vacancyFor(
-                    worker, workers.ofColony(colonyId), adultPopulation);
+                    worker, workers.ofColony(colonyId), adultPopulation, policies);
 
             if (vacancy.isEmpty()) {
                 // <b>Vazio por dois motivos, e eles não se tratam
@@ -369,7 +441,7 @@ public final class ProfessionAssigner {
                 // comportamento que a linha de reserva quer: um
                 // trabalhador de molho não pode congelar a contratação da
                 // colônia.
-                if (vacancy(workers.ofColony(colonyId), adultPopulation).isEmpty()) {
+                if (vacancy(workers.ofColony(colonyId), adultPopulation, policies).isEmpty()) {
                     break;
                 }
 

@@ -60,7 +60,7 @@ public final class Mine {
      */
     public static final int ARMS = 4;
 
-    private final UUID colonyId;
+    private UUID colonyId;
 
     /**
      * O poço: boca, descida, e o rumo do primeiro ramal.
@@ -174,6 +174,11 @@ public final class Mine {
         return new Mine(colonyId, shaft, cuts);
     }
 
+    /** Passa para a colônia que absorveu a sua — ADR-007 §3. Só o MineRegistry chama. */
+    public void joinColony(UUID colonyId) {
+        this.colonyId = Objects.requireNonNull(colonyId, "colonyId");
+    }
+
     public UUID colonyId() {
         return colonyId;
     }
@@ -198,6 +203,17 @@ public final class Mine {
     /** Os quatro ramais, na ordem em que os rumos giram. */
     public List<MineArm> arms() {
         return Collections.unmodifiableList(arms);
+    }
+
+    /** As células planejadas do nível atual, somando os quatro ramais — ADR-025. */
+    public java.util.Set<ColonyPos> plannedCells() {
+        java.util.Set<ColonyPos> cells = new java.util.HashSet<>();
+
+        for (MineArm arm : arms) {
+            cells.addAll(arm.shaft().plannedCells());
+        }
+
+        return cells;
     }
 
     /** O ramal de índice {@code i}. */

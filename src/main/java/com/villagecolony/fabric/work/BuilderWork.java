@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
@@ -19,6 +20,7 @@ import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.event.VillageFocus;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
 import com.villagecolony.fabric.integration.ColonySupply;
@@ -60,8 +62,10 @@ import java.util.UUID;
  *   <li>nada é posto sobre bloco que não seja substituível: grama alta
  *       e flor saem, parede de ninguém sai;
  *   <li>o material sai do baú <b>antes</b> de o bloco entrar no mundo.
- *       Se não há material, não há bloco — a colônia não cria recurso
- *       (Construction-System.md §"Regras de Arquitetura").
+ *       Se não há material, não há bloco. As exceções são as da
+ *       ADR-028: bloco sem item montado no local, peça sem rota e
+ *       ingrediente de drop que aparecem no baú — a regra "a colônia não
+ *       cria recurso" foi retirada pelo autor em 2026-09-30.
  * </ol>
  *
  * <p><b>O ritmo.</b> Um bloco por segundo, como a Regra 2 fez com a
@@ -76,6 +80,10 @@ import java.util.UUID;
  * obra.
  */
 public final class BuilderWork {
+
+    static {
+        ServerMemory.register(BuilderWork.class, BuilderWork::clearAll);
+    }
 
     /** Um bloco por segundo. Ver a Regra 2, que fez o mesmo com a derrubada. */
     static final int TICKS_PER_BLOCK = 20;
@@ -93,6 +101,9 @@ public final class BuilderWork {
      * {@code LumberjackWork.STALL_LIMIT}.
      */
     static final int STALL_LIMIT = 4 * VillageDetector.CYCLE_TICKS;
+
+    /** Tiques andando sem alcançar a peça antes de deixá-la de lado — A-6. */
+    static final int SET_ASIDE_AFTER = 200;
 
     /** Trabalho aberto, por construtor. */
     static final Map<UUID, Job> JOBS = new HashMap<>();
@@ -208,6 +219,10 @@ public final class BuilderWork {
 
             Map.Entry<UUID, Job> entry = entries.next();
 
+            if (!VillageFocus.isWorking(world, entry.getValue().task.colonyId())) {
+                continue;
+            }
+
             if (!step(world, entry.getKey(), entry.getValue())) {
                 entries.remove();
             }
@@ -215,6 +230,8 @@ public final class BuilderWork {
     }
 
     /**
+     * Um passo do construtor neste tique.
+     *
      * @return false quando este trabalho acabou e pode sair do registro
      */
     static boolean step(ServerWorld world, UUID workerId, Job job) {
@@ -264,13 +281,14 @@ public final class BuilderWork {
 
         BlockPos target = MinecraftTypeAdapter.toBlockPos(project.worldPositionOf(next.get()));
 
-        if (!BuilderApproach.isWithinReach(villager.getBlockPos(), target)) {
+        if (!BuilderApproach.isWithinReach(villager.getPos(), target)) {
             // <b>De onde ele está, e não do piso</b> — 2026-09-16. Ver
             // BuilderApproach.footOf: mandar ao piso quem já subiu na obra
             // é mandá-lo para uma queda que a navegação não percorre.
             WorkTargets.set(
                     workerId,
-                    BuilderApproach.footOf(world, project, target, villager.getBlockPos()));
+                    BuilderApproach.footOf(world, project, target, villager.getBlockPos()),
+                    BuilderApproach.ARRIVAL);
 
             if (job.stall.stuck(world, villager)) {
                 // Parado no mesmo bloco há quinze segundos de expediente —
@@ -297,7 +315,21 @@ public final class BuilderWork {
                 return false;
             }
 
-            if (++job.stalled > STALL_LIMIT) {
+            // A peça que não se alcança fica de lado, e a obra segue pela
+            // próxima — A-6, 2026-10-02. Antes ele insistia até o STALL_LIMIT
+            // (dois minutos) e largava a obra inteira.
+            if (++job.stalled % SET_ASIDE_AFTER == 0 && project.remaining().size() > 1) {
+                project.defer(next.get(), ConstructionOutcome.skipped(project.worldPositionOf(next.get()),
+                        SkipReason.UNREACHABLE), BuilderPlacement.supportFingerprint(world, target));
+                VillageColonyMod.LOGGER.info("Project {} sets {} at {} aside — the builder walked {} ticks"
+                        + " without reaching it; it goes on with the next piece",
+                        project.id(), next.get().block(), target.toShortString(), job.stalled);
+                job.stalled = 0;
+
+                return true;
+            }
+
+            if (job.stalled > STALL_LIMIT) {
                 // Andou dois minutos de horário de trabalho e não chegou
                 // ao bloco. A obra continua de pé e volta para a fila; o
                 // que não continua é este construtor sendo dono dela.
@@ -389,6 +421,8 @@ public final class BuilderWork {
     static void finish(Job job, UUID workerId, String why) {
         if (job.task.state() == TaskState.EXECUTING) {
             job.task.complete();
+            WorkerStrikes.worked(workerId, job.task);
+            TaskChain.next(job.task);
         } else if (job.task.isHeld()) {
             job.task.release();
         }

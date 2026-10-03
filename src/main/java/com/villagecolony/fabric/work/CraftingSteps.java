@@ -392,8 +392,13 @@ final class CraftingSteps {
         ResourceTally owned =
                 ChestInventoryReader.readAll(world, workerIds, VillageColonyMod.STORAGES);
 
-        return StockRules.logsToConvert(
+        Map<ResourceId, Integer> stillNeeded = VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
+                .map(ConstructionProject::remainingMaterials)
+                .orElseGet(Map::of);
+
+        return StockRules.logsThatMayBeConverted(
                 owned.amountOfGroup(ResourceGroup.WOOD),
-                owned.amountOfGroup(ResourceGroup.PLANKS)) > 0;
+                owned.amountOfGroup(ResourceGroup.PLANKS),
+                stillNeeded) > 0;
     }
 }

@@ -205,6 +205,40 @@ public final class ChestWithdrawer {
     }
 
     /**
+     * Tira do baú exatamente esta pilha — item e componentes (encantamento,
+     * nome, desgaste) — 2026-10-02. O {@link #takeOne} tira "uma do tipo", e
+     * com uma picareta encantada e outra lisa no mesmo baú a troca podia tirar
+     * a lisa e pôr a encantada na mão: a encantada ficava duplicada.
+     */
+    static int takeExact(ServerWorld world, ColonyPos chest, ItemStack wanted) {
+        ChestBlockEntity inventory = chestAt(world, chest);
+
+        if (inventory == null) {
+            return 0;
+        }
+
+        for (int slot = 0; slot < inventory.size(); slot++) {
+            ItemStack stack = inventory.getStack(slot);
+
+            if (!ItemStack.areItemsAndComponentsEqual(stack, wanted)) {
+                continue;
+            }
+
+            stack.decrement(1);
+
+            if (stack.isEmpty()) {
+                inventory.setStack(slot, ItemStack.EMPTY);
+            }
+
+            inventory.markDirty();
+
+            return 1;
+        }
+
+        return 0;
+    }
+
+    /**
      * Tira uma unidade deste item do baú, seja ele recurso ou não —
      * 2026-09-04.
      *

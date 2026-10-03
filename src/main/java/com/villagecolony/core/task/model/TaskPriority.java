@@ -1,5 +1,7 @@
 package com.villagecolony.core.task.model;
 
+import java.util.Comparator;
+
 /**
  * Quanto uma tarefa importa perto das outras.
  *
@@ -7,27 +9,44 @@ package com.villagecolony.core.task.model;
  * de produção, produção antes de construção. Uma colônia com fome não
  * ergue casa.
  *
- * <p>A ordem de declaração é a ordem de urgência, da maior para a menor,
- * para que a ordenação natural do enum já sirva. Trocar a ordem aqui
- * muda o comportamento da colônia — é por isso que ela está declarada
- * de propósito, e não em ordem alfabética.
+ * <p>A urgência é o campo {@link #urgency()}, <b>não</b> a ordem de
+ * declaração: menor número, mais urgente. Até 2026-09-29 valia o
+ * {@code ordinal()}, e reordenar as constantes mudava a colônia em
+ * silêncio. Os números têm folga de dez para que um nível novo entre
+ * entre dois sem renumerar os outros; {@code TaskPriorityTest} fixa a
+ * sequência e a unicidade.
  */
 public enum TaskPriority {
 
     /** Comida e recursos básicos. Sem isto a vila encolhe. */
-    SURVIVAL,
+    SURVIVAL(10),
 
     /** Materiais que destravam a obra aberta têm precedência sobre estoque. */
-    CONSTRUCTION_MATERIAL,
+    CONSTRUCTION_MATERIAL(20),
 
     /** Coletar e transformar matéria-prima. */
-    PRODUCTION,
+    PRODUCTION(30),
 
     /** Erguer o que a colônia planejou. */
-    CONSTRUCTION;
+    CONSTRUCTION(40);
+
+    /** Da mais urgente para a menos urgente. */
+    public static final Comparator<TaskPriority> MOST_URGENT_FIRST =
+            Comparator.comparingInt(TaskPriority::urgency);
+
+    private final int urgency;
+
+    TaskPriority(int urgency) {
+        this.urgency = urgency;
+    }
+
+    /** Menor é mais urgente. Só para ordenar — não é persistido. */
+    public int urgency() {
+        return urgency;
+    }
 
     /** Se esta prioridade vem antes da outra. */
     public boolean isHigherThan(TaskPriority other) {
-        return ordinal() < other.ordinal();
+        return urgency < other.urgency;
     }
 }

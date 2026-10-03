@@ -29,6 +29,10 @@ import java.util.Optional;
  * repetir, com risco de errar, uma tabela que o Vanilla já mantém — e
  * envelheceria no primeiro material novo, de outra versão ou de mod.
  *
+ * <p><b>O ponto de partida hoje é ferro</b> (commit 55cf8a3), e não madeira
+ * como a citação acima dizia em 09-04; a troca pela melhor do baú continua.
+ * A ferramenta que conta em cada quebra é escolhida por {@link ActionTool}.
+ *
  * <p><b>A família da ferramenta sai de graça disso.</b> Não é preciso
  * perguntar "isto é picareta?": basta medir contra a pedra. Machado em
  * pedra vale 1,0, como a mão vazia; picareta de madeira vale 2,0. Uma
@@ -114,6 +118,8 @@ public final class ToolUpgrade {
 
         ItemStack best = null;
         float bestSpeed = bar;
+        // Desempate da Regra 2-e1 (10-02): na mesma velocidade, a encantada vence.
+        int bestEnchantments = speedOf(held, state) >= bar ? ActionTool.enchantmentsOf(held) : 0;
 
         for (int slot = 0; slot < inventory.size(); slot++) {
             ItemStack candidate = inventory.getStack(slot);
@@ -123,13 +129,15 @@ public final class ToolUpgrade {
             }
 
             float speed = speedOf(candidate, state);
+            int enchantments = ActionTool.enchantmentsOf(candidate);
 
-            if (speed <= bestSpeed) {
+            if (speed < bestSpeed || (speed == bestSpeed && enchantments <= bestEnchantments)) {
                 continue;
             }
 
             best = candidate;
             bestSpeed = speed;
+            bestEnchantments = enchantments;
         }
 
         return best == null ? Optional.empty() : Optional.of(best.copyWithCount(1));
@@ -171,7 +179,10 @@ public final class ToolUpgrade {
 
         BlockState state = proof.getDefaultState();
 
-        return speedOf(held, state) > speedOf(starter, state);
+        // A encantada na mesma velocidade também fica — Regra 2-e1, 10-02. Sem
+        // isto uma picareta de ferro com Inquebrável era trocada pela de ferro.
+        return speedOf(held, state) > speedOf(starter, state)
+                || (speedOf(held, state) == speedOf(starter, state) && ActionTool.enchantmentsOf(held) > 0);
     }
 
     /**
@@ -181,6 +192,7 @@ public final class ToolUpgrade {
      * há caso especial a escrever.
      */
     private static float speedOf(ItemStack stack, BlockState state) {
-        return stack.getMiningSpeedMultiplier(state);
+        // Com a Eficiência — Regra 2-e1, 2026-10-02. Ver ActionTool.speedOf.
+        return ActionTool.speedOf(stack, state);
     }
 }

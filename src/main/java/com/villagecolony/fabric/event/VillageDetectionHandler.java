@@ -8,9 +8,11 @@ import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.ColonyState;
 import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.colony.service.ColonyAbandonment;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.coordination.ColonyCycle;
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.coordination.ColonyGoals;
 import com.villagecolony.core.coordination.WorkDemand;
 import com.villagecolony.core.resource.model.ColonyResources;
@@ -92,6 +94,10 @@ import net.minecraft.world.poi.PointOfInterestTypes;
  */
 public final class VillageDetectionHandler {
 
+    static {
+        ServerMemory.register(VillageDetectionHandler.class, VillageDetectionHandler::clearPending);
+    }
+
     static final VillageScanner SCANNER = new VillageScanner();
 
     /**
@@ -104,24 +110,6 @@ public final class VillageDetectionHandler {
 
     /** Duração de um tick do servidor, em milissegundos. */
     static final int TICK_MILLIS = 50;
-
-    /**
-     * Até onde uma colônia trabalha — decisão do autor, 2026-09-15.
-     *
-     * <p>A frase dele: <i>"não trabalhar nas vilas que o jogador não está
-     * perto"</i>. O log de 23:41 mostrou <b>seis colônias</b> reportando
-     * atividade no mesmo período, e o jogador estava numa.
-     *
-     * <p><b>O dobro do raio da vila</b>, e a folga é o ponto. Com os 64 de
-     * {@code SEARCH_RADIUS} a colônia congelaria assim que o autor
-     * caminhasse para a borda dela ou descesse à mina — e o centro da vila
-     * oscila entre oito posições, como a sessão de 21:50 mediu, de modo que
-     * a régua justa ficaria piscando.
-     *
-     * <p>Horizontal, como todo raio deste projeto: o jogador no fundo da
-     * mina continua sendo o jogador daquela vila.
-     */
-    static final int WORKING_DISTANCE = 2 * VillageDetector.SEARCH_RADIUS;
 
     /**
      * Chunks com cama esperando varredura, um por chunk.
@@ -273,7 +261,14 @@ public final class VillageDetectionHandler {
     static void drainOnePending(ServerWorld overworld) {
         while (!pending.isEmpty()) {
             Iterator<Map.Entry<ChunkPos, BlockPos>> entries = pending.entrySet().iterator();
-            BlockPos bed = entries.next().getValue();
+            Map.Entry<ChunkPos, BlockPos> pendingBed = entries.next();
+            BlockPos bed = pendingBed.getValue();
+
+            if (!VillageFocus.isNearAPlayer(overworld, bed)) {
+                entries.remove();
+                pending.put(pendingBed.getKey(), bed);
+                return;
+            }
 
             entries.remove();
 
@@ -281,7 +276,11 @@ public final class VillageDetectionHandler {
                     .findNearest(
                             MinecraftTypeAdapter.toColonyPos(bed),
                             VillageDetector.DUPLICATE_DISTANCE)
-                    .isPresent();
+                    .isPresent()
+                    || VillageColonyMod.COLONIES.all().stream().anyMatch(colony -> colony.bounds()
+                            .map(bounds -> bounds.containsColumn(
+                                    bed.getX(), bed.getZ(), VillageBounds.IDENTITY_MARGIN))
+                            .orElse(false));
 
             if (known) {
                 continue;
@@ -310,33 +309,68 @@ public final class VillageDetectionHandler {
      * ponto estável entre ciclos. Ver {@code Colony#observe}.
      */
     static void onServerTick(net.minecraft.server.MinecraftServer server) {
-        drainOnePending(server.getOverworld());
+        ServerWorld overworld = server.getOverworld();
+
+        if (overworld.getPlayers().isEmpty()) {
+            return;
+        }
+
+        // Quem está dentro de qual vila — ADR-003 Emenda 6. Antes do tique,
+        // para a vila em que o jogador acabou de entrar já trabalhar nele.
+        if (server.getTicks() % VillageFocus.EVERY_TICKS == 0) {
+            VillageFocus.attend(overworld);
+        }
+
+        tickActiveServer(server);
+
+        // Quem ficou livre não espera o ciclo de 30 s — F10, 2026-09-30.
+        if (server.getTicks() % IdleHands.EVERY_TICKS == 0) {
+            IdleHands.assignNow(overworld);
+        }
+    }
+
+    /**
+     * Executa o mesmo tique do servidor usado em jogo, sem exigir jogador.
+     *
+     * <p>Esta costura é chamada exclusivamente pelo mod do source set de
+     * GameTest. Ela preserva o cenário sem jogador que a bateria usa para
+     * verificar as profissões, enquanto {@link #onServerTick} continua sendo
+     * a porta de produção que pausa uma colônia sem jogador por perto.
+     */
+    public static void tickGameTestServer(net.minecraft.server.MinecraftServer server) {
+        tickActiveServer(server);
+    }
+
+    private static void tickActiveServer(net.minecraft.server.MinecraftServer server) {
+        ServerWorld overworld = server.getOverworld();
+
+        drainOnePending(overworld);
 
         // A Regra 2 mora aqui: o lenhador quebra um bloco de cada vez, no
         // tempo que um jogador com machado de ferro levaria, e para isso
         // precisa de um passo por tick — não de um passo a cada 600. O
         // custo é um contador por lenhador; a parte cara, a busca por
         // árvore, tem orçamento próprio dentro de LumberjackWork.
-        MinerWork.tick(server.getOverworld());
-        SmelterWork.tick(server.getOverworld());
-        SurfaceGatheringWork.tick(server.getOverworld());
-        ShepherdWork.tick(server.getOverworld());
-        FarmerWork.tick(server.getOverworld());
-        LumberjackWork.tick(server.getOverworld());
-        CraftingWork.tick(server.getOverworld());
-        BuilderWork.tick(server.getOverworld());
+        MinerWork.tick(overworld);
+        SmelterWork.tick(overworld);
+        SurfaceGatheringWork.tick(overworld);
+        ShepherdWork.tick(overworld);
+        FarmerWork.tick(overworld);
+        LumberjackWork.tick(overworld);
+        CraftingWork.tick(overworld);
+        BuilderWork.tick(overworld);
 
         // Quem ficou preso cava a própria saída — E47, 2026-09-24. Uma
         // passagem por segundo, só para os encalhados; ver StrandedEscape.
-        StrandedEscape.tick(server.getOverworld());
+        StrandedEscape.tick(overworld);
 
         // A comida do fim do expediente, para a vila crescer por
         // procriação — N1, 2026-09-24; ver VillageMeals.
-        VillageMeals.tick(server.getOverworld());
+        VillageMeals.tick(overworld);
 
         // O contorno do lote escolhido — 2026-09-15, pedido do autor. Sai
         // de graça em 19 de cada 20 tiques; ver SiteMarker.EVERY_TICKS.
-        SiteMarker.tick(server.getOverworld());
+        SiteMarker.tick(overworld);
 
         tickCounter++;
 
@@ -368,6 +402,12 @@ public final class VillageDetectionHandler {
 
         VillageAdoption.detectFromColonyCenters(
                 server.getOverworld(), colony -> VillageFocus.isAnalyzed(server.getOverworld(), colony));
+
+        // Colônias que se tocam ou ocupam o mesmo espaço viram uma antes de
+        // decidir o ciclo — ADR-007, 2026-09-30. Só neste caminho de jogo:
+        // as arenas da bateria ficam lado a lado, e fundiriam colônias de
+        // testes diferentes. O GameTest da fusão chama o gatilho direto.
+        ColonyMergeTrigger.mergeTouchingColonies(server.getOverworld());
 
         CycleCost.since(CycleCost.Phase.DETECT, mark);
 

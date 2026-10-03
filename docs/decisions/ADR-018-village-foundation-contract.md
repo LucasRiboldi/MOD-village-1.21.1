@@ -51,8 +51,9 @@ producao, mas nao cobre a fundacao minima exigida para toda vila.
 - O crescimento posterior continua usando as quotas produtoras da ADR-011;
   `BUILDER` e uma funcao fundacional permanente, mas a capacidade de executar
   `BUILD` continua sendo tratada pelo fluxo de construcao.
-- A criacao evita acavalamento, mas pode adiar a fundacao se nao houver local
-  seguro. A proxima deteccao tenta novamente e registra um `WARN`.
+- A criacao evita acavalamento. A vila ainda nao e adotada se nao houver local
+  seguro para a casa; a proxima deteccao tenta a adocao inteira novamente e
+  registra um `WARN`.
 - O GameTest `BigHouseModBlueprintGameTest` prova o conteudo da planta, e
   `VillageFoundationGameTest` prova a colocacao, as seis funcoes e os seis
   registros distintos em terreno isolado. A existencia e o posicionamento no
@@ -77,8 +78,8 @@ Decisao e ajusta os itens 1 e 5.
    casa, mesmo que a vila Vanilla ja tivesse adultos. A cama recebe o bilhete
    do ponto de interesse do Vanilla, e a memoria `HOME` aponta para a cabeca da
    cama, como no Vanilla. Por isso a morte do morador devolve a cama ao jogo.
-3. Sem lote para a casa, a colonia recem-nascida ainda recebe o caminho antigo:
-   completa os adultos da fundacao com camas avulsas.
+3. Sem lote para a casa, a vila recem-detectada nao e registrada como colonia
+   e nao recebe adulto, cama ou bau avulso.
 4. Depois da fundacao, a vila cresce por **procriacao Vanilla**. Uma vez por
    dia, ao fim do expediente, e so se houver cama sobrando, `VillageMeals` tira
    comida dos baus da colonia (pao, cenoura, batata, beterraba) e poe no
@@ -92,3 +93,20 @@ Verificacao: `VillageFoundationGameTest.everyBedOfTheHouseGetsItsOwnNewborn`,
 `aDeadResidentIsNotReplacedByTheNextPass` e `VillageMealsGameTest` (dois
 casos). Que a procriacao acontece de fato em jogo continua dependendo de
 playtest.
+
+## Emenda N2 - 2026-09-26: adocao atomica da BigHouseMOD
+
+O autor tornou imutavel o nascimento da `BigHouseMOD` com suas camas, baus e
+aldeoes. Para uma vila nova, `VillageAdoption` tenta colocar a casa antes de
+registrar camas Vanilla, trabalhadores ou recursos da colonia. Se o lote nao
+for seguro ou a planta nao puder ser colocada, a entrada nova e removida do
+registro no mesmo ciclo. A deteccao posterior recomeca a adocao e tenta a casa
+de novo.
+
+Essa regra nao remove colonia preexistente de um save: ela continua tentando
+reparar a fundacao quando for detectada, para nao apagar estado do jogador.
+
+Verificacao: `ColonyDetectionGameTest.aVillageWithoutASafeBigHouseLotIsNotAdopted`
+falhou contra a ordem anterior e a rodada integral passou com 480/480
+GameTests. A criacao e o aspecto da casa no save do autor continuam pendentes
+de playtest.

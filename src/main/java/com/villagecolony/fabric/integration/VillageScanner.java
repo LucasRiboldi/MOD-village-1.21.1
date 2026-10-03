@@ -5,6 +5,7 @@ import com.villagecolony.core.colony.model.VillageCandidate;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.world.GeneratedVillages;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -44,6 +45,8 @@ public final class VillageScanner {
     }
 
     /**
+     * A mesma busca, dizendo se ela é a sonda do centro.
+     *
      * @param isProbe se esta varredura é a sonda ancorada no centro de
      *     uma colônia. Só ela marca a âncora dos candidatos, porque só
      *     ela parte do mesmo ponto a cada ciclo e produz leituras
@@ -63,7 +66,8 @@ public final class VillageScanner {
      * {@code ColonyAbandonment}.
      */
     public ScanResult survey(ServerWorld world, BlockPos trigger, boolean isProbe) {
-        List<ColonyPos> beds = collectBeds(world, trigger);
+        int[] window = GeneratedVillages.bedWindowAround(world, trigger.getX(), trigger.getZ());
+        List<ColonyPos> beds = collectBeds(world, trigger, window);
 
         if (beds.size() < VillageDetector.MIN_BEDS) {
             // Nem a soma de todas as camas do raio chega ao mínimo: não
@@ -87,7 +91,7 @@ public final class VillageScanner {
         Optional<ColonyPos> from = Optional.of(MinecraftTypeAdapter.toColonyPos(trigger));
 
         for (List<ColonyPos> cluster : detector.cluster(beds)) {
-            int villagers = countVillagers(world, cluster);
+            int villagers = countVillagers(world, cluster, window);
 
             Optional<ClusterRejection> rejection = detector.rejectionOf(cluster, villagers);
 
@@ -162,20 +166,37 @@ public final class VillageScanner {
     }
 
     /**
-     * Camas registradas como POI no raio de busca.
+     * Camas registradas como POI numa <b>coluna</b> de raio
+     * {@link VillageDetector#SEARCH_RADIUS} em volta do gatilho, só dentro da
+     * janela de altura — ADR-003 Emenda 6, decisão do autor de 2026-09-30.
+     * Abaixo do solo e no céu não há cama de vila: o save tinha 67 camas de
+     * Trial Chamber no subsolo, duas embaixo de vilas.
      *
      * <p>{@code ANY} inclui camas livres: uma vila que perdeu aldeões
      * continua sendo uma vila, e é a validação que decide isso.
      */
-    private static List<ColonyPos> collectBeds(ServerWorld world, BlockPos trigger) {
-        return world.getPointOfInterestStorage()
-                .getInCircle(
-                        poi -> poi.matchesKey(PointOfInterestTypes.HOME),
+    private static List<ColonyPos> collectBeds(ServerWorld world, BlockPos trigger, int[] window) {
+        long radiusSquared = (long) VillageDetector.SEARCH_RADIUS * VillageDetector.SEARCH_RADIUS;
+        List<ColonyPos> beds = new ArrayList<>();
+
+        for (var poi : world.getPointOfInterestStorage()
+                .getInSquare(
+                        type -> type.matchesKey(PointOfInterestTypes.HOME),
                         trigger,
                         VillageDetector.SEARCH_RADIUS,
                         PointOfInterestStorage.OccupationStatus.ANY)
-                .map(poi -> MinecraftTypeAdapter.toColonyPos(poi.getPos()))
-                .toList();
+                .toList()) {
+            BlockPos pos = poi.getPos();
+            long dx = (long) pos.getX() - trigger.getX();
+            long dz = (long) pos.getZ() - trigger.getZ();
+
+            if (pos.getY() >= window[0] && pos.getY() <= window[1]
+                    && dx * dx + dz * dz <= radiusSquared) {
+                beds.add(MinecraftTypeAdapter.toColonyPos(pos));
+            }
+        }
+
+        return beds;
     }
 
     /** Sino do cluster, que tem prioridade como centro. Ver ADR-003 §4. */
@@ -202,29 +223,30 @@ public final class VillageScanner {
      * buscar todos os aldeões do mundo é proibido por
      * Performance-Rules.md §5.
      */
-    private static int countVillagers(ServerWorld world, List<ColonyPos> cluster) {
+    private static int countVillagers(ServerWorld world, List<ColonyPos> cluster, int[] window) {
         if (cluster.isEmpty()) {
             return 0;
         }
 
         int minX = Integer.MAX_VALUE;
-        int minY = Integer.MAX_VALUE;
         int minZ = Integer.MAX_VALUE;
         int maxX = Integer.MIN_VALUE;
-        int maxY = Integer.MIN_VALUE;
         int maxZ = Integer.MIN_VALUE;
 
         for (ColonyPos bed : cluster) {
             minX = Math.min(minX, bed.x());
-            minY = Math.min(minY, bed.y());
             minZ = Math.min(minZ, bed.z());
             maxX = Math.max(maxX, bed.x());
-            maxY = Math.max(maxY, bed.y());
             maxZ = Math.max(maxZ, bed.z());
         }
 
-        Box area = new Box(minX, minY, minZ, maxX + 1.0, maxY + 1.0, maxZ + 1.0)
-                .expand(VillageDetector.CLUSTER_DISTANCE);
+        // Recortada pela janela de altura: o mineiro que cava embaixo da vila
+        // não valida um aglomerado de camas de Trial Chamber.
+        Box area = new Box(
+                minX - (double) VillageDetector.CLUSTER_DISTANCE, window[0],
+                minZ - (double) VillageDetector.CLUSTER_DISTANCE,
+                maxX + 1.0 + VillageDetector.CLUSTER_DISTANCE, window[1] + 1.0,
+                maxZ + 1.0 + VillageDetector.CLUSTER_DISTANCE);
 
         return world.getEntitiesByClass(VillagerEntity.class, area, VillagerEntity::isAlive).size();
     }

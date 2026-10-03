@@ -103,6 +103,18 @@ final class TreeReplanting {
             return;
         }
 
+        // No espaço de uma obra não nasce rebento — regra do autor,
+        // 2026-09-30. A mesma pergunta que o viveiro do fazendeiro faz: obra
+        // aberta ou casa pronta da colônia.
+        if (BlockProtection.isColonyBuilt(base)) {
+            VillageColonyMod.LOGGER.info(
+                    "No {} sapling at {} — the spot belongs to a colony build",
+                    species,
+                    base.toShortString());
+
+            return;
+        }
+
         BlockState sapling = species.sapling().getDefaultState();
 
         if (!sapling.canPlaceAt(world, base)) {

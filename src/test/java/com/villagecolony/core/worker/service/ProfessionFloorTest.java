@@ -318,4 +318,26 @@ class ProfessionFloorTest {
             assertEquals(1, headcount().get(type));
         }
     }
+
+    /**
+     * Dois mineiros sem baú e duas trocas: sai um, e o outro segura o posto.
+     *
+     * <p>O teste de cima tem um ocupante por função, e ali nenhum sai de
+     * qualquer jeito. Com dois, a contagem precisa descer a cada dispensa;
+     * sem isso o segundo também saía e a fundação ficava sem mineiro —
+     * 2026-09-25, pelo PIT.
+     */
+    @Test
+    void aDuplicatedFoundationPostLosesOnlyTheExtraWorker() {
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        workers.register(first, COLONY).assign(ProfessionType.MINER);
+        workers.register(second, COLONY).assign(ProfessionType.MINER);
+
+        Set<UUID> demoted = VacancyEnforcer.enforceVacanciesPreservingFoundation(
+                workers, COLONY, villagerId -> false, 2);
+
+        assertEquals(Set.of(first), demoted);
+        assertEquals(1, headcount().get(ProfessionType.MINER), "a fundação ficou sem mineiro");
+    }
 }

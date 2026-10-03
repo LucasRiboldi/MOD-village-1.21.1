@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import net.minecraft.block.Block;
 import net.minecraft.registry.Registries;
@@ -43,6 +44,10 @@ import java.util.Set;
  * {@code LotRefusals}, que é onde quem investiga já está olhando.
  */
 public final class ProtectionSample {
+
+    static {
+        ServerMemory.register(ProtectionSample.class, ProtectionSample::clearAll);
+    }
 
     private ProtectionSample() {
     }

@@ -277,4 +277,29 @@ class MineMarksTest {
                 MineMarks.isInADeadEndAt(1000, FIRST_OF_THE_DEAD_END),
                 "o beco continua fechado");
     }
+
+    /**
+     * A pedra recusada continua recusada depois de salvar e carregar —
+     * 2026-09-25, ADR-025. O mineiro voltava à mesma pedra 553, 39, 158 em
+     * todas as sessões porque a marca vivia só em memória.
+     */
+    @Test
+    void aRefusalSurvivesSavingAndLoading() {
+        BlockPos stone = new BlockPos(553, 39, 158);
+
+        MineMarks.refuseAt(1000, stone);
+        MineMarks.refuseAt(1100, stone);
+
+        java.util.List<MineMarks.Mark> saved = MineMarks.marks();
+
+        MineMarks.clearAll();
+
+        assertFalse(MineMarks.isOutOfReachAt(1200, stone), "a limpeza não apagou a marca");
+
+        MineMarks.restore(saved);
+
+        assertTrue(MineMarks.isOutOfReachAt(1200, stone), "a marca não voltou do save");
+        assertEquals(1, saved.size());
+        assertEquals(2, saved.get(0).count(), "a contagem de recusas não foi salva");
+    }
 }

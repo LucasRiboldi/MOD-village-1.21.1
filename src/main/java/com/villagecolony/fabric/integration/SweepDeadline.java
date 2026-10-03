@@ -15,7 +15,8 @@ import java.util.function.Supplier;
  *
  * <p><b>Sem prazo por padrão.</b> Só o ciclo de jogo arma o prazo; quem chama
  * a varredura direto — o teste de jogo, que precisa de resposta
- * determinística — continua varrendo pelo teto de colunas, como antes.
+ * determinística — continua varrendo pelo teto de colunas, como antes. Com
+ * prazo armado, o teto de colunas não vale — ver {@link #columnCap}.
  *
  * <p>Uma thread só: o ciclo roda no tique do servidor.
  */
@@ -44,6 +45,20 @@ public final class SweepDeadline {
         } finally {
             deadline = previous;
         }
+    }
+
+    /**
+     * O teto de colunas desta passagem — 2026-09-30.
+     *
+     * <p>Com prazo armado, quem para a passagem é o relógio, e o teto de
+     * colunas sai do caminho. O playtest de 30-09 mediu o contrário: cada
+     * passagem parava nas 1.024 colunas gastando 1 a 2 ms dos 15 do prazo,
+     * e a volta do raio 64 levava 16 a 18 ciclos, cerca de oito minutos.
+     * Sem prazo, o teto de sempre continua: o teste de jogo precisa de
+     * passagens determinísticas.
+     */
+    public static int columnCap(int withoutADeadline) {
+        return deadline == Long.MAX_VALUE ? withoutADeadline : Integer.MAX_VALUE;
     }
 
     /** Se a passagem deve parar aqui: o piso foi cumprido e o prazo venceu. */

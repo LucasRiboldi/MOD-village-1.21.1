@@ -278,6 +278,33 @@ class MineSaveTest {
         assertTrue(back.archRaised(), "a migração esqueceu o arco já construído");
     }
 
+    @Test
+    void aMineFromShapeSixRestartsEveryCursorAndKeepsItsRouteAndArch() {
+        UUID colonyId = UUID.randomUUID();
+        Mine mine = Mine.restore(
+                colonyId,
+                MineShaft.from(MOUTH, Side.EAST).rerouted(),
+                new int[] {17, 29, 41, 53});
+        mine.archIsUp();
+
+        NbtCompound nbt = savedWith(colonyAt(colonyId), mine)
+                .writeNbt(new NbtCompound(), null);
+        nbt.getList("mines", NbtElement.COMPOUND_TYPE)
+                .getCompound(0)
+                .putInt("shape", 6);
+
+        Mine back = ColonySavedData.TYPE.deserializer().apply(nbt, null).mines().get(0);
+
+        assertEquals(MOUTH, back.entry());
+        assertEquals(mine.shaft().descent(), back.shaft().descent());
+        assertEquals(mine.shaft().gallery(), back.shaft().gallery());
+        assertEquals(0, back.arm(0).cut());
+        assertEquals(0, back.arm(1).cut());
+        assertEquals(0, back.arm(2).cut());
+        assertEquals(0, back.arm(3).cut());
+        assertTrue(back.archRaised());
+    }
+
     /** A mina desta versão retoma onde parou, e não do começo. */
     @Test
     void aMineOfThisShapeKeepsItsFrontier() {

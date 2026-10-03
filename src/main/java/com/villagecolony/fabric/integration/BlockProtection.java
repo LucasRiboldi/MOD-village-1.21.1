@@ -63,6 +63,41 @@ public final class BlockProtection {
     }
 
     /**
+     * Se o aldeão preso pode cavar este bloco para sair — 2026-10-02.
+     *
+     * <p>A mesma Regra 3 de {@link #mayBreak}, com a exceção que a rua (30-09)
+     * e o lote (18-09) já têm: <b>o chão do bioma dentro de peça da vila não é
+     * peça da vila</b>. Na sessão de 01-10 às 23:36 o mineiro 199ad062 subiu
+     * 81 níveis em pilar e parou a dois blocos da superfície, debaixo da
+     * vila, por 41 minutos: a grama em cima dele estava dentro da caixa de
+     * uma peça gerada, e a fuga a tratava como cerca. Cerca, escada, baú e o
+     * resto da peça continuam intocáveis; a casa da colônia também.
+     *
+     * <p>Só a fuga pergunta isto. Lenhador, mineiro e obra seguem em
+     * {@link #mayBreak}.
+     */
+    public static boolean mayDigOut(ServerWorld world, BlockPos pos, BlockState state) {
+        return !isPlayerPlaced(state)
+                && !isColonyBuilt(pos)
+                && (!isVillageOriginal(world, pos) || LotGround.isBiomeGround(world, pos));
+    }
+
+    /**
+     * Se a base de uma obra pode ocupar o lugar deste bloco de terreno —
+     * 2026-10-02.
+     *
+     * <p>{@link #mayBreak} sem a pergunta da obra aberta: a posição está
+     * dentro da obra que a está construindo, e a obra não se protege de si
+     * mesma. Casa pronta, bloco do jogador e peça da vila continuam de fora;
+     * o chão do bioma dentro de peça da vila entra, como na rua e no lote.
+     */
+    public static boolean mayBuildOver(ServerWorld world, BlockPos pos, BlockState state) {
+        return !isPlayerPlaced(state)
+                && !VillageColonyMod.BUILDINGS.isColonyInfrastructure(MinecraftTypeAdapter.toColonyPos(pos))
+                && (!isVillageOriginal(world, pos) || LotGround.isBiomeGround(world, pos));
+    }
+
+    /**
      * Se este bloco é de uma casa que a própria colônia levantou.
      *
      * <p>A terceira metade da regra, e a que o autor não precisou

@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.type.ColonyPos;
@@ -50,6 +51,10 @@ import java.util.UUID;
  */
 public final class RoadExtension {
 
+    static {
+        ServerMemory.register(RoadExtension.class, RoadExtension::clearAll);
+    }
+
     /**
      * Quantos blocos por vez.
      *
@@ -91,6 +96,9 @@ public final class RoadExtension {
      * perto.
      */
     private static final Map<UUID, List<End>> ENDS = new HashMap<>();
+
+    /** Ramais laterais, tentados apenas depois das pontas verdadeiras. */
+    private static final Map<UUID, List<End>> BRANCHES = new HashMap<>();
 
     /**
      * As pontas que não se deixaram calçar, e desde quando.
@@ -205,11 +213,23 @@ public final class RoadExtension {
 
         Optional<Direction> towards = RoadPaving.openSideOf(world, colonyId, road);
 
-        if (towards.isEmpty()) {
+        if (towards.isPresent()) {
+            addCandidate(ENDS, colonyId, road, towards.get(), center);
             return;
         }
 
-        List<End> found = ENDS.computeIfAbsent(colonyId, id -> new ArrayList<>());
+        for (Direction branch : RoadPaving.openBranchSidesOf(world, colonyId, road)) {
+            addCandidate(BRANCHES, colonyId, road, branch, center);
+        }
+    }
+
+    private static void addCandidate(
+            Map<UUID, List<End>> candidates,
+            UUID colonyId,
+            BlockPos road,
+            Direction towards,
+            BlockPos center) {
+        List<End> found = candidates.computeIfAbsent(colonyId, id -> new ArrayList<>());
 
         double distance = center.getSquaredDistance(road);
 
@@ -218,7 +238,7 @@ public final class RoadExtension {
             return;
         }
 
-        found.add(new End(road, towards.get(), distance));
+        found.add(new End(road, towards, distance));
 
         // Da mais distante para a mais perto, que é a frase da regra: a
         // rua cresce pela ponta, e não pelo meio.
@@ -255,6 +275,7 @@ public final class RoadExtension {
      */
     public static void forgetEnds(UUID colonyId) {
         ENDS.remove(colonyId);
+        BRANCHES.remove(colonyId);
     }
 
     /**
@@ -266,6 +287,7 @@ public final class RoadExtension {
      */
     public static void lotFound(UUID colonyId) {
         ENDS.remove(colonyId);
+        BRANCHES.remove(colonyId);
         GROWING.remove(colonyId);
     }
 
@@ -298,6 +320,8 @@ public final class RoadExtension {
     /** Esvazia os registros. Chamado ao parar o servidor. */
     public static void clearAll() {
         ENDS.clear();
+
+        BRANCHES.clear();
 
         REFUSED.clear();
 
@@ -421,9 +445,18 @@ public final class RoadExtension {
      *     {@link VillageRoad}
      */
     public static Outcome extend(ServerWorld world, UUID colonyId, ResourceId paving) {
-        List<End> ends = ENDS.remove(colonyId);
+        List<End> ends = new ArrayList<>();
+        List<End> trueEnds = ENDS.remove(colonyId);
+        List<End> branches = BRANCHES.remove(colonyId);
 
-        if (ends == null || ends.isEmpty()) {
+        if (trueEnds != null) {
+            ends.addAll(trueEnds);
+        }
+        if (branches != null) {
+            ends.addAll(branches);
+        }
+
+        if (ends.isEmpty()) {
             return Outcome.NO_END;
         }
 
@@ -436,8 +469,10 @@ public final class RoadExtension {
         // Da mais distante para a mais perto, e a primeira que aceitar
         // calçamento vence. Tentar todas custa poucas leituras de bloco e
         // é o que impede a vila de parar por causa de uma ponta ruim.
+        PavingRefusals refusals = new PavingRefusals();
+
         for (End end : ends) {
-            List<ColonyPos> laidAt = RoadPaving.pave(world, colonyId, end, block.get());
+            List<ColonyPos> laidAt = RoadPaving.pave(world, colonyId, end, block.get(), refusals);
 
             int laid = laidAt.size();
 
@@ -464,12 +499,16 @@ public final class RoadExtension {
         // Todas recusaram. O fracasso tem voz e diz quantas foram — sem
         // isto, "a rua não cresceu" e "a rua nem foi tentada" são a mesma
         // linha, que é o que custou as sessões da mina.
+        // E diz o que cada uma encontrou — 2026-09-30. Ver PavingRefusals.
+        refusals.publish(colonyId);
+
         VillageColonyMod.LOGGER.info(
                 "Colony {} found no road end it may pave — tried {} of them, and they sit out"
-                        + " {} cycles before being tried again",
+                        + " {} cycles before being tried again — {}",
                 colonyId,
                 ends.size(),
-                REFUSED_MEMORY / VillageDetector.CYCLE_TICKS);
+                REFUSED_MEMORY / VillageDetector.CYCLE_TICKS,
+                refusals.isEmpty() ? "no reason recorded" : refusals.summary());
 
         return Outcome.BLOCKED;
     }

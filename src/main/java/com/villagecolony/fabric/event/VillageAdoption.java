@@ -3,6 +3,7 @@ package com.villagecolony.fabric.event;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.ClusterRejection;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.coordination.ColonyIdentity;
 import com.villagecolony.core.coordination.IdleReason;
 import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.ColonyState;
@@ -32,6 +33,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageBiomes;
 import com.villagecolony.fabric.integration.VillageScanner;
 import com.villagecolony.fabric.integration.VillageFoundation;
+import com.villagecolony.fabric.integration.VillageForest;
 import com.villagecolony.fabric.integration.VanillaBedChests;
 import com.villagecolony.fabric.integration.BigHouseFoundation;
 import com.villagecolony.fabric.integration.VillagerScanner;
@@ -103,8 +105,8 @@ final class VillageAdoption {
     }
 
     /**
-     * O mesmo, só nas colônias que a regra deixa analisar — 2026-09-24. Em
-     * jogo, a vila foco e as que têm jogador dentro; ver VillageFocus.
+     * O mesmo, só nas colônias que a regra deixa analisar. Em jogo, são
+     * exclusivamente as vilas no raio atual de um jogador; ver VillageFocus.
      */
     static void detectFromColonyCenters(
             ServerWorld overworld, java.util.function.Predicate<Colony> analyzed) {
@@ -117,6 +119,10 @@ final class VillageAdoption {
         }
 
         for (Colony colony : active) {
+            // A colônia sem caixa — save antigo — é medida antes da sonda, e
+            // a sonda já procura camas na janela de altura dela.
+            VillageMeasure.measure(overworld, colony, List.of());
+
             // Antes da varredura: a adoção move centros, e a pergunta do
             // abandono é sobre o que a sonda enxergou de onde ela partiu.
             ColonyPos probedFrom = colony.center();
@@ -262,6 +268,8 @@ final class VillageAdoption {
     }
 
     /**
+     * A detecção em volta do gatilho, dizendo se ela é a sonda do centro.
+     *
      * @param isProbe se a varredura é a sonda ancorada no centro de uma
      *     colônia, a única cujas leituras se confirmam entre ciclos
      * @return tudo o que a varredura viu, aprovado e recusado. Só a sonda
@@ -279,6 +287,44 @@ final class VillageAdoption {
 
         for (VillageCandidate candidate
                 : VillageColonyMod.COLONIES.bestPerColony(result.candidates())) {
+            // <b>Aglomerado de vila conhecida não é vila nova</b> — E51,
+            // 2026-09-30. A identidade comparava só centros, a até 64 blocos,
+            // e a ponta de uma vila grande nascia colônia nova com BigHouseMOD
+            // e 7 adultos, absorvida só no fim do ciclo. Agora a mesma vila
+            // gerada, ou uma cama a poucos blocos de uma construção da
+            // colônia, também dizem "é dela". Fora do raio do centro, o
+            // aglomerado só empresta os aldeões: não move o centro nem a
+            // contagem de camas, que são a leitura da sonda (Emenda 4).
+            // A colônia que o aglomerado seria, fora do registro: só para
+            // perguntar à fusão se as duas ocupam a mesma vila gerada.
+            Colony wouldBe = Colony.create(UUID.randomUUID(), candidate.center());
+
+            Optional<ColonyIdentity.Owner> owner = ColonyIdentity.ownerOf(
+                    candidate,
+                    VillageColonyMod.COLONIES,
+                    VillageColonyMod.BUILDINGS,
+                    colony -> ColonyMergeTrigger.shareAGeneratedVillage(world, wouldBe, colony));
+
+            if (owner.isPresent()
+                    && owner.get().reason() != ColonyIdentity.Reason.NEAR_ITS_CENTER) {
+                Colony colony = owner.get().colony();
+
+                VillagerRegistration.registerVillagers(world, colony, candidate.center());
+
+                if (VillageDetectionHandler.overlapsReported.add(
+                        "part|" + colony.id() + "|" + owner.get().reason())) {
+                    VillageColonyMod.LOGGER.info(
+                            "Bed cluster at {} ({} beds) is part of colony {} — {};"
+                                    + " no new colony and no BigHouseMOD",
+                            candidate.center(),
+                            candidate.bedCount(),
+                            colony.id(),
+                            owner.get().reason());
+                }
+
+                continue;
+            }
+
             int before = VillageColonyMod.COLONIES.count();
 
             Optional<Colony> known = VillageColonyMod.COLONIES
@@ -291,14 +337,27 @@ final class VillageAdoption {
             Colony colony = VillageColonyMod.COLONIES.adopt(candidate);
 
             boolean created = VillageColonyMod.COLONIES.count() > before;
+            BigHouseFoundation.Result house = BigHouseFoundation.ensure(world, colony);
+
+            // O contrato da fundação é atômico para uma vila inédita: uma
+            // colônia só passa a existir quando a BigHouseMOD física cabe em
+            // um lote seguro. Não deixar o registro sobreviver evita uma vila
+            // lógica sem camas, baús e moradores da casa. Colônias de saves
+            // antigos permanecem para que possam reparar a fundação depois.
+            if (created && !house.placed()) {
+                VillageColonyMod.COLONIES.remove(colony.id());
+                VillageColonyMod.LOGGER.info(
+                        "Deferred colony adoption at {} until BigHouseMOD has a safe lot",
+                        candidate.center());
+                continue;
+            }
+
             if (created && !candidate.beds().isEmpty()) {
                 // Só a primeira adoção recebe esta passagem. A lista é o
                 // cluster exato que acabou de provar a vila, nunca uma
                 // varredura posterior de trabalhador ou de fundação.
                 VanillaBedChests.ensure(world, candidate.beds());
             }
-
-            BigHouseFoundation.Result house = BigHouseFoundation.ensure(world, colony);
 
             // A partir das camas vistas, e não do centro — 2026-08-22.
             // Desde a Emenda 4 o centro não persegue mais a observação,
@@ -321,11 +380,16 @@ final class VillageAdoption {
                 VillagerRegistration.registerVillagers(world, colony, candidate.center());
             }
 
+            // A caixa da vila: medida uma vez, depois só cresce.
+            VillageMeasure.measure(world, colony, candidate.beds());
+
             if (created) {
+                int trees = VillageForest.seedInitial(world, colony);
                 VillageColonyMod.LOGGER.info(
-                        "Colony created at {} with {} beds",
+                        "Colony created at {} with {} beds and {} forest trees",
                         colony.center(),
-                        candidate.bedCount());
+                        candidate.bedCount(),
+                        trees);
             } else if (previousCenter != null && !colony.center().equals(previousCenter)) {
                 VillageColonyMod.LOGGER.info(
                         "Colony {} moved from {} to {} with {} beds",
@@ -370,12 +434,12 @@ final class VillageAdoption {
 
             VillageColonyMod.LOGGER.warn(
                     "Overlapping colonies detected — {} at {} and {} at {} are {} blocks apart"
-                            + " (less than {}); the MVP does not merge them",
+                            + " (less than {}); they merge on the next colony cycle (ADR-007)",
                     colony.id(),
                     colony.center(),
                     other.id(),
                     other.center(),
-                    (int) Math.sqrt(colony.center().horizontalDistanceSquared(other.center())),
+                    (int) Math.sqrt((double) colony.center().horizontalDistanceSquared(other.center())),
                     VillageDetector.OVERLAP_DISTANCE);
         }
     }

@@ -1,6 +1,10 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.task.model.Task;
+import com.villagecolony.core.task.model.TaskPriority;
+import com.villagecolony.core.task.model.TaskType;
+import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.core.worker.model.Worker;
 import net.minecraft.util.math.BlockPos;
@@ -27,6 +31,7 @@ class StrandedWorkersTest {
     void clear() {
         StrandedWorkers.clearAll();
         VillageColonyMod.WORKERS.clear();
+        VillageColonyMod.TASKS.clear();
     }
 
     private static Worker mason() {
@@ -87,5 +92,30 @@ class StrandedWorkersTest {
 
         assertFalse(StrandedWorkers.frozeAt(stranger, PIT));
         assertFalse(StrandedWorkers.isStranded(stranger));
+    }
+
+    /**
+     * Dois condutores no mesmo aldeão — 2026-10-01. O mineiro 199ad062 foi
+     * marcado encalhado e o trabalho de mineiro seguiu mandando nele ao lado
+     * da fuga. Marcado, ele larga a tarefa, e ela volta à fila para outro.
+     */
+    @Test
+    void aStrandedWorkerDropsItsTaskBackToTheQueue() {
+        Worker worker = mason();
+        Task task = VillageColonyMod.TASKS.create(worker.colonyId(), TaskType.COLLECT_WOOD,
+                TaskPriority.PRODUCTION, ResourceType.OAK_LOG, 8);
+        task.reserveFor(worker.villagerId());
+
+        StrandedWorkers.frozeAt(worker.villagerId(), PIT);
+        StrandedWorkers.frozeAt(worker.villagerId(), PIT);
+
+        // Ainda com a tarefa: o WorkStall marca de dentro do laço do ofício,
+        // e tirar o trabalho ali quebraria o laço. Larga no tique seguinte.
+        assertFalse(VillageColonyMod.TASKS.assignedTo(worker.villagerId()).isEmpty());
+
+        StrandedWorkers.dropMarkedJobs();
+
+        assertTrue(VillageColonyMod.TASKS.assignedTo(worker.villagerId()).isEmpty(),
+                "o encalhado continuou com a tarefa, e o ofício seguiria mandando nele");
     }
 }

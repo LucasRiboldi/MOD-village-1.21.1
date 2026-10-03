@@ -1,5 +1,7 @@
 package com.villagecolony.core.type;
 
+import java.util.Comparator;
+
 /**
  * Quanto um recurso serve no lugar de outro — a ADR-009 §3.10.
  *
@@ -13,9 +15,12 @@ package com.villagecolony.core.type;
  * dizer "use este se não houver aquele", e é essa a diferença entre
  * aceitar e preferir.
  *
- * <p><b>A ordem do enum é a ordem da preferência</b>, e há código que
- * depende disso: quem escolhe entre dois recursos aceitos pega o de
- * menor {@code ordinal}. Reordenar aqui muda o que a colônia escolhe.
+ * <p><b>A preferência é o campo {@link #preference()}</b>, e não a ordem
+ * de declaração: quem escolhe entre dois recursos aceitos pega o de
+ * menor número. Até 2026-09-29 era o {@code ordinal()}, e reordenar as
+ * constantes mudava o que a colônia escolhia. A folga de dez deixa
+ * entrar um nível novo sem renumerar; {@code SubstitutionTest} fixa a
+ * sequência.
  */
 public enum Substitution {
 
@@ -25,7 +30,7 @@ public enum Substitution {
      * <p>Todo recurso é {@code PREFERRED} para si mesmo, e isso não se
      * declara em lugar nenhum: sai de graça da comparação.
      */
-    PREFERRED,
+    PREFERRED(10),
 
     /**
      * Serve para a <b>meta</b> da colônia, e não para a parede.
@@ -38,7 +43,7 @@ public enum Substitution {
      * Regra 27, e ela só abriu para pedra. Substituição de estoque não é
      * substituição de obra.
      */
-    ACCEPTABLE,
+    ACCEPTABLE(20),
 
     /**
      * Serve <b>até na parede</b>, e só quando não houver nada melhor.
@@ -55,7 +60,7 @@ public enum Substitution {
      * <p>Declarado hoje: a família da pedra, e só ela — pedregulho e
      * arenito, um pelo outro. Decisão do autor.
      */
-    ALTERNATIVE,
+    ALTERNATIVE(30),
 
     /**
      * Não serve.
@@ -65,15 +70,30 @@ public enum Substitution {
      * não equivale. Pedregulho e arenito moram os dois em
      * {@link ResourceGroup#STONE} e são proibidos um para o outro.
      */
-    FORBIDDEN;
+    FORBIDDEN(40);
+
+    /** Do que mais serve para o que menos serve. */
+    public static final Comparator<Substitution> BEST_FIRST =
+            Comparator.comparingInt(Substitution::preference);
+
+    private final int preference;
+
+    Substitution(int preference) {
+        this.preference = preference;
+    }
+
+    /** Menor é melhor. Só para ordenar — não é persistido. */
+    public int preference() {
+        return preference;
+    }
 
     /** Se este nível deixa o recurso passar. */
     public boolean serves() {
         return this != FORBIDDEN;
     }
 
-    /** Se este é melhor que aquele — menor ordinal, maior preferência. */
+    /** Se este é melhor que aquele — menor {@link #preference()}. */
     public boolean isBetterThan(Substitution other) {
-        return ordinal() < other.ordinal();
+        return preference < other.preference;
     }
 }

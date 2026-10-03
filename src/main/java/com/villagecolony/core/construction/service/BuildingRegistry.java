@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * O que a colônia construiu — TASK-036 e TASK-037.
@@ -40,10 +41,19 @@ public final class BuildingRegistry {
     /** Ordem de inserção, para log e iteração reproduzíveis. */
     private final Map<UUID, Building> buildings = new LinkedHashMap<>();
 
+    /** Quem quer saber de cada construção registrada — a vila que cresce, ADR-003 Emenda 6. */
+    private Consumer<Building> registered = building -> { };
+
     public void register(Building building) {
         Objects.requireNonNull(building, "building");
 
         buildings.put(building.id(), building);
+        registered.accept(building);
+    }
+
+    /** Avisa {@code listener} de cada construção registrada daqui em diante. */
+    public void whenRegistered(Consumer<Building> listener) {
+        registered = Objects.requireNonNull(listener, "listener");
     }
 
     /**
@@ -65,6 +75,11 @@ public final class BuildingRegistry {
                 continue;
             }
 
+            // Sai e entra de novo, e é de propósito — 2026-09-25: a obra que
+            // acabou de ser terminada é a última tentada, e o rodízio lê a
+            // última pela ordem deste mapa. Ficar na posição antiga fazia o
+            // templo retomado parecer tentado lá atrás.
+            buildings.remove(existing.id());
             buildings.put(existing.id(), new Building(
                     existing.id(),
                     existing.colonyId(),
@@ -179,6 +194,27 @@ public final class BuildingRegistry {
         }
 
         return found;
+    }
+
+    /**
+     * Passa as construções de uma colônia para outra — ADR-007 §3.
+     *
+     * @return quantas mudaram de dono
+     */
+    public int reassign(UUID from, UUID to) {
+        Objects.requireNonNull(from, "from");
+        Objects.requireNonNull(to, "to");
+
+        int moved = 0;
+
+        for (Map.Entry<UUID, Building> entry : buildings.entrySet()) {
+            if (entry.getValue().colonyId().equals(from)) {
+                entry.setValue(entry.getValue().joinColony(to));
+                moved++;
+            }
+        }
+
+        return moved;
     }
 
     /** Todas, em ordem de registro. Somente leitura. */

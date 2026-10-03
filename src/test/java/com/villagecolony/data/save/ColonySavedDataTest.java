@@ -1,6 +1,7 @@
 package com.villagecolony.data.save;
 
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.colony.model.ColonyLifecycle;
 import com.villagecolony.core.colony.model.ColonyState;
 import com.villagecolony.core.type.ColonyPos;
@@ -15,6 +16,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Round-trip de serialização.
@@ -55,6 +57,66 @@ class ColonySavedDataTest {
         assertEquals(colony.id(), restored.id());
         assertEquals(colony.center(), restored.center());
         assertEquals(ColonyState.EXPANSION, restored.state());
+    }
+
+    @Test
+    void forestPopulationMilestoneSurvivesRoundTrip() {
+        Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(120, 68, -340));
+        colony.markForestPopulationMilestone(20);
+
+        ColonySavedData data = empty();
+        data.sync(List.of(colony), List.of());
+
+        Colony restored = roundTrip(data).colonies().get(0);
+
+        assertEquals(20, restored.forestPopulationMilestone());
+    }
+
+    @Test
+    void theVillageBoundsSurviveRoundTrip() {
+        Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(120, 68, -340));
+        VillageBounds bounds = new VillageBounds(1627, 63, -5376, 1764, 85, -5220);
+        colony.measure(bounds);
+
+        ColonySavedData data = empty();
+        data.sync(List.of(colony), List.of());
+
+        Colony restored = roundTrip(data).colonies().get(0);
+
+        assertEquals(bounds, restored.bounds().orElseThrow());
+        assertEquals(colony.center(), restored.center());
+    }
+
+    @Test
+    void anOldSaveComesBackWithoutBounds() {
+        Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(120, 68, -340));
+
+        ColonySavedData data = empty();
+        data.sync(List.of(colony), List.of());
+
+        assertTrue(roundTrip(data).colonies().get(0).bounds().isEmpty());
+    }
+
+    @Test
+    void saveWithoutForestPopulationMilestoneStartsAtZero() {
+        Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(0, 64, 0));
+        ColonySavedData data = empty();
+        data.sync(List.of(colony), List.of());
+
+        NbtCompound oldSave = data.writeNbt(new NbtCompound(), null);
+        oldSave.getList("colonies", 10).getCompound(0).remove("forestPopulationMilestone");
+
+        Colony restored = ColonySavedData.TYPE.deserializer().apply(oldSave, null).colonies().get(0);
+
+        assertEquals(0, restored.forestPopulationMilestone());
+    }
+
+    @Test
+    void forestPopulationMilestoneMustBeAWholeDecade() {
+        Colony colony = Colony.create(UUID.randomUUID(), new ColonyPos(0, 64, 0));
+
+        assertThrows(IllegalArgumentException.class, () -> colony.markForestPopulationMilestone(9));
+        assertThrows(IllegalArgumentException.class, () -> colony.markForestPopulationMilestone(-10));
     }
 
     /** ADR-002: nada está carregado ao abrir o mundo. */

@@ -72,11 +72,20 @@ public final class RoadsideSites {
             ServerWorld world, UUID colonyId, ColonyPos center,
             List<ColonyPos> plans, List<ColonyPos> road) {
 
+        return findBesideForFootprints(
+                world, colonyId, center, BuildSiteScanner.footprintsForAnyRoadSide(plans), road);
+    }
+
+    /** Encontra um lote usando a dimensão válida para o lado da rua. */
+    public static Optional<Site> findBesideForFootprints(
+            ServerWorld world, UUID colonyId, ColonyPos center,
+            List<BuildSiteScanner.Footprint> footprints, List<ColonyPos> road) {
+
         BlockPos from = MinecraftTypeAdapter.toBlockPos(center);
 
         for (ColonyPos column : road) {
             Optional<Site> site = siteBesideRoadAt(
-                    world, colonyId, from, column.x(), column.z(), from.getY(), plans);
+                    world, colonyId, from, column.x(), column.z(), from.getY(), footprints);
 
             if (site.isPresent()) {
                 // Achou: a varredura em curso perde o sentido, e o cursor
@@ -100,7 +109,7 @@ public final class RoadsideSites {
      */
     static Optional<Site> siteBesideRoadAt(
             ServerWorld world, UUID colonyId, BlockPos center,
-            int x, int z, int aroundY, List<ColonyPos> plans) {
+            int x, int z, int aroundY, List<BuildSiteScanner.Footprint> footprints) {
 
         Optional<BlockPos> ground = LotGround.groundInColumn(world, x, z, aroundY);
 
@@ -126,8 +135,9 @@ public final class RoadsideSites {
         // A altura da rua, que a Regra 19 usa como régua do lote.
         int roadY = ground.get().getY();
 
-        for (ColonyPos size : plans) {
-            Optional<Site> site = siteFor(world, colonyId, x, z, aroundY, roadY, size);
+        for (BuildSiteScanner.Footprint footprint : footprints) {
+            Optional<Site> site = siteFor(
+                    world, colonyId, x, z, aroundY, roadY, footprint.size(), footprint.doorSide());
 
             if (site.isPresent()) {
                 return site;
@@ -140,9 +150,13 @@ public final class RoadsideSites {
     /** O lote desta planta ao lado desta rua, se houver. */
     static Optional<Site> siteFor(
             ServerWorld world, UUID colonyId, int x, int z, int aroundY, int roadY,
-            ColonyPos size) {
+            ColonyPos size, Direction doorSide) {
 
         for (Direction side : Direction.Type.HORIZONTAL) {
+            if (side.getOpposite() != doorSide) {
+                continue;
+            }
+
             // O lote começa no bloco seguinte à estrada — encostado nela,
             // que é a decisão 1.
             int lotX = x + side.getOffsetX();
@@ -151,23 +165,54 @@ public final class RoadsideSites {
             // A casa se estende para longe da estrada, e não por cima
             // dela: partindo da beira, o canto do lote recua meia casa
             // nos eixos que não são o da direção.
-            int originX = side.getOffsetX() < 0 ? lotX - size.x() + 1 : lotX;
-            int originZ = side.getOffsetZ() < 0 ? lotZ - size.z() + 1 : lotZ;
+            int baseX = side.getOffsetX() < 0 ? lotX - size.x() + 1 : lotX;
+            int baseZ = side.getOffsetZ() < 0 ? lotZ - size.z() + 1 : lotZ;
 
-            Optional<Integer> floor =
-                    LotLevel.flatGroundAt(world, colonyId, originX, originZ, aroundY, roadY, size);
+            // <b>Alternativas antes de recusar</b> — pedido do autor,
+            // 2026-09-30. Cada coluna de rua tinha um só candidato, ancorado
+            // numa ponta, e metade das recusas da sessão das 02:45 foi a rua
+            // dobrando para dentro dele. Agora a pegada também desliza ao
+            // longo da rua, sem se afastar dela (a porta continua na rua, a
+            // Regra 17); a posição de sempre continua sendo a primeira.
+            boolean roadRunsAlongX = side.getOffsetX() == 0;
+            int along = roadRunsAlongX ? size.x() : size.z();
 
-            if (floor.isPresent()) {
-                // A rua fica do lado oposto àquele para onde o lote
-                // cresceu: `side` aponta da rua para o lote, e a porta
-                // olha de volta para ela.
-                return Optional.of(new Site(
-                        new ColonyPos(originX, floor.get(), originZ),
-                        side.getOpposite(),
-                        size));
+            for (int slide : slidesFor(along)) {
+                int originX = baseX + (roadRunsAlongX ? slide : 0);
+                int originZ = baseZ + (roadRunsAlongX ? 0 : slide);
+
+                Optional<Integer> floor = LotLevel.flatGroundAt(
+                        world, colonyId, originX, originZ, aroundY, roadY, size);
+
+                if (floor.isPresent()) {
+                    // A rua fica do lado oposto àquele para onde o lote
+                    // cresceu: `side` aponta da rua para o lote, e a porta
+                    // olha de volta para ela.
+                    return Optional.of(new Site(
+                            new ColonyPos(originX, floor.get(), originZ),
+                            side.getOpposite(),
+                            size));
+                }
             }
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * Onde a pegada começa ao longo da rua, relativa à coluna: ancorada nela
+     * (a posição de sempre), na outra ponta e no meio.
+     */
+    private static int[] slidesFor(int along) {
+        int end = -(along - 1);
+        int middle = end / 2;
+
+        if (end == 0) {
+            return new int[] {0};
+        }
+
+        return middle == 0 || middle == end
+                ? new int[] {0, end}
+                : new int[] {0, end, middle};
     }
 }

@@ -205,12 +205,14 @@ public final class ChestInventoryReader {
      * @param freeSpaceByGroup espaço dos grupos pedidos para esta fotografia
      * @param chestsRead  baús alcançados, incluindo os que estavam vazios
      * @param chestsUnreachable baús registrados cujo chunk não está carregado
+     * @param chestsPending baús carregados que ainda serão lidos nesta rodada
      */
     public record ChestSurvey(
             ColonyResources resources,
             Map<ResourceGroup, Integer> freeSpaceByGroup,
             int chestsRead,
-            int chestsUnreachable) {
+            int chestsUnreachable,
+            int chestsPending) {
 
         public ChestSurvey {
             freeSpaceByGroup = Map.copyOf(freeSpaceByGroup);
@@ -218,7 +220,16 @@ public final class ChestInventoryReader {
 
         /** Construtor mantido para fotografias que só precisam do estoque. */
         public ChestSurvey(ColonyResources resources, int chestsRead, int chestsUnreachable) {
-            this(resources, Map.of(), chestsRead, chestsUnreachable);
+            this(resources, Map.of(), chestsRead, chestsUnreachable, 0);
+        }
+
+        /** Construtor para uma fotografia completa, com espaço já calculado. */
+        public ChestSurvey(
+                ColonyResources resources,
+                Map<ResourceGroup, Integer> freeSpaceByGroup,
+                int chestsRead,
+                int chestsUnreachable) {
+            this(resources, freeSpaceByGroup, chestsRead, chestsUnreachable, 0);
         }
 
         /**
@@ -234,6 +245,27 @@ public final class ChestInventoryReader {
 
         /** Se a contagem está incompleta, e por isso não vale confiar nela. */
         public boolean isPartial() {
+            return chestsUnreachable > 0 || chestsPending > 0;
+        }
+
+        /**
+         * Se ainda há baús a visitar nesta rodada.
+         *
+         * <p>O estoque já observado pode orientar o ciclo, mas a fotografia
+         * continua incompleta até a próxima fatia.
+         */
+        public boolean isPending() {
+            return chestsPending > 0;
+        }
+
+        /**
+         * Se algum baú conhecido ficou fora de alcance nesta fotografia.
+         *
+         * <p>O conteúdo ausente não vira zero, saldo virtual ou reserva. O
+         * ciclo pode continuar com o limite inferior observado, e as retiradas
+         * físicas continuam confirmando o item no baú antes de usá-lo.
+         */
+        public boolean isDegraded() {
             return chestsUnreachable > 0;
         }
 
@@ -242,7 +274,7 @@ public final class ChestInventoryReader {
          * não entregou.
          */
         public int chestsKnown() {
-            return chestsRead + chestsUnreachable;
+            return chestsRead + chestsUnreachable + chestsPending;
         }
 
         /**
@@ -281,10 +313,18 @@ public final class ChestInventoryReader {
          * como oito baús dos quais um foi alcançado.
          */
         public String coverage() {
-            String read = isPartial()
-                    ? chestsRead + " of " + chestsKnown() + " chests read ("
-                            + chestsUnreachable + " in unloaded chunks)"
-                    : chestsRead + " chests read";
+            String read = chestsRead + " of " + chestsKnown() + " chests read";
+
+            if (!isPartial()) {
+                read = chestsRead + " chests read";
+            } else if (chestsPending > 0 && chestsUnreachable > 0) {
+                read += " (" + chestsPending + " pending, "
+                        + chestsUnreachable + " in unloaded chunks)";
+            } else if (chestsPending > 0) {
+                read += " (" + chestsPending + " pending this round)";
+            } else {
+                read += " (" + chestsUnreachable + " in unloaded chunks)";
+            }
 
             return read + ", " + chestsWithItems() + " with items";
         }
@@ -350,6 +390,6 @@ public final class ChestInventoryReader {
         }
 
         return new ChestSurvey(
-                ColonyResources.of(byChest), freeSpace, byChest.size(), unreachable);
+                ColonyResources.of(byChest), freeSpace, byChest.size(), unreachable, 0);
     }
 }

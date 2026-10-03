@@ -3,6 +3,8 @@ package com.villagecolony.gametest;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
+import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.ProfessionAssigner;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
@@ -24,6 +26,7 @@ import net.minecraft.world.poi.PointOfInterestTypes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Os primeiros testes que não precisam de um humano.
@@ -67,6 +70,86 @@ public class ColonyDetectionGameTest implements FabricGameTest {
                     "nenhuma colônia nasceu destas camas — " + diagnose(context, anchor));
         } finally {
             forget(context, anchor);
+        }
+
+        context.complete();
+    }
+
+    /**
+     * Uma vila nova não entra no registro até sua casa fundacional caber no mundo.
+     *
+     * <p>Os espigões tornam impossível uma caixa plana de 7 por 11 em todo o
+     * raio que {@code BigHouseFoundation} considera. O cenário ainda tem camas
+     * e adultos suficientes para a detecção; a única recusa é o lote da casa.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE,
+            batchId = "colony_detection", tickLimit = 120)
+    public void aVillageWithoutASafeBigHouseLotIsNotAdopted(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos anchor = context.getAbsolutePos(new BlockPos(1, 2, 1))
+                .add(1_000_000, 0, 1_100_000);
+
+        prepareImpossibleBigHouseLot(world, anchor);
+        placeBeds(world, anchor, BEDS);
+        spawnVillagers(world, anchor, VillageDetector.MIN_VILLAGERS);
+
+        try {
+            for (int attempt = 0; attempt < 3; attempt++) {
+                VillageDetectionHandler.runCycleNow(world, anchor);
+            }
+
+            context.assertFalse(VillageColonyMod.COLONIES.findNearest(
+                            MinecraftTypeAdapter.toColonyPos(anchor),
+                            VillageDetector.DUPLICATE_DISTANCE).isPresent(),
+                    "a vila sem lote seguro ficou registrada sem BigHouseMOD");
+        } finally {
+            VillageColonyMod.COLONIES.findNearest(
+                            MinecraftTypeAdapter.toColonyPos(anchor),
+                            VillageDetector.DUPLICATE_DISTANCE)
+                    .ifPresent(ColonyDetectionGameTest::forgetColony);
+        }
+
+        context.complete();
+    }
+
+    /**
+     * <b>A ponta de uma vila conhecida não nasce colônia nova</b> — E51,
+     * 2026-09-30.
+     *
+     * <p>No playtest, aglomerados a 65+ blocos do centro da vila do autor
+     * viraram colônias novas, cada uma com BigHouseMOD e 7 adultos. Aqui o
+     * centro da colônia fica a 100 blocos, mas uma casa dela fica a poucos
+     * blocos das camas: é a mesma vila.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "colony_detection")
+    public void aClusterBesideAColonyBuildingIsNotANewColony(TestContext context) {
+        BlockPos anchor = new BlockPos(1, 1, 1);
+        BlockPos at = context.getAbsolutePos(anchor);
+        Colony known = Colony.create(UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(at.add(100, 0, 0)));
+        Building house = new Building(UUID.randomUUID(), known.id(), ResourceId.vanilla("house"),
+                MinecraftTypeAdapter.toColonyPos(at.add(-12, 0, 0)),
+                MinecraftTypeAdapter.toColonyPos(at.add(-8, 4, 4)));
+
+        VillageColonyMod.COLONIES.register(known);
+        VillageColonyMod.BUILDINGS.register(house);
+        placeBeds(context, anchor, BEDS);
+        spawnVillagers(context, anchor, VillageDetector.MIN_VILLAGERS);
+
+        runCycle(context, anchor);
+
+        try {
+            context.assertTrue(colonyOf(context, anchor).isEmpty(),
+                    "as camas ao lado de uma casa da colônia viraram colônia nova");
+            context.assertTrue(
+                    VillageColonyMod.WORKERS.ofColony(known.id()).size()
+                            >= VillageDetector.MIN_VILLAGERS,
+                    "os aldeões do aglomerado não entraram na colônia que já existia: "
+                            + VillageColonyMod.WORKERS.ofColony(known.id()).size());
+        } finally {
+            forget(context, anchor);
+            VillageColonyMod.BUILDINGS.remove(house.id());
+            forgetColony(known);
         }
 
         context.complete();
@@ -267,6 +350,56 @@ public class ColonyDetectionGameTest implements FabricGameTest {
             context.setBlockState(head.offset(Direction.SOUTH), Blocks.WHITE_BED.getDefaultState()
                     .with(BedBlock.PART, BedPart.FOOT)
                     .with(BedBlock.FACING, Direction.NORTH));
+        }
+    }
+
+    private static void placeBeds(ServerWorld world, BlockPos anchor, int count) {
+        for (int i = 0; i < count; i++) {
+            BlockPos head = bedHead(anchor, i);
+
+            world.setBlockState(head, Blocks.WHITE_BED.getDefaultState()
+                    .with(BedBlock.PART, BedPart.HEAD)
+                    .with(BedBlock.FACING, Direction.NORTH));
+            world.setBlockState(head.offset(Direction.SOUTH), Blocks.WHITE_BED.getDefaultState()
+                    .with(BedBlock.PART, BedPart.FOOT)
+                    .with(BedBlock.FACING, Direction.NORTH));
+        }
+    }
+
+    private static void spawnVillagers(ServerWorld world, BlockPos anchor, int count) {
+        for (int i = 0; i < count; i++) {
+            VillagerEntity villager = EntityType.VILLAGER.create(world);
+            if (villager == null) {
+                throw new AssertionError("nao foi possivel criar aldeao para a vila de teste");
+            }
+
+            villager.refreshPositionAndAngles(
+                    anchor.getX() + (i % 4) + 0.5,
+                    anchor.getY(),
+                    anchor.getZ() + 4 + (i / 4) + 0.5,
+                    0.0F,
+                    0.0F);
+            villager.setBreedingAge(0);
+            world.spawnEntity(villager);
+        }
+    }
+
+    private static void prepareImpossibleBigHouseLot(ServerWorld world, BlockPos anchor) {
+        world.getChunk(anchor);
+
+        // O raio de busca é 32, a casa mede 7 por 11 e seus espigões são
+        // espaçados exatamente por essas dimensões. Assim toda caixa possível
+        // contém ao menos uma coluna mais alta e nunca é um lote plano.
+        for (int dx = -39; dx <= 38; dx++) {
+            for (int dz = -39; dz <= 38; dz++) {
+                world.setBlockState(anchor.add(dx, -1, dz), Blocks.GRASS_BLOCK.getDefaultState());
+            }
+        }
+
+        for (int dx = -39; dx <= 38; dx += 7) {
+            for (int dz = -39; dz <= 38; dz += 11) {
+                world.setBlockState(anchor.add(dx, 0, dz), Blocks.STONE.getDefaultState());
+            }
         }
     }
 

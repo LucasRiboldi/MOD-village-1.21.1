@@ -107,6 +107,23 @@ class TreeMarksTest {
     }
 
     /**
+     * Tora de casa vai direto ao castigo mais longo — F-1, 2026-10-02: 124
+     * recusas de 41 toras de casa em três rodadas (5, 10, 20 min).
+     */
+    @Test
+    void aBuiltWallSitsOutTheLongestWaitAtOnce() {
+        List<BlockPos> wall = wallAt(0);
+
+        TreeMarks.rejectAt(0, wall, true);
+
+        long longest = TreeMarks.memoryFor(99);
+
+        assertTrue(longest > 6000 * 4, "o teto devia passar de vinte minutos");
+        assertTrue(TreeMarks.isRejectedAt(longest - 1, wall.get(0)), "a casa voltou à busca antes do teto");
+        assertFalse(TreeMarks.isRejectedAt(longest, wall.get(0)));
+    }
+
+    /**
      * A segunda dura mais, e é o E1 inteiro.
      *
      * <p>A parede é recusada, o prazo vence, ela é recusada de novo — e

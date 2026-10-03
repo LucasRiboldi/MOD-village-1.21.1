@@ -2138,6 +2138,55 @@ public class LumberjackGameTest implements FabricGameTest {
      * <p>O filtro por coluna existe para que árvore de outra estrutura de
      * teste, dentro do raio, não responda pela nossa.
      */
+    /**
+     * Uma varredura serve várias árvores — A-2, 2026-10-02 (o lenhador ficava
+     * 66% do tempo procurando). Depois da primeira busca, uma tora nova é posta
+     * mais perto do centro: a varredura do zero a acharia primeiro, o índice
+     * devolve a que já tinha visto.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_search_index")
+    public void oneSweepServesTheNextTreesFromTheIndex(TestContext context) {
+        BlockPos center = context.getAbsolutePos(new BlockPos(1, 2, 1));
+        BlockPos near = new BlockPos(4, 2, 1);
+        BlockPos middle = new BlockPos(7, 2, 1);
+        BlockPos closer = new BlockPos(2, 2, 1);
+        java.util.Set<BlockPos> ours = new java.util.HashSet<>();
+        java.util.Set<BlockPos> given = new java.util.HashSet<>();
+
+        TreeScanner.clearAll();
+
+        for (BlockPos log : new BlockPos[] {near, middle}) {
+            context.setBlockState(log, net.minecraft.block.Blocks.OAK_LOG.getDefaultState());
+            ours.add(context.getAbsolutePos(log));
+        }
+
+        ServerWorld world = context.getWorld();
+        java.util.function.Predicate<BlockPos> accepts = pos -> ours.contains(pos) && !given.contains(pos);
+
+        BlockPos first = TreeScanner.findNearestLog(world, center, 12, accepts).orElse(null);
+
+        context.assertTrue(context.getAbsolutePos(near).equals(first), "a primeira devia ser a mais perto: " + first);
+        given.add(first);
+
+        // Nova, e mais perto que a do índice.
+        context.setBlockState(closer, net.minecraft.block.Blocks.OAK_LOG.getDefaultState());
+        ours.add(context.getAbsolutePos(closer));
+
+        BlockPos second = TreeScanner.findNearestLog(world, center, 12, accepts).orElse(null);
+
+        context.assertTrue(context.getAbsolutePos(middle).equals(second),
+                "a segunda devia sair do índice (a do meio), sem varrer de novo: " + second);
+        given.add(second);
+
+        BlockPos third = TreeScanner.findNearestLog(world, center, 12, accepts).orElse(null);
+
+        context.assertTrue(context.getAbsolutePos(closer).equals(third),
+                "com o índice vazio a varredura volta e acha a nova: " + third);
+
+        TreeScanner.clearAll();
+        context.complete();
+    }
+
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "lumber_search_cursor")
     public void theSearchMovesOutwardAndComesBack(TestContext context) {
         BlockPos base = new BlockPos(4, 2, 4);

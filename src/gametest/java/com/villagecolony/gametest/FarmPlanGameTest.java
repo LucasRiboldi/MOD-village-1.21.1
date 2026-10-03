@@ -125,6 +125,34 @@ public class FarmPlanGameTest implements FabricGameTest {
     }
 
     /**
+     * A roça fica acima da rua — pedido do autor, 2026-10-02: ela precisa da
+     * altura para receber a água. A planta do jogo tem camada da rua; a da
+     * colônia não, e a lavoura assenta um acima do chão.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "farm_plan")
+    public void theFarmSitsAboveTheStreet(TestContext context) {
+        Blueprint raw = plainsFarm(context).orElse(null);
+
+        context.assertTrue(raw != null && raw.hasStreetLayer(),
+                "a roça do jogo veio sem camada da rua, e aí este teste não mede nada");
+
+        Colony colony = Colony.create(
+                UUID.randomUUID(),
+                MinecraftTypeAdapter.toColonyPos(
+                        context.getAbsolutePos(new BlockPos(1, 2, 1))));
+
+        ColonyPos floor = new ColonyPos(10, 70, 10);
+
+        for (Blueprint plan : FarmPlans.plansFor(context.getWorld(), colony)) {
+            context.assertFalse(plan.hasStreetLayer(), plan.id() + " ficou na altura da rua");
+            context.assertTrue(plan.originFor(floor).equals(floor),
+                    plan.id() + ": a lavoura devia assentar um acima do chão, no piso do lote");
+        }
+
+        context.complete();
+    }
+
+    /**
      * <b>A roça nasce dentro da vila, e não na ponta da estrada</b> —
      * 2026-09-05, visto em jogo.
      *
@@ -272,6 +300,11 @@ public class FarmPlanGameTest implements FabricGameTest {
                 owned.owning(id);
             }
 
+            // O cenário mede o rodízio, não uma vila sem capacidade de
+            // moradia. A observação completa devolve a condição equivalente
+            // a vinte camas que o detector já confirmou no mundo.
+            colony.observe(colony.center(), FarmPlans.VILLAGERS_PER_FARM, true);
+
             // A vila já ergueu a primeira casa, e ela está <b>de pé no
             // mundo</b> — 2026-09-22.
             //
@@ -406,6 +439,11 @@ public class FarmPlanGameTest implements FabricGameTest {
                 VillageColonyMod.WORKERS.register(id, colony.id());
                 owned.owning(id);
             }
+
+            // Sem esta observação, vinte adultos e zero camas devem abrir
+            // uma casa. Este teste precisa da condição oposta para exercitar
+            // somente a invariância da observação de inventário.
+            colony.observe(colony.center(), FarmPlans.VILLAGERS_PER_FARM, true);
 
             ResourceId houseId =
                     ResourceId.vanilla("village/plains/houses/plains_small_house_1");

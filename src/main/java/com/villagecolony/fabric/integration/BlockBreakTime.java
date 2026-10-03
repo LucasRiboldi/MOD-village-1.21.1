@@ -89,7 +89,10 @@ public final class BlockBreakTime {
     public static int ticksFor(
             ServerWorld world, BlockPos pos, BlockState state, LivingEntity worker) {
 
-        return ticksFor(world, pos, state, worker.getEquippedStack(EquipmentSlot.MAINHAND));
+        // A ferramenta de ferro certa para ESTE bloco, e não só a da
+        // profissão — 2026-09-30, ver ActionTool.
+        return ticksFor(world, pos, state,
+                ActionTool.forBlock(state, worker.getEquippedStack(EquipmentSlot.MAINHAND)));
     }
 
     /**
@@ -124,7 +127,7 @@ public final class BlockBreakTime {
             return 1;
         }
 
-        float speed = held.getMiningSpeedMultiplier(state);
+        float speed = ActionTool.speedOf(held, state);
         float divisor = harvests(held, state) ? HARVESTABLE : UNHARVESTABLE;
 
         float perTick = speed / hardness / divisor;

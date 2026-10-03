@@ -48,6 +48,13 @@ final class CycleCost {
         /** Nascer, crescer e abandonar colônia. */
         LIFECYCLE("lifecycle"),
 
+        /**
+         * Contar os adultos e plantar a árvore da dezena — separado de
+         * {@code CHESTS} em 2026-09-30 (F13): a fase "chests" do log incluía
+         * isto, e não dava para saber quanto era baú.
+         */
+        POPULATION("population"),
+
         /** Ler os baús e medir o espaço que sobra neles. */
         CHESTS("chests"),
 

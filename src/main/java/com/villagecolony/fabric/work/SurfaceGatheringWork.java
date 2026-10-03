@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.coordination.GatheringReach;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
@@ -13,7 +14,9 @@ import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.event.VillageFocus;
 import com.villagecolony.fabric.integration.BlockProtection;
+import com.villagecolony.fabric.integration.ActionTool;
 import com.villagecolony.fabric.integration.BlockBreakTime;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.DirtPatch;
@@ -44,6 +47,10 @@ import java.util.UUID;
 
 /** Coleta materiais naturais expostos fora da zona habitada. */
 public final class SurfaceGatheringWork {
+
+    static {
+        ServerMemory.register(SurfaceGatheringWork.class, SurfaceGatheringWork::clearAll);
+    }
 
     private static final int BREAKING_STAGES = 10;
     private static final int SWING_INTERVAL = 5;
@@ -93,7 +100,7 @@ public final class SurfaceGatheringWork {
                     return current;
                 }
 
-                RingSweep.forget(worker);
+                RingSweep.forget(worker, RingSweep.Scan.SURFACE);
                 Direction sector = FarthestVillageSector.farthestLoadedSector(world, center, colony.id());
                 return new Job(task, center, sector);
             });
@@ -119,17 +126,23 @@ public final class SurfaceGatheringWork {
         List<UUID> searching = new ArrayList<>();
         for (var iterator = JOBS.entrySet().iterator(); iterator.hasNext();) {
             Map.Entry<UUID, Job> entry = iterator.next();
-            if (!isOngoing(entry.getValue().task)) {
+            Job job = entry.getValue();
+
+            if (!VillageFocus.isWorking(world, job.task.colonyId())) {
+                continue;
+            }
+
+            if (!isOngoing(job.task)) {
                 WorkTargets.clear(entry.getKey());
-                RingSweep.forget(entry.getKey());
+                RingSweep.forget(entry.getKey(), RingSweep.Scan.SURFACE);
                 iterator.remove();
-            } else if (entry.getValue().target == null) {
+            } else if (job.target == null) {
                 searching.add(entry.getKey());
             } else {
-                step(world, entry.getKey(), entry.getValue(), false);
-                if (!isOngoing(entry.getValue().task)) {
+                step(world, entry.getKey(), job, false);
+                if (!isOngoing(job.task)) {
                     WorkTargets.clear(entry.getKey());
-                    RingSweep.forget(entry.getKey());
+                    RingSweep.forget(entry.getKey(), RingSweep.Scan.SURFACE);
                     iterator.remove();
                 }
             }
@@ -245,7 +258,7 @@ public final class SurfaceGatheringWork {
                 : column -> true;
 
         Optional<BlockPos> found = RingSweep.around(
-                workerId, searchCenter, reach(job, outsideVillage), worthLooking, column -> {
+                workerId, RingSweep.Scan.SURFACE, searchCenter, reach(job, outsideVillage), worthLooking, column -> {
             if (job.task.targetResource() == ResourceType.SAND) {
                 return SandPatch.in(world, column, job.center.getY())
                         .filter(pos -> BlockProtection.mayBreak(world, pos, world.getBlockState(pos)));
@@ -272,14 +285,22 @@ public final class SurfaceGatheringWork {
         });
 
         if (found.isEmpty()) {
+            boolean paused = RingSweep.pausedAt(workerId, RingSweep.Scan.SURFACE).isPresent();
+
             IdleLog.recordAt(
                     job.task.colonyId(), subject(job),
-                    RingSweep.pausedAt(workerId).isPresent()
-                            ? IdleReason.SWEEP_INCOMPLETE : IdleReason.NO_TARGET,
+                    paused ? IdleReason.SWEEP_INCOMPLETE : IdleReason.NO_TARGET,
                     job.task.targetResource().name().toLowerCase(java.util.Locale.ROOT), world.getTime());
+
+            if (!paused) {
+                // O raio inteiro, e nada: solta a tarefa e espera — F-1. Ver EmptySweeps.
+                EmptySweeps.foundNothing(job.task.colonyId(), job.task.targetResource(), world.getTime());
+                finish(job, workerId, "nothing in the whole radius");
+            }
             return true;
         }
 
+        EmptySweeps.found(job.task.colonyId(), job.task.targetResource());
         IdleLog.clear(job.task.colonyId(), subject(job));
         job.target = found.get();
         job.progress = 0;
@@ -309,9 +330,11 @@ public final class SurfaceGatheringWork {
         // A pá do fundidor tem Toque Suave para recolher o bloco que a
         // fornalha transforma em terracota. Tijolos, porém, exigem as bolas
         // Vanilla, então esta ordem calcula a quebra com uma pá sem encanto.
+        // A ferramenta de ferro certa para o bloco (ActionTool): a terra do
+        // fazendeiro sai de pá, e não de enxada — 2026-09-30.
         ItemStack tool = job.task.targetResource() == ResourceType.CLAY_BALL
                 ? new ItemStack(Items.IRON_SHOVEL)
-                : villager.getMainHandStack();
+                : ActionTool.forBlock(state, villager.getMainHandStack());
         List<ItemStack> drops = Block.getDroppedStacks(
                 state, world, job.target, world.getBlockEntity(job.target), villager, tool);
         int amount = drops.stream()
@@ -352,6 +375,8 @@ public final class SurfaceGatheringWork {
                 job.task.start();
             }
             job.task.complete();
+            WorkerStrikes.worked(workerId, job.task);
+            TaskChain.next(job.task);
             finish(job, workerId, "natural resource order filled");
             return;
         }
@@ -372,7 +397,7 @@ public final class SurfaceGatheringWork {
             job.task.release();
         }
         WorkTargets.clear(workerId);
-        RingSweep.forget(workerId);
+        RingSweep.forget(workerId, RingSweep.Scan.SURFACE);
         job.target = null;
     }
 
@@ -411,14 +436,14 @@ public final class SurfaceGatheringWork {
         Job job = JOBS.remove(workerId);
         if (job != null) {
             WorkTargets.clear(workerId);
-            RingSweep.forget(workerId);
+            RingSweep.forget(workerId, RingSweep.Scan.SURFACE);
         }
     }
 
     public static void clearAll() {
         for (UUID workerId : JOBS.keySet()) {
             WorkTargets.clear(workerId);
-            RingSweep.forget(workerId);
+            RingSweep.forget(workerId, RingSweep.Scan.SURFACE);
         }
         JOBS.clear();
         lastSearchWorker = null;

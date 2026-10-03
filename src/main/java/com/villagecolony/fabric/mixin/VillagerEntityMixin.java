@@ -22,6 +22,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(VillagerEntity.class)
 public abstract class VillagerEntityMixin {
 
+    // Chamado pelo Mixin por injeção de bytecode, e o CallbackInfo é
+    // obrigatório na assinatura do @Inject: o Error Prone não vê nenhum
+    // dos dois.
+    @SuppressWarnings({"UnusedMethod", "UnusedVariable"})
     @Inject(method = "initBrain", at = @At("TAIL"))
     private void villagecolony$installColonyTask(
             Brain<VillagerEntity> brain, CallbackInfo info) {

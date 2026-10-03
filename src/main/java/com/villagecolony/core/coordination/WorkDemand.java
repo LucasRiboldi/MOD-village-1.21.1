@@ -41,7 +41,22 @@ public record WorkDemand(
         int coal,
         int iron,
         Map<ResourceType, Integer> smelted,
-        Map<ResourceType, Integer> surfaceGathered) {
+        Map<ResourceType, Integer> surfaceGathered,
+        int rawLogs) {
+
+    /** O mesmo, sem tora bruta pedida pela obra. */
+    public WorkDemand(
+            int planks,
+            ResourceType stone,
+            int stoneAmount,
+            int wool,
+            int glass,
+            int coal,
+            int iron,
+            Map<ResourceType, Integer> smelted,
+            Map<ResourceType, Integer> surfaceGathered) {
+        this(planks, stone, stoneAmount, wool, glass, coal, iron, smelted, surfaceGathered, 0);
+    }
 
     public WorkDemand {
         Objects.requireNonNull(stone, "stone");
@@ -57,6 +72,7 @@ public record WorkDemand(
         refuseNegative(glass, "glass");
         refuseNegative(coal, "coal");
         refuseNegative(iron, "iron");
+        refuseNegative(rawLogs, "raw log");
     }
 
     public WorkDemand(
@@ -68,12 +84,12 @@ public record WorkDemand(
             int coal,
             int iron,
             Map<ResourceType, Integer> smelted) {
-        this(planks, stone, stoneAmount, wool, glass, coal, iron, smelted, Map.of());
+        this(planks, stone, stoneAmount, wool, glass, coal, iron, smelted, Map.of(), 0);
     }
 
     /** Nenhuma obra aberta: a colônia decide pela Regra 1 e nada mais. */
     public static WorkDemand none() {
-        return new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 0, 0, Map.of(), Map.of());
+        return new WorkDemand(0, ResourceType.COBBLESTONE, 0, 0, 0, 0, 0, Map.of(), Map.of(), 0);
     }
 
     /** Materiais que destravam a obra e devem preceder produção de reserva. */

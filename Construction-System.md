@@ -477,7 +477,12 @@ O cancelamento deve preservar o mundo.
 
 # Regras de Arquitetura
 
-## Construção nunca cria recursos.
+## ~~Construção nunca cria recursos.~~
+
+**Retirada em 2026-09-30 pelo autor — ADR-028.** Bloco sem item é montado
+no local, peça e ingrediente sem rota aparecem no baú, ingrediente de drop
+(corante, linha, pó de osso, drop de bicho) aparece na hora. A lava nunca é
+assentada. O que tem cadeia na colônia continua usando a cadeia.
 
 ---
 

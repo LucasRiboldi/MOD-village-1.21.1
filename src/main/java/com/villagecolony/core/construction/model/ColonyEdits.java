@@ -1,5 +1,6 @@
 package com.villagecolony.core.construction.model;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.type.ColonyPos;
 
 import java.util.LinkedHashSet;
@@ -30,6 +31,10 @@ import java.util.Set;
  * por ali — trocaríamos uma enxurrada por um silêncio, que é pior.
  */
 public final class ColonyEdits {
+
+    static {
+        ServerMemory.register(ColonyEdits.class, ColonyEdits::clearAll);
+    }
 
     /**
      * Quantas mudanças ficam esperando leitura.

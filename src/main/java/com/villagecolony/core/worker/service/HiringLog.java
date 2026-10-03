@@ -1,5 +1,8 @@
 package com.villagecolony.core.worker.service;
 
+import org.jspecify.annotations.Nullable;
+
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.worker.model.ProfessionType;
 
 import java.util.EnumMap;
@@ -44,6 +47,10 @@ import java.util.UUID;
  * precisa conhecer.
  */
 public final class HiringLog {
+
+    static {
+        ServerMemory.register(HiringLog.class, HiringLog::clearAll);
+    }
 
     /** O que aconteceu com uma profissão nesta passagem de contratação. */
     public enum Outcome {
@@ -98,7 +105,13 @@ public final class HiringLog {
     }
 
     /** Registra o que aconteceu com esta profissão. */
-    public static void record(UUID colonyId, ProfessionType profession, Outcome outcome) {
+    public static void record(@Nullable UUID colonyId, ProfessionType profession, Outcome outcome) {
+        if (colonyId == null) {
+            // A pergunta sem dono (a contagem da colônia) não é decisão de
+            // contratação e não vai ao relatório — NullAway, 2026-09-30.
+            return;
+        }
+
         if (COUNTED.size() >= MAX_COLONIES && !COUNTED.containsKey(colonyId)) {
             COUNTED.clear();
         }

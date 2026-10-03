@@ -3,6 +3,9 @@ package com.villagecolony.fabric.event;
 import com.villagecolony.core.coordination.PlanningBudget;
 import com.villagecolony.fabric.integration.SweepDeadline;
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.fabric.integration.FurnaceReach;
+import com.villagecolony.core.coordination.StandingWork;
 import com.villagecolony.core.colony.model.ClusterRejection;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.IdleReason;
@@ -19,6 +22,7 @@ import com.villagecolony.core.resource.model.ColonyResources;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.task.model.TaskType;
+import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.core.worker.service.HiringLog;
@@ -27,6 +31,9 @@ import com.villagecolony.core.worker.service.VacancyEnforcer;
 import com.villagecolony.fabric.brain.WorkTargets;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.fabric.integration.ChestInventoryReader;
+import com.villagecolony.fabric.integration.ColonyChestSurvey;
+import com.villagecolony.fabric.integration.WarehouseHealthLog;
+import com.villagecolony.fabric.integration.FoundationPreparation;
 import com.villagecolony.fabric.integration.ChestMarker;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.SiteMarker;
@@ -34,6 +41,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.VillageBiomes;
 import com.villagecolony.fabric.integration.VillageScanner;
 import com.villagecolony.fabric.integration.VillageFoundation;
+import com.villagecolony.fabric.integration.VillageForest;
 import com.villagecolony.fabric.integration.VanillaBedChests;
 import com.villagecolony.fabric.integration.BigHouseFoundation;
 import com.villagecolony.fabric.integration.VillagerScanner;
@@ -51,6 +59,8 @@ import com.villagecolony.fabric.work.WorkMaterials;
 import com.villagecolony.fabric.work.HousePlans;
 import com.villagecolony.fabric.work.LumberjackWork;
 import com.villagecolony.fabric.work.BuilderWork;
+import com.villagecolony.fabric.work.BuilderApproach;
+import com.villagecolony.fabric.work.EmptySweeps;
 import com.villagecolony.fabric.work.StrandedEscape;
 import com.villagecolony.fabric.work.VillageMeals;
 import com.villagecolony.fabric.work.ConstructionDemand;
@@ -73,9 +83,10 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.Set;
+import java.util.stream.Collectors;
 import net.minecraft.world.poi.PointOfInterestTypes;
 
 /**
@@ -120,7 +131,6 @@ final class ColonyCycleRunner {
     static void runColonyCycles(ServerWorld overworld, boolean onlyNearPlayers) {
         List<Colony> active = List.copyOf(VillageColonyMod.COLONIES.all()).stream()
                 .filter(Colony::isActive)
-                .filter(colony -> !onlyNearPlayers || VillageFocus.isNearAPlayer(overworld, colony))
                 .toList();
 
         // <b>A vez de planejar é repartida</b> — 2026-09-15. O log do autor
@@ -130,15 +140,13 @@ final class ColonyCycleRunner {
         // passagem —, e faltava o teto global: mil colunas vezes vinte e
         // nove cabem num tique só, e coube.
         //
-        // Só o planejamento espera a vez. O resto do ciclo continua
-        // rodando para todas, pelo mesmo motivo que a guarda de abandono
-        // registrou em 09-02: pular o ciclo inteiro faz o trabalhador
-        // andar aos soluços. Ver PlannerTurns.
-        //
-        // <b>E em jogo só a vila foco planeja</b> — 2026-09-24, decisão do
-        // autor; ver VillageFocus. O planejador tem prazo de relógio e a
-        // cota se ajusta pelo custo do ciclo; ver PlanningBudget.
-        Set<UUID> watched = VillageFocus.coloniesNearPlayers(overworld, active);
+        // Em jogo, o ciclo inteiro só roda na vila com jogador dentro da
+        // caixa, ou que o teve há até 5 minutos — ADR-003 Emenda 6, decisão
+        // do autor na noite de 30-09, que desfaz a da manhã (a obra aberta
+        // continuava com o jogador longe). O
+        // planejador tem prazo de relógio e a cota se ajusta pelo custo do
+        // ciclo; ver PlanningBudget.
+        Set<UUID> watched = VillageFocus.attended(overworld, active);
         List<UUID> eligible = onlyNearPlayers
                 ? VillageFocus.planners(active, watched)
                 : active.stream().map(Colony::id).toList();
@@ -148,6 +156,12 @@ final class ColonyCycleRunner {
         plannerDeadline = onlyNearPlayers;
 
         for (Colony colony : active) {
+            // Vila sem jogador dentro há mais de 5 minutos não roda o ciclo:
+            // não gasta processamento — decisão do autor, 2026-09-30.
+            if (onlyNearPlayers && !watched.contains(colony.id())) {
+                continue;
+            }
+
             runCycleOf(overworld, colony, planners.contains(colony.id()));
         }
 
@@ -170,15 +184,28 @@ final class ColonyCycleRunner {
     /**
      * Um ciclo de uma colônia.
      *
-     * <p>A contagem parcial é motivo para não decidir. Baú em chunk
-     * descarregado sai da soma sem avisar, e uma colônia que conclui
-     * "falta madeira" com metade dos baús fora de alcance mandaria um
-     * trabalhador buscar o que ela já tem. Ver
-     * {@code ChestInventoryReader.ChestSurvey} e a entrada de §15 de
-     * 2026-08-07.
+     * <p>Baú em chunk descarregado não entra na soma e não é carregado à
+     * força. O ciclo continua com o limite inferior que observou; toda retirada
+     * continua física e tenta os baús carregados em ordem de distância.
      */
     static void runCycleOf(ServerWorld overworld, Colony colony, boolean mayPlan) {
         long mark = System.nanoTime();
+
+        VillageForest.PopulationPlanting forest = VillageForest.plantForPopulation(
+                overworld, colony, VillagerScanner.livingAdultPopulation(overworld, colony));
+        if (forest == VillageForest.PopulationPlanting.PLANTED) {
+            VillageColonyMod.LOGGER.info(
+                    "Colony {} planted its forest tree for population {}",
+                    colony.id(),
+                    colony.forestPopulationMilestone());
+        } else if (forest == VillageForest.PopulationPlanting.WAITING_FOR_SPACE) {
+            VillageColonyMod.LOGGER.debug(
+                    "Colony {} forest is waiting for a safe loaded site at population {}",
+                    colony.id(),
+                    colony.forestPopulationMilestone() + 10);
+        }
+
+        mark = CycleCost.since(CycleCost.Phase.POPULATION, mark);
 
         // <b>Uma lista, e os três consumidores dela</b> — P0.3, 2026-09-11.
         // A varredura e as duas medidas de espaço montavam cada uma a
@@ -188,30 +215,16 @@ final class ColonyCycleRunner {
         List<ColonyPos> chests = ColonyChests.nearestFirst(
                 overworld, colony.id(), colony.center());
 
-        ChestInventoryReader.ChestSurvey survey =
-                ChestInventoryReader.survey(
-                        overworld, chests, ResourceGroup.WOOD, ResourceGroup.PLANKS);
+        Set<ColonyPos> professionChests = VillageColonyMod.STORAGES.all().stream()
+                .map(WorkerStorage::chestPosition)
+                .collect(Collectors.toSet());
+        ChestInventoryReader.ChestSurvey survey = ColonyChestSurvey.advance(
+                overworld, colony.id(), chests, professionChests, ResourceGroup.WOOD, ResourceGroup.PLANKS);
 
-        if (survey.isPartial()) {
-            // A leitura aconteceu e custou, mesmo sem decidir nada: cobrar
-            // só o caminho feliz esconderia justamente a colônia cara que
-            // não produz — que é o caso que o P2.1 foi medir.
-            CycleCost.since(CycleCost.Phase.CHESTS, mark);
+        WarehouseHealthLog.observe(colony.id(), survey);
 
-            // <b>E agora ele diz.</b> Pular era certo desde 2026-08-07;
-            // pular calado custou a sessão de 2026-09-04 inteira em
-            // dúvida — não havia como saber, do log, se uma colônia
-            // parada tinha decidido não decidir. Uma colônia inteira sem
-            // fazer nada é a maior omissão que este log podia ter.
-            IdleLog.record(
-                    colony.id(),
-                    CYCLE_SUBJECT,
-                    IdleReason.COUNT_PARTIAL,
-                    survey.chestsUnreachable() + " of "
-                            + (survey.chestsRead() + survey.chestsUnreachable())
-                            + " chests are in unloaded chunks");
-
-            return;
+        if (survey.isPending()) {
+            VillageColonyMod.LOGGER.debug("Colony {} continues with observed chest stock: {}", colony.id(), survey.coverage());
         }
 
         IdleLog.clear(colony.id(), CYCLE_SUBJECT);
@@ -231,6 +244,11 @@ final class ColonyCycleRunner {
         // E a Regra 5, a da Fase 9: metade do que os baús comportam em
         // tábua. Medida do mesmo jeito e pelo mesmo motivo.
         int plankRoom = survey.freeSpaceForGroup(ResourceGroup.PLANKS);
+
+        // E a pedra, só no baú de quem a cava — 2026-09-25, decisão do autor
+        // ("galerias novas sem parar"). Ver ColonyGoals.of: medir a vila
+        // inteira contaria todo slot vazio de todo baú como lugar de pedra.
+        int stoneRoom = ColonyChests.minersRoom(overworld, colony.id());
 
         // Até aqui é baú: uma só fotografia produz estoque e as duas
         // medidas de espaço, sem reler os mesmos inventários no ciclo.
@@ -316,7 +334,9 @@ final class ColonyCycleRunner {
                 WorkMaterials.coal(overworld, colony),
                 WorkMaterials.iron(overworld, colony),
                 WorkMaterials.smeltedNeeds(overworld, colony),
-                WorkMaterials.surfaceGatheredNeeds(overworld, colony));
+                WorkMaterials.surfaceGatheredNeeds(overworld, colony),
+                // A tora que a obra pede bruta: a meta não a conta como tábua (A-1).
+                ConstructionDemand.rawWoodNeededBy(colony));
 
         // E a placa da obra fica sabendo do estoque — 2026-09-15. O ciclo
         // acabou de ler os baús; a placa desenha uma vez por segundo e
@@ -332,13 +352,24 @@ final class ColonyCycleRunner {
         int assigned = ColonyCycle.run(
                 colony.id(),
                 survey.resources().total(),
-                ColonyGoals.of(
-                        colony, survey.resources().total(), room, plankRoom, work),
+                // O trabalho contínuo por cima das metas — decisão do autor,
+                // 2026-09-26. Ver StandingWork e FurnaceReach.
+                FurnaceReach.withoutUnreachable(overworld, colony.id(), StandingWork.widen(
+                        ColonyGoals.of(
+                                colony, survey.resources().total(), room, plankRoom, stoneRoom, work),
+                        survey.resources().total(),
+                        new StandingWork.Rooms(
+                                ColonyChests.roomOf(overworld, colony.id(),
+                                        ProfessionType.SHEPHERD, ResourceGroup.WOOL),
+                                ColonyChests.roomOf(overworld, colony.id(),
+                                        ProfessionType.FARMER, ResourceGroup.CROPS))),
+                        work),
                 VillageColonyMod.TASKS,
                 VillageColonyMod.WORKERS,
                 VillageColonyMod.STORAGES::hasStorage,
                 (resource, type, hands) -> reportHands(colony.id(), resource, type, hands),
-                work.constructionMaterials());
+                work.constructionMaterials(),
+                (worker, task) -> canReserveTask(overworld, colony.id(), task));
 
         // Sem o `if (assigned > 0)` que estava aqui. A linha calava
         // exatamente quando havia algo a dizer: distribuição parada é
@@ -362,12 +393,7 @@ final class ColonyCycleRunner {
 
         // Depois da distribuição: quem recebeu tarefa neste ciclo já
         // começa a andar nele, em vez de esperar o próximo.
-        LumberjackWork.run(overworld, colony);
-        MinerWork.run(overworld, colony);
-        SmelterWork.run(overworld, colony);
-        SurfaceGatheringWork.run(overworld, colony);
-        ShepherdWork.run(overworld, colony);
-        FarmerWork.run(overworld, colony);
+        runOngoingWork(overworld, colony);
 
         // <b>A peça que a obra espera e ninguém faz</b> — P1.1,
         // 2026-09-17. Vem antes do fabricante, para a tarefa aberta agora
@@ -382,9 +408,40 @@ final class ColonyCycleRunner {
         WaitingWork.askForWhatTheWorkIsWaitingOn(overworld, colony);
 
         CraftingWork.run(overworld, colony);
-        BuilderWork.run(overworld, colony);
 
         CycleCost.since(CycleCost.Phase.WORKERS, mark);
+    }
+
+    /** Trabalhos já reservados continuam mesmo enquanto uma fotografia termina de ser lida. */
+    static void runOngoingWork(ServerWorld world, Colony colony) {
+        LumberjackWork.run(world, colony);
+        MinerWork.run(world, colony);
+        SmelterWork.run(world, colony);
+        SurfaceGatheringWork.run(world, colony);
+        ShepherdWork.run(world, colony);
+        FarmerWork.run(world, colony);
+        BuilderWork.run(world, colony);
+    }
+
+    /** Recusa obra aberta cujo próximo bloco ainda não possui ponto físico de trabalho. */
+    static boolean canReserveTask(ServerWorld world, UUID colonyId, Task task) {
+        if (task.type() == TaskType.COLLECT_SURFACE_RESOURCE || task.type() == TaskType.COLLECT_SOIL) {
+            // O raio já foi varrido inteiro sem achar — F-1, 2026-10-02.
+            return !EmptySweeps.isWaiting(colonyId, task.targetResource(), world.getTime());
+        }
+
+        if (task.type() != TaskType.BUILD) {
+            return true;
+        }
+
+        return VillageColonyMod.CONSTRUCTIONS.openOf(colonyId)
+                .flatMap(project -> project.nextBlock().map(next ->
+                        BuilderApproach.hasStandingSpotWithinReach(
+                                world,
+                                project,
+                                MinecraftTypeAdapter.toBlockPos(project.worldPositionOf(next)))
+                                && FoundationPreparation.prepareIfQualified(world, project)))
+                .orElse(false);
     }
 
     /**

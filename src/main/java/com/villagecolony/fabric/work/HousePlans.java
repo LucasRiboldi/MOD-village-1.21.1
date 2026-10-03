@@ -1,9 +1,11 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.construction.model.ConstructionPriority;
 import com.villagecolony.core.construction.model.VillagePalette;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
@@ -43,6 +45,10 @@ import java.util.UUID;
  * para a rua.
  */
 public final class HousePlans {
+
+    static {
+        ServerMemory.register(HousePlans.class, HousePlans::clearAll);
+    }
 
     private HousePlans() {
     }
@@ -169,9 +175,7 @@ public final class HousePlans {
      * propósito: ali a pergunta é "existe casa de pé", não "de quem é a vez".
      */
     static boolean nextConstructionIsHouse(List<Building> buildings) {
-        Optional<Building> last = lastAttempted(buildings);
-
-        return last.isEmpty() || !isHouse(last.get().blueprint());
+        return nextConstructionPriority(buildings, 0, 0).requiresHouse();
     }
 
     /**
@@ -182,17 +186,37 @@ public final class HousePlans {
      * relento. Enquanto houver mais adultos do que camas, a vez é da casa;
      * com cama para todos, o rodízio volta a decidir.
      *
-     * <p><b>Zero camas é "ainda não contado", não "nenhuma cama".</b>
-     * {@code Colony.observedBeds} nasce em zero e só vale depois da primeira
-     * detecção da sessão; toda vila Vanilla tem cama e a {@code BigHouseMOD}
-     * põe seis. Ler o zero como falta forçaria casa em toda colônia recém-
-     * carregada, antes de alguém olhar.
-     *
      * @param adults os trabalhadores adultos da colônia
-     * @param beds as camas que a detecção de vila contou; zero é desconhecido
+     * @param beds as camas que a detecção de vila contou
      */
     static boolean nextConstructionIsHouse(List<Building> buildings, int adults, int beds) {
-        return (beds > 0 && adults > beds) || nextConstructionIsHouse(buildings);
+        return nextConstructionPriority(buildings, adults, beds).requiresHouse();
+    }
+
+    /**
+     * Motivo atual da família de plantas da próxima obra.
+     *
+     * <p>Esta adaptação conserva no Fabric a pergunta sobre a planta ser uma
+     * casa. A precedência entre déficit, primeira obra e rodízio fica no Core,
+     * onde também é exercitada sem mundo.
+     */
+    static ConstructionPriority nextConstructionPriority(
+            List<Building> buildings, int adults, int beds) {
+        Optional<Building> last = lastAttempted(buildings);
+
+        return ConstructionPriority.decide(
+                last.isPresent(),
+                last.map(building -> isHouse(building.blueprint())).orElse(false),
+                adults,
+                beds);
+    }
+
+    static int effectiveBedsForPriority(UUID colonyId, int adults, int observedBeds) {
+        if (!WorkerHousingNeeds.needsHouse(colonyId) || adults == 0) {
+            return observedBeds;
+        }
+
+        return Math.min(observedBeds, adults - 1);
     }
 
     /**
@@ -216,6 +240,34 @@ public final class HousePlans {
     }
 
     /**
+     * Se é a vez do tipo desta planta no rodízio — 2026-09-25, decisão do
+     * autor.
+     *
+     * <p><b>Para a obra abandonada.</b> O {@code BuildingRepairPlanner} roda
+     * antes do rodízio e reabria a obra largada no mesmo segundo em que a
+     * colônia desistia dela: o playtest de 24-09 tem "gives up on
+     * plains_temple_4" e "starts repair sweep for plains_temple_4" na mesma
+     * origem e no mesmo segundo, e o de 25-09 reabriu um templo abandonado
+     * de 301 blocos assim que o outro terminou. A vila ficava presa a
+     * templos, e a vez da casa nunca chegava.
+     *
+     * <p>A regra é a do próprio rodízio: casa na vez da casa; outra obra na
+     * vez de outra, e nunca do mesmo tipo da última não residencial tentada.
+     * Como a obra abandonada conta como tentada (E48), a que acabou de ser
+     * largada nunca é a vez dela.
+     */
+    static boolean isTurnOf(List<Building> buildings, int adults, int beds, ResourceId blueprint) {
+        boolean houseTurn = nextConstructionIsHouse(buildings, adults, beds);
+
+        if (isHouse(blueprint)) {
+            return houseTurn;
+        }
+
+        return !houseTurn
+                && !constructionType(blueprint).equals(lastNonHouseType(buildings).orElse(""));
+    }
+
+    /**
      * A próxima família de plantas da colônia, com a regra de alternância.
      * O lote continua sendo escolhido pelo mesmo scanner para qualquer
      * família retornada aqui.
@@ -224,11 +276,22 @@ public final class HousePlans {
         List<Building> buildings = VillageColonyMod.BUILDINGS.ofColony(colony.id());
         int adults = VillageColonyMod.WORKERS.countOfColony(colony.id());
 
-        if (nextConstructionIsHouse(buildings, adults, colony.observedBeds())) {
-            return plansFor(world, colony);
+        int beds = effectiveBedsForPriority(colony.id(), adults, colony.observedBeds());
+        String previous = lastNonHouseType(buildings).orElse("");
+
+        // A casa do ofício que falta, sem falta de cama — Regra 49. Sem planta
+        // de oficina possível agora, o rodízio de sempre segue.
+        if (ConstructionTurn.of(buildings, adults, beds, ConstructionTurn.workshopMissing(world, colony, buildings))
+                == ConstructionPriority.WORKSHOP) {
+            List<Blueprint> workshops = nonHousePlansFor(world, colony, previous, buildings);
+            if (!workshops.isEmpty()) {
+                return workshops;
+            }
         }
 
-        String previous = lastNonHouseType(buildings).orElse("");
+        if (nextConstructionPriority(buildings, adults, beds).requiresHouse()) {
+            return plansFor(world, colony);
+        }
 
         return nonHousePlansFor(world, colony, previous, buildings);
     }
@@ -399,6 +462,10 @@ public final class HousePlans {
                 continue;
             }
 
+            if (!hasBed(house.get())) {
+                continue;
+            }
+
             plans.add(house.get());
         }
 
@@ -458,6 +525,11 @@ public final class HousePlans {
      */
     public static boolean isHouse(ResourceId id) {
         return isDwelling(id) && !ConstructionOrder.isShop(id);
+    }
+
+    /** Uma moradia elegível para expansão precisa oferecer ao menos uma cama. */
+    public static boolean hasBed(Blueprint plan) {
+        return plan.blocks().stream().anyMatch(block -> block.block().path().endsWith("_bed"));
     }
 
     /** Se esta peça é casa de morar, e não cerca, poço ou templo. */

@@ -18,10 +18,12 @@ regra que foi emendada. O corpo de cada regra vive em
 |---|---|---|---|---|
 | 1 | Colher até os baús encherem | 08-08 | ✅ feita | `ColonyGoals` (meta = guardado + espaço) |
 | 2 | Colher no tempo de um jogador com ferro | 08-08 | ✅ feita | `BlockBreakTime`, `LumberjackWork.tick` |
+| 2-e1 | **Emenda 1:** o aldeão trabalha na velocidade da ferramenta que tem — começa com ferro; havendo no baú dele uma melhor (mais rápida ou encantada), troca a de ferro por ela | 10-02 | ✅ feita | `ToolUpgrade` (desde 09-04) + `ActionTool.speedOf` com Eficiência e desempate por encantamento; troca pela pilha exata (`ChestWithdrawer.takeExact`, `ChestDepositor.depositExact`) — `BetterToolGameTest` |
 | 3 | Nunca destruir construções da vila original, da colônia ou do jogador | 08-13 | ✅ feita, com limite de autoria manual | `BlockProtection`, `TreeHarvester` |
 | 3-e1 | **Emenda 1:** lenhador respeita estruturas protegidas ao cortar árvores | 09-14 | ✅ feita | `TreeHarvester.plan`, `breakOne` |
-| 4 | Dois trabalhadores por profissão | 08-13 | ✅ feita | `ProfessionAssigner`, `MAX_PER_PROFESSION` |
+| 4 | Dois trabalhadores por profissão | 08-13 | ⚠️ substituída na prática | a constante `MAX_PER_PROFESSION` não existe mais; a cota cresce com a população (`ProfessionAssigner.targetCount`, lotes de 15 adultos) e a demanda passa uma cabeça acima dela (`ProfessionDemand`, 09-30) |
 | 5 | Fabricar até metade do armazém | 08-13 | ✅ feita | `ColonyGoals` (tábua) |
+| 5-e1 | **Emenda 1:** a obra usa todos os recursos de todos os baús — a tora vira a tábua que a obra pede, além da metade; a reserva de metade em tora vale só para os outros ofícios. A meta e o fabricante fazem a mesma conta | 10-02 | ✅ feita | `StockRules.logsThatMayBeConverted`, `WorkDemand.rawLogs` |
 | 6 | Estrada primeiro, casa ligada a ela | 08-14 | ✅ feita | `RoadExtension`, `BuildSiteScanner` |
 | 7 | O lenhador planta onde cortou | 08-15 | ✅ feita | `LumberjackWork.closePlan` |
 | 8 | Um baú ao lado de cada cama | 08-15 | ⚠️ metade | `ChestPlacer` (só para trabalhador) |
@@ -35,6 +37,7 @@ regra que foi emendada. O corpo de cada regra vive em
 | 16 | Cada casa com espaço em volta | 08-18 | ⚠️ parcial | volume no `BuildSiteScanner` |
 | 17 | A casa com uma lateral na estrada | 08-19 | ✅ feita | `Blueprint.doorSide`, `rotated` |
 | 18 | O dia inteiro é expediente | 08-19 | ✅ feita | `WorkClock`, `WorkHours` |
+| 18-e1 | **Emenda 1:** ninguém para de trabalhar por chuva, e não há pausa ao meio-dia (R-6 e R-7 do estudo de 10-02 recusadas) | 10-02 | ✅ é o que já acontece | `WorkHours` não olha o tempo |
 | 19 | O lote fica no nível da estrada | 08-19 | ✅ feita | `BuildSiteScanner.flatGroundAt` |
 | 20 | Cada vila constrói no estilo do bioma | 08-19 | ✅ feita | `VillagePalette`, `VillageBiomesGameTest` |
 | 21 | Toda casa nasce com cama, baú e lampião | 08-19 | ✅ feita | `BuilderWork.furnish` |
@@ -46,13 +49,32 @@ regra que foi emendada. O corpo de cada regra vive em
 | 27 | Só o catálogo do jogo, e o construtor aguarda | 08-20 | 🔒 imutável | `VillageStructures`, `MaterialChoice` |
 | 27-e1 | **Emenda 1:** abre para pedra só | 08-26 | ✅ feita | `Substitution.ALTERNATIVE` |
 | 27-e2 | **Emenda 2:** e para a madeira junto | 08-26 | ✅ feita | `MaterialChoice.INTERCHANGEABLE_IN_THE_WALL` |
-| 28 | Barreira de teste: casa pequena, mobília dispensada | 08-20 | ⚠️ **provisória** | `VillageStructures.ONLY_WHILE_TESTING` |
+| 27-e3 | **Emenda 3:** os modelos próprios da colônia (`data/villagecolony/structure/colony/`, `.nbt`) têm prioridade sobre a estrutura do jogo quando existem — casa de cada ofício e troca de estrutura; sem modelo, vale o catálogo do jogo | 10-02 | ✅ feita | `ColonyModels`, `CATALOGO.md` (`scripts/structure_catalog.py`) |
+| 28 | Barreira de teste: casa pequena, mobília dispensada | 08-20 | ⚠️ **provisória, só a metade da peça** | a casa pequena caiu em 09-09; resta a peça dispensada (`TestBarrier`) |
 | 29 | A mina em escada, duas salas, galeria sem fim | 08-20 | ✅ feita | `MineShaft` |
 | 30 | O mineiro recolhe tudo, e a boca tem endereço | 08-22 | ✅ feita | `MineMouth`, `MinerHaul` |
 | 30-e1 | **Emenda 1:** manter piso de carvão e ferro bruto mesmo sem obra ativa | 09-14 | ✅ feita | `ColonyGoals.MINERAL_FLOOR` |
 | 31 | O fazendeiro planta o que tem e colhe o que está pronto | 08-26 | ✅ feita | `FarmerWork`, `CropPatch` |
 | 32 | Móveis e cama entram depois da casa pronta | 08-29 | ✅ feita | `BuilderWork.furnish` (segunda passada) |
 | 33 | Pedido de commit+push também atualiza o JAR local | 09-14 | ✅ registrada | `build/libs/` → `downloads/` → `%APPDATA%/.minecraft/mods/`; conferir SHA-256 |
+| 34 | A lava nunca surge automática | 09-30 | ✅ feita | `BlockShaping.isNeverPlaced`, `BuilderPlacement.placeOne` |
+| 35 | Carpinteiro titular na BigHouseMOD, cama e baú à direita da porta, corredor livre até a escada | 09-30 | ✅ feita | `FOUNDATION_ORDER`, `big_house_mod.nbt` |
+| 36 | O viveiro (terra enraizada + rebento) é do lenhador | 09-30 | ✅ feita | `LumberjackNursery` |
+| 37 | Cada aldeão usa a ferramenta de ferro apropriada para a ação | 09-30 | ✅ feita | `ActionTool`, `BlockBreakTime` |
+| 37-e1 | **Emenda 1:** a de ferro é a primeira, não a única — ver 2-e1 | 10-02 | ✅ feita | `ActionTool`, `ToolUpgrade` |
+| 38 | Contratar primeiro a profissão de que a demanda depende, depois a lista | 09-30 | ✅ feita | `ProfessionDemand`, `ProfessionAssigner.demandedVacancy` |
+| 39 | Comida é feita pelo fazendeiro (pão do trigo acima de 32) | 09-30 | ✅ feita | `FarmerBakery` |
+| 40 | Piso de fundido só com cadeia do cru | 09-30 | ✅ feita | `StockRules.rawOf`, `ColonyGoals` |
+| 41 | Corante, linha, pó de osso e drops de inimigo e animal aparecem automáticos | 09-30 | ✅ feita | `DropIngredients`, `ColonySupply` (ADR-028) |
+| 42 | Mineiro para de guardar um tipo aos 256 no baú (fora o pedido) | 09-30 | ✅ feita | `MinerHaul.TYPE_CAP` |
+| 43 | O pastor faz o rebanho procriar | 09-30 | ✅ feita | `ShepherdFlock` |
+| 44 | Ofício do mod exclui ofício Vanilla | 09-30 | ✅ feita | `VanillaProfessionGuard`, `VillagerDataMixin` (ADR-029) |
+| 46 | A fome não influencia o trabalho: a comida decide só a procriação (Vanilla) | 10-02 | ✅ é o que já acontece | `VillageMeals` |
+| 47 | O aldeão não envelhece nem morre de velhice | 10-02 | ✅ é o que já acontece | — |
+| 48 | Item caído no chão só é recolhido se for peça que falta à obra aberta | 10-02 | ✅ feita | `GroundPickup` (B-1: quem está à toa recolhe e guarda no baú mais perto da obra) |
+| 49 | A ordem das obras: faltando cama, casa primeiro; não faltando, a casa de cada ofício que ainda não tem; só com todas de pé entram as demais (e a casa volta ao rodízio) | 10-02 | ✅ feita | `ConstructionPriority.WORKSHOP`, `ConstructionTurn`, `ConstructionOrder` (o mineiro ganhou o ferramenteiro; lenhador e construtor não têm casa de ofício no catálogo) |
+| 50 | Toda verificação mede o tempo dos aldeões — trabalhando, andando, bloqueado, ocioso, encalhado — por profissão, e usa a proporção como critério de melhoria e de correção | 10-02 | ✅ feita | `WorkTime` (linha `VC_TIME`), `scripts/time_ledger.py`, `CLAUDE.md` §0.4 |
+| 45 | Os baús da colônia são todos os da vila, e só eles: com a vila medida, todo baú livre dentro da caixa (na janela de altura das camas) conta, de dentro ou de fora de casa; fora da caixa está fora de alcance, mesmo o de trabalhador; baú de trabalhador de qualquer colônia nunca é livre | 10-01 | ✅ feita | `ColonyChests.nearestFirst`, `VillageChests` (`VillageChestReachGameTest`) |
 
 ---
 
@@ -62,11 +84,10 @@ Regras que o autor declarou **temporárias** e vão sair.
 
 | # | Enunciado | Por que existe | O que destrava a saída |
 |---|---|---|---|
-| 28 | Barreira de teste: só `plains_small_house_1` e mobília dispensada | Tornar as sessões comparáveis entre si | O planejador saber desistir de um objetivo (P1.1) |
+| 28 | Barreira de teste: ~~só `plains_small_house_1`~~ (caiu em 09-09) e peça dispensada | Tornar as sessões comparáveis entre si | O planejador saber desistir de um objetivo (P1.1) |
 
-**Enquanto a 28 valer:**
-- A 25 fica inerte (não há escolha entre plantas).
-- A casa sobe com peças da barreira (última medição: 19 de 169).
+**Enquanto a metade que resta valer:**
+- A casa sobe com peças da barreira (playtest de 02-10: 16 de 69).
 - `TEST BARRIER covered for N of M pieces` é a linha que mede.
 
 ---
@@ -90,8 +111,19 @@ precisam **concordar**.
 
 ## Regras revogadas
 
-Nenhuma revogada até hoje. A 25 está **inerte**, não revogada — acorda
-quando a 28 sair.
+A regra de arquitetura "a colônia não cria recurso" (`Construction-System.md`,
+sem número nesta tabela) foi **retirada em 2026-09-30** — ADR-028. A 25 está
+**inerte** no registro; a metade da 28 que a travava (só a casa pequena) caiu em 09-09.
+
+---
+
+## Decididas em 2026-10-02 (estudo de profissões)
+
+Do `docs/research/2026-10-02-melhorias-profissoes-vida-natural.md`, o autor:
+recusou a pausa e a chuva (18-e1); trocou a ferramenta fixa pela melhor do baú
+(2-e1, 37-e1); fixou que a fome não pesa no trabalho (46) e que ninguém envelhece
+(47); limitou o recolher do chão ao que a obra espera (48); deu a ordem das obras
+(49); e fez do tempo dos aldeões o critério de toda verificação (50).
 
 ---
 

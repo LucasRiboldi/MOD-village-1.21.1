@@ -50,16 +50,22 @@ jobs:
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
+      # O build roda desde 2026-09-30: unitarios, propriedades jqwik
+      # (propertyTest, fora do carregador do Fabric), regras ArchUnit e de
+      # tamanho de arquivo, Error Prone + NullAway com -Werror, e o PMD de
+      # complexidade cognitiva (so relatorio).
       - name: Build and run unit tests
         run: ./gradlew build --rerun-tasks
 
       - name: Run Fabric gametests
         run: ./gradlew runGametest --rerun-tasks
 
-      # Teste de mutacao do core (PIT). Nao reprova o CI: o numero e para
-      # ler, e o mutante sobrevivente vira tarefa de teste.
+      # Teste de mutacao do core (PIT). Desde 2026-09-30 reprova abaixo de
+      # 85% (mutationThreshold no build.gradle; o placar estava em 88%), e
+      # continua reprovando o PIT que nem comeca. Ate 2026-09-25 este passo
+      # tinha continue-on-error, e o PIT ficou parado do 78e7efc ao 7619b1d
+      # com o CI verde.
       - name: Run mutation tests (PIT, core)
-        continue-on-error: true
         run: ./gradlew pitest
 
       - name: Upload coverage and mutation reports
@@ -70,6 +76,8 @@ jobs:
           path: |
             build/reports/jacoco/**
             build/reports/pitest/**
+            build/reports/pmd/**
+            build/reports/tests/propertyTest/**
           if-no-files-found: ignore
 
       - name: Upload built jars

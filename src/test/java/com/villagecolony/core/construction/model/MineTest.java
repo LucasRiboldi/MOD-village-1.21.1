@@ -6,9 +6,11 @@ import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Contratos de avanço e divisão dos quatro ramais. */
@@ -116,5 +118,80 @@ class MineTest {
         for (int arm = 0; arm < cuts.length; arm++) {
             assertEquals(cuts[arm], mine.arm(arm).cut());
         }
+    }
+
+    // --- o que o save devolve e a troca de rota, 2026-09-25 (sobreviventes do PIT) ---
+
+    private static final MineShaft SHAFT = MineShaft.from(ENTRY, Side.NORTH);
+
+    /** Mina gravada antes de a primeira picareta cair começa em zero, e isso vale. */
+    @Test
+    void aMineSavedBeforeTheFirstBlockRestores() {
+        assertEquals(0, Mine.restore(UUID.randomUUID(), SHAFT, 0).arm(0).cut());
+        assertThrows(IllegalArgumentException.class,
+                () -> Mine.restore(UUID.randomUUID(), SHAFT, -1));
+    }
+
+    /** A fronteira de cada ramal volta ao disco como veio dele. */
+    @Test
+    void theCutsGoBackToDiskAsTheyCame() {
+        int[] saved = {70, 5, 6, 7};
+
+        assertArrayEquals(saved, Mine.restore(UUID.randomUUID(), SHAFT, saved).cuts());
+    }
+
+    /** Duas voltas sem picareta são azar; a terceira manda trocar de rota. */
+    @Test
+    void theThirdTurnWithoutAPickaxeAsksForANewRoute() {
+        Mine mine = opened();
+
+        assertFalse(mine.turnedWithoutAPickaxe());
+        assertFalse(mine.turnedWithoutAPickaxe());
+        assertTrue(mine.turnedWithoutAPickaxe());
+    }
+
+    /**
+     * Trocar de rota reabre os quatro ramais do zero na hélice nova, cada
+     * um virado um passo em relação ao anterior, e conta a tentativa.
+     */
+    @Test
+    void reroutingRestartsEveryArmOnTheNewHelix() {
+        Mine mine = Mine.restore(UUID.randomUUID(), SHAFT, new int[] {70, 5, 6, 7});
+        mine.turnedWithoutAPickaxe();
+
+        mine.reroute();
+
+        MineShaft heading = SHAFT.rerouted();
+
+        for (int index = 0; index < 4; index++) {
+            assertEquals(0, mine.arm(index).cut(), "ramal " + index + " não recomeçou");
+            assertEquals(heading, mine.arm(index).shaft(), "ramal " + index + " na hélice errada");
+            heading = heading.turned();
+        }
+
+        assertEquals(1, mine.helicesTried());
+        assertEquals(0, mine.turnsWithoutAPickaxe());
+    }
+
+    /** Mina recém-aberta não desce por nenhuma das duas portas. */
+    @Test
+    void aFreshMineDoesNotDeepen() {
+        Mine mine = opened();
+        MineShaft before = mine.shaft();
+
+        assertEquals(Mine.LevelAdvance.WAITING, mine.advanceIfEveryArmIsDone());
+        assertFalse(mine.deepenIfEveryArmIsDone());
+        assertEquals(Mine.LevelAdvance.WAITING, mine.advanceIfEveryOpenArmIsDone());
+        assertEquals(before, mine.shaft());
+    }
+
+    /** As células planejadas da mina somam os quatro ramais. */
+    @Test
+    void thePlannedCellsCoverEveryArm() {
+        java.util.Set<ColonyPos> cells = opened().plannedCells();
+
+        assertTrue(cells.contains(new ColonyPos(100, 55, 206)), "o ramal do sul");
+        assertTrue(cells.contains(new ColonyPos(94, 55, 200)), "o ramal do oeste");
+        assertTrue(cells.contains(new ColonyPos(100, 64, 199)), "o caracol comum");
     }
 }

@@ -1,9 +1,11 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import net.minecraft.item.Item;
 import net.minecraft.block.Block;
 import com.villagecolony.fabric.integration.ColonySupply;
+import com.villagecolony.fabric.event.VillageFocus;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.construction.model.ConstructionProject;
@@ -69,6 +71,10 @@ import java.util.UUID;
  * sai do mundo antes de ter para onde ir.
  */
 public final class CraftingWork {
+
+    static {
+        ServerMemory.register(CraftingWork.class, CraftingWork::clearAll);
+    }
 
     /**
      * Quantos ticks uma peça leva.
@@ -237,6 +243,10 @@ public final class CraftingWork {
                 entries.hasNext(); ) {
 
             Map.Entry<UUID, Job> entry = entries.next();
+
+            if (!VillageFocus.isWorking(world, entry.getValue().task.colonyId())) {
+                continue;
+            }
 
             if (!step(world, entry.getKey(), entry.getValue())) {
                 entries.remove();
@@ -429,6 +439,8 @@ public final class CraftingWork {
         }
 
         job.task.complete();
+        WorkerStrikes.worked(workerId, job.task);
+        TaskChain.next(job.task);
 
         WorkTargets.clear(workerId);
 

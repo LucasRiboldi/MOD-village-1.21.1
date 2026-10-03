@@ -208,7 +208,19 @@ public final class ColonySupply {
         boolean made = false;
 
         for (Map.Entry<Item, Integer> part : recipe.get().ingredients().entrySet()) {
-            if (ColonyChests.countIn(world, chests, part.getKey()) >= part.getValue()) {
+            int have = ColonyChests.countIn(world, chests, part.getKey());
+
+            if (have >= part.getValue()) {
+                continue;
+            }
+
+            if (DropIngredients.isAutomatic(part.getKey())) {
+                // Corante, linha, pó de osso e drop de bicho aparecem no
+                // baú — 2026-09-30, ver DropIngredients.
+                if (appear(world, chests, part.getKey(), part.getValue() - have)) {
+                    made = true;
+                }
+
                 continue;
             }
 
@@ -221,6 +233,22 @@ public final class ColonySupply {
         }
 
         return made;
+    }
+
+    /** Deposita o ingrediente automático que falta no primeiro baú com lugar. */
+    private static boolean appear(
+            ServerWorld world, List<ColonyPos> chests, Item item, int amount) {
+
+        Optional<ColonyPos> chest = ColonyChests.firstWithRoomFor(world, chests, item, amount);
+
+        if (chest.isEmpty() || ChestDepositor.deposit(world, chest.get(), item, amount) != 0) {
+            return false;
+        }
+
+        VillageColonyMod.LOGGER.info(
+                "The colony received {} x{} — drop ingredients appear on their own", item, amount);
+
+        return true;
     }
 
     /** Não há receita, ou há e falta ingrediente para ela. */
@@ -268,7 +296,8 @@ public final class ColonySupply {
         }
 
         for (Map.Entry<Item, Integer> part : recipe.get().ingredients().entrySet()) {
-            if (ColonyChests.countIn(world, chests, part.getKey()) >= part.getValue()) {
+            if (ColonyChests.countIn(world, chests, part.getKey()) >= part.getValue()
+                    || DropIngredients.isAutomatic(part.getKey())) {
                 continue;
             }
 

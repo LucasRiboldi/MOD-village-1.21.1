@@ -11,6 +11,7 @@ import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.integration.RoadExtension;
+import com.villagecolony.fabric.integration.PavingRefusals;
 import com.villagecolony.fabric.work.ConstructionPlanner;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Blocks;
@@ -69,14 +70,19 @@ public class RoadExtensionGameTest implements FabricGameTest {
 
         // A varredura é quem anota a ponta, e é ela que precisa falhar:
         // é o "não há mais lote" dela que autoriza a rua a crescer.
+        java.util.Optional<BuildSiteScanner.Site> unexpected = BuildSiteScanner.find(
+                context.getWorld(),
+                colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
+                RADIUS,
+                SMALL_HOUSE);
+
         context.assertTrue(
-                BuildSiteScanner.find(
-                        context.getWorld(),
-                        colony,
-                        MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
-                        RADIUS,
-                        SMALL_HOUSE).isEmpty(),
-                "a faixa de um bloco não podia ter cabido uma casa de dois");
+                unexpected.isEmpty(),
+                "a faixa de um bloco não podia ter cabido uma casa de dois: "
+                        + unexpected.map(site -> context.getRelativePos(
+                                MinecraftTypeAdapter.toBlockPos(site.origin())).toShortString()
+                                + " porta " + site.doorSide()).orElse(""));
 
         RoadExtension.Outcome outcome = RoadExtension.extend(
                 context.getWorld(), colony, ResourceId.vanilla("dirt_path"));
@@ -178,6 +184,129 @@ public class RoadExtensionGameTest implements FabricGameTest {
     }
 
     /**
+     * A ponta segue por rua que já existe, mesmo de outra colônia — F3,
+     * 2026-09-30.
+     *
+     * <p>No playtest das 02:45, 9 a 11 das 24 pontas recusadas bateram em
+     * {@code dirt_path} que o índice desta colônia não conhecia: rua de outra
+     * colônia da mesma vila, ou caminho solto. A ponta tratava o caminho como
+     * chão proibido e a rua não crescia. Caminho já é rua: seguir por cima
+     * dele não troca bloco nenhum.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_extension")
+    public void theRoadRunsOnOverAPathItDidNotLay(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        strip(context);
+        reserveInitialRoad(context, colony);
+
+        // Um caminho que o índice não conhece, logo à frente da ponta.
+        context.setBlockState(ROAD_END.add(1, 0, 0), Blocks.DIRT_PATH.getDefaultState());
+
+        BuildSiteScanner.find(
+                context.getWorld(),
+                colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        RoadExtension.Outcome outcome = RoadExtension.extend(
+                context.getWorld(), colony, ResourceId.vanilla("dirt_path"));
+
+        context.assertTrue(
+                outcome == RoadExtension.Outcome.EXTENDED,
+                "a ponta parou no caminho que não calçou: " + outcome + " — "
+                        + PavingRefusals.lastOf(colony));
+
+        context.assertTrue(
+                context.getBlockState(ROAD_END.add(2, 0, 0)).isOf(Blocks.DIRT_PATH),
+                "a terra depois do caminho não foi calçada");
+
+        context.complete();
+    }
+
+    /**
+     * Planta à frente da ponta não é chão: a rua passa por baixo dela e a
+     * tira — pedido do autor, 2026-09-30 ("estradas nascem para fora da
+     * vila").
+     *
+     * <p>No playtest das 02:45 as pontas recusaram por {@code short_grass} e
+     * {@code dandelion}: a procura de chão parava na planta e a tratava como
+     * o chão. Grama curta sobre terra é o terreno mais comum fora da vila.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_extension")
+    public void aPlantAheadIsClearedAndTheRoadIsLaidUnderIt(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        strip(context);
+        reserveInitialRoad(context, colony);
+
+        for (int step = 1; step <= 3; step++) {
+            context.setBlockState(ROAD_END.add(step, 1, 0), Blocks.SHORT_GRASS.getDefaultState());
+        }
+
+        BuildSiteScanner.find(
+                context.getWorld(),
+                colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        RoadExtension.Outcome outcome = RoadExtension.extend(
+                context.getWorld(), colony, ResourceId.vanilla("dirt_path"));
+
+        context.assertTrue(
+                outcome == RoadExtension.Outcome.EXTENDED,
+                "a grama curta parou a rua: " + outcome + " — " + PavingRefusals.lastOf(colony));
+
+        for (int step = 1; step <= 3; step++) {
+            context.assertTrue(
+                    context.getBlockState(ROAD_END.add(step, 0, 0)).isOf(Blocks.DIRT_PATH),
+                    "a terra sob a planta " + step + " não virou rua");
+            context.assertTrue(
+                    context.getBlockState(ROAD_END.add(step, 1, 0)).isAir(),
+                    "a planta " + step + " ficou em cima da rua");
+        }
+
+        context.complete();
+    }
+
+    /**
+     * A recusa diz o que a ponta encontrou — 2026-09-30.
+     *
+     * <p>O playtest de 30-09 teve <i>"found no road end it may pave — tried
+     * 22 of them"</i> sem nenhum motivo, e a causa da vila sem lote ficou
+     * sem diagnóstico. A pedra à frente da ponta é chão que não é natural,
+     * e é isso que o registro precisa dizer.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_extension")
+    public void aRefusedEndSaysWhatStoppedIt(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        strip(context);
+        reserveInitialRoad(context, colony);
+
+        context.setBlockState(ROAD_END.add(1, 0, 0), Blocks.STONE.getDefaultState());
+
+        BuildSiteScanner.find(
+                context.getWorld(),
+                colony,
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(ROAD_START)),
+                RADIUS,
+                SMALL_HOUSE);
+
+        RoadExtension.extend(context.getWorld(), colony, ResourceId.vanilla("dirt_path"));
+
+        java.util.Map<String, Integer> reasons = PavingRefusals.lastOf(colony);
+
+        context.assertTrue(
+                reasons.getOrDefault("not natural ground (stone)", 0) >= 1,
+                "a ponta recusada contra pedra não registrou o motivo: " + reasons);
+
+        context.complete();
+    }
+
+    /**
      * Uma ponta murada não para a vila — E27, 2026-08-25.
      *
      * <p>A colônia guardava <b>uma</b> ponta, a mais distante, e nenhuma
@@ -234,6 +363,49 @@ public class RoadExtensionGameTest implements FabricGameTest {
                 context.getBlockState(ROAD_END.add(1, 0, 0)).isOf(Blocks.STONE),
                 "a pedra virou rua");
 
+        context.complete();
+    }
+
+    /** Sem ponta aproveitavel, um trecho reto pode abrir um ramal fisico. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "road_extension")
+    public void aClosedRoadCanBranchTowardsNewGround(TestContext context) {
+        UUID colony = UUID.randomUUID();
+        BlockPos center = new BlockPos(6, 1, 6);
+        List<BlockPos> ring = new java.util.ArrayList<>();
+
+        sealTheGround(context);
+
+        for (int x = 4; x <= 8; x++) {
+            ring.add(new BlockPos(x, 1, 4));
+            ring.add(new BlockPos(x, 1, 8));
+        }
+        for (int z = 5; z <= 7; z++) {
+            ring.add(new BlockPos(4, 1, z));
+            ring.add(new BlockPos(8, 1, z));
+        }
+        for (BlockPos road : ring) {
+            context.setBlockState(road, Blocks.DIRT_PATH.getDefaultState());
+        }
+        for (int z = 1; z <= 3; z++) {
+            context.setBlockState(new BlockPos(6, 1, z), Blocks.DIRT.getDefaultState());
+        }
+        reserveRoad(context, colony, ring);
+
+        context.assertTrue(
+                BuildSiteScanner.find(
+                        context.getWorld(), colony,
+                        MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(center)),
+                        4, SMALL_HOUSE).isEmpty(),
+                "o anel estreito nao podia oferecer um lote de dois por dois");
+
+        RoadExtension.Outcome outcome = RoadExtension.extend(
+                context.getWorld(), colony, ResourceId.vanilla("dirt_path"));
+
+        context.assertTrue(outcome == RoadExtension.Outcome.EXTENDED,
+                "a estrada fechada nao abriu um ramal: " + outcome);
+        context.assertTrue(
+                context.getBlockState(new BlockPos(6, 1, 3)).isOf(Blocks.DIRT_PATH),
+                "o ramal nao alcancou o solo novo ao norte");
         context.complete();
     }
 
@@ -300,6 +472,8 @@ public class RoadExtensionGameTest implements FabricGameTest {
      * raio inteiro sem achar nada — que é a condição da regra.
      */
     private static void strip(TestContext context) {
+        sealTheGround(context);
+
         for (int step = 0; step <= 2; step++) {
             context.setBlockState(
                     ROAD_START.add(step, 0, 0), Blocks.DIRT_PATH.getDefaultState());
@@ -308,6 +482,25 @@ public class RoadExtensionGameTest implements FabricGameTest {
         for (int step = 1; step <= 3; step++) {
             context.setBlockState(
                     ROAD_END.add(step, 0, 0), Blocks.DIRT.getDefaultState());
+        }
+    }
+
+    /**
+     * O chão em volta do cenário não serve de lote nem de aterro — 2026-09-30.
+     *
+     * <p>Os cenários desta classe precisam de "não há lote" para a rua
+     * crescer, e isso vinha da profundidade da arena: o chão do mundo plano
+     * fica dois abaixo da rua. Em 30-09 o aterro foi a três camadas por
+     * algumas horas e esse chão virou lote; a regra voltou a uma camada, mas
+     * a selagem fica, para o cenário não depender da arena. Vidro não é vazio
+     * para o aterro atravessar nem chão sólido para apoiá-lo; pedra não
+     * serviria — é sólida, e o aterro a aceita.
+     */
+    private static void sealTheGround(TestContext context) {
+        for (int x = -2; x <= 12; x++) {
+            for (int z = -2; z <= 12; z++) {
+                context.setBlockState(new BlockPos(x, 0, z), Blocks.GLASS.getDefaultState());
+            }
         }
     }
 

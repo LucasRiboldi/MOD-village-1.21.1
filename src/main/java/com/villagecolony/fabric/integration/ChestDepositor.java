@@ -73,6 +73,32 @@ public final class ChestDepositor {
     }
 
     /**
+     * Guarda a pilha como ela é — com encantamento, nome e desgaste —
+     * 2026-10-02. O {@link #deposit} guarda "o tipo", e a ferramenta devolvida
+     * ao baú perdia o encantamento.
+     *
+     * @return se coube
+     */
+    public static boolean depositExact(ServerWorld world, ColonyPos chest, ItemStack stack) {
+        ChestBlockEntity inventory = ChestWithdrawer.chestAt(world, chest);
+
+        if (inventory == null) {
+            return false;
+        }
+
+        for (int slot = 0; slot < inventory.size(); slot++) {
+            if (inventory.getStack(slot).isEmpty()) {
+                inventory.setStack(slot, stack.copy());
+                inventory.markDirty();
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Quanto deste item ainda cabe no baú.
      *
      * <p>Existe para poder perguntar <b>antes</b> de derrubar. A madeira

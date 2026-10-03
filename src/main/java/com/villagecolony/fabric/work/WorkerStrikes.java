@@ -86,13 +86,50 @@ public final class WorkerStrikes {
     }
 
     /**
+     * Este trabalhador terminou uma tarefa — playtest de 2026-10-02.
+     *
+     * <p>O traço só recebia desistência e saída de ponto preso, nunca o
+     * trabalho que deu certo. O {@code /vc log} mostrava "[TRAVADO]
+     * Fazendeiro" com o fazendeiro colhendo: a última linha dele era a
+     * desistência de 01-10 às 09:22, quando o curral o prendeu. Agora, se a
+     * última linha da profissão é uma interrupção, a tarefa concluída grava a
+     * volta ao trabalho — uma linha por interrupção, não uma por tarefa.
+     */
+    public static void worked(UUID workerId, Task task) {
+        VillageColonyMod.WORKERS.find(workerId).ifPresent(worker -> worker.profession().ifPresent(profession -> {
+            ActivityProfession traced = toActivityProfession(profession);
+
+            boolean stopped = VillageColonyMod.ACTIVITY_TRACES.of(worker.colonyId())
+                    .map(trace -> trace.endsStopped(traced))
+                    .orElse(false);
+
+            if (!stopped) {
+                return;
+            }
+
+            VillageColonyMod.ACTIVITY_TRACES.append(
+                    worker.colonyId(),
+                    new ActivityTraceEvent(
+                            workerId,
+                            traced,
+                            toActivityKind(task.requiredCapability()),
+                            ActivityState.RECOVERED,
+                            ControlledReason.WORK_STALLED,
+                            profession == ProfessionType.FARMER
+                                    ? TargetKind.CROP
+                                    : toTargetKind(task.requiredCapability()),
+                            0));
+        }));
+    }
+
+    /**
      * A tradução entre o vocabulário do worker e o do traço —
      * {@code core.telemetry} não pode importar {@code core.worker} nem
      * {@code core.type} guarda esses valores; ver o javadoc de
      * {@link ActivityProfession}. Só {@code fabric}, que enxerga os dois
      * lados, faz essa ponte.
      */
-    private static ActivityProfession toActivityProfession(ProfessionType profession) {
+    static ActivityProfession toActivityProfession(ProfessionType profession) {
         return switch (profession) {
             case MINER -> ActivityProfession.MINER;
             case LUMBERJACK -> ActivityProfession.LUMBERJACK;

@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.type.ServerMemory;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Heightmap;
@@ -24,6 +25,10 @@ import java.util.Optional;
  * trava a thread.
  */
 public final class TreeScanner {
+
+    static {
+        ServerMemory.register(TreeScanner.class, TreeScanner::clearAll);
+    }
 
     /**
      * Quantas colunas se olha por busca, no máximo.
@@ -63,6 +68,18 @@ public final class TreeScanner {
      * ciclos de busca perto do centro, e nada mais.
      */
     private static final java.util.Map<BlockPos, Integer> NEXT_RING = new java.util.HashMap<>();
+
+    /**
+     * As árvores que a varredura já achou e ainda não deu a ninguém, por centro
+     * de busca, da mais perto à mais longe — A-2, 2026-10-02. A reanálise mediu
+     * o lenhador 66% do tempo procurando (2,4 min por árvore): cada busca
+     * recomeçava do centro e relia as mesmas colunas. Agora uma varredura serve
+     * várias árvores, e a próxima sai daqui sem varrer.
+     */
+    private static final java.util.Map<BlockPos, java.util.ArrayDeque<BlockPos>> INDEX = new java.util.HashMap<>();
+
+    /** Quantas árvores o índice guarda por centro. */
+    private static final int MAX_INDEX = 256;
 
     /**
      * Quantos blocos acima e abaixo da superfície se procura tronco.
@@ -109,7 +126,20 @@ public final class TreeScanner {
             int radius,
             java.util.function.Predicate<BlockPos> accepts) {
 
+        // O índice primeiro — A-2: a árvore que a varredura anterior já viu,
+        // conferida agora (ainda tronco, ainda aceita).
+        java.util.ArrayDeque<BlockPos> known = INDEX.get(center);
+
+        while (known != null && !known.isEmpty()) {
+            BlockPos log = known.pollFirst();
+
+            if (isStillALog(world, log) && accepts.test(log)) {
+                return Optional.of(log);
+            }
+        }
+
         int columns = 0;
+        BlockPos first = null;
 
         int startRing = NEXT_RING.getOrDefault(center, 0);
 
@@ -133,6 +163,14 @@ public final class TreeScanner {
                     }
 
                     if (++columns > MAX_COLUMNS) {
+                        if (first != null) {
+                            // Achou e gastou o orçamento guardando as outras:
+                            // a próxima varredura segue daqui — A-2.
+                            NEXT_RING.put(center.toImmutable(), ring);
+
+                            return Optional.of(first);
+                        }
+
                         // Recomeça neste anel, e não no seguinte: ele
                         // ficou pela metade. Reolhar a primeira metade
                         // custa colunas que já custariam de qualquer
@@ -147,25 +185,42 @@ public final class TreeScanner {
                             world, center.getX() + dx, center.getZ() + dz);
 
                     if (log.isPresent() && accepts.test(log.get())) {
-                        NEXT_RING.remove(center);
+                        // A mais perto vai agora; as outras do orçamento vão
+                        // para o índice, na ordem dos anéis — A-2.
+                        if (first == null) {
+                            first = log.get();
+                        } else {
+                            java.util.ArrayDeque<BlockPos> index =
+                                    INDEX.computeIfAbsent(center.toImmutable(), c -> new java.util.ArrayDeque<>());
 
-                        return log;
+                            if (index.size() < MAX_INDEX) {
+                                index.addLast(log.get());
+                            }
+                        }
                     }
                 }
             }
         }
 
-        // Varreu até a borda do raio sem achar nada. Recomeçar do centro
-        // é o certo: a floresta cresce, e a muda replantada perto volta a
-        // ser árvore antes de a busca dar a volta inteira de novo.
+        // Varreu até a borda do raio. Recomeçar do centro é o certo: a
+        // floresta cresce, e a muda replantada perto volta a ser árvore antes
+        // de a busca dar a volta inteira de novo.
         NEXT_RING.remove(center);
 
-        return Optional.empty();
+        return Optional.ofNullable(first);
+    }
+
+    /** Se ainda há tronco aqui — a árvore do índice pode ter sido derrubada. */
+    private static boolean isStillALog(ServerWorld world, BlockPos log) {
+        WorldChunk chunk = world.getChunkManager().getWorldChunk(log.getX() >> 4, log.getZ() >> 4);
+
+        return chunk != null && TreeSpecies.isLog(chunk.getBlockState(log));
     }
 
     /** Esquece os cursores, junto com o resto do estado em memória. */
     public static void clearAll() {
         NEXT_RING.clear();
+        INDEX.clear();
     }
 
     /** O tronco mais baixo desta coluna, se houver. */

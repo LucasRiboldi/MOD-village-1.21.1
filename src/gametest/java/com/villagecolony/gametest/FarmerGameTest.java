@@ -361,7 +361,7 @@ public class FarmerGameTest implements FabricGameTest {
                     "uma passagem não fecha o raio 30, e o campo tinha de dizer isso "
                             + "em vez de devolver um vazio que parece resposta");
 
-            int pausedAt = RingSweep.pausedAt(colonyId).orElse(-1);
+            int pausedAt = RingSweep.pausedAt(colonyId, RingSweep.Scan.FARMING).orElse(-1);
 
             context.assertTrue(
                     pausedAt > 0,
@@ -369,14 +369,14 @@ public class FarmerGameTest implements FabricGameTest {
 
             CropPatch.survey(world, colonyId, center, radius);
 
-            int resumedAt = RingSweep.pausedAt(colonyId).orElse(-1);
+            int resumedAt = RingSweep.pausedAt(colonyId, RingSweep.Scan.FARMING).orElse(-1);
 
             context.assertTrue(
                     resumedAt > pausedAt,
                     "a segunda passagem recomeçou do centro em vez de retomar: anel "
                             + pausedAt + " para " + resumedAt);
         } finally {
-            RingSweep.forget(colonyId);
+            RingSweep.forget(colonyId, RingSweep.Scan.FARMING);
         }
 
         context.complete();

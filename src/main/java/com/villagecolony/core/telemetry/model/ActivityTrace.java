@@ -71,6 +71,24 @@ public final class ActivityTrace {
     }
 
     /**
+     * Se o evento mais recente desta profissão é uma interrupção — desistência
+     * ou erro. É o que o {@code /vc log} mostra como "[TRAVADO]".
+     */
+    public boolean endsStopped(ActivityProfession profession) {
+        Iterator<ActivityTraceEvent> fromNewest = events.descendingIterator();
+
+        while (fromNewest.hasNext()) {
+            ActivityTraceEvent event = fromNewest.next();
+
+            if (event.profession() == profession) {
+                return event.state() == ActivityState.ABANDONED || event.state() == ActivityState.ERROR;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Quantos eventos foram expulsos por falta de espaço.
      *
      * <p>Cresce sem teto — não é limitado pela {@link #CAPACITY} do

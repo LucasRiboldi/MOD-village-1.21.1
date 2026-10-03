@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
@@ -9,6 +10,7 @@ import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.event.VillageFocus;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.particle.ParticleTypes;
@@ -22,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Optional;
 
 /**
  * O contorno do lote, desenhado no mundo — 2026-09-15.
@@ -45,6 +48,10 @@ import java.util.UUID;
  * sem abrir o log.
  */
 public final class SiteMarker {
+
+    static {
+        ServerMemory.register(SiteMarker.class, SiteMarker::clearAll);
+    }
 
     /**
      * De quantos em quantos tiques o contorno pisca.
@@ -92,7 +99,7 @@ public final class SiteMarker {
     private static final String SIGN_TAG = "villagecolony_site_sign";
 
     /** A placa de cada obra, para achá-la de volta e removê-la no fim. */
-    private static final Map<UUID, UUID> SIGNS = new HashMap<>();
+    static final Map<UUID, UUID> SIGNS = new HashMap<>();
 
     private SiteMarker() {
     }
@@ -104,6 +111,17 @@ public final class SiteMarker {
      */
     public static void remember(UUID colonyId, ResourceTally stock) {
         STOCK.put(colonyId, stock);
+    }
+
+    /**
+     * Devolve a última leitura de estoque da colônia, se ela existir.
+     *
+     * <p>O overlay cliente usa exatamente a mesma fotografia que a placa
+     * Vanilla do lote. Assim os dois diagnósticos não discordam e a
+     * sincronização não reabre baús fora do ciclo de inventário.
+     */
+    public static Optional<ResourceTally> rememberedStock(UUID colonyId) {
+        return Optional.ofNullable(STOCK.get(colonyId));
     }
 
     /**
@@ -121,6 +139,8 @@ public final class SiteMarker {
 
         // As placas de obra fechada saem primeiro, e saem mesmo sem
         // ninguém por perto: entidade órfã no save não espera plateia.
+        // Antes do desenho, para ele não adotar uma placa órfã.
+        SiteSignJanitor.judgeLoaded(world);
         clearStale(world);
 
         if (world.getPlayers().isEmpty()) {
@@ -130,6 +150,10 @@ public final class SiteMarker {
 
         for (ConstructionProject project : VillageColonyMod.CONSTRUCTIONS.all()) {
             if (!project.state().isOpen()) {
+                continue;
+            }
+
+            if (!VillageFocus.isWorking(world, project.colonyId())) {
                 continue;
             }
 
@@ -178,6 +202,18 @@ public final class SiteMarker {
     }
 
     /**
+     * Quantos blocos acima do topo da planta a placa flutua — 2026-09-24.
+     *
+     * <p><b>Decisão do autor (N7):</b> <i>"o da do lote precisa ficar 5
+     * blocos acima da altura da construção para facilitar a leitura"</i>.
+     * A versão de 09-18 a punha a 2,5 do chão: legível de perto, mas
+     * dentro da parede que subia, e escondida atrás dela de longe. Acima
+     * do telhado ela se lê de qualquer ponto da vila, e a obra não a cobre
+     * em nenhuma altura.
+     */
+    static final int LABEL_ABOVE_TOP = 5;
+
+    /**
      * A placa que flutua sobre o lote — 2026-09-16.
      *
      * <p><b>Correção de rumo.</b> A primeira versão, de 09-15, pôs a linha
@@ -199,18 +235,6 @@ public final class SiteMarker {
      * que sobrevivesse ao fim da obra seria entidade órfã no mundo do
      * jogador, e disso o projeto já tem cicatriz.
      */
-    /**
-     * Quantos blocos acima do topo da planta a placa flutua — 2026-09-24.
-     *
-     * <p><b>Decisão do autor (N7):</b> <i>"o da do lote precisa ficar 5
-     * blocos acima da altura da construção para facilitar a leitura"</i>.
-     * A versão de 09-18 a punha a 2,5 do chão: legível de perto, mas
-     * dentro da parede que subia, e escondida atrás dela de longe. Acima
-     * do telhado ela se lê de qualquer ponto da vila, e a obra não a cobre
-     * em nenhuma altura.
-     */
-    static final int LABEL_ABOVE_TOP = 5;
-
     private static void label(
             ServerWorld world, ConstructionProject project, ColonyPos origin, ColonyPos size) {
 
@@ -220,7 +244,11 @@ public final class SiteMarker {
                 project.remainingMaterials(),
                 stock == null ? Map.of() : stock.idCounts(),
                 project.remainingCount(),
-                SiteMarker::nameOf);
+                SiteMarker::nameOf,
+                // O bloco em que o construtor para quando falta material —
+                // 2026-09-25; ver SiteLabel.of.
+                project.nextBlock().map(block -> block.block()),
+                project.deferredPieces().size());
 
         // O centro do lote, cinco blocos acima do topo da planta — N7,
         // 2026-09-24; ver LABEL_ABOVE_TOP.
@@ -295,11 +323,14 @@ public final class SiteMarker {
         }
 
         // A placa de uma sessão anterior: a coluna inteira do lote, e não
-        // só a caixa em volta do ponto, pela mesma razão.
+        // só a caixa em volta do ponto, pela mesma razão. Só a desta obra:
+        // placa sem dono é órfã, e o SiteSignJanitor a remove.
         Box column = new Box(x - 1.5, y - LABEL_ABOVE_TOP - 64, z - 1.5, x + 1.5, y + 1.5, z + 1.5);
 
-        for (ArmorStandEntity found
-                : world.getEntitiesByClass(ArmorStandEntity.class, column, SiteMarker::isSign)) {
+        for (ArmorStandEntity found : world.getEntitiesByClass(
+                ArmorStandEntity.class, column,
+                candidate -> isSign(candidate)
+                        && SiteSignJanitor.projectOf(candidate).filter(project.id()::equals).isPresent())) {
 
             SIGNS.put(project.id(), found.getUuid());
             found.refreshPositionAfterTeleport(x, y, z);
@@ -307,7 +338,7 @@ public final class SiteMarker {
             return found;
         }
 
-        return raiseSign(world, x, y, z);
+        return raiseSign(world, project, x, y, z);
     }
 
     /** A altura da placa: o topo da planta mais {@link #LABEL_ABOVE_TOP}. */
@@ -317,7 +348,7 @@ public final class SiteMarker {
 
     /** Um suporte novo, invisível e sem colisão, só para carregar o nome. */
     private static ArmorStandEntity raiseSign(
-            ServerWorld world, double x, double y, double z) {
+            ServerWorld world, ConstructionProject project, double x, double y, double z) {
 
         ArmorStandEntity sign = EntityType.ARMOR_STAND.create(world);
 
@@ -336,6 +367,11 @@ public final class SiteMarker {
         sign.setSilent(true);
         sign.setCustomNameVisible(true);
         sign.addCommandTag(SIGN_TAG);
+        sign.addCommandTag(SiteSignJanitor.PROJECT_TAG_PREFIX + project.id());
+
+        // Conhecida antes de entrar no mundo: o SiteSignJanitor a vê como a
+        // placa da obra, e não como repetida.
+        SIGNS.put(project.id(), sign.getUuid());
 
         world.spawnEntity(sign);
 
@@ -343,7 +379,7 @@ public final class SiteMarker {
     }
 
     /** Se este suporte é uma placa nossa, e não decoração do jogador. */
-    private static boolean isSign(ArmorStandEntity candidate) {
+    static boolean isSign(ArmorStandEntity candidate) {
         return candidate.getCommandTags().contains(SIGN_TAG);
     }
 
@@ -353,6 +389,10 @@ public final class SiteMarker {
      * <p>É a metade que impede o lixo no save. Sem ela, cada casa terminada
      * deixaria um suporte de armadura invisível de pé para sempre, com o
      * último recado congelado.
+     *
+     * <p>A placa descarregada é esquecida aqui sem ser removida; a
+     * etiqueta da obra a condena quando o chunk voltar — ver
+     * {@link SiteSignJanitor}.
      */
     private static void clearStale(ServerWorld world) {
         SIGNS.entrySet().removeIf(entry -> {

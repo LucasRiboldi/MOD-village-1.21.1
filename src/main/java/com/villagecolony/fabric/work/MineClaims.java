@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.construction.model.Mine;
 
 import java.util.Arrays;
@@ -57,6 +58,10 @@ import java.util.UUID;
  * escada.
  */
 public final class MineClaims {
+
+    static {
+        ServerMemory.register(MineClaims.class, MineClaims::clearAll);
+    }
 
     /**
      * Os ramais de cada colônia, e o mineiro que está em cada um.

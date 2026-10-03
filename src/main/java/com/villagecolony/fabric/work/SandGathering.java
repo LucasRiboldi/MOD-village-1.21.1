@@ -4,6 +4,7 @@ import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.GatheringReach;
 import com.villagecolony.core.coordination.IdleReason;
+import com.villagecolony.fabric.integration.MineFlooding;
 import com.villagecolony.fabric.integration.RingSweep;
 import com.villagecolony.fabric.integration.SandPatch;
 import net.minecraft.server.world.ServerWorld;
@@ -97,7 +98,8 @@ public final class SandGathering {
                 // e uma duna inalcançável tem exatamente a mesma forma de
                 // laço. Ver MineMarks.
                 column -> SandPatch.in(world, column, center.getY())
-                        .filter(sand -> !MineMarks.isUnreachableAround(world, sand)));
+                        .filter(sand -> !MineMarks.isUnreachableAround(world, sand))
+                        .filter(sand -> !MineFlooding.holdsBackFluid(world, sand)));
 
         if (found.isEmpty()) {
             // Pelo IdleLog, e não direto no logger: uma varredura de raio

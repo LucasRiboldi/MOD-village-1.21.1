@@ -3819,6 +3819,7 @@ public class MinerGameTest implements FabricGameTest {
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_stillness",
             tickLimit = 400)
     public void aFrozenMinerGivesUpLongBeforeTheStallGuard(TestContext context) {
+        // (O nome ficou: o que ele mede é o guarda de imobilidade agir cedo.)
         // O relógio é do mundo inteiro e a bateria o faz andar: sem
         // fixá-lo, onde este teste cai no dia depende de quantos
         // tiques a bateria gastou antes dele. Ver 2026-09-04.
@@ -3923,8 +3924,19 @@ public class MinerGameTest implements FabricGameTest {
 
         int[] releasedAt = { -1 };
 
+        // <b>Ou ele cava a saída</b> — ADR-025, fase 2, 2026-09-25. Desde o
+        // desvio, o primeiro disparo do guarda não devolve mais a tarefa: o
+        // mineiro emparedado abre o caminho até a pedra. O que o teste
+        // protege continua o mesmo — o guarda fala muito antes dos 2.400 —,
+        // e "falou" passa a ser a tarefa devolvida OU a parede aberta.
+        int[] openedAt = { -1 };
+
         context.runAtEveryTick(() -> {
             passes[0]++;
+
+            if (openedAt[0] < 0 && enclosureOpened(context)) {
+                openedAt[0] = passes[0];
+            }
 
             if (releasedAt[0] >= 0) {
                 return;
@@ -3962,7 +3974,10 @@ public class MinerGameTest implements FabricGameTest {
             //
             // Fala só quando algo está errado, para não somar ruído às
             // 269 passagens de uma bateria verde.
-            if (releasedAt[0] < 0 || !WorkHours.isWorkTime(world, villager)) {
+            int actedAt = releasedAt[0] < 0 ? openedAt[0]
+                    : openedAt[0] < 0 ? releasedAt[0] : Math.min(releasedAt[0], openedAt[0]);
+
+            if (actedAt < 0 || !WorkHours.isWorkTime(world, villager)) {
                 VillageColonyMod.LOGGER.warn(
                         "KF-001 — a tarefa do mineiro emparedado nunca voltou para a fila."
                                 + " task={}, expediente={}, relatório={}",
@@ -3983,17 +3998,17 @@ public class MinerGameTest implements FabricGameTest {
                                 + " travamento, senão ele não adianta nada");
 
                 context.assertTrue(
-                        releasedAt[0] >= 0,
-                        "o mineiro passou " + (MinerWork.STILL_LIMIT + 20) + " passagens parado"
-                                + " e a tarefa nunca voltou para a fila —"
+                        actedAt >= 0,
+                        "o mineiro passou " + (MinerWork.STILL_LIMIT + 20) + " passagens parado,"
+                                + " não cavou a saída e a tarefa nunca voltou para a fila —"
                                 + " ela só voltaria no tique " + MinerWork.STALL_LIMIT
                                 + ", que é o preço que toda sessão pagou. O relatório diz o"
                                 + " que o contador marcava: "
                                 + MinerReport.report(world, colony).orElse("(sem relatório)"));
 
                 context.assertTrue(
-                        releasedAt[0] < MinerWork.STALL_LIMIT,
-                        "a tarefa voltou no tique " + releasedAt[0] + ", e o guarda de"
+                        actedAt < MinerWork.STALL_LIMIT,
+                        "o guarda agiu no tique " + actedAt + ", e o guarda de"
                                 + " travamento só falaria no " + MinerWork.STALL_LIMIT
                                 + " — quem a devolveu não foi o detector de imobilidade");
             } finally {
@@ -5769,6 +5784,14 @@ public class MinerGameTest implements FabricGameTest {
             world.setBlockState(hill, Blocks.STONE.getDefaultState());
             world.setBlockState(hill.up(), Blocks.AIR.getDefaultState());
 
+            // A encosta alta continua elegivel, mas agora tambem sustenta os
+            // tres primeiros degraus das três faixas da espiral.
+            for (int step = 1; step <= 3; step++) {
+                world.setBlockState(hill.add(0, 0, -step), Blocks.STONE.getDefaultState());
+                world.setBlockState(hill.add(-1, 0, -step), Blocks.STONE.getDefaultState());
+                world.setBlockState(hill.add(-2, 0, -step), Blocks.STONE.getDefaultState());
+            }
+
             Optional<BlockPos> mouth = MineSite.mouthOf(world, center, Side.NORTH);
 
             context.assertTrue(mouth.isPresent(), "não foi encontrada uma boca seca acessível");
@@ -5781,6 +5804,66 @@ public class MinerGameTest implements FabricGameTest {
         }
 
         context.complete();
+    }
+
+    /**
+     * A escada precisa de um patamar de terra, e nao pode sair de um pilar solto.
+     *
+     * <p>O pilar a leste esta mais alto e, sem conferir os primeiros degraus,
+     * vence a plataforma sul no desempate por elevacao. A abertura resultante
+     * cava o ar ao redor da vila em vez de entrar no solo.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "mine_mouth",
+            tickLimit = 20)
+    public void theMineMouthRejectsAnUnsupportedRaisedPillar(TestContext context) {
+        ServerWorld world = context.getWorld();
+        BlockPos center = context.getAbsolutePos(new BlockPos(4, 2, 4));
+
+        MineDigging.shortenMineDistanceTo(3);
+
+        try {
+            BlockPos unsupportedPillar = center.offset(Direction.EAST, 3).up(2);
+            BlockPos supportedGround = center.offset(Direction.SOUTH, 3).down();
+
+            world.setBlockState(unsupportedPillar, Blocks.STONE.getDefaultState());
+
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int forward = 0; forward <= 3; forward++) {
+                    world.setBlockState(
+                            supportedGround.add(dx, 0, -forward), Blocks.STONE.getDefaultState());
+                }
+            }
+
+            Optional<BlockPos> mouth = MineSite.mouthOf(world, center, Side.NORTH);
+
+            context.assertTrue(mouth.isPresent(), "nenhum terreno estavel foi aceito para a mina");
+            context.assertTrue(
+                    !mouth.get().equals(unsupportedPillar),
+                    "a boca aceitou o pilar sem patamar em vez de outro solo estavel: "
+                            + mouth.get().toShortString());
+        } finally {
+            MineDigging.restoreMineDistance();
+        }
+
+        context.complete();
+    }
+
+    /** Se algum bloco da caixa de pedra em volta do PERCH foi aberto — ADR-025. */
+    private static boolean enclosureOpened(TestContext context) {
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 2; dy++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    BlockPos at = PERCH.add(dx, dy, dz);
+
+                    if (!at.equals(PERCH) && !at.equals(PERCH.up())
+                            && !context.getWorld().getBlockState(context.getAbsolutePos(at)).isOf(Blocks.STONE)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     /** A primeira tocha de parede da arena, se a mina acendeu alguma. */

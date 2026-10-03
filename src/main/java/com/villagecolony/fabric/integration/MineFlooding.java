@@ -56,6 +56,29 @@ public final class MineFlooding {
     }
 
     /**
+     * Se esta pedra segura líquido — pedido do autor, 2026-09-25: "não deixar
+     * o mineiro quebrar o bloco que tem líquido atrás".
+     *
+     * <p>As seis faces, as mesmas que o {@link #seal} olha depois: a pedra que
+     * passa aqui não abre nascente nenhuma. Toda porta por onde uma pedra vira
+     * alvo do mineiro pergunta isto antes — o cursor da galeria, o minério da
+     * parede, o veio, a pedra de superfície, a areia —, e o {@code MinerHands}
+     * pergunta de novo antes da primeira batida, porque a água anda.
+     *
+     * <p>A vedação continua valendo como rede: areia que cai e líquido que
+     * chega depois da escolha ainda passam por ela.
+     */
+    public static boolean holdsBackFluid(ServerWorld world, BlockPos stone) {
+        for (Direction face : Direction.values()) {
+            if (!world.getFluidState(stone.offset(face)).isEmpty()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Tapa as nascentes que a picareta acabou de abrir nesta posição.
      *
      * <p>As seis faces, e só elas: é o que se vê da pedra que saiu. O

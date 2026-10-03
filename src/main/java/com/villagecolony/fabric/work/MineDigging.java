@@ -171,7 +171,23 @@ public final class MineDigging {
             }
 
             if (advance == Mine.LevelAdvance.EXHAUSTED) {
-                MineTrouble.abandonAtBottom(world, colonyId, mine.get(), center);
+                if (!MineBottomRetry.isDue(colonyId, world.getTime())) {
+                    return Optional.empty();
+                }
+
+                if (MineTrouble.abandonAtBottom(world, colonyId, mine.get(), center)) {
+                    MineBottomRetry.clear(colonyId);
+                    IdleLog.clear(colonyId, ARM_SUBJECT);
+                } else {
+                    MineBottomRetry.defer(colonyId, world.getTime());
+                    IdleLog.recordAt(
+                            colonyId,
+                            ARM_SUBJECT,
+                            IdleReason.NO_TARGET,
+                            "mine reached the world bottom; the opposite mouth is not available yet",
+                            world.getTime());
+                }
+
                 return Optional.empty();
             }
 
@@ -220,7 +236,7 @@ public final class MineDigging {
 
         IdleLog.clear(colonyId, ARM_SUBJECT);
 
-        Optional<BlockPos> found = MineVein.followingTheVein(world, arm)
+        Optional<BlockPos> found = MineVein.followingTheVein(world, mine.get(), arm)
                 .or(() -> MineCuts.nextCut(world, workerId, mine.get(), arm));
 
         if (found.isEmpty()) {
@@ -387,7 +403,29 @@ public final class MineDigging {
 
         Side descent = MineCuts.sideOf(colonyId);
 
-        Optional<BlockPos> mouth = MineSite.mouthOf(world, center, descent);
+        // A descida da mina anterior travou: a nova nasce na borda, longe da água (A-4).
+        Optional<MineEdge.Choice> edge = MineEdge.relocation(world, colonyId, center);
+
+        if (edge.isPresent()) {
+            descent = edge.get().side();
+        }
+
+        Optional<BlockPos> mouth = edge.isPresent()
+                ? Optional.of(edge.get().mouth())
+                : MineSite.mouthOf(world, center, descent);
+        Optional<WaterMineAccess.Route> waterAccess = Optional.empty();
+
+        if (mouth.isEmpty()) {
+            waterAccess = WaterMineAccess.find(world, center, descent);
+
+            if (waterAccess.isPresent() && waterAccess.get().place(world)) {
+                mouth = Optional.of(waterAccess.get().entry());
+                VillageColonyMod.LOGGER.info(
+                        "Miner {} opens a sealed water mine access at {}",
+                        workerId,
+                        mouth.get().toShortString());
+            }
+        }
 
         if (mouth.isEmpty()) {
             // A linha que faltava, e a falta dela custou três sessões.
@@ -419,9 +457,14 @@ public final class MineDigging {
                 MineShaft.DESCENT,
                 MineShaft.ARM_STAIRS);
 
-        // A Regra 30: onde ele decide começar a cavar nascem a lanterna
-        // e o baú da mina.
-        MineFurnishing.furnishAndLight(world, opened);
+        if (waterAccess.isPresent()) {
+            // A saída inferior está dentro da rota selada. O arco normal
+            // ocuparia o corredor de três pistas, então esta mina só recebe
+            // a iluminação das galerias já abertas.
+            MineFurnishing.lightMine(world, opened);
+        } else {
+            MineFurnishing.furnishAndLight(world, opened);
+        }
 
         return Optional.of(opened);
     }

@@ -61,15 +61,11 @@ public record Building(
         }
     }
 
-    /**
-     * A construção que uma obra terminada deixou.
-     *
-     * <p>A caixa vem do projeto e da origem, e não dos blocos de fato
-     * colocados: um bloco que o construtor tenha pulado — a tocha sem
-     * parede, por exemplo — continua sendo parte da casa para efeito de
-     * proteção. Do contrário a casa teria buracos por onde outra obra
-     * poderia passar.
-     */
+    /** A mesma construção, agora da colônia que absorveu a sua — ADR-007 §3. */
+    public Building joinColony(UUID newColonyId) {
+        return new Building(id, newColonyId, blueprint, min, max, finished);
+    }
+
     /**
      * A caixa de uma obra <b>abandonada</b> — ela ocupa o lote e não é casa.
      *
@@ -83,6 +79,12 @@ public record Building(
 
     /**
      * A caixa desta obra, dizendo se ela chegou ao fim.
+     *
+     * <p>A caixa vem do projeto e da origem, e não dos blocos de fato
+     * colocados: um bloco que o construtor tenha pulado — a tocha sem
+     * parede, por exemplo — continua sendo parte da casa para efeito de
+     * proteção. Do contrário a casa teria buracos por onde outra obra
+     * poderia passar.
      *
      * @param finished verdadeiro só quando o construtor assentou o último
      *     bloco. A obra largada por falta de material, ou por ter ficado

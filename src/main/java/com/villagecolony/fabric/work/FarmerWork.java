@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.IdleReason;
@@ -8,9 +9,12 @@ import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.core.task.model.TaskType;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.data.save.ProfessionPolicySavedData;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.event.VillageFocus;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
 import com.villagecolony.fabric.integration.CropPatch;
@@ -59,6 +63,10 @@ import java.util.UUID;
  * se procura.
  */
 public final class FarmerWork {
+
+    static {
+        ServerMemory.register(FarmerWork.class, FarmerWork::clearAll);
+    }
 
     /** Alcance de braço. O mesmo do pastor e do lenhador. */
     private static final int REACH = 3;
@@ -158,6 +166,12 @@ public final class FarmerWork {
         searchRadius = SEARCH_RADIUS;
     }
 
+    static int searchRadius(ServerWorld world) {
+        int configured = ProfessionPolicySavedData.get(world.getServer()).policies()
+                .policyOf(ProfessionType.FARMER).searchRadius();
+        return configured < 0 ? searchRadius : configured;
+    }
+
     /**
      * Casa fazendeiro com tarefa de comida, e diz quantos trabalham.
      *
@@ -238,8 +252,13 @@ public final class FarmerWork {
                 entries.hasNext(); ) {
 
             Map.Entry<UUID, Job> entry = entries.next();
+            Job job = entry.getValue();
 
-            if (!isOngoing(entry.getValue().task)) {
+            if (!VillageFocus.isWorking(world, job.task.colonyId())) {
+                continue;
+            }
+
+            if (!isOngoing(job.task)) {
                 entries.remove();
 
                 // O destino morre com a tarefa — ver WorkTargets.clear.
@@ -248,7 +267,7 @@ public final class FarmerWork {
                 continue;
             }
 
-            step(world, entry.getKey(), entry.getValue());
+            step(world, entry.getKey(), job);
         }
     }
 

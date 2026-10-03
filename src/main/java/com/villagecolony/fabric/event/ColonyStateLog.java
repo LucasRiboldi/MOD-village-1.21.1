@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.event;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.ColonyState;
 
@@ -39,6 +40,10 @@ import java.util.UUID;
  * <p>Some quando o E9 fechar.
  */
 public final class ColonyStateLog {
+
+    static {
+        ServerMemory.register(ColonyStateLog.class, ColonyStateLog::clearAll);
+    }
 
     /** Quantas trocas cada colônia teve nesta sessão. */
     private static final Map<UUID, Integer> FLIPS = new LinkedHashMap<>();

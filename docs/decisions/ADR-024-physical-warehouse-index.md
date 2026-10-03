@@ -39,6 +39,23 @@ faltou ler pode ser exatamente o que decidiria. `invalidate()` esquece toda
 reserva sem alterar o estoque visto — chamado ao fim de cada ciclo, para
 que reserva de um ciclo nunca vaze para o seguinte.
 
+**Emenda 2026-09-28 — materializacao fatiada e prioridade compartilhada.** Na
+integracao Fabric, `ColonyChestSurvey` le no maximo oito baus por colonia em
+cada rodada e guarda somente um cursor de memoria ate a rodada terminar. Baus
+sem vinculo de profissao sao lidos antes dos baus de profissao, preservando a
+ordem de distancia dentro de cada grupo.
+
+Enquanto houver baus pendentes, o ciclo pode decidir reserva, pedido,
+planejamento e fabricacao com somente as quantidades que ja foram lidas. Bau
+ainda nao lido nao vira saldo zero, sobra presumida nem dado persistido; a
+rodada e descartada ao fechar, quando a lista de baus muda e no ciclo de vida
+do servidor. Leitura parcial causada por bau inalcançavel deixa o armazem em
+modo degradado: a integracao registra a transicao e continua somente com o
+limite inferior fisico que observou. Ela nao carrega chunk, nao estima o
+conteudo ausente e nao o transforma em saldo ou reserva. A retirada no ponto
+de uso continua tentando os baus carregados e confirma o item antes de
+consumi-lo; uma falha local pausa somente o trabalho que realmente depende dele.
+
 **Sem estoque virtual.** Todo recurso que o índice conhece veio de leitura
 física de baú reconhecido. A única exceção documentada é a **ADR-022**: uma
 peça final sintetizada quando nenhuma alternativa da família tem rota
@@ -52,8 +69,9 @@ depósito acontece.
 - Duas tarefas do mesmo ciclo não podem prometer o mesmo estoque escasso
   duas vezes.
 - Prioridade é decisão explícita e testável, não ordem de chegada acidental.
-- Uma leitura parcial de baú nunca é tratada como "zero" nem como "sobra o
-  bastante" — ela bloqueia, e diz por quê.
+- Bau ainda pendente ou inalcançavel nunca e tratado como "zero" nem como
+  "sobra o bastante"; a decisao usa apenas o que foi observado. O segundo
+  informa a degradacao sem bloquear a colonia inteira.
 - O contrato não sabe onde um baú fica nem que item Minecraft representa um
   `ResourceId`; isso é responsabilidade de
   `fabric.integration.WarehouseObserver` (Task 9), que nunca entra em
@@ -62,8 +80,16 @@ depósito acontece.
 ## Verificação
 
 `WarehouseIndexTest` cobre: reserva impede dupla contagem no mesmo ciclo,
-motivo de bloqueio por estoque insuficiente, fotografia incompleta
-bloqueia toda reserva, recurso nunca visto é zero (não erro),
+motivo de bloqueio por estoque insuficiente, fotografia incompleta bloqueia a
+reserva do contrato puro, recurso nunca visto e zero (nao erro),
 `invalidate()` limpa reserva sem tocar estoque, `reserveBatch` ordena por
 prioridade enquanto `reserve` sozinho é *greedy*, a ordem de
 `SupplyPriority` é explícita, e quantidade zero/negativa é recusada.
+`StorageGameTest.aSlicedSurveyPublishesTheLastChestOnlyAfterItsRoundCloses`
+prova que o conteudo do nono bau nao aparece na fotografia antes do fechamento
+da rodada.
+`StorageGameTest.pendingSurveyReadsSharedChestBeforeProfessionStorage` prova
+que um bau compartilhado e consultado antes dos baus vinculados a profissao.
+`ChestSurveyCoverageTest.anUnreachableChestDoesNotBlockObservedStockDecisions`
+prova que indisponibilidade continua explicitamente degradada, mas nao volta a
+ser veto global; `WarehouseHealthLogTest` cobre a transicao do aviso.

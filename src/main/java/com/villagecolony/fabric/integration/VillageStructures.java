@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.type.ResourceId;
 
 import java.io.InputStream;
@@ -54,6 +55,10 @@ import java.util.Set;
  * que restava dela.
  */
 public final class VillageStructures {
+
+    static {
+        ServerMemory.register(VillageStructures.class, VillageStructures::clearAll);
+    }
 
     /** Onde o índice da pasta mora dentro do jar. */
     private static final String CATALOG =
@@ -245,9 +250,15 @@ public final class VillageStructures {
 
     /** Todas as peças autorizadas, inclusive lâmpadas fora de {@code houses}. */
     public static synchronized List<ResourceId> buildableFor(String style) {
-        return BUILDABLE.computeIfAbsent(style, VillageStructures::loadAllowed).stream()
+        // As casas de ofício da colônia primeiro — 2026-10-02: quando existem,
+        // vêm à frente das do jogo. Ver ColonyModels.
+        List<ResourceId> buildable = new ArrayList<>(ColonyModels.tradeHousesFor(style));
+
+        BUILDABLE.computeIfAbsent(style, VillageStructures::loadAllowed).stream()
                 .filter(VillageStructures::isProfessionBuildable)
-                .toList();
+                .forEach(buildable::add);
+
+        return List.copyOf(buildable);
     }
 
     /**
@@ -259,7 +270,7 @@ public final class VillageStructures {
      * explicita contra ela voltar a aparecer numa lista profissional.
      */
     public static boolean isProfessionBuildable(ResourceId id) {
-        return id != null && ResourceId.VANILLA.equals(id.namespace());
+        return id != null && (ResourceId.VANILLA.equals(id.namespace()) || ColonyModels.isColonyModel(id));
     }
 
     /**

@@ -2,6 +2,9 @@ package com.villagecolony.gametest;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.Mine;
 import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.core.storage.model.WorkerStorage;
@@ -9,6 +12,7 @@ import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskPriority;
 import com.villagecolony.core.task.model.TaskType;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.core.type.Side;
 import com.villagecolony.core.worker.model.ProfessionType;
@@ -45,6 +49,92 @@ public class SmelterGameTest implements FabricGameTest {
     private static final BlockPos CHEST = new BlockPos(2, 2, 2);
 
     private static final BlockPos STAND = new BlockPos(3, 2, 3);
+
+    /**
+     * Sem a matéria-prima do pedido, o fundidor adianta a obra — F2 e pedido
+     * do autor, 2026-09-30.
+     *
+     * <p>No playtest das 02:45 os fundidores pararam 193 vezes sem argila nem
+     * areia, soltando e retomando a mesma tarefa. A regra nova: depois de
+     * cinco paradas pelo mesmo pedido, ele funde uma peça de outro item que a
+     * obra aberta vai precisar, e volta a tentar o pedido — sem abandoná-lo.
+     *
+     * <p>O cenário: pedido de lingote sem ferro cru no baú, areia no baú e uma
+     * obra aberta com vidro na planta.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "smelter_fallback",
+            tickLimit = 200)
+    public void withoutTheRawMaterialTheSmelterWorksForTheOpenBuild(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        context.setBlockState(new BlockPos(3, 1, 3), Blocks.DIRT.getDefaultState());
+        context.setBlockState(CHEST, Blocks.CHEST.getDefaultState());
+
+        ColonyPos chest = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(CHEST));
+
+        ChestDepositor.deposit(world, chest, Items.SAND, 4);
+
+        Colony colony = Colony.create(UUID.randomUUID(), chest);
+
+        VillageColonyMod.COLONIES.register(colony);
+
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+
+        VillagerEntity villager = context.spawnEntity(EntityType.VILLAGER, STAND);
+        villager.setBreedingAge(0);
+
+        Worker worker = VillageColonyMod.WORKERS.register(villager.getUuid(), colony.id());
+        worker.assign(ProfessionType.SMELTER);
+
+        VillageColonyMod.STORAGES.register(WorkerStorage.of(villager.getUuid(), chest));
+
+        owned.owning(villager.getUuid());
+
+        VillageColonyMod.CONSTRUCTIONS.register(ConstructionProject.plan(
+                colony.id(),
+                Blueprint.of(
+                        ResourceId.vanilla("village/plains/houses/smelter_fallback"),
+                        List.of(new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("glass")))),
+                MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(new BlockPos(6, 2, 6)))));
+
+        Task task = VillageColonyMod.TASKS.create(
+                colony.id(),
+                TaskType.SMELT_MATERIAL,
+                TaskPriority.PRODUCTION,
+                ResourceType.IRON_INGOT,
+                4);
+
+        try {
+            // Seis rodadas: cinco paradas pelo pedido e a primeira depois
+            // delas. Cada rodada é o que o ciclo faria — retomar a tarefa se
+            // ela voltou à fila e dar vinte tiques de fornalha.
+            for (int round = 0; round < 6; round++) {
+                if (!task.isHeld()) {
+                    task.reserveFor(villager.getUuid());
+                }
+
+                SmelterWork.run(world, colony);
+
+                for (int tick = 0; tick < 20; tick++) {
+                    SmelterWork.tick(world);
+                }
+            }
+
+            int glass = ChestInventoryReader
+                    .read(world, context.getAbsolutePos(CHEST))
+                    .amountOf(ResourceType.GLASS);
+
+            context.assertTrue(glass > 0,
+                    "depois de cinco paradas sem ferro cru o fundidor não fundiu o vidro"
+                            + " que a obra aberta pede");
+            context.assertTrue(task.isHeld(),
+                    "o fundidor largou o pedido de lingote em vez de voltar a tentá-lo");
+        } finally {
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
 
     /**
      * A areia do baú vira vidro no mesmo baú.
@@ -249,11 +339,10 @@ public class SmelterGameTest implements FabricGameTest {
      * enquanto o construtor esperava pelo arenito"</i>. Meia correção
      * aqui seria pior que nenhuma.
      *
-     * <p>Este teste fixa as duas metades, agora do lado certo. Que é
-     * mesmo ali que o minério cai, pelo caminho que o
-     * {@code MinerHaul.treasureChestFor} percorre — registro da mina,
-     * entrada do poço, baú encostado. E que a colônia <b>o enxerga</b>,
-     * conta o ferro e funde.
+     * <p>Este teste protege a leitura de estoque histórico: um baú que a
+     * regra antiga deixou na boca da mina ainda entra na contabilidade, para
+     * que a colônia <b>o enxergue</b>, conte o ferro e funda. Depósitos novos
+     * vão diretamente ao baú do mineiro.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "smelter_mine_mouth",
             tickLimit = 200)
@@ -324,9 +413,8 @@ public class SmelterGameTest implements FabricGameTest {
 
         context.runAtTick(150, () -> {
             try {
-                // Primeira metade: é este o baú que o mineiro alimenta.
-                // O caminho é o do MinerHaul.treasureChestFor — mina da
-                // colônia, entrada do poço, baú encostado.
+                // Primeira metade: o baú histórico ainda é achado pela
+                // geometria da mina, mesmo sem receber depósitos novos.
                 BlockPos reached = VillageColonyMod.MINES.of(colony.id())
                         .map(mine -> MinecraftTypeAdapter.toBlockPos(mine.shaft().entry()))
                         .flatMap(entry -> MineMouth.chestAt(world, entry))
@@ -334,7 +422,7 @@ public class SmelterGameTest implements FabricGameTest {
 
                 context.assertTrue(
                         context.getAbsolutePos(mouthChest).equals(reached),
-                        "a Regra 30 não chega a este baú — o cenário não prova nada");
+                        "a leitura histórica não chegou ao baú do cenário");
 
                 // Segunda metade: a colônia o enxerga, pela mesma lista
                 // que o ciclo usa. Montar uma lista à parte aqui faria o

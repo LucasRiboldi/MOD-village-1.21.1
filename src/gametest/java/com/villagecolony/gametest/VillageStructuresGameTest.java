@@ -201,6 +201,24 @@ public class VillageStructuresGameTest implements FabricGameTest {
         context.complete();
     }
 
+    /** Cada moradia que pode ser escolhida para crescimento precisa ampliar a capacidade de camas. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "village_catalog")
+    public void everyOfferedHouseContainsABed(TestContext context) {
+        for (String style : STYLES) {
+            for (ResourceId structure : VillageStructures.housesFor(style)) {
+                if (!HousePlans.isHouse(structure)) {
+                    continue;
+                }
+
+                var blueprint = StructureBlueprintReader.read(context.getWorld(), structure);
+                context.assertTrue(blueprint.isPresent(), "Estrutura de moradia ausente: " + structure);
+                context.assertTrue(HousePlans.hasBed(blueprint.orElseThrow()),
+                        "Moradia elegível sem cama: " + structure);
+            }
+        }
+        context.complete();
+    }
+
     /**
      * Nenhuma casa inventada pelo mod entra na lista.
      *

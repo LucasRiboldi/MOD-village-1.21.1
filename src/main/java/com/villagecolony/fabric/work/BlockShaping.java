@@ -56,6 +56,45 @@ public final class BlockShaping {
     }
 
     /**
+     * A peça de parede se apoia na parede que existe — 2026-09-25, visto em
+     * jogo.
+     *
+     * <p><b>O defeito original.</b> Antes da ADR-008 a planta não guardava a
+     * direção do bloco, e {@link #facing} só virava as peças da borda da
+     * caixa. No miolo da casa a escada de mão e a tocha de parede ficavam no
+     * estado padrão. Este método permanece como recuperação quando a direção
+     * pedida não encontra apoio no mundo real.
+     *
+     * <p><b>A regra.</b> Se a direção deduzida já se sustenta, ela fica — a
+     * borda da caixa e qualquer peça que já dava certo não mudam. Senão, a
+     * primeira das quatro direções, numa ordem fixa, em que o jogo aceita a
+     * peça. Sem nenhuma, devolve a de antes, e a peça é adiada como era.
+     *
+     * <p>A direção principal vem do arquivo da estrutura. Este fallback é o
+     * que impede uma diferença posterior no mundo de prender a obra.
+     */
+    static BlockState leanOnAWall(ServerWorld world, BlockPos target, BlockState state) {
+        if (!state.contains(Properties.HORIZONTAL_FACING) || state.canPlaceAt(world, target)) {
+            return state;
+        }
+
+        for (Direction facing : WALL_ORDER) {
+            BlockState turned = state.with(Properties.HORIZONTAL_FACING, facing);
+
+            if (turned.canPlaceAt(world, target)) {
+                return turned;
+            }
+        }
+
+        return state;
+    }
+
+    /** Ordem fixa: a mesma parede dá a mesma direção em toda sessão. */
+    private static final Direction[] WALL_ORDER = {
+        Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST
+    };
+
+    /**
      * Vira o bloco de parede para fora da casa — a Regra 17.
      *
      * <p>Até 2026-08-19 a porta saía no estado padrão da planta, que
@@ -69,8 +108,8 @@ public final class BlockShaping {
      * lado de fora, olhando para a casa, e a porta guarda a direção do
      * olhar dele.
      *
-     * <p>Só blocos de parede. Bloco do miolo — a cama, o baú da Regra 21
-     * — não tem "fora" e fica com o estado padrão até ter regra própria.
+     * <p>Só blocos de parede. No miolo, prevalece a orientação da planta; a
+     * cama ainda passa por {@link #bedFacing} para não atravessar uma parede.
      *
      * <p>Deduzir em vez de gravar tem uma vantagem que vale dizer: a
      * obra que volta do save não precisa que o save saiba disso. A
@@ -82,6 +121,12 @@ public final class BlockShaping {
 
         if (!state.contains(Properties.HORIZONTAL_FACING)) {
             return state;
+        }
+
+        if (block.facing().isPresent()) {
+            state = state.with(
+                    Properties.HORIZONTAL_FACING,
+                    MinecraftTypeAdapter.toDirection(block.facing().orElseThrow()));
         }
 
         if (state.contains(Properties.BED_PART)) {
@@ -124,11 +169,9 @@ public final class BlockShaping {
      *     — Block{minecraft:cobblestone} is in the way
      * </pre>
      *
-     * <p>A planta guarda o nome do bloco e não o estado (ADR-005), então
-     * a cama saía no <b>padrão</b>, que olha para o norte. Na casa de
-     * planície o norte da cama é a parede: a cabeceira não coube, e
-     * sobrou meia cama — <i>"aparece somente a metade da cama e na
-     * direção errada"</i>.
+     * <p>Antes da ADR-008 a planta guardava o nome, mas não o lado. A cama
+     * saía no padrão, que podia apontar para a parede; a cabeceira não cabia
+     * e sobrava meia cama.
      *
      * <p>A saída é perguntar ao mundo em vez de ao arquivo, e é a Regra
      * 32 que a torna possível: com a mobília entrando depois da casa
@@ -140,12 +183,17 @@ public final class BlockShaping {
      * livre, fica o que estava — e aí o {@code placeSecondHalf} diz no
      * log que a cabeceira não coube, como já dizia.
      *
-     * <p><b>A orientação fiel ao arquivo continua sendo a ADR-008</b>,
-     * decidida e por escrever, e vale para o tronco e o degrau também.
-     * Isto aqui é mais simples e mais urgente: cama que cabe.
+     * <p>A ADR-008 agora fornece a direção preferida. Quando ela não cabe,
+     * esta regra ainda escolhe uma direção segura para manter a cama inteira.
      */
     static BlockState bedFacing(ServerWorld world, BlockPos foot, BlockState state) {
         if (!state.contains(Properties.BED_PART) || !state.contains(Properties.HORIZONTAL_FACING)) {
+            return state;
+        }
+
+        Direction requested = state.get(Properties.HORIZONTAL_FACING);
+
+        if (world.getBlockState(foot.offset(requested)).isReplaceable()) {
             return state;
         }
 
@@ -200,11 +248,8 @@ public final class BlockShaping {
         }
 
         if (state.contains(Properties.BED_PART) && state.contains(Properties.HORIZONTAL_FACING)) {
-            // A cabeceira vai para onde o estado padrão aponta, e não
-            // para onde o arquivo dizia: a orientação é a metade do E8
-            // que continua aberta (TASK-046). Uma cama virada para o
-            // norte numa casa que a queria virada para o leste continua
-            // sendo uma cama — dois pés lado a lado não eram.
+            // A cabeceira segue o estado já orientado pela planta ou pelo
+            // fallback de geometria; as duas metades precisam concordar.
             put(
                     world,
                     pos.offset(state.get(Properties.HORIZONTAL_FACING)),
@@ -238,11 +283,59 @@ public final class BlockShaping {
      * baú como qualquer outro material de construção.
      */
     public static boolean isShapedFromTheGround(BlockState state) {
+        if (isNeverPlaced(state)) {
+            return false;
+        }
+
         return state.isOf(Blocks.FARMLAND)
                 || state.isOf(Blocks.WATER)
                 || state.isOf(Blocks.DIRT_PATH)
                 || state.getBlock() instanceof CropBlock
                 || hasNoItemOfItsOwn(state);
+    }
+
+    /**
+     * Se o canteiro da planta pode ser aberto no chão que já está ali — E50,
+     * 2026-09-30.
+     *
+     * <p>{@link #isShapedFromTheGround} diz que quem abre um canteiro move o
+     * chão do lugar, mas o construtor pulava antes: grama não é substituível,
+     * e o reparo da {@code plains_small_farm_1} do playtest de 30-09 riscou
+     * as 62 posições de canteiro com "grass_block is in the way". O trigo de
+     * cima ficou sem apoio e a obra, parada adiando um trigo por ciclo.
+     *
+     * <p>É o que a enxada faz: grama, terra e caminho viram canteiro, e nada
+     * além disso — tábua e pedra do jogador continuam no caminho (Regra 3).
+     *
+     * <p><b>Sem {@code BlockProtection.mayBreak}, e de propósito.</b> Ela
+     * protege a caixa da obra aberta e a estrutura original da vila, e as duas
+     * são o próprio lugar do canteiro: no reparo da roça da vila, a posição é
+     * da vila e da obra ao mesmo tempo. Arar não tira bloco de ninguém — o
+     * chão fica, só muda de estado, na posição que a planta manda.
+     */
+    public static boolean tillsTheGround(ServerWorld world, BlockState planned, BlockPos where) {
+        if (!planned.isOf(Blocks.FARMLAND)) {
+            return false;
+        }
+
+        BlockState ground = world.getBlockState(where);
+
+        return (ground.isOf(Blocks.GRASS_BLOCK)
+                        || ground.isOf(Blocks.DIRT)
+                        || ground.isOf(Blocks.DIRT_PATH))
+                && world.getBlockEntity(where) == null;
+    }
+
+    /**
+     * Bloco que a obra nunca assenta — decisão do autor, 2026-09-30:
+     * <i>"lava não pode surgir automático"</i>.
+     *
+     * <p>A lava não tem item e entraria pelo mesmo caminho da água, montada
+     * no local. Numa casa de madeira isso é incêndio. O construtor pula a
+     * posição e a obra segue sem ela; o lugar fica vazio.
+     */
+    public static boolean isNeverPlaced(BlockState state) {
+        return state.isOf(Blocks.LAVA);
     }
 
     /**

@@ -1,7 +1,13 @@
 package com.villagecolony.gametest;
 
+import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.construction.model.ConstructionProject;
+import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
-import com.villagecolony.fabric.work.FarmerNursery;
+import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
+import com.villagecolony.fabric.work.LumberjackNursery;
 import com.villagecolony.fabric.work.TreeNursery;
 
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -11,10 +17,12 @@ import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
- * O viveiro do fazendeiro — 2026-09-19, habilidade nova pedida pelo autor.
+ * O viveiro da vila — 2026-09-19, habilidade nova pedida pelo autor; do
+ * fazendeiro passou ao lenhador em 2026-09-30.
  *
  * <p>O que estes cenários trancam: a espécie sai do bioma, o plantio
  * acontece de verdade no mundo, e o lugar ocupado não vira viveiro.
@@ -91,6 +99,56 @@ public class TreeNurseryGameTest {
     }
 
     /**
+     * O espaço escolhido para uma obra não recebe viveiro — regra do autor,
+     * 2026-09-30.
+     *
+     * <p>No playtest de 30-09 o fazendeiro plantou carvalho sobre terra
+     * enraizada em {@code 1762, 71, -5321} três vezes, duas delas com a casa
+     * do pastor aberta ali: a borda do viveiro (48–56 do centro) cai dentro
+     * do raio de busca de lote (64). O viveiro não perguntava pela obra.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "tree_nursery",
+            tickLimit = 100)
+    public void aSpotInsideAnOpenBuildIsNeverANursery(TestContext context) {
+        ServerWorld world = context.getWorld();
+
+        BlockPos ground = context.getAbsolutePos(new BlockPos(3, 1, 3));
+
+        world.setBlockState(ground, Blocks.SAND.getDefaultState());
+        world.setBlockState(ground.up(), Blocks.AIR.getDefaultState());
+
+        UUID colony = UUID.randomUUID();
+        ConstructionProject project = ConstructionProject.plan(
+                colony,
+                Blueprint.of(
+                        ResourceId.vanilla("village/plains/houses/nursery_lot"),
+                        List.of(
+                                new BlueprintBlock(new ColonyPos(-1, 0, -1), ResourceId.vanilla("oak_planks")),
+                                new BlueprintBlock(new ColonyPos(1, 2, 1), ResourceId.vanilla("oak_planks")))),
+                MinecraftTypeAdapter.toColonyPos(ground));
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+
+        try {
+            if (TreeNursery.isSpotForANursery(world, ground)) {
+                throw new AssertionError("o chao de uma obra aberta foi aceito como viveiro");
+            }
+
+            if (TreeNursery.plant(world, ground, Blocks.OAK_SAPLING)) {
+                throw new AssertionError("o fazendeiro plantou dentro de uma obra aberta");
+            }
+
+            if (!world.getBlockState(ground).isOf(Blocks.SAND)) {
+                throw new AssertionError(
+                        "a recusa trocou o chao da obra: " + world.getBlockState(ground).getBlock());
+            }
+        } finally {
+            VillageColonyMod.CONSTRUCTIONS.removeOfColony(colony);
+        }
+
+        context.complete();
+    }
+
+    /**
      * Cada bioma planta a sua espécie.
      *
      * <p>É o pedido do autor — <i>"cada bioma planta o tipo de rebento
@@ -140,18 +198,18 @@ public class TreeNurseryGameTest {
 
         UUID colony = UUID.randomUUID();
 
-        FarmerNursery.clearAll();
+        LumberjackNursery.clearAll();
 
         long now = world.getTime();
 
-        if (!FarmerNursery.isTime(colony, now)) {
+        if (!LumberjackNursery.isTime(colony, now)) {
             throw new AssertionError("a primeira arvore foi barrada pelo ritmo");
         }
 
         // A colônia acabou de plantar: a passagem seguinte espera.
-        FarmerNursery.remember(colony, now);
+        LumberjackNursery.remember(colony, now);
 
-        if (FarmerNursery.isTime(colony, now + 1)) {
+        if (LumberjackNursery.isTime(colony, now + 1)) {
             throw new AssertionError(
                     "plantou de novo no tique seguinte — sem freio a borda inteira"
                             + " vira viveiro, porque o fazendeiro chega aqui toda"
@@ -160,13 +218,13 @@ public class TreeNurseryGameTest {
 
         // E passado o intervalo ele planta de novo: um freio que nunca
         // solta seria uma arvore so, para sempre.
-        if (!FarmerNursery.isTime(colony, now + FarmerNursery.BETWEEN_PLANTINGS)) {
+        if (!LumberjackNursery.isTime(colony, now + LumberjackNursery.BETWEEN_PLANTINGS)) {
             throw new AssertionError(
                     "passado o intervalo inteiro o ritmo continuou segurando — a vila"
                             + " planta uma arvore e nunca mais");
         }
 
-        FarmerNursery.clearAll();
+        LumberjackNursery.clearAll();
 
         context.complete();
     }
@@ -184,7 +242,7 @@ public class TreeNurseryGameTest {
         UUID colony = UUID.randomUUID();
         BlockPos centre = context.getAbsolutePos(new BlockPos(8, 1, 8)).add(3000, 0, 3000);
 
-        FarmerNursery.clearAll();
+        LumberjackNursery.clearAll();
 
         for (int dx = -57; dx <= 57; dx++) {
             for (int dz = -57; dz <= 57; dz++) {
@@ -199,20 +257,25 @@ public class TreeNurseryGameTest {
 
         for (int planted = 0; planted < 10; planted++) {
             long now = world.getTime();
-            FarmerNursery.remember(
-                    colony, now - FarmerNursery.BETWEEN_PLANTINGS);
+            LumberjackNursery.remember(
+                    colony, now - LumberjackNursery.BETWEEN_PLANTINGS);
 
-            if (!FarmerNursery.plantIfItIsTime(world, colony, centre)) {
+            if (!LumberjackNursery.plantIfItIsTime(world, colony, centre)) {
                 throw new AssertionError(
                         "o viveiro parou antes de plantar as dez arvores: " + planted);
             }
         }
 
         long now = world.getTime();
-        FarmerNursery.remember(colony, now - FarmerNursery.BETWEEN_PLANTINGS);
+        LumberjackNursery.remember(colony, now - LumberjackNursery.BETWEEN_PLANTINGS);
 
-        if (FarmerNursery.plantIfItIsTime(world, colony, centre)) {
+        if (LumberjackNursery.plantIfItIsTime(world, colony, centre)) {
             throw new AssertionError("o viveiro plantou uma decima primeira arvore");
+        }
+
+        // Cheio, ele espera o intervalo antes de recontar — spark de 2026-09-26.
+        if (LumberjackNursery.isTime(colony, world.getTime())) {
+            throw new AssertionError("o viveiro cheio vai recontar os blocos na proxima chamada");
         }
 
         int rootedDirt = 0;
@@ -230,7 +293,93 @@ public class TreeNurseryGameTest {
                     "a vila deveria ter dez bases de viveiro, mas tem " + rootedDirt);
         }
 
-        FarmerNursery.clearAll();
+        LumberjackNursery.clearAll();
+        context.complete();
+    }
+
+    /**
+     * Sem árvore ao alcance, o lenhador pede um lote — sessão de 2026-09-26.
+     *
+     * <p>Na vila de planície sem árvore natural o viveiro plantou uma muda a
+     * cada ~6 minutos e o lenhador cortou 15 toras em 33 minutos. Um lote
+     * encurta a espera até a primeira madeira sem passar do teto de dez.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "tree_nursery_batch",
+            tickLimit = 100)
+    public void aLumberjackWithoutTreesGetsABatchOfSaplings(TestContext context) {
+        ServerWorld world = context.getWorld();
+        UUID colony = UUID.randomUUID();
+        BlockPos centre = context.getAbsolutePos(new BlockPos(8, 1, 8)).add(-3000, 0, 3000);
+
+        LumberjackNursery.clearAll();
+
+        for (int dx = -57; dx <= 57; dx++) {
+            for (int dz = -57; dz <= 57; dz++) {
+                int distance = dx * dx + dz * dz;
+
+                if (distance >= 48 * 48 && distance <= 57 * 57) {
+                    world.setBlockState(centre.add(dx, 0, dz), Blocks.SAND.getDefaultState());
+                }
+            }
+        }
+
+        int planted = LumberjackNursery.plantBatchIfItIsTime(world, colony, centre);
+
+        int rootedDirt = 0;
+        for (int dx = -57; dx <= 57; dx++) {
+            for (int dz = -57; dz <= 57; dz++) {
+                if (world.getBlockState(centre.add(dx, 0, dz)).isOf(Blocks.ROOTED_DIRT)) {
+                    rootedDirt++;
+                }
+            }
+        }
+
+        LumberjackNursery.clearAll();
+
+        if (planted != LumberjackNursery.BATCH || rootedDirt != LumberjackNursery.BATCH) {
+            throw new AssertionError("o lote plantou " + planted + " (no chão: " + rootedDirt
+                    + "), e eram " + LumberjackNursery.BATCH);
+        }
+
+        context.complete();
+    }
+
+    /** Uma borda ocupada tambem espera antes de procurar outro lugar. */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "tree_nursery_backoff",
+            tickLimit = 100)
+    public void anOccupiedNurseryEdgeWaitsBeforeScanningAgain(TestContext context) {
+        ServerWorld world = context.getWorld();
+        UUID colony = UUID.randomUUID();
+        BlockPos centre = context.getAbsolutePos(new BlockPos(8, 1, 8)).add(3000, 0, -3000);
+
+        LumberjackNursery.clearAll();
+
+        for (int radius = 48; radius <= 56; radius++) {
+            for (int step = 0; step < 48; step++) {
+                double angle = 2 * Math.PI * step / 48;
+                BlockPos column = centre.add(
+                        (int) Math.round(radius * Math.cos(angle)),
+                        0,
+                        (int) Math.round(radius * Math.sin(angle)));
+
+                // Bloqueia toda a janela de busca do viveiro nesta coluna;
+                // assim nenhum nivel da coluna pode se passar por solo livre.
+                for (int y = -8; y <= 5; y++) {
+                    world.setBlockState(column.add(0, y, 0), Blocks.STONE.getDefaultState());
+                }
+            }
+        }
+
+        if (LumberjackNursery.plantBatchIfItIsTime(world, colony, centre) != 0) {
+            throw new AssertionError("plantou mesmo com toda a borda ocupada");
+        }
+
+        if (LumberjackNursery.isTime(colony, world.getTime())) {
+            throw new AssertionError(
+                    "borda ocupada vai recontar o viveiro no proximo tick em vez de esperar");
+        }
+
+        LumberjackNursery.clearAll();
         context.complete();
     }
 }

@@ -4,6 +4,7 @@ import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.resource.model.ResourceTally;
 import com.villagecolony.core.resource.service.ResourceDemand;
 import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
 import org.junit.jupiter.api.Test;
 
@@ -112,21 +113,59 @@ class ColonyGoalsTest {
     }
 
     /**
-     * A obra manda, mas não fura a reserva.
+     * A obra usa toda a madeira — A-1, decisão do autor de 2026-10-02:
+     * <i>"permitindo que as obras utilizem todos os recursos de todos os baús;
+     * a reserva de metade é para outras profissões"</i>.
      *
-     * <p>Uma casa que peça quatrocentas tábuas com vinte toras no baú
-     * recebe as quarenta que a metade rende, e espera em
-     * WAITING_RESOURCES pelo resto — que é o estado previsto. Furar aqui
-     * seria devolver o defeito por onde ele entrou: a obra consome a
-     * tora que a obra seguinte precisa inteira.
+     * <p>Até 02-10 a obra recebia só as quarenta tábuas que a metade rendia e
+     * esperava o resto. Agora as vinte toras viram as oitenta tábuas da obra.
      */
     @Test
-    void theWorkDemandDoesNotBreakTheReserve() {
+    void theWorkDemandUsesAllTheWood() {
         ResourceTally stock = owned(ResourceType.OAK_LOG, 20);
 
         Map<ResourceType, Integer> goal = ColonyGoals.of(colony(), stock, 0, 0, 400);
 
-        assertEquals(40, goal.get(ResourceType.OAK_PLANKS));
+        assertEquals(80, goal.get(ResourceType.OAK_PLANKS));
+    }
+
+    /** Sem obra, a metade continua guardada para os outros ofícios (A-1). */
+    @Test
+    void withoutAWorkHalfOfTheLogsStayLogs() {
+        assertEquals(10, StockRules.logsThatMayBeConverted(20, 0, 0, 0));
+    }
+
+    /** A obra converte o que precisa, além da metade — mas não a tora que ela pede bruta (A-1). */
+    @Test
+    void theWorkConvertsPastTheHalfButKeepsItsRawLogs() {
+        assertEquals(15, StockRules.logsThatMayBeConverted(20, 0, 0, 60), "60 tábuas pedem 15 toras");
+        assertEquals(4, StockRules.logsThatMayBeConverted(20, 0, 16, 60), "16 toras brutas da obra ficam toras");
+        assertEquals(10, StockRules.logsThatMayBeConverted(20, 0, 0, 8), "pedido pequeno não baixa a metade");
+    }
+
+    /**
+     * A meta e o fabricante dizem o mesmo (A-1): se a meta pede tábua além do
+     * guardado, o fabricante tem tora para converter. Até 02-10, 14 de 22
+     * tarefas fecharam com 0 peça porque a meta não contava a tora bruta da obra.
+     */
+    @Test
+    void theGoalNeverAsksForPlanksTheCrafterWouldRefuse() {
+        for (int logs = 0; logs <= 40; logs += 4) {
+            for (int raw = 0; raw <= 24; raw += 8) {
+                for (int need : new int[] {0, 8, 60, 400}) {
+                    WorkDemand work = new WorkDemand(need, ResourceType.COBBLESTONE, 0, 0, 0, 0, 0,
+                            Map.of(), Map.of(), raw);
+                    int goal = ColonyGoals.of(colony(), owned(ResourceType.OAK_LOG, logs), 0, 1000, 0, work)
+                            .get(ResourceType.OAK_PLANKS);
+
+                    if (goal > 0) {
+                        assertTrue(StockRules.logsThatMayBeConverted(logs, 0, raw, need) > 0,
+                                "a meta pede " + goal + " tábuas e o fabricante recusaria: toras " + logs
+                                        + ", brutas da obra " + raw + ", tábuas da obra " + need);
+                    }
+                }
+            }
+        }
     }
 
     /** A conta da reserva, sozinha e sem colônia em volta. */
@@ -136,6 +175,25 @@ class ColonyGoalsTest {
         assertEquals(0, StockRules.logsToConvert(10, 40));
         assertEquals(0, StockRules.logsToConvert(135, 1257));
         assertEquals(0, StockRules.logsToConvert(0, 0));
+    }
+
+    @Test
+    void keepsTheRawLogsThatTheOpenConstructionStillNeeds() {
+        assertEquals(
+                0,
+                StockRules.logsThatMayBeConverted(
+                        3,
+                        0,
+                        Map.of(ResourceId.vanilla("stripped_oak_log"), 3)),
+                "as tres toras da obra nao podem virar tabuas genericas");
+
+        assertEquals(
+                1,
+                StockRules.logsThatMayBeConverted(
+                        4,
+                        0,
+                        Map.of(ResourceId.vanilla("stripped_oak_log"), 3)),
+                "a sobra pode virar tabua sem consumir a reserva da obra");
     }
 
     /** A meta é o que se tem mais o que ainda cabe. */
@@ -478,19 +536,12 @@ class ColonyGoalsTest {
     // --- a segunda metade da Regra 5: a obra manda ---
 
     /**
-     * Com obra, a meta de tábua é a da obra — <b>até a reserva</b>.
-     *
-     * <p>A metade do armazém deixa de ser teto e vira lote de partida.
-     *
-     * <p><b>Eram 33 até 2026-09-05</b>, que é o que a obra pedia. A
-     * reserva passa por cima porque é ela que responde à queixa do autor:
-     * a obra que consome a última tora deixa a obra seguinte sem os
-     * {@code stripped_oak_log}, que não saem de tábua. O que falta vem
-     * pela meta de madeira, e a obra espera em WAITING_RESOURCES — que é
-     * o estado previsto para isso.
+     * A obra pede 33 tábuas com 4 guardadas: as 8 toras que faltam viram tábua,
+     * além da metade — A-1, decisão do autor de 2026-10-02 (antes a obra ficava
+     * presa à reserva e recebia 20).
      */
     @Test
-    void theWorkDemandIsCappedByTheReserve() {
+    void theWorkDemandIsNoLongerCappedByTheReserve() {
         Map<ResourceType, Integer> counts = new EnumMap<>(ResourceType.class);
         counts.put(ResourceType.OAK_LOG, 10);
         counts.put(ResourceType.OAK_PLANKS, 4);
@@ -498,7 +549,7 @@ class ColonyGoalsTest {
         Map<ResourceType, Integer> goal =
                 ColonyGoals.of(colony(), ResourceTally.of(counts), 0, 100, 33);
 
-        assertEquals(20, goal.get(ResourceType.OAK_PLANKS));
+        assertEquals(33, goal.get(ResourceType.OAK_PLANKS));
     }
 
     /** Sem obra, continua valendo a metade — a da reserva, desde 09-05. */
@@ -758,15 +809,22 @@ class ColonyGoalsTest {
         // mutação cobrou isto: comparar com {@code SMELTED_FLOOR} fazia a
         // afirmação passar com o piso em ZERO, porque os dois lados se
         // moviam juntos. Um teste assim não mede nada.
+        //
+        // <b>Pedra lisa, e não arenito liso</b> — 2026-09-30: o piso só
+        // vale com cadeia, e esta vila é de pedregulho (pedregulho →
+        // pedra → pedra lisa). O arenito liso não tem cru aqui.
         assertTrue(
-                goal.getOrDefault(ResourceType.SMOOTH_SANDSTONE, 0) > 0,
+                goal.getOrDefault(ResourceType.SMOOTH_STONE, 0) > 0,
                 "sem obra a fornalha parou de manter estoque — a casa seguinte espera"
                         + " ela comecar do zero");
 
         assertEquals(
                 ColonyGoals.SMELTED_FLOOR,
-                goal.get(ResourceType.SMOOTH_SANDSTONE),
+                goal.get(ResourceType.SMOOTH_STONE),
                 "o piso deixou de ser o que a constante diz");
+
+        assertFalse(goal.containsKey(ResourceType.SMOOTH_SANDSTONE),
+                "piso de arenito liso numa vila sem arenito: tarefa sem cru possivel");
 
         // E o foco continua sendo da obra: quando ela pede mais, manda.
         Map<ResourceType, Integer> asked = ColonyGoals.of(
@@ -782,5 +840,121 @@ class ColonyGoalsTest {
                 60,
                 asked.get(ResourceType.SMOOTH_SANDSTONE),
                 "a obra pediu 60 e o piso ganhou dela — o foco deixou de ser da obra");
+    }
+
+    // --- valores exatos da meta, 2026-09-25 (sobreviventes do PIT) ---
+
+    private static WorkDemand work(int wool, int iron,
+            Map<ResourceType, Integer> smelted, Map<ResourceType, Integer> gathered) {
+        return new WorkDemand(0, ResourceType.COBBLESTONE, 0, wool, 0, 0, iron, smelted, gathered);
+    }
+
+    private static Map<ResourceType, Integer> goalFor(WorkDemand work) {
+        return ColonyGoals.of(colony(), owned(ResourceType.OAK_LOG, 100), 0, 0, work);
+    }
+
+    /**
+     * Sem obra, a tábua pedida é a metade do que cabe mais o que já há:
+     * nenhuma tábua e espaço para 40 pedem 20, com tora de sobra.
+     */
+    @Test
+    void withoutWorkThePlankGoalIsHalfOfTheRoom() {
+        Map<ResourceType, Integer> goal = ColonyGoals.of(
+                colony(), owned(ResourceType.OAK_LOG, 100), 0, 40, WorkDemand.none());
+
+        assertEquals(20, goal.get(ResourceType.OAK_PLANKS));
+    }
+
+    /** Lã só vira meta quando alguma casa está sem cama. */
+    @Test
+    void woolIsAGoalOnlyWhenABedIsMissing() {
+        assertFalse(goalFor(work(0, 0, Map.of(), Map.of())).containsKey(ResourceType.WHITE_WOOL));
+        assertEquals(3, goalFor(work(3, 0, Map.of(), Map.of())).get(ResourceType.WHITE_WOOL));
+    }
+
+    /** Sem lampião na obra, o lingote não é meta — só o minério de piso. */
+    @Test
+    void ironIngotsAreAGoalOnlyWhenTheWorkAsksForThem() {
+        Map<ResourceType, Integer> goal = goalFor(work(0, 0, Map.of(), Map.of()));
+
+        assertFalse(goal.containsKey(ResourceType.IRON_INGOT));
+        assertEquals(ColonyGoals.MINERAL_FLOOR, goal.get(ResourceType.RAW_IRON));
+    }
+
+    /**
+     * O que a obra pede de fornalha fora do catálogo entra pela lista da
+     * obra — o vidro fica de fora do catálogo de propósito. Pedido zero
+     * não vira meta.
+     */
+    @Test
+    void aSmeltedMaterialOutsideTheCatalogueComesFromTheWork() {
+        assertEquals(5, goalFor(work(0, 0, Map.of(ResourceType.GLASS, 5), Map.of()))
+                .get(ResourceType.GLASS));
+        assertFalse(goalFor(work(0, 0, Map.of(ResourceType.GLASS, 0), Map.of()))
+                .containsKey(ResourceType.GLASS));
+    }
+
+    /** Obra pequena não abaixa o piso do que o catálogo da fornalha já pede. */
+    @Test
+    void aSmallAskDoesNotLowerTheFurnaceFloor() {
+        Map<ResourceType, Integer> goal =
+                goalFor(work(0, 0, Map.of(ResourceType.SMOOTH_STONE, 3), Map.of()));
+
+        assertEquals(ColonyGoals.SMELTED_FLOOR, goal.get(ResourceType.SMOOTH_STONE));
+    }
+
+    /**
+     * Piso de fundido só com cadeia — 2026-09-30. Terracota sem argila
+     * não tem piso; com argila no baú, tem. A obra pede sempre.
+     */
+    @Test
+    void theFurnaceFloorNeedsARawMaterialChain() {
+        Map<ResourceType, Integer> noClay = goalFor(work(0, 0, Map.of(), Map.of()));
+
+        assertFalse(noClay.containsKey(ResourceType.TERRACOTTA));
+        assertFalse(noClay.containsKey(ResourceType.BRICK));
+
+        Map<ResourceType, Integer> withClay = ColonyGoals.of(
+                colony(), owned(ResourceType.CLAY, 10), 0, 0, work(0, 0, Map.of(), Map.of()));
+
+        assertEquals(ColonyGoals.SMELTED_FLOOR, withClay.get(ResourceType.TERRACOTTA));
+
+        Map<ResourceType, Integer> asked =
+                goalFor(work(0, 0, Map.of(ResourceType.TERRACOTTA, 5), Map.of()));
+
+        assertEquals(5, asked.get(ResourceType.TERRACOTTA));
+    }
+
+    /** O que se colhe no chão entra na meta pelo que a obra pede. */
+    @Test
+    void surfaceGatheredMaterialComesFromTheWork() {
+        assertEquals(7, goalFor(work(0, 0, Map.of(), Map.of(ResourceType.SAND, 7)))
+                .get(ResourceType.SAND));
+        assertFalse(goalFor(work(0, 0, Map.of(), Map.of(ResourceType.SAND, 0)))
+                .containsKey(ResourceType.SAND), "pedido zero não vira meta");
+    }
+
+    // --- a Regra 1 da pedra, 2026-09-25 (decisão do autor) ---
+    //
+    // "Galerias novas sem parar": sem obra pedindo, o mineiro continua
+    // cavando enquanto os baús dele tiverem espaço — a mesma forma da
+    // madeira, em que a meta é o guardado mais o que ainda cabe.
+
+    /** Com espaço no baú do mineiro, a meta de pedra é o guardado mais o espaço. */
+    @Test
+    void roomInTheMinersChestsKeepsTheMinerDigging() {
+        Map<ResourceType, Integer> goal = ColonyGoals.of(
+                colony(), owned(ResourceType.COBBLESTONE, 100), 0, 0, 500, WorkDemand.none());
+
+        assertEquals(600, goal.get(ResourceType.COBBLESTONE));
+    }
+
+    /** Sem espaço, a meta de pedra é a de antes: o piso, ou o que a obra pede. */
+    @Test
+    void withNoRoomTheStoneGoalIsTheFloor() {
+        Map<ResourceType, Integer> goal = ColonyGoals.of(
+                colony(), owned(ResourceType.COBBLESTONE, 100), 0, 0, 0, WorkDemand.none());
+
+        assertEquals(ColonyGoals.STONE_FLOOR, goal.get(ResourceType.COBBLESTONE));
     }
 }

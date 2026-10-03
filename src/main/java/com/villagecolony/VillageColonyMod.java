@@ -1,6 +1,10 @@
 package com.villagecolony;
 
+import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.colony.model.VillageBounds;
 import com.villagecolony.core.colony.service.ColonyService;
+import com.villagecolony.core.construction.model.Building;
+import com.villagecolony.core.coordination.VillageGrowth;
 import com.villagecolony.core.storage.service.StorageRegistry;
 import com.villagecolony.core.construction.service.BuildingRegistry;
 import com.villagecolony.core.construction.service.ConstructionService;
@@ -8,13 +12,23 @@ import com.villagecolony.core.construction.service.MineRegistry;
 import com.villagecolony.core.task.service.TaskService;
 import com.villagecolony.core.worker.service.WorkerService;
 import com.villagecolony.fabric.work.ActivityTraceRegistry;
+import com.villagecolony.fabric.command.VillageLogCommand;
 import com.villagecolony.fabric.event.ServerLifecycleHandler;
 import com.villagecolony.fabric.event.PlayerWorldChangeHandler;
 import com.villagecolony.fabric.event.VillageDetectionHandler;
 import com.villagecolony.fabric.event.VillagerLifecycleHandler;
+import com.villagecolony.fabric.integration.SiteSignJanitor;
+import com.villagecolony.fabric.integration.VillageChests;
+import com.villagecolony.fabric.network.ProfessionPolicyNetworking;
+import com.villagecolony.fabric.overlay.OverlaySync;
+import com.villagecolony.fabric.overlay.OverlaySnapshotPayload;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.api.ModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Ponto de entrada do mod.
@@ -146,12 +160,37 @@ public class VillageColonyMod implements ModInitializer {
      */
     public static final ActivityTraceRegistry ACTIVITY_TRACES = new ActivityTraceRegistry();
 
+    // A vila cresce com o que a colônia constrói ou abre — ADR-003 Emenda 6,
+    // decisão do autor de 2026-09-30. A rua avisa por RoadPaving.
+    static {
+        BUILDINGS.whenRegistered(building -> reportGrowth(
+                building.colonyId(), VillageGrowth.byPiece(COLONIES, building), "a building"));
+        CONSTRUCTIONS.whenOpened(project -> reportGrowth(
+                project.colonyId(), VillageGrowth.byPiece(COLONIES, Building.of(project)), "a lot"));
+    }
+
+    /** Registra no log quando a vila cresceu. */
+    public static void reportGrowth(UUID colonyId, Optional<VillageBounds> grown, String by) {
+        grown.ifPresent(bounds -> LOGGER.info(
+                "Colony {} grew to {} by {} — center now {}",
+                colonyId,
+                bounds,
+                by,
+                COLONIES.find(colonyId).map(Colony::center).orElse(null)));
+    }
+
     @Override
     public void onInitialize() {
+        PayloadTypeRegistry.playS2C().register(OverlaySnapshotPayload.ID, OverlaySnapshotPayload.CODEC);
+        OverlaySync.register();
         ServerLifecycleHandler.register();
         PlayerWorldChangeHandler.register();
         VillageDetectionHandler.register();
         VillagerLifecycleHandler.register();
+        VillageChests.register();
+        SiteSignJanitor.register();
+        VillageLogCommand.register();
+        ProfessionPolicyNetworking.register();
 
         LOGGER.info("[Village Colony] Mod initialized");
     }

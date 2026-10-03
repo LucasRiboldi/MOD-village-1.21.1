@@ -146,9 +146,10 @@ public class BlueprintReaderGameTest implements FabricGameTest {
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "blueprint_reader")
     public void theGeneratorsMarkerBecomesTheBlockItPromises(TestContext context) {
+        Blueprint house = read(context);
         Map<ColonyPos, ResourceId> planned = new HashMap<>();
 
-        for (BlueprintBlock block : read(context).blocks()) {
+        for (BlueprintBlock block : house.blocks()) {
             planned.put(block.offset(), block.block());
         }
 
@@ -172,6 +173,15 @@ public class BlueprintReaderGameTest implements FabricGameTest {
         context.assertTrue(
                 planned.get(doorstep).equals(ResourceId.vanilla("oak_stairs")),
                 "o degrau da entrada saiu como " + planned.get(doorstep));
+
+        BlueprintBlock step = house.blocks().stream()
+                .filter(block -> block.offset().equals(doorstep))
+                .findFirst()
+                .orElseThrow();
+
+        context.assertTrue(
+                step.facing().isPresent(),
+                "o degrau da entrada perdeu a orientacao escrita pelo gerador");
 
         context.complete();
     }

@@ -1,5 +1,7 @@
 package com.villagecolony.core.worker.model;
 
+import org.jspecify.annotations.Nullable;
+
 import com.villagecolony.core.type.Capability;
 
 import java.util.EnumMap;
@@ -101,7 +103,7 @@ public final class Worker {
 
     private final UUID villagerId;
 
-    private final UUID colonyId;
+    private UUID colonyId;
 
     /**
      * Profissão de colônia, ou {@code null} enquanto não houver.
@@ -110,7 +112,7 @@ public final class Worker {
      * diferentes: a detecção registra todos os aldeões da vila, e só
      * depois a colônia decide quem faz o quê. Ver TASK-012 e TASK-013.
      */
-    private ProfessionType profession;
+    private @Nullable ProfessionType profession;
 
     /**
      * As capacidades que travaram para ele, e quantas passagens faltam.
@@ -173,7 +175,7 @@ public final class Worker {
     private final Map<ProfessionType, Integer> tallyLeft =
             new EnumMap<>(ProfessionType.class);
 
-    private Worker(UUID villagerId, UUID colonyId, ProfessionType profession) {
+    private Worker(UUID villagerId, UUID colonyId, @Nullable ProfessionType profession) {
         this.villagerId = villagerId;
         this.colonyId = colonyId;
         this.profession = profession;
@@ -197,7 +199,7 @@ public final class Worker {
      * @param profession pode ser {@code null}, para quem ainda não tinha
      *     função quando o mundo foi fechado
      */
-    public static Worker restore(UUID villagerId, UUID colonyId, ProfessionType profession) {
+    public static Worker restore(UUID villagerId, UUID colonyId, @Nullable ProfessionType profession) {
         return new Worker(
                 Objects.requireNonNull(villagerId, "villagerId"),
                 Objects.requireNonNull(colonyId, "colonyId"),
@@ -207,6 +209,16 @@ public final class Worker {
     /** Id do {@code VillagerEntity} Vanilla. É a identidade do trabalhador. */
     public UUID villagerId() {
         return villagerId;
+    }
+
+    /**
+     * Passa para a colônia que absorveu a sua — ADR-007 §3.
+     *
+     * <p>Só a fusão chama isto. Os registros guardam o objeto pelo próprio
+     * id, e não pelo da colônia, então trocar o dono não desloca nada.
+     */
+    public void joinColony(UUID colonyId) {
+        this.colonyId = java.util.Objects.requireNonNull(colonyId, "colonyId");
     }
 
     public UUID colonyId() {

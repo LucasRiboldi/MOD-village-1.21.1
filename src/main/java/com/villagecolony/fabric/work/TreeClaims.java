@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.integration.TreeHarvester;
 import net.minecraft.util.math.BlockPos;
 
@@ -24,6 +25,10 @@ import java.util.Set;
  * a marca é sobre o <b>mundo</b> e vence pelo relógio.
  */
 public final class TreeClaims {
+
+    static {
+        ServerMemory.register(TreeClaims.class, TreeClaims::clearAll);
+    }
 
     private TreeClaims() {
     }

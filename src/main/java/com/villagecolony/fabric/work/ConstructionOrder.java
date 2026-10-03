@@ -3,6 +3,7 @@ package com.villagecolony.fabric.work;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.worker.model.ProfessionType;
+import com.villagecolony.fabric.integration.ColonyModels;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,7 +50,9 @@ final class ConstructionOrder {
         order.put(ProfessionType.FARMER, List.of("farm"));
         order.put(ProfessionType.SHEPHERD, List.of("shepherd", "animal_pen"));
         order.put(ProfessionType.MASON, List.of("mason"));
-        order.put(ProfessionType.SMELTER, List.of("armorer", "tool_smith", "weaponsmith", "weapon_smith"));
+        order.put(ProfessionType.SMELTER, List.of("armorer", "weaponsmith", "weapon_smith"));
+        // O ferramenteiro é do mineiro — Regra 49, 2026-10-02: a picareta é dele.
+        order.put(ProfessionType.MINER, List.of("tool_smith"));
         order.put(ProfessionType.CARPENTER, List.of("fletcher"));
         WORKSHOPS = Collections.unmodifiableMap(order);
     }
@@ -64,6 +67,13 @@ final class ConstructionOrder {
 
     /** O ofício da colônia a que esta planta serve, se servir a algum. */
     static Optional<ProfessionType> professionOf(ResourceId id) {
+        // A casa de ofício da colônia diz o ofício no nome — 2026-10-02.
+        Optional<ProfessionType> colony = ColonyModels.professionOf(id);
+
+        if (colony.isPresent()) {
+            return colony;
+        }
+
         for (Map.Entry<ProfessionType, List<String>> entry : WORKSHOPS.entrySet()) {
             for (String name : entry.getValue()) {
                 if (id.path().contains(name)) {
@@ -77,6 +87,12 @@ final class ConstructionOrder {
 
     /** O nome da oficina do jogo nesta planta, se ela for uma. */
     static Optional<String> shopType(ResourceId id) {
+        Optional<ProfessionType> colony = ColonyModels.professionOf(id);
+
+        if (colony.isPresent()) {
+            return Optional.of("trade_" + colony.get().name().toLowerCase(java.util.Locale.ROOT));
+        }
+
         return SHOPS.stream().filter(name -> id.path().contains(name)).findFirst();
     }
 
@@ -94,7 +110,17 @@ final class ConstructionOrder {
 
         List<ProfessionType> missing = new ArrayList<>();
 
-        for (ProfessionType profession : WORKSHOPS.keySet()) {
+        // Os ofícios do jogo na ordem de sempre, depois os que só a colônia
+        // tem casa (lenhador, construtor) — 2026-10-02.
+        List<ProfessionType> order = new ArrayList<>(WORKSHOPS.keySet());
+
+        for (ProfessionType profession : ProfessionType.values()) {
+            if (!order.contains(profession)) {
+                order.add(profession);
+            }
+        }
+
+        for (ProfessionType profession : order) {
             if (!offered.contains(profession)) {
                 continue;
             }

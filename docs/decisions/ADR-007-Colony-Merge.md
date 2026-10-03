@@ -4,12 +4,18 @@
 
 # Village Colony — Fusão de colônias
 
-**Status:** Accepted
+**Status:** Accepted — **implementada em 2026-09-30**, com gatilho ampliado pelo autor (§6)
 **Date:** 2026-08-21
 **Accepted:** 2026-08-21
 **Decision Type:** Architecture / Data
 **Implements:** TASK-044, B3 do Backlog
 **Amends:** ADR-003 §5
+
+> **Estado da implementação (2026-09-30):** implementada. A regra do Core
+> está em `core/coordination/ColonyMerge` (quem sobrevive e o que muda de
+> dono) e o gatilho em `fabric/event/ColonyMergeTrigger`, chamado uma vez
+> por ciclo de jogo antes das colônias decidirem. Ver §6 para o gatilho
+> ampliado e a conciliação da mina.
 
 ---
 
@@ -127,3 +133,48 @@ errado a partir daqui — e o `ProfessionAssignerTest` precisa dizer isso.
 
 **Não decide:** a divisão. Uma vila que se parta em duas continua sendo
 uma colônia só, e isso continua sendo o §5 da ADR-003 por escrever.
+
+---
+
+# 6. Emenda de 2026-09-30 — o gatilho ampliado e a mina
+
+O playtest de 30-09 teve três colônias na mesma vila gerada, com centros a
+20–70 blocos, disputando lote e rua. O autor decidiu: **colônias que se
+tocam ou ocupam os mesmos espaços viram a mesma colônia.** O gatilho do §4
+continua e ganha dois irmãos; basta um dizer sim:
+
+```text
+uma construção de uma encosta numa construção da outra   (§4, original)
+os centros estão a até OVERLAP_DISTANCE (32)             (a sobreposição que só avisava)
+os chunks dos dois centros pertencem à mesma vila gerada
+```
+
+**A mina.** A tabela do §3 dizia que a mina da absorvida "É MANTIDA" e o
+texto dizia para manter a do sobrevivente e esquecer a outra. As duas
+cabem: sem mina, o sobrevivente herda a da absorvida; com mina, a outra é
+esquecida, e a escada continua no mundo.
+
+**Obra aberta.** A obra da absorvida muda de dono e continua; se o
+sobrevivente também tinha uma, as duas coexistem e a segunda espera a vez
+na vaga única.
+
+**Onde roda.** Só no ciclo de jogo: as arenas da bateria de GameTest ficam
+lado a lado e fundiriam colônias de testes diferentes.
+
+
+---
+
+# 7. Emenda de 2026-09-30, noite — sobrevivente e "a poucos blocos" (E51)
+
+**Sobrevivente.** O §2.1 dava a vitória a quem tinha mais camas observadas.
+Camas são a leitura do instante: no playtest, a colônia recém-nascida viu 26
+camas da vila e absorveu a antiga, com 41 trabalhadores, 9 construções e a
+mina. Agora vence a de **mais trabalhadores**; empate segue o §2.1 (camas,
+depois id). O argumento do §2.1 — reescrever menos vínculos — é o mesmo, e
+quem conta os vínculos são os trabalhadores.
+
+**Gatilho.** Além de encostar (§4), centros a até `OVERLAP_DISTANCE` e mesma
+vila gerada, funde também quando uma construção de uma fica a até
+`ColonyIdentity.NEIGHBOUR_GAP` (32) de uma da outra — pedido do autor: "se
+estiverem a poucos blocos uma da outra também". A mesma régua decide, na
+ADR-003 Emenda 5, que um aglomerado novo não é colônia nova.

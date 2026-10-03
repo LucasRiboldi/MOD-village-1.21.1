@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.type.ColonyPos;
 
@@ -45,6 +46,10 @@ import java.util.function.UnaryOperator;
  * quando a pergunta estiver respondida.
  */
 public final class SweepLog {
+
+    static {
+        ServerMemory.register(SweepLog.class, SweepLog::clearAll);
+    }
 
     /**
      * A partir daqui, reiniciar sem terminar nenhuma volta é o defeito.
@@ -176,7 +181,7 @@ public final class SweepLog {
         long dx = (long) was.x() - now.x();
         long dz = (long) was.z() - now.z();
 
-        int blocks = (int) Math.round(Math.sqrt(dx * dx + dz * dz));
+        int blocks = (int) Math.round(Math.sqrt((double) (dx * dx + dz * dz)));
 
         change(colonyId, before -> new Tally(
                 before.asked(), before.passes(), before.columns(), before.restarts(),

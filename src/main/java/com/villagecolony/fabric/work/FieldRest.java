@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.fabric.integration.RingSweep;
 
 import java.util.HashMap;
@@ -32,6 +33,10 @@ import java.util.UUID;
  * turnos, que é o gasto sem a economia.
  */
 final class FieldRest {
+
+    static {
+        ServerMemory.register(FieldRest.class, FieldRest::clearAll);
+    }
 
     /**
      * Quanto o campo fica em paz depois de uma volta inteira sem nada.
@@ -90,7 +95,7 @@ final class FieldRest {
     static void forget(UUID colonyId) {
         QUIET_UNTIL.remove(colonyId);
 
-        RingSweep.forget(colonyId);
+        RingSweep.forget(colonyId, RingSweep.Scan.FARMING);
     }
 
     /** Esquece tudo. Chamado ao descarregar o mundo. */

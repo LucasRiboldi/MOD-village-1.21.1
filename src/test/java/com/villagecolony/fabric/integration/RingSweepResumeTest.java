@@ -179,6 +179,31 @@ class RingSweepResumeTest {
                 "a volta fechou e o cursor tinha de sair — Regra 23");
     }
 
+    /** Uma lavoura pausada não pode perder sua retomada para uma coleta da mesma colônia. */
+    @Test
+    void separateScanKindsKeepIndependentCursorsForTheSameOwner() {
+        RingSweep.around(owner, RingSweep.Scan.FARMING, CENTER, BEYOND_ONE_PASS,
+                column -> true, this::nothingAt);
+
+        assertTrue(RingSweep.pausedAt(owner, RingSweep.Scan.FARMING).isPresent(),
+                "a lavoura precisava ficar pausada depois da primeira fatia");
+
+        BlockPos surfaceTarget = CENTER.east();
+        Optional<BlockPos> surface = RingSweep.around(
+                owner,
+                RingSweep.Scan.SURFACE,
+                CENTER,
+                1,
+                column -> true,
+                at -> lookingFor(surfaceTarget, at));
+
+        assertTrue(surface.isPresent(), "a coleta de superficie nao encontrou o alvo proximo");
+        assertTrue(RingSweep.pausedAt(owner, RingSweep.Scan.FARMING).isPresent(),
+                "a coleta apagou o cursor da lavoura");
+        assertTrue(RingSweep.pausedAt(owner, RingSweep.Scan.SURFACE).isEmpty(),
+                "a coleta concluida deixou cursor para tras");
+    }
+
     /**
      * <b>E é isto que o {@code CropPatch} fazia:</b> varrer sempre do
      * zero, e nunca chegar lá.

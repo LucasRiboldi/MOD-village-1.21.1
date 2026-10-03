@@ -2,8 +2,10 @@ package com.villagecolony.core.construction.model;
 
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.core.type.Side;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Um bloco de um projeto: onde vai, e o que é.
@@ -12,18 +14,20 @@ import java.util.Objects;
  * ao mesmo {@link Blueprint} servir para toda casa que a colônia
  * levantar. Somar a origem escolhida é trabalho de quem executa a obra.
  *
- * <p>Guarda o bloco por nome ({@link ResourceId}) e não por estado
- * completo. O que se perde com isso é a orientação: uma escada olhando
- * para o norte e outra para o sul são o mesmo {@code oak_stairs} aqui
- * dentro. A perda é conhecida e assumida no MVP — a casa sai de pé, com
- * degrau apontando para o padrão. Guardar estado exigiria ou levar
- * {@code BlockState} para dentro do Core, contra a ADR-005, ou inventar
- * uma linguagem de propriedades no Core, que é trabalho de outra fase.
+ * <p>Guarda o bloco por nome ({@link ResourceId}) e somente a parte fechada do
+ * estado aprovada pela ADR-008: um dos quatro lados horizontais. Eixo, metade,
+ * formato e demais propriedades continuam pertencendo ao Minecraft.
  *
  * @param offset posição relativa à origem do projeto
  * @param block o bloco a colocar ali
  */
-public record BlueprintBlock(ColonyPos offset, ResourceId block, boolean furniture) {
+public record BlueprintBlock(
+        ColonyPos offset, ResourceId block, boolean furniture, Optional<Side> facing) {
+
+    /** Compatibilidade para plantas que nao declaram orientacao. */
+    public BlueprintBlock(ColonyPos offset, ResourceId block, boolean furniture) {
+        this(offset, block, furniture, Optional.empty());
+    }
 
     /**
      * Um bloco de estrutura, que é o caso comum.
@@ -32,7 +36,7 @@ public record BlueprintBlock(ColonyPos offset, ResourceId block, boolean furnitu
      * pelo material deles.
      */
     public BlueprintBlock(ColonyPos offset, ResourceId block) {
-        this(offset, block, false);
+        this(offset, block, false, Optional.empty());
     }
 
     /**
@@ -50,11 +54,12 @@ public record BlueprintBlock(ColonyPos offset, ResourceId block, boolean furnitu
      * exatamente o travamento que a Regra 13 corrigiu.
      */
     public static BlueprintBlock furniture(ColonyPos offset, ResourceId block) {
-        return new BlueprintBlock(offset, block, true);
+        return new BlueprintBlock(offset, block, true, Optional.empty());
     }
 
     public BlueprintBlock {
         Objects.requireNonNull(offset, "offset");
         Objects.requireNonNull(block, "block");
+        Objects.requireNonNull(facing, "facing");
     }
 }

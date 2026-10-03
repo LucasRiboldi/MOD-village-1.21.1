@@ -65,6 +65,12 @@ public final class MineCuts {
                 continue;
             }
 
+            if (WaterMineAccess.protects(world, mine, at)) {
+                // A escada selada é passagem, não frente de escavação. A
+                // mesma exclusão também entra no recuo e no veio.
+                continue;
+            }
+
             if (!world.isInBuildLimit(at)) {
                 arm.finish();
 
@@ -98,6 +104,23 @@ public final class MineCuts {
                 if (arm.blockedAgain(MineDigging.BLOCKED_BEFORE_TURNING)) {
                     VillageColonyMod.LOGGER.info(
                             "Miner {} hit something it cannot dig - the branch ends here",
+                            workerId);
+
+                    break;
+                }
+
+                continue;
+            }
+
+            if (MineFlooding.holdsBackFluid(world, at)) {
+                // <b>Pedra que segura líquido fica</b> — pedido do autor,
+                // 2026-09-25: "não deixar o mineiro quebrar o bloco que tem
+                // líquido atrás". Conta para a curva como o bedrock: a
+                // galeria contorna a nascente em vez de abri-la.
+                if (arm.blockedAgain(MineDigging.BLOCKED_BEFORE_TURNING)) {
+                    VillageColonyMod.LOGGER.info(
+                            "Miner {} keeps finding stone that holds back water or lava"
+                                    + " - the branch ends here",
                             workerId);
 
                     break;
@@ -218,6 +241,7 @@ public final class MineCuts {
             if (ore.isEmpty()
                     || (!ore.get().equals(at)
                             && (MineVein.nowhereToStand(world, ore.get())
+                                    || MineFlooding.holdsBackFluid(world, ore.get())
                                     || MineMarks.isOutOfReach(world, ore.get())))) {
 
                 return Optional.of(at);
@@ -248,6 +272,13 @@ public final class MineCuts {
      * mina nova abre para o mesmo lado da antiga.
      */
     static Side sideOf(UUID colonyId) {
-        return Side.values()[Math.floorMod(colonyId.hashCode(), Side.values().length)];
+        // Tabela escrita à mão, e não Side.values(): reordenar o enum não
+        // pode mudar o lado da mina de uma colônia que já existe.
+        return switch (Math.floorMod(colonyId.hashCode(), 4)) {
+            case 0 -> Side.NORTH;
+            case 1 -> Side.SOUTH;
+            case 2 -> Side.EAST;
+            default -> Side.WEST;
+        };
     }
 }

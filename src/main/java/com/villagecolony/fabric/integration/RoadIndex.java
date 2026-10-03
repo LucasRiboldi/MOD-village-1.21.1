@@ -149,7 +149,7 @@ public final class RoadIndex {
      */
     static RoadScan findAmongRoads(
             ServerWorld world, UUID colonyId, BlockPos from, ColonyRoads roads,
-            int radius, List<ColonyPos> plans) {
+            int radius, List<BuildSiteScanner.Footprint> footprints) {
 
         List<Long> columns = roads.columns();
 
@@ -171,7 +171,12 @@ public final class RoadIndex {
         int looked = 0;
 
         for (int at = start; at < columns.size(); at++) {
-            if (++looked > BuildSiteScanner.MAX_COLUMNS) {
+            // O mesmo prazo da varredura do quadrado — F1, 2026-09-30. Esta
+            // volta só parava nas 1.024 colunas, cada uma testando as pegadas
+            // das plantas, e com a maioria das respostas vindo daqui o
+            // planejador chegou a 178 ms num ciclo.
+            if (++looked > SweepDeadline.columnCap(BuildSiteScanner.MAX_COLUMNS)
+                    || SweepDeadline.expired(looked)) {
                 SweepState.ROAD_CURSOR.put(colonyId, at);
 
                 // Aqui houve passagem de verdade: o orçamento foi gasto
@@ -185,7 +190,7 @@ public final class RoadIndex {
 
             Optional<Site> site = RoadsideSites.siteBesideRoadAt(
                     world, colonyId, from,
-                    ColonyRoads.xOf(column), ColonyRoads.zOf(column), from.getY(), plans);
+                    ColonyRoads.xOf(column), ColonyRoads.zOf(column), from.getY(), footprints);
 
             if (site.isPresent()) {
                 // Uma adiante, pelo mesmo motivo do cursor do quadrado:
@@ -286,8 +291,8 @@ public final class RoadIndex {
      * volta — o jogador arrancou o caminho, e aí a casa fica com a porta
      * onde ela já estava.
      *
-     * @param floor a altura do piso da casa. A rua fica um abaixo dele,
-     *     porque é sobre ela que se anda
+     * @param origin o canto do lote; {@code origin.y()} é a altura do piso
+     *     da casa. A rua fica um abaixo dele, porque é sobre ela que se anda
      */
     public static Optional<Direction> roadSideOf(
             ServerWorld world, UUID colonyId, ColonyPos origin, ColonyPos size) {

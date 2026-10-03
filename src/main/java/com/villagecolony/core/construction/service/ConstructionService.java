@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * As obras que existem — TASK-033.
@@ -36,6 +37,8 @@ public final class ConstructionService {
 
     /** Ordem de inserção, para log e iteração reproduzíveis. */
     private final Map<UUID, ConstructionProject> projects = new LinkedHashMap<>();
+
+    private Consumer<ConstructionProject> opened = project -> { };
 
     /**
      * Obras lidas do save, esperando o mundo para renascer.
@@ -133,6 +136,12 @@ public final class ConstructionService {
         }
 
         projects.put(project.id(), project);
+        opened.accept(project);
+    }
+
+    /** Avisa {@code listener} de cada obra registrada daqui em diante — o lote que faz a vila crescer. */
+    public void whenOpened(Consumer<ConstructionProject> listener) {
+        opened = Objects.requireNonNull(listener, "listener");
     }
 
     /** A obra em andamento desta colônia, se houver. */

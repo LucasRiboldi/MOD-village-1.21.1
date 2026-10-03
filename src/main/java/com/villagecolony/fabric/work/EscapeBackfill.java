@@ -1,8 +1,10 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.fabric.integration.ChestWithdrawer;
+import com.villagecolony.fabric.event.VillageFocus;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.LivingEntity;
@@ -41,6 +43,10 @@ import java.util.UUID;
  * criatura fica aberto, para não enterrar ninguém.
  */
 public final class EscapeBackfill {
+
+    static {
+        ServerMemory.register(EscapeBackfill.class, EscapeBackfill::clearAll);
+    }
 
     /** Um vão cavado e o item com que ele se tampa. */
     private record Hole(BlockPos at, Item refill) {
@@ -95,6 +101,13 @@ public final class EscapeBackfill {
 
         while (jobs.hasNext()) {
             Job job = jobs.next();
+
+            if (!VillageColonyMod.WORKERS.find(job.workerId())
+                    .map(worker -> VillageFocus.isWorking(world, worker.colonyId()))
+                    .orElse(false)) {
+                continue;
+            }
+
             Hole hole = job.holes().pollFirst();
 
             if (hole != null) {
@@ -130,6 +143,17 @@ public final class EscapeBackfill {
 
         world.setBlockState(
                 hole.at(), Block.getBlockFromItem(hole.refill()).getDefaultState(), Block.NOTIFY_ALL);
+    }
+
+    /**
+     * Põe em {@code at} um {@code item} tirado do baú — o pilar de quem sobe
+     * sem nada no bolso (ver {@link ClimbOut}). As mesmas regras do tampão:
+     * vão vazio, ninguém nele, e o item precisa estar no baú.
+     */
+    static boolean placeFromChest(ServerWorld world, UUID workerId, ColonyPos chest, BlockPos at, Item item) {
+        fill(world, new Job(workerId, new ArrayDeque<>(), chest), new Hole(at.toImmutable(), item));
+
+        return world.getBlockState(at).isOf(Block.getBlockFromItem(item));
     }
 
     /** Esquece um trabalhador que saiu do registro. */

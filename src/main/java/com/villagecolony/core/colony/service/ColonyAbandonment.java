@@ -1,5 +1,6 @@
 package com.villagecolony.core.colony.service;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.model.ColonyState;
 import com.villagecolony.core.colony.model.VillageCandidate;
@@ -39,6 +40,10 @@ import java.util.UUID;
  * mundo nem no registro. Quem aplica é a camada fabric.
  */
 public final class ColonyAbandonment {
+
+    static {
+        ServerMemory.register(ColonyAbandonment.class, ColonyAbandonment::clearAll);
+    }
 
     private static final long VIABLE_DISTANCE_SQUARED =
             (long) VillageDetector.DUPLICATE_DISTANCE * VillageDetector.DUPLICATE_DISTANCE;

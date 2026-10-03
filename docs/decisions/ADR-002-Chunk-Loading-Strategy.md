@@ -346,6 +346,17 @@ Exige nova ADR.
 
 ---
 
+# 6.1 Nota de 2026-09-30 — execução volta ao critério desta ADR
+
+Em 2026-09-26 (P0.15) a execução passou a exigir, além do chunk simulando,
+um jogador a até 64 blocos do centro (`VillageFocus`). Em 2026-09-30 o autor
+decidiu que a obra aberta deve continuar com o jogador longe: a execução
+voltou a depender só de `ACTIVE`, como definido aqui. Planejar obra nova e
+detectar vila continuam restritos à vila com jogador presente, pelo custo
+medido em 24-09. A Option 1 (forceload) continua rejeitada.
+
+---
+
 # 7. Rejected Alternatives Summary
 
 ```text

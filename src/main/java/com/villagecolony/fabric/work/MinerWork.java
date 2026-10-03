@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.ColonyEdits;
@@ -17,6 +18,7 @@ import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.event.VillageFocus;
 import com.villagecolony.fabric.integration.BlockBreakTime;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import com.villagecolony.fabric.integration.MineFlooding;
@@ -64,6 +66,10 @@ import java.util.UUID;
  * busca recomeça depois de cada um.
  */
 public final class MinerWork {
+
+    static {
+        ServerMemory.register(MinerWork.class, MinerWork::clearAll);
+    }
 
     /**
      * Alcance de braço, medido no espaço. O mesmo número do lenhador.
@@ -211,6 +217,12 @@ public final class MinerWork {
         /** Se ele está encurtando a distância até a pedra — E44. Ver MineLease. */
         final MineLease lease = new MineLease();
 
+        /** O desvio em curso, cavando e pondo bloco — ADR-025. Ver MinerDetours. */
+        DetourWalker detour;
+
+        /** Quantos desvios esta pedra já pediu. Zera com a pedra. */
+        int detours;
+
         Job(Task task, BlockPos center) {
             this.task = task;
             this.center = center;
@@ -292,6 +304,10 @@ public final class MinerWork {
             UUID workerId = entry.getKey();
             Job job = entry.getValue();
 
+            if (!VillageFocus.isWorking(world, job.task.colonyId())) {
+                continue;
+            }
+
             if (!isOngoing(job.task)) {
                 entries.remove();
 
@@ -368,7 +384,7 @@ public final class MinerWork {
      *
      * <p>A mina inteira e nao so a boca, porque o passo de caminhada e
      * dado pela <b>ordem de cavar</b> desde 2026-08-29: e ela que sabe
-     * onde o corredor passa. Ver {@link MinerReach#legTowards}.
+     * onde o corredor passa. Ver {@link MinerLeg#legTowards}.
      */
     static Optional<Mine> mineOf(Job job) {
         return VillageColonyMod.MINES.of(job.task.colonyId());

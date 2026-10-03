@@ -1,38 +1,32 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.worker.model.Worker;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
-import com.villagecolony.fabric.brain.WorkHours;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.event.VillageFocus;
 import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.ChestDepositor;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.block.FallingBlock;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.Heightmap;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -51,22 +45,22 @@ import java.util.UUID;
  *
  * <p><b>O que faz ele desistir de um rumo:</b> água ou lava encostada no
  * que ia sair (abrir o buraco inundaria a escada), e areia ou cascalho solto
- * logo acima do vão (cairia em cima dele). Sem rumo possível, ele fica onde
- * está e o log diz por quê — o jogador pode resgatá-lo.
+ * logo acima do vão (cairia em cima dele). Desistir de um rumo não é
+ * desistir de sair: sem degrau, o {@link ClimbOut} sobe em pilar ou abre
+ * túnel para o lado, e recomeça — 2026-10-01, pedido do autor: <i>"nunca
+ * ficar preso"</i>.
  *
  * <p><b>Nada se perde.</b> O que sai do buraco vai para o baú dele; o que não
  * couber cai no chão como item, como faz o mineiro.
  */
 public final class StrandedEscape {
 
-    /** Quantos degraus uma fuga cava antes de desistir. */
-    static final int MAX_STEPS = 32;
+    static {
+        ServerMemory.register(StrandedEscape.class, StrandedEscape::clearAll);
+    }
 
     /** A fuga anda uma vez por segundo — o aldeão precisa de tempo para subir. */
     private static final int PASS_EVERY = 20;
-
-    /** Quantas passagens parado, sem nada novo a cavar, antes de desistir. */
-    private static final int STILL_PASSES = 15;
 
     /** A distância das oito colunas que dizem se ele já está no nível do terreno. */
     private static final int OUT_RING = 3;
@@ -74,20 +68,32 @@ public final class StrandedEscape {
     /** Quantas das oito colunas precisam estar no nível dele para contar como fora. */
     private static final int OUT_MIN_LEVEL = 3;
 
-    private static final Map<UUID, BlockPos> LAST_FEET = new HashMap<>();
-
-    private static final Map<UUID, Integer> STILL = new HashMap<>();
-
-    private static final Set<UUID> HOPELESS = new HashSet<>();
-
     private StrandedEscape() {
     }
 
     /** Uma passagem por segundo, para todos os encalhados. */
     public static void tick(ServerWorld world) {
+        // Quem está num curral sai pelo portão ou pula a cerca, sem esperar
+        // ser marcado encalhado — E52, 2026-10-01. Ver PenEscape.
+        PenEscape.tick(world);
+
+        // Quem foi marcado larga o trabalho, fora do laço do ofício que o
+        // marcou; e quem sobe pula e pisa a cada tique — ver ClimbOut.
+        StrandedWorkers.dropMarkedJobs();
+        ClimbOut.tick(world);
+
         if (world.getTime() % PASS_EVERY != 0) {
             return;
         }
+
+        // O rastro de quem anda solto: o caminho de volta, se ele encalhar.
+        MineReturn.record(world);
+
+        // E o tempo de cada um — Regra 50. Ver WorkTime.
+        WorkTime.sample(world);
+
+        // Quem está à toa recolhe do chão o que a obra espera — B-1, Regra 48.
+        GroundPickup.pass(world);
 
         for (UUID workerId : StrandedWorkers.all()) {
             pass(world, workerId);
@@ -95,16 +101,24 @@ public final class StrandedEscape {
 
         // Quem já saiu tampa a escada, um bloco por passagem — N10.
         EscapeBackfill.tick(world);
+
+        // E o portão aberto para sair do cercado fecha de novo — E52.
+        FencedIn.tick(world);
     }
 
-    private static void pass(ServerWorld world, UUID workerId) {
+    static void pass(ServerWorld world, UUID workerId) {
         Optional<Worker> worker = VillageColonyMod.WORKERS.find(workerId);
 
         if (worker.isEmpty()) {
             StrandedWorkers.forget(workerId);
             forget(workerId);
             EscapeBackfill.forget(workerId);
+            MineReturn.forget(workerId);
 
+            return;
+        }
+
+        if (!VillageFocus.isWorking(world, worker.get().colonyId())) {
             return;
         }
 
@@ -114,6 +128,15 @@ public final class StrandedEscape {
 
         BlockPos feet = villager.getBlockPos();
 
+        // <b>No nível do chão não é o mesmo que solto</b> — E52, 2026-10-01.
+        // Dentro de um curral ele está no nível do terreno em volta, e a fuga
+        // o devolvia à escala "after 0 steps", de volta à cerca, por horas.
+        // Enquanto ele sai do curral, a fuga espera; quando sair, esta mesma
+        // passagem o vê fora e o devolve à escala.
+        if (PenEscape.check(world, villager)) {
+            return;
+        }
+
         if (isOut(world, feet)) {
             VillageColonyMod.LOGGER.info(
                     "Stranded worker {} is out at {} after {} steps — back in the work queue",
@@ -122,14 +145,12 @@ public final class StrandedEscape {
                     StrandedWorkers.stepsDug(workerId));
 
             StrandedWorkers.release(workerId);
+            ClimbOut.finish(world, villager, workerId);
+            MineReturn.finish(workerId);
             forget(workerId);
             EscapeBackfill.begin(workerId,
                     VillageColonyMod.STORAGES.of(workerId).map(WorkerStorage::chestPosition).orElse(null));
 
-            return;
-        }
-
-        if (HOPELESS.contains(workerId) || !WorkHours.isWorkTime(world, villager)) {
             return;
         }
 
@@ -139,38 +160,12 @@ public final class StrandedEscape {
             return;
         }
 
-        BlockPos home = MinecraftTypeAdapter.toBlockPos(colony.get().center());
-        Optional<WorkerStorage> storage = VillageColonyMod.STORAGES.of(workerId);
-
-        Optional<Step> step = planStep(world, feet, home);
-
-        if (step.isEmpty() || StrandedWorkers.stepsDug(workerId) >= MAX_STEPS
-                || stillFor(workerId, feet) >= STILL_PASSES) {
-
-            giveUp(workerId, feet, step.isEmpty()
-                    ? "no natural, dry way up toward the village"
-                    : "it dug " + StrandedWorkers.stepsDug(workerId) + " steps and is still down");
-
-            return;
-        }
-
-        if (!step.get().toBreak().isEmpty()) {
-            dig(world, step.get(), storage.map(WorkerStorage::chestPosition).orElse(null), feet,
-                    workerId);
-            villager.swingHand(Hand.MAIN_HAND);
-            StrandedWorkers.dugAStep(workerId);
-            STILL.remove(workerId);
-
-            VillageColonyMod.LOGGER.info(
-                    "Stranded worker {} dug a step at {} toward the village ({} of {})",
-                    workerId.toString().substring(0, 8),
-                    step.get().standAt().toShortString(),
-                    StrandedWorkers.stepsDug(workerId),
-                    MAX_STEPS);
-        }
-
-        // Ele sobe andando: o degrau é o destino, e o Brain faz o resto.
-        WorkTargets.set(workerId, step.get().standAt(), 0);
+        // A qualquer hora: sair do buraco não é trabalho, e preso ele não
+        // chega à cama. Ver ClimbOut — primeiro o caminho por onde desceu
+        // (MineReturn); sem ele, escada, pilar ou túnel, mirando a borda da
+        // vila e não o centro dela, sem desistir.
+        ClimbOut.pass(world, villager, workerId, MineReturn.homeFor(colony.get(), feet),
+                VillageColonyMod.STORAGES.of(workerId).map(WorkerStorage::chestPosition).orElse(null));
     }
 
     /**
@@ -296,31 +291,36 @@ public final class StrandedEscape {
     }
 
     /** Terreno natural, que a proteção deixa quebrar. */
-    private static boolean mayDig(ServerWorld world, BlockPos at, BlockState state) {
+    static boolean mayDig(ServerWorld world, BlockPos at, BlockState state) {
         if (!state.getFluidState().isEmpty() || world.getBlockEntity(at) != null) {
             return false;
         }
 
-        return isNaturalGround(state) && BlockProtection.mayBreak(world, at, state);
+        // A casca da vila não se fura subindo — pedido do autor, 2026-10-02.
+        return (WorldTerrain.isNaturalGround(state) || isRubbleUnderground(world, at, state))
+                && BlockProtection.mayDigOut(world, at, state)
+                && !MineReturn.isVillageShell(world, at);
     }
 
-    private static boolean isNaturalGround(BlockState state) {
-        return state.isIn(BlockTags.BASE_STONE_OVERWORLD)
-                || state.isIn(BlockTags.DIRT)
-                || state.isIn(BlockTags.SAND)
-                || state.isIn(BlockTags.TERRACOTTA)
-                || state.isIn(BlockTags.COAL_ORES)
-                || state.isIn(BlockTags.IRON_ORES)
-                || state.isIn(BlockTags.COPPER_ORES)
-                || state.isIn(BlockTags.GOLD_ORES)
-                || state.isIn(BlockTags.REDSTONE_ORES)
-                || state.isIn(BlockTags.LAPIS_ORES)
-                || state.isIn(BlockTags.DIAMOND_ORES)
-                || state.isIn(BlockTags.EMERALD_ORES)
-                || state.isOf(Blocks.GRAVEL)
-                || state.isOf(Blocks.CLAY)
-                || state.isOf(Blocks.SANDSTONE)
-                || state.isOf(Blocks.RED_SANDSTONE);
+    /** Quantos blocos abaixo da superfície o pedregulho conta como entulho da mina. */
+    static final int RUBBLE_DEPTH = 4;
+
+    /**
+     * Pedregulho no subsolo — playtest de 2026-10-02.
+     *
+     * <p>O mineiro 199ad062 subiu 29 níveis e parou 15 minutos em y=39,
+     * "boxed in", debaixo de um pedregulho que a própria colônia pôs na mina
+     * (o aterro e o pilar são de pedregulho). Pedregulho não é terreno natural,
+     * e a fuga não o quebrava. Debaixo da terra ele é entulho; perto da
+     * superfície pode ser parede de alguém, e fica.
+     */
+    static boolean isRubbleUnderground(ServerWorld world, BlockPos at, BlockState state) {
+        boolean rubble = state.isOf(net.minecraft.block.Blocks.COBBLESTONE)
+                || state.isOf(net.minecraft.block.Blocks.COBBLED_DEEPSLATE)
+                || state.isOf(net.minecraft.block.Blocks.MOSSY_COBBLESTONE);
+
+        return rubble
+                && world.getTopY(Heightmap.Type.WORLD_SURFACE, at.getX(), at.getZ()) - at.getY() > RUBBLE_DEPTH;
     }
 
     /**
@@ -348,7 +348,7 @@ public final class StrandedEscape {
     }
 
     /** Quebra os vãos do degrau e guarda o que saiu. */
-    private static void dig(
+    static void dig(
             ServerWorld world, Step step,
             ColonyPos chest, BlockPos dropAt, UUID digger) {
 
@@ -367,7 +367,14 @@ public final class StrandedEscape {
                 EscapeBackfill.dug(digger, at, drops);
             }
 
-            for (ItemStack drop : drops) {
+            for (ItemStack dug : drops) {
+                // O que serve de bloco fica com quem sobe, para o pilar.
+                ItemStack drop = ClimbOut.keep(digger, dug);
+
+                if (drop.isEmpty()) {
+                    continue;
+                }
+
                 int left = chest == null
                         ? drop.getCount()
                         : ChestDepositor.deposit(world, chest, drop.getItem(), drop.getCount());
@@ -384,43 +391,14 @@ public final class StrandedEscape {
         }
     }
 
-    private static int stillFor(UUID workerId, BlockPos feet) {
-        BlockPos before = LAST_FEET.put(workerId, feet.toImmutable());
-
-        if (feet.equals(before)) {
-            return STILL.merge(workerId, 1, Integer::sum);
-        }
-
-        STILL.remove(workerId);
-
-        return 0;
-    }
-
-    private static void giveUp(UUID workerId, BlockPos feet, String why) {
-        if (HOPELESS.add(workerId)) {
-            WorkTargets.clear(workerId);
-
-            VillageColonyMod.LOGGER.warn(
-                    "Stranded worker {} cannot dig out of {} — {}; it stays out of the"
-                            + " work queue until someone frees it",
-                    workerId.toString().substring(0, 8),
-                    feet.toShortString(),
-                    why);
-        }
-    }
-
     private static void forget(UUID workerId) {
-        LAST_FEET.remove(workerId);
-        STILL.remove(workerId);
-        HOPELESS.remove(workerId);
+        ClimbOut.forget(workerId);
         WorkTargets.clear(workerId);
     }
 
     /** Esquece tudo. Chamado ao abrir e ao parar o servidor. */
     public static void clearAll() {
-        LAST_FEET.clear();
-        STILL.clear();
-        HOPELESS.clear();
+        ClimbOut.clearAll();
         EscapeBackfill.clearAll();
     }
 }

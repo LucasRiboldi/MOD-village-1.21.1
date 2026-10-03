@@ -72,6 +72,9 @@ class ConstructionOrderTest {
         assertEquals(Optional.of(ProfessionType.FARMER), ConstructionOrder.professionOf(FARM));
         assertEquals(Optional.of(ProfessionType.MASON), ConstructionOrder.professionOf(MASON));
         assertEquals(Optional.of(ProfessionType.SMELTER), ConstructionOrder.professionOf(ARMORER));
+        // Regra 49 (10-02): o ferramenteiro é do mineiro.
+        assertEquals(Optional.of(ProfessionType.MINER), ConstructionOrder.professionOf(
+                ResourceId.vanilla("village/plains/houses/plains_tool_smith_1")));
         assertEquals(Optional.empty(), ConstructionOrder.professionOf(BUTCHER));
         assertEquals(Optional.empty(), ConstructionOrder.professionOf(TEMPLE));
     }

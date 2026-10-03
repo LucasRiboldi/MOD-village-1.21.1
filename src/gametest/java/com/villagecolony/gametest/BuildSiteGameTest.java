@@ -18,6 +18,7 @@ import com.villagecolony.fabric.integration.BuildSiteScanner;
 import com.villagecolony.fabric.integration.LotRefusals;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.SweepLog;
+import com.villagecolony.fabric.integration.SweepDeadline;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
@@ -246,14 +247,14 @@ public class BuildSiteGameTest implements FabricGameTest {
      * {@link BuildSiteScanner#ROAD_LEVEL_TOLERANCE} é <b>por coluna</b> e
      * nada exigia que as colunas concordassem entre si.
      *
-     * <p>Aqui metade do lote está num nível e metade no outro: nenhum
-     * dos dois chega aos 90%, e o lote é recusado. É o caso que a régua
-     * de conjunto existe para pegar, e o irmão do
-     * {@code oneBlockOffTheRoadLevelIsStillALot} — lá o lote INTEIRO
-     * está um acima, concorda consigo mesmo, e passa.
+     * <p>Aqui metade do lote está um acima da rua e metade na rua. Desde
+     * 2026-09-30 (decisão do autor) a casa assenta na metade alta, um acima,
+     * e a metade baixa é uma lacuna de uma camada que a preparação aterra:
+     * nada fica voando. O que não pode é assentar na rua e deixar a metade
+     * alta dentro da casa, nem na metade alta sem aterrar a baixa.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_level")
-    public void theUnevenBaseIsNotALot(TestContext context) {
+    public void theUnevenBaseSitsOnItsHigherHalf(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         UUID colony = UUID.randomUUID();
 
@@ -286,10 +287,12 @@ public class BuildSiteGameTest implements FabricGameTest {
                     0,
                     SMALL_HOUSE);
 
-            context.assertFalse(
-                    site.isPresent(),
-                    "a base remendada virou lote — a casa assenta num nível só e o resto"
-                            + " dela fica voando sobre o terreno, que é o que o autor viu");
+            int road = context.getAbsolutePos(center).getY();
+
+            context.assertTrue(
+                    site.isEmpty() || site.get().origin().y() == road + 2,
+                    "a base remendada virou lote no nível da rua, com a metade alta dentro"
+                            + " da casa: " + site.map(found -> found.origin().toString()).orElse(""));
         } finally {
             BuildSiteScanner.clearAll();
             LotRefusals.clearAll();
@@ -399,33 +402,13 @@ public class BuildSiteGameTest implements FabricGameTest {
     }
 
     /**
-     * <b>Um bloco de desnível da rua ainda é lote</b> — decisão do autor,
-     * 2026-09-15: <i>"desnivel, permitir somente 1 bloco de desnivel da
-     * estrada"</i>.
-     *
-     * <p><b>A medição que autorizou isto.</b> A pesquisa de 09-11
-     * ({@code docs/research/terraplanagem-da-vila.md} §8) registrou a regra
-     * do autor: <i>"Medir primeiro. Se a recusa por desnível dominar, a
-     * inferência vira fato"</i>. Duas sessões responderam, e o número é
-     * estável: <b>35,0%</b> e <b>33,6%</b> das recusas de lote eram
-     * {@code OFF_ROAD_LEVEL} — a segunda maior causa, atrás só da área de
-     * estrada.
-     *
-     * <p>A régua era <b>exata</b>: uma coluna um bloco fora reprovava o
-     * lote inteiro, e num terreno de planície ondulada isso reprova quase
-     * tudo. Um bloco de tolerância é o degrau que um jogador sobe sem
-     * pensar, e é o que a Regra 19 queria impedir quando falava de
-     * <i>"varanda sem escada"</i> — ela mirava o lote dois acima, não o
-     * ondulado.
-     *
-     * <p><b>O que NÃO entra nesta decisão:</b> mover terra. A preparação
-     * do canteiro tira planta e não aterra — ver {@code SitePreparation} —,
-     * então a coluna um abaixo fica com um vão sob o piso. O autor foi
-     * avisado disso e escolheu assim mesmo, para a vila voltar a crescer;
-     * aterrar é a frente de terraplanagem, que continua aberta.
+     * A pegada inteira um bloco acima da rua é lote, e a casa assenta um
+     * acima — decisão do autor, 2026-09-30. Até então era recusa: a base
+     * era forçada na altura da rua e deixaria um vão sob a casa. Com a base
+     * no próprio chão elevado, não há vão; a porta fica um degrau acima.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_slope_one")
-    public void oneBlockOffTheRoadLevelIsStillALot(TestContext context) {
+    public void oneBlockAboveTheRoadIsALotOneHigher(TestContext context) {
         BlockPos center = new BlockPos(3, 1, 3);
         UUID colony = UUID.randomUUID();
 
@@ -435,8 +418,8 @@ public class BuildSiteGameTest implements FabricGameTest {
         context.setBlockState(center, Blocks.DIRT_PATH.getDefaultState());
         reserveRoad(context, colony, center);
 
-        // O lote em volta sobe um bloco: é o ondulado que a régua exata
-        // reprovava, e que agora tem de passar.
+        // Toda a pegada fica um bloco acima da rua. Sem terraplanagem, a
+        // planta assentaria acima do chão e deixaria um vão sob a casa.
         for (int dx = -2; dx <= 2; dx++) {
             for (int dz = -2; dz <= 2; dz++) {
                 if (dx == 0 && dz == 0) {
@@ -455,17 +438,11 @@ public class BuildSiteGameTest implements FabricGameTest {
                     0,
                     SMALL_HOUSE);
 
-            context.assertTrue(
-                    site.isPresent(),
-                    "um bloco de desnível continuou reprovando o lote — é a segunda maior"
-                            + " causa de recusa no log do autor, com 35% e 34% em duas"
-                            + " sessões. off_road=" + LotRefusals.countOf(
-                                    colony, LotRefusals.Reason.OFF_ROAD_LEVEL)
-                            + " no_ground=" + LotRefusals.countOf(
-                                    colony, LotRefusals.Reason.NO_GROUND)
-                            + " occupied=" + LotRefusals.countOf(
-                                    colony, LotRefusals.Reason.OCCUPIED)
-                            + " road=" + LotRefusals.countOf(colony, LotRefusals.Reason.ROAD));
+            int road = context.getAbsolutePos(center).getY();
+
+            context.assertTrue(site.isPresent() && site.get().origin().y() == road + 2,
+                    "o lote um acima da rua devia assentar um acima: "
+                            + site.map(found -> found.origin().toString()).orElse("recusado"));
         } finally {
             BuildSiteScanner.clearAll();
             LotRefusals.clearAll();
@@ -671,9 +648,20 @@ public class BuildSiteGameTest implements FabricGameTest {
                     0,
                     SMALL_HOUSE);
 
+            // A pergunta é se a casa atravessa a estrada, e não se há lote:
+            // a borda do cenário pode dar um lote legítimo fora dela. O que
+            // não pode é cobrir a rua.
+            BlockPos first = context.getAbsolutePos(center.add(-2, 0, -2));
+            BlockPos last = context.getAbsolutePos(center.add(2, 0, 2));
+
             context.assertTrue(
-                    site.isEmpty(),
-                    paving + " reservado como ROAD_AREA deixou uma casa atravessar a estrada");
+                    site.isEmpty()
+                            || site.get().origin().x() + SMALL_HOUSE.x() - 1 < first.getX()
+                            || site.get().origin().x() > last.getX()
+                            || site.get().origin().z() + SMALL_HOUSE.z() - 1 < first.getZ()
+                            || site.get().origin().z() > last.getZ(),
+                    paving + " reservado como ROAD_AREA deixou uma casa atravessar a estrada: "
+                            + site.map(BuildSiteScanner.Site::origin).map(Object::toString).orElse(""));
             context.assertTrue(
                     LotRefusals.countOf(colony, LotRefusals.Reason.ROAD) > 0,
                     paving + " reservado como ROAD_AREA nao registrou a recusa da estrada");
@@ -1044,6 +1032,45 @@ public class BuildSiteGameTest implements FabricGameTest {
                         + columns + " colunas a " + BuildSiteScanner.MAX_COLUMNS
                         + " por passagem cabem em " + floor
                         + " — está re-perguntando por coluna já respondida");
+
+        BuildSiteScanner.clearAll();
+
+        context.complete();
+    }
+
+    /**
+     * Com prazo de relógio, quem para a passagem é o relógio — 2026-09-30.
+     *
+     * <p>O playtest de 30-09 levou treze minutos até a primeira obra. Cada
+     * volta do raio 64 custou 16 a 18 passagens de 1.024 colunas, uma por
+     * ciclo de trinta segundos, enquanto o planejador gastava 1 a 2 ms dos
+     * 15 que o prazo permite. O teto de colunas é anterior ao prazo e
+     * ficou como o limite de fato.
+     *
+     * <p>Sob um prazo folgado, a volta inteira cabe numa chamada. Sem prazo
+     * — o teste acima —, o teto continua valendo.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site_budget")
+    public void underADeadlineTheClockAndNotTheColumnCapEndsThePass(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        ColonyPos center = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(3, 1, 3)));
+
+        // A mesma casa impossível: nenhum lote encerra a volta antes.
+        ColonyPos tooBigToFit = new ColonyPos(40, 20, 40);
+
+        int radius = 64;
+
+        SweepDeadline.within(60_000L, () -> BuildSiteScanner.find(
+                context.getWorld(), colony, center, radius, tooBigToFit));
+
+        context.assertTrue(
+                SweepState.sweepPausedAt(colony).isEmpty(),
+                "com prazo de sobra a varredura do raio " + radius + " parou em "
+                        + SweepState.sweepPausedAt(colony)
+                        + " — o teto de " + BuildSiteScanner.MAX_COLUMNS
+                        + " colunas ainda manda na passagem");
 
         BuildSiteScanner.clearAll();
 
@@ -2037,6 +2064,43 @@ public class BuildSiteGameTest implements FabricGameTest {
         }
 
         return new ColonyRoads(colony, from, columns);
+    }
+
+    /**
+     * <b>A volta pelo índice também obedece ao prazo</b> — F1, 2026-09-30.
+     *
+     * <p>Na sessão das 02:45 o planejador subiu para 28 ms de mediana e 178
+     * de máximo, com a maioria das respostas vindo do índice. A varredura do
+     * quadrado consultava o relógio; a volta pelo índice só parava nas 1.024
+     * colunas, e cada coluna dela testa as pegadas das plantas. Com o prazo
+     * vencido, ela tem que parar logo depois do piso de colunas.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_site",
+            tickLimit = 20)
+    public void theRoadIndexStopsWhenTheDeadlineIsOver(TestContext context) {
+        UUID colony = UUID.randomUUID();
+
+        ColonyPos from = MinecraftTypeAdapter.toColonyPos(
+                context.getAbsolutePos(new BlockPos(1, 1, 1)));
+
+        try {
+            BuildSiteScanner.restore(
+                    bigIndex(colony, from, BuildSiteScanner.MAX_COLUMNS * 2));
+
+            SweepDeadline.within(0L, () -> BuildSiteScanner.find(
+                    context.getWorld(), colony, from, 64, SMALL_HOUSE));
+
+            int stoppedAt = SweepState.roadCursorAt(colony).orElse(Integer.MAX_VALUE);
+
+            context.assertTrue(
+                    stoppedAt <= SweepDeadline.MIN_COLUMNS + 1,
+                    "com o prazo vencido a volta pelo índice olhou " + stoppedAt
+                            + " colunas — o relógio não para esta passagem");
+        } finally {
+            BuildSiteScanner.clearAll();
+        }
+
+        context.complete();
     }
 
     /**

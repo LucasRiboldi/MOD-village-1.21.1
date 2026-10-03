@@ -1,5 +1,7 @@
 package com.villagecolony.core.construction.service;
 
+import org.jspecify.annotations.Nullable;
+
 import com.villagecolony.core.construction.model.ConstructionProject;
 import com.villagecolony.core.construction.model.ConstructionState;
 
@@ -43,9 +45,9 @@ public final class RemovalAudit {
         COMPLETED_PROJECT_PURGE
     }
 
-    private final Reason reason;
+    private final @Nullable Reason reason;
 
-    private RemovalAudit(Reason reason) {
+    private RemovalAudit(@Nullable Reason reason) {
         this.reason = reason;
     }
 

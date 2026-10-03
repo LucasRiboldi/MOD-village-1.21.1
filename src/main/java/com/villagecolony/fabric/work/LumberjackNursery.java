@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 
@@ -14,7 +15,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Quando e onde o fazendeiro planta a árvore — 2026-09-19.
+ * Quando e onde o lenhador planta a árvore do viveiro — 2026-09-19;
+ * do fazendeiro para o lenhador em 2026-09-30, decisão do autor.
  *
  * <p>A habilidade é do autor e está descrita em {@link TreeNursery}; o
  * que mora aqui é o <b>ritmo</b> e o <b>lugar</b>, que são as duas
@@ -24,14 +26,22 @@ import java.util.UUID;
  * <p><b>Na borda, e não no meio.</b> O pedido é <i>"no limite da vila"</i>,
  * e há razão prática: árvore no miolo tomaria lote de casa, e o
  * {@code BuildSiteScanner} passaria a recusar por volume ocupado — que foi
- * 70% das recusas no P1.6. A borda é onde não há obra disputando.
+ * 70% das recusas no P1.6. A borda <b>não</b> está livre de obra: a busca de
+ * lote vai até 64 do centro, e a casa do pastor do playtest de 2026-09-30
+ * nasceu a 50. Quem impede o rebento no espaço de uma obra é
+ * {@code TreeNursery.isSpotForANursery}.
  *
- * <p><b>Uma por vez, com intervalo.</b> O fazendeiro chega aqui toda vez
- * que varre o raio e não acha lavoura, o que numa vila sem roça é
- * <b>sempre</b>. Sem freio ele plantaria uma árvore por passagem até a
- * borda inteira virar viveiro.
+ * <p><b>Dois momentos, com intervalo.</b> O lenhador planta um lote
+ * quando não acha árvore ao alcance ({@link #plantBatchIfItIsTime}) e uma
+ * muda depois de cada árvore que derruba inteira ({@link #plantIfItIsTime}).
+ * Sem freio ele plantaria a cada passagem até a borda inteira virar
+ * viveiro.
  */
-public final class FarmerNursery {
+public final class LumberjackNursery {
+
+    static {
+        ServerMemory.register(LumberjackNursery.class, LumberjackNursery::clearAll);
+    }
 
     /**
      * Quantos tiques entre um plantio e o seguinte.
@@ -62,7 +72,7 @@ public final class FarmerNursery {
 
     private static final Map<UUID, Long> LAST = new HashMap<>();
 
-    private FarmerNursery() {
+    private LumberjackNursery() {
     }
 
     /** Se já passou tempo bastante desde o último plantio desta colônia. */
@@ -78,13 +88,15 @@ public final class FarmerNursery {
      * @return {@code true} se uma árvore nasceu agora
      */
     public static boolean plantIfItIsTime(ServerWorld world, UUID colonyId, BlockPos centre) {
+        return plant(world, colonyId, centre, 1) > 0;
+    }
+
+    private static int plant(ServerWorld world, UUID colonyId, BlockPos centre, int wanted) {
         if (!isTime(colonyId, world.getTime())) {
-            return false;
+            return 0;
         }
 
-        if (countNurseries(world, centre) >= TARGET_TREES) {
-            return false;
-        }
+        double towards = towardsTheLumberjack(colonyId, centre);
 
         Optional<Block> sapling =
                 TreeNursery.saplingFor(world, MinecraftTypeAdapter.toColonyPos(centre));
@@ -92,28 +104,64 @@ public final class FarmerNursery {
         if (sapling.isEmpty()) {
             // Bioma sem madeira declarada: não é vila que o mod atende, e
             // inventar uma espécie aqui seria escolher por conta própria.
-            return false;
+            return 0;
         }
 
-        Optional<BlockPos> spot = spotOnTheEdge(world, centre);
+        int room = Math.min(wanted, TARGET_TREES - countNurseries(world, centre));
 
-        if (spot.isEmpty()) {
-            return false;
+        if (room <= 0) {
+            // <b>Cheio também marca a hora</b> — spark de 2026-09-26. Com os
+            // dez viveiros de pé, cada chamada recontava ~166 mil blocos e
+            // não guardava nada; o lenhador sem árvore chama
+            // o tempo todo, e a conta virou o terceiro maior custo do mod.
+            // Cheio agora espera o mesmo intervalo de quem plantou.
+            LAST.put(colonyId, world.getTime());
+
+            return 0;
         }
 
-        if (!TreeNursery.plant(world, spot.get(), sapling.get())) {
-            return false;
+        int planted = 0;
+
+        while (planted < room) {
+            Optional<BlockPos> spot = spotOnTheEdge(world, centre, towards);
+
+            if (spot.isEmpty() || !TreeNursery.plant(world, spot.get(), sapling.get())) {
+                break;
+            }
+
+            planted++;
+
+            VillageColonyMod.LOGGER.info(
+                    "Colony {} — the lumberjack planted {} on rooted dirt at {}, at the village edge",
+                    colonyId.toString().substring(0, 8),
+                    TreeNursery.idOf(sapling.get()),
+                    spot.get().toShortString());
         }
 
+        // Sem ponto livre, o lenhador sem arvore voltaria aqui a cada tick e
+        // repetiria a contagem cara do viveiro. A tentativa vale pelo mesmo
+        // intervalo de quem plantou ou encontrou a borda ja cheia.
         LAST.put(colonyId, world.getTime());
 
-        VillageColonyMod.LOGGER.info(
-                "Colony {} — the farmer planted {} on rooted dirt at {}, at the village edge",
-                colonyId.toString().substring(0, 8),
-                TreeNursery.idOf(sapling.get()),
-                spot.get().toShortString());
+        return planted;
+    }
 
-        return true;
+    /**
+     * Quantas mudas o lenhador sem árvore pede de uma vez — sessão de
+     * 2026-09-26. A vila de planície sem árvore natural esperou uma muda a cada
+     * cinco minutos, e o lenhador cortou 15 toras em 33 minutos. Com quatro, o
+     * teto de dez fecha em três plantios.
+     */
+    public static final int BATCH = 4;
+
+    /**
+     * O plantio do lenhador que não achou árvore: até {@link #BATCH} mudas,
+     * no mesmo ritmo e no mesmo teto do plantio avulso.
+     *
+     * @return quantas mudas nasceram agora
+     */
+    public static int plantBatchIfItIsTime(ServerWorld world, UUID colonyId, BlockPos centre) {
+        return plant(world, colonyId, centre, BATCH);
     }
 
     /**
@@ -123,10 +171,14 @@ public final class FarmerNursery {
      * longe possível do centro sem sair do alcance do lenhador; só usa uma
      * distância menor quando a borda está ocupada ou inacessível.
      */
-    private static Optional<BlockPos> spotOnTheEdge(ServerWorld world, BlockPos centre) {
+    private static Optional<BlockPos> spotOnTheEdge(ServerWorld world, BlockPos centre, double towards) {
         for (int radius = EDGE; radius >= INNER_EDGE; radius--) {
-            for (int step = 0; step < DIRECTIONS; step++) {
-                double angle = 2 * Math.PI * step / DIRECTIONS;
+            for (int turn = 0; turn < DIRECTIONS; turn++) {
+                // Do lado da borda mais perto do baú do lenhador para fora — A-7,
+                // 2026-10-02: o viveiro continua na borda, mas no ponto dela de
+                // onde o lenhador anda menos.
+                int step = (turn % 2 == 0 ? turn / 2 : DIRECTIONS - (turn + 1) / 2);
+                double angle = towards + 2 * Math.PI * step / DIRECTIONS;
 
                 int x = centre.getX() + (int) Math.round(radius * Math.cos(angle));
                 int z = centre.getZ() + (int) Math.round(radius * Math.sin(angle));
@@ -140,6 +192,26 @@ public final class FarmerNursery {
         }
 
         return Optional.empty();
+    }
+
+    /** O ângulo, a partir do centro, do baú do lenhador da colônia; zero sem lenhador com baú. */
+    private static double towardsTheLumberjack(UUID colonyId, BlockPos centre) {
+        for (var worker : VillageColonyMod.WORKERS.ofColony(colonyId)) {
+            if (worker.profession().filter(com.villagecolony.core.worker.model.ProfessionType.LUMBERJACK::equals)
+                    .isEmpty()) {
+                continue;
+            }
+
+            var chest = VillageColonyMod.STORAGES.of(worker.villagerId());
+
+            if (chest.isPresent()) {
+                BlockPos at = MinecraftTypeAdapter.toBlockPos(chest.get().chestPosition());
+
+                return Math.atan2(at.getZ() - centre.getZ(), at.getX() - centre.getX());
+            }
+        }
+
+        return 0.0;
     }
 
     /** Conta marcadores de viveiro que ainda têm muda ou árvore em cima. */

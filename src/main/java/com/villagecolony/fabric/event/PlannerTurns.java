@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.event;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.coordination.PlanningBudget;
 import com.villagecolony.core.coordination.ScanReport;
@@ -39,6 +40,10 @@ import java.util.UUID;
  * soluços.
  */
 final class PlannerTurns {
+
+    static {
+        ServerMemory.register(PlannerTurns.class, PlannerTurns::clearAll);
+    }
 
     /**
      * Quantas colônias decidem obra por ciclo.

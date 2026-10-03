@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.colony.service.VillageDetector;
@@ -7,6 +8,7 @@ import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.construction.model.BlueprintBlock;
 import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.fabric.integration.ColonyModels;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.integration.StructureBlueprintReader;
 import com.villagecolony.fabric.integration.VillageStructures;
@@ -53,6 +55,10 @@ import java.util.UUID;
  * pequena que nasce alimenta mais que uma grande que nunca cabe.
  */
 public final class FarmPlans {
+
+    static {
+        ServerMemory.register(FarmPlans.class, FarmPlans::clearAll);
+    }
 
     /** As plantas lidas, por id. Ler um template não é barato. */
     private static final Map<ResourceId, Optional<Blueprint>> READ = new HashMap<>();
@@ -211,7 +217,12 @@ public final class FarmPlans {
             }
         }
 
-        return kept.size() == farm.blocks().size() ? farm : Blueprint.of(farm.id(), kept);
+        // <b>A roça fica acima da rua</b> — pedido do autor, 2026-10-02: <i>"a
+        // base da plantação exclusivamente não pode ficar na altura da rua,
+        // porque precisa da altura para receber a água"</i>. Sem a camada da
+        // rua, a planta volta à origem de sempre: a camada da lavoura e do
+        // canal assenta um acima do chão. As casas continuam na rua.
+        return Blueprint.of(farm.id(), kept);
     }
 
     /**
@@ -241,6 +252,7 @@ public final class FarmPlans {
 
     /** Se esta planta é uma roça, e não uma casa. */
     public static boolean isFarm(ResourceId id) {
-        return id.path().contains("farm");
+        // A casa do fazendeiro da colônia (trade_farmer) é casa, não roça.
+        return id.path().contains("farm") && !ColonyModels.isColonyModel(id);
     }
 }

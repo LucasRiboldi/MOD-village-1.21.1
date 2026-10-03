@@ -34,6 +34,7 @@ import net.minecraft.block.CropBlock;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
+import net.minecraft.util.Hand;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -82,10 +83,24 @@ public final class BuilderPlacement {
             return true;
         }
 
-        BlockState state = BlockShaping.bedFacing(
-                world, target, BlockShaping.facing(project, block, material.get().getDefaultState()));
+        if (BlockShaping.isNeverPlaced(material.get().getDefaultState())) {
+            // A lava da planta não surge sozinha — 2026-09-30. A posição
+            // fica vazia e a obra segue.
+            VillageColonyMod.LOGGER.info(
+                    "Project {} leaves {} empty — lava is never placed by the colony",
+                    project.id(),
+                    target.toShortString());
 
-        if (!world.getBlockState(target).isReplaceable()) {
+            project.markPlaced(block);
+
+            return true;
+        }
+
+        BlockState state = shaped(world, project, block, material.get(), target);
+
+        if (!world.getBlockState(target).isReplaceable()
+                && !BuriedPieces.mayReplaceGround(world, project.blueprint(), block, target)
+                && !BlockShaping.tillsTheGround(world, state, target)) {
             // Já tem coisa ali, e não é grama alta: pode ser peça de
             // vila, pode ser construção do jogador. A Regra 3 manda não
             // mexer, e a obra segue sem este bloco.
@@ -122,9 +137,8 @@ public final class BuilderPlacement {
         if (PottedPlant.isPotted(state)) {
             // <b>O vaso com planta é montado, e pago</b> — 2026-09-19. O
             // bloco não tem item e ninguém o traria; o que a colônia tem
-            // é o vaso e a planta, e é deles que ele sai. Montar de graça
-            // seria a colônia CRIANDO recurso, que a primeira regra de
-            // arquitetura do Construction-System proíbe.
+            // é o vaso e a planta, e é deles que ele sai: a cadeia existe
+            // dentro da colônia, então ela é usada (ADR-028).
             //
             // Espera pelos dois como esperaria por qualquer material: a
             // Regra 27 continua valendo, só que sobre os ingredientes em
@@ -216,6 +230,11 @@ public final class BuilderPlacement {
 
         job.placed++;
 
+        // O gesto de assentar — e o sinal de "trabalhando" do WorkTime (Regra 50).
+        if (world.getEntity(workerId) instanceof VillagerEntity builder) {
+            builder.swingHand(Hand.MAIN_HAND);
+        }
+
         // A única passagem em que uma peça de verdade encosta no mundo,
         // e é por isso que a conta da barreira sai daqui: as outras
         // quatro saídas de placeOne riscam o bloco, e riscado não é
@@ -245,8 +264,60 @@ public final class BuilderPlacement {
                         project.id(),
                         piece.block(),
                         target.toShortString());
+
+                continue;
+            }
+
+            // <b>E quando ela já cabe</b> — 2026-09-25, visto em jogo. As nove
+            // peças do templo foram adiadas por uma versão que não apoiava a
+            // peça de parede na parede que existe; a vizinhança delas nunca ia
+            // mudar, e a obra ficou aberta por três sessões. A pergunta é a
+            // mesma que o construtor faz ao assentar — ver shaped.
+            if (fitsNow(world, project, piece, target) && project.retry(piece)) {
+                VillageColonyMod.LOGGER.info(
+                        "Project {} retries {} at {} — it fits against the wall now",
+                        project.id(),
+                        piece.block(),
+                        target.toShortString());
             }
         }
+    }
+
+    /**
+     * O estado que o construtor assenta neste lugar: a direção da planta, a
+     * cama pela cabeceira, e a peça de parede apoiada na parede que existe.
+     */
+    static BlockState shaped(
+            ServerWorld world,
+            ConstructionProject project,
+            BlueprintBlock block,
+            Block material,
+            BlockPos target) {
+
+        BlockState state = BlockShaping.bedFacing(
+                world, target, BlockShaping.facing(project, block, material.getDefaultState()));
+
+        return BlockShaping.leanOnAWall(world, target, state);
+    }
+
+    /** Se a peça adiada já se sustenta no lugar dela. */
+    private static boolean fitsNow(
+            ServerWorld world,
+            ConstructionProject project,
+            ConstructionProject.DeferredPiece piece,
+            BlockPos target) {
+
+        Optional<BlueprintBlock> block = project.remaining().stream()
+                .filter(candidate -> candidate.block().equals(piece.block())
+                        && project.worldPositionOf(candidate).equals(piece.position()))
+                .findFirst();
+
+        Optional<Block> material = MinecraftTypeAdapter.toBlock(piece.block());
+
+        return block.isPresent()
+                && material.isPresent()
+                && world.getBlockState(target).isReplaceable()
+                && shaped(world, project, block.get(), material.get(), target).canPlaceAt(world, target);
     }
 
     /** Uma representação estável do alvo e de cada bloco que pode apoiá-lo. */

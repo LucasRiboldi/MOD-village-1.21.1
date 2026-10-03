@@ -49,7 +49,6 @@ import java.util.UUID;
  * deixando trabalhador órfão apontando para colônia inexistente.
  */
 public final class ColonySavedData extends PersistentState {
-
     /** Nome do arquivo em {@code data/}. Mudar isto invalida saves. */
     public static final String KEY = "villagecolony_colonies";
 
@@ -60,6 +59,7 @@ public final class ColonySavedData extends PersistentState {
     static final String CENTER_Z = "centerZ";
     static final String STATE = "state";
     static final String OBSERVED_BEDS = "observedBeds";
+    static final String FOREST_POPULATION_MILESTONE = "forestPopulationMilestone";
 
     static final String WORKERS = "workers";
     static final String VILLAGER_ID = "villagerId";
@@ -204,6 +204,8 @@ public final class ColonySavedData extends PersistentState {
     }
 
     /**
+     * O mesmo, gravando também as obras em andamento e as construções.
+     *
      * @param currentProjects as obras em andamento, já reduzidas ao que
      *     se grava: identidade, estrutura, lugar e estado. O progresso
      *     não vai para o disco — quem sabe o que está de pé é o mundo.
@@ -222,6 +224,8 @@ public final class ColonySavedData extends PersistentState {
     }
 
     /**
+     * O mesmo, gravando também a mina de cada colônia.
+     *
      * @param currentMines a mina de cada colônia — a boca, o lado da
      *     descida, o lado da galeria e a fronteira já cavada. É a única
      *     parte do trabalho do mineiro que o mundo <b>não</b> guarda: os
@@ -240,6 +244,8 @@ public final class ColonySavedData extends PersistentState {
     }
 
     /**
+     * O mesmo, gravando também o índice de ruas.
+     *
      * @param currentRoads o índice de ruas de cada colônia. É a resposta
      *     cara de uma pergunta barata de reconferir: montá-lo custa
      *     varrer 16.641 colunas em dezessete ciclos, e cada coluna dele
@@ -258,6 +264,8 @@ public final class ColonySavedData extends PersistentState {
     }
 
     /**
+     * O mesmo, gravando também a varredura que parou no meio.
+     *
      * @param currentSweeps a varredura de cada colônia que parou no meio
      *     do raio, com o que ela já achou. Medido em 2026-08-27: uma
      *     sessão de catorze passagens das dezessete necessárias gravava
@@ -277,6 +285,8 @@ public final class ColonySavedData extends PersistentState {
     }
 
     /**
+     * O mesmo, gravando também o traço de atividade.
+     *
      * @param currentActivityTraces o traço circular de atividade de cada
      *     colônia — decisão 7B, 2026-09-24. Sem UUID de coordenada, sem
      *     texto livre: seis campos por evento, no máximo
@@ -362,6 +372,8 @@ public final class ColonySavedData extends PersistentState {
             entry.putInt(CENTER_Z, colony.center().z());
             entry.putString(STATE, colony.state().name());
             entry.putInt(OBSERVED_BEDS, colony.observedBeds());
+            entry.putInt(FOREST_POPULATION_MILESTONE, colony.forestPopulationMilestone());
+            VillageBoundsSave.write(entry, colony);
 
             list.add(entry);
         }
@@ -477,6 +489,8 @@ public final class ColonySavedData extends PersistentState {
             // Save antigo não tem o campo; getInt devolve 0, que apenas
             // faz a primeira detecção da sessão valer. Autocorrige.
             colony.observe(center, entry.getInt(OBSERVED_BEDS));
+            colony.markForestPopulationMilestone(entry.getInt(FOREST_POPULATION_MILESTONE));
+            VillageBoundsSave.read(entry, colony);
 
             data.colonies.add(colony);
         }
@@ -486,5 +500,4 @@ public final class ColonySavedData extends PersistentState {
 
         return data;
     }
-
 }

@@ -65,6 +65,29 @@ public final class MineRegistry {
     }
 
     /**
+     * A mina da colônia absorvida, na fusão — ADR-007 §3.
+     *
+     * <p>A ADR diz as duas coisas: a tabela manda manter a mina da absorvida,
+     * o texto manda manter a do sobrevivente e esquecer a outra. As duas
+     * cabem: sem mina, o sobrevivente herda a da absorvida; com mina, a
+     * outra é esquecida — a escada fica no mundo, só deixa de ser trabalhada.
+     *
+     * @return se a mina da absorvida passou para o sobrevivente
+     */
+    public boolean absorb(UUID absorbed, UUID survivor) {
+        Mine theirs = mines.remove(absorbed);
+
+        if (theirs == null || mines.containsKey(survivor)) {
+            return false;
+        }
+
+        theirs.joinColony(survivor);
+        mines.put(survivor, theirs);
+
+        return true;
+    }
+
+    /**
      * Esquece a mina desta colônia.
      *
      * <p>Colônia abandonada, e o teste que se limpa pelo identificador

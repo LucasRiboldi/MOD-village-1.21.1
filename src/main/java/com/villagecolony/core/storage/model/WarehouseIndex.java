@@ -107,7 +107,7 @@ public final class WarehouseIndex {
         Map<SupplyRequest, Reservation> results = new LinkedHashMap<>();
 
         requests.stream()
-                .sorted(Comparator.comparingInt(request -> request.priority().ordinal()))
+                .sorted(Comparator.comparing(SupplyRequest::priority, SupplyPriority.FIRST_SERVED))
                 .forEach(request -> results.put(request, reserve(request)));
 
         return results;

@@ -1,16 +1,102 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Atualização de 2026-09-24, tarde — jogar com o spark ligado.** O JAR em
-`mods` agora é o do commit `a119c2a` (SHA-256
-`F4226F8AA1EED834FEC508C5389ED4E287DF2A81FC7FC51878C2B6B1B511F911`):
-revisão de naturalidade, rodada de qualidade, refatoração e a **vila foco**
-(só ela planeja; procure `Focus village is now`, `Planner turns` e a queda
-de `Colony cycle took`) — nada disso visto em jogo ainda, e o
+**Atualizacao de 2026-09-28 - JAR `B1C516AD...A38C2F5`.** Este e o JAR instalado
+em `downloads/` e `%APPDATA%/.minecraft/mods/`; as tres copias conferem com
+`build/libs/` pelo SHA-256
+`B1C516AD68A99987088D97A82B976C01F10E321A66858D05C49590BC3A38C2F5`.
+`test --rerun-tasks`, `build` e `runGametest --rerun-tasks` passaram, com
+**1.168/1.168 testes unitarios e 498/498 GameTests**. A mina normal mantém o poço de três blocos de largura e altura.
+Quando uma mina de vila fundada sobre água esgotar os níveis mineráveis, ela
+reabre por uma escadaria segura de três blocos, selada por vidro, até uma camada
+natural de rocha; os mineiros não podem minerar a escada nem a proteção.
+Quando uma mina normal esgotada ainda não puder abrir uma saída oposta, a
+colônia aguarda 600 ticks antes de tentar novamente. Isso substitui a repetição
+do aviso e da tentativa a cada tick, sem alterar a mina normal ou a rota aquática.
+
+**Gargalo visto no save:** com 6-7 colonias, o levantamento de baus consumiu
+76-122 ms em ciclos de 91-259 ms. Antes de alterar qualquer profissao, repetir
+o perfil Spark descrito em `docs/technical/Profiling-spark.md`; a proxima
+correcao compara indice incremental de estoque com levantamento fatiado. Ver
+`docs/technical/Auditoria-Entrega-2026-09-28.md` para os criterios e os
+playtests ainda obrigatorios.
+
+**Bau em chunk descarregado:** deixe um bau registrado fora da distancia de
+carregamento e mantenha outro bau compartilhado carregado com material. O log
+deve dizer uma vez `warehouse is degraded` e os trabalhos que usam o segundo
+bau devem continuar. Ao voltar a carregar o primeiro chunk, deve aparecer uma
+vez `warehouse recovered`. Nenhum item pode surgir, sumir ou depender de
+forcar o carregamento do chunk.
+
+No playtest, confira também que o mineiro segue a perna intermediária até uma
+pedra distante, que uma rua sem ponta abre um ramal físico antes de procurar
+lote e que um fundidor com HOME legado migra para cama livre de casa concluída,
+com baú dentro dela. Sem cama livre, a próxima obra deve ser moradia. O `/vc
+log` deve mostrar o estado atual separado do último bloqueio histórico.
+
+Ao abrir uma vila com mais adultos que camas, confirme a frase indicando quantas
+camas faltam e a abertura de uma moradia. Com camas suficientes logo depois de
+uma casa, confirme a mensagem de infraestrutura e a obra não residencial. O
+comando e a obra real ainda dependem desse playtest no save do autor. Na obra
+que travava, confirme que o construtor ja dentro de cinco blocos do centro da
+peca a coloca sem voltar a caminhar nem repetir `WORK_STALLED`.
+
+**Obras e baús:** uma obra nova só abre quando toda a pegada está na altura
+exata da rua, portanto não pode ficar suspensa nem com vão sob o piso. Um baú
+novo de profissão só surge junto a uma cama dentro de estrutura vanilla ou
+construção concluída da colônia; não nasce no centro nem à frente de porta.
+Uma vila nova só é adotada depois que sua BigHouseMOD cabe no lote: então recebe
+as seis camas, os seis baús e os moradores; sem lote, a detecção tenta novamente
+mais tarde. As construções e baús já existentes permanecem intactos. No mesmo
+save, observe uma obra em terreno irregular e a primeira vila criada após a atualização.
+
+**Atualização de 2026-09-25, tarde — o mineiro autônomo.** O JAR em
+`mods` foi republicado (commit `a222342`, SHA-256
+`8862EC4FF9CC42688D34ED0D5FC3BAF0016CB3D30104861BED216614147707C0`).
+**O que procurar do mineiro (ADR-025 fases 1 e 2):**
+
+- `takes a detour of N steps` → `is through its detour` (o travado cavou o
+  próprio caminho) ou `its detour failed — …` (o motivo, e a tarefa volta);
+- `Stranded worker … taking a detour` (o encalhado sem escada natural);
+- `The mine floored` (vão de caverna sob a passagem virou chão);
+- `leaves … alone - it holds back water or lava` e `keeps finding stone that
+  holds back water or lava` (a pedra com líquido atrás ficou);
+- em qualquer `gave up the stone`, a parte `brain: …` — é ela que diz por que
+  ele travava em 553, 39, 158;
+- fechar e reabrir o mundo: a pedra recusada deve continuar recusada.
+
+**Da sessão de 26-09:** numa vila sem árvore,
+o lenhador fica em `looking for a tree` sem `wood task returned` e sem largar
+o ofício; `the farmer planted` sai em grupos de 4; vila vanilla nova recebe
+`VC_VILLAGE_BED_CHEST outcome=CREATED` nas camas com parede ao lado; a obra
+com tapete colorido não mostra mais `needs … black_carpet`.
+
+**Obra sem rota de suprimento:** para uma peça manufaturada que nenhuma
+profissão consegue recolher ou fabricar, aguarde três tentativas. Na terceira,
+ela deve surgir primeiro no baú do construtor; se ele estiver ausente ou cheio,
+deve ir para outro baú livre da colônia. Itens naturais continuam a depender
+dos ofícios, sem geração automática.
+
+**Casa na altura da rua (26-09):** a próxima casa aberta tem o chão rente à
+rua e a porta um bloco acima do caminho, sem plataforma de terra embaixo. A
+casa 5 de (-462, 66, 3490), feita antes, fica como está e não deve abrir
+reparo.
+
+**Antes dele, a escolha da obra** (publicação da manhã de 25-09):
+Ao carregar, o templo de z=211 deve
+sair com `keeps the abandoned ... waiting — it is not its turn`, e a próxima
+obra deve ser **casa** (`planned ...house...`), depois outra obra, alternando.
+A linha `miners:` deve voltar a cada ciclo com pedra pedida mesmo sem obra. Ele soma o **cache da varredura de baús livres** ao de 09-24: o perfil de
+09-24 (`wIEM9zz90l`) deu TPS 20 e o `ColonyChests.nearestFirst` como o
+maior custo do mod — o próximo perfil diz se ele caiu. Vêm de antes:
+revisão de naturalidade, rodada de qualidade, refatoração e a **ativação por
+presença** (só vilas no raio do jogador planejam e trabalham; procure
+`Planner turns`, `Colony cycle took` e a pausa ao se afastar) — nada disso
+visto em jogo ainda, e o
 **spark** 1.10.109 está instalado ao lado dele.
 
 - **Primeiro, o perfil.** Seguir `docs/technical/Profiling-spark.md`:
   `/spark profiler start --only-ticks-over 50`, jogar 5 a 10 minutos perto
-  da vila, `/spark profiler stop` e trazer o link. Motivo: o log de 24-09
+  da vila, afastar-se dela e voltar, `/spark profiler stop` e trazer o link. Motivo: o log de 24-09
   teve 196 ciclos acima de um tique.
 - **Depois, o que só o jogo mostra:**
   - um filhote nascer e ganhar ofício (N1, `shared supper with`);

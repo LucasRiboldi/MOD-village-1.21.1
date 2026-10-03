@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Blueprint;
@@ -15,21 +16,28 @@ import net.minecraft.util.math.BlockPos;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 /**
- * Varre construções do mod que ficaram incompletas e abre uma tentativa
- * limitada de reparo antes de aceitar uma obra nova.
+ * Varre obras abandonadas do mod e abre uma tentativa limitada de retomada
+ * antes de aceitar uma obra nova.
  *
  * <p>A construção registrada é a lista de candidatos; a planta e o mundo
- * decidem os blocos. Uma tentativa abandonada é pulada uma vez, para que
- * material ou acesso impossível não congele a vila. No ciclo seguinte,
- * depois que a vaga teve oportunidade de seguir, ela volta à varredura.
+ * decidem os blocos. Construção concluída é definitiva: mesmo que o mundo
+ * difira da planta depois, ela não vira obra outra vez. Uma tentativa
+ * abandonada é pulada uma vez, para que material ou acesso impossível não
+ * congele a vila. No ciclo seguinte, depois que a vaga teve oportunidade de
+ * seguir, ela volta à varredura.
  */
 final class BuildingRepairPlanner {
+
+    static {
+        ServerMemory.register(BuildingRepairPlanner.class, BuildingRepairPlanner::clearAll);
+    }
 
     private record Attempt(UUID projectId, UUID buildingId, int standing) {
     }
@@ -54,7 +62,7 @@ final class BuildingRepairPlanner {
      * <p>Uma tentativa que termina sem aumentar o número de blocos de pé não
      * ganha outra. Isto não desliga o reparo — lacuna que o construtor
      * consegue fechar continua sendo fechada, e quem prova isso é
-     * {@code FoundationRepairGameTest.anIncompleteProfessionHouseStillStartsRepair}.
+     * {@code FoundationRepairGameTest.aRepairThatPlacedNothingIsNotOpenedAgain}.
      * O que acaba é a insistência no que não se fecha.
      */
     private static final Map<UUID, Set<UUID>> EXHAUSTED = new HashMap<>();
@@ -67,9 +75,22 @@ final class BuildingRepairPlanner {
 
         Set<UUID> exhausted = EXHAUSTED.getOrDefault(colony.id(), Set.of());
 
-        for (Building building : VillageColonyMod.BUILDINGS.ofColony(colony.id())) {
+        List<Building> buildings = VillageColonyMod.BUILDINGS.ofColony(colony.id());
+        int adults = VillageColonyMod.WORKERS.countOfColony(colony.id());
+
+        for (Building building : buildings) {
             if (building.blueprint().equals(StructureBlueprintReader.BIG_HOUSE_MOD)
                     || exhausted.contains(building.id())) {
+                continue;
+            }
+
+            // <b>Construção concluída nunca reabre</b> — decisão do autor,
+            // 2026-09-26. O reparo de uma lacuna visual reabria a mesma
+            // fazenda logo após ela terminar e fazia o construtor desmontar
+            // o que parecia uma obra nova. Só obra abandonada pode voltar,
+            // e apenas na vez do tipo dela.
+            if (building.finished() || !HousePlans.isTurnOf(
+                    buildings, adults, colony.observedBeds(), building.blueprint())) {
                 continue;
             }
 
@@ -133,7 +154,10 @@ final class BuildingRepairPlanner {
                 continue;
             }
 
-            if (world.getBlockState(position).isOf(expected.get())) {
+            // O chão na altura da rua conta como de pé — 2026-09-26: a terra
+            // da planta sobre a grama do mundo não é peça faltando.
+            if (world.getBlockState(position).isOf(expected.get())
+                    || BuriedPieces.heldByTheGround(world, blueprint, block, position)) {
                 standing.add(MinecraftTypeAdapter.toColonyPos(position));
             }
         }

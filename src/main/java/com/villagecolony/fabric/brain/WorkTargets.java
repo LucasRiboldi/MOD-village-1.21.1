@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.brain;
 
+import com.villagecolony.core.type.ServerMemory;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.Map;
@@ -30,6 +31,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * O ciclo seguinte o repõe, porque a tarefa continua na fila.
  */
 public final class WorkTargets {
+
+    static {
+        ServerMemory.register(WorkTargets.class, WorkTargets::clearAll);
+    }
 
     /**
      * A folga com que a navegação se dá por chegada, quando quem põe o

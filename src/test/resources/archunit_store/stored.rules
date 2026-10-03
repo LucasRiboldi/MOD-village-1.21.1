@@ -1,0 +1,4 @@
+#
+#Wed Sep 30 16:51:40 BRT 2026
+classes\ that\ reside\ in\ a\ package\ 'com.villagecolony..'\ should\ register\ ServerMemory\ when\ they\ keep\ static\ mutable\ collections,\ because\ estado\ est\u00E1tico\ sobrevive\ \u00E0\ troca\ de\ mundo\ (ServerMemory)=9f6005cc-3be1-4598-ba09-49c7fc06cab7
+slices\ matching\ 'com.villagecolony.fabric.(*)..'\ should\ be\ free\ of\ cycles=bd1afc07-a68a-495d-a15e-c406db07eaa7

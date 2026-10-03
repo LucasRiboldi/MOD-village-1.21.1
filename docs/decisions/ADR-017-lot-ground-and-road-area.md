@@ -42,3 +42,57 @@ estrada.
 
 `runGametest --rerun-tasks` executou 327 GameTests sem falhas em 2026-09-15.
 O JAR distribuido nao foi atualizado nesta entrega.
+
+## Emenda — 2026-09-26: a camada da rua da planta
+
+Pedido do autor depois da sessão de 26-09: *"não deve ser construído as
+camadas de terra na base das construções; o chão da construção e a porta
+devem estar na altura da rua, na altura da zona escolhida"*.
+
+O lote continua respondendo "o piso vai um acima do chão" (`LotLevel`). A
+planta passa a dizer em que camada fica a rua (`Blueprint.streetLayer`: uma
+abaixo da porta mais baixa; sem porta, o encaixe de rua do jogo), e é essa
+camada que desce ao chão (`Blueprint.originFor`). O que fica abaixo dela e a
+terra/grama nela são chão (`Blueprint.isBuried`) e não se constroem; o piso
+dessa camada toma o lugar do terreno natural (`BuriedPieces.mayReplaceGround`).
+Isto não terraplana: coluna um abaixo do nível-base continua com o vão que a
+decisão 2 aceita.
+
+Casas e obras já registradas não mudam: a peça enterrada só conta como
+assentada onde o chão de fato ocupa a posição, e nelas a posição é ar.
+
+## Emenda — 2026-09-26: apoio físico em toda a pegada
+
+Depois do playtest de 26-09 mostrar uma obra nascida sem chão, o autor
+substituiu a tolerância anterior de um bloco pela regra estrita: cada coluna da
+pegada deve ter `groundY == roadY`. `LotLevel` recusa o lote inteiro como
+`OFF_ROAD_LEVEL` antes de abrir o canteiro.
+
+Isto não autoriza terraplanagem nem escreve blocos de terra. A consequência é
+uma obra nova esperar um lote realmente apoiado; uma casa ou obra já colocada
+não é deslocada, desmontada nem transformada em reparo automático.
+
+## Emenda — 2026-09-28: preparacao parcial na cota da rua
+
+O autor substituiu a exigencia de apoio em toda a pegada por uma preparacao
+fisica limitada. `LotLevel` aceita o lote quando pelo menos 50% das colunas ja
+tem `groundY == roadY`. As demais colunas so podem estar exatamente uma camada
+abaixo, com ar substituivel na cota da rua, sem fluido e com solo firme logo
+abaixo. Qualquer degrau maior, agua, vazio sem apoio ou terreno acima da rua
+continua `OFF_ROAD_LEVEL`.
+
+Depois de `BuilderApproach` confirmar um ponto real onde o construtor possa
+ficar dentro do alcance, `FoundationPreparation` preenche somente essas
+lacunas permitidas em `roadY`, usando o solo padrao do bioma: areia no deserto,
+neve nos biomas nevados e grama nos demais. A fundacao nao sobe nem desce a
+obra, nao cria plataforma suspensa e nao altera obra ja registrada.
+
+`RoadPaving` continua responsavel pela expansao fisica das ruas e conserva sua
+inclinacao maxima de um bloco. Portanto, um relevo que peca rampa nao e
+regularizado pela fundacao: os aldeoes primeiro estendem a rua e so entao o
+scanner pode abrir a obra na nova cota.
+
+`FoundationPreparationGameTest.halfSupportedStreetBaseIsFilledWithBiomeGround`
+e `lessThanHalfOfTheStreetBaseIsRejected` cobrem o limiar e a escrita fisica.
+`runGametest --rerun-tasks --no-daemon` passou em 498/498; falta a confirmacao
+visual no save do autor.

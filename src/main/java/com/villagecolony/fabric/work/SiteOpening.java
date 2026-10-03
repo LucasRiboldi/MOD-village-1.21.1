@@ -100,6 +100,29 @@ final class SiteOpening {
     }
 
     /**
+     * A medida de cada planta depois de girá-la para cada lado de rua.
+     *
+     * <p>O scanner recebe essa relação, e não apenas os dois retângulos
+     * possíveis. Assim não pode aceitar a orientação de origem e abrir uma
+     * obra cuja rotação invada uma lavoura ou estrutura existente.
+     */
+    static List<BuildSiteScanner.Footprint> footprintsFor(List<Blueprint> plans) {
+        List<BuildSiteScanner.Footprint> footprints = new ArrayList<>();
+
+        for (Blueprint plan : plans) {
+            for (net.minecraft.util.math.Direction direction
+                    : net.minecraft.util.math.Direction.Type.HORIZONTAL) {
+                Side road = MinecraftTypeAdapter.toSide(direction);
+                Blueprint turned = PlanPlacement.turnedToTheRoad(plan, road);
+
+                footprints.add(new BuildSiteScanner.Footprint(turned.size(), direction));
+            }
+        }
+
+        return List.copyOf(footprints);
+    }
+
+    /**
      * O lote vira obra aberta.
      *
      * <p>Separado de {@link ConstructionPlanner#plan} em 2026-08-25, quando passou a haver
@@ -169,23 +192,23 @@ final class SiteOpening {
         // referência e deixaria a planta oferecida duas vezes no sorteio
         // — com peso dobrado sobre as irmãs.
         List<Blueprint> candidates = new ArrayList<>(plans);
+        candidates.add(blueprint);
 
         if (HousePlans.isHouse(blueprint.id())) {
             candidates.addAll(PlanPlacement.siblingsOf(
                     world, HousePlans.paletteOf(world, colony.center()).style(), site.size()));
         }
 
-        Set<ResourceId> seen = new HashSet<>();
+        List<Blueprint> fitting = fittingPlans(candidates, road, site.size());
 
-        List<Blueprint> fitting = candidates.stream()
-                .filter(plan -> seen.add(plan.id()))
-                .map(plan -> PlanPlacement.turnedToTheRoad(plan, road))
-                .filter(plan -> plan.size().equals(site.size()))
-                .toList();
+        if (fitting.isEmpty()) {
+            VillageColonyMod.LOGGER.warn(
+                    "Refused construction for colony {}: no offered plan matches validated lot {} at {}",
+                    colony.id(), site.size(), site.origin());
+            return Optional.empty();
+        }
 
-        Blueprint facingTheRoad = fitting.isEmpty()
-                ? PlanPlacement.turnedToTheRoad(blueprint, road)
-                : fitting.get(world.getRandom().nextInt(fitting.size()));
+        Blueprint facingTheRoad = fitting.get(world.getRandom().nextInt(fitting.size()));
 
         // <b>Quantas concorreram, e é o §11</b> — 2026-09-18. O playtest
         // de 02:25 levantou duas plantas diferentes, e isso <b>não</b>
@@ -202,10 +225,21 @@ final class SiteOpening {
         //
         String drawnFrom = drawnFrom(fitting.size());
 
+        // <b>A camada da rua vai no chão</b> — sessão de jogo de 2026-09-26.
+        // O lote diz onde fica o piso; a planta do jogo diz em que camada a
+        // rua está, e é ela que desce ao chão. Ver Blueprint.originFor.
         ConstructionProject project = ConstructionProject.plan(
-                colony.id(), facingTheRoad, site.origin());
+                colony.id(), facingTheRoad, facingTheRoad.originFor(site.origin()));
 
         VillageColonyMod.CONSTRUCTIONS.register(project);
+
+        // Lote um acima da rua: a porta não pode ficar dois degraus acima de
+        // quem chega — decisão do autor, 2026-09-30. Ver DoorStep.
+        com.villagecolony.fabric.integration.DoorStep.placeIfNeeded(world, site);
+
+        // E o que é chão não vira obra: fundação enterrada e a terra do
+        // quintal já estão lá. Ver BuriedPieces.
+        BuriedPieces.markHeldByTheGround(world, project);
 
         // PREPARING deixou de passar em branco em 2026-08-19. O lote é
         // escolhido sem bloco sólido dentro (Regra 22), mas grama alta e
@@ -249,7 +283,7 @@ final class SiteOpening {
                 colony.center(),
                 squareDistance(project.origin(), colony.center()),
                 straightDistance(project.origin(), colony.center()),
-                ConstructionPlanner.searchRadius);
+                ConstructionPlanner.searchRadius(colony));
 
         return Optional.of(project);
     }
@@ -273,8 +307,25 @@ final class SiteOpening {
      */
     static String drawnFrom(int fitting) {
         return fitting == 0
-                ? "none fitting, the offered plan"
+                ? "no plan matched the validated lot"
                 : fitting + " of that footprint";
+    }
+
+    /**
+     * As plantas que ainda cabem depois do giro para a rua.
+     *
+     * <p>O lote ja foi varrido com esta pegada. Uma planta diferente nao pode
+     * entrar como reserva, pois ocuparia colunas que a varredura nunca viu.
+     */
+    static List<Blueprint> fittingPlans(
+            List<Blueprint> candidates, Side road, ColonyPos footprint) {
+        Set<ResourceId> seen = new HashSet<>();
+
+        return candidates.stream()
+                .filter(plan -> seen.add(plan.id()))
+                .map(plan -> PlanPlacement.turnedToTheRoad(plan, road))
+                .filter(plan -> plan.size().equals(footprint))
+                .toList();
     }
 
     /**
@@ -301,6 +352,6 @@ final class SiteOpening {
         long dx = (long) origin.x() - centre.x();
         long dz = (long) origin.z() - centre.z();
 
-        return (int) Math.round(Math.sqrt(dx * dx + dz * dz));
+        return (int) Math.round(Math.sqrt((double) (dx * dx + dz * dz)));
     }
 }

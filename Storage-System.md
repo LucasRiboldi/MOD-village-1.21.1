@@ -105,10 +105,9 @@ Nunca o inverso. Vila que já tem baú não ganha baú novo.
 
 ## De onde vem o baú
 
-Do nada, e **isto é exceção declarada**. A regra de arquitetura do
-`Construction-System.md` — a colônia não cria recurso — continua valendo
-para todo o resto: o que a obra consome sai de baú, e nada do que o
-trabalhador produz nasce do vazio.
+Do nada. Era exceção declarada à regra "a colônia não cria recurso", que o
+autor retirou em 2026-09-30 (ADR-028); o que a obra consome continua saindo
+de baú, e o que tem cadeia na colônia continua usando a cadeia.
 
 A justificativa da exceção é que este baú não é produção da colônia. É
 completar o que a geração de vila do Minecraft deixou incompleto — do

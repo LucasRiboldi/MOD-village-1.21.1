@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.integration;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 
 import java.util.EnumMap;
@@ -32,6 +33,10 @@ import java.util.UUID;
  * {@link Reason#OFF_ROAD_LEVEL} contra os outros quatro.
  */
 public final class LotRefusals {
+
+    static {
+        ServerMemory.register(LotRefusals.class, LotRefusals::clearAll);
+    }
 
     private LotRefusals() {
     }

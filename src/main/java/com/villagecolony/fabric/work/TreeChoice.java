@@ -2,13 +2,16 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.coordination.GatheringReach;
+import com.villagecolony.core.worker.model.ProfessionType;
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.data.save.ProfessionPolicySavedData;
 import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.type.ColonyPos;
 import com.villagecolony.core.type.ResourceGroup;
 import com.villagecolony.core.task.model.TaskState;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.integration.BlockProtection;
 import com.villagecolony.fabric.integration.ColonyChests;
 import com.villagecolony.fabric.integration.TreeHarvester;
 import com.villagecolony.fabric.integration.TreeScanner;
@@ -96,6 +99,12 @@ public final class TreeChoice {
     private TreeChoice() {
     }
 
+    private static int searchRadius(ServerWorld world) {
+        int configured = ProfessionPolicySavedData.get(world.getServer()).policies()
+                .policyOf(ProfessionType.LUMBERJACK).searchRadius();
+        return configured < 0 ? LumberjackWork.searchRadius : configured;
+    }
+
     /**
      * Escolhe a próxima árvore, ou encerra a tarefa.
      *
@@ -143,7 +152,7 @@ public final class TreeChoice {
                 GatheringReach.radius(
                         VillageColonyMod.COLONIES.find(job.task.colonyId())
                                 .map(Colony::observedBeds).orElse(0),
-                        LumberjackWork.SEARCH_RADIUS),
+                        searchRadius(world)),
                 log -> !TreeClaims.isTaken(log)
                         && !TreeMarks.isRejected(world, log)
                         && !TreeMarks.isOutOfReach(world, log));
@@ -151,7 +160,9 @@ public final class TreeChoice {
         if (tree.isEmpty()) {
             // Nenhuma árvore ao alcance. Não é motivo para encerrar: a
             // floresta cresce, e a muda replantada volta a ser árvore.
-            FarmerNursery.plantIfItIsTime(world, job.task.colonyId(), job.center);
+            // Em lote — 2026-09-26: uma muda a cada cinco minutos deu 15
+            // toras em 33 minutos numa vila sem árvore natural.
+            LumberjackNursery.plantBatchIfItIsTime(world, job.task.colonyId(), job.center);
 
             return LumberjackWork.Outcome.SEARCHED;
         }
@@ -196,7 +207,13 @@ public final class TreeChoice {
             // Não é árvore: a regra da copa recusou. Recusar em silêncio
             // e sair daqui faria a busca reencontrar este mesmo tronco no
             // ciclo seguinte, e no seguinte — ver REJECTED.
-            TreeMarks.reject(world, trunkGroup);
+            BlockPos foot = trunkGroup.isEmpty() ? tree.get() : trunkGroup.get(0);
+
+            if (BlockProtection.isColonyBuilt(foot) || BlockProtection.isVillageOriginal(world, foot)) {
+                TreeMarks.rejectBuilt(world, trunkGroup);
+            } else {
+                TreeMarks.reject(world, trunkGroup);
+            }
 
             return LumberjackWork.Outcome.SEARCHED;
         }

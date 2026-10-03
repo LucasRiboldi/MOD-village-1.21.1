@@ -1,6 +1,13 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.construction.model.Blueprint;
+import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.type.ColonyPos;
+import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.core.type.Side;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -51,20 +58,33 @@ class DrawnFromTest {
         assertEquals("1 of that footprint", SiteOpening.drawnFrom(1));
     }
 
-    /**
-     * Lista vazia é o caminho de reserva, e não "sorteou entre zero".
-     *
-     * <p>Nenhuma planta coube na pegada do lote e vale a que veio de fora.
-     * Imprimir {@code 0} faria um caminho <b>diferente</b> parecer um
-     * sorteio degenerado — o tipo de silêncio que este log existe para
-     * desfazer.
-     */
+    /** Lista vazia recusa a obra; nao existe planta de reserva fora do lote. */
     @Test
-    void anEmptyListIsTheFallbackAndNotADrawOfZero() {
+    void anEmptyListReportsThatNoPlanMatchedTheLot() {
         String said = SiteOpening.drawnFrom(0);
 
-        assertTrue(said.contains("none fitting"), "o caminho de reserva não se identificou: " + said);
+        assertTrue(said.contains("no plan matched"), "a recusa do lote nao se identificou: " + said);
 
-        assertTrue(!said.startsWith("0"), "a reserva saiu como sorteio de zero: " + said);
+        assertTrue(!said.startsWith("0"), "a recusa saiu como sorteio de zero: " + said);
+    }
+
+    /** Um lote nunca pode receber a planta oferecida se ela nao couber nele. */
+    @Test
+    void noMismatchedPlanCanEscapeTheValidatedLot() {
+        Blueprint smaller = blueprint("small", 2);
+        Blueprint offered = blueprint("offered", 3);
+
+        assertTrue(
+                SiteOpening.fittingPlans(
+                        List.of(smaller, offered), Side.NORTH, new ColonyPos(4, 1, 4)).isEmpty(),
+                "a planta oferecida nao cabe neste lote e nao pode ser usada como reserva: " + offered.id());
+    }
+
+    private static Blueprint blueprint(String name, int width) {
+        return Blueprint.of(
+                ResourceId.vanilla(name),
+                List.of(
+                        new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("stone")),
+                        new BlueprintBlock(new ColonyPos(width - 1, 0, width - 1), ResourceId.vanilla("stone"))));
     }
 }

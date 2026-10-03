@@ -1,5 +1,6 @@
 package com.villagecolony.fabric.work;
 
+import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Building;
@@ -17,6 +18,7 @@ import com.villagecolony.core.type.ResourceId;
 import com.villagecolony.core.type.ResourceType;
 import com.villagecolony.fabric.adapter.MinecraftTypeAdapter;
 import com.villagecolony.fabric.brain.WorkTargets;
+import com.villagecolony.fabric.integration.BiomeConstructionSupply;
 import com.villagecolony.fabric.integration.ColonySupply;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
@@ -40,6 +42,10 @@ import java.util.UUID;
  * planejamento, porque são a mesma decisão vista de dois lados.
  */
 public final class WaitingWork {
+
+    static {
+        ServerMemory.register(WaitingWork.class, WaitingWork::clearAll);
+    }
 
     /** O assunto destas linhas no registro de ociosidade. */
     private static final String SUBJECT = "building";
@@ -174,28 +180,36 @@ public final class WaitingWork {
     public static void askForWhatTheWorkIsWaitingOn(ServerWorld world, Colony colony) {
         VillageColonyMod.CONSTRUCTIONS.openOf(colony.id())
                 .filter(project -> project.state() == ConstructionState.WAITING_RESOURCES)
-                .ifPresent(project -> askTheCraftsmanFor(world, project));
+                .ifPresent(project -> project.remainingMaterials().keySet()  // a lista inteira (A-3, 10-02)
+                        .forEach(wanted -> askTheCraftsmanFor(world, project, wanted)));
     }
 
-    private static void askTheCraftsmanFor(ServerWorld world, ConstructionProject project) {
-        Optional<BlueprintBlock> next = project.nextBlock();
-
-        if (next.isEmpty()) {
+    /**
+     * Abre antecipadamente, pela lista inteira da obra (A-3), a tarefa da peça que a
+     * cadeia de recursos não declara. A peça continua sendo feita apenas
+     * quando os ingredientes já existem fisicamente nos baús.
+     */
+    public static void askBeforeTheWorkWaits(ServerWorld world, ConstructionProject project) {
+        if (project.state() != ConstructionState.BUILDING) {
             return;
         }
 
-        ResourceId wanted = next.get().block();
+        project.remainingMaterials().keySet().forEach(wanted -> askTheCraftsmanFor(world, project, wanted)); // A-3
+    }
+
+    private static boolean askTheCraftsmanFor(
+            ServerWorld world, ConstructionProject project, ResourceId wanted) {
 
         Optional<Item> piece = MinecraftTypeAdapter.toBlock(wanted).map(Block::asItem);
 
         if (piece.isEmpty()) {
-            return;
+            return false;
         }
 
         // Já é recurso declarado: o ColonyCycle cuida dele, e abrir aqui
         // seria um segundo pedido pela mesma coisa.
         if (MinecraftTypeAdapter.toResourceType(piece.get()).isPresent()) {
-            return;
+            return false;
         }
 
         TaskType type = CraftingWork.isMasonry(wanted)
@@ -204,7 +218,7 @@ public final class WaitingWork {
 
         for (Task task : VillageColonyMod.TASKS.ofColony(project.colonyId())) {
             if (task.type() == type && task.isOpen()) {
-                return;
+                return false;
             }
         }
 
@@ -214,7 +228,7 @@ public final class WaitingWork {
             // Ninguém sabe lavrar isto. Abrir a tarefa a deixaria na fila
             // para sempre, sem executor possível — mesma razão do
             // ColonyCycle.requestMissing.
-            return;
+            return false;
         }
 
         if (!ColonySupply.canProvide(
@@ -222,7 +236,7 @@ public final class WaitingWork {
 
             // A colônia não tem como fazer: falta ingrediente, e quem o
             // traz é o pedido de recurso, não o fabricante.
-            return;
+            return false;
         }
 
         VillageColonyMod.TASKS.create(
@@ -236,11 +250,12 @@ public final class WaitingWork {
                 1);
 
         VillageColonyMod.LOGGER.info(
-                "Colony {} asks the {} for {} — the work is waiting on a piece"
-                        + " nobody was making",
+                "Colony {} asks the {} for construction piece {}",
                 project.colonyId(),
                 type == TaskType.CRAFT_STONE_MATERIAL ? "mason" : "carpenter",
                 wanted);
+
+        return true;
     }
 
     /**
@@ -271,16 +286,6 @@ public final class WaitingWork {
     public static boolean giveUpIfStalled(
             ServerWorld world, Colony colony, ConstructionProject project) {
 
-        if (!project.isFinished() && project.nextBlock().isEmpty()) {
-            // Nenhuma peca esta colocavel: as restantes foram adiadas por
-            // apoio fisico. Nao e falta de progresso; o planejador as
-            // reconsidera apenas quando a assinatura do entorno muda.
-            WAITING_SINCE.remove(project.id());
-            BUILDING_SINCE.remove(project.id());
-
-            return false;
-        }
-
         if (project.state() != ConstructionState.WAITING_RESOURCES) {
             WAITING_SINCE.remove(project.id());
 
@@ -295,9 +300,33 @@ public final class WaitingWork {
             return false;
         }
 
+        if (awaitsLocalProfessionDelivery(world, project)) {
+            return false;
+        }
+
         giveUp(colony, project);
 
         return true;
+    }
+
+    /**
+     * A espera só pode abandonar uma peça que a vila não tem como entregar.
+     *
+     * <p>A terceira tentativa já abastece a peça sem rota profissional; por
+     * isso o relógio não deve encerrar uma obra que espera, por exemplo, o
+     * tronco que o lenhador daquela vila ainda pode recolher. A pergunta é
+     * pelo próximo bloco, que é a falta que realmente levou a obra ao estado
+     * de espera, e pelo bioma da própria colônia.
+     */
+    private static boolean awaitsLocalProfessionDelivery(
+            ServerWorld world, ConstructionProject project) {
+
+        return project.nextBlock()
+                .flatMap(next -> MinecraftTypeAdapter.toBlock(next.block()))
+                .map(Block::asItem)
+                .map(item -> BiomeConstructionSupply.hasRouteInBiome(
+                        world, project.colonyId(), item))
+                .orElse(false);
     }
 
     /**
@@ -451,6 +480,7 @@ public final class WaitingWork {
         }
 
         VillageColonyMod.BUILDINGS.registerOrMerge(Building.of(project));
+
         VillageColonyMod.CONSTRUCTIONS.forget(project.id(), RemovalAudit.patienceAbandonment());
 
         // A vaga de obra é única; suas tarefas não podem sobreviver ao projeto.

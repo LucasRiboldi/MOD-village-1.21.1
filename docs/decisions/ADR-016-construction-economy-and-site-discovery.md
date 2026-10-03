@@ -28,8 +28,8 @@ limitado existente.
    conhecida. Materiais de construção sem produtor dedicado usam as funções de
    cobertura aprovadas na ADR-015 (fundidor e criador), sem remover suas
    tarefas originais. Um pedido genérico só é aberto quando a execução sabe
-   obter ou fabricar o ID; não criar recursos sem origem física nem tarefas
-   impossíveis. A contagem de material e a aceitação pelo construtor devem usar
+   obter ou fabricar o ID; não criar tarefas impossíveis. (A cláusula "não
+   criar recursos sem origem física" foi retirada em 2026-09-30 — ADR-028.) A contagem de material e a aceitação pelo construtor devem usar
    exatamente a mesma regra de substituição.
 3. Ordenar as próximas construções pela necessidade observável da vila: casas
    quando a capacidade de camas não atende os aldeões adultos, estruturas
@@ -64,3 +64,25 @@ limitado existente.
   iniciadas. Dados Vanilla não serão duplicados em save.
 - Nenhum lote pode forçar chunk loading, escavar solo protegido ou modificar o
   terreno; a politica de elegibilidade e estrada permanece a da ADR-017.
+
+## Emenda - 2026-09-27: déficit de camas tem prioridade absoluta
+
+Com ao menos um adulto registrado, toda diferença positiva entre adultos e
+camas observadas, inclusive `0` camas, obriga a próxima construção a ser uma
+moradia cuja planta contenha cama. O rodízio de infraestrutura só volta quando
+a capacidade observada atende todos os adultos.
+
+## Emenda - 2026-09-27: prioridade de construção explícita
+
+A precedência da próxima família de plantas é representada no Core por
+`ConstructionPriority`: `HOUSING_DEFICIT`, `FIRST_HOUSE`,
+`ROTATION_NON_RESIDENTIAL` e `ROTATION_HOUSE`. Ela é derivada, a cada
+planejamento, do histórico de obras tentadas, de adultos registrados e de
+camas observadas; não é persistida nem duplica dados do mundo.
+
+O déficit de camas vence as demais alternativas. Sem déficit, a primeira obra
+é uma moradia e o rodízio alterna moradia e infraestrutura. A seleção concreta
+da oficina, roça ou planta continua no Fabric, em `HousePlans` e
+`ConstructionOrder`, porque depende do catálogo de estruturas e das cadeias
+profissionais. O comando `/vc log` mostra a prioridade atual em linguagem
+curta, calculada na consulta, antes das atividades dos profissionais.

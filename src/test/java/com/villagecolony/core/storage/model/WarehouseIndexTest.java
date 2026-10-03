@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * O contrato do armazém físico — decisão 4B, 2026-09-24. Ver
@@ -117,12 +116,20 @@ class WarehouseIndexTest {
 
     @Test
     void priorityOrderIsExplicit() {
-        assertTrue(SupplyPriority.ACTIVE_CONSTRUCTION.ordinal()
-                < SupplyPriority.ACTIVE_PROFESSION_WORK.ordinal());
-        assertTrue(SupplyPriority.ACTIVE_PROFESSION_WORK.ordinal()
-                < SupplyPriority.CAPACITY_RELIEF.ordinal());
-        assertTrue(SupplyPriority.CAPACITY_RELIEF.ordinal()
-                < SupplyPriority.STOCK_OBJECTIVE.ordinal());
+        List<SupplyPriority> contract = List.of(
+                SupplyPriority.ACTIVE_CONSTRUCTION,
+                SupplyPriority.ACTIVE_PROFESSION_WORK,
+                SupplyPriority.CAPACITY_RELIEF,
+                SupplyPriority.STOCK_OBJECTIVE);
+        List<SupplyPriority> reversed = new java.util.ArrayList<>(contract);
+        java.util.Collections.reverse(reversed);
+
+        reversed.sort(SupplyPriority.FIRST_SERVED);
+
+        assertEquals(contract, reversed);
+        assertEquals(SupplyPriority.values().length,
+                java.util.Arrays.stream(SupplyPriority.values())
+                        .mapToInt(SupplyPriority::rank).distinct().count());
     }
 
     @Test

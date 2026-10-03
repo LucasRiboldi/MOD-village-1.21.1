@@ -14,7 +14,7 @@ mod no cliente.
 Download: [village-colony-0.3.0.jar](downloads/village-colony-0.3.0.jar?raw=1)
 
 SHA-256 do JAR publicado nesta árvore:
-`983638B6FE18D5814B4BC5A5192FBA23A0214FE31B59B6BA642B4A9B773DF81B`.
+`AB7626919BF87DA9B7916504617706E1E0EC52341E86F6F84C85E4EEB9F99FFA`.
 
 ## O que o mod faz
 
@@ -32,35 +32,55 @@ SHA-256 do JAR publicado nesta árvore:
   dentro dela, liberando a fila; a `BigHouseMOD` é protegida dessa regra.
 - Evita sobreposição com estruturas existentes, projetos pendentes e blocos
   físicos dentro da área vertical protegida.
+- Põe o aldeão ocioso para recolher do chão só o item que falta à obra aberta
+  (Regra 48) e mostra no `/vc log` quem espera o quê há mais de dois minutos.
+- Regras de profissão por mundo, editáveis pelo [Mod Menu](https://modrinth.com/mod/modmenu)
+  (opcional): ativar ou desativar a profissão, limite de trabalhadores, raio de
+  busca do lenhador, fazendeiro e pastor, e ordem de contratação (ADR-030).
+- Com o mod no cliente, mostra a profissão sobre o aldeão e o progresso da
+  obra, com o primeiro material que falta; o cliente Vanilla continua vendo as
+  placas.
 
-O mod é alpha. A rede de testes é ampla, mas a rodada atual ainda tem uma
-falha obrigatória de GameTest e alguns fluxos dependem de playtest em um save.
-O diagnóstico completo está em
-[`docs/technical/Project-Audit-2026-09-21.md`](docs/technical/Project-Audit-2026-09-21.md).
+O mod é alpha. A bateria automática está verde (unitários, GameTests e
+mutação), mas vários fluxos só se confirmam em playtest num save, e as
+entregas desde 2026-09-24 ainda não foram vistas em jogo. O que mudou em cada
+publicação está no [`CHANGELOG.md`](CHANGELOG.md); a avaliação técnica mais
+recente, em
+[`docs/technical/avaliacao/`](docs/technical/avaliacao/).
 
 ## Profissões e funções
 
-Estas são as oito funções operacionais atuais. `BREEDER` foi encerrado;
+Estas são as oito funções operacionais atuais (revistas em 2026-09-30). `BREEDER` foi encerrado;
 saves antigos com esse código são carregados como `SHEPHERD`.
 `MANUFACTURER` não existe no código atual; documentos que usam esse nome estão
 desatualizados.
 
 | Código | Nome | Ferramenta inicial | Responsabilidade | Executor |
 |---|---|---|---|---|
-| `MINER` | Mineiro | Picareta de ferro | Abre e amplia a mina, coleta pedra, areia e minério | `MinerWork` |
-| `LUMBERJACK` | Lenhador | Machado de ferro | Derruba árvores, coleta madeira e participa do viveiro | `LumberjackWork` |
+| `MINER` | Mineiro | Picareta de ferro | Abre e amplia a mina, coleta pedra e minério; guarda até 256 de cada tipo que a tarefa não pediu | `MinerWork` |
+| `LUMBERJACK` | Lenhador | Machado de ferro | Derruba árvores, replanta e mantém o viveiro da borda | `LumberjackWork` |
 | `MASON` | Pedreiro, equivalente ao ferreiro do catálogo | Nenhuma | Produz alvenaria e peças de pedra exigidas pelas obras | `CraftingWork` |
-| `SMELTER` | Fundidor | Pá de ferro com Silk Touch | Funde materiais e coleta areia, terra ou relva sob demanda | `SmelterWork` |
-| `CARPENTER` | Carpinteiro | Nenhuma | Processa madeira, tochas, vidraças e peças derivadas | `CraftingWork` |
-| `FARMER` | Agricultor/Fazendeiro | Enxada de ferro | Mantém lavouras e planta árvores do viveiro | `FarmerWork` |
-| `SHEPHERD` | Pastor | Tesoura | Coleta lã e mantém a cadeia de materiais de origem animal | `ShepherdWork` |
+| `SMELTER` | Fundidor | Pá de ferro com Silk Touch | Funde materiais e coleta areia, relva, cacto e argila sob demanda | `SmelterWork` |
+| `CARPENTER` | Carpinteiro | Nenhuma | Artesão geral: madeira e toda peça que não é alvenaria (vidraça, tear, cama, lampião, tocha) | `CraftingWork` |
+| `FARMER` | Agricultor/Fazendeiro | Enxada de ferro | Mantém lavouras, cava terra para obra e faz pão do trigo acima da reserva | `FarmerWork` |
+| `SHEPHERD` | Pastor | Tesoura | Tosquia e faz o rebanho procriar com trigo da colônia (até 12 ovelhas) | `ShepherdWork` |
 | `BUILDER` | Construtor | Nenhuma | Reserva lotes, repara e assenta estruturas | `BuilderWork` |
 
 Compatibilidade: `BREEDER` é convertido para `SHEPHERD` ao ler saves antigos.
-Agricultor e
-carpinteiro continuam profissões completas: estão no registro, podem ser
-atribuídos, recebem tarefas e participam do crescimento normal. A exceção é
-apenas física: não têm cama ou baú fundacional dentro da `BigHouseMOD`.
+O agricultor continua profissão completa, sem cama ou baú fundacional dentro
+da `BigHouseMOD`. O carpinteiro é titular da fundação desde 2026-09-30.
+
+Regras transversais de 2026-09-30:
+
+- Cada bloco é quebrado com a ferramenta de ferro certa para ele
+  (`ActionTool`); a da mão fica quando é tão boa ou melhor.
+- A contratação atende primeiro a profissão de que a obra depende agora
+  (`ProfessionDemand`), depois a ordem fixa.
+- Aldeão com profissão do mod não recebe profissão Vanilla (ADR-029).
+- A regra "a colônia não cria recurso" foi retirada (ADR-028): corante,
+  linha, pó de osso e drops de inimigo e animal aparecem no baú quando a
+  receita do artesão pede; bloco sem item é montado no local; a **lava nunca**
+  é assentada.
 
 ## Regras do mod
 
@@ -69,11 +89,12 @@ apenas física: não têm cama ou baú fundacional dentro da `BigHouseMOD`.
 1. Toda vila adotada cria uma `BigHouseMOD` uma única vez.
 2. A `BigHouseMOD` é uma cópia editada da big house Vanilla e não altera a
    estrutura Vanilla original.
-3. A casa contém somente seis camas e seis baús para `MINER`, `LUMBERJACK`,
-   `MASON`, `SMELTER`, `SHEPHERD` e `BUILDER`.
-4. Agricultor e carpinteiro continuam existindo e trabalhando normalmente, mas
-   não recebem cama ou baú reservados dentro da `BigHouseMOD`; esses dois
-   conjuntos foram omitidos somente para liberar a porta e o acesso à escada.
+3. A casa contém sete camas e sete baús para `MINER`, `LUMBERJACK`,
+   `CARPENTER`, `MASON`, `SMELTER`, `SHEPHERD` e `BUILDER`. Os do
+   carpinteiro ficam à direita da porta, junto à parede, com o corredor
+   livre até a escada.
+4. O agricultor continua existindo e trabalhando normalmente, mas não recebe
+   cama ou baú reservados dentro da `BigHouseMOD`.
 5. Cada titular recebe cama `HOME` e um baú próprio dentro da casa.
 6. A `BigHouseMOD` não entra no catálogo de casas ou oficinas profissionais.
 
@@ -85,12 +106,12 @@ apenas física: não têm cama ou baú fundacional dentro da `BigHouseMOD`.
 4. A melhor ferramenta disponível pode substituir a ferramenta inicial.
 5. O mineiro não cava estruturas Vanilla, construções da colônia ou blocos
    protegidos e, no deserto, reavalia a frente após areia ou cascalho cair.
-6. O mineiro coleta todos os blocos quebrados, inclusive o excedente levado ao
-   baú ou deixado como overflow no chão.
+6. O mineiro coleta os blocos quebrados até 256 de cada tipo no próprio baú;
+   passado o teto, o tipo que a tarefa não pediu deixa de ser guardado.
 7. A entrada de mina rejeita água próxima e procura uma posição seca, distante,
    acessível e preferencialmente voltada para terreno alto.
-8. O agricultor e o lenhador compartilham o viveiro: até dez árvores da madeira
-   do bioma, com muda sobre terra enraizada no anel mais distante acessível.
+8. O lenhador mantém o viveiro: até dez árvores da madeira do bioma, com muda
+   sobre terra enraizada no anel mais distante acessível.
 9. O viveiro não cresce indefinidamente e árvores naturais não contam como
    árvores marcadas da vila.
 10. O trabalho ocorre durante o expediente; noite e retorno ao alojamento são
@@ -141,7 +162,10 @@ O detalhe dos IDs e a regra da estrutura própria estão em
 
 Requisitos: Minecraft Java 1.21.1, Fabric Loader compatível, Fabric API e
 Java 21. Coloque o JAR e a Fabric API na pasta `mods`. O servidor precisa do
-mod; clientes que entram em um servidor dedicado não precisam instalá-lo.
+mod; clientes que entram em um servidor dedicado não precisam instalá-lo. No
+cliente, o mod liga as sobreposições de profissão e de obra, e o Mod Menu
+(opcional) abre a tela de regras de profissão — mudar regras exige operador
+nível 2.
 Use um mundo de teste: o mod corta árvores, minera e coloca blocos no mundo.
 
 ## Desenvolvimento e verificação
@@ -150,19 +174,31 @@ Use um mundo de teste: o mod corta árvores, minera e coloca blocos no mundo.
 ./gradlew.bat test
 ./gradlew.bat build
 ./gradlew.bat runGametest
+./gradlew.bat pitest
+./gradlew.bat javadoc
 python -m unittest discover -s tests
 ```
 
-Verificação de 2026-09-21:
+O build exige Java 21 (`JAVA_HOME` apontando para um JDK 21).
 
-- 960 testes unitários em 103 suítes: aprovados.
-- 74 testes Python: aprovados.
-- 397 GameTests: 396 passaram e 1 falhou.
-- Falha atual: `FarmPlanGameTest.thenextturnafterahouseisnonresidential`.
+Verificação de 2026-10-02 (consolidação):
+
+- 1293 testes unitários: aprovados (`test --rerun-tasks`).
+- 88 testes Python: aprovados.
+- 564 GameTests: todos aprovados, em duas rodadas seguidas.
+- `./gradlew build`: passa.
+
+A mutação (PIT, pacote `core`) e o `javadoc` não foram rodados nesta
+verificação; a última medida é a de 2026-09-25: 1151 de 1312 mutações mortas
+(87,7%), força de teste 95%.
 
 ## Estado e nota da auditoria
 
-Nota técnica global desta varredura: **7,0/10**.
+A nota abaixo é da auditoria de 2026-09-21 e ficou como registro. A GameTest
+que falhava então foi corrigida, e a avaliação posterior está em
+[`docs/technical/avaliacao/`](docs/technical/avaliacao/).
+
+Nota técnica global daquela varredura: **7,0/10**.
 
 Arquitetura e isolamento: **8,0/10**. A separação `core`/`fabric` é protegida
 por teste e o grafo atualizado não encontrou ciclos de importação.
@@ -190,6 +226,7 @@ e a fila viva em [`TODO.md`](TODO.md).
 - [`CLAUDE.md`](CLAUDE.md): regras para trabalhar no repositório.
 - [`STATE.md`](STATE.md): estado vivo e pendências de playtest.
 - [`TODO.md`](TODO.md): backlog canônico.
+- [`CHANGELOG.md`](CHANGELOG.md): o que mudou em cada publicação.
 - [`docs/decisions/`](docs/decisions/): decisões arquiteturais.
 - [`docs/behavioral-tests/`](docs/behavioral-tests/): estratégia e falhas de
   GameTest.

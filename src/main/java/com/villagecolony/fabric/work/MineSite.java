@@ -1,6 +1,7 @@
 package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.type.Side;
+import com.villagecolony.core.construction.model.MineShaft;
 import com.villagecolony.fabric.integration.BlockProtection;
 
 import net.minecraft.block.BlockState;
@@ -246,7 +247,7 @@ public final class MineSite {
                 // as quatro do eixo caíram todas na água da mesma vila, e
                 // a colônia ficou sem pedra por falta de amostra.
                 Optional<BlockPos> found = surfaceAt(
-                        world, center, side.offsetX() * away, side.offsetZ() * away, up, down);
+                        world, center, side.offsetX() * away, side.offsetZ() * away, up, down, towards);
 
                 found.ifPresent(candidates::add);
 
@@ -256,7 +257,8 @@ public final class MineSite {
                         (side.offsetX() + next.offsetX()) * corner,
                         (side.offsetZ() + next.offsetZ()) * corner,
                         up,
-                        down);
+                        down,
+                        towards);
 
                 found.ifPresent(candidates::add);
 
@@ -279,7 +281,7 @@ public final class MineSite {
         for (int part : reaches) {
             int away = Math.max(NEAREST_MOUTH, mineDistance * part / 100);
             surfaceAt(
-                    world, center, side.offsetX() * away, side.offsetZ() * away, up, down)
+                    world, center, side.offsetX() * away, side.offsetZ() * away, up, down, side)
                     .ifPresent(candidates::add);
         }
 
@@ -290,8 +292,8 @@ public final class MineSite {
 
     /** Distância horizontal é a prioridade; no empate, terreno alto vence. */
     private static long score(BlockPos center, BlockPos candidate) {
-        long dx = candidate.getX() - center.getX();
-        long dz = candidate.getZ() - center.getZ();
+        long dx = (long) candidate.getX() - center.getX();
+        long dz = (long) candidate.getZ() - center.getZ();
         long distance = dx * dx + dz * dz;
         long elevation = Math.max(0, candidate.getY() - center.getY());
 
@@ -326,6 +328,11 @@ public final class MineSite {
         return true;
     }
 
+    /** A boca neste ponto da borda, pelas regras de sempre — A-4 (ver MineEdge). */
+    static Optional<BlockPos> edgeMouth(ServerWorld world, BlockPos center, int dx, int dz, Side side) {
+        return surfaceAt(world, center, dx, dz, LOOK_UP, LOOK_DOWN, side);
+    }
+
     /**
      * O chão desta coluna, se ela servir de boca.
      *
@@ -342,7 +349,7 @@ public final class MineSite {
      * e não "desista", que era o defeito.
      */
     private static Optional<BlockPos> surfaceAt(
-            ServerWorld world, BlockPos center, int dx, int dz, int up, int down) {
+            ServerWorld world, BlockPos center, int dx, int dz, int up, int down, Side descent) {
 
         int x = center.getX() + dx;
         int z = center.getZ() + dz;
@@ -370,7 +377,7 @@ public final class MineSite {
 
                 int y = center.getY() + offset;
 
-                Optional<BlockPos> found = surfaceOn(world, new BlockPos(x, y, z));
+                Optional<BlockPos> found = surfaceOn(world, new BlockPos(x, y, z), descent);
 
                 if (found.isPresent()) {
                     return found;
@@ -395,7 +402,7 @@ public final class MineSite {
      * <p>Vazio também quando o bloco é peça de vila gerada ou construção
      * da colônia: a Regra 3 vale para a boca como vale para o resto.
      */
-    private static Optional<BlockPos> surfaceOn(ServerWorld world, BlockPos at) {
+    private static Optional<BlockPos> surfaceOn(ServerWorld world, BlockPos at, Side descent) {
         if (!world.getBlockState(at).isSolidBlock(world, at)) {
             return Optional.empty();
         }
@@ -417,6 +424,39 @@ public final class MineSite {
             return Optional.empty();
         }
 
+        if (!hasStableEntrance(world, at, descent)) {
+            return Optional.empty();
+        }
+
         return Optional.of(at);
+    }
+
+    /**
+     * Os tres primeiros degraus da espiral precisam partir de solo continuo.
+     *
+     * <p>A antiga verificacao aceitava uma unica coluna alta. Como a escada
+     * tem três faixas e abre tres degraus logo adiante, ela removia blocos no
+     * ar ao redor desse pilar e deixava uma entrada quebrada. Esta leitura nao
+     * carrega chunks e tambem protege estruturas ja existentes nessa faixa.
+     */
+    private static boolean hasStableEntrance(ServerWorld world, BlockPos mouth, Side descent) {
+        Side sideways = descent.clockwise().opposite();
+
+        for (int step = 1; step <= 3; step++) {
+            for (int lane = 0; lane < MineShaft.STAIR_LANES; lane++) {
+                BlockPos ground = mouth.add(
+                        descent.offsetX() * step + sideways.offsetX() * lane,
+                        0,
+                        descent.offsetZ() * step + sideways.offsetZ() * lane);
+
+                if (!world.getBlockState(ground).isSolidBlock(world, ground)
+                        || BlockProtection.isVillageOriginal(world, ground)
+                        || BlockProtection.isColonyBuilt(ground)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 }

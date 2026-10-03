@@ -42,11 +42,12 @@ documento errado. Vá para `STATE.md` primeiro.
 
 ### 0.2 Estado em uma linha
 
-**O núcleo do MVP está implementado, com oito funções operacionais, seis
-titulares na `BigHouseMOD` e sete profissões produtoras. A rodada de 2026-09-21
-ainda tem uma falha obrigatória de GameTest e playtests pendentes.** O estado
-vivo e a auditoria estão em `STATE.md` e
-`docs/technical/Project-Audit-2026-09-21.md`.
+**O núcleo do MVP está implementado, com oito funções operacionais, sete
+titulares na `BigHouseMOD` e sete profissões produtoras. Em 2026-09-30, depois
+da revisão das profissões, 1.196 testes unitários e 528 GameTests passaram
+localmente; os playtests do save e a medição dos gargalos de ciclo ainda
+estão pendentes.** O estado vivo e a auditoria estão em
+`STATE.md` e `docs/technical/Auditoria-Entrega-2026-09-28.md`.
 
 ### 0.3 Não comece criando classes
 
@@ -58,3 +59,18 @@ código antes de responder:
 2. Qual sistema é responsável?
 3. Quais arquivos serão alterados?
 4. Existe decisão arquitetural envolvida?
+```
+
+### 0.4 Toda verificação mede o tempo dos aldeões (Regra 50)
+
+Pedido do autor, 2026-10-02. Depois de qualquer playtest, rode
+`python scripts/time_ledger.py` (lê as linhas `VC_TIME` do `WorkTime`). Por
+profissão, ele dá a proporção de trabalho, caminhada, espera, bloqueio, ócio
+e encalhe no expediente.
+
+- **Mais de 40% sem trabalhar** (espera + bloqueio + ócio + encalhe): o fluxo
+  da profissão pede melhoria.
+- **Mais de 10% bloqueado + encalhado:** há travamento a corrigir.
+
+Uma correção de fluxo só está provada quando a proporção cai no playtest
+seguinte. O GameTest prova o mecanismo; o `time_ledger` prova o efeito.
