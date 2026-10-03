@@ -35,6 +35,7 @@
       "com.villagecolony.fabric.work.MineReturnGameTest",
       "com.villagecolony.fabric.work.MineEdgeGameTest",
       "com.villagecolony.fabric.work.GroundPickupGameTest",
+      "com.villagecolony.fabric.work.SmelterFallbackGameTest",
       "com.villagecolony.gametest.StorageGameTest",
       "com.villagecolony.gametest.LumberjackGameTest",
       "com.villagecolony.gametest.ChestMarkerGameTest",

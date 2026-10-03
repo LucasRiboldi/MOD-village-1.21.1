@@ -47,7 +47,7 @@ escada de madeira na porta elevada, roça acima da rua. **Nada visto em jogo.**
 - [~] 🟠 B-1: ajudante no tempo ocioso — **feita a metade do chão** (recolhe o que a obra espera e guarda no baú mais perto dela). Falta: levar material do baú para perto do construtor.
 - [x] 🟠 A-2: índice de árvores — feito em `8bcb941` (com A-5..A-8). Falta medir em jogo o tempo procurando (era 66%).
 - [x] 🟠 A-3 (material da obra pedido inteiro) e A-4 (mina nova na borda, longe da água) — feitos em `d15d95d`. Não vistos em jogo.
-- [~] 🟠 B-4: fundidor sem cru — **feito o carvão vegetal** (a obra que pede carvão aceita o vegetal, que sai da tora). Falta: pedra lisa a partir do pedregulho.
+- [x] 🟠 B-4: fundidor sem cru — carvão vegetal (a obra que pede carvão aceita o vegetal, que sai da tora) e, em 02-10, o degrau de fornalha: a obra que pede pedra lisa põe a pedra na lista, e a pedra sai do pedregulho (`SmelterFallbackGameTest`, confirmado por mutação). Não visto em jogo.
 - [x] 🟡 B-5: esperas de mais de 2 min no `/vc log`, com motivo e tempo (`VillageLogPresenter.longWaits`).
 - [ ] 🟡 Bateria: dois intermitentes vistos em 02-10, uma vez cada em 8 rodadas — `SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted` (a mina sumiu no tique 150) e `BuilderGameTest.theBuilderMakesTheDoorTheWorkIsWaitingFor` (1 porta no baú em vez de 2). Suspeita: interferência entre cenários no mundo único.
 - [ ] 🟡 Decisões do autor do estudo de profissões: Regra 28 (casa do ofício), Regra 18 (pausa/chuva), felicidade (R-3), fornalha real (V-2).
