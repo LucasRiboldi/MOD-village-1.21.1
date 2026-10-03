@@ -95,6 +95,10 @@ public final class StrandedEscape {
         // Quem está à toa recolhe do chão o que a obra espera — B-1, Regra 48.
         GroundPickup.pass(world);
 
+        // A vila com jogador dentro não espera o ciclo para continuar a busca
+        // de lote — estudo de 01-10, §7-A. Ver SweepCadence.
+        SweepCadence.pass(world);
+
         for (UUID workerId : StrandedWorkers.all()) {
             pass(world, workerId);
         }

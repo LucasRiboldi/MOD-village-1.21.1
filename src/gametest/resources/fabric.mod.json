@@ -37,6 +37,7 @@
       "com.villagecolony.fabric.work.GroundPickupGameTest",
       "com.villagecolony.fabric.work.SmelterFallbackGameTest",
       "com.villagecolony.fabric.work.ClimbOutPiecesGameTest",
+      "com.villagecolony.fabric.work.SweepCadenceGameTest",
       "com.villagecolony.gametest.StorageGameTest",
       "com.villagecolony.gametest.LumberjackGameTest",
       "com.villagecolony.gametest.ChestMarkerGameTest",
