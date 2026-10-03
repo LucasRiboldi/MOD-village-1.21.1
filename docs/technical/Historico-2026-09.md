@@ -3290,3 +3290,18 @@ falhas repetidas.
   F6, F10 e F12 (fusão, ADR-007) atendidos; F13 parcial; F7, F8, F9, F11 e
   F14 abertos. Lote na rua ou um acima, com degrau; areia perto da água; linha
   do tear no baú do carpinteiro após 3 tentativas. `22b40bf`..`1920948`.
+
+## Arquivado do STATE.md em 2026-10-02
+
+Linhas da tabela "Corrigido e testado, pendente de playtest", movidas sem
+edição para o STATE voltar ao teto de 150 linhas. **Continuam sem playtest.**
+
+| Data | Correção | O que confirmar no save |
+|---|---|---|
+| 26-09 | BigHouseMOD atômica; cama e baú só dentro de estrutura | vila nova sem cama ou baú fora de estrutura |
+| 26-09 | `/vc log` (diagnóstico no chat) | estados ativo, aguardando e travado coerentes |
+| 26-09 | Construção concluída não reabre como reparo | fazenda antiga sem blocos quebrados |
+| 26-09 | Bosque fundacional | duas árvores maduras a 48–56 blocos; +1 por dez adultos |
+| 26-09 | Obra só no nível da rua; baú ao lado da cama | nenhuma casa sobre monte de terra |
+| 26-09 | Alternativa A (obra adiada entregue); peça que ninguém fabrica vai ao baú | obra que antes nunca fechava |
+| 25-09 | ADR-025 fases 1 e 2 (mineiro autônomo) | linha `brain:` no travamento; encalhado sai cavando |

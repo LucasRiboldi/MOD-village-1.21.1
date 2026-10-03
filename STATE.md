@@ -1,4 +1,4 @@
-# STATE — 2026-09-30
+# STATE — 2026-10-02
 
 > Arquivo de estado vivo. **Sobrescreve, não acumula.**
 > Se passar de 150 linhas, algo está errado — P0 não está fechando.
@@ -11,6 +11,12 @@
 > "Arquivado do STATE.md em 2026-09-30".
 
 ---
+
+## 🟡 02-10 — políticas de profissão e overlays juntados (aguarda playtest)
+
+- Mod Menu opcional (ADR-030): profissão ativa, limite e raio por mundo.
+- Overlays S2C só para cliente com o mod (profissão, progresso e material da
+  obra); Vanilla segue com as placas. Playtest pendente: lista no `TODO.md`.
 
 ## Em uma linha
 
@@ -62,13 +68,7 @@ Cada item tem teste que falhou antes da correção. Nenhum foi visto em jogo.
 | 27-09 | Construtor na evolução por população; déficit de camas prioriza moradia | vila com mais adultos que camas; mensagem do `/vc log` |
 | 27-09 | Mineiro volta depois de cair dois blocos (pedregulho do baú) | retorno num poço real |
 | 27-09 | `WaitingWork` conserva a obra com rota no bioma; `BuilderApproach` escolhe ponto livre | retomada de obra já marcada como abandonada |
-| 26-09 | BigHouseMOD atômica; cama e baú só dentro de estrutura | vila nova sem cama ou baú fora de estrutura |
-| 26-09 | `/vc log` (diagnóstico no chat) | estados ativo, aguardando e travado coerentes |
-| 26-09 | Construção concluída não reabre como reparo | fazenda antiga sem blocos quebrados |
-| 26-09 | Bosque fundacional | duas árvores maduras a 48–56 blocos; +1 por dez adultos |
-| 26-09 | Obra só no nível da rua; baú ao lado da cama | nenhuma casa sobre monte de terra |
-| 26-09 | Alternativa A (obra adiada entregue); peça que ninguém fabrica vai ao baú | obra que antes nunca fechava |
-| 25-09 | ADR-025 fases 1 e 2 (mineiro autônomo) | linha `brain:` no travamento; encalhado sai cavando |
+| 25–26-09 | Oito correções mais antigas, ainda sem playtest | `Historico-2026-09.md`, "Arquivado do STATE.md em 2026-10-02" |
 
 ## O que o próximo jogo precisa mostrar
 

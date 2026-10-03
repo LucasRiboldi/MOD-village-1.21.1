@@ -12,6 +12,20 @@ da reabertura seca oposta. Cada lote e validado na orientacao final da planta.
 A bateria de 1.196 testes unitarios e 528 GameTests (30-09, depois da revisao
 das profissoes) esta verde; ainda requer validacao no save real.
 
+## Integração de 2026-10-02 — políticas de profissão e overlays
+
+`feature/mod-menu-settings` e `feature/profession-overlays` (feitas sobre a
+`main` de 24-09) juntadas à linha de 02-10. **Nada visto em jogo.**
+
+- [ ] 🔴 Playtest do Mod Menu: desativar uma profissão e pôr limite máximo;
+  a contratação redistribui a vaga e a fundação mantém o carpinteiro logo
+  depois do lenhador (ADR-030, `HiringQuota`).
+- [ ] 🔴 Overlays: rótulos de profissão sobre aldeões registrados, a no
+  máximo 32 blocos; obra com progresso, estado e primeiro material faltante a
+  no máximo 64 blocos, comparada com a placa de `SiteMarker`.
+- [ ] 🟠 Cliente Vanilla no mesmo servidor: placas antigas visíveis e nenhum
+  payload enviado.
+
 ## Playtest de 2026-10-02 — travamentos e tentativas (`docs/research/2026-10-02-travamentos-e-tentativas.md`)
 
 Corrigido nesta sessão, com teste: piso e base da obra (`mayBuildOver`, base

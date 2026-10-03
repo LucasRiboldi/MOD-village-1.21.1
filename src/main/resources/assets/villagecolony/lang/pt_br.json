@@ -17,5 +17,18 @@
   "text.villagecolony.profession.carpenter": "Carpinteiro",
   "text.villagecolony.profession.farmer": "Fazendeiro",
   "text.villagecolony.profession.shepherd": "Pastor",
-  "text.villagecolony.profession.builder": "Construtor"
+  "text.villagecolony.profession.builder": "Construtor",
+  "overlay.profession.lumberjack": "Lenhador",
+  "overlay.profession.miner": "Mineiro",
+  "overlay.profession.shepherd": "Pastor",
+  "overlay.profession.farmer": "Fazendeiro",
+  "overlay.profession.smelter": "Fundidor",
+  "overlay.profession.carpenter": "Carpinteiro",
+  "overlay.profession.mason": "Pedreiro",
+  "overlay.profession.builder": "Construtor",
+  "overlay.construction.missing": "Falta: %s",
+  "overlay.construction.state.planned": "Planejada",
+  "overlay.construction.state.preparing": "Preparando",
+  "overlay.construction.state.waiting_resources": "Aguardando materiais",
+  "overlay.construction.state.building": "Em construção"
 }
