@@ -2,6 +2,7 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.core.type.ServerMemory;
 import com.villagecolony.VillageColonyMod;
+import com.villagecolony.core.colony.service.VillageDetector;
 import com.villagecolony.core.colony.model.Colony;
 import com.villagecolony.core.construction.model.Building;
 import com.villagecolony.core.construction.model.ConstructionProject;
@@ -255,7 +256,9 @@ public final class WaitingWork {
         long stalled = seen.stalled() + workingTicksSince(seen, now, timeOfDay);
         BUILDING_SINCE.put(project.id(), new Progress(left, now, timeOfDay, stalled));
 
-        if (!PatienceClock.ranOut(0, stalled)) {
+        boolean onlyUnsupported = project.nextBlock().isEmpty() && !project.isFinished();
+
+        if (!ranOutOfPatience(onlyUnsupported, stalled)) {
             return false;
         }
 
@@ -275,6 +278,22 @@ public final class WaitingWork {
         giveUp(colony, project, false);
 
         return true;
+    }
+
+    /** A espera quando só sobram peças sem apoio: dois ciclos, um minuto. */
+    static final long UNSUPPORTED_PATIENCE = 2L * VillageDetector.CYCLE_TICKS;
+
+    /**
+     * Se a obra parada já esperou o bastante.
+     *
+     * <p><b>Só peça sem apoio sobrando espera um minuto, e não dez</b> —
+     * playtest de 2026-10-03: a casa do pastor ficou 18 minutos em 4 peças
+     * que nada segurava, e só o relógio de dez minutos a largou. Peça sem
+     * apoio é revista a cada ciclo; dois ciclos sem mudança bastam para saber
+     * que esperar não a põe de pé.
+     */
+    static boolean ranOutOfPatience(boolean onlyUnsupported, long stalled) {
+        return onlyUnsupported ? stalled >= UNSUPPORTED_PATIENCE : PatienceClock.ranOut(0, stalled);
     }
 
     /** Desconta noites completas e parciais entre duas leituras do planejador. */

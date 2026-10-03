@@ -114,7 +114,7 @@ Cycle detected: Slice adapter -> \
     - Method <com.villagecolony.fabric.work.MaterialChoice.forBlock(net.minecraft.block.Block)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toItem(com.villagecolony.core.type.ResourceType)> in (MaterialChoice.java:88)\
     - Method <com.villagecolony.fabric.work.CraftsmanRequest.askTheCraftsmanFor(net.minecraft.server.world.ServerWorld, com.villagecolony.core.construction.model.ConstructionProject, com.villagecolony.core.type.ResourceId)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlock(com.villagecolony.core.type.ResourceId)> in (CraftsmanRequest.java:92)\
     - Method <com.villagecolony.fabric.work.CraftsmanRequest.askTheCraftsmanFor(net.minecraft.server.world.ServerWorld, com.villagecolony.core.construction.model.ConstructionProject, com.villagecolony.core.type.ResourceId)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toResourceType(net.minecraft.item.Item)> in (CraftsmanRequest.java:100)\
-    (79 further dependencies have been omitted...)
+    (80 further dependencies have been omitted...)
 Cycle detected: Slice adapter -> \
                 Slice integration -> \
                 Slice work -> \
@@ -157,7 +157,7 @@ Cycle detected: Slice adapter -> \
     - Method <com.villagecolony.fabric.work.MaterialChoice.forBlock(net.minecraft.block.Block)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toItem(com.villagecolony.core.type.ResourceType)> in (MaterialChoice.java:88)\
     - Method <com.villagecolony.fabric.work.CraftsmanRequest.askTheCraftsmanFor(net.minecraft.server.world.ServerWorld, com.villagecolony.core.construction.model.ConstructionProject, com.villagecolony.core.type.ResourceId)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toBlock(com.villagecolony.core.type.ResourceId)> in (CraftsmanRequest.java:92)\
     - Method <com.villagecolony.fabric.work.CraftsmanRequest.askTheCraftsmanFor(net.minecraft.server.world.ServerWorld, com.villagecolony.core.construction.model.ConstructionProject, com.villagecolony.core.type.ResourceId)> calls method <com.villagecolony.fabric.adapter.MinecraftTypeAdapter.toResourceType(net.minecraft.item.Item)> in (CraftsmanRequest.java:100)\
-    (79 further dependencies have been omitted...)
+    (80 further dependencies have been omitted...)
 Cycle detected: Slice adapter -> \
                 Slice integration -> \
                 Slice work -> \
@@ -361,7 +361,7 @@ Cycle detected: Slice event -> \
     - Method <com.villagecolony.fabric.work.MineCuts.nextCut(net.minecraft.server.world.ServerWorld, java.util.UUID, com.villagecolony.core.construction.model.Mine, com.villagecolony.core.construction.model.MineArm)> calls method <com.villagecolony.fabric.integration.MineMouth.isPortalBlock(net.minecraft.util.math.BlockPos, net.minecraft.util.math.Direction, net.minecraft.util.math.BlockPos)> in (MineCuts.java:61)\
     - Method <com.villagecolony.fabric.work.SweepCadence.passFor(net.minecraft.server.world.ServerWorld, com.villagecolony.core.colony.model.Colony)> calls method <com.villagecolony.fabric.integration.RoadExtension.isGrowing(java.util.UUID)> in (SweepCadence.java:61)\
     - Method <com.villagecolony.fabric.work.MineVein.exposedStone(net.minecraft.server.world.ServerWorld, java.util.UUID, java.util.UUID, net.minecraft.util.math.BlockPos)> calls method <com.villagecolony.fabric.integration.StonePatch.in(net.minecraft.server.world.ServerWorld, net.minecraft.util.math.BlockPos, int)> in (MineVein.java:64)\
-    (251 further dependencies have been omitted...)\
+    (252 further dependencies have been omitted...)\
   3. Dependencies of Slice integration\
     - Method <com.villagecolony.fabric.integration.SiteMarker.tick(net.minecraft.server.world.ServerWorld)> calls method <com.villagecolony.fabric.event.VillageFocus.isWorking(net.minecraft.server.world.ServerWorld, java.util.UUID)> in (SiteMarker.java:156)
 Cycle detected: Slice integration -> \
@@ -397,4 +397,4 @@ Cycle detected: Slice integration -> \
     - Method <com.villagecolony.fabric.work.MineCuts.nextCut(net.minecraft.server.world.ServerWorld, java.util.UUID, com.villagecolony.core.construction.model.Mine, com.villagecolony.core.construction.model.MineArm)> calls method <com.villagecolony.fabric.integration.MineMouth.isPortalBlock(net.minecraft.util.math.BlockPos, net.minecraft.util.math.Direction, net.minecraft.util.math.BlockPos)> in (MineCuts.java:61)\
     - Method <com.villagecolony.fabric.work.SweepCadence.passFor(net.minecraft.server.world.ServerWorld, com.villagecolony.core.colony.model.Colony)> calls method <com.villagecolony.fabric.integration.RoadExtension.isGrowing(java.util.UUID)> in (SweepCadence.java:61)\
     - Method <com.villagecolony.fabric.work.MineVein.exposedStone(net.minecraft.server.world.ServerWorld, java.util.UUID, java.util.UUID, net.minecraft.util.math.BlockPos)> calls method <com.villagecolony.fabric.integration.StonePatch.in(net.minecraft.server.world.ServerWorld, net.minecraft.util.math.BlockPos, int)> in (MineVein.java:64)\
-    (251 further dependencies have been omitted...)
+    (252 further dependencies have been omitted...)

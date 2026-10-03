@@ -2,6 +2,10 @@ package com.villagecolony.fabric.work;
 
 import com.villagecolony.VillageColonyMod;
 import com.villagecolony.core.colony.model.Colony;
+import com.villagecolony.core.type.ResourceId;
+import com.villagecolony.core.construction.model.ConstructionProject;
+import com.villagecolony.core.construction.model.BlueprintBlock;
+import com.villagecolony.core.construction.model.Blueprint;
 import com.villagecolony.core.storage.model.WorkerStorage;
 import com.villagecolony.core.task.model.Task;
 import com.villagecolony.core.task.model.TaskPriority;
@@ -20,6 +24,7 @@ import net.minecraft.test.GameTest;
 import net.minecraft.test.TestContext;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -132,6 +137,37 @@ public final class LocateFallbackGameTest implements FabricGameTest {
             context.assertFalse(task.isOpen(), "entregue a lã, a tarefa de tosquia acaba");
         } finally {
             EmptySweeps.found(scene.colony.id(), ResourceType.WHITE_WOOL);
+            scene.forget();
+        }
+
+        context.complete();
+    }
+
+    /**
+     * As três tentativas contam para todas as peças que faltam, não só para a
+     * próxima — playtest de 2026-10-03, papoula, grama, cerca e dente-de-leão
+     * esperando um minuto cada, em fila.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "locate_fallback")
+    public void aPieceFurtherDownTheListCountsItsAttemptsToo(TestContext context) {
+        ServerWorld world = context.getWorld();
+        Scene scene = Scene.of(context);
+
+        try {
+            ConstructionProject project = ConstructionProject.plan(scene.colony.id(),
+                    Blueprint.of(ResourceId.vanilla("village/plains/houses/test_ahead"), List.of(
+                            new BlueprintBlock(new ColonyPos(0, 0, 0), ResourceId.vanilla("oak_planks")),
+                            new BlueprintBlock(new ColonyPos(1, 0, 0), ResourceId.vanilla("poppy")))),
+                    new ColonyPos(scene.builderChest.x(), scene.builderChest.y() + 3, scene.builderChest.z()));
+
+            for (int cycle = 1; cycle <= 3; cycle++) {
+                BuilderMaterials.prepareAhead(world, project);
+            }
+
+            context.assertTrue(ChestWithdrawer.countIn(world, scene.builderChest, Items.POPPY) == 1,
+                    "a papoula, segunda da lista, devia aparecer depois de três ciclos sem ser a próxima peça");
+        } finally {
+            BiomeConstructionSupply.routeDelivered(scene.colony.id(), Items.POPPY);
             scene.forget();
         }
 

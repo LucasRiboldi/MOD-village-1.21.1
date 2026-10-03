@@ -254,6 +254,7 @@ public final class ConstructionPlanner {
 
         if (open.isPresent()) {
             WaitingWork.wakeIfSupplied(world, open.get());
+            BuilderMaterials.prepareAhead(world, open.get());
             CraftsmanRequest.askBeforeTheWorkWaits(world, open.get());
             BuilderPlacement.reconsiderDeferredPieces(world, open.get());
 

@@ -51,7 +51,8 @@ public final class ConstructionOverlayRenderer {
             OverlayDrawing.label(context.camera(), buffers, position,
                     OverlayDrawing.id(OverlaySprites.construction(construction.state(), missing)),
                     new Text[] {
-                        Text.literal(construction.blueprint() + " " + construction.placed() + "/" + construction.total()),
+                        Text.literal(OverlaySprites.shortName(construction.blueprint()) + "  "
+                                + construction.placed() + "/" + construction.total()),
                         status
                     },
                     new int[] {0xFF55FFFF, missing.isBlank() ? 0xFF55FF55 : 0xFFFFAA00});

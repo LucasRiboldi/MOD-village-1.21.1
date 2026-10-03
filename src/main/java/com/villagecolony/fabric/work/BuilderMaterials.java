@@ -158,6 +158,50 @@ public final class BuilderMaterials {
         return ensureConstructionMaterial(world, project, MaterialChoice.forBlock(material.get()));
     }
 
+    /** Quantas peças diferentes, além da próxima, contam tentativa por ciclo. */
+    static final int AHEAD = 8;
+
+    /**
+     * As tentativas contam para as peças que faltam, não só para a próxima —
+     * playtest de 2026-10-03.
+     *
+     * <p>A obra parava numa peça sem rota (papoula), esperava as três
+     * tentativas, e só então batia na seguinte (grama, cerca, dente-de-leão,
+     * terracota): um minuto cada, em fila. Aqui cada peça que falta ganha sua
+     * tentativa no mesmo ciclo, e as que não têm rota aparecem juntas. A
+     * próxima peça fica de fora: quem conta a dela é
+     * {@link #hasMaterialForNextBlock}, e contar duas vezes encurtaria a espera.
+     */
+    static void prepareAhead(ServerWorld world, ConstructionProject project) {
+        Optional<ResourceId> next = project.nextBlock().map(BlueprintBlock::block);
+        int asked = 0;
+
+        for (ResourceId id : project.remainingMaterials().keySet()) {
+            if (asked >= AHEAD) {
+                return;
+            }
+
+            Optional<Block> block = MinecraftTypeAdapter.toBlock(id);
+
+            if (next.filter(id::equals).isPresent() || block.isEmpty()
+                    || BlockShaping.isShapedFromTheGround(block.get().getDefaultState())
+                    || BlockShaping.isNeverPlaced(block.get().getDefaultState())
+                    || TestBarrier.chainFor(id).isPresent()) {
+                continue;
+            }
+
+            List<Item> choices = MaterialChoice.forBlock(block.get());
+
+            if (choices.stream().anyMatch(item ->
+                    ColonySupply.canProvide(world, project.colonyId(), project.origin(), item))) {
+                continue;
+            }
+
+            asked++;
+            ensureConstructionMaterial(world, project, choices);
+        }
+    }
+
     /** Mantém no baú a peça que nenhuma profissão consegue produzir. */
     static boolean hasOrStocksConstructionMaterial(
             ServerWorld world, ConstructionProject project, Item item) {

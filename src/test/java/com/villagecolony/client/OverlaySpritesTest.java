@@ -45,4 +45,11 @@ class OverlaySpritesTest {
         assertEquals("textures/gui/overlays/construction/building.png",
                 OverlaySprites.construction("BUILDING", ""));
     }
+
+    @Test
+    void theSignShowsTheShortBlueprintName() {
+        assertEquals("plains shepherds house 1",
+                OverlaySprites.shortName("minecraft:village/plains/houses/plains_shepherds_house_1"));
+        assertEquals("big house mod", OverlaySprites.shortName("villagecolony:houses/big_house_mod"));
+    }
 }

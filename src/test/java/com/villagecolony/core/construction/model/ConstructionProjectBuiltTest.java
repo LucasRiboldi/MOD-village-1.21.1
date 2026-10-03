@@ -17,7 +17,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class ConstructionProjectBuiltTest {
 
-    private static final ResourceId DIRT = ResourceId.vanilla("dirt");
+    /** Só a grama da base é chão desde 2026-10-03. */
+    private static final ResourceId DIRT = ResourceId.vanilla("grass_block");
 
     private static final ResourceId PLANKS = ResourceId.vanilla("oak_planks");
 

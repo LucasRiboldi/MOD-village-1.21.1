@@ -21,6 +21,17 @@ public final class OverlaySprites {
     private OverlaySprites() {
     }
 
+    /**
+     * O nome curto da planta para a placa: {@code
+     * minecraft:village/plains/houses/plains_shepherds_house_1} vira {@code
+     * plains shepherds house 1}.
+     */
+    public static String shortName(String blueprint) {
+        String path = blueprint.substring(blueprint.indexOf(':') + 1);
+
+        return path.substring(path.lastIndexOf('/') + 1).replace('_', ' ');
+    }
+
     /** O ícone da profissão, pelo nome do enum que o servidor manda. */
     public static String profession(String profession) {
         return ROOT + "professions/" + profession.toLowerCase(Locale.ROOT) + ".png";

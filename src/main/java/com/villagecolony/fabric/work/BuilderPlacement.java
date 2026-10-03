@@ -96,6 +96,15 @@ public final class BuilderPlacement {
             return true;
         }
 
+        // O bloco da planta já está no lugar — 2026-10-03. Com a terra da base
+        // sendo construída, terra sobre terra viraria cavar e repor; aqui ela
+        // conta como assentada, sem tirar material do baú.
+        if (world.getBlockState(target).isOf(material.get())) {
+            project.markPlaced(block);
+
+            return true;
+        }
+
         BlockState state = shaped(world, project, block, material.get(), target);
 
         if (!world.getBlockState(target).isReplaceable()
