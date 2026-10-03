@@ -93,6 +93,18 @@ public final class VillageLogCommand {
             source.sendFeedback(() -> statusText(entry), false);
         }
 
+        // As esperas longas, com o motivo e o tempo — B-5, 2026-10-02.
+        List<String> waits = VillageLogPresenter.longWaits(
+                com.villagecolony.fabric.work.IdleLog.waitingOf(nearby.id()), System.currentTimeMillis());
+
+        if (!waits.isEmpty()) {
+            source.sendFeedback(() -> Text.literal("Esperas longas:").formatted(Formatting.WHITE), false);
+
+            for (String wait : waits) {
+                source.sendFeedback(() -> Text.literal(wait).formatted(Formatting.YELLOW), false);
+            }
+        }
+
         if (trace.overflowCount() > 0) {
             source.sendFeedback(
                     () -> Text.literal("Histórico resumido: " + trace.overflowCount()

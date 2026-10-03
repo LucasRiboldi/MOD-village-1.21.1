@@ -92,6 +92,9 @@ public final class StrandedEscape {
         // E o tempo de cada um — Regra 50. Ver WorkTime.
         WorkTime.sample(world);
 
+        // Quem está à toa recolhe do chão o que a obra espera — B-1, Regra 48.
+        GroundPickup.pass(world);
+
         for (UUID workerId : StrandedWorkers.all()) {
             pass(world, workerId);
         }

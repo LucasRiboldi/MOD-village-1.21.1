@@ -68,6 +68,17 @@ public final class IdleLog {
     private static final Map<Key, Long> SPOKE_AT = new HashMap<>();
 
     /**
+     * A espera atual de cada assunto: motivo, detalhe e desde quando (relógio
+     * real) — B-5, 2026-10-02. É o que o {@code /vc log} mostra em "Esperas
+     * longas"; quando o motivo muda, a espera recomeça.
+     */
+    private static final Map<Key, Waiting> WAITING = new HashMap<>();
+
+    /** Uma espera em curso, para o {@code /vc log}. */
+    public record Waiting(String subject, IdleReason reason, String detail, long sinceMillis) {
+    }
+
+    /**
      * Quanto tempo um assunto fica calado depois de falar.
      *
      * <p>Um ciclo de colônia, que é a unidade de decisão do mod: entre
@@ -108,6 +119,8 @@ public final class IdleLog {
         if (reason == LAST.put(new Key(colonyId, subject), reason)) {
             return false;
         }
+
+        WAITING.put(new Key(colonyId, subject), new Waiting(subject, reason, detail, System.currentTimeMillis()));
 
         ActivityLog.waiting(subject, reason);
 
@@ -166,6 +179,15 @@ public final class IdleLog {
         record(colonyId, subject, reason, "");
     }
 
+    /** As esperas em curso desta colônia, da mais longa à mais curta — B-5. */
+    public static java.util.List<Waiting> waitingOf(UUID colonyId) {
+        return WAITING.entrySet().stream()
+                .filter(entry -> entry.getKey().colonyId().equals(colonyId))
+                .map(Map.Entry::getValue)
+                .sorted(java.util.Comparator.comparingLong(Waiting::sinceMillis))
+                .toList();
+    }
+
     /**
      * Esquece o motivo guardado de um assunto.
      *
@@ -176,6 +198,7 @@ public final class IdleLog {
      * tinha acabado.
      */
     public static void clear(UUID colonyId, String subject) {
+        WAITING.remove(new Key(colonyId, subject));
         IdleReason previous = LAST.remove(new Key(colonyId, subject));
         if (previous != null) {
             ActivityLog.recovered(subject, previous);
@@ -186,5 +209,6 @@ public final class IdleLog {
     public static void clearAll() {
         LAST.clear();
         SPOKE_AT.clear();
+        WAITING.clear();
     }
 }

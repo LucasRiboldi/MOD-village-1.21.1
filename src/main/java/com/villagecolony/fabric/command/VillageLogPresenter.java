@@ -65,6 +65,63 @@ final class VillageLogPresenter {
         return List.copyOf(entries);
     }
 
+    /** Quanto tempo uma espera precisa ter para aparecer no /vc log: dois minutos. */
+    static final long LONG_WAIT_MILLIS = 120_000;
+
+    /** Quantas esperas o /vc log mostra. */
+    static final int WAIT_LIMIT = 6;
+
+    /**
+     * As esperas de mais de dois minutos, com motivo e tempo — B-5, 2026-10-02:
+     * <i>"[ESPERANDO] Fundidor: nada no raio inteiro (sand) — há 12 min"</i>.
+     */
+    static List<String> longWaits(List<com.villagecolony.fabric.work.IdleLog.Waiting> waits, long nowMillis) {
+        List<String> lines = new ArrayList<>();
+
+        for (com.villagecolony.fabric.work.IdleLog.Waiting wait : waits) {
+            long minutes = (nowMillis - wait.sinceMillis()) / 60_000;
+
+            if (nowMillis - wait.sinceMillis() < LONG_WAIT_MILLIS || lines.size() >= WAIT_LIMIT) {
+                continue;
+            }
+
+            lines.add("[ESPERANDO] " + subjectName(wait.subject()) + ": " + idleReason(wait.reason())
+                    + (wait.detail().isBlank() ? "" : " (" + wait.detail() + ")") + " — há " + minutes + " min");
+        }
+
+        return List.copyOf(lines);
+    }
+
+    private static String subjectName(String subject) {
+        return switch (subject) {
+            case "miner", "miner mine mouth", "miner mouth chest", "miner branch", "miner cut",
+                    "miner surface stone", "miner sand" -> "Mineiro";
+            case "lumberjack" -> "Lenhador";
+            case "farmer" -> "Fazendeiro";
+            case "shepherd" -> "Pastor";
+            case "smelter", "surface gathering" -> "Fundidor";
+            case "building" -> "Obra";
+            case "carpenter" -> "Carpinteiro";
+            case "mason" -> "Pedreiro";
+            default -> subject;
+        };
+    }
+
+    private static String idleReason(com.villagecolony.core.coordination.IdleReason reason) {
+        return switch (reason) {
+            case NO_TASK -> "sem tarefa aberta";
+            case NO_EXECUTOR -> "tarefa aberta sem ninguém que a pegue";
+            case ALREADY_OPEN -> "já há uma aberta";
+            case NO_WORKER -> "ninguém na vila sabe fazer";
+            case NO_STORAGE -> "o trabalhador não tem baú";
+            case STORAGE_FULL -> "o baú está cheio";
+            case NO_TARGET -> "nada a fazer no raio inteiro";
+            case SWEEP_INCOMPLETE -> "ainda procurando";
+            case NOT_IN_GAME -> "o jogo não tem o que se pede";
+            case MISSING_MATERIAL -> "falta o material na colônia";
+        };
+    }
+
     /** Explica a prioridade atual da próxima obra sem expor a regra técnica. */
     static String constructionPriority(ConstructionPriority priority, int adults, int beds) {
         return switch (priority) {

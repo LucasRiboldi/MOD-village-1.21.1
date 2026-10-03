@@ -117,7 +117,7 @@ public final class WorkTime {
 
         return classify(
                 StrandedWorkers.isStranded(id) || PenEscape.isEscaping(id),
-                !VillageColonyMod.TASKS.assignedTo(id).isEmpty(),
+                !VillageColonyMod.TASKS.assignedTo(id).isEmpty() || GroundPickup.isHelping(id),
                 villager.handSwinging,
                 moved,
                 WorkTargets.of(id).isPresent(),

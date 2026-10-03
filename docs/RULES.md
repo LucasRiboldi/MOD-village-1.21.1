@@ -71,7 +71,7 @@ regra que foi emendada. O corpo de cada regra vive em
 | 44 | Ofício do mod exclui ofício Vanilla | 09-30 | ✅ feita | `VanillaProfessionGuard`, `VillagerDataMixin` (ADR-029) |
 | 46 | A fome não influencia o trabalho: a comida decide só a procriação (Vanilla) | 10-02 | ✅ é o que já acontece | `VillageMeals` |
 | 47 | O aldeão não envelhece nem morre de velhice | 10-02 | ✅ é o que já acontece | — |
-| 48 | Item caído no chão só é recolhido se for peça que falta à obra aberta | 10-02 | ⬜ em curso | — |
+| 48 | Item caído no chão só é recolhido se for peça que falta à obra aberta | 10-02 | ✅ feita | `GroundPickup` (B-1: quem está à toa recolhe e guarda no baú mais perto da obra) |
 | 49 | A ordem das obras: faltando cama, casa primeiro; não faltando, a casa de cada ofício que ainda não tem; só com todas de pé entram as demais (e a casa volta ao rodízio) | 10-02 | ✅ feita | `ConstructionPriority.WORKSHOP`, `ConstructionTurn`, `ConstructionOrder` (o mineiro ganhou o ferramenteiro; lenhador e construtor não têm casa de ofício no catálogo) |
 | 50 | Toda verificação mede o tempo dos aldeões — trabalhando, andando, bloqueado, ocioso, encalhado — por profissão, e usa a proporção como critério de melhoria e de correção | 10-02 | ✅ feita | `WorkTime` (linha `VC_TIME`), `scripts/time_ledger.py`, `CLAUDE.md` §0.4 |
 | 45 | Os baús da colônia são todos os da vila, e só eles: com a vila medida, todo baú livre dentro da caixa (na janela de altura das camas) conta, de dentro ou de fora de casa; fora da caixa está fora de alcance, mesmo o de trabalhador; baú de trabalhador de qualquer colônia nunca é livre | 10-01 | ✅ feita | `ColonyChests.nearestFirst`, `VillageChests` (`VillageChestReachGameTest`) |

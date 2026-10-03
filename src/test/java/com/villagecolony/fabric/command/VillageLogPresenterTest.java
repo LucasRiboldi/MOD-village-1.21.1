@@ -109,4 +109,19 @@ class VillageLogPresenterTest {
         return new ActivityTraceEvent(
                 workerId, profession, ActivityKind.MINING, state, reason, target, 0);
     }
+
+    /** B-5 (10-02): a espera de mais de dois minutos aparece com motivo e tempo, a curta não. */
+    @Test
+    void longWaitsShowTheReasonAndHowLong() {
+        long now = 10 * 60_000L;
+        List<String> lines = VillageLogPresenter.longWaits(List.of(
+                new com.villagecolony.fabric.work.IdleLog.Waiting("smelter",
+                        com.villagecolony.core.coordination.IdleReason.NO_TARGET, "sand", 0L),
+                new com.villagecolony.fabric.work.IdleLog.Waiting("farmer",
+                        com.villagecolony.core.coordination.IdleReason.SWEEP_INCOMPLETE, "", now - 30_000L)),
+                now);
+
+        org.junit.jupiter.api.Assertions.assertEquals(
+                List.of("[ESPERANDO] Fundidor: nada a fazer no raio inteiro (sand) — há 10 min"), lines);
+    }
 }

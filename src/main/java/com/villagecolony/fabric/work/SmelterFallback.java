@@ -129,7 +129,7 @@ final class SmelterFallback {
             }
 
             if (isSmelted(world, item.get())) {
-                into.add(item.get());
+                addWithCharcoal(item.get(), into);
 
                 continue;
             }
@@ -137,10 +137,23 @@ final class SmelterFallback {
             CraftingLookup.billFor(world, item.get(), any -> true).ifPresent(bill -> {
                 for (Item ingredient : bill.ingredients().keySet()) {
                     if (isSmelted(world, ingredient)) {
-                        into.add(ingredient);
+                        addWithCharcoal(ingredient, into);
                     }
                 }
             });
+        }
+    }
+
+    /**
+     * O carvão vem com o carvão vegetal logo atrás — B-4, 2026-10-02. A
+     * reanálise viu a obra esperar a tocha e o fundidor parado sem minério: a
+     * tocha aceita os dois carvões, e o vegetal sai da tora, sem mineiro.
+     */
+    private static void addWithCharcoal(Item item, Set<Item> into) {
+        into.add(item);
+
+        if (item == Items.COAL) {
+            into.add(Items.CHARCOAL);
         }
     }
 
