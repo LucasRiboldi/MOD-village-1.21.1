@@ -249,7 +249,7 @@ public final class SmelterWork {
             return pending.get();
         }
 
-        // <b>Cinco paradas pelo mesmo pedido, e ele trabalha para a obra</b>
+        // <b>Duas paradas pelo mesmo pedido, e ele trabalha para a obra</b>
         // — F2 e pedido do autor, 2026-09-30. Soltar e retomar a tarefa sem
         // produzir nada foram 193 paradas numa sessão. Uma peça de outro item
         // que as obras vão usar, e o passo seguinte tenta o pedido de novo:

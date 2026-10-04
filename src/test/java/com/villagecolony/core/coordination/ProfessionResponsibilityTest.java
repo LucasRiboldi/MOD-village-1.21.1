@@ -75,8 +75,8 @@ class ProfessionResponsibilityTest {
     }
 
     @Test
-    void coloredTerracottaIsHandledByTheKilnAndStoneBricksByMasonry() {
-        assertEquals(TaskType.SMELT_MATERIAL,
+    void coloredTerracottaAndStoneBricksAreHandledByMasonry() {
+        assertEquals(TaskType.CRAFT_STONE_MATERIAL,
                 ColonyCycle.typeFor(ResourceType.RED_TERRACOTTA));
         assertEquals(TaskType.CRAFT_STONE_MATERIAL,
                 ColonyCycle.typeFor(ResourceType.STONE_BRICKS));

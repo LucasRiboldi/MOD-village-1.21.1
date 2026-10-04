@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-10-04 (a camada inferior de roça agora é fundação física; matriz de 161 blocos Vanilla registra 67 sem rota direta; recuo de roça inviável reduzido para um ciclo; antes, muda solicitada respeita o expediente; 581 GameTests no topo; painéis pixelados, marcador, mina, base e varredura, integração de 02-10 e sessão de 02-10, seção
+**Atualizado:** 2026-10-04 (terracota colorida passa pelo pedreiro com corante automático e o fundidor antecipa após duas faltas; a camada inferior de roça agora é fundação física; matriz de 161 blocos Vanilla registra 67 sem rota direta; recuo de roça inviável reduzido para um ciclo; antes, muda solicitada respeita o expediente; `barn_majest` e `storage_majest` entram no rodízio de pastor e construtor; 583 GameTests no topo; painéis pixelados, marcador, mina, base e varredura, integração de 02-10 e sessão de 02-10, seção
 abaixo). Estado de 2026-09-28: a obra antecipa a proxima peca artesanal sem
 consumir os troncos brutos que ela mesma ainda exige; o `/vc log` explica a
 saida de trabalhador preso e seu retorno a escala. A evolucao agora inclui
@@ -15,6 +15,33 @@ das profissoes) esta verde; ainda requer validacao no save real.
 ## Sessão de 2026-10-03 — painéis, perímetro e mina
 
 ## Sessão de 2026-10-04 — suprimento de obra, overflow e varredura
+
+## Sessão de 2026-10-04 — cadeia colorida e antecipação do fundidor
+
+- [x] 🔴 Terracota vermelha pertence ao pedreiro e abre a cadeia física
+  `argila -> terracota -> terracota vermelha`; a receita Vanilla continua a
+  definir rendimento e ingredientes.
+- [x] 🔴 Todo `DyeItem` Vanilla é fornecido automaticamente no baú de serviço
+  quando uma receita o pede, sem criar tarefa de colher ou fabricar corante.
+- [x] 🟠 Fundidor antecipa a demanda de obra depois de duas faltas por matéria
+  prima, mantendo o material físico e a tarefa reservada.
+- [x] 🟠 A revisão do seletor de lote manteve o índice incremental já existente:
+  ele evita recandidatos de rua e aceita lacunas rasas preenchíveis pela
+  fundação. Não foi adicionada cache paralela sem ganho medido.
+- [ ] 🟠 Playtest: abrir uma obra de terracota colorida e confirmar a entrada
+  automática do corante, a coleta de argila, a queima de terracota e a ação do
+  pedreiro no save real.
+
+## Sessão de 2026-10-04 — oficinas nomeadas no sorteio
+
+- [x] 🟠 `barn_majest.nbt` passa a ser oficina sorteável do pastor e
+  `storage_majest.nbt` a do construtor, pela mesma seleção que atende os demais
+  modelos profissionais.
+- [x] 🟠 Retirar do celeiro somente a camada de solo natural, reduzindo sua
+  área para 12x13x15 e mantendo os blocos funcionais na base.
+- [ ] 🟠 Playtest: observar celeiro do pastor e depósito do construtor nascerem
+  em vila real com lote suficiente; confirmar que a nova pegada do celeiro não
+  cria terreno flutuante.
 
 - [x] 🔴 Roça: a camada inferior pedida pela planta substitui terreno natural e
   é construída fisicamente, mantendo os canteiros e a água na altura especial.

@@ -6,6 +6,27 @@
 
 # Village Colony — Development Log
 
+## 2026-10-04 — terracota colorida, corantes automáticos e fundidor antecipado
+
+A terracota vermelha deixou de ser tratada como saída direta da fornalha. Ela é
+uma peça do pedreiro cuja receita Vanilla pede terracota neutra e corante; o
+planejamento agora abre somente a cadeia física `argila -> terracota`, para
+coleta e fundição. `DyeItem` já era classificado como ingrediente automático
+em `DropIngredients`; a cobertura foi ampliada para cores distintas, garantindo
+que qualquer corante Vanilla entre fisicamente no baú de serviço sem tarefa de
+coleta ou craft.
+
+O fundidor passa a antecipar materiais da obra após duas faltas, em vez de
+cinco, preservando a reserva e a contagem física de materiais. A revisão do
+seletor de lote confirmou que `RoadIndex` já pagina candidatos e que a política
+de fundação aceita lacunas rasas preenchíveis. Não foi criada uma segunda cache
+de terreno, que duplicaria estado sem ganho observado no Spark.
+
+O teste de responsabilidade de profissões falhou antes da reclassificação; o
+teste de fallback do fundidor falhou antes do limiar novo. Depois da correção,
+os testes unitários direcionados passaram e `runGametest --rerun-tasks`
+concluiu 583/583 testes obrigatórios. Falta somente o playtest no save real.
+
 ## 2026-10-03 — trabalho diurno, madeira solicitada, baús e mina profunda
 
 O renderer dos painéis deixou de enviar overlay e normal para uma camada cujo
@@ -10512,3 +10533,26 @@ templates NBT distribuídos no JAR Vanilla 1.21.1 e cruza cada bloco usado com
 as duas colunas solicitadas e 161 blocos distintos. Sessenta e sete não têm
 profissão com rota direta e foram mantidos explicitamente assim, sem declarar
 uma geração de item que o mundo não oferece.
+
+### 2026-10-04 - Celeiro e depósito no rodízio profissional
+
+Os modelos externos foram incorporados em identificadores válidos de recurso:
+`colony/barn_majest` pertence explicitamente ao pastor e
+`colony/storage_majest` ao construtor. `ColonyModels` os acrescenta antes dos
+modelos genéricos de ofício e `ConstructionOrder` reutiliza essa classificação
+para que não sejam tratados como casas. Assim, ambos entram no sorteio regular
+de oficina da profissão respectiva.
+
+O celeiro original tinha 20x13x29 e 580 blocos naturais no piso. Esses blocos
+de grama, terra, caminho, cascalho e terra grossa foram removidos; barril,
+funis e fardos de feno na mesma camada foram preservados. Os blocos restantes
+foram transladados para a origem, resultando em uma planta de 12x13x15 com 818
+blocos e sem entidade persistida no template.
+
+`ConstructionOrderTest` foi escrito primeiro e falhou sem o mapeamento, pois
+os dois modelos retornavam profissão vazia. Depois da associação, o teste
+unitário passou. O cenário Fabric carrega os dois NBT reais, confirma que estão
+na lista construível e que não são casas. A execução completa de
+`runGametest --rerun-tasks --no-daemon` concluiu em **582/582**. Ainda falta o
+playtest no save para observar o sorteio e a implantação visual em terreno
+real.

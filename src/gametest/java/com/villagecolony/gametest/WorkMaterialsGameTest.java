@@ -108,6 +108,44 @@ public class WorkMaterialsGameTest implements FabricGameTest {
         context.complete();
     }
 
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "work_materials",
+            tickLimit = 20)
+    public void redTerracottaKeepsMasonryAndRequestsItsKilnChain(TestContext context) {
+        ServerWorld world = context.getWorld();
+        ColonyPos origin = MinecraftTypeAdapter.toColonyPos(context.getAbsolutePos(HERE));
+        Colony colony = Colony.create(UUID.randomUUID(), origin);
+        ColonyFixture owned = ColonyFixture.create().owning(colony);
+        VillageColonyMod.COLONIES.register(colony);
+
+        Blueprint plan = Blueprint.of(
+                ResourceId.vanilla("village/plains/houses/red_terracotta_test"),
+                List.of(new BlueprintBlock(
+                        new ColonyPos(0, 0, 0), MinecraftTypeAdapter.toResourceId(Blocks.RED_TERRACOTTA))));
+        ConstructionProject project = ConstructionProject.plan(colony.id(), plan, origin);
+        VillageColonyMod.CONSTRUCTIONS.register(project);
+        project.moveTo(ConstructionState.PREPARING);
+        project.moveTo(ConstructionState.BUILDING);
+
+        try {
+            context.assertTrue(
+                    WorkMaterials.smeltedNeeds(world, colony)
+                            .getOrDefault(ResourceType.RED_TERRACOTTA, 0) == 1,
+                    "a obra deve abrir a tarefa do pedreiro para a terracota vermelha");
+            context.assertTrue(
+                    WorkMaterials.smeltedNeeds(world, colony)
+                            .getOrDefault(ResourceType.TERRACOTTA, 0) == 8,
+                    "a receita de terracota vermelha deve pedir oito terracotas ao fundidor");
+            context.assertTrue(
+                    WorkMaterials.surfaceGatheredNeeds(world, colony)
+                            .getOrDefault(ResourceType.CLAY, 0) == 8,
+                    "a cadeia da terracota vermelha deve abrir coleta de oito blocos de argila");
+        } finally {
+            owned.cleanUp();
+        }
+
+        context.complete();
+    }
+
     /**
      * A vidraça vira vidro pela receita do próprio jogo — 2026-08-20.
      *

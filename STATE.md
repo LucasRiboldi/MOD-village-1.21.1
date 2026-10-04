@@ -52,6 +52,12 @@
   recoloração: a peça preferida entra fisicamente no baú do construtor. A
   terceira tentativa continua sendo necessária e as duas primeiras deixam a
   coleta/fabricação local trabalhar.
+- Terracota vermelha agora é peça do pedreiro, não saída direta da fornalha:
+  a demanda abre `argila -> terracota` para fundidor e coleta. Todo corante
+  Vanilla é ingrediente automático físico no baú de serviço, sem tarefa de
+  coleta ou craft. O fundidor passa a antecipar a cadeia da obra após duas
+  faltas; o lote já usa o índice incremental da rua e aceita lacunas rasas que
+  a fundação pode preencher, sem uma segunda cache concorrente.
 - Colunas de terreno cujo chunk estava descarregado deixam de ser perdidas pelo
   índice de água/lava: ficam pendentes e são revisitadas incrementalmente quando
   o chunk carregar. A varredura integral de chunks segue rejeitada por custo;
@@ -65,7 +71,7 @@
   coluna exata e encerra a passagem ao indexar 16 árvores. A carpintaria
   fabrica até cobrir a demanda restante da obra, ainda com uma receita por
   ação; o analisador só chama baú de mineiro cheio diante do aviso real.
-- A rodada de 04-10 confirmou 580/580 GameTests. Uma execução anterior teve
+- A rodada de 04-10 confirmou 583/583 GameTests. Uma execução anterior teve
   duas falhas opostas no batch concorrente `craft_family`; a repetição imediata
   passou integralmente, portanto a instabilidade ficou registrada para
   investigação, sem reduzir timeout nem enfraquecer a cobertura.
@@ -75,9 +81,14 @@
   de todas as vilas Vanilla 1.21.1 está em
   `docs/reports/blocos-vilas-vanilla-1.21.1.xlsx`; 67 ainda não têm rota direta
   de uma profissão e estão marcados sem inventar suprimento.
+- `barn_majest.nbt` entra no sorteio de oficinas do pastor e
+  `storage_majest.nbt` no do construtor. O celeiro foi compactado ao retirar
+  apenas o solo natural da camada inferior, preservando os cinco blocos
+  funcionais nela presentes; sua nova área é 12x13x15. A rodada completa de
+  GameTests confirmou ambos os NBT reais carregados e associados: 582/582.
 - Falta o playtest visual e de desempenho no save, inclusive marcador em vila
-  grande e coleta atravessando a borda, fluxo real dos baús e nova medição do
-  lenhador/carpintaria.
+  grande e coleta atravessando a borda, fluxo real dos baús, nova medição do
+  lenhador/carpintaria e o sorteio das duas oficinas em uma vila real.
 
 ## 🟡 02-10 — consolidação na `main` (aguarda playtest)
 

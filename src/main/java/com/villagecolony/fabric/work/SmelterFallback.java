@@ -47,7 +47,7 @@ final class SmelterFallback {
     }
 
     /** Paradas seguidas pelo mesmo pedido antes de trabalhar para a obra. */
-    static final int MISSES_BEFORE_FALLBACK = 5;
+    static final int MISSES_BEFORE_FALLBACK = 2;
 
     /** Paradas por tarefa, pelo id dela: a tarefa sai e volta da fila. */
     private static final Map<UUID, Integer> MISSES = new HashMap<>();

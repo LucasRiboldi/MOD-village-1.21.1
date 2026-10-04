@@ -189,6 +189,8 @@ public class ProfessionReviewGameTest implements FabricGameTest {
         try {
             context.assertTrue(DropIngredients.isAutomatic(Items.STRING)
                             && DropIngredients.isAutomatic(Items.RED_DYE)
+                            && DropIngredients.isAutomatic(Items.WHITE_DYE)
+                            && DropIngredients.isAutomatic(Items.CYAN_DYE)
                             && !DropIngredients.isAutomatic(Items.OAK_PLANKS),
                     "a classificacao de drop esta errada");
 

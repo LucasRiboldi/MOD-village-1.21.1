@@ -192,6 +192,15 @@ public final class WorkMaterials {
                     .filter(WorkMaterials::nobodyElseAsksFor)
                     .ifPresent(type -> wanted.merge(type, entry.getValue(), Integer::sum));
 
+            // A parede pode pedir uma peça de alvenaria pronta cuja receita
+            // ainda pede algo assado. A terracota colorida e o caso concreto:
+            // o pedreiro aplica o corante automático, mas antes disso o
+            // fundidor precisa assar a terracota neutra e alguém precisa
+            // trazer a argila. A receita Vanilla escolhe ingredientes e
+            // rendimento, para que datapacks continuem sendo a fonte da
+            // verdade.
+            WorkMaterialRecipeNeeds.addSmeltedIngredients(world, entry.getKey(), entry.getValue(), wanted);
+
             // <b>E o vaso que o bloco sem item esconde</b> — 2026-09-19.
             // Mesma razão da planta, do outro lado da cadeia: o vaso é
             // fabricado de três tijolos, e o tijolo é argila assada.
@@ -268,7 +277,7 @@ public final class WorkMaterials {
     }
 
     /** O primeiro item conhecido entre as alternativas materiais da obra. */
-    private static Optional<ResourceType> firstKnownAlternative(Block block) {
+    static Optional<ResourceType> firstKnownAlternative(Block block) {
         for (Item candidate : MaterialChoice.forBlock(block)) {
             Optional<ResourceType> resource = MinecraftTypeAdapter.toResourceType(candidate);
             if (resource.isPresent()) {
