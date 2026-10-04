@@ -240,6 +240,12 @@ public final class LumberjackWork {
         dropClosedJobs();
 
         if (open == 0) {
+            // Sem árvore a cortar, o lenhador recompõe o viveiro da borda
+            // antes de ficar ocioso. A atribuição de construção continua
+            // sendo a alternativa seguinte, em WorkAssignment.
+            if (LumberjackNursery.hasLumberjack(colony.id())) {
+                LumberjackNursery.plantBatchIfItIsTime(world, colony.id(), center);
+            }
             LumberjackReport.reportIdle(colony);
         } else {
             IdleLog.clear(colony.id(), SUBJECT);

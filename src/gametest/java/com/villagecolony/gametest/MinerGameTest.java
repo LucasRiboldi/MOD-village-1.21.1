@@ -361,8 +361,9 @@ public class MinerGameTest implements FabricGameTest {
      * não o que saiu da pedra.
      *
      * <p>A pedra saiu do mundo e não entrou em lugar nenhum: continuar é
-     * gastar a vez do mineiro e sujar o chão. Encerrar devolve a vez ao ciclo
-     * da colônia, que é quem sabe pedir baú novo.
+     * gastar a vez do mineiro e sujar o chão. A coleta volta para a fila com
+     * uma pausa curta; assim a colônia pode abrir espaço, e o mineiro não
+     * registra uma entrega que não aconteceu.
      */
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "miner_full_chest",
             tickLimit = 400)
@@ -433,9 +434,9 @@ public class MinerGameTest implements FabricGameTest {
         context.runAtTick(320, () -> {
             try {
                 context.assertTrue(
-                        task.state() == TaskState.COMPLETED,
-                        "o mineiro continuou cavando com o baú cheio — a tarefa ficou em "
-                                + task.state() + ", e a pedra vai para o chão a cada passagem");
+                        task.state() == TaskState.AVAILABLE,
+                        "o mineiro concluiu uma coleta sem destino físico — a tarefa ficou em "
+                                + task.state() + " em vez de voltar para a fila");
             } finally {
                 owned.cleanUp();
 

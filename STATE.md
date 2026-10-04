@@ -54,6 +54,12 @@
   da mesma vila, priorizando um baú vazio. Pilhas e componentes são preservados;
   sem espaço comunitário, o excedente usa um baú físico no salão completo da
   mina, sem carregar chunk ou usar baú de profissão (ADR-033).
+- Spark `8VskZd9AOD` confirmou 20 TPS e mostrou o mineiro alcançando a frente,
+  mas abandonando a coleta porque seu baú estava cheio. O transbordo agora é
+  tentado no instante do depósito; sem destino, a tarefa volta à fila em vez de
+  concluir com zero itens e o mineiro pode apoiar obra durante o descanso curto.
+  Lenhador sem árvore recompõe o viveiro do anel 48–56 antes do apoio, com meta
+  `max(10, 5 por lenhador)`.
 - Depois de três faltas, terracota colorida não fica presa a uma rota teórica de
   recoloração: a peça preferida entra fisicamente no baú do construtor. A
   terceira tentativa continua sendo necessária e as duas primeiras deixam a

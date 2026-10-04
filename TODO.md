@@ -14,6 +14,22 @@ das profissoes) esta verde; ainda requer validacao no save real.
 
 ## Sessão de 2026-10-03 — painéis, perímetro e mina
 
+## Sessão de 2026-10-04 — fluxo de mina e viveiro proporcional
+
+- [x] 🔴 Spark `8VskZd9AOD`: baú cheio do mineiro aciona transbordo imediato
+  antes da desistência; se não houver destino físico, a coleta fica disponível
+  e não é concluída com entrega zero.
+- [x] 🟠 Lenhador sem árvore inicia lote de viveiro no anel 48–56 antes de
+  ficar ocioso; a meta é `max(10, 5 por lenhador)` e a varredura não roda sem
+  lenhador registrado.
+- [x] 🟠 Apoio de obra permanece disponível a produtor ocioso ou com coleta em
+  descanso, sem cruzar coleta de madeira e mineração (ADR-010).
+- [ ] 🔴 Playtest: encher o baú de mineiro, confirmar a transferência para baú
+  comunitário e que a tarefa reaparece sem a mensagem falsa de entrega zero;
+  depois observar o mineiro apoiar uma obra enquanto espera.
+- [ ] 🟠 Playtest: deixar o lenhador sem árvores e confirmar plantio longe das
+  estruturas na borda, até a meta de cinco árvores por lenhador.
+
 ## Sessão de 2026-10-04 — suprimento de obra, overflow e varredura
 
 ## Sessão de 2026-10-04 — cadeia colorida e antecipação do fundidor

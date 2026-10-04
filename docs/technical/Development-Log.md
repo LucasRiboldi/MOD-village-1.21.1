@@ -6,6 +6,31 @@
 
 # Village Colony — Development Log
 
+## 2026-10-04 — fluxo de armazenamento do mineiro e viveiro proporcional
+
+O Spark `8VskZd9AOD` manteve 20 TPS, MSPT mediano de 6,97 ms e p95 de 10,5 ms:
+não houve congelamento global. O mineiro alcançou a boca e a frente, quebrou
+blocos, mas o depósito encontrou baú cheio e encerrava a tarefa como concluída
+com zero itens. `MinerHaul` agora pede o transbordo dos dez slots reservados no
+mesmo instante do depósito, apenas para baús comunitários. Se ainda não houver
+destino físico, a tarefa volta a `AVAILABLE` e a coleta mineral descansa por
+poucos ciclos; ela não produz mais uma conclusão falsa e o mineiro pode apoiar
+uma obra nesse período.
+
+O perfil também mostrou lenhador que concluiu uma árvore e passou a procurar
+outra. O viveiro do anel 48–56 é acionado antes da ociosidade e sua meta é
+`max(10, 5 por lenhador)`. A chamada automática exige lenhador registrado para
+evitar varreduras caras em vilas sem essa profissão.
+
+TDD: o cenário sem baú comunitário passou a exigir tarefa disponível, e o novo
+cenário com baú comunitário exige a transferência de pelo menos dez itens, a
+entrega da pedra e a preservação do baú de outra profissão. O teste unitário do
+alvo do viveiro passou. `runGametest --rerun-tasks --no-daemon` concluiu 584 de
+585 obrigatórios; a única falha foi
+`SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted`, já existente e
+fora desta alteração. Falta playtest no save para percurso da mina, transbordo e
+plantio da borda.
+
 ## 2026-10-04 — terracota colorida, corantes automáticos e fundidor antecipado
 
 A terracota vermelha deixou de ser tratada como saída direta da fornalha. Ela é
@@ -10583,3 +10608,38 @@ já conhecida como intermitente, em
 `BuilderGameTest.theBuilderMakesTheDoorTheWorkIsWaitingFor`; a repetição final
 passou integralmente, mas a reprodução determinística dessa instabilidade
 continua pendente.
+
+### 2026-10-04 - Armazenamento do mineiro, viveiro proporcional e apoio à obra
+
+O perfil Spark `8VskZd9AOD` confirmou TPS 20 e MSPT mediano de 6,97 ms: o
+comportamento observado não era uma parada global do servidor. O mineiro chegou
+à frente de mineração, extraiu blocos e, em seguida, encerrou a coleta com zero
+itens quando o seu baú estava cheio. A causa era o encerramento artificial da
+tarefa depois de uma tentativa de depósito sem destino.
+
+`MinerHaul` agora tenta o depósito normal e, somente quando necessário, alivia
+o baú profissional para armazenamento comunitário da mesma vila antes de
+repetir o depósito. Caso nenhum destino possa receber a carga, `MinerHands` não
+marca a tarefa como concluída: devolve-a à fila, aplica a espera curta já usada
+para coleta mineral e libera o trabalhador para as atividades secundárias
+permitidas. A navegação da mina continua na escada e nos corredores físicos;
+os reparos locais de piso, iluminação e troca de frente seguem como recuperação
+pontual, sem substituir a navegação Vanilla.
+
+O viveiro do lenhador mantém o patamar inicial de dez árvores e passa a usar
+`max(10, 5 por lenhador)`, com plantio nos anéis de borda protegidos de 48--56
+blocos. A manutenção automática só roda para colônias que realmente possuem
+lenhador, evitando varredura recorrente em vilas sem essa profissão. Quando
+não há corte nem reposição pendentes, o lenhador pode reservar construção; a
+mesma ajuda de construção e o recolhimento de itens no chão que faltam à obra
+permanecem disponíveis a todas as profissões ociosas, sem trocar a especialidade
+de coleta de cada uma.
+
+O teste unitário de meta do viveiro e a bateria direcionada de despacho passaram.
+Duas execuções integrais de `runGametest --rerun-tasks --no-daemon` mantiveram
+verdes os cenários alterados, mas ambas encerraram em 584/585 por falhas
+preexistentes distintas e não determinísticas: uma em
+`SmelterGameTest.theOreInTheMineMouthChestIsCountedAndSmelted` e outra em
+`CraftingGameTest.theWorkPieceMadeByTheCarpenterStaysInTheChest`. Portanto, a
+suíte completa ainda não é uma evidência de liberação integral e exige
+estabilização separada desses cenários, além do playtest no save.
