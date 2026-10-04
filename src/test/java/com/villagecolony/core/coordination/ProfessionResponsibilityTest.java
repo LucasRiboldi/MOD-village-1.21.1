@@ -74,6 +74,14 @@ class ProfessionResponsibilityTest {
                 ColonyCycle.typeFor(ResourceType.SMOOTH_STONE));
     }
 
+    @Test
+    void coloredTerracottaIsHandledByTheKilnAndStoneBricksByMasonry() {
+        assertEquals(TaskType.SMELT_MATERIAL,
+                ColonyCycle.typeFor(ResourceType.RED_TERRACOTTA));
+        assertEquals(TaskType.CRAFT_STONE_MATERIAL,
+                ColonyCycle.typeFor(ResourceType.STONE_BRICKS));
+    }
+
     /**
      * Todo recurso do jogo tem quem o produza.
      *

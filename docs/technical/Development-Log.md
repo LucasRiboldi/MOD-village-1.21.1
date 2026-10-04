@@ -10492,3 +10492,23 @@ Publicação: `build --no-daemon` concluiu em verde e produziu o JAR SHA-256
 para `downloads/`. O cliente Minecraft estava aberto, portanto a instalação em
 `%APPDATA%/.minecraft/mods/` foi preservada no JAR anterior; a troca deve ser
 feita com o cliente fechado.
+
+### 2026-10-04 - Fundação física da roça e matriz de blocos Vanilla
+
+`Blueprint.isBase` reconhecia somente a camada de rua. Isso excluía as roças,
+que deliberadamente não têm essa camada para deixar canteiros e água um bloco
+acima da rua. Quando a primeira peça da roça encontrava grama, ela era tratada
+como obstáculo e riscada como concluída em vez de ser assentada.
+
+O GameTest `BuilderGameTest.aFarmFoundationReplacesNaturalGround` foi escrito
+antes da alteração e falhou como esperado: a terra da planta não substituía a
+grama. A planta agora marca apenas sua menor camada real como base física; casas
+e demais plantas continuam usando a camada de rua. A repetição completa passou
+em **581/581** GameTests.
+
+Também foi criado `scripts/export_vanilla_village_block_routes.py`, que lê os
+templates NBT distribuídos no JAR Vanilla 1.21.1 e cruza cada bloco usado com
+`ResourceType`. A saída `docs/reports/blocos-vilas-vanilla-1.21.1.xlsx` possui
+as duas colunas solicitadas e 161 blocos distintos. Sessenta e sete não têm
+profissão com rota direta e foram mantidos explicitamente assim, sem declarar
+uma geração de item que o mundo não oferece.

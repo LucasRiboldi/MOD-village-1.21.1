@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-10-04 (recuo de roça inviável reduzido para um ciclo; antes, muda solicitada respeita o expediente; 578 GameTests no topo; painéis pixelados, marcador, mina, base e varredura, integração de 02-10 e sessão de 02-10, seção
+**Atualizado:** 2026-10-04 (a camada inferior de roça agora é fundação física; matriz de 161 blocos Vanilla registra 67 sem rota direta; recuo de roça inviável reduzido para um ciclo; antes, muda solicitada respeita o expediente; 581 GameTests no topo; painéis pixelados, marcador, mina, base e varredura, integração de 02-10 e sessão de 02-10, seção
 abaixo). Estado de 2026-09-28: a obra antecipa a proxima peca artesanal sem
 consumir os troncos brutos que ela mesma ainda exige; o `/vc log` explica a
 saida de trabalhador preso e seu retorno a escala. A evolucao agora inclui
@@ -15,6 +15,13 @@ das profissoes) esta verde; ainda requer validacao no save real.
 ## Sessão de 2026-10-03 — painéis, perímetro e mina
 
 ## Sessão de 2026-10-04 — suprimento de obra, overflow e varredura
+
+- [x] 🔴 Roça: a camada inferior pedida pela planta substitui terreno natural e
+  é construída fisicamente, mantendo os canteiros e a água na altura especial.
+- [ ] 🟠 Playtest: criar uma roça sobre grama e confirmar a fundação completa,
+  o canal de água e os canteiros sem blocos apenas riscados como concluídos.
+- [ ] 🟡 Definir rotas físicas para os 67 blocos de vila Vanilla sem profissão
+  adquirente, listados em `docs/reports/blocos-vilas-vanilla-1.21.1.xlsx`.
 
 - [x] 🔴 Spark `t80rKW8u6q`: uma roça cujo único lote estava fora do alcance
   bloqueava todos os projetos por vinte ciclos. Ela agora cede somente uma

@@ -69,6 +69,12 @@
   duas falhas opostas no batch concorrente `craft_family`; a repetição imediata
   passou integralmente, portanto a instabilidade ficou registrada para
   investigação, sem reduzir timeout nem enfraquecer a cobertura.
+- Roças agora tratam a sua camada física mais baixa como fundação: o construtor
+  assenta o bloco pedido sobre a grama natural, sem mudar a altura especial que
+  acomoda os canteiros e a água. A matriz auditável de 161 blocos dos templates
+  de todas as vilas Vanilla 1.21.1 está em
+  `docs/reports/blocos-vilas-vanilla-1.21.1.xlsx`; 67 ainda não têm rota direta
+  de uma profissão e estão marcados sem inventar suprimento.
 - Falta o playtest visual e de desempenho no save, inclusive marcador em vila
   grande e coleta atravessando a borda, fluxo real dos baús e nova medição do
   lenhador/carpintaria.

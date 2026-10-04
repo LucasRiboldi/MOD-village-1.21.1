@@ -48,6 +48,9 @@ public final class Blueprint {
      */
     private final int streetLayer;
 
+    /** A camada mais baixa que a planta efetivamente pede. */
+    private final int lowestBlockLayer;
+
     /** Planta sem encaixe de rua: a do próprio mod, a de teste. */
     public static final int NO_STREET_LAYER = -1;
 
@@ -65,6 +68,10 @@ public final class Blueprint {
         this.blocks = blocks;
         this.size = size;
         this.streetLayer = streetLayer;
+        this.lowestBlockLayer = blocks.stream()
+                .mapToInt(block -> block.offset().y())
+                .min()
+                .orElseThrow();
     }
 
     /**
@@ -144,9 +151,19 @@ public final class Blueprint {
                 && GROUND.contains(block.block().path());
     }
 
-    /** Se esta peça é da base: da camada da rua para baixo. */
+    /**
+     * Se esta peça é da base que deve ocupar o lugar do terreno natural.
+     *
+     * <p>Casas usam a camada da rua. A roça é a exceção deliberada: ela fica
+     * acima da rua para caber água, mas a camada mais baixa que pede continua
+     * sendo fundação física, não terreno a ser riscado como concluído.
+     */
     public boolean isBase(BlueprintBlock block) {
-        return hasStreetLayer() && block.offset().y() <= streetLayer;
+        if (hasStreetLayer()) {
+            return block.offset().y() <= streetLayer;
+        }
+
+        return BlueprintKind.isFarm(id) && block.offset().y() == lowestBlockLayer;
     }
 
     /**

@@ -815,6 +815,35 @@ public class BuilderGameTest implements FabricGameTest {
     }
 
     /**
+     * A camada inferior de uma roça também é obra — 2026-10-04.
+     *
+     * <p>A roça não tem camada de rua porque os canteiros ficam um bloco acima
+     * dela, para acomodar o canal de água. Isso não transforma a base em
+     * terreno descartável: quando a planta pede terra, a terra do baú deve
+     * substituir a grama natural e aparecer fisicamente no mundo.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "build_ground",
+            tickLimit = 300)
+    public void aFarmFoundationReplacesNaturalGround(TestContext context) {
+        Fixture fixture = setUp(context, 0, farmFoundation(), 1);
+        context.setBlockState(SITE, Blocks.GRASS_BLOCK.getDefaultState());
+        ChestDepositor.deposit(context.getWorld(), fixture.chest, Items.DIRT, 1);
+
+        context.runAtTick(120, () -> {
+            try {
+                context.assertTrue(
+                        stateAt(context, SITE).isOf(Blocks.DIRT),
+                        "a base da roça foi riscada sobre a grama em vez de ser construída: "
+                                + stateAt(context, SITE).getBlock());
+            } finally {
+                fixture.owned.cleanUp();
+            }
+
+            context.complete();
+        });
+    }
+
+    /**
      * <b>E a obra marcada como esperando ainda consegue acabar</b> —
      * crash de 2026-09-05, às 21:06, com o servidor no chão:
      *
@@ -980,6 +1009,14 @@ public class BuilderGameTest implements FabricGameTest {
     private static Blueprint dirt() {
         return Blueprint.of(HUT, List.of(new BlueprintBlock(
                 new ColonyPos(0, 0, 0), MinecraftTypeAdapter.toResourceId(Blocks.DIRT))));
+    }
+
+    /** Uma base física, no nível inferior de uma planta de roça. */
+    private static Blueprint farmFoundation() {
+        return Blueprint.of(
+                ResourceId.vanilla("village/plains/houses/plains_small_farm_1"),
+                List.of(new BlueprintBlock(
+                        new ColonyPos(0, 0, 0), MinecraftTypeAdapter.toResourceId(Blocks.DIRT))));
     }
 
     /** Um canteiro com cultivo em cima: os dois são moldados no lugar. */

@@ -57,6 +57,7 @@ class ProductionTest {
                         ResourceType.STONE,
                         ResourceType.SMOOTH_STONE,
                         ResourceType.TERRACOTTA,
+                        ResourceType.RED_TERRACOTTA,
 
                         // <b>O tijolo entrou em 2026-09-19</b>, e este
                         // teste cobrou a declaração — que é o serviço
