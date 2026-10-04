@@ -8,6 +8,7 @@ import net.minecraft.util.math.BlockPos;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -36,6 +37,7 @@ public final class VillageFluidIndex {
     private static final class Index {
         private final VillageBounds bounds;
         private final Set<Long> fluids = new HashSet<>();
+        private final Set<Long> unavailable = new HashSet<>();
         private long nextColumn;
 
         private Index(VillageBounds bounds) {
@@ -99,8 +101,33 @@ public final class VillageFluidIndex {
             BlockPos column = new BlockPos(x, bounds.minY(), z);
             scanned++;
 
-            if (loaded.test(column) && fluid.test(column)) {
+            if (!loaded.test(column)) {
+                index.unavailable.add(key(x, z));
+            } else if (fluid.test(column)) {
                 index.fluids.add(key(x, z));
+            }
+        }
+
+        // Chunks descarregados não são classificados como solo. Depois que a
+        // primeira volta termina, revisita somente essas colunas pendentes,
+        // sem reexaminar o restante da vila a cada ciclo.
+        if (index.nextColumn >= total) {
+            Iterator<Long> pending = index.unavailable.iterator();
+            while (pending.hasNext() && scanned < MAX_COLUMNS_PER_PASS) {
+                long encoded = pending.next();
+                int x = (int) (encoded >> 32);
+                int z = (int) encoded;
+                BlockPos column = new BlockPos(x, bounds.minY(), z);
+                scanned++;
+
+                if (!loaded.test(column)) {
+                    continue;
+                }
+
+                if (fluid.test(column)) {
+                    index.fluids.add(encoded);
+                }
+                pending.remove();
             }
         }
     }

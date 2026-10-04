@@ -10442,3 +10442,53 @@ Na publicacao posterior, o JAR `0.3.0` foi copiado com o cliente fechado para
 `build/libs/`, conferem SHA-256
 `B8A9E15BD0E5726FFA70CDFAB65616382166110CAA59FBBCEAECFF9C4BE64CE7`;
 `scripts/release_manifest.py --dry-run` confirmou o manifesto.
+
+### 2026-10-04 - Terracota, transbordo comunitario e leitura pendente de terreno
+
+O cenário novo `BuilderGameTest.aTheoreticalTerracottaRouteFallsBackAfterThreeMisses`
+reproduziu a espera infinita de terracota colorida: uma receita de recoloração
+e as alternativas da família faziam a rota parecer disponível mesmo sem peça
+física chegar à obra. Depois de duas tentativas sem alterar o fluxo local, a
+terceira coloca a terracota preferida no baú que atende o construtor. A primeira
+rodada completa registrou exatamente essa falha; depois da correção localizada à
+família de terracota, a repetição passou.
+
+O alívio dos dez slots finais passou a procurar primeiro baú comunitário vazio
+e só depois baús comunitários parcialmente ocupados. A ADR-033 permite, se nada
+couber, um único baú físico no salão comum já inteiramente aberto da mina; ele
+não ocupa escada/corredor, não carrega chunk e só aparece em posição com piso
+sólido. `MineOverflowStorageGameTest` cobre a posição, e
+`ProfessionChestOverflowGameTest` cobre a prioridade do baú vazio. O próximo
+nível só recebe outro depósito quando for aberto naturalmente.
+
+Também foi corrigido o índice transitório de fluidos: coluna de chunk ainda
+descarregado fica pendente, em vez de avançar para sempre sem ser lida. O estudo
+de varredura registra que `site_sweep_budget_exhausted` é do scanner de lote de
+obra, não a coleta de recursos; leitura integral de chunks continua recusada até
+perfil justificar seu custo.
+
+Verificação desta sessão: `test --rerun-tasks --no-daemon` com **1.309/1.309**
+e `runGametest --rerun-tasks --no-daemon` com **580/580**. Ainda falta o
+playtest do save para confirmar obra de terracota, prioridade entre baús reais e
+criação no segundo nível da mina.
+
+### 2026-10-04 - Obra adiada por roça sem alcance
+
+O Spark `t80rKW8u6q` e o log local não mostraram parada do planejador: uma obra
+foi concluída, elevando os edifícios salvos de 11 para 12. A obra seguinte não
+abria porque o único lote elegível era usado pela demanda de roça, mas ficava
+fora do alcance do fazendeiro. `FarmPlans` marcava a roça como adiada por vinte
+ciclos, deixando a vila sem projeto durante cerca de dez minutos, apesar de
+estoque e trabalhadores livres.
+
+O recuo agora dura um único `VillageDetector.CYCLE_TICKS`. Assim, a próxima
+rodada pode abrir casa ou oficina, enquanto a roça segue proibida fora de
+`FarmerWork.reach()`. `FarmPostponementTest` foi alterado primeiro para exigir
+o retorno no tick 600; falhou com a janela antiga e passou após a correção. O
+playtest ainda deve confirmar uma obra visível no ciclo posterior à recusa.
+
+Publicação: `build --no-daemon` concluiu em verde e produziu o JAR SHA-256
+`47B30CD9E662C5C4BE79F090ED5FB886792A218B259FC26BD0360D39ADFC44FD`, copiado
+para `downloads/`. O cliente Minecraft estava aberto, portanto a instalação em
+`%APPDATA%/.minecraft/mods/` foi preservada no JAR anterior; a troca deve ser
+feita com o cliente fechado.

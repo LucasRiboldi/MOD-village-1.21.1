@@ -125,11 +125,12 @@ public final class FarmPlans {
     /**
      * Quanto tempo a roça sai da frente depois de não caber.
      *
-     * <p>Vinte ciclos, o mesmo fôlego do {@code PatienceClock}: tempo de
-     * uma casa subir e mudar o desenho da vila, que é o que pode abrir o
-     * lote perto que faltava.
+     * <p>Uma rodada dá à casa ou oficina a oportunidade de assumir o lote.
+     * Vinte rodadas deixavam a vila dez minutos sem projeto mesmo tendo
+     * materiais e trabalhadores disponíveis; a próxima tentativa de roça
+     * continua preservando a cota e o alcance do fazendeiro.
      */
-    private static final int POSTPONE_TICKS = 20 * VillageDetector.CYCLE_TICKS;
+    private static final int POSTPONE_TICKS = VillageDetector.CYCLE_TICKS;
 
     /**
      * A roça espera, e as casas passam à frente — 2026-09-09.

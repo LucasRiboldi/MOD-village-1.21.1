@@ -66,6 +66,26 @@ public final class ProfessionChestOverflowGameTest implements FabricGameTest {
     }
 
     @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "profession_chest_overflow")
+    public void anEmptyCommunityChestWinsBeforeACompatiblePartialChest(TestContext context) {
+        ChestBlockEntity source = chest(context, SOURCE);
+        ChestBlockEntity empty = chest(context, COMMUNITY);
+        ChestBlockEntity partial = chest(context, OTHER_PROFESSION);
+        fill(source, Items.COBBLESTONE);
+        fill(partial, Items.STONE);
+        partial.setStack(0, new ItemStack(Items.COBBLESTONE, 63));
+
+        ProfessionChestOverflow.relieve(context.getWorld(),
+                List.of(position(context, SOURCE), position(context, OTHER_PROFESSION), position(context, COMMUNITY)),
+                Set.of(position(context, SOURCE)));
+
+        context.assertTrue(count(empty, Items.COBBLESTONE) == 10,
+                "o bau comunitario vazio deveria receber a reserva antes dos demais");
+        context.assertTrue(count(partial, Items.COBBLESTONE) == 63,
+                "uma pilha parcial tomou prioridade sobre um bau vazio");
+        context.complete();
+    }
+
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "profession_chest_overflow")
     public void itemsStayInPlaceWhenCommunityChestsHaveNoRoom(TestContext context) {
         ChestBlockEntity source = chest(context, SOURCE);
         ChestBlockEntity community = chest(context, COMMUNITY);

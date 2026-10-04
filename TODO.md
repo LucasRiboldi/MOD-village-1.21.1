@@ -1,6 +1,6 @@
 # TODO
 
-**Atualizado:** 2026-10-04 (muda solicitada respeita o expediente; 578 GameTests no topo; antes, painéis pixelados, marcador, mina, base e varredura, integração de 02-10 e sessão de 02-10, seção
+**Atualizado:** 2026-10-04 (recuo de roça inviável reduzido para um ciclo; antes, muda solicitada respeita o expediente; 578 GameTests no topo; painéis pixelados, marcador, mina, base e varredura, integração de 02-10 e sessão de 02-10, seção
 abaixo). Estado de 2026-09-28: a obra antecipa a proxima peca artesanal sem
 consumir os troncos brutos que ela mesma ainda exige; o `/vc log` explica a
 saida de trabalhador preso e seu retorno a escala. A evolucao agora inclui
@@ -13,6 +13,29 @@ A bateria de 1.196 testes unitarios e 528 GameTests (30-09, depois da revisao
 das profissoes) esta verde; ainda requer validacao no save real.
 
 ## Sessão de 2026-10-03 — painéis, perímetro e mina
+
+## Sessão de 2026-10-04 — suprimento de obra, overflow e varredura
+
+- [x] 🔴 Spark `t80rKW8u6q`: uma roça cujo único lote estava fora do alcance
+  bloqueava todos os projetos por vinte ciclos. Ela agora cede somente uma
+  rodada para casa/oficina, preservando a recusa da roça inalcançável.
+- [ ] 🟠 Playtest: depois de uma roça sem lote ao alcance, observar uma
+  casa/oficina surgir no ciclo seguinte e confirmar que a roça não nasce fora
+  do alcance do fazendeiro.
+
+- [x] 🔴 Obra que falha três vezes para obter material sem rota física imediata,
+  inclusive terracota branca de rota teórica de fundição, recebe o bloco final
+  fisicamente no baú do construtor.
+- [x] 🟠 Baú profissional cheio prioriza baú comunitário vazio, depois os
+  demais comunitários; sem espaço, usa um baú físico no salão completo da mina
+  (ADR-033), sem transferir a outra profissão.
+- [x] 🟠 Índice de água/lava volta a tentar colunas que estavam em chunk
+  descarregado, sem varredura integral de chunks.
+- [ ] 🟠 Playtest: três falhas de terracota branca retomam a obra com o item no
+  baú do construtor; confirmar também a prioridade de baú vazio e o baú do salão
+  de mina sem espaço comunitário.
+- [ ] 🟡 Medir no próximo Spark leituras/candidatos/falhas da coleta por
+  profissão antes de considerar heightmap ou índice por eventos.
 
 - [x] 🔴 Corrigir emissão de vértices dos overlays cliente.
 - [x] 🔴 Tratar baús duplos como inventário único, inclusive na reserva dos

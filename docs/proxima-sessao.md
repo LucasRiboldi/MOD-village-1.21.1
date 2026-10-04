@@ -1,15 +1,17 @@
 # A próxima sessão de jogo — o que olhar, e em que ordem
 
-**Atualização de 2026-10-04 — JAR `B8A9E15B...64CE7`.** O JAR com os painéis
+**Atualização de 2026-10-04 — JAR `47B30CD9...44FD`.** O JAR com os painéis
 transparentes, perímetro da vila, boca e passagem da mina ampliadas, varredura
-em espiral, reserva dos dez slots finais dos baús profissionais e viveiro de
-emergência restrito ao expediente está instalado em `downloads/` e
-`%APPDATA%/.minecraft/mods/`. As três cópias conferem com `build/libs/` pelo
-SHA-256 `B8A9E15BD0E5726FFA70CDFAB65616382166110CAA59FBBCEAECFF9C4BE64CE7`.
-Foram verificados **1.308/1.308 testes unitários**, **89/89 testes Python**,
-**578/578 GameTests** e o `build`; falta confirmar no save a escala dos
-painéis, o custo do perímetro e da varredura em vila grande, a passagem 3x3 e
-o transbordo entre baús reais.
+em espiral, reserva dos dez slots finais dos baús profissionais, viveiro de
+emergência e retorno de uma roça sem alcance em um ciclo está em `downloads/`.
+Ele confere com `build/libs/` pelo SHA-256
+`47B30CD9E662C5C4BE79F090ED5FB886792A218B259FC26BD0360D39ADFC44FD`.
+O cliente estava aberto, portanto `%APPDATA%/.minecraft/mods/` ainda mantém o
+JAR anterior e deve ser atualizado somente após fechá-lo. Foram verificados
+**1.309/1.309 testes unitários**, **89/89 testes Python**, **580/580
+GameTests** e o `build`; falta confirmar no save a escala dos painéis, o custo
+do perímetro e da varredura em vila grande, a passagem 3x3, o transbordo entre
+baús reais e a obra no ciclo posterior à recusa de roça.
 
 **Atualizacao de 2026-09-28 - JAR `B1C516AD...A38C2F5`.** Este e o JAR instalado
 em `downloads/` e `%APPDATA%/.minecraft/mods/`; as tres copias conferem com

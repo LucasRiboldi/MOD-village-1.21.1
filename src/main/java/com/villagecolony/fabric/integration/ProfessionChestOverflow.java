@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 /** Mantém livres os dez slots finais dos baús reservados às profissões. */
 public final class ProfessionChestOverflow {
@@ -20,20 +22,36 @@ public final class ProfessionChestOverflow {
 
     public static int relieve(ServerWorld world, List<ColonyPos> villageChests,
             Set<ColonyPos> professionChests) {
+        return relieve(world, Optional.empty(), villageChests, professionChests);
+    }
+
+    /**
+     * Mantém espaço nas profissões e, se a vila estiver saturada, usa o
+     * armazém comunitário de emergência da mina já concluída.
+     */
+    public static int relieve(ServerWorld world, UUID colonyId,
+            List<ColonyPos> villageChests, Set<ColonyPos> professionChests) {
+        return relieve(world, Optional.of(colonyId), villageChests, professionChests);
+    }
+
+    private static int relieve(ServerWorld world, Optional<UUID> colonyId,
+            List<ColonyPos> villageChests, Set<ColonyPos> professionChests) {
         Map<ColonyPos, ChestInventories.Handle> observed = new LinkedHashMap<>();
         for (ColonyPos chest : villageChests) {
             ChestInventories.at(world, chest)
                     .ifPresent(handle -> observed.putIfAbsent(handle.key(), handle));
         }
 
-        List<Inventory> destinations = observed.values().stream()
+        List<Inventory> community = observed.values().stream()
                 .filter(handle -> !handle.isProfession(professionChests))
                 .map(ChestInventories.Handle::inventory)
                 .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
 
-        if (destinations.isEmpty()) {
-            return 0;
-        }
+        // Um baú totalmente vazio recebe primeiro. Assim o alívio preserva
+        // pilhas já organizadas e deixa os demais baús comunitários utilizáveis.
+        List<Inventory> destinations = new ArrayList<>();
+        community.stream().filter(ProfessionChestOverflow::isEmpty).forEach(destinations::add);
+        community.stream().filter(inventory -> !isEmpty(inventory)).forEach(destinations::add);
 
         int moved = 0;
         for (ChestInventories.Handle handle : observed.values()) {
@@ -43,6 +61,14 @@ public final class ProfessionChestOverflow {
             Inventory source = handle.inventory();
             if (isFull(source)) {
                 moved += relieveLastSlots(source, destinations);
+                if (hasReservedItems(source) && colonyId.isPresent()) {
+                    Optional<Inventory> storage = MineOverflowStorage.ensure(world, colonyId.get())
+                            .flatMap(chest -> ChestInventories.at(world, chest))
+                            .map(ChestInventories.Handle::inventory);
+                    if (storage.isPresent()) {
+                        moved += relieveLastSlots(source, List.of(storage.get()));
+                    }
+                }
             }
         }
         return moved;
@@ -110,6 +136,25 @@ public final class ProfessionChestOverflow {
     private static boolean isFull(Inventory inventory) {
         for (int slot = 0; slot < inventory.size(); slot++) {
             if (inventory.getStack(slot).isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean hasReservedItems(Inventory inventory) {
+        int firstReservedSlot = Math.max(0, inventory.size() - RESERVED_SLOTS);
+        for (int slot = firstReservedSlot; slot < inventory.size(); slot++) {
+            if (!inventory.getStack(slot).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isEmpty(Inventory inventory) {
+        for (int slot = 0; slot < inventory.size(); slot++) {
+            if (!inventory.getStack(slot).isEmpty()) {
                 return false;
             }
         }

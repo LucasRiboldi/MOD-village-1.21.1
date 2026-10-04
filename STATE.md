@@ -12,7 +12,7 @@
 
 ---
 
-## 🟡 03-10 — painéis, perímetro, mina e varredura (aguarda playtest)
+## 🟡 04-10 — painéis, perímetro, mina e varredura (aguarda playtest)
 
 - Corrigido o formato de vértices dos overlays: moldura e ícone não enviam
   mais atributos incompatíveis com `RenderLayer.getTextSeeThrough`.
@@ -45,14 +45,27 @@
   incremental ignora colunas de água/lava já medidas e é invalidado quando a
   caixa cresce (ADR-031).
 - Baú profissional cheio libera seus dez slots finais para baús comunitários
-  da mesma vila. Pilhas e componentes são preservados; sem espaço de destino,
-  nada sai da origem (ADR-032).
+  da mesma vila, priorizando um baú vazio. Pilhas e componentes são preservados;
+  sem espaço comunitário, o excedente usa um baú físico no salão completo da
+  mina, sem carregar chunk ou usar baú de profissão (ADR-033).
+- Depois de três faltas, terracota colorida não fica presa a uma rota teórica de
+  recoloração: a peça preferida entra fisicamente no baú do construtor. A
+  terceira tentativa continua sendo necessária e as duas primeiras deixam a
+  coleta/fabricação local trabalhar.
+- Colunas de terreno cujo chunk estava descarregado deixam de ser perdidas pelo
+  índice de água/lava: ficam pendentes e são revisitadas incrementalmente quando
+  o chunk carregar. A varredura integral de chunks segue rejeitada por custo;
+  o estudo compara cursor, heightmap e índice por eventos.
+- O Spark `t80rKW8u6q` mostrou que uma roça sem lote ao alcance deixava a vila
+  sem projeto por vinte ciclos, embora houvesse materiais e trabalhadores. O
+  recuo agora dura um ciclo: a casa ou oficina seguinte pode abrir, e a roça
+  continua proibida fora do alcance do fazendeiro.
 - O Spark `G7eI22eQt0` manteve 20 TPS (MSPT mediano 9,93; p95 14), mas mostrou
   `TreeScanner.findNearestLog` em 62% do custo do mod. A busca agora retoma na
   coluna exata e encerra a passagem ao indexar 16 árvores. A carpintaria
   fabrica até cobrir a demanda restante da obra, ainda com uma receita por
   ação; o analisador só chama baú de mineiro cheio diante do aviso real.
-- A rodada de 04-10 confirmou 578/578 GameTests. Uma execução anterior teve
+- A rodada de 04-10 confirmou 580/580 GameTests. Uma execução anterior teve
   duas falhas opostas no batch concorrente `craft_family`; a repetição imediata
   passou integralmente, portanto a instabilidade ficou registrada para
   investigação, sem reduzir timeout nem enfraquecer a cobertura.
@@ -67,11 +80,12 @@
 
 ## Em uma linha
 
-Entrega de 04-10 na branch de desenvolvimento: 1.308 unitários, 89 Python e
-578/578 GameTests; `build` verde. O JAR instalado é
-`B8A9E15B…64CE7`, idêntico em `build/libs/`, `downloads/` e `mods/`.
-Próximo: playtest dos painéis, perímetro, mina, varredura, baús e ritmo de
-construção.
+Entrega de 04-10 na branch de desenvolvimento: 1.309 unitários, 89 Python e
+580/580 GameTests; `build` verde. O JAR em `build/libs/` e `downloads/` é
+`47B30CD9…44FD`; a cópia em `mods/` ainda é `B8A9E15B…64CE7` porque o
+cliente Minecraft estava aberto durante a publicação.
+Próximo: fechar o cliente e atualizar `mods/`, depois fazer o playtest dos
+painéis, perímetro, mina, varredura, baús e ritmo de construção.
 
 ## 30-09, noite — playtests 18h e 21h (Spark `YUm45D9Sw4`, `qI5h6MXtDA`)
 

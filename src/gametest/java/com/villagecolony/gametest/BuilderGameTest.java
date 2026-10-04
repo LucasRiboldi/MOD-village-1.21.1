@@ -631,6 +631,40 @@ public class BuilderGameTest implements FabricGameTest {
     }
 
     /**
+     * Uma rota apenas teórica não pode prender a obra para sempre. Argila
+     * costuma existir fora da vila, mas ainda pode não ser alcançável pelo
+     * fundidor; depois de três faltas, a terracota de manufatura atende a obra.
+     */
+    @GameTest(templateName = FabricGameTest.EMPTY_STRUCTURE, batchId = "builder")
+    public void aTheoreticalTerracottaRouteFallsBackAfterThreeMisses(TestContext context) {
+        Fixture fixture = setUp(context, 0, Blueprint.of(
+                ResourceId.vanilla("village/plains/houses/test_white_terracotta"),
+                List.of(new BlueprintBlock(
+                        new ColonyPos(0, 0, 0),
+                        MinecraftTypeAdapter.toResourceId(Blocks.WHITE_TERRACOTTA)))), 1);
+
+        try {
+            for (int attempt = 1; attempt <= 2; attempt++) {
+                context.assertFalse(
+                        BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
+                        "a terracota apareceu antes da tentativa " + attempt);
+            }
+
+            context.assertTrue(
+                    BuilderMaterials.hasMaterialForNextBlock(context.getWorld(), fixture.project),
+                    "a terceira falta em uma rota teorica nao abasteceu a terracota");
+            context.assertTrue(
+                    ColonyChests.countIn(context.getWorld(), List.of(fixture.chest), Items.WHITE_TERRACOTTA) == 1,
+                    "a terracota de contingencia nao entrou no bau da obra");
+        } finally {
+            fixture.owned.cleanUp();
+            BiomeConstructionSupply.routeDelivered(fixture.colony.id(), Items.WHITE_TERRACOTTA);
+        }
+
+        context.complete();
+    }
+
+    /**
      * O mesmo cenário da porta, com o que o baú recebe por fora.
      *
      * <p>Existe por causa da Regra 10: o baú com tábua em vez de porta

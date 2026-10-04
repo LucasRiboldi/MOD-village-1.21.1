@@ -72,4 +72,18 @@ class VillageFluidIndexTest {
 
         assertFalse(VillageFluidIndex.skip(colonyId, bounds, fluid));
     }
+
+    @Test
+    void revisitsAColumnThatWasUnavailableWhenItsChunkLaterLoads() {
+        UUID colonyId = UUID.randomUUID();
+        VillageBounds bounds = new VillageBounds(0, 0, 0, 0, 4, 0);
+        BlockPos column = new BlockPos(0, 0, 0);
+
+        VillageFluidIndex.refresh(colonyId, bounds, ignored -> false, ignored -> true);
+        assertFalse(VillageFluidIndex.skip(colonyId, bounds, column));
+
+        VillageFluidIndex.refresh(colonyId, bounds, ignored -> true, ignored -> true);
+        assertTrue(VillageFluidIndex.skip(colonyId, bounds, column),
+                "a coluna ignorada por chunk descarregado nunca foi revisitada");
+    }
 }

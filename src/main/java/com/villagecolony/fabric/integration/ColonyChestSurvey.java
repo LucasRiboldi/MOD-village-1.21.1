@@ -72,7 +72,7 @@ public final class ColonyChestSurvey {
             Set<ColonyPos> professionChests,
             ResourceGroup... capacityGroups) {
 
-        ProfessionChestOverflow.relieve(world, chests, professionChests);
+        ProfessionChestOverflow.relieve(world, colonyId, chests, professionChests);
 
         List<ColonyPos> knownChests = chests.stream()
                 .sorted((first, second) -> Boolean.compare(

@@ -40,3 +40,19 @@ reduza o tempo parado sem aumentar chunks carregados.
 
 Estudo apenas. A espiral de superfície e o índice transitório de fluidos da
 ADR-031 permanecem; nenhuma varredura integral de chunk foi ativada.
+
+## Atualização de 2026-10-04
+
+O aviso `site_sweep_budget_exhausted` visto no Spark pertence ao
+`BuildSiteScanner` da construção, não à coleta de recursos: é o cursor de lote
+de obra respeitando seu orçamento, e não prova de uma varredura de vila parada.
+Para a coleta, foi corrigido o caso em que uma coluna de chunk descarregado era
+avançada e nunca mais observada: ela fica pendente e é revista em passagens
+incrementais quando o chunk carregar. Água e lava continuam sendo memória
+transitória e são reconstruídas quando a área cresce.
+
+Próximas alternativas, nesta ordem: medir leituras, candidatos e falhas por
+profissão; usar heightmap apenas onde a medição acusar superfície cara; só então
+prototipar um índice invalidado por eventos. A leitura de todos os blocos do
+chunk segue rejeitada enquanto não houver perfil que prove benefício maior que o
+custo.

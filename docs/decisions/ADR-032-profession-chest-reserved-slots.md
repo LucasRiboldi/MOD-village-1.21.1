@@ -1,6 +1,6 @@
 # ADR-032 — Slots reservados nos baús profissionais
 
-**Estado:** Aceita pelo autor em 2026-10-03
+**Estado:** Substituída em parte pela ADR-033 em 2026-10-04
 **Escopo:** transferência de excedente dos baús associados a trabalhadores.
 
 ## Contexto
@@ -27,8 +27,8 @@ profissão.
    são preservados.
 6. A origem perde somente a quantidade que coube fisicamente no destino. Se
    nenhum destino tiver espaço, os itens permanecem onde estavam.
-7. Nenhum baú é criado, nenhum item é descartado e nenhum chunk é carregado à
-   força para cumprir a regra.
+7. Nenhum item é descartado e nenhum chunk é carregado à força para cumprir a
+   regra. A exceção controlada de armazenamento de emergência está na ADR-033.
 
 ## Consequências
 

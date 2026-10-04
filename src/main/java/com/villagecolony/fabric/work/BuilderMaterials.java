@@ -44,6 +44,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -55,6 +56,14 @@ import java.util.UUID;
  * antes) encontram o construtor. Os comentários vieram junto sem mudança.
  */
 public final class BuilderMaterials {
+    private static final Set<Item> TERRACOTTA = Set.of(
+            Items.TERRACOTTA,
+            Items.WHITE_TERRACOTTA, Items.ORANGE_TERRACOTTA, Items.MAGENTA_TERRACOTTA,
+            Items.LIGHT_BLUE_TERRACOTTA, Items.YELLOW_TERRACOTTA, Items.LIME_TERRACOTTA,
+            Items.PINK_TERRACOTTA, Items.GRAY_TERRACOTTA, Items.LIGHT_GRAY_TERRACOTTA,
+            Items.CYAN_TERRACOTTA, Items.PURPLE_TERRACOTTA, Items.BLUE_TERRACOTTA,
+            Items.BROWN_TERRACOTTA, Items.GREEN_TERRACOTTA, Items.RED_TERRACOTTA,
+            Items.BLACK_TERRACOTTA);
 
     private BuilderMaterials() {
     }
@@ -158,7 +167,7 @@ public final class BuilderMaterials {
         return ensureConstructionMaterial(world, project, MaterialChoice.forBlock(material.get()));
     }
 
-    /** Mantém no baú a peça que nenhuma profissão consegue produzir. */
+    /** Mantém a obra abastecida quando a rota local não chega a entregar a peça. */
     static boolean hasOrStocksConstructionMaterial(
             ServerWorld world, ConstructionProject project, Item item) {
 
@@ -173,10 +182,10 @@ public final class BuilderMaterials {
     }
 
     /**
-     * Alternativas locais sempre ganham. Sem rota no bioma, três tentativas
-     * de recolher autorizam o ingrediente sem rota a aparecer no baú do
-     * artesão, que fabrica a peça — decisão do autor, 2026-09-30. Só a peça
-     * sem receita nenhuma aparece ela mesma, pela regra de 26-09.
+     * Alternativas locais sempre ganham. Três faltas da mesma peça distinguem
+     * uma rota que de fato entregou de uma rota apenas teórica. Receita de
+     * bancada continua recebendo seus ingredientes ausentes; peça de fornalha
+     * ou sem receita aparece no baú da obra quando a rota não chegou.
      */
     static boolean ensureConstructionMaterial(
             ServerWorld world, ConstructionProject project, List<Item> choices) {
@@ -187,13 +196,11 @@ public final class BuilderMaterials {
 
         Item preferred = choices.getFirst();
 
-        // <b>Rota no mundo, e não na receita</b> — F6, 2026-09-30. A
-        // pergunta não olhava o bioma: vidraça dava "tem rota" porque areia
-        // é um recurso, e na planície a areia não tem coleta. A peça nunca
-        // era entregue e ninguém ia buscar areia — 4 min 17 s de obra parada
-        // no playtest daquele dia.
-        if (choices.stream().anyMatch(candidate ->
-                BiomeConstructionSupply.hasRouteInBiome(world, project.colonyId(), candidate))) {
+        boolean terracotta = isTerracotta(preferred);
+        boolean routeExists = choices.stream().anyMatch(candidate ->
+                BiomeConstructionSupply.hasRouteInBiome(world, project.colonyId(), candidate));
+
+        if (!terracotta && routeExists) {
             return false;
         }
 
@@ -201,11 +208,24 @@ public final class BuilderMaterials {
             return false;
         }
 
+        // A família de terracota colorida parece ter rota por receita de
+        // recoloração, mas isto não prova que o corante e a terracota neutra
+        // chegaram a um artesão. Três faltas do bloco concreto encerram essa
+        // rota apenas teórica sem alterar a prioridade das alternativas nas
+        // duas primeiras tentativas.
         Optional<CraftingLookup.Bill> bill = CraftingLookup.billFor(world, preferred, any -> true);
 
-        if (bill.isEmpty()) {
+        // A rota do bioma e a entrega são fatos diferentes. Terracota, por
+        // exemplo, pode ter argila em teoria, mas a coleta pode nunca chegar
+        // ao baú da obra. Depois da terceira falta, uma peça de manufatura
+        // sem receita de bancada deixa de travar a construção.
+        if (terracotta || bill.isEmpty()) {
             return BiomeConstructionSupply.stockForConstruction(
                     world, project.colonyId(), project.origin(), preferred);
+        }
+
+        if (routeExists) {
+            return false;
         }
 
         // O tear pede linha: as linhas aparecem no baú do carpinteiro, e ele
@@ -225,6 +245,10 @@ public final class BuilderMaterials {
         }
 
         return false;
+    }
+
+    private static boolean isTerracotta(Item item) {
+        return TERRACOTTA.contains(item);
     }
 
     /**
